@@ -31,7 +31,7 @@ I don't like such "hard-coding" things, so I decide to make a more improved vers
 
 ## The development of deskHPSDR continues...
 
-My work is not completed. I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma any my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. I cannot check the code against Linux - I don't use it, only macOS. But normally all should be run with Linux too. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/download/current/piHPSDR-Manual.pdf) for basic knowledge, how this application works in general.
+My work is not completed. I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. I cannot check the code against Linux - I don't use it, only macOS. But normally all should be run with Linux too. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/download/current/piHPSDR-Manual.pdf) for basic knowledge, how this application works in general.
 
 ## Credits
 
