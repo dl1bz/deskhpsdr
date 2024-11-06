@@ -44,6 +44,7 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
   // A layout tailored for a screen 1920 px wide,
   // which is the 1280px version scaled with 1.8
   //
+  #if !defined (__LDESK__)
   {
     .description = "VFO bar for 1920px windows",
     .width = 1575,
@@ -109,6 +110,7 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .multifn_x = 775,
     .multifn_y = 160,
   },
+  #endif
 
   //
   // A layout tailored for a screen 1280 px wide:
@@ -180,7 +182,7 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .multifn_x = 775,
     .multifn_y = 90
   },
-
+  #if !defined (__LDESK__)
   //
   // A layout tailored for a screen 1024 px wide:
   // a Layout with dial digits of size 40, and a "LED" size 17
@@ -440,6 +442,7 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .dexp_x = 0,
     .dexp_y = 0,
   },
+  #endif
   //
   // The last "layout" must have a negative width to
   // mark the end of the list
