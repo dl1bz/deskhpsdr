@@ -79,8 +79,8 @@ void about_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   row++;
   snprintf(text, 1024, "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
-           "Based on source code developed by G0ORX/N6LYT and DL1YCF\n"
-           "This improved and extended version made by DL1BZ\n\n"
+           "Based on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\n"
+           "This version is developed and maintained by DL1BZ\n\n"
            "    Credits:\n"
            "    Steve Wilson, KA6S: RIGCTL (CAT over TCP)\n"
            "    Laurence Barker, G8NJJ: USB OZY Support\n"
