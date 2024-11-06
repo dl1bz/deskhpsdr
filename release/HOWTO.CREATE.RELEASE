@@ -1,0 +1,12 @@
+To make a "release", you need a working pihpsdr executable
+in your pihpsdr directory. 
+
+Then, simply do "make release". This creates the tar file
+
+pihpsdr-GIT_VERSION.tar
+
+where GIT_VERSION expands to the current git version.
+
+The tar file contains the "pihpsdr" directory inside
+the "release" directory, with the pihpsdr executable
+added.

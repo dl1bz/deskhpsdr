@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>deskHPSDR</string>
+	<key>CFBundleExecutable</key>
+	<string>deskhpsdr</string>
+	<key>CFBundleIconFile</key>
+	<string>hpsdr.icns</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>BNDL</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow for using Sound input devices</string>
+	<key>NSHighResolutionCapable</key>
+	<string>YES</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+</dict>
+</plist>
