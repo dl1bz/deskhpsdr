@@ -164,7 +164,7 @@ int audio_open_output(RECEIVER *rx) {
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
   char stream_id[16];
   snprintf(stream_id, 16, "RX-%d", rx->id);
-  #if define (__LDESK__)
+  #if defined (__LDESK__)
   rx->playstream = pa_simple_new(NULL, // Use the default server.
                                  "deskHPSDR",          // Our application's name.
                                  PA_STREAM_PLAYBACK,
@@ -260,7 +260,7 @@ int audio_open_input() {
   sample_spec.rate = 48000;
   sample_spec.channels = 1;
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
-  #if define (__LDESK__)
+  #if defined (__LDESK__)
   microphone_stream = pa_simple_new(NULL,      // Use the default server.
                                     "deskHPSDR",                   // Our application's name.
                                     PA_STREAM_RECORD,
