@@ -14,6 +14,8 @@ In the last time Christoph/DL1YCF has added some important features at piHPSDR. 
 
 But some features of the WDSP library are not fully implemented in piHPSDR. So some features like the Leveler, the Phase Rotator are build-in, but without any access to the parameter of this functions. DL1YCF has a lot of this "hard-coded", which limits the possible use of this functions too much.
 
+I add the missing access for a lot of parameters and add the status displayed in the upper side og the VFO window. You can see, which function is activated and which values are selected. In the digital S-Meter I add calculated S-Meter values on top of the dbm-display. SO you can see the S-Meter value and the RX value in dbm. I improve the digital S-Meter bar too for better readability.
+
 I don't like such "hard-coding" things, so I decide to make a more improved version of piHPSDR, which I called deskHPSDR for a clear demarcation of my version against piHPSDR. My focus are Desktops with macOS, because there is the selection of good SDR applications very poor, or Linux. I own a Hermes Lite 2 as my running hamradio station, use Thetis with WINDOWS with it but want a solution with my Mac's too, which is very near to Thetis. piHPSDR has this potential but not yet using it to its full extent. I study the source code of piHPSDR and had decided, I do this by myself. My knowledge in C programming is good enough for do this. So deskHPSDR was born a few weeks ago.
 
 ## Requirements
@@ -21,10 +23,15 @@ I don't like such "hard-coding" things, so I decide to make a more improved vers
 * a modern Desktop-OS like Linux or macOS with installed developer tools like compiler, linker etc.
 * a large screensize starts at 1280x720 or higher
 * basic knowledge: how to use your OS, a shell, a text editor and how to compile applications from source code
+* *macOS only*: need **first** install xcode-commandline-tools and the Homebrew-environment for later compiling deskHPSDR
 * a SDR device or transceiver, which supports HPSDR protocol 1 (older) or 2 (newer) like the Hermes Lite 2, the ANAN or similiar devices
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 
 **Important:** For best desktop experience please select **VFO bar for 1280px windows** in the *Menu->Screen* (if not selected).
+
+## The development continues...
+
+My work is not completed. I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma any my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. I cannot check the code against Linux - I don't use it, only macOS. But normally all should be run with Linux too. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/download/current/piHPSDR-Manual.pdf) for basic knowledge, how this application works in general.
 
 ## Credits
 
