@@ -2322,17 +2322,30 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
   t_print("WDSP:TX id=%d MicGain(dB)=%g\n", tx->id, tx->mic_gain);
 #endif
 #if defined (__LDESK__)
-  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g\n", tx->id, tx->mic_gain, pow(10.0, tx->mic_gain * 0.05));
+  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, tx->mic_gain, pow(10.0, tx->mic_gain * 0.05), vfo_get_tx_mode());
 #endif
 }
 
 void tx_set_mode(TRANSMITTER* tx, int mode) {
   if (tx != NULL) {
+    #if defined (__LDESK__)
+    if (mode == modeDIGU || mode == modeDIGL) {
+      if (tx->drive > drive_digi_max + 0.5) {
+        set_drive(drive_digi_max);
+      }
+      SetTXAPanelGain1(tx->id, 1.0);
+      t_print("%s: DIGIMODE set AF input gain to 0db\n", __FUNCTION__);
+    } else {
+      SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+      t_print("%s: Restore AF input gain: %.1fdb\n", __FUNCTION__, tx->mic_gain);
+    }
+    #else
     if (mode == modeDIGU || mode == modeDIGL) {
       if (tx->drive > drive_digi_max + 0.5) {
         set_drive(drive_digi_max);
       }
     }
+    #endif
 
 #ifdef WDSPTXDEBUG
     t_print("WDSP:TX id=%d mode=%d\n", tx->id, mode);

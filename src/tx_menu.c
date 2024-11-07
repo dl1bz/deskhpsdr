@@ -638,7 +638,11 @@ void tx_menu(GtkWidget *parent) {
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
     col = 0;
+    #if defined (__LDESK__)
+    label = gtk_label_new("SDR Radio Input");
+    #else
     label = gtk_label_new("Radio Mic");
+    #endif
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(tx_grid), label, col++, row, 1, 1);
@@ -660,8 +664,17 @@ void tx_menu(GtkWidget *parent) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(btn), pos);
     my_combo_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
     g_signal_connect(btn, "changed", G_CALLBACK(mic_in_cb), NULL);
+    #if defined (__LDESK__)
+    if (transmitter->local_microphone) {
+      gtk_widget_set_sensitive (btn, FALSE);
+    }
+    #endif
     col++;
+    #if defined (__LDESK__)
+    label = gtk_label_new("SDR LineIn (dB)");
+    #else
     label = gtk_label_new("LineIn Lvl (dB)");
+    #endif
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
@@ -671,6 +684,11 @@ void tx_menu(GtkWidget *parent) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), linein_gain);
     gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
     g_signal_connect(G_OBJECT(btn), "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_LINEIN));
+    #if defined (__LDESK__)
+    if (transmitter->local_microphone) {
+      gtk_widget_set_sensitive (btn, FALSE);
+    }
+    #endif
   }
 
   row++;
