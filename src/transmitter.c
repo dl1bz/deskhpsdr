@@ -2321,6 +2321,9 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
 #ifdef WDSPTXDEBUG
   t_print("WDSP:TX id=%d MicGain(dB)=%g\n", tx->id, tx->mic_gain);
 #endif
+#if defined (__LDESK__)
+  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g\n", tx->id, tx->mic_gain, pow(10.0, tx->mic_gain * 0.05));
+#endif
 }
 
 void tx_set_mode(TRANSMITTER* tx, int mode) {
