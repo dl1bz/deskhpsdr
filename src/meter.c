@@ -538,6 +538,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     int Y1 = METER_HEIGHT / 4;
     int Y2 = Y1 + METER_HEIGHT / 3;
     int Y4 = 4 * Y1 - 6;
+
     int size;
     cairo_text_extents_t extents;
     cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
