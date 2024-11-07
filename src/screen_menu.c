@@ -196,7 +196,11 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
+  #if defined (__LDESK__)
+  wide_b = gtk_spin_button_new_with_range(1280.0, (double) screen_width, 32.0);
+  #else
   wide_b = gtk_spin_button_new_with_range(640.0, (double) screen_width, 32.0);
+  #endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
   gtk_grid_attach(GTK_GRID(grid), wide_b, col, row, 1, 1);
   g_signal_connect(wide_b, "value-changed", G_CALLBACK(width_cb), NULL);
@@ -206,7 +210,11 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
+  #if defined (__LDESK__)
+  height_b = gtk_spin_button_new_with_range(600.0, (double) screen_height, 16.0);
+  #else
   height_b = gtk_spin_button_new_with_range(400.0, (double) screen_height, 16.0);
+  #endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(height_b), (double) my_display_height);
   gtk_grid_attach(GTK_GRID(grid), height_b, col, row, 1, 1);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);

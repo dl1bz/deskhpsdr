@@ -2156,13 +2156,13 @@ void vfo_update() {
     }
     cairo_show_text(cr, temp_text);
 
-    cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y);
+    cairo_move_to(cr, vfl->cat_x + 200, vfl->cat_y + 65);
     if (transmitter->is_tuned) {
       cairo_set_source_rgba(cr, COLOUR_OK);
       snprintf(temp_text, 32, "TUNED");
     } else {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
-      snprintf(temp_text, 32, "NOT TUNED");
+      snprintf(temp_text, 32, "TUNED");
     }
     cairo_show_text(cr, temp_text);
 
