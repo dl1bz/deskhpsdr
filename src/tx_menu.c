@@ -390,8 +390,8 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
 
     case TX_CESSB_ENABLE:
       transmitter->cessb_enable = v;
-      mode_settings[mode].cessb_enable = transmitter->cessb_enable;
-      copy_mode_settings(mode);
+      // mode_settings[mode].cessb_enable = transmitter->cessb_enable;
+      // copy_mode_settings(mode);
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
@@ -965,7 +965,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->compressor_level);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 4, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_COMP));
-  btn = gtk_check_button_new_with_label("CESSB");
+  btn = gtk_check_button_new_with_label("Auto CESSB");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->cessb_enable);

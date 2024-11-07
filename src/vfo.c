@@ -156,7 +156,6 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     SetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-    SetPropI1("modeset.%d.cessb_enable", i,          mode_settings[i].cessb_enable);
 
     SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
@@ -259,7 +258,6 @@ static void modesettingsRestoreState() {
     mode_settings[i].lev_gain = 0.0;
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
-    mode_settings[i].cessb_enable = 0;
 
     for (int j = 0; j < 11; j++) {
       mode_settings[i].tx_eq_gain[j] = 0;
@@ -348,7 +346,6 @@ static void modesettingsRestoreState() {
     GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     GetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-    GetPropI1("modeset.%d.cessb_enable", i,          mode_settings[i].cessb_enable);
 
     for (int j = 0; j < 11; j++) {
       GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
@@ -646,7 +643,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->lev_enable       = mode_settings[m].lev_enable;
     transmitter->lev_gain         = mode_settings[m].lev_gain;
     transmitter->phrot_enable     = mode_settings[m].phrot_enable;
-    transmitter->cessb_enable     = mode_settings[m].cessb_enable;
 
     for (int i = 0; i < 11; i++) {
       transmitter->eq_gain[i]  = mode_settings[m].tx_eq_gain[i];

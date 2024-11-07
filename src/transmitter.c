@@ -999,7 +999,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->phrot_enable     =       0;
   tx->phrot_stage      =       8;
   tx->phrot_freq       =   338.0;
-  tx->cessb_enable     =       0;
+  tx->cessb_enable     =       1;
   tx->local_microphone = 0;
   STRLCPY(tx->microphone_name, "NO MIC", 128);
   tx->dialog_x = -1;
@@ -2195,12 +2195,21 @@ void tx_set_compressor(TRANSMITTER *tx) {
   // SetTXAosctrlRun(tx->id, tx->compressor);
   SetTXACompressorGain(tx->id, tx->compressor_level);
   SetTXACompressorRun(tx->id, tx->compressor); // PROC on/off
+  /*
   if (!tx->compressor && tx->cessb_enable) {
     tx->cessb_enable = 0;
   }
   SetTXAosctrlRun(tx->id, tx->cessb_enable); // CESSB on/off
+  */
+  if (tx->compressor && tx->cessb_enable) {
+    SetTXAosctrlRun(tx->id, tx->compressor); // CESSB on
+    t_print("%s: CESSB enabled\n", __FUNCTION__);
+  } else {
+    SetTXAosctrlRun(tx->id, 0); // CESSB off
+    t_print("%s: CESSB disabled\n", __FUNCTION__);
+  }
 
-  t_print("%s: CESSB state %d\n", __FUNCTION__, tx->cessb_enable);
+  // t_print("%s: CESSB state %d\n", __FUNCTION__, tx->cessb_enable);
 
   t_print("%s: Baseband-Compr state %d, level %.1f\n",
           __FUNCTION__, tx->compressor, tx->compressor_level);

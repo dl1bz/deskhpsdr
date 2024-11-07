@@ -138,7 +138,6 @@ struct _mode_settings {
   double lev_gain;                  // Leveler Gain
   int    lev_enable;                // Leveler on/off
   int    phrot_enable;              // Phase Rotator on/off
-  int    cessb_enable;              // CESSB on/off
   double cfc_freq[11];              // CFC corner frequencies
   double cfc_lvl[11];               // CFC compression at corner frequency
   double cfc_post[11];              // CFC post-EQ gain at corner frequency
