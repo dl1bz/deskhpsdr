@@ -2195,12 +2195,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   // SetTXAosctrlRun(tx->id, tx->compressor);
   SetTXACompressorGain(tx->id, tx->compressor_level);
   SetTXACompressorRun(tx->id, tx->compressor); // PROC on/off
-  /*
-  if (!tx->compressor && tx->cessb_enable) {
-    tx->cessb_enable = 0;
-  }
-  SetTXAosctrlRun(tx->id, tx->cessb_enable); // CESSB on/off
-  */
+
   if (tx->compressor && tx->cessb_enable) {
     SetTXAosctrlRun(tx->id, tx->compressor); // CESSB on
     t_print("%s: CESSB enabled\n", __FUNCTION__);
@@ -2208,8 +2203,6 @@ void tx_set_compressor(TRANSMITTER *tx) {
     SetTXAosctrlRun(tx->id, 0); // CESSB off
     t_print("%s: CESSB disabled\n", __FUNCTION__);
   }
-
-  // t_print("%s: CESSB state %d\n", __FUNCTION__, tx->cessb_enable);
 
   t_print("%s: Baseband-Compr state %d, level %.1f\n",
           __FUNCTION__, tx->compressor, tx->compressor_level);
