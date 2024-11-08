@@ -442,13 +442,25 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       if (v) {
         if (audio_open_input() == 0) {
           transmitter->local_microphone = 1;
+          #if defined (__LDESK__)
+          mode_settings[mode].local_microphone = 1;
+          copy_mode_settings(mode);
+          #endif
         } else {
           transmitter->local_microphone = 0;
+          #if defined (__LDESK__)
+          mode_settings[mode].local_microphone = 0;
+          copy_mode_settings(mode);
+          #endif
           gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
         }
       } else {
         if (transmitter->local_microphone) {
           transmitter->local_microphone = 0;
+          #if defined (__LDESK__)
+          mode_settings[mode].local_microphone = 0;
+          copy_mode_settings(mode);
+          #endif
           audio_close_input();
         }
       }
@@ -542,10 +554,19 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   }
 
   STRLCPY(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
+  #if defined (__LDESK__)
+  int mode = vfo_get_tx_mode();
+  STRLCPY(mode_settings[mode].microphone_name, transmitter->microphone_name, sizeof(mode_settings[mode].microphone_name));
+  copy_mode_settings(mode);
+  #endif
 
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {
       transmitter->local_microphone = 0;
+      #if defined (__LDESK__)
+      mode_settings[mode].local_microphone = 0;
+      copy_mode_settings(mode);
+      #endif
     }
   }
 }

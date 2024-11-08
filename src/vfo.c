@@ -156,6 +156,8 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     SetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
+    SetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
+    SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
 
     SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
@@ -258,6 +260,8 @@ static void modesettingsRestoreState() {
     mode_settings[i].lev_gain = 0.0;
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
+    mode_settings[i].local_microphone = 0;
+    STRLCPY(mode_settings[i].microphone_name, "NO MIC", 128);
 
     for (int j = 0; j < 11; j++) {
       mode_settings[i].tx_eq_gain[j] = 0;
@@ -346,6 +350,9 @@ static void modesettingsRestoreState() {
     GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     GetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
+    GetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
+    GetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
+
 
     for (int j = 0; j < 11; j++) {
       GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
@@ -639,6 +646,8 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->dexp_filter_high = mode_settings[m].dexp_filter_high;
     transmitter->cfc              = mode_settings[m].cfc;
     transmitter->cfc_eq           = mode_settings[m].cfc_eq;
+    transmitter->local_microphone = mode_settings[m].local_microphone;
+    STRLCPY(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
 
     transmitter->lev_enable       = mode_settings[m].lev_enable;
     transmitter->lev_gain         = mode_settings[m].lev_gain;

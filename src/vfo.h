@@ -141,6 +141,8 @@ struct _mode_settings {
   double cfc_freq[11];              // CFC corner frequencies
   double cfc_lvl[11];               // CFC compression at corner frequency
   double cfc_post[11];              // CFC post-EQ gain at corner frequency
+  int local_microphone;
+  gchar microphone_name[128];
 };
 
 extern struct _mode_settings mode_settings[];
