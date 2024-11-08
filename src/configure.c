@@ -59,7 +59,7 @@ void configure_gpio(GtkWidget *parent) {
   GtkWidget *widget;
   GtkWidget *grid;
   gpioRestoreState();
-  GtkWidget *dialog = gtk_dialog_new_with_buttons("piHPSDR - GPIO pins (Broadcom Numbers) ", GTK_WINDOW(parent),
+  GtkWidget *dialog = gtk_dialog_new_with_buttons("deskHPSDR - GPIO pins (Broadcom Numbers) ", GTK_WINDOW(parent),
                       GTK_DIALOG_DESTROY_WITH_PARENT, ("OK"), GTK_RESPONSE_ACCEPT, "Cancel", GTK_RESPONSE_REJECT, NULL);
   g_signal_connect (dialog, "response", G_CALLBACK (response_event), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));

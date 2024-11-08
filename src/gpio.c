@@ -222,7 +222,7 @@ guchar encoder_state_table[13][4] = {
 };
 
 #ifdef GPIO
-  char *consumer = "pihpsdr";
+  char *consumer = "deskhpsdr";
 
   //
   // gpio_init() tries several chips, until success.
