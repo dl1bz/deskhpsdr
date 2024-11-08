@@ -2152,13 +2152,27 @@ void vfo_update() {
     }
     cairo_show_text(cr, temp_text);
 
-    cairo_move_to(cr, vfl->cat_x + 200, vfl->cat_y + 65);
+    cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
     if (transmitter->is_tuned) {
       cairo_set_source_rgba(cr, COLOUR_OK);
       snprintf(temp_text, 32, "TUNED");
     } else {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
       snprintf(temp_text, 32, "TUNED");
+    }
+    cairo_show_text(cr, temp_text);
+
+    cairo_move_to(cr, vfl->cat_x + 160, vfl->cat_y + 65);
+    if (transmitter->addgain_enable) {
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      if (transmitter->addgain_gain > 0) {
+        snprintf(temp_text, 32, "Mic PreAmp +%.0fdb", transmitter->addgain_gain);
+      } else {
+        snprintf(temp_text, 32, "Mic PreAmp");
+      }
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+      snprintf(temp_text, 32, "Mic PreAmp");
     }
     cairo_show_text(cr, temp_text);
 

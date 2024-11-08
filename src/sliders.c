@@ -704,7 +704,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_size_request (sliders, width, height);
   gtk_grid_set_row_homogeneous(GTK_GRID(sliders), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(sliders), TRUE);
+  #if defined (__LDESK__)
+  af_gain_label = gtk_label_new("Vol");
+  #else
   af_gain_label = gtk_label_new("AF");
+  #endif
   gtk_widget_set_name(af_gain_label, csslabel);
   gtk_widget_set_halign(af_gain_label, GTK_ALIGN_END);
   gtk_widget_show(af_gain_label);
@@ -732,7 +736,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
 
   if (have_rx_gain) {
+    #if defined (__LDESK__)
+    rf_gain_label = gtk_label_new("ADC Gain");
+    #else
     rf_gain_label = gtk_label_new("RF");
+    #endif
     gtk_widget_set_name(rf_gain_label, csslabel);
     gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_END);
     gtk_widget_show(rf_gain_label);
@@ -800,7 +808,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_container_add(GTK_CONTAINER(c25_container), c25_grid);
 
   if (can_transmit) {
+    #if defined (__LDESK__)
+    char _label[32];
+    snprintf(_label, 32, "Mic Gain");
+    mic_gain_label = gtk_label_new(_label);
+    #else
     mic_gain_label = gtk_label_new("Mic");
+    #endif
     gtk_widget_set_name(mic_gain_label, csslabel);
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
@@ -811,7 +825,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
     gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
     g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
+    #if defined (__LDESK__)
+    drive_label = gtk_label_new("TX Pwr");
+    #else
     drive_label = gtk_label_new("TX Drv");
+    #endif
     gtk_widget_set_name(drive_label, csslabel);
     gtk_widget_set_halign(drive_label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, twidth, 1);
@@ -830,7 +848,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     drive_scale = NULL;
   }
 
+  #if defined (__LDESK__)
+  squelch_label = gtk_label_new("Squelch");
+  #else
   squelch_label = gtk_label_new("Sqlch");
+  #endif
   gtk_widget_set_name(squelch_label, csslabel);
   gtk_widget_set_halign(squelch_label, GTK_ALIGN_END);
   gtk_widget_show(squelch_label);

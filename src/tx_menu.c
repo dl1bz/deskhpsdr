@@ -79,6 +79,8 @@ enum _tx_choices {
   TX_PHROT_STAGE,
   TX_PHROT_FREQ,
   TX_CESSB_ENABLE,
+  TX_ADDGAIN_ENABLE,
+  TX_ADDGAIN_GAIN,
   TX_SWR_ALARM,
   TX_DISPLAY_FILLED,
   TX_COMP_ENABLE,
@@ -262,6 +264,12 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       g_idle_add(ext_vfo_update, NULL);
       break;
 
+    case TX_ADDGAIN_GAIN:
+      transmitter->addgain_gain = v;
+      tx_set_mic_gain(transmitter);
+      g_idle_add(ext_vfo_update, NULL);
+      break;
+
     case TX_SWR_ALARM:
       transmitter->swr_alarm = v;
       break;
@@ -393,6 +401,12 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       // mode_settings[mode].cessb_enable = transmitter->cessb_enable;
       // copy_mode_settings(mode);
       tx_set_compressor(transmitter);
+      g_idle_add(ext_vfo_update, NULL);
+      break;
+
+    case TX_ADDGAIN_ENABLE:
+      transmitter->addgain_enable = (int) v;
+      tx_set_mic_gain(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
 
@@ -587,7 +601,11 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(CFC_CONTAINER));
   col++;
+  #if defined (__LDESK__)
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "DEXP Settings");
+  #else
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "DwdExp Settings");
+  #endif
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == DEXP_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
@@ -709,18 +727,18 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_USE_RX_FILTER));
   col++;
-  #if !defined (__LDESK__)
-  btn = gtk_check_button_new_with_label("Compression");
+  #if defined (__LDESK__)
+  btn = gtk_check_button_new_with_label("Local Mic PreAmp Gain");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->compressor);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->addgain_enable);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
-  g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_COMP_ENABLE));
+  g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_ADDGAIN_ENABLE));
   col++;
-  btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->compressor_level);
+  btn = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->addgain_gain);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
-  g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_COMP));
+  g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_ADDGAIN_GAIN));
   #endif
   row++;
   col = 0;
@@ -1002,10 +1020,10 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 3, row, 1, 1);
   #if defined (__LDESK__)
-  label = gtk_label_new("Comp Level");
+  label = gtk_label_new("Pre Comp Level");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 1, row, 1, 1);
-  label = gtk_label_new("Comp Level");
+  label = gtk_label_new("Pre Comp Level");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 4, row, 1, 1);
   label = gtk_label_new("Post Gain");
@@ -1066,7 +1084,11 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_set_row_spacing (GTK_GRID(dexp_grid), 5);
   gtk_container_add(GTK_CONTAINER(dexp_container), dexp_grid);
   row = 0;
+  #if defined (__LDESK__)
+  btn = gtk_check_button_new_with_label("Use DEXP");
+  #else
   btn = gtk_check_button_new_with_label("Use Downward Expander");
+  #endif
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->dexp);
   gtk_grid_attach(GTK_GRID(dexp_grid), btn, 0, row, 1, 1);

@@ -877,7 +877,11 @@ void radio_menu(GtkWidget *parent) {
   // Calibration of the RF front end
   //
   col++;
+  #if defined (__LDESK__)
+  label = gtk_label_new("ADC Gain\nCalibration (dB):");
+  #else
   label = gtk_label_new("RX Gain\nCalibration (dB):");
+  #endif
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;

@@ -383,6 +383,8 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.phrot_stage",       tx->id,               tx->phrot_stage);
   SetPropF1("transmitter.%d.phrot_freq",        tx->id,               tx->phrot_freq);
   SetPropI1("transmitter.%d.cessb_enable",      tx->id,               tx->cessb_enable);
+  SetPropI1("transmitter.%d.addgain_enable",    tx->id,               tx->addgain_enable);
+  SetPropF1("transmitter.%d.addgain_gain",      tx->id,               tx->addgain_gain);
 }
 
 static void tx_restore_state(TRANSMITTER *tx) {
@@ -462,6 +464,8 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.phrot_stage",       tx->id,               tx->phrot_stage);
   GetPropF1("transmitter.%d.phrot_freq",        tx->id,               tx->phrot_freq);
   GetPropI1("transmitter.%d.cessb_enable",      tx->id,               tx->cessb_enable);
+  GetPropI1("transmitter.%d.addgain_enable",    tx->id,               tx->addgain_enable);
+  GetPropF1("transmitter.%d.addgain_gain",      tx->id,               tx->addgain_gain);
 }
 
 static double compute_power(double p) {
@@ -1000,6 +1004,8 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->phrot_stage      =       8;
   tx->phrot_freq       =   338.0;
   tx->cessb_enable     =       1;
+  tx->addgain_enable   =       0;
+  tx->addgain_gain     =    10.0;
   tx->local_microphone = 0;
   STRLCPY(tx->microphone_name, "NO MIC", 128);
   tx->dialog_x = -1;
@@ -2319,27 +2325,49 @@ void tx_set_fft_size(const TRANSMITTER *tx) {
 }
 
 void tx_set_mic_gain(const TRANSMITTER *tx) {
+  #if defined (__LDESK__)
+  double _gain;
+  int _mode;
+  _gain = tx->mic_gain;
+  _mode = vfo_get_tx_mode();
+  if (tx->addgain_enable) {
+    _gain += tx->addgain_gain;
+  }
+  if (_mode == modeDIGL || _mode == modeDIGU) {
+    SetTXAPanelGain1(tx->id, 1.0);
+    t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __FUNCTION__);
+  } else {
+    SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
+    t_print("%s: set input gain to %.1fdb\n", __FUNCTION__, _gain);
+  }
+  #else
   SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+  #endif
 #ifdef WDSPTXDEBUG
   t_print("WDSP:TX id=%d MicGain(dB)=%g\n", tx->id, tx->mic_gain);
 #endif
 #if defined (__LDESK__)
-  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, tx->mic_gain, pow(10.0, tx->mic_gain * 0.05), vfo_get_tx_mode());
+  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05), vfo_get_tx_mode());
 #endif
 }
 
 void tx_set_mode(TRANSMITTER* tx, int mode) {
   if (tx != NULL) {
     #if defined (__LDESK__)
+    double _gain;
     if (mode == modeDIGU || mode == modeDIGL) {
       if (tx->drive > drive_digi_max + 0.5) {
         set_drive(drive_digi_max);
       }
       SetTXAPanelGain1(tx->id, 1.0);
-      t_print("%s: DIGIMODE set AF input gain to 0db\n", __FUNCTION__);
+      t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __FUNCTION__);
     } else {
-      SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
-      t_print("%s: Restore AF input gain: %.1fdb\n", __FUNCTION__, tx->mic_gain);
+      _gain = tx->mic_gain;
+      if (tx->addgain_enable) {
+        _gain += tx->addgain_gain;
+      }
+      SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
+      t_print("%s: Restore input gain: %.1fdb\n", __FUNCTION__, _gain);
     }
     #else
     if (mode == modeDIGU || mode == modeDIGL) {
