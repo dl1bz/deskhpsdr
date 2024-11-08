@@ -582,7 +582,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       static unsigned int sequence_error_count = 0;
       cairo_move_to(cr, 100.0, 50.0);
       #if defined (__LDESK__)
-      cairo_show_text(cr, "UDP Sequence Error");
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+      cairo_show_text(cr, "UDP Stream Sequence Error");
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
       #else
       cairo_show_text(cr, "Sequence Error");
       #endif
@@ -607,7 +609,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (adc0_overload && !adc1_overload) {
         #if defined (__LDESK__)
-        cairo_show_text(cr, "ADC0 overload » Decrease RF !");
+        cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
         #else
         cairo_show_text(cr, "ADC0 overload");
         #endif        
