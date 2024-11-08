@@ -31,17 +31,17 @@ ATU=OFF
 # GPIO         | If ON, compile with GPIO support (RaspPi only)
 # MIDI         | If ON, compile with MIDI support
 # SATURN       | If ON, compile with native SATURN/G2 XDMA support
-# USBOZY       | If ON, piHPSDR can talk to legacy USB OZY radios
-# SOAPYSDR     | If ON, piHPSDR can talk to radios via SoapySDR library
-# STEMLAB      | If ON, piHPSDR can start SDR app on RedPitay via Web interface
-# EXTENDED_NR  | If ON, piHPSDR can use extended noise reduction (VU3RDD WDSP version)
+# USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios
+# SOAPYSDR     | If ON, deskHPSDR can talk to radios via SoapySDR library
+# STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface
+# EXTENDED_NR  | If ON, deskHPSDR can use extended noise reduction (VU3RDD WDSP version)
 # SERVER       | If ON, include client/server code (still far from being complete)
 # AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux
 #
 # If you want to use a non-default compile time option, write them
-# into a file "make.pihpsdr.config". So, for example, if you want to
-# disable GPIO and have AUDIO=ALSA, create a file make.config.pihpsdr in
-# the pihpsdr directory with two lines that read
+# into a file "make.deskhpsdr.config". So, for example, if you want to
+# disable GPIO and have AUDIO=ALSA, create a file make.config.deskhpsdr in
+# the deskhpsdr directory with two lines that read
 #
 # GPIO=OFF
 # AUDIO=ALSA
@@ -276,7 +276,7 @@ endif
 #
 # Activate code for remote operation, if requested.
 # This feature is not yet finished. If finished, it
-# allows to run two instances of piHPSDR on two
+# allows to run two instances of deskHPSDR on two
 # different computers, one interacting with the operator
 # and the other talking to the radio, and both computers
 # may be connected by a long-distance internet connection.
@@ -433,7 +433,7 @@ LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTKLIBS) $(GPIO_LIBS) $(SOAPYSDR
 
 ##############################################################################
 #
-# The main target, the pihpsdr program
+# The main target, the deskhpsdr program
 #
 ##############################################################################
 
@@ -825,11 +825,11 @@ DEPEND:
 #
 # This is for MacOS "app" creation ONLY
 #
-#       The piHPSDR working directory is
-#	$HOME -> Application Support -> piHPSDR
+#       The deskHPSDR working directory is
+#	$HOME -> Application Support -> deskHPSDR
 #
 #       That is the directory where the WDSP wisdom file (created upon first
-#       start of piHPSDR) but also the radio settings and the midi.props file
+#       start of deskHPSDR) but also the radio settings and the midi.props file
 #       are stored.
 #
 #       No libraries are included in the app bundle, so it will only run
@@ -840,6 +840,33 @@ DEPEND:
 
 .PHONY: app
 app:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) \
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
+ifneq (z$(WDSP_INCLUDE), z)
+	@+make -C wdsp
+endif
+	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
+		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) \
+		$(LIBS) $(LDFLAGS)
+	@echo "Remove further compiled deskHPSDR..."
+	@rm -rf deskHPSDR.app
+	@mkdir -p deskHPSDR.app/Contents/MacOS
+	@mkdir -p deskHPSDR.app/Contents/Frameworks
+	@mkdir -p deskHPSDR.app/Contents/Resources
+	@echo "Generate macOS deskHPSDR.app container..."
+	@cp deskhpsdr deskHPSDR.app/Contents/MacOS/deskhpsdr
+	@cp MacOS/PkgInfo deskHPSDR.app/Contents
+	@cp MacOS/Info.plist deskHPSDR.app/Contents
+	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources/hpsdr.icns
+	@cp MacOS/hpsdr.png deskHPSDR.app/Contents/Resources
+	@sleep 1
+	@echo "Copy Fonts..."
+	@cp -R fonts/Roboto ${HOME}/Library/Fonts
+	@echo "All done."
+
+#########################################################################################################
+
+.PHONY: macapp
+macapp:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
