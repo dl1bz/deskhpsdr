@@ -111,6 +111,7 @@ static int cwmode = 0;  // used to detect TRX transitions in CW
 // This inits PortAudio and looks for suitable input and output channels
 //
 void audio_get_cards() {
+  t_print("%s: PORTAUDIO call audio_get_cards\n", __FUNCTION__);
   int numDevices;
   PaStreamParameters inputParameters, outputParameters;
   PaError err;
@@ -183,6 +184,7 @@ int pa_mic_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*
 int pa_out_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 
 int audio_open_input() {
+  t_print("%s: PORTAUDIO call audio_open_input\n", __FUNCTION__);
   PaError err;
   PaStreamParameters inputParameters;
   int i;
@@ -504,6 +506,7 @@ int audio_open_output(RECEIVER *rx) {
 // close a TX microphone stream
 //
 void audio_close_input() {
+  t_print("%s: PORTAUDIO call audio_close_input\n", __FUNCTION__);
   t_print("%s: micname=%s\n", __FUNCTION__, transmitter->microphone_name);
   g_mutex_lock(&audio_mutex);
 
