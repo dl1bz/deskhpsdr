@@ -666,7 +666,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     tpix   =  width / 9;      // width of text label in pixel
     twidth =  3;              // width of text label in grid units
     swidth =  6;              // width of slider in grid units
+  #if defined (__LDESK__)
+  } else if (width < 1441) {
+  #else
   } else if (width < 1280) {
+  #endif
     // label  width: 1/12 of screen width
     // slider width: 3/12 of screen width
     tpix   =  width / 12;

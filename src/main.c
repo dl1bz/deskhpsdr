@@ -413,7 +413,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("Monitor: width=%d height=%d\n", screen_width, screen_height);
   #if defined (__LDESK__)
   display_width  = 1280;
-  display_height = 720;
+  display_height = 600;
   full_screen    = 0;
   #else
   // Start with 800x480, since this width is required for the "discovery" screen.
