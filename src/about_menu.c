@@ -80,7 +80,7 @@ void about_menu(GtkWidget *parent) {
   row++;
   snprintf(text, 1024, "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
            "Based on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\n"
-           "This version deskHPSDR is developed and maintained by DL1BZ\n\n"
+           "deskHPSDR is developed and maintained by DL1BZ\n\n"
            "    Credits:\n"
            "    John Melton G0ORX/N6LYT: first and initial version of piHPSDR\n"
            "    Steve Wilson, KA6S: RIGCTL (CAT over TCP)\n"
