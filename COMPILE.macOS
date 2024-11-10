@@ -94,5 +94,10 @@ You can also use "make mclean" instead of "make clean", which removes in additio
 deskHPSDR use a separate working directory like piHPSDR, you can find all in
 $HOME/Library/Application Support/deskHPSDR, so if you want you can use deskHPSDR and piHPSDR on your macOS (but not at the same time).
 
+Please don't change the two options in the Makefile
+ATU=OFF
+DEVEL=OFF
+Leave this two options as they are (OFF) and don't change this at the moment please.
+
 Thats all, folks :)
 73 Heiko, DL1BZ
