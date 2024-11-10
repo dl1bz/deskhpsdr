@@ -86,5 +86,13 @@ The Homebrew environment need updated by yourself:
 
 Basically it's ever a good idea, after updates of Xcode command line tools or Homebrew environment to re-compile deskHPSDR.
 
+Last remark:
+You can use instead of "make app" also "make macapp". This compiles deskHPSDR, copy the deskHPSDR.app to your Desktop
+and start it automaticly.
+
+You can also use "make mclean" instead of "make clean", which removes in addition the deskHPSDR.app from your Desktop.
+deskHPSDR use a separate working directory like piHPSDR, you can find all in
+$HOME/Library/Application Support/deskHPSDR, so if you want you can use deskHPSDR and piHPSDR on your macOS (but not at the same time).
+
 Thats all, folks :)
 73 Heiko, DL1BZ
