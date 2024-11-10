@@ -1,0 +1,90 @@
+Here the instructions for compile the deskHPSDR app under macOS.
+You need to have basic knowledge, how you work with the Terminal app and the shell running in Terminal app.
+
+1. Prerequisites
+
+For compiling under macOS we need the following prerequisites:
+
+1.1 X Window manager for macOS
+
+Please go to www.xquartz.org and download the latest package file (e.g. XQuartz-2.8.5.pkg) and install the package.
+
+1.2 Xcode command line tools
+
+Start the Terminal app and install the needed Xcode command line tools:
+~$ xcode-select --install
+
+2. Get the source code from github.com:
+~$ cd $HOME
+~$ mkdir src
+~$ cd src
+~/src$ git clone https://github.com/dl1bz/deskhpsdr.git
+~/src$ cd deskhpsdr
+~/src/deskhpsdr$
+
+3. Prepare the macOS environment for compiling with the included script:
+~/src/deskhpsdr$ ./MacOS/libinstall.sh
+
+If you need one of the Soapy-Modules, please edit the ./MacOS/libinstall.sh at the bottom and remove the comment marker "#"
+from the module you want to use. Per default only the base Soapy-API will be installed. If you want to use the Soapy modules
+you need edit the Makefile too and set SOAPYSDR=ON. I don't need the Soapy-support, because I use a Hermes-Lite 2.
+
+4. Compile the deskHPSDR
+After Pt.3 we can now compile deskHPSDR:
+~/src/deskhpsdr$ make app
+
+After this we should have a deskhpsdr.app, so we check this:
+~/src/deskhpsdr$ ls -ld deskhpsdr*
+
+As result you see something like this:
+heiko:~/src/deskhpsdr$ ls -ld desk*
+drwxr-xr-x  3 heiko  staff       96 10 Nov 11:55 deskHPSDR.app
+-rwxr-xr-x  1 heiko  staff  1990176 10 Nov 11:55 deskhpsdr
+heiko:~/src/deskhpsdr$
+
+Now we move the deskhpsdr.app to our Desktop:
+~/src/deskhpsdr$ mv deskHPSDR.app $HOME/Desktop
+
+Now you can find on your macOS Desktop the deskHPSDR app symbol, which you can start.
+Thats all, we're ready.
+
+5. Update deskHPSDR
+From time to time you need to update deskHPSDR. That means, we update the source code from github.com and recompile deskHPSDR.
+
+5.1 update the source code, start the Terminal app:
+~$ cd $HOME
+~$ cd src
+~/src$ cd deskhpsdr
+~/src/deskhpsdr$ git pull
+
+5.2 cleanup the last compiling process:
+~/src/deskhpsdr$ make clean
+~/src/deskhpsdr$ rm -fr $HOME/Desktop/deskHPSDR.app
+
+5.3 re-compile deskHPSDR:
+Start simply with Pt.4 again.
+
+Troubleshooting:
+-------------------------------------------------------------------------------
+If there some wrong, simply start new from Zero:
+-> start the Terminal app
+~$ cd $HOME
+~$ cd src
+~/src$ rm -fr deskhpsdr
+~/src$ git clone https://github.com/dl1bz/deskhpsdr.git
+~/src$ cd deskhpsdr
+~/src/deskhpsdr$
+
+and continue again from Pt.4.
+Pt.3 need to execute only one time, but you can repeat it if you want and not sure, if all is ok.
+
+The Xcode command line tool will be updated with the regular macOS Software Updates.
+The Homebrew environment need updated by yourself:
+-> start the Terminal app
+~$ brew update
+~$ brew upgrade
+
+Basically it's ever a good idea, after updates of Xcode command line tools or Homebrew environment to re-compile deskHPSDR.
+
+Thats all, folks :)
+73 Heiko, DL1BZ
