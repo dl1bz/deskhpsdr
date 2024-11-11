@@ -696,6 +696,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     #if defined (__DVL__)
       audio_reload_input();
       tx_ps_onoff(transmitter, transmitter->puresignal);
+      tx_set_filter(transmitter);
     #endif
 
     tx_set_compressor(transmitter);
