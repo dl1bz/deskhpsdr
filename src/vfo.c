@@ -1577,9 +1577,21 @@ void vfo_update() {
 
     case modeLSB:
     case modeUSB:
+    #if defined (__LDESK__)
+    case modeDIGL:
+    case modeDIGU:
+    #endif
     case modeDSB:
     case modeAM:
+      #if defined (__LDESK__)
+      if (transmitter->use_rx_filter) {
+        snprintf(temp_text, 32, "%s %s [RX=TX]", mode_string[vfo[id].mode], band_filter->title);
+      } else {
+        snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], band_filter->title);
+      }
+      #else
       snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], band_filter->title);
+      #endif
       break;
 
     default:

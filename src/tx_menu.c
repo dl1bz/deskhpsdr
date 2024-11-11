@@ -439,7 +439,7 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
         gtk_widget_set_sensitive (tx_spin_low, TRUE);
         gtk_widget_set_sensitive (tx_spin_high, TRUE);
       }
-
+      vfo_update();
       break;
 
     case TX_LOCAL_MIC:
