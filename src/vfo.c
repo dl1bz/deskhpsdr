@@ -30,6 +30,9 @@
 #include <net/if.h>
 #include <ifaddrs.h>
 
+#if defined (__DVL__)
+  #include "audio.h"
+#endif
 #include "appearance.h"
 #include "discovered.h"
 #include "main.h"
@@ -585,6 +588,21 @@ void vfo_xvtr_changed() {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+#if defined (__DVL__)
+static void audio_reload_input() {
+  if (transmitter->local_microphone) {
+    audio_close_input();
+    t_print("%s: audio in closed\n", __FUNCTION__);
+    }
+  if (transmitter->local_microphone) {
+    if (audio_open_input() < 0) {
+      transmitter->local_microphone = 0;
+    }
+    t_print("%s: audio in re-open\n", __FUNCTION__);
+  }
+}
+#endif
+
 void vfo_apply_mode_settings(RECEIVER *rx) {
   int id, m;
   id = rx->id;
@@ -667,9 +685,14 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
       transmitter->cfc_post[i] = mode_settings[m].cfc_post[i];
     }
 
+    #if defined (__DVL__)
+      audio_reload_input();
+    #endif
+
     tx_set_compressor(transmitter);
     tx_set_dexp(transmitter);
     // tx_set_equalizer(transmitter);
+
   }
 
   //
