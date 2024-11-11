@@ -696,7 +696,9 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     #if defined (__DVL__)
       audio_reload_input();
       tx_ps_onoff(transmitter, transmitter->puresignal);
+      t_print("%s: state Pure Signal %d\n", __FUNCTION__, transmitter->puresignal);
       tx_set_filter(transmitter);
+      t_print("%s: state transmitter->use_rx_filter: %d\n", __FUNCTION__, transmitter->use_rx_filter);
     #endif
 
     tx_set_compressor(transmitter);

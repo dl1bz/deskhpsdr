@@ -1741,6 +1741,7 @@ void tx_set_filter(TRANSMITTER *tx) {
       low  = filter->low;
       break;
     }
+    t_print("%s: tx->use_rx_filter: %d, set RX filter high %d, set RX filter low %d\n", __FUNCTION__, tx->use_rx_filter, high, low);
   }
 
   switch (txmode) {
@@ -1793,6 +1794,8 @@ void tx_set_filter(TRANSMITTER *tx) {
     tx->filter_low = 7000;
     tx->filter_high = 17000;
     break;
+
+    t_print("%s: set TX filter high %d, set TX filter low %d\n", __FUNCTION__, tx->filter_high, tx->filter_low);
   }
 
   tx_set_bandpass(tx);
