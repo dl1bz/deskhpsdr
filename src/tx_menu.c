@@ -427,6 +427,10 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
     case TX_USE_RX_FILTER:
       transmitter->use_rx_filter = v;
       tx_set_filter(transmitter);
+      #if defined (__DVL__)
+      mode_settings[mode].use_rx_filter = v;
+      copy_mode_settings(mode);
+      #endif
 
       if (v) {
         gtk_widget_set_sensitive (tx_spin_low, FALSE);

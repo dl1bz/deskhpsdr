@@ -145,6 +145,7 @@ struct _mode_settings {
   int local_microphone;
   gchar microphone_name[128];
   int puresignal;
+  int use_rx_filter;
   #endif
 };
 
