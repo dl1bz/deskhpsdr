@@ -559,17 +559,18 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
 
   STRLCPY(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
   #if defined (__DVL__)
-  int mode = vfo_get_tx_mode();
-  STRLCPY(mode_settings[mode].microphone_name, transmitter->microphone_name, sizeof(mode_settings[mode].microphone_name));
-  copy_mode_settings(mode);
+  int _mode = vfo_get_tx_mode();
+  STRLCPY(mode_settings[_mode].microphone_name, transmitter->microphone_name, sizeof(mode_settings[_mode].microphone_name));
+  copy_mode_settings(_mode);
+  t_print("%s: mode: %d, mode_settings %s size: %d\n", __FUNCTION__, _mode, mode_settings[_mode].microphone_name, sizeof(mode_settings[_mode].microphone_name));
   #endif
 
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {
       transmitter->local_microphone = 0;
       #if defined (__DVL__)
-      mode_settings[mode].local_microphone = 0;
-      copy_mode_settings(mode);
+      mode_settings[_mode].local_microphone = 0;
+      copy_mode_settings(_mode);
       #endif
     }
   }
