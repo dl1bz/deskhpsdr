@@ -1051,6 +1051,9 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   // Modify these values from the props file
   //
   tx_restore_state(tx);
+  #if defined (__HAVEATU__)
+  tx->stored_drive = tx->drive;
+  #endif
   //
   // allocate buffers
   //
