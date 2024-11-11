@@ -421,6 +421,11 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     int val = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
     clear_fields();
+    #if defined (__DVL__)
+    int _mode = vfo_get_tx_mode();
+    mode_settings[_mode].puresignal = val;
+    copy_mode_settings(_mode);
+    #endif
     tx_ps_onoff(transmitter, val);
 
     if (val) {

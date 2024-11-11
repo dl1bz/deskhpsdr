@@ -144,6 +144,7 @@ struct _mode_settings {
   #if defined (__DVL__)
   int local_microphone;
   gchar microphone_name[128];
+  int puresignal;
   #endif
 };
 

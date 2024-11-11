@@ -162,6 +162,7 @@ static void modesettingsSaveState() {
     #if defined (__DVL__)
     SetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
     SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
+    SetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
     #endif
     SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
@@ -267,6 +268,7 @@ static void modesettingsRestoreState() {
     #if defined (__DVL__)
     mode_settings[i].local_microphone = 0;
     STRLCPY(mode_settings[i].microphone_name, "NO MIC", 128);
+    mode_settings[i].puresignal = 0;
     #endif
 
     for (int j = 0; j < 11; j++) {
@@ -359,6 +361,7 @@ static void modesettingsRestoreState() {
     #if defined (__DVL__)
     GetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
     GetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
+    GetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
     #endif
 
     for (int j = 0; j < 11; j++) {
@@ -671,6 +674,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     #if defined (__DVL__)
     transmitter->local_microphone = mode_settings[m].local_microphone;
     STRLCPY(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
+    transmitter->puresignal       = mode_settings[m].puresignal;
     #endif
 
     transmitter->lev_enable       = mode_settings[m].lev_enable;
@@ -687,6 +691,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
 
     #if defined (__DVL__)
       audio_reload_input();
+      tx_ps_onoff(transmitter, transmitter->puresignal);
     #endif
 
     tx_set_compressor(transmitter);
