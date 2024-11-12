@@ -268,14 +268,17 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 ifeq ($(DESKTOP), ON)
 DESKTOP_OPTIONS=-D__LDESK__
 endif
+CPP_DEFINES += -D__LDESK__
 
 ifeq ($(ATU), ON)
 ATU_OPTIONS=-D__HAVEATU__
 endif
+CPP_DEFINES += -D__HAVEATU__
 
 ifeq ($(DEVEL), ON)
 DEVEL_OPTIONS=-D__DVL__
 endif
+CPP_DEFINES += -D__DVL__
 
 ##############################################################################
 #
