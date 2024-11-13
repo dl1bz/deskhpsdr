@@ -45,6 +45,11 @@
 
 #include <sys/types.h>
 #include <string.h>
+// add by DH0DM
+#if defined (__DVL__)
+  #include <pthread.h>
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 /*
  * Appends src to string dst of size dsize (unlike strncat, dsize is the
@@ -95,6 +100,11 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
   const char *osrc = src;
   size_t nleft = dsize;
 
+  // add by DH0DM
+  #if defined (__DVL__)
+    pthread_mutex_lock(&mutex);
+  #endif
+
   /* Copy as many bytes as will fit. */
   if (nleft != 0) {
     while (--nleft != 0) {
@@ -113,6 +123,9 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
     while (*src++)
       ;
   }
-
+  // add by DH0DM
+  #if defined (__DVL__)
+    pthread_mutex_unlock(&mutex);
+  #endif
   return (src - osrc - 1); /* count does not include NUL */
 }
