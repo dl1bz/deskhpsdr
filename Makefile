@@ -23,6 +23,7 @@ SERVER=OFF
 AUDIO=PULSE
 DESKTOP=ON
 ATU=OFF
+COPYMODE=OFF
 DEVEL=OFF
 
 #######################################################################################
@@ -275,6 +276,11 @@ ATU_OPTIONS=-D__HAVEATU__
 endif
 CPP_DEFINES += -D__HAVEATU__
 
+ifeq ($(COPYMODE), ON)
+COPYMODE_OPTIONS=-D__CPYMODE__
+endif
+CPP_DEFINES += -D__CPYMODE__
+
 ifeq ($(DEVEL), ON)
 DEVEL_OPTIONS=-D__DVL__
 endif
@@ -420,6 +426,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(STEMLAB_OPTIONS) \
 	$(DESKTOP_OPTIONS) \
 	$(ATU_OPTIONS) \
+	$(COPYMODE_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(SERVER_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS)\
@@ -828,7 +835,8 @@ DEPEND:
 	touch DEPEND
 	makedepend -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DEXTNR -DGPIO \
 		-DSTEMLAB_DISCOVERY -DCLIENT_SERVER -DPULSEAUDIO \
-		-DPORTAUDIO -DALSA -D__APPLE__ -D__LDESK__ -D__HAVEATU__ -D__DVL__ -D__linux__ \
+		-DPORTAUDIO -DALSA -D__APPLE__ -D__linux__ \
+		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__DVL__ \
 		-f DEPEND -I./src src/*.c src/*.h
 #############################################################################
 #

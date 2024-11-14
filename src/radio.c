@@ -2146,15 +2146,13 @@ void radio_set_tune(int state) {
 
       tune = state;
       radio_calc_drive_level();
-      #if defined (__LDESK__)
+      #if defined (__HAVEATU__)
         transmitter->is_tuned = 1;
-        #if defined (__HAVEATU__)
-          if (transmitter->stored_drive > 0) {
-            set_drive(transmitter->stored_drive);
-          }
-          t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-          t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
-          #endif
+        if (transmitter->stored_drive > 0) {
+          set_drive(transmitter->stored_drive);
+        }
+        t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
+        t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
       #endif
     }
   }
