@@ -23,7 +23,7 @@ I don't like such "hard-coding" things, so I decide to make a more improved vers
 * a modern Desktop-OS like Linux or macOS with installed developer tools like compiler, linker etc.
 * a large screensize starts at 1280x720 or higher
 * basic knowledge: how to use your OS, a shell, a text editor and how to compile applications from source code
-* *macOS only*: need **first** install xcode-commandline-tools and the Homebrew-environment for later compiling deskHPSDR
+* *macOS only*: please read the COMPILE.macOS first
 * a SDR device or transceiver, which supports HPSDR protocol 1 (older) or 2 (newer) like the Hermes Lite 2, the ANAN or similiar devices
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 
