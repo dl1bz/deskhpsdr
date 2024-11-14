@@ -38,6 +38,7 @@
 
 #include <wdsp.h>
 
+#if define (__LDESK__)
 //----------------------------------------------------------------------------------------------
 #define NUM_SWERTE 16   /* Number of S-Werte */
 
@@ -64,6 +65,7 @@ unsigned char get_SWert(short int dbm) {
     return NUM_SWERTE; // no valid S-Werte -> return not defined
 }
 //----------------------------------------------------------------------------------------------
+#endif
 
 static GtkWidget *meter;
 static cairo_surface_t *meter_surface = NULL;
