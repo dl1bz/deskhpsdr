@@ -508,7 +508,11 @@ void new_menu() {
     gtk_widget_set_name(close_b, "close_button");
     g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
+    #if defined (__LDESK__)
+    GtkWidget *restart_b = gtk_button_new_with_label("Restart HPSDR protocol");
+    #else
     GtkWidget *restart_b = gtk_button_new_with_label("Restart");
+    #endif
     g_signal_connect (restart_b, "button-press-event", G_CALLBACK(restart_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), restart_b, 2, 0, 2, 1);
     #if defined (__LDESK__)

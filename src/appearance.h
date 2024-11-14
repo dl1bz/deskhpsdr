@@ -37,10 +37,13 @@
 #if defined (__APPLE__)
   #define DISPLAY_FONT_NORMAL     "Tahoma"
   #define DISPLAY_FONT_BOLD       "Tahoma"
-  #define DISPLAY_FONT_MONO       "Roboto-Bold" // "Monaco"
+  #define DISPLAY_FONT_METER      "Roboto-Bold" // "Monaco"
+
 #else
   #define DISPLAY_FONT_NORMAL     "FreeSans"
   #define DISPLAY_FONT_BOLD       "FreeSans"
+  #define DISPLAY_FONT_METER      "FreeSansBold"
+
 #endif
 
 #define DISPLAY_FONT_SIZE1 10                       // no longer used, this is too small for elder hams
