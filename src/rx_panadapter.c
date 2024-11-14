@@ -671,12 +671,12 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   }
 
     #if defined (__CPYMODE__)
-    char _text[64];
+    char _text[128];
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
     cairo_move_to(cr, 380.0, 30.0);
-    snprintf(_text, 64, "%s", transmitter->microphone_name);
+    snprintf(_text, 128, "%s", transmitter->microphone_name);
     cairo_show_text(cr, _text);
     #endif
 
