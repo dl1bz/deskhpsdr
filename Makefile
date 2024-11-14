@@ -26,7 +26,7 @@ ATU=OFF
 COPYMODE=OFF
 DEVEL=OFF
 
-#######################################################################################
+##################################################################################################
 #
 # Explanation of compile time options
 #
@@ -39,6 +39,10 @@ DEVEL=OFF
 # EXTENDED_NR  | If ON, deskHPSDR can use extended noise reduction (VU3RDD WDSP version)
 # SERVER       | If ON, include client/server code (still far from being complete)
 # AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux
+# DESKTOP      | If ON, activate the deskHPSDR called version instead of old original piHPSDR code
+# ATU          | If ON, acticate some special functions if using an external ATU
+# COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
+# DEVEL        | ONLY FOR INTERNAL DEVELOPER USE ! Leave it ever OFF, please
 #
 # If you want to use a non-default compile time option, write them
 # into a file "make.deskhpsdr.config". So, for example, if you want to
@@ -48,7 +52,7 @@ DEVEL=OFF
 # GPIO=OFF
 # AUDIO=ALSA
 #
-#######################################################################################
+##################################################################################################
 
 -include make.config.deskhpsdr
 
