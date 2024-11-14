@@ -537,10 +537,10 @@ static inline void vfo_adjust_band(int v, long long f) {
   #if defined (__LDESK__)
     if (b != vfo[v].band) {
       t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, (int) v,(int) vfo[v].band, (int) b);
-      transmitter->is_tuned = 0;
       #if defined (__HAVEATU__)
+        transmitter->is_tuned = 0;
         transmitter->stored_drive = radio_get_drive();
-        if (!transmitter->is_tuned) { 
+        if (!transmitter->is_tuned) {
           set_drive(1.0);
         }
         t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
@@ -737,14 +737,14 @@ void vfo_band_changed(int id, int b) {
   if (b != vfo[id].band) {
     #if defined (__LDESK__)
       t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, id, b, (int) vfo[id].band);
-      transmitter->is_tuned = 0;
       #if defined (__HAVEATU__)
-      transmitter->stored_drive = radio_get_drive();
-      if (!transmitter->is_tuned) { 
-        set_drive(1.0);
-      }
-      t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-      t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
+        transmitter->is_tuned = 0;
+        transmitter->stored_drive = radio_get_drive();
+        if (!transmitter->is_tuned) {
+          set_drive(1.0);
+        }
+        t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
+        t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
       #endif
     #endif
     band = band_get_band(b);
@@ -2214,6 +2214,7 @@ void vfo_update() {
     }
     cairo_show_text(cr, temp_text);
 
+    #if defined (__HAVEATU__)
     cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
     if (transmitter->is_tuned) {
       cairo_set_source_rgba(cr, COLOUR_OK);
@@ -2223,6 +2224,7 @@ void vfo_update() {
       snprintf(temp_text, 32, "TUNED");
     }
     cairo_show_text(cr, temp_text);
+    #endif
 
     cairo_move_to(cr, vfl->cat_x + 160, vfl->cat_y + 65);
     if (transmitter->addgain_enable) {
