@@ -38,7 +38,7 @@
 
 #include <wdsp.h>
 
-#if define (__LDESK__)
+#if defined (__LDESK__)
 //----------------------------------------------------------------------------------------------
 #define NUM_SWERTE 16   /* Number of S-Werte */
 
