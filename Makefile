@@ -911,6 +911,8 @@ endif
 	@sleep 1
 	@echo "Copy Fonts..."
 	@cp -R fonts/Roboto ${HOME}/Library/Fonts
+	@mkdir -p ${HOME}/Library/Fonts/GNUFreefonts
+	@cp X11fonts/*.otf ${HOME}/Library/Fonts/GNUFreefonts
 	@sleep 1
 	@echo "Copy deskHPSDR to your Desktop..."
 	@mv deskHPSDR.app ${HOME}/Desktop
