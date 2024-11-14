@@ -1310,7 +1310,7 @@ void radio_start_radio() {
       // if needed, the MAC address of the radio can be
       // found in the ABOUT menu.
       #if defined (__LDESK__)
-      snprintf(text, 1024, "%s %s_%s: %s (%s %s) %s on %s",
+      snprintf(text, 1024, "%s %s[%s] SDR Device: %s (%s %s) %s on %s",
                PGNAME,
                build_version,
                unameData.machine,

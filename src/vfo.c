@@ -30,7 +30,7 @@
 #include <net/if.h>
 #include <ifaddrs.h>
 
-#if defined (__DVL__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
   #include "audio.h"
 #endif
 #include "appearance.h"
@@ -159,7 +159,7 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     SetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-    #if defined (__DVL__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     SetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
     SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
     SetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
@@ -266,7 +266,7 @@ static void modesettingsRestoreState() {
     mode_settings[i].lev_gain = 0.0;
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
-    #if defined (__DVL__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     mode_settings[i].local_microphone = 0;
     STRLCPY(mode_settings[i].microphone_name, "NO MIC", 128);
     mode_settings[i].puresignal = 0;
@@ -360,7 +360,7 @@ static void modesettingsRestoreState() {
     GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     GetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-    #if defined (__DVL__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     GetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
     GetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
     GetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
@@ -594,7 +594,7 @@ void vfo_xvtr_changed() {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-#if defined (__DVL__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
 static void audio_reload_input() {
   if (transmitter->local_microphone) {
     audio_close_input();
@@ -674,7 +674,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->dexp_filter_high = mode_settings[m].dexp_filter_high;
     transmitter->cfc              = mode_settings[m].cfc;
     transmitter->cfc_eq           = mode_settings[m].cfc_eq;
-    #if defined (__DVL__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     transmitter->local_microphone = mode_settings[m].local_microphone;
     STRLCPY(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
     transmitter->puresignal       = mode_settings[m].puresignal;
@@ -693,7 +693,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
       transmitter->cfc_post[i] = mode_settings[m].cfc_post[i];
     }
 
-    #if defined (__DVL__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
       audio_reload_input();
       tx_ps_onoff(transmitter, transmitter->puresignal);
       t_print("%s: state Pure Signal %d\n", __FUNCTION__, transmitter->puresignal);
