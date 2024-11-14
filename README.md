@@ -8,16 +8,6 @@ My version here need a screen size 1280x720 at minimum or higher for best GUI ex
 
 piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago. Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now. So his codebase of piHPSDR was my starting point a few weeks ago.
 
-## Why deskHPSDR ?
-
-In the last time Christoph/DL1YCF has added some important features at piHPSDR. piHPSDR based at the great library WDSP, which was developed by Dr. Warren C. Pratt, NR0V a few years ago. You can say, piHPSDR is a kind of GUI frontend for this library. The most powerful SDR application for WINDOWS, OpenHPSDR-Thetis (earlier also known as PowerDSR) use the same WDSP library and is also a kind of GUI frontend. But Thetis is only availible for WINDOWS. So piHPSDR is the similiar alternative for other OS like Linux or macOS too and and basically offers the same options and results.
-
-But some features of the WDSP library are not fully implemented in piHPSDR. So some features like the Leveler, the Phase Rotator are build-in, but without any access to the parameter of this functions. DL1YCF has a lot of this "hard-coded", which limits the possible use of this functions too much.
-
-I add the missing access for a lot of parameters and add the status displayed in the upper side og the VFO window. You can see, which function is activated and which values are selected. In the digital S-Meter I add calculated S-Meter values on top of the dbm-display. SO you can see the S-Meter value and the RX value in dbm. I improve the digital S-Meter bar too for better readability.
-
-I don't like such "hard-coding" things, so I decide to make a more improved version of piHPSDR, which I called deskHPSDR for a clear demarcation of my version against piHPSDR. My focus are Desktops with macOS, because there is the selection of good SDR applications very poor, or Linux. I own a Hermes Lite 2 as my running hamradio station, use Thetis with WINDOWS with it but want a solution with my Mac's too, which is very near to Thetis. piHPSDR has this potential but not yet using it to its full extent. I study the source code of piHPSDR and had decided, I do this by myself. My knowledge in C programming is good enough for do this. So deskHPSDR was born a few weeks ago.
-
 ## Requirements
 
 * a modern Desktop-OS like Linux or macOS with installed developer tools like compiler, linker etc.
