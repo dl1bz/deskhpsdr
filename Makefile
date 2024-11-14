@@ -261,7 +261,7 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 
 ##############################################################################
 #
-# Activate additional GUI code if using a Screensize 1024x768 or more
+# Activate additional code
 #
 ##############################################################################
 
