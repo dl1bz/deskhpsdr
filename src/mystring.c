@@ -46,7 +46,7 @@
 #include <sys/types.h>
 #include <string.h>
 // add by DH0DM
-#if defined (__DVL__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
   #include <pthread.h>
   pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -101,7 +101,7 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
   size_t nleft = dsize;
 
   // add by DH0DM
-  #if defined (__DVL__)
+  #if defined (__LDESK__) && defined (__CPYMODE__)
     pthread_mutex_lock(&mutex);
   #endif
 
@@ -124,7 +124,7 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
       ;
   }
   // add by DH0DM
-  #if defined (__DVL__)
+  #if defined (__LDESK__) && defined (__CPYMODE__)
     pthread_mutex_unlock(&mutex);
   #endif
   return (src - osrc - 1); /* count does not include NUL */

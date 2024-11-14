@@ -427,7 +427,7 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
     case TX_USE_RX_FILTER:
       transmitter->use_rx_filter = v;
       tx_set_filter(transmitter);
-      #if defined (__DVL__)
+      #if defined (__LDESK__) && defined (__CPYMODE__)
       mode_settings[mode].use_rx_filter = v;
       copy_mode_settings(mode);
       #endif
@@ -446,13 +446,13 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       if (v) {
         if (audio_open_input() == 0) {
           transmitter->local_microphone = 1;
-          #if defined (__DVL__)
+          #if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 1;
           copy_mode_settings(mode);
           #endif
         } else {
           transmitter->local_microphone = 0;
-          #if defined (__DVL__)
+          #if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 0;
           copy_mode_settings(mode);
           #endif
@@ -461,7 +461,7 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       } else {
         if (transmitter->local_microphone) {
           transmitter->local_microphone = 0;
-          #if defined (__DVL__)
+          #if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 0;
           copy_mode_settings(mode);
           #endif
@@ -558,7 +558,7 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   }
 
   STRLCPY(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
-  #if defined (__DVL__)
+  #if defined (__LDESK__) && defined (__CPYMODE__)
   int _mode = vfo_get_tx_mode();
   STRLCPY(mode_settings[_mode].microphone_name, transmitter->microphone_name, sizeof(mode_settings[_mode].microphone_name));
   copy_mode_settings(_mode);
@@ -568,7 +568,7 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {
       transmitter->local_microphone = 0;
-      #if defined (__DVL__)
+      #if defined (__LDESK__) && defined (__CPYMODE__)
       mode_settings[_mode].local_microphone = 0;
       copy_mode_settings(_mode);
       #endif
