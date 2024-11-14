@@ -685,9 +685,11 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
 
       if (size > METER_HEIGHT / 3) { size = METER_HEIGHT / 3; }
 
-      #if defined (__APPLE__)
+      #if defined (__LDESK__)
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
-      cairo_select_font_face(cr, DISPLAY_FONT_MONO, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+      #if defined (__APPLE__)
+        cairo_select_font_face(cr, DISPLAY_FONT_MONO, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+      #endif
       cairo_set_font_size(cr, size - 4);
       snprintf(sf, 32, "%s", dbm2smeter[get_SWert((int)(max_rxlvl - 0.5))]); // assume max_rxlvl < 0 in roundig
       cairo_text_extents(cr, sf, &extents);
@@ -697,6 +699,20 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_text_extents(cr, sf, &extents);
       cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 + 15);
       cairo_show_text(cr, sf);
+
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+      if (active_receiver->smetermode == 100) {
+        snprintf(sf, 32, "S=Peak");
+        cairo_text_extents(cr, sf, &extents);
+        cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 - 32);
+        cairo_show_text(cr, sf);
+      } else if (active_receiver->smetermode == 101) {
+        snprintf(sf, 32, "S=Avg");
+        cairo_text_extents(cr, sf, &extents);
+        cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 - 32);
+        cairo_show_text(cr, sf);
+      }
+
       #else
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_set_font_size(cr, size);

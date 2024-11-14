@@ -449,12 +449,14 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
           #if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 1;
           copy_mode_settings(mode);
+          g_idle_add(ext_vfo_update, NULL);
           #endif
         } else {
           transmitter->local_microphone = 0;
           #if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 0;
           copy_mode_settings(mode);
+          g_idle_add(ext_vfo_update, NULL);
           #endif
           gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
         }
@@ -464,6 +466,7 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
           #if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 0;
           copy_mode_settings(mode);
+          g_idle_add(ext_vfo_update, NULL);
           #endif
           audio_close_input();
         }
@@ -615,20 +618,28 @@ void tx_menu(GtkWidget *parent) {
   cfc_container = gtk_fixed_new();
   dexp_container = gtk_fixed_new();
   col++;
+  #if defined (__LDESK__)
+  mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "TX Main Settings");
+  #else
   mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "TX Settings");
+  #endif
   gtk_widget_set_name(mbtn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (which_container == TX_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
   g_signal_connect(mbtn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(TX_CONTAINER));
   col++;
+  #if defined (__LDESK__)
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "TX Audio Tools");
+  #else
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "CFC Settings");
+  #endif
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == CFC_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(CFC_CONTAINER));
   col++;
   #if defined (__LDESK__)
-  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "DEXP Settings");
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "DEXP Adjustment");
   #else
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "DwdExp Settings");
   #endif
