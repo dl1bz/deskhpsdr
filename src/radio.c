@@ -2146,7 +2146,7 @@ void radio_set_tune(int state) {
 
       tune = state;
       radio_calc_drive_level();
-      #if defined (__HAVEATU__)
+      #if defined (__LDESK__) && defined (__HAVEATU__)
         transmitter->is_tuned = 1;
         if (transmitter->stored_drive > 0) {
           set_drive(transmitter->stored_drive);
@@ -2307,7 +2307,7 @@ void radio_set_drive(double value) {
   t_print("%s: drive=%f\n", __FUNCTION__, value);
   if (!can_transmit) { return; }
 
-  #if defined (__HAVEATU__)
+  #if defined (__LDESK__) && defined (__HAVEATU__)
   transmitter->drive = (double) value;
   t_print("%s: transmitter_drive: %f\n", __FUNCTION__, (double) transmitter->drive);
   #else

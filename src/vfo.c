@@ -64,7 +64,7 @@
 #include "equalizer_menu.h"
 #include "message.h"
 
-#if defined (__HAVEATU__)
+#if defined (__LDESK__) && defined (__HAVEATU__)
   #include "sliders.h"
 #endif
 
@@ -2214,7 +2214,7 @@ void vfo_update() {
     }
     cairo_show_text(cr, temp_text);
 
-    #if defined (__HAVEATU__)
+    #if defined (__LDESK__) && defined (__HAVEATU__)
     cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
     if (transmitter->is_tuned) {
       cairo_set_source_rgba(cr, COLOUR_OK);

@@ -938,7 +938,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   #else
   tx->tune_drive = 10;
   #endif
-  #if defined (__HAVEATU__)
+  #if defined (__LDESK__) && defined (__HAVEATU__)
   tx->is_tuned = 0;
   tx->stored_drive = 0.0;
   #endif
@@ -1051,7 +1051,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   // Modify these values from the props file
   //
   tx_restore_state(tx);
-  #if defined (__HAVEATU__)
+  #if defined (__LDESK__) && defined (__HAVEATU__)
   tx->stored_drive = tx->drive;
   #endif
   //

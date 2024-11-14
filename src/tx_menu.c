@@ -789,7 +789,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->tune_use_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_TUNE_USE_DRIVE));
-  #if defined (__HAVEATU__)
+  #if defined (__LDESK__) && defined (__HAVEATU__)
   if (!transmitter->tune_use_drive) {
     gtk_widget_set_sensitive (btn, FALSE);
   } else {
