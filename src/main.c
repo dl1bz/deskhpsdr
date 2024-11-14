@@ -333,7 +333,7 @@ static int init(void *data) {
 
 static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   #if defined (__LDESK__)
-    char text[1024];
+    char text[2048];
   #else
   char text[256];
   #endif
@@ -519,7 +519,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   gtk_grid_attach(GTK_GRID(topgrid), image, 0, 0, 1, 2);
   t_print("create pi label\n");
   #if defined (__LDESK__)
-    snprintf(text, 1024, "Hamradio SDR-Software for HPSDR protocol 1 & 2\nBased on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\ndeskHPSDR is developed and maintained by DL1BZ");
+    snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2\nBased on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\ndeskHPSDR is developed and maintained by DL1BZ");
     GtkWidget *pi_label = gtk_label_new(text);
     gtk_widget_set_name(pi_label, "big_txt");
     gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
@@ -533,7 +533,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   #endif
   t_print("create build label\n");
   #if defined (__LDESK__)
-  snprintf(text, 1024, "Version %s (build %s)\nCompiler: %s\nOptions: %s\nAudio module: %s\nWorking Directory: %s",
+  snprintf(text, 2048, "Version %s (build %s)\nCompiler: %s\nOptions: %s\nAudio module: %s\nWorking Directory: %s",
            build_version, build_date, __VERSION__, build_options, build_audio, config_directory);
   #else
   snprintf(text, 256, "Built %s, Version %s\nOptions: %s\nAudio module: %s",
