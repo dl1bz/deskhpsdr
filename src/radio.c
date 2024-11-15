@@ -2017,7 +2017,6 @@ void radio_set_tune(int state) {
     }
 
     if (state) {
-
       //
       // Ron has reported that TX underruns occur if TUNEing with
       // compressor or CFC engaged, and that this can be
@@ -2029,6 +2028,9 @@ void radio_set_tune(int state) {
       //
       // A clean solution is to disable compressor/CFC temporarily
       // while TUNEing.
+      //
+      // DL1BZ: cannot confirm this, never see such effect here
+      // but I was adopting DL1YCF's patch if anybody else has a similiar effect
       //
       int _save_lev = transmitter->lev_enable;
       int _save_phrot = transmitter->phrot_enable;
