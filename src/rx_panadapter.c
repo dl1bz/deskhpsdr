@@ -670,7 +670,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
 
-    #if defined (__CPYMODE__)
+    #if defined (__CPYMODE__) && defined (__APPLE__)
     char _text[128];
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
