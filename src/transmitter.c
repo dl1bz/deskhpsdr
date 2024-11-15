@@ -2172,6 +2172,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   // - if using COMP: engage CESSB overshoot control
   //
   // Run phase rotator and auto-leveler with both COMP and CRC
+  //
   // SetTXAPHROTRun(tx->id, tx->compressor || tx->cfc);
   // SetTXALevelerSt(tx->id, tx->compressor || tx->cfc);
   // SetTXALevelerAttack(tx->id, 1);
