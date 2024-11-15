@@ -1473,8 +1473,10 @@ void vfo_update() {
   //
   // -----------------------------------------------------------
   if ((f == filterVar1 || f == filterVar2) && m != modeFMN && vfl->filter_x != 0) {
+    #if !defined (__LDESK__)
     double range;
     double s, x1, x2;
+    #endif
     int def_low, def_high;
     int low = band_filter->low;
     int high = band_filter->high;
@@ -1499,6 +1501,7 @@ void vfo_update() {
       high     = swap;
     }
 
+    #if !defined (__LDESK__)
     // default range is 50 pix wide in a 100 pix window
     cairo_set_line_width(cr, 3.0);
     cairo_set_source_rgba(cr, COLOUR_OK);
@@ -1507,8 +1510,10 @@ void vfo_update() {
     cairo_line_to(cr, vfl->filter_x + 75, vfl->filter_y - 5);
     cairo_line_to(cr, vfl->filter_x + 80, vfl->filter_y);
     cairo_stroke(cr);
+
     range = (double) (def_high - def_low);
     s = 50.0 / range;
+
     // convert actual filter size to the "default" scale
     x1 = vfl->filter_x + 25 + s * (double)(low - def_low);
     x2 = vfl->filter_x + 25 + s * (double)(high - def_low);
@@ -1518,6 +1523,7 @@ void vfo_update() {
     cairo_line_to(cr, x2, vfl->filter_y - 10);
     cairo_line_to(cr, x2 + 5, vfl->filter_y - 15);
     cairo_stroke(cr);
+    #endif
   }
 
   // -----------------------------------------------------------
