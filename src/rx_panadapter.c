@@ -377,14 +377,26 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   // cursor
   if (active) {
+    #if defined (__LDESK__)
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    #else
     cairo_set_source_rgba(cr, COLOUR_ALARM);
+    #endif
   } else {
+    #if defined (__LDESK__)
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    #else
     cairo_set_source_rgba(cr, COLOUR_ALARM_WEAK);
+    #endif
   }
 
   cairo_move_to(cr, vfofreq + (offset / HzPerPixel), 0.0);
   cairo_line_to(cr, vfofreq + (offset / HzPerPixel), myheight);
+  #if defined (__LDESK__)
+  cairo_set_line_width(cr, PAN_LINE_EXTRA);
+  #else
   cairo_set_line_width(cr, PAN_LINE_THIN);
+  #endif
   cairo_stroke(cr);
   // signal
   double s1;
