@@ -76,8 +76,11 @@
 //
 // The PAN_FILTER must be somewhat transparent, such that it does not hide a PAN_LINE.
 //
-
+#if defined (__LDESK__)
+#define COLOUR_PAN_FILTER    0.40, 0.40, 0.40, 0.75 // Default: 0.25, 0.25, 0.25, 0.75
+#else
 #define COLOUR_PAN_FILTER    0.30, 0.30, 0.30, 0.66 // Default: 0.25, 0.25, 0.25, 0.75
+#endif
 #define COLOUR_PAN_LINE      0.00, 1.00, 1.00, 1.00 // Default: 0.00, 1.00, 1.00, 1.00
 #define COLOUR_PAN_LINE_WEAK 0.00, 0.50, 0.50, 1.00 // Default: 0.00, 0.50, 0.50, 1.00
 #define COLOUR_PAN_60M       0.60, 0.30, 0.30, 1.00 // Default: 0.60, 0.30, 0.30, 1.00
