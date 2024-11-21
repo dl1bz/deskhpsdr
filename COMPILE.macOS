@@ -23,7 +23,7 @@ Start the Terminal app and install the needed Xcode command line tools:
 ~/src/deskhpsdr$
 
 3. Prepare the macOS environment for compiling with the included script:
-~/src/deskhpsdr$ ./MacOS/libinstall.sh
+~/src/deskhpsdr$ ./MacOS/prep_macos.sh
 
 If you need one of the Soapy-Modules, please edit the ./MacOS/libinstall.sh at the bottom and remove the comment marker "#"
 from the module you want to use. Per default only the base Soapy-API will be installed. If you want to use the Soapy modules
