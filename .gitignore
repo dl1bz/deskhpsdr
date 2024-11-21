@@ -8,8 +8,8 @@ GNUmakefile
 *.orig
 *.bak
 *.patch
-pihpsdr
-pihpsdr.app
+deskhpsdr
+deskHPSDR.app
 hpsdrsim
 wdspWisdom*
 *.props
@@ -22,6 +22,6 @@ LINUX/SoapyRTLSDR
 release/LatexManual/piHPSDR-Manual.pdf
 wdsp/WDSP_Guide.pdf
 wdsp/libwdsp.a
-make.config.pihpsdr
+make.config.deskhpsdr
 .vscode/*
 src/.vscode/*
