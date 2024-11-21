@@ -5,11 +5,12 @@
 #  Raspberry Pi for use with deskHPSDR by DL1BZ
 #
 #  This script was checked with the Debian-based PiOS(64bit)
-#  running on Raspberry Pi5 with normal Desktop-Environment
+#  (Bookworm) running on Raspberry Pi5 (4GB & SSD-HAT) with
+#  X11-Desktop-Environment
 #
 #  This script was adopted from libinstall.sh (piHPSDR)
 #  by Heiko/DL1BZ for using only with deskHPSDR and renamed
-#  to prep_linux.sh
+#  now to prep_linux.sh
 #
 #  2024, November 21th
 #
