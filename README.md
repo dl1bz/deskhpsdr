@@ -26,7 +26,7 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 ## Issues
 
 I'm now activate the Issues tab, but please note the following:<br>
-- don't ask about feature requests or/and questions about porting to other systems like WIN, my answer will be ever NO. Such requests will be ignored and closed.<br>
+- Don't ask about feature requests, questions about porting to other systems like WIN and support for additional hardware - my answer will be ever NO. Such requests will be ignored and closed.<br>
 - first make a git pull for using the most up-to-date codebase, compile it, test it and THEN open an issue, if there something wrong with the last codebase<br>
 
 ## Credits
