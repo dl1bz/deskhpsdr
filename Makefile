@@ -786,7 +786,8 @@ mclean:
 .PHONY: x11install
 x11install:
 	@echo "Compiling deskHPSDR..."
-	@make -j$(nproc)
+#	@make -j$(nproc)
+	@make
 	@sleep 1
 	@sudo ldconfig
 	@sleep 1
