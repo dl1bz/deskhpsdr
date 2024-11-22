@@ -38,6 +38,7 @@ But if you have such file yet or edit it and make after this a ```git pull``` , 
 ```
 $ mv make.config.deskhpsdr make.config.deskhpsdr.save
 $ git pull
+$ rm make.config.deskhpsdr
 $ mv make.config.deskhpsdr.save make.config.deskhpsdr
 $ git update-index --assume-unchanged make.config.deskhpsdr
 ```
