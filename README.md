@@ -28,7 +28,19 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 I'm now activate the Issues tab, but please note the following:<br>
 - I ONLY accept error reports for this published codebase here. The Issues tab not suitable for discussion about other things except error messages.<br>
 - Don't ask about feature requests, questions about porting to other systems like WIN/MinGW and support for additional hardware - my answer will be ever NO. Such requests will be ignored and closed without any comment.<br>
-- first make a ```git pull``` for using the most up-to-date codebase, compile it, test it and THEN open an issue, if you think there something wrong with the last codebase<br>
+- first make a ```git pull``` for using the most up-to-date codebase, compile it, test it and THEN open an issue, if you think there's something wrong with the last codebase<br>
+
+## Known problems
+
+In the ```Makefile``` I add a comment "don't edit this Makefile". That's I mean so. I'm now add the editable, additional file for this called ```make.config.deskhpsdr```.<br>
+But if you edit this file and make after this a ```git pull``` , git come back with an error message. In this case try this:<br>
+```
+$ mv make.config.deskhpsdr make.config.deskhpsdr.save
+$ git pull
+$ mv make.config.deskhpsdr.save make.config.deskhpsdr
+$ git update-index --assume-unchanged make.config.deskhpsdr
+```
+After this, ```git pull``` should work correct.
 
 ## Credits
 
