@@ -42,7 +42,9 @@ $ rm make.config.deskhpsdr
 $ mv make.config.deskhpsdr.save make.config.deskhpsdr
 $ git update-index --assume-unchanged make.config.deskhpsdr
 ```
-After this, ```git pull``` should work correct.
+After this, ```git pull``` should work correct.<br>
+Background about this: I made a mistake in the ```.gitignore```, but I correct it in the meantime. ```git pull``` see local changes with this file (if edit) and stop working, because this file is not identical with the file from the upstream master branch.<br>
+```git update-index --assume-unchanged make.config.deskhpsdr``` inform git, that this file need to be ignored in the future, so you can edit it how you need.
 
 ## Credits
 
