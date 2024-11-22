@@ -33,7 +33,8 @@ I'm now activate the Issues tab, but please note the following:<br>
 ## Known problems
 
 In the ```Makefile``` I add a comment "don't edit this Makefile". That's I mean so. I'm now add the editable, additional file for this called ```make.config.deskhpsdr```.<br>
-But if you edit this file and make after this a ```git pull``` , git come back with an error message. In this case try this:<br>
+But if you have such file yet or edit it and make after this a ```git pull``` , git maybe come back with an error message.<br>
+ In this case try this:<br>
 ```
 $ mv make.config.deskhpsdr make.config.deskhpsdr.save
 $ git pull
