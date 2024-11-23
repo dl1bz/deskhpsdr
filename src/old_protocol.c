@@ -185,7 +185,7 @@ static int hl2_iob_present = 0;
   #define USB_TIMEOUT -7
 #endif
 
-static GMutex dump_mutex;
+// static GMutex dump_mutex;
 
 #ifdef __APPLE__
   static sem_t *txring_sem;
