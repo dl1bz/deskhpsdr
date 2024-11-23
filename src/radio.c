@@ -270,6 +270,7 @@ int have_rx_gain = 0;
 int have_rx_att = 0;
 int have_alex_att = 0;
 int have_preamp = 0;
+int have_dither = 1;
 int have_saturn_xdma = 0;
 int have_racm5 = 0;
 int rx_gain_calibration = 0;
@@ -1213,19 +1214,26 @@ void radio_start_radio() {
   case DEVICE_HERMES_LITE2:
   case NEW_DEVICE_HERMES_LITE:
   case NEW_DEVICE_HERMES_LITE2:
+    have_dither = 0;
     have_rx_gain = 1;
     rx_gain_calibration = 14;
     break;
 
   case SOAPYSDR_USB_DEVICE:
+    have_dither = 0;
     have_rx_gain = 1;
     rx_gain_calibration = 10;
+    break;
+
+  case DEVICE_STEMLAB:
+    have_dither = 0;
     break;
 
   default:
     //
     // DEFAULT: we have a step attenuator nothing else
     //
+    have_dither = 0;
     have_rx_att = 1;
     break;
   }

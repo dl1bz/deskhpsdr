@@ -66,9 +66,7 @@ static void random_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void preamp_cb(GtkWidget *widget, gpointer data) {
-  if (have_preamp) {
-    active_receiver->preamp = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  }
+  active_receiver->preamp = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 static void alex_att_cb(GtkWidget *widget, gpointer data) {
@@ -293,17 +291,8 @@ void rx_menu(GtkWidget *parent) {
       row++;
     }
 
-    //
-    // The CHARLY25 board (with RedPitaya) has no support for preamp/dither/random
-    // so those are left out. For Charly25, PreAmps and Alex Attenuator are controlled via
-    // the sliders menu.
-    //
-    // Preamps are switchable only for the very first HPSDR radios
-    //
-    // We assume Alex attenuators are present if we have an ALEX board and no Orion2
-    // (ANAN-7000/8000 do not have these), and if the RX is fed by the first ADC.
-    //
-    if (filter_board != CHARLY25) {
+    if (have_dither) {
+      // We assume  Dither/Random are either both available or both not available
       GtkWidget *dither_b = gtk_check_button_new_with_label("Dither");
       gtk_widget_set_name(dither_b, "boldlabel");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
@@ -315,15 +304,15 @@ void rx_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
       g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
       row++;
+    }
 
-      if (have_preamp) {
-        GtkWidget *preamp_b = gtk_check_button_new_with_label("Preamp");
-        gtk_widget_set_name(preamp_b, "boldlabel");
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (preamp_b), active_receiver->preamp);
-        gtk_grid_attach(GTK_GRID(grid), preamp_b, 0, row, 1, 1);
-        g_signal_connect(preamp_b, "toggled", G_CALLBACK(preamp_cb), NULL);
-        row++;
-      }
+    if (have_preamp) {
+      GtkWidget *preamp_b = gtk_check_button_new_with_label("Preamp");
+      gtk_widget_set_name(preamp_b, "boldlabel");
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (preamp_b), active_receiver->preamp);
+      gtk_grid_attach(GTK_GRID(grid), preamp_b, 0, row, 1, 1);
+      g_signal_connect(preamp_b, "toggled", G_CALLBACK(preamp_cb), NULL);
+      row++;
     }
   }
 
@@ -335,12 +324,15 @@ void rx_menu(GtkWidget *parent) {
   gtk_widget_show(mute_audio_b);
   gtk_grid_attach(GTK_GRID(grid), mute_audio_b, 0, row, 2, 1);
   g_signal_connect(mute_audio_b, "toggled", G_CALLBACK(mute_audio_cb), NULL);
-  GtkWidget *mute_radio_b = gtk_check_button_new_with_label("Mute Audio to Radio");
-  gtk_widget_set_name(mute_radio_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mute_radio_b), active_receiver->mute_radio);
-  gtk_widget_show(mute_radio_b);
-  gtk_grid_attach(GTK_GRID(grid), mute_radio_b, 2, row, 1, 1);
-  g_signal_connect(mute_radio_b, "toggled", G_CALLBACK(mute_radio_cb), NULL);
+
+  if (protocol == ORIGINAL_PROTOCOL || protocol  == NEW_PROTOCOL) {
+    GtkWidget *mute_radio_b = gtk_check_button_new_with_label("Mute Audio to Radio");
+    gtk_widget_set_name(mute_radio_b, "boldlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mute_radio_b), active_receiver->mute_radio);
+    gtk_widget_show(mute_radio_b);
+    gtk_grid_attach(GTK_GRID(grid), mute_radio_b, 2, row, 1, 1);
+    g_signal_connect(mute_radio_b, "toggled", G_CALLBACK(mute_radio_cb), NULL);
+  }
   row++;
 
   if (filter_board == ALEX) {
