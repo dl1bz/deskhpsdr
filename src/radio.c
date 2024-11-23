@@ -1214,7 +1214,7 @@ void radio_start_radio() {
   case DEVICE_HERMES_LITE2:
   case NEW_DEVICE_HERMES_LITE:
   case NEW_DEVICE_HERMES_LITE2:
-    have_dither = 0;
+    have_dither = 1; // HERMES LITE 2: dither bit if set activate bandvoltage output as option
     have_rx_gain = 1;
     rx_gain_calibration = 14;
     break;
