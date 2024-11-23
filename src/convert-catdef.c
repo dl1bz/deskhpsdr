@@ -16,6 +16,8 @@ void replacexy(char *str, int flag) {
   //
   // Replaces x -> P$_1$
   //          y -> P$_2$
+  //          < -> $<$
+  //          > -> $>$
   //
   // etc. (order is: xyzsbcdefghikmnop)  (letter a replaced by s!)
   //
@@ -36,6 +38,20 @@ void replacexy(char *str, int flag) {
 
     if (str[i] == '|') {
       res[j++] = '\n';
+      continue;
+    }
+
+    if (str[i] == '<') {
+      res[j++] = '$';
+      res[j++] = '<';
+      res[j++] = '$';
+      continue;
+    }
+
+    if (str[i] == '>') {
+      res[j++] = '$';
+      res[j++] = '>';
+      res[j++] = '$';
       continue;
     }
 
@@ -151,7 +167,7 @@ int main(int argc, char **argv) {
   char catread[1024];
   char catresp[1024];
   int notenum;
-  char notes[16][128];
+  char notes[16][1024];
   char *line;
   size_t linecap;
   char *pos;
@@ -193,6 +209,15 @@ int main(int argc, char **argv) {
 
     if (strstr(line, "//RESP")  != NULL) {
       strcpy(catresp, pos);
+    }
+
+    if (strstr(line, "//CONT")  != NULL) {
+      if (notenum == 0) {
+        strcpy(notes[notenum], pos);
+        notenum++;
+      } else {
+        strcat(notes[notenum-1], pos-1);
+      }
     }
 
     if (strstr(line, "//NOTE")  != NULL) {

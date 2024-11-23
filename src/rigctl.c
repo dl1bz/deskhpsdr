@@ -1310,11 +1310,11 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //RESP      ZZACxx;
       //NOTE      x 0...16 encodes the step size:
       //NOTE      1 Hz (x=0), 10 Hz (x=1), 25 Hz (x=2), 50 Hz (x=3)
-      //NOTE      100 Hz (x=4), 250 Hz (x=5), 500 Hz (x=6)
-      //NOTE      1000 Hz (x=7), 5000 Hz (x=8), 6250 Hz (x=9)
-      //NOTE      9 kHz (x=10), 10 kHz (x=11), 12.5 kHz (x=12)
-      //NOTE      100 kHz (x=13), 250 kHz (x=14)
-      //NOTE      500 kHz (x=15), 1 MHz (x=16)
+      //CONT      100 Hz (x=4), 250 Hz (x=5), 500 Hz (x=6)
+      //CONT      1000 Hz (x=7), 5000 Hz (x=8), 6250 Hz (x=9)
+      //CONT      9 kHz (x=10), 10 kHz (x=11), 12.5 kHz (x=12)
+      //CONT      100 kHz (x=13), 250 kHz (x=14)
+      //CONT      500 kHz (x=15), 1 MHz (x=16).
       //ENDDEF
       if (command[4] == ';') {
         // read the step size
@@ -1408,10 +1408,10 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //SET       ZZAIx;
       //READ      ZZAI;
       //RESP      ZZAIx;
-      //NOTE      x=0: auto-reporting disabled, x>1: enabled
+      //NOTE      x=0: auto-reporting disabled, x>0: enabled.
       //NOTE      Auto-reporting is affected for the client that sends this command.
-      //NOTE      For x=1, only frequency changes are sent via FA/FB commands.
-      //NOTE      For x>1, mode changes are also sent via MD commands.
+      //CONT      For x=1, only frequency changes are sent via FA/FB commands.
+      //CONT      For x>1, mode changes are also sent via MD commands.
       //ENDDEF
       if (command[4] == ';') {
         // Query status
@@ -1614,10 +1614,10 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //DESCR     Set/Read VFO-A band
       //SET       ZZBSxxx;
       //NOTE      x 0...999 encodes the band:
-      //NOTE      136 kHz (x=136), 472 kHz (x=472), 160m (x=160)
-      //NOTE      80m (x=80), 60m (x=60), 40m (x=40), 30m (x=30)
-      //NODE      20m (x=20), 17m (x=17), 15m (x=15), 12m (x=12)
-      //NOTE      10m (x=10), 6m (x=6), Gen (x=888), WWV (x=999)
+      //NOTE      136 kHz (x=136), 472 kHz (x=472), 160M (x=160)
+      //CONT      80M (x=80), 60M (x=60), 40M (x=40), 30M (x=30)
+      //CONT      20M (x=20), 17M (x=17), 15M (x=15), 12M (x=12)
+      //CONT      10M (x=10), 6M (x=6), Gen (x=888), WWV (x=999).
       //ENDDEF
       //CATDEF    ZZBT
       //DESCR     Set/Read VFO-B band
@@ -2083,9 +2083,9 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //SET       ZZFHxxxxx;
       //READ      ZZFH;
       //RESP      ZZFHxxxxxx;
-      //NOTE      If setting, this switches to the Var1 filter first.
-      //NOTE      x -9999 ... 9999. Must start with  minus sign if negative.
-      //NOTE      In LSB, the filter high water affects the low audio frequencies
+      //NOTE      x must be in the range -9999 ... 9999 and start with a minus sign if negative.
+      //CONT      If setting, this switches to the Var1 filter first.
+      //CONT      The convention is such that LSB, the filter high cut is negative and affects the low audio frequencies.
       //ENDDEF
       if (command[4] == ';') {
         snprintf(reply, 256, "ZZFH%05d;", receiver[0]->filter_high);
@@ -2142,9 +2142,9 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //SET       ZZFLxxxxx;
       //READ      ZZFL;
       //RESP      ZZFLxxxxxx;
-      //NOTE      If setting, this switches to the Var1 filter first.
-      //NOTE      x -9999 ... 9999. Must start with minus sign if negative.
-      //NOTE      In LSB, the filter-low affects the high audio frequencies
+      //NOTE      x must be in the range -9999 ... 9999 and start with a minus sign if negative.
+      //CONT      If setting, this switches to the Var1 filter first.
+      //CONT      The convention is such that LSB, the filter low cut is negative and affects the high audio frequencies.
       //ENDDEF
       if (command[4] == ';') {
         snprintf(reply, 256, "ZZFL%05d;", receiver[0]->filter_low);
@@ -2335,7 +2335,7 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //READ      ZZMA;
       //RESP      ZZMAx;
       //NOTE      x=0: RX1 not muted, x=1: muted.
-      //NOTE      This only affects the audio sent to the radio via the HPSDR protocol.
+      //CONT      This only affects the audio sent to the radio via the HPSDR protocol.
       //ENDDEF
       if (command[4] == ';') {
         snprintf(reply, 256, "ZZMA%d;", receiver[0]->mute_radio);
@@ -2353,8 +2353,8 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //SET       ZZMBx;
       //READ      ZZMB;
       //RESP      ZZMBx;
-      //NOTE      x=0: RX2 not muted, x=1: muted
-      //NOTE      This only affects the audio sent to the radio via the HPSDR protocol.
+      //NOTE      x=0: RX2 not muted, x=1: muted.
+      //CONT      This only affects the audio sent to the radio via the HPSDR protocol.
       //ENDDEF
       RXCHECK(1,
       if (command[4] == ';') {
@@ -2375,8 +2375,8 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //READ      ZZMD;
       //RESP      ZZMDxx;
       //NOTE      Modes: LSB (x=0), USB (x=1), DSB (x=3), CWL (x=4)
-      //NOTE      CWU (x=5), FMN (x=6), AM (x=7), DIGU (x=7)
-      //NOTE      SPEC (x=8), DIGL (x=9), SAM (x=10), DRM (x=11)
+      //CONT      CWU (x=5), FMN (x=6), AM (x=7), DIGU (x=7)
+      //CONT      SPEC (x=8), DIGL (x=9), SAM (x=10), DRM (x=11)
       //ENDDEF
       if (command[4] == ';') {
         snprintf(reply, 256, "ZZMD%02d;", vfo[VFO_A].mode);
@@ -3329,11 +3329,11 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //DESCR     Move down frequency of active receiver
       //SET       ZZZDxx;
       //NOTE      ANDROMEDA extension. x = number of VFO steps.
-      //NOTE      For x$>$10, the number of VFO steps is multiplied with
-      //NOTE      a speed-up factor that increases up to 4 at x=30
-      //NOTE      (corresponds to 3 turns of the VFO dial per second).
-      //NOTE      This implements an over-proportional tuning speed if
-      //NOTE      turning the VFO knob faster and faster.
+      //NOTE      For x>10, the number of VFO steps is multiplied with
+      //CONT      a speed-up factor that increases up to 4 at x=30
+      //CONT      (corresponds to 3 turns of the VFO dial per second).
+      //CONT      This implements an over-proportional tuning speed if
+      //CONT      turning the VFO knob faster and faster.
       //ENDDEF
       if (command[6] == ';') {
         int steps = 10 * (command[4] - '0') + (command[5] - '0');
@@ -4128,11 +4128,11 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //SET       ZZZSxxyyzzz;
       //NOTE      ANDROMEDA extension.
       //NOTE      The ANDROMEDA type (x), hardware (y) and
-      //NOTE      software (z) version is printed in the log file.
-      //NOTE      The type (x) sent by a client does affect the
-      //NOTE      processing of ZZZE and ZZZP commands from that client.
-      //NOTE      Only the cases x=1 (original ANDROMEDA console)
-      //NOTE      and x=5 (G2V2 console) are implemented.
+      //CONT      software (z) version is printed in the log file.
+      //CONT      The type (x) sent by a client does affect the
+      //CONT      processing of ZZZE and ZZZP commands from that client.
+      //CONT      Only the cases x=1 (original ANDROMEDA console)
+      //CONT      and x=5 (G2 Ultra console) are implemented.
       //ENDDEF
       if (command[11] == ';') {
         //
@@ -4152,11 +4152,11 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //DESCR     Move up frequency of active receiver
       //SET       ZZZUxx;
       //NOTE      ANDROMEDA extension. x = number of steps.
-      //NOTE      For x$>$10, the number of VFO steps is multiplied with
-      //NOTE      a speed-up factor that increases up to 4 at x=30
-      //NOTE      (corresponds to 3 turns of the VFO dial per second).
-      //NOTE      This implements an over-proportional tuning speed if
-      //NOTE      turning the VFO knob faster and faster.
+      //NOTE      For x>10, the number of VFO steps is multiplied with
+      //CONT      a speed-up factor that increases up to 4 at x=30
+      //CONT      (corresponds to 3 turns of the VFO dial per second).
+      //CONT      This implements an over-proportional tuning speed if
+      //CONT      turning the VFO knob faster and faster.
       //ENDDEF
       if (command[6] == ';') {
         int steps = 10 * (command[4] - '0') + (command[5] - '0');
@@ -4256,10 +4256,10 @@ int parse_cmd(void *data) {
       //SET       AIx;
       //READ      AI;
       //RESP      AIx;
-      //NOTE      x=0: auto-reporting disabled, x=1: enabled
+      //NOTE      x=0: auto-reporting disabled, x>0: enabled.
       //NOTE      Auto-reporting is affected for the client that sends this command.
-      //NOTE      For x=1, only frequency changes are sent via FA/FB commands.
-      //NOTE      For x>1, mode changes are also sent via MD commands.
+      //CONT      For x=1, only frequency changes are sent via FA/FB commands.
+      //CONT      For x>1, mode changes are also sent via MD commands.
       //ENDDEF
       if (command[2] == ';') {
         snprintf(reply, 256, "AI%d;", client->auto_reporting);
@@ -4373,16 +4373,16 @@ int parse_cmd(void *data) {
       //READ      CN;
       //RESP      CNxx;
       //NOTE      x =  1...38. CTCSS frequencies in Hz are:
-      //NOTE      67.0 (x=1),  71.9 (x=2),  74.4 (x=3),  77.0 (x=4),
-      //NOTE      79.7 (x=5),  82.5 (x=6),  85.4 (x=7),  88.5 (x=8),
-      //NOTE      91.5 (x=9),  94.8 (x=10), 97.4 (x=11), 100.0 (x=12)
-      //NOTE      103.5 (x=13), 107.2 (x=14), 110.9 (x=15), 114.8 (x=16)
-      //NOTE      118.8 (x=17), 123.0 (x=18), 127.3 (x=19), 131.8 (x=20)
-      //NOTE      136.5 (x=21), 141.3 (x=22), 146.2 (x=23), 151.4 (x=24)
-      //NOTE      156.7 (x=25), 162.2 (x=26), 167.9 (x=27), 173.8 (x=28)
-      //NOTE      179.9 (x=29), 186.2 (x=30), 192.8 (x=31), 203.5 (x=32)
-      //NOTE      210.7 (x=33), 218.1 (x=34), 225.7 (x=35), 233.6 (x=36)
-      //NOTE      241.8 (x=37), 250.3 (x=38)
+      //CONT      67.0 (x=1),  71.9 (x=2),  74.4 (x=3),  77.0 (x=4),
+      //CONT      79.7 (x=5),  82.5 (x=6),  85.4 (x=7),  88.5 (x=8),
+      //CONT      91.5 (x=9),  94.8 (x=10), 97.4 (x=11), 100.0 (x=12)
+      //CONT      103.5 (x=13), 107.2 (x=14), 110.9 (x=15), 114.8 (x=16)
+      //CONT      118.8 (x=17), 123.0 (x=18), 127.3 (x=19), 131.8 (x=20)
+      //CONT      136.5 (x=21), 141.3 (x=22), 146.2 (x=23), 151.4 (x=24)
+      //CONT      156.7 (x=25), 162.2 (x=26), 167.9 (x=27), 173.8 (x=28)
+      //CONT      179.9 (x=29), 186.2 (x=30), 192.8 (x=31), 203.5 (x=32)
+      //CONT      210.7 (x=33), 218.1 (x=34), 225.7 (x=35), 233.6 (x=36)
+      //CONT      241.8 (x=37), 250.3 (x=38).
       //ENDDEF
       // sets/reads CTCSS function (frequency)
       if (can_transmit) {
@@ -4583,7 +4583,7 @@ int parse_cmd(void *data) {
       //READ      FW;
       //RESP      FWxxxx;
       //NOTE      When setting, this switches to the Var1 filter and sets its  width to x.
-      //NOTE      Only valid for CW, FM, AM. Use SH/SL for LSB, USB, DIGL, DIGU.
+      //CONT      Only valid for CW, FM, AM. Use SH/SL for LSB, USB, DIGL, DIGU.
       //NOTE      For AM, 8kHz filter width (x=0) or  16 kHz (x$\ne$0)
       //NOTE      For FM, 2.5kHz deviation (x=0) or 5 kHz (x$\ne$0)
       //ENDDEF
@@ -4695,8 +4695,8 @@ int parse_cmd(void *data) {
       //SET       GTxxx;
       //READ      GT;
       //RESP      GTxxx;
-      //NOTE      x=0: AGC OFF, x=5: LONG, x=10: SLOW
-      //NOTE      x=15: MEDIUM, x=20: FAST
+      //NOTE      x=0: AGC OFF, x=5: LONG, x=10: SLOW,
+      //CONT      x=15: MEDIUM, x=20: FAST.
       //ENDDEF
       if (command[2] == ';') {
         snprintf(reply, 256, "GT%03d;", receiver[0]->agc * 5);
@@ -4840,9 +4840,9 @@ int parse_cmd(void *data) {
       //READ      KY;
       //RESP      KYx;
       //NOTE      When setting (sending), x must be a space.
-      //NOTE      When reading, x=1 indicates buffer space is available, x=0  buffer full
-      //NOTE      y: string of up to 24 characters NOT containing ';'
-      //NOTE      trailing blanks are ignored in y, but if it is completely blank it causes an inter-word space.
+      //CONT      When reading, x=1 indicates buffer space is available, x=0  buffer full
+      //NOTE      y: string of up to 24 characters NOT containing ';'.
+      //CONT      Trailing blanks are ignored in y, but if it is completely blank it causes an inter-word space.
       //ENDDEF
       if (command[2] == ';') {
         //
@@ -4908,8 +4908,8 @@ int parse_cmd(void *data) {
       //SET       LKxx;
       //READ      LK;
       //RESP      LKxx;
-      //NOTE      When setting, any nonzero x sets lock status
-      //NOTE      When reading, x = 00 (not locked) or x = 11 (locked)
+      //NOTE      When setting, any nonzero x sets lock status.
+      //CONT      When reading, x = 00 (not locked) or x = 11 (locked)
       //ENDDEF
       if (command[2] == ';') {
         snprintf(reply, 256, "LK%d%d;", locked, locked);
@@ -4953,8 +4953,8 @@ int parse_cmd(void *data) {
       //READ      MD;
       //RESP      MDx;
       //NOTE      Kenwood-type  mode  list:
-      //NOTE      LSB (x=1), USB (x=2), CWU (x=3), FMN (x=4),
-      //NOTE      AM (x=5), DIGL (x=6), CWL (x=7), DIGU (x=9)
+      //CONT      LSB (x=1), USB (x=2), CWU (x=3), FMN (x=4),
+      //CONT      AM (x=5), DIGL (x=6), CWL (x=7), DIGU (x=9)
       //ENDDEF
       if (command[2] == ';') {
         int mode = ts2000_mode(vfo[VFO_A].mode);
@@ -5291,10 +5291,10 @@ int parse_cmd(void *data) {
       //SET       RAxx;
       //READ      RA;
       //RESP      RAxxyy;
-      //NOTE      x = 0 ... 99 is mapped to the range available
-      //NOTE      HPSDR radios: attenuator range 0...31 dB
-      //NOTE      HermesLite-II etc.: gain range -12...48 dB
-      //NOTE      y is always zero.
+      //NOTE      x = 0 ... 99 is mapped to the attenuation range available.
+      //NOTE      HPSDR radios: attenuator range 0...31 dB,
+      //CONT      HermesLite-II etc.: gain range -12...48 dB.
+      //CONT      y is always zero.
       //ENDDEF
       // set/read Attenuator function
       if (command[2] == ';') {
@@ -5350,8 +5350,8 @@ int parse_cmd(void *data) {
       //CATDEF    RD
       //DESCR     Set or Decrement VFO-A RIT value
       //SET       RDxxxxx;
-      //NOTE      when x is not given (RD;)  decrement by 10 Hz (CW modes) or 50 Hz (other modes)
-      //NOTE      when x is given, set VFO-A rit value to the negative of x
+      //NOTE      When x is not given (RD;)  decrement by 10 Hz (CW modes) or 50 Hz (other modes).
+      //CONT      When x is given, set VFO-A rit value to the negative of x.
       //ENDDEF
       if (command[2] == ';') {
         if (vfo[VFO_A].mode == modeCWL || vfo[VFO_A].mode == modeCWU) {
@@ -5407,8 +5407,8 @@ int parse_cmd(void *data) {
       //CATDEF    RU
       //DESCR     Set or Increment VFO-A RIT value
       //SET       RUxxxxx;
-      //NOTE      when x is not given (RU;)  increment by 10 Hz (CW modes) or 50 Hz (other modes)
-      //NOTE      when x is given, set VFO-A rit value to x
+      //NOTE      When x is not given (RU;)  increment by 10 Hz (CW modes) or 50 Hz (other modes).
+      //CONT      When x is given, set VFO-A rit value to x
       //ENDDEF
       if (command[2] == ';') {
         if (vfo[VFO_A].mode == modeCWL || vfo[VFO_A].mode == modeCWU) {
@@ -5458,8 +5458,7 @@ int parse_cmd(void *data) {
       //NOTE      c = 1 indicates SAT mode (TRACE)
       //NOTE      d = 1 indicates RSAT mode (TRACE REV)
       //NOTE      e = eight-character label, here "SAT     "
-      //NOTE      when setting, c == d == 1 is illegal
-      //NOTE      when setting, s is ignored
+      //NOTE      when setting, c=1 and/or d=1 is illegal, and s is ignored.
       //ENDDEF
       if (command[2] == ';') {
         snprintf(reply, 256, "SA%d%d%d%d%d%d%dSAT     ;", (sat_mode == SAT_MODE) || (sat_mode == RSAT_MODE), 0, 0, 0,
@@ -5502,8 +5501,8 @@ int parse_cmd(void *data) {
       //SET       SDxxxx;
       //READ      SD;
       //RESP      SDxxxx;
-      //NOTE      x = 0...1000 (in milli seconds)
-      //NOTE      when setting, x = 0  disables break-in
+      //NOTE      x = 0...1000 (in milli seconds).
+      //CONT      When setting, x = 0  disables break-in
       //ENDDEF
       if (command[2] == ';') {
         snprintf(reply, 256, "SD%04d;", (int)fmin(cw_keyer_hang_time, 1000));
@@ -5528,8 +5527,8 @@ int parse_cmd(void *data) {
       //NOTE      When setting, the Var1 filter is activated
       //NOTE      x = 0...11 encodes filter high water mark in Hz:
       //NOTE      1400 (x=0), 1600 (x=1), 1800 (x=2), 2000 (x=3)
-      //NOTE      2200 (x=4), 2400 (x=5), 2600 (x=6), 2800 (x=7)
-      //NOTE      3000 (x=8), 3400 (x=9), 4000 (x=10), 5000 (x=11)
+      //CONT      2200 (x=4), 2400 (x=5), 2600 (x=6), 2800 (x=7)
+      //CONT      3000 (x=8), 3400 (x=9), 4000 (x=10), 5000 (x=11).
       //ENDDEF
       if (command[2] == ';') {
         FILTER *mode_filters = filters[vfo[VFO_A].mode];
@@ -5683,8 +5682,8 @@ int parse_cmd(void *data) {
       //NOTE      When setting, the Var1 filter is activated
       //NOTE      x = 0...11 encodes filter low water mark in Hz:
       //NOTE      10 (x=0), 50 (x=1), 100 (x=2), 200 (x=3)
-      //NOTE      300 (x=4), 400 (x=5), 500 (x=6), 600 (x=7)
-      //NOTE      700 (x=8), 800 (x=9), 900 (x=10), 1000 (x=11)
+      //CONT      300 (x=4), 400 (x=5), 500 (x=6), 600 (x=7)
+      //CONT      700 (x=8), 800 (x=9), 900 (x=10), 1000 (x=11).
       //ENDDEF
       if (command[2] == ';') {
         FILTER *mode_filters = filters[vfo[VFO_A].mode];
@@ -5837,7 +5836,7 @@ int parse_cmd(void *data) {
       //SET       SQxyyy;
       //READ      SQx;
       //RESP      SQxyyy
-      //NOTE      x=0: read/set RX1 squelch, x=1: RX2
+      //NOTE      x=0: read/set RX1 squelch, x=1: RX2.
       //NOTE      y : 0-255 mapped to 0-100
       //ENDDEF
       if (command[3] == ';') {
@@ -5997,7 +5996,7 @@ int parse_cmd(void *data) {
       //READ      VG;
       //RESP      VGxxx;
       //NOTE      x is in the range 0-9, mapped to an amplitude
-      //NOTE      threshold 0.0-1.0
+      //CONT      threshold 0.0-1.0
       //ENDDEF
       if (command[2] == ';') {
         snprintf(reply, 256, "VG%03d;", (int)((vox_threshold * 100.0) * 0.9));
@@ -6020,7 +6019,7 @@ int parse_cmd(void *data) {
       //DESCR     Set/Read VOX status
       //SET       VXx;
       //READ      VX;
-      //RESP      VGx;
+      //RESP      VXx;
       //NOTE      x=0: VOX disabled, x=1: enabled
       //ENDDEF
       if (command[2] == ';') {
