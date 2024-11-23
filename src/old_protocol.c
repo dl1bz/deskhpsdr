@@ -358,32 +358,6 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   return NULL;
 }
 
-// This function is used in debug code
-void dump_buffer(unsigned char *buffer, int length, const char *who) {
-  g_mutex_lock(&dump_mutex);
-  t_print("%s: %s: %d\n", __FUNCTION__, who, length);
-  int i = 0;
-  int line = 0;
-
-  while (i < length) {
-    t_print("%02X", buffer[i]);
-    i++;
-    line++;
-
-    if (line == 16) {
-      t_print("\n");
-      line = 0;
-    }
-  }
-
-  if (line != 0) {
-    t_print("\n");
-  }
-
-  t_print("\n");
-  g_mutex_unlock(&dump_mutex);
-}
-
 void old_protocol_stop() {
   //
   // Mutex is needed since in the TCP case, sending TX IQ packets
@@ -586,7 +560,7 @@ static gpointer ozy_ep6_rx_thread(gpointer arg) {
     if (!P1running) { continue; }
 
     //t_print("%s: read %d bytes\n",__FUNCTION__,bytes);
-    //dump_buffer(ep6_inbuffer,bytes,__FUNCTION__);
+
     if (bytes == 0) {
       t_print("old_protocol_ep6_read: ozy_read returned 0 bytes... retrying\n");
       continue;
@@ -2772,10 +2746,7 @@ static void ozyusb_write(unsigned char* buffer, int length) {
   // and write the 4 usb frames to the usb in one 2k packet
         i = ozy_write(EP2_OUT_ID,usb_output_buffer,EP6_BUFFER_SIZE);
 
-        //dump_buffer(usb_output_buffer,EP6_BUFFER_SIZE,__FUNCTION__);
-
         //t_print("%s: written %d\n",__FUNCTION__,i);
-        //dump_buffer(usb_output_buffer,EP6_BUFFER_SIZE);
 
         if(i != EP6_BUFFER_SIZE)
         {

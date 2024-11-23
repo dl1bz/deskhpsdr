@@ -75,7 +75,7 @@ extern bool ServerActive;
 extern bool MOXAsserted;
 
 #define FIRMWARE_MIN_VERSION  8               // Minimum FPGA software version that this software requires
-#define FIRMWARE_MAX_VERSION 17               // Maximum FPGA software version that this software is tested on
+#define FIRMWARE_MAX_VERSION 18               // Maximum FPGA software version that this software is tested on
 
 #define SDRBOARDID 1                          // Hermes
 #define SDRSWVERSION 1                        // version of this software
@@ -257,18 +257,6 @@ bool CreateDynamicMemory(void) {                            // return true if er
   DMABasePtr = DMAReadBuffer + VBASE;
   memset(DMAReadBuffer, 0, DMABufferSize);
   return Result;
-}
-
-void FreeDynamicMemory(void) {
-  uint32_t DDC;
-  free(DMAReadBuffer);
-
-  //
-  // free the per-DDC buffers
-  //
-  for (DDC = 0; DDC < VNUMDDC; DDC++) {
-    free(DDCSampleBuffer[DDC]);
-  }
 }
 
 void saturn_register_init() {

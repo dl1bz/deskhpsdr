@@ -345,16 +345,6 @@ void ResetDMAStreamFIFO(EDMAStreamSelect DDCNum) {
 }
 
 //
-// SetTXAmplitudeEER (bool EEREnabled)
-// enables amplitude restoratino mode. Generates envelope output alongside I/Q samples.
-// NOTE hardware does not properly support this yet!
-//
-void SetTXAmplitudeEER(bool EEREnabled) {
-  //GEEREnabled = EEREnabled;               // save value
-  //HandlerSetEERMode(EEREnabled);              // I/Q send handler
-}
-
-//
 // number of samples to read for each DDC setting
 // these settings must match behaviour of the FPGA IP!
 // a value of "7" indicates an interleaved DDC

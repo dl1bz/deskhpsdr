@@ -102,12 +102,6 @@ void shutdown_saturn_server(void);
 void* saturn_server(void *arg);
 
 //
-// set the port for a given thread. If 0, set the default according to HPSDR spec.
-// if port is different from the currently assigned one, set the "change port" bit
-//
-void SetPort(uint32_t ThreadNum, uint16_t PortNum);
-
-//
 // function to make an incoming or outgoing socket, bound to the specified port in the structure
 // 1st parameter is a link into the socket data table
 //

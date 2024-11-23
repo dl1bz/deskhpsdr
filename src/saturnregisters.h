@@ -50,11 +50,6 @@ void *OutgoingDDCIQ(void *arg);
 // interface calls to get commands from PC settings
 //
 
-//
-// HandlerCheckDDCSettings()
-// called when DDC settings have been changed. Check which DDCs are enabled, and sample rate.
-//
-void HandlerCheckDDCSettings(void);
 //END OutDDCIQ.h
 
 //START codecwrite.h
