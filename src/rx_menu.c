@@ -293,11 +293,19 @@ void rx_menu(GtkWidget *parent) {
 
     if (have_dither) {
       // We assume  Dither/Random are either both available or both not available
+      if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      GtkWidget *dither_b = gtk_check_button_new_with_label("Band Volts");
+      gtk_widget_set_name(dither_b, "boldlabel");
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
+      gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
+      g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
+      } else {
       GtkWidget *dither_b = gtk_check_button_new_with_label("Dither");
       gtk_widget_set_name(dither_b, "boldlabel");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
       gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
       g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
+      }
       GtkWidget *random_b = gtk_check_button_new_with_label("Random");
       gtk_widget_set_name(random_b, "boldlabel");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
