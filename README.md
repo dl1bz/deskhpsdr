@@ -48,6 +48,14 @@ Background about this: I made a mistake in the ```.gitignore```, but I correct i
 If this not help, please delete the complete codebase of deskHPSDR and clone it again, then you have a fresh copy.<br>
 Don't forget to edit ```make.config.deskhpsdr``` again for set your needed options. Don't change the ```DESKTOP=ON``` option, that MUST always be set to ON.
 
+## Successful and confirmed Tests I had done up to now
+
+So far, deskHPSDR has been successfully tested on the following systems:<br>
+* iMac 21" i5 running macOS 14.7.1 aka Sonoma
+* Macbook Air M1 running macOS 14.7.1 aka Sonoma
+* Raspberry Pi5 with NVMe-HAT running 64bit PiOS and X11 environment
+* Raspberry Pi 3B+ works too, but with limitations (panadapter framerate only 10fps, if want more the CPU hasn't enough power)
+
 ## Credits
 
 Big thanks and huge respect to all involved developers for their previous great work on piHPSDR until now and make this application accessible as Open Source under the GPL.
