@@ -55,6 +55,9 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 * Macbook Air M1 running macOS 14.7.1 aka Sonoma
 * Raspberry Pi5 with NVMe-HAT running 64bit PiOS and X11 environment
 * Raspberry Pi 3B+ works too, but with limitations (panadapter framerate only 10fps, if want more the CPU hasn't enough power)
+* a hamradio friend of mine has checked it on a Desktop Linux Ubuntu LTS for me, works too
+
+All radio tests are made with my Hermes Lite 2 SDR-Transceiver.
 
 ## Credits
 
