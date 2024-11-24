@@ -11,7 +11,7 @@ piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Late
 ## Requirements
 
 * a modern Desktop-OS like Linux or macOS with installed developer tools like compiler, linker etc.
-* a large screensize starts at 1280x720 or higher
+* a large screensize starts at 1280x600 or higher
 * basic knowledge: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the ```COMPILE.macOS``` first
 * a SDR device or transceiver, which supports HPSDR protocol 1 (older) or 2 (newer) like the Hermes Lite 2, the ANAN or similiar devices
