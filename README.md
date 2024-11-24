@@ -6,7 +6,7 @@ My version here need a screen size 1280x600 at minimum or higher for best GUI ex
 
 ## deskHPSDR start with the code base from piHPSDR
 
-piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago. Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now. So his codebase of piHPSDR was my starting point a few weeks ago.
+piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago. Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now. So his codebase of piHPSDR was my starting point a few weeks ago. But anyway, there is and will be no collaboration, deskHPSDR go it's own way now and in future.
 
 ## Requirements
 
