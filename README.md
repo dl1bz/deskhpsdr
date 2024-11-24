@@ -1,6 +1,6 @@
 # deskHPSDR
 
-This is an improved version based at the code of [piHPSDR](https://github.com/dl1ycf/pihpsdr). But it is not [piHPSDR](https://github.com/dl1ycf/pihpsdr) itself and has no backward dependencies to [piHPSDR](https://github.com/dl1ycf/pihpsdr). My goal was to make an optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In this case you need to use [piHPSDR](https://github.com/dl1ycf/pihpsdr), but not deskHPSDR.
+This is an improved version based at the code of [piHPSDR](https://github.com/dl1ycf/pihpsdr). But it is not [piHPSDR](https://github.com/dl1ycf/pihpsdr) itself and has no backward dependencies to [piHPSDR](https://github.com/dl1ycf/pihpsdr). My goal was to make an optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In this case you need to use [piHPSDR](https://github.com/dl1ycf/pihpsdr), but not my deskHPSDR.
 
 My version here need a screen size 1280x600 at minimum or higher for best GUI experiences.
 
