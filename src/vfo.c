@@ -449,11 +449,20 @@ void vfo_restore_state() {
     } else {
       vfo[i].band            = band20;
       vfo[i].bandstack       = 0;
+      #if defined (__LDESK__)
+      vfo[i].frequency       = 14250000;
+      #else
       vfo[i].frequency       = 14010000;
+      #endif
     }
 
+    #if defined (__LDESK__)
+    vfo[i].mode              = modeUSB;
+    vfo[i].filter            = filterF5;
+    #else
     vfo[i].mode              = modeCWU;
     vfo[i].filter            = filterF4;
+    #endif
     vfo[i].cwAudioPeakFilter = 0;
     vfo[i].lo                = 0;
     vfo[i].offset            = 0;
