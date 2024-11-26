@@ -640,6 +640,7 @@ void *IncomingDUCSpecific(void *arg) {                  // listener thread
 // if sufficient FIFO data available: DMA that data and transfer it out.
 // if it turns out to be too inefficient, we'll have to try larger DMA.
 //
+#if 0
 void *IncomingSpkrAudio(void *arg) {                    // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
@@ -736,6 +737,7 @@ void *IncomingSpkrAudio(void *arg) {                    // listener thread
   ThreadData->Active = false;                   // indicate it is closed
   return NULL;
 }
+#endif
 
 #define VIQSAMPLESPERFRAME 240                      // samples per UDP frame
 #define VMEMDUCWORDSPERFRAME 180                       // memory writes per UDP frame

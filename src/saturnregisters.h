@@ -262,7 +262,7 @@ void SetTXEnable(bool Enabled);
 // SetATUTune(bool TuneEnabled)
 // drives the ATU tune output to selected state.
 //
-void SetATUTune(bool TuneEnabled);
+//void SetATUTune(bool TuneEnabled);
 
 //
 // SetP1SampleRate(ESampleRate Rate, unsigned int Count)
@@ -270,7 +270,7 @@ void SetATUTune(bool TuneEnabled);
 // allowed rates are 48KHz to 384KHz.
 // also sets the number of enabled DDCs, 1-8. Count = #DDC reqd
 //
-void SetP1SampleRate(ESampleRate Rate, unsigned int Count);
+//void SetP1SampleRate(ESampleRate Rate, unsigned int Count);
 
 //
 // SetP2SampleRate(unsigned int DDC, bool Enabled, unsigned int SampleRate, bool InterleaveWithNext)
@@ -301,7 +301,7 @@ uint32_t GetDDCEnables(void);
 // SetClassEPA(bool IsClassE)
 // enables non linear PA mode
 //
-void SetClassEPA(bool IsClassE);
+//void SetClassEPA(bool IsClassE);
 
 //
 // SetOpenCollectorOutputs(unsigned int bits)
@@ -353,27 +353,27 @@ void SetDUCFrequency(unsigned int Value, bool IsDeltaPhase);    // only accepts 
 // P1: set the Alex RX antenna bits.
 // bits=00: none; 01: RX1; 02: RX2; 03: transverter
 //
-void SetAlexRXAnt(unsigned int Bits);
+//void SetAlexRXAnt(unsigned int Bits);
 
 //
 // SetAlexRXOut(bool Enable)
 // P1: sets the Alex RX output relay
 //
-void SetAlexRXOut(bool Enable);
+//void SetAlexRXOut(bool Enable);
 
 //
 // SetAlexTXAnt(unsigned int Bits)
 // P1: set the Alex TX antenna bits.
 // bits=00: ant1; 01: ant2; 10: ant3; other: chooses ant1
 //
-void SetAlexTXAnt(unsigned int Bits);
+//void SetAlexTXAnt(unsigned int Bits);
 
 //
 // SetAlexCoarseAttenuator(unsigned int Bits)
 // P1: set the 0/10/20/30dB attenuator bits. NOT used for for 7000RF board.
 // bits: 00=0dB, 01=10dB, 10=20dB, 11=30dB
 //
-void SetAlexCoarseAttenuator(unsigned int Bits);
+//void SetAlexCoarseAttenuator(unsigned int Bits);
 
 //
 // SetAlexRXFilters(bool IsRX1, unsigned int Bits)
@@ -381,14 +381,14 @@ void SetAlexCoarseAttenuator(unsigned int Bits);
 // IsRX1 true for RX1, false for RX2
 // Bits follows the P1 protocol format
 //
-void SetAlexRXFilters(bool IsRX1, unsigned int Bits);
+//void SetAlexRXFilters(bool IsRX1, unsigned int Bits);
 
 //
 // SetAlexTXFilters(unsigned int Bits)
 // P1: set the Alex bits for TX LPF filter selection
 // Bits follows the P1 protocol format
 //
-void SetAlexTXFilters(unsigned int Bits);
+//void SetAlexTXFilters(unsigned int Bits);
 
 //
 // EnableAlexManualFilterSelect(bool IsManual)
@@ -408,13 +408,13 @@ void AlexManualRXFilters(unsigned int Bits, int RX);
 //
 // SetRX2GroundDuringTX(bool IsGrounded)
 //
-void SetRX2GroundDuringTX(bool IsGrounded);
+//void SetRX2GroundDuringTX(bool IsGrounded);
 
 //
 // DisableAlexTRRelay(bool IsDisabled)
 // if parameter true, the TX RX relay is disabled and left in RX
 //
-void DisableAlexTRRelay(bool IsDisabled);
+//void DisableAlexTRRelay(bool IsDisabled);
 
 //
 // AlexManualTXFilters(unsigned int Bits)
@@ -429,7 +429,7 @@ void AlexManualTXFilters(unsigned int Bits, bool HasTXAntExplicitly);
 // SetApolloBits(bool EnableFilter, bool EnableATU, bool StartAutoTune)
 // sets the control bits for Apollo. No support for these in Saturn at present.
 //
-void SetApolloBits(bool EnableFilter, bool EnableATU, bool StartAutoTune);
+//void SetApolloBits(bool EnableFilter, bool EnableATU, bool StartAutoTune);
 
 //
 // SetApolloEnabled(bool EnableFilter)
@@ -441,13 +441,13 @@ void SetApolloEnabled(bool EnableFilter);
 // SelectFilterBoard(bool IsApollo)
 // Selects between Apollo and Alex controls. Currently ignored & hw supports only Alex.
 //
-void SelectFilterBoard(bool IsApollo);
+//void SelectFilterBoard(bool IsApollo);
 
 //
 // EnablePPSStamp(bool Enabled)
 // enables a "pulse per second" timestamp
 //
-void EnablePPSStamp(bool Enabled);
+//void EnablePPSStamp(bool Enabled);
 
 //
 // SetTXDriveLevel(unsigned int Level)
@@ -490,7 +490,7 @@ void SetCodecLineInGain(unsigned int Gain);
 // EnablePureSignal(bool Enabled)
 // enables PureSignal operation. Enables DDC5 to be feedback (P1)
 //
-void EnablePureSignal(bool Enabled);
+//void EnablePureSignal(bool Enabled);
 
 //
 // SetADCAttenuator(EADCSelect ADC, unsigned int Atten, bool Enabled, bool RXAtten)
@@ -536,7 +536,7 @@ void SetDDCADC(int DDC, EADCSelect ADC);
 // If interleaved, the DDC LO is set to the same as the paired DDC
 // // this doesn't affect the sample data stream generation!
 //
-void SetDDCInterleaved(uint32_t DDCNum, bool Interleaved);
+//void SetDDCInterleaved(uint32_t DDCNum, bool Interleaved);
 
 //
 // void SetRXDDCEnabled(bool IsEnabled);

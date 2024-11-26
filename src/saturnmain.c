@@ -74,8 +74,16 @@ extern bool client_enable_tx;
 extern bool ServerActive;
 extern bool MOXAsserted;
 
-#define FIRMWARE_MIN_VERSION  8               // Minimum FPGA software version that this software requires
-#define FIRMWARE_MAX_VERSION 18               // Maximum FPGA software version that this software is tested on
+//
+// For "minor" versions up to 17, there is no "major" one.
+// For "minor" version 18,  the "major" version is 1
+// With each firmware update, the "minor" version is increased (it is not reset upon advancinc the major)
+// The "major" version is increased if piHPSDR compatibility is broken
+//
+#define FIRMWARE_MIN_MINOR    8               // Minimum FPGA "minor" software version that this software requires
+#define FIRMWARE_MAX_MINOR   18               // Maximum FPGA "minor" software version that this software is tested on
+#define FIRMWARE_MIN_MAJOR    1               // Minimum FPGA "major" software version that this software requires
+#define FIRMWARE_MAX_MAJOR    1               // Minimum FPGA "major" software version that this software requires
 
 #define SDRBOARDID 1                          // Hermes
 #define SDRSWVERSION 1                        // version of this software
@@ -329,11 +337,13 @@ void saturn_discovery() {
     uint8_t *mac = discovered[devices].info.network.mac_address;
     uint32_t SoftwareInformation;                   // swid & version
     uint32_t ProductInformation;                    // product id & version
-    uint32_t Version;                               // s/w version
+    uint32_t MinorVersion;                          // s/w version
+    uint32_t MajorVersion;                          // s/w version
     uint32_t SWID;                                  // s/w id
     uint32_t ProdID;                                // product version and id
     uint32_t ClockInfo;                             // clock status
     bool goodConfig = true;
+    bool incompatible = true;
     char buf[256];
     bool running = is_already_running();
 
@@ -347,34 +357,56 @@ void saturn_discovery() {
     //
     SoftwareInformation = RegisterRead(VADDRSWVERSIONREG);
     ProductInformation = RegisterRead(VADDRPRODVERSIONREG);
-    ClockInfo = (SoftwareInformation & 0xF);                        // 4 clock bits
-    Version = (SoftwareInformation >> 4) & 0xFFFF;                  // 16 bit sw version
-    SWID = SoftwareInformation >> 20;                               // 12 bit software ID
-    ProdID = ProductInformation >> 16;                              // 16 bit product ID
+    ClockInfo    = (SoftwareInformation      ) & 0xF;               // 4 clock bits
+    MinorVersion = (SoftwareInformation >>  4) & 0xFFFF;            // 16 bit minor sw version
+    MajorVersion = (SoftwareInformation >> 25) & 0x7F;              //  7 bit major sw version
+    SWID         = (SoftwareInformation >> 20) & 0x1F;              //  5 bit software ID
+    ProdID       = (ProductInformation  >> 16) & 0xFFFF;            // 16 bit product ID
+
+    //
+    // Initially, MajorVersions did not exist
+    //
+    if (MinorVersion < 18) {
+      MajorVersion = 0;
+    }
 
     if (ProdID != SATURNPRODUCTID) {
+      t_print("SATURN ProdID does not match\n");
       goodConfig = false;
     }
 
     if (SWID != SATURNGOLDENCONFIGID && SWID != SATURNPRIMARYCONFIGID) {
+      t_print("SATURN SWID does not match\n");
       goodConfig = false;
     }
 
     if (ClockInfo != 0xF) {
+      t_print("SATURN clocks missing\n");
       goodConfig = false;  // not all clocks are present
-    }
-
-    if (Version < FIRMWARE_MIN_VERSION || Version > FIRMWARE_MAX_VERSION) {
-      t_print("Incompatible Saturn FPGA firmware version %d, need %d ... %d\n",
-              Version,
-              FIRMWARE_MIN_VERSION,
-              FIRMWARE_MAX_VERSION);
-      discovered[devices].status = STATE_INCOMPATIBLE;
-      goodConfig = false;
     }
 
     if (goodConfig) {
       discovered[devices].status = (running) ? STATE_SENDING : STATE_AVAILABLE;
+    }
+
+    if (MajorVersion == 0 && MinorVersion >= FIRMWARE_MIN_MINOR && MinorVersion <= FIRMWARE_MAX_MINOR) {
+      incompatible = false;
+    }
+
+    if (MajorVersion >= FIRMWARE_MIN_MAJOR && MajorVersion <=  FIRMWARE_MAX_MAJOR) {
+      incompatible = false;
+    }
+
+    if (incompatible) {
+      t_print("Incompatible Saturn FPGA firmware version (%d,%d), need (%d...%d, %d...%d) \n",
+              MajorVersion,
+              MinorVersion,
+              FIRMWARE_MIN_MAJOR,
+              FIRMWARE_MAX_MAJOR,
+              FIRMWARE_MIN_MINOR,
+              FIRMWARE_MAX_MINOR
+              );
+      discovered[devices].status = STATE_INCOMPATIBLE;
     }
 
     discovered[devices].protocol = NEW_PROTOCOL;
@@ -384,6 +416,16 @@ void saturn_discovery() {
     STRLCPY(discovered[devices].name, "saturn",  sizeof(discovered[devices].name));
     discovered[devices].frequency_min = 0.0;
     discovered[devices].frequency_max = 61440000.0;
+
+    //
+    // Try to obtain the hardware MAC address of the local eth0.
+    // This is for diagnostic purposes only, so if it fails,
+    // just use 00:00:00:00::00.
+    //
+    // One possible reason for failure is that the ethernet adapter is
+    // not present or has a name different from eth0.
+    // The interface name reported upstream is "XDMA" anyway.
+    //
     memset(buf, 0, 256);
     FILE *fp = fopen("/sys/class/net/eth0/address", "rt");
 
@@ -1452,9 +1494,9 @@ void saturn_handle_general_packet(bool FromNetwork, uint8_t *PacketBuffer) {
   SetFreqPhaseWord((bool)(Byte & 8));
   Byte = *(uint8_t*)(PacketBuffer + 38);              // enable timeout
   HW_Timer_Enable = ((bool)(Byte & 1));
-  Byte = *(uint8_t*)(PacketBuffer + 58);              // flag bits
+  Byte = *(uint8_t*)(PacketBuffer + 58);              // Only Bit0 used for "PA enable"
   SetPAEnabled((bool)(Byte & 1));
-  SetApolloEnabled((bool)(Byte & 2));
+  //SetApolloEnabled((bool)(Byte & 2));
   Byte = *(uint8_t*)(PacketBuffer + 59);              // Alex enable bits
   SetAlexEnabled(Byte);
   return;
