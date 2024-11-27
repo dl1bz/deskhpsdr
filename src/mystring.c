@@ -47,8 +47,10 @@
 #include <string.h>
 // add by DH0DM
 #if defined (__LDESK__) && defined (__CPYMODE__)
-  #include <pthread.h>
-  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  // #include <pthread.h>
+  // pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  #include <gtk/gtk.h>
+  static GMutex copy_string_mutex;
 #endif
 
 /*
@@ -102,7 +104,8 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
 
   // add by DH0DM
   #if defined (__LDESK__) && defined (__CPYMODE__)
-    pthread_mutex_lock(&mutex);
+    // pthread_mutex_lock(&mutex);
+    g_mutex_lock(&copy_string_mutex);
   #endif
 
   /* Copy as many bytes as will fit. */
@@ -125,7 +128,8 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
   }
   // add by DH0DM
   #if defined (__LDESK__) && defined (__CPYMODE__)
-    pthread_mutex_unlock(&mutex);
+    // pthread_mutex_unlock(&mutex);
+    g_mutex_unlock(&copy_string_mutex);
   #endif
   return (src - osrc - 1); /* count does not include NUL */
 }
