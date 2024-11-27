@@ -280,6 +280,38 @@ static void modesettingsRestoreState() {
       mode_settings[i].cfc_post  [j] = 0;
     }
 
+    #if defined (__LDESK__)
+    switch (i) {
+    case modeLSB:
+    case modeUSB:
+    case modeDSB:
+      mode_settings[i].tx_eq_gain[ 0] =  0.0;
+      mode_settings[i].tx_eq_gain[ 1] = -9.0;
+      mode_settings[i].tx_eq_gain[ 2] = -6.0;
+      mode_settings[i].tx_eq_gain[ 3] = -6.0;
+      mode_settings[i].tx_eq_gain[ 4] = -9.0;
+      mode_settings[i].tx_eq_gain[ 5] =  0.0;
+      mode_settings[i].tx_eq_gain[ 6] =  0.0;
+      mode_settings[i].tx_eq_gain[ 7] =  3.0;
+      mode_settings[i].tx_eq_gain[ 8] =  3.0;
+      mode_settings[i].tx_eq_gain[ 9] =  3.0;
+      mode_settings[i].tx_eq_gain[10] =  3.0;
+      mode_settings[i].cfc_lvl   [ 0] =  3.0;
+      mode_settings[i].cfc_lvl   [ 1] =  0.0;
+      mode_settings[i].cfc_lvl   [ 2] =  0.0;
+      mode_settings[i].cfc_lvl   [ 3] =  3.0;
+      mode_settings[i].cfc_lvl   [ 4] =  3.0;
+      mode_settings[i].cfc_lvl   [ 5] =  3.0;
+      mode_settings[i].cfc_lvl   [ 6] =  6.0;
+      mode_settings[i].cfc_lvl   [ 7] =  6.0;
+      mode_settings[i].cfc_lvl   [ 8] =  6.0;
+      mode_settings[i].cfc_lvl   [ 9] =  9.0;
+      mode_settings[i].cfc_lvl   [10] =  9.0;
+      mode_settings[i].cfc_post  [ 0] = -9.0;
+    break;
+    }
+    #endif
+
     mode_settings[i].tx_eq_freq[0]  =     0.0;
     mode_settings[i].rx_eq_freq[0]  =     0.0;
     mode_settings[i].cfc_freq  [0]  =     0.0;
