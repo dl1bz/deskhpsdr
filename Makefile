@@ -798,6 +798,9 @@ x11install:
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
 	@sudo mkdir -p /usr/local/share/$(PROGRAM)
 	@sudo cp release/$(PROGRAM)/hpsdr*.png /usr/local/share/$(PROGRAM)
+	@echo "Copy icon files for deskHPSDR to /usr/local/share/icons"
+	@sudo mkdir -p /usr/local/share/icons
+	@sudo cp release/$(PROGRAM)/radio_icon.png /usr/local/share/icons
 	@echo "[Re-]Install X11 deskHPSDR desktop file..."
 	@rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
