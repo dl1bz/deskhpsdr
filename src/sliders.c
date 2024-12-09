@@ -678,8 +678,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // label  width: 1/12 of screen width
     // slider width: 3/12 of screen width
     tpix   =  width / 12;
+    #if defined (__linux__)
+    twidth =  4;              // width of text label in pixel
+    swidth = 10;              // width of slider in grid units
+    #else
     twidth =  3;              // width of text label in pixel
     swidth =  9;              // width of slider in grid units
+    #endif
   } else {
     // label  width: 1/15 of screen width
     // slider width: 4/12 of screen width
