@@ -648,7 +648,11 @@ void show_diversity_phase() {
 }
 
 GtkWidget *sliders_init(int my_width, int my_height) {
+  #if defined (__LDESK__)
+  width = my_width - 50;
+  #else
   width = my_width;
+  #endif
   height = my_height;
   t_print("sliders_init: width=%d height=%d\n", width, height);
   //
