@@ -63,8 +63,8 @@
 #include "noise_menu.h"
 #include "equalizer_menu.h"
 #include "message.h"
-#if defined (__LDESK__) && defined (__HAVEATU__)
-#include "sliders.h"
+#if defined (__LDESK__)
+  #include "sliders.h"
 #endif
 
 static int my_width;
@@ -143,7 +143,7 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
     SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
-    #if defined (__CPYMODE__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     SetPropF1("modeset.%d.mic_gain", i,              mode_settings[i].mic_gain);
     #endif
     SetPropI1("modeset.%d.dexp", i,                  mode_settings[i].dexp);
@@ -251,7 +251,7 @@ static void modesettingsRestoreState() {
     mode_settings[i].en_txeq = 0;
     mode_settings[i].compressor = 0;
     mode_settings[i].compressor_level = 4.0;
-    #if defined (__CPYMODE__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     mode_settings[i].mic_gain = 0.0;
     #endif
     mode_settings[i].dexp = 0;
@@ -380,7 +380,7 @@ static void modesettingsRestoreState() {
     GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
     GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     GetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
-    #if defined (__CPYMODE__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     GetPropF1("modeset.%d.mic_gain", i,              mode_settings[i].mic_gain);
     #endif
     GetPropI1("modeset.%d.dexp", i,                  mode_settings[i].dexp);
@@ -753,7 +753,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     tx_set_compressor(transmitter);
     tx_set_dexp(transmitter);
 
-    #if defined (__CPYMODE__)
+    #if defined (__LDESK__) && defined (__CPYMODE__)
     set_mic_gain(mode_settings[m].mic_gain);
     #endif
     // tx_set_equalizer(transmitter);
