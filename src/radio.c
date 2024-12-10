@@ -1214,7 +1214,13 @@ void radio_start_radio() {
   case DEVICE_HERMES_LITE2:
   case NEW_DEVICE_HERMES_LITE:
   case NEW_DEVICE_HERMES_LITE2:
-    have_dither = 1; // HERMES LITE 2: dither bit if set activate bandvoltage output as option
+    //
+    // Note: HL2 does not have Dither and Random.
+    //       BUT: the Dither bit is hi-jacked without documentation (!)
+    //       for a "band voltage" output, see:
+    //       https://github.com/softerhardware/Hermes-Lite2/wiki/Band-Volts
+    //
+    have_dither = 1;
     have_rx_gain = 1;
     rx_gain_calibration = 14;
     break;

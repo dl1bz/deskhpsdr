@@ -44,7 +44,6 @@
 #define ALEX_RX_ANTENNA_EXT1   0x00000200               // route EXT1     to RX1 (bit 9)
 #define ALEX_RX_ANTENNA_EXT2   0x00000400               // route EXT2     to RX1 (bit 10)
 #define ALEX_RX_ANTENNA_BYPASS 0x00000800               // activate BYPASS       (bit 11)
-#define ANAN7000_RX_SELECT     0x00004000               // Master RX select      (bit 14)
 
 #define ALEX_TX_ANTENNA_1      0x01000000               // route TX to ANT1      (bit 24)
 #define ALEX_TX_ANTENNA_2      0x02000000               // route TX to ANT2      (bit 25)
@@ -101,8 +100,9 @@
 //
 // ALEX bits for ANAN-7000 and ANAN-8000
 // Note that we here also have Alex1 bits which control the filters
-// for the second ADC. The RX input is also very different and now used
-// bit14 which is used for switching attenuators in the general case
+// for the second ADC. The RX input is also very different and now for ANAN-7000
+// bit14 (which is used for switching attenuators in the general case)
+// is used to switch the RF frontend between Ant1/2/3 and Ext1/XvrtIn.
 // On the RX side, we now have band-pass filters and the RX signals
 // from Ant1,2,3 DO NOT PASS the TX low-pass filters.
 // The TX bits are just as for the "generic" case.
@@ -118,11 +118,13 @@
 #define ALEX_ANAN7000_RX_160_BPF        0x00000040   // (bit  6),  1.5 -  2.0 MHz
 #define ALEX_ANAN7000_RX_BYPASS_BPF     0x00001000   // (bit 12)
 
+#define ALEX0_ANAN7000_RX_SELECT        0x00004000   // (bit 14) Master RX select
 #define ALEX1_ANAN7000_RX_GNDonTX       0x00000100   // (bit 8), ground second ADC input during TX
 
 //
 // ANAN7000,8000 specific bits in byte 1400 of the high-priority packet
 //
-#define ANAN7000_XVTR_OUT               0x00000001   //  if PTT is set, Orion-II RF output is routed to the "XVTR Port" jack (1 = enabled)
-#define ANAN7000_SPKR_MUTE              0x00000002   //  Enable/mute audio (1 = mute)
+#define ANAN7000_HIPRIO1400_XVTR_OUT   0x00000001   //  if PTT is set, Orion-II RF output is routed to the "XVTR Port" jack (1 = enabled)
+#define ANAN7000_HIPRIO1400_SPKR_MUTE  0x00000002   //  Enable/mute audio (1 = mute)
+#define ANAN7000_HIPRIO1400_ATU        0x00000004   //  another output used to start a Tuner - needs firmware/hardware modification (?)
 #endif

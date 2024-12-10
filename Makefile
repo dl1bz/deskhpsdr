@@ -1305,7 +1305,7 @@ src/vfo.o: src/transmitter.h src/new_protocol.h src/MacOS.h
 src/vfo.o: src/soapy_protocol.h src/vfo.h src/channel.h src/toolbar.h
 src/vfo.o: src/gpio.h src/new_menu.h src/rigctl.h src/client_server.h
 src/vfo.o: src/ext.h src/actions.h src/noise_menu.h src/equalizer_menu.h
-src/vfo.o: src/message.h
+src/vfo.o: src/message.h src/sliders.h
 src/vfo_menu.o: src/new_menu.h src/band.h src/bandstack.h src/filter.h
 src/vfo_menu.o: src/mode.h src/radio.h src/adc.h src/dac.h src/discovered.h
 src/vfo_menu.o: src/receiver.h src/transmitter.h src/vfo.h src/ext.h

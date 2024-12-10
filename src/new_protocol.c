@@ -902,14 +902,14 @@ static void new_protocol_high_priority() {
       //                  such that upon RX, Xvtr port is input, and on TX, Xvrt port
       //                  is output if the XVTR_OUT bit is set.
       //
-      high_priority_buffer_to_radio[1400] |= ANAN7000_XVTR_OUT;
+      high_priority_buffer_to_radio[1400] |= ANAN7000_HIPRIO1400_XVTR_OUT;
     }
 
     if (mute_spkr_amp) {
       //
       // Mute the amplifier of the built-in speakers
       //
-      high_priority_buffer_to_radio[1400] |= ANAN7000_SPKR_MUTE;
+      high_priority_buffer_to_radio[1400] |= ANAN7000_HIPRIO1400_SPKR_MUTE;
     }
   }
 
@@ -1238,11 +1238,11 @@ static void new_protocol_high_priority() {
 
   case 104:         // EXT2 with ANAN-7000: does not exist, use EXT1
   case 103:         // EXT1 with ANAN-7000
-    alex0 |= ALEX_RX_ANTENNA_EXT1 | ANAN7000_RX_SELECT;
+    alex0 |= ALEX_RX_ANTENNA_EXT1 | ALEX0_ANAN7000_RX_SELECT;
     break;
 
   case 105:         // XVTR with ANAN-7000
-    alex0 |= ALEX_RX_ANTENNA_XVTR | ANAN7000_RX_SELECT;
+    alex0 |= ALEX_RX_ANTENNA_XVTR | ALEX0_ANAN7000_RX_SELECT;
     break;
 
   case 106:         // EXT1-on-TX with ANAN-7000: does not exist, use ByPass

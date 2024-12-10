@@ -2420,8 +2420,12 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           send_resp(client->fd, reply);
         } else if (command[7] == ';') {
           int val = atoi(&command[4]);
+          #if !defined (__CPYMODE__)
           transmitter->mic_gain = ((double) val * 0.8857) - 12.0;
           tx_set_mic_gain(transmitter);
+          #else
+          set_mic_gain(((double) val * 0.8857) - 12.0);
+          #endif
         }
       } else {
         implemented = FALSE;
@@ -4993,8 +4997,12 @@ int parse_cmd(void *data) {
 
           if (gain > 50.0) { gain = 50.0; }
 
+          #if !defined (__CPYMODE__)
           transmitter->mic_gain = gain;
           tx_set_mic_gain(transmitter);
+          #else
+          set_mic_gain(gain);
+          #endif
         }
       } else {
         implemented = FALSE;
