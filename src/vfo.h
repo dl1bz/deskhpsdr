@@ -122,7 +122,7 @@ struct _mode_settings {
   double tx_eq_gain[11];
   int compressor;                   // TX compressor on/off
   double compressor_level;          // TX compressor level
-  #if defined (__LDESK__) && defined (__CPYMODE__)
+  #if defined (__LDESK__) && defined (__USELESS__)
   double mic_gain;                  // TX mic gain
   #endif
   int dexp;                         // Downward Expander (DEXP) on/off
