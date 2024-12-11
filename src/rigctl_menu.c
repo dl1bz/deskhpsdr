@@ -374,7 +374,7 @@ void rigctl_menu(GtkWidget *parent) {
       my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL], 3, row, 1, 1);
       g_signal_connect(serial_baud[MAX_SERIAL], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL));
 
-      serial_enable[MAX_SERIAL] = gtk_check_button_new_with_label("Enable");
+      serial_enable[MAX_SERIAL] = gtk_check_button_new_with_label("Enable RTS as TUNING pin on this serial");
       gtk_widget_set_name(serial_enable[MAX_SERIAL], "boldlabel");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL]), SerialPorts[MAX_SERIAL].enable);
       gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL], 4, row, 1, 1);
