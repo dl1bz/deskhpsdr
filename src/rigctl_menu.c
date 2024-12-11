@@ -34,8 +34,13 @@
 #include "mystring.h"
 
 static GtkWidget *dialog = NULL;
+#if defined (__DVL__)
+static GtkWidget *serial_baud[MAX_SERIAL+1];
+static GtkWidget *serial_enable[MAX_SERIAL+1];
+#else
 static GtkWidget *serial_baud[MAX_SERIAL];
 static GtkWidget *serial_enable[MAX_SERIAL];
+#endif
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -129,7 +134,9 @@ static void andromeda_cb(GtkWidget *widget, gpointer data) {
 
 static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
-
+  #if defined (__DVL__)
+  if (id < MAX_SERIAL) {
+  #endif
   if ((SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))) {
     if (launch_serial_rigctl(id) == 0) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
@@ -138,7 +145,11 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   } else {
     disable_serial_rigctl(id);
   }
-
+  #if defined (__DVL__)
+  } else {
+    SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  }
+  #endif
   t_print("%s: Serial enable : ID=%d Enabled=%d\n", __FUNCTION__, id, SerialPorts[id].enable);
 }
 
@@ -294,21 +305,25 @@ void rigctl_menu(GtkWidget *parent) {
 
       my_combo_attach(GTK_GRID(grid), serial_baud[i], 3, row, 1, 1);
       g_signal_connect(serial_baud[i], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(i));
+
       serial_enable[i] = gtk_check_button_new_with_label("Enable");
       gtk_widget_set_name(serial_enable[i], "boldlabel");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[i]), SerialPorts[i].enable);
       gtk_grid_attach(GTK_GRID(grid), serial_enable[i], 4, row, 1, 1);
       g_signal_connect(serial_enable[i], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(i));
+      
       w = gtk_check_button_new_with_label("Andromeda");
       gtk_widget_set_name(w, "boldlabel");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), SerialPorts[i].andromeda);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(andromeda_cb), GINT_TO_POINTER(i));
+      
       w = gtk_check_button_new_with_label("AutoRprt");
       gtk_widget_set_name(w, "boldlabel");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), SerialPorts[i].autoreporting);
       gtk_grid_attach(GTK_GRID(grid), w, 6, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(serial_autoreporting_cb), GINT_TO_POINTER(i));
+
     } else {
       snprintf (str, 64, "This port is used for G2-internal communication");
       w = gtk_label_new(str);
@@ -317,7 +332,56 @@ void rigctl_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), w, 3, row, 3, 1);
     }
   }
+#if defined (__DVL__)
+//-----------------------------------------------------------------------------------------------------------------
+    char str[64];
+    row++;
+    snprintf (str, 64, "Serial");
+    w = gtk_label_new(str);
+    gtk_widget_set_name(w, "boldlabel");
+    gtk_widget_set_halign(w, GTK_ALIGN_END);
+    gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
+    w = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(w), SerialPorts[MAX_SERIAL].port);
+    gtk_grid_attach(GTK_GRID(grid), w, 1, row, 2, 1);
+    g_signal_connect(w, "changed", G_CALLBACK(serial_port_cb), GINT_TO_POINTER(MAX_SERIAL));
 
+      serial_baud[MAX_SERIAL] = gtk_combo_box_text_new();
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "4800 Bd");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "9600 Bd");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "19200 Bd");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "38400 Bd");
+
+      switch (SerialPorts[MAX_SERIAL].baud) {
+      case B9600:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 1);
+        break;
+
+      case B19200:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 2);
+        break;
+
+      case B38400:
+        gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 3);
+        break;
+
+      default:
+        SerialPorts[MAX_SERIAL].baud = B4800;
+        gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 0);
+        break;
+      }
+
+      my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL], 3, row, 1, 1);
+      g_signal_connect(serial_baud[MAX_SERIAL], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL));
+
+      serial_enable[MAX_SERIAL] = gtk_check_button_new_with_label("Enable");
+      gtk_widget_set_name(serial_enable[MAX_SERIAL], "boldlabel");
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL]), SerialPorts[MAX_SERIAL].enable);
+      gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL], 4, row, 1, 1);
+      g_signal_connect(serial_enable[MAX_SERIAL], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(MAX_SERIAL));
+
+//-----------------------------------------------------------------------------------------------------------------
+#endif
   row++;
   w = gtk_check_button_new_with_label("Enable RigCtl Debug Logging");
   gtk_widget_set_name(w, "boldlabel");
@@ -328,4 +392,3 @@ void rigctl_menu(GtkWidget *parent) {
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
 }
-

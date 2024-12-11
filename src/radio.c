@@ -29,6 +29,14 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <termios.h>
+#if defined (__DVL__)
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <signal.h>
+#endif
 
 #include "appearance.h"
 #include "adc.h"
@@ -1068,7 +1076,12 @@ void radio_start_radio() {
     have_saturn_xdma = 1;
   }
 
+
+#if defined (__DVL__)
+  for (int id = 0; id <= MAX_SERIAL; id++) {
+#else
   for (int id = 0; id < MAX_SERIAL; id++) {
+#endif
     //
     // Apply some default values. The name ttyACMx is suitable for
     // USB-serial adapters on Linux
@@ -2013,6 +2026,38 @@ void radio_set_vox(int state) {
   schedule_receive_specific();
 }
 
+#if defined (__DVL__)
+void rts_onoff(int rtsEnable)
+{
+  int fd;
+  int flags;
+
+  // char *serialdev = "/dev/cu.usbserial-A107PEXL";
+  char *serialdev = SerialPorts[MAX_SERIAL].port;
+  
+    fd = open(serialdev, O_RDWR | O_NOCTTY);
+    if (fd > 0) {
+
+    ioctl(fd, TIOCMGET, &flags);
+    t_print("%s: Flags before are %x.\n", __FUNCTION__, flags);
+  
+    if(rtsEnable!=0) {
+      flags |= TIOCM_RTS;
+    } else {
+	    flags &= ~TIOCM_RTS;
+	  }
+
+    ioctl(fd, TIOCMSET, &flags);
+    ioctl(fd, TIOCMGET, &flags);
+    t_print("%s: Flags after are %x.\n", __FUNCTION__, flags);
+  
+    if (rtsEnable==0) {
+      close(fd);
+    }
+  }
+}
+#endif
+
 void radio_set_tune(int state) {
   t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox,vox,tune,state);
 
@@ -2031,6 +2076,11 @@ void radio_set_tune(int state) {
     }
 
     if (state) {
+      #if defined (__DVL__)
+      if (SerialPorts[MAX_SERIAL].enable) {
+        rts_onoff(1);
+      }
+      #endif
       //
       // Ron has reported that TX underruns occur if TUNEing with
       // compressor or CFC engaged, and that this can be
@@ -2197,6 +2247,11 @@ void radio_set_tune(int state) {
 
       // restore settings we switched off earlier
       tx_set_compressor(transmitter);
+      #if defined (__DVL__)
+      if (SerialPorts[MAX_SERIAL].enable) {
+        rts_onoff(0);
+      }
+      #endif
 
       tune = state;
       radio_calc_drive_level();
@@ -2634,6 +2689,12 @@ static void radio_restore_state() {
     }
   }
 
+  #if defined (__DVL__)
+    GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
+    GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
+    GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  #endif
+
   for (int i = 0; i < n_adc; i++) {
     GetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
     GetPropI1("radio.adc[%d].hpf", i,                        adc[i].hpf);
@@ -2836,6 +2897,12 @@ void radio_save_state() {
     SetPropS1("rigctl_serial_port[%d]", id,                  SerialPorts[id].port);
     SetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
   }
+
+  #if defined (__DVL__)
+    SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
+    SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
+    SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  #endif
 
   for (int i = 0; i < n_adc; i++) {
     SetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
