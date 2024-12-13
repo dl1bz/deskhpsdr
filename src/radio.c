@@ -2039,7 +2039,11 @@ void tune_serial_set(int rtsdtrEnable)
     // open serial in non-blocking mode, not important for control only RTS or DTR
     fd = open(serialdev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
     if (fd < 0) {
-      t_print("%s: open serial port %s for TUNE failed\n", __FUNCTION__, serialdev);
+        t_print("%s: open serial port %s for TUNE failed\n", __FUNCTION__, serialdev);
+      if (SerialPorts[MAX_SERIAL].enable) {
+        SerialPorts[MAX_SERIAL].enable = 0;
+        t_print("%s: disable serial port %s for TUNE now\n", __FUNCTION__, serialdev);
+      }
     } else {
     ioctl(fd, TIOCMGET, &flags);
     // t_print("%s: Flags before are %x.\n", __FUNCTION__, flags);
