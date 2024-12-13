@@ -93,6 +93,7 @@
 #if defined (__LDESK__)
   #include "version.h"
   #include "exit_menu.h"
+  #include "message.h"
 #endif
 #include "mystring.h"
 
@@ -2027,31 +2028,37 @@ void radio_set_vox(int state) {
 }
 
 #if defined (__DVL__)
-void rts_onoff(int rtsEnable)
+void tune_serial_set(int rtsdtrEnable)
 {
   int fd;
   int flags;
 
-  // char *serialdev = "/dev/cu.usbserial-A107PEXL";
   char *serialdev = SerialPorts[MAX_SERIAL].port;
-  
-    fd = open(serialdev, O_RDWR | O_NOCTTY);
-    if (fd > 0) {
+    // fd = open(serialdev, O_RDWR | O_NOCTTY);
 
-    ioctl(fd, TIOCMGET, &flags);
-    t_print("%s: Flags before are %x.\n", __FUNCTION__, flags);
-  
-    if(rtsEnable!=0) {
-      flags |= TIOCM_RTS;
+    // open serial in non-blocking mode, not important for control only RTS or DTR
+    fd = open(serialdev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
+    if (fd < 0) {
+      t_print("%s: open serial port %s for TUNE failed\n", __FUNCTION__, serialdev);
     } else {
-	    flags &= ~TIOCM_RTS;
-	  }
-
-    ioctl(fd, TIOCMSET, &flags);
     ioctl(fd, TIOCMGET, &flags);
-    t_print("%s: Flags after are %x.\n", __FUNCTION__, flags);
+    // t_print("%s: Flags before are %x.\n", __FUNCTION__, flags);
   
-    if (rtsEnable==0) {
+    if(rtsdtrEnable!=0) {
+      // set RTS and DTR to HIGH
+      flags |= TIOCM_RTS;
+      flags |= TIOCM_DTR;
+    } else {
+      // set RTS and DTR to LOW
+	    flags &= ~TIOCM_RTS;
+      flags &= ~TIOCM_DTR;
+	  }
+    ioctl(fd, TIOCMSET, &flags);
+
+    // ioctl(fd, TIOCMGET, &flags);
+    // t_print("%s: Flags after are %x.\n", __FUNCTION__, flags);
+  
+    if (rtsdtrEnable==0) {
       close(fd);
     }
   }
@@ -2078,7 +2085,7 @@ void radio_set_tune(int state) {
     if (state) {
       #if defined (__DVL__)
       if (SerialPorts[MAX_SERIAL].enable) {
-        rts_onoff(1);
+        tune_serial_set(1);
       }
       #endif
       //
@@ -2249,7 +2256,7 @@ void radio_set_tune(int state) {
       tx_set_compressor(transmitter);
       #if defined (__DVL__)
       if (SerialPorts[MAX_SERIAL].enable) {
-        rts_onoff(0);
+        tune_serial_set(0);
       }
       #endif
 
