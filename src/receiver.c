@@ -211,7 +211,7 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointer data) {
-  #if defined (__LDESK__)
+  #if defined (__LDESK__) && defined (__APPLE__)
   if (event->state) {
   if (event->direction == GDK_SCROLL_UP) {
     vfo_step(1);
