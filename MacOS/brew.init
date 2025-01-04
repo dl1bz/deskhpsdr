@@ -18,6 +18,7 @@ brew install gtk+3
 brew install pkg-config
 brew install portaudio
 brew install fftw
+brew install openssl@3
 
 #
 # This is for the SoapySDR universe

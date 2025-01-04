@@ -123,6 +123,7 @@ $BREW install librsvg
 $BREW install pkg-config
 $BREW install portaudio
 $BREW install fftw
+$BREW install openssl@3
 $BREW install libusb
 
 ################################################################
