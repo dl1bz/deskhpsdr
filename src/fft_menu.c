@@ -166,11 +166,15 @@ void fft_menu(GtkWidget *parent) {
 
     gtk_grid_attach(GTK_GRID(grid), w, col, 1, 1, 1);
 
-    if (chan != 8) {
+    if (chan == 8) {
       //
       // To enable CESSB overshoot correction with TX compression, we cannot
       // allow low latency filters for TX
       //
+      w = gtk_label_new("Linear Phase");
+      gtk_widget_set_name(w, "boldlabel");
+      gtk_grid_attach(GTK_GRID(grid), w, col, 2, 1, 1);
+    } else {
       w = gtk_combo_box_text_new();
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Linear Phase");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Low Latency");

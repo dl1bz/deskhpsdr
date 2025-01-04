@@ -749,7 +749,7 @@ void *highprio_thread(void *data) {
   struct timeval tv;
   int yes = 1;
   int rc;
-  unsigned long freq;
+  long freq;
   uint32_t u32;
   int i;
   int alex0_mod, alex1_mod, hp_mod;

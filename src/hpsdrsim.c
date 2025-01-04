@@ -76,6 +76,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #ifdef __APPLE__
   #include "MacOS.h"  // emulate clock_gettime on old MacOS systems
 #endif
@@ -683,8 +684,8 @@ int main(int argc, char *argv[]) {
     // If nothing has arrived via UDP for some time, try to open TCP connection.
     // "for some time" means 10 subsequent un-successful UDP rcvmmsg() calls
     if (sock_TCP_Client < 0 && udp_retries > 10 && oldnew != 2) {
-      if ((sock_TCP_Client = accept(sock_TCP_Server, NULL, NULL)) > -1) {
-        t_print("sock_TCP_Client: %d connected to sock_TCP_Server: %d\n", sock_TCP_Client, sock_TCP_Server);
+      if ((sock_TCP_Client = accept(sock_TCP_Server, (struct sockaddr *)&addr_from, &lenaddr)) > -1) {
+        t_print("sock_TCP_Client: Connected from %s\n", inet_ntoa(addr_from.sin_addr));
       }
 
       // This avoids firing accept() too often if it constantly fails
@@ -856,11 +857,11 @@ int main(int argc, char *argv[]) {
     // respond to an incoming Metis detection request
     case 0x0002feef:
       if (oldnew == 2) {
-        t_print("OldProtocol detection request IGNORED.\n");
+        t_print("OldProtocol detection request from %s IGNORED.\n",inet_ntoa(addr_from.sin_addr));
         break;  // Swallow P1 detection requests
       }
 
-      t_print( "Respond to an incoming Metis detection request / code: 0x%08x\n", code);
+      t_print( "Respond to an incoming Metis detection request from %s / code: 0x%08x\n", inet_ntoa(addr_from.sin_addr),code);
 
       // processing an invalid packet is too dangerous -- skip it!
       if (bytes_read != 63) {
@@ -987,7 +988,7 @@ int main(int argc, char *argv[]) {
        *                                  ==> this starts NewProtocol radio
        */
       if (bytes_read == 264 && buffer[0] == 0xEF && buffer[1] == 0xFE && buffer[2] == 0x03 && buffer[3] == 0x01) {
-        static long cnt = 0;
+        static unsigned long cnt = 0;
         unsigned long blks = (buffer[4] << 24) + (buffer[5] << 16) + (buffer[6] << 8) + buffer[7];
         t_print("OldProtocol Program blks=%lu count=%ld\r", blks, ++cnt);
         usleep(1000);
@@ -1038,11 +1039,11 @@ int main(int argc, char *argv[]) {
 
       if (code == 0 && buffer[4] == 0x02) {
         if (oldnew == 1) {
-          t_print("NewProtocol discovery packet IGNORED.\n");
+          t_print("NewProtocol discovery packet from %s IGNORED.\n",inet_ntoa(addr_from.sin_addr));
           break;
         }
 
-        t_print("NewProtocol discovery packet received\n");
+        t_print("NewProtocol discovery packet received from %s\n",inet_ntoa(addr_from.sin_addr));
         // prepeare response
         memset(buffer, 0, 60);
         buffer [4] = 0x02 + new_protocol_running();
