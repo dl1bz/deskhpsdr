@@ -558,7 +558,6 @@ static gpointer ozy_ep6_rx_thread(gpointer arg) {
     if (!P1running) { continue; }
 
     //t_print("%s: read %d bytes\n",__FUNCTION__,bytes);
-
     if (bytes == 0) {
       t_print("old_protocol_ep6_read: ozy_read returned 0 bytes... retrying\n");
       continue;
@@ -1175,7 +1174,20 @@ static void process_control_bytes() {
   radio_ptt  = (control_in[0]     ) & 0x01;
 
   if (previous_ptt != radio_ptt) {
-    g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    int m = vfo_get_tx_mode();
+    if (radio_ptt || m == modeCWU || m == modeCWL) {
+      //
+      // If "PTT on" comes from the radio, or we are doing CW: go TX without delay
+      //
+      g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    } else {
+      //
+      // If "PTT off" comes from the radio and no CW:
+      // delay the TX/RX transistion a little bit to avoid
+      // clipping the last bits of the TX signal
+      //
+      g_timeout_add(50,ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    }
   }
 
   if ((device == DEVICE_HERMES_LITE2) && (control_in[0] & 0x80)) {

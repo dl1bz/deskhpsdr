@@ -2541,7 +2541,20 @@ static void process_high_priority() {
   }
 
   if (previous_ptt != radio_ptt) {
-    g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    int m = vfo_get_tx_mode();
+    if (radio_ptt || m == modeCWU || m == modeCWL) {
+      //
+      // If "PTT on" comes from the radio, or we are doing CW: go TX without delay
+      //
+      g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    } else {
+      //
+      // If "PTT off" comes from the radio and no CW:
+      // delay the TX/RX transistion a little bit to avoid
+      // clipping the last bits of the TX signal
+      //
+      g_timeout_add(50,ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    }
   }
 
   if (enable_tx_inhibit) {
