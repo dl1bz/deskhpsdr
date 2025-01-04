@@ -372,10 +372,12 @@ void tx_panadapter_update(TRANSMITTER *tx) {
         cairo_show_text(cr, text);
       }
 
-      row += 15;
-      snprintf(text, 64, "ALC %2.1f dB", transmitter->alc);
-      cairo_move_to(cr, 10, row);
-      cairo_show_text(cr, text);
+      if (!cwmode) {
+        row += 15;
+        snprintf(text, 64, "ALC %2.1f dB", transmitter->alc);
+        cairo_move_to(cr, 10, row);
+        cairo_show_text(cr, text);
+      }
     }
 
     if (tx->dialog == NULL) {
