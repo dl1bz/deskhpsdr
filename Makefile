@@ -14,6 +14,7 @@
 #
 #######################################################################################
 
+TCI=OFF
 GPIO=OFF
 MIDI=ON
 SATURN=OFF
@@ -32,19 +33,20 @@ DEVEL=OFF
 #
 # Explanation of compile time options
 #
-# GPIO         | If ON, compile with GPIO support (RaspPi only)
+# TCI          | If ON, compile with TCI support (needs OpenSSL)
+# GPIO         | If ON, compile with GPIO support (RaspPi only, needs libgpiod)
 # MIDI         | If ON, compile with MIDI support
 # SATURN       | If ON, compile with native SATURN/G2 XDMA support
-# USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios
+# USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs libusb-1.0)
 # SOAPYSDR     | If ON, deskHPSDR can talk to radios via SoapySDR library
-# STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface
+# STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
 # EXTENDED_NR  | If ON, deskHPSDR can use extended noise reduction (VU3RDD WDSP version)
 # SERVER       | If ON, include client/server code (still far from being complete)
 # AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux
 # DESKTOP      | If ON, activate the deskHPSDR called version instead of old original piHPSDR code
 # ATU          | If ON, acticate some special functions if using an external ATU
 # COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
-# DEVEL        | ONLY FOR INTERNAL DEVELOPER USE ! Leave it ever OFF, please
+# DEVEL        | ONLY FOR DEVELOPERs INTERNAL USE ! Leave it ever OFF, please
 #
 # If you want to use a non-default compile time option, write them
 # into a file "make.deskhpsdr.config". So, for example, if you want to
@@ -391,6 +393,21 @@ endif
 
 ##############################################################################
 #
+# Add TCI support, if requested
+#
+##############################################################################
+ifeq ($(TCI), ON)
+TCI_OPTIONS=-DTCI
+TCI_INCLUDE=`$(PKG_CONFIG) --cflags openssl`
+TCI_LIBS=`$(PKG_CONFIG) --libs openssl`
+TCI_SOURCES=src/tci.c
+TCI_OBJS=src/tci.o
+endif
+CPP_DEFINES += -DTCI
+CPP_SOURCES += src/tci.c
+
+##############################################################################
+#
 # End of "libraries for optional features" section
 #
 ##############################################################################
@@ -435,7 +452,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(COPYMODE_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(SERVER_OPTIONS) \
-	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS)\
+	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"'
 
 INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE)
@@ -451,7 +468,7 @@ COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 ##############################################################################
 
 LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTKLIBS) $(GPIO_LIBS) $(SOAPYSDRLIBS) $(STEMLAB_LIBS) \
-	$(MIDI_LIBS) $(WDSP_LIBS) -lm $(SYSLIBS)
+	$(MIDI_LIBS) $(TCI_LIBS) $(WDSP_LIBS) -lm $(SYSLIBS)
 
 ##############################################################################
 #
@@ -719,14 +736,15 @@ src/zoompan.o
 #
 ##############################################################################
 
-$(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
+$(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
 	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) $(LIBS)
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) \
+		$(TCI_OBJS) $(LIBS)
 
 ##############################################################################
 #
@@ -885,14 +903,14 @@ DEPEND:
 #############################################################################
 
 .PHONY: app
-app:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) \
+app:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
 	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
 		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) \
-		$(LIBS) $(LDFLAGS)
+		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
 	@mkdir -p deskHPSDR.app/Contents/MacOS
@@ -912,14 +930,14 @@ endif
 #########################################################################################################
 
 .PHONY: macapp
-macapp:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) \
+macapp:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
 	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
 		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) \
-		$(LIBS) $(LDFLAGS)
+		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
 	@echo "Remove old deskHPSDR.app container from ${HOME}/Desktop ..."
@@ -1172,10 +1190,11 @@ src/radio.o: src/new_protocol.h src/MacOS.h src/old_protocol.h src/store.h
 src/radio.o: src/soapy_protocol.h src/actions.h src/gpio.h src/vfo.h
 src/radio.o: src/vox.h src/meter.h src/rx_panadapter.h src/tx_panadapter.h
 src/radio.o: src/waterfall.h src/zoompan.h src/sliders.h src/toolbar.h
-src/radio.o: src/rigctl.h src/ext.h src/client_server.h src/radio_menu.h
-src/radio.o: src/iambic.h src/rigctl_menu.h src/screen_menu.h src/midi.h
-src/radio.o: src/alsa_midi.h src/midi_menu.h src/message.h src/saturnmain.h
-src/radio.o: src/saturnregisters.h src/saturnserver.h
+src/radio.o: src/rigctl.h src/tci.h src/ext.h src/client_server.h
+src/radio.o: src/radio_menu.h src/iambic.h src/rigctl_menu.h
+src/radio.o: src/screen_menu.h src/midi.h src/alsa_midi.h src/midi_menu.h
+src/radio.o: src/message.h src/saturnmain.h src/saturnregisters.h
+src/radio.o: src/saturnserver.h
 src/radio_menu.o: src/main.h src/discovered.h src/new_menu.h src/radio_menu.h
 src/radio_menu.o: src/adc.h src/band.h src/bandstack.h src/filter.h
 src/radio_menu.o: src/mode.h src/radio.h src/dac.h src/receiver.h
@@ -1265,7 +1284,7 @@ src/switch_menu.o: src/adc.h src/dac.h src/discovered.h src/receiver.h
 src/switch_menu.o: src/transmitter.h src/vfo.h src/mode.h src/toolbar.h
 src/switch_menu.o: src/gpio.h src/actions.h src/action_dialog.h src/i2c.h
 src/tci.o: src/radio.h src/adc.h src/dac.h src/discovered.h src/receiver.h
-src/tci.o: src/transmitter.h src/vfo.h src/mode.h src/message.h
+src/tci.o: src/transmitter.h src/vfo.h src/mode.h src/rigctl.h src/message.h
 src/toolbar.o: src/actions.h src/gpio.h src/toolbar.h src/mode.h src/filter.h
 src/toolbar.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
 src/toolbar.o: src/MacOS.h src/receiver.h src/old_protocol.h src/vfo.h
