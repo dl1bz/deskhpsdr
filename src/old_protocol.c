@@ -364,8 +364,8 @@ void old_protocol_stop() {
   //
   if (device == DEVICE_OZY) { return; }
 
-  pthread_mutex_lock(&send_ozy_mutex);
   t_print("%s\n", __FUNCTION__);
+  pthread_mutex_lock(&send_ozy_mutex);
   metis_start_stop(0);
   pthread_mutex_unlock(&send_ozy_mutex);
 }

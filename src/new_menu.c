@@ -711,7 +711,11 @@ void new_menu() {
     g_signal_connect (toolbar_b, "button-press-event", G_CALLBACK(toolbar_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), toolbar_b, col, row, 1, 1);
     row++;
-    GtkWidget *rigctl_b = gtk_button_new_with_label("RigCtl");
+#ifdef TCI
+    GtkWidget *rigctl_b = gtk_button_new_with_label("CAT/TCI");
+#else
+    GtkWidget *rigctl_b = gtk_button_new_with_label("CAT");
+#endif
     g_signal_connect (rigctl_b, "button-press-event", G_CALLBACK(rigctl_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), rigctl_b, col, row, 1, 1);
     row++;
