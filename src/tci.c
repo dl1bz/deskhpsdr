@@ -28,8 +28,6 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 
-#include <ctype.h>
-
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
@@ -360,7 +358,7 @@ void send_mode(CLIENT *client, int v) {
 
 void send_close(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
-  if (rigctl_debug) { t_print("TCI%d CLOSE\n",client->seq); }
+  if (rigctl_debug) { t_print("TCI%d CLOSE\n"); }
   resp->client = client;
   resp->type   = opCLOSE;
   resp->msg[0] = 0;
@@ -378,7 +376,7 @@ void send_ping(CLIENT *client) {
 
 void send_pong(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
-  if (rigctl_debug) { t_print("TCI%d PONG\n",client->seq); }
+  if (rigctl_debug) { t_print("TCI%d PONG\n"); }
   resp->client = client;
   resp->type   = opPONG;
   resp->msg[0] = 0;
@@ -711,26 +709,20 @@ static gpointer tci_listener(gpointer data) {
   send_text(client, "if:0,1,0;");
   send_text(client, "if:1,0,0;");
   send_text(client, "if:1,1,0;");
-  send_vfo(client, VFO_A);
-  send_vfo(client, VFO_B);
-  send_mode(client, VFO_A);
-  send_mode(client, VFO_B);
   send_text(client, "rx_enable:0,true;");
-  send_text(client, "rx_enable:1,false;");
-  send_text(client, "split_enable:0,false;");
-  send_text(client, "split_enable:1,false;");
+  send_text(client, "rx_enable:1,true;");
   send_text(client, "tx_enable:0,true;");
   send_text(client, "tx_enable:1,false;");
+  send_text(client, "split_enable:0,false;");
+  send_text(client, "split_enable:1,false;");
   send_mox(client);
   send_text(client, "trx:1,false;");
   send_text(client, "tune:0,false;");
   send_text(client, "tune:1,false;");
   send_text(client, "mute:false;");
-  send_text(client, "mon_enable:false;");
   send_text(client, "start;");
   send_text(client, "ready;");
 
-/*
   while (client->running) {
     int type;
     //
@@ -741,7 +733,6 @@ static gpointer tci_listener(gpointer data) {
       client->running = 0;
       break;
     }
-    // t_print("%s: TCI client runs: %d\n", __FUNCTION__, client->running);
     numbytes = recv(client->fd, buff+offset, MAXDATASIZE-offset, 0);
     if (numbytes <= 0) {
       usleep(100000);
@@ -751,18 +742,11 @@ static gpointer tci_listener(gpointer data) {
     //
     // If there is enough data in the frame, process it
     //
-    t_print("%s: numbytes: %d\n", __FUNCTION__, numbytes);
     numbytes =  digest_frame(buff, msg, offset, &type);
-    t_print("%s: type: %d msg: %s\n", __FUNCTION__, type, msg);
     if (numbytes > 0) {
       switch(type) {
       case opTEXT:
         if (rigctl_debug) { t_print("TCI%d command rcvd=%s\n", client->seq, msg); }
-        if (strcmp(msg, "VFO:0,0;") == 0) {
-          send_vfo(client, VFO_A);
-          send_mode(client, VFO_A);
-          t_print("%s: Strings equal\n", __FUNCTION__);
-        }
         break;
       case opPING:
         if (rigctl_debug) { t_print("TCI%d PING rcvd\n", client->seq); }
@@ -785,55 +769,6 @@ static gpointer tci_listener(gpointer data) {
       }
     }
   }
-*/
-
-while (client->running) {
-  int type;
-
-  recv(client->fd, buff+offset, MAXDATASIZE-offset, 0);
-  digest_frame(buff, msg, offset, &type);
-
-  // numbytes = recv(client->fd, buff+offset, MAXDATASIZE-offset, 0);
-  // numbytes = digest_frame(buff, msg, offset, &type);
-
-  usleep(100000);
-
-  //convert msg payload ever to lower case
-  for (unsigned long i = 0; i < strlen(msg); i++) { msg[i] = tolower(msg[i]); }
-  
-  t_print("%s: TCI%d Type: %d Msg recv: %s\n", __FUNCTION__, client->seq, type, msg);
-  
-  switch (type) {
-    case opTEXT:
-      if (strcmp(msg, "vfo:0,0;") == 0) {
-        send_vfo(client, VFO_A);
-      }
-      else if (strcmp(msg, "modulation:0;") == 0) {
-        send_mode(client, VFO_A);
-      }
-      else if (strcmp(msg, "trx:0,true,tci;") == 0) {
-        send_text(client,"trx:0,true;");
-      }
-      else if (strcmp(msg, "trx:0,false,tci;") == 0) {
-        send_text(client,"trx:0,false;");
-      } else {
-        t_print("%s: TCI%d command %s not implemented -> ignore command\n", __FUNCTION__, client->seq, msg);
-        send_ping(client);
-      }
-      break;
-    case opPING:
-      send_pong(client);
-      t_print("%s: TCI%d PING recv, send PONG\n", __FUNCTION__, client->seq);
-      break;
-    case opPONG:
-      t_print("%s: TCI%d PONG recv -> confirmed\n", __FUNCTION__, client->seq);
-      break;
-    case opCLOSE:
-      client->running = 0;
-      t_print("%s: TCI%d Client DISC, close connection\n", __FUNCTION__, client->seq);
-      break;
-  }
-}
 
   send_text(client, "stop;");
   send_close(client);
