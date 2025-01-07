@@ -82,6 +82,7 @@ static void cleanup() {
 }
 
 static gboolean close_cb () {
+  radio_mox_update(0);
   cleanup();
   return TRUE;
 }
