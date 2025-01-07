@@ -46,4 +46,8 @@ void saturn_handle_duc_iq(bool FromNetwork, uint8_t *UDPInBuffer);
 void saturn_free_buffers(void);
 void saturn_exit(void);
 
+int saturn_minor_version_min(void);
+int saturn_minor_version_max(void);
+int saturn_major_version_min(void);
+int saturn_major_version_max(void);
 #endif

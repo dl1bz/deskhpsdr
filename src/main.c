@@ -50,6 +50,9 @@
 #ifdef SOAPYSDR
   #include "soapy_protocol.h"
 #endif
+#ifdef SATURN
+  #include "saturnmain.h"
+#endif
 #include "ext.h"
 #include "vfo.h"
 #include "css.h"
@@ -567,6 +570,24 @@ int main(int argc, char **argv) {
   GtkApplication *pihpsdr;
   int rc;
   char name[1024];
+  //
+  // We start with printing information of compile time options
+  // and SATURN FPGA compatibility
+  //
+  t_print("--------------------------------------------------------------\n");
+  t_print("deskHPSDR GIT version          : %s\n", build_version);
+  t_print("deskHPSDR GIT commit           : %s\n", build_commit);
+  t_print("deskHPSDR build date           : %s\n", build_date);
+  t_print("deskHPSDR compile-time options : %s\n", build_options);
+  t_print("deskHPSDR audio option         : %s\n", build_audio);
+  t_print("--------------------------------------------------------------\n");
+#ifdef SATURN
+  t_print("SATURN min minor FPGA version: %d\n", saturn_minor_version_min());
+  t_print("SATURN max minor FPGA version: %d\n", saturn_minor_version_max());
+  t_print("SATURN min major FPGA version: %d\n", saturn_major_version_min());
+  t_print("SATURN max major FPGA version: %d\n", saturn_major_version_max());
+  t_print("--------------------------------------------------------------\n");
+#endif
   //
   // The following call will most likely fail (until this program
   // has the privileges to reduce the nice value). But if the
