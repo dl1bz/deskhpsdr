@@ -78,7 +78,7 @@ void about_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   row++;
-  snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
+  snprintf(text, 1024, "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
            "Based on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\n"
            "deskHPSDR is developed and maintained by DL1BZ\n\n"
            "    Credits:\n"
@@ -93,9 +93,8 @@ void about_menu(GtkWidget *parent) {
            "Used compiler: %s\n"
            "Build date: %s (commit %s)\n"
            "Build version: %s\n"
-           "Build options: %s\n"
            "WDSP version: %d.%02d\n\n",
-           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_commit, build_version, build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100);
+           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_commit, build_version, GetWDSPVersion() / 100, GetWDSPVersion() % 100);
 
   switch (radio->protocol) {
   case ORIGINAL_PROTOCOL:

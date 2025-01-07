@@ -72,7 +72,6 @@
 #include "sliders.h"
 #include "toolbar.h"
 #include "rigctl.h"
-#include "tci.h"
 #include "ext.h"
 #include "radio_menu.h"
 #include "iambic.h"
@@ -1579,12 +1578,6 @@ void radio_start_radio() {
   radio_create_visual();
   radio_reconfigure_screen();
 
-  #ifdef TCI
-  if (tci_enable) {
-    launch_tci();
-  }
-  #endif
-
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
   }
@@ -2672,11 +2665,6 @@ static void radio_restore_state() {
   GetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   GetPropI0("radio.display_warnings",                        display_warnings);
   GetPropI0("radio.display_pacurr",                          display_pacurr);
-  #ifdef TCI
-    GetPropI0("tci_enable",                                  tci_enable);
-    GetPropI0("tci_port",                                    tci_port);
-    GetPropI0("tci_txonly",                                  tci_txonly);
-  #endif
   GetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   GetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   GetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -2897,11 +2885,6 @@ void radio_save_state() {
   SetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   SetPropI0("radio.display_warnings",                        display_warnings);
   SetPropI0("radio.display_pacurr",                          display_pacurr);
-  #ifdef TCI
-    SetPropI0("tci_enable",                                  tci_enable);
-    SetPropI0("tci_port",                                    tci_port);
-    SetPropI0("tci_txonly",                                  tci_txonly);
-  #endif
   SetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   SetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   SetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
