@@ -48,18 +48,6 @@ char build_options[] =
 #ifdef CLIENT_SERVER
   "SERVER "
 #endif
-#ifdef __LDESK__
-  "DESKTOP "
-#endif
-#ifdef __HAVEATU__
-  "ATU "
-#endif
-#ifdef __CPYMODE__
-  "COPYMODE "
-#endif
-#ifdef __DVL__
-  "DEVEL "
-#endif
   "";
 
 char build_audio[] =
