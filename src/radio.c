@@ -1941,8 +1941,9 @@ static void rxtx(int state) {
       }
     }
   }
-
+#ifdef GPIO
   gpio_set_ptt(state);
+#endif
 }
 
 void radio_mox_update(int state) {

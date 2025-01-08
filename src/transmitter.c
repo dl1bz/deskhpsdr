@@ -60,6 +60,8 @@
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
 
+#define WDSPTXDEBUG
+
 //
 // CW pulses are timed by the heart-beat of the mic samples.
 // Other parts of the program may produce CW RF pulses by manipulating
@@ -918,7 +920,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->ps_oneshot = 0;
   tx->ps_ints = 16;
   tx->ps_spi = 256;           // ints=16/spi=256 corresponds to "TINT=0.5 dB"
-  tx->ps_stbl = 0;            // "Stbl" un-checked
+  tx->ps_stbl = 1;            // "Stbl" un-checked
   tx->ps_map = 1;             // "Map" checked
   tx->ps_pin = 1;             // "Pin" checked
   tx->ps_ptol = 0;            // "Relax Tolerance" un-checked

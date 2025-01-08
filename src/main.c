@@ -334,7 +334,11 @@ static int init(void *data) {
   return 0;
 }
 
+#if defined (__LDESK__)
+static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
+#else
 static void activate_pihpsdr(GtkApplication *app, gpointer data) {
+#endif
   #if defined (__LDESK__)
     char text[2048];
   #else
@@ -567,7 +571,11 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 }
 
 int main(int argc, char **argv) {
+  #if defined (__LDESK__)
+  GtkApplication *deskhpsdr;
+  #else
   GtkApplication *pihpsdr;
+  #endif
   int rc;
   char name[1024];
   //
@@ -602,15 +610,21 @@ int main(int argc, char **argv) {
   startup(argv[0]);
   #if defined (__LDESK__)
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
+  t_print("%s: gtk_application_new: %s\n",__FUNCTION__, name);
+  deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
+  g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
+  rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
+  t_print("exiting ...\n");
+  g_object_unref(deskhpsdr);
   #else
   snprintf(name, 1024, "org.g0orx.pihpsdr.pid%d", getpid());
-  #endif
   t_print("%s: gtk_application_new: %s\n",__FUNCTION__, name);
   pihpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(pihpsdr, "activate", G_CALLBACK(activate_pihpsdr), NULL);
   rc = g_application_run(G_APPLICATION(pihpsdr), argc, argv);
   t_print("exiting ...\n");
   g_object_unref(pihpsdr);
+  #endif
   return rc;
 }
 

@@ -2883,8 +2883,12 @@ static void metis_start_stop(int command) {
     for (i = 4; i < 64; i++) {
       buffer[i] = 0x00;
     }
-
+    
     metis_send_buffer(buffer, 64);
+    #if defined (__LDESK__)
+    usleep(100000);
+    #endif
+
   } else {
     // use TCP -- send a long packet
     //
