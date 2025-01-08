@@ -2023,10 +2023,14 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     // stop protocol, change PS state, restart protocol
+    #if !defined (__LDESK__)
     old_protocol_stop();
     usleep(100000);
+    #endif
     tx->puresignal = SET(state);
+    #if !defined (__LDESK__)
     old_protocol_run();
+    #endif
     break;
 
   case NEW_PROTOCOL:
@@ -2049,6 +2053,14 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
     tx_ps_resume(tx);
     tx_ps_setparams(tx);
   }
+
+#if defined (__LDESK__)
+  if (protocol == ORIGINAL_PROTOCOL) {
+    old_protocol_stop();
+    usleep(100000);
+    old_protocol_run();
+  }
+#endif
 
   g_idle_add(ext_vfo_update, NULL);
 }
