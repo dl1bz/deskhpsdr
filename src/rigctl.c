@@ -75,7 +75,7 @@ int rigctl_tcp_autoreporting = 0;
 // max number of bytes we can get at once
 #define MAXDATASIZE 2000
 
-gboolean rigctl_debug = TRUE;
+gboolean rigctl_debug = FALSE;
 
 int parse_cmd (void *data);
 

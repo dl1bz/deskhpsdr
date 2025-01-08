@@ -2681,6 +2681,7 @@ static void radio_restore_state() {
   GetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   GetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
   GetPropI0("rigctl_port_base",                              rigctl_tcp_port);
+  GetPropI0("rigctl_debug",                                  rigctl_debug);
   GetPropI0("mute_spkr_amp",                                 mute_spkr_amp);
   GetPropI0("adc0_filter_bypass",                            adc0_filter_bypass);
   GetPropI0("adc1_filter_bypass",                            adc1_filter_bypass);
@@ -2906,6 +2907,7 @@ void radio_save_state() {
   SetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   SetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
   SetPropI0("rigctl_port_base",                              rigctl_tcp_port);
+  SetPropI0("rigctl_debug",                                  rigctl_debug);
   SetPropI0("mute_spkr_amp",                                 mute_spkr_amp);
   SetPropI0("adc0_filter_bypass",                            adc0_filter_bypass);
   SetPropI0("adc1_filter_bypass",                            adc1_filter_bypass);
