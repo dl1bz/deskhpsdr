@@ -60,7 +60,7 @@
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
 
-#define WDSPTXDEBUG
+// #define WDSPTXDEBUG
 
 //
 // CW pulses are timed by the heart-beat of the mic samples.
@@ -937,6 +937,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->drive = 50;
   #if defined (__LDESK__)
   tx->tune_drive = 2;
+  tx->radio_ptt_lock = 0;
   #else
   tx->tune_drive = 10;
   #endif
@@ -1996,6 +1997,10 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
   t_print("WDSP:TX id=%d PS OnOff=%d\n", tx->id, state);
 #endif
 
+#if defined (__LDESK__)
+  transmitter->radio_ptt_lock = 1;
+#endif
+
   if (!state) {
     // see above. Ensure some feedback samples still flow into
     // pscc after resetting.
@@ -2023,14 +2028,10 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     // stop protocol, change PS state, restart protocol
-    #if !defined (__LDESK__)
     old_protocol_stop();
     usleep(100000);
-    #endif
     tx->puresignal = SET(state);
-    #if !defined (__LDESK__)
     old_protocol_run();
-    #endif
     break;
 
   case NEW_PROTOCOL:
@@ -2054,15 +2055,10 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
     tx_ps_setparams(tx);
   }
 
-#if defined (__LDESK__)
-  if (protocol == ORIGINAL_PROTOCOL) {
-    old_protocol_stop();
-    usleep(100000);
-    old_protocol_run();
-  }
-#endif
-
   g_idle_add(ext_vfo_update, NULL);
+#if defined (__LDESK__)
+  transmitter->radio_ptt_lock = 0;
+#endif
 }
 
 void tx_ps_reset(const TRANSMITTER *tx) {
