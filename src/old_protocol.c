@@ -1182,9 +1182,13 @@ static void process_control_bytes() {
       if (radio_ptt || m == modeCWU || m == modeCWL) {
         //
         // If "PTT on" comes from the radio, or we are doing CW: go TX without delay
+        // We need a timeout_add here because sometimes there is a "spike" on the
+        // PTT line and we have to guarantee that the mox_update that is scheduled
+        // first will be executed first.
         //
         // t_print("%s: A_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
         g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
+        // g_timeout_add(5,ext_mox_update, GINT_TO_POINTER(radio_ptt));
       } else {
         //
         // If "PTT off" comes from the radio and no CW:

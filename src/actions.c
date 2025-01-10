@@ -203,6 +203,9 @@ ACTION_TABLE ActionTable[] = {
   {RIT_RX1,             "RIT\nRX1",             "RIT1",         MIDI_WHEEL | CONTROLLER_ENCODER},
   {RIT_RX2,             "RIT\nRX2",             "RIT2",         MIDI_WHEEL | CONTROLLER_ENCODER},
   {RIT_STEP,            "RIT\nStep",            "RITST",        MIDI_KEY   | CONTROLLER_SWITCH},
+  {RITXIT,              "RIT/XIT",              "RITXIT",       MIDI_WHEEL | CONTROLLER_ENCODER},
+  {RITSELECT,           "RIT/XIT\nCycle",       "RITXTCYC",     MIDI_KEY   | CONTROLLER_SWITCH},
+  {RITXIT_CLEAR,        "RIT/XIT\nClear",       "RITXTCLR",     MIDI_KEY   | CONTROLLER_SWITCH},
   {RSAT,                "RSAT",                 "RSAT",         MIDI_KEY   | CONTROLLER_SWITCH},
   {MENU_RX,             "RX\nMenu",             "RX",           MIDI_KEY   | CONTROLLER_SWITCH},
   {RX1,                 "RX1",                  "RX1",          MIDI_KEY   | CONTROLLER_SWITCH},
@@ -1509,6 +1512,44 @@ int process_action(void *data) {
     }
 
     g_idle_add(ext_vfo_update, NULL);
+    break;
+  
+  case RITXIT:
+    //
+    // a RITXIT encoder automatically switches between RIT or XIT. It does XIT
+    // if (and only if) RIT is disabled and XIT is enabled, otherwise it does RIT
+    //
+    if ((vfo[active_receiver->id].rit_enabled == 0) && (vfo[vfo_get_tx_vfo()].xit_enabled == 1)) {
+      vfo_xit_incr(rit_increment * a->val);
+    } else {
+      vfo_rit_incr(active_receiver->id, rit_increment * a->val);
+    }
+    break;
+  
+  case RITSELECT:
+    //
+    // An action which cycles between RIT on, XIT on, and both off.
+    // This is intended to be used together with the RITXIT encoder
+    //
+    if (a->mode == PRESSED) {
+      if ((vfo[active_receiver->id].rit_enabled == 0) && (vfo[vfo_get_tx_vfo()].xit_enabled == 0)) {
+        vfo_rit_onoff(active_receiver->id, 1);
+        vfo_xit_onoff(0);
+      } else if ((vfo[active_receiver->id].rit_enabled == 1) && (vfo[vfo_get_tx_vfo()].xit_enabled == 0)) {
+        vfo_rit_onoff(active_receiver->id, 0);
+        vfo_xit_onoff(1);
+      } else {
+        vfo_rit_onoff(active_receiver->id, 0);
+        vfo_xit_onoff(0);
+      }
+    }
+    break;
+  
+  case RITXIT_CLEAR:
+    if (a->mode == PRESSED) {
+      vfo_rit_value(active_receiver->id, 0);
+      vfo_xit_value(0);
+    }
     break;
 
   case RX1:
