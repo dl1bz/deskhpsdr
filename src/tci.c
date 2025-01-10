@@ -926,19 +926,21 @@ static gpointer tci_listener(gpointer data) {
       usleep(100000);
       continue;
     }
-
+    // offset += numbytes;
+    //
+    // If there is enough data in the frame, process it
+    //
     numbytes = digest_frame(buff, msg, offset, &type);
-    // better to convert payload msg ever to lower case because TCI client maybe send all in upper case
-    // required add #include <ctype.h> if using tolower()
-    for (unsigned long i = 0; i < strlen(msg); i++) { msg[i] = tolower(msg[i]); }
 
-    t_print("%s: TCI%d Type: %d Msg recv: %s\n", __FUNCTION__, client->seq, type, msg);
-
+    t_print("%s: TCI%d Numbytes: %d Offset: %d Type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
     // usleep(100000);
 
     if (numbytes > 0) {
       switch(type) {
       case opTEXT:
+        // better to convert payload msg ever to lower case because TCI client maybe send all in upper case
+        // required add #include <ctype.h> if using tolower()
+        for (unsigned long i = 0; i < strlen(msg); i++) { msg[i] = tolower(msg[i]); }
         if (rigctl_debug) { t_print("TCI%d command rcvd=%s\n", client->seq, msg); }
         //
         // Separate into commands and arguments, and then process the incoming
@@ -996,6 +998,12 @@ static gpointer tci_listener(gpointer data) {
         client->running = 0;
         break;
       }
+      //
+      // Remove the just-processed frame from the input buffer
+      // In normal operation, offset will be set to zero here.
+      //
+      // offset  -= numbytes;
+      t_print("%s: Offset %d\n", __FUNCTION__, offset);
     } 
   }
 //--------------------------------------------------------------------------------
