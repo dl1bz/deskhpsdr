@@ -27,7 +27,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
-
 #include <ctype.h>
 
 #include <openssl/sha.h>
@@ -200,7 +199,7 @@ static int send_frame(void *data) {
     return G_SOURCE_REMOVE;
   }
 
-  int length = strlen(msg);
+  size_t length = strlen(msg);
   frame[0] = 128 | type;
 
   if (length <= 125) {
@@ -213,7 +212,7 @@ static int send_frame(void *data) {
     start = 4;
   }
 
-  for (int i = 0; i < length; i++) {
+  for (size_t i = 0; i < length; i++) {
     frame[start + i] = msg[i];
   }
 
@@ -252,6 +251,9 @@ static int send_frame(void *data) {
 }
 
 void send_text(CLIENT *client, char *msg) {
+  if (!client->running) {
+    return;
+  }
   if (rigctl_debug) { t_print("TCI%d response: %s\n", client->seq, msg); }
   RESPONSE *resp=g_new(RESPONSE, 1);
   resp->client = client;
@@ -309,8 +311,10 @@ void send_vfo(CLIENT *client, int v) {
   }
   snprintf(msg, MAXMSGSIZE, "vfo:%d,0,%lld;", v, f1);
   send_text(client, msg);
+  if (receivers > 1) {
   snprintf(msg, MAXMSGSIZE, "vfo:%d,1,%lld;", v, f2);
   send_text(client, msg);
+  }
 }
 
 void send_split(CLIENT *client) {
@@ -473,7 +477,7 @@ static gboolean tci_reporter(gpointer data) {
 
   if (++(client->count) >= 30) {
     client->count = 0;
-    send_ping(client);
+    // send_ping(client);
   }
 
   //
@@ -482,7 +486,7 @@ static gboolean tci_reporter(gpointer data) {
   long long fx = vfo_get_tx_freq();
 
   if (fx != client->last_fx) {
-    send_txfreq(client);
+    // send_txfreq(client);
   }
 
   if (!tci_txonly) {
@@ -807,11 +811,15 @@ static gpointer tci_listener(gpointer data) {
   send_mode(client, VFO_A);
   send_mode(client, VFO_B);
   send_text(client, "rx_enable:0,true;");
+  if (receivers == 1) {
+  send_text(client, "rx_enable:1,false;");
+  } else {
   send_text(client, "rx_enable:1,true;");
-  send_text(client, "split_enable:0,false;");
-  send_text(client, "split_enable:1,false;");
+  }
   send_text(client, "tx_enable:0,true;");
   send_text(client, "tx_enable:1,false;");
+  send_text(client, "split_enable:0,false;");
+  send_text(client, "split_enable:1,false;");
   send_mox(client);
   send_text(client, "trx:1,false;");
   send_text(client, "tune:0,false;");
@@ -820,8 +828,6 @@ static gpointer tci_listener(gpointer data) {
   send_text(client, "start;");
   send_text(client, "ready;");
 
-/*
-//--------------------------------------------------------------------------------
   while (client->running) {
     int type;
     //
@@ -837,111 +843,21 @@ static gpointer tci_listener(gpointer data) {
       usleep(100000);
       continue;
     }
-    offset += numbytes;
-    //
-    // If there is enough data in the frame, process it
-    //
-    numbytes =  digest_frame(buff, msg, offset, &type);
-
-    for (unsigned long i = 0; i < strlen(msg); i++) { msg[i] = tolower(msg[i]); }
-
-    if (numbytes > 0) {
-      switch(type) {
-      case opTEXT:
-        if (rigctl_debug) { t_print("TCI%d command rcvd=%s\n", client->seq, msg); }
-        //
-        // Separate into commands and arguments, and then process the incoming
-        // commands according to the following list
-        //
-        // Received                Response/Remarks
-        // --------------------------------------------------------------------------
-        // trx_count               send_trx_count()  (should not be received from client)
-        // trx                     send_mox()        (do not change mox, ignore arg1/2/3)
-        // rx_sensors_enable       enable:=arg1      (sending interval always 1 second, ignore arg2)
-        // modulation              send_mode(arg1)   (do not change mode, ignore arg2)
-        // vfo:x,*;                send_vfo(arg1)    (do not change frequency, ignore arg2/3)
-        // rx_smeter,x,*;          send_smeter(arg1) (undocumented, ignore arg2)
-        //
-        // While it was originally decided NOT to respond to any incoming TCI command, there
-        // are logbook program which seem to require that
-        //
-        argc=1;
-        arg[0] = msg;
-        for (char *cp = msg; *cp != 0; cp++) {
-          if (*cp == ':' || *cp == ',') {
-            arg[argc] = cp+1;
-            argc++;
-            *cp = 0;
-          }
-          if (*cp == ';') {
-            *cp = 0;
-            break;
-          }
-        }
-        if (!strcmp(arg[0], "trx_count") && argc == 1) {
-          send_trx_count(client);
-        } else if (!strcmp(arg[0], "trx")) {
-          // just report MOX no matter how much arguments come in
-          send_mox(client);
-        } else if (!strcmp(arg[0],"rx_sensors_enable")) {
-          client->rxsensor = (*arg[1] == '1');
-        } else if (!strcmp(arg[0],"modulation")) {
-          send_mode(client, (*arg[1] == '1') ? 1 : 0);
-        } else if (!strcmp(arg[0],"vfo")) {
-          send_vfo(client, (*arg[1] == '1') ? 1 : 0);
-        } else if (!strcmp(arg[0],"rx_smeter")) {
-          send_smeter(client, (*arg[1] == '1') ? 1 : 0);
-        }
-        break;
-      case opPING:
-        if (rigctl_debug) { t_print("TCI%d PING rcvd\n", client->seq); }
-        send_pong(client);
-        break;
-      case opCLOSE:
-        if (rigctl_debug) { t_print("TCI%d CLOSE rcvd\n", client->seq); }
-        client->running = 0;
-        break;
-      }
-      //
-      // Remove the just-processed frame from the input buffer
-      // In normal operation, offset will be set to zero here.
-      //
-      offset  -= numbytes;
-      if (offset > 0) {
-        for (int i=0; i<offset; i++) {
-          buff[i]=buff[i+numbytes];
-        }
-      }
-    }
-  }
-//--------------------------------------------------------------------------------
-*/
-
-//--------------------------------------------------------------------------------
-  while (client->running) {
-    int type;
-
-    numbytes = recv(client->fd, buff+offset, MAXDATASIZE-offset, 0);
-    if (numbytes <= 0) {
-      usleep(100000);
-      continue;
-    }
     // offset += numbytes;
     //
     // If there is enough data in the frame, process it
     //
-    numbytes = digest_frame(buff, msg, offset, &type);
-
-    t_print("%s: TCI%d Numbytes: %d Offset: %d Type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
-    // usleep(100000);
-
+    numbytes =  digest_frame(buff, msg, offset, &type);
+    t_print("%s: TCI%d numbytes: %d offset: %d type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
     if (numbytes > 0) {
       switch(type) {
       case opTEXT:
-        // better to convert payload msg ever to lower case because TCI client maybe send all in upper case
-        // required add #include <ctype.h> if using tolower()
-        for (unsigned long i = 0; i < strlen(msg); i++) { msg[i] = tolower(msg[i]); }
-        if (rigctl_debug) { t_print("TCI%d command rcvd=%s\n", client->seq, msg); }
+        for (size_t i=0; i< strlen(msg); i++) {
+          msg[i] = tolower(msg[i]);
+        }
+        if (rigctl_debug) {
+          t_print("TCI%d command rcvd=%s\n", client->seq, msg);
+        }
         //
         // Separate into commands and arguments, and then process the incoming
         // commands according to the following list
@@ -989,9 +905,6 @@ static gpointer tci_listener(gpointer data) {
       case opPING:
         if (rigctl_debug) { t_print("TCI%d PING rcvd\n", client->seq); }
         send_pong(client);
-        break;
-      case opPONG:
-        if (rigctl_debug) { t_print("TCI%d confirm with PONG\n", client->seq); }
         break;
       case opCLOSE:
         if (rigctl_debug) { t_print("TCI%d CLOSE rcvd\n", client->seq); }
@@ -1003,10 +916,13 @@ static gpointer tci_listener(gpointer data) {
       // In normal operation, offset will be set to zero here.
       //
       // offset  -= numbytes;
-      t_print("%s: Offset %d\n", __FUNCTION__, offset);
-    } 
+      if (offset > 0) {
+        for (int i=0; i<offset; i++) {
+          buff[i]=buff[i+numbytes];
+        }
+      }
+    }
   }
-//--------------------------------------------------------------------------------
 
   send_text(client, "stop;");
   send_close(client);
