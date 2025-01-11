@@ -486,7 +486,7 @@ static gboolean tci_reporter(gpointer data) {
   long long fx = vfo_get_tx_freq();
 
   if (fx != client->last_fx) {
-    // send_txfreq(client);
+    send_txfreq(client);
   }
 
   if (!tci_txonly) {
