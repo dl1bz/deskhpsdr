@@ -400,6 +400,12 @@ void send_trx_count(CLIENT *client) {
   send_text(client, "trx_count:2;");
 }
 
+void send_cwspeed(CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  snprintf(msg, MAXMSGSIZE, "cw_macros_speed:%d;",cw_keyer_speed);
+  send_text(client, msg);
+}
+
 void send_smeter(CLIENT *client, int v) {
   //
   // UNDOCUMENTED in the TCI protocol, but MLDX sends this
@@ -732,6 +738,7 @@ int digest_frame(unsigned char *buff, char *msg,  int offset, int *type) {
 
   if (len == 127) {
     // Do not even try
+    t_print("%s: excessive length\n", __FUNCTION__);
     return 0;
   }
 
@@ -745,11 +752,9 @@ int digest_frame(unsigned char *buff, char *msg,  int offset, int *type) {
     head += 4;
   }
 
-  if (head + len < offset) {
+  if (head + len > offset) {
     return 0;
   }
-
-  if (rigctl_debug) { t_print("%s: head: %d, mask: %d, len: %d, mstrt: %d\n", __FUNCTION__, head, mask, len, mstrt); }
 
   //
   // There is enough data. Copy/DeMask  it.
@@ -845,15 +850,16 @@ static gpointer tci_listener(gpointer data) {
       usleep(100000);
       continue;
     }
-    // offset += numbytes;
+    offset += numbytes;
     //
-    // If there is enough data in the frame, process it
+    // The chunk just read may contain more than one frame
     //
+    /*
     numbytes =  digest_frame(buff, msg, offset, &type);
-    if (rigctl_debug) {
-      t_print("%s: TCI%d numbytes: %d offset: %d type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
-    }
+    t_print("%s: TCI%d numbytes: %d offset: %d type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
     if (numbytes > 0) {
+    */
+    while ((numbytes =  digest_frame(buff, msg, offset, &type)) > 0) {
       switch(type) {
       case opTEXT:
         for (size_t i=0; i< strlen(msg); i++) {
@@ -904,6 +910,8 @@ static gpointer tci_listener(gpointer data) {
           send_vfo(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0],"rx_smeter")) {
           send_smeter(client, (*arg[1] == '1') ? 1 : 0);
+        } else if (!strcmp(arg[0],"cw_macros_speed")) {
+          send_cwspeed(client);
         }
         break;
       case opPING:
@@ -919,7 +927,7 @@ static gpointer tci_listener(gpointer data) {
       // Remove the just-processed frame from the input buffer
       // In normal operation, offset will be set to zero here.
       //
-      // offset  -= numbytes;
+      offset  -= numbytes;
       if (offset > 0) {
         for (int i=0; i<offset; i++) {
           buff[i]=buff[i+numbytes];
