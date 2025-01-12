@@ -29,6 +29,10 @@
 #include <netinet/tcp.h>
 #include <ctype.h>
 
+#ifdef __APPLE__
+  #include <time.h>
+#endif
+
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
@@ -481,9 +485,18 @@ static gboolean tci_reporter(gpointer data) {
     return FALSE;
   }
 
+#ifdef __APPLE__
+  struct timespec ts;
+  // clock_gettime(CLOCK_REALTIME, &ts);
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+#endif
+
   if (++(client->count) >= 30) {
     client->count = 0;
     // send_ping(client);
+    #ifdef __APPLE__
+      if (rigctl_debug) { t_print("%s: Time: %ld\n", __FUNCTION__, ts.tv_sec); }
+    #endif
   }
 
   //
