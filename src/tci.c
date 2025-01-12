@@ -749,6 +749,8 @@ int digest_frame(unsigned char *buff, char *msg,  int offset, int *type) {
     return 0;
   }
 
+  if (rigctl_debug) { t_print("%s: head: %d, mask: %d, len: %d, mstrt: %d\n", __FUNCTION__, head, mask, len, mstrt); }
+
   //
   // There is enough data. Copy/DeMask  it.
   //
@@ -848,7 +850,9 @@ static gpointer tci_listener(gpointer data) {
     // If there is enough data in the frame, process it
     //
     numbytes =  digest_frame(buff, msg, offset, &type);
-    t_print("%s: TCI%d numbytes: %d offset: %d type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
+    if (rigctl_debug) {
+      t_print("%s: TCI%d numbytes: %d offset: %d type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
+    }
     if (numbytes > 0) {
       switch(type) {
       case opTEXT:
