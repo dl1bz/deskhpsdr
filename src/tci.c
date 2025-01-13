@@ -39,6 +39,7 @@
 #include "radio.h"
 #include "vfo.h"
 #include "rigctl.h"
+#include "ext.h"
 #include "message.h"
 
 #define MAX_TCI_CLIENTS 3
@@ -48,6 +49,7 @@
 int tci_enable = 0;
 int tci_port   = 40001;
 int tci_txonly = 0;
+long tci_timer = 0;
 
 //
 // OpCodes for WebSocket frames
@@ -321,6 +323,20 @@ void send_vfo(CLIENT *client, int v) {
   }
 }
 
+void TCI_set_vfo(CLIENT *client, int VfoNr, long long SetFreq) {
+  if (VfoNr < 0 || VfoNr > 1) { return; }
+  if (VfoNr  == VFO_A) {
+    vfo_set_frequency(VFO_A, SetFreq);
+    client->last_fa = SetFreq;
+    g_idle_add(ext_vfo_update, NULL);
+  } else {
+    vfo_set_frequency(VFO_B, SetFreq);
+    client->last_fb = SetFreq;
+    g_idle_add(ext_vfo_update, NULL);
+  }
+  send_vfo(client, VfoNr);
+}
+
 void send_split(CLIENT *client) {
   //
   // send "true" if tx is on VFO-B frequency
@@ -489,13 +505,15 @@ static gboolean tci_reporter(gpointer data) {
   struct timespec ts;
   // clock_gettime(CLOCK_REALTIME, &ts);
   clock_gettime(CLOCK_MONOTONIC, &ts);
+  tci_timer += ts.tv_sec;
 #endif
 
   if (++(client->count) >= 30) {
     client->count = 0;
     // send_ping(client);
     #ifdef __APPLE__
-      if (rigctl_debug) { t_print("%s: Time: %ld\n", __FUNCTION__, ts.tv_sec); }
+      // if (rigctl_debug) { t_print("%s: Time: %ld\n", __FUNCTION__, ts.tv_sec); }
+      // if (rigctl_debug) { t_print("%s: Timer: %lds\n", __FUNCTION__, tci_timer); }
     #endif
   }
 
@@ -910,17 +928,53 @@ static gpointer tci_listener(gpointer data) {
             break;
           }
         }
+
+        int arg_count=0;
+        // arg[0] is the received command, we count the command parameters saved in arg[1] or more
+        // for later action report only or do an action
+        for(int i = 1; i < 5; i++) {
+          if (arg[i] != NULL) {
+            arg_count++;
+          } else {
+            break;
+          }
+        }
+
+        // t_print("count actual array size of arg[]: %d\n", arg_count);
+        // t_print("command: arg[0]=%s arg[1]=%s, arg[2]=%s, arg[3]=%s\n", arg[0], arg[1], arg[2], arg[3]);
+
         if (!strcmp(arg[0], "trx_count") && argc == 1) {
           send_trx_count(client);
         } else if (!strcmp(arg[0], "trx")) {
+          if (arg_count > 1 && arg[1] != NULL && arg[2] != NULL) {
+            if (!strcmp(arg[2], "true")) {
+              #if defined (__HAVEATU__)
+                if (transmitter->is_tuned) { g_idle_add(ext_mox_update, GINT_TO_POINTER(1)); }
+              #else
+                g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+              #endif
+              t_print("TX request\n");
+            } else {
+              // g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
+              g_timeout_add(50,ext_mox_update, GINT_TO_POINTER(0));
+              t_print("RX request\n");
+            }
+          } else {
           // just report MOX no matter how much arguments come in
           send_mox(client);
+          }
         } else if (!strcmp(arg[0],"rx_sensors_enable")) {
           client->rxsensor = (*arg[1] == '1');
         } else if (!strcmp(arg[0],"modulation")) {
           send_mode(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0],"vfo")) {
-          send_vfo(client, (*arg[1] == '1') ? 1 : 0);
+          if (arg[1] != NULL && arg[3] != NULL) {
+            int VfoNr = atoi(arg[1]);
+            long long SetFreq = atoll(arg[3]);
+            TCI_set_vfo(client, VfoNr, SetFreq);
+          } else {
+            send_vfo(client, (*arg[1] == '1') ? 1 : 0);
+          }
         } else if (!strcmp(arg[0],"rx_smeter")) {
           send_smeter(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0],"cw_macros_speed")) {
