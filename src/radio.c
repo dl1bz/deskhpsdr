@@ -1212,6 +1212,7 @@ void radio_start_radio() {
   case DEVICE_ANGELIA:
   case DEVICE_ORION:
   case NEW_DEVICE_HERMES:
+  case NEW_DEVICE_HERMES2:
   case NEW_DEVICE_ANGELIA:
   case NEW_DEVICE_ORION:
     have_rx_att = 1;

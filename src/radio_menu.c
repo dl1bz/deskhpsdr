@@ -355,15 +355,18 @@ static void ck10mhz_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void ck128mhz_cb(GtkWidget *widget, gpointer data) {
-  atlas_clock_source_128mhz = SET(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
+  // atlas_clock_source_128mhz = SET(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
+  atlas_clock_source_128mhz = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 }
 
 static void micsource_cb(GtkWidget *widget, gpointer data) {
-  atlas_mic_source = SET(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
+  // atlas_mic_source = SET(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
+  atlas_mic_source = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 }
 
 static void tx_cb(GtkWidget *widget, gpointer data) {
-  atlas_penelope = SET(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
+  // atlas_penelope = SET(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
+  atlas_penelope = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 }
 
 void radio_menu(GtkWidget *parent) {
@@ -816,7 +819,8 @@ void radio_menu(GtkWidget *parent) {
   break;
 
   case DEVICE_HERMES:
-  case NEW_DEVICE_HERMES: {
+  case NEW_DEVICE_HERMES:
+  case NEW_DEVICE_HERMES2: {
     ChkBtn = gtk_check_button_new_with_label("Anan-10E/100B");
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), anan10E);

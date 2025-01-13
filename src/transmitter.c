@@ -627,6 +627,7 @@ static gboolean tx_update_display(gpointer data) {
     case DEVICE_METIS:
     case DEVICE_HERMES:
     case DEVICE_ANGELIA:
+    case NEW_DEVICE_HERMES:
     case NEW_DEVICE_HERMES2:
     case NEW_DEVICE_ANGELIA:
       constant1 = 3.3;
