@@ -439,9 +439,11 @@ void send_smeter(CLIENT *client, int v) {
   if (v < 0 || v > 1) { return; }
   if (v == 1 && receivers == 1) { return; }
   lvl = (int) (receiver[v]->meter - 0.5);
-  snprintf(msg, MAXMSGSIZE, "rx_smeter:%d,0,%d.0;",v,lvl);
-  send_text(client, msg);
-  snprintf(msg, MAXMSGSIZE, "rx_smeter:%d,1,%d.0;",v,lvl);
+  // snprintf(msg, MAXMSGSIZE, "rx_smeter:%d,0,%d.0;",v,lvl);
+  // send_text(client, msg);
+  // snprintf(msg, MAXMSGSIZE, "rx_smeter:%d,1,%d.0;",v,lvl);
+  // send_text(client, msg);
+  snprintf(msg, MAXMSGSIZE, "rx_sensors:%d,%d.0;",v,lvl);
   send_text(client, msg);
 }
 
@@ -534,6 +536,16 @@ static gboolean tci_reporter(gpointer data) {
       send_rx(client, 0);
       send_rx(client, 1);
     }
+
+    if (receivers > 0 && client->rxsensor && (client->count & 1)) {
+      if (receivers == 1) {
+        send_smeter(client, 0);
+      } else {
+        send_smeter(client, 0);
+        send_smeter(client, 1);
+      }
+    }
+
     //
     // Determine VFO-A/B frequency/mode, report if changed
     //
@@ -964,7 +976,14 @@ static gpointer tci_listener(gpointer data) {
           send_mox(client);
           }
         } else if (!strcmp(arg[0],"rx_sensors_enable")) {
-          client->rxsensor = (*arg[1] == '1');
+          //client->rxsensor = (*arg[1] == '1');
+          if (arg_count > 1 && arg[1] != NULL) {
+            if (!strcmp(arg[1], "true")) {
+              client->rxsensor = 1;
+            } else {
+              client->rxsensor = 0;
+            }
+          }
         } else if (!strcmp(arg[0],"modulation")) {
           send_mode(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0],"vfo")) {
