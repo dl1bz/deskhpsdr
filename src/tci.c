@@ -28,6 +28,7 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #ifdef __APPLE__
   #include <time.h>
@@ -191,7 +192,7 @@ static int send_frame(void *data) {
   RESPONSE *response = (RESPONSE *) data;
   CLIENT *client = response->client;
   int type = response->type;
-  char *msg = response->msg;
+  const char *msg = response->msg;
 
   unsigned char frame[1024];
   unsigned char *p;
@@ -293,38 +294,30 @@ void send_mox(CLIENT *client) {
 
 //
 // There are four (!) frequencies to report, namely for RX0/1 channel0/1.
-// This is mapped onto our  piHPSDR model as
-// RX=0 channel=0: VFO-A
-// RX=0 channel=1: VFO-B
-// RX=1 channel=0: VFO-B
-// RX=1 channel=1: VFO-B
+// RX=0 channel=0: reports VFO-A frequency, all other combination report VFO-B
 //
 // Thus logbook programs correctly display both frequencies no matter whether
 // they  use RX0/channel0:RX0/channel1 or RX0/channel0:RX1/channel0
 //
-void send_vfo(CLIENT *client, int v) {
-  long long f1,f2;
+void send_vfo(CLIENT *client, int v, int c) {
+  long long f;
   char msg[MAXMSGSIZE];
   if (v < 0 || v > 1) { return; }
-  if (v  == VFO_A) {
-    f1 = vfo[VFO_A].ctun ? vfo[VFO_A].ctun_frequency : vfo[VFO_A].frequency;
-    f2 = vfo[VFO_B].ctun ? vfo[VFO_B].ctun_frequency : vfo[VFO_B].frequency;
-    client->last_fa = f1;
-    client->last_fb = f2;
+  if (c < 0 || c > 1) { return; }
+  if (v  == VFO_A && c == 0) {
+    f = vfo[VFO_A].ctun ? vfo[VFO_A].ctun_frequency : vfo[VFO_A].frequency;
+    client->last_fa = f;
   } else {
-    f1 = f2 = vfo[VFO_B].ctun ? vfo[VFO_B].ctun_frequency : vfo[VFO_B].frequency;
-    client->last_fb = f2;
+    f = vfo[VFO_B].ctun ? vfo[VFO_B].ctun_frequency : vfo[VFO_B].frequency;
+    client->last_fb = f;
   }
-  snprintf(msg, MAXMSGSIZE, "vfo:%d,0,%lld;", v, f1);
+  snprintf(msg, MAXMSGSIZE, "vfo:%d,%d,%lld;", v, c, f);
   send_text(client, msg);
-  if (receivers > 1) {
-  snprintf(msg, MAXMSGSIZE, "vfo:%d,1,%lld;", v, f2);
-  send_text(client, msg);
-  }
 }
 
-void TCI_set_vfo(CLIENT *client, int VfoNr, long long SetFreq) {
+void TCI_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
   if (VfoNr < 0 || VfoNr > 1) { return; }
+  if (Ch < 0 || Ch > 1) { return; }
   if (VfoNr  == VFO_A) {
     vfo_set_frequency(VFO_A, SetFreq);
     client->last_fa = SetFreq;
@@ -334,7 +327,19 @@ void TCI_set_vfo(CLIENT *client, int VfoNr, long long SetFreq) {
     client->last_fb = SetFreq;
     g_idle_add(ext_vfo_update, NULL);
   }
-  send_vfo(client, VfoNr);
+  send_vfo(client, VfoNr, Ch);
+}
+
+void send_limits(CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  char* maxQRG;
+  int Dec, sign;
+  int ndig = 1;
+  maxQRG = fcvt(discovered[0].frequency_max/10, ndig, &Dec, &sign);
+  snprintf(msg, MAXMSGSIZE, "vfo_limits:0,%s;", maxQRG);
+  send_text(client, msg);
+  snprintf(msg, MAXMSGSIZE, "if_limits:-%lld,%lld;", (long long)receiver[0]->sample_rate/2, (long long)receiver[0]->sample_rate/2);
+  send_text(client, msg);
 }
 
 void send_split(CLIENT *client) {
@@ -556,11 +561,13 @@ static gboolean tci_reporter(gpointer data) {
     int       sp = (vfo_get_tx_vfo() == VFO_B);
     int       mx = radio_is_transmitting();
 
-    if (fa != client->last_fa || fb != client->last_fb) {
-      send_vfo(client, 0);
+    if (fa != client->last_fa) {
+      send_vfo(client, 0, 0);
     }
     if (fb != client->last_fb) {
-      send_vfo(client, 1);
+      send_vfo(client, 0, 1);
+      send_vfo(client, 1, 0);
+      send_vfo(client, 1, 1);
     }
     if (ma  != client->last_ma) {
       send_mode(client, 0);
@@ -765,7 +772,7 @@ static gpointer tci_server(gpointer data) {
   return NULL;
 }
 
-int digest_frame(unsigned char *buff, char *msg,  int offset, int *type) {
+int digest_frame(const unsigned char *buff, char *msg,  int offset, int *type) {
   //
   // If the buffer contains enough data for a complete frame,
   // produce the payload in "msg" and return the number of
@@ -826,13 +833,15 @@ int digest_frame(unsigned char *buff, char *msg,  int offset, int *type) {
 //
 static gpointer tci_listener(gpointer data) {
   CLIENT *client = (CLIENT *)data;
+
   t_print("%s: starting client: socket=%d\n", __FUNCTION__, client->fd);
-  int numbytes;
-  int   offset = 0;
-  unsigned char  buff [MAXDATASIZE];
-  char  msg  [MAXDATASIZE];
+
+  int offset = 0;
+  unsigned char buff [MAXDATASIZE];
+  char msg [MAXDATASIZE];
+  const int ARGLEN=16;
   int argc;
-  char *arg[16];
+  char *arg[ARGLEN];
   //
   // Send initial state info to client
   //
@@ -847,8 +856,9 @@ static gpointer tci_listener(gpointer data) {
   // No need to send vfo and modulation  commands, since this is
   // automatically  done in the tci_reporter task.
   //
-  send_text(client, "vfo_limits:0,450000000;");
-  send_text(client, "if_limits:-96000,96000;");
+  // send_text(client, "vfo_limits:0,450000000;");
+  // send_text(client, "if_limits:-96000,96000;");
+  send_limits(client);
   send_text(client, "modulations_list:LSB,USB,DSB,CW,FMN,AM,DIGU,SPEC,DIGL,SAM,DRM;");
   send_dds(client, VFO_A);
   send_dds(client, VFO_B);
@@ -856,8 +866,10 @@ static gpointer tci_listener(gpointer data) {
   send_text(client, "if:0,1,0;");
   send_text(client, "if:1,0,0;");
   send_text(client, "if:1,1,0;");
-  send_vfo(client, VFO_A);
-  send_vfo(client, VFO_B);
+  send_vfo(client, VFO_A, 0);
+  send_vfo(client, VFO_A, 1);
+  send_vfo(client, VFO_B, 0);
+  send_vfo(client, VFO_B, 1);
   send_mode(client, VFO_A);
   send_mode(client, VFO_B);
   send_text(client, "rx_enable:0,true;");
@@ -879,6 +891,7 @@ static gpointer tci_listener(gpointer data) {
   send_text(client, "ready;");
 
   while (client->running) {
+    int numbytes;
     int type;
     //
     // This can happen when a very long command has arrived...
@@ -915,17 +928,19 @@ static gpointer tci_listener(gpointer data) {
         // Separate into commands and arguments, and then process the incoming
         // commands according to the following list
         //
-        // Received                Response/Remarks
+        // Received                Response            Remarks
         // --------------------------------------------------------------------------
-        // trx_count               send_trx_count()  (should not be received from client)
-        // trx                     send_mox()        (do not change mox, ignore arg1/2/3)
-        // rx_sensors_enable       enable:=arg1      (sending interval always 1 second, ignore arg2)
-        // modulation              send_mode(arg1)   (do not change mode, ignore arg2)
-        // vfo:x,*;                send_vfo(arg1)    (do not change frequency, ignore arg2/3)
-        // rx_smeter,x,*;          send_smeter(arg1) (undocumented, ignore arg2)
+        // trx_count               send_trx_count()
+        // trx                     send_mox()          do not change mox
+        // rx_sensors_enable:x,y;  enable:=arg1        sending interval always 1 second, ignore y
+        // modulation:x;           send_mode(arg1)     do not change mode, ignore y
+        // vfo:x,y;                send_vfo(x,y)       do not change frequency
+        // rx_smeter,x,y;          send_smeter(x)      undocumented, ignore y
         //
         // While it was originally decided NOT to respond to any incoming TCI command, there
-        // are logbook program which seem to require that
+        // are logbook program which seem to require that. Note that additional arguments are
+        // accepted but not processed. Since we only report data but do not perform any
+        // "actions", this need not be done in the GTK queue.
         //
         argc=1;
         arg[0] = msg;
@@ -939,13 +954,16 @@ static gpointer tci_listener(gpointer data) {
             *cp = 0;
             break;
           }
+          if (argc >= ARGLEN) {
+            break;
+          }
         }
 
         int arg_count=0;
         // arg[0] is the received command, we count the command parameters saved in arg[1] or more
         // for later action report only or do an action
-        for(int i = 1; i < 5; i++) {
-          if (arg[i] != NULL) {
+        for(int ii = 1; ii < 5; ii++) {
+          if (arg[ii] != NULL) {
             arg_count++;
           } else {
             break;
@@ -953,9 +971,14 @@ static gpointer tci_listener(gpointer data) {
         }
 
         // t_print("count actual array size of arg[]: %d\n", arg_count);
-        // t_print("command: arg[0]=%s arg[1]=%s, arg[2]=%s, arg[3]=%s\n", arg[0], arg[1], arg[2], arg[3]);
+        t_print("command: argc=%d arg[0]=%s arg[1]=%s, arg[2]=%s, arg[3]=%s\n",argc, arg[0], arg[1], arg[2], arg[3]);
 
-        if (!strcmp(arg[0], "trx_count") && argc == 1) {
+        //
+        // Note that for i>=argc, arg[i] is not defined.
+        // So verify argc > i before using arg[i].
+        // The only assumption that can be made is argc >= 1.
+        //
+        if (!strcmp(arg[0], "trx_count")) {
           send_trx_count(client);
         } else if (!strcmp(arg[0], "trx")) {
           if (arg_count > 1 && arg[1] != NULL && arg[2] != NULL) {
@@ -972,29 +995,23 @@ static gpointer tci_listener(gpointer data) {
               t_print("RX request\n");
             }
           } else {
-          // just report MOX no matter how much arguments come in
           send_mox(client);
           }
-        } else if (!strcmp(arg[0],"rx_sensors_enable")) {
-          //client->rxsensor = (*arg[1] == '1');
-          if (arg_count > 1 && arg[1] != NULL) {
-            if (!strcmp(arg[1], "true")) {
-              client->rxsensor = 1;
-            } else {
-              client->rxsensor = 0;
-            }
-          }
-        } else if (!strcmp(arg[0],"modulation")) {
+        } else if (!strcmp(arg[0],"rx_sensors_enable") && argc > 1) {
+          // MLDX originally sent '1/0' instead of 'true/false'
+          client->rxsensor = (*arg[1] == '1' || !strcmp(arg[1],"true"));
+        } else if (!strcmp(arg[0],"modulation") && argc > 1) {
           send_mode(client, (*arg[1] == '1') ? 1 : 0);
-        } else if (!strcmp(arg[0],"vfo")) {
+        } else if (!strcmp(arg[0],"vfo") && argc > 2) {
           if (arg[1] != NULL && arg[3] != NULL) {
             int VfoNr = atoi(arg[1]);
+            int Ch = atoi(arg[2]);
             long long SetFreq = atoll(arg[3]);
-            TCI_set_vfo(client, VfoNr, SetFreq);
+            TCI_set_vfo(client, VfoNr, Ch, SetFreq);
           } else {
-            send_vfo(client, (*arg[1] == '1') ? 1 : 0);
+            send_vfo(client, (*arg[1] == '1') ? 1 : 0, (*arg[2] == '1' ? 1 : 0));
           }
-        } else if (!strcmp(arg[0],"rx_smeter")) {
+        } else if (!strcmp(arg[0],"rx_smeter") && argc > 1) {
           send_smeter(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0],"cw_macros_speed")) {
           send_cwspeed(client);
