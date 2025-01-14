@@ -330,15 +330,15 @@ void TCI_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
   send_vfo(client, VfoNr, Ch);
 }
 
-void send_limits(CLIENT *client) {
+void send_limits(CLIENT *client, int v) {
   char msg[MAXMSGSIZE];
   char* maxQRG;
   int Dec, sign;
   int ndig = 1;
   maxQRG = fcvt(discovered[0].frequency_max/10, ndig, &Dec, &sign);
-  snprintf(msg, MAXMSGSIZE, "vfo_limits:0,%s;", maxQRG);
+  snprintf(msg, MAXMSGSIZE, "vfo_limits:%d,%s;", v, maxQRG);
   send_text(client, msg);
-  snprintf(msg, MAXMSGSIZE, "if_limits:-%lld,%lld;", (long long)receiver[0]->sample_rate/2, (long long)receiver[0]->sample_rate/2);
+  snprintf(msg, MAXMSGSIZE, "if_limits:-%lld,%lld;", (long long)receiver[v]->sample_rate/2, (long long)receiver[v]->sample_rate/2);
   send_text(client, msg);
 }
 
@@ -858,7 +858,7 @@ static gpointer tci_listener(gpointer data) {
   //
   // send_text(client, "vfo_limits:0,450000000;");
   // send_text(client, "if_limits:-96000,96000;");
-  send_limits(client);
+  send_limits(client, VFO_A);
   send_text(client, "modulations_list:LSB,USB,DSB,CW,FMN,AM,DIGU,SPEC,DIGL,SAM,DRM;");
   send_dds(client, VFO_A);
   send_dds(client, VFO_B);
