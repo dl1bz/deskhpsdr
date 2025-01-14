@@ -959,19 +959,10 @@ static gpointer tci_listener(gpointer data) {
           }
         }
 
-        int arg_count=0;
-        // arg[0] is the received command, we count the command parameters saved in arg[1] or more
-        // for later action report only or do an action
-        for(int ii = 1; ii < 5; ii++) {
-          if (arg[ii] != NULL) {
-            arg_count++;
-          } else {
-            break;
-          }
-        }
+        arg[argc] = NULL; // clear the array
 
-        // t_print("count actual array size of arg[]: %d\n", arg_count);
-        t_print("command: argc=%d arg[0]=%s arg[1]=%s, arg[2]=%s, arg[3]=%s\n",argc, arg[0], arg[1], arg[2], arg[3]);
+        if (rigctl_debug) t_print("count actual array size of arg[]: %d\n", argc);
+        if (rigctl_debug) t_print("command: argc=%d arg[0]=%s arg[1]=%s, arg[2]=%s, arg[3]=%s\n",argc, arg[0], arg[1], arg[2], arg[3]);
 
         //
         // Note that for i>=argc, arg[i] is not defined.
@@ -981,7 +972,7 @@ static gpointer tci_listener(gpointer data) {
         if (!strcmp(arg[0], "trx_count")) {
           send_trx_count(client);
         } else if (!strcmp(arg[0], "trx")) {
-          if (arg_count > 1 && arg[1] != NULL && arg[2] != NULL) {
+          if (argc > 2 && arg[1] != NULL && arg[2] != NULL) {
             if (!strcmp(arg[2], "true")) {
               #if defined (__HAVEATU__)
                 if (transmitter->is_tuned) { g_idle_add(ext_mox_update, GINT_TO_POINTER(1)); }
