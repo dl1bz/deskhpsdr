@@ -101,6 +101,10 @@ void show_popup_slider(enum ACTION action, int rx, double min, double max, doubl
   static double scale_min;
   static double scale_max;
   static double scale_wid;
+  
+  if (suppress_popup_sliders) {
+  return;
+  }
 
   //
   // a) if there is still a pop-up slider on the screen for a different action, destroy it
@@ -484,7 +488,9 @@ static void micgain_value_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
     #if defined (__LDESK__) && defined (__USELESS__)
-    mode_settings[vfo_get_tx_mode()].mic_gain = transmitter->mic_gain;
+    int mode = vfo_get_tx_mode();
+    mode_settings[mode].mic_gain = transmitter->mic_gain;
+    copy_mode_settings(mode);
     #endif
     tx_set_mic_gain(transmitter);
   }
@@ -501,7 +507,9 @@ void set_mic_gain(double value) {
   if (can_transmit) {
     transmitter->mic_gain = value;
     #if defined (__LDESK__) && defined (__USELESS__)
-    mode_settings[vfo_get_tx_mode()].mic_gain = transmitter->mic_gain;
+    int mode = vfo_get_tx_mode();
+    mode_settings[mode].mic_gain = transmitter->mic_gain;
+    copy_mode_settings(mode);
     #endif
     tx_set_mic_gain(transmitter);
 

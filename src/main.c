@@ -359,11 +359,6 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("machine: %s\n", unameData.machine);
   load_css();
 
-  // Check to see if we are running on a Radxa CM5
-  if ((strstr(unameData.release, "rockchip-rk3588")) != NULL) {
-    have_racm5 = 1;
-  }
-
   GdkDisplay *display = gdk_display_get_default();
 
   if (display == NULL) {

@@ -48,6 +48,7 @@
 #include "iambic.h"
 #include "store.h"
 #include "equalizer_menu.h"
+#include "exit_menu.h"
 #include "message.h"
 #include "mystring.h"
 
@@ -211,6 +212,7 @@ ACTION_TABLE ActionTable[] = {
   {RX1,                 "RX1",                  "RX1",          MIDI_KEY   | CONTROLLER_SWITCH},
   {RX2,                 "RX2",                  "RX2",          MIDI_KEY   | CONTROLLER_SWITCH},
   {SAT,                 "SAT",                  "SAT",          MIDI_KEY   | CONTROLLER_SWITCH},
+  {SHUTDOWN,            "Shutdown\nOS",         "SDWN",         MIDI_KEY   | CONTROLLER_SWITCH},
   {SNB,                 "SNB",                  "SNB",          MIDI_KEY   | CONTROLLER_SWITCH},
   {SPLIT,               "Split",                "SPLIT",        MIDI_KEY   | CONTROLLER_SWITCH},
   {SQUELCH,             "Squelch",              "SQUELCH",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -1580,6 +1582,19 @@ int process_action(void *data) {
       g_idle_add(ext_vfo_update, NULL);
     }
 
+    break;
+
+  case SHUTDOWN:
+    if (a->mode == PRESSED) {
+      stop_program();
+      #ifdef __APPLE__
+      (void) system("shutdown -h now"); 
+      #else
+      (void) system("sudo shutdown -h -P now");
+      #endif
+      _exit(0);
+    }
+    
     break;
 
   case SNB:

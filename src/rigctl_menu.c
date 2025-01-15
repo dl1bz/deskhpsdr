@@ -113,16 +113,20 @@ static void rigctl_tcp_enable_cb(GtkWidget *widget, gpointer data) {
 //
 static void serial_port_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
-
-  if (SerialPorts[id].enable) {
-    //
-    // If this port is running, do not allow changes and
-    // re-init the text entry field
-    //
+  const char *cp = gtk_entry_get_text(GTK_ENTRY(widget));
+  //
+  // If the serial port is already running, do not allow changes.
+  //
+  // If the last serial port is marked as a G2-internal port,
+  // and if the same port name is used, do not allow changes
+  //
+  if (SerialPorts[id].enable ||
+     (SerialPorts[MAX_SERIAL-1].g2 && !strcmp(SerialPorts[MAX_SERIAL-1].port, cp))) {
     gtk_entry_set_text(GTK_ENTRY(widget), SerialPorts[id].port);
   } else {
-    const char *cp = gtk_entry_get_text(GTK_ENTRY(widget));
-    STRLCPY(SerialPorts[id].port, cp, sizeof(SerialPorts[id].port));
+    // const char *cp = gtk_entry_get_text(GTK_ENTRY(widget));
+    // STRLCPY(SerialPorts[id].port, cp, sizeof(SerialPorts[id].port));
+    snprintf(SerialPorts[id].port, sizeof(SerialPorts[id].port), "%s", cp);
   }
 }
 
@@ -310,21 +314,23 @@ void rigctl_menu(GtkWidget *parent) {
   for (int i = 0; i < MAX_SERIAL; i++) {
     char str[64];
     row++;
+    //
+    // If this serial port is used internally in a G2 simply state port name
+    //
     snprintf (str, 64, "Serial");
     w = gtk_label_new(str);
     gtk_widget_set_name(w, "boldlabel");
     gtk_widget_set_halign(w, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
-    w = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(w), SerialPorts[i].port);
-    gtk_grid_attach(GTK_GRID(grid), w, 1, row, 2, 1);
-    g_signal_connect(w, "changed", G_CALLBACK(serial_port_cb), GINT_TO_POINTER(i));
 
     //
-    // If this serial port is used internally in a G2, there are not user choices
-    // except the port name
+    // If this serial port is used internally in a G2 simply state port name
     //
     if (!SerialPorts[i].g2) {
+      w = gtk_entry_new();
+      gtk_entry_set_text(GTK_ENTRY(w), SerialPorts[i].port);
+      gtk_grid_attach(GTK_GRID(grid), w, 1, row, 2, 1);
+      g_signal_connect(w, "changed", G_CALLBACK(serial_port_cb), GINT_TO_POINTER(i));
       serial_baud[i] = gtk_combo_box_text_new();
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[i]), NULL, "4800 Bd");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[i]), NULL, "9600 Bd");
@@ -370,13 +376,17 @@ void rigctl_menu(GtkWidget *parent) {
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), SerialPorts[i].autoreporting);
       gtk_grid_attach(GTK_GRID(grid), w, 6, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(serial_autoreporting_cb), GINT_TO_POINTER(i));
-
     } else {
-      snprintf (str, 64, "This port is used for G2-internal communication");
+      //
+      // If the Serial port is used for the G2 panel, just report port name.
+      // If it is not enabled, this means the initial launch_serial() failed.
+      //
+      snprintf (str, 64, "%s %s for G2-internal communication", SerialPorts[i].port,
+                 SerialPorts[i].enable ? "used" : "failed");
       w = gtk_label_new(str);
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
-      gtk_grid_attach(GTK_GRID(grid), w, 3, row, 3, 1);
+      gtk_grid_attach(GTK_GRID(grid), w, 1, row, 5, 1);
     }
   }
 #if defined (__DVL__)

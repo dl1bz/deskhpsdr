@@ -754,7 +754,9 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     tx_set_dexp(transmitter);
 
     #if defined (__LDESK__) && defined (__USELESS__)
+    suppress_popup_sliders = 1;
     set_mic_gain(mode_settings[m].mic_gain);
+    suppress_popup_sliders = 0;
     #endif
     // tx_set_equalizer(transmitter);
 

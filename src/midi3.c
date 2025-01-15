@@ -29,6 +29,7 @@
 
 #include "actions.h"
 #include "message.h"
+#include "rigctl.h"
 #include "midi.h"
 
 struct _vfo_timer {
@@ -102,7 +103,7 @@ void DoTheMidi(int action, enum ACTIONtype type, int val) {
       break;
 
     default:
-      t_print("%s: action=%d val=%d\n", __FUNCTION__, action, val);
+      if (rigctl_debug) t_print("%s: action=%d val=%d\n", __FUNCTION__, action, val);
       schedule_action(action, RELATIVE, val);
     }
 

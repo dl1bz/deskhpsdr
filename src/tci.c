@@ -87,6 +87,7 @@ typedef struct _client {
   int last_mox;                 // last mox   state reported
   int count;                    // ping counter
   int rxsensor;                 // enable transmit of S meter data
+  int txsensor;                 // enable transmit of drive data
 } CLIENT;
 
 typedef struct _response {
@@ -342,6 +343,15 @@ void send_limits(CLIENT *client, int v) {
   send_text(client, msg);
 }
 
+void send_drive(CLIENT *client, int v) {
+  char msg[MAXMSGSIZE];
+  int tx_drive;
+  tx_drive = radio_get_drive();
+  if (v < 0 || v > 1) { return; }
+  snprintf(msg, MAXMSGSIZE, "drive:%d,%d;", v, (int) tx_drive);
+  send_text(client, msg);
+}
+
 void send_split(CLIENT *client) {
   //
   // send "true" if tx is on VFO-B frequency
@@ -540,6 +550,10 @@ static gboolean tci_reporter(gpointer data) {
     if (client->rxsensor && (client->count & 1)) {
       send_rx(client, 0);
       send_rx(client, 1);
+    }
+
+    if (client->txsensor && (client->count & 1)) {
+      send_drive(client, 0);
     }
 
     if (receivers > 0 && client->rxsensor && (client->count & 1)) {
@@ -835,6 +849,10 @@ static gpointer tci_listener(gpointer data) {
   CLIENT *client = (CLIENT *)data;
 
   t_print("%s: starting client: socket=%d\n", __FUNCTION__, client->fd);
+  
+  // update CAT status onscreen  
+  cat_control++;
+  g_idle_add(ext_vfo_update, NULL);
 
   int offset = 0;
   unsigned char buff [MAXDATASIZE];
@@ -844,6 +862,7 @@ static gpointer tci_listener(gpointer data) {
   char *arg[ARGLEN];
   //
   // Send initial state info to client
+  // using emulatation Expert SunSDR2Pro
   //
   send_text(client, "protocol:ExpertSDR3,1.8;");
   send_text(client, "device:SunSDR2PRO;");
@@ -991,6 +1010,8 @@ static gpointer tci_listener(gpointer data) {
         } else if (!strcmp(arg[0],"rx_sensors_enable") && argc > 1) {
           // MLDX originally sent '1/0' instead of 'true/false'
           client->rxsensor = (*arg[1] == '1' || !strcmp(arg[1],"true"));
+        } else if (!strcmp(arg[0],"tx_sensors_enable") && argc > 1) {
+          client->txsensor = (*arg[1] == '1' || !strcmp(arg[1],"true"));
         } else if (!strcmp(arg[0],"modulation") && argc > 1) {
           send_mode(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0],"vfo") && argc > 2) {
@@ -1004,8 +1025,15 @@ static gpointer tci_listener(gpointer data) {
           }
         } else if (!strcmp(arg[0],"rx_smeter") && argc > 1) {
           send_smeter(client, (*arg[1] == '1') ? 1 : 0);
+        } else if (!strcmp(arg[0],"drive") && argc > 1) {
+          send_drive(client, atoi(arg[1]));
         } else if (!strcmp(arg[0],"cw_macros_speed")) {
           send_cwspeed(client);
+        } else if (!strcmp(arg[0],"stop")) {
+        client->rxsensor = 0;
+        client->txsensor = 0;
+        send_text(client, "stop;");
+        client->running = 0;
         }
         break;
       case opPING:
@@ -1034,5 +1062,10 @@ static gpointer tci_listener(gpointer data) {
   send_close(client);
   force_close(client);
   t_print("%s: leaving thread\n", __FUNCTION__);
+
+  // update CAT status onscreen
+  cat_control--;
+  g_idle_add(ext_vfo_update, NULL);
+  
   return NULL;
 }

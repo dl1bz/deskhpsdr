@@ -91,19 +91,14 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
 // cppcheck-suppress constParameterCallback
 static gboolean reboot_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   stop_program();
-  (void) system("reboot");
+  (void) system("sudo reboot");
   _exit(0);
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean shutdown_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  stop_program();
-#ifdef __APPLE__
-  (void) system("shutdown -h now");
-#else
-  (void) system("shutdown -h -P now");
-#endif
-  _exit(0);
+  schedule_action(SHUTDOWN, PRESSED, 0);
+  return TRUE;
 }
 #endif
 
