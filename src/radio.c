@@ -30,12 +30,12 @@
 #include <netdb.h>
 #include <termios.h>
 #if defined (__DVL__)
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <signal.h>
+  #include <unistd.h>
+  #include <sys/ioctl.h>
+  #include <sys/types.h>
+  #include <sys/stat.h>
+  #include <fcntl.h>
+  #include <signal.h>
 #endif
 
 #include "appearance.h"
@@ -122,7 +122,7 @@ GtkWidget *fixed;
 static GtkWidget *hide_b;
 static GtkWidget *menu_b;
 #if defined (__LDESK__)
-static GtkWidget *exit_b;
+  static GtkWidget *exit_b;
 #endif
 static GtkWidget *vfo_panel;
 static GtkWidget *meter;
@@ -136,9 +136,9 @@ long long frequency_calibration = 0LL;
 int sat_mode;
 
 #if defined (__LDESK__)
-int region = REGION_WRC15;
+  int region = REGION_WRC15;
 #else
-int region = REGION_OTHER;
+  int region = REGION_OTHER;
 #endif
 int radio_sample_rate;   // alias for radio->info.soapy.sample_rate
 gboolean iqswap;
@@ -299,11 +299,11 @@ int eer_pwm_min = 100;
 int eer_pwm_max = 800;
 
 #if defined (__LDESK__)
-int tx_filter_low = 100;
-int tx_filter_high = 2900;
+  int tx_filter_low = 100;
+  int tx_filter_high = 2900;
 #else
-int tx_filter_low = 150;
-int tx_filter_high = 2850;
+  int tx_filter_low = 150;
+  int tx_filter_high = 2850;
 #endif
 
 static int pre_tune_mode;
@@ -340,9 +340,9 @@ int optimize_for_touchscreen = 0;
 
 gboolean duplex = FALSE;
 #if defined (__LDESK__)
-gboolean mute_rx_while_transmitting = TRUE;
+  gboolean mute_rx_while_transmitting = TRUE;
 #else
-gboolean mute_rx_while_transmitting = FALSE;
+  gboolean mute_rx_while_transmitting = FALSE;
 #endif
 
 double drive_max = 100.0;
@@ -362,12 +362,12 @@ typedef struct {
 } SaturnSerialPort;
 
 static SaturnSerialPort SaturnSerialPortsList[] = {
-   {"/dev/serial/by-id/g2-front-9600", B9600},
-   {"/dev/serial/by-id/g2-front-115200", B115200},
-   {"/dev/ttyAMA1", B9600},
-   {"/dev/ttyS3", B9600},
-   {"/dev/ttyS7", B115200},
-   {NULL, 0}
+  {"/dev/serial/by-id/g2-front-9600", B9600},
+  {"/dev/serial/by-id/g2-front-115200", B115200},
+  {"/dev/ttyAMA1", B9600},
+  {"/dev/ttyS3", B9600},
+  {"/dev/ttyS7", B115200},
+  {NULL, 0}
 };
 
 static void radio_restore_state();
@@ -548,11 +548,11 @@ void radio_reconfigure_screen() {
   gtk_window_resize(GTK_WINDOW(top_window), my_width, my_height);
   gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT);
   gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT);
-  #if defined (__LDESK__)
-  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT*2/3);
-  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT*2/3);
-  gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT*2/3);
-  #endif
+#if defined (__LDESK__)
+  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+#endif
   gtk_widget_set_size_request(meter,  METER_WIDTH, METER_HEIGHT);
   gtk_widget_set_size_request(vfo_panel, VFO_WIDTH, VFO_HEIGHT);
   //
@@ -560,10 +560,10 @@ void radio_reconfigure_screen() {
   //
   gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, 0);
   gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT);
-  #if defined (__LDESK__)
-  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT/2 + 8);
+#if defined (__LDESK__)
+  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT / 2 + 8);
   gtk_fixed_move(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 14);
-  #endif
+#endif
   gtk_fixed_move(GTK_FIXED(fixed), meter, VFO_WIDTH, 0);
 
   //
@@ -785,6 +785,7 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
   stop_program();
   _exit(0);
 }
+
 #endif
 
 static void radio_create_visual() {
@@ -802,43 +803,46 @@ static void radio_create_visual() {
   //t_print("radio: meter_init\n");
   meter = meter_init(METER_WIDTH, METER_HEIGHT);
   gtk_fixed_put(GTK_FIXED(fixed), meter, VFO_WIDTH, y);
-  t_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH, y);
+  t_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+          y);
   hide_b = gtk_button_new_with_label("Hide");
   gtk_widget_set_name(hide_b, "boldlabel");
-  #if defined (__LDESK__)
-  gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT*2/3);
+#if defined (__LDESK__)
+  gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y);
-  y += MENU_HEIGHT-10;
-  #else
+  y += MENU_HEIGHT - 10;
+#else
   gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT);
   g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y);
   y += MENU_HEIGHT;
-  #endif
-  t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH, y);
+#endif
+  t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+          y);
   menu_b = gtk_button_new_with_label("Menu");
   gtk_widget_set_name(menu_b, "boldlabel");
-  #if defined (__LDESK__)
-  gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT*2/3);
+#if defined (__LDESK__)
+  gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect (menu_b, "button-press-event", G_CALLBACK(menu_cb), NULL) ;
   gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y);
-  y += MENU_HEIGHT-10;
-  #else
+  y += MENU_HEIGHT - 10;
+#else
   gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT);
   g_signal_connect (menu_b, "button-press-event", G_CALLBACK(menu_cb), NULL) ;
   gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y);
   y += MENU_HEIGHT;
-  #endif
-  #if defined (__LDESK__)
-  t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH, y);
+#endif
+#if defined (__LDESK__)
+  t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+          y);
   exit_b = gtk_button_new_with_label("Exit");
   gtk_widget_set_name(exit_b, "boldlabel");
-  gtk_widget_set_size_request (exit_b, MENU_WIDTH, MENU_HEIGHT*2/3);
+  gtk_widget_set_size_request (exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL) ;
   gtk_fixed_put(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, y);
-  y += MENU_HEIGHT-10;
-  #endif
+  y += MENU_HEIGHT - 10;
+#endif
   rx_height = my_height - VFO_HEIGHT;
 
   if (display_zoompan) {
@@ -1081,11 +1085,11 @@ void radio_start_radio() {
   // The setting can be changed in the RADIO menu and is stored in the
   // props file, so will be restored therefrom as well.
   //
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   optimize_for_touchscreen = 0;
-  #else
+#else
   optimize_for_touchscreen = 1;
-  #endif
+#endif
   protocol = radio->protocol;
   device = radio->device;
 
@@ -1093,10 +1097,11 @@ void radio_start_radio() {
     have_saturn_xdma = 1;
   }
 
-
 #if defined (__DVL__)
+
   for (int id = 0; id <= MAX_SERIAL; id++) {
 #else
+
   for (int id = 0; id < MAX_SERIAL; id++) {
 #endif
     //
@@ -1122,6 +1127,7 @@ void radio_start_radio() {
   if (have_saturn_xdma) {
     for (SaturnSerialPort *ChkSerial = SaturnSerialPortsList; ChkSerial->port != NULL; ChkSerial++) {
       char *cp = realpath(ChkSerial->port, NULL);
+
       if (cp != NULL) {
         SerialPorts[MAX_SERIAL - 1].enable = 1;
         SerialPorts[MAX_SERIAL - 1].andromeda = 1;
@@ -1353,7 +1359,7 @@ void radio_start_radio() {
       // it does not fit  in windows 640 pixels wide.
       // if needed, the MAC address of the radio can be
       // found in the ABOUT menu.
-      #if defined (__LDESK__)
+#if defined (__LDESK__)
       snprintf(text, 1024, "%s %s[%s] SDR Device: %s (%s %s) %s on %s",
                PGNAME,
                build_version,
@@ -1363,14 +1369,14 @@ void radio_start_radio() {
                version,
                ip,
                iface);
-      #else
+#else
       snprintf(text, 1024, "piHPSDR: %s (%s %s) %s on %s",
                radio->name,
                p,
                version,
                ip,
                iface);
-      #endif
+#endif
     }
 
     break;
@@ -1588,17 +1594,18 @@ void radio_start_radio() {
 
   receivers = RECEIVERS;
   radio_restore_state();
-  #if !defined (__LDESK__)
+#if !defined (__LDESK__)
   radio_change_region(region);
-  #endif
+#endif
   radio_create_visual();
   radio_reconfigure_screen();
+#ifdef TCI
 
-  #ifdef TCI
   if (tci_enable) {
     launch_tci();
   }
-  #endif
+
+#endif
 
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
@@ -1956,6 +1963,7 @@ static void rxtx(int state) {
       }
     }
   }
+
 #ifdef GPIO
   gpio_set_ptt(state);
 #endif
@@ -2051,49 +2059,50 @@ void radio_set_vox(int state) {
 }
 
 #if defined (__DVL__)
-void tune_serial_set(int rtsdtrEnable)
-{
+void tune_serial_set(int rtsdtrEnable) {
   int fd;
   int flags;
-
   char *serialdev = SerialPorts[MAX_SERIAL].port;
-    // fd = open(serialdev, O_RDWR | O_NOCTTY);
+  // fd = open(serialdev, O_RDWR | O_NOCTTY);
+  // open serial in non-blocking mode, not important for control only RTS or DTR
+  fd = open(serialdev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
 
-    // open serial in non-blocking mode, not important for control only RTS or DTR
-    fd = open(serialdev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
-    if (fd < 0) {
-        t_print("%s: open serial port %s for TUNE failed\n", __FUNCTION__, serialdev);
-      if (SerialPorts[MAX_SERIAL].enable) {
-        SerialPorts[MAX_SERIAL].enable = 0;
-        t_print("%s: disable serial port %s for TUNE now\n", __FUNCTION__, serialdev);
-      }
-    } else {
+  if (fd < 0) {
+    t_print("%s: open serial port %s for TUNE failed\n", __FUNCTION__, serialdev);
+
+    if (SerialPorts[MAX_SERIAL].enable) {
+      SerialPorts[MAX_SERIAL].enable = 0;
+      t_print("%s: disable serial port %s for TUNE now\n", __FUNCTION__, serialdev);
+    }
+  } else {
     ioctl(fd, TIOCMGET, &flags);
     // t_print("%s: Flags before are %x.\n", __FUNCTION__, flags);
-  
-    if(rtsdtrEnable!=0) {
+
+    if (rtsdtrEnable != 0) {
       // set RTS and DTR to HIGH
       flags |= TIOCM_RTS;
       flags |= TIOCM_DTR;
     } else {
       // set RTS and DTR to LOW
-	    flags &= ~TIOCM_RTS;
+      flags &= ~TIOCM_RTS;
       flags &= ~TIOCM_DTR;
-	  }
+    }
+
     ioctl(fd, TIOCMSET, &flags);
 
     // ioctl(fd, TIOCMGET, &flags);
     // t_print("%s: Flags after are %x.\n", __FUNCTION__, flags);
-  
-    if (rtsdtrEnable==0) {
+
+    if (rtsdtrEnable == 0) {
       close(fd);
     }
   }
 }
+
 #endif
 
 void radio_set_tune(int state) {
-  t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox,vox,tune,state);
+  t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox, vox, tune, state);
 
   if (!can_transmit) { return; }
 
@@ -2110,11 +2119,13 @@ void radio_set_tune(int state) {
     }
 
     if (state) {
-      #if defined (__DVL__)
+#if defined (__DVL__)
+
       if (SerialPorts[MAX_SERIAL].enable) {
         tune_serial_set(1);
       }
-      #endif
+
+#endif
       //
       // Ron has reported that TX underruns occur if TUNEing with
       // compressor or CFC engaged, and that this can be
@@ -2214,7 +2225,6 @@ void radio_set_tune(int state) {
       pre_tune_mode = txmode;
       pre_tune_cw_internal = cw_keyer_internal;
       double freq = 0.0;
-
 #if 0
 
       // Code currently not active:
@@ -2281,22 +2291,25 @@ void radio_set_tune(int state) {
 
       // restore settings we switched off earlier
       tx_set_compressor(transmitter);
-      #if defined (__DVL__)
+#if defined (__DVL__)
+
       if (SerialPorts[MAX_SERIAL].enable) {
         tune_serial_set(0);
       }
-      #endif
 
+#endif
       tune = state;
       radio_calc_drive_level();
-      #if defined (__LDESK__) && defined (__HAVEATU__)
-        transmitter->is_tuned = 1;
-        if (transmitter->stored_drive > 0) {
-          set_drive(transmitter->stored_drive);
-        }
-        t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-        t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
-      #endif
+#if defined (__LDESK__) && defined (__HAVEATU__)
+      transmitter->is_tuned = 1;
+
+      if (transmitter->stored_drive > 0) {
+        set_drive(transmitter->stored_drive);
+      }
+
+      t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
+      t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
+#endif
     }
   }
 
@@ -2448,14 +2461,15 @@ void radio_calc_drive_level() {
 
 void radio_set_drive(double value) {
   t_print("%s: drive=%f\n", __FUNCTION__, value);
+
   if (!can_transmit) { return; }
 
-  #if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__LDESK__) && defined (__HAVEATU__)
   transmitter->drive = (double) value;
   t_print("%s: transmitter_drive: %f\n", __FUNCTION__, (double) transmitter->drive);
-  #else
+#else
   transmitter->drive = value;
-  #endif
+#endif
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
@@ -2688,11 +2702,11 @@ static void radio_restore_state() {
   GetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   GetPropI0("radio.display_warnings",                        display_warnings);
   GetPropI0("radio.display_pacurr",                          display_pacurr);
-  #ifdef TCI
-    GetPropI0("tci_enable",                                  tci_enable);
-    GetPropI0("tci_port",                                    tci_port);
-    GetPropI0("tci_txonly",                                  tci_txonly);
-  #endif
+#ifdef TCI
+  GetPropI0("tci_enable",                                  tci_enable);
+  GetPropI0("tci_port",                                    tci_port);
+  GetPropI0("tci_txonly",                                  tci_txonly);
+#endif
   GetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   GetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   GetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -2727,11 +2741,11 @@ static void radio_restore_state() {
     }
   }
 
-  #if defined (__DVL__)
-    GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
-    GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
-    GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
-  #endif
+#if defined (__DVL__)
+  GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
+  GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
+  GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+#endif
 
   for (int i = 0; i < n_adc; i++) {
     GetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
@@ -2912,11 +2926,11 @@ void radio_save_state() {
   SetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   SetPropI0("radio.display_warnings",                        display_warnings);
   SetPropI0("radio.display_pacurr",                          display_pacurr);
-  #ifdef TCI
-    SetPropI0("tci_enable",                                  tci_enable);
-    SetPropI0("tci_port",                                    tci_port);
-    SetPropI0("tci_txonly",                                  tci_txonly);
-  #endif
+#ifdef TCI
+  SetPropI0("tci_enable",                                  tci_enable);
+  SetPropI0("tci_port",                                    tci_port);
+  SetPropI0("tci_txonly",                                  tci_txonly);
+#endif
   SetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   SetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   SetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -2942,11 +2956,11 @@ void radio_save_state() {
     SetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
   }
 
-  #if defined (__DVL__)
-    SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
-    SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
-    SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
-  #endif
+#if defined (__DVL__)
+  SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
+  SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
+  SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+#endif
 
   for (int i = 0; i < n_adc; i++) {
     SetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
@@ -3306,21 +3320,20 @@ void radio_start_playback() {
   int  eq     = transmitter->eq_enable;
   int  dexp   = transmitter->dexp;
   double gain = transmitter->mic_gain;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   int leveler_enable = transmitter->lev_enable;
   int phrot_enable = transmitter->phrot_enable;
-  #endif
+#endif
   transmitter->eq_enable = 0;
   transmitter->compressor = 0;
   transmitter->mic_gain = 0.0;
   transmitter->cfc = 0;
   transmitter->cfc_eq = 0;
   transmitter->dexp = 0;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   transmitter->lev_enable = 0;
   transmitter->phrot_enable = 0;
-  #endif
-
+#endif
   tx_set_equalizer(transmitter);
   tx_set_mic_gain(transmitter);
   tx_set_compressor(transmitter);
@@ -3331,10 +3344,10 @@ void radio_start_playback() {
   transmitter->dexp = dexp;
   transmitter->eq_enable  = eq;
   transmitter->mic_gain = gain;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   transmitter->lev_enable = leveler_enable;
   transmitter->phrot_enable = phrot_enable;
-  #endif
+#endif
 }
 
 void radio_end_playback() {

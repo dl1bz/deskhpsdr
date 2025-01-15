@@ -143,9 +143,9 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
     SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
-    #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
     SetPropF1("modeset.%d.mic_gain", i,              mode_settings[i].mic_gain);
-    #endif
+#endif
     SetPropI1("modeset.%d.dexp", i,                  mode_settings[i].dexp);
     SetPropI1("modeset.%d.dexp_trigger", i,          mode_settings[i].dexp_trigger);
     SetPropF1("modeset.%d.dexp_tau", i,              mode_settings[i].dexp_tau);
@@ -157,16 +157,15 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.dexp_filter", i,           mode_settings[i].dexp_filter);
     SetPropI1("modeset.%d.dexp_filter_low", i,       mode_settings[i].dexp_filter_low);
     SetPropI1("modeset.%d.dexp_filter_high", i,      mode_settings[i].dexp_filter_high);
-
     SetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     SetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-    #if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
     SetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
     SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
     SetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
     SetPropI1("modeset.%d.use_rx_filter", i,         mode_settings[i].use_rx_filter);
-    #endif
+#endif
     SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
 
@@ -251,9 +250,9 @@ static void modesettingsRestoreState() {
     mode_settings[i].en_txeq = 0;
     mode_settings[i].compressor = 0;
     mode_settings[i].compressor_level = 4.0;
-    #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
     mode_settings[i].mic_gain = 0.0;
-    #endif
+#endif
     mode_settings[i].dexp = 0;
     mode_settings[i].dexp_trigger = -25;
     mode_settings[i].dexp_tau = 0.01;
@@ -267,16 +266,15 @@ static void modesettingsRestoreState() {
     mode_settings[i].dexp_filter_high = 2000;
     mode_settings[i].cfc = 0;
     mode_settings[i].cfc_eq = 0;
-
     mode_settings[i].lev_gain = 0.0;
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
-    #if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
     mode_settings[i].local_microphone = 0;
     STRLCPY(mode_settings[i].microphone_name, "NO MIC", 128);
     mode_settings[i].puresignal = 0;
     mode_settings[i].use_rx_filter = 0;
-    #endif
+#endif
 
     for (int j = 0; j < 11; j++) {
       mode_settings[i].tx_eq_gain[j] = 0;
@@ -285,7 +283,8 @@ static void modesettingsRestoreState() {
       mode_settings[i].cfc_post  [j] = 0;
     }
 
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
+
     switch (i) {
     case modeLSB:
     case modeUSB:
@@ -313,10 +312,10 @@ static void modesettingsRestoreState() {
       mode_settings[i].cfc_lvl   [ 9] =  9.0;
       mode_settings[i].cfc_lvl   [10] =  9.0;
       mode_settings[i].cfc_post  [ 0] = -9.0;
-    break;
+      break;
     }
-    #endif
 
+#endif
     mode_settings[i].tx_eq_freq[0]  =     0.0;
     mode_settings[i].rx_eq_freq[0]  =     0.0;
     mode_settings[i].cfc_freq  [0]  =     0.0;
@@ -380,9 +379,9 @@ static void modesettingsRestoreState() {
     GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
     GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     GetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
-    #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
     GetPropF1("modeset.%d.mic_gain", i,              mode_settings[i].mic_gain);
-    #endif
+#endif
     GetPropI1("modeset.%d.dexp", i,                  mode_settings[i].dexp);
     GetPropI1("modeset.%d.dexp_trigger", i,          mode_settings[i].dexp_trigger);
     GetPropF1("modeset.%d.dexp_tau", i,              mode_settings[i].dexp_tau);
@@ -396,16 +395,15 @@ static void modesettingsRestoreState() {
     GetPropI1("modeset.%d.dexp_filter_high", i,      mode_settings[i].dexp_filter_high);
     GetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     GetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
-
     GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     GetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-    #if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
     GetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
     GetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
     GetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
     GetPropI1("modeset.%d.use_rx_filter", i,         mode_settings[i].use_rx_filter);
-    #endif
+#endif
 
     for (int j = 0; j < 11; j++) {
       GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
@@ -489,20 +487,20 @@ void vfo_restore_state() {
     } else {
       vfo[i].band            = band20;
       vfo[i].bandstack       = 0;
-      #if defined (__LDESK__)
+#if defined (__LDESK__)
       vfo[i].frequency       = 14250000;
-      #else
+#else
       vfo[i].frequency       = 14010000;
-      #endif
+#endif
     }
 
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     vfo[i].mode              = modeUSB;
     vfo[i].filter            = filterF5;
-    #else
+#else
     vfo[i].mode              = modeCWU;
     vfo[i].filter            = filterF4;
-    #endif
+#endif
     vfo[i].cwAudioPeakFilter = 0;
     vfo[i].lo                = 0;
     vfo[i].offset            = 0;
@@ -583,20 +581,25 @@ static inline void vfo_adjust_band(int v, long long f) {
   //       out of a transverter band!
   //
   vfo[v].band = get_band_from_frequency(f);
-  #if defined (__LDESK__)
-    if (b != vfo[v].band) {
-      t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, (int) v,(int) vfo[v].band, (int) b);
-      #if defined (__HAVEATU__)
-        transmitter->is_tuned = 0;
-        transmitter->stored_drive = radio_get_drive();
-        if (!transmitter->is_tuned) {
-          set_drive(1.0);
-        }
-        t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-        t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
-      #endif
+#if defined (__LDESK__)
+
+  if (b != vfo[v].band) {
+    t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, (int) v,
+            (int) vfo[v].band, (int) b);
+#if defined (__HAVEATU__)
+    transmitter->is_tuned = 0;
+    transmitter->stored_drive = radio_get_drive();
+
+    if (!transmitter->is_tuned) {
+      set_drive(1.0);
     }
-  #endif
+
+    t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
+    t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
+#endif
+  }
+
+#endif
   bandstack = bandstack_get_bandstack(vfo[v].band);
   vfo[v].bandstack = bandstack->current_entry;
 }
@@ -648,14 +651,17 @@ static void audio_reload_input() {
   if (transmitter->local_microphone) {
     audio_close_input();
     t_print("%s: audio in closed\n", __FUNCTION__);
-    }
+  }
+
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {
       transmitter->local_microphone = 0;
     }
+
     t_print("%s: audio in re-open\n", __FUNCTION__);
   }
 }
+
 #endif
 
 void vfo_apply_mode_settings(RECEIVER *rx) {
@@ -723,13 +729,12 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->dexp_filter_high = mode_settings[m].dexp_filter_high;
     transmitter->cfc              = mode_settings[m].cfc;
     transmitter->cfc_eq           = mode_settings[m].cfc_eq;
-    #if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
     transmitter->local_microphone = mode_settings[m].local_microphone;
     STRLCPY(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
     transmitter->puresignal       = mode_settings[m].puresignal;
     transmitter->use_rx_filter    = mode_settings[m].use_rx_filter;
-    #endif
-
+#endif
     transmitter->lev_enable       = mode_settings[m].lev_enable;
     transmitter->lev_gain         = mode_settings[m].lev_gain;
     transmitter->phrot_enable     = mode_settings[m].phrot_enable;
@@ -742,24 +747,21 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
       transmitter->cfc_post[i] = mode_settings[m].cfc_post[i];
     }
 
-    #if defined (__LDESK__) && defined (__CPYMODE__)
-      audio_reload_input();
-      tx_ps_onoff(transmitter, transmitter->puresignal);
-      t_print("%s: state Pure Signal %d\n", __FUNCTION__, transmitter->puresignal);
-      tx_set_filter(transmitter);
-      t_print("%s: state transmitter->use_rx_filter: %d\n", __FUNCTION__, transmitter->use_rx_filter);
-    #endif
-
+#if defined (__LDESK__) && defined (__CPYMODE__)
+    audio_reload_input();
+    tx_ps_onoff(transmitter, transmitter->puresignal);
+    t_print("%s: state Pure Signal %d\n", __FUNCTION__, transmitter->puresignal);
+    tx_set_filter(transmitter);
+    t_print("%s: state transmitter->use_rx_filter: %d\n", __FUNCTION__, transmitter->use_rx_filter);
+#endif
     tx_set_compressor(transmitter);
     tx_set_dexp(transmitter);
-
-    #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
     suppress_popup_sliders = 1;
     set_mic_gain(mode_settings[m].mic_gain);
     suppress_popup_sliders = 0;
-    #endif
+#endif
     // tx_set_equalizer(transmitter);
-
   }
 
   //
@@ -790,18 +792,21 @@ void vfo_band_changed(int id, int b) {
   // Note the LO frequency of the *new* band must be subtracted here
   //
   if (b != vfo[id].band) {
-    #if defined (__LDESK__)
-      t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, id, b, (int) vfo[id].band);
-      #if defined (__HAVEATU__)
-        transmitter->is_tuned = 0;
-        transmitter->stored_drive = radio_get_drive();
-        if (!transmitter->is_tuned) {
-          set_drive(1.0);
-        }
-        t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-        t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
-      #endif
-    #endif
+#if defined (__LDESK__)
+    t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, id, b,
+            (int) vfo[id].band);
+#if defined (__HAVEATU__)
+    transmitter->is_tuned = 0;
+    transmitter->stored_drive = radio_get_drive();
+
+    if (!transmitter->is_tuned) {
+      set_drive(1.0);
+    }
+
+    t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
+    t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
+#endif
+#endif
     band = band_get_band(b);
     bandstack = bandstack_get_bandstack(b);
     long long f = bandstack->entry[bandstack->current_entry].frequency;
@@ -1447,22 +1452,25 @@ void vfo_id_move_to(int id, long long hz) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, gpointer data) {
-  #if defined (__LDESK__)
-  if (event->state) {
-  if (event->direction == GDK_SCROLL_UP) {
-    vfo_step(1);
-  } else {
-    vfo_step(-1);
-  }
-  }
-  #else
-  if (event->direction == GDK_SCROLL_UP) {
-    vfo_step(1);
-  } else {
-    vfo_step(-1);
-  }
-  #endif
+#if defined (__LDESK__)
 
+  if (event->state) {
+    if (event->direction == GDK_SCROLL_UP) {
+      vfo_step(1);
+    } else {
+      vfo_step(-1);
+    }
+  }
+
+#else
+
+  if (event->direction == GDK_SCROLL_UP) {
+    vfo_step(1);
+  } else {
+    vfo_step(-1);
+  }
+
+#endif
   return FALSE;
 }
 
@@ -1528,10 +1536,10 @@ void vfo_update() {
   //
   // -----------------------------------------------------------
   if ((f == filterVar1 || f == filterVar2) && m != modeFMN && vfl->filter_x != 0) {
-    #if !defined (__LDESK__)
+#if !defined (__LDESK__)
     double range;
     double s, x1, x2;
-    #endif
+#endif
     int def_low, def_high;
     int low = band_filter->low;
     int high = band_filter->high;
@@ -1556,7 +1564,7 @@ void vfo_update() {
       high     = swap;
     }
 
-    #if !defined (__LDESK__)
+#if !defined (__LDESK__)
     // default range is 50 pix wide in a 100 pix window
     cairo_set_line_width(cr, 3.0);
     cairo_set_source_rgba(cr, COLOUR_OK);
@@ -1565,10 +1573,8 @@ void vfo_update() {
     cairo_line_to(cr, vfl->filter_x + 75, vfl->filter_y - 5);
     cairo_line_to(cr, vfl->filter_x + 80, vfl->filter_y);
     cairo_stroke(cr);
-
     range = (double) (def_high - def_low);
     s = 50.0 / range;
-
     // convert actual filter size to the "default" scale
     x1 = vfl->filter_x + 25 + s * (double)(low - def_low);
     x2 = vfl->filter_x + 25 + s * (double)(high - def_low);
@@ -1578,7 +1584,7 @@ void vfo_update() {
     cairo_line_to(cr, x2, vfl->filter_y - 10);
     cairo_line_to(cr, x2 + 5, vfl->filter_y - 15);
     cairo_stroke(cr);
-    #endif
+#endif
   }
 
   // -----------------------------------------------------------
@@ -1638,21 +1644,22 @@ void vfo_update() {
 
     case modeLSB:
     case modeUSB:
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     case modeDIGL:
     case modeDIGU:
-    #endif
+#endif
     case modeDSB:
     case modeAM:
-      #if defined (__LDESK__)
+#if defined (__LDESK__)
       if (transmitter->use_rx_filter) {
         snprintf(temp_text, 32, "%s %s [RX=TX]", mode_string[vfo[id].mode], band_filter->title);
       } else {
         snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], band_filter->title);
       }
-      #else
+
+#else
       snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], band_filter->title);
-      #endif
+#endif
       break;
 
     default:
@@ -1660,11 +1667,11 @@ void vfo_update() {
       break;
     }
 
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     cairo_set_font_size(cr, vfl->size1 + 2);
-    #else
+#else
     cairo_set_font_size(cr, vfl->size1);
-    #endif
+#endif
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_move_to(cr, vfl->mode_x, vfl->mode_y);
     cairo_show_text(cr, temp_text);
@@ -2065,8 +2072,8 @@ void vfo_update() {
   // -----------------------------------------------------------
   if (can_transmit && vfl->cmpr_x != 0) {
     cairo_move_to(cr, vfl->cmpr_x, vfl->cmpr_y);
+#if defined (__LDESK__)
 
-    #if defined (__LDESK__)
     if (transmitter->cfc && transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC %+d %+d", (int) transmitter->cfc_lvl[0], (int) transmitter->cfc_post[0]);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2084,11 +2091,11 @@ void vfo_update() {
 
     if (!transmitter->cfc && !transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC");
-      cairo_set_source_rgba(cr, COLOUR_SHADE);    
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-    cairo_show_text(cr, temp_text);
 
-    #else
+    cairo_show_text(cr, temp_text);
+#else
 
     if (transmitter->cfc && transmitter->compressor) {
       snprintf(temp_text, 32, "CprCfc");
@@ -2109,9 +2116,9 @@ void vfo_update() {
       snprintf(temp_text, 32, "Cmpr");
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-    cairo_show_text(cr, temp_text);
 
-    #endif
+    cairo_show_text(cr, temp_text);
+#endif
   }
 
   // -----------------------------------------------------------
@@ -2120,8 +2127,9 @@ void vfo_update() {
   //
   // -----------------------------------------------------------
   if (vfl->eq_x != 0) {
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     cairo_move_to(cr, vfl->eq_x + 22, vfl->eq_y);
+
     if (active_receiver->eq_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "RxEQ");
@@ -2130,8 +2138,9 @@ void vfo_update() {
       cairo_show_text(cr, "RxEQ");
     }
 
-    #else
+#else
     cairo_move_to(cr, vfl->eq_x, vfl->eq_y);
+
     if (radio_is_transmitting() && transmitter->eq_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "TxEQ");
@@ -2142,8 +2151,8 @@ void vfo_update() {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       cairo_show_text(cr, "EQ");
     }
-    
-    #endif
+
+#endif
   }
 
   // -----------------------------------------------------------
@@ -2153,8 +2162,8 @@ void vfo_update() {
   // -----------------------------------------------------------
   if (vfl->div_x != 0) {
     cairo_move_to(cr, vfl->div_x, vfl->div_y);
+#if defined (__LDESK__)
 
-    #if defined (__LDESK__)
     if (transmitter->compressor) {
       snprintf(temp_text, 32, "PROC %+d", (int) transmitter->compressor_level);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2166,8 +2175,7 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, temp_text);
-    
-    #else
+#else
 
     if (diversity_enabled) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2176,8 +2184,7 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, "DIV");
-
-    #endif
+#endif
   }
 
   // -----------------------------------------------------------
@@ -2223,11 +2230,11 @@ void vfo_update() {
   //
   // -----------------------------------------------------------
   if (vfl->cat_x != 0) {
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     cairo_move_to(cr, vfl->cat_x + 7, vfl->cat_y);
-    #else
+#else
     cairo_move_to(cr, vfl->cat_x, vfl->cat_y);
-    #endif
+#endif
 
     if (cat_control > 0) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2238,12 +2245,15 @@ void vfo_update() {
     cairo_show_text(cr, "CAT");
   }
 
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
+
   // TX-EQ & Leveler & Tuning state
   if (vfl->eq_x != 0) {
     cairo_move_to(cr, vfl->cat_x + 40, vfl->cat_y);
+
     if (transmitter->eq_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
+
       if (transmitter->eq_gain[0] == 0.0) {
         snprintf(temp_text, 32, "TxEQ");
       } else {
@@ -2253,19 +2263,21 @@ void vfo_update() {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, 32, "TxEQ");
     }
-    cairo_show_text(cr, temp_text);
 
+    cairo_show_text(cr, temp_text);
     cairo_move_to(cr, vfl->cat_x + 110, vfl->cat_y);
+
     if (transmitter->lev_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
-      snprintf(temp_text, 32, "LEV %+d", (int) transmitter->lev_gain);    
+      snprintf(temp_text, 32, "LEV %+d", (int) transmitter->lev_gain);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, 32, "LEV");
     }
-    cairo_show_text(cr, temp_text);
 
+    cairo_show_text(cr, temp_text);
     cairo_move_to(cr, vfl->cat_x + 180, vfl->cat_y);
+
     if (transmitter->phrot_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       snprintf(temp_text, 32, "PH-ROT %+d", (int) transmitter->phrot_stage);
@@ -2273,10 +2285,11 @@ void vfo_update() {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, 32, "PH-ROT");
     }
-    cairo_show_text(cr, temp_text);
 
-    #if defined (__LDESK__) && defined (__HAVEATU__)
+    cairo_show_text(cr, temp_text);
+#if defined (__LDESK__) && defined (__HAVEATU__)
     cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
+
     if (transmitter->is_tuned) {
       cairo_set_source_rgba(cr, COLOUR_OK);
       snprintf(temp_text, 32, "TUNED");
@@ -2284,12 +2297,14 @@ void vfo_update() {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
       snprintf(temp_text, 32, "TUNED");
     }
-    cairo_show_text(cr, temp_text);
-    #endif
 
+    cairo_show_text(cr, temp_text);
+#endif
     cairo_move_to(cr, vfl->cat_x + 160, vfl->cat_y + 65);
+
     if (transmitter->addgain_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
+
       if (transmitter->addgain_gain > 0) {
         snprintf(temp_text, 32, "Mic PreAmp +%.0fdb", transmitter->addgain_gain);
       } else {
@@ -2299,11 +2314,11 @@ void vfo_update() {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, 32, "Mic PreAmp");
     }
+
     cairo_show_text(cr, temp_text);
-
   }
-  #endif
 
+#endif
 
   // -----------------------------------------------------------
   //
@@ -2394,7 +2409,8 @@ void vfo_update() {
     cairo_show_text(cr, temp_text);
   }
 
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
+
   if (can_transmit && vfl->dup_x != 0) {
     if (transmitter->cessb_enable) {
       cairo_set_source_rgba(cr, COLOUR_OK);
@@ -2406,8 +2422,8 @@ void vfo_update() {
     cairo_move_to(cr, vfl->dup_x + 35, vfl->dup_y + 22);
     cairo_show_text(cr, temp_text);
   }
-  #endif
 
+#endif
   // -----------------------------------------------------------
   //
   // Draw string indicating multifunction encoder status

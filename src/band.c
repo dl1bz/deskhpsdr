@@ -689,7 +689,8 @@ int TransmitAllowed() {
     break;
   }
 
-  #if !defined (__LDESK__)
+#if !defined (__LDESK__)
+
   if (txb == band60) {
     //
     // For 60m band, ensure signal is within one of the "channels"
@@ -715,9 +716,10 @@ int TransmitAllowed() {
     //
     result = flow >= txband->frequencyMin && fhigh <= txband->frequencyMax;
   }
-  #else
-    result = flow >= txband->frequencyMin && fhigh <= txband->frequencyMax;
-  #endif
+
+#else
+  result = flow >= txband->frequencyMin && fhigh <= txband->frequencyMax;
+#endif
   t_print("%s: CANTRANSMIT: low=%lld  high=%lld transmit=%d\n", __FUNCTION__, flow, fhigh, result);
   return result;
 }

@@ -98,8 +98,7 @@ unsigned int GetFirmwareVersion(ESoftwareID* ID) {
   return Version;
 }
 
-unsigned int GetFirmwareMajorVersion(void)
-{
+unsigned int GetFirmwareMajorVersion(void) {
   unsigned int MajorVersion = 0;
   uint32_t SoftwareInformation;                                 // swid & version
   SoftwareInformation = RegisterRead(VADDRSWVERSIONREG);

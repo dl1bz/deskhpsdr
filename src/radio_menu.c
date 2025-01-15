@@ -326,9 +326,9 @@ static void receivers_cb(GtkToggleButton *widget, gpointer data) {
 }
 
 static void region_cb(GtkWidget *widget, gpointer data) {
-  #if !defined (__LDESK__)
+#if !defined (__LDESK__)
   radio_change_region(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
-  #endif
+#endif
 }
 
 static void rit_cb(GtkWidget *widget, gpointer data) {
@@ -378,13 +378,13 @@ void radio_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Radio", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  #else
+#else
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Radio");
-  #endif
+#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -547,9 +547,9 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   gtk_widget_set_sensitive (label, FALSE);
-  #endif
+#endif
   row++;
   GtkWidget *region_combo = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "Other");
@@ -558,9 +558,9 @@ void radio_menu(GtkWidget *parent) {
   gtk_combo_box_set_active(GTK_COMBO_BOX(region_combo), region);
   my_combo_attach(GTK_GRID(grid), region_combo, 2, row, 1, 1);
   g_signal_connect(region_combo, "changed", G_CALLBACK(region_cb), NULL);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   gtk_widget_set_sensitive (region_combo, FALSE);
-  #endif
+#endif
   row++;
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
@@ -881,11 +881,11 @@ void radio_menu(GtkWidget *parent) {
   // Calibration of the RF front end
   //
   col++;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   label = gtk_label_new("ADC Gain\nCalibration (dB):");
-  #else
+#else
   label = gtk_label_new("RX Gain\nCalibration (dB):");
-  #endif
+#endif
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;

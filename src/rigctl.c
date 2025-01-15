@@ -135,9 +135,9 @@ typedef struct _command {
 static CLIENT tcp_client[MAX_TCP_CLIENTS]; // TCP clients
 static CLIENT serial_client[MAX_SERIAL];   // serial clienta
 #if defined (__DVL__)
-SERIALPORT SerialPorts[MAX_SERIAL+1];
+  SERIALPORT SerialPorts[MAX_SERIAL + 1];
 #else
-SERIALPORT SerialPorts[MAX_SERIAL];
+  SERIALPORT SerialPorts[MAX_SERIAL];
 #endif
 
 static gpointer rigctl_client (gpointer data);
@@ -180,7 +180,6 @@ void shutdown_tcp_rigctl() {
 
     if (tcp_client[id].fd != -1) {
       // t_print("%s: setting SO_LINGER to 0 for client_socket: %d\n", __FUNCTION__, tcp_client[id].fd);
-
       if (setsockopt(tcp_client[id].fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
         t_perror("setsockopt(...,SO_LINGER,...) failed for client:");
       }
@@ -201,7 +200,6 @@ void shutdown_tcp_rigctl() {
   //
   if (server_socket >= 0) {
     // t_print("%s: setting SO_LINGER to 0 for server_socket: %d\n", __FUNCTION__, server_socket);
-
     if (setsockopt(server_socket, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
       t_perror("setsockopt(...,SO_LINGER,...) failed for server:");
     }
@@ -210,6 +208,7 @@ void shutdown_tcp_rigctl() {
     close(server_socket);
     server_socket = -1;
   }
+
   // TODO: join with the server thread, but this requires to make the accept() there
   //       non-blocking (use select())
 }
@@ -997,6 +996,7 @@ static gboolean andromeda_handler(gpointer data) {
         break;
 
       case 4:
+
         // According to the ANAN document this is LED #5
         if (can_transmit) {
           new = transmitter->puresignal;
@@ -1102,7 +1102,6 @@ static gboolean andromeda_oneshot_handler(gpointer data) {
   // "immediate" LED update is desired.
   //
   (void) andromeda_handler(data);
-
   return G_SOURCE_REMOVE;
 }
 
@@ -1320,9 +1319,7 @@ static gpointer rigctl_client (gpointer data) {
   // Decrement CAT_CONTROL
   g_mutex_lock(&mutex_numcat);
   cat_control--;
-
   // if (rigctl_debug) { t_print("RIGCTL: CTLA DEC - cat_control=%d\n", cat_control); }
-
   g_mutex_unlock(&mutex_numcat);
   g_idle_add(ext_vfo_update, NULL);
   return NULL;
@@ -2455,12 +2452,12 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           send_resp(client->fd, reply);
         } else if (command[7] == ';') {
           int val = atoi(&command[4]);
-          #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
           set_mic_gain(((double) val * 0.8857) - 12.0);
-          #else
+#else
           transmitter->mic_gain = ((double) val * 0.8857) - 12.0;
           tx_set_mic_gain(transmitter);
-          #endif
+#endif
         }
       } else {
         implemented = FALSE;
@@ -3403,7 +3400,6 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //NOTE      y=0-9 is the number of ticks
       //NOTE
       //ENDDEF
-
       if (command[7] == ';') {
         int v, p;
         p = 10 * (command[4] - '0') + (command[5] - '0');
@@ -3473,12 +3469,10 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
             // Enc9/10: "RIT/XIT"
             case 9: // RIT of the VFO of the active receiver
               schedule_action(RIT, RELATIVE, v);
-
               break;
 
             case 10:
               schedule_action(XIT, RELATIVE, v);
-
               break;
 
             //Enc11/12: "MULTI/DRIVE", but here implemented as "MIC/DRIVE"
@@ -3500,24 +3494,31 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           case 1:  // left edge lower encoder inner knob, silk print: "RX AF/AGC", default: AF_GAIN
             schedule_action(AF_GAIN, RELATIVE, v);
             break;
+
           case 2:  // left edge lower encoder outer knob, silk print: "RX AF/AGC", default: AGC_GAIN
             schedule_action(AGC_GAIN, RELATIVE, v);
             break;
+
           case 5:  // right edge upper encoder inner knob, silk print: "Multi 1" (?), default: FILTER_CUT_HIGH
             schedule_action(FILTER_CUT_HIGH, RELATIVE, v);
             break;
+
           case 6:  // right edge upper encoder outer knob, silk print: "Multi 1" (?), default: FILTER_CUT_LOW
             schedule_action(FILTER_CUT_LOW, RELATIVE, v);
             break;
+
           case 9:  // right edge lower encoder inner knob, silk print: "Multi 2" (?), default: RIT
             schedule_action(RIT, RELATIVE, v);
             break;
+
           case 10:  // right edge lower encoder outer knob, silk print: "Multi 2" (?), default: XIT
             schedule_action(XIT, RELATIVE, v);
             break;
+
           case 11:  // left edge upper encoder inner knob, silk print: "MIC/DRIVE", default: MULTI_ENC
             schedule_action(MULTI_ENC, RELATIVE, v);
             break;
+
           case 12:  // left edge upper encoder outer knob, silk print: "MIC/DRIVE", default: TX_DRIVE
             schedule_action(DRIVE, RELATIVE, v);
             break;
@@ -3578,7 +3579,6 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
             break;
           }
         } // end of G2Mk2 console
-
       } else {
         // unexpected command format
         implemented = FALSE;
@@ -3607,7 +3607,7 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //NOTE      pressed(y=1) or pressed for a longer time (y=2).
       //ENDDEF
       if (command[7] == ';') {
-        int p = 10*(command[4] - '0') + (command[5] - '0');
+        int p = 10 * (command[4] - '0') + (command[5] - '0');
         int v = (command[6] - '0');
 
         //
@@ -3953,19 +3953,22 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
               }
             }
           }
+
           break;
         } // end of the "type=1" section
 
         int tr01, tr10, tr12, tr20;
-
         tr01 = 0;  // indicates a v=0 --> v=1 transision
         tr12 = 0;  // indicates a v=1 --> v=2 transision
         tr10 = 0;  // indicates a v=1 --> v=0 transision
         tr20 = 0;  // indicates a v=2 --> v=0 transision
 
         if (client->last_v == 0 && v == 1) { tr01 = 1; }
+
         if (client->last_v == 1 && v == 2) { tr12 = 1; }
+
         if (client->last_v == 1 && v == 0) { tr10 = 1; }
+
         if (client->last_v == 2 && v == 0) { tr20 = 1; }
 
         client->last_v = v;
@@ -3977,82 +3980,102 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           switch (p) {
           case 1:  // left edge lower encoder push-button, silk print: "RX AF/AGC", default: MUTE
             if (tr01) { schedule_action(MUTE, PRESSED, 0); }
+
             break;
 
           case 5:  // right edge upper encoder push-button, silk print: "Multi 1", default: FILTER_CUT_DEFAULT
             if (tr01) { schedule_action(FILTER_CUT_DEFAULT, PRESSED, 0); }
+
             break;
 
           case 9:  // right edge lower encoder push-button, silk print: "Multi 2", default: RITXIT_CLEAR
             if (tr01) { schedule_action(RITXIT_CLEAR, PRESSED, 0); }
+
             break;
 
           case 11:  // left edge upper encoder push-button, silk print: "MIC/DRIVE", default: MULTI_BUTTON
             if (tr01) { schedule_action(MULTI_BUTTON, PRESSED, 0); }
+
             break;
 
           case 21:  // 4x3 pad, row 4, column 1, silk print: "FCN", default: FUNCTION
             if (tr01) { schedule_action(FUNCTION, PRESSED, 0); }
+
             break;
 
           case 30:  // 4x3 pad, row 1, column 3, silk print: "Band+", default: BAND_PLUS
             if (tr01) { schedule_action(BAND_PLUS, PRESSED, 0); }
+
             break;
 
           case 31:  // 4x3 pad, row 1, column 1, silk print: "Mode+", default: MODE_PLUS
             if (tr01) { schedule_action(MODE_PLUS, PRESSED, 0); }
+
             break;
 
           case 32:  // 4x3 pad, row 1, column 2, silk print: "Fil+", default: FILTER_PLUS
             if (tr01) { schedule_action(FILTER_PLUS, PRESSED, 0); }
+
             break;
 
           case 33:  // 4x3 pad, row 2, column 3, silk print: "Band-", default: BAND_MINUS
             if (tr01) { schedule_action(BAND_MINUS, PRESSED, 0); }
+
             break;
 
           case 34:  // 4x3 pad, row 2, column 1, silk print: "Mode-", default: MODE_MINUX
             if (tr01) { schedule_action(MODE_MINUS, PRESSED, 0); }
+
             break;
 
           case 35:  // 4x3 pad, row 2, column 3, silk print: "Fil-", default: FILTER_MINUS
             if (tr01) { schedule_action(FILTER_MINUS, PRESSED, 0); }
+
             break;
 
           case 36:  // 4x3 pad, row 3, column 1, silk print: "A>B", default: A_TO_B
             if (tr01) { schedule_action(A_TO_B, PRESSED, 0); }
+
             break;
 
           case 37:  // 4x3 pad, row 3, column 2, silk print: "B>A", default: B_TO_A
             if (tr01) { schedule_action(B_TO_A, PRESSED, 0); }
+
             break;
 
           case 38: // 4x3 pad, row 3, column 3, silk print: "Split", default: SPLIT
             if (tr01) { schedule_action(SPLIT, PRESSED, 0); }
+
             break;
 
           case 42:  // 4x3 pad, row 4, column 2, silk print: "RIT", default: RIT_ENABLE
             if (tr01) { schedule_action(RIT_ENABLE, PRESSED, 0); }
+
             break;
 
           case 43:  // 4x3 pad, row 4, column 3, silk print: "XIT", default: XIT_ENABLE
             if (tr01) { schedule_action(XIT_ENABLE, PRESSED, 0); }
+
             break;
 
           case 44:  // right button below VFO knob, silk print: "LOCK", default: LOCK
             if (tr01) { schedule_action(LOCK, PRESSED, 0); }
+
             break;
 
           case 45:  // left button below VFO knob, silk print: "CTUNE", default: CTUN
             if (tr01) { schedule_action(CTUN, PRESSED, 0); }
+
             break;
 
           case 47:  // upper button left of the screen, silk print: "MOX", default: MOX
             if (tr01) { schedule_action(MOX, PRESSED, 0); }
+
             break;
 
           case 50:  // lower button left of screen, silk print: "2TONE/TUNE", default: TUNE
             if (tr01) { schedule_action(TUNE, PRESSED, 0); }
+
             break;
           }
         }
@@ -4064,14 +4087,17 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           switch (p) {
           case 1:  // left edge lower encoder, push-button, silk print: "RX2 AF/AGC", default: MUTE_RX2
             if (tr01) { schedule_action(MUTE_RX2, PRESSED, 0); }
+
             break;
 
           case 2:  // left edge upper encoder (directly below power button), push-button, silk print: "RX1 AF/AGC", default: MUTE_RX1
             if (tr01) { schedule_action(MUTE_RX1, PRESSED, 0); }
+
             break;
 
           case 3: // encoder between power button and screen, push-button, silk print: "DRIVE/MULTI", default: MULTI_BUTTON
             if (tr01) { schedule_action(MULTI_BUTTON, PRESSED, 0); }
+
             break;
 
           case 4:  // lowest of the four buttons left of the screen, silk print: "ATU", not yet used
@@ -4079,92 +4105,119 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
           case 5:  // second-lowest of the four buttons left of the screen, silk print: "2TONE", default: TWO_TONE
             if (tr01) { schedule_action(TWO_TONE, PRESSED, 0); }
+
             break;
 
           case 6:  // second-highest of the four buttons left of the screen, silk print: "TUNE", default: TUNE
             if (tr01) { schedule_action(TUNE, PRESSED, 0); }
+
             break;
 
           case 7:  // highest of the four buttons left of the screen, silk print: "MOX", default: MOX
             if (tr01) { schedule_action(MOX, PRESSED, 0); }
+
             break;
 
           case 8: // lower left of the VFO knob, silk print: "CTUNE", default: CTUN
             if (tr01) { schedule_action(CTUN, PRESSED, 0); }
+
             break;
 
           case 9: // lower right of the VFO knob, silk print: "LOCK", default: LOCK
             if (tr01) { schedule_action(LOCK, PRESSED, 0); }
+
             break;
 
           case 10: // button with silk print "A/B", default: SWAP_RX
             if (tr01) { schedule_action(SWAP_RX, PRESSED, 0); }
+
             break;
 
           case 11: // button with silk print "RIT/XIT", default: RITSELECT
             if (tr01) { schedule_action(RITSELECT, PRESSED, 0); }
+
             break;
 
           case 12: // right edge lower encoder, push-button, silk print: "RIT/XIT", default: RITCIT_CLEAR
             if (tr01) { schedule_action(RITXIT_CLEAR, PRESSED, 0); }
+
             break;
 
           case 13:  // right edge upper encoder, push-button, SHIFT OFF, silk print: "MULTI 2", default: FILTER_CUT_DEFAULT
             if (tr01) { schedule_action(FILTER_CUT_DEFAULT, PRESSED, 0); }
+
             break;
 
           case 14:  // 4x3 pad row 1 col 1, silk print: "160/MODE+", "no Band", default: MODE_PLUS, long: MENU_MODE
             if (tr10) { schedule_action(MODE_PLUS, PRESSED, 0); }
+
             if (tr12) { schedule_action(MENU_MODE, PRESSED, 0); }
+
             break;
 
           case 15:  // 4x3 pad row 1 col 2, silk print: "80/FIL+", "no Band", default: FILTER_PLUS, long: MENU_FILTER
             if (tr10) { schedule_action(FILTER_PLUS, PRESSED, 0); }
+
             if (tr12) { schedule_action(MENU_FILTER, PRESSED, 0); }
+
             break;
 
           case 16:  // 4x3 pad row 1 col 3, silk print: "60/BAND+", "no Band", default: BAND_PLUS, long: MENU_BAND
             if (tr01) { schedule_action(BAND_PLUS, PRESSED, 0); }
+
             if (tr12) { schedule_action(MENU_BAND, PRESSED, 0); }
+
             break;
 
           case 17:  // 4x3 pad row 2 col 1, silk print: "40/MODE-", "no Band", default: MODE_MINUS
             if (tr01) { schedule_action(MODE_MINUS, PRESSED, 0); }
+
             break;
 
           case 18:  // 4x3 pad row 2 col 2, silk print: "30/FIL-", "no Band", default: FILTER_MINUS
             if (tr01) { schedule_action(FILTER_MINUS, PRESSED, 0); }
+
             break;
 
           case 19:  // 4x3 pad row 2 col 3, silk print: "20/BAND-", "no Band", default: BAND_MINUS
             if (tr01) { schedule_action(BAND_MINUS, PRESSED, 0); }
+
             break;
 
           case 20:  // 4x3 pad row 3 col 1, silk print: "17/A>B", "no Band", default: A_TO_B
             if (tr01) { schedule_action(A_TO_B, PRESSED, 0); }
+
             break;
 
           case 21:  // 4x3 pad row 3 col 2, silk print: "15/B>A", "no Band", default: B_TO_A
             if (tr01) { schedule_action(B_TO_A, PRESSED, 0); }
+
             break;
 
           case 22:  // 4x3 pad row 3 col 3, silk print: "12/SPLIT", "no Band", default: SPLIT
             if (tr01) { schedule_action(SPLIT, PRESSED, 0); }
+
             break;
 
           case 23:  // 4x3 pad row 4 col 1, silk print: "10/F1", "no Band", default: SNB, long: MENU_NOISE
             if (tr10) { schedule_action(SNB, PRESSED, 0); }
+
             if (tr12) { schedule_action(MENU_NOISE, PRESSED, 0); }
+
             break;
 
           case 24:  // 4x3 pad row 4 col 2, silk print: "6/F2", "no Band", default: NB, long: MENU_NOISE
             if (tr10) { schedule_action(NB, PRESSED, 0); }
+
             if (tr12) { schedule_action(MENU_NOISE, PRESSED, 0); }
+
             break;
 
           case 25:  // 4x3 pad row 4 col 3, silk print: "LF/HF/F3", "no Band", default: NR, long: MENU_NOISE
             if (tr10) { schedule_action(NR, PRESSED, 0); }
+
             if (tr12) { schedule_action(MENU_NOISE, PRESSED, 0); }
+
             break;
 
           case 26:  // unused
@@ -4172,50 +4225,62 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
           case 27:  // 4x3 pad row 1 col 1, silk print: "160/MODE+", "Band", default: BAND_160
             if (tr01) { schedule_action(BAND_160, PRESSED, 0); }
+
             break;
 
           case 28:  // 4x3 pad row 1 col 2, silk print: "80/FIL+", "Band", default: BAND_80
             if (tr01) { schedule_action(BAND_80, PRESSED, 0); }
+
             break;
 
           case 29:  // 4x3 pad row 1 col 3, silk print: "60/BAND+", "Band", default: BAND_60
             if (tr01) { schedule_action(BAND_60, PRESSED, 0); }
+
             break;
 
           case 30:  // 4x3 pad row 2 col 1, silk print: "40/MODE-", "Band", default: BAND_40
             if (tr01) { schedule_action(BAND_40, PRESSED, 0); }
+
             break;
 
           case 31:  // 4x3 pad row 2 col 2, silk print: "30/FIL-", "Band", default: BAND_30
             if (tr01) { schedule_action(BAND_30, PRESSED, 0); }
+
             break;
 
           case 32:  // 4x3 pad row 2 col 3, silk print: "20/BAND-", "Band", default: BAND_20
             if (tr01) { schedule_action(BAND_20, PRESSED, 0); }
+
             break;
 
           case 33:  // 4x3 pad row 3 col 1, silk print: "17/A>B", "Band", default: BAND_17
             if (tr01) { schedule_action(BAND_17, PRESSED, 0); }
+
             break;
 
           case 34:  // 4x3 pad row 3 col 2, silk print: "15/B>A", "Band", default: BAND_15
             if (tr01) { schedule_action(BAND_15, PRESSED, 0); }
+
             break;
 
           case 35:  // 4x3 pad row 3 col 3, silk print: "12/SPLIT", "Band", default: BAND_12
             if (tr01) { schedule_action(BAND_12, PRESSED, 0); }
+
             break;
 
           case 36:  // 4x3 pad row 4 col 1, silk print: "10/F1", "Band", default: BAND_10
             if (tr01) { schedule_action(BAND_10, PRESSED, 0); }
+
             break;
 
           case 37:  // 4x3 pad row 4 col 2, silk print: "6/F2", "Band", default: BAND_6
             if (tr01) { schedule_action(BAND_6, PRESSED, 0); }
+
             break;
 
           case 38:  // 4x3 pad row 4 col 3, silk print: "LF/HF/F3", "Band", default: BAND_136
             if (tr01) { schedule_action(BAND_136, PRESSED, 0); }
+
             break;
 
           case 39:  // Reserved
@@ -4226,16 +4291,15 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
           case 41:  // right edge upper encoder, push-button, SHIFT ON, silk print: "MULTI 2", default: DIV
             if (tr01) { schedule_action(DIV, PRESSED, 0); }
+
             break;
           }
-
         }    // end of G2Mk2 ZZZP code
 
         //
         // Schedule LED update
         //
         g_idle_add(andromeda_oneshot_handler, (gpointer) client);
-
       } else {
         // all ANDROMEDA types, unexpected command format
         implemented = FALSE;
@@ -5109,12 +5173,12 @@ int parse_cmd(void *data) {
 
           if (gain > 50.0) { gain = 50.0; }
 
-          #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
           set_mic_gain(gain);
-          #else
+#else
           transmitter->mic_gain = gain;
           tx_set_mic_gain(transmitter);
-          #endif
+#endif
         }
       } else {
         implemented = FALSE;
@@ -6311,9 +6375,7 @@ static gpointer serial_server(gpointer data) {
   t_print("%s: Entering Thread\n", __FUNCTION__);
   g_mutex_lock(&mutex_numcat);
   cat_control++;
-
   // if (rigctl_debug) { t_print("RIGCTL: SER INC cat_control=%d\n", cat_control); }
-
   g_mutex_unlock(&mutex_numcat);
   g_idle_add(ext_vfo_update, NULL);
   client->running = TRUE;
@@ -6402,9 +6464,7 @@ static gpointer serial_server(gpointer data) {
   g_free(command);
   g_mutex_lock(&mutex_numcat);
   cat_control--;
-
   // if (rigctl_debug) { t_print("RIGCTL: SER DEC - cat_control=%d\n", cat_control); }
-
   g_mutex_unlock(&mutex_numcat);
   g_idle_add(ext_vfo_update, NULL);
   t_print("%s: Exiting Thread, running=%d\n", __FUNCTION__, client->running);
@@ -6437,8 +6497,8 @@ int launch_serial_rigctl (int id) {
   if (SerialPorts[id].andromeda && !SerialPorts[id].g2) {
     baud = B9600;
   }
-  t_print("%s: Baud rate=%d\n", __FUNCTION__, baud);
 
+  t_print("%s: Baud rate=%d\n", __FUNCTION__, baud);
   serial_client[id].fifo = 0;
 
   if (set_interface_attribs (fd, baud, 0) == 0) {

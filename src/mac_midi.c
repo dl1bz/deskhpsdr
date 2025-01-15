@@ -261,11 +261,11 @@ void register_midi_device(int index) {
   myClients[index] = 0;
   myMIDIports[index] = 0;
   //Create client and port, and connect
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   osret = MIDIClientCreate(CFSTR("deskHPSDR"), NULL, NULL, &myClients[index]);
-  #else
+#else
   osret = MIDIClientCreate(CFSTR("piHPSDR"), NULL, NULL, &myClients[index]);
-  #endif
+#endif
 
   if (osret != 0) {
     t_print("%s: MIDIClientCreate failed with ret=%d\n", __FUNCTION__, (int) osret);

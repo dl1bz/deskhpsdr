@@ -737,6 +737,7 @@ void *IncomingSpkrAudio(void *arg) {                    // listener thread
   ThreadData->Active = false;                   // indicate it is closed
   return NULL;
 }
+
 #endif
 
 #define VIQSAMPLESPERFRAME 240                      // samples per UDP frame

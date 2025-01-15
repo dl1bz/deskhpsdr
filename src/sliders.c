@@ -101,9 +101,9 @@ void show_popup_slider(enum ACTION action, int rx, double min, double max, doubl
   static double scale_min;
   static double scale_max;
   static double scale_wid;
-  
+
   if (suppress_popup_sliders) {
-  return;
+    return;
   }
 
   //
@@ -487,11 +487,11 @@ void set_filter_shift(int rx, int shift) {
 static void micgain_value_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
-    #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
     int mode = vfo_get_tx_mode();
     mode_settings[mode].mic_gain = transmitter->mic_gain;
     copy_mode_settings(mode);
-    #endif
+#endif
     tx_set_mic_gain(transmitter);
   }
 }
@@ -506,11 +506,11 @@ void set_mic_gain(double value) {
   //t_print("%s value=%f\n",__FUNCTION__, value);
   if (can_transmit) {
     transmitter->mic_gain = value;
-    #if defined (__LDESK__) && defined (__USELESS__)
+#if defined (__LDESK__) && defined (__USELESS__)
     int mode = vfo_get_tx_mode();
     mode_settings[mode].mic_gain = transmitter->mic_gain;
     copy_mode_settings(mode);
-    #endif
+#endif
     tx_set_mic_gain(transmitter);
 
     if (display_sliders) {
@@ -662,11 +662,11 @@ void show_diversity_phase() {
 }
 
 GtkWidget *sliders_init(int my_width, int my_height) {
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   width = my_width - 50;
-  #else
+#else
   width = my_width;
-  #endif
+#endif
   height = my_height;
   t_print("sliders_init: width=%d height=%d\n", width, height);
   //
@@ -684,21 +684,21 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     tpix   =  width / 9;      // width of text label in pixel
     twidth =  3;              // width of text label in grid units
     swidth =  6;              // width of slider in grid units
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   } else if (width < 1441) {
-  #else
+#else
   } else if (width < 1280) {
-  #endif
+#endif
     // label  width: 1/12 of screen width
     // slider width: 3/12 of screen width
     tpix   =  width / 12;
-    #if defined (__LDESK__) && defined (__linux__)
+#if defined (__LDESK__) && defined (__linux__)
     twidth =  4;              // width of text label in pixel
     swidth = 10;              // width of slider in grid units
-    #else
+#else
     twidth =  3;              // width of text label in pixel
     swidth =  9;              // width of slider in grid units
-    #endif
+#endif
   } else {
     // label  width: 1/15 of screen width
     // slider width: 4/12 of screen width
@@ -731,11 +731,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_size_request (sliders, width, height);
   gtk_grid_set_row_homogeneous(GTK_GRID(sliders), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(sliders), TRUE);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   af_gain_label = gtk_label_new("Vol");
-  #else
+#else
   af_gain_label = gtk_label_new("AF");
-  #endif
+#endif
   gtk_widget_set_name(af_gain_label, csslabel);
   gtk_widget_set_halign(af_gain_label, GTK_ALIGN_END);
   gtk_widget_show(af_gain_label);
@@ -763,11 +763,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
 
   if (have_rx_gain) {
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     rf_gain_label = gtk_label_new("ADC Gain");
-    #else
+#else
     rf_gain_label = gtk_label_new("RF");
-    #endif
+#endif
     gtk_widget_set_name(rf_gain_label, csslabel);
     gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_END);
     gtk_widget_show(rf_gain_label);
@@ -835,13 +835,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_container_add(GTK_CONTAINER(c25_container), c25_grid);
 
   if (can_transmit) {
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     char _label[32];
     snprintf(_label, 32, "Mic Gain");
     mic_gain_label = gtk_label_new(_label);
-    #else
+#else
     mic_gain_label = gtk_label_new("Mic");
-    #endif
+#endif
     gtk_widget_set_name(mic_gain_label, csslabel);
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
@@ -852,11 +852,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
     gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
     g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     drive_label = gtk_label_new("TX Pwr");
-    #else
+#else
     drive_label = gtk_label_new("TX Drv");
-    #endif
+#endif
     gtk_widget_set_name(drive_label, csslabel);
     gtk_widget_set_halign(drive_label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, twidth, 1);
@@ -875,11 +875,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     drive_scale = NULL;
   }
 
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   squelch_label = gtk_label_new("Squelch");
-  #else
+#else
   squelch_label = gtk_label_new("Sqlch");
-  #endif
+#endif
   gtk_widget_set_name(squelch_label, csslabel);
   gtk_widget_set_halign(squelch_label, GTK_ALIGN_END);
   gtk_widget_show(squelch_label);

@@ -857,11 +857,12 @@ int main(int argc, char *argv[]) {
     // respond to an incoming Metis detection request
     case 0x0002feef:
       if (oldnew == 2) {
-        t_print("OldProtocol detection request from %s IGNORED.\n",inet_ntoa(addr_from.sin_addr));
+        t_print("OldProtocol detection request from %s IGNORED.\n", inet_ntoa(addr_from.sin_addr));
         break;  // Swallow P1 detection requests
       }
 
-      t_print( "Respond to an incoming Metis detection request from %s / code: 0x%08x\n", inet_ntoa(addr_from.sin_addr),code);
+      t_print( "Respond to an incoming Metis detection request from %s / code: 0x%08x\n", inet_ntoa(addr_from.sin_addr),
+               code);
 
       // processing an invalid packet is too dangerous -- skip it!
       if (bytes_read != 63) {
@@ -1039,11 +1040,11 @@ int main(int argc, char *argv[]) {
 
       if (code == 0 && buffer[4] == 0x02) {
         if (oldnew == 1) {
-          t_print("NewProtocol discovery packet from %s IGNORED.\n",inet_ntoa(addr_from.sin_addr));
+          t_print("NewProtocol discovery packet from %s IGNORED.\n", inet_ntoa(addr_from.sin_addr));
           break;
         }
 
-        t_print("NewProtocol discovery packet received from %s\n",inet_ntoa(addr_from.sin_addr));
+        t_print("NewProtocol discovery packet received from %s\n", inet_ntoa(addr_from.sin_addr));
         // prepeare response
         memset(buffer, 0, 60);
         buffer [4] = 0x02 + new_protocol_running();

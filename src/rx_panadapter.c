@@ -169,8 +169,8 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   long long min_display = frequency - half + (long long)((double)rx->pan * HzPerPixel);
   long long max_display = min_display + (long long)((double)rx->width * HzPerPixel);
+#if !defined (__LDESK__)
 
-  #if !defined (__LDESK__)
   if (vfoband == band60) {
     for (i = 0; i < channel_entries; i++) {
       long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
@@ -182,8 +182,8 @@ void rx_panadapter_update(RECEIVER *rx) {
       cairo_fill(cr);
     }
   }
-  #endif
 
+#endif
   // filter
   cairo_set_source_rgba (cr, COLOUR_PAN_FILTER);
   double filter_left = ((double)rx->pixels * 0.5) - (double)rx->pan + (((double)rx->filter_low + offset) / HzPerPixel);
@@ -284,10 +284,11 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   cairo_set_line_width(cr, PAN_LINE_THIN);
   cairo_stroke(cr);
+#if defined (__LDESK__)
 
-  #if defined (__LDESK__)
   if (vfoband != band60) {
-  #endif
+#endif
+
     // band edges
     if (band->frequencyMin != 0LL) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
@@ -309,10 +310,11 @@ void rx_panadapter_update(RECEIVER *rx) {
         cairo_stroke(cr);
       }
     }
-  #if defined (__LDESK__)
-  }
-  #endif
 
+#if defined (__LDESK__)
+  }
+
+#endif
 #ifdef CLIENT_SERVER
 
   if (remoteclients != NULL) {
@@ -377,26 +379,26 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   // cursor
   if (active) {
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     cairo_set_source_rgba(cr, COLOUR_WHITE);
-    #else
+#else
     cairo_set_source_rgba(cr, COLOUR_ALARM);
-    #endif
+#endif
   } else {
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     cairo_set_source_rgba(cr, COLOUR_WHITE);
-    #else
+#else
     cairo_set_source_rgba(cr, COLOUR_ALARM_WEAK);
-    #endif
+#endif
   }
 
   cairo_move_to(cr, vfofreq + (offset / HzPerPixel), 0.0);
   cairo_line_to(cr, vfofreq + (offset / HzPerPixel), myheight);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   cairo_set_line_width(cr, PAN_LINE_EXTRA);
-  #else
+#else
   cairo_set_line_width(cr, PAN_LINE_THIN);
-  #endif
+#endif
   cairo_stroke(cr);
   // signal
   double s1;
@@ -585,34 +587,38 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     // Are shown on display for 2 seconds
     //
     cairo_set_source_rgba(cr, COLOUR_ALARM);
-    #if defined (__LDESK__)
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
-    #else
+#if defined (__LDESK__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
+#else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-    #endif
+#endif
+
     if (sequence_errors != 0) {
       static unsigned int sequence_error_count = 0;
       cairo_move_to(cr, 100.0, 50.0);
-      #if defined (__LDESK__)
+#if defined (__LDESK__)
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
       cairo_show_text(cr, "UDP Stream Sequence Error");
       cairo_set_source_rgba(cr, COLOUR_ALARM);
-      #else
+#else
       cairo_show_text(cr, "Sequence Error");
-      #endif
+#endif
       sequence_error_count++;
+#if defined (__LDESK__)
 
-      #if defined (__LDESK__)
-        if (sequence_error_count >= 2 * fps) {
+      if (sequence_error_count >= 2 * fps) {
         sequence_errors = 0;
         sequence_error_count = 0;
       }
-      #else
+
+#else
+
       if (sequence_error_count == 2 * fps) {
         sequence_errors = 0;
         sequence_error_count = 0;
       }
-      #endif
+
+#endif
     }
 
     if (adc0_overload || adc1_overload) {
@@ -620,11 +626,11 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, 100.0, 70.0);
 
       if (adc0_overload && !adc1_overload) {
-        #if defined (__LDESK__)
+#if defined (__LDESK__)
         cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
-        #else
+#else
         cairo_show_text(cr, "ADC0 overload");
-        #endif        
+#endif
       }
 
       if (adc1_overload && !adc0_overload) {
@@ -682,19 +688,19 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
 
-    #if defined (__CPYMODE__)
-    char _text[128];
-    cairo_set_source_rgba(cr, COLOUR_ORANGE);
-    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
-    #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-    #endif
-    cairo_move_to(cr, 380.0, 30.0);
-    snprintf(_text, 128, "%s", transmitter->microphone_name);
-    cairo_show_text(cr, _text);
-    #endif
+#if defined (__CPYMODE__)
+  char _text[128];
+  cairo_set_source_rgba(cr, COLOUR_ORANGE);
+  cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
+#else
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+  cairo_move_to(cr, 380.0, 30.0);
+  snprintf(_text, 128, "%s", transmitter->microphone_name);
+  cairo_show_text(cr, _text);
+#endif
 
   if (TxInhibit) {
     cairo_set_source_rgba(cr, COLOUR_ALARM);

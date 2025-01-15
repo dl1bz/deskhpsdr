@@ -143,12 +143,12 @@ static gboolean about_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
 
 static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   cleanup();
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   stop_program();
   _exit(0);
-  #else
+#else
   exit_menu(top_window);
-  #endif
+#endif
   return TRUE;
 }
 
@@ -486,13 +486,13 @@ void new_menu() {
     GtkWidget *headerbar = gtk_header_bar_new();
     gtk_window_set_titlebar(GTK_WINDOW(main_menu), headerbar);
     gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     char _title[32];
     snprintf(_title, 32, "%s - Menu", PGNAME);
     gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-    #else
+#else
     gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Menu");
-    #endif
+#endif
     g_signal_connect (main_menu, "delete_event", G_CALLBACK (close_cb), NULL);
     g_signal_connect (main_menu, "destroy", G_CALLBACK (close_cb), NULL);
     GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(main_menu));
@@ -508,20 +508,20 @@ void new_menu() {
     gtk_widget_set_name(close_b, "close_button");
     g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     GtkWidget *restart_b = gtk_button_new_with_label("Restart HPSDR protocol");
-    #else
+#else
     GtkWidget *restart_b = gtk_button_new_with_label("Restart");
-    #endif
+#endif
     g_signal_connect (restart_b, "button-press-event", G_CALLBACK(restart_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), restart_b, 2, 0, 2, 1);
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     char _label[32];
     snprintf(_label, 32, "Exit %s", PGNAME);
     GtkWidget *exit_b = gtk_button_new_with_label(_label);
-    #else
+#else
     GtkWidget *exit_b = gtk_button_new_with_label("Exit piHPSDR");
-    #endif
+#endif
     g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), exit_b, 4, 0, 2, 1);
     //
@@ -679,11 +679,11 @@ void new_menu() {
     g_signal_connect (dsp_b, "button-press-event", G_CALLBACK(dsp_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), dsp_b, col, row, 1, 1);
     row++;
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     GtkWidget *equalizer_b = gtk_button_new_with_label("EQ RX/TX");
-    #else
+#else
     GtkWidget *equalizer_b = gtk_button_new_with_label("Equalizer");
-    #endif
+#endif
     g_signal_connect (equalizer_b, "button-press-event", G_CALLBACK(equalizer_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), equalizer_b, col, row, 1, 1);
     row++;

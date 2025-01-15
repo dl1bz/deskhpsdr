@@ -106,18 +106,18 @@ typedef struct _transmitter {
   int drive;            // value of the drive slider
   int tune_use_drive;
   int tune_drive;
-  #if defined (__LDESK__) && defined (__HAVEATU__)
-    int is_tuned;
-    double stored_drive;
-  #endif
+#if defined (__LDESK__) && defined (__HAVEATU__)
+  int is_tuned;
+  double stored_drive;
+#endif
   int drive_level;      // amplitude (0-255) corresponding to "drive"
   int do_scale;         // apply TX iq scaling
   double drive_scale;   // additional TX iq scaling required
   double drive_iscal;   // inverse of drive_scale
   double mic_gain;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   int radio_ptt_lock;   // use for locking the internal PTT line
-  #endif
+#endif
 
   int compressor;
   double compressor_level;

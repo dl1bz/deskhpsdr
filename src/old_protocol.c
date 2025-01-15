@@ -1175,10 +1175,12 @@ static void process_control_bytes() {
 
   if (previous_ptt != radio_ptt) {
     int m = vfo_get_tx_mode();
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     t_print("%s: PTT_LOCK: %d\n", __FUNCTION__, transmitter->radio_ptt_lock);
-    if(!transmitter->radio_ptt_lock) {
-    #endif
+
+    if (!transmitter->radio_ptt_lock) {
+#endif
+
       if (radio_ptt || m == modeCWU || m == modeCWL) {
         //
         // If "PTT on" comes from the radio, or we are doing CW: go TX without delay
@@ -1196,11 +1198,13 @@ static void process_control_bytes() {
         // clipping the last bits of the TX signal
         //
         // t_print("%s: B_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
-        g_timeout_add(50,ext_mox_update, GINT_TO_POINTER(radio_ptt));
+        g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(radio_ptt));
       }
-    #if defined (__LDESK__)
+
+#if defined (__LDESK__)
     }
-    #endif
+
+#endif
   }
 
   if ((device == DEVICE_HERMES_LITE2) && (control_in[0] & 0x80)) {
@@ -2896,12 +2900,11 @@ static void metis_start_stop(int command) {
     for (i = 4; i < 64; i++) {
       buffer[i] = 0x00;
     }
-    
-    metis_send_buffer(buffer, 64);
-    #if defined (__LDESK__)
-    usleep(100000);
-    #endif
 
+    metis_send_buffer(buffer, 64);
+#if defined (__LDESK__)
+    usleep(100000);
+#endif
   } else {
     // use TCP -- send a long packet
     //

@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
         strcpy(notes[notenum], pos);
         notenum++;
       } else {
-        strcat(notes[notenum-1], pos-1);
+        strcat(notes[notenum - 1], pos - 1);
       }
     }
 

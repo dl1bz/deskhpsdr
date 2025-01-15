@@ -58,7 +58,7 @@ enum _active_menu {
 
 extern int active_menu;
 #if defined (__LDESK__)
-static const char * const PGNAME = "deskHPSDR";
+  static const char * const PGNAME = "deskHPSDR";
 #else
-static const char * const PGNAME = "piHPSDR";
+  static const char * const PGNAME = "piHPSDR";
 #endif

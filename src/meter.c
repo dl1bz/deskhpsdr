@@ -44,26 +44,29 @@
 
 // lower limits
 static short int lowlimits[NUM_SWERTE] = {
-  -200,-121,-115,-109,-103,-97,-91,-85,-79,-73,-68,-63,-58,-53,-48,-43,-33,-23,-13
+  -200, -121, -115, -109, -103, -97, -91, -85, -79, -73, -68, -63, -58, -53, -48, -43, -33, -23, -13
 };
 // upper limits
 static short int uplimits[NUM_SWERTE] = {
-  -122,-116,-110,-104,-98 ,-92,-86,-80,-74,-69,-64,-59,-54,-49,-44,-34,-24,-14,0
+  -122, -116, -110, -104, -98, -92, -86, -80, -74, -69, -64, -59, -54, -49, -44, -34, -24, -14, 0
 };
 
 const char* (dbm2smeter[NUM_SWERTE + 1]) = {
-    "no signal","S1","S2","S3","S4","S5","S6","S7","S8","S9","S9+5db","S9+10db","S9+15db","S9+20db","S9+25db","S9+30db","S9+40db","S9+50db","S9+60db","out of range"
+  "no signal", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S9+5db", "S9+10db", "S9+15db", "S9+20db", "S9+25db", "S9+30db", "S9+40db", "S9+50db", "S9+60db", "out of range"
 };
 
 unsigned char get_SWert(short int dbm) {
-    int i;
-    for (i = 0; i < NUM_SWERTE; i++) {
-        if ((dbm >= lowlimits[i]) && (dbm <= uplimits[i])) {
-           return i;
-        }
+  int i;
+
+  for (i = 0; i < NUM_SWERTE; i++) {
+    if ((dbm >= lowlimits[i]) && (dbm <= uplimits[i])) {
+      return i;
     }
-    return NUM_SWERTE; // no valid S-Werte -> return not defined
+  }
+
+  return NUM_SWERTE; // no valid S-Werte -> return not defined
 }
+
 //----------------------------------------------------------------------------------------------
 #endif
 
@@ -144,15 +147,14 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
   int txmode = vfo[txvfo].mode;
   int cwmode = (txmode == modeCWU || txmode == modeCWL);
   const BAND *band = band_get_band(vfo[txvfo].band);
-
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   double _mic_av;
   double _eq_av;
   double _lvlr_av;
   double _cfc_av;
   double _proc_av;
   double _out_av;
-  #endif
+#endif
 
   //
   // First, do all the work that  does not depend on whether the
@@ -487,6 +489,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       snprintf(sf, 32, "SWR %1.1f:1", swr);
       cairo_move_to(cr, cx - 40, cx - radius + 28);
       cairo_show_text(cr, sf);
+
       if (!cwmode) {
         cairo_set_source_rgba(cr, COLOUR_METER);
         snprintf(sf, 32, "ALC %2.1f dB", max_alc);
@@ -547,7 +550,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     int Y1 = METER_HEIGHT / 4;
     int Y2 = Y1 + METER_HEIGHT / 3;
     int Y4 = 4 * Y1 - 6;
-
     int size;
     cairo_text_extents_t extents;
     cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
@@ -617,9 +619,9 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
 
         cairo_stroke(cr);
-        #if defined (__LDESK__)
+#if defined (__LDESK__)
         cairo_select_font_face(cr, "FreeSans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        #endif
+#endif
         cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
         cairo_move_to(cr, 20, Y4);
         cairo_show_text(cr, "3");
@@ -695,11 +697,11 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
 
       if (size > METER_HEIGHT / 3) { size = METER_HEIGHT / 3; }
 
-      #if defined (__LDESK__)
+#if defined (__LDESK__)
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
-      #if defined (__APPLE__)
-        cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-      #endif
+#if defined (__APPLE__)
+      cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#endif
       cairo_set_font_size(cr, size - 4);
       snprintf(sf, 32, "%s", dbm2smeter[get_SWert((int)(max_rxlvl - 0.5))]); // assume max_rxlvl < 0 in roundig
       cairo_text_extents(cr, sf, &extents);
@@ -709,8 +711,8 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_text_extents(cr, sf, &extents);
       cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 + 15);
       cairo_show_text(cr, sf);
-
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+
       if (active_receiver->smetermode == 100) {
         snprintf(sf, 32, "S=Peak");
         cairo_text_extents(cr, sf, &extents);
@@ -723,14 +725,14 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_show_text(cr, sf);
       }
 
-      #else
+#else
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_set_font_size(cr, size);
       snprintf(sf, 32, "%-3d dBm", (int)(max_rxlvl - 0.5));  // assume max_rxlvl < 0 in rounding
       cairo_text_extents(cr, sf, &extents);
       cairo_move_to(cr, METER_WIDTH - extents.width - 5, Y2);
       cairo_show_text(cr, sf);
-      #endif
+#endif
       break;
 
     case POWER:
@@ -757,11 +759,11 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
 
         cairo_set_source_rgba(cr, COLOUR_ATTN);
-        #if defined (__LDESK__)
+#if defined (__LDESK__)
         cairo_move_to(cr, 5, Y2 - 12);
-        #else
+#else
         cairo_move_to(cr, 5, Y2);
-        #endif
+#endif
         cairo_show_text(cr, sf);
 
         if (can_transmit) {
@@ -773,12 +775,13 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
 
         snprintf(sf, 32, "SWR %1.1f:1", swr);
-        #if defined (__LDESK__)
+#if defined (__LDESK__)
         cairo_move_to(cr, METER_WIDTH / 2, Y2 - 12);
-        #else
+#else
         cairo_move_to(cr, METER_WIDTH / 2, Y2);
-        #endif
+#endif
         cairo_show_text(cr, sf);
+
         if (!cwmode) {
           cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
           cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
@@ -786,67 +789,67 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           snprintf(sf, 32, "ALC %2.1f dB", max_alc);
           cairo_move_to(cr, METER_WIDTH / 2, Y4);
           cairo_show_text(cr, sf);
+#if defined (__LDESK__)
+          // additional display levels of the audio chain
+          _mic_av = GetTXAMeter(transmitter->id, TXA_MIC_AV);
 
-        #if defined (__LDESK__)
-        // additional display levels of the audio chain
-        _mic_av = GetTXAMeter(transmitter->id, TXA_MIC_AV);
-        if (_mic_av < -100.0) {
-          _mic_av = 0.0;
-        }
+          if (_mic_av < -100.0) {
+            _mic_av = 0.0;
+          }
 
-        _eq_av = GetTXAMeter(transmitter->id, TXA_EQ_AV);
-        if (_eq_av < -100.0) {
-          _eq_av = 0.0;
-        }
+          _eq_av = GetTXAMeter(transmitter->id, TXA_EQ_AV);
 
-        _lvlr_av = GetTXAMeter(transmitter->id, TXA_LVLR_AV);
-        if (_lvlr_av < -100.0) {
-          _lvlr_av = 0.0;
-        }
+          if (_eq_av < -100.0) {
+            _eq_av = 0.0;
+          }
 
-        _cfc_av = GetTXAMeter(transmitter->id, TXA_CFC_AV);
-        if (_cfc_av < -100.0) {
-          _cfc_av = 0.0;
-        }
+          _lvlr_av = GetTXAMeter(transmitter->id, TXA_LVLR_AV);
 
-        _proc_av = GetTXAMeter(transmitter->id, TXA_COMP_AV);
-        if (_proc_av < -100.0) {
-          _proc_av = 0.0;
-        }
+          if (_lvlr_av < -100.0) {
+            _lvlr_av = 0.0;
+          }
 
-        _out_av = GetTXAMeter(transmitter->id, TXA_OUT_AV);
+          _cfc_av = GetTXAMeter(transmitter->id, TXA_CFC_AV);
 
-        cairo_set_source_rgba(cr, COLOUR_METER);
-        snprintf(sf, 32, "Mic %.0f", _mic_av);
-        cairo_move_to(cr, 5, Y4 - 30);
-        cairo_show_text(cr, sf);
+          if (_cfc_av < -100.0) {
+            _cfc_av = 0.0;
+          }
 
-        if (vfo_get_tx_mode() == modeDIGL || vfo_get_tx_mode() == modeDIGU) {
-          cairo_set_source_rgba(cr, COLOUR_SHADE);
-        } else {
+          _proc_av = GetTXAMeter(transmitter->id, TXA_COMP_AV);
+
+          if (_proc_av < -100.0) {
+            _proc_av = 0.0;
+          }
+
+          _out_av = GetTXAMeter(transmitter->id, TXA_OUT_AV);
           cairo_set_source_rgba(cr, COLOUR_METER);
-        }
-        snprintf(sf, 32, "EQ  %.0f", _eq_av);
-        cairo_move_to(cr, 5, Y4 - 15);
-        cairo_show_text(cr, sf);
+          snprintf(sf, 32, "Mic %.0f", _mic_av);
+          cairo_move_to(cr, 5, Y4 - 30);
+          cairo_show_text(cr, sf);
 
-        snprintf(sf, 32, "Lev %.0f", _lvlr_av);
-        cairo_move_to(cr, 65, Y4 - 30);
-        cairo_show_text(cr, sf);
+          if (vfo_get_tx_mode() == modeDIGL || vfo_get_tx_mode() == modeDIGU) {
+            cairo_set_source_rgba(cr, COLOUR_SHADE);
+          } else {
+            cairo_set_source_rgba(cr, COLOUR_METER);
+          }
 
-        snprintf(sf, 32, "CFC %.0f", _cfc_av);
-        cairo_move_to(cr, 65, Y4 - 15);
-        cairo_show_text(cr, sf);
-
-        snprintf(sf, 32, "PROC %.0f", _proc_av);
-        cairo_move_to(cr, METER_WIDTH / 2, Y4 - 30);
-        cairo_show_text(cr, sf);
-
-        cairo_set_source_rgba(cr, COLOUR_METER);
-        snprintf(sf, 32, "Out %.0f", _out_av);
-        cairo_move_to(cr, METER_WIDTH / 2, Y4 - 15);
-        cairo_show_text(cr, sf);
-        #endif
+          snprintf(sf, 32, "EQ  %.0f", _eq_av);
+          cairo_move_to(cr, 5, Y4 - 15);
+          cairo_show_text(cr, sf);
+          snprintf(sf, 32, "Lev %.0f", _lvlr_av);
+          cairo_move_to(cr, 65, Y4 - 30);
+          cairo_show_text(cr, sf);
+          snprintf(sf, 32, "CFC %.0f", _cfc_av);
+          cairo_move_to(cr, 65, Y4 - 15);
+          cairo_show_text(cr, sf);
+          snprintf(sf, 32, "PROC %.0f", _proc_av);
+          cairo_move_to(cr, METER_WIDTH / 2, Y4 - 30);
+          cairo_show_text(cr, sf);
+          cairo_set_source_rgba(cr, COLOUR_METER);
+          snprintf(sf, 32, "Out %.0f", _out_av);
+          cairo_move_to(cr, METER_WIDTH / 2, Y4 - 15);
+          cairo_show_text(cr, sf);
+#endif
         }
       }
 

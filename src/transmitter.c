@@ -936,16 +936,16 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->pre_emphasize = 0;
   tx->am_carrier_level = 0.5;
   tx->drive = 50;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   tx->tune_drive = 2;
   tx->radio_ptt_lock = 0;
-  #else
+#else
   tx->tune_drive = 10;
-  #endif
-  #if defined (__LDESK__) && defined (__HAVEATU__)
+#endif
+#if defined (__LDESK__) && defined (__HAVEATU__)
   tx->is_tuned = 0;
   tx->stored_drive = 0.0;
-  #endif
+#endif
   tx->mic_gain = 0.0;
   tx->tune_use_drive = 0;
   tx->drive_level = 0;
@@ -1055,9 +1055,9 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   // Modify these values from the props file
   //
   tx_restore_state(tx);
-  #if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__LDESK__) && defined (__HAVEATU__)
   tx->stored_drive = tx->drive;
-  #endif
+#endif
   //
   // allocate buffers
   //
@@ -1745,7 +1745,9 @@ void tx_set_filter(TRANSMITTER *tx) {
       low  = filter->low;
       break;
     }
-    t_print("%s: tx->use_rx_filter: %d, set RX filter high %d, set RX filter low %d\n", __FUNCTION__, tx->use_rx_filter, high, low);
+
+    t_print("%s: tx->use_rx_filter: %d, set RX filter high %d, set RX filter low %d\n", __FUNCTION__, tx->use_rx_filter,
+            high, low);
   }
 
   switch (txmode) {
@@ -1798,7 +1800,6 @@ void tx_set_filter(TRANSMITTER *tx) {
     tx->filter_low = 7000;
     tx->filter_high = 17000;
     break;
-
     t_print("%s: set TX filter high %d, set TX filter low %d\n", __FUNCTION__, tx->filter_high, tx->filter_low);
   }
 
@@ -1997,7 +1998,6 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
 #ifdef WDSPTXDEBUG
   t_print("WDSP:TX id=%d PS OnOff=%d\n", tx->id, state);
 #endif
-
 #if defined (__LDESK__)
   transmitter->radio_ptt_lock = 1;
 #endif
@@ -2193,28 +2193,21 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXALevelerDecay(tx->id, tx->lev_decay);
   SetTXALevelerTop(tx->id, tx->lev_gain);
   SetTXALevelerSt(tx->id, tx->lev_enable); // Leveler on/off
-
   t_print("%s: Leveler state %d , gain %.1fdb, attack %dms, decay %dms\n",
           __FUNCTION__, tx->lev_enable, tx->lev_gain, tx->lev_attack, tx->lev_decay);
-
   SetTXAPHROTCorner(tx->id, tx->phrot_freq);   // Phase Rotator corner frequency in Hz
   SetTXAPHROTNstages(tx->id, tx->phrot_stage); // Phase Rotator stages
   SetTXAPHROTRun(tx->id, tx->phrot_enable);    // Phase Rotator on/off
-
   t_print("%s: PH-ROT state %d, stages %d, freq %.1fHz\n",
           __FUNCTION__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
-
   SetTXACFCOMPprofile(tx->id, 10, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
   SetTXACFCOMPPrecomp(tx->id, tx->cfc_lvl[0]);
   SetTXACFCOMPRun(tx->id, tx->cfc); // Pre CFC on/off
-
   SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
   // SetTXACFCOMPRun(tx->id, tx->cfc);
   SetTXACFCOMPPeqRun(tx->id, tx->cfc_eq); // Post CFC on/off
-
   t_print("%s: pre CFC state %d with Level %.1fdb, post CFC state: %d with Level %.1fdb\n",
-         __FUNCTION__, tx->cfc, tx->cfc_lvl[0], tx->cfc_eq, tx->cfc_post[0]);
-
+          __FUNCTION__, tx->cfc, tx->cfc_lvl[0], tx->cfc_eq, tx->cfc_post[0]);
   // CESSB overshoot control used only with COMP
   // SetTXAosctrlRun(tx->id, tx->compressor);
   SetTXACompressorGain(tx->id, tx->compressor_level);
@@ -2230,7 +2223,6 @@ void tx_set_compressor(TRANSMITTER *tx) {
 
   t_print("%s: Baseband-Compr state %d, level %.1f\n",
           __FUNCTION__, tx->compressor, tx->compressor_level);
-
 #ifdef WDSPTXDEBUG
   t_print("WDSP:TX id=%d Compressor=%d Lvl=%g CFC=%d CFC-EQ=%d AllComp=%g AllGain=%g\n",
           tx->id, tx->compressor, tx->compressor_level, tx->cfc, tx->cfc_eq,
@@ -2330,9 +2322,7 @@ void tx_set_equalizer(TRANSMITTER *tx) {
   }
 
 #endif
-
-t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __FUNCTION__, tx->eq_enable, tx->eq_gain[0]);
-
+  t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __FUNCTION__, tx->eq_enable, tx->eq_gain[0]);
 }
 
 void tx_set_fft_size(const TRANSMITTER *tx) {
@@ -2343,14 +2333,16 @@ void tx_set_fft_size(const TRANSMITTER *tx) {
 }
 
 void tx_set_mic_gain(const TRANSMITTER *tx) {
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   double _gain;
   int _mode;
   _gain = tx->mic_gain;
   _mode = vfo_get_tx_mode();
+
   if (tx->addgain_enable) {
     _gain += tx->addgain_gain;
   }
+
   if (_mode == modeDIGL || _mode == modeDIGU) {
     SetTXAPanelGain1(tx->id, 1.0);
     t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __FUNCTION__);
@@ -2358,43 +2350,51 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
     SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
     t_print("%s: set input gain to %.1fdb\n", __FUNCTION__, _gain);
   }
-  #else
+
+#else
   SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
-  #endif
+#endif
 #ifdef WDSPTXDEBUG
   t_print("WDSP:TX id=%d MicGain(dB)=%g\n", tx->id, tx->mic_gain);
 #endif
 #if defined (__LDESK__)
-  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05), vfo_get_tx_mode());
+  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
+          vfo_get_tx_mode());
 #endif
 }
 
 void tx_set_mode(TRANSMITTER* tx, int mode) {
   if (tx != NULL) {
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     double _gain;
+
     if (mode == modeDIGU || mode == modeDIGL) {
       if (tx->drive > drive_digi_max + 0.5) {
         set_drive(drive_digi_max);
       }
+
       SetTXAPanelGain1(tx->id, 1.0);
       t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __FUNCTION__);
     } else {
       _gain = tx->mic_gain;
+
       if (tx->addgain_enable) {
         _gain += tx->addgain_gain;
       }
+
       SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
       t_print("%s: Restore input gain: %.1fdb\n", __FUNCTION__, _gain);
     }
-    #else
+
+#else
+
     if (mode == modeDIGU || mode == modeDIGL) {
       if (tx->drive > drive_digi_max + 0.5) {
         set_drive(drive_digi_max);
       }
     }
-    #endif
 
+#endif
 #ifdef WDSPTXDEBUG
     t_print("WDSP:TX id=%d mode=%d\n", tx->id, mode);
 #endif

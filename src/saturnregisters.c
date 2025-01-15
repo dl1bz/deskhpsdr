@@ -85,7 +85,8 @@ static uint32_t GPIORegValue;                              // value stored into 
 static uint32_t TXConfigRegValue;                          // value written into TX config register
 static uint32_t DDCInSelReg;                               // value written into DDC config register
 static uint32_t DDCRateReg;                                // value written into DDC rate register
-static bool GADCOverride;                                  // true if ADCs are to be overridden & use test source instead
+static bool
+GADCOverride;                                  // true if ADCs are to be overridden & use test source instead
 static bool GByteSwapEnabled;                              // true if byte swapping enabled for sample readout
 static bool GPTTEnabled;                                   // true if PTT is enabled
 //static bool GPureSignalEnabled;                            // true if PureSignal is enabled
@@ -150,7 +151,8 @@ static bool GTXDUCMuxActive;                               // true if I/Q mux is
 static ETXModulationSource GTXModulationSource;            // values added to register
 static bool GTXProtocolP2;                                 // true if P2
 static uint32_t TXModulationTestReg;                       // modulation test DDS
-static bool GEnableTimeStamping;                           // true if timestamps to be added to data. NOT IMPLEMENTED YET
+static bool
+GEnableTimeStamping;                           // true if timestamps to be added to data. NOT IMPLEMENTED YET
 static bool GEnableVITA49;                                 // true if tyo enable VITA49 formatting. NOT SUPPORTED YET
 static unsigned int GCWKeyerRampms = 0;                    // ramp length for keyer, in ms
 static bool GCWKeyerRamp_IsP2 = false;                     // true if ramp initialised for protocol 2

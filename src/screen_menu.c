@@ -169,13 +169,13 @@ void screen_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Screen Layout", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  #else
+#else
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Screen Layout");
-  #endif
+#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -196,11 +196,11 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   wide_b = gtk_spin_button_new_with_range(1280.0, (double) screen_width, 32.0);
-  #else
+#else
   wide_b = gtk_spin_button_new_with_range(640.0, (double) screen_width, 32.0);
-  #endif
+#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
   gtk_grid_attach(GTK_GRID(grid), wide_b, col, row, 1, 1);
   g_signal_connect(wide_b, "value-changed", G_CALLBACK(width_cb), NULL);
@@ -210,11 +210,11 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   height_b = gtk_spin_button_new_with_range(600.0, (double) screen_height, 16.0);
-  #else
+#else
   height_b = gtk_spin_button_new_with_range(400.0, (double) screen_height, 16.0);
-  #endif
+#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(height_b), (double) my_display_height);
   gtk_grid_attach(GTK_GRID(grid), height_b, col, row, 1, 1);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);

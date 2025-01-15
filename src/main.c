@@ -173,16 +173,16 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
 
   case  GDK_KEY_d:
-  #if defined (__LDESK__)
-    case  GDK_KEY_Left:
-  #endif
+#if defined (__LDESK__)
+  case  GDK_KEY_Left:
+#endif
     vfo_step(-1);
     break;
 
   case GDK_KEY_u:
-  #if defined (__LDESK__)
-    case GDK_KEY_Right:
-  #endif
+#if defined (__LDESK__)
+  case GDK_KEY_Right:
+#endif
     vfo_step(1);
     break;
 
@@ -198,13 +198,13 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case  GDK_KEY_D:
     vfo_id_step(1 - active_receiver->id, -10);
     break;
+#if defined (__LDESK__)
 
-  #if defined (__LDESK__)
   case GDK_KEY_Q:
     stop_program();
     _exit(0);
     break;
-  #endif
+#endif
 
   //
   // This is a contribution of Ron, it uses a keypad for
@@ -339,16 +339,16 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 #else
 static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 #endif
-  #if defined (__LDESK__)
-    char text[2048];
-  #else
+#if defined (__LDESK__)
+  char text[2048];
+#else
   char text[256];
-  #endif
-  #if defined (__LDESK__)
-    char config_directory[1024];
-    (void) getcwd(config_directory, sizeof(config_directory));
-    STRLCAT(config_directory, "/", 1024);
-  #endif
+#endif
+#if defined (__LDESK__)
+  char config_directory[1024];
+  (void) getcwd(config_directory, sizeof(config_directory));
+  STRLCAT(config_directory, "/", 1024);
+#endif
   t_print("Build: %s (Commit: %s, Date: %s)\n", build_version, build_commit, build_date);
   t_print("GTK+ version %u.%u.%u\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
   uname(&unameData);
@@ -358,7 +358,6 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("version: %s\n", unameData.version);
   t_print("machine: %s\n", unameData.machine);
   load_css();
-
   GdkDisplay *display = gdk_display_get_default();
 
   if (display == NULL) {
@@ -379,13 +378,13 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("create top level window\n");
   top_window = gtk_application_window_new (app);
   gtk_widget_set_size_request(top_window, 100, 100);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s", PGNAME);
   gtk_window_set_title (GTK_WINDOW (top_window), _title);
-  #else
+#else
   gtk_window_set_title (GTK_WINDOW (top_window), "piHPSDR");
-  #endif
+#endif
   //
   // do not use GTK_WIN_POS_CENTER_ALWAYS, since this will let the
   // window jump back to the center each time the window is
@@ -398,9 +397,9 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   //
   gtk_window_set_position(GTK_WINDOW(top_window), GTK_WIN_POS_CENTER);
   gtk_window_set_resizable(GTK_WINDOW(top_window), FALSE);
-  #if defined (__LDESK__)
-    gtk_window_set_deletable(GTK_WINDOW(top_window), FALSE); // remove close button in main window
-  #endif
+#if defined (__LDESK__)
+  gtk_window_set_deletable(GTK_WINDOW(top_window), FALSE); // remove close button in main window
+#endif
   //
   // Get the position of the top window, and then determine
   // to which monitor this position belongs.
@@ -417,18 +416,18 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   screen_width = rect.width;
   screen_height = rect.height;
   t_print("Monitor: width=%d height=%d\n", screen_width, screen_height);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   display_width  = 1280;
   display_height = 600;
   full_screen    = 0;
-  #else
+#else
   // Start with 800x480, since this width is required for the "discovery" screen.
   // Go to "full screen" mode if display nearly matches 800x480
   // This is all overridden later for the radio from the props file
   display_width  = 800;
   display_height = 480;
   full_screen    = 0;
-  #endif
+#endif
 
   //
   // Go to full-screen mode by default, if the screen size is approx. 800*480
@@ -468,17 +467,18 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
     }
 
     error = NULL;
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/share/deskhpsdr/hpsdr.png", &error);
-    #else
+#else
     rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/share/pihpsdr/hpsdr.png", &error);
-    #endif
+#endif
+
     if (rc) {
-      #if defined (__LDESK__)
+#if defined (__LDESK__)
       image = gtk_image_new_from_file("/usr/share/deskhpsdr/hpsdr.png");
-      #else
+#else
       image = gtk_image_new_from_file("/usr/share/pihpsdr/hpsdr.png");
-      #endif
+#endif
     } else {
       if (error) {
         t_print("%s\n", error->message);
@@ -486,13 +486,13 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
       }
 
       error = NULL;
-      #if defined (__LDESK__)
+#if defined (__LDESK__)
       rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/local/share/deskhpsdr/hpsdr.png", &error);
       image = gtk_image_new_from_file("/usr/local/share/deskhpsdr/hpsdr.png");
-      #else
+#else
       rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/local/share/pihpsdr/hpsdr.png", &error);
       image = gtk_image_new_from_file("/usr/local/share/pihpsdr/hpsdr.png");
-      #endif
+#endif
 
       if (!rc) {
         if (error) {
@@ -520,76 +520,80 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("add image to grid\n");
   gtk_grid_attach(GTK_GRID(topgrid), image, 0, 0, 1, 2);
   t_print("create pi label\n");
-  #if defined (__LDESK__)
-    snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2\nBased on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\ndeskHPSDR is developed and maintained by DL1BZ");
-    GtkWidget *pi_label = gtk_label_new(text);
-    gtk_widget_set_name(pi_label, "big_txt");
-    gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(topgrid), pi_label, 1, 0, 3, 1);
-  #else
+#if defined (__LDESK__)
+  snprintf(text, 2048,
+           "Hamradio SDR-Software for HPSDR protocol 1 & 2\nBased on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\ndeskHPSDR is developed and maintained by DL1BZ");
+  GtkWidget *pi_label = gtk_label_new(text);
+  gtk_widget_set_name(pi_label, "big_txt");
+  gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(topgrid), pi_label, 1, 0, 3, 1);
+#else
   GtkWidget *pi_label = gtk_label_new("piHPSDR by John Melton G0ORX/N6LYT");
   gtk_widget_set_name(pi_label, "big_txt");
   gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
   t_print("add pi label to grid\n");
   gtk_grid_attach(GTK_GRID(topgrid), pi_label, 1, 0, 3, 1);
-  #endif
+#endif
   t_print("create build label\n");
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   snprintf(text, 2048, "Version %s (build %s)\nCompiler: %s\nOptions: %s\nAudio module: %s\nWorking Directory: %s",
            build_version, build_date, __VERSION__, build_options, build_audio, config_directory);
-  #else
+#else
   snprintf(text, 256, "Built %s, Version %s\nOptions: %s\nAudio module: %s",
            build_date, build_version, build_options, build_audio);
-  #endif
+#endif
   GtkWidget *build_date_label = gtk_label_new(text);
   gtk_widget_set_name(build_date_label, "med_txt");
   gtk_widget_set_halign(build_date_label, GTK_ALIGN_START);
   t_print("add build label to grid\n");
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 2, 3, 1);
-  #else
+#else
   gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 1, 3, 1);
-  #endif
+#endif
   t_print("create status\n");
   status_label = gtk_label_new(NULL);
   gtk_widget_set_name(status_label, "med_txt");
   gtk_widget_set_halign(status_label, GTK_ALIGN_START);
   t_print("add status to grid\n");
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 3, 3, 1);
-  #else
+#else
   gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 2, 3, 1);
-  #endif
+#endif
   gtk_widget_show_all(top_window);
   t_print("g_idle_add: init\n");
   g_idle_add(init, NULL);
 }
 
 int main(int argc, char **argv) {
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   GtkApplication *deskhpsdr;
-  #else
+#else
   GtkApplication *pihpsdr;
-  #endif
+#endif
   int rc;
   char name[1024];
+
   //
   // If invoked with -V, print version and FPGA firmware compatibility information
   //
-  if (argc >= 2 && !strcmp("-V",argv[1])) {
-    #if defined (__LDESK__)
+  if (argc >= 2 && !strcmp("-V", argv[1])) {
+#if defined (__LDESK__)
     uname(&unameData);
-    fprintf(stderr,"deskHPSDR version %s [%s] (commit %s), built date %s with %s\n", build_version, unameData.machine, build_commit,build_date, __VERSION__);
-    #else
-    fprintf(stderr,"piHPSDR version and commit: %s, %s; built %s\n", build_version,build_commit,build_date);
-    #endif
-    fprintf(stderr,"Compile-time options      : %sAudioModule=%s\n", build_options,build_audio);
+    fprintf(stderr, "deskHPSDR version %s [%s] (commit %s), built date %s with %s\n", build_version, unameData.machine,
+            build_commit, build_date, __VERSION__);
+#else
+    fprintf(stderr, "piHPSDR version and commit: %s, %s; built %s\n", build_version, build_commit, build_date);
+#endif
+    fprintf(stderr, "Compile-time options      : %sAudioModule=%s\n", build_options, build_audio);
 #ifdef SATURN
-    fprintf(stderr,"SATURN min:max minor FPGA : %d:%d\n", saturn_minor_version_min(),saturn_minor_version_max());
-    fprintf(stderr,"SATURN min:max major FPGA : %d:%d\n", saturn_major_version_min(),saturn_major_version_max());
+    fprintf(stderr, "SATURN min:max minor FPGA : %d:%d\n", saturn_minor_version_min(), saturn_minor_version_max());
+    fprintf(stderr, "SATURN min:max major FPGA : %d:%d\n", saturn_major_version_min(), saturn_major_version_max());
 #endif
     exit(0);
   }
+
   //
   // The following call will most likely fail (until this program
   // has the privileges to reduce the nice value). But if the
@@ -602,23 +606,23 @@ int main(int argc, char **argv) {
   rc = getpriority(PRIO_PROCESS, 0);
   t_print("Base priority after adjustment: %d\n", rc);
   startup(argv[0]);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
-  t_print("%s: gtk_application_new: %s\n",__FUNCTION__, name);
+  t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
   t_print("exiting ...\n");
   g_object_unref(deskhpsdr);
-  #else
+#else
   snprintf(name, 1024, "org.g0orx.pihpsdr.pid%d", getpid());
-  t_print("%s: gtk_application_new: %s\n",__FUNCTION__, name);
+  t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
   pihpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(pihpsdr, "activate", G_CALLBACK(activate_pihpsdr), NULL);
   rc = g_application_run(G_APPLICATION(pihpsdr), argc, argv);
   t_print("exiting ...\n");
   g_object_unref(pihpsdr);
-  #endif
+#endif
   return rc;
 }
 
@@ -645,7 +649,7 @@ int fatal_error(void *data) {
 
   if (top_window) {
     GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
-    #if defined (__LDESK__)
+#if defined (__LDESK__)
     GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(top_window),
                         flags,
                         GTK_MESSAGE_ERROR,
@@ -653,7 +657,7 @@ int fatal_error(void *data) {
                         "<span color='red' size='x-large' weight='bold'>deskHPSDR termination due to fatal error:</span>"
                         "\n\n<span size='x-large'>   %s</span>\n\n",
                         msg);
-    #else
+#else
     GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(top_window),
                         flags,
                         GTK_MESSAGE_ERROR,
@@ -661,7 +665,7 @@ int fatal_error(void *data) {
                         "<span color='red' size='x-large' weight='bold'>piHPSDR termination due to fatal error:</span>"
                         "\n\n<span size='x-large'>   %s</span>\n\n",
                         msg);
-    #endif
+#endif
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }

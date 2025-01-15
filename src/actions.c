@@ -1515,8 +1515,9 @@ int process_action(void *data) {
 
     g_idle_add(ext_vfo_update, NULL);
     break;
-  
+
   case RITXIT:
+
     //
     // a RITXIT encoder automatically switches between RIT or XIT. It does XIT
     // if (and only if) RIT is disabled and XIT is enabled, otherwise it does RIT
@@ -1526,9 +1527,11 @@ int process_action(void *data) {
     } else {
       vfo_rit_incr(active_receiver->id, rit_increment * a->val);
     }
+
     break;
-  
+
   case RITSELECT:
+
     //
     // An action which cycles between RIT on, XIT on, and both off.
     // This is intended to be used together with the RITXIT encoder
@@ -1545,13 +1548,15 @@ int process_action(void *data) {
         vfo_xit_onoff(0);
       }
     }
+
     break;
-  
+
   case RITXIT_CLEAR:
     if (a->mode == PRESSED) {
       vfo_rit_value(active_receiver->id, 0);
       vfo_xit_value(0);
     }
+
     break;
 
   case RX1:
@@ -1587,14 +1592,14 @@ int process_action(void *data) {
   case SHUTDOWN:
     if (a->mode == PRESSED) {
       stop_program();
-      #ifdef __APPLE__
-      (void) system("shutdown -h now"); 
-      #else
+#ifdef __APPLE__
+      (void) system("shutdown -h now");
+#else
       (void) system("sudo shutdown -h -P now");
-      #endif
+#endif
       _exit(0);
     }
-    
+
     break;
 
   case SNB:

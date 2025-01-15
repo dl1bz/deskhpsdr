@@ -422,11 +422,11 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     int val = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
     clear_fields();
-    #if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__LDESK__) && defined (__CPYMODE__)
     int _mode = vfo_get_tx_mode();
     mode_settings[_mode].puresignal = val;
     copy_mode_settings(_mode);
-    #endif
+#endif
     tx_ps_onoff(transmitter, val);
 
     if (val) {
@@ -539,13 +539,13 @@ void ps_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Pure Signal", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  #else
+#else
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Pure Signal");
-  #endif
+#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));

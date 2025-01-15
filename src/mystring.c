@@ -101,12 +101,11 @@ size_t
 STRLCPY(char *dst, const char *src, size_t dsize) {
   const char *osrc = src;
   size_t nleft = dsize;
-
   // add by DH0DM
-  #if defined (__LDESK__) && defined (__CPYMODE__)
-    // pthread_mutex_lock(&mutex);
-    g_mutex_lock(&copy_string_mutex);
-  #endif
+#if defined (__LDESK__) && defined (__CPYMODE__)
+  // pthread_mutex_lock(&mutex);
+  g_mutex_lock(&copy_string_mutex);
+#endif
 
   /* Copy as many bytes as will fit. */
   if (nleft != 0) {
@@ -126,10 +125,11 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
     while (*src++)
       ;
   }
+
   // add by DH0DM
-  #if defined (__LDESK__) && defined (__CPYMODE__)
-    // pthread_mutex_unlock(&mutex);
-    g_mutex_unlock(&copy_string_mutex);
-  #endif
+#if defined (__LDESK__) && defined (__CPYMODE__)
+  // pthread_mutex_unlock(&mutex);
+  g_mutex_unlock(&copy_string_mutex);
+#endif
   return (src - osrc - 1); /* count does not include NUL */
 }

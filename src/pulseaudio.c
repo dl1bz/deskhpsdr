@@ -145,11 +145,11 @@ void audio_get_cards() {
   g_mutex_lock(&audio_mutex);
   main_loop = pa_glib_mainloop_new(NULL);
   main_loop_api = pa_glib_mainloop_get_api(main_loop);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   pa_ctx = pa_context_new(main_loop_api, "deskHPSDR");
-  #else
+#else
   pa_ctx = pa_context_new(main_loop_api, "piHPSDR");
-  #endif
+#endif
   pa_context_connect(pa_ctx, NULL, 0, NULL);
   pa_context_set_state_callback(pa_ctx, state_cb, NULL);
 }
@@ -164,7 +164,7 @@ int audio_open_output(RECEIVER *rx) {
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
   char stream_id[16];
   snprintf(stream_id, 16, "RX-%d", rx->id);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   rx->playstream = pa_simple_new(NULL, // Use the default server.
                                  "deskHPSDR",          // Our application's name.
                                  PA_STREAM_PLAYBACK,
@@ -175,7 +175,7 @@ int audio_open_output(RECEIVER *rx) {
                                  NULL,               // Use default attributes
                                  &err                // error code if returns NULL
                                 );
-  #else
+#else
   rx->playstream = pa_simple_new(NULL, // Use the default server.
                                  "piHPSDR",          // Our application's name.
                                  PA_STREAM_PLAYBACK,
@@ -186,7 +186,7 @@ int audio_open_output(RECEIVER *rx) {
                                  NULL,               // Use default attributes
                                  &err                // error code if returns NULL
                                 );
-  #endif
+#endif
 
   if (rx->playstream != NULL) {
     rx->local_audio_buffer_offset = 0;
@@ -260,7 +260,7 @@ int audio_open_input() {
   sample_spec.rate = 48000;
   sample_spec.channels = 1;
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   microphone_stream = pa_simple_new(NULL,      // Use the default server.
                                     "deskHPSDR",                   // Our application's name.
                                     PA_STREAM_RECORD,
@@ -271,8 +271,7 @@ int audio_open_input() {
                                     &attr,                       // Use default buffering attributes but set fragsize
                                     NULL                         // Ignore error code.
                                    );
-
-  #else
+#else
   microphone_stream = pa_simple_new(NULL,      // Use the default server.
                                     "piHPSDR",                   // Our application's name.
                                     PA_STREAM_RECORD,
@@ -283,7 +282,7 @@ int audio_open_input() {
                                     &attr,                       // Use default buffering attributes but set fragsize
                                     NULL                         // Ignore error code.
                                    );
-  #endif
+#endif
 
   if (microphone_stream != NULL) {
     local_microphone_buffer_offset = 0;

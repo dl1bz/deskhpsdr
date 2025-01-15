@@ -182,7 +182,8 @@ void rx_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   char title[64];
-  snprintf(title, 64, "%s - Receive (RX%d VFO-%s)", PGNAME, active_receiver->id + 1, active_receiver->id == 0 ? "A" : "B");
+  snprintf(title, 64, "%s - Receive (RX%d VFO-%s)", PGNAME, active_receiver->id + 1,
+  active_receiver->id == 0 ? "A" : "B");
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -305,17 +306,18 @@ void rx_menu(GtkWidget *parent) {
         gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
       } else {
-      GtkWidget *dither_b = gtk_check_button_new_with_label("Dither Bit");
-      gtk_widget_set_name(dither_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
-      gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
-      g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
-      GtkWidget *random_b = gtk_check_button_new_with_label("Random Bit");
-      gtk_widget_set_name(random_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
-      gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
-      g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
+        GtkWidget *dither_b = gtk_check_button_new_with_label("Dither Bit");
+        gtk_widget_set_name(dither_b, "boldlabel");
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
+        gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
+        g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
+        GtkWidget *random_b = gtk_check_button_new_with_label("Random Bit");
+        gtk_widget_set_name(random_b, "boldlabel");
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
+        gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
+        g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
       }
+
       row++;
     }
 
@@ -346,6 +348,7 @@ void rx_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), mute_radio_b, 2, row, 1, 1);
     g_signal_connect(mute_radio_b, "toggled", G_CALLBACK(mute_radio_cb), NULL);
   }
+
   row++;
 
   if (filter_board == ALEX) {
