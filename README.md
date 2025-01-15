@@ -4,9 +4,9 @@ This is an improved version based at the code of [piHPSDR](https://github.com/dl
 
 My version here need a screen size 1280x600 at minimum or higher for best GUI experiences.
 
-## deskHPSDR start with the code base from piHPSDR
+## deskHPSDR was splitting October 2024 from the code base of piHPSDR
 
-piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no collaboration between piHPSDR and deskHPSDR, no interest from either side.<br><br>deskHPSDR go it's own way.
+piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>deskHPSDR go it's own way, but there is an active exchange of ideas between Christoph/DL1YCF and me regarding development and programming of both versions piHPSDR and deskHPSDR.
 
 ## Requirements
 
@@ -21,14 +21,27 @@ piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Late
 
 ## The further development of deskHPSDR
 
-My work is not completed. I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/download/current/piHPSDR-Manual.pdf) for basic knowledge, how this application works in general.
+My work is not completed. I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/) for basic knowledge, how this application works in general.
 
-## Issues
+## Latest Changes
+### Version 2.5.x
+- under development: implementation of a TCI Server, which emulates a SunSDR2Pro device (successful tested with JTDX, RumLogNG, MacLoggerDX)<br>
+- completed: add an additional serial device interface option, which can switch on the RTS and/or DTR signal line during TUNE function<br>
+- under development: sereral GUI improvements for show additional status infos on the screen<br>
+- under development: make deeper access possible to the whole audio tools like CFC, Compressor, phase rotator for the user<br>
+- completed: add an additional, adjustable up to +20db, AF preamp for increasing mic input level if required<br>
+- under development: automatic switching of different audio inputs depends from the selected mode with automatic save settings<br>
+- completed: remove most of the limitations at 60m band (remove channelizing and other non-essential things)<br>
+
+Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
+
+## Issues tab at Github for this project - read carefully !
 
 I'm now activate the Issues tab, but please note the following:<br>
 - I ONLY accept error reports or runtime errors for this published codebase here. The Issues tab not suitable for discussion about other things except error messages or error reports.<br>
 - Don't ask about feature requests, questions about porting to other systems like WIN/MinGW and support for additional hardware - my answer will be ever NO. Such requests will be ignored and closed without any comment.<br>
 - first make a ```git pull``` for using the most up-to-date codebase, compile it, test it and THEN open an issue, if you think there's something wrong with the last codebase<br>
+- I don't accept any questions, comments or remarks about transmitting outside of the amateur radio frequencies !!!
 
 ## Known problems
 
