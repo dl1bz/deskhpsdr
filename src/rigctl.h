@@ -36,7 +36,7 @@ typedef struct _SERIALPORT SERIALPORT;
 
 #define MAX_SERIAL 3
 #if defined (__DVL__)
-  extern SERIALPORT SerialPorts[MAX_SERIAL + 1];
+  extern SERIALPORT SerialPorts[MAX_SERIAL+2];
 #else
   extern SERIALPORT SerialPorts[MAX_SERIAL];
 #endif

@@ -135,7 +135,7 @@ typedef struct _command {
 static CLIENT tcp_client[MAX_TCP_CLIENTS]; // TCP clients
 static CLIENT serial_client[MAX_SERIAL];   // serial clienta
 #if defined (__DVL__)
-  SERIALPORT SerialPorts[MAX_SERIAL + 1];
+  SERIALPORT SerialPorts[MAX_SERIAL+2];
 #else
   SERIALPORT SerialPorts[MAX_SERIAL];
 #endif

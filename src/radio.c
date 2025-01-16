@@ -1099,7 +1099,7 @@ void radio_start_radio() {
 
 #if defined (__DVL__)
 
-  for (int id = 0; id <= MAX_SERIAL; id++) {
+  for (int id = 0; id <= MAX_SERIAL+1; id++) {
 #else
 
   for (int id = 0; id < MAX_SERIAL; id++) {
@@ -2745,6 +2745,9 @@ static void radio_restore_state() {
   GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  GetPropS1("ptt_serial_port[%d]", MAX_SERIAL+1,           SerialPorts[MAX_SERIAL+1].port);
+  GetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL+1,      SerialPorts[MAX_SERIAL+1].baud);
+  GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL+1,         SerialPorts[MAX_SERIAL+1].enable);
 #endif
 
   for (int i = 0; i < n_adc; i++) {
@@ -2960,6 +2963,9 @@ void radio_save_state() {
   SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  SetPropS1("ptt_serial_port[%d]", MAX_SERIAL+1,           SerialPorts[MAX_SERIAL+1].port);
+  SetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL+1,      SerialPorts[MAX_SERIAL+1].baud);
+  SetPropI1("ptt_serial_enable[%d]", MAX_SERIAL+1,         SerialPorts[MAX_SERIAL+1].enable);
 #endif
 
   for (int i = 0; i < n_adc; i++) {
