@@ -490,7 +490,7 @@ void rigctl_menu(GtkWidget *parent) {
 
   my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL + 1], 3, row, 1, 1);
   g_signal_connect(serial_baud[MAX_SERIAL + 1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
-  serial_enable[MAX_SERIAL + 1] = gtk_check_button_new_with_label("read CTS as external PTT");
+  serial_enable[MAX_SERIAL + 1] = gtk_check_button_new_with_label("read RTS & CTS as external PTT");
   gtk_widget_set_name(serial_enable[MAX_SERIAL + 1], "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL + 1]), SerialPorts[MAX_SERIAL + 1].enable);
   gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL + 1], 4, row, 1, 1);
