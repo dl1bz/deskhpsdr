@@ -38,8 +38,8 @@
 
 static GtkWidget *dialog = NULL;
 #if defined (__DVL__)
-  static GtkWidget *serial_baud[MAX_SERIAL+2];
-  static GtkWidget *serial_enable[MAX_SERIAL+2];
+  static GtkWidget *serial_baud[MAX_SERIAL + 2];
+  static GtkWidget *serial_enable[MAX_SERIAL + 2];
 #else
   static GtkWidget *serial_baud[MAX_SERIAL];
   static GtkWidget *serial_enable[MAX_SERIAL];
@@ -184,6 +184,10 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
 #if defined (__DVL__)
   } else {
     SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+    if (id == MAX_SERIAL + 1) {
+      launch_serptt();
+    }
   }
 
 #endif
@@ -456,41 +460,42 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_halign(w, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
   w = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(w), SerialPorts[MAX_SERIAL+1].port);
+  gtk_entry_set_text(GTK_ENTRY(w), SerialPorts[MAX_SERIAL + 1].port);
   gtk_grid_attach(GTK_GRID(grid), w, 1, row, 2, 1);
-  g_signal_connect(w, "changed", G_CALLBACK(serial_port_cb), GINT_TO_POINTER(MAX_SERIAL+1));
-  serial_baud[MAX_SERIAL+1] = gtk_combo_box_text_new();
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL+1]), NULL, "4800 Bd");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL+1]), NULL, "9600 Bd");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL+1]), NULL, "19200 Bd");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL+1]), NULL, "38400 Bd");
+  g_signal_connect(w, "changed", G_CALLBACK(serial_port_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
+  serial_baud[MAX_SERIAL + 1] = gtk_combo_box_text_new();
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "4800 Bd");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "9600 Bd");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "19200 Bd");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "38400 Bd");
 
-  switch (SerialPorts[MAX_SERIAL+1].baud) {
+  switch (SerialPorts[MAX_SERIAL + 1].baud) {
   case B9600:
-    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL+1]), 1);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 1);
     break;
 
   case B19200:
-    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL+1]), 2);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 2);
     break;
 
   case B38400:
-    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL+1]), 3);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 3);
     break;
 
   default:
-    SerialPorts[MAX_SERIAL+1].baud = B4800;
-    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL+1]), 0);
+    SerialPorts[MAX_SERIAL + 1].baud = B4800;
+    gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 0);
     break;
   }
 
-  my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL+1], 3, row, 1, 1);
-  g_signal_connect(serial_baud[MAX_SERIAL+1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL+1));
-  serial_enable[MAX_SERIAL+1] = gtk_check_button_new_with_label("read CTS as external PTT");
-  gtk_widget_set_name(serial_enable[MAX_SERIAL+1], "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL+1]), SerialPorts[MAX_SERIAL+1].enable);
-  gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL+1], 4, row, 1, 1);
-  g_signal_connect(serial_enable[MAX_SERIAL+1], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(MAX_SERIAL+1));
+  my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL + 1], 3, row, 1, 1);
+  g_signal_connect(serial_baud[MAX_SERIAL + 1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
+  serial_enable[MAX_SERIAL + 1] = gtk_check_button_new_with_label("read CTS as external PTT");
+  gtk_widget_set_name(serial_enable[MAX_SERIAL + 1], "boldlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL + 1]), SerialPorts[MAX_SERIAL + 1].enable);
+  gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL + 1], 4, row, 1, 1);
+  g_signal_connect(serial_enable[MAX_SERIAL + 1], "toggled", G_CALLBACK(serial_enable_cb),
+                   GINT_TO_POINTER(MAX_SERIAL + 1));
   //-----------------------------------------------------------------------------------------------------------------
 #endif
   // row++;

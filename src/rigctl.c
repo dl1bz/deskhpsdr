@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
+#include <stdbool.h>
 #include "receiver.h"
 #include "toolbar.h"
 #include "band_menu.h"
@@ -71,6 +73,11 @@ int rigctl_tcp_enable = 0;
 int rigctl_tcp_andromeda = 0;
 int rigctl_tcp_autoreporting = 0;
 
+#if defined (__DVL__)
+  int serptt_fd;
+  volatile bool serptt_cts = false;
+#endif
+
 // max number of bytes we can get at once
 #define MAXDATASIZE 2000
 
@@ -87,6 +94,9 @@ static GMutex mutex_numcat;   // only needed to make in/de-crements of "cat_cont
 
 static GThread *rigctl_server_thread_id = NULL;
 static GThread *rigctl_cw_thread_id = NULL;
+#if defined (__DVL__)
+  static GThread *serptt_thread_id = NULL;
+#endif
 static int tcp_running = 0;
 
 static int server_socket = -1;
@@ -135,7 +145,7 @@ typedef struct _command {
 static CLIENT tcp_client[MAX_TCP_CLIENTS]; // TCP clients
 static CLIENT serial_client[MAX_SERIAL];   // serial clienta
 #if defined (__DVL__)
-  SERIALPORT SerialPorts[MAX_SERIAL+2];
+  SERIALPORT SerialPorts[MAX_SERIAL + 2];
 #else
   SERIALPORT SerialPorts[MAX_SERIAL];
 #endif
@@ -154,6 +164,91 @@ static gpointer rigctl_client (gpointer data);
 int rigctl_tcp_running() {
   return (server_socket >= 0);
 }
+
+#if defined (__DVL__)
+// Funktion zum Abrufen des CTS-Status der seriellen PTT
+bool get_serptt_cts(int fd) {
+  int status;
+
+  if (ioctl(fd, TIOCMGET, &status) < 0) {
+    // t_print("%s: Error reading CTS status from serial PTT device\n", __FUNCTION__);
+    return false;
+  }
+
+  return (status & TIOCM_CTS) != 0;
+}
+
+// Funktion zur Aktualisierung des CTS-Status der seriellen PTT
+gboolean update_serptt_cts(gpointer user_data) {
+  bool current_status = GPOINTER_TO_INT(user_data);
+
+  if (current_status != serptt_cts) {
+    serptt_cts = current_status;
+
+    if (serptt_cts) {
+      t_print("%s: serial PTT ON\n", __FUNCTION__);
+#if defined (__HAVEATU__)
+      (transmitter->is_tuned) g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+#else
+      g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+#endif
+    } else {
+      t_print("%s: serial PTT OFF\n", __FUNCTION__);
+      g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(0));
+    }
+  }
+
+  return G_SOURCE_REMOVE; // Einmalige Ausführung
+}
+
+gpointer monitor_cts_thread(gpointer user_data) {
+  bool last_status = 0;
+  int fd = *(int *)user_data;
+
+  if (fd < 0) {
+    if (SerialPorts[MAX_SERIAL + 1].enable) {
+      SerialPorts[MAX_SERIAL + 1].enable = 0;
+    }
+
+    t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL + 1].port);
+  }
+
+  while (!(fd < 0)) {
+    bool current_status = get_serptt_cts(fd);
+
+    if (current_status != last_status) {
+      last_status = current_status;
+      g_idle_add(update_serptt_cts, GINT_TO_POINTER(current_status));
+    }
+
+    g_usleep(50000); // 50 ms warten
+  }
+
+  return NULL;
+}
+
+void launch_serptt() {
+  if (SerialPorts[MAX_SERIAL + 1].enable) {
+    serptt_fd = open(SerialPorts[MAX_SERIAL + 1].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
+
+    if (serptt_fd < 0) {
+      SerialPorts[MAX_SERIAL + 1].enable = 0;
+      t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL + 1].port);
+    } else {
+      serptt_thread_id = g_thread_new("serPTT-Monitoring", monitor_cts_thread, &serptt_fd);
+      t_print("---- LAUNCHING serPTT control Thread Id %d ----\n", serptt_thread_id);
+    }
+  } else {
+    if (serptt_thread_id) {
+      serptt_thread_id = NULL;
+      close(serptt_fd);
+      serptt_fd = -1;
+      t_print("---- Shutdown SerPTT Thread at %s ----\n", SerialPorts[MAX_SERIAL + 1].port);
+    }
+  }
+}
+
+#endif
 
 void shutdown_tcp_rigctl() {
   struct linger linger = { 0 };

@@ -36,7 +36,7 @@ typedef struct _SERIALPORT SERIALPORT;
 
 #define MAX_SERIAL 3
 #if defined (__DVL__)
-  extern SERIALPORT SerialPorts[MAX_SERIAL+2];
+  extern SERIALPORT SerialPorts[MAX_SERIAL + 2];
 #else
   extern SERIALPORT SerialPorts[MAX_SERIAL];
 #endif
@@ -47,7 +47,10 @@ extern int launch_serial_rigctl (int id);
 extern void disable_serial_rigctl (int id);
 extern int rigctl_tcp_running();
 extern void  shutdown_tcp_rigctl(void);
-
+#if defined (__DVL__)
+  extern void launch_serptt(void);
+  extern int serptt_fd;
+#endif
 extern int cat_control;
 extern unsigned int rigctl_tcp_port;
 extern int rigctl_tcp_enable;
