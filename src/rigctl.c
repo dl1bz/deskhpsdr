@@ -188,7 +188,9 @@ gboolean update_serptt_cts(gpointer user_data) {
     if (serptt_cts) {
       t_print("%s: serial PTT ON\n", __FUNCTION__);
 #if defined (__HAVEATU__)
-      (transmitter->is_tuned) g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+
+      if (transmitter->is_tuned) { g_idle_add(ext_mox_update, GINT_TO_POINTER(1)); }
+
 #else
       g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
 #endif
