@@ -32,9 +32,9 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 - completed: add an additional, adjustable up to +20db, AF preamp for increasing mic input level if required<br>
 - under development: automatic switching of different audio inputs depends from the selected mode with automatic save settings<br>
 - completed: remove most of the limitations at 60m band (remove channelizing and other non-essential things)<br>
-- completed: add new UDP listener for my RX200 ESP32 project, which send via UDP broadcast data in JSON format<br>
-  like forward and reflected power, SWR and show the received and parsed data onscreen as panadapter overlay<br>
-  (need now json-c as additional lib, so please install it)
+- completed: add new UDP listener for my RX200 ESP32 project, which send via UDP broadcast data in JSON<br>
+  format like forward and reflected power, SWR and show the received and parsed data onscreen<br>
+  as panadapter overlay (need now json-c as additional lib, so please install it)
 
 Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
 
