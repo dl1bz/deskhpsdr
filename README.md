@@ -38,6 +38,9 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 - completed: add new serial device, which can be used as an external PTT switch using RTS signaling<br>
   (similar like in Thetis)<br>
 
+Things marked as "under development" are not fully tested and have maybe issues.<br>
+Things marked as "completed" are tested a longer time and will work without known issues up to now.<br>
+
 Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
 
 ## Issues tab at Github for this project - read carefully !
