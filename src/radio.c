@@ -341,6 +341,8 @@ int optimize_for_touchscreen = 0;
 gboolean duplex = FALSE;
 #if defined (__LDESK__)
   gboolean mute_rx_while_transmitting = TRUE;
+  char g_rx200_data[4][64];
+  int rx200_valid = 0;
 #else
   gboolean mute_rx_while_transmitting = FALSE;
 #endif
@@ -1617,6 +1619,7 @@ void radio_start_radio() {
     launch_serptt();
   }
 
+  launch_rx200_monitor();
 #endif
 
   for (int id = 0; id < MAX_SERIAL; id++) {

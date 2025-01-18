@@ -294,6 +294,9 @@ extern int MENU_WIDTH;
 extern int rx_stack_horizontal;
 extern int suppress_popup_sliders;
 
+extern char g_rx200_data[4][64];
+extern int rx200_valid;
+
 //
 // All global functions declared here start with "radio_",
 // exception: my_combo_attach()

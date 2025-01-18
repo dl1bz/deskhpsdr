@@ -700,6 +700,39 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   cairo_move_to(cr, 380.0, 30.0);
   snprintf(_text, 128, "%s", transmitter->microphone_name);
   cairo_show_text(cr, _text);
+#if defined (__APPLE__)
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+  cairo_set_source_rgba(cr, COLOUR_WHITE);
+
+  if (rx200_valid) {
+    cairo_move_to(cr, width - 270.0, 30.0);
+    snprintf(_text, 128, "Fwd  %sW", g_rx200_data[0]);
+    cairo_show_text(cr, _text);
+    cairo_move_to(cr, width - 270.0, 50.0);
+    snprintf(_text, 128, "Ref   %sW", g_rx200_data[1]);
+    cairo_show_text(cr, _text);
+    cairo_move_to(cr, width - 170.0, 30.0);
+    snprintf(_text, 128, "%s", g_rx200_data[3]);
+    cairo_show_text(cr, _text);
+    cairo_move_to(cr, width - 170.0, 50.0);
+    snprintf(_text, 128, "SWR %s", g_rx200_data[2]);
+    cairo_show_text(cr, _text);
+  } else {
+    snprintf(_text, 128, "");
+    cairo_move_to(cr, width - 270.0, 30.0);
+    cairo_show_text(cr, _text);
+    cairo_move_to(cr, width - 270.0, 50.0);
+    cairo_show_text(cr, _text);
+    cairo_move_to(cr, width - 170.0, 50.0);
+    cairo_show_text(cr, _text);
+    snprintf(_text, 128, "RX200 offline");
+    cairo_move_to(cr, width - 170.0, 30.0);
+    cairo_show_text(cr, _text);
+  }
+
 #endif
 
   if (TxInhibit) {

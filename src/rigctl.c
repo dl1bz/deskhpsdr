@@ -68,6 +68,10 @@
 #include <arpa/inet.h> //inet_addr
 #include <netinet/tcp.h>
 
+#include <netinet/in.h>
+#include <pthread.h>
+#include <json-c/json.h>
+
 unsigned int rigctl_tcp_port = 19090;
 int rigctl_tcp_enable = 0;
 int rigctl_tcp_andromeda = 0;
@@ -96,6 +100,9 @@ static GThread *rigctl_server_thread_id = NULL;
 static GThread *rigctl_cw_thread_id = NULL;
 #if defined (__DVL__)
   static GThread *serptt_thread_id = NULL;
+  pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
+  pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+  int rx200_port = 5573;  // Portnummer für den RX200 UDP Listener
 #endif
 static int tcp_running = 0;
 
@@ -247,6 +254,105 @@ void launch_serptt() {
       serptt_fd = -1;
       t_print("---- Shutdown SerPTT Thread at %s ----\n", SerialPorts[MAX_SERIAL + 1].port);
     }
+  }
+}
+
+// Callback-Funktion für empfangene RX200 UDP Daten
+void rx200_process_data(char *rx200_data[7]) {
+  // Daten von rx200_data in g_rx200_data thread-safe kopieren
+  pthread_mutex_lock(&rx200_array_mutex); // Mutex sperren
+
+  for (int i = 0; i < 4; i++) {
+    if (rx200_data[i] != NULL) { // Sicherstellen, dass der Zeiger gültig ist
+      strncpy(g_rx200_data[i], rx200_data[i], sizeof(g_rx200_data[i]) - 1);
+      g_rx200_data[i][sizeof(g_rx200_data[i]) - 1] = '\0'; // Nullterminator sicherstellen
+    } else {
+      g_rx200_data[i][0] = '\0'; // Leeren String setzen, falls NULL
+    }
+  }
+
+  pthread_mutex_unlock(&rx200_array_mutex); // Mutex entsperren
+  // t_print("RX200: Pfwd: %sW Pref: %sW SWR %s Timestamp: %s\n", g_rx200_data[0], g_rx200_data[1], g_rx200_data[2], g_rx200_data[3]);
+}
+
+// RX200 UDP Listener-Funktion
+void *rx200_udp_listener(void *arg) {
+  int port = *((int *)arg);
+  int sockfd;
+  struct sockaddr_in server_addr;
+  char buffer[1024];
+
+  // Socket erstellen
+  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    // perror("Socket creation failed");
+    pthread_exit(NULL);
+  }
+
+  memset(&server_addr, 0, sizeof(server_addr));
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_addr.s_addr = INADDR_ANY;
+  server_addr.sin_port = htons(port);
+
+  // Socket an Port binden
+  if (bind(sockfd, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    t_perror("RX200 UDP Listener: socket bind failed\n");
+    close(sockfd);
+    pthread_exit(NULL);
+  }
+
+  t_print("%s: starting RX200 UDP-Listener at port %d\n", __FUNCTION__, port);
+
+  // while (atomic_load(&toggle_listener)) { // Überprüfen, ob der Listener aktiv bleiben soll
+  while (1) { // Überprüfen, ob der Listener aktiv bleiben soll
+    int len = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+
+    if (len < 0) {
+      t_print("%s: ERROR: invalid incoming UDP data\n", __FUNCTION__);
+      rx200_valid = 0;
+      continue;
+    }
+
+    buffer[len] = '\0'; // Null-terminieren
+    // JSON-Daten parsen und Callback aufrufen
+    struct json_object *parsed_json = json_tokener_parse(buffer);
+
+    if (parsed_json) {
+      struct json_object *pwrfwd, *pwrref, *swr, *time, *rssi, *rst, *ssid;
+      const char *data[7];
+      json_object_object_get_ex(parsed_json, "pwrfwd", &pwrfwd);
+      json_object_object_get_ex(parsed_json, "pwrref", &pwrref);
+      json_object_object_get_ex(parsed_json, "swr", &swr);
+      json_object_object_get_ex(parsed_json, "time", &time);
+      json_object_object_get_ex(parsed_json, "rssi", &rssi);
+      json_object_object_get_ex(parsed_json, "rst", &rst);
+      json_object_object_get_ex(parsed_json, "ssid", &ssid);
+      data[0] = json_object_get_string(pwrfwd);
+      data[1] = json_object_get_string(pwrref);
+      data[2] = json_object_get_string(swr);
+      data[3] = json_object_get_string(time);
+      data[4] = json_object_get_string(rssi);
+      data[5] = json_object_get_string(rst);
+      data[6] = json_object_get_string(ssid);
+      rx200_process_data(data); // Callback aufrufen
+      rx200_valid = 1;
+      json_object_put(parsed_json); // Speicher freigeben
+    } else {
+      t_print("%s: RX200: invalid JSON data received: %s\n", __FUNCTION__, buffer);
+    }
+  }
+
+  t_print("RX200: UDP-Listener stopped...\n");
+  close(sockfd);
+  pthread_exit(NULL);
+}
+
+void launch_rx200_monitor() {
+  t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __FUNCTION__);
+
+  // RX200 UDP Listener-Thread starten
+  if (pthread_create(&rx200_listener_thread, NULL, rx200_udp_listener, &rx200_port) != 0) {
+    t_perror("ERROR: cannot start RX200 UDP Listener thread\n");
+    // return EXIT_FAILURE;
   }
 }
 

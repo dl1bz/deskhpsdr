@@ -418,8 +418,8 @@ CPP_SOURCES += src/tci.c
 #
 ##############################################################################
 
-GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0`
-GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0`
+GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 --cflags json-c`
+GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0 --cflags json-c`
 CPP_INCLUDE += $(GTKINCLUDE)
 
 ##############################################################################

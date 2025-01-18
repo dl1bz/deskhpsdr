@@ -50,6 +50,7 @@ extern void  shutdown_tcp_rigctl(void);
 #if defined (__DVL__)
   extern void launch_serptt(void);
   extern int serptt_fd;
+  extern void launch_rx200_monitor(void);
 #endif
 extern int cat_control;
 extern unsigned int rigctl_tcp_port;
