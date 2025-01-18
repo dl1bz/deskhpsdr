@@ -34,7 +34,9 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 - completed: remove most of the limitations at 60m band (remove channelizing and other non-essential things)<br>
 - completed: add new UDP listener for my RX200 ESP32 project, which send via UDP broadcast data in JSON<br>
   format like forward and reflected power, SWR and show the received and parsed data onscreen<br>
-  as panadapter overlay (need now json-c as additional lib, so please install it)
+  as panadapter overlay (need now json-c as additional lib, so please install it)<br>
+- completed: add new serial device, which can be used as an external PTT switch using RTS signaling<br>
+  (similar like in Thetis)<br>
 
 Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
 
