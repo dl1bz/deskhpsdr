@@ -712,10 +712,10 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_move_to(cr, width - 300.0, 50.0);
     snprintf(_text, 128, "Ref   %sW", g_rx200_data[1]);
     cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 200.0, 30.0);
+    cairo_move_to(cr, width - 190.0, 30.0);
     snprintf(_text, 128, "%s", g_rx200_data[3]);
     cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 200.0, 50.0);
+    cairo_move_to(cr, width - 190.0, 50.0);
     snprintf(_text, 128, "SWR %s", g_rx200_data[2]);
     cairo_show_text(cr, _text);
   } else {
@@ -724,10 +724,10 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_show_text(cr, _text);
     cairo_move_to(cr, width - 300.0, 50.0);
     cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 200.0, 50.0);
+    cairo_move_to(cr, width - 190.0, 50.0);
     cairo_show_text(cr, _text);
     snprintf(_text, 128, "RX200 offline");
-    cairo_move_to(cr, width - 200.0, 30.0);
+    cairo_move_to(cr, width - 190.0, 30.0);
     cairo_show_text(cr, _text);
   }
 
