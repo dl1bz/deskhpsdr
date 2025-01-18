@@ -719,7 +719,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     snprintf(_text, 128, "SWR %s", g_rx200_data[2]);
     cairo_show_text(cr, _text);
   } else {
-    snprintf(_text, 128, "");
+    snprintf(_text, 128, " ");
     cairo_move_to(cr, width - 270.0, 30.0);
     cairo_show_text(cr, _text);
     cairo_move_to(cr, width - 270.0, 50.0);
