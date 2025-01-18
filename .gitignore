@@ -25,3 +25,7 @@ wdsp/libwdsp.a
 make.config.deskhpsdr
 .vscode/*
 src/.vscode/*
+./deskhpsdr
+./deskhpsdr.app
+./hpsdrsim
+./wdspWisdom*
