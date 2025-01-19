@@ -306,7 +306,7 @@ void *rx200_udp_listener(void *arg) {
   t_print("%s: starting RX200 UDP-Listener at port %d\n", __FUNCTION__, port);
 
   // while (atomic_load(&toggle_listener)) { // Überprüfen, ob der Listener aktiv bleiben soll
-  while (1) { // Überprüfen, ob der Listener aktiv bleiben soll
+  while (1) { // Überprüfen, ob der Listener aktiv bleiben soll, 1 = immer ohne Abbruchcondition
     int len = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
 
     if (len < 0) {
