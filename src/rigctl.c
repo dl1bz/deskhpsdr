@@ -102,7 +102,7 @@ static GThread *rigctl_cw_thread_id = NULL;
   static GThread *serptt_thread_id = NULL;
   pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
   pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
-  int rx200_port = 5573;  // Portnummer für den RX200 UDP Listener
+  // int rx200_port = 5573;  // Portnummer für den RX200 UDP Listener -> move to radio.c
 #endif
 static int tcp_running = 0;
 
@@ -308,7 +308,7 @@ void *rx200_udp_listener(void *arg) {
 
     if (len < 0) {
       t_print("%s: ERROR: invalid incoming UDP data\n", __FUNCTION__);
-      rx200_valid = 0;
+      rx200_udp_valid = 0;
       continue;
     }
 
@@ -334,7 +334,7 @@ void *rx200_udp_listener(void *arg) {
       data[5] = json_object_get_string(rst);
       data[6] = json_object_get_string(ssid);
       rx200_process_data(data); // Callback aufrufen
-      rx200_valid = 1;
+      rx200_udp_valid = 1;
       json_object_put(parsed_json); // Speicher freigeben
     } else {
       t_print("%s: RX200: invalid JSON data received: %s\n", __FUNCTION__, buffer);
@@ -350,7 +350,7 @@ void launch_rx200_monitor() {
   t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __FUNCTION__);
 
   // RX200 UDP Listener-Thread starten
-  if (pthread_create(&rx200_listener_thread, NULL, rx200_udp_listener, &rx200_port) != 0) {
+  if (pthread_create(&rx200_listener_thread, NULL, rx200_udp_listener, &rx200_udp_port) != 0) {
     t_perror("ERROR: cannot start RX200 UDP Listener thread\n");
     // return EXIT_FAILURE;
   }

@@ -295,7 +295,8 @@ extern int rx_stack_horizontal;
 extern int suppress_popup_sliders;
 
 extern char g_rx200_data[4][64];
-extern int rx200_valid;
+extern int rx200_udp_valid;
+extern int rx200_udp_port;
 
 //
 // All global functions declared here start with "radio_",

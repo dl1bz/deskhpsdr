@@ -195,6 +195,8 @@ int pa_power = PA_1W;
 const int pa_power_list[] = {1, 5, 10, 30, 50, 100, 200, 500, 1000};
 double pa_trim[11];
 
+int rx200_udp_port = 5573;  // Portnummer für den RX200 UDP Listener
+
 int display_zoompan = 0;
 int display_sliders = 0;
 int display_toolbar = 0;
@@ -342,7 +344,7 @@ gboolean duplex = FALSE;
 #if defined (__LDESK__)
   gboolean mute_rx_while_transmitting = TRUE;
   char g_rx200_data[4][64];
-  int rx200_valid = 0;
+  int rx200_udp_valid = 0;
 #else
   gboolean mute_rx_while_transmitting = FALSE;
 #endif
@@ -2671,6 +2673,7 @@ static void radio_restore_state() {
   GetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   GetPropI0("filter_board",                                  filter_board);
   GetPropI0("pa_enabled",                                    pa_enabled);
+  GetPropI0("rx200_udp_port",                                rx200_udp_port);
   GetPropI0("pa_power",                                      pa_power);
   GetPropI0("mic_boost",                                     mic_boost);
   GetPropI0("mic_linein",                                    mic_linein);
@@ -2898,6 +2901,7 @@ void radio_save_state() {
   SetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   SetPropI0("filter_board",                                  filter_board);
   SetPropI0("pa_enabled",                                    pa_enabled);
+  SetPropI0("rx200_udp_port",                                rx200_udp_port);
   SetPropI0("pa_power",                                      pa_power);
   SetPropI0("mic_boost",                                     mic_boost);
   SetPropI0("mic_linein",                                    mic_linein);
