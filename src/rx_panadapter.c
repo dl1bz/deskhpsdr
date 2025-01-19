@@ -688,8 +688,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
 
-#if defined (__CPYMODE__)
   char _text[128];
+#if defined (__CPYMODE__)
   cairo_set_source_rgba(cr, COLOUR_ORANGE);
   cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
@@ -700,6 +700,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   cairo_move_to(cr, 380.0, 30.0);
   snprintf(_text, 128, "%s", transmitter->microphone_name);
   cairo_show_text(cr, _text);
+#endif
+
   // show RX200 data
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
@@ -729,8 +731,6 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_move_to(cr, width - 190.0, 30.0);
     cairo_show_text(cr, _text);
   }
-
-#endif
 
   if (TxInhibit) {
     cairo_set_source_rgba(cr, COLOUR_ALARM);

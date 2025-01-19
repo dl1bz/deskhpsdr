@@ -100,10 +100,12 @@ static GThread *rigctl_server_thread_id = NULL;
 static GThread *rigctl_cw_thread_id = NULL;
 #if defined (__DVL__)
   static GThread *serptt_thread_id = NULL;
-  pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
-  pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
-  // int rx200_port = 5573;  // Portnummer für den RX200 UDP Listener -> move to radio.c
 #endif
+
+pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
+pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+// int rx200_port = 5573;  // Portnummer für den RX200 UDP Listener -> move to radio.c
+
 static int tcp_running = 0;
 
 static int server_socket = -1;
@@ -256,6 +258,7 @@ void launch_serptt() {
     }
   }
 }
+#endif
 
 // Callback-Funktion für empfangene RX200 UDP Daten
 void rx200_process_data(char *rx200_data[7]) {
@@ -355,8 +358,6 @@ void launch_rx200_monitor() {
     // return EXIT_FAILURE;
   }
 }
-
-#endif
 
 void shutdown_tcp_rigctl() {
   struct linger linger = { 0 };

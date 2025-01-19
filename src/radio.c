@@ -196,6 +196,8 @@ const int pa_power_list[] = {1, 5, 10, 30, 50, 100, 200, 500, 1000};
 double pa_trim[11];
 
 int rx200_udp_port = 5573;  // Portnummer für den RX200 UDP Listener
+char g_rx200_data[4][64];
+int rx200_udp_valid = 0;
 
 int display_zoompan = 0;
 int display_sliders = 0;
@@ -343,8 +345,6 @@ int optimize_for_touchscreen = 0;
 gboolean duplex = FALSE;
 #if defined (__LDESK__)
   gboolean mute_rx_while_transmitting = TRUE;
-  char g_rx200_data[4][64];
-  int rx200_udp_valid = 0;
 #else
   gboolean mute_rx_while_transmitting = FALSE;
 #endif
@@ -1620,9 +1620,10 @@ void radio_start_radio() {
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     launch_serptt();
   }
-
-  launch_rx200_monitor();
 #endif
+
+launch_rx200_monitor();
+
 
   for (int id = 0; id < MAX_SERIAL; id++) {
     //
