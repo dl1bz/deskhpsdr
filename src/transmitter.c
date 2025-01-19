@@ -938,7 +938,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->drive = 50;
 #if defined (__LDESK__)
   tx->tune_drive = 2;
-  tx->radio_ptt_lock = 0;
+  tx->radio_ptt_lock = 1;
 #else
   tx->tune_drive = 10;
 #endif

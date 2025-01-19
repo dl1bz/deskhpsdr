@@ -351,12 +351,16 @@ void *rx200_udp_listener(void *arg) {
 
 void launch_rx200_monitor() {
   t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __FUNCTION__);
-
   // RX200 UDP Listener-Thread starten
   if (pthread_create(&rx200_listener_thread, NULL, rx200_udp_listener, &rx200_udp_port) != 0) {
     t_perror("ERROR: cannot start RX200 UDP Listener thread\n");
     // return EXIT_FAILURE;
   }
+}
+
+void unlock_internal_ptt() {
+  transmitter->radio_ptt_lock = 0; // release the handbrake of internal PTT
+  t_print("UNLOCK transmitter->radio_ptt_lock: %d\n", transmitter->radio_ptt_lock);
 }
 
 void shutdown_tcp_rigctl() {

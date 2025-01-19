@@ -1622,8 +1622,10 @@ void radio_start_radio() {
   }
 #endif
 
-launch_rx200_monitor();
+unlock_internal_ptt();
 
+// first call to start RX200 UDP Listener
+launch_rx200_monitor();
 
   for (int id = 0; id < MAX_SERIAL; id++) {
     //
