@@ -693,7 +693,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   cairo_set_source_rgba(cr, COLOUR_ORANGE);
   cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
 #else
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
