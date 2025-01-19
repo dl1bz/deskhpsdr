@@ -1620,12 +1620,11 @@ void radio_start_radio() {
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     launch_serptt();
   }
+
 #endif
-
-unlock_internal_ptt();
-
-// first call to start RX200 UDP Listener
-launch_rx200_monitor();
+  unlock_internal_ptt();
+  // first call to start RX200 UDP Listener
+  launch_rx200_monitor();
 
   for (int id = 0; id < MAX_SERIAL; id++) {
     //
