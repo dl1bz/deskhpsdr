@@ -69,49 +69,46 @@ void t_print(const gchar *format, ...) {
 */
 
 void t_print(const gchar *format, ...) {
-    va_list args;
-    va_start(args, format);
-    struct timespec ts;
-    double now;
-    static double starttime;
-    static int first = 1;
-    char line[1024];
-    char time_str[16];
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    now = ts.tv_sec + 1E-9 * ts.tv_nsec;
+  va_list args;
+  va_start(args, format);
+  struct timespec ts;
+  double now;
+  static double starttime;
+  static int first = 1;
+  char line[1024];
+  char time_str[16];
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  now = ts.tv_sec + 1E-9 * ts.tv_nsec;
 
-    if (first) {
-        first = 0;
-        starttime = now;
-    }
+  if (first) {
+    first = 0;
+    starttime = now;
+  }
 
-    //
-    // After 11 days, the time reaches 999999.999 so we simply wrap around
-    //
-    if (now - starttime >= 999999.995) {
-        starttime += 1000000.0;
-    }
+  //
+  // After 11 days, the time reaches 999999.999 so we simply wrap around
+  //
+  if (now - starttime >= 999999.995) {
+    starttime += 1000000.0;
+  }
 
-    //
-    // Berechnung von hh:mm:ss.mmm (Millisekunden)
-    //
-    double elapsed_time = now - starttime;
-    int hours = (int)(elapsed_time / 3600);
-    int minutes = (int)((elapsed_time - (hours * 3600)) / 60);
-    double seconds = elapsed_time - (hours * 3600) - (minutes * 60);
-    int millisec = (int)((seconds - (int)seconds) * 1000); // Millisekunden
-
-    // Formatierte Zeit in den String schreiben
-    snprintf(time_str, sizeof(time_str), "%02d:%02d:%02d.%03d", hours, minutes, (int)seconds, millisec);
-
-    //
-    // Wir nutzen vsnprintf, um die varargs zu verarbeiten
-    // g_print() wird einmalig aufgerufen, um Thread-Sicherheit zu gewährleisten
-    //
-    vsnprintf(line, sizeof(line), format, args);
-    g_print("%s %s", time_str, line);
-
-    va_end(args);
+  //
+  // Berechnung von hh:mm:ss.mmm (Millisekunden)
+  //
+  double elapsed_time = now - starttime;
+  int hours = (int)(elapsed_time / 3600);
+  int minutes = (int)((elapsed_time - (hours * 3600)) / 60);
+  double seconds = elapsed_time - (hours * 3600) - (minutes * 60);
+  int millisec = (int)((seconds - (int)seconds) * 1000); // Millisekunden
+  // Formatierte Zeit in den String schreiben
+  snprintf(time_str, sizeof(time_str), "%02d:%02d:%02d.%03d", hours, minutes, (int)seconds, millisec);
+  //
+  // Wir nutzen vsnprintf, um die varargs zu verarbeiten
+  // g_print() wird einmalig aufgerufen, um Thread-Sicherheit zu gewährleisten
+  //
+  vsnprintf(line, sizeof(line), format, args);
+  g_print("%s %s", time_str, line);
+  va_end(args);
 }
 
 

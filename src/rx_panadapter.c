@@ -108,25 +108,23 @@ static gboolean panadapter_scroll_event_cb(GtkWidget *widget, GdkEventScroll *ev
 }
 
 void get_local_time(char *zeitString, size_t groesse) {
-    // Aktuelle Zeit abrufen
-    time_t aktuelleZeit;
-    time(&aktuelleZeit);
-
-    // Zeit in lokales Format konvertieren
-    struct tm Zeit;
-    // Zeit in UTC konvertieren (Thread-sicher)
-    // gmtime_r(&aktuelleZeit, &Zeit); // thread-sicher
-    // Zeit in lokales Format konvertieren
-    localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
-
-    // Formatierter Zeit-String erstellen
-    snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
-             Zeit.tm_mday,
-             Zeit.tm_mon + 1, // Monate beginnen bei 0
-             Zeit.tm_year + 1900, // Jahre ab 1900
-             Zeit.tm_hour,
-             Zeit.tm_min,
-             Zeit.tm_sec);
+  // Aktuelle Zeit abrufen
+  time_t aktuelleZeit;
+  time(&aktuelleZeit);
+  // Zeit in lokales Format konvertieren
+  struct tm Zeit;
+  // Zeit in UTC konvertieren (Thread-sicher)
+  // gmtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+  // Zeit in lokales Format konvertieren
+  localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+  // Formatierter Zeit-String erstellen
+  snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
+           Zeit.tm_mday,
+           Zeit.tm_mon + 1, // Monate beginnen bei 0
+           Zeit.tm_year + 1900, // Jahre ab 1900
+           Zeit.tm_hour,
+           Zeit.tm_min,
+           Zeit.tm_sec);
 }
 
 void rx_panadapter_update(RECEIVER *rx) {
