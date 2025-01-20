@@ -1587,8 +1587,7 @@ void vfo_update() {
       rxlow    = rxhigh;
       rxhigh   = swap;
     }
-
-    t_print("H=%d DH=%d L=%d DL=%d\n", rxhigh, def_high, rxlow, def_low);
+    // t_print("H=%d DH=%d L=%d DL=%d\n", rxhigh, def_high, rxlow, def_low);
 #if !defined (__LDESK__)
     // default range is 50 pix wide in a 100 pix window
     cairo_set_line_width(cr, 3.0);
