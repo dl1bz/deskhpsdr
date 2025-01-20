@@ -24,6 +24,7 @@
 #include <string.h>
 #include <semaphore.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 #include "appearance.h"
 #include "agc.h"
@@ -45,6 +46,8 @@
 #ifdef USBOZY
   #include "ozyio.h"
 #endif
+
+char zeitString[20];
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
@@ -102,6 +105,28 @@ static gboolean panadapter_motion_notify_event_cb(GtkWidget *widget, GdkEventMot
 // cppcheck-suppress constParameterCallback
 static gboolean panadapter_scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data) {
   return rx_scroll_event(widget, event, data);
+}
+
+void get_local_time(char *zeitString, size_t groesse) {
+    // Aktuelle Zeit abrufen
+    time_t aktuelleZeit;
+    time(&aktuelleZeit);
+
+    // Zeit in lokales Format konvertieren
+    struct tm Zeit;
+    // Zeit in UTC konvertieren (Thread-sicher)
+    // gmtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+    // Zeit in lokales Format konvertieren
+    localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+
+    // Formatierter Zeit-String erstellen
+    snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
+             Zeit.tm_mday,
+             Zeit.tm_mon + 1, // Monate beginnen bei 0
+             Zeit.tm_year + 1900, // Jahre ab 1900
+             Zeit.tm_hour,
+             Zeit.tm_min,
+             Zeit.tm_sec);
 }
 
 void rx_panadapter_update(RECEIVER *rx) {
@@ -726,8 +751,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_show_text(cr, _text);
     cairo_move_to(cr, width - 190.0, 50.0);
     cairo_show_text(cr, _text);
-    snprintf(_text, 128, "RX200 offline");
     cairo_move_to(cr, width - 190.0, 30.0);
+    get_local_time(zeitString, sizeof(zeitString));
+    snprintf(_text, 128, "%s", zeitString);
     cairo_show_text(cr, _text);
   }
 
