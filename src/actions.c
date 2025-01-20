@@ -924,12 +924,12 @@ int process_action(void *data) {
     break;
 
   case FILTER_CUT_HIGH: {
-    filter_cut_changed(active_receiver->id, FILTER_CUT_HIGH, a->val);
+    filter_high_changed(active_receiver->id, a->val);
   }
   break;
 
   case FILTER_CUT_LOW: {
-    filter_cut_changed(active_receiver->id, FILTER_CUT_LOW, a->val);
+    filter_low_changed(active_receiver->id, a->val);
   }
   break;
 

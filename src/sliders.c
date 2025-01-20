@@ -451,7 +451,7 @@ void set_rf_gain(int rx, double value) {
   }
 }
 
-void set_filter_width(int rx, int width) {
+void show_filter_width(int rx, int width) {
   //t_print("%s width=%d\n",__FUNCTION__, width);
   char title[64];
   int min, max;
@@ -474,7 +474,7 @@ void set_filter_width(int rx, int width) {
   show_popup_slider(IF_WIDTH, rx, (double)(min), (double)(max), 1.0, (double) width, title);
 }
 
-void set_filter_shift(int rx, int shift) {
+void show_filter_shift(int rx, int shift) {
   //t_print("%s shift=%d\n",__FUNCTION__, shift);
   char title[64];
   int min, max;
@@ -551,7 +551,7 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
   radio_set_drive(value);
 }
 
-void set_filter_cut_high(int rx, int var) {
+void show_filter_high(int rx, int var) {
   //t_print("%s var=%d\n",__FUNCTION__,var);
   char title[64];
   int min, max;
@@ -572,8 +572,7 @@ void set_filter_cut_high(int rx, int var) {
   show_popup_slider(FILTER_CUT_HIGH, rx, (double)(min), (double)(max), 1.00, (double) var, title);
 }
 
-void set_filter_cut_low(int rx, int var) {
-  t_print("%s var=%d\n", __FUNCTION__, var);
+void show_filter_low(int rx, int var) {
   char title[64];
   int min, max;
   snprintf(title, 64, "Filter Cut Low RX%d (Hz)", rx + 1);

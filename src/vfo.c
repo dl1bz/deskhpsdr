@@ -1510,10 +1510,40 @@ static gboolean vfo_draw_cb (GtkWidget *widget,
 // Elements whose x-coordinate is zero are not drawn
 //
 void vfo_update() {
+  char wid[6];
   if (!vfo_surface) { return; }
 
   int id = active_receiver->id;
   int m = vfo[id].mode;
+  //
+  // Determine the width of the band filter of the active receiver
+  // and convert this to a 3-letter string
+  //
+  int rxhigh = active_receiver->filter_high;
+  int rxlow = active_receiver->filter_low;
+  int w = rxhigh - rxlow;
+  //
+  // CW: renormalize the filter edges to zero
+  //
+  if (m == modeCWL) {
+    rxhigh += cw_keyer_sidetone_frequency;
+    rxlow  += cw_keyer_sidetone_frequency;
+  } else if (m == modeCWU) {
+    rxhigh -= cw_keyer_sidetone_frequency;
+    rxlow  -= cw_keyer_sidetone_frequency;
+  }
+  if (w < 995) {
+    w = 10 * ((w+5)/10);   // between 0 and 990
+    snprintf(wid, sizeof(wid), "%3d", w);
+  } else if (w < 9950) {
+    w = 100 * ((w+50) / 100); // between 1000 and 9900
+    // print "2.7k" for a width of 2700
+    snprintf(wid, sizeof(wid), "%d.%dk", w/1000, (w % 1000) / 100);
+  } else {
+    // print "11k" for a width of 11000
+    w = (w+500) / 1000;
+    snprintf(wid, sizeof(wid), "%2dk", w);
+  }
   int f = vfo[id].filter;
   int txvfo = vfo_get_tx_vfo();
   const VFO_BAR_LAYOUT *vfl = &vfo_layout_list[vfo_layout];
@@ -1531,26 +1561,16 @@ void vfo_update() {
 
   // -----------------------------------------------------------
   //
-  // Only if using a variable filter:
-  // Draw a picture showing the actual and default fileter edges
+  // Draw a picture showing the actual and default filter edges
   //
   // -----------------------------------------------------------
-  if ((f == filterVar1 || f == filterVar2) && m != modeFMN && vfl->filter_x != 0) {
+  if (m != modeFMN && vfl->filter_x != 0) {
 #if !defined (__LDESK__)
     double range;
     double s, x1, x2;
 #endif
-    int def_low, def_high;
-    int low = band_filter->low;
-    int high = band_filter->high;
-
-    if (vfo[id].filter == filterVar1) {
-      def_low = var1_default_low[m];
-      def_high = var1_default_high[m];
-    } else {
-      def_low = var2_default_low[m];
-      def_high = var2_default_high[m];
-    }
+    int def_low = band_filter->low;
+    int def_high = band_filter->high;
 
     // switch high/low for lower-sideband-modes such
     // that the graphic display refers to audio frequencies.
@@ -1559,11 +1579,11 @@ void vfo_update() {
       swap     = def_low;
       def_low  = def_high;
       def_high = swap;
-      swap     = low;
-      low      = high;
-      high     = swap;
+      swap     = rxlow;
+      rxlow    = rxhigh;
+      rxhigh   = swap;
     }
-
+    t_print("H=%d DH=%d L=%d DL=%d\n", rxhigh,def_high, rxlow,def_low);
 #if !defined (__LDESK__)
     // default range is 50 pix wide in a 100 pix window
     cairo_set_line_width(cr, 3.0);
@@ -1576,8 +1596,8 @@ void vfo_update() {
     range = (double) (def_high - def_low);
     s = 50.0 / range;
     // convert actual filter size to the "default" scale
-    x1 = vfl->filter_x + 25 + s * (double)(low - def_low);
-    x2 = vfl->filter_x + 25 + s * (double)(high - def_low);
+    x1 = vfl->filter_x + 25 + s * (double)(rxlow - def_low);
+    x2 = vfl->filter_x + 25 + s * (double)(rxhigh - def_low);
     cairo_set_source_rgba(cr, COLOUR_ALARM);
     cairo_move_to(cr, x1 - 5, vfl->filter_y - 15);
     cairo_line_to(cr, x1, vfl->filter_y - 10);
@@ -1596,26 +1616,6 @@ void vfo_update() {
   if (vfl->mode_x != 0) {
     switch (vfo[id].mode) {
     case modeFMN: {
-      int dev;
-      const char *wid;
-      //
-      // filter edges are +/- 5500 if deviation==2500,
-      //              and +/- 8000 if deviation==5000
-      dev = vfo[id].deviation;
-
-      switch (dev) {
-      case 2500:
-        wid = "11k";
-        break;
-
-      case 5000:
-        wid = "16k";
-        break;
-
-      default:
-        wid = "???";
-        break;
-      }
 
       if (can_transmit ? transmitter->ctcss_enabled : 0) {
         snprintf(temp_text, 32, "%s %s C=%0.1f", mode_string[vfo[id].mode], wid,
@@ -1623,6 +1623,7 @@ void vfo_update() {
       } else {
         snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       }
+
     }
     break;
 
@@ -1630,40 +1631,30 @@ void vfo_update() {
     case modeCWU:
       if (vfo[id].cwAudioPeakFilter) {
         snprintf(temp_text, 32, "%s %sP %dwpm %dHz", mode_string[vfo[id].mode],
-                 band_filter->title,
+                 wid,
                  cw_keyer_speed,
                  cw_keyer_sidetone_frequency);
       } else {
         snprintf(temp_text, 32, "%s %s %d wpm %d Hz", mode_string[vfo[id].mode],
-                 band_filter->title,
+                 wid,
                  cw_keyer_speed,
                  cw_keyer_sidetone_frequency);
       }
 
       break;
 
-    case modeLSB:
-    case modeUSB:
 #if defined (__LDESK__)
     case modeDIGL:
     case modeDIGU:
-#endif
-    case modeDSB:
-    case modeAM:
-#if defined (__LDESK__)
       if (transmitter->use_rx_filter) {
-        snprintf(temp_text, 32, "%s %s [RX=TX]", mode_string[vfo[id].mode], band_filter->title);
+        snprintf(temp_text, 32, "%s %s [RX=TX]", mode_string[vfo[id].mode], wid);
       } else {
-        snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], band_filter->title);
+        snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       }
-
-#else
-      snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], band_filter->title);
-#endif
       break;
-
+#endif
     default:
-      snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], band_filter->title);
+        snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       break;
     }
 

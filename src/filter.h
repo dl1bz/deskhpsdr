@@ -55,6 +55,7 @@ extern void filterSaveState(void);
 extern void filterRestoreState(void);
 extern void filter_width_changed(int id, int increment);
 extern void filter_shift_changed(int id, int increment);
-extern void filter_cut_changed(int id, int action, int increment);
+extern void filter_high_changed(int id, int increment);
+extern void filter_low_changed(int id, int increment);
 extern void filter_cut_default(int id);
 #endif

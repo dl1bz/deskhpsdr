@@ -442,330 +442,351 @@ void filterRestoreState() {
 }
 
 //
-// This function is a no-op unless the vfo referenced uses a Var1 or Var2 filter
+// The following functions work adjust the filter edges in the receiver #id
+// but do not change the filters themselves.
+// So these changes are temporary, and nominal filter edges will be restored
+// upon the next filter/mode/band change.
+//
+// Note that we do not allow filter shifts for FMN, but this may change in
+// the future. Currently, the notion is that FM filter edges are calculated
+// from the deviation according to Carson's rule, and that deviations are
+// are fixed (at 2500 or 5000).
+//
 //
 void filter_cut_default(int id) {
+  //
+  // This will restore the nominal filter edges of the filter being used
+  //
   int mode = vfo[id].mode;
+
+  // Assertions
+  if (id >= receivers || mode == modeFMN) { return; }
+
+  RECEIVER *rx = receiver[id];
   int f = vfo[id].filter;
   FILTER *filter = &(filters[mode][f]);
 
-  switch (f) {
-  case filterVar1:
-    filter->low = var1_default_low[mode];
-    filter->high = var1_default_high[mode];
-    vfo_filter_changed(f);
-    break;
-
-  case filterVar2:
-    filter->low = var2_default_low[mode];
-    filter->high = var2_default_high[mode];
-    vfo_filter_changed(f);
-    break;
-
-  default:
-    // do nothing
-    break;
+  if (mode == modeCWU) {
+    rx->filter_low = filter->low+cw_keyer_sidetone_frequency;
+    rx->filter_high = filter->high+cw_keyer_sidetone_frequency;
+  } else if (mode == modeCWL) {
+    rx->filter_low = filter->low - cw_keyer_sidetone_frequency;
+    rx->filter_high = filter->high - cw_keyer_sidetone_frequency;
+  } else {
+    rx->filter_low = filter->low;
+    rx->filter_high = filter->high;
   }
 
   g_idle_add(ext_vfo_update, NULL);
 }
 
 //
-// This function is a no-op unless the vfo referenced uses a Var1 or Var2 filter
 // The notion of "high" and "low" is referenced to the audio, that is,
 // they have to be reversed for LSB/DIGU.
 //
-void filter_cut_changed(int id, int action, int increment) {
+//
+// Note that show_filter_* *only* puts a scale on the screen
+// but does not do anything. The call that actually creates the pop-up
+// slider WILL NOT RETURN until that slider is destroyed, so show_filter_*
+// must be the last statement in this and the following functions.
+//
+void filter_high_changed(int id, int increment) {
   int mode = vfo[id].mode;
-  int f = vfo[id].filter;
 
-  if (mode == modeFMN) {
-    return;
+  // Assertions
+  if (id >= receivers || mode == modeFMN) { return; }
+
+  RECEIVER *rx = receiver[id];
+  int low = rx->filter_low;
+  int high = rx->filter_high;
+  int new;
+
+  switch (mode) {
+  case modeLSB:
+  case modeDIGL:
+    low -= increment * 25;
+    if (low > 0) { low = 0; }
+    if (low > high) { low = high; }
+    new = -low;
+    break;
+
+  case modeCWL:
+    low -= increment * 5;
+    if (low > -cw_keyer_sidetone_frequency) { low = -cw_keyer_sidetone_frequency; }
+    if (low > high) { low = high; }
+    new = -low + cw_keyer_sidetone_frequency;
+    break;
+
+  case  modeCWU:
+    high += increment * 5;
+    if (high < cw_keyer_sidetone_frequency) { high = cw_keyer_sidetone_frequency; }
+    if (high < low) { high = low; }
+    new = high - cw_keyer_sidetone_frequency;
+    break;
+
+  case modeUSB:
+  case modeDIGU:
+    high += increment * 25;
+    if (high < 0) { high = 0; }
+    if (high < low) { high = low; }
+    new = high;
+    break;
+
+  default:
+    high += increment * 50;
+    if (high < 0) { high = 0; }
+    if (high < low) { high = low; }
+    new = high;
+    break;
   }
+  //
+  // Apply changed filter settings to the running rx
+  //
+  rx->filter_low = low;
+  rx->filter_high = high;
 
-  if (f == filterVar1 || f == filterVar2) {
-    FILTER *filter = &(filters[mode][f]);
+  rx_set_bandpass(rx);
+  rx_set_agc(rx);
 
-    //
-    // Note that set_filter_cut_high/low *only* puts a scale on the screen
-    //
-    switch (action) {
-    case FILTER_CUT_HIGH:
-      switch (mode) {
-      case modeLSB:
-      case modeDIGL:
-        filter->low -= increment * 25;
-
-        if (filter->low > 0) { filter->low = 0; }
-
-        if (filter->low > filter->high) { filter->low = filter->high; }
-
-        set_filter_cut_high(id, -filter->low);
-        break;
-
-      case modeCWL:
-        filter->low -= increment * 5;
-
-        if (filter->low > 0) { filter->low = 0; }
-
-        if (filter->low > filter->high) { filter->low = filter->high; }
-
-        set_filter_cut_high(id, -filter->low);
-        break;
-
-      case  modeCWU:
-        filter->high += increment * 5;
-
-        if (filter->high < 0) { filter->high = 0; }
-
-        if (filter->high < filter->low) { filter->high = filter->low; }
-
-        set_filter_cut_high(id, filter->high);
-        break;
-
-      case modeUSB:
-      case modeDIGU:
-        filter->high += increment * 25;
-
-        if (filter->high < 0) { filter->high = 0; }
-
-        if (filter->high < filter->low) { filter->high = filter->low; }
-
-        set_filter_cut_high(id, filter->high);
-        break;
-
-      default:
-        filter->high += increment * 50;
-
-        if (filter->high < 0) { filter->high = 0; }
-
-        if (filter->high < filter->low) { filter->high = filter->low; }
-
-        set_filter_cut_high(id, filter->high);
-        break;
-      }
-
-      break;
-
-    case FILTER_CUT_LOW:
-      switch (mode) {
-      case modeLSB:
-      case modeDIGL:
-        filter->high -= increment * 25;
-
-        if (filter->high > 0) { filter->high = 0; }
-
-        if (filter->high < filter->low) { filter->high = filter->low; }
-
-        set_filter_cut_low(id, -filter->high);
-        break;
-
-      case modeCWL:
-        filter->high -= increment * 5;
-
-        if (filter->high < 0) { filter->high = 0; }
-
-        if (filter->high < filter->low) { filter->high = filter->low; }
-
-        set_filter_cut_low(id, -filter->high);
-        break;
-
-      case modeCWU:
-        filter->low += increment * 5;
-
-        if (filter->low > 0) { filter->low = 0; }
-
-        if (filter->low > filter->high) { filter->low = filter->high; }
-
-        set_filter_cut_low(id, filter->low);
-        break;
-
-      case modeUSB:
-      case modeDIGU:
-        filter->low += increment * 25;
-
-        if (filter->low < 0) { filter->low = 0; }
-
-        if (filter->low > filter->high) { filter->low = filter->high; }
-
-        set_filter_cut_low(id, filter->low);
-        break;
-
-      default:
-        filter->low += increment * 50;
-
-        if (filter->low > 0) { filter->low = 0; }
-
-        if (filter->low > filter->high) { filter->low = filter->high; }
-
-        set_filter_cut_low(id, filter->low);
-        break;
-      }
-
-      break;
-
-    default:
-      break;
-    }
-
-    vfo_filter_changed(f);
-    g_idle_add(ext_vfo_update, NULL);
+  if (mode == modeCWL || mode == modeCWU) {
+    int have_peak = vfo[id].cwAudioPeakFilter;
+    rx_set_cw_peak(rx, have_peak, (double) cw_keyer_sidetone_frequency);
   }
+  g_idle_add(ext_vfo_update, NULL);
+  show_filter_high(id, new);
 }
 
+void filter_low_changed(int id, int increment) {
+  int mode = vfo[id].mode;
+
+  // Assertions
+  if (id >= receivers || mode == modeFMN) { return; }
+
+  RECEIVER *rx = receiver[id];
+  int low = rx->filter_low;
+  int high = rx->filter_high;
+  int new;
+
+  t_print("OLD: L=%d H=%d\n", low, high);
+  switch (mode) {
+  case modeLSB:
+  case modeDIGL:
+    high -= increment * 25;
+    if (high > 0) { high = 0; }
+    if (high < low) { high = low; }
+    new = -high;
+    break;
+
+  case modeCWL:
+    high -= increment * 5;
+    if (high < -cw_keyer_sidetone_frequency) { high = -cw_keyer_sidetone_frequency; }
+    if (high < low) { high = low; }
+    new = -high + cw_keyer_sidetone_frequency;
+    break;
+
+  case modeCWU:
+    low += increment * 5;
+    if (low > cw_keyer_sidetone_frequency) { low = cw_keyer_sidetone_frequency; }
+    if (low > high) { low = high; }
+    new = low - cw_keyer_sidetone_frequency;
+    break;
+
+  case modeUSB:
+  case modeDIGU:
+    low += increment * 25;
+    if (low < 0) { low = 0; }
+    if (low > high) { low = high; }
+    new = low;
+    break;
+
+  default:
+    low += increment * 50;
+    if (low > 0) { low = 0; }
+    if (low > high) { low = high; }
+    new = low;
+    break;
+  }
+  t_print("NEW: L=%d H=%d N=%d\n", low, high,new);
+
+  //
+  // Apply changed filter settings to the running rx
+  //
+  rx->filter_low = low;
+  rx->filter_high = high;
+
+  rx_set_bandpass(rx);
+  rx_set_agc(rx);
+
+  if (mode == modeCWL || mode == modeCWU) {
+    int have_peak = vfo[id].cwAudioPeakFilter;
+    rx_set_cw_peak(rx, have_peak, (double) cw_keyer_sidetone_frequency);
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
+  show_filter_low(id, new);
+}
 //
-// This function is a no-op unless the vfo referenced uses a Var1 or Var2 filter
-// Note the changed width affects the low/high cut depending on the mode
-// For USB/LSB only the high-audio-frequency cut is affected.
+// This function changes the width but keeps the mid-point unchanged
 //
 void filter_width_changed(int id, int increment) {
   int mode = vfo[id].mode;
-  int f = vfo[id].filter;
-  FILTER *filter = &(filters[mode][f]);
 
-  if (mode == modeFMN) {
-    return;
-  }
+  // Assertions
+  if (id >= receivers || mode == modeFMN) { return; }
 
-  if (f == filterVar1 || f == filterVar2) {
-    switch (mode) {
-    case modeDIGL:
-      if (filter->high < -500) {
-        // change both high and low
-        filter->low -= increment * 13;
-        filter->high += increment * 12;
+  RECEIVER *rx = receiver[id];
+  int low = rx->filter_low;
+  int high = rx->filter_high;
 
-        if (filter->low > filter->high) { filter->low = filter->high; }
-
-        break;
-      }
-
-      __attribute__((fallthrough));
-
-    case modeLSB:
-      // only change high-audio-cut
-      filter->low -= increment * 25;
-
-      if (filter->low > filter->high) { filter->low = filter->high; }
-
-      break;
-
-    case modeDIGU:
-      if (filter->low > 500) {
-        // change both high and low
-        filter->low -= increment * 12;
-        filter->high += increment * 13;
-
-        if (filter->high < filter->low) { filter->high = filter->low; }
-
-        break;
-      }
-
-      __attribute__((fallthrough));
-
-    case modeUSB:
-      // only change high-audio-cut
-      filter->high += increment * 25;
-
-      if (filter->high < filter->low) { filter->high = filter->low; }
-
-      break;
-
-    case modeCWL:
-    case modeCWU:
-      filter->low  -= increment * 5;
-      filter->high += increment * 5;
-
-      if (filter->low > filter->high) {
-        int mid = (filter->low + filter->high) / 2;
-        filter->low = mid;
-        filter->high = mid;
-      }
-
-      break;
-
-    default:
-      filter->low  -= increment * 50;
-      filter->high += increment * 50;
-
-      if (filter->low > filter->high) {
-        int mid = (filter->low + filter->high) / 2;
-        filter->low = mid;
-        filter->high = mid;
-      }
-
+  switch (mode) {
+  case modeDIGL:
+    if (high < -500) {
+      // change both high and low
+      low -= increment * 13;
+      high += increment * 12;
+      if (low > high) { low = high; }
       break;
     }
 
-    vfo_filter_changed(f);
-    // this *only* displays a scale on the screen
-    set_filter_width(id, filter->high - filter->low);
-    g_idle_add(ext_vfo_update, NULL);
+    __attribute__((fallthrough));
+
+  case modeLSB:
+    // only change high-audio-cut
+    low -= increment * 25;
+    if (low > high) { low = high; }
+    break;
+
+  case modeDIGU:
+    if (low > 500) {
+      // change both high and low
+      low -= increment * 12;
+      high += increment * 13;
+      if (high < low) { high = low; }
+      break;
+    }
+
+    __attribute__((fallthrough));
+
+  case modeUSB:
+    // only change high-audio-cut
+    high += increment * 25;
+    if (high < low) { high = low; }
+    break;
+
+  case modeCWL:
+  case modeCWU:
+    low  -= increment * 5;
+    high += increment * 5;
+
+    if (low > high) {
+      int mid = (low + high) / 2;
+      low = mid;
+      high = mid;
+    }
+
+    break;
+
+  default:
+    low  -= increment * 50;
+    high += increment * 50;
+
+    if (low > high) {
+      int mid = (low + high) / 2;
+      low = mid;
+      high = mid;
+    }
+
+    break;
   }
+
+  //
+  // Apply changed filter settings to the running rx
+  //
+  rx->filter_low = low;
+  rx->filter_high = high;
+
+  rx_set_bandpass(rx);
+  rx_set_agc(rx);
+
+  if (mode == modeCWL || mode == modeCWU) {
+    int have_peak = vfo[id].cwAudioPeakFilter;
+    rx_set_cw_peak(rx, have_peak, (double) cw_keyer_sidetone_frequency);
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
+  show_filter_width(id, high-low);
 }
 
-//
-// This function is a no-op unless the vfo referenced uses a Var1 or Var2 filter
-// The shift is defined as the difference of the filter passband mid-point
-// w.r.t. 1500 (USB, DIGU), -1500 (LSB, DIGL), SideToneFreq (CWU), -SideToneFreq (CWL)
-// or zero (everything else).
 //
 // This function changes the shift but leaves the width unchanged
 //
 void filter_shift_changed(int id, int increment) {
   int mode = vfo[id].mode;
-  int f = vfo[id].filter;
 
-  if (mode == modeFMN) {
-    return;
+  // Assertions
+  if (id >= receivers || mode == modeFMN) { return; }
+
+  RECEIVER *rx = receiver[id];
+  int low = rx->filter_low;
+  int high = rx->filter_high;
+
+  int fac;
+  int ref;
+  int mid = (high + low) / 2;
+  int wid = (high - low);
+  int shft;
+  int sgn = 1;
+
+  switch (mode) {
+  case modeLSB:
+  case modeDIGL:
+    fac  = 25;
+    ref  = -1500;
+    sgn  = -1;
+    break;
+
+  case modeUSB:
+  case modeDIGU:
+    fac  = 25;
+    ref  = 1500;
+    break;
+
+  case modeCWL:
+    fac  = 5;
+    ref  = 0;
+    sgn  = -1;
+    break;
+
+  case modeCWU:
+    fac  = 5;
+    ref = 0;
+    break;
+
+  default:
+    fac  = 50;
+    ref = 0;
+    break;
   }
 
-  if (f == filterVar1 || f == filterVar2) {
-    FILTER *filter = &(filters[mode][f]);
-    int fac;
-    int ref;
-    int mid = (filter->high + filter->low) / 2;
-    int wid = (filter->high - filter->low);
-    int shft;
-    int sgn = 1;
+  shft = mid - ref;
+  shft += increment * fac * sgn;
+  low =  ref + shft - wid / 2;
+  high = ref + shft + wid / 2;
 
-    switch (mode) {
-    case modeLSB:
-    case modeDIGL:
-      fac  = 25;
-      ref  = -1500;
-      sgn  = -1;
-      break;
+  //
+  // Apply changed filter settings to the running rx
+  //
+  rx->filter_low = low;
+  rx->filter_high = high;
 
-    case modeUSB:
-    case modeDIGU:
-      fac  = 25;
-      ref  = 1500;
-      break;
+  rx_set_bandpass(rx);
+  rx_set_agc(rx);
 
-    case modeCWL:
-      fac  = 5;
-      ref  = 0;
-      sgn  = -1;
-      break;
-
-    case modeCWU:
-      fac  = 5;
-      ref = 0;
-      break;
-
-    default:
-      fac  = 50;
-      ref = 0;
-      break;
-    }
-
-    shft = mid - ref;
-    shft += increment * fac * sgn;
-    filter->low =  ref + shft - wid / 2;
-    filter->high = ref + shft + wid / 2;
-    set_filter_shift(id, sgn * shft);
-    vfo_filter_changed(f);
-    g_idle_add(ext_vfo_update, NULL);
+  if (mode == modeCWL || mode == modeCWU) {
+    int have_peak = vfo[id].cwAudioPeakFilter;
+    rx_set_cw_peak(rx, have_peak, (double) cw_keyer_sidetone_frequency);
   }
+
+  g_idle_add(ext_vfo_update, NULL);
+  show_filter_shift(id, sgn * shft);
 }

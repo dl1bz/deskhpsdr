@@ -38,11 +38,11 @@ extern void set_rf_gain(int rx, double value);
 extern void set_mic_gain(double value);
 extern void set_linein_gain(double value);
 extern void set_drive(double drive);
-extern void set_filter_cut_low(int rx, int value);
-extern void set_filter_cut_high(int rx, int value);
+extern void show_filter_low(int rx, int value);
+extern void show_filter_high(int rx, int value);
+extern void show_filter_width(int rx, int value);
+extern void show_filter_shift(int rx, int value);
 extern void set_attenuation_value(double attenuation);
-extern void set_filter_width(int rx, int width);
-extern void set_filter_shift(int rx, int width);
 extern GtkWidget *sliders_init(int my_width, int my_height);
 
 extern void sliders_update(void);
