@@ -155,14 +155,12 @@ static gboolean filter_select_cb (GtkWidget *widget, gpointer data) {
     g_signal_handler_unblock(G_OBJECT(current->button), current->signal);
   }
 
-
   //
   // if current == choice, the filter will not be changed but the RX filter edges
   // will be restored to their default values
   //
   current = choice;
   vfo_filter_changed(current->info);
-
   return FALSE;
 }
 

@@ -1511,6 +1511,7 @@ static gboolean vfo_draw_cb (GtkWidget *widget,
 //
 void vfo_update() {
   char wid[6];
+
   if (!vfo_surface) { return; }
 
   int id = active_receiver->id;
@@ -1522,6 +1523,7 @@ void vfo_update() {
   int rxhigh = active_receiver->filter_high;
   int rxlow = active_receiver->filter_low;
   int w = rxhigh - rxlow;
+
   //
   // CW: renormalize the filter edges to zero
   //
@@ -1532,18 +1534,20 @@ void vfo_update() {
     rxhigh -= cw_keyer_sidetone_frequency;
     rxlow  -= cw_keyer_sidetone_frequency;
   }
+
   if (w < 995) {
-    w = 10 * ((w+5)/10);   // between 0 and 990
+    w = 10 * ((w + 5) / 10); // between 0 and 990
     snprintf(wid, sizeof(wid), "%3d", w);
   } else if (w < 9950) {
-    w = 100 * ((w+50) / 100); // between 1000 and 9900
+    w = 100 * ((w + 50) / 100); // between 1000 and 9900
     // print "2.7k" for a width of 2700
-    snprintf(wid, sizeof(wid), "%d.%dk", w/1000, (w % 1000) / 100);
+    snprintf(wid, sizeof(wid), "%d.%dk", w / 1000, (w % 1000) / 100);
   } else {
     // print "11k" for a width of 11000
-    w = (w+500) / 1000;
+    w = (w + 500) / 1000;
     snprintf(wid, sizeof(wid), "%2dk", w);
   }
+
   int f = vfo[id].filter;
   int txvfo = vfo_get_tx_vfo();
   const VFO_BAR_LAYOUT *vfl = &vfo_layout_list[vfo_layout];
@@ -1583,7 +1587,8 @@ void vfo_update() {
       rxlow    = rxhigh;
       rxhigh   = swap;
     }
-    t_print("H=%d DH=%d L=%d DL=%d\n", rxhigh,def_high, rxlow,def_low);
+
+    t_print("H=%d DH=%d L=%d DL=%d\n", rxhigh, def_high, rxlow, def_low);
 #if !defined (__LDESK__)
     // default range is 50 pix wide in a 100 pix window
     cairo_set_line_width(cr, 3.0);
@@ -1616,14 +1621,12 @@ void vfo_update() {
   if (vfl->mode_x != 0) {
     switch (vfo[id].mode) {
     case modeFMN: {
-
       if (can_transmit ? transmitter->ctcss_enabled : 0) {
         snprintf(temp_text, 32, "%s %s C=%0.1f", mode_string[vfo[id].mode], wid,
                  ctcss_frequencies[transmitter->ctcss]);
       } else {
         snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       }
-
     }
     break;
 
@@ -1642,8 +1645,8 @@ void vfo_update() {
       }
 
       break;
-
 #if defined (__LDESK__)
+
     case modeDIGL:
     case modeDIGU:
       if (transmitter->use_rx_filter) {
@@ -1651,10 +1654,12 @@ void vfo_update() {
       } else {
         snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       }
+
       break;
 #endif
+
     default:
-        snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
+      snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       break;
     }
 
