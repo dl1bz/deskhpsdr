@@ -360,11 +360,6 @@ void launch_rx200_monitor() {
   }
 }
 
-void unlock_internal_ptt() {
-  transmitter->radio_ptt_lock = 0; // release the handbrake of internal PTT
-  t_print("UNLOCK transmitter->radio_ptt_lock: %d\n", transmitter->radio_ptt_lock);
-}
-
 void shutdown_tcp_rigctl() {
   struct linger linger = { 0 };
   linger.l_onoff = 1;

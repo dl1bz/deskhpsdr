@@ -1175,11 +1175,6 @@ static void process_control_bytes() {
 
   if (previous_ptt != radio_ptt) {
     int m = vfo_get_tx_mode();
-#if defined (__LDESK__)
-    t_print("%s: PTT_LOCK: %d\n", __FUNCTION__, transmitter->radio_ptt_lock);
-
-    if (!transmitter->radio_ptt_lock) {
-#endif
 
       if (radio_ptt || m == modeCWU || m == modeCWL) {
         //
@@ -1200,11 +1195,6 @@ static void process_control_bytes() {
         // t_print("%s: B_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
         g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(radio_ptt));
       }
-
-#if defined (__LDESK__)
-    }
-
-#endif
   }
 
   if ((device == DEVICE_HERMES_LITE2) && (control_in[0] & 0x80)) {

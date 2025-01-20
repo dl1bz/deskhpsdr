@@ -115,9 +115,6 @@ typedef struct _transmitter {
   double drive_scale;   // additional TX iq scaling required
   double drive_iscal;   // inverse of drive_scale
   double mic_gain;
-#if defined (__LDESK__)
-  int radio_ptt_lock;   // use for locking the internal PTT line
-#endif
 
   int compressor;
   double compressor_level;

@@ -938,7 +938,6 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->drive = 50;
 #if defined (__LDESK__)
   tx->tune_drive = 2;
-  tx->radio_ptt_lock = 1;
 #else
   tx->tune_drive = 10;
 #endif
@@ -1998,9 +1997,6 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
 #ifdef WDSPTXDEBUG
   t_print("WDSP:TX id=%d PS OnOff=%d\n", tx->id, state);
 #endif
-#if defined (__LDESK__)
-  transmitter->radio_ptt_lock = 1;
-#endif
 
   if (!state) {
     // see above. Ensure some feedback samples still flow into
@@ -2057,9 +2053,6 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
   }
 
   g_idle_add(ext_vfo_update, NULL);
-#if defined (__LDESK__)
-  transmitter->radio_ptt_lock = 0;
-#endif
 }
 
 void tx_ps_reset(const TRANSMITTER *tx) {

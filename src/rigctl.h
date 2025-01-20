@@ -52,7 +52,6 @@ extern void  shutdown_tcp_rigctl(void);
   extern int serptt_fd;
 #endif
 extern void launch_rx200_monitor(void);
-extern void unlock_internal_ptt(void);
 extern int cat_control;
 extern unsigned int rigctl_tcp_port;
 extern int rigctl_tcp_enable;
