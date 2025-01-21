@@ -4012,7 +4012,7 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
                 shift = 0;
                 snprintf(reply, 256, "ZZZI060;");
                 send_resp(client->fd, reply);
-              } else if (v == 1) {
+              } else if (!shift && v == 1) {
                 if (p == 30) { start_tx(); }                                  // MODE DATA
                 else if (p == 31) { schedule_action(MODE_PLUS, PRESSED, 0); } // MODE+
                 else if (p == 32) { schedule_action(FILTER_PLUS, PRESSED, 0); } // FILTER+
