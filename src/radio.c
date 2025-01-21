@@ -1622,7 +1622,6 @@ void radio_start_radio() {
   }
 
 #endif
-
   // first call to start RX200 UDP Listener
   launch_rx200_monitor();
 

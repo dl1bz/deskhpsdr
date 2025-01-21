@@ -1176,25 +1176,25 @@ static void process_control_bytes() {
   if (previous_ptt != radio_ptt) {
     int m = vfo_get_tx_mode();
 
-      if (radio_ptt || m == modeCWU || m == modeCWL) {
-        //
-        // If "PTT on" comes from the radio, or we are doing CW: go TX without delay
-        // We need a timeout_add here because sometimes there is a "spike" on the
-        // PTT line and we have to guarantee that the mox_update that is scheduled
-        // first will be executed first.
-        //
-        // t_print("%s: A_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
-        g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
-        // g_timeout_add(5,ext_mox_update, GINT_TO_POINTER(radio_ptt));
-      } else {
-        //
-        // If "PTT off" comes from the radio and no CW:
-        // delay the TX/RX transistion a little bit to avoid
-        // clipping the last bits of the TX signal
-        //
-        // t_print("%s: B_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
-        g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(radio_ptt));
-      }
+    if (radio_ptt || m == modeCWU || m == modeCWL) {
+      //
+      // If "PTT on" comes from the radio, or we are doing CW: go TX without delay
+      // We need a timeout_add here because sometimes there is a "spike" on the
+      // PTT line and we have to guarantee that the mox_update that is scheduled
+      // first will be executed first.
+      //
+      // t_print("%s: A_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
+      g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
+      // g_timeout_add(5,ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    } else {
+      //
+      // If "PTT off" comes from the radio and no CW:
+      // delay the TX/RX transistion a little bit to avoid
+      // clipping the last bits of the TX signal
+      //
+      // t_print("%s: B_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
+      g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(radio_ptt));
+    }
   }
 
   if ((device == DEVICE_HERMES_LITE2) && (control_in[0] & 0x80)) {
@@ -1396,6 +1396,7 @@ static void process_ozy_byte(int b) {
     } else {
       state = SYNC_0;
     }
+
     break;
 
   case SYNC_2:
@@ -1404,6 +1405,7 @@ static void process_ozy_byte(int b) {
     } else {
       state = SYNC_0;
     }
+
     break;
 
   case CONTROL_0:
