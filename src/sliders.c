@@ -535,6 +535,7 @@ void set_drive(double value) {
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       value /= 20;
     }
+
     gtk_range_set_value (GTK_RANGE(drive_scale), value);
   } else {
     show_popup_slider(DRIVE, 0, 0.0, drive_max, 1.0, value, "TX Drive");
@@ -543,20 +544,24 @@ void set_drive(double value) {
 
 static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
   double value = gtk_range_get_value(GTK_RANGE(drive_scale));
+
   if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
     value *= 20;
   }
+
   t_print("%s: value=%f at device %d\n", __FUNCTION__, value, device);
   int txmode = vfo_get_tx_mode();
+
   if (txmode == modeDIGU || txmode == modeDIGL) {
     if (value > drive_digi_max) { value = drive_digi_max; }
   }
 
-   radio_set_drive(value);
+  radio_set_drive(value);
 
   if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
     value /= 20;
   }
+
   gtk_range_set_value (GTK_RANGE(drive_scale), value);
 }
 
@@ -861,31 +866,41 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
     g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
 #if defined (__LDESK__)
+
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       drive_label = gtk_label_new("TX HL2");
     } else {
       drive_label = gtk_label_new("TX Pwr");
     }
+
 #else
     drive_label = gtk_label_new("TX Drv");
 #endif
     gtk_widget_set_name(drive_label, csslabel);
     gtk_widget_set_halign(drive_label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, twidth, 1);
+
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
     } else {
       drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
     }
+
     gtk_widget_set_size_request(drive_scale, 0, height / 2);
     gtk_widget_set_valign(drive_scale, GTK_ALIGN_CENTER);
+
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       gtk_range_set_increments (GTK_RANGE(drive_scale), 0.1, 0.1);
-      gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive()/20);
+      gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive() / 20);
+
+      for (float i = 0.0; i <= 5.0; i += 0.5) {
+        gtk_scale_add_mark(GTK_SCALE(drive_scale), i, GTK_POS_TOP, NULL);
+      }
     } else {
       gtk_range_set_increments (GTK_RANGE(drive_scale), 1.0, 1.0);
       gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive());
     }
+
     gtk_widget_show(drive_scale);
     gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, swidth, 1);
     g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb), NULL);
