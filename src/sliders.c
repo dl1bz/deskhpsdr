@@ -758,6 +758,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_valign(af_gain_scale, GTK_ALIGN_CENTER);
   gtk_range_set_increments (GTK_RANGE(af_gain_scale), 1.0, 1.0);
   gtk_range_set_value (GTK_RANGE(af_gain_scale), active_receiver->volume);
+
+  for (float i = -40.0; i <= 0.0; i += 5.0) {
+    gtk_scale_add_mark(GTK_SCALE(af_gain_scale), i, GTK_POS_TOP, NULL);
+  }
+
   gtk_widget_show(af_gain_scale);
   gtk_grid_attach(GTK_GRID(sliders), af_gain_scale, s1pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(af_gain_scale), "value_changed", G_CALLBACK(afgain_value_changed_cb), NULL);
@@ -864,6 +869,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
     gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
+
+    for (float i = -12.0; i <= 50.0; i += 6.0) {
+      gtk_scale_add_mark(GTK_SCALE(mic_gain_scale), i, GTK_POS_TOP, NULL);
+    }
+
     g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
 #if defined (__LDESK__)
 
