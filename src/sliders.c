@@ -735,11 +735,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
   if (!strcmp(csslabel, "slider1")) { csslabel_smaller = "slider0"; }
+
   if (!strcmp(csslabel, "slider2")) { csslabel_smaller = "slider1"; }
+
   if (!strcmp(csslabel, "slider3")) { csslabel_smaller = "slider2"; }
 
   // csslabel_small = "slider2";
-
   t1pos  =  0;
   s1pos  =  t1pos + twidth;
   t2pos  =  s1pos + swidth;
@@ -789,13 +790,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   if (have_rx_gain) {
 #if defined (__LDESK__)
-  if (device == DEVICE_HERMES_LITE2) {
-    rf_gain_label = gtk_label_new("HL2:Gain\nRxPGA");
-    gtk_widget_set_name(rf_gain_label, csslabel_smaller);
-  } else {
-    rf_gain_label = gtk_label_new("Gain");
-    gtk_widget_set_name(rf_gain_label, csslabel);
-  }
+
+    if (device == DEVICE_HERMES_LITE2) {
+      rf_gain_label = gtk_label_new("HL2:Gain\nRxPGA");
+      gtk_widget_set_name(rf_gain_label, csslabel_smaller);
+    } else {
+      rf_gain_label = gtk_label_new("Gain");
+      gtk_widget_set_name(rf_gain_label, csslabel);
+    }
+
 #else
     rf_gain_label = gtk_label_new("RF");
     gtk_widget_set_name(rf_gain_label, csslabel);
