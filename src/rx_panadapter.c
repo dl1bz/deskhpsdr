@@ -397,7 +397,17 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_line_width(cr, PAN_LINE_THICK);
     cairo_stroke(cr);
     cairo_move_to(cr, 48.0, knee_y);
+    #if defined (__LDESK__)
+    if(device == DEVICE_HERMES_LITE2) {
+      char ADCgain[64];
+      snprintf(ADCgain, 64, "    RxPGA %ddb",(int)adc[active_receiver->adc].gain);
+      cairo_show_text(cr, ADCgain);
+    } else {
+      cairo_show_text(cr, "-Gain");
+    }
+    #else
     cairo_show_text(cr, "-G");
+    #endif
   }
 
   // cursor
