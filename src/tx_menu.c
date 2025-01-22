@@ -32,6 +32,9 @@
 #include "new_protocol.h"
 #include "message.h"
 #include "mystring.h"
+#if defined (__LDESK__) && defined (__CPYMODE__)
+  #include "property.h"
+#endif
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *input;
@@ -111,6 +114,52 @@ enum _cfc_choices {
   CFC_EQ
 };
 
+#if defined (__LDESK__) && defined (__CPYMODE__)
+void ersetzeLeerzeichenMitUnterstrich(char *str) {
+  while (*str != '\0') { // Schleife bis zum Ende des Strings
+    if (*str == ' ') { // Wenn das aktuelle Zeichen ein Leerzeichen ist
+      *str = '_';   // Ersetze es durch einen Unterstrich
+    }
+
+    str++; // Gehe zum nächsten Zeichen
+  }
+}
+
+void audioSaveState() {
+  clearProperties();
+  // save only for LSB
+  int i = modeLSB;
+  SetPropI0("modeset.en_rxeq",               mode_settings[i].en_rxeq);
+  SetPropI0("modeset.en_txeq",               mode_settings[i].en_txeq);
+  SetPropI0("modeset.compressor",            mode_settings[i].compressor);
+  SetPropF0("modeset.compressor_level",      mode_settings[i].compressor_level);
+  SetPropI0("modeset.lev_enable",            mode_settings[i].lev_enable);
+  SetPropF0("modeset.lev_gain",              mode_settings[i].lev_gain);
+  SetPropI0("modeset.phrot_enable",          mode_settings[i].phrot_enable);
+  SetPropI0("modeset.cfc",                   mode_settings[i].cfc);
+  SetPropI0("modeset.cfc_eq",                mode_settings[i].cfc_eq);
+
+  for (int j = 0; j < 11; j++) {
+    SetPropF1("modeset.txeq.%d", j,          mode_settings[i].tx_eq_gain[j]);
+    SetPropF1("modeset.txeqfrq.%d", j,       mode_settings[i].tx_eq_freq[j]);
+    SetPropF1("modeset.rxeq.%d", j,          mode_settings[i].rx_eq_gain[j]);
+    SetPropF1("modeset.rxeqfrq.%d", j,       mode_settings[i].rx_eq_freq[j]);
+    SetPropF1("modeset.cfc_frq.%d", j,       mode_settings[i].cfc_freq[j]);
+    SetPropF1("modeset.cfc_lvl.%d", j,       mode_settings[i].cfc_lvl[j]);
+    SetPropF1("modeset.cfc_post.%d", j,      mode_settings[i].cfc_post[j]);
+  }
+
+  SetPropS0("modeset.microphone_name",       mode_settings[i].microphone_name);
+  char SaveDateiName[128];
+  char MicName[128];
+  strcpy(MicName, mode_settings[i].microphone_name);
+  ersetzeLeerzeichenMitUnterstrich(MicName);
+  snprintf(SaveDateiName, 128, "audio_%s.prop", MicName);
+  saveProperties(SaveDateiName);
+}
+
+#endif
+
 static void cleanup() {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
@@ -119,6 +168,9 @@ static void cleanup() {
     sub_menu = NULL;
     active_menu  = NO_MENU;
     radio_save_state();
+#if defined (__LDESK__) && defined (__CPYMODE__)
+    audioSaveState();
+#endif
   }
 }
 
