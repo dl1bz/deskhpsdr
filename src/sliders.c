@@ -891,15 +891,17 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__LDESK__)
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
-      drive_label = gtk_label_new("TX HL2");
+      drive_label = gtk_label_new("HL2:TX\nPwr (W)");
+      gtk_widget_set_name(drive_label, csslabel_smaller);
     } else {
       drive_label = gtk_label_new("TX Pwr");
+      gtk_widget_set_name(drive_label, csslabel);
     }
 
 #else
     drive_label = gtk_label_new("TX Drv");
-#endif
     gtk_widget_set_name(drive_label, csslabel);
+#endif
     gtk_widget_set_halign(drive_label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, twidth, 1);
 
