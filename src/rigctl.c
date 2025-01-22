@@ -77,7 +77,7 @@ int rigctl_tcp_enable = 0;
 int rigctl_tcp_andromeda = 0;
 int rigctl_tcp_autoreporting = 0;
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
   int serptt_fd;
   volatile bool serptt_cts = false;
 #endif
@@ -98,7 +98,7 @@ static GMutex mutex_numcat;   // only needed to make in/de-crements of "cat_cont
 
 static GThread *rigctl_server_thread_id = NULL;
 static GThread *rigctl_cw_thread_id = NULL;
-#if defined (__DVL__)
+#if defined (__LDESK__)
   static GThread *serptt_thread_id = NULL;
 #endif
 
@@ -153,7 +153,7 @@ typedef struct _command {
 
 static CLIENT tcp_client[MAX_TCP_CLIENTS]; // TCP clients
 static CLIENT serial_client[MAX_SERIAL];   // serial clienta
-#if defined (__DVL__)
+#if defined (__LDESK__)
   SERIALPORT SerialPorts[MAX_SERIAL + 2];
 #else
   SERIALPORT SerialPorts[MAX_SERIAL];
@@ -174,7 +174,7 @@ int rigctl_tcp_running() {
   return (server_socket >= 0);
 }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
 // Funktion zum Abrufen des CTS-Status der seriellen PTT
 bool get_serptt_cts(int fd) {
   int status;

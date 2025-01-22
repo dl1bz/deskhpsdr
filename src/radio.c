@@ -29,7 +29,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <termios.h>
-#if defined (__DVL__)
+#if defined (__LDESK__)
   #include <unistd.h>
   #include <sys/ioctl.h>
   #include <sys/types.h>
@@ -1101,7 +1101,7 @@ void radio_start_radio() {
     have_saturn_xdma = 1;
   }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
 
   for (int id = 0; id <= MAX_SERIAL + 1; id++) {
 #else
@@ -1615,7 +1615,7 @@ void radio_start_radio() {
     launch_tcp_rigctl();
   }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
 
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     launch_serptt();
@@ -2072,7 +2072,7 @@ void radio_set_vox(int state) {
   schedule_receive_specific();
 }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
 void tune_serial_set(int rtsdtrEnable) {
   int fd;
   int flags;
@@ -2133,7 +2133,7 @@ void radio_set_tune(int state) {
     }
 
     if (state) {
-#if defined (__DVL__)
+#if defined (__LDESK__)
 
       if (SerialPorts[MAX_SERIAL].enable) {
         tune_serial_set(1);
@@ -2305,7 +2305,7 @@ void radio_set_tune(int state) {
 
       // restore settings we switched off earlier
       tx_set_compressor(transmitter);
-#if defined (__DVL__)
+#if defined (__LDESK__)
 
       if (SerialPorts[MAX_SERIAL].enable) {
         tune_serial_set(0);
@@ -2756,7 +2756,7 @@ static void radio_restore_state() {
     }
   }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
   GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
@@ -2975,7 +2975,7 @@ void radio_save_state() {
     SetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
   }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
   SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);

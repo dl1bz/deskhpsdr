@@ -37,7 +37,7 @@
 #include "mystring.h"
 
 static GtkWidget *dialog = NULL;
-#if defined (__DVL__)
+#if defined (__LDESK__)
   static GtkWidget *serial_baud[MAX_SERIAL + 2];
   static GtkWidget *serial_enable[MAX_SERIAL + 2];
 #else
@@ -167,7 +167,7 @@ static void andromeda_cb(GtkWidget *widget, gpointer data) {
 
 static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
-#if defined (__DVL__)
+#if defined (__LDESK__)
 
   if (id < MAX_SERIAL) {
 #endif
@@ -181,7 +181,7 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
       disable_serial_rigctl(id);
     }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
   } else {
     SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
@@ -402,7 +402,7 @@ void rigctl_menu(GtkWidget *parent) {
     }
   }
 
-#if defined (__DVL__)
+#if defined (__LDESK__)
   //-----------------------------------------------------------------------------------------------------------------
   char str[64];
   row++;
