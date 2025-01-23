@@ -102,8 +102,8 @@ static GThread *rigctl_cw_thread_id = NULL;
   static GThread *serptt_thread_id = NULL;
 #endif
 
-pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
-pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+static pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
+static pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
 // int rx200_port = 5573;  // Portnummer für den RX200 UDP Listener -> move to radio.c
 
 static int tcp_running = 0;
@@ -176,7 +176,7 @@ int rigctl_tcp_running() {
 
 #if defined (__LDESK__)
 // Funktion zum Abrufen des CTS-Status der seriellen PTT
-bool get_serptt_cts(int fd) {
+static bool get_serptt_cts(int fd) {
   int status;
 
   if (ioctl(fd, TIOCMGET, &status) < 0) {
@@ -188,7 +188,7 @@ bool get_serptt_cts(int fd) {
 }
 
 // Funktion zur Aktualisierung des CTS-Status der seriellen PTT
-gboolean update_serptt_cts(gpointer user_data) {
+static gboolean update_serptt_cts(gpointer user_data) {
   bool current_status = GPOINTER_TO_INT(user_data);
 
   if (current_status != serptt_cts) {
@@ -212,7 +212,7 @@ gboolean update_serptt_cts(gpointer user_data) {
   return G_SOURCE_REMOVE; // Einmalige Ausführung
 }
 
-gpointer monitor_cts_thread(gpointer user_data) {
+static gpointer monitor_cts_thread(gpointer user_data) {
   bool last_status = 0;
   int fd = *(int *)user_data;
 
@@ -262,7 +262,7 @@ void launch_serptt() {
 #endif
 
 // Callback-Funktion für empfangene RX200 UDP Daten
-void rx200_process_data(char *rx200_data[7]) {
+static void rx200_process_data(const char *rx200_data[7]) {
   // Daten von rx200_data in g_rx200_data thread-safe kopieren
   pthread_mutex_lock(&rx200_array_mutex); // Mutex sperren
 
@@ -280,7 +280,7 @@ void rx200_process_data(char *rx200_data[7]) {
 }
 
 // RX200 UDP Listener-Funktion
-void *rx200_udp_listener(void *arg) {
+static void *rx200_udp_listener(void *arg) {
   int port = *((int *)arg);
   int sockfd;
   struct sockaddr_in server_addr;
