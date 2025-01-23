@@ -4162,11 +4162,10 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           break;
         } // end of the "type=1" section
 
-        int tr01, tr10, tr12, tr20;
-        tr01 = 0;  // indicates a v=0 --> v=1 transision
-        tr12 = 0;  // indicates a v=1 --> v=2 transision
-        tr10 = 0;  // indicates a v=1 --> v=0 transision
-        tr20 = 0;  // indicates a v=2 --> v=0 transision
+        int tr01 = 0;  // indicates a v=0 --> v=1 transision
+        int tr12 = 0;  // indicates a v=1 --> v=2 transision
+        int tr10 = 0;  // indicates a v=1 --> v=0 transision
+        int tr20 __attribute__((unused)) = 0;  // indicates a v=2 --> v=0 transision
 
         if (client->last_v == 0 && v == 1) { tr01 = 1; }
 
