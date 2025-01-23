@@ -124,7 +124,7 @@ void launch_tci () {
 // and removes the autoreporting task. Do not  join with the listener
 // so this may be called from  within the listener.
 //
-void force_close(CLIENT *client) {
+static void force_close(CLIENT *client) {
   struct linger linger = { 0 };
   linger.l_onoff = 1;
   linger.l_linger = 0;
@@ -189,9 +189,9 @@ void shutdown_tci() {
 }
 
 //
-// send_frame is intended to  be called  through the GTK idle queue
+// tci_send_frame is intended to  be called  through the GTK idle queue
 //
-static int send_frame(void *data) {
+static int tci_send_frame(void *data) {
   RESPONSE *response = (RESPONSE *) data;
   CLIENT *client = response->client;
   int type = response->type;
@@ -260,7 +260,7 @@ static int send_frame(void *data) {
   return G_SOURCE_REMOVE;
 }
 
-void send_text(CLIENT *client, char *msg) {
+static void tci_send_text(CLIENT *client, char *msg) {
   if (!client->running) {
     return;
   }
@@ -271,14 +271,14 @@ void send_text(CLIENT *client, char *msg) {
   resp->client = client;
   strcpy(resp->msg, msg);
   resp->type = opTEXT;
-  g_idle_add(send_frame, resp);
+  g_idle_add(tci_send_frame, resp);
 }
 
 //
-// To keep things  simple, send_dds does not report
+// To keep things  simple, tci_send_dds does not report
 // the center frequency but the "real" RX frequency
 //
-void send_dds(CLIENT *client, int v) {
+static void tci_send_dds(CLIENT *client, int v) {
   long long f;
   char msg[MAXMSGSIZE];
 
@@ -286,15 +286,15 @@ void send_dds(CLIENT *client, int v) {
 
   f = vfo[v].ctun ? vfo[v].ctun_frequency : vfo[v].frequency;
   snprintf(msg, MAXMSGSIZE, "dds:%d,%lld;", v, f);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 }
 
-void send_mox(CLIENT *client) {
+static void tci_send_mox(CLIENT *client) {
   if (radio_is_transmitting()) {
-    send_text(client, "trx:0,true;");
+    tci_send_text(client, "trx:0,true;");
     client->last_mox = 1;
   } else {
-    send_text(client, "trx:0,false;");
+    tci_send_text(client, "trx:0,false;");
     client->last_mox = 0;
   }
 }
@@ -306,7 +306,7 @@ void send_mox(CLIENT *client) {
 // Thus logbook programs correctly display both frequencies no matter whether
 // they  use RX0/channel0:RX0/channel1 or RX0/channel0:RX1/channel0
 //
-void send_vfo(CLIENT *client, int v, int c) {
+static void tci_send_vfo(CLIENT *client, int v, int c) {
   long long f;
   char msg[MAXMSGSIZE];
 
@@ -323,10 +323,10 @@ void send_vfo(CLIENT *client, int v, int c) {
   }
 
   snprintf(msg, MAXMSGSIZE, "vfo:%d,%d,%lld;", v, c, f);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 }
 
-void TCI_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
+static void tci_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
   if (VfoNr < 0 || VfoNr > 1) { return; }
 
   if (Ch < 0 || Ch > 1) { return; }
@@ -341,23 +341,23 @@ void TCI_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
     g_idle_add(ext_vfo_update, NULL);
   }
 
-  send_vfo(client, VfoNr, Ch);
+  tci_send_vfo(client, VfoNr, Ch);
 }
 
-void send_limits(CLIENT *client, int v) {
+static void tci_send_limits(CLIENT *client, int v) {
   char msg[MAXMSGSIZE];
   char* maxQRG;
   int Dec, sign;
   int ndig = 1;
   maxQRG = fcvt(discovered[0].frequency_max / 10, ndig, &Dec, &sign);
   snprintf(msg, MAXMSGSIZE, "vfo_limits:%d,%s;", v, maxQRG);
-  send_text(client, msg);
+  tci_send_text(client, msg);
   snprintf(msg, MAXMSGSIZE, "if_limits:-%lld,%lld;", (long long)receiver[v]->sample_rate / 2,
            (long long)receiver[v]->sample_rate / 2);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 }
 
-void send_drive(CLIENT *client, int v) {
+static void tci_send_drive(CLIENT *client, int v) {
   char msg[MAXMSGSIZE];
   int tx_drive;
   tx_drive = radio_get_drive();
@@ -365,31 +365,31 @@ void send_drive(CLIENT *client, int v) {
   if (v < 0 || v > 1) { return; }
 
   snprintf(msg, MAXMSGSIZE, "drive:%d,%d;", v, (int) tx_drive);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 }
 
-void send_split(CLIENT *client) {
+static void tci_send_split(CLIENT *client) {
   //
   // send "true" if tx is on VFO-B frequency
   //
   if (vfo_get_tx_vfo() == VFO_A) {
-    send_text(client, "split_enable:0,false;");
+    tci_send_text(client, "split_enable:0,false;");
     client->last_split = 0;
   } else {
-    send_text(client, "split_enable:0,true;");
+    tci_send_text(client, "split_enable:0,true;");
     client->last_split = 1;
   }
 }
 
-void send_txfreq(CLIENT *client) {
+static void tci_send_txfreq(CLIENT *client) {
   char msg[MAXMSGSIZE];
   long long f = vfo_get_tx_freq();
   snprintf(msg, MAXMSGSIZE, "tx_frequency:%lld;", f);
-  send_text(client, msg);
+  tci_send_text(client, msg);
   client->last_fx = f;
 }
 
-void send_mode(CLIENT *client, int v) {
+static void tci_send_mode(CLIENT *client, int v) {
   int m;
   const char *mode;
   char msg[MAXMSGSIZE];
@@ -450,7 +450,7 @@ void send_mode(CLIENT *client, int v) {
   }
 
   snprintf(msg, MAXMSGSIZE, "modulation:%d,%s;", v, mode);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 
   if (v == 0) {
     client->last_ma = m;
@@ -459,17 +459,17 @@ void send_mode(CLIENT *client, int v) {
   }
 }
 
-void send_trx_count(CLIENT *client) {
-  send_text(client, "trx_count:2;");
+static void tci_send_trx_count(CLIENT *client) {
+  tci_send_text(client, "trx_count:2;");
 }
 
-void send_cwspeed(CLIENT *client) {
+static void tci_send_cwspeed(CLIENT *client) {
   char msg[MAXMSGSIZE];
   snprintf(msg, MAXMSGSIZE, "cw_macros_speed:%d;", cw_keyer_speed);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 }
 
-void send_smeter(CLIENT *client, int v) {
+static void tci_send_smeter(CLIENT *client, int v) {
   //
   // UNDOCUMENTED in the TCI protocol, but MLDX sends this
   // ATTENTION: in some countries, %f sends a comma instead of a decimal
@@ -485,14 +485,14 @@ void send_smeter(CLIENT *client, int v) {
 
   lvl = (int) (receiver[v]->meter - 0.5);
   // snprintf(msg, MAXMSGSIZE, "rx_smeter:%d,0,%d.0;",v,lvl);
-  // send_text(client, msg);
+  // tci_send_text(client, msg);
   // snprintf(msg, MAXMSGSIZE, "rx_smeter:%d,1,%d.0;",v,lvl);
-  // send_text(client, msg);
+  // tci_send_text(client, msg);
   snprintf(msg, MAXMSGSIZE, "rx_sensors:%d,%d.0;", v, lvl);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 }
 
-void send_rx(CLIENT *client, int v) {
+static void tci_send_rx(CLIENT *client, int v) {
   //
   // Send S-meter reading.
   // ATTENTION: in some countries, %f sends a comma instead of a decimal
@@ -508,12 +508,12 @@ void send_rx(CLIENT *client, int v) {
 
   lvl = (int) (receiver[v]->meter - 0.5);
   snprintf(msg, MAXMSGSIZE, "rx_channel_sensors:%d,0,%d.0;", v, lvl);
-  send_text(client, msg);
+  tci_send_text(client, msg);
   snprintf(msg, MAXMSGSIZE, "rx_channel_sensors:%d,1,%d.0;", v, lvl);
-  send_text(client, msg);
+  tci_send_text(client, msg);
 }
 
-void send_close(CLIENT *client) {
+static void tci_send_close(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
 
   if (rigctl_debug) { t_print("TCI%d CLOSE\n", client->seq); }
@@ -521,10 +521,10 @@ void send_close(CLIENT *client) {
   resp->client = client;
   resp->type   = opCLOSE;
   resp->msg[0] = 0;
-  g_idle_add(send_frame, resp);
+  g_idle_add(tci_send_frame, resp);
 }
 
-void send_ping(CLIENT *client) {
+static void tci_send_ping(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
 
   if (rigctl_debug) { t_print("TCI%d PING\n", client->seq); }
@@ -532,10 +532,10 @@ void send_ping(CLIENT *client) {
   resp->client = client;
   resp->type   = opPING;
   resp->msg[0] = 0;
-  g_idle_add(send_frame, resp);
+  g_idle_add(tci_send_frame, resp);
 }
 
-void send_pong(CLIENT *client) {
+static void tci_send_pong(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
 
   if (rigctl_debug) { t_print("TCI%d PONG\n", client->seq); }
@@ -543,7 +543,7 @@ void send_pong(CLIENT *client) {
   resp->client = client;
   resp->type   = opPONG;
   resp->msg[0] = 0;
-  g_idle_add(send_frame, resp);
+  g_idle_add(tci_send_frame, resp);
 }
 
 static gboolean tci_reporter(gpointer data) {
@@ -565,7 +565,7 @@ static gboolean tci_reporter(gpointer data) {
 
   if (++(client->count) >= 30) {
     client->count = 0;
-    // send_ping(client);
+    // tci_send_ping(client);
 #ifdef __APPLE__
     // if (rigctl_debug) { t_print("%s: Time: %ld\n", __FUNCTION__, ts.tv_sec); }
     // if (rigctl_debug) { t_print("%s: Timer: %lds\n", __FUNCTION__, tci_timer); }
@@ -578,7 +578,7 @@ static gboolean tci_reporter(gpointer data) {
   long long fx = vfo_get_tx_freq();
 
   if (fx != client->last_fx) {
-    send_txfreq(client);
+    tci_send_txfreq(client);
   }
 
   if (!tci_txonly) {
@@ -586,20 +586,20 @@ static gboolean tci_reporter(gpointer data) {
     // If S-meter reading is requested, send info each time
     //
     if (client->rxsensor && (client->count & 1)) {
-      send_rx(client, 0);
-      send_rx(client, 1);
+      tci_send_rx(client, 0);
+      tci_send_rx(client, 1);
     }
 
     if (client->txsensor && (client->count & 1)) {
-      send_drive(client, 0);
+      tci_send_drive(client, 0);
     }
 
     if (receivers > 0 && client->rxsensor && (client->count & 1)) {
       if (receivers == 1) {
-        send_smeter(client, 0);
+        tci_send_smeter(client, 0);
       } else {
-        send_smeter(client, 0);
-        send_smeter(client, 1);
+        tci_send_smeter(client, 0);
+        tci_send_smeter(client, 1);
       }
     }
 
@@ -614,29 +614,29 @@ static gboolean tci_reporter(gpointer data) {
     int       mx = radio_is_transmitting();
 
     if (fa != client->last_fa) {
-      send_vfo(client, 0, 0);
+      tci_send_vfo(client, 0, 0);
     }
 
     if (fb != client->last_fb) {
-      send_vfo(client, 0, 1);
-      send_vfo(client, 1, 0);
-      send_vfo(client, 1, 1);
+      tci_send_vfo(client, 0, 1);
+      tci_send_vfo(client, 1, 0);
+      tci_send_vfo(client, 1, 1);
     }
 
     if (ma  != client->last_ma) {
-      send_mode(client, 0);
+      tci_send_mode(client, 0);
     }
 
     if (mb  != client->last_mb) {
-      send_mode(client, 1);
+      tci_send_mode(client, 1);
     }
 
     if (sp != client->last_split) {
-      send_split(client);
+      tci_send_split(client);
     }
 
     if (mx != client->last_mox) {
-      send_mox(client);
+      tci_send_mox(client);
     }
   }
 
@@ -831,7 +831,7 @@ static gpointer tci_server(gpointer data) {
   return NULL;
 }
 
-int digest_frame(const unsigned char *buff, char *msg,  int offset, int *type) {
+static int digest_frame(const unsigned char *buff, char *msg,  int offset, int *type) {
   //
   // If the buffer contains enough data for a complete frame,
   // produce the payload in "msg" and return the number of
@@ -906,52 +906,52 @@ static gpointer tci_listener(gpointer data) {
   // Send initial state info to client
   // using emulatation Expert SunSDR2Pro
   //
-  send_text(client, "protocol:ExpertSDR3,1.8;");
-  send_text(client, "device:SunSDR2PRO;");
-  send_text(client, "receive_only:false;");
-  send_trx_count(client);
-  send_text(client, "channels_count:2;");
+  tci_send_text(client, "protocol:ExpertSDR3,1.8;");
+  tci_send_text(client, "device:SunSDR2PRO;");
+  tci_send_text(client, "receive_only:false;");
+  tci_send_trx_count(client);
+  tci_send_text(client, "channels_count:2;");
   //
   // With transverters etc. the upper frequency can be
   // very large. For the time being we go up to the 70cm band
   // No need to send vfo and modulation  commands, since this is
   // automatically  done in the tci_reporter task.
   //
-  // send_text(client, "vfo_limits:0,450000000;");
-  // send_text(client, "if_limits:-96000,96000;");
-  send_limits(client, VFO_A);
-  send_text(client, "modulations_list:LSB,USB,DSB,CW,FMN,AM,DIGU,SPEC,DIGL,SAM,DRM;");
-  send_dds(client, VFO_A);
-  send_dds(client, VFO_B);
-  send_text(client, "if:0,0,0;");
-  send_text(client, "if:0,1,0;");
-  send_text(client, "if:1,0,0;");
-  send_text(client, "if:1,1,0;");
-  send_vfo(client, VFO_A, 0);
-  send_vfo(client, VFO_A, 1);
-  send_vfo(client, VFO_B, 0);
-  send_vfo(client, VFO_B, 1);
-  send_mode(client, VFO_A);
-  send_mode(client, VFO_B);
-  send_text(client, "rx_enable:0,true;");
+  // tci_send_text(client, "vfo_limits:0,450000000;");
+  // tci_send_text(client, "if_limits:-96000,96000;");
+  tci_send_limits(client, VFO_A);
+  tci_send_text(client, "modulations_list:LSB,USB,DSB,CW,FMN,AM,DIGU,SPEC,DIGL,SAM,DRM;");
+  tci_send_dds(client, VFO_A);
+  tci_send_dds(client, VFO_B);
+  tci_send_text(client, "if:0,0,0;");
+  tci_send_text(client, "if:0,1,0;");
+  tci_send_text(client, "if:1,0,0;");
+  tci_send_text(client, "if:1,1,0;");
+  tci_send_vfo(client, VFO_A, 0);
+  tci_send_vfo(client, VFO_A, 1);
+  tci_send_vfo(client, VFO_B, 0);
+  tci_send_vfo(client, VFO_B, 1);
+  tci_send_mode(client, VFO_A);
+  tci_send_mode(client, VFO_B);
+  tci_send_text(client, "rx_enable:0,true;");
 
   if (receivers == 1) {
-    send_text(client, "rx_enable:1,false;");
+    tci_send_text(client, "rx_enable:1,false;");
   } else {
-    send_text(client, "rx_enable:1,true;");
+    tci_send_text(client, "rx_enable:1,true;");
   }
 
-  send_text(client, "tx_enable:0,true;");
-  send_text(client, "tx_enable:1,false;");
-  send_text(client, "split_enable:0,false;");
-  send_text(client, "split_enable:1,false;");
-  send_mox(client);
-  send_text(client, "trx:1,false;");
-  send_text(client, "tune:0,false;");
-  send_text(client, "tune:1,false;");
-  send_text(client, "mute:false;");
-  send_text(client, "start;");
-  send_text(client, "ready;");
+  tci_send_text(client, "tx_enable:0,true;");
+  tci_send_text(client, "tx_enable:1,false;");
+  tci_send_text(client, "split_enable:0,false;");
+  tci_send_text(client, "split_enable:1,false;");
+  tci_send_mox(client);
+  tci_send_text(client, "trx:1,false;");
+  tci_send_text(client, "tune:0,false;");
+  tci_send_text(client, "tune:1,false;");
+  tci_send_text(client, "mute:false;");
+  tci_send_text(client, "start;");
+  tci_send_text(client, "ready;");
 
   while (client->running) {
     int numbytes;
@@ -1000,12 +1000,12 @@ static gpointer tci_listener(gpointer data) {
         //
         // Received                Response            Remarks
         // --------------------------------------------------------------------------
-        // trx_count               send_trx_count()
-        // trx                     send_mox()          do not change mox
+        // trx_count               tci_send_trx_count()
+        // trx                     tci_send_mox()          do not change mox
         // rx_sensors_enable:x,y;  enable:=arg1        sending interval always 1 second, ignore y
-        // modulation:x;           send_mode(arg1)     do not change mode, ignore y
-        // vfo:x,y;                send_vfo(x,y)       do not change frequency
-        // rx_smeter,x,y;          send_smeter(x)      undocumented, ignore y
+        // modulation:x;           tci_send_mode(arg1)     do not change mode, ignore y
+        // vfo:x,y;                tci_send_vfo(x,y)       do not change frequency
+        // rx_smeter,x,y;          tci_send_smeter(x)      undocumented, ignore y
         //
         // While it was originally decided NOT to respond to any incoming TCI command, there
         // are logbook program which seem to require that. Note that additional arguments are
@@ -1044,7 +1044,7 @@ static gpointer tci_listener(gpointer data) {
         // The only assumption that can be made is argc >= 1.
         //
         if (!strcmp(arg[0], "trx_count")) {
-          send_trx_count(client);
+          tci_send_trx_count(client);
         } else if (!strcmp(arg[0], "trx")) {
           if (argc > 2 && arg[1] != NULL && arg[2] != NULL) {
             if (!strcmp(arg[2], "true")) {
@@ -1062,7 +1062,7 @@ static gpointer tci_listener(gpointer data) {
               t_print("RX request\n");
             }
           } else {
-            send_mox(client);
+            tci_send_mox(client);
           }
         } else if (!strcmp(arg[0], "rx_sensors_enable") && argc > 1) {
           // MLDX originally sent '1/0' instead of 'true/false'
@@ -1070,26 +1070,26 @@ static gpointer tci_listener(gpointer data) {
         } else if (!strcmp(arg[0], "tx_sensors_enable") && argc > 1) {
           client->txsensor = (*arg[1] == '1' || !strcmp(arg[1], "true"));
         } else if (!strcmp(arg[0], "modulation") && argc > 1) {
-          send_mode(client, (*arg[1] == '1') ? 1 : 0);
+          tci_send_mode(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0], "vfo") && argc > 2) {
           if (arg[1] != NULL && arg[3] != NULL) {
             int VfoNr = atoi(arg[1]);
             int Ch = atoi(arg[2]);
             long long SetFreq = atoll(arg[3]);
-            TCI_set_vfo(client, VfoNr, Ch, SetFreq);
+            tci_set_vfo(client, VfoNr, Ch, SetFreq);
           } else {
-            send_vfo(client, (*arg[1] == '1') ? 1 : 0, (*arg[2] == '1' ? 1 : 0));
+            tci_send_vfo(client, (*arg[1] == '1') ? 1 : 0, (*arg[2] == '1' ? 1 : 0));
           }
         } else if (!strcmp(arg[0], "rx_smeter") && argc > 1) {
-          send_smeter(client, (*arg[1] == '1') ? 1 : 0);
+          tci_send_smeter(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0], "drive") && argc > 1) {
-          send_drive(client, atoi(arg[1]));
+          tci_send_drive(client, atoi(arg[1]));
         } else if (!strcmp(arg[0], "cw_macros_speed")) {
-          send_cwspeed(client);
+          tci_send_cwspeed(client);
         } else if (!strcmp(arg[0], "stop")) {
           client->rxsensor = 0;
           client->txsensor = 0;
-          send_text(client, "stop;");
+          tci_send_text(client, "stop;");
           client->running = 0;
         }
 
@@ -1098,7 +1098,7 @@ static gpointer tci_listener(gpointer data) {
       case opPING:
         if (rigctl_debug) { t_print("TCI%d PING rcvd\n", client->seq); }
 
-        send_pong(client);
+        tci_send_pong(client);
         break;
 
       case opCLOSE:
@@ -1122,8 +1122,8 @@ static gpointer tci_listener(gpointer data) {
     }
   }
 
-  send_text(client, "stop;");
-  send_close(client);
+  tci_send_text(client, "stop;");
+  tci_send_close(client);
   force_close(client);
   t_print("%s: leaving thread\n", __FUNCTION__);
   // update CAT status onscreen
