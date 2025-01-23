@@ -524,7 +524,7 @@ static void tci_send_close(CLIENT *client) {
   g_idle_add(tci_send_frame, resp);
 }
 
-static void tci_send_ping(CLIENT *client) {
+__attribute__((unused)) static void tci_send_ping(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
 
   if (rigctl_debug) { t_print("TCI%d PING\n", client->seq); }
