@@ -1660,6 +1660,7 @@ void radio_start_radio() {
     soapy_protocol_set_rx_antenna(rx, adc[0].antenna);
     soapy_protocol_set_rx_frequency(rx, VFO_A);
     soapy_protocol_set_automatic_gain(rx, adc[0].agc);
+
     if (!adc[0].agc) { soapy_protocol_set_gain(rx); }
 
     if (vfo[0].ctun) {

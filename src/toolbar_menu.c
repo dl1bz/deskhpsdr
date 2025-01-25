@@ -81,11 +81,11 @@ void toolbar_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 3, 1);
   int lfunction = 0;
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   const int max_switches = 10;
-  #else
+#else
   const int max_switches = 8;
-  #endif
+#endif
 
   for (lfunction = 0; lfunction < MAX_FUNCTIONS; lfunction++) {
     SWITCH *sw = switches_controller1[lfunction];

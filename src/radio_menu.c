@@ -68,8 +68,6 @@ static gboolean close_cb () {
 
 #ifdef SOAPYSDR
 static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
-
-
   if (device == SOAPYSDR_USB_DEVICE) {
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
     adc[active_receiver->adc].gain = gain;
@@ -90,6 +88,7 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
     int agc = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     adc[active_receiver->adc].agc = agc;
     soapy_protocol_set_automatic_gain(active_receiver, agc);
+
     if (!agc) { soapy_protocol_set_gain(active_receiver); }
   }
 }
