@@ -68,27 +68,29 @@ static gboolean close_cb () {
 
 #ifdef SOAPYSDR
 static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
-  ADC *myadc = (ADC *)data;
+
 
   if (device == SOAPYSDR_USB_DEVICE) {
-    myadc->gain = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
-    soapy_protocol_set_gain_element(receiver[0], (char *)gtk_widget_get_name(widget), myadc->gain);
+    double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+    adc[active_receiver->adc].gain = gain;
+    soapy_protocol_set_gain_element(active_receiver, (char *)gtk_widget_get_name(widget), (int) gain);
   }
 }
 
 static void tx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit && device == SOAPYSDR_USB_DEVICE) {
-    int gain = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
-    soapy_protocol_set_tx_gain_element(transmitter, (char *)gtk_widget_get_name(widget), gain);
+    double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+    dac[0].gain = gain;
+    soapy_protocol_set_tx_gain_element(transmitter, (char *)gtk_widget_get_name(widget), (int) gain);
   }
 }
 
 static void agc_changed_cb(GtkWidget *widget, gpointer data) {
-  gboolean agc = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  soapy_protocol_set_automatic_gain(active_receiver, agc);
-
-  if (!agc) {
-    soapy_protocol_set_gain(active_receiver);
+  if (device == SOAPYSDR_USB_DEVICE) {
+    int agc = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    adc[active_receiver->adc].agc = agc;
+    soapy_protocol_set_automatic_gain(active_receiver, agc);
+    if (!agc) { soapy_protocol_set_gain(active_receiver); }
   }
 }
 
@@ -843,8 +845,8 @@ void radio_menu(GtkWidget *parent) {
       ChkBtn = gtk_check_button_new_with_label("Hardware AGC");
       gtk_widget_set_name(ChkBtn, "boldlabel");
       gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), adc[0].agc);
-      g_signal_connect(ChkBtn, "toggled", G_CALLBACK(agc_changed_cb), &adc[0]);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), adc[active_receiver->adc].agc);
+      g_signal_connect(ChkBtn, "toggled", G_CALLBACK(agc_changed_cb), NULL);
       col++;
     }
   }
@@ -957,7 +959,7 @@ void radio_menu(GtkWidget *parent) {
         int value = soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[i]);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain), (double)value);
         gtk_grid_attach(GTK_GRID(grid), rx_gain, 1, row, 1, 1);
-        g_signal_connect(rx_gain, "value_changed", G_CALLBACK(rx_gain_element_changed_cb), &adc[0]);
+        g_signal_connect(rx_gain, "value_changed", G_CALLBACK(rx_gain_element_changed_cb), NULL);
         row++;
       }
     }
@@ -982,7 +984,7 @@ void radio_menu(GtkWidget *parent) {
         int value = soapy_protocol_get_tx_gain_element(transmitter, radio->info.soapy.tx_gain[i]);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_gain), (double)value);
         gtk_grid_attach(GTK_GRID(grid), tx_gain, 3, row, 1, 1);
-        g_signal_connect(tx_gain, "value_changed", G_CALLBACK(tx_gain_element_changed_cb), &dac[0]);
+        g_signal_connect(tx_gain, "value_changed", G_CALLBACK(tx_gain_element_changed_cb), NULL);
         row++;
       }
     }

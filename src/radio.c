@@ -1660,7 +1660,7 @@ void radio_start_radio() {
     soapy_protocol_set_rx_antenna(rx, adc[0].antenna);
     soapy_protocol_set_rx_frequency(rx, VFO_A);
     soapy_protocol_set_automatic_gain(rx, adc[0].agc);
-    soapy_protocol_set_gain(rx);
+    if (!adc[0].agc) { soapy_protocol_set_gain(rx); }
 
     if (vfo[0].ctun) {
       rx_set_frequency(rx, vfo[0].ctun_frequency);
@@ -2773,22 +2773,12 @@ static void radio_restore_state() {
     GetPropI1("radio.adc[%d].dither", i,                     adc[i].dither);
     GetPropI1("radio.adc[%d].random", i,                     adc[i].random);
     GetPropI1("radio.adc[%d].preamp", i,                     adc[i].preamp);
-
-    if (have_rx_att) {
-      GetPropI1("radio.adc[%d].attenuation", i,              adc[i].attenuation);
-      GetPropI1("radio.adc[%d].enable_step_attenuation", i,  adc[i].enable_step_attenuation);
-    }
-
-    if (have_rx_gain) {
-      GetPropF1("radio.adc[%d].gain", i,                     adc[i].gain);
-      GetPropF1("radio.adc[%d].min_gain", i,                 adc[i].min_gain);
-      GetPropF1("radio.adc[%d].max_gain", i,                 adc[i].max_gain);
-    }
-
-    if (device == SOAPYSDR_USB_DEVICE) {
-      GetPropI1("radio.adc[%d].agc", i,                      adc[i].agc);
-    }
-
+    GetPropI1("radio.adc[%d].attenuation", i,                adc[i].attenuation);
+    GetPropI1("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
+    GetPropF1("radio.adc[%d].gain", i,                       adc[i].gain);
+    GetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
+    GetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+    GetPropI1("radio.adc[%d].agc", i,                        adc[i].agc);
     GetPropI1("radio.dac[%d].antenna", i,                    dac[i].antenna);
     GetPropF1("radio.dac[%d].gain", i,                       dac[i].gain);
   }
@@ -2992,22 +2982,12 @@ void radio_save_state() {
     SetPropI1("radio.adc[%d].dither", i,                     adc[i].dither);
     SetPropI1("radio.adc[%d].random", i,                     adc[i].random);
     SetPropI1("radio.adc[%d].preamp", i,                     adc[i].preamp);
-
-    if (have_rx_att) {
-      SetPropI1("radio.adc[%d].attenuation", i,              adc[i].attenuation);
-      SetPropI1("radio.adc[%d].enable_step_attenuation", i,  adc[i].enable_step_attenuation);
-    }
-
-    if (have_rx_gain) {
-      SetPropF1("radio.adc[%d].gain", i,                     adc[i].gain);
-      SetPropF1("radio.adc[%d].min_gain", i,                 adc[i].min_gain);
-      SetPropF1("radio.adc[%d].max_gain", i,                 adc[i].max_gain);
-    }
-
-    if (device == SOAPYSDR_USB_DEVICE) {
-      SetPropI1("radio.adc[%d].agc", i,                      adc[i].agc);
-    }
-
+    SetPropI1("radio.adc[%d].attenuation", i,                adc[i].attenuation);
+    SetPropI1("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
+    SetPropF1("radio.adc[%d].gain", i,                       adc[i].gain);
+    SetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
+    SetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+    SetPropI1("radio.adc[%d].agc", i,                        adc[i].agc);
     SetPropI1("radio.dac[%d].antenna", i,                    dac[i].antenna);
     SetPropF1("radio.dac[%d].gain", i,                       dac[i].gain);
   }
