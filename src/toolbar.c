@@ -58,6 +58,10 @@ static GtkWidget *sim_s4;
 static GtkWidget *sim_s5;
 static GtkWidget *sim_s6;
 static GtkWidget *sim_s7;
+#if defined (__LDESK__)
+static GtkWidget *sim_s8;
+static GtkWidget *sim_s9;
+#endif
 
 SWITCH *toolbar_switches = switches_controller1[0];
 
@@ -74,13 +78,17 @@ void update_toolbar_labels() {
     gtk_button_set_label(GTK_BUTTON(sim_s4), ActionTable[toolbar_switches[4].switch_function].button_str);
     gtk_button_set_label(GTK_BUTTON(sim_s5), ActionTable[toolbar_switches[5].switch_function].button_str);
     gtk_button_set_label(GTK_BUTTON(sim_s6), ActionTable[toolbar_switches[6].switch_function].button_str);
+    #if defined (__LDESK__)
+    gtk_button_set_label(GTK_BUTTON(sim_s7), ActionTable[toolbar_switches[7].switch_function].button_str);
+    gtk_button_set_label(GTK_BUTTON(sim_s8), ActionTable[toolbar_switches[8].switch_function].button_str);
+    #endif
 
-    if (toolbar_switches[7].switch_function == FUNCTION) {
+    if (toolbar_switches[9].switch_function == FUNCTION) {
       char lbl[16];
       snprintf(lbl, 16, "FNC(%d)", function);
-      gtk_button_set_label(GTK_BUTTON(sim_s7), lbl);
+      gtk_button_set_label(GTK_BUTTON(sim_s9), lbl);
     } else {
-      gtk_button_set_label(GTK_BUTTON(sim_s7), ActionTable[toolbar_switches[7].switch_function].button_str);
+      gtk_button_set_label(GTK_BUTTON(sim_s9), ActionTable[toolbar_switches[9].switch_function].button_str);
     }
   }
 }
@@ -98,7 +106,7 @@ static void toolbar_button_press_cb(GtkWidget *widget, GdkEventButton *event, gp
   // This is our "easter egg" for the FUNC toolbar button. A secondary (right) click
   // cycles backwards
   //
-  if (i == 7  && event->button == GDK_BUTTON_SECONDARY) {
+  if (i == 9  && event->button == GDK_BUTTON_SECONDARY) {
     schedule_action(FUNCTIONREV, PRESSED, 0);
   } else {
     schedule_action(toolbar_switches[i].switch_function, PRESSED, 0);
@@ -115,7 +123,7 @@ static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event,
 GtkWidget *toolbar_init(int my_width, int my_height) {
   width = my_width;
   height = my_height;
-  int button_width = width / 8;
+  int button_width = width / 10;
   const char *button_css;
   t_print("toolbar_init: width=%d height=%d button_width=%d\n", width, height, button_width);
 
@@ -131,65 +139,87 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   toolbar = gtk_grid_new();
   gtk_widget_set_size_request (toolbar, width, height);
   gtk_grid_set_column_homogeneous(GTK_GRID(toolbar), TRUE);
+  //----------------------------------------------------------------------------------------------------------------------
   sim_s0 = gtk_button_new_with_label(ActionTable[toolbar_switches[0].switch_function].button_str);
   gtk_widget_set_name(sim_s0, button_css);
   gtk_widget_set_size_request (sim_s0, button_width, height);
   g_signal_connect(G_OBJECT(sim_s0), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(0));
   g_signal_connect(G_OBJECT(sim_s0), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(0));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s0, 0, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
   sim_s1 = gtk_button_new_with_label(ActionTable[toolbar_switches[1].switch_function].button_str);
   gtk_widget_set_name(sim_s1, button_css);
   gtk_widget_set_size_request (sim_s1, button_width, height);
   g_signal_connect(G_OBJECT(sim_s1), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(1));
   g_signal_connect(G_OBJECT(sim_s1), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(1));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s1, 4, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
   sim_s2 = gtk_button_new_with_label(ActionTable[toolbar_switches[2].switch_function].button_str);
   gtk_widget_set_name(sim_s2, button_css);
   gtk_widget_set_size_request (sim_s2, button_width, height);
   g_signal_connect(G_OBJECT(sim_s2), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(2));
   g_signal_connect(G_OBJECT(sim_s2), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(2));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s2, 8, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
   sim_s3 = gtk_button_new_with_label(ActionTable[toolbar_switches[3].switch_function].button_str);
   gtk_widget_set_name(sim_s3, button_css);
   gtk_widget_set_size_request (sim_s3, button_width, height);
   g_signal_connect(G_OBJECT(sim_s3), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(3));
   g_signal_connect(G_OBJECT(sim_s3), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(3));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s3, 12, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
   sim_s4 = gtk_button_new_with_label(ActionTable[toolbar_switches[4].switch_function].button_str);
   gtk_widget_set_name(sim_s4, button_css);
   gtk_widget_set_size_request (sim_s4, button_width, height);
   g_signal_connect(G_OBJECT(sim_s4), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(4));
   g_signal_connect(G_OBJECT(sim_s4), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(4));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s4, 16, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
   sim_s5 = gtk_button_new_with_label(ActionTable[toolbar_switches[5].switch_function].button_str);
   gtk_widget_set_name(sim_s5, button_css);
   gtk_widget_set_size_request (sim_s5, button_width, height);
   g_signal_connect(G_OBJECT(sim_s5), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(5));
   g_signal_connect(G_OBJECT(sim_s5), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(5));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s5, 20, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
   sim_s6 = gtk_button_new_with_label(ActionTable[toolbar_switches[6].switch_function].button_str);
   gtk_widget_set_name(sim_s6, button_css);
   gtk_widget_set_size_request (sim_s6, button_width, height);
   g_signal_connect(G_OBJECT(sim_s6), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(6));
   g_signal_connect(G_OBJECT(sim_s6), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(6));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s6, 24, 0, 4, 1);
-
-  //
-  // For the FUNC button, include the layer in the description
-  //
-  if (toolbar_switches[7].switch_function == FUNCTION) {
-    char lbl[16];
-    snprintf(lbl, 16, "FNC(%d)", function);
-    sim_s7 = gtk_button_new_with_label(lbl);
-  } else {
-    sim_s7 = gtk_button_new_with_label(ActionTable[toolbar_switches[7].switch_function].button_str);
-  }
-
+  //----------------------------------------------------------------------------------------------------------------------
+  sim_s7 = gtk_button_new_with_label(ActionTable[toolbar_switches[7].switch_function].button_str);
   gtk_widget_set_name(sim_s7, button_css);
   gtk_widget_set_size_request (sim_s7, button_width, height);
   g_signal_connect(G_OBJECT(sim_s7), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(7));
   g_signal_connect(G_OBJECT(sim_s7), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(7));
   gtk_grid_attach(GTK_GRID(toolbar), sim_s7, 28, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
+  sim_s8 = gtk_button_new_with_label(ActionTable[toolbar_switches[8].switch_function].button_str);
+  gtk_widget_set_name(sim_s8, button_css);
+  gtk_widget_set_size_request (sim_s8, button_width, height);
+  g_signal_connect(G_OBJECT(sim_s8), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(8));
+  g_signal_connect(G_OBJECT(sim_s8), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(8));
+  gtk_grid_attach(GTK_GRID(toolbar), sim_s8, 32, 0, 4, 1);
+  //----------------------------------------------------------------------------------------------------------------------
+
+  //
+  // For the FUNC button, include the layer in the description
+  //
+  if (toolbar_switches[9].switch_function == FUNCTION) {
+    char lbl[16];
+    snprintf(lbl, 16, "FNC(%d)", function);
+    sim_s9 = gtk_button_new_with_label(lbl);
+  } else {
+    sim_s9 = gtk_button_new_with_label(ActionTable[toolbar_switches[9].switch_function].button_str);
+  }
+
+  gtk_widget_set_name(sim_s9, button_css);
+  gtk_widget_set_size_request (sim_s9, button_width, height);
+  g_signal_connect(G_OBJECT(sim_s9), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(9));
+  g_signal_connect(G_OBJECT(sim_s9), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(9));
+  gtk_grid_attach(GTK_GRID(toolbar), sim_s9, 36, 0, 4, 1);
   gtk_widget_show_all(toolbar);
   return toolbar;
 }
