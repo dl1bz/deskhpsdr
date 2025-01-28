@@ -743,16 +743,19 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   snprintf(_text, 128, "%s", transmitter->microphone_name);
 #else
   int _audioindex = 0;
+
   if (n_input_devices > 0) {
     for (int i = 0; i < n_input_devices; i++) {
       if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
         _audioindex = i;
       }
     }
+
     snprintf(_text, 128, "%s", input_devices[_audioindex].description);
   } else {
     snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
   }
+
 #endif
   cairo_show_text(cr, _text);
 #endif

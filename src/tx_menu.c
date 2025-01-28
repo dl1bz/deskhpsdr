@@ -270,6 +270,7 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
   int _mode = vfo_get_tx_mode();
 #if !defined (__APPLE__)
   int _audioindex = 0;
+
   if (n_input_devices > 0) {
     for (int i = 0; i < n_input_devices; i++) {
       if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
@@ -277,7 +278,9 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
       }
     }
   }
+
 #endif
+
   if (_mode < 3) {
 #if !defined (__APPLE__)
     strncpy(mic_prof.desc[mic_prof.nr], input_devices[_audioindex].description, sizeof(mic_prof.desc[mic_prof.nr]));
