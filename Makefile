@@ -1061,6 +1061,7 @@ src/equalizer_menu.o: src/main.h src/new_menu.h src/equalizer_menu.h
 src/equalizer_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/equalizer_menu.o: src/receiver.h src/transmitter.h src/ext.h
 src/equalizer_menu.o: src/client_server.h src/vfo.h src/mode.h src/message.h
+src/equalizer_menu.o: src/tx_menu.h
 src/exit_menu.o: src/main.h src/new_menu.h src/exit_menu.h src/discovery.h
 src/exit_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/exit_menu.o: src/receiver.h src/transmitter.h src/new_protocol.h
@@ -1147,8 +1148,9 @@ src/new_menu.o: src/vox_menu.h src/diversity_menu.h src/tx_menu.h
 src/new_menu.o: src/ps_menu.h src/encoder_menu.h src/switch_menu.h
 src/new_menu.o: src/toolbar_menu.h src/vfo_menu.h src/fft_menu.h src/main.h
 src/new_menu.o: src/actions.h src/gpio.h src/old_protocol.h
-src/new_menu.o: src/new_protocol.h src/MacOS.h src/server_menu.h src/midi.h
-src/new_menu.o: src/midi_menu.h src/screen_menu.h src/saturn_menu.h
+src/new_menu.o: src/new_protocol.h src/MacOS.h src/mode.h src/vfo.h
+src/new_menu.o: src/server_menu.h src/midi.h src/midi_menu.h
+src/new_menu.o: src/screen_menu.h src/saturn_menu.h
 src/new_protocol.o: src/main.h src/alex.h src/audio.h src/receiver.h
 src/new_protocol.o: src/band.h src/bandstack.h src/new_protocol.h src/MacOS.h
 src/new_protocol.o: src/discovered.h src/mode.h src/filter.h src/radio.h
@@ -1325,6 +1327,7 @@ src/tx_menu.o: src/adc.h src/dac.h src/discovered.h src/transmitter.h
 src/tx_menu.o: src/sliders.h src/actions.h src/ext.h src/client_server.h
 src/tx_menu.o: src/filter.h src/mode.h src/vfo.h src/new_protocol.h
 src/tx_menu.o: src/MacOS.h src/message.h src/mystring.h src/property.h
+src/tx_menu.o: src/equalizer_menu.h
 src/tx_panadapter.o: src/appearance.h src/agc.h src/band.h src/bandstack.h
 src/tx_panadapter.o: src/discovered.h src/radio.h src/adc.h src/dac.h
 src/tx_panadapter.o: src/receiver.h src/transmitter.h src/rx_panadapter.h
