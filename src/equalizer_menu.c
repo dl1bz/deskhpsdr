@@ -31,7 +31,9 @@
 #include "vfo.h"
 #include "transmitter.h"
 #include "message.h"
-
+#if defined (__LDESK__)
+  #include "tx_menu.h"
+#endif
 static GtkWidget *dialog = NULL;
 
 static GtkWidget *rx1_container;
@@ -48,6 +50,12 @@ static void cleanup() {
     sub_menu = NULL;
     active_menu  = NO_MENU;
     radio_save_state();
+#if defined (__LDESK__)
+    int _mode = vfo_get_tx_mode();
+    if (_mode < 3) {
+      audioSaveProfile();
+    }
+#endif
   }
 }
 
@@ -214,7 +222,7 @@ void equalizer_menu(GtkWidget *parent) {
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
 #if defined (__LDESK__)
   char _title[32];
-  snprintf(_title, 32, "%s - RX/TX Equalizer", PGNAME);
+  snprintf(_title, 32, "%s - RX/TX Equalizer (%d)", PGNAME, mic_prof.nr);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
 #else
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Equalizer");

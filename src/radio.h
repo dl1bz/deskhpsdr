@@ -164,6 +164,14 @@ extern int mic_ptt_enabled;
 extern int mic_ptt_tip_bias_ring;
 extern int mic_input_xlr;
 
+#if defined (__LDESK__)
+struct audio_profile {
+    int nr;
+    char desc[3][64];
+};
+extern struct audio_profile mic_prof;
+#endif
+
 extern int receivers;
 
 extern ADC adc[2];

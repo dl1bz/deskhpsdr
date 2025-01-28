@@ -244,7 +244,7 @@ static void tree_selection_changed_cb (GtkTreeSelection *selection, gpointer dat
       thisChannel = atoi(str_channel);
       thisNote = atoi(str_note);
       thisVal = 0;
-      thisMin = 0;
+      thisMin = 127;
       thisMax = 0;
       thisType = String2Type(str_type);
       thisAction = NO_ACTION;

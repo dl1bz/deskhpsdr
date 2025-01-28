@@ -58,6 +58,8 @@
 #include "gpio.h"
 #include "old_protocol.h"
 #include "new_protocol.h"
+#include "mode.h"
+#include "vfo.h"
 #ifdef CLIENT_SERVER
   #include "server_menu.h"
 #endif
@@ -474,6 +476,7 @@ static gboolean midi_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
 
 void new_menu() {
   int col, row, maxrow;
+  int _mode = vfo_get_tx_mode();
 
   if (sub_menu != NULL) {
     gtk_widget_destroy(sub_menu);
@@ -684,6 +687,11 @@ void new_menu() {
 #else
     GtkWidget *equalizer_b = gtk_button_new_with_label("Equalizer");
 #endif
+    if (_mode == modeDIGU || _mode == modeDIGL) {
+      gtk_widget_set_sensitive(equalizer_b, FALSE);
+    } else {
+      gtk_widget_set_sensitive(equalizer_b, TRUE);
+    }
     g_signal_connect (equalizer_b, "button-press-event", G_CALLBACK(equalizer_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), equalizer_b, col, row, 1, 1);
     row++;

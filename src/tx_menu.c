@@ -32,8 +32,9 @@
 #include "new_protocol.h"
 #include "message.h"
 #include "mystring.h"
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__LDESK__)
   #include "property.h"
+  #include "equalizer_menu.h"
 #endif
 
 static GtkWidget *dialog = NULL;
@@ -45,6 +46,11 @@ static GtkWidget *tx_container;
 static GtkWidget *cfc_container;
 static GtkWidget *dexp_container;
 
+#if defined (__LDESK__)
+static GtkWidget *load_button;
+static GtkWidget *audio_profile;
+static GtkWidget *save_button;
+#endif
 //
 // Some symbolic constants used in callbacks
 //
@@ -114,8 +120,9 @@ enum _cfc_choices {
   CFC_EQ
 };
 
-#if defined (__LDESK__) && defined (__CPYMODE__)
-void ersetzeLeerzeichenMitUnterstrich(char *str) {
+#if defined (__LDESK__)
+/*
+static void ersetzeLeerzeichenMitUnterstrich(char *str) {
   while (*str != '\0') { // Schleife bis zum Ende des Strings
     if (*str == ' ') { // Wenn das aktuelle Zeichen ein Leerzeichen ist
       *str = '_';   // Ersetze es durch einen Unterstrich
@@ -124,38 +131,185 @@ void ersetzeLeerzeichenMitUnterstrich(char *str) {
     str++; // Gehe zum nächsten Zeichen
   }
 }
+*/
 
-void audioSaveState() {
+static int check_file(int p) {
+  char DateiName[64];
+  snprintf(DateiName, 64, "audio_profile_%d.prop", p);
+    // if (access(DateiName, F_OK)) {
+      FILE *file = fopen(DateiName, "r");  // Versucht, die Datei im Lesemodus zu öffnen
+      if (file) {
+      t_print("%s: Access file %s successful.\n", __FUNCTION__, DateiName);
+      fclose(file); // Datei wurde erfolgreich geöffnet, also existiert sie
+      return 1;     // Datei existiert
+    } else {
+      t_print("%s: Access file %s failed.\n", __FUNCTION__, DateiName);
+      return 0;     // Datei existiert nicht
+    }
+}
+
+static void audioLoadProfile() {
+  int i = modeLSB;
+  char DateiName[64];
+  snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
+  if (!access(DateiName, F_OK)) {
+    t_print("%s: Mode i=%d\n", __FUNCTION__, i);
+    loadProperties(DateiName);
+
+    GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+    GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
+    GetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
+    GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
+    GetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
+    GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
+    GetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
+    GetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
+
+    for (int j = 0; j < 11; j++) {
+      GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
+      GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+      GetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
+      GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
+      GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
+    }
+
+    GetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
+    GetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
+
+    transmitter->eq_enable        = mode_settings[i].en_txeq;
+    transmitter->compressor       = mode_settings[i].compressor;
+    transmitter->compressor_level = mode_settings[i].compressor_level;
+    transmitter->lev_enable       = mode_settings[i].lev_enable;
+    transmitter->lev_gain         = mode_settings[i].lev_gain;
+    transmitter->phrot_enable     = mode_settings[i].phrot_enable;
+    transmitter->cfc              = mode_settings[i].cfc;
+    transmitter->cfc_eq           = mode_settings[i].cfc_eq;
+
+    for (int j = 0; j < 11; j++) {
+      transmitter->eq_gain[j]     = mode_settings[i].tx_eq_gain[j];
+      transmitter->eq_freq[j]     = mode_settings[i].tx_eq_freq[j];
+      transmitter->cfc_freq[j]    = mode_settings[i].cfc_freq[j];
+      transmitter->cfc_lvl[j]     = mode_settings[i].cfc_lvl[j];
+      transmitter->cfc_post[j]    = mode_settings[i].cfc_post[j];
+    }
+
+    copy_mode_settings(i);
+    tx_set_compressor(transmitter);
+    tx_set_dexp(transmitter);
+    // rx_set_agc(rx);
+    // update_noise();
+    update_eq();
+    g_idle_add(ext_vfo_update, NULL);
+  } else {
+    return;
+  }
+}
+
+static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
+  GtkWidget *load_button = GTK_WIDGET(data);
+  if (!check_file(mic_prof.nr)) {
+    gtk_widget_set_sensitive(load_button, FALSE);
+    return;
+  } else {
+    gtk_widget_set_sensitive(load_button, TRUE);
+  }
+
+  // Force the GUI to update
+  gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
+  // Flush the GDK event queue to force GUI updates
+  gdk_flush();  // Ensure that all updates are processed
+
+  int _mode = vfo_get_tx_mode();
+  char DateiName[64];
+  snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
+  if (_mode < 3) {
+    if (!access(DateiName, F_OK)) {
+      audioLoadProfile();
+      start_tx();
+      t_print("%s: Mode %d accepted, file %s exist...loaded Mic Profile %d successful.\n", __FUNCTION__, _mode, DateiName, mic_prof.nr);
+    } else {
+      t_print("%s: Mode %d accepted, but file %s don't exist.\n", __FUNCTION__, _mode, DateiName);
+    }
+  } else {
+    t_print("%s: Mic Profile %d not loaded, Mode %d not supported.\n", __FUNCTION__,mic_prof.nr, _mode);
+  }
+}
+
+void audioSaveProfile() {
   clearProperties();
   // save only for LSB
   int i = modeLSB;
-  SetPropI0("modeset.en_rxeq",               mode_settings[i].en_rxeq);
-  SetPropI0("modeset.en_txeq",               mode_settings[i].en_txeq);
-  SetPropI0("modeset.compressor",            mode_settings[i].compressor);
-  SetPropF0("modeset.compressor_level",      mode_settings[i].compressor_level);
-  SetPropI0("modeset.lev_enable",            mode_settings[i].lev_enable);
-  SetPropF0("modeset.lev_gain",              mode_settings[i].lev_gain);
-  SetPropI0("modeset.phrot_enable",          mode_settings[i].phrot_enable);
-  SetPropI0("modeset.cfc",                   mode_settings[i].cfc);
-  SetPropI0("modeset.cfc_eq",                mode_settings[i].cfc_eq);
+  SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+  SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
+  SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
+  SetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
+  SetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
+  SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
+  SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
+  SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
 
   for (int j = 0; j < 11; j++) {
-    SetPropF1("modeset.txeq.%d", j,          mode_settings[i].tx_eq_gain[j]);
-    SetPropF1("modeset.txeqfrq.%d", j,       mode_settings[i].tx_eq_freq[j]);
-    SetPropF1("modeset.rxeq.%d", j,          mode_settings[i].rx_eq_gain[j]);
-    SetPropF1("modeset.rxeqfrq.%d", j,       mode_settings[i].rx_eq_freq[j]);
-    SetPropF1("modeset.cfc_frq.%d", j,       mode_settings[i].cfc_freq[j]);
-    SetPropF1("modeset.cfc_lvl.%d", j,       mode_settings[i].cfc_lvl[j]);
-    SetPropF1("modeset.cfc_post.%d", j,      mode_settings[i].cfc_post[j]);
+    SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
+    SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+    SetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
+    SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
+    SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
   }
 
-  SetPropS0("modeset.microphone_name",       mode_settings[i].microphone_name);
-  char SaveDateiName[128];
-  char MicName[128];
-  strcpy(MicName, mode_settings[i].microphone_name);
-  ersetzeLeerzeichenMitUnterstrich(MicName);
-  snprintf(SaveDateiName, 128, "audio_%s.prop", MicName);
-  saveProperties(SaveDateiName);
+  SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
+  SetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
+
+  // SetPropS0("modeset.%d.microphone_name",       mode_settings[i].microphone_name);
+  char DateiName[64];
+  snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
+  saveProperties(DateiName);
+}
+
+static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
+  GtkWidget *load_button = GTK_WIDGET(data);
+  int _mode = vfo_get_tx_mode();
+  if (_mode < 3) {
+    // STRLCPY(transmitter->microphone_name, mic_prof.desc[mic_prof.nr], sizeof(transmitter->microphone_name));
+    strncpy(mic_prof.desc[mic_prof.nr], transmitter->microphone_name, sizeof(mic_prof.desc[mic_prof.nr]));
+    t_print("%s: Mic: %s / %s\n", __FUNCTION__, transmitter->microphone_name, mic_prof.desc[mic_prof.nr]);
+
+    audioSaveProfile();
+    start_tx();
+
+    t_print("%s: Mic Profile %d saved, Mode %d supported.\n", __FUNCTION__, mic_prof.nr, _mode);
+    gtk_widget_set_sensitive(load_button, TRUE);
+    // Force the GUI to update
+    gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
+    // Flush the GDK event queue to force GUI updates
+    gdk_flush();  // Ensure that all updates are processed
+  } else {
+    t_print("%s: Mic Profile %d not saved, Mode %d not supported.\n", __FUNCTION__, mic_prof.nr, _mode);
+    return;
+  }
+}
+
+static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
+  GtkWidget *load_button = GTK_WIDGET(data);
+
+  int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget)); // Rückgabe als Index
+  if (i != mic_prof.nr) {
+    mic_prof.nr = i;
+  }
+
+  if (!check_file(mic_prof.nr)) {
+    gtk_widget_set_sensitive(load_button, FALSE);
+    return;
+  } else {
+    gtk_widget_set_sensitive(load_button, TRUE);
+  }
+  // Force the GUI to update
+  gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
+  // Flush the GDK event queue to force GUI updates
+  gdk_flush();  // Ensure that all updates are processed
+
+  // const gchar *selected_label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)); // Rückgabe als Label
+  // const gchar *selected_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(widget)); // Rückgabe als Id
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 #endif
@@ -168,8 +322,11 @@ static void cleanup() {
     sub_menu = NULL;
     active_menu  = NO_MENU;
     radio_save_state();
-#if defined (__LDESK__) && defined (__CPYMODE__)
-    audioSaveState();
+#if defined (__LDESK__)
+    int _mode = vfo_get_tx_mode();
+    if (_mode < 3) {
+      audioSaveProfile();
+    }
 #endif
   }
 }
@@ -604,7 +761,6 @@ static void ctcss_frequency_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-
 static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   t_print("local_input_changed_cb: %d %s\n", i, input_devices[i].name);
@@ -645,7 +801,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
 #if defined (__LDESK__)
   char _title[32];
-  snprintf(_title, 32, "%s TX Menu", PGNAME);
+  snprintf(_title, 32, "%s TX Menu (%d)", PGNAME, mic_prof.nr);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
 #else
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Transmit");
@@ -710,6 +866,45 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_set_row_spacing (GTK_GRID(tx_grid), 5);
   gtk_container_add(GTK_CONTAINER(tx_container), tx_grid);
   row = 0;
+
+#if defined (__LDESK__)
+//------------------------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  col += 3;
+  load_button = gtk_button_new_with_label("Load Profile");
+  gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
+  g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);
+  if (!check_file(mic_prof.nr)) {
+    gtk_widget_set_sensitive(load_button, FALSE);
+  } else {
+    gtk_widget_set_sensitive(load_button, TRUE);
+  }
+  col++;
+  save_button = gtk_button_new_with_label("Save");
+  gtk_grid_attach(GTK_GRID(tx_grid), save_button, col, row, 1, 1);
+  g_signal_connect(save_button, "clicked", G_CALLBACK(save_button_clicked_cb), save_button);
+
+  col = 0;
+  audio_profile = gtk_combo_box_text_new();
+  // gtk_grid_set_column_homogeneous (GTK_GRID(tx_grid), TRUE);
+  for (int i = 0; i < 3; i++) {
+    gchar *id = g_strdup_printf("audio_profile_%d.prop", i);  // Einträge-ID erstellen
+    gchar *label = g_strdup_printf("Mic Profile %d (%s)", i, mic_prof.desc[i]);      // Beschriftung erstellen
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(audio_profile), id, label);
+    g_free(id);    // Speicher freigeben
+    g_free(label); // Speicher freigeben
+  }
+  if (mic_prof.nr > 0 && mic_prof.nr < 3) {
+    gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), mic_prof.nr);
+  } else {
+    mic_prof.nr = 0;
+    gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), 0);
+  }
+  my_combo_attach(GTK_GRID(tx_grid), audio_profile, col, row, 3, 1);
+  g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
+//------------------------------------------------------------------------------------------------
+#endif
 
   if (n_input_devices > 0) {
     row++;
