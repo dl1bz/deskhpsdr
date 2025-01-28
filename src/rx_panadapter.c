@@ -749,8 +749,10 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         _audioindex = i;
       }
     }
+    snprintf(_text, 128, "%s", input_devices[_audioindex].description);
+  } else {
+    snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
   }
-  snprintf(_text, 128, "%s", input_devices[_audioindex].description);
 #endif
   cairo_show_text(cr, _text);
 #endif
