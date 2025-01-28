@@ -46,6 +46,9 @@
 #ifdef USBOZY
   #include "ozyio.h"
 #endif
+#if defined (__LDESK__)
+  #include "audio.h"
+#endif
 
 char zeitString[20];
 
