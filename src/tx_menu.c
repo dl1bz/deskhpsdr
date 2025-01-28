@@ -268,11 +268,20 @@ void audioSaveProfile() {
 static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
   int _mode = vfo_get_tx_mode();
-
+  int _index;
+  if (n_input_devices > 0) {
+    for (int i = 0; i < n_input_devices; i++) {
+      // gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(input), NULL, input_devices[i].description);
+      if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+        _index = i;
+        t_print("%s: Mic(short): %s\n", __FUNCTION__, input_devices[i].description);
+      }
+    }
+  }
   if (_mode < 3) {
     // STRLCPY(transmitter->microphone_name, mic_prof.desc[mic_prof.nr], sizeof(transmitter->microphone_name));
-    strncpy(mic_prof.desc[mic_prof.nr], transmitter->microphone_name, sizeof(mic_prof.desc[mic_prof.nr]));
-    t_print("%s: Mic: %s / %s\n", __FUNCTION__, transmitter->microphone_name, mic_prof.desc[mic_prof.nr]);
+    strncpy(mic_prof.desc[mic_prof.nr], input_devices[_index].description, sizeof(mic_prof.desc[mic_prof.nr]));
+    t_print("%s: Mic: %s / %s\n", __FUNCTION__, input_devices[_index].description, mic_prof.desc[mic_prof.nr]);
     audioSaveProfile();
     start_tx();
     t_print("%s: Mic Profile %d saved, Mode %d supported.\n", __FUNCTION__, mic_prof.nr, _mode);
