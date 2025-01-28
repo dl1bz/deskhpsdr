@@ -2687,12 +2687,14 @@ static void radio_restore_state() {
   GetPropI0("mic_bias_enabled",                              mic_bias_enabled);
   GetPropI0("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
   GetPropI0("mic_input_xlr",                                 mic_input_xlr);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   GetPropI0("mic_profile_nr",                                mic_prof.nr);
+
   for (int i = 0; i < 3; i++) {
     GetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
-  #endif
+
+#endif
   GetPropI0("tx_filter_low",                                 tx_filter_low);
   GetPropI0("tx_filter_high",                                tx_filter_high);
   GetPropI0("cw_keys_reversed",                              cw_keys_reversed);
@@ -2911,12 +2913,14 @@ void radio_save_state() {
   SetPropI0("mic_bias_enabled",                              mic_bias_enabled);
   SetPropI0("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
   SetPropI0("mic_input_xlr",                                 mic_input_xlr);
-  #if defined (__LDESK__)
+#if defined (__LDESK__)
   SetPropI0("mic_profile_nr",                                mic_prof.nr);
+
   for (int i = 0; i < 3; i++) {
     SetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
-  #endif
+
+#endif
   SetPropI0("tx_filter_low",                                 tx_filter_low);
   SetPropI0("tx_filter_high",                                tx_filter_high);
   SetPropI0("cw_keys_reversed",                              cw_keys_reversed);

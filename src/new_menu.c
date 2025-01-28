@@ -687,11 +687,13 @@ void new_menu() {
 #else
     GtkWidget *equalizer_b = gtk_button_new_with_label("Equalizer");
 #endif
+
     if (_mode == modeDIGU || _mode == modeDIGL) {
       gtk_widget_set_sensitive(equalizer_b, FALSE);
     } else {
       gtk_widget_set_sensitive(equalizer_b, TRUE);
     }
+
     g_signal_connect (equalizer_b, "button-press-event", G_CALLBACK(equalizer_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), equalizer_b, col, row, 1, 1);
     row++;

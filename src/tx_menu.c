@@ -47,9 +47,9 @@ static GtkWidget *cfc_container;
 static GtkWidget *dexp_container;
 
 #if defined (__LDESK__)
-static GtkWidget *load_button;
-static GtkWidget *audio_profile;
-static GtkWidget *save_button;
+  static GtkWidget *load_button;
+  static GtkWidget *audio_profile;
+  static GtkWidget *save_button;
 #endif
 //
 // Some symbolic constants used in callbacks
@@ -136,26 +136,26 @@ static void ersetzeLeerzeichenMitUnterstrich(char *str) {
 static int check_file(int p) {
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", p);
-    // if (access(DateiName, F_OK)) {
-      FILE *file = fopen(DateiName, "r");  // Versucht, die Datei im Lesemodus zu öffnen
-      if (file) {
-      t_print("%s: Access file %s successful.\n", __FUNCTION__, DateiName);
-      fclose(file); // Datei wurde erfolgreich geöffnet, also existiert sie
-      return 1;     // Datei existiert
-    } else {
-      t_print("%s: Access file %s failed.\n", __FUNCTION__, DateiName);
-      return 0;     // Datei existiert nicht
-    }
+  FILE *file = fopen(DateiName, "r");  // Versucht, die Datei im Lesemodus zu öffnen
+
+  if (file) {
+    t_print("%s: Access file %s successful.\n", __FUNCTION__, DateiName);
+    fclose(file); // Datei wurde erfolgreich geöffnet, also existiert sie
+    return 1;     // Datei existiert
+  } else {
+    t_print("%s: Access file %s failed.\n", __FUNCTION__, DateiName);
+    return 0;     // Datei existiert nicht
+  }
 }
 
 static void audioLoadProfile() {
   int i = modeLSB;
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
+
   if (!access(DateiName, F_OK)) {
     t_print("%s: Mode i=%d\n", __FUNCTION__, i);
     loadProperties(DateiName);
-
     GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
     GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     GetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
@@ -175,7 +175,6 @@ static void audioLoadProfile() {
 
     GetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
     GetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
-
     transmitter->eq_enable        = mode_settings[i].en_txeq;
     transmitter->compressor       = mode_settings[i].compressor;
     transmitter->compressor_level = mode_settings[i].compressor_level;
@@ -207,6 +206,7 @@ static void audioLoadProfile() {
 
 static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
+
   if (!check_file(mic_prof.nr)) {
     gtk_widget_set_sensitive(load_button, FALSE);
     return;
@@ -218,20 +218,21 @@ static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
   gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
   // Flush the GDK event queue to force GUI updates
   gdk_flush();  // Ensure that all updates are processed
-
   int _mode = vfo_get_tx_mode();
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
+
   if (_mode < 3) {
     if (!access(DateiName, F_OK)) {
       audioLoadProfile();
       start_tx();
-      t_print("%s: Mode %d accepted, file %s exist...loaded Mic Profile %d successful.\n", __FUNCTION__, _mode, DateiName, mic_prof.nr);
+      t_print("%s: Mode %d accepted, file %s exist...loaded Mic Profile %d successful.\n", __FUNCTION__, _mode, DateiName,
+              mic_prof.nr);
     } else {
       t_print("%s: Mode %d accepted, but file %s don't exist.\n", __FUNCTION__, _mode, DateiName);
     }
   } else {
-    t_print("%s: Mic Profile %d not loaded, Mode %d not supported.\n", __FUNCTION__,mic_prof.nr, _mode);
+    t_print("%s: Mic Profile %d not loaded, Mode %d not supported.\n", __FUNCTION__, mic_prof.nr, _mode);
   }
 }
 
@@ -258,7 +259,6 @@ void audioSaveProfile() {
 
   SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   SetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
-
   // SetPropS0("modeset.%d.microphone_name",       mode_settings[i].microphone_name);
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
@@ -268,14 +268,13 @@ void audioSaveProfile() {
 static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
   int _mode = vfo_get_tx_mode();
+
   if (_mode < 3) {
     // STRLCPY(transmitter->microphone_name, mic_prof.desc[mic_prof.nr], sizeof(transmitter->microphone_name));
     strncpy(mic_prof.desc[mic_prof.nr], transmitter->microphone_name, sizeof(mic_prof.desc[mic_prof.nr]));
     t_print("%s: Mic: %s / %s\n", __FUNCTION__, transmitter->microphone_name, mic_prof.desc[mic_prof.nr]);
-
     audioSaveProfile();
     start_tx();
-
     t_print("%s: Mic Profile %d saved, Mode %d supported.\n", __FUNCTION__, mic_prof.nr, _mode);
     gtk_widget_set_sensitive(load_button, TRUE);
     // Force the GUI to update
@@ -290,8 +289,8 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
 
 static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
-
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget)); // Rückgabe als Index
+
   if (i != mic_prof.nr) {
     mic_prof.nr = i;
   }
@@ -302,11 +301,11 @@ static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
   } else {
     gtk_widget_set_sensitive(load_button, TRUE);
   }
+
   // Force the GUI to update
   gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
   // Flush the GDK event queue to force GUI updates
   gdk_flush();  // Ensure that all updates are processed
-
   // const gchar *selected_label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)); // Rückgabe als Label
   // const gchar *selected_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(widget)); // Rückgabe als Id
   g_idle_add(ext_vfo_update, NULL);
@@ -324,9 +323,11 @@ static void cleanup() {
     radio_save_state();
 #if defined (__LDESK__)
     int _mode = vfo_get_tx_mode();
+
     if (_mode < 3) {
       audioSaveProfile();
     }
+
 #endif
   }
 }
@@ -866,27 +867,28 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_set_row_spacing (GTK_GRID(tx_grid), 5);
   gtk_container_add(GTK_CONTAINER(tx_container), tx_grid);
   row = 0;
-
 #if defined (__LDESK__)
-//------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------
   row++;
   col = 0;
   col += 3;
   load_button = gtk_button_new_with_label("Load Profile");
   gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
   g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);
+
   if (!check_file(mic_prof.nr)) {
     gtk_widget_set_sensitive(load_button, FALSE);
   } else {
     gtk_widget_set_sensitive(load_button, TRUE);
   }
+
   col++;
   save_button = gtk_button_new_with_label("Save");
   gtk_grid_attach(GTK_GRID(tx_grid), save_button, col, row, 1, 1);
   g_signal_connect(save_button, "clicked", G_CALLBACK(save_button_clicked_cb), save_button);
-
   col = 0;
   audio_profile = gtk_combo_box_text_new();
+
   // gtk_grid_set_column_homogeneous (GTK_GRID(tx_grid), TRUE);
   for (int i = 0; i < 3; i++) {
     gchar *id = g_strdup_printf("audio_profile_%d.prop", i);  // Einträge-ID erstellen
@@ -895,15 +897,17 @@ void tx_menu(GtkWidget *parent) {
     g_free(id);    // Speicher freigeben
     g_free(label); // Speicher freigeben
   }
+
   if (mic_prof.nr > 0 && mic_prof.nr < 3) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), mic_prof.nr);
   } else {
     mic_prof.nr = 0;
     gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), 0);
   }
+
   my_combo_attach(GTK_GRID(tx_grid), audio_profile, col, row, 3, 1);
   g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
-//------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------
 #endif
 
   if (n_input_devices > 0) {
