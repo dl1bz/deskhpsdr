@@ -268,10 +268,9 @@ void audioSaveProfile() {
 static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
   int _mode = vfo_get_tx_mode();
-  int _index;
+  int _index = 0;
   if (n_input_devices > 0) {
     for (int i = 0; i < n_input_devices; i++) {
-      // gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(input), NULL, input_devices[i].description);
       if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
         _index = i;
         t_print("%s: Mic(short): %s\n", __FUNCTION__, input_devices[i].description);
