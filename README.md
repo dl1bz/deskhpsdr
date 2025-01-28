@@ -8,6 +8,8 @@ My version here need a screen size 1280x600 at minimum or higher for best GUI ex
 
 piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>deskHPSDR go it's own way, but there is an active exchange of ideas between Christoph/DL1YCF and me regarding development and programming of both versions piHPSDR and deskHPSDR.
 
+From now on (January 2025) I stop merging code from piHPSDR to deskHPSDR. Last changes from piHPSDR like the G2Panel and other things are not available in deskHPSDR and won't be. My future development has the focus to the Hermes Lite 2 SDR, but not for devices come from Apache Labs. My meaning to this manufacturer is not the best, they only sell expensive hardware and let the open source developers do the work for the SDR applications which can be used with their hardware. I did not support this approach. For the Hermes Lite 2 most issues are fixed now in deskHPSDR. There are no more recognizable problems with the HL2.
+
 ## Requirements
 
 * a modern Desktop-OS like Linux or macOS with installed developer tools like compiler, linker etc.
