@@ -69,7 +69,6 @@ STRLCAT(char *dst, const char *src, size_t dsize) {
   const char *osrc = src;
   size_t n = dsize;
   size_t dlen;
-
 #if defined (__LDESK__)
   g_mutex_lock(&copy_string_mutex);
 #endif
