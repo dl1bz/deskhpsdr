@@ -67,6 +67,10 @@ STRLCAT(char *dst, const char *src, size_t dsize) {
   size_t n = dsize;
   size_t dlen;
 
+#if defined (__LDESK__)
+  g_mutex_lock(&copy_string_mutex);
+#endif
+
   /* Find the end of dst and adjust bytes left but don't go past end. */
   while (n-- != 0 && *dst != '\0') {
     dst++;
@@ -89,6 +93,9 @@ STRLCAT(char *dst, const char *src, size_t dsize) {
   }
 
   *dst = '\0';
+#if defined (__LDESK__)
+  g_mutex_unlock(&copy_string_mutex);
+#endif
   return (dlen + (src - osrc)); /* count does not include NUL */
 }
 
