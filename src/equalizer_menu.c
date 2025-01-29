@@ -57,7 +57,8 @@ static void cleanup() {
     int _mode = vfo_get_tx_mode();
 
     if (_mode < 3) {
-      audioSaveProfile();
+      showSaveDialog();
+      // audioSaveProfile();
     }
 
 #endif
@@ -244,7 +245,7 @@ void equalizer_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   col++;
-  GtkWidget *rx1_sel = gtk_radio_button_new_with_label_from_widget(NULL, "RX1 Settings");
+  GtkWidget *rx1_sel = gtk_radio_button_new_with_label_from_widget(NULL, "RX1-EQ Settings");
   gtk_widget_set_name(rx1_sel, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rx1_sel), (eqid == 0));
   gtk_grid_attach(GTK_GRID(grid), rx1_sel, col, row, 1, 1);
@@ -252,7 +253,7 @@ void equalizer_menu(GtkWidget *parent) {
 
   if (receivers > 1) {
     col++;
-    mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "RX2 Settings");
+    mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "RX2-EQ Settings");
     gtk_widget_set_name(mbtn, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (eqid == 1));
     gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
@@ -261,7 +262,7 @@ void equalizer_menu(GtkWidget *parent) {
 
   if (can_transmit) {
     col++;
-    mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "TX Settings");
+    mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "TX-EQ Settings");
     gtk_widget_set_name(mbtn, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (eqid == 2));
     gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);

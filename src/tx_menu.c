@@ -124,6 +124,7 @@ enum _cfc_choices {
 };
 
 #if defined (__LDESK__)
+
 /*
 static void ersetzeLeerzeichenMitUnterstrich(char *str) {
   while (*str != '\0') { // Schleife bis zum Ende des Strings
@@ -328,6 +329,96 @@ static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
   // const gchar *selected_label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)); // Rückgabe als Label
   // const gchar *selected_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(widget)); // Rückgabe als Id
   g_idle_add(ext_vfo_update, NULL);
+}
+
+// Callback für den "Yes"-Button
+static void aprof_save_bt_clicked(GtkWidget *widget, gpointer data) {
+    // gtk_main_quit();  // Beendet das GTK-Fenster
+    gtk_widget_destroy(GTK_WIDGET(data));  // Schließt nur das Fenster, ohne das Programm zu beenden
+    // gtk_widget_destroy(aprof_win);
+    audioSaveProfile();
+}
+
+// Callback für den "No"-Button
+static void aprof_nosave_bt_clicked(GtkWidget *widget, gpointer data) {
+    // gtk_main_quit();  // Beendet das GTK-Fenster
+    gtk_widget_destroy(GTK_WIDGET(data));  // Schließt nur das Fenster, ohne das Programm zu beenden
+}
+
+void showSaveDialog() {
+    GtkWidget *aprof_win;
+    GtkWidget *grid;
+    GtkWidget *label;
+    GtkWidget *aprof_save_button;
+    GtkWidget *aprof_nosave_button;
+    char _title[64];
+
+    // Fenster erstellen
+    int window_width = 500;  // Fensterbreite
+    int window_height = 150;  // Fensterhöhe
+    aprof_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    snprintf(_title, 64, "%s", PGNAME);
+    gtk_window_set_title(GTK_WINDOW(aprof_win), _title);
+    gtk_window_set_default_size(GTK_WINDOW(aprof_win), window_width, window_height);
+    g_signal_connect(aprof_win, "destroy", G_CALLBACK(aprof_nosave_bt_clicked), aprof_win);
+    g_signal_connect(aprof_win, "delete_event", G_CALLBACK (aprof_nosave_bt_clicked), aprof_win);
+
+    // Entferne die Fensterdekorationen (Schließen-Button, etc.)
+    gtk_window_set_decorated(GTK_WINDOW(aprof_win), FALSE);
+
+    // Berechne die mittige Position auf dem Bildschirm
+    GdkScreen *screen = gdk_screen_get_default();  // Hole den Standardbildschirm
+    int screen_width = gdk_screen_get_width(screen);  // Bildschirmbreite
+    int screen_height = gdk_screen_get_height(screen);  // Bildschirmhöhe
+
+    // Berechne die Position, um das Fenster mittig zu setzen
+    int x_position = (screen_width - window_width) / 2;
+    int y_position = (screen_height - window_height) / 2;
+
+    // Definiere die Position des Fensters auf dem Bildschirm
+    gtk_window_move(GTK_WINDOW(aprof_win), x_position, y_position);
+
+    // Grid-Layout für das Fenster
+    grid = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(aprof_win), grid);
+
+    // Label hinzufügen
+    snprintf(_title, 64, "Save now your TX-EQ settings to current Mic Profile [%d] ?", mic_prof.nr);
+    label = gtk_label_new(_title);
+    // Pango-Layout für Textgröße anpassen
+    PangoFontDescription *font_desc = pango_font_description_from_string("Arial 18"); // Schriftart und Größe
+    gtk_widget_override_font(label, font_desc);  // Wendet die Schriftart auf das Label an
+    gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1); // Label in Zeile 0, Spalte 0 (über 2 Spalten)
+
+    // "Yes"-Button hinzufügen
+    aprof_save_button = gtk_button_new_with_label("Yes");
+    gtk_widget_override_font(aprof_save_button, font_desc);
+    g_signal_connect(aprof_save_button, "clicked", G_CALLBACK(aprof_save_bt_clicked), aprof_win);
+    gtk_grid_attach(GTK_GRID(grid), aprof_save_button, 0, 1, 1, 1); // Button in Zeile 1, Spalte 0
+
+    // "No"-Button hinzufügen
+    aprof_nosave_button = gtk_button_new_with_label("No");
+    gtk_widget_override_font(aprof_nosave_button, font_desc);
+    g_signal_connect(aprof_nosave_button, "clicked", G_CALLBACK(aprof_nosave_bt_clicked), aprof_win);
+    gtk_grid_attach(GTK_GRID(grid), aprof_nosave_button, 1, 1, 1, 1); // Button in Zeile 1, Spalte 1
+
+    // Widgets in den mittleren Bereich des Grids verschieben
+    gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+    gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+
+    // Widgets mittig in ihren Zellen ausrichten
+    gtk_widget_set_halign(label, GTK_ALIGN_CENTER);  // Horizontale Ausrichtung des Textes
+    gtk_widget_set_valign(label, GTK_ALIGN_CENTER);  // Vertikale Ausrichtung des Textes
+    gtk_widget_set_halign(aprof_save_button, GTK_ALIGN_CENTER);  // Horizontale Ausrichtung des Buttons
+    gtk_widget_set_valign(aprof_save_button, GTK_ALIGN_CENTER);  // Vertikale Ausrichtung des Buttons
+    gtk_widget_set_halign(aprof_nosave_button, GTK_ALIGN_CENTER);  // Horizontale Ausrichtung des Buttons
+    gtk_widget_set_valign(aprof_nosave_button, GTK_ALIGN_CENTER);  // Vertikale Ausrichtung des Buttons
+
+    // Pango-Objekt freigeben
+    pango_font_description_free(font_desc);
+
+    // Fenster anzeigen
+    gtk_widget_show_all(aprof_win);
 }
 
 #endif
