@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
+*
+*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
 #include <string.h>
 #include <ctype.h>
 
