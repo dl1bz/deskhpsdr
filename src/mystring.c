@@ -46,7 +46,7 @@
 #include <sys/types.h>
 #include <string.h>
 // add by DH0DM
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__LDESK__)
   // #include <pthread.h>
   // pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
   #include <gtk/gtk.h>
