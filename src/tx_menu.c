@@ -347,12 +347,13 @@ static void aprof_nosave_btn_clicked(GtkWidget *widget, gpointer data) {
 
 // Funktion, die auf die Enter-Taste reagiert
 gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
-    if (event->keyval == GDK_KEY_Return) {
-        // Falls Enter gedrückt wurde, den Load-Button klicken
-        gtk_button_clicked(GTK_BUTTON(data));  // data ist hier der Load-Button
-        return TRUE;
-    }
-    return FALSE;
+  if (event->keyval == GDK_KEY_Return) {
+    // Falls Enter gedrückt wurde, den Load-Button klicken
+    gtk_button_clicked(GTK_BUTTON(data));  // data ist hier der Load-Button
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 void showSaveDialog() {
@@ -981,47 +982,49 @@ void tx_menu(GtkWidget *parent) {
   gtk_container_add(GTK_CONTAINER(tx_container), tx_grid);
   row = 0;
 #if defined (__LDESK__)
+
   //------------------------------------------------------------------------------------------------
   if (can_transmit) {
-  row++;
-  col = 0;
-  col += 3;
-  load_button = gtk_button_new_with_label("Load Profile");
-  gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
-  g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);
+    row++;
+    col = 0;
+    col += 3;
+    load_button = gtk_button_new_with_label("Load Profile");
+    gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
+    g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);
 
-  if (!check_file(mic_prof.nr)) {
-    gtk_widget_set_sensitive(load_button, FALSE);
-  } else {
-    gtk_widget_set_sensitive(load_button, TRUE);
+    if (!check_file(mic_prof.nr)) {
+      gtk_widget_set_sensitive(load_button, FALSE);
+    } else {
+      gtk_widget_set_sensitive(load_button, TRUE);
+    }
+
+    col++;
+    save_button = gtk_button_new_with_label("Save");
+    gtk_grid_attach(GTK_GRID(tx_grid), save_button, col, row, 1, 1);
+    g_signal_connect(save_button, "clicked", G_CALLBACK(save_button_clicked_cb), save_button);
+    col = 0;
+    audio_profile = gtk_combo_box_text_new();
+
+    // gtk_grid_set_column_homogeneous (GTK_GRID(tx_grid), TRUE);
+    for (int i = 0; i < 3; i++) {
+      gchar *id = g_strdup_printf("audio_profile_%d.prop", i);  // Einträge-ID erstellen
+      gchar *label = g_strdup_printf("Mic Profile %d (%s)", i, mic_prof.desc[i]);      // Beschriftung erstellen
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(audio_profile), id, label);
+      g_free(id);    // Speicher freigeben
+      g_free(label); // Speicher freigeben
+    }
+
+    if (mic_prof.nr > 0 && mic_prof.nr < 3) {
+      gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), mic_prof.nr);
+    } else {
+      mic_prof.nr = 0;
+      gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), 0);
+    }
+
+    my_combo_attach(GTK_GRID(tx_grid), audio_profile, col, row, 3, 1);
+    g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
   }
 
-  col++;
-  save_button = gtk_button_new_with_label("Save");
-  gtk_grid_attach(GTK_GRID(tx_grid), save_button, col, row, 1, 1);
-  g_signal_connect(save_button, "clicked", G_CALLBACK(save_button_clicked_cb), save_button);
-  col = 0;
-  audio_profile = gtk_combo_box_text_new();
-
-  // gtk_grid_set_column_homogeneous (GTK_GRID(tx_grid), TRUE);
-  for (int i = 0; i < 3; i++) {
-    gchar *id = g_strdup_printf("audio_profile_%d.prop", i);  // Einträge-ID erstellen
-    gchar *label = g_strdup_printf("Mic Profile %d (%s)", i, mic_prof.desc[i]);      // Beschriftung erstellen
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(audio_profile), id, label);
-    g_free(id);    // Speicher freigeben
-    g_free(label); // Speicher freigeben
-  }
-
-  if (mic_prof.nr > 0 && mic_prof.nr < 3) {
-    gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), mic_prof.nr);
-  } else {
-    mic_prof.nr = 0;
-    gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), 0);
-  }
-
-  my_combo_attach(GTK_GRID(tx_grid), audio_profile, col, row, 3, 1);
-  g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
-  }
   //------------------------------------------------------------------------------------------------
 #endif
 
