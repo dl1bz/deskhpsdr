@@ -178,15 +178,31 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case  GDK_KEY_d:
 #if defined (__LDESK__)
   case  GDK_KEY_Left:
+    if (event->state & GDK_SHIFT_MASK) {
+      // vfo_id_step(1 - active_receiver->id, -10); // for VFO B
+      vfo_step(-10);
+    } else {
 #endif
-    vfo_step(-1);
+      vfo_step(-1);
+#if defined (__LDESK__)
+    }
+
+#endif
     break;
 
   case GDK_KEY_u:
 #if defined (__LDESK__)
   case GDK_KEY_Right:
+    if (event->state & GDK_SHIFT_MASK) {
+      // vfo_id_step(1 - active_receiver->id, 10); // for VFO B
+      vfo_step(10);
+    } else {
 #endif
-    vfo_step(1);
+      vfo_step(1);
+#if defined (__LDESK__)
+    }
+
+#endif
     break;
 
   //
@@ -203,9 +219,12 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
 #if defined (__LDESK__)
 
-  case GDK_KEY_Q:
-    stop_program();
-    _exit(0);
+  case GDK_KEY_q:
+    if (event->state & GDK_CONTROL_MASK) {
+      stop_program();
+      _exit(0);
+    }
+
     break;
 
   // add an idea from DH0DM: press key [s] increase the VFO step, press key [S] decrease the VFO step
