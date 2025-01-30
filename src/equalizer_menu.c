@@ -56,7 +56,7 @@ static void cleanup() {
 #if defined (__LDESK__)
     int _mode = vfo_get_tx_mode();
 
-    if (_mode < 3) {
+    if (_mode < 3 && can_transmit) {
       showSaveDialog();
       // audioSaveProfile();
     }

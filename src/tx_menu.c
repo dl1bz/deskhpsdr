@@ -345,6 +345,16 @@ static void aprof_nosave_btn_clicked(GtkWidget *widget, gpointer data) {
   gtk_widget_destroy(GTK_WIDGET(data));  // Schließt nur das Fenster, ohne das Programm zu beenden
 }
 
+// Funktion, die auf die Enter-Taste reagiert
+gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
+    if (event->keyval == GDK_KEY_Return) {
+        // Falls Enter gedrückt wurde, den Load-Button klicken
+        gtk_button_clicked(GTK_BUTTON(data));  // data ist hier der Load-Button
+        return TRUE;
+    }
+    return FALSE;
+}
+
 void showSaveDialog() {
   GtkWidget *aprof_dialog_win;
   GtkWidget *grid;
@@ -352,6 +362,7 @@ void showSaveDialog() {
   GtkWidget *aprof_save_button;
   GtkWidget *aprof_nosave_button;
   char _title[64];
+  char _dialog[64];
   // Fenster erstellen
   int window_width = 500;  // Fensterbreite
   int window_height = 150;  // Fensterhöhe
@@ -376,8 +387,8 @@ void showSaveDialog() {
   grid = gtk_grid_new();
   gtk_container_add(GTK_CONTAINER(aprof_dialog_win), grid);
   // Label hinzufügen
-  snprintf(_title, 64, "Save now your TX-EQ settings to current Mic Profile [%d] ?", mic_prof.nr);
-  label = gtk_label_new(_title);
+  snprintf(_dialog, 64, "Save now your TX-EQ settings to current Mic Profile [%d] ?", mic_prof.nr);
+  label = gtk_label_new(_dialog);
   // Pango-Layout für Textgröße anpassen
   PangoFontDescription *font_desc = pango_font_description_from_string("Arial 18"); // Schriftart und Größe
   gtk_widget_override_font(label, font_desc);  // Wendet die Schriftart auf das Label an
@@ -404,6 +415,11 @@ void showSaveDialog() {
   gtk_widget_set_valign(aprof_nosave_button, GTK_ALIGN_CENTER);  // Vertikale Ausrichtung des Buttons
   // Pango-Objekt freigeben
   pango_font_description_free(font_desc);
+  // Den NO-Button als Standard-Button festlegen (bei Enter)
+  gtk_widget_grab_focus(aprof_nosave_button);  // Fokussiere den Button explizit
+  // gtk_window_set_default(GTK_WINDOW(aprof_dialog_win), aprof_nosave_button); // FUNKTIONIERT NICHT
+  // Manuelles Abfangen der Enter-Taste, um das gleiche Verhalten wie mit gtk_window_set_default() zu erreichen
+  g_signal_connect(aprof_dialog_win, "key-press-event", G_CALLBACK(aprof_enter_key_press), aprof_nosave_button);
   // Fenster anzeigen
   gtk_widget_show_all(aprof_dialog_win);
 }
@@ -421,8 +437,8 @@ static void cleanup() {
 #if defined (__LDESK__)
     int _mode = vfo_get_tx_mode();
 
-    if (_mode < 3) {
-      audioSaveProfile();
+    if (_mode < 3 && can_transmit) {
+      // audioSaveProfile();
     }
 
 #endif
@@ -966,6 +982,7 @@ void tx_menu(GtkWidget *parent) {
   row = 0;
 #if defined (__LDESK__)
   //------------------------------------------------------------------------------------------------
+  if (can_transmit) {
   row++;
   col = 0;
   col += 3;
@@ -1004,6 +1021,7 @@ void tx_menu(GtkWidget *parent) {
 
   my_combo_attach(GTK_GRID(tx_grid), audio_profile, col, row, 3, 1);
   g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
+  }
   //------------------------------------------------------------------------------------------------
 #endif
 
