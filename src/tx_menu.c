@@ -365,8 +365,8 @@ void showSaveDialog() {
   char _title[64];
   char _dialog[64];
   // Fenster erstellen
-  int window_width = 500;  // Fensterbreite
-  int window_height = 150;  // Fensterhöhe
+  int window_width = 600;  // Fensterbreite
+  int window_height = 200;  // Fensterhöhe
   aprof_dialog_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   snprintf(_title, 64, "%s", PGNAME);
   gtk_window_set_title(GTK_WINDOW(aprof_dialog_win), _title);
