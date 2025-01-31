@@ -227,7 +227,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 
     break;
 
-  // add an idea from DH0DM: press key [s] increase the VFO step, press key [S] decrease the VFO step
+  // add an idea from DH0DM: press key [s] decrease the VFO step, press key [S] increase the VFO step
   case GDK_KEY_s: {
     int i = vfo_get_stepindex(active_receiver->id);
     vfo_set_step_from_index(active_receiver->id, --i);
