@@ -387,6 +387,8 @@ void showSaveDialog() {
   // Grid-Layout für das Fenster
   grid = gtk_grid_new();
   gtk_container_add(GTK_CONTAINER(aprof_dialog_win), grid);
+  // Setze die Ränder des Fensters mit Container-Setup (falls nötig)
+  gtk_container_set_border_width(GTK_CONTAINER(aprof_dialog_win), 20);  // 20px Abstand vom Fensterrand
   // Label hinzufügen
   snprintf(_dialog, 64, "Save now your TX-EQ settings to current Mic Profile [%d] ?", mic_prof.nr);
   label = gtk_label_new(_dialog);
