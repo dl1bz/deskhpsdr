@@ -64,6 +64,9 @@
 #include "mystring.h"
 #include "startup.h"
 #include "tts.h"
+#if defined (__LDESK__)
+  #include "sliders.h"
+#endif
 
 struct utsname unameData;
 
@@ -237,6 +240,32 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 
 #endif
     break;
+#if defined (__LDESK__)
+
+  case GDK_KEY_Page_Down: {
+    double _vol = active_receiver->volume;
+    _vol -= 1;
+
+    if (_vol < -40.0) {
+      _vol = -40.0;
+    }
+
+    set_af_gain(active_receiver->id, _vol);
+  }
+  break;
+
+  case GDK_KEY_Page_Up: {
+    double _vol = active_receiver->volume;
+    _vol += 1;
+
+    if (_vol > 0) {
+      _vol = 0;
+    }
+
+    set_af_gain(active_receiver->id, _vol);
+  }
+  break;
+#endif
 
   case  GDK_KEY_d:
 #if defined (__LDESK__)
