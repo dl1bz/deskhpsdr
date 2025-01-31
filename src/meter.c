@@ -672,7 +672,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         // use colours from the "gradient" panadapter display,
         // but use no gradient: S0-S9 first colour, beyond S9 last colour
         cairo_pattern_t *pat = cairo_pattern_create_linear(0.0, 0.0, 114.0, 0.0);
-
         // Definiere Farben für den Verlauf
         cairo_pattern_add_color_stop_rgba(pat, 0.00, COLOUR_GRAD1);       // green
         // cairo_pattern_add_color_stop_rgba(pat, 0.50, COLOUR_GRAD1);
@@ -682,7 +681,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_pattern_add_color_stop_rgba(pat, 0.75, COLOUR_GRAD4);       // red
         cairo_pattern_add_color_stop_rgba(pat, 1.00, COLOUR_GRAD4);       // red
         cairo_set_source(cr, pat);
-
         // cairo_rectangle(cr, 5, Y2 - 20, l, 20.0);
         cairo_rectangle(cr, 5, Y2 - 20, l, 30.0);               // add by DL1BZ
         cairo_fill(cr);
