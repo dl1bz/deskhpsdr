@@ -120,9 +120,9 @@ void get_local_time(char *zeitString, size_t groesse) {
   // Zeit in lokales Format konvertieren
   struct tm Zeit;
   // Zeit in UTC konvertieren (Thread-sicher)
-  // gmtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+  gmtime_r(&aktuelleZeit, &Zeit); // thread-sicher
   // Zeit in lokales Format konvertieren
-  localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+  // localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
   // Formatierter Zeit-String erstellen
   snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
            Zeit.tm_mday,
