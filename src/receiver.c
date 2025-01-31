@@ -214,22 +214,41 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointer data) {
-#if defined (__LDESK__) && defined (__APPLE__)
-
-  if (event->state) {
+  // if using Apple Magic Mouse it's tricky to use because we have only touch but no real wheel
+  // for safer use we need to press the CTRL key for VFO movement in VFO step and
+  // SHIFT+CTRL for VFO movement in VFO step 10 instead 1
+#if defined (__APPLE__)
+  if (event->state & GDK_SHIFT_MASK && event->state & GDK_CONTROL_MASK) {
     if (event->direction == GDK_SCROLL_UP) {
-      vfo_step(1);
-    } else {
-      vfo_step(-1);
+      vfo_step(10);
+    } else if (event->direction == GDK_SCROLL_DOWN) {
+      vfo_step(-10);
+    }
+  } else {
+    if (event->state & GDK_CONTROL_MASK) {
+      if (event->direction == GDK_SCROLL_UP) {
+        vfo_step(1);
+      } else if (event->direction == GDK_SCROLL_DOWN) {
+        vfo_step(-1);
+      }
     }
   }
 
 #else
 
-  if (event->direction == GDK_SCROLL_UP) {
-    vfo_step(1);
+  // add press SHIFT if using mouse wheel for VFO movement in VFO step 10 instead 1
+  if (event->state & GDK_SHIFT_MASK) {
+    if (event->direction == GDK_SCROLL_UP) {
+      vfo_step(10);
+    } else if (event->direction == GDK_SCROLL_DOWN) {
+      vfo_step(-10);
+    }
   } else {
-    vfo_step(-1);
+    if (event->direction == GDK_SCROLL_UP) {
+      vfo_step(1);
+    } else if (event->direction == GDK_SCROLL_DOWN) {
+      vfo_step(-1);
+    }
   }
 
 #endif
