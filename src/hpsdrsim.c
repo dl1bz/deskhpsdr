@@ -436,8 +436,8 @@ int main(int argc, char *argv[]) {
   j = RAND_MAX / 2;
 
   for (i = 0; i < LENNOISE; i++) {
-    noiseItab[i] = ((double) rand_r(&seed) / j - 1.0) * 0.00001;
-    noiseQtab[i] = ((double) rand_r(&seed) / j - 1.0) * 0.00001;
+    noiseItab[i] = ((double) rand_r(&seed) / j - 1.0) * 0.00003;
+    noiseQtab[i] = ((double) rand_r(&seed) / j - 1.0) * 0.00003;
   }
 
   //
