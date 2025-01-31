@@ -157,8 +157,70 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_F6:
     tts_atten();
     break;
+#if defined (__LDESK__)
+
+  // DH0DM: add additional keyboard shortcuts b,m,v,n,T
+  case GDK_KEY_b:
+    start_band();
+    break;
+
+  case GDK_KEY_m:
+    start_mode();
+    break;
+
+  case GDK_KEY_v:
+    start_vfo(active_receiver->id);
+    break;
+
+  case GDK_KEY_f:
+    start_filter();
+    break;
+
+  case GDK_KEY_n:
+    start_noise();
+    break;
+
+  case GDK_KEY_T:
+
+    // Tune - Uppercase to avoid unwanted tuning by hitting the t key
+    if (can_transmit) {
+      if (radio_get_mox() == 1) {
+        radio_set_mox(0);
+      }
+
+      if (radio_get_tune() == 0) {
+        radio_set_tune(1);
+      } else {
+        radio_set_tune(0);
+      }
+    }
+
+    break;
+#endif
 
   case GDK_KEY_space:
+#if defined (__LDESK__)
+
+    // DH0DM: changed the logic here for combination with the tune key
+    // if tuning is active space will stop tuning and not switching to mox with
+    // the same keypress. for me more logical and space remains "emergency tx off"
+    // if tx is actice
+    if (can_transmit) {
+      if (radio_get_tune() == 1) {
+        radio_set_tune(0);
+      } else {
+        if (radio_get_mox() == 1) {
+          radio_set_mox(0);
+        } else if (TransmitAllowed()) {
+          radio_set_mox(1);
+        } else {
+          tx_set_out_of_band(transmitter);
+        }
+      }
+    }
+
+#else
+
     if (can_transmit) {
       if (radio_get_tune() == 1) {
         radio_set_tune(0);
@@ -173,6 +235,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       }
     }
 
+#endif
     break;
 
   case  GDK_KEY_d:
