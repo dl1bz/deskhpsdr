@@ -584,12 +584,53 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
 #if defined (__LDESK__)
-  cairo_set_source_rgba(cr, COLOUR_WHITE);
-  // cairo_set_source_rgba(cr, COLOUR_ORANGE);
-  cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-  cairo_move_to(cr, mywidth - 600.0, myheight - 10);
-  cairo_show_text(cr, "T)une - b)and - m)ode - v)fo - f)ilter - n)oise - a)nf -n(r) - w) binaural - e) SNB");
+
+  if (!active_receiver->display_waterfall && active_receiver->display_panadapter) {
+    // cairo_rectangle(cr, x, y, width, height) -> all as double()
+    // X coordinate of the top left corner of the rectangle
+    // Y coordinate to the top left corner of the rectangle
+    // width of the rectangle
+    // height of the rectangle
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_rectangle(cr, 0.0, myheight - 30, mywidth, 30.0);
+    cairo_fill(cr);
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    // cairo_set_source_rgba(cr, COLOUR_ORANGE);
+    // cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_move_to(cr, mywidth - 530.0, myheight - 10);
+    cairo_show_text(cr, "[T]une  [b]and  [m]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+    char _text[128];
+    cairo_set_source_rgba(cr, COLOUR_ORANGE);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+#if defined (__APPLE__)
+    snprintf(_text, 128, "%s", transmitter->microphone_name);
+#else
+    int _audioindex = 0;
+
+    if (n_input_devices > 0) {
+      for (int i = 0; i < n_input_devices; i++) {
+        if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+          _audioindex = i;
+        }
+      }
+
+      snprintf(_text, 128, "%s", input_devices[_audioindex].description);
+    } else {
+      snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
+    }
+
+#endif
+    cairo_move_to(cr, 10.0, myheight - 10);
+    cairo_show_text(cr, _text);
+  }
+
 #endif
   cairo_destroy (cr);
   gtk_widget_queue_draw (rx->panadapter);
@@ -741,34 +782,38 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   }
 
   char _text[128];
-#if defined (__CPYMODE__)
-  cairo_set_source_rgba(cr, COLOUR_ORANGE);
-  cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-#if defined (__APPLE__)
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-#else
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-#endif
-  cairo_move_to(cr, 380.0, 30.0);
-#if defined (__APPLE__)
-  snprintf(_text, 128, "%s", transmitter->microphone_name);
-#else
-  int _audioindex = 0;
+#if defined (__LDESK__)
 
-  if (n_input_devices > 0) {
-    for (int i = 0; i < n_input_devices; i++) {
-      if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
-        _audioindex = i;
+  if (active_receiver->display_waterfall && active_receiver->display_panadapter) {
+    cairo_set_source_rgba(cr, COLOUR_ORANGE);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+    cairo_move_to(cr, 380.0, 30.0);
+#if defined (__APPLE__)
+    snprintf(_text, 128, "%s", transmitter->microphone_name);
+#else
+    int _audioindex = 0;
+
+    if (n_input_devices > 0) {
+      for (int i = 0; i < n_input_devices; i++) {
+        if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+          _audioindex = i;
+        }
       }
+
+      snprintf(_text, 128, "%s", input_devices[_audioindex].description);
+    } else {
+      snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
     }
 
-    snprintf(_text, 128, "%s", input_devices[_audioindex].description);
-  } else {
-    snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
+#endif
+    cairo_show_text(cr, _text);
   }
 
-#endif
-  cairo_show_text(cr, _text);
 #endif
   // show RX200 data
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);

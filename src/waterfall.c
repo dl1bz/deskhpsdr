@@ -28,6 +28,9 @@
 #include "radio.h"
 #include "vfo.h"
 #include "band.h"
+#if defined (__LDESK__)
+  #include "appearance.h"
+#endif
 #include "waterfall.h"
 
 static int colorLowR = 0; // black
@@ -41,7 +44,7 @@ static int colorHighB = 0;
 static double hz_per_pixel;
 
 static int my_width;
-static int my_heigt;
+static int my_height;
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
@@ -50,10 +53,10 @@ waterfall_configure_event_cb (GtkWidget         *widget,
                               gpointer           data) {
   RECEIVER *rx = (RECEIVER *)data;
   my_width = gtk_widget_get_allocated_width (widget);
-  my_heigt = gtk_widget_get_allocated_height (widget);
-  rx->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, my_width, my_heigt);
+  my_height = gtk_widget_get_allocated_height (widget);
+  rx->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, my_width, my_height);
   unsigned char *pixels = gdk_pixbuf_get_pixels (rx->pixbuf);
-  memset(pixels, 0, my_width * my_heigt * 3);
+  memset(pixels, 0, my_width * my_height * 3);
   return TRUE;
 }
 
@@ -139,7 +142,7 @@ void waterfall_update(RECEIVER *rx) {
           //
           // If horizontal shift is too large, re-init waterfall
           //
-          memset(pixels, 0, my_width * my_heigt * 3);
+          memset(pixels, 0, my_width * my_height * 3);
           rx->waterfall_frequency = vfofreq;
           rx->waterfall_pan = pan;
         } else {
@@ -150,16 +153,16 @@ void waterfall_update(RECEIVER *rx) {
           //
           if (rotate_pixels < 0) {
             // shift left, and clear the right-most part
-            memmove(pixels, &pixels[-rotate_pixels * 3], ((my_width * my_heigt) + rotate_pixels) * 3);
+            memmove(pixels, &pixels[-rotate_pixels * 3], ((my_width * my_height) + rotate_pixels) * 3);
 
-            for (int i = 0; i < my_heigt; i++) {
+            for (int i = 0; i < my_height; i++) {
               memset(&pixels[((i * my_width) + (width + rotate_pixels)) * 3], 0, -rotate_pixels * 3);
             }
           } else if (rotate_pixels > 0) {
             // shift right, and clear left-most part
-            memmove(&pixels[rotate_pixels * 3], pixels, ((my_width * my_heigt) - rotate_pixels) * 3);
+            memmove(&pixels[rotate_pixels * 3], pixels, ((my_width * my_height) - rotate_pixels) * 3);
 
-            for (int i = 0; i < my_heigt; i++) {
+            for (int i = 0; i < my_height; i++) {
               memset(&pixels[(i * my_width) * 3], 0, rotate_pixels * 3);
             }
           }
@@ -177,7 +180,7 @@ void waterfall_update(RECEIVER *rx) {
       // waterfall frequency not (yet) set, sample rate changed, or zoom value changed:
       // (re-) init waterfall
       //
-      memset(pixels, 0, my_width * my_heigt * 3);
+      memset(pixels, 0, my_width * my_height * 3);
       rx->waterfall_frequency = vfofreq;
       rx->waterfall_pan = pan;
       rx->waterfall_zoom = zoom;
@@ -295,7 +298,7 @@ void waterfall_update(RECEIVER *rx) {
 
 void waterfall_init(RECEIVER *rx, int width, int height) {
   my_width = width;
-  my_heigt = height;
+  my_height = height;
   rx->pixbuf = NULL;
   rx->waterfall_frequency = 0;
   rx->waterfall_sample_rate = 0;
