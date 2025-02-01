@@ -582,7 +582,14 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_line_width(cr, 1);
     cairo_stroke(cr);
   }
-
+#if defined (__LDESK__)
+  cairo_set_source_rgba(cr, COLOUR_WHITE);
+  // cairo_set_source_rgba(cr, COLOUR_ORANGE);
+  cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+  cairo_move_to(cr, mywidth - 600.0, myheight - 10);
+  cairo_show_text(cr, "T)une - b)and - m)ode - v)fo - f)ilter - n)oise - a)nf -n(r) - w) binaural - e) SNB");
+#endif
   cairo_destroy (cr);
   gtk_widget_queue_draw (rx->panadapter);
 }

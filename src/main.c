@@ -66,6 +66,7 @@
 #include "tts.h"
 #if defined (__LDESK__)
   #include "sliders.h"
+  #include "noise_menu.h"
 #endif
 
 struct utsname unameData;
@@ -162,7 +163,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
 #if defined (__LDESK__)
 
-  // DH0DM: add additional keyboard shortcuts b,m,v,n,T
+  // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T
   case GDK_KEY_b:
     start_band();
     break;
@@ -181,6 +182,52 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 
   case GDK_KEY_n:
     start_noise();
+    break;
+
+  case GDK_KEY_a:
+    // toggle anf
+    if (active_receiver->anf > 0) {
+      active_receiver->anf = 0;
+    }
+    else {
+      active_receiver->anf = 1;
+    }
+    update_noise();
+    break;
+
+  case GDK_KEY_w:
+    // toggle binaural audio (w)ide
+    if (active_receiver->binaural > 0) {
+      active_receiver->binaural = 0;
+    }
+    else {
+      active_receiver->binaural = 1;
+    }
+    rx_set_af_binaural(active_receiver);
+    break;
+
+  case GDK_KEY_e:
+    // toggle SNB
+    if (active_receiver->snb > 0) {
+      active_receiver->snb = 0;
+    } else {
+      active_receiver->snb = 1;
+    }
+    update_noise();
+    break;
+
+  case GDK_KEY_r:
+    // toggle NR    
+    if (active_receiver->nr == 0) {
+      active_receiver->nr = 1;
+    }
+    else if (active_receiver->nr == 1) {
+      active_receiver->nr = 2;
+    }
+    else {
+      active_receiver->nr = 0;
+    }
+    update_noise();
     break;
 
   case GDK_KEY_T:
