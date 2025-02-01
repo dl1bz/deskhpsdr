@@ -253,8 +253,8 @@ int main(int argc, char **argv) {
 
     /* determine if this is a bootloader packet */
     if (hdr.len > 22 && packet[0] == 0x11 && packet[1] == 0x22 && packet[2] == 0x33
-    && packet[3] == 0x44 && packet[4] == 0x55 && packet[5] == 0x66
-    && packet[12] == 0xef && packet[13] == 0xfe) {
+        && packet[3] == 0x44 && packet[4] == 0x55 && packet[5] == 0x66
+        && packet[12] == 0xef && packet[13] == 0xfe) {
       hismac[0] = packet[6];
       hismac[1] = packet[7];
       hismac[2] = packet[8];

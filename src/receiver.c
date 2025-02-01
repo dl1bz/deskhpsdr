@@ -215,6 +215,7 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 // cppcheck-suppress constParameterPointer
 gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointer data) {
 #if defined (__APPLE__)
+
   // if using Apple Magic Mouse it's tricky to use the mouse because we have only touch but no real wheel
   // for safer use we need to press the OPTION key for VFO movement in VFO step and
   // CTRL+OPTION for VFO movement in VFO step 10 instead 1

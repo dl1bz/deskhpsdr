@@ -126,7 +126,7 @@ void waterfall_update(RECEIVER *rx) {
     // corrects for a number of VFO update steps.
     //
     if (rx->waterfall_frequency != 0 && (rx->sample_rate == rx->waterfall_sample_rate)
-    && (rx->zoom == rx->waterfall_zoom)) {
+        && (rx->zoom == rx->waterfall_zoom)) {
       if (rx->waterfall_frequency != vfofreq || rx->waterfall_pan != pan) {
         //
         // Frequency and/or PAN value changed: possibly shift waterfall

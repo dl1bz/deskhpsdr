@@ -5851,7 +5851,7 @@ int parse_cmd(void *data) {
       //ENDDEF
       if (command[2] == ';') {
         snprintf(reply, 256, "SA%d%d%d%d%d%d%dSAT     ;", (sat_mode == SAT_MODE) || (sat_mode == RSAT_MODE), 0, 0, 0,
-        sat_mode == SAT_MODE, sat_mode == RSAT_MODE, 0);
+                 sat_mode == SAT_MODE, sat_mode == RSAT_MODE, 0);
         send_resp(client->fd, reply);
       } else if (command[9] == ';') {
         if (command[2] == '0') {

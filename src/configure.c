@@ -106,7 +106,7 @@ void configure_gpio(GtkWidget *parent) {
     col++;
     widget = gtk_label_new(NULL);
     gtk_label_set_markup (GTK_LABEL(widget), (controller == CONTROLLER2_V2
-    || controller == G2_FRONTPANEL) ? "<b>Bottom Encoder</b>" : "<b>Encoder</b>");
+                          || controller == G2_FRONTPANEL) ? "<b>Bottom Encoder</b>" : "<b>Encoder</b>");
     gtk_grid_attach(GTK_GRID(grid), widget, col, row, 2, 1);
     col += 2;
 

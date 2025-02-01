@@ -523,11 +523,11 @@ int main(int argc, char **argv) {
        and only then process the contents (otherwise get next packet)
      */
     if (hdr.len > 22
-    && packet[ 0] == mymac[0] && packet[ 1] == mymac[1] && packet[ 2] == mymac[2]
-    && packet[ 3] == mymac[3] && packet[ 4] == mymac[4] && packet[ 5] == mymac[5]
-    && packet[ 6] == 0x11     && packet[ 7] == 0x22     && packet[ 8] == 0x33
-    && packet[ 9] == 0x44     && packet[10] == 0x55     && packet[11] == 0x66
-    && packet[12] == 0xef     && packet[13] == 0xfe     && packet[14] == 0x03) {
+        && packet[ 0] == mymac[0] && packet[ 1] == mymac[1] && packet[ 2] == mymac[2]
+        && packet[ 3] == mymac[3] && packet[ 4] == mymac[4] && packet[ 5] == mymac[5]
+        && packet[ 6] == 0x11     && packet[ 7] == 0x22     && packet[ 8] == 0x33
+        && packet[ 9] == 0x44     && packet[10] == 0x55     && packet[11] == 0x66
+        && packet[12] == 0xef     && packet[13] == 0xfe     && packet[14] == 0x03) {
       switch (packet[15]) {
       case HAVE_MAC_ADDRESS:
         printf("HPSDR board detected, MAC=%02x:%02x:%02x:%02x:%02x:%02x\n", packet[16], packet[17], packet[18], packet[19],

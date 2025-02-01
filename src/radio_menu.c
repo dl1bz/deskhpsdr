@@ -700,7 +700,7 @@ void radio_menu(GtkWidget *parent) {
   }
 
   if (device == NEW_DEVICE_ORION || device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN ||
-  device == DEVICE_ORION || device == DEVICE_ORION2) {
+      device == DEVICE_ORION || device == DEVICE_ORION2) {
     row = 1;
     label = gtk_label_new("ORION/SATURN Mic jack:");
     gtk_widget_set_name(label, "boldlabel");

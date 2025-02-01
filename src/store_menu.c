@@ -63,7 +63,7 @@ static gboolean store_select_cb (GtkWidget *widget, GdkEventButton *event, gpoin
     snprintf(label_str, 40, "M%d=%8.3f MHz (%s, %s)", ind,
              mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
              mode_string[mode],
-    mem[ind].deviation == 2500 ? "11k" : "16k");
+             mem[ind].deviation == 2500 ? "11k" : "16k");
   } else {
     int filter = mem[ind].filter;
     snprintf(label_str, 40, "M%d=%8.3f MHz (%s, %s)", ind,
@@ -122,7 +122,7 @@ void store_menu(GtkWidget *parent) {
       snprintf(label_str, 50, "M%d=%8.3f MHz (%s, %s)", ind,
                mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
                mode_string[mode],
-      mem[ind].deviation == 2500 ? "11k" : "16k");
+               mem[ind].deviation == 2500 ? "11k" : "16k");
     } else {
       int filter = mem[ind].filter;
       snprintf(label_str, 50, "M%d=%8.3f MHz (%s, %s)", ind,

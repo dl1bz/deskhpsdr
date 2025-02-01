@@ -389,7 +389,7 @@ void discovery() {
       case NEW_PROTOCOL:
         if (d->device == DEVICE_OZY) {
           snprintf(text, sizeof(text), "%s (%s via USB)", d->name,
-          d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2");
+                   d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2");
         } else if (d->device == NEW_DEVICE_SATURN && strcmp(d->info.network.interface_name, "XDMA") == 0) {
           snprintf(text, sizeof(text), "%s (%s v%d) fpga:%x (%s) on /dev/xdma*", d->name,
                    d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2", d->software_version,
@@ -461,7 +461,7 @@ void discovery() {
         if (d->use_routing) { can_connect = 1; }
 
         if ((d->info.network.interface_address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr) ==
-              (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
+            (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
 
         if (!can_connect) {
           gtk_button_set_label(GTK_BUTTON(start_button), "Subnet!");

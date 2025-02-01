@@ -691,7 +691,7 @@ static gboolean tx_update_display(gpointer data) {
     // sense transformer: Exchange fwd and rev readings
     //
     if (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
-    device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2) {
+        device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2) {
       if (rev_power > fwd_power) {
         fwd_power   = alex_reverse_power;
         rev_power   = alex_forward_power;
@@ -2432,7 +2432,7 @@ void tx_set_singletone(const TRANSMITTER *tx, int state, double freq) {
     SetTXAPostGenRun(tx->id, 0);
 
     if (device == DEVICE_HERMES_LITE2 || device == DEVICE_HERMES_LITE ||
-    device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
+        device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
       usleep(100000);
     }
   }
@@ -2488,7 +2488,7 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
     //
     //
     if (device == DEVICE_HERMES_LITE2 || device == DEVICE_HERMES_LITE ||
-    device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
+        device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
       usleep(100000);
     }
   }

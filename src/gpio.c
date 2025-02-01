@@ -1289,7 +1289,7 @@ int gpio_init() {
   t_print("%s: GPIO device=%s\n", __FUNCTION__, gpio_device);
 
   if (controller == CONTROLLER1 || controller == CONTROLLER2_V1 || controller == CONTROLLER2_V2
-  || controller == G2_FRONTPANEL) {
+      || controller == G2_FRONTPANEL) {
     // setup encoders
     t_print("%s: setup encoders\n", __FUNCTION__);
 

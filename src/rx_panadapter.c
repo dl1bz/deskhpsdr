@@ -582,6 +582,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_line_width(cr, 1);
     cairo_stroke(cr);
   }
+
 #if defined (__LDESK__)
   cairo_set_source_rgba(cr, COLOUR_WHITE);
   // cairo_set_source_rgba(cr, COLOUR_ORANGE);

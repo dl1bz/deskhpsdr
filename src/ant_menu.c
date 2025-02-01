@@ -319,7 +319,7 @@ void ant_menu(GtkWidget *parent) {
   }
 
   if (device == NEW_DEVICE_HERMES || device == NEW_DEVICE_ANGELIA || device == NEW_DEVICE_ORION ||
-  device == DEVICE_HERMES     || device == DEVICE_ANGELIA     || device == DEVICE_ORION) {
+      device == DEVICE_HERMES     || device == DEVICE_ANGELIA     || device == DEVICE_ORION) {
     //
     // ANAN-100/200: There is an "old" (Rev. 15/16) and "new" (Rev. 24) PA board
     //               around which differs in relay settings for using EXT1,2 and

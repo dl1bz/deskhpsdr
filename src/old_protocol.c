@@ -1046,7 +1046,7 @@ static long long channel_freq(int chan) {
   // Radios (especially with small FPGAs) may use RX1/RX2 for feedback while transmitting,
   //
   if (radio_is_transmitting() && transmitter->puresignal && (chan == rx_feedback_channel()
-  || chan == tx_feedback_channel())) {
+      || chan == tx_feedback_channel())) {
     vfonum = -1;
   }
 
@@ -1215,10 +1215,10 @@ static void process_control_bytes() {
     // to the IOB query.
     //
     if (addr == 0x3D && control_in[1] == 0xF1
-    && control_in[2] == 0xF1
-    && control_in[3] == 0xF1
-    && control_in[4] == 0xF1
-                                         && !hl2_iob_present) {
+        && control_in[2] == 0xF1
+        && control_in[3] == 0xF1
+        && control_in[4] == 0xF1
+        && !hl2_iob_present) {
       t_print("HL2IOB: board detected\n");
       hl2_iob_present = 1;
     }

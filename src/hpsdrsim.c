@@ -1531,7 +1531,7 @@ void process_ep2(uint8_t *frame) {
     rc = frame[0] >> 1;
 
     if (hl2addr[rc].c1 != frame[1] || hl2addr[rc].c2 != frame[2] ||
-                          hl2addr[rc].c3 != frame[3] || hl2addr[rc].c4 != frame[4]) {
+        hl2addr[rc].c3 != frame[3] || hl2addr[rc].c4 != frame[4]) {
       t_print("        HL2 AHL2 DDR=0x%2x C1=0x%2x C2=0x%2x C3=0x%2x C4=0x%2x\n",
               rc, frame[1], frame[2], frame[3], frame[4]);
       hl2addr[rc].c1 = frame[1];

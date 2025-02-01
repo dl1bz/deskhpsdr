@@ -2178,8 +2178,8 @@ static void *client_thread(void* arg) {
       }
 
       if (vfo[VFO_A].frequency != frequency_a || vfo[VFO_B].frequency != frequency_b
-                                  || vfo[VFO_A].ctun_frequency != ctun_frequency_a || vfo[VFO_B].ctun_frequency != ctun_frequency_b
-                                    || vfo[VFO_A].offset != offset_a || vfo[VFO_B].offset != offset_b) {
+          || vfo[VFO_A].ctun_frequency != ctun_frequency_a || vfo[VFO_B].ctun_frequency != ctun_frequency_b
+          || vfo[VFO_A].offset != offset_a || vfo[VFO_B].offset != offset_b) {
         vfo[VFO_A].frequency = frequency_a;
         vfo[VFO_B].frequency = frequency_b;
         vfo[VFO_A].ctun_frequency = ctun_frequency_a;
