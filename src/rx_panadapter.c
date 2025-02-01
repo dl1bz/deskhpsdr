@@ -598,7 +598,11 @@ void rx_panadapter_update(RECEIVER *rx) {
     // cairo_set_source_rgba(cr, COLOUR_ORANGE);
     // cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
     cairo_move_to(cr, mywidth / 2, myheight - 10);
     cairo_show_text(cr, "[T]une  [b]and  [m]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
     char _text[128];
