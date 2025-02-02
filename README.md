@@ -5,7 +5,7 @@ This is an improved version based at the code of [piHPSDR](https://github.com/dl
 My version here need a screen size 1280x600 at minimum or higher for best GUI experiences.
 
 More information about the develop progress of deskHPSDR can be found here in my Blog:<br>
-[https://hamradio.bzsax.de](https://hamradio.bzsax.de) (German language only).
+[https://hamradio.bzsax.de/category/hamradio/deskhpsdr/](https://hamradio.bzsax.de/category/hamradio/deskhpsdr/) (German language only).
 
 ## deskHPSDR was splitting October 2024 from the code base of piHPSDR
 
