@@ -4,6 +4,8 @@ This is an improved version based at the code of [piHPSDR](https://github.com/dl
 
 My version here need a screen size 1280x600 at minimum or higher for best GUI experiences.
 
+More information about the develop progress of deskHPSDR can be found here in my Blog: [https://hamradio.bzsax.de](https://hamradio.bzsax.de) (German language only).
+
 ## deskHPSDR was splitting October 2024 from the code base of piHPSDR
 
 piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>deskHPSDR go it's own way, but there is an active exchange of ideas between Christoph/DL1YCF and me regarding development and programming of both versions piHPSDR and deskHPSDR.
