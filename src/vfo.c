@@ -1455,6 +1455,7 @@ void vfo_id_move_to(int id, long long hz) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, gpointer data) {
+/*
 #if defined (__LDESK__)
 
   if (event->state) {
@@ -1475,6 +1476,8 @@ static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, g
 
 #endif
   return FALSE;
+*/
+  return rx_scroll_event(widget, event, data);
 }
 
 static gboolean vfo_configure_event_cb (GtkWidget         *widget,
