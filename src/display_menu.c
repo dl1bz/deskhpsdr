@@ -249,6 +249,7 @@ void display_menu(GtkWidget *parent) {
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_container_add(GTK_CONTAINER(content), grid);
   int row = 0;
   int col = 0;
@@ -268,10 +269,11 @@ void display_menu(GtkWidget *parent) {
   mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "General Settings");
   gtk_widget_set_name(mbtn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (which_container == GENERAL_CONTAINER));
-  gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 2, 1);
   g_signal_connect(mbtn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(GENERAL_CONTAINER));
   col++;
-  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peaks Settings");
+  col++;
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peaks Labels");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == PEAKS_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
@@ -497,7 +499,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_show(b_pan_hide_noise);
   gtk_grid_attach(GTK_GRID(peaks_grid), b_pan_hide_noise, col, ++row, 1, 1);
   g_signal_connect(b_pan_hide_noise, "toggled", G_CALLBACK(panadapter_hide_noise_filled_cb), NULL);
-  label = gtk_label_new("Peaks to Show:");
+  label = gtk_label_new("Number of Peaks to label:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(peaks_grid), label, col, ++row, 1, 1);

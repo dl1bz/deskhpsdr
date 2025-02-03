@@ -385,6 +385,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     if (tx->panadapter_peaks_on != 0) {
       int num_peaks = tx->panadapter_num_peaks;
+      /*
       gboolean peaks_in_passband = TRUE;
 
       if (tx->panadapter_peaks_in_passband_filled != 1) {
@@ -396,7 +397,9 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       if (tx->panadapter_hide_noise_filled != 1) {
         hide_noise = FALSE;
       }
-
+      */
+      gboolean peaks_in_passband = SET(tx->panadapter_peaks_in_passband_filled);
+      gboolean hide_noise = SET(tx->panadapter_hide_noise_filled);
       double noise_percentile = (double)tx->panadapter_ignore_noise_percentile;
       int ignore_range_divider = tx->panadapter_ignore_range_divider;
       int ignore_range = (mywidth + ignore_range_divider - 1) / ignore_range_divider; // Round up
@@ -408,6 +411,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
         peak_positions[a] = 0;
       }
 
+      /*
       // Dynamically allocate a copy of samples for sorting
       double *sorted_samples = malloc(mywidth * sizeof(double));
 
@@ -419,17 +423,28 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       for (int i = 0; i < mywidth; i++) {
         sorted_samples[i] = (double)samples[i + offset];
       }
-
+      */
       // Calculate the noise level if needed
       double noise_level = 0.0;
 
       if (hide_noise) {
-        qsort(sorted_samples, mywidth, sizeof(double), compare_doubles);
-        int index = (int)((noise_percentile / 100.0) * mywidth);
-        noise_level = sorted_samples[index];
+        // Dynamically allocate a copy of samples for sorting
+        double *sorted_samples = malloc(mywidth * sizeof(double));
+
+        if (sorted_samples != NULL) {
+          for (int i = 0; i < mywidth; i++) {
+            sorted_samples[i] = (double)samples[i + offset];
+          }
+
+          qsort(sorted_samples, mywidth, sizeof(double), compare_doubles);
+          int index = (int)((noise_percentile / 100.0) * mywidth);
+          // noise_level = sorted_samples[index];
+          noise_level = sorted_samples[index] + 3.0;
+          free(sorted_samples); // Free memory after use
+        }
       }
 
-      free(sorted_samples); // Free memory after use
+      // free(sorted_samples); // Free memory after use
       // Detect peaks
       double filter_left_bound = peaks_in_passband ? filter_left : 0;
       double filter_right_bound = peaks_in_passband ? filter_right : mywidth;
@@ -498,7 +513,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       }
 
       // Draw peak values on the chart
-#define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
+      // #define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
       cairo_set_source_rgba(cr, COLOUR_PAN_TEXT); // Set text color
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);

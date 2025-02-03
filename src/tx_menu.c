@@ -958,7 +958,7 @@ void tx_menu(GtkWidget *parent) {
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing (GTK_GRID(grid), 0);
   gtk_grid_set_column_homogeneous (GTK_GRID(grid), TRUE);
   gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
   gtk_container_add(GTK_CONTAINER(content), grid);
@@ -1007,7 +1007,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(DEXP_CONTAINER));
   col++;
-  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peaks Settings");
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peak Labels");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == PEAKS_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
@@ -1015,7 +1015,7 @@ void tx_menu(GtkWidget *parent) {
   //
   // TX container and controls therein
   //
-  gtk_grid_attach(GTK_GRID(grid), tx_container, 0, 1, 4, 1);
+  gtk_grid_attach(GTK_GRID(grid), tx_container, 0, 1, 5, 1);
   GtkWidget *tx_grid = gtk_grid_new();
   gtk_grid_set_column_spacing (GTK_GRID(tx_grid), 5);
   gtk_grid_set_row_spacing (GTK_GRID(tx_grid), 5);
@@ -1352,7 +1352,7 @@ void tx_menu(GtkWidget *parent) {
   //
   // CFC container and controls therein
   //
-  gtk_grid_attach(GTK_GRID(grid), cfc_container, 0, 1, 4, 1);
+  gtk_grid_attach(GTK_GRID(grid), cfc_container, 0, 1, 5, 1);
   GtkWidget *cfc_grid = gtk_grid_new();
   gtk_grid_set_column_spacing (GTK_GRID(cfc_grid), 5);
   gtk_grid_set_row_spacing (GTK_GRID(cfc_grid), 5);
@@ -1532,7 +1532,7 @@ void tx_menu(GtkWidget *parent) {
   //
   // DEXP container and controls therein
   //
-  gtk_grid_attach(GTK_GRID(grid), dexp_container, 0, 1, 4, 1);
+  gtk_grid_attach(GTK_GRID(grid), dexp_container, 0, 1, 5, 1);
   GtkWidget *dexp_grid = gtk_grid_new();
   gtk_grid_set_column_spacing (GTK_GRID(dexp_grid), 5);
   gtk_grid_set_row_spacing (GTK_GRID(dexp_grid), 5);
@@ -1634,7 +1634,7 @@ void tx_menu(GtkWidget *parent) {
   //
   // Peaks container and controls therein
   //
-  gtk_grid_attach(GTK_GRID(grid), peaks_container, 0, 1, 4, 1);
+  gtk_grid_attach(GTK_GRID(grid), peaks_container, 0, 1, 5, 1);
   GtkWidget *peaks_grid = gtk_grid_new();
   gtk_grid_set_column_spacing (GTK_GRID(peaks_grid), 5);
   gtk_grid_set_row_spacing (GTK_GRID(peaks_grid), 5);
@@ -1661,7 +1661,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_show(b_pan_hide_noise);
   gtk_grid_attach(GTK_GRID(peaks_grid), b_pan_hide_noise, col, ++row, 1, 1);
   g_signal_connect(b_pan_hide_noise, "toggled", G_CALLBACK(tx_panadapter_hide_noise_filled_cb), NULL);
-  label = gtk_label_new("Panadapter Peaks:");
+  label = gtk_label_new("Number of Peaks to label:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(peaks_grid), label, col, ++row, 1, 1);

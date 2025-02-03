@@ -918,7 +918,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->panadapter_low = -70;
   tx->panadapter_step = 10;
   tx->panadapter_peaks_on = 0;
-  tx->panadapter_num_peaks = 3;
+  tx->panadapter_num_peaks = 4;
   tx->panadapter_ignore_range_divider = 24;
   tx->panadapter_ignore_noise_percentile = 50;
   tx->panadapter_hide_noise_filled = 1;

@@ -351,6 +351,8 @@ extern void   radio_protocol_stop(void);
 extern void   radio_protocol_restart(void);
 extern void   radio_start_auto_tune(void);
 
+extern int compare_doubles(const void *a, const void *b);
+
 #ifdef CLIENT_SERVER
   extern int radio_remote_start(void *data);
 #endif
