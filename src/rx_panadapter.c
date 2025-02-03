@@ -737,13 +737,10 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     // Draw peak values on the chart
     // #define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
-    cairo_set_source_rgba(cr, COLOUR_PAN_TEXT); // Set text color
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-#if defined (__APPLE__)
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-#else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-#endif
+
     double previous_text_positions[num_peaks][2]; // Store previous text positions (x, y)
 
     for (int j = 0; j < num_peaks; j++) {
