@@ -133,6 +133,18 @@ void get_local_time(char *zeitString, size_t groesse) {
            Zeit.tm_sec);
 }
 
+int compare_doubles(const void *a, const void *b) {
+  double arg1 = *(const double *)a;
+  double arg2 = *(const double *)b;
+
+  if (arg1 < arg2) { return -1; }
+
+  if (arg1 > arg2) { return 1; }
+
+  return 0;
+}
+
+
 void rx_panadapter_update(RECEIVER *rx) {
   int i;
   float *samples;
@@ -560,6 +572,186 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   #endif
   */
+  if (rx->panadapter_peaks_on != 0) {
+    int num_peaks = rx->panadapter_num_peaks;
+    gboolean peaks_in_passband = TRUE;
+
+    if (rx->panadapter_peaks_in_passband_filled != 1) {
+      peaks_in_passband = FALSE;
+    }
+
+    gboolean hide_noise = TRUE;
+
+    if (rx->panadapter_hide_noise_filled != 1) {
+      hide_noise = FALSE;
+    }
+
+    double noise_percentile = (double)rx->panadapter_ignore_noise_percentile;
+    int ignore_range_divider = rx->panadapter_ignore_range_divider;
+    int ignore_range = (mywidth + ignore_range_divider - 1) / ignore_range_divider; // Round up
+    double peaks[num_peaks];
+    int peak_positions[num_peaks];
+
+    for (int a = 0; a < num_peaks; a++) {
+      peaks[a] = -200;
+      peak_positions[a] = 0;
+    }
+
+    // Dynamically allocate a copy of samples for sorting
+    double *sorted_samples = malloc(mywidth * sizeof(double));
+
+    if (sorted_samples == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      return; // Handle memory allocation failure
+    }
+
+    for (int i = 0; i < mywidth; i++) {
+      sorted_samples[i] = (double)samples[i + rx->pan] + soffset;
+    }
+
+    // Calculate the noise level if needed
+    double noise_level = 0.0;
+
+    if (hide_noise) {
+      qsort(sorted_samples, mywidth, sizeof(double), compare_doubles);
+      int index = (int)((noise_percentile / 100.0) * mywidth);
+      noise_level = sorted_samples[index];
+    }
+
+    free(sorted_samples); // Free memory after use
+    // Detect peaks
+    double filter_left_bound = peaks_in_passband ? filter_left : 0;
+    double filter_right_bound = peaks_in_passband ? filter_right : mywidth;
+
+    for (int i = 1; i < mywidth - 1; i++) {
+      if (i >= filter_left_bound && i <= filter_right_bound) {
+        double s = (double)samples[i + rx->pan] + soffset;
+
+        // Check if the point is a peak
+        if ((!hide_noise || s >= noise_level) && s > samples[i - 1 + rx->pan] && s > samples[i + 1 + rx->pan]) {
+          int replace_index = -1;
+          int start_range = i - ignore_range;
+          int end_range = i + ignore_range;
+
+          // Check if the peak is within the ignore range of any existing peak
+          for (int j = 0; j < num_peaks; j++) {
+            if (peak_positions[j] >= start_range && peak_positions[j] <= end_range) {
+              if (s > peaks[j]) {
+                replace_index = j;
+                break;
+              } else {
+                replace_index = -2;
+                break;
+              }
+            }
+          }
+
+          // Replace the existing peak if a higher peak is found within the ignore range
+          if (replace_index >= 0) {
+            peaks[replace_index] = s;
+            peak_positions[replace_index] = i;
+          }
+          // Add the peak if no peaks are found within the ignore range
+          else if (replace_index == -1) {
+            // Find the index of the lowest peak
+            int lowest_peak_index = 0;
+
+            for (int j = 1; j < num_peaks; j++) {
+              if (peaks[j] < peaks[lowest_peak_index]) {
+                lowest_peak_index = j;
+              }
+            }
+
+            // Replace the lowest peak if the current peak is higher
+            if (s > peaks[lowest_peak_index]) {
+              peaks[lowest_peak_index] = s;
+              peak_positions[lowest_peak_index] = i;
+            }
+          }
+        }
+      }
+    }
+
+    // Sort peaks in descending order
+    for (int i = 0; i < num_peaks - 1; i++) {
+      for (int j = i + 1; j < num_peaks; j++) {
+        if (peaks[i] < peaks[j]) {
+          double temp_peak = peaks[i];
+          peaks[i] = peaks[j];
+          peaks[j] = temp_peak;
+          int temp_pos = peak_positions[i];
+          peak_positions[i] = peak_positions[j];
+          peak_positions[j] = temp_pos;
+        }
+      }
+    }
+
+    // Draw peak values on the chart
+#define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
+    cairo_set_source_rgba(cr, COLOUR_PAN_TEXT); // Set text color
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    double previous_text_positions[num_peaks][2]; // Store previous text positions (x, y)
+
+    for (int j = 0; j < num_peaks; j++) {
+      previous_text_positions[j][0] = -1; // Initialize x positions
+      previous_text_positions[j][1] = -1; // Initialize y positions
+    }
+
+    for (int j = 0; j < num_peaks; j++) {
+      if (peak_positions[j] > 0) {
+        char peak_label[32];
+        snprintf(peak_label, sizeof(peak_label), "%.1f dBm", peaks[j]);
+        cairo_text_extents_t extents;
+        cairo_text_extents(cr, peak_label, &extents);
+        // Calculate initial text position: slightly above the peak
+        double text_x = peak_positions[j];
+        double text_y = floor((rx->panadapter_high - peaks[j])
+                              * (double)myheight
+                              / (rx->panadapter_high - rx->panadapter_low)) - 5;
+
+        // Ensure text stays within the drawing area
+        if (text_y < extents.height) {
+          text_y = extents.height; // Push text down to fit inside the top boundary
+        }
+
+        // Adjust position to avoid overlap with previous labels
+        for (int k = 0; k < j; k++) {
+          double prev_x = previous_text_positions[k][0];
+          double prev_y = previous_text_positions[k][1];
+
+          if (prev_x >= 0 && prev_y >= 0) {
+            double distance_x = fabs(text_x - prev_x);
+            double distance_y = fabs(text_y - prev_y);
+
+            if (distance_y < extents.height && distance_x < extents.width) {
+              // Try moving vertically first
+              if (text_y + extents.height < myheight) {
+                text_y += extents.height + 5; // Move below
+              } else if (text_y - extents.height > 0) {
+                text_y -= extents.height + 5; // Move above
+              } else {
+                // Move horizontally if no vertical space is available
+                if (text_x + extents.width < mywidth) {
+                  text_x += extents.width + 5; // Move right
+                } else if (text_x - extents.width > 0) {
+                  text_x -= extents.width + 5; // Move left
+                }
+              }
+            }
+          }
+        }
+
+        // Draw text
+        cairo_move_to(cr, text_x - (extents.width / 2.0), text_y);
+        cairo_show_text(cr, peak_label);
+        // Store current text position for overlap checks
+        previous_text_positions[j][0] = text_x;
+        previous_text_positions[j][1] = text_y;
+      }
+    }
+  }
+
   if (rx->id == 0 && !radio_is_remote) {
     display_panadapter_messages(cr, mywidth, rx->fps);
   }

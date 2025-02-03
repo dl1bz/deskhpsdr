@@ -48,6 +48,7 @@ static GtkWidget *tx_spin_high;
 static GtkWidget *tx_container;
 static GtkWidget *cfc_container;
 static GtkWidget *dexp_container;
+static GtkWidget *peaks_container;
 
 #if defined (__LDESK__)
   static GtkWidget *load_button;
@@ -61,7 +62,8 @@ static GtkWidget *dexp_container;
 enum _containers {
   TX_CONTAINER = 1,
   CFC_CONTAINER,
-  DEXP_CONTAINER
+  DEXP_CONTAINER,
+  PEAKS_CONTAINER
 };
 static int which_container = TX_CONTAINER;
 
@@ -453,6 +455,31 @@ static gboolean close_cb () {
   return TRUE;
 }
 
+static void tx_panadapter_peaks_in_passband_filled_cb(GtkWidget *widget, gpointer data) {
+  transmitter->panadapter_peaks_in_passband_filled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
+static void tx_panadapter_hide_noise_filled_cb(GtkWidget *widget, gpointer data) {
+  transmitter->panadapter_hide_noise_filled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
+static void tx_panadapter_peaks_on_cb(GtkWidget *widget, gpointer data) {
+  transmitter->panadapter_peaks_on = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
+static void tx_panadapter_num_peaks_value_changed_cb(GtkWidget *widget, gpointer data) {
+  transmitter->panadapter_num_peaks = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  printf("New peaks no %d", transmitter->panadapter_num_peaks);
+}
+
+static void tx_panadapter_ignore_range_divider_value_changed_cb(GtkWidget *widget, gpointer data) {
+  transmitter->panadapter_ignore_range_divider = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+}
+
+static void tx_panadapter_ignore_noise_percentile_value_changed_cb(GtkWidget *widget, gpointer data) {
+  transmitter->panadapter_ignore_noise_percentile = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+}
+
 static void sel_cb(GtkWidget *widget, gpointer data) {
   //
   // Handle radio button in the top row, this selects
@@ -472,6 +499,10 @@ static void sel_cb(GtkWidget *widget, gpointer data) {
 
   case DEXP_CONTAINER:
     my_container = dexp_container;
+    break;
+
+  case PEAKS_CONTAINER:
+    my_container = peaks_container;
     break;
 
   default:
@@ -944,6 +975,7 @@ void tx_menu(GtkWidget *parent) {
   tx_container = gtk_fixed_new();
   cfc_container = gtk_fixed_new();
   dexp_container = gtk_fixed_new();
+  peaks_container = gtk_fixed_new();
   col++;
 #if defined (__LDESK__)
   mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "TX Main Settings");
@@ -974,6 +1006,12 @@ void tx_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == DEXP_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(DEXP_CONTAINER));
+  col++;
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peaks Settings");
+  gtk_widget_set_name(btn, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == PEAKS_CONTAINER));
+  gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
+  g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(PEAKS_CONTAINER));
   //
   // TX container and controls therein
   //
@@ -1593,6 +1631,75 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), 1000.0 * transmitter->dexp_hold);
   gtk_grid_attach(GTK_GRID(dexp_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(DEXP_HOLD));
+  //
+  // Peaks container and controls therein
+  //
+  gtk_grid_attach(GTK_GRID(grid), peaks_container, 0, 1, 4, 1);
+  GtkWidget *peaks_grid = gtk_grid_new();
+  gtk_grid_set_column_spacing (GTK_GRID(peaks_grid), 5);
+  gtk_grid_set_row_spacing (GTK_GRID(peaks_grid), 5);
+  gtk_container_add(GTK_CONTAINER(peaks_container), peaks_grid);
+  col = 0;
+  row = 0;
+  GtkWidget *b_panadapter_peaks_on = gtk_check_button_new_with_label("Show Peak Numbers on Panadapter");
+  gtk_widget_set_name(b_panadapter_peaks_on, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_on), transmitter->panadapter_peaks_on);
+  gtk_widget_show(b_panadapter_peaks_on);
+  gtk_grid_attach(GTK_GRID(peaks_grid), b_panadapter_peaks_on, col, row, 1, 1);
+  g_signal_connect(b_panadapter_peaks_on, "toggled", G_CALLBACK(tx_panadapter_peaks_on_cb), NULL);
+  row++;
+  GtkWidget *b_pan_peaks_in_passband = gtk_check_button_new_with_label("Show Peaks in Passband Only");
+  gtk_widget_set_name(b_pan_peaks_in_passband, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_peaks_in_passband),
+                               transmitter->panadapter_peaks_in_passband_filled);
+  gtk_widget_show(b_pan_peaks_in_passband);
+  gtk_grid_attach(GTK_GRID(peaks_grid), b_pan_peaks_in_passband, col, row, 1, 1);
+  g_signal_connect(b_pan_peaks_in_passband, "toggled", G_CALLBACK(tx_panadapter_peaks_in_passband_filled_cb), NULL);
+  GtkWidget *b_pan_hide_noise = gtk_check_button_new_with_label("Hide Peaks Below Noise Floor");
+  gtk_widget_set_name(b_pan_hide_noise, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_hide_noise), transmitter->panadapter_hide_noise_filled);
+  gtk_widget_show(b_pan_hide_noise);
+  gtk_grid_attach(GTK_GRID(peaks_grid), b_pan_hide_noise, col, ++row, 1, 1);
+  g_signal_connect(b_pan_hide_noise, "toggled", G_CALLBACK(tx_panadapter_hide_noise_filled_cb), NULL);
+  label = gtk_label_new("Panadapter Peaks:");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peaks_grid), label, col, ++row, 1, 1);
+  col++;
+  GtkWidget *panadapter_num_peaks_r = gtk_spin_button_new_with_range(1.0, 10.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_num_peaks_r), (double)transmitter->panadapter_num_peaks);
+  gtk_widget_show(panadapter_num_peaks_r);
+  gtk_grid_attach(GTK_GRID(peaks_grid), panadapter_num_peaks_r, col, row, 1, 1);
+  g_signal_connect(panadapter_num_peaks_r, "value_changed", G_CALLBACK(tx_panadapter_num_peaks_value_changed_cb), NULL);
+  row++;
+  col = 0;
+  label = gtk_label_new("Panadapter Ignore Adjacent Peaks:");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peaks_grid), label, col, row, 1, 1);
+  col++;
+  GtkWidget *panadapter_ignore_range_divider_r = gtk_spin_button_new_with_range(1.0, 150.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_ignore_range_divider_r),
+                            (double)transmitter->panadapter_ignore_range_divider);
+  gtk_widget_show(panadapter_ignore_range_divider_r);
+  gtk_grid_attach(GTK_GRID(peaks_grid), panadapter_ignore_range_divider_r, col, row, 1, 1);
+  g_signal_connect(panadapter_ignore_range_divider_r, "value_changed",
+                   G_CALLBACK(tx_panadapter_ignore_range_divider_value_changed_cb), NULL);
+  row++;
+  col = 0;
+  label = gtk_label_new("Panadapter Noise Floor Percentile:");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peaks_grid), label, col, row, 1, 1);
+  col++;
+  GtkWidget *panadapter_ignore_noise_percentile_r = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_ignore_noise_percentile_r),
+                            (double)transmitter->panadapter_ignore_noise_percentile);
+  gtk_widget_show(panadapter_ignore_noise_percentile_r);
+  gtk_grid_attach(GTK_GRID(peaks_grid), panadapter_ignore_noise_percentile_r, col, row, 1, 1);
+  g_signal_connect(panadapter_ignore_noise_percentile_r, "value_changed",
+                   G_CALLBACK(tx_panadapter_ignore_noise_percentile_value_changed_cb), NULL);
+  row++;
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
 
@@ -1606,16 +1713,25 @@ void tx_menu(GtkWidget *parent) {
   case TX_CONTAINER:
     gtk_widget_hide(cfc_container);
     gtk_widget_hide(dexp_container);
+    gtk_widget_hide(peaks_container);
     break;
 
   case CFC_CONTAINER:
     gtk_widget_hide(tx_container);
     gtk_widget_hide(dexp_container);
+    gtk_widget_hide(peaks_container);
     break;
 
   case DEXP_CONTAINER:
     gtk_widget_hide(tx_container);
     gtk_widget_hide(cfc_container);
+    gtk_widget_hide(peaks_container);
+    break;
+
+  case PEAKS_CONTAINER:
+    gtk_widget_hide(tx_container);
+    gtk_widget_hide(cfc_container);
+    gtk_widget_hide(dexp_container);
     break;
   }
 }

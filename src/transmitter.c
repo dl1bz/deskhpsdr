@@ -321,6 +321,12 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.alex_antenna",      tx->id,               tx->alex_antenna);
   SetPropI1("transmitter.%d.panadapter_low",    tx->id,               tx->panadapter_low);
   SetPropI1("transmitter.%d.panadapter_high",   tx->id,               tx->panadapter_high);
+  SetPropI1("transmitter.%d.panadapter_peaks_on", tx->id,             tx->panadapter_peaks_on);
+  SetPropI1("transmitter.%d.panadapter_num_peaks", tx->id,            tx->panadapter_num_peaks);
+  SetPropI1("transmitter.%d.panadapter_ignore_range_divider", tx->id, tx->panadapter_ignore_range_divider);
+  SetPropI1("transmitter.%d.panadapter_ignore_noise_percentile", tx->id, tx->panadapter_ignore_noise_percentile);
+  SetPropI1("transmitter.%d.panadapter_hide_noise_filled", tx->id,    tx->panadapter_hide_noise_filled);
+  SetPropI1("transmitter.%d.panadapter_peaks_in_passband_filled", tx->id, tx->panadapter_peaks_in_passband_filled);
   SetPropI1("transmitter.%d.local_microphone",  tx->id,               tx->local_microphone);
   SetPropS1("transmitter.%d.microphone_name",   tx->id,               tx->microphone_name);
   SetPropI1("transmitter.%d.puresignal",        tx->id,               tx->puresignal);
@@ -402,6 +408,12 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.alex_antenna",      tx->id,               tx->alex_antenna);
   GetPropI1("transmitter.%d.panadapter_low",    tx->id,               tx->panadapter_low);
   GetPropI1("transmitter.%d.panadapter_high",   tx->id,               tx->panadapter_high);
+  GetPropI1("transmitter.%d.panadapter_peaks_on", tx->id,             tx->panadapter_peaks_on);
+  GetPropI1("transmitter.%d.panadapter_num_peaks", tx->id,            tx->panadapter_num_peaks);
+  GetPropI1("transmitter.%d.panadapter_ignore_range_divider", tx->id, tx->panadapter_ignore_range_divider);
+  GetPropI1("transmitter.%d.panadapter_ignore_noise_percentile", tx->id, tx->panadapter_ignore_noise_percentile);
+  GetPropI1("transmitter.%d.panadapter_hide_noise_filled", tx->id,    tx->panadapter_hide_noise_filled);
+  GetPropI1("transmitter.%d.panadapter_peaks_in_passband_filled", tx->id, tx->panadapter_peaks_in_passband_filled);
   GetPropI1("transmitter.%d.local_microphone",  tx->id,               tx->local_microphone);
   GetPropS1("transmitter.%d.microphone_name",   tx->id,               tx->microphone_name);
   GetPropI1("transmitter.%d.puresignal",        tx->id,               tx->puresignal);
@@ -905,6 +917,12 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   tx->panadapter_high = 0;
   tx->panadapter_low = -70;
   tx->panadapter_step = 10;
+  tx->panadapter_peaks_on = 0;
+  tx->panadapter_num_peaks = 3;
+  tx->panadapter_ignore_range_divider = 24;
+  tx->panadapter_ignore_noise_percentile = 50;
+  tx->panadapter_hide_noise_filled = 1;
+  tx->panadapter_peaks_in_passband_filled = 0;
   tx->displaying = 0;
   tx->alex_antenna = 0; // default: ANT1
   t_print("%s: id=%d buffer_size=%d mic_sample_rate=%d mic_dsp_rate=%d iq_output_rate=%d output_samples=%d width=%d height=%d\n",
