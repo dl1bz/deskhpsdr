@@ -494,7 +494,8 @@ void display_menu(GtkWidget *parent) {
   //----------------------------------------------------------------------------------------------------------
   GtkWidget *b_panadapter_peaks_as_smeter = gtk_check_button_new_with_label("Show Peak Labels as S-Meter values");
   gtk_widget_set_name(b_panadapter_peaks_as_smeter, "boldlabel");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_as_smeter), active_receiver->panadapter_peaks_as_smeter);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_as_smeter),
+                               active_receiver->panadapter_peaks_as_smeter);
   gtk_widget_show(b_panadapter_peaks_as_smeter);
   gtk_grid_attach(GTK_GRID(peaks_grid), b_panadapter_peaks_as_smeter, col, row, 1, 1);
   g_signal_connect(b_panadapter_peaks_as_smeter, "toggled", G_CALLBACK(panadapter_peaks_as_smeter_cb), NULL);
