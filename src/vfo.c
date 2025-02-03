@@ -1455,28 +1455,28 @@ void vfo_id_move_to(int id, long long hz) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, gpointer data) {
-/*
-#if defined (__LDESK__)
+  /*
+  #if defined (__LDESK__)
 
-  if (event->state) {
+    if (event->state) {
+      if (event->direction == GDK_SCROLL_UP) {
+        vfo_step(1);
+      } else {
+        vfo_step(-1);
+      }
+    }
+
+  #else
+
     if (event->direction == GDK_SCROLL_UP) {
       vfo_step(1);
     } else {
       vfo_step(-1);
     }
-  }
 
-#else
-
-  if (event->direction == GDK_SCROLL_UP) {
-    vfo_step(1);
-  } else {
-    vfo_step(-1);
-  }
-
-#endif
-  return FALSE;
-*/
+  #endif
+    return FALSE;
+  */
   return rx_scroll_event(widget, event, data);
 }
 
