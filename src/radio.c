@@ -1429,6 +1429,12 @@ void radio_start_radio() {
     break;
   }
 
+  for (unsigned int i = 0; i < strlen(property_path); i++) {
+
+    if (property_path[i] == '/') { property_path[i] = '.'; }
+
+  }
+
   //
   // Determine number of ADCs in the device
   //
@@ -2226,7 +2232,6 @@ void radio_set_tune(int state) {
 
     schedule_high_priority();
 
-    //schedule_general();
     if (state) {
       if (!duplex) {
         for (int i = 0; i < receivers; i++) {
@@ -3032,6 +3037,13 @@ void radio_save_state() {
 int radio_remote_start(void *data) {
   const char *server = (const char *)data;
   snprintf(property_path, sizeof(property_path), "%s@%s.props", radio->name, server);
+
+  for (unsigned int i = 0; i < strlen(property_path); i++) {
+
+    if (property_path[i] == '/') { property_path[i] = '.'; }
+
+  }
+
   radio_is_remote = TRUE;
   optimize_for_touchscreen = 1;
 
