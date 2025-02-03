@@ -309,6 +309,7 @@ uint32_t GetDDCEnables(void);
 //
 // SetOpenCollectorOutputs(unsigned int bits)
 // sets the 7 open collector output bits
+// data must be provided in bits 0-6
 //
 void SetOpenCollectorOutputs(unsigned int bits);
 

@@ -560,7 +560,7 @@ uint32_t GetDDCEnables(void) {
 //
 // SetOpenCollectorOutputs(unsigned int bits)
 // sets the 7 open collector output bits
-// which are in b0:6 or "bits"
+// data must be provided in bits 6:0
 //
 void SetOpenCollectorOutputs(unsigned int bits) {
   uint32_t Register;                              // FPGA register content
@@ -569,9 +569,9 @@ void SetOpenCollectorOutputs(unsigned int bits) {
   Register = GPIORegValue;                        // get current settings
   BitMask = (0b1111111) << VOPENCOLLECTORBITS;
   Register = Register & ~BitMask;                 // strip old bits, add new
-  Register |= (bits << VOPENCOLLECTORBITS);
-  GPIORegValue = Register;                    // store it back
-  RegisterWrite(VADDRRFGPIOREG, Register);  // and write to it
+  Register |= (bits << VOPENCOLLECTORBITS);       // OC bits are in bits (6:0)
+  GPIORegValue = Register;                        // store it back
+  RegisterWrite(VADDRRFGPIOREG, Register);        // and write to it
   sem_post(&RFGPIOMutex);                         // clear protected access
 }
 
