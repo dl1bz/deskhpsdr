@@ -149,6 +149,10 @@ static void panadapter_peaks_on_cb(GtkWidget *widget, gpointer data) {
   active_receiver->panadapter_peaks_on = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static void panadapter_peaks_as_smeter_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->panadapter_peaks_as_smeter = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
 static void time_value_changed_cb(GtkWidget *widget, gpointer data) {
   active_receiver->display_average_time = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   rx_set_average(active_receiver);
@@ -479,13 +483,24 @@ void display_menu(GtkWidget *parent) {
   gtk_container_add(GTK_CONTAINER(peaks_container), peaks_grid);
   col = 0;
   row = 0;
-  GtkWidget *b_panadapter_peaks_on = gtk_check_button_new_with_label("Show Peak Numbers on Panadapter");
+  GtkWidget *b_panadapter_peaks_on = gtk_check_button_new_with_label("Show Peak Labels on Panadapter");
   gtk_widget_set_name(b_panadapter_peaks_on, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_on), active_receiver->panadapter_peaks_on);
   gtk_widget_show(b_panadapter_peaks_on);
   gtk_grid_attach(GTK_GRID(peaks_grid), b_panadapter_peaks_on, col, row, 1, 1);
   g_signal_connect(b_panadapter_peaks_on, "toggled", G_CALLBACK(panadapter_peaks_on_cb), NULL);
   row++;
+#if defined (__LDESK__)
+  //----------------------------------------------------------------------------------------------------------
+  GtkWidget *b_panadapter_peaks_as_smeter = gtk_check_button_new_with_label("Show Peak Labels as S-Meter values");
+  gtk_widget_set_name(b_panadapter_peaks_as_smeter, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_as_smeter), active_receiver->panadapter_peaks_as_smeter);
+  gtk_widget_show(b_panadapter_peaks_as_smeter);
+  gtk_grid_attach(GTK_GRID(peaks_grid), b_panadapter_peaks_as_smeter, col, row, 1, 1);
+  g_signal_connect(b_panadapter_peaks_as_smeter, "toggled", G_CALLBACK(panadapter_peaks_as_smeter_cb), NULL);
+  row++;
+  //----------------------------------------------------------------------------------------------------------
+#endif
   GtkWidget *b_pan_peaks_in_passband = gtk_check_button_new_with_label("Show Peaks in Passband Only");
   gtk_widget_set_name(b_pan_peaks_in_passband, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_peaks_in_passband),

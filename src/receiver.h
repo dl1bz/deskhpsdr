@@ -181,6 +181,7 @@ typedef struct _receiver {
   int panadapter_ignore_noise_percentile;
   int panadapter_hide_noise_filled;
   int panadapter_peaks_in_passband_filled;
+  int panadapter_peaks_as_smeter;
 
   int waterfall_low;
   int waterfall_high;
