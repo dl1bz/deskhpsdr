@@ -54,11 +54,11 @@ static short int uplimits[NUM_SWERTE] = {
   -122, -116, -110, -104, -98, -92, -86, -80, -74, -69, -64, -59, -54, -49, -44, -34, -24, -14, 0
 };
 
-const char* (dbm2smeter[NUM_SWERTE + 1]) = {
+static const char* (dbm2smeter[NUM_SWERTE + 1]) = {
   "no signal", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S9+5db", "S9+10db", "S9+15db", "S9+20db", "S9+25db", "S9+30db", "S9+40db", "S9+50db", "S9+60db", "out of range"
 };
 
-unsigned char get_SWert(short int dbm) {
+static unsigned char get_SWert(short int dbm) {
   int i;
 
   for (i = 0; i < NUM_SWERTE; i++) {

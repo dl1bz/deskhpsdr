@@ -113,6 +113,39 @@ static gboolean panadapter_scroll_event_cb(GtkWidget *widget, GdkEventScroll *ev
   return rx_scroll_event(widget, event, data);
 }
 
+#if defined (__LDESK__)
+//----------------------------------------------------------------------------------------------
+#define NUM_SWERTE 19   /* Number of S-Werte */
+
+// lower limits
+static short int lowlimits[NUM_SWERTE] = {
+  -200, -121, -115, -109, -103, -97, -91, -85, -79, -73, -68, -63, -58, -53, -48, -43, -33, -23, -13
+};
+// upper limits
+static short int uplimits[NUM_SWERTE] = {
+  -122, -116, -110, -104, -98, -92, -86, -80, -74, -69, -64, -59, -54, -49, -44, -34, -24, -14, 0
+};
+
+static const char* (dbm2smeter[NUM_SWERTE + 1]) = {
+  "no signal", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S9+5db", "S9+10db", "S9+15db", "S9+20db", "S9+25db", "S9+30db", "S9+40db", "S9+50db", "S9+60db", "out of range"
+};
+
+
+static unsigned char get_SWert(short int dbm) {
+  int i;
+
+  for (i = 0; i < NUM_SWERTE; i++) {
+    if ((dbm >= lowlimits[i]) && (dbm <= uplimits[i])) {
+      return i;
+    }
+  }
+
+  return NUM_SWERTE; // no valid S-Werte -> return not defined
+}
+
+//----------------------------------------------------------------------------------------------
+#endif
+
 void get_local_time(char *zeitString, size_t groesse) {
   // Aktuelle Zeit abrufen
   time_t aktuelleZeit;
@@ -706,7 +739,11 @@ void rx_panadapter_update(RECEIVER *rx) {
     // #define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
     cairo_set_source_rgba(cr, COLOUR_PAN_TEXT); // Set text color
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
     double previous_text_positions[num_peaks][2]; // Store previous text positions (x, y)
 
     for (int j = 0; j < num_peaks; j++) {
@@ -717,7 +754,11 @@ void rx_panadapter_update(RECEIVER *rx) {
     for (int j = 0; j < num_peaks; j++) {
       if (peak_positions[j] > 0) {
         char peak_label[32];
+#if defined (__LDESK__)
+        snprintf(peak_label, sizeof(peak_label), "%s", dbm2smeter[get_SWert((int)(peaks[j] - 0.5))]);
+#else
         snprintf(peak_label, sizeof(peak_label), "%.1f dBm", peaks[j]);
+#endif
         cairo_text_extents_t extents;
         cairo_text_extents(cr, peak_label, &extents);
         // Calculate initial text position: slightly above the peak
