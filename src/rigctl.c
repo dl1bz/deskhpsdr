@@ -326,14 +326,14 @@ void launch_sertune() {
       }
 
       sertune_thread_id = g_thread_new("serTUNE-Monitoring", monitor_sertune_thread, &sertune_fd);
-      t_print("---- LAUNCHING serTUNE control Thread Id %d ----\n", sertune_thread_id);
+      t_print("---- LAUNCHING serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
     }
   } else {
     if (sertune_thread_id) {
       sertune_thread_id = NULL;
       close(sertune_fd);
       sertune_fd = -1;
-      t_print("---- Shutdown SerTUNE Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
+      t_print("---- Shutdown serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
     }
   }
 }
