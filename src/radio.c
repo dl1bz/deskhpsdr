@@ -2087,49 +2087,6 @@ void radio_set_vox(int state) {
   schedule_receive_specific();
 }
 
-#if defined (__LDESK__)
-static void tune_serial_set(int rtsdtrEnable) {
-  int fd;
-  int flags;
-  char *serialdev = SerialPorts[MAX_SERIAL].port;
-  // fd = open(serialdev, O_RDWR | O_NOCTTY);
-  // open serial in non-blocking mode, not important for control only RTS or DTR
-  fd = open(serialdev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
-
-  if (fd < 0) {
-    t_print("%s: open serial port %s for TUNE failed\n", __FUNCTION__, serialdev);
-
-    if (SerialPorts[MAX_SERIAL].enable) {
-      SerialPorts[MAX_SERIAL].enable = 0;
-      t_print("%s: disable serial port %s for TUNE now\n", __FUNCTION__, serialdev);
-    }
-  } else {
-    ioctl(fd, TIOCMGET, &flags);
-    // t_print("%s: Flags before are %x.\n", __FUNCTION__, flags);
-
-    if (rtsdtrEnable != 0) {
-      // set RTS and DTR to HIGH
-      flags |= TIOCM_RTS;
-      flags |= TIOCM_DTR;
-    } else {
-      // set RTS and DTR to LOW
-      flags &= ~TIOCM_RTS;
-      flags &= ~TIOCM_DTR;
-    }
-
-    ioctl(fd, TIOCMSET, &flags);
-
-    // ioctl(fd, TIOCMGET, &flags);
-    // t_print("%s: Flags after are %x.\n", __FUNCTION__, flags);
-
-    if (rtsdtrEnable == 0) {
-      close(fd);
-    }
-  }
-}
-
-#endif
-
 void radio_set_tune(int state) {
   t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox, vox, tune, state);
 
@@ -2148,13 +2105,6 @@ void radio_set_tune(int state) {
     }
 
     if (state) {
-#if defined (__LDESK__)
-
-      if (SerialPorts[MAX_SERIAL].enable) {
-        // tune_serial_set(1);
-      }
-
-#endif
       //
       // Ron has reported that TX underruns occur if TUNEing with
       // compressor or CFC engaged, and that this can be
@@ -2319,13 +2269,6 @@ void radio_set_tune(int state) {
 
       // restore settings we switched off earlier
       tx_set_compressor(transmitter);
-#if defined (__LDESK__)
-
-      if (SerialPorts[MAX_SERIAL].enable) {
-        // tune_serial_set(0);
-      }
-
-#endif
       tune = state;
       radio_calc_drive_level();
 #if defined (__LDESK__) && defined (__HAVEATU__)
