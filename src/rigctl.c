@@ -259,6 +259,12 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
   while (!(fd < 0)) {
     ioctl(fd, TIOCMGET, &status);
 
+  /*
+  if (mox || vox || tune) {
+    t_print("%s: MOX: %d VOX: %d TUNE: %d\n", __FUNCTION__, mox, vox, tune); // add debug output
+  }
+  */
+
     if (radio_is_transmitting()) {
       g_mutex_lock(&sertune_mutex);
 
