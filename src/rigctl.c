@@ -192,10 +192,10 @@ static bool get_serptt_cts(int fd) {
 
 // Funktion zur Aktualisierung des CTS-Status der seriellen PTT
 static gboolean update_serptt_cts(gpointer user_data) {
-  bool current_status = GPOINTER_TO_INT(user_data);
+  bool current_state_serptt = GPOINTER_TO_INT(user_data);
 
-  if (current_status != serptt_cts) {
-    serptt_cts = current_status;
+  if (current_state_serptt != serptt_cts) {
+    serptt_cts = current_state_serptt;
 
     if (serptt_cts) {
       t_print("%s: serial PTT ON\n", __FUNCTION__);
@@ -215,8 +215,8 @@ static gboolean update_serptt_cts(gpointer user_data) {
   return G_SOURCE_REMOVE; // Einmalige Ausführung
 }
 
-static gpointer monitor_cts_thread(gpointer user_data) {
-  bool last_status = 0;
+static gpointer monitor_serptt_cts_thread(gpointer user_data) {
+  bool last_state_serptt = 0;
   int fd = *(int *)user_data;
 
   if (fd < 0) {
@@ -228,11 +228,11 @@ static gpointer monitor_cts_thread(gpointer user_data) {
   }
 
   while (!(fd < 0)) {
-    bool current_status = get_serptt_cts(fd);
+    bool current_state_serptt = get_serptt_cts(fd);
 
-    if (current_status != last_status) {
-      last_status = current_status;
-      g_idle_add(update_serptt_cts, GINT_TO_POINTER(current_status));
+    if (current_state_serptt != last_state_serptt) {
+      last_state_serptt = current_state_serptt;
+      g_idle_add(update_serptt_cts, GINT_TO_POINTER(current_state_serptt));
     }
 
     g_usleep(50000); // 50 ms warten
@@ -249,7 +249,7 @@ void launch_serptt() {
       SerialPorts[MAX_SERIAL + 1].enable = 0;
       t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL + 1].port);
     } else {
-      serptt_thread_id = g_thread_new("serPTT-Monitoring", monitor_cts_thread, &serptt_fd);
+      serptt_thread_id = g_thread_new("serPTT-Monitoring", monitor_serptt_cts_thread, &serptt_fd);
       t_print("---- LAUNCHING serPTT control Thread Id %d ----\n", serptt_thread_id);
     }
   } else {
