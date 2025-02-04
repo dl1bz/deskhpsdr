@@ -263,7 +263,6 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
     if (radio_is_transmitting()) {
       g_mutex_lock(&sertune_mutex);
 
-      // g_idle_add(update_sertune, GINT_TO_POINTER(&fd));
       if (tune) {
         status |= TIOCM_RTS;               // Setze RTS
         status |= TIOCM_DTR;               // Setze DTR
@@ -277,10 +276,6 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
     } else {
       g_mutex_lock(&sertune_mutex);
       status &= ~TIOCM_RTS;              // Lösche RTS
-      ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
-      if (txmode != modeCWL && txmode != modeCWU) {
-        g_usleep(50000); // 50 ms warten
-      }
       status &= ~TIOCM_DTR;              // Lösche DTR
       ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
       g_mutex_unlock(&sertune_mutex);
@@ -324,10 +319,10 @@ void launch_sertune() {
       t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL].port);
     } else {
       if (!(sertune_fd < 0)) {
-        ioctl(sertune_fd, TIOCMGET, &status_sertune);
-        status_sertune &= ~TIOCM_RTS;                  // Lösche RTS
-        status_sertune &= ~TIOCM_DTR;                  // Lösche DTR
-        ioctl(sertune_fd, TIOCMSET, &status_sertune);  // Wende den neuen Status an
+        ioctl(sertune_fd, TIOCMGET, &status_sertune);  // get state
+        status_sertune &= ~TIOCM_RTS;                  // clear RTS
+        status_sertune &= ~TIOCM_DTR;                  // clear DTR
+        ioctl(sertune_fd, TIOCMSET, &status_sertune);  // set new state
       }
 
       sertune_thread_id = g_thread_new("serTUNE-Monitoring", monitor_sertune_thread, &sertune_fd);
