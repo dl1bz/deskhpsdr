@@ -247,6 +247,7 @@ static gpointer monitor_serptt_cts_thread(gpointer user_data) {
 static gpointer monitor_sertune_thread(gpointer user_data) {
   int fd = *(int *)user_data;
   int status;
+  int txmode = vfo_get_tx_mode();
 
   if (fd < 0) {
     if (SerialPorts[MAX_SERIAL].enable) {
@@ -276,6 +277,10 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
     } else {
       g_mutex_lock(&sertune_mutex);
       status &= ~TIOCM_RTS;              // Lösche RTS
+      ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
+      if (txmode != modeCWL && txmode != modeCWU) {
+        g_usleep(50000); // 50 ms warten
+      }
       status &= ~TIOCM_DTR;              // Lösche DTR
       ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
       g_mutex_unlock(&sertune_mutex);
