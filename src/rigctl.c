@@ -247,7 +247,6 @@ static gpointer monitor_serptt_cts_thread(gpointer user_data) {
 static gpointer monitor_sertune_thread(gpointer user_data) {
   int fd = *(int *)user_data;
   int status;
-  int txmode = vfo_get_tx_mode();
 
   if (fd < 0) {
     if (SerialPorts[MAX_SERIAL].enable) {
