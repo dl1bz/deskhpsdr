@@ -82,6 +82,7 @@ int rigctl_tcp_autoreporting = 0;
 
 #if defined (__LDESK__)
   int serptt_fd;
+  int sertune_fd;
   volatile bool serptt_cts = false;
 #endif
 
@@ -103,6 +104,8 @@ static GThread *rigctl_server_thread_id = NULL;
 static GThread *rigctl_cw_thread_id = NULL;
 #if defined (__LDESK__)
   static GThread *serptt_thread_id = NULL;
+  static GThread *sertune_thread_id = NULL;
+  GMutex sertune_mutex;
 #endif
 
 static pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
@@ -241,6 +244,49 @@ static gpointer monitor_serptt_cts_thread(gpointer user_data) {
   return NULL;
 }
 
+static gpointer monitor_sertune_thread(gpointer user_data) {
+  int fd = *(int *)user_data;
+  int status;
+
+  if (fd < 0) {
+    if (SerialPorts[MAX_SERIAL].enable) {
+      SerialPorts[MAX_SERIAL].enable = 0;
+    }
+
+    t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL].port);
+  }
+
+  while (!(fd < 0)) {
+    ioctl(fd, TIOCMGET, &status);
+
+    if (radio_is_transmitting()) {
+      g_mutex_lock(&sertune_mutex);
+
+      // g_idle_add(update_sertune, GINT_TO_POINTER(&fd));
+      if (tune) {
+        status |= TIOCM_RTS;               // Setze RTS
+        status |= TIOCM_DTR;               // Setze DTR
+        ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
+      } else {
+        status |= TIOCM_DTR;               // Setze DTR
+        ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
+      }
+
+      g_mutex_unlock(&sertune_mutex);
+    } else {
+      g_mutex_lock(&sertune_mutex);
+      status &= ~TIOCM_RTS;              // Lösche RTS
+      status &= ~TIOCM_DTR;              // Lösche DTR
+      ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
+      g_mutex_unlock(&sertune_mutex);
+    }
+
+    g_usleep(10000); // 10 ms warten
+  }
+
+  return NULL;
+}
+
 void launch_serptt() {
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     serptt_fd = open(SerialPorts[MAX_SERIAL + 1].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
@@ -258,6 +304,36 @@ void launch_serptt() {
       close(serptt_fd);
       serptt_fd = -1;
       t_print("---- Shutdown SerPTT Thread at %s ----\n", SerialPorts[MAX_SERIAL + 1].port);
+    }
+  }
+}
+
+void launch_sertune() {
+  int status_sertune;
+
+  if (SerialPorts[MAX_SERIAL].enable) {
+    sertune_fd = open(SerialPorts[MAX_SERIAL].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
+
+    if (sertune_fd < 0) {
+      SerialPorts[MAX_SERIAL].enable = 0;
+      t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL].port);
+    } else {
+      if (!(sertune_fd < 0)) {
+        ioctl(sertune_fd, TIOCMGET, &status_sertune);
+        status_sertune &= ~TIOCM_RTS;                  // Lösche RTS
+        status_sertune &= ~TIOCM_DTR;                  // Lösche DTR
+        ioctl(sertune_fd, TIOCMSET, &status_sertune);  // Wende den neuen Status an
+      }
+
+      sertune_thread_id = g_thread_new("serTUNE-Monitoring", monitor_sertune_thread, &sertune_fd);
+      t_print("---- LAUNCHING serTUNE control Thread Id %d ----\n", sertune_thread_id);
+    }
+  } else {
+    if (sertune_thread_id) {
+      sertune_thread_id = NULL;
+      close(sertune_fd);
+      sertune_fd = -1;
+      t_print("---- Shutdown SerTUNE Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
     }
   }
 }

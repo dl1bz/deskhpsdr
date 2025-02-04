@@ -1430,9 +1430,7 @@ void radio_start_radio() {
   }
 
   for (unsigned int i = 0; i < strlen(property_path); i++) {
-
     if (property_path[i] == '/') { property_path[i] = '.'; }
-
   }
 
   //
@@ -1628,6 +1626,10 @@ void radio_start_radio() {
   }
 
 #if defined (__LDESK__)
+
+  if (SerialPorts[MAX_SERIAL].enable) {
+    launch_sertune();
+  }
 
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     launch_serptt();
@@ -2086,7 +2088,7 @@ void radio_set_vox(int state) {
 }
 
 #if defined (__LDESK__)
-void tune_serial_set(int rtsdtrEnable) {
+static void tune_serial_set(int rtsdtrEnable) {
   int fd;
   int flags;
   char *serialdev = SerialPorts[MAX_SERIAL].port;
@@ -2149,7 +2151,7 @@ void radio_set_tune(int state) {
 #if defined (__LDESK__)
 
       if (SerialPorts[MAX_SERIAL].enable) {
-        tune_serial_set(1);
+        // tune_serial_set(1);
       }
 
 #endif
@@ -2320,7 +2322,7 @@ void radio_set_tune(int state) {
 #if defined (__LDESK__)
 
       if (SerialPorts[MAX_SERIAL].enable) {
-        tune_serial_set(0);
+        // tune_serial_set(0);
       }
 
 #endif
@@ -3039,9 +3041,7 @@ int radio_remote_start(void *data) {
   snprintf(property_path, sizeof(property_path), "%s@%s.props", radio->name, server);
 
   for (unsigned int i = 0; i < strlen(property_path); i++) {
-
     if (property_path[i] == '/') { property_path[i] = '.'; }
-
   }
 
   radio_is_remote = TRUE;

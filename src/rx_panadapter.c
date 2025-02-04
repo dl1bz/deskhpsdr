@@ -740,7 +740,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-
     double previous_text_positions[num_peaks][2]; // Store previous text positions (x, y)
 
     for (int j = 0; j < num_peaks; j++) {
