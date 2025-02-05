@@ -33,6 +33,7 @@ struct _SERIALPORT {
   int  andromeda;   // flag for handling ANDROMEDA console
   int  g2;          // This port is used for G2-internal communication
   int  autoreporting;
+  int  swapRtsDtr; // invert RTS and DTR control signals if needed
 };
 
 typedef struct _SERIALPORT SERIALPORT;

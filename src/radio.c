@@ -1123,6 +1123,7 @@ void radio_start_radio() {
     SerialPorts[id].baud = 0;
     SerialPorts[id].autoreporting = 0;
     SerialPorts[id].g2 = 0;
+    SerialPorts[id].swapRtsDtr = 0;
     snprintf(SerialPorts[id].port, sizeof(SerialPorts[id].port), "/dev/ttyACM%d", id);
   }
 
@@ -2725,9 +2726,11 @@ static void radio_restore_state() {
   GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  GetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,    SerialPorts[MAX_SERIAL].swapRtsDtr);
   GetPropS1("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
   GetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
   GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
+  GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1, SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
 #endif
 
   for (int i = 0; i < n_adc; i++) {
@@ -2942,9 +2945,11 @@ void radio_save_state() {
   SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  SetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,    SerialPorts[MAX_SERIAL].swapRtsDtr);
   SetPropS1("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
   SetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
   SetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
+  SetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1, SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
 #endif
 
   for (int i = 0; i < n_adc; i++) {

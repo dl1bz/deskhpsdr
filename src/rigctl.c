@@ -257,36 +257,44 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
   }
 
   while (!(fd < 0)) {
-    ioctl(fd, TIOCMGET, &status);
+    ioctl(fd, TIOCMGET, &status);          // Read state
 
-  /*
-  if (mox || vox || tune) {
-    t_print("%s: MOX: %d VOX: %d TUNE: %d\n", __FUNCTION__, mox, vox, tune); // add debug output
-  }
-  */
+    /*
+    if (mox || vox || tune) {
+      t_print("%s: MOX: %d VOX: %d TUNE: %d\n", __FUNCTION__, mox, vox, tune); // add debug output
+    }
+    */
+
+    // if using TUNE we set RTS & DTR active,
+    // if we transmit (MOX, VOX, TUNE) set DTR active, which can be used as external PTT output
 
     if (radio_is_transmitting()) {
-      g_mutex_lock(&sertune_mutex);
+      g_mutex_lock(&sertune_mutex);        // Lock thread
 
       if (tune) {
-        status |= TIOCM_RTS;               // Setze RTS
-        status |= TIOCM_DTR;               // Setze DTR
-        ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
+        status |= TIOCM_RTS;               // Set RTS active
+        status |= TIOCM_DTR;               // Set DTR active
+        ioctl(fd, TIOCMSET, &status);      // Write new state
       } else {
-        status |= TIOCM_DTR;               // Setze DTR
-        ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
+        if (SerialPorts[MAX_SERIAL].swapRtsDtr) {
+          status |= TIOCM_RTS;             // Set RTS active instead DTR if RTS <-> DTR is swapped
+        } else {
+          status |= TIOCM_DTR;             // Set DTR active (default)
+        }
+
+        ioctl(fd, TIOCMSET, &status);      // Write new state
       }
 
-      g_mutex_unlock(&sertune_mutex);
+      g_mutex_unlock(&sertune_mutex);      // Unlock thread
     } else {
-      g_mutex_lock(&sertune_mutex);
-      status &= ~TIOCM_RTS;              // Lösche RTS
-      status &= ~TIOCM_DTR;              // Lösche DTR
-      ioctl(fd, TIOCMSET, &status);      // Wende den neuen Status an
-      g_mutex_unlock(&sertune_mutex);
+      g_mutex_lock(&sertune_mutex);        // Lock thread
+      status &= ~TIOCM_RTS;                // Clear RTS
+      status &= ~TIOCM_DTR;                // Clear DTR
+      ioctl(fd, TIOCMSET, &status);        // Set new state
+      g_mutex_unlock(&sertune_mutex);      // Unlock thread
     }
 
-    g_usleep(10000); // 10 ms warten
+    g_usleep(10000); // delay 10 ms
   }
 
   return NULL;
