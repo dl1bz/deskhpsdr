@@ -43,28 +43,51 @@
 
 #if defined (__LDESK__)
 //----------------------------------------------------------------------------------------------
+//
+// https://de.wikipedia.org/wiki/S-Meter
+//
 #define NUM_SWERTE 19   /* Number of S-Werte */
 
-// lower limits
-static short int lowlimits[NUM_SWERTE] = {
+// lower limits <= 30 MHz
+static short int lowlimitsHF[NUM_SWERTE] = {
   -200, -121, -115, -109, -103, -97, -91, -85, -79, -73, -68, -63, -58, -53, -48, -43, -33, -23, -13
+//      S1    S2    S3    S4    S5   S6   S7   S8   S9   +5   +10  +15  +20  +25  +30  +40  +50  +60
 };
-// upper limits
-static short int uplimits[NUM_SWERTE] = {
+// upper limits <= 30 MHz
+static short int uplimitsHF[NUM_SWERTE] = {
   -122, -116, -110, -104, -98, -92, -86, -80, -74, -69, -64, -59, -54, -49, -44, -34, -24, -14, 0
+};
+
+// lower limits > 30 MHz
+static short int lowlimitsUKW[NUM_SWERTE] = {
+  -200, -141, -135, -129, -123, -117, -111, -105, -99, -93, -88, -83, -78, -73, -68, -63, -53, -43, -33
+//      S1    S2    S3    S4    S5    S6    S7    S8   S9   +5   +10  +15  +20  +25  +30  +40  +50  +60
+};
+// upper limits > 30 MHz
+static short int uplimitsUKW[NUM_SWERTE] = {
+  -142, -136, -130, -124, -118, -112, -106, -100, -94, -89, -84, -79, -74, -69, -64, -54, -44, -34, 0
 };
 
 static const char* (dbm2smeter[NUM_SWERTE + 1]) = {
   "no signal", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S9+5db", "S9+10db", "S9+15db", "S9+20db", "S9+25db", "S9+30db", "S9+40db", "S9+50db", "S9+60db", "out of range"
 };
 
+
 static unsigned char get_SWert(short int dbm) {
   int i;
 
   for (i = 0; i < NUM_SWERTE; i++) {
-    if ((dbm >= lowlimits[i]) && (dbm <= uplimits[i])) {
-      return i;
-    }
+    // if VFO > 30 MHz reference S9 = -93dbm
+    if (vfo[active_receiver->id].frequency > 30000000LL) {
+        if ((dbm >= lowlimitsUKW[i]) && (dbm <= uplimitsUKW[i])) {
+          return i;
+        }
+    // if VFO <= 30 MHz reference S9 = -73dbm
+    } else {
+        if ((dbm >= lowlimitsHF[i]) && (dbm <= uplimitsHF[i])) {
+          return i;
+        }
+      }
   }
 
   return NUM_SWERTE; // no valid S-Werte -> return not defined
