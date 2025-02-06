@@ -35,7 +35,7 @@ heiko@AfuPi5:~/src/deskhpsdr $ ./LINUX/prep_linux.sh
 Per default only the base Soapy-API will be installed. If you want or need to use
 Soapy API support in deskHPSDR, edit the make.config.deskhpsdr and set SOAPYSDR=ON.
 The installation for Soapy modules does not become part of this guidance, that's your very
-own task. I don't need the Soapy-support, because I use a Hermes-Lite 2.
+own task. I personally don't need the Soapy API-support, because I use a Hermes-Lite 2.
 
 4. Compile the deskHPSDR
 
@@ -90,7 +90,8 @@ heiko@AfuPi5:~/src/deskhpsdr $ make x11install
 
 Have fun with the updated version !
 
-Troubleshooting:
+-------------------------------------------------------------------------------
+7. Troubleshooting:
 -------------------------------------------------------------------------------
 It could happen that "git pull" fails. The reason mostly is, you changed local files and
 git pull don't know now, which site is up-to-date - local or remote. You can delete the complete deskhpsdr directory
@@ -110,6 +111,13 @@ heiko@AfuPi5:~/src/deskhpsdr $ git update-index --assume-unchanged make.config.d
 
 It tells git, that we want to ignore all (local) changes in make.config.deskhpsdr. After this, "git pull" should
 work again correct.
+
+8. Remarks
+
+I check this instructions with my Pi5 and PiOS 64bit. All is working great.
+I use Pulseaudio for audio support (not ALSA) and GPIO support is activated too.
+And I use the classical X11 environment, not the newer Wayfire/Labwc (not stable enough yet and
+too much issues up to now). You can change the X11 environment in PiOS with raspi-config.
 
 Thats all, folks :)
 73 Heiko, DL1BZ
