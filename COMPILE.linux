@@ -53,7 +53,7 @@ We can now compile deskHPSDR:
 
 heiko@AfuPi5:~/src/deskhpsdr $ make
 
-5. Copy some needed fonts to your system
+4.3. Copy some needed fonts to your system
 
 For best desktop experience I collect some free availible fonts, published under the GPLv3 licence,
 so we can use them. So please install the fonts, deskHPSDR need them:
@@ -63,7 +63,7 @@ heiko@AfuPi5:~/src/deskhpsdr $ sudo cp ./X11fonts/*.otf /usr/share/fonts/opentyp
 
 5. A little help from me to install deskHPSDR in X11 environment easier
 
-After step 4 and 5, hopeful successful, you can do this:
+After step 4, hopeful successful, you can do this:
 
 heiko@AfuPi5:~/src/deskhpsdr $ make x11install
 

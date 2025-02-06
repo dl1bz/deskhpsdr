@@ -2900,7 +2900,7 @@ static void metis_start_stop(int command) {
 
     metis_send_buffer(buffer, 64);
 #if defined (__LDESK__)
-    usleep(100000);
+    // usleep(100000);
 #endif
   } else {
     // use TCP -- send a long packet
