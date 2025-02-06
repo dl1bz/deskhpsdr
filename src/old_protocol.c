@@ -1178,7 +1178,7 @@ static void process_control_bytes() {
 
 #if defined (__LDESK__)
   // old mechanism, back-patched before DL1YCFs patch in piHPSDR
-  // because timing problems at Hermes Lite 2 while Radio_PTT is used (issue by DH0DM)
+  // because timing problems at Hermes Lite 2 while Radio_PTT is used (issue located by DH0DM)
   if (previous_ptt != radio_ptt) {
     g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
   }
