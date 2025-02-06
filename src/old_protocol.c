@@ -1177,12 +1177,13 @@ static void process_control_bytes() {
   radio_ptt  = (control_in[0]     ) & 0x01;
 
 #if defined (__LDESK__)
-  // old version, back-patched
+  // old mechanism, back-patched before DL1YCFs patch in piHPSDR
+  // because timing problems at Hermes Lite 2 while Radio_PTT is used (issue by DH0DM)
   if (previous_ptt != radio_ptt) {
     g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
   }
 #else
-  // changed by DL1YCF
+  // changed by DL1YCF in piHPSDR
   if (previous_ptt != radio_ptt) {
     int m = vfo_get_tx_mode();
 
@@ -1194,8 +1195,8 @@ static void process_control_bytes() {
       // first will be executed first.
       //
       // t_print("%s: A_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
-      g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
-      // g_timeout_add(5,ext_mox_update, GINT_TO_POINTER(radio_ptt));
+      // g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
+      g_timeout_add(5,ext_mox_update, GINT_TO_POINTER(radio_ptt));
     } else {
       //
       // If "PTT off" comes from the radio and no CW:
