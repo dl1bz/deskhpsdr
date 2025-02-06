@@ -1,0 +1,113 @@
+Here the instructions for compile the deskHPSDR app under Linux.
+You need to have basic knowledge, how you work with the shell.
+
+1. First words and prerequisites
+
+1.1 Linux distribution
+
+This guidance is made for Debian-based distributions like Debian, Ubuntu or PiOS.
+For other distributions you need to adopt this guidance by yourself. Basically deskHPSDR
+should be run with any distribution, if all needed libraries are installed.
+
+For first start with Linux we need as prerequisite the git tool.
+Start a shell and do the following:
+
+heiko@AfuPi5:~ $ sudo apt-get update
+heiko@AfuPi5:~ $ sudo apt-get upgrade
+heiko@AfuPi5:~ $ sudo apt-get --yes install build-essential
+heiko@AfuPi5:~ $ sudo apt-get --yes install git
+
+2. Get the source code from github.com:
+
+heiko@AfuPi5:~ $ cd
+heiko@AfuPi5:~ $ mkdir -p src
+heiko@AfuPi5:~ $ cd src
+heiko@AfuPi5:~/src $ git clone https://github.com/dl1bz/deskhpsdr.git
+heiko@AfuPi5:~/src $ cd deskhpsdr
+heiko@AfuPi5:~/src/deskhpsdr $
+
+3. Prepare the Linux environment for compiling with the included shell script:
+
+heiko@AfuPi5:~/src/deskhpsdr $ ./LINUX/prep_linux.sh
+
+Per default only the base Soapy-API will be installed. If you want or need to use Soapy,
+you need edit the make.config.deskhpsdr and set SOAPYSDR=ON.
+The installation for Soapy modules does not become part of this guidance, that's your very
+own task. I don't need the Soapy-support, because I use a Hermes-Lite 2.
+
+4. Compile the deskHPSDR
+
+4.1 First edit make.config.deskhpsdr, but NOT the Makefile
+
+Edit the make.config.deskhpsdr (not the Makefile !!!) and set the options you want.
+Never change DESKTOP=ON to OFF, and check this settings too:
+ATU=OFF
+COPYMODE=OFF
+DEVEL=OFF
+
+The other options you can set how you want or need.
+
+4.2 Compiling
+
+We can now compile deskHPSDR:
+
+heiko@AfuPi5:~/src/deskhpsdr $ make
+
+5. Copy some needed fonts to your system
+
+For best desktop experience I collect some free availible fonts, published under the GPLv3 licence,
+so we can use them. So please install the fonts, deskHPSDR need them:
+
+heiko@AfuPi5:~/src/deskhpsdr $ sudo mkdir -p /usr/share/fonts/opentype/GNU
+heiko@AfuPi5:~/src/deskhpsdr $ sudo cp ./X11fonts/*.otf /usr/share/fonts/opentype/GNU
+
+5. A little help from me to install deskHPSDR in X11 environment easier
+
+After step 4 and 5, hopeful successful, you can do this:
+
+heiko@AfuPi5:~/src/deskhpsdr $ make x11install
+
+This will copy the deskhpsdr binary to /usr/local/bin and prepare your X11 environment for easy start deskHPSDR.
+In your X11 menu you should find in one of the sub-menus deskhpsdr as menu entry. Where exact depends strongly
+from your used X11 desktop environment and can be different from system to system.
+
+Thats all, we're ready.
+
+6. Update deskHPSDR
+
+From time to time you need to update deskHPSDR. That means, we update the source code from github.com and recompile deskHPSDR.
+If you want update the source code of deskhpsdr, start a shell and do this:
+
+heiko@AfuPi5:~ $ cd
+heiko@AfuPi5:~ $ cd src
+heiko@AfuPi5:~/src $ cd deskhpsdr
+heiko@AfuPi5:~/src/deskhpsdr $ git pull
+heiko@AfuPi5:~/src/deskhpsdr $ make clean
+heiko@AfuPi5:~/src/deskhpsdr $ make
+heiko@AfuPi5:~/src/deskhpsdr $ make x11install
+
+Have fun with the updated version !
+
+Troubleshooting:
+-------------------------------------------------------------------------------
+It could happen that "git pull" fails. The reason mostly is, you changed local files and
+git pull don't know now, which site is up-to-date - local or remote. You can delete the complete deskhpsdr directory
+and start again:
+
+heiko@AfuPi5:~ $ cd
+heiko@AfuPi5:~ $ cd src
+heiko@AfuPi5:~/src $ rm -fr deskhpsdr
+heiko@AfuPi5:~/src $ git clone https://github.com/dl1bz/deskhpsdr.git
+heiko@AfuPi5:~/src $ cd deskhpsdr
+heiko@AfuPi5:~/src/deskhpsdr $
+
+The second problem are changes in make.config.deskhpsdr, but we need to do this. Please don't make any
+changes in the Makefile, only in make.config.deskhpsdr. We do this now:
+
+heiko@AfuPi5:~/src/deskhpsdr $ git update-index --assume-unchanged make.config.deskhpsdr
+
+It tells git, that we want to ignore all (local) changes in make.config.deskhpsdr. After this, "git pull" should
+work again correct.
+
+Thats all, folks :)
+73 Heiko, DL1BZ
