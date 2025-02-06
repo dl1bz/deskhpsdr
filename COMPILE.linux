@@ -8,6 +8,8 @@ You need to have basic knowledge, how you work with the shell.
 This guidance is made for Debian-based distributions like Debian, Ubuntu or PiOS.
 For other distributions you need to adopt this guidance by yourself. Basically deskHPSDR
 should be run with any distribution, if all needed libraries are installed.
+We do all at user level, if we need admin privileges we do it with sudo.
+That means, we have and use a "rootless" system.
 
 For first start with Linux we need as prerequisite the git tool.
 Start a shell and do the following:
@@ -30,8 +32,8 @@ heiko@AfuPi5:~/src/deskhpsdr $
 
 heiko@AfuPi5:~/src/deskhpsdr $ ./LINUX/prep_linux.sh
 
-Per default only the base Soapy-API will be installed. If you want or need to use Soapy,
-you need edit the make.config.deskhpsdr and set SOAPYSDR=ON.
+Per default only the base Soapy-API will be installed. If you want or need to use
+Soapy API support in deskHPSDR, edit the make.config.deskhpsdr and set SOAPYSDR=ON.
 The installation for Soapy modules does not become part of this guidance, that's your very
 own task. I don't need the Soapy-support, because I use a Hermes-Lite 2.
 
