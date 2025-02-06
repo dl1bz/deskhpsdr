@@ -43,9 +43,10 @@
 
 #if defined (__LDESK__)
 //----------------------------------------------------------------------------------------------
-//
-// https://de.wikipedia.org/wiki/S-Meter
-//
+// Reference of calculate S-Meter values: https://de.wikipedia.org/wiki/S-Meter
+// <= 30 MHz: S9 = -73dbm
+//  > 30 MHz: S9 = -93dbm
+
 #define NUM_SWERTE 19   /* Number of S-Werte */
 
 // lower limits <= 30 MHz
