@@ -175,6 +175,12 @@ static void serial_swapRtsDtr_cb(GtkWidget *widget, gpointer data) {
   SerialPorts[id].swapRtsDtr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static gboolean rigctl_reload_menu() {
+  cleanup();
+  rigctl_menu(top_window);
+  return FALSE;             // Gibt FALSE zurück, damit die Funktion nur einmal ausgeführt wird
+}
+
 static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
 #if defined (__LDESK__)
@@ -203,8 +209,7 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
       launch_serptt();
     }
 
-    cleanup();
-    rigctl_menu(top_window);
+    g_idle_add(rigctl_reload_menu, NULL);
   }
 
 #endif
