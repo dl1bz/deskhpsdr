@@ -1175,42 +1175,10 @@ static void process_control_bytes() {
   static unsigned int adc1_acc = 0;
   previous_ptt = radio_ptt;
   radio_ptt  = (control_in[0]     ) & 0x01;
-#if defined (__LDESK__)
 
-  // old mechanism, back-patched before DL1YCFs patch in piHPSDR
-  // because timing problems at Hermes Lite 2 while Radio_PTT is used (issue located by DH0DM)
   if (previous_ptt != radio_ptt) {
     g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
   }
-
-#else
-
-  // changed by DL1YCF in piHPSDR
-  if (previous_ptt != radio_ptt) {
-    int m = vfo_get_tx_mode();
-
-    if (radio_ptt || m == modeCWU || m == modeCWL) {
-      //
-      // If "PTT on" comes from the radio, or we are doing CW: go TX without delay
-      // We need a timeout_add here because sometimes there is a "spike" on the
-      // PTT line and we have to guarantee that the mox_update that is scheduled
-      // first will be executed first.
-      //
-      // t_print("%s: A_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
-      // g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
-      g_timeout_add(5, ext_mox_update, GINT_TO_POINTER(radio_ptt));
-    } else {
-      //
-      // If "PTT off" comes from the radio and no CW:
-      // delay the TX/RX transistion a little bit to avoid
-      // clipping the last bits of the TX signal
-      //
-      // t_print("%s: B_DEBUG RADIO PTT: %d PREV RADIO PTT: %d\n", __FUNCTION__, radio_ptt, previous_ptt);
-      g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(radio_ptt));
-    }
-  }
-
-#endif
 
   if ((device == DEVICE_HERMES_LITE2) && (control_in[0] & 0x80)) {
     //
