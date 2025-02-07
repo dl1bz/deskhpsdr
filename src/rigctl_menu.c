@@ -209,7 +209,7 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
       launch_serptt();
     }
 
-    g_idle_add(rigctl_reload_menu, NULL);
+    g_idle_add(rigctl_reload_menu, NULL); // execute in main thread
   }
 
 #endif
