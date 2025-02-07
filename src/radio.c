@@ -1109,11 +1109,11 @@ void radio_start_radio() {
 
 #if defined (__LDESK__)
 
-  for (int id = 0; id <= MAX_SERIAL + 1; id++) {
+  for (int id = 0; id <= MAX_SERIAL + 1; id++)
 #else
-
-  for (int id = 0; id < MAX_SERIAL; id++) {
+  for (int id = 0; id < MAX_SERIAL; id++)
 #endif
+  {
     //
     // Apply some default values. The name ttyACMx is suitable for
     // USB-serial adapters on Linux
