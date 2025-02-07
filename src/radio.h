@@ -174,6 +174,7 @@ struct audio_profile {
 };
 
 extern struct audio_profile mic_prof;
+extern int autogain_enabled;
 #endif
 
 extern int receivers;

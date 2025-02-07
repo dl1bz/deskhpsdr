@@ -105,7 +105,9 @@ static GThread *rigctl_cw_thread_id = NULL;
 #if defined (__LDESK__)
   static GThread *serptt_thread_id = NULL;
   static GThread *sertune_thread_id = NULL;
+  static GThread *autogain_thread_id = NULL;
   GMutex sertune_mutex;
+  GMutex autogain_mutex;
 #endif
 
 static pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
@@ -347,6 +349,55 @@ void launch_sertune() {
       close(sertune_fd);
       sertune_fd = -1;
       t_print("---- Shutdown serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
+    }
+  }
+}
+
+static gpointer autogain_thread(gpointer user_data) {
+  static double gain_step = 1.0;
+  static double gain = 0.0;
+  static unsigned int adc_count_limit = 2;
+  static unsigned int adc_error_count = 0;
+
+  while (1) {
+    if (!(radio_is_transmitting())) {
+      // sanity checks
+      if (adc[active_receiver->adc].gain < adc[active_receiver->adc].min_gain) {
+        adc[active_receiver->adc].gain = adc[active_receiver->adc].min_gain;
+      }
+
+      if (adc[active_receiver->adc].gain > adc[active_receiver->adc].max_gain) {
+        adc[active_receiver->adc].gain = adc[active_receiver->adc].max_gain;
+      }
+
+      if (active_receiver->id == 0 && active_receiver->adc == 0 && adc0_overload) {
+        adc_error_count++;
+
+        while (adc0_overload && adc_error_count > adc_count_limit) {
+          gain = adc[active_receiver->adc].gain;
+          gain -= gain_step;
+          set_rf_gain(active_receiver->id, gain);
+          sleep(1);
+        }
+
+        if (!adc0_overload) { adc_error_count = 0; }
+      }
+    }
+
+    sleep(1);
+  }
+
+  return NULL;
+}
+
+void launch_autogain_hl2() {
+  if (autogain_enabled) {
+    autogain_thread_id = g_thread_new("AutoGainHL2", autogain_thread, NULL);
+    t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
+  } else {
+    if (autogain_thread_id) {
+      autogain_thread_id = NULL;
+      t_print("---- Shutdown HL2 AutoGain Thread ----\n");
     }
   }
 }

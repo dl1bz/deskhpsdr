@@ -216,6 +216,7 @@ int mic_input_xlr = 0;
 
 #if defined (__LDESK__)
 struct audio_profile mic_prof = {0, {"NOMIC", "NOMIC", "NOMIC"}};
+int autogain_enabled = 0;
 #endif
 int receivers;
 
@@ -1636,6 +1637,10 @@ void radio_start_radio() {
     launch_serptt();
   }
 
+  if ((device == DEVICE_HERMES_LITE2) && autogain_enabled) {
+    launch_autogain_hl2();
+  }
+
 #endif
   // first call to start RX200 UDP Listener
   launch_rx200_monitor();
@@ -2648,6 +2653,7 @@ static void radio_restore_state() {
     GetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
+  GetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   GetPropI0("tx_filter_low",                                 tx_filter_low);
   GetPropI0("tx_filter_high",                                tx_filter_high);
@@ -2876,6 +2882,7 @@ void radio_save_state() {
     SetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
+  SetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   SetPropI0("tx_filter_low",                                 tx_filter_low);
   SetPropI0("tx_filter_high",                                tx_filter_high);
