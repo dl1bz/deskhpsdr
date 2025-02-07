@@ -377,7 +377,8 @@ static gpointer autogain_thread(gpointer user_data) {
           gain = adc[active_receiver->adc].gain;
           gain -= gain_step;
           set_rf_gain(active_receiver->id, gain);
-          sleep(1);
+          // sleep(1);
+          g_usleep(200000);
         }
 
         if (!adc0_overload) { adc_error_count = 0; }
