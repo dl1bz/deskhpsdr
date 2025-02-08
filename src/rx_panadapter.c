@@ -860,7 +860,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
 #if defined (__LDESK__)
 
-  if (!active_receiver->display_waterfall && active_receiver->display_panadapter) {
+  if (!active_receiver->display_waterfall && active_receiver->display_panadapter && rx->id == 0) {
     // cairo_rectangle(cr, x, y, width, height) -> all as double()
     // X coordinate of the top left corner of the rectangle
     // Y coordinate to the top left corner of the rectangle
@@ -889,7 +889,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
 #if defined (__APPLE__)
-    snprintf(_text, 128, "%s", transmitter->microphone_name);
+    snprintf(_text, 128, "[%d] %s", active_receiver->id, transmitter->microphone_name);
 #else
     int _audioindex = 0;
 
@@ -900,7 +900,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         }
       }
 
-      snprintf(_text, 128, "%s", input_devices[_audioindex].description);
+      snprintf(_text, 128, "[%d] %s", active_receiver->id, input_devices[_audioindex].description);
     } else {
       snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
     }
@@ -999,7 +999,11 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (adc0_overload && !adc1_overload) {
 #if defined (__LDESK__)
-        cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
+        if (autogain_enabled && device == DEVICE_HERMES_LITE2) {
+          cairo_show_text(cr, "ADC0 overload » auto-adjust RxPGA gain...");
+        } else {
+          cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
+        }
 #else
         cairo_show_text(cr, "ADC0 overload");
 #endif

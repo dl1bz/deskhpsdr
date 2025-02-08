@@ -316,7 +316,7 @@ void rx_menu(GtkWidget *parent) {
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
         gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
-        GtkWidget *autogain_b = gtk_check_button_new_with_label("RxPGA Gain Automatic");
+        GtkWidget *autogain_b = gtk_check_button_new_with_label("Auto ADC Overload Protection");
         gtk_widget_set_name(autogain_b, "boldlabel");
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_b), autogain_enabled);
         gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, row + 1, 1, 1);

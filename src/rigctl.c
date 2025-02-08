@@ -106,8 +106,8 @@ static GThread *rigctl_cw_thread_id = NULL;
   static GThread *serptt_thread_id = NULL;
   static GThread *sertune_thread_id = NULL;
   static GThread *autogain_thread_id = NULL;
-  GMutex sertune_mutex;
-  GMutex autogain_mutex;
+  static GMutex sertune_mutex;
+  static GMutex autogain_mutex;
 #endif
 
 static pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
@@ -339,7 +339,6 @@ void launch_sertune() {
         status_sertune &= ~TIOCM_DTR;                  // clear DTR
         ioctl(sertune_fd, TIOCMSET, &status_sertune);  // set new state
       }
-
       sertune_thread_id = g_thread_new("serTUNE-Monitoring", monitor_sertune_thread, &sertune_fd);
       t_print("---- LAUNCHING serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
     }
@@ -353,14 +352,18 @@ void launch_sertune() {
   }
 }
 
+#if defined (__LDESK__)
 static gpointer autogain_thread(gpointer user_data) {
-  static double gain_step = 1.0;
+
+  static double gain_step = 2.0;
   static double gain = 0.0;
   static unsigned int adc_count_limit = 2;
-  static unsigned int adc_error_count = 0;
+  static unsigned int adc0_error_count = 0;
+  static unsigned int adc1_error_count = 0;
 
   while (1) {
     if (!(radio_is_transmitting())) {
+      g_mutex_lock(&autogain_mutex);
       // sanity checks
       if (adc[active_receiver->adc].gain < adc[active_receiver->adc].min_gain) {
         adc[active_receiver->adc].gain = adc[active_receiver->adc].min_gain;
@@ -371,25 +374,135 @@ static gpointer autogain_thread(gpointer user_data) {
       }
 
       if (active_receiver->id == 0 && active_receiver->adc == 0 && adc0_overload) {
-        adc_error_count++;
+        adc0_error_count++;
 
-        while (adc0_overload && adc_error_count > adc_count_limit) {
+        while (adc0_overload && adc0_error_count > adc_count_limit) {
           gain = adc[active_receiver->adc].gain;
           gain -= gain_step;
           set_rf_gain(active_receiver->id, gain);
           // sleep(1);
-          g_usleep(200000);
+          g_usleep(500000);
         }
 
-        if (!adc0_overload) { adc_error_count = 0; }
+        if (!adc0_overload) { adc0_error_count = 0; }
+      }
+
+      if (active_receiver->id == 1 && active_receiver->adc == 1 && adc1_overload) {
+        adc1_error_count++;
+
+        while (adc1_overload && adc1_error_count > adc_count_limit) {
+          gain = adc[active_receiver->adc].gain;
+          gain -= gain_step;
+          set_rf_gain(active_receiver->id, gain);
+          // sleep(1);
+          g_usleep(500000);
+        }
+
+        if (!adc1_overload) { adc1_error_count = 0; }
       }
     }
-
+    g_mutex_unlock(&autogain_mutex);
     sleep(1);
+  }
+}
+#endif
+
+#if defined (__USELESS__)
+static gpointer autogain_thread(gpointer user_data) {
+
+static double max_gain = 0.0;
+static double min_gain = 0.0;
+static double gain_step = 3.0;
+static double gain_HYSTERESIS_step = 1.0;
+static unsigned int adc_error_count = 0;
+static unsigned int adc_count_limit = 3;
+static double gain = 0;
+static bool is_adjusted = false;
+static bool restart_trigger = false;
+
+min_gain = adc[active_receiver->adc].min_gain;
+max_gain = adc[active_receiver->adc].max_gain;
+
+  while (1) {
+    g_mutex_lock (&autogain_mutex);
+
+    if (restart_trigger) {
+      is_adjusted = false;      // Regelung zurücksetzen
+      adc_error_count = 0;      // Zähler zurücksetzen
+      t_print("Externer Trigger aktiviert, Regelung zurückgesetzt.\n");
+      restart_trigger = false;  // Trigger zurücksetzen
+    }
+
+    if (adc0_overload) {
+      adc_error_count++;
+    } else {
+      adc_error_count = 0;
+    }
+
+    gain = adc[active_receiver->adc].gain;
+
+        // Wenn der Zähler 3 erreicht hat, starte die Regelung
+        if (adc_error_count >= adc_count_limit && !is_adjusted) {
+          // GAIN reduzieren, solange adc0_overload TRUE ist
+          while (adc0_overload && gain > min_gain) {
+              gain -= gain_step;
+              if (gain < min_gain) {
+                  gain = min_gain;  // Sicherstellen, dass GAIN nicht unter MIN_GAIN fällt
+              }
+              set_rf_gain(active_receiver->id, gain);
+          }
+
+          // Nachdem adc0_overload FALSE ist, GAIN wieder schrittweise erhöhen
+          while (!adc0_overload && gain < max_gain) {
+              gain += gain_HYSTERESIS_step;
+              if (gain > max_gain) {
+                  gain = max_gain;  // Sicherstellen, dass GAIN nicht über MAX_GAIN steigt
+              }
+              set_rf_gain(active_receiver->id, gain);
+          }
+
+          // Regelung beenden, wenn adc0_overload erneut auftritt
+          is_adjusted = true;
+          t_print("Regelung Stage 1 beendet, auf erneutes adc0_overload warten...\n");
+      }
+
+      // Wenn erneut adc0_overload TRUE wird, GAIN um 1 weiter reduzieren
+      if (adc0_overload && is_adjusted) {
+          gain -= gain_HYSTERESIS_step;
+          if (gain < min_gain) {
+              gain = min_gain;  // Sicherstellen, dass GAIN nicht unter MIN_GAIN fällt
+          }
+          set_rf_gain(active_receiver->id, gain);
+
+          // Regelung beenden
+          // is_adjusted = true;
+          adc_error_count = 0;
+          t_print("Regelung Stage 2 beendet, auf erneutes adc0_overload warten...\n");
+      }
+
+      if (adc_error_count >= adc_count_limit && is_adjusted) {
+        is_adjusted = false;  // Regelung zurücksetzen, sodass sie erneut gestartet wird
+        t_print("Regelung zurückgesetzt, auf erneutes adc0_overload warten...\n");
+      }
+
+      if (!adc0_overload && gain < 10) {
+        while (!adc0_overload && gain < max_gain) {
+          gain += gain_HYSTERESIS_step;
+          if (gain > max_gain) {
+              gain = max_gain;  // Sicherstellen, dass GAIN nicht über MAX_GAIN steigt
+          }
+          set_rf_gain(active_receiver->id, gain - 1.0);
+        }
+      }
+
+      g_mutex_unlock (&autogain_mutex);
+      // Verzögerung von 200ms (200000 Mikrosekunden)
+      g_usleep(200000);  // Warten für 200ms
   }
 
   return NULL;
 }
+#endif
 
 void launch_autogain_hl2() {
   if (autogain_enabled) {
