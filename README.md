@@ -30,6 +30,7 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 
 ## Latest Changes
 ### Version 2.5.x
+- under development: begin implementation to full-automatic control the RxPGA gain if using a Hermes Lite 2
 - completed: merge the new PEAK label feature from piHPSDR into deskHPSDR and add an option for show the peak label as S-Meter values instead of dbm
 - completed: add an option for using 3 Mic profiles, which can save and load different audio settings (CFC, TX-EQ, Limiter, Basebandcompressor) if using different types of Mics with special settings per Mic. Load and save is only possible in modes LSB, USB or DSB. Other modes are not supported. If mode is DIGL or DIGU the access to the RX- and TX-EQ is now blocked, because is it important that the frequency spectrum is not manipulated if using digi modes.
 - under development: implementation of a TCI Server, which emulates a SunSDR2Pro device (successful tested with JTDX, RumLogNG, MacLoggerDX)<br>
@@ -42,7 +43,7 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 - completed: add new UDP listener for my RX200 ESP32 project, which send via UDP broadcast data in JSON<br>
   format like forward and reflected power, SWR and show the received and parsed data onscreen<br>
   as panadapter overlay (need now json-c as additional lib, so please install it)<br>
-- completed: add new serial device, which can be used as an external PTT switch using RTS signaling<br>
+- completed: add new serial device, which can be used as an external PTT switch using RTS or DTR signaling<br>
   (similar like in Thetis)<br>
 
 Things marked as "under development" are not fully tested and have maybe issues.<br>
