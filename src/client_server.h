@@ -564,7 +564,7 @@ extern void send_xit_clear(int s);
 extern void send_xit(int s, int xit);
 extern void send_sample_rate(int s, int rx, int sample_rate);
 extern void send_receivers(int s, int receivers);
-extern void send_rit_increment(int s, int increment);
+extern void send_rit_step(int s, int step);
 extern void send_filter_board(int s, int filter_board);
 extern void send_swap_iq(int s, int swap_iq);
 extern void send_region(int s, int region);

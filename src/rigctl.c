@@ -339,6 +339,7 @@ void launch_sertune() {
         status_sertune &= ~TIOCM_DTR;                  // clear DTR
         ioctl(sertune_fd, TIOCMSET, &status_sertune);  // set new state
       }
+
       sertune_thread_id = g_thread_new("serTUNE-Monitoring", monitor_sertune_thread, &sertune_fd);
       t_print("---- LAUNCHING serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
     }
@@ -354,7 +355,6 @@ void launch_sertune() {
 
 #if defined (__LDESK__)
 static gpointer autogain_thread(gpointer user_data) {
-
   static double gain_step = 2.0;
   static double gain = 0.0;
   static unsigned int adc_count_limit = 2;
@@ -364,6 +364,7 @@ static gpointer autogain_thread(gpointer user_data) {
   while (1) {
     if (!(radio_is_transmitting())) {
       g_mutex_lock(&autogain_mutex);
+
       // sanity checks
       if (adc[active_receiver->adc].gain < adc[active_receiver->adc].min_gain) {
         adc[active_receiver->adc].gain = adc[active_receiver->adc].min_gain;
@@ -401,27 +402,27 @@ static gpointer autogain_thread(gpointer user_data) {
         if (!adc1_overload) { adc1_error_count = 0; }
       }
     }
+
     g_mutex_unlock(&autogain_mutex);
     sleep(1);
   }
 }
+
 #endif
 
 #if defined (__USELESS__)
 static gpointer autogain_thread(gpointer user_data) {
-
-static double max_gain = 0.0;
-static double min_gain = 0.0;
-static double gain_step = 3.0;
-static double gain_HYSTERESIS_step = 1.0;
-static unsigned int adc_error_count = 0;
-static unsigned int adc_count_limit = 3;
-static double gain = 0;
-static bool is_adjusted = false;
-static bool restart_trigger = false;
-
-min_gain = adc[active_receiver->adc].min_gain;
-max_gain = adc[active_receiver->adc].max_gain;
+  static double max_gain = 0.0;
+  static double min_gain = 0.0;
+  static double gain_step = 3.0;
+  static double gain_HYSTERESIS_step = 1.0;
+  static unsigned int adc_error_count = 0;
+  static unsigned int adc_count_limit = 3;
+  static double gain = 0;
+  static bool is_adjusted = false;
+  static bool restart_trigger = false;
+  min_gain = adc[active_receiver->adc].min_gain;
+  max_gain = adc[active_receiver->adc].max_gain;
 
   while (1) {
     g_mutex_lock (&autogain_mutex);
@@ -441,67 +442,75 @@ max_gain = adc[active_receiver->adc].max_gain;
 
     gain = adc[active_receiver->adc].gain;
 
-        // Wenn der Zähler 3 erreicht hat, starte die Regelung
-        if (adc_error_count >= adc_count_limit && !is_adjusted) {
-          // GAIN reduzieren, solange adc0_overload TRUE ist
-          while (adc0_overload && gain > min_gain) {
-              gain -= gain_step;
-              if (gain < min_gain) {
-                  gain = min_gain;  // Sicherstellen, dass GAIN nicht unter MIN_GAIN fällt
-              }
-              set_rf_gain(active_receiver->id, gain);
-          }
+    // Wenn der Zähler 3 erreicht hat, starte die Regelung
+    if (adc_error_count >= adc_count_limit && !is_adjusted) {
+      // GAIN reduzieren, solange adc0_overload TRUE ist
+      while (adc0_overload && gain > min_gain) {
+        gain -= gain_step;
 
-          // Nachdem adc0_overload FALSE ist, GAIN wieder schrittweise erhöhen
-          while (!adc0_overload && gain < max_gain) {
-              gain += gain_HYSTERESIS_step;
-              if (gain > max_gain) {
-                  gain = max_gain;  // Sicherstellen, dass GAIN nicht über MAX_GAIN steigt
-              }
-              set_rf_gain(active_receiver->id, gain);
-          }
-
-          // Regelung beenden, wenn adc0_overload erneut auftritt
-          is_adjusted = true;
-          t_print("Regelung Stage 1 beendet, auf erneutes adc0_overload warten...\n");
-      }
-
-      // Wenn erneut adc0_overload TRUE wird, GAIN um 1 weiter reduzieren
-      if (adc0_overload && is_adjusted) {
-          gain -= gain_HYSTERESIS_step;
-          if (gain < min_gain) {
-              gain = min_gain;  // Sicherstellen, dass GAIN nicht unter MIN_GAIN fällt
-          }
-          set_rf_gain(active_receiver->id, gain);
-
-          // Regelung beenden
-          // is_adjusted = true;
-          adc_error_count = 0;
-          t_print("Regelung Stage 2 beendet, auf erneutes adc0_overload warten...\n");
-      }
-
-      if (adc_error_count >= adc_count_limit && is_adjusted) {
-        is_adjusted = false;  // Regelung zurücksetzen, sodass sie erneut gestartet wird
-        t_print("Regelung zurückgesetzt, auf erneutes adc0_overload warten...\n");
-      }
-
-      if (!adc0_overload && gain < 10) {
-        while (!adc0_overload && gain < max_gain) {
-          gain += gain_HYSTERESIS_step;
-          if (gain > max_gain) {
-              gain = max_gain;  // Sicherstellen, dass GAIN nicht über MAX_GAIN steigt
-          }
-          set_rf_gain(active_receiver->id, gain - 1.0);
+        if (gain < min_gain) {
+          gain = min_gain;  // Sicherstellen, dass GAIN nicht unter MIN_GAIN fällt
         }
+
+        set_rf_gain(active_receiver->id, gain);
       }
 
-      g_mutex_unlock (&autogain_mutex);
-      // Verzögerung von 200ms (200000 Mikrosekunden)
-      g_usleep(200000);  // Warten für 200ms
+      // Nachdem adc0_overload FALSE ist, GAIN wieder schrittweise erhöhen
+      while (!adc0_overload && gain < max_gain) {
+        gain += gain_HYSTERESIS_step;
+
+        if (gain > max_gain) {
+          gain = max_gain;  // Sicherstellen, dass GAIN nicht über MAX_GAIN steigt
+        }
+
+        set_rf_gain(active_receiver->id, gain);
+      }
+
+      // Regelung beenden, wenn adc0_overload erneut auftritt
+      is_adjusted = true;
+      t_print("Regelung Stage 1 beendet, auf erneutes adc0_overload warten...\n");
+    }
+
+    // Wenn erneut adc0_overload TRUE wird, GAIN um 1 weiter reduzieren
+    if (adc0_overload && is_adjusted) {
+      gain -= gain_HYSTERESIS_step;
+
+      if (gain < min_gain) {
+        gain = min_gain;  // Sicherstellen, dass GAIN nicht unter MIN_GAIN fällt
+      }
+
+      set_rf_gain(active_receiver->id, gain);
+      // Regelung beenden
+      // is_adjusted = true;
+      adc_error_count = 0;
+      t_print("Regelung Stage 2 beendet, auf erneutes adc0_overload warten...\n");
+    }
+
+    if (adc_error_count >= adc_count_limit && is_adjusted) {
+      is_adjusted = false;  // Regelung zurücksetzen, sodass sie erneut gestartet wird
+      t_print("Regelung zurückgesetzt, auf erneutes adc0_overload warten...\n");
+    }
+
+    if (!adc0_overload && gain < 10) {
+      while (!adc0_overload && gain < max_gain) {
+        gain += gain_HYSTERESIS_step;
+
+        if (gain > max_gain) {
+          gain = max_gain;  // Sicherstellen, dass GAIN nicht über MAX_GAIN steigt
+        }
+
+        set_rf_gain(active_receiver->id, gain - 1.0);
+      }
+    }
+
+    g_mutex_unlock (&autogain_mutex);
+    // Verzögerung von 200ms (200000 Mikrosekunden)
+    g_usleep(200000);  // Warten für 200ms
   }
 
   return NULL;
 }
+
 #endif
 
 void launch_autogain_hl2() {
@@ -3306,11 +3315,7 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       //DO NOT DOCUMENT, THIS WILL BE REMOVED
       if (command[4] == ';') {
-        if (vfo[VFO_A].mode == modeCWL || vfo[VFO_A].mode == modeCWU) {
-          vfo_rit_incr(VFO_A, -10);
-        } else {
-          vfo_rit_incr(VFO_A, -rit_increment);
-        }
+        vfo_rit_incr(VFO_A, -vfo[VFO_A].rit_step);
       } else if (command[9] == ';') {
         // set RIT frequency
         vfo_rit_value(VFO_A, atoi(&command[4]));
@@ -3375,11 +3380,7 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       //DO NOT DOCUMENT, THIS WILL BE REMOVED
       if (command[4] == ';') {
-        if (vfo[VFO_A].mode == modeCWL || vfo[VFO_A].mode == modeCWU) {
-          vfo_rit_incr(VFO_A, 10);
-        } else {
-          vfo_rit_incr(VFO_A, rit_increment);
-        }
+        vfo_rit_incr(VFO_A, vfo[VFO_A].rit_step);
       } else if (command[9] == ';') {
         vfo_rit_value(VFO_A,  atoi(&command[4]));
       }

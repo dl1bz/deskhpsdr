@@ -1736,13 +1736,12 @@ void send_receivers(int s, int receivers) {
   send_bytes(s, (char *)&command, sizeof(command));
 }
 
-void send_rit_increment(int s, int increment) {
+void send_rit_step(int s, int step) {
   RIT_INCREMENT_COMMAND command;
-  t_print("send_rit_increment increment=%d\n", increment);
   command.header.sync = REMOTE_SYNC;
   command.header.data_type = htons(CMD_RESP_RIT_INCREMENT);
   command.header.version = htonl(CLIENT_SERVER_VERSION);
-  command.increment = htons(increment);
+  command.increment = htons(step);
   send_bytes(s, (char *)&command, sizeof(command));
 }
 
@@ -2603,8 +2602,7 @@ static void *client_thread(void* arg) {
       }
 
       int increment = ntohs(rit_increment_cmd.increment);
-      t_print("CMD_RESP_RIT_INCREMENT: increment=%d\n", increment);
-      rit_increment = increment;
+      vfo_set_rit_step(increment);
     }
     break;
 
@@ -3065,10 +3063,10 @@ static int remote_command(void *data) {
 
   case CMD_RESP_RIT: {
     RIT_COMMAND *rit_command = (RIT_COMMAND *)data;
-    int rx = rit_command->id;
+    int id = rit_command->id;
     short rit = ntohs(rit_command->rit);
-    vfo_rit_incr(rx, (int)rit * rit_increment);
-    send_vfo_data(client, rx);
+    vfo_rit_incr(id, (int)rit * vfo[id].rit_step);
+    send_vfo_data(client, id);
   }
   break;
 
@@ -3116,9 +3114,9 @@ static int remote_command(void *data) {
 
   case CMD_RESP_RIT_INCREMENT: {
     const RIT_INCREMENT_COMMAND *rit_increment_command = (RIT_INCREMENT_COMMAND *)data;
-    short increment = ntohs(rit_increment_command->increment);
-    rit_increment = (int)increment;
-    send_rit_increment(client->socket, rit_increment);
+    short step = ntohs(rit_increment_command->increment);
+    vfo_set_rit_step(step);
+    send_rit_step(client->socket, step);
   }
   break;
 

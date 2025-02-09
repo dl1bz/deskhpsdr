@@ -445,8 +445,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_KP_Enter:
     vfo_num_pad(-4, active_receiver->id);
     break;
-
 #if defined (__APPLE__)
+
   case GDK_KEY_comma:
 #else
   case GDK_KEY_KP_Decimal:

@@ -44,6 +44,7 @@ struct _vfo {
   long long ctun_frequency;
 
   int rit_enabled;
+  int rit_step;
   long long rit;
   int xit_enabled;
   long long xit;
@@ -87,6 +88,7 @@ struct _mode_settings {
   //
   int    filter;                    // actual filter used
   int    cwPeak;                    // CW peak filter on/off
+  int    rit_step;                  // RIT step size
   long long step;                   // VFO step size
   //
   // RX (noise, EQ, AGC mode) settings
@@ -170,6 +172,8 @@ extern void       vfo_set_step_from_index(int id, int index);
 extern int        vfo_get_step_from_index(int index);
 extern void       vfo_step(int steps);
 extern void       vfo_id_step(int id, int steps);
+extern void       vfo_set_rit_step(int step);
+extern void       vfo_id_set_rit_step(int id, int step);
 extern void       vfo_move(long long hz, int round);
 extern void       vfo_id_move(int id, long long hz, int round);
 extern void       vfo_id_move_to(int id, long long hz);

@@ -119,6 +119,7 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.filter", i,                mode_settings[i].filter);
     SetPropI1("modeset.%d.cwPeak", i,                mode_settings[i].cwPeak);
     SetPropI1("modeset.%d.step", i,                  mode_settings[i].step);
+    SetPropI1("modeset.%d.rit_step", i,              mode_settings[i].rit_step);
     SetPropI1("modeset.%d.nb", i,                    mode_settings[i].nb);
     SetPropF1("modeset.%d.nb_tau", i,                mode_settings[i].nb_tau);
     SetPropF1("modeset.%d.nb_hang", i,               mode_settings[i].nb_hang);
@@ -193,23 +194,26 @@ static void modesettingsRestoreState() {
     case modeLSB:
     case modeUSB:
     case modeDSB:
-      mode_settings[i].agc = AGC_MEDIUM;
-      mode_settings[i].filter = filterF5; //  2700 Hz
-      mode_settings[i].step   = 100;
+      mode_settings[i].agc      = AGC_MEDIUM;
+      mode_settings[i].filter   = filterF5; //  2700 Hz
+      mode_settings[i].step     = 100;
+      mode_settings[i].rit_step = 100;
       break;
 
     case modeDIGL:
     case modeDIGU:
-      mode_settings[i].agc = AGC_FAST;
-      mode_settings[i].filter = filterF6; //  1000 Hz
-      mode_settings[i].step   = 50;
+      mode_settings[i].agc      = AGC_FAST;
+      mode_settings[i].filter   = filterF6; //  1000 Hz
+      mode_settings[i].step     = 50;
+      mode_settings[i].rit_step = 100;
       break;
 
     case modeCWL:
     case modeCWU:
-      mode_settings[i].agc = AGC_FAST;
-      mode_settings[i].filter = filterF4; //   500 Hz
-      mode_settings[i].step   = 25;
+      mode_settings[i].agc      = AGC_FAST;
+      mode_settings[i].filter   = filterF4; //   500 Hz
+      mode_settings[i].step     = 25;
+      mode_settings[i].rit_step = 10;
       break;
 
     case modeAM:
@@ -217,9 +221,10 @@ static void modesettingsRestoreState() {
     case modeSPEC:
     case modeDRM:
     case modeFMN:  // nowhere used for FM
-      mode_settings[i].agc = AGC_MEDIUM;
-      mode_settings[i].filter = filterF3; //  8000 Hz
-      mode_settings[i].step   = 100;
+      mode_settings[i].agc      = AGC_MEDIUM;
+      mode_settings[i].filter   = filterF3; //  8000 Hz
+      mode_settings[i].step     = 100;
+      mode_settings[i].rit_step = 100;
       break;
     }
 
@@ -355,6 +360,7 @@ static void modesettingsRestoreState() {
     GetPropI1("modeset.%d.filter", i,                mode_settings[i].filter);
     GetPropI1("modeset.%d.cwPeak", i,                mode_settings[i].cwPeak);
     GetPropI1("modeset.%d.step", i,                  mode_settings[i].step);
+    GetPropI1("modeset.%d.rit_step", i,              mode_settings[i].rit_step);
     GetPropI1("modeset.%d.nb", i,                    mode_settings[i].nb);
     GetPropF1("modeset.%d.nb_tau", i,                mode_settings[i].nb_tau);
     GetPropF1("modeset.%d.nb_hang", i,               mode_settings[i].nb_hang);
@@ -468,6 +474,7 @@ void vfo_save_state() {
     SetPropI1("vfo.%d.cw_apf", i,           vfo[i].cwAudioPeakFilter);
     SetPropI1("vfo.%d.deviation", i,        vfo[i].deviation);
     SetPropI1("vfo.%d.step", i,             vfo[i].step);
+    SetPropI1("vfo.%d.rit_step", i,         vfo[i].rit_step);
   }
 
   modesettingsSaveState();
@@ -514,6 +521,7 @@ void vfo_restore_state() {
     vfo[i].ctun              = 0;
     vfo[i].deviation         = 2500;
     vfo[i].step              = 100;
+    vfo[i].rit_step          = 10;
     GetPropI1("vfo.%d.band", i,             vfo[i].band);
     GetPropI1("vfo.%d.frequency", i,        vfo[i].frequency);
     GetPropI1("vfo.%d.ctun", i,             vfo[i].ctun);
@@ -529,6 +537,7 @@ void vfo_restore_state() {
     GetPropI1("vfo.%d.cw_apf", i,           vfo[i].cwAudioPeakFilter);
     GetPropI1("vfo.%d.deviation", i,        vfo[i].deviation);
     GetPropI1("vfo.%d.step", i,             vfo[i].step);
+    GetPropI1("vfo.%d.rit_step", i,         vfo[i].rit_step);
 
     // Sanity check: if !ctun, offset must be zero
     if (!vfo[i].ctun) {
@@ -677,6 +686,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   vfo[id].filter                = mode_settings[m].filter;
   vfo[id].cwAudioPeakFilter     = mode_settings[m].cwPeak;
   vfo[id].step                  = mode_settings[m].step;
+  vfo[id].rit_step              = mode_settings[m].rit_step;
   //
   // Apply noise and EQ settings to the receiver
   //
@@ -1222,6 +1232,23 @@ void vfo_id_step(int id, int steps) {
     rx_frequency_changed(receiver[id]);
     g_idle_add(ext_vfo_update, NULL);
   }
+}
+
+void vfo_set_rit_step(int step) {
+  int id = active_receiver->id;
+  vfo_id_set_rit_step(id, step);
+}
+
+void vfo_id_set_rit_step(int id, int step) {
+  vfo[id].rit_step = step;
+
+  if (id == 0) {
+    int mode = vfo[id].mode;
+    mode_settings[mode].rit_step = step;
+    copy_mode_settings(mode);
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 //

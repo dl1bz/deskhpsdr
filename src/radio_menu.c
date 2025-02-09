@@ -341,15 +341,15 @@ static void rit_cb(GtkWidget *widget, gpointer data) {
   switch (val) {
   case 0:
   default:
-    rit_increment = 1;
+    vfo_set_rit_step(1);
     break;
 
   case 1:
-    rit_increment = 10;
+    vfo_set_rit_step(10);
     break;
 
   case 2:
-    rit_increment = 100;
+    vfo_set_rit_step(100);
     break;
   }
 }
@@ -507,10 +507,10 @@ void radio_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_combo), NULL, "10");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_combo), NULL, "100");
 
-  switch (rit_increment) {
+  switch (vfo[active_receiver->id].rit_step) {
   default:
     // we should not arrive here, but just in case ...
-    rit_increment = 1;
+    vfo_set_rit_step(1);
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_combo), 0);
     break;
 

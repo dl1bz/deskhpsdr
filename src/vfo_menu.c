@@ -108,15 +108,15 @@ static gboolean vfo_num_pad_cb(GtkWidget *widget, GdkEventButton *event, gpointe
 static void rit_cb(GtkComboBox *widget, gpointer data) {
   switch (gtk_combo_box_get_active(widget)) {
   case 0:
-    rit_increment = 1;
+    vfo_set_rit_step(1);
     break;
 
   case 1:
-    rit_increment = 10;
+    vfo_set_rit_step(10);
     break;
 
   case 2:
-    rit_increment = 100;
+    vfo_set_rit_step(100);
     break;
   }
 
@@ -220,7 +220,7 @@ void vfo_menu(GtkWidget *parent, int id) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_b), NULL, "10 Hz");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_b), NULL, "100 Hz");
 
-  switch (rit_increment) {
+  switch (vfo[myvfo].rit_step) {
   case 1:
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_b), 0);
     break;
