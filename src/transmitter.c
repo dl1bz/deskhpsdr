@@ -805,6 +805,8 @@ void tx_create_dialog(TRANSMITTER *tx) {
 
   tx->dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(tx->dialog), GTK_WINDOW(top_window));
+  // Resizing für das transient Fenster deaktivieren
+  gtk_window_set_resizable(GTK_WINDOW(tx->dialog), FALSE);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(tx->dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), FALSE);
@@ -813,7 +815,8 @@ void tx_create_dialog(TRANSMITTER *tx) {
   g_signal_connect (tx->dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
-  gtk_widget_set_size_request (tx->panel, display_width / 4, display_height / 2);
+  gtk_widget_set_size_request (tx->panel, display_width / 4, display_width / 4);
+  // t_print("%s: W:%d\n", __FUNCTION__, display_width);
   gtk_container_add(GTK_CONTAINER(content), tx->panel);
   gtk_widget_add_events(tx->dialog, GDK_KEY_PRESS_MASK);
   g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
