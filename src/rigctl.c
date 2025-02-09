@@ -357,49 +357,62 @@ void launch_sertune() {
 static gpointer autogain_thread(gpointer user_data) {
   static double gain_step = 2.0;
   static double gain = 0.0;
+  static double max_gain = 0.0;
+  static double min_gain = 0.0;
   static unsigned int adc_count_limit = 2;
   static unsigned int adc0_error_count = 0;
   static unsigned int adc1_error_count = 0;
+  min_gain = adc[active_receiver->adc].min_gain;
+  max_gain = adc[active_receiver->adc].max_gain;
 
   while (1) {
     if (!(radio_is_transmitting())) {
       g_mutex_lock(&autogain_mutex);
 
-      // sanity checks
-      if (adc[active_receiver->adc].gain < adc[active_receiver->adc].min_gain) {
-        adc[active_receiver->adc].gain = adc[active_receiver->adc].min_gain;
-      }
-
-      if (adc[active_receiver->adc].gain > adc[active_receiver->adc].max_gain) {
-        adc[active_receiver->adc].gain = adc[active_receiver->adc].max_gain;
-      }
-
-      if (active_receiver->id == 0 && active_receiver->adc == 0 && adc0_overload) {
+      if (adc0_overload) {
         adc0_error_count++;
-
-        while (adc0_overload && adc0_error_count > adc_count_limit) {
-          gain = adc[active_receiver->adc].gain;
-          gain -= gain_step;
-          set_rf_gain(active_receiver->id, gain);
-          // sleep(1);
-          g_usleep(500000);
-        }
-
-        if (!adc0_overload) { adc0_error_count = 0; }
+      } else {
+        adc0_error_count = 0;
       }
 
-      if (active_receiver->id == 1 && active_receiver->adc == 1 && adc1_overload) {
+      if (adc1_overload) {
         adc1_error_count++;
+      } else {
+        adc1_error_count = 0;
+      }
 
-        while (adc1_overload && adc1_error_count > adc_count_limit) {
-          gain = adc[active_receiver->adc].gain;
+      gain = adc[active_receiver->adc].gain;
+
+      if (gain > max_gain) {
+        gain = max_gain;  // Sicherstellen, dass GAIN nicht größer als MAX_GAIN
+      }
+
+      if (adc0_error_count >= adc_count_limit) {
+        while (adc0_overload && gain > min_gain) {
           gain -= gain_step;
+
+          if (gain < min_gain) {
+            gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
+          }
+
           set_rf_gain(active_receiver->id, gain);
           // sleep(1);
           g_usleep(500000);
         }
+      }
 
-        if (!adc1_overload) { adc1_error_count = 0; }
+      if (adc1_error_count >= adc_count_limit) {
+        while (adc1_overload && gain > min_gain) {
+          gain -= gain_step;
+
+          if (gain < min_gain) {
+            gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
+          }
+
+          set_rf_gain(active_receiver->id, gain);
+          // sleep(1);
+          g_usleep(500000);
+        }
       }
     }
 
