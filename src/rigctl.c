@@ -355,71 +355,92 @@ void launch_sertune() {
 
 #if defined (__LDESK__)
 static gpointer autogain_thread(gpointer user_data) {
-  static double gain_step = 2.0;
+  static struct timespec start_time, current_time;
+  static time_t elapsed_time;
+  static int autogain_first_run = 1; // only if deskHPSDR starts we get sometimes wrong ADC OVL states, we add a delay
+  static double gain_step = 2.0;     // gain step size for aotomatic
   static double gain = 0.0;
   static double max_gain = 0.0;
   static double min_gain = 0.0;
-  static unsigned int adc_count_limit = 2;
+  static unsigned int adc_count_limit = 4;  // count more than 1x ADC OVL as hyterese
   static unsigned int adc0_error_count = 0;
   static unsigned int adc1_error_count = 0;
   min_gain = adc[active_receiver->adc].min_gain;
   max_gain = adc[active_receiver->adc].max_gain;
 
+/*
+In this thread we check, if the ADC0 or ADC1 runs in overflow because the gain is too much.
+The feedback come from the SDR itself, OVF signal will send inside the HPSDR protocol.
+If we receive a ADC0/ADC1 OVF, we reduce stepwise the gain every 0.5s with the defined gain_step.
+If the OVF flag is cleared, we stop with decreasing gain.
+If deskHPSDR starts the first time, we need to add an delay around 10-20s before the gain monitoring starts.
+That's why sometimes not all protocol initializations are completed just in time after app start
+This function needs more fine adjustment, not all is completed yet
+*/
+  clock_gettime(CLOCK_MONOTONIC, &start_time);              // get start time
+
   while (1) {
+    clock_gettime(CLOCK_MONOTONIC, &current_time);          // get currect time
+    elapsed_time = current_time.tv_sec - start_time.tv_sec; // calculate time difference in s
+
+    if (elapsed_time > 10 && autogain_first_run) {          // set a delay of 10s
+      autogain_first_run = !autogain_first_run;             // clear state of autogain_first_run
+      t_print("%s: Clear state autogain_first_run = %d after %ds delay\n", __FUNCTION__, autogain_first_run, (int)elapsed_time);
+    }
     if (!(radio_is_transmitting())) {
-      g_mutex_lock(&autogain_mutex);
+      g_mutex_lock(&autogain_mutex); // lock thread
 
       if (adc0_overload) {
-        adc0_error_count++;
+        adc0_error_count++;   // if ADC0 OVL increase counter
       } else {
-        adc0_error_count = 0;
+        adc0_error_count = 0; // reset counter
       }
 
       if (adc1_overload) {
-        adc1_error_count++;
+        adc1_error_count++;   // if ADC1 OVL increase counter
       } else {
-        adc1_error_count = 0;
+        adc1_error_count = 0; // reset counter
       }
 
-      gain = adc[active_receiver->adc].gain;
+      gain = adc[active_receiver->adc].gain; //get current gain from active receiver
 
       if (gain > max_gain) {
         gain = max_gain;  // Sicherstellen, dass GAIN nicht größer als MAX_GAIN
       }
 
-      if (adc0_error_count >= adc_count_limit) {
+      if (adc0_error_count >= adc_count_limit && !autogain_first_run) {
         while (adc0_overload && gain > min_gain) {
-          gain -= gain_step;
+          gain -= gain_step; // decrease gain with gain_step
 
           if (gain < min_gain) {
             gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
           }
 
-          set_rf_gain(active_receiver->id, gain);
+          set_rf_gain(active_receiver->id, gain); // set new gain
           // sleep(1);
-          g_usleep(500000);
+          g_usleep(500000);  // wait 0.5s
         }
 
         t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __FUNCTION__, active_receiver->id, (int)gain);
       }
 
-      if (adc1_error_count >= adc_count_limit) {
+      if (adc1_error_count >= adc_count_limit && !autogain_first_run) {
         while (adc1_overload && gain > min_gain) {
-          gain -= gain_step;
+          gain -= gain_step; // decrease gain with gain_step
 
           if (gain < min_gain) {
             gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
           }
 
-          set_rf_gain(active_receiver->id, gain);
+          set_rf_gain(active_receiver->id, gain); // set new gain
           // sleep(1);
-          g_usleep(500000);
+          g_usleep(500000); // wait 0.5s
         }
       }
     }
 
-    g_mutex_unlock(&autogain_mutex);
-    sleep(1);
+    g_mutex_unlock(&autogain_mutex); // unlock thread
+    sleep(1); // wait 1s in main thread loop
   }
 }
 
