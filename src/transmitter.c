@@ -301,7 +301,8 @@ void tx_reconfigure(TRANSMITTER *tx, int width, int height) {
     // The value of tx->pixels corresponds to the *full* TX spectrum in the
     // target resolution.
     //
-    tx->pixels = display_width * tx->ratio * 2;
+    // tx->pixels = display_width * tx->ratio * 2;
+    tx->pixels = display_width;
     g_free(tx->pixel_samples);
     tx->pixel_samples = g_new(float, tx->pixels);
     tx_set_analyzer(tx);
@@ -810,12 +811,17 @@ void tx_create_dialog(TRANSMITTER *tx) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(tx->dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), FALSE);
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "TX");
+  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "TX [duplex]");
   g_signal_connect (tx->dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (tx->dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
-  gtk_widget_set_size_request (tx->panel, display_width / 4, display_width / 4);
+  #if defined (__APPLE__)
+  gtk_widget_set_size_request(tx->panel, tx->width, tx->height);
+  // gtk_widget_set_size_request(tx->panel, display_width / 4, display_width / 4);
+  #else
+  gtk_widget_set_size_request(tx->panel, display_width / 4, display_width / 2);
+  #endif
   gtk_container_add(GTK_CONTAINER(content), tx->panel);
   gtk_widget_add_events(tx->dialog, GDK_KEY_PRESS_MASK);
   g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
@@ -911,7 +917,8 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   }
 
   tx->output_samples = tx->buffer_size * tx->ratio;
-  tx->pixels = display_width * tx->ratio * 2;
+  // tx->pixels = display_width * tx->ratio * 2;
+  tx->pixels = display_width;
   tx->width = width;
   tx->height = height;
   tx->display_panadapter = 1;
@@ -1912,15 +1919,23 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   const int spur_elimination_ffts = 1;
   const int data_type = 1;
   const double kaiser_pi = 14.0;
-  const double fscLin = 0;
-  const double fscHin = 0;
+  // const double fscLin = 0;
+  // const double fscHin = 0;
+  //
+  // The TX spectrum is always 24k wide, which is a fraction of the TX IQ output rate
+  // This fraction determines how much to "clip" from both sides. The number of bins
+  // equals the analyzer FFTZ size
+  //
+  const int afft_size = 16384;
+  const double fscLin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
+  const double fscHin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
   const int stitches = 1;
   const int calibration_data_set = 0;
   const double span_min_freq = 0.0;
   const double span_max_freq = 0.0;
   const int clip = 0;
   const int window_type = 5;
-  const int afft_size = 16384;
+  // const int afft_size = 16384;
   const int pixels = tx->pixels;
   int overlap;
   int max_w = afft_size + (int) min(keep_time * (double) tx->iq_output_rate,
