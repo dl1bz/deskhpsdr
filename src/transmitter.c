@@ -816,11 +816,7 @@ void tx_create_dialog(TRANSMITTER *tx) {
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
   // gtk_widget_set_size_request(tx->panel, tx->width, tx->height);
-#if defined (__APPLE__)
-  gtk_widget_set_size_request(tx->panel, display_width / 4, display_width / 4);
-#else
-  gtk_widget_set_size_request(tx->panel, display_width / 4, display_width / 4);
-#endif
+  gtk_widget_set_size_request(tx->panel, display_width / 4, display_height / 2);
   gtk_container_add(GTK_CONTAINER(content), tx->panel);
   gtk_widget_add_events(tx->dialog, GDK_KEY_PRESS_MASK);
   g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
