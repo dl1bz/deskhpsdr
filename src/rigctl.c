@@ -358,6 +358,7 @@ static gpointer autogain_thread(gpointer user_data) {
   static struct timespec start_time, current_time;
   static time_t elapsed_time;
   static int autogain_first_run = 1; // only if deskHPSDR starts we get sometimes wrong ADC OVL states, we add a delay
+  static int is_adjusted = 0;
   static double gain_step = 2.0;     // gain step size for aotomatic
   static double gain = 0.0;
   static double max_gain = 0.0;
@@ -422,6 +423,7 @@ static gpointer autogain_thread(gpointer user_data) {
           g_usleep(500000);  // wait 0.5s
         }
 
+        is_adjusted = 1;
         t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __FUNCTION__, active_receiver->id, (int)gain);
       }
 
@@ -437,6 +439,18 @@ static gpointer autogain_thread(gpointer user_data) {
           // sleep(1);
           g_usleep(500000); // wait 0.5s
         }
+      }
+
+      if (!adc0_overload && is_adjusted && !autogain_first_run) {
+        while (!adc0_overload && gain > min_gain) {
+          gain += 1.0;                                  // increase gain +1db
+          set_rf_gain(active_receiver->id, gain);       // set gain
+          g_usleep(500000); // wait 0.5s
+        }
+          set_rf_gain(active_receiver->id, gain - 3.0); // decrease gain -2db
+          is_adjusted = 0;
+          // g_usleep(500000); // wait 0.5s
+          sleep(2);
       }
     }
 

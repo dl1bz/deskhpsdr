@@ -1032,7 +1032,15 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       adc_error_count++;
 
-      if (adc_error_count > 2 * fps) {
+      if (!autogain_enabled && adc_error_count > 2 * fps) {
+        adc_error_count = 0;
+        adc0_overload = 0;
+        adc1_overload = 0;
+#ifdef USBOZY
+        mercury_overload[0] = 0;
+        mercury_overload[1] = 0;
+#endif
+      } else if (adc_error_count > 1 * fps) {
         adc_error_count = 0;
         adc0_overload = 0;
         adc1_overload = 0;
