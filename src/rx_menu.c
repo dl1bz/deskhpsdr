@@ -39,6 +39,7 @@
 #include "mystring.h"
 #if defined (__LDESK__)
   #include "rigctl.h"
+  #include "ext.h"
 #endif
 
 static GtkWidget *dialog = NULL;
@@ -64,6 +65,7 @@ static gboolean close_cb () {
 static void autogain_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   launch_autogain_hl2();
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 static void dither_cb(GtkWidget *widget, gpointer data) {
