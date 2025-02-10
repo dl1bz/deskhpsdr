@@ -367,16 +367,15 @@ static gpointer autogain_thread(gpointer user_data) {
   static unsigned int adc1_error_count = 0;
   min_gain = adc[active_receiver->adc].min_gain;
   max_gain = adc[active_receiver->adc].max_gain;
-
-/*
-In this thread we check, if the ADC0 or ADC1 runs in overflow because the gain is too much.
-The feedback come from the SDR itself, OVF signal will send inside the HPSDR protocol.
-If we receive a ADC0/ADC1 OVF, we reduce stepwise the gain every 0.5s with the defined gain_step.
-If the OVF flag is cleared, we stop with decreasing gain.
-If deskHPSDR starts the first time, we need to add an delay around 10-20s before the gain monitoring starts.
-That's why sometimes not all protocol initializations are completed just in time after app start
-This function needs more fine adjustment, not all is completed yet
-*/
+  /*
+  In this thread we check, if the ADC0 or ADC1 runs in overflow because the gain is too much.
+  The feedback come from the SDR itself, OVF signal will send inside the HPSDR protocol.
+  If we receive a ADC0/ADC1 OVF, we reduce stepwise the gain every 0.5s with the defined gain_step.
+  If the OVF flag is cleared, we stop with decreasing gain.
+  If deskHPSDR starts the first time, we need to add an delay around 10-20s before the gain monitoring starts.
+  That's why sometimes not all protocol initializations are completed just in time after app start
+  This function needs more fine adjustment, not all is completed yet
+  */
   clock_gettime(CLOCK_MONOTONIC, &start_time);              // get start time
 
   while (1) {
@@ -385,8 +384,10 @@ This function needs more fine adjustment, not all is completed yet
 
     if (elapsed_time > 10 && autogain_first_run) {          // set a delay of 10s
       autogain_first_run = !autogain_first_run;             // clear state of autogain_first_run
-      t_print("%s: Clear state autogain_first_run = %d after %ds delay\n", __FUNCTION__, autogain_first_run, (int)elapsed_time);
+      t_print("%s: Clear state autogain_first_run = %d after %ds delay\n", __FUNCTION__, autogain_first_run,
+              (int)elapsed_time);
     }
+
     if (!(radio_is_transmitting())) {
       g_mutex_lock(&autogain_mutex); // lock thread
 
@@ -442,6 +443,7 @@ This function needs more fine adjustment, not all is completed yet
     g_mutex_unlock(&autogain_mutex); // unlock thread
     sleep(1); // wait 1s in main thread loop
   }
+
   return NULL;
 }
 
