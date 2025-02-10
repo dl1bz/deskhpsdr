@@ -442,6 +442,7 @@ This function needs more fine adjustment, not all is completed yet
     g_mutex_unlock(&autogain_mutex); // unlock thread
     sleep(1); // wait 1s in main thread loop
   }
+  return NULL;
 }
 
 #endif
