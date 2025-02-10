@@ -399,6 +399,7 @@ static gpointer autogain_thread(gpointer user_data) {
           // sleep(1);
           g_usleep(500000);
         }
+
         t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __FUNCTION__, active_receiver->id, (int)gain);
       }
 
