@@ -359,7 +359,7 @@ static gpointer autogain_thread(gpointer user_data) {
   static time_t elapsed_time;
   static int autogain_first_run = 1; // only if deskHPSDR starts we get sometimes wrong ADC OVL states, we add a delay
   static int is_adjusted = 0;
-  static double gain_step = 2.0;     // gain step size for aotomatic
+  static double gain_step = 3.0;     // gain step size for aotomatic
   static double gain = 0.0;
   static double max_gain = 0.0;
   static double min_gain = 0.0;
