@@ -301,7 +301,6 @@ void tx_reconfigure(TRANSMITTER *tx, int width, int height) {
     // The value of tx->pixels corresponds to the *full* TX spectrum in the
     // target resolution.
     //
-    // tx->pixels = display_width * tx->ratio * 2;
     tx->pixels = display_width;
     g_free(tx->pixel_samples);
     tx->pixel_samples = g_new(float, tx->pixels);
@@ -917,7 +916,6 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   }
 
   tx->output_samples = tx->buffer_size * tx->ratio;
-  // tx->pixels = display_width * tx->ratio * 2;
   tx->pixels = display_width;
   tx->width = width;
   tx->height = height;
