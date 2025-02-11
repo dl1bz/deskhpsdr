@@ -65,7 +65,7 @@ static GtkWidget *af_gain_label;
 static GtkWidget *af_gain_scale;
 static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
-#if defined (__LDESK__)
+#if defined (__DVL__)
   static GtkWidget *autogain_en;
 #endif
 static GtkWidget *agc_gain_label;
@@ -652,7 +652,7 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-#if defined (__LDESK__)
+#if defined (__DVL__)
 static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   launch_autogain_hl2();
@@ -806,7 +806,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_show(agc_scale);
   gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
-#if defined (__LDESK__)
+#if defined (__DVL__)
 
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     autogain_en = gtk_check_button_new();

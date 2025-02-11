@@ -54,9 +54,11 @@ extern void  shutdown_tcp_rigctl(void);
 #if defined (__LDESK__)
   extern void launch_serptt(void);
   extern void launch_sertune(void);
-  extern void launch_autogain_hl2(void);
   extern int serptt_fd;
   extern int sertune_fd;
+#endif
+#if defined (__DVL__)
+  extern void launch_autogain_hl2(void);
 #endif
 extern void launch_rx200_monitor(void);
 extern int cat_control;

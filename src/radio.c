@@ -1635,6 +1635,9 @@ void radio_start_radio() {
     launch_serptt();
   }
 
+#endif
+#if defined (__DVL__)
+
   if ((device == DEVICE_HERMES_LITE2) && autogain_enabled) {
     launch_autogain_hl2();
   }
@@ -2651,7 +2654,9 @@ static void radio_restore_state() {
     GetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
-  // GetPropI0("autogain_enabled",                              autogain_enabled);
+#endif
+#if defined (__DVL__)
+  GetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   GetPropI0("tx_filter_low",                                 tx_filter_low);
   GetPropI0("tx_filter_high",                                tx_filter_high);
@@ -2879,6 +2884,8 @@ void radio_save_state() {
     SetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
+#endif
+#if defined (__DVL__)
   SetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   SetPropI0("tx_filter_low",                                 tx_filter_low);

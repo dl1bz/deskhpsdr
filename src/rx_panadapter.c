@@ -1009,7 +1009,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, 100.0, 70.0);
 
       if (adc0_overload && !adc1_overload) {
-#if defined (__LDESK__)
+#if defined (__DVL__)
 
         if (autogain_enabled && device == DEVICE_HERMES_LITE2) {
           cairo_show_text(cr, "ADC0 overload » auto-adjust RxPGA gain...");
@@ -1031,6 +1031,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       }
 
       adc_error_count++;
+#if defined (__DVL__)
 
       if (!autogain_enabled && adc_error_count > 2 * fps) {
         adc_error_count = 0;
@@ -1049,6 +1050,20 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         mercury_overload[1] = 0;
 #endif
       }
+
+#else
+
+      if (adc_error_count > 2 * fps) {
+        adc_error_count = 0;
+        adc0_overload = 0;
+        adc1_overload = 0;
+#ifdef USBOZY
+        mercury_overload[0] = 0;
+        mercury_overload[1] = 0;
+#endif
+      }
+
+#endif
     }
 
     if (high_swr_seen) {

@@ -2316,6 +2316,7 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, temp_text);
+#if defined (__DVL__)
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y);
@@ -2331,6 +2332,7 @@ void vfo_update() {
       cairo_show_text(cr, temp_text);
     }
 
+#endif
 #if defined (__LDESK__) && defined (__HAVEATU__)
     cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
 
