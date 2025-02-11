@@ -843,7 +843,18 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
     gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
     gtk_widget_show(rf_gain_scale);
-    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, sqpos, 0, swidth -1, 1);
+#if defined (__DVL__)
+    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, sqpos, 0, swidth - 1, 1);
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
+        gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
+      }
+    }
+
+#else
+    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
+#endif
     g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed", G_CALLBACK(rf_gain_value_changed_cb), NULL);
   } else {
     rf_gain_label = NULL;
