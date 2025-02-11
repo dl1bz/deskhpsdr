@@ -447,10 +447,11 @@ static gpointer autogain_thread(gpointer user_data) {
           set_rf_gain(active_receiver->id, gain);       // set gain
           g_usleep(500000); // wait 0.5s
         }
-          set_rf_gain(active_receiver->id, gain - 3.0); // decrease gain -3db
-          is_adjusted = 0;
-          // g_usleep(500000); // wait 0.5s
-          sleep(2);
+
+        set_rf_gain(active_receiver->id, gain - 3.0); // decrease gain -3db
+        is_adjusted = 0;
+        // g_usleep(500000); // wait 0.5s
+        sleep(2);
       }
     }
 
