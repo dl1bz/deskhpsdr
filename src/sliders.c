@@ -45,6 +45,7 @@
 #include "property.h"
 #include "main.h"
 #include "ext.h"
+#include "rigctl.h"
 #ifdef CLIENT_SERVER
   #include "client_server.h"
 #endif
@@ -64,6 +65,9 @@ static GtkWidget *af_gain_label;
 static GtkWidget *af_gain_scale;
 static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
+#if defined (__LDESK__)
+  static GtkWidget *autogain_en;
+#endif
 static GtkWidget *agc_gain_label;
 static GtkWidget *agc_scale;
 static GtkWidget *attenuation_label = NULL;
@@ -648,6 +652,15 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
+#if defined (__LDESK__)
+static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
+  autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  launch_autogain_hl2();
+  g_idle_add(ext_vfo_update, NULL);
+}
+
+#endif
+
 void set_squelch(RECEIVER *rx) {
   //t_print("%s\n",__FUNCTION__);
   //
@@ -751,6 +764,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   t3pos  =  s2pos + swidth;
   s3pos  =  t3pos + twidth;
   sqpos  =  s3pos + 1;
+  t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d sqpos=%d\n",
+          __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos, sqpos);
+  t_print("%s: twidth=%d swidth=%d\n", __FUNCTION__, twidth, swidth);
   sliders = gtk_grid_new();
   gtk_widget_set_size_request (sliders, width, height);
   gtk_grid_set_row_homogeneous(GTK_GRID(sliders), FALSE);
@@ -790,6 +806,18 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_show(agc_scale);
   gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
+#if defined (__LDESK__)
+
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    autogain_en = gtk_check_button_new();
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_en), autogain_enabled);
+    gtk_widget_show(autogain_en);
+    gtk_grid_attach(GTK_GRID(sliders), autogain_en, 36, 0, 1, 1);
+    gtk_widget_set_halign(autogain_en, GTK_ALIGN_CENTER);
+    g_signal_connect(autogain_en, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
+  }
+
+#endif
 
   if (have_rx_gain) {
 #if defined (__LDESK__)

@@ -62,11 +62,14 @@ static gboolean close_cb () {
   return TRUE;
 }
 
+#if defined (__LDESK__)
 static void autogain_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }
+
+#endif
 
 static void dither_cb(GtkWidget *widget, gpointer data) {
   active_receiver->dither = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -318,11 +321,13 @@ void rx_menu(GtkWidget *parent) {
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
         gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
+#if defined (__LDESK__)
         GtkWidget *autogain_b = gtk_check_button_new_with_label("Auto ADC Overload Protection");
         gtk_widget_set_name(autogain_b, "boldlabel");
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_b), autogain_enabled);
         gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, row + 1, 1, 1);
         g_signal_connect(autogain_b, "toggled", G_CALLBACK(autogain_cb), NULL);
+#endif
       } else {
         GtkWidget *dither_b = gtk_check_button_new_with_label("Dither Bit");
         gtk_widget_set_name(dither_b, "boldlabel");
