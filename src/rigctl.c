@@ -105,9 +105,13 @@ static GThread *rigctl_cw_thread_id = NULL;
 #if defined (__LDESK__)
   static GThread *serptt_thread_id = NULL;
   static GThread *sertune_thread_id = NULL;
-  static GThread *autogain_thread_id = NULL;
+  // static GThread *autogain_thread_id = NULL;
   static GMutex sertune_mutex;
-  static GMutex autogain_mutex;
+  // static GMutex autogain_mutex;
+
+  static pthread_t autogain_thread;
+  static pthread_mutex_t autogain_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+
 #endif
 
 static pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
@@ -354,7 +358,8 @@ void launch_sertune() {
 }
 
 #if defined (__LDESK__)
-static gpointer autogain_thread(gpointer user_data) {
+// static gpointer autogain_thread(gpointer user_data) {
+static void* autogain_thread_function(void* arg) {
   static struct timespec start_time, current_time;
   static time_t elapsed_time;
   static int autogain_first_run = 1; // only if deskHPSDR starts we get sometimes wrong ADC OVL states, we add a delay
@@ -390,7 +395,8 @@ static gpointer autogain_thread(gpointer user_data) {
     }
 
     if (!(radio_is_transmitting())) {
-      g_mutex_lock(&autogain_mutex); // lock thread
+      // g_mutex_lock(&autogain_mutex); // lock thread
+      pthread_mutex_lock(&autogain_mutex);
 
       if (adc0_overload) {
         adc0_error_count++;   // if ADC0 OVL increase counter
@@ -455,7 +461,8 @@ static gpointer autogain_thread(gpointer user_data) {
       }
     }
 
-    g_mutex_unlock(&autogain_mutex); // unlock thread
+    // g_mutex_unlock(&autogain_mutex); // unlock thread
+    pthread_mutex_unlock(&autogain_mutex);
     sleep(1); // wait 1s in main thread loop
   }
 
@@ -466,13 +473,18 @@ static gpointer autogain_thread(gpointer user_data) {
 
 void launch_autogain_hl2() {
   if (autogain_enabled) {
-    autogain_thread_id = g_thread_new("AutoGainHL2", autogain_thread, NULL);
+    // autogain_thread_id = g_thread_new("AutoGainHL2", autogain_thread, NULL);
+    if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
+      t_perror("---- ERROR: cannot start autogain_thread ----\n"); // return EXIT_FAILURE;
+    }
     t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
   } else {
-    if (autogain_thread_id) {
-      autogain_thread_id = NULL;
-      t_print("---- Shutdown HL2 AutoGain Thread ----\n");
-    }
+    // if (autogain_thread_id) {
+    // autogain_thread_id = NULL;
+    // t_print("---- Shutdown HL2 AutoGain Thread ----\n");
+    // }
+    pthread_cancel(autogain_thread);
+    t_print("---- Shutdown HL2 AutoGain Thread ----\n");
   }
 }
 
