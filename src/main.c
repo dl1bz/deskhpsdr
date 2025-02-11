@@ -707,7 +707,9 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("create pi label\n");
 #if defined (__LDESK__)
   snprintf(text, 2048,
-           "Hamradio SDR-Software for HPSDR protocol 1 & 2\nBased on source code of piHPSDR developed by G0ORX/N6LYT and DL1YCF\ndeskHPSDR is developed and maintained by DL1BZ");
+           "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY\n"
+           "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
+           "(contains code portions of piHPSDR developed by G0ORX/N6LYT and DL1YCF)");
   GtkWidget *pi_label = gtk_label_new(text);
   gtk_widget_set_name(pi_label, "big_txt");
   gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
