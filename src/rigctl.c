@@ -354,7 +354,6 @@ void launch_sertune() {
   }
 }
 
-#if defined (__LDESK__)
 static void* autogain_thread_function(void* arg) {
   static struct timespec start_time, current_time;
   static time_t elapsed_time;
@@ -462,8 +461,6 @@ static void* autogain_thread_function(void* arg) {
 
   return NULL;
 }
-
-#endif
 
 void launch_autogain_hl2() {
   if (autogain_enabled) {
