@@ -2317,7 +2317,7 @@ void vfo_update() {
 
     cairo_show_text(cr, temp_text);
 
-    if (device == DEVICE_HERMES_LITE2) {
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y);
 
       if (autogain_enabled) {
