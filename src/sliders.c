@@ -812,7 +812,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     autogain_en = gtk_check_button_new();
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_en), autogain_enabled);
     gtk_widget_show(autogain_en);
-    gtk_grid_attach(GTK_GRID(sliders), autogain_en, 36, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), autogain_en, s3pos, 0, 1, 1);
     gtk_widget_set_halign(autogain_en, GTK_ALIGN_CENTER);
     g_signal_connect(autogain_en, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
   }
@@ -843,7 +843,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
     gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
     gtk_widget_show(rf_gain_scale);
-    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
+    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, sqpos, 0, swidth -1, 1);
     g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed", G_CALLBACK(rf_gain_value_changed_cb), NULL);
   } else {
     rf_gain_label = NULL;
