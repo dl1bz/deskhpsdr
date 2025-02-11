@@ -810,7 +810,6 @@ void tx_create_dialog(TRANSMITTER *tx) {
   }
 
   tx->dialog = gtk_dialog_new();
-  // gtk_window_set_default_size(GTK_WINDOW(tx->dialog), 248, 248);
   gtk_window_set_transient_for(GTK_WINDOW(tx->dialog), GTK_WINDOW(top_window));
   // Resizing für das transient Fenster deaktivieren
   gtk_window_set_resizable(GTK_WINDOW(tx->dialog), FALSE);
@@ -823,7 +822,7 @@ void tx_create_dialog(TRANSMITTER *tx) {
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
   if (display_width > 992) {
-    gtk_widget_set_size_request(tx->panel, 248, tx->height);
+    gtk_widget_set_size_request(tx->panel, 248, display_height / 2);
   } else {
     gtk_widget_set_size_request(tx->panel, display_width / 4, display_height / 2);
   }
