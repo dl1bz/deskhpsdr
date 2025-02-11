@@ -155,7 +155,11 @@ void setDuplex() {
   if (duplex) {
     // TX is in separate window, also in full-screen mode
     gtk_container_remove(GTK_CONTAINER(fixed), transmitter->panel);
-    tx_reconfigure(transmitter, display_width / 4, display_height / 2);
+    if (display_width > 992) {
+      tx_reconfigure(transmitter, 248, display_height / 2);
+    } else {
+      tx_reconfigure(transmitter, display_width / 4, display_height / 2);
+    }
     tx_create_dialog(transmitter);
   } else {
     GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(transmitter->dialog));

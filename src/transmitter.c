@@ -288,7 +288,7 @@ void tx_set_ramps(TRANSMITTER *tx) {
 void tx_reconfigure(TRANSMITTER *tx, int width, int height) {
   if (width != tx->width || height != tx->height) {
     g_mutex_lock(&tx->display_mutex);
-    t_print("%s: width=%d height=%d\n", __FUNCTION__, width, height);
+    t_print("%s: width=%d height=%d display_width=%d\n", __FUNCTION__, width, height, display_width);
     tx->width = width;
     tx->height = height;
     gtk_widget_set_size_request(tx->panel, width, height);
@@ -301,8 +301,13 @@ void tx_reconfigure(TRANSMITTER *tx, int width, int height) {
     // The value of tx->pixels corresponds to the *full* TX spectrum in the
     // target resolution.
     //
-    tx->pixels = display_width * tx->ratio * 2;
-    // tx->pixels = display_width;
+    if (duplex) {
+      tx->pixels = 4 * width * tx->ratio * 2;
+      t_print("%s: tx->pixels=%d\n", __FUNCTION__, tx->pixels);
+    } else {
+      tx->pixels = display_width * tx->ratio * 2;
+    }
+      // tx->pixels = display_width;
     g_free(tx->pixel_samples);
     tx->pixel_samples = g_new(float, tx->pixels);
     tx_set_analyzer(tx);
@@ -805,6 +810,7 @@ void tx_create_dialog(TRANSMITTER *tx) {
   }
 
   tx->dialog = gtk_dialog_new();
+  // gtk_window_set_default_size(GTK_WINDOW(tx->dialog), 248, 248);
   gtk_window_set_transient_for(GTK_WINDOW(tx->dialog), GTK_WINDOW(top_window));
   // Resizing für das transient Fenster deaktivieren
   gtk_window_set_resizable(GTK_WINDOW(tx->dialog), FALSE);
@@ -816,8 +822,11 @@ void tx_create_dialog(TRANSMITTER *tx) {
   g_signal_connect (tx->dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
-  // gtk_widget_set_size_request(tx->panel, tx->width, tx->height);
-  gtk_widget_set_size_request(tx->panel, display_width / 4, display_height / 2);
+  if (display_width > 992) {
+    gtk_widget_set_size_request(tx->panel, 248, tx->height);
+  } else {
+    gtk_widget_set_size_request(tx->panel, display_width / 4, display_height / 2);
+  }
   gtk_container_add(GTK_CONTAINER(content), tx->panel);
   gtk_widget_add_events(tx->dialog, GDK_KEY_PRESS_MASK);
   g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
@@ -835,10 +844,18 @@ static void tx_create_visual(TRANSMITTER *tx) {
   }
 
   tx->panel = gtk_fixed_new();
-  gtk_widget_set_size_request (tx->panel, tx->width, tx->height);
+    if (duplex && display_width > 992) {
+      gtk_widget_set_size_request (tx->panel, 248, tx->height);
+    } else {
+      gtk_widget_set_size_request (tx->panel, tx->width, tx->height);
+    }
 
   if (tx->display_panadapter) {
-    tx_panadapter_init(tx, tx->width, tx->height);
+    if (duplex && display_width > 992) {
+      tx_panadapter_init(tx, 248, tx->height);
+    } else {
+      tx_panadapter_init(tx, tx->width, tx->height);
+    }
     gtk_fixed_put(GTK_FIXED(tx->panel), tx->panadapter, 0, 0);
   }
 
