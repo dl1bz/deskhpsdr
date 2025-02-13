@@ -754,9 +754,9 @@ static void new_protocol_high_priority() {
   for (int id = 0; id < 2; id++) {
     DDCfrequency[id] = vfo[id].frequency - vfo[id].lo;
 
-    if (vfo[id].rit_enabled) {
-      DDCfrequency[id] += vfo[id].rit;
-    }
+    // if (vfo[id].rit_enabled) {
+    //  DDCfrequency[id] += vfo[id].rit;
+    // }
 
     if (vfo[id].mode == modeCWU) {
       DDCfrequency[id] -= (long long)cw_keyer_sidetone_frequency;
