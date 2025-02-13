@@ -285,29 +285,30 @@ void tx_set_ramps(TRANSMITTER *tx) {
   g_mutex_unlock(&tx->cw_ramp_mutex);
 }
 
-void tx_reconfigure(TRANSMITTER *tx, int width, int height) {
+void tx_reconfigure(TRANSMITTER *tx, int pixels, int width, int height) {
   if (width != tx->width || height != tx->height) {
     g_mutex_lock(&tx->display_mutex);
     t_print("%s: width=%d height=%d\n", __FUNCTION__, width, height);
     tx->width = width;
     tx->height = height;
     gtk_widget_set_size_request(tx->panel, width, height);
-
     //
-    // Upon calling, width either equals display_width (non-duplex) and
-    // the *shown* TX spectrum is 24 kHz wide, or width equals 1/4 display_width (duplex)
-    // and the *shown* TX spectrum is 6 kHz wide. In both cases, display_width pixels
-    // correspond to 24 kHz, while the width of the whole spectrum is TXIQ.
-    // The mic sample rate is fixed to 48k , so ratio is TXIQ/24k.
-    // The value of tx->pixels corresponds to the *full* TX spectrum in the
-    // target resolution.
-    //
-    // tx->pixels = display_width * tx->ratio * 2;
-    tx->pixels = display_width;
+    // In duplex mode, pixels = 4*width, else pixels equals width
+    tx->pixels = pixels;
     g_free(tx->pixel_samples);
     tx->pixel_samples = g_new(float, tx->pixels);
     tx_set_analyzer(tx);
     g_mutex_unlock(&tx->display_mutex);
+
+    if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+      RECEIVER *rx = receiver[PS_RX_FEEDBACK];
+      g_mutex_lock(&rx->mutex);
+      rx->pixels = pixels;
+      g_free(rx->pixel_samples);
+      rx->pixel_samples = g_new(float, rx->pixels);
+      rx_set_analyzer(rx);
+      g_mutex_unlock(&rx->mutex);
+    }
   }
 
   gtk_widget_set_size_request(tx->panadapter, width, height);
@@ -514,14 +515,6 @@ static gboolean tx_update_display(gpointer data) {
     // if "MON" button is active (tx->feedback is TRUE),
     // then obtain spectrum pixels from PS_RX_FEEDBACK,
     // that is, display the (attenuated) TX signal from the "antenna"
-    //
-    // POSSIBLE MISMATCH OF SAMPLE RATES IN ORIGINAL PROTOCOL:
-    // TX sample rate is fixed 48 kHz, but RX sample rate can be
-    // 2*, 4*, or even 8* larger. The analyzer has been set up to use
-    // more pixels in this case, so we just need to copy the
-    // inner part of the spectrum.
-    // If both spectra have the same number of pixels, this code
-    // just copies all of them
     //
     g_mutex_lock(&tx->display_mutex);
 
@@ -817,7 +810,7 @@ void tx_create_dialog(TRANSMITTER *tx) {
   g_signal_connect (tx->dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
-  gtk_widget_set_size_request(tx->panel, display_width / 4, display_height / 2);
+  gtk_widget_set_size_request (tx->panel, tx_dialog_width, tx_dialog_height);
   gtk_container_add(GTK_CONTAINER(content), tx->panel);
   gtk_widget_add_events(tx->dialog, GDK_KEY_PRESS_MASK);
   g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
@@ -850,7 +843,7 @@ static void tx_create_visual(TRANSMITTER *tx) {
   }
 }
 
-TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
+TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   TRANSMITTER *tx = g_new(TRANSMITTER, 1);
   //
   // This is to guard against programming errors
@@ -913,8 +906,7 @@ TRANSMITTER *tx_create_transmitter(int id, int width, int height) {
   }
 
   tx->output_samples = tx->buffer_size * tx->ratio;
-  // tx->pixels = display_width * tx->ratio * 2;
-  tx->pixels = display_width;
+  tx->pixels = pixels;
   tx->width = width;
   tx->height = height;
   tx->display_panadapter = 1;
@@ -1863,14 +1855,14 @@ void tx_set_framerate(TRANSMITTER *tx) {
 void tx_close(const TRANSMITTER *tx) {
   CloseChannel(tx->id);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX CloseChannel id=%d\n", tx->id);
+  t_print("TX CloseChannel id=%d\n", tx->id);
 #endif
 }
 
 void tx_create_analyzer(const TRANSMITTER *tx) {
   int rc;
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX CreateAnalyzer id=%d\n", tx->id);
+  t_print("TX CreateAnalyzer id=%d\n", tx->id);
 #endif
   XCreateAnalyzer(tx->id, &rc, 262144, 1, 1, NULL);
 
@@ -1937,7 +1929,7 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   int max_w = afft_size + (int) min(keep_time * (double) tx->iq_output_rate,
                                     keep_time * (double) afft_size * (double) tx->fps);
   overlap = (int)max(0.0, ceil(afft_size - (double)tx->iq_output_rate / (double)tx->fps));
-  t_print("WDSP:TX SetAnalyzer id=%d buffer_size=%d overlap=%d pixels=%d\n", tx->id, tx->output_samples, overlap,
+  t_print("TX SetAnalyzer id=%d buffer_size=%d overlap=%d pixels=%d\n", tx->id, tx->output_samples, overlap,
           tx->pixels);
   SetAnalyzer(tx->id,                // id of the TXA channel
               n_pixout,              // 1 = "use same data for scope and waterfall"
@@ -1965,7 +1957,7 @@ void tx_off(const TRANSMITTER *tx) {
   // switch TX OFF, wait until slew-down completed
   SetChannelState(tx->id, 0, 1);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d Channel OFF\n", tx->id);
+  t_print("TX id=%d Channel OFF\n", tx->id);
 #endif
 }
 
@@ -1973,7 +1965,7 @@ void tx_on(const TRANSMITTER *tx) {
   // switch TX ON
   SetChannelState(tx->id, 1, 0);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d Channel ON\n", tx->id);
+  t_print("TX id=%d Channel ON\n", tx->id);
 #endif
 }
 
@@ -1996,7 +1988,7 @@ double tx_ps_getpk(const TRANSMITTER *tx) {
 void tx_ps_mox(const TRANSMITTER *tx, int state) {
   SetPSMox(tx->id, state);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d PS mox=%d\n", tx->id, state);
+  t_print("TX id=%d PS mox=%d\n", tx->id, state);
 #endif
 }
 
@@ -2029,7 +2021,7 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
   //     RX streams)
   //
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d PS OnOff=%d\n", tx->id, state);
+  t_print("TX id=%d PS OnOff=%d\n", tx->id, state);
 #endif
 
   if (!state) {
@@ -2042,7 +2034,7 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
     } else {
       RECEIVER *rx_feedback = receiver[PS_RX_FEEDBACK];
 
-      if (rx_feedback != 0) {
+      if (rx_feedback) {
         memset(rx_feedback->iq_input_buffer, 0, rx_feedback->buffer_size * sizeof(double));
 
         //
@@ -2091,14 +2083,14 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
 
 void tx_ps_reset(const TRANSMITTER *tx) {
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d PS Reset\n", tx->id);
+  t_print("TX id=%d PS Reset\n", tx->id);
 #endif
   SetPSControl(tx->id, 1, 0, 0, 0);
 }
 
 void tx_ps_resume(const TRANSMITTER *tx) {
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d PS Resume OneShot=%d\n", tx->id, tx->ps_oneshot);
+  t_print("TX id=%d PS Resume OneShot=%d\n", tx->id, tx->ps_oneshot);
 #endif
 
   if (tx->ps_oneshot) {
@@ -2110,7 +2102,7 @@ void tx_ps_resume(const TRANSMITTER *tx) {
 
 void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d PS SampleRate=%d\n", tx->id, rate);
+  t_print("TX id=%d PS SampleRate=%d\n", tx->id, rate);
 #endif
   SetPSFeedbackRate (tx->id, rate);
 }
@@ -2126,7 +2118,7 @@ void tx_ps_setparams(const TRANSMITTER *tx) {
   SetPSTXDelay(tx->id, 1E-9 * tx->ps_ampdelay);
   SetPSLoopDelay(tx->id, tx->ps_loopdelay);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d PS map=%d ptol=%d ints=%d spi=%d stbl=%d pin=%d moxdelay=%g ampdelay=%g loopdelay=%g\n",
+  t_print("TX id=%d PS map=%d ptol=%d ints=%d spi=%d stbl=%d pin=%d moxdelay=%g ampdelay=%g loopdelay=%g\n",
           tx->id, tx->ps_map, tx->ps_ptol, tx->ps_ints, tx->ps_spi, tx->ps_stbl, tx->ps_pin, tx->ps_moxdelay,
           tx->ps_ampdelay, tx->ps_loopdelay);
 #endif
@@ -2135,14 +2127,14 @@ void tx_ps_setparams(const TRANSMITTER *tx) {
 void tx_ps_setpk(const TRANSMITTER *tx, double peak) {
   SetPSHWPeak(tx->id, peak);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d PS HWpeak=%g\n", tx->id, peak);
+  t_print("TX id=%d PS HWpeak=%g\n", tx->id, peak);
 #endif
 }
 
 void tx_set_am_carrier_level(const TRANSMITTER *tx) {
   SetTXAAMCarrierLevel(tx->id, tx->am_carrier_level);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d AM carrier level=%g\n", tx->id, tx->am_carrier_level);
+  t_print("TX id=%d AM carrier level=%g\n", tx->id, tx->am_carrier_level);
 #endif
 }
 
@@ -2178,7 +2170,7 @@ void tx_set_average(const TRANSMITTER *tx) {
   }
 
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d Display BackMult=%g NumAvg=%d AvgMode=%d\n",
+  t_print("TX id=%d Display BackMult=%g NumAvg=%d AvgMode=%d\n",
           display_avb, display_average, wdspmode);
 #endif
   //
@@ -2194,7 +2186,7 @@ void tx_set_average(const TRANSMITTER *tx) {
 void tx_set_bandpass(const TRANSMITTER *tx) {
   SetTXABandpassFreqs(tx->id, (double) tx->filter_low, (double) tx->filter_high);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d BandPass low=%d high=%d\n", tx->id, tx->filter_low, tx->filter_high);
+  t_print("TX id=%d BandPass low=%d high=%d\n", tx->id, tx->filter_low, tx->filter_high);
 #endif
 }
 
@@ -2251,7 +2243,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   t_print("%s: Baseband-Compr state %d, level %.1f\n",
           __FUNCTION__, tx->compressor, tx->compressor_level);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d Compressor=%d Lvl=%g CFC=%d CFC-EQ=%d AllComp=%g AllGain=%g\n",
+  t_print("TX id=%d Compressor=%d Lvl=%g CFC=%d CFC-EQ=%d AllComp=%g AllGain=%g\n",
           tx->id, tx->compressor, tx->compressor_level, tx->cfc, tx->cfc_eq,
           tx->cfc_lvl[0], tx->cfc_post[0]);
 
@@ -2270,7 +2262,7 @@ void tx_set_ctcss(const TRANSMITTER *tx) {
   SetTXACTCSSFreq(tx->id, ctcss_frequencies[tx->ctcss]);
   SetTXACTCSSRun(tx->id, tx->ctcss_enabled);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d CTCSS enable=%d freq=%5g\n", tx->id, tx->ctcss_enabled, ctcss_frequencies[tx->ctcss]);
+  t_print("TX id=%d CTCSS enable=%d freq=%5g\n", tx->id, tx->ctcss_enabled, ctcss_frequencies[tx->ctcss]);
 #endif
 }
 
@@ -2300,7 +2292,7 @@ void tx_set_detector(const TRANSMITTER *tx) {
   }
 
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d Display DetMode=%d\n", tx->id, wdspmode);
+  t_print("TX id=%d Display DetMode=%d\n", tx->id, wdspmode);
 #endif
   SetDisplayDetectorMode(tx->id, 0, wdspmode);
 }
@@ -2308,7 +2300,7 @@ void tx_set_detector(const TRANSMITTER *tx) {
 void tx_set_deviation(const TRANSMITTER *tx) {
   SetTXAFMDeviation(tx->id, (double)tx->deviation);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d FM Max Deviation=%d\n", tx->id, tx->deviation);
+  t_print("TX id=%d FM Max Deviation=%d\n", tx->id, tx->deviation);
 #endif
 }
 
@@ -2331,7 +2323,7 @@ void tx_set_dexp(const TRANSMITTER *tx) {
   SetDEXPRunSideChannelFilter(0, tx->dexp_filter);
   SetDEXPRun(0, tx->dexp);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d DEXP=%d DoFilter=%d Low=%d High=%d ExpRatio(dB)=%d TriggerLvl(dB)=%d\n",
+  t_print("TX id=%d DEXP=%d DoFilter=%d Low=%d High=%d ExpRatio(dB)=%d TriggerLvl(dB)=%d\n",
           tx->id, tx->dexp, tx->dexp_filter, tx->dexp_filter_low, tx->dexp_filter_high, tx->dexp_exp, tx->dexp_trigger);
   t_print("... Tau=%g Attack=%g Release=%g Hold=%g Hyst=%g\n",
           tx->dexp_tau, tx->dexp_attack, tx->dexp_release, tx->dexp_hold, tx->dexp_hyst);
@@ -2342,7 +2334,7 @@ void tx_set_equalizer(TRANSMITTER *tx) {
   SetTXAEQProfile(tx->id, 10, tx->eq_freq, tx->eq_gain);
   SetTXAEQRun(tx->id, tx->eq_enable);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d Equalizer enable=%d allgain=%g\n", tx->id, tx->eq_enable, tx->eq_gain[0]);
+  t_print("TX id=%d Equalizer enable=%d allgain=%g\n", tx->id, tx->eq_enable, tx->eq_gain[0]);
 
   for (int i = 1; i < 11; i++) {
     t_print("... Chan=%2d Freq=%6g Gain=%4g\n", i, tx->eq_freq[i], tx->eq_gain[i]);
@@ -2355,7 +2347,7 @@ void tx_set_equalizer(TRANSMITTER *tx) {
 void tx_set_fft_size(const TRANSMITTER *tx) {
   TXASetNC(tx->id, tx->fft_size);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d FFT size=%d\n", tx->id, tx->fft_size);
+  t_print("TX id=%d FFT size=%d\n", tx->id, tx->fft_size);
 #endif
 }
 
@@ -2382,10 +2374,10 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
   SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
 #endif
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d MicGain(dB)=%g\n", tx->id, tx->mic_gain);
+  t_print("TX id=%d MicGain(dB)=%g\n", tx->id, tx->mic_gain);
 #endif
 #if defined (__LDESK__)
-  t_print("WDSP:TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
+  t_print("TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
           vfo_get_tx_mode());
 #endif
 }
@@ -2423,7 +2415,7 @@ void tx_set_mode(TRANSMITTER* tx, int mode) {
 
 #endif
 #ifdef WDSPTXDEBUG
-    t_print("WDSP:TX id=%d mode=%d\n", tx->id, mode);
+    t_print("TX id=%d mode=%d\n", tx->id, mode);
 #endif
     SetTXAMode(tx->id, mode);
     tx_set_filter(tx);
@@ -2433,7 +2425,7 @@ void tx_set_mode(TRANSMITTER* tx, int mode) {
 void tx_set_pre_emphasize(const TRANSMITTER *tx) {
   SetTXAFMEmphPosition(tx->id, tx->pre_emphasize);
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d FM PreEmph=%d\n", tx->id, tx->pre_emphasize);
+  t_print("TX id=%d FM PreEmph=%d\n", tx->id, tx->pre_emphasize);
 #endif
 }
 
@@ -2442,7 +2434,7 @@ void tx_set_singletone(const TRANSMITTER *tx, int state, double freq) {
   // Produce the TX signal for TUNEing
   //
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d SingleTone=%d Freq=%g\n", tx->id, state, freq);
+  t_print("TX id=%d SingleTone=%d Freq=%g\n", tx->id, state, freq);
 #endif
 
   if (state) {
@@ -2481,7 +2473,7 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
   if (state == tx->twotone) { return; }
 
 #ifdef WDSPTXDEBUG
-  t_print("WDSP:TX id=%d TwoTone=%d\n", tx->id, state);
+  t_print("TX id=%d TwoTone=%d\n", tx->id, state);
 #endif
   tx->twotone = state;
 

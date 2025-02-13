@@ -306,6 +306,8 @@ extern int METER_HEIGHT;
 extern int MENU_WIDTH;
 extern int rx_stack_horizontal;
 extern int suppress_popup_sliders;
+extern const int tx_dialog_width;
+extern const int tx_dialog_height;
 
 extern char g_rx200_data[4][64];
 extern int rx200_udp_valid;

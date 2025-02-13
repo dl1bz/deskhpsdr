@@ -685,7 +685,7 @@ RECEIVER *rx_create_pure_signal_receiver(int id, int sample_rate, int width, int
     rx->sample_rate = sample_rate;
     rx->fps = fps;
     rx->width = width; // used to re-calculate rx->pixels upon sample rate change
-    rx->pixels = (sample_rate / 24000) * width;
+    rx->pixels = duplex ? 4 * tx_dialog_width : width;
     rx->pixel_samples = g_new(float, rx->pixels);
     //
     // These values (including fps) should match those of the TX display
@@ -1440,7 +1440,7 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   // feedback and *must* then return (rx->id is not a WDSP channel!)
   //
   if (rx->id == PS_RX_FEEDBACK && protocol == ORIGINAL_PROTOCOL) {
-    rx->pixels = (sample_rate / 24000) * rx->width;
+    rx->pixels = duplex ? 4 * tx_dialog_width : rx->width;
     g_free(rx->pixel_samples);
     rx->pixel_samples = g_new(float, rx->pixels);
     rx_set_analyzer(rx);
@@ -1538,7 +1538,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
 #endif
   //
   // The analyzer depends on the framerate (fps), the
-  // width (pixels), and the sample rate, as well as the
+  // number of pixels, and the sample rate, as well as the
   // buffer size (this is constant).
   // So rx_set_analyzer() has to be called whenever fps, pixels,
   // or sample_rate change in rx
@@ -1549,8 +1549,8 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const int spur_elimination_ffts = 1;
   const int data_type = 1;
   const double kaiser_pi = 14.0;
-  const double fscLin = 0;
-  const double fscHin = 0;
+  double fscLin = 0;
+  double fscHin = 0;
   const int stitches = 1;
   const int calibration_data_set = 0;
   const double span_min_freq = 0.0;
@@ -1563,6 +1563,18 @@ void rx_set_analyzer(const RECEIVER *rx) {
   int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
                                     keep_time * (double) afft_size * (double) rx->fps);
   overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
+
+  //
+  // RX FEEDBACK receiver:
+  // Here we use a hard-wired zoom factor. We display exactly 24 kHz of the
+  // spectrum thus have to clip off
+  //
+  if (rx->id == PS_RX_FEEDBACK) {
+    fscLin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
+    fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
+  }
+
+  t_print("RX SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d\n", rx->id, rx->buffer_size, overlap, rx->pixels);
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination

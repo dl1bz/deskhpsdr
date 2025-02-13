@@ -365,6 +365,9 @@ gint window_y_pos = 0;
 
 int rx_height;
 
+const int tx_dialog_width = 240;
+const int tx_dialog_height = 400;
+
 typedef struct {
   char *port;
   int baud;
@@ -732,7 +735,7 @@ void radio_reconfigure() {
   }
 
   if (can_transmit && !duplex) {
-    tx_reconfigure(transmitter, my_width, rx_height);
+    tx_reconfigure(transmitter, my_width, my_width, rx_height);
   }
 }
 
@@ -927,9 +930,9 @@ static void radio_create_visual() {
 
     if (radio_has_transmitter) {
       if (duplex) {
-        transmitter = tx_create_transmitter(CHANNEL_TX, my_width / 4, my_height / 2);
+        transmitter = tx_create_transmitter(CHANNEL_TX, 4 * tx_dialog_width, tx_dialog_width, tx_dialog_height);
       } else {
-        transmitter = tx_create_transmitter(CHANNEL_TX, my_width, rx_height);
+        transmitter = tx_create_transmitter(CHANNEL_TX, my_width, my_width, rx_height);
       }
 
       can_transmit = 1;

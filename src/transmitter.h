@@ -197,10 +197,10 @@ typedef struct _transmitter {
 
 } TRANSMITTER;
 
-extern TRANSMITTER *tx_create_transmitter(int id, int width, int height);
+extern TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height);
 
 void tx_create_dialog(TRANSMITTER *tx);
-void tx_reconfigure(TRANSMITTER *tx, int width, int height);
+void tx_reconfigure(TRANSMITTER *tx, int pixels, int width, int height);
 
 //
 // CW pulse shaper variables
