@@ -376,7 +376,11 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_arc(cr, cx, cx, radius + 8, radians, radians);
       cairo_line_to(cr, cx, cx);
       cairo_stroke(cr);
+#if defined (__LDESK__)
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+#else
       cairo_set_source_rgba(cr, COLOUR_METER);
+#endif
       snprintf(sf, 32, "%d dBm", (int)(max_rxlvl - 0.5)); // assume max_rxlvl < 0 in roundig
 
       if (METER_WIDTH < 210) {
@@ -388,6 +392,26 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       }
 
       cairo_show_text(cr, sf);
+#if defined (__LDESK__)
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+#if defined (__APPLE__)
+      cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#endif
+      // cairo_set_font_size(cr, 16);
+      snprintf(sf, 32, "%s", dbm2smeter[get_SWert((int)(max_rxlvl - 0.5))]);
+      cairo_move_to(cr, cx - 90, cx - radius + 64);
+      cairo_show_text(cr, sf);
+
+      if (active_receiver->smetermode == 100) {
+        snprintf(sf, 32, "S=Peak");
+      } else if (active_receiver->smetermode == 101) {
+        snprintf(sf, 32, "S=Avg");
+      }
+
+      cairo_set_font_size(cr, 16);
+      cairo_move_to(cr, cx + 65, cx - radius - 3);
+      cairo_show_text(cr, sf);
+#endif
     }
     break;
 
