@@ -1012,8 +1012,10 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #if defined (__DVL__)
 
         if (autogain_enabled && device == DEVICE_HERMES_LITE2) {
-          cairo_show_text(cr, "ADC0 overload » auto-adjust RxPGA gain...");
+          cairo_set_source_rgba(cr, COLOUR_ORANGE);
+          cairo_show_text(cr, "ADC0 auto-adjust RxPGA gain...");
         } else {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
           cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
         }
 
@@ -1021,6 +1023,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         cairo_show_text(cr, "ADC0 overload");
 #endif
       }
+
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
 
       if (adc1_overload && !adc0_overload) {
         cairo_show_text(cr, "ADC1 overload");
