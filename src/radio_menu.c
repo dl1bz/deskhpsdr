@@ -915,13 +915,15 @@ void radio_menu(GtkWidget *parent) {
   g_signal_connect(rx_gain_calibration_b, "value_changed", G_CALLBACK(rx_gain_calibration_value_changed_cb), NULL);
 #if defined (__LDESK__)
   row++;
+  col = 0;
   label = gtk_label_new("Your Callsign:");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   GtkWidget *callsign_box = gtk_entry_new();
+  col++;
   gtk_entry_set_max_length(GTK_ENTRY(callsign_box), 20);
   gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
-  gtk_grid_attach(GTK_GRID(grid), callsign_box, 1, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), callsign_box, col, row, 1, 1);
   g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_box_cb), NULL);
 #endif
 #ifdef SOAPYSDR
