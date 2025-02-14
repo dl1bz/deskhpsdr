@@ -69,6 +69,22 @@ static gboolean close_cb () {
   return TRUE;
 }
 
+#if defined (__LDESK__)
+static void callsign_box_cb(GtkWidget *widget, gpointer data) {
+  const gchar *rufz = gtk_entry_get_text(GTK_ENTRY(widget));
+
+  if (strlen(rufz) >= 3) {
+    g_strup((gchar*)rufz);
+    g_strlcpy(own_callsign, rufz, sizeof(own_callsign));
+  } else {
+    g_strlcpy(own_callsign, "YOUR_CALLSIGN", sizeof(own_callsign));
+  }
+
+  close_cb();
+}
+
+#endif
+
 #ifdef SOAPYSDR
 static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
   if (device == SOAPYSDR_USB_DEVICE) {
@@ -897,6 +913,17 @@ void radio_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain_calibration_b), (double)rx_gain_calibration);
   gtk_grid_attach(GTK_GRID(grid), rx_gain_calibration_b, col, row, 1, 1);
   g_signal_connect(rx_gain_calibration_b, "value_changed", G_CALLBACK(rx_gain_calibration_value_changed_cb), NULL);
+#if defined (__LDESK__)
+  row++;
+  label = gtk_label_new("Your Callsign:");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+  GtkWidget *callsign_box = gtk_entry_new();
+  gtk_entry_set_max_length(GTK_ENTRY(callsign_box), 20);
+  gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
+  gtk_grid_attach(GTK_GRID(grid), callsign_box, 1, row, 1, 1);
+  g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_box_cb), NULL);
+#endif
 #ifdef SOAPYSDR
   row++;
   col = 0;

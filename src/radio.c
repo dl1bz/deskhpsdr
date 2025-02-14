@@ -217,6 +217,7 @@ int mic_input_xlr = 0;
 #if defined (__LDESK__)
 struct audio_profile mic_prof = {0, {"NOMIC", "NOMIC", "NOMIC"}};
 int autogain_enabled = 0;
+gchar own_callsign[20] = "YOUR_CALLSIGN";
 #endif
 int receivers;
 
@@ -2742,6 +2743,7 @@ static void radio_restore_state() {
   GetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
   GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
   GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1, SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
+  GetPropS0("own_callsign",                                own_callsign);
 #endif
 
   for (int i = 0; i < n_adc; i++) {
@@ -2963,6 +2965,7 @@ void radio_save_state() {
   SetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
   SetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
   SetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1, SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
+  SetPropS0("own_callsign",                                own_callsign);
 #endif
 
   for (int i = 0; i < n_adc; i++) {
