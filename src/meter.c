@@ -299,7 +299,11 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_set_source_rgba(cr, COLOUR_METER);
       cairo_arc(cr, cx, cx, radius, (min_angle + 6.0 * bydb) * M_PI / 180.0, max_angle * M_PI / 180.0);
       cairo_stroke(cr);
+#if defined (__LDESK__)
+      cairo_set_line_width(cr, 4.0);
+#else
       cairo_set_line_width(cr, PAN_LINE_EXTRA);
+#endif
       cairo_set_source_rgba(cr, COLOUR_ALARM);
       cairo_arc(cr, cx, cx, radius + 2, (min_angle + 54.0 * bydb) * M_PI / 180.0, max_angle * M_PI / 180.0);
       cairo_stroke(cr);
