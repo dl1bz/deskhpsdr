@@ -1139,7 +1139,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
   if (strcmp(own_callsign, "YOUR_CALLSIGN") != 0) {
     cairo_move_to(cr, 60, 30);
-    cairo_set_source_rgba(cr, COLOUR_ORANGE);
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_set_font_size(cr, 22);
     snprintf(_text, 20, "%s", own_callsign);
     cairo_show_text(cr, _text);
