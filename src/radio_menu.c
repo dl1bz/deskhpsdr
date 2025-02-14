@@ -923,7 +923,7 @@ void radio_menu(GtkWidget *parent) {
   col++;
   gtk_entry_set_max_length(GTK_ENTRY(callsign_box), 20);
   gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
-  gtk_grid_attach(GTK_GRID(grid), callsign_box, col, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), callsign_box, col, row, 2, 1);
   g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_box_cb), NULL);
 #endif
 #ifdef SOAPYSDR
