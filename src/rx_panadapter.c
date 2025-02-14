@@ -1282,7 +1282,11 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   if (capture_state == CAP_RECORDING || capture_state == CAP_REPLAY || capture_state == CAP_AVAIL) {
     static unsigned int cap_count = 0;
     double cx = (double) width - 100.0;
+#if defined (__LDESK__)
+    double cy = 60.0;
+#else
     double cy = 30.0;
+#endif
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
     cairo_set_line_width(cr, 2.0);
