@@ -30,6 +30,10 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 
 ## Latest Changes
 ### Version 2.5.x
+- completed: fix some display errors if horizontal screen resolution >= 1280px and duplex selected (issue by CU2ED, tnx)
+- completed: show own callsign in upper left corner of RX panadapter, callsign is configurable in Radio menu (feature request by CU2ED)
+- completed: show S meter values if using analogue S meter (feature request by CU2ED)
+- completed: if using Hermes Lite 2 TX power slider show now TX output in W (step-size 0.1W) instead of a scale between 0-100
 - under development: begin implementation to full-automatic control the RxPGA gain if using a Hermes Lite 2
 - completed: merge the new PEAK label feature from piHPSDR into deskHPSDR and add an option for show the peak label as S-Meter values instead of dbm
 - completed: add an option for using 3 Mic profiles, which can save and load different audio settings (CFC, TX-EQ, Limiter, Basebandcompressor) if using different types of Mics with special settings per Mic. Load and save is only possible in modes LSB, USB or DSB. Other modes are not supported. If mode is DIGL or DIGU the access to the RX- and TX-EQ is now blocked, because is it important that the frequency spectrum is not manipulated if using digi modes.
