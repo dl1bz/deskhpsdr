@@ -351,7 +351,17 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.deviation",         tx->id,               tx->deviation);
   SetPropI1("transmitter.%d.pre_emphasize",     tx->id,               tx->pre_emphasize);
   SetPropF1("transmitter.%d.am_carrier_level",  tx->id,               tx->am_carrier_level);
+#if defined (__LDESK__) && defined (__HAVEATU__)
+
+  if (transmitter->is_tuned) {
+    SetPropI1("transmitter.%d.drive",           tx->id,               tx->drive);
+  } else {
+    SetPropI1("transmitter.%d.drive",           tx->id,               tx->stored_drive);
+  }
+
+#else
   SetPropI1("transmitter.%d.drive",             tx->id,               tx->drive);
+#endif
   SetPropF1("transmitter.%d.mic_gain",          tx->id,               tx->mic_gain);
   SetPropI1("transmitter.%d.tune_drive",        tx->id,               tx->tune_drive);
   SetPropI1("transmitter.%d.tune_use_drive",    tx->id,               tx->tune_use_drive);
