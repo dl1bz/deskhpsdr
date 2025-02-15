@@ -609,11 +609,14 @@ static inline void vfo_adjust_band(int v, long long f) {
     t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
     t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
 #endif
+#if defined (__DVL__)
 
     if (autogain_enabled) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
     }
+
+#endif
   }
 
 #endif
@@ -834,7 +837,7 @@ void vfo_band_changed(int id, int b) {
       return;
     }
 
-#if defined (__LDESK__)
+#if defined (__DVL__)
 
     if (autogain_enabled) {
       autogain_is_adjusted = 0;
