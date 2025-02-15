@@ -921,7 +921,7 @@ void radio_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   GtkWidget *callsign_box = gtk_entry_new();
   col++;
-  gtk_entry_set_max_length(GTK_ENTRY(callsign_box), 20);
+  gtk_entry_set_max_length(GTK_ENTRY(callsign_box), 32);
   gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
   gtk_grid_attach(GTK_GRID(grid), callsign_box, col, row, 2, 1);
   g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_box_cb), NULL);

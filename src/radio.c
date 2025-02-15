@@ -217,7 +217,7 @@ int mic_input_xlr = 0;
 #if defined (__LDESK__)
 struct audio_profile mic_prof = {0, {"NOMIC", "NOMIC", "NOMIC"}};
 int autogain_enabled = 0;
-gchar own_callsign[20] = "YOUR_CALLSIGN";
+gchar own_callsign[32] = "YOUR_CALLSIGN";
 #endif
 int receivers;
 

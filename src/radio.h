@@ -174,7 +174,7 @@ struct audio_profile {
 };
 
 extern struct audio_profile mic_prof;
-extern gchar own_callsign[20];
+extern gchar own_callsign[32];
 #endif
 #if defined (__DVL__)
   extern int autogain_enabled;
