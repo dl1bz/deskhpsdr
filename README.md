@@ -19,6 +19,7 @@ From now on (January 2025) I stop merging code from piHPSDR into deskHPSDR. Last
 * a large screensize starts at 1280x600 or higher
 * basic knowledge: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the ```COMPILE.macOS``` first
+* *Linux only*: please read the ```COMPILE.linux``` first
 * a SDR device or transceiver, which supports HPSDR protocol 1 (older) or 2 (newer) like the Hermes Lite 2, the ANAN or similiar devices
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 
@@ -26,7 +27,7 @@ From now on (January 2025) I stop merging code from piHPSDR into deskHPSDR. Last
 
 ## The further development of deskHPSDR
 
-My work is not completed. I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/) for basic knowledge, how this application works in general.
+My work is not completed (Are software projects ever finished ???). I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/) for basic knowledge, how this application works in general.
 
 ## Latest Changes
 ### Version 2.5.x
@@ -34,11 +35,12 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 - completed: show own callsign in upper left corner of RX panadapter, callsign is configurable in Radio menu (feature request by CU2ED)
 - completed: show S meter values if using analogue S meter (feature request by CU2ED)
 - completed: if using Hermes Lite 2 TX power slider show now TX output in W (step-size 0.1W) instead of a scale between 0-100
+- completed: add more keyboard shortcuts (feature request by DH0DM)
 - under development: begin implementation to full-automatic control the RxPGA gain if using a Hermes Lite 2
 - completed: merge the new PEAK label feature from piHPSDR into deskHPSDR and add an option for show the peak label as S-Meter values instead of dbm
 - completed: add an option for using 3 Mic profiles, which can save and load different audio settings (CFC, TX-EQ, Limiter, Basebandcompressor) if using different types of Mics with special settings per Mic. Load and save is only possible in modes LSB, USB or DSB. Other modes are not supported. If mode is DIGL or DIGU the access to the RX- and TX-EQ is now blocked, because is it important that the frequency spectrum is not manipulated if using digi modes.
 - under development: implementation of a TCI Server, which emulates a SunSDR2Pro device (successful tested with JTDX, RumLogNG, MacLoggerDX)<br>
-- completed: add an additional serial device interface option, which can switch on the RTS and/or DTR signal line during TUNE function<br>
+- completed: add an additional serial device interface option, which can switch ON the RTS and/or DTR signal line during TUNE function and PTT output (feature request by DD8JM for TUNE and by CU2ED for PTT output)
 - under development: sereral GUI improvements for show additional status infos on the screen<br>
 - under development: make deeper access possible to the whole audio tools like CFC, Compressor, phase rotator for the user<br>
 - completed: add an additional, adjustable up to +20db, AF preamp for increasing mic input level if required<br>
@@ -47,8 +49,7 @@ My work is not completed. I have some ideas, what I need to add too. You need to
 - completed: add new UDP listener for my RX200 ESP32 project, which send via UDP broadcast data in JSON<br>
   format like forward and reflected power, SWR and show the received and parsed data onscreen<br>
   as panadapter overlay (need now json-c as additional lib, so please install it)<br>
-- completed: add new serial device, which can be used as an external PTT switch using RTS or DTR signaling<br>
-  (similar like in Thetis)<br>
+- completed: add new serial device, which can be used as an external PTT input using RTS & CTS signaling similar like Thetis
 
 Things marked as "under development" are not fully tested and have maybe issues.<br>
 Things marked as "completed" are tested a longer time and will work without known issues up to now.<br>
@@ -94,7 +95,7 @@ All radio tests are made with my Hermes Lite 2 SDR-Transceiver.
 
 ## Credits
 
-Big thanks and huge respect to all involved developers for their previous great work on piHPSDR until now and make this application accessible as Open Source under the GPL.
+Big thanks and huge respect to all involved developers for their previous great work on piHPSDR until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.
 
 ## Exclusion of any Guarantee and any Warrenty
 
