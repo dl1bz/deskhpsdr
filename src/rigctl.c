@@ -84,6 +84,7 @@ int rigctl_tcp_autoreporting = 0;
   int serptt_fd;
   int sertune_fd;
   volatile bool serptt_cts = false;
+  int autogain_is_adjusted = 1;
 #endif
 
 // max number of bytes we can get at once
@@ -362,7 +363,7 @@ static void* autogain_thread_function(void* arg) {
   static struct timespec start_time, current_time;
   static time_t elapsed_time;
   static int autogain_first_run = 1; // only if deskHPSDR starts we get sometimes wrong ADC OVL states, we add a delay
-  static int is_adjusted = 0;
+  // static int autogain_is_adjusted = 0;
   static double gain_step = 3.0;     // gain step size for aotomatic
   static double gain = 0.0;
   static double max_gain = 0.0;
@@ -415,6 +416,9 @@ static void* autogain_thread_function(void* arg) {
       }
 
       if (adc0_error_count >= adc_count_limit && !autogain_first_run) {
+        autogain_is_adjusted = 0;
+        g_idle_add(ext_vfo_update, NULL);
+
         while (adc0_overload && gain > min_gain) {
           gain -= gain_step; // decrease gain with gain_step
 
@@ -427,7 +431,8 @@ static void* autogain_thread_function(void* arg) {
           g_usleep(500000);  // wait 0.5s
         }
 
-        is_adjusted = 1;
+        // autogain_is_adjusted = 0;
+        // g_idle_add(ext_vfo_update, NULL);
         t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __FUNCTION__, active_receiver->id, (int)gain);
       }
 
@@ -445,7 +450,7 @@ static void* autogain_thread_function(void* arg) {
         }
       }
 
-      if (!adc0_overload && is_adjusted && !autogain_first_run) {
+      if (!adc0_overload && !autogain_is_adjusted && !autogain_first_run) {
         while (!adc0_overload && gain > min_gain) {
           gain += 1.0;                                  // increase gain +1db
           set_rf_gain(active_receiver->id, gain);       // set gain
@@ -453,7 +458,8 @@ static void* autogain_thread_function(void* arg) {
         }
 
         set_rf_gain(active_receiver->id, gain - 3.0); // decrease gain -3db
-        is_adjusted = 0;
+        autogain_is_adjusted = 1;
+        g_idle_add(ext_vfo_update, NULL);
         // g_usleep(500000); // wait 0.5s
         sleep(2);
       }

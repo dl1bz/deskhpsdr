@@ -609,6 +609,11 @@ static inline void vfo_adjust_band(int v, long long f) {
     t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
     t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
 #endif
+
+    if (autogain_enabled) {
+      autogain_is_adjusted = 0;
+      t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
+    }
   }
 
 #endif
@@ -828,6 +833,15 @@ void vfo_band_changed(int id, int b) {
     if (f < radio->frequency_min || f > radio->frequency_max) {
       return;
     }
+
+#if defined (__LDESK__)
+
+    if (autogain_enabled) {
+      autogain_is_adjusted = 0;
+      t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
+    }
+
+#endif
   }
 
   if (id == 0) {
@@ -2321,14 +2335,15 @@ void vfo_update() {
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y);
 
-      if (autogain_enabled) {
+      if (autogain_enabled && autogain_is_adjusted) {
+        cairo_set_source_rgba(cr, COLOUR_OK);
+      } else if (autogain_enabled) {
         cairo_set_source_rgba(cr, COLOUR_ATTN);
-        snprintf(temp_text, 32, "AG");
       } else {
         cairo_set_source_rgba(cr, COLOUR_SHADE);
-        snprintf(temp_text, 32, "AG");
       }
 
+      snprintf(temp_text, 32, "AG");
       cairo_show_text(cr, temp_text);
     }
 

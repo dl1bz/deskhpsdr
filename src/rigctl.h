@@ -66,5 +66,6 @@ extern unsigned int rigctl_tcp_port;
 extern int rigctl_tcp_enable;
 extern int rigctl_tcp_andromeda;
 extern int rigctl_tcp_autoreporting;
+extern int autogain_is_adjusted;
 
 #endif // RIGCTL_H
