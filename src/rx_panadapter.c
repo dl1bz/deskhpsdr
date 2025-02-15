@@ -1233,7 +1233,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
 
     if (flag) {
-      cairo_move_to(cr, 100.0, 30.0);
+      cairo_move_to(cr, 250.0, 30.0);
       cairo_show_text(cr, text);
     }
 
@@ -1284,7 +1284,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
 
     if (flag) {
-      cairo_move_to(cr, 160.0, 30.0);
+      cairo_move_to(cr, 300.0, 30.0);
       cairo_show_text(cr, text);
     }
 
