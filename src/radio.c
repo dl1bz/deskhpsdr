@@ -1355,6 +1355,27 @@ void radio_start_radio() {
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
   case NEW_PROTOCOL:
+#if defined (__LDESK__)
+    if (have_saturn_xdma) {
+      // radio has no ip and MAC
+      snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s v%d) on %s",
+           PGNAME,
+           build_version,
+           unameData.machine,
+           radio->name,
+           p,
+           radio->software_version,
+           iface);
+    } else if (device == DEVICE_OZY) {
+      // radio has no ip, and name is "Ozy USB"
+      snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s)",
+           PGNAME,
+           build_version,
+           unameData.machine,
+           radio->name,
+           p,
+           version);
+#else
     if (have_saturn_xdma) {
       // radio has no ip and MAC
       snprintf(text, 1024, "piHPSDR: %s (%s v%d) on %s",
@@ -1368,6 +1389,7 @@ void radio_start_radio() {
                radio->name,
                p,
                version);
+#endif
     } else {
       // radio MAC address removed from the top bar otherwise
       // it does not fit  in windows 640 pixels wide.
@@ -1396,10 +1418,20 @@ void radio_start_radio() {
     break;
 
   case SOAPYSDR_PROTOCOL:
+#if defined (__LDESK__)
+    snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s)",
+             PGNAME,
+             build_version,
+             unameData.machine,
+             radio->name,
+             p,
+             version);
+#else
     snprintf(text, 1024, "piHPSDR: %s (%s %s)",
              radio->name,
              p,
              version);
+#endif
     break;
   }
 
