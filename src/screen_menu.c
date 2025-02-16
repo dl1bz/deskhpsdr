@@ -126,10 +126,13 @@ static void height_cb(GtkWidget *widget, gpointer data) {
   schedule_apply();
 }
 
+#if defined (__USELESS__)
 static void horizontal_cb(GtkWidget *widget, gpointer data) {
   my_rx_stack_horizontal = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   schedule_apply();
 }
+
+#endif
 
 static void full_cb(GtkWidget *widget, gpointer data) {
   my_full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -161,7 +164,9 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
 
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
+#if defined (__USELESS__)
   GtkWidget *button;
+#endif
   my_display_width       = display_width;
   my_display_height      = display_height;
   my_full_screen         = full_screen;
@@ -243,11 +248,13 @@ void screen_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), vfo_b, col, row, 3, 1);
   vfo_signal_id = g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
   row++;
+#if defined (__USELESS__)
   button = gtk_check_button_new_with_label("Stack receivers horizontally");
   gtk_widget_set_name(button, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), my_rx_stack_horizontal);
   gtk_grid_attach(GTK_GRID(grid), button, 0, row, 2, 1);
   g_signal_connect(button, "toggled", G_CALLBACK(horizontal_cb), NULL);
+#endif
   full_b = gtk_check_button_new_with_label("Full Screen Mode");
   gtk_widget_set_name(full_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(full_b), my_full_screen);
