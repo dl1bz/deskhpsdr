@@ -21,10 +21,8 @@ SATURN=OFF
 USBOZY=OFF
 SOAPYSDR=OFF
 STEMLAB=OFF
-EXTENDED_NR=
-SERVER=OFF
+EXTENDED_NR=OFF
 AUDIO=PULSE
-DESKTOP=ON
 ATU=OFF
 COPYMODE=OFF
 DEVEL=OFF
@@ -41,9 +39,7 @@ DEVEL=OFF
 # SOAPYSDR     | If ON, deskHPSDR can talk to radios via SoapySDR library
 # STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
 # EXTENDED_NR  | If ON, deskHPSDR can use extended noise reduction (VU3RDD WDSP version)
-# SERVER       | If ON, include client/server code (still far from being complete)
 # AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux
-# DESKTOP      | If ON, activate the deskHPSDR called version instead of old original piHPSDR code
 # ATU          | If ON, acticate some special functions if using an external ATU
 # COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
 # DEVEL        | ONLY FOR INTERNAL DEVELOPER USE ! Leave it ever OFF, please
@@ -97,6 +93,15 @@ CPP_INCLUDE=
 
 WDSP_INCLUDE=-I./wdsp
 WDSP_LIBS=wdsp/libwdsp.a `$(PKG_CONFIG) --libs fftw3`
+
+##############################################################################
+#
+#  Activate all deskHPSDR code per default
+#
+##############################################################################
+
+DESKTOP_OPTIONS=-D__LDESK__
+CPP_DEFINES += -D__LDESK__
 
 ##############################################################################
 #
@@ -274,11 +279,6 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 #
 ##############################################################################
 
-ifeq ($(DESKTOP), ON)
-DESKTOP_OPTIONS=-D__LDESK__
-endif
-CPP_DEFINES += -D__LDESK__
-
 ifeq ($(ATU), ON)
 ATU_OPTIONS=-D__HAVEATU__
 endif
@@ -293,29 +293,6 @@ ifeq ($(DEVEL), ON)
 DEVEL_OPTIONS=-D__DVL__
 endif
 CPP_DEFINES += -D__DVL__
-
-##############################################################################
-#
-# Activate code for remote operation, if requested.
-# This feature is not yet finished. If finished, it
-# allows to run two instances of deskHPSDR on two
-# different computers, one interacting with the operator
-# and the other talking to the radio, and both computers
-# may be connected by a long-distance internet connection.
-#
-##############################################################################
-
-ifeq ($(SERVER), ON)
-SERVER_OPTIONS=-D CLIENT_SERVER
-SERVER_SOURCES= \
-src/client_server.c src/server_menu.c
-SERVER_HEADERS= \
-src/client_server.h src/server_menu.h
-SERVER_OBJS= \
-src/client_server.o src/server_menu.o
-endif
-CPP_DEFINES += -DCLIENT_SERVER
-CPP_SOURCES += src/client_server.c src/server_menu.c
 
 ##############################################################################
 #
@@ -462,7 +439,6 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(ATU_OPTIONS) \
 	$(COPYMODE_OPTIONS) \
 	$(DEVEL_OPTIONS) \
-	$(SERVER_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"'
 
@@ -748,13 +724,13 @@ src/zoompan.o
 ##############################################################################
 
 $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
 	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) \
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) \
 		$(TCI_OBJS) $(LIBS)
 
 ##############################################################################
@@ -892,7 +868,7 @@ DEPEND:
 	rm -f DEPEND
 	touch DEPEND
 	makedepend -DTCI -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DEXTNR -DGPIO \
-		-DSTEMLAB_DISCOVERY -DCLIENT_SERVER -DPULSEAUDIO \
+		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -D__APPLE__ -D__linux__ \
 		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__DVL__ \
 		-f DEPEND -I./src src/*.c src/*.h
@@ -915,12 +891,12 @@ DEPEND:
 
 .PHONY: app
 app:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
 	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
-		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) \
+		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) \
 		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
@@ -942,12 +918,12 @@ endif
 
 .PHONY: macapp
 macapp:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS)
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
 	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
-		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SERVER_OBJS) $(SATURN_OBJS) \
+		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) \
 		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
