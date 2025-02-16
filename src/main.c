@@ -67,6 +67,7 @@
 #if defined (__LDESK__)
   #include "sliders.h"
   #include "noise_menu.h"
+  #include "rigctl.h"
 #endif
 
 struct utsname unameData;
@@ -384,6 +385,20 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     g_idle_add(ext_vfo_update, NULL);
   }
   break;
+
+  case GDK_KEY_g: {
+    autogain_is_adjusted = 0;
+    g_idle_add(ext_vfo_update, NULL);
+  }
+  break;
+
+  case GDK_KEY_G: {
+    set_rf_gain(active_receiver->id, 14.0);
+    autogain_is_adjusted = 0;
+    g_idle_add(ext_vfo_update, NULL);
+  }
+  break;
+
 #endif
 
   //
