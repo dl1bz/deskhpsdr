@@ -385,8 +385,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     g_idle_add(ext_vfo_update, NULL);
   }
   break;
-
 #if defined (__DVL__)
+
   case GDK_KEY_g: {
     autogain_is_adjusted = 0;
     g_idle_add(ext_vfo_update, NULL);
@@ -400,7 +400,6 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   }
   break;
 #endif
-
 #endif
 
   //

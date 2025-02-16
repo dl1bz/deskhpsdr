@@ -1359,23 +1359,24 @@ void radio_start_radio() {
     if (have_saturn_xdma) {
       // radio has no ip and MAC
       snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s v%d) on %s",
-           PGNAME,
-           build_version,
-           unameData.machine,
-           radio->name,
-           p,
-           radio->software_version,
-           iface);
+               PGNAME,
+               build_version,
+               unameData.machine,
+               radio->name,
+               p,
+               radio->software_version,
+               iface);
     } else if (device == DEVICE_OZY) {
       // radio has no ip, and name is "Ozy USB"
       snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s)",
-           PGNAME,
-           build_version,
-           unameData.machine,
-           radio->name,
-           p,
-           version);
+               PGNAME,
+               build_version,
+               unameData.machine,
+               radio->name,
+               p,
+               version);
 #else
+
     if (have_saturn_xdma) {
       // radio has no ip and MAC
       snprintf(text, 1024, "piHPSDR: %s (%s v%d) on %s",
