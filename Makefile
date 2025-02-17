@@ -996,11 +996,6 @@ src/bandstack_menu.o: src/new_menu.h src/bandstack_menu.h src/band.h
 src/bandstack_menu.o: src/bandstack.h src/filter.h src/mode.h src/radio.h
 src/bandstack_menu.o: src/adc.h src/dac.h src/discovered.h src/receiver.h
 src/bandstack_menu.o: src/transmitter.h src/vfo.h
-src/client_server.o: src/discovered.h src/adc.h src/dac.h src/receiver.h
-src/client_server.o: src/transmitter.h src/radio.h src/main.h src/vfo.h
-src/client_server.o: src/mode.h src/ext.h src/audio.h src/zoompan.h
-src/client_server.o: src/noise_menu.h src/radio_menu.h src/sliders.h
-src/client_server.o: src/actions.h src/message.h src/mystring.h
 src/configure.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/configure.o: src/receiver.h src/transmitter.h src/main.h src/channel.h
 src/configure.o: src/actions.h src/gpio.h src/i2c.h src/message.h
@@ -1231,9 +1226,6 @@ src/saturnserver.o: src/saturndrivers.h src/saturnmain.h src/message.h
 src/screen_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/screen_menu.o: src/receiver.h src/transmitter.h src/new_menu.h src/main.h
 src/screen_menu.o: src/appearance.h src/message.h
-src/server_menu.o: src/new_menu.h src/server_menu.h src/radio.h src/adc.h
-src/server_menu.o: src/dac.h src/discovered.h src/receiver.h
-src/server_menu.o: src/transmitter.h src/client_server.h
 src/sliders.o: src/appearance.h src/receiver.h src/sliders.h
 src/sliders.o: src/transmitter.h src/actions.h src/mode.h src/filter.h
 src/sliders.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
