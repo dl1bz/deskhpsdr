@@ -31,6 +31,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ## Latest Changes
 ### Version 2.5.x
+- completed: remove "horizontal stacking" display option for panadapter in screen menu, that disturbs a lot of my changed GUI design
 - completed: remove all old piHPSDR Client-Server code, deskHPSDR doesn't support this "One-App-Limited" Client-Server concept
 - completed: fix some display errors if horizontal screen resolution >= 1280px and duplex selected (issue by CU2ED, tnx)
 - completed: show own callsign in upper left corner of RX panadapter, callsign is configurable in Radio menu (feature request by CU2ED)
