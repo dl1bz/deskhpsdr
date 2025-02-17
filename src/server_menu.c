@@ -30,7 +30,7 @@
 #include "new_menu.h"
 #include "server_menu.h"
 #include "radio.h"
-#include "client_server.h"
+// #include "client_server.h"
 
 static GtkWidget *dialog = NULL;
 

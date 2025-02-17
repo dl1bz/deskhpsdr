@@ -106,12 +106,6 @@ void waterfall_update(RECEIVER *rx) {
     int  freq_changed = 0;                    // flag whether we have just "rotated"
     int pan = rx->pan;
     int zoom = rx->zoom;
-
-    if (radio_is_remote) {
-      pan = 0;
-      zoom = 1;
-    }
-
     unsigned char *pixels = gdk_pixbuf_get_pixels (rx->pixbuf);
     int width = gdk_pixbuf_get_width(rx->pixbuf);
     int height = gdk_pixbuf_get_height(rx->pixbuf);

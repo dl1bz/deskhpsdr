@@ -345,13 +345,7 @@ void vfo_num_pad(int action, int id) {
     // by hitting the "NUMPAD enter" button.
     //
     if (fl >= 10000ll) {
-      if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-        send_vfo_frequency(client_socket, id, fl);
-#endif
-      } else {
-        vfo_set_frequency(id, fl);
-      }
+      vfo_set_frequency(id, fl);
     }
 
     break;

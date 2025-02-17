@@ -323,9 +323,4 @@ extern void   rx_set_squelch(const RECEIVER *rx);
 extern void   rx_vfo_changed(RECEIVER *rx);
 extern void   rx_update_zoom(RECEIVER *rx);
 
-#ifdef CLIENT_SERVER
-  extern void rx_create_remote(RECEIVER *rx);
-  extern void rx_remote_update_display(RECEIVER *rx);
-#endif
-
 #endif

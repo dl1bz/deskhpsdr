@@ -86,9 +86,6 @@
   #include "alsa_midi.h"
   #include "midi_menu.h"
 #endif
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 #include "message.h"
 #ifdef SATURN
   #include "saturnmain.h"
@@ -875,25 +872,14 @@ static void radio_create_visual() {
   // If upon startup, we only should display one panel, we do the switch below
   //
   for (int i = 0; i < RECEIVERS; i++) {
-    if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-      rx_create_remote(receiver[i]);
-#endif
-    } else {
-      receiver[i] = rx_create_receiver(CHANNEL_RX0 + i, my_width, my_width, rx_height / RECEIVERS);
-      rx_set_squelch(receiver[i]);
-    }
-
+    receiver[i] = rx_create_receiver(CHANNEL_RX0 + i, my_width, my_width, rx_height / RECEIVERS);
+    rx_set_squelch(receiver[i]);
     receiver[i]->x = 0;
     receiver[i]->y = y;
     // Upon startup, if RIT or CTUN is active, tell WDSP.
-
-    if (!radio_is_remote) {
-      receiver[i]->displaying = 1;
-      rx_set_displaying(receiver[i]);
-      rx_set_offset(receiver[i], vfo[i].offset);
-    }
-
+    receiver[i]->displaying = 1;
+    rx_set_displaying(receiver[i]);
+    rx_set_offset(receiver[i], vfo[i].offset);
     gtk_fixed_put(GTK_FIXED(fixed), receiver[i]->panel, 0, y);
     g_object_ref((gpointer)receiver[i]->panel);
     y += rx_height / RECEIVERS;
@@ -905,95 +891,92 @@ static void radio_create_visual() {
   //
   receiver[PS_RX_FEEDBACK] = NULL;
   receiver[PS_TX_FEEDBACK] = NULL;
+  //t_print("Create transmitter\n");
+  transmitter = NULL;
+  can_transmit = 0;
+  //
+  //  do not set can_transmit before transmitter exists, because we assume
+  //  if (can_transmit) is equivalent to if (transmitter)
+  //
+  int radio_has_transmitter = 0;
 
-  if (!radio_is_remote) {
-    //t_print("Create transmitter\n");
-    transmitter = NULL;
-    can_transmit = 0;
-    //
-    //  do not set can_transmit before transmitter exists, because we assume
-    //  if (can_transmit) is equivalent to if (transmitter)
-    //
-    int radio_has_transmitter = 0;
-
-    switch (protocol) {
-    case ORIGINAL_PROTOCOL:
-    case NEW_PROTOCOL:
-      radio_has_transmitter = 1;
-      break;
+  switch (protocol) {
+  case ORIGINAL_PROTOCOL:
+  case NEW_PROTOCOL:
+    radio_has_transmitter = 1;
+    break;
 #ifdef SOAPYSDR
 
-    case SOAPYSDR_PROTOCOL:
-      radio_has_transmitter = (radio->info.soapy.tx_channels != 0);
-      break;
+  case SOAPYSDR_PROTOCOL:
+    radio_has_transmitter = (radio->info.soapy.tx_channels != 0);
+    break;
 #endif
+  }
+
+  if (radio_has_transmitter) {
+    if (duplex) {
+      transmitter = tx_create_transmitter(CHANNEL_TX, 4 * tx_dialog_width, tx_dialog_width, tx_dialog_height);
+    } else {
+      transmitter = tx_create_transmitter(CHANNEL_TX, my_width, my_width, rx_height);
     }
 
-    if (radio_has_transmitter) {
-      if (duplex) {
-        transmitter = tx_create_transmitter(CHANNEL_TX, 4 * tx_dialog_width, tx_dialog_width, tx_dialog_height);
-      } else {
-        transmitter = tx_create_transmitter(CHANNEL_TX, my_width, my_width, rx_height);
-      }
+    can_transmit = 1;
+    transmitter->x = 0;
+    transmitter->y = VFO_HEIGHT;
+    radio_calc_drive_level();
 
-      can_transmit = 1;
-      transmitter->x = 0;
-      transmitter->y = VFO_HEIGHT;
-      radio_calc_drive_level();
+    if (protocol == NEW_PROTOCOL || protocol == ORIGINAL_PROTOCOL) {
+      tx_ps_set_sample_rate(transmitter, protocol == NEW_PROTOCOL ? 192000 : active_receiver->sample_rate);
+      receiver[PS_TX_FEEDBACK] = rx_create_pure_signal_receiver(PS_TX_FEEDBACK,
+                                 protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
+      receiver[PS_RX_FEEDBACK] = rx_create_pure_signal_receiver(PS_RX_FEEDBACK,
+                                 protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
 
-      if (protocol == NEW_PROTOCOL || protocol == ORIGINAL_PROTOCOL) {
-        tx_ps_set_sample_rate(transmitter, protocol == NEW_PROTOCOL ? 192000 : active_receiver->sample_rate);
-        receiver[PS_TX_FEEDBACK] = rx_create_pure_signal_receiver(PS_TX_FEEDBACK,
-                                   protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
-        receiver[PS_RX_FEEDBACK] = rx_create_pure_signal_receiver(PS_RX_FEEDBACK,
-                                   protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
-
-        //
-        // If the pk value is slightly too large, this does no harm, but
-        // if it is slightly too small, very strange things can happen.
-        // Therefore it is good to "measure" this value and then slightly
-        // increase it.
-        //
-        switch (protocol) {
-        case NEW_PROTOCOL:
-          switch (device) {
-          case NEW_DEVICE_SATURN:
-            tx_ps_setpk(transmitter, 0.6121);
-            break;
-
-          default:
-            // recommended "new protocol value"
-            tx_ps_setpk(transmitter, 0.2899);
-            break;
-          }
-
-          break;
-
-        case ORIGINAL_PROTOCOL:
-          switch (device) {
-          case DEVICE_HERMES_LITE2:
-            // measured value: 0.2386
-            tx_ps_setpk(transmitter, 0.2400);
-            break;
-
-          case DEVICE_STEMLAB:
-            // measured value: 0.4155
-            tx_ps_setpk(transmitter, 0.4160);
-            break;
-
-          default:
-            // recommended "old protocol" value
-            tx_ps_setpk(transmitter, 0.4067);
-            break;
-          }
-
+      //
+      // If the pk value is slightly too large, this does no harm, but
+      // if it is slightly too small, very strange things can happen.
+      // Therefore it is good to "measure" this value and then slightly
+      // increase it.
+      //
+      switch (protocol) {
+      case NEW_PROTOCOL:
+        switch (device) {
+        case NEW_DEVICE_SATURN:
+          tx_ps_setpk(transmitter, 0.6121);
           break;
 
         default:
-          // NOTREACHED
-          tx_ps_setpk(transmitter, 1.0000);
+          // recommended "new protocol value"
+          tx_ps_setpk(transmitter, 0.2899);
           break;
         }
+
+        break;
+
+      case ORIGINAL_PROTOCOL:
+        switch (device) {
+        case DEVICE_HERMES_LITE2:
+          // measured value: 0.2386
+          tx_ps_setpk(transmitter, 0.2400);
+          break;
+
+        case DEVICE_STEMLAB:
+          // measured value: 0.4155
+          tx_ps_setpk(transmitter, 0.4160);
+          break;
+
+        default:
+          // recommended "old protocol" value
+          tx_ps_setpk(transmitter, 0.4067);
+          break;
+        }
+
+        break;
+
+      default:
+        // NOTREACHED
+        tx_ps_setpk(transmitter, 1.0000);
+        break;
       }
     }
   }
@@ -1004,22 +987,20 @@ static void radio_create_visual() {
     keyer_update();
   }
 
-  if (!radio_is_remote) {
-    switch (protocol) {
-    case ORIGINAL_PROTOCOL:
-      old_protocol_init(receiver[0]->sample_rate);
-      break;
+  switch (protocol) {
+  case ORIGINAL_PROTOCOL:
+    old_protocol_init(receiver[0]->sample_rate);
+    break;
 
-    case NEW_PROTOCOL:
-      new_protocol_init();
-      break;
+  case NEW_PROTOCOL:
+    new_protocol_init();
+    break;
 #ifdef SOAPYSDR
 
-    case SOAPYSDR_PROTOCOL:
-      soapy_protocol_init(FALSE);
-      break;
+  case SOAPYSDR_PROTOCOL:
+    soapy_protocol_init(FALSE);
+    break;
 #endif
-    }
   }
 
   if (display_zoompan) {
@@ -1756,13 +1737,6 @@ void radio_start_radio() {
   }
 
 #endif
-#ifdef CLIENT_SERVER
-
-  if (hpsdr_server) {
-    create_hpsdr_server();
-  }
-
-#endif
 }
 
 void radio_change_receivers(int r) {
@@ -1776,10 +1750,8 @@ void radio_change_receivers(int r) {
   // When changing the number of receivers, restart the
   // old protocol
   //
-  if (!radio_is_remote) {
-    if (protocol == ORIGINAL_PROTOCOL) {
-      old_protocol_stop();
-    }
+  if (protocol == ORIGINAL_PROTOCOL) {
+    old_protocol_stop();
   }
 
   switch (r) {
@@ -1808,13 +1780,10 @@ void radio_change_receivers(int r) {
 
   radio_reconfigure_screen();
   rx_set_active(receiver[0]);
+  schedule_high_priority();
 
-  if (!radio_is_remote) {
-    schedule_high_priority();
-
-    if (protocol == ORIGINAL_PROTOCOL) {
-      old_protocol_run();
-    }
+  if (protocol == ORIGINAL_PROTOCOL) {
+    old_protocol_run();
   }
 }
 
@@ -2501,13 +2470,6 @@ void radio_set_drive(double value) {
 }
 
 void radio_set_satmode(int mode) {
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_sat(client_socket, mode);
-#endif
-    return;
-  }
-
   sat_mode = mode;
 }
 
@@ -2645,16 +2607,6 @@ static void radio_restore_state() {
   //
   if ((window_x_pos < screen_width - 100) && (window_y_pos < screen_height - 100)) {
     gtk_window_move(GTK_WINDOW(top_window), window_x_pos, window_y_pos);
-  }
-
-#ifdef CLIENT_SERVER
-  GetPropI0("radio.hpsdr_server",                            hpsdr_server);
-  GetPropI0("radio.hpsdr_server.listen_port",                listen_port);
-#endif
-
-  if (radio_is_remote) {
-    g_mutex_unlock(&property_mutex);
-    return;
   }
 
   GetPropI0("enable_auto_tune",                              enable_auto_tune);
@@ -2879,17 +2831,6 @@ void radio_save_state() {
   // TODO: I think some further options related to the GUI
   // have to be moved up here for Client-Server operation
   //
-#ifdef CLIENT_SERVER
-  SetPropI0("radio.hpsdr_server",                            hpsdr_server);
-  SetPropI0("radio.hpsdr_server.listen_port",                listen_port);
-#endif
-
-  if (radio_is_remote) {
-    saveProperties(property_path);
-    g_mutex_unlock(&property_mutex);
-    return;
-  }
-
   SetPropI0("enable_auto_tune",                              enable_auto_tune);
   SetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
   SetPropI0("radio_sample_rate",                             radio_sample_rate);
@@ -3035,75 +2976,6 @@ void radio_save_state() {
   g_mutex_unlock(&property_mutex);
 }
 
-#ifdef CLIENT_SERVER
-// cppcheck-suppress constParameterPointer
-int radio_remote_start(void *data) {
-  const char *server = (const char *)data;
-  snprintf(property_path, sizeof(property_path), "%s@%s.props", radio->name, server);
-
-  for (unsigned int i = 0; i < strlen(property_path); i++) {
-    if (property_path[i] == '/') { property_path[i] = '.'; }
-  }
-
-  radio_is_remote = TRUE;
-  optimize_for_touchscreen = 1;
-
-  switch (controller) {
-  case CONTROLLER2_V1:
-  case CONTROLLER2_V2:
-  case G2_FRONTPANEL:
-    display_zoompan = 1;
-    display_sliders = 0;
-    display_toolbar = 0;
-    break;
-
-  default:
-    display_zoompan = 1;
-    display_sliders = 1;
-    display_toolbar = 1;
-    break;
-  }
-
-  RECEIVERS = 2;
-  PS_RX_FEEDBACK = 2;
-  PS_TX_FEEDBACK = 2;
-  radio_restore_state();
-  radio_create_visual();
-  radio_reconfigure_screen();
-
-  if (can_transmit) {
-    if (transmitter->local_microphone) {
-      if (audio_open_input() != 0) {
-        t_print("audio_open_input failed\n");
-        transmitter->local_microphone = 0;
-      }
-    }
-  }
-
-  for (int i = 0; i < receivers; i++) {
-    rx_restore_state(receiver[i]);  // this ONLY restores local display settings
-
-    if (receiver[i]->local_audio) {
-      if (audio_open_output(receiver[i])) {
-        receiver[i]->local_audio = 0;
-      }
-    }
-  }
-
-  radio_reconfigure();
-  g_idle_add(ext_vfo_update, NULL);
-  gdk_window_set_cursor(gtk_widget_get_window(top_window), gdk_cursor_new(GDK_ARROW));
-
-  for (int i = 0; i < receivers; i++) {
-    (void) gdk_threads_add_timeout_full(G_PRIORITY_DEFAULT_IDLE, 100, start_spectrum, receiver[i], NULL);
-  }
-
-  start_vfo_timer();
-  remote_started = TRUE;
-  return 0;
-}
-
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 //

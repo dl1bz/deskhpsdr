@@ -40,9 +40,6 @@
 #include "band.h"
 #include "bandstack.h"
 #include "noise_menu.h"
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 #include "ext.h"
 #include "zoompan.h"
 #include "actions.h"
@@ -1010,14 +1007,8 @@ int process_action(void *data) {
 
   case LOCK:
     if (a->mode == PRESSED) {
-      if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-        send_lock(client_socket, NOT(locked));
-#endif
-      } else {
-        TOGGLE(locked);
-        g_idle_add(ext_vfo_update, NULL);
-      }
+      TOGGLE(locked);
+      g_idle_add(ext_vfo_update, NULL);
     }
 
     break;

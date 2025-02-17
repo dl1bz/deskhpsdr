@@ -137,29 +137,3 @@ int ext_set_duplex(void *data) {
   setDuplex();
   return G_SOURCE_REMOVE;
 }
-
-#ifdef CLIENT_SERVER
-int ext_rx_remote_update_display(void *data) {
-  RECEIVER *rx = (RECEIVER *)data;
-  rx_remote_update_display(rx);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_remote_set_zoom(void *data) {
-  int zoom = GPOINTER_TO_INT(data);
-  remote_set_zoom(active_receiver->id, (double)zoom);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_remote_set_pan(void *data) {
-  int pan = GPOINTER_TO_INT(data);
-  remote_set_pan(active_receiver->id, (double)pan);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_set_title(void *data) {
-  gtk_window_set_title(GTK_WINDOW(top_window), (char *)data);
-  return G_SOURCE_REMOVE;
-}
-
-#endif

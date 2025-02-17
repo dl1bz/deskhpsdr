@@ -32,9 +32,6 @@
 #include "vfo.h"
 #include "sliders.h"
 #include "zoompan.h"
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 #include "actions.h"
 #include "ext.h"
 #include "message.h"
@@ -78,15 +75,7 @@ static void zoom_value_changed_cb(GtkWidget *widget, gpointer data) {
   g_mutex_lock(&pan_zoom_mutex);
   g_mutex_lock(&active_receiver->display_mutex);
   active_receiver->zoom = (int)(gtk_range_get_value(GTK_RANGE(zoom_scale)) + 0.5);
-
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_zoom(client_socket, active_receiver->id, active_receiver->zoom);
-#endif
-  } else {
-    rx_update_zoom(active_receiver);
-  }
-
+  rx_update_zoom(active_receiver);
   g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
   gtk_range_set_range(GTK_RANGE(pan_scale), 0.0,
                       (double)(active_receiver->zoom == 1 ? active_receiver->pixels : active_receiver->pixels - active_receiver->width));
@@ -146,12 +135,6 @@ static void pan_value_changed_cb(GtkWidget *widget, gpointer data) {
 
   if (active_receiver->zoom > 1) {
     active_receiver->pan = (int)(gtk_range_get_value(GTK_RANGE(pan_scale)) + 0.5);
-
-    if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-      send_pan(client_socket, active_receiver->id, active_receiver->pan);
-#endif
-    }
   }
 
   g_mutex_unlock(&pan_zoom_mutex);

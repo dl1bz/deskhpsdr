@@ -33,9 +33,6 @@
 #include "radio.h"
 #include "receiver.h"
 #include "vfo.h"
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 
 static GtkWidget *dialog = NULL;
 
@@ -79,21 +76,12 @@ gboolean band_select_cb (GtkWidget *widget, gpointer data) {
   CHOICE *choice = (CHOICE *) data;
   int id = active_receiver->id;
   int newband;
-
   //
   // If the current band has been clicked, this will cycle through the
   // band stack
   //
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_band(client_socket, id, choice->info);
-#endif
-    // We have to assume that the band change succeeded, we just cannot know.
-    newband = choice->info;
-  } else {
-    vfo_band_changed(id, choice->info);
-    newband = vfo[id].band;
-  }
+  vfo_band_changed(id, choice->info);
+  newband = vfo[id].band;
 
   if (newband != choice->info) {
     //

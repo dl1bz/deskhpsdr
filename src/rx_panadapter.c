@@ -43,9 +43,6 @@
 #ifdef GPIO
   #include "gpio.h"
 #endif
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 #ifdef USBOZY
   #include "ozyio.h"
 #endif
@@ -425,20 +422,6 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
 #endif
-#ifdef CLIENT_SERVER
-
-  if (remoteclients != NULL) {
-    char text[64];
-    cairo_select_font_face(cr, DISPLAY_FONT_NORMAL, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-    cairo_set_source_rgba(cr, COLOUR_SHADE);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
-    inet_ntop(AF_INET, &(((struct sockaddr_in *)&remoteclients->address)->sin_addr), text, 64);
-    cairo_text_extents(cr, text, &extents);
-    cairo_move_to(cr, ((double)mywidth / 2.0) - (extents.width / 2.0), (double)myheight / 2.0);
-    cairo_show_text(cr, text);
-  }
-
-#endif
 
   // agc
   if (rx->agc != AGC_OFF) {
@@ -528,11 +511,6 @@ void rx_panadapter_update(RECEIVER *rx) {
   // signal
   double s1;
   int pan = rx->pan;
-
-  if (radio_is_remote) {
-    pan = 0;
-  }
-
   samples[pan] = -200.0;
   samples[mywidth - 1 + pan] = -200.0;
   //
@@ -846,7 +824,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   }
 
-  if (rx->id == 0 && !radio_is_remote) {
+  if (rx->id == 0) {
     display_panadapter_messages(cr, mywidth, rx->fps);
   }
 

@@ -52,9 +52,6 @@
   #include "configure.h"
 #endif
 #include "protocols.h"
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 #include "property.h"
 #include "message.h"
 #include "mystring.h"
@@ -75,14 +72,6 @@ char *ipaddr_radio = &ipaddr_buf[0];
 int discover_only_stemlab = 0;
 
 int delayed_discovery(gpointer data);
-
-#ifdef CLIENT_SERVER
-  GtkWidget *host_addr_entry;
-  static char host_addr_buffer[128] = "";
-  char *host_addr = &host_addr_buffer[0];
-  GtkWidget *host_port_spinner;
-  int host_port = 50000; // default listening port
-#endif
 
 static gboolean close_cb() {
   // There is nothing to clean up
@@ -201,37 +190,6 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
 
   return FALSE;
 }
-
-#ifdef CLIENT_SERVER
-static gboolean connect_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  // connect to remote host running piHPSDR
-  strncpy(host_addr, gtk_entry_get_text(GTK_ENTRY(host_addr_entry)), 30);
-  host_port = gtk_spin_button_get_value(GTK_SPIN_BUTTON(host_port_spinner));
-  t_print("connect_cb: %s:%d\n", host_addr, host_port);
-  clearProperties();
-  SetPropS0("host",   host_addr);
-  SetPropI0("port",   host_port);
-  saveProperties("remote.props");
-
-  if (radio_connect_remote(host_addr, host_port) == 0) {
-    gtk_widget_destroy(discovery_dialog);
-  } else {
-    // dialog box to display connection error
-    GtkWidget *dialog = gtk_dialog_new_with_buttons("Remote Connect", GTK_WINDOW(discovery_dialog),
-                        GTK_DIALOG_DESTROY_WITH_PARENT, "OK", GTK_RESPONSE_NONE, NULL);
-    GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    char message[128];
-    snprintf(message, sizeof(message), "Connection failed to %s:%d", host_addr, host_port);
-    GtkWidget *label = gtk_label_new(message);
-    g_signal_connect_swapped(dialog, "response", G_CALLBACK(gtk_widget_destroy), dialog);
-    gtk_container_add(GTK_CONTAINER(content_area), label);
-    gtk_widget_show_all(dialog);
-  }
-
-  return TRUE;
-}
-
-#endif
 
 void discovery() {
   //
@@ -514,27 +472,6 @@ void discovery() {
     }
   }
 
-#ifdef CLIENT_SERVER
-  loadProperties("remote.props");
-  GetPropS0("host",   host_addr_buffer);
-  GetPropI0("port",   host_port);
-  GtkWidget *connect_b = gtk_button_new_with_label("Connect to Server");
-  g_signal_connect (connect_b, "button-press-event", G_CALLBACK(connect_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), connect_b, 0, row, 1, 1);
-  host_addr_entry = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(host_addr_entry), 30);
-  gtk_grid_attach(GTK_GRID(grid), host_addr_entry, 1, row, 1, 1);
-  gtk_entry_set_text(GTK_ENTRY(host_addr_entry), host_addr);
-  GtkWidget *host_port_label = gtk_label_new("Server Port");
-  gtk_widget_set_name(host_port_label, "boldlabel");
-  gtk_widget_show(host_port_label);
-  gtk_grid_attach(GTK_GRID(grid), host_port_label, 2, row, 1, 1);
-  host_port_spinner = gtk_spin_button_new_with_range(45000, 55000, 1);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(host_port_spinner), (double)host_port);
-  gtk_widget_show(host_port_spinner);
-  gtk_grid_attach(GTK_GRID(grid), host_port_spinner, 3, row, 1, 1);
-  row++;
-#endif
   controller = NO_CONTROLLER;
   gpioRestoreState();
   gpio_set_defaults(controller);

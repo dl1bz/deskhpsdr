@@ -53,9 +53,6 @@
 #endif
 #include "ext.h"
 #include "new_menu.h"
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 #include "message.h"
 #include "mystring.h"
 
@@ -121,17 +118,10 @@ gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpoin
 
   if (making_active) {
     making_active = FALSE;
+    rx_set_active(rx);
 
-    if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-      send_rx_select(client_socket, rx->id);
-#endif
-    } else {
-      rx_set_active(rx);
-
-      if (event->button == GDK_BUTTON_SECONDARY) {
-        g_idle_add(ext_start_rx, NULL);
-      }
+    if (event->button == GDK_BUTTON_SECONDARY) {
+      g_idle_add(ext_start_rx, NULL);
     }
   } else {
     if (pressed) {
@@ -275,15 +265,6 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   SetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   SetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
-
-  //
-  // no further settings are
-  // needed if this is a remote receiver
-  //
-  if (radio_is_remote) {
-    return;
-  }
-
   SetPropI1("receiver.%d.smetermode", rx->id,                   rx->smetermode);
   SetPropI1("receiver.%d.low_latency", rx->id,                  rx->low_latency);
   SetPropI1("receiver.%d.fft_size", rx->id,                     rx->fft_size);
@@ -379,15 +360,6 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   GetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   GetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
-
-  //
-  // After restoring local audio settings, no further settings are
-  // needed if this is a remote receiver
-  //
-  if (radio_is_remote) {
-    return;
-  }
-
   GetPropI1("receiver.%d.smetermode", rx->id,                   rx->smetermode);
   GetPropI1("receiver.%d.low_latency", rx->id,                  rx->low_latency);
   GetPropI1("receiver.%d.fft_size", rx->id,                     rx->fft_size);
@@ -581,36 +553,7 @@ static int rx_update_display(gpointer data) {
   return FALSE;
 }
 
-#ifdef CLIENT_SERVER
-void rx_remote_update_display(RECEIVER *rx) {
-  if (rx->displaying) {
-    if (rx->pixels > 0) {
-      g_mutex_lock(&rx->display_mutex);
-
-      if (rx->display_panadapter) {
-        rx_panadapter_update(rx);
-      }
-
-      if (rx->display_waterfall) {
-        waterfall_update(rx);
-      }
-
-      if (active_receiver == rx) {
-        meter_update(rx, SMETER, rx->meter, 0.0, 0.0);
-      }
-
-      g_mutex_unlock(&rx->display_mutex);
-    }
-  }
-}
-
-#endif
-
 void rx_set_displaying(RECEIVER *rx) {
-  if (radio_is_remote) {
-    return;
-  }
-
   if (rx->displaying) {
     if (rx->update_timer_id > 0) {
       g_source_remove(rx->update_timer_id);
@@ -1147,14 +1090,6 @@ static void rx_process_buffer(RECEIVER *rx) {
       audio_write(rx, (float)left_sample, (float)right_sample);
     }
 
-#ifdef CLIENT_SERVER
-
-    if (remoteclients != NULL) {
-      remote_audio(rx, left_audio_sample, right_audio_sample);
-    }
-
-#endif
-
     if (rx == active_receiver && capture_state == CAP_RECORDING) {
       if (capture_record_pointer < capture_max) {
         //
@@ -1307,14 +1242,12 @@ void rx_update_zoom(RECEIVER *rx) {
     }
   }
 
-  if (!radio_is_remote) {
-    if (rx->pixel_samples != NULL) {
-      g_free(rx->pixel_samples);
-    }
-
-    rx->pixel_samples = g_new(float, rx->pixels);
-    rx_set_analyzer(rx);
+  if (rx->pixel_samples != NULL) {
+    g_free(rx->pixel_samples);
   }
+
+  rx->pixel_samples = g_new(float, rx->pixels);
+  rx_set_analyzer(rx);
 }
 
 void rx_set_filter(RECEIVER *rx) {
@@ -1380,26 +1313,10 @@ void rx_set_framerate(RECEIVER *rx) {
   // be restarted, the averaging re-calculated, and the analyzer
   // parameter re-set
   //
-  if (radio_is_remote) {
-    return;
-  }
-
   rx_set_displaying(rx);
   rx_set_average(rx);
   rx_set_analyzer(rx);
 }
-
-#ifdef CLIENT_SERVER
-void rx_create_remote(RECEIVER *rx) {
-  //
-  // receiver structure already setup via INFO_RECEIVER packet.
-  // since everything is done on the "local" side, we only need
-  // to set-up the panadapter
-  //
-  rx_create_visual(rx);
-}
-
-#endif
 
 ///////////////////////////////////////////////////////
 //

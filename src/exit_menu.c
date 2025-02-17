@@ -50,18 +50,15 @@ void stop_program() {
   gpio_close();
   t_print("%s: GPIO closed\n", __FUNCTION__);
 #endif
+  radio_protocol_stop();
+  t_print("%s: protocol stopped\n", __FUNCTION__);
+  radio_stop();
+  t_print("%s: radio stopped\n", __FUNCTION__);
 
-  if (!radio_is_remote) {
-    radio_protocol_stop();
-    t_print("%s: protocol stopped\n", __FUNCTION__);
-    radio_stop();
-    t_print("%s: radio stopped\n", __FUNCTION__);
-
-    if (have_saturn_xdma) {
+  if (have_saturn_xdma) {
 #ifdef SATURN
-      saturn_exit();
+    saturn_exit();
 #endif
-    }
   }
 
   radio_save_state();

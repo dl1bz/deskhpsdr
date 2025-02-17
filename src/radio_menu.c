@@ -47,9 +47,6 @@
 #endif
 #include "vfo.h"
 #include "ext.h"
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 
 static GtkWidget *dialog = NULL;
 
@@ -315,13 +312,7 @@ static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
   //
   if (sscanf(p, "%d", &samplerate) != 1) { return; }
 
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_sample_rate(client_socket, -1, samplerate);
-#endif
-  } else {
-    radio_change_sample_rate(samplerate);
-  }
+  radio_change_sample_rate(samplerate);
 }
 
 static void receivers_cb(GtkToggleButton *widget, gpointer data) {
@@ -336,13 +327,7 @@ static void receivers_cb(GtkToggleButton *widget, gpointer data) {
     return;
   }
 
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_receivers(client_socket, val);
-#endif
-  } else {
-    radio_change_receivers(val);
-  }
+  radio_change_receivers(val);
 }
 
 static void region_cb(GtkWidget *widget, gpointer data) {

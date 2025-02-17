@@ -57,9 +57,6 @@
 #include "toolbar.h"
 #include "new_menu.h"
 #include "rigctl.h"
-#ifdef CLIENT_SERVER
-  #include "client_server.h"
-#endif
 #include "ext.h"
 #include "filter.h"
 #include "actions.h"
@@ -795,13 +792,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
 }
 
 void vfo_band_changed(int id, int b) {
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_band(client_socket, id, b);
-#endif
-    return;
-  }
-
   const BAND *band;
   BANDSTACK *bandstack;
   int   oldmode = vfo[id].mode;
@@ -907,7 +897,6 @@ void vfo_band_changed(int id, int b) {
 }
 
 void vfo_bandstack_changed(int b) {
-  CLIENT_MISSING;
   int id = active_receiver->id;
   int oldmode = vfo[id].mode;
   BANDSTACK *bandstack = bandstack_get_bandstack(vfo[id].band);
@@ -951,13 +940,6 @@ void vfo_mode_changed(int m) {
 }
 
 void vfo_id_mode_changed(int id, int m) {
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_mode(client_socket, id, m);
-#endif
-    return;
-  }
-
   vfo[id].mode = m;
 
   if (id < receivers) {
@@ -1000,13 +982,6 @@ void vfo_filter_changed(int f) {
 }
 
 void vfo_id_filter_changed(int id, int f) {
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_filter(client_socket, id, f);
-#endif
-    return;
-  }
-
   // store changed filter in the mode settings
   if (id == 0) {
     int mode = vfo[id].mode;
@@ -1056,7 +1031,6 @@ void vfo_vfos_changed() {
 }
 
 void vfo_a_to_b() {
-  CLIENT_MISSING;
   int oldmode = vfo[VFO_B].mode;
   vfo[VFO_B] = vfo[VFO_A];
 
@@ -1068,7 +1042,6 @@ void vfo_a_to_b() {
 }
 
 void vfo_b_to_a() {
-  CLIENT_MISSING;
   int oldmode = vfo[VFO_A].mode;
   vfo[VFO_A] = vfo[VFO_B];
 
@@ -1080,7 +1053,6 @@ void vfo_b_to_a() {
 }
 
 void vfo_a_swap_b() {
-  CLIENT_MISSING;
   struct  _vfo temp = vfo[VFO_A];
   vfo[VFO_A]        = vfo[VFO_B];
   vfo[VFO_B]        = temp;
@@ -1135,8 +1107,6 @@ int vfo_get_stepindex(int id) {
 }
 
 void vfo_set_step_from_index(int id, int index) {
-  CLIENT_MISSING;
-
   //
   // Set VFO step size to steps[index], with range checking
   //
@@ -1160,13 +1130,6 @@ void vfo_step(int steps) {
 }
 
 void vfo_id_step(int id, int steps) {
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    update_vfo_step(id, steps);
-#endif
-    return;
-  }
-
   if (!locked) {
     long long delta;
 
@@ -1285,14 +1248,6 @@ void vfo_id_set_rit_step(int id, int step) {
 void vfo_id_move(int id, long long hz, int round) {
   long long delta;
 
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    //send_vfo_move(client_socket,id,hz,round);
-    update_vfo_move(id, hz, round);
-#endif
-    return;
-  }
-
   if (!locked) {
     if (vfo[id].ctun) {
       // don't let ctun go beyond end of passband
@@ -1396,13 +1351,6 @@ void vfo_move_to(long long hz) {
 }
 
 void vfo_id_move_to(int id, long long hz) {
-  if (radio_is_remote) {
-#ifdef CLIENT_SERVER
-    send_vfo_move_to(client_socket, id, hz);
-#endif
-    return;
-  }
-
   // hz is the offset from the min displayed frequency
   const RECEIVER *myrx;
 
@@ -2588,7 +2536,6 @@ long long vfo_get_tx_freq() {
 }
 
 void vfo_xit_value(long long value ) {
-  CLIENT_MISSING;
   int id = vfo_get_tx_vfo();
   vfo[id].xit = value;
   vfo[id].xit_enabled = value ? 1 : 0;
@@ -2597,7 +2544,6 @@ void vfo_xit_value(long long value ) {
 }
 
 void vfo_xit_toggle() {
-  CLIENT_MISSING;
   int id = vfo_get_tx_vfo();
   TOGGLE(vfo[id].xit_enabled);
   schedule_high_priority();
@@ -2605,7 +2551,6 @@ void vfo_xit_toggle() {
 }
 
 void vfo_rit_toggle(int id) {
-  CLIENT_MISSING;
   TOGGLE(vfo[id].rit_enabled);
 
   if (id < receivers) {
@@ -2616,7 +2561,6 @@ void vfo_rit_toggle(int id) {
 }
 
 void vfo_rit_value(int id, long long value) {
-  CLIENT_MISSING;
   vfo[id].rit = value;
   vfo[id].rit_enabled = value ? 1 : 0;
 
@@ -2628,7 +2572,6 @@ void vfo_rit_value(int id, long long value) {
 }
 
 void vfo_rit_onoff(int id, int enable) {
-  CLIENT_MISSING;
   vfo[id].rit_enabled = SET(enable);
 
   if (id < receivers) {
@@ -2639,7 +2582,6 @@ void vfo_rit_onoff(int id, int enable) {
 }
 
 void vfo_xit_onoff(int enable) {
-  CLIENT_MISSING;
   int id = vfo_get_tx_vfo();
   vfo[id].xit_enabled = SET(enable);
   schedule_high_priority();
@@ -2647,7 +2589,6 @@ void vfo_xit_onoff(int enable) {
 }
 
 void vfo_xit_incr(int incr) {
-  CLIENT_MISSING;
   int id = vfo_get_tx_vfo();
   long long value = vfo[id].xit + incr;
 
@@ -2664,7 +2605,6 @@ void vfo_xit_incr(int incr) {
 }
 
 void vfo_rit_incr(int id, int incr) {
-  CLIENT_MISSING;
   long long value = vfo[id].rit + incr;
 
   if (value < -9999) {
@@ -2693,7 +2633,6 @@ void vfo_rit_incr(int id, int incr) {
 // - CAT "set frequency" command
 //
 void vfo_set_frequency(int v, long long f) {
-  CLIENT_MISSING;
   //
   // Here we used to have call vfo_band_changed() for
   // frequency jumps from one band to another.
@@ -2738,8 +2677,6 @@ void vfo_set_frequency(int v, long long f) {
 // Set CTUN state of a VFO
 //
 void vfo_ctun_update(int id, int state) {
-  CLIENT_MISSING;
-
   //
   // Note: if this VFO does not control a (running) receiver,
   //       rx_set_frequency is *not* called therefore
