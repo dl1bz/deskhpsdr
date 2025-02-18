@@ -45,6 +45,9 @@
 #include "ext.h"
 #include "new_menu.h"
 #include "message.h"
+#if defined (__LDESK__)
+  #include "wdsp.h"
+#endif
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
@@ -119,6 +122,14 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     cairo_paint (cr);
     // filter
     filter_left = filter_right = 0.5 * mywidth;
+#if defined (__LDESK__)
+    static double _mic_av;
+    static double _eq_av;
+    static double _lvlr_av;
+    static double _cfc_av;
+    static double _proc_av;
+    static double _out_av;
+#endif
 
     if (txmode != modeCWU && txmode != modeCWL) {
       cairo_set_source_rgba(cr, COLOUR_PAN_FILTER);
@@ -354,8 +365,22 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     if (tx->dialog) {
       char text[64];
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#if defined (__LDESK__)
+      int _xpos = 0;
+      int _ypos = 80;
+
+      if (vfo_get_tx_mode() == modeLSB || vfo_get_tx_mode() == modeDIGL) {
+        _xpos = 130;
+      } else {
+        _xpos = 10;
+      }
+
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+      cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#else
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
+#endif
       int row = 0;
 
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
@@ -363,25 +388,113 @@ void tx_panadapter_update(TRANSMITTER *tx) {
         // Power values not available for SoapySDR
         //
         snprintf(text, 64, "FWD %0.1f W", transmitter->fwd);
-        row += 15;
-        cairo_move_to(cr, 10, row);
+        row += 20;
+        cairo_move_to(cr, _xpos, row);
         cairo_show_text(cr, text);
         //
         // Since colour is already red, no special
         // action for "high SWR" warning
         //
         snprintf(text, 64, "SWR 1:%1.1f", transmitter->swr);
-        row += 15;
-        cairo_move_to(cr, 10, row);
+        row += 20;
+        cairo_move_to(cr, _xpos, row);
         cairo_show_text(cr, text);
       }
 
       if (!cwmode) {
-        row += 15;
+        row += 20;
         snprintf(text, 64, "ALC %2.1f dB", transmitter->alc);
-        cairo_move_to(cr, 10, row);
+        cairo_move_to(cr, _xpos, row);
         cairo_show_text(cr, text);
       }
+
+#if defined (__LDESK__)
+
+      if (duplex && !cwmode) {
+        cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
+        cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+
+        if (!tune) {
+          // additional display levels of the audio chain
+          _mic_av = GetTXAMeter(transmitter->id, TXA_MIC_AV);
+
+          if (_mic_av < -100.0) {
+            _mic_av = 0.0;
+          }
+
+          _eq_av = GetTXAMeter(transmitter->id, TXA_EQ_AV);
+
+          if (_eq_av < -100.0) {
+            _eq_av = 0.0;
+          }
+
+          _lvlr_av = GetTXAMeter(transmitter->id, TXA_LVLR_AV);
+
+          if (_lvlr_av < -100.0) {
+            _lvlr_av = 0.0;
+          }
+
+          _cfc_av = GetTXAMeter(transmitter->id, TXA_CFC_AV);
+
+          if (_cfc_av < -100.0) {
+            _cfc_av = 0.0;
+          }
+
+          _proc_av = GetTXAMeter(transmitter->id, TXA_COMP_AV);
+
+          if (_proc_av < -100.0) {
+            _proc_av = 0.0;
+          }
+
+          _out_av = GetTXAMeter(transmitter->id, TXA_OUT_AV);
+
+          if (_mic_av > 0.0) {
+            cairo_set_source_rgba(cr, COLOUR_ALARM);
+          } else {
+            cairo_set_source_rgba(cr, COLOUR_METER);
+          }
+
+          cairo_move_to(cr, _xpos, _ypos);
+          snprintf(text, 64, "Mic %.0f", _mic_av);
+          cairo_show_text(cr, text);
+          cairo_set_source_rgba(cr, COLOUR_METER);
+
+          if (vfo_get_tx_mode() == modeDIGL || vfo_get_tx_mode() == modeDIGU) {
+            cairo_set_source_rgba(cr, COLOUR_SHADE);
+          }
+
+          snprintf(text, 64, "EQ  %.0f", _eq_av);
+          _ypos += 20;
+          cairo_move_to(cr, _xpos, _ypos);
+          cairo_show_text(cr, text);
+          snprintf(text, 64, "Lev %.0f", _lvlr_av);
+          _ypos += 20;
+          cairo_move_to(cr, _xpos, _ypos);
+          cairo_show_text(cr, text);
+          snprintf(text, 64, "CFC %.0f", _cfc_av);
+          _ypos += 20;
+          cairo_move_to(cr, _xpos, _ypos);
+          cairo_show_text(cr, text);
+          snprintf(text, 64, "PROC %.0f", _proc_av);
+          _ypos += 20;
+          cairo_move_to(cr, _xpos, _ypos);
+          cairo_show_text(cr, text);
+
+          if (_out_av > 0.0) {
+            cairo_set_source_rgba(cr, COLOUR_ALARM);
+          } else {
+            cairo_set_source_rgba(cr, COLOUR_METER);
+          }
+
+          snprintf(text, 64, "Out %.0f", _out_av);
+          _ypos += 20;
+          cairo_move_to(cr, _xpos, _ypos);
+          cairo_show_text(cr, text);
+        }
+      }
+
+#endif
     }
 
     if (tx->panadapter_peaks_on != 0) {
