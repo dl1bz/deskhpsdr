@@ -291,6 +291,8 @@ int have_alex_att = 0;
 int have_preamp = 0;
 int have_dither = 1;
 int have_saturn_xdma = 0;
+int have_radioberry1 = 0;
+int have_radioberry2 = 0;
 int rx_gain_calibration = 0;
 
 int split = 0;
@@ -1086,6 +1088,19 @@ void radio_start_radio() {
 #endif
   protocol = radio->protocol;
   device = radio->device;
+
+  if (device == DEVICE_HERMES_LITE2) {
+    if (realpath("/dev/radioberry", NULL) != NULL) {
+      //
+      // This is a RadioBerry.
+      //
+      if (radio->software_version < 732) {
+        have_radioberry1 = 1;
+      } else {
+        have_radioberry2 = 1;
+      }
+    }
+  }
 
   if (device == NEW_DEVICE_SATURN && (strcmp(radio->info.network.interface_name, "XDMA") == 0)) {
     have_saturn_xdma = 1;

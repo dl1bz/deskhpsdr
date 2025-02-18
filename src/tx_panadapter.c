@@ -338,7 +338,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     // only exception is if we are running twotone from
     // within the PS menu.
     //
-    int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
+    int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tx->twotone;
 
     if (tx->puresignal && !cwmode) {
       cairo_set_source_rgba(cr, COLOUR_OK);

@@ -403,7 +403,7 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *trained_t2_b = gtk_spin_button_new_with_range(0.02, 0.3, 0.01);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(trained_t2_b), active_receiver->nr2_trained_t2);
   gtk_grid_attach(GTK_GRID(nr_grid), trained_t2_b, 3, 2, 1, 1);
-  g_signal_connect(trained_thr_b, "changed", G_CALLBACK(trained_t2_cb), NULL);
+  g_signal_connect(trained_t2_b, "changed", G_CALLBACK(trained_t2_cb), NULL);
   //
   gtk_container_add(GTK_CONTAINER(nr_container), nr_grid);
   //

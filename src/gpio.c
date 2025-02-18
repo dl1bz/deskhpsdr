@@ -980,6 +980,22 @@ void gpio_set_defaults(int ctrlr) {
     PTTIN_LINE = 16;
     PTTOUT_LINE = 22;
     CWOUT_LINE = 23;
+    if (have_radioberry1) {
+      CWL_LINE = 14;
+      CWR_LINE = 15;
+      CWKEY_LINE = -1;
+      PTTIN_LINE = -1;
+      PTTOUT_LINE = -1;
+      CWOUT_LINE = -1;
+    }
+    if (have_radioberry2) {
+      CWL_LINE = 17;
+      CWR_LINE = 21;
+      CWKEY_LINE = -1;
+      PTTIN_LINE = -1;
+      PTTOUT_LINE = -1;
+      CWOUT_LINE = -1;
+    }
     memcpy(my_encoders, encoders_no_controller, sizeof(my_encoders));
     memcpy(my_switches, switches_no_controller, sizeof(my_switches));
     encoders = my_encoders;

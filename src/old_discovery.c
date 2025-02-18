@@ -383,8 +383,11 @@ static gpointer discover_receive_thread(gpointer data) {
             // DEVICE_HERMES_LITE as the ID and a software version
             // that is larger or equal to 40, while the original
             // (V1) HermesLite boards have software versions up to 31.
+            // Furthermode, HL2 uses a minor version in buffer[15]
+            // so the official version number e.g. 73.2 stems from buf9=73 and buf15=2
             //
-            if (discovered[devices].software_version < 40) {
+            discovered[devices].software_version = 10*(buffer[9] & 0xFF) + (buffer[15] & 0xFF);
+            if (discovered[devices].software_version < 400) {
               STRLCPY(discovered[devices].name, "HermesLite V1", sizeof(discovered[devices].name));
             } else {
               STRLCPY(discovered[devices].name, "HermesLite V2", sizeof(discovered[devices].name));
