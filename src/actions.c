@@ -846,36 +846,33 @@ int process_action(void *data) {
 
   case DIV:
     if (a->mode == PRESSED && n_adc > 1) {
-      TOGGLE(diversity_enabled);
-      schedule_high_priority();
-      schedule_receive_specific();
-      g_idle_add(ext_vfo_update, NULL);
+      set_diversity(NOT(diversity_enabled));
     }
 
     break;
 
   case DIV_GAIN:
-    update_diversity_gain((double)a->val * 0.5);
+    set_diversity_gain(div_gain + (double)a->val * 0.05);
     break;
 
   case DIV_GAIN_COARSE:
-    update_diversity_gain((double)a->val * 2.5);
+    set_diversity_gain(div_gain + (double)a->val * 0.25);
     break;
 
   case DIV_GAIN_FINE:
-    update_diversity_gain((double)a->val * 0.1);
+    set_diversity_gain((double)a->val * 0.01);
     break;
 
   case DIV_PHASE:
-    update_diversity_phase((double)a->val * 0.5);
+    set_diversity_phase(div_phase + (double)a->val * 0.5);
     break;
 
   case DIV_PHASE_COARSE:
-    update_diversity_phase((double)a->val * 2.5);
+    set_diversity_phase(div_phase + (double)a->val * 2.5);
     break;
 
   case DIV_PHASE_FINE:
-    update_diversity_phase((double)a->val * 0.1);
+    set_diversity_phase(div_phase + (double)a->val * 0.1);
     break;
 
   case DRIVE:

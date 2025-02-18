@@ -66,24 +66,8 @@ static gboolean close_cb () {
 }
 
 static void diversity_cb(GtkWidget *widget, gpointer data) {
-  //
-  // If we have only one receiver, then changing diversity
-  // changes the number of HPSR receivers so we restart the
-  // original protocol
-  //
-  if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
-    old_protocol_stop();
-  }
-
-  diversity_enabled = diversity_enabled == 1 ? 0 : 1;
-
-  if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
-    old_protocol_run();
-  }
-
-  schedule_high_priority();
-  schedule_receive_specific();
-  g_idle_add(ext_vfo_update, NULL);
+  int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  set_diversity(state);
 }
 
 //
@@ -97,7 +81,6 @@ static void set_gain_phase() {
   arg = div_phase * 0.017453292519943295769236907684886;
   div_cos = amplitude * cos(arg);
   div_sin = amplitude * sin(arg);
-  //t_print("%s: GAIN=%f PHASE=%f\n", __FUNCTION__,div_gain, div_phase);
 }
 
 static void gain_coarse_changed_cb(GtkWidget *widget, gpointer data) {
@@ -124,14 +107,12 @@ static void phase_fine_changed_cb(GtkWidget *widget, gpointer data) {
   set_gain_phase();
 }
 
-void update_diversity_gain(double increment) {
-  double g = div_gain + (0.1 * increment);
+void set_diversity_gain(double val) {
+  if (val < -27.0) { val = -27.0; }
 
-  if (g < -27.0) { g = -27.0; }
+  if (val >  27.0) { val =  27.0; }
 
-  if (g > 27.0) { g = 27.0; }
-
-  div_gain = g;
+  div_gain = val;
   //
   // calculate coarse and fine value.
   // if gain is 27, we can only use coarse=25 and fine=2,
@@ -155,14 +136,12 @@ void update_diversity_gain(double increment) {
   set_gain_phase();
 }
 
-void update_diversity_phase(double increment) {
-  double p = div_phase + increment;
+void set_diversity_phase(double value) {
+  while (value >  180.0) { value -= 360.0; }
 
-  while (p >  180.0) { p -= 360.0; }
+  while (value < -180.0) { value += 360.0; }
 
-  while (p < -180.0) { p += 360.0; }
-
-  div_phase = p;
+  div_phase = value;
   //
   // calculate coarse and fine
   //
@@ -177,6 +156,27 @@ void update_diversity_phase(double increment) {
   }
 
   set_gain_phase();
+}
+
+void set_diversity(int state) {
+  //
+  // If we have only one receiver, then changing diversity
+  // changes the number of HPSR receivers so we restart the
+  // original protocol
+  //
+  if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
+    old_protocol_stop();
+  }
+
+  diversity_enabled = state;
+
+  if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
+    old_protocol_run();
+  }
+
+  schedule_high_priority();
+  schedule_receive_specific();
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 void diversity_menu(GtkWidget *parent) {
