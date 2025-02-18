@@ -1058,14 +1058,6 @@ void radio_start_radio() {
     }
   }
 
-#ifdef GPIO
-
-  if (gpio_init() < 0) {
-    t_print("GPIO failed to initialize\n");
-  }
-
-#endif
-  //t_print("start_radio: selected radio=%p device=%d\n",radio,radio->device);
   gdk_window_set_cursor(gtk_widget_get_window(top_window), gdk_cursor_new(GDK_WATCH));
   //
   // The behaviour of pop-up menus (Combo-Boxes) can be set to
@@ -1101,6 +1093,18 @@ void radio_start_radio() {
       }
     }
   }
+
+#ifdef GPIO
+
+  //
+  // Post-pone GPIO initialization until here since
+  // we must first set the RadioBerry flags
+  //
+  if (gpio_init() < 0) {
+    t_print("GPIO failed to initialize\n");
+  }
+
+#endif
 
   if (device == NEW_DEVICE_SATURN && (strcmp(radio->info.network.interface_name, "XDMA") == 0)) {
     have_saturn_xdma = 1;
