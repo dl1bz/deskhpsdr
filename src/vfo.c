@@ -2296,6 +2296,15 @@ void vfo_update() {
 
       snprintf(temp_text, 32, "AG");
       cairo_show_text(cr, temp_text);
+
+      cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y + 15);
+      if (hl2_cl1_enable) {
+        cairo_set_source_rgba(cr, COLOUR_OK);
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_SHADE);
+      }
+      snprintf(temp_text, 32, "CL1");
+      cairo_show_text(cr, temp_text);
     }
 
 #endif
