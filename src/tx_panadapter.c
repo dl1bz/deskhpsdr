@@ -480,6 +480,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
           _ypos += 20;
           cairo_move_to(cr, _xpos, _ypos);
           cairo_show_text(cr, text);
+          cairo_set_source_rgba(cr, COLOUR_METER);
 
           if (_out_av > 0.0) {
             cairo_set_source_rgba(cr, COLOUR_ALARM);
@@ -491,6 +492,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
           _ypos += 20;
           cairo_move_to(cr, _xpos, _ypos);
           cairo_show_text(cr, text);
+          cairo_set_source_rgba(cr, COLOUR_METER);
         }
       }
 

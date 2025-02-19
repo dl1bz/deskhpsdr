@@ -903,11 +903,10 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           snprintf(sf, 32, "Mic %.0f", _mic_av);
           cairo_move_to(cr, 5, Y4 - 30);
           cairo_show_text(cr, sf);
+          cairo_set_source_rgba(cr, COLOUR_METER);
 
           if (vfo_get_tx_mode() == modeDIGL || vfo_get_tx_mode() == modeDIGU) {
             cairo_set_source_rgba(cr, COLOUR_SHADE);
-          } else {
-            cairo_set_source_rgba(cr, COLOUR_METER);
           }
 
           snprintf(sf, 32, "EQ  %.0f", _eq_av);
@@ -923,9 +922,17 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           cairo_move_to(cr, METER_WIDTH / 2, Y4 - 30);
           cairo_show_text(cr, sf);
           cairo_set_source_rgba(cr, COLOUR_METER);
+
+          if (_out_av > 0.0) {
+            cairo_set_source_rgba(cr, COLOUR_ALARM);
+          } else {
+            cairo_set_source_rgba(cr, COLOUR_METER);
+          }
+
           snprintf(sf, 32, "Out %.0f", _out_av);
           cairo_move_to(cr, METER_WIDTH / 2, Y4 - 15);
           cairo_show_text(cr, sf);
+          cairo_set_source_rgba(cr, COLOUR_METER);
         }
       }
 
