@@ -846,82 +846,84 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_move_to(cr, METER_WIDTH / 2, Y2);
 #endif
         cairo_show_text(cr, sf);
+      }
 
-        if (!cwmode) {
-          cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-          cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-          cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
-          snprintf(sf, 32, "ALC %2.1f dB", max_alc);
-          cairo_move_to(cr, METER_WIDTH / 2, Y4);
-          cairo_show_text(cr, sf);
+      if (!cwmode) {
+        cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
+        snprintf(sf, 32, "ALC %2.1f dB", max_alc);
+        cairo_move_to(cr, METER_WIDTH / 2, Y4);
+        cairo_show_text(cr, sf);
+      }
+
 #if defined (__LDESK__)
 
-          if (!tune) {
-            // additional display levels of the audio chain
-            _mic_av = GetTXAMeter(transmitter->id, TXA_MIC_AV);
+      if (!duplex && !cwmode) {
+        if (!tune) {
+          // additional display levels of the audio chain
+          _mic_av = GetTXAMeter(transmitter->id, TXA_MIC_AV);
 
-            if (_mic_av < -100.0) {
-              _mic_av = 0.0;
-            }
-
-            _eq_av = GetTXAMeter(transmitter->id, TXA_EQ_AV);
-
-            if (_eq_av < -100.0) {
-              _eq_av = 0.0;
-            }
-
-            _lvlr_av = GetTXAMeter(transmitter->id, TXA_LVLR_AV);
-
-            if (_lvlr_av < -100.0) {
-              _lvlr_av = 0.0;
-            }
-
-            _cfc_av = GetTXAMeter(transmitter->id, TXA_CFC_AV);
-
-            if (_cfc_av < -100.0) {
-              _cfc_av = 0.0;
-            }
-
-            _proc_av = GetTXAMeter(transmitter->id, TXA_COMP_AV);
-
-            if (_proc_av < -100.0) {
-              _proc_av = 0.0;
-            }
-
-            _out_av = GetTXAMeter(transmitter->id, TXA_OUT_AV);
-            cairo_set_source_rgba(cr, COLOUR_METER);
-            snprintf(sf, 32, "Mic %.0f", _mic_av);
-            cairo_move_to(cr, 5, Y4 - 30);
-            cairo_show_text(cr, sf);
-
-            if (vfo_get_tx_mode() == modeDIGL || vfo_get_tx_mode() == modeDIGU) {
-              cairo_set_source_rgba(cr, COLOUR_SHADE);
-            } else {
-              cairo_set_source_rgba(cr, COLOUR_METER);
-            }
-
-            snprintf(sf, 32, "EQ  %.0f", _eq_av);
-            cairo_move_to(cr, 5, Y4 - 15);
-            cairo_show_text(cr, sf);
-            snprintf(sf, 32, "Lev %.0f", _lvlr_av);
-            cairo_move_to(cr, 65, Y4 - 30);
-            cairo_show_text(cr, sf);
-            snprintf(sf, 32, "CFC %.0f", _cfc_av);
-            cairo_move_to(cr, 65, Y4 - 15);
-            cairo_show_text(cr, sf);
-            snprintf(sf, 32, "PROC %.0f", _proc_av);
-            cairo_move_to(cr, METER_WIDTH / 2, Y4 - 30);
-            cairo_show_text(cr, sf);
-            cairo_set_source_rgba(cr, COLOUR_METER);
-            snprintf(sf, 32, "Out %.0f", _out_av);
-            cairo_move_to(cr, METER_WIDTH / 2, Y4 - 15);
-            cairo_show_text(cr, sf);
+          if (_mic_av < -100.0) {
+            _mic_av = 0.0;
           }
 
-#endif
+          _eq_av = GetTXAMeter(transmitter->id, TXA_EQ_AV);
+
+          if (_eq_av < -100.0) {
+            _eq_av = 0.0;
+          }
+
+          _lvlr_av = GetTXAMeter(transmitter->id, TXA_LVLR_AV);
+
+          if (_lvlr_av < -100.0) {
+            _lvlr_av = 0.0;
+          }
+
+          _cfc_av = GetTXAMeter(transmitter->id, TXA_CFC_AV);
+
+          if (_cfc_av < -100.0) {
+            _cfc_av = 0.0;
+          }
+
+          _proc_av = GetTXAMeter(transmitter->id, TXA_COMP_AV);
+
+          if (_proc_av < -100.0) {
+            _proc_av = 0.0;
+          }
+
+          _out_av = GetTXAMeter(transmitter->id, TXA_OUT_AV);
+          cairo_set_source_rgba(cr, COLOUR_METER);
+          snprintf(sf, 32, "Mic %.0f", _mic_av);
+          cairo_move_to(cr, 5, Y4 - 30);
+          cairo_show_text(cr, sf);
+
+          if (vfo_get_tx_mode() == modeDIGL || vfo_get_tx_mode() == modeDIGU) {
+            cairo_set_source_rgba(cr, COLOUR_SHADE);
+          } else {
+            cairo_set_source_rgba(cr, COLOUR_METER);
+          }
+
+          snprintf(sf, 32, "EQ  %.0f", _eq_av);
+          cairo_move_to(cr, 5, Y4 - 15);
+          cairo_show_text(cr, sf);
+          snprintf(sf, 32, "Lev %.0f", _lvlr_av);
+          cairo_move_to(cr, 65, Y4 - 30);
+          cairo_show_text(cr, sf);
+          snprintf(sf, 32, "CFC %.0f", _cfc_av);
+          cairo_move_to(cr, 65, Y4 - 15);
+          cairo_show_text(cr, sf);
+          snprintf(sf, 32, "PROC %.0f", _proc_av);
+          cairo_move_to(cr, METER_WIDTH / 2, Y4 - 30);
+          cairo_show_text(cr, sf);
+          cairo_set_source_rgba(cr, COLOUR_METER);
+          snprintf(sf, 32, "Out %.0f", _out_av);
+          cairo_move_to(cr, METER_WIDTH / 2, Y4 - 15);
+          cairo_show_text(cr, sf);
         }
       }
 
+#endif
       break;
     }
   }
