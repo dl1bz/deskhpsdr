@@ -32,7 +32,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ## Latest Changes
 ### Version 2.5.x
-- under development: prepare deskHPSDR for using CL1 input with external 10 MHz reference (e.g. with a GPSDO)
+- under development: prepare deskHPSDR for using Hermes-Lite 2 CL1 input with external 10 MHz reference (e.g. with a GPSDO)
 - completed: add (if in duplex mode) the audio level monitoring in the separated TX window too (feature request by CU2ED)
 - completed: remove "horizontal stacking" display option for panadapter in screen menu, that disturbs a lot of my changed GUI design
 - completed: remove all old piHPSDR Client-Server code, deskHPSDR doesn't support this "One-App-Limited" Client-Server concept
