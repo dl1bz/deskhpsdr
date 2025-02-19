@@ -145,6 +145,7 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   schedule_general();
   schedule_transmit_specific();
   schedule_high_priority();
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 static void anan10e_cb(GtkWidget *widget, gpointer data) {
