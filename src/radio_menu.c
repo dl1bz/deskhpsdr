@@ -820,6 +820,13 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_audio_codec);
     col++;
+    GtkWidget *hl2_cl1_b = gtk_check_button_new_with_label("HL2 CL1 10MHz Ext");
+    gtk_widget_set_name(hl2_cl1_b, "boldlabel");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hl2_cl1_b), hl2_cl1_enable);
+    gtk_grid_attach(GTK_GRID(grid), hl2_cl1_b, col, row, 1, 1);
+    gtk_widget_set_sensitive(hl2_cl1_b, FALSE);  // Setzt den Button inaktiv
+    g_signal_connect(hl2_cl1_b, "toggled", G_CALLBACK(toggle_cb), &hl2_cl1_enable);
+    col++;
   }
   break;
 
@@ -899,6 +906,16 @@ void radio_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), rx_gain_calibration_b, col, row, 1, 1);
   g_signal_connect(rx_gain_calibration_b, "value_changed", G_CALLBACK(rx_gain_calibration_value_changed_cb), NULL);
 #if defined (__LDESK__)
+  //
+  // Insert small separation between top columns and bottom rows
+  //
+  row++;
+  col = 0;
+  GtkWidget *Separator2 = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_widget_set_margin_top(Separator2, 10);    // 10px Abstand oben
+  gtk_widget_set_margin_bottom(Separator2, 10); // 10px Abstand unten
+  gtk_widget_set_size_request(Separator2, -1, 3);
+  gtk_grid_attach(GTK_GRID(grid), Separator2, col, row, 5, 1);
   row++;
   col = 0;
   label = gtk_label_new("Your Callsign:");
