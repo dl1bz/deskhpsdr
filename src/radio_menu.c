@@ -820,7 +820,7 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_audio_codec);
     col++;
-    GtkWidget *hl2_cl1_b = gtk_check_button_new_with_label("HL2 CL1 10MHz Ext");
+    GtkWidget *hl2_cl1_b = gtk_check_button_new_with_label("HL2 CL1 EXT 10MHz");
     gtk_widget_set_name(hl2_cl1_b, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hl2_cl1_b), hl2_cl1_enable);
     gtk_grid_attach(GTK_GRID(grid), hl2_cl1_b, col, row, 1, 1);
