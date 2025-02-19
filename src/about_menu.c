@@ -81,7 +81,7 @@ void about_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   row++;
-  snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY\n"
+  snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
                        "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
                        "(contains code portions of piHPSDR developed by G0ORX/N6LYT and DL1YCF)\n\n"
                        "    Credits:\n"

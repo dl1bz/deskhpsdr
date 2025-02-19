@@ -723,7 +723,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("create pi label\n");
 #if defined (__LDESK__)
   snprintf(text, 2048,
-           "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY\n"
+           "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
            "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
            "(contains code portions of piHPSDR developed by G0ORX/N6LYT and DL1YCF)");
   GtkWidget *pi_label = gtk_label_new(text);
