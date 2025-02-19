@@ -295,7 +295,7 @@ extern gboolean display_warnings;
 extern gboolean display_pacurr;
 
 extern int hl2_audio_codec;
-extern int hl2_cl1_enable;
+extern int hl2_cl1_input;
 extern int anan10E;
 
 extern int adc0_filter_bypass;   // Bypass ADC0 filters on receive
