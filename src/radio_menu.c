@@ -911,11 +911,11 @@ void radio_menu(GtkWidget *parent) {
   //
   row++;
   col = 0;
-  GtkWidget *Separator2 = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-  gtk_widget_set_margin_top(Separator2, 10);    // 10px Abstand oben
-  gtk_widget_set_margin_bottom(Separator2, 10); // 10px Abstand unten
-  gtk_widget_set_size_request(Separator2, -1, 3);
-  gtk_grid_attach(GTK_GRID(grid), Separator2, col, row, 5, 1);
+  GtkWidget *Separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_widget_set_margin_top(Separator, 10);    // 10px Abstand oben
+  gtk_widget_set_margin_bottom(Separator, 10); // 10px Abstand unten
+  gtk_widget_set_size_request(Separator, -1, 3);
+  gtk_grid_attach(GTK_GRID(grid), Separator, col, row, 5, 1);
   row++;
   col = 0;
   label = gtk_label_new("Your Callsign:");
