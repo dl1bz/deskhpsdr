@@ -893,7 +893,13 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           }
 
           _out_av = GetTXAMeter(transmitter->id, TXA_OUT_AV);
-          cairo_set_source_rgba(cr, COLOUR_METER);
+
+          if (_mic_av > 0.0) {
+            cairo_set_source_rgba(cr, COLOUR_ALARM);
+          } else {
+            cairo_set_source_rgba(cr, COLOUR_METER);
+          }
+
           snprintf(sf, 32, "Mic %.0f", _mic_av);
           cairo_move_to(cr, 5, Y4 - 30);
           cairo_show_text(cr, sf);
