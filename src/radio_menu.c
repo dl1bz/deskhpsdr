@@ -786,7 +786,11 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mute_rx_while_transmitting);
     col++;
-    ChkBtn = gtk_check_button_new_with_label("PA enable");
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2) {
+      ChkBtn = gtk_check_button_new_with_label("HL2 5W PA enable");
+    } else {
+      ChkBtn = gtk_check_button_new_with_label("PA enable");
+    }
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), pa_enabled);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
@@ -828,6 +832,9 @@ void radio_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
       g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_cl1_input);
       col++;
+    } else {
+      hl2_audio_codec = 0;
+      hl2_cl1_input = 0;
     }
   }
   break;
