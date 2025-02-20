@@ -888,7 +888,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
 #if defined (__LDESK__)
 
-    if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+    if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2) {
       drive_label = gtk_label_new("HL2:TX\nPwr (W)");
       gtk_widget_set_name(drive_label, csslabel_smaller);
     } else {

@@ -815,21 +815,20 @@ void radio_menu(GtkWidget *parent) {
   break;
 
   case DEVICE_HERMES_LITE2: {
-    if (!have_radioberry1 &&  !have_radioberry2)
-      {
-        ChkBtn = gtk_check_button_new_with_label("HL2 audio codec");
-        gtk_widget_set_name(ChkBtn, "boldlabel");
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), hl2_audio_codec);
-        gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-        g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_audio_codec);
-        col++;
-        ChkBtn = gtk_check_button_new_with_label("HL2 CL1 10Mhz Ref Clock");
-        gtk_widget_set_name(ChkBtn, "boldlabel");
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), hl2_cl1_input);
-        gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-        g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_cl1_input);
-        col++;
-      }
+    if (!have_radioberry1 && !have_radioberry2) {
+      ChkBtn = gtk_check_button_new_with_label("HL2 audio codec");
+      gtk_widget_set_name(ChkBtn, "boldlabel");
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), hl2_audio_codec);
+      gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
+      g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_audio_codec);
+      col++;
+      ChkBtn = gtk_check_button_new_with_label("HL2 CL1 10Mhz Ref Clock");
+      gtk_widget_set_name(ChkBtn, "boldlabel");
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), hl2_cl1_input);
+      gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
+      g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_cl1_input);
+      col++;
+    }
   }
   break;
 
