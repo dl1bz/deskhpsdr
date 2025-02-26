@@ -20,7 +20,7 @@ deskHPSDR has a build-in MIDI support. You can use MIDI controller for the most 
 
 If using GPIO control lines (Raspberry Pi only), you need to set **GPIO=ON** in the ```make.config.deskhpsdr``` before you start compiling deskHPSDR. With other OS like macOS we cannot use GPIO, because such computers like Macs havn't any GPIO. Use a DIY MIDI device/controller instead and control deskHPSDR via MIDI. Functions are accessible via GPIO can be used via MIDI too.
 
-## Change IP parameter of the HL2
+## Change IP parameter of the HL2 (change MAC address and/or set a fixed IP address) ##
 
 Per default the HL2 is configured as a DHCP client. That means, the HL2 will get his IP address from a running DHCP server inside your network. But it's possible to put a fixed IP address into the HL2. **deskHPSDR itself cannot adjust the IP address of the HL2**.<br>
 But there are exist a Python-Extension ```hermeslite.py``` for doing this - outside deskHPSDR.<br>
