@@ -30,15 +30,36 @@
 * @brief Band definition
 */
 struct _MEM_STORE {
+  int sat_mode;
+  int split;        // this will only be used with SAT/RSAT
+  int duplex;       // this will only be used with SAT/RSAT
   long long frequency;
   long long ctun_frequency;
   int ctun;
   int mode;
   int filter;
   int deviation;
+  int bd;
+  //
+  // The above data is for "normal" (non-SAT-mode) memory slots.
+  // The data comes from / goes to the VFO of the active receiver (only)
+  //
+  // For SAT/RSAT modes, we need a second set of data, and the VFO-A data
+  // always goes to the "normal" set, while the VFO-B data goes to the
+  // "alternate" set.
+  //
+  // This does *not* apply to CTCSS data, since this is global
+  //
+  long long alt_frequency;
+  long long alt_ctun_frequency;
+  int  alt_ctun;
+  int  alt_mode;
+  int  alt_filter;
+  int  alt_deviation;
+  int  alt_bd;
+
   int ctcss_enabled;
   int ctcss;
-  int bd;
 };
 
 typedef struct _MEM_STORE MEM;
