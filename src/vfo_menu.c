@@ -85,11 +85,13 @@ static gboolean vfo_num_pad_cb(GtkWidget *widget, GdkEventButton *event, gpointe
   int val = GPOINTER_TO_INT(data);
 
   //
-  // A "double click" with the mouse actually generates THREE button press
-  // events, the third one has event->type == GDK_2BUTTON_PRESS.
-  // This one has to be ignored.
+  // A "double" or "triple" click will generate a GDK_BUTTON_PRESS for each click,
+  // and *additionally** a GDK_2BUTTON_PRESS and possibly a GDK_3BUTTON_PRESS.
+  // Only the  plain vanilla button press should be handeld, the other ignored.
+  // This one has to be ignored, as well as a three-button-press.
   //
-  if (event->type != GDK_2BUTTON_PRESS) {
+
+  if (event->type == GDK_BUTTON_PRESS) {
     char output[64];
     vfo_num_pad(btn_actions[val], myvfo);
 
