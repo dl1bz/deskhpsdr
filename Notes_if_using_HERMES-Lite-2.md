@@ -14,4 +14,8 @@ For using the bandvoltage output option of the Hermes Lite 2, you need to tick o
 
 ## Using MIDI for control deskHPSDR ##
 
-deskHPSDR has a build-in MIDI support. You can use MIDI controller for the most functions, the assignments needs to be done in **MIDI Menu**. You can also use DIY controller (e.g. ESP32 or Arduino based) for developing you own MIDI controller with the help of their MIDI libraries.
+deskHPSDR has a build-in MIDI support. You can use MIDI controller for the most functions (like a rotary switch as VFO knob), the assignments needs to be done in **MIDI Menu**. You can also use DIY controller (e.g. ESP32 or Arduino based) for developing you own MIDI controller with the help of their MIDI libraries.
+
+## Using GPIO (Raspberry Pi only) ##
+
+If using GPIO control lines (Raspberry Pi only), you need to set **GPIO=ON** in the ```make.config.deskhpsdr``` before you start compiling deskHPSDR. With other OS like macOS we cannot use GPIO, because such computers like Macs havn't any GPIO. Use a DIY MIDI device/controller instead.
