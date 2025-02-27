@@ -2,7 +2,9 @@
 
 This is an improved version based at the code of [piHPSDR](https://github.com/dl1ycf/pihpsdr). But it is not [piHPSDR](https://github.com/dl1ycf/pihpsdr) itself and has no backward dependencies to [piHPSDR](https://github.com/dl1ycf/pihpsdr). My goal was to make an optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In this case you need to use [piHPSDR](https://github.com/dl1ycf/pihpsdr), but not my deskHPSDR.
 
-My version here need a screen size 1280x600 at minimum or higher for best GUI experiences.
+deskHPSDR need a screen size 1280x600 at minimum or higher for best GUI experiences, that's one of the difference against piHPSDR. There are also no plans for a Client-Server-Mode like with piHPSDR, this code part was removed in deskHPSDR.
+
+My main focus of deskHPSDR development, the improvements and additional functions against piHPSDR is the Hermes Lite 2 SDR Transceiver and his similar devices based on the same hardware platform like the Square-SDR. Other SDR devices can be used too if supported, but I cannot check it. The second focus is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The third focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio, less for wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
 More information about the develop progress of deskHPSDR can be found here in my Blog:<br>
 [https://hamradio.bzsax.de/category/hamradio/deskhpsdr/](https://hamradio.bzsax.de/category/hamradio/deskhpsdr/) (German language only).
