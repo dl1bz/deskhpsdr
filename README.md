@@ -70,7 +70,7 @@ I'm now activate the Issues tab, but please note the following:<br>
 - first make a ```git pull``` for using the most up-to-date codebase, compile it, test it and THEN open an issue, if you think there's something wrong with the last codebase<br>
 - I don't accept any questions, comments or remarks about transmitting outside of the amateur radio frequencies !!!
 
-## Known problems
+## Known problems if using Git for update the code base at your local computer
 
 In the ```Makefile``` I add a comment "don't edit this Makefile". That's I mean so. I'm now add the editable, additional file for this called ```make.config.deskhpsdr```.<br>
 But if you have such file yet or edit it and make after this a ```git pull``` , git maybe come back with an error message.<br>
