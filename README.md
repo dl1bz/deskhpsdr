@@ -23,7 +23,7 @@ From now on (January 2025) I stop merging code from piHPSDR into deskHPSDR. Last
 * basic knowledge: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the ```COMPILE.macOS``` first
 * *Linux only*: please read the ```COMPILE.linux``` first
-* a SDR device or transceiver, which supports HPSDR protocol 1 (older) or 2 (newer) like the Hermes Lite 2, the ANAN or similiar devices
+* a SDR device or transceiver, which supports HPSDR protocol 1 (older) or 2 (newer) like the Hermes Lite 2, the ANAN or similiar devices. Soapy-API based SDR can be used too, but with limitations because of the Soapy-API implementation. Per default Soapy-API is disabled, if needed you must activate Soapy-API support in the ```make.config.deskhpsdr``` as an user-defined option
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the ```Notes_if_using_HERMES-Lite-2.md```
 
