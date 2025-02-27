@@ -700,7 +700,7 @@ static gpointer tci_server(gpointer data) {
 
   while (tci_running) {
     int spare;
-    char buf[MAXDATASIZE + 1];
+    char buf[MAXDATASIZE + 40];
     char key[MAXDATASIZE + 1];
     unsigned char sha[SHA_DIGEST_LENGTH];
     ssize_t nbytes;
@@ -783,11 +783,11 @@ static gpointer tci_server(gpointer data) {
     q = key;
 
     while (*p != '\n' && *p != '\r' && p != 0) {
-      *q++ = *p++;
+      if (q - key < MAXDATASIZE) { *q++ = *p++; }
     }
 
     *q = 0;
-    snprintf(buf, MAXDATASIZE, "%s%s", key, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+    snprintf(buf, sizeof(buf), "%s%s", key, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
     nbytes = strlen(buf);
     //
     // 3. Get SHA1 hash from the result (buf -> sha)
