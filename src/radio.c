@@ -2317,6 +2317,9 @@ void radio_set_tune(int state) {
       t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
       t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
 #endif
+#if defined (__DVL__)
+      autogain_is_adjusted = 0;
+#endif
     }
   }
 
