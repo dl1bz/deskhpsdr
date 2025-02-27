@@ -94,6 +94,9 @@ $ git reset --hard origin/main
 ```
 This overwrite local changes, which are different from the remote repo at Github.com and set the status equal between local and remote.
 
+## Known problems with SDR devices
+* if using SOAPY-API with SDRPlay RSP2Pro (older model, EOL) via USB, deskHPSDR crash with a segmentation fault if try to start this device (issue is actual under investigation, but not fixed yet)
+
 ## Successful and confirmed Tests I had done up to now
 
 So far, deskHPSDR has been successfully tested on the following systems:<br>
@@ -103,7 +106,7 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 * *Raspberry Pi 3B+ works too, but with limitations (panadapter framerate only 10fps, if want more the CPU hasn't enough power)*
 * a hamradio friend of mine has checked it on a Desktop Linux Ubuntu LTS for me, works too
 
-All radio tests are made with my Hermes Lite 2 SDR-Transceiver.
+All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1. Actual no issues with the Hermes Lite 2 and deskHPSDR.
 
 ## Credits
 
