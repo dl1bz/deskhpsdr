@@ -106,7 +106,8 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 * *Raspberry Pi 3B+ works too, but with limitations (panadapter framerate only 10fps, if want more the CPU hasn't enough power)*
 * a hamradio friend of mine has checked it on a Desktop Linux Ubuntu LTS for me, works too
 
-All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1. Actual no issues with the Hermes Lite 2 and deskHPSDR.
+**All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1 under macOS 14.7.4.**
+**There are no issues with the Hermes Lite 2 and deskHPSDR yet, but it is not possible to check ALL exist SDR devices.**
 
 ## Credits
 
