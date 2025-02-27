@@ -86,7 +86,13 @@ After this, ```git pull``` should work correct.<br>
 Background about this: I made a mistake in the ```.gitignore```, but I correct it in the meantime. ```git pull``` see local changes with this file (if edit) and stop working, because this file is not identical with the file from the upstream master branch.<br>
 ```git update-index --assume-unchanged make.config.deskhpsdr``` inform git, that this file need to be ignored in the future, so you can edit it how you need.<br>
 If this not help, please delete the complete codebase of deskHPSDR and clone it again, then you have a fresh copy.<br>
-Don't forget to edit ```make.config.deskhpsdr``` again for set your needed options. Don't change the ```DESKTOP=ON``` option, that MUST always be set to ON.
+
+If ```git pull``` failed, you can also try this:<br>
+```
+$ git pull
+$ git reset --hard origin/main
+```
+This overwrite local changes, which are different from the remote repo at Github.com and set the status equal between local and remote.
 
 ## Successful and confirmed Tests I had done up to now
 
