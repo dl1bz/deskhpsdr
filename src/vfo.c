@@ -1660,6 +1660,7 @@ void vfo_update() {
       } else {
         snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       }
+
       break;
 #endif
 
