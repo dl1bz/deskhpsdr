@@ -35,6 +35,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ## Latest Changes
 ### Version 2.5.x
+- completed: fix a segmentation fault of deskHPSDR if using SDR-RX-only devices like SDRplay via Soapy-API after start the SDR device
 - completed: if using Hermes-Lite 2 activate CL1 input for inject external 10 MHz reference (e.g. with a GPSDO)
 - completed: add (if in duplex mode) the audio level monitoring in the separated TX window too (feature request by CU2ED)
 - completed: remove "horizontal stacking" display option for panadapter in screen menu, that disturbs a lot of my changed GUI design
