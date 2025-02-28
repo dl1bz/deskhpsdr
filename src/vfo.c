@@ -596,19 +596,23 @@ static inline void vfo_adjust_band(int v, long long f) {
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, (int) v,
             (int) vfo[v].band, (int) b);
 #if defined (__HAVEATU__)
-    transmitter->is_tuned = 0;
-    transmitter->stored_drive = radio_get_drive();
 
-    if (!transmitter->is_tuned) {
-      set_drive(1.0);
+    if (can_transmit) {
+      transmitter->is_tuned = 0;
+      transmitter->stored_drive = radio_get_drive();
+
+      if (!transmitter->is_tuned) {
+        set_drive(1.0);
+      }
+
+      t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
+      t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
     }
 
-    t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-    t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
 #endif
 #if defined (__DVL__)
 
-    if (autogain_enabled) {
+    if (can_transmit && autogain_enabled) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
     }
@@ -807,15 +811,19 @@ void vfo_band_changed(int id, int b) {
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, id, b,
             (int) vfo[id].band);
 #if defined (__HAVEATU__)
-    transmitter->is_tuned = 0;
-    transmitter->stored_drive = radio_get_drive();
 
-    if (!transmitter->is_tuned) {
-      set_drive(1.0);
+    if (can_transmit) {
+      transmitter->is_tuned = 0;
+      transmitter->stored_drive = radio_get_drive();
+
+      if (!transmitter->is_tuned) {
+        set_drive(1.0);
+      }
+
+      t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
+      t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
     }
 
-    t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-    t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
 #endif
 #endif
     band = band_get_band(b);
