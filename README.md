@@ -97,7 +97,7 @@ $ git reset --hard origin/main
 This overwrite local changes, which are different from the remote repo at Github.com and set the status equal between local and remote.
 
 ## Known problems with SDR devices
-* if using SOAPY-API with SDRPlay RSP2Pro (older model, EOL) via USB, deskHPSDR crash with a segmentation fault if try to start this device (issue is actual under investigation, but not fixed yet)
+* ~~if using SOAPY-API with SDRPlay RSP2Pro (older model, EOL) via USB, deskHPSDR crash with a segmentation fault if try to start this device (issue is actual under investigation, but not fixed yet)~~ FIXED
 
 ## Successful and confirmed Tests I had done up to now
 
