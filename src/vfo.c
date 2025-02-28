@@ -2243,7 +2243,7 @@ void vfo_update() {
 #if defined (__LDESK__)
 
   // TX-EQ & Leveler & Tuning state
-  if (vfl->eq_x != 0) {
+  if (can_transmit && vfl->eq_x != 0) {
     cairo_move_to(cr, vfl->cat_x + 40, vfl->cat_y);
 
     if (transmitter->eq_enable) {
