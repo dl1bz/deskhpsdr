@@ -1092,7 +1092,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   char _text[128];
 #if defined (__LDESK__)
 
-  if (active_receiver->display_waterfall && active_receiver->display_panadapter && !rx_stack_horizontal) {
+  if (can_transmit && active_receiver->display_waterfall && active_receiver->display_panadapter && !rx_stack_horizontal) {
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
