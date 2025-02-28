@@ -877,26 +877,28 @@ void rx_panadapter_update(RECEIVER *rx) {
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
+    if (can_transmit) {
 #if defined (__APPLE__)
-    snprintf(_text, 128, "[%d] %s", active_receiver->id, transmitter->microphone_name);
+      snprintf(_text, 128, "[%d] %s", active_receiver->id, transmitter->microphone_name);
 #else
-    int _audioindex = 0;
+      int _audioindex = 0;
 
-    if (n_input_devices > 0) {
-      for (int i = 0; i < n_input_devices; i++) {
-        if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
-          _audioindex = i;
+      if (n_input_devices > 0) {
+        for (int i = 0; i < n_input_devices; i++) {
+          if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+            _audioindex = i;
+          }
         }
+
+        snprintf(_text, 128, "[%d] %s", active_receiver->id, input_devices[_audioindex].description);
+      } else {
+        snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
       }
 
-      snprintf(_text, 128, "[%d] %s", active_receiver->id, input_devices[_audioindex].description);
-    } else {
-      snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
-    }
-
 #endif
-    cairo_move_to(cr, 10.0, myheight - 10);
-    cairo_show_text(cr, _text);
+      cairo_move_to(cr, 10.0, myheight - 10);
+      cairo_show_text(cr, _text);
+    }
   }
 
 #endif
