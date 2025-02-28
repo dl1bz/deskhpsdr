@@ -93,7 +93,7 @@ Background about this: I made a mistake in the ```.gitignore```, but I correct i
 If ```git pull``` failed, you can also try this:<br>
 ```
 $ git pull
-$ git reset --hard origin/main
+$ git reset --hard origin/master
 ```
 This overwrite local changes, which are different from the remote repo at Github.com and set the status equal between local and remote.
 
