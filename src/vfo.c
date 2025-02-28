@@ -2157,7 +2157,7 @@ void vfo_update() {
   if (vfl->div_x != 0) {
     cairo_move_to(cr, vfl->div_x, vfl->div_y);
 #if defined (__LDESK__)
-
+  if (can_transmit) {
     if (transmitter->compressor) {
       snprintf(temp_text, 32, "PROC %+d", (int) transmitter->compressor_level);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2169,6 +2169,7 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, temp_text);
+  }
 #else
 
     if (diversity_enabled) {
