@@ -868,7 +868,13 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
     cairo_move_to(cr, mywidth / 2, myheight - 10);
-    cairo_show_text(cr, "[T]une  [b]and  [m]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+
+    if (can_transmit) {
+      cairo_show_text(cr, "[T]une  [b]and  [m]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+    } else {
+      cairo_show_text(cr, "[b]and  [m]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+    }
+
     char _text[128];
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -877,6 +883,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
+
     if (can_transmit) {
 #if defined (__APPLE__)
       snprintf(_text, 128, "[%d] %s", active_receiver->id, transmitter->microphone_name);
