@@ -426,6 +426,7 @@ void rigctl_menu(GtkWidget *parent) {
 
 #if defined (__LDESK__)
   //-----------------------------------------------------------------------------------------------------------------
+  if (can_transmit) {
   char str[64];
   row++;
   w = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -524,6 +525,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL + 1], 4, row, 1, 1);
   g_signal_connect(serial_enable[MAX_SERIAL + 1], "toggled", G_CALLBACK(serial_enable_cb),
                    GINT_TO_POINTER(MAX_SERIAL + 1));
+  }
   //-----------------------------------------------------------------------------------------------------------------
 #endif
   // row++;
