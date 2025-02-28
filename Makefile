@@ -71,7 +71,7 @@ GIT_COMMIT := $(shell git log --pretty=format:"%h"  -1)
 # release) and against unused parameters (those regularly occur in GTK callbacks).
 #
 ifeq ($(GDB), ON)
-CFLAGS?=-O0 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations -g
+CFLAGS?=-O0 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
 else
 CFLAGS?=-O3 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
 endif
@@ -449,8 +449,11 @@ INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 
 .c.o:
+ifeq ($(GDB), ON)
+	$(COMPILE) -g -c -o $@ $<
+else
 	$(COMPILE) -c -o $@ $<
-
+endif
 ##############################################################################
 #
 # All the libraries we need to link with (including WDSP, libm, $(SYSLIBS))
