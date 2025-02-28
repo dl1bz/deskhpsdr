@@ -1655,12 +1655,11 @@ void vfo_update() {
 
     case modeDIGL:
     case modeDIGU:
-      if (transmitter->use_rx_filter) {
+      if (can_transmit && transmitter->use_rx_filter) {
         snprintf(temp_text, 32, "%s %s [RX=TX]", mode_string[vfo[id].mode], wid);
       } else {
         snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       }
-
       break;
 #endif
 
