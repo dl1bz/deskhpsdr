@@ -70,9 +70,12 @@ GIT_COMMIT := $(shell git log --pretty=format:"%h"  -1)
 # Turn off complaints about deprecated functions (new GTK functions are marked deprecated in each
 # release) and against unused parameters (those regularly occur in GTK callbacks).
 #
-CFLAGS?= -O3 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
-LINK?=   $(CC)
-
+ifeq ($(GDB), ON)
+CFLAGS?=-O0 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations -g
+else
+CFLAGS?=-O3 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
+endif
+LINK?=$(CC)
 #
 # The "official" way to compile+link with pthreads is now to use the -pthread option
 # *both* for the compile and the link step.
