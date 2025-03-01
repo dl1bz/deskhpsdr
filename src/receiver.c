@@ -1429,7 +1429,9 @@ double rx_get_smeter(const RECEIVER *rx) {
     level = GetRXAMeter(rx->id, RXA_S_AV);
     break;
   }
-
+  if (device == DEVICE_HERMES_LITE2) {
+    level = level + 6.0;
+  }
   return level;
 }
 
