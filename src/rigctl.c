@@ -451,7 +451,7 @@ static void* autogain_thread_function(void* arg) {
       }
 
       if (!adc0_overload && !autogain_is_adjusted && !autogain_first_run) {
-        while (!adc0_overload && gain > min_gain) {
+        while (!adc0_overload && gain >= min_gain && gain < max_gain) {
           gain += 1.0;                                  // increase gain +1db
           set_rf_gain(active_receiver->id, gain);       // set gain
           g_usleep(500000); // wait 0.5s
