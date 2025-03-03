@@ -764,9 +764,11 @@ void rx_panadapter_update(RECEIVER *rx) {
       if (peak_positions[j] > 0) {
         char peak_label[32];
 #if defined (__LDESK__)
+#if defined (__USELESS__)
         if (device == DEVICE_HERMES_LITE2) {
           peaks[j] += 6.0;
         }
+#endif
         if (active_receiver->panadapter_peaks_as_smeter) {
           snprintf(peak_label, sizeof(peak_label), "%s", dbm2smeter[get_SWert((int)(peaks[j]))]);
         } else {
