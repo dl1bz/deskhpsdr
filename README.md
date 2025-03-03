@@ -99,6 +99,7 @@ This overwrite local changes, which are different from the remote repo at Github
 
 ## Known problems with SDR devices
 * ~~if using SOAPY-API with SDRPlay RSP2Pro (older model, EOL) via USB, deskHPSDR crash with a segmentation fault if try to start this device (issue is actual under investigation, but not fixed yet)~~ **FIXED**
+* From time to time there I got reports from from some users, that the HL2 will not produce the full 5W output with deskHPSDR (or piHPSDR). I can't confirm this issue. Many measurements showed as a result the full 5W output - if you had done a valid setup (5W PA enabled, TX PWR = 100, PA calibration for each band with the value 38.8 and correct settings in deskHPSDR or piHPSDR if using the N2ADR low pass filter board). In fact, we havn't any issues in the program code of deskHPSDR (or piHPSDR) if you don't reach the full output. In this case you need to check you complete setup again, there must be another reason with your whole setup if it don't work.
 
 ## Successful and confirmed Tests I had done up to now
 
