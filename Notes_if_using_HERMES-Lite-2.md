@@ -12,6 +12,11 @@ If not using the HL2+ extension board (which is not a part of the original HL2 a
 
 For using the bandvoltage output option of the Hermes Lite 2, you need to tick on **Band volts / Dither bit** in the **RX Menu**.
 
+## S-Meter calibration ##
+
+For showing correct S-Meter values you need adjust the **ADC Gain Calibration** in the **Radio Menu**:
+Use a RF generator and set the frequency to 10.0 MHz, deskHPSDR set to RX 10.0 MHz too in mode CWL. Set the level in the RF generator to -73dbm and the waveform to sine wave, which represent a S-value S9 (< 30 MHz) unmodulated carrier (like CW). Set the **Meter Type** to **digital** in the **Meter Menu**. Now increase or decrease the **ADC Gain Calibration** in the **Radio Menu** until you see -73dbm in the S-Meter display. Now our S-Meter is calibrated correct.
+
 ## Using MIDI for control deskHPSDR ##
 
 deskHPSDR has a build-in MIDI support. You can use MIDI controller for the most functions (like a rotary switch as VFO knob), the assignments needs to be done in **MIDI Menu**. You can also use DIY controller (e.g. ESP32 or Arduino based) for developing you own MIDI controller with the help of their MIDI libraries.
