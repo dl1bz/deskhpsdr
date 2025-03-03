@@ -69,9 +69,9 @@ Most of the new functions need to be activated in the ```make.config.deskhpsdr``
 
 I'm now activate the Issues tab, but please note the following:<br>
 - I ONLY accept error reports or runtime errors for this published codebase here. The Issues tab not suitable for discussion about other things except error messages or error reports.<br>
-- Don't ask about feature requests, questions about porting to other systems like WIN/MinGW and support for additional hardware - my answer will be ever NO. Such requests will be ignored and closed without any comment.<br>
+- Don't ask about feature requests, questions about porting to other systems like WIN/MinGW or support for new SDR hardware which is not provided up to now in the published version - my answer will be ever NO. Such requests will be ignored and closed without any comment.<br>
 - first make a ```git pull``` for using the most up-to-date codebase, compile it, test it and THEN open an issue, if you think there's something wrong with the last codebase<br>
-- I don't accept any questions, comments or remarks about transmitting outside of the amateur radio frequencies !!!
+- **I don't accept any questions, comments or remarks about transmitting outside of the amateur radio frequencies !!!**
 
 ## Known problems if using Git for update the code base at your local computer
 
