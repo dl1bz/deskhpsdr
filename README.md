@@ -37,7 +37,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ### Version 2.6.0 (final version)
 
-On March 4, 2025 the **first final version 2.6.0 of deskHPSDR** is published.
+On March 4, 2025 the **first final version 2.6.0 of deskHPSDR** is published. This version will not get new functions, only bugfixes if any become known. Further development will start later from version 2.7.x after a short break in development.
 
 ### Version 2.5.x (developer version)
 - completed: if using Hermes-Lite 2 add autogain regulation as option for RxPGA gain (need insert AUTOGAIN=ON in ```make.config.deskhpsdr```)
