@@ -40,7 +40,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 On March 4, 2025 the **first final version 2.6.0 of deskHPSDR** is published.
 
 ### Version 2.5.x
-- completed: if using Hermes-Lite 2 add autogain regulation as option for RxPGA gain (need AUTOGAIN=ON in ```make.config.deskhpsdr```)
+- completed: if using Hermes-Lite 2 add autogain regulation as option for RxPGA gain (need insert AUTOGAIN=ON in ```make.config.deskhpsdr```)
 - completed: fix a segmentation fault of deskHPSDR if using SDR-RX-only devices like SDRplay via Soapy-API after start the SDR device
 - completed: if using Hermes-Lite 2 activate CL1 input for inject external 10 MHz reference (e.g. with a GPSDO)
 - completed: add (if in duplex mode) the audio level monitoring in the separated TX window too (feature request by CU2ED)
