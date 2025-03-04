@@ -1011,6 +1011,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         if (!autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
           cairo_set_source_rgba(cr, COLOUR_ALARM);
           cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
+        } else if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
+          cairo_show_text(cr, "OVF");
         }
 
 #else
