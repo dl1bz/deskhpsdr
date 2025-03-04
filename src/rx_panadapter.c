@@ -998,22 +998,13 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       if (adc0_overload && !adc1_overload) {
 #if defined (__AUTOG__)
 
-        /*
-        if (autogain_enabled && device == DEVICE_HERMES_LITE2) {
-            cairo_set_source_rgba(cr, COLOUR_ORANGE);
-            cairo_show_text(cr, "ADC0 auto-adjust RxPGA gain...");
-        } else {
-            cairo_set_source_rgba(cr, COLOUR_ALARM);
-            cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
-        }
-        */
-
         if (!autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
           cairo_set_source_rgba(cr, COLOUR_ALARM);
-          cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
-        } else if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+          cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
+        } else if (active_receiver->panadapter_ovf_on && autogain_enabled && (device == DEVICE_HERMES_LITE2
+                   || device == NEW_DEVICE_HERMES_LITE2)) {
           cairo_set_source_rgba(cr, COLOUR_ALARM);
-          cairo_show_text(cr, "OVF");
+          cairo_show_text(cr, "ADC0 OVF");
         }
 
 #else

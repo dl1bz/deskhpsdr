@@ -282,6 +282,7 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.panadapter_hide_noise_filled", rx->id, rx->panadapter_hide_noise_filled);
   SetPropI1("receiver.%d.panadapter_peaks_in_passband_filled", rx->id, rx->panadapter_peaks_in_passband_filled);
   SetPropI1("receiver.%d.panadapter_peaks_as_smeter", rx->id,   rx->panadapter_peaks_as_smeter);
+  SetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   SetPropI1("receiver.%d.display_waterfall", rx->id,            rx->display_waterfall);
   SetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   SetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
@@ -385,6 +386,7 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.panadapter_hide_noise_filled", rx->id, rx->panadapter_hide_noise_filled);
   GetPropI1("receiver.%d.panadapter_peaks_in_passband_filled", rx->id, rx->panadapter_peaks_in_passband_filled);
   GetPropI1("receiver.%d.panadapter_peaks_as_smeter", rx->id,   rx->panadapter_peaks_as_smeter);
+  GetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   GetPropI1("receiver.%d.display_waterfall", rx->id,            rx->display_waterfall);
   GetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   GetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
@@ -720,6 +722,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_hide_noise_filled = 1;
   rx->panadapter_peaks_in_passband_filled = 0;
   rx->panadapter_peaks_as_smeter = 0;
+  rx->panadapter_ovf_on  = 1;
   rx->waterfall_high = -40;
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;

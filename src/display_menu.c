@@ -228,6 +228,16 @@ static void display_panadapter_cb(GtkWidget *widget, gpointer data) {
   radio_reconfigure();
 }
 
+static void display_panadapter_ovf_cb(GtkWidget *widget, gpointer data) {
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    active_receiver->panadapter_ovf_on = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  }
+
+  radio_reconfigure();
+}
+
+
+
 
 //
 // Some symbolic constants used in callbacks
@@ -467,6 +477,24 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_show(b_display_panadapter);
   gtk_grid_attach(GTK_GRID(general_grid), b_display_panadapter, col, row, 1, 1);
   g_signal_connect(b_display_panadapter, "toggled", G_CALLBACK(display_panadapter_cb), NULL);
+
+  //------------------------------------------------------------------------------------------------------------
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Display ADC0 OVF Alarm");
+    gtk_widget_set_name (b_display_panadapter_ovf, "stdlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_panadapter_ovf), active_receiver->panadapter_ovf_on);
+
+    if (!autogain_enabled) {
+      gtk_widget_hide(b_display_panadapter_ovf);
+    } else {
+      gtk_widget_show(b_display_panadapter_ovf);
+      gtk_widget_set_sensitive(b_display_panadapter_ovf, TRUE);
+      gtk_grid_attach(GTK_GRID(general_grid), b_display_panadapter_ovf, col + 1, row, 1, 1);
+      g_signal_connect(b_display_panadapter_ovf, "toggled", G_CALLBACK(display_panadapter_ovf_cb), NULL);
+    }
+  }
+
+  //------------------------------------------------------------------------------------------------------------
   GtkWidget *b_display_waterfall = gtk_check_button_new_with_label("Display Waterfall");
   gtk_widget_set_name (b_display_waterfall, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_waterfall), active_receiver->display_waterfall);
