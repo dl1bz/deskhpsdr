@@ -37,7 +37,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ### Version 2.6.0
 
-On March 4, 2025 the first final version 2.6.0 of deskHPSDR is published.
+On March 4, 2025 the **first final version 2.6.0 of deskHPSDR** is published.
 
 ### Version 2.5.x
 - completed: fix a segmentation fault of deskHPSDR if using SDR-RX-only devices like SDRplay via Soapy-API after start the SDR device
