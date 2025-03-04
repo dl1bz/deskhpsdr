@@ -336,13 +336,10 @@ void launch_sertune() {
       SerialPorts[MAX_SERIAL].enable = 0;
       t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL].port);
     } else {
-      if (!(sertune_fd < 0)) {
-        ioctl(sertune_fd, TIOCMGET, &status_sertune);  // get state
-        status_sertune &= ~TIOCM_RTS;                  // clear RTS
-        status_sertune &= ~TIOCM_DTR;                  // clear DTR
-        ioctl(sertune_fd, TIOCMSET, &status_sertune);  // set new state
-      }
-
+      ioctl(sertune_fd, TIOCMGET, &status_sertune);  // get state
+      status_sertune &= ~TIOCM_RTS;                  // clear RTS
+      status_sertune &= ~TIOCM_DTR;                  // clear DTR
+      ioctl(sertune_fd, TIOCMSET, &status_sertune);  // set new state
       sertune_thread_id = g_thread_new("serTUNE-Monitoring", monitor_sertune_thread, &sertune_fd);
       t_print("---- LAUNCHING serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
     }
