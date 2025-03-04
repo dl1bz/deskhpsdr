@@ -57,7 +57,7 @@ extern void  shutdown_tcp_rigctl(void);
   extern int serptt_fd;
   extern int sertune_fd;
 #endif
-#if defined (__DVL__)
+#if defined (__AUTOG__)
   extern void launch_autogain_hl2(void);
 #endif
 extern void launch_rx200_monitor(void);

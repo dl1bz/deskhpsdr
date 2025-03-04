@@ -1677,9 +1677,9 @@ void radio_start_radio() {
   }
 
 #endif
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 
-  if ((device == DEVICE_HERMES_LITE2) && autogain_enabled) {
+  if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && autogain_enabled) {
     launch_autogain_hl2();
   }
 
@@ -2317,8 +2317,12 @@ void radio_set_tune(int state) {
       t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
       t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
 #endif
-#if defined (__DVL__)
-      autogain_is_adjusted = 0;
+#if defined (__AUTOG__)
+
+      if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+        autogain_is_adjusted = 0;
+      }
+
 #endif
     }
   }
@@ -2673,7 +2677,7 @@ static void radio_restore_state() {
   }
 
 #endif
-#if defined (__DVL__)
+#if defined (__AUTOG__)
   GetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   GetPropI0("tx_filter_low",                                 tx_filter_low);
@@ -2896,7 +2900,7 @@ void radio_save_state() {
   }
 
 #endif
-#if defined (__DVL__)
+#if defined (__AUTOG__)
   SetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   SetPropI0("tx_filter_low",                                 tx_filter_low);

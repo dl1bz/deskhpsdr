@@ -108,7 +108,7 @@ static GThread *rigctl_cw_thread_id = NULL;
   static GThread *sertune_thread_id = NULL;
   static GMutex sertune_mutex;
 #endif
-#if defined (__DVL__)
+#if defined (__AUTOG__)
   static pthread_t autogain_thread;
   static pthread_mutex_t autogain_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
 #endif
@@ -358,7 +358,7 @@ void launch_sertune() {
 
 #endif
 
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 static void* autogain_thread_function(void* arg) {
   static struct timespec start_time, current_time;
   static time_t elapsed_time;

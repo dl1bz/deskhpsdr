@@ -60,6 +60,9 @@ char build_options[] =
 #ifdef __CPYMODE__
   "COPYMODE "
 #endif
+#ifdef __AUTOG__
+  "AUTOGAIN-HL2 "
+#endif
 #ifdef __DVL__
   "DEVEL "
 #endif

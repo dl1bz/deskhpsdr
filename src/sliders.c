@@ -62,7 +62,7 @@ static GtkWidget *af_gain_label;
 static GtkWidget *af_gain_scale;
 static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
-#if defined (__DVL__)
+#if defined (__AUTOG__)
   static GtkWidget *autogain_en;
 #endif
 static GtkWidget *agc_gain_label;
@@ -605,7 +605,7 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   rx_set_squelch(active_receiver);
 }
 
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   launch_autogain_hl2();
@@ -759,7 +759,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_show(agc_scale);
   gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     autogain_en = gtk_check_button_new();
@@ -796,10 +796,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
     gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
     gtk_widget_show(rf_gain_scale);
-#if defined (__DVL__)
-    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, sqpos, 0, swidth - 1, 1);
+#if defined (__AUTOG__)
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, sqpos, 0, swidth - 1, 1);
+
       for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
         gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
       }

@@ -62,7 +62,7 @@ static gboolean close_cb () {
   return TRUE;
 }
 
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 static void autogain_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   launch_autogain_hl2();
@@ -311,7 +311,7 @@ void rx_menu(GtkWidget *parent) {
     if (have_dither) {
       // We assume  Dither/Random are either both available or both not available
       if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-        GtkWidget *dither_b = gtk_check_button_new_with_label("Band Volts / Dither Bit");
+        GtkWidget *dither_b = gtk_check_button_new_with_label("HL2 Band Volts / Dither Bit");
         gtk_widget_set_name(dither_b, "boldlabel");
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
         gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
@@ -321,8 +321,8 @@ void rx_menu(GtkWidget *parent) {
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
         gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
-#if defined (__DVL__)
-        GtkWidget *autogain_b = gtk_check_button_new_with_label("Auto ADC Overload Protection");
+#if defined (__AUTOG__)
+        GtkWidget *autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
         gtk_widget_set_name(autogain_b, "boldlabel");
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_b), autogain_enabled);
         gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, row + 1, 1, 1);

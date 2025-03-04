@@ -996,7 +996,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, 100.0, 70.0);
 
       if (adc0_overload && !adc1_overload) {
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 
         /*
         if (autogain_enabled && device == DEVICE_HERMES_LITE2) {
@@ -1008,7 +1008,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         }
         */
 
-        if (!autogain_enabled && device == DEVICE_HERMES_LITE2) {
+        if (!autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
           cairo_set_source_rgba(cr, COLOUR_ALARM);
           cairo_show_text(cr, "ADC0 overload » Decrease ADC Gain !");
         }
@@ -1029,7 +1029,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       }
 
       adc_error_count++;
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 
       if (!autogain_enabled && adc_error_count > 2 * fps) {
         adc_error_count = 0;

@@ -610,9 +610,9 @@ static inline void vfo_adjust_band(int v, long long f) {
     }
 
 #endif
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 
-    if (can_transmit && autogain_enabled) {
+    if (can_transmit && autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
     }
@@ -835,9 +835,9 @@ void vfo_band_changed(int id, int b) {
       return;
     }
 
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 
-    if (autogain_enabled) {
+    if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
     }
@@ -2292,7 +2292,7 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, temp_text);
-#if defined (__DVL__)
+#if defined (__AUTOG__)
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y);
