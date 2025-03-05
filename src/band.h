@@ -97,18 +97,6 @@ typedef struct _CHANNEL CHANNEL;
 #define OTHER_CHANNEL_ENTRIES 5
 #define WRC15_CHANNEL_ENTRIES 1
 
-//
-// 1. If you want change band borders used at IARU Region 1 shown at RX panadapter you need define REG1
-// 2. Then your task is to delete the lines
-//    band.XX.frequencyMax
-//    band.XX.frequencyMin
-//    in your device .props file located in working directory, because the borders are saved in the .props
-//    device file and will be reloaded if you start deskHPSDR again.
-//    The value XX stand for a numeric value for EACH band.
-// 3. To set the borders new, the only solution is to delete these lines exist in the device .props file.
-//
-#define REG1
-
 extern int channel_entries;
 extern CHANNEL *band_channels_60m;
 

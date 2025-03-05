@@ -29,6 +29,7 @@ AUDIO=PULSE
 ATU=OFF
 COPYMODE=OFF
 AUTOGAIN=OFF
+REGION1=OFF
 DEVEL=OFF
 
 ##################################################################################################
@@ -47,6 +48,7 @@ DEVEL=OFF
 # ATU          | If ON, acticate some special functions if using an external ATU
 # COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
 # AUTOGAIN     | If ON and using a Hermes Lite 2, activate automatic regulation of RxPGA gain
+# REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
 # DEVEL        | ONLY FOR INTERNAL DEVELOPER USE ! Leave it ever OFF, please
 #
 # If you want to use a non-default compile time option, write them
@@ -307,6 +309,11 @@ DEVEL_OPTIONS=-D__DVL__
 endif
 CPP_DEFINES += -D__DVL__
 
+ifeq ($(REGION1), ON)
+REG1_OPTIONS=-D__REG1__
+endif
+CPP_DEFINES += -D__REG1__
+
 ##############################################################################
 #
 # Options for audio module
@@ -453,6 +460,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(COPYMODE_OPTIONS) \
 	$(AUTOGAIN_OPTIONS) \
 	$(DEVEL_OPTIONS) \
+	$(REG1_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"'
 
@@ -875,7 +883,7 @@ DEPEND:
 	makedepend -DTCI -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DEXTNR -DGPIO \
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -D__APPLE__ -D__linux__ \
-		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ \
+		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
 		-f DEPEND -I./src src/*.c src/*.h
 #############################################################################
 #

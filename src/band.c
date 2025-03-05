@@ -64,7 +64,7 @@ static BANDSTACK_ENTRY bandstack_entries160[] = {
   {1845000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
-#if defined (REG1)
+#if defined (__REG1__)
 static BANDSTACK_ENTRY bandstack_entries80[] = {
   {3501000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
   {3751000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
@@ -115,7 +115,7 @@ static BANDSTACK_ENTRY bandstack_entries60_UK[] = {
   {5405000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
-#if defined (REG1)
+#if defined (__REG1__)
 static BANDSTACK_ENTRY bandstack_entries40[] = {
   {7001000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
   {7152000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
@@ -247,7 +247,7 @@ static BANDSTACK_ENTRY bandstack_entriesWWV[] = {
 };
 
 static BANDSTACK bandstack160  = {3, 1, bandstack_entries160};
-#if defined (REG1)
+#if defined (__REG1__)
 static BANDSTACK bandstack80   = {2, 1, bandstack_entries80};
 #else
 static BANDSTACK bandstack80   = {3, 1, bandstack_entries80};
@@ -257,7 +257,7 @@ static BANDSTACK bandstack60   = {5, 1, bandstack_entries60};
 #else
 static BANDSTACK bandstack60   = {5, 1, bandstack_entries60_OTHER};
 #endif
-#if defined (REG1)
+#if defined (__REG1__)
 static BANDSTACK bandstack40   = {2, 1, bandstack_entries40};
 #else
 static BANDSTACK bandstack40   = {3, 1, bandstack_entries40};
@@ -352,7 +352,7 @@ static BANDSTACK bandstack_xvtr_8 = {3, 0, bandstack_entries_xvtr_8};
 static BANDSTACK bandstack_xvtr_9 = {3, 0, bandstack_entries_xvtr_9};
 
 // *INDENT-OFF*
-#if defined (REG1)
+#if defined (__REG1__)
 static BAND bands[BANDS + XVTRS] = {
   {"136kHz", &bandstack136,     0, 0, 0, 0, 0, 0, 53.0,     135700LL,     137800LL, 0LL, 0LL, 0},
   {"472kHz", &bandstack472,     0, 0, 0, 0, 0, 0, 53.0,     472000LL,     479000LL, 0LL, 0LL, 0},
