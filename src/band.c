@@ -521,8 +521,10 @@ void bandSaveState() {
     }
 
     SetPropS1("band.%d.title", b,              bands[b].title);
-    SetPropI1("band.%d.frequencyMin", b,       bands[b].frequencyMin);
-    SetPropI1("band.%d.frequencyMax", b,       bands[b].frequencyMax);
+    if (b > 11) {
+      SetPropI1("band.%d.frequencyMin", b,       bands[b].frequencyMin);
+      SetPropI1("band.%d.frequencyMax", b,       bands[b].frequencyMax);
+    }
     SetPropI1("band.%d.disablePA", b,          bands[b].disablePA);
     SetPropI1("band.%d.current", b,            bands[b].bandstack->current_entry);
     SetPropI1("band.%d.alexRxAntenna", b,      bands[b].alexRxAntenna);
@@ -562,8 +564,10 @@ void bandRestoreState() {
       GetPropI1("band.%d.gain", b,               bands[b].gain);
     }
 
-    GetPropI1("band.%d.frequencyMin", b,       bands[b].frequencyMin);
-    GetPropI1("band.%d.frequencyMax", b,       bands[b].frequencyMax);
+    if (b > 11) {
+      GetPropI1("band.%d.frequencyMin", b,       bands[b].frequencyMin);
+      GetPropI1("band.%d.frequencyMax", b,       bands[b].frequencyMax);
+    }
     GetPropI1("band.%d.disablePA", b,          bands[b].disablePA);
     GetPropI1("band.%d.current", b,            bands[b].bandstack->current_entry);
     GetPropI1("band.%d.alexRxAntenna", b,      bands[b].alexRxAntenna);
