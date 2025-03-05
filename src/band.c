@@ -64,11 +64,18 @@ static BANDSTACK_ENTRY bandstack_entries160[] = {
   {1845000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
+#if defined (REG1)
+static BANDSTACK_ENTRY bandstack_entries80[] = {
+  {3501000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
+  {3751000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
+};
+#else
 static BANDSTACK_ENTRY bandstack_entries80[] = {
   {3501000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
   {3751000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0},
   {3850000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
 };
+#endif
 
 #if defined (__LDESK__)
 static BANDSTACK_ENTRY bandstack_entries60[] = {
@@ -108,11 +115,18 @@ static BANDSTACK_ENTRY bandstack_entries60_UK[] = {
   {5405000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
+#if defined (REG1)
+static BANDSTACK_ENTRY bandstack_entries40[] = {
+  {7001000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
+  {7152000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
+};
+#else
 static BANDSTACK_ENTRY bandstack_entries40[] = {
   {7001000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
   {7152000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0},
   {7255000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
 };
+#endif
 
 static BANDSTACK_ENTRY bandstack_entries30[] = {
   {10120000LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
@@ -233,13 +247,21 @@ static BANDSTACK_ENTRY bandstack_entriesWWV[] = {
 };
 
 static BANDSTACK bandstack160  = {3, 1, bandstack_entries160};
+#if defined (REG1)
+static BANDSTACK bandstack80   = {2, 1, bandstack_entries80};
+#else
 static BANDSTACK bandstack80   = {3, 1, bandstack_entries80};
+#endif
 #if defined (__LDESK__)
 static BANDSTACK bandstack60   = {5, 1, bandstack_entries60};
 #else
 static BANDSTACK bandstack60   = {5, 1, bandstack_entries60_OTHER};
 #endif
+#if defined (REG1)
+static BANDSTACK bandstack40   = {2, 1, bandstack_entries40};
+#else
 static BANDSTACK bandstack40   = {3, 1, bandstack_entries40};
+#endif
 static BANDSTACK bandstack30   = {3, 1, bandstack_entries30};
 static BANDSTACK bandstack20   = {4, 1, bandstack_entries20};
 static BANDSTACK bandstack17   = {3, 1, bandstack_entries17};
@@ -330,6 +352,45 @@ static BANDSTACK bandstack_xvtr_8 = {3, 0, bandstack_entries_xvtr_8};
 static BANDSTACK bandstack_xvtr_9 = {3, 0, bandstack_entries_xvtr_9};
 
 // *INDENT-OFF*
+#if defined (REG1)
+static BAND bands[BANDS + XVTRS] = {
+  {"136kHz", &bandstack136,     0, 0, 0, 0, 0, 0, 53.0,     135700LL,     137800LL, 0LL, 0LL, 0},
+  {"472kHz", &bandstack472,     0, 0, 0, 0, 0, 0, 53.0,     472000LL,     479000LL, 0LL, 0LL, 0},
+  {"160",    &bandstack160,     0, 0, 0, 0, 0, 0, 53.0,    1810000LL,    2000000LL, 0LL, 0LL, 0},
+  {"80",     &bandstack80,      0, 0, 0, 0, 0, 0, 53.0,    3500000LL,    3800000LL, 0LL, 0LL, 0},
+  {"60",     &bandstack60,      0, 0, 0, 0, 0, 0, 53.0,    5250000LL,    5450000LL, 0LL, 0LL, 0},
+  {"40",     &bandstack40,      0, 0, 0, 0, 0, 0, 53.0,    7000000LL,    7200000LL, 0LL, 0LL, 0},
+  {"30",     &bandstack30,      0, 0, 0, 0, 0, 0, 53.0,   10100000LL,   10150000LL, 0LL, 0LL, 0},
+  {"20",     &bandstack20,      0, 0, 0, 0, 0, 0, 53.0,   14000000LL,   14350000LL, 0LL, 0LL, 0},
+  {"17",     &bandstack17,      0, 0, 0, 0, 0, 0, 53.0,   18068000LL,   18168000LL, 0LL, 0LL, 0},
+  {"15",     &bandstack15,      0, 0, 0, 0, 0, 0, 53.0,   21000000LL,   21450000LL, 0LL, 0LL, 0},
+  {"12",     &bandstack12,      0, 0, 0, 0, 0, 0, 53.0,   24890000LL,   24990000LL, 0LL, 0LL, 0},
+  {"10",     &bandstack10,      0, 0, 0, 0, 0, 0, 53.0,   28000000LL,   29700000LL, 0LL, 0LL, 0},
+  {"6",      &bandstack6,       0, 0, 0, 0, 0, 0, 53.0,   50000000LL,   54000000LL, 0LL, 0LL, 0},
+  {"4",      &bandstack70,      0, 0, 0, 0, 0, 0, 53.0,   70000000LL,   70500000LL, 0LL, 0LL, 0},
+  {"144",    &bandstack144,     0, 0, 0, 0, 0, 0, 53.0,  144000000LL,  146000000LL, 0LL, 0LL, 0},
+  {"220",    &bandstack220,     0, 0, 0, 0, 0, 0, 53.0,  220000000LL,  224980000LL, 0LL, 0LL, 0},
+  {"430",    &bandstack430,     0, 0, 0, 0, 0, 0, 53.0,  430000000LL,  440000000LL, 0LL, 0LL, 0},
+  {"902",    &bandstack902,     0, 0, 0, 0, 0, 0, 53.0,  902000000LL,  928000000LL, 0LL, 0LL, 0},
+  {"1240",   &bandstack1240,    0, 0, 0, 0, 0, 0, 53.0, 1240000000LL, 1300000000LL, 0LL, 0LL, 0},
+  {"2300",   &bandstack2300,    0, 0, 0, 0, 0, 0, 53.0, 2300000000LL, 2450000000LL, 0LL, 0LL, 0},
+  {"3400",   &bandstack3400,    0, 0, 0, 0, 0, 0, 53.0, 3400000000LL, 3410000000LL, 0LL, 0LL, 0},
+  {"AIR",    &bandstackAIR,     0, 0, 0, 0, 0, 0, 53.0,  108000000LL,  137000000LL, 0LL, 0LL, 0},
+  {"WWV",    &bandstackWWV,     0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 0},
+  {"GEN",    &bandstackGEN,     0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 0},
+  // XVTRS
+  {"",       &bandstack_xvtr_0, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_1, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_2, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_3, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_4, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_5, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_6, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_7, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_8, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
+  {"",       &bandstack_xvtr_9, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1}
+};
+#else
 static BAND bands[BANDS + XVTRS] = {
   {"136kHz", &bandstack136,     0, 0, 0, 0, 0, 0, 53.0,     135700LL,     137800LL, 0LL, 0LL, 0},
   {"472kHz", &bandstack472,     0, 0, 0, 0, 0, 0, 53.0,     472000LL,     479000LL, 0LL, 0LL, 0},
@@ -367,6 +428,7 @@ static BAND bands[BANDS + XVTRS] = {
   {"",       &bandstack_xvtr_8, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
   {"",       &bandstack_xvtr_9, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1}
 };
+#endif
 // *INDENT-ON*
 
 static CHANNEL band_channels_60m_UK[UK_CHANNEL_ENTRIES] = {
