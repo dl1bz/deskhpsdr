@@ -63,6 +63,9 @@ char build_options[] =
 #ifdef __AUTOG__
   "AUTOGAIN-HL2 "
 #endif
+#ifdef __REG1__
+  "REGION1 "
+#endif
 #ifdef __DVL__
   "DEVEL "
 #endif
