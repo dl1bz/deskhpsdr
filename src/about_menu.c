@@ -83,17 +83,13 @@ void about_menu(GtkWidget *parent) {
   row++;
   snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
                        "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
-                       "(contains code portions of piHPSDR developed by G0ORX/N6LYT and DL1YCF)\n\n"
+                       "(contains code portions of piHPSDR by G0ORX/N6LYT and DL1YCF)\n\n"
                        "    Credits:\n"
-                       "    John Melton G0ORX/N6LYT: first and initial version of piHPSDR\n"
-                       "    Steve Wilson, KA6S: RIGCTL (CAT over TCP)\n"
-                       "    Laurence Barker, G8NJJ: USB OZY Support\n"
-           //"    Johan Maas, PA3GSB: RadioBerry support\n"
-                       "    Ken Hopper, N9VV: Testing and Documentation\n"
-                       "    Christoph van Wüllen, DL1YCF: CW, PureSignal, Diversity, MIDI, CFC, DEXP  \n"
-                       "    Heiko Amft, DL1BZ: Improvements, new Functions, TX Audio tools\n\n"
-                       "Build system: %s %s @ %s\n"
-                       "Used compiler: %s\n"
+                       "    Warren C. Pratt, NR0V: WDSP Library\n"
+                       "    John Melton, G0ORX/N6LYT: first and initial version of piHPSDR\n"
+                       "    Christoph van Wüllen, DL1YCF: continuation & current version piHPSDR\n\n"
+                       "Build OS: %s %s @ %s\n"
+                       "Build compiler: %s\n"
                        "Build date: %s (commit %s)\n"
                        "Build version: %s\n"
                        "Build options: %s\n"
@@ -119,9 +115,9 @@ void about_menu(GtkWidget *parent) {
                  radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                  radio->software_version / 10, radio->software_version % 10);
       } else {
-        snprintf(line, 512, "Device: %s, Protocol %s, v%d.%d\n"
-                            "    Mac Address: %02X:%02X:%02X:%02X:%02X:%02X\n"
-                            "    IP Address: %s on %s (%s)",
+        snprintf(line, 512, "SDR Device: %s, Protocol %s, Firmware v%d.%d\n"
+                            "    MAC address SDR: %02X:%02X:%02X:%02X:%02X:%02X\n"
+                            "    IP address SDR: %s [on %s w/ local IP %s]",
                  radio->name, radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                  radio->software_version / 10, radio->software_version % 10,
                  radio->info.network.mac_address[0],
