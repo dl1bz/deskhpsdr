@@ -70,6 +70,7 @@ UNAME_S := $(shell uname -s)
 GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
 GIT_VERSION := $(shell git describe --abbrev=0 --tags --always --dirty)
 GIT_COMMIT := $(shell git log --pretty=format:"%h"  -1)
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
 #
 # Compile with warning level set to maximum. Note the check against "unintendend" fallthroughs
@@ -462,7 +463,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(REG1_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
-	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"'
+	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
 
 INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)

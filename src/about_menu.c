@@ -90,11 +90,11 @@ void about_menu(GtkWidget *parent) {
                        "    Christoph van Wüllen, DL1YCF: continuation & current version piHPSDR\n\n"
                        "Build OS: %s %s @ %s\n"
                        "Build compiler: %s\n"
-                       "Build date: %s (commit %s)\n"
+                       "Build date: %s (Branch: %s, Commit: %s)\n"
                        "Build version: %s\n"
                        "Build options: %s\n"
                        "WDSP version: %d.%02d\n\n",
-           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_commit, build_version,
+           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_branch, build_commit, build_version,
            build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100);
 
   switch (radio->protocol) {

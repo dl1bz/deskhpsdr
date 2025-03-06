@@ -550,7 +550,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   (void) getcwd(config_directory, sizeof(config_directory));
   STRLCAT(config_directory, "/", 1024);
 #endif
-  t_print("Build: %s (Commit: %s, Date: %s)\n", build_version, build_commit, build_date);
+  t_print("Build: %s (Branch: %s, Commit: %s, Date: %s)\n", build_version, build_branch, build_commit, build_date);
   t_print("GTK+ version %u.%u.%u\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
   uname(&unameData);
   t_print("sysname: %s\n", unameData.sysname);
@@ -783,8 +783,8 @@ int main(int argc, char **argv) {
   if (argc >= 2 && !strcmp("-V", argv[1])) {
 #if defined (__LDESK__)
     uname(&unameData);
-    fprintf(stderr, "deskHPSDR version %s [%s] (commit %s), built date %s with %s\n", build_version, unameData.machine,
-            build_commit, build_date, __VERSION__);
+    fprintf(stderr, "deskHPSDR version %s [%s] (branch %s - commit %s), built date %s with %s\n", build_version, unameData.machine,
+            build_branch, build_commit, build_date, __VERSION__);
 #else
     fprintf(stderr, "piHPSDR version and commit: %s, %s; built %s\n", build_version, build_commit, build_date);
 #endif
