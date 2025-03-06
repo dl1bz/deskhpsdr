@@ -738,8 +738,8 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 #endif
   t_print("create build label\n");
 #if defined (__LDESK__)
-  snprintf(text, 2048, "Version %s (build %s)\nCompiler: %s\nOptions: %s\nAudio module: %s\nWorking Directory: %s",
-           build_version, build_date, __VERSION__, build_options, build_audio, config_directory);
+  snprintf(text, 2048, "Version %s (build %s from %s branch)\nCompiler: %s\nOptions: %s\nAudio module: %s\nWorking Directory: %s",
+           build_version, build_date, build_branch, __VERSION__, build_options, build_audio, config_directory);
 #else
   snprintf(text, 256, "Built %s, Version %s\nOptions: %s\nAudio module: %s",
            build_date, build_version, build_options, build_audio);
