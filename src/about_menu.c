@@ -62,6 +62,7 @@ void about_menu(GtkWidget *parent) {
   struct utsname unameData;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 20); // 20px leer zwischen Fenster und Content
   char title[64];
   uname(&unameData);
   snprintf(title, 64, "%s - About", PGNAME);
@@ -76,10 +77,12 @@ void about_menu(GtkWidget *parent) {
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_column_spacing (GTK_GRID(grid), 4);
   int row = 0;
+  /*
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
+  */
   row++;
   snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
                        "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
@@ -150,6 +153,14 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "small_button");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 1, row, 5, 1);
+
+  row++;
+  GtkWidget *close_b = gtk_button_new_with_label("Close");
+  gtk_widget_set_name(close_b, "close_button");
+  gtk_widget_set_margin_top(close_b, 20); // 20px Platz nach oben
+  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  gtk_grid_attach(GTK_GRID(grid), close_b, 3, row, 1, 1);
+
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
