@@ -40,9 +40,6 @@
 // the working directory exists but is not a directory, or cannot be created)
 // then $HOME is used as the working dir.
 //
-// On MacOS, if the program is started from an app bundle containing the file
-// hpsdr.png, this file is copied to the working directory
-//
 // Note no output (via t_print) should be made until either stdout is "reconnected"
 // or we know that we won't reconnect it.
 //
@@ -88,7 +85,7 @@ void startup(const char *path) {
                                CFSTR ("deskHPSDR"), &keep_awake);
 #endif
   writeable = 0;  // if zero, the current dir is not writeable
-  found = 0;      // if nonzero, hpsdr.png or protocols.props found in current dir
+  found = 0;      // if nonzero, protocols.props found in current dir
   //
   // try to create a file with an unique file name
   //
@@ -209,44 +206,4 @@ void startup(const char *path) {
   (void) freopen("pihpsdr.stderr", "w", stderr);
 #endif
   t_print("%s: working dir changed to %s\n", __FUNCTION__, workdir);
-#ifdef __APPLE__
-
-  //
-  // path is the name of the executable. Try to find hpsdr.png *relative* to that.
-  // If found and this file is not (yet) there, copy to work dir
-  //
-  if (stat("hpsdr.png", &statbuf) < 0)  {
-    char *c;
-    int fdin, fdout;
-    char source[PATH_MAX];
-    STRLCPY(source, path, PATH_MAX);
-    c = rindex(source, '/');
-
-    if (c) { *c = 0; }
-
-    STRLCAT(source,  "/../Resources/hpsdr.png", PATH_MAX);
-    //
-    // Now copy the file from "source" to "workdir"
-    //
-    fdin = open(source, O_RDONLY);
-
-    if (fdin >= 0) {
-      fdout = open("hpsdr.png", O_WRONLY | O_CREAT | O_TRUNC, (mode_t) 0400);
-    }
-
-    if (fdin >= 0 && fdout >= 0) {
-      //
-      // Now do the copy, use "source" as I/O buffer
-      //
-      ssize_t bytesread;
-      t_print("%s: copying hpsdr.png to working dir\n", __FUNCTION__);
-
-      while ((bytesread = read(fdin, source, PATH_MAX)) > 0) { write (fdout, source, bytesread); }
-
-      close(fdin);
-      close(fdout);
-    }
-  }
-
-#endif
 }
