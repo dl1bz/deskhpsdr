@@ -921,8 +921,7 @@ endif
 	@cp deskhpsdr deskHPSDR.app/Contents/MacOS/deskhpsdr
 	@cp MacOS/PkgInfo deskHPSDR.app/Contents
 	@cp MacOS/Info.plist deskHPSDR.app/Contents
-	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources/hpsdr.icns
-	@cp MacOS/hpsdr.png deskHPSDR.app/Contents/Resources
+	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
 	@sleep 1
 	@echo "Copy Fonts..."
 	@cp -R fonts/Roboto ${HOME}/Library/Fonts
@@ -950,8 +949,7 @@ endif
 	@cp deskhpsdr deskHPSDR.app/Contents/MacOS/deskhpsdr
 	@cp MacOS/PkgInfo deskHPSDR.app/Contents
 	@cp MacOS/Info.plist deskHPSDR.app/Contents
-	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources/hpsdr.icns
-	@cp MacOS/hpsdr.png deskHPSDR.app/Contents/Resources
+	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
 	@sleep 1
 	@echo "Copy Fonts..."
 	@cp -R fonts/Roboto ${HOME}/Library/Fonts
