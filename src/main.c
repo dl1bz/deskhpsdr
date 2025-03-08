@@ -69,6 +69,7 @@
   #include "noise_menu.h"
   #include "rigctl.h"
 #endif
+#include "hpsdr_logo.h"
 
 struct utsname unameData;
 
@@ -494,6 +495,23 @@ gboolean main_delete (GtkWidget *widget) {
   _exit(0);
 }
 
+static GdkPixbuf *create_pixbuf_from_data() {
+  GInputStream *mem_stream;
+  GdkPixbuf *pixbuf;
+  GError *error = NULL;
+
+  mem_stream = g_memory_input_stream_new_from_data(hpsdr_png, hpsdr_png_len, NULL);
+  pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
+
+  if (!pixbuf) {
+      g_printerr("Fehler beim Laden des Bildes: %s\n", error->message);
+      g_error_free(error);
+  }
+
+  g_object_unref(mem_stream);
+  return pixbuf;
+}
+
 static int init(void *data) {
   char wisdom_directory[1024];
   t_print("%s\n", __FUNCTION__);
@@ -652,58 +670,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   // To help such "package" maintainers, look for a file hpsdr.png in the
   // current working directory, then in /usr/share/pihpsdr, then in /usr/local/share/pihpsdr
   //
-  GError *error;
-  GtkWidget *image;
-  gboolean rc;
-  t_print("create image and icon\n");
-  error = NULL;
-  rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "hpsdr.png", &error);
-
-  if (rc) {
-    image = gtk_image_new_from_file("hpsdr.png");
-  } else {
-    if (error) {
-      t_print("%s\n", error->message);
-      g_error_free(error);
-    }
-
-    error = NULL;
-#if defined (__LDESK__)
-    rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/share/deskhpsdr/hpsdr.png", &error);
-#else
-    rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/share/pihpsdr/hpsdr.png", &error);
-#endif
-
-    if (rc) {
-#if defined (__LDESK__)
-      image = gtk_image_new_from_file("/usr/share/deskhpsdr/hpsdr.png");
-#else
-      image = gtk_image_new_from_file("/usr/share/pihpsdr/hpsdr.png");
-#endif
-    } else {
-      if (error) {
-        t_print("%s\n", error->message);
-        g_error_free(error);
-      }
-
-      error = NULL;
-#if defined (__LDESK__)
-      rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/local/share/deskhpsdr/hpsdr.png", &error);
-      image = gtk_image_new_from_file("/usr/local/share/deskhpsdr/hpsdr.png");
-#else
-      rc = gtk_window_set_icon_from_file (GTK_WINDOW(top_window), "/usr/local/share/pihpsdr/hpsdr.png", &error);
-      image = gtk_image_new_from_file("/usr/local/share/pihpsdr/hpsdr.png");
-#endif
-
-      if (!rc) {
-        if (error) {
-          t_print("%s\n", error->message);
-          g_error_free(error);
-        }
-      }
-    }
-  }
-
+  GtkWidget *hpsdr_logo = gtk_image_new_from_pixbuf(create_pixbuf_from_data());
   g_signal_connect (top_window, "delete-event", G_CALLBACK (main_delete), NULL);
   //
   // We want to use the space-bar as an alternative to go to TX
@@ -719,7 +686,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("add grid\n");
   gtk_container_add (GTK_CONTAINER (top_window), topgrid);
   t_print("add image to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), image, 0, 0, 1, 2);
+  gtk_grid_attach(GTK_GRID(topgrid), hpsdr_logo, 0, 0, 1, 2);
   t_print("create pi label\n");
 #if defined (__LDESK__)
   snprintf(text, 2048,
