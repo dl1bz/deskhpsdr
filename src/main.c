@@ -499,23 +499,20 @@ static GdkPixbuf *create_pixbuf_from_data() {
   GInputStream *mem_stream;
   GdkPixbuf *pixbuf, *scaled_pixbuf;
   GError *error = NULL;
-
   mem_stream = g_memory_input_stream_new_from_data(hpsdr_png, hpsdr_png_len, NULL);
   pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
 
   if (!pixbuf) {
-      g_printerr("ERROR loading pic: %s\n", error->message);
-      g_error_free(error);
-      g_object_unref(mem_stream);
-      return NULL;
+    g_printerr("ERROR loading pic: %s\n", error->message);
+    g_error_free(error);
+    g_object_unref(mem_stream);
+    return NULL;
   }
 
   // pic scaling
   scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, 100, 100, GDK_INTERP_BILINEAR);
-
   g_object_unref(pixbuf);  // free original-pixbuf
   g_object_unref(mem_stream);
-
   return scaled_pixbuf;
 }
 
@@ -685,7 +682,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   // we make the first startup windows smaller, looks better
   gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.6);
 #else
-gtk_widget_set_size_request(topgrid, display_width, display_height);
+  gtk_widget_set_size_request(topgrid, display_width, display_height);
 #endif
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
