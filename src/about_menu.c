@@ -97,7 +97,8 @@ void about_menu(GtkWidget *parent) {
                        "Build version: %s\n"
                        "Build options: %s\n"
                        "WDSP version: %d.%02d\n\n",
-           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_branch, build_commit, build_version,
+           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_branch, build_commit,
+           build_version,
            build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100);
 
   switch (radio->protocol) {
@@ -153,14 +154,12 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "small_button");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 1, row, 5, 1);
-
   row++;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
   gtk_widget_set_margin_top(close_b, 20); // 20px Platz nach oben
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 3, row, 1, 1);
-
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

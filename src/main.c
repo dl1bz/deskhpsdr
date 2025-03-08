@@ -499,13 +499,12 @@ static GdkPixbuf *create_pixbuf_from_data() {
   GInputStream *mem_stream;
   GdkPixbuf *pixbuf;
   GError *error = NULL;
-
   mem_stream = g_memory_input_stream_new_from_data(hpsdr_png, hpsdr_png_len, NULL);
   pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
 
   if (!pixbuf) {
-      g_printerr("Fehler beim Laden des Bildes: %s\n", error->message);
-      g_error_free(error);
+    g_printerr("Fehler beim Laden des Bildes: %s\n", error->message);
+    g_error_free(error);
   }
 
   g_object_unref(mem_stream);
@@ -700,7 +699,8 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 #endif
   t_print("create build label\n");
 #if defined (__LDESK__)
-  snprintf(text, 2048, "Version %s (build %s from %s branch)\nCompiler: %s\nOptions: %s\nAudio module: %s\nWorking Directory: %s",
+  snprintf(text, 2048,
+           "Version %s (build %s from %s branch)\nCompiler: %s\nOptions: %s\nAudio module: %s\nWorking Directory: %s",
            build_version, build_date, build_branch, __VERSION__, build_options, build_audio, config_directory);
 #else
   snprintf(text, 256, "Built %s, Version %s\nOptions: %s\nAudio module: %s",
@@ -745,7 +745,8 @@ int main(int argc, char **argv) {
   if (argc >= 2 && !strcmp("-V", argv[1])) {
 #if defined (__LDESK__)
     uname(&unameData);
-    fprintf(stderr, "deskHPSDR version %s [%s] (branch %s - commit %s), built date %s with %s\n", build_version, unameData.machine,
+    fprintf(stderr, "deskHPSDR version %s [%s] (branch %s - commit %s), built date %s with %s\n", build_version,
+            unameData.machine,
             build_branch, build_commit, build_date, __VERSION__);
 #else
     fprintf(stderr, "piHPSDR version and commit: %s, %s; built %s\n", build_version, build_commit, build_date);
