@@ -664,12 +664,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
     gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
   }
 
-  //
-  // For some binary installations, the piHPSDR working directory may be empty
-  // upon first start, and the hpsdr icon placed somewhere else.
-  // To help such "package" maintainers, look for a file hpsdr.png in the
-  // current working directory, then in /usr/share/pihpsdr, then in /usr/local/share/pihpsdr
-  //
+  // load the OpenHPSDR logo now only from the included hpsdr_logo.h
   GtkWidget *hpsdr_logo = gtk_image_new_from_pixbuf(create_pixbuf_from_data());
   g_signal_connect (top_window, "delete-event", G_CALLBACK (main_delete), NULL);
   //
