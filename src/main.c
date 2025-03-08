@@ -497,18 +497,26 @@ gboolean main_delete (GtkWidget *widget) {
 
 static GdkPixbuf *create_pixbuf_from_data() {
   GInputStream *mem_stream;
-  GdkPixbuf *pixbuf;
+  GdkPixbuf *pixbuf, *scaled_pixbuf;
   GError *error = NULL;
+
   mem_stream = g_memory_input_stream_new_from_data(hpsdr_png, hpsdr_png_len, NULL);
   pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
 
   if (!pixbuf) {
-    g_printerr("Fehler beim Laden des Bildes: %s\n", error->message);
-    g_error_free(error);
+      g_printerr("ERROR loading pic: %s\n", error->message);
+      g_error_free(error);
+      g_object_unref(mem_stream);
+      return NULL;
   }
 
+  // pic scaling
+  scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, 100, 100, GDK_INTERP_BILINEAR);
+
+  g_object_unref(pixbuf);  // free original-pixbuf
   g_object_unref(mem_stream);
-  return pixbuf;
+
+  return scaled_pixbuf;
 }
 
 static int init(void *data) {
