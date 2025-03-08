@@ -681,7 +681,12 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   g_signal_connect(top_window, "key_press_event", G_CALLBACK(keypress_cb), NULL);
   t_print("create grid\n");
   topgrid = gtk_grid_new();
-  gtk_widget_set_size_request(topgrid, display_width, display_height);
+#if defined (__LDESK__)
+  // we make the first startup windows smaller, looks better
+  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.6);
+#else
+gtk_widget_set_size_request(topgrid, display_width, display_height);
+#endif
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing (GTK_GRID(topgrid), 10);

@@ -1,3 +1,25 @@
+/* Copyright (C)
+* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
+*
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 3 of the License, or
+*   (at your option) any later version.
+*
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*
+*/
+//--------------------------------------------------------------------------------------------
+// using the xxd tool (c) 1990-1997 by Juergen Weigert <jnweiger@informatik.uni-erlangen.de>
+//
+// generate this xxx.h file: xxd -i xxx.png > xxx.h
+//--------------------------------------------------------------------------------------------
 unsigned char hpsdr_png[] = {
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
   0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x96, 0x00, 0x00, 0x00, 0x96,
