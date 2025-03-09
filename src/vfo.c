@@ -1912,7 +1912,11 @@ void vfo_update() {
     }
 
     snprintf(temp_text, 32, "XIT %lldHz", vfo[txvfo].xit);
+#if defined (__LDESK__)
+    cairo_move_to(cr, vfl->xit_x - 10, vfl->xit_y);
+#else
     cairo_move_to(cr, vfl->xit_x, vfl->xit_y);
+#endif
     cairo_show_text(cr, temp_text);
   }
 
@@ -2336,7 +2340,8 @@ void vfo_update() {
     cairo_show_text(cr, temp_text);
 #endif
 #if defined (__LDESK__) && defined (__HAVEATU__)
-    cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
+    // cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
+    cairo_move_to(cr, vfl->split_x + 37, vfl->split_y);
 
     if (transmitter->is_tuned) {
       cairo_set_source_rgba(cr, COLOUR_OK);
@@ -2487,7 +2492,11 @@ void vfo_update() {
     }
 
     GetMultifunctionString(temp_text, 32);
+#if defined (__LDESK__)
+    cairo_move_to(cr, vfl->multifn_x - 25, vfl->multifn_y);
+#else
     cairo_move_to(cr, vfl->multifn_x, vfl->multifn_y);
+#endif
     cairo_show_text(cr, temp_text);
   }
 
