@@ -804,10 +804,21 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
         gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
       }
+    } else {
+      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
+
+      for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
+        gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
+      }
     }
 
 #else
     gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
+
+    for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
+      gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
+    }
+
 #endif
     g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed", G_CALLBACK(rf_gain_value_changed_cb), NULL);
   } else {
