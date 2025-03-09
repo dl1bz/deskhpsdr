@@ -2323,6 +2323,18 @@ void vfo_update() {
     }
 
 #endif
+#if defined (__LDESK__)
+    cairo_move_to(cr, vfl->dup_x + 40, vfl->dup_y);
+
+    if (active_receiver->mute_radio || receiver[0]->mute_radio || receiver[1]->mute_radio) {
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+    }
+
+    snprintf(temp_text, 32, "MUTE");
+    cairo_show_text(cr, temp_text);
+#endif
 #if defined (__LDESK__) && defined (__HAVEATU__)
     cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
 

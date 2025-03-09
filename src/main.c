@@ -223,8 +223,22 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
 
   case GDK_KEY_r:
-
     // toggle NR
+#ifdef EXTNR
+    if (active_receiver->nr == 0) {
+      active_receiver->nr = 1;
+    } else if (active_receiver->nr == 1) {
+      active_receiver->nr = 2;
+    } else if (active_receiver->nr == 2) {
+      active_receiver->nr = 3;
+    } else if (active_receiver->nr == 3) {
+      active_receiver->nr = 4;
+    } else {
+      active_receiver->nr = 0;
+    }
+
+#else
+
     if (active_receiver->nr == 0) {
       active_receiver->nr = 1;
     } else if (active_receiver->nr == 1) {
@@ -233,6 +247,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       active_receiver->nr = 0;
     }
 
+#endif
     update_noise();
     break;
 

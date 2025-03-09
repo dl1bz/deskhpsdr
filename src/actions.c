@@ -1179,6 +1179,7 @@ int process_action(void *data) {
   case MUTE:
     if (a->mode == PRESSED) {
       active_receiver->mute_radio = !active_receiver->mute_radio;
+      g_idle_add(ext_vfo_update, NULL);
     }
 
     break;
@@ -1186,6 +1187,7 @@ int process_action(void *data) {
   case MUTE_RX1:
     if (a->mode == PRESSED) {
       receiver[0]->mute_radio = !receiver[0]->mute_radio;
+      g_idle_add(ext_vfo_update, NULL);
     }
 
     break;
@@ -1193,6 +1195,7 @@ int process_action(void *data) {
   case MUTE_RX2:
     if (a->mode == PRESSED && receivers > 1) {
       receiver[1]->mute_radio = !receiver[1]->mute_radio;
+      g_idle_add(ext_vfo_update, NULL);
     }
 
     break;
