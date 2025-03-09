@@ -870,9 +870,9 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_move_to(cr, mywidth / 2, myheight - 10);
 
     if (can_transmit) {
-      cairo_show_text(cr, "[T]une  [b]and  [m]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+      cairo_show_text(cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
     } else {
-      cairo_show_text(cr, "[b]and  [m]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+      cairo_show_text(cr, "[b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
     }
 
     char _text[128];

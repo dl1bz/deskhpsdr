@@ -170,8 +170,19 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     start_band();
     break;
 
-  case GDK_KEY_m:
+  case GDK_KEY_M:
     start_mode();
+    break;
+
+  case GDK_KEY_m:
+
+    // toggle anf
+    if (active_receiver->mute_radio > 0) {
+      active_receiver->mute_radio = 0;
+    } else {
+      active_receiver->mute_radio = 1;
+    }
+
     break;
 
   case GDK_KEY_v:
