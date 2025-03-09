@@ -2330,7 +2330,8 @@ void vfo_update() {
 #if defined (__LDESK__)
     cairo_move_to(cr, vfl->dup_x + 40, vfl->dup_y);
 
-    if (active_receiver->mute_radio || receiver[0]->mute_radio || receiver[1]->mute_radio) {
+    // if (active_receiver->mute_radio || receiver[0]->mute_radio || receiver[1]->mute_radio) {
+    if (active_receiver->mute_radio) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
