@@ -2454,7 +2454,7 @@ void vfo_update() {
 
   // -----------------------------------------------------------
   //
-  // Draw string indicating SAT status
+  // Draw string indicating DUPLEX and CESSB status
   //
   // -----------------------------------------------------------
   if (can_transmit && vfl->dup_x != 0) {
