@@ -149,8 +149,10 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .div_y = 24,
     .eq_x = 610,
     .eq_y = 24,
-    .cat_x = 670,
+    .cat_x = 677,
     .cat_y = 24,
+    .base_x = 670,
+    .base_y = 24,
 
     .cmpr_x = 380,
     .cmpr_y = 50,
@@ -163,6 +165,13 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .vox_y = 68,
     .dup_x = 470,
     .dup_y = 68,
+
+    .mute_x = 510,
+    .mute_y = 68,
+    .tuned_x = 417,
+    .tuned_y = 90,
+    .preamp_x = 830,
+    .preamp_y = 89,
 
     .lock_x = 5,
     .lock_y = 90,
@@ -178,11 +187,11 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .sat_y = 90,
     .rit_x = 560,
     .rit_y = 90,
-    .xit_x = 670,
+    .xit_x = 660,
     .xit_y = 90,
     .filter_x = 730,
     .filter_y = 24,
-    .multifn_x = 775,
+    .multifn_x = 750,
     .multifn_y = 90
   },
 #if !defined (__LDESK__)

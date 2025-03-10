@@ -144,6 +144,49 @@
 // This data structure contains the size of the VFO bar, and the position of its elements
 // Several such layouts are stored in the array vfo_layout_list[] (see appearance.c).
 //
+#if defined (__LDESK__)
+struct _VFO_BAR_LAYOUT {
+  const char *description; // Text appearing in the screen menu combobox
+  int width;               // overall width required
+  int height;              // overall height required
+  int size1;               // Font size for the "LED markers"
+  int size2;               // Font size for the "small dial digits"
+  int size3;               // Font size for the "large dial digits"
+
+  int vfo_a_x, vfo_a_y;    // coordinates of VFO A/B dial
+  int vfo_b_x, vfo_b_y;
+
+  int mode_x,  mode_y;     // Mode/Filter/CW wpm string
+  int zoom_x,  zoom_y;     // "Zoom x1"
+  int ps_x,    ps_y;       // "PS"
+  int rit_x,   rit_y ;     // "RIT -9999Hz"
+  int xit_x,   xit_y;      // "XIT -9999Hz"
+  int nb_x,    nb_y;       // NB/NB2
+  int nr_x,    nr_y;
+  int anf_x,   anf_y;
+  int snb_x,   snb_y;
+  int agc_x,   agc_y;      // "AGC slow"
+  int cmpr_x,  cmpr_y;
+  int eq_x,    eq_y;
+  int div_x,   div_y;
+  int step_x,  step_y;     // "Step 100 kHz"
+  int ctun_x,  ctun_y;
+  int cat_x,   cat_y;
+  int dexp_x,  dexp_y;
+  int vox_x,   vox_y;
+  int lock_x,  lock_y;
+  int split_x, split_y;
+  int sat_x,   sat_y;
+  int dup_x,   dup_y;
+  int mute_x,  mute_y;
+  int tuned_x, tuned_y;
+  int preamp_x, preamp_y;
+  int base_x,  base_y;
+  int filter_x, filter_y;
+  int multifn_x, multifn_y;
+};
+
+#else
 struct _VFO_BAR_LAYOUT {
   const char *description; // Text appearing in the screen menu combobox
   int width;               // overall width required
@@ -181,6 +224,7 @@ struct _VFO_BAR_LAYOUT {
   int multifn_x, multifn_y;
 };
 
+#endif
 typedef struct _VFO_BAR_LAYOUT VFO_BAR_LAYOUT;
 extern const VFO_BAR_LAYOUT vfo_layout_list[];
 extern int vfo_layout;

@@ -1912,11 +1912,7 @@ void vfo_update() {
     }
 
     snprintf(temp_text, 32, "XIT %lldHz", vfo[txvfo].xit);
-#if defined (__LDESK__)
-    cairo_move_to(cr, vfl->xit_x - 10, vfl->xit_y);
-#else
     cairo_move_to(cr, vfl->xit_x, vfl->xit_y);
-#endif
     cairo_show_text(cr, temp_text);
   }
 
@@ -2239,11 +2235,7 @@ void vfo_update() {
   //
   // -----------------------------------------------------------
   if (vfl->cat_x != 0) {
-#if defined (__LDESK__)
-    cairo_move_to(cr, vfl->cat_x + 7, vfl->cat_y);
-#else
     cairo_move_to(cr, vfl->cat_x, vfl->cat_y);
-#endif
 
     if (cat_control > 0) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2255,10 +2247,31 @@ void vfo_update() {
   }
 
 #if defined (__LDESK__)
+  // -----------------------------------------------------------
+  //
+  // Draw string indicating MUTE status
+  //
+  // -----------------------------------------------------------
+
+  if (vfl->mute_x != 0) {
+    cairo_move_to(cr, vfl->mute_x, vfl->mute_y);
+
+    if (active_receiver->mute_radio) {
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+    }
+
+    snprintf(temp_text, 32, "MUTE");
+    cairo_show_text(cr, temp_text);
+  }
+
+#endif
+#if defined (__LDESK__)
 
   // TX-EQ & Leveler & Tuning state
   if (can_transmit && vfl->eq_x != 0) {
-    cairo_move_to(cr, vfl->cat_x + 40, vfl->cat_y);
+    cairo_move_to(cr, vfl->base_x + 40, vfl->base_y);
 
     if (transmitter->eq_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2274,7 +2287,7 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, temp_text);
-    cairo_move_to(cr, vfl->cat_x + 110, vfl->cat_y);
+    cairo_move_to(cr, vfl->base_x + 110, vfl->base_y);
 
     if (transmitter->lev_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2285,7 +2298,7 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, temp_text);
-    cairo_move_to(cr, vfl->cat_x + 180, vfl->cat_y);
+    cairo_move_to(cr, vfl->base_x + 180, vfl->base_y);
 
     if (transmitter->phrot_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2299,7 +2312,7 @@ void vfo_update() {
 #if defined (__AUTOG__)
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-      cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y);
+      cairo_move_to(cr, vfl->base_x + 270, vfl->base_y);
 
       if (autogain_enabled && autogain_is_adjusted) {
         cairo_set_source_rgba(cr, COLOUR_OK);
@@ -2313,7 +2326,7 @@ void vfo_update() {
       cairo_show_text(cr, temp_text);
 
       if (!have_radioberry1 &&  !have_radioberry2) {
-        cairo_move_to(cr, vfl->cat_x + 270, vfl->cat_y + 15);
+        cairo_move_to(cr, vfl->base_x + 270, vfl->base_y + 15);
 
         if (hl2_cl1_input) {
           cairo_set_source_rgba(cr, COLOUR_OK);
@@ -2327,49 +2340,42 @@ void vfo_update() {
     }
 
 #endif
-#if defined (__LDESK__)
-    cairo_move_to(cr, vfl->dup_x + 40, vfl->dup_y);
-
-    // if (active_receiver->mute_radio || receiver[0]->mute_radio || receiver[1]->mute_radio) {
-    if (active_receiver->mute_radio) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-    } else {
-      cairo_set_source_rgba(cr, COLOUR_SHADE);
-    }
-
-    snprintf(temp_text, 32, "MUTE");
-    cairo_show_text(cr, temp_text);
-#endif
 #if defined (__LDESK__) && defined (__HAVEATU__)
-    // cairo_move_to(cr, vfl->cat_x + 100, vfl->cat_y + 65);
-    cairo_move_to(cr, vfl->split_x + 37, vfl->split_y);
 
-    if (transmitter->is_tuned) {
-      cairo_set_source_rgba(cr, COLOUR_OK);
-      snprintf(temp_text, 32, "TUNED");
-    } else {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-      snprintf(temp_text, 32, "TUNED");
+    if (vfl->tuned_x != 0) {
+      cairo_move_to(cr, vfl->tuned_x, vfl->tuned_y);
+
+      if (transmitter->is_tuned) {
+        cairo_set_source_rgba(cr, COLOUR_OK);
+        snprintf(temp_text, 32, "TUNED");
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_ALARM);
+        snprintf(temp_text, 32, "TUNED");
+      }
+
+      cairo_show_text(cr, temp_text);
     }
 
-    cairo_show_text(cr, temp_text);
 #endif
-    cairo_move_to(cr, vfl->cat_x + 160, vfl->cat_y + 65);
 
-    if (transmitter->addgain_enable) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+    if (vfl->preamp_x != 0) {
+      cairo_move_to(cr, vfl->preamp_x, vfl->preamp_y);
 
-      if (transmitter->addgain_gain > 0) {
-        snprintf(temp_text, 32, "Mic PreAmp +%.0fdb", transmitter->addgain_gain);
+      if (transmitter->addgain_enable) {
+        cairo_set_source_rgba(cr, COLOUR_ATTN);
+
+        if (transmitter->addgain_gain > 0) {
+          snprintf(temp_text, 32, "Mic PreAmp +%.0fdb", transmitter->addgain_gain);
+        } else {
+          snprintf(temp_text, 32, "Mic PreAmp");
+        }
       } else {
+        cairo_set_source_rgba(cr, COLOUR_SHADE);
         snprintf(temp_text, 32, "Mic PreAmp");
       }
-    } else {
-      cairo_set_source_rgba(cr, COLOUR_SHADE);
-      snprintf(temp_text, 32, "Mic PreAmp");
-    }
 
-    cairo_show_text(cr, temp_text);
+      cairo_show_text(cr, temp_text);
+    }
   }
 
 #endif
@@ -2493,11 +2499,7 @@ void vfo_update() {
     }
 
     GetMultifunctionString(temp_text, 32);
-#if defined (__LDESK__)
-    cairo_move_to(cr, vfl->multifn_x - 25, vfl->multifn_y);
-#else
     cairo_move_to(cr, vfl->multifn_x, vfl->multifn_y);
-#endif
     cairo_show_text(cr, temp_text);
   }
 
