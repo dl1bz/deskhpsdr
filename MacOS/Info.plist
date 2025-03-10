@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>deskhpsdr</string>
 	<key>CFBundleIconFile</key>
-	<string>hpsdr.icns</string>
+	<string>radio.icns</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
