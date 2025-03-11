@@ -629,11 +629,11 @@ void radio_reconfigure() {
   } else if (my_height < 720) {
     TOOLBAR_HEIGHT = 40;
     ZOOMPAN_HEIGHT = 55;
-    SLIDERS_HEIGHT = 110;
+    SLIDERS_HEIGHT = 160;
   } else {
     TOOLBAR_HEIGHT = 50;
     ZOOMPAN_HEIGHT = 60;
-    SLIDERS_HEIGHT = 120;
+    SLIDERS_HEIGHT = 170;
   }
 
   if (display_zoompan) {
