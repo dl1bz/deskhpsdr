@@ -80,8 +80,6 @@ static GtkWidget *squelch_label;
 static GtkWidget *squelch_scale;
 static gulong     squelch_signal_id;
 static GtkWidget *squelch_enable;
-static GtkWidget *tune_drive_label;
-static GtkWidget *tune_drive_scale;
 
 //
 // general tool for displaying a pop-up slider. This can also be used for a value for which there
@@ -972,31 +970,26 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_grid_attach(GTK_GRID(sliders), squelch_enable, s3pos, 1, 1, 1);
   gtk_widget_set_halign(squelch_enable, GTK_ALIGN_CENTER);
   g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
-  tune_drive_label = gtk_label_new("HL2:\nTune (W)");
-  gtk_widget_set_name(tune_drive_label, csslabel_smaller);
-  gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_END);
-  gtk_widget_show(tune_drive_label);
-  gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t2pos, 2, twidth, 1);
-  tune_drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.1, 5.0, 0.1);
-  gtk_widget_set_size_request(tune_drive_scale, 0, height / 3);
-  gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
-  gtk_range_set_increments(GTK_RANGE(tune_drive_scale), 0.1, 0.1);
-  gtk_range_set_value(GTK_RANGE(tune_drive_scale), (double)transmitter->tune_drive / 20);
 
-  for (float i = 0.0; i <= 5.0; i += 0.5) {
-    gtk_scale_add_mark(GTK_SCALE(tune_drive_scale), i, GTK_POS_TOP, NULL);
+  if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+    GtkWidget *tune_drive_label = gtk_label_new("HL2:\nTune (W)");
+    gtk_widget_set_name(tune_drive_label, csslabel_smaller);
+    gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_END);
+    gtk_widget_show(tune_drive_label);
+    gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t2pos, 2, twidth, 1);
+    GtkWidget *tune_drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.1, 5.0, 0.1);
+    gtk_widget_set_size_request(tune_drive_scale, 0, height / 3);
+    gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
+    gtk_range_set_increments(GTK_RANGE(tune_drive_scale), 0.1, 0.1);
+    gtk_range_set_value(GTK_RANGE(tune_drive_scale), (double)transmitter->tune_drive / 20);
+
+    for (float i = 0.0; i <= 5.0; i += 0.5) {
+      gtk_scale_add_mark(GTK_SCALE(tune_drive_scale), i, GTK_POS_TOP, NULL);
+    }
+
+    gtk_widget_show(tune_drive_scale);
+    gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s2pos, 2, swidth, 1);
   }
 
-  gtk_widget_show(tune_drive_scale);
-  gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s2pos, 2, swidth, 1);
-  /*
-  tune_drive_scale = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
-  gtk_widget_set_name(tune_drive_scale, csslabel);
-  gtk_widget_set_size_request(tune_drive_scale, 0, height / 3);
-  gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), (double)transmitter->tune_drive);
-  gtk_widget_show(tune_drive_scale);
-  gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s2pos, 2, swidth - 5, 1);
-  */
   return sliders;
 }
