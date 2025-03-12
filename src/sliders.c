@@ -82,7 +82,7 @@ static gulong     squelch_signal_id;
 static GtkWidget *squelch_enable;
 #if defined (__LDESK__)
   static GtkWidget *tune_drive_label;
-  static GtkWidget *tune_drive_scale;
+  GtkWidget *tune_drive_scale;
 #endif
 
 //
@@ -609,6 +609,16 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   rx_set_squelch(active_receiver);
 }
 
+#if defined (__LDESK__)
+static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
+  double value = gtk_range_get_value(GTK_RANGE(widget));
+  transmitter->tune_drive = value;
+  gtk_range_set_value(GTK_RANGE(widget), transmitter->tune_drive);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
+#endif
+
 #if defined (__AUTOG__)
 static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
@@ -1000,6 +1010,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     gtk_widget_show(tune_drive_scale);
     gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s2pos, 2, swidth, 1);
+    g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed", G_CALLBACK(tune_drive_changed_cb), NULL);
   } else {
     tune_drive_label = NULL;
     tune_drive_scale = NULL;
