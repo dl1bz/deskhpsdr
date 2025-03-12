@@ -629,11 +629,19 @@ void radio_reconfigure() {
   } else if (my_height < 720) {
     TOOLBAR_HEIGHT = 40;
     ZOOMPAN_HEIGHT = 55;
-    SLIDERS_HEIGHT = 160;
+    SLIDERS_HEIGHT = 110;
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      SLIDERS_HEIGHT += 50;
+    }
   } else {
     TOOLBAR_HEIGHT = 50;
     ZOOMPAN_HEIGHT = 60;
-    SLIDERS_HEIGHT = 170;
+    SLIDERS_HEIGHT = 120;
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      SLIDERS_HEIGHT += 50;
+    }
   }
 
   if (display_zoompan) {
