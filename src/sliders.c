@@ -1001,7 +1001,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   if (can_transmit && display_sliders && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
     //-------------------------------------------------------------------------------------------
     nested_slider = gtk_grid_new();
-    gtk_grid_attach(GTK_GRID(sliders), nested_slider, s2pos, 2, swidth, 1);
+    gtk_grid_attach(GTK_GRID(sliders), nested_slider, s1pos, 2, swidth, 1);
     gtk_widget_set_margin_start(nested_slider, 20 * twidth);
     gtk_grid_set_column_spacing(GTK_GRID(nested_slider), 10);
     //-------------------------------------------------------------------------------------------
