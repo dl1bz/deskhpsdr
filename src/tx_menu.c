@@ -581,7 +581,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
 #if defined (__LDESK__)
 
       if (can_transmit && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
-        gtk_range_set_value (GTK_RANGE(tune_drive_scale), transmitter->tune_drive);
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
         gtk_widget_queue_draw(tune_drive_scale);
         gdk_flush();
       }

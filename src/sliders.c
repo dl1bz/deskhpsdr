@@ -83,6 +83,7 @@ static GtkWidget *squelch_enable;
 #if defined (__LDESK__)
   static GtkWidget *tune_drive_label;
   GtkWidget *tune_drive_scale;
+  static GtkWidget *nested_slider;
 #endif
 
 //
@@ -611,9 +612,9 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
 
 #if defined (__LDESK__)
 static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
-  double value = gtk_range_get_value(GTK_RANGE(widget));
+  int value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   transmitter->tune_drive = value;
-  gtk_range_set_value(GTK_RANGE(widget), transmitter->tune_drive);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), transmitter->tune_drive);
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -993,24 +994,26 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__LDESK__)
 
   if (can_transmit && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+    //-------------------------------------------------------------------------------------------
+    nested_slider = gtk_grid_new();
+    gtk_grid_attach(GTK_GRID(sliders), nested_slider, s2pos, 2, swidth, 1);
+    gtk_widget_set_margin_start(nested_slider, 20 * twidth);
+    gtk_grid_set_column_spacing(GTK_GRID(nested_slider), 10);
+    //-------------------------------------------------------------------------------------------
     tune_drive_label = gtk_label_new("TUNE\nDrv");
     gtk_widget_set_name(tune_drive_label, csslabel_smaller);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_END);
+    gtk_grid_attach(GTK_GRID(nested_slider), tune_drive_label, 0, 1, 1, 1);
     gtk_widget_show(tune_drive_label);
-    gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t2pos, 2, twidth, 1);
-    tune_drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, 100.0, 1.0);
-    gtk_widget_set_size_request(tune_drive_scale, 0, widget_height);
+    //-------------------------------------------------------------------------------------------
+    tune_drive_scale = gtk_spin_button_new_with_range(1, 100, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
+    gtk_grid_attach(GTK_GRID(nested_slider), tune_drive_scale, 1, 1, 1, 1);
+    gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 10);
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
-    gtk_range_set_increments(GTK_RANGE(tune_drive_scale), 1.0, 1.0);
-    gtk_range_set_value(GTK_RANGE(tune_drive_scale), (double)transmitter->tune_drive);
-
-    for (float i = 1.0; i <= 100.0; i += 10.0) {
-      gtk_scale_add_mark(GTK_SCALE(tune_drive_scale), i, GTK_POS_TOP, NULL);
-    }
-
-    gtk_widget_show(tune_drive_scale);
-    gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s2pos, 2, swidth, 1);
     g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed", G_CALLBACK(tune_drive_changed_cb), NULL);
+    gtk_widget_show(tune_drive_scale);
+    //-------------------------------------------------------------------------------------------
   } else {
     tune_drive_label = NULL;
     tune_drive_scale = NULL;
