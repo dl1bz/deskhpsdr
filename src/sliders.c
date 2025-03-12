@@ -613,6 +613,11 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
 #if defined (__LDESK__)
 static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   int value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+
+  if (value < 1) { value = 1; }
+
+  if (value > 100) { value = 100; }
+
   transmitter->tune_drive = value;
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), transmitter->tune_drive);
   g_idle_add(ext_vfo_update, NULL);
@@ -993,7 +998,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
 #if defined (__LDESK__)
 
-  if (can_transmit && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+  if (can_transmit && display_sliders && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
     //-------------------------------------------------------------------------------------------
     nested_slider = gtk_grid_new();
     gtk_grid_attach(GTK_GRID(sliders), nested_slider, s2pos, 2, swidth, 1);
