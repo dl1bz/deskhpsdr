@@ -1692,8 +1692,12 @@ void radio_start_radio() {
   }
 
 #endif
-  // first call to start RX200 UDP Listener
-  launch_rx200_monitor();
+#if defined (__LDESK__)
+  // first call to start RX200 UDP Listener if SDR can transmit
+  if (can_transmit) {
+    launch_rx200_monitor();
+  }
+#endif
 
   for (int id = 0; id < MAX_SERIAL; id++) {
     //
