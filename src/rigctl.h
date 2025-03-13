@@ -61,6 +61,7 @@ extern void  shutdown_tcp_rigctl(void);
   extern void launch_autogain_hl2(void);
 #endif
 extern void launch_rx200_monitor(void);
+extern void launch_lpf_monitor(void);
 extern int cat_control;
 extern unsigned int rigctl_tcp_port;
 extern int rigctl_tcp_enable;

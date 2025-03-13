@@ -316,6 +316,10 @@ extern const int tx_dialog_height;
 extern char g_rx200_data[4][64];
 extern int rx200_udp_valid;
 extern int rx200_udp_port;
+extern char g_lpf_data[4][64];
+extern int lpf_udp_valid;
+extern int lpf_udp_port;
+
 
 //
 // All global functions declared here start with "radio_",

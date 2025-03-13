@@ -1165,6 +1165,16 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_show_text(cr, _text);
   }
 
+  if (can_transmit && lpf_udp_valid) {
+    cairo_move_to(cr, width - 300.0, 70.0);
+    snprintf(_text, 128, "LPF %s", g_lpf_data[0]);
+    cairo_show_text(cr, _text);
+  } else {
+    snprintf(_text, 128, " ");
+    cairo_move_to(cr, width - 300.0, 70.0);
+    cairo_show_text(cr, _text);
+  }
+
   if (TxInhibit) {
     cairo_set_source_rgba(cr, COLOUR_ALARM);
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
