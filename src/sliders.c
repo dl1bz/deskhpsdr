@@ -998,7 +998,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
 #if defined (__LDESK__)
 
-  if (can_transmit && display_sliders && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+  if (can_transmit && display_sliders) {
     //-------------------------------------------------------------------------------------------
     nested_slider = gtk_grid_new();
     gtk_grid_attach(GTK_GRID(sliders), nested_slider, s1pos, 2, swidth, 1);

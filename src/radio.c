@@ -631,7 +631,7 @@ void radio_reconfigure() {
     ZOOMPAN_HEIGHT = 55;
     SLIDERS_HEIGHT = 110;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if (can_transmit) {
       SLIDERS_HEIGHT += 50;
     }
   } else {
@@ -639,7 +639,7 @@ void radio_reconfigure() {
     ZOOMPAN_HEIGHT = 60;
     SLIDERS_HEIGHT = 120;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if (can_transmit) {
       SLIDERS_HEIGHT += 50;
     }
   }
