@@ -36,9 +36,31 @@
 #include "radio.h"
 #include "version.h"
 #include "mystring.h"
+#include "hpsdr_logo.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *label;
+
+static GdkPixbuf *create_pixbuf_from_data() {
+  GInputStream *mem_stream;
+  GdkPixbuf *pixbuf, *scaled_pixbuf;
+  GError *error = NULL;
+  mem_stream = g_memory_input_stream_new_from_data(hpsdr_logo, hpsdr_logo_len, NULL);
+  pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
+
+  if (!pixbuf) {
+    g_printerr("ERROR loading pic: %s\n", error->message);
+    g_error_free(error);
+    g_object_unref(mem_stream);
+    return NULL;
+  }
+
+  // pic scaling
+  scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, 100, 100, GDK_INTERP_BILINEAR);
+  g_object_unref(pixbuf);  // free original-pixbuf
+  g_object_unref(mem_stream);
+  return scaled_pixbuf;
+}
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -84,6 +106,11 @@ void about_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   */
   row++;
+  // load the TRX logo now only from the included hpsdr_logo.h
+  GtkWidget *hpsdr_logo_widget = gtk_image_new_from_pixbuf(create_pixbuf_from_data());
+  gtk_widget_set_halign(hpsdr_logo_widget, GTK_ALIGN_CENTER);  // Horizontal zentrieren
+  gtk_widget_set_valign(hpsdr_logo_widget, GTK_ALIGN_START);   // Vertikal oben ausrichten
+  gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
   snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
                        "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
                        "(contains code portions of piHPSDR by G0ORX/N6LYT and DL1YCF)\n\n"

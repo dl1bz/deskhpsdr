@@ -69,7 +69,7 @@
   #include "noise_menu.h"
   #include "rigctl.h"
 #endif
-#include "hpsdr_logo.h"
+#include "trx_logo.h"
 
 struct utsname unameData;
 
@@ -525,7 +525,7 @@ static GdkPixbuf *create_pixbuf_from_data() {
   GInputStream *mem_stream;
   GdkPixbuf *pixbuf, *scaled_pixbuf;
   GError *error = NULL;
-  mem_stream = g_memory_input_stream_new_from_data(hpsdr_png, hpsdr_png_len, NULL);
+  mem_stream = g_memory_input_stream_new_from_data(trx_logo, trx_logo_len, NULL);
   pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
 
   if (!pixbuf) {
@@ -694,8 +694,8 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
     gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
   }
 
-  // load the OpenHPSDR logo now only from the included hpsdr_logo.h
-  GtkWidget *hpsdr_logo = gtk_image_new_from_pixbuf(create_pixbuf_from_data());
+  // load the TRX logo now only from the included trx_logo.h
+  GtkWidget *trx_logo_widget = gtk_image_new_from_pixbuf(create_pixbuf_from_data());
   g_signal_connect (top_window, "delete-event", G_CALLBACK (main_delete), NULL);
   //
   // We want to use the space-bar as an alternative to go to TX
@@ -716,7 +716,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("add grid\n");
   gtk_container_add (GTK_CONTAINER (top_window), topgrid);
   t_print("add image to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), hpsdr_logo, 0, 0, 1, 2);
+  gtk_grid_attach(GTK_GRID(topgrid), trx_logo_widget, 0, 0, 1, 2);
   t_print("create pi label\n");
 #if defined (__LDESK__)
   snprintf(text, 2048,
