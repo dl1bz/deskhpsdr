@@ -979,6 +979,7 @@ src/MacOS.o: src/message.h
 src/about_menu.o: src/new_menu.h src/about_menu.h src/discovered.h
 src/about_menu.o: src/radio.h src/adc.h src/dac.h src/receiver.h
 src/about_menu.o: src/transmitter.h src/version.h src/mystring.h
+src/about_menu.o: src/hpsdr_logo.h
 src/action_dialog.o: src/main.h src/actions.h
 src/actions.o: src/main.h src/discovery.h src/receiver.h src/sliders.h
 src/actions.o: src/transmitter.h src/actions.h src/band_menu.h
@@ -1096,7 +1097,7 @@ src/main.o: src/new_protocol.h src/MacOS.h src/old_protocol.h
 src/main.o: src/soapy_protocol.h src/saturnmain.h src/saturnregisters.h
 src/main.o: src/ext.h src/vfo.h src/mode.h src/css.h src/exit_menu.h
 src/main.o: src/message.h src/mystring.h src/startup.h src/tts.h
-src/main.o: src/sliders.h src/noise_menu.h src/rigctl.h src/hpsdr_logo.h
+src/main.o: src/sliders.h src/noise_menu.h src/rigctl.h src/trx_logo.h
 src/meter.o: src/appearance.h src/band.h src/bandstack.h src/receiver.h
 src/meter.o: src/meter.h src/radio.h src/adc.h src/dac.h src/discovered.h
 src/meter.o: src/transmitter.h src/version.h src/mode.h src/vox.h
@@ -1226,8 +1227,8 @@ src/rx_menu.o: src/message.h src/mystring.h src/rigctl.h src/ext.h
 src/rx_panadapter.o: src/appearance.h src/agc.h src/band.h src/bandstack.h
 src/rx_panadapter.o: src/discovered.h src/radio.h src/adc.h src/dac.h
 src/rx_panadapter.o: src/receiver.h src/transmitter.h src/rx_panadapter.h
-src/rx_panadapter.o: src/vfo.h src/mode.h src/actions.h src/gpio.h
-src/rx_panadapter.o: src/ozyio.h src/audio.h
+src/rx_panadapter.o: src/vfo.h src/mode.h src/actions.h src/message.h
+src/rx_panadapter.o: src/gpio.h src/ozyio.h src/audio.h
 src/saturn_menu.o: src/new_menu.h src/saturn_menu.h src/saturnserver.h
 src/saturn_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/saturn_menu.o: src/receiver.h src/transmitter.h
