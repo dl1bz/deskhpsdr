@@ -186,7 +186,9 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   gtk_widget_set_margin_top(close_b, 20); // 20px Platz nach oben
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), close_b, 3, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), close_b, 2, row, 1, 1);
+  // gtk_widget_set_halign(close_b, GTK_ALIGN_CENTER);  // Horizontal zentrieren
+  // gtk_widget_set_valign(close_b, GTK_ALIGN_CENTER);   // Vertikal oben ausrichten
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
