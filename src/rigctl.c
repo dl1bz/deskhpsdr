@@ -510,7 +510,7 @@ static void lpf_process_data(const char *lpf_data[6]) {
   // Daten von lpf_data in g_lpf_data thread-safe kopieren
   pthread_mutex_lock(&lpf_array_mutex); // Mutex sperren
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 6; i++) {
     if (lpf_data[i] != NULL) { // Sicherstellen, dass der Zeiger gültig ist
       strncpy(g_lpf_data[i], lpf_data[i], sizeof(g_lpf_data[i]) - 1);
       g_lpf_data[i][sizeof(g_lpf_data[i]) - 1] = '\0'; // Nullterminator sicherstellen
@@ -520,7 +520,7 @@ static void lpf_process_data(const char *lpf_data[6]) {
   }
 
   pthread_mutex_unlock(&lpf_array_mutex); // Mutex entsperren
-  // t_print("LPF: Band: %s\n", g_lpf_data[0]);
+  // t_print("LPF: Band: %s PTT: %s\n", g_lpf_data[0], g_lpf_data[5]);
 }
 
 // RX200 UDP Listener-Funktion
@@ -565,22 +565,22 @@ static void *rx200_udp_listener(void *arg) {
     struct json_object *parsed_json = json_tokener_parse(buffer);
 
     if (parsed_json) {
-      struct json_object *pwrfwd, *pwrref, *swr, *time, *rssi, *rst, *ssid;
+      struct json_object *pwrfwd_rx200, *pwrref_rx200, *swr_rx200, *time_rx200, *rssi_rx200, *rst_rx200, *ssid_rx200;
       const char *data[7];
-      json_object_object_get_ex(parsed_json, "pwrfwd", &pwrfwd);
-      json_object_object_get_ex(parsed_json, "pwrref", &pwrref);
-      json_object_object_get_ex(parsed_json, "swr", &swr);
-      json_object_object_get_ex(parsed_json, "time", &time);
-      json_object_object_get_ex(parsed_json, "rssi", &rssi);
-      json_object_object_get_ex(parsed_json, "rst", &rst);
-      json_object_object_get_ex(parsed_json, "ssid", &ssid);
-      data[0] = json_object_get_string(pwrfwd);
-      data[1] = json_object_get_string(pwrref);
-      data[2] = json_object_get_string(swr);
-      data[3] = json_object_get_string(time);
-      data[4] = json_object_get_string(rssi);
-      data[5] = json_object_get_string(rst);
-      data[6] = json_object_get_string(ssid);
+      json_object_object_get_ex(parsed_json, "pwrfwd", &pwrfwd_rx200);
+      json_object_object_get_ex(parsed_json, "pwrref", &pwrref_rx200);
+      json_object_object_get_ex(parsed_json, "swr", &swr_rx200);
+      json_object_object_get_ex(parsed_json, "time", &time_rx200);
+      json_object_object_get_ex(parsed_json, "rssi", &rssi_rx200);
+      json_object_object_get_ex(parsed_json, "rst", &rst_rx200);
+      json_object_object_get_ex(parsed_json, "ssid", &ssid_rx200);
+      data[0] = json_object_get_string(pwrfwd_rx200);
+      data[1] = json_object_get_string(pwrref_rx200);
+      data[2] = json_object_get_string(swr_rx200);
+      data[3] = json_object_get_string(time_rx200);
+      data[4] = json_object_get_string(rssi_rx200);
+      data[5] = json_object_get_string(rst_rx200);
+      data[6] = json_object_get_string(ssid_rx200);
       rx200_process_data(data); // Callback aufrufen
       rx200_udp_valid = 1;
       json_object_put(parsed_json); // Speicher freigeben
@@ -636,20 +636,20 @@ static void *lpf_udp_listener(void *arg) {
     struct json_object *parsed_json = json_tokener_parse(buffer);
 
     if (parsed_json) {
-      struct json_object *band_l, *time_l, *rssi_l, *rst_l, *ssid_l, *ptt_l;
+      struct json_object *band_lpf, *time_lpf, *rssi_lpf, *rst_lpf, *ssid_lpf, *ptt_lpf;
       const char *data[6];
-      json_object_object_get_ex(parsed_json, "band", &band_l);
-      json_object_object_get_ex(parsed_json, "time", &time_l);
-      json_object_object_get_ex(parsed_json, "rssi", &rssi_l);
-      json_object_object_get_ex(parsed_json, "rst", &rst_l);
-      json_object_object_get_ex(parsed_json, "ssid", &ssid_l);
-      json_object_object_get_ex(parsed_json, "ptt", &ptt_l);
-      data[0] = json_object_get_string(band_l);
-      data[1] = json_object_get_string(time_l);
-      data[2] = json_object_get_string(rssi_l);
-      data[3] = json_object_get_string(rst_l);
-      data[4] = json_object_get_string(ssid_l);
-      data[5] = json_object_get_string(ptt_l);
+      json_object_object_get_ex(parsed_json, "band", &band_lpf);
+      json_object_object_get_ex(parsed_json, "time", &time_lpf);
+      json_object_object_get_ex(parsed_json, "rssi", &rssi_lpf);
+      json_object_object_get_ex(parsed_json, "rst", &rst_lpf);
+      json_object_object_get_ex(parsed_json, "ssid", &ssid_lpf);
+      json_object_object_get_ex(parsed_json, "ptt", &ptt_lpf);
+      data[0] = json_object_get_string(band_lpf);
+      data[1] = json_object_get_string(time_lpf);
+      data[2] = json_object_get_string(rssi_lpf);
+      data[3] = json_object_get_string(rst_lpf);
+      data[4] = json_object_get_string(ssid_lpf);
+      data[5] = json_object_get_string(ptt_lpf);
       lpf_process_data(data); // Callback aufrufen
       lpf_udp_valid = 1;
       json_object_put(parsed_json); // Speicher freigeben

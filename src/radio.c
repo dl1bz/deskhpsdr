@@ -204,7 +204,7 @@ char g_rx200_data[4][64];
 int rx200_udp_valid = 0;
 
 int lpf_udp_port = 7355;    // Portnummer für den LPF UDP Listener
-char g_lpf_data[4][64];
+char g_lpf_data[6][64];
 int lpf_udp_valid = 0;
 
 int display_zoompan = 0;
@@ -1697,11 +1697,13 @@ void radio_start_radio() {
 
 #endif
 #if defined (__LDESK__)
+
   // first call to start RX200 & LPF UDP Listener if SDR can transmit
   if (can_transmit) {
     launch_rx200_monitor();
     launch_lpf_monitor();
   }
+
 #endif
 
   for (int id = 0; id < MAX_SERIAL; id++) {

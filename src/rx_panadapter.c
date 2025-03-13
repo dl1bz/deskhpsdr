@@ -28,6 +28,7 @@
 #include <semaphore.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include "appearance.h"
 #include "agc.h"
@@ -40,6 +41,7 @@
 #include "vfo.h"
 #include "mode.h"
 #include "actions.h"
+#include "message.h"
 #ifdef GPIO
   #include "gpio.h"
 #endif
@@ -1166,12 +1168,18 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   }
 
   if (can_transmit && lpf_udp_valid) {
-    cairo_move_to(cr, width - 300.0, 70.0);
+    if (strcasecmp(g_lpf_data[5], "true") == 0) {
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_WHITE);
+    }
+
+    cairo_move_to(cr, width - 300.0, 75.0);
     snprintf(_text, 128, "LPF %s", g_lpf_data[0]);
     cairo_show_text(cr, _text);
   } else {
     snprintf(_text, 128, " ");
-    cairo_move_to(cr, width - 300.0, 70.0);
+    cairo_move_to(cr, width - 300.0, 75.0);
     cairo_show_text(cr, _text);
   }
 
