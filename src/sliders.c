@@ -1012,6 +1012,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_show(tune_drive_label);
     //-------------------------------------------------------------------------------------------
     tune_drive_scale = gtk_spin_button_new_with_range(1, 100, 1);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
     gtk_grid_attach(GTK_GRID(nested_slider), tune_drive_scale, 1, 1, 1, 1);
     gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 10);
