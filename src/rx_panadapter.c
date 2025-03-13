@@ -1138,7 +1138,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
 
-  if (rx200_udp_valid) {
+  if (can_transmit && rx200_udp_valid) {
     cairo_move_to(cr, width - 300.0, 30.0);
     snprintf(_text, 128, "Fwd  %sW", g_rx200_data[0]);
     cairo_show_text(cr, _text);
