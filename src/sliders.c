@@ -672,7 +672,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   height = my_height;
   int widget_height = height / 2;
 
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (can_transmit) {
     widget_height = height / 3;
   }
 
