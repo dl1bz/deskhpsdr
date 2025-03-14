@@ -30,6 +30,7 @@ ATU=OFF
 COPYMODE=OFF
 AUTOGAIN=OFF
 REGION1=OFF
+WMAP=OFF
 DEVEL=OFF
 
 ##################################################################################################
@@ -49,6 +50,7 @@ DEVEL=OFF
 # COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
 # AUTOGAIN     | If ON and using a Hermes Lite 2, activate automatic regulation of RxPGA gain
 # REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
+# WMAP         | If ON, a Worldmap is shown as Backgroundimage of RX Panadapter
 # DEVEL        | ONLY FOR INTERNAL DEVELOPER USE ! Leave it ever OFF, please
 #
 # If you want to use a non-default compile time option, write them
@@ -314,6 +316,11 @@ ifeq ($(REGION1), ON)
 REG1_OPTIONS=-D__REG1__
 endif
 CPP_DEFINES += -D__REG1__
+
+ifeq ($(WMAP), ON)
+REG1_OPTIONS=-D__WMAP__
+endif
+CPP_DEFINES += -D__WMAP__
 
 ##############################################################################
 #

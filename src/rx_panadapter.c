@@ -51,8 +51,44 @@
 #if defined (__LDESK__)
   #include "audio.h"
 #endif
+#if defined (__WMAP__)
+  #include "worldmap.h"
+#endif
 
 char zeitString[20];
+#if defined (__WMAP__)
+//------------------------------------------------------------------------------
+GdkPixbuf *pixbuf = NULL;
+
+static GdkPixbuf *create_pixbuf_from_data(int w, int h) {
+  GInputStream *mem_stream;
+  GdkPixbuf *pixbuf, *scaled_pixbuf;
+  GError *error = NULL;
+  mem_stream = g_memory_input_stream_new_from_data(worldmap_png, worldmap_png_len, NULL);
+  pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
+
+  if (!pixbuf) {
+    g_printerr("ERROR loading pic: %s\n", error->message);
+    g_error_free(error);
+    g_object_unref(mem_stream);
+    return NULL;
+  }
+
+  // pic scaling
+  scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, w, h, GDK_INTERP_BILINEAR);
+  g_object_unref(pixbuf);  // free original-pixbuf
+  g_object_unref(mem_stream);
+  return scaled_pixbuf;
+}
+
+void draw_image(cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
+  // Bild auf dem Cairo-Zeichenkontext setzen
+  gdk_cairo_set_source_pixbuf(cr, pixbuf, x_offset, y_offset);
+  cairo_paint(cr);  // Bild zeichnen
+}
+
+//------------------------------------------------------------------------------
+#endif
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
@@ -212,6 +248,12 @@ void rx_panadapter_update(RECEIVER *rx) {
   cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
   cairo_rectangle(cr, 0, 0, mywidth, myheight);
   cairo_fill(cr);
+#if defined (__WMAP__)
+  //------------------------------------------------------------------------------
+  pixbuf = create_pixbuf_from_data(mywidth, myheight);
+  draw_image(cr, pixbuf, 0, 0);
+  //------------------------------------------------------------------------------
+#endif
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
   int mode = vfo[rx->id].mode;
   long long frequency = vfo[rx->id].frequency;
@@ -938,6 +980,21 @@ void rx_panadapter_init(RECEIVER *rx, int width, int height) {
                          | GDK_SCROLL_MASK
                          | GDK_POINTER_MOTION_MASK
                          | GDK_POINTER_MOTION_HINT_MASK);
+  /*
+  GtkWidget *windowB = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(windowB), "Bildanzeige");
+  gtk_window_set_default_size(GTK_WINDOW(windowB), 640, 480);
+  GdkPixbuf *pixbuf = create_pixbuf_from_data();
+  // GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
+  // gtk_container_add(GTK_CONTAINER(windowB), image);
+  // Erstelle eine DrawingArea für Cairo
+  GtkWidget *drawing_area = gtk_drawing_area_new();
+  gtk_container_add(GTK_CONTAINER(windowB), drawing_area);
+  // Verbinde das "draw"-Signal mit der Rendering-Funktion
+  g_signal_connect(drawing_area, "draw", G_CALLBACK(on_draw_event), pixbuf);
+  // Zeige das Fenster und alle Widgets an
+  gtk_widget_show_all(windowB);
+  */
 }
 
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
