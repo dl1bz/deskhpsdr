@@ -980,21 +980,6 @@ void rx_panadapter_init(RECEIVER *rx, int width, int height) {
                          | GDK_SCROLL_MASK
                          | GDK_POINTER_MOTION_MASK
                          | GDK_POINTER_MOTION_HINT_MASK);
-  /*
-  GtkWidget *windowB = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title(GTK_WINDOW(windowB), "Bildanzeige");
-  gtk_window_set_default_size(GTK_WINDOW(windowB), 640, 480);
-  GdkPixbuf *pixbuf = create_pixbuf_from_data();
-  // GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
-  // gtk_container_add(GTK_CONTAINER(windowB), image);
-  // Erstelle eine DrawingArea für Cairo
-  GtkWidget *drawing_area = gtk_drawing_area_new();
-  gtk_container_add(GTK_CONTAINER(windowB), drawing_area);
-  // Verbinde das "draw"-Signal mit der Rendering-Funktion
-  g_signal_connect(drawing_area, "draw", G_CALLBACK(on_draw_event), pixbuf);
-  // Zeige das Fenster und alle Widgets an
-  gtk_widget_show_all(windowB);
-  */
 }
 
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
