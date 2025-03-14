@@ -55,10 +55,7 @@
 char zeitString[20];
 
 /* Create a new surface of the appropriate size to store our scribbles */
-static gboolean
-panadapter_configure_event_cb (GtkWidget         *widget,
-                               GdkEventConfigure *event,
-                               gpointer           data) {
+static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
   RECEIVER *rx = (RECEIVER *)data;
   int mywidth = gtk_widget_get_allocated_width (widget);
   int myheight = gtk_widget_get_allocated_height (widget);
@@ -81,10 +78,7 @@ panadapter_configure_event_cb (GtkWidget         *widget,
  * signal receives a ready-to-be-used cairo_t that is already
  * clipped to only draw the exposed areas of the widget
  */
-static gboolean
-panadapter_draw_cb (GtkWidget *widget,
-                    cairo_t   *cr,
-                    gpointer   data) {
+static gboolean panadapter_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
   RECEIVER *rx = (RECEIVER *)data;
 
   if (rx->panadapter_surface) {
