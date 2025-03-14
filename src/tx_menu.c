@@ -584,6 +584,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
         if (transmitter->tune_use_drive) {
           transmitter->tune_use_drive = 0;
         }
+
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
         gtk_widget_queue_draw(tune_drive_scale);
         gdk_flush();

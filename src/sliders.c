@@ -620,9 +620,11 @@ static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
 
   transmitter->tune_drive = value;
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), transmitter->tune_drive);
+
   if (can_transmit && transmitter->tune_use_drive) {
     transmitter->tune_use_drive = 0;
   }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
