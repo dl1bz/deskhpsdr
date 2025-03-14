@@ -581,6 +581,9 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
 #if defined (__LDESK__)
 
       if (can_transmit && display_sliders) {
+        if (transmitter->tune_use_drive) {
+          transmitter->tune_use_drive = 0;
+        }
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
         gtk_widget_queue_draw(tune_drive_scale);
         gdk_flush();
@@ -1224,16 +1227,6 @@ void tx_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->tune_use_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_TUNE_USE_DRIVE));
-#if defined (__LDESK__) && defined (__HAVEATU__)
-
-  if (!transmitter->tune_use_drive) {
-    gtk_widget_set_sensitive (btn, FALSE);
-  } else {
-    transmitter->tune_use_drive = 0;
-    gtk_widget_set_sensitive (btn, FALSE);
-  }
-
-#endif
   col++;
   label = gtk_label_new("Tune Drive level");
   gtk_widget_set_name(label, "boldlabel");
