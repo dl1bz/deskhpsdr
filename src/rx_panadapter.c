@@ -52,7 +52,7 @@
   #include "audio.h"
 #endif
 #if defined (__WMAP__)
-  #include "worldmap.h"
+  #include "map_d.h"
 #endif
 
 char zeitString[20];
@@ -60,7 +60,7 @@ char zeitString[20];
 //------------------------------------------------------------------------------
 GdkPixbuf *pixbuf = NULL;
 
-static GdkPixbuf *create_pixbuf_from_data(int w, int h) {
+static GdkPixbuf *create_pixbuf_from_mapdata(int w, int h) {
   GInputStream *mem_stream;
   GdkPixbuf *pixbuf, *scaled_pixbuf;
   GError *error = NULL;
@@ -250,7 +250,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   cairo_fill(cr);
 #if defined (__WMAP__)
   //------------------------------------------------------------------------------
-  pixbuf = create_pixbuf_from_data(mywidth, myheight);
+  pixbuf = create_pixbuf_from_mapdata(mywidth, myheight);
   draw_image(cr, pixbuf, 0, 0);
   //------------------------------------------------------------------------------
 #endif
