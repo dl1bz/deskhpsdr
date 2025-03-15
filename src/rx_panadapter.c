@@ -252,7 +252,12 @@ void rx_panadapter_update(RECEIVER *rx) {
   //------------------------------------------------------------------------------
   pixbuf = create_pixbuf_from_mapdata(mywidth, myheight);
   draw_image(cr, pixbuf, 0, 0);
-  g_object_unref(pixbuf);  // Pixbuf freigeben
+  /*
+      IMPORTANT:
+      Free Pixbuf ! Otherwise we will get a memory leak after a short
+      runtime and the app will be crashed !
+  */
+  g_object_unref(pixbuf); // never forget this !
   //------------------------------------------------------------------------------
 #endif
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
