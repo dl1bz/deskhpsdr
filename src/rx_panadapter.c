@@ -58,7 +58,7 @@
 char zeitString[20];
 #if defined (__WMAP__)
 //------------------------------------------------------------------------------
-GdkPixbuf *pixbuf = NULL;
+static GdkPixbuf *pixbuf = NULL;
 
 static GdkPixbuf *create_pixbuf_from_mapdata(int w, int h) {
   GInputStream *mem_stream;
@@ -81,7 +81,7 @@ static GdkPixbuf *create_pixbuf_from_mapdata(int w, int h) {
   return scaled_pixbuf;
 }
 
-void draw_image(cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
+static void draw_image(cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
   // Bild auf dem Cairo-Zeichenkontext setzen
   gdk_cairo_set_source_pixbuf(cr, pixbuf, x_offset, y_offset);
   cairo_paint(cr);  // Bild zeichnen
