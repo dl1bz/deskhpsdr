@@ -33,35 +33,40 @@ REGION1=OFF
 WMAP=OFF
 DEVEL=OFF
 
-##################################################################################################
+#################################################################################################################
 #
-# Explanation of compile time options
+#  Explanation of compile time options
 #
-# TCI          | If ON, compile with TCI support (needs OpenSSL)
-# GPIO         | If ON, compile with GPIO support (RaspPi only, needs libgpiod)
-# MIDI         | If ON, compile with MIDI support
-# SATURN       | If ON, compile with native SATURN/G2 XDMA support
-# USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs  libusb-1.0)
-# SOAPYSDR     | If ON, deskHPSDR can talk to radios via SoapySDR library
-# STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
-# EXTENDED_NR  | If ON, deskHPSDR can use extended noise reduction (VU3RDD WDSP version)
-# AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux
-# ATU          | If ON, acticate some special functions if using an external ATU
-# COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
-# AUTOGAIN     | If ON and using a Hermes Lite 2, activate automatic regulation of RxPGA gain
-# REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
-# WMAP         | If ON, a Worldmap is shown as Backgroundimage of RX Panadapter
-# DEVEL        | ONLY FOR INTERNAL DEVELOPER USE ! Leave it ever OFF, please
+#  TCI          | If ON, compile with TCI support (needs OpenSSL)
+#  GPIO         | If ON, compile with GPIO support (RaspPi only, needs libgpiod)
+#  MIDI         | If ON, compile with MIDI support
+#  SATURN       | If ON, compile with native SATURN/G2 XDMA support
+#  USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs  libusb-1.0)
+#  SOAPYSDR     | If ON, deskHPSDR can talk to radios supported via SoapySDR-API library
+#  STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
+#  EXTENDED_NR  | If ON, deskHPSDR can use extended noise reduction (VU3RDD WDSP version) -> EXPERIMENTAL !
+#  AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux (use PulseAudio recommend)
+#  ATU          | If ON, acticate some special functions if using an external ATU
+#  COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
+#  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
+#  REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
+#  WMAP         | If ON, a Worldmap is shown as Backgroundimage of RX Panadapter -> NEED more CPU consumption !
+#  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
 #
-# If you want to use a non-default compile time option, write them
-# into a file "make.config.deskhpsdr". So, for example, if you want to
-# disable GPIO and have AUDIO=ALSA, create a file make.config.deskhpsdr in
-# the deskhpsdr directory with two lines that read
+#  If you want to use the Worldmap option (shown as RX panadapter background image instead of the original black
+#  filled background) the CPU consumption will be increase !
+#  This can be a problem with SoC without enough compute power like the older Raspberry Pi (except Pi5,
+#  maybe except Pi4 too). In this case better leave this option OFF !
 #
-# GPIO=OFF
-# AUDIO=ALSA
+#  If you want to use a non-default compile time option, write them
+#  into a file "make.config.deskhpsdr". So, for example, if you want to
+#  disable GPIO and have AUDIO=ALSA, create a file make.config.deskhpsdr in
+#  the deskhpsdr directory with two lines that read
 #
-##################################################################################################
+#  GPIO=OFF
+#  AUDIO=ALSA
+#
+#################################################################################################################
 
 -include make.config.deskhpsdr
 
