@@ -250,12 +250,12 @@ void rx_panadapter_update(RECEIVER *rx) {
   cairo_fill(cr);
 #if defined (__WMAP__)
   //------------------------------------------------------------------------------
-  pixbuf = create_pixbuf_from_mapdata(mywidth, myheight);
-  draw_image(cr, pixbuf, 0, 0);
+  pixbuf = create_pixbuf_from_mapdata(mywidth, myheight); // build the picture in memory
+  draw_image(cr, pixbuf, 0, 0); // draw the picture
   /*
       IMPORTANT:
-      Free Pixbuf ! Otherwise we will get a memory leak after a short
-      runtime and the app will be crashed !
+      Release now the object Pixbuf ! Otherwise we will get increasing memory consumption
+      and after a short runtime the app will be crashed with "no more free memory" !
   */
   g_object_unref(pixbuf); // never forget this !
   //------------------------------------------------------------------------------
