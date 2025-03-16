@@ -279,12 +279,10 @@ static void modesettingsRestoreState() {
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
 #if defined (__LDESK__) && defined (__CPYMODE__)
-    g_mutex_lock(&copy_string_mutex);
     mode_settings[i].local_microphone = 0;
     strncpy(mode_settings[i].microphone_name, "NO MIC", 128);
     mode_settings[i].puresignal = 0;
     mode_settings[i].use_rx_filter = 0;
-    g_mutex_unlock(&copy_string_mutex);
 #endif
 
     for (int j = 0; j < 11; j++) {

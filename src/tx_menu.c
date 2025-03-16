@@ -799,10 +799,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
     case TX_USE_RX_FILTER:
       transmitter->use_rx_filter = v;
       tx_set_filter(transmitter);
-#if defined (__LDESK__) && defined (__CPYMODE__)
-      mode_settings[mode].use_rx_filter = v;
-      copy_mode_settings(mode);
-#endif
 
       if (v) {
         gtk_widget_set_sensitive (tx_spin_low, FALSE);
@@ -811,30 +807,36 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
         gtk_widget_set_sensitive (tx_spin_low, TRUE);
         gtk_widget_set_sensitive (tx_spin_high, TRUE);
       }
-
-      vfo_update();
+#if defined (__LDESK__) && defined (__CPYMODE__)
+      mode_settings[mode].use_rx_filter = v;
+      copy_mode_settings(mode);
+#endif
+      // vfo_update();
+      g_idle_add(ext_vfo_update, NULL);
       break;
 
     case TX_LOCAL_MIC:
       if (v) {
         if (audio_open_input() == 0) {
           transmitter->local_microphone = 1;
-          mode_settings[mode].local_microphone = 1;
         } else {
           transmitter->local_microphone = 0;
-          mode_settings[mode].local_microphone = 0;
           gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
         }
       } else {
         if (transmitter->local_microphone) {
           transmitter->local_microphone = 0;
-          mode_settings[mode].local_microphone = 0;
           audio_close_input();
         }
       }
 #if defined (__LDESK__) && defined (__CPYMODE__)
-      t_print("DL1BZ: mode: %d transmitter->local_microphone: %d mode_settings[mode].local_microphone %d\n",
-      mode, transmitter->local_microphone, mode_settings[mode].local_microphone);
+      if (transmitter->local_microphone) {
+        mode_settings[mode].local_microphone = 1;
+      } else {
+        mode_settings[mode].local_microphone = 0;
+      }
+      t_print("DL1BZ: mode: %d transmitter->local_microphone: %d mode_settings[%d].local_microphone %d\n",
+      mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
       copy_mode_settings(mode);
       g_idle_add(ext_vfo_update, NULL);
 #endif
@@ -919,19 +921,19 @@ static void ctcss_frequency_cb(GtkWidget *widget, gpointer data) {
 
 static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#if defined (__LDESK__) && defined (__CPYMODE__)
+  int _mode = vfo_get_tx_mode();
+#endif
   t_print("local_input_changed_cb: %d %s\n", i, input_devices[i].name);
 
   if (transmitter->local_microphone) {
     audio_close_input();
   }
 
-  STRLCPY(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
+  strncpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
+
 #if defined (__LDESK__) && defined (__CPYMODE__)
-  int _mode = vfo_get_tx_mode();
-  STRLCPY(mode_settings[_mode].microphone_name, transmitter->microphone_name,
-          sizeof(mode_settings[_mode].microphone_name));
-  copy_mode_settings(_mode);
-  // t_print("%s: mode: %d, mode_settings %s size: %d\n", __FUNCTION__, _mode, mode_settings[_mode].microphone_name, sizeof(mode_settings[_mode].microphone_name));
+  strncpy(mode_settings[_mode].microphone_name, transmitter->microphone_name, sizeof(mode_settings[_mode].microphone_name));
 #endif
 
   if (transmitter->local_microphone) {
@@ -939,10 +941,13 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
       transmitter->local_microphone = 0;
 #if defined (__LDESK__) && defined (__CPYMODE__)
       mode_settings[_mode].local_microphone = 0;
-      copy_mode_settings(_mode);
 #endif
     }
   }
+#if defined (__LDESK__) && defined (__CPYMODE__)
+  t_print("%s: mode: %d, mode_settings %s size: %d\n", __FUNCTION__, _mode, mode_settings[_mode].microphone_name, sizeof(mode_settings[_mode].microphone_name));
+  copy_mode_settings(_mode);
+#endif
 }
 
 void tx_menu(GtkWidget *parent) {
