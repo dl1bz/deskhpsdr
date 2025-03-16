@@ -1130,7 +1130,7 @@ void tx_menu(GtkWidget *parent) {
 
     if (gtk_combo_box_get_active(GTK_COMBO_BOX(input))  < 0) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
-      STRLCPY(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
+      strncpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
     }
 
     my_combo_attach(GTK_GRID(tx_grid), input, col, row, 4, 1);
