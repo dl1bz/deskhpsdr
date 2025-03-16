@@ -67,6 +67,10 @@
   #include "sliders.h"
 #endif
 
+#if defined (__LDESK__) && defined (__CPYMODE__)
+  static GMutex copy_string_mutex;
+#endif
+
 static int my_width;
 static int my_height;
 
@@ -275,10 +279,12 @@ static void modesettingsRestoreState() {
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
 #if defined (__LDESK__) && defined (__CPYMODE__)
+    g_mutex_lock(&copy_string_mutex);
     mode_settings[i].local_microphone = 0;
     strncpy(mode_settings[i].microphone_name, "NO MIC", 128);
     mode_settings[i].puresignal = 0;
     mode_settings[i].use_rx_filter = 0;
+    g_mutex_unlock(&copy_string_mutex);
 #endif
 
     for (int j = 0; j < 11; j++) {
@@ -752,10 +758,12 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->cfc              = mode_settings[m].cfc;
     transmitter->cfc_eq           = mode_settings[m].cfc_eq;
 #if defined (__LDESK__) && defined (__CPYMODE__)
+    g_mutex_lock(&copy_string_mutex);
     transmitter->local_microphone = mode_settings[m].local_microphone;
     strncpy(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
     transmitter->puresignal       = mode_settings[m].puresignal;
     transmitter->use_rx_filter    = mode_settings[m].use_rx_filter;
+    g_mutex_unlock(&copy_string_mutex);
 #endif
     transmitter->lev_enable       = mode_settings[m].lev_enable;
     transmitter->lev_gain         = mode_settings[m].lev_gain;

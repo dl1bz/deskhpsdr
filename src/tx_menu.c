@@ -246,7 +246,9 @@ void audioSaveProfile() {
   clearProperties();
   // save only for LSB
   int i = modeLSB;
+#if defined (__LDESK__) && defined (__CPYMODE__)
   SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name)
+#endif
   SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
   SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
   SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
@@ -266,7 +268,6 @@ void audioSaveProfile() {
 
   SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   SetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
-  // SetPropS0("modeset.%d.microphone_name",       mode_settings[i].microphone_name);
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
   saveProperties(DateiName);
