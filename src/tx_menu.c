@@ -819,32 +819,25 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       if (v) {
         if (audio_open_input() == 0) {
           transmitter->local_microphone = 1;
-#if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 1;
-          copy_mode_settings(mode);
-          g_idle_add(ext_vfo_update, NULL);
-#endif
         } else {
           transmitter->local_microphone = 0;
-#if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 0;
-          copy_mode_settings(mode);
-          g_idle_add(ext_vfo_update, NULL);
-#endif
           gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
         }
       } else {
         if (transmitter->local_microphone) {
           transmitter->local_microphone = 0;
-#if defined (__LDESK__) && defined (__CPYMODE__)
           mode_settings[mode].local_microphone = 0;
-          copy_mode_settings(mode);
-          g_idle_add(ext_vfo_update, NULL);
-#endif
           audio_close_input();
         }
       }
-
+#if defined (__LDESK__) && defined (__CPYMODE__)
+      t_print("DL1BZ: mode: %d transmitter->local_microphone: %d mode_settings[mode].local_microphone %d\n",
+      mode, transmitter->local_microphone, mode_settings[mode].local_microphone);
+      copy_mode_settings(mode);
+      g_idle_add(ext_vfo_update, NULL);
+#endif
       break;
 
     case TX_FM_EMP:

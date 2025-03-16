@@ -68,7 +68,7 @@
 #endif
 
 #if defined (__LDESK__) && defined (__CPYMODE__)
-  static GMutex copy_string_mutex;
+  GMutex copy_string_mutex;
 #endif
 
 static int my_width;
