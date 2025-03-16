@@ -67,6 +67,9 @@ char build_options[] =
 #ifdef __REG1__
   "REGION1 "
 #endif
+#ifdef __WMAP__
+  "MAP "
+#endif
 #ifdef __DVL__
   "DEVEL "
 #endif

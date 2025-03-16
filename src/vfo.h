@@ -151,7 +151,7 @@ struct _mode_settings {
   double cfc_post[11];              // CFC post-EQ gain at corner frequency
 #if defined (__LDESK__) && defined (__CPYMODE__)
   int local_microphone;
-  gchar microphone_name[128];
+  char microphone_name[128];
   int puresignal;
   int use_rx_filter;
 #endif

@@ -48,13 +48,6 @@
 
 #include <sys/types.h>
 #include <string.h>
-// add by DH0DM
-#if defined (__LDESK__)
-  // #include <pthread.h>
-  // pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-  #include <gtk/gtk.h>
-  static GMutex copy_string_mutex;
-#endif
 
 /*
  * Appends src to string dst of size dsize (unlike strncat, dsize is the
@@ -69,9 +62,6 @@ STRLCAT(char *dst, const char *src, size_t dsize) {
   const char *osrc = src;
   size_t n = dsize;
   size_t dlen;
-#if defined (__LDESK__)
-  g_mutex_lock(&copy_string_mutex);
-#endif
 
   /* Find the end of dst and adjust bytes left but don't go past end. */
   while (n-- != 0 && *dst != '\0') {
@@ -95,9 +85,6 @@ STRLCAT(char *dst, const char *src, size_t dsize) {
   }
 
   *dst = '\0';
-#if defined (__LDESK__)
-  g_mutex_unlock(&copy_string_mutex);
-#endif
   return (dlen + (src - osrc)); /* count does not include NUL */
 }
 
@@ -110,11 +97,6 @@ size_t
 STRLCPY(char *dst, const char *src, size_t dsize) {
   const char *osrc = src;
   size_t nleft = dsize;
-  // add by DH0DM
-#if defined (__LDESK__)
-  // pthread_mutex_lock(&mutex);
-  g_mutex_lock(&copy_string_mutex);
-#endif
 
   /* Copy as many bytes as will fit. */
   if (nleft != 0) {
@@ -135,10 +117,5 @@ STRLCPY(char *dst, const char *src, size_t dsize) {
       ;
   }
 
-  // add by DH0DM
-#if defined (__LDESK__)
-  // pthread_mutex_unlock(&mutex);
-  g_mutex_unlock(&copy_string_mutex);
-#endif
   return (src - osrc - 1); /* count does not include NUL */
 }
