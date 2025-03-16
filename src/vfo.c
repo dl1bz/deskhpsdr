@@ -325,7 +325,7 @@ static void modesettingsRestoreState() {
     mode_settings[i].phrot_enable = 0;
 #if defined (__LDESK__) && defined (__CPYMODE__)
     mode_settings[i].local_microphone = 0;
-    strncpy(mode_settings[i].microphone_name, "NO MIC", 128);
+    strlcpy(mode_settings[i].microphone_name, "NOMIC", 128);
     mode_settings[i].puresignal = 0;
     mode_settings[i].use_rx_filter = 0;
 #endif
@@ -806,7 +806,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
 #if defined (__LDESK__) && defined (__CPYMODE__)
     g_mutex_lock(&copy_string_mutex);
     transmitter->local_microphone = mode_settings[m].local_microphone;
-    strncpy(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
+    strlcpy(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
     transmitter->puresignal       = mode_settings[m].puresignal;
     transmitter->use_rx_filter    = mode_settings[m].use_rx_filter;
     g_mutex_unlock(&copy_string_mutex);

@@ -1038,7 +1038,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->addgain_enable   =       0;
   tx->addgain_gain     =    10.0;
   tx->local_microphone = 0;
-  strncpy(tx->microphone_name, "NOMIC", 128);
+  strlcpy(tx->microphone_name, "NOMIC", 128);
   tx->dialog_x = -1;
   tx->dialog_y = -1;
   tx->dialog = NULL;
