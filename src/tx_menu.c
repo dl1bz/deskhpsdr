@@ -163,6 +163,7 @@ static void audioLoadProfile() {
     t_print("%s: Mode i=%d\n", __FUNCTION__, i);
     loadProperties(DateiName);
     GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+    GetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
     GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     GetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
     GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
@@ -174,6 +175,8 @@ static void audioLoadProfile() {
     for (int j = 0; j < 11; j++) {
       GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
       GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+      GetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
+      GetPropF2("modeset.%d.rxeqfrq.%d", i, j,       mode_settings[i].rx_eq_freq[j]);
       GetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
       GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
       GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
@@ -250,6 +253,7 @@ void audioSaveProfile() {
   SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name)
 #endif
   SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+  SetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
   SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
   SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
   SetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
@@ -261,9 +265,16 @@ void audioSaveProfile() {
   for (int j = 0; j < 11; j++) {
     SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
     SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+    SetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
+    SetPropF2("modeset.%d.rxeqfrq.%d", i, j,       mode_settings[i].rx_eq_freq[j]);
     SetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
     SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
     SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
+  }
+
+  for (int k = 0; k < 11; k++) {
+    SetPropF2("modeset.%d.rxeq.%d", i, k,          mode_settings[i].rx_eq_gain[k]);
+    SetPropF2("modeset.%d.rxeqfrq.%d", i, k,       mode_settings[i].rx_eq_freq[k]);
   }
 
   SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
@@ -1188,7 +1199,11 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
+#if defined (__LDESK__)
+  tx_spin_low = gtk_spin_button_new_with_range(0.0, 8000.0, 50.0);
+#else
   tx_spin_low = gtk_spin_button_new_with_range(0.0, 8000.0, 1.0);
+#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_spin_low), (double)tx_filter_low);
   gtk_grid_attach(GTK_GRID(tx_grid), tx_spin_low, col, row, 1, 1);
   g_signal_connect(tx_spin_low, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FILTER_LOW));
@@ -1219,7 +1234,11 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
+#if defined (__LDESK__)
+  tx_spin_high = gtk_spin_button_new_with_range(0.0, 8000.0, 50.0);
+#else
   tx_spin_high = gtk_spin_button_new_with_range(0.0, 8000.0, 1.0);
+#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_spin_high), (double)tx_filter_high);
   gtk_grid_attach(GTK_GRID(tx_grid), tx_spin_high, col, row, 1, 1);
   g_signal_connect(tx_spin_high, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FILTER_HIGH));

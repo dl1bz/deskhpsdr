@@ -101,43 +101,43 @@ struct _mode_settings mode_settings[MODES];
 const char* getModeName(int mode) {
   switch (mode) {
   case modeLSB:
-    return "modeLSB";
+    return "LSB";
 
   case modeUSB:
-    return "modeUSB";
+    return "USB";
 
   case modeDSB:
-    return "modeDSB";
+    return "DSB";
 
   case modeCWL:
-    return "modeCWL";
+    return "CW-L";
 
   case modeCWU:
-    return "modeCWU";
+    return "CW-U";
 
   case modeFMN:
-    return "modeFMN";
+    return "FM-N";
 
   case modeAM:
-    return "modeAM";
+    return "AM";
 
   case modeDIGU:
-    return "modeDIGU";
+    return "DIG-U";
 
   case modeSPEC:
-    return "modeSPEC";
+    return "SPEC";
 
   case modeDIGL:
-    return "modeDIGL";
+    return "DIG-L";
 
   case modeSAM:
-    return "modeSAM";
+    return "SAM";
 
   case modeDRM:
-    return "modeDRM";
+    return "DRM";
 
   default:
-    return "mode_UNKNOWN";  // Gibt "Unbekannt" zurück, wenn der Wert nicht gefunden wird
+    return "Mode_not_supported";  // wenn der Wert nicht gefunden wird
   }
 }
 
@@ -178,7 +178,7 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.nr2_ae", i,                mode_settings[i].nr2_ae);
     SetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     SetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
-    SetPropS1("modeset.%d.desc", i,                  mode_settings[i].desc);
+    SetPropS1("modeset.%d.mode_description", i,      mode_settings[i].desc);
 #ifdef EXTNR
     SetPropF1("modeset.%d.nr4_reduction_amount", i,  mode_settings[i].nr4_reduction_amount);
     SetPropF1("modeset.%d.nr4_smoothing_factor", i,  mode_settings[i].nr4_smoothing_factor);
