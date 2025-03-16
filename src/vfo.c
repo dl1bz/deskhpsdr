@@ -160,6 +160,7 @@ static void vfo_save_bandstack() {
 
 static void modesettingsSaveState() {
   for (int i = 0; i < MODES; i++) {
+    mode_settings[i].desc = getModeName(i); // save description of numeric mode number for better reading
     SetPropI1("modeset.%d.filter", i,                mode_settings[i].filter);
     SetPropI1("modeset.%d.cwPeak", i,                mode_settings[i].cwPeak);
     SetPropI1("modeset.%d.step", i,                  mode_settings[i].step);
@@ -177,6 +178,7 @@ static void modesettingsSaveState() {
     SetPropI1("modeset.%d.nr2_ae", i,                mode_settings[i].nr2_ae);
     SetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     SetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
+    SetPropS1("modeset.%d.desc", i,                  mode_settings[i].desc);
 #ifdef EXTNR
     SetPropF1("modeset.%d.nr4_reduction_amount", i,  mode_settings[i].nr4_reduction_amount);
     SetPropF1("modeset.%d.nr4_smoothing_factor", i,  mode_settings[i].nr4_smoothing_factor);
