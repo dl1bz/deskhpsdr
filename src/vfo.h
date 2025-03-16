@@ -212,5 +212,6 @@ extern void       vfo_ctun_update(int id, int state);
 extern void       vfo_apply_mode_settings(RECEIVER *rx);
 extern void       vfo_vfos_changed(void);
 extern void       vfo_num_pad(int val, int vfo);
+extern const char* getModeName(int mode);
 
 #endif

@@ -428,7 +428,6 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
     int _mode = vfo_get_tx_mode();
 #endif
     clear_fields();
-
     tx_ps_onoff(transmitter, val);
 
     if (val) {
@@ -448,6 +447,7 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
       gtk_widget_show(tx_att);
       gtk_entry_set_text(GTK_ENTRY(tx_att), "");
     }
+
 #if defined (__LDESK__) && defined (__CPYMODE__)
     mode_settings[_mode].puresignal = val;
     copy_mode_settings(_mode);

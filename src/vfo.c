@@ -98,6 +98,49 @@ static inline long long ROUND(long long freq, int nsteps, int step) {
 struct _vfo vfo[MAX_VFOS];
 struct _mode_settings mode_settings[MODES];
 
+const char* getModeName(int mode) {
+  switch (mode) {
+  case modeLSB:
+    return "modeLSB";
+
+  case modeUSB:
+    return "modeUSB";
+
+  case modeDSB:
+    return "modeDSB";
+
+  case modeCWL:
+    return "modeCWL";
+
+  case modeCWU:
+    return "modeCWU";
+
+  case modeFMN:
+    return "modeFMN";
+
+  case modeAM:
+    return "modeAM";
+
+  case modeDIGU:
+    return "modeDIGU";
+
+  case modeSPEC:
+    return "modeSPEC";
+
+  case modeDIGL:
+    return "modeDIGL";
+
+  case modeSAM:
+    return "modeSAM";
+
+  case modeDRM:
+    return "modeDRM";
+
+  default:
+    return "mode_UNKNOWN";  // Gibt "Unbekannt" zurück, wenn der Wert nicht gefunden wird
+  }
+}
+
 static void vfo_save_bandstack() {
   BANDSTACK *bandstack = bandstack_get_bandstack(vfo[0].band);
   bandstack->current_entry = vfo[0].bandstack;
@@ -453,6 +496,9 @@ void copy_mode_settings(int mode) {
     mode_settings[modeUSB] = mode_settings[mode];
     mode_settings[modeDSB] = mode_settings[mode];
     break;
+
+  default:
+    t_print("%s: Mode %s has no copy condition.\n", __FUNCTION__, getModeName(mode));
   }
 }
 
