@@ -201,7 +201,10 @@ static void audioLoadProfile() {
       transmitter->cfc_post[j]    = mode_settings[i].cfc_post[j];
     }
 
+    GetPropI0("transmitter.tx_filter_high",          tx_filter_high);
+    GetPropI0("transmitter.tx_filter_low",           tx_filter_low);
     copy_mode_settings(i);
+    tx_set_filter(transmitter);
     tx_set_compressor(transmitter);
     tx_set_dexp(transmitter);
     // rx_set_agc(rx);
@@ -279,6 +282,8 @@ void audioSaveProfile() {
 
   SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   SetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
+  SetPropI0("transmitter.tx_filter_high",          tx_filter_high);
+  SetPropI0("transmitter.tx_filter_low",           tx_filter_low);
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
   saveProperties(DateiName);
