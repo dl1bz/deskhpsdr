@@ -933,7 +933,9 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   strncpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
 
 #if defined (__LDESK__) && defined (__CPYMODE__)
+  g_mutex_lock(&copy_string_mutex);
   strncpy(mode_settings[_mode].microphone_name, transmitter->microphone_name, sizeof(transmitter->microphone_name));
+  g_mutex_unlock(&copy_string_mutex);
 #endif
 
   if (transmitter->local_microphone) {
