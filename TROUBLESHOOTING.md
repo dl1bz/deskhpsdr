@@ -7,14 +7,14 @@ If the application don't work, don't work correctly or crash, here some recommen
 ### 1. Update the code and recompile
 
 The first you need to do is be sure using most up-to-date codebase:
-```$ cd deskhpsdr```
-```$ git checkout master```
-```$ git pull```
+```$ cd deskhpsdr```<br>
+```$ git checkout master```<br>
+```$ git pull```<br>
 
-If ```git pull``` failed, you can try this:
-```$ git reset --hard origin/master```
-```$ git pull```
-```$ git update-index --assume-unchanged make.config.deskhpsdr```
+If ```git pull``` failed, you can try this:<br>
+```$ git reset --hard origin/master```<br>
+```$ git pull```<br>
+```$ git update-index --assume-unchanged make.config.deskhpsdr```<br>
 
 This reset your local codebase similiar to my repository at github.com. Mostly ```git pull``` failed, if you have done local changes in the codebase. Please don't edit the Makefile direct ! Only do all it in the ```make.config.deskhpsdr```, this file will be used and included in the Makefile.
 
@@ -26,12 +26,12 @@ I will permanently update the codebase with bugfixes, so be sure you will be usi
 
 deskHPSDR is using for every SDR device a config file, where all settings you have done will be saved and reloaded automaticly. Sometimes this or these file(s) can be wrong for various reasons. If you sure, deskHPSDR was compiled correct, but don't work correct, try at first to remove these config files.
 
-They are located here:
-macOS: ```[home-dir]/Library/Application Support/deskHPSDR/```
-Linux: ```[home-dir]/.config/deskhpsdr/```
+They are located here:<br>
+macOS: ```[home-dir]/Library/Application Support/deskHPSDR/```<br>
+Linux: ```[home-dir]/.config/deskhpsdr/```<br>
 
-Close deskHPSDR and remove in the just described directory all *.prop files:
-```$ rm *.props```
+Close deskHPSDR and remove in the just described directory all *.prop files:<br>
+```$ rm *.props```<br>
 
 After removing restart deskHPSDR. Unfortunately, you need to do again a complete new setup for your used SDR device. The most problems can be fixed with this action. The config files will be generated new from scratch and old or wrong values won't be imported.
 This can be mandatory, if I change code or change variables inside the code.
