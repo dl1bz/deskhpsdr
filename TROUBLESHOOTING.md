@@ -22,6 +22,29 @@ After all, check and follow the instructions written in the ```COMPILE.macOS``` 
 
 I will permanently update the codebase with bugfixes, so be sure you will be using the last and actual version of codebase. Use ever the master branch, but not the devel branch. The devel branch is a work-in-progress with no guarantee, that the code will be work. Maybe yes, maybe no. The devel branch isn't suitable for production, normal or daily use ! Only the master branch is that, what you must use.
 
+### 1.1 Example of make.config.deskhpsdr
+
+A correct, minimum file ```make.config.deskhpsdr``` look like this as example:
+```
+TCI=ON
+GPIO=OFF
+MIDI=ON
+SATURN=OFF
+USBOZY=OFF
+SOAPYSDR=ON
+STEMLAB=OFF
+EXTENDED_NR=
+AUDIO=PULSE
+ATU=OFF
+COPYMODE=OFF
+AUTOGAIN=ON
+REGION1=ON
+WMAP=ON
+```
+Please use ```AUTOGAIN=ON``` only if your SDR is a Hermes Lite 2, otherwise set it ```AUTOGAIN=OFF```. ```GPIO``` will only work with Raspberry Pi. Let ```ATU=OFF``` and ```COPYMODE=OFF```, these are special functions they work only with **my own** SDR system.<br>
+```REGION1=ON``` set the band borders in the RX panadpter to IARU Region 1 (if OFF all is US based) and ```WMAP=ON``` show a worldmap as background instead of the pure black background. The pic for the worldmap is taken from Thetis. The worldmap as background maybe increase the CPU usage. If your system hasn't enough CPU power and this is a problem, better set ```WMAP=OFF```. deskHPSDR is made for desktop systems, they all have enough CPU power. But my tests were shown, with a Raspberry Pi5 the worldmap works too without any issues.
+
+
 ### 2. Remove the config files
 
 deskHPSDR is using for every SDR device a config file, where all settings you have done will be saved and reloaded automaticly. Sometimes this or these file(s) can be wrong for various reasons. If you sure, deskHPSDR was compiled correct, but don't work correct, try at first to remove these config files.
@@ -33,7 +56,7 @@ Linux: ```[home-dir]/.config/deskhpsdr/```<br>
 Close deskHPSDR and remove in the just described directory all *.prop files:<br>
 ```$ rm *.props```<br>
 
-After removing restart deskHPSDR. Unfortunately, you need to do again a complete new setup for your used SDR device. The most problems can be fixed with this action. The config files will be generated new from scratch and old or wrong values won't be imported.
+After removing restart deskHPSDR. **Unfortunately, you need to do again a complete new setup for your used SDR device**. The most problems can be fixed with this action. The config files will be generated new from scratch and old or wrong values won't be imported.
 This can be mandatory, if I change code or change variables inside the code.
 
 ### 3. Your used OS
