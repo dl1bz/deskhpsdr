@@ -272,7 +272,11 @@ static void tci_send_text(CLIENT *client, char *msg) {
 
   RESPONSE *resp = g_new(RESPONSE, 1);
   resp->client = client;
+#if defined (__LDESK__)
+  g_strlcpy(resp->msg, msg, sizeof(resp->msg));
+#else
   strcpy(resp->msg, msg);
+#endif
   resp->type = opTEXT;
   g_idle_add(tci_send_frame, resp);
 }
