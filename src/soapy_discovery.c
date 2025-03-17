@@ -226,7 +226,8 @@ static void get_info(char *driver) {
     discovered[devices].frequency_min = ranges[0].minimum;
     discovered[devices].frequency_max = ranges[0].maximum;
     g_strlcpy(discovered[devices].info.soapy.driver_key, driverkey, sizeof(discovered[devices].info.soapy.driver_key));
-    g_strlcpy(discovered[devices].info.soapy.hardware_key, hardwarekey, sizeof(discovered[devices].info.soapy.hardware_key));
+    g_strlcpy(discovered[devices].info.soapy.hardware_key, hardwarekey,
+              sizeof(discovered[devices].info.soapy.hardware_key));
     discovered[devices].info.soapy.sample_rate = sample_rate;
 
     if (strcmp(driver, "rtlsdr") == 0) {

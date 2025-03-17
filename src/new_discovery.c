@@ -377,7 +377,7 @@ gpointer new_discover_receive_thread(gpointer data) {
                    sizeof(interface_netmask));
             discovered[devices].info.network.interface_length = sizeof(interface_addr);
             g_strlcpy(discovered[devices].info.network.interface_name, interface_name,
-                    sizeof(discovered[devices].info.network.interface_name));
+                      sizeof(discovered[devices].info.network.interface_name));
             discovered[devices].supported_receivers = 2;
             //
             // Info not yet made use of:
