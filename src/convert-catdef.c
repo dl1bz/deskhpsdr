@@ -19,6 +19,9 @@
 *
 */
 
+#include <gtk/gtk.h>
+#include <gdk/gdk.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -178,7 +181,8 @@ void replacexy(char *str, int flag) {
   }
 
   res[j++] = 0;
-  strcpy(str, res);
+  // strcpy(str, res);
+  g_strlcpy(str, res, sizeof(str));
 }
 
 int main(int argc, char **argv) {
@@ -207,7 +211,8 @@ int main(int argc, char **argv) {
     }
 
     if (strstr(line, "//CATDEF")  != NULL) {
-      strcpy(catcmd, pos);
+      // strcpy(catcmd, pos);
+      g_strlcpy(catcmd, pos, sizeof(catcmd));
       notenum = 0;
       catdescr[0] = 0;
       catset[0] = 0;
@@ -217,32 +222,39 @@ int main(int argc, char **argv) {
     }
 
     if (strstr(line, "//DESCR")  != NULL) {
-      strcpy(catdescr, pos);
+      // strcpy(catdescr, pos);
+      g_strlcpy(catdescr, pos, sizeof(catdescr));
     }
 
     if (strstr(line, "//SET")  != NULL) {
-      strcpy(catset, pos);
+      // strcpy(catset, pos);
+      g_strlcpy(catset, pos, sizeof(catset));
     }
 
     if (strstr(line, "//READ")  != NULL) {
-      strcpy(catread, pos);
+      // strcpy(catread, pos);
+      g_strlcpy(catread, pos, sizeof(catread));
     }
 
     if (strstr(line, "//RESP")  != NULL) {
-      strcpy(catresp, pos);
+      // strcpy(catresp, pos);
+      strlcpy(catresp, pos, sizeof(catresp));
     }
 
     if (strstr(line, "//CONT")  != NULL) {
       if (notenum == 0) {
-        strcpy(notes[notenum], pos);
+        // strcpy(notes[notenum], pos);
+        g_strlcpy(notes[notenum], pos, sizeof(notes[notenum]));
         notenum++;
       } else {
-        strcat(notes[notenum - 1], pos - 1);
+        // strcat(notes[notenum - 1], pos - 1);
+        g_strlcpy(notes[notenum - 1], pos - 1, sizeof(notes[notenum - 1]));
       }
     }
 
     if (strstr(line, "//NOTE")  != NULL) {
-      strcpy(notes[notenum], pos);
+      // strcpy(notes[notenum], pos);
+      g_strlcpy(notes[notenum], pos, sizeof(notes[notenum]));
       notenum++;
     }
 
