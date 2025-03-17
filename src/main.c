@@ -555,7 +555,7 @@ static int init(void *data) {
   // Depending on the WDSP version, the file is wdspWisdom or wdspWisdom00.
   //
   (void) getcwd(wisdom_directory, sizeof(wisdom_directory));
-  STRLCAT(wisdom_directory, "/", 1024);
+  g_strlcat(wisdom_directory, "/", 1024);
   t_print("Securing wisdom file in directory: %s\n", wisdom_directory);
   status_text("Checking FFTW Wisdom file ...");
   wisdom_running = 1;
@@ -596,7 +596,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 #if defined (__LDESK__)
   char config_directory[1024];
   (void) getcwd(config_directory, sizeof(config_directory));
-  STRLCAT(config_directory, "/", 1024);
+  g_strlcat(config_directory, "/", 1024);
 #endif
   t_print("Build: %s (Branch: %s, Commit: %s, Date: %s)\n", build_version, build_branch, build_commit, build_date);
   t_print("GTK+ version %u.%u.%u\n", gtk_major_version, gtk_minor_version, gtk_micro_version);

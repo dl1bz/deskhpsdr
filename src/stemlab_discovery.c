@@ -372,7 +372,7 @@ void stemlab_discovery() {
   DISCOVERED *dev = &discovered[devices++];
   dev->protocol = STEMLAB_PROTOCOL;
   dev->device = DEVICE_METIS;                                     // not used
-  STRLCPY(dev->name, "STEMlab", sizeof(dev->name));
+  g_strlcpy(dev->name, "STEMlab", sizeof(dev->name));
   dev->software_version = app_list;                               // encodes list of SDR apps present
   dev->status = STATE_AVAILABLE;
   memset(dev->info.network.mac_address, 0, 6);                    // not used
@@ -383,5 +383,5 @@ void stemlab_discovery() {
   dev->info.network.interface_length = sizeof(struct sockaddr_in);
   dev->info.network.interface_address = ip_address;                // same as RedPitaya address
   dev->info.network.interface_netmask = netmask;                   // does not matter
-  STRLCPY(dev->info.network.interface_name, "", sizeof(dev->info.network.interface_name));
+  g_strlcpy(dev->info.network.interface_name, "", sizeof(dev->info.network.interface_name));
 }

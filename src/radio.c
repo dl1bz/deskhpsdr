@@ -1326,7 +1326,7 @@ void radio_start_radio() {
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
-    STRLCPY(p, "Protocol 1", 32);
+    g_strlcpy(p, "Protocol 1", 32);
     snprintf(version, 32, "v%d.%d",
              radio->software_version / 10,
              radio->software_version % 10);
@@ -1335,7 +1335,7 @@ void radio_start_radio() {
     break;
 
   case NEW_PROTOCOL:
-    STRLCPY(p, "Protocol 2", 32);
+    g_strlcpy(p, "Protocol 2", 32);
     snprintf(version, 32, "v%d.%d",
              radio->software_version / 10,
              radio->software_version % 10);
@@ -1345,7 +1345,7 @@ void radio_start_radio() {
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    STRLCPY(p, "SoapySDR", 32);
+    g_strlcpy(p, "SoapySDR", 32);
     snprintf(version, 32, "%4.20s v%d.%d.%d",
              radio->info.soapy.driver_key,
              (radio->software_version % 10000) / 100,

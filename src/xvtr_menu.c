@@ -51,7 +51,7 @@ static void save_xvtr () {
     BAND *xvtr = band_get_band(i);
     BANDSTACK *bandstack = xvtr->bandstack;
     txt = gtk_entry_get_text(GTK_ENTRY(title[i]));
-    STRLCPY(xvtr->title, txt, sizeof(xvtr->title));
+    g_strlcpy(xvtr->title, txt, sizeof(xvtr->title));
 
     if (strlen(txt) != 0) {
       txt = gtk_entry_get_text(GTK_ENTRY(min_frequency[i]));

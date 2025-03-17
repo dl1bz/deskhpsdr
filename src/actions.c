@@ -1954,9 +1954,9 @@ int process_action(void *data) {
 //
 void Action2String(int id, char *str, size_t len) {
   if (id < 0 || id >= ACTIONS) {
-    STRLCPY(str, "NONE", len);
+    g_strlcpy(str, "NONE", len);
   } else {
-    STRLCPY(str, ActionTable[id].button_str, len);
+    g_strlcpy(str, ActionTable[id].button_str, len);
   }
 }
 
@@ -1992,6 +1992,6 @@ int  GetMultifunctionStatus() {
 // function to get string for multifunction encoder
 //
 void GetMultifunctionString(char* str, size_t len) {
-  STRLCPY(str, "M=", len);
-  STRLCAT(str, multi_action_table[multi_action].descr, len);
+  g_strlcpy(str, "M=", len);
+  g_strlcat(str, multi_action_table[multi_action].descr, len);
 }

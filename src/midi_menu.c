@@ -392,7 +392,7 @@ static void add_store(int key, const struct desc *cmd) {
   snprintf(str_note, 64, "%d", key);
   gtk_list_store_prepend(store, &iter);
   // convert line breaks to spaces for window
-  STRLCPY(str_action, ActionTable[cmd->action].str, 64);
+  g_strlcpy(str_action, ActionTable[cmd->action].str, 64);
   cp = str_action;
 
   while (*cp) {
@@ -482,7 +482,7 @@ static void updateDescription() {
     char str_action[64];
     char *cp;
     // convert line breaks to spaces for window
-    STRLCPY(str_action, ActionTable[thisAction].str, 64);
+    g_strlcpy(str_action, ActionTable[thisAction].str, 64);
     cp = str_action;
 
     while (*cp) {
@@ -1189,7 +1189,7 @@ void midiRestoreState() {
   // radio.c when it is appropriate
   //
   for (i = 0; i < MAX_MIDI_DEVICES; i++) {
-    STRLCPY(str, "NO_MIDI_DEVICE_FOUND", 128);
+    g_strlcpy(str, "NO_MIDI_DEVICE_FOUND", 128);
     GetPropS1("mididevice[%d].name", i,  str);
 
     for (j = 0; j < n_midi_devices; j++) {
@@ -1211,10 +1211,10 @@ void midiRestoreState() {
 
       if (channel < 0) { continue; }
 
-      STRLCPY(str, "NONE", 128);
+      g_strlcpy(str, "NONE", 128);
       GetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel, str);
       event = String2Event(str);
-      STRLCPY(str, "NONE", 128);
+      g_strlcpy(str, "NONE", 128);
       GetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel, str);
       type  = String2Type(str);
       action = NO_ACTION;

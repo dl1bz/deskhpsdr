@@ -332,43 +332,43 @@ static int info_thread(gpointer arg) {
       if (i == 15) {
         switch (info[15]) {
         case 0:
-          STRLCPY(label, "RESET", 20);
+          g_strlcpy(label, "RESET", 20);
           break;
 
         case 1:
-          STRLCPY(label, "WAIT", 20);
+          g_strlcpy(label, "WAIT", 20);
           break;
 
         case 2:
-          STRLCPY(label, "MOXDELAY", 20);
+          g_strlcpy(label, "MOXDELAY", 20);
           break;
 
         case 3:
-          STRLCPY(label, "SETUP", 20);
+          g_strlcpy(label, "SETUP", 20);
           break;
 
         case 4:
-          STRLCPY(label, "COLLECT", 20);
+          g_strlcpy(label, "COLLECT", 20);
           break;
 
         case 5:
-          STRLCPY(label, "MOXCHECK", 20);
+          g_strlcpy(label, "MOXCHECK", 20);
           break;
 
         case 6:
-          STRLCPY(label, "CALC", 20);
+          g_strlcpy(label, "CALC", 20);
           break;
 
         case 7:
-          STRLCPY(label, "DELAY", 20);
+          g_strlcpy(label, "DELAY", 20);
           break;
 
         case 8:
-          STRLCPY(label, "STAYON", 20);
+          g_strlcpy(label, "STAYON", 20);
           break;
 
         case 9:
-          STRLCPY(label, "TURNON", 20);
+          g_strlcpy(label, "TURNON", 20);
           break;
         }
       }
@@ -677,23 +677,23 @@ void ps_menu(GtkWidget *parent) {
 
     switch (i) {
     case 4:
-      STRLCPY(text, "feedbk", 16);
+      g_strlcpy(text, "feedbk", 16);
       break;
 
     case 5:
-      STRLCPY(text, "cor.cnt", 16);
+      g_strlcpy(text, "cor.cnt", 16);
       break;
 
     case 6:
-      STRLCPY(text, "sln.chk", 16);
+      g_strlcpy(text, "sln.chk", 16);
       break;
 
     case 13:
-      STRLCPY(text, "dg.cnt", 16);
+      g_strlcpy(text, "dg.cnt", 16);
       break;
 
     case 15:
-      STRLCPY(text, "status", 16);
+      g_strlcpy(text, "status", 16);
       break;
 
     default:

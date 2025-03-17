@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-size_t STRLCAT(char *dst, const char *src, size_t dsize);
-size_t STRLCPY(char *dst, const char *src, size_t dsize);
+size_t g_strlcat(char *dst, const char *src, size_t dsize);
+size_t g_strlcpy(char *dst, const char *src, size_t dsize);
 
 #endif

@@ -137,7 +137,7 @@ static void serial_port_cb(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(GTK_ENTRY(widget), SerialPorts[id].port);
   } else {
     // const char *cp = gtk_entry_get_text(GTK_ENTRY(widget));
-    // STRLCPY(SerialPorts[id].port, cp, sizeof(SerialPorts[id].port));
+    // g_strlcpy(SerialPorts[id].port, cp, sizeof(SerialPorts[id].port));
     snprintf(SerialPorts[id].port, sizeof(SerialPorts[id].port), "%s", cp);
   }
 }

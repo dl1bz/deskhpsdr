@@ -842,172 +842,172 @@ static void rigctl_send_cw_char(char cw_char) {
   switch (cw_char) {
   case 'a':
   case 'A':
-    STRLCPY(pattern, ".-", 9);
+    g_strlcpy(pattern, ".-", 9);
     break;
 
   case 'b':
   case 'B':
-    STRLCPY(pattern, "-...", 9);
+    g_strlcpy(pattern, "-...", 9);
     break;
 
   case 'c':
   case 'C':
-    STRLCPY(pattern, "-.-.", 9);
+    g_strlcpy(pattern, "-.-.", 9);
     break;
 
   case 'd':
   case 'D':
-    STRLCPY(pattern, "-..", 9);
+    g_strlcpy(pattern, "-..", 9);
     break;
 
   case 'e':
   case 'E':
-    STRLCPY(pattern, ".", 9);
+    g_strlcpy(pattern, ".", 9);
     break;
 
   case 'f':
   case 'F':
-    STRLCPY(pattern, "..-.", 9);
+    g_strlcpy(pattern, "..-.", 9);
     break;
 
   case 'g':
   case 'G':
-    STRLCPY(pattern, "--.", 9);
+    g_strlcpy(pattern, "--.", 9);
     break;
 
   case 'h':
   case 'H':
-    STRLCPY(pattern, "....", 9);
+    g_strlcpy(pattern, "....", 9);
     break;
 
   case 'i':
   case 'I':
-    STRLCPY(pattern, "..", 9);
+    g_strlcpy(pattern, "..", 9);
     break;
 
   case 'j':
   case 'J':
-    STRLCPY(pattern, ".---", 9);
+    g_strlcpy(pattern, ".---", 9);
     break;
 
   case 'k':
   case 'K':
-    STRLCPY(pattern, "-.-", 9);
+    g_strlcpy(pattern, "-.-", 9);
     break;
 
   case 'l':
   case 'L':
-    STRLCPY(pattern, ".-..", 9);
+    g_strlcpy(pattern, ".-..", 9);
     break;
 
   case 'm':
   case 'M':
-    STRLCPY(pattern, "--", 9);
+    g_strlcpy(pattern, "--", 9);
     break;
 
   case 'n':
   case 'N':
-    STRLCPY(pattern, "-.", 9);
+    g_strlcpy(pattern, "-.", 9);
     break;
 
   case 'o':
   case 'O':
-    STRLCPY(pattern, "---", 9);
+    g_strlcpy(pattern, "---", 9);
     break;
 
   case 'p':
   case 'P':
-    STRLCPY(pattern, ".--.", 9);
+    g_strlcpy(pattern, ".--.", 9);
     break;
 
   case 'q':
   case 'Q':
-    STRLCPY(pattern, "--.-", 9);
+    g_strlcpy(pattern, "--.-", 9);
     break;
 
   case 'r':
   case 'R':
-    STRLCPY(pattern, ".-.", 9);
+    g_strlcpy(pattern, ".-.", 9);
     break;
 
   case 's':
   case 'S':
-    STRLCPY(pattern, "...", 9);
+    g_strlcpy(pattern, "...", 9);
     break;
 
   case 't':
   case 'T':
-    STRLCPY(pattern, "-", 9);
+    g_strlcpy(pattern, "-", 9);
     break;
 
   case 'u':
   case 'U':
-    STRLCPY(pattern, "..-", 9);
+    g_strlcpy(pattern, "..-", 9);
     break;
 
   case 'v':
   case 'V':
-    STRLCPY(pattern, "...-", 9);
+    g_strlcpy(pattern, "...-", 9);
     break;
 
   case 'w':
   case 'W':
-    STRLCPY(pattern, ".--", 9);
+    g_strlcpy(pattern, ".--", 9);
     break;
 
   case 'x':
   case 'X':
-    STRLCPY(pattern, "-..-", 9);
+    g_strlcpy(pattern, "-..-", 9);
     break;
 
   case 'y':
   case 'Y':
-    STRLCPY(pattern, "-.--", 9);
+    g_strlcpy(pattern, "-.--", 9);
     break;
 
   case 'z':
   case 'Z':
-    STRLCPY(pattern, "--..", 9);
+    g_strlcpy(pattern, "--..", 9);
     break;
 
   case '0':
-    STRLCPY(pattern, "-----", 9);
+    g_strlcpy(pattern, "-----", 9);
     break;
 
   case '1':
-    STRLCPY(pattern, ".----", 9);
+    g_strlcpy(pattern, ".----", 9);
     break;
 
   case '2':
-    STRLCPY(pattern, "..---", 9);
+    g_strlcpy(pattern, "..---", 9);
     break;
 
   case '3':
-    STRLCPY(pattern, "...--", 9);
+    g_strlcpy(pattern, "...--", 9);
     break;
 
   case '4':
-    STRLCPY(pattern, "....-", 9);
+    g_strlcpy(pattern, "....-", 9);
     break;
 
   case '5':
-    STRLCPY(pattern, ".....", 9);
+    g_strlcpy(pattern, ".....", 9);
     break;
 
   case '6':
-    STRLCPY(pattern, "-....", 9);
+    g_strlcpy(pattern, "-....", 9);
     break;
 
   case '7':
-    STRLCPY(pattern, "--...", 9);
+    g_strlcpy(pattern, "--...", 9);
     break;
 
   case '8':
-    STRLCPY(pattern, "---..", 9);
+    g_strlcpy(pattern, "---..", 9);
     break;
 
   case '9':
-    STRLCPY(pattern, "----.", 9);
+    g_strlcpy(pattern, "----.", 9);
     break;
 
   //
@@ -1016,66 +1016,66 @@ static void rigctl_send_cw_char(char cw_char) {
   //     in the order given there.
   //
   case '.':
-    STRLCPY(pattern, ".-.-.-", 9);
+    g_strlcpy(pattern, ".-.-.-", 9);
     break;
 
   case ',':
-    STRLCPY(pattern, "--..--", 9);
+    g_strlcpy(pattern, "--..--", 9);
     break;
 
   case ':':
-    STRLCPY(pattern, "---..", 9);
+    g_strlcpy(pattern, "---..", 9);
     break;
 
   case '?':
-    STRLCPY(pattern, "..--..", 9);
+    g_strlcpy(pattern, "..--..", 9);
     break;
 
   case '\'':
-    STRLCPY(pattern, ".----.", 9);
+    g_strlcpy(pattern, ".----.", 9);
     break;
 
   case '-':
-    STRLCPY(pattern, "-....-", 9);
+    g_strlcpy(pattern, "-....-", 9);
     break;
 
   case '/':
-    STRLCPY(pattern, "-..-.", 9);
+    g_strlcpy(pattern, "-..-.", 9);
     break;
 
   case '(':
-    STRLCPY(pattern, "-.--.", 9);
+    g_strlcpy(pattern, "-.--.", 9);
     break;
 
   case ')':
-    STRLCPY(pattern, "-.--.-", 9);
+    g_strlcpy(pattern, "-.--.-", 9);
     break;
 
   case '"':
-    STRLCPY(pattern, ".-..-.", 9);
+    g_strlcpy(pattern, ".-..-.", 9);
     break;
 
   case '=':
-    STRLCPY(pattern, "-...-", 9);
+    g_strlcpy(pattern, "-...-", 9);
     break;
 
   case '+':
-    STRLCPY(pattern, ".-.-.", 9);
+    g_strlcpy(pattern, ".-.-.", 9);
     break;
 
   case '@':
-    STRLCPY(pattern, ".--.-.", 9);
+    g_strlcpy(pattern, ".--.-.", 9);
     break;
 
   //
   //     Often used, but not ITU: Ampersand for "wait"
   //
   case '&':
-    STRLCPY(pattern, ".-...", 9);
+    g_strlcpy(pattern, ".-...", 9);
     break;
 
   default:
-    STRLCPY(pattern, "", 9);
+    g_strlcpy(pattern, "", 9);
   }
 
   while (*ptr != '\0') {
@@ -3014,10 +3014,10 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
         for (int i = 0; i < FILTERS; i++) {
           snprintf(temp, 32, "%5s%5d%5d", f[i].title, f[i].high, f[i].low);
-          STRLCAT(reply, temp, 256);
+          g_strlcat(reply, temp, 256);
         }
 
-        STRLCAT(reply, ";", 256);
+        g_strlcat(reply, ";", 256);
         send_resp(client->fd, reply);
       }
 
@@ -5433,7 +5433,7 @@ int parse_cmd(void *data) {
       //RESP      IDxxx;
       //NOTE      piHPSDR responds ID019; (so does the Kenwood TS-2000)
       //ENDDEF
-      STRLCPY(reply, "ID019;", 256);
+      g_strlcpy(reply, "ID019;", 256);
       send_resp(client->fd, reply);
       break;
 
@@ -5481,7 +5481,7 @@ int parse_cmd(void *data) {
 
       //DO NOT DOCUMENT, THIS WILL BE REMOVED
       if (command[2] == ';') {
-        STRLCPY(reply, "IS 0000;", 256);
+        g_strlcpy(reply, "IS 0000;", 256);
         send_resp(client->fd, reply);
       } else {
         implemented = FALSE;

@@ -66,7 +66,7 @@ extern void saveProperties(const char* filename);
 
 #define GetPropS0(a,b)  { \
   const char *value=getProperty(a); \
-  if (value) { STRLCPY(b, value, sizeof(b)); } \
+  if (value) { g_strlcpy(b, value, sizeof(b)); } \
 }
 
 #define GetPropA0(a,b)  { \
@@ -92,7 +92,7 @@ extern void saveProperties(const char* filename);
   char name[128]; \
   snprintf(name, sizeof(name), a, b); \
   const char *value=getProperty(name); \
-  if (value) { STRLCPY(c, value, sizeof(c)); } \
+  if (value) { g_strlcpy(c, value, sizeof(c)); } \
 }
 
 #define GetPropA1(a,b,c) { \
@@ -120,7 +120,7 @@ extern void saveProperties(const char* filename);
   char name[128]; \
   snprintf(name, sizeof(name), a, b, c); \
   const char *value=getProperty(name); \
-  if (value) { STRLCPY(d, value, sizeof(d)); } \
+  if (value) { g_strlcpy(d, value, sizeof(d)); } \
 }
 
 #define GetPropA2(a,b,c,d) { \
@@ -141,7 +141,7 @@ extern void saveProperties(const char* filename);
   char name[128]; \
   snprintf(name, sizeof(name), a, b, c, d); \
   const char *value=getProperty(name); \
-  if (value) { STRLCPY(e, value, sizeof(e)); } \
+  if (value) { g_strlcpy(e, value, sizeof(e)); } \
 }
 
 #define GetPropA3(a,b,c,d,e) { \

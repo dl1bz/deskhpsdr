@@ -154,7 +154,7 @@ void startup(const char *path) {
   rc = stat(workdir, &statbuf);
 
   if (rc < 0 || !S_ISDIR(statbuf.st_mode)) {
-    STRLCPY(workdir, homedir, PATH_MAX);
+    g_strlcpy(workdir, homedir, PATH_MAX);
   }
 
 #else
@@ -181,7 +181,7 @@ void startup(const char *path) {
   rc = stat(workdir, &statbuf);
 
   if (rc < 0 || !S_ISDIR(statbuf.st_mode)) {
-    STRLCPY(workdir, homedir, PATH_MAX);
+    g_strlcpy(workdir, homedir, PATH_MAX);
   }
 
   //

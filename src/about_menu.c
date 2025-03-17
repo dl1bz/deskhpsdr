@@ -134,12 +134,12 @@ void about_menu(GtkWidget *parent) {
     if (device == DEVICE_OZY) {
       snprintf(line, 512, "Device:  OZY (via USB)  Protocol %s v%d.%d", radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                radio->software_version / 10, radio->software_version % 10);
-      STRLCAT(text, line, 1024);
+      g_strlcat(text, line, 1024);
     } else {
       char interface_addr[64];
       char addr[64];
-      STRLCPY(addr, inet_ntoa(radio->info.network.address.sin_addr), 64);
-      STRLCPY(interface_addr, inet_ntoa(radio->info.network.interface_address.sin_addr), 64);
+      g_strlcpy(addr, inet_ntoa(radio->info.network.address.sin_addr), 64);
+      g_strlcpy(interface_addr, inet_ntoa(radio->info.network.interface_address.sin_addr), 64);
 
       if (have_saturn_xdma) {
         snprintf(line, 512, "Device: Saturn (via XDMA), Protocol %s, v%d.%d\n",
@@ -162,7 +162,7 @@ void about_menu(GtkWidget *parent) {
                  interface_addr);
       }
 
-      STRLCAT(text, line, 1024);
+      g_strlcat(text, line, 1024);
     }
 
     break;
@@ -172,7 +172,7 @@ void about_menu(GtkWidget *parent) {
     snprintf(line, 512, "Device: %s (via SoapySDR)\n"
                         "    %s (%s)",
              radio->name, radio->info.soapy.hardware_key, radio->info.soapy.driver_key);
-    STRLCAT(text, line, 1024);
+    g_strlcat(text, line, 1024);
     break;
 #endif
   }
