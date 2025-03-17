@@ -307,10 +307,10 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
 
   if (_mode < 3) {
 #if !defined (__APPLE__)
-    strlcpy(mic_prof.desc[mic_prof.nr], input_devices[_audioindex].description, sizeof(mic_prof.desc[mic_prof.nr]));
+    g_strlcpy(mic_prof.desc[mic_prof.nr], input_devices[_audioindex].description, sizeof(mic_prof.desc[mic_prof.nr]));
     t_print("%s: Mic: %s / %s\n", __FUNCTION__, input_devices[_audioindex].description, mic_prof.desc[mic_prof.nr]);
 #else
-    strlcpy(mic_prof.desc[mic_prof.nr], transmitter->microphone_name, sizeof(mic_prof.desc[mic_prof.nr]));
+    g_strlcpy(mic_prof.desc[mic_prof.nr], transmitter->microphone_name, sizeof(mic_prof.desc[mic_prof.nr]));
     t_print("%s: Mic: %s / %s\n", __FUNCTION__, transmitter->microphone_name, mic_prof.desc[mic_prof.nr]);
 #endif
     audioSaveProfile();
@@ -950,10 +950,10 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
     audio_close_input();
   }
 
-  strlcpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
+  g_strlcpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
 #if defined (__LDESK__) && defined (__CPYMODE__)
   g_mutex_lock(&copy_string_mutex);
-  strlcpy(mode_settings[_mode].microphone_name, transmitter->microphone_name, sizeof(transmitter->microphone_name));
+  g_strlcpy(mode_settings[_mode].microphone_name, transmitter->microphone_name, sizeof(transmitter->microphone_name));
   g_mutex_unlock(&copy_string_mutex);
 #endif
 
@@ -1130,7 +1130,7 @@ void tx_menu(GtkWidget *parent) {
 
     if (gtk_combo_box_get_active(GTK_COMBO_BOX(input))  < 0) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
-      strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
+      g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
     }
 
     my_combo_attach(GTK_GRID(tx_grid), input, col, row, 4, 1);
