@@ -33,7 +33,6 @@
 #include "vfo.h"
 #include "ext.h"
 #include "message.h"
-#include "mystring.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *feedback_l;

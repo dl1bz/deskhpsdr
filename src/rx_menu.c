@@ -36,7 +36,6 @@
 #include "sliders.h"
 #include "new_protocol.h"
 #include "message.h"
-#include "mystring.h"
 #if defined (__LDESK__)
   #include "rigctl.h"
   #include "ext.h"

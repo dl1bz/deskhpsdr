@@ -61,7 +61,6 @@
 #endif
 
 #include "message.h"
-#include "mystring.h"
 
 void startup(const char *path) {
   struct stat statbuf;

@@ -38,7 +38,6 @@
 #include "discovered.h"
 #include "discovery.h"
 #include "message.h"
-#include "mystring.h"
 
 static char interface_name[64];
 static struct sockaddr_in interface_addr = {0};

@@ -35,7 +35,6 @@
 #include "discovered.h"
 #include "radio.h"
 #include "version.h"
-#include "mystring.h"
 #include "hpsdr_logo.h"
 
 static GtkWidget *dialog = NULL;

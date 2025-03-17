@@ -63,7 +63,6 @@
 #include "new_menu.h"
 #include "zoompan.h"
 #include "message.h"
-#include "mystring.h"
 
 #include <math.h>
 

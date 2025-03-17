@@ -37,7 +37,6 @@
   #include "tci.h"
 #endif
 #include "message.h"
-#include "mystring.h"
 
 static GtkWidget *dialog = NULL;
 #if defined (__LDESK__)

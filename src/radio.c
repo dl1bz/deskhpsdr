@@ -96,7 +96,6 @@
   #include "exit_menu.h"
   #include "message.h"
 #endif
-#include "mystring.h"
 
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)

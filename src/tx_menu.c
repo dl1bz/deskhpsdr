@@ -34,7 +34,6 @@
 #include "vfo.h"
 #include "new_protocol.h"
 #include "message.h"
-#include "mystring.h"
 #if defined (__LDESK__)
   #include "property.h"
   #include "equalizer_menu.h"

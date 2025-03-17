@@ -52,8 +52,6 @@ extern void saveProperties(const char* filename);
 //  n   = 0, 1, 2, 3  for scalars or quantities with 1...3 indices
 //
 
-#include "mystring.h"
-
 #define GetPropI0(a,b)  { \
   const char *value=getProperty(a); \
   if (value) { b = atoll(value); } \

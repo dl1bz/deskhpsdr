@@ -62,7 +62,6 @@
 #include "discovered.h"
 #include "new_protocol.h"
 #include "message.h"
-#include "mystring.h"
 
 extern sem_t DDCInSelMutex;                 // protect access to shared DDC input select register
 extern sem_t DDCResetFIFOMutex;             // protect access to FIFO reset register

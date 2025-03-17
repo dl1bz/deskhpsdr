@@ -61,7 +61,6 @@
 #include "css.h"
 #include "exit_menu.h"
 #include "message.h"
-#include "mystring.h"
 #include "startup.h"
 #include "tts.h"
 #if defined (__LDESK__)

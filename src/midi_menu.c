@@ -45,7 +45,6 @@
 #include "midi_menu.h"
 #include "property.h"
 #include "message.h"
-#include "mystring.h"
 
 int midiIgnoreCtrlPairs = 0;
 

@@ -50,7 +50,6 @@
 #include "equalizer_menu.h"
 #include "exit_menu.h"
 #include "message.h"
-#include "mystring.h"
 
 //
 // The "short button text" (button_str) needs to be present in ALL cases, and must be different

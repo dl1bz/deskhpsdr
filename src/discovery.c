@@ -54,7 +54,6 @@
 #include "protocols.h"
 #include "property.h"
 #include "message.h"
-#include "mystring.h"
 #if defined (__LDESK__)
   #include "new_menu.h"
 #endif

@@ -33,7 +33,6 @@
 #include "radio.h"
 #include "vfo.h"
 #include "message.h"
-#include "mystring.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *title[BANDS + XVTRS];
