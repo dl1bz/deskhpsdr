@@ -6,7 +6,7 @@ If the application don't work, don't work correctly or crash, here some recommen
 
 ### 1. Update the code and recompile
 
-The first you need to do is be sure using most up-to-date codebase:
+The first you need to do is be sure using most up-to-date codebase:<br>
 ```$ cd deskhpsdr```<br>
 ```$ git checkout master```<br>
 ```$ git pull```<br>
