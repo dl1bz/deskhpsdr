@@ -1,4 +1,4 @@
-# Troubleshooting deskHPSDR
+# Troubleshooting deskHPSDR for final Version 2.6
 
 ## Things you can or should do for first-aid
 
