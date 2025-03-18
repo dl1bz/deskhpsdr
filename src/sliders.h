@@ -31,9 +31,6 @@ extern void att_type_changed(void);
 extern void update_c25_att(void);
 
 extern int sliders_active_receiver_changed(void *data);
-extern int update_mic_gain(void *);
-extern int update_drive(void *);
-extern int update_tune_drive(void *);
 
 extern void set_agc_gain(int rx, double value);
 extern void set_af_gain(int rx, double value);

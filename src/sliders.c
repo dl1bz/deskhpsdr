@@ -48,6 +48,7 @@
 #include "rigctl.h"
 #include "actions.h"
 #include "message.h"
+#include "audio.h"
 
 static int width;
 static int height;
@@ -83,7 +84,12 @@ static GtkWidget *squelch_enable;
 #if defined (__LDESK__)
   static GtkWidget *tune_drive_label;
   GtkWidget *tune_drive_scale;
-  static GtkWidget *nested_slider;
+  static GtkWidget *local_mic_button;
+  static GtkWidget *lmic_input;
+  static GtkWidget *nested_slider_ll;
+  static GtkWidget *nested_slider_ms;
+  static GtkWidget *nested_slider_ml;
+  static GtkWidget *lmic_label;
 #endif
 
 //
@@ -610,6 +616,47 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   rx_set_squelch(active_receiver);
 }
 
+static void lmic_toggle_cb(GtkWidget *widget, gpointer data) {
+  int mode = vfo_get_tx_mode();
+  int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (v) {
+    if (audio_open_input() == 0) {
+      transmitter->local_microphone = 1;
+    } else {
+      transmitter->local_microphone = 0;
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
+    }
+  } else {
+    if (transmitter->local_microphone) {
+      transmitter->local_microphone = 0;
+      audio_close_input();
+    }
+  }
+
+#if defined (__LDESK__) && defined (__CPYMODE__)
+
+  if (transmitter->local_microphone) {
+    mode_settings[mode].local_microphone = 1;
+  } else {
+    mode_settings[mode].local_microphone = 0;
+  }
+
+  t_print("%s: mode: %d transmitter->local_microphone: %d mode_settings[%d].local_microphone %d\n",
+          __FUNCTION__, mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
+  copy_mode_settings(mode);
+  g_idle_add(ext_vfo_update, NULL);
+#endif
+}
+
+static void lmic_local_update(GtkWidget *widget, gpointer data) {
+  int _v = transmitter->local_microphone;
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), _v);
+  gtk_widget_queue_draw(sliders);
+  gtk_widget_queue_draw(nested_slider_ms);
+  gtk_widget_queue_draw(widget);
+}
+
 #if defined (__LDESK__)
 static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   int value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
@@ -1005,30 +1052,94 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   if (can_transmit && display_sliders) {
     //-------------------------------------------------------------------------------------------
-    nested_slider = gtk_grid_new();
-    gtk_grid_attach(GTK_GRID(sliders), nested_slider, s1pos, 2, swidth, 1);
-    gtk_widget_set_margin_start(nested_slider, 20 * twidth);
-    gtk_grid_set_column_spacing(GTK_GRID(nested_slider), 10);
+    // nested grid left_long
+    nested_slider_ll = gtk_grid_new();
+    gtk_grid_attach(GTK_GRID(sliders), nested_slider_ll, s1pos, 2, swidth, 1);
+    gtk_widget_set_margin_start(nested_slider_ll, 20 * twidth);
+    gtk_grid_set_column_spacing(GTK_GRID(nested_slider_ll), 10);
     //-------------------------------------------------------------------------------------------
+    // tune_drive_label
     tune_drive_label = gtk_label_new("TUNE\nDrv");
     gtk_widget_set_name(tune_drive_label, csslabel_smaller);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_END);
-    gtk_grid_attach(GTK_GRID(nested_slider), tune_drive_label, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(nested_slider_ll), tune_drive_label, 0, 1, 1, 1);
     gtk_widget_show(tune_drive_label);
     //-------------------------------------------------------------------------------------------
+    // tune_drive_scale
     tune_drive_scale = gtk_spin_button_new_with_range(1, 100, 1);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
-    gtk_grid_attach(GTK_GRID(nested_slider), tune_drive_scale, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(nested_slider_ll), tune_drive_scale, 1, 1, 1, 1);
     gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 10);
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
     g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed", G_CALLBACK(tune_drive_changed_cb), NULL);
     gtk_widget_show(tune_drive_scale);
+
     //-------------------------------------------------------------------------------------------
+    // nested grid middle_short
+    if (n_input_devices > 0) {
+      nested_slider_ms = gtk_grid_new();
+      gtk_grid_attach(GTK_GRID(sliders), nested_slider_ms, t2pos, 2, twidth, 1);
+      gtk_widget_set_margin_start(nested_slider_ms, 10 * twidth);
+      gtk_grid_set_column_spacing(GTK_GRID(nested_slider_ms), 10);
+      //-------------------------------------------------------------------------------------------
+      // lmic_label
+      lmic_label = gtk_label_new("Local\nMic");
+      gtk_widget_set_name(lmic_label, csslabel_smaller);
+      gtk_widget_set_halign(lmic_label, GTK_ALIGN_END);
+      gtk_grid_attach(GTK_GRID(nested_slider_ms), lmic_label, 0, 1, 1, 1);
+      gtk_widget_show(lmic_label);
+      // local_mic_button
+      local_mic_button = gtk_check_button_new();
+      gtk_widget_set_halign(local_mic_button, GTK_ALIGN_END);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
+      gtk_grid_attach(GTK_GRID(nested_slider_ms), local_mic_button, 1, 1, 1, 1);
+      gtk_widget_set_size_request(local_mic_button, 0, widget_height - 10);
+      g_signal_connect(local_mic_button, "toggled", G_CALLBACK(lmic_toggle_cb), NULL);
+      g_signal_connect(local_mic_button, "enter-notify-event", G_CALLBACK(lmic_local_update), NULL);
+      g_signal_connect(local_mic_button, "leave-notify-event", G_CALLBACK(lmic_local_update), NULL);
+      g_signal_connect(local_mic_button, "motion-notify-event", G_CALLBACK(lmic_local_update), NULL);
+      gtk_widget_show(local_mic_button);
+      //-------------------------------------------------------------------------------------------
+      // nested grid middle_long
+      nested_slider_ml = gtk_grid_new();
+      gtk_grid_attach(GTK_GRID(sliders), nested_slider_ml, s2pos, 2, swidth, 1);
+      gtk_grid_set_column_spacing(GTK_GRID(nested_slider_ml), 10);
+      gtk_widget_set_margin_start(nested_slider_ml, 5 * twidth);
+      //-------------------------------------------------------------------------------------------
+      lmic_input = gtk_combo_box_text_new();
+      gtk_widget_set_name(lmic_input, "boldlabel");
+
+      for (int i = 0; i < n_input_devices; i++) {
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(lmic_input), NULL, input_devices[i].description);
+
+        if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+          gtk_combo_box_set_active(GTK_COMBO_BOX(lmic_input), i);
+        }
+      }
+
+      // If the combo box shows no device, take the first one
+      // AND set the mic.name to that device name.
+      // This situation occurs if the local microphone device in the props
+      // file is no longer present
+
+      if (gtk_combo_box_get_active(GTK_COMBO_BOX(lmic_input))  < 0) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(lmic_input), 0);
+        g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
+      }
+
+      gtk_grid_attach(GTK_GRID(nested_slider_ml), lmic_input, 0, 1, 1, 1); // Zeile 0, Spalte 1
+      gtk_widget_set_size_request(lmic_input, 0, widget_height - 10);
+      gtk_widget_set_valign(lmic_input, GTK_ALIGN_CENTER);
+      gtk_widget_show(lmic_input);
+    }
   } else {
     tune_drive_label = NULL;
     tune_drive_scale = NULL;
+    lmic_label = NULL;
+    local_mic_button = NULL;
+    lmic_input = NULL;
   }
 
 #endif
