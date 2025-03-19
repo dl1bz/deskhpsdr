@@ -739,7 +739,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // The larger the width, the smaller the fraction used for the label can be
   // font size.
   //
-  int twidth, swidth, tpix;
+  int twidth, swidth, bwidth, tpix;
   int t1pos, t2pos, t3pos;
 #if defined (__LDESK__)
   int s1pos, s2pos, s3pos;
@@ -779,9 +779,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     swidth =  8;              // width of slider in grid units
   }
 
-  int lbl_w_fix = width / 23;
-  int sl_w_fix = width / 5;
-
   //
   // Depending on the width for the Label, we can increase the
   // font size. Note the minimum value for tpix is 71
@@ -812,8 +809,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   sqpos  =  s3pos + 1;
 */
 
-  twidth = 1; // 1 Spalte
+  int lbl_w_fix = width / 23;
+  int sl_w_fix = width / 4.1;
+
+  twidth = 2; // 2 Spalten
   swidth = 4; // 4 Spalten
+  bwidth = 1; // 1 Spalte
 
   t1pos  =  0;
   b1pos  =  t1pos + twidth;
@@ -829,8 +830,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //        __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos, sqpos);
   t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d\n",
           __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos);
-
-  t_print("%s: twidth=%d swidth=%d\n", __FUNCTION__, twidth, swidth);
+  t_print("%s: max. slider surface column: %d\n", __FUNCTION__, s3pos + swidth);
+  t_print("%s: twidth=%d swidth=%d bwidth=%d lbl_w_fix=%d sl_w_fix=%d\n",
+          __FUNCTION__, twidth, swidth, bwidth, lbl_w_fix, sl_w_fix);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   sliders = gtk_grid_new();
   gtk_widget_set_size_request (sliders, width, height);
@@ -1130,8 +1132,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
-    gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s1pos, 2, twidth, 1);
-    gtk_widget_set_size_request(tune_drive_scale, 0, widget_height);
+    gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s1pos, 2, twidth - 1, 1);
+    gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 10);
     gtk_widget_set_margin_start(tune_drive_scale, 10);  // Abstand am Anfang
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
     g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed", G_CALLBACK(tune_drive_changed_cb), NULL);
