@@ -85,8 +85,8 @@ static GtkWidget *squelch_enable;
   static GtkWidget *tune_drive_label;
   GtkWidget *tune_drive_scale;
   static GtkWidget *local_mic_button;
-  static GtkWidget *lmic_input;
-  static GtkWidget *lmic_label;
+  static GtkWidget *local_mic_input;
+  static GtkWidget *local_mic_label;
 #endif
 
 //
@@ -613,7 +613,7 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   rx_set_squelch(active_receiver);
 }
 
-static void lmic_toggle_cb(GtkWidget *widget, gpointer data) {
+static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
   int mode = vfo_get_tx_mode();
   int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
@@ -646,7 +646,7 @@ static void lmic_toggle_cb(GtkWidget *widget, gpointer data) {
 #endif
 }
 
-static void lmic_local_update(GtkWidget *widget, gpointer data) {
+static void local_mic_update_state(GtkWidget *widget, gpointer data) {
   int _v = transmitter->local_microphone;
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), _v);
   gtk_widget_queue_draw(sliders);
@@ -689,7 +689,7 @@ static void on_size_allocate(GtkWidget *widget, GtkAllocation *allocation, gpoin
   const gchar *_name = gtk_widget_get_name(widget);
   const gchar *_typ = G_OBJECT_TYPE_NAME(widget);
   // const gchar *_name = (const gchar *)g_hash_table_lookup(widget_name_map, widget);
-  t_print("%s: Widget %s Typ %s (size-allocate) Breite %d Höhe %d\n", __FUNCTION__, _name, _typ,_width, _height);
+  t_print("%s: Widget %s Typ %s (size-allocate) Breite %d Höhe %d\n", __FUNCTION__, _name, _typ, _width, _height);
 }
 
 void set_squelch(RECEIVER *rx) {
@@ -721,6 +721,7 @@ void show_diversity_phase() {
   show_popup_slider(DIV_PHASE, 0, -180.0, 180.0, 0.1, div_phase, "Diversity Phase");
 }
 
+// will ce called from radio.c and initializing the slider surface depend from the selected screen size
 GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__LDESK__)
   width = my_width - 50;
@@ -751,32 +752,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   const char *csslabel_smaller;
 
   if (width < 1024) {
-    // label  width: 1/9 of screen width
-    // slider width: 2/9 of screen width
-    tpix   =  width / 9;      // width of text label in pixel
-    twidth =  3;              // width of text label in grid units
-    swidth =  6;              // width of slider in grid units
+    tpix   =  width / 9;
 #if defined (__LDESK__)
   } else if (width < 1441) {
 #else
   } else if (width < 1280) {
 #endif
-    // label  width: 1/12 of screen width
-    // slider width: 3/12 of screen width
     tpix   =  width / 12;
-#if defined (__LDESK__) && defined (__linux__)
-    twidth =  4;              // width of text label in pixel
-    swidth = 10;              // width of slider in grid units
-#else
-    twidth =  3;              // width of text label in pixel
-    swidth =  9;              // width of slider in grid units
-#endif
   } else {
-    // label  width: 1/15 of screen width
-    // slider width: 4/12 of screen width
     tpix   =  width / 15;
-    twidth =  2;              // width of text label in pixel
-    swidth =  8;              // width of slider in grid units
   }
 
   //
@@ -798,24 +782,18 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   if (!strcmp(csslabel, "slider3")) { csslabel_smaller = "slider2"; }
 
-/*
-  // csslabel_small = "slider2";
-  t1pos  =  0;
-  s1pos  =  t1pos + twidth;
-  t2pos  =  s1pos + swidth;
-  s2pos  =  t2pos + twidth;
-  t3pos  =  s2pos + swidth;
-  s3pos  =  t3pos + twidth;
-  sqpos  =  s3pos + 1;
-*/
-
-  int lbl_w_fix = width / 23;
-  int sl_w_fix = width / slider_surface_scale;
-
-  twidth = 2; // 2 Spalten
-  swidth = 4; // 4 Spalten
-  bwidth = 1; // 1 Spalte
-
+  int lbl_w_fix = width / 23;  // Label_width fixed now
+  int sl_w_fix = width / slider_surface_scale; // slider_width fixed now, default 5.0 if Linux and 4.1 if macOS
+  // DL1BZ, 19.3.2025:
+  // from now we use the new slider surface resize factor in Screen Menu
+  // for adjust the whole slider surface design better
+  //
+  // the old "dynamic" calculation had a lot of issues depend from the screen size
+  // I had redesign the sliders GRID complete new from scratch. GTK has some limitations
+  // if you use a GTK_GRID positioning only with pixels
+  twidth = 2; // 2 Spalten,  Label
+  swidth = 4; // 4 Spalten,  Slider
+  bwidth = 1; // 1 Spalte,   Klick_Button if used
   t1pos  =  0;
   b1pos  =  t1pos + twidth;
   s1pos  =  b1pos + twidth;
@@ -825,9 +803,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   t3pos  =  s2pos + swidth;
   b3pos  =  t3pos + twidth;
   s3pos  =  b3pos + twidth;
-
-  // t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d sqpos=%d\n",
-  //        __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos, sqpos);
+  // some debug output for info
   t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d\n",
           __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos);
   t_print("%s: max. slider surface column: %d\n", __FUNCTION__, s3pos + swidth);
@@ -842,7 +818,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_margin_bottom(sliders, 0); // Kein Abstand unten
   gtk_widget_set_margin_start(sliders, 15);  // Kein Abstand am Anfang
   gtk_widget_set_margin_end(sliders, 15);    // Kein Abstand am Ende
-
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
   af_gain_label = gtk_label_new("Vol");
@@ -902,6 +877,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
 #endif
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (have_rx_gain) {
 #if defined (__LDESK__)
@@ -958,6 +934,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     rf_gain_label = NULL;
     rf_gain_scale = NULL;
   }
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (have_rx_att) {
     attenuation_label = gtk_label_new("ATT");
@@ -979,6 +956,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     attenuation_label = NULL;
     attenuation_scale = NULL;
   }
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   //
   // These handles need to be created because they are activated/deactivaded
@@ -1009,6 +987,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   my_combo_attach(GTK_GRID(c25_grid), c25_att_combobox, 0, 0, 2, 1);
   g_signal_connect(G_OBJECT(c25_att_combobox), "changed", G_CALLBACK(c25_att_combobox_changed), NULL);
   gtk_container_add(GTK_CONTAINER(c25_container), c25_grid);
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit) {
 #if defined (__LDESK__)
@@ -1085,6 +1064,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     drive_label = NULL;
     drive_scale = NULL;
   }
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
   squelch_label = gtk_label_new("Squelch");
@@ -1142,13 +1122,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     if (n_input_devices > 0) {
       //-------------------------------------------------------------------------------------------
-      // lmic_label
-      lmic_label = gtk_label_new("Local\nMic");
-      gtk_widget_set_size_request(lmic_label, lbl_w_fix, widget_height);
-      gtk_widget_set_name(lmic_label, csslabel_smaller);
-      gtk_widget_set_halign(lmic_label, GTK_ALIGN_CENTER);
-      gtk_grid_attach(GTK_GRID(sliders), lmic_label, t2pos, 2, twidth, 1);
-      gtk_widget_show(lmic_label);
+      // local_mic_label
+      local_mic_label = gtk_label_new("Local\nMic");
+      gtk_widget_set_size_request(local_mic_label, lbl_w_fix, widget_height);
+      gtk_widget_set_name(local_mic_label, csslabel_smaller);
+      gtk_widget_set_halign(local_mic_label, GTK_ALIGN_CENTER);
+      gtk_grid_attach(GTK_GRID(sliders), local_mic_label, t2pos, 2, twidth, 1);
+      gtk_widget_show(local_mic_label);
       //-------------------------------------------------------------------------------------------
       // local_mic_button
       local_mic_button = gtk_check_button_new();
@@ -1156,21 +1136,21 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_halign(local_mic_button, GTK_ALIGN_FILL);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
       gtk_grid_attach(GTK_GRID(sliders), local_mic_button, b2pos, 2, twidth, 1);
-      g_signal_connect(local_mic_button, "toggled", G_CALLBACK(lmic_toggle_cb), NULL);
-      g_signal_connect(local_mic_button, "enter-notify-event", G_CALLBACK(lmic_local_update), NULL);
-      g_signal_connect(local_mic_button, "leave-notify-event", G_CALLBACK(lmic_local_update), NULL);
-      g_signal_connect(local_mic_button, "motion-notify-event", G_CALLBACK(lmic_local_update), NULL);
+      g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
+      g_signal_connect(local_mic_button, "enter-notify-event", G_CALLBACK(local_mic_update_state), NULL);
+      g_signal_connect(local_mic_button, "leave-notify-event", G_CALLBACK(local_mic_update_state), NULL);
+      g_signal_connect(local_mic_button, "motion-notify-event", G_CALLBACK(local_mic_update_state), NULL);
       gtk_widget_show(local_mic_button);
       //-------------------------------------------------------------------------------------------
-      lmic_input = gtk_combo_box_text_new();
-      gtk_widget_set_name(lmic_input, "boldlabel");
-      gtk_widget_set_size_request(lmic_input, sl_w_fix, widget_height);
+      local_mic_input = gtk_combo_box_text_new();
+      gtk_widget_set_name(local_mic_input, "boldlabel");
+      gtk_widget_set_size_request(local_mic_input, sl_w_fix, widget_height);
 
       for (int i = 0; i < n_input_devices; i++) {
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(lmic_input), NULL, input_devices[i].description);
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, input_devices[i].description);
 
         if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
-          gtk_combo_box_set_active(GTK_COMBO_BOX(lmic_input), i);
+          gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
         }
       }
 
@@ -1179,24 +1159,23 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       // This situation occurs if the local microphone device in the props
       // file is no longer present
 
-      if (gtk_combo_box_get_active(GTK_COMBO_BOX(lmic_input))  < 0) {
-        gtk_combo_box_set_active(GTK_COMBO_BOX(lmic_input), 0);
+      if (gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input))  < 0) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), 0);
         g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
       }
 
-      gtk_grid_attach(GTK_GRID(sliders), lmic_input, s2pos, 2, swidth, 1); // Zeile 0, Spalte 1
-      gtk_widget_set_valign(lmic_input, GTK_ALIGN_CENTER);
-      gtk_widget_show(lmic_input);
+      gtk_grid_attach(GTK_GRID(sliders), local_mic_input, s2pos, 2, swidth, 1); // Zeile 0, Spalte 1
+      gtk_widget_set_valign(local_mic_input, GTK_ALIGN_CENTER);
+      gtk_widget_show(local_mic_input);
     }
   } else {
     tune_drive_label = NULL;
     tune_drive_scale = NULL;
-    lmic_label = NULL;
+    local_mic_label = NULL;
     local_mic_button = NULL;
-    lmic_input = NULL;
+    local_mic_input = NULL;
   }
 
 #endif
-
   return sliders;
 }
