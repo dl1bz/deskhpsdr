@@ -859,6 +859,19 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       copy_mode_settings(mode);
       g_idle_add(ext_vfo_update, NULL);
 #endif
+
+      if (!transmitter->local_microphone) {
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
+      }
+
+#ifndef __APPLE__
+
+      if (transmitter->local_microphone) {
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
+      }
+
+#endif
+      gtk_widget_queue_draw(local_mic_button);
       break;
 
     case TX_FM_EMP:
@@ -938,7 +951,7 @@ static void ctcss_frequency_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
+void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 #if defined (__LDESK__) && defined (__CPYMODE__)
   int _mode = vfo_get_tx_mode();
@@ -969,6 +982,13 @@ static void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   t_print("%s: mode: %d, mode_settings %s size: %d\n", __FUNCTION__, _mode, mode_settings[_mode].microphone_name,
           sizeof(mode_settings[_mode].microphone_name));
   copy_mode_settings(_mode);
+
+  if (n_input_devices > 0) {
+    gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
+    gtk_widget_queue_draw(local_mic_input);
+    gdk_flush();
+  }
+
 #endif
 }
 

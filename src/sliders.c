@@ -49,6 +49,7 @@
 #include "actions.h"
 #include "message.h"
 #include "audio.h"
+#include "tx_menu.h"
 
 static int width;
 static int height;
@@ -84,8 +85,8 @@ static GtkWidget *squelch_enable;
 #if defined (__LDESK__)
   static GtkWidget *tune_drive_label;
   GtkWidget *tune_drive_scale;
-  static GtkWidget *local_mic_button;
-  static GtkWidget *local_mic_input;
+  GtkWidget *local_mic_button;
+  GtkWidget *local_mic_input;
   static GtkWidget *local_mic_label;
 #endif
 
@@ -646,12 +647,15 @@ static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
 #endif
 }
 
+#ifndef __APPLE__
 static void local_mic_update_state(GtkWidget *widget, gpointer data) {
   int _v = transmitter->local_microphone;
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), _v);
   gtk_widget_queue_draw(sliders);
   gtk_widget_queue_draw(widget);
 }
+
+#endif
 
 #if defined (__LDESK__)
 static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
@@ -1137,9 +1141,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
       gtk_grid_attach(GTK_GRID(sliders), local_mic_button, b2pos, 2, twidth, 1);
       g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
+#ifndef __APPLE__
       g_signal_connect(local_mic_button, "enter-notify-event", G_CALLBACK(local_mic_update_state), NULL);
       g_signal_connect(local_mic_button, "leave-notify-event", G_CALLBACK(local_mic_update_state), NULL);
       g_signal_connect(local_mic_button, "motion-notify-event", G_CALLBACK(local_mic_update_state), NULL);
+#endif
       gtk_widget_show(local_mic_button);
       //-------------------------------------------------------------------------------------------
       local_mic_input = gtk_combo_box_text_new();
@@ -1166,6 +1172,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
       gtk_grid_attach(GTK_GRID(sliders), local_mic_input, s2pos, 2, swidth, 1); // Zeile 0, Spalte 1
       gtk_widget_set_valign(local_mic_input, GTK_ALIGN_CENTER);
+      g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb), NULL);
       gtk_widget_show(local_mic_input);
     }
   } else {

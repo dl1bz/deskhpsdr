@@ -47,6 +47,8 @@ extern GtkWidget *sliders_init(int my_width, int my_height);
 
 #if defined (__LDESK__)
   extern GtkWidget *tune_drive_scale;
+  extern GtkWidget *local_mic_input;
+  extern GtkWidget *local_mic_button;
 #endif
 extern void set_squelch(RECEIVER *rx);
 
