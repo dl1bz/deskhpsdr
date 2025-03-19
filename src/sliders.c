@@ -741,7 +741,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //
   int twidth, swidth, tpix;
   int t1pos, t2pos, t3pos;
+#if defined (__LDESK__)
+  int s1pos, s2pos, s3pos;
+#else
   int s1pos, s2pos, s3pos, sqpos;
+#endif
   int b1pos, b2pos, b3pos;
   const char *csslabel;
   const char *csslabel_smaller;
@@ -808,19 +812,25 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   sqpos  =  s3pos + 1;
 */
 
+  twidth = 1; // 1 Spalte
+  swidth = 4; // 4 Spalten
+
   t1pos  =  0;
-  b1pos  =  1;
-  s1pos  =  2;
-  t2pos  =  6;
-  b2pos  =  7;
-  s2pos  =  8;
-  t3pos  =  12;
-  b3pos  =  13;
-  s3pos  =  14;
+  b1pos  =  t1pos + twidth;
+  s1pos  =  b1pos + twidth;
+  t2pos  =  s1pos + swidth;
+  b2pos  =  t2pos + twidth;
+  s2pos  =  b2pos + twidth;
+  t3pos  =  s2pos + swidth;
+  b3pos  =  t3pos + twidth;
+  s3pos  =  b3pos + twidth;
 
   // t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d sqpos=%d\n",
   //        __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos, sqpos);
-  // t_print("%s: twidth=%d swidth=%d\n", __FUNCTION__, twidth, swidth);
+  t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d\n",
+          __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos);
+
+  t_print("%s: twidth=%d swidth=%d\n", __FUNCTION__, twidth, swidth);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   sliders = gtk_grid_new();
   gtk_widget_set_size_request (sliders, width, height);
@@ -828,8 +838,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_grid_set_column_homogeneous(GTK_GRID(sliders), FALSE);
   gtk_widget_set_margin_top(sliders, 0);    // Kein Abstand oben
   gtk_widget_set_margin_bottom(sliders, 0); // Kein Abstand unten
-  gtk_widget_set_margin_start(sliders, 10);  // Kein Abstand am Anfang
-  gtk_widget_set_margin_end(sliders, 0);    // Kein Abstand am Ende
+  gtk_widget_set_margin_start(sliders, 15);  // Kein Abstand am Anfang
+  gtk_widget_set_margin_end(sliders, 15);    // Kein Abstand am Ende
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
@@ -1110,7 +1120,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // tune_drive_label
     tune_drive_label = gtk_label_new("TUNE\nDrv");
     gtk_widget_set_size_request(tune_drive_label, lbl_w_fix, widget_height);
-    // gtk_widget_set_size_request(tune_drive_label, -1, widget_height);
     gtk_widget_set_name(tune_drive_label, csslabel_smaller);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, 1, 1);
@@ -1122,8 +1131,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
     gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s1pos, 2, 1, 1);
-    // gtk_widget_set_size_request(tune_drive_scale, sl_w_fix - 200, widget_height);
-    gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 50);
+    gtk_widget_set_size_request(tune_drive_scale, 0, widget_height);
+    gtk_widget_set_margin_start(tune_drive_scale, 10);  // Abstand am Anfang
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
     g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed", G_CALLBACK(tune_drive_changed_cb), NULL);
     gtk_widget_show(tune_drive_scale);
@@ -1185,8 +1194,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
 #endif
-  t_print("DL1BZ: sliders w=%d h=%d\n", (int)gtk_widget_get_allocated_width(sliders),
-       (int)gtk_widget_get_allocated_height(sliders));
 
   return sliders;
 }
