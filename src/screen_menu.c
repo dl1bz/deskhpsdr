@@ -75,7 +75,7 @@ static int apply(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-static void schedule_apply() {
+void schedule_apply() {
   if (apply_timeout > 0) {
     g_source_remove(apply_timeout);
   }
@@ -113,6 +113,15 @@ static void vfo_cb(GtkWidget *widget, gpointer data) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
   }
 
+  schedule_apply();
+}
+
+static void slider_surface_f_cb(GtkWidget *widget, gpointer data) {
+  double value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  if (value < 3.5) { value = 3.5; }
+  if (value > 6.5) { value = 6.5; }
+  slider_surface_scale = value;
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), slider_surface_scale);
   schedule_apply();
 }
 
@@ -198,6 +207,19 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  label = gtk_label_new("Slider Surface\nResize Factor");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
+  GtkWidget *slider_surface_f = gtk_spin_button_new_with_range(3.5, 6.5, 0.1);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(slider_surface_f), TRUE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(slider_surface_f), TRUE);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(slider_surface_f), slider_surface_scale);
+  gtk_grid_attach(GTK_GRID(grid), slider_surface_f, 3, row, 1, 1);
+  g_signal_connect(G_OBJECT(slider_surface_f), "value_changed", G_CALLBACK(slider_surface_f_cb), NULL);
+  gtk_widget_show(slider_surface_f);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   row++;
   label = gtk_label_new("Window Width:");
   gtk_widget_set_name(label, "boldlabel");

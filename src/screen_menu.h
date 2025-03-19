@@ -20,3 +20,4 @@
 */
 
 extern void screen_menu(GtkWidget *parent);
+extern void schedule_apply(void);

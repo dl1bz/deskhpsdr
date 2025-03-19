@@ -155,6 +155,7 @@ extern int pa_power;
 extern double pa_trim[11];
 extern const int pa_power_list[];
 
+extern double slider_surface_scale;
 extern int display_zoompan;
 extern int display_sliders;
 extern int display_toolbar;

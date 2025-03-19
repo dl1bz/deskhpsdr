@@ -206,6 +206,11 @@ int lpf_udp_port = 7355;    // Portnummer für den LPF UDP Listener
 char g_lpf_data[6][64];
 int lpf_udp_valid = 0;
 
+#ifdef __APPLE__
+double slider_surface_scale = 4.1; // scaling factor for slider surface
+#else
+double slider_surface_scale = 5.0; // scaling factor for slider surface
+#endif
 int display_zoompan = 0;
 int display_sliders = 0;
 int display_toolbar = 0;
@@ -2623,6 +2628,7 @@ static void radio_restore_state() {
   //
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
+  GetPropF0("slider_surface_scale",                          slider_surface_scale);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
   GetPropI0("display_toolbar",                               display_toolbar);
@@ -2865,6 +2871,7 @@ void radio_save_state() {
   // Use the "saved" Zoompan/Slider/Toolbar display status
   // if they are currently hidden via the "Hide" button
   //
+  SetPropF0("slider_surface_scale",                          slider_surface_scale);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
   SetPropI0("display_toolbar",                               hide_status ? old_tool : display_toolbar);
