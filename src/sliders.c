@@ -851,7 +851,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_name(af_gain_label, csslabel);
   gtk_widget_set_halign(af_gain_label, GTK_ALIGN_END);
   gtk_widget_show(af_gain_label);
-  gtk_grid_attach(GTK_GRID(sliders), af_gain_label, t1pos, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(sliders), af_gain_label, t1pos, 0, twidth, 1);
   g_signal_connect(G_OBJECT(af_gain_label), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.00);
@@ -865,7 +865,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
   gtk_widget_show(af_gain_scale);
-  gtk_grid_attach(GTK_GRID(sliders), af_gain_scale, s1pos, 0, 4, 1);
+  gtk_grid_attach(GTK_GRID(sliders), af_gain_scale, s1pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(af_gain_scale), "value_changed", G_CALLBACK(afgain_value_changed_cb), NULL);
   g_signal_connect(G_OBJECT(af_gain_scale), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -874,7 +874,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_name(agc_gain_label, csslabel);
   gtk_widget_set_halign(agc_gain_label, GTK_ALIGN_END);
   gtk_widget_show(agc_gain_label);
-  gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, t2pos, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, t2pos, 0, twidth, 1);
   g_signal_connect(G_OBJECT(agc_gain_label), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   agc_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -20.0, 120.0, 1.0);
@@ -883,7 +883,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_range_set_increments (GTK_RANGE(agc_scale), 1.0, 1.0);
   gtk_range_set_value (GTK_RANGE(agc_scale), active_receiver->agc_gain);
   gtk_widget_show(agc_scale);
-  gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, 4, 1);
+  gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
   g_signal_connect(G_OBJECT(agc_scale), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -894,7 +894,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(agc_scale, 0, widget_height);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_en), autogain_enabled);
     gtk_widget_show(autogain_en);
-    gtk_grid_attach(GTK_GRID(sliders), autogain_en, b3pos, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), autogain_en, b3pos, 0, twidth, 1);
     gtk_widget_set_halign(autogain_en, GTK_ALIGN_CENTER);
     g_signal_connect(autogain_en, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
   }
@@ -919,7 +919,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(rf_gain_label, lbl_w_fix, widget_height);
     gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_END);
     gtk_widget_show(rf_gain_label);
-    gtk_grid_attach(GTK_GRID(sliders), rf_gain_label, t3pos, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), rf_gain_label, t3pos, 0, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, adc[0].min_gain, adc[0].max_gain, 1.0);
     gtk_widget_set_size_request(rf_gain_scale, sl_w_fix, widget_height);
@@ -930,13 +930,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__AUTOG__)
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, 4, 1);
+      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
 
       for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
         gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
       }
     } else {
-      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, 4, 1);
+      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
 
       for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
         gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
@@ -944,7 +944,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
 
 #else
-    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, 4, 1);
+    gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
 
     for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
       gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
@@ -963,7 +963,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(attenuation_label, csslabel);
     gtk_widget_set_halign(attenuation_label, GTK_ALIGN_END);
     gtk_widget_show(attenuation_label);
-    gtk_grid_attach(GTK_GRID(sliders), attenuation_label, t3pos, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), attenuation_label, t3pos, 0, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
     gtk_widget_set_size_request(attenuation_scale, sl_w_fix, widget_height);
@@ -971,7 +971,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_value (GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
     gtk_range_set_increments (GTK_RANGE(attenuation_scale), 1.0, 1.0);
     gtk_widget_show(attenuation_scale);
-    gtk_grid_attach(GTK_GRID(sliders), attenuation_scale, s3pos, 0, 4, 1);
+    gtk_grid_attach(GTK_GRID(sliders), attenuation_scale, s3pos, 0, swidth, 1);
     g_signal_connect(G_OBJECT(attenuation_scale), "value_changed", G_CALLBACK(attenuation_value_changed_cb), NULL);
   } else {
     attenuation_label = NULL;
@@ -987,9 +987,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   c25_att_label = gtk_label_new("Att/Pre");
   gtk_widget_set_name(c25_att_label, csslabel);
   gtk_widget_set_halign(c25_att_label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(sliders), c25_att_label, t3pos, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(sliders), c25_att_label, t3pos, 0, twidth, 1);
   c25_container = gtk_fixed_new();
-  gtk_grid_attach(GTK_GRID(sliders), c25_container, s3pos, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(sliders), c25_container, s3pos, 0, twidth, 1);
   GtkWidget *c25_grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(c25_grid), TRUE);
   //
@@ -1019,13 +1019,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(mic_gain_label, lbl_w_fix, widget_height);
     gtk_widget_set_name(mic_gain_label, csslabel);
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_END);
-    gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
     gtk_widget_set_size_request(mic_gain_scale, sl_w_fix, widget_height);
     gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
     gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
-    gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, 4, 1);
+    gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
     gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
 
     for (float i = -12.0; i <= 50.0; i += 6.0) {
@@ -1050,7 +1050,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #endif
     gtk_widget_set_size_request(drive_label, lbl_w_fix, widget_height);
     gtk_widget_set_halign(drive_label, GTK_ALIGN_END);
-    gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
@@ -1075,7 +1075,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
 
     gtk_widget_show(drive_scale);
-    gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, 4, 1);
+    gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, swidth, 1);
     g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb), NULL);
   } else {
     mic_gain_label = NULL;
@@ -1093,7 +1093,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_name(squelch_label, csslabel);
   gtk_widget_set_halign(squelch_label, GTK_ALIGN_END);
   gtk_widget_show(squelch_label);
-  gtk_grid_attach(GTK_GRID(sliders), squelch_label, t3pos, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(sliders), squelch_label, t3pos, 1, twidth, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   squelch_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
   gtk_widget_set_size_request(squelch_scale, sl_w_fix, widget_height);
@@ -1101,7 +1101,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_range_set_increments(GTK_RANGE(squelch_scale), 1.0, 1.0);
   gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
   gtk_widget_show(squelch_scale);
-  gtk_grid_attach(GTK_GRID(sliders), squelch_scale, s3pos, 1, 4, 1);
+  gtk_grid_attach(GTK_GRID(sliders), squelch_scale, s3pos, 1, swidth, 1);
   squelch_signal_id = g_signal_connect(G_OBJECT(squelch_scale), "value_changed", G_CALLBACK(squelch_value_changed_cb),
                                        NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1109,7 +1109,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_size_request(squelch_enable, 0, widget_height);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
   gtk_widget_show(squelch_enable);
-  gtk_grid_attach(GTK_GRID(sliders), squelch_enable, b3pos, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(sliders), squelch_enable, b3pos, 1, twidth, 1);
   gtk_widget_set_halign(squelch_enable, GTK_ALIGN_CENTER);
   g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1122,7 +1122,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(tune_drive_label, lbl_w_fix, widget_height);
     gtk_widget_set_name(tune_drive_label, csslabel_smaller);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_END);
-    gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, twidth, 1);
     gtk_widget_show(tune_drive_label);
     //-------------------------------------------------------------------------------------------
     // tune_drive_scale
@@ -1130,7 +1130,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
-    gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s1pos, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(sliders), tune_drive_scale, s1pos, 2, twidth, 1);
     gtk_widget_set_size_request(tune_drive_scale, 0, widget_height);
     gtk_widget_set_margin_start(tune_drive_scale, 10);  // Abstand am Anfang
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
@@ -1145,14 +1145,14 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_size_request(lmic_label, lbl_w_fix, widget_height);
       gtk_widget_set_name(lmic_label, csslabel_smaller);
       gtk_widget_set_halign(lmic_label, GTK_ALIGN_END);
-      gtk_grid_attach(GTK_GRID(sliders), lmic_label, t2pos, 2, 1, 1);
+      gtk_grid_attach(GTK_GRID(sliders), lmic_label, t2pos, 2, twidth, 1);
       gtk_widget_show(lmic_label);
       // local_mic_button
       local_mic_button = gtk_check_button_new();
       gtk_widget_set_size_request(local_mic_button, 0, widget_height);
       gtk_widget_set_halign(local_mic_button, GTK_ALIGN_END);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
-      gtk_grid_attach(GTK_GRID(sliders), local_mic_button, b2pos, 2, 1, 1);
+      gtk_grid_attach(GTK_GRID(sliders), local_mic_button, b2pos, 2, twidth, 1);
       g_signal_connect(local_mic_button, "toggled", G_CALLBACK(lmic_toggle_cb), NULL);
       g_signal_connect(local_mic_button, "enter-notify-event", G_CALLBACK(lmic_local_update), NULL);
       g_signal_connect(local_mic_button, "leave-notify-event", G_CALLBACK(lmic_local_update), NULL);
@@ -1181,7 +1181,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
       }
 
-      gtk_grid_attach(GTK_GRID(sliders), lmic_input, s2pos, 2, 4, 1); // Zeile 0, Spalte 1
+      gtk_grid_attach(GTK_GRID(sliders), lmic_input, s2pos, 2, swidth, 1); // Zeile 0, Spalte 1
       gtk_widget_set_valign(lmic_input, GTK_ALIGN_CENTER);
       gtk_widget_show(lmic_input);
     }
