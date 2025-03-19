@@ -1254,6 +1254,7 @@ src/sliders.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
 src/sliders.o: src/MacOS.h src/soapy_protocol.h src/vfo.h src/agc.h
 src/sliders.o: src/channel.h src/radio.h src/adc.h src/dac.h src/property.h
 src/sliders.o: src/main.h src/ext.h src/rigctl.h src/message.h src/audio.h
+src/sliders.o: src/tx_menu.h
 src/soapy_discovery.o: src/discovered.h src/soapy_discovery.h src/message.h
 src/soapy_protocol.o: src/band.h src/bandstack.h src/channel.h
 src/soapy_protocol.o: src/discovered.h src/mode.h src/filter.h src/receiver.h
