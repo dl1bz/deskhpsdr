@@ -602,9 +602,10 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
           transmitter->tune_use_drive = 0;
         }
 
+        g_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
+        g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
         gtk_widget_queue_draw(tune_drive_scale);
-        gdk_flush();
       }
 
 #endif
@@ -860,17 +861,10 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       g_idle_add(ext_vfo_update, NULL);
 #endif
 
-      if (!transmitter->local_microphone) {
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
-      }
+      g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
+      g_signal_handler_unblock(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
 
-#ifndef __APPLE__
-
-      if (transmitter->local_microphone) {
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
-      }
-
-#endif
       gtk_widget_queue_draw(local_mic_button);
       break;
 
@@ -984,9 +978,10 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   copy_mode_settings(_mode);
 
   if (n_input_devices > 0) {
+    g_signal_handler_block(GTK_COMBO_BOX(local_mic_input), local_mic_input_signal_id);
     gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
+    g_signal_handler_unblock(GTK_COMBO_BOX(local_mic_input), local_mic_input_signal_id);
     gtk_widget_queue_draw(local_mic_input);
-    gdk_flush();
   }
 
 #endif

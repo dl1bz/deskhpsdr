@@ -49,7 +49,15 @@ extern GtkWidget *sliders_init(int my_width, int my_height);
   extern GtkWidget *tune_drive_scale;
   extern GtkWidget *local_mic_input;
   extern GtkWidget *local_mic_button;
+  extern gulong local_mic_toggle_signal_id;
+  extern gulong tune_drive_scale_signal_id;
+  extern gulong local_mic_input_signal_id;
 #endif
+#if defined (__AUTOG__)
+  extern GtkWidget *autogain_en;
+  extern gulong autogain_en_signal_id;
+#endif
+
 extern void set_squelch(RECEIVER *rx);
 
 extern void show_diversity_gain(void);
