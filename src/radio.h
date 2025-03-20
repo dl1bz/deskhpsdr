@@ -160,6 +160,7 @@ extern int display_zoompan;
 extern int display_sliders;
 extern int display_toolbar;
 extern double percent_pan_wf;
+extern int display_info_bar;
 
 extern int mic_linein;
 extern double linein_gain;

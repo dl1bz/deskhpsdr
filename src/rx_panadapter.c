@@ -893,7 +893,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
 #if defined (__LDESK__)
 
-  if (!active_receiver->display_waterfall && active_receiver->display_panadapter && rx->id == 0) {
+  if (display_info_bar && active_receiver->display_panadapter && rx->id == 0) {
     // cairo_rectangle(cr, x, y, width, height) -> all as double()
     // X coordinate of the top left corner of the rectangle
     // Y coordinate to the top left corner of the rectangle

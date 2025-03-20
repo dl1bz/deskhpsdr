@@ -215,6 +215,7 @@ int display_zoompan = 0;
 int display_sliders = 0;
 int display_toolbar = 0;
 double percent_pan_wf = 50.0;
+int display_info_bar = 0;
 
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
 double linein_gain = 0.0;  // -34.0 ... +12.5 in steps of 1.5 dB
@@ -2631,6 +2632,7 @@ static void radio_restore_state() {
   GetPropI0("WindowPositionY",                               window_y_pos);
   GetPropF0("slider_surface_scale",                          slider_surface_scale);
   GetPropF0("percent_pan_wf",                                percent_pan_wf);
+  GetPropI0("display_info_bar",                              display_info_bar);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
   GetPropI0("display_toolbar",                               display_toolbar);
@@ -2875,6 +2877,7 @@ void radio_save_state() {
   //
   SetPropF0("slider_surface_scale",                          slider_surface_scale);
   SetPropF0("percent_pan_wf",                                percent_pan_wf);
+  SetPropI0("display_info_bar",                              display_info_bar);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
   SetPropI0("display_toolbar",                               hide_status ? old_tool : display_toolbar);

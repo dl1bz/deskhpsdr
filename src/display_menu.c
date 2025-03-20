@@ -241,8 +241,10 @@ static void display_panadapter_ovf_cb(GtkWidget *widget, gpointer data) {
   radio_reconfigure();
 }
 
-
-
+static void toggle_info_bar_cb(GtkWidget *widget, gpointer data) {
+  display_info_bar = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_reconfigure();
+}
 
 //
 // Some symbolic constants used in callbacks
@@ -514,6 +516,11 @@ void display_menu(GtkWidget *parent) {
     }
   }
 
+  GtkWidget *b_display_info_bar = gtk_check_button_new_with_label("Display Info Bar");
+  gtk_widget_set_name (b_display_info_bar, "stdlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_info_bar), display_info_bar);
+  gtk_grid_attach(GTK_GRID(general_grid), b_display_info_bar, col + 1, row + 1, 1, 1);
+  g_signal_connect(b_display_info_bar, "toggled", G_CALLBACK(toggle_info_bar_cb), NULL);
   //------------------------------------------------------------------------------------------------------------
   GtkWidget *b_display_waterfall = gtk_check_button_new_with_label("Display Waterfall");
   gtk_widget_set_name (b_display_waterfall, "boldlabel");
