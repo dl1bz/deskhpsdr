@@ -435,7 +435,7 @@ void rigctl_menu(GtkWidget *parent) {
     row++;
     snprintf (str, 64, "Serial");
     w = gtk_label_new(str);
-    gtk_widget_set_name(w, "boldlabel");
+    gtk_widget_set_name(w, "boldlabel_blue");
     gtk_widget_set_halign(w, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
     w = gtk_entry_new();
@@ -466,13 +466,13 @@ void rigctl_menu(GtkWidget *parent) {
     g_signal_connect(serial_baud[MAX_SERIAL], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_enable[MAX_SERIAL] =
       gtk_check_button_new_with_label("Set RTS active during TUNE\nSet DTR active as PTT output");
-    gtk_widget_set_name(serial_enable[MAX_SERIAL], "boldlabel");
+    gtk_widget_set_name(serial_enable[MAX_SERIAL], "boldlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL]), SerialPorts[MAX_SERIAL].enable);
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_swapRtsDtr[MAX_SERIAL] =
       gtk_check_button_new_with_label("Swap RTS <-> DTR (if required)");
-    gtk_widget_set_name(serial_swapRtsDtr[MAX_SERIAL], "boldlabel");
+    gtk_widget_set_name(serial_swapRtsDtr[MAX_SERIAL], "boldlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_swapRtsDtr[MAX_SERIAL]), SerialPorts[MAX_SERIAL].swapRtsDtr);
     gtk_grid_attach(GTK_GRID(grid), serial_swapRtsDtr[MAX_SERIAL], 5, row, 1, 1);
     g_signal_connect(serial_swapRtsDtr[MAX_SERIAL], "toggled", G_CALLBACK(serial_swapRtsDtr_cb),
@@ -489,7 +489,7 @@ void rigctl_menu(GtkWidget *parent) {
     row++;
     snprintf (str, 64, "Serial");
     w = gtk_label_new(str);
-    gtk_widget_set_name(w, "boldlabel");
+    gtk_widget_set_name(w, "boldlabel_blue");
     gtk_widget_set_halign(w, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
     w = gtk_entry_new();
@@ -520,7 +520,7 @@ void rigctl_menu(GtkWidget *parent) {
     g_signal_connect(serial_baud[MAX_SERIAL + 1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
     serial_enable[MAX_SERIAL + 1] =
       gtk_check_button_new_with_label("Read RTS & CTS as PTT Input\n(shorten RTS+CTS set PTT active)");
-    gtk_widget_set_name(serial_enable[MAX_SERIAL + 1], "boldlabel");
+    gtk_widget_set_name(serial_enable[MAX_SERIAL + 1], "boldlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL + 1]), SerialPorts[MAX_SERIAL + 1].enable);
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL + 1], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL + 1], "toggled", G_CALLBACK(serial_enable_cb),

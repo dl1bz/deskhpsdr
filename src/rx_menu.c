@@ -64,13 +64,10 @@ static gboolean close_cb () {
 #if defined (__AUTOG__)
 static void autogain_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_en), autogain_enabled);
   g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
-
   gtk_widget_queue_draw(autogain_en);
-
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }
@@ -329,7 +326,7 @@ void rx_menu(GtkWidget *parent) {
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
 #if defined (__AUTOG__)
         GtkWidget *autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
-        gtk_widget_set_name(autogain_b, "boldlabel");
+        gtk_widget_set_name(autogain_b, "boldlabel_blue");
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_b), autogain_enabled);
         gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, row + 1, 1, 1);
         g_signal_connect(autogain_b, "toggled", G_CALLBACK(autogain_cb), NULL);

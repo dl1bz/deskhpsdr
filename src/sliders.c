@@ -1121,7 +1121,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 10);
     gtk_widget_set_margin_start(tune_drive_scale, 10);  // Abstand am Anfang
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
-    tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed", G_CALLBACK(tune_drive_changed_cb), NULL);
+    tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed",
+                                 G_CALLBACK(tune_drive_changed_cb), NULL);
     gtk_widget_show(tune_drive_scale);
 
     //-------------------------------------------------------------------------------------------

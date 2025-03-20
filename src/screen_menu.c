@@ -99,6 +99,7 @@ static gboolean close_cb () {
   return TRUE;
 }
 
+#ifdef __USELESS__
 static void vfo_cb(GtkWidget *widget, gpointer data) {
   my_vfo_layout = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
   VFO_HEIGHT = vfo_layout_list[my_vfo_layout].height;
@@ -115,6 +116,8 @@ static void vfo_cb(GtkWidget *widget, gpointer data) {
 
   schedule_apply();
 }
+
+#endif
 
 static void slider_surface_f_cb(GtkWidget *widget, gpointer data) {
   double value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
@@ -212,7 +215,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   label = gtk_label_new("Slider Surface\nResize Factor");
-  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_name(label, "boldlabel_blue");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
   GtkWidget *slider_surface_f = gtk_spin_button_new_with_range(3.5, 6.5, 0.1);
@@ -253,11 +256,24 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
   row++;
   col = 0;
+  label = gtk_label_new("This version is for Desktops,\ntherefore no VFO bar layouts available !");
+#ifdef __USELESS__
   label = gtk_label_new("Select VFO bar layout:");
-  gtk_widget_set_name(label, "boldlabel");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+#endif
+  gtk_widget_set_name(label, "boldlabel_red");
+  gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+  gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 2, 1);
+  gtk_widget_set_margin_start(label, 10);  // Abstand am Anfang
   col++;
+  label = gtk_label_new("Minimum Screensize must\n be 1280x600 or higher !");
+  gtk_widget_set_name(label, "boldlabel_red");
+  gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+  gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
+  gtk_grid_attach(GTK_GRID(grid), label, 2, row, 2, 1);
+  gtk_widget_set_margin_start(label, 10);  // Abstand am Anfang
+  col++;
+#ifdef __USELESS__
   vfo_b = gtk_combo_box_text_new();
   const VFO_BAR_LAYOUT *vfl = vfo_layout_list;
 
@@ -272,6 +288,7 @@ void screen_menu(GtkWidget *parent) {
   // This combo-box spans three columns so the text may be really long
   my_combo_attach(GTK_GRID(grid), vfo_b, col, row, 3, 1);
   vfo_signal_id = g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
+#endif
   row++;
 #if defined (__USELESS__)
   button = gtk_check_button_new_with_label("Stack receivers horizontally");

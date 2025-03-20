@@ -322,7 +322,7 @@ void display_menu(GtkWidget *parent) {
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   col++;
   label = gtk_label_new("Relation Pan<->Waterfall:\n(in Percent)");
-  gtk_widget_set_name (label, "stdlabel");
+  gtk_widget_set_name (label, "stdlabel_blue");
   // Text im Label rechts ausrichten
   gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_RIGHT);
   gtk_widget_set_halign(label, GTK_ALIGN_END);
@@ -505,7 +505,7 @@ void display_menu(GtkWidget *parent) {
   //------------------------------------------------------------------------------------------------------------
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Display ADC0 OVF Alarm");
-    gtk_widget_set_name (b_display_panadapter_ovf, "stdlabel");
+    gtk_widget_set_name (b_display_panadapter_ovf, "stdlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_panadapter_ovf), active_receiver->panadapter_ovf_on);
 
     if (!autogain_enabled) {
@@ -519,7 +519,7 @@ void display_menu(GtkWidget *parent) {
   }
 
   GtkWidget *b_display_info_bar = gtk_check_button_new_with_label("Display Info Bar");
-  gtk_widget_set_name (b_display_info_bar, "stdlabel");
+  gtk_widget_set_name (b_display_info_bar, "stdlabel_blue");
 
   if (!rx_stack_horizontal) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_info_bar), display_info_bar);
@@ -557,7 +557,7 @@ void display_menu(GtkWidget *parent) {
 #if defined (__LDESK__)
   //----------------------------------------------------------------------------------------------------------
   GtkWidget *b_panadapter_peaks_as_smeter = gtk_check_button_new_with_label("Show Peak Labels as S-Meter values");
-  gtk_widget_set_name(b_panadapter_peaks_as_smeter, "boldlabel");
+  gtk_widget_set_name(b_panadapter_peaks_as_smeter, "boldlabel_blue");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_as_smeter),
                                active_receiver->panadapter_peaks_as_smeter);
   gtk_widget_show(b_panadapter_peaks_as_smeter);

@@ -930,7 +930,7 @@ void radio_menu(GtkWidget *parent) {
   row++;
   col = 0;
   label = gtk_label_new("Your Callsign:");
-  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_name(label, "boldlabel_blue");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   GtkWidget *callsign_box = gtk_entry_new();
   col++;

@@ -860,11 +860,9 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       copy_mode_settings(mode);
       g_idle_add(ext_vfo_update, NULL);
 #endif
-
       g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
       g_signal_handler_unblock(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
-
       gtk_widget_queue_draw(local_mic_button);
       break;
 
@@ -1079,6 +1077,7 @@ void tx_menu(GtkWidget *parent) {
     col = 0;
     col += 3;
     load_button = gtk_button_new_with_label("Load Profile");
+    gtk_widget_set_name(load_button, "boldlabel_blue");
     gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
     g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);
 
@@ -1090,6 +1089,7 @@ void tx_menu(GtkWidget *parent) {
 
     col++;
     save_button = gtk_button_new_with_label("Save");
+    gtk_widget_set_name(save_button, "boldlabel_blue");
     gtk_grid_attach(GTK_GRID(tx_grid), save_button, col, row, 1, 1);
     g_signal_connect(save_button, "clicked", G_CALLBACK(save_button_clicked_cb), save_button);
     col = 0;
@@ -1235,7 +1235,7 @@ void tx_menu(GtkWidget *parent) {
   col++;
 #if defined (__LDESK__)
   btn = gtk_check_button_new_with_label("Local Mic PreAmp Gain");
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->addgain_enable);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
@@ -1418,7 +1418,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(CFC_EQ));
   btn = gtk_check_button_new_with_label("Phase Rotator");
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->phrot_enable);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_PHROT_ENABLE));
@@ -1453,7 +1453,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCLVL));
   btn = gtk_check_button_new_with_label("Leveler");
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->lev_enable);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
@@ -1476,7 +1476,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST));
   btn = gtk_check_button_new_with_label("Baseband PROC");
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->compressor);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
@@ -1486,7 +1486,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 4, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_COMP));
   btn = gtk_check_button_new_with_label("Auto CESSB");
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->cessb_enable);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 5, row, 1, 1);
