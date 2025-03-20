@@ -451,13 +451,13 @@ void rx_reconfigure(RECEIVER *rx, int height) {
   // for adjust the display relation between RX panadapter and waterfall
   int myheight_pan = 0;
   int myheight_wf = 0;
-
   //
   // myheight is the size of the waterfall or the panadapter
   // which is the full or half of the height depending on whether BOTH
   // are displayed
   //
-  t_print("%s: rx=%d width=%d height=%d percent_pan_wf=%f\n", __FUNCTION__, rx->id, rx->width, rx->height, percent_pan_wf);
+  t_print("%s: rx=%d width=%d height=%d percent_pan_wf=%f\n", __FUNCTION__, rx->id, rx->width, rx->height,
+          percent_pan_wf);
   g_mutex_lock(&rx->display_mutex);
   // int myheight = (rx->display_panadapter && rx->display_waterfall) ? height / 2 : height;
 
@@ -472,7 +472,6 @@ void rx_reconfigure(RECEIVER *rx, int height) {
   }
 
   t_print("%s: myheight_pan %d myheight_wf %d\n", __FUNCTION__, myheight_pan, myheight_wf);
-
   rx->height = height; // total height
   gtk_widget_set_size_request(rx->panel, rx->width, rx->height);
 
