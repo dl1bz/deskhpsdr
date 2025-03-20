@@ -177,6 +177,13 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
   display_pacurr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static void bgcolor_button_clicked(GtkButton *bgcolor_btn, gpointer data) {
+  GtkEntry *bgcolor_text_input = GTK_ENTRY(data);  // Das GtkEntry-Widget
+  const gchar *text = gtk_entry_get_text(bgcolor_text_input);  // Hole den eingegebenen Text
+  g_strlcpy(radio_bgcolor, text, strlen(radio_bgcolor) + 1);
+  radio_set_bgcolor(top_window, NULL);
+}
+
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
 #if defined (__USELESS__)
@@ -225,6 +232,21 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), slider_surface_f, 3, row, 1, 1);
   g_signal_connect(G_OBJECT(slider_surface_f), "value_changed", G_CALLBACK(slider_surface_f_cb), NULL);
   gtk_widget_show(slider_surface_f);
+  GtkWidget *bgcolor_label = gtk_label_new("Backgrund Color\n#RRGGBB (hex)");
+  gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
+  gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
+  gtk_widget_set_halign(bgcolor_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(grid), bgcolor_label, 1, 3, 1, 1);
+  GtkWidget *bgcolor_text_input = gtk_entry_new();
+  gtk_entry_set_max_length(GTK_ENTRY(bgcolor_text_input), strlen(radio_bgcolor));
+  gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor);
+  gtk_grid_attach(GTK_GRID(grid), bgcolor_text_input, 2, 3, 1, 1);
+  gtk_widget_show(bgcolor_text_input);
+  GtkWidget *bgcolor_btn = gtk_button_new_with_label("Set");
+  gtk_widget_set_halign(bgcolor_btn, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), bgcolor_btn, 3, 3, 1, 1);
+  g_signal_connect(bgcolor_btn, "clicked", G_CALLBACK(bgcolor_button_clicked), bgcolor_text_input);
+  gtk_widget_show(bgcolor_btn);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   row++;
   label = gtk_label_new("Window Width:");

@@ -161,6 +161,7 @@ extern int display_sliders;
 extern int display_toolbar;
 extern double percent_pan_wf;
 extern int display_info_bar;
+extern char radio_bgcolor[];
 
 extern int mic_linein;
 extern double linein_gain;
@@ -369,6 +370,7 @@ extern int compare_doubles(const void *a, const void *b);
 
 extern int optimize_for_touchscreen;
 extern void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol);
+extern gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data);
 
 //
 // Macro for a memory barrier, preventing changing the execution order

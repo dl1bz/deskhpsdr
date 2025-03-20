@@ -216,6 +216,7 @@ int display_sliders = 0;
 int display_toolbar = 0;
 double percent_pan_wf = 50.0;
 int display_info_bar = 0;
+char radio_bgcolor[] = "#E6E6FA";
 
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
 double linein_gain = 0.0;  // -34.0 ... +12.5 in steps of 1.5 dB
@@ -820,6 +821,15 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
   _exit(0);
 }
 
+gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
+  GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
+  // Definiere die Hintergrundfarbe
+  gdk_rgba_parse(&bgcolor, radio_bgcolor);
+  gtk_widget_override_background_color(widget, GTK_STATE_FLAG_NORMAL, &bgcolor);
+  gtk_widget_queue_draw(widget);
+  return FALSE;
+}
+
 #endif
 
 static void radio_create_visual() {
@@ -828,6 +838,9 @@ static void radio_create_visual() {
   g_object_ref(topgrid);  // so it does not get deleted
   gtk_container_remove(GTK_CONTAINER(top_window), topgrid);
   gtk_container_add(GTK_CONTAINER(top_window), fixed);
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  radio_set_bgcolor(top_window, NULL);
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   //t_print("radio: vfo_init\n");
   int my_height = full_screen ? screen_height : display_height;
   int my_width  = full_screen ? screen_width  : display_width;
@@ -2630,6 +2643,7 @@ static void radio_restore_state() {
   //
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
+  GetPropS0("radio_bgcolor",                                 radio_bgcolor);
   GetPropF0("slider_surface_scale",                          slider_surface_scale);
   GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("display_info_bar",                              display_info_bar);
@@ -2875,6 +2889,7 @@ void radio_save_state() {
   // Use the "saved" Zoompan/Slider/Toolbar display status
   // if they are currently hidden via the "Hide" button
   //
+  SetPropS0("radio_bgcolor",                                 radio_bgcolor);
   SetPropF0("slider_surface_scale",                          slider_surface_scale);
   SetPropF0("percent_pan_wf",                                percent_pan_wf);
   SetPropI0("display_info_bar",                              display_info_bar);

@@ -381,6 +381,7 @@ void showSaveDialog() {
   GtkWidget *label;
   GtkWidget *aprof_save_button;
   GtkWidget *aprof_nosave_button;
+  GdkRGBA color_for_dialog;  // Hier deklarierst du die GdkRGBA-Struktur
   char _title[64];
   char _dialog[64];
   // Fenster erstellen
@@ -414,6 +415,10 @@ void showSaveDialog() {
   // Pango-Layout für Textgröße anpassen
   PangoFontDescription *font_desc = pango_font_description_from_string("Arial 18"); // Schriftart und Größe
   gtk_widget_override_font(label, font_desc);  // Wendet die Schriftart auf das Label an
+  // Definiere die Textfarbe
+  gdk_rgba_parse(&color_for_dialog, "blue");
+  // Setze die Textfarbe für das Label
+  gtk_widget_override_color(label, GTK_STATE_FLAG_NORMAL, &color_for_dialog);
   gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1); // Label in Zeile 0, Spalte 0 (über 2 Spalten)
   // "Yes"-Button hinzufügen
   aprof_save_button = gtk_button_new_with_label("Yes");

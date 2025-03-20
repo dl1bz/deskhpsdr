@@ -680,16 +680,6 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
 
 #endif
 
-// Diese Funktion wird aufgerufen, wenn das "size-allocate"-Signal ausgelöst wird
-static void on_size_allocate(GtkWidget *widget, GtkAllocation *allocation, gpointer data) {
-  int _width = allocation->width;
-  int _height = allocation->height;
-  const gchar *_name = gtk_widget_get_name(widget);
-  const gchar *_typ = G_OBJECT_TYPE_NAME(widget);
-  // const gchar *_name = (const gchar *)g_hash_table_lookup(widget_name_map, widget);
-  t_print("%s: Widget %s Typ %s (size-allocate) Breite %d Höhe %d\n", __FUNCTION__, _name, _typ, _width, _height);
-}
-
 void set_squelch(RECEIVER *rx) {
   //t_print("%s\n",__FUNCTION__);
   //
@@ -723,6 +713,7 @@ void show_diversity_phase() {
 GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__LDESK__)
   width = my_width - 50;
+  // GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
 #else
   width = my_width;
 #endif
@@ -816,6 +807,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_margin_bottom(sliders, 0); // Kein Abstand unten
   gtk_widget_set_margin_start(sliders, 15);  // Kein Abstand am Anfang
   gtk_widget_set_margin_end(sliders, 15);    // Kein Abstand am Ende
+  // Definiere die Hintergrundfarbe (grün)
+  // gdk_rgba_parse(&bgcolor, "white");
+  // gtk_widget_override_background_color(sliders, GTK_STATE_FLAG_NORMAL, &bgcolor);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
   af_gain_label = gtk_label_new("Vol");
@@ -828,7 +822,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_label_set_justify(GTK_LABEL(af_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(af_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), af_gain_label, t1pos, 0, twidth, 1);
-  g_signal_connect(G_OBJECT(af_gain_label), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.00);
   gtk_widget_set_size_request(af_gain_scale, sl_w_fix, widget_height);
@@ -843,7 +836,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_show(af_gain_scale);
   gtk_grid_attach(GTK_GRID(sliders), af_gain_scale, s1pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(af_gain_scale), "value_changed", G_CALLBACK(afgain_value_changed_cb), NULL);
-  g_signal_connect(G_OBJECT(af_gain_scale), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   agc_gain_label = gtk_label_new("AGC");
   gtk_widget_set_size_request(agc_gain_label, lbl_w_fix, widget_height);
@@ -852,7 +844,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_label_set_justify(GTK_LABEL(agc_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(agc_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, t2pos, 0, twidth, 1);
-  g_signal_connect(G_OBJECT(agc_gain_label), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   agc_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -20.0, 120.0, 1.0);
   gtk_widget_set_size_request(agc_scale, sl_w_fix, widget_height);
@@ -862,7 +853,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_show(agc_scale);
   gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
   g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
-  g_signal_connect(G_OBJECT(agc_scale), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__AUTOG__)
 
@@ -1106,7 +1096,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // tune_drive_label
     tune_drive_label = gtk_label_new("TUNE\nDrv");
     gtk_widget_set_size_request(tune_drive_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(tune_drive_label, csslabel_smaller);
+    gtk_widget_set_name(tune_drive_label, "slider2_blue");
     gtk_label_set_justify(GTK_LABEL(tune_drive_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, twidth, 1);
@@ -1131,7 +1121,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       // local_mic_label
       local_mic_label = gtk_label_new("Local\nMic");
       gtk_widget_set_size_request(local_mic_label, lbl_w_fix, widget_height);
-      gtk_widget_set_name(local_mic_label, csslabel_smaller);
+      // gtk_widget_set_name(local_mic_label, csslabel_smaller);
+      gtk_widget_set_name(local_mic_label, "slider2_blue");
       gtk_widget_set_halign(local_mic_label, GTK_ALIGN_CENTER);
       gtk_label_set_justify(GTK_LABEL(local_mic_label), GTK_JUSTIFY_CENTER);
       gtk_grid_attach(GTK_GRID(sliders), local_mic_label, t2pos, 2, twidth, 1);
