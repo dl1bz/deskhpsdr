@@ -30,8 +30,10 @@
 #include "band.h"
 #if defined (__LDESK__)
   #include "appearance.h"
+  #include "audio.h"
 #endif
 #include "waterfall.h"
+#include "message.h"
 
 static int colorLowR = 0; // black
 static int colorLowG = 0;
@@ -69,8 +71,70 @@ waterfall_draw_cb (GtkWidget *widget,
                    cairo_t   *cr,
                    gpointer   data) {
   const RECEIVER *rx = (RECEIVER *)data;
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  GtkAllocation allocation;
+  gtk_widget_get_allocation(rx->waterfall, &allocation);
+  int b_width = allocation.width;
+  int b_height = allocation.height;
+  int box_height = 30;
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   gdk_cairo_set_source_pixbuf (cr, rx->pixbuf, 0, 0);
-  cairo_paint (cr);
+  cairo_paint (cr); // vor dem Zeichnen der Box aufrufen, sinst wird der pixbuf überschrieben !
+
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  if (display_info_bar && active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
+      || active_receiver->display_panadapter == 1) && rx->id == 0) {
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_rectangle(cr, 0.0, b_height - box_height, b_width, box_height);
+    cairo_fill(cr);
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+    cairo_move_to(cr, b_width / 2, b_height - 10);
+
+    if (can_transmit) {
+      cairo_show_text(cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+    } else {
+      cairo_show_text(cr, "[b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+    }
+
+    if (can_transmit) {
+      char _text[128];
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+      cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+#if defined (__APPLE__)
+      snprintf(_text, 128, "[%d] %s", active_receiver->id, transmitter->microphone_name);
+#else
+      int _audioindex = 0;
+
+      if (n_input_devices > 0) {
+        for (int i = 0; i < n_input_devices; i++) {
+          if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+            _audioindex = i;
+          }
+        }
+
+        snprintf(_text, 128, "[%d] %s", active_receiver->id, input_devices[_audioindex].description);
+      } else {
+        snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
+      }
+
+#endif
+      cairo_move_to(cr, 10.0, b_height - 10);
+      cairo_show_text(cr, _text);
+    }
+  }
+
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   return FALSE;
 }
 

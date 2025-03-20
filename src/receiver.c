@@ -469,6 +469,7 @@ void rx_reconfigure(RECEIVER *rx, int height) {
     myheight_wf = height - myheight_pan;
   } else {
     myheight_pan = height;
+    myheight_wf = height;
   }
 
   t_print("%s: myheight_pan %d myheight_wf %d\n", __FUNCTION__, myheight_pan, myheight_wf);
