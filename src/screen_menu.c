@@ -21,6 +21,8 @@
 
 #include <gtk/gtk.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
 
 #include "radio.h"
 #include "new_menu.h"
@@ -35,6 +37,8 @@ static GtkWidget *full_b = NULL;
 static GtkWidget *vfo_b = NULL;
 static gulong vfo_signal_id;
 static guint apply_timeout = 0;
+static GtkWidget *bgcolor_text_input;
+static gulong bgcolor_text_input_signal_id;
 
 //
 // local copies of global variables
@@ -177,11 +181,25 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
   display_pacurr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static bool is_valid_rgb(const char *str) {
+  int r, g, b;
+  return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3;
+}
+
 static void bgcolor_button_clicked(GtkButton *bgcolor_btn, gpointer data) {
   GtkEntry *bgcolor_text_input = GTK_ENTRY(data);  // Das GtkEntry-Widget
   const gchar *text = gtk_entry_get_text(bgcolor_text_input);  // Hole den eingegebenen Text
-  g_strlcpy(radio_bgcolor, text, strlen(radio_bgcolor) + 1);
-  radio_set_bgcolor(top_window, NULL);
+
+  if (is_valid_rgb(text)) {
+    g_strlcpy(radio_bgcolor, text, strlen(radio_bgcolor) + 1);
+    radio_set_bgcolor(top_window, NULL);
+  } else {
+    g_signal_handler_block(bgcolor_text_input, bgcolor_text_input_signal_id);
+    gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor);
+    g_signal_handler_unblock(bgcolor_text_input, bgcolor_text_input_signal_id);
+    gtk_widget_queue_draw(GTK_WIDGET(bgcolor_text_input));
+    t_print("%s: ERROR: wrong RGB entry %s\n", __FUNCTION__, text);
+  }
 }
 
 void screen_menu(GtkWidget *parent) {
@@ -237,10 +255,12 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
   gtk_widget_set_halign(bgcolor_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), bgcolor_label, 1, 3, 1, 1);
-  GtkWidget *bgcolor_text_input = gtk_entry_new();
+  bgcolor_text_input = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(bgcolor_text_input), strlen(radio_bgcolor));
   gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor);
   gtk_grid_attach(GTK_GRID(grid), bgcolor_text_input, 2, 3, 1, 1);
+  bgcolor_text_input_signal_id = g_signal_connect(bgcolor_text_input, "activate", G_CALLBACK(bgcolor_button_clicked),
+                                 bgcolor_text_input);
   gtk_widget_show(bgcolor_text_input);
   GtkWidget *bgcolor_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(bgcolor_btn, GTK_ALIGN_START);

@@ -821,12 +821,21 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
   _exit(0);
 }
 
+static bool is_valid_rgb(const char *str) {
+  int r, g, b;
+  return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3;
+}
+
 gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
   GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
-  // Definiere die Hintergrundfarbe
-  gdk_rgba_parse(&bgcolor, radio_bgcolor);
-  gtk_widget_override_background_color(widget, GTK_STATE_FLAG_NORMAL, &bgcolor);
-  gtk_widget_queue_draw(widget);
+
+  // Definiere und prüfe die Hintergrundfarbe
+  if (is_valid_rgb(radio_bgcolor)) {
+    gdk_rgba_parse(&bgcolor, radio_bgcolor);
+    gtk_widget_override_background_color(widget, GTK_STATE_FLAG_NORMAL, &bgcolor);
+    gtk_widget_queue_draw(widget);
+  }
+
   return FALSE;
 }
 
