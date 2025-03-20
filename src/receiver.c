@@ -447,21 +447,25 @@ void rx_restore_state(RECEIVER *rx) {
 
 void rx_reconfigure(RECEIVER *rx, int height) {
   int y = 0;
+  // now we separate the old myheight: one for panadapter myheight_pan and one for waterfall myheight_wf
+  // for adjust the display relation between RX panadapter and waterfall
   int myheight_pan = 0;
   int myheight_wf = 0;
-  double rel_pan_wf = 70.0; // how many procent will be shown the RX pandapter in relation to the waterfall
 
   //
   // myheight is the size of the waterfall or the panadapter
   // which is the full or half of the height depending on whether BOTH
   // are displayed
   //
-  t_print("%s: rx=%d width=%d height=%d\n", __FUNCTION__, rx->id, rx->width, rx->height);
+  t_print("%s: rx=%d width=%d height=%d percent_pan_wf=%f\n", __FUNCTION__, rx->id, rx->width, rx->height, percent_pan_wf);
   g_mutex_lock(&rx->display_mutex);
   // int myheight = (rx->display_panadapter && rx->display_waterfall) ? height / 2 : height;
 
   if (rx->display_panadapter && rx->display_waterfall) {
-    myheight_pan = height * (rel_pan_wf * 0.01);
+    // calculation in pixel, how many percent will be shown the RX pandapter in relation to the waterfall
+    // the percent_pan_wf value is defined in radio.c and adjustable in the Display Menu
+    myheight_pan = height * (percent_pan_wf * 0.01);
+    // full height minus RX panadapter height in pixel
     myheight_wf = height - myheight_pan;
   } else {
     myheight_pan = height;

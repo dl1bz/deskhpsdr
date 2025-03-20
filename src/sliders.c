@@ -831,6 +831,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_size_request(af_gain_label, lbl_w_fix, widget_height);
   gtk_widget_set_name(af_gain_label, csslabel);
   gtk_widget_set_halign(af_gain_label, GTK_ALIGN_CENTER);
+  gtk_label_set_justify(GTK_LABEL(af_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(af_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), af_gain_label, t1pos, 0, twidth, 1);
   g_signal_connect(G_OBJECT(af_gain_label), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
@@ -854,6 +855,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_size_request(agc_gain_label, lbl_w_fix, widget_height);
   gtk_widget_set_name(agc_gain_label, csslabel);
   gtk_widget_set_halign(agc_gain_label, GTK_ALIGN_CENTER);
+  gtk_label_set_justify(GTK_LABEL(agc_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(agc_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, t2pos, 0, twidth, 1);
   g_signal_connect(G_OBJECT(agc_gain_label), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
@@ -900,6 +902,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #endif
     gtk_widget_set_size_request(rf_gain_label, lbl_w_fix, widget_height);
     gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_END);
+    gtk_label_set_justify(GTK_LABEL(rf_gain_label), GTK_JUSTIFY_CENTER);
     gtk_widget_show(rf_gain_label);
     gtk_grid_attach(GTK_GRID(sliders), rf_gain_label, t3pos, 0, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1004,6 +1007,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(mic_gain_label, lbl_w_fix, widget_height);
     gtk_widget_set_name(mic_gain_label, csslabel);
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_CENTER);
+    gtk_label_set_justify(GTK_LABEL(mic_gain_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
@@ -1034,6 +1038,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(drive_label, csslabel);
 #endif
     gtk_widget_set_size_request(drive_label, lbl_w_fix, widget_height);
+    gtk_label_set_justify(GTK_LABEL(drive_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(drive_label, GTK_ALIGN_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1078,6 +1083,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_size_request(squelch_label, lbl_w_fix, widget_height);
   gtk_widget_set_name(squelch_label, csslabel);
   gtk_widget_set_halign(squelch_label, GTK_ALIGN_END);
+  gtk_label_set_justify(GTK_LABEL(squelch_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(squelch_label);
   gtk_grid_attach(GTK_GRID(sliders), squelch_label, t3pos, 1, twidth, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1107,6 +1113,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     tune_drive_label = gtk_label_new("TUNE\nDrv");
     gtk_widget_set_size_request(tune_drive_label, lbl_w_fix, widget_height);
     gtk_widget_set_name(tune_drive_label, csslabel_smaller);
+    gtk_label_set_justify(GTK_LABEL(tune_drive_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, twidth, 1);
     gtk_widget_show(tune_drive_label);
@@ -1131,6 +1138,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_size_request(local_mic_label, lbl_w_fix, widget_height);
       gtk_widget_set_name(local_mic_label, csslabel_smaller);
       gtk_widget_set_halign(local_mic_label, GTK_ALIGN_CENTER);
+      gtk_label_set_justify(GTK_LABEL(local_mic_label), GTK_JUSTIFY_CENTER);
       gtk_grid_attach(GTK_GRID(sliders), local_mic_label, t2pos, 2, twidth, 1);
       gtk_widget_show(local_mic_label);
       //-------------------------------------------------------------------------------------------

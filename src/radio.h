@@ -159,6 +159,7 @@ extern double slider_surface_scale;
 extern int display_zoompan;
 extern int display_sliders;
 extern int display_toolbar;
+extern double percent_pan_wf;
 
 extern int mic_linein;
 extern double linein_gain;

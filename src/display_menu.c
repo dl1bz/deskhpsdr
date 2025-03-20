@@ -179,6 +179,11 @@ static void frames_per_second_value_changed_cb(GtkWidget *widget, gpointer data)
   rx_set_framerate(active_receiver);
 }
 
+static void relation_pan_wf_changed_cb(GtkWidget *widget, gpointer data) {
+  percent_pan_wf = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  radio_reconfigure();
+}
+
 static void panadapter_high_value_changed_cb(GtkWidget *widget, gpointer data) {
   active_receiver->panadapter_high = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 }
@@ -312,6 +317,21 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_show(frames_per_second_r);
   gtk_grid_attach(GTK_GRID(general_grid), frames_per_second_r, col, row, 1, 1);
   g_signal_connect(frames_per_second_r, "value_changed", G_CALLBACK(frames_per_second_value_changed_cb), NULL);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  col++;
+  label = gtk_label_new("Relation Pan<->Waterfall:\n(in Percent)");
+  gtk_widget_set_name (label, "stdlabel");
+  // Text im Label rechts ausrichten
+  gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_RIGHT);
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
+  col++;
+  GtkWidget *rel_pan_wf_sb = gtk_spin_button_new_with_range(30.0, 80.0, 5.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(rel_pan_wf_sb), (double)percent_pan_wf);
+  gtk_widget_show(rel_pan_wf_sb);
+  gtk_grid_attach(GTK_GRID(general_grid), rel_pan_wf_sb, col, row, 1, 1);
+  g_signal_connect(rel_pan_wf_sb, "value_changed", G_CALLBACK(relation_pan_wf_changed_cb), NULL);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   row++;
   col = 0;
   label = gtk_label_new("Panadapter High:");
