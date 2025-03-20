@@ -49,6 +49,7 @@
 #include "ext.h"
 
 static GtkWidget *dialog = NULL;
+static gulong callsign_box_signal_id;
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -373,6 +374,23 @@ static void micsource_cb(GtkWidget *widget, gpointer data) {
 static void tx_cb(GtkWidget *widget, gpointer data) {
   // atlas_penelope = SET(gtk_combo_box_get_active (GTK_COMBO_BOX(widget)));
   atlas_penelope = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+}
+
+static void callsign_button_clicked(GtkButton *callsign_box_btn, gpointer data) {
+  GtkEntry *callsign_box = GTK_ENTRY(data);  // Das GtkEntry-Widget
+  const gchar *text = gtk_entry_get_text(callsign_box);  // Hole den eingegebenen Text
+
+  if (strlen(text) >= 3 && strlen(text) <= 32) {
+    g_strup((gchar*)text);
+    g_strlcpy(own_callsign, text, strlen(text) + 1);
+  } else {
+    g_signal_handler_block(callsign_box, callsign_box_signal_id);
+    gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
+    g_signal_handler_unblock(callsign_box, callsign_box_signal_id);
+  }
+
+  gtk_widget_queue_draw(GTK_WIDGET(callsign_box));
+  // close_cb();
 }
 
 void radio_menu(GtkWidget *parent) {
@@ -937,7 +955,13 @@ void radio_menu(GtkWidget *parent) {
   gtk_entry_set_max_length(GTK_ENTRY(callsign_box), 32);
   gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
   gtk_grid_attach(GTK_GRID(grid), callsign_box, col, row, 2, 1);
-  g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_box_cb), NULL);
+  callsign_box_signal_id = g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_box_cb), NULL);
+  col += 2;
+  GtkWidget *callsign_box_btn = gtk_button_new_with_label("Set");
+  gtk_widget_set_halign(callsign_box_btn, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), callsign_box_btn, col, row, 1, 1);
+  g_signal_connect(callsign_box_btn, "clicked", G_CALLBACK(callsign_button_clicked), callsign_box);
+  gtk_widget_show(callsign_box_btn);
 #endif
 #ifdef SOAPYSDR
   row++;

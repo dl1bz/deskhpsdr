@@ -197,9 +197,10 @@ static void bgcolor_button_clicked(GtkButton *bgcolor_btn, gpointer data) {
     g_signal_handler_block(bgcolor_text_input, bgcolor_text_input_signal_id);
     gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor);
     g_signal_handler_unblock(bgcolor_text_input, bgcolor_text_input_signal_id);
-    gtk_widget_queue_draw(GTK_WIDGET(bgcolor_text_input));
     t_print("%s: ERROR: wrong RGB entry %s\n", __FUNCTION__, text);
   }
+
+  gtk_widget_queue_draw(GTK_WIDGET(bgcolor_text_input));
 }
 
 void screen_menu(GtkWidget *parent) {
