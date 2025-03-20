@@ -330,6 +330,8 @@ void display_menu(GtkWidget *parent) {
   col++;
   GtkWidget *rel_pan_wf_sb = gtk_spin_button_new_with_range(30.0, 80.0, 5.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(rel_pan_wf_sb), (double)percent_pan_wf);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(rel_pan_wf_sb), TRUE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(rel_pan_wf_sb), TRUE);
   gtk_widget_show(rel_pan_wf_sb);
   gtk_grid_attach(GTK_GRID(general_grid), rel_pan_wf_sb, col, row, 1, 1);
   g_signal_connect(rel_pan_wf_sb, "value_changed", G_CALLBACK(relation_pan_wf_changed_cb), NULL);
@@ -518,7 +520,14 @@ void display_menu(GtkWidget *parent) {
 
   GtkWidget *b_display_info_bar = gtk_check_button_new_with_label("Display Info Bar");
   gtk_widget_set_name (b_display_info_bar, "stdlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_info_bar), display_info_bar);
+
+  if (!rx_stack_horizontal) {
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_info_bar), display_info_bar);
+  } else {
+    display_info_bar = 0;
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_info_bar), display_info_bar);
+  }
+
   gtk_grid_attach(GTK_GRID(general_grid), b_display_info_bar, col + 1, row + 1, 1, 1);
   g_signal_connect(b_display_info_bar, "toggled", G_CALLBACK(toggle_info_bar_cb), NULL);
   //------------------------------------------------------------------------------------------------------------
