@@ -1331,7 +1331,8 @@ src/vox_menu.o: src/transmitter.h src/vfo.h src/mode.h src/vox_menu.h
 src/vox_menu.o: src/vox.h src/ext.h src/message.h
 src/waterfall.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/waterfall.o: src/receiver.h src/transmitter.h src/vfo.h src/mode.h
-src/waterfall.o: src/band.h src/bandstack.h src/appearance.h src/waterfall.h
+src/waterfall.o: src/band.h src/bandstack.h src/appearance.h src/audio.h
+src/waterfall.o: src/waterfall.h src/message.h
 src/xvtr_menu.o: src/new_menu.h src/band.h src/bandstack.h src/filter.h
 src/xvtr_menu.o: src/mode.h src/xvtr_menu.h src/radio.h src/adc.h src/dac.h
 src/xvtr_menu.o: src/discovered.h src/receiver.h src/transmitter.h src/vfo.h
