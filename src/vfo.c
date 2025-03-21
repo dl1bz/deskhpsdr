@@ -32,10 +32,6 @@
 #include <net/if_arp.h>
 #include <net/if.h>
 #include <ifaddrs.h>
-
-#if defined (__LDESK__) && defined (__CPYMODE__)
-  #include "audio.h"
-#endif
 #include "appearance.h"
 #include "discovered.h"
 #include "main.h"
@@ -63,10 +59,9 @@
 #include "noise_menu.h"
 #include "equalizer_menu.h"
 #include "message.h"
-#if defined (__LDESK__)
-  #include "sliders.h"
-  #include "audio.h"
-#endif
+#include "sliders.h"
+#include "audio.h"
+
 
 #if defined (__LDESK__) && defined (__CPYMODE__)
   GMutex copy_string_mutex;
