@@ -606,11 +606,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
         if (transmitter->tune_use_drive) {
           transmitter->tune_use_drive = 0;
         }
-
-        g_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
-        g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
-        gtk_widget_queue_draw(tune_drive_scale);
+        update_slider_tune_drive_scale();
       }
 
 #endif

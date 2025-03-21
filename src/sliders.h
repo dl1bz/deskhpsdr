@@ -33,6 +33,7 @@ extern void update_c25_att(void);
 extern int sliders_active_receiver_changed(void *data);
 extern void update_slider_local_mic_input(void);
 extern void update_slider_local_mic_button(void);
+extern void update_slider_tune_drive_scale(void);
 
 extern void set_agc_gain(int rx, double value);
 extern void set_af_gain(int rx, double value);
