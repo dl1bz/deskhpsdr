@@ -257,7 +257,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_halign(bgcolor_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), bgcolor_label, 1, 3, 1, 1);
   bgcolor_text_input = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(bgcolor_text_input), strlen(radio_bgcolor));
+  gtk_entry_set_max_length(GTK_ENTRY(bgcolor_text_input), 7);
   gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor);
   gtk_grid_attach(GTK_GRID(grid), bgcolor_text_input, 2, 3, 1, 1);
   bgcolor_text_input_signal_id = g_signal_connect(bgcolor_text_input, "activate", G_CALLBACK(bgcolor_button_clicked),
