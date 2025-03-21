@@ -669,6 +669,38 @@ static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+void update_slider_local_mic_input() {
+  g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
+
+  for (int i = 0; i < n_input_devices; i++) {
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, input_devices[i].description);
+
+    if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+      gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
+    }
+  }
+
+  // If the combo box shows no device, take the first one
+  // AND set the mic.name to that device name.
+  // This situation occurs if the local microphone device in the props
+  // file is no longer present
+
+  if (gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input))  < 0) {
+    gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), 0);
+    g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
+  }
+
+  g_signal_handler_unblock(G_OBJECT(local_mic_input), local_mic_input_signal_id);
+  gtk_widget_queue_draw(local_mic_input);
+}
+
+void update_slider_local_mic_button() {
+  g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
+  g_signal_handler_unblock(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
+  gtk_widget_queue_draw(local_mic_button);
+}
+
 #endif
 
 #if defined (__AUTOG__)

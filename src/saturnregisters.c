@@ -89,7 +89,8 @@ static uint32_t GPIORegValue;                              // value stored into 
 static uint32_t TXConfigRegValue;                          // value written into TX config register
 static uint32_t DDCInSelReg;                               // value written into DDC config register
 static uint32_t DDCRateReg;                                // value written into DDC rate register
-static bool GADCOverride;                                  // true if ADCs are to be overridden & use test source instead
+static bool
+GADCOverride;                                  // true if ADCs are to be overridden & use test source instead
 static bool GByteSwapEnabled;                              // true if byte swapping enabled for sample readout
 static bool GPTTEnabled;                                   // true if PTT is enabled
 //static bool GPureSignalEnabled;                            // true if PureSignal is enabled

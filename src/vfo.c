@@ -847,6 +847,11 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   update_noise();
   update_eq();
   g_idle_add(ext_vfo_update, NULL);
+
+  if (n_input_devices > 0) {
+    update_slider_local_mic_input();
+    update_slider_local_mic_button();
+  }
 }
 
 void vfo_band_changed(int id, int b) {

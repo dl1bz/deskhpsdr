@@ -865,10 +865,7 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       copy_mode_settings(mode);
       g_idle_add(ext_vfo_update, NULL);
 #endif
-      g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
-      g_signal_handler_unblock(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
-      gtk_widget_queue_draw(local_mic_button);
+      update_slider_local_mic_button();
       break;
 
     case TX_FM_EMP:
@@ -981,10 +978,8 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   copy_mode_settings(_mode);
 
   if (n_input_devices > 0) {
-    g_signal_handler_block(GTK_COMBO_BOX(local_mic_input), local_mic_input_signal_id);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
-    g_signal_handler_unblock(GTK_COMBO_BOX(local_mic_input), local_mic_input_signal_id);
-    gtk_widget_queue_draw(local_mic_input);
+    update_slider_local_mic_input();
+    update_slider_local_mic_button();
   }
 
 #endif
