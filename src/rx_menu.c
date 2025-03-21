@@ -64,10 +64,7 @@ static gboolean close_cb () {
 #if defined (__AUTOG__)
 static void autogain_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_en), autogain_enabled);
-  g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
-  gtk_widget_queue_draw(autogain_en);
+  update_slider_autogain_en();
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }

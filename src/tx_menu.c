@@ -606,6 +606,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
         if (transmitter->tune_use_drive) {
           transmitter->tune_use_drive = 0;
         }
+
         update_slider_tune_drive_scale();
       }
 

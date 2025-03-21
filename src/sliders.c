@@ -708,6 +708,13 @@ void update_slider_tune_drive_scale() {
   gtk_widget_queue_draw(tune_drive_scale);
 }
 
+void update_slider_autogain_en() {
+  g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_en), autogain_enabled);
+  g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
+  gtk_widget_queue_draw(autogain_en);
+}
+
 #endif
 
 #if defined (__AUTOG__)
