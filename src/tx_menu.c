@@ -973,13 +973,12 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   t_print("%s: mode: %d, mode_settings %s size: %d\n", __FUNCTION__, _mode, mode_settings[_mode].microphone_name,
           sizeof(mode_settings[_mode].microphone_name));
   copy_mode_settings(_mode);
+#endif
 
   if (n_input_devices > 0) {
     update_slider_local_mic_input();
     update_slider_local_mic_button();
   }
-
-#endif
 }
 
 void tx_menu(GtkWidget *parent) {
