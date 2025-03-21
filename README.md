@@ -29,7 +29,7 @@ From now on (January 2025) I stop merging code from piHPSDR into deskHPSDR. Last
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the ```Notes_if_using_HERMES-Lite-2.md```
 
-**Important:** For best desktop experience please select **VFO bar for 1280px windows** in the *Menu->Screen* (if not selected).
+~~**Important:** For best desktop experience please select **VFO bar for 1280px windows** in the *Menu->Screen* (if not selected).~~ No more required, the VFO bar selection was removed.
 
 ## The further development of deskHPSDR
 
@@ -40,6 +40,14 @@ My work is not completed (are software projects ever finished ???). I have some 
 ### Version 2.6.0 (final version)
 
 On March 4, 2025 the **first final version 2.6.0 of deskHPSDR** is published. This version will not get new functions, only bugfixes if any become known. Further development will start later from version 2.7.x after a short break in development.
+**Changes / Corrections after Version 2.5 and implement into 2.6**
+- relation between RX panadapter and waterfall now adjustable in Display Menu
+- add a worldmap as background for the RX panadapter (in the ```make.config.deskhpsdr``` set WMAP=ON)
+- change band borders in the RX panadapter (vertical red lines) from US (default) to IARU Reg. 1 (in the ```make.config.deskhpsdr``` set REGION1=ON)
+- if using a Hermes Lite 2 you can use Autogain now (like in Thetis), set if want using in the ```make.config.deskhpsdr``` AUTOGAIN=ON
+- background color of the slider surface can be user-defined now in the Screen Menu
+- slider geometry is adjustable now via a Slider Surface Resize Factor in the Screen Menu
+- add TUNE Drv and Audio Input Selection into the slider surface for direct access (go to TX Menu no more required)
 
 ### Version 2.5.x (developer version)
 - completed: if using Hermes-Lite 2 add autogain regulation as option for RxPGA gain (need insert AUTOGAIN=ON in ```make.config.deskhpsdr```)
