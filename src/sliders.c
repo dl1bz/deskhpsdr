@@ -670,6 +670,7 @@ static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void update_slider_local_mic_input() {
+  if (display_sliders) {
   g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
 
   for (int i = 0; i < n_input_devices; i++) {
@@ -693,26 +694,33 @@ void update_slider_local_mic_input() {
   g_signal_handler_unblock(G_OBJECT(local_mic_input), local_mic_input_signal_id);
   gtk_widget_queue_draw(local_mic_input);
 }
+}
 
 void update_slider_local_mic_button() {
+  if (display_sliders) {
   g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
   g_signal_handler_unblock(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
   gtk_widget_queue_draw(local_mic_button);
+  }
 }
 
 void update_slider_tune_drive_scale() {
+  if (display_sliders) {
   g_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
   g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
   gtk_widget_queue_draw(tune_drive_scale);
+  }
 }
 
 void update_slider_autogain_en() {
+  if (display_sliders) {
   g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_en), autogain_enabled);
   g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
   gtk_widget_queue_draw(autogain_en);
+  }
 }
 
 #endif

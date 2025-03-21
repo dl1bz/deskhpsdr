@@ -65,6 +65,7 @@
 #include "message.h"
 #if defined (__LDESK__)
   #include "sliders.h"
+  #include "audio.h"
 #endif
 
 #if defined (__LDESK__) && defined (__CPYMODE__)
