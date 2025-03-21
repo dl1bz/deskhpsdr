@@ -714,6 +714,7 @@ void update_slider_tune_drive_scale() {
   }
 }
 
+#if defined (__AUTOG__)
 void update_slider_autogain_en() {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
@@ -723,14 +724,12 @@ void update_slider_autogain_en() {
   }
 }
 
-#endif
-
-#if defined (__AUTOG__)
 static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }
+#endif
 
 #endif
 
