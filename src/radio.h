@@ -161,7 +161,7 @@ extern int display_sliders;
 extern int display_toolbar;
 extern double percent_pan_wf;
 extern int display_info_bar;
-extern char radio_bgcolor[];
+extern char radio_bgcolor[8];
 
 extern int mic_linein;
 extern double linein_gain;

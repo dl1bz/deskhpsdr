@@ -217,7 +217,7 @@ int display_sliders = 0;
 int display_toolbar = 0;
 double percent_pan_wf = 50.0;
 int display_info_bar = 0;
-char radio_bgcolor[] = "#E6E6FA";
+char radio_bgcolor[8] = "#E6E6FA";
 
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
 double linein_gain = 0.0;  // -34.0 ... +12.5 in steps of 1.5 dB
