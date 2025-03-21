@@ -43,7 +43,7 @@ On March 4, 2025 the **first final version 2.6.0 of deskHPSDR** is published. Th
 **Changes / Corrections after Version 2.5 and implement into 2.6**
 - relation between RX panadapter and waterfall now adjustable in Display Menu
 - add a worldmap as background for the RX panadapter (in the ```make.config.deskhpsdr``` set WMAP=ON)
-- change band borders in the RX panadapter (vertical red lines) from US (default) to IARU Reg. 1 (in the ```make.config.deskhpsdr``` set REGION1=ON)
+- change band borders in the RX panadapter (vertical red lines) from US (default) to IARU Reg. 1 (if want use set in the ```make.config.deskhpsdr``` REGION1=ON)
 - if using a Hermes Lite 2 you can use Autogain now (like in Thetis), set if want using in the ```make.config.deskhpsdr``` AUTOGAIN=ON
 - background color of the slider surface can be user-defined now in the Screen Menu
 - slider geometry is adjustable now via a Slider Surface Resize Factor in the Screen Menu
