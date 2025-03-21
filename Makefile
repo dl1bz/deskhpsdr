@@ -8,6 +8,10 @@
 #
 #######################################################################################
 
+#	$(info Prevent make.config.deskhpsdr: can be changed now.)
+#	$(shell git update-index --assume-unchanged make.config.deskhpsdr)
+#	$(info Begin compiling deskHPSDR...)
+
 #######################################################################################
 #
 # Default Compile-time options
