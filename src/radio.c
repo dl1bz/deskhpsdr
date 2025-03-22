@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>   // Stellt isxdigit zur Verfügung
 #include <semaphore.h>
 #include <math.h>
 #include <sys/time.h>
@@ -217,7 +218,7 @@ int display_sliders = 0;
 int display_toolbar = 0;
 double percent_pan_wf = 50.0;
 int display_info_bar = 0;
-char radio_bgcolor[8] = "#E6E6FA";
+char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
 
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
 double linein_gain = 0.0;  // -34.0 ... +12.5 in steps of 1.5 dB
@@ -822,17 +823,16 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
   _exit(0);
 }
 
-static bool is_valid_rgb(const char *str) {
-  int r, g, b;
-  return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3;
-}
-
 gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
   GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
 
+  if (strlen(radio_bgcolor_rgb_hex) != 7) {
+    g_strlcpy(radio_bgcolor_rgb_hex, "#E6E6FA", sizeof(radio_bgcolor_rgb_hex));
+  }
+
   // Definiere und prüfe die Hintergrundfarbe
-  if (is_valid_rgb(radio_bgcolor)) {
-    gdk_rgba_parse(&bgcolor, radio_bgcolor);
+  if (is_valid_hex(radio_bgcolor_rgb_hex) && is_valid_rgb(radio_bgcolor_rgb_hex)) {
+    gdk_rgba_parse(&bgcolor, radio_bgcolor_rgb_hex);
     gtk_widget_override_background_color(widget, GTK_STATE_FLAG_NORMAL, &bgcolor);
     gtk_widget_queue_draw(widget);
   }
@@ -2653,7 +2653,7 @@ static void radio_restore_state() {
   //
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
-  GetPropS0("radio_bgcolor",                                 radio_bgcolor);
+  GetPropS0("radio_bgcolor_rgb_hex",                                 radio_bgcolor_rgb_hex);
   GetPropF0("slider_surface_scale",                          slider_surface_scale);
   GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("display_info_bar",                              display_info_bar);
@@ -2897,7 +2897,7 @@ void radio_save_state() {
   // Use the "saved" Zoompan/Slider/Toolbar display status
   // if they are currently hidden via the "Hide" button
   //
-  SetPropS0("radio_bgcolor",                                 radio_bgcolor);
+  SetPropS0("radio_bgcolor_rgb_hex",                                 radio_bgcolor_rgb_hex);
   SetPropF0("slider_surface_scale",                          slider_surface_scale);
   SetPropF0("percent_pan_wf",                                percent_pan_wf);
   SetPropI0("display_info_bar",                              display_info_bar);

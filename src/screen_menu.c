@@ -183,38 +183,45 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
 }
 
 // Funktion zur Überprüfung, ob der String ein gültiges Hex-Format hat
-static bool is_valid_hex(const char *str) {
-  if (str[0] != '#' || strlen(str) != 7) return false;  // Muss mit # beginnen und 7 Zeichen lang sein
+bool is_valid_hex(const char *str) {
+  if (str[0] != '#' || strlen(str) != 7) { return false; }  // Muss mit # beginnen und 7 Zeichen lang sein
+
   for (int i = 1; i < 7; i++) {
-      if (!isxdigit(str[i])) return false;  // Überprüft, ob jedes Zeichen hexadezimal ist
+    if (!isxdigit(str[i])) { return false; }  // Überprüft, ob jedes Zeichen hexadezimal ist
   }
+
   return true;  // Gültig, wenn alle Zeichen Hexadezimal sind
 }
 
-static bool is_valid_rgb(const char *str) {
+bool is_valid_rgb(const char *str) {
   int r, g, b;
   return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3;
 }
 
-static void bgcolor_button_clicked(GtkButton *bgcolor_btn, gpointer data) {
+static void bgcolor_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *bgcolor_text_input = GTK_ENTRY(data);  // Das GtkEntry-Widget
   const gchar *text = gtk_entry_get_text(bgcolor_text_input);  // Hole den eingegebenen Text
-  g_strup((gchar*)text);
+  gchar *mod_text = g_strdup(text); // Umkopieren weil text unveränderbar
+  g_strup(mod_text); // in Grossbuchstaben konvertieren
 
-  // t_print("%s: text = %s strlen text = %d strglen radio_bgcolor = %d\n", __FUNCTION__, text, strlen(text), strlen(radio_bgcolor));
-
-  if (strlen(text) == 7 && is_valid_hex(text) && is_valid_rgb(text)) {
-    g_strlcpy(radio_bgcolor, text, strlen(radio_bgcolor) + 1);
+  if (is_valid_hex(mod_text) && is_valid_rgb(mod_text)) {
+    g_strlcpy(radio_bgcolor_rgb_hex, mod_text, sizeof(radio_bgcolor_rgb_hex));
     radio_set_bgcolor(top_window, NULL);
   } else {
-    g_signal_handler_block(bgcolor_text_input, bgcolor_text_input_signal_id);
-    gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor);
-    g_signal_handler_unblock(bgcolor_text_input, bgcolor_text_input_signal_id);
-    t_print("%s: ERROR: wrong RGB entry %s\n", __FUNCTION__, text);
+    t_print("%s: ERROR: wrong RGB entry %s\n", __FUNCTION__, mod_text);
   }
 
+  // bgcolor_text_input aktualisieren
+  g_signal_handler_block(bgcolor_text_input, bgcolor_text_input_signal_id);
+  gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor_rgb_hex);
+  g_signal_handler_unblock(bgcolor_text_input, bgcolor_text_input_signal_id);
   gtk_widget_queue_draw(GTK_WIDGET(bgcolor_text_input));
 }
+
+static void bgcolor_entry_activate(GtkWidget *widget, gpointer data) {
+  bgcolor_button_clicked(NULL, data);  // Simuliert den Klick des OK-Buttons
+}
+
 
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
@@ -271,9 +278,9 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), bgcolor_label, 1, 3, 1, 1);
   bgcolor_text_input = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(bgcolor_text_input), 7);
-  gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor);
+  gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor_rgb_hex);
   gtk_grid_attach(GTK_GRID(grid), bgcolor_text_input, 2, 3, 1, 1);
-  bgcolor_text_input_signal_id = g_signal_connect(bgcolor_text_input, "activate", G_CALLBACK(bgcolor_button_clicked),
+  bgcolor_text_input_signal_id = g_signal_connect(bgcolor_text_input, "activate", G_CALLBACK(bgcolor_entry_activate),
                                  bgcolor_text_input);
   gtk_widget_show(bgcolor_text_input);
   GtkWidget *bgcolor_btn = gtk_button_new_with_label("Set");
