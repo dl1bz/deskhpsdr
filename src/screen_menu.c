@@ -190,7 +190,9 @@ static void bgcolor_button_clicked(GtkButton *bgcolor_btn, gpointer data) {
   GtkEntry *bgcolor_text_input = GTK_ENTRY(data);  // Das GtkEntry-Widget
   const gchar *text = gtk_entry_get_text(bgcolor_text_input);  // Hole den eingegebenen Text
 
-  if (is_valid_rgb(text)) {
+  // t_print("%s: text = %s strlen text = %d strglen radio_bgcolor = %d\n", __FUNCTION__, text, strlen(text), strlen(radio_bgcolor));
+
+  if (strlen(text) == 7 && is_valid_rgb(text)) {
     g_strlcpy(radio_bgcolor, text, strlen(radio_bgcolor) + 1);
     radio_set_bgcolor(top_window, NULL);
   } else {
