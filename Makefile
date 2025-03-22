@@ -10,7 +10,7 @@
 
 #	$(info Prevent make.config.deskhpsdr: can be changed now.)
 #	$(shell git update-index --assume-unchanged make.config.deskhpsdr)
-#	$(info Begin compiling deskHPSDR...)
+#	$(info Begin linking deskHPSDR...)
 
 #######################################################################################
 #
@@ -766,6 +766,9 @@ src/zoompan.o
 $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
+	$(info Prevent make.config.deskhpsdr: can be changed now.)
+	$(shell git update-index --assume-unchanged make.config.deskhpsdr)
+	$(info ...continue...)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
@@ -852,6 +855,9 @@ x11install:
 	@rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
 	@sudo sync
+	@sleep 1
+	@echo "Prevent make.config.deskhpsdr: can be changed now."
+	@git update-index --assume-unchanged make.config.deskhpsdr
 
 #############################################################################
 #
@@ -943,6 +949,9 @@ endif
 	@sleep 1
 	@echo "Copy Fonts..."
 	@cp -R fonts/Roboto ${HOME}/Library/Fonts
+	@sleep 1
+	@echo "Prevent make.config.deskhpsdr: can be changed now."
+	@git update-index --assume-unchanged make.config.deskhpsdr
 	@echo "All done."
 
 #########################################################################################################
@@ -975,10 +984,25 @@ endif
 	@mkdir -p ${HOME}/Library/Fonts/GNUFreefonts
 	@cp X11fonts/*.otf ${HOME}/Library/Fonts/GNUFreefonts
 	@sleep 1
+	@echo "Prevent make.config.deskhpsdr: can be changed now."
+	@git update-index --assume-unchanged make.config.deskhpsdr
+	@sleep 1
 	@echo "Copy deskHPSDR to your Desktop..."
 	@mv deskHPSDR.app ${HOME}/Desktop
 	@echo "Starting deskHPSDR..."
 	@open -a ${HOME}/Desktop/deskHPSDR.app
+
+.PHONY: update
+update:
+	@+make clean
+	@echo "Checkout deskHPSDR master branch..."
+	@git checkout master
+	@sleep 1
+	@echo "Update deskHPSDR..."
+	@git pull
+	@sleep 1
+	@echo "Update done."
+	@echo "Please recompile deskHPSDR now."
 
 #############################################################################
 #
