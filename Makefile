@@ -995,6 +995,9 @@ endif
 .PHONY: update
 update:
 	@+make clean
+	@sleep 1
+	@echo "Prevent make.config.deskhpsdr: can be changed now."
+	@git update-index --assume-unchanged make.config.deskhpsdr
 	@echo "Checkout deskHPSDR master branch..."
 	@git checkout master
 	@sleep 1
@@ -1002,6 +1005,7 @@ update:
 	@git pull
 	@sleep 1
 	@echo "Update done."
+	@echo "All done."
 	@echo "Please recompile deskHPSDR now."
 
 #############################################################################
