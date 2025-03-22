@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>   // Stellt isxdigit zur Verfügung
 
 #include "radio.h"
 #include "new_menu.h"
@@ -181,6 +182,15 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
   display_pacurr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+// Funktion zur Überprüfung, ob der String ein gültiges Hex-Format hat
+static bool is_valid_hex(const char *str) {
+  if (str[0] != '#' || strlen(str) != 7) return false;  // Muss mit # beginnen und 7 Zeichen lang sein
+  for (int i = 1; i < 7; i++) {
+      if (!isxdigit(str[i])) return false;  // Überprüft, ob jedes Zeichen hexadezimal ist
+  }
+  return true;  // Gültig, wenn alle Zeichen Hexadezimal sind
+}
+
 static bool is_valid_rgb(const char *str) {
   int r, g, b;
   return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3;
@@ -189,10 +199,11 @@ static bool is_valid_rgb(const char *str) {
 static void bgcolor_button_clicked(GtkButton *bgcolor_btn, gpointer data) {
   GtkEntry *bgcolor_text_input = GTK_ENTRY(data);  // Das GtkEntry-Widget
   const gchar *text = gtk_entry_get_text(bgcolor_text_input);  // Hole den eingegebenen Text
+  g_strup((gchar*)text);
 
   // t_print("%s: text = %s strlen text = %d strglen radio_bgcolor = %d\n", __FUNCTION__, text, strlen(text), strlen(radio_bgcolor));
 
-  if (strlen(text) == 7 && is_valid_rgb(text)) {
+  if (strlen(text) == 7 && is_valid_hex(text) && is_valid_rgb(text)) {
     g_strlcpy(radio_bgcolor, text, strlen(radio_bgcolor) + 1);
     radio_set_bgcolor(top_window, NULL);
   } else {
