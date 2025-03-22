@@ -617,7 +617,6 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
-  int mode = vfo_get_tx_mode();
   int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (v) {
@@ -635,6 +634,7 @@ static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
   }
 
 #if defined (__LDESK__) && defined (__CPYMODE__)
+  int mode = vfo_get_tx_mode();
 
   if (transmitter->local_microphone) {
     mode_settings[mode].local_microphone = 1;
@@ -721,11 +721,14 @@ void update_slider_autogain_btn() {
   }
 }
 
+#if defined (__AUTOG__)
 static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }
+
+#endif
 
 #endif
 
