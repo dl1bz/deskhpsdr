@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <ctype.h>   // Stellt isxdigit zur Verfügung
 #include <semaphore.h>
 #include <math.h>
 #include <sys/time.h>
