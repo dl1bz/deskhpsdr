@@ -64,10 +64,6 @@ static GtkWidget *af_gain_label;
 static GtkWidget *af_gain_scale;
 static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
-#if defined (__AUTOG__)
-  GtkWidget *autogain_en;
-  gulong autogain_en_signal_id;
-#endif
 static GtkWidget *agc_gain_label;
 static GtkWidget *agc_scale;
 static GtkWidget *attenuation_label = NULL;
@@ -92,6 +88,8 @@ static GtkWidget *squelch_enable;
   gulong local_mic_toggle_signal_id;
   gulong tune_drive_scale_signal_id;
   gulong local_mic_input_signal_id;
+  GtkWidget *autogain_btn;
+  gulong autogain_btn_signal_id;
 #endif
 
 //
@@ -714,13 +712,12 @@ void update_slider_tune_drive_scale() {
   }
 }
 
-#if defined (__AUTOG__)
-void update_slider_autogain_en() {
+void update_slider_autogain_btn() {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_en), autogain_enabled);
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_en), autogain_en_signal_id);
-    gtk_widget_queue_draw(autogain_en);
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_btn), autogain_btn_signal_id);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_btn), autogain_enabled);
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_btn), autogain_btn_signal_id);
+    gtk_widget_queue_draw(autogain_btn);
   }
 }
 
@@ -729,7 +726,6 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }
-#endif
 
 #endif
 
@@ -910,13 +906,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__AUTOG__)
 
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-    autogain_en = gtk_check_button_new();
-    gtk_widget_set_size_request(autogain_en, 0, widget_height);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_en), autogain_enabled);
-    gtk_widget_show(autogain_en);
-    gtk_grid_attach(GTK_GRID(sliders), autogain_en, b3pos, 0, twidth, 1);
-    gtk_widget_set_halign(autogain_en, GTK_ALIGN_CENTER);
-    autogain_en_signal_id = g_signal_connect(autogain_en, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
+    autogain_btn = gtk_check_button_new();
+    gtk_widget_set_size_request(autogain_btn, 0, widget_height);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
+    gtk_widget_show(autogain_btn);
+    gtk_grid_attach(GTK_GRID(sliders), autogain_btn, b3pos, 0, twidth, 1);
+    gtk_widget_set_halign(autogain_btn, GTK_ALIGN_CENTER);
+    autogain_btn_signal_id = g_signal_connect(autogain_btn, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
   }
 
 #endif

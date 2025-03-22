@@ -2728,8 +2728,6 @@ static void radio_restore_state() {
     GetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
-#endif
-#if defined (__AUTOG__)
   GetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   GetPropI0("tx_filter_low",                                 tx_filter_low);
@@ -2955,8 +2953,6 @@ void radio_save_state() {
     SetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
-#endif
-#if defined (__AUTOG__)
   SetPropI0("autogain_enabled",                              autogain_enabled);
 #endif
   SetPropI0("tx_filter_low",                                 tx_filter_low);

@@ -34,9 +34,7 @@ extern int sliders_active_receiver_changed(void *data);
 extern void update_slider_local_mic_input(void);
 extern void update_slider_local_mic_button(void);
 extern void update_slider_tune_drive_scale(void);
-#if define (__AUTOG__)
-  extern void update_slider_autogain_en(void);
-#endif
+extern void update_slider_autogain_btn(void);
 
 extern void set_agc_gain(int rx, double value);
 extern void set_af_gain(int rx, double value);
@@ -58,10 +56,8 @@ extern GtkWidget *sliders_init(int my_width, int my_height);
   extern gulong local_mic_toggle_signal_id;
   extern gulong tune_drive_scale_signal_id;
   extern gulong local_mic_input_signal_id;
-#endif
-#if defined (__AUTOG__)
-  extern GtkWidget *autogain_en;
-  extern gulong autogain_en_signal_id;
+  extern GtkWidget *autogain_btn;
+  extern gulong autogain_btn_signal_id;
 #endif
 
 extern void set_squelch(RECEIVER *rx);
