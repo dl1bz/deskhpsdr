@@ -2215,6 +2215,12 @@ void radio_set_tune(int state) {
       transmitter->compressor = 0;
       // set off if TUNEing, but restore later
       tx_set_compressor(transmitter);
+
+      if (can_transmit && display_sliders) {
+        update_slider_bbcompr_scale(FALSE);
+        update_slider_lev_scale(FALSE);
+      }
+
       //
       // Keep previous state in transmitter data, so we just need
       // call tx_set_compressor when TUNEing ends.
@@ -2352,6 +2358,12 @@ void radio_set_tune(int state) {
 
       // restore settings we switched off earlier
       tx_set_compressor(transmitter);
+
+      if (can_transmit && display_sliders) {
+        update_slider_bbcompr_scale(TRUE);
+        update_slider_lev_scale(TRUE);
+      }
+
       tune = state;
       radio_calc_drive_level();
 #if defined (__LDESK__) && defined (__HAVEATU__)

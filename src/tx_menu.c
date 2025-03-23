@@ -565,6 +565,9 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
 
     case TX_COMP:
       transmitter->compressor_level = vi;
+
+      if (can_transmit && display_sliders) { update_slider_bbcompr_scale(TRUE); }
+
       mode_settings[mode].compressor_level = vi;
       copy_mode_settings(mode);
       tx_set_compressor(transmitter);
@@ -624,6 +627,9 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
 
     case TX_LEVELER_GAIN:
       transmitter->lev_gain = v;
+
+      if (can_transmit && display_sliders) { update_slider_lev_scale(TRUE); }
+
       mode_settings[mode].lev_gain = v;
       copy_mode_settings(mode);
       tx_set_compressor(transmitter);
@@ -657,6 +663,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
     case TX_ADDGAIN_GAIN:
       transmitter->addgain_gain = v;
       tx_set_mic_gain(transmitter);
+      update_slider_preamp_scale(TRUE);
       g_idle_add(ext_vfo_update, NULL);
       break;
 

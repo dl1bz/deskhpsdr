@@ -90,6 +90,15 @@ static GtkWidget *squelch_enable;
   gulong local_mic_input_signal_id;
   GtkWidget *autogain_btn;
   gulong autogain_btn_signal_id;
+  GtkWidget *bbcompr_scale;
+  gulong bbcompr_scale_signal_id;
+  static GtkWidget *bbcompr_label;
+  static GtkWidget *lev_label;
+  GtkWidget *lev_scale;
+  gulong lev_scale_signal_id;
+  static GtkWidget *preamp_label;
+  GtkWidget *preamp_scale;
+  gulong preamp_scale_signal_id;
 #endif
 
 //
@@ -667,6 +676,36 @@ static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+static void bbcompr_scale_changed_cb(GtkWidget *widget, gpointer data) {
+  int mode = vfo_get_tx_mode();
+  double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  int    vi = (v >= 0.0) ? (int) (v + 0.5) : (int) (v - 0.5);
+  transmitter->compressor_level = vi;
+  mode_settings[mode].compressor_level = vi;
+  copy_mode_settings(mode);
+  tx_set_compressor(transmitter);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
+static void lev_scale_changed_cb(GtkWidget *widget, gpointer data) {
+  int mode = vfo_get_tx_mode();
+  double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  transmitter->lev_gain = v;
+  mode_settings[mode].lev_gain = v;
+  copy_mode_settings(mode);
+  tx_set_compressor(transmitter);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
+static void preamp_scale_changed_cb(GtkWidget *widget, gpointer data) {
+  double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  transmitter->addgain_gain = v;
+  tx_set_mic_gain(transmitter);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
+
+
 void update_slider_local_mic_input() {
   if (display_sliders) {
     g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
@@ -709,6 +748,54 @@ void update_slider_tune_drive_scale() {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
     g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_widget_queue_draw(tune_drive_scale);
+  }
+}
+
+void update_slider_bbcompr_scale(gboolean show_widget) {
+  if (display_sliders) {
+    g_signal_handler_block(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(bbcompr_scale), transmitter->compressor_level);
+
+    if (show_widget) {
+      gtk_widget_set_sensitive(bbcompr_scale, TRUE);
+    } else {
+      gtk_widget_set_sensitive(bbcompr_scale, FALSE);
+    }
+
+    g_signal_handler_unblock(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
+    gtk_widget_queue_draw(bbcompr_scale);
+  }
+}
+
+void update_slider_lev_scale(gboolean show_widget) {
+  if (display_sliders) {
+    g_signal_handler_block(G_OBJECT(lev_scale), lev_scale_signal_id);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(lev_scale), transmitter->lev_gain);
+
+    if (show_widget) {
+      gtk_widget_set_sensitive(lev_scale, TRUE);
+    } else {
+      gtk_widget_set_sensitive(lev_scale, FALSE);
+    }
+
+    g_signal_handler_unblock(G_OBJECT(lev_scale), lev_scale_signal_id);
+    gtk_widget_queue_draw(lev_scale);
+  }
+}
+
+void update_slider_preamp_scale(gboolean show_widget) {
+  if (display_sliders) {
+    g_signal_handler_block(G_OBJECT(preamp_scale), preamp_scale_signal_id);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), transmitter->addgain_gain);
+
+    if (show_widget) {
+      gtk_widget_set_sensitive(preamp_scale, TRUE);
+    } else {
+      gtk_widget_set_sensitive(preamp_scale, FALSE);
+    }
+
+    g_signal_handler_unblock(G_OBJECT(preamp_scale), preamp_scale_signal_id);
+    gtk_widget_queue_draw(preamp_scale);
   }
 }
 
@@ -766,6 +853,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__LDESK__)
   width = my_width - 50;
   // GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
+  int selected_mode = vfo[active_receiver->id].mode;
 #else
   width = my_width;
 #endif
@@ -1151,7 +1239,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(tune_drive_label, "slider2_blue");
     gtk_label_set_justify(GTK_LABEL(tune_drive_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_CENTER);
-    gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, twidth, 1);
+    gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, twidth - 1, 1);
     gtk_widget_show(tune_drive_label);
     //-------------------------------------------------------------------------------------------
     // tune_drive_scale
@@ -1163,6 +1251,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 10);
     gtk_widget_set_margin_start(tune_drive_scale, 10);  // Abstand am Anfang
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_margin_right(tune_drive_scale, 10);
     tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed",
                                  G_CALLBACK(tune_drive_changed_cb), NULL);
     gtk_widget_show(tune_drive_scale);
@@ -1216,12 +1305,82 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       local_mic_input_signal_id = g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb), NULL);
       gtk_widget_show(local_mic_input);
     }
+
+    //-------------------------------------------------------------------------------------------
+    bbcompr_label = gtk_label_new("BBand\nPROC");
+    gtk_widget_set_size_request(bbcompr_label, lbl_w_fix, widget_height);
+    gtk_widget_set_name(bbcompr_label, "slider2_blue");
+    gtk_label_set_justify(GTK_LABEL(bbcompr_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_halign(bbcompr_label, GTK_ALIGN_CENTER);
+    gtk_grid_attach(GTK_GRID(sliders), bbcompr_label, t3pos, 2, twidth, 1);
+    gtk_widget_show(bbcompr_label);
+    //-------------------------------------------------------------------------------------------
+    bbcompr_scale = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
+    gtk_widget_set_size_request(bbcompr_scale, 0, widget_height - 10);
+    gtk_widget_set_valign(bbcompr_scale, GTK_ALIGN_CENTER);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(bbcompr_scale), (double)transmitter->compressor_level);
+    gtk_grid_attach(GTK_GRID(sliders), bbcompr_scale, s3pos, 2, twidth - 1, 1);
+    bbcompr_scale_signal_id = g_signal_connect(G_OBJECT(bbcompr_scale), "value_changed",
+                              G_CALLBACK(bbcompr_scale_changed_cb), NULL);
+    gtk_widget_show(bbcompr_scale);
+    //-------------------------------------------------------------------------------------------
+    lev_label = gtk_label_new("Lev");
+    gtk_widget_set_size_request(lev_label, lbl_w_fix, widget_height);
+    gtk_widget_set_name(lev_label, "slider2_blue");
+    gtk_label_set_justify(GTK_LABEL(lev_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_halign(lev_label, GTK_ALIGN_CENTER);
+    gtk_grid_attach(GTK_GRID(sliders), lev_label, s3pos + 1, 2, twidth - 1, 1);
+    gtk_widget_show(lev_label);
+    //-------------------------------------------------------------------------------------------
+    lev_scale = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(lev_scale), TRUE);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(lev_scale), TRUE);
+    gtk_widget_set_size_request(lev_scale, 0, widget_height - 10);
+    gtk_widget_set_valign(lev_scale, GTK_ALIGN_CENTER);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(lev_scale), (double)transmitter->lev_gain);
+    gtk_grid_attach(GTK_GRID(sliders), lev_scale, s3pos + 2, 2, twidth - 1, 1);
+    lev_scale_signal_id = g_signal_connect(G_OBJECT(lev_scale), "value_changed", G_CALLBACK(lev_scale_changed_cb), NULL);
+    gtk_widget_show(lev_scale);
+    //-------------------------------------------------------------------------------------------
+    preamp_label = gtk_label_new("Mic\nPreA");
+    gtk_widget_set_size_request(preamp_label, lbl_w_fix, widget_height);
+    gtk_widget_set_name(preamp_label, "slider2_blue");
+    gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_halign(preamp_label, GTK_ALIGN_CENTER);
+    gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 2, twidth - 1, 1);
+    gtk_widget_show(preamp_label);
+    //-------------------------------------------------------------------------------------------
+    preamp_scale = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(preamp_scale), TRUE);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(preamp_scale), TRUE);
+    gtk_widget_set_size_request(preamp_scale, 0, widget_height - 10);
+    gtk_widget_set_valign(preamp_scale, GTK_ALIGN_CENTER);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
+    gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 2, twidth - 1, 1);
+    preamp_scale_signal_id = g_signal_connect(G_OBJECT(preamp_scale), "value_changed", G_CALLBACK(preamp_scale_changed_cb),
+                             NULL);
+    gtk_widget_show(preamp_scale);
+
+    // sanity check, if DIGIMODE selected set BBCOMPR and LEV inactive
+    if (selected_mode == modeDIGL || selected_mode == modeDIGU) {
+      gtk_widget_set_sensitive(preamp_scale, FALSE);
+      gtk_widget_set_sensitive(bbcompr_scale, FALSE);
+      gtk_widget_set_sensitive(lev_scale, FALSE);
+      gtk_widget_queue_draw(bbcompr_scale);
+      gtk_widget_queue_draw(lev_scale);
+      gtk_widget_queue_draw(preamp_scale);
+    }
   } else {
     tune_drive_label = NULL;
     tune_drive_scale = NULL;
     local_mic_label = NULL;
     local_mic_button = NULL;
     local_mic_input = NULL;
+    bbcompr_scale = NULL;
+    lev_label = NULL;
+    lev_scale = NULL;
   }
 
 #endif

@@ -1015,6 +1015,18 @@ void vfo_id_mode_changed(int id, int m) {
     tx_set_mode(transmitter, vfo_get_tx_mode());
   }
 
+  if (can_transmit && display_sliders) {
+    if (m == modeDIGU || m == modeDIGL) {
+      update_slider_preamp_scale(FALSE);
+      update_slider_bbcompr_scale(FALSE);
+      update_slider_lev_scale(FALSE);
+    } else {
+      update_slider_bbcompr_scale(TRUE);
+      update_slider_lev_scale(TRUE);
+      update_slider_preamp_scale(TRUE);
+    }
+  }
+
   //
   // changing modes may change BFO frequency
   // and SDR need to be informed about "CW or not CW"
