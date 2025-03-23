@@ -1148,7 +1148,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     mic_gain_label = gtk_label_new("Mic");
 #endif
     gtk_widget_set_size_request(mic_gain_label, lbl_w_fix, widget_height);
+#ifdef __APPLE__
     gtk_widget_set_name(mic_gain_label, csslabel);
+#else
+    gtk_widget_set_name(mic_gain_label, csslabel_smaller);
+#endif
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_CENTER);
     gtk_label_set_justify(GTK_LABEL(mic_gain_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
@@ -1219,7 +1223,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
-  squelch_label = gtk_label_new("Squelch");
+  squelch_label = gtk_label_new("Sql");
 #else
   squelch_label = gtk_label_new("Sqlch");
 #endif
