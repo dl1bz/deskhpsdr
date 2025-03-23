@@ -756,7 +756,7 @@ void update_slider_tune_drive_scale(gboolean show_widget) {
 #ifdef __APPLE__
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE=\nTX Pwr");
 #else
-      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nTX Pwr");
+      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nTXPWR");
 #endif
       gtk_widget_set_name(tune_drive_label, "slider2_red");
     }
