@@ -846,7 +846,12 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
 
   if (can_transmit && display_sliders) {
     if (n_input_devices > 0) {
-      update_slider_local_mic_input();
+      for (int i = 0; i < n_input_devices; i++) {
+        if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+          update_slider_local_mic_input(i);
+        }
+      }
+
       update_slider_local_mic_button();
     }
   }

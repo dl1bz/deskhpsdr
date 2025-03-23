@@ -706,16 +706,12 @@ static void preamp_scale_changed_cb(GtkWidget *widget, gpointer data) {
 
 
 
-void update_slider_local_mic_input() {
+void update_slider_local_mic_input(int src) {
   if (display_sliders) {
     g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
 
-    for (int i = 0; i < n_input_devices; i++) {
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, input_devices[i].description);
-
-      if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
-        gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
-      }
+    if (strcmp(transmitter->microphone_name, input_devices[src].name) == 0) {
+      gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), src);
     }
 
     // If the combo box shows no device, take the first one
@@ -1332,7 +1328,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
       gtk_grid_attach(GTK_GRID(sliders), local_mic_input, s2pos, 2, swidth, 1); // Zeile 0, Spalte 1
       gtk_widget_set_valign(local_mic_input, GTK_ALIGN_CENTER);
-      local_mic_input_signal_id = g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb), NULL);
+      gboolean flag = FALSE;
+      local_mic_input_signal_id = g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb),
+                                  GINT_TO_POINTER(flag));
       gtk_widget_show(local_mic_input);
     }
 

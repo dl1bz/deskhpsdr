@@ -952,6 +952,8 @@ static void ctcss_frequency_cb(GtkWidget *widget, gpointer data) {
 
 void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+  gboolean flag = GPOINTER_TO_INT(data);
+  t_print("%s: Flag: %d\n", __FUNCTION__, flag);
 #if defined (__LDESK__) && defined (__CPYMODE__)
   int _mode = vfo_get_tx_mode();
 #endif
@@ -984,7 +986,10 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
 #endif
 
   if (n_input_devices > 0) {
-    update_slider_local_mic_input();
+    if (flag) {
+      update_slider_local_mic_input(i);
+    }
+
     update_slider_local_mic_button();
   }
 }
@@ -1152,7 +1157,8 @@ void tx_menu(GtkWidget *parent) {
     }
 
     my_combo_attach(GTK_GRID(tx_grid), input, col, row, 4, 1);
-    g_signal_connect(input, "changed", G_CALLBACK(local_input_changed_cb), NULL);
+    gboolean flag = TRUE;
+    g_signal_connect(input, "changed", G_CALLBACK(local_input_changed_cb), GINT_TO_POINTER(flag));
   }
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
