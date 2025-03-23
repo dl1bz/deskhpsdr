@@ -746,15 +746,21 @@ void update_slider_tune_drive_scale(gboolean show_widget) {
   if (display_sliders) {
     g_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
+
     if (show_widget && !transmitter->tune_use_drive) {
       gtk_widget_set_sensitive(tune_drive_scale, TRUE);
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nDrv");
       gtk_widget_set_name(tune_drive_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(tune_drive_scale, FALSE);
+#ifdef __APPLE__
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE=\nTX Pwr");
+#else
+      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nTX Pwr");
+#endif
       gtk_widget_set_name(tune_drive_label, "slider2_red");
     }
+
     g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_widget_queue_draw(tune_drive_scale);
     gtk_widget_queue_draw(tune_drive_label);
