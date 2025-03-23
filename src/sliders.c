@@ -751,13 +751,11 @@ void update_slider_tune_drive_scale(gboolean show_widget) {
       gtk_widget_set_sensitive(tune_drive_scale, TRUE);
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nDrv");
       gtk_widget_set_name(tune_drive_label, "slider2_blue");
+      gtk_widget_show(tune_drive_scale);
     } else {
       gtk_widget_set_sensitive(tune_drive_scale, FALSE);
-#ifdef __APPLE__
-      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE=\nTX Pwr");
-#else
-      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nTXPWR");
-#endif
+      gtk_widget_hide(tune_drive_scale);
+      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE =\nTX Pwr");
       gtk_widget_set_name(tune_drive_label, "slider2_red");
     }
 
@@ -1148,17 +1146,20 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   if (can_transmit) {
 #if defined (__LDESK__)
     char _label[32];
-    snprintf(_label, 32, "Mic\nGain");
-    mic_gain_label = gtk_label_new(_label);
-#else
-    mic_gain_label = gtk_label_new("Mic");
-#endif
-    gtk_widget_set_size_request(mic_gain_label, lbl_w_fix, widget_height);
 #ifdef __APPLE__
+    snprintf(_label, 32, "Mic Gain");
+    mic_gain_label = gtk_label_new(_label);
     gtk_widget_set_name(mic_gain_label, csslabel);
 #else
+    snprintf(_label, 32, "Mic\nGain");
+    mic_gain_label = gtk_label_new(_label);
     gtk_widget_set_name(mic_gain_label, csslabel_smaller);
 #endif
+#else
+    mic_gain_label = gtk_label_new("Mic");
+    gtk_widget_set_name(mic_gain_label, csslabel);
+#endif
+    gtk_widget_set_size_request(mic_gain_label, lbl_w_fix, widget_height);
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_CENTER);
     gtk_label_set_justify(GTK_LABEL(mic_gain_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
