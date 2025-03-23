@@ -22,7 +22,6 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 #include <semaphore.h>
 #include <math.h>

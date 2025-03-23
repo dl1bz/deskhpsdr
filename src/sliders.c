@@ -742,12 +742,22 @@ void update_slider_local_mic_button() {
   }
 }
 
-void update_slider_tune_drive_scale() {
+void update_slider_tune_drive_scale(gboolean show_widget) {
   if (display_sliders) {
     g_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
+    if (show_widget && !transmitter->tune_use_drive) {
+      gtk_widget_set_sensitive(tune_drive_scale, TRUE);
+      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nDrv");
+      gtk_widget_set_name(tune_drive_label, "slider2_blue");
+    } else {
+      gtk_widget_set_sensitive(tune_drive_scale, FALSE);
+      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE=\nTX Pwr");
+      gtk_widget_set_name(tune_drive_label, "slider2_red");
+    }
     g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_widget_queue_draw(tune_drive_scale);
+    gtk_widget_queue_draw(tune_drive_label);
   }
 }
 
@@ -756,14 +766,17 @@ void update_slider_bbcompr_scale(gboolean show_widget) {
     g_signal_handler_block(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(bbcompr_scale), transmitter->compressor_level);
 
-    if (show_widget) {
+    if (show_widget && transmitter->compressor) {
       gtk_widget_set_sensitive(bbcompr_scale, TRUE);
+      gtk_widget_set_name(bbcompr_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
+      gtk_widget_set_name(bbcompr_label, "slider2_red");
     }
 
     g_signal_handler_unblock(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
     gtk_widget_queue_draw(bbcompr_scale);
+    gtk_widget_queue_draw(bbcompr_label);
   }
 }
 
@@ -772,14 +785,17 @@ void update_slider_lev_scale(gboolean show_widget) {
     g_signal_handler_block(G_OBJECT(lev_scale), lev_scale_signal_id);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(lev_scale), transmitter->lev_gain);
 
-    if (show_widget) {
+    if (show_widget && transmitter->lev_enable) {
       gtk_widget_set_sensitive(lev_scale, TRUE);
+      gtk_widget_set_name(lev_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(lev_scale, FALSE);
+      gtk_widget_set_name(lev_label, "slider2_red");
     }
 
     g_signal_handler_unblock(G_OBJECT(lev_scale), lev_scale_signal_id);
     gtk_widget_queue_draw(lev_scale);
+    gtk_widget_queue_draw(lev_label);
   }
 }
 
@@ -788,14 +804,17 @@ void update_slider_preamp_scale(gboolean show_widget) {
     g_signal_handler_block(G_OBJECT(preamp_scale), preamp_scale_signal_id);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), transmitter->addgain_gain);
 
-    if (show_widget) {
+    if (show_widget && transmitter->addgain_enable) {
       gtk_widget_set_sensitive(preamp_scale, TRUE);
+      gtk_widget_set_name(preamp_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
+      gtk_widget_set_name(preamp_label, "slider2_red");
     }
 
     g_signal_handler_unblock(G_OBJECT(preamp_scale), preamp_scale_signal_id);
     gtk_widget_queue_draw(preamp_scale);
+    gtk_widget_queue_draw(preamp_label);
   }
 }
 
@@ -1366,11 +1385,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // sanity check, if DIGIMODE selected set BBCOMPR and LEV inactive
     if (selected_mode == modeDIGL || selected_mode == modeDIGU) {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
+      gtk_widget_set_name(preamp_label, "slider2_red");
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
+      gtk_widget_set_name(bbcompr_label, "slider2_red");
       gtk_widget_set_sensitive(lev_scale, FALSE);
-      gtk_widget_queue_draw(bbcompr_scale);
-      gtk_widget_queue_draw(lev_scale);
-      gtk_widget_queue_draw(preamp_scale);
+      gtk_widget_set_name(lev_label, "slider2_red");
+      gtk_widget_queue_draw(sliders);
+      // gtk_widget_queue_draw(bbcompr_scale);
+      // gtk_widget_queue_draw(lev_scale);
+      // gtk_widget_queue_draw(preamp_scale);
     }
   } else {
     tune_drive_label = NULL;

@@ -21,5 +21,5 @@
 
 extern void screen_menu(GtkWidget *parent);
 extern void schedule_apply(void);
-extern bool is_valid_rgb(const char *str);
-extern bool is_valid_hex(const char *str);
+extern gboolean is_valid_rgb(const char *str);
+extern gboolean is_valid_hex(const char *str);

@@ -610,7 +610,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
           transmitter->tune_use_drive = 0;
         }
 
-        update_slider_tune_drive_scale();
+        update_slider_tune_drive_scale(TRUE);
       }
 
 #endif
@@ -815,6 +815,7 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
 
     case TX_TUNE_USE_DRIVE:
       transmitter->tune_use_drive = v;
+      update_slider_tune_drive_scale(TRUE);
       break;
 
     case TX_SWR_PROTECTION:

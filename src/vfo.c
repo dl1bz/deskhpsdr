@@ -1013,10 +1013,8 @@ void vfo_id_mode_changed(int id, int m) {
 
   if (can_transmit) {
     tx_set_mode(transmitter, vfo_get_tx_mode());
-  }
 
-  if (can_transmit && display_sliders) {
-    if (m == modeDIGU || m == modeDIGL) {
+    if (display_sliders && (m == modeDIGU || m == modeDIGL)) {
       update_slider_preamp_scale(FALSE);
       update_slider_bbcompr_scale(FALSE);
       update_slider_lev_scale(FALSE);

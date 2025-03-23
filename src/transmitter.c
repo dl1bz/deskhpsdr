@@ -2262,6 +2262,10 @@ void tx_set_compressor(TRANSMITTER *tx) {
   }
 
 #endif
+  if (can_transmit && display_sliders) {
+    update_slider_lev_scale(TRUE);
+    update_slider_bbcompr_scale(TRUE);
+  }
 }
 
 void tx_set_ctcss(const TRANSMITTER *tx) {
@@ -2389,6 +2393,9 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
   t_print("TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
           vfo_get_tx_mode());
 #endif
+  if (can_transmit && display_sliders) {
+    update_slider_preamp_scale(TRUE);
+  }
 }
 
 void tx_set_mode(TRANSMITTER* tx, int mode) {

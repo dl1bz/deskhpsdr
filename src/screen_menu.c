@@ -22,7 +22,6 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 #include <ctype.h>   // Stellt isxdigit zur Verfügung
 
 #include "radio.h"
@@ -183,19 +182,23 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
 }
 
 // Funktion zur Überprüfung, ob der String ein gültiges Hex-Format hat
-bool is_valid_hex(const char *str) {
-  if (str[0] != '#' || strlen(str) != 7) { return false; }  // Muss mit # beginnen und 7 Zeichen lang sein
-
-  for (int i = 1; i < 7; i++) {
-    if (!isxdigit(str[i])) { return false; }  // Überprüft, ob jedes Zeichen hexadezimal ist
+gboolean is_valid_hex(const char *str) {
+  if (str[0] != '#' || strlen(str) != 7) {
+    return FALSE;  // Muss mit # beginnen und 7 Zeichen lang sein
   }
 
-  return true;  // Gültig, wenn alle Zeichen Hexadezimal sind
+  for (int i = 1; i < 7; i++) {
+    if (!isxdigit(str[i])) {
+      return FALSE;  // Überprüft, ob jedes Zeichen hexadezimal ist
+    }
+  }
+
+  return TRUE;  // Gültig, wenn alle Zeichen Hexadezimal sind
 }
 
-bool is_valid_rgb(const char *str) {
+gboolean is_valid_rgb(const char *str) {
   int r, g, b;
-  return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3;
+  return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3 ? TRUE : FALSE;
 }
 
 static void bgcolor_button_clicked(GtkWidget *widget, gpointer data) {

@@ -35,7 +35,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <stdbool.h>
 #include "receiver.h"
 #include "toolbar.h"
 #include "band_menu.h"
@@ -82,7 +81,7 @@ int rigctl_tcp_autoreporting = 0;
 #if defined (__LDESK__)
   int serptt_fd;
   int sertune_fd;
-  volatile bool serptt_cts = false;
+  volatile gboolean serptt_cts = FALSE;
   int autogain_is_adjusted = 1;
 #endif
 
@@ -189,44 +188,53 @@ int rigctl_tcp_running() {
 
 #if defined (__LDESK__)
 // Funktion zum Abrufen des CTS-Status der seriellen PTT
-static bool get_serptt_cts(int fd) {
+static gboolean get_serptt_cts(int fd) {
   int status;
 
+  // Holen des CTS-Status von einem seriellen Gerät
   if (ioctl(fd, TIOCMGET, &status) < 0) {
-    // t_print("%s: Error reading CTS status from serial PTT device\n", __FUNCTION__);
-    return false;
+    // Fehlerbehandlung
+    return FALSE;  // Gibt FALSE zurück, wenn ein Fehler auftritt
   }
 
-  return (status & TIOCM_CTS) != 0;
+  // Überprüft, ob der CTS-Pin gesetzt ist
+  return (status & TIOCM_CTS) != 0 ? TRUE : FALSE;
 }
 
 // Funktion zur Aktualisierung des CTS-Status der seriellen PTT
 static gboolean update_serptt_cts(gpointer user_data) {
-  bool current_state_serptt = GPOINTER_TO_INT(user_data);
+  gboolean current_state_serptt = GPOINTER_TO_INT(user_data);  // Umwandlung von gpointer zu gboolean
 
+  // Wenn sich der Zustand von `serptt_cts` geändert hat
   if (current_state_serptt != serptt_cts) {
     serptt_cts = current_state_serptt;
 
+    // Wenn PTT (Push To Talk) an ist
     if (serptt_cts) {
       t_print("%s: serial PTT ON\n", __FUNCTION__);
 #if defined (__HAVEATU__)
 
-      if (transmitter->is_tuned) { g_idle_add(ext_mox_update, GINT_TO_POINTER(1)); }
+      // Wenn der Sender gestimmt ist, wird eine Funktion mit Idle hinzugefügt
+      if (transmitter->is_tuned) {
+        g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+      }
 
 #else
+      // Unabhängig von der Bedingung in #ifdef wird ext_mox_update mit 1 aufgerufen
       g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
 #endif
     } else {
       t_print("%s: serial PTT OFF\n", __FUNCTION__);
+      // Wenn PTT aus ist, wird eine Funktion mit Timeout hinzugefügt
       g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(0));
     }
   }
 
-  return G_SOURCE_REMOVE; // Einmalige Ausführung
+  return G_SOURCE_REMOVE;  // Einmalige Ausführung der Funktion
 }
 
 static gpointer monitor_serptt_cts_thread(gpointer user_data) {
-  bool last_state_serptt = 0;
+  gboolean last_state_serptt = FALSE;  // Umstellung von bool auf gboolean
   int fd = *(int *)user_data;
 
   if (fd < 0) {
@@ -237,12 +245,12 @@ static gpointer monitor_serptt_cts_thread(gpointer user_data) {
     t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL + 1].port);
   }
 
-  while (!(fd < 0)) {
-    bool current_state_serptt = get_serptt_cts(fd);
+  while (fd >= 0) {  // Solange fd gültig ist
+    gboolean current_state_serptt = get_serptt_cts(fd);  // Get the current CTS state
 
     if (current_state_serptt != last_state_serptt) {
       last_state_serptt = current_state_serptt;
-      g_idle_add(update_serptt_cts, GINT_TO_POINTER(current_state_serptt));
+      g_idle_add(update_serptt_cts, GINT_TO_POINTER(current_state_serptt));  // Update if state changes
     }
 
     g_usleep(50000); // 50 ms warten

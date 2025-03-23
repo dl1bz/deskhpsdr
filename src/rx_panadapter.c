@@ -28,7 +28,6 @@
 #include <semaphore.h>
 #include <arpa/inet.h>
 #include <time.h>
-#include <stdbool.h>
 
 #include "appearance.h"
 #include "agc.h"
