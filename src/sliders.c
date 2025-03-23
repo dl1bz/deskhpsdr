@@ -1142,7 +1142,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   if (can_transmit) {
 #if defined (__LDESK__)
     char _label[32];
-    snprintf(_label, 32, "Mic Gain");
+    snprintf(_label, 32, "Mic\nGain");
     mic_gain_label = gtk_label_new(_label);
 #else
     mic_gain_label = gtk_label_new("Mic");
