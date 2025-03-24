@@ -25,7 +25,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <arpa/inet.h>
@@ -45,7 +44,7 @@
 
 // As we only run in the GTK+ main event loop, which is single-threaded and
 // non-preemptive, we shouldn't need any additional synchronisation mechanisms.
-static bool curl_initialised = FALSE;
+static gboolean curl_initialised = FALSE;
 extern void status_text(const char *);
 
 #define ERROR_PREFIX "stemlab_discovery: "
