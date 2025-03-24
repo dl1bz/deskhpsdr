@@ -476,7 +476,11 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_name (label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
+#if defined (__LDESK__)
+  GtkWidget *time_r = gtk_spin_button_new_with_range(1.0, 9999.0, 10.0);
+#else
   GtkWidget *time_r = gtk_spin_button_new_with_range(1.0, 9999.0, 1.0);
+#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(time_r), (double)active_receiver->display_average_time);
   gtk_widget_show(time_r);
   gtk_grid_attach(GTK_GRID(general_grid), time_r, col + 1, row, 1, 1);
