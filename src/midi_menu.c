@@ -107,6 +107,12 @@ static GtkWidget *set_vfr1, *set_vfr2;
 static enum ACTIONtype thisType;
 static int thisAction;
 
+//
+// While choosing an action in the dialog, new incoming events
+// shall not have any effect
+//
+static int ignore_incoming_events = 0;
+
 enum {
   UPDATE_NEW = 0,
   UPDATE_CURRENT,
@@ -127,6 +133,7 @@ static void cleanup() {
     GtkWidget *tmp = dialog;
     dialog = NULL;
     configure_midi_device(FALSE);
+    ignore_incoming_events = 0;
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
@@ -211,10 +218,12 @@ static gboolean action_cb(GtkWidget *widget, gpointer data) {
   if (thisType == TYPE_NONE) { return TRUE; }
 
   //t_print("%s: type=%d action=%d\n", __FUNCTION__, thisType, thisAction);
+  ignore_incoming_events = 1;
   thisAction = action_dialog(dialog, thisType, thisAction);
   //t_print("%s: new action=%d\n", __FUNCTION__, thisAction);
   gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
   updateDescription();
+  ignore_incoming_events = 0;
   return TRUE;
 }
 
@@ -546,6 +555,7 @@ void midi_menu(GtkWidget *parent) {
   //
   // MIDI stays in "configure" mode until this menu is closed
   //
+  ignore_incoming_events = 0;
   configure_midi_device(TRUE);
   thisEvent = EVENT_NONE;
   dialog = gtk_dialog_new();
@@ -1084,6 +1094,10 @@ int ProcessNewMidiConfigureEvent(void * data) {
 }
 
 void NewMidiConfigureEvent(enum MIDIevent event, int channel, int note, int val) {
+  if (ignore_incoming_events) {
+    return;
+  }
+
   //
   // Sometimes a "heart beat" from a device might be useful. Therefore, we resert
   // channel=16 note=0 for this purpose and filter this out here
