@@ -36,6 +36,15 @@
 #include <fcntl.h>
 #include <sys/select.h>
 
+#ifdef __linux__
+  #include <unistd.h>
+#endif
+
+#ifdef __APPLE__
+  #include <sys/types.h>
+  #include <sys/sysctl.h>
+#endif
+
 #include "discovered.h"
 #include "discovery.h"
 #include "old_discovery.h"
@@ -476,9 +485,59 @@ static gpointer discover_receive_thread(gpointer data) {
   return NULL;
 }
 
+// Funktion zum Überprüfen, ob es ein Raspberry Pi ist
+static int is_raspberry_pi_linux() {
+  FILE *fp = fopen("/proc/cpuinfo", "r");
+
+  if (fp == NULL) {
+    return 0; // Fehler beim Öffnen der Datei
+  }
+
+  char line[256];
+
+  while (fgets(line, sizeof(line), fp)) {
+    if (strncmp(line, "Model", 5) == 0) {
+      if (strstr(line, "Raspberry Pi")) {
+        fclose(fp);
+        return 1; // Raspberry Pi gefunden
+      }
+    }
+  }
+
+  fclose(fp);
+  return 0; // Kein Raspberry Pi gefunden
+}
+
+// Funktion zum Überprüfen, ob es ein macOS-System ist
+static int is_macos() {
+#ifdef __APPLE__
+  // Wir können sysctl verwenden, um die Hardware zu überprüfen
+  size_t len = 0;
+  char *model = NULL;
+
+  if (sysctlbyname("hw.model", NULL, &len, NULL, 0) == 0) {
+    model = (char*)malloc(len);
+
+    if (model != NULL) {
+      if (sysctlbyname("hw.model", model, &len, NULL, 0) == 0) {
+        if (strstr(model, "MacBook") || strstr(model, "iMac") || strstr(model, "Mac mini")) {
+          free(model);
+          return 1; // macOS erkannt
+        }
+      }
+
+      free(model);
+    }
+  }
+
+#endif
+  return 0; // Kein macOS erkannt
+}
+
 void old_discovery() {
   struct ifaddrs *addrs,*ifa;
   int i, is_local;
+  int ist_macos, ist_raspi;
   t_print("old_discovery\n");
 
   //
@@ -558,4 +617,8 @@ void old_discovery() {
             discovered[i].info.network.mac_address[5],
             discovered[i].info.network.interface_name);
   }
+
+  ist_macos = is_macos() ? 1 : 0;
+  ist_raspi = is_raspberry_pi_linux() ? 1 : 0;
+  t_print("%s: macOS = %d Raspberry Pi = %d Lokal = %d\n", __FUNCTION__, ist_macos, ist_raspi, is_local);
 }
