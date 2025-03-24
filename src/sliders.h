@@ -38,6 +38,8 @@ extern void update_slider_autogain_btn(void);
 extern void update_slider_bbcompr_scale(gboolean show_widget);
 extern void update_slider_lev_scale(gboolean show_widget);
 extern void update_slider_preamp_scale(gboolean show_widget);
+extern void sliders_hide_row(int row);
+extern void sliders_show_row(int row);
 
 extern void set_agc_gain(int rx, double value);
 extern void set_af_gain(int rx, double value);

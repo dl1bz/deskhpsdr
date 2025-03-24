@@ -213,6 +213,7 @@ int lpf_udp_valid = 0;
 #endif
 int display_zoompan = 0;
 int display_sliders = 0;
+int display_extra_sliders = 0;
 int display_toolbar = 0;
 double percent_pan_wf = 50.0;
 int display_info_bar = 0;
@@ -734,6 +735,12 @@ void radio_reconfigure() {
     gtk_widget_show_all(sliders);  // ... this shows both C25 and Alex ATT/Preamp, and both Mic/Linein sliders
     att_type_changed();            // ... and this hides the „wrong“ ones.
     y += SLIDERS_HEIGHT;
+
+    if (can_transmit && display_extra_sliders) {
+      sliders_show_row(2);
+    } else {
+      sliders_hide_row(2);
+    }
   } else {
     if (sliders != NULL) {
       gtk_container_remove(GTK_CONTAINER(fixed), sliders);
@@ -1059,6 +1066,12 @@ static void radio_create_visual() {
     sliders = sliders_init(my_width, SLIDERS_HEIGHT);
     gtk_fixed_put(GTK_FIXED(fixed), sliders, 0, y);
     y += SLIDERS_HEIGHT;
+
+    if (can_transmit && display_extra_sliders) {
+      sliders_show_row(2);
+    } else {
+      sliders_hide_row(2);
+    }
   }
 
   if (display_toolbar) {
@@ -2669,6 +2682,7 @@ static void radio_restore_state() {
   GetPropI0("display_info_bar",                              display_info_bar);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
+  GetPropI0("display_extra_sliders",                         display_extra_sliders);
   GetPropI0("display_toolbar",                               display_toolbar);
   GetPropI0("display_width",                                 display_width);
   GetPropI0("display_height",                                display_height);
@@ -2913,6 +2927,7 @@ void radio_save_state() {
   SetPropI0("display_info_bar",                              display_info_bar);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
+  SetPropI0("display_extra_sliders",                         display_extra_sliders);
   SetPropI0("display_toolbar",                               hide_status ? old_tool : display_toolbar);
   SetPropI0("display_width",                                 display_width);
   SetPropI0("display_height",                                display_height);

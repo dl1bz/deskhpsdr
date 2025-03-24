@@ -29,6 +29,7 @@
 #include "main.h"
 #include "appearance.h"
 #include "message.h"
+#include "sliders.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *wide_b = NULL;
@@ -39,6 +40,7 @@ static gulong vfo_signal_id;
 static guint apply_timeout = 0;
 static GtkWidget *bgcolor_text_input;
 static gulong bgcolor_text_input_signal_id;
+static GtkWidget *display_extras_btn;
 
 //
 // local copies of global variables
@@ -225,6 +227,20 @@ static void bgcolor_entry_activate(GtkWidget *widget, gpointer data) {
   bgcolor_button_clicked(NULL, data);  // Simuliert den Klick des OK-Buttons
 }
 
+// Callback für den Button-Klick
+static void display_extras_btn_cb(GtkWidget *widget, gpointer data) {
+  int r = GPOINTER_TO_INT(data);
+  display_extra_sliders = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (display_extra_sliders) {
+    sliders_show_row(r);
+  } else {
+    sliders_hide_row(r);  // Versteckt die 4. Zeile des Grids
+  }
+
+  schedule_apply();
+}
+
 
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
@@ -391,6 +407,19 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_show(b_display_toolbar);
   gtk_grid_attach(GTK_GRID(grid), b_display_toolbar, 2, row, 1, 1);
   g_signal_connect(b_display_toolbar, "toggled", G_CALLBACK(display_toolbar_cb), NULL);
+
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  if (can_transmit) {
+    display_extras_btn = gtk_check_button_new_with_label("Display Extras");
+    gtk_widget_set_name (display_extras_btn, "boldlabel");
+    gtk_grid_attach(GTK_GRID(grid), display_extras_btn, 3, row, 1, 1);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(display_extras_btn), display_extra_sliders);
+    int row_to_hide = 2; // from sliders.c
+    g_signal_connect(display_extras_btn, "clicked", G_CALLBACK(display_extras_btn_cb), GINT_TO_POINTER(row_to_hide));
+    gtk_widget_show(display_extras_btn);
+  }
+
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   row++;
   GtkWidget *b_display_warnings = gtk_check_button_new_with_label("Display Warnings");
   gtk_widget_set_name (b_display_warnings, "boldlabel");

@@ -113,6 +113,30 @@ int scale_timeout_cb(gpointer data) {
   return FALSE;
 }
 
+void sliders_hide_row(int row) {
+  if (can_transmit) {
+    for (int col = 0; col < 24; col++) {
+      GtkWidget *widget = gtk_grid_get_child_at(GTK_GRID(sliders), col, row);
+
+      if (widget) {
+        gtk_widget_hide(widget);  // Das Widget ausblenden
+      }
+    }
+  }
+}
+
+void sliders_show_row(int row) {
+  if (can_transmit) {
+    for (int col = 0; col < 24; col++) {
+      GtkWidget *widget = gtk_grid_get_child_at(GTK_GRID(sliders), col, row);
+
+      if (widget) {
+        gtk_widget_show(widget);  // Das Widget ausblenden
+      }
+    }
+  }
+}
+
 void show_popup_slider(enum ACTION action, int rx, double min, double max, double delta, double value,
                        const char *title) {
   //
@@ -882,7 +906,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   height = my_height;
   int widget_height = height / 2;
 
-  if (can_transmit) {
+  if (can_transmit && display_extra_sliders) {
     widget_height = height / 3;
   }
 
@@ -894,7 +918,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   int twidth, swidth, bwidth, tpix;
   int t1pos, t2pos, t3pos;
 #if defined (__LDESK__)
-  int s1pos, s2pos, s3pos;
+  int s1pos, s2pos, s3pos, l_col;
 #else
   int s1pos, s2pos, s3pos, sqpos;
 #endif
@@ -954,9 +978,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   t3pos  =  s2pos + swidth;
   b3pos  =  t3pos + twidth;
   s3pos  =  b3pos + twidth;
+  l_col  =  s3pos + swidth;
   // some debug output for info
-  t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d\n",
-          __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos);
+  t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d l_col=%d\n",
+          __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos, l_col);
   t_print("%s: max. slider surface column: %d\n", __FUNCTION__, s3pos + swidth);
   t_print("%s: twidth=%d swidth=%d bwidth=%d lbl_w_fix=%d sl_w_fix=%d\n",
           __FUNCTION__, twidth, swidth, bwidth, lbl_w_fix, sl_w_fix);

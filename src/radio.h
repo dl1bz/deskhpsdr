@@ -158,6 +158,7 @@ extern const int pa_power_list[];
 extern double slider_surface_scale;
 extern int display_zoompan;
 extern int display_sliders;
+extern int display_extra_sliders;
 extern int display_toolbar;
 extern double percent_pan_wf;
 extern int display_info_bar;
