@@ -501,8 +501,8 @@ static void rx200_process_data(const char *rx200_data[7]) {
 
   for (int i = 0; i < 4; i++) {
     if (rx200_data[i] != NULL) { // Sicherstellen, dass der Zeiger gültig ist
-      strncpy(g_rx200_data[i], rx200_data[i], sizeof(g_rx200_data[i]) - 1);
-      g_rx200_data[i][sizeof(g_rx200_data[i]) - 1] = '\0'; // Nullterminator sicherstellen
+      g_strlcpy(g_rx200_data[i], rx200_data[i], sizeof(g_rx200_data[i]));
+      // Keine manuelle Nullterminierung notwendig
     } else {
       g_rx200_data[i][0] = '\0'; // Leeren String setzen, falls NULL
     }
@@ -519,8 +519,8 @@ static void lpf_process_data(const char *lpf_data[6]) {
 
   for (int i = 0; i < 6; i++) {
     if (lpf_data[i] != NULL) { // Sicherstellen, dass der Zeiger gültig ist
-      strncpy(g_lpf_data[i], lpf_data[i], sizeof(g_lpf_data[i]) - 1);
-      g_lpf_data[i][sizeof(g_lpf_data[i]) - 1] = '\0'; // Nullterminator sicherstellen
+      g_strlcpy(g_lpf_data[i], lpf_data[i], sizeof(g_lpf_data[i]));
+      // Keine manuelle Nullterminierung notwendig
     } else {
       g_lpf_data[i][0] = '\0'; // Leeren String setzen, falls NULL
     }
