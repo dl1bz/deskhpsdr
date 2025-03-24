@@ -732,6 +732,14 @@ void update_slider_local_mic_input(int src) {
 void update_slider_local_mic_button() {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
+
+    if (transmitter->local_microphone) {
+      if (audio_open_input() != 0) {
+        t_print("audio_open_input failed\n");
+        transmitter->local_microphone = 0;
+      }
+    }
+
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
     gtk_widget_queue_draw(local_mic_button);
