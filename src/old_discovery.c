@@ -504,12 +504,16 @@ void old_discovery() {
       if (ifa->ifa_addr) {
         if (
           ifa->ifa_addr->sa_family == AF_INET
+#ifdef __APPLE__
+          && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
+#endif
           && (ifa->ifa_flags & IFF_UP) == IFF_UP
           && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
-          // && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
+#ifndef __APPLE__
           && strncmp("veth", ifa->ifa_name, 4)
           && strncmp("dock", ifa->ifa_name, 4)
           && strncmp("hass", ifa->ifa_name, 4)
+#endif
         ) {
           discover(ifa, 1);   // send UDP broadcast packet to interface
         }

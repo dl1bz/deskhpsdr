@@ -178,8 +178,12 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
     return TRUE;
   }
 
+#if defined (__LDESK__)
+  g_strlcpy(ipaddr_radio, cp, IPADDR_LEN);
+#else
   strncpy(ipaddr_radio, cp, IPADDR_LEN);
   ipaddr_radio[IPADDR_LEN - 1] = 0;
+#endif
   FILE *fp = fopen("ip.addr", "w");
 
   if (fp) {
