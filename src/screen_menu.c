@@ -411,7 +411,7 @@ void screen_menu(GtkWidget *parent) {
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit) {
     display_extras_btn = gtk_check_button_new_with_label("Display Extras");
-    gtk_widget_set_name (display_extras_btn, "boldlabel");
+    gtk_widget_set_name (display_extras_btn, "boldlabel_blue");
     gtk_grid_attach(GTK_GRID(grid), display_extras_btn, 3, row, 1, 1);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(display_extras_btn), display_extra_sliders);
     int row_to_hide = 2; // from sliders.c
