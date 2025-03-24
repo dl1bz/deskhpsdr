@@ -81,24 +81,24 @@ static gulong     squelch_signal_id;
 static GtkWidget *squelch_enable;
 #if defined (__LDESK__)
   static GtkWidget *tune_drive_label;
-  GtkWidget *tune_drive_scale;
-  GtkWidget *local_mic_button;
-  GtkWidget *local_mic_input;
+  static GtkWidget *tune_drive_scale;
+  static gulong tune_drive_scale_signal_id;
+  static GtkWidget *local_mic_input;
+  static gulong local_mic_input_signal_id;
   static GtkWidget *local_mic_label;
-  gulong local_mic_toggle_signal_id;
-  gulong tune_drive_scale_signal_id;
-  gulong local_mic_input_signal_id;
-  GtkWidget *autogain_btn;
-  gulong autogain_btn_signal_id;
-  GtkWidget *bbcompr_scale;
-  gulong bbcompr_scale_signal_id;
+  static GtkWidget *local_mic_button;
+  static gulong local_mic_toggle_signal_id;
+  static GtkWidget *autogain_btn;
+  static gulong autogain_btn_signal_id;
+  static GtkWidget *bbcompr_scale;
+  static gulong bbcompr_scale_signal_id;
   static GtkWidget *bbcompr_label;
   static GtkWidget *lev_label;
-  GtkWidget *lev_scale;
-  gulong lev_scale_signal_id;
+  static GtkWidget *lev_scale;
+  static gulong lev_scale_signal_id;
   static GtkWidget *preamp_label;
-  GtkWidget *preamp_scale;
-  gulong preamp_scale_signal_id;
+  static GtkWidget *preamp_scale;
+  static gulong preamp_scale_signal_id;
 #endif
 
 //
@@ -708,24 +708,27 @@ static void preamp_scale_changed_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_local_mic_input(int src) {
   if (display_sliders) {
-    g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
+    // t_print("%s: local_mic_input = %d src = %d\n", __FUNCTION__, gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input)), src);
+    if (src != gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input))) {
+      g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
 
-    if (strcmp(transmitter->microphone_name, input_devices[src].name) == 0) {
-      gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), src);
+      if (strcmp(transmitter->microphone_name, input_devices[src].name) == 0) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), src);
+      }
+
+      // If the combo box shows no device, take the first one
+      // AND set the mic.name to that device name.
+      // This situation occurs if the local microphone device in the props
+      // file is no longer present
+
+      if (gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input))  < 0) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), 0);
+        g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
+      }
+
+      g_signal_handler_unblock(G_OBJECT(local_mic_input), local_mic_input_signal_id);
+      gtk_widget_queue_draw(local_mic_input);
     }
-
-    // If the combo box shows no device, take the first one
-    // AND set the mic.name to that device name.
-    // This situation occurs if the local microphone device in the props
-    // file is no longer present
-
-    if (gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input))  < 0) {
-      gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), 0);
-      g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
-    }
-
-    g_signal_handler_unblock(G_OBJECT(local_mic_input), local_mic_input_signal_id);
-    gtk_widget_queue_draw(local_mic_input);
   }
 }
 

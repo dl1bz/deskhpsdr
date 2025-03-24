@@ -52,23 +52,6 @@ extern void show_filter_shift(int rx, int value);
 extern void set_attenuation_value(double attenuation);
 extern GtkWidget *sliders_init(int my_width, int my_height);
 
-#if defined (__LDESK__)
-  extern GtkWidget *tune_drive_scale;
-  extern GtkWidget *local_mic_input;
-  extern GtkWidget *local_mic_button;
-  extern gulong local_mic_toggle_signal_id;
-  extern gulong tune_drive_scale_signal_id;
-  extern gulong local_mic_input_signal_id;
-  extern GtkWidget *autogain_btn;
-  extern gulong autogain_btn_signal_id;
-  extern GtkWidget *bbcompr_scale;
-  extern gulong bbcompr_scale_signal_id;
-  extern GtkWidget *lev_scale;
-  extern gulong lev_scale_signal_id;
-  extern GtkWidget *preamp_scale;
-  extern gulong preamp_scale_signal_id;
-#endif
-
 extern void set_squelch(RECEIVER *rx);
 
 extern void show_diversity_gain(void);
