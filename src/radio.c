@@ -213,7 +213,7 @@ int lpf_udp_valid = 0;
 #endif
 int display_zoompan = 0;
 int display_sliders = 0;
-int display_extra_sliders = 0;
+int display_extra_sliders = 1;
 int display_toolbar = 0;
 double percent_pan_wf = 50.0;
 int display_info_bar = 0;
