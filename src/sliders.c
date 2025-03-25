@@ -1367,6 +1367,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
       gtk_grid_attach(GTK_GRID(sliders), local_mic_input, s2pos, 2, swidth, 1); // Zeile 0, Spalte 1
       gtk_widget_set_valign(local_mic_input, GTK_ALIGN_CENTER);
+      gtk_widget_set_can_focus(local_mic_input, TRUE);
       gboolean flag = FALSE;
       local_mic_input_signal_id = g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb),
                                   GINT_TO_POINTER(flag));

@@ -1121,6 +1121,7 @@ void tx_menu(GtkWidget *parent) {
     }
 
     my_combo_attach(GTK_GRID(tx_grid), audio_profile, col, row, 3, 1);
+    gtk_widget_set_can_focus(audio_profile, TRUE);
     g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
   }
 
@@ -1157,6 +1158,7 @@ void tx_menu(GtkWidget *parent) {
     }
 
     my_combo_attach(GTK_GRID(tx_grid), input, col, row, 4, 1);
+    gtk_widget_set_can_focus(input, TRUE);
     gboolean flag = TRUE;
     g_signal_connect(input, "changed", G_CALLBACK(local_input_changed_cb), GINT_TO_POINTER(flag));
   }

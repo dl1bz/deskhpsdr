@@ -574,27 +574,26 @@ void radio_reconfigure_screen() {
   }
 
   gtk_window_resize(GTK_WINDOW(top_window), my_width, my_height);
-  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT);
-  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT);
-#if defined (__LDESK__)
-  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-#endif
-  gtk_widget_set_size_request(meter,  METER_WIDTH, METER_HEIGHT);
-  gtk_widget_set_size_request(vfo_panel, VFO_WIDTH, VFO_HEIGHT);
   //
   // Move Hide and Menu buttons, meter to new position
   //
+#if defined (__LDESK__)
+  gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_fixed_move(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, 0);
+  gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT / 2 + 8);
+  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 14);
+#else
+  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT);
+  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT);
   gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, 0);
   gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT);
-#if defined (__LDESK__)
-  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT / 2 + 8);
-  gtk_fixed_move(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 14);
 #endif
+  gtk_widget_set_size_request(meter,  METER_WIDTH, METER_HEIGHT);
   gtk_fixed_move(GTK_FIXED(fixed), meter, VFO_WIDTH, 0);
+  gtk_widget_set_size_request(vfo_panel, VFO_WIDTH, VFO_HEIGHT);
 
-  //
   // Adjust position of the TX panel.
   // This must even be done in duplex mode, if we switch back
   // to non-duplex in the future.
@@ -865,6 +864,7 @@ static void radio_create_visual() {
   //t_print("radio: meter_init\n");
   meter = meter_init(METER_WIDTH, METER_HEIGHT);
   gtk_fixed_put(GTK_FIXED(fixed), meter, VFO_WIDTH, y);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   t_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   hide_b = gtk_button_new_with_label("Hide");
@@ -880,6 +880,7 @@ static void radio_create_visual() {
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y);
   y += MENU_HEIGHT;
 #endif
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   menu_b = gtk_button_new_with_label("Menu");
@@ -895,6 +896,7 @@ static void radio_create_visual() {
   gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y);
   y += MENU_HEIGHT;
 #endif
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
   t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
@@ -905,6 +907,7 @@ static void radio_create_visual() {
   gtk_fixed_put(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, y);
   y += MENU_HEIGHT - 10;
 #endif
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   rx_height = my_height - VFO_HEIGHT;
 
   if (display_zoompan) {
