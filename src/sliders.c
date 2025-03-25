@@ -861,6 +861,17 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+// Funktion zum Kürzen des Textes
+static const char* truncate_text(const char* text, size_t max_length) {
+  static char truncated[128];  // Ein statisches Array für den gekürzten Text
+  if (strlen(text) > max_length) {
+      g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
+  } else {
+      g_strlcpy(truncated, text, sizeof(truncated));  // Sicheres Kopieren des Textes
+  }
+  return truncated;
+}
+
 #endif
 
 #endif
@@ -1337,7 +1348,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_size_request(local_mic_input, sl_w_fix, widget_height);
 
       for (int i = 0; i < n_input_devices; i++) {
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, input_devices[i].description);
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, truncate_text(input_devices[i].description, 32));
 
         if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
           gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
