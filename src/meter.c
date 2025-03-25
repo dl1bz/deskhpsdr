@@ -562,13 +562,18 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     // otherwise it is always shown while TX, and shown
     // during RX only if VOX is enabled
     //
-    if (((meter_type == POWER) || vox_enabled) && !cwmode) {
+    // if (((meter_type == POWER) || vox_enabled) && !cwmode) {
+    if (can_transmit && !cwmode) {
       double offset = ((double)METER_WIDTH - 100.0) / 2.0;
       double peak = vox_get_peak();
 
       if (peak > 1.0) { peak = 1.0; }
 
-      peak = peak * 100.0;
+      // peak = peak * 100.0; // old
+      peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
+
+      if (peak < 0.0) { peak = 0.0; } // add new
+
       cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_rectangle(cr, offset, 0.0, peak, 5.0);
       cairo_fill(cr);
@@ -614,7 +619,8 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     cairo_set_line_width(cr, PAN_LINE_THICK);
 
     // if (can_transmit) {
-    if (((meter_type == POWER) || vox_enabled) && !cwmode) {
+    // if (((meter_type == POWER) || vox_enabled) && !cwmode) {
+    if (can_transmit && !cwmode) {
       cairo_set_source_rgba(cr, COLOUR_METER);
       cairo_move_to(cr, 5.0, Y1);
       cairo_line_to(cr, 5.0, Y1 - 10);
@@ -631,7 +637,11 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
 
       if (peak > 1.0) { peak = 1.0; }
 
-      peak = peak * 100.0;
+      // peak = peak * 100.0; // old
+      peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
+
+      if (peak < 0.0) { peak = 0.0; } // add
+
       cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_rectangle(cr, 5.0, Y1 - 10, peak, 5);
       cairo_fill(cr);
