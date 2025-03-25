@@ -578,12 +578,12 @@ void radio_reconfigure_screen() {
   // Move Hide and Menu buttons, meter to new position
   //
 #if defined (__LDESK__)
-  gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  gtk_fixed_move(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, 0);
+  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, 0);
   gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT / 2 + 8);
-  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 14);
+  gtk_fixed_move(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 14);
 #else
   gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT);
   gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT);
