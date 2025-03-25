@@ -1348,7 +1348,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_size_request(local_mic_input, sl_w_fix, widget_height);
 
       for (int i = 0; i < n_input_devices; i++) {
+#ifdef __APPLE__
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, truncate_text(input_devices[i].description, 32));
+#else
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, truncate_text(input_devices[i].description, 28));
+#endif
 
         if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
           gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
