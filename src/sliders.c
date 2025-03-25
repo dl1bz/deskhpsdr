@@ -728,8 +728,6 @@ static void preamp_scale_changed_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-
-
 void update_slider_local_mic_input(int src) {
   if (display_sliders) {
     // t_print("%s: local_mic_input = %d src = %d\n", __FUNCTION__, gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input)), src);
@@ -864,11 +862,13 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
 // Funktion zum Kürzen des Textes
 static const char* truncate_text(const char* text, size_t max_length) {
   static char truncated[128];  // Ein statisches Array für den gekürzten Text
+
   if (strlen(text) > max_length) {
-      g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
+    g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
   } else {
-      g_strlcpy(truncated, text, sizeof(truncated));  // Sicheres Kopieren des Textes
+    g_strlcpy(truncated, text, sizeof(truncated));  // Sicheres Kopieren des Textes
   }
+
   return truncated;
 }
 
