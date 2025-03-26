@@ -563,44 +563,117 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     // during RX only if VOX is enabled
     //
     // ANALOG-ANZEIGE
-    // if (((meter_type == POWER) || vox_enabled) && !cwmode) {
-    if (can_transmit && !cwmode) {
-      double offset = ((double)METER_WIDTH - 100.0) / 2.0;
-      double peak = vox_get_peak();
-
-      if (peak > 1.0) { peak = 1.0; }
-
-      // peak = peak * 100.0; // old
-      peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
-
-      if (peak < 0.0) { peak = 0.0; } // add new
-
-      cairo_set_source_rgba(cr, COLOUR_OK);
-      cairo_rectangle(cr, offset, 0.0, peak, 5.0);
-      cairo_fill(cr);
-      cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-      cairo_set_source_rgba(cr, COLOUR_METER);
-      cairo_move_to(cr, offset + 105.0, 10.0);
-      cairo_show_text(cr, "Mic Lvl");
-      cairo_move_to(cr, offset, 0.0);
-      cairo_line_to(cr, offset, 5.0);
-      cairo_stroke(cr);
-      cairo_move_to(cr, offset + 50.0, 0.0);
-      cairo_line_to(cr, offset + 50.0, 5.0);
-      cairo_stroke(cr);
-      cairo_move_to(cr, offset + 100.0, 0.0);
-      cairo_line_to(cr, offset + 100.0, 5.0);
-      cairo_stroke(cr);
-      cairo_move_to(cr, offset, 5.0);
-      cairo_line_to(cr, offset + 100.0, 5.0);
-      cairo_stroke(cr);
-
-      if (vox_enabled) {
-        cairo_set_source_rgba(cr, COLOUR_ALARM);
-        cairo_move_to(cr, offset + (vox_threshold * 100.0), 0.0);
-        cairo_line_to(cr, offset + (vox_threshold * 100.0), 5.0);
+    if (((meter_type == POWER) || vox_enabled) && !cwmode) {
+      if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+        double x_offset = 5.0;
+        double y_offset = 10.0;
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_move_to(cr, x_offset, y_offset);
+        cairo_line_to(cr, x_offset, y_offset + 80.0);
+        cairo_move_to(cr, x_offset, y_offset);
+        cairo_line_to(cr, x_offset + 20.0, y_offset);
+        cairo_move_to(cr, x_offset, y_offset + 20.0);
+        cairo_line_to(cr, x_offset + 3.0, y_offset + 20.0);
+        cairo_move_to(cr, x_offset, y_offset + 40.0);
+        cairo_line_to(cr, x_offset + 3.0, y_offset + 40.0);
+        cairo_move_to(cr, x_offset, y_offset + 60.0);
+        cairo_line_to(cr, x_offset + 3.0, y_offset + 60.0);
+        cairo_move_to(cr, x_offset, y_offset + 80.0);
+        cairo_line_to(cr, x_offset + 20.0, y_offset + 80.0);
         cairo_stroke(cr);
+        cairo_set_source_rgba(cr, COLOUR_ALARM_WEAK);
+        cairo_rectangle(cr, x_offset, y_offset, 20.0, 20.0);
+        cairo_fill(cr);
+        cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+        cairo_rectangle(cr, x_offset, y_offset + 20.0, 20.0, 20.0);
+        cairo_fill(cr);
+        double peak = GetTXAMeter(transmitter->id, TXA_MIC_AV);
+
+        if (peak < -30.0) { peak = -30.0; }
+
+        if (peak > 5.0) { peak = 5.0; }
+
+        peak = 0.0571 * peak * peak + 3.7143 * peak + 60;
+
+        if (peak < 0.0) { peak = 0.0; }
+
+        if (peak > 80.0) { peak = 80.0; }
+
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_rectangle(cr, x_offset + 4.0, (y_offset + 80) - peak, 4.0, peak);
+        cairo_fill(cr);
+        double alc_val;
+
+        switch (transmitter->alcmode) {
+        case ALC_PEAK:
+        default:
+          alc_val = GetTXAMeter(transmitter->id, TXA_ALC_PK);
+          break;
+
+        case ALC_AVERAGE:
+          alc_val = GetTXAMeter(transmitter->id, TXA_ALC_AV);
+          break;
+
+        case ALC_GAIN:
+          alc_val = GetTXAMeter(transmitter->id, TXA_ALC_GAIN);
+          break;
+        }
+
+        if (alc_val > 5.0) { alc_val = 5.0; }
+
+        if (alc_val < -30.0) { alc_val = -30.0; }
+
+        alc_val = 0.0571 * alc_val * alc_val + 3.7143 * alc_val + 60;
+
+        if (alc_val < 0.0) { alc_val = 0.0; }
+
+        if (alc_val > 80.0) { alc_val = 80.0; }
+
+        cairo_rectangle(cr, x_offset + 13.0, (y_offset + 80) - alc_val, 4.0, alc_val);
+        cairo_fill(cr);
+        cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_move_to(cr, x_offset + 25.0, y_offset + 10.0);
+        cairo_show_text(cr, "Mic | ALC");
+      } else {
+        double offset = ((double)METER_WIDTH - 100.0) / 2.0;
+        double peak = vox_get_peak();
+
+        if (peak > 1.0) { peak = 1.0; }
+
+        // peak = peak * 100.0; // old
+        peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
+
+        if (peak < 0.0) { peak = 0.0; } // add new
+
+        cairo_set_source_rgba(cr, COLOUR_OK);
+        cairo_rectangle(cr, offset, 0.0, peak, 5.0);
+        cairo_fill(cr);
+        cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_move_to(cr, offset + 105.0, 10.0);
+        cairo_show_text(cr, "Mic Lvl");
+        cairo_move_to(cr, offset, 0.0);
+        cairo_line_to(cr, offset, 5.0);
+        cairo_stroke(cr);
+        cairo_move_to(cr, offset + 50.0, 0.0);
+        cairo_line_to(cr, offset + 50.0, 5.0);
+        cairo_stroke(cr);
+        cairo_move_to(cr, offset + 100.0, 0.0);
+        cairo_line_to(cr, offset + 100.0, 5.0);
+        cairo_stroke(cr);
+        cairo_move_to(cr, offset, 5.0);
+        cairo_line_to(cr, offset + 100.0, 5.0);
+        cairo_stroke(cr);
+
+        if (vox_enabled) {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
+          cairo_move_to(cr, offset + (vox_threshold * 100.0), 0.0);
+          cairo_line_to(cr, offset + (vox_threshold * 100.0), 5.0);
+          cairo_stroke(cr);
+        }
       }
     }
   } else {
@@ -620,10 +693,8 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_line_width(cr, PAN_LINE_THICK);
 
-    // if (can_transmit) {
     if (((meter_type == POWER) || vox_enabled) && !cwmode) {
-      // if (can_transmit && !cwmode) {
-      if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+      if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) { // new designed MicLvl and ALC meter
         cairo_set_source_rgba(cr, COLOUR_METER);
         cairo_move_to(cr, 5.0, Y1);
         cairo_line_to(cr, 105.0, Y1);
@@ -641,7 +712,10 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_move_to(cr, 5.0 + 100.0, Y1);
         cairo_line_to(cr, 5.0 + 100.0, Y1 - 15);
         cairo_stroke(cr);
-        cairo_set_source_rgba(cr, COLOUR_ALARM);
+        cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+        cairo_rectangle(cr, 5.0 + 64.0, Y1 - 15, 16, 15);
+        cairo_fill(cr);
+        cairo_set_source_rgba(cr, COLOUR_ALARM_WEAK);
         cairo_rectangle(cr, 5.0 + 80.0, Y1 - 15, 19, 15);
         cairo_fill(cr);
         cairo_set_source_rgba(cr, COLOUR_METER);
@@ -649,26 +723,17 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
 
         if (peak > 5.0) { peak = 5.0; }
 
-        // peak += 95.0;
-        peak = 1.6 * peak + 80; // 0-100 meter: 0 is -50db, 100 is +5db, from 0-5db is red
+        if (peak < -40.0) { peak = -40.0; }
+
+        // peak = 1.6 * peak + 80; // 0-100 meter: 0 is -50db, 100 is +5db, from 0-5db is red
+        peak = 0.0436 * peak * peak + 3.7818 * peak + 80;
 
         if (peak < 0.0) { peak = 0.00; }
 
-        /*
-        double peak = vox_get_peak();
-        if (peak > 1.0) { peak = 1.0; }
-        peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
-        if (peak < 0.0) { peak = 0.0; } // add
-        */
-        // 64 is -10db, 72 is -5db, 80 is 0db and 100 is +5db
-        if (peak > 80.0 ) {
-          cairo_set_source_rgba(cr, COLOUR_ALARM);
-        } else if (peak > 64) {
-          cairo_set_source_rgba(cr, COLOUR_OK);
-        } else {
-          cairo_set_source_rgba(cr, COLOUR_METER);
-        }
+        if (peak > 100.0) { peak = 100.0; }
 
+        // 64 is -10db, 72 is -5db, 80 is 0db and 100 is +5db
+        cairo_set_source_rgba(cr, COLOUR_METER);
         cairo_rectangle(cr, 5.0, Y1 - 12, peak, 3);
         cairo_fill(cr);
         double alc_val;
@@ -690,21 +755,29 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
 
         if (alc_val > 5.0) { alc_val = 5.0; }
 
-        alc_val = 1.6 * alc_val + 80;
+        if (alc_val < -40.0) { alc_val = -40.0; }
+
+        // alc_val = 1.6 * alc_val + 80;
+        alc_val = 0.0436 * alc_val * alc_val + 3.7818 * alc_val + 80;
 
         if (alc_val < 0.0) { alc_val = 0.00; }
 
-        if (alc_val > 80.0 ) {
-          cairo_set_source_rgba(cr, COLOUR_ALARM);
-        } else if (alc_val > 64) {
-          cairo_set_source_rgba(cr, COLOUR_OK);
-        } else {
-          cairo_set_source_rgba(cr, COLOUR_METER);
-        }
+        if (alc_val > 100.0) { alc_val = 100.0; }
 
+        cairo_set_source_rgba(cr, COLOUR_METER);
         cairo_rectangle(cr, 5.0, Y1 - 6, alc_val, 3);
         cairo_fill(cr);
-      } else {
+        double current_line_width = cairo_get_line_width(cr);
+
+        if (vox_enabled) {
+          cairo_set_source_rgba(cr, COLOUR_ATTN);
+          cairo_set_line_width(cr, current_line_width + 1.5);
+          cairo_move_to(cr, 5.0 + (vox_threshold * 100.0), Y1 - 15);
+          cairo_line_to(cr, 5.0 + (vox_threshold * 100.0), Y1 - 6);
+          cairo_stroke(cr);
+          cairo_set_line_width(cr, current_line_width);
+        }
+      } else { // original MicLvl meter
         cairo_set_source_rgba(cr, COLOUR_METER);
         cairo_move_to(cr, 5.0, Y1);
         cairo_line_to(cr, 5.0, Y1 - 10);
@@ -728,29 +801,29 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_set_source_rgba(cr, COLOUR_OK);
         cairo_rectangle(cr, 5.0, Y1 - 10, peak, 5);
         cairo_fill(cr);
-      }
 
-      if (vox_enabled) {
-        cairo_set_source_rgba(cr, COLOUR_ALARM);
-        cairo_move_to(cr, 5.0 + (vox_threshold * 100.0), Y1 - 10);
-        cairo_line_to(cr, 5.0 + (vox_threshold * 100.0), Y1);
-        cairo_stroke(cr);
+        if (vox_enabled) {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
+          cairo_move_to(cr, 5.0 + (vox_threshold * 100.0), Y1 - 10);
+          cairo_line_to(cr, 5.0 + (vox_threshold * 100.0), Y1);
+          cairo_stroke(cr);
+        }
       }
 
       cairo_set_source_rgba(cr, COLOUR_METER);
-      // cairo_set_font_size(cr, DISPLAY_FONT_SIZE1);
-      // cairo_move_to(cr, 80.0, Y1 - 12);
-      // cairo_set_source_rgba(cr, COLOUR_ALARM);
-      // cairo_show_text(cr, "+5db");
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-      // cairo_move_to(cr, 150.0, Y1);
-      cairo_move_to(cr, 110.0, Y1 - 8);
-      cairo_set_source_rgba(cr, COLOUR_METER);
-      cairo_show_text(cr, "Mic Lvl");
 
+      // cairo_move_to(cr, 150.0, Y1);
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+        cairo_move_to(cr, 110.0, Y1 - 8);
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_show_text(cr, "Mic Lvl");
         cairo_move_to(cr, 110.0, Y1 + 4);
         cairo_show_text(cr, "ALC");
+      } else {
+        cairo_move_to(cr, 110.0, Y1);
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_show_text(cr, "Mic Lvl");
       }
     }
 
