@@ -562,6 +562,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     // otherwise it is always shown while TX, and shown
     // during RX only if VOX is enabled
     //
+    // ANALOG-ANZEIGE
     // if (((meter_type == POWER) || vox_enabled) && !cwmode) {
     if (can_transmit && !cwmode) {
       double offset = ((double)METER_WIDTH - 100.0) / 2.0;
@@ -607,6 +608,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     // Digital meter, both RX and TX:
     // Mic level display
     //
+    // DIGITAL-ANZEIGE
     int text_location;
     int Y1 = METER_HEIGHT / 4;
     int Y2 = Y1 + METER_HEIGHT / 3;
@@ -619,32 +621,114 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     cairo_set_line_width(cr, PAN_LINE_THICK);
 
     // if (can_transmit) {
-    // if (((meter_type == POWER) || vox_enabled) && !cwmode) {
-    if (can_transmit && !cwmode) {
-      cairo_set_source_rgba(cr, COLOUR_METER);
-      cairo_move_to(cr, 5.0, Y1);
-      cairo_line_to(cr, 5.0, Y1 - 10);
-      cairo_move_to(cr, 5.0 + 25.0, Y1);
-      cairo_line_to(cr, 5.0 + 25.0, Y1 - 5);
-      cairo_move_to(cr, 5.0 + 50.0, Y1);
-      cairo_line_to(cr, 5.0 + 50.0, Y1 - 10);
-      cairo_move_to(cr, 5.0 + 75.0, Y1);
-      cairo_line_to(cr, 5.0 + 75.0, Y1 - 5);
-      cairo_move_to(cr, 5.0 + 100.0, Y1);
-      cairo_line_to(cr, 5.0 + 100.0, Y1 - 10);
-      cairo_stroke(cr);
-      double peak = vox_get_peak();
+    if (((meter_type == POWER) || vox_enabled) && !cwmode) {
+      // if (can_transmit && !cwmode) {
+      if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_move_to(cr, 5.0, Y1);
+        cairo_line_to(cr, 105.0, Y1);
+        cairo_move_to(cr, 5.0, Y1);
+        cairo_line_to(cr, 5.0, Y1 - 15);
+        cairo_move_to(cr, 5.0 + 20.0, Y1);
+        cairo_line_to(cr, 5.0 + 20.0, Y1 - 3);
+        cairo_move_to(cr, 5.0 + 40.0, Y1);
+        cairo_line_to(cr, 5.0 + 40.0, Y1 - 3);
+        cairo_move_to(cr, 5.0 + 60.0, Y1);
+        cairo_line_to(cr, 5.0 + 60.0, Y1 - 3);
+        cairo_stroke(cr);
+        // cairo_move_to(cr, 5.0 + 80.0, Y1);
+        // cairo_line_to(cr, 5.0 + 80.0, Y1 - 10);
+        cairo_move_to(cr, 5.0 + 100.0, Y1);
+        cairo_line_to(cr, 5.0 + 100.0, Y1 - 15);
+        cairo_stroke(cr);
+        cairo_set_source_rgba(cr, COLOUR_ALARM);
+        cairo_rectangle(cr, 5.0 + 80.0, Y1 - 15, 19, 15);
+        cairo_fill(cr);
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        double peak = GetTXAMeter(transmitter->id, TXA_MIC_AV);
 
-      if (peak > 1.0) { peak = 1.0; }
+        if (peak > 5.0) { peak = 5.0; }
 
-      // peak = peak * 100.0; // old
-      peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
+        // peak += 95.0;
+        peak = 1.6 * peak + 80; // 0-100 meter: 0 is -50db, 100 is +5db, from 0-5db is red
 
-      if (peak < 0.0) { peak = 0.0; } // add
+        if (peak < 0.0) { peak = 0.00; }
 
-      cairo_set_source_rgba(cr, COLOUR_OK);
-      cairo_rectangle(cr, 5.0, Y1 - 10, peak, 5);
-      cairo_fill(cr);
+        /*
+        double peak = vox_get_peak();
+        if (peak > 1.0) { peak = 1.0; }
+        peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
+        if (peak < 0.0) { peak = 0.0; } // add
+        */
+        // 64 is -10db, 72 is -5db, 80 is 0db and 100 is +5db
+        if (peak > 80.0 ) {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
+        } else if (peak > 64) {
+          cairo_set_source_rgba(cr, COLOUR_OK);
+        } else {
+          cairo_set_source_rgba(cr, COLOUR_METER);
+        }
+
+        cairo_rectangle(cr, 5.0, Y1 - 12, peak, 3);
+        cairo_fill(cr);
+        double alc_val;
+
+        switch (transmitter->alcmode) {
+        case ALC_PEAK:
+        default:
+          alc_val = GetTXAMeter(transmitter->id, TXA_ALC_PK);
+          break;
+
+        case ALC_AVERAGE:
+          alc_val = GetTXAMeter(transmitter->id, TXA_ALC_AV);
+          break;
+
+        case ALC_GAIN:
+          alc_val = GetTXAMeter(transmitter->id, TXA_ALC_GAIN);
+          break;
+        }
+
+        if (alc_val > 5.0) { alc_val = 5.0; }
+
+        alc_val = 1.6 * alc_val + 80;
+
+        if (alc_val < 0.0) { alc_val = 0.00; }
+
+        if (alc_val > 80.0 ) {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
+        } else if (alc_val > 64) {
+          cairo_set_source_rgba(cr, COLOUR_OK);
+        } else {
+          cairo_set_source_rgba(cr, COLOUR_METER);
+        }
+
+        cairo_rectangle(cr, 5.0, Y1 - 6, alc_val, 3);
+        cairo_fill(cr);
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_METER);
+        cairo_move_to(cr, 5.0, Y1);
+        cairo_line_to(cr, 5.0, Y1 - 10);
+        cairo_move_to(cr, 5.0 + 25.0, Y1);
+        cairo_line_to(cr, 5.0 + 25.0, Y1 - 5);
+        cairo_move_to(cr, 5.0 + 50.0, Y1);
+        cairo_line_to(cr, 5.0 + 50.0, Y1 - 10);
+        cairo_move_to(cr, 5.0 + 75.0, Y1);
+        cairo_line_to(cr, 5.0 + 75.0, Y1 - 5);
+        cairo_move_to(cr, 5.0 + 100.0, Y1);
+        cairo_line_to(cr, 5.0 + 100.0, Y1 - 10);
+        cairo_stroke(cr);
+        double peak = vox_get_peak();
+
+        if (peak > 1.0) { peak = 1.0; }
+
+        peak = 50.0 * log(peak) + 100.0;  // 0-100 maps to -40...0 dB
+
+        if (peak < 0.0) { peak = 0.0; } // add
+
+        cairo_set_source_rgba(cr, COLOUR_OK);
+        cairo_rectangle(cr, 5.0, Y1 - 10, peak, 5);
+        cairo_fill(cr);
+      }
 
       if (vox_enabled) {
         cairo_set_source_rgba(cr, COLOUR_ALARM);
@@ -654,9 +738,20 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       }
 
       cairo_set_source_rgba(cr, COLOUR_METER);
+      // cairo_set_font_size(cr, DISPLAY_FONT_SIZE1);
+      // cairo_move_to(cr, 80.0, Y1 - 12);
+      // cairo_set_source_rgba(cr, COLOUR_ALARM);
+      // cairo_show_text(cr, "+5db");
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-      cairo_move_to(cr, 110.0, Y1);
+      // cairo_move_to(cr, 150.0, Y1);
+      cairo_move_to(cr, 110.0, Y1 - 8);
+      cairo_set_source_rgba(cr, COLOUR_METER);
       cairo_show_text(cr, "Mic Lvl");
+
+      if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+        cairo_move_to(cr, 110.0, Y1 + 4);
+        cairo_show_text(cr, "ALC");
+      }
     }
 
     cairo_set_source_rgba(cr, COLOUR_METER);
