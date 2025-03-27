@@ -73,6 +73,7 @@ static GtkWidget *c25_att_combobox = NULL;
 static GtkWidget *c25_att_label = NULL;
 static GtkWidget *mic_gain_label;
 static GtkWidget *mic_gain_scale;
+static gulong    mic_gain_scale_signal_id;
 static GtkWidget *drive_label;
 static GtkWidget *drive_scale;
 static GtkWidget *squelch_label;
@@ -538,11 +539,15 @@ void set_mic_gain(double value) {
     tx_set_mic_gain(transmitter);
 
     if (display_sliders) {
+      g_signal_handler_block(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
+
       if (optimize_for_touchscreen) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), value);
       } else {
         gtk_range_set_value (GTK_RANGE(mic_gain_scale), value);
       }
+
+      g_signal_handler_unblock(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
     } else {
       show_popup_slider(MIC_GAIN, 0, -12.0, 50.0, 1.0, value, "Mic Gain");
     }
@@ -1233,8 +1238,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       }
     }
 
-    g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
-    gtk_widget_show(mic_gain_scale);
+    mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
+                               G_CALLBACK(micgain_value_changed_cb), NULL);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
 
