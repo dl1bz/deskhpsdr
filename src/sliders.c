@@ -504,13 +504,19 @@ void show_filter_shift(int rx, int shift) {
 
 static void micgain_value_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
-    transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
+    if (optimize_for_touchscreen) {
+      transmitter->mic_gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+    } else {
+      transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
+    }
+
 #if defined (__LDESK__) && defined (__USELESS__)
     int mode = vfo_get_tx_mode();
     mode_settings[mode].mic_gain = transmitter->mic_gain;
     copy_mode_settings(mode);
 #endif
     tx_set_mic_gain(transmitter);
+    g_idle_add(ext_vfo_update, NULL);
   }
 }
 
@@ -532,7 +538,11 @@ void set_mic_gain(double value) {
     tx_set_mic_gain(transmitter);
 
     if (display_sliders) {
-      gtk_range_set_value (GTK_RANGE(mic_gain_scale), value);
+      if (optimize_for_touchscreen) {
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), value);
+      } else {
+        gtk_range_set_value (GTK_RANGE(mic_gain_scale), value);
+      }
     } else {
       show_popup_slider(MIC_GAIN, 0, -12.0, 50.0, 1.0, value, "Mic Gain");
     }
@@ -1198,19 +1208,33 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_CENTER);
     gtk_label_set_justify(GTK_LABEL(mic_gain_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
-    gtk_widget_set_size_request(mic_gain_scale, sl_w_fix, widget_height);
-    gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
-    gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
-    gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
-    gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
 
-    for (float i = -12.0; i <= 50.0; i += 6.0) {
-      gtk_scale_add_mark(GTK_SCALE(mic_gain_scale), i, GTK_POS_TOP, NULL);
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    if (optimize_for_touchscreen) {
+      mic_gain_scale = gtk_spin_button_new_with_range(-12.0, 50.0, 1.0);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
+      gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
+      gtk_widget_set_size_request(mic_gain_scale, 0, widget_height - 10);
+      gtk_widget_set_margin_start(mic_gain_scale, 10);  // Abstand am Anfang
+      gtk_widget_set_margin_right(mic_gain_scale, 10);
+      gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double)transmitter->mic_gain);
+      gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, twidth - 1, 1);
+    } else {
+      mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
+      gtk_widget_set_size_request(mic_gain_scale, sl_w_fix, widget_height);
+      gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
+      gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
+      gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
+      gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
+
+      for (float i = -12.0; i <= 50.0; i += 6.0) {
+        gtk_scale_add_mark(GTK_SCALE(mic_gain_scale), i, GTK_POS_TOP, NULL);
+      }
     }
 
     g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
+    gtk_widget_show(mic_gain_scale);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
 
@@ -1421,7 +1445,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(preamp_label, "slider2_blue");
     gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(preamp_label, GTK_ALIGN_CENTER);
-    gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 2, twidth - 1, 1);
+
+    if (optimize_for_touchscreen) {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 1, twidth - 1, 1);
+    } else {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 2, twidth - 1, 1);
+    }
+
     gtk_widget_show(preamp_label);
     //-------------------------------------------------------------------------------------------
     preamp_scale = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
@@ -1430,7 +1460,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(preamp_scale, 0, widget_height - 10);
     gtk_widget_set_valign(preamp_scale, GTK_ALIGN_CENTER);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
-    gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 2, twidth - 1, 1);
+
+    if (optimize_for_touchscreen) {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 1, twidth - 1, 1);
+    } else {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 2, twidth - 1, 1);
+    }
+
     preamp_scale_signal_id = g_signal_connect(G_OBJECT(preamp_scale), "value_changed", G_CALLBACK(preamp_scale_changed_cb),
                              NULL);
     gtk_widget_show(preamp_scale);

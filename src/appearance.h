@@ -158,6 +158,7 @@ struct _VFO_BAR_LAYOUT {
   int vfo_a_x, vfo_a_y;    // coordinates of VFO A/B dial
   int vfo_b_x, vfo_b_y;
 
+  int mgain_x, mgain_y;    // Micggain
   int mode_x,  mode_y;     // Mode/Filter/CW wpm string
   int zoom_x,  zoom_y;     // "Zoom x1"
   int ps_x,    ps_y;       // "PS"

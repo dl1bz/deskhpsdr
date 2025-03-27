@@ -2488,6 +2488,18 @@ void vfo_update() {
 
   // -----------------------------------------------------------
   //
+  // Draw string indicating MICGAIN status
+  //
+  // -----------------------------------------------------------
+  if (can_transmit && vfl->mgain_x != 0) {
+    cairo_move_to(cr, vfl->mgain_x, vfl->mgain_y);
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    snprintf(temp_text, 32, "MicG %+d", (int)transmitter->mic_gain);
+    cairo_show_text(cr, temp_text);
+  }
+
+  // -----------------------------------------------------------
+  //
   // Draw string indicating SPLIT status
   //
   // -----------------------------------------------------------
