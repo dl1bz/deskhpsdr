@@ -2808,8 +2808,10 @@ static void radio_restore_state() {
   GetPropI0("saturn_server_en",                              saturn_server_en);
 #endif
 
-  for (int i = 0; i < 11; i++) {
-    GetPropF1("pa_trim[%d]", i,                              pa_trim[i]);
+  if (device != DEVICE_HERMES_LITE2 || device != NEW_DEVICE_HERMES_LITE2) {
+    for (int i = 0; i < 11; i++) {
+      GetPropF1("pa_trim[%d]", i,                              pa_trim[i]);
+    }
   }
 
   for (int id = 0; id < MAX_SERIAL; id++) {
