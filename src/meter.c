@@ -636,6 +636,16 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_set_source_rgba(cr, COLOUR_METER);
         cairo_move_to(cr, x_offset + 25.0, y_offset + 10.0);
         cairo_show_text(cr, "Mic | ALC");
+        double current_line_width = cairo_get_line_width(cr);
+
+        if (vox_enabled) {
+          cairo_set_source_rgba(cr, COLOUR_ATTN);
+          cairo_set_line_width(cr, current_line_width + 1.5);
+          cairo_move_to(cr, x_offset, y_offset + 80.0 * (1 - vox_threshold));
+          cairo_line_to(cr, x_offset + 10.0, y_offset + 80.0 * (1 - vox_threshold));
+          cairo_stroke(cr);
+          cairo_set_line_width(cr, current_line_width);
+        }
       } else {
         double offset = ((double)METER_WIDTH - 100.0) / 2.0;
         double peak = vox_get_peak();
