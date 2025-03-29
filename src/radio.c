@@ -2814,11 +2814,8 @@ static void radio_restore_state() {
   GetPropI0("saturn_server_en",                              saturn_server_en);
 #endif
 
-  if (device != DEVICE_HERMES_LITE || device != DEVICE_HERMES_LITE2 ||
-      device != NEW_DEVICE_HERMES_LITE || device != NEW_DEVICE_HERMES_LITE2) {
-    for (int i = 0; i < 11; i++) {
-      GetPropF1("pa_trim[%d]", i,                              pa_trim[i]);
-    }
+  for (int i = 0; i < 11; i++) {
+    GetPropF1("pa_trim[%d]", i,                              pa_trim[i]);
   }
 
   for (int id = 0; id < MAX_SERIAL; id++) {
@@ -2877,7 +2874,12 @@ static void radio_restore_state() {
   midiRestoreState();
 #endif
   t_print("%s: radio state (except receiver/transmitter) restored.\n", __FUNCTION__);
-  reassign_pa_trim();
+
+  if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
+                     device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2)) {
+    reassign_pa_trim();
+    t_print("%s: using HL2: re-assign pa_trim[]\n", __FUNCTION__);
+  }
 
   //
   // Sanity check part 2:
