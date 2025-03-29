@@ -1824,6 +1824,12 @@ void radio_start_radio() {
 #endif
 }
 
+void reassign_pa_trim() {
+  for (int j = 0; j < 11; j++) {
+    pa_trim[j] = j * pa_power_list[pa_power] * 0.1;
+  }
+}
+
 void radio_change_receivers(int r) {
   t_print("radio_change_receivers: from %d to %d\n", receivers, r);
 
@@ -2808,7 +2814,8 @@ static void radio_restore_state() {
   GetPropI0("saturn_server_en",                              saturn_server_en);
 #endif
 
-  if (device != DEVICE_HERMES_LITE2 || device != NEW_DEVICE_HERMES_LITE2) {
+  if (device != DEVICE_HERMES_LITE || device != DEVICE_HERMES_LITE2 ||
+      device != NEW_DEVICE_HERMES_LITE || device != NEW_DEVICE_HERMES_LITE2) {
     for (int i = 0; i < 11; i++) {
       GetPropF1("pa_trim[%d]", i,                              pa_trim[i]);
     }
@@ -2870,6 +2877,7 @@ static void radio_restore_state() {
   midiRestoreState();
 #endif
   t_print("%s: radio state (except receiver/transmitter) restored.\n", __FUNCTION__);
+  reassign_pa_trim();
 
   //
   // Sanity check part 2:

@@ -500,6 +500,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
 static double compute_power(double p) {
   double interval = 0.1 * pa_power_list[pa_power];
   int i = 0;
+  reassign_pa_trim();
 
   if (p > pa_trim[10]) {
     i = 9;
