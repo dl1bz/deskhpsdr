@@ -2558,7 +2558,7 @@ void vfo_update() {
 #if defined (__LDESK__)
 
   if (can_transmit && vfl->dup_x != 0) {
-    if (transmitter->cessb_enable) {
+    if (transmitter->compressor && transmitter->cessb_enable && transmitter->compressor_level > 0) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);

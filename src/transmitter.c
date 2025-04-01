@@ -2246,7 +2246,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXACompressorGain(tx->id, tx->compressor_level);
   SetTXACompressorRun(tx->id, tx->compressor); // PROC on/off
 
-  if (tx->compressor && tx->cessb_enable) {
+  if (tx->compressor && tx->cessb_enable && tx->compressor_level > 0) {
     SetTXAosctrlRun(tx->id, tx->compressor); // CESSB on
     t_print("%s: CESSB enabled\n", __FUNCTION__);
   } else {
