@@ -76,6 +76,7 @@ static GtkWidget *mic_gain_scale;
 static gulong    mic_gain_scale_signal_id;
 static GtkWidget *drive_label;
 static GtkWidget *drive_scale;
+static gulong    drive_scale_signal_id;
 static GtkWidget *squelch_label;
 static GtkWidget *squelch_scale;
 static gulong     squelch_signal_id;
@@ -569,14 +570,30 @@ void set_drive(double value) {
       value /= 20;
     }
 
-    gtk_range_set_value (GTK_RANGE(drive_scale), value);
+    g_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
+
+    if (optimize_for_touchscreen) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), value);
+    } else {
+      gtk_range_set_value (GTK_RANGE(drive_scale), value);
+    }
+
+    g_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
   } else {
     show_popup_slider(DRIVE, 0, 0.0, drive_max, 1.0, value, "TX Drive");
   }
 }
 
 static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
-  double value = gtk_range_get_value(GTK_RANGE(drive_scale));
+  double value = 0.0;
+
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  } else if (GTK_IS_RANGE(widget)) {
+    value = gtk_range_get_value(GTK_RANGE(widget));
+  }
+
+  // double value = gtk_range_get_value(GTK_RANGE(drive_scale));
 
   if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
     value *= 20;
@@ -595,7 +612,11 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
     value /= 20;
   }
 
-  gtk_range_set_value (GTK_RANGE(drive_scale), value);
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), value);
+  } else if (GTK_IS_RANGE(widget)) {
+    gtk_range_set_value (GTK_RANGE(widget), value);
+  }
 }
 
 void show_filter_high(int rx, int var) {
@@ -1262,29 +1283,66 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
-      drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
+      if (optimize_for_touchscreen) {
+        drive_scale = gtk_spin_button_new_with_range(0.0, 5.0, 0.1);
+        gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_widget_set_size_request(drive_scale, 0, widget_height - 10);
+        gtk_widget_set_margin_start(drive_scale, 10);  // Abstand am Anfang
+        gtk_widget_set_margin_right(drive_scale, 10);
+      } else {
+        drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
+        gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
+      }
     } else {
-      drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
+      if (optimize_for_touchscreen) {
+        drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
+        gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_widget_set_size_request(drive_scale, 0, widget_height - 10);
+        gtk_widget_set_margin_start(drive_scale, 10);  // Abstand am Anfang
+        gtk_widget_set_margin_right(drive_scale, 10);
+      } else {
+        drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
+        gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
+      }
     }
 
-    gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
     gtk_widget_set_valign(drive_scale, GTK_ALIGN_CENTER);
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       gtk_range_set_increments (GTK_RANGE(drive_scale), 0.1, 0.1);
-      gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive() / 20);
 
-      for (float i = 0.0; i <= 5.0; i += 0.5) {
-        gtk_scale_add_mark(GTK_SCALE(drive_scale), i, GTK_POS_TOP, NULL);
+      if (optimize_for_touchscreen) {
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive() / 20);
+      } else {
+        gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive() / 20);
+      }
+
+      if (!optimize_for_touchscreen) {
+        for (float i = 0.0; i <= 5.0; i += 0.5) {
+          gtk_scale_add_mark(GTK_SCALE(drive_scale), i, GTK_POS_TOP, NULL);
+        }
       }
     } else {
       gtk_range_set_increments (GTK_RANGE(drive_scale), 1.0, 1.0);
-      gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive());
+
+      if (optimize_for_touchscreen) {
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive());
+      } else {
+        gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive());
+      }
+    }
+
+    if (optimize_for_touchscreen) {
+      gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, twidth - 1, 1);
+    } else {
+      gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, swidth, 1);
     }
 
     gtk_widget_show(drive_scale);
-    gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, swidth, 1);
-    g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb), NULL);
+    drive_scale_signal_id = g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb),
+                            NULL);
   } else {
     mic_gain_label = NULL;
     mic_gain_scale = NULL;
