@@ -1024,9 +1024,11 @@ void vfo_id_mode_changed(int id, int m) {
     if (display_sliders && (m == modeDIGU || m == modeDIGL)) {
       update_slider_preamp_scale(FALSE);
       update_slider_bbcompr_scale(FALSE);
+      update_slider_bbcompr_button(FALSE);
       update_slider_lev_scale(FALSE);
     } else {
       update_slider_bbcompr_scale(TRUE);
+      update_slider_bbcompr_button(TRUE);
       update_slider_lev_scale(TRUE);
       update_slider_preamp_scale(TRUE);
     }

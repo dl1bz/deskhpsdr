@@ -95,6 +95,8 @@ static GtkWidget *squelch_enable;
   static GtkWidget *bbcompr_scale;
   static gulong bbcompr_scale_signal_id;
   static GtkWidget *bbcompr_label;
+  static GtkWidget *bbcompr_btn;
+  static gulong bbcompr_btn_signal_id;
   static GtkWidget *lev_label;
   static GtkWidget *lev_scale;
   static gulong lev_scale_signal_id;
@@ -747,6 +749,23 @@ static void bbcompr_scale_changed_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+static void bbcompr_btn_toggle_cb(GtkWidget *widget, gpointer data) {
+  int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  int mode = vfo_get_tx_mode();
+
+  if (mode == modeDIGL || mode == modeDIGU) {
+    transmitter->compressor = 0;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), transmitter->compressor);
+  } else {
+    transmitter->compressor = v;
+  }
+
+  mode_settings[mode].compressor_level = v;
+  copy_mode_settings(mode);
+  tx_set_compressor(transmitter);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 static void lev_scale_changed_cb(GtkWidget *widget, gpointer data) {
   int mode = vfo_get_tx_mode();
   double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
@@ -787,6 +806,24 @@ void update_slider_local_mic_input(int src) {
       g_signal_handler_unblock(G_OBJECT(local_mic_input), local_mic_input_signal_id);
       gtk_widget_queue_draw(local_mic_input);
     }
+  }
+}
+
+void update_slider_bbcompr_button(gboolean show_widget) {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (bbcompr_btn), bbcompr_btn_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (bbcompr_btn), transmitter->compressor);
+
+    if (show_widget) {
+      gtk_widget_set_sensitive(bbcompr_btn, TRUE);
+      gtk_widget_show(bbcompr_btn);
+    } else {
+      gtk_widget_set_sensitive(bbcompr_btn, FALSE);
+      gtk_widget_hide(bbcompr_btn);
+    }
+
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (bbcompr_btn), bbcompr_btn_signal_id);
+    gtk_widget_queue_draw(bbcompr_btn);
   }
 }
 
@@ -1474,6 +1511,14 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_grid_attach(GTK_GRID(sliders), bbcompr_label, t3pos, 2, twidth, 1);
     gtk_widget_show(bbcompr_label);
     //-------------------------------------------------------------------------------------------
+    bbcompr_btn = gtk_check_button_new();
+    gtk_widget_set_size_request(bbcompr_btn, 0, widget_height);
+    gtk_widget_set_halign(bbcompr_btn, GTK_ALIGN_FILL);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bbcompr_btn), transmitter->compressor);
+    gtk_grid_attach(GTK_GRID(sliders), bbcompr_btn, b3pos, 2, bwidth, 1);
+    bbcompr_btn_signal_id = g_signal_connect(bbcompr_btn, "toggled", G_CALLBACK(bbcompr_btn_toggle_cb), NULL);
+    gtk_widget_show(bbcompr_btn);
+    //-------------------------------------------------------------------------------------------
     bbcompr_scale = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
@@ -1540,6 +1585,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_name(preamp_label, "label2_grey");
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
       gtk_widget_set_name(bbcompr_label, "label2_grey");
+      gtk_widget_set_sensitive(bbcompr_btn, FALSE);
       gtk_widget_set_sensitive(lev_scale, FALSE);
       gtk_widget_set_name(lev_label, "label2_grey");
       gtk_widget_queue_draw(sliders);
@@ -1554,6 +1600,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     local_mic_button = NULL;
     local_mic_input = NULL;
     bbcompr_scale = NULL;
+    bbcompr_btn = NULL;
     lev_label = NULL;
     lev_scale = NULL;
   }

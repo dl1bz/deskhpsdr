@@ -2271,6 +2271,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   if (can_transmit && display_sliders) {
     update_slider_lev_scale(TRUE);
     update_slider_bbcompr_scale(TRUE);
+    update_slider_bbcompr_button(TRUE);
   }
 }
 

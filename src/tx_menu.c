@@ -566,7 +566,10 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
     case TX_COMP:
       transmitter->compressor_level = vi;
 
-      if (can_transmit && display_sliders) { update_slider_bbcompr_scale(TRUE); }
+      if (can_transmit && display_sliders) {
+        update_slider_bbcompr_scale(TRUE);
+        update_slider_bbcompr_button(TRUE);
+      }
 
       mode_settings[mode].compressor_level = vi;
       copy_mode_settings(mode);
