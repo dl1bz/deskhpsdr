@@ -366,6 +366,7 @@ extern void   radio_protocol_run(void);
 extern void   radio_protocol_stop(void);
 extern void   radio_protocol_restart(void);
 extern void   radio_start_auto_tune(void);
+extern void   reassign_pa_trim(void);
 
 extern int compare_doubles(const void *a, const void *b);
 

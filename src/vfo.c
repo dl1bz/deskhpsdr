@@ -309,7 +309,7 @@ static void modesettingsRestoreState() {
     mode_settings[i].dexp_attack = 0.025;
     mode_settings[i].dexp_release = 0.100;
     mode_settings[i].dexp_hold = 0.800;
-    mode_settings[i].dexp_exp = -25;
+    mode_settings[i].dexp_exp = 20;
     mode_settings[i].dexp_hyst = 0.75;
     mode_settings[i].dexp_filter = 0;
     mode_settings[i].dexp_filter_low = 1000;
@@ -2484,6 +2484,18 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, "Locked");
+  }
+
+  // -----------------------------------------------------------
+  //
+  // Draw string indicating MICGAIN status
+  //
+  // -----------------------------------------------------------
+  if (can_transmit && vfl->mgain_x != 0) {
+    cairo_move_to(cr, vfl->mgain_x, vfl->mgain_y);
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    snprintf(temp_text, 32, "MicG %+d", (int)transmitter->mic_gain);
+    cairo_show_text(cr, temp_text);
   }
 
   // -----------------------------------------------------------

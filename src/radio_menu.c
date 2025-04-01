@@ -38,6 +38,7 @@
 #include "sliders.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
+#include "screen_menu.h"
 #ifdef SOAPYSDR
   #include "soapy_protocol.h"
 #endif
@@ -147,6 +148,7 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   schedule_transmit_specific();
   schedule_high_priority();
   g_idle_add(ext_vfo_update, NULL);
+  radio_reconfigure_screen();
 }
 
 static void anan10e_cb(GtkWidget *widget, gpointer data) {

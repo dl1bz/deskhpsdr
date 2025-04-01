@@ -73,8 +73,10 @@ static GtkWidget *c25_att_combobox = NULL;
 static GtkWidget *c25_att_label = NULL;
 static GtkWidget *mic_gain_label;
 static GtkWidget *mic_gain_scale;
+static gulong    mic_gain_scale_signal_id;
 static GtkWidget *drive_label;
 static GtkWidget *drive_scale;
+static gulong    drive_scale_signal_id;
 static GtkWidget *squelch_label;
 static GtkWidget *squelch_scale;
 static gulong     squelch_signal_id;
@@ -504,13 +506,19 @@ void show_filter_shift(int rx, int shift) {
 
 static void micgain_value_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
-    transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
+    if (optimize_for_touchscreen) {
+      transmitter->mic_gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+    } else {
+      transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
+    }
+
 #if defined (__LDESK__) && defined (__USELESS__)
     int mode = vfo_get_tx_mode();
     mode_settings[mode].mic_gain = transmitter->mic_gain;
     copy_mode_settings(mode);
 #endif
     tx_set_mic_gain(transmitter);
+    g_idle_add(ext_vfo_update, NULL);
   }
 }
 
@@ -532,7 +540,15 @@ void set_mic_gain(double value) {
     tx_set_mic_gain(transmitter);
 
     if (display_sliders) {
-      gtk_range_set_value (GTK_RANGE(mic_gain_scale), value);
+      g_signal_handler_block(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
+
+      if (optimize_for_touchscreen) {
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), value);
+      } else {
+        gtk_range_set_value (GTK_RANGE(mic_gain_scale), value);
+      }
+
+      g_signal_handler_unblock(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
     } else {
       show_popup_slider(MIC_GAIN, 0, -12.0, 50.0, 1.0, value, "Mic Gain");
     }
@@ -554,14 +570,30 @@ void set_drive(double value) {
       value /= 20;
     }
 
-    gtk_range_set_value (GTK_RANGE(drive_scale), value);
+    g_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
+
+    if (optimize_for_touchscreen) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), value);
+    } else {
+      gtk_range_set_value (GTK_RANGE(drive_scale), value);
+    }
+
+    g_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
   } else {
     show_popup_slider(DRIVE, 0, 0.0, drive_max, 1.0, value, "TX Drive");
   }
 }
 
 static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
-  double value = gtk_range_get_value(GTK_RANGE(drive_scale));
+  double value = 0.0;
+
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  } else if (GTK_IS_RANGE(widget)) {
+    value = gtk_range_get_value(GTK_RANGE(widget));
+  }
+
+  // double value = gtk_range_get_value(GTK_RANGE(drive_scale));
 
   if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
     value *= 20;
@@ -580,7 +612,11 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
     value /= 20;
   }
 
-  gtk_range_set_value (GTK_RANGE(drive_scale), value);
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), value);
+  } else if (GTK_IS_RANGE(widget)) {
+    gtk_range_set_value (GTK_RANGE(widget), value);
+  }
 }
 
 void show_filter_high(int rx, int var) {
@@ -728,8 +764,6 @@ static void preamp_scale_changed_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-
-
 void update_slider_local_mic_input(int src) {
   if (display_sliders) {
     // t_print("%s: local_mic_input = %d src = %d\n", __FUNCTION__, gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input)), src);
@@ -779,7 +813,7 @@ void update_slider_tune_drive_scale(gboolean show_widget) {
       gtk_widget_set_sensitive(tune_drive_scale, FALSE);
       gtk_widget_hide(tune_drive_scale);
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE =\nTX Pwr");
-      gtk_widget_set_name(tune_drive_label, "slider2_red");
+      gtk_widget_set_name(tune_drive_label, "label2_grey");
     }
 
     g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
@@ -798,7 +832,7 @@ void update_slider_bbcompr_scale(gboolean show_widget) {
       gtk_widget_set_name(bbcompr_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
-      gtk_widget_set_name(bbcompr_label, "slider2_red");
+      gtk_widget_set_name(bbcompr_label, "label2_grey");
     }
 
     g_signal_handler_unblock(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
@@ -817,7 +851,7 @@ void update_slider_lev_scale(gboolean show_widget) {
       gtk_widget_set_name(lev_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(lev_scale, FALSE);
-      gtk_widget_set_name(lev_label, "slider2_red");
+      gtk_widget_set_name(lev_label, "label2_grey");
     }
 
     g_signal_handler_unblock(G_OBJECT(lev_scale), lev_scale_signal_id);
@@ -836,7 +870,7 @@ void update_slider_preamp_scale(gboolean show_widget) {
       gtk_widget_set_name(preamp_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
-      gtk_widget_set_name(preamp_label, "slider2_red");
+      gtk_widget_set_name(preamp_label, "label2_grey");
     }
 
     g_signal_handler_unblock(G_OBJECT(preamp_scale), preamp_scale_signal_id);
@@ -859,6 +893,19 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
+}
+
+// Funktion zum Kürzen des Textes
+static const char* truncate_text(const char* text, size_t max_length) {
+  static char truncated[128];  // Ein statisches Array für den gekürzten Text
+
+  if (strlen(text) > max_length) {
+    g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
+  } else {
+    g_strlcpy(truncated, text, sizeof(truncated));  // Sicheres Kopieren des Textes
+  }
+
+  return truncated;
 }
 
 #endif
@@ -1187,19 +1234,33 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_CENTER);
     gtk_label_set_justify(GTK_LABEL(mic_gain_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
-    gtk_widget_set_size_request(mic_gain_scale, sl_w_fix, widget_height);
-    gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
-    gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
-    gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
-    gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
 
-    for (float i = -12.0; i <= 50.0; i += 6.0) {
-      gtk_scale_add_mark(GTK_SCALE(mic_gain_scale), i, GTK_POS_TOP, NULL);
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    if (optimize_for_touchscreen) {
+      mic_gain_scale = gtk_spin_button_new_with_range(-12.0, 50.0, 1.0);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
+      gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
+      gtk_widget_set_size_request(mic_gain_scale, 0, widget_height - 10);
+      gtk_widget_set_margin_start(mic_gain_scale, 10);  // Abstand am Anfang
+      gtk_widget_set_margin_right(mic_gain_scale, 10);
+      gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double)transmitter->mic_gain);
+      gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, twidth - 1, 1);
+    } else {
+      mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
+      gtk_widget_set_size_request(mic_gain_scale, sl_w_fix, widget_height);
+      gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
+      gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
+      gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
+      gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
+
+      for (float i = -12.0; i <= 50.0; i += 6.0) {
+        gtk_scale_add_mark(GTK_SCALE(mic_gain_scale), i, GTK_POS_TOP, NULL);
+      }
     }
 
-    g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed", G_CALLBACK(micgain_value_changed_cb), NULL);
+    mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
+                               G_CALLBACK(micgain_value_changed_cb), NULL);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
 
@@ -1222,29 +1283,66 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
-      drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
+      if (optimize_for_touchscreen) {
+        drive_scale = gtk_spin_button_new_with_range(0.0, 5.0, 0.1);
+        gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_widget_set_size_request(drive_scale, 0, widget_height - 10);
+        gtk_widget_set_margin_start(drive_scale, 10);  // Abstand am Anfang
+        gtk_widget_set_margin_right(drive_scale, 10);
+      } else {
+        drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
+        gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
+      }
     } else {
-      drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
+      if (optimize_for_touchscreen) {
+        drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
+        gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_widget_set_size_request(drive_scale, 0, widget_height - 10);
+        gtk_widget_set_margin_start(drive_scale, 10);  // Abstand am Anfang
+        gtk_widget_set_margin_right(drive_scale, 10);
+      } else {
+        drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
+        gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
+      }
     }
 
-    gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
     gtk_widget_set_valign(drive_scale, GTK_ALIGN_CENTER);
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       gtk_range_set_increments (GTK_RANGE(drive_scale), 0.1, 0.1);
-      gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive() / 20);
 
-      for (float i = 0.0; i <= 5.0; i += 0.5) {
-        gtk_scale_add_mark(GTK_SCALE(drive_scale), i, GTK_POS_TOP, NULL);
+      if (optimize_for_touchscreen) {
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive() / 20);
+      } else {
+        gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive() / 20);
+      }
+
+      if (!optimize_for_touchscreen) {
+        for (float i = 0.0; i <= 5.0; i += 0.5) {
+          gtk_scale_add_mark(GTK_SCALE(drive_scale), i, GTK_POS_TOP, NULL);
+        }
       }
     } else {
       gtk_range_set_increments (GTK_RANGE(drive_scale), 1.0, 1.0);
-      gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive());
+
+      if (optimize_for_touchscreen) {
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive());
+      } else {
+        gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive());
+      }
+    }
+
+    if (optimize_for_touchscreen) {
+      gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, twidth - 1, 1);
+    } else {
+      gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, swidth, 1);
     }
 
     gtk_widget_show(drive_scale);
-    gtk_grid_attach(GTK_GRID(sliders), drive_scale, s2pos, 1, swidth, 1);
-    g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb), NULL);
+    drive_scale_signal_id = g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb),
+                            NULL);
   } else {
     mic_gain_label = NULL;
     mic_gain_scale = NULL;
@@ -1337,7 +1435,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_size_request(local_mic_input, sl_w_fix, widget_height);
 
       for (int i = 0; i < n_input_devices; i++) {
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, input_devices[i].description);
+#ifdef __APPLE__
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, truncate_text(input_devices[i].description, 32));
+#else
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, truncate_text(input_devices[i].description, 28));
+#endif
 
         if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
           gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
@@ -1356,6 +1458,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
       gtk_grid_attach(GTK_GRID(sliders), local_mic_input, s2pos, 2, swidth, 1); // Zeile 0, Spalte 1
       gtk_widget_set_valign(local_mic_input, GTK_ALIGN_CENTER);
+      gtk_widget_set_can_focus(local_mic_input, TRUE);
       gboolean flag = FALSE;
       local_mic_input_signal_id = g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb),
                                   GINT_TO_POINTER(flag));
@@ -1405,7 +1508,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(preamp_label, "slider2_blue");
     gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(preamp_label, GTK_ALIGN_CENTER);
-    gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 2, twidth - 1, 1);
+
+    if (optimize_for_touchscreen) {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 1, twidth - 1, 1);
+    } else {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 2, twidth - 1, 1);
+    }
+
     gtk_widget_show(preamp_label);
     //-------------------------------------------------------------------------------------------
     preamp_scale = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
@@ -1414,7 +1523,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(preamp_scale, 0, widget_height - 10);
     gtk_widget_set_valign(preamp_scale, GTK_ALIGN_CENTER);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
-    gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 2, twidth - 1, 1);
+
+    if (optimize_for_touchscreen) {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 1, twidth - 1, 1);
+    } else {
+      gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 2, twidth - 1, 1);
+    }
+
     preamp_scale_signal_id = g_signal_connect(G_OBJECT(preamp_scale), "value_changed", G_CALLBACK(preamp_scale_changed_cb),
                              NULL);
     gtk_widget_show(preamp_scale);
@@ -1422,11 +1537,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // sanity check, if DIGIMODE selected set BBCOMPR and LEV inactive
     if (selected_mode == modeDIGL || selected_mode == modeDIGU) {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
-      gtk_widget_set_name(preamp_label, "slider2_red");
+      gtk_widget_set_name(preamp_label, "label2_grey");
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
-      gtk_widget_set_name(bbcompr_label, "slider2_red");
+      gtk_widget_set_name(bbcompr_label, "label2_grey");
       gtk_widget_set_sensitive(lev_scale, FALSE);
-      gtk_widget_set_name(lev_label, "slider2_red");
+      gtk_widget_set_name(lev_label, "label2_grey");
       gtk_widget_queue_draw(sliders);
       // gtk_widget_queue_draw(bbcompr_scale);
       // gtk_widget_queue_draw(lev_scale);
