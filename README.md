@@ -39,7 +39,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ### Version 2.6.0 (final version)
 
-On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get new functions, only bugfixes if any become known. Further development will start later from version 2.7.x after a short break in development.<br>
+On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get any brand-new base functions, only bugfixes if any become known or improvements if I think there's still something to be done yet. Further development will start later from version 2.7.x after a short break in development.<br>
 **Changes / Corrections after Version 2.5 and implement into 2.6**
 - some minor code adjustments for better program and functions logic (dependencies and correlations), remove/change code which is not supported at all compilers and linkers for better compatibility and interoperability between macOS and Linux
 - add two new level bars for MicLvl and ALCLvl if analog S-Meter is selected
