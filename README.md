@@ -39,8 +39,12 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ### Version 2.6.0 (final version)
 
-On March 4, 2025 the **first final version 2.6.0 of deskHPSDR** is published. This version will not get new functions, only bugfixes if any become known. Further development will start later from version 2.7.x after a short break in development.<br>
+On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get new functions, only bugfixes if any become known. Further development will start later from version 2.7.x after a short break in development.<br>
 **Changes / Corrections after Version 2.5 and implement into 2.6**
+- some minor code adjustments for better program and functions logic (dependencies and correlations), remove/change code which is not supported at all compilers and linkers for better compatibility and interoperability between macOS and Linux
+- add two new level bars for MicLvl and ALCLvl if analog S-Meter is selected
+- new design for the MicLvl meter and assign now the Mic Gain Level for MicLvl meter from the WDSP audio chain
+- if selected **Optimize_for_Touch** in Radio Menu change some sliders to spin-buttons for better experience at slider surface
 - relation between RX panadapter and waterfall now adjustable in Display Menu
 - add a worldmap as background for the RX panadapter (in the ```make.config.deskhpsdr``` set WMAP=ON)
 - change band borders in the RX panadapter (vertical red lines) from US (default) to IARU Reg. 1 (if want use set in the ```make.config.deskhpsdr``` REGION1=ON)
