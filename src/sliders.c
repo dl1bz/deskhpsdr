@@ -66,6 +66,7 @@ static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
 static GtkWidget *agc_gain_label;
 static GtkWidget *agc_scale;
+static gulong    agc_scale_signal_id;
 static GtkWidget *attenuation_label = NULL;
 static GtkWidget *attenuation_scale = NULL;
 static GtkWidget *c25_container = NULL;
@@ -392,7 +393,12 @@ void update_c25_att() {
 }
 
 static void agcgain_value_changed_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->agc_gain = gtk_range_get_value(GTK_RANGE(agc_scale));
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    active_receiver->agc_gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  } else if (GTK_IS_RANGE(widget)) {
+    active_receiver->agc_gain = gtk_range_get_value(GTK_RANGE(widget));
+  }
+
   rx_set_agc(active_receiver);
 }
 
@@ -404,7 +410,15 @@ void set_agc_gain(int rx, double value) {
   rx_set_agc(receiver[rx]);
 
   if (display_sliders && active_receiver->id == rx) {
-    gtk_range_set_value (GTK_RANGE(agc_scale), receiver[rx]->agc_gain);
+    g_signal_handler_block(G_OBJECT(agc_scale), agc_scale_signal_id);
+
+    if (GTK_IS_SPIN_BUTTON(agc_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_scale), (double)receiver[rx]->agc_gain);
+    } else if (GTK_IS_RANGE(agc_scale)) {
+      gtk_range_set_value (GTK_RANGE(agc_scale), (double)receiver[rx]->agc_gain);
+    }
+
+    g_signal_handler_unblock(G_OBJECT(agc_scale), agc_scale_signal_id);
   } else {
     char title[64];
     snprintf(title, 64, "AGC Gain RX%d", rx + 1);
@@ -1115,15 +1129,29 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_label_set_justify(GTK_LABEL(agc_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(agc_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, t2pos, 0, twidth, 1);
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  agc_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -20.0, 120.0, 1.0);
-  gtk_widget_set_size_request(agc_scale, sl_w_fix, widget_height);
+  if (optimize_for_touchscreen) {
+    agc_scale = gtk_spin_button_new_with_range(-20.0, 120.0, 1.0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(agc_scale), TRUE);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(agc_scale), TRUE);
+    gtk_widget_set_size_request(agc_scale, 0, widget_height - 10);
+    gtk_widget_set_margin_start(agc_scale, 10);  // Abstand am Anfang
+    gtk_widget_set_margin_right(agc_scale, 10);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_scale), (double)active_receiver->agc_gain);
+    gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, twidth - 1, 1);
+  } else {
+    agc_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -20.0, 120.0, 1.0);
+    gtk_widget_set_size_request(agc_scale, sl_w_fix, widget_height);
+    gtk_range_set_increments (GTK_RANGE(agc_scale), 1.0, 1.0);
+    gtk_range_set_value (GTK_RANGE(agc_scale), (double)active_receiver->agc_gain);
+    gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
+  }
+
   gtk_widget_set_valign(agc_scale, GTK_ALIGN_CENTER);
-  gtk_range_set_increments (GTK_RANGE(agc_scale), 1.0, 1.0);
-  gtk_range_set_value (GTK_RANGE(agc_scale), active_receiver->agc_gain);
+  agc_scale_signal_id = g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb),
+                                         NULL);
   gtk_widget_show(agc_scale);
-  gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
-  g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__AUTOG__)
 
