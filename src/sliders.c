@@ -932,6 +932,8 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+#endif
+
 // Funktion zum Kürzen des Textes
 static const char* truncate_text(const char* text, size_t max_length) {
   static char truncated[128];  // Ein statisches Array für den gekürzten Text
@@ -944,8 +946,6 @@ static const char* truncate_text(const char* text, size_t max_length) {
 
   return truncated;
 }
-
-#endif
 
 #endif
 
