@@ -1554,7 +1554,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(preamp_label, GTK_ALIGN_CENTER);
 
-    if (optimize_for_touchscreen) {
+    if (optimize_for_touchscreen && display_extra_sliders) {
       gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 1, twidth - 1, 1);
     } else {
       gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 2, twidth - 1, 1);
@@ -1569,7 +1569,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_valign(preamp_scale, GTK_ALIGN_CENTER);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
 
-    if (optimize_for_touchscreen) {
+    if (optimize_for_touchscreen && display_extra_sliders) {
       gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 1, twidth - 1, 1);
     } else {
       gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 2, twidth - 1, 1);
