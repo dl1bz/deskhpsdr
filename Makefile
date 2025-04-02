@@ -1235,7 +1235,8 @@ src/radio_menu.o: src/adc.h src/band.h src/bandstack.h src/filter.h
 src/radio_menu.o: src/mode.h src/radio.h src/dac.h src/receiver.h
 src/radio_menu.o: src/transmitter.h src/sliders.h src/actions.h
 src/radio_menu.o: src/new_protocol.h src/MacOS.h src/old_protocol.h
-src/radio_menu.o: src/soapy_protocol.h src/gpio.h src/vfo.h src/ext.h
+src/radio_menu.o: src/screen_menu.h src/soapy_protocol.h src/gpio.h src/vfo.h
+src/radio_menu.o: src/ext.h
 src/receiver.o: src/agc.h src/audio.h src/receiver.h src/band.h
 src/receiver.o: src/bandstack.h src/channel.h src/discovered.h src/filter.h
 src/receiver.o: src/mode.h src/main.h src/meter.h src/property.h src/radio.h
