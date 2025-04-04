@@ -671,6 +671,7 @@ static inline void vfo_adjust_band(int v, long long f) {
 #endif
   bandstack = bandstack_get_bandstack(vfo[v].band);
   vfo[v].bandstack = bandstack->current_entry;
+  radio_set_alex_antennas();
 }
 
 void vfo_xvtr_changed() {
