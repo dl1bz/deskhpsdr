@@ -2679,7 +2679,6 @@ void radio_set_split(int val) {
 
 static void radio_restore_state() {
   t_print("%s: path=%s\n", __FUNCTION__, property_path);
-  sync();
   g_mutex_lock(&property_mutex);
   loadProperties(property_path);
   //
