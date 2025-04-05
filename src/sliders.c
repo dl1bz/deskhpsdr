@@ -221,7 +221,14 @@ int sliders_active_receiver_changed(void *data) {
     // new active receiver
     //
     gtk_range_set_value(GTK_RANGE(af_gain_scale), active_receiver->volume);
-    gtk_range_set_value (GTK_RANGE(agc_scale), active_receiver->agc_gain);
+
+    if (GTK_IS_SPIN_BUTTON(agc_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_scale), (double)active_receiver->agc_gain);
+    } else if (GTK_IS_RANGE(agc_scale)) {
+      gtk_range_set_value (GTK_RANGE(agc_scale), (double)active_receiver->agc_gain);
+    }
+
+    // gtk_range_set_value (GTK_RANGE(agc_scale), active_receiver->agc_gain);
     //
     // need block/unblock so setting the value of the receivers does not
     // enable/disable squelch
@@ -1117,7 +1124,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_show(af_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), af_gain_label, t1pos, 0, twidth, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.00);
+  af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.0);
   gtk_widget_set_size_request(af_gain_scale, sl_w_fix, widget_height);
   gtk_widget_set_valign(af_gain_scale, GTK_ALIGN_CENTER);
   gtk_range_set_increments (GTK_RANGE(af_gain_scale), 1.0, 1.0);
@@ -1385,11 +1392,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_valign(drive_scale, GTK_ALIGN_CENTER);
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
-      gtk_range_set_increments (GTK_RANGE(drive_scale), 0.1, 0.1);
-
       if (optimize_for_touchscreen) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive() / 20);
       } else {
+        gtk_range_set_increments (GTK_RANGE(drive_scale), 0.1, 0.1);
         gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive() / 20);
       }
 
@@ -1399,11 +1405,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         }
       }
     } else {
-      gtk_range_set_increments (GTK_RANGE(drive_scale), 1.0, 1.0);
-
       if (optimize_for_touchscreen) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive());
       } else {
+        gtk_range_set_increments (GTK_RANGE(drive_scale), 1.0, 1.0);
         gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive());
       }
     }
