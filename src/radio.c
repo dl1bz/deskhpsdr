@@ -2679,6 +2679,7 @@ void radio_set_split(int val) {
 
 static void radio_restore_state() {
   t_print("%s: path=%s\n", __FUNCTION__, property_path);
+  sync();
   g_mutex_lock(&property_mutex);
   loadProperties(property_path);
   //
@@ -2687,9 +2688,6 @@ static void radio_restore_state() {
   //
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
-  GetPropS0("radio_bgcolor_rgb_hex",                                 radio_bgcolor_rgb_hex);
-  GetPropF0("slider_surface_scale",                          slider_surface_scale);
-  GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("display_info_bar",                              display_info_bar);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
@@ -2726,6 +2724,9 @@ static void radio_restore_state() {
     gtk_window_move(GTK_WINDOW(top_window), window_x_pos, window_y_pos);
   }
 
+  GetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
+  GetPropF0("slider_surface_scale",                          slider_surface_scale);
+  GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("enable_auto_tune",                              enable_auto_tune);
   GetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
   GetPropI0("radio_sample_rate",                             radio_sample_rate);
@@ -2938,9 +2939,6 @@ void radio_save_state() {
   // Use the "saved" Zoompan/Slider/Toolbar display status
   // if they are currently hidden via the "Hide" button
   //
-  SetPropS0("radio_bgcolor_rgb_hex",                                 radio_bgcolor_rgb_hex);
-  SetPropF0("slider_surface_scale",                          slider_surface_scale);
-  SetPropF0("percent_pan_wf",                                percent_pan_wf);
   SetPropI0("display_info_bar",                              display_info_bar);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
@@ -2954,6 +2952,9 @@ void radio_save_state() {
 #endif
   SetPropI0("vfo_layout",                                    vfo_layout);
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
+  SetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
+  SetPropF0("slider_surface_scale",                          slider_surface_scale);
+  SetPropF0("percent_pan_wf",                                percent_pan_wf);
   //
   // TODO: I think some further options related to the GUI
   // have to be moved up here for Client-Server operation
@@ -3099,6 +3100,7 @@ void radio_save_state() {
   midiSaveState();
 #endif
   saveProperties(property_path);
+  sync();
   g_mutex_unlock(&property_mutex);
 }
 

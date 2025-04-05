@@ -1001,8 +1001,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #else
   width = my_width;
 #endif
+  int widget_height = 0;
   height = my_height;
-  int widget_height = height / 2;
+  widget_height = height / 2;
 
   if (can_transmit && display_extra_sliders) {
     widget_height = height / 3;
@@ -1017,6 +1018,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   int t1pos, t2pos, t3pos;
 #if defined (__LDESK__)
   int s1pos, s2pos, s3pos, l_col;
+  double l_scale_factor;
 #else
   int s1pos, s2pos, s3pos, sqpos;
 #endif
@@ -1055,8 +1057,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   if (!strcmp(csslabel, "slider3")) { csslabel_smaller = "slider2"; }
 
-  int lbl_w_fix = width / 23;  // Label_width fixed now
-  int sl_w_fix = width / slider_surface_scale; // slider_width fixed now, default 5.0 if Linux and 4.1 if macOS
+  int lbl_w_fix = width / 23; // Label_width fixed now
+
+  if (slider_surface_scale < 3.5) { slider_surface_scale = 3.5; }
+
+  if (slider_surface_scale > 6.5) { slider_surface_scale = 6.5; }
+
+  l_scale_factor = slider_surface_scale;
+  int sl_w_fix = width / l_scale_factor; // slider_width fixed now, default 5.0 if Linux and 4.1 if macOS
+  t_print("%s: slider_surface_scale: %f l_scale_factor: %f\n", __FUNCTION__, slider_surface_scale, l_scale_factor);
   // DL1BZ, 19.3.2025:
   // from now we use the new slider surface resize factor in Screen Menu
   // for adjust the whole slider surface design better
