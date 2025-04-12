@@ -1926,11 +1926,6 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   //
   // The TX spectrum is always 24k wide, which is a fraction of the TX IQ output rate
   // This fraction determines how much to "clip" from both sides. The number of bins
-  /*
-    // equals the analyzer FFTZ size
-    //
-    const int afft_size = 16384;
-  */
   // equals the analyzer FFT size.
   //
   // The display resolution is (24k / pixels), so the minimum afft size such that the
@@ -1967,16 +1962,11 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   const double span_max_freq = 0.0;
   const int clip = 0;
   const int window_type = 5;
-  // const int afft_size = 16384;
   const int pixels = tx->pixels;
   int overlap;
   int max_w = afft_size + (int) min(keep_time * (double) tx->iq_output_rate,
                                     keep_time * (double) afft_size * (double) tx->fps);
   overlap = (int)max(0.0, ceil(afft_size - (double)tx->iq_output_rate / (double)tx->fps));
-  /*
-    t_print("TX SetAnalyzer id=%d buffer_size=%d overlap=%d pixels=%d\n", tx->id, tx->output_samples, overlap,
-            tx->pixels);
-  */
   t_print("TX SetAnalyzer fft_size=%d overlap=%d pixels=%d\n", afft_size, overlap, tx->pixels);
   SetAnalyzer(tx->id,                // id of the TXA channel
               n_pixout,              // 1 = "use same data for scope and waterfall"
