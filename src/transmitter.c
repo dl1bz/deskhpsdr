@@ -1926,9 +1926,39 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   //
   // The TX spectrum is always 24k wide, which is a fraction of the TX IQ output rate
   // This fraction determines how much to "clip" from both sides. The number of bins
-  // equals the analyzer FFTZ size
+  /*
+    // equals the analyzer FFTZ size
+    //
+    const int afft_size = 16384;
+  */
+  // equals the analyzer FFT size.
   //
-  const int afft_size = 16384;
+  // The display resolution is (24k / pixels), so the minimum afft size such that the
+  // FFT resolution reaches this value is sample_rate * pixels / 24k
+  // Some examples for the needed FFT size (rounded up to the next power of two
+  // and no lower than 16386):
+  //
+  // Measurements on a RaspPi5 indicate that using analyzer FFT sizes up to 65536
+  // does not significantly increase the CPU demand.
+  //
+  // TX display width         TX sample rate         Analyzer FFT
+  // --------------------------------------------------------------
+  //    1536                    48k                   3072 --> 16384
+  //    1536                   192k                            16384
+  //    1024                   768k                            32768
+  //    1536                   768k                  49152 --> 65536
+  //    1024                  1536k                            65536
+  //
+  int afft_size = (int) (((long) tx->iq_output_rate * tx->pixels) / 24000L);
+
+  if (afft_size <= 16384) {
+    afft_size = 16384;       // our previous fixed value
+  } else if (afft_size <= 32768) {
+    afft_size = 32768;       //  next step
+  } else  {
+    afft_size = 65536;       //  this shall be the maximum
+  }
+
   const double fscLin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
   const double fscHin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
   const int stitches = 1;
@@ -1943,8 +1973,11 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   int max_w = afft_size + (int) min(keep_time * (double) tx->iq_output_rate,
                                     keep_time * (double) afft_size * (double) tx->fps);
   overlap = (int)max(0.0, ceil(afft_size - (double)tx->iq_output_rate / (double)tx->fps));
-  t_print("TX SetAnalyzer id=%d buffer_size=%d overlap=%d pixels=%d\n", tx->id, tx->output_samples, overlap,
-          tx->pixels);
+  /*
+    t_print("TX SetAnalyzer id=%d buffer_size=%d overlap=%d pixels=%d\n", tx->id, tx->output_samples, overlap,
+            tx->pixels);
+  */
+  t_print("TX SetAnalyzer fft_size=%d overlap=%d pixels=%d\n", afft_size, overlap, tx->pixels);
   SetAnalyzer(tx->id,                // id of the TXA channel
               n_pixout,              // 1 = "use same data for scope and waterfall"
               spur_elimination_ffts, // 1 = "no spur elimination"
