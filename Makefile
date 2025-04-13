@@ -953,8 +953,11 @@ install:
 	@sudo mkdir -p /usr/share/fonts/opentype/GNU
 	@sudo cp X11fonts/*.otf /usr/share/fonts/opentype/GNU
 	@echo "[Re-]Install X11 deskHPSDR desktop file..."
-	@rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
+	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
+	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
+	@cp LINUX/deskHPSDR.desklnk ${HOME}/Desktop/deskHPSDR.desktop
+	@echo 'URL=${HOME}/.local/share/applications/deskHPSDR.desktop' >> ${HOME}/Desktop/deskHPSDR.desktop
 	@sudo sync
 endif
 	@sleep 1
