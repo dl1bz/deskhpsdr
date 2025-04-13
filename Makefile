@@ -815,47 +815,26 @@ endif
 cppcheck:
 	cppcheck $(CPP_OPTIONS) $(CPP_INCLUDE) $(CPP_DEFINES) $(SOURCES) $(CPP_SOURCES)
 
+#############################################################################
+#
+#  "make clean" delete now all binaries from deskHPSDR, but never the
+#  config files in the config-directory
+#
+#############################################################################
+
 .PHONY:	clean
 clean:
-	rm -f src/*.o
-	rm -f $(PROGRAM) hpsdrsim bootloader
+	@-rm -f src/*.o
+	@-rm -f $(PROGRAM) hpsdrsim bootloader
 	@make -C wdsp clean
 ifeq ($(UNAME_S), Darwin)
-	rm -rf $(PROGRAM).app
-	rm -fr ${HOME}/Desktop/deskhpsdr.app
+	@-rm -rf $(PROGRAM).app
+	@-rm -fr ${HOME}/Desktop/deskhpsdr.app
+else
+	@-sudo rm -f /usr/local/bin/$(PROGRAM)
+	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
+	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
 endif
-
-.PHONY: x11install
-x11install:
-	@echo "Compiling deskHPSDR..."
-#	@make -j$(nproc)
-	@make
-	@sleep 1
-	@sudo ldconfig
-	@sleep 1
-	@echo "Remove previous deskHPSDR binary..."
-	@sudo rm -f /usr/local/bin/$(PROGRAM)
-	@echo "Copy just complied deskHPSDR binary to /usr/local/bin"
-	@sudo cp $(PROGRAM) /usr/local/bin
-	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
-	@sudo mkdir -p /usr/local/share/$(PROGRAM)
-	@sudo cp release/$(PROGRAM)/hpsdr*.png /usr/local/share/$(PROGRAM)
-	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/$(PROGRAM)
-	@echo "Copy icon files for deskHPSDR to /usr/local/share/icons"
-	@sudo mkdir -p /usr/local/share/icons
-	@sudo cp release/$(PROGRAM)/radio_icon.png /usr/local/share/icons
-	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/icons
-	@echo "Copy additional needed Screenfonts..."
-	@sudo mkdir -p /usr/share/fonts/opentype
-	@sudo mkdir -p /usr/share/fonts/opentype/GNU
-	@sudo cp X11fonts/*.otf /usr/share/fonts/opentype/GNU
-	@echo "[Re-]Install X11 deskHPSDR desktop file..."
-	@rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
-	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
-	@sudo sync
-	@sleep 1
-	@echo "Prevent make.config.deskhpsdr: can be changed now."
-	@git update-index --assume-unchanged make.config.deskhpsdr
 
 #############################################################################
 #
@@ -907,88 +886,14 @@ DEPEND:
 		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
 		-D__WMAP__ \
 		-f DEPEND -I./src src/*.c src/*.h
-#############################################################################
-#
-# This is for MacOS "app" creation ONLY
-#
-#       The deskHPSDR working directory is
-#	$HOME -> Application Support -> deskHPSDR
-#
-#       That is the directory where the WDSP wisdom file (created upon first
-#       start of deskHPSDR) but also the radio settings and the midi.props file
-#       are stored.
-#
-#       No libraries are included in the app bundle, so it will only run
-#       on the computer where it was created, and on other computers which
-#       have all librariesand possibly the SoapySDR support
-#       modules installed.
-#############################################################################
-
-.PHONY: app
-app:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
-ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp
-endif
-	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
-		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) \
-		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
-	@echo "Remove further compiled deskHPSDR..."
-	@rm -rf deskHPSDR.app
-	@mkdir -p deskHPSDR.app/Contents/MacOS
-	@mkdir -p deskHPSDR.app/Contents/Frameworks
-	@mkdir -p deskHPSDR.app/Contents/Resources
-	@echo "Generate macOS deskHPSDR.app container..."
-	@cp deskhpsdr deskHPSDR.app/Contents/MacOS/deskhpsdr
-	@cp MacOS/PkgInfo deskHPSDR.app/Contents
-	@cp MacOS/Info.plist deskHPSDR.app/Contents
-	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
-	@cp MacOS/radio.icns deskHPSDR.app/Contents/Resources
-	@sleep 1
-	@echo "Copy Fonts..."
-	@cp -R fonts/Roboto ${HOME}/Library/Fonts
-	@sleep 1
-	@echo "Prevent make.config.deskhpsdr: can be changed now."
-	@git update-index --assume-unchanged make.config.deskhpsdr
-	@echo "All done."
 
 #########################################################################################################
-
-.PHONY: macapp
-macapp:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
-ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp
-endif
-	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
-		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) \
-		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
-	@echo "Remove further compiled deskHPSDR..."
-	@rm -rf deskHPSDR.app
-	@echo "Remove old deskHPSDR.app container from ${HOME}/Desktop ..."
-	@rm -rf ${HOME}/Desktop/deskHPSDR.app
-	@mkdir -p deskHPSDR.app/Contents/MacOS
-	@mkdir -p deskHPSDR.app/Contents/Frameworks
-	@mkdir -p deskHPSDR.app/Contents/Resources
-	@echo "Generate macOS deskHPSDR.app container..."
-	@cp deskhpsdr deskHPSDR.app/Contents/MacOS/deskhpsdr
-	@cp MacOS/PkgInfo deskHPSDR.app/Contents
-	@cp MacOS/Info.plist deskHPSDR.app/Contents
-	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
-	@cp MacOS/radio.icns deskHPSDR.app/Contents/Resources
-	@sleep 1
-	@echo "Copy Fonts..."
-	@cp -R fonts/Roboto ${HOME}/Library/Fonts
-	@mkdir -p ${HOME}/Library/Fonts/GNUFreefonts
-	@cp X11fonts/*.otf ${HOME}/Library/Fonts/GNUFreefonts
-	@sleep 1
-	@echo "Prevent make.config.deskhpsdr: can be changed now."
-	@git update-index --assume-unchanged make.config.deskhpsdr
-	@sleep 1
-	@echo "Copy deskHPSDR to your Desktop..."
-	@mv deskHPSDR.app ${HOME}/Desktop
-	@echo "Starting deskHPSDR..."
-	@open -a ${HOME}/Desktop/deskHPSDR.app
+#
+#
+#
+#
+#
+#########################################################################################################
 
 .PHONY: install
 ifeq ($(UNAME_S), Darwin)
