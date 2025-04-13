@@ -25,25 +25,16 @@ Start the Terminal app and install the needed Xcode command line tools:
 3. Prepare the macOS environment for compiling with the included script:
 ~/src/deskhpsdr$ ./MacOS/prep_macos.sh
 
-If you need one of the Soapy-Modules, please edit the ./MacOS/libinstall.sh at the bottom and remove the comment marker "#"
-from the module you want to use. Per default only the base Soapy-API will be installed. If you want to use the Soapy modules
-you need edit the Makefile too and set SOAPYSDR=ON. I don't need the Soapy-support, because I use a Hermes-Lite 2.
+If you need one of the Soapy-Modules, please edit the ./MacOS/prep_macos.sh at the bottom and remove the comment marker "#"
+from the Soapy module you want to use. Per default only the base Soapy-API will be installed. If you want to use Soapy-based SDR devices
+you need edit the make.config.deskhpsdr too and set SOAPYSDR=ON. I don't need the Soapy-support, because I use a Hermes-Lite 2.
+
+PLEASE DON'T EDIT the Makefile ! Do all changes only in the make.config.deskhpsdr ! This file will be read from the Makefile and
+include your own settings into the Makefile without changing the Makefile itself.
 
 4. Compile the deskHPSDR
 After Pt.3 we can now compile deskHPSDR:
-~/src/deskhpsdr$ make app
-
-After this we should have a deskhpsdr.app, so we check this:
-~/src/deskhpsdr$ ls -ld deskhpsdr*
-
-As result you see something like this:
-heiko:~/src/deskhpsdr$ ls -ld desk*
-drwxr-xr-x  3 heiko  staff       96 10 Nov 11:55 deskHPSDR.app
--rwxr-xr-x  1 heiko  staff  1990176 10 Nov 11:55 deskhpsdr
-heiko:~/src/deskhpsdr$
-
-Now we move the deskhpsdr.app to our Desktop:
-~/src/deskhpsdr$ mv deskHPSDR.app $HOME/Desktop
+~/src/deskhpsdr$ make install
 
 Now you can find on your macOS Desktop the deskHPSDR app symbol, which you can start.
 Thats all, we're ready.
@@ -55,14 +46,13 @@ From time to time you need to update deskHPSDR. That means, we update the source
 ~$ cd $HOME
 ~$ cd src
 ~/src$ cd deskhpsdr
-~/src/deskhpsdr$ git pull
+~/src/deskhpsdr$ make update
 
 5.2 cleanup the last compiling process:
 ~/src/deskhpsdr$ make clean
-~/src/deskhpsdr$ rm -fr $HOME/Desktop/deskHPSDR.app
 
 5.3 re-compile deskHPSDR:
-Start simply with Pt.4 again.
+~/src/deskhpsdr$ make install
 
 Troubleshooting:
 -------------------------------------------------------------------------------
@@ -73,10 +63,11 @@ If there some wrong, simply start new from Zero:
 ~/src$ rm -fr deskhpsdr
 ~/src$ git clone https://github.com/dl1bz/deskhpsdr.git
 ~/src$ cd deskhpsdr
-~/src/deskhpsdr$
+~/src/deskhpsdr$ git checkout master
 
-and continue again from Pt.4.
-Pt.3 need to execute only one time, but you can repeat it if you want and not sure, if all is ok.
+Edit the make.config.deskhpsdr for your needed options and continue again from Pt.4.
+
+Notice: Pt.3 need to execute only one time, but you can repeat it if you want and not sure, if all is ok.
 
 The Xcode command line tool will be updated with the regular macOS Software Updates.
 The Homebrew environment need updated by yourself:
@@ -86,18 +77,16 @@ The Homebrew environment need updated by yourself:
 
 Basically it's ever a good idea, after updates of Xcode command line tools or Homebrew environment to re-compile deskHPSDR.
 
-Last remark:
-You can use instead of "make app" also "make macapp". This compiles deskHPSDR, copy the deskHPSDR.app to your Desktop
-and start it automaticly.
+You can use "make clean", which removes the deskHPSDR.app from your Desktop, but don't delete the working directory, that means,
+all config-files (*.props) stay untouched. deskHPSDR use an own working directory, so you can find all in the directory
+$HOME/Library/Application Support/deskHPSDR if using macOS - if you want you can switch between deskHPSDR and piHPSDR on your macOS
+at the same machine.
 
-You can also use "make mclean" instead of "make clean", which removes in addition the deskHPSDR.app from your Desktop.
-deskHPSDR use a separate working directory like piHPSDR, you can find all in
-$HOME/Library/Application Support/deskHPSDR, so if you want you can use deskHPSDR and piHPSDR on your macOS (but not at the same time).
-
-Please don't change the two options in the Makefile
+Please don't change three options in the make.config.deskhpsdr at the moment:
 ATU=OFF
+COPYMODE=OFF
 DEVEL=OFF
-Leave this two options as they are (OFF) and don't change this at the moment please.
+Leave this three options as they are (OFF) and don't change this please.
 
 Thats all, folks :)
 73 Heiko, DL1BZ
