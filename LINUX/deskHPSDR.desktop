@@ -14,3 +14,4 @@ Name[de]=deskHPSDR
 GenericName=SDR-Application
 GenericName[en_GB]=SDR-Application
 GenericName[de]=SDR-Applikation
+StartupNotify=true
