@@ -851,6 +851,10 @@ x11install:
 	@sudo mkdir -p /usr/local/share/icons
 	@sudo cp release/$(PROGRAM)/radio_icon.png /usr/local/share/icons
 	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/icons
+	@echo "Copy additional needed Screenfonts..."
+	@sudo mkdir -p /usr/share/fonts/opentype
+	@sudo mkdir -p /usr/share/fonts/opentype/GNU
+	@sudo cp X11fonts/*.otf /usr/share/fonts/opentype/GNU
 	@echo "[Re-]Install X11 deskHPSDR desktop file..."
 	@rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
