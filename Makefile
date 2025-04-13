@@ -822,19 +822,23 @@ cppcheck:
 #
 #############################################################################
 
-.PHONY:	clean
+.PHONY:	clean mclean
+mclean: clean
 clean:
 	@-rm -f src/*.o
 	@-rm -f $(PROGRAM) hpsdrsim bootloader
 	@make -C wdsp clean
 ifeq ($(UNAME_S), Darwin)
+	@echo "Cleanup deskHPSDR for macOS..."
 	@-rm -rf $(PROGRAM).app
 	@-rm -fr ${HOME}/Desktop/deskhpsdr.app
 else
+	@echo "Cleanup deskHPSDR from this machine..."
 	@-sudo rm -f /usr/local/bin/$(PROGRAM)
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
 endif
+	@echo "DONE."
 
 #############################################################################
 #
@@ -888,14 +892,11 @@ DEPEND:
 		-f DEPEND -I./src src/*.c src/*.h
 
 #########################################################################################################
-#
-#
-#
-#
-#
+
 #########################################################################################################
 
-.PHONY: install
+.PHONY: install app macapp x11install
+app macapp x11install: install
 ifeq ($(UNAME_S), Darwin)
 install:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 			$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
@@ -948,13 +949,14 @@ install:
 	@sudo mkdir -p /usr/local/share/icons
 	@sudo cp release/$(PROGRAM)/radio_icon.png /usr/local/share/icons
 	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/icons
-	@echo "Copy additional needed Screenfonts..."
+	@echo "Copy additional Opentype Fonts which are not include in X11..."
 	@sudo mkdir -p /usr/share/fonts/opentype
 	@sudo mkdir -p /usr/share/fonts/opentype/GNU
 	@sudo cp X11fonts/*.otf /usr/share/fonts/opentype/GNU
 	@echo "[Re-]Install X11 deskHPSDR desktop file..."
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
+	@echo "Create a link for deskHPSDR at the Desktop..."
 	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desklnk ${HOME}/Desktop/deskHPSDR.desktop
 	@echo 'URL=${HOME}/.local/share/applications/deskHPSDR.desktop' >> ${HOME}/Desktop/deskHPSDR.desktop
