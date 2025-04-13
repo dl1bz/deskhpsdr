@@ -1443,15 +1443,17 @@ void vfo_id_move_to(int id, long long hz) {
     myrx = active_receiver;
   }
 
-  long long offset = hz;
+  // long long offset = hz;
   long long half = (long long)(myrx->sample_rate / 2);
-  long long f;
+  // long long f;
+  long long f = (vfo[id].frequency - half) + hz + ((double)myrx->pan * myrx->hz_per_pixel);
 
   if (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU) {
-    offset = ROUND(hz, 0, vfo[id].step);
+    // offset = ROUND(hz, 0, vfo[id].step);
+    f = ROUND(f, 0, vfo[id].step);
   }
 
-  f = (vfo[id].frequency - half) + offset + ((double)myrx->pan * myrx->hz_per_pixel);
+  // f = (vfo[id].frequency - half) + offset + ((double)myrx->pan * myrx->hz_per_pixel);
 
   if (!locked) {
     long long delta;
