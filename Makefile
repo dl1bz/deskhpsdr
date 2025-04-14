@@ -822,18 +822,29 @@ cppcheck:
 #
 #############################################################################
 
-.PHONY:	clean mclean
-mclean: clean
+.PHONY:	clean
 clean:
-	@-rm -f src/*.o
-	@-rm -f $(PROGRAM) hpsdrsim bootloader
-	@make -C wdsp clean
+	@echo "Cleanup source directory of deskHPSDR..."
+	rm -f src/*.o
+	rm -f $(PROGRAM) hpsdrsim bootloader
+	make -C wdsp clean
 ifeq ($(UNAME_S), Darwin)
-	@echo "Cleanup deskHPSDR for macOS..."
+	@-rm -rf $(PROGRAM).app
+endif
+	@echo "DONE."
+
+.PHONY: uninstall mclean
+mclean: uninstall
+uninstall:
+	@echo "Cleanup source directory of deskHPSDR..."
+	rm -f src/*.o
+	rm -f $(PROGRAM) hpsdrsim bootloader
+	make -C wdsp clean
+	@echo "Remove installed deskHPSDR binary..."
+ifeq ($(UNAME_S), Darwin)
 	@-rm -rf $(PROGRAM).app
 	@-rm -fr ${HOME}/Desktop/deskhpsdr.app
 else
-	@echo "Cleanup deskHPSDR from this machine..."
 	@-sudo rm -f /usr/local/bin/$(PROGRAM)
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
