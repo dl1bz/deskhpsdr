@@ -76,6 +76,7 @@ DEVEL=OFF
 
 # get the OS Name
 UNAME_S := $(shell uname -s)
+CURRDIR := $(shell pwd)
 
 # Get git commit version and date
 GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
@@ -975,8 +976,9 @@ install:
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
 	@echo "Create a link for deskHPSDR at the Desktop..."
 	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
-	@cp LINUX/deskHPSDR.desklnk ${HOME}/Desktop/deskHPSDR.desktop
-	@echo 'URL=${HOME}/.local/share/applications/deskHPSDR.desktop' >> ${HOME}/Desktop/deskHPSDR.desktop
+	@cp LINUX/deskHPSDR.desklnk ${CURRDIR}/deskHPSDR.desktop
+	@echo 'URL=${HOME}/.local/share/applications/deskHPSDR.desktop' >> ${CURRDIR}/deskHPSDR.desktop
+	@install -m 0755 -t ${HOME}/Desktop ${CURRDIR}/deskHPSDR.desktop
 	@sudo sync
 	@echo "Update Desktop database..."
 	@command -v update-database-desktop >/dev/null 2>&1 && update-database-desktop || :
