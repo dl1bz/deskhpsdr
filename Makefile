@@ -936,6 +936,9 @@ endif
 	@mkdir -p ${HOME}/Library/Fonts/GNUFreefonts
 	@cp X11fonts/*.otf ${HOME}/Library/Fonts/GNUFreefonts
 	@sleep 1
+	@echo "Rebuild font cache..."
+	@-fc-cache -f
+	@sleep 1
 	@echo "Copy deskHPSDR to your Desktop..."
 	@mv deskHPSDR.app ${HOME}/Desktop
 	@echo "Starting deskHPSDR..."
@@ -964,6 +967,9 @@ install:
 	@sudo mkdir -p /usr/share/fonts/opentype
 	@sudo mkdir -p /usr/share/fonts/opentype/GNU
 	@sudo cp X11fonts/*.otf /usr/share/fonts/opentype/GNU
+	@sleep 1
+	@echo "Rebuild font cache..."
+	@-sudo fc-cache -f
 	@echo "[Re-]Install X11 deskHPSDR desktop file..."
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
@@ -972,6 +978,8 @@ install:
 	@cp LINUX/deskHPSDR.desklnk ${HOME}/Desktop/deskHPSDR.desktop
 	@echo 'URL=${HOME}/.local/share/applications/deskHPSDR.desktop' >> ${HOME}/Desktop/deskHPSDR.desktop
 	@sudo sync
+	@echo "Update Desktop database..."
+	@command -v update-database-desktop >/dev/null 2>&1 && update-database-desktop || :
 endif
 	@sleep 1
 	@echo "Prevent make.config.deskhpsdr: can be changed now."
