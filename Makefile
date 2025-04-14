@@ -979,6 +979,7 @@ install:
 	@cp LINUX/deskHPSDR.desklnk ${CURRDIR}/deskHPSDR.desktop
 	@echo 'URL=${HOME}/.local/share/applications/deskHPSDR.desktop' >> ${CURRDIR}/deskHPSDR.desktop
 	@install -m 0755 -t ${HOME}/Desktop ${CURRDIR}/deskHPSDR.desktop
+	@-rm -f ${CURRDIR}/deskHPSDR.desktop
 	@sudo sync
 	@echo "Update Desktop database..."
 	@command -v update-database-desktop >/dev/null 2>&1 && update-database-desktop || :
