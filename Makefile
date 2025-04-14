@@ -956,7 +956,7 @@ install:
 	@sleep 1
 	@echo "Remove previous deskHPSDR binary..."
 	@sudo rm -f /usr/local/bin/$(PROGRAM)
-	@echo "Copy just complied deskHPSDR binary to /usr/local/bin"
+	@echo "Copy just compiled deskHPSDR binary to /usr/local/bin"
 	@sudo install -m 0755 -t /usr/local/bin $(PROGRAM)
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
 	@sudo mkdir -p /usr/local/share/$(PROGRAM)
@@ -973,7 +973,7 @@ install:
 	@sleep 1
 	@echo "Rebuild font cache..."
 	@-sudo fc-cache -f
-	@echo "[Re-]Install X11 deskHPSDR desktop file..."
+	@echo "Install X11 deskHPSDR desktop file..."
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
 	@echo "Create a link for deskHPSDR at the Desktop..."
