@@ -954,7 +954,7 @@ install:
 	@echo "Remove previous deskHPSDR binary..."
 	@sudo rm -f /usr/local/bin/$(PROGRAM)
 	@echo "Copy just complied deskHPSDR binary to /usr/local/bin"
-	@sudo install -m 0755 $(PROGRAM) /usr/local/bin
+	@sudo install -m 0755 -t /usr/local/bin $(PROGRAM)
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
 	@sudo mkdir -p /usr/local/share/$(PROGRAM)
 	@sudo cp release/$(PROGRAM)/hpsdr*.png /usr/local/share/$(PROGRAM)
