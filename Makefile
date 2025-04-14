@@ -849,6 +849,8 @@ else
 	@-sudo rm -f /usr/local/bin/$(PROGRAM)
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
+	@echo "Update Desktop database..."
+	@command -v update-database-desktop >/dev/null 2>&1 && update-database-desktop || :
 endif
 	@echo "DONE."
 
