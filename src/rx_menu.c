@@ -224,7 +224,7 @@ void rx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
 #ifdef __APPLE__
   GtkWidget *wheel_present_btn = gtk_check_button_new_with_label("using Mouse with Wheel");
-  gtk_widget_set_name(wheel_present_btn, "boldlabel");
+  gtk_widget_set_name(wheel_present_btn, "boldlabel_blue");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (wheel_present_btn), active_receiver->wheel_present);
   gtk_widget_show(wheel_present_btn);
   gtk_grid_attach(GTK_GRID(grid), wheel_present_btn, 1, 0, 1, 1);
