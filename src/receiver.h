@@ -238,6 +238,9 @@ typedef struct _receiver {
   int waterfall_zoom;
 
   int mute_radio;
+#ifdef __APPLE__
+  int wheel_present;
+#endif
 
   double *buffer;
   void *resampler;

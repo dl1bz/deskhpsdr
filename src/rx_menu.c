@@ -150,6 +150,12 @@ static void adc1_filter_bypass_cb(GtkWidget *widget, gpointer data) {
   schedule_high_priority();
 }
 
+#ifdef __APPLE__
+static void wheel_present_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->wheel_present = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+}
+#endif
+
 //
 // possible the device has been changed:
 // call audo_close_output with old device, audio_open_output with new one
@@ -216,6 +222,14 @@ void rx_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect (close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
+#ifdef __APPLE__
+  GtkWidget *wheel_present_btn = gtk_check_button_new_with_label("using Mouse with Wheel");
+  gtk_widget_set_name(wheel_present_btn, "boldlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (wheel_present_btn), active_receiver->wheel_present);
+  gtk_widget_show(wheel_present_btn);
+  gtk_grid_attach(GTK_GRID(grid), wheel_present_btn, 1, 0, 1, 1);
+  g_signal_connect(wheel_present_btn, "toggled", G_CALLBACK(wheel_present_cb), NULL);
+#endif
   int row = 1;
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {

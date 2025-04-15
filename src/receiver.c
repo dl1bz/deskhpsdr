@@ -203,7 +203,8 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointer data) {
-#if defined (__APPLE__)
+#ifdef __APPLE__
+  RECEIVER *rx = (RECEIVER *)data;
 
   // if using Apple Magic Mouse it's tricky to use the mouse because we have only touch but no real wheel
   // for safer use we need to press the OPTION key for VFO movement in VFO step and
@@ -212,37 +213,34 @@ gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointe
   // At a Mac we use now GDK_MOD1_MASK [OPTION-key] and GDK_CONTROL_MASK [CONTROL-key],
   // Serveral tests with a Macbook Air M1 was showing, that combinations like SHIFT+CONTROL or SHIFT+OPTION
   // hasn't any effect. Otherwise, OPTION and CTRL+OPTION were working. Very strange...
-  if ((event->state & (GDK_MOD1_MASK | GDK_CONTROL_MASK)) == (GDK_MOD1_MASK | GDK_CONTROL_MASK)) {
-    if (event->direction == GDK_SCROLL_UP) {
-      vfo_step(10);
-    } else if (event->direction == GDK_SCROLL_DOWN) {
-      vfo_step(-10);
+  if (rx->wheel_present) {
+    gboolean shift = (event->state & GDK_SHIFT_MASK) != 0;
+    gboolean option = (event->state & GDK_MOD1_MASK) != 0;
+
+    if ((shift && !option) || (!shift && option)) { // XOR: Nur eine gedrückt
+      vfo_step(event->direction == GDK_SCROLL_UP ? 10 : -10);
+    } else {
+      vfo_step(event->direction == GDK_SCROLL_UP ? 1 : -1);
     }
   } else {
-    if (event->state & GDK_MOD1_MASK) {
-      if (event->direction == GDK_SCROLL_UP) {
-        vfo_step(1);
-      } else if (event->direction == GDK_SCROLL_DOWN) {
-        vfo_step(-1);
-      }
+    gboolean option = event->state & GDK_MOD1_MASK;
+    gboolean control = event->state & GDK_CONTROL_MASK;
+
+    if (option && control) {
+      vfo_step(event->direction == GDK_SCROLL_UP ? 10 : -10);
+    } else if (option) {
+      vfo_step(event->direction == GDK_SCROLL_UP ? 1 : -1);
     }
   }
 
 #else
-
   // add press SHIFT if using mouse wheel for VFO movement in VFO step 10 instead 1
-  if (event->state & GDK_SHIFT_MASK) {
-    if (event->direction == GDK_SCROLL_UP) {
-      vfo_step(10);
-    } else if (event->direction == GDK_SCROLL_DOWN) {
-      vfo_step(-10);
-    }
-  } else {
-    if (event->direction == GDK_SCROLL_UP) {
-      vfo_step(1);
-    } else if (event->direction == GDK_SCROLL_DOWN) {
-      vfo_step(-1);
-    }
+  int wheel_step = (event->state & GDK_SHIFT_MASK) ? 10 : 1;
+
+  if (event->direction == GDK_SCROLL_UP) {
+    vfo_step(wheel_step);
+  } else if (event->direction == GDK_SCROLL_DOWN) {
+    vfo_step(-wheel_step);
   }
 
 #endif
@@ -264,6 +262,9 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   SetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   SetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
+#ifdef __APPLE__
+  SetPropI1("receiver.%d.wheel_present", rx->id,                rx->wheel_present);
+#endif
   SetPropI1("receiver.%d.smetermode", rx->id,                   rx->smetermode);
   SetPropI1("receiver.%d.low_latency", rx->id,                  rx->low_latency);
   SetPropI1("receiver.%d.fft_size", rx->id,                     rx->fft_size);
@@ -360,6 +361,9 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   GetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   GetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
+#ifdef __APPLE__
+  GetPropI1("receiver.%d.wheel_present", rx->id,                rx->wheel_present);
+#endif
   GetPropI1("receiver.%d.smetermode", rx->id,                   rx->smetermode);
   GetPropI1("receiver.%d.low_latency", rx->id,                  rx->low_latency);
   GetPropI1("receiver.%d.fft_size", rx->id,                     rx->fft_size);
@@ -812,6 +816,9 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->filter_low = 275;
   rx->deviation = 2500;
   rx->mute_radio = 0;
+#ifdef __APPLE__
+  rx->wheel_present = 1;
+#endif
   rx->zoom = 1;
   rx->pan = 0;
   rx->eq_enable = 0;
