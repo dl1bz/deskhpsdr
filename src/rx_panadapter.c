@@ -53,6 +53,9 @@
 #if defined (__WMAP__)
   #include "map_d.h"
 #endif
+#ifdef __APPLE__
+  #include "solar.h"
+#endif
 
 char zeitString[20];
 #if defined (__WMAP__)

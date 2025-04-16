@@ -16,11 +16,14 @@ wdspWisdom*
 ip.addr
 hpsdr.png
 .DS_Store
+DEPEND
+DEPEND.bak
 LINUX/SoapySDR
 LINUX/SoapyPlutoSDR
 LINUX/SoapyRTLSDR
 wdsp/WDSP_Guide.pdf
 wdsp/libwdsp.a
+libsolar/libsolar.a
 make.config.deskhpsdr
 .vscode/*
 src/.vscode/*

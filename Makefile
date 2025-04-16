@@ -117,6 +117,9 @@ CPP_INCLUDE=
 WDSP_INCLUDE=-I./wdsp
 WDSP_LIBS=wdsp/libwdsp.a `$(PKG_CONFIG) --libs fftw3`
 
+SOLAR_INCLUDE=-I./libsolar
+SOLAR_LIBS=libsolar/libsolar.a `$(PKG_CONFIG) --libs libcurl libxml-2.0`
+
 ##############################################################################
 #
 #  Activate all deskHPSDR code per default
@@ -141,6 +144,7 @@ WDSP_LIBS=-lwdsp `$(PKG_CONFIG) --libs fftw3`
 endif
 CPP_DEFINES += -DEXTNR
 CPP_INCLUDE +=$(WDSP_INCLUDE)
+CPP_INCLUDE +=$(SOLAR_INCLUDE)
 
 ##############################################################################
 #
@@ -483,7 +487,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
 
-INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
+INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 
 .c.o:
@@ -499,7 +503,7 @@ endif
 ##############################################################################
 
 LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTKLIBS) $(GPIO_LIBS) $(SOAPYSDRLIBS) $(STEMLAB_LIBS) \
-	$(MIDI_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) -lm $(SYSLIBS)
+	$(MIDI_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) -lm $(SYSLIBS)
 
 ##############################################################################
 #
@@ -773,6 +777,9 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
+ifneq (z$(SOLAR_INCLUDE), z)
+	@+make -C libsolar
+endif
 	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) \
 		$(TCI_OBJS) $(LIBS)
@@ -916,6 +923,9 @@ install:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 			$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
+endif
+ifneq (z$(SOLAR_INCLUDE), z)
+	@+make -C libsolar
 endif
 	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
 		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) \
@@ -1234,7 +1244,7 @@ src/radio_menu.o: src/mode.h src/radio.h src/dac.h src/receiver.h
 src/radio_menu.o: src/transmitter.h src/sliders.h src/actions.h
 src/radio_menu.o: src/new_protocol.h src/MacOS.h src/old_protocol.h
 src/radio_menu.o: src/screen_menu.h src/soapy_protocol.h src/gpio.h src/vfo.h
-src/radio_menu.o: src/ext.h
+src/radio_menu.o: src/ext.h src/message.h
 src/receiver.o: src/agc.h src/audio.h src/receiver.h src/band.h
 src/receiver.o: src/bandstack.h src/channel.h src/discovered.h src/filter.h
 src/receiver.o: src/mode.h src/main.h src/meter.h src/property.h src/radio.h
