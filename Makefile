@@ -836,6 +836,7 @@ clean:
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	make -C wdsp clean
+	make -C libsolar clean
 ifeq ($(UNAME_S), Darwin)
 	@-rm -rf $(PROGRAM).app
 endif
@@ -848,6 +849,7 @@ uninstall:
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	make -C wdsp clean
+	make -C libsolar clean
 	@echo "Remove installed deskHPSDR binary..."
 ifeq ($(UNAME_S), Darwin)
 	@-rm -rf $(PROGRAM).app
