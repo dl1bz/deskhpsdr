@@ -48,6 +48,7 @@
 #endif
 #include "vfo.h"
 #include "ext.h"
+#include "message.h"
 
 static GtkWidget *dialog = NULL;
 static gulong callsign_box_signal_id;
@@ -124,6 +125,27 @@ static void rx_gain_calibration_value_changed_cb(GtkWidget *widget, gpointer dat
 static void vfo_divisor_value_changed_cb(GtkWidget *widget, gpointer data) {
   vfo_encoder_divisor = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 }
+
+//-------------------------------------------------------------------------------------
+static void capture_time_changed_cb(GtkWidget *widget, gpointer data) {
+  int t = 0;
+  t = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  t = (t < 10) ? 10 : (t > 120) ? 120 : t;
+
+  if (radio_is_transmitting()) {
+    radio_end_playback();
+  } else {
+    radio_end_capture();
+  }
+
+  capture_max = t * 48000;
+  capture_data = g_new(double, capture_max);
+  capture_record_pointer = 0;
+  capture_replay_pointer = 0;
+  capture_state = CAP_INIT;
+  t_print("%s: time: %d capture_max: %d\n", __FUNCTION__, t, capture_max);
+}
+//-------------------------------------------------------------------------------------
 
 static void ptt_ring_cb(GtkWidget *widget, gpointer data) {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
@@ -425,6 +447,20 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect (close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
+
+  if (can_transmit) {
+    //--------------------------------------------------------------------------------------------------------
+    label = gtk_label_new("Audio Capture Time (sec):");
+    gtk_widget_set_name(label, "boldlabel_blue");
+    gtk_grid_attach(GTK_GRID(grid), label, 1, 0, 1, 1);
+    //--------------------------------------------------------------------------------------------------------
+    GtkWidget *capture_time_btn = gtk_spin_button_new_with_range(10, 120, 10);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(capture_time_btn), (int)capture_max / 48000);
+    gtk_grid_attach(GTK_GRID(grid), capture_time_btn, 2, 0, 1, 1);
+    g_signal_connect(capture_time_btn, "value_changed", G_CALLBACK(capture_time_changed_cb), NULL);
+    //--------------------------------------------------------------------------------------------------------
+  }
+
   row = 1;
   label = gtk_label_new("Receivers:");
   gtk_widget_set_name(label, "boldlabel");

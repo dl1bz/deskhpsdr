@@ -355,7 +355,7 @@ double div_phase = 0.0;    // phase for diversity (in degrees, 0 ... 360)
 // (Equalizers are switched off during capture and replay)
 //
 int capture_state = CAP_INIT;
-const int capture_max = 480000;  // 10 seconds
+int capture_max = 480000;  // 10 seconds
 int capture_record_pointer;
 int capture_replay_pointer;
 double *capture_data = NULL;
@@ -2700,6 +2700,7 @@ static void radio_restore_state() {
 #endif
   GetPropI0("vfo_layout",                                    vfo_layout);
   GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
+  GetPropI0("capture_max",                                   capture_max);
 
   //
   // TODO: I think some further options related to the GUI
@@ -2951,6 +2952,7 @@ void radio_save_state() {
 #endif
   SetPropI0("vfo_layout",                                    vfo_layout);
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
+  SetPropI0("capture_max",                                   capture_max);
   SetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
   SetPropF0("slider_surface_scale",                          slider_surface_scale);
   SetPropF0("percent_pan_wf",                                percent_pan_wf);

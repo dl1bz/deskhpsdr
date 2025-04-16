@@ -276,7 +276,7 @@ extern double div_cos, div_sin;
 extern double div_gain, div_phase;
 
 extern int capture_state;
-extern const int capture_max;
+extern int capture_max;
 extern int capture_record_pointer;
 extern int capture_replay_pointer;
 extern double *capture_data;
