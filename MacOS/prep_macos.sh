@@ -126,9 +126,6 @@ $BREW install fftw
 $BREW install openssl@3
 $BREW install libusb
 $BREW install json-c
-$BREW install curl
-$BREW install libxml2
-
 ################################################################
 #
 # This is for the SoapySDR universe
