@@ -2,7 +2,6 @@ UNAME := $(shell uname)
 
 CFLAGS?=-O3 -D_GNU_SOURCE -Wno-parentheses
 CFLAGS+= `pkg-config --cflags libcurl libxml-2.0`
-
 LIBS = `pkg-config --libs libcurl libxml-2.0`
 
 all: libsolar.a
