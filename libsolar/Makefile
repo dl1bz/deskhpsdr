@@ -1,14 +1,15 @@
 UNAME := $(shell uname)
 
-CC = gcc
-AR = ar
-CFLAGS = `pkg-config --cflags libcurl libxml-2.0`
+CFLAGS?=-O3 -D_GNU_SOURCE -Wno-parentheses
+CFLAGS+= `pkg-config --cflags libcurl libxml-2.0`
+
 LIBS = `pkg-config --libs libcurl libxml-2.0`
 
 all: libsolar.a
 
 libsolar.a: solar.o
-	$(AR) rcs libsolar.a solar.o
+	ar rv libsolar.a solar.o
+	ranlib libsolar.a
 
 solar.o: solar.c solar.h
 	$(CC) $(CFLAGS) -c solar.c -o solar.o
