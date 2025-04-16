@@ -2,13 +2,15 @@ UNAME := $(shell uname)
 
 CC = gcc
 AR = ar
-CFLAGS = -Wall -Wextra -O2 -I/usr/include/libxml2
-LIBS = -lcurl -lxml2
+# CFLAGS = -Wall -Wextra -O2 -I/usr/include/libxml2
+# LIBS = -lcurl -lxml2
+CFLAGS = `pkg-config --cflags libcurl libxml-2.0`
+LIBS = `pkg-config --libs libcurl libxml-2.0`
 
-ifeq ($(UNAME), Darwin)
-	CFLAGS += -I/opt/homebrew/include
-	LIBS += -L/opt/homebrew/lib
-endif
+# ifeq ($(UNAME), Darwin)
+# 	CFLAGS += -I/opt/homebrew/include
+# 	LIBS += -L/opt/homebrew/lib
+# endif
 
 all: libsolar.a example
 
