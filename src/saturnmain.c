@@ -278,7 +278,7 @@ void saturn_register_init() {
   sem_init(&DDCInSelMutex, 0, 1);                                   // for DDC input select register
   sem_init(&DDCResetFIFOMutex, 0, 1);                               // for FIFO reset register
   sem_init(&RFGPIOMutex, 0, 1);                                     // for RF GPIO register
-  sem_init(&CodecRegMutex, 0, 1);                                   // for codec writes
+  sem_init(&CodecRegMutex, 0, 1);                                   // for codec access
   //
   // setup Saturn hardware
   //
@@ -692,6 +692,7 @@ void start_saturn_high_priority_thread() {
 static gpointer saturn_high_priority_thread(gpointer arg) {
   uint8_t Byte;                                   // data being encoded
   uint16_t Word;                                  // data being encoded
+  uint8_t ADCOverflows = 0;                       // set to non-zero if ADC overflows detected
   int Error;
   uint8_t UDPBuffer[VHIGHPRIOTIYFROMSDRSIZE];
   //
@@ -736,12 +737,17 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
       ReadStatusRegister();
       PTTBits = (uint8_t)GetP2PTTKeyInputs();
       *(uint8_t *)(UDPBuffer + 4) = *(uint8_t *)(mybuf->buffer + 4) = PTTBits;
-      Byte = (uint8_t)GetADCOverflow();
-      *(uint8_t *)(UDPBuffer + 5) = *(uint8_t *)(mybuf->buffer + 5) = Byte;
-      Byte = (uint8_t)GetUserIOBits();                                              // user I/O bits
+      // Byte = (uint8_t)GetADCOverflow();
+      // *(uint8_t *)(UDPBuffer + 5) = *(uint8_t *)(mybuf->buffer + 5) = Byte;
+      // Byte = (uint8_t)GetUserIOBits();
+      ADCOverflows |= (uint8_t)GetADCOverflow();
+      *(uint8_t *)(UDPBuffer + 5) = *(uint8_t *)(mybuf->buffer + 5) = ADCOverflows,
+      ADCOverflows = 0;                                                                // clear it once reported
+      Byte = (uint8_t)
+             GetUserIOBits();                                                 // user I/O bits                                          // user I/O bits
       *(uint8_t *)(UDPBuffer + 59) = *(uint8_t *)(mybuf->buffer + 59) = Byte;
       Word = (uint16_t)GetAnalogueIn(4);
-      *(uint16_t *)(UDPBuffer + 6) = *(uint16_t *)(mybuf->buffer + 6) = htons(Word); // exciter power
+      *(uint16_t *)(UDPBuffer + 6) = *(uint16_t *)(mybuf->buffer + 6) = htons(Word);   // exciter power
       Word = (uint16_t)GetAnalogueIn(0);
       *(uint16_t *)(UDPBuffer + 14) = *(uint16_t *)(mybuf->buffer + 14) = htons(Word); // forward power
       Word = (uint16_t)GetAnalogueIn(1);
@@ -753,6 +759,11 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
       Word = (uint16_t)GetAnalogueIn(3);
       *(uint16_t *)(UDPBuffer + 55) = *(uint16_t *)(mybuf->buffer + 55) = htons(Word); // AIN4 user_analog2
 
+      //
+      // TODO: get the FIFO  counts for DDC, Mic, DUC, Audio and report them in bytes 31/32, 33/34, 35/36, 37/38 (see p2app.c).
+      //       (not yet used in pihpsdr)
+      //       (and report underruns/overruns in byte 4 bits 5 and 6)
+      //
       if (TXActive != 2) {
         *(uint32_t *)mybuf->buffer = htonl(SequenceCounter++);       // add sequence count
         saturn_post_high_priority(mybuf);
@@ -780,7 +791,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
 
       //
       // now we need to sleep for 1ms (in TX) or 200ms (not in TX)
-      // BUT if any of the PTT or key inputs change, send a message immediately
+      // BUT if any of the PTT or key inputs change, or ADC overflow detected, send a message immediately
       // so break up the 200ms period with smaller sleeps
       //
       SleepCount = (MOXAsserted) ? 2 : 400;
@@ -789,6 +800,12 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
         ReadStatusRegister();
 
         if ((uint8_t)GetP2PTTKeyInputs() != PTTBits) {
+          break;
+        }
+
+        ADCOverflows |= (uint8_t)GetADCOverflow();
+
+        if (ADCOverflows != 0) {
           break;
         }
 
@@ -1388,8 +1405,8 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
   Byte = (uint8_t)(UDPInBuffer[345]);
   SetTXDriveLevel(Byte);
   //
-  // CAT port (if set)
-  Word = ntohs(*(uint16_t *)(UDPInBuffer + 1398));
+  // CAT port (UNUSED in deskHPSDR)
+  // Word = ntohs(*(uint16_t *)(UDPInBuffer + 1398));
   //t_print("CAT over TCP port = %x\n", Word);
   //
   // transverter, speaker mute, open collector, user outputs
