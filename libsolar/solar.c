@@ -110,8 +110,6 @@ SolarData fetch_solar_data() {
           data.kindex = atoi((char *)val);
         } else if (strcmp((char *)c->name, "updated") == 0) {
           strncpy(data.updated, (char *)val, sizeof(data.updated) - 1);
-        } else if (strcmp((char *)c->name, "xray") == 0) {
-          strncpy(data.xray, (char *)val, sizeof(data.xray) - 1);
         }
 
         xmlFree(val);
