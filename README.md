@@ -2,9 +2,9 @@
 
 <img src="https://github.com/dl1bz/deskhpsdr/blob/master/release/deskhpsdr/screenshot.png" width="1024px" />
 
-This is an improved version based at the code of [piHPSDR](https://github.com/dl1ycf/pihpsdr). But it is not [piHPSDR](https://github.com/dl1ycf/pihpsdr) itself and has no backward dependencies to [piHPSDR](https://github.com/dl1ycf/pihpsdr). My goal was to make an optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In this case you need to use [piHPSDR](https://github.com/dl1ycf/pihpsdr), but not my deskHPSDR.
+This is a hamradio application for SDR devices with HPSDR protocol 1 and 2, based at codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr). But anywhere, it's not piHPSDR and has no backward dependencies to piHPSDR. My goal was to make an more optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In the case mini-display you need to fallback to piHPSDR, deskHPSDR don't support this anymore.
 
-**deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. There are also no plans for a Client-Server-Mode like with piHPSDR, this code part was removed in deskHPSDR.
+**deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. deskHPSDR hasn't a special Client-Server-Mode like pihpsdr (make no sense, we HAVE network-connected SDR devices yet).
 
 My main focus of deskHPSDR development, the improvements and additional functions against piHPSDR is the Hermes Lite 2 SDR Transceiver and his similar devices based on the same hardware platform like the Square-SDR. Other SDR devices can be used too if supported, but I cannot check it. The second focus is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The third focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio, less for wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
@@ -14,9 +14,7 @@ More information about the develop progress of deskHPSDR can be found here in my
 ## deskHPSDR was splitting October 2024 from the code base of piHPSDR
 
 piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>
-Today deskHPSDR go an entire own way. deskHPSDR has got many new functions that are not available in piHPSDR. Things that deskHPSDR doesn't need have also been removed, they exist furthermore in piHPSDR, but are no longer as parts of deskHPSDR. deskHPSDR is an evolution of piHPSDR with  completely different objectives.
-
-From now on (January 2025) I stop merging code from piHPSDR into deskHPSDR. Last changes from piHPSDR like the G2Panel and other things are not available in deskHPSDR and won't be. My future development has the focus at the Hermes Lite 2 SDR, but not for devices come from Apache Labs. My meaning to this manufacturer is not the best, they only sell expensive hardware and let the open source developers do the work for the SDR applications which can be used with their hardware. I did not support this approach. For the Hermes Lite 2 most issues are fixed now in deskHPSDR. There are no more recognizable problems with the HL2.
+Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they are not available in piHPSDR. Things that deskHPSDR doesn't need have also been removed, they exist furthermore in piHPSDR, but are no longer as parts of deskHPSDR. deskHPSDR is a kind of evolution from piHPSDR with completely different objectives.
 
 ## Requirements
 
@@ -31,7 +29,7 @@ From now on (January 2025) I stop merging code from piHPSDR into deskHPSDR. Last
 
 ## The further development of deskHPSDR
 
-My work is not completed (are software projects ever finished ???). I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/) for basic knowledge, how this application works in general.
+My work is not completed (are software projects ever finished ???). I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW.
 
 ## Latest Changes
 
