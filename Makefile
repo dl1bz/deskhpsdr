@@ -581,6 +581,7 @@ src/store_menu.c \
 src/switch_menu.c \
 src/toolbar.c \
 src/toolbar_menu.c \
+src/toolset.c \
 src/transmitter.c \
 src/tts.c \
 src/tx_menu.c \
@@ -668,6 +669,7 @@ src/store_menu.h \
 src/switch_menu.h \
 src/toolbar.h \
 src/toolbar_menu.h \
+src/toolset.h \
 src/transmitter.h \
 src/tts.h \
 src/tx_menu.h \
@@ -749,6 +751,7 @@ src/store_menu.o \
 src/switch_menu.o \
 src/toolbar.o \
 src/toolbar_menu.o \
+src/toolset.o \
 src/transmitter.o \
 src/tts.o \
 src/tx_menu.o \
@@ -1297,7 +1300,7 @@ src/sliders.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
 src/sliders.o: src/MacOS.h src/soapy_protocol.h src/vfo.h src/agc.h
 src/sliders.o: src/channel.h src/radio.h src/adc.h src/dac.h src/property.h
 src/sliders.o: src/main.h src/ext.h src/rigctl.h src/message.h src/audio.h
-src/sliders.o: src/tx_menu.h
+src/sliders.o: src/tx_menu.h src/toolset.h
 src/soapy_discovery.o: src/discovered.h src/soapy_discovery.h src/message.h
 src/soapy_protocol.o: src/band.h src/bandstack.h src/channel.h
 src/soapy_protocol.o: src/discovered.h src/mode.h src/filter.h src/receiver.h
@@ -1334,6 +1337,7 @@ src/toolbar_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/toolbar_menu.o: src/receiver.h src/transmitter.h src/new_menu.h
 src/toolbar_menu.o: src/actions.h src/action_dialog.h src/gpio.h
 src/toolbar_menu.o: src/toolbar.h
+src/toolset.o: src/toolset.h src/message.h
 src/transmitter.o: src/band.h src/bandstack.h src/channel.h src/main.h
 src/transmitter.o: src/receiver.h src/meter.h src/filter.h src/mode.h
 src/transmitter.o: src/property.h src/radio.h src/adc.h src/dac.h
@@ -1375,7 +1379,7 @@ src/vox_menu.o: src/vox.h src/ext.h src/message.h
 src/waterfall.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/waterfall.o: src/receiver.h src/transmitter.h src/vfo.h src/mode.h
 src/waterfall.o: src/band.h src/bandstack.h src/appearance.h src/audio.h
-src/waterfall.o: src/waterfall.h src/message.h
+src/waterfall.o: src/toolset.h src/waterfall.h src/message.h
 src/xvtr_menu.o: src/new_menu.h src/band.h src/bandstack.h src/filter.h
 src/xvtr_menu.o: src/mode.h src/xvtr_menu.h src/radio.h src/adc.h src/dac.h
 src/xvtr_menu.o: src/discovered.h src/receiver.h src/transmitter.h src/vfo.h

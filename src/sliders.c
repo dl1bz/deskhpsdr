@@ -50,6 +50,7 @@
 #include "message.h"
 #include "audio.h"
 #include "tx_menu.h"
+#include "toolset.h"
 
 static int width;
 static int height;
@@ -951,21 +952,7 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   launch_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }
-
 #endif
-
-// Funktion zum Kürzen des Textes
-static const char* truncate_text(const char* text, size_t max_length) {
-  static char truncated[128];  // Ein statisches Array für den gekürzten Text
-
-  if (strlen(text) > max_length) {
-    g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
-  } else {
-    g_strlcpy(truncated, text, sizeof(truncated));  // Sicheres Kopieren des Textes
-  }
-
-  return truncated;
-}
 
 #endif
 
