@@ -85,13 +85,10 @@ Things marked as "completed" are tested a longer time and will work without know
 
 Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
 
-## Issues tab at Github for this project - read carefully !
+## Issues and Discussion tab at Github for this project - read carefully !
 
-I'm now activate the Issues tab, but please note the following:<br>
-- I ONLY accept error reports or runtime errors for this published codebase here. The Issues tab not suitable for discussion about other things except error messages or error reports.<br>
-- Don't ask about feature requests, questions about porting to other systems like WIN/MinGW or support for new SDR hardware which is not provided up to now in the published version - my answer will be ever NO. Such requests will be ignored and closed without any comment.<br>
-- first make a ```git pull``` for using the most up-to-date codebase, compile it, test it and THEN open an issue, if you think there's something wrong with the last codebase<br>
-- **I don't accept any questions, comments or remarks about transmitting outside of the amateur radio frequencies !!!**
+- the **Issues tab is only for reporting issues, bugs or malfunctions of this app** !
+- for all other things please use necessarily the discussions tab
 
 ## Known problems if using Git for update the code base at your local computer
 
