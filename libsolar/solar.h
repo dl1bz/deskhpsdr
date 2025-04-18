@@ -24,6 +24,7 @@ typedef struct {
   int aindex;
   int kindex;
   char updated[64];
+  char xray[16];
 } SolarData;
 
 SolarData fetch_solar_data();
