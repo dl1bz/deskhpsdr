@@ -41,6 +41,7 @@
 #include "mode.h"
 #include "actions.h"
 #include "message.h"
+#include "toolset.h"
 #ifdef GPIO
   #include "gpio.h"
 #endif
@@ -52,9 +53,6 @@
 #endif
 #if defined (__WMAP__)
   #include "map_d.h"
-#endif
-#ifdef __APPLE__
-  #include "solar.h"
 #endif
 
 char zeitString[20];
@@ -952,6 +950,17 @@ void rx_panadapter_update(RECEIVER *rx) {
 #endif
       cairo_move_to(cr, 10.0, myheight - 10);
       cairo_show_text(cr, _text);
+      check_and_run();
+      cairo_move_to(cr, (mywidth / 3), myheight - 10);
+
+      if (sunspots != -1) {
+        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d", sunspots, solar_flux, a_index, k_index);
+      } else {
+        snprintf(_text, 128, " ");
+      }
+
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_show_text(cr, _text);
     }
   }
 
@@ -1169,7 +1178,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
 
 #endif
-    cairo_show_text(cr, _text);
+    cairo_show_text(cr, _text); // show onscreen if status bar switched off
   }
 
   if (strcmp(own_callsign, "YOUR_CALLSIGN") != 0) {
