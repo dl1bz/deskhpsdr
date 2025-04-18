@@ -29,13 +29,13 @@ From now on (January 2025) I stop merging code from piHPSDR into deskHPSDR. Last
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the ```Notes_if_using_HERMES-Lite-2.md```
 
-~~**Important:** For best desktop experience please select **VFO bar for 1280px windows** in the *Menu->Screen* (if not selected).~~ No more required, the VFO bar selection was removed.
-
 ## The further development of deskHPSDR
 
 My work is not completed (are software projects ever finished ???). I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW. And - sorry guys - I have not the time to write any kind of manual for deskHPSDR. Use instead the [published manual of DL1YCF's piHPSDR version](https://github.com/dl1ycf/pihpsdr/releases/) for basic knowledge, how this application works in general.
 
 ## Latest Changes
+
+**CHANGES are moved now to the Discussions tab, cacategory CHANGELOG deskhpsdr.**
 
 ### Version 2.6.0 (final version)
 
@@ -113,11 +113,6 @@ $ git pull
 $ git reset --hard origin/master
 ```
 This overwrite local changes, which are different from the remote repo at Github.com and set the status equal between local and remote.
-
-## Known (and unknown) problems with SDR devices
-* ~~if using SOAPY-API with SDRPlay RSP2Pro (older model, EOL) via USB, deskHPSDR crash with a segmentation fault if try to start this device (issue is actual under investigation, but not fixed yet)~~ **FIXED**
-* From time to time there I got reports from some users, that the HL2 or similar devices (like the SquareSDR) will not produce the full 5W output with deskHPSDR (or piHPSDR). **At no time I can confirm this so-called "issue"**. A lot of measurements and tests showed as a result ever the full 5W output - provided you had done a valid setup (5W PA enabled, TX PWR = 100, PA calibration for each band with the value 38.8 and correct settings in deskHPSDR or piHPSDR if using the N2ADR low pass filter board, no bad SWR or wrong impedance issues at the RF output). In fact, we havn't any so-called "issues" in the program code of deskHPSDR (or piHPSDR) if you don't reach the full output. In this case you need to check you complete setup again, there must be another reason with your whole setup if it don't work.<br>
-Please have a look into ```Notes_if_using_HERMES-Lite-2.md``` too for specific setup things around the HL2.
 
 ## Successful and confirmed Tests I had done up to now
 
