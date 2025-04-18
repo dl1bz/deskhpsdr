@@ -88,7 +88,7 @@ Most of the new functions need to be activated in the ```make.config.deskhpsdr``
 ## Issues and Discussion tab at Github for this project - read carefully !
 
 - the **Issues tab is only for reporting issues, bugs or malfunctions of this app** !
-- for all other things please use necessarily the discussions tab
+- for all other things please use necessarily the [discussions tab](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr)
 
 ## Known problems if using Git for update the code base at your local computer
 
