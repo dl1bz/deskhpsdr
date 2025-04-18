@@ -24,6 +24,8 @@ extern int sunspots;
 extern int a_index;
 extern int k_index;
 extern int solar_flux;
+extern char geomagfield[32];
+extern char xray[16];
 
 extern gboolean is_5min_marker(void);
 extern int https_ok(const char* hostname, int mit_cert_check);

@@ -38,6 +38,8 @@ int sunspots = -1;
 int a_index = -1;
 int k_index = -1;
 int solar_flux = -1;
+char geomagfield[32];
+char xray[16];
 
 gboolean is_5min_marker() {
   static int last_minute = -1;
@@ -156,8 +158,11 @@ void assign_solar_data() {
     solar_flux = (int)sd.solarflux;
     a_index = sd.aindex;
     k_index = sd.kindex;
+    g_strlcpy(geomagfield, sd.geomagfield, sizeof(sd.geomagfield));
+    g_strlcpy(xray, sd.xray, sizeof(sd.xray));
     t_print("%s fetch data from %s at %s", __FUNCTION__, host, ctime(&now));
-    t_print("%s Sunspots: %d, Flux: %d, A: %d, K: %d\n", __FUNCTION__, sunspots, solar_flux, a_index, k_index);
+    t_print("%s Sunspots: %d, Flux: %d, A: %d, K: %d, X:%s, GMF:%s\n", __FUNCTION__, sunspots, solar_flux, a_index, k_index,
+            xray, geomagfield);
   } else {
     t_print("%s failed: host %s not reachable\n", __FUNCTION__, host);
   }

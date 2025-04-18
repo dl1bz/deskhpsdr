@@ -113,7 +113,7 @@ waterfall_draw_cb (GtkWidget *widget,
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
 #if defined (__APPLE__)
-      snprintf(_text, 128, "[%d] %s", active_receiver->id, transmitter->microphone_name);
+      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 28));
 #else
       int _audioindex = 0;
 
@@ -124,7 +124,7 @@ waterfall_draw_cb (GtkWidget *widget,
           }
         }
 
-        snprintf(_text, 128, "[%d] %s", active_receiver->id, input_devices[_audioindex].description);
+        snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(input_devices[_audioindex].description, 28));
       } else {
         snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
       }
@@ -133,10 +133,10 @@ waterfall_draw_cb (GtkWidget *widget,
       cairo_move_to(cr, 10.0, b_height - 10);
       cairo_show_text(cr, _text);
       check_and_run();
-      cairo_move_to(cr, (b_width / 3), b_height - 10);
+      cairo_move_to(cr, (b_width / 4) - 50, b_height - 10);
 
       if (sunspots != -1) {
-        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d", sunspots, solar_flux, a_index, k_index);
+        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GMF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
       } else {
         snprintf(_text, 128, " ");
       }

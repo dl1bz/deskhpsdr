@@ -112,6 +112,8 @@ SolarData fetch_solar_data() {
           strncpy(data.updated, (char *)val, sizeof(data.updated) - 1);
         } else if (strcmp((char *)c->name, "xray") == 0) {
           strncpy(data.xray, (char *)val, sizeof(data.xray) - 1);
+        } else if (strcmp((char *)c->name, "geomagfield") == 0) {
+          strncpy(data.geomagfield, (char *)val, sizeof(data.geomagfield) - 1);
         }
 
         xmlFree(val);
