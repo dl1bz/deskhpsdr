@@ -92,10 +92,11 @@ waterfall_draw_cb (GtkWidget *widget,
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_move_to(cr, (b_width / 2) + 50, b_height - 10);
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-#endif
     cairo_move_to(cr, b_width / 2, b_height - 10);
+#endif
 
     if (can_transmit) {
       cairo_show_text(cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
@@ -136,7 +137,7 @@ waterfall_draw_cb (GtkWidget *widget,
       cairo_move_to(cr, (b_width / 4) - 50, b_height - 10);
 
       if (sunspots != -1) {
-        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GMF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
       } else {
         snprintf(_text, 128, " ");
       }

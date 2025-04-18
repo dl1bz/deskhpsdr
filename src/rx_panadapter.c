@@ -909,10 +909,11 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_move_to(cr, (mywidth / 2) + 50, myheight - 10);
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-#endif
     cairo_move_to(cr, mywidth / 2, myheight - 10);
+#endif
 
     if (can_transmit) {
       cairo_show_text(cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
@@ -931,7 +932,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (can_transmit) {
 #if defined (__APPLE__)
-      snprintf(_text, 128, "[%d] %s", active_receiver->id, transmitter->microphone_name);
+      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 28));
 #else
       int _audioindex = 0;
 
@@ -942,7 +943,7 @@ void rx_panadapter_update(RECEIVER *rx) {
           }
         }
 
-        snprintf(_text, 128, "[%d] %s", active_receiver->id, input_devices[_audioindex].description);
+        snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(input_devices[_audioindex].description, 28));
       } else {
         snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
       }
@@ -951,10 +952,10 @@ void rx_panadapter_update(RECEIVER *rx) {
       cairo_move_to(cr, 10.0, myheight - 10);
       cairo_show_text(cr, _text);
       check_and_run();
-      cairo_move_to(cr, (mywidth / 3), myheight - 10);
+      cairo_move_to(cr, (mywidth / 4) - 50, myheight - 10);
 
       if (sunspots != -1) {
-        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d", sunspots, solar_flux, a_index, k_index);
+        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
       } else {
         snprintf(_text, 128, " ");
       }
