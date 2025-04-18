@@ -195,3 +195,34 @@ const char* truncate_text(const char* text, size_t max_length) {
 
   return truncated;
 }
+
+char* truncate_text_malloc(const char* text, size_t max_length) {
+  size_t len = strlen(text);
+
+  if (len > max_length) { len = max_length; }
+
+  char* truncated = g_malloc(len + 1);  // +1 für '\0'
+  g_strlcpy(truncated, text, len + 1);  // sicheres Kopieren
+  return truncated;  // muss mit g_free() freigegeben werden
+}
+
+char* truncate_text_3p(const char* text, size_t max_length) {
+  size_t len = strlen(text);
+
+  if (len <= max_length) {
+    // Text passt komplett – einfach kopieren
+    return g_strdup(text);
+  }
+
+  // Für "..." brauchen wir Platz: 3 Zeichen
+  if (max_length < 3) {
+    // Nicht genug Platz für Text + Ellipsis – gib einfach leeren String zurück
+    return g_strdup("");
+  }
+
+  size_t cut_len = max_length - 3;  // Platz für Text ohne die drei Punkte
+  char* truncated = g_malloc(max_length + 1);  // +1 für '\0'
+  g_strlcpy(truncated, text, cut_len + 1);     // +1, weil g_strlcpy inkl. Nullbyte
+  strcat(truncated, "...");  // Anhängen
+  return truncated;  // Muss mit g_free() freigegeben werden
+}
