@@ -35,7 +35,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ## Latest Changes
 
-**CHANGES are moved now to the Discussions tab, cacategory CHANGELOG deskhpsdr.**
+**CHANGES are moved now to the [Discussions tab, category CHANGELOG deskhpsdr](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr).**
 
 ### Version 2.6.0 (final version)
 
