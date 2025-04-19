@@ -909,7 +909,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-    cairo_move_to(cr, (mywidth / 2) + 50, myheight - 10);
+    cairo_move_to(cr, (mywidth / 2) + 100, myheight - 10);
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
     cairo_move_to(cr, mywidth / 2, myheight - 10);
@@ -932,7 +932,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (can_transmit) {
 #if defined (__APPLE__)
-      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 32));
+      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
 #else
       int _audioindex = 0;
 
@@ -954,7 +954,11 @@ void rx_panadapter_update(RECEIVER *rx) {
 
       if (display_solardata) {
         check_and_run(1); // 0=no_log_output, 1=print_to_log
+#if defined (__APPLE__)
+        cairo_move_to(cr, (mywidth / 4) + 20, myheight - 10);
+#else
         cairo_move_to(cr, (mywidth / 4) - 50, myheight - 10);
+#endif
 
         if (sunspots != -1) {
           snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
