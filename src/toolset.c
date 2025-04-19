@@ -148,7 +148,7 @@ cleanup:
   return erfolg;
 }
 
-void assign_solar_data() {
+void assign_solar_data(int is_dbg) {
   time_t now = time(NULL);
   const char* host = "www.hamqsl.com";
 
@@ -160,15 +160,18 @@ void assign_solar_data() {
     k_index = sd.kindex;
     g_strlcpy(geomagfield, sd.geomagfield, sizeof(sd.geomagfield));
     g_strlcpy(xray, sd.xray, sizeof(sd.xray));
-    t_print("%s fetch data from %s at %s", __FUNCTION__, host, ctime(&now));
-    t_print("%s Sunspots: %d, Flux: %d, A: %d, K: %d, X:%s, GMF:%s\n", __FUNCTION__, sunspots, solar_flux, a_index, k_index,
-            xray, geomagfield);
+
+    if (is_dbg) {
+      t_print("%s fetch data from %s at %s", __FUNCTION__, host, ctime(&now));
+      t_print("%s Sunspots: %d, Flux: %d, A: %d, K: %d, X:%s, GMF:%s\n", __FUNCTION__, sunspots, solar_flux, a_index, k_index,
+              xray, geomagfield);
+    }
   } else {
     t_print("%s failed: host %s not reachable\n", __FUNCTION__, host);
   }
 }
 
-void check_and_run() {
+void check_and_run(int is_dbg) {
   static struct timespec last_check = {0};
   static gboolean first_run = TRUE;
   struct timespec now;
@@ -182,7 +185,7 @@ void check_and_run() {
 
     // Beim ersten Mal oder bei neuer 5-Minuten-Marke
     if (first_run || is_5min_marker()) {
-      assign_solar_data();
+      assign_solar_data(is_dbg);
       first_run = FALSE;
     }
   }

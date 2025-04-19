@@ -47,6 +47,7 @@ static GtkWidget *waterfall_high_r = NULL;
 static GtkWidget *waterfall_low_r = NULL;
 static GtkWidget *general_container;
 static GtkWidget *peaks_container;
+static GtkWidget *b_display_solardata;
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -243,6 +244,22 @@ static void display_panadapter_ovf_cb(GtkWidget *widget, gpointer data) {
 
 static void toggle_info_bar_cb(GtkWidget *widget, gpointer data) {
   display_info_bar = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (can_transmit && display_info_bar) {
+    gtk_widget_set_sensitive(GTK_WIDGET(b_display_solardata), TRUE);
+    // gtk_widget_set_visible(GTK_WIDGET(b_display_solardata), TRUE);
+    // gtk_widget_show(GTK_WIDGET(b_display_solardata));
+  } else {
+    gtk_widget_set_sensitive(GTK_WIDGET(b_display_solardata), FALSE);
+    // gtk_widget_set_visible(GTK_WIDGET(b_display_solardata), FALSE);
+    // gtk_widget_hide(GTK_WIDGET(b_display_solardata));
+  }
+
+  radio_reconfigure();
+}
+
+static void toggle_display_solardata_cb(GtkWidget *widget, gpointer data) {
+  display_solardata =  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_reconfigure();
 }
 
@@ -534,6 +551,16 @@ void display_menu(GtkWidget *parent) {
 
   gtk_grid_attach(GTK_GRID(general_grid), b_display_info_bar, col + 1, row + 1, 1, 1);
   g_signal_connect(b_display_info_bar, "toggled", G_CALLBACK(toggle_info_bar_cb), NULL);
+
+  //------------------------------------------------------------------------------------------------------------
+  if (can_transmit) {
+    b_display_solardata = gtk_check_button_new_with_label("Display Solardata");
+    gtk_widget_set_name (b_display_solardata, "stdlabel_blue");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_solardata), display_solardata);
+    gtk_grid_attach(GTK_GRID(general_grid), b_display_solardata, col + 1, row + 2, 1, 1);
+    g_signal_connect(b_display_solardata, "toggled", G_CALLBACK(toggle_display_solardata_cb), NULL);
+  }
+
   //------------------------------------------------------------------------------------------------------------
   GtkWidget *b_display_waterfall = gtk_check_button_new_with_label("Display Waterfall");
   gtk_widget_set_name (b_display_waterfall, "boldlabel");
