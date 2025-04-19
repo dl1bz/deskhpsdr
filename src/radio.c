@@ -2844,11 +2844,11 @@ static void radio_restore_state() {
   GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
-  GetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,    SerialPorts[MAX_SERIAL].swapRtsDtr);
+  GetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,      SerialPorts[MAX_SERIAL].swapRtsDtr);
   GetPropS1("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
   GetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
   GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
-  GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1, SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
+  GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
   GetPropS0("own_callsign",                                own_callsign);
 #endif
 

@@ -525,7 +525,7 @@ void display_menu(GtkWidget *parent) {
 
   //------------------------------------------------------------------------------------------------------------
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-    GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Display ADC0 OVF Alarm");
+    GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Show ADC0 OVF Alarm");
     gtk_widget_set_name (b_display_panadapter_ovf, "stdlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_panadapter_ovf), active_receiver->panadapter_ovf_on);
 
@@ -540,7 +540,7 @@ void display_menu(GtkWidget *parent) {
   }
 
   GtkWidget *b_display_info_bar = gtk_check_button_new_with_label("Display Info Bar");
-  gtk_widget_set_name (b_display_info_bar, "stdlabel_blue");
+  gtk_widget_set_name (b_display_info_bar, "boldlabel_blue");
 
   if (!rx_stack_horizontal) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_info_bar), display_info_bar);
@@ -554,7 +554,7 @@ void display_menu(GtkWidget *parent) {
 
   //------------------------------------------------------------------------------------------------------------
   if (can_transmit) {
-    b_display_solardata = gtk_check_button_new_with_label("Display Solardata");
+    b_display_solardata = gtk_check_button_new_with_label("Show Solardata in Info Bar");
     gtk_widget_set_name (b_display_solardata, "stdlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_solardata), display_solardata);
     gtk_grid_attach(GTK_GRID(general_grid), b_display_solardata, col + 1, row + 2, 1, 1);
