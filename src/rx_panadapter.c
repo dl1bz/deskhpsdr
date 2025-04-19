@@ -932,7 +932,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (can_transmit) {
 #if defined (__APPLE__)
-      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 28));
+      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 32));
 #else
       int _audioindex = 0;
 
@@ -951,17 +951,20 @@ void rx_panadapter_update(RECEIVER *rx) {
 #endif
       cairo_move_to(cr, 10.0, myheight - 10);
       cairo_show_text(cr, _text);
-      check_and_run();
-      cairo_move_to(cr, (mywidth / 4) - 50, myheight - 10);
 
-      if (sunspots != -1) {
-        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
-      } else {
-        snprintf(_text, 128, " ");
+      if (display_solardata) {
+        check_and_run();
+        cairo_move_to(cr, (mywidth / 4) - 50, myheight - 10);
+
+        if (sunspots != -1) {
+          snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+        } else {
+          snprintf(_text, 128, " ");
+        }
+
+        cairo_set_source_rgba(cr, COLOUR_ATTN);
+        cairo_show_text(cr, _text);
       }
-
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      cairo_show_text(cr, _text);
     }
   }
 

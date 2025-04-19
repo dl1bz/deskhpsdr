@@ -217,6 +217,7 @@ int display_extra_sliders = 1;
 int display_toolbar = 0;
 double percent_pan_wf = 50.0;
 int display_info_bar = 0;
+int display_solardata = 0;
 char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
 
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
@@ -2688,6 +2689,7 @@ static void radio_restore_state() {
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
   GetPropI0("display_info_bar",                              display_info_bar);
+  GetPropI0("display_solardata",                             display_solardata);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
   GetPropI0("display_extra_sliders",                         display_extra_sliders);
@@ -2940,6 +2942,7 @@ void radio_save_state() {
   // if they are currently hidden via the "Hide" button
   //
   SetPropI0("display_info_bar",                              display_info_bar);
+  SetPropI0("display_solardata",                             display_solardata);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
   SetPropI0("display_extra_sliders",                         display_extra_sliders);
