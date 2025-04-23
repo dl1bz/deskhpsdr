@@ -45,6 +45,7 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *local_audio_b = NULL;
 static GtkWidget *output = NULL;
 static GtkWidget *autogain_b;
+static GtkWidget *autogain_time_b;
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -66,7 +67,21 @@ static gboolean close_cb () {
 static void autogain_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   update_slider_autogain_btn();
+
+  if (autogain_enabled) {
+    gtk_widget_set_sensitive(autogain_time_b, TRUE);
+  } else {
+    gtk_widget_set_sensitive(autogain_time_b, FALSE);
+  }
+
   launch_autogain_hl2();
+  g_idle_add(ext_vfo_update, NULL);
+}
+
+static void autogain_time_cb(GtkWidget *widget, gpointer data) {
+  autogain_time_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  // update_slider_autogain_btn();
+  restart_autogain_hl2();
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -338,10 +353,22 @@ void rx_menu(GtkWidget *parent) {
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
         autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
         gtk_widget_set_name(autogain_b, "boldlabel_blue");
+        autogain_time_b = gtk_check_button_new_with_label("HL2 Auto Gain time-controlled");
+        gtk_widget_set_name(autogain_time_b, "boldlabel_blue");
 #if defined (__AUTOG__)
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_b), autogain_enabled);
         gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, row + 1, 1, 1);
         g_signal_connect(autogain_b, "toggled", G_CALLBACK(autogain_cb), NULL);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_time_b), autogain_time_enabled);
+
+        if (autogain_enabled) {
+          gtk_widget_set_sensitive(autogain_time_b, TRUE);
+        } else {
+          gtk_widget_set_sensitive(autogain_time_b, FALSE);
+        }
+
+        gtk_grid_attach(GTK_GRID(grid), autogain_time_b, 0, row + 2, 1, 1);
+        g_signal_connect(autogain_time_b, "toggled", G_CALLBACK(autogain_time_cb), NULL);
 #endif
       } else {
         GtkWidget *dither_b = gtk_check_button_new_with_label("Dither Bit");

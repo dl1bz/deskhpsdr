@@ -2389,7 +2389,7 @@ void vfo_update() {
 #if defined (__AUTOG__)
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-      cairo_move_to(cr, vfl->base_x + 270, vfl->base_y);
+      cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 20);
 
       if (autogain_enabled && autogain_is_adjusted) {
         cairo_set_source_rgba(cr, COLOUR_OK);
@@ -2399,11 +2399,16 @@ void vfo_update() {
         cairo_set_source_rgba(cr, COLOUR_SHADE);
       }
 
-      snprintf(temp_text, 32, "AG");
+      if (autogain_time_enabled) {
+        snprintf(temp_text, 32, "AGT");
+      } else {
+        snprintf(temp_text, 32, "AG");
+      }
+
       cairo_show_text(cr, temp_text);
 
       if (!have_radioberry1 &&  !have_radioberry2) {
-        cairo_move_to(cr, vfl->base_x + 270, vfl->base_y + 15);
+        cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 35);
 
         if (hl2_cl1_input) {
           cairo_set_source_rgba(cr, COLOUR_OK);

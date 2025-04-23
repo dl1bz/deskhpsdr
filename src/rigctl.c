@@ -367,11 +367,11 @@ void launch_sertune() {
 
 #if defined (__AUTOG__)
 static void* autogain_thread_function(void* arg) {
-  static struct timespec start_time, current_time;
+  static struct timespec start_time, current_time, last_autogain_increase;
   static time_t elapsed_time;
-  static int autogain_first_run = 1; // only if deskHPSDR starts we get sometimes wrong ADC OVL states, we add a delay
-  // static int autogain_is_adjusted = 0;
-  static double gain_step = 3.0;     // gain step size for aotomatic
+  static int re_adjustment_time = 30; // in sec
+  static int autogain_first_run = 1;  // only if deskHPSDR starts we get sometimes wrong ADC OVL states, we add a delay
+  static double gain_step = 3.0;      // gain step size for aotomatic
   static double gain = 0.0;
   static double max_gain = 0.0;
   static double min_gain = 0.0;
@@ -473,9 +473,18 @@ static void* autogain_thread_function(void* arg) {
         set_rf_gain(active_receiver->id, gain - 3.0); // decrease gain -3db
         pthread_mutex_unlock(&autogain_mutex);
         autogain_is_adjusted = 1;
+        last_autogain_increase = current_time; // patch by DH0DM
         g_idle_add(ext_vfo_update, NULL);
         // g_usleep(500000); // wait 0.5s
         sleep(2);
+      }
+    }
+
+    // patch by DH0DM: add time-controlled adjustment
+    if (autogain_time_enabled && autogain_is_adjusted) {
+      if (current_time.tv_sec - last_autogain_increase.tv_sec > re_adjustment_time) {
+        autogain_is_adjusted = 0;
+        t_print("%s: recall time-controlled autogain adjustment\n", __FUNCTION__);
       }
     }
 
@@ -497,6 +506,12 @@ void launch_autogain_hl2() {
     pthread_cancel(autogain_thread);
     t_print("---- Shutdown HL2 AutoGain Thread ----\n");
   }
+}
+
+void restart_autogain_hl2() {
+  pthread_cancel(autogain_thread);
+  t_print("%s\n", __FUNCTION__);
+  launch_autogain_hl2();
 }
 
 #endif

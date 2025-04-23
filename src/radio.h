@@ -184,6 +184,7 @@ extern gchar own_callsign[32];
 #endif
 #if defined (__LDESK__)
   extern int autogain_enabled;
+  extern int autogain_time_enabled;
 #endif
 
 extern int receivers;

@@ -231,6 +231,7 @@ int mic_input_xlr = 0;
 #if defined (__LDESK__)
 struct audio_profile mic_prof = {0, {"NOMIC", "NOMIC", "NOMIC"}};
 int autogain_enabled = 0;
+int autogain_time_enabled = 0;
 gchar own_callsign[32] = "YOUR_CALLSIGN";
 #endif
 int receivers;
@@ -2767,6 +2768,7 @@ static void radio_restore_state() {
   }
 
   GetPropI0("autogain_enabled",                              autogain_enabled);
+  GetPropI0("autogain_time_enabled",                         autogain_time_enabled);
 #endif
   GetPropI0("tx_filter_low",                                 tx_filter_low);
   GetPropI0("tx_filter_high",                                tx_filter_high);
@@ -3001,6 +3003,7 @@ void radio_save_state() {
   }
 
   SetPropI0("autogain_enabled",                              autogain_enabled);
+  SetPropI0("autogain_time_enabled",                         autogain_time_enabled);
 #endif
   SetPropI0("tx_filter_low",                                 tx_filter_low);
   SetPropI0("tx_filter_high",                                tx_filter_high);
