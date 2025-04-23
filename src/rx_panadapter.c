@@ -221,7 +221,7 @@ void get_local_time(char *zeitString, size_t groesse) {
 
 static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
   int value = (((int)noise_value / 10) - ((int)noise_value % 10 != 0 ? 1 : 0)) * 10 + offset_db;
-  value = (value > -100) ? -100 : (value < -145) ? -145 : value;
+  value = (value > -100) ? -100 : (value < -220) ? -220 : value;
   return value;
 }
 
