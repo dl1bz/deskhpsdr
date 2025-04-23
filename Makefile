@@ -1279,7 +1279,8 @@ src/rx_panadapter.o: src/appearance.h src/agc.h src/band.h src/bandstack.h
 src/rx_panadapter.o: src/discovered.h src/radio.h src/adc.h src/dac.h
 src/rx_panadapter.o: src/receiver.h src/transmitter.h src/rx_panadapter.h
 src/rx_panadapter.o: src/vfo.h src/mode.h src/actions.h src/message.h
-src/rx_panadapter.o: src/gpio.h src/ozyio.h src/audio.h src/map_d.h
+src/rx_panadapter.o: src/toolset.h src/gpio.h src/ozyio.h src/audio.h
+src/rx_panadapter.o: src/map_d.h
 src/saturn_menu.o: src/new_menu.h src/saturn_menu.h src/saturnserver.h
 src/saturn_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/saturn_menu.o: src/receiver.h src/transmitter.h
