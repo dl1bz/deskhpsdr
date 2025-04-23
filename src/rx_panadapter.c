@@ -219,6 +219,12 @@ void get_local_time(char *zeitString, size_t groesse) {
            Zeit.tm_sec);
 }
 
+static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
+  int value = (((int)noise_value / 10) - ((int)noise_value % 10 != 0 ? 1 : 0)) * 10 + offset_db;
+  value = (value > -100) ? -100 : (value < -145) ? -145 : value;
+  return value;
+}
+
 /*
 int compare_doubles(const void *a, const void *b) {
   double arg1 = *(const double *)a;
@@ -663,6 +669,44 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   #endif
   */
+
+  if (rx->panadapter_autoscale_enabled) {
+    double noise_floor_level = 0.0;
+    double ignore_noise_percentile = 80.0;
+    double *qsorted_samples = malloc(mywidth * sizeof(double));
+    static double noise_floor_level_sum = 0.0;
+    static int lfd_messung = 0;
+    // static struct timespec current_time, last_autogain_change;
+    // static int re_adjustment_time = 30; // in sec
+
+    if (qsorted_samples != NULL) {
+      for (int i = 0; i < mywidth; i++) {
+        qsorted_samples[i] = (double)samples[i + rx->pan] + soffset;
+      }
+
+      qsort(qsorted_samples, mywidth, sizeof(double), compare_doubles);
+      int index = (int)((ignore_noise_percentile / 100.0) * mywidth);
+      noise_floor_level = qsorted_samples[index] + 3.0;
+      // t_print("noise_floor = %f\n", noise_floor_level);
+      free(qsorted_samples); // Free memory after use
+    }
+
+    noise_floor_level_sum += noise_floor_level;
+    lfd_messung++;
+
+    if (lfd_messung >= rx->fps) {
+      noise_floor_level = noise_floor_level_sum / rx->fps;  // Glätten des Wertes
+      rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
+
+      if (rx->panadapter_high <= -50) {
+        rx->panadapter_high = -50;
+      }
+
+      noise_floor_level_sum = 0.0;
+      lfd_messung = 0;
+    }
+  }
+
   if (rx->panadapter_peaks_on != 0) {
     int num_peaks = rx->panadapter_num_peaks;
     /*

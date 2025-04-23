@@ -183,6 +183,7 @@ typedef struct _receiver {
   int panadapter_peaks_in_passband_filled;
   int panadapter_peaks_as_smeter;
   int panadapter_ovf_on;
+  int panadapter_autoscale_enabled;
 
   int waterfall_low;
   int waterfall_high;

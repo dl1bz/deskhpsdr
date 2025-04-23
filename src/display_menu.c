@@ -209,6 +209,11 @@ static void panadapter_ignore_noise_percentile_value_changed_cb(GtkWidget *widge
   active_receiver->panadapter_ignore_noise_percentile = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 }
 
+static void panadapter_autoscale_toggle_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->panadapter_autoscale_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_reconfigure();
+}
+
 static void waterfall_high_value_changed_cb(GtkWidget *widget, gpointer data) {
   active_receiver->waterfall_high = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 }
@@ -425,6 +430,19 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_show(waterfall_automatic_b);
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_automatic_b, col, row, 1, 1);
   g_signal_connect(waterfall_automatic_b, "toggled", G_CALLBACK(waterfall_automatic_cb), NULL);
+  //--------------------------------------------------------------------------------------------------------------
+  label = gtk_label_new("Panadapter Automatic:\n(Noisefloor)");
+  gtk_widget_set_name (label, "boldlabel_blue");
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_RIGHT);
+  gtk_grid_attach(GTK_GRID(general_grid), label, 0, row + 1, 1, 1);
+  GtkWidget *panadapter_autoscale_btn = gtk_check_button_new();
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (panadapter_autoscale_btn),
+                                active_receiver->panadapter_autoscale_enabled);
+  gtk_widget_show(panadapter_autoscale_btn);
+  gtk_grid_attach(GTK_GRID(general_grid), panadapter_autoscale_btn, 1, row + 1, 1, 1);
+  g_signal_connect(panadapter_autoscale_btn, "toggled", G_CALLBACK(panadapter_autoscale_toggle_cb), NULL);
+  //--------------------------------------------------------------------------------------------------------------
   col = 2;
   row = 1;
   label = gtk_label_new("Detector:");
