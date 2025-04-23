@@ -2424,6 +2424,15 @@ void vfo_update() {
 #endif
 #if defined (__LDESK__) && defined (__HAVEATU__)
 
+    cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 50);
+    if (active_receiver->panadapter_autoscale_enabled) {
+      cairo_set_source_rgba(cr, COLOUR_OK);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+    }
+    snprintf(temp_text, 32, "NFA");
+    cairo_show_text(cr, temp_text);
+
     if (vfl->tuned_x != 0) {
       cairo_move_to(cr, vfl->tuned_x, vfl->tuned_y);
 

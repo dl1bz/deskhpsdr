@@ -30,6 +30,7 @@
 #include "new_menu.h"
 #include "display_menu.h"
 #include "radio.h"
+#include "ext.h"
 
 enum _containers {
   GENERAL_CONTAINER = 1,
@@ -212,6 +213,7 @@ static void panadapter_ignore_noise_percentile_value_changed_cb(GtkWidget *widge
 static void panadapter_autoscale_toggle_cb(GtkWidget *widget, gpointer data) {
   active_receiver->panadapter_autoscale_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_reconfigure();
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 static void waterfall_high_value_changed_cb(GtkWidget *widget, gpointer data) {
