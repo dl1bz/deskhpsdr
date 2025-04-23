@@ -401,9 +401,8 @@ static void* autogain_thread_function(void* arg) {
               (int)elapsed_time);
     }
 
-    if (!(radio_is_transmitting())) {
-      pthread_mutex_lock(&autogain_mutex);
-
+    if (!radio_is_transmitting() && !radio_ptt) {
+      // pthread_mutex_lock(&autogain_mutex);
       if (adc0_overload) {
         adc0_error_count++;   // if ADC0 OVL increase counter
       } else {
@@ -433,7 +432,9 @@ static void* autogain_thread_function(void* arg) {
             gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
           }
 
+          pthread_mutex_lock(&autogain_mutex);
           set_rf_gain(active_receiver->id, gain); // set new gain
+          pthread_mutex_unlock(&autogain_mutex);
           // sleep(1);
           g_usleep(500000);  // wait 0.5s
         }
@@ -451,7 +452,9 @@ static void* autogain_thread_function(void* arg) {
             gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
           }
 
+          pthread_mutex_lock(&autogain_mutex);
           set_rf_gain(active_receiver->id, gain); // set new gain
+          pthread_mutex_unlock(&autogain_mutex);
           // sleep(1);
           g_usleep(500000); // wait 0.5s
         }
@@ -460,11 +463,15 @@ static void* autogain_thread_function(void* arg) {
       if (!adc0_overload && !autogain_is_adjusted && !autogain_first_run) {
         while (!adc0_overload && gain >= min_gain && gain < max_gain) {
           gain += 1.0;                                  // increase gain +1db
+          pthread_mutex_lock(&autogain_mutex);
           set_rf_gain(active_receiver->id, gain);       // set gain
+          pthread_mutex_unlock(&autogain_mutex);
           g_usleep(500000); // wait 0.5s
         }
 
+        pthread_mutex_lock(&autogain_mutex);
         set_rf_gain(active_receiver->id, gain - 3.0); // decrease gain -3db
+        pthread_mutex_unlock(&autogain_mutex);
         autogain_is_adjusted = 1;
         g_idle_add(ext_vfo_update, NULL);
         // g_usleep(500000); // wait 0.5s
@@ -472,7 +479,7 @@ static void* autogain_thread_function(void* arg) {
       }
     }
 
-    pthread_mutex_unlock(&autogain_mutex);
+    // pthread_mutex_unlock(&autogain_mutex);
     sleep(1); // wait 1s in main thread loop
   }
 

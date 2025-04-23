@@ -41,12 +41,14 @@ int solar_flux = -1;
 char geomagfield[32];
 char xray[16];
 
-gboolean is_5min_marker() {
+static gboolean is_minute_marker(int interval) {
   static int last_minute = -1;
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
+  // Intervall prüfen und anpassen
+  interval = (interval < 1) ? 5 : (interval > 59) ? 45 : interval;
 
-  if ((t->tm_min % 5 == 0) && (t->tm_min != last_minute)) {
+  if ((t->tm_min % interval == 0) && (t->tm_min != last_minute)) {
     last_minute = t->tm_min;
     return TRUE;
   }
@@ -174,6 +176,7 @@ void assign_solar_data(int is_dbg) {
 void check_and_run(int is_dbg) {
   static struct timespec last_check = {0};
   static gboolean first_run = TRUE;
+  static int aller_x_min = 15; // jede 5min
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);  // Hochauflösende monotone Uhr
   // Zeitdifferenz in Millisekunden berechnen
@@ -183,8 +186,8 @@ void check_and_run(int is_dbg) {
   if (diff_ms >= 200) {
     last_check = now;
 
-    // Beim ersten Mal oder bei neuer 5-Minuten-Marke
-    if (first_run || is_5min_marker()) {
+    // Beim ersten Mal oder bei neuer x-Minuten-Marke
+    if (first_run || is_minute_marker(aller_x_min)) {
       assign_solar_data(is_dbg);
       first_run = FALSE;
     }
@@ -233,4 +236,10 @@ char* truncate_text_3p(const char* text, size_t max_length) {
   g_strlcpy(truncated, text, cut_len + 1);     // +1, weil g_strlcpy inkl. Nullbyte
   strcat(truncated, "...");  // Anhängen
   return truncated;  // Muss mit g_free() freigegeben werden
+}
+
+gboolean check_and_run_idle_cb(gpointer data) {
+  int arg = GPOINTER_TO_INT(data);
+  check_and_run(arg);
+  return FALSE; // Nur einmal ausführen
 }
