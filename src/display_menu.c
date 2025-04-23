@@ -46,6 +46,8 @@ static GtkWidget *peaks_container;
 static GtkWidget *dialog = NULL;
 static GtkWidget *waterfall_high_r = NULL;
 static GtkWidget *waterfall_low_r = NULL;
+static GtkWidget *panadapter_high_r = NULL;
+static GtkWidget *panadapter_low_r = NULL;
 static GtkWidget *general_container;
 static GtkWidget *peaks_container;
 static GtkWidget *b_display_solardata;
@@ -214,6 +216,11 @@ static void panadapter_autoscale_toggle_cb(GtkWidget *widget, gpointer data) {
   active_receiver->panadapter_autoscale_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_reconfigure();
   g_idle_add(ext_vfo_update, NULL);
+  if (active_receiver->panadapter_autoscale_enabled) {
+    gtk_widget_set_sensitive(panadapter_low_r, FALSE);
+  } else {
+    gtk_widget_set_sensitive(panadapter_low_r, TRUE);
+  }
 }
 
 static void waterfall_high_value_changed_cb(GtkWidget *widget, gpointer data) {
@@ -367,7 +374,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
-  GtkWidget *panadapter_high_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
+  panadapter_high_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_high_r), (double)active_receiver->panadapter_high);
   gtk_widget_show(panadapter_high_r);
   gtk_grid_attach(GTK_GRID(general_grid), panadapter_high_r, col, row, 1, 1);
@@ -379,7 +386,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
-  GtkWidget *panadapter_low_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
+  panadapter_low_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_low_r), (double)active_receiver->panadapter_low);
   gtk_widget_show(panadapter_low_r);
   gtk_grid_attach(GTK_GRID(general_grid), panadapter_low_r, col, row, 1, 1);
@@ -674,6 +681,10 @@ void display_menu(GtkWidget *parent) {
   if (active_receiver->waterfall_automatic) {
     gtk_widget_set_sensitive(waterfall_high_r, FALSE);
     gtk_widget_set_sensitive(waterfall_low_r, FALSE);
+  }
+
+  if (active_receiver->panadapter_autoscale_enabled) {
+    gtk_widget_set_sensitive(panadapter_low_r, FALSE);
   }
 
   gtk_widget_show_all(dialog);
