@@ -431,7 +431,7 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_automatic_b, col, row, 1, 1);
   g_signal_connect(waterfall_automatic_b, "toggled", G_CALLBACK(waterfall_automatic_cb), NULL);
   //--------------------------------------------------------------------------------------------------------------
-  label = gtk_label_new("Panadapter Automatic:\n(Noisefloor)");
+  label = gtk_label_new("Panadapter Automatic:\n(Related to Noisefloor)");
   gtk_widget_set_name (label, "boldlabel_blue");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_RIGHT);
