@@ -23,6 +23,7 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include <string.h>
+#include <curl/curl.h>
 
 #include "main.h"
 #include "new_menu.h"
@@ -54,6 +55,8 @@ void stop_program() {
   t_print("%s: protocol stopped\n", __FUNCTION__);
   radio_stop();
   t_print("%s: radio stopped\n", __FUNCTION__);
+  t_print("%s: cleanup global cURL...\n", __FUNCTION__);
+  curl_global_cleanup();
 
   if (have_saturn_xdma) {
 #ifdef SATURN

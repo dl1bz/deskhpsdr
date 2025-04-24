@@ -135,8 +135,8 @@ waterfall_draw_cb (GtkWidget *widget,
       cairo_show_text(cr, _text);
 
       if (display_solardata) {
-        // check_and_run(1);  // 0=no_log_output, 1=print_to_log
-        g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
+        check_and_run(1);  // 0=no_log_output, 1=print_to_log
+        // g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
 #if defined (__APPLE__)
         cairo_move_to(cr, (b_width / 4) + 20, b_height - 10);
 #else

@@ -29,10 +29,13 @@
 #include <arpa/inet.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <pthread.h>
 
 #include "toolset.h"
 #include "solar.h"
 #include "message.h"
+
+GMutex solar_data_mutex;
 
 int sunspots = -1;
 int a_index = -1;
@@ -150,6 +153,8 @@ cleanup:
   return erfolg;
 }
 
+/*
+// get Solar Data without threading -> can block the GTK main thread/GUI -> bad
 void assign_solar_data(int is_dbg) {
   time_t now = time(NULL);
   const char* host = "www.hamqsl.com";
@@ -172,11 +177,58 @@ void assign_solar_data(int is_dbg) {
     t_print("%s failed: host %s not reachable\n", __FUNCTION__, host);
   }
 }
+*/
+
+static void *solar_thread_func(void *arg) {
+  int is_dbg = GPOINTER_TO_INT(arg);
+  time_t now = time(NULL);
+  const char* host = "www.hamqsl.com";
+
+  if (https_ok(host, 0)) {
+    // Lokale Kopie holen
+    SolarData sd = fetch_solar_data();
+
+    // Ergebnis sichern – mit Mutex schützen
+    if (sd.sunspots != -1) {  // we got valid solar data
+      g_mutex_lock(&solar_data_mutex);
+      sunspots = sd.sunspots;
+      solar_flux = (int)sd.solarflux;
+      a_index = sd.aindex;
+      k_index = sd.kindex;
+      g_strlcpy(geomagfield, sd.geomagfield, sizeof(sd.geomagfield));
+      g_strlcpy(xray, sd.xray, sizeof(sd.xray));
+      g_mutex_unlock(&solar_data_mutex);
+
+      if (is_dbg) {
+        t_print("fetch data from %s at %s", host, ctime(&now));
+        t_print("Sunspots: %d, Flux: %d, A: %d, K: %d, X:%s, GMF:%s\n",
+                sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+      }
+    } else {
+      t_print("%s: ERROR: invalid data from %s at %s", __FUNCTION__, host, ctime(&now));
+    }
+  } else {
+    t_print("%s failed: host %s at %s not reachable\n", __FUNCTION__, host, ctime(&now));
+  }
+
+  return NULL;
+}
+
+// get Solar Data with threading -> best solution
+static void assign_solar_data_async(int is_dbg) {
+  pthread_t solar_thread;
+
+  if (pthread_create(&solar_thread, NULL, solar_thread_func, GINT_TO_POINTER(is_dbg)) == 0) {
+    pthread_detach(solar_thread); // kein join nötig
+  } else {
+    t_print("%s: ERROR: solar_data_fetch thread not started...\n", __FUNCTION__);
+  }
+}
 
 void check_and_run(int is_dbg) {
   static struct timespec last_check = {0};
   static gboolean first_run = TRUE;
-  static int aller_x_min = 15; // jede 5min
+  static int aller_x_min = 5; // jede 5min
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);  // Hochauflösende monotone Uhr
   // Zeitdifferenz in Millisekunden berechnen
@@ -188,7 +240,8 @@ void check_and_run(int is_dbg) {
 
     // Beim ersten Mal oder bei neuer x-Minuten-Marke
     if (first_run || is_minute_marker(aller_x_min)) {
-      assign_solar_data(is_dbg);
+      // assign_solar_data(is_dbg);
+      assign_solar_data_async(is_dbg); // nicht mehr direkt aufrufen! jetzt als Thread
       first_run = FALSE;
     }
   }

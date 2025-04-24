@@ -62,7 +62,7 @@ SolarData fetch_solar_data() {
     return data;
   }
 
-  curl_global_init(CURL_GLOBAL_ALL);
+  // curl_global_init(CURL_GLOBAL_ALL);  // call only one time per program run -> moved to main.c
   curl_easy_setopt(curl, CURLOPT_URL, URL);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
@@ -125,6 +125,6 @@ SolarData fetch_solar_data() {
 cleanup:
   curl_easy_cleanup(curl);
   free(chunk.memory);
-  curl_global_cleanup();
+  // curl_global_cleanup();  call only one time per program run -> moved to exit_menu.c
   return data;
 }

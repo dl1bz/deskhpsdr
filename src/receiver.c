@@ -735,7 +735,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->displaying = 0;
   rx->display_panadapter = 1;
   rx->display_waterfall = 1;
-  rx->panadapter_high = -40;
+  rx->panadapter_high = -55;
   rx->panadapter_low = -140;
   rx->panadapter_step = 20;
   rx->panadapter_peaks_on = 0;
@@ -746,15 +746,15 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_peaks_in_passband_filled = 0;
   rx->panadapter_peaks_as_smeter = 0;
   rx->panadapter_ovf_on  = 1;
-  rx->panadapter_autoscale_enabled = 1;
-  rx->waterfall_high = -40;
+  rx->panadapter_autoscale_enabled = 0;
+  rx->waterfall_high = -55;
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;
   rx->display_filled = 1;
   rx->display_gradient = 1;
   rx->display_detector_mode = DET_AVERAGE;
   rx->display_average_mode = AVG_LOGRECURSIVE;
-  rx->display_average_time = 120.0;
+  rx->display_average_time = 250.0;
   rx->volume = -20.0;
   rx->dither = 0;
   rx->random = 0;

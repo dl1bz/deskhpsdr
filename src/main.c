@@ -30,6 +30,7 @@
 #include <sys/resource.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <curl/curl.h>
 
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
@@ -807,6 +808,8 @@ int main(int argc, char **argv) {
   t_print("Base priority after adjustment: %d\n", rc);
   startup(argv[0]);
 #if defined (__LDESK__)
+  t_print("%s: init global cURL...\n", __FUNCTION__);
+  curl_global_init(CURL_GLOBAL_ALL);
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
   t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);

@@ -27,9 +27,7 @@ extern int solar_flux;
 extern char geomagfield[32];
 extern char xray[16];
 
-extern gboolean is_5min_marker(void);
 extern int https_ok(const char* hostname, int mit_cert_check);
-extern void assign_solar_data(int is_dbg);
 extern void check_and_run(int is_dbg);
 extern const char* truncate_text(const char* text, size_t max_length);
 extern char* truncate_text_malloc(const char* text, size_t max_length);

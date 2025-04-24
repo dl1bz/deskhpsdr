@@ -216,6 +216,7 @@ static void panadapter_autoscale_toggle_cb(GtkWidget *widget, gpointer data) {
   active_receiver->panadapter_autoscale_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_reconfigure();
   g_idle_add(ext_vfo_update, NULL);
+
   if (active_receiver->panadapter_autoscale_enabled) {
     gtk_widget_set_sensitive(panadapter_low_r, FALSE);
   } else {
@@ -374,7 +375,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
-  panadapter_high_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
+  panadapter_high_r = gtk_spin_button_new_with_range(-175.0, 50.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_high_r), (double)active_receiver->panadapter_high);
   gtk_widget_show(panadapter_high_r);
   gtk_grid_attach(GTK_GRID(general_grid), panadapter_high_r, col, row, 1, 1);
@@ -386,7 +387,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
-  panadapter_low_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
+  panadapter_low_r = gtk_spin_button_new_with_range(-175.0, 50.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_low_r), (double)active_receiver->panadapter_low);
   gtk_widget_show(panadapter_low_r);
   gtk_grid_attach(GTK_GRID(general_grid), panadapter_low_r, col, row, 1, 1);
@@ -410,7 +411,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
-  waterfall_high_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
+  waterfall_high_r = gtk_spin_button_new_with_range(-175.0, 50.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(waterfall_high_r), (double)active_receiver->waterfall_high);
   gtk_widget_show(waterfall_high_r);
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_high_r, col, row, 1, 1);
@@ -422,7 +423,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
-  waterfall_low_r = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
+  waterfall_low_r = gtk_spin_button_new_with_range(-175.0, 50.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(waterfall_low_r), (double)active_receiver->waterfall_low);
   gtk_widget_show(waterfall_low_r);
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_low_r, col, row, 1, 1);
