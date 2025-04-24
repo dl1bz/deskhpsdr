@@ -56,6 +56,8 @@
 #endif
 
 char zeitString[20];
+static time_t last_noisefloor_calc_time = 0;  // Zeit der letzten Berechnung
+
 #if defined (__WMAP__)
 //------------------------------------------------------------------------------
 static GdkPixbuf *pixbuf = NULL;
@@ -671,14 +673,18 @@ void rx_panadapter_update(RECEIVER *rx) {
   */
 
   if (rx->panadapter_autoscale_enabled) {
-    double noise_floor_level = 0.0;
-    double ignore_noise_percentile = 80.0;
+    double noise_floor_level = -175.0; // inital value
+    double ignore_noise_percentile = 80.0; // means 80%
     double *qsorted_samples = malloc(mywidth * sizeof(double));
-    static double noise_floor_level_sum = 0.0;
-    static int lfd_messung = 0;
-    // static struct timespec current_time, last_autogain_change;
-    // static int re_adjustment_time = 30; // in sec
+    static double noise_floor_level_sum = 0.0; // inital value
+    static int anz_messungen = 0; // initial value
+    static int noisefloor_first_run_flag = 1;
+    static int noisefloor_update_interval = 5; // in sec
+    // Berechne die aktuelle Zeit
+    time_t current_time;
+    time(&current_time);
 
+    // calculate the noise level from samples
     if (qsorted_samples != NULL) {
       for (int i = 0; i < mywidth; i++) {
         qsorted_samples[i] = (double)samples[i + rx->pan] + soffset;
@@ -692,18 +698,36 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
 
     noise_floor_level_sum += noise_floor_level;
-    lfd_messung++;
+    anz_messungen++;
 
-    if (lfd_messung >= rx->fps) {
-      noise_floor_level = noise_floor_level_sum / rx->fps;  // Glätten des Wertes
+    if (anz_messungen >= rx->fps) { // number of runs = rx->fps
+      noise_floor_level = noise_floor_level_sum / rx->fps;  // flatten the noise_floor_level
+      /*
       rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
+        if (rx->panadapter_high <= -50) {
+          rx->panadapter_high = -50;
+      }
+      */
+      noise_floor_level_sum = 0.0;
+      anz_messungen = 0;
+      noisefloor_first_run_flag = 0;
+    }
+
+    // Überprüfe, ob 5 Minuten vergangen sind, bevor rx->panadapter_low angepasst wird
+    if (noisefloor_first_run_flag
+        || difftime(current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
+      if (abs(autoscale_panadapter_with_offset(noise_floor_level, -5) - rx->panadapter_low) > 10) {
+        t_print("%s: rx->panadapter_low: %d noise_floor: %d\n", __FUNCTION__, rx->panadapter_low,
+                autoscale_panadapter_with_offset(noise_floor_level, -5));
+        rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
+      }
 
       if (rx->panadapter_high <= -50) {
         rx->panadapter_high = -50;
       }
 
-      noise_floor_level_sum = 0.0;
-      lfd_messung = 0;
+      // update time of the last calculation
+      last_noisefloor_calc_time = current_time;
     }
   }
 
@@ -1024,7 +1048,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   gtk_widget_queue_draw (rx->panadapter);
 }
 
-void rx_panadapter_init(RECEIVER *rx, int width, int height) {
+void rx_panadapter_init(RECEIVER * rx, int width, int height) {
   rx->panadapter_surface = NULL;
   rx->panadapter = gtk_drawing_area_new ();
   gtk_widget_set_size_request (rx->panadapter, width, height);
@@ -1054,7 +1078,6 @@ void rx_panadapter_init(RECEIVER *rx, int width, int height) {
                          | GDK_POINTER_MOTION_MASK
                          | GDK_POINTER_MOTION_HINT_MASK);
 }
-
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   char text[64];
 
