@@ -1275,31 +1275,26 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   // show RX200 data
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
-
   double rx200_x = 0.0;
 
   if (can_transmit && rx200_udp_valid) {
     snprintf(_text, 128, "Fwd:");
     cairo_move_to(cr, width - 300, 30.0);
     cairo_show_text(cr, _text);
-
     snprintf(_text, 128, "Ref:");
     cairo_move_to(cr, width - 300, 50.0);
     cairo_show_text(cr, _text);
-
     cairo_text_extents_t rx200_extents;
     snprintf(_text, 128, "%s W", g_rx200_data[0]);
     cairo_text_extents(cr, _text, &rx200_extents);
     rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
     cairo_move_to(cr, rx200_x, 30.0);
     cairo_show_text(cr, _text);
-
     snprintf(_text, 128, "%s W", g_rx200_data[1]);
     cairo_text_extents(cr, _text, &rx200_extents);
     rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
     cairo_move_to(cr, rx200_x, 50.0);
     cairo_show_text(cr, _text);
-
     snprintf(_text, 128, "%s", g_rx200_data[3]);
     cairo_move_to(cr, width - 190.0, 30.0);
     cairo_show_text(cr, _text);
@@ -1309,6 +1304,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     } else {
       snprintf(_text, 128, " ");
     }
+
     cairo_move_to(cr, width - 190.0, 50.0);
     cairo_show_text(cr, _text);
 
@@ -1317,12 +1313,11 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     } else {
       snprintf(_text, 128, " ");
     }
+
     cairo_text_extents(cr, _text, &rx200_extents);
     rx200_x = width - 90.0 - (rx200_extents.width + rx200_extents.x_bearing);
     cairo_move_to(cr, rx200_x, 50.0);
     cairo_show_text(cr, _text);
-
-
   } else {
     snprintf(_text, 128, " ");
     cairo_move_to(cr, width - 300.0, 30.0);
