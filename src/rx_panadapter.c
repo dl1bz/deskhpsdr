@@ -57,6 +57,7 @@
 
 char zeitString[20];
 static time_t last_noisefloor_calc_time = 0;  // Zeit der letzten Berechnung
+int g_noise_level = 0;
 
 #if defined (__WMAP__)
 //------------------------------------------------------------------------------
@@ -680,6 +681,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     static int anz_messungen = 0; // initial value
     static int noisefloor_first_run_flag = 1;
     static int noisefloor_update_interval = 5; // in sec
+    static int panadapter_scale_corr_f = 5;
     // Berechne die aktuelle Zeit
     time_t current_time;
     time(&current_time);
@@ -702,6 +704,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (anz_messungen >= rx->fps) { // number of runs = rx->fps
       noise_floor_level = noise_floor_level_sum / rx->fps;  // flatten the noise_floor_level
+      g_noise_level = (int)noise_floor_level - 3;
       /*
       rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
         if (rx->panadapter_high <= -50) {
@@ -720,7 +723,7 @@ void rx_panadapter_update(RECEIVER *rx) {
           || rx->panadapter_low < autoscale_panadapter_with_offset(noise_floor_level, -5)) {
         t_print("%s: rx->panadapter_low: %d noise_floor: %d\n", __FUNCTION__, rx->panadapter_low,
                 autoscale_panadapter_with_offset(noise_floor_level, -5));
-        rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
+        rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5) - panadapter_scale_corr_f;
       }
 
       if (rx->panadapter_high <= -50) {
