@@ -421,11 +421,11 @@ static void* autogain_thread_function(void* arg) {
         gain = max_gain;  // Sicherstellen, dass GAIN nicht größer als MAX_GAIN
       }
 
-      if (adc0_error_count >= adc_count_limit && !autogain_first_run) {
+      if (!radio_is_transmitting() && !radio_ptt && adc0_error_count >= adc_count_limit && !autogain_first_run) {
         autogain_is_adjusted = 0;
         g_idle_add(ext_vfo_update, NULL);
 
-        while (adc0_overload && gain > min_gain) {
+        while (!radio_is_transmitting() && !radio_ptt && adc0_overload && gain > min_gain) {
           gain -= gain_step; // decrease gain with gain_step
 
           if (gain < min_gain) {
@@ -444,8 +444,8 @@ static void* autogain_thread_function(void* arg) {
         t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __FUNCTION__, active_receiver->id, (int)gain);
       }
 
-      if (adc1_error_count >= adc_count_limit && !autogain_first_run) {
-        while (adc1_overload && gain > min_gain) {
+      if (!radio_is_transmitting() && !radio_ptt && adc1_error_count >= adc_count_limit && !autogain_first_run) {
+        while (!radio_is_transmitting() && !radio_ptt && adc1_overload && gain > min_gain) {
           gain -= gain_step; // decrease gain with gain_step
 
           if (gain < min_gain) {
@@ -460,8 +460,8 @@ static void* autogain_thread_function(void* arg) {
         }
       }
 
-      if (!adc0_overload && !autogain_is_adjusted && !autogain_first_run) {
-        while (!adc0_overload && gain >= min_gain && gain < max_gain) {
+      if (!radio_is_transmitting() && !radio_ptt && !adc0_overload && !autogain_is_adjusted && !autogain_first_run) {
+        while (!radio_is_transmitting() && !radio_ptt && !adc0_overload && gain >= min_gain && gain < max_gain) {
           gain += 1.0;                                  // increase gain +1db
           pthread_mutex_lock(&autogain_mutex);
           set_rf_gain(active_receiver->id, gain);       // set gain
