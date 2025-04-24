@@ -161,7 +161,7 @@ waterfall_draw_cb (GtkWidget *widget,
   if (active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
       || active_receiver->display_panadapter == 1) && rx->id == 0 && !rx_stack_horizontal) {
     char _text[128];
-    cairo_set_source_rgba(cr, COLOUR_OK);
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
     snprintf(_text, 128, "%d db", g_noise_level);
     cairo_text_extents_t nf_extents;
     cairo_text_extents(cr, _text, &nf_extents);

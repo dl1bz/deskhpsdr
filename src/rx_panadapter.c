@@ -675,7 +675,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   if (rx->panadapter_autoscale_enabled) {
     double noise_floor_level = -175.0; // inital value
-    double ignore_noise_percentile = 80.0; // means 80%
+    double ignore_noise_percentile = 60.0; // means 80%
     double *qsorted_samples = malloc(mywidth * sizeof(double));
     static double noise_floor_level_sum = 0.0; // inital value
     static int anz_messungen = 0; // initial value
@@ -1276,19 +1276,53 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
 
+  double rx200_x = 0.0;
+
   if (can_transmit && rx200_udp_valid) {
-    cairo_move_to(cr, width - 300.0, 30.0);
-    snprintf(_text, 128, "Fwd  %sW", g_rx200_data[0]);
+    snprintf(_text, 128, "Fwd:");
+    cairo_move_to(cr, width - 300, 30.0);
     cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 300.0, 50.0);
-    snprintf(_text, 128, "Ref   %sW", g_rx200_data[1]);
+
+    snprintf(_text, 128, "Ref:");
+    cairo_move_to(cr, width - 300, 50.0);
     cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 190.0, 30.0);
+
+    cairo_text_extents_t rx200_extents;
+    snprintf(_text, 128, "%s W", g_rx200_data[0]);
+    cairo_text_extents(cr, _text, &rx200_extents);
+    rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
+    cairo_move_to(cr, rx200_x, 30.0);
+    cairo_show_text(cr, _text);
+
+    snprintf(_text, 128, "%s W", g_rx200_data[1]);
+    cairo_text_extents(cr, _text, &rx200_extents);
+    rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
+    cairo_move_to(cr, rx200_x, 50.0);
+    cairo_show_text(cr, _text);
+
     snprintf(_text, 128, "%s", g_rx200_data[3]);
+    cairo_move_to(cr, width - 190.0, 30.0);
     cairo_show_text(cr, _text);
+
+    if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
+      snprintf(_text, 128, "SWR:");
+    } else {
+      snprintf(_text, 128, " ");
+    }
     cairo_move_to(cr, width - 190.0, 50.0);
-    snprintf(_text, 128, "SWR %s", g_rx200_data[2]);
     cairo_show_text(cr, _text);
+
+    if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
+      snprintf(_text, 128, "%s:1", g_rx200_data[2]);
+    } else {
+      snprintf(_text, 128, " ");
+    }
+    cairo_text_extents(cr, _text, &rx200_extents);
+    rx200_x = width - 90.0 - (rx200_extents.width + rx200_extents.x_bearing);
+    cairo_move_to(cr, rx200_x, 50.0);
+    cairo_show_text(cr, _text);
+
+
   } else {
     snprintf(_text, 128, " ");
     cairo_move_to(cr, width - 300.0, 30.0);
