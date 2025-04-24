@@ -716,7 +716,8 @@ void rx_panadapter_update(RECEIVER *rx) {
     // Überprüfe, ob 5 Minuten vergangen sind, bevor rx->panadapter_low angepasst wird
     if (noisefloor_first_run_flag
         || difftime(current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
-      if (abs(autoscale_panadapter_with_offset(noise_floor_level, -5) - rx->panadapter_low) > 10) {
+      if (abs(autoscale_panadapter_with_offset(noise_floor_level, -5) - rx->panadapter_low) > 10
+          || rx->panadapter_low < autoscale_panadapter_with_offset(noise_floor_level, -5)) {
         t_print("%s: rx->panadapter_low: %d noise_floor: %d\n", __FUNCTION__, rx->panadapter_low,
                 autoscale_panadapter_with_offset(noise_floor_level, -5));
         rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
