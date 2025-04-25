@@ -1056,28 +1056,35 @@ static long long channel_freq(int chan) {
     // We have to adjust by the offset for CTUN mode
     //
     vfonum = vfo_get_tx_vfo();
-    freq = vfo[vfonum].frequency - vfo[vfonum].lo;
+    // freq = vfo[vfonum].frequency - vfo[vfonum].lo;
+    freq = vfo[vfonum].ctun ? vfo[vfonum].ctun_frequency : vfo[vfonum].frequency;
 
-    if (vfo[vfonum].ctun) { freq += vfo[vfonum].offset; }
+    // if (vfo[vfonum].ctun) { freq += vfo[vfonum].offset; }
+    if (vfo[vfonum].xit_enabled) {
+      freq += vfo[vfonum].xit;
+    }
 
-    if (vfo[vfonum].xit_enabled) { freq += vfo[vfonum].xit; }
+    // if (vfo[vfonum].xit_enabled) { freq += vfo[vfonum].xit; }
+    freq += frequency_calibration - vfo[vfonum].lo;
   } else {
     //
     // determine RX frequency associated with VFO #vfonum
     // This is the center freq in CTUN mode.
     //
-    freq = vfo[vfonum].frequency - vfo[vfonum].lo;
-
+    // freq = vfo[vfonum].frequency - vfo[vfonum].lo;
     // if (vfo[vfonum].rit_enabled) { freq += vfo[vfonum].rit; }
+    freq = vfo[vfonum].frequency;
 
     if (vfo[vfonum].mode == modeCWU) {
       freq -= (long long)cw_keyer_sidetone_frequency;
     } else if (vfo[vfonum].mode == modeCWL) {
       freq += (long long)cw_keyer_sidetone_frequency;
     }
+
+    freq += frequency_calibration - vfo[vfonum].lo;
   }
 
-  freq += frequency_calibration;
+  // freq += frequency_calibration;
   return freq;
 }
 
@@ -2139,7 +2146,7 @@ void ozy_send_buffer() {
       int power = 0;
       //
       //  Set DUC frequency.
-      //  txfreq is the "on the air" frequency for out-of-band checking
+      //  txfreq is the "on the air" frequency (for out-of-band checking)
       //
       long long DUCfrequency = channel_freq(-1);
       long long txfreq = DUCfrequency + vfo[txvfo].lo - frequency_calibration;
@@ -2196,10 +2203,10 @@ void ozy_send_buffer() {
         //
         // For "manual" filter selection we also need to select the appropriate TX LPF
         //
-        // We here use the transition frequencies used in Thetis by default. Note the
-        // P1 firmware has different default transition frequences.
-        // Even more odd, HERMES routes 15m through the 10/12 LPF, while
-        // Angelia routes 12m through the 17/15m LPF.
+        // Transition frequencies used here come from the Thetis code.
+        // Note the P1 firmware has different default transition frequences.
+        // Even more odd, the Hermes firmware routes 15m through the 10/12 LPF, while
+        // the Angelia firmware routes 12m through the 17/15m LPF.
         //
         if (DUCfrequency > 35600000L) {            // > 10m so use 6m LPF
           output_buffer[C4] = 0x10;
@@ -2579,11 +2586,11 @@ void ozy_send_buffer() {
         //
         // Leave C0-C4 untouched such that PTThang/TXlateny is actually sent
         //
-        hl2_iob_tx_freq = vfo[txvfo].frequency;
+        hl2_iob_tx_freq = vfo[txvfo].ctun ? vfo[txvfo].ctun_frequency : vfo[txvfo].frequency;
 
-        if (vfo[txvfo].ctun) { hl2_iob_tx_freq += vfo[txvfo].offset; }
-
-        if (vfo[txvfo].xit_enabled) { hl2_iob_tx_freq += vfo[txvfo].xit; }
+        if (vfo[txvfo].xit_enabled) {
+          hl2_iob_tx_freq += vfo[txvfo].xit;
+        }
 
         hl2_iob_rx1_code = (int)(0.5 + 15.47 * log((double)vfo[VFO_A].frequency / 18748.1));
         hl2_iob_rx2_code = (int)(0.5 + 15.47 * log((double)vfo[VFO_B].frequency / 18748.1));

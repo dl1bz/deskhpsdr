@@ -752,11 +752,11 @@ static void new_protocol_high_priority() {
   //  Set DDC frequencies for RX1 and RX2
   //
   for (int id = 0; id < 2; id++) {
-    DDCfrequency[id] = vfo[id].frequency - vfo[id].lo;
-
+    // DDCfrequency[id] = vfo[id].frequency - vfo[id].lo;
     // if (vfo[id].rit_enabled) {
     //  DDCfrequency[id] += vfo[id].rit;
     // }
+    DDCfrequency[id] = vfo[id].frequency;
 
     if (vfo[id].mode == modeCWU) {
       DDCfrequency[id] -= (long long)cw_keyer_sidetone_frequency;
@@ -764,7 +764,7 @@ static void new_protocol_high_priority() {
       DDCfrequency[id] += (long long)cw_keyer_sidetone_frequency;
     }
 
-    DDCfrequency[id] += frequency_calibration;
+    DDCfrequency[id] += frequency_calibration -  vfo[id].lo;
   }
 
   // CW mode from the Host; disabled since pihpsdr does not use this CW option.
@@ -815,11 +815,11 @@ static void new_protocol_high_priority() {
   //  Set DUC frequency.
   //  txfreq is the "on the air" frequency for out-of-band checking
   //
-  txfreq = vfo[txvfo].frequency;
+  txfreq = vfo[txvfo].ctun ? vfo[txvfo].ctun_frequency : vfo[txvfo].frequency;
 
-  if (vfo[txvfo].ctun) { txfreq += vfo[txvfo].offset; }
-
-  if (vfo[txvfo].xit_enabled) { txfreq += vfo[txvfo].xit; }
+  if (vfo[txvfo].xit_enabled) {
+    txfreq += vfo[txvfo].xit;
+  }
 
   DUCfrequency = txfreq - vfo[txvfo].lo + frequency_calibration;
   phase = (unsigned long)(((double)DUCfrequency) * 34.952533333333333333333333333333);
