@@ -389,6 +389,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.dialog_y",          tx->id,               tx->dialog_y);
   SetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   SetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
+  SetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
 
   for (int i = 0; i < 11; i++) {
     SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
@@ -476,6 +477,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.dialog_y",          tx->id,               tx->dialog_y);
   GetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   GetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
+  GetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
 
   for (int i = 0; i < 11; i++) {
     GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
@@ -1082,6 +1084,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->swr_alarm = 3.0;     // default value for SWR protection
   tx->alc = 0.0;
   tx->eq_enable = 0;
+  tx->eq_ctfmode = 0;
   tx->eq_freq[0]  =     0.0; // not used
   tx->eq_freq[1]  =    70.0;
   tx->eq_freq[2]  =   150.0;
@@ -1213,6 +1216,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx_set_mic_gain(tx);
   tx_set_compressor(tx);
   tx_set_dexp(tx);
+  tx_set_eq_ctfmode(tx);
   tx_set_mode(tx, vfo_get_tx_mode());
   tx_create_analyzer(tx);
   tx_set_detector(tx);
@@ -2253,6 +2257,11 @@ void tx_set_compressor(TRANSMITTER *tx) {
     update_slider_bbcompr_scale(TRUE);
     update_slider_bbcompr_button(TRUE);
   }
+}
+
+void tx_set_eq_ctfmode(const TRANSMITTER *tx) {
+  SetTXAEQCtfmode(tx->id, tx->eq_ctfmode);
+  t_print("%s: TX-EQ Ctfmode: %d\n", __FUNCTION__, tx->eq_ctfmode);
 }
 
 void tx_set_ctcss(const TRANSMITTER *tx) {
