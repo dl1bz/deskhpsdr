@@ -359,7 +359,6 @@ void filter_menu(GtkWidget *parent) {
     gtk_widget_set_name(w, "boldlabel");
     gtk_widget_set_halign(w, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), w, 1, 1, 6, 1);
-
     w = gtk_toggle_button_new_with_label("16k");
     gtk_widget_set_name(w, "small_toggle_button");
     choice = g_new(CHOICE, 1);
