@@ -759,11 +759,6 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
       Word = (uint16_t)GetAnalogueIn(3);
       *(uint16_t *)(UDPBuffer + 55) = *(uint16_t *)(mybuf->buffer + 55) = htons(Word); // AIN4 user_analog2
 
-      //
-      // TODO: get the FIFO  counts for DDC, Mic, DUC, Audio and report them in bytes 31/32, 33/34, 35/36, 37/38 (see p2app.c).
-      //       (not yet used in pihpsdr)
-      //       (and report underruns/overruns in byte 4 bits 5 and 6)
-      //
       if (TXActive != 2) {
         *(uint32_t *)mybuf->buffer = htonl(SequenceCounter++);       // add sequence count
         saturn_post_high_priority(mybuf);
@@ -791,8 +786,8 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
 
       //
       // now we need to sleep for 1ms (in TX) or 200ms (not in TX)
-      // BUT if any of the PTT or key inputs change, or ADC overflow detected, send a message immediately
-      // so break up the 200ms period with smaller sleeps
+      // - if any of the PTT or key inputs change, send a message immediately
+      // - if a new ADC overload is detected, send after 50 ms at the latest
       //
       SleepCount = (MOXAsserted) ? 2 : 400;
 
@@ -803,10 +798,23 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
           break;
         }
 
+        //
+        // Note GetADCOverflow() *clears* the ADC overflow latch
+        // in the FPGA. During TX, just report ADC status every
+        // msec in the message that is sent anyway. During RX,
+        // take care that a HighPrio packet is sent "soon" after
+        // a new ADC overflow has been detected.
+        //
         ADCOverflows |= (uint8_t)GetADCOverflow();
 
-        if (ADCOverflows != 0) {
-          break;
+	if (ADCOverflows != 0 && SleepCount > 100)  {
+          // We come here during RX only
+          SleepCount = 100;
+        }
+
+        if (MOXAsserted && SleepCount > 1) {
+          // RXTX transition while "sleeping"
+          SleepCount = 1;
         }
 
         usleep(500);
@@ -1405,7 +1413,7 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
   Byte = (uint8_t)(UDPInBuffer[345]);
   SetTXDriveLevel(Byte);
   //
-  // CAT port (UNUSED in deskHPSDR)
+  // CAT port (not used with XDMA)
   // Word = ntohs(*(uint16_t *)(UDPInBuffer + 1398));
   //t_print("CAT over TCP port = %x\n", Word);
   //
