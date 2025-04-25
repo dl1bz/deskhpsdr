@@ -92,6 +92,7 @@ enum _tx_choices {
   TX_PHROT_STAGE,
   TX_PHROT_FREQ,
   TX_CESSB_ENABLE,
+  TX_CTFMODE,
   TX_ADDGAIN_ENABLE,
   TX_ADDGAIN_GAIN,
   TX_SWR_ALARM,
@@ -804,6 +805,12 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       g_idle_add(ext_vfo_update, NULL);
       break;
 
+    case TX_CTFMODE:
+      transmitter->eq_ctfmode = v;
+      tx_set_eq_ctfmode(transmitter);
+      g_idle_add(ext_vfo_update, NULL);
+      break;
+
     case TX_ADDGAIN_ENABLE:
       transmitter->addgain_enable = (int) v;
       tx_set_mic_gain(transmitter);
@@ -1506,6 +1513,13 @@ void tx_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->cessb_enable);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 5, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_CESSB_ENABLE));
+  row++;
+  btn = gtk_check_button_new_with_label("TX-EQ Ctfmode");
+  gtk_widget_set_name(btn, "boldlabel_blue");
+  gtk_widget_set_halign(btn, GTK_ALIGN_START);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->eq_ctfmode);
+  gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
+  g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_CTFMODE));
 #else
   label = gtk_label_new("Add Freq-Indep. Compression:");
   gtk_widget_set_name(label, "boldlabel");
