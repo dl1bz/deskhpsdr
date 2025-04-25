@@ -886,7 +886,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
     break;
 
   case SOAPYSDR_PROTOCOL:
-    tx->iq_output_rate = soapy_radio_sample_rate;
+    // tx->iq_output_rate = soapy_radio_sample_rate;
+    tx->iq_output_rate = radio_sample_rate;
     break;
   }
 
