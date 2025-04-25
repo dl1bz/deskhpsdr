@@ -480,8 +480,17 @@ void soapy_protocol_stop() {
 
 void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
   if (soapy_device != NULL) {
-    double f = (double)(vfo[v].frequency - vfo[v].lo);
-    int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, f, NULL);
+    int id = rx->id;
+    long long f = vfo[v].frequency;
+
+    if (vfo[id].mode == modeCWU) {
+      f -= (long long)cw_keyer_sidetone_frequency;
+    } else if (vfo[id].mode == modeCWL) {
+      f += (long long)cw_keyer_sidetone_frequency;
+    }
+
+    f += frequency_calibration - vfo[f].lo;
+    int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
 
     if (rc != 0) {
       t_print("soapy_protocol: SoapySDRDevice_setFrequency(RX) failed: %s\n", SoapySDR_errToStr(rc));
@@ -490,24 +499,18 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
 }
 
 void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
-  int v;
-  v = vfo_get_tx_vfo();
-
   if (can_transmit && soapy_device != NULL) {
-    double f;
-
-    if (vfo[v].ctun) {
-      f = (double)(vfo[v].ctun_frequency);
-    } else {
-      f = (double)(vfo[v].frequency);
-    }
+    int v = vfo_get_tx_vfo();
+    long long f;
+    f = vfo[v].ctun ? vfo[v].ctun_frequency : vfo[v].frequency;
 
     if (vfo[v].xit_enabled) {
-      f += (double)(vfo[v].xit);
+      f += vfo[v].xit;
     }
 
+    f += frequency_calibration - vfo[f].lo;
     //t_print("soapy_protocol_set_tx_frequency: %f\n",f);
-    int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, f, NULL);
+    int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
 
     if (rc != 0) {
       t_print("soapy_protocol: SoapySDRDevice_setFrequency(TX) failed: %s\n", SoapySDR_errToStr(rc));
