@@ -340,9 +340,7 @@ void filter_menu(GtkWidget *parent) {
 
   if (m == modeFMN) {
     CHOICE *choice;
-    w = gtk_label_new("Deviation:");
-    gtk_grid_attach(GTK_GRID(grid), w, 0, 1, 4, 1);
-    w = gtk_toggle_button_new_with_label("2.5K");
+    w = gtk_toggle_button_new_with_label("11k");
     gtk_widget_set_name(w, "small_toggle_button");
     choice = g_new(CHOICE, 1);
     choice->next = first;
@@ -356,8 +354,13 @@ void filter_menu(GtkWidget *parent) {
     }
 
     choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(deviation_select_cb), choice);
-    gtk_grid_attach(GTK_GRID(grid), w, 4, 1, 3, 1);
-    w = gtk_toggle_button_new_with_label("5.0K");
+    gtk_grid_attach(GTK_GRID(grid), w, 0, 1, 1, 1);
+    w = gtk_label_new(" (Deviation=2.5k, use for 12.5 kHz raster)");
+    gtk_widget_set_name(w, "boldlabel");
+    gtk_widget_set_halign(w, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(grid), w, 1, 1, 6, 1);
+
+    w = gtk_toggle_button_new_with_label("16k");
     gtk_widget_set_name(w, "small_toggle_button");
     choice = g_new(CHOICE, 1);
     choice->next = first;
@@ -371,7 +374,11 @@ void filter_menu(GtkWidget *parent) {
     }
 
     choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(deviation_select_cb), choice);
-    gtk_grid_attach(GTK_GRID(grid), w, 7, 1, 3, 1);
+    gtk_grid_attach(GTK_GRID(grid), w, 0, 2, 1, 1);
+    w = gtk_label_new(" (Deviation=5.0k, use for 25.0 kHz raster)");
+    gtk_widget_set_name(w, "boldlabel");
+    gtk_widget_set_halign(w, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(grid), w, 1, 2, 6, 1);
   } else {
     int row = 0;
     int col = 10;
