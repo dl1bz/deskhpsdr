@@ -211,7 +211,7 @@ static void audioLoadProfile() {
     // rx_set_agc(rx);
     // update_noise();
     update_eq();
-    tx_set_eq_ctfmode();
+    tx_set_eq_ctfmode(transmitter);
     g_idle_add(ext_vfo_update, NULL);
   } else {
     return;
