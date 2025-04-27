@@ -469,13 +469,13 @@ void filter_menu(GtkWidget *parent) {
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 3, 1);
-      var1_spin_low = gtk_spin_button_new_with_range(5.0, 16000.0, 5.0);
+      var1_spin_low = gtk_spin_button_new_with_range(5.0, 20000.0, 5.0);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_low), (double)(filter1->high - filter1->low));
-      var2_spin_low = gtk_spin_button_new_with_range(5.0, 8000.0, 5.0);
+      var2_spin_low = gtk_spin_button_new_with_range(5.0, 20000.0, 5.0);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_low), (double)(filter2->high - filter2->low));
-      var1_spin_high = gtk_spin_button_new_with_range(-8000.0, 8000.0, 5.0);
+      var1_spin_high = gtk_spin_button_new_with_range(-10000.0, 10000.0, 5.0);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_high), 0.5 * (double)(filter1->high + filter1->low));
-      var2_spin_high = gtk_spin_button_new_with_range(-8000.0, 8000.0, 5.0);
+      var2_spin_high = gtk_spin_button_new_with_range(-10000.0, 10000.0, 5.0);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_high),
                                 0.5 * (double)(filter2->high + filter2->low));
       break;
