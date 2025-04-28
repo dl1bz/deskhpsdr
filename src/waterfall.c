@@ -159,7 +159,8 @@ waterfall_draw_cb (GtkWidget *widget,
   }
 
   if (active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
-      || active_receiver->display_panadapter == 1) && rx->id == 0 && !rx_stack_horizontal) {
+      || active_receiver->display_panadapter == 1) && rx->id == 0 && active_receiver->panadapter_autoscale_enabled
+      && !rx_stack_horizontal) {
     char _text[128];
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     snprintf(_text, 128, "%d db", g_noise_level);
