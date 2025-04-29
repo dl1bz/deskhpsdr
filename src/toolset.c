@@ -296,3 +296,12 @@ gboolean check_and_run_idle_cb(gpointer data) {
   check_and_run(arg);
   return FALSE; // Nur einmal ausführen
 }
+
+void to_uppercase(char *str) {
+  while (*str) {
+      if (*str >= 'a' && *str <= 'z') {
+          *str = *str - 32;
+      }
+      str++;
+  }
+}

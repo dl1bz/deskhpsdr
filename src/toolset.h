@@ -33,5 +33,6 @@ extern const char* truncate_text(const char* text, size_t max_length);
 extern char* truncate_text_malloc(const char* text, size_t max_length);
 extern char* truncate_text_3p(const char* text, size_t max_length);
 extern gboolean check_and_run_idle_cb(gpointer data);
+extern void to_uppercase(char *str);
 
 #endif // _TOOLSET_H

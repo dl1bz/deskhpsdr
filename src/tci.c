@@ -45,6 +45,7 @@
 #include "rigctl.h"
 #include "ext.h"
 #include "message.h"
+#include "toolset.h"
 
 #define MAX_TCI_CLIENTS 5
 #define MAXDATASIZE     1024
