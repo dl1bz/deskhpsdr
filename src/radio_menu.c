@@ -51,6 +51,7 @@
 #include "message.h"
 
 static GtkWidget *dialog = NULL;
+static GtkWidget *n2adr_hpf_btn = NULL;
 static gulong callsign_box_signal_id;
 
 static void cleanup() {
@@ -260,36 +261,40 @@ void n2adr_oc_settings_tx() {
   // set OC outputs for each band according to the N2ADR board requirements
   // unlike load_filters(), this can be executed outside the GTK queue
   //
+  // Bit 6 is the 3 Mhz HPF and should be set from 80m - 10m except 160m
+  // to set Bit 6 (shown as 7 in OC Menu) OCrx must be decimal 64 (01000000)
+  // hpf_flag = 0 -> HPF OFF, hpf_flag = 1 -> HPF ON
+  int rx_val = (n2adr_hpf_enable == 1) ? 64 : 0;
   BAND *band;
   band = band_get_band(band160);
-  band->OCrx = 0;
+  band->OCrx = 0; // 160m HPF already OFF
   band->OCtx = 1;
   band = band_get_band(band80);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 66;
   band = band_get_band(band60);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 68;
   band = band_get_band(band40);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 68;
   band = band_get_band(band30);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 72;
   band = band_get_band(band20);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 72;
   band = band_get_band(band17);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 80;
   band = band_get_band(band15);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 80;
   band = band_get_band(band12);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 96;
   band = band_get_band(band10);
-  band->OCrx = 0;
+  band->OCrx = rx_val;
   band->OCtx = 96;
   schedule_high_priority();
 }
@@ -297,24 +302,29 @@ void n2adr_oc_settings_tx() {
 void load_filters() {
   switch (filter_board) {
   case N2ADR_TX:
+    gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     n2adr_oc_settings_tx();
     break;
 
   case N2ADR:
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     n2adr_oc_settings();
     break;
 
   case ALEX:
   case APOLLO:
   case CHARLY25:
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     // This is most likely not necessary here, but can do no harm
     radio_set_alex_antennas();
     break;
 
   case NO_FILTER_BOARD:
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     break;
 
   default:
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     break;
   }
 
@@ -332,29 +342,40 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 0:
   default:
     filter_board = NO_FILTER_BOARD;
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     break;
 
   case 1:
     filter_board = ALEX;
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     break;
 
   case 2:
     filter_board = APOLLO;
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     break;
 
   case 3:
     filter_board = CHARLY25;
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     break;
 
   case 4:
     filter_board = N2ADR;
+    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     break;
 
   case 5:
     filter_board = N2ADR_TX;
+    gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     break;
   }
 
+  load_filters();
+}
+
+static void n2adr_hpf_btn_cb(GtkWidget *widget, gpointer data) {
+  n2adr_hpf_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   load_filters();
 }
 
@@ -683,8 +704,8 @@ void radio_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "ALEX");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "APOLLO");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "CHARLY25");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR_TX");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR (LPF RX + TX + HPF)");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR (LPF TX only)");
 
     switch (filter_board) {
     case NO_FILTER_BOARD:
@@ -714,6 +735,11 @@ void radio_menu(GtkWidget *parent) {
 
     my_combo_attach(GTK_GRID(grid), filter_combo, 2, row, 1, 1);
     g_signal_connect(filter_combo, "changed", G_CALLBACK(filter_cb), NULL);
+    n2adr_hpf_btn = gtk_check_button_new_with_label("+RX: N2ADR HPF 3MHz");
+    gtk_widget_set_name(n2adr_hpf_btn, "boldlabel_blue");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (n2adr_hpf_btn), n2adr_hpf_enable);
+    gtk_grid_attach(GTK_GRID(grid), n2adr_hpf_btn, 3, row, 1, 1);
+    g_signal_connect(n2adr_hpf_btn, "toggled", G_CALLBACK(n2adr_hpf_btn_cb), NULL);
     row++;
   }
 

@@ -249,6 +249,7 @@ extern unsigned int ADC0;
 
 extern int split;
 
+extern int n2adr_hpf_enable;
 extern unsigned char OCtune;
 extern int OCfull_tune_time;
 extern int OCmemory_tune_time;

@@ -315,6 +315,7 @@ int rx_gain_calibration = 0;
 
 int split = 0;
 
+int n2adr_hpf_enable = 1;
 unsigned char OCtune = 0;
 int OCfull_tune_time = 2800; // ms
 int OCmemory_tune_time = 550; // ms
@@ -2785,6 +2786,7 @@ static void radio_restore_state() {
   GetPropI0("cw_breakin",                                    cw_breakin);
   //GetPropI0("cw_ramp_width",                                 cw_ramp_width);
   GetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
+  GetPropI0("n2adr_hpf_enable",                              n2adr_hpf_enable);
   GetPropI0("OCtune",                                        OCtune);
   GetPropI0("OCfull_tune_time",                              OCfull_tune_time);
   GetPropI0("OCmemory_tune_time",                            OCmemory_tune_time);
@@ -2905,7 +2907,7 @@ static void radio_restore_state() {
   }
 
   if (filter_board == N2ADR_TX) {
-    n2adr_oc_settings_tx(); // Apply default OC settings for N2ADR board
+    n2adr_oc_settings_tx(); // Apply default OC settings for N2ADR board (if RX the LPF is OFF)
   }
 
   g_mutex_unlock(&property_mutex);
@@ -3024,6 +3026,7 @@ void radio_save_state() {
   SetPropI0("cw_breakin",                                    cw_breakin);
   //SetPropI0("cw_ramp_width",                                 cw_ramp_width);
   SetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
+  SetPropI0("n2adr_hpf_enable",                              n2adr_hpf_enable);
   SetPropI0("OCtune",                                        OCtune);
   SetPropI0("OCfull_tune_time",                              OCfull_tune_time);
   SetPropI0("OCmemory_tune_time",                            OCmemory_tune_time);
