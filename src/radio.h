@@ -64,7 +64,8 @@ enum _filter_board_enum {
   ALEX,
   APOLLO,
   CHARLY25,
-  N2ADR
+  N2ADR,
+  N2ADR_TX
 };
 
 enum _region_enum {

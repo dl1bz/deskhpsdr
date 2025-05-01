@@ -255,8 +255,51 @@ void n2adr_oc_settings() {
   schedule_high_priority();
 }
 
+void n2adr_oc_settings_tx() {
+  //
+  // set OC outputs for each band according to the N2ADR board requirements
+  // unlike load_filters(), this can be executed outside the GTK queue
+  //
+  BAND *band;
+  band = band_get_band(band160);
+  band->OCrx = 0;
+  band->OCtx = 1;
+  band = band_get_band(band80);
+  band->OCrx = 0;
+  band->OCtx = 66;
+  band = band_get_band(band60);
+  band->OCrx = 0;
+  band->OCtx = 68;
+  band = band_get_band(band40);
+  band->OCrx = 0;
+  band->OCtx = 68;
+  band = band_get_band(band30);
+  band->OCrx = 0;
+  band->OCtx = 72;
+  band = band_get_band(band20);
+  band->OCrx = 0;
+  band->OCtx = 72;
+  band = band_get_band(band17);
+  band->OCrx = 0;
+  band->OCtx = 80;
+  band = band_get_band(band15);
+  band->OCrx = 0;
+  band->OCtx = 80;
+  band = band_get_band(band12);
+  band->OCrx = 0;
+  band->OCtx = 96;
+  band = band_get_band(band10);
+  band->OCrx = 0;
+  band->OCtx = 96;
+  schedule_high_priority();
+}
+
 void load_filters() {
   switch (filter_board) {
+  case N2ADR_TX:
+    n2adr_oc_settings_tx();
+    break;
+
   case N2ADR:
     n2adr_oc_settings();
     break;
@@ -305,6 +348,10 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
 
   case 4:
     filter_board = N2ADR;
+    break;
+
+  case 5:
+    filter_board = N2ADR_TX;
     break;
   }
 
@@ -637,6 +684,7 @@ void radio_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "APOLLO");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "CHARLY25");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR_TX");
 
     switch (filter_board) {
     case NO_FILTER_BOARD:
@@ -657,6 +705,10 @@ void radio_menu(GtkWidget *parent) {
 
     case N2ADR:
       gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 4);
+      break;
+
+    case N2ADR_TX:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 5);
       break;
     }
 

@@ -299,9 +299,10 @@ gboolean check_and_run_idle_cb(gpointer data) {
 
 void to_uppercase(char *str) {
   while (*str) {
-      if (*str >= 'a' && *str <= 'z') {
-          *str = *str - 32;
-      }
-      str++;
+    if (*str >= 'a' && *str <= 'z') {
+      *str = *str - 32;
+    }
+
+    str++;
   }
 }

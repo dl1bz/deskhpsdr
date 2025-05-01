@@ -2904,6 +2904,10 @@ static void radio_restore_state() {
     n2adr_oc_settings(); // Apply default OC settings for N2ADR board
   }
 
+  if (filter_board == N2ADR_TX) {
+    n2adr_oc_settings_tx(); // Apply default OC settings for N2ADR board
+  }
+
   g_mutex_unlock(&property_mutex);
 }
 
