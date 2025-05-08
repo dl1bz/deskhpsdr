@@ -471,9 +471,15 @@ static void tci_send_trx_count(CLIENT *client) {
   tci_send_text(client, "trx_count:2;");
 }
 
-static void tci_send_cwspeed(CLIENT *client) {
+static void tci_send_macros_cwspeed(CLIENT *client) {
   char msg[MAXMSGSIZE];
   snprintf(msg, MAXMSGSIZE, "cw_macros_speed:%d;", cw_keyer_speed);
+  tci_send_text(client, msg);
+}
+
+static void tci_send_keyer_cwspeed(CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  snprintf(msg, MAXMSGSIZE, "cw_keyer_speed:%d;", cw_keyer_speed);
   tci_send_text(client, msg);
 }
 
@@ -914,8 +920,10 @@ static gpointer tci_listener(gpointer data) {
   // Send initial state info to client
   // using emulatation Expert SunSDR2Pro
   //
-  tci_send_text(client, "protocol:ExpertSDR3,1.8;");
-  tci_send_text(client, "device:SunSDR2PRO;");
+  // tci_send_text(client, "protocol:ExpertSDR3,1.8;");
+  // tci_send_text(client, "device:SunSDR2PRO;");
+  tci_send_text(client, "protocol:ExpertSDR3,2.0;");
+  tci_send_text(client, "device:SunSDR2QRP;");
   tci_send_text(client, "receive_only:false;");
   tci_send_trx_count(client);
   tci_send_text(client, "channels_count:2;");
@@ -958,6 +966,9 @@ static gpointer tci_listener(gpointer data) {
   tci_send_text(client, "tune:0,false;");
   tci_send_text(client, "tune:1,false;");
   tci_send_text(client, "mute:false;");
+  tci_send_macros_cwspeed(client);
+  tci_send_text(client, "cw_macros_delay:10;");
+  tci_send_keyer_cwspeed(client);
   tci_send_text(client, "start;");
   tci_send_text(client, "ready;");
 
@@ -1093,7 +1104,11 @@ static gpointer tci_listener(gpointer data) {
         } else if (!strcmp(arg[0], "drive") && argc > 1) {
           tci_send_drive(client, atoi(arg[1]));
         } else if (!strcmp(arg[0], "cw_macros_speed")) {
-          tci_send_cwspeed(client);
+          tci_send_macros_cwspeed(client);
+        } else if (!strcmp(arg[0], "cw_keyer_speed")) {
+          tci_send_keyer_cwspeed(client);
+        } else if (!strcmp(arg[0], "cw_macros_delay")) {
+          tci_send_text(client, "cw_macros_delay:10;");
         } else if (!strcmp(arg[0], "stop")) {
           client->rxsensor = 0;
           client->txsensor = 0;
