@@ -174,7 +174,7 @@ static void serial_swapRtsDtr_cb(GtkWidget *widget, gpointer data) {
   SerialPorts[id].swapRtsDtr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
-static gboolean rigctl_reload_menu() {
+static gboolean rigctl_reload_menu(gpointer data) {
   cleanup();
   rigctl_menu(top_window);
   return FALSE;             // Gibt FALSE zurück, damit die Funktion nur einmal ausgeführt wird
