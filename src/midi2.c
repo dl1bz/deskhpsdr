@@ -54,7 +54,7 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
   struct desc *desc;
   int new;
 #ifdef MIDIDEBUG
-  t_print("%s:EVENT=%d CHAN=%d NOTE=%d VAL=%d\n", __FUNCTION__, now, event, channel, note, val);
+  t_print("%s:EVENT=%d CHAN=%d NOTE=%d VAL=%d\n", __FUNCTION__, event, channel, note, val);
 #endif
 
   //
