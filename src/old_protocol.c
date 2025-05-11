@@ -595,6 +595,7 @@ static void open_udp_socket() {
   if (tmp < 0) {
     t_perror("P1 create data socket:");
     g_idle_add(fatal_error, "P1: could not create data socket");
+    return;  // <-- Funktion sicher verlassen
   }
 
   int optval = 1;
@@ -690,6 +691,9 @@ static void open_udp_socket() {
   if (bind(tmp, (struct sockaddr * )&radio->info.network.interface_address, radio->info.network.interface_length) < 0) {
     t_perror("P1: bind socket:");
     g_idle_add(fatal_error, "P1: could not bind data socket");
+    close(tmp);
+    data_socket = -1;  // optional, für Klarheit
+    return;
   }
 
   memcpy(&data_addr, &radio->info.network.address, radio->info.network.address_length);
@@ -721,6 +725,7 @@ static void open_tcp_socket() {
   if (tmp < 0) {
     t_perror("P1: create TCP socket:");
     g_idle_add(fatal_error, "P1: could not create TCP socket");
+    return;
   }
 
   int optval = 1;
@@ -728,14 +733,24 @@ static void open_tcp_socket() {
 
   if (setsockopt(tmp, SOL_SOCKET, SO_REUSEADDR, &optval, optlen) < 0) {
     t_perror("tcp_socket: SO_REUSEADDR");
+    close(tmp);
+    tcp_socket = -1;
+    return;
   }
 
   if (setsockopt(tmp, SOL_SOCKET, SO_REUSEPORT, &optval, optlen) < 0) {
     t_perror("tcp_socket: SO_REUSEPORT");
+    close(tmp);
+    tcp_socket = -1;
+    return;
   }
 
   if (connect(tmp, (const struct sockaddr *)&data_addr, sizeof(data_addr)) < 0) {
     t_perror("tcp_socket: connect");
+    close(tmp);
+    tcp_socket = -1;  // zur Sicherheit explizit
+    g_idle_add(fatal_error, "P1: could not connect TCP socket");
+    return;
   }
 
   //
@@ -759,12 +774,18 @@ static void open_tcp_socket() {
 
   if (setsockopt(tmp, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
     t_perror("tcp_socket: set SO_RCVBUF");
+    close(tmp);
+    tcp_socket = -1;
+    return;
   }
 
   optval = 0x10000;
 
   if (setsockopt(tmp, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
     t_perror("tcp_socket: set SO_SNDBUF");
+    close(tmp);
+    tcp_socket = -1;
+    return;
   }
 
   optlen = sizeof(optval);
@@ -797,6 +818,9 @@ static void open_tcp_socket() {
 
   if (setsockopt(tmp, IPPROTO_IP, IP_TOS, &optval, optlen) < 0) {
     t_perror("tcp_socket: IP_TOS");
+    close(tmp);
+    tcp_socket = -1;
+    return;
   }
 
   //
