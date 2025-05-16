@@ -30,6 +30,7 @@
 #include "exit_menu.h"
 #include "discovery.h"
 #include "radio.h"
+#include "rigctl.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
 #ifdef SOAPYSDR
@@ -57,6 +58,16 @@ void stop_program() {
   t_print("%s: radio stopped\n", __FUNCTION__);
   t_print("%s: cleanup global cURL...\n", __FUNCTION__);
   curl_global_cleanup();
+
+  if (rigctl_tcp_enable) {
+    rigctld_enabled = 0;
+
+    if (use_rigctld) {
+      stop_rigctld();
+    }
+
+    shutdown_tcp_rigctl();
+  }
 
   if (have_saturn_xdma) {
 #ifdef SATURN

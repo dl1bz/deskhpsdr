@@ -70,11 +70,17 @@ static void tcp_autoreporting_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void rigctl_value_changed_cb(GtkWidget *widget, gpointer data) {
-  if (rigctl_tcp_enable) { shutdown_tcp_rigctl(); }
+  if (rigctl_tcp_enable) {
+    rigctld_enabled = 0;
+    shutdown_tcp_rigctl();
+  }
 
   rigctl_tcp_port = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  if (rigctl_tcp_enable) { launch_tcp_rigctl(); }
+  if (rigctl_tcp_enable) {
+    launch_tcp_rigctl();
+    rigctld_enabled = 1;
+  }
 }
 
 static void rigctl_debug_cb(GtkWidget *widget, gpointer data) {
@@ -112,7 +118,10 @@ static void rigctl_tcp_enable_cb(GtkWidget *widget, gpointer data) {
 
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
+    rigctld_enabled = 1;
+    launch_rigctld_monitor();
   } else {
+    rigctld_enabled = 0;
     shutdown_tcp_rigctl();
   }
 }

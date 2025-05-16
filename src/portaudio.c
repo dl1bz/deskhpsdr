@@ -41,6 +41,10 @@
 #include <semaphore.h>
 #include <portaudio.h>
 
+#ifdef __APPLE__
+  #include <pa_mac_core.h>
+#endif
+
 #include "radio.h"
 #include "receiver.h"
 #include "mode.h"
@@ -225,7 +229,16 @@ int audio_open_input() {
   inputParameters.hostApiSpecificStreamInfo = NULL;
   inputParameters.sampleFormat = paFloat32;
   inputParameters.suggestedLatency = Pa_GetDeviceInfo(padev)->defaultLowInputLatency ;
+#ifdef __APPLE__
+  static PaMacCoreStreamInfo macCoreInfo;
+  macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
+  macCoreInfo.hostApiType = paCoreAudio;
+  macCoreInfo.version = 0x01;
+  macCoreInfo.flags = paMacCoreChangeDeviceParameters | paMacCoreFailIfConversionRequired;
+  inputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
+#else
   inputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
+#endif
   err = Pa_OpenStream(&record_handle, &inputParameters, NULL, 48000.0, MY_AUDIO_BUFFER_SIZE,
                       paNoFlag, pa_mic_cb, NULL);
 
@@ -458,7 +471,16 @@ int audio_open_output(RECEIVER *rx) {
   outputParameters.sampleFormat = paFloat32;
   // use a zero for the latency to get the minimum value
   outputParameters.suggestedLatency = 0.0; //Pa_GetDeviceInfo(padev)->defaultLowOutputLatency ;
+#ifdef __APPLE__
+  static PaMacCoreStreamInfo macCoreInfo;
+  macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
+  macCoreInfo.hostApiType = paCoreAudio;
+  macCoreInfo.version = 0x01;
+  macCoreInfo.flags = paMacCoreChangeDeviceParameters | paMacCoreFailIfConversionRequired;
+  outputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
+#else
   outputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
+#endif
   err = Pa_OpenStream(&(rx->playstream), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
                       paNoFlag, pa_out_cb, rx);
 

@@ -91,7 +91,7 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 # release) and against unused parameters (those regularly occur in GTK callbacks).
 #
 ifeq ($(GDB), ON)
-CFLAGS?=-O0 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
+CFLAGS?=-g -O0 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
 else
 CFLAGS?=-O3 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
 endif
@@ -397,7 +397,7 @@ CPP_SOURCES += src/audio.c
 ##############################################################################
 
 ifeq ($(AUDIO), PORTAUDIO)
-AUDIO_OPTIONS=-DPORTAUDIO
+AUDIO_OPTIONS=-DPORTAUDIO -DPA_USE_COREAUDIO
 AUDIO_INCLUDE=`$(PKG_CONFIG) --cflags portaudio-2.0`
 AUDIO_LIBS=`$(PKG_CONFIG) --libs portaudio-2.0`
 AUDIO_SOURCES=src/portaudio.c
@@ -948,6 +948,7 @@ endif
 	@cp MacOS/Info.plist deskHPSDR.app/Contents
 	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
 	@cp MacOS/radio.icns deskHPSDR.app/Contents/Resources
+	@cp MacOS/rigctld_deskhpsdr deskHPSDR.app/Contents/Resources
 	@sleep 1
 	@echo "Copy Fonts..."
 	@cp -R fonts/Roboto ${HOME}/Library/Fonts
@@ -1103,10 +1104,10 @@ src/equalizer_menu.o: src/receiver.h src/transmitter.h src/ext.h src/vfo.h
 src/equalizer_menu.o: src/mode.h src/message.h src/tx_menu.h
 src/exit_menu.o: src/main.h src/new_menu.h src/exit_menu.h src/discovery.h
 src/exit_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
-src/exit_menu.o: src/receiver.h src/transmitter.h src/new_protocol.h
-src/exit_menu.o: src/MacOS.h src/old_protocol.h src/soapy_protocol.h
-src/exit_menu.o: src/actions.h src/gpio.h src/message.h src/saturnmain.h
-src/exit_menu.o: src/saturnregisters.h
+src/exit_menu.o: src/receiver.h src/transmitter.h src/rigctl.h
+src/exit_menu.o: src/new_protocol.h src/MacOS.h src/old_protocol.h
+src/exit_menu.o: src/soapy_protocol.h src/actions.h src/gpio.h src/message.h
+src/exit_menu.o: src/saturnmain.h src/saturnregisters.h
 src/ext.o: src/main.h src/discovery.h src/receiver.h src/sliders.h
 src/ext.o: src/transmitter.h src/actions.h src/toolbar.h src/gpio.h src/vfo.h
 src/ext.o: src/mode.h src/radio.h src/adc.h src/dac.h src/discovered.h
@@ -1265,7 +1266,7 @@ src/rigctl.o: src/filter.h src/mode.h src/band.h src/bandstack.h
 src/rigctl.o: src/filter_menu.h src/vfo.h src/agc.h src/store.h src/ext.h
 src/rigctl.o: src/rigctl_menu.h src/noise_menu.h src/new_protocol.h
 src/rigctl.o: src/MacOS.h src/old_protocol.h src/iambic.h src/new_menu.h
-src/rigctl.o: src/zoompan.h src/message.h
+src/rigctl.o: src/zoompan.h src/message.h src/startup.h
 src/rigctl_menu.o: src/new_menu.h src/rigctl_menu.h src/rigctl.h src/band.h
 src/rigctl_menu.o: src/bandstack.h src/radio.h src/adc.h src/dac.h
 src/rigctl_menu.o: src/discovered.h src/receiver.h src/transmitter.h
@@ -1327,7 +1328,7 @@ src/switch_menu.o: src/transmitter.h src/vfo.h src/mode.h src/toolbar.h
 src/switch_menu.o: src/gpio.h src/actions.h src/action_dialog.h src/i2c.h
 src/tci.o: src/radio.h src/adc.h src/dac.h src/discovered.h src/receiver.h
 src/tci.o: src/transmitter.h src/vfo.h src/mode.h src/rigctl.h src/ext.h
-src/tci.o: src/message.h
+src/tci.o: src/message.h src/toolset.h
 src/toolbar.o: src/actions.h src/gpio.h src/toolbar.h src/mode.h src/filter.h
 src/toolbar.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
 src/toolbar.o: src/MacOS.h src/receiver.h src/old_protocol.h src/vfo.h

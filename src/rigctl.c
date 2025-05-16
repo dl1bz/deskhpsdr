@@ -35,6 +35,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <spawn.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <libgen.h>
+#ifdef __APPLE__
+  #include <mach-o/dyld.h>   // Für _NSGetExecutablePath
+#endif
+#include <limits.h>
 #include "receiver.h"
 #include "toolbar.h"
 #include "band_menu.h"
@@ -62,6 +70,7 @@
 #include "new_menu.h"
 #include "zoompan.h"
 #include "message.h"
+#include "startup.h"
 
 #include <math.h>
 
@@ -74,9 +83,11 @@
 #include <json-c/json.h>
 
 unsigned int rigctl_tcp_port = 19090;
-int rigctl_tcp_enable = 0;
+volatile int rigctl_tcp_enable = 0;
 int rigctl_tcp_andromeda = 0;
 int rigctl_tcp_autoreporting = 0;
+volatile int rigctld_enabled = 0;
+volatile int use_rigctld = 0;
 
 #if defined (__LDESK__)
   int serptt_fd;
@@ -118,7 +129,13 @@ static pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex f
 static pthread_t lpf_listener_thread;  // Thread für den LPF UDP Listener
 static pthread_mutex_t lpf_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
 
+static pthread_t rigctld_thread;
+static pthread_mutex_t rigctld_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+static pid_t rigctld_pid = 0;
+extern char **environ;  // wird von posix_spawnp benötigt
+
 static int tcp_running = 0;
+static char rigctld_path[PATH_MAX];
 
 static int server_socket = -1;
 static struct sockaddr_in server_address;
@@ -692,6 +709,162 @@ static void *lpf_udp_listener(void *arg) {
   pthread_exit(NULL);
 }
 
+static pid_t get_pid_by_name(const char* process_name) {
+  char command[256];
+  snprintf(command, sizeof(command), "pgrep -n %s", process_name);  // -n = neueste (letzte gestartete) Instanz
+  FILE* fp = popen(command, "r");
+
+  if (!fp) { return 0; }
+
+  pid_t pid = 0;
+  fscanf(fp, "%d", &pid);  // Lies die erste Zeile (PID)
+  pclose(fp);
+  return pid;
+}
+
+static char* find_in_path(const char* binary_name) {
+  const char* paths[] = {
+    "/usr/local/bin",
+    "/usr/bin",
+    "/opt/bin",
+    "/bin",
+    workdir,
+    NULL
+  };
+
+  for (int i = 0; paths[i] != NULL; i++) {
+    char fullpath[512];
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", paths[i], binary_name);
+
+    if (access(fullpath, X_OK) == 0) {
+      return strdup(fullpath);  // Rückgabe → muss später mit free() freigegeben werden
+    }
+  }
+
+  return NULL;  // nicht gefunden
+}
+
+#ifdef __APPLE__
+static int start_from_app_bundle() {
+  char exe_path[PATH_MAX];
+  uint32_t size = sizeof(exe_path);
+
+  if (_NSGetExecutablePath(exe_path, &size) != 0) {
+    // Fehler beim Ermitteln des Pfads
+    return 0;
+  }
+
+  // Prüfen auf typische App-Bundle-Pfadstruktur
+  if (strstr(exe_path, ".app/Contents/MacOS") != NULL) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+// Funktion, um den Pfad zur rigctld_deskhpsdr zu ermitteln
+static char* mac_get_rigctld_path() {
+  if (start_from_app_bundle()) {
+    t_print("%s: macOS: %s start from .app bundle.\n", __FUNCTION__, PGNAME);
+    char exec_path[PATH_MAX];
+    uint32_t size = sizeof(exec_path);
+
+    if (_NSGetExecutablePath(exec_path, &size) != 0) {
+      t_perror("_NSGetExecutablePath fehlgeschlagen\n");
+      return NULL;
+    }
+
+    char *exec_dir = dirname(exec_path);
+    snprintf(rigctld_path, sizeof(rigctld_path), "%s/../Resources/rigctld_deskhpsdr", exec_dir);
+
+    if (access(rigctld_path, X_OK) != 0) {
+      t_perror("rigctld_deskhpsdr nicht gefunden oder nicht ausführbar\n");
+      return NULL;
+    }
+
+    return rigctld_path;
+  } else {
+    t_print("%s: macOS: %s start from command line.\n", __FUNCTION__, PGNAME);
+    return find_in_path("rigctld_deskhpsdr");
+  }
+}
+#endif
+
+static void start_rigctld() {
+  char rigctld_target_port[16];
+  snprintf(rigctld_target_port, sizeof(rigctld_target_port), ":%u", rigctl_tcp_port);
+  t_print("%s: rigctld_target_port is %s\n", __FUNCTION__, rigctld_target_port);
+  pid_t running_pid = get_pid_by_name("rigctld_deskhpsdr");
+
+  if (running_pid > 0) {
+    t_print("%s: Stop old rigctld (PID %d)...\n", __FUNCTION__, running_pid);
+    kill(running_pid, SIGTERM);
+    waitpid(running_pid, NULL, 0);
+    rigctld_pid = 0;
+  }
+
+  if (rigctld_pid != 0) { return; }
+
+#ifdef __APPLE__
+  // Get rigctld path using helper function
+  char *rigctld_path = mac_get_rigctld_path();
+#else
+  char *rigctld_path = find_in_path("rigctld_deskhpsdr");
+#endif
+  if (!rigctld_path) {
+    rigctld_enabled = 0;
+    return;
+  }
+
+
+  t_print("%s: rigctld_deskhpsdr gefunden: %s\n", __FUNCTION__, rigctld_path);
+  char *args[] = {
+    rigctld_path,
+    "-t", "4533",
+    "-m", "2040",
+    "-r", rigctld_target_port,
+    NULL
+  };
+  pid_t pid;
+  int status = posix_spawn(&pid, rigctld_path, NULL, NULL, args, environ);
+
+  if (status == 0) {
+    rigctld_pid = pid;
+    t_print("%s: rigctld gestartet mit PID %d\n", __FUNCTION__, pid);
+  } else {
+    rigctld_enabled = 0;
+    t_perror("posix_spawn fehlgeschlagen\n");
+  }
+}
+
+// Funktion zum Stoppen von rigctld
+void stop_rigctld() {
+  if (rigctld_pid == 0) { return; }  // Läuft nicht
+
+  t_print("%s:Stoppe rigctld (PID %d)...\n", __FUNCTION__, rigctld_pid);
+  kill(rigctld_pid, SIGTERM);  // Oder SIGKILL bei Bedarf
+  waitpid(rigctld_pid, NULL, 0);  // Warten bis beendet
+  rigctld_pid = 0;
+}
+
+static void* rigctld_control_thread(void* arg) {
+  while (1) {
+    pthread_mutex_lock(&rigctld_mutex);
+    int enabled = rigctld_enabled;
+    pthread_mutex_unlock(&rigctld_mutex);
+
+    if (enabled && rigctld_pid == 0) {
+      start_rigctld();
+    } else if (!enabled && rigctld_pid != 0) {
+      stop_rigctld();
+    }
+
+    sleep(1);  // Sekündlich prüfen
+  }
+
+  return NULL;
+}
+
 void launch_rx200_monitor() {
   t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __FUNCTION__);
 
@@ -702,10 +875,24 @@ void launch_rx200_monitor() {
   }
 }
 
+// Funktion zum Starten des Steuer-Threads
+void launch_rigctld_monitor() {
+  if (use_rigctld) {
+    t_print("---- LAUNCHING RIGCTLD SERVER ----\n", __FUNCTION__);
+
+    if (pthread_create(&rigctld_thread, NULL, rigctld_control_thread, NULL) != 0) {
+      t_perror("ERROR: cannot start rigctld thread\n");
+      // exit(EXIT_FAILURE);
+    }
+
+    pthread_detach(rigctld_thread);
+  }
+}
+
 void launch_lpf_monitor() {
   t_print("---- LAUNCHING LPF UDP Monitor ----\n", __FUNCTION__);
 
-  // RX200 UDP Listener-Thread starten
+  // LPF UDP Listener-Thread starten
   if (pthread_create(&lpf_listener_thread, NULL, lpf_udp_listener, &lpf_udp_port) != 0) {
     t_perror("ERROR: cannot start LPF UDP Listener thread\n");
     // return EXIT_FAILURE;
@@ -718,6 +905,7 @@ void shutdown_tcp_rigctl() {
   linger.l_linger = 0;
   t_print("%s: server_socket=%d\n", __FUNCTION__, server_socket);
   tcp_running = 0;
+  rigctld_enabled = 0;
 
   //
   // Gracefully terminate all active TCP connections
@@ -5462,7 +5650,7 @@ int parse_cmd(void *data) {
       //RESP      IDxxx;
       //NOTE      piHPSDR responds ID019; (so does the Kenwood TS-2000)
       //ENDDEF
-      g_strlcpy(reply, "ID019;", 256);
+      g_strlcpy(reply, "ID019;", sizeof(reply));
       send_resp(client->fd, reply);
       break;
 
