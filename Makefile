@@ -948,7 +948,7 @@ endif
 	@cp MacOS/Info.plist deskHPSDR.app/Contents
 	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
 	@cp MacOS/radio.icns deskHPSDR.app/Contents/Resources
-	@cp MacOS/rigctld_deskhpsdr deskHPSDR.app/Contents/Resources
+	@cp MacOS/rigctld_deskhpsdr deskHPSDR.app/Contents/Resources 2>/dev/null || true
 	@sleep 1
 	@echo "Copy Fonts..."
 	@cp -R fonts/Roboto ${HOME}/Library/Fonts
