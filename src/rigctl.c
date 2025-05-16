@@ -811,8 +811,9 @@ static void start_rigctld() {
 #else
   char *rigctld_path = find_in_path("rigctld_deskhpsdr");
 #endif
-  if (!rigctld_path) {
+  if (!rigctld_path || access(rigctld_path, X_OK) != 0) {
     rigctld_enabled = 0;
+    t_perror("rigctld_deskhpsdr nicht gefunden oder nicht ausführbar\n");
     return;
   }
 
