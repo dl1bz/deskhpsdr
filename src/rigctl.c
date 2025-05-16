@@ -711,7 +711,10 @@ static void *lpf_udp_listener(void *arg) {
 
 static pid_t get_pid_by_name(const char* process_name) {
   char command[256];
-  snprintf(command, sizeof(command), "pgrep -n %s", process_name);  // -n = neueste (letzte gestartete) Instanz
+  // -n = neueste (letzte gestartete) Instanz
+  // snprintf(command, sizeof(command), "pgrep -n %s", process_name);
+  // -f durchsucht die ganze Kommandozeile, nicht nur die ersten 15 Zeichen
+  snprintf(command, sizeof(command), "pgrep -n -f '%s'", process_name);
   FILE* fp = popen(command, "r");
 
   if (!fp) { return 0; }
