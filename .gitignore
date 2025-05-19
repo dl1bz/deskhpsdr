@@ -19,6 +19,8 @@ hpsdr.png
 DEPEND
 DEPEND.bak
 hamlib-static/
+MacOS/rigctld_deskhpsdr
+LINUX/rigctld_deskhpsdr
 LINUX/SoapySDR
 LINUX/SoapyPlutoSDR
 LINUX/SoapyRTLSDR
