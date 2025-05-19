@@ -948,7 +948,9 @@ endif
 	@cp MacOS/Info.plist deskHPSDR.app/Contents
 	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
 	@cp MacOS/radio.icns deskHPSDR.app/Contents/Resources
-	@if [ -f MacOS/rigctld_deskhpsdr ]; then cp MacOS/rigctld_deskhpsdr deskHPSDR.app/Contents/Resources; fi
+	@if [ -f ${CURRDIR}/MacOS/rigctld_deskhpsdr ]; then \
+		cp ${CURRDIR}/MacOS/rigctld_deskhpsdr deskHPSDR.app/Contents/Resources; \
+	fi
 	@sleep 1
 	@echo "Copy Fonts..."
 	@cp -R fonts/Roboto ${HOME}/Library/Fonts
@@ -974,6 +976,9 @@ install:
 	@sudo rm -f /usr/local/bin/$(PROGRAM)
 	@echo "Copy just compiled deskHPSDR binary to /usr/local/bin"
 	@sudo install -m 0755 -t /usr/local/bin $(PROGRAM)
+	@if [ -f ${CURRDIR}/LINUX/rigctld_deskhpsdr ]; then \
+		sudo install -m 0755 -t /usr/local/bin ${CURRDIR}/LINUX/rigctld_deskhpsdr; \
+	fi
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
 	@sudo mkdir -p /usr/local/share/$(PROGRAM)
 	@sudo cp release/$(PROGRAM)/hpsdr*.png /usr/local/share/$(PROGRAM)
