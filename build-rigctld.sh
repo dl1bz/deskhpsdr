@@ -33,7 +33,8 @@ fi
 if [ ! -f config.log  -o ! -f Makefile ]; then
 ./bootstrap
 autoreconf -i
-./configure --enable-static --disable-shared --disable-winradio --without-readline --without-libusb --without-indi --with-cxx-binding
+# ./configure --enable-static --disable-shared --disable-winradio --without-readline --without-libusb --without-indi --with-cxx-binding
+./configure --enable-static --disable-shared --disable-winradio --without-readline --without-libusb --without-indi
 fi
 
 if [ "$OS_TYPE" = "Darwin" ]; then
@@ -44,7 +45,7 @@ else
     CPU_CORES=$(nproc)
 fi
 
-make -j $CPU_CORES
+make -j $CPU_CORES -l 4
 
 #
 # Test presence of certain  files
