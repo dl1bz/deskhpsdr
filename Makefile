@@ -859,6 +859,8 @@ ifeq ($(UNAME_S), Darwin)
 	@-rm -fr ${HOME}/Desktop/deskhpsdr.app
 else
 	@-sudo rm -f /usr/local/bin/$(PROGRAM)
+	@-sudo killall rigctld_deskhpsdr || true
+	@-sudo rm -f /usr/local/bin/rigctld_deskhpsdr
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
 	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
 	@echo "Update Desktop database..."
