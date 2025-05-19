@@ -18,6 +18,7 @@ hpsdr.png
 .DS_Store
 DEPEND
 DEPEND.bak
+hamlib-static/
 LINUX/SoapySDR
 LINUX/SoapyPlutoSDR
 LINUX/SoapyRTLSDR
