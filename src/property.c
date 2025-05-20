@@ -52,7 +52,8 @@ void clearProperties() {
 void loadProperties(const char* filename) {
   FILE* f = fopen(filename, "r");
   PROPERTY* property;
-  t_print("loadProperties: %s\n", filename);
+  // t_print("loadProperties: %s\n", filename);
+  int lines = 0;
   clearProperties();
 
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -89,6 +90,8 @@ void loadProperties(const char* filename) {
     double version = -1;
 
     while (fgets(string, sizeof(string), f)) {
+      lines++;
+
       if (string[0] != '#') {
         name = strtok(string, "=");
         value = strtok(NULL, "\n");
@@ -115,6 +118,8 @@ void loadProperties(const char* filename) {
 
     fclose(f);
   }
+
+  t_print("loadProperties: %s, lines read: %d\n", filename, lines);
 }
 
 /* --------------------------------------------------------------------------*/

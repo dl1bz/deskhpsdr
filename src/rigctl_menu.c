@@ -127,6 +127,7 @@ static void rigctl_tcp_enable_cb(GtkWidget *widget, gpointer data) {
     gtk_widget_set_sensitive(rigctld_btn, TRUE);
     gtk_widget_set_sensitive(rigctl_andromeda_btn, TRUE);
     gtk_widget_set_sensitive(rigctl_port_select, FALSE);
+
     if (use_rigctld) {
       rigctl_tcp_andromeda = 0;
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctl_andromeda_btn), rigctl_tcp_andromeda);
@@ -379,22 +380,26 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(rigctl_port_select), (double)rigctl_tcp_port);
   gtk_grid_attach(GTK_GRID(grid), rigctl_port_select, 1, row, 1, 1);
   g_signal_connect(rigctl_port_select, "value_changed", G_CALLBACK(rigctl_value_changed_cb), NULL);
+
   if (rigctl_tcp_enable) {
     gtk_widget_set_sensitive(rigctl_port_select, FALSE);
   } else {
     gtk_widget_set_sensitive(rigctl_port_select, TRUE);
   }
+
   //--------------------------------------------------------------------------------
   rigctld_btn = gtk_check_button_new_with_label(" + start rigctld");
   gtk_widget_set_name(rigctld_btn, "boldlabel_blue");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctld_btn), use_rigctld);
   gtk_grid_attach(GTK_GRID(grid), rigctld_btn, 3, row, 1, 1);
   g_signal_connect(rigctld_btn, "toggled", G_CALLBACK(rigctld_btn_cb), NULL);
+
   if (rigctl_tcp_enable && !rigctl_tcp_andromeda) {
     gtk_widget_set_sensitive(rigctld_btn, TRUE);
   } else {
     gtk_widget_set_sensitive(rigctld_btn, FALSE);
   }
+
   gtk_widget_show(rigctld_btn);
   //
   w = gtk_check_button_new_with_label("Enable");
@@ -408,11 +413,13 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctl_andromeda_btn), rigctl_tcp_andromeda);
   gtk_grid_attach(GTK_GRID(grid), rigctl_andromeda_btn, 5, row, 1, 1);
   g_signal_connect(rigctl_andromeda_btn, "toggled", G_CALLBACK(tcp_andromeda_cb), NULL);
+
   if (rigctl_tcp_enable && !use_rigctld) {
     gtk_widget_set_sensitive(rigctl_andromeda_btn, TRUE);
   } else {
     gtk_widget_set_sensitive(rigctl_andromeda_btn, FALSE);
   }
+
   gtk_widget_show(rigctl_andromeda_btn);
   w = gtk_check_button_new_with_label("AutoRprt");
   gtk_widget_set_name(w, "boldlabel");
@@ -623,11 +630,13 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tci_port_select), (double)tci_port);
   gtk_grid_attach(GTK_GRID(grid), tci_port_select, 1, row, 1, 1);
   g_signal_connect(tci_port_select, "value_changed", G_CALLBACK(tci_port_changed_cb), NULL);
+
   if (tci_enable) {
     gtk_widget_set_sensitive(tci_port_select, FALSE);
   } else {
     gtk_widget_set_sensitive(tci_port_select, TRUE);
   }
+
   w = gtk_check_button_new_with_label("Enable");
   gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_enable);
