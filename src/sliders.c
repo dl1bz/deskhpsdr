@@ -1058,9 +1058,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #else
     slider_surface_scale = 3.5;
 #endif
-  }
-
-  if (slider_surface_scale > 6.5) {
+  } else if (slider_surface_scale > 6.5) {
     slider_surface_scale = 6.5;
   }
 

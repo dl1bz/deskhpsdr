@@ -127,15 +127,7 @@ static void vfo_cb(GtkWidget *widget, gpointer data) {
 
 static void slider_surface_f_cb(GtkWidget *widget, gpointer data) {
   double value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
-  if (value < 3.5) {
-    value = 3.5;
-  }
-
-  if (value > 6.5) {
-    value = 6.5;
-  }
-
+  value = (value < 3.5) ? 3.5 : (value > 6.5 ? 6.5 : value); // sanity check more compact
   slider_surface_scale = value;
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), slider_surface_scale);
   schedule_apply();
