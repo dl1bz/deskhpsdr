@@ -448,7 +448,15 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
     }
 
 #if defined (__LDESK__) && defined (__CPYMODE__)
-    mode_settings[_mode].puresignal = val;
+
+    // PS make no sense in CW and FM !
+    if (can_transmit && (_mode == modeUSB || _mode == modeLSB || _mode == modeDIGL || _mode == modeDIGU || _mode == modeAM
+                         || _mode == modeDSB)) {
+      mode_settings[_mode].puresignal = val;
+    } else {
+      mode_settings[_mode].puresignal = 0;
+    }
+
     copy_mode_settings(_mode);
 #endif
   }

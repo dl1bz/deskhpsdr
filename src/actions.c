@@ -1392,13 +1392,29 @@ int process_action(void *data) {
 
   case PS:
     if (a->mode == PRESSED) {
+#if defined (__LDESK__) && defined (__CPYMODE__)
+      int _mode = vfo[active_receiver->id].mode;
+
       if (can_transmit) {
-        if (transmitter->puresignal == 0) {
-          tx_ps_onoff(transmitter, 1);
+        // PS make no sense in CW and FM !
+        if (_mode == modeUSB || _mode == modeLSB || _mode == modeDIGL || _mode == modeDIGU || _mode == modeAM
+            || _mode == modeDSB) {
+          tx_ps_onoff(transmitter, transmitter->puresignal ? 0 : 1);
+          mode_settings[_mode].puresignal = transmitter->puresignal;
+          copy_mode_settings(_mode);
         } else {
-          tx_ps_onoff(transmitter, 0);
+          mode_settings[_mode].puresignal = 0;
+          copy_mode_settings(_mode);
         }
       }
+
+#else
+
+      if (can_transmit) {
+        tx_ps_onoff(transmitter, transmitter->puresignal ? 0 : 1);
+      }
+
+#endif
     }
 
     break;
