@@ -1052,9 +1052,17 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   int lbl_w_fix = width / 23; // Label_width fixed now
 
-  if (slider_surface_scale < 3.5) { slider_surface_scale = 3.5; }
+  if (slider_surface_scale < 3.5) {
+#ifdef __APPLE__
+    slider_surface_scale = 3.9;
+#else
+    slider_surface_scale = 3.5;
+#endif
+  }
 
-  if (slider_surface_scale > 6.5) { slider_surface_scale = 6.5; }
+  if (slider_surface_scale > 6.5) {
+    slider_surface_scale = 6.5;
+  }
 
   l_scale_factor = slider_surface_scale;
   int sl_w_fix = width / l_scale_factor; // slider_width fixed now, default 5.0 if Linux and 4.1 if macOS
