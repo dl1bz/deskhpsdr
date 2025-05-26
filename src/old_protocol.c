@@ -230,7 +230,14 @@ static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
 //
 // TXRINGBUFLEN must be a multiple of 1008 bytes (126 samples)
 //
-#define TXRINGBUFLEN 32256     // 80 msec
+
+// Größe eines Audioframes in Bytes: 2 × 2 Byte für L/R + 4 Byte Padding
+#define TXRING_AUDIO_SAMPLE_BYTES   8              // 4 Audiodatenbytes + 4 Nullbytes (Padding)
+#define TXRING_AUDIO_FRAMES_PER_BLOCK 126          // entspricht einem SDR-Block, Frames pro SDR-Block
+#define TXRING_MAX_BLOCKS           32             // Maximale SDR-Blöcke im Puffer
+#define TXRINGBUFLEN  (TXRING_AUDIO_SAMPLE_BYTES * TXRING_AUDIO_FRAMES_PER_BLOCK * TXRING_MAX_BLOCKS)
+//  #define TXRINGBUFLEN 32256          // 80 msec
+
 static unsigned char *TXRINGBUF = NULL;
 static volatile int txring_inptr  = 0;  // pointer updated when writing into the ring buffer
 static volatile int txring_outptr = 0;  // pointer updated when reading from the ring buffer
@@ -238,17 +245,106 @@ static volatile int txring_flag   = 0;  // 0: RX, 1: TX
 static volatile int txring_count  = 0;  // a sample counter
 static volatile int txring_drain  = 0;  // a flag for draining the output buffer
 
+#ifdef __APPLE__
+  static volatile int sleep_short = 250000;   // in ns
+  static volatile int sleep_long  = 1500000;  // in ns
+  static volatile int sr = 0;
+#endif
+
 //
 // If we want to store samples of about 75msec, this
 // corresponds to 480 kByte (PS, 5RX, 192k) or
 // 400 kByyte (2RX, 384k), so we use 512k
 //
-#define RXRINGBUFLEN 524288  // must be multiple of 1024 since we queue double-buffers
+#ifdef __APPLE__
+  #define RXRINGBUFLEN (1024 * 1024)  // increase to 1 MB for better jitter tolerance under WiFi with macOS
+#else
+  #define RXRINGBUFLEN (1024 * 512)   // must be multiple of 1024 since we queue double-buffers
+#endif
 static unsigned char *RXRINGBUF = NULL;
 static volatile int rxring_inptr  = 0;  // pointer updated when writing into the ring buffer
 static volatile int rxring_outptr = 0;  // pointer updated when reading from the ring buffer
 static volatile int rxring_count  = 0;  // a sample counter
 
+#ifdef __APPLE__
+void old_protocol_update_timing(void) {
+  sr = 48000 * mic_sample_divisor;
+  int receivers = how_many_receivers();
+
+  if      (sr <= 48000)  { sleep_short = 800000; sleep_long  = 2000000; }
+  else if (sr <= 96000)  { sleep_short = 400000; sleep_long  = 1750000; }
+  else if (sr <= 192000) { sleep_short = 250000; sleep_long  = 1500000; }
+  else                   { sleep_short = 100000; sleep_long  = 1000000; }
+
+  if (receivers > 2) {
+    sleep_short -= 50000;
+    sleep_long  -= 250000;
+  }
+
+  t_print("%s: SR=%dk RX=%d → short=%d µs, long=%d ms\n",
+          __FUNCTION__, sr / 1000, receivers, sleep_short / 1000, sleep_long / 1000000);
+}
+#endif
+
+#ifdef __APPLE__
+static gpointer old_protocol_txiq_thread(gpointer data) {
+  int nptr;
+  struct timespec target_time;
+  clock_gettime(CLOCK_MONOTONIC, &target_time);  // Startzeitpunkt initialisieren
+  old_protocol_update_timing();
+  t_print("%s: sr=%d\n", __FUNCTION__, sr);
+
+  for (;;) {
+    sem_wait(txring_sem);
+    nptr = txring_outptr + 1008;
+
+    if (nptr >= TXRINGBUFLEN) { nptr = 0; }
+
+    // Falls TX gestoppt ist oder Drain-Modus aktiv → skip
+    if (!P1running || txring_drain) {
+      txring_outptr = nptr;
+      continue;
+    }
+
+    // Versuche exklusiven Zugriff auf TX-Sende-Buffer
+    if (pthread_mutex_trylock(&send_ozy_mutex)) {
+      txring_outptr = nptr;
+      continue;
+    }
+
+    // Keine Samples vorhanden → skip
+    if (txring_outptr == nptr) {
+      pthread_mutex_unlock(&send_ozy_mutex);
+      continue;
+    }
+
+    // ➤ Sende genau 1 Paket (besteht aus 2 × 504 Bytes = 1032 Bytes)
+    memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr], 504);
+    ozy_send_buffer();
+    memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr + 504], 504);
+    ozy_send_buffer();
+    MEMORY_BARRIER;
+    txring_outptr = nptr;
+    pthread_mutex_unlock(&send_ozy_mutex);
+    // 🕒 Dynamisch berechneter Abstand je nach aktueller Sample-Rate
+    int interval_us = 126 * 1000000 / (sr ? sr : 48000);
+    // ➤ Zielzeitpunkt für nächstes Paket berechnen
+    target_time.tv_nsec += interval_us * 1000;
+
+    if (target_time.tv_nsec >= 1000000000) {
+      target_time.tv_nsec -= 1000000000;
+      target_time.tv_sec += 1;
+    }
+
+    // ➤ Genaue Pause bis zum nächsten Zielzeitpunkt
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &target_time, NULL);
+  }
+
+  return NULL;
+}
+#endif
+
+#ifndef __APPLE__
 static gpointer old_protocol_txiq_thread(gpointer data) {
   int nptr;
 
@@ -267,11 +363,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   // If "txring_drain" is set, drain the buffer
   //
   for (;;) {
-#ifdef __APPLE__
-    sem_wait(txring_sem);
-#else
     sem_wait(&txring_sem);
-#endif
     nptr = txring_outptr + 1008;
 
     if (nptr >= TXRINGBUFLEN) { nptr = 0; }
@@ -358,6 +450,130 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
 
   return NULL;
 }
+#endif
+
+/*
+static gpointer old_protocol_txiq_thread(gpointer data) {
+  int nptr;
+#ifdef __APPLE__
+  old_protocol_update_timing();
+#endif
+
+  //
+  // Ideally, an output METIS buffer with 126 samples is sent every 2625 usec.
+  // We thus wait until we have 126 samples, and then send a packet.
+  // Upon RX, the packets come from the RX thread and contain the receiver audio,
+  // and the rate in which packets fly in strongly depends on the receiver sample
+  // rate:
+  // Each WDSP "fexchange" event, with a fixed buffer size of 1024, produces
+  // between 128 (384k sample rate) and 1024 (48k sample rate) audio samples,
+  // which therefore arrive every 2.7 msec (384k) up to every 21.3 msec (48k).
+  //
+  // When TXing, a bunch of 1024 TX IQ samples is produced every 21.3 msec.
+  //
+  // If "txring_drain" is set, drain the buffer
+  //
+  for (;;) {
+#ifdef __APPLE__
+    sem_wait(txring_sem);
+#else
+    sem_wait(&txring_sem);
+#endif
+    nptr = txring_outptr + 1008;
+
+    if (nptr >= TXRINGBUFLEN) { nptr = 0; }
+
+    if (!P1running || txring_drain) {
+      txring_outptr = nptr;
+      continue;
+    }
+
+    if (pthread_mutex_trylock(&send_ozy_mutex)) {
+      //
+      // This can only happen if the GUI thread initiates
+      // a protocol stop/start sequence, as it does e.g.
+      // when changing the number of receivers, changing
+      // the sample rate, en/dis-abling PureSignal or
+      // DIVERSITY, or executing the RESTART button.
+      //
+      txring_outptr = nptr;
+    } else {
+      //
+      // We used to have a fixed sleeping time of 2000 usec, and
+      // observed that the sleep was sometimes too long, especially
+      // at 48k sample rate.
+      // The idea is now to monitor how fast we actually send
+      // the packets, and FIFO is the coarse (!) estimation of the
+      // FPGA-FIFO filling level.
+      // If we lag behind and FIFO goes low, send packets with
+      // little or no delay. Never sleep longer than 2000 usec, the
+      // fixed time we had before.
+      //
+      struct timespec ts;
+      static double last = -9999.9;
+      static double FIFO = 0.0;
+      double now;
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+      now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
+      FIFO -= (now - last) * 48000.0;
+      last = now;
+
+      if (FIFO < 0.0) {
+        FIFO = 0.0;
+      }
+
+      //
+      // Depending on how we estimate the FIFO filling, wait
+      // 2000usec, or 500 usec, or nothing before sending
+      // out the next packet.
+      //
+      // Note that in reality, the "sleep" is a little bit longer
+      // than specified by ts (we cannot rely on a wake-up in time).
+      //
+      if (FIFO > 1500.0) {
+#ifdef __APPLE__
+        ts.tv_nsec += sleep_long;
+#else
+        // Wait about 2000 usec before sending the next packet.
+        ts.tv_nsec += 2000000;
+#endif
+
+        if (ts.tv_nsec > 999999999) {
+          ts.tv_sec++;
+          ts.tv_nsec -= 1000000000;
+        }
+
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+      } else if (FIFO > 300.0) {
+#ifdef __APPLE__
+        ts.tv_nsec += sleep_short;
+#else
+        // Wait about 500 usec before sending the next packet.
+        ts.tv_nsec += 500000;
+#endif
+
+        if (ts.tv_nsec > 999999999) {
+          ts.tv_sec++;
+          ts.tv_nsec -= 1000000000;
+        }
+
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+      }
+
+      FIFO += 126.0;  // number of samples in THIS packet
+      memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr    ], 504);
+      ozy_send_buffer();
+      memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr + 504], 504);
+      ozy_send_buffer();
+      MEMORY_BARRIER;
+      txring_outptr = nptr;
+      pthread_mutex_unlock(&send_ozy_mutex);
+    }
+  }
+
+  return NULL;
+}
+*/
 
 void old_protocol_stop() {
   //
@@ -391,7 +607,9 @@ void old_protocol_set_mic_sample_rate(int rate) {
 //
 void old_protocol_init(int rate) {
   int i;
-  t_print("old_protocol_init: num_hpsdr_receivers=%d\n", how_many_receivers());
+  t_print("%s: num_hpsdr_receivers=%d\n", __FUNCTION__, how_many_receivers());
+  t_print("%s: RX ring buffer size: %d bytes\n", __FUNCTION__, RXRINGBUFLEN);
+  t_print("%s: TX ring buffer size: %d bytes\n", __FUNCTION__, TXRINGBUFLEN);
 
   if (TXRINGBUF == NULL) {
     TXRINGBUF = g_new(unsigned char, TXRINGBUFLEN);
@@ -438,6 +656,16 @@ void old_protocol_init(int rate) {
       open_tcp_socket();
     } else  {
       open_udp_socket();
+#ifdef __APPLE__
+      // macOS: prevent SIGPIPE on UDP socket
+      int optval = 1;
+
+      if (data_socket >= 0) {
+        setsockopt(data_socket, SOL_SOCKET, SO_NOSIGPIPE, &optval, sizeof(optval));
+        t_print("SO_NOSIGPIPE set on UDP socket (macOS-specific)\n");
+      }
+
+#endif
     }
 
     g_thread_new( "METIS", receive_thread, NULL);
@@ -830,6 +1058,7 @@ static void open_tcp_socket() {
   t_print("TCP socket established: %d\n", tcp_socket);
 }
 
+#ifndef __APPLE__
 static gpointer receive_thread(gpointer arg) {
   struct sockaddr_in addr;
   socklen_t length;
@@ -893,6 +1122,23 @@ static gpointer receive_thread(gpointer arg) {
         continue;
       }
 
+#ifdef __APPLE__
+      static struct timespec last_rx_time = {0, 0};
+      struct timespec now_rx;
+      clock_gettime(CLOCK_MONOTONIC, &now_rx);
+
+      if (last_rx_time.tv_sec != 0) {
+        long delta_us = (now_rx.tv_sec - last_rx_time.tv_sec) * 1000000 +
+                        (now_rx.tv_nsec - last_rx_time.tv_nsec) / 1000;
+
+        if (delta_us > 3000 || delta_us < 2000) { // optionaler Filter
+          t_print("RX Jitter: Δt = %.3f ms\n", delta_us / 1000.0);
+        }
+      }
+
+      last_rx_time = now_rx;
+#endif
+
       if (buffer[0] == 0xEF && buffer[1] == 0xFE) {
         switch (buffer[2]) {
         case 1:
@@ -945,6 +1191,144 @@ static gpointer receive_thread(gpointer arg) {
 
   return NULL;
 }
+#endif
+
+#ifdef __APPLE__
+static gpointer receive_thread(gpointer arg) {
+  struct sockaddr_in addr;
+  socklen_t length = sizeof(addr);
+  unsigned char buffer[1032];
+  int bytes_read;
+  int ret, left;
+  int ep;
+  int mode_timeout_usec;
+  uint32_t sequence;
+  t_print("old_protocol: receive_thread\n");
+
+  for (;;) {
+    switch (device) {
+    case DEVICE_OZY:
+      // should not happen
+      break;
+
+    default:
+      for (;;) {
+        if (tcp_socket >= 0) {
+          // TCP-Modus: 1032 Bytes sammeln
+          bytes_read = 0;
+          left = 1032;
+
+          while (left > 0) {
+            ret = recvfrom(tcp_socket, buffer + bytes_read, (size_t)left, 0, NULL, 0);
+
+            if (ret < 0 && errno == EAGAIN) { continue; }
+
+            if (ret < 0) { break; }
+
+            bytes_read += ret;
+            left -= ret;
+          }
+
+          if (ret < 0) {
+            bytes_read = ret; // Fehlerfall
+          }
+        } else if (data_socket >= 0) {
+          // 🆕 UDP mit select()
+          fd_set readfds;
+
+          if (vfo[0].mode == modeCWU || vfo[0].mode == modeCWL) {
+            mode_timeout_usec = 150000; // CW: 150ms
+          } else {
+            mode_timeout_usec = 300000; // sonst: 300ms
+          }
+
+          // struct timeval timeout = {0, 100000}; // 100ms
+          // struct timeval timeout = {0, 300000}; // 300ms – more tolerant for WiFi
+          struct timeval timeout = {0, mode_timeout_usec};
+          FD_ZERO(&readfds);
+          FD_SET(data_socket, &readfds);
+          ret = select(data_socket + 1, &readfds, NULL, NULL, &timeout);
+
+          if (ret > 0 && FD_ISSET(data_socket, &readfds)) {
+            bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &length);
+
+            if (bytes_read < 0 && errno != EAGAIN) {
+              t_perror("UDP recvfrom failed:");
+              continue;
+            }
+          } else if (ret == 0) {
+            // Timeout – kein Paket
+            continue;
+          } else {
+            t_perror("select() failed");
+            continue;
+          }
+        } else {
+          // Socket noch nicht offen
+          usleep(100000);
+          continue;
+        }
+
+        if (bytes_read >= 0 || errno != EAGAIN) { break; }
+      }
+
+      if (bytes_read <= 0 || !P1running) { continue; }
+
+      if (buffer[0] == 0xEF && buffer[1] == 0xFE) {
+        switch (buffer[2]) {
+        case 1:
+          ep = buffer[3] & 0xFF;
+          sequence = ((buffer[4] & 0xFF) << 24) | ((buffer[5] & 0xFF) << 16) |
+                     ((buffer[6] & 0xFF) << 8) | (buffer[7] & 0xFF);
+
+          if (sequence != 0 && sequence != last_seq_num + 1) {
+            long diff = (long)sequence - (long)last_seq_num;
+
+            if (diff > 1 || diff < 0) {
+              t_print("SEQ ERROR: last %ld, recvd %ld (diff=%ld)\n",
+                      (long)last_seq_num, (long)sequence, diff);
+              sequence_errors++;
+            }
+          }
+
+          last_seq_num = sequence;
+
+          switch (ep) {
+          case 6:
+            // HL2 IQ-Daten
+            queue_two_ozy_input_buffers(&buffer[8], &buffer[520]);
+            break;
+
+          case 4:
+            // nicht implementiert
+            break;
+
+          default:
+            t_print("unexpected EP %d length=%d\n", ep, bytes_read);
+            break;
+          }
+
+          break;
+
+        case 2:
+          t_print("unexpected discovery response (not in discovery mode)\n");
+          break;
+
+        default:
+          t_print("unexpected packet type: 0x%02X\n", buffer[2]);
+          break;
+        }
+      } else {
+        t_print("bad header bytes on data port: %02X,%02X\n", buffer[0], buffer[1]);
+      }
+
+      break;
+    }
+  }
+
+  return NULL;
+}
+#endif
 
 //
 // To avoid overloading code with handling all the different cases
@@ -1600,22 +1984,35 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
 
   if (nptr >= RXRINGBUFLEN) { nptr = 0; }
 
+#ifdef __APPLE__
+
+  if (nptr == rxring_outptr) {
+    t_print("%s: RX input buffer overflow — overwriting oldest buffer.\n", __FUNCTION__);
+    // Ältestes Paket verwerfen, indem der out-pointer auf das nächste Element zeigt
+    rxring_outptr = (rxring_outptr + 1024) % RXRINGBUFLEN;
+  }
+
+  memcpy((void *)(&RXRINGBUF[rxring_inptr]), buf1, 512);
+  memcpy((void *)(&RXRINGBUF[rxring_inptr + 512]), buf2, 512);
+  MEMORY_BARRIER;
+  rxring_inptr = nptr;
+  sem_post(rxring_sem);
+#else
+
   if (nptr != rxring_outptr) {
     memcpy((void *)(&RXRINGBUF[rxring_inptr    ]), buf1, 512);
     memcpy((void *)(&RXRINGBUF[rxring_inptr + 512]), buf2, 512);
     MEMORY_BARRIER;
     rxring_inptr = nptr;
-#ifdef __APPLE__
-    sem_post(rxring_sem);
-#else
     sem_post(&rxring_sem);
-#endif
   } else {
     t_print("%s: input buffer overflow.\n", __FUNCTION__);
     // if an overflow is encountered, skip the next 256 input buffers
     // to allow a "fresh start"
     rxring_count = -256;
   }
+
+#endif
 }
 
 static gpointer process_ozy_input_buffer_thread(gpointer arg) {
@@ -1666,6 +2063,27 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
       return;
     }
 
+#ifdef __APPLE__
+
+    if (txring_flag) {
+      struct timespec start, now;
+      clock_gettime(CLOCK_MONOTONIC, &start);
+      txring_drain = 1;
+
+      for (;;) {
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        long elapsed_us = (now.tv_sec - start.tv_sec) * 1000000 +
+                          (now.tv_nsec - start.tv_nsec) / 1000;
+
+        if (elapsed_us > 5000) { break; }
+      }
+
+      txring_drain = 0;
+      txring_flag = 0;
+    }
+
+#else
+
     if (txring_flag) {
       //
       // First time we arrive here after a TX->RX transition:
@@ -1678,7 +2096,10 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
       txring_flag = 0;
     }
 
-    int iptr = txring_inptr + 8 * txring_count;
+#endif
+    // int iptr = txring_inptr + 8 * txring_count;
+    // int iptr = txring_inptr + TXRING_AUDIO_SAMPLE_BYTES * txring_count;
+    int iptr = (txring_inptr + TXRING_AUDIO_SAMPLE_BYTES * txring_count) % TXRINGBUFLEN;
 
     //
     // The HL2 makes no use of audio samples, but instead
@@ -1704,8 +2125,10 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
     TXRINGBUF[iptr++] = 0;
     txring_count++;
 
-    if (txring_count >= 126) {
-      int nptr = txring_inptr + 1008;
+    // if (txring_count >= 126) {
+    if (txring_count >= TXRING_AUDIO_FRAMES_PER_BLOCK) { // also 126
+      // int nptr = txring_inptr + 1008;
+      int nptr = txring_inptr + TXRING_AUDIO_SAMPLE_BYTES * TXRING_AUDIO_FRAMES_PER_BLOCK;
 
       if (nptr >= TXRINGBUFLEN) { nptr = 0; }
 
@@ -1719,7 +2142,8 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
         txring_count = 0;
       } else {
         t_print("%s: output buffer overflow.\n", __FUNCTION__);
-        txring_count = -1260;
+        // txring_count = -1260;
+        txring_count = -TXRING_AUDIO_FRAMES_PER_BLOCK * 10;
       }
     }
 
@@ -1737,6 +2161,27 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
       return;
     }
 
+#ifdef __APPLE__
+
+    if (!txring_flag) {
+      struct timespec start, now;
+      clock_gettime(CLOCK_MONOTONIC, &start);
+      txring_drain = 1;
+
+      for (;;) {
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        long elapsed_us = (now.tv_sec - start.tv_sec) * 1000000 +
+                          (now.tv_nsec - start.tv_nsec) / 1000;
+
+        if (elapsed_us > 5000) { break; }
+      }
+
+      txring_drain = 0;
+      txring_flag = 1;
+    }
+
+#else
+
     if (!txring_flag) {
       //
       // First time we arrive here after a RX->TX transition:
@@ -1750,6 +2195,7 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
       txring_flag = 1;
     }
 
+#endif
     int iptr = txring_inptr + 8 * txring_count;
 
     //
@@ -2883,6 +3329,29 @@ static int metis_write(unsigned char ep, unsigned const char* buffer, int length
     metis_buffer[6] = (send_sequence >> 8) & 0xFF;
     metis_buffer[7] = (send_sequence) & 0xFF;
     send_sequence++;
+#ifdef __APPLE__
+    extern volatile int txring_flag;
+
+    if (txring_flag) {
+      static struct timespec last_ts = {0};
+      struct timespec now_ts;
+      clock_gettime(CLOCK_MONOTONIC, &now_ts);
+
+      if (last_ts.tv_sec != 0 || last_ts.tv_nsec != 0) {
+        long delta_us = (now_ts.tv_sec - last_ts.tv_sec) * 1000000 +
+                        (now_ts.tv_nsec - last_ts.tv_nsec) / 1000;
+        double dt_ms = delta_us / 1000.0;
+
+        // if (dt_ms < 2.4 || dt_ms > 2.8) {
+        if (dt_ms < 2.6 || dt_ms > 2.7) {
+          t_print("TX Jitter: Δt = %.3f ms\n", dt_ms);
+        }
+      }
+
+      last_ts = now_ts;
+    }
+
+#endif
     metis_send_buffer(&metis_buffer[0], 1032);
     metis_offset = 8;
   }
@@ -2942,6 +3411,15 @@ static void metis_start_stop(int command) {
   int i;
   unsigned char buffer[1032];
   t_print("%s: %d\n", __FUNCTION__, command);
+#ifdef __APPLE__
+  // Dynamische Anpassung von Puffergrößen und Sleep-Timing bei Start/Stop/Umschaltung
+  sr = 48000 * mic_sample_divisor;
+
+  if (sr > 0) {
+    old_protocol_update_timing();
+  }
+
+#endif
   P1running = command;
 
   if (device == DEVICE_OZY) { return; }

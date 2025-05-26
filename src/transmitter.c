@@ -79,6 +79,19 @@ int cw_key_up = 0;
 int cw_key_down = 0;
 int cw_not_ready = 1;
 
+static const float fir_bandpass_300_2700[] = {
+  -0.001149, -0.001942, -0.001656, -0.000186,  0.002823,  0.006602,
+  0.009652,  0.009957,  0.004892, -0.006310, -0.020976, -0.033399,
+  -0.036293, -0.023005,  0.008005,  0.055879,  0.112121,  0.162074,
+  0.191579,  0.191579,  0.162074,  0.112121,  0.055879,  0.008005,
+  -0.023005, -0.036293, -0.033399, -0.020976, -0.006310,  0.004892,
+  0.009957,  0.009652,  0.006602,  0.002823, -0.000186, -0.001656,
+  -0.001942, -0.001149
+};
+#define FIR_TAPS (sizeof(fir_bandpass_300_2700) / sizeof(float))
+static float fir_state[FIR_TAPS] = {0.0f};
+static int mon_enabled = 0;
+
 double ctcss_frequencies[CTCSS_FREQUENCIES] = {
   67.0,  71.9,  74.4,  77.0,  79.7,  82.5,  85.4,  88.5,  91.5,  94.8,
   97.4, 100.0, 103.5, 107.2, 110.9, 114.8, 118.8, 123.0, 127.3, 131.8,
@@ -1225,6 +1238,18 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   return tx;
 }
 
+float fir_apply(float input) {
+  memmove(&fir_state[1], &fir_state[0], (FIR_TAPS - 1) * sizeof(float));
+  fir_state[0] = input;
+  float acc = 0.0f;
+
+  for (size_t i = 0; i < FIR_TAPS; i++) {
+    acc += fir_state[i] * fir_bandpass_300_2700[i];
+  }
+
+  return acc;
+}
+
 //////////////////////////////////////////////////////////////////////////
 //
 // tx_add_mic_sample, tx_full_buffer,  tx_add_ps_iq_samples form the
@@ -1333,6 +1358,39 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     //
     xdexp(0);
     fexchange0(tx->id, tx->mic_input_buffer, tx->iq_output_buffer, &error);
+
+    if (mon_enabled && radio_is_transmitting() &&
+        vfo_get_tx_mode() != modeCWU &&
+        vfo_get_tx_mode() != modeCWL) {
+      float gain = 1.0f;  // Optional: -6 dB
+
+      for (int i = 0; i < tx->samples; i++) {
+        float left  = tx->mic_input_buffer[2 * i];
+        float right = tx->mic_input_buffer[2 * i + 1];
+        float mono  = 0.5f * (left + right);
+        float filtered = fir_apply(gain * mono);
+        audio_write(receiver[0], filtered, filtered);  // Stereo out
+      }
+    }
+
+    /*
+    // test from Siphon of the WDSP
+    if (radio_is_transmitting() &&
+        vfo_get_tx_mode() != modeCWU &&
+        vfo_get_tx_mode() != modeCWL) {
+
+      float gain = 0.3f;  // z. B. -6 dB
+      float siphon_buffer[tx->samples];
+
+      TXAGetaSipF(tx->id, siphon_buffer, tx->samples);  // Siphon auslesen
+
+      for (int i = 0; i < tx->samples; i++) {
+        float sample = siphon_buffer[i];
+        // audio_write(receiver[0], gain * sample, gain * sample);  // Mono auf beide Kanäle
+        printf("Siphon sample[%d] = %f\n", i, sample);  // testweise loggen
+      }
+    }
+    */
 
     if (error != 0) {
       t_print("tx_full_buffer: id=%d fexchange0: error=%d\n", tx->id, error);

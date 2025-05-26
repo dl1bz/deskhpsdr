@@ -30,4 +30,7 @@ extern void old_protocol_set_mic_sample_rate(int rate);
 
 extern void old_protocol_audio_samples(short left_audio_sample, short right_audio_sample);
 extern void old_protocol_iq_samples(int isample, int qsample, int side);
+#ifdef __APPLE__
+  extern void old_protocol_update_timing(void);
+#endif
 #endif
