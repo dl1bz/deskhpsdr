@@ -1,5 +1,13 @@
 #!/bin/sh
 
+###############################################################################################################
+# Copyright (C) 2025
+# Heiko Amft, DL1BZ (Project deskHPSDR)
+#
+# All code published unter the GPLv3
+#
+###############################################################################################################
+
 # === wir verwenden bis auf Weiteres die Hamlib Version 4.5.6
 # === ab der Version 4.6 und höher gibt es Probleme mit dem CW Keying
 USE_HAMLIB_456=ON
