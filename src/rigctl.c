@@ -586,11 +586,11 @@ static void *rx200_udp_listener(void *arg) {
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(port);
-
   // Socket an Port binden
   int opt = 1;
   setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
   setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt));
+
   if (bind(sockfd, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
     t_perror("RX200 UDP Listener: socket bind failed\n");
     close(sockfd);
@@ -660,11 +660,11 @@ static void *lpf_udp_listener(void *arg) {
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(port);
-
   // Socket an Port binden
   int opt = 1;
   setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
   setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt));
+
   if (bind(sockfd, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
     t_perror("LPF UDP Listener: socket bind failed\n");
     close(sockfd);
