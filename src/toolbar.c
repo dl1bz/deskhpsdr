@@ -143,6 +143,7 @@ static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event,
 GtkWidget *toolbar_init(int my_width, int my_height) {
   width = my_width;
   height = my_height;
+  height = 20;
 #if defined (__LDESK__)
   int button_width = width / 10;
 #else
@@ -158,6 +159,7 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   } else {
     button_css = "large_button";
   }
+  t_print("toolbar_init: button_css=%s\n", button_css);
 
   toolbar_switches = switches_controller1[function];
   toolbar = gtk_grid_new();
