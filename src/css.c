@@ -80,7 +80,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////////
 char *css =
-  "  * { font-family: Tahoma, Sans; }\n"
+  "  * { font-family:'JetBrains Mono', Tahoma, Sans; }\n"
   "  combobox { font-size: 15px; }\n"
   "  button   { font-size: 15px; }\n"
   "  checkbutton label { font-size: 15px; }\n"
@@ -191,7 +191,7 @@ char *css =
   "  #small_button label {\n"
   "    padding: 1px;\n"
   "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
-  "    font-size: 16px;\n"
+  "    font-size: 15px;\n"
   "    font-weight: bold;\n"
   "    }\n"
   "  #medium_button {\n"

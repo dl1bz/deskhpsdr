@@ -407,6 +407,9 @@ void discovery() {
       }
 
       if (d->device != SOAPYSDR_USB_DEVICE) {
+#ifdef __LDESK__
+        int can_connect = 1;
+#else
         int can_connect = 0;
 
         //
@@ -428,6 +431,7 @@ void discovery() {
           gtk_button_set_label(GTK_BUTTON(start_button), "Subnet!");
           gtk_widget_set_sensitive(start_button, FALSE);
         }
+#endif
       }
 
       if (d->protocol == STEMLAB_PROTOCOL) {
