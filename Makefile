@@ -954,7 +954,7 @@ endif
 		cp ${CURRDIR}/MacOS/rigctld_deskhpsdr deskHPSDR.app/Contents/Resources; \
 	fi
 	@sleep 1
-	@echo "Copy Fonts..."
+	@echo "Copy additional needed Fonts..."
 	@cp -R fonts/ttf/Roboto ${HOME}/Library/Fonts
 	@cp -R fonts/ttf/JetBrainsMono ${HOME}/Library/Fonts
 	@cp -R fonts/otf/GNU ${HOME}/Library/Fonts
@@ -989,10 +989,10 @@ install:
 	@sudo mkdir -p /usr/local/share/icons
 	@sudo cp release/$(PROGRAM)/radio_icon.png /usr/local/share/icons
 	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/icons
-	@echo "Copy additional Opentype Fonts which are not include in X11..."
-	@sudo mkdir -p /usr/share/fonts/opentype
-	@sudo mkdir -p /usr/share/fonts/opentype/GNU
-	@sudo cp X11fonts/*.otf /usr/share/fonts/opentype/GNU
+	@echo "Copy additional needed Fonts..."
+	@sudo cp -R fonts/ttf/Roboto /usr/share/fonts/truetype
+	@sudo cp -R fonts/ttf/JetBrainsMono /usr/share/fonts/truetype
+	@sudo cp -R fonts/otf/GNU /usr/share/fonts/opentype
 	@sleep 1
 	@echo "Rebuild font cache..."
 	@-sudo fc-cache -f
