@@ -955,9 +955,9 @@ endif
 	fi
 	@sleep 1
 	@echo "Copy Fonts..."
-	@cp -R fonts/Roboto ${HOME}/Library/Fonts
-	@mkdir -p ${HOME}/Library/Fonts/GNUFreefonts
-	@cp X11fonts/*.otf ${HOME}/Library/Fonts/GNUFreefonts
+	@cp -R fonts/ttf/Roboto ${HOME}/Library/Fonts
+	@cp -R fonts/ttf/JetBrainsMono ${HOME}/Library/Fonts
+	@cp -R fonts/otf/GNU ${HOME}/Library/Fonts
 	@sleep 1
 	@echo "Rebuild font cache..."
 	@-fc-cache -f
