@@ -407,9 +407,6 @@ void discovery() {
       }
 
       if (d->device != SOAPYSDR_USB_DEVICE) {
-#ifdef __LDESK__
-        int can_connect = 1;
-#else
         int can_connect = 0;
 
         //
@@ -427,12 +424,15 @@ void discovery() {
         if ((d->info.network.interface_address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr) ==
             (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
 
+        t_print("%s: d->status=%d\n", __FUNCTION__, d->status);
+        if (devices > 0 && d->status == STATE_AVAILABLE) {
+          can_connect = 1;
+        }
+
         if (!can_connect) {
           gtk_button_set_label(GTK_BUTTON(start_button), "Subnet!");
           gtk_widget_set_sensitive(start_button, FALSE);
         }
-
-#endif
       }
 
       if (d->protocol == STEMLAB_PROTOCOL) {
