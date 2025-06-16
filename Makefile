@@ -1026,7 +1026,8 @@ install-Linux: all
 	@-rm -f ${CURRDIR}/deskHPSDR.desktop
 	@sudo sync
 	@echo "Update Desktop database..."
-	@command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database || :
+#	@command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database || :
+	@update-desktop-database ~/.local/share/applications >/dev/null 2>&1 || :
 	@sleep 1
 	@echo "Prevent make.config.deskhpsdr: can be changed now."
 	@git update-index --assume-unchanged make.config.deskhpsdr
