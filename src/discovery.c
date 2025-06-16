@@ -425,6 +425,7 @@ void discovery() {
             (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
 
         t_print("%s: d->status=%d\n", __FUNCTION__, d->status);
+
         if (devices > 0 && d->status == STATE_AVAILABLE) {
           can_connect = 1;
         }

@@ -1483,27 +1483,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     if (n_input_devices > 0) {
       //-------------------------------------------------------------------------------------------
-      /*
-      // local_mic_label
-      local_mic_label = gtk_label_new("Local\nMic");
-      gtk_widget_set_size_request(local_mic_label, lbl_w_fix, widget_height);
-      // gtk_widget_set_name(local_mic_label, csslabel_smaller);
-      gtk_widget_set_name(local_mic_label, "slider2_blue");
-      gtk_widget_set_halign(local_mic_label, GTK_ALIGN_CENTER);
-      gtk_label_set_justify(GTK_LABEL(local_mic_label), GTK_JUSTIFY_CENTER);
-      gtk_grid_attach(GTK_GRID(sliders), local_mic_label, b2pos, 2, twidth, 1);
-      gtk_widget_show(local_mic_label);
-      //-------------------------------------------------------------------------------------------
-      // local_mic_button
-      local_mic_button = gtk_check_button_new();
-      gtk_widget_set_size_request(local_mic_button, 0, widget_height);
-      gtk_widget_set_halign(local_mic_button, GTK_ALIGN_FILL);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
-      gtk_grid_attach(GTK_GRID(sliders), local_mic_button, t2pos, 2, twidth, 1);
-      local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
-      gtk_widget_show(local_mic_button);
-      */
-      //-------------------------------------------------------------------------------------------
       local_mic_button = gtk_toggle_button_new_with_label("Local\nMic");
       gtk_widget_set_name(local_mic_button, "small_toggle_button");
       // gtk_button_set_alignment(GTK_BUTTON(local_mic_button), 0.5, 0.5);
@@ -1528,7 +1507,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
       gtk_widget_show(local_mic_button);
       //-------------------------------------------------------------------------------------------
-
       local_mic_input = gtk_combo_box_text_new();
       gtk_widget_set_name(local_mic_input, "boldlabel");
       gtk_widget_set_size_request(local_mic_input, sl_w_fix, widget_height);
