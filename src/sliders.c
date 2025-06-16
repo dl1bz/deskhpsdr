@@ -837,10 +837,8 @@ void update_slider_bbcompr_button(gboolean show_widget) {
 
     if (show_widget) {
       gtk_widget_set_sensitive(bbcompr_btn, TRUE);
-      gtk_widget_show(bbcompr_btn);
     } else {
       gtk_widget_set_sensitive(bbcompr_btn, FALSE);
-      gtk_widget_hide(bbcompr_btn);
     }
 
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON (bbcompr_btn), bbcompr_btn_signal_id);
@@ -887,15 +885,12 @@ void update_slider_bbcompr_scale(gboolean show_widget) {
 
     if (show_widget && transmitter->compressor) {
       gtk_widget_set_sensitive(bbcompr_scale, TRUE);
-      gtk_widget_set_name(bbcompr_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
-      gtk_widget_set_name(bbcompr_label, "label2_grey");
     }
 
     g_signal_handler_unblock(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
     gtk_widget_queue_draw(bbcompr_scale);
-    gtk_widget_queue_draw(bbcompr_label);
   }
 }
 
@@ -997,6 +992,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   int widget_height = 0;
   height = my_height;
   widget_height = height / 2;
+  int label_padding = 3;
 
   if (can_transmit && display_extra_sliders) {
     widget_height = height / 3;
@@ -1105,13 +1101,18 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // gtk_widget_override_background_color(sliders, GTK_STATE_FLAG_NORMAL, &bgcolor);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
-  af_gain_label = gtk_label_new("Vol");
+  af_gain_label = gtk_label_new("Volume");
 #else
   af_gain_label = gtk_label_new("AF");
 #endif
-  gtk_widget_set_size_request(af_gain_label, lbl_w_fix, widget_height);
-  gtk_widget_set_name(af_gain_label, csslabel);
+  gtk_widget_set_size_request(af_gain_label, 2 * widget_height, widget_height - 10);
+  gtk_widget_set_name(af_gain_label, "boldlabel_border_blue");
+  gtk_widget_set_margin_top(af_gain_label, 5);
+  gtk_widget_set_margin_bottom(af_gain_label, 5);
   gtk_widget_set_halign(af_gain_label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(af_gain_label, GTK_ALIGN_CENTER);
+  gtk_label_set_xalign(GTK_LABEL(af_gain_label), 0.5);
+  gtk_label_set_yalign(GTK_LABEL(af_gain_label), 0.5);
   gtk_label_set_justify(GTK_LABEL(af_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(af_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), af_gain_label, t1pos, 0, twidth, 1);
@@ -1131,9 +1132,14 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   g_signal_connect(G_OBJECT(af_gain_scale), "value_changed", G_CALLBACK(afgain_value_changed_cb), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   agc_gain_label = gtk_label_new("AGC");
-  gtk_widget_set_size_request(agc_gain_label, lbl_w_fix, widget_height);
-  gtk_widget_set_name(agc_gain_label, csslabel);
+  gtk_widget_set_size_request(agc_gain_label, 2 * widget_height - 15, widget_height - 10);
+  gtk_widget_set_name(agc_gain_label, "boldlabel_border_blue");
+  gtk_widget_set_margin_top(agc_gain_label, 5);
+  gtk_widget_set_margin_bottom(agc_gain_label, 5);
   gtk_widget_set_halign(agc_gain_label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(agc_gain_label, GTK_ALIGN_CENTER);
+  gtk_label_set_xalign(GTK_LABEL(agc_gain_label), 0.5);
+  gtk_label_set_yalign(GTK_LABEL(agc_gain_label), 0.5);
   gtk_label_set_justify(GTK_LABEL(agc_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(agc_gain_label);
   gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, b2pos, 0, twidth, 1);
@@ -1161,41 +1167,46 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                                          NULL);
   gtk_widget_show(agc_scale);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#if defined (__AUTOG__)
+  /*
+  #if defined (__AUTOG__)
 
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-    autogain_btn = gtk_check_button_new();
-    gtk_widget_set_size_request(autogain_btn, 0, widget_height);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
-    gtk_widget_show(autogain_btn);
-    gtk_grid_attach(GTK_GRID(sliders), autogain_btn, b3pos, 0, twidth, 1);
-    gtk_widget_set_halign(autogain_btn, GTK_ALIGN_CENTER);
-    autogain_btn_signal_id = g_signal_connect(autogain_btn, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
-  }
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      autogain_btn = gtk_check_button_new();
+      gtk_widget_set_size_request(autogain_btn, 0, widget_height);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
+      gtk_widget_show(autogain_btn);
+      gtk_grid_attach(GTK_GRID(sliders), autogain_btn, b3pos, 0, twidth, 1);
+      gtk_widget_set_halign(autogain_btn, GTK_ALIGN_CENTER);
+      autogain_btn_signal_id = g_signal_connect(autogain_btn, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
+    }
 
-#endif
+  #endif
+  */
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (have_rx_gain) {
 #if defined (__LDESK__)
 
     if (device == DEVICE_HERMES_LITE2) {
-      rf_gain_label = gtk_label_new("HL2:Gain\nRxPGA");
-      gtk_widget_set_name(rf_gain_label, csslabel_smaller);
+      rf_gain_label = gtk_label_new("RxPGA");
     } else {
-      rf_gain_label = gtk_label_new("Gain");
-      gtk_widget_set_name(rf_gain_label, csslabel);
+      rf_gain_label = gtk_label_new("RF Gain");
     }
 
 #else
     rf_gain_label = gtk_label_new("RF");
-    gtk_widget_set_name(rf_gain_label, csslabel);
 #endif
-    gtk_widget_set_size_request(rf_gain_label, lbl_w_fix, widget_height);
-    gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_END);
+    gtk_widget_set_size_request(rf_gain_label, 2 * widget_height + 10, widget_height - 10);
+    gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
+    gtk_widget_set_margin_top(rf_gain_label, 5);
+    gtk_widget_set_margin_bottom(rf_gain_label, 5);
+    gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(rf_gain_label, GTK_ALIGN_CENTER);
+    gtk_label_set_xalign(GTK_LABEL(rf_gain_label), 0.5);
+    gtk_label_set_yalign(GTK_LABEL(rf_gain_label), 0.5);
     gtk_label_set_justify(GTK_LABEL(rf_gain_label), GTK_JUSTIFY_CENTER);
     gtk_widget_show(rf_gain_label);
-    gtk_grid_attach(GTK_GRID(sliders), rf_gain_label, t3pos, 0, twidth, 1);
+    gtk_grid_attach(GTK_GRID(sliders), rf_gain_label, t3pos, 0, twidth + 2, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, adc[0].min_gain, adc[0].max_gain, 1.0);
     gtk_widget_set_size_request(rf_gain_scale, sl_w_fix, widget_height);
@@ -1290,21 +1301,19 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   if (can_transmit) {
 #if defined (__LDESK__)
     char _label[32];
-#ifdef __APPLE__
     snprintf(_label, 32, "Mic Gain");
     mic_gain_label = gtk_label_new(_label);
-    gtk_widget_set_name(mic_gain_label, csslabel);
-#else
-    snprintf(_label, 32, "Mic\nGain");
-    mic_gain_label = gtk_label_new(_label);
-    gtk_widget_set_name(mic_gain_label, csslabel_smaller);
-#endif
 #else
     mic_gain_label = gtk_label_new("Mic");
-    gtk_widget_set_name(mic_gain_label, csslabel);
 #endif
-    gtk_widget_set_size_request(mic_gain_label, lbl_w_fix, widget_height);
+    gtk_widget_set_size_request(mic_gain_label, 2 * widget_height, widget_height - 10);
+    gtk_widget_set_name(mic_gain_label, "boldlabel_border_blue");
+    gtk_widget_set_margin_top(mic_gain_label, 5);
+    gtk_widget_set_margin_bottom(mic_gain_label, 5);
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(mic_gain_label, GTK_ALIGN_CENTER);
+    gtk_label_set_xalign(GTK_LABEL(mic_gain_label), 0.5);
+    gtk_label_set_yalign(GTK_LABEL(mic_gain_label), 0.5);
     gtk_label_set_justify(GTK_LABEL(mic_gain_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), mic_gain_label, t1pos, 1, twidth, 1);
 
@@ -1338,21 +1347,23 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__LDESK__)
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2) {
-      drive_label = gtk_label_new("HL2:TX\nPwr(W)");
-      gtk_widget_set_name(drive_label, csslabel_smaller);
+      drive_label = gtk_label_new("TXPwr(W)");
     } else {
-      drive_label = gtk_label_new("TX Pwr");
-      gtk_widget_set_name(drive_label, csslabel);
+      drive_label = gtk_label_new("TXPwr(%)");
     }
 
 #else
     drive_label = gtk_label_new("TX Drv");
-    gtk_widget_set_name(drive_label, csslabel);
 #endif
-    gtk_widget_set_size_request(drive_label, lbl_w_fix, widget_height);
-    gtk_label_set_justify(GTK_LABEL(drive_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_size_request(drive_label, 2 * widget_height - 15, widget_height - 10);
+    gtk_widget_set_name(drive_label, "boldlabel_border_blue");
+    gtk_widget_set_margin_top(drive_label, 5);
+    gtk_widget_set_margin_bottom(drive_label, 5);
     gtk_widget_set_halign(drive_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(drive_label, GTK_ALIGN_CENTER);
     gtk_label_set_xalign(GTK_LABEL(drive_label), 0.5);
+    gtk_label_set_yalign(GTK_LABEL(drive_label), 0.5);
+    gtk_label_set_justify(GTK_LABEL(drive_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), drive_label, b2pos, 1, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1422,19 +1433,29 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     drive_scale = NULL;
   }
 
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#if defined (__LDESK__)
-  squelch_label = gtk_label_new("Sql");
-#else
-  squelch_label = gtk_label_new("Sqlch");
-#endif
-  gtk_widget_set_size_request(squelch_label, lbl_w_fix, widget_height);
-  gtk_widget_set_name(squelch_label, csslabel);
-  gtk_widget_set_halign(squelch_label, GTK_ALIGN_END);
+  //-------------------------------------------------------------------------------------------
+  squelch_enable = gtk_toggle_button_new_with_label("Squelch");
+  gtk_widget_set_name(squelch_enable, "medium_toggle_button");
+  gtk_widget_set_halign(squelch_enable, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(squelch_enable, GTK_ALIGN_CENTER);
+  gtk_widget_set_size_request(squelch_enable, 2 * widget_height + 10, widget_height - 10);
+  gtk_widget_set_margin_top(squelch_enable, 5);
+  gtk_widget_set_margin_bottom(squelch_enable, 5);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
+  // begin label definition inside button
+  squelch_label = gtk_bin_get_child(GTK_BIN(squelch_enable));
+  gtk_label_set_xalign(GTK_LABEL(squelch_label), 0.5);
+  gtk_label_set_yalign(GTK_LABEL(squelch_label), 0.5);
   gtk_label_set_justify(GTK_LABEL(squelch_label), GTK_JUSTIFY_CENTER);
-  gtk_widget_show(squelch_label);
-  gtk_grid_attach(GTK_GRID(sliders), squelch_label, t3pos, 1, twidth, 1);
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  gtk_widget_set_margin_top(squelch_label, label_padding);
+  gtk_widget_set_margin_bottom(squelch_label, label_padding);
+  gtk_widget_set_margin_start(squelch_label, label_padding);
+  gtk_widget_set_margin_end(squelch_label, label_padding);
+  // end label definition
+  gtk_grid_attach(GTK_GRID(sliders), squelch_enable, t3pos, 1, twidth + 2, 1);
+  g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
+  gtk_widget_show(squelch_enable);
+  //-------------------------------------------------------------------------------------------
   squelch_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
   gtk_widget_set_size_request(squelch_scale, sl_w_fix, widget_height);
   gtk_widget_set_valign(squelch_scale, GTK_ALIGN_CENTER);
@@ -1445,24 +1466,22 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   squelch_signal_id = g_signal_connect(G_OBJECT(squelch_scale), "value_changed", G_CALLBACK(squelch_value_changed_cb),
                                        NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  squelch_enable = gtk_check_button_new();
-  gtk_widget_set_size_request(squelch_enable, 0, widget_height);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
-  gtk_widget_show(squelch_enable);
-  gtk_grid_attach(GTK_GRID(sliders), squelch_enable, b3pos, 1, twidth, 1);
-  gtk_widget_set_halign(squelch_enable, GTK_ALIGN_CENTER);
-  g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
 
   if (can_transmit && display_sliders) {
     //-------------------------------------------------------------------------------------------
     // tune_drive_label
-    tune_drive_label = gtk_label_new("TUNE\nDrv");
-    gtk_widget_set_size_request(tune_drive_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(tune_drive_label, "slider2_blue");
-    gtk_label_set_justify(GTK_LABEL(tune_drive_label), GTK_JUSTIFY_CENTER);
+    tune_drive_label = gtk_label_new("TUNE Drv");
+    // gtk_widget_set_size_request(tune_drive_label, lbl_w_fix, widget_height);
+    gtk_widget_set_size_request(tune_drive_label, 2 * widget_height, widget_height - 10);
+    gtk_widget_set_name(tune_drive_label, "boldlabel_border_blue");
+    gtk_widget_set_margin_top(tune_drive_label, 5);
+    gtk_widget_set_margin_bottom(tune_drive_label, 5);
     gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(tune_drive_label, GTK_ALIGN_CENTER);
+    gtk_label_set_xalign(GTK_LABEL(tune_drive_label), 0.5);
+    gtk_label_set_yalign(GTK_LABEL(tune_drive_label), 0.5);
+    gtk_label_set_justify(GTK_LABEL(tune_drive_label), GTK_JUSTIFY_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), tune_drive_label, t1pos, 2, twidth - 1, 1);
     gtk_widget_show(tune_drive_label);
     //-------------------------------------------------------------------------------------------
@@ -1484,25 +1503,23 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     if (n_input_devices > 0) {
       //-------------------------------------------------------------------------------------------
       local_mic_button = gtk_toggle_button_new_with_label("Local\nMic");
-      gtk_widget_set_name(local_mic_button, "small_toggle_button");
-      // gtk_button_set_alignment(GTK_BUTTON(local_mic_button), 0.5, 0.5);
+      gtk_widget_set_name(local_mic_button, "front_toggle_button");
       gtk_widget_set_halign(local_mic_button, GTK_ALIGN_CENTER);
       gtk_widget_set_valign(local_mic_button, GTK_ALIGN_CENTER);
-      gtk_widget_set_size_request(local_mic_button, 0, widget_height - 10);
+      gtk_widget_set_size_request(local_mic_button, 2 * widget_height - 15, widget_height - 10);
       gtk_widget_set_margin_top(local_mic_button, 5);
       gtk_widget_set_margin_bottom(local_mic_button, 5);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_mic_button), transmitter->local_microphone);
-      // Label im Button
+      // begin label definition inside button
       local_mic_label = gtk_bin_get_child(GTK_BIN(local_mic_button));
       gtk_label_set_xalign(GTK_LABEL(local_mic_label), 0.5);
       gtk_label_set_yalign(GTK_LABEL(local_mic_label), 0.5);
       gtk_label_set_justify(GTK_LABEL(local_mic_label), GTK_JUSTIFY_CENTER);
-      int label_padding = 3;
       gtk_widget_set_margin_top(local_mic_label, label_padding);
       gtk_widget_set_margin_bottom(local_mic_label, label_padding);
       gtk_widget_set_margin_start(local_mic_label, label_padding);
       gtk_widget_set_margin_end(local_mic_label, label_padding);
-      //
+      // end label definition
       gtk_grid_attach(GTK_GRID(sliders), local_mic_button, b2pos, 2, twidth, 1);
       local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
       gtk_widget_show(local_mic_button);
@@ -1545,19 +1562,27 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
 
     //-------------------------------------------------------------------------------------------
-    bbcompr_label = gtk_label_new("BBand\nPROC");
-    gtk_widget_set_size_request(bbcompr_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(bbcompr_label, "slider2_blue");
+    bbcompr_btn = gtk_toggle_button_new_with_label("BBand\nPROC");
+    gtk_widget_set_name(bbcompr_btn, "front_toggle_button");
+    gtk_widget_set_halign(bbcompr_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(bbcompr_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_size_request(bbcompr_btn, 2 * widget_height + 10, widget_height - 10);
+    gtk_widget_set_margin_top(bbcompr_btn, 5);
+    gtk_widget_set_margin_bottom(bbcompr_btn, 5);
+    gtk_widget_set_margin_start(bbcompr_btn, 5);
+    gtk_widget_set_margin_end(bbcompr_btn, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bbcompr_btn), transmitter->compressor);
+    // begin label definition inside button
+    bbcompr_label = gtk_bin_get_child(GTK_BIN(bbcompr_btn));
+    gtk_label_set_xalign(GTK_LABEL(bbcompr_label), 0.5);
+    gtk_label_set_yalign(GTK_LABEL(bbcompr_label), 0.5);
     gtk_label_set_justify(GTK_LABEL(bbcompr_label), GTK_JUSTIFY_CENTER);
-    gtk_widget_set_halign(bbcompr_label, GTK_ALIGN_CENTER);
-    gtk_grid_attach(GTK_GRID(sliders), bbcompr_label, t3pos, 2, twidth, 1);
-    gtk_widget_show(bbcompr_label);
-    //-------------------------------------------------------------------------------------------
-    bbcompr_btn = gtk_check_button_new();
-    gtk_widget_set_size_request(bbcompr_btn, 0, widget_height);
-    gtk_widget_set_halign(bbcompr_btn, GTK_ALIGN_FILL);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bbcompr_btn), transmitter->compressor);
-    gtk_grid_attach(GTK_GRID(sliders), bbcompr_btn, b3pos, 2, bwidth, 1);
+    gtk_widget_set_margin_top(bbcompr_label, label_padding);
+    gtk_widget_set_margin_bottom(bbcompr_label, label_padding);
+    gtk_widget_set_margin_start(bbcompr_label, label_padding);
+    gtk_widget_set_margin_end(bbcompr_label, label_padding);
+    // end label definition
+    gtk_grid_attach(GTK_GRID(sliders), bbcompr_btn, t3pos, 2, twidth + 2, 1);
     bbcompr_btn_signal_id = g_signal_connect(bbcompr_btn, "toggled", G_CALLBACK(bbcompr_btn_toggle_cb), NULL);
     gtk_widget_show(bbcompr_btn);
     //-------------------------------------------------------------------------------------------
@@ -1574,7 +1599,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     lev_label = gtk_label_new("Lev");
     gtk_widget_set_size_request(lev_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(lev_label, "slider2_blue");
+    gtk_widget_set_name(lev_label, "boldlabel_blue");
     gtk_label_set_justify(GTK_LABEL(lev_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(lev_label, GTK_ALIGN_CENTER);
     gtk_grid_attach(GTK_GRID(sliders), lev_label, s3pos + 1, 2, twidth - 1, 1);
@@ -1592,7 +1617,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     preamp_label = gtk_label_new("Mic\nPreA");
     gtk_widget_set_size_request(preamp_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(preamp_label, "slider2_blue");
+    gtk_widget_set_name(preamp_label, "boldlabel_blue");
     gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(preamp_label, GTK_ALIGN_CENTER);
 
@@ -1627,7 +1652,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
       gtk_widget_set_name(preamp_label, "label2_grey");
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
-      gtk_widget_set_name(bbcompr_label, "label2_grey");
       gtk_widget_set_sensitive(bbcompr_btn, FALSE);
       gtk_widget_set_sensitive(lev_scale, FALSE);
       gtk_widget_set_name(lev_label, "label2_grey");
