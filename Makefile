@@ -923,11 +923,18 @@ DEPEND:
 
 #########################################################################################################
 
-.PHONY: install app macapp x11install
-app macapp x11install: install
-ifeq ($(UNAME_S), Darwin)
-install:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-			$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
+# .PHONY: install app macapp x11install
+# app macapp x11install: install
+
+.PHONY: install install-Darwin install-Linux
+
+install: install-$(UNAME_S)
+
+all:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS)
+
+install-Darwin: all
+	@echo "Install deskHPSDR for macOS..."
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp
 endif
@@ -955,6 +962,7 @@ endif
 	fi
 	@sleep 1
 	@echo "Copy additional needed Fonts..."
+	@mkdir -p $(HOME)/Library/Fonts
 	@cp -R fonts/ttf/Roboto ${HOME}/Library/Fonts
 	@cp -R fonts/ttf/JetBrainsMono ${HOME}/Library/Fonts
 	@cp -R fonts/otf/GNU ${HOME}/Library/Fonts
@@ -962,14 +970,14 @@ endif
 	@echo "Rebuild font cache..."
 	@-fc-cache -f
 	@sleep 1
+	@git update-index --assume-unchanged make.config.deskhpsdr
 	@echo "Copy deskHPSDR to your Desktop..."
 	@mv deskHPSDR.app ${HOME}/Desktop
 	@echo "Starting deskHPSDR..."
 	@open -a ${HOME}/Desktop/deskHPSDR.app
-else
-install:
-	@echo "Compiling deskHPSDR for Linux..."
-#	@make -j$(nproc)
+
+install-Linux: all
+	@echo "Install deskHPSDR for Linux..."
 	@make
 	@sleep 1
 	@sudo ldconfig
@@ -990,9 +998,20 @@ install:
 	@sudo cp release/$(PROGRAM)/radio_icon.png /usr/local/share/icons
 	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/icons
 	@echo "Copy additional needed Fonts..."
-	@sudo cp -R fonts/ttf/Roboto /usr/share/fonts/truetype
-	@sudo cp -R fonts/ttf/JetBrainsMono /usr/share/fonts/truetype
-	@sudo cp -R fonts/otf/GNU /usr/share/fonts/opentype
+	@if [ -d /usr/share/fonts/truetype ]; then \
+		sudo cp -R fonts/ttf/Roboto /usr/share/fonts/truetype; \
+		sudo cp -R fonts/ttf/JetBrainsMono /usr/share/fonts/truetype; \
+	else \
+		mkdir -p ${HOME}/.local/share/fonts/truetype; \
+		cp -R fonts/ttf/Roboto ${HOME}/.local/share/fonts/truetype; \
+		cp -R fonts/ttf/JetBrainsMono ${HOME}/.local/share/fonts/truetype; \
+	fi; \
+	if [ -d /usr/share/fonts/opentype ]; then \
+		sudo cp -R fonts/otf/GNU /usr/share/fonts/opentype; \
+	else \
+		mkdir -p ${HOME}/.local/share/fonts/opentype; \
+		cp -R fonts/otf/GNU ${HOME}/.local/share/fonts/opentype; \
+	fi
 	@sleep 1
 	@echo "Rebuild font cache..."
 	@-sudo fc-cache -f
@@ -1007,8 +1026,7 @@ install:
 	@-rm -f ${CURRDIR}/deskHPSDR.desktop
 	@sudo sync
 	@echo "Update Desktop database..."
-	@command -v update-database-desktop >/dev/null 2>&1 && update-database-desktop || :
-endif
+	@command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database || :
 	@sleep 1
 	@echo "Prevent make.config.deskhpsdr: can be changed now."
 	@git update-index --assume-unchanged make.config.deskhpsdr

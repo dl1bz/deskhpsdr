@@ -431,6 +431,7 @@ void discovery() {
           gtk_button_set_label(GTK_BUTTON(start_button), "Subnet!");
           gtk_widget_set_sensitive(start_button, FALSE);
         }
+
 #endif
       }
 

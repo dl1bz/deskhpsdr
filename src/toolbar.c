@@ -159,8 +159,8 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   } else {
     button_css = "large_button";
   }
-  t_print("toolbar_init: button_css=%s\n", button_css);
 
+  t_print("toolbar_init: button_css=%s\n", button_css);
   toolbar_switches = switches_controller1[function];
   toolbar = gtk_grid_new();
   gtk_widget_set_size_request (toolbar, width, height);
