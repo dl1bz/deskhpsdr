@@ -1136,7 +1136,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_halign(agc_gain_label, GTK_ALIGN_CENTER);
   gtk_label_set_justify(GTK_LABEL(agc_gain_label), GTK_JUSTIFY_CENTER);
   gtk_widget_show(agc_gain_label);
-  gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, t2pos, 0, twidth, 1);
+  gtk_grid_attach(GTK_GRID(sliders), agc_gain_label, b2pos, 0, twidth, 1);
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (optimize_for_touchscreen) {
@@ -1338,7 +1338,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__LDESK__)
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2) {
-      drive_label = gtk_label_new("HL2:TX\nPwr (W)");
+      drive_label = gtk_label_new("HL2:TX\nPwr(W)");
       gtk_widget_set_name(drive_label, csslabel_smaller);
     } else {
       drive_label = gtk_label_new("TX Pwr");
@@ -1352,7 +1352,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(drive_label, lbl_w_fix, widget_height);
     gtk_label_set_justify(GTK_LABEL(drive_label), GTK_JUSTIFY_CENTER);
     gtk_widget_set_halign(drive_label, GTK_ALIGN_CENTER);
-    gtk_grid_attach(GTK_GRID(sliders), drive_label, t2pos, 1, twidth, 1);
+    gtk_label_set_xalign(GTK_LABEL(drive_label), 0.5);
+    gtk_grid_attach(GTK_GRID(sliders), drive_label, b2pos, 1, twidth, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
@@ -1482,6 +1483,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     if (n_input_devices > 0) {
       //-------------------------------------------------------------------------------------------
+      /*
       // local_mic_label
       local_mic_label = gtk_label_new("Local\nMic");
       gtk_widget_set_size_request(local_mic_label, lbl_w_fix, widget_height);
@@ -1489,7 +1491,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_name(local_mic_label, "slider2_blue");
       gtk_widget_set_halign(local_mic_label, GTK_ALIGN_CENTER);
       gtk_label_set_justify(GTK_LABEL(local_mic_label), GTK_JUSTIFY_CENTER);
-      gtk_grid_attach(GTK_GRID(sliders), local_mic_label, t2pos, 2, twidth, 1);
+      gtk_grid_attach(GTK_GRID(sliders), local_mic_label, b2pos, 2, twidth, 1);
       gtk_widget_show(local_mic_label);
       //-------------------------------------------------------------------------------------------
       // local_mic_button
@@ -1497,10 +1499,36 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_size_request(local_mic_button, 0, widget_height);
       gtk_widget_set_halign(local_mic_button, GTK_ALIGN_FILL);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
+      gtk_grid_attach(GTK_GRID(sliders), local_mic_button, t2pos, 2, twidth, 1);
+      local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
+      gtk_widget_show(local_mic_button);
+      */
+      //-------------------------------------------------------------------------------------------
+      local_mic_button = gtk_toggle_button_new_with_label("Local\nMic");
+      gtk_widget_set_name(local_mic_button, "small_toggle_button");
+      // gtk_button_set_alignment(GTK_BUTTON(local_mic_button), 0.5, 0.5);
+      gtk_widget_set_halign(local_mic_button, GTK_ALIGN_CENTER);
+      gtk_widget_set_valign(local_mic_button, GTK_ALIGN_CENTER);
+      gtk_widget_set_size_request(local_mic_button, 0, widget_height - 10);
+      gtk_widget_set_margin_top(local_mic_button, 5);
+      gtk_widget_set_margin_bottom(local_mic_button, 5);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_mic_button), transmitter->local_microphone);
+      // Label im Button
+      local_mic_label = gtk_bin_get_child(GTK_BIN(local_mic_button));
+      gtk_label_set_xalign(GTK_LABEL(local_mic_label), 0.5);
+      gtk_label_set_yalign(GTK_LABEL(local_mic_label), 0.5);
+      gtk_label_set_justify(GTK_LABEL(local_mic_label), GTK_JUSTIFY_CENTER);
+      int label_padding = 3;
+      gtk_widget_set_margin_top(local_mic_label, label_padding);
+      gtk_widget_set_margin_bottom(local_mic_label, label_padding);
+      gtk_widget_set_margin_start(local_mic_label, label_padding);
+      gtk_widget_set_margin_end(local_mic_label, label_padding);
+      //
       gtk_grid_attach(GTK_GRID(sliders), local_mic_button, b2pos, 2, twidth, 1);
       local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
       gtk_widget_show(local_mic_button);
       //-------------------------------------------------------------------------------------------
+
       local_mic_input = gtk_combo_box_text_new();
       gtk_widget_set_name(local_mic_input, "boldlabel");
       gtk_widget_set_size_request(local_mic_input, sl_w_fix, widget_height);
@@ -1604,6 +1632,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(preamp_scale, 0, widget_height - 10);
     gtk_widget_set_valign(preamp_scale, GTK_ALIGN_CENTER);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
+    gtk_widget_set_margin_end(preamp_scale, 10);
 
     if (optimize_for_touchscreen && display_extra_sliders) {
       gtk_grid_attach(GTK_GRID(sliders), preamp_scale, s1pos + 2, 1, twidth - 1, 1);
