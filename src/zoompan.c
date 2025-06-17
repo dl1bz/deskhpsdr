@@ -280,7 +280,11 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_name(pan_label, "boldlabel_border_blue");
   gtk_widget_set_margin_top(pan_label, 5);
   gtk_widget_set_margin_bottom(pan_label, 5);
+#ifdef __APPLE__
+  gtk_widget_set_margin_start(pan_label, 10);  // linker Rand (Start)
+#else
   gtk_widget_set_margin_start(pan_label, 0);  // linker Rand (Start)
+#endif
   gtk_widget_set_margin_end(pan_label, 5);    // rechter Rand (Ende)
   gtk_widget_set_halign(pan_label, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(pan_label, GTK_ALIGN_CENTER);
