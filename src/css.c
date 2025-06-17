@@ -274,14 +274,14 @@ char *css =
   "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
   "    color: rgb(0%, 0%, 0%);\n"                 // text if selected
   "    }\n"
-  "  #front_toggle_button:insensitive {\n"
+  "  #front_toggle_button:disabled {\n"
   "    padding: 1px;\n"
   "    border: 1px solid darkgrey;\n"
   "    border-radius: 6px;\n"
   "    background-color: #ccc;\n"                 // grauer Hintergrund
   "    color: #888;\n"                            // grauer Text
   "    }\n"
-  "  #front_toggle_button:checked:insensitive {\n"
+  "  #front_toggle_button:checked:disabled {\n"
   "    padding: 1px;\n"
   "    border: 1px solid darkgrey;\n"
   "    border-radius: 6px;\n"

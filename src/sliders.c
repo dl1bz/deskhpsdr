@@ -1013,7 +1013,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #endif
   int b1pos, b2pos, b3pos;
   const char *csslabel;
-  const char *csslabel_smaller;
 
   if (width < 1024) {
     tpix   =  width / 9;
@@ -1039,12 +1038,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   } else {
     csslabel = "slider3";
   }
-
-  if (!strcmp(csslabel, "slider1")) { csslabel_smaller = "slider0"; }
-
-  if (!strcmp(csslabel, "slider2")) { csslabel_smaller = "slider1"; }
-
-  if (!strcmp(csslabel, "slider3")) { csslabel_smaller = "slider2"; }
 
   int lbl_w_fix = width / 23; // Label_width fixed now
 
@@ -1196,7 +1189,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #else
     rf_gain_label = gtk_label_new("RF");
 #endif
-    gtk_widget_set_size_request(rf_gain_label, 2 * widget_height + 10, widget_height - 10);
+    gtk_widget_set_size_request(rf_gain_label, 1.5 * widget_height, widget_height - 10);
     gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
     gtk_widget_set_margin_top(rf_gain_label, 5);
     gtk_widget_set_margin_bottom(rf_gain_label, 5);
@@ -1214,30 +1207,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
     gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
     gtk_widget_show(rf_gain_scale);
-#if defined (__AUTOG__)
-
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
-
-      for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
-        gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
-      }
-    } else {
-      gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
-
-      for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
-        gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
-      }
-    }
-
-#else
     gtk_grid_attach(GTK_GRID(sliders), rf_gain_scale, s3pos, 0, swidth, 1);
 
     for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 6.0) {
       gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
     }
 
-#endif
     g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed", G_CALLBACK(rf_gain_value_changed_cb), NULL);
   } else {
     rf_gain_label = NULL;
@@ -1434,11 +1409,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
   //-------------------------------------------------------------------------------------------
-  squelch_enable = gtk_toggle_button_new_with_label("Squelch");
+  squelch_enable = gtk_toggle_button_new_with_label("SQL");
   gtk_widget_set_name(squelch_enable, "medium_toggle_button");
   gtk_widget_set_halign(squelch_enable, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(squelch_enable, GTK_ALIGN_CENTER);
-  gtk_widget_set_size_request(squelch_enable, 2 * widget_height + 10, widget_height - 10);
+  gtk_widget_set_size_request(squelch_enable, 1.5 * widget_height, widget_height - 10);
   gtk_widget_set_margin_top(squelch_enable, 5);
   gtk_widget_set_margin_bottom(squelch_enable, 5);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
@@ -1566,7 +1541,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(bbcompr_btn, "front_toggle_button");
     gtk_widget_set_halign(bbcompr_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(bbcompr_btn, GTK_ALIGN_CENTER);
-    gtk_widget_set_size_request(bbcompr_btn, 2 * widget_height + 10, widget_height - 10);
+    gtk_widget_set_size_request(bbcompr_btn, 1.5 * widget_height, widget_height - 10);
     gtk_widget_set_margin_top(bbcompr_btn, 5);
     gtk_widget_set_margin_bottom(bbcompr_btn, 5);
     gtk_widget_set_margin_start(bbcompr_btn, 5);
