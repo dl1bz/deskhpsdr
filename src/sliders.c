@@ -1191,22 +1191,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   agc_scale_signal_id = g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb),
                                          NULL);
   gtk_widget_show(agc_scale);
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  /*
-  #if defined (__AUTOG__)
-
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-      autogain_btn = gtk_check_button_new();
-      gtk_widget_set_size_request(autogain_btn, 0, widget_height);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
-      gtk_widget_show(autogain_btn);
-      gtk_grid_attach(GTK_GRID(sliders), autogain_btn, b3pos, 0, twidth, 1);
-      gtk_widget_set_halign(autogain_btn, GTK_ALIGN_CENTER);
-      autogain_btn_signal_id = g_signal_connect(autogain_btn, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
-    }
-
-  #endif
-  */
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (have_rx_gain) {
@@ -1634,15 +1618,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                               G_CALLBACK(bbcompr_scale_changed_cb), NULL);
     gtk_widget_show(bbcompr_scale);
     //-------------------------------------------------------------------------------------------
-    /*
-    lev_label = gtk_label_new("Lev");
-    gtk_widget_set_size_request(lev_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(lev_label, "boldlabel_blue");
-    gtk_label_set_justify(GTK_LABEL(lev_label), GTK_JUSTIFY_CENTER);
-    gtk_widget_set_halign(lev_label, GTK_ALIGN_CENTER);
-    gtk_grid_attach(GTK_GRID(sliders), lev_label, s3pos + 1, 2, twidth - 1, 1);
-    gtk_widget_show(lev_label);
-    */
     lev_btn = gtk_toggle_button_new_with_label("Lev");
     gtk_widget_set_name(lev_btn, "front_toggle_button");
     gtk_widget_set_halign(lev_btn, GTK_ALIGN_CENTER);
