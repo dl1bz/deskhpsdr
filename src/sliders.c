@@ -105,6 +105,8 @@ static GtkWidget *squelch_enable;
   static gulong lev_btn_signal_id;
   static gulong lev_scale_signal_id;
   static GtkWidget *preamp_label;
+  static GtkWidget *preamp_btn;
+  static gulong preamp_btn_signal_id;
   static GtkWidget *preamp_scale;
   static gulong preamp_scale_signal_id;
 #endif
@@ -806,6 +808,21 @@ static void lev_btn_toggle_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+static void preamp_btn_toggle_cb(GtkWidget *widget, gpointer data) {
+  int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  int mode = vfo_get_tx_mode();
+
+  if (mode == modeDIGL || mode == modeDIGU) {
+    transmitter->addgain_enable = 0;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), transmitter->addgain_enable);
+  } else {
+    transmitter->addgain_enable = v;
+  }
+
+  tx_set_mic_gain(transmitter);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 static void lev_scale_changed_cb(GtkWidget *widget, gpointer data) {
   int mode = vfo_get_tx_mode();
   double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
@@ -881,6 +898,22 @@ void update_slider_lev_button(gboolean show_widget) {
   }
 }
 
+void update_slider_preamp_button(gboolean show_widget) {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (preamp_btn), preamp_btn_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (preamp_btn), transmitter->addgain_enable);
+
+    if (show_widget) {
+      gtk_widget_set_sensitive(preamp_btn, TRUE);
+    } else {
+      gtk_widget_set_sensitive(preamp_btn, FALSE);
+    }
+
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (preamp_btn), preamp_btn_signal_id);
+    gtk_widget_queue_draw(preamp_btn);
+  }
+}
+
 void update_slider_local_mic_button() {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
@@ -952,15 +985,13 @@ void update_slider_preamp_scale(gboolean show_widget) {
 
     if (show_widget && transmitter->addgain_enable) {
       gtk_widget_set_sensitive(preamp_scale, TRUE);
-      gtk_widget_set_name(preamp_label, "slider2_blue");
     } else {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
-      gtk_widget_set_name(preamp_label, "label2_grey");
     }
 
     g_signal_handler_unblock(G_OBJECT(preamp_scale), preamp_scale_signal_id);
     gtk_widget_queue_draw(preamp_scale);
-    gtk_widget_queue_draw(preamp_label);
+    // gtk_widget_queue_draw(preamp_label);
   }
 }
 
@@ -1527,7 +1558,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_name(local_mic_button, "front_toggle_button");
       gtk_widget_set_halign(local_mic_button, GTK_ALIGN_CENTER);
       gtk_widget_set_valign(local_mic_button, GTK_ALIGN_CENTER);
-      gtk_widget_set_size_request(local_mic_button, 2 * widget_height - 15, widget_height - 10);
+      gtk_widget_set_size_request(local_mic_button, 2 * widget_height - 15, widget_height - 15);
       gtk_widget_set_margin_top(local_mic_button, 5);
       gtk_widget_set_margin_bottom(local_mic_button, 5);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_mic_button), transmitter->local_microphone);
@@ -1587,7 +1618,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(bbcompr_btn, "front_toggle_button");
     gtk_widget_set_halign(bbcompr_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(bbcompr_btn, GTK_ALIGN_CENTER);
-    gtk_widget_set_size_request(bbcompr_btn, 1.5 * widget_height, widget_height - 10);
+    gtk_widget_set_size_request(bbcompr_btn, 1.5 * widget_height, widget_height - 15);
     gtk_widget_set_margin_top(bbcompr_btn, 5);
     gtk_widget_set_margin_bottom(bbcompr_btn, 5);
     gtk_widget_set_margin_start(bbcompr_btn, 5);
@@ -1622,7 +1653,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(lev_btn, "front_toggle_button");
     gtk_widget_set_halign(lev_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(lev_btn, GTK_ALIGN_CENTER);
-    gtk_widget_set_size_request(lev_btn, lbl_w_fix, widget_height - 10);
+    gtk_widget_set_size_request(lev_btn, lbl_w_fix, widget_height - 15);
     gtk_widget_set_margin_top(lev_btn, 5);
     gtk_widget_set_margin_bottom(lev_btn, 5);
     gtk_widget_set_margin_start(lev_btn, 5);
@@ -1652,19 +1683,34 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     lev_scale_signal_id = g_signal_connect(G_OBJECT(lev_scale), "value_changed", G_CALLBACK(lev_scale_changed_cb), NULL);
     gtk_widget_show(lev_scale);
     //-------------------------------------------------------------------------------------------
-    preamp_label = gtk_label_new("Mic\nPreA");
-    gtk_widget_set_size_request(preamp_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(preamp_label, "boldlabel_blue");
+    preamp_btn = gtk_toggle_button_new_with_label("Mic\nPreA");
+    gtk_widget_set_name(preamp_btn, "front_toggle_button");
+    gtk_widget_set_halign(preamp_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(preamp_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_size_request(preamp_btn, lbl_w_fix, widget_height - 15);
+    gtk_widget_set_margin_top(preamp_btn, 5);
+    gtk_widget_set_margin_bottom(preamp_btn, 5);
+    gtk_widget_set_margin_start(preamp_btn, 5);
+    gtk_widget_set_margin_end(preamp_btn, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preamp_btn), transmitter->addgain_enable);
+    // begin label definition inside button
+    preamp_label = gtk_bin_get_child(GTK_BIN(preamp_btn));
+    gtk_label_set_xalign(GTK_LABEL(preamp_label), 0.5);
+    gtk_label_set_yalign(GTK_LABEL(preamp_label), 0.5);
     gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
-    gtk_widget_set_halign(preamp_label, GTK_ALIGN_CENTER);
-
+    gtk_widget_set_margin_top(preamp_label, label_padding);
+    gtk_widget_set_margin_bottom(preamp_label, label_padding);
+    gtk_widget_set_margin_start(preamp_label, label_padding);
+    gtk_widget_set_margin_end(preamp_label, label_padding);
+    // end label definition
     if (optimize_for_touchscreen && display_extra_sliders) {
-      gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 1, twidth - 1, 1);
+      gtk_grid_attach(GTK_GRID(sliders), preamp_btn, s1pos + 1, 1, twidth - 1, 1);
     } else {
-      gtk_grid_attach(GTK_GRID(sliders), preamp_label, s1pos + 1, 2, twidth - 1, 1);
+      gtk_grid_attach(GTK_GRID(sliders), preamp_btn, s1pos + 1, 2, twidth - 1, 1);
     }
+    preamp_btn_signal_id = g_signal_connect(preamp_btn, "toggled", G_CALLBACK(preamp_btn_toggle_cb), NULL);
+    gtk_widget_show(preamp_btn);
 
-    gtk_widget_show(preamp_label);
     //-------------------------------------------------------------------------------------------
     preamp_scale = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(preamp_scale), TRUE);
@@ -1687,11 +1733,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // sanity check, if DIGIMODE selected set BBCOMPR and LEV inactive
     if (selected_mode == modeDIGL || selected_mode == modeDIGU) {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
-      gtk_widget_set_name(preamp_label, "label2_grey");
+      gtk_widget_set_sensitive(preamp_btn, FALSE);
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
       gtk_widget_set_sensitive(bbcompr_btn, FALSE);
       gtk_widget_set_sensitive(lev_scale, FALSE);
-      gtk_widget_set_name(lev_label, "label2_grey");
+      gtk_widget_set_sensitive(lev_btn, FALSE);
       gtk_widget_queue_draw(sliders);
       // gtk_widget_queue_draw(bbcompr_scale);
       // gtk_widget_queue_draw(lev_scale);
