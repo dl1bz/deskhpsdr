@@ -239,7 +239,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_margin_top(zoompan, 0);    // Kein Abstand oben
   gtk_widget_set_margin_bottom(zoompan, 0); // Kein Abstand unten
   gtk_widget_set_margin_start(zoompan, 15);  // Kein Abstand am Anfang
-  gtk_widget_set_margin_end(zoompan, 15);    // Kein Abstand am Ende
+  gtk_widget_set_margin_end(zoompan, 0);    // Kein Abstand am Ende
   //-----------------------------------------------------------------------------------------------------------
   zoom_label = gtk_label_new("Zoom");
   gtk_widget_set_size_request(zoom_label, 2 * widget_height - 3, widget_height - 15);
@@ -256,9 +256,10 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_show(zoom_label);
   //-----------------------------------------------------------------------------------------------------------
   zoom_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, MAX_ZOOM, 1.00);
-  gtk_widget_set_size_request(zoom_scale, 322, height);
+  gtk_widget_set_size_request(zoom_scale, sl_w_fix, height);
   gtk_widget_set_valign(zoom_scale, GTK_ALIGN_CENTER);
   gtk_range_set_increments (GTK_RANGE(zoom_scale), 1.0, 1.0);
+  gtk_widget_set_margin_end(zoom_scale, 0);    // rechter Rand (Ende)
   gtk_range_set_value (GTK_RANGE(zoom_scale), active_receiver->zoom);
 
   for (float i = 1.0; i <= 8.0; i += 1.0) {
@@ -274,7 +275,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_name(pan_label, "boldlabel_border_blue");
   gtk_widget_set_margin_top(pan_label, 5);
   gtk_widget_set_margin_bottom(pan_label, 5);
-  // gtk_widget_set_margin_start(pan_label, 5);  // linker Rand (Start)
+  gtk_widget_set_margin_start(pan_label, 0);  // linker Rand (Start)
   gtk_widget_set_margin_end(pan_label, 5);    // rechter Rand (Ende)
   gtk_widget_set_halign(pan_label, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(pan_label, GTK_ALIGN_CENTER);
@@ -286,11 +287,12 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   //-----------------------------------------------------------------------------------------------------------
   pan_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0,
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
-  gtk_widget_set_size_request(pan_scale, 2.3 * sl_w_fix, height);
+  gtk_widget_set_size_request(pan_scale, sl_w_fix + 400, height);
   gtk_widget_set_valign(pan_scale, GTK_ALIGN_CENTER);
   gtk_scale_set_draw_value (GTK_SCALE(pan_scale), FALSE);
   gtk_range_set_increments (GTK_RANGE(pan_scale), 10.0, 10.0);
   gtk_range_set_value (GTK_RANGE(pan_scale), active_receiver->pan);
+  gtk_widget_set_margin_end(pan_scale, 10);    // rechter Rand (Ende)
   gtk_widget_show(pan_scale);
   gtk_grid_attach(GTK_GRID(zoompan), pan_scale, s2pos, 0, swidth, 1);
   pan_signal_id = g_signal_connect(G_OBJECT(pan_scale), "value_changed", G_CALLBACK(pan_value_changed_cb), NULL);
