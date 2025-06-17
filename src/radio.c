@@ -2249,6 +2249,7 @@ void radio_set_tune(int state) {
         update_slider_bbcompr_scale(FALSE);
         update_slider_bbcompr_button(FALSE);
         update_slider_lev_scale(FALSE);
+        update_slider_lev_button(FALSE);
       }
 
       //
@@ -2393,6 +2394,7 @@ void radio_set_tune(int state) {
         update_slider_bbcompr_scale(TRUE);
         update_slider_bbcompr_button(TRUE);
         update_slider_lev_scale(TRUE);
+        update_slider_lev_button(TRUE);
       }
 
       tune = state;

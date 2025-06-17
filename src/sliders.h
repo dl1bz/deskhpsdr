@@ -37,6 +37,7 @@ extern void update_slider_tune_drive_scale(gboolean show_widget);
 extern void update_slider_autogain_btn(void);
 extern void update_slider_bbcompr_scale(gboolean show_widget);
 extern void update_slider_bbcompr_button(gboolean show_widget);
+extern void update_slider_lev_button(gboolean show_widget);
 extern void update_slider_lev_scale(gboolean show_widget);
 extern void update_slider_preamp_scale(gboolean show_widget);
 extern void sliders_hide_row(int row);

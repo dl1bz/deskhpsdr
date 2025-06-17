@@ -259,7 +259,8 @@ char *css =
   "    border: 1px solid darkblue;\n"
   "    border-radius: 6px;\n"
   "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
-  "    font-size: 12px;\n"
+  "    font-size: 13px;\n"
+  "    font-weight: bold;\n"
   "    background-image: none;\n"
   "    background-color: rgb(100%, 20%, 20%);\n"    // background if selected
   "    color: rgb(100%, 100%, 100%);\n"             // text if selected
@@ -269,7 +270,8 @@ char *css =
   "    border: 1px solid darkblue;\n"
   "    border-radius: 6px;\n"
   "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
-  "    font-size: 12px;\n"
+  "    font-size: 13px;\n"
+  "    font-weight: bold;\n"
   "    background-image: none;\n"
   "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
   "    color: rgb(0%, 0%, 0%);\n"                 // text if selected

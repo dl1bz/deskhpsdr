@@ -635,7 +635,10 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
     case TX_LEVELER_GAIN:
       transmitter->lev_gain = v;
 
-      if (can_transmit && display_sliders) { update_slider_lev_scale(TRUE); }
+      if (can_transmit && display_sliders) {
+        update_slider_lev_scale(TRUE);
+        update_slider_lev_button(TRUE);
+      }
 
       mode_settings[mode].lev_gain = v;
       copy_mode_settings(mode);

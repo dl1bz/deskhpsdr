@@ -1027,10 +1027,12 @@ void vfo_id_mode_changed(int id, int m) {
       update_slider_bbcompr_scale(FALSE);
       update_slider_bbcompr_button(FALSE);
       update_slider_lev_scale(FALSE);
+      update_slider_lev_button(FALSE);
     } else {
       update_slider_bbcompr_scale(TRUE);
       update_slider_bbcompr_button(TRUE);
       update_slider_lev_scale(TRUE);
+      update_slider_lev_button(TRUE);
       update_slider_preamp_scale(TRUE);
     }
   }
