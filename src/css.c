@@ -91,13 +91,13 @@ char *css =
   "  notebook { font-size: 15px; }\n"
   "  #boldlabel {\n"
   "    padding: 3px;\n"
-  "    font-family: Tahoma, Sans;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-weight: bold;\n"
   "    font-size: 15px;\n"
   "  }\n"
   "  #boldlabel_red {\n"
   "    padding: 3px;\n"
-  "    font-family: Tahoma, Sans;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-weight: bold;\n"
   "    font-size: 15px;\n"
   "    color: red;\n"
@@ -120,7 +120,7 @@ char *css =
   "  }\n"
   "  #stdlabel {\n"
   "    padding: 3px;\n"
-  "    font-family: Tahoma, Sans;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-weight: normal;\n"
   "    font-size: 15px;\n"
   "  }\n"
@@ -165,7 +165,7 @@ char *css =
   "  }\n"
   "  #label2_grey {\n"
   "    padding: 3px;\n"
-  "    font-family: Tahoma, Sans;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-weight: normal;\n"
   "    font-size: 18px;\n"
   "    color: #c2c2c2;\n"
@@ -192,10 +192,18 @@ char *css =
   "    }\n"
   "  #close_button {\n"
   "    padding: 5px;\n"
-  "    font-family: Tahoma, Sans;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-size: 15px;\n"
   "    font-weight: bold;\n"
   "    border: 1px solid rgb(50%, 50%, 50%);\n"
+  "    }\n"
+  "  #small_button {\n"
+  "    border: 1px solid darkblue;\n"
+  "    border-radius: 6px;\n"
+  "    background: none;\n"
+  "    background-color: white;\n"
+  "    background-image: none;\n"
+  "    box-shadow: none;\n"
   "    }\n"
   "  #small_button label {\n"
   "    padding: 1px;\n"
@@ -205,17 +213,23 @@ char *css =
   "    }\n"
   "  #medium_button {\n"
   "    padding: 1px;\n"
-  "    font-family: Tahoma, Sans;\n"
+//   "    border: 1px solid darkblue;\n"
+  "    border-radius: 20px;\n"
+//  "    background: none;\n"
+//  "    background-color: white;\n"
+//  "    background-image: none;\n"
+//  "    box-shadow: none;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-size: 20px;\n"
   "    }\n"
   "  #large_button {\n"
   "    padding: 1px;\n"
-  "    font-family: Tahoma, Sans;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-size: 25px;\n"
   "    }\n"
   "  #small_button_with_border {\n"
   "    padding: 3px;\n"
-  "    font-family: Tahoma, Sans;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-size: 15px;\n"
   "    border: 1px solid rgb(50%, 50%, 50%);\n"
   "    }\n"
@@ -310,7 +324,7 @@ char *css =
   ;
 
 //
-// If CSS loading from a file named default.css is successful, take that
+// If CSS loading from a file named deskhpsdr.css is successful, take that
 // Otherwise load the default settings hard-coded above
 //
 void load_css() {
@@ -326,13 +340,13 @@ void load_css() {
       GTK_STYLE_PROVIDER(provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   error = NULL;
-  rc = gtk_css_provider_load_from_path (provider, "default.css", &error);
+  rc = gtk_css_provider_load_from_path (provider, "deskhpsdr.css", &error);
   g_clear_error(&error);
 
   if (rc) {
-    t_print("%s: CSS data loaded from file default.css\n", __FUNCTION__);
+    t_print("%s: CSS data loaded from file deskhpsdr.css\n", __FUNCTION__);
   } else {
-    t_print("%s: failed to load CSS data from file default.css\n", __FUNCTION__);
+    t_print("%s: failed to load CSS data from file deskhpsdr.css\n", __FUNCTION__);
     rc = gtk_css_provider_load_from_data(provider, css, -1, &error);
     g_clear_error(&error);
 
