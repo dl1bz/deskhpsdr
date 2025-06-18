@@ -1151,7 +1151,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_margin_top(sliders, 0);    // Kein Abstand oben
   gtk_widget_set_margin_bottom(sliders, 0); // Kein Abstand unten
   gtk_widget_set_margin_start(sliders, 15);  // Kein Abstand am Anfang
-  gtk_widget_set_margin_end(sliders, 15);    // Kein Abstand am Ende
+  gtk_widget_set_margin_end(sliders, 0);    // Kein Abstand am Ende
   // Definiere die Hintergrundfarbe (grün)
   // gdk_rgba_parse(&bgcolor, "white");
   // gtk_widget_override_background_color(sliders, GTK_STATE_FLAG_NORMAL, &bgcolor);
@@ -1176,6 +1176,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.0);
   gtk_widget_set_size_request(af_gain_scale, sl_w_fix, widget_height);
   gtk_widget_set_valign(af_gain_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(af_gain_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(af_gain_scale, FALSE);
   gtk_range_set_increments (GTK_RANGE(af_gain_scale), 1.0, 1.0);
   gtk_range_set_value (GTK_RANGE(af_gain_scale), active_receiver->volume);
 
@@ -1213,11 +1215,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   } else {
     agc_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -20.0, 120.0, 1.0);
     gtk_widget_set_size_request(agc_scale, sl_w_fix, widget_height);
+    gtk_widget_set_hexpand(agc_scale, FALSE);
     gtk_range_set_increments (GTK_RANGE(agc_scale), 1.0, 1.0);
     gtk_range_set_value (GTK_RANGE(agc_scale), (double)active_receiver->agc_gain);
     gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
   }
 
+  gtk_widget_set_halign(agc_scale, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(agc_scale, GTK_ALIGN_CENTER);
   agc_scale_signal_id = g_signal_connect(G_OBJECT(agc_scale), "value_changed", G_CALLBACK(agcgain_value_changed_cb),
                                          NULL);
@@ -1280,7 +1284,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, adc[0].min_gain, adc[0].max_gain, 1.0);
     gtk_widget_set_size_request(rf_gain_scale, sl_w_fix, widget_height);
+    gtk_widget_set_hexpand(rf_gain_scale, FALSE);
     gtk_widget_set_valign(rf_gain_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(rf_gain_scale, GTK_ALIGN_CENTER);
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
     gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
     gtk_widget_show(rf_gain_scale);
@@ -1308,6 +1314,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
     gtk_widget_set_size_request(attenuation_scale, sl_w_fix, widget_height);
     gtk_widget_set_valign(attenuation_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(attenuation_scale, GTK_ALIGN_CENTER);
     gtk_range_set_value (GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
     gtk_range_set_increments (GTK_RANGE(attenuation_scale), 1.0, 1.0);
     gtk_widget_show(attenuation_scale);
@@ -1378,12 +1385,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_margin_start(mic_gain_scale, 10);  // Abstand am Anfang
       gtk_widget_set_margin_right(mic_gain_scale, 10);
       gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
+      gtk_widget_set_halign(mic_gain_scale, GTK_ALIGN_CENTER);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double)transmitter->mic_gain);
       gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, twidth - 1, 1);
     } else {
       mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
       gtk_widget_set_size_request(mic_gain_scale, sl_w_fix, widget_height);
       gtk_widget_set_valign(mic_gain_scale, GTK_ALIGN_CENTER);
+      gtk_widget_set_halign(mic_gain_scale, GTK_ALIGN_CENTER);
+      gtk_widget_set_hexpand(mic_gain_scale, FALSE);
       gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
       gtk_grid_attach(GTK_GRID(sliders), mic_gain_scale, s1pos, 1, swidth, 1);
       gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
@@ -1430,6 +1440,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       } else {
         drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
         gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
+        gtk_widget_set_hexpand(drive_scale, FALSE);
       }
     } else {
       if (optimize_for_touchscreen) {
@@ -1442,9 +1453,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       } else {
         drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
         gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
+        gtk_widget_set_hexpand(drive_scale, FALSE);
       }
     }
 
+    gtk_widget_set_halign(drive_scale, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(drive_scale, GTK_ALIGN_CENTER);
 
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
@@ -1511,6 +1524,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   squelch_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
   gtk_widget_set_size_request(squelch_scale, sl_w_fix, widget_height);
   gtk_widget_set_valign(squelch_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(squelch_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(squelch_scale, FALSE);
   gtk_range_set_increments(GTK_RANGE(squelch_scale), 1.0, 1.0);
   gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
   gtk_widget_show(squelch_scale);
@@ -1546,6 +1561,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(tune_drive_scale, 0, widget_height - 10);
     gtk_widget_set_margin_start(tune_drive_scale, 10);  // Abstand am Anfang
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(tune_drive_scale, GTK_ALIGN_CENTER);
     gtk_widget_set_margin_right(tune_drive_scale, 10);
     tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed",
                                  G_CALLBACK(tune_drive_changed_cb), NULL);
@@ -1643,6 +1659,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
     gtk_widget_set_size_request(bbcompr_scale, 0, widget_height - 10);
     gtk_widget_set_valign(bbcompr_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(bbcompr_scale, GTK_ALIGN_CENTER);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(bbcompr_scale), (double)transmitter->compressor_level);
     gtk_grid_attach(GTK_GRID(sliders), bbcompr_scale, s3pos, 2, twidth - 1, 1);
     bbcompr_scale_signal_id = g_signal_connect(G_OBJECT(bbcompr_scale), "value_changed",
@@ -1678,6 +1695,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(lev_scale), TRUE);
     gtk_widget_set_size_request(lev_scale, 0, widget_height - 10);
     gtk_widget_set_valign(lev_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(lev_scale, GTK_ALIGN_CENTER);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(lev_scale), (double)transmitter->lev_gain);
     gtk_grid_attach(GTK_GRID(sliders), lev_scale, s3pos + 2, 2, twidth - 1, 1);
     lev_scale_signal_id = g_signal_connect(G_OBJECT(lev_scale), "value_changed", G_CALLBACK(lev_scale_changed_cb), NULL);
@@ -1717,6 +1735,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(preamp_scale), TRUE);
     gtk_widget_set_size_request(preamp_scale, 0, widget_height - 10);
     gtk_widget_set_valign(preamp_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(preamp_scale, GTK_ALIGN_CENTER);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
     gtk_widget_set_margin_end(preamp_scale, 10);
 

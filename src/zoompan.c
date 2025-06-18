@@ -263,6 +263,8 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   zoom_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, MAX_ZOOM, 1.00);
   gtk_widget_set_size_request(zoom_scale, sl_w_fix, height);
   gtk_widget_set_valign(zoom_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(zoom_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(zoom_scale, FALSE);
   gtk_range_set_increments (GTK_RANGE(zoom_scale), 1.0, 1.0);
   gtk_widget_set_margin_end(zoom_scale, 0);    // rechter Rand (Ende)
   gtk_range_set_value (GTK_RANGE(zoom_scale), active_receiver->zoom);
@@ -281,7 +283,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_margin_top(pan_label, 5);
   gtk_widget_set_margin_bottom(pan_label, 5);
 #ifdef __APPLE__
-  gtk_widget_set_margin_start(pan_label, 10);  // linker Rand (Start)
+  gtk_widget_set_margin_start(pan_label, 0);  // linker Rand (Start)
 #else
   gtk_widget_set_margin_start(pan_label, 0);  // linker Rand (Start)
 #endif
@@ -298,6 +300,8 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
   gtk_widget_set_size_request(pan_scale, sl_w_fix + add_pixel, height);
   gtk_widget_set_valign(pan_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(pan_scale, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(pan_scale, FALSE);
   gtk_scale_set_draw_value (GTK_SCALE(pan_scale), FALSE);
   gtk_range_set_increments (GTK_RANGE(pan_scale), 10.0, 10.0);
   gtk_range_set_value (GTK_RANGE(pan_scale), active_receiver->pan);
