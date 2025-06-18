@@ -1720,15 +1720,16 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_bottom(preamp_label, label_padding);
     gtk_widget_set_margin_start(preamp_label, label_padding);
     gtk_widget_set_margin_end(preamp_label, label_padding);
+
     // end label definition
     if (optimize_for_touchscreen && display_extra_sliders) {
       gtk_grid_attach(GTK_GRID(sliders), preamp_btn, s1pos + 1, 1, twidth - 1, 1);
     } else {
       gtk_grid_attach(GTK_GRID(sliders), preamp_btn, s1pos + 1, 2, twidth - 1, 1);
     }
+
     preamp_btn_signal_id = g_signal_connect(preamp_btn, "toggled", G_CALLBACK(preamp_btn_toggle_cb), NULL);
     gtk_widget_show(preamp_btn);
-
     //-------------------------------------------------------------------------------------------
     preamp_scale = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(preamp_scale), TRUE);
