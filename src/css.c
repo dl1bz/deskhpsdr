@@ -196,6 +196,11 @@ char *css =
   "    font-size: 15px;\n"
   "    font-weight: bold;\n"
   "    border: 1px solid rgb(50%, 50%, 50%);\n"
+  "    background-image: none;\n"
+  "    }\n"
+  "  #close_button:hover {\n"
+  "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
+  "    background-image: none;\n"
   "    }\n"
   "  #small_button {\n"
   "    padding: 1px;\n"
@@ -218,7 +223,6 @@ char *css =
   "    background-image: none;\n"
   "    }\n"
   "  #medium_button:hover {\n"
-  "    background-image: none;\n"
   "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
   "    background-image: none;\n"
   "    }\n"
@@ -324,8 +328,11 @@ char *css =
   "    color: rgb(100%, 10%, 10%);\n"              // digits
   "    font-size: 15px;\n"
   "    }\n"
-  "  checkbutton check {\n"
+  "  checkbutton:checked > check {\n"
   "    border: 1px solid rgb(50%, 50%, 50%);\n"
+  "    background-color: darkgreen;\n"  // Hintergrundfarbe des CheckButtons selbst
+  "    border-color: darkgreen;\n"
+  "    background-image: none;\n"
   "    }\n"
   "  radiobutton radio {\n"
   "    border: 1px solid rgb(50%, 50%, 50%);\n"
