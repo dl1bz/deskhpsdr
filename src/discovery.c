@@ -379,12 +379,20 @@ void discovery() {
       }
 
       GtkWidget *label = gtk_label_new(text);
-      gtk_widget_set_name(label, "boldlabel");
-      gtk_widget_set_halign (label, GTK_ALIGN_START);
+      gtk_widget_set_name(label, "boldlabel_blue");
+      // gtk_widget_set_halign (label, GTK_ALIGN_START);
+      gtk_widget_set_margin_top(label, 10);
+      gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+      gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
       gtk_widget_show(label);
       gtk_grid_attach(GTK_GRID(grid), label, 0, row, 3, 1);
       GtkWidget *start_button = gtk_button_new();
-      gtk_widget_set_name(start_button, "big_txt");
+      gtk_widget_set_name(start_button, "discovery_btn");
+      gtk_widget_set_margin_top(start_button, 10);
+      gtk_widget_set_margin_end(start_button, 5);
+      // gtk_widget_set_margin_bottom(start_button, 10);
+      gtk_widget_set_halign(start_button, GTK_ALIGN_CENTER);
+      gtk_widget_set_valign(start_button, GTK_ALIGN_CENTER);
       gtk_widget_show(start_button);
       gtk_grid_attach(GTK_GRID(grid), start_button, 3, row, 1, 1);
       g_signal_connect(start_button, "button-press-event", G_CALLBACK(start_cb), (gpointer)d);
@@ -392,7 +400,11 @@ void discovery() {
       // if not available then cannot start it
       switch (d->status) {
       case STATE_AVAILABLE:
-        gtk_button_set_label(GTK_BUTTON(start_button), "Start");
+        if (d->protocol == ORIGINAL_PROTOCOL || d->protocol == NEW_PROTOCOL) {
+          gtk_button_set_label(GTK_BUTTON(start_button), "Connect");
+        } else {
+          gtk_button_set_label(GTK_BUTTON(start_button), "Start");
+        }
         break;
 
       case STATE_SENDING:
@@ -509,7 +521,7 @@ void discovery() {
 #endif
 #endif
   GtkWidget *tcp_b = gtk_label_new("Radio IP Addr:");
-  gtk_widget_set_name(tcp_b, "boldlabel");
+  gtk_widget_set_name(tcp_b, "boldlabel_blue");
   gtk_grid_attach(GTK_GRID(grid), tcp_b, 1, row, 1, 1);
   tcpaddr = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(tcpaddr), 20);
@@ -517,7 +529,9 @@ void discovery() {
   gtk_entry_set_text(GTK_ENTRY(tcpaddr), ipaddr_radio);
   g_signal_connect (tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
   GtkWidget *exit_b = gtk_button_new_with_label("Exit");
-  gtk_widget_set_name(exit_b, "close_button");
+  gtk_widget_set_name(exit_b, "discovery_btn");
+  gtk_widget_set_margin_start(exit_b, 10);
+  gtk_widget_set_margin_end(exit_b, 10);
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), exit_b, 3, row, 1, 1);
   gtk_container_add (GTK_CONTAINER (content), grid);
