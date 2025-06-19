@@ -871,7 +871,7 @@ static void radio_create_visual() {
   t_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   hide_b = gtk_button_new_with_label("Hide");
-  gtk_widget_set_name(hide_b, "boldlabel");
+  gtk_widget_set_name(hide_b, "boldlabel_vfo_sf");
 #if defined (__LDESK__)
   gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
@@ -887,7 +887,7 @@ static void radio_create_visual() {
   t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   menu_b = gtk_button_new_with_label("Menu");
-  gtk_widget_set_name(menu_b, "boldlabel");
+  gtk_widget_set_name(menu_b, "boldlabel_vfo_sf");
 #if defined (__LDESK__)
   gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect (menu_b, "button-press-event", G_CALLBACK(menu_cb), NULL) ;
@@ -904,7 +904,7 @@ static void radio_create_visual() {
   t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   exit_b = gtk_button_new_with_label("Exit");
-  gtk_widget_set_name(exit_b, "boldlabel");
+  gtk_widget_set_name(exit_b, "boldlabel_vfo_sf");
   gtk_widget_set_size_request (exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL) ;
   gtk_fixed_put(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, y + 2);
