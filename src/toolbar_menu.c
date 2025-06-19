@@ -85,7 +85,7 @@ void toolbar_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 3, 1);
   int lfunction = 0;
 #if defined (__LDESK__)
-  const int max_switches = 10;
+  const int max_switches = 11;
 #else
   const int max_switches = 8;
 #endif
