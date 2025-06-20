@@ -73,6 +73,10 @@ int action_dialog(GtkWidget *parent, int filter, enum ACTION currentAction) {
     if ((ActionTable[i].type & filter) || (ActionTable[i].type == TYPE_NONE)) {
       GtkWidget *button = gtk_toggle_button_new_with_label(ActionTable[i].str);
       gtk_widget_set_name(button, "small_toggle_button");
+      GtkWidget *button_label = gtk_bin_get_child(GTK_BIN(button));
+      gtk_label_set_xalign(GTK_LABEL(button_label), 0.5);
+      gtk_label_set_yalign(GTK_LABEL(button_label), 0.5);
+      gtk_label_set_justify(GTK_LABEL(button_label), GTK_JUSTIFY_CENTER);
       gtk_grid_attach(GTK_GRID(grid), button, j % GRID_WIDTH, j / GRID_WIDTH, 1, 1);
 
       if (ActionTable[i].action == currentAction) {

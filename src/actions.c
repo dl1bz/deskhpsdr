@@ -129,6 +129,7 @@ ACTION_TABLE ActionTable[] = {
   {FILTER_CUT_LOW,      "Filter Cut\nLow",      "FCUTL",        MIDI_WHEEL | CONTROLLER_ENCODER},
   {FILTER_CUT_HIGH,     "Filter Cut\nHigh",     "FCUTH",        MIDI_WHEEL | CONTROLLER_ENCODER},
   {FILTER_CUT_DEFAULT,  "Filter Cut\nDefault",  "FCUTDEF",      MIDI_KEY   | CONTROLLER_SWITCH},
+  {F_SCREEN,            "Full\nScreen",         "FSCRN",        TYPE_NONE},
   {MENU_FILTER,         "Filter\nMenu",         "FILT",         MIDI_KEY   | CONTROLLER_SWITCH},
   {FUNCTION,            "Function",             "FUNC",         MIDI_KEY   | CONTROLLER_SWITCH},
   {FUNCTIONREV,         "FuncRev",              "FUNC-",        MIDI_KEY   | CONTROLLER_SWITCH},
@@ -970,6 +971,11 @@ int process_action(void *data) {
       }
     }
 
+    break;
+
+  case F_SCREEN:
+    TOGGLE(full_screen);
+    radio_reconfigure_screen();
     break;
 
   case IF_SHIFT:
