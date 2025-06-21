@@ -946,8 +946,8 @@ endif
 		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
-	@echo "Remove old deskHPSDR.app container from ${HOME}/Desktop ..."
-	@rm -rf ${HOME}/Desktop/deskHPSDR.app
+	@echo "Remove old deskHPSDR.app container from \"${HOME}/Desktop\" ..."
+	@rm -rf "${HOME}/Desktop/deskHPSDR.app"
 	@mkdir -p deskHPSDR.app/Contents/MacOS
 	@mkdir -p deskHPSDR.app/Contents/Frameworks
 	@mkdir -p deskHPSDR.app/Contents/Resources
@@ -957,24 +957,24 @@ endif
 	@cp MacOS/Info.plist deskHPSDR.app/Contents
 	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
 	@cp MacOS/radio.icns deskHPSDR.app/Contents/Resources
-	@if [ -f ${CURRDIR}/MacOS/rigctld_deskhpsdr ]; then \
-		cp ${CURRDIR}/MacOS/rigctld_deskhpsdr deskHPSDR.app/Contents/Resources; \
+	@if [ -f "${CURRDIR}/MacOS/rigctld_deskhpsdr" ]; then \
+		cp "${CURRDIR}/MacOS/rigctld_deskhpsdr" deskHPSDR.app/Contents/Resources; \
 	fi
 	@sleep 1
 	@echo "Copy additional needed Fonts..."
-	@mkdir -p $(HOME)/Library/Fonts
-	@cp -R fonts/ttf/Roboto ${HOME}/Library/Fonts
-	@cp -R fonts/ttf/JetBrainsMono ${HOME}/Library/Fonts
-	@cp -R fonts/otf/GNU ${HOME}/Library/Fonts
+	@mkdir -p "$(HOME)/Library/Fonts"
+	@cp -R fonts/ttf/Roboto "${HOME}/Library/Fonts"
+	@cp -R fonts/ttf/JetBrainsMono "${HOME}/Library/Fonts"
+	@cp -R fonts/otf/GNU "${HOME}/Library/Fonts"
 	@sleep 1
 	@echo "Rebuild font cache..."
 	@-fc-cache -f
 	@sleep 1
 	@git update-index --assume-unchanged make.config.deskhpsdr
 	@echo "Copy deskHPSDR to your Desktop..."
-	@mv deskHPSDR.app ${HOME}/Desktop
+	@mv deskHPSDR.app "${HOME}/Desktop"
 	@echo "Starting deskHPSDR..."
-	@open -a ${HOME}/Desktop/deskHPSDR.app
+	@open -a "${HOME}/Desktop/deskHPSDR.app"
 
 install-Linux: all
 	@echo "Install deskHPSDR for Linux..."
@@ -983,47 +983,47 @@ install-Linux: all
 	@sudo ldconfig
 	@sleep 1
 	@echo "Remove previous deskHPSDR binary..."
-	@sudo rm -f /usr/local/bin/$(PROGRAM)
+	@sudo rm -f "/usr/local/bin/$(PROGRAM)"
 	@echo "Copy just compiled deskHPSDR binary to /usr/local/bin"
-	@sudo install -m 0755 -t /usr/local/bin $(PROGRAM)
-	@if [ -f ${CURRDIR}/LINUX/rigctld_deskhpsdr ]; then \
-		sudo install -m 0755 -t /usr/local/bin ${CURRDIR}/LINUX/rigctld_deskhpsdr; \
+	@sudo install -m 0755 -t /usr/local/bin "$(PROGRAM)"
+	@if [ -f "${CURRDIR}/LINUX/rigctld_deskhpsdr" ]; then \
+		sudo install -m 0755 -t /usr/local/bin "${CURRDIR}/LINUX/rigctld_deskhpsdr"; \
 	fi
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
-	@sudo mkdir -p /usr/local/share/$(PROGRAM)
-	@sudo cp release/$(PROGRAM)/hpsdr*.png /usr/local/share/$(PROGRAM)
-	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/$(PROGRAM)
+	@sudo mkdir -p "/usr/local/share/$(PROGRAM)"
+	@sudo cp release/"$(PROGRAM)"/hpsdr*.png "/usr/local/share/$(PROGRAM)"
+	@sudo cp release/"$(PROGRAM)"/trx_icon.png "/usr/local/share/$(PROGRAM)"
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/icons"
-	@sudo mkdir -p /usr/local/share/icons
-	@sudo cp release/$(PROGRAM)/radio_icon.png /usr/local/share/icons
-	@sudo cp release/$(PROGRAM)/trx_icon.png /usr/local/share/icons
+	@sudo mkdir -p "/usr/local/share/icons"
+	@sudo cp release/"$(PROGRAM)"/radio_icon.png "/usr/local/share/icons"
+	@sudo cp release/"$(PROGRAM)"/trx_icon.png "/usr/local/share/icons"
 	@echo "Copy additional needed Fonts..."
 	@if [ -d /usr/share/fonts/truetype ]; then \
 		sudo cp -R fonts/ttf/Roboto /usr/share/fonts/truetype; \
 		sudo cp -R fonts/ttf/JetBrainsMono /usr/share/fonts/truetype; \
 	else \
-		mkdir -p ${HOME}/.local/share/fonts/truetype; \
-		cp -R fonts/ttf/Roboto ${HOME}/.local/share/fonts/truetype; \
-		cp -R fonts/ttf/JetBrainsMono ${HOME}/.local/share/fonts/truetype; \
+		mkdir -p "${HOME}/.local/share/fonts/truetype"; \
+		cp -R fonts/ttf/Roboto "${HOME}/.local/share/fonts/truetype"; \
+		cp -R fonts/ttf/JetBrainsMono "${HOME}/.local/share/fonts/truetype"; \
 	fi; \
 	if [ -d /usr/share/fonts/opentype ]; then \
 		sudo cp -R fonts/otf/GNU /usr/share/fonts/opentype; \
 	else \
-		mkdir -p ${HOME}/.local/share/fonts/opentype; \
-		cp -R fonts/otf/GNU ${HOME}/.local/share/fonts/opentype; \
+		mkdir -p "${HOME}/.local/share/fonts/opentype"; \
+		cp -R fonts/otf/GNU "${HOME}/.local/share/fonts/opentype"; \
 	fi
 	@sleep 1
 	@echo "Rebuild font cache..."
 	@-sudo fc-cache -f
 	@echo "Install X11 deskHPSDR desktop file..."
-	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
-	@cp LINUX/deskHPSDR.desktop ${HOME}/.local/share/applications
+	@-rm -f "${HOME}/.local/share/applications/deskHPSDR.desktop"
+	@cp LINUX/deskHPSDR.desktop "${HOME}/.local/share/applications"
 	@echo "Create a link for deskHPSDR at the Desktop..."
-	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
-	@cp LINUX/deskHPSDR.desklnk ${CURRDIR}/deskHPSDR.desktop
-	@echo 'URL=${HOME}/.local/share/applications/deskHPSDR.desktop' >> ${CURRDIR}/deskHPSDR.desktop
-	@install -m 0755 -t ${HOME}/Desktop ${CURRDIR}/deskHPSDR.desktop
-	@-rm -f ${CURRDIR}/deskHPSDR.desktop
+	@-rm -f "${HOME}/Desktop/deskHPSDR.desktop"
+	@cp LINUX/deskHPSDR.desklnk "${CURRDIR}/deskHPSDR.desktop"
+	@echo "URL=${HOME}/.local/share/applications/deskHPSDR.desktop" >> "${CURRDIR}/deskHPSDR.desktop"
+	@install -m 0755 -t "${HOME}/Desktop" "${CURRDIR}/deskHPSDR.desktop"
+	@-rm -f "${CURRDIR}/deskHPSDR.desktop"
 	@sudo sync
 	@echo "Update Desktop database..."
 #	@command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database || :
