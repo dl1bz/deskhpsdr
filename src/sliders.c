@@ -18,8 +18,8 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 *
 */
-
 #include <gtk/gtk.h>
+#include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -492,6 +492,19 @@ void set_rf_gain(int rx, double value) {
   if (display_sliders && active_receiver->id == rx) {
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[rxadc].gain);
   } else {
+    // alte Version ohne den main_thread genau zu definieren -> Erkennung aber nicht sicher
+    /*
+    if (!g_main_context_is_owner(NULL)) {
+        // Wir sind im falschen Thread – NICHT show_popup_slider() aufrufen
+        return;
+    }
+    */
+    // Falls wir NICHT im Main Thread sind, dürfen wir show_popup_slider()
+    // nicht aus einem anderen "fremden" Thread aufrufen, anderenfalls App-Crash !!!
+    if (!pthread_equal(pthread_self(), deskhpsdr_main_thread)) {
+      return;
+    }
+
     char title[64];
     snprintf(title, 64, "RF Gain ADC %d", rxadc);
     show_popup_slider(RF_GAIN, rxadc, adc[rxadc].min_gain, adc[rxadc].max_gain, 1.0, adc[rxadc].gain, title);
@@ -1299,6 +1312,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed", G_CALLBACK(rf_gain_value_changed_cb), NULL);
   } else {
     rf_gain_label = NULL;
+    autogain_btn = NULL;
     rf_gain_scale = NULL;
   }
 
@@ -1769,10 +1783,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     local_mic_label = NULL;
     local_mic_button = NULL;
     local_mic_input = NULL;
-    bbcompr_scale = NULL;
+    bbcompr_label = NULL;
     bbcompr_btn = NULL;
+    bbcompr_scale = NULL;
     lev_label = NULL;
+    lev_btn = NULL;
     lev_scale = NULL;
+    preamp_label = NULL;
+    preamp_btn = NULL;
+    preamp_scale = NULL;
   }
 
 #endif

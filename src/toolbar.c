@@ -257,7 +257,8 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   gtk_widget_set_name(sim_sfunc, button_css);
   gtk_widget_set_size_request (sim_sfunc, button_width, height);
   g_signal_connect(G_OBJECT(sim_sfunc), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(10));
-  g_signal_connect(G_OBJECT(sim_sfunc), "button-release-event", G_CALLBACK(toolbar_button_released_cb), GINT_TO_POINTER(10));
+  g_signal_connect(G_OBJECT(sim_sfunc), "button-release-event", G_CALLBACK(toolbar_button_released_cb),
+                   GINT_TO_POINTER(10));
   gtk_grid_attach(GTK_GRID(toolbar), sim_sfunc, 40, 0, 4, 1);
   gtk_widget_show_all(toolbar);
 #else

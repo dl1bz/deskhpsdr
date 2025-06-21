@@ -46,6 +46,9 @@ extern int this_monitor;
 extern int full_screen;
 extern GtkWidget *top_window;
 extern GtkWidget *topgrid;
+
+extern pthread_t deskhpsdr_main_thread;
+
 extern void status_text(const char *text);
 
 extern gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data);

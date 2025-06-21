@@ -405,6 +405,7 @@ void discovery() {
         } else {
           gtk_button_set_label(GTK_BUTTON(start_button), "Start");
         }
+
         break;
 
       case STATE_SENDING:

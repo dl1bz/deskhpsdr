@@ -31,6 +31,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <curl/curl.h>
+#include <pthread.h>
 
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
@@ -88,6 +89,8 @@ GtkWidget *top_window = NULL;
 GtkWidget *topgrid;
 
 static GtkWidget *status_label;
+
+pthread_t deskhpsdr_main_thread;  // global
 
 void status_text(const char *text) {
   gtk_label_set_text(GTK_LABEL(status_label), text);
@@ -588,6 +591,8 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 #else
 static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 #endif
+  // Hier setzen wir den GTK-Mainloop-Thread
+  deskhpsdr_main_thread = pthread_self();
 #if defined (__LDESK__)
   char text[2048];
 #else
