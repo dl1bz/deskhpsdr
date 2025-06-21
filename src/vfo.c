@@ -1536,29 +1536,15 @@ void vfo_id_move_to(int id, long long hz) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, gpointer data) {
-  /*
-  #if defined (__LDESK__)
+  RECEIVER *rx = active_receiver;
 
-    if (event->state) {
-      if (event->direction == GDK_SCROLL_UP) {
-        vfo_step(1);
-      } else {
-        vfo_step(-1);
-      }
-    }
-
-  #else
-
-    if (event->direction == GDK_SCROLL_UP) {
-      vfo_step(1);
-    } else {
-      vfo_step(-1);
-    }
-
-  #endif
+  if (!rx) {
+    t_print("%s: no active RX\n", __FUNCTION__);
     return FALSE;
-  */
-  return rx_scroll_event(widget, event, data);
+  }
+
+  // return rx_scroll_event(widget, event, data);
+  return rx_scroll_event(widget, event, rx);
 }
 
 static gboolean vfo_configure_event_cb (GtkWidget         *widget,

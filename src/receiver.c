@@ -203,8 +203,15 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointer data) {
-#ifdef __APPLE__
   RECEIVER *rx = (RECEIVER *)data;
+
+  if (!rx) {
+    // Falls kein gültiger Zeiger übergeben wurde, mache nichts und verhindere Absturz
+    t_print("%s: ERROR: called with NULL RECEIVER pointer!\n", __FUNCTION__);
+    return FALSE;  // Event nicht verarbeitet
+  }
+
+#ifdef __APPLE__
 
   // if using Apple Magic Mouse it's tricky to use the mouse because we have only touch but no real wheel
   // for safer use we need to press the OPTION key for VFO movement in VFO step and
