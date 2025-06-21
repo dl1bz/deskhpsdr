@@ -167,10 +167,12 @@ GtkWidget* meter_init(int width, int height) {
 }
 
 void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double swr) {
+  /* Sofort-Fix: nichts machen, wenn noch kein Surface existiert */
+  if (!meter_surface) { return; }
+  cairo_t *cr = cairo_create (meter_surface);
   double rxlvl;   // only used for RX input level, clones "value"
   double pwr;     // only used for TX power, clones "value"
   char sf[32];
-  cairo_t *cr = cairo_create (meter_surface);
   int txvfo = vfo_get_tx_vfo();
   int txmode = vfo[txvfo].mode;
   int cwmode = (txmode == modeCWU || txmode == modeCWL);
