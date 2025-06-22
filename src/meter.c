@@ -168,7 +168,9 @@ GtkWidget* meter_init(int width, int height) {
 
 void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double swr) {
   /* Sofort-Fix: nichts machen, wenn noch kein Surface existiert */
-  if (!meter_surface) { return; }
+  if (!rx || !meter_surface) {
+    return;
+  }
 
   cairo_t *cr = cairo_create (meter_surface);
   double rxlvl;   // only used for RX input level, clones "value"
