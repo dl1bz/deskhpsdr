@@ -242,6 +242,10 @@ int compare_doubles(const void *a, const void *b) {
 */
 
 void rx_panadapter_update(RECEIVER *rx) {
+  if (!rx || !rx->panadapter_surface) {
+    return;
+  }
+
   int i;
   float *samples;
   cairo_text_extents_t extents;

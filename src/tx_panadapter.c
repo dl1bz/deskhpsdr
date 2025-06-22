@@ -107,6 +107,10 @@ static gboolean tx_panadapter_button_press_event_cb (GtkWidget *widget, GdkEvent
 }
 
 void tx_panadapter_update(TRANSMITTER *tx) {
+  if (!tx || !tx->panadapter_surface) {
+    return;
+  }
+
   if (tx->panadapter_surface) {
     int mywidth = gtk_widget_get_allocated_width (tx->panadapter);
     int myheight = gtk_widget_get_allocated_height (tx->panadapter);
