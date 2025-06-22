@@ -1277,6 +1277,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
 #endif
   // show RX200 data
+  cairo_select_font_face(cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
   double rx200_x = 0.0;
