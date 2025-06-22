@@ -49,7 +49,7 @@
 
 #endif
 
-#define DISPLAY_FONT_UDP          "JetBrainsMono-Regular"
+#define DISPLAY_FONT_UDP          "JetBrains Mono"
 #define DISPLAY_FONT_UDP_B        "JetBrains Mono ExtraBold"
 
 #define DISPLAY_FONT_SIZE1 10                       // no longer used, this is too small for elder hams
