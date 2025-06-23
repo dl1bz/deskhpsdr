@@ -74,6 +74,16 @@ DEVEL=OFF
 
 -include make.config.deskhpsdr
 
+ifeq ($(EXTENDED_NR),ON)
+ifeq ("$(wildcard /usr/local/include/wdsp.h)","")
+$(info ---------------------------------------------------)
+$(info ERROR: EXTENDED_NR=ON is set, but /usr/local/include/wdsp.h not found!)
+$(info Please first run script build_wdsp_nr4.sh before you set EXTENDED_NR=ON !)
+$(info ---------------------------------------------------)
+$(error Cannot continue - STOP here.)
+endif
+endif
+
 # get the OS Name
 UNAME_S := $(shell uname -s)
 CURRDIR := $(shell pwd)
