@@ -1,8 +1,5 @@
 /* Copyright (C)
-* 2024 - Christoph van W"ullen, DL1YCF
-* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
-*
-*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
+* 2025 - Christoph van Wüllen, DL1YCF
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -19,12 +16,10 @@
 *
 */
 
+#ifdef __APPLE__
 #ifdef TTS
-  void tts_send(char *msg);
-  void tts_freq(void);
-  void tts_mode(void);
-  void tts_filter(void);
-  void tts_smeter(void);
-  void tts_txdrive(void);
-  void tts_atten(void);
+
+void MacTTS(char *msg);
+
+#endif
 #endif

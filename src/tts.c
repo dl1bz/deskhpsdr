@@ -49,6 +49,10 @@
 // 19080, and sends the text to eSpeak/festival.
 //
 
+// For MacOS, we in addition use the MacOS TTS capabilities
+
+#ifdef TTS
+
 #include <gtk/gtk.h>
 
 #include <unistd.h>
@@ -61,8 +65,14 @@
 #include "receiver.h"
 #include "vfo.h"
 
+
+#ifdef __APPLE__
+  #include "MacTTS.h"
+#endif
+
 //
 // tts_send: send broadcast UDP packet containing a string
+//           on MacOS do both: send UDP packet and use MacTTS
 //
 void tts_send(char *msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -78,6 +88,9 @@ void tts_send(char *msg) {
   addr.sin_port = htons(19080);
   sendto(sock, msg, strlen(msg), 0, (struct sockaddr * ) &addr, sizeof(addr));
   close(sock);
+#ifdef __APPLE__
+  MacTTS(msg);
+#endif
 }
 
 //
@@ -235,3 +248,4 @@ void tts_atten() {
 
   tts_send(msg);
 }
+#endif

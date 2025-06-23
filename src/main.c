@@ -64,7 +64,9 @@
 #include "exit_menu.h"
 #include "message.h"
 #include "startup.h"
-#include "tts.h"
+#ifdef TTS
+  #include "tts.h"
+#endif
 #if defined (__LDESK__)
   #include "sliders.h"
   #include "noise_menu.h"
@@ -143,6 +145,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   // F6                ==>  Attenuation/Preamp
   //
   switch (event->keyval) {
+#ifdef TTS
+
   case GDK_KEY_F1:
     tts_freq();
     break;
@@ -166,6 +170,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_F6:
     tts_atten();
     break;
+#endif
 #if defined (__LDESK__)
 
   // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T
