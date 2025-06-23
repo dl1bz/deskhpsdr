@@ -37,6 +37,9 @@ char build_options[] =
 #ifdef TCI
   "TCI "
 #endif
+#ifdef TTS
+  "TTS "
+#endif
 #ifdef USBOZY
   "USBOZY "
 #endif
