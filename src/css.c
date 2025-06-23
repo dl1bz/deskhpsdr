@@ -145,7 +145,7 @@ char *css =
   "    font-size: 15px;\n"
   "    color: darkblue;\n"
   "  }\n"
-    "  #smalllabel {\n"
+  "  #smalllabel {\n"
   "    padding: 3px;\n"
   "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
   "    font-weight: normal;\n"

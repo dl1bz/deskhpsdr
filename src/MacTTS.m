@@ -18,10 +18,6 @@ void MacTTS(char *text) {
   //
   NSString* str = [NSString stringWithUTF8String:text];
 
-  AVSpeechUtterance *utter = [[AVSpeechUtterance alloc] initWithString:str];
-  AVSpeechSynthesisVoice *voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"en-GB"];
-  [utter setVoice:voice];
-
   //
   // ONLY ONCE: create an instance of the synthesizer. This remains alive
   //
@@ -30,10 +26,23 @@ void MacTTS(char *text) {
    synth = [[AVSpeechSynthesizer alloc] init];
   }
 
+  AVSpeechUtterance *utter = [[AVSpeechUtterance alloc] initWithString:str];
+  AVSpeechSynthesisVoice *voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"en-GB"];
+  [utter setVoice:voice];
+
+  //
+  // If the previous text is not yet completely spoken,
+  // abort such that the new text can be spoken immediately
+  //
+  if ([synth isSpeaking]) {
+    [synth stopSpeakingAtBoundary:AVSpeechBoundaryImmediate ];
+  }
+
   //
   // Put the text into the queue of the synthesizer
-  // and return fast. No problem if the synthesizer is
-  // still busy with the preceeding text.
+  // and return. The synthesizer will be busy with speaking
+  // for some more time, we do not wait for the speech being
+  // complete.
   //
   [synth speakUtterance:utter];
 
