@@ -52,9 +52,9 @@ char build_options[] =
 #ifdef EXTNR
   "EXTNR "
 #endif
-// #ifdef __LDESK__
-//  "DESKTOP "
-// #endif
+  // #ifdef __LDESK__
+  //  "DESKTOP "
+  // #endif
 #ifdef __HAVEATU__
   "ATU "
 #endif
