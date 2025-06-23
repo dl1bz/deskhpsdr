@@ -1,4 +1,4 @@
-# deskHPSDR
+# deskHPSDR by DL1BZ
 
 <img src="https://github.com/dl1bz/deskhpsdr/blob/master/release/deskhpsdr/screenshot.png" width="1024px" />
 
@@ -11,7 +11,7 @@ My main focus of deskHPSDR development, the improvements and additional function
 More information about the develop progress of deskHPSDR can be found here in my Blog:<br>
 [https://hamradio.bzsax.de/category/hamradio/deskhpsdr/](https://hamradio.bzsax.de/category/hamradio/deskhpsdr/) (German language only).
 
-## deskHPSDR was splitting October 2024 from the code base of piHPSDR
+## deskHPSDR was forked once from pihpsdr - <br>but is now no more comparable with piHPSDR !
 
 piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>
 Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they are not available in piHPSDR. Things that deskHPSDR doesn't need have also been removed, they exist furthermore in piHPSDR, but are no longer as parts of deskHPSDR. deskHPSDR is a kind of evolution from piHPSDR with completely different objectives.
@@ -27,6 +27,11 @@ Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they 
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the ```Notes_if_using_HERMES-Lite-2.md```
 
+## I want use now deskHPSDR. What I need to do ?
+
+deskHPSDR is published exclusively as source code only. You need to clone this Github repository and compile the app before you can use it. Please read all included instructions carefully to avoid installation errors by yourself. Additional notes you can find too under the discussion tab of this project. Please have a look there too from time to time.<br>
+I will never publish any ready-compiled binaries, neither for macOS nor for Linux. The task of compiling it yourself remains.
+
 ## The further development of deskHPSDR
 
 My work is not completed (are software projects ever finished ???). I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW.
@@ -35,7 +40,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 **CHANGES are moved now to the [Discussions tab, category CHANGELOG deskhpsdr](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr).**
 
-### Version 2.6.0 (final version)
+### Version 2.6.0 (final version [current])
 
 On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get any brand-new base functions, only bugfixes if any become known or improvements if I think there's still something to be done yet. Further development will start later from version 2.7.x after a short break in development.<br>
 **Changes / Corrections after Version 2.5 and implement into 2.6**
@@ -51,7 +56,7 @@ On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This
 - slider geometry is adjustable now via a Slider Surface Resize Factor in the Screen Menu
 - add TUNE Drv and Audio Input Selection into the slider surface for direct access (go to TX Menu no more required)
 
-### Version 2.5.x (developer version)
+### Version 2.5.x (first developer version [deprecated])
 - completed: if using Hermes-Lite 2 add autogain regulation as option for RxPGA gain (need insert AUTOGAIN=ON in ```make.config.deskhpsdr```)
 - completed: fix a segmentation fault of deskHPSDR if using SDR-RX-only devices like SDRplay via Soapy-API after start the SDR device
 - completed: if using Hermes-Lite 2 activate CL1 input for inject external 10 MHz reference (e.g. with a GPSDO)
