@@ -526,12 +526,20 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 
+.c.o:
+ifeq ($(GDB), ON)
+	$(COMPILE) -g -c -o $@ $<
+else
+	$(COMPILE) -c -o $@ $<
+endif
+
 .m.o:
 ifeq ($(GDB), ON)
 	$(COMPILE) -g -c -o $@ $<
 else
 	$(COMPILE) -c -o $@ $<
 endif
+
 ##############################################################################
 #
 # All the libraries we need to link with (including WDSP, libm, $(SYSLIBS))
