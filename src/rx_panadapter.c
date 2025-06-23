@@ -1281,8 +1281,19 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
   double rx200_x = 0.0;
+  double rt_rx200_y = 15.0;
+  double rt_rx200_w = 305.0;
+  double rt_rx200_h = 60.0;
 
   if (can_transmit && rx200_udp_valid) {
+#ifdef __WMAP__
+    cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+#else
+    cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+#endif
+    cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
+    cairo_fill(cr);
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
     snprintf(_text, 128, "Fwd:");
     cairo_move_to(cr, width - 300, 30.0);
     cairo_show_text(cr, _text);
@@ -1344,12 +1355,12 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_set_source_rgba(cr, COLOUR_WHITE);
     }
 
-    cairo_move_to(cr, width - 300.0, 75.0);
+    cairo_move_to(cr, width - 300.0, 70.0);
     snprintf(_text, 128, "LPF %s", g_lpf_data[0]);
     cairo_show_text(cr, _text);
   } else {
     snprintf(_text, 128, " ");
-    cairo_move_to(cr, width - 300.0, 75.0);
+    cairo_move_to(cr, width - 300.0, 70.0);
     cairo_show_text(cr, _text);
   }
 

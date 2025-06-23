@@ -177,7 +177,7 @@ void about_menu(GtkWidget *parent) {
   }
 
   label = gtk_label_new(text);
-  gtk_widget_set_name(label, "small_button");
+  gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 1, row, 5, 1);
   row++;
