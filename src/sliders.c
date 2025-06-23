@@ -1200,6 +1200,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   gtk_widget_show(af_gain_scale);
   gtk_grid_attach(GTK_GRID(sliders), af_gain_scale, s1pos, 0, swidth, 1);
+  gtk_widget_set_tooltip_text(af_gain_scale, "Set AF Volume");
   g_signal_connect(G_OBJECT(af_gain_scale), "value_changed", G_CALLBACK(afgain_value_changed_cb), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   agc_gain_label = gtk_label_new("AGC");
@@ -1246,6 +1247,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       autogain_btn = gtk_toggle_button_new_with_label("RxPGA");
+      gtk_widget_set_tooltip_text(autogain_btn, "AutoGain ON/OFF");
     } else {
       autogain_btn = gtk_toggle_button_new_with_label("RF Gain");
     }
@@ -1417,6 +1419,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       }
     }
 
+    gtk_widget_set_tooltip_text(mic_gain_scale, "Set Mic Gain in db");
     mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
                                G_CALLBACK(micgain_value_changed_cb), NULL);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1456,6 +1459,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
         gtk_widget_set_hexpand(drive_scale, FALSE);
       }
+
+      gtk_widget_set_tooltip_text(drive_scale, "Set TX Pwr in W");
     } else {
       if (optimize_for_touchscreen) {
         drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
@@ -1469,6 +1474,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_size_request(drive_scale, sl_w_fix, widget_height);
         gtk_widget_set_hexpand(drive_scale, FALSE);
       }
+
+      gtk_widget_set_tooltip_text(drive_scale, "Set TX Pwr in %");
     }
 
     gtk_widget_set_halign(drive_scale, GTK_ALIGN_CENTER);
@@ -1515,6 +1522,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //-------------------------------------------------------------------------------------------
   squelch_enable = gtk_toggle_button_new_with_label("SQL");
   gtk_widget_set_name(squelch_enable, "medium_toggle_button");
+  gtk_widget_set_tooltip_text(squelch_enable, "Squelch ON / OFF");
   gtk_widget_set_halign(squelch_enable, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(squelch_enable, GTK_ALIGN_CENTER);
   gtk_widget_set_size_request(squelch_enable, 1.5 * widget_height, widget_height - 10);
@@ -1542,6 +1550,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_hexpand(squelch_scale, FALSE);
   gtk_range_set_increments(GTK_RANGE(squelch_scale), 1.0, 1.0);
   gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
+  gtk_widget_set_tooltip_text(squelch_scale, "Set Squelch Threshold");
   gtk_widget_show(squelch_scale);
   gtk_grid_attach(GTK_GRID(sliders), squelch_scale, s3pos, 1, swidth, 1);
   squelch_signal_id = g_signal_connect(G_OBJECT(squelch_scale), "value_changed", G_CALLBACK(squelch_value_changed_cb),
@@ -1576,6 +1585,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_start(tune_drive_scale, 10);  // Abstand am Anfang
     gtk_widget_set_valign(tune_drive_scale, GTK_ALIGN_CENTER);
     gtk_widget_set_halign(tune_drive_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_tooltip_text(tune_drive_scale, "Set TX Pwr in % for TUNE");
     gtk_widget_set_margin_right(tune_drive_scale, 10);
     tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed",
                                  G_CALLBACK(tune_drive_changed_cb), NULL);
@@ -1586,6 +1596,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       //-------------------------------------------------------------------------------------------
       local_mic_button = gtk_toggle_button_new_with_label("Local\nMic");
       gtk_widget_set_name(local_mic_button, "front_toggle_button");
+      gtk_widget_set_tooltip_text(local_mic_button, "Using local connected Mic ON / OFF");
       gtk_widget_set_halign(local_mic_button, GTK_ALIGN_CENTER);
       gtk_widget_set_valign(local_mic_button, GTK_ALIGN_CENTER);
       gtk_widget_set_size_request(local_mic_button, 2 * widget_height - 15, widget_height - 15);
@@ -1646,6 +1657,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     bbcompr_btn = gtk_toggle_button_new_with_label("BBand\nPROC");
     gtk_widget_set_name(bbcompr_btn, "front_toggle_button");
+    gtk_widget_set_tooltip_text(bbcompr_btn, "Speech Processor ON/OFF");
     gtk_widget_set_halign(bbcompr_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(bbcompr_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_size_request(bbcompr_btn, 1.5 * widget_height, widget_height - 15);
@@ -1674,6 +1686,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(bbcompr_scale, 0, widget_height - 10);
     gtk_widget_set_valign(bbcompr_scale, GTK_ALIGN_CENTER);
     gtk_widget_set_halign(bbcompr_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_tooltip_text(bbcompr_scale, "Speech Processor Gain in db");
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(bbcompr_scale), (double)transmitter->compressor_level);
     gtk_grid_attach(GTK_GRID(sliders), bbcompr_scale, s3pos, 2, twidth - 1, 1);
     bbcompr_scale_signal_id = g_signal_connect(G_OBJECT(bbcompr_scale), "value_changed",
@@ -1682,6 +1695,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     lev_btn = gtk_toggle_button_new_with_label("Lev");
     gtk_widget_set_name(lev_btn, "front_toggle_button");
+    gtk_widget_set_tooltip_text(lev_btn, "Leveler ON/OFF");
     gtk_widget_set_halign(lev_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(lev_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_size_request(lev_btn, lbl_w_fix, widget_height - 15);
@@ -1710,6 +1724,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(lev_scale, 0, widget_height - 10);
     gtk_widget_set_valign(lev_scale, GTK_ALIGN_CENTER);
     gtk_widget_set_halign(lev_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_tooltip_text(lev_scale, "Leveler Gain in db");
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(lev_scale), (double)transmitter->lev_gain);
     gtk_grid_attach(GTK_GRID(sliders), lev_scale, s3pos + 2, 2, twidth - 1, 1);
     lev_scale_signal_id = g_signal_connect(G_OBJECT(lev_scale), "value_changed", G_CALLBACK(lev_scale_changed_cb), NULL);
@@ -1717,6 +1732,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     preamp_btn = gtk_toggle_button_new_with_label("Mic\nPreA");
     gtk_widget_set_name(preamp_btn, "front_toggle_button");
+    gtk_widget_set_tooltip_text(preamp_btn, "Mic Preamplifier ON / OFF");
     gtk_widget_set_halign(preamp_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(preamp_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_size_request(preamp_btn, lbl_w_fix, widget_height - 15);
@@ -1751,6 +1767,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(preamp_scale, 0, widget_height - 10);
     gtk_widget_set_valign(preamp_scale, GTK_ALIGN_CENTER);
     gtk_widget_set_halign(preamp_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_tooltip_text(preamp_scale, "Mic Preamp Gain in db");
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
     gtk_widget_set_margin_end(preamp_scale, 10);
 

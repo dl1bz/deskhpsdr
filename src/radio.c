@@ -808,6 +808,7 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     //
     hide_status = 0;
     gtk_button_set_label(GTK_BUTTON(hide_b), "Hide");
+    gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
     display_zoompan = old_zoom;
     display_sliders = old_slid;
     display_toolbar = old_tool;
@@ -872,6 +873,7 @@ static void radio_create_visual() {
           y);
   hide_b = gtk_button_new_with_label("Hide");
   gtk_widget_set_name(hide_b, "boldlabel_vfo_sf");
+  gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
 #if defined (__LDESK__)
   gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
@@ -887,6 +889,7 @@ static void radio_create_visual() {
   t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   menu_b = gtk_button_new_with_label("Menu");
+  gtk_widget_set_tooltip_text(menu_b, "Main Menu and Settings");
   gtk_widget_set_name(menu_b, "boldlabel_vfo_sf");
 #if defined (__LDESK__)
   gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
@@ -904,6 +907,7 @@ static void radio_create_visual() {
   t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   exit_b = gtk_button_new_with_label("Exit");
+  gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
   gtk_widget_set_name(exit_b, "boldlabel_vfo_sf");
   gtk_widget_set_size_request (exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL) ;

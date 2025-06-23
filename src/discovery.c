@@ -530,6 +530,7 @@ void discovery() {
   gtk_entry_set_text(GTK_ENTRY(tcpaddr), ipaddr_radio);
   g_signal_connect (tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
   GtkWidget *exit_b = gtk_button_new_with_label("Exit");
+  gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
   gtk_widget_set_name(exit_b, "discovery_btn");
   gtk_widget_set_margin_start(exit_b, 10);
   gtk_widget_set_margin_end(exit_b, 10);

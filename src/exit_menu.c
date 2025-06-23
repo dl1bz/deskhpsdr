@@ -147,6 +147,7 @@ void exit_menu(GtkWidget *parent) {
   row++;
   col = 0;
   GtkWidget *exit_b = gtk_button_new_with_label("Exit");
+  gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), exit_b, col, row, 1, 1);
 #if !defined (__LDESK__)
