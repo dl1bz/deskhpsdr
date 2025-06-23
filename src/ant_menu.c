@@ -132,8 +132,20 @@ static void show_hf() {
   int col = 0;
   int row = 1;
 
-  for (int i = 0; i <= bands; i++) {
-    const BAND *band = band_get_band(i);
+  /*
+    for (int i = 0; i <= bands; i++) {
+      const BAND *band = band_get_band(i);
+  */
+  for (int i = 0; i <= bands + 2; i++) {
+    int b = i;
+
+    if (i == bands + 1) {
+      b = bandWWV;
+    } else if (i == bands + 2) {
+      b = bandGen;
+    }
+
+    const BAND *band = band_get_band(b);
 
     if (strlen(band->title) > 0) {
       if (col > 6) {
@@ -154,7 +166,8 @@ static void show_hf() {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Xvtr");
       gtk_combo_box_set_active(GTK_COMBO_BOX(rxcombo), band->alexRxAntenna);
       my_combo_attach(GTK_GRID(mygrid), rxcombo, col, row, 1, 1);
-      g_signal_connect(rxcombo, "changed", G_CALLBACK(rx_ant_cb), GINT_TO_POINTER(i));
+      // g_signal_connect(rxcombo, "changed", G_CALLBACK(rx_ant_cb), GINT_TO_POINTER(i));
+      g_signal_connect(rxcombo, "changed", G_CALLBACK(rx_ant_cb), GINT_TO_POINTER(b));
       col++;
       GtkWidget *txcombo = gtk_combo_box_text_new();
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(txcombo), NULL, "Ant1");
@@ -162,7 +175,8 @@ static void show_hf() {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(txcombo), NULL, "Ant3");
       gtk_combo_box_set_active(GTK_COMBO_BOX(txcombo), band->alexTxAntenna);
       my_combo_attach(GTK_GRID(mygrid), txcombo, col, row, 1, 1);
-      g_signal_connect(txcombo, "changed", G_CALLBACK(tx_ant_cb), GINT_TO_POINTER(i));
+      // g_signal_connect(txcombo, "changed", G_CALLBACK(tx_ant_cb), GINT_TO_POINTER(i));
+      g_signal_connect(txcombo, "changed", G_CALLBACK(tx_ant_cb), GINT_TO_POINTER(b));
       col++;
       col++;
     }
