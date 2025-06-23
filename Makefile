@@ -1411,7 +1411,7 @@ src/transmitter.o: src/old_protocol.h src/ps_menu.h src/soapy_protocol.h
 src/transmitter.o: src/audio.h src/ext.h src/sliders.h src/actions.h
 src/transmitter.o: src/ozyio.h src/sintab.h src/message.h
 src/tts.o: src/message.h src/radio.h src/adc.h src/dac.h src/discovered.h
-src/tts.o: src/receiver.h src/transmitter.h src/vfo.h src/mode.h
+src/tts.o: src/receiver.h src/transmitter.h src/vfo.h src/mode.h src/MacTTS.h
 src/tx_menu.o: src/audio.h src/receiver.h src/new_menu.h src/radio.h
 src/tx_menu.o: src/adc.h src/dac.h src/discovered.h src/transmitter.h
 src/tx_menu.o: src/sliders.h src/actions.h src/ext.h src/filter.h src/mode.h
@@ -1464,3 +1464,4 @@ src/sliders.o: src/receiver.h src/transmitter.h src/actions.h
 src/store.o: src/bandstack.h
 src/toolbar.o: src/gpio.h
 src/vfo.o: src/mode.h
+src/MacTTS.o: src/message.h
