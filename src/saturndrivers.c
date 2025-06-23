@@ -121,18 +121,17 @@ int DMAWriteToFPGA(int fd, unsigned char*SrcData, uint32_t Length, uint32_t AXIA
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
-/*
-  rc = lseek(fd, OffsetAddr, SEEK_SET);
+  /*
+    rc = lseek(fd, OffsetAddr, SEEK_SET);
 
-  if (rc != OffsetAddr) {
-    t_print("seek off 0x%lx != 0x%lx.\n", rc, OffsetAddr);
-    t_perror("seek file");
-    return -EIO;
-  }
-*/
-
+    if (rc != OffsetAddr) {
+      t_print("seek off 0x%lx != 0x%lx.\n", rc, OffsetAddr);
+      t_perror("seek file");
+      return -EIO;
+    }
+  */
   // write data to FPGA from memory buffer
-//  rc = write(fd, SrcData, Length);
+  //  rc = write(fd, SrcData, Length);
   rc = pwrite(fd, SrcData, Length, OffsetAddr);
 
   if (rc < 0) {
@@ -156,18 +155,19 @@ int DMAReadFromFPGA(int fd, unsigned char*DestData, uint32_t Length, uint32_t AX
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
-/*
-  rc = lseek(fd, OffsetAddr, SEEK_SET);
+  /*
+    rc = lseek(fd, OffsetAddr, SEEK_SET);
 
-  if (rc != OffsetAddr) {
-    t_print("seek off 0x%lx != 0x%lx.\n", rc, OffsetAddr);
-    t_perror("seek file");
-    return -EIO;
-  }
+    if (rc != OffsetAddr) {
+      t_print("seek off 0x%lx != 0x%lx.\n", rc, OffsetAddr);
+      t_perror("seek file");
+      return -EIO;
+    }
 
-  // write data to FPGA from memory buffer
-  rc = read(fd, DestData, Length);
-*/
+    // write data to FPGA from memory buffer
+    rc = read(fd, DestData, Length);
+  */
+  // read data to FPGA from memory buffer
   rc = pread(fd, DestData, Length, OffsetAddr);
 
   if (rc < 0) {

@@ -487,7 +487,7 @@ void saturn_init_duc_iq() {
   //
   // open DMA device driver
   //
-//  DMADUCWritefile_fd = open(VDUCDMADEVICE, O_RDWR);
+  //  DMADUCWritefile_fd = open(VDUCDMADEVICE, O_RDWR);
   DMADUCWritefile_fd = open(VDUCDMADEVICE, O_WRONLY);
 
   if (DMADUCWritefile_fd < 0) {
@@ -602,8 +602,9 @@ void saturn_init_speaker_audio() {
   //
   // open DMA device driver
   //
-//  DMASpkWritefile_fd = open(VSPKDMADEVICE, O_RDWR);
+  //  DMASpkWritefile_fd = open(VSPKDMADEVICE, O_RDWR);
   DMASpkWritefile_fd = open(VSPKDMADEVICE, O_WRONLY);
+
   if (DMASpkWritefile_fd < 0) {
     t_print("%s: XDMA write device open failed for spk data\n", __FUNCTION__);
     exit(-1);
@@ -873,7 +874,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
   //
   // open DMA device driver
   //
-//  DMAReadfile_fd = open(VMICDMADEVICE, O_RDWR);
+  //  DMAReadfile_fd = open(VMICDMADEVICE, O_RDWR);
   DMAReadfile_fd = open(VMICDMADEVICE, O_RDONLY);
 
   if (DMAReadfile_fd < 0) {
@@ -1053,7 +1054,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
   //
   // open DMA device driver
   //
-//  IQReadfile_fd = open(VDDCDMADEVICE, O_RDWR);
+  //  IQReadfile_fd = open(VDDCDMADEVICE, O_RDWR);
   IQReadfile_fd = open(VDDCDMADEVICE, O_RDONLY);
 
   if (IQReadfile_fd < 0) {
