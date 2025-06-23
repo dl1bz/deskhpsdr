@@ -29,7 +29,7 @@ USBOZY=OFF
 SOAPYSDR=OFF
 STEMLAB=OFF
 EXTENDED_NR=OFF
-TTS=OFF
+TTS=ON
 AUDIO=PULSE
 ATU=OFF
 COPYMODE=OFF
@@ -45,6 +45,7 @@ DEVEL=OFF
 #  TCI          | If ON, compile with TCI support (needs OpenSSL)
 #  GPIO         | If ON, compile with GPIO support (RaspPi only, needs libgpiod)
 #  MIDI         | If ON, compile with MIDI support
+#  TTS          | If ON, compile with TTS support and activate TTS
 #  SATURN       | If ON, compile with native SATURN/G2 XDMA support
 #  USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs  libusb-1.0)
 #  SOAPYSDR     | If ON, deskHPSDR can talk to radios supported via SoapySDR-API library
