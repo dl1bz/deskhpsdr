@@ -116,7 +116,10 @@ void about_menu(GtkWidget *parent) {
                        "    Credits:\n"
                        "    Warren C. Pratt, NR0V: WDSP Library\n"
                        "    John Melton, G0ORX/N6LYT: first and initial version of piHPSDR\n"
-                       "    Christoph van Wüllen, DL1YCF: continuation & current version piHPSDR\n\n"
+                       "    Christoph van Wüllen, DL1YCF: Continuation & current version piHPSDR\n"
+                       "    Richie, MW0LGE: Developer of main version Thetis\n"
+                       "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
+                       "    Ramakrishnan, VU3RDD: patched WDSP with NR3 and NR4\n\n"
                        "Build OS: %s %s @ %s\n"
                        "Build compiler: %s\n"
                        "Build date: %s (Branch: %s, Commit: %s)\n"
@@ -177,7 +180,7 @@ void about_menu(GtkWidget *parent) {
   }
 
   label = gtk_label_new(text);
-  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_name(label, "smalllabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 1, row, 5, 1);
   row++;
