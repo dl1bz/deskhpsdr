@@ -207,9 +207,9 @@ char g_lpf_data[6][64];
 int lpf_udp_valid = 0;
 
 #ifdef __APPLE__
-  double slider_surface_scale = 4.1; // scaling factor for slider surface
+  double slider_surface_scale = 3.9; // scaling factor for slider surface
 #else
-  double slider_surface_scale = 5.0; // scaling factor for slider surface
+  double slider_surface_scale = 3.5; // scaling factor for slider surface
 #endif
 int display_zoompan = 0;
 int display_sliders = 0;

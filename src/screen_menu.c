@@ -127,7 +127,7 @@ static void vfo_cb(GtkWidget *widget, gpointer data) {
 
 static void slider_surface_f_cb(GtkWidget *widget, gpointer data) {
   double value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  value = (value < 3.5) ? 3.5 : (value > 6.5 ? 6.5 : value); // sanity check more compact
+  value = (value < 1.0) ? 1.0 : (value > 6.5 ? 6.5 : value); // sanity check more compact
   slider_surface_scale = value;
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), slider_surface_scale);
   schedule_apply();
@@ -279,7 +279,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel_blue");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
-  GtkWidget *slider_surface_f = gtk_spin_button_new_with_range(3.5, 6.5, 0.05);
+  GtkWidget *slider_surface_f = gtk_spin_button_new_with_range(1.0, 6.5, 0.05);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(slider_surface_f), TRUE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(slider_surface_f), TRUE);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(slider_surface_f), slider_surface_scale);
