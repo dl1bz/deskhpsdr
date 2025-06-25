@@ -1645,7 +1645,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
 
     //-------------------------------------------------------------------------------------------
-    bbcompr_btn = gtk_toggle_button_new_with_label("BBand\nPROC");
+    bbcompr_btn = gtk_toggle_button_new_with_label("Speech\nProc");
     gtk_widget_set_name(bbcompr_btn, "front_toggle_button");
     gtk_widget_set_tooltip_text(bbcompr_btn, "Speech Processor ON/OFF");
     gtk_widget_set_halign(bbcompr_btn, GTK_ALIGN_CENTER);

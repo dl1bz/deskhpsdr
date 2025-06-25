@@ -1504,7 +1504,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[0]);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST));
-  btn = gtk_check_button_new_with_label("Baseband PROC");
+  btn = gtk_check_button_new_with_label("Speech Proc");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->compressor);
@@ -1515,6 +1515,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 4, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_COMP));
   btn = gtk_check_button_new_with_label("Auto CESSB");
+  gtk_widget_set_tooltip_text(btn, "Controlled-Envelope SSB\nWorks only if Speech Processor is ON !");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->cessb_enable);
