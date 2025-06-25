@@ -35,6 +35,10 @@
 #include "solar.h"
 #include "message.h"
 
+#if defined(__APPLE__)
+  #include <TargetConditionals.h>
+#endif
+
 GMutex solar_data_mutex;
 
 int sunspots = -1;
@@ -43,6 +47,43 @@ int k_index = -1;
 int solar_flux = -1;
 char geomagfield[32];
 char xray[16];
+
+int is_raspberry_pi(void) {
+#if defined(__APPLE__)
+  // macOS oder iOS: kein Raspberry Pi
+  return 0;
+#elif defined(__linux__)
+  // Linux: prüfe Device Tree
+  FILE *fp = fopen("/sys/firmware/devicetree/base/model", "r");
+
+  if (fp) {
+    char model[256] = {0};
+    fread(model, 1, sizeof(model) - 1, fp);
+    fclose(fp);
+
+    if (strstr(model, "Raspberry Pi")) { return 1; }
+  }
+
+  // Fallback: prüfe /proc/cpuinfo
+  fp = fopen("/proc/cpuinfo", "r");
+
+  if (fp) {
+    char line[256];
+
+    while (fgets(line, sizeof(line), fp)) {
+      if (strstr(line, "Raspberry Pi") || strstr(line, "BCM")) {
+        fclose(fp);
+        return 1;
+      }
+    }
+
+    fclose(fp);
+  }
+
+#endif
+  // Anderes System oder nicht erkannt
+  return 0;
+}
 
 static gboolean is_minute_marker(int interval) {
   static int last_minute = -1;
