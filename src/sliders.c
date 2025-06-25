@@ -1683,9 +1683,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                               G_CALLBACK(bbcompr_scale_changed_cb), NULL);
     gtk_widget_show(bbcompr_scale);
     //-------------------------------------------------------------------------------------------
-    lev_btn = gtk_toggle_button_new_with_label("Lev");
+    lev_btn = gtk_toggle_button_new_with_label("Mic\nLeveler");
     gtk_widget_set_name(lev_btn, "front_toggle_button");
-    gtk_widget_set_tooltip_text(lev_btn, "Leveler ON/OFF");
+    gtk_widget_set_tooltip_text(lev_btn, "Mic Leveler ON/OFF");
     gtk_widget_set_halign(lev_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(lev_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_size_request(lev_btn, lbl_w_fix, widget_height - 15);

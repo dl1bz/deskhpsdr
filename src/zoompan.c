@@ -251,6 +251,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_show(zoom_label);
   //-----------------------------------------------------------------------------------------------------------
   zoom_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, MAX_ZOOM, 1.00);
+  gtk_widget_set_tooltip_text(zoom_scale, "Zoom into the Panadapter");
   gtk_widget_set_size_request(zoom_scale, sl_w_fix, height);
   gtk_widget_set_valign(zoom_scale, GTK_ALIGN_CENTER);
   gtk_widget_set_halign(zoom_scale, GTK_ALIGN_CENTER);
@@ -289,6 +290,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   pan_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0,
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
   gtk_widget_set_size_request(pan_scale, sl_w_fix + add_pixel, height);
+  gtk_widget_set_tooltip_text(pan_scale, "Move the spectrum left or right");
   gtk_widget_set_valign(pan_scale, GTK_ALIGN_CENTER);
   gtk_widget_set_halign(pan_scale, GTK_ALIGN_CENTER);
   gtk_widget_set_hexpand(pan_scale, FALSE);
