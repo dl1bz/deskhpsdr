@@ -48,7 +48,7 @@ int solar_flux = -1;
 char geomagfield[32];
 char xray[16];
 
-int is_raspberry_pi(void) {
+int is_pi(void) {
 #if defined(__APPLE__)
   // macOS oder iOS: kein Raspberry Pi
   return 0;
