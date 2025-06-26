@@ -119,7 +119,7 @@ void about_menu(GtkWidget *parent) {
                        "    Christoph van Wüllen, DL1YCF: Continuation & current version piHPSDR\n"
                        "    Richie, MW0LGE: Developer of main version Thetis\n"
                        "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
-                       "    Ramakrishnan, VU3RDD: patched WDSP with NR3 and NR4\n\n"
+                       "    Ramakrishnan, VU3RDD: patched WDSP with NR3 & NR4 support\n\n"
                        "Build OS: %s %s @ %s\n"
                        "Build compiler: %s\n"
                        "Build date: %s (Branch: %s, Commit: %s)\n"
