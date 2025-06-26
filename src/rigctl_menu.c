@@ -388,10 +388,12 @@ void rigctl_menu(GtkWidget *parent) {
   }
 
   //--------------------------------------------------------------------------------
-  rigctld_btn = gtk_check_button_new_with_label(" + start rigctld");
+  rigctld_btn = gtk_check_button_new_with_label(" + start rigctld at port 4533");
   gtk_widget_set_name(rigctld_btn, "boldlabel_blue");
+  gtk_widget_set_tooltip_text(rigctld_btn,
+                              "Start an external rigctld at port 4533\nfor using deskHPSDR with Hamlib-supported apps\n\nUse |Hamlib NET rigctl| as rig selection\nand 127.0.0.1:4533 as port in the app\n\nCW keying over CAT with rigctld is supported");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctld_btn), use_rigctld);
-  gtk_grid_attach(GTK_GRID(grid), rigctld_btn, 3, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), rigctld_btn, 3, row, 2, 1);
   g_signal_connect(rigctld_btn, "toggled", G_CALLBACK(rigctld_btn_cb), NULL);
 
   if (rigctl_tcp_enable && !rigctl_tcp_andromeda) {
@@ -404,6 +406,8 @@ void rigctl_menu(GtkWidget *parent) {
   //
   w = gtk_check_button_new_with_label("Enable");
   gtk_widget_set_name(w, "boldlabel");
+  gtk_widget_set_tooltip_text(w,
+                              "Enable network CAT port\nwith Kenwood TS2000 emulation as default\n(can be changed to Andromeda SDR emulation)");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_tcp_enable);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
@@ -416,6 +420,8 @@ void rigctl_menu(GtkWidget *parent) {
 
   if (rigctl_tcp_enable && !use_rigctld) {
     gtk_widget_set_sensitive(rigctl_andromeda_btn, TRUE);
+    gtk_widget_set_tooltip_text(rigctl_andromeda_btn,
+                                "Use Apache Labs Andromeda SDR CAT emulation\ninstead of the Kenwood TS2000 CAT emulation");
   } else {
     gtk_widget_set_sensitive(rigctl_andromeda_btn, FALSE);
   }
@@ -482,6 +488,8 @@ void rigctl_menu(GtkWidget *parent) {
       g_signal_connect(serial_enable[i], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(i));
       w = gtk_check_button_new_with_label("Andromeda");
       gtk_widget_set_name(w, "boldlabel");
+      gtk_widget_set_tooltip_text(w,
+                                  "Use Apache Labs Andromeda SDR CAT emulation\ninstead of the Kenwood TS2000 CAT emulation");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), SerialPorts[i].andromeda);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(andromeda_cb), GINT_TO_POINTER(i));
@@ -552,7 +560,7 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_swapRtsDtr[MAX_SERIAL] =
-      gtk_check_button_new_with_label("Swap RTS <-> DTR (if required)");
+      gtk_check_button_new_with_label("Swap RTS <-> DTR\n(if required)");
     gtk_widget_set_name(serial_swapRtsDtr[MAX_SERIAL], "boldlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_swapRtsDtr[MAX_SERIAL]), SerialPorts[MAX_SERIAL].swapRtsDtr);
     gtk_grid_attach(GTK_GRID(grid), serial_swapRtsDtr[MAX_SERIAL], 5, row, 1, 1);
@@ -627,6 +635,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_halign(w, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
   tci_port_select = gtk_spin_button_new_with_range(1025, 65535, 1);
+  gtk_widget_set_tooltip_text(tci_port_select, "Select TCI port");
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tci_port_select), (double)tci_port);
   gtk_grid_attach(GTK_GRID(grid), tci_port_select, 1, row, 1, 1);
   g_signal_connect(tci_port_select, "value_changed", G_CALLBACK(tci_port_changed_cb), NULL);
@@ -639,6 +648,7 @@ void rigctl_menu(GtkWidget *parent) {
 
   w = gtk_check_button_new_with_label("Enable");
   gtk_widget_set_name(w, "boldlabel");
+  gtk_widget_set_tooltip_text(w, "Enable / Disable TCI");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_enable);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
@@ -649,6 +659,11 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 3, row, 3, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_txonly_changed_cb), NULL);
+  row++;
+  w = gtk_label_new("No TCI Audio, no TCI CW Keying - only pure CAT control over TCI supported !\nUse virtual audio cable connections instead for your needed audio routing\nbetween deskHPSDR and your external app.");
+  gtk_widget_set_name(w, "boldlabel_red");
+  gtk_widget_set_halign(w, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), w, 0, row, 6, 1);
 #endif
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
