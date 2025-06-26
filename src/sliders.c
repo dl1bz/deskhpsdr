@@ -1586,7 +1586,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       //-------------------------------------------------------------------------------------------
       local_mic_button = gtk_toggle_button_new_with_label("Local\nMic");
       gtk_widget_set_name(local_mic_button, "front_toggle_button");
-      gtk_widget_set_tooltip_text(local_mic_button, "Using local connected Mic ON / OFF");
+      gtk_widget_set_tooltip_text(local_mic_button,
+                                  "Set use of local connected audio input device\n(e.g. local Mic) ON / OFF");
       gtk_widget_set_halign(local_mic_button, GTK_ALIGN_CENTER);
       gtk_widget_set_valign(local_mic_button, GTK_ALIGN_CENTER);
       gtk_widget_set_size_request(local_mic_button, 2 * widget_height - 15, widget_height - 15);
@@ -1609,6 +1610,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       //-------------------------------------------------------------------------------------------
       local_mic_input = gtk_combo_box_text_new();
       gtk_widget_set_name(local_mic_input, "boldlabel");
+      gtk_widget_set_tooltip_text(local_mic_input, "Select local audio input device");
       gtk_widget_set_size_request(local_mic_input, sl_w_fix, widget_height);
 
       for (int i = 0; i < n_input_devices; i++) {

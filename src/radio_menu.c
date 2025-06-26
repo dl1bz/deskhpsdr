@@ -909,13 +909,13 @@ void radio_menu(GtkWidget *parent) {
   row++;
 
   if (can_transmit) {
-    ChkBtn = gtk_check_button_new_with_label("Split");
+    ChkBtn = gtk_check_button_new_with_label("Split operation");
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), split);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(split_cb), NULL);
     col++;
-    ChkBtn = gtk_check_button_new_with_label("Duplex");
+    ChkBtn = gtk_check_button_new_with_label("Duplex operation");
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), duplex);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
@@ -944,6 +944,8 @@ void radio_menu(GtkWidget *parent) {
   col = 0;
   ChkBtn = gtk_check_button_new_with_label("Optimize for TouchScreen");
   gtk_widget_set_name(ChkBtn, "boldlabel");
+  gtk_widget_set_tooltip_text(ChkBtn,
+                              "Change the design of some buttons and\nsliders for easier use with a touch screen");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), optimize_for_touchscreen);
   gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 2, 1);
   g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &optimize_for_touchscreen);
@@ -965,12 +967,16 @@ void radio_menu(GtkWidget *parent) {
     if (!have_radioberry1 && !have_radioberry2) {
       ChkBtn = gtk_check_button_new_with_label("HL2 audio codec");
       gtk_widget_set_name(ChkBtn, "boldlabel");
+      gtk_widget_set_tooltip_text(ChkBtn,
+                                  "Activate only if using a Hermes Lite 2\nwith the AK4951 Companion Board,\ncalled Hermes Lite 2 Plus");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), hl2_audio_codec);
       gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
       g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_audio_codec);
       col++;
       ChkBtn = gtk_check_button_new_with_label("HL2 CL1 10Mhz Ref Clock");
       gtk_widget_set_name(ChkBtn, "boldlabel");
+      gtk_widget_set_tooltip_text(ChkBtn,
+                                  "Switch ON if using a Hermes Lite 2 with a 10MHz\nGPS disciplined oscillator connected at CL1 input.");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), hl2_cl1_input);
       gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
       g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_cl1_input);
@@ -1039,6 +1045,8 @@ void radio_menu(GtkWidget *parent) {
   col++;
   GtkWidget *calibration_b = gtk_spin_button_new_with_range(-9999.0, 9999.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(calibration_b), (double)frequency_calibration);
+  gtk_widget_set_tooltip_text(calibration_b,
+                              "Use a high-precision RF generator and\nadjust a possible frequency inaccuracy.");
   gtk_grid_attach(GTK_GRID(grid), calibration_b, col, row, 1, 1);
   g_signal_connect(calibration_b, "value_changed", G_CALLBACK(calibration_value_changed_cb), NULL);
   //
@@ -1055,6 +1063,8 @@ void radio_menu(GtkWidget *parent) {
   col++;
   GtkWidget *rx_gain_calibration_b = gtk_spin_button_new_with_range(-50.0, 50.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain_calibration_b), (double)rx_gain_calibration);
+  gtk_widget_set_tooltip_text(rx_gain_calibration_b,
+                              "Adjust this value for calibrating the S-Meter.\nUse a RF generator, set output (waveform sine) level\nto -73dbm at 15MHz and connect the RF generator output\nwith the RX antenna input of the SDR.\nAdjust the value until you get exact S9 at the S-Meter.");
   gtk_grid_attach(GTK_GRID(grid), rx_gain_calibration_b, col, row, 1, 1);
   g_signal_connect(rx_gain_calibration_b, "value_changed", G_CALLBACK(rx_gain_calibration_value_changed_cb), NULL);
 #if defined (__LDESK__)
