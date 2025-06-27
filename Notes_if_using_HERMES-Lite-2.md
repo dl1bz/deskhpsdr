@@ -4,9 +4,9 @@
 
 After compilation and installation you need to adjust the output power of the 5W PA from the Hermes Lite 2. Go into the **Menu > Radio Menu** and tick **"PA enable"**. Then go into the **PA Menu** and set all values to 38.8 for full 5W output, otherwise you don't reach the maximum out of the Hermes Lite 2. Set the **MAX POWER** to 5W in the PA Menu if using Hermes Lite 2.<br>
 If using the N2ADR low pass filter board:<br>
-You will lost about 0.5..1W TX power due to the insert loss of this filter board. You need to check in **Radio Menu** too, if **N2ADR** is selected under **Filter Board**. You need also to check the settings for the N2ADR low pass filter board in the **OC Menu**. This N2ADR low pass filter board will be controlled via internal I2C bus inside the HL2, so it is important that the correct setup for this N2ADR low pass filter board is done.<br>
+You will lost about 0.5..1W TX power due to the insert loss of this filter board. You need to check in **Radio Menu** too, if **N2ADR (LPF RX + TX + HPF)** or **N2ADR (LPF TX only)** is selected under **Filter Board**. You need also to check the settings for the N2ADR low pass filter board in the **OC Menu**. This N2ADR low pass filter board will be controlled via internal I2C bus inside the HL2, so it is important that the correct setup for this N2ADR low pass filter board is done.<br>
 If using the SquareSDR:<br>
-If using the SquareSDR, the low pass filter is part of the mainboard. But the setup is the same like using a HL2 in combination with the N2ADR low pass filter board. You need select **N2ADR** under **Filter Board** in **Radio Menu** too. Also check the correct settings in the **OC Menu**.
+If using the SquareSDR, the low pass filter is part of the mainboard. But the setup is the same like using a HL2 in combination with the N2ADR low pass filter board. You need select **N2ADR (LPF RX + TX + HPF)** or **N2ADR (LPF TX only)** under **Filter Board** in **Radio Menu** too. Also check the correct settings in the **OC Menu**.
 
 ## Audio-Setup (if not using the HL2+ extension board) ##
 
