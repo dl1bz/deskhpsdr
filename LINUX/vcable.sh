@@ -6,7 +6,7 @@ if [ "$(uname)" != "Linux" ]; then
 fi
 
 # Prüfen, ob pactl mit PipeWire arbeitet
-if ! pactl info | grep -q "PulseAudio (on PipeWire)"; then
+if ! pactl info | grep -q "PulseAudio (on PipeWire"; then
   echo "pactl don't use PipeWire – possible running only PulseAudio"
   echo "This script need PipeWire. Exit script now."
   exit 1
