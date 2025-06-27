@@ -1,0 +1,11 @@
+[Unit]
+Description=Virtual Audio Cables via PipeWire
+After=default.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vcable.sh load
+RemainAfterExit=true
+
+[Install]
+WantedBy=default.target

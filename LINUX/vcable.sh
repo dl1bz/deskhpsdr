@@ -7,6 +7,12 @@
 #
 # if not, try "sudo apt install pipewire pipewire-pulse" for install PipeWire on Debian-based Linux systems
 #
+# for use with systemd copy the vcable.service to $HOME/.config/systemd/user
+# systemctl --user daemon-reload
+# systemctl --user enable vcable.service
+# systemctl --user start vcable.service
+# check with systemctl --user status vcable.service
+#
 
 if [ "$(uname)" != "Linux" ]; then
   echo "This script runs on LINUX only! Exiting."
