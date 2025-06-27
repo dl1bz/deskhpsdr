@@ -42,10 +42,9 @@ own task. I personally don't need the Soapy API-support, because I use a Hermes-
 4.1 First edit make.config.deskhpsdr, but NOT the Makefile
 
 Edit the make.config.deskhpsdr (not the Makefile !!!) and set the options you want.
-Never change DESKTOP=ON to OFF, and check this settings too:
+Never change this settings:
 ATU=OFF
 COPYMODE=OFF
-DEVEL=OFF
 
 The other options you can set how you want or need.
 
