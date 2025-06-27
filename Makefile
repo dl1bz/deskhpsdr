@@ -1031,9 +1031,11 @@ install-Linux: all
 	@echo "Copy just compiled deskHPSDR binary to /usr/local/bin"
 	@sudo install -m 0755 -t /usr/local/bin "$(PROGRAM)"
 	@if [ -f "${CURRDIR}/LINUX/rigctld_deskhpsdr" ]; then \
+		echo "Copy special rigctld to /usr/local/bin"; \
 		sudo install -m 0755 -t /usr/local/bin "${CURRDIR}/LINUX/rigctld_deskhpsdr"; \
 	fi
 	@if [ -f "${CURRDIR}/LINUX/vcable.sh" ]; then \
+		echo "Copy vcable.sh to /usr/local/bin"; \
 		sudo install -m 0755 -t /usr/local/bin "${CURRDIR}/LINUX/vcable.sh"; \
 	fi
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
