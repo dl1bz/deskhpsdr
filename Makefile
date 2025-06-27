@@ -1033,6 +1033,9 @@ install-Linux: all
 	@if [ -f "${CURRDIR}/LINUX/rigctld_deskhpsdr" ]; then \
 		sudo install -m 0755 -t /usr/local/bin "${CURRDIR}/LINUX/rigctld_deskhpsdr"; \
 	fi
+	@if [ -f "${CURRDIR}/LINUX/vcable.sh" ]; then \
+		sudo install -m 0755 -t /usr/local/bin "${CURRDIR}/LINUX/vcable.sh"; \
+	fi
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
 	@sudo mkdir -p "/usr/local/share/$(PROGRAM)"
 	@sudo cp release/"$(PROGRAM)"/hpsdr*.png "/usr/local/share/$(PROGRAM)"
