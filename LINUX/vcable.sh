@@ -9,33 +9,55 @@
 #
 
 if [ "$(uname)" != "Linux" ]; then
-  echo "This script run with LINUX only ! Exit script now."
+  echo "This script runs on LINUX only! Exiting."
   exit 1
 fi
 
 # Prüfen, ob pactl mit PipeWire arbeitet
 if ! pactl info | grep -q "PulseAudio (on PipeWire"; then
-  echo "pactl don't use PipeWire – possible running only PulseAudio"
-  echo "This script need PipeWire. Exit script now."
+  echo "pactl is not using PipeWire – only PulseAudio detected."
+  echo "This script requires PipeWire. Exiting."
   exit 1
 fi
 
 SINK_NAME_1="VAC_1to2"
 SINK_NAME_2="VAC_2to1"
 
-if [ "$1" = "load" ]; then
-  pactl load-module module-null-sink sink_name="$SINK_NAME_1"
-  pactl load-module module-null-sink sink_name="$SINK_NAME_2"
+load_sink() {
+  local SINK_NAME=$1
+  # Prüfen, ob Modul mit diesem Sink-Name bereits existiert
+  if pactl list short modules | grep -q "sink_name=$SINK_NAME"; then
+    echo "Sink $SINK_NAME already loaded. Skipping."
+  else
+    echo "Loading sink: $SINK_NAME"
+    pactl load-module module-null-sink sink_name="$SINK_NAME"
+  fi
+}
 
-elif [ "$1" = "unload" ]; then
-  MODULE_ID_1=$(pactl list short modules | grep "sink_name=$SINK_NAME_1" | awk '{print $1}')
-  [ -n "$MODULE_ID_1" ] && pactl unload-module "$MODULE_ID_1"
-  MODULE_ID_2=$(pactl list short modules | grep "sink_name=$SINK_NAME_2" | awk '{print $1}')
-  [ -n "$MODULE_ID_2" ] && pactl unload-module "$MODULE_ID_2"
+unload_sink() {
+  local SINK_NAME=$1
+  MODULE_ID=$(pactl list short modules | grep "sink_name=$SINK_NAME" | awk '{print $1}')
+  if [ -n "$MODULE_ID" ]; then
+    echo "Unloading sink: $SINK_NAME (Module ID: $MODULE_ID)"
+    pactl unload-module "$MODULE_ID"
+  else
+    echo "Sink $SINK_NAME not loaded."
+  fi
+}
 
-else
-  echo "Generate virtual audio sinks $SINK_NAME_1 and $SINK_NAME_2 with PipeWire"
-  echo ""
-  echo "Use ./vcable.sh [load | unload]"
-  echo ""
-fi
+case "$1" in
+  load)
+    load_sink "$SINK_NAME_1"
+    load_sink "$SINK_NAME_2"
+    ;;
+  unload)
+    unload_sink "$SINK_NAME_1"
+    unload_sink "$SINK_NAME_2"
+    ;;
+  *)
+    echo "Generate virtual audio sinks $SINK_NAME_1 and $SINK_NAME_2 with PipeWire"
+    echo ""
+    echo "Usage: $0 [load | unload]"
+    echo ""
+    ;;
+esac
