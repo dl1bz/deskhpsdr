@@ -240,6 +240,8 @@ void rx_menu(GtkWidget *parent) {
 #ifdef __APPLE__
   GtkWidget *wheel_present_btn = gtk_check_button_new_with_label("using Mouse with Wheel");
   gtk_widget_set_name(wheel_present_btn, "boldlabel_blue");
+  gtk_widget_set_tooltip_text(wheel_present_btn,
+                              "macOS only:\nIf ON, the mouse wheel can change the frequency\nIf OFF, you need to press OPTION + mouse wheel for frequency change");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (wheel_present_btn), active_receiver->wheel_present);
   gtk_widget_show(wheel_present_btn);
   gtk_grid_attach(GTK_GRID(grid), wheel_present_btn, 1, 0, 1, 1);
@@ -343,6 +345,7 @@ void rx_menu(GtkWidget *parent) {
       if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
         GtkWidget *dither_b = gtk_check_button_new_with_label("HL2 Band Volts / Dither Bit");
         gtk_widget_set_name(dither_b, "boldlabel");
+        gtk_widget_set_tooltip_text(dither_b, "activate Band Voltage output at the Hermes Lite 2");
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
         gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
         g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
@@ -353,8 +356,12 @@ void rx_menu(GtkWidget *parent) {
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
         autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
         gtk_widget_set_name(autogain_b, "boldlabel_blue");
-        autogain_time_b = gtk_check_button_new_with_label("HL2 Auto Gain time-controlled");
+        gtk_widget_set_tooltip_text(autogain_b,
+                                    "Activate RF Gain Automatic:\nControl and set the ADC to max. 75% level\nfor protect ADC against overflows");
+        autogain_time_b = gtk_check_button_new_with_label("HL2 Auto Gain time-regulated");
         gtk_widget_set_name(autogain_time_b, "boldlabel_blue");
+        gtk_widget_set_tooltip_text(autogain_time_b,
+                                    "Re-adjust RF Gain Automatic every 30s\nIf OFF, RF Gain Automatic adjust only one-time\nif band was changed");
 #if defined (__AUTOG__)
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_b), autogain_enabled);
         gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, row + 1, 1, 1);
