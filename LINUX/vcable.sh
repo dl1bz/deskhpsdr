@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# This script is made for the deskHPSDR project, maintained by Heiko/DL1BZ
+# https://github.com/dl1bz/deskhpsdr.git
+#
+# PipeWire is required for this script, since Debian 12 "Bookworm" PipeWire is installed per default
+#
+# if not, try "sudo apt install pipewire pipewire-pulse" for install PipeWire on Debian-based Linux systems
+#
+
 if [ "$(uname)" != "Linux" ]; then
   echo "This script run with LINUX only ! Exit script now."
   exit 1
