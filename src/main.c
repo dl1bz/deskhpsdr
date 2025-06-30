@@ -220,7 +220,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_w:
 
     // toggle binaural audio (w)ide
-    if (active_receiver->binaural > 0) {
+    if (!radio_is_transmitting() && active_receiver->binaural > 0) {
       active_receiver->binaural = 0;
     } else {
       active_receiver->binaural = 1;

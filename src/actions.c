@@ -101,6 +101,7 @@ ACTION_TABLE ActionTable[] = {
   {BAND_WWV,            "Band WWV",             "WWV",          MIDI_KEY   | CONTROLLER_SWITCH},
   {BANDSTACK_MINUS,     "BndStack -",           "BSTK-",        MIDI_KEY   | CONTROLLER_SWITCH},
   {BANDSTACK_PLUS,      "BndStack +",           "BSTK+",        MIDI_KEY   | CONTROLLER_SWITCH},
+  {BI_NAURAL,           "Binaural",             "BINAURAL",     TYPE_NONE},
   {MENU_BAND,           "Band\nMenu",           "BAND",         MIDI_KEY   | CONTROLLER_SWITCH},
   {MENU_BANDSTACK,      "BndStack\nMenu",       "BSTK",         MIDI_KEY   | CONTROLLER_SWITCH},
   {CAPTURE,             "Capture",              "CAPTUR",       MIDI_KEY   | CONTROLLER_SWITCH},
@@ -712,6 +713,14 @@ int process_action(void *data) {
 
     break;
 
+  case BI_NAURAL:
+    if (!radio_is_transmitting() && a->mode == PRESSED) {
+      TOGGLE(active_receiver->binaural);
+      rx_set_af_binaural(active_receiver);
+    }
+
+    break;
+
   case CAPTURE:
     if (can_transmit && a->mode == PRESSED) {
       switch (capture_state) {
@@ -974,8 +983,10 @@ int process_action(void *data) {
     break;
 
   case F_SCREEN:
-    TOGGLE(full_screen);
-    radio_reconfigure_screen();
+    if (a->mode == PRESSED) {
+      TOGGLE(full_screen);
+      radio_reconfigure_screen();
+    }
     break;
 
   case IF_SHIFT:
