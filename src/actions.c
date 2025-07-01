@@ -987,6 +987,7 @@ int process_action(void *data) {
       TOGGLE(full_screen);
       radio_reconfigure_screen();
     }
+
     break;
 
   case IF_SHIFT:

@@ -395,8 +395,10 @@ static void* autogain_thread_function(void* arg) {
   static unsigned int adc_count_limit = 4;  // count more than 1x ADC OVL as hyterese
   static unsigned int adc0_error_count = 0;
   static unsigned int adc1_error_count = 0;
+  pthread_mutex_lock(&autogain_mutex);
   min_gain = adc[active_receiver->adc].min_gain;
   max_gain = adc[active_receiver->adc].max_gain;
+  pthread_mutex_unlock(&autogain_mutex);
   /*
   In this thread we check, if the ADC0 or ADC1 runs in overflow because the gain is too much.
   The feedback come from the SDR itself, OVF signal will send inside the HPSDR protocol.
@@ -432,7 +434,9 @@ static void* autogain_thread_function(void* arg) {
         adc1_error_count = 0; // reset counter
       }
 
+      pthread_mutex_lock(&autogain_mutex);
       gain = adc[active_receiver->adc].gain; //get current gain from active receiver
+      pthread_mutex_unlock(&autogain_mutex);
 
       if (gain > max_gain) {
         gain = max_gain;  // Sicherstellen, dass GAIN nicht größer als MAX_GAIN
@@ -488,19 +492,21 @@ static void* autogain_thread_function(void* arg) {
 
         pthread_mutex_lock(&autogain_mutex);
         set_rf_gain(active_receiver->id, gain - 3.0); // decrease gain -3db
-        pthread_mutex_unlock(&autogain_mutex);
         autogain_is_adjusted = 1;
+        pthread_mutex_unlock(&autogain_mutex);
         last_autogain_increase = current_time; // patch by DH0DM
         g_idle_add(ext_vfo_update, NULL);
         // g_usleep(500000); // wait 0.5s
-        sleep(2);
+        // sleep(2);
       }
     }
 
     // patch by DH0DM: add time-controlled adjustment
     if (autogain_time_enabled && autogain_is_adjusted) {
       if (current_time.tv_sec - last_autogain_increase.tv_sec > re_adjustment_time) {
+        pthread_mutex_lock(&autogain_mutex);
         autogain_is_adjusted = 0;
+        pthread_mutex_unlock(&autogain_mutex);
         t_print("%s: recall time-controlled autogain adjustment\n", __FUNCTION__);
       }
     }
