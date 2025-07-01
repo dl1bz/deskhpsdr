@@ -118,8 +118,9 @@ static GThread *rigctl_cw_thread_id = NULL;
   static GMutex sertune_mutex;
 #endif
 #if defined (__AUTOG__)
-  static pthread_t autogain_thread;
-  static pthread_mutex_t autogain_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+  pthread_t autogain_thread;
+  pthread_mutex_t autogain_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+  volatile int autogain_thread_running = 0;
 #endif
 
 // Portnummer für die UDP Listener -> move to radio.c
@@ -513,6 +514,7 @@ static void* autogain_thread_function(void* arg) {
   return NULL;
 }
 
+/*
 void launch_autogain_hl2() {
   if (autogain_enabled) {
     if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
@@ -525,11 +527,51 @@ void launch_autogain_hl2() {
     t_print("---- Shutdown HL2 AutoGain Thread ----\n");
   }
 }
+*/
+void launch_autogain_hl2() {
+  if (autogain_enabled) {
+    if (!autogain_thread_running) {
+      autogain_thread_running = 1;
 
+      if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
+        t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
+      } else {
+        t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
+      }
+    }
+  } else {
+    if (autogain_thread_running) {
+      autogain_thread_running = 0;           // Stop-Signal setzen
+      // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten
+      pthread_cancel(autogain_thread);
+      t_print("---- Shutdown HL2 AutoGain Thread ----\n");
+    }
+  }
+}
+
+/*
 void restart_autogain_hl2() {
   pthread_cancel(autogain_thread);
   t_print("%s\n", __FUNCTION__);
   launch_autogain_hl2();
+}
+*/
+void restart_autogain_hl2() {
+  if (autogain_thread_running) {
+    autogain_thread_running = 0;           // Stop-Signal setzen
+    // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten
+    pthread_cancel(autogain_thread);
+    t_print("---- Stop HL2 AutoGain Thread ----\n");
+  }
+
+  autogain_thread_running = 1;             // Neustart vorbereiten
+
+  if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
+    autogain_thread_running = 0;
+    t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
+  } else {
+    t_print("---- Restart HL2 AutoGain Thread ----\n");
+  }
 }
 
 #endif
