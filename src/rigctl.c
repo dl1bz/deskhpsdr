@@ -421,7 +421,6 @@ static void* autogain_thread_function(void* arg) {
     }
 
     if (!radio_is_transmitting() && !radio_ptt) {
-      // pthread_mutex_lock(&autogain_mutex);
       if (adc0_overload) {
         adc0_error_count++;   // if ADC0 OVL increase counter
       } else {
@@ -443,7 +442,9 @@ static void* autogain_thread_function(void* arg) {
       }
 
       if (!radio_is_transmitting() && !radio_ptt && adc0_error_count >= adc_count_limit && !autogain_first_run) {
+        pthread_mutex_lock(&autogain_mutex);
         autogain_is_adjusted = 0;
+        pthread_mutex_unlock(&autogain_mutex);
         g_idle_add(ext_vfo_update, NULL);
 
         while (!radio_is_transmitting() && !radio_ptt && adc0_overload && gain > min_gain) {
@@ -456,12 +457,9 @@ static void* autogain_thread_function(void* arg) {
           pthread_mutex_lock(&autogain_mutex);
           set_rf_gain(active_receiver->id, gain); // set new gain
           pthread_mutex_unlock(&autogain_mutex);
-          // sleep(1);
           g_usleep(500000);  // wait 0.5s
         }
 
-        // autogain_is_adjusted = 0;
-        // g_idle_add(ext_vfo_update, NULL);
         t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __FUNCTION__, active_receiver->id, (int)gain);
       }
 
@@ -476,7 +474,6 @@ static void* autogain_thread_function(void* arg) {
           pthread_mutex_lock(&autogain_mutex);
           set_rf_gain(active_receiver->id, gain); // set new gain
           pthread_mutex_unlock(&autogain_mutex);
-          // sleep(1);
           g_usleep(500000); // wait 0.5s
         }
       }
@@ -496,8 +493,7 @@ static void* autogain_thread_function(void* arg) {
         pthread_mutex_unlock(&autogain_mutex);
         last_autogain_increase = current_time; // patch by DH0DM
         g_idle_add(ext_vfo_update, NULL);
-        // g_usleep(500000); // wait 0.5s
-        // sleep(2);
+        // g_usleep(1000000); // wait 0.5s
       }
     }
 
@@ -511,8 +507,7 @@ static void* autogain_thread_function(void* arg) {
       }
     }
 
-    // pthread_mutex_unlock(&autogain_mutex);
-    sleep(1); // wait 1s in main thread loop
+    g_usleep(1000000); // statt sleep(1)
   }
 
   return NULL;
