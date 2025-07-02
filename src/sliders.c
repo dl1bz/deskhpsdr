@@ -473,6 +473,14 @@ static void rf_gain_value_changed_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
+// Callback, um rf_gain_slider-Wert im Mainthread zu setzen
+gboolean update_rf_gain_slider_value(gpointer data) {
+  double value = *(double *)data;
+  gtk_range_set_value(GTK_RANGE(rf_gain_scale), value);
+  g_free(data);
+  return FALSE;
+}
+
 void set_rf_gain(int rx, double value) {
   if (!have_rx_gain) { return; }
 
@@ -490,15 +498,15 @@ void set_rf_gain(int rx, double value) {
 #endif
 
   if (display_sliders && active_receiver->id == rx) {
-    gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[rxadc].gain);
-  } else {
-    // alte Version ohne den main_thread genau zu definieren -> Erkennung aber nicht sicher
-    /*
-    if (!g_main_context_is_owner(NULL)) {
-        // Wir sind im falschen Thread – NICHT show_popup_slider() aufrufen
-        return;
+    if (pthread_equal(pthread_self(), deskhpsdr_main_thread)) {
+      gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[rxadc].gain);
+    } else {
+      // wir brauchen ein Callback um den rf_gain_slider nur im Hauptthread zu aktualisieren
+      double *val = g_new(double, 1);
+      *val = adc[rxadc].gain;
+      g_idle_add(update_rf_gain_slider_value, val);
     }
-    */
+  } else {
     // Falls wir NICHT im Main Thread sind, dürfen wir show_popup_slider()
     // nicht aus einem anderen "fremden" Thread aufrufen, anderenfalls App-Crash !!!
     if (!pthread_equal(pthread_self(), deskhpsdr_main_thread)) {
