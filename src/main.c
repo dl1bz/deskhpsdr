@@ -107,13 +107,14 @@ static pthread_t wisdom_thread_id;
 static int wisdom_running = 0;
 
 static void* wisdom_thread(void *arg) {
-  // WDSPwisdom ((char *)arg);
+  WDSPwisdom ((char *)arg);
+  /*
   if (WDSPwisdom ((char *)arg)) {
     t_print("WDSP wisdom file has been rebuilt.\n");
   } else {
     t_print("Re-using existing WDSP wisdom file.\n");
   }
-
+  */
   wisdom_running = 0;
   return NULL;
 }

@@ -8,6 +8,7 @@ GNUmakefile
 *.orig
 *.bak
 *.patch
+*.a
 deskhpsdr
 deskHPSDR.app
 hpsdrsim
@@ -26,6 +27,9 @@ LINUX/SoapyPlutoSDR
 LINUX/SoapyRTLSDR
 wdsp/WDSP_Guide.pdf
 wdsp/libwdsp.a
+wdsp/*.o
+wdsp-1.26/libwdsp.a
+wdsp-1.26/*.o
 libsolar/libsolar.a
 make.config.deskhpsdr
 .vscode/*
