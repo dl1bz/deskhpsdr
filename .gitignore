@@ -28,6 +28,8 @@ LINUX/SoapyRTLSDR
 wdsp/WDSP_Guide.pdf
 wdsp/libwdsp.a
 wdsp/*.o
+wdsp-1.25/libwdsp.a
+wdsp-1.25/*.o
 wdsp-1.26/libwdsp.a
 wdsp-1.26/*.o
 libsolar/libsolar.a
