@@ -187,7 +187,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     fcntl(discovery_socket, F_SETFL, flags | O_NONBLOCK);
     rc = connect(discovery_socket, (const struct sockaddr *)&to_addr, sizeof(to_addr));
 
-    if ((errno != EINPROGRESS) && (rc < 0)) {
+    if ((rc < 0) && (errno != EINPROGRESS)) {
       t_perror("discover: connect() failed for TCP discovery_socket:");
       close(discovery_socket);
       return;

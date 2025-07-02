@@ -45,7 +45,7 @@ void MacTTS(char *text) {
   // complete.
   //
   [synth speakUtterance:utter];
-
+  [utter release];
 }
 
 #endif

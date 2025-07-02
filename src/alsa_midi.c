@@ -113,7 +113,7 @@ static void *midi_thread(void *arg) {
 
     if (ret <= 0) { continue; }  // nothing arrived, do next poll()
 
-    if ((ret = snd_rawmidi_poll_descriptors_revents(input, pfds, npfds, &revents)) < 0) {
+    if (snd_rawmidi_poll_descriptors_revents(input, pfds, npfds, &revents) < 0) {
       t_print("%s: cannot get poll events: %s\n", __FUNCTION__, snd_strerror(errno));
       continue;
     }

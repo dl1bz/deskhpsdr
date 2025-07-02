@@ -76,18 +76,22 @@
 //
 void tts_send(char *msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  int optval = 1;
-  struct sockaddr_in addr;
-  //t_print("%s: sending >>>%s<<<\n", __FUNCTION__, msg);
-  setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-  addr.sin_port = htons(19080);
-  sendto(sock, msg, strlen(msg), 0, (struct sockaddr * ) &addr, sizeof(addr));
-  close(sock);
+
+  if (sock >= 0) {
+    int optval = 1;
+    struct sockaddr_in addr;
+    //t_print("%s: sending >>>%s<<<\n", __FUNCTION__, msg);
+    setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    addr.sin_port = htons(19080);
+    sendto(sock, msg, strlen(msg), 0, (struct sockaddr * ) &addr, sizeof(addr));
+    close(sock);
+  }
+
 #ifdef __APPLE__
   MacTTS(msg);
 #endif

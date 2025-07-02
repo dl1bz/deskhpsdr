@@ -435,6 +435,7 @@ static void *receive_thread(void *arg) {
   t_print("soapy_protocol: receive_thread: SoapySDRDevice_unmake\n");
   SoapySDRDevice_unmake(soapy_device);
   */
+  g_free(buffer);
   return NULL;
 }
 
