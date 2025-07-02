@@ -107,14 +107,23 @@ static pthread_t wisdom_thread_id;
 static int wisdom_running = 0;
 
 static void* wisdom_thread(void *arg) {
+  int wdsp_subversion = GetWDSPVersion() % 100;
+  t_print("%s: WDSP Subversion: %d\n", __FUNCTION__, wdsp_subversion);
+#ifdef EXTNR
   WDSPwisdom ((char *)arg);
-  /*
-  if (WDSPwisdom ((char *)arg)) {
-    t_print("WDSP wisdom file has been rebuilt.\n");
+#else
+
+  if (wdsp_subversion < 26) {
+    WDSPwisdom ((char *)arg);
   } else {
-    t_print("Re-using existing WDSP wisdom file.\n");
+    if (WDSPwisdom ((char *)arg)) {
+      t_print("WDSP wisdom file has been rebuilt.\n");
+    } else {
+      t_print("Re-using existing WDSP wisdom file.\n");
+    }
   }
-  */
+
+#endif
   wisdom_running = 0;
   return NULL;
 }
@@ -753,8 +762,9 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("create build label\n");
 #if defined (__LDESK__)
   snprintf(text, 2048,
-           "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nUsed Audio module: %s\nWorking Directory: %s",
-           build_version, build_date, build_branch, __VERSION__, build_options, build_audio, config_directory);
+           "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nWDSP version: %d.%02d\nUsed Audio module: %s\nWorking Directory: %s",
+           build_version, build_date, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100,
+           build_audio, config_directory);
 #else
   snprintf(text, 256, "Built %s, Version %s\nOptions: %s\nAudio module: %s",
            build_date, build_version, build_options, build_audio);

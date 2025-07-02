@@ -46,7 +46,7 @@
 #include "new_menu.h"
 #include "message.h"
 #if defined (__LDESK__)
-  #include "wdsp.h"
+  #include <wdsp.h>
 #endif
 
 /* Create a new surface of the appropriate size to store our scribbles */
