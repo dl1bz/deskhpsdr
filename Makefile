@@ -880,9 +880,10 @@ clean:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	make -C wdsp clean
-	make -C wdsp-1.26 clean
-	make -C libsolar clean
+	@if [ -d wdsp ]; then $(MAKE) -C wdsp clean; fi
+	@if [ -d wdsp-1.25 ]; then $(MAKE) -C wdsp-1.25 clean; fi
+	@if [ -d wdsp-1.26 ]; then $(MAKE) -C wdsp-1.26 clean; fi
+	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 ifeq ($(UNAME_S), Darwin)
 	@-rm -rf $(PROGRAM).app
 endif
@@ -894,9 +895,10 @@ uninstall:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	make -C wdsp clean
-	make -C wdsp-1.26 clean
-	make -C libsolar clean
+	@if [ -d wdsp ]; then $(MAKE) -C wdsp clean; fi
+	@if [ -d wdsp-1.25 ]; then $(MAKE) -C wdsp-1.25 clean; fi
+	@if [ -d wdsp-1.26 ]; then $(MAKE) -C wdsp-1.26 clean; fi
+	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@echo "Remove installed deskHPSDR binary..."
 ifeq ($(UNAME_S), Darwin)
 	@-rm -rf $(PROGRAM).app
