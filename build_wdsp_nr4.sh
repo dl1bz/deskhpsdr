@@ -79,7 +79,7 @@ else
 fi
 
 cd "$NR4_DIR"
-git clone --depth=1 https://github.com/vu3rdd/libspecbleach
+git clone --depth=1 https://github.com/dl1bz/libspecbleach
 if [ ! -d "$NR4_DIR/libspecbleach" ]; then
     echo "Error: '$NR4_DIR/libspecbleach' download error."
     echo "Stopping script $SCRIPT_NAME.."
