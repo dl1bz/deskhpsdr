@@ -1319,14 +1319,21 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (have_rx_att) {
     attenuation_label = gtk_label_new("ATT");
-    gtk_widget_set_size_request(attenuation_label, lbl_w_fix, widget_height);
-    gtk_widget_set_name(attenuation_label, csslabel);
-    gtk_widget_set_halign(attenuation_label, GTK_ALIGN_END);
+    gtk_widget_set_size_request(attenuation_label, 1.5 * widget_height, widget_height - 10);
+    gtk_widget_set_name(attenuation_label, "boldlabel_border_blue");
+    gtk_widget_set_margin_top(attenuation_label, 5);
+    gtk_widget_set_margin_bottom(attenuation_label, 5);
+    gtk_widget_set_halign(attenuation_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(attenuation_label, GTK_ALIGN_CENTER);
+    gtk_label_set_xalign(GTK_LABEL(attenuation_label), 0.5);
+    gtk_label_set_yalign(GTK_LABEL(attenuation_label), 0.5);
+    gtk_label_set_justify(GTK_LABEL(attenuation_label), GTK_JUSTIFY_CENTER);
     gtk_widget_show(attenuation_label);
-    gtk_grid_attach(GTK_GRID(sliders), attenuation_label, t3pos, 0, twidth, 1);
+    gtk_grid_attach(GTK_GRID(sliders), attenuation_label, t3pos, 0, twidth + 2, 1);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
     gtk_widget_set_size_request(attenuation_scale, sl_w_fix, widget_height);
+    gtk_widget_set_hexpand(attenuation_scale, FALSE);
     gtk_widget_set_valign(attenuation_scale, GTK_ALIGN_CENTER);
     gtk_widget_set_halign(attenuation_scale, GTK_ALIGN_CENTER);
     gtk_range_set_value (GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
