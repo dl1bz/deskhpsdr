@@ -302,29 +302,44 @@ void n2adr_oc_settings_tx() {
 void load_filters() {
   switch (filter_board) {
   case N2ADR_TX:
-    gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
+    }
+
     n2adr_oc_settings_tx();
     break;
 
   case N2ADR:
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     n2adr_oc_settings();
     break;
 
   case ALEX:
   case APOLLO:
   case CHARLY25:
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     // This is most likely not necessary here, but can do no harm
     radio_set_alex_antennas();
     break;
 
   case NO_FILTER_BOARD:
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     break;
 
   default:
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     break;
   }
 
@@ -342,32 +357,56 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 0:
   default:
     filter_board = NO_FILTER_BOARD;
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     break;
 
   case 1:
     filter_board = ALEX;
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     break;
 
   case 2:
     filter_board = APOLLO;
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     break;
 
   case 3:
     filter_board = CHARLY25;
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     break;
 
   case 4:
     filter_board = N2ADR;
-    gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+    }
+
     break;
 
   case 5:
     filter_board = N2ADR_TX;
-    gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
+
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
+    }
+
     break;
   }
 
@@ -375,8 +414,10 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void n2adr_hpf_btn_cb(GtkWidget *widget, gpointer data) {
-  n2adr_hpf_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  load_filters();
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    n2adr_hpf_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    load_filters();
+  }
 }
 
 static void mic_input_cb(GtkWidget *widget, gpointer data) {
@@ -735,13 +776,16 @@ void radio_menu(GtkWidget *parent) {
 
     my_combo_attach(GTK_GRID(grid), filter_combo, 2, row, 1, 1);
     g_signal_connect(filter_combo, "changed", G_CALLBACK(filter_cb), NULL);
-    n2adr_hpf_btn = gtk_check_button_new_with_label("+RX: N2ADR HPF 3MHz");
-    gtk_widget_set_name(n2adr_hpf_btn, "boldlabel_blue");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (n2adr_hpf_btn), n2adr_hpf_enable);
-    gtk_grid_attach(GTK_GRID(grid), n2adr_hpf_btn, 3, row, 1, 1);
-    g_signal_connect(n2adr_hpf_btn, "toggled", G_CALLBACK(n2adr_hpf_btn_cb), NULL);
 
-    if (filter_board == N2ADR_TX) {
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+      n2adr_hpf_btn = gtk_check_button_new_with_label("+RX: N2ADR HPF 3MHz");
+      gtk_widget_set_name(n2adr_hpf_btn, "boldlabel_blue");
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (n2adr_hpf_btn), n2adr_hpf_enable);
+      gtk_grid_attach(GTK_GRID(grid), n2adr_hpf_btn, 3, row, 1, 1);
+      g_signal_connect(n2adr_hpf_btn, "toggled", G_CALLBACK(n2adr_hpf_btn_cb), NULL);
+    }
+
+    if (filter_board == N2ADR_TX && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     } else {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
