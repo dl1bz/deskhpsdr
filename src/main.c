@@ -647,8 +647,11 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   if (desktop_env) {
     t_print("Detected Desktop Environment: %s\n", desktop_env);
 
-    if (g_strrstr(desktop_env, "KDE") || g_strrstr(desktop_env, "LXQt") || g_strrstr(desktop_env, "Cinnamon")
-        || g_strrstr(desktop_env, "UNKNOWN")) {
+    if (g_strrstr(desktop_env, "KDE")      ||
+        g_strrstr(desktop_env, "LXQt")     ||
+        g_strrstr(desktop_env, "LXDE")     ||
+        g_strrstr(desktop_env, "Cinnamon") ||
+        g_strrstr(desktop_env, "UNKNOWN")) {
       t_print("Forcing GTK theme to Adwaita for better compatibility\n");
       gtk_settings_set_string_property(
         gtk_settings_get_default(),
