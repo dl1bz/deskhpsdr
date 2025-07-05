@@ -641,6 +641,29 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   }
 
   screen = gdk_display_get_default_screen(display);
+#ifdef __linux__
+  const char *desktop_env = getenv("XDG_CURRENT_DESKTOP");
+
+  if (desktop_env) {
+    t_print("Detected Desktop Environment: %s\n", desktop_env);
+
+    if (g_strrstr(desktop_env, "KDE") || g_strrstr(desktop_env, "LXQt") || g_strrstr(desktop_env, "Cinnamon")
+        || g_strrstr(desktop_env, "UNKNOWN")) {
+      t_print("Forcing GTK theme to Adwaita for better compatibility\n");
+      gtk_settings_set_string_property(
+        gtk_settings_get_default(),
+        "gtk-theme-name",
+        "Adwaita",
+        NULL
+      );
+    }
+  } else {
+    t_print("Desktop environment not detected – no GTK theme override\n");
+  }
+
+#else
+  t_print("Non-Linux system – skipping GTK theme override\n");
+#endif
 
   if (screen == NULL) {
     t_print("no default screen!\n");
