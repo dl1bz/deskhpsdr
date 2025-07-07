@@ -732,7 +732,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 #if defined (__LDESK__)
   const char *used_theme = get_current_gtk_theme();
   char _title[64];
-  snprintf(_title, 64, "%s V%s [GTK Theme: %s]", PGNAME, build_version, used_theme);
+  snprintf(_title, 64, "%s by DL1BZ %s [GTK Theme: %s]", PGNAME, build_version, used_theme);
   gtk_window_set_title (GTK_WINDOW (top_window), _title);
 #else
   gtk_window_set_title (GTK_WINDOW (top_window), "piHPSDR");

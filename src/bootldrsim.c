@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
   unsigned char mymac[6];               // MAC address of radio (that is, of THIS host)
   unsigned char myip[4];                // IP  address of radio (that is, of THIS host)
   unsigned char hismac[6];              // MAC address of PC running the bootloader
-  pcap_if_t *devlist,*ifp;              // Data used in the ethernet card detection loop
+  pcap_if_t *devlist, *ifp;             // Data used in the ethernet card detection loop
   pcap_addr_t *addr;
   struct sockaddr *sa;
   struct sockaddr_dl *link;

@@ -1106,7 +1106,7 @@ static void send_space(int len) {
 static int join_cw_characters = 0;
 
 static void rigctl_send_cw_char(char cw_char) {
-  char pattern[9],*ptr;
+  char pattern[9], *ptr;
   ptr = &pattern[0];
 
   switch (cw_char) {

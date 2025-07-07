@@ -173,7 +173,7 @@ static void get_info(char *driver) {
   SoapySDRRange *ranges = SoapySDRDevice_getFrequencyRange(sdr, SOAPY_SDR_RX, 0, &ranges_length);
 
   for (size_t i = 0; i < ranges_length; i++) t_print("RX freq range [%f MHz -> %f MHz step=%f]\n",
-      ranges[i].minimum * 1E-6, ranges[i].maximum * 1E-6, ranges[i].step);
+        ranges[i].minimum * 1E-6, ranges[i].maximum * 1E-6, ranges[i].step);
 
   char** rx_antennas = SoapySDRDevice_listAntennas(sdr, SOAPY_SDR_RX, 0, &rx_antennas_length);
 

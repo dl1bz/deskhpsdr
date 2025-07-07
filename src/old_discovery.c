@@ -535,7 +535,7 @@ static int is_macos() {
 }
 
 void old_discovery() {
-  struct ifaddrs *addrs,*ifa;
+  struct ifaddrs *addrs, *ifa;
   int i, is_local;
   int ist_macos, ist_raspi;
   t_print("old_discovery\n");

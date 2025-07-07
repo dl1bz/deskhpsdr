@@ -329,7 +329,7 @@ static int keyword2action(char *s) {
 int ReadLegacyMidiFile(char *filename) {
   FILE *fpin;
   char zeile[255];
-  char *cp,*cq;
+  char *cp, *cq;
   int key;
   int action;
   int chan;

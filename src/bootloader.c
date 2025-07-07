@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
   unsigned char mymac[6];  // Mac address of host
   unsigned char myip[4];   // IP  address of host
   unsigned char  hisip[4]; // IP  address to burn into radio
-  pcap_if_t *devlist,*ifp;
+  pcap_if_t *devlist, *ifp;
   pcap_addr_t *addr;
   struct sockaddr *sa;
   struct sockaddr_dl *link;

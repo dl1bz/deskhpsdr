@@ -68,7 +68,7 @@ void print_device(int i) {
 }
 
 void new_discovery() {
-  struct ifaddrs *addrs,*ifa;
+  struct ifaddrs *addrs, *ifa;
   int i, is_local;
   getifaddrs(&addrs);
   ifa = addrs;
