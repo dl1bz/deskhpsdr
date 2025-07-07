@@ -967,7 +967,7 @@ void radio_menu(GtkWidget *parent) {
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mute_rx_while_transmitting);
     col++;
 
-    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       ChkBtn = gtk_check_button_new_with_label("HL2 5W PA enable");
     } else {
       ChkBtn = gtk_check_button_new_with_label("PA enable");
@@ -1002,6 +1002,7 @@ void radio_menu(GtkWidget *parent) {
   }
   break;
 
+  case NEW_DEVICE_HERMES_LITE2:
   case DEVICE_HERMES_LITE2: {
     if (!have_radioberry1 && !have_radioberry2) {
       ChkBtn = gtk_check_button_new_with_label("HL2 audio codec");
