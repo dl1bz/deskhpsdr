@@ -1430,7 +1430,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #if defined (__LDESK__)
 
-    if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && pa_enabled && !have_radioberry1
+        && !have_radioberry2) {
       drive_label = gtk_label_new("TXPwr(W)");
     } else {
       drive_label = gtk_label_new("TXPwr(%)");
