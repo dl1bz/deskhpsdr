@@ -302,7 +302,7 @@ void n2adr_oc_settings_tx() {
 void load_filters() {
   switch (filter_board) {
   case N2ADR_TX:
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     }
 
@@ -310,7 +310,7 @@ void load_filters() {
     break;
 
   case N2ADR:
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -320,7 +320,7 @@ void load_filters() {
   case ALEX:
   case APOLLO:
   case CHARLY25:
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -329,14 +329,14 @@ void load_filters() {
     break;
 
   case NO_FILTER_BOARD:
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
     break;
 
   default:
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -358,7 +358,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   default:
     filter_board = NO_FILTER_BOARD;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -367,7 +367,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 1:
     filter_board = ALEX;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -376,7 +376,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 2:
     filter_board = APOLLO;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -385,7 +385,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 3:
     filter_board = CHARLY25;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -394,7 +394,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 4:
     filter_board = N2ADR;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
 
@@ -403,7 +403,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 5:
     filter_board = N2ADR_TX;
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     }
 
@@ -414,7 +414,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void n2adr_hpf_btn_cb(GtkWidget *widget, gpointer data) {
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
     n2adr_hpf_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     load_filters();
   }
@@ -777,7 +777,7 @@ void radio_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), filter_combo, 2, row, 1, 1);
     g_signal_connect(filter_combo, "changed", G_CALLBACK(filter_cb), NULL);
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       n2adr_hpf_btn = gtk_check_button_new_with_label("+RX: N2ADR HPF 3MHz");
       gtk_widget_set_name(n2adr_hpf_btn, "boldlabel_blue");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (n2adr_hpf_btn), n2adr_hpf_enable);
