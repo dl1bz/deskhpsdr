@@ -128,6 +128,50 @@ static void* wisdom_thread(void *arg) {
   return NULL;
 }
 
+const char* get_current_gtk_theme(void) {
+  GtkSettings *settings = gtk_settings_get_default();
+  gchar *theme_name = NULL;
+
+  if (!settings) {
+    return NULL;
+  }
+
+  g_object_get(settings, "gtk-theme-name", &theme_name, NULL);
+
+  // Achtung: Übergib eine Kopie, da theme_name freigegeben wird
+  if (theme_name) {
+    gchar *copy = g_strdup(theme_name);
+    g_free(theme_name);
+    return copy;
+  }
+
+  return NULL;
+}
+
+gboolean is_theme_adwaita(void) {
+  GtkSettings *settings = gtk_settings_get_default();
+  gchar *theme_name = NULL;
+  gboolean result = FALSE;
+
+  if (!settings) {
+    return FALSE;
+  }
+
+  g_object_get(settings, "gtk-theme-name", &theme_name, NULL);
+
+  if (theme_name) {
+    if (g_strcmp0(theme_name, "Adwaita") == 0) {
+      result = TRUE;
+    } else {
+      t_print("Active GTK theme is '%s', but not 'Adwaita'\n", theme_name);
+    }
+
+    g_free(theme_name);
+  }
+
+  return result;
+}
+
 // cppcheck-suppress constParameterCallback
 gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   gboolean ret = TRUE;
@@ -668,6 +712,12 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("Non-Linux system – skipping GTK theme override\n");
 #endif
 
+  if (!is_theme_adwaita()) {
+    t_print("Note: Adwaita GTK theme is not active. Display of some widgets can be limited.\n");
+  } else {
+    t_print("Note: Adwaita GTK theme is active. Thats the recommend setting.\n");
+  }
+
   if (screen == NULL) {
     t_print("no default screen!\n");
     _exit(0);
@@ -680,8 +730,9 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   top_window = gtk_application_window_new (app);
   gtk_widget_set_size_request(top_window, 100, 100);
 #if defined (__LDESK__)
-  char _title[32];
-  snprintf(_title, 32, "%s", PGNAME);
+  const char *used_theme = get_current_gtk_theme();
+  char _title[64];
+  snprintf(_title, 64, "%s V%s [GTK Theme: %s]", PGNAME, build_version, used_theme);
   gtk_window_set_title (GTK_WINDOW (top_window), _title);
 #else
   gtk_window_set_title (GTK_WINDOW (top_window), "piHPSDR");
