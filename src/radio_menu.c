@@ -783,12 +783,7 @@ void radio_menu(GtkWidget *parent) {
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (n2adr_hpf_btn), n2adr_hpf_enable);
       gtk_grid_attach(GTK_GRID(grid), n2adr_hpf_btn, 3, row, 1, 1);
       g_signal_connect(n2adr_hpf_btn, "toggled", G_CALLBACK(n2adr_hpf_btn_cb), NULL);
-    }
-
-    if (filter_board == N2ADR_TX && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
-      gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
-    } else {
-      gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
+      gtk_widget_set_sensitive(n2adr_hpf_btn, filter_board == N2ADR_TX);
     }
 
     row++;
