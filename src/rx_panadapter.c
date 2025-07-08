@@ -156,22 +156,22 @@ static gboolean panadapter_scroll_event_cb(GtkWidget *widget, GdkEventScroll *ev
 // lower limits <= 30 MHz
 static short int lowlimitsHF[NUM_SWERTE] = {
   -200, -121, -115, -109, -103, -97, -91, -85, -79, -73, -68, -63, -58, -53, -48, -43, -33, -23, -13
-    //      S1    S2    S3    S4    S5   S6   S7   S8   S9   +5   +10  +15  +20  +25  +30  +40  +50  +60
-  };
+  //      S1    S2    S3    S4    S5   S6   S7   S8   S9   +5   +10  +15  +20  +25  +30  +40  +50  +60
+};
 // upper limits <= 30 MHz
 static short int uplimitsHF[NUM_SWERTE] = {
   -122, -116, -110, -104, -98, -92, -86, -80, -74, -69, -64, -59, -54, -49, -44, -34, -24, -14, 0
-  };
+};
 
 // lower limits > 30 MHz
 static short int lowlimitsUKW[NUM_SWERTE] = {
   -200, -141, -135, -129, -123, -117, -111, -105, -99, -93, -88, -83, -78, -73, -68, -63, -53, -43, -33
-    //      S1    S2    S3    S4    S5    S6    S7    S8   S9   +5   +10  +15  +20  +25  +30  +40  +50  +60
-  };
+  //      S1    S2    S3    S4    S5    S6    S7    S8   S9   +5   +10  +15  +20  +25  +30  +40  +50  +60
+};
 // upper limits > 30 MHz
 static short int uplimitsUKW[NUM_SWERTE] = {
   -142, -136, -130, -124, -118, -112, -106, -100, -94, -89, -84, -79, -74, -69, -64, -54, -44, -34, 0
-  };
+};
 
 static const char* (dbm2smeter[NUM_SWERTE + 1]) = {
   "no signal", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S9+5db", "S9+10db", "S9+15db", "S9+20db", "S9+25db", "S9+30db", "S9+40db", "S9+50db", "S9+60db", "out of range"
