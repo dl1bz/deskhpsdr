@@ -52,9 +52,6 @@ char build_options[] =
 #ifdef EXTNR
   "EXTNR "
 #endif
-  // #ifdef __LDESK__
-  //  "DESKTOP "
-  // #endif
 #ifdef __HAVEATU__
   "ATU "
 #endif
@@ -71,7 +68,7 @@ char build_options[] =
   "MAP "
 #endif
 #ifdef __DVL__
-  "DEVEL "
+  "DEV "
 #endif
   "";
 

@@ -54,6 +54,7 @@
 #include "protocols.h"
 #include "property.h"
 #include "message.h"
+#include "version.h"
 #if defined (__LDESK__)
   #include "new_menu.h"
 #endif
@@ -307,8 +308,8 @@ void discovery() {
   gtk_window_set_titlebar(GTK_WINDOW(discovery_dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
 #if defined (__LDESK__)
-  char _title[32];
-  snprintf(_title, 32, "%s - Discovery", PGNAME);
+  char _title[64];
+  snprintf(_title, 64, "%s by DL1BZ %s - Discover SDR Device", PGNAME, build_version);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
 #else
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Discovery");

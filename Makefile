@@ -1163,7 +1163,8 @@ src/discovery.o: src/soapy_discovery.h src/main.h src/radio.h src/adc.h
 src/discovery.o: src/dac.h src/receiver.h src/transmitter.h src/ozyio.h
 src/discovery.o: src/stemlab_discovery.h src/ext.h src/gpio.h src/actions.h
 src/discovery.o: src/configure.h src/protocols.h src/property.h src/message.h
-src/discovery.o: src/new_menu.h src/saturnmain.h src/saturnregisters.h
+src/discovery.o: src/version.h src/new_menu.h src/saturnmain.h
+src/discovery.o: src/saturnregisters.h
 src/display_menu.o: src/main.h src/new_menu.h src/display_menu.h src/radio.h
 src/display_menu.o: src/adc.h src/dac.h src/discovered.h src/receiver.h
 src/display_menu.o: src/transmitter.h src/ext.h
