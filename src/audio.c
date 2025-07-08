@@ -287,7 +287,7 @@ int audio_open_input() {
   }
 
   t_print("%s: creating mic_read_thread\n", __FUNCTION__);
-  GError *error;
+  GError *error = NULL;
   mic_read_thread_id = g_thread_try_new("microphone", mic_read_thread, NULL, &error);
 
   if (!mic_read_thread_id ) {
@@ -343,6 +343,7 @@ void audio_close_input() {
 
   if (mic_ring_buffer != NULL) {
     g_free(mic_ring_buffer);
+    mic_ring_buffer = NULL;
   }
 
   g_mutex_unlock(&audio_mutex);
@@ -387,8 +388,8 @@ int cw_audio_write(RECEIVER *rx, float sample) {
 
     case SND_PCM_FORMAT_S32_LE: {
       int32_t *long_buffer = (int32_t *)rx->local_audio_buffer;
-      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(sample * 4294967295.0F);
-      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(sample * 4294967295.0F);
+      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(sample * 2147483647.0F);
+      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(sample * 2147483647.0F);
     }
     break;
 
@@ -525,8 +526,8 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
 
     case SND_PCM_FORMAT_S32_LE: {
       int32_t *long_buffer = (int32_t *)rx->local_audio_buffer;
-      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(left_sample * 4294967295.0F);
-      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(right_sample * 4294967295.0F);
+      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(left_sample * 2147483647.0F);
+      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(right_sample * 2147483647.0F);
     }
     break;
 
@@ -667,7 +668,7 @@ static void *mic_read_thread(gpointer arg) {
 
         case SND_PCM_FORMAT_S32_LE:
           long_buffer = (int32_t *)mic_buffer;
-          sample = (float)long_buffer[i] / 4294967295.0f;
+          sample = (float)long_buffer[i] / 2147483647.0F;
           break;
 
         case SND_PCM_FORMAT_FLOAT_LE:
@@ -798,7 +799,7 @@ void audio_get_cards() {
           // the two allocated strings will never be free'd
           output_devices[n_output_devices].name = g_strdup(device_id);
           output_devices[n_output_devices].description = g_strdup(device_id);
-          input_devices[n_output_devices].index = 0; // not used
+          output_devices[n_output_devices].index = 0; // not used
           n_output_devices++;
           t_print("output_device: %s\n", device_id);
         }
