@@ -3344,7 +3344,7 @@ static int metis_write(unsigned char ep, unsigned const char* buffer, int length
 
         // if (dt_ms < 2.4 || dt_ms > 2.8) {
         if (dt_ms < 2.6 || dt_ms > 2.7) {
-          t_print("TX Jitter: Δt = %.3f ms\n", dt_ms);
+          // t_print("TX Jitter: Δt = %.3f ms\n", dt_ms);
         }
       }
 

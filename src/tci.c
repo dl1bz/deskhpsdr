@@ -32,6 +32,7 @@
 #include <netinet/tcp.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <signal.h>
 
 #ifdef __APPLE__
   #include <time.h>
@@ -49,7 +50,7 @@
 
 #define MAX_TCI_CLIENTS 5
 #define MAXDATASIZE     1024
-#define MAXMSGSIZE      128
+#define MAXMSGSIZE      256
 
 int tci_enable = 0;
 #if defined (__LDESK__)
@@ -96,6 +97,7 @@ typedef struct _client {
   int count;                    // ping counter
   int rxsensor;                 // enable transmit of S meter data
   int txsensor;                 // enable transmit of drive data
+  int idle_queued;              // counter
 } CLIENT;
 
 typedef struct _response {
@@ -105,6 +107,8 @@ typedef struct _response {
 } RESPONSE;
 
 static CLIENT tci_client[MAX_TCI_CLIENTS];
+
+static GMutex tci_mutex;
 
 static gpointer tci_server(gpointer data);
 static gpointer tci_listener(gpointer data);
@@ -132,6 +136,7 @@ static void force_close(CLIENT *client) {
   struct linger linger = { 0 };
   linger.l_onoff = 1;
   linger.l_linger = 0;
+  g_mutex_lock(&tci_mutex);
   client->running = 0;
 
   if (client->fd  != -1) {
@@ -146,6 +151,8 @@ static void force_close(CLIENT *client) {
     g_source_remove(client->tci_timer);
     client->tci_timer = 0;
   }
+
+  g_mutex_unlock(&tci_mutex);
 }
 
 //
@@ -195,6 +202,7 @@ void shutdown_tci() {
 //
 // tci_send_frame is intended to  be called  through the GTK idle queue
 //
+/*
 static int tci_send_frame(void *data) {
   RESPONSE *response = (RESPONSE *) data;
   CLIENT *client = response->client;
@@ -207,10 +215,13 @@ static int tci_send_frame(void *data) {
   //
   // This means client has already been closed
   //
+  g_mutex_lock(&tci_mutex);
   if (client->fd < 0) {
+    g_mutex_unlock(&tci_mutex);
     g_free(data);
     return G_SOURCE_REMOVE;
   }
+  g_mutex_unlock(&tci_mutex);
 
   size_t length = strlen(msg);
   frame[0] = 128 | type;
@@ -242,7 +253,9 @@ static int tci_send_frame(void *data) {
 
     if (rc < 0) {
       g_free(data);
+      g_mutex_lock(&tci_mutex);
       client->running = 0;
+      g_mutex_unlock(&tci_mutex);
       return G_SOURCE_REMOVE;
     }
 
@@ -262,6 +275,91 @@ static int tci_send_frame(void *data) {
 
   g_free(data);
   return G_SOURCE_REMOVE;
+  g_mutex_lock(&tci_mutex);
+  client->idle_queued--;
+  g_mutex_unlock(&tci_mutex);
+}
+*/
+static int tci_send_frame(void *data) {
+  RESPONSE *response = (RESPONSE *) data;
+
+  if (!response || !response->client) {
+    g_free(response);  // Sicherstellen, dass Speicher freigegeben wird
+    return G_SOURCE_REMOVE;
+  }
+
+  CLIENT *client = response->client;
+  int type = response->type;
+  const char *msg = response->msg;
+  unsigned char frame[1024];
+  unsigned char *p;
+  int start;
+  g_mutex_lock(&tci_mutex);
+
+  if (client->fd < 0) {
+    client->idle_queued--;  // idle-Zähler korrigieren
+    g_mutex_unlock(&tci_mutex);
+    g_free(response);
+    return G_SOURCE_REMOVE;
+  }
+
+  g_mutex_unlock(&tci_mutex);
+  // size_t length = strlen(msg);
+  size_t length = msg ? strlen(msg) : 0;
+  frame[0] = 128 | type;
+
+  if (length <= 125) {
+    frame[1] = length;
+    start = 2;
+  } else {
+    frame[1] = 126;
+    frame[2] = (length >> 8) & 255;
+    frame[3] = length & 255;
+    start = 4;
+  }
+
+  for (size_t i = 0; i < length; i++) {
+    frame[start + i] = msg[i];
+  }
+
+  length = length + start;
+  int count = 0;
+  p = frame;
+
+  while (length > 0) {
+    int rc = write(client->fd, p, length);
+
+    if (rc < 0) {
+      g_mutex_lock(&tci_mutex);
+      client->idle_queued--;   // idle-Zähler korrigieren
+      client->running = 0;
+      g_mutex_unlock(&tci_mutex);
+      g_free(response);
+      return G_SOURCE_REMOVE;
+    }
+
+    if (rc == 0) {
+      count++;
+
+      if (count > 10) {
+        g_mutex_lock(&tci_mutex);
+        client->idle_queued--;  // idle-Zähler korrigieren
+        client->running = 0;
+        g_mutex_unlock(&tci_mutex);
+        g_free(response);
+        return G_SOURCE_REMOVE;
+      }
+    }
+
+    length -= rc;
+    p += rc;
+  }
+
+  g_mutex_lock(&tci_mutex);
+  client->idle_queued--;  // idle-Zähler korrekt verringern
+  g_mutex_unlock(&tci_mutex);
+  g_free(response);
+  return G_SOURCE_REMOVE;
 }
 
 static void tci_send_text(CLIENT *client, char *msg) {
@@ -273,12 +371,18 @@ static void tci_send_text(CLIENT *client, char *msg) {
 
   RESPONSE *resp = g_new(RESPONSE, 1);
   resp->client = client;
-#if defined (__LDESK__)
   g_strlcpy(resp->msg, msg, sizeof(resp->msg));
-#else
-  strcpy(resp->msg, msg);
-#endif
   resp->type = opTEXT;
+  g_mutex_lock(&tci_mutex);
+
+  if (client->idle_queued >= 100) {
+    g_mutex_unlock(&tci_mutex);
+    g_free(resp);  // nicht vergessen!
+    return;
+  }
+
+  client->idle_queued++;
+  g_mutex_unlock(&tci_mutex);
   g_idle_add(tci_send_frame, resp);
 }
 
@@ -565,11 +669,14 @@ static gboolean tci_reporter(gpointer data) {
   // This function is called repeatedly as long as the client  runs
   //
   CLIENT *client = (CLIENT *) data;
+  g_mutex_lock(&tci_mutex);
 
   if (!client->running) {
+    g_mutex_unlock(&tci_mutex);
     return FALSE;
   }
 
+  g_mutex_unlock(&tci_mutex);
 #ifdef __APPLE__
   struct timespec ts;
   // clock_gettime(CLOCK_REALTIME, &ts);
@@ -661,6 +768,7 @@ static gboolean tci_reporter(gpointer data) {
 // This is the TCI server, which listens for (and accepts) connections
 //
 static gpointer tci_server(gpointer data) {
+  signal(SIGPIPE, SIG_IGN);
   int port = GPOINTER_TO_INT(data);
   int on = 1;
   struct timeval tv;
@@ -722,6 +830,7 @@ static gpointer tci_server(gpointer data) {
     // find a spare slot
     //
     spare = -1;
+    g_mutex_lock(&tci_mutex);
 
     for (int id = 0; id < MAX_TCI_CLIENTS; id++) {
       if (tci_client[id].fd == -1) {
@@ -729,6 +838,8 @@ static gpointer tci_server(gpointer data) {
         break;
       }
     }
+
+    g_mutex_unlock(&tci_mutex);
 
     // if all slots are in use, wait and continue
     if (spare < 0) {
@@ -981,9 +1092,17 @@ static gpointer tci_listener(gpointer data) {
     // ...just give up
     //
     if (offset >= MAXDATASIZE) {
+      g_mutex_lock(&tci_mutex);
       client->running = 0;
+      g_mutex_unlock(&tci_mutex);
       break;
     }
+
+    g_mutex_lock(&tci_mutex);
+    int fd = client->fd;
+    g_mutex_unlock(&tci_mutex);
+
+    if (fd < 0) { break; }
 
     numbytes = recv(client->fd, buff + offset, MAXDATASIZE - offset, 0);
 
@@ -1071,25 +1190,35 @@ static gpointer tci_listener(gpointer data) {
             if (!strcmp(arg[2], "true")) {
 #if defined (__HAVEATU__)
 
-              if (transmitter->is_tuned) { g_idle_add(ext_mox_update, GINT_TO_POINTER(1)); }
+              if (transmitter->is_tuned) {
+                g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+                t_print("TCI%d TX request valid - TX is tuned\n", client->seq);
+              } else {
+                tci_send_mox(client);
+                t_print("TCI%d TX request invalid - TX not tuned\n", client->seq);
+              }
 
 #else
               g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+              t_print("TCI%d TX request\n", client->seq);
 #endif
-              t_print("TX request\n");
             } else {
               // g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
               g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(0));
-              t_print("RX request\n");
+              t_print("TCI%d RX request\n", client->seq);
             }
           } else {
             tci_send_mox(client);
           }
         } else if (!strcmp(arg[0], "rx_sensors_enable") && argc > 1) {
           // MLDX originally sent '1/0' instead of 'true/false'
+          g_mutex_lock(&tci_mutex);
           client->rxsensor = (*arg[1] == '1' || !strcmp(arg[1], "true"));
+          g_mutex_unlock(&tci_mutex);
         } else if (!strcmp(arg[0], "tx_sensors_enable") && argc > 1) {
+          g_mutex_lock(&tci_mutex);
           client->txsensor = (*arg[1] == '1' || !strcmp(arg[1], "true"));
+          g_mutex_unlock(&tci_mutex);
         } else if (!strcmp(arg[0], "modulation") && argc > 1) {
           tci_send_mode(client, (*arg[1] == '1') ? 1 : 0);
         } else if (!strcmp(arg[0], "vfo") && argc > 2) {
@@ -1115,7 +1244,9 @@ static gpointer tci_listener(gpointer data) {
           client->rxsensor = 0;
           client->txsensor = 0;
           tci_send_text(client, "stop;");
+          g_mutex_lock(&tci_mutex);
           client->running = 0;
+          g_mutex_unlock(&tci_mutex);
         }
 
         break;
@@ -1129,7 +1260,9 @@ static gpointer tci_listener(gpointer data) {
       case opCLOSE:
         if (rigctl_debug) { t_print("TCI%d CLOSE rcvd\n", client->seq); }
 
+        g_mutex_lock(&tci_mutex);
         client->running = 0;
+        g_mutex_unlock(&tci_mutex);
         break;
       }
 
