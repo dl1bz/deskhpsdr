@@ -53,11 +53,7 @@
 #define MAXMSGSIZE      256
 
 int tci_enable = 0;
-#if defined (__LDESK__)
-  int tci_port   = 50001;
-#else
-  int tci_port   = 40001;
-#endif
+int tci_port   = 50001;
 int tci_txonly = 0;
 long tci_timer = 0;
 
@@ -202,84 +198,6 @@ void shutdown_tci() {
 //
 // tci_send_frame is intended to  be called  through the GTK idle queue
 //
-/*
-static int tci_send_frame(void *data) {
-  RESPONSE *response = (RESPONSE *) data;
-  CLIENT *client = response->client;
-  int type = response->type;
-  const char *msg = response->msg;
-  unsigned char frame[1024];
-  unsigned char *p;
-  int start;
-
-  //
-  // This means client has already been closed
-  //
-  g_mutex_lock(&tci_mutex);
-  if (client->fd < 0) {
-    g_mutex_unlock(&tci_mutex);
-    g_free(data);
-    return G_SOURCE_REMOVE;
-  }
-  g_mutex_unlock(&tci_mutex);
-
-  size_t length = strlen(msg);
-  frame[0] = 128 | type;
-
-  if (length <= 125) {
-    frame[1] = length;
-    start = 2;
-  } else {
-    frame[1] = 126;
-    frame[2] = (length >> 8) & 255;
-    frame[3] = length & 255;
-    start = 4;
-  }
-
-  for (size_t i = 0; i < length; i++) {
-    frame[start + i] = msg[i];
-  }
-
-  length = length + start;
-  int count = 0;
-  p = frame;
-
-  //
-  // Write data, possibly in several chunks. If it fails,
-  // mark the client as "not running"
-  //
-  while (length > 0) {
-    int rc = write(client->fd, p, length);
-
-    if (rc < 0) {
-      g_free(data);
-      g_mutex_lock(&tci_mutex);
-      client->running = 0;
-      g_mutex_unlock(&tci_mutex);
-      return G_SOURCE_REMOVE;
-    }
-
-    if (rc == 0) {
-      count++;
-
-      if (count > 10) {
-        g_free(data);
-        client->running = 0;
-        return G_SOURCE_REMOVE;
-      }
-    }
-
-    length -= rc;
-    p += rc;
-  }
-
-  g_free(data);
-  return G_SOURCE_REMOVE;
-  g_mutex_lock(&tci_mutex);
-  client->idle_queued--;
-  g_mutex_unlock(&tci_mutex);
-}
-*/
 static int tci_send_frame(void *data) {
   RESPONSE *response = (RESPONSE *) data;
 
@@ -687,10 +605,6 @@ static gboolean tci_reporter(gpointer data) {
   if (++(client->count) >= 30) {
     client->count = 0;
     // tci_send_ping(client);
-#ifdef __APPLE__
-    // if (rigctl_debug) { t_print("%s: Time: %ld\n", __FUNCTION__, ts.tv_sec); }
-    // if (rigctl_debug) { t_print("%s: Timer: %lds\n", __FUNCTION__, tci_timer); }
-#endif
   }
 
   //
@@ -1116,20 +1030,9 @@ static gpointer tci_listener(gpointer data) {
     //
     // The chunk just read may contain more than one frame
     //
-    /*
-    numbytes =  digest_frame(buff, msg, offset, &type);
-    t_print("%s: TCI%d numbytes: %d offset: %d type: %d Msg recv: %s\n", __FUNCTION__, client->seq, numbytes, offset, type, msg);
-    if (numbytes > 0) {
-    */
     while ((numbytes =  digest_frame(buff, msg, offset, &type)) > 0) {
       switch (type) {
       case opTEXT:
-
-        /*
-        for (size_t i = 0; i < strlen(msg); i++) {
-          msg[i] = tolower(msg[i]);
-        }
-        */
         if (rigctl_debug) {
           t_print("TCI%d command rcvd=%s\n", client->seq, msg);
         }
