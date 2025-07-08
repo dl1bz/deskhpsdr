@@ -134,6 +134,8 @@ void audio_get_cards() {
 
   if ( numDevices < 0 ) { return; }
 
+  g_mutex_lock(&audio_mutex);
+
   n_input_devices = 0;
   n_output_devices = 0;
 
@@ -178,6 +180,7 @@ void audio_get_cards() {
       t_print("%s: OUTPUT DEVICE, No=%d, Name=%s\n", __FUNCTION__, i, deviceInfo->name);
     }
   }
+  g_mutex_unlock(&audio_mutex);
 }
 
 //
