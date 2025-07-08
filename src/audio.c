@@ -101,8 +101,8 @@ AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 //
 #define MICRINGLEN 6000
 float  *mic_ring_buffer = NULL;
-int     mic_ring_read_pt = 0;
-int     mic_ring_write_pt = 0;
+volatile int mic_ring_read_pt = 0;
+volatile int mic_ring_write_pt = 0;
 
 int audio_open_output(RECEIVER *rx) {
   int err;
@@ -745,10 +745,23 @@ void audio_get_cards() {
   int card = -1;
   t_print("%s\n", __FUNCTION__);
   g_mutex_init(&audio_mutex);
+  g_mutex_lock(&audio_mutex);
+
+  for (int i = 0; i < n_input_devices; i++) {
+    g_free(input_devices[i].name);
+    g_free(input_devices[i].description);
+  }
+
+  for (int i = 0; i < n_output_devices; i++) {
+    g_free(output_devices[i].name);
+    g_free(output_devices[i].description);
+  }
+
   n_input_devices = 0;
   n_output_devices = 0;
-  snd_ctl_card_info_alloca(&info);
-  snd_pcm_info_alloca(&pcminfo);
+  memset(input_devices, 0, sizeof(input_devices));
+  memset(output_devices, 0, sizeof(output_devices));
+  g_mutex_unlock(&audio_mutex);
 
   while (snd_card_next(&card) >= 0 && card >= 0) {
     snd_ctl_t *handle;
@@ -838,7 +851,7 @@ void audio_get_cards() {
           }
         }
 
-        input_devices[n_output_devices].index = 0; // not used
+        output_devices[n_output_devices].index = 0; // not used
         n_output_devices++;
         t_print("output_device: name=%s descr=%s\n", name, descr);
       }
