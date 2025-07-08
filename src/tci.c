@@ -50,7 +50,7 @@
 
 #define MAX_TCI_CLIENTS 5
 #define MAXDATASIZE     1024
-#define MAXMSGSIZE      256
+#define MAXMSGSIZE      512
 
 int tci_enable = 0;
 int tci_port   = 50001;
@@ -248,6 +248,8 @@ static int tci_send_frame(void *data) {
     int rc = write(client->fd, p, length);
 
     if (rc < 0) {
+      if (errno == EINTR) { continue; }
+
       g_mutex_lock(&tci_mutex);
       client->idle_queued--;   // idle-Zähler korrigieren
       client->running = 0;
@@ -289,7 +291,8 @@ static void tci_send_text(CLIENT *client, char *msg) {
 
   RESPONSE *resp = g_new(RESPONSE, 1);
   resp->client = client;
-  g_strlcpy(resp->msg, msg, sizeof(resp->msg));
+  // g_strlcpy(resp->msg, msg, sizeof(resp->msg));
+  g_strlcpy(resp->msg, msg, MAXMSGSIZE);
   resp->type = opTEXT;
   g_mutex_lock(&tci_mutex);
 
@@ -765,6 +768,7 @@ static gpointer tci_server(gpointer data) {
     // A slot is available, try to get connection via accept()
     // (this initializes fd, address, address_length)
     //
+    tci_client[spare].address_length = sizeof(struct sockaddr_in);
     fd = accept(server_socket, (struct sockaddr*)&tci_client[spare].address,
                 &tci_client[spare].address_length);
 
