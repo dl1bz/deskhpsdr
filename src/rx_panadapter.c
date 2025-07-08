@@ -61,27 +61,40 @@ int g_noise_level = 0;
 
 #if defined (__WMAP__)
 //------------------------------------------------------------------------------
-static GdkPixbuf *pixbuf = NULL;
+static GdkPixbuf *worldmap_scaled = NULL;
 
-static GdkPixbuf *create_pixbuf_from_mapdata(int w, int h) {
-  GInputStream *mem_stream;
-  GdkPixbuf *pixbuf, *scaled_pixbuf;
-  GError *error = NULL;
-  mem_stream = g_memory_input_stream_new_from_data(worldmap_png, worldmap_png_len, NULL);
-  pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
+/*
+  1. Wir laden einmal das Map-Bild und berechnen es
+  2. Nur wenn sich die Auflösung ändert, wird komplett neu gerendert
 
-  if (!pixbuf) {
-    g_printerr("ERROR loading pic: %s\n", error->message);
-    g_error_free(error);
-    g_object_unref(mem_stream);
-    return NULL;
+  Wir berechnen und zeichnen also nur, wenn notwendig und nicht mehr
+  synchron zur Framerate wie bisher -> senkt CPU Last !
+*/
+static void init_worldmap_pixbuf(int w, int h) {
+  if (worldmap_scaled &&
+      gdk_pixbuf_get_width(worldmap_scaled) == w &&
+      gdk_pixbuf_get_height(worldmap_scaled) == h) {
+    return;  // schon vorhanden in richtiger Größe
   }
 
-  // pic scaling
-  scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, w, h, GDK_INTERP_BILINEAR);
-  g_object_unref(pixbuf);  // free original-pixbuf
+  if (worldmap_scaled) {
+    g_object_unref(worldmap_scaled);  // wichtig: alten freigeben
+    worldmap_scaled = NULL;
+  }
+
+  GError *error = NULL;
+  GInputStream *mem_stream = g_memory_input_stream_new_from_data(worldmap_png, worldmap_png_len, NULL);
+  GdkPixbuf *raw_pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
   g_object_unref(mem_stream);
-  return scaled_pixbuf;
+
+  if (!raw_pixbuf) {
+    t_print("%s: ERROR loading map pic: %s\n", __FUNCTION__, error->message);
+    g_error_free(error);
+    return;
+  }
+
+  worldmap_scaled = gdk_pixbuf_scale_simple(raw_pixbuf, w, h, GDK_INTERP_BILINEAR);
+  g_object_unref(raw_pixbuf);
 }
 
 static void draw_image(cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
@@ -89,7 +102,6 @@ static void draw_image(cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offse
   gdk_cairo_set_source_pixbuf(cr, pixbuf, x_offset, y_offset);
   cairo_paint(cr);  // Bild zeichnen
 }
-
 //------------------------------------------------------------------------------
 #endif
 
@@ -107,7 +119,11 @@ static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfig
                            CAIRO_CONTENT_COLOR,
                            mywidth, myheight);
   cairo_t *cr = cairo_create(rx->panadapter_surface);
+#if defined (__WMAP__)
+  cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
+#else
   cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+#endif
   cairo_paint(cr);
   cairo_destroy(cr);
   return TRUE;
@@ -258,21 +274,21 @@ void rx_panadapter_update(RECEIVER *rx) {
   samples = rx->pixel_samples;
   cairo_t *cr;
   cr = cairo_create (rx->panadapter_surface);
-  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
-  cairo_rectangle(cr, 0, 0, mywidth, myheight);
-  cairo_fill(cr);
 #if defined (__WMAP__)
   //------------------------------------------------------------------------------
-  pixbuf = create_pixbuf_from_mapdata(mywidth, myheight); // build the picture in memory
-  draw_image(cr, pixbuf, 0, 0); // draw the picture
-  /*
-      IMPORTANT:
-      Release now the object Pixbuf ! Otherwise we will get increasing memory consumption
-      and after a short runtime the app will be crashed with "no more free memory" !
-  */
-  g_object_unref(pixbuf); // never forget this !
+  init_worldmap_pixbuf(mywidth, myheight);  // nur wenn nötig
+
+  if (worldmap_scaled) {
+    draw_image(cr, worldmap_scaled, 0, 0);
+  }
+
   //------------------------------------------------------------------------------
+  cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
+#else
+  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
 #endif
+  cairo_rectangle(cr, 0, 0, mywidth, myheight);
+  cairo_fill(cr);
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
   int mode = vfo[rx->id].mode;
   long long frequency = vfo[rx->id].frequency;
