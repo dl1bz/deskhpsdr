@@ -800,8 +800,17 @@ static gpointer tci_server(gpointer data) {
     //
     // Read from the socket
     //
-    nbytes = read(fd, buf, sizeof(buf));
-    buf[nbytes] = 0;
+    // nbytes = read(fd, buf, sizeof(buf));
+    // buf[nbytes] = 0;
+    nbytes = recv(fd, buf, sizeof(buf) - 1, 0);
+
+    if (nbytes <= 0) {
+      perror("recv");
+      close(fd);
+      continue;
+    }
+
+    buf[nbytes] = '\0';
 
     //
     // Try to establish websocket connection. If this fails, close
