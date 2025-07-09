@@ -71,6 +71,7 @@
   #include "sliders.h"
   #include "noise_menu.h"
   #include "rigctl.h"
+  #include "midi.h"
 #endif
 #include "trx_logo.h"
 
@@ -658,6 +659,9 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
 #endif
   // Hier setzen wir den GTK-Mainloop-Thread
   deskhpsdr_main_thread = pthread_self();
+  g_mutex_init(&vfo_timer.lock);
+  g_mutex_init(&vfoa_timer.lock);
+  g_mutex_init(&vfob_timer.lock);
 #if defined (__LDESK__)
   char text[2048];
 #else
@@ -921,6 +925,9 @@ int main(int argc, char **argv) {
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
   t_print("exiting ...\n");
   g_object_unref(deskhpsdr);
+  g_mutex_clear(&vfo_timer.lock);
+  g_mutex_clear(&vfoa_timer.lock);
+  g_mutex_clear(&vfob_timer.lock);
 #else
   snprintf(name, 1024, "org.g0orx.pihpsdr.pid%d", getpid());
   t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);

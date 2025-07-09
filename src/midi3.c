@@ -29,30 +29,25 @@
  * However, changing the volume makes sense both with MIDI_KNOB and MIDI_WHEEL.
  */
 #include <gtk/gtk.h>
+#include <glib.h>
 
 #include "actions.h"
 #include "message.h"
 #include "rigctl.h"
 #include "midi.h"
 
-struct _vfo_timer {
-  int action;
-  int val;
-  guint timeout;
-};
-
-typedef struct _vfo_timer VFO_TIMER;
-
-VFO_TIMER vfo_timer =  {VFO,  0, 0};
-VFO_TIMER vfoa_timer = {VFOA, 0, 0};
-VFO_TIMER vfob_timer = {VFOB, 0, 0};
+VFO_TIMER vfo_timer  = { VFO,  0, 0, {0} };
+VFO_TIMER vfoa_timer = { VFOA, 0, 0, {0} };
+VFO_TIMER vfob_timer = { VFOB, 0, 0, {0} };
 
 static int vfo_timeout_cb(gpointer data) {
   VFO_TIMER *timer = (VFO_TIMER *)data;
+  g_mutex_lock(&timer->lock);
   t_print("%s: action=%d val=%d\n", __FUNCTION__, timer->action, timer->val);
   schedule_action(timer->action, RELATIVE, timer->val);
   timer->timeout = 0;
   timer->val = 0;
+  g_mutex_unlock(&timer->lock);
   return FALSE;
 }
 
@@ -79,30 +74,36 @@ void DoTheMidi(int action, enum ACTIONtype type, int val) {
     //
     switch (action) {
     case VFOA:
+      g_mutex_lock(&vfoa_timer.lock);
       vfoa_timer.val += val;
 
       if (vfoa_timer.timeout == 0) {
         vfoa_timer.timeout = g_timeout_add(100, vfo_timeout_cb, &vfoa_timer);
       }
 
+      g_mutex_unlock(&vfoa_timer.lock);
       break;
 
     case VFOB:
+      g_mutex_lock(&vfob_timer.lock);
       vfob_timer.val += val;
 
       if (vfob_timer.timeout == 0) {
         vfob_timer.timeout = g_timeout_add(100, vfo_timeout_cb, &vfob_timer);
       }
 
+      g_mutex_unlock(&vfob_timer.lock);
       break;
 
     case VFO:
+      g_mutex_lock(&vfo_timer.lock);
       vfo_timer.val += val;
 
       if (vfo_timer.timeout == 0) {
         vfo_timer.timeout = g_timeout_add(100, vfo_timeout_cb, &vfo_timer);
       }
 
+      g_mutex_unlock(&vfo_timer.lock);
       break;
 
     default:

@@ -138,4 +138,16 @@ void MidiReleaseCommands(void);
 //
 
 void DoTheMidi(int code, enum ACTIONtype type, int val);
+
+typedef struct _vfo_timer {
+    int action;
+    int val;
+    guint timeout;
+    GMutex lock;
+} VFO_TIMER;
+
+extern VFO_TIMER vfo_timer;
+extern VFO_TIMER vfoa_timer;
+extern VFO_TIMER vfob_timer;
+
 #endif
