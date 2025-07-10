@@ -401,6 +401,13 @@ static SaturnSerialPort SaturnSerialPortsList[] = {
   {NULL, 0}
 };
 
+#if defined (__AUTOG__)
+static gboolean launch_autogain_hl2_wrapper(gpointer data) {
+  launch_autogain_hl2();
+  return FALSE;
+}
+#endif
+
 static void radio_restore_state();
 
 void radio_stop() {
@@ -1747,7 +1754,11 @@ void radio_start_radio() {
 #if defined (__AUTOG__)
 
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && autogain_enabled) {
-    launch_autogain_hl2();
+    if (pthread_equal(pthread_self(), deskhpsdr_main_thread)) {
+      launch_autogain_hl2();
+    } else {
+      g_idle_add((GSourceFunc)launch_autogain_hl2_wrapper, NULL);
+    }
   }
 
 #endif

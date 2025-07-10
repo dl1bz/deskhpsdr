@@ -37,39 +37,13 @@
  */
 
 #include <gdk/gdk.h>
+#include <glib.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <time.h>
+#include <stdio.h>
 
-/*
-void t_print(const gchar *format, ...) {
-  va_list(args);
-  va_start(args, format);
-  struct timespec ts;
-  double now;
-  static double starttime;
-  static int first = 1;
-  char line[1024];
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  now = ts.tv_sec + 1E-9 * ts.tv_nsec;
-
-  if (first) {
-    first = 0;
-    starttime = now;
-  }
-
-  //
-  // After 11 days, the time reaches 999999.999 so we simply wrap around
-  //
-  if (now - starttime >= 999999.995) { starttime += 1000000.0; }
-
-  //
-  // We have to use vsnprintf to handle the varargs stuff
-  // g_print() seems to be thread-safe but call it only ONCE.
-  //
-  vsnprintf(line, 1024, format, args);
-  g_print("%10.3f %s", now - starttime, line);
-}
-*/
+static GMutex t_print_mutex;  // globaler Mutex
 
 void t_print(const gchar *format, ...) {
   va_list args;
@@ -82,6 +56,7 @@ void t_print(const gchar *format, ...) {
   char time_str[16];
   clock_gettime(CLOCK_MONOTONIC, &ts);
   now = ts.tv_sec + 1E-9 * ts.tv_nsec;
+  g_mutex_lock(&t_print_mutex);
 
   if (first) {
     first = 0;
@@ -95,6 +70,7 @@ void t_print(const gchar *format, ...) {
     starttime += 1000000.0;
   }
 
+  g_mutex_unlock(&t_print_mutex);
   //
   // Berechnung von hh:mm:ss.mmm (Millisekunden)
   //
