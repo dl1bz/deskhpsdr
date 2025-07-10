@@ -348,7 +348,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   long long min_display = frequency - half + (long long)((double)rx->pan * HzPerPixel);
   long long max_display = min_display + (long long)((double)rx->width * HzPerPixel);
 
-  if (vfoband == band60 && band_channels_60m != NULL && channel_entries > 1) {
+  if (vfoband == band60 && band_channels_60m != NULL && region > 0) {
     for (i = 0; i < channel_entries; i++) {
       long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
       long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
