@@ -2405,11 +2405,20 @@ void radio_set_tune(int state) {
       // restore settings we switched off earlier
       tx_set_compressor(transmitter);
 
+      int id = active_receiver->id;
+      int m = vfo[id].mode;
       if (can_transmit && display_sliders) {
-        update_slider_bbcompr_scale(TRUE);
-        update_slider_bbcompr_button(TRUE);
-        update_slider_lev_scale(TRUE);
-        update_slider_lev_button(TRUE);
+        if (m == modeDIGU || m == modeDIGL) {
+          update_slider_bbcompr_scale(FALSE);
+          update_slider_bbcompr_button(FALSE);
+          update_slider_lev_scale(FALSE);
+          update_slider_lev_button(FALSE);
+        } else {
+          update_slider_bbcompr_scale(TRUE);
+          update_slider_bbcompr_button(TRUE);
+          update_slider_lev_scale(TRUE);
+          update_slider_lev_button(TRUE);
+        }
       }
 
       tune = state;
