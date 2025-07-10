@@ -134,11 +134,7 @@ long long frequency_calibration = 0LL;
 
 int sat_mode;
 
-#if defined (__LDESK__)
-  int region = REGION_WRC15;
-#else
-  int region = REGION_OTHER;
-#endif
+int region = REGION_VFO;
 int radio_sample_rate;   // alias for radio->info.soapy.sample_rate
 gboolean iqswap;
 
@@ -1718,9 +1714,7 @@ void radio_start_radio() {
 
   receivers = RECEIVERS;
   radio_restore_state();
-#if !defined (__LDESK__)
   radio_change_region(region);
-#endif
   radio_create_visual();
   radio_reconfigure_screen();
 #ifdef TCI
@@ -2404,9 +2398,9 @@ void radio_set_tune(int state) {
 
       // restore settings we switched off earlier
       tx_set_compressor(transmitter);
-
       int id = active_receiver->id;
       int m = vfo[id].mode;
+
       if (can_transmit && display_sliders) {
         if (m == modeDIGU || m == modeDIGL) {
           update_slider_bbcompr_scale(FALSE);

@@ -77,23 +77,15 @@ static BANDSTACK_ENTRY bandstack_entries80[] = {
 };
 #endif
 
-#if defined (__LDESK__)
-static BANDSTACK_ENTRY bandstack_entries60[] = {
+static BANDSTACK_ENTRY bandstack_entries60_VFO[] = {
   {5352750LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
   {5354000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
   {5357000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
   {5360000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
   {5363000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
-#endif
 
-static BANDSTACK_ENTRY bandstack_entries60_WRC15[] = {
-  {5352750LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
-  {5357000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
-  {5363000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
-};
-
-static BANDSTACK_ENTRY bandstack_entries60_OTHER[] = {
+static BANDSTACK_ENTRY bandstack_entries60_US[] = {
   {5332000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}, // default channels for
   {5348000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}, // 60m band, US regulations
   {5358500LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
@@ -252,11 +244,7 @@ static BANDSTACK bandstack80   = {2, 1, bandstack_entries80};
 #else
 static BANDSTACK bandstack80   = {3, 1, bandstack_entries80};
 #endif
-#if defined (__LDESK__)
-static BANDSTACK bandstack60   = {5, 1, bandstack_entries60};
-#else
-static BANDSTACK bandstack60   = {5, 1, bandstack_entries60_OTHER};
-#endif
+static BANDSTACK bandstack60   = {5, 1, bandstack_entries60_VFO};
 #if defined (__REG1__)
 static BANDSTACK bandstack40   = {2, 1, bandstack_entries40};
 #else
@@ -449,10 +437,10 @@ static CHANNEL band_channels_60m_UK[UK_CHANNEL_ENTRIES] = {
 // Many countries have now allowed ham radio on the 60m
 // band based on WRC15. There is a single 15 kHz wide "channel"
 //
-static CHANNEL band_channels_60m_WRC15[WRC15_CHANNEL_ENTRIES] =
+static CHANNEL band_channels_60m_VFO[VFO_CHANNEL_ENTRIES] =
 {{5359000LL, 15000LL}};
 
-static CHANNEL band_channels_60m_OTHER[OTHER_CHANNEL_ENTRIES] = {
+static CHANNEL band_channels_60m_US[US_CHANNEL_ENTRIES] = {
   {5332000LL, 2800LL},
   {5348000LL, 2800LL},
   {5358500LL, 2800LL},
@@ -484,25 +472,25 @@ void radio_change_region(int r) {
   case REGION_UK:
     channel_entries = UK_CHANNEL_ENTRIES;
     band_channels_60m = &band_channels_60m_UK[0];
-    bandstack60.entries = UK_CHANNEL_ENTRIES;
+    bandstack60.entries = UK_BANDSTACK_ENTRIES;
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_UK;
     break;
 
-  case REGION_OTHER:
-    channel_entries = OTHER_CHANNEL_ENTRIES;
-    band_channels_60m = &band_channels_60m_OTHER[0];
-    bandstack60.entries = OTHER_CHANNEL_ENTRIES;
+  case REGION_US:
+    channel_entries = US_CHANNEL_ENTRIES;
+    band_channels_60m = &band_channels_60m_US[0];
+    bandstack60.entries = US_BANDSTACK_ENTRIES;
     bandstack60.current_entry = 0;
-    bandstack60.entry = bandstack_entries60_OTHER;
+    bandstack60.entry = bandstack_entries60_US;
     break;
 
-  case REGION_WRC15:
-    channel_entries = WRC15_CHANNEL_ENTRIES;
-    band_channels_60m = &band_channels_60m_WRC15[0];
-    bandstack60.entries = WRC15_CHANNEL_ENTRIES;
+  case REGION_VFO:
+    channel_entries = VFO_CHANNEL_ENTRIES;
+    band_channels_60m = &band_channels_60m_VFO[0];
+    bandstack60.entries = VFO_BANDSTACK_ENTRIES;
     bandstack60.current_entry = 0;
-    bandstack60.entry = bandstack_entries60_WRC15;
+    bandstack60.entry = bandstack_entries60_VFO;
     break;
   }
 }

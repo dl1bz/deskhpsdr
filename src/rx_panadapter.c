@@ -347,9 +347,8 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   long long min_display = frequency - half + (long long)((double)rx->pan * HzPerPixel);
   long long max_display = min_display + (long long)((double)rx->width * HzPerPixel);
-#if !defined (__LDESK__)
 
-  if (vfoband == band60) {
+  if (vfoband == band60 && band_channels_60m != NULL && channel_entries > 1) {
     for (i = 0; i < channel_entries; i++) {
       long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
       long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
@@ -361,7 +360,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   }
 
-#endif
   //
   // Filter edges.
   //
@@ -464,37 +462,28 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   cairo_set_line_width(cr, PAN_LINE_THIN);
   cairo_stroke(cr);
-#if defined (__LDESK__)
 
-  if (vfoband != band60) {
-#endif
+  // band edges
+  if (band->frequencyMin != 0LL) {
+    cairo_set_source_rgba(cr, COLOUR_ALARM);
+    cairo_set_line_width(cr, PAN_LINE_THICK);
 
-    // band edges
-    if (band->frequencyMin != 0LL) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-      cairo_set_line_width(cr, PAN_LINE_THICK);
-
-      if ((min_display < band->frequencyMin) && (max_display > band->frequencyMin)) {
-        double x = (double)(band->frequencyMin - min_display) / HzPerPixel;
-        cairo_move_to(cr, x, 0);
-        cairo_line_to(cr, x, myheight);
-        cairo_set_line_width(cr, PAN_LINE_EXTRA);
-        cairo_stroke(cr);
-      }
-
-      if ((min_display < band->frequencyMax) && (max_display > band->frequencyMax)) {
-        double x = (double) (band->frequencyMax - min_display) / HzPerPixel;
-        cairo_move_to(cr, x, 0);
-        cairo_line_to(cr, x, myheight);
-        cairo_set_line_width(cr, PAN_LINE_EXTRA);
-        cairo_stroke(cr);
-      }
+    if ((min_display < band->frequencyMin) && (max_display > band->frequencyMin)) {
+      double x = (double)(band->frequencyMin - min_display) / HzPerPixel;
+      cairo_move_to(cr, x, 0);
+      cairo_line_to(cr, x, myheight);
+      cairo_set_line_width(cr, PAN_LINE_EXTRA);
+      cairo_stroke(cr);
     }
 
-#if defined (__LDESK__)
+    if ((min_display < band->frequencyMax) && (max_display > band->frequencyMax)) {
+      double x = (double) (band->frequencyMax - min_display) / HzPerPixel;
+      cairo_move_to(cr, x, 0);
+      cairo_line_to(cr, x, myheight);
+      cairo_set_line_width(cr, PAN_LINE_EXTRA);
+      cairo_stroke(cr);
+    }
   }
-
-#endif
 
   // agc
   if (rx->agc != AGC_OFF) {

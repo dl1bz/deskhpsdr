@@ -69,9 +69,9 @@ enum _filter_board_enum {
 };
 
 enum _region_enum {
-  REGION_OTHER = 0,
-  REGION_UK,
-  REGION_WRC15  // 60m band allocation for countries implementing WRC15
+  REGION_VFO = 0,  // VFO mode
+  REGION_UK,       // 60m band allocation for UK
+  REGION_US        // 60m band allocation for US
 };
 
 enum _capture_state {

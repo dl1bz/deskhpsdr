@@ -93,16 +93,20 @@ struct _CHANNEL {
 
 typedef struct _CHANNEL CHANNEL;
 
+#define UK_BANDSTACK_ENTRIES 11
+#define US_BANDSTACK_ENTRIES 5
+#define VFO_BANDSTACK_ENTRIES 5
+
 #define UK_CHANNEL_ENTRIES 11
-#define OTHER_CHANNEL_ENTRIES 5
-#define WRC15_CHANNEL_ENTRIES 1
+#define US_CHANNEL_ENTRIES 5
+#define VFO_CHANNEL_ENTRIES 1
 
 extern int channel_entries;
 extern CHANNEL *band_channels_60m;
 
 //extern CHANNEL band_channels_60m_UK[UK_CHANNEL_ENTRIES];
-//extern CHANNEL band_channels_60m_OTHER[OTHER_CHANNEL_ENTRIES];
-//extern CHANNEL band_channels_60m_WRC15[WRC15_CHANNEL_ENTRIES];
+//extern CHANNEL band_channels_60m_US[US_CHANNEL_ENTRIES];
+//extern CHANNEL band_channels_60m_VFO[VFO_CHANNEL_ENTRIES];
 
 extern BAND *band_get_band(int b);
 extern int get_band_from_frequency(long long f);
