@@ -354,7 +354,7 @@ void rx_panadapter_update(RECEIVER *rx) {
       long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
       double x1 = (double) (low_freq - min_display) / HzPerPixel;
       double x2 = (double) (hi_freq - min_display) / HzPerPixel;
-      cairo_set_source_rgba(cr, COLOUR_PAN_60M);
+      cairo_set_source_rgba(cr, COLOUR_PAN_60M_OPQ);
       cairo_rectangle(cr, x1, 0.0, x2 - x1, myheight);
       cairo_fill(cr);
     }

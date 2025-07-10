@@ -90,6 +90,7 @@
 #define COLOUR_PAN_LINE      0.00, 1.00, 1.00, 1.00 // Default: 0.00, 1.00, 1.00, 1.00
 #define COLOUR_PAN_LINE_WEAK 0.00, 0.50, 0.50, 1.00 // Default: 0.00, 0.50, 0.50, 1.00
 #define COLOUR_PAN_60M       0.60, 0.30, 0.30, 1.00 // Default: 0.60, 0.30, 0.30, 1.00
+#define COLOUR_PAN_60M_OPQ   0.60, 0.30, 0.30, 0.75 // Default: 0.60, 0.30, 0.30, 1.00
 #define COLOUR_PAN_TEXT      1.00, 1.00, 1.00, 1.00 // dBm labels
 
 //
