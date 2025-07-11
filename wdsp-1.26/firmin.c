@@ -406,16 +406,15 @@ void flush_fircore (FIRCORE a)
 	a->buffidx = 0;
 }
 
-void xfircore(FIRCORE a)
+void xfircore (FIRCORE a)
 {
 	//[2.10.3.9]MW0LGE refactor to remove pointer chase in the loops
 	int i, j, k;
-	memcpy(&(a->fftin[2 * a->size]), a->in, a->size * sizeof(complex));
-	fftw_execute(a->pcfor[a->buffidx]);
+	memcpy (&(a->fftin[2 * a->size]), a->in, a->size * sizeof (complex));
+	fftw_execute (a->pcfor[a->buffidx]);
 	k = a->buffidx;
-	memset(a->accum, 0, 2 * a->size * sizeof(complex));
-
-	EnterCriticalSection(&a->update);
+	memset (a->accum, 0, 2 * a->size * sizeof (complex));
+	EnterCriticalSection (&a->update);
 	double* accum = a->accum;
 	double** fftout = a->fftout;
 	double*** fmask = a->fmask;
@@ -432,11 +431,10 @@ void xfircore(FIRCORE a)
 		}
 		k = (k + idxmask) & idxmask;
 	}
-	LeaveCriticalSection(&a->update);
-
+	LeaveCriticalSection (&a->update);
 	a->buffidx = (a->buffidx + 1) & idxmask;
-	fftw_execute(a->crev);
-	memcpy(a->fftin, &(a->fftin[2 * a->size]), a->size * sizeof(complex));
+	fftw_execute (a->crev);
+	memcpy (a->fftin, &(a->fftin[2 * a->size]), a->size * sizeof(complex));
 }
 
 void setBuffers_fircore (FIRCORE a, double* in, double* out)

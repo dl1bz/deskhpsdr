@@ -18,16 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
 */
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                   Partitioned Overlap-Save Equalizer                                  *
-*                                                                                                       *
+*																										*
+*									Partitioned Overlap-Save Equalizer									*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _eqp_h
@@ -35,25 +35,25 @@ warren@wpratt.com
 #include "firmin.h"
 typedef struct _eqp
 {
-    int run;
-    int size;
-    int nc;
-    int mp;
-    double* in;
-    double* out;
-    int nfreqs;
-    double* F;
-    double* G;
-    int ctfmode;
-    int wintype;
-    double samplerate;
-    FIRCORE p;
+	int run;
+	int size;
+	int nc;
+	int mp;
+	double* in;
+	double* out;
+	int nfreqs;
+	double* F;
+	double* G;
+	int ctfmode;
+	int wintype;
+	double samplerate;
+	FIRCORE p;
 } eqp, *EQP;
 
 extern double* eq_impulse (int N, int nfreqs, double* F, double* G, double samplerate, double scale, int ctfmode, int wintype);
 
-extern EQP create_eqp (int run, int size, int nc, int mp, double *in, double *out,
-    int nfreqs, double* F, double* G, int ctfmode, int wintype, int samplerate);
+extern EQP create_eqp (int run, int size, int nc, int mp, double *in, double *out, 
+	int nfreqs, double* F, double* G, int ctfmode, int wintype, int samplerate);
 
 extern void destroy_eqp (EQP a);
 
@@ -80,9 +80,9 @@ __declspec (dllexport) void SetTXAEQMP (int channel, int mp);
 
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                           Overlap-Save Equalizer                                      *
-*                                                                                                       *
+*																										*
+*											Overlap-Save Equalizer										*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _eq_h
@@ -90,22 +90,22 @@ __declspec (dllexport) void SetTXAEQMP (int channel, int mp);
 
 typedef struct _eq
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    int nfreqs;
-    double* F;
-    double* G;
-    double* infilt;
-    double* product;
-    double* mults;
-    double scale;
-    int ctfmode;
-    int wintype;
-    double samplerate;
-    fftw_plan CFor;
-    fftw_plan CRev;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	int nfreqs;
+	double* F;
+	double* G;
+	double* infilt;
+	double* product;
+	double* mults;
+	double scale;
+	int ctfmode;
+	int wintype;
+	double samplerate;
+	fftw_plan CFor;
+	fftw_plan CRev;
 }eq, *EQ;
 
 extern double* eq_mults (int size, int nfreqs, double* F, double* G, double samplerate, double scale, int ctfmode, int wintype);

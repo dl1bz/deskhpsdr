@@ -2,7 +2,7 @@
 
 This file is part of a program that implements a Software-Defined Radio.
 
-Copyright (C) 2017, 2021 Warren Pratt, NR0V
+Copyright (C) 2017, 2021 Warren Pratt, NR0V 
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,73 +29,73 @@ warren@wpratt.com
 
 typedef struct _cfcomp
 {
-    int run;
-    int position;
-    int bsize;
-    double* in;
-    double* out;
-    int fsize;
-    int ovrlp;
-    int incr;
-    double* window;
-    int iasize;
-    double* inaccum;
-    double* forfftin;
-    double* forfftout;
-    int msize;
-    double* cmask;
-    double* mask;
-    int mask_ready;
-    double* cfc_gain;
-    double* revfftin;
-    double* revfftout;
-    double** save;
-    int oasize;
-    double* outaccum;
-    double rate;
-    int wintype;
-    double pregain;
-    double postgain;
-    int nsamps;
-    int iainidx;
-    int iaoutidx;
-    int init_oainidx;
-    int oainidx;
-    int oaoutidx;
-    int saveidx;
-    fftw_plan Rfor;
-    fftw_plan Rrev;
+	int run;
+	int position;
+	int bsize;
+	double* in;
+	double* out;
+	int fsize;
+	int ovrlp;
+	int incr;
+	double* window;
+	int iasize;
+	double* inaccum;
+	double* forfftin;
+	double* forfftout;
+	int msize;
+	double* cmask;
+	double* mask;
+	int mask_ready;
+	double* cfc_gain;
+	double* revfftin;
+	double* revfftout;
+	double** save;
+	int oasize;
+	double* outaccum;
+	double rate;
+	int wintype;
+	double pregain;
+	double postgain;
+	int nsamps;
+	int iainidx;
+	int iaoutidx;
+	int init_oainidx;
+	int oainidx;
+	int oaoutidx;
+	int saveidx;
+	fftw_plan Rfor;
+	fftw_plan Rrev;
 
-    int comp_method;
-    int nfreqs;
-    double* F;
-    double* G;
-    double* E;
-    double* fp;
-    double* gp;
-    double* ep;
-    double* comp;
-    double precomp;
-    double precomplin;
-    double* peq;
-    int peq_run;
-    double prepeq;
-    double prepeqlin;
-    double winfudge;
+	int comp_method;
+	int nfreqs;
+	double* F;
+	double* G;
+	double* E;
+	double* fp;
+	double* gp;
+	double* ep;
+	double* comp;
+	double precomp;
+	double precomplin;
+	double* peq;
+	int peq_run;
+	double prepeq;
+	double prepeqlin;
+	double winfudge;
 
-    double gain;
-    double mtau;
-    double mmult;
-    // display stuff
-    double dtau;
-    double dmult;
-    double* delta;
-    double* delta_copy;
-    double* cfc_gain_copy;
+	double gain;
+	double mtau;
+	double mmult;
+	// display stuff
+	double dtau;
+	double dmult;
+	double* delta;
+	double* delta_copy;
+	double* cfc_gain_copy;
 }cfcomp, *CFCOMP;
 
-extern CFCOMP create_cfcomp (int run, int position, int peq_run, int size, double* in, double* out, int fsize, int ovrlp,
-    int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double* F, double* G, double* E, double mtau, double dtau);
+extern CFCOMP create_cfcomp (int run, int position, int peq_run, int size, double* in, double* out, int fsize, int ovrlp, 
+	int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double* F, double* G, double* E, double mtau, double dtau);
 
 extern void destroy_cfcomp (CFCOMP a);
 

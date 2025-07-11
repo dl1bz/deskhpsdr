@@ -147,6 +147,7 @@ void new_window(int disp, int type, int size, double PiAlpha)
 			break;
 		}
 	case 6:					// Blackman-Harris window (7-term)
+	default:
 		{
 			arg0 = 2.0 * PI / ((double)size - 1.0);
 			cgsum = 0.0;
@@ -870,6 +871,7 @@ DWORD WINAPI Cspectra (void *pargs)
 		// 
 
 	}
+
 	if (a->stop)
 	{
 		InterlockedDecrement(a->pnum_threads);
@@ -950,7 +952,7 @@ void interpolate(int disp, int set, double fmin, double fmax, int num_pixels)
 				kmax = min(n - 1, kmax + kdelta);
 				kdelta += kdelta;
 			}
-
+			k = (kmin + kmax) / 2;
 			while ((kmax - kmin) > 1)
 			{
 				k = (kmin + kmax) / 2;
@@ -966,6 +968,7 @@ void interpolate(int disp, int set, double fmin, double fmax, int num_pixels)
         mag = (((a->ac3[set][0])[k] * dx + (a->ac2[set][0])[k]) * dx + (a->ac1[set][0])[k]) * dx + (a->ac0[set][0])[k];
 		a->cd[i] = mag * mag;
 	}
+	return;
 }
 
 int build_interpolants(int disp, int set, int n, int m, double *x, double (*y)[dMAX_M])
@@ -982,7 +985,7 @@ int build_interpolants(int disp, int set, int n, int m, double *x, double (*y)[d
 	double v[dMAX_N][dMAX_M];
 	double tmp;
 	int i, j;
-
+	if (n < 3) return -1;
     for (i = 0; i < n - 1; i++)
     {
         dx[i] = x[i + 1] - x[i];
@@ -1104,7 +1107,7 @@ void ResetPixelBuffers(int disp)
 	EnterCriticalSection(&a->SetAnalyzerSection);
 	EnterCriticalSection(&a->ResampleSection);
 	for (i = 0; i < dMAX_PIXOUTS; i++)
-	{				
+	{
 		for (j = 0; j < dMAX_PIXELS; j++)
 			a->t_pixels[i][j] = 0.0;
 		for (j = 0; j < dMAX_AVERAGE; j++)
@@ -1151,7 +1154,7 @@ void ResetPixelBuffers(int disp)
 		a->spec_flag[i] = 0;
 	a->stitch_flag = 0;
 	a->ss = 0;
-	a->LO = 0;	
+	a->LO = 0;
 	for (i = 0; i < dMAX_STITCH; i++)
 		for (j = 0; j < dMAX_NUM_FFT; j++)
 		{
@@ -1161,7 +1164,7 @@ void ResetPixelBuffers(int disp)
 			a->IQin_index[i][j] = 0;
 			a->IQout_index[i][j] = 0;
 			LeaveCriticalSection(&(a->BufferControlSection[i][j]));
-		}	
+		}
 	LeaveCriticalSection(&a->StitchSection);
 	LeaveCriticalSection(&a->SetAnalyzerSection);
 }
@@ -1289,7 +1292,7 @@ void SetAnalyzer (	int disp,			// display identifier
 		a->spec_flag[i] = 0;
 	a->stitch_flag = 0;
 	for (i = 0; i < dMAX_PIXOUTS; i++)
-	{		
+	{
 		a->w_pix_buff[i] = 0;
 		a->r_pix_buff[i] = 0;
 		a->last_pix_buff[i] = 0;
@@ -1533,12 +1536,12 @@ void SnapSpectrum(	int disp,
 }
 
 PORT
-void SnapSpectrumTimeout(int disp,
-	int ss,
-	int LO,
-	double* snap_buff,
-	DWORD timeout,
-	int* flag)
+void SnapSpectrumTimeout(	int disp,
+							int ss,
+							int LO,
+							double* snap_buff,
+							DWORD timeout,
+							int* flag)
 {
 	DP a = pdisp[disp];
 	a->snap_buff[ss][LO] = snap_buff;

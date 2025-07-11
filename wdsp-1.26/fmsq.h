@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,49 +29,49 @@ warren@wpratt.com
 #include "firmin.h"
 typedef struct _fmsq
 {
-    int run;                            // 0 if squelch system is OFF; 1 if it's ON
-    int size;                           // size of input/output buffers
-    double* insig;                      // squelch input signal buffer
-    double* outsig;                     // squelch output signal buffer
-    double* trigger;                    // buffer used to trigger mute/unmute (may be same as input; matches timing of input buffer)
-    double rate;                        // sample rate
-    double* noise;
-    double fc;                          // corner frequency for sig / noise detection
-    double* pllpole;                    // pointer to pole frequency of the fm demodulator pll
-    double F[4];
-    double G[4];
-    double avtau;                       // time constant for averaging noise
-    double avm;
-    double onem_avm;
-    double avnoise;
-    double longtau;                     // time constant for long averaging
-    double longavm;
-    double onem_longavm;
-    double longnoise;
-    int state;                          // state machine control
-    int count;
-    double tup;
-    double tdown;
-    int ntup;
-    int ntdown;
-    double* cup;
-    double* cdown;
-    double tail_thresh;
-    double unmute_thresh;
-    double min_tail;
-    double max_tail;
-    int ready;
-    double ramp;
-    double rstep;
-    double tdelay;
-    int nc;
-    int mp;
-    FIRCORE p;
+	int run;							// 0 if squelch system is OFF; 1 if it's ON
+	int size;							// size of input/output buffers
+	double* insig;						// squelch input signal buffer
+	double* outsig;						// squelch output signal buffer
+	double* trigger;					// buffer used to trigger mute/unmute (may be same as input; matches timing of input buffer)
+	double rate;						// sample rate
+	double* noise;
+	double fc;							// corner frequency for sig / noise detection
+	double* pllpole;					// pointer to pole frequency of the fm demodulator pll
+	double F[4];
+	double G[4];
+	double avtau;						// time constant for averaging noise
+	double avm;						
+	double onem_avm;
+	double avnoise;
+	double longtau;						// time constant for long averaging
+	double longavm;
+	double onem_longavm;
+	double longnoise;
+	int state;							// state machine control
+	int count;
+	double tup;
+	double tdown;
+	int ntup;
+	int ntdown;
+	double* cup;
+	double* cdown;
+	double tail_thresh;
+	double unmute_thresh;
+	double min_tail;
+	double max_tail;
+	int ready;
+	double ramp;
+	double rstep;
+	double tdelay;
+	int nc;
+	int mp;
+	FIRCORE p;
 } fmsq, *FMSQ;
 
-extern FMSQ create_fmsq (int run, int size, double* insig, double* outsig, double* trigger, int rate, double fc,
-    double* pllpole, double tdelay, double avtau, double longtau, double tup, double tdown, double tail_thresh,
-    double unmute_thresh, double min_tail, double max_tail, int nc, int mp);
+extern FMSQ create_fmsq (int run, int size, double* insig, double* outsig, double* trigger, int rate, double fc, 
+	double* pllpole, double tdelay, double avtau, double longtau, double tup, double tdown, double tail_thresh, 
+	double unmute_thresh, double min_tail, double max_tail, int nc, int mp);
 
 extern void destroy_fmsq (FMSQ a);
 

@@ -18,16 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
 */
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                           Time-Domain FIR                                             *
-*                                                                                                       *
+*																										*
+*											Time-Domain FIR												*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _firmin_h
@@ -35,26 +35,26 @@ warren@wpratt.com
 
 typedef struct _firmin
 {
-    int run;                // run control
-    int position;           // position at which to execute
-    int size;               // input/output buffer size, power of two
-    double* in;             // input buffer
-    double* out;            // output buffer, can be same as input
-    int nc;                 // number of filter coefficients, power of two
-    double f_low;           // low cutoff frequency
-    double f_high;          // high cutoff frequency
-    double* ring;           // internal complex ring buffer
-    double* h;              // complex filter coefficients
-    int rsize;              // ring size, number of complex samples, power of two
-    int mask;               // mask to update indexes
-    int idx;                // ring input/output index
-    double samplerate;      // sample rate
-    int wintype;            // filter window type
-    double gain;            // filter gain
+	int run;				// run control
+	int position;			// position at which to execute
+	int size;				// input/output buffer size, power of two
+	double* in;				// input buffer
+	double* out;			// output buffer, can be same as input
+	int nc;					// number of filter coefficients, power of two
+	double f_low;			// low cutoff frequency
+	double f_high;			// high cutoff frequency
+	double* ring;			// internal complex ring buffer
+	double* h;				// complex filter coefficients
+	int rsize;				// ring size, number of complex samples, power of two
+	int mask;				// mask to update indexes
+	int idx;				// ring input/output index
+	double samplerate;		// sample rate
+	int wintype;			// filter window type
+	double gain;			// filter gain
 }firmin, *FIRMIN;
 
-extern FIRMIN create_firmin (int run, int position, int size, double* in, double* out,
-    int nc, double f_low, double f_high, int samplerate, int wintype, double gain);
+extern FIRMIN create_firmin (int run, int position, int size, double* in, double* out, 
+	int nc, double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void destroy_firmin (FIRMIN a);
 
@@ -73,9 +73,9 @@ extern void setFreqs_firmin (FIRMIN a, double f_low, double f_high);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                               Standalone Partitioned Overlap-Save Bandpass                            *
-*                                                                                                       *
+*																										*
+*								Standalone Partitioned Overlap-Save Bandpass							*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _firopt_h
@@ -83,32 +83,32 @@ extern void setFreqs_firmin (FIRMIN a, double f_low, double f_high);
 
 typedef struct _firopt
 {
-    int run;                // run control
-    int position;           // position at which to execute
-    int size;               // input/output buffer size, power of two
-    double* in;             // input buffer
-    double* out;            // output buffer, can be same as input
-    int nc;                 // number of filter coefficients, power of two, >= size
-    double f_low;           // low cutoff frequency
-    double f_high;          // high cutoff frequency
-    double samplerate;      // sample rate
-    int wintype;            // filter window type
-    double gain;            // filter gain
-    int nfor;               // number of buffers in delay line
-    double* fftin;          // fft input buffer
-    double** fmask;         // frequency domain masks
-    double** fftout;        // fftout delay line
-    double* accum;          // frequency domain accumulator
-    int buffidx;            // fft out buffer index
-    int idxmask;            // mask for index computations
-    double* maskgen;        // input for mask generation FFT
-    fftw_plan* pcfor;       // array of forward FFT plans
-    fftw_plan crev;         // reverse fft plan
-    fftw_plan* maskplan;    // plans for frequency domain masks
+	int run;				// run control
+	int position;			// position at which to execute
+	int size;				// input/output buffer size, power of two
+	double* in;				// input buffer
+	double* out;			// output buffer, can be same as input
+	int nc;					// number of filter coefficients, power of two, >= size
+	double f_low;			// low cutoff frequency
+	double f_high;			// high cutoff frequency
+	double samplerate;		// sample rate
+	int wintype;			// filter window type
+	double gain;			// filter gain
+	int nfor;				// number of buffers in delay line
+	double* fftin;			// fft input buffer
+	double** fmask;			// frequency domain masks
+	double** fftout;		// fftout delay line
+	double* accum;			// frequency domain accumulator
+	int buffidx;			// fft out buffer index
+	int idxmask;			// mask for index computations
+	double* maskgen;		// input for mask generation FFT
+	fftw_plan* pcfor;		// array of forward FFT plans
+	fftw_plan crev;			// reverse fft plan
+	fftw_plan* maskplan;	// plans for frequency domain masks
 } firopt, *FIROPT;
 
-extern FIROPT create_firopt (int run, int position, int size, double* in, double* out,
-    int nc, double f_low, double f_high, int samplerate, int wintype, double gain);
+extern FIROPT create_firopt (int run, int position, int size, double* in, double* out, 
+	int nc, double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void xfiropt (FIROPT a, int pos);
 
@@ -127,9 +127,9 @@ extern void setFreqs_firopt (FIROPT a, double f_low, double f_high);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                   Partitioned Overlap-Save Filter Kernel                              *
-*                                                                                                       *
+*																										*
+*									Partitioned Overlap-Save Filter Kernel								*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _fircore_h
@@ -137,31 +137,31 @@ extern void setFreqs_firopt (FIROPT a, double f_low, double f_high);
 
 typedef struct _fircore
 {
-    int size;               // input/output buffer size, power of two
-    double* in;             // input buffer
-    double* out;            // output buffer, can be same as input
-    int nc;                 // number of filter coefficients, power of two, >= size
-    double* impulse;        // impulse response of filter
-    double* imp;
-    int nfor;               // number of buffers in delay line
-    double* fftin;          // fft input buffer
-    double*** fmask;        // frequency domain masks
-    double** fftout;        // fftout delay line
-    double* accum;          // frequency domain accumulator
-    int buffidx;            // fft out buffer index
-    int idxmask;            // mask for index computations
-    double* maskgen;        // input for mask generation FFT
-    fftw_plan* pcfor;       // array of forward FFT plans
-    fftw_plan crev;         // reverse fft plan
-    fftw_plan** maskplan;   // plans for frequency domain masks
-    CRITICAL_SECTION update;
-    int cset;
-    int mp;
-    int masks_ready;
+	int size;				// input/output buffer size, power of two
+	double* in;				// input buffer
+	double* out;			// output buffer, can be same as input
+	int nc;					// number of filter coefficients, power of two, >= size
+	double* impulse;		// impulse response of filter
+	double* imp;
+	int nfor;				// number of buffers in delay line
+	double* fftin;			// fft input buffer
+	double*** fmask;		// frequency domain masks
+	double** fftout;		// fftout delay line
+	double* accum;			// frequency domain accumulator
+	int buffidx;			// fft out buffer index
+	int idxmask;			// mask for index computations
+	double* maskgen;		// input for mask generation FFT
+	fftw_plan* pcfor;		// array of forward FFT plans
+	fftw_plan crev;			// reverse fft plan
+	fftw_plan** maskplan;	// plans for frequency domain masks
+	CRITICAL_SECTION update;
+	int cset;
+	int mp;
+	int masks_ready;
 } fircore, *FIRCORE;
 
-extern FIRCORE create_fircore (int size, double* in, double* out,
-    int nc, int mp, double* impulse);
+extern FIRCORE create_fircore (int size, double* in, double* out, 
+	int nc, int mp, double* impulse);
 
 extern void xfircore (FIRCORE a);
 

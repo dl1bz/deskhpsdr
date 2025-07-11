@@ -18,16 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
 */
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                           Bi-Quad Notch                                               *
-*                                                                                                       *
+*																										*
+*											Bi-Quad Notch												*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _snotch_h
@@ -35,16 +35,16 @@ warren@wpratt.com
 
 typedef struct _snotch
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    double f;
-    double bw;
-    double a0, a1, a2, b1, b2;
-    double x0, x1, x2, y1, y2;
-    CRITICAL_SECTION cs_update;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	double f;
+	double bw;
+	double a0, a1, a2, b1, b2;
+	double x0, x1, x2, y1, y2;
+	CRITICAL_SECTION cs_update;
 } snotch, *SNOTCH;
 
 extern SNOTCH create_snotch (int run, int size, double* in, double* out, int rate, double f, double bw);
@@ -68,9 +68,9 @@ extern void SetSNCTCSSRun (SNOTCH a, int run);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                           Complex Bi-Quad Peaking                                     *
-*                                                                                                       *
+*																										*
+*											Complex Bi-Quad Peaking										*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _speak_h
@@ -78,21 +78,21 @@ extern void SetSNCTCSSRun (SNOTCH a, int run);
 
 typedef struct _speak
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    double f;
-    double bw;
-    double cbw;
-    double gain;
-    double fgain;
-    int nstages;
-    int design;
-    double a0, a1, a2, b1, b2;
-    double *x0, *x1, *x2, *y0, *y1, *y2;
-    CRITICAL_SECTION cs_update;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	double f;
+	double bw;
+	double cbw;
+	double gain;
+	double fgain;
+	int nstages;
+	int design;
+	double a0, a1, a2, b1, b2;
+	double *x0, *x1, *x2, *y0, *y1, *y2;
+	CRITICAL_SECTION cs_update;
 } speak, *SPEAK;
 
 extern SPEAK create_speak (int run, int size, double* in, double* out, int rate, double f, double bw, double gain, int nstages, int design);
@@ -112,9 +112,9 @@ extern void setSize_speak (SPEAK a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                       Complex Multiple Peaking                                        *
-*                                                                                                       *
+*																										*
+*										Complex Multiple Peaking										*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _mpeak_h
@@ -122,21 +122,21 @@ extern void setSize_speak (SPEAK a, int size);
 
 typedef struct _mpeak
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    int rate;
-    int npeaks;
-    int* enable;
-    double* f;
-    double* bw;
-    double* gain;
-    int nstages;
-    SPEAK* pfil;
-    double* tmp;
-    double* mix;
-    CRITICAL_SECTION cs_update;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	int rate;
+	int npeaks;
+	int* enable;
+	double* f;
+	double* bw;
+	double* gain;
+	int nstages;
+	SPEAK* pfil;
+	double* tmp;
+	double* mix;
+	CRITICAL_SECTION cs_update;
 } mpeak, *MPEAK;
 
 extern MPEAK create_mpeak (int run, int size, double* in, double* out, int rate, int npeaks, int* enable, double* f, double* bw, double* gain, int nstages);
@@ -156,9 +156,9 @@ extern void setSize_mpeak (MPEAK a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                            Phase Rotator                                              *
-*                                                                                                       *
+*																										*
+*										     Phase Rotator      										*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _phrot_h
@@ -166,18 +166,18 @@ extern void setSize_mpeak (MPEAK a, int size);
 
 typedef struct _phrot
 {
-    int reverse;
-    int run;
-    int size;
-    double* in;
-    double* out;
-    int rate;
-    double fc;
-    int nstages;
-    // normalized such that a0 = 1
-    double a1, b0, b1;
-    double *x0, *x1, *y0, *y1;
-    CRITICAL_SECTION cs_update;
+	int reverse;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	int rate;
+	double fc;
+	int nstages;
+	// normalized such that a0 = 1
+	double a1, b0, b1;
+	double *x0, *x1, *y0, *y1;
+	CRITICAL_SECTION cs_update;
 } phrot, *PHROT;
 
 extern PHROT create_phrot (int run, int size, double* in, double* out, int rate, double fc, int nstages);
@@ -197,9 +197,9 @@ extern void setSize_phrot (PHROT a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                   Complex Bi-Quad Low-Pass                                            *
-*                                                                                                       *
+*																										*
+*									Complex Bi-Quad Low-Pass				     						*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _bqlp_h
@@ -207,18 +207,18 @@ extern void setSize_phrot (PHROT a, int size);
 
 typedef struct _bqlp
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    double fc;
-    double Q;
-    double gain;
-    int nstages;
-    double a0, a1, a2, b1, b2;
-    double* x0, * x1, * x2, * y0, * y1, * y2;
-    CRITICAL_SECTION cs_update;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	double fc;
+	double Q;
+	double gain;
+	int nstages;
+	double a0, a1, a2, b1, b2;
+	double* x0, * x1, * x2, * y0, * y1, * y2;
+	CRITICAL_SECTION cs_update;
 } bqlp, *BQLP;
 
 extern BQLP create_bqlp(int run, int size, double* in, double* out, double rate, double fc, double Q, double gain, int nstages);
@@ -238,9 +238,9 @@ extern void setSize_bqlp(BQLP a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                      Double Bi-Quad Low-Pass                                          *
-*                                                                                                       *
+*																										*
+*									   Double Bi-Quad Low-Pass				     						*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _dbqlp_h
@@ -263,9 +263,9 @@ extern void setSize_dbqlp(BQLP a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                   Complex Bi-Quad Band-Pass                                           *
-*                                                                                                       *
+*																										*
+*									Complex Bi-Quad Band-Pass				     						*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _bqbp_h
@@ -273,18 +273,18 @@ extern void setSize_dbqlp(BQLP a, int size);
 
 typedef struct _bqbp
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    double f_low;
-    double f_high;
-    double gain;
-    int nstages;
-    double a0, a1, a2, b1, b2;
-    double* x0, * x1, * x2, * y0, * y1, * y2;
-    CRITICAL_SECTION cs_update;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	double f_low;
+	double f_high;
+	double gain;
+	int nstages;
+	double a0, a1, a2, b1, b2;
+	double* x0, * x1, * x2, * y0, * y1, * y2;
+	CRITICAL_SECTION cs_update;
 } bqbp, * BQBP;
 
 extern BQBP create_bqbp(int run, int size, double* in, double* out, double rate, double f_low, double f_high, double gain, int nstages);
@@ -304,9 +304,9 @@ extern void setSize_bqbp(BQBP a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                     Double Bi-Quad Band-Pass                                          *
-*                                                                                                       *
+*																										*
+*									  Double Bi-Quad Band-Pass				     						*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _dbqbp_h
@@ -329,9 +329,9 @@ extern void setSize_dbqbp(BQBP a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                      Double Single-Pole High-Pass                                     *
-*                                                                                                       *
+*																										*
+*									   Double Single-Pole High-Pass				   						*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _dsphp_h
@@ -339,16 +339,16 @@ extern void setSize_dbqbp(BQBP a, int size);
 
 typedef struct _sphp
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    double fc;
-    int nstages;
-    double a1, b0, b1;
-    double* x0, * x1, * y0, * y1;
-    CRITICAL_SECTION cs_update;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	double fc;
+	int nstages;
+	double a1, b0, b1;
+	double* x0, * x1, * y0, * y1;
+	CRITICAL_SECTION cs_update;
 } sphp, * SPHP;
 
 extern SPHP create_dsphp(int run, int size, double* in, double* out, double rate, double fc, int nstages);
@@ -368,9 +368,9 @@ extern void setSize_dsphp(SPHP a, int size);
 #endif
 
 /********************************************************************************************************
-*                                                                                                       *
-*                                    Complex Single-Pole High-Pass                                      *
-*                                                                                                       *
+*																										*
+*								     Complex Single-Pole High-Pass				     					*
+*																										*
 ********************************************************************************************************/
 
 #ifndef _dphp_h

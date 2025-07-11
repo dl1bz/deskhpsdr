@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,23 +29,23 @@ warren@wpratt.com
 
 typedef struct _meter
 {
-    int run;
-    int* prun;
-    int size;
-    double* buff;
-    double rate;
-    double tau_average;
-    double tau_peak_decay;
-    double mult_average;
-    double mult_peak;
-    double* result;
-    int enum_av;
-    int enum_pk;
-    int enum_gain;
-    double* pgain;
-    double avg;
-    double peak;
-    CRITICAL_SECTION mtupdate;
+	int run;
+	int* prun;
+	int size;
+	double* buff;
+	double rate;
+	double tau_average;
+	double tau_peak_decay;
+	double mult_average;
+	double mult_peak;
+	double* result;
+	int enum_av;
+	int enum_pk;
+	int enum_gain;
+	double* pgain;
+	double avg;
+	double peak;
+	CRITICAL_SECTION mtupdate;
 } meter, *METER;
 
 extern METER create_meter (int run, int* prun, int size, double* buff, int rate, double tau_av, double tau_decay, double* result, CRITICAL_SECTION** pmtupdate, int enum_av, int enum_pk, int enum_gain, double* pgain);

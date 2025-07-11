@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,20 +29,20 @@ warren@wpratt.com
 
 typedef struct _uslew
 {
-    int channel;
-    volatile long *ch_upslew;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    double tdelay;
-    double tupslew;
-    int runmode;
-    int state;
-    int count;
-    int ndelup;
-    int ntup;
-    double* cup;
+	int channel;
+	volatile long *ch_upslew;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	double tdelay;
+	double tupslew;
+	int runmode;
+	int state;
+	int count;
+	int ndelup;
+	int ntup;
+	double* cup;
 } uslew, *USLEW;
 
 extern USLEW create_uslew (int channel, volatile long *ch_upslew, int size, double* in, double* out, double rate, double tdelay, double tupslew);

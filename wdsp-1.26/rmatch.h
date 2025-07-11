@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -31,87 +31,87 @@ warren@wpratt.com
 
 typedef struct _mav
 {
-    int ringmin;
-    int ringmax;        // must be a power of two
-    int* ring;
-    int mask;
-    int i;
-    int load;
-    int sum;
-    double nom_value;
+	int ringmin;
+	int ringmax;		// must be a power of two
+	int* ring;
+	int mask;
+	int i;
+	int load;
+	int sum;
+	double nom_value;
 } mav, *MAV;
 
 typedef struct _aamav
 {
-    int ringmin;
-    int ringmax;        // must be a power of two
-    int* ring;
-    int mask;
-    int i;
-    int load;
-    int pos;
-    int neg;
-    double nom_ratio;
+	int ringmin;
+	int ringmax;		// must be a power of two
+	int* ring;
+	int mask;
+	int i;
+	int load;
+	int pos;
+	int neg;
+	double nom_ratio;
 } aamav, *AAMAV;
 
 typedef struct _rmatch
 {
-    volatile long run;
-    double* in;
-    double* out;
-    int insize;
-    int outsize;
-    double* resout;
-    int nom_inrate;
-    int nom_outrate;
-    double nom_ratio;
-    double inv_nom_ratio;
-    double fc_high;
-    double fc_low;
-    double gain;
-    double startup_delay;
-    int auto_ringsize;
-    int ringsize;
-    int rsize;
-    double* ring;
-    int n_ring;
-    int iin;
-    int iout;
-    double var;
-    int R;
-    AAMAV ffmav;
-    MAV propmav;
-    int ff_ringmin;
-    int ff_ringmax;         // must be a power of two
-    double ff_alpha;
-    double feed_forward;
-    int prop_ringmin;
-    int prop_ringmax;       // must be a power of two
-    double prop_gain;
-    double pr_gain;
-    double av_deviation;
-    VARSAMP v;
-    int varmode;
-    CRITICAL_SECTION cs_ring;
-    CRITICAL_SECTION cs_var;
-    // blend / slew
-    double tslew;
-    int ntslew;
-    double* cslew;
-    double* baux;
-    double dlast[2];
-    int ucnt;
-    // variables to check start-up time for control to become active
-    unsigned int readsamps;
-    unsigned int writesamps;
-    unsigned int read_startup;
-    unsigned int write_startup;
-    int control_flag;
-    // diagnostics
-    volatile long underflows;
-    volatile long overflows;
-    int force;
-    double fvar;
+	volatile long run;
+	double* in;
+	double* out;
+	int insize;
+	int outsize;
+	double* resout;
+	int nom_inrate;
+	int nom_outrate;
+	double nom_ratio;
+	double inv_nom_ratio;
+	double fc_high;
+	double fc_low;
+	double gain;
+	double startup_delay;
+	int auto_ringsize;
+	int ringsize;
+	int rsize;
+	double* ring;
+	int n_ring;
+	int iin;
+	int iout;
+	double var;
+	int R;
+	AAMAV ffmav;
+	MAV propmav;
+	int ff_ringmin;
+	int ff_ringmax;			// must be a power of two
+	double ff_alpha;
+	double feed_forward;
+	int prop_ringmin;
+	int prop_ringmax;		// must be a power of two
+	double prop_gain;
+	double pr_gain;
+	double av_deviation;
+	VARSAMP v;
+	int varmode;
+	CRITICAL_SECTION cs_ring;
+	CRITICAL_SECTION cs_var;
+	// blend / slew
+	double tslew;
+	int ntslew;
+	double* cslew;
+	double* baux;
+	double dlast[2];
+	int ucnt;
+	// variables to check start-up time for control to become active
+	unsigned int readsamps;
+	unsigned int writesamps;
+	unsigned int read_startup;
+	unsigned int write_startup;
+	int control_flag;
+	// diagnostics
+	volatile long underflows;
+	volatile long overflows;
+	int force;
+	double fvar;
 } rmatch, *RMATCH;
 
 extern __declspec (dllexport) void* create_rmatchV(int in_size, int out_size, int nom_inrate, int nom_outrate, int ringsize, double var);

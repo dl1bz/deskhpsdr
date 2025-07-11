@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,16 +29,16 @@ warren@wpratt.com
 
 typedef struct _div
 {
-    int run;
-    int nr;                         // number of receivers to mix
-    int size;                       // size of input/output buffers
-    double **in;                    // input buffers
-    double *out;                    // output buffer
-    int output;                     // which rcvr to output; ==nr for mix
-    double *Irotate;
-    double *Qrotate;
-    CRITICAL_SECTION cs_update;
-    double *legacy[4];                                                                  ///////////// legacy interface - remove
+	int run;
+	int nr;							// number of receivers to mix
+	int size;						// size of input/output buffers
+	double **in;					// input buffers
+	double *out;					// output buffer
+	int output;						// which rcvr to output; ==nr for mix
+	double *Irotate;
+	double *Qrotate;
+	CRITICAL_SECTION cs_update;
+	double *legacy[4];																	///////////// legacy interface - remove
 } mdiv, *MDIV;
 
 extern MDIV create_div (int run, int nr, int size, double **in, double *out);

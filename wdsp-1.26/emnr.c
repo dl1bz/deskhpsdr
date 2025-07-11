@@ -193,11 +193,11 @@ void interpM (double* res, double x, int nvals, double* xvals, double* yvals)
 		*res = yvals[nvals - 1];
 	else
 	{
-		int idx = 0;
+		int idx = 1;
 		double xllow, xlhigh, frac;
-		while (x >= xvals[idx])  idx++;
-		xllow = log10 (xvals[idx - 1]);
-		xlhigh = log10(xvals[idx]);
+		while (x > xvals[idx])  idx++;
+		xllow  = log10 (xvals[idx - 1]);
+		xlhigh = log10 (xvals[idx]);
 		frac = (log10 (x) - xllow) / (xlhigh - xllow);
 		*res = yvals[idx - 1] + frac * (yvals[idx] - yvals[idx - 1]);
 	}
@@ -208,27 +208,32 @@ int readZetaHat(const char* zeta_file, int* rows, int* cols,
 {
 	char zetaBinary[256];
 	char bin[50] = ".bin";
-	sprintf(zetaBinary, "%s%s", zeta_file, bin);
+	sprintf (zetaBinary, "%s%s", zeta_file, bin);
 	FILE* pzetaBinary;
-	if (pzetaBinary = fopen (zetaBinary, "rb")) 
+	int e = 0;
+	if (pzetaBinary = fopen(zetaBinary, "rb"))
 	{
-		fread(rows, sizeof(int), 1, pzetaBinary);
-		fread(cols, sizeof(int), 1, pzetaBinary);
-		fread(gmin, sizeof(double), 1, pzetaBinary);
-		fread(gmax, sizeof(double), 1, pzetaBinary);
-		fread(ximin, sizeof(double), 1, pzetaBinary);
-		fread(ximax, sizeof(double), 1, pzetaBinary);
-		int nvals = (*rows) * (*cols);
-		fread(zetaHat, sizeof(double), nvals, pzetaBinary);
-		fread(zetaValid, sizeof(int), nvals, pzetaBinary);
+		int nvals = 0;
+		// 'fread's executed only through first error
+		if (e == 0 && fread(rows,      sizeof(int),    1,     pzetaBinary) != 1) e = 1;
+		if (e == 0 && fread(cols,      sizeof(int),    1,     pzetaBinary) != 1) e = 1;
+		if (e == 0 && fread(gmin,      sizeof(double), 1,     pzetaBinary) != 1) e = 1;
+		if (e == 0 && fread(gmax,      sizeof(double), 1,     pzetaBinary) != 1) e = 1;
+		if (e == 0 && fread(ximin,     sizeof(double), 1,     pzetaBinary) != 1) e = 1;
+		if (e == 0 && fread(ximax,     sizeof(double), 1,     pzetaBinary) != 1) e = 1;
+		if (e == 0)   nvals = (*rows) * (*cols);
+		if (e == 0 && fread(zetaHat,   sizeof(double), nvals, pzetaBinary) != nvals) e = 1;
+		if (e == 0 && fread(zetaValid, sizeof(int),    nvals, pzetaBinary) != nvals) e = 1;
 		fclose(pzetaBinary);
 	}
-	else
+	else 
+		e = 1;
+	if (e)
 	{
-		*rows = CzetaRows;
-		*cols = CzetaCols;
-		*gmin = CzetaGmin;
-		*gmax = CzetaGmax;
+		*rows  = CzetaRows;
+		*cols  = CzetaCols;
+		*gmin  = CzetaGmin;
+		*gmax  = CzetaGmax;
 		*ximin = CzetaXimin;
 		*ximax = CzetaXimax;
 		int nvals = (*rows) * (*cols);
@@ -245,46 +250,49 @@ void CwriteZetaHat(const char* cfile, int zetaHat_rows, int zetaHat_cols,
 	char cfilename[256];
 	char dot_c[50] = ".c";
 	sprintf(cfilename, "%s%s", cfile, dot_c);
-	FILE* pcfile = fopen(cfilename, "w");
-	fprintf(pcfile, "int CzetaRows = %d;\n", zetaHat_rows);
-	fprintf(pcfile, "int CzetaCols = %d;\n", zetaHat_cols);
-	fprintf(pcfile, "double CzetaGmin = %lf;\n", zetaHat_gmin);
-	fprintf(pcfile, "double CzetaGmax = %lf;\n", zetaHat_gmax);
-	fprintf(pcfile, "double CzetaXimin = %lf;\n", zetaHat_ximin);
-	fprintf(pcfile, "double CzetaXimax = %lf;\n\n", zetaHat_ximax);
-	n = zetaHat_rows * zetaHat_cols;
-	fprintf(pcfile, "double CzetaHat [%d] =\n", n);
-	fprintf(pcfile, "{\n");
-	i = 0;
-	j = 0;
-	while (i < n)
+	FILE* pcfile;
+	if (pcfile = fopen(cfilename, "w"))
 	{
-		fprintf(pcfile, "%.17e,  ", zetaHat[i++]);
-		if (++j == 4)
+		fprintf(pcfile, "int CzetaRows = %d;\n",        zetaHat_rows);
+		fprintf(pcfile, "int CzetaCols = %d;\n",        zetaHat_cols);
+		fprintf(pcfile, "double CzetaGmin = %lf;\n",    zetaHat_gmin);
+		fprintf(pcfile, "double CzetaGmax = %lf;\n",    zetaHat_gmax);
+		fprintf(pcfile, "double CzetaXimin = %lf;\n",   zetaHat_ximin);
+		fprintf(pcfile, "double CzetaXimax = %lf;\n\n", zetaHat_ximax);
+		n = zetaHat_rows * zetaHat_cols;
+		fprintf(pcfile, "double CzetaHat [%d] =\n", n);
+		fprintf(pcfile, "{\n");
+		i = 0;
+		j = 0;
+		while (i < n)
 		{
-			fprintf(pcfile, "\n");
-			j = 0;
+			fprintf(pcfile, "%.17e,  ", zetaHat[i++]);
+			if (++j == 4)
+			{
+				fprintf(pcfile, "\n");
+				j = 0;
+			}
 		}
-	}
-	if (j != 0) fprintf(pcfile, "\n");
-	fprintf(pcfile, "};\n\n");
-	fprintf(pcfile, "double CzetaValid [%d] =\n", n);
-	fprintf(pcfile, "{\n");
-	i = 0;
-	j = 0;
-	while (i < n)
-	{
-		fprintf(pcfile, "%d,  ", zetaValid[i++]);
-		if (++j == 4)
+		if (j != 0) fprintf(pcfile, "\n");
+		fprintf(pcfile, "};\n\n");
+		fprintf(pcfile, "int CzetaValid [%d] =\n", n);
+		fprintf(pcfile, "{\n");
+		i = 0;
+		j = 0;
+		while (i < n)
 		{
-			fprintf(pcfile, "\n");
-			j = 0;
+			fprintf(pcfile, "%d,  ", zetaValid[i++]);
+			if (++j == 4)
+			{
+				fprintf(pcfile, "\n");
+				j = 0;
+			}
 		}
+		if (j != 0) fprintf(pcfile, "\n");
+		fprintf(pcfile, "};\n");
+		fflush(pcfile);
+		fclose(pcfile);
 	}
-	if (j != 0) fprintf(pcfile, "\n");
-	fprintf(pcfile, "};\n");
-	fflush(pcfile);
-	fclose(pcfile);
 }
 
 

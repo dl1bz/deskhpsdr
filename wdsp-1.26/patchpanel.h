@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,16 +29,16 @@ warren@wpratt.com
 
 typedef struct _patchpanel
 {
-    int channel;
-    int run;
-    int size;
-    double* in;
-    double* out;
-    double gain1;
-    double gain2I;
-    double gain2Q;
-    int inselect;
-    int copy;
+	int channel;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	double gain1;
+	double gain2I;
+	double gain2Q;
+	int inselect;
+	int copy;
 } panel, *PANEL;
 
 extern PANEL create_panel (int channel, int run, int size, double* in, double* out, double gain1, double gain2I, double gain2Q, int inselect, int copy);

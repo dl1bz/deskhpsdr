@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,16 +29,16 @@ warren@wpratt.com
 
 typedef struct _shift
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    double shift;
-    double phase;
-    double delta;
-    double cos_delta;
-    double sin_delta;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	double shift;
+	double phase;
+	double delta;
+	double cos_delta;
+	double sin_delta;
 } shift, *SHIFT;
 
 extern SHIFT create_shift (int run, int size, double* in, double* out, int rate, double fshift);

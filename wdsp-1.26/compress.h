@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,21 +29,21 @@ warren@wpratt.com
 
 typedef struct _compressor
 {
-    int run;
-    int buffsize;
-    double *inbuff;
-    double *outbuff;
-    double gain;
+	int run;
+	int buffsize;
+	double *inbuff;
+	double *outbuff;
+	double gain;
 } compressor, *COMPRESSOR;
 
 extern void xcompressor (COMPRESSOR a);
 
 extern COMPRESSOR create_compressor (
-                int run,
-                int buffsize,
-                double* inbuff,
-                double* outbuff,
-                double gain );
+				int run,
+				int buffsize,
+				double* inbuff,
+				double* outbuff,
+				double gain );
 
 extern void destroy_compressor (COMPRESSOR a);
 

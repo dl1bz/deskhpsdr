@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,37 +29,37 @@ warren@wpratt.com
 
 typedef struct _varsamp
 {
-    int run;
-    int size;
-    double* in;
-    double* out;
-    int in_rate;
-    int out_rate;
-    double fcin;
-    double fc;
-    double fc_low;
-    double gain;
-    int idx_in;
-    int ncoef;
-    double* h;
-    int rsize;
-    double* ring;
-    double var;
-    int varmode;
-    double cvar;
-    double inv_cvar;
-    double old_inv_cvar;
-    double dicvar;
-    double delta;
-    double* hs;
-    int R;
-    double h_offset;
-    double isamps;
-    double nom_ratio;
+	int run;
+	int size;
+	double* in;
+	double* out;
+	int in_rate;
+	int out_rate;
+	double fcin;
+	double fc;
+	double fc_low;
+	double gain;
+	int idx_in;
+	int ncoef;
+	double* h;
+	int rsize;
+	double* ring;
+	double var;
+	int varmode;
+	double cvar;
+	double inv_cvar;
+	double old_inv_cvar;
+	double dicvar;
+	double delta;
+	double* hs;
+	int R;
+	double h_offset;
+	double isamps;
+	double nom_ratio;
 } varsamp, *VARSAMP;
 
-extern VARSAMP create_varsamp ( int run, int size, double* in, double* out,
-    int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode);
+extern VARSAMP create_varsamp ( int run, int size, double* in, double* out,  
+	int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode);
 
 extern void destroy_varsamp (VARSAMP a);
 

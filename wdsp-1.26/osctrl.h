@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -33,32 +33,32 @@ warren@wpratt.com
 
 typedef struct _osctrl
 {
-    int run;                        // 1 to run; 0 otherwise
-    int size;                       // buffer size
-    double *inbuff;                 // input buffer
-    double *outbuff;                // output buffer
-    int rate;                       // sample rate
-    double osgain;                  // gain applied to overshoot "clippings"
-    double bw;                      // bandwidth
-    int pn;                         // "peak stretcher" window, samples
-    int dl_len;                     // delay line length, samples
-    double* dl;                     // delay line for complex samples
-    double* dlenv;                  // delay line for envelope values
-    int in_idx;                     // input index for dl
-    int out_idx;                    // output index for dl
-    double max_env;                 // maximum env value in env delay line
-    double env_out;
+	int run;						// 1 to run; 0 otherwise
+	int size;						// buffer size
+	double *inbuff;					// input buffer
+	double *outbuff;				// output buffer
+	int rate;						// sample rate
+	double osgain;					// gain applied to overshoot "clippings"
+	double bw;						// bandwidth
+	int pn;							// "peak stretcher" window, samples
+	int dl_len;						// delay line length, samples
+	double* dl;						// delay line for complex samples
+	double* dlenv;					// delay line for envelope values
+	int in_idx;						// input index for dl
+	int out_idx;					// output index for dl
+	double max_env;					// maximum env value in env delay line
+	double env_out;
 } osctrl, *OSCTRL;
 
 extern void xosctrl (OSCTRL a);
 
 extern OSCTRL create_osctrl (
-                int run,
-                int size,
-                double* inbuff,
-                double* outbuff,
-                int rate,
-                double osgain );
+				int run,
+				int size,
+				double* inbuff,
+				double* outbuff,
+				int rate,
+				double osgain );
 
 extern void destroy_osctrl (OSCTRL a);
 

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,27 +29,27 @@ warren@wpratt.com
 #include "firmin.h"
 typedef struct _cfir
 {
-    int run;
-    int size;
-    int nc;
-    int mp;
-    double* in;
-    double* out;
-    int runrate;
-    int cicrate;
-    int DD;
-    int R;
-    int Pairs;
-    double cutoff;
-    double scale;
-    int xtype;
-    double xbw;
-    int wintype;
-    FIRCORE p;
+	int run;
+	int size;
+	int nc;
+	int mp;
+	double* in;
+	double* out;
+	int runrate;
+	int cicrate; 
+	int DD; 
+	int R; 
+	int Pairs; 
+	double cutoff;
+	double scale;
+	int xtype;
+	double xbw;
+	int wintype;
+	FIRCORE p;
 } cfir, *CFIR;
 
-extern CFIR create_cfir (int run, int size, int nc, int mp, double* in, double* out, int runrate, int cicrate,
-    int DD, int R, int Pairs, double cutoff, int xtype, double xbw, int wintype);
+extern CFIR create_cfir (int run, int size, int nc, int mp, double* in, double* out, int runrate, int cicrate, 
+	int DD, int R, int Pairs, double cutoff, int xtype, double xbw, int wintype);
 
 extern void destroy_cfir (CFIR a);
 
@@ -65,8 +65,8 @@ extern void setSize_cfir (CFIR a, int size);
 
 extern void setOutRate_cfir (CFIR a, int rate);
 
-extern double* cfir_impulse (int N, int DD, int R, int Pairs, double runrate, double cicrate,
-    double cutoff, int xtype, double xbw, int rtype, double scale, int wintype);
+extern double* cfir_impulse (int N, int DD, int R, int Pairs, double runrate, double cicrate, 
+	double cutoff, int xtype, double xbw, int rtype, double scale, int wintype);
 
 extern __declspec (dllexport) void SetTXACFIRRun(int channel, int run);
 

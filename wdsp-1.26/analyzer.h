@@ -204,12 +204,12 @@ void SnapSpectrum(	int disp,
 					int LO,
 					double *snap_buff);
 
-extern __declspec(dllexport)
-void SnapSpectrumTimeout(int disp,
-	int ss,
-	int LO,
-	double* snap_buff,
-	DWORD timeout,
-	int* flag);
+extern __declspec( dllexport )
+void SnapSpectrumTimeout (int disp,
+	                      int ss,
+	                      int LO,
+	                      double* snap_buff,
+	                      DWORD timeout,
+	                      int* flag);
 
 #endif

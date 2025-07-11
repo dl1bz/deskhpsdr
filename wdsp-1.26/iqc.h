@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
@@ -29,31 +29,31 @@ warren@wpratt.com
 
 typedef struct _iqc
 {
-    volatile long run;
-    volatile long busy;
-    int size;
-    double* in;
-    double* out;
-    double rate;
-    int ints;
-    double* t;
-    int cset;
-    double* cm[2];
-    double* cc[2];
-    double* cs[2];
-    double tup;
-    double* cup;
-    int count;
-    int ntup;
-    int state;
-    struct
-    {
-        int spi;
-        int* cpi;
-        int full_ints;
-        int count;
-        CRITICAL_SECTION cs;
-    } dog;
+	volatile long run;
+	volatile long busy;
+	int size;
+	double* in;
+	double* out;
+	double rate;
+	int ints;
+	double* t;
+	int cset;
+	double* cm[2];
+	double* cc[2];
+	double* cs[2];
+	double tup;
+	double* cup;
+	int count;
+	int ntup;
+	int state;
+	struct
+	{
+		int spi;
+		int* cpi;
+		int full_ints;
+		int count;
+		CRITICAL_SECTION cs;
+	} dog;
 } iqc, *IQC;
 
 extern IQC create_iqc (int run, int size, double* in, double* out, double rate, int ints, double tup, int spi);

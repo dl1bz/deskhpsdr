@@ -18,16 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at
+The author can be reached by email at  
 
 warren@wpratt.com
 
 */
 
 /************************************************************************************************
-*                                                                                               *
-*                             VERSION FOR COMPLEX DOUBLE-PRECISION                              *
-*                                                                                               *
+*																								*
+*							  VERSION FOR COMPLEX DOUBLE-PRECISION								*
+*																								*
 ************************************************************************************************/
 
 #ifndef _resample_h
@@ -35,26 +35,26 @@ warren@wpratt.com
 
 typedef struct _resample
 {
-    int run;            // run
-    int size;           // number of input samples per buffer
-    double* in;         // input buffer for resampler
-    double* out;        // output buffer for resampler
-    int in_rate;
-    int out_rate;
-    double fcin;
-    double fc;
-    double fc_low;
-    double gain;
-    int idx_in;         // index for input into ring
-    int ncoefin;
-    int ncoef;          // number of coefficients
-    int L;              // interpolation factor
-    int M;              // decimation factor
-    double* h;          // coefficients
-    int ringsize;       // number of complex pairs the ring buffer holds
-    double* ring;       // ring buffer
-    int cpp;            // coefficients of the phase
-    int phnum;          // phase number
+	int run;			// run
+	int size;			// number of input samples per buffer
+	double* in;			// input buffer for resampler
+	double* out;		// output buffer for resampler
+	int in_rate;
+	int out_rate;
+	double fcin;
+	double fc;
+	double fc_low;
+	double gain;
+	int idx_in;			// index for input into ring
+	int ncoefin;
+	int ncoef;			// number of coefficients
+	int L;				// interpolation factor
+	int M;				// decimation factor
+	double* h;			// coefficients
+	int ringsize;		// number of complex pairs the ring buffer holds
+	double* ring;		// ring buffer
+	int cpp;			// coefficients of the phase
+	int phnum;			// phase number
 } resample, *RESAMPLE;
 
 __declspec (dllexport)
@@ -84,9 +84,9 @@ extern void setBandwidth_resample (RESAMPLE a, double fc_low, double fc_high);
 #endif
 
 /************************************************************************************************
-*                                                                                               *
-*                             VERSION FOR NON-COMPLEX FLOATS                                    *
-*                                                                                               *
+*																								*
+*							  VERSION FOR NON-COMPLEX FLOATS									*
+*																								*
 ************************************************************************************************/
 
 #ifndef _resampleF_h
@@ -94,19 +94,19 @@ extern void setBandwidth_resample (RESAMPLE a, double fc_low, double fc_high);
 
 typedef struct _resampleF
 {
-    int run;            // run
-    int size;           // number of input samples per buffer
-    float* in;          // input buffer for resampler
-    float* out;         // output buffer for resampler
-    int idx_in;         // index for input into ring
-    int ncoef;          // number of coefficients
-    int L;              // interpolation factor
-    int M;              // decimation factor
-    double* h;          // coefficients
-    int ringsize;       // number of values the ring buffer holds
-    double* ring;       // ring buffer
-    int cpp;            // coefficients of the phase
-    int phnum;          // phase number
+	int run;			// run
+	int size;			// number of input samples per buffer
+	float* in;			// input buffer for resampler
+	float* out;			// output buffer for resampler
+	int idx_in;			// index for input into ring
+	int ncoef;			// number of coefficients
+	int L;				// interpolation factor
+	int M;				// decimation factor
+	double* h;			// coefficients
+	int ringsize;		// number of values the ring buffer holds
+	double* ring;		// ring buffer
+	int cpp;			// coefficients of the phase
+	int phnum;			// phase number
 } resampleF, *RESAMPLEF;
 
 extern RESAMPLEF create_resampleF (int run, int size, float* in, float* out, int in_rate, int out_rate);
