@@ -1232,7 +1232,7 @@ src/main.o: src/new_protocol.h src/MacOS.h src/old_protocol.h
 src/main.o: src/soapy_protocol.h src/saturnmain.h src/saturnregisters.h
 src/main.o: src/ext.h src/vfo.h src/mode.h src/css.h src/exit_menu.h
 src/main.o: src/message.h src/startup.h src/tts.h src/sliders.h
-src/main.o: src/noise_menu.h src/rigctl.h src/trx_logo.h
+src/main.o: src/noise_menu.h src/rigctl.h src/midi.h src/trx_logo.h
 src/meter.o: src/appearance.h src/band.h src/bandstack.h src/receiver.h
 src/meter.o: src/meter.h src/radio.h src/adc.h src/dac.h src/discovered.h
 src/meter.o: src/transmitter.h src/version.h src/mode.h src/vox.h
