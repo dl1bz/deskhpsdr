@@ -137,8 +137,19 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     if (txmode != modeCWU && txmode != modeCWL) {
       cairo_set_source_rgba(cr, COLOUR_PAN_FILTER);
-      filter_left = (double)mywidth / 2.0 + ((double)tx->filter_low / hz_per_pixel);
-      filter_right = (double)mywidth / 2.0 + ((double)tx->filter_high / hz_per_pixel);
+
+      if (txmode == modeFMN) {
+        //
+        // The bandpass filter used in FM  is applied *before* the FM
+        // modulator. Here we use Carson's rule to determine the "true"
+        // TX bandwidth
+        filter_left = (double)mywidth / 2.0 + ((double)(tx->filter_low - tx->deviation) / hz_per_pixel);
+        filter_right = (double)mywidth / 2.0 + ((double)(tx->filter_high + tx->deviation) / hz_per_pixel);
+      } else {
+        filter_left = (double)mywidth / 2.0 + ((double)tx->filter_low / hz_per_pixel);
+        filter_right = (double)mywidth / 2.0 + ((double)tx->filter_high / hz_per_pixel);
+      }
+
       cairo_rectangle(cr, filter_left, 0.0, filter_right - filter_left, (double)myheight);
       cairo_fill(cr);
     }
