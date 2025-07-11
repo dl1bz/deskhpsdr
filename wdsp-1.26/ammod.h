@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at  
+The author can be reached by email at
 
 warren@wpratt.com
 
@@ -27,17 +27,16 @@ warren@wpratt.com
 #ifndef _ammod_h
 #define _ammod_h
 
-typedef struct _ammod
-{
-	int run;
-	int mode;
-	int size;
-	double* in;
-	double* out;
-	double c_level;
-	double a_level;
-	double mult;
-}ammod, *AMMOD;
+typedef struct _ammod {
+  int run;
+  int mode;
+  int size;
+  double* in;
+  double* out;
+  double c_level;
+  double a_level;
+  double mult;
+} ammod, *AMMOD;
 
 extern AMMOD create_ammod (int run, int mode, int size, double* in, double* out, double c_level);
 

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at  
+The author can be reached by email at
 
 warren@wpratt.com
 
@@ -27,13 +27,13 @@ warren@wpratt.com
 extern void dR (int n, double* r, double* y, double* z);
 
 extern void trI (
-    int n,
-    double* r,
-    double* B,
-	double* y,
-	double* v,
-	double* dR_z
-    );
+  int n,
+  double* r,
+  double* B,
+  double* y,
+  double* v,
+  double* dR_z
+);
 
 extern void asolve(int xsize, int asize, double* x, double* a, double* r, double* z);
 
@@ -42,38 +42,37 @@ extern void median(int n, double* a, double* med);
 #ifndef _bldr_h
 #define _bldr_h
 
-typedef struct _bldr
-{
-	double* catxy;
-	double* sx;
-	double* sy;
-	double* h;
-	int* p;
-	int* np;
-	double* taa;
-	double* tab;
-	double* tag;
-	double* tad;
-	double* tbb;
-	double* tbg;
-	double* tbd;
-	double* tgg;
-	double* tgd;
-	double* tdd;
-	double* A;
-	double* B;
-	double* C;
-	double* D;
-	double* E;
-	double* F;
-	double* G;
-	double* MAT;
-	double* RHS;
-	double* SLN;
-	double* z;
-	double* zp;
-	double* wrk;
-	int* ipiv;
+typedef struct _bldr {
+  double* catxy;
+  double* sx;
+  double* sy;
+  double* h;
+  int* p;
+  int* np;
+  double* taa;
+  double* tab;
+  double* tag;
+  double* tad;
+  double* tbb;
+  double* tbg;
+  double* tbd;
+  double* tgg;
+  double* tgd;
+  double* tdd;
+  double* A;
+  double* B;
+  double* C;
+  double* D;
+  double* E;
+  double* F;
+  double* G;
+  double* MAT;
+  double* RHS;
+  double* SLN;
+  double* z;
+  double* zp;
+  double* wrk;
+  int* ipiv;
 } bldr, *BLDR;
 
 extern BLDR create_builder(int points, int ints);

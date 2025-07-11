@@ -26,77 +26,89 @@
 
 void trimm(char *line, size_t maxlen);
 
-int main(int argc, char **argv)
-{
-    FILE *infile;
-    int i,rc,len;
-    int first_in_file;
-    int first_in_decl;
-    char line[1000];
-    size_t linesize=999;
-    char *buffer=line;
+int main(int argc, char **argv) {
+  FILE *infile;
+  int i, rc, len;
+  int first_in_file;
+  int first_in_decl;
+  char line[1000];
+  size_t linesize = 999;
+  char *buffer = line;
 
-    for (i=1; i<argc; i++) {
-      infile=fopen(argv[i],"r");
-      if (infile == NULL) continue;
-      first_in_file=1;
+  for (i = 1; i < argc; i++) {
+    infile = fopen(argv[i], "r");
+
+    if (infile == NULL) { continue; }
+
+    first_in_file = 1;
+
+    for (;;) {
+      if (getline(&buffer, &linesize, infile) < 0) { break; }
+
+      trimm(line, linesize);
+
+      if (strncmp(line, "PORT", 4) != 0) { continue; }
+
+      // found an interface
+      if (first_in_file) {
+        printf("\n//\n// Interfaces from %s\n//\n\n", argv[i]);
+        first_in_file = 0;
+      }
+
+      if (strlen(line) > 4) {
+        printf("extern %s ", line + 4);
+      } else {
+        printf("extern ");
+      }
+
+      first_in_decl = 1;
+
       for (;;) {
-        if (getline(&buffer, &linesize, infile) < 0) break;
-        trimm(line, linesize);
-        if (strncmp(line,"PORT", 4) != 0) continue;
-        // found an interface
-        if (first_in_file) {
-          printf("\n//\n// Interfaces from %s\n//\n\n", argv[i]);
-          first_in_file=0;
+        if (getline(&buffer, &linesize, infile) < 0) {
+          fprintf(stderr, "! Found a PORT but found EOF while scanning interface.\n");
+          return 8;
         }
-        if (strlen(line) >4) {
-          printf("extern %s ", line+4);
-        } else {
-          printf("extern ");
-        }
-        first_in_decl=1;
 
-        for (;;) {
-          if (getline(&buffer, &linesize, infile) < 0) {
-            fprintf(stderr,"! Found a PORT but found EOF while scanning interface.\n");
-            return 8;
-          }
-          trimm(line, linesize);
-          if (line[0] == 0) continue;
-          if (line[0] == '{') {
-            printf(";\n");
-            break;
+        trimm(line, linesize);
+
+        if (line[0] == 0) { continue; }
+
+        if (line[0] == '{') {
+          printf(";\n");
+          break;
+        } else {
+          if (first_in_decl) {
+            printf("%s", line);
+            first_in_decl = 0;
           } else {
-            if (first_in_decl) {
-              printf("%s", line);
-              first_in_decl=0;
-            } else {
-              printf("\n%s", line);
-            }
+            printf("\n%s", line);
           }
         }
       }
-      fclose(infile);
     }
-    return 0;
+
+    fclose(infile);
+  }
+
+  return 0;
 }
 
 void trimm(char *line, size_t maxlen) {
   int len;
-
   //
   // Remove comments starting with '//'
   //
-  len=strnlen(line,maxlen);
-  for (int i=0; i< len-1; i++) {
-    if (line[i] == '/' && line[i+1] == '/') line[i]=0;
+  len = strnlen(line, maxlen);
+
+  for (int i = 0; i < len - 1; i++) {
+    if (line[i] == '/' && line[i + 1] == '/') { line[i] = 0; }
   }
 
   //
   // Remove trailing white space and newlines
   //
-  len=strnlen(line,maxlen);
-  line[len--]=0;
-  while (len >= 0 && (line[len] == ' ' || line[len] == '\t' || line[len]== '\n')) line[len--]=0;
+  len = strnlen(line, maxlen);
+  line[len--] = 0;
 
+  while (len >= 0 && (line[len] == ' ' || line[len] == '\t' || line[len] == '\n')) { line[len--] = 0; }
 }

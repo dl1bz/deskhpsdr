@@ -25,42 +25,45 @@
 
 int main() {
   int fd;
-  int i,j;
+  int i, j;
   double d;
 
   if (sizeof(double) != 8) {
     printf("Data type DOUBLE is not 8-byte. Please check!\n");
     return -1;
   }
-  fd=open ("calculus", O_RDONLY);
+
+  fd = open ("calculus", O_RDONLY);
+
   if (fd < 0) {
     printf("Could not open file 'calculus'\n");
     return -2;
   }
 
-  for (j=0; j<2; j++) {
+  for (j = 0; j < 2; j++) {
     switch (j) {
-      case 0:
-        printf("double GG[241*241]={\n");
-        break;
-      case 1:
-        printf("double GGS[241*241]={\n");
-        break;
+    case 0:
+      printf("double GG[241*241]={\n");
+      break;
+
+    case 1:
+      printf("double GGS[241*241]={\n");
+      break;
     }
-    for (i=0; i< 241*241; i++) {
+
+    for (i = 0; i < 241 * 241; i++) {
       if (read(fd, &d, 8) != 8) {
         printf("READ ERROR\n");
         return -3;
       }
-      if (i == 241*241 -1) {
+
+      if (i == 241 * 241 - 1) {
         printf("%30.25f};\n", d);
       } else {
         printf("%30.25f,\n", d);
       }
+    }
+
+    return 0;
   }
-  return 0;
-}
-
-
-
 }

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at  
+The author can be reached by email at
 
 warren@pratt.one
 
@@ -30,7 +30,8 @@ extern double* fir_fsamp_odd (int N, double* A, int rtype, double scale, int win
 
 extern double* fir_fsamp (int N, double* A, int rtype, double scale, int wintype);
 
-extern double* fir_bandpass (int N, double f_low, double f_high, double samplerate, int wintype, int rtype, double scale);
+extern double* fir_bandpass (int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
+                             double scale);
 
 extern double* get_fsamp_window(int N, int wintype);
 

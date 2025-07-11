@@ -18,42 +18,41 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at  
+The author can be reached by email at
 
 warren@wpratt.com
 
 */
 
 /********************************************************************************************************
-*																										*
-*										Overlap-Save Bandpass											*
-*																										*
+*                                                   *
+*                   Overlap-Save Bandpass                     *
+*                                                   *
 ********************************************************************************************************/
 
 #ifndef _bps_h
 #define _bps_h
 
-typedef struct _bps
-{
-	int run;
-	int position;
-	int size;
-	double* in;
-	double* out;
-	double f_low;
-	double f_high;
-	double* infilt;
-	double* product;
-	double* mults;
-	double samplerate;
-	int wintype;
-	double gain;
-	fftw_plan CFor;
-	fftw_plan CRev;
-}bps, *BPS;
+typedef struct _bps {
+  int run;
+  int position;
+  int size;
+  double* in;
+  double* out;
+  double f_low;
+  double f_high;
+  double* infilt;
+  double* product;
+  double* mults;
+  double samplerate;
+  int wintype;
+  double gain;
+  fftw_plan CFor;
+  fftw_plan CRev;
+} bps, *BPS;
 
-extern BPS create_bps (int run, int position, int size, double* in, double* out, 
-	double f_low, double f_high, int samplerate, int wintype, double gain);
+extern BPS create_bps (int run, int position, int size, double* in, double* out,
+                       double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void destroy_bps (BPS a);
 
@@ -85,34 +84,33 @@ extern __declspec (dllexport) void SetTXABPSFreqs (int channel, double low, doub
 
 
 /********************************************************************************************************
-*																										*
-*									Partitioned Overlap-Save Bandpass									*
-*																										*
+*                                                   *
+*                 Partitioned Overlap-Save Bandpass                 *
+*                                                   *
 ********************************************************************************************************/
 
 
 #ifndef _bandpass_h
 #define _bandpass_h
 #include "firmin.h"
-typedef struct _bandpass
-{
-	int run;
-	int position;
-	int size;
-	int nc;
-	int mp;
-	double* in;
-	double* out;
-	double f_low;
-	double f_high;
-	double samplerate;
-	int wintype;
-	double gain;
-	FIRCORE p;
-}bandpass, *BANDPASS;
+typedef struct _bandpass {
+  int run;
+  int position;
+  int size;
+  int nc;
+  int mp;
+  double* in;
+  double* out;
+  double f_low;
+  double f_high;
+  double samplerate;
+  int wintype;
+  double gain;
+  FIRCORE p;
+} bandpass, *BANDPASS;
 
-extern BANDPASS create_bandpass (int run, int position, int size, int nc, int mp, double* in, double* out, 
-	double f_low, double f_high, int samplerate, int wintype, double gain);
+extern BANDPASS create_bandpass (int run, int position, int size, int nc, int mp, double* in, double* out,
+                                 double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void destroy_bandpass (BANDPASS a);
 

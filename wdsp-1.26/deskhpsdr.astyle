@@ -1,0 +1,13 @@
+--style=java
+--indent=spaces=2
+--indent-preproc-block
+--break-blocks
+--pad-oper
+--pad-header
+--delete-empty-lines
+--add-braces
+--max-code-length=120
+--mode=c
+--indent-col1-comments
+--convert-tabs
+--keep-one-line-blocks

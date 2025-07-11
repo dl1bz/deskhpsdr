@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at  
+The author can be reached by email at
 
 warren@wpratt.com
 
@@ -27,19 +27,19 @@ warren@wpratt.com
 #ifndef _gain_h
 #define _gain_h
 
-typedef struct _gain
-{
-	int run;
-	int* prun;
-	int size;
-	double* in;
-	double* out;
-	double Igain;
-	double Qgain;
-	CRITICAL_SECTION cs_update;
-}gain, *GAIN;
+typedef struct _gain {
+  int run;
+  int* prun;
+  int size;
+  double* in;
+  double* out;
+  double Igain;
+  double Qgain;
+  CRITICAL_SECTION cs_update;
+} gain, *GAIN;
 
-__declspec (dllexport) GAIN create_gain (int run, int* prun, int size, double* in, double* out, double Igain, double Qgain);
+__declspec (dllexport) GAIN create_gain (int run, int* prun, int size, double* in, double* out, double Igain,
+    double Qgain);
 
 __declspec (dllexport) void destroy_gain (GAIN a);
 

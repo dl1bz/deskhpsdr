@@ -25,14 +25,14 @@ extern "C" {
 
 // from rxa.h
 enum rxaMeterType {
-        RXA_S_PK,
-        RXA_S_AV,
-        RXA_ADC_PK,
-        RXA_ADC_AV,
-        RXA_AGC_GAIN,
-        RXA_AGC_PK,
-        RXA_AGC_AV,
-        RXA_METERTYPE_LAST
+  RXA_S_PK,
+  RXA_S_AV,
+  RXA_ADC_PK,
+  RXA_ADC_AV,
+  RXA_AGC_GAIN,
+  RXA_AGC_PK,
+  RXA_AGC_AV,
+  RXA_METERTYPE_LAST
 };
 
 // from txa.h
@@ -135,57 +135,57 @@ extern void SetTXAAMSQThreshold (int channel, double threshold);
 //
 
 extern void SetupDetectMaxBin(int run, int disp, int ss, int LO, double rate,
-	double fLow, double fHigh, double tau, int frame_rate);
+                              double fLow, double fHigh, double tau, int frame_rate);
 extern double GetDetectMaxBin(int disp);
 extern void ResetPixelBuffers(int disp);
-extern void SetAnalyzer (	int disp,
-					int n_pixout,
-					int n_fft,
-					int typ,
-					int *flp,
-					int sz,
-					int bf_sz,
-					int win_type,
-					double pi,
-					int ovrlp,
-					int clp,
-					double fscLin,
-					double fscHin,
-					int n_pix,
-					int n_stch,
-					int calset,
-					double fmin,
-					double fmax,
-					int max_w
-				 );
-extern void XCreateAnalyzer(	int disp,
-						int *success,
-						int m_size,
-						int m_num_fft,
-						int m_stitch,
-						char *app_data_path
-						);
+extern void SetAnalyzer ( int disp,
+                          int n_pixout,
+                          int n_fft,
+                          int typ,
+                          int *flp,
+                          int sz,
+                          int bf_sz,
+                          int win_type,
+                          double pi,
+                          int ovrlp,
+                          int clp,
+                          double fscLin,
+                          double fscHin,
+                          int n_pix,
+                          int n_stch,
+                          int calset,
+                          double fmin,
+                          double fmax,
+                          int max_w
+                        );
+extern void XCreateAnalyzer(  int disp,
+                              int *success,
+                              int m_size,
+                              int m_num_fft,
+                              int m_stitch,
+                              char *app_data_path
+                           );
 extern void DestroyAnalyzer(int disp);
-extern void GetPixels	(	int disp,
-					int pixout,
-					dOUTREAL *pix,
-					int *flag
-				);
-extern void SnapSpectrum(	int disp,
-					int ss,
-					int LO,
-					double *snap_buff);
+extern void GetPixels ( int disp,
+                        int pixout,
+                        dOUTREAL *pix,
+                        int *flag
+                      );
+extern void SnapSpectrum( int disp,
+                          int ss,
+                          int LO,
+                          double *snap_buff);
 extern void SnapSpectrumTimeout(int disp,
-	int ss,
-	int LO,
-	double* snap_buff,
-	DWORD timeout,
-	int* flag);
-extern void SetCalibration (	int disp,
-						int set_num,
-						int n_points,
-						double (*cal)[dMAX_M+1]
-					);
+                                int ss,
+                                int LO,
+                                double* snap_buff,
+                                DWORD timeout,
+                                int* flag);
+extern void SetCalibration (  int disp,
+                              int set_num,
+                              int n_points,
+                              double (*cal)[dMAX_M + 1]
+                           );
 extern void OpenBuffer(int disp, int ss, int LO, void **Ipointer, void **Qpointer);
 extern void CloseBuffer(int disp, int ss, int LO);
 extern void Spectrum(int disp, int ss, int LO, dINREAL* pI, dINREAL* pQ);
@@ -248,7 +248,8 @@ extern void SetTXABandpassMP (int channel, int mp);
 //
 
 extern void pscc (int channel, int size, double* tx, double* rx);
-extern void psccF (int channel, int size, float *Itxbuff, float *Qtxbuff, float *Irxbuff, float *Qrxbuff, int mox, int solidmox);
+extern void psccF (int channel, int size, float *Itxbuff, float *Qtxbuff, float *Irxbuff, float *Qrxbuff, int mox,
+                   int solidmox);
 extern void PSSaveCorr (int channel, char* filename);
 extern void PSRestoreCorr (int channel, char* filename);
 extern void SetPSRunCal (int channel, int run);
@@ -302,8 +303,9 @@ extern void SetTXACFIRNC(int channel, int nc);
 // Interfaces from channel.c
 //
 
-extern void OpenChannel (int channel, int in_size, int dsp_size, int input_samplerate, int dsp_rate, int output_samplerate,
-    int type, int state, double tdelayup, double tslewup, double tdelaydown, double tslewdown, int bfo);
+extern void OpenChannel (int channel, int in_size, int dsp_size, int input_samplerate, int dsp_rate,
+                         int output_samplerate,
+                         int type, int state, double tdelayup, double tslewup, double tdelaydown, double tslewdown, int bfo);
 extern void CloseChannel (int channel);
 extern void SetType (int channel, int type);
 extern void SetInputBuffsize (int channel, int in_size);
@@ -329,10 +331,12 @@ extern  void SetTXACompressorGain (int channel, double gain);
 // Interfaces from dexp.c
 //
 
-extern void create_dexp (int id, int run_dexp, int size, double* in, double* out, int rate, double dettau, double tattack, double tdecay,
-    double thold, double exp_ratio, double hyst_ratio, double attack_thresh, int nc, int wtype, double lowcut, double highcut,
-    int run_filt, int run_vox, int run_audelay, double audelay, void (__stdcall *pushvox)(int id, int active),
-    int antivox_run, int antivox_size, int antivox_rate, double antivox_gain, double antivox_tau);
+extern void create_dexp (int id, int run_dexp, int size, double* in, double* out, int rate, double dettau,
+                         double tattack, double tdecay,
+                         double thold, double exp_ratio, double hyst_ratio, double attack_thresh, int nc, int wtype, double lowcut,
+                         double highcut,
+                         int run_filt, int run_vox, int run_audelay, double audelay, void (__stdcall *pushvox)(int id, int active),
+                         int antivox_run, int antivox_size, int antivox_rate, double antivox_gain, double antivox_tau);
 extern void destroy_dexp (int id);
 extern void flush_dexp (int id);
 extern void xdexp (int id);
@@ -383,11 +387,13 @@ extern void xdivEXTF (int id, int size, float **input, float *Iout, float *Qout)
 // Interfaces from eer.c
 //
 
-extern EER create_eer (int run, int size, double* in, double* out, double* outM, int rate, double mgain, double pgain, int rundelays, double mdelay, double pdelay, int amiq);
+extern EER create_eer (int run, int size, double* in, double* out, double* outM, int rate, double mgain, double pgain,
+                       int rundelays, double mdelay, double pdelay, int amiq);
 extern void destroy_eer (EER a);
 extern void flush_eer (EER a);
 extern void xeer (EER a);
-extern void create_eerEXT (int id, int run, int size, int rate, double mgain, double pgain, int rundelays, double mdelay, double pdelay, int amiq);
+extern void create_eerEXT (int id, int run, int size, int rate, double mgain, double pgain, int rundelays,
+                           double mdelay, double pdelay, int amiq);
 extern void destroy_eerEXT (int id);
 extern void flush_eerEXT (int id);
 extern void SetEERRun (int id, int run);
@@ -408,7 +414,8 @@ extern void pSetEERMdelay (EER a, double delay);
 extern void pSetEERPdelay (EER a, double delay);
 extern void pSetEERSize (EER a, int size);
 extern void pSetEERSamplerate (EER a, int rate);
-extern void xeerEXTF (int id, float* inI, float* inQ, float* outI, float* outQ, float* outMI, float* outMQ, int mox, int size);
+extern void xeerEXTF (int id, float* inI, float* inQ, float* outI, float* outQ, float* outMI, float* outMQ, int mox,
+                      int size);
 
 //
 // Interfaces from emnr.c
@@ -643,17 +650,17 @@ extern void RXANBPSetAutoIncrease (int channel, int autoincr);
 //
 
 extern ANB create_anb  (
-    int run,
-    int buffsize,
-    double* in,
-    double* out,
-    double samplerate,
-    double tau,
-    double hangtime,
-    double advtime,
-    double backtau,
-    double threshold
-                );
+  int run,
+  int buffsize,
+  double* in,
+  double* out,
+  double samplerate,
+  double tau,
+  double hangtime,
+  double advtime,
+  double backtau,
+  double threshold
+);
 extern void destroy_anb (ANB a);
 extern void flush_anb (ANB a);
 extern void xanb (ANB a);
@@ -666,16 +673,16 @@ extern void pSetRCVRANBAdvtime (ANB a, double time);
 extern void pSetRCVRANBBacktau (ANB a, double tau);
 extern void pSetRCVRANBThreshold (ANB a, double thresh);
 extern void create_anbEXT  (
-    int id,
-    int run,
-    int buffsize,
-    double samplerate,
-    double tau,
-    double hangtime,
-    double advtime,
-    double backtau,
-    double threshold
-                    );
+  int id,
+  int run,
+  int buffsize,
+  double samplerate,
+  double tau,
+  double hangtime,
+  double advtime,
+  double backtau,
+  double threshold
+);
 extern void destroy_anbEXT (int id);
 extern void flush_anbEXT (int id);
 extern void xanbEXT (int id, double* in, double* out);
@@ -694,20 +701,20 @@ extern void xanbEXTF (int id, float *I, float *Q);
 //
 
 extern NOB create_nob (
-    int run,
-    int buffsize,
-    double* in,
-    double* out,
-    double samplerate,
-    int mode,
-    double advslewtime,
-    double advtime,
-    double hangslewtime,
-    double hangtime,
-    double max_imp_seq_time,
-    double backtau,
-    double threshold
-    );
+  int run,
+  int buffsize,
+  double* in,
+  double* out,
+  double samplerate,
+  int mode,
+  double advslewtime,
+  double advtime,
+  double hangslewtime,
+  double hangtime,
+  double max_imp_seq_time,
+  double backtau,
+  double threshold
+);
 extern void destroy_nob (NOB a);
 extern void flush_nob (NOB a);
 extern void xnob (NOB a);
@@ -721,17 +728,17 @@ extern void pSetRCVRNOBAdvtime (NOB a, double time);
 extern void pSetRCVRNOBBacktau (NOB a, double tau);
 extern void pSetRCVRNOBThreshold (NOB a, double thresh);
 extern void create_nobEXT  (
-    int id,
-    int run,
-    int mode,
-    int buffsize,
-    double samplerate,
-    double slewtime,
-    double hangtime,
-    double advtime,
-    double backtau,
-    double threshold
-                    );
+  int id,
+  int run,
+  int mode,
+  int buffsize,
+  double samplerate,
+  double slewtime,
+  double hangtime,
+  double advtime,
+  double backtau,
+  double threshold
+);
 extern void destroy_nobEXT (int id);
 extern void flush_nobEXT (int id);
 extern void xnobEXT (int id, double* in, double* out);
@@ -771,7 +778,8 @@ extern void SetTXAPanelSelect (int channel, int select);
 // Interfaces from resample.c
 //
 
-extern RESAMPLE create_resample ( int run, int size, double* in, double* out, int in_rate, int out_rate, double fc, int ncoef, double gain);
+extern RESAMPLE create_resample ( int run, int size, double* in, double* out, int in_rate, int out_rate, double fc,
+                                  int ncoef, double gain);
 extern void destroy_resample (RESAMPLE a);
 extern void flush_resample (RESAMPLE a);
 extern int xresample(RESAMPLE a);
@@ -883,7 +891,8 @@ extern void SetRXASSQLTauUnMute (int channel, double tau_unmute);
 extern void *malloc0 (int size);
 extern  void *NewCriticalSection();
 extern  void DestroyCriticalSection (LPCRITICAL_SECTION cs_ptr);
-extern void analyze_bandpass_filter (int N, double f_low, double f_high, double samplerate, int wintype, int rtype, double scale);
+extern void analyze_bandpass_filter (int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
+                                     double scale);
 extern void print_buffer_parameters (const char* filename, int channel);
 extern int create_bfcu(int id, int min_size, int max_size, double rate, double corner, int points);
 extern void destroy_bfcu(int id);

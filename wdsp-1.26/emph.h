@@ -18,39 +18,38 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-The author can be reached by email at  
+The author can be reached by email at
 
 warren@wpratt.com
 
 */
 
 /********************************************************************************************************
-*																										*
-*								Partitioned Overlap-Save FM Pre-Emphasis								*
-*																										*
+*                                                   *
+*               Partitioned Overlap-Save FM Pre-Emphasis                *
+*                                                   *
 ********************************************************************************************************/
 
 #ifndef _emphp_h
 #define _emphp_h
 #include "firmin.h"
-typedef struct _emphp
-{
-	int run;
-	int position;
-	int size;
-	int nc;
-	int mp;
-	double* in;
-	double* out;
-	int ctype;
-	double f_low;
-	double f_high;
-	double rate;
-	FIRCORE p;
+typedef struct _emphp {
+  int run;
+  int position;
+  int size;
+  int nc;
+  int mp;
+  double* in;
+  double* out;
+  int ctype;
+  double f_low;
+  double f_high;
+  double rate;
+  FIRCORE p;
 } emphp, *EMPHP;
 
-extern EMPHP create_emphp (int run, int position, int size, int nc, int mp, 
-	double* in, double* out, int rate, int ctype, double f_low, double f_high);
+extern EMPHP create_emphp (int run, int position, int size, int nc, int mp,
+                           double* in, double* out, int rate, int ctype, double f_low, double f_high);
 
 extern void destroy_emphp (EMPHP a);
 
@@ -73,33 +72,33 @@ __declspec (dllexport) void SetTXAFMPreEmphFreqs(int channel, double low, double
 #endif
 
 /********************************************************************************************************
-*																										*
-*										Overlap-Save FM Pre-Emphasis									*
-*																										*
+*                                                   *
+*                   Overlap-Save FM Pre-Emphasis                  *
+*                                                   *
 ********************************************************************************************************/
 
 #ifndef _emph_h
 #define _emph_h
 
-typedef struct _emph
-{
-	int run;
-	int position;
-	int size;
-	double* in;
-	double* out;
-	int ctype;
-	double f_low;
-	double f_high;
-	double* infilt;
-	double* product;
-	double* mults;
-	double rate;
-	fftw_plan CFor;
-	fftw_plan CRev;
+typedef struct _emph {
+  int run;
+  int position;
+  int size;
+  double* in;
+  double* out;
+  int ctype;
+  double f_low;
+  double f_high;
+  double* infilt;
+  double* product;
+  double* mults;
+  double rate;
+  fftw_plan CFor;
+  fftw_plan CRev;
 } emph, *EMPH;
 
-extern EMPH create_emph (int run, int position, int size, double* in, double* out, int rate, int ctype, double f_low, double f_high);
+extern EMPH create_emph (int run, int position, int size, double* in, double* out, int rate, int ctype, double f_low,
+                         double f_high);
 
 extern void destroy_emph (EMPH a);
 
