@@ -719,8 +719,9 @@ void radio_menu(GtkWidget *parent) {
   row++;
   GtkWidget *region_combo = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "NONE (VFO)");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "UK");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "US");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "UK Channels");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "US Channels");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "WRC15");
   gtk_combo_box_set_active(GTK_COMBO_BOX(region_combo), region);
   my_combo_attach(GTK_GRID(grid), region_combo, 2, row, 1, 1);
   g_signal_connect(region_combo, "changed", G_CALLBACK(region_cb), NULL);

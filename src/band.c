@@ -85,6 +85,14 @@ static BANDSTACK_ENTRY bandstack_entries60_VFO[] = {
   {5363000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
+static BANDSTACK_ENTRY bandstack_entries60_WRC15[] = {
+  {5352750LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
+  {5354000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
+  {5357000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
+  {5360000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
+  {5363000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
+};
+
 static BANDSTACK_ENTRY bandstack_entries60_US[] = {
   {5332000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}, // default channels for
   {5348000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}, // 60m band, US regulations
@@ -438,14 +446,17 @@ static CHANNEL band_channels_60m_UK[UK_CHANNEL_ENTRIES] = {
 // band based on WRC15. There is a single 15 kHz wide "channel"
 //
 static CHANNEL band_channels_60m_VFO[VFO_CHANNEL_ENTRIES] =
+{{5350000LL, 200000LL}};
+
+static CHANNEL band_channels_60m_WRC15[WRC15_CHANNEL_ENTRIES] =
 {{5359000LL, 15000LL}};
 
 static CHANNEL band_channels_60m_US[US_CHANNEL_ENTRIES] = {
-  {5332000LL, 2800LL},
-  {5348000LL, 2800LL},
-  {5358500LL, 2800LL},
-  {5373000LL, 2800LL},
-  {5405000LL, 2800LL}
+  {5331900LL, 2800LL},
+  {5347900LL, 2800LL},
+  {5358400LL, 2800LL},
+  {5372900LL, 2800LL},
+  {5404900LL, 2800LL}
 };
 
 //
@@ -491,6 +502,14 @@ void radio_change_region(int r) {
     bandstack60.entries = VFO_BANDSTACK_ENTRIES;
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_VFO;
+    break;
+
+  case REGION_WRC15:
+    channel_entries = WRC15_CHANNEL_ENTRIES;
+    band_channels_60m = &band_channels_60m_WRC15[0];
+    bandstack60.entries = WRC15_BANDSTACK_ENTRIES;
+    bandstack60.current_entry = 0;
+    bandstack60.entry = bandstack_entries60_WRC15;
     break;
   }
 }

@@ -71,7 +71,8 @@ enum _filter_board_enum {
 enum _region_enum {
   REGION_VFO = 0,  // VFO mode
   REGION_UK,       // 60m band allocation for UK
-  REGION_US        // 60m band allocation for US
+  REGION_US,       // 60m band allocation for US
+  REGION_WRC15     // 60m band allocation for WRC15
 };
 
 enum _capture_state {
