@@ -1376,6 +1376,7 @@ src/saturnserver.o: src/saturndrivers.h src/saturnmain.h src/message.h
 src/screen_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/screen_menu.o: src/receiver.h src/transmitter.h src/new_menu.h src/main.h
 src/screen_menu.o: src/appearance.h src/message.h src/sliders.h src/actions.h
+src/screen_menu.o: src/css.h src/toolset.h
 src/sliders.o: src/appearance.h src/receiver.h src/sliders.h
 src/sliders.o: src/transmitter.h src/actions.h src/mode.h src/filter.h
 src/sliders.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
