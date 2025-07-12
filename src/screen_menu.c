@@ -107,6 +107,12 @@ static gboolean close_cb () {
   return TRUE;
 }
 
+static void reload_css_cb(GtkWidget *widget, gpointer data) {
+  t_print("%s: Reload CSS...\n", __FUNCTION__);
+  load_css();
+}
+
+
 #ifdef __USELESS__
 static void vfo_cb(GtkWidget *widget, gpointer data) {
   my_vfo_layout = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
@@ -305,18 +311,36 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(remove_css_btn, "boldlabel_blue");
   // gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 1, 0, 1, 1);
   g_signal_connect(remove_css_btn, "clicked", G_CALLBACK(remove_css), NULL);
+  //--------------------------------------------------------------------------------------------
+  GtkWidget *reload_css_btn = gtk_button_new_with_label("Reload CSS");
+  gtk_widget_set_tooltip_text(reload_css_btn,
+                              "Reload the deskhpsdr.css file from the working directory\n"
+                              "This allows you to apply edits to the CSS without restarting deskHPSDR\n\n"
+                              "Be aware, a GTK CSS is not identical with a HTML CSS, you need to know, what you do!\n\n"
+                              "There is NO SUPPORT for this special option");
+  gtk_widget_set_name(reload_css_btn, "boldlabel_blue");
+  g_signal_connect(reload_css_btn, "clicked", G_CALLBACK(reload_css_cb), NULL);
 
   //--------------------------------------------------------------------------------------------
   if (file_present(css_filename)) {
     t_print("%s: %s exist\n", __FUNCTION__, css_filename);
+    // Remove CSS Button (Spalte 1, gleiche Zeile)
     gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 1, 0, 1, 1);
     gtk_widget_set_hexpand(remove_css_btn, FALSE);
     gtk_widget_set_vexpand(remove_css_btn, TRUE);
     gtk_widget_set_halign(remove_css_btn, GTK_ALIGN_END);
     gtk_widget_set_valign(remove_css_btn, GTK_ALIGN_CENTER);
     gtk_widget_show(remove_css_btn);
+    // Reload CSS Button (Spalte 0, gleiche Zeile)
+    gtk_grid_attach(GTK_GRID(css_button_grid), reload_css_btn, 0, 0, 1, 1);
+    gtk_widget_set_hexpand(reload_css_btn, FALSE);
+    gtk_widget_set_vexpand(reload_css_btn, TRUE);
+    gtk_widget_set_halign(reload_css_btn, GTK_ALIGN_END);
+    gtk_widget_set_valign(reload_css_btn, GTK_ALIGN_CENTER);
+    gtk_widget_show(reload_css_btn);
   } else {
     t_print("%s: %s don't exist\n", __FUNCTION__, css_filename);
+    // Save CSS Button (Spalte 1, gleiche Zeile)
     gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 1, 0, 1, 1);
     gtk_widget_set_hexpand(save_css_btn, FALSE);
     gtk_widget_set_vexpand(save_css_btn, TRUE);
@@ -325,6 +349,7 @@ void screen_menu(GtkWidget *parent) {
     gtk_widget_show(save_css_btn);
   }
 
+  // CSS button grid
   gtk_widget_show(css_button_grid);
   gtk_grid_insert_column(GTK_GRID(css_button_grid), 0);
   gtk_widget_set_hexpand(css_button_grid, TRUE);
