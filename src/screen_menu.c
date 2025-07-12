@@ -279,7 +279,7 @@ void screen_menu(GtkWidget *parent) {
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   GtkWidget *css_button_grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(css_button_grid), TRUE);
-  gtk_grid_set_row_homogeneous(GTK_GRID(css_button_grid), TRUE);
+  // gtk_grid_set_row_homogeneous(GTK_GRID(css_button_grid), TRUE);
   gtk_grid_set_column_spacing (GTK_GRID(css_button_grid), 5);
   gtk_grid_set_row_spacing (GTK_GRID(css_button_grid), 5);
   //--------------------------------------------------------------------------------------------
@@ -309,15 +309,25 @@ void screen_menu(GtkWidget *parent) {
   //--------------------------------------------------------------------------------------------
   if (file_present(css_filename)) {
     t_print("%s: %s exist\n", __FUNCTION__, css_filename);
-    gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 1, 0, 1, 1);
+    gtk_widget_set_hexpand(remove_css_btn, FALSE);
+    gtk_widget_set_vexpand(remove_css_btn, TRUE);
+    gtk_widget_set_halign(remove_css_btn, GTK_ALIGN_END);
+    gtk_widget_set_valign(remove_css_btn, GTK_ALIGN_CENTER);
     gtk_widget_show(remove_css_btn);
   } else {
     t_print("%s: %s don't exist\n", __FUNCTION__, css_filename);
-    gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 1, 0, 1, 1);
+    gtk_widget_set_hexpand(save_css_btn, FALSE);
+    gtk_widget_set_vexpand(save_css_btn, TRUE);
+    gtk_widget_set_halign(save_css_btn, GTK_ALIGN_END);
+    gtk_widget_set_valign(save_css_btn, GTK_ALIGN_CENTER);
     gtk_widget_show(save_css_btn);
   }
 
   gtk_widget_show(css_button_grid);
+  gtk_grid_insert_column(GTK_GRID(css_button_grid), 0);
+  gtk_widget_set_hexpand(css_button_grid, TRUE);
   gtk_grid_attach(GTK_GRID(grid), css_button_grid, col + 1, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   label = gtk_label_new("Slider Surface\nResize Factor");
