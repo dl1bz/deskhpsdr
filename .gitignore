@@ -20,7 +20,7 @@ hpsdr.png
 DEPEND
 DEPEND.bak
 nr4-install.txt
-./nr4/*
+nr4/*
 hamlib-static/
 MacOS/rigctld_deskhpsdr
 LINUX/rigctld_deskhpsdr
