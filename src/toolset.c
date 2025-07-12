@@ -347,3 +347,7 @@ void to_uppercase(char *str) {
     str++;
   }
 }
+
+int file_present(const char *filename) {
+  return (access(filename, F_OK) == 0) ? 1 : 0;
+}

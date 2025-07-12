@@ -31,6 +31,7 @@
 #include "message.h"
 #include "sliders.h"
 #include "css.h"
+#include "toolset.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *wide_b = NULL;
@@ -291,7 +292,7 @@ void screen_menu(GtkWidget *parent) {
                               "Be aware, a GTK CSS is not identical with a HTML CSS, you need to know, what you do !\n\n"
                               "There is NO SUPPORT for this special option");
   gtk_widget_set_name(save_css_btn, "boldlabel_blue");
-  gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 0, 0, 1, 1);
+  // gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 0, 0, 1, 1);
   g_signal_connect(save_css_btn, "clicked", G_CALLBACK(save_css), NULL);
   //--------------------------------------------------------------------------------------------
   GtkWidget *remove_css_btn = gtk_button_new_with_label("Remove CSS");
@@ -302,11 +303,20 @@ void screen_menu(GtkWidget *parent) {
                               "IF YOU DO THIS, ALL YOUR OWN CHANGES WILL BE LOST !\n\n"
                               "There is NO SUPPORT for this special option");
   gtk_widget_set_name(remove_css_btn, "boldlabel_blue");
-  gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 1, 0, 1, 1);
+  // gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 1, 0, 1, 1);
   g_signal_connect(remove_css_btn, "clicked", G_CALLBACK(remove_css), NULL);
+
   //--------------------------------------------------------------------------------------------
-  gtk_widget_show(save_css_btn);
-  gtk_widget_show(remove_css_btn);
+  if (file_present(css_filename)) {
+    t_print("%s: %s exist\n", __FUNCTION__, css_filename);
+    gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 0, 0, 1, 1);
+    gtk_widget_show(remove_css_btn);
+  } else {
+    t_print("%s: %s don't exist\n", __FUNCTION__, css_filename);
+    gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 0, 0, 1, 1);
+    gtk_widget_show(save_css_btn);
+  }
+
   gtk_widget_show(css_button_grid);
   gtk_grid_attach(GTK_GRID(grid), css_button_grid, col + 1, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
