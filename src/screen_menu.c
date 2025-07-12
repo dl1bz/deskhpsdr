@@ -30,6 +30,7 @@
 #include "appearance.h"
 #include "message.h"
 #include "sliders.h"
+#include "css.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *wide_b = NULL;
@@ -274,6 +275,40 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  GtkWidget *css_button_grid = gtk_grid_new();
+  gtk_grid_set_column_homogeneous(GTK_GRID(css_button_grid), TRUE);
+  gtk_grid_set_row_homogeneous(GTK_GRID(css_button_grid), TRUE);
+  gtk_grid_set_column_spacing (GTK_GRID(css_button_grid), 5);
+  gtk_grid_set_row_spacing (GTK_GRID(css_button_grid), 5);
+  //--------------------------------------------------------------------------------------------
+  GtkWidget *save_css_btn = gtk_button_new_with_label("Save CSS");
+  gtk_widget_set_tooltip_text(save_css_btn,
+                              "Save the hardcoded internal CSS to a file deskhpsdr.css\n"
+                              "in the working directory for editing (e.g. change fonts, colors etc.)\n\n"
+                              "You can edit this saved file and make your own adjustments\n"
+                              "If deskhpsdr detect this file deskhpsdr.css, it will be used instead of the hardcoded CSS defintions\n\n"
+                              "Be aware, a GTK CSS is not identical with a HTML CSS, you need to know, what you do !\n\n"
+                              "There is NO SUPPORT for this special option");
+  gtk_widget_set_name(save_css_btn, "boldlabel_blue");
+  gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 0, 0, 1, 1);
+  g_signal_connect(save_css_btn, "clicked", G_CALLBACK(save_css), NULL);
+  //--------------------------------------------------------------------------------------------
+  GtkWidget *remove_css_btn = gtk_button_new_with_label("Remove CSS");
+  gtk_widget_set_tooltip_text(remove_css_btn,
+                              "Remove the deskhpsdr.css file from the working directory\n"
+                              "Make first a backup of your deskhpsdr.css if exist and used\n"
+                              "This bring back the use of internal, hardcoded CSS defintions\n"
+                              "IF YOU DO THIS, ALL YOUR OWN CHANGES WILL BE LOST !\n\n"
+                              "There is NO SUPPORT for this special option");
+  gtk_widget_set_name(remove_css_btn, "boldlabel_blue");
+  gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 1, 0, 1, 1);
+  g_signal_connect(remove_css_btn, "clicked", G_CALLBACK(remove_css), NULL);
+  //--------------------------------------------------------------------------------------------
+  gtk_widget_show(save_css_btn);
+  gtk_widget_show(remove_css_btn);
+  gtk_widget_show(css_button_grid);
+  gtk_grid_attach(GTK_GRID(grid), css_button_grid, col + 1, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   label = gtk_label_new("Slider Surface\nResize Factor");
   gtk_widget_set_name(label, "boldlabel_blue");

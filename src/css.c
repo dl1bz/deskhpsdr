@@ -23,6 +23,8 @@
 #include "css.h"
 #include "message.h"
 
+const char *css_filename = "deskhpsdr.css";
+
 //////////////////////////////////////////////////////////////////////////////////////////
 //
 // Normally one wants to inherit everything from the GTK theme.
@@ -394,39 +396,65 @@ char *css =
   "    }\n"
   ;
 
-//
-// If CSS loading from a file named deskhpsdr.css is successful, take that
-// Otherwise load the default settings hard-coded above
-//
 void load_css() {
   GtkCssProvider *provider;
   GdkDisplay *display;
   GdkScreen *screen;
   GError *error;
   int rc;
-  provider = gtk_css_provider_new ();
-  display = gdk_display_get_default ();
-  screen = gdk_display_get_default_screen (display);
-  gtk_style_context_add_provider_for_screen (screen,
+  provider = gtk_css_provider_new();
+  display = gdk_display_get_default();
+  screen = gdk_display_get_default_screen(display);
+  gtk_style_context_add_provider_for_screen(screen,
       GTK_STYLE_PROVIDER(provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   error = NULL;
-  rc = gtk_css_provider_load_from_path (provider, "deskhpsdr.css", &error);
+  rc = gtk_css_provider_load_from_path(provider, css_filename, &error);
   g_clear_error(&error);
 
   if (rc) {
-    t_print("%s: CSS data loaded from file deskhpsdr.css\n", __FUNCTION__);
+    t_print("%s: CSS data loaded from file %s\n", __FUNCTION__, css_filename);
   } else {
-    t_print("%s: failed to load CSS data from file deskhpsdr.css\n", __FUNCTION__);
+    t_print("%s: failed to load CSS data from file %s\n", __FUNCTION__, css_filename);
     rc = gtk_css_provider_load_from_data(provider, css, -1, &error);
     g_clear_error(&error);
 
     if (rc) {
-      t_print("%s: hard-wired CSS data successfully loaded\n", __FUNCTION__);
+      t_print("%s: hard-coded CSS data successfully loaded\n", __FUNCTION__);
     } else {
-      t_print("%s: failed to load hard-wired CSS data\n", __FUNCTION__);
+      t_print("%s: failed to load hard-coded CSS data\n", __FUNCTION__);
     }
   }
 
-  g_object_unref (provider);
+  g_object_unref(provider);
+}
+
+void save_css(GtkWidget *widget, gpointer data) {
+  FILE *file = fopen(css_filename, "w");
+
+  if (file == NULL) {
+    t_print("%s: Error opening %s for writing\n", __FUNCTION__, css_filename);
+    return;
+  }
+
+  if (fputs(css, file) == EOF) {
+    t_print("%s: Error writing to %s\n", __FUNCTION__, css_filename);
+  } else {
+    t_print("%s: Hard-coded CSS successfully written to %s\n", __FUNCTION__, css_filename);
+  }
+
+  fclose(file);
+  load_css();
+}
+
+void remove_css(GtkWidget *widget, gpointer data) {
+  int rc = remove(css_filename);
+
+  if (rc == 0) {
+    t_print("%s: %s successfully deleted\n", __FUNCTION__, css_filename);
+  } else {
+    t_print("%s: Error deleting %s\n", __FUNCTION__, css_filename);
+  }
+
+  load_css();
 }
