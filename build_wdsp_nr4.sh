@@ -101,6 +101,7 @@ if [ ! -d "$NR4_DIR/wdsp" ]; then
 else
     echo "Installing patched WDSP library..."
     cd "$NR4_DIR/wdsp"
+    git checkout fe7f2a5b13da20276056b38683ef29a6f6dfba3e
     make NEW_NR_ALGORITHMS=1
     sudo make install
 fi
