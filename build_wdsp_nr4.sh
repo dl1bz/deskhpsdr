@@ -64,7 +64,8 @@ if [ ! -d "$NR4_DIR" ]; then
 fi
 
 cd "$NR4_DIR"
-git clone --depth=1 https://github.com/vu3rdd/rnnoise
+# git clone --depth=1 https://github.com/vu3rdd/rnnoise
+git clone --depth=1 https://github.com/dl1bz/rnnoise
 if [ ! -d "$NR4_DIR/rnnoise" ]; then
     echo "Error: '$NR4_DIR/rnnoise' download error."
     echo "Stopping script $SCRIPT_NAME."
@@ -79,6 +80,7 @@ else
 fi
 
 cd "$NR4_DIR"
+# git clone --depth=1 https://github.com/vu3rdd/libspecbleach
 git clone --depth=1 https://github.com/dl1bz/libspecbleach
 if [ ! -d "$NR4_DIR/libspecbleach" ]; then
     echo "Error: '$NR4_DIR/libspecbleach' download error."
@@ -93,7 +95,8 @@ else
 fi
 
 cd "$NR4_DIR"
-git clone https://github.com/vu3rdd/wdsp
+# git clone https://github.com/vu3rdd/wdsp
+git clone --depth=1 https://github.com/dl1bz/wdsp
 if [ ! -d "$NR4_DIR/wdsp" ]; then
     echo "Error: '$NR4_DIR/wdsp' download error."
     echo "Stopping script $SCRIPT_NAME."
@@ -101,7 +104,8 @@ if [ ! -d "$NR4_DIR/wdsp" ]; then
 else
     echo "Installing patched WDSP library..."
     cd "$NR4_DIR/wdsp"
-    git checkout fe7f2a5b13da20276056b38683ef29a6f6dfba3e
+    # if want using old WDSP 1.25
+    # git checkout fe7f2a5b13da20276056b38683ef29a6f6dfba3e
     make NEW_NR_ALGORITHMS=1
     sudo make install
 fi
