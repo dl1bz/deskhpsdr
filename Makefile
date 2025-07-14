@@ -1151,7 +1151,7 @@ src/bandstack_menu.o: src/transmitter.h src/vfo.h
 src/configure.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/configure.o: src/receiver.h src/transmitter.h src/main.h src/channel.h
 src/configure.o: src/actions.h src/gpio.h src/i2c.h src/message.h
-src/css.o: src/css.h src/message.h
+src/css.o: src/css.h src/message.h src/screen_menu.h src/main.h
 src/cw_menu.o: src/new_menu.h src/pa_menu.h src/band.h src/bandstack.h
 src/cw_menu.o: src/filter.h src/mode.h src/radio.h src/adc.h src/dac.h
 src/cw_menu.o: src/discovered.h src/receiver.h src/transmitter.h
