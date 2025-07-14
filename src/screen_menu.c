@@ -107,6 +107,10 @@ static gboolean close_cb () {
   return TRUE;
 }
 
+void screen_menu_cleanup(void) {
+  cleanup();
+}
+
 static void reload_css_cb(GtkWidget *widget, gpointer data) {
   t_print("%s: Reload CSS...\n", __FUNCTION__);
   load_css();

@@ -20,6 +20,7 @@
 */
 
 extern void screen_menu(GtkWidget *parent);
+extern void screen_menu_cleanup(void);
 extern void schedule_apply(void);
 extern gboolean is_valid_rgb(const char *str);
 extern gboolean is_valid_hex(const char *str);

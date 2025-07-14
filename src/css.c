@@ -22,6 +22,8 @@
 #include <gtk/gtk.h>
 #include "css.h"
 #include "message.h"
+#include "screen_menu.h"
+#include "main.h"
 
 const char *css_filename = "deskhpsdr.css";
 
@@ -468,6 +470,8 @@ void save_css(GtkWidget *widget, gpointer data) {
 
   fclose(file);
   load_css();
+  screen_menu_cleanup();
+  screen_menu(top_window);
 }
 
 void remove_css(GtkWidget *widget, gpointer data) {
@@ -480,4 +484,6 @@ void remove_css(GtkWidget *widget, gpointer data) {
   }
 
   load_css();
+  screen_menu_cleanup();
+  screen_menu(top_window);
 }
