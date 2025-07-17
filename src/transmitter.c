@@ -1888,11 +1888,22 @@ void tx_set_filter(TRANSMITTER *tx) {
   case modeAM:
   case modeSAM:
   case modeSPEC:
-  case modeFMN:
     // disregard the "low" value and use (-high, high)
     // FMN: filtering is applied to the  signal *before* the FM modulator
     tx->filter_low = -high;
     tx->filter_high = high;
+    break;
+
+  case modeFMN:
+    //
+    // FMN: the TX bandpass is applied to the signal *before* the FM modulator.
+    //      While WDSP is (meanwhile) more flexible here, piHPSDR still assumes
+    //      that the max audio frequency used in FMN is 3000 Hz.
+    //      BTW, the FM modulator then contains an additional bandpass filter
+    //      with corner frequencies from Carsons's rule, +/-(Deviation + AudioHighCut)
+    //
+    tx->filter_low = -3000;
+    tx->filter_high = 3000;
     break;
 
   case modeLSB:
