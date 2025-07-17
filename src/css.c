@@ -24,6 +24,7 @@
 #include "message.h"
 #include "screen_menu.h"
 #include "main.h"
+#include "toolset.h"
 
 const char *css_filename = "deskhpsdr.css";
 
@@ -399,54 +400,30 @@ char *css =
   ;
 
 void load_css() {
-  GtkCssProvider *provider;
-  GdkDisplay *display;
-  GdkScreen *screen;
+  GtkCssProvider *provider = gtk_css_provider_new();
+  GdkDisplay *display = gdk_display_get_default();
+  GdkScreen *screen = gdk_display_get_default_screen(display);
   GError *error = NULL;
-  provider = gtk_css_provider_new();
-  display = gdk_display_get_default();
-  screen = gdk_display_get_default_screen(display);
   gtk_style_context_add_provider_for_screen(screen,
       GTK_STYLE_PROVIDER(provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   // 1. Laden aus Datei
   gtk_css_provider_load_from_path(provider, css_filename, &error);
 
-  if (error == NULL) {
+  if (!error) {
     t_print("%s: CSS data loaded from file %s\n", __FUNCTION__, css_filename);
   } else {
-    // Schöne Fehlermeldung extrahieren
-    const char *short_msg = strrchr(error->message, ':');
-
-    if (short_msg != NULL && *(short_msg + 1) != '\0') {
-      short_msg += 1;
-
-      while (*short_msg == ' ') { short_msg++; }  // führende Leerzeichen überspringen
-    } else {
-      short_msg = error->message;
-    }
-
-    t_print("%s: failed to load CSS data from file %s: %s\n", __FUNCTION__, css_filename, short_msg);
+    t_print("%s: failed to load CSS data from file %s: %s\n",
+            __FUNCTION__, css_filename, extract_short_msg(error->message));
     g_clear_error(&error);
-    error = NULL;
     // 2. Laden aus Hardcoded-String
     gtk_css_provider_load_from_data(provider, css, -1, &error);
 
-    if (error == NULL) {
+    if (!error) {
       t_print("%s: hard-coded CSS data successfully loaded\n", __FUNCTION__);
     } else {
-      // Auch hier Fehlermeldung schöner machen
-      short_msg = strrchr(error->message, ':');
-
-      if (short_msg != NULL && *(short_msg + 1) != '\0') {
-        short_msg += 1;
-
-        while (*short_msg == ' ') { short_msg++; }
-      } else {
-        short_msg = error->message;
-      }
-
-      t_print("%s: failed to load hard-coded CSS data: %s\n", __FUNCTION__, short_msg);
+      t_print("%s: failed to load hard-coded CSS data: %s\n",
+              __FUNCTION__, extract_short_msg(error->message));
       g_clear_error(&error);
     }
   }

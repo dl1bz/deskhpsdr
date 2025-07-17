@@ -351,3 +351,17 @@ void to_uppercase(char *str) {
 int file_present(const char *filename) {
   return (access(filename, F_OK) == 0) ? 1 : 0;
 }
+
+const char* extract_short_msg(const char *msg) {
+  const char *s = strrchr(msg, ':');
+
+  if (s && *(s + 1)) {
+    s += 1;
+
+    while (*s == ' ') { s++; }
+  } else {
+    s = msg;
+  }
+
+  return s;
+}

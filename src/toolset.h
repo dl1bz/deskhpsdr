@@ -36,5 +36,6 @@ extern char* truncate_text_3p(const char* text, size_t max_length);
 extern gboolean check_and_run_idle_cb(gpointer data);
 extern void to_uppercase(char *str);
 extern int file_present(const char *filename);
+extern const char* extract_short_msg(const char *msg);
 
 #endif // _TOOLSET_H
