@@ -571,7 +571,7 @@ void new_menu() {
     GtkWidget *band_b = gtk_button_new_with_label("Band");
     g_signal_connect (band_b, "button-press-event", G_CALLBACK(band_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), band_b, col, row++, 1, 1);
-    GtkWidget *bstk_b = gtk_button_new_with_label("BndStack");
+    GtkWidget *bstk_b = gtk_button_new_with_label("BandStack");
     g_signal_connect (bstk_b, "button-press-event", G_CALLBACK(bstk_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), bstk_b, col, row++, 1, 1);
     GtkWidget *mode_b = gtk_button_new_with_label("Mode");
