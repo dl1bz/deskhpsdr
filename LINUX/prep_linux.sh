@@ -120,6 +120,7 @@ sudo apt-get --yes install pulseaudio
 sudo apt-get --yes install libpcap-dev
 sudo apt-get --yes install libjson-c-dev
 sudo apt-get --yes install gnome-themes-extra
+sudo apt-get --yes install libwebsockets-dev
 
 # ----------------------------------------------
 # Install standard libraries necessary for SOAPY

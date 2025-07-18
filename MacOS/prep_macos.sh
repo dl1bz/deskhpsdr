@@ -134,6 +134,7 @@ $BREW install fftw
 $BREW install openssl@3
 $BREW install libusb
 $BREW install json-c
+$BREW install libwebsockets
 ################################################################
 #
 # This is for the SoapySDR universe
