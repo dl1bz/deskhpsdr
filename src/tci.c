@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
 
 #ifdef __APPLE__
   #include <time.h>
