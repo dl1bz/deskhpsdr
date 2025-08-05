@@ -160,6 +160,15 @@ sudo ldconfig
 
 elif  [ "$(grep -Ei 'fedora' /etc/*release)" ]; then
 
+################################################################
+#
+# Fedora installation support added by Heath, NQ7T  - not by me
+#
+# I (DL1BZ) don't give any support as Maintainer of the deskHPSDR project
+# for *not* Debian based distributions !
+#
+################################################################
+
 sudo dnf group install -y c-development
 sudo dnf -y install git gcc-gfortran gettext cppcheck dos2unix \
 libzstd-devel python3-devel fftw-devel gtk3-devel \
