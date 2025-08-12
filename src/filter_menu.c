@@ -390,6 +390,13 @@ void filter_menu(GtkWidget *parent) {
       }
 
       w = gtk_toggle_button_new_with_label(band_filters[i].title);
+
+      if ((m == modeDIGL || m == modeDIGU) && g_strcmp0(band_filters[i].title, "2.0k") == 0) {
+        char ext_label[32];
+        g_snprintf(ext_label, sizeof(ext_label), "%s/RADEV1", band_filters[i].title);
+        gtk_button_set_label(GTK_BUTTON(w), ext_label);
+      }
+
       gtk_widget_set_name(w, "small_toggle_button");
       choice = g_new(CHOICE, 1);
       choice->next = first;
