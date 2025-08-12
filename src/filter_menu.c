@@ -332,7 +332,7 @@ void filter_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   char title[64];
-  snprintf(title, 64, "%s - Filter (RX%d VFO-%s)", PGNAME, id + 1, id == 0 ? "A" : "B");
+  snprintf(title, 64, "%s - Set RX Filter %s (RX%d VFO-%s)", PGNAME, mode_string[m], id + 1, id == 0 ? "A" : "B");
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -352,6 +352,8 @@ void filter_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 2, 1);
   //-----------------------------------------------------------------------------------------
   rxtx_filter_btn = gtk_check_button_new_with_label("TX uses RX filter");
+  gtk_widget_set_tooltip_text(rxtx_filter_btn,
+                              "Set TX filter = RX filter\nOtherwise the TX filter must be set\nin the TX Menu");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rxtx_filter_btn), transmitter->use_rx_filter == 1 ? 1 : 0);
   g_signal_connect(rxtx_filter_btn, "toggled", G_CALLBACK(rxtx_filter_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), rxtx_filter_btn, 2, 0, 3, 1);
@@ -410,6 +412,10 @@ void filter_menu(GtkWidget *parent) {
       }
 
       w = gtk_toggle_button_new_with_label(band_filters[i].title);
+      char filter_desc[64];
+      snprintf(filter_desc, sizeof(filter_desc), "Low  cutoff: %d Hz\nHigh cutoff: %d Hz", band_filters[i].low,
+               band_filters[i].high);
+      gtk_widget_set_tooltip_text(w, filter_desc);
 
       if ((m == modeDIGL || m == modeDIGU) && g_strcmp0(band_filters[i].title, "2.0k") == 0) {
         char ext_label[32];
