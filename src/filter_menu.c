@@ -311,11 +311,24 @@ static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+static void rxtx_filter_cb(GtkToggleButton *btn, gpointer user_data) {
+  int mode = vfo_get_tx_mode();
+  int v = gtk_toggle_button_get_active(btn) ? 1 : 0;
+  transmitter->use_rx_filter = v;
+  tx_set_filter(transmitter);     // Filter neu setzen
+#if defined (__LDESK__) && defined (__CPYMODE__)
+  mode_settings[mode].use_rx_filter = v;
+  copy_mode_settings(mode);
+#endif
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 void filter_menu(GtkWidget *parent) {
   int id = active_receiver->id;
   int f = vfo[id].filter;
   int m = vfo[id].mode;
   GtkWidget *w;
+  GtkWidget *rxtx_filter_btn;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   char title[64];
@@ -332,10 +345,17 @@ void filter_menu(GtkWidget *parent) {
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
   gtk_grid_set_column_spacing (GTK_GRID(grid), 5);
   gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  //-----------------------------------------------------------------------------------------
   w = gtk_button_new_with_label("Close");
   gtk_widget_set_name(w, "close_button");
   g_signal_connect (w, "button-press-event", G_CALLBACK(close_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 4, 1);
+  gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 2, 1);
+  //-----------------------------------------------------------------------------------------
+  rxtx_filter_btn = gtk_check_button_new_with_label("TX uses RX filter");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rxtx_filter_btn), transmitter->use_rx_filter == 1 ? 1 : 0);
+  g_signal_connect(rxtx_filter_btn, "toggled", G_CALLBACK(rxtx_filter_cb), NULL);
+  gtk_grid_attach(GTK_GRID(grid), rxtx_filter_btn, 2, 0, 3, 1);
+  //-----------------------------------------------------------------------------------------
   FILTER* band_filters = filters[m];
 
   if (m == modeFMN) {
