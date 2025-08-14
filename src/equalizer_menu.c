@@ -57,7 +57,7 @@ static void cleanup() {
     int _mode = vfo_get_tx_mode();
 
     if (_mode < 3 && can_transmit) {
-      showSaveDialog();
+      showAudioProfileSaveDialog();
       // audioSaveProfile();
     }
 

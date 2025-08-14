@@ -365,3 +365,58 @@ const char* extract_short_msg(const char *msg) {
 
   return s;
 }
+
+#if defined (__HAVEATU__)
+static gboolean show_NOTUNE_dialog_cb(gpointer user_data) {
+  GtkWindow *parent = GTK_WINDOW(user_data); // falls NULL → freischwebend
+  GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(win), "deskHPSDR - CAT/TCI Message");
+  gtk_window_set_default_size(GTK_WINDOW(win), 400, 100);
+
+  if (parent) {
+    gtk_window_set_transient_for(GTK_WINDOW(win), parent);
+    gtk_window_set_modal(GTK_WINDOW(win), TRUE);
+  }
+
+  gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
+  // Fenster auf Position x=100, y=100 bewegen
+  gtk_window_move(GTK_WINDOW(win), 100, 100);
+  GtkWidget *grid = gtk_grid_new();
+  gtk_container_add(GTK_CONTAINER(win), grid);
+  gtk_container_set_border_width(GTK_CONTAINER(win), 20);
+  // gleiche Verteilung der Zeilen und Spalten
+  gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  GtkWidget *label = gtk_label_new("ANT NOT TUNED - TX NOT ALLOWED - PTT BLOCKED");
+  // Schriftart anpassen
+  PangoFontDescription *font_desc = pango_font_description_from_string("Arial 18");
+  gtk_widget_override_font(label, font_desc);
+  pango_font_description_free(font_desc);
+  // Labelfarbe soll rot sein → aber nur hier
+  GdkRGBA red;
+  gdk_rgba_parse(&red, "red");
+  gtk_widget_override_color(label, GTK_STATE_FLAG_NORMAL, &red);
+  int row = 0;
+  // Label horizontal & vertikal zentrieren
+  gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, row++, 2, 1);
+  GtkWidget *ok_btn = gtk_button_new_with_label("CONFIRM");
+  g_signal_connect_swapped(ok_btn, "clicked", G_CALLBACK(gtk_widget_destroy), win);
+  // Button horizontal & vertikal zentrieren
+  gtk_widget_set_halign(ok_btn, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(ok_btn, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(grid), ok_btn, 0, row++, 2, 1);
+  // Fensterdekorationen entfernen → mit Vorsicht verwenden, kann u.U. Probleme verursachen
+  gtk_window_set_decorated(GTK_WINDOW(win), TRUE);
+  // es ist nicht zulässig/möglich, das Fenster in den Fokus zu "zwingen"
+  gtk_widget_show_all(win);
+  gtk_window_present_with_time(GTK_WINDOW(win), gtk_get_current_event_time());
+  return G_SOURCE_REMOVE; // nur einmal ausführen
+}
+
+void show_NOTUNE_dialog(GtkWindow *parent) {
+  g_idle_add(show_NOTUNE_dialog_cb, parent);
+}
+#endif
+

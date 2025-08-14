@@ -22,5 +22,5 @@
 extern void tx_menu(GtkWidget *parent);
 extern void set_tune(double value);
 extern void audioSaveProfile(void);
-extern void showSaveDialog(void);
+extern void showAudioProfileSaveDialog(void);
 extern void local_input_changed_cb(GtkWidget *widget, gpointer data);

@@ -379,7 +379,7 @@ gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer d
   return FALSE;
 }
 
-void showSaveDialog() {
+void showAudioProfileSaveDialog() {
   GtkWidget *aprof_dialog_win;
   GtkWidget *grid;
   GtkWidget *label;

@@ -71,6 +71,8 @@
 #include "zoompan.h"
 #include "message.h"
 #include "startup.h"
+#include "toolset.h"
+#include "main.h"
 
 #include <math.h>
 
@@ -235,6 +237,8 @@ static gboolean update_serptt_cts(gpointer user_data) {
       // Wenn der Sender gestimmt ist, wird eine Funktion mit Idle hinzugefügt
       if (transmitter->is_tuned) {
         g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+      } else {
+        show_NOTUNE_dialog(GTK_WINDOW(top_window));
       }
 
 #else
@@ -6899,7 +6903,16 @@ int parse_cmd(void *data) {
       //ENDDEF
       // set transceiver to TX mode
       if (command[2] == ';') {
+#if defined (__HAVEATU__)
+        if (transmitter->is_tuned) {
+          radio_mox_update(1);
+        } else {
+          radio_mox_update(0);
+          show_NOTUNE_dialog(GTK_WINDOW(top_window));
+        }
+#else
         radio_mox_update(1);
+#endif
       }
 
       break;
