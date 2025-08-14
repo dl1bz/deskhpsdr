@@ -6904,12 +6904,14 @@ int parse_cmd(void *data) {
       // set transceiver to TX mode
       if (command[2] == ';') {
 #if defined (__HAVEATU__)
+
         if (transmitter->is_tuned) {
           radio_mox_update(1);
         } else {
           radio_mox_update(0);
           show_NOTUNE_dialog(GTK_WINDOW(top_window));
         }
+
 #else
         radio_mox_update(1);
 #endif
