@@ -594,7 +594,7 @@ void new_menu() {
     g_signal_connect (rx_b, "button-press-event", G_CALLBACK(rx_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), rx_b, col, row, 1, 1);
     row++;
-    GtkWidget *filter_b = gtk_button_new_with_label("Filter");
+    GtkWidget *filter_b = gtk_button_new_with_label("RX Filter");
     g_signal_connect (filter_b, "button-press-event", G_CALLBACK(filter_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), filter_b, col, row, 1, 1);
     row++;

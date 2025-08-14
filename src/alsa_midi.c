@@ -39,7 +39,7 @@
  */
 
 #include <gtk/gtk.h>
-
+#include <errno.h>
 #include "actions.h"
 #include "midi.h"
 #include "midi_menu.h"

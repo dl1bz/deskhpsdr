@@ -806,7 +806,7 @@ static void bbcompr_btn_toggle_cb(GtkWidget *widget, gpointer data) {
     transmitter->compressor = v;
   }
 
-  mode_settings[mode].compressor_level = v;
+  mode_settings[mode].compressor = v;
   copy_mode_settings(mode);
   tx_set_compressor(transmitter);
   g_idle_add(ext_vfo_update, NULL);

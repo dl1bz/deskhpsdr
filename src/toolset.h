@@ -37,5 +37,8 @@ extern gboolean check_and_run_idle_cb(gpointer data);
 extern void to_uppercase(char *str);
 extern int file_present(const char *filename);
 extern const char* extract_short_msg(const char *msg);
+#if defined (__HAVEATU__)
+  extern void show_NOTUNE_dialog(GtkWindow *parent);
+#endif
 
 #endif // _TOOLSET_H

@@ -159,8 +159,26 @@ make -j$(nproc)
 sudo make install
 sudo ldconfig
 
+elif  [ "$(grep -Ei 'fedora' /etc/*release)" ]; then
+
+################################################################
+#
+# Fedora installation support added by Heath, NQ7T  - not by me
+#
+# I (DL1BZ) don't give any support as Maintainer of the deskHPSDR project
+# for *not* Debian based distributions !
+#
+################################################################
+
+sudo dnf group install -y c-development
+sudo dnf -y install git gcc-gfortran gettext cppcheck dos2unix \
+libzstd-devel python3-devel fftw-devel gtk3-devel \
+openssl-devel alsa-lib-devel libcurl-devel  libusb1-devel \
+libgpiod-devel  pulseaudio-libs-devel  libpcap-devel  \
+json-c-devel  gnome-themes-extra  SoapySDR-devel
+
 else
-	echo "This script is only for Debian based or similiar LINUX distributions"
+	echo "This script is only for Debian and Fedora based or similiar LINUX distributions"
 	echo "You need to prepare your Linux system by another way or manually."
 	echo "Here we can't help, sorry...exiting this script"
 	exit 1

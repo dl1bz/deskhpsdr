@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
 
 #ifdef __APPLE__
   #include <time.h>
@@ -47,6 +48,7 @@
 #include "ext.h"
 #include "message.h"
 #include "toolset.h"
+#include "main.h"
 
 #define MAX_TCI_CLIENTS 5
 #define MAXDATASIZE     1024
@@ -1101,30 +1103,30 @@ static gpointer tci_listener(gpointer data) {
         //
         if (!strcmp(arg[0], "trx_count")) {
           tci_send_trx_count(client);
-        } else if (!strcmp(arg[0], "trx")) {
-          if (argc > 2 && arg[1] != NULL && arg[2] != NULL) {
-            if (!strcmp(arg[2], "true")) {
+        } else if (!strcmp(arg[0], "trx")) {                          // get command [trx]
+          if (argc > 2 && arg[1] != NULL && arg[2] != NULL) {         // prüfe auf evtl. Parameter
+            if (!strcmp(arg[2], "true")) {                            // wenn trx = true, also TX aktivieren
 #if defined (__HAVEATU__)
-
-              if (transmitter->is_tuned) {
-                g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+              if (transmitter->is_tuned) {                            // nur wenn vorher geTUNEd wurde !
+                g_idle_add(ext_mox_update, GINT_TO_POINTER(1));       // TX EIN
                 t_print("TCI%d TX request valid - TX is tuned\n", client->seq);
               } else {
-                tci_send_mox(client);
+                tci_send_mox(client);                                 // sonst einfach TX Status AUS zurück
                 t_print("TCI%d TX request invalid - TX not tuned\n", client->seq);
+                show_NOTUNE_dialog(GTK_WINDOW(top_window));
               }
 
 #else
-              g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
+              g_idle_add(ext_mox_update, GINT_TO_POINTER(1));         // TX EIN
               t_print("TCI%d TX request\n", client->seq);
 #endif
             } else {
               // g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
-              g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(0));
+              g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(0));  // TX AUS nach 50ms Delay
               t_print("TCI%d RX request\n", client->seq);
             }
           } else {
-            tci_send_mox(client);
+            tci_send_mox(client); // wenn keine Parameter mitgesendet, einfach nur TX Status zurück
           }
         } else if (!strcmp(arg[0], "rx_sensors_enable") && argc > 1) {
           // MLDX originally sent '1/0' instead of 'true/false'
