@@ -2713,6 +2713,8 @@ static void radio_restore_state() {
   // For consistency, all variables should get default values HERE,
   // but this is too much for the moment.
   //
+  GetPropF0("slider_surface_scale",                          slider_surface_scale);
+  GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
   GetPropI0("display_info_bar",                              display_info_bar);
@@ -2754,8 +2756,6 @@ static void radio_restore_state() {
   }
 
   GetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
-  GetPropF0("slider_surface_scale",                          slider_surface_scale);
-  GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("enable_auto_tune",                              enable_auto_tune);
   GetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
   GetPropI0("radio_sample_rate",                             radio_sample_rate);
@@ -2965,6 +2965,8 @@ void radio_save_state() {
   // Obtain window position and save in props file
   //
   gtk_window_get_position(GTK_WINDOW(top_window), &window_x_pos, &window_y_pos);
+  SetPropF0("slider_surface_scale",                          slider_surface_scale);
+  SetPropF0("percent_pan_wf",                                percent_pan_wf);
   SetPropI0("WindowPositionX",                               window_x_pos);
   SetPropI0("WindowPositionY",                               window_y_pos);
   //
@@ -2991,8 +2993,6 @@ void radio_save_state() {
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   SetPropI0("capture_max",                                   capture_max);
   SetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
-  SetPropF0("slider_surface_scale",                          slider_surface_scale);
-  SetPropF0("percent_pan_wf",                                percent_pan_wf);
   //
   // TODO: I think some further options related to the GUI
   // have to be moved up here for Client-Server operation

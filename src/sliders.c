@@ -1089,22 +1089,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //
   int twidth, swidth, bwidth, tpix;
   int t1pos, t2pos, t3pos;
-#if defined (__LDESK__)
   int s1pos, s2pos, s3pos, l_col;
-  double l_scale_factor;
-#else
-  int s1pos, s2pos, s3pos, sqpos;
-#endif
   int b1pos, b2pos, b3pos;
   const char *csslabel;
 
   if (width < 1024) {
     tpix   =  width / 9;
-#if defined (__LDESK__)
   } else if (width < 1441) {
-#else
-  } else if (width < 1280) {
-#endif
     tpix   =  width / 12;
   } else {
     tpix   =  width / 15;
@@ -1125,7 +1116,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   int lbl_w_fix = width / 23; // Label_width fixed now
   slider_surface_scale = (slider_surface_scale < 1.0) ? 1.0 : (slider_surface_scale > 6.5 ? 6.5 : slider_surface_scale);
-  l_scale_factor = slider_surface_scale;
+  double l_scale_factor = (double)slider_surface_scale;
   int sl_w_fix = width / l_scale_factor; // slider_width fixed now, default 5.0 if Linux and 4.1 if macOS
   t_print("%s: slider_surface_scale: %f l_scale_factor: %f\n", __FUNCTION__, slider_surface_scale, l_scale_factor);
   // DL1BZ, 19.3.2025:
