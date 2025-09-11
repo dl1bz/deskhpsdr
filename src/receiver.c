@@ -1531,6 +1531,22 @@ void rx_set_analyzer(const RECEIVER *rx) {
               span_max_freq,                        // frequency at last pixel value
               max_w                                 // max samples to hold in input ring buffers
              );
+  //
+  // The spectrum is normalized to a "bin width" of sample_rate / afft_size,
+  // which is smaller than the frequency width of one pixel which is sample_rate / (width * zoom).
+  //
+  // A normalization to "1 pixel" is accomplished with the following two calls. Note the noise
+  // floor then depends on the zoom factor (that is, the frequency width of one pixel)
+  //
+  SetDisplayNormOneHz(rx->id, 0, 1);
+  SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
+  //
+  // In effect, this "lifts" the spectrum (in dB) by 10*log10(afft_size/(width*zoom)).
+  //
+  // One can also normalise to 1 Hz,in the case the second parameter to SetDisplaySampleRate
+  // must be (the true) rx->sample_rate, then WDSP adds 10*log10(afft_size/sample_rate) which
+  // normally means the spectrum is down-shifted quite a bit.
+  //
 }
 
 void rx_off(const RECEIVER *rx) {
