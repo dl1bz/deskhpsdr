@@ -1755,17 +1755,23 @@ static void process_control_bytes() {
     adc0_overload |= control_in[1] & 0x01;
     adc1_overload |= control_in[2] & 0x01;
 
-    if (mercury_software_version[0] != control_in[1] >> 1 && control_in[1] >> 1 != 0x7F) {
-      mercury_software_version[0] = control_in[1] >> 1;
-      t_print("  Mercury 1 Software version: %d.%d\n", mercury_software_version[0] / 10, mercury_software_version[0] % 10);
-      receiver[0]->adc = 0;
-    }
+    if (device == DEVICE_METIS || device == DEVICE_OZY) {
+      //
+      // If  Mercury card #1 is reported, assign RX1 with the first card (ADC1)
+      // If  Mercury card #2 is reported, assign RX2 with the first card (ADC2)
+      //
+      if (mercury_software_version[0] != control_in[1] >> 1 && control_in[1] >> 1 != 0x7F) {
+        mercury_software_version[0] = control_in[1] >> 1;
+        t_print("  Mercury 1 Software version: %d.%d\n", mercury_software_version[0] / 10, mercury_software_version[0] % 10);
+        receiver[0]->adc = 0;
+      }
 
-    if (mercury_software_version[1] != control_in[2] >> 1 && control_in[2] >> 1 != 0x7F) {
-      mercury_software_version[1] = control_in[2] >> 1;
-      t_print("  Mercury 2 Software version: %d.%d\n", mercury_software_version[1] / 10, mercury_software_version[1] % 10);
+      if (mercury_software_version[1] != control_in[2] >> 1 && control_in[2] >> 1 != 0x7F) {
+        mercury_software_version[1] = control_in[2] >> 1;
+        t_print("  Mercury 2 Software version: %d.%d\n", mercury_software_version[1] / 10, mercury_software_version[1] % 10);
 
-      if (receivers > 1) { receiver[1]->adc = 1; }
+        if (receivers > 1) { receiver[1]->adc = 1; }
+      }
     }
   }
 }
