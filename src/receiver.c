@@ -1492,9 +1492,10 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const double span_min_freq = 0.0;
   const double span_max_freq = 0.0;
   const int clip = 0;
-  const int window_type = 5;
+  const int window_type = 2; // 5 = Kaiser, 2 = Hann
   const int afft_size = 16384;
   const int pixels = rx->pixels;
+  const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
   int overlap;
   int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
                                     keep_time * (double) afft_size * (double) rx->fps);
@@ -1510,7 +1511,8 @@ void rx_set_analyzer(const RECEIVER *rx) {
     fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
   }
 
-  t_print("RX SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d\n", rx->id, rx->buffer_size, overlap, rx->pixels);
+  t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d\n", rx->id, rx->buffer_size,
+          overlap, rx->pixels, window_type);
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination
@@ -1538,7 +1540,11 @@ void rx_set_analyzer(const RECEIVER *rx) {
   // A normalization to "1 pixel" is accomplished with the following two calls. Note the noise
   // floor then depends on the zoom factor (that is, the frequency width of one pixel)
   //
-  SetDisplayNormOneHz(rx->id, 0, 1);
+  // WDSP: void SetDisplayNormOneHz (int disp, int pixout, int norm)
+  // disp: identifier for the Display.
+  // pixout: identifier of the pixel output for which the parameter is being set.
+  // norm: 0 = do not normalize; 1 = normalize to one Hz bandwidth.
+  SetDisplayNormOneHz(rx->id, 0, Pan_NormOneHz);
   SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
   //
   // In effect, this "lifts" the spectrum (in dB) by 10*log10(afft_size/(width*zoom)).
@@ -1547,6 +1553,9 @@ void rx_set_analyzer(const RECEIVER *rx) {
   // must be (the true) rx->sample_rate, then WDSP adds 10*log10(afft_size/sample_rate) which
   // normally means the spectrum is down-shifted quite a bit.
   //
+  // SetDisplaySampleRate(rx->id, rx->sample_rate);
+  t_print("RX:WDSP SetDisplaySampleRate rx->id=%d rx->width=%d rx->zoom=%d rx->sample_rate=%d\n", rx->id, rx->width,
+          rx->zoom, rx->sample_rate);
 }
 
 void rx_off(const RECEIVER *rx) {
