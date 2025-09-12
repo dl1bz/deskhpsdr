@@ -121,6 +121,17 @@
 #define COLOUR_GRAD3_WEAK    0.50, 0.50, 0.00, 1.00 // Default: 0.50, 0.50, 0.00, 1.00
 #define COLOUR_GRAD4_WEAK    0.50, 0.00, 0.00, 1.00 // Default: 0.50, 0.00, 0.00, 1.00
 
+#define GRAD_GREEN           0.00, 1.00, 0.00, 1.00 // Default: 0.00, 1.00, 0.00, 1.0
+#define GRAD_ORANGE          1.00, 0.66, 0.00, 1.00 // Default: 1.00, 0.66, 0.00, 1.00
+#define GRAD_YELLOW          1.00, 1.00, 0.00, 1.00 // Default: 1.00, 1.00, 0.00, 1.00
+#define GRAD_RED             1.00, 0.00, 0.00, 1.00 // Default: 1.00, 0.00, 0.00, 1.00
+#define GRAD_PURPLE          0.75, 0.25, 1.00, 1.00 // kräftiges Lila
+#define GRAD_GREEN_WEAK      0.00, 0.50, 0.00, 1.00 // Default: 0.00, 0.50, 0.00, 1.00
+#define GRAD_ORANGE_WEAK     0.50, 0.33, 0.00, 1.00 // Default: 0.50, 0.33, 0.00, 1.00
+#define GRAD_YELLOW_WEAK     0.50, 0.50, 0.00, 1.00 // Default: 0.50, 0.50, 0.00, 1.00
+#define GRAD_RED_WEAK        0.50, 0.00, 0.00, 1.00 // Default: 0.50, 0.00, 0.00, 1.00
+#define GRAD_PURPLE_WEAK     0.40, 0.20, 0.50, 1.00 // Lila abgeschwächt
+
 #define COLOUR_ORANGE        1.00, 0.65, 0.00, 1.00 // orange
 #define COLOUR_WHITE         1.00, 1.00, 1.00, 1.00 // white
 #define COLOUR_DBLUE         0.00, 0.00, 1.00, 1.00 // blue

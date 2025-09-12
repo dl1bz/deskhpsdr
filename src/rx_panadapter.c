@@ -240,7 +240,7 @@ void get_local_time(char *zeitString, size_t groesse) {
 
 static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
   int value = (((int)noise_value / 10) - ((int)noise_value % 10 != 0 ? 1 : 0)) * 10 + offset_db;
-  value = (value > -100) ? -100 : (value < -220) ? -220 : value;
+  value = (value > -95) ? -95 : (value < -220) ? -220 : value;
   return value;
 }
 
@@ -598,30 +598,57 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   if (rx->display_gradient) {
     gradient = cairo_pattern_create_linear(0.0, myheight, 0.0, 0.0);
-    // calculate where S9 is
-    double S9 = -73;
+    // calculate where S9 is as gradient offset (0.0 = bottom, 1.0 = top)
+    double denom = (double)rx->panadapter_high - (double)rx->panadapter_low;
 
-    if (vfo[rx->id].frequency > 30000000LL) {
-      S9 = -93;
-    }
+    if (denom <= 0.0) { denom = 1.0; } // Fallback, falls high<=low
 
-    S9 = floor((rx->panadapter_high - S9)
-               * (double) myheight
-               / (rx->panadapter_high - rx->panadapter_low));
-    S9 = 1.0 - (S9 / (double)myheight);
+    double S9 = ( (vfo[rx->id].frequency > 30000000LL) ? -93.0 : -73.0 );
+    S9 += 10; // 10db nach oben schieben
+    S9 = (S9 - (double)rx->panadapter_low) / denom;
+    S9 = (S9 < 0.0) ? 0.0 : (S9 > 1.0) ? 1.0 : S9;
+    t_print("S9(off)=%.6f low=%d high=%d h=%d\n",
+            S9, rx->panadapter_low, rx->panadapter_high, myheight);
 
     if (active) {
-      cairo_pattern_add_color_stop_rgba(gradient, 0.0,         COLOUR_GRAD1);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 / 3.0,      COLOUR_GRAD2);
-      cairo_pattern_add_color_stop_rgba(gradient, (S9 / 3.0) * 2.0, COLOUR_GRAD3);
-      cairo_pattern_add_color_stop_rgba(gradient, S9,          COLOUR_GRAD4);
+      cairo_pattern_add_color_stop_rgba(gradient, 0.0,       GRAD_GREEN);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.20, GRAD_YELLOW);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.55, GRAD_ORANGE);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.80, GRAD_RED);
+      cairo_pattern_add_color_stop_rgba(gradient, S9,        GRAD_PURPLE);
     } else {
-      cairo_pattern_add_color_stop_rgba(gradient, 0.0,         COLOUR_GRAD1_WEAK);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 / 3.0,      COLOUR_GRAD2_WEAK);
-      cairo_pattern_add_color_stop_rgba(gradient, (S9 / 3.0) * 2.0, COLOUR_GRAD3_WEAK);
-      cairo_pattern_add_color_stop_rgba(gradient, S9,          COLOUR_GRAD4_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, 0.0,       GRAD_GREEN_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.20, GRAD_YELLOW_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.55, GRAD_ORANGE_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.80, GRAD_RED_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, S9,        GRAD_PURPLE_WEAK);
     }
 
+    /*
+        // calculate where S9 is
+        double S9 = -73;
+
+        if (vfo[rx->id].frequency > 30000000LL) {
+          S9 = -93;
+        }
+
+        S9 = floor((rx->panadapter_high - S9)
+                   * (double) myheight
+                   / (rx->panadapter_high - rx->panadapter_low));
+        S9 = 1.0 - (S9 / (double)myheight);
+
+    if (active) {
+      cairo_pattern_add_color_stop_rgba(gradient, 0.0,              GRAD_GREEN);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 / 3.0,         GRAD_YELLOW);
+      cairo_pattern_add_color_stop_rgba(gradient, (S9 / 3.0) * 2.0, GRAD_ORANGE);
+      cairo_pattern_add_color_stop_rgba(gradient, S9,               GRAD_RED);
+    } else {
+      cairo_pattern_add_color_stop_rgba(gradient, 0.0,              GRAD_GREEN_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, S9 / 3.0,         GRAD_YELLOW_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, (S9 / 3.0) * 2.0, GRAD_ORANGE_WEAK);
+      cairo_pattern_add_color_stop_rgba(gradient, S9,               GRAD_RED_WEAK);
+    }
+    */
     cairo_set_source(cr, gradient);
   } else {
     //
