@@ -1222,6 +1222,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_range_set_increments (GTK_RANGE(agc_scale), 1.0, 1.0);
     gtk_range_set_value (GTK_RANGE(agc_scale), (double)active_receiver->agc_gain);
     gtk_grid_attach(GTK_GRID(sliders), agc_scale, s2pos, 0, swidth, 1);
+
+    for (double agc_mark = -20.0; agc_mark <= 120.0; agc_mark += 20.0) {
+      gtk_scale_add_mark(GTK_SCALE(agc_scale), agc_mark, GTK_POS_TOP, NULL);
+    }
+
+    gtk_widget_set_tooltip_text(agc_scale,
+                                "AGC of the currently active receiver.\n"
+                                "Adjust coral colored horizontal line\n"
+                                "slightly above the noise floor.");
   }
 
   gtk_widget_set_halign(agc_scale, GTK_ALIGN_CENTER);

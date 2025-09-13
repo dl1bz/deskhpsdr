@@ -126,6 +126,10 @@
 #define GRAD_YELLOW          1.00, 1.00, 0.00, 1.00 // Default: 1.00, 1.00, 0.00, 1.00
 #define GRAD_RED             1.00, 0.00, 0.00, 1.00 // Default: 1.00, 0.00, 0.00, 1.00
 #define GRAD_PURPLE          0.75, 0.25, 1.00, 1.00 // kräftiges Lila
+#define GRAD_LI_BLUE         0.00, 0.53, 1.00, 1.00 // light blue
+#define GRAD_LI_PINK         1.00, 0.71, 0.76, 1.00 // light pink
+#define GRAD_ORCHID          0.70, 0.23, 0.93, 1.00 // orchid
+#define GRAD_CORAL           1.00, 0.50, 0.31, 1.00 // coral
 #define GRAD_GREEN_WEAK      0.00, 0.50, 0.00, 1.00 // Default: 0.00, 0.50, 0.00, 1.00
 #define GRAD_ORANGE_WEAK     0.50, 0.33, 0.00, 1.00 // Default: 0.50, 0.33, 0.00, 1.00
 #define GRAD_YELLOW_WEAK     0.50, 0.50, 0.00, 1.00 // Default: 0.50, 0.50, 0.00, 1.00

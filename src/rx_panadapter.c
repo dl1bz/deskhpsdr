@@ -485,6 +485,8 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   }
 
+  /*
+  //---------------------------------------------------------------------------------------
   // agc
   if (rx->agc != AGC_OFF) {
     cairo_set_line_width(cr, PAN_LINE_THICK);
@@ -529,7 +531,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_line_width(cr, PAN_LINE_THICK);
     cairo_stroke(cr);
     cairo_move_to(cr, 48.0, knee_y);
-#if defined (__LDESK__)
+  #if defined (__LDESK__)
 
     if (device == DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, 58.0, knee_y - 2.0);
@@ -542,10 +544,12 @@ void rx_panadapter_update(RECEIVER *rx) {
       cairo_show_text(cr, "-Gain");
     }
 
-#else
+  #else
     cairo_show_text(cr, "-G");
-#endif
+  #endif
   }
+  //---------------------------------------------------------------------------------------
+  */
 
   // cursor
   if (active) {
@@ -681,6 +685,83 @@ void rx_panadapter_update(RECEIVER *rx) {
   if (gradient) {
     cairo_pattern_destroy(gradient);
   }
+
+  //---------------------------------------------------------------------------------------
+  // move downward to show the line, otherwise the spectrum overlay this line
+  // AGC line
+  if (rx->agc != AGC_OFF) {
+    cairo_set_line_width(cr, PAN_LINE_THICK);
+    double knee_y = rx->agc_thresh + soffset;
+    knee_y = floor((rx->panadapter_high - knee_y)
+                   * (double) myheight
+                   / (rx->panadapter_high - rx->panadapter_low));
+    double hang_y = rx->agc_hang + soffset;
+    hang_y = floor((rx->panadapter_high - hang_y)
+                   * (double) myheight
+                   / (rx->panadapter_high - rx->panadapter_low));
+
+    if (rx->agc != AGC_MEDIUM && rx->agc != AGC_FAST) {
+      if (active) {
+        cairo_set_source_rgba(cr, GRAD_CORAL);
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_ATTN_WEAK);
+      }
+
+      cairo_move_to(cr, 40.0, hang_y - 8.0);
+      cairo_rectangle(cr, 40, hang_y - 8.0, 8.0, 8.0);
+      cairo_fill(cr);
+      cairo_move_to(cr, 40.0, hang_y);
+      cairo_line_to(cr, (double)mywidth - 40.0, hang_y);
+      cairo_set_line_width(cr, PAN_LINE_THICK);
+      cairo_stroke(cr);
+      cairo_move_to(cr, 48.0, hang_y);
+      cairo_show_text(cr, "-H");
+    }
+
+    if (active) {
+      cairo_set_source_rgba(cr, GRAD_CORAL);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+    }
+
+    cairo_move_to(cr, 40.0, knee_y - 8.0);
+    cairo_rectangle(cr, 40, knee_y - 8.0, 8.0, 8.0);
+    cairo_fill(cr);
+    cairo_move_to(cr, 40.0, knee_y);
+    cairo_line_to(cr, (double)mywidth - 40.0, knee_y);
+    cairo_set_line_width(cr, PAN_LINE_THICK);
+    cairo_stroke(cr);
+    cairo_move_to(cr, 48.0, knee_y);
+#if defined (__LDESK__)
+
+    if (active) {
+      cairo_set_source_rgba(cr, GRAD_CORAL);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+    }
+
+    if (device == DEVICE_HERMES_LITE2) {
+      cairo_move_to(cr, 58.0, knee_y - 2.0);
+      // cairo_show_text(cr, "RxPGA");
+      // char ADCgain[64];
+      // snprintf(ADCgain, 64, "%+ddb", (int)adc[active_receiver->adc].gain);
+      // cairo_move_to(cr, 62.0, knee_y + 12.0);
+      // cairo_show_text(cr, ADCgain);
+      cairo_show_text(cr, "[AGC]");
+      char AGCgain[64];
+      snprintf(AGCgain, 64, "%+d", (int)active_receiver->agc_gain);
+      cairo_move_to(cr, 62.0, knee_y + 12.0);
+      cairo_show_text(cr, AGCgain);
+    } else {
+      cairo_show_text(cr, "-Gain");
+    }
+
+#else
+    cairo_show_text(cr, "-G");
+#endif
+  }
+
+  //---------------------------------------------------------------------------------------
 
   /*
   #ifdef GPIO
