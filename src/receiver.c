@@ -1495,7 +1495,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const int window_type = 2; // 5 = Kaiser, 2 = Hann
   const int afft_size = 16384;
   const int pixels = rx->pixels;
-  // const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
+  const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
   int overlap;
   int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
                                     keep_time * (double) afft_size * (double) rx->fps);
@@ -1533,6 +1533,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
               span_max_freq,                        // frequency at last pixel value
               max_w                                 // max samples to hold in input ring buffers
              );
+
   //
   // The spectrum is normalized to a "bin width" of sample_rate / afft_size,
   // which is smaller than the frequency width of one pixel which is sample_rate / (width * zoom).
@@ -1544,8 +1545,11 @@ void rx_set_analyzer(const RECEIVER *rx) {
   // disp: identifier for the Display.
   // pixout: identifier of the pixel output for which the parameter is being set.
   // norm: 0 = do not normalize; 1 = normalize to one Hz bandwidth.
-  // SetDisplayNormOneHz(rx->id, 0, Pan_NormOneHz);
-  // SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
+  if (rx->id != PS_RX_FEEDBACK) {
+    SetDisplayNormOneHz(rx->id, 0, Pan_NormOneHz);
+    SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
+  }
+
   //
   // In effect, this "lifts" the spectrum (in dB) by 10*log10(afft_size/(width*zoom)).
   //
