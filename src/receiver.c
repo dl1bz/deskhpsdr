@@ -1496,10 +1496,6 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const int afft_size = 16384;
   const int pixels = rx->pixels;
   const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
-  int overlap;
-  int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
-                                    keep_time * (double) afft_size * (double) rx->fps);
-  overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
 
   //
   // RX FEEDBACK receiver:
@@ -1511,6 +1507,9 @@ void rx_set_analyzer(const RECEIVER *rx) {
     fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
   }
 
+  int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
+                                    keep_time * (double) afft_size * (double) rx->fps);
+  int overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
   t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d\n", rx->id, rx->buffer_size,
           overlap, rx->pixels, window_type);
   SetAnalyzer(rx->id,
@@ -1534,30 +1533,30 @@ void rx_set_analyzer(const RECEIVER *rx) {
               max_w                                 // max samples to hold in input ring buffers
              );
 
-  //
   // The spectrum is normalized to a "bin width" of sample_rate / afft_size,
   // which is smaller than the frequency width of one pixel which is sample_rate / (width * zoom).
-  //
-  // A normalization to "1 pixel" is accomplished with the following two calls. Note the noise
-  // floor then depends on the zoom factor (that is, the frequency width of one pixel)
-  //
-  // WDSP: void SetDisplayNormOneHz (int disp, int pixout, int norm)
-  // disp: identifier for the Display.
-  // pixout: identifier of the pixel output for which the parameter is being set.
-  // norm: 0 = do not normalize; 1 = normalize to one Hz bandwidth.
-  if (rx->id != PS_RX_FEEDBACK) {
+
+  if (rx->id != PS_RX_FEEDBACK) {  // exclude the PS feedback RX ! Otherwise the PS Mon is broken !
+    //
+    // A normalization to "1 pixel" is accomplished with the following two calls. Note the noise
+    // floor then depends on the zoom factor (that is, the frequency width of one pixel)
+    //
+    // WDSP: void SetDisplayNormOneHz (int disp, int pixout, int norm)
+    // disp: identifier for the Display.
+    // pixout: identifier of the pixel output for which the parameter is being set.
+    // norm: 0 = do not normalize; 1 = normalize to one Hz bandwidth.
     SetDisplayNormOneHz(rx->id, 0, Pan_NormOneHz);
     SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
+    //
+    // In effect, this "lifts" the spectrum (in dB) by 10*log10(afft_size/(width*zoom)).
+    //
+    // One can also normalise to 1 Hz,in the case the second parameter to SetDisplaySampleRate
+    // must be (the true) rx->sample_rate, then WDSP adds 10*log10(afft_size/sample_rate) which
+    // normally means the spectrum is down-shifted quite a bit.
+    //
+    // SetDisplaySampleRate(rx->id, rx->sample_rate);
   }
 
-  //
-  // In effect, this "lifts" the spectrum (in dB) by 10*log10(afft_size/(width*zoom)).
-  //
-  // One can also normalise to 1 Hz,in the case the second parameter to SetDisplaySampleRate
-  // must be (the true) rx->sample_rate, then WDSP adds 10*log10(afft_size/sample_rate) which
-  // normally means the spectrum is down-shifted quite a bit.
-  //
-  // SetDisplaySampleRate(rx->id, rx->sample_rate);
   t_print("RX:WDSP SetDisplaySampleRate rx->id=%d rx->width=%d rx->zoom=%d rx->sample_rate=%d\n", rx->id, rx->width,
           rx->zoom, rx->sample_rate);
 }
