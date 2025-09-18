@@ -43,6 +43,10 @@ enum {
   filterF7,
   filterF8,
   filterF9,
+  filterF10,
+  filterF11,
+  filterF12,
+  filterF13,
   filterVar1,
   filterVar2,
   FILTERS

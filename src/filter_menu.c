@@ -406,6 +406,11 @@ void filter_menu(GtkWidget *parent) {
     CHOICE *choice;
 
     for (int i = 0; i < filterVar1; i++) {
+      // Einträge ohne Titel überspringen -> erscheinen nicht im Menü
+      if (!band_filters[i].title || band_filters[i].title[0] == '\0') {
+        continue;
+      }
+
       if (col > 9) {
         col = 0;
         row++;
@@ -438,6 +443,30 @@ void filter_menu(GtkWidget *parent) {
       choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(filter_select_cb), choice);
       gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
       col += 2;
+
+      // Separator zwischen festen Filtern und Var1/Var2
+      if ((m == modeLSB || m == modeUSB) && i == 9) {
+        row++; // nächste Zeile
+        GtkWidget *sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+        gtk_widget_set_size_request(sep, -1, 3); // Dicke der Linie anpassen
+        gtk_widget_set_margin_top(sep, 6);     // Abstand davor
+        gtk_widget_set_margin_bottom(sep, 6);  // Abstand danach
+        gtk_grid_attach(GTK_GRID(grid), sep, 0, row, 10, 1);
+
+        if ((m == modeLSB || m == modeUSB) && region != REGION_US) {
+          row++; // nächste Zeile
+          // Beschriftung nach dem Separator
+          GtkWidget *essb_lbl = gtk_label_new("Observe legal TX bandwidth limits when using ESSB !");
+          gtk_widget_set_name(essb_lbl, "boldlabel_red");
+          // gtk_widget_set_halign(essb_lbl, GTK_ALIGN_START);
+          gtk_widget_set_halign(essb_lbl, GTK_ALIGN_CENTER);
+          gtk_widget_set_margin_bottom(essb_lbl, 2);
+          gtk_grid_attach(GTK_GRID(grid), essb_lbl, 0, row, 10, 1);
+        }
+
+        row++; // nächste Zeile
+        col = 0;
+      }
     }
 
     row++;
@@ -446,6 +475,7 @@ void filter_menu(GtkWidget *parent) {
     //
     GtkWidget *line = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_widget_set_size_request(line, -1, 3);
+    gtk_widget_set_margin_top(line, 6);     // Abstand davor
     gtk_grid_attach(GTK_GRID(grid), line, 0, row++, 10, 1);
     //
     // Place Var1 and Var2 buttons in row+1, row+2
