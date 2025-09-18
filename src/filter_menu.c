@@ -353,7 +353,7 @@ void filter_menu(GtkWidget *parent) {
   //-----------------------------------------------------------------------------------------
   rxtx_filter_btn = gtk_check_button_new_with_label("TX uses RX filter");
   gtk_widget_set_tooltip_text(rxtx_filter_btn,
-                              "Set TX filter = RX filter\nOtherwise the TX filter must be set\nin the TX Menu");
+                              "If enabled, set TX filter edges\nto match RX filter edges.\n\nIf disabled, set the TX filter edges\nmanually in the TX menu");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rxtx_filter_btn), transmitter->use_rx_filter == 1 ? 1 : 0);
   g_signal_connect(rxtx_filter_btn, "toggled", G_CALLBACK(rxtx_filter_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), rxtx_filter_btn, 2, 0, 3, 1);
