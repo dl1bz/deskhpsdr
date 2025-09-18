@@ -95,6 +95,7 @@ static FILTER filterLSB[FILTERS] = {
   {-1950, -150, "1.8k"},
   {-1150, -150, "1.0k"},
   {-3050, -50,  "3.0k/ESSB"}, // ESSB
+  {-3550, -50,  "3.5k/ESSB"}, // ESSB
   {-4050, -50,  "4.0k/ESSB"}, // ESSB
   {-6050, -50,  "6.0k/ESSB"}, // ESSB
   {-8050, -50,  "8.0k/ESSB"}, // ESSB
@@ -114,6 +115,7 @@ static FILTER filterUSB[FILTERS] = {
   {150, 1950, "1.8k"},
   {150, 1150, "1.0k"},
   {50,  3050, "3.0k/ESSB"},  // ESSB
+  {50,  3550, "3.5k/ESSB"},  // ESSB
   {50,  4050, "4.0k/ESSB"},  // ESSB
   {50,  6050, "6.0k/ESSB"},  // ESSB
   {50,  8050, "8.0k/ESSB"},  // ESSB
@@ -141,6 +143,7 @@ static FILTER filterDIGL[FILTERS] = {
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
+  {0, 0, ""},  // placeholder, will be ignored
   {DIGL_VAR1_DEFAULT_LOW, DIGL_VAR1_DEFAULT_HIGH, "Var1"},
   {DIGL_VAR2_DEFAULT_LOW, DIGL_VAR2_DEFAULT_HIGH, "Var2"}
 };
@@ -157,6 +160,7 @@ static FILTER filterDIGU[FILTERS] = {
   {1250, 1750, "500"},
   {1375, 1625, "250"},
   { 700, 2300, "FreeDV/RADEV1"},
+  {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
@@ -182,6 +186,7 @@ static FILTER filterCWL[FILTERS] = {
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
+  {0, 0, ""},  // placeholder, will be ignored
   {CWL_VAR1_DEFAULT_LOW, CWL_VAR1_DEFAULT_HIGH, "Var1"},
   {CWL_VAR2_DEFAULT_LOW, CWL_VAR2_DEFAULT_HIGH, "Var2"}
 };
@@ -197,6 +202,7 @@ static FILTER filterCWU[FILTERS] = {
   {-50, 50, "100"},
   {-25, 25, "50"},
   {-13, 13, "25"},
+  {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
@@ -224,6 +230,7 @@ static FILTER filterDSB[FILTERS] = {
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
+  {0, 0, ""},  // placeholder, will be ignored
   {DSB_VAR1_DEFAULT_LOW, DSB_VAR1_DEFAULT_HIGH, "Var1"},
   {DSB_VAR2_DEFAULT_LOW, DSB_VAR2_DEFAULT_HIGH, "Var2"}
 };
@@ -239,6 +246,7 @@ static FILTER filterAM[FILTERS] = {
   {-1550, 1550, "3.1k"},
   {-1450, 1450, "2.9k"},
   {-1200, 1200, "2.4k"},
+  {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
@@ -262,6 +270,7 @@ static FILTER filterSAM[FILTERS] = {
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
+  {0, 0, ""},  // placeholder, will be ignored
   {SAM_VAR1_DEFAULT_LOW, SAM_VAR1_DEFAULT_HIGH, "Var1"},
   {SAM_VAR2_DEFAULT_LOW, SAM_VAR2_DEFAULT_HIGH, "Var2"}
 };
@@ -277,6 +286,7 @@ static FILTER filterSPEC[FILTERS] = {
   {-1550, 1550, "3.1k"},
   {-1450, 1450, "2.9k"},
   {-1200, 1200, "2.4k"},
+  {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
@@ -300,6 +310,7 @@ static FILTER filterDRM[FILTERS] = {
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
+  {0, 0, ""},  // placeholder, will be ignored
   {DRM_VAR1_DEFAULT_LOW, DRM_VAR1_DEFAULT_HIGH, "Var1"},
   {DRM_VAR2_DEFAULT_LOW, DRM_VAR2_DEFAULT_HIGH, "Var2"}
 };
@@ -309,22 +320,23 @@ static FILTER filterDRM[FILTERS] = {
 // just there to avoid voids.
 //
 static FILTER filterFMN[FILTERS] = {
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, "FM"},
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, "FM"},
-  {0, 0, "FM"}
+  {0, 0, "FM"}, // 0
+  {0, 0, "FM"}, // 1
+  {0, 0, "FM"}, // 2
+  {0, 0, "FM"}, // 3
+  {0, 0, "FM"}, // 4
+  {0, 0, "FM"}, // 5
+  {0, 0, "FM"}, // 6
+  {0, 0, "FM"}, // 7
+  {0, 0, "FM"}, // 8
+  {0, 0, "FM"}, // 9
+  {0, 0, "FM"}, // 10
+  {0, 0, "FM"}, // 11
+  {0, 0, "FM"}, // 12
+  {0, 0, "FM"}, // 13
+  {0, 0, "FM"}, // 14
+  {0, 0, "FM"}, // VAR1
+  {0, 0, "FM"}  // VAR2
 };
 
 //

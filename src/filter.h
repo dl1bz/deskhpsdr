@@ -47,6 +47,7 @@ enum {
   filterF11,
   filterF12,
   filterF13,
+  filterF14,
   filterVar1,
   filterVar2,
   FILTERS
