@@ -2516,7 +2516,7 @@ void ozy_send_buffer() {
     if (diversity_enabled) { output_buffer[C4] |= 0x80; }
 
     // 0 ... 7 maps on 1 ... 8 receivers
-    output_buffer[C4] |= (num_hpsdr_receivers - 1) << 3;
+    output_buffer[C4] |= ((num_hpsdr_receivers - 1) & 0x07) << 3;
 
     //
     //  Now we set the bits for Ant1/2/3 (RX and TX may be different)
