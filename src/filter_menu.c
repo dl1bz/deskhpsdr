@@ -421,13 +421,13 @@ void filter_menu(GtkWidget *parent) {
       snprintf(filter_desc, sizeof(filter_desc), "Low  cutoff: %d Hz\nHigh cutoff: %d Hz", band_filters[i].low,
                band_filters[i].high);
       gtk_widget_set_tooltip_text(w, filter_desc);
-
+      /*
       if ((m == modeDIGL || m == modeDIGU) && g_strcmp0(band_filters[i].title, "2.0k") == 0) {
         char ext_label[32];
         g_snprintf(ext_label, sizeof(ext_label), "%s/RADEV1", band_filters[i].title);
         gtk_button_set_label(GTK_BUTTON(w), ext_label);
       }
-
+      */
       gtk_widget_set_name(w, "small_toggle_button");
       choice = g_new(CHOICE, 1);
       choice->next = first;
@@ -466,6 +466,13 @@ void filter_menu(GtkWidget *parent) {
 
         row++; // nächste Zeile
         col = 0;
+      } else if ((m == modeDIGL || m == modeDIGU) && i == 9) {
+        row++; // nächste Zeile
+        GtkWidget *sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+        gtk_widget_set_size_request(sep, -1, 3); // Dicke der Linie anpassen
+        gtk_widget_set_margin_top(sep, 6);     // Abstand davor
+        gtk_widget_set_margin_bottom(sep, 6);  // Abstand danach
+        gtk_grid_attach(GTK_GRID(grid), sep, 0, row, 10, 1);
       }
     }
 

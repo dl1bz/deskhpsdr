@@ -137,7 +137,7 @@ static FILTER filterDIGL[FILTERS] = {
   {-1875, -1125, "750"},
   {-1750, -1250, "500"},
   {-1625, -1375, "250"},
-  {0, 0, ""},  // placeholder, will be ignored
+  {-2300, -700, "FreeDV/RADEV1"},
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
@@ -156,7 +156,7 @@ static FILTER filterDIGU[FILTERS] = {
   {1125, 1875, "750"},
   {1250, 1750, "500"},
   {1375, 1625, "250"},
-  {0, 0, ""},  // placeholder, will be ignored
+  { 700, 2300, "FreeDV/RADEV1"},
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
   {0, 0, ""},  // placeholder, will be ignored
