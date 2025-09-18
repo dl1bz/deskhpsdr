@@ -968,8 +968,17 @@ void radio_menu(GtkWidget *parent) {
 
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2) {
       ChkBtn = gtk_check_button_new_with_label("HL2 5W PA enable");
+      gtk_widget_set_tooltip_text(ChkBtn,
+        "Don't forget to check/adjust in the PA MENU\n"
+        "if all bands set to a value of <38.8>\n"
+        "for full 5W output !");
     } else {
       ChkBtn = gtk_check_button_new_with_label("PA enable");
+      gtk_widget_set_tooltip_text(ChkBtn,
+        "Don't forget to check\n"
+        "in the PA MENU your correct\n"
+        "device-depend and SDR-specific\n"
+        "TX power settings for correct output !");
     }
 
     gtk_widget_set_name(ChkBtn, "boldlabel");

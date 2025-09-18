@@ -316,7 +316,28 @@ void pa_menu(GtkWidget *parent) {
       }
     }
 
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), grid, gtk_label_new("Calibrate"));
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1
+        && !have_radioberry2) {
+    // Calibrate-Seite: Grid in VBox einbetten und Footer unten anhängen
+    GtkWidget *calib_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    gtk_box_pack_start(GTK_BOX(calib_page), grid, TRUE, TRUE, 0);
+
+    char pa_menu_footer_txt[256];
+    snprintf(pa_menu_footer_txt, sizeof(pa_menu_footer_txt),
+            "Hermes Lite 2 or compatible SDR devices:\n"
+            "1. Set all bands to a value of <38.8> and\n"
+            "   MAX Power to <5W> for full 5W output !\n"
+            "2. Set <PA ENABLE> in the Radio Menu !");
+    GtkWidget *pa_menu_footer = gtk_label_new(pa_menu_footer_txt);
+    gtk_widget_set_name(pa_menu_footer, "boldlabel_red");
+    gtk_widget_set_halign(pa_menu_footer, GTK_ALIGN_CENTER);
+    // gtk_widget_set_halign(pa_menu_footer, GTK_ALIGN_START);  // statt CENTER
+    gtk_widget_set_hexpand(pa_menu_footer, TRUE);
+    gtk_box_pack_start(GTK_BOX(calib_page), pa_menu_footer, FALSE, FALSE, 0);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), calib_page, gtk_label_new("Calibrate"));
+    } else {
+      gtk_notebook_append_page(GTK_NOTEBOOK(notebook), grid, gtk_label_new("Calibrate"));
+    }
   }
 
   calibgrid = gtk_grid_new();
@@ -328,4 +349,3 @@ void pa_menu(GtkWidget *parent) {
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
 }
-
