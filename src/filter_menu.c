@@ -350,13 +350,18 @@ void filter_menu(GtkWidget *parent) {
   gtk_widget_set_name(w, "close_button");
   g_signal_connect (w, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 2, 1);
+
   //-----------------------------------------------------------------------------------------
-  rxtx_filter_btn = gtk_check_button_new_with_label("TX uses RX filter");
-  gtk_widget_set_tooltip_text(rxtx_filter_btn,
-                              "If enabled, set TX filter edges\nto match RX filter edges.\n\nIf disabled, set the TX filter edges\nmanually in the TX menu");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rxtx_filter_btn), transmitter->use_rx_filter == 1 ? 1 : 0);
-  g_signal_connect(rxtx_filter_btn, "toggled", G_CALLBACK(rxtx_filter_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), rxtx_filter_btn, 2, 0, 3, 1);
+  if ((m != modeCWL || m == modeCWU)) {
+    rxtx_filter_btn = gtk_check_button_new_with_label("Set TX = RX filter edges");
+    gtk_widget_set_name(rxtx_filter_btn, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(rxtx_filter_btn,
+                                "If enabled, set TX filter edges\nto match RX filter edges.\n\nIf disabled, set the TX filter edges\nmanually in the TX menu");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rxtx_filter_btn), transmitter->use_rx_filter == 1 ? 1 : 0);
+    g_signal_connect(rxtx_filter_btn, "toggled", G_CALLBACK(rxtx_filter_cb), NULL);
+    gtk_grid_attach(GTK_GRID(grid), rxtx_filter_btn, 2, 0, 3, 1);
+  }
+
   //-----------------------------------------------------------------------------------------
   FILTER* band_filters = filters[m];
 
@@ -445,7 +450,7 @@ void filter_menu(GtkWidget *parent) {
       col += 2;
 
       // Separator zwischen festen Filtern und Var1/Var2
-      if ((m == modeLSB || m == modeUSB) && i == 9) {
+      if ((m == modeLSB || m == modeUSB || m == modeDIGL || m == modeDIGU) && i == 9) {
         row++; // nächste Zeile
         GtkWidget *sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
         gtk_widget_set_size_request(sep, -1, 3); // Dicke der Linie anpassen
@@ -453,7 +458,7 @@ void filter_menu(GtkWidget *parent) {
         gtk_widget_set_margin_bottom(sep, 6);  // Abstand danach
         gtk_grid_attach(GTK_GRID(grid), sep, 0, row, 10, 1);
 
-        if ((m == modeLSB || m == modeUSB) && region != REGION_US) {
+        if ((m == modeLSB || m == modeUSB)) {
           row++; // nächste Zeile
           // Beschriftung nach dem Separator
           GtkWidget *essb_lbl = gtk_label_new("Observe legal TX bandwidth limits when using ESSB !");
@@ -466,13 +471,6 @@ void filter_menu(GtkWidget *parent) {
 
         row++; // nächste Zeile
         col = 0;
-      } else if ((m == modeDIGL || m == modeDIGU) && i == 9) {
-        row++; // nächste Zeile
-        GtkWidget *sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-        gtk_widget_set_size_request(sep, -1, 3); // Dicke der Linie anpassen
-        gtk_widget_set_margin_top(sep, 6);     // Abstand davor
-        gtk_widget_set_margin_bottom(sep, 6);  // Abstand danach
-        gtk_grid_attach(GTK_GRID(grid), sep, 0, row, 10, 1);
       }
     }
 
@@ -612,11 +610,20 @@ void filter_menu(GtkWidget *parent) {
     // Add a checkbox for the CW audio peak filter, if the mode is CWU/CWL
     //
     if (m == modeCWU || m == modeCWL) {
-      GtkWidget *cw_peak_b = gtk_check_button_new_with_label("Enable additional CW Audio peak filter");
+      if (transmitter->use_rx_filter) { // sanity check, RX = TX filter edges make no sense in mode CW
+        int current_tx_mode = vfo_get_tx_mode();
+        transmitter->use_rx_filter = 0; // switch TX=RX filter edge off
+        tx_set_filter(transmitter);  // update TX filter settings
+        mode_settings[current_tx_mode].use_rx_filter = 0;
+        copy_mode_settings(current_tx_mode);
+        g_idle_add(ext_vfo_update, NULL); // add to VFO
+      }
+
+      GtkWidget *cw_peak_b = gtk_check_button_new_with_label("Enable CW Audio peak filter");
       gtk_widget_set_name(cw_peak_b, "boldlabel");
       gtk_widget_set_halign(cw_peak_b, GTK_ALIGN_START);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_peak_b), vfo[active_receiver->id].cwAudioPeakFilter);
-      gtk_grid_attach(GTK_GRID(grid), cw_peak_b, 4, 0, 6, 1);
+      gtk_grid_attach(GTK_GRID(grid), cw_peak_b, 2, 0, 5, 1);
       g_signal_connect(cw_peak_b, "toggled", G_CALLBACK(cw_peak_cb), NULL);
     }
   }
