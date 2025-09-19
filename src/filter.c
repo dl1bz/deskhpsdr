@@ -96,9 +96,9 @@ static FILTER filterLSB[FILTERS] = {
   {-1150, -150, "1.0k"},
   {-2950, -50,  "2.9k/ESSB"}, // ESSB
   {-3450, -50,  "3.4k/ESSB"}, // ESSB
-  {-4050, -50,  "4.0k/ESSB"}, // ESSB
-  {-6050, -50,  "6.0k/ESSB"}, // ESSB
-  {-8050, -50,  "8.0k/ESSB"}, // ESSB
+  {-3950, -50,  "3.9k/ESSB"}, // ESSB
+  {-5950, -50,  "5.9k/ESSB"}, // ESSB
+  {-7950, -50,  "7.9k/ESSB"}, // ESSB
   {LSB_VAR1_DEFAULT_LOW, LSB_VAR1_DEFAULT_HIGH, "Var1"},
   {LSB_VAR2_DEFAULT_LOW, LSB_VAR2_DEFAULT_HIGH, "Var2"}
 };
@@ -116,9 +116,9 @@ static FILTER filterUSB[FILTERS] = {
   {150, 1150, "1.0k"},
   {50,  2950, "2.9k/ESSB"},  // ESSB
   {50,  3450, "3.4k/ESSB"},  // ESSB
-  {50,  4050, "4.0k/ESSB"},  // ESSB
-  {50,  6050, "6.0k/ESSB"},  // ESSB
-  {50,  8050, "8.0k/ESSB"},  // ESSB
+  {50,  3950, "3.9k/ESSB"},  // ESSB
+  {50,  5950, "5.9k/ESSB"},  // ESSB
+  {50,  7950, "7.9k/ESSB"},  // ESSB
   {USB_VAR1_DEFAULT_LOW, USB_VAR1_DEFAULT_HIGH, "Var1"},
   {USB_VAR2_DEFAULT_LOW, USB_VAR2_DEFAULT_HIGH, "Var2"}
 };
