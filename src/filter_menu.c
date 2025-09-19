@@ -352,7 +352,7 @@ void filter_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 2, 1);
 
   //-----------------------------------------------------------------------------------------
-  if ((m != modeCWL || m == modeCWU)) {
+  if (m != modeCWL && m != modeCWU) {
     rxtx_filter_btn = gtk_check_button_new_with_label("Set TX = RX filter edges");
     gtk_widget_set_name(rxtx_filter_btn, "boldlabel_blue");
     gtk_widget_set_tooltip_text(rxtx_filter_btn,

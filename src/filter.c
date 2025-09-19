@@ -94,8 +94,8 @@ static FILTER filterLSB[FILTERS] = {
   {-2250, -150, "2.1k"},
   {-1950, -150, "1.8k"},
   {-1150, -150, "1.0k"},
-  {-3050, -50,  "3.0k/ESSB"}, // ESSB
-  {-3550, -50,  "3.5k/ESSB"}, // ESSB
+  {-2950, -50,  "2.9k/ESSB"}, // ESSB
+  {-3450, -50,  "3.4k/ESSB"}, // ESSB
   {-4050, -50,  "4.0k/ESSB"}, // ESSB
   {-6050, -50,  "6.0k/ESSB"}, // ESSB
   {-8050, -50,  "8.0k/ESSB"}, // ESSB
@@ -114,8 +114,8 @@ static FILTER filterUSB[FILTERS] = {
   {150, 2250, "2.1k"},
   {150, 1950, "1.8k"},
   {150, 1150, "1.0k"},
-  {50,  3050, "3.0k/ESSB"},  // ESSB
-  {50,  3550, "3.5k/ESSB"},  // ESSB
+  {50,  2950, "2.9k/ESSB"},  // ESSB
+  {50,  3450, "3.4k/ESSB"},  // ESSB
   {50,  4050, "4.0k/ESSB"},  // ESSB
   {50,  6050, "6.0k/ESSB"},  // ESSB
   {50,  8050, "8.0k/ESSB"},  // ESSB
