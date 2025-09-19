@@ -53,6 +53,7 @@
 #define MAX_TCI_CLIENTS 5
 #define MAXDATASIZE     1024
 #define MAXMSGSIZE      512
+#define ARGLEN 16
 
 int tci_enable = 0;
 int tci_port   = 50001;
@@ -953,7 +954,7 @@ static gpointer tci_listener(gpointer data) {
   int offset = 0;
   unsigned char buff [MAXDATASIZE];
   char msg [MAXDATASIZE];
-  const int ARGLEN = 16;
+  // const int ARGLEN = 16;
   int argc;
   char *arg[ARGLEN];
   //
