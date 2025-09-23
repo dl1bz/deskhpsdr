@@ -232,6 +232,9 @@ static void modesettingsSaveState() {
       SetPropF2("modeset.%d.txeqfrq.%d", i, jj,       mode_settings[i].tx_eq_freq[jj]);
       SetPropF2("modeset.%d.rxeq.%d", i, jj,          mode_settings[i].rx_eq_gain[jj]);
       SetPropF2("modeset.%d.rxeqfrq.%d", i, jj,       mode_settings[i].rx_eq_freq[jj]);
+      SetPropF2("modeset.%d.cfc_frq.%d", i, jj,       mode_settings[i].cfc_freq[jj]);
+      SetPropF2("modeset.%d.cfc_lvl.%d", i, jj,       mode_settings[i].cfc_lvl[jj]);
+      SetPropF2("modeset.%d.cfc_post.%d", i, jj,      mode_settings[i].cfc_post[jj]);
     }
 
 #endif
@@ -349,6 +352,8 @@ static void modesettingsRestoreState() {
     for (int jj = 11; jj < 13; jj++) {
       mode_settings[i].tx_eq_gain[jj] = 0;
       mode_settings[i].rx_eq_gain[jj] = 0;
+      mode_settings[i].cfc_lvl   [jj] = 0;
+      mode_settings[i].cfc_post  [jj] = 0;
     }
 
 #endif
@@ -384,6 +389,10 @@ static void modesettingsRestoreState() {
       mode_settings[i].cfc_lvl   [ 8] =  6.0;
       mode_settings[i].cfc_lvl   [ 9] =  9.0;
       mode_settings[i].cfc_lvl   [10] =  9.0;
+#if defined (__EQ12__)
+      mode_settings[i].cfc_lvl   [11] =  0.0;
+      mode_settings[i].cfc_lvl   [12] =  0.0;
+#endif
       mode_settings[i].cfc_post  [ 0] = -9.0;
       break;
     }
@@ -425,8 +434,10 @@ static void modesettingsRestoreState() {
 #if defined (__EQ12__)
     mode_settings[i].tx_eq_freq[11] =  6000.0;
     mode_settings[i].rx_eq_freq[11] =  6000.0;
+    mode_settings[i].cfc_freq  [11] =  6000.0;
     mode_settings[i].tx_eq_freq[12] =  8000.0;
     mode_settings[i].rx_eq_freq[12] =  8000.0;
+    mode_settings[i].cfc_freq  [12] =  8000.0;
 #endif
     GetPropI1("modeset.%d.filter", i,                mode_settings[i].filter);
     GetPropI1("modeset.%d.cwPeak", i,                mode_settings[i].cwPeak);
@@ -502,6 +513,9 @@ static void modesettingsRestoreState() {
       GetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
       GetPropF2("modeset.%d.rxeq.%d", i, jj,         mode_settings[i].rx_eq_gain[jj]);
       GetPropF2("modeset.%d.rxeqfrq.%d", i, jj,      mode_settings[i].rx_eq_freq[jj]);
+      GetPropF2("modeset.%d.cfc_frq.%d", i, jj,      mode_settings[i].cfc_freq[jj]);
+      GetPropF2("modeset.%d.cfc_lvl.%d", i, jj,      mode_settings[i].cfc_lvl[jj]);
+      GetPropF2("modeset.%d.cfc_post.%d", i, jj,     mode_settings[i].cfc_post[jj]);
     }
 
 #endif
@@ -874,6 +888,9 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     for (int ii = 11; ii < 13; ii++) {
       transmitter->eq_gain[ii]  = mode_settings[m].tx_eq_gain[ii];
       transmitter->eq_freq[ii]  = mode_settings[m].tx_eq_freq[ii];
+      transmitter->cfc_freq[ii] = mode_settings[m].cfc_freq[ii];
+      transmitter->cfc_lvl[ii]  = mode_settings[m].cfc_lvl[ii];
+      transmitter->cfc_post[ii] = mode_settings[m].cfc_post[ii];
     }
 
 #endif

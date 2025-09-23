@@ -350,23 +350,38 @@ void equalizer_menu(GtkWidget *parent) {
 #endif
 
     for (int i = 1; i <= max_eq_zeilen; i++) { // index 0 must be excluded
-      myrow++;
-      mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+      myrow++; // neue Zeile
+
+      //----------------------------------------------------------------------------------------------------------------
+      // links 1.Spalte Freq
+      if (i == 1) {
+        mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+      } else {
+        mbtn = gtk_spin_button_new_with_range(freqs[i - 1] + 10.0, 16000.0, 10.0);
+      }
+
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 0, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i]);
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i));
+      //----------------------------------------------------------------------------------------------------------------
+      // links 2.Spalte Gain
       mbtn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 1, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), gains[i]);
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i));
-      mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+      //----------------------------------------------------------------------------------------------------------------
+      // rechts 1.Spalte Freq
+      mbtn = gtk_spin_button_new_with_range(freqs[i + max_eq_zeilen - 1] + 10.0, 16000.0, 10.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 2, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i + max_eq_zeilen]);
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
+      //----------------------------------------------------------------------------------------------------------------
+      // rechts 2.Spalte Gain
       mbtn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 3, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), gains[i + max_eq_zeilen]);
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
+      //----------------------------------------------------------------------------------------------------------------
     }
   }
 

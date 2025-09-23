@@ -417,6 +417,9 @@ void tx_save_state(const TRANSMITTER *tx) {
   for (int ii = 11; ii < 13; ii++) {
     SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,            tx->eq_freq[ii]);
     SetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,            tx->eq_gain[ii]);
+    SetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, ii,            tx->cfc_freq[ii]);
+    SetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, ii,            tx->cfc_lvl[ii]);
+    SetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, ii,            tx->cfc_post[ii]);
   }
 
 #endif
@@ -513,6 +516,9 @@ static void tx_restore_state(TRANSMITTER *tx) {
   for (int ii = 11; ii < 13; ii++) {
     GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,           tx->eq_freq[ii]);
     GetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,           tx->eq_gain[ii]);
+    GetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, ii,           tx->cfc_freq[ii]);
+    GetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, ii,           tx->cfc_lvl[ii]);
+    GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, ii,           tx->cfc_post[ii]);
   }
 
 #endif
@@ -1060,6 +1066,10 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->cfc_freq[ 8]     =  2300.0;
   tx->cfc_freq[ 9]     =  2800.0;
   tx->cfc_freq[10]     =  3100.0;
+#if defined (__EQ12__)
+  tx->cfc_freq[11]     =  6000.0;
+  tx->cfc_freq[12]     =  8000.0;
+#endif
   tx->cfc_lvl [ 0]     =     3.0;    // freq independent part
   tx->cfc_lvl [ 1]     =     0.0;
   tx->cfc_lvl [ 2]     =     0.0;
@@ -1071,6 +1081,10 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->cfc_lvl [ 8]     =     6.0;
   tx->cfc_lvl [ 9]     =     9.0;
   tx->cfc_lvl [10]     =     9.0;
+#if defined (__EQ12__)
+  tx->cfc_lvl [11]     =     0.0;
+  tx->cfc_lvl [12]     =     0.0;
+#endif
   tx->cfc_post[ 0]     =    -9.0;    // freq independent part
   tx->cfc_post[ 1]     =     0.0;
   tx->cfc_post[ 2]     =     0.0;
@@ -1082,6 +1096,10 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->cfc_post[ 8]     =     0.0;
   tx->cfc_post[ 9]     =     0.0;
   tx->cfc_post[10]     =     0.0;
+#if defined (__EQ12__)
+  tx->cfc_post[11]     =     0.0;
+  tx->cfc_post[12]     =     0.0;
+#endif
   tx->dexp             =       0;
   tx->dexp_tau         =    0.01;
   tx->dexp_attack      =   0.025;
@@ -2321,7 +2339,11 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXAPHROTRun(tx->id, tx->phrot_enable);    // Phase Rotator on/off
   t_print("%s: PH-ROT state %d, stages %d, freq %.1fHz\n",
           __FUNCTION__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
+#if defined (__EQ12__)
+  SetTXACFCOMPprofile(tx->id, 12, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
+#else
   SetTXACFCOMPprofile(tx->id, 10, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
+#endif
   SetTXACFCOMPPrecomp(tx->id, tx->cfc_lvl[0]);
   SetTXACFCOMPRun(tx->id, tx->cfc); // Pre CFC on/off
   SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);

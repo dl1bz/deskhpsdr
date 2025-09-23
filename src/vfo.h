@@ -157,9 +157,15 @@ struct _mode_settings {
   double lev_gain;                  // Leveler Gain
   int    lev_enable;                // Leveler on/off
   int    phrot_enable;              // Phase Rotator on/off
+#if defined (__EQ12__)
+  double cfc_freq[13];              // CFC corner frequencies
+  double cfc_lvl[13];               // CFC compression at corner frequency
+  double cfc_post[13];              // CFC post-EQ gain at corner frequency
+#else
   double cfc_freq[11];              // CFC corner frequencies
   double cfc_lvl[11];               // CFC compression at corner frequency
   double cfc_post[11];              // CFC post-EQ gain at corner frequency
+#endif
 #if defined (__LDESK__) && defined (__CPYMODE__)
   int local_microphone;
   char microphone_name[128];
