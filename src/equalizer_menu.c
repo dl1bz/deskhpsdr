@@ -36,6 +36,7 @@
 #include "message.h"
 #if defined (__LDESK__)
   #include "tx_menu.h"
+  #include "toolset.h"
 #endif
 static GtkWidget *dialog = NULL;
 
@@ -299,6 +300,10 @@ void equalizer_menu(GtkWidget *parent) {
       break;
 
     case 2:
+      if (can_transmit) {
+        sort_tx_eq(transmitter);
+      }
+
       freqs = transmitter->eq_freq;
       gains = transmitter->eq_gain;
       en = transmitter->eq_enable;
@@ -331,6 +336,18 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_widget_set_size_request(line, -1, 3);
     gtk_grid_attach(GTK_GRID(mygrid), line, 0, myrow, 4, 1);
     myrow++;
+
+    if (myeq == 2 && can_transmit) {
+      char txeq_label_txt[256];
+      snprintf(txeq_label_txt, sizeof(txeq_label_txt),
+               "TX Equalizer — Continuous-Gain EQ Model\n"
+               "Start here to adjust and shape your TX audio.");
+      GtkWidget *txeq_label = gtk_label_new(txeq_label_txt);
+      gtk_widget_set_name(txeq_label, "smalllabel_blue_bold");
+      gtk_grid_attach(GTK_GRID(mygrid), txeq_label, 0, myrow, 4, 1);
+    }
+
+    myrow++;
     label = gtk_label_new("Frequency");
     gtk_widget_set_name(label, "boldlabel");
     gtk_grid_attach(GTK_GRID(mygrid), label, 0, myrow, 1, 1);
@@ -351,15 +368,9 @@ void equalizer_menu(GtkWidget *parent) {
 
     for (int i = 1; i <= max_eq_zeilen; i++) { // index 0 must be excluded
       myrow++; // neue Zeile
-
       //----------------------------------------------------------------------------------------------------------------
       // links 1.Spalte Freq
-      if (i == 1) {
-        mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
-      } else {
-        mbtn = gtk_spin_button_new_with_range(freqs[i - 1] + 10.0, 16000.0, 10.0);
-      }
-
+      mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 0, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i]);
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i));
@@ -371,7 +382,7 @@ void equalizer_menu(GtkWidget *parent) {
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i));
       //----------------------------------------------------------------------------------------------------------------
       // rechts 1.Spalte Freq
-      mbtn = gtk_spin_button_new_with_range(freqs[i + max_eq_zeilen - 1] + 10.0, 16000.0, 10.0);
+      mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 2, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i + max_eq_zeilen]);
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));

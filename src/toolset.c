@@ -20,6 +20,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <semaphore.h>
@@ -37,6 +38,14 @@
 
 #if defined(__APPLE__)
   #include <TargetConditionals.h>
+#endif
+
+#if defined (__EQ12__)
+  #define N_CFC 12
+  #define N_EQ 12
+#else
+  #define N_CFC 10
+  #define N_EQ 10
 #endif
 
 GMutex solar_data_mutex;
@@ -364,6 +373,70 @@ const char* extract_short_msg(const char *msg) {
   }
 
   return s;
+}
+
+static const TRANSMITTER *tx_ctx;
+
+static int cmp_cfc_idx(const void *xa, const void *xb) {
+  int i = *(const int*)xa;
+  int j = *(const int*)xb;
+  return (tx_ctx->cfc_freq[i] > tx_ctx->cfc_freq[j]) -
+         (tx_ctx->cfc_freq[i] < tx_ctx->cfc_freq[j]);
+}
+
+static int cmp_tx_eq_idx(const void *xa, const void *xb) {
+  int i = *(const int*)xa;
+  int j = *(const int*)xb;
+  return (tx_ctx->eq_freq[i] > tx_ctx->eq_freq[j]) -
+         (tx_ctx->eq_freq[i] < tx_ctx->eq_freq[j]);
+}
+
+void sort_cfc(TRANSMITTER *tx) {
+  int idx[N_CFC];
+  tx_ctx = tx;
+
+  for (int k = 0; k < N_CFC; k++) { idx[k] = k + 1; }
+
+  qsort(idx, N_CFC, sizeof(int), cmp_cfc_idx);
+  float f[N_CFC + 1], l[N_CFC + 1], p[N_CFC + 1];
+
+  for (int k = 1; k <= N_CFC; k++) {
+    int i = idx[k - 1];
+    f[k] = tx->cfc_freq[i];
+    l[k] = tx->cfc_lvl[i];
+    p[k] = tx->cfc_post[i];
+  }
+
+  for (int k = 1; k <= N_CFC; k++) {
+    tx->cfc_freq[k] = f[k];
+    tx->cfc_lvl[k]  = l[k];
+    tx->cfc_post[k] = p[k];
+  }
+
+  t_print("%s: CFC_FREQ sorted\n", __FUNCTION__);
+}
+
+void sort_tx_eq(TRANSMITTER *tx) {
+  int idx[N_EQ];
+  tx_ctx = tx;
+
+  for (int k = 0; k < N_EQ; k++) { idx[k] = k + 1; }
+
+  qsort(idx, N_EQ, sizeof(int), cmp_tx_eq_idx);
+  float f[N_EQ + 1], g[N_EQ + 1]; // 1-basiert
+
+  for (int k = 1; k <= N_EQ; k++) {
+    int i = idx[k - 1];
+    f[k] = tx->eq_freq[i];
+    g[k] = tx->eq_gain[i];
+  }
+
+  for (int k = 1; k <= N_EQ; k++) {
+    tx->eq_freq[k] = f[k];
+    tx->eq_gain[k] = g[k];
+  }
+
+  t_print("%s: TX_EQ_FREQ sorted\n", __FUNCTION__);
 }
 
 #if defined (__HAVEATU__)

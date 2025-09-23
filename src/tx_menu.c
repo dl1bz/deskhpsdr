@@ -37,6 +37,7 @@
 #if defined (__LDESK__)
   #include "property.h"
   #include "equalizer_menu.h"
+  #include "toolset.h"
 #endif
 
 static GtkWidget *dialog = NULL;
@@ -1094,13 +1095,13 @@ void tx_menu(GtkWidget *parent) {
   g_signal_connect(mbtn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(TX_CONTAINER));
   col++;
 #if defined (__LDESK__)
-  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "TX Audio Tools");
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "TX ProAudio Tools");
 #else
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "CFC Settings");
 #endif
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == CFC_CONTAINER));
-  gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), btn, col, row, 2, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(CFC_CONTAINER));
   col++;
 #if defined (__LDESK__)
@@ -1537,6 +1538,9 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST));
   btn = gtk_check_button_new_with_label("Speech Proc");
+  gtk_widget_set_tooltip_text(btn, "Speech Processor:\n"
+                                   "Type: Baseband Compressor — Optimize your voice transmission\n"
+                                   "Requires ENABLE(>1) when using the CESSB function");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->compressor);
@@ -1555,6 +1559,8 @@ void tx_menu(GtkWidget *parent) {
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_CESSB_ENABLE));
   row++;
   btn = gtk_check_button_new_with_label("TX-EQ Ctfmode");
+  gtk_widget_set_tooltip_text(btn, "The cutoff-mode used in the generation\nof the EQ filter can be selected.\n\n"
+                                   "If ON:\nNo roll-off outside the specified passband (default is OFF).");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->eq_ctfmode);
@@ -1582,6 +1588,13 @@ void tx_menu(GtkWidget *parent) {
   GtkWidget *line = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_widget_set_size_request(line, -1, 3);
   gtk_grid_attach(GTK_GRID(cfc_grid), line, 0, row, 6, 1);
+  row++;
+  char cfc_label_txt[256];
+  snprintf(cfc_label_txt, sizeof(cfc_label_txt),
+           "CFC: This is a Multiband Compressor, not an EQ. Adjust and shape your audio with the TX-EQ first.");
+  GtkWidget *cfc_label = gtk_label_new(cfc_label_txt);
+  gtk_widget_set_name(cfc_label, "smalllabel_blue_bold");
+  gtk_grid_attach(GTK_GRID(cfc_grid), cfc_label, 0, row, 6, 1);
   // Frequency, Level, Post-Gain
   row++;
   label = gtk_label_new("Frequency");
@@ -1617,6 +1630,11 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 5, row, 1, 1);
 #endif
+
+  if (can_transmit) {
+    sort_cfc(transmitter);
+  }
+
 #if defined (__EQ12__)
   const int max_cfc_zeilen = 6;
 #else
@@ -1625,19 +1643,13 @@ void tx_menu(GtkWidget *parent) {
 
   for (int i = 1; i <= max_cfc_zeilen; i++) {
     row++; // neue Zeile
-
     //------------------------------------------------------------------------------------------------------------------
-    if (i == 1) {
-      btn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
-    } else {
-      btn = gtk_spin_button_new_with_range(transmitter->cfc_freq[i - 1] + 10.0, 16000.0, 10.0);
-    }
-
+    btn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 0, row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCFREQ + i));
     //------------------------------------------------------------------------------------------------------------------
-    btn = gtk_spin_button_new_with_range(transmitter->cfc_freq[i + max_cfc_zeilen - 1] + 10.0, 16000.0, 10.0);
+    btn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i + max_cfc_zeilen]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCFREQ + i + max_cfc_zeilen));

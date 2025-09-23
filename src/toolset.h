@@ -20,6 +20,9 @@
 #ifndef _TOOLSET_H
 #define _TOOLSET_H
 
+#pragma once
+#include "radio.h"      // bringt TRANSMITTER-Typ
+
 extern int sunspots;
 extern int a_index;
 extern int k_index;
@@ -37,6 +40,8 @@ extern gboolean check_and_run_idle_cb(gpointer data);
 extern void to_uppercase(char *str);
 extern int file_present(const char *filename);
 extern const char* extract_short_msg(const char *msg);
+extern void sort_cfc(TRANSMITTER *tx);
+extern void sort_tx_eq(TRANSMITTER *tx);
 #if defined (__HAVEATU__)
   extern void show_NOTUNE_dialog(GtkWindow *parent);
 #endif
