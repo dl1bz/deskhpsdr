@@ -412,6 +412,14 @@ void tx_save_state(const TRANSMITTER *tx) {
     SetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
   }
 
+#if defined (__EQ12__)
+
+  for (int ii = 11; ii < 13; ii++) {
+    SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,            tx->eq_freq[ii]);
+    SetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,            tx->eq_gain[ii]);
+  }
+
+#endif
   SetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   SetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
   SetPropF1("transmitter.%d.lev_gain",          tx->id,               tx->lev_gain);
@@ -500,6 +508,14 @@ static void tx_restore_state(TRANSMITTER *tx) {
     GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
   }
 
+#if defined (__EQ12__)
+
+  for (int ii = 11; ii < 13; ii++) {
+    GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,           tx->eq_freq[ii]);
+    GetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,           tx->eq_gain[ii]);
+  }
+
+#endif
   GetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   GetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
   GetPropF1("transmitter.%d.lev_gain",          tx->id,               tx->lev_gain);
@@ -1109,6 +1125,10 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->eq_freq[8]  =  2500.0;
   tx->eq_freq[9]  =  3000.0;
   tx->eq_freq[10] =  3500.0;
+#if defined (__EQ12__)
+  tx->eq_freq[11] =  6000.0;
+  tx->eq_freq[12] =  8000.0;
+#endif
   tx->eq_gain[0]  = 0.0;
   tx->eq_gain[1]  = -9.0;
   tx->eq_gain[2]  = -6.0;
@@ -1120,6 +1140,10 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->eq_gain[8]  = 3.0;
   tx->eq_gain[9]  = 3.0;
   tx->eq_gain[10] = 3.0;
+#if defined (__EQ12__)
+  tx->eq_gain[11] = 0.0;
+  tx->eq_gain[12] = 0.0;
+#endif
   //
   // Some of these values cannot be changed.
   // If using PURESIGNAL and displaying the feedback signal,
@@ -2395,7 +2419,11 @@ void tx_set_dexp(const TRANSMITTER *tx) {
 }
 
 void tx_set_equalizer(TRANSMITTER *tx) {
+#if defined (__EQ12__)
+  SetTXAEQProfile(tx->id, 12, tx->eq_freq, tx->eq_gain);
+#else
   SetTXAEQProfile(tx->id, 10, tx->eq_freq, tx->eq_gain);
+#endif
   SetTXAEQRun(tx->id, tx->eq_enable);
   t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __FUNCTION__, tx->eq_enable, tx->eq_gain[0]);
 }

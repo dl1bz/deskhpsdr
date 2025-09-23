@@ -182,6 +182,16 @@ static void audioLoadProfile() {
       GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
     }
 
+#if defined (__EQ12__)
+
+    for (int jj = 11; jj < 13; jj++) {
+      GetPropF2("modeset.%d.txeq.%d", i, jj,         mode_settings[i].tx_eq_gain[jj]);
+      GetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
+      GetPropF2("modeset.%d.rxeq.%d", i, jj,         mode_settings[i].rx_eq_gain[jj]);
+      GetPropF2("modeset.%d.rxeqfrq.%d", i, jj,      mode_settings[i].rx_eq_freq[jj]);
+    }
+
+#endif
     GetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
     GetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
     transmitter->eq_enable        = mode_settings[i].en_txeq;
@@ -201,6 +211,14 @@ static void audioLoadProfile() {
       transmitter->cfc_post[j]    = mode_settings[i].cfc_post[j];
     }
 
+#if defined (__EQ12__)
+
+    for (int jj = 11; jj < 13; jj++) {
+      transmitter->eq_gain[jj]    = mode_settings[i].tx_eq_gain[jj];
+      transmitter->eq_freq[jj]    = mode_settings[i].tx_eq_freq[jj];
+    }
+
+#endif
     GetPropI0("transmitter.tx_filter_high",          tx_filter_high);
     GetPropI0("transmitter.tx_filter_low",           tx_filter_low);
     GetPropI0("transmitter.eq_ctfmode",              transmitter->eq_ctfmode);
@@ -277,11 +295,16 @@ void audioSaveProfile() {
     SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
   }
 
-  for (int k = 0; k < 11; k++) {
-    SetPropF2("modeset.%d.rxeq.%d", i, k,          mode_settings[i].rx_eq_gain[k]);
-    SetPropF2("modeset.%d.rxeqfrq.%d", i, k,       mode_settings[i].rx_eq_freq[k]);
+#if defined (__EQ12__)
+
+  for (int jj = 11; jj < 13; jj++) {
+    SetPropF2("modeset.%d.txeq.%d", i, jj,         mode_settings[i].tx_eq_gain[jj]);
+    SetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
+    SetPropF2("modeset.%d.rxeq.%d", i, jj,         mode_settings[i].rx_eq_gain[jj]);
+    SetPropF2("modeset.%d.rxeqfrq.%d", i, jj,      mode_settings[i].rx_eq_freq[jj]);
   }
 
+#endif
   SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   SetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
   SetPropI0("transmitter.tx_filter_high",          tx_filter_high);
@@ -1585,33 +1608,38 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 5, row, 1, 1);
 #endif
+  // #if defined (__EQ12__)
+  //  const int max_cfc_zeilen = 6;
+  // #else
+  const int max_cfc_zeilen = 5;
+  // #endif
 
-  for (int i = 1; i < 6; i++) {
+  for (int i = 1; i <= max_cfc_zeilen; i++) {
     row++;
     btn = gtk_spin_button_new_with_range(10.0, 9990.0, 10.0);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 0, row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCFREQ + i));
     btn = gtk_spin_button_new_with_range(10.0, 9990.0, 10.0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i + 5]);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i + max_cfc_zeilen]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
-    g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCFREQ + i + 5));
+    g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCFREQ + i + max_cfc_zeilen));
     btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[i]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCLVL + i));
     btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[i + 5]);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[i + max_cfc_zeilen]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 4, row, 1, 1);
-    g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCLVL + i + 5));
+    g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCLVL + i + max_cfc_zeilen));
     btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[i]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 2, row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST + i));
     btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[i + 5]);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[i + max_cfc_zeilen]);
     gtk_grid_attach(GTK_GRID(cfc_grid), btn, 5, row, 1, 1);
-    g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST + i + 5));
+    g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST + i + max_cfc_zeilen));
   }
 
   //

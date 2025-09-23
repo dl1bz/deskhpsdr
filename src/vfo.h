@@ -118,14 +118,24 @@ struct _mode_settings {
   int snb;                          // Spectral noise blanker
   int agc;                          // AGC characteristics (slow/medium/fast etc.)
   int en_rxeq;                      // RX equalizer on/off
+#if defined (__EQ12__)
+  double rx_eq_freq[13];            // RX equalizer settings
+  double rx_eq_gain[13];
+#else
   double rx_eq_freq[11];            // RX equalizer settings
   double rx_eq_gain[11];
+#endif
   //
   // TX (EQ, CMPR, DEXP, CRC) settings
   //
   int en_txeq;                      // TX equalizer on/off
+#if defined (__EQ12__)
+  double tx_eq_freq[13];            // TX equalizer settings
+  double tx_eq_gain[13];
+#else
   double tx_eq_freq[11];            // TX equalizer settings
   double tx_eq_gain[11];
+#endif
   int compressor;                   // TX compressor on/off
   double compressor_level;          // TX compressor level
 #if defined (__LDESK__) && defined (__USELESS__)

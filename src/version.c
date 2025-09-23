@@ -67,6 +67,9 @@ char build_options[] =
 #ifdef __WMAP__
   "MAP "
 #endif
+#ifdef __EQ12__
+  "EQ12 "
+#endif
 #ifdef __DVL__
   "DEV "
 #endif

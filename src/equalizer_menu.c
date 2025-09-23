@@ -343,8 +343,13 @@ void equalizer_menu(GtkWidget *parent) {
     label = gtk_label_new("Gain");
     gtk_widget_set_name(label, "boldlabel");
     gtk_grid_attach(GTK_GRID(mygrid), label, 3, myrow, 1, 1);
+#if defined (__EQ12__)
+    const int max_eq_zeilen = 6; // if use 12-band EQ 6 rows
+#else
+    const int max_eq_zeilen = 5; // if use 10-band EQ 5 rows
+#endif
 
-    for (int i = 1; i < 6; i++) {
+    for (int i = 1; i <= max_eq_zeilen; i++) { // index 0 must be excluded
       myrow++;
       mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 0, myrow, 1, 1);
@@ -356,12 +361,12 @@ void equalizer_menu(GtkWidget *parent) {
       g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i));
       mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 2, myrow, 1, 1);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i + 5]);
-      g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i + 5));
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i + max_eq_zeilen]);
+      g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
       mbtn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
       gtk_grid_attach(GTK_GRID(mygrid), mbtn, 3, myrow, 1, 1);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), gains[i + 5]);
-      g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i + 5));
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), gains[i + max_eq_zeilen]);
+      g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
     }
   }
 

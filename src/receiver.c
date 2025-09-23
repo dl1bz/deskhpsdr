@@ -348,6 +348,15 @@ void rx_save_state(const RECEIVER *rx) {
     SetPropF2("receiver.%d.eq_freq[%d]", rx->id, i,             rx->eq_freq[i]);
     SetPropF2("receiver.%d.eq_gain[%d]", rx->id, i,             rx->eq_gain[i]);
   }
+
+#if defined (__EQ12__)
+
+  for (int ii = 11; ii < 13; ii++) {
+    SetPropF2("receiver.%d.eq_freq[%d]", rx->id, ii,             rx->eq_freq[ii]);
+    SetPropF2("receiver.%d.eq_gain[%d]", rx->id, ii,             rx->eq_gain[ii]);
+  }
+
+#endif
 }
 
 void rx_restore_state(RECEIVER *rx) {
@@ -456,6 +465,15 @@ void rx_restore_state(RECEIVER *rx) {
     GetPropF2("receiver.%d.eq_freq[%d]", rx->id, i,             rx->eq_freq[i]);
     GetPropF2("receiver.%d.eq_gain[%d]", rx->id, i,             rx->eq_gain[i]);
   }
+
+#if defined (__EQ12__)
+
+  for (int ii = 11; ii < 13; ii++) {
+    GetPropF2("receiver.%d.eq_freq[%d]", rx->id, ii,             rx->eq_freq[ii]);
+    GetPropF2("receiver.%d.eq_gain[%d]", rx->id, ii,             rx->eq_gain[ii]);
+  }
+
+#endif
 }
 
 void rx_reconfigure(RECEIVER *rx, int height) {
@@ -843,6 +861,10 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->eq_freq[8]  =  2500.0;
   rx->eq_freq[9]  =  3000.0;
   rx->eq_freq[10] =  5000.0;
+#if defined (__EQ12__)
+  rx->eq_freq[11] =  6000.0;
+  rx->eq_freq[12] =  8000.0;
+#endif
   rx->eq_gain[0]  = 0.0;
   rx->eq_gain[1]  = 0.0;
   rx->eq_gain[2]  = 0.0;
@@ -854,6 +876,10 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->eq_gain[8]  = 0.0;
   rx->eq_gain[9]  = 0.0;
   rx->eq_gain[10] = 0.0;
+#if defined (__EQ12__)
+  rx->eq_gain[11] = 0.0;
+  rx->eq_gain[12] = 0.0;
+#endif
   //
   // Overwrite all these values with data from the props file
   //
@@ -1754,7 +1780,11 @@ void rx_set_equalizer(RECEIVER *rx) {
   //
   // Apply the equalizer parameters stored in rx
   //
+#if defined (__EQ12__)
+  SetRXAEQProfile(rx->id, 12, rx->eq_freq, rx->eq_gain);
+#else
   SetRXAEQProfile(rx->id, 10, rx->eq_freq, rx->eq_gain);
+#endif
   SetRXAEQRun(rx->id, rx->eq_enable);
 }
 

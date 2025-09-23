@@ -191,8 +191,13 @@ typedef struct _transmitter {
   // Equalizer data
   //
   int    eq_enable;
+#if defined (__EQ12__)
+  double eq_freq[13];  // frequency in Hz
+  double eq_gain[13];  // gain in dB
+#else
   double eq_freq[11];  // frequency in Hz
   double eq_gain[11];  // gain in dB
+#endif
   int eq_ctfmode;
 
 } TRANSMITTER;
