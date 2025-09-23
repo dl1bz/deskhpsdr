@@ -36,6 +36,7 @@ COPYMODE=OFF
 AUTOGAIN=OFF
 REGION1=OFF
 WMAP=OFF
+EQ12=OFF
 DEVEL=OFF
 
 #################################################################################################################
@@ -57,6 +58,7 @@ DEVEL=OFF
 #  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
 #  REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
 #  WMAP         | If ON, a Worldmap is shown as Backgroundimage of RX Panadapter -> NEED more CPU consumption !
+#  EQ12         | If ON, use 12-band EQ instead of 10-band EQ
 #  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
 #
 #  If you want to use the Worldmap option (shown as RX panadapter background image instead of the original black
@@ -372,6 +374,11 @@ WMAP_OPTIONS=-D__WMAP__
 endif
 CPP_DEFINES += -D__WMAP__
 
+ifeq ($(EQ12), ON)
+EQ12_OPTIONS=-D__EQ12__
+endif
+CPP_DEFINES += -D__EQ12__
+
 ##############################################################################
 #
 # Options for audio module
@@ -521,6 +528,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(REG1_OPTIONS) \
 	$(WMAP_OPTIONS) \
+	$(EQ12_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
 
@@ -963,7 +971,7 @@ DEPEND:
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
-		-D__WMAP__ \
+		-D__WMAP__ -D__EQ12__ \
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND
 
