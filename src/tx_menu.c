@@ -1089,7 +1089,7 @@ void tx_menu(GtkWidget *parent) {
 #else
   mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "TX Settings");
 #endif
-  gtk_widget_set_name(mbtn, "boldlabel");
+  gtk_widget_set_name(mbtn, "smalllabel_blue_bold");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (which_container == TX_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
   g_signal_connect(mbtn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(TX_CONTAINER));
@@ -1099,9 +1099,9 @@ void tx_menu(GtkWidget *parent) {
 #else
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "CFC Settings");
 #endif
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "smalllabel_blue_bold");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == CFC_CONTAINER));
-  gtk_grid_attach(GTK_GRID(grid), btn, col, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(CFC_CONTAINER));
   col++;
 #if defined (__LDESK__)
@@ -1109,13 +1109,13 @@ void tx_menu(GtkWidget *parent) {
 #else
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "DwdExp Settings");
 #endif
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "smalllabel_bold");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == DEXP_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(DEXP_CONTAINER));
   col++;
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peak Labels");
-  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_name(btn, "smalllabel_bold");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == PEAKS_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(PEAKS_CONTAINER));
