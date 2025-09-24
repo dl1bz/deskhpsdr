@@ -8,9 +8,6 @@ This is a hamradio application for SDR devices with HPSDR protocol 1 and 2, base
 
 My main focus of deskHPSDR development, the improvements and additional functions against piHPSDR is the Hermes Lite 2 SDR Transceiver and his similar devices based on the same hardware platform like the Square-SDR. Other SDR devices can be used too if supported, but I cannot check it. The second focus is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The third focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio, less for wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
-More information about the develop progress of deskHPSDR can be found here in my Blog:<br>
-[https://hamradio.bzsax.de/category/hamradio/deskhpsdr/](https://hamradio.bzsax.de/category/hamradio/deskhpsdr/) (German language only).
-
 ## deskHPSDR was forked once from pihpsdr - <br>but is now no more comparable with piHPSDR !
 
 piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>
@@ -38,55 +35,18 @@ My work is not completed (are software projects ever finished ???). I have some 
 
 ## Latest Changes
 
-**CHANGES are moved now to the [Discussions tab, category CHANGELOG deskhpsdr](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr).**
+**CHANGES are located in the [Discussions tab, category CHANGELOG deskhpsdr](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr).**
 
-### Version 2.6.0 (final version [current])
+### Version 2.6.x (current version)
 
-On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get any brand-new base functions, only bugfixes if any become known or improvements if I think there's still something to be done yet. Further development will start later from version 2.7.x after a short break in development.<br>
-**Changes / Corrections after Version 2.5 and implement into 2.6**
-- some minor code adjustments for better program and functions logic (dependencies and correlations), remove/change code which is not supported at all compilers and linkers for better compatibility and interoperability between macOS and Linux
-- add two new level bars for MicLvl and ALCLvl if analog S-Meter is selected
-- new design for the MicLvl meter and assign now the Mic Gain Level for MicLvl meter from the WDSP audio chain
-- if selected **Optimize_for_Touch** in Radio Menu change some sliders to spin-buttons for better experience at slider surface (with spin-buttons instead sliders we can increase the preciseness of adjust values at touch operation)
-- relation between RX panadapter and waterfall now adjustable in Display Menu
-- add a worldmap as background for the RX panadapter (in the ```make.config.deskhpsdr``` set WMAP=ON)
-- change band borders in the RX panadapter (vertical red lines) from US (default) to IARU Reg. 1 (if want use set in the ```make.config.deskhpsdr``` REGION1=ON)
-- if using a Hermes Lite 2 you can use Autogain now (like in Thetis), set if want using in the ```make.config.deskhpsdr``` AUTOGAIN=ON
-- background color of the slider surface can be user-defined now in the Screen Menu
-- slider geometry is adjustable now via a Slider Surface Resize Factor in the Screen Menu
-- add TUNE Drv and Audio Input Selection into the slider surface for direct access (go to TX Menu no more required)
-
-### Version 2.5.x (first developer version [deprecated])
-- completed: if using Hermes-Lite 2 add autogain regulation as option for RxPGA gain (need insert AUTOGAIN=ON in ```make.config.deskhpsdr```)
-- completed: fix a segmentation fault of deskHPSDR if using SDR-RX-only devices like SDRplay via Soapy-API after start the SDR device
-- completed: if using Hermes-Lite 2 activate CL1 input for inject external 10 MHz reference (e.g. with a GPSDO)
-- completed: add (if in duplex mode) the audio level monitoring in the separated TX window too (feature request by CU2ED)
-- completed: remove "horizontal stacking" display option for panadapter in screen menu, that disturbs a lot of my changed GUI design
-- completed: remove all old piHPSDR Client-Server code, deskHPSDR doesn't support this "One-App-Limited" Client-Server concept
-- completed: fix some display errors if horizontal screen resolution >= 1280px and duplex selected (issue by CU2ED, tnx)
-- completed: show own callsign in upper left corner of RX panadapter, callsign is configurable in Radio menu (feature request by CU2ED)
-- completed: show S meter values if using analogue S meter (feature request by CU2ED)
-- completed: if using Hermes Lite 2 TX power slider show now TX output in W (step-size 0.1W) instead of a scale between 0-100
-- completed: add more keyboard shortcuts (feature request by DH0DM)
-- under development: begin implementation to full-automatic control the RxPGA gain if using a Hermes Lite 2
-- completed: merge the new PEAK label feature from piHPSDR into deskHPSDR and add an option for show the peak label as S-Meter values instead of dbm
-- completed: add an option for using 3 Mic profiles, which can save and load different audio settings (CFC, TX-EQ, Limiter, Basebandcompressor) if using different types of Mics with special settings per Mic. Load and save is only possible in modes LSB, USB or DSB. Other modes are not supported. If mode is DIGL or DIGU the access to the RX- and TX-EQ is now blocked, because is it important that the frequency spectrum is not manipulated if using digi modes.
-- under development: implementation of a TCI Server, which emulates a SunSDR2Pro device (successful tested with JTDX, RumLogNG, MacLoggerDX)<br>
-- completed: add an additional serial device interface option, which can switch ON the RTS and/or DTR signal line during TUNE function and PTT output (feature request by DD8JM for TUNE and by CU2ED for PTT output)
-- under development: sereral GUI improvements for show additional status infos on the screen<br>
-- under development: make deeper access possible to the whole audio tools like CFC, Compressor, phase rotator for the user<br>
-- completed: add an additional, adjustable up to +20db, AF preamp for increasing mic input level if required<br>
-- under development: automatic switching of different audio inputs depends from the selected mode with automatic save settings<br>
-- completed: remove most of the limitations at 60m band (remove channelizing and other non-essential things)<br>
-- completed: add new UDP listener for my RX200 ESP32 project, which send via UDP broadcast data in JSON<br>
-  format like forward and reflected power, SWR and show the received and parsed data onscreen<br>
-  as panadapter overlay (need now json-c as additional lib, so please install it)<br>
-- completed: add new serial device, which can be used as an external PTT input using RTS & CTS signaling similar like Thetis
-
-Things marked as "under development" are not fully tested and have maybe issues.<br>
-Things marked as "completed" are tested a longer time and will work without known issues up to now.<br>
+On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get any brand-new base functions, only bugfixes if any become known or improvements if I think there's still something to be done yet.<br>
+Further development will start later from version 2.7.x after a short break in development.<br>
 
 Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
+
+### Version 2.5.x (first developer version [deprecated])
+
+First version after forking from pihpsdr in October 2024, not made for production or public use.
 
 ## Issues and Discussion tab at Github for this project - read carefully !
 
@@ -131,7 +91,12 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 
 ## Credits
 
-Big thanks and huge respect to all involved developers for their previous great work on piHPSDR until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.
+Big thanks and huge respect to all involved developers for their previous great work on piHPSDR until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
+Special thanks to:<br>
+- my wife for her great patience and understanding
+- John Melton G0ORX & Christoph van Wüllen DL1YCF for their great development around pihpsdr
+- Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
+- all of the active users for support deskHPSDR
 
 ## Exclusion of any Guarantee and any Warrenty
 
