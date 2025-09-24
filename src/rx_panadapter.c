@@ -611,8 +611,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     S9 += 10; // 10db nach oben schieben
     S9 = (S9 - (double)rx->panadapter_low) / denom;
     S9 = (S9 < 0.0) ? 0.0 : (S9 > 1.0) ? 1.0 : S9;
-    t_print("S9(off)=%.6f low=%d high=%d h=%d\n",
-            S9, rx->panadapter_low, rx->panadapter_high, myheight);
+    // t_print("S9(off)=%.6f low=%d high=%d h=%d\n", S9, rx->panadapter_low, rx->panadapter_high, myheight);
 
     if (active) {
       cairo_pattern_add_color_stop_rgba(gradient, 0.0,       GRAD_GREEN);
