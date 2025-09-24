@@ -1029,8 +1029,8 @@ void tx_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  char _title[32];
-  snprintf(_title, 32, "%s TX Menu (%d)", PGNAME, mic_prof.nr);
+  char _title[64];
+  snprintf(_title, 64, "%s TX Menu (Mic profile:%d)", PGNAME, mic_prof.nr);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
@@ -1057,18 +1057,22 @@ void tx_menu(GtkWidget *parent) {
   col++;
   mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "TX Basic Settings");
   gtk_widget_set_name(mbtn, "smalllabel_blue_bold");
+  gtk_widget_set_tooltip_text(mbtn, "Adjust general TX settings");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (which_container == TX_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
   g_signal_connect(mbtn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(TX_CONTAINER));
   col++;
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "TX ProAudio Tools");
   gtk_widget_set_name(btn, "smalllabel_blue_bold");
+  gtk_widget_set_tooltip_text(btn, "Adjust CFC, Leveler, Phase Rotator & Speech Processor\n"
+                                   "Enable/Disable CESSB function");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == CFC_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(CFC_CONTAINER));
   col++;
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "DEXP Adjustment");
   gtk_widget_set_name(btn, "smalllabel_bold");
+  gtk_widget_set_tooltip_text(btn, "Adjust Downward Expander");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == DEXP_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(DEXP_CONTAINER));
@@ -1092,6 +1096,10 @@ void tx_menu(GtkWidget *parent) {
   if (can_transmit) {
     row++;
     col = 0;
+    GtkWidget *trennline = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_size_request(trennline, -1, 3);
+    gtk_grid_attach(GTK_GRID(tx_grid), trennline, col, row, 5, 1);
+    row++;
     col += 3;
     load_button = gtk_button_new_with_label("Load Profile");
     gtk_widget_set_name(load_button, "boldlabel_blue");
@@ -1133,17 +1141,26 @@ void tx_menu(GtkWidget *parent) {
     g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
   }
 
+  row++;
+  GtkWidget *trennline = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_widget_set_size_request(trennline, -1, 3);
+  gtk_grid_attach(GTK_GRID(tx_grid), trennline, 0, row, 5, 1);
+
   //------------------------------------------------------------------------------------------------
   if (n_input_devices > 0) {
     row++;
     col = 0;
-    btn = gtk_check_button_new_with_label("Local Microphone");
-    gtk_widget_set_halign(btn, GTK_ALIGN_END);
-    gtk_widget_set_name(btn, "boldlabel");
+    btn = gtk_check_button_new_with_label("Use computer\naudio input");
+    gtk_widget_set_tooltip_text(btn, "Enable computer audio as mic input\n"
+                                     "(if your SDR-TRX hasn't an own mic input)");
+    gtk_widget_set_halign(btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_name(btn, "smallabel");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->local_microphone);
     gtk_grid_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
     g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_LOCAL_MIC));
     input = gtk_combo_box_text_new();
+    gtk_widget_set_tooltip_text(input, "Select one of your local audio devices as mic input,\n"
+                                       "which is connected to your computer.");
 
     for (int i = 0; i < n_input_devices; i++) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(input), NULL, input_devices[i].description);
@@ -1214,6 +1231,11 @@ void tx_menu(GtkWidget *parent) {
     if (transmitter->local_microphone) {
       gtk_widget_set_sensitive (btn, FALSE);
     }
+
+    row++;
+    GtkWidget *trennline = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_size_request(trennline, -1, 3);
+    gtk_grid_attach(GTK_GRID(tx_grid), trennline, 0, row, 5, 1);
   }
 
   row++;

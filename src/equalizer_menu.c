@@ -222,7 +222,7 @@ void equalizer_menu(GtkWidget *parent) {
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
 #if defined (__LDESK__)
   char _title[64];
-  snprintf(_title, 64, "%s - RX/TX Equalizer (Mic Profile %d)", PGNAME, mic_prof.nr);
+  snprintf(_title, 64, "%s - RX/TX Equalizer (Mic Profile:%d)", PGNAME, mic_prof.nr);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
 #else
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Equalizer");
@@ -241,6 +241,7 @@ void equalizer_menu(GtkWidget *parent) {
   col++;
   GtkWidget *rx1_sel = gtk_radio_button_new_with_label_from_widget(NULL, "RX1-EQ Settings");
   gtk_widget_set_name(rx1_sel, "boldlabel");
+  gtk_widget_set_tooltip_text(rx1_sel, "Equalize your receiver RX1");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rx1_sel), (eqid == 0));
   gtk_grid_attach(GTK_GRID(grid), rx1_sel, col, row, 1, 1);
   g_signal_connect(rx1_sel, "toggled", G_CALLBACK(eqid_changed_cb), GINT_TO_POINTER(0));
@@ -249,6 +250,7 @@ void equalizer_menu(GtkWidget *parent) {
     col++;
     mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "RX2-EQ Settings");
     gtk_widget_set_name(mbtn, "boldlabel");
+    gtk_widget_set_tooltip_text(mbtn, "Equalize your receiver RX2");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (eqid == 1));
     gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
     g_signal_connect(mbtn, "toggled", G_CALLBACK(eqid_changed_cb), GINT_TO_POINTER(1));
@@ -257,6 +259,7 @@ void equalizer_menu(GtkWidget *parent) {
   if (can_transmit) {
     col++;
     mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "TX-EQ Settings");
+    gtk_widget_set_tooltip_text(mbtn, "Adjust and shape your microphone audio for transmission");
     gtk_widget_set_name(mbtn, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (eqid == 2));
     gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
