@@ -3441,9 +3441,16 @@ static void metis_start_stop(int command) {
       buffer[i] = 0x00;
     }
 
+#ifdef __APPLE__
+    //-- start fix for Tahoe --
+    // Send Start/Stop packet 3x to mitigate macOS first-UDP-drop
+    for (int n = 0; n < 3; n++) {
+      metis_send_buffer(buffer, 64);
+      usleep(30000); // 30 ms
+    }
+    //-- end fix for Tahoe --
+#else
     metis_send_buffer(buffer, 64);
-#if defined (__LDESK__)
-    // usleep(100000);
 #endif
   } else {
     // use TCP -- send a long packet
