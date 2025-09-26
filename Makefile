@@ -1160,6 +1160,8 @@ src/configure.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/configure.o: src/receiver.h src/transmitter.h src/main.h src/channel.h
 src/configure.o: src/actions.h src/gpio.h src/i2c.h src/message.h
 src/css.o: src/css.h src/message.h src/screen_menu.h src/main.h src/toolset.h
+src/css.o: src/radio.h src/adc.h src/dac.h src/discovered.h src/receiver.h
+src/css.o: src/transmitter.h
 src/cw_menu.o: src/new_menu.h src/pa_menu.h src/band.h src/bandstack.h
 src/cw_menu.o: src/filter.h src/mode.h src/radio.h src/adc.h src/dac.h
 src/cw_menu.o: src/discovered.h src/receiver.h src/transmitter.h
@@ -1189,7 +1191,7 @@ src/encoder_menu.o: src/action_dialog.h src/gpio.h src/i2c.h
 src/equalizer_menu.o: src/main.h src/new_menu.h src/equalizer_menu.h
 src/equalizer_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/equalizer_menu.o: src/receiver.h src/transmitter.h src/ext.h src/vfo.h
-src/equalizer_menu.o: src/mode.h src/message.h src/tx_menu.h
+src/equalizer_menu.o: src/mode.h src/message.h src/tx_menu.h src/toolset.h
 src/exit_menu.o: src/main.h src/new_menu.h src/exit_menu.h src/discovery.h
 src/exit_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/exit_menu.o: src/receiver.h src/transmitter.h src/rigctl.h
@@ -1354,7 +1356,8 @@ src/rigctl.o: src/filter.h src/mode.h src/band.h src/bandstack.h
 src/rigctl.o: src/filter_menu.h src/vfo.h src/agc.h src/store.h src/ext.h
 src/rigctl.o: src/rigctl_menu.h src/noise_menu.h src/new_protocol.h
 src/rigctl.o: src/MacOS.h src/old_protocol.h src/iambic.h src/new_menu.h
-src/rigctl.o: src/zoompan.h src/message.h src/startup.h
+src/rigctl.o: src/zoompan.h src/message.h src/startup.h src/toolset.h
+src/rigctl.o: src/main.h
 src/rigctl_menu.o: src/new_menu.h src/rigctl_menu.h src/rigctl.h src/band.h
 src/rigctl_menu.o: src/bandstack.h src/radio.h src/adc.h src/dac.h
 src/rigctl_menu.o: src/discovered.h src/receiver.h src/transmitter.h
@@ -1417,7 +1420,10 @@ src/switch_menu.o: src/transmitter.h src/vfo.h src/mode.h src/toolbar.h
 src/switch_menu.o: src/gpio.h src/actions.h src/action_dialog.h src/i2c.h
 src/tci.o: src/radio.h src/adc.h src/dac.h src/discovered.h src/receiver.h
 src/tci.o: src/transmitter.h src/vfo.h src/mode.h src/rigctl.h src/ext.h
-src/tci.o: src/message.h src/toolset.h
+src/tci.o: src/message.h src/toolset.h src/main.h
+src/tci_lws.o: src/tci_lws.h src/radio.h src/adc.h src/dac.h src/discovered.h
+src/tci_lws.o: src/receiver.h src/transmitter.h src/vfo.h src/mode.h
+src/tci_lws.o: src/rigctl.h src/ext.h src/message.h src/toolset.h
 src/toolbar.o: src/actions.h src/gpio.h src/toolbar.h src/mode.h src/filter.h
 src/toolbar.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
 src/toolbar.o: src/MacOS.h src/receiver.h src/old_protocol.h src/vfo.h
@@ -1428,7 +1434,8 @@ src/toolbar_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/toolbar_menu.o: src/receiver.h src/transmitter.h src/new_menu.h
 src/toolbar_menu.o: src/actions.h src/action_dialog.h src/gpio.h
 src/toolbar_menu.o: src/toolbar.h
-src/toolset.o: src/toolset.h src/message.h
+src/toolset.o: src/toolset.h src/radio.h src/adc.h src/dac.h src/discovered.h
+src/toolset.o: src/receiver.h src/transmitter.h src/message.h
 src/transmitter.o: src/band.h src/bandstack.h src/channel.h src/main.h
 src/transmitter.o: src/receiver.h src/meter.h src/filter.h src/mode.h
 src/transmitter.o: src/property.h src/radio.h src/adc.h src/dac.h
@@ -1444,7 +1451,7 @@ src/tx_menu.o: src/audio.h src/receiver.h src/new_menu.h src/radio.h
 src/tx_menu.o: src/adc.h src/dac.h src/discovered.h src/transmitter.h
 src/tx_menu.o: src/sliders.h src/actions.h src/ext.h src/filter.h src/mode.h
 src/tx_menu.o: src/vfo.h src/new_protocol.h src/MacOS.h src/message.h
-src/tx_menu.o: src/property.h src/equalizer_menu.h
+src/tx_menu.o: src/property.h src/equalizer_menu.h src/toolset.h
 src/tx_panadapter.o: src/appearance.h src/agc.h src/band.h src/bandstack.h
 src/tx_panadapter.o: src/discovered.h src/radio.h src/adc.h src/dac.h
 src/tx_panadapter.o: src/receiver.h src/transmitter.h src/rx_panadapter.h
@@ -1491,5 +1498,7 @@ src/saturnmain.o: src/saturnregisters.h
 src/sliders.o: src/receiver.h src/transmitter.h src/actions.h
 src/store.o: src/bandstack.h
 src/toolbar.o: src/gpio.h
+src/toolset.o: src/radio.h src/adc.h src/dac.h src/discovered.h
+src/toolset.o: src/receiver.h src/transmitter.h
 src/vfo.o: src/mode.h
 src/MacTTS.o: src/message.h

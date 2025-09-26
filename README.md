@@ -6,22 +6,22 @@ This is a hamradio application for SDR devices with HPSDR protocol 1 and 2, base
 
 **deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. deskHPSDR hasn't a special Client-Server-Mode like pihpsdr (make no sense, we HAVE network-connected SDR devices yet).
 
-My main focus of deskHPSDR development, the improvements and additional functions against piHPSDR is the Hermes Lite 2 SDR Transceiver and his similar devices based on the same hardware platform like the Square-SDR. Other SDR devices can be used too if supported, but I cannot check it. The second focus is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The third focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio, less for wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
+My main focus of deskHPSDR development, the improvements and additional functions against piHPSDR is the Hermes Lite 2 SDR Transceiver and his similar devices based on the same hardware platform (like the SquareSDR). Other SDR devices can be used too if supported, but I cannot check it. The second focus is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The third focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, less for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
-## deskHPSDR was forked once from pihpsdr - <br>but is now no more comparable with piHPSDR !
+## deskHPSDR was forked once from pihpsdr
 
-piHPSDR was first developed by John Melton, G0ORX/N6LYT a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>
-Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they are not available in piHPSDR. Things that deskHPSDR doesn't need have also been removed, they exist furthermore in piHPSDR, but are no longer as parts of deskHPSDR. deskHPSDR is a kind of evolution from piHPSDR with completely different objectives.
+piHPSDR was [first developed](https://github.com/g0orx/pihpsdr) by [John Melton, G0ORX/N6LYT](https://github.com/g0orx) a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>
+Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they are not available in piHPSDR. Things that deskHPSDR doesn't need have also been removed (e.g. the build-in client-server-mode), they exist furthermore in piHPSDR, but are no longer as parts of deskHPSDR. deskHPSDR is now a kind of evolution from piHPSDR with completely different objectives.
 
 ## Requirements
 
-* a modern Desktop-OS like Linux or macOS with installed developer tools like compiler, linker etc.
-* a large screensize starts at 1280x600 or higher
-* basic knowledge: how to use your OS, a shell, a text editor and how to compile applications from source code
+* modern Desktop-OS like Linux or macOS with installed developer tools like compiler, linker etc.
+* minimum screensize starts from 1280x600 or higher resolutions
+* **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the ```COMPILE.macOS``` first
 * *Linux only*: please read the ```COMPILE.linux``` first
-* a SDR device or transceiver, which supports HPSDR protocol 1 (older) or 2 (newer) like the Hermes Lite 2, the ANAN or similiar devices. Soapy-API based SDR can be used too, but with limitations because of the Soapy-API implementation. Per default Soapy-API is disabled, if needed you must activate Soapy-API support in the ```make.config.deskhpsdr``` as an user-defined option
-* a very good running network without any issues (Ethernet preferred, WiFi not recommended) and an DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
+* a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices. Soapy-API based SDR can be used too, but with limitations because of the Soapy-API implementation. Per default Soapy-API is disabled, if needed you must activate Soapy-API support in the ```make.config.deskhpsdr``` as an user-defined option. In fact, support the Soapy-API has no priority and no focus in deskHPSDR and that will not change in future.
+* a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the ```Notes_if_using_HERMES-Lite-2.md```
 
 ## I want use now deskHPSDR. What I need to do ?
@@ -31,7 +31,8 @@ I will never publish any ready-compiled binaries, neither for macOS nor for Linu
 
 ## The further development of deskHPSDR
 
-My work is not completed (are software projects ever finished ???). I have some ideas, what I need to add too. You need to understand this branch as "work in progress". I ever check my code here with my test environment: Intel iMac 21" i5 and Macbook Air M1 running both with macOS 14.7.1 aka Sonoma and my SDR tranceiver Hermes-Lite 2 in combination with my homebrew-LDMOS-PA 600W. My focus is Fonie/SSB and Digimode/FT8+FT4, less CW.
+deskHPSDR is under active development, because software projects never finished. My focus with deskHPSDR is Fonie/SSB and Digimodes, less CW.<br>
+My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.
 
 ## Latest Changes
 
@@ -40,7 +41,7 @@ My work is not completed (are software projects ever finished ???). I have some 
 ### Version 2.6.x (current version)
 
 On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get any brand-new base functions, only bugfixes if any become known or improvements if I think there's still something to be done yet.<br>
-Further development will start later from version 2.7.x after a short break in development.<br>
+Further development will start later from version 2.7.x<br>
 
 Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
 
@@ -80,13 +81,13 @@ This overwrite local changes, which are different from the remote repo at Github
 ## Successful and confirmed Tests I had done up to now
 
 So far, deskHPSDR has been successfully tested on the following systems:<br>
-* iMac 21" i5 running macOS 14.7.x aka Sonoma
-* Macbook Air M1 running macOS 14.7.x aka Sonoma
+* iMac 21" i5 running macOS 14 aka Sonoma
+* Macbook Air M1 running macOS 15 aka Sequoia
 * Raspberry Pi5 with NVMe-HAT running 64bit PiOS and X11 environment
 * *Raspberry Pi 3B+ works too, but with limitations (panadapter framerate only 10fps, if want more the CPU hasn't enough power)*
 * a hamradio friend of mine has checked it on a Desktop Linux Ubuntu LTS for me, works too
 
-**All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1 under macOS 14.7.4.**
+**All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1 under macOS 14 and 15**
 **There are no issues with the Hermes Lite 2 and deskHPSDR yet, but it is not possible to check ALL other exist SDR devices.**
 
 ## Credits
