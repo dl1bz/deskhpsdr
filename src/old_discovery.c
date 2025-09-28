@@ -270,23 +270,28 @@ static void discover(struct ifaddrs* iface, int discflag) {
   }
 
 #ifdef __APPLE__
+
   //-- start fix for Tahoe --
   // Send discovery packet 3x to mitigate macOS first-UDP-drop
   for (int n = 0; n < 3; n++) {
-    if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr*)&to_addr, sizeof(to_addr)) < 0) {
+    if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
       t_perror("discover: sendto socket failed for discovery_socket:");
       close(discovery_socket);
       return;
     }
+
     usleep(30000); // 30 ms
   }
+
   //-- end fix for Tahoe --
 #else
+
   if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
     t_perror("discover: sendto socket failed for discovery_socket:");
     close (discovery_socket);
     return;
   }
+
 #endif
   // wait for receive thread to complete
   g_thread_join(discover_thread_id);
@@ -364,8 +369,11 @@ static gpointer discover_receive_thread(gpointer data) {
 #ifdef __APPLE__
         // -- start fix for Tahoe: de-duplicate discovery responses by MAC --
         unsigned char mac_tmp[6];
-        for (i = 0; i < 6; i++) mac_tmp[i] = buffer[i + 3];
+
+        for (i = 0; i < 6; i++) { mac_tmp[i] = buffer[i + 3]; }
+
         int duplicate = 0;
+
         for (int d = 0; d < devices; d++) {
           if (discovered[d].protocol == ORIGINAL_PROTOCOL &&
               memcmp(discovered[d].info.network.mac_address, mac_tmp, 6) == 0) {
@@ -376,9 +384,12 @@ static gpointer discover_receive_thread(gpointer data) {
             break;
           }
         }
+
         if (duplicate) { continue; } // skip adding a second time
+
         // -- end fix for Tahoe --
 #endif
+
         if (devices < MAX_DEVICES) {
           discovered[devices].protocol = ORIGINAL_PROTOCOL;
           discovered[devices].device = buffer[10] & 0xFF;

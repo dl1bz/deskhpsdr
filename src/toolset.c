@@ -36,8 +36,9 @@
 #include "solar.h"
 #include "message.h"
 
-#if defined(__APPLE__)
+#if defined (__APPLE__)
   #include <TargetConditionals.h>
+  #include <sys/sysctl.h>
 #endif
 
 #if defined (__EQ12__)
@@ -93,6 +94,21 @@ int is_pi(void) {
   // Anderes System oder nicht erkannt
   return 0;
 }
+
+#ifdef __APPLE__
+int get_macos_major_version(void) {
+  char macos_version[64] = {0};
+  size_t size = sizeof(macos_version);
+
+  if (sysctlbyname("kern.osproductversion", macos_version, &size, NULL, 0) != 0) {
+    return -1;
+  }
+
+  int major = 0;
+  sscanf(macos_version, "%d", &major);
+  return major;
+}
+#endif
 
 static gboolean is_minute_marker(int interval) {
   static int last_minute = -1;

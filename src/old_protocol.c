@@ -54,6 +54,9 @@
 #include "ext.h"
 #include "iambic.h"
 #include "message.h"
+#ifdef __APPLE__
+  #include "toolset.h"
+#endif
 
 #define min(x,y) (x<y?x:y)
 
@@ -3442,12 +3445,22 @@ static void metis_start_stop(int command) {
     }
 
 #ifdef __APPLE__
-    //-- start fix for Tahoe --
-    // Send Start/Stop packet 3x to mitigate macOS first-UDP-drop
-    for (int n = 0; n < 3; n++) {
+    int major_version = get_macos_major_version();
+
+    if (major_version > 15) {
+      //-- start fix for Tahoe --
+      // Send Start/Stop packet 3x to mitigate macOS first-UDP-drop
+      t_print("%s: macOS major version: %d => activate Tahoe patch\n", __FUNCTION__, major_version);
+
+      for (int n = 0; n < 3; n++) {
+        metis_send_buffer(buffer, 64);
+        usleep(30000); // 30 ms
+      }
+    } else {
+      t_print("%s: macOS major version: %d\n", __FUNCTION__, major_version);
       metis_send_buffer(buffer, 64);
-      usleep(30000); // 30 ms
     }
+
     //-- end fix for Tahoe --
 #else
     metis_send_buffer(buffer, 64);

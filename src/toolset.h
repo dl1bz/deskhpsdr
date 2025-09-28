@@ -45,5 +45,8 @@ extern void sort_tx_eq(TRANSMITTER *tx);
 #if defined (__HAVEATU__)
   extern void show_NOTUNE_dialog(GtkWindow *parent);
 #endif
+#ifdef __APPLE__
+  extern int get_macos_major_version(void);
+#endif
 
 #endif // _TOOLSET_H
