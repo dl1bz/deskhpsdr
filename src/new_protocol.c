@@ -60,10 +60,14 @@
 #include "iambic.h"
 #include "rigctl.h"
 #include "message.h"
+
 #ifdef SATURN
   #include "saturnmain.h"
 #endif
 
+#ifdef __APPLE__
+  #include "toolset.h"
+#endif
 
 #ifdef DUMP_TX_DATA
   long rxiqi[1000000];
@@ -1747,12 +1751,50 @@ void new_protocol_menu_start() {
     new_protocol_thread_id = g_thread_new( "P2 main", new_protocol_thread, NULL);
   }
 
+#ifdef __APPLE__
+  int major_version = get_macos_major_version();
+
+  if (major_version > 15) {
+    // Tahoe workaround: erste UDPs „primen“
+    t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __FUNCTION__, major_version);
+
+    for (int n = 0; n < 3; n++) {
+      new_protocol_general();
+      usleep(30000);
+    }
+
+    for (int n = 0; n < 3; n++) {
+      new_protocol_high_priority();
+      usleep(30000);
+    }
+
+    for (int n = 0; n < 3; n++) {
+      new_protocol_transmit_specific();
+      usleep(30000);
+    }
+
+    for (int n = 0; n < 3; n++) {
+      new_protocol_receive_specific();
+      usleep(30000);
+    }
+  } else {
+    t_print("%s: macOS major version: %d\n", __FUNCTION__, major_version);
+    new_protocol_general();
+    usleep(50000);                    // let FPGA digest the port numbers
+    new_protocol_high_priority();
+    usleep(50000);                    // let FPGA digest the "run" command
+    new_protocol_transmit_specific();
+    new_protocol_receive_specific();
+  }
+
+#else
   new_protocol_general();
   usleep(50000);                    // let FPGA digest the port numbers
   new_protocol_high_priority();
   usleep(50000);                    // let FPGA digest the "run" command
   new_protocol_transmit_specific();
   new_protocol_receive_specific();
+#endif
   new_protocol_timer_thread_id = g_thread_new( "P2 task", new_protocol_timer_thread, NULL);
 }
 

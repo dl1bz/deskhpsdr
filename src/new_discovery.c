@@ -230,12 +230,30 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     buffer[i] = 0x00;
   }
 
+#ifdef __APPLE__
+
+  //-- start fix for Tahoe --
+  // Tahoe workaround: erstes UDP nach bind() kann gedroppt werden → dreifach senden
+  for (int n = 0; n < 3; n++) {
+    if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
+      t_perror("new_discover: sendto socket failed for discovery_socket\n");
+      close(discovery_socket);
+      return;
+    }
+
+    usleep(30000); // 30 ms
+  }
+
+  //-- end fix for Tahoe --
+#else
+
   if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
     t_perror("new_discover: sendto socket failed for discovery_socket\n");
     close (discovery_socket);
     return;
   }
 
+#endif
   // wait for receive thread to complete
   g_thread_join(discover_thread_id);
   close(discovery_socket);
@@ -294,6 +312,29 @@ gpointer new_discover_receive_thread(gpointer data) {
         int status = buffer[4] & 0xFF;
 
         if (status == 2 || status == 3) {
+#ifdef __APPLE__
+          // -- start fix for Tahoe: de-duplicate discovery responses by MAC --
+          unsigned char mac_tmp[6];
+
+          for (i = 0; i < 6; i++) { mac_tmp[i] = buffer[i + 5]; }  // Offset
+
+          int duplicate = 0;
+
+          for (int d = 0; d < devices; d++) {
+            if (discovered[d].protocol == NEW_PROTOCOL &&
+                memcmp(discovered[d].info.network.mac_address, mac_tmp, 6) == 0) {
+              memcpy(&discovered[d].info.network.address, &addr, sizeof(addr));
+              discovered[d].info.network.address_length = sizeof(addr);
+              duplicate = 1;
+              break;
+            }
+          }
+
+          if (duplicate) { continue; }  // erst nach der MAC-Schleife
+
+          // -- end fix for Tahoe --
+#endif
+
           if (devices < MAX_DEVICES) {
             discovered[devices].protocol = NEW_PROTOCOL;
             discovered[devices].device = buffer[11] & 0xFF;
