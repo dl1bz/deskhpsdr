@@ -3450,7 +3450,7 @@ static void metis_start_stop(int command) {
     if (major_version > 15) {
       //-- start fix for Tahoe --
       // Send Start/Stop packet 3x to mitigate macOS first-UDP-drop
-      t_print("%s: macOS major version: %d => activate Tahoe patch\n", __FUNCTION__, major_version);
+      t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __FUNCTION__, major_version);
 
       for (int n = 0; n < 3; n++) {
         metis_send_buffer(buffer, 64);
