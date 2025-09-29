@@ -42,3 +42,5 @@ src/.vscode/*
 ./deskhpsdr.app
 ./hpsdrsim
 ./wdspWisdom*
+HL2-Tools/hl2_eeprom_discovery
+HL2-Tools/hl2_ip_tool
