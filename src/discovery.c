@@ -55,9 +55,7 @@
 #include "property.h"
 #include "message.h"
 #include "version.h"
-#if defined (__LDESK__)
-  #include "new_menu.h"
-#endif
+#include "new_menu.h"
 
 static GtkWidget *discovery_dialog;
 static DISCOVERED *d;
@@ -116,6 +114,48 @@ static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
   status_text("Starting Radio ...\n");
   g_timeout_add(10, ext_start_radio, NULL);
   gtk_widget_destroy(discovery_dialog);
+  return TRUE;
+}
+
+// --- Hermes Lite 2: Reboot via C&C-Frame @ UDP:1025, target addr 0x3A ---
+// Paketlayout (60 Bytes):
+//   0x00..: EF FE 05 7F (0x3A<<1) 00 00 00 01 00...00
+static int hl2_send_reboot_1025(const struct sockaddr_in *dst_in) {
+  int s = socket(AF_INET, SOCK_DGRAM, 0);
+
+  if (s < 0) { return -1; }
+
+  uint8_t msg[60];
+  memset(msg, 0, sizeof msg);
+  msg[0] = 0xEF;
+  msg[1] = 0xFE;
+  msg[2] = 0x05;
+  msg[3] = 0x7F;
+  msg[4] = (uint8_t)(0x3A << 1);
+  msg[5] = 0x00;
+  msg[6] = 0x00;
+  msg[7] = 0x00;
+  msg[8] = 0x01;
+  struct sockaddr_in to = *dst_in;
+  to.sin_port = htons(1025);
+  ssize_t n = sendto(s, msg, sizeof msg, 0, (struct sockaddr*)&to, sizeof to);
+  close(s);
+  return (n == (ssize_t)sizeof msg) ? 0 : -1;
+}
+
+static gboolean reboot_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  DISCOVERED *radio = (DISCOVERED *)data;
+  struct sockaddr_in dst = radio->info.network.address;
+  int rc = hl2_send_reboot_1025(&dst);
+
+  if (rc == 0) {
+    status_text("HL2: reboot command sent\n");
+    t_print("%s: HL2: reboot command sent\n", __FUNCTION__);
+  } else {
+    status_text("HL2: reboot send error\n");
+    t_print("%s: HL2: reboot send error\n", __FUNCTION__);
+  }
+
   return TRUE;
 }
 
@@ -179,12 +219,7 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
     return TRUE;
   }
 
-#if defined (__LDESK__)
   g_strlcpy(ipaddr_radio, cp, IPADDR_LEN);
-#else
-  strncpy(ipaddr_radio, cp, IPADDR_LEN);
-  ipaddr_radio[IPADDR_LEN - 1] = 0;
-#endif
   FILE *fp = fopen("ip.addr", "w");
 
   if (fp) {
@@ -307,13 +342,9 @@ void discovery() {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(discovery_dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[64];
   snprintf(_title, 64, "%s by DL1BZ %s - Discover SDR Device", PGNAME, build_version);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Discovery");
-#endif
   g_signal_connect(discovery_dialog, "delete_event", G_CALLBACK(close_cb), NULL);
   g_signal_connect(discovery_dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content;
@@ -398,11 +429,26 @@ void discovery() {
       gtk_grid_attach(GTK_GRID(grid), start_button, 3, row, 1, 1);
       g_signal_connect(start_button, "button-press-event", G_CALLBACK(start_cb), (gpointer)d);
 
+      // Reboot-Button für Hermes Lite 2
+      // Voraussetzung: DEVICE_HERMES_LITE2 & NEW_DEVICE_HERMES_LITE2 ist im Projekt definiert.
+      // Spalte 4 ist in Nicht-STEMlab-Pfaden frei.
+      if ((d->device == DEVICE_HERMES_LITE2 || d->device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1
+          && !have_radioberry2) {
+        GtkWidget *reboot_button = gtk_button_new_with_label("Reboot");
+        gtk_widget_set_name(reboot_button, "discovery_btn");
+        gtk_widget_set_tooltip_text(reboot_button, "Reboot this SDR Device");
+        gtk_widget_set_margin_top(reboot_button, 10);
+        gtk_widget_set_margin_start(reboot_button, 5);
+        gtk_grid_attach(GTK_GRID(grid), reboot_button, 4, row, 1, 1);
+        g_signal_connect(reboot_button, "button-press-event", G_CALLBACK(reboot_cb), (gpointer)d);
+      }
+
       // if not available then cannot start it
       switch (d->status) {
       case STATE_AVAILABLE:
         if (d->protocol == ORIGINAL_PROTOCOL || d->protocol == NEW_PROTOCOL) {
           gtk_button_set_label(GTK_BUTTON(start_button), "Connect");
+          gtk_widget_set_tooltip_text(start_button, "Start this SDR Device");
         } else {
           gtk_button_set_label(GTK_BUTTON(start_button), "Start");
         }
