@@ -198,10 +198,35 @@ HANDLE _beginthread( void( __cdecl *start_address )( void * ), unsigned stack_si
 
   //pthread_attr_destroy(&attr);
 #ifndef __APPLE__
-  // DL1YCF: this function does not exist on MacOS. You can only name the
-  //         current thread.
-  //         If this call should fail, continue anyway.
-  (void) pthread_setname_np(threadid, "WDSP");
+  //
+  // pthread_setname_np does not exist, or exists with
+  // different semantics, on MacOS (you can only name "yourself")
+  // To aid analyzing CPU times, we name each thread with its
+  // function.
+  //
+  void sendbuf(void *arg); // declared in analyzer.c but not in header file
+  char tname[64];
+
+  if (start_address == &wdspmain) {
+    snprintf(tname, sizeof(tname), "Wchan%d", (int)(uintptr_t)arglist);
+  } else if (start_address == &sendbuf) {
+    snprintf(tname, sizeof(tname), "Wdisp%d", (int)(uintptr_t)arglist);
+  } else if (start_address == &flushChannel) {
+    snprintf(tname, sizeof(tname), "Wflush%d", (int)(uintptr_t)arglist);
+  } else if (start_address == &syncb_main) {
+    snprintf(tname, sizeof(tname), "WSync");
+  } else if (start_address == &doPSCalcCorrection || start_address == &doPSTurnoff || start_address == &PSSaveCorrection
+             || start_address == &PSRestoreCorrection) {
+    snprintf(tname, sizeof(tname), "PURESIGNAL");
+  } else {
+    // in case there are more worker types
+    snprintf(tname, sizeof(tname), "WDSP");
+  }
+
+  //
+  // Ignore return value since we continue anyway.
+  //
+  (void) pthread_setname_np(threadid, tname);
 #endif
   return (HANDLE)threadid;
 }
