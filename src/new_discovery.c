@@ -182,6 +182,29 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(DISCOVERY_PORT);
     to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    //
+    // This will use the subnet-specific broadcast address
+    // instead of INADDR_BROADCAST (255.255.255.255)
+    //
+    //  to_addr.sin_addr.s_addr = htonl(ntohl(interface_addr.sin_addr.s_addr)
+    //          | (ntohl(interface_netmask.sin_addr.s_addr) ^ 0xFFFFFFFF));
+    //
+#ifdef __APPLE__
+
+    //
+    // MacOS fails for broadcasts to the loopback interface(s).
+    // so if this is a loopback, simply use the loopback addr
+    // (Note: currently we are not discovering on LO in P2)
+    //
+    if ((iface->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
+      //
+      // No broadcast on loopback interfaces. Send UDP packet
+      // to interface address
+      //
+      to_addr.sin_addr = interface_addr.sin_addr;
+    }
+
+#endif
     break;
 
   case 2:
@@ -189,7 +212,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     // prepeare socket for sending an UPD packet to ipaddr_radio
     //
     interface_addr.sin_family = AF_INET;
-    interface_addr.sin_addr.s_addr = INADDR_ANY;
+    interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(DISCOVERY_PORT);

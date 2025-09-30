@@ -717,7 +717,7 @@ static gpointer tci_server(gpointer data) {
   // bind to listening port
   memset(&server_address, 0, sizeof(server_address));
   server_address.sin_family = AF_INET;
-  server_address.sin_addr.s_addr = INADDR_ANY;
+  server_address.sin_addr.s_addr = htonl(INADDR_ANY);
   server_address.sin_port = htons(port);
 
   if (bind(server_socket, (struct sockaddr * )&server_address, sizeof(server_address)) < 0) {

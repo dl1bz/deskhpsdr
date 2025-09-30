@@ -123,6 +123,28 @@ static void discover(struct ifaddrs* iface, int discflag) {
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(DISCOVERY_PORT);
     to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    //
+    // This will use the subnet-specific broadcast address
+    // instead of 255.255.255.255
+    //
+    //  to_addr.sin_addr.s_addr = htonl(ntohl(interface_addr.sin_addr.s_addr)
+    //          | (ntohl(interface_netmask.sin_addr.s_addr) ^ 0xFFFFFFFF));
+    //
+#ifdef __APPLE__
+
+    //
+    // MacOS fails for broadcasts to the loopback interface(s).
+    // so if this is a loopback, simply use the loopback addr
+    //
+    if ((iface->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
+      //
+      // No broadcast on loopback interfaces. Send UDP packet
+      // to interface address
+      //
+      to_addr.sin_addr = interface_addr.sin_addr;
+    }
+
+#endif
     break;
 
   case 2:
@@ -131,7 +153,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     // To be able to connect later, we have to specify INADDR_ANY
     //
     interface_addr.sin_family = AF_INET;
-    interface_addr.sin_addr.s_addr = INADDR_ANY;
+    interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(DISCOVERY_PORT);
@@ -442,7 +464,18 @@ static gpointer discover_receive_thread(gpointer data) {
             } else {
               g_strlcpy(discovered[devices].name, "HermesLite V2", sizeof(discovered[devices].name));
               discovered[devices].device = DEVICE_HERMES_LITE2;
-              t_print("discovered HL2: Gateware Major Version=%d Minor Version=%d\n", buffer[9], buffer[21]);
+              // t_print("discovered HL2: Gateware Major Version=%d Minor Version=%d\n", buffer[9], buffer[21]);
+              t_print("==> HL2: Gateware Major Version=%d Minor Version=%d\n", buffer[9], buffer[21]);
+
+              if (buffer[11] & 0xA0) {
+                t_print("==> HL2: fixed IP %d.%d.%d.%d (DHCP overrides)\n", buffer[13], buffer[14], buffer[15], buffer[16]);
+              } else if (buffer[11] & 0x80) {
+                t_print("==> HL2: fixed IP %d.%d.%d.%d (DHCP ignored)\n", buffer[13], buffer[14], buffer[15], buffer[16]);
+              }
+
+              if (buffer[11] & 0x40) {
+                t_print("==> HL2 MAC addr modified: <...>:%02x:%02x\n", buffer[17], buffer[18]);
+              }
             }
 
             discovered[devices].frequency_min = 0.0;
@@ -482,10 +515,6 @@ static gpointer discover_receive_thread(gpointer data) {
             break;
           }
 
-          t_print("old_discovery: name=%s min=%0.3f MHz max=%0.3f MHz\n", discovered[devices].name,
-                  discovered[devices].frequency_min * 1E-6,
-                  discovered[devices].frequency_max * 1E-6);
-
           for (i = 0; i < 6; i++) {
             discovered[devices].info.network.mac_address[i] = buffer[i + 3];
           }
@@ -502,10 +531,14 @@ static gpointer discover_receive_thread(gpointer data) {
           discovered[devices].use_tcp = 0;
           discovered[devices].use_routing = 0;
           discovered[devices].supported_receivers = 2;
-          t_print("old_discovery: found device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s min=%0.3f MHz max=%0.3f MHz\n",
+          t_print("%s: device=%d name=%s software_version=%d status=%d\n",
+                  __FUNCTION__,
                   discovered[devices].device,
+                  discovered[devices].name,
                   discovered[devices].software_version,
-                  discovered[devices].status,
+                  discovered[devices].status);
+          t_print("%s: address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s min=%0.3f MHz max=%0.3f MHz\n",
+                  __FUNCTION__,
                   inet_ntoa(discovered[devices].info.network.address.sin_addr),
                   discovered[devices].info.network.mac_address[0],
                   discovered[devices].info.network.mac_address[1],
