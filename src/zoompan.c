@@ -181,13 +181,9 @@ void remote_set_pan(int rx, double value) {
 }
 
 GtkWidget *zoompan_init(int my_width, int my_height) {
-#if defined (__LDESK__)
   width = my_width - 50;
-#else
-  width = my_width;
-#endif
   height = my_height;
-  //t_print("%s: width=%d height=%d\n", __FUNCTION__,width,height);
+  t_print("%s: width=%d height=%d\n", __FUNCTION__, width, height);
   //
   // the horizontal layout changes a little if the total width changes
   //

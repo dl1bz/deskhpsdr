@@ -1066,13 +1066,8 @@ void show_diversity_phase() {
 
 // will ce called from radio.c and initializing the slider surface depend from the selected screen size
 GtkWidget *sliders_init(int my_width, int my_height) {
-#if defined (__LDESK__)
   width = my_width - 50;
-  // GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
   int selected_mode = vfo[active_receiver->id].mode;
-#else
-  width = my_width;
-#endif
   int widget_height = 0;
   height = my_height;
   widget_height = height / 2;
