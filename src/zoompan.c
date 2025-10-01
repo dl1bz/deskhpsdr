@@ -181,126 +181,94 @@ void remote_set_pan(int rx, double value) {
 }
 
 GtkWidget *zoompan_init(int my_width, int my_height) {
-  width = my_width - 50;
+  // width = my_width - 50;
+  width = my_width;
   height = my_height;
   t_print("%s: width=%d height=%d\n", __FUNCTION__, width, height);
-  //
-  // the horizontal layout changes a little if the total width changes
-  //
-  int twidth, swidth, bwidth;
-  int t1pos, t2pos, t3pos;
-  int s1pos, s2pos, s3pos, l_col;
-  int b1pos, b2pos, b3pos;
-  int lbl_w_fix = width / 23; // Label_width fixed now
-  slider_surface_scale = (slider_surface_scale < 1.0) ? 1.0 : (slider_surface_scale > 6.5 ? 6.5 : slider_surface_scale);
-  double l_scale_factor = (double)slider_surface_scale;
-  int sl_w_fix = width / l_scale_factor; // slider_width fixed now, default 5.0 if Linux and 4.1 if macOS
-  t_print("%s: slider_surface_scale: %f l_scale_factor: %f\n", __FUNCTION__, slider_surface_scale, l_scale_factor);
-  twidth = 2; // 2 Spalten,  Label
-  swidth = 4; // 4 Spalten,  Slider
-  bwidth = 1; // 1 Spalte,   Klick_Button if used
-  t1pos  =  0;
-  b1pos  =  t1pos + twidth;
-  s1pos  =  b1pos + twidth;
-  t2pos  =  s1pos + swidth;
-  b2pos  =  t2pos + twidth;
-  s2pos  =  b2pos + twidth;
-  t3pos  =  s2pos + swidth;
-  b3pos  =  t3pos + twidth;
-  s3pos  =  b3pos + twidth;
-  l_col  =  s3pos + swidth;
   int widget_height = 0;
   widget_height = height;
-#ifdef __APPLE__
-  int add_pixel = 400;
-#else
-  int add_pixel = 380;
-#endif
-  // some debug output for info
-  t_print("%s: t1pos=%d s1pos=%d t2pos=%d s2pos=%d t3pos=%d s3pos=%d l_col=%d\n",
-          __FUNCTION__, t1pos, s1pos, t2pos, s2pos, t3pos, s3pos, l_col);
-  t_print("%s: max. slider surface column: %d\n", __FUNCTION__, s3pos + swidth);
-  t_print("%s: twidth=%d swidth=%d bwidth=%d lbl_w_fix=%d sl_w_fix=%d\n",
-          __FUNCTION__, twidth, swidth, bwidth, lbl_w_fix, sl_w_fix);
+  int zoombox_width = width / 2.95; // Breite zoom_box
+  // int panbox_width = width / 2.68; // Breite pan_box
+  int panbox_width = width - zoombox_width; // Breite pan_box: Gesamtbreite - Breite zoom_box
+  t_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __FUNCTION__, zoombox_width, panbox_width,
+          zoombox_width + panbox_width);
   zoompan = gtk_grid_new();
   gtk_widget_set_size_request (zoompan, width, height);
   gtk_grid_set_row_homogeneous(GTK_GRID(zoompan), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(zoompan), FALSE);
-  gtk_widget_set_margin_top(zoompan, 0);    // Kein Abstand oben
-  gtk_widget_set_margin_bottom(zoompan, 0); // Kein Abstand unten
-  gtk_widget_set_margin_start(zoompan, 15);  // Kein Abstand am Anfang
-  gtk_widget_set_margin_end(zoompan, 0);    // Kein Abstand am Ende
+  gtk_widget_set_margin_top(zoompan, 0);     // Abstand oben
+  gtk_widget_set_margin_bottom(zoompan, 0);  // Abstand unten
+  gtk_widget_set_margin_start(zoompan, 15);  // Abstand am Anfang
+  gtk_widget_set_margin_end(zoompan, 0);     // Abstand am Ende
+  //-----------------------------------------------------------------------------------------------------------
+  // Hauptcontainer: horizontale Box für Zoom
+  GtkWidget *zoom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);   // 5px Abstand zwischen Label & Slider
+  gtk_widget_set_size_request(zoom_box, zoombox_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
   zoom_label = gtk_label_new("Zoom");
-  gtk_widget_set_size_request(zoom_label, 2 * widget_height - 3, widget_height - 15);
   gtk_widget_set_name(zoom_label, "boldlabel_border_blue");
+  // Label breiter erzwingen
+  gtk_widget_set_size_request(zoom_label, 105, -1);  // z.B. 100px
   gtk_widget_set_margin_top(zoom_label, 5);
   gtk_widget_set_margin_bottom(zoom_label, 5);
   gtk_widget_set_margin_end(zoom_label, 5);    // rechter Rand (Ende)
-  gtk_widget_set_halign(zoom_label, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(zoom_label, GTK_ALIGN_START);
   gtk_widget_set_valign(zoom_label, GTK_ALIGN_CENTER);
-  gtk_label_set_xalign(GTK_LABEL(zoom_label), 0.5);
-  gtk_label_set_yalign(GTK_LABEL(zoom_label), 0.5);
-  gtk_label_set_justify(GTK_LABEL(zoom_label), GTK_JUSTIFY_CENTER);
-  gtk_grid_attach(GTK_GRID(zoompan), zoom_label, t1pos, 0, twidth, 1);
-  gtk_widget_show(zoom_label);
   //-----------------------------------------------------------------------------------------------------------
   zoom_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, MAX_ZOOM, 1.00);
   gtk_widget_set_tooltip_text(zoom_scale, "Zoom into the Panadapter");
-  gtk_widget_set_size_request(zoom_scale, sl_w_fix, height);
-  gtk_widget_set_valign(zoom_scale, GTK_ALIGN_CENTER);
-  gtk_widget_set_halign(zoom_scale, GTK_ALIGN_CENTER);
-  gtk_widget_set_hexpand(zoom_scale, FALSE);
+  gtk_widget_set_margin_end(zoom_scale, 15);  // rechter Rand (Ende)
   gtk_range_set_increments (GTK_RANGE(zoom_scale), 1.0, 1.0);
-  gtk_widget_set_margin_end(zoom_scale, 0);    // rechter Rand (Ende)
+  gtk_widget_set_hexpand(zoom_scale, FALSE);  // fülle Box nicht nach rechts
   gtk_range_set_value (GTK_RANGE(zoom_scale), active_receiver->zoom);
 
   for (float i = 1.0; i <= 8.0; i += 1.0) {
     gtk_scale_add_mark(GTK_SCALE(zoom_scale), i, GTK_POS_TOP, NULL);
   }
 
-  gtk_widget_show(zoom_scale);
-  gtk_grid_attach(GTK_GRID(zoompan), zoom_scale, s1pos, 0, swidth, 1);
   zoom_signal_id = g_signal_connect(G_OBJECT(zoom_scale), "value_changed", G_CALLBACK(zoom_value_changed_cb), NULL);
+  // Widgets in Box packen
+  gtk_box_pack_start(GTK_BOX(zoom_box), zoom_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(zoom_box), zoom_scale, TRUE, TRUE, 0);
+  // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
+  gtk_grid_attach(GTK_GRID(zoompan), zoom_box, /* column */ 0, /* row */ 0, /* width */ 1, /* height */ 1);
+  gtk_widget_show_all(zoompan);
+  //-----------------------------------------------------------------------------------------------------------
+  // Hauptcontainer: horizontale Box für Pan
+  GtkWidget *pan_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);   // 5px Abstand zwischen Label & Slider
+  gtk_widget_set_size_request(pan_box, panbox_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
   pan_label = gtk_label_new("Pan");
-  gtk_widget_set_size_request(pan_label, 2 * widget_height - 18, widget_height - 15);
   gtk_widget_set_name(pan_label, "boldlabel_border_blue");
+  // Label breiter erzwingen
+  gtk_widget_set_size_request(pan_label, 90, -1);
   gtk_widget_set_margin_top(pan_label, 5);
   gtk_widget_set_margin_bottom(pan_label, 5);
-#ifdef __APPLE__
-  gtk_widget_set_margin_start(pan_label, 0);  // linker Rand (Start)
-#else
-  gtk_widget_set_margin_start(pan_label, 0);  // linker Rand (Start)
-#endif
-  gtk_widget_set_margin_end(pan_label, 5);    // rechter Rand (Ende)
-  gtk_widget_set_halign(pan_label, GTK_ALIGN_CENTER);
+  gtk_widget_set_margin_end(pan_label, 5);  // rechter Rand (Ende)
+  gtk_widget_set_halign(pan_label, GTK_ALIGN_START);
   gtk_widget_set_valign(pan_label, GTK_ALIGN_CENTER);
-  gtk_label_set_xalign(GTK_LABEL(pan_label), 0.5);
-  gtk_label_set_yalign(GTK_LABEL(pan_label), 0.5);
-  gtk_label_set_justify(GTK_LABEL(pan_label), GTK_JUSTIFY_CENTER);
-  gtk_grid_attach(GTK_GRID(zoompan), pan_label, b2pos, 0, twidth, 1);
-  gtk_widget_show(pan_label);
   //-----------------------------------------------------------------------------------------------------------
   pan_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0,
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
-  gtk_widget_set_size_request(pan_scale, sl_w_fix + add_pixel, height);
   gtk_widget_set_tooltip_text(pan_scale, "Move the spectrum left or right\nif Zoom > 1");
-  gtk_widget_set_valign(pan_scale, GTK_ALIGN_CENTER);
-  gtk_widget_set_halign(pan_scale, GTK_ALIGN_CENTER);
-  gtk_widget_set_hexpand(pan_scale, FALSE);
+  gtk_widget_set_margin_end(pan_scale, 10); // rechter Rand (Ende)
+  gtk_widget_set_hexpand(pan_scale, TRUE);
+  gtk_widget_set_halign(pan_scale, GTK_ALIGN_FILL);
   gtk_scale_set_draw_value (GTK_SCALE(pan_scale), FALSE);
   gtk_range_set_increments (GTK_RANGE(pan_scale), 10.0, 10.0);
   gtk_range_set_value (GTK_RANGE(pan_scale), active_receiver->pan);
-  gtk_widget_set_margin_end(pan_scale, 10);    // rechter Rand (Ende)
-  gtk_widget_show(pan_scale);
-  gtk_grid_attach(GTK_GRID(zoompan), pan_scale, s2pos, 0, swidth, 1);
   pan_signal_id = g_signal_connect(G_OBJECT(pan_scale), "value_changed", G_CALLBACK(pan_value_changed_cb), NULL);
 
   if (active_receiver->zoom == 1) {
     gtk_widget_set_sensitive(pan_scale, FALSE);
   }
 
+  // Widgets in Box packen
+  gtk_box_pack_start(GTK_BOX(pan_box), pan_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(pan_box), pan_scale, TRUE, TRUE, 0);
+  // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
+  gtk_grid_attach(GTK_GRID(zoompan), pan_box, /* column */ 1, /* row */ 0, /* width */ 1, /* height */ 1);
+  gtk_widget_show_all(pan_box);
   g_mutex_init(&pan_zoom_mutex);
   return zoompan;
 }
