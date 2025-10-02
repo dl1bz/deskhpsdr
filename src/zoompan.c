@@ -187,7 +187,8 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   t_print("%s: width=%d height=%d\n", __FUNCTION__, width, height);
   int widget_height = 0;
   widget_height = height;
-  int zoombox_width = width / 2.95; // Breite zoom_box
+  // int zoombox_width = (int)floor(width / 2.95); // Breite zoom_box
+  int zoombox_width = (int)floor(width / 3); // Breite zoom_box
   // int panbox_width = width / 2.68; // Breite pan_box
   int panbox_width = width - zoombox_width; // Breite pan_box: Gesamtbreite - Breite zoom_box
   t_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __FUNCTION__, zoombox_width, panbox_width,
@@ -198,11 +199,11 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_grid_set_column_homogeneous(GTK_GRID(zoompan), FALSE);
   gtk_widget_set_margin_top(zoompan, 0);     // Abstand oben
   gtk_widget_set_margin_bottom(zoompan, 0);  // Abstand unten
-  gtk_widget_set_margin_start(zoompan, 15);  // Abstand am Anfang
-  gtk_widget_set_margin_end(zoompan, 0);     // Abstand am Ende
+  gtk_widget_set_margin_start(zoompan, 3);  // Abstand am Anfang
+  gtk_widget_set_margin_end(zoompan, 3);     // Abstand am Ende
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für Zoom
-  GtkWidget *zoom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);   // 5px Abstand zwischen Label & Slider
+  GtkWidget *zoom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(zoom_box, zoombox_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
   zoom_label = gtk_label_new("Zoom");
@@ -217,7 +218,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   //-----------------------------------------------------------------------------------------------------------
   zoom_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, MAX_ZOOM, 1.00);
   gtk_widget_set_tooltip_text(zoom_scale, "Zoom into the Panadapter");
-  gtk_widget_set_margin_end(zoom_scale, 15);  // rechter Rand (Ende)
+  gtk_widget_set_margin_end(zoom_scale, 0);  // rechter Rand (Ende)
   gtk_range_set_increments (GTK_RANGE(zoom_scale), 1.0, 1.0);
   gtk_widget_set_hexpand(zoom_scale, FALSE);  // fülle Box nicht nach rechts
   gtk_range_set_value (GTK_RANGE(zoom_scale), active_receiver->zoom);
@@ -235,7 +236,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_show_all(zoompan);
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für Pan
-  GtkWidget *pan_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);   // 5px Abstand zwischen Label & Slider
+  GtkWidget *pan_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(pan_box, panbox_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
   pan_label = gtk_label_new("Pan");
@@ -244,7 +245,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_size_request(pan_label, 90, -1);
   gtk_widget_set_margin_top(pan_label, 5);
   gtk_widget_set_margin_bottom(pan_label, 5);
-  gtk_widget_set_margin_end(pan_label, 5);  // rechter Rand (Ende)
+  gtk_widget_set_margin_end(pan_label, 0);  // rechter Rand (Ende)
   gtk_widget_set_halign(pan_label, GTK_ALIGN_START);
   gtk_widget_set_valign(pan_label, GTK_ALIGN_CENTER);
   //-----------------------------------------------------------------------------------------------------------

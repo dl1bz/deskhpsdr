@@ -202,11 +202,6 @@ int lpf_udp_port = 7355;    // Portnummer für den LPF UDP Listener
 char g_lpf_data[6][64];
 int lpf_udp_valid = 0;
 
-#ifdef __APPLE__
-  double slider_surface_scale = 3.9; // scaling factor for slider surface
-#else
-  double slider_surface_scale = 3.5; // scaling factor for slider surface
-#endif
 int display_zoompan = 0;
 int display_sliders = 0;
 int display_extra_sliders = 1;
@@ -2713,7 +2708,6 @@ static void radio_restore_state() {
   // For consistency, all variables should get default values HERE,
   // but this is too much for the moment.
   //
-  GetPropF0("slider_surface_scale",                          slider_surface_scale);
   GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
@@ -2965,7 +2959,6 @@ void radio_save_state() {
   // Obtain window position and save in props file
   //
   gtk_window_get_position(GTK_WINDOW(top_window), &window_x_pos, &window_y_pos);
-  SetPropF0("slider_surface_scale",                          slider_surface_scale);
   SetPropF0("percent_pan_wf",                                percent_pan_wf);
   SetPropI0("WindowPositionX",                               window_x_pos);
   SetPropI0("WindowPositionY",                               window_y_pos);

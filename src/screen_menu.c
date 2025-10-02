@@ -137,14 +137,6 @@ static void vfo_cb(GtkWidget *widget, gpointer data) {
 
 #endif
 
-static void slider_surface_f_cb(GtkWidget *widget, gpointer data) {
-  double value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  value = (value < 1.0) ? 1.0 : (value > 6.5 ? 6.5 : value); // sanity check more compact
-  slider_surface_scale = value;
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), slider_surface_scale);
-  schedule_apply();
-}
-
 static void width_cb(GtkWidget *widget, gpointer data) {
   my_display_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   schedule_apply();
@@ -359,19 +351,6 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_hexpand(css_button_grid, TRUE);
   gtk_grid_attach(GTK_GRID(grid), css_button_grid, col + 1, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  label = gtk_label_new("Slider Surface\nResize Factor");
-  gtk_widget_set_name(label, "boldlabel_blue");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
-  GtkWidget *slider_surface_f = gtk_spin_button_new_with_range(1.0, 6.5, 0.05);
-  gtk_widget_set_tooltip_text(slider_surface_f,
-                              "Fine-adjust the appearance of the sliders\nrelated to the selected screen resolution");
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(slider_surface_f), TRUE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(slider_surface_f), TRUE);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(slider_surface_f), slider_surface_scale);
-  gtk_grid_attach(GTK_GRID(grid), slider_surface_f, 3, row, 1, 1);
-  g_signal_connect(G_OBJECT(slider_surface_f), "value_changed", G_CALLBACK(slider_surface_f_cb), NULL);
-  gtk_widget_show(slider_surface_f);
   GtkWidget *bgcolor_label = gtk_label_new("Backgrund Color\n#RRGGBB (hex)");
   gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
   gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
