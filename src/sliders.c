@@ -83,33 +83,31 @@ static GtkWidget *squelch_label;
 static GtkWidget *squelch_scale;
 static gulong     squelch_signal_id;
 static GtkWidget *squelch_enable;
-#if defined (__LDESK__)
-  static GtkWidget *tune_drive_label;
-  static GtkWidget *tune_drive_scale;
-  static gulong tune_drive_scale_signal_id;
-  static GtkWidget *local_mic_input;
-  static gulong local_mic_input_signal_id;
-  static GtkWidget *local_mic_label;
-  static GtkWidget *local_mic_button;
-  static gulong local_mic_toggle_signal_id;
-  static GtkWidget *autogain_btn;
-  static gulong autogain_btn_signal_id;
-  static GtkWidget *bbcompr_scale;
-  static gulong bbcompr_scale_signal_id;
-  static GtkWidget *bbcompr_label;
-  static GtkWidget *bbcompr_btn;
-  static gulong bbcompr_btn_signal_id;
-  static GtkWidget *lev_label;
-  static GtkWidget *lev_scale;
-  static GtkWidget *lev_btn;
-  static gulong lev_btn_signal_id;
-  static gulong lev_scale_signal_id;
-  static GtkWidget *preamp_label;
-  static GtkWidget *preamp_btn;
-  static gulong preamp_btn_signal_id;
-  static GtkWidget *preamp_scale;
-  static gulong preamp_scale_signal_id;
-#endif
+static GtkWidget *tune_drive_label;
+static GtkWidget *tune_drive_scale;
+static gulong tune_drive_scale_signal_id;
+static GtkWidget *local_mic_input;
+static gulong local_mic_input_signal_id;
+static GtkWidget *local_mic_label;
+static GtkWidget *local_mic_button;
+static gulong local_mic_toggle_signal_id;
+static GtkWidget *autogain_btn;
+static gulong autogain_btn_signal_id;
+static GtkWidget *bbcompr_scale;
+static gulong bbcompr_scale_signal_id;
+static GtkWidget *bbcompr_label;
+static GtkWidget *bbcompr_btn;
+static gulong bbcompr_btn_signal_id;
+static GtkWidget *lev_label;
+static GtkWidget *lev_scale;
+static GtkWidget *lev_btn;
+static gulong lev_btn_signal_id;
+static gulong lev_scale_signal_id;
+static GtkWidget *preamp_label;
+static GtkWidget *preamp_btn;
+static gulong preamp_btn_signal_id;
+static GtkWidget *preamp_scale;
+static gulong preamp_scale_signal_id;
 
 //
 // general tool for displaying a pop-up slider. This can also be used for a value for which there
@@ -560,11 +558,6 @@ static void micgain_value_changed_cb(GtkWidget *widget, gpointer data) {
       transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
     }
 
-#if defined (__LDESK__) && defined (__USELESS__)
-    int mode = vfo_get_tx_mode();
-    mode_settings[mode].mic_gain = transmitter->mic_gain;
-    copy_mode_settings(mode);
-#endif
     tx_set_mic_gain(transmitter);
     g_idle_add(ext_vfo_update, NULL);
   }
@@ -580,11 +573,6 @@ void set_mic_gain(double value) {
   //t_print("%s value=%f\n",__FUNCTION__, value);
   if (can_transmit) {
     transmitter->mic_gain = value;
-#if defined (__LDESK__) && defined (__USELESS__)
-    int mode = vfo_get_tx_mode();
-    mode_settings[mode].mic_gain = transmitter->mic_gain;
-    copy_mode_settings(mode);
-#endif
     tx_set_mic_gain(transmitter);
 
     if (display_sliders) {
@@ -750,7 +738,7 @@ static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
     }
   }
 
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
   int mode = vfo_get_tx_mode();
 
   if (transmitter->local_microphone) {
@@ -766,7 +754,6 @@ static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
 #endif
 }
 
-#if defined (__LDESK__)
 static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   int value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
@@ -1033,8 +1020,6 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
 }
 #endif
 
-#endif
-
 void set_squelch(RECEIVER *rx) {
   //t_print("%s\n",__FUNCTION__);
   //
@@ -1153,11 +1138,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // gdk_rgba_parse(&bgcolor, "white");
   // gtk_widget_override_background_color(sliders, GTK_STATE_FLAG_NORMAL, &bgcolor);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#if defined (__LDESK__)
   af_gain_label = gtk_label_new("Volume");
-#else
-  af_gain_label = gtk_label_new("AF");
-#endif
   gtk_widget_set_size_request(af_gain_label, 2 * widget_height, widget_height - 10);
   gtk_widget_set_name(af_gain_label, "boldlabel_border_blue");
   gtk_widget_set_margin_top(af_gain_label, 5);
@@ -1266,7 +1247,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     g_signal_connect(autogain_btn, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
     gtk_widget_show(autogain_btn);
 #else
-#if defined (__LDESK__)
 
     if (device == DEVICE_HERMES_LITE2) {
       rf_gain_label = gtk_label_new("RxPGA");
@@ -1274,9 +1254,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       rf_gain_label = gtk_label_new("RF Gain");
     }
 
-#else
-    rf_gain_label = gtk_label_new("RF");
-#endif
     gtk_widget_set_size_request(rf_gain_label, 1.5 * widget_height, widget_height - 10);
     gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
     gtk_widget_set_margin_top(rf_gain_label, 5);
@@ -1374,13 +1351,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit) {
-#if defined (__LDESK__)
     char _label[32];
     snprintf(_label, 32, "Mic Gain");
     mic_gain_label = gtk_label_new(_label);
-#else
-    mic_gain_label = gtk_label_new("Mic");
-#endif
     gtk_widget_set_size_request(mic_gain_label, 2 * widget_height, widget_height - 10);
     gtk_widget_set_name(mic_gain_label, "boldlabel_border_blue");
     gtk_widget_set_margin_top(mic_gain_label, 5);
@@ -1422,9 +1395,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_tooltip_text(mic_gain_scale, "Set Mic Gain in db");
     mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
                                G_CALLBACK(micgain_value_changed_cb), NULL);
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#if defined (__LDESK__)
 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && pa_enabled && !have_radioberry1
         && !have_radioberry2) {
       drive_label = gtk_label_new("TXPwr(W)");
@@ -1432,9 +1404,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       drive_label = gtk_label_new("TXPwr(%)");
     }
 
-#else
-    drive_label = gtk_label_new("TX Drv");
-#endif
     gtk_widget_set_size_request(drive_label, 2 * widget_height - 15, widget_height - 10);
     gtk_widget_set_name(drive_label, "boldlabel_border_blue");
     gtk_widget_set_margin_top(drive_label, 5);
@@ -1556,9 +1525,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_grid_attach(GTK_GRID(sliders), squelch_scale, s3pos, 1, swidth, 1);
   squelch_signal_id = g_signal_connect(G_OBJECT(squelch_scale), "value_changed", G_CALLBACK(squelch_value_changed_cb),
                                        NULL);
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#if defined (__LDESK__)
 
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit && display_sliders) {
     //-------------------------------------------------------------------------------------------
     // tune_drive_label
@@ -1814,6 +1782,5 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     preamp_scale = NULL;
   }
 
-#endif
   return sliders;
 }
