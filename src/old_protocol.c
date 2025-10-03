@@ -3444,7 +3444,7 @@ static void metis_start_stop(int command) {
       buffer[i] = 0x00;
     }
 
-#ifdef __APPLE__
+#if defined (__APPLE__) && defined (__TAHOEFIX__)
     int major_version = get_macos_major_version();
 
     if (major_version > 15) {

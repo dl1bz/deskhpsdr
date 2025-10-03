@@ -253,8 +253,8 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     buffer[i] = 0x00;
   }
 
-#ifdef __APPLE__
-
+#if defined (__APPLE__) && defined (__TAHOEFIX__)
+  t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
   //-- start fix for Tahoe --
   // Tahoe workaround: erstes UDP nach bind() kann gedroppt werden → dreifach senden
   for (int n = 0; n < 3; n++) {
@@ -335,7 +335,8 @@ gpointer new_discover_receive_thread(gpointer data) {
         int status = buffer[4] & 0xFF;
 
         if (status == 2 || status == 3) {
-#ifdef __APPLE__
+#if defined (__APPLE__) && defined (__TAHOEFIX__)
+          t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
           // -- start fix for Tahoe: de-duplicate discovery responses by MAC --
           unsigned char mac_tmp[6];
 

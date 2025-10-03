@@ -813,7 +813,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   topgrid = gtk_grid_new();
 #if defined (__LDESK__)
   // we make the first startup windows smaller, looks better
-  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.6);
+  gtk_widget_set_size_request(topgrid, display_width * 0.75, display_height * 0.6);
 #else
   gtk_widget_set_size_request(topgrid, display_width, display_height);
 #endif

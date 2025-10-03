@@ -1751,7 +1751,7 @@ void new_protocol_menu_start() {
     new_protocol_thread_id = g_thread_new( "P2 main", new_protocol_thread, NULL);
   }
 
-#ifdef __APPLE__
+#if defined (__APPLE__) && defined (__TAHOEFIX__)
   int major_version = get_macos_major_version();
 
   if (major_version > 15) {

@@ -38,6 +38,7 @@ REGION1=OFF
 WMAP=OFF
 EQ12=OFF
 DEVEL=OFF
+TAHOEFIX=ON
 
 #################################################################################################################
 #
@@ -60,6 +61,7 @@ DEVEL=OFF
 #  WMAP         | If ON, a Worldmap is shown as Backgroundimage of RX Panadapter -> NEED more CPU consumption !
 #  EQ12         | If ON, use 12-band EQ instead of 10-band EQ
 #  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
+#  TAHOEFIX     | If ON, a fix for macOS 26 Tahoe will be activated
 #
 #  If you want to use the Worldmap option (shown as RX panadapter background image instead of the original black
 #  filled background) the CPU consumption will be increase !
@@ -379,6 +381,15 @@ EQ12_OPTIONS=-D__EQ12__
 endif
 CPP_DEFINES += -D__EQ12__
 
+ifeq ($(UNAME_S), Linux)
+	TAHOEFIX=
+endif
+
+ifeq ($(TAHOEFIX), ON)
+TAHOEFIX_OPTIONS=-D__TAHOEFIX__
+endif
+CPP_DEFINES += -D__TAHOEFIX__
+
 ##############################################################################
 #
 # Options for audio module
@@ -529,6 +540,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(REG1_OPTIONS) \
 	$(WMAP_OPTIONS) \
 	$(EQ12_OPTIONS) \
+	$(TAHOEFIX_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
 
@@ -971,7 +983,7 @@ DEPEND:
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
-		-D__WMAP__ -D__EQ12__ \
+		-D__WMAP__ -D__EQ12__ -D__TAHOEFIX__ \
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND
 
