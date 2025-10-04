@@ -523,7 +523,6 @@ void noise_menu(GtkWidget *parent) {
   gtk_spin_button_set_value (GTK_SPIN_BUTTON(nr4_threshold_b), active_receiver->nr4_post_filter_threshold);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_threshold_b, 3, 2, 1, 1);
   g_signal_connect(G_OBJECT(nr4_threshold_b), "changed", G_CALLBACK(nr4_threshold_cb), NULL);
-  //
   gtk_container_add(GTK_CONTAINER(nr4_container), nr4_grid);
 #endif
   gtk_container_add(GTK_CONTAINER(content), grid);
@@ -545,4 +544,31 @@ void noise_menu(GtkWidget *parent) {
 #ifdef EXTNR
   gtk_widget_hide(nr4_container);
 #endif
+  // Start Anpassung das NR4 angezeigt wird, wenn aktiv
+#ifdef EXTNR
+
+  if (active_receiver->nr == 4) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(nr4_sel), TRUE);
+    gtk_widget_show(nr4_container);
+    gtk_widget_hide(nr_container);
+    gtk_widget_hide(nb_container);
+  } else
+#endif
+    if (active_receiver->nb > 0) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(nb_sel), TRUE);
+      gtk_widget_show(nb_container);
+      gtk_widget_hide(nr_container);
+#ifdef EXTNR
+      gtk_widget_hide(nr4_container);
+#endif
+    } else {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(nr_sel), TRUE);
+      gtk_widget_show(nr_container);
+#ifdef EXTNR
+      gtk_widget_hide(nr4_container);
+#endif
+      gtk_widget_hide(nb_container);
+    }
+
+  // Ende Anpassung das NR4 angezeigt wird, wenn aktiv
 }
