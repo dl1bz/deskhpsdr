@@ -17,10 +17,13 @@
 *
 *   hl2_ip_tool.c
 *
-*   Build: gcc -std=c11 -O2 -Wall hl2_ip_tool.c -o hl2_ip_tool
+*   Build: gcc -std=c11 -O2 -D_DEFAULT_SOURCE -Wall hl2_ip_tool.c -o hl2_ip_tool
 *
 *   HL2 Fixed-IP setzen/löschen (UDP:1025) + Reboot via C&C-Frame (UDP:1025, Addr 0x3A)
 */
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
+#endif
 #include <arpa/inet.h>
 #include <errno.h>
 #include <getopt.h>

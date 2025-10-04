@@ -25,9 +25,9 @@ echo "OS: $OS_TYPE" 2>&1
 echo "used compiler: $CC" 2>&1
 
 echo "Build $SRC_DIR/hl2_ip_tool" 2>&1
-$CC -std=c11 -O2 -Wall $SRC_DIR/hl2_ip_tool.c -o $SRC_DIR/hl2_ip_tool
+$CC -std=c11 -O2 -D_DEFAULT_SOURCE -Wall $SRC_DIR/hl2_ip_tool.c -o $SRC_DIR/hl2_ip_tool
 
 echo "Build $SRC_DIR/hl2_eeprom_discovery" 2>&1
-$CC -std=c11 -O2 -Wall $SRC_DIR/hl2_eeprom_discovery.c -o $SRC_DIR/hl2_eeprom_discovery
+$CC -std=c11 -O2 -D_DEFAULT_SOURCE -Wall $SRC_DIR/hl2_eeprom_discovery.c -o $SRC_DIR/hl2_eeprom_discovery
 
 echo "Done." 2>&1

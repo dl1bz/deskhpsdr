@@ -17,9 +17,12 @@
 *
 *   hl2_eeprom_discovery.c
 *
-*   Build: gcc -std=c11 -Wall -O2 hl2_eeprom_discovery.c -o hl2_eeprom_discovery
+*   Build: gcc -std=c11 -Wall -O2 -D_DEFAULT_SOURCE hl2_eeprom_discovery.c -o hl2_eeprom_discovery
 *
 */
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -27,6 +30,10 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#ifndef __APPLE__
+  #include <sys/time.h>     // struct timeval
+  #include <sys/socket.h>   // setsockopt, SOL_SOCKET
+#endif
 
 static void mac(const uint8_t *m){ printf("%02X:%02X:%02X:%02X:%02X:%02X",m[0],m[1],m[2],m[3],m[4],m[5]); }
 
@@ -35,8 +42,12 @@ int main(void){
 
     int fd=socket(AF_INET,SOCK_DGRAM,0); if(fd<0){perror("socket");return 1;}
     int yes=1; setsockopt(fd,SOL_SOCKET,SO_BROADCAST,&yes,sizeof(yes));
+#ifndef __APPLE__
+    struct timeval tv; tv.tv_sec = 2; tv.tv_usec = 0;
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+#else
     struct timeval tv={.tv_sec=2,.tv_usec=0}; setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&tv,sizeof(tv));
-
+#endif
     struct sockaddr_in any={0}; any.sin_family=AF_INET; any.sin_port=0; any.sin_addr.s_addr=htonl(INADDR_ANY);
     if(bind(fd,(struct sockaddr*)&any,sizeof(any))<0){perror("bind");return 1;}
 
