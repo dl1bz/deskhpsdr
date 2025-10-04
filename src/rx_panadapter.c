@@ -48,9 +48,7 @@
 #ifdef USBOZY
   #include "ozyio.h"
 #endif
-#if defined (__LDESK__)
-  #include "audio.h"
-#endif
+#include "audio.h"
 #if defined (__WMAP__)
   #include "map_d.h"
 #endif
@@ -161,7 +159,6 @@ static gboolean panadapter_scroll_event_cb(GtkWidget *widget, GdkEventScroll *ev
   return rx_scroll_event(widget, event, data);
 }
 
-#if defined (__LDESK__)
 //----------------------------------------------------------------------------------------------
 // Reference of calculate S-Meter values: https://de.wikipedia.org/wiki/S-Meter
 // <= 30 MHz: S9 = -73dbm
@@ -216,7 +213,6 @@ static unsigned char get_SWert(short int dbm) {
 }
 
 //----------------------------------------------------------------------------------------------
-#endif
 
 void get_local_time(char *zeitString, size_t groesse) {
   // Aktuelle Zeit abrufen
@@ -485,95 +481,45 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   }
 
-  /*
-  //---------------------------------------------------------------------------------------
-  // agc
-  if (rx->agc != AGC_OFF) {
-    cairo_set_line_width(cr, PAN_LINE_THICK);
-    double knee_y = rx->agc_thresh + soffset;
-    knee_y = floor((rx->panadapter_high - knee_y)
-                   * (double) myheight
-                   / (rx->panadapter_high - rx->panadapter_low));
-    double hang_y = rx->agc_hang + soffset;
-    hang_y = floor((rx->panadapter_high - hang_y)
-                   * (double) myheight
-                   / (rx->panadapter_high - rx->panadapter_low));
-
-    if (rx->agc != AGC_MEDIUM && rx->agc != AGC_FAST) {
-      if (active) {
-        cairo_set_source_rgba(cr, COLOUR_ATTN);
-      } else {
-        cairo_set_source_rgba(cr, COLOUR_ATTN_WEAK);
-      }
-
-      cairo_move_to(cr, 40.0, hang_y - 8.0);
-      cairo_rectangle(cr, 40, hang_y - 8.0, 8.0, 8.0);
-      cairo_fill(cr);
-      cairo_move_to(cr, 40.0, hang_y);
-      cairo_line_to(cr, (double)mywidth - 40.0, hang_y);
-      cairo_set_line_width(cr, PAN_LINE_THICK);
-      cairo_stroke(cr);
-      cairo_move_to(cr, 48.0, hang_y);
-      cairo_show_text(cr, "-H");
-    }
-
-    if (active) {
-      cairo_set_source_rgba(cr, COLOUR_OK);
-    } else {
-      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
-    }
-
-    cairo_move_to(cr, 40.0, knee_y - 8.0);
-    cairo_rectangle(cr, 40, knee_y - 8.0, 8.0, 8.0);
-    cairo_fill(cr);
-    cairo_move_to(cr, 40.0, knee_y);
-    cairo_line_to(cr, (double)mywidth - 40.0, knee_y);
-    cairo_set_line_width(cr, PAN_LINE_THICK);
-    cairo_stroke(cr);
-    cairo_move_to(cr, 48.0, knee_y);
-  #if defined (__LDESK__)
-
-    if (device == DEVICE_HERMES_LITE2) {
-      cairo_move_to(cr, 58.0, knee_y - 2.0);
-      cairo_show_text(cr, "RxPGA");
-      char ADCgain[64];
-      snprintf(ADCgain, 64, "%+ddb", (int)adc[active_receiver->adc].gain);
-      cairo_move_to(cr, 62.0, knee_y + 12.0);
-      cairo_show_text(cr, ADCgain);
-    } else {
-      cairo_show_text(cr, "-Gain");
-    }
-
-  #else
-    cairo_show_text(cr, "-G");
-  #endif
-  }
-  //---------------------------------------------------------------------------------------
-  */
-
   // cursor
   if (active) {
-#if defined (__LDESK__)
     cairo_set_source_rgba(cr, COLOUR_WHITE);
-#else
-    cairo_set_source_rgba(cr, COLOUR_ALARM);
-#endif
   } else {
-#if defined (__LDESK__)
     cairo_set_source_rgba(cr, COLOUR_WHITE);
-#else
-    cairo_set_source_rgba(cr, COLOUR_ALARM_WEAK);
-#endif
   }
 
-  cairo_move_to(cr, vfofreq + (offset / HzPerPixel), 0.0);
-  cairo_line_to(cr, vfofreq + (offset / HzPerPixel), myheight);
-#if defined (__LDESK__)
+  double x_coord = vfofreq + (offset / HzPerPixel);
+
+  if (x_coord < 0) { x_coord = 0; }
+
+  if (x_coord > mywidth - 1) { x_coord = mywidth - 1; }
+
+  cairo_move_to(cr, x_coord, 0.0);
+  cairo_line_to(cr, x_coord, myheight);
   cairo_set_line_width(cr, PAN_LINE_EXTRA);
-#else
-  cairo_set_line_width(cr, PAN_LINE_THIN);
-#endif
   cairo_stroke(cr);
+  // Marker oben zeichnen
+  double cursor_w = 12.0;
+  double cursor_h = 9.0;
+  /*
+  if (mode == modeDIGL || mode == modeLSB) {
+    // Dreieck nach links
+    cairo_move_to(cr, x_coord, 0.0);
+    cairo_line_to(cr, x_coord, cursor_w);
+    cairo_line_to(cr, x_coord - cursor_h, cursor_w / 2);
+  } else if (mode == modeDIGU || mode == modeUSB) {
+    // Dreieck nach rechts
+    cairo_move_to(cr, x_coord, 0.0);
+    cairo_line_to(cr, x_coord, cursor_w);
+    cairo_line_to(cr, x_coord + cursor_h, cursor_w / 2);
+  } else { }
+  */
+  // Dreieck nach unten
+  cairo_move_to(cr, x_coord - (cursor_w / 2), 0.0);
+  cairo_line_to(cr, x_coord + (cursor_w / 2), 0.0);
+  cairo_line_to(cr, x_coord, 0.0 + cursor_h);
+  cairo_close_path(cr);
+  cairo_fill(cr);
   // signal
   double s1;
   int pan = rx->pan;
@@ -731,7 +677,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_line_width(cr, PAN_LINE_THICK);
     cairo_stroke(cr);
     cairo_move_to(cr, 48.0, knee_y);
-#if defined (__LDESK__)
 
     if (active) {
       cairo_set_source_rgba(cr, GRAD_CORAL);
@@ -741,11 +686,6 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (device == DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, 58.0, knee_y - 2.0);
-      // cairo_show_text(cr, "RxPGA");
-      // char ADCgain[64];
-      // snprintf(ADCgain, 64, "%+ddb", (int)adc[active_receiver->adc].gain);
-      // cairo_move_to(cr, 62.0, knee_y + 12.0);
-      // cairo_show_text(cr, ADCgain);
       cairo_show_text(cr, "[AGC]");
       char AGCgain[64];
       snprintf(AGCgain, 64, "%+d", (int)active_receiver->agc_gain);
@@ -754,10 +694,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     } else {
       cairo_show_text(cr, "-Gain");
     }
-
-#else
-    cairo_show_text(cr, "-G");
-#endif
   }
 
   //---------------------------------------------------------------------------------------
@@ -995,7 +931,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     for (int j = 0; j < num_peaks; j++) {
       if (peak_positions[j] > 0) {
         char peak_label[32];
-#if defined (__LDESK__)
 
         if (active_receiver->panadapter_peaks_as_smeter) {
           snprintf(peak_label, sizeof(peak_label), "%s", dbm2smeter[get_SWert((int)(peaks[j]))]);
@@ -1003,9 +938,6 @@ void rx_panadapter_update(RECEIVER *rx) {
           snprintf(peak_label, sizeof(peak_label), "%d dBm", (int)peaks[j]);
         }
 
-#else
-        snprintf(peak_label, sizeof(peak_label), "%.1f dBm", peaks[j]);
-#endif
         cairo_text_extents_t extents;
         cairo_text_extents(cr, peak_label, &extents);
         // Calculate initial text position: slightly above the peak
@@ -1078,8 +1010,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_line_width(cr, 1);
     cairo_stroke(cr);
   }
-
-#if defined (__LDESK__)
 
   if (display_info_bar && active_receiver->display_panadapter && !active_receiver->display_waterfall && rx->id == 0
       && !rx_stack_horizontal) {
@@ -1163,7 +1093,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   }
 
-#endif
   cairo_destroy (cr);
   gtk_widget_queue_draw (rx->panadapter);
 }
@@ -1211,38 +1140,20 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     // Are shown on display for 2 seconds
     //
     cairo_set_source_rgba(cr, COLOUR_ALARM);
-#if defined (__LDESK__)
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
-#else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-#endif
 
     if (sequence_errors != 0) {
       static unsigned int sequence_error_count = 0;
       cairo_move_to(cr, 100.0, 50.0);
-#if defined (__LDESK__)
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
       cairo_show_text(cr, "UDP Stream Sequence Error");
       cairo_set_source_rgba(cr, COLOUR_ALARM);
-#else
-      cairo_show_text(cr, "Sequence Error");
-#endif
       sequence_error_count++;
-#if defined (__LDESK__)
 
       if (sequence_error_count >= 2 * fps) {
         sequence_errors = 0;
         sequence_error_count = 0;
       }
-
-#else
-
-      if (sequence_error_count == 2 * fps) {
-        sequence_errors = 0;
-        sequence_error_count = 0;
-      }
-
-#endif
     }
 
     if (adc0_overload || adc1_overload) {
@@ -1347,7 +1258,6 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   }
 
   char _text[128];
-#if defined (__LDESK__)
 
   if (can_transmit && !display_info_bar && active_receiver->display_panadapter && !rx_stack_horizontal) {
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
@@ -1387,7 +1297,6 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_show_text(cr, _text);
   }
 
-#endif
   // show RX200 data
   cairo_select_font_face(cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
@@ -1593,11 +1502,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   if (capture_state == CAP_RECORDING || capture_state == CAP_REPLAY || capture_state == CAP_AVAIL) {
     static unsigned int cap_count = 0;
     double cx = (double) width - 100.0;
-#if defined (__LDESK__)
     double cy = 60.0;
-#else
-    double cy = 30.0;
-#endif
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
     cairo_set_line_width(cr, 2.0);
