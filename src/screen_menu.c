@@ -33,6 +33,11 @@
 #include "css.h"
 #include "toolset.h"
 
+#include "new_protocol.h"
+#include "old_protocol.h"
+#include "vfo.h"
+#include "ext.h"
+
 static GtkWidget *dialog = NULL;
 static GtkWidget *wide_b = NULL;
 static GtkWidget *height_b = NULL;
@@ -136,6 +141,16 @@ static void vfo_cb(GtkWidget *widget, gpointer data) {
 }
 
 #endif
+
+static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  schedule_general();
+  schedule_transmit_specific();
+  schedule_high_priority();
+  g_idle_add(ext_vfo_update, NULL);
+  radio_reconfigure_screen();
+}
 
 static void width_cb(GtkWidget *widget, gpointer data) {
   my_display_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
@@ -257,13 +272,9 @@ void screen_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Screen Layout", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Screen Layout");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -351,6 +362,16 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_hexpand(css_button_grid, TRUE);
   gtk_grid_attach(GTK_GRID(grid), css_button_grid, col + 1, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Optimize for touchscreen
+  GtkWidget *ChkBtn_tscreen = gtk_check_button_new_with_label("Optimize for TouchScreen");
+  gtk_widget_set_name(ChkBtn_tscreen, "boldlabel");
+  gtk_widget_set_margin_start(ChkBtn_tscreen, 20);    // linker Rand (Anfang)
+  gtk_widget_set_tooltip_text(ChkBtn_tscreen,
+                              "Change the design of some buttons and\nsliders for easier use with a touch screen");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_tscreen), optimize_for_touchscreen);
+  gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 2, 1);
+  g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &optimize_for_touchscreen);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   GtkWidget *bgcolor_label = gtk_label_new("Backgrund Color\n#RRGGBB (hex)");
   gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
   gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
@@ -375,11 +396,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
-#if defined (__LDESK__)
   wide_b = gtk_spin_button_new_with_range(1280.0, (double) screen_width, 32.0);
-#else
-  wide_b = gtk_spin_button_new_with_range(640.0, (double) screen_width, 32.0);
-#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
   gtk_grid_attach(GTK_GRID(grid), wide_b, col, row, 1, 1);
   g_signal_connect(wide_b, "value-changed", G_CALLBACK(width_cb), NULL);
@@ -389,11 +406,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
-#if defined (__LDESK__)
   height_b = gtk_spin_button_new_with_range(600.0, (double) screen_height, 16.0);
-#else
-  height_b = gtk_spin_button_new_with_range(400.0, (double) screen_height, 16.0);
-#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(height_b), (double) my_display_height);
   gtk_grid_attach(GTK_GRID(grid), height_b, col, row, 1, 1);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
@@ -443,11 +456,7 @@ void screen_menu(GtkWidget *parent) {
   full_b = gtk_check_button_new_with_label("Full Screen Mode");
   gtk_widget_set_name(full_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(full_b), my_full_screen);
-#if defined (__LDESK__)
   gtk_grid_attach(GTK_GRID(grid), full_b, 0, row, 2, 1);
-#else
-  gtk_grid_attach(GTK_GRID(grid), full_b, 2, row, 2, 1);
-#endif
   g_signal_connect(full_b, "toggled", G_CALLBACK(full_cb), NULL);
   row++;
   GtkWidget *b_display_zoompan = gtk_check_button_new_with_label("Display Zoom/Pan");

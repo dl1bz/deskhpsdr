@@ -293,6 +293,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
 
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
   t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
+
   //-- start fix for Tahoe --
   // Send discovery packet 3x to mitigate macOS first-UDP-drop
   for (int n = 0; n < 3; n++) {

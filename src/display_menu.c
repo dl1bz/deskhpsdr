@@ -290,13 +290,9 @@ void display_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Display", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Display");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -365,6 +361,8 @@ void display_menu(GtkWidget *parent) {
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(rel_pan_wf_sb), TRUE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(rel_pan_wf_sb), TRUE);
   gtk_widget_show(rel_pan_wf_sb);
+  gtk_widget_set_hexpand(rel_pan_wf_sb, FALSE);
+  gtk_widget_set_halign(rel_pan_wf_sb, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(general_grid), rel_pan_wf_sb, col, row, 1, 1);
   g_signal_connect(rel_pan_wf_sb, "value_changed", G_CALLBACK(relation_pan_wf_changed_cb), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -521,12 +519,10 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_name (label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
-#if defined (__LDESK__)
   GtkWidget *time_r = gtk_spin_button_new_with_range(1.0, 9999.0, 10.0);
-#else
-  GtkWidget *time_r = gtk_spin_button_new_with_range(1.0, 9999.0, 1.0);
-#endif
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(time_r), (double)active_receiver->display_average_time);
+  gtk_widget_set_hexpand(time_r, FALSE);
+  gtk_widget_set_halign(time_r, GTK_ALIGN_START);
   gtk_widget_show(time_r);
   gtk_grid_attach(GTK_GRID(general_grid), time_r, col + 1, row, 1, 1);
   g_signal_connect(time_r, "value_changed", G_CALLBACK(time_value_changed_cb), NULL);
@@ -613,7 +609,6 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(peaks_grid), b_panadapter_peaks_on, col, row, 1, 1);
   g_signal_connect(b_panadapter_peaks_on, "toggled", G_CALLBACK(panadapter_peaks_on_cb), NULL);
   row++;
-#if defined (__LDESK__)
   //----------------------------------------------------------------------------------------------------------
   GtkWidget *b_panadapter_peaks_as_smeter = gtk_check_button_new_with_label("Show Peak Labels as S-Meter values");
   gtk_widget_set_name(b_panadapter_peaks_as_smeter, "boldlabel_blue");
@@ -624,7 +619,6 @@ void display_menu(GtkWidget *parent) {
   g_signal_connect(b_panadapter_peaks_as_smeter, "toggled", G_CALLBACK(panadapter_peaks_as_smeter_cb), NULL);
   row++;
   //----------------------------------------------------------------------------------------------------------
-#endif
   GtkWidget *b_pan_peaks_in_passband = gtk_check_button_new_with_label("Show Peaks in Passband Only");
   gtk_widget_set_name(b_pan_peaks_in_passband, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_peaks_in_passband),

@@ -70,7 +70,6 @@ static gboolean close_cb () {
   return TRUE;
 }
 
-#if defined (__LDESK__)
 static void callsign_box_cb(GtkWidget *widget, gpointer data) {
   const gchar *rufz = gtk_entry_get_text(GTK_ENTRY(widget));
 
@@ -83,8 +82,6 @@ static void callsign_box_cb(GtkWidget *widget, gpointer data) {
 
   close_cb();
 }
-
-#endif
 
 #ifdef SOAPYSDR
 static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
@@ -533,13 +530,9 @@ void radio_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Radio", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Radio");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -563,6 +556,8 @@ void radio_menu(GtkWidget *parent) {
     //--------------------------------------------------------------------------------------------------------
     GtkWidget *capture_time_btn = gtk_spin_button_new_with_range(10, 120, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(capture_time_btn), (int)capture_max / 48000);
+    gtk_widget_set_hexpand(capture_time_btn, FALSE);
+    gtk_widget_set_halign(capture_time_btn, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), capture_time_btn, 2, 0, 1, 1);
     g_signal_connect(capture_time_btn, "value_changed", G_CALLBACK(capture_time_changed_cb), NULL);
     //--------------------------------------------------------------------------------------------------------
@@ -797,6 +792,8 @@ void radio_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, 0, row, 2, 1);
   GtkWidget *vfo_divisor = gtk_spin_button_new_with_range(1.0, 60.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(vfo_divisor), (double)vfo_encoder_divisor);
+  gtk_widget_set_hexpand(vfo_divisor, FALSE);
+  gtk_widget_set_halign(vfo_divisor, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), vfo_divisor, 2, row, 1, 1);
   g_signal_connect(vfo_divisor, "value_changed", G_CALLBACK(vfo_divisor_value_changed_cb), NULL);
   row++;
@@ -952,13 +949,7 @@ void radio_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), split);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(split_cb), NULL);
-    col++;
-    ChkBtn = gtk_check_button_new_with_label("Duplex operation");
-    gtk_widget_set_name(ChkBtn, "boldlabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), duplex);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(duplex_cb), NULL);
-    col++;
+    col += 2;
     ChkBtn = gtk_check_button_new_with_label("Mute RX when TX");
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), mute_rx_while_transmitting);
@@ -986,17 +977,15 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &pa_enabled);
     row++;
+    col = 0;
+    ChkBtn = gtk_check_button_new_with_label("Duplex operation");
+    gtk_widget_set_name(ChkBtn, "boldlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), duplex);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(duplex_cb), NULL);
   }
 
-  col = 0;
-  ChkBtn = gtk_check_button_new_with_label("Optimize for TouchScreen");
-  gtk_widget_set_name(ChkBtn, "boldlabel");
-  gtk_widget_set_tooltip_text(ChkBtn,
-                              "Change the design of some buttons and\nsliders for easier use with a touch screen");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), optimize_for_touchscreen);
-  gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 2, 1);
-  g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &optimize_for_touchscreen);
-  col += 2;
+  col = 2;
 
   switch (device) {
   case NEW_DEVICE_ORION2:
@@ -1013,7 +1002,7 @@ void radio_menu(GtkWidget *parent) {
   case NEW_DEVICE_HERMES_LITE2:
   case DEVICE_HERMES_LITE2: {
     if (!have_radioberry1 && !have_radioberry2) {
-      ChkBtn = gtk_check_button_new_with_label("HL2 audio codec");
+      ChkBtn = gtk_check_button_new_with_label("HL2+ audio codec");
       gtk_widget_set_name(ChkBtn, "boldlabel");
       gtk_widget_set_tooltip_text(ChkBtn,
                                   "Activate only if using a Hermes Lite 2\nwith the AK4951 Companion Board,\ncalled Hermes Lite 2 Plus");
@@ -1095,17 +1084,15 @@ void radio_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(calibration_b), (double)frequency_calibration);
   gtk_widget_set_tooltip_text(calibration_b,
                               "Use a high-precision RF generator and\nadjust a possible frequency inaccuracy.");
+  gtk_widget_set_hexpand(calibration_b, FALSE);  // fülle Box nicht nach rechts
+  gtk_widget_set_halign(calibration_b, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), calibration_b, col, row, 1, 1);
   g_signal_connect(calibration_b, "value_changed", G_CALLBACK(calibration_value_changed_cb), NULL);
   //
   // Calibration of the RF front end
   //
   col++;
-#if defined (__LDESK__)
   label = gtk_label_new("ADC Gain\nCalibration (dB):");
-#else
-  label = gtk_label_new("RX Gain\nCalibration (dB):");
-#endif
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
@@ -1113,9 +1100,10 @@ void radio_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain_calibration_b), (double)rx_gain_calibration);
   gtk_widget_set_tooltip_text(rx_gain_calibration_b,
                               "Adjust this value for calibrating the S-Meter.\nUse a RF generator, set output (waveform sine) level\nto -73dbm at 15MHz and connect the RF generator output\nwith the RX antenna input of the SDR.\nAdjust the value until you get exact S9 at the S-Meter.");
+  gtk_widget_set_hexpand(rx_gain_calibration_b, FALSE);  // fülle Box nicht nach rechts
+  gtk_widget_set_halign(rx_gain_calibration_b, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), rx_gain_calibration_b, col, row, 1, 1);
   g_signal_connect(rx_gain_calibration_b, "value_changed", G_CALLBACK(rx_gain_calibration_value_changed_cb), NULL);
-#if defined (__LDESK__)
   //
   // Insert small separation between top columns and bottom rows
   //
@@ -1143,7 +1131,6 @@ void radio_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), callsign_box_btn, col, row, 1, 1);
   g_signal_connect(callsign_box_btn, "clicked", G_CALLBACK(callsign_button_clicked), callsign_box);
   gtk_widget_show(callsign_box_btn);
-#endif
 #ifdef SOAPYSDR
   row++;
   col = 0;

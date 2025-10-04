@@ -305,7 +305,6 @@ void att_type_changed() {
     if (attenuation_scale != NULL) { gtk_widget_show(attenuation_scale); }
 
     if (c25_box != NULL) { gtk_widget_hide(c25_box); }
-
   }
 
   sliders_active_receiver_changed(NULL);
@@ -1060,7 +1059,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
   t_print("sliders_init: width=%d height=%d widget_height=%d\n", width, height, widget_height);
-
   const char *csslabel;
   int tpix;
 
@@ -1110,10 +1108,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_margin_bottom(sliders, 0); // Kein Abstand unten
   gtk_widget_set_margin_start(sliders, 3);  // Kein Abstand am Anfang
   gtk_widget_set_margin_end(sliders, 3);    // Kein Abstand am Ende
-
   // Safety: Gain und Att dürfen nicht gleichzeitig aktiv sein
   g_return_val_if_fail(!(have_rx_gain && have_rx_att), sliders);
-
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für Volume
   GtkWidget *box_Z1_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
@@ -1171,6 +1167,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(agc_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(agc_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_scale), (double)active_receiver->agc_gain);
+    gtk_widget_set_margin_top(agc_scale, 5);
+    gtk_widget_set_margin_bottom(agc_scale, 5);
+    gtk_widget_set_margin_start(agc_scale, 3);
     gtk_widget_set_margin_end(agc_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(agc_scale, FALSE);  // fülle Box nicht nach rechts
     // Widgets in Box packen
@@ -1329,7 +1328,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(c25_att_combobox), "18",  "+18 dB");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(c25_att_combobox), "36",  "+36 dB");
   g_signal_connect(G_OBJECT(c25_att_combobox), "changed",
-                 G_CALLBACK(c25_att_combobox_changed), NULL);
+                   G_CALLBACK(c25_att_combobox_changed), NULL);
   c25_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
   gtk_box_pack_start(GTK_BOX(c25_box), c25_att_label,     FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(c25_box), c25_att_combobox,  TRUE,  TRUE,  0);
@@ -1337,12 +1336,14 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_halign(c25_box, GTK_ALIGN_FILL);
   gtk_widget_set_valign(c25_box, GTK_ALIGN_CENTER);
   gtk_grid_attach(GTK_GRID(sliders), c25_box, /*col*/ 2, /*row*/ 0, /*w*/ 1, /*h*/ 1);
+
   if (filter_board == CHARLY25) {
     update_c25_att();
     gtk_widget_show(c25_box);
   } else {
     gtk_widget_hide(c25_box);
   }
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit) {
     // Hauptcontainer: horizontale Box für RF Gain
@@ -1369,6 +1370,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double)transmitter->mic_gain);
+      gtk_widget_set_margin_top(mic_gain_scale, 5);
+      gtk_widget_set_margin_bottom(mic_gain_scale, 5);
+      gtk_widget_set_margin_start(mic_gain_scale, 3);
       gtk_widget_set_margin_end(mic_gain_scale, 0);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(mic_gain_scale, FALSE);  // fülle Box nicht nach rechts
       gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_scale, FALSE, FALSE, 0);
@@ -1421,6 +1425,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         drive_scale = gtk_spin_button_new_with_range(0.0, 5.0, 0.1);
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_widget_set_margin_top(drive_scale, 5);
+        gtk_widget_set_margin_bottom(drive_scale, 5);
+        gtk_widget_set_margin_start(drive_scale, 3);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
@@ -1437,6 +1444,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
+        gtk_widget_set_margin_top(drive_scale, 5);
+        gtk_widget_set_margin_bottom(drive_scale, 5);
+        gtk_widget_set_margin_start(drive_scale, 3);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
@@ -1748,6 +1758,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     preamp_btn = NULL;
     preamp_scale = NULL;
   }
+
   gtk_widget_show_all(sliders);
   return sliders;
 }

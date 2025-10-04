@@ -255,6 +255,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
   t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
+
   //-- start fix for Tahoe --
   // Tahoe workaround: erstes UDP nach bind() kann gedroppt werden → dreifach senden
   for (int n = 0; n < 3; n++) {

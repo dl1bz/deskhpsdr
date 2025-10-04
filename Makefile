@@ -1296,7 +1296,7 @@ src/new_protocol.o: src/discovered.h src/mode.h src/filter.h src/radio.h
 src/new_protocol.o: src/adc.h src/dac.h src/transmitter.h src/vfo.h
 src/new_protocol.o: src/toolbar.h src/gpio.h src/vox.h src/ext.h src/iambic.h
 src/new_protocol.o: src/rigctl.h src/message.h src/saturnmain.h
-src/new_protocol.o: src/saturnregisters.h
+src/new_protocol.o: src/saturnregisters.h src/toolset.h
 src/newhpsdrsim.o: src/MacOS.h src/hpsdrsim.h
 src/noise_menu.o: src/new_menu.h src/noise_menu.h src/band.h src/bandstack.h
 src/noise_menu.o: src/filter.h src/mode.h src/radio.h src/adc.h src/dac.h
@@ -1312,7 +1312,7 @@ src/old_protocol.o: src/MacOS.h src/main.h src/audio.h src/receiver.h
 src/old_protocol.o: src/band.h src/bandstack.h src/discovered.h src/mode.h
 src/old_protocol.o: src/filter.h src/old_protocol.h src/radio.h src/adc.h
 src/old_protocol.o: src/dac.h src/transmitter.h src/vfo.h src/ext.h
-src/old_protocol.o: src/iambic.h src/message.h src/ozyio.h
+src/old_protocol.o: src/iambic.h src/message.h src/toolset.h src/ozyio.h
 src/ozyio.o: src/ozyio.h src/message.h
 src/pa_menu.o: src/new_menu.h src/pa_menu.h src/band.h src/bandstack.h
 src/pa_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
@@ -1399,7 +1399,8 @@ src/saturnserver.o: src/saturndrivers.h src/saturnmain.h src/message.h
 src/screen_menu.o: src/radio.h src/adc.h src/dac.h src/discovered.h
 src/screen_menu.o: src/receiver.h src/transmitter.h src/new_menu.h src/main.h
 src/screen_menu.o: src/appearance.h src/message.h src/sliders.h src/actions.h
-src/screen_menu.o: src/css.h src/toolset.h
+src/screen_menu.o: src/css.h src/toolset.h src/new_protocol.h src/MacOS.h
+src/screen_menu.o: src/old_protocol.h src/vfo.h src/mode.h src/ext.h
 src/sliders.o: src/appearance.h src/receiver.h src/sliders.h
 src/sliders.o: src/transmitter.h src/actions.h src/mode.h src/filter.h
 src/sliders.o: src/bandstack.h src/band.h src/discovered.h src/new_protocol.h
