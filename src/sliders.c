@@ -109,6 +109,8 @@ static gulong preamp_btn_signal_id;
 static GtkWidget *preamp_scale;
 static gulong preamp_scale_signal_id;
 
+char txpwr_ttip_txt[64];
+
 //
 // general tool for displaying a pop-up slider. This can also be used for a value for which there
 // is no GTK slider. Make the slider "insensitive" so one cannot operate on it.
@@ -610,6 +612,13 @@ void set_drive(double value) {
       gtk_range_set_value (GTK_RANGE(drive_scale), value);
     }
 
+    // update the tooltip text if tx_drive is changed
+    if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+      snprintf(txpwr_ttip_txt, sizeof(txpwr_ttip_txt), "Set TX Pwr in W ≙ %.0f %%", radio_get_drive());
+      gtk_widget_set_tooltip_text(drive_scale, NULL);
+      gtk_widget_set_tooltip_text(drive_scale, txpwr_ttip_txt);
+    }
+
     g_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
   } else {
     show_popup_slider(DRIVE, 0, 0.0, drive_max, 1.0, value, "TX Drive");
@@ -648,6 +657,13 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), value);
   } else if (GTK_IS_RANGE(widget)) {
     gtk_range_set_value (GTK_RANGE(widget), value);
+  }
+
+  // update the tooltip text if tx_drive is changed
+  if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+    snprintf(txpwr_ttip_txt, sizeof(txpwr_ttip_txt), "Set TX Pwr in W ≙ %.0f %%", radio_get_drive());
+    gtk_widget_set_tooltip_text(widget, NULL);
+    gtk_widget_set_tooltip_text(widget, txpwr_ttip_txt);
   }
 }
 
@@ -1438,7 +1454,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, TRUE, TRUE, 0);
       }
 
-      gtk_widget_set_tooltip_text(drive_scale, "Set TX Pwr in W");
+      snprintf(txpwr_ttip_txt, sizeof(txpwr_ttip_txt), "Set TX Pwr in W ≙ %.0f %%", radio_get_drive());
+      gtk_widget_set_tooltip_text(drive_scale, txpwr_ttip_txt);
     } else {
       if (optimize_for_touchscreen) {
         drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
