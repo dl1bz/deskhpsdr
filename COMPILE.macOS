@@ -5,6 +5,10 @@ You need to have basic knowledge, how you work with the Terminal app and the she
 
 For compiling under macOS we need the following prerequisites:
 
+1.0 macOS version
+
+The required macOS version for deskHPSDR is >= 13.0, older versions are not supported.
+
 1.1 X Window manager for macOS
 
 Please go to www.xquartz.org and download the latest package file (e.g. XQuartz-2.8.5.pkg) and install the package.

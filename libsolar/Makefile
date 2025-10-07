@@ -15,10 +15,18 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 UNAME := $(shell uname)
+UNAME_S := $(shell uname -s)
 
 CFLAGS?=-O3 -D_GNU_SOURCE -Wno-parentheses
 CFLAGS+= `pkg-config --cflags libcurl libxml-2.0`
 LIBS = `pkg-config --libs libcurl libxml-2.0`
+
+ifeq ($(UNAME_S),Darwin)
+# SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
+# ARCH_FLAGS := -arch arm64 -arch x86_64
+# CFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT) -I/usr/local/include
+CFLAGS += -mmacosx-version-min=13.0
+endif
 
 all: libsolar.a
 

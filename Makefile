@@ -111,7 +111,18 @@ CFLAGS?=-g -O0 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-d
 else
 CFLAGS?=-O3 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
 endif
+
 LINK?=$(CC)
+
+ifeq ($(UNAME_S),Darwin)
+# SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
+# ARCH_FLAGS := -arch arm64 -arch x86_64
+# CFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT) -I./src -I/usr/local/include
+# LDFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT)
+CFLAGS += -mmacosx-version-min=13.0
+LINK   += -mmacosx-version-min=13.0
+endif
+
 #
 # The "official" way to compile+link with pthreads is now to use the -pthread option
 # *both* for the compile and the link step.
@@ -1029,6 +1040,13 @@ endif
 		cp "${CURRDIR}/MacOS/rigctld_deskhpsdr" deskHPSDR.app/Contents/Resources; \
 	fi
 	@sleep 1
+	@if [ -x /usr/bin/codesign ]; then \
+		echo "Codesign deskHPSDR against possible problems with gatekeeper..."; \
+		codesign --force --deep --sign - "deskHPSDR.app"; \
+		sleep 1; \
+		echo "Verify deskHPSDR codesign..."; \
+		codesign --verify --deep --strict --verbose=2 "deskHPSDR.app"; \
+	fi
 	@echo "Copy additional needed Fonts..."
 	@mkdir -p "$(HOME)/Library/Fonts"
 	@cp -R fonts/ttf/Roboto "${HOME}/Library/Fonts"
