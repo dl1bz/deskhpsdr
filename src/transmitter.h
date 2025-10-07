@@ -114,7 +114,7 @@ typedef struct _transmitter {
   int drive;            // value of the drive slider
   int tune_use_drive;
   int tune_drive;
-#if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__HAVEATU__)
   int is_tuned;
   double stored_drive;
 #endif

@@ -174,7 +174,6 @@ extern int mic_ptt_enabled;
 extern int mic_ptt_tip_bias_ring;
 extern int mic_input_xlr;
 
-#if defined (__LDESK__)
 struct audio_profile {
   int nr;
   char desc[3][64];
@@ -182,11 +181,8 @@ struct audio_profile {
 
 extern struct audio_profile mic_prof;
 extern gchar own_callsign[32];
-#endif
-#if defined (__LDESK__)
-  extern int autogain_enabled;
-  extern int autogain_time_enabled;
-#endif
+extern int autogain_enabled;
+extern int autogain_time_enabled;
 
 extern int receivers;
 

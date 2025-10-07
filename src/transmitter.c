@@ -363,7 +363,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.deviation",         tx->id,               tx->deviation);
   SetPropI1("transmitter.%d.pre_emphasize",     tx->id,               tx->pre_emphasize);
   SetPropF1("transmitter.%d.am_carrier_level",  tx->id,               tx->am_carrier_level);
-#if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__HAVEATU__)
 
   if (transmitter->is_tuned) {
     SetPropI1("transmitter.%d.drive",           tx->id,               tx->drive);
@@ -1036,12 +1036,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->pre_emphasize = 0;
   tx->am_carrier_level = 0.5;
   tx->drive = 50;
-#if defined (__LDESK__)
   tx->tune_drive = 2;
-#else
-  tx->tune_drive = 10;
-#endif
-#if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__HAVEATU__)
   tx->is_tuned = 0;
   tx->stored_drive = 0.0;
 #endif
@@ -1175,7 +1171,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   // Modify these values from the props file
   //
   tx_restore_state(tx);
-#if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__HAVEATU__)
   tx->stored_drive = tx->drive;
 #endif
   //
@@ -2455,7 +2451,6 @@ void tx_set_fft_size(const TRANSMITTER *tx) {
 }
 
 void tx_set_mic_gain(const TRANSMITTER *tx) {
-#if defined (__LDESK__)
   double _gain;
   int _mode;
   _gain = tx->mic_gain;
@@ -2473,13 +2468,8 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
     t_print("%s: set input gain to %.1fdb\n", __FUNCTION__, _gain);
   }
 
-#else
-  SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
-#endif
-#if defined (__LDESK__)
   t_print("TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
           vfo_get_tx_mode());
-#endif
 
   if (can_transmit && display_sliders) {
     update_slider_preamp_button(TRUE);
@@ -2489,7 +2479,6 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
 
 void tx_set_mode(TRANSMITTER* tx, int mode) {
   if (tx != NULL) {
-#if defined (__LDESK__)
     double _gain;
 
     if (mode == modeDIGU || mode == modeDIGL) {
@@ -2510,15 +2499,6 @@ void tx_set_mode(TRANSMITTER* tx, int mode) {
       t_print("%s: Restore input gain: %.1fdb\n", __FUNCTION__, _gain);
     }
 
-#else
-
-    if (mode == modeDIGU || mode == modeDIGL) {
-      if (tx->drive > drive_digi_max + 0.5) {
-        set_drive(drive_digi_max);
-      }
-    }
-
-#endif
     SetTXAMode(tx->id, mode);
     tx_set_filter(tx);
   }

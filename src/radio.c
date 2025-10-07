@@ -32,14 +32,12 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <termios.h>
-#if defined (__LDESK__)
-  #include <unistd.h>
-  #include <sys/ioctl.h>
-  #include <sys/types.h>
-  #include <sys/stat.h>
-  #include <fcntl.h>
-  #include <signal.h>
-#endif
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <signal.h>
 
 #include "appearance.h"
 #include "adc.h"
@@ -91,11 +89,9 @@
   #include "saturnmain.h"
   #include "saturnserver.h"
 #endif
-#if defined (__LDESK__)
-  #include "version.h"
-  #include "exit_menu.h"
-  #include "message.h"
-#endif
+#include "version.h"
+#include "exit_menu.h"
+#include "message.h"
 
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
@@ -120,9 +116,7 @@ int controller = NO_CONTROLLER;
 GtkWidget *fixed;
 static GtkWidget *hide_b;
 static GtkWidget *menu_b;
-#if defined (__LDESK__)
-  static GtkWidget *exit_b;
-#endif
+static GtkWidget *exit_b;
 static GtkWidget *vfo_panel;
 static GtkWidget *meter;
 static GtkWidget *zoompan;
@@ -219,12 +213,10 @@ int mic_ptt_enabled = 0;
 int mic_ptt_tip_bias_ring = 0;
 int mic_input_xlr = 0;
 
-#if defined (__LDESK__)
 struct audio_profile mic_prof = {0, {"NOMIC", "NOMIC", "NOMIC"}};
 int autogain_enabled = 0;
 int autogain_time_enabled = 0;
 gchar own_callsign[32] = "YOUR_CALLSIGN";
-#endif
 int receivers;
 
 ADC adc[2];
@@ -317,13 +309,8 @@ int analog_meter = 0;
 int eer_pwm_min = 100;
 int eer_pwm_max = 800;
 
-#if defined (__LDESK__)
-  int tx_filter_low = 100;
-  int tx_filter_high = 2900;
-#else
-  int tx_filter_low = 150;
-  int tx_filter_high = 2850;
-#endif
+int tx_filter_low = 100;
+int tx_filter_high = 2900;
 
 static int pre_tune_mode;
 static int pre_tune_cw_internal;
@@ -358,11 +345,7 @@ int can_transmit = 0;
 int optimize_for_touchscreen = 0;
 
 gboolean duplex = FALSE;
-#if defined (__LDESK__)
-  gboolean mute_rx_while_transmitting = TRUE;
-#else
-  gboolean mute_rx_while_transmitting = FALSE;
-#endif
+gboolean mute_rx_while_transmitting = TRUE;
 
 double drive_max = 100.0;
 double drive_digi_max = 100.0; // maximum drive in DIGU/DIGL
@@ -578,19 +561,12 @@ void radio_reconfigure_screen() {
   //
   // Move Hide and Menu buttons, meter to new position
   //
-#if defined (__LDESK__)
   gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, 1);
   gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT / 2 + 9);
   gtk_fixed_move(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 16);
-#else
-  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT);
-  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT);
-  gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, 0);
-  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT);
-#endif
   gtk_widget_set_size_request(meter,  METER_WIDTH, METER_HEIGHT);
   gtk_fixed_move(GTK_FIXED(fixed), meter, VFO_WIDTH, 0);
   gtk_widget_set_size_request(vfo_panel, VFO_WIDTH, VFO_HEIGHT);
@@ -822,7 +798,6 @@ static gboolean menu_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
   return TRUE;
 }
 
-#if defined (__LDESK__)
 // cppcheck-suppress constParameterCallback
 static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   stop_program();
@@ -845,8 +820,6 @@ gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
 
   return FALSE;
 }
-
-#endif
 
 static void radio_create_visual() {
   int y = 0;
@@ -872,36 +845,21 @@ static void radio_create_visual() {
   hide_b = gtk_button_new_with_label("Hide");
   gtk_widget_set_name(hide_b, "boldlabel_vfo_sf");
   gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
-#if defined (__LDESK__)
   gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
-#else
-  gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT);
-  g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
-  gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y);
-  y += MENU_HEIGHT;
-#endif
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   menu_b = gtk_button_new_with_label("Menu");
   gtk_widget_set_tooltip_text(menu_b, "Main Menu and Settings");
   gtk_widget_set_name(menu_b, "boldlabel_vfo_sf");
-#if defined (__LDESK__)
   gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   g_signal_connect (menu_b, "button-press-event", G_CALLBACK(menu_cb), NULL) ;
   gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
-#else
-  gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT);
-  g_signal_connect (menu_b, "button-press-event", G_CALLBACK(menu_cb), NULL) ;
-  gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y);
-  y += MENU_HEIGHT;
-#endif
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#if defined (__LDESK__)
   t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   exit_b = gtk_button_new_with_label("Exit");
@@ -911,7 +869,6 @@ static void radio_create_visual() {
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL) ;
   gtk_fixed_put(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, y + 2);
   y += MENU_HEIGHT - 10;
-#endif
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   rx_height = my_height - VFO_HEIGHT;
 
@@ -1137,11 +1094,7 @@ void radio_start_radio() {
   // The setting can be changed in the RADIO menu and is stored in the
   // props file, so will be restored therefrom as well.
   //
-#if defined (__LDESK__)
   optimize_for_touchscreen = 0;
-#else
-  optimize_for_touchscreen = 1;
-#endif
   protocol = radio->protocol;
   device = radio->device;
 
@@ -1174,13 +1127,7 @@ void radio_start_radio() {
     have_saturn_xdma = 1;
   }
 
-#if defined (__LDESK__)
-
-  for (int id = 0; id <= MAX_SERIAL + 1; id++)
-#else
-  for (int id = 0; id < MAX_SERIAL; id++)
-#endif
-  {
+  for (int id = 0; id <= MAX_SERIAL + 1; id++) {
     //
     // Apply some default values. The name ttyACMx is suitable for
     // USB-serial adapters on Linux
@@ -1419,7 +1366,6 @@ void radio_start_radio() {
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
   case NEW_PROTOCOL:
-#if defined (__LDESK__)
     if (have_saturn_xdma) {
       // radio has no ip and MAC
       snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s v%d) on %s",
@@ -1439,28 +1385,11 @@ void radio_start_radio() {
                radio->name,
                p,
                version);
-#else
-
-    if (have_saturn_xdma) {
-      // radio has no ip and MAC
-      snprintf(text, 1024, "piHPSDR: %s (%s v%d) on %s",
-               radio->name,
-               p,
-               radio->software_version,
-               iface);
-    } else if (device == DEVICE_OZY) {
-      // radio has no ip, and name is "Ozy USB"
-      snprintf(text, 1024, "piHPSDR: %s (%s %s)",
-               radio->name,
-               p,
-               version);
-#endif
     } else {
       // radio MAC address removed from the top bar otherwise
       // it does not fit  in windows 640 pixels wide.
       // if needed, the MAC address of the radio can be
       // found in the ABOUT menu.
-#if defined (__LDESK__)
       snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s) %s on %s",
                PGNAME,
                build_version,
@@ -1470,20 +1399,11 @@ void radio_start_radio() {
                version,
                ip,
                iface);
-#else
-      snprintf(text, 1024, "piHPSDR: %s (%s %s) %s on %s",
-               radio->name,
-               p,
-               version,
-               ip,
-               iface);
-#endif
     }
 
     break;
 
   case SOAPYSDR_PROTOCOL:
-#if defined (__LDESK__)
     snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s)",
              PGNAME,
              build_version,
@@ -1491,12 +1411,6 @@ void radio_start_radio() {
              radio->name,
              p,
              version);
-#else
-    snprintf(text, 1024, "piHPSDR: %s (%s %s)",
-             radio->name,
-             p,
-             version);
-#endif
     break;
   }
 
@@ -1729,8 +1643,6 @@ void radio_start_radio() {
     }
   }
 
-#if defined (__LDESK__)
-
   if (SerialPorts[MAX_SERIAL].enable) {
     launch_sertune();
   }
@@ -1739,7 +1651,6 @@ void radio_start_radio() {
     launch_serptt();
   }
 
-#endif
 #if defined (__AUTOG__)
 
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && autogain_enabled) {
@@ -1751,15 +1662,12 @@ void radio_start_radio() {
   }
 
 #endif
-#if defined (__LDESK__)
 
   // first call to start RX200 & LPF UDP Listener if SDR can transmit
   if (can_transmit) {
     launch_rx200_monitor();
     launch_lpf_monitor();
   }
-
-#endif
 
   for (int id = 0; id < MAX_SERIAL; id++) {
     //
@@ -2412,7 +2320,7 @@ void radio_set_tune(int state) {
 
       tune = state;
       radio_calc_drive_level();
-#if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__HAVEATU__)
       transmitter->is_tuned = 1;
 
       if (transmitter->stored_drive > 0) {
@@ -2583,7 +2491,7 @@ void radio_set_drive(double value) {
 
   if (!can_transmit) { return; }
 
-#if defined (__LDESK__) && defined (__HAVEATU__)
+#if defined (__HAVEATU__)
   transmitter->drive = (double) value;
   t_print("%s: transmitter_drive: %f\n", __FUNCTION__, (double) transmitter->drive);
 #else
@@ -2780,7 +2688,6 @@ static void radio_restore_state() {
   GetPropI0("mic_bias_enabled",                              mic_bias_enabled);
   GetPropI0("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
   GetPropI0("mic_input_xlr",                                 mic_input_xlr);
-#if defined (__LDESK__)
   GetPropI0("mic_profile_nr",                                mic_prof.nr);
 
   for (int i = 0; i < 3; i++) {
@@ -2789,7 +2696,6 @@ static void radio_restore_state() {
 
   GetPropI0("autogain_enabled",                              autogain_enabled);
   GetPropI0("autogain_time_enabled",                         autogain_time_enabled);
-#endif
   GetPropI0("tx_filter_low",                                 tx_filter_low);
   GetPropI0("tx_filter_high",                                tx_filter_high);
   GetPropI0("cw_keys_reversed",                              cw_keys_reversed);
@@ -2864,7 +2770,6 @@ static void radio_restore_state() {
     }
   }
 
-#if defined (__LDESK__)
   GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
@@ -2874,7 +2779,6 @@ static void radio_restore_state() {
   GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
   GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
   GetPropS0("own_callsign",                                own_callsign);
-#endif
 
   for (int i = 0; i < n_adc; i++) {
     GetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
@@ -3020,7 +2924,6 @@ void radio_save_state() {
   SetPropI0("mic_bias_enabled",                              mic_bias_enabled);
   SetPropI0("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
   SetPropI0("mic_input_xlr",                                 mic_input_xlr);
-#if defined (__LDESK__)
   SetPropI0("mic_profile_nr",                                mic_prof.nr);
 
   for (int i = 0; i < 3; i++) {
@@ -3029,7 +2932,6 @@ void radio_save_state() {
 
   SetPropI0("autogain_enabled",                              autogain_enabled);
   SetPropI0("autogain_time_enabled",                         autogain_time_enabled);
-#endif
   SetPropI0("tx_filter_low",                                 tx_filter_low);
   SetPropI0("tx_filter_high",                                tx_filter_high);
   SetPropI0("cw_keys_reversed",                              cw_keys_reversed);
@@ -3095,7 +2997,6 @@ void radio_save_state() {
     SetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
   }
 
-#if defined (__LDESK__)
   SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
@@ -3105,7 +3006,6 @@ void radio_save_state() {
   SetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
   SetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1, SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
   SetPropS0("own_callsign",                                own_callsign);
-#endif
 
   for (int i = 0; i < n_adc; i++) {
     SetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
@@ -3392,20 +3292,16 @@ void radio_start_playback() {
   int  eq     = transmitter->eq_enable;
   int  dexp   = transmitter->dexp;
   double gain = transmitter->mic_gain;
-#if defined (__LDESK__)
   int leveler_enable = transmitter->lev_enable;
   int phrot_enable = transmitter->phrot_enable;
-#endif
   transmitter->eq_enable = 0;
   transmitter->compressor = 0;
   transmitter->mic_gain = 0.0;
   transmitter->cfc = 0;
   transmitter->cfc_eq = 0;
   transmitter->dexp = 0;
-#if defined (__LDESK__)
   transmitter->lev_enable = 0;
   transmitter->phrot_enable = 0;
-#endif
   tx_set_equalizer(transmitter);
   tx_set_mic_gain(transmitter);
   tx_set_compressor(transmitter);
@@ -3416,10 +3312,8 @@ void radio_start_playback() {
   transmitter->dexp = dexp;
   transmitter->eq_enable  = eq;
   transmitter->mic_gain = gain;
-#if defined (__LDESK__)
   transmitter->lev_enable = leveler_enable;
   transmitter->phrot_enable = phrot_enable;
-#endif
 }
 
 void radio_end_playback() {
