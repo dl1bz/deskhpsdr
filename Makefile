@@ -93,6 +93,7 @@ endif
 # get the OS Name
 UNAME_S := $(shell uname -s)
 CURRDIR := $(shell pwd)
+UNAME_R := $(shell uname -r | sed 's/\..*//')
 
 # Get git commit version and date
 GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
@@ -114,14 +115,14 @@ endif
 
 LINK?=$(CC)
 
-ifeq ($(UNAME_S),Darwin)
+# ifeq ($(UNAME_S),Darwin)
 # SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
 # ARCH_FLAGS := -arch arm64 -arch x86_64
 # CFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT) -I./src -I/usr/local/include
 # LDFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT)
-CFLAGS += -mmacosx-version-min=13.0
-LINK   += -mmacosx-version-min=13.0
-endif
+# CFLAGS += -mmacosx-version-min=13.0
+# LINK   += -mmacosx-version-min=13.0
+# endif
 
 #
 # The "official" way to compile+link with pthreads is now to use the -pthread option
@@ -392,10 +393,12 @@ EQ12_OPTIONS=-D__EQ12__
 endif
 CPP_DEFINES += -D__EQ12__
 
+# if OS is Linux, but TAHOEFIX is set, remove this
 ifeq ($(UNAME_S), Linux)
 	TAHOEFIX=
 endif
 
+# only if using macOS 26 Tahoe, fix a SDR detection issue
 ifeq ($(TAHOEFIX), ON)
 TAHOEFIX_OPTIONS=-D__TAHOEFIX__
 endif
