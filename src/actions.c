@@ -1410,7 +1410,7 @@ int process_action(void *data) {
 
   case PS:
     if (a->mode == PRESSED) {
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
       int _mode = vfo[active_receiver->id].mode;
 
       if (can_transmit) {

@@ -122,26 +122,6 @@ static void reload_css_cb(GtkWidget *widget, gpointer data) {
 }
 
 
-#ifdef __USELESS__
-static void vfo_cb(GtkWidget *widget, gpointer data) {
-  my_vfo_layout = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
-  VFO_HEIGHT = vfo_layout_list[my_vfo_layout].height;
-  int needed = vfo_layout_list[my_vfo_layout].width + MIN_METER_WIDTH + MENU_WIDTH;
-
-  if (needed % 32 != 0) { needed = 32 * (needed / 32 + 1); }
-
-  if (needed > screen_width) { needed = screen_width; }
-
-  if (needed > my_display_width && wide_b) {
-    my_display_width = needed;
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
-  }
-
-  schedule_apply();
-}
-
-#endif
-
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -161,14 +141,6 @@ static void height_cb(GtkWidget *widget, gpointer data) {
   my_display_height = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   schedule_apply();
 }
-
-#if defined (__USELESS__)
-static void horizontal_cb(GtkWidget *widget, gpointer data) {
-  my_rx_stack_horizontal = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  schedule_apply();
-}
-
-#endif
 
 static void full_cb(GtkWidget *widget, gpointer data) {
   my_full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -259,9 +231,6 @@ static void display_extras_btn_cb(GtkWidget *widget, gpointer data) {
 
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
-#if defined (__USELESS__)
-  GtkWidget *button;
-#endif
   my_display_width       = display_width;
   my_display_height      = display_height;
   my_full_screen         = full_screen;
@@ -413,9 +382,6 @@ void screen_menu(GtkWidget *parent) {
   row++;
   col = 0;
   label = gtk_label_new("This version is for Desktops,\ntherefore no VFO bar layouts available !");
-#ifdef __USELESS__
-  label = gtk_label_new("Select VFO bar layout:");
-#endif
   gtk_widget_set_name(label, "boldlabel_red");
   gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
   gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
@@ -429,30 +395,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, 2, row, 2, 1);
   gtk_widget_set_margin_start(label, 10);  // Abstand am Anfang
   col++;
-#ifdef __USELESS__
-  vfo_b = gtk_combo_box_text_new();
-  const VFO_BAR_LAYOUT *vfl = vfo_layout_list;
-
-  for (;;) {
-    if (vfl->width < 0) { break; }
-
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(vfo_b), NULL, vfl->description);
-    vfl++;
-  }
-
-  gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
-  // This combo-box spans three columns so the text may be really long
-  my_combo_attach(GTK_GRID(grid), vfo_b, col, row, 3, 1);
-  vfo_signal_id = g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
-#endif
   row++;
-#if defined (__USELESS__)
-  button = gtk_check_button_new_with_label("Stack receivers horizontally");
-  gtk_widget_set_name(button, "boldlabel");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), my_rx_stack_horizontal);
-  gtk_grid_attach(GTK_GRID(grid), button, 0, row, 2, 1);
-  g_signal_connect(button, "toggled", G_CALLBACK(horizontal_cb), NULL);
-#endif
   full_b = gtk_check_button_new_with_label("Full Screen Mode");
   gtk_widget_set_name(full_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(full_b), my_full_screen);

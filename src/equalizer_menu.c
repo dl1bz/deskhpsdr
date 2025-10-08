@@ -34,10 +34,9 @@
 #include "vfo.h"
 #include "transmitter.h"
 #include "message.h"
-#if defined (__LDESK__)
-  #include "tx_menu.h"
-  #include "toolset.h"
-#endif
+#include "tx_menu.h"
+#include "toolset.h"
+
 static GtkWidget *dialog = NULL;
 
 static GtkWidget *rx1_container;
@@ -54,15 +53,12 @@ static void cleanup() {
     sub_menu = NULL;
     active_menu  = NO_MENU;
     radio_save_state();
-#if defined (__LDESK__)
     int _mode = vfo_get_tx_mode();
 
     if (_mode < 3 && can_transmit) {
       showAudioProfileSaveDialog();
       // audioSaveProfile();
     }
-
-#endif
   }
 }
 
@@ -220,13 +216,9 @@ void equalizer_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[64];
   snprintf(_title, 64, "%s - RX/TX Equalizer (Mic Profile:%d)", PGNAME, mic_prof.nr);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Equalizer");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));

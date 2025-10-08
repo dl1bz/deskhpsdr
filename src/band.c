@@ -768,37 +768,7 @@ int TransmitAllowed() {
     break;
   }
 
-#if !defined (__LDESK__)
-
-  if (txb == band60) {
-    //
-    // For 60m band, ensure signal is within one of the "channels"
-    //
-    result = 0;
-
-    for (int i = 0; i < channel_entries; i++) {
-      long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
-      long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
-
-      //t_print("TRY CHANNEL: low=%lld high=%lld SIGNAL: low=%lld high=%lld\n", low_freq, hi_freq, flow, fhigh);
-      if (flow >= low_freq && fhigh <= hi_freq) {
-        //t_print("60m channel OK: chan=%d flow=%lld fhigh=%lld\n", i, flow, fhigh);
-        result = 1;
-        break;
-      }
-    }
-
-    //t_print("60m channel NOT FOUND: flow=%lld fhigh=%lld\n", flow, fhigh);
-  } else {
-    //
-    // For other bands, return true if signal within band
-    //
-    result = flow >= txband->frequencyMin && fhigh <= txband->frequencyMax;
-  }
-
-#else
   result = flow >= txband->frequencyMin && fhigh <= txband->frequencyMax;
-#endif
   t_print("%s: CANTRANSMIT: low=%lld  high=%lld transmit=%d\n", __FUNCTION__, flow, fhigh, result);
   return result;
 }

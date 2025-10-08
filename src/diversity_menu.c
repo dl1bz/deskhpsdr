@@ -185,13 +185,9 @@ void diversity_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Diversity", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Diversity");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
 

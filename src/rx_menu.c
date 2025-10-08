@@ -36,10 +36,8 @@
 #include "sliders.h"
 #include "new_protocol.h"
 #include "message.h"
-#if defined (__LDESK__)
-  #include "rigctl.h"
-  #include "ext.h"
-#endif
+#include "rigctl.h"
+#include "ext.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *local_audio_b = NULL;

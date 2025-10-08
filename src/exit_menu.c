@@ -101,7 +101,7 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
   _exit(0);
 }
 
-#if !defined (__LDESK__)
+/*
 // cppcheck-suppress constParameterCallback
 static gboolean reboot_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   stop_program();
@@ -114,8 +114,7 @@ static gboolean shutdown_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
   schedule_action(SHUTDOWN, PRESSED, 0);
   return TRUE;
 }
-
-#endif
+*/
 
 void exit_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
@@ -123,13 +122,9 @@ void exit_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Exit", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Exit");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -150,8 +145,7 @@ void exit_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), exit_b, col, row, 1, 1);
-#if !defined (__LDESK__)
-  col++;
+  /*
   GtkWidget *reboot_b = gtk_button_new_with_label("Reboot");
   g_signal_connect (reboot_b, "button-press-event", G_CALLBACK(reboot_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), reboot_b, col, row, 1, 1);
@@ -159,7 +153,7 @@ void exit_menu(GtkWidget *parent) {
   GtkWidget *shutdown_b = gtk_button_new_with_label("Shutdown");
   g_signal_connect (shutdown_b, "button-press-event", G_CALLBACK(shutdown_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), shutdown_b, col, row, 1, 1);
-#endif
+  */
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

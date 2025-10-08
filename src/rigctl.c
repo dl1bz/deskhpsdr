@@ -91,12 +91,10 @@ int rigctl_tcp_autoreporting = 0;
 volatile int rigctld_enabled = 0;
 volatile int use_rigctld = 0;
 
-#if defined (__LDESK__)
-  int serptt_fd;
-  int sertune_fd;
-  volatile gboolean serptt_cts = FALSE;
-  int autogain_is_adjusted = 1;
-#endif
+int serptt_fd;
+int sertune_fd;
+volatile gboolean serptt_cts = FALSE;
+int autogain_is_adjusted = 1;
 
 // max number of bytes we can get at once
 #define MAXDATASIZE 2000
@@ -114,11 +112,9 @@ static GMutex mutex_numcat;   // only needed to make in/de-crements of "cat_cont
 
 static GThread *rigctl_server_thread_id = NULL;
 static GThread *rigctl_cw_thread_id = NULL;
-#if defined (__LDESK__)
-  static GThread *serptt_thread_id = NULL;
-  static GThread *sertune_thread_id = NULL;
-  static GMutex sertune_mutex;
-#endif
+static GThread *serptt_thread_id = NULL;
+static GThread *sertune_thread_id = NULL;
+static GMutex sertune_mutex;
 #if defined (__AUTOG__)
   pthread_t autogain_thread;
   pthread_mutex_t autogain_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
@@ -185,11 +181,7 @@ typedef struct _command {
 
 static CLIENT tcp_client[MAX_TCP_CLIENTS]; // TCP clients
 static CLIENT serial_client[MAX_SERIAL];   // serial clienta
-#if defined (__LDESK__)
-  SERIALPORT SerialPorts[MAX_SERIAL + 2];
-#else
-  SERIALPORT SerialPorts[MAX_SERIAL];
-#endif
+SERIALPORT SerialPorts[MAX_SERIAL + 2];
 
 static gpointer rigctl_client (gpointer data);
 
@@ -206,7 +198,6 @@ int rigctl_tcp_running() {
   return (server_socket >= 0);
 }
 
-#if defined (__LDESK__)
 // Funktion zum Abrufen des CTS-Status der seriellen PTT
 static gboolean get_serptt_cts(int fd) {
   int status;
@@ -384,8 +375,6 @@ void launch_sertune() {
     }
   }
 }
-
-#endif
 
 #if defined (__AUTOG__)
 static void* autogain_thread_function(void* arg) {
@@ -3254,12 +3243,8 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           send_resp(client->fd, reply);
         } else if (command[7] == ';') {
           int val = atoi(&command[4]);
-#if defined (__LDESK__) && defined (__USELESS__)
-          set_mic_gain(((double) val * 0.8857) - 12.0);
-#else
           transmitter->mic_gain = ((double) val * 0.8857) - 12.0;
           tx_set_mic_gain(transmitter);
-#endif
         }
       } else {
         implemented = FALSE;
@@ -5966,12 +5951,8 @@ int parse_cmd(void *data) {
 
           if (gain > 50.0) { gain = 50.0; }
 
-#if defined (__LDESK__) && defined (__USELESS__)
-          set_mic_gain(gain);
-#else
           transmitter->mic_gain = gain;
           tx_set_mic_gain(transmitter);
-#endif
         }
       } else {
         implemented = FALSE;

@@ -41,7 +41,6 @@
 
 #include <wdsp.h>
 
-#if defined (__LDESK__)
 //----------------------------------------------------------------------------------------------
 // Reference of calculate S-Meter values: https://de.wikipedia.org/wiki/S-Meter
 // <= 30 MHz: S9 = -73dbm
@@ -96,7 +95,6 @@ static unsigned char get_SWert(short int dbm) {
 }
 
 //----------------------------------------------------------------------------------------------
-#endif
 
 static GtkWidget *meter;
 static cairo_surface_t *meter_surface = NULL;
@@ -180,14 +178,12 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
   int txmode = vfo[txvfo].mode;
   int cwmode = (txmode == modeCWU || txmode == modeCWL);
   const BAND *band = band_get_band(vfo[txvfo].band);
-#if defined (__LDESK__)
   double _mic_av;
   double _eq_av;
   double _lvlr_av;
   double _cfc_av;
   double _proc_av;
   double _out_av;
-#endif
 
   //
   // First, do all the work that  does not depend on whether the
@@ -304,11 +300,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_set_source_rgba(cr, COLOUR_METER);
       cairo_arc(cr, cx, cx, radius, (min_angle + 6.0 * bydb) * M_PI / 180.0, max_angle * M_PI / 180.0);
       cairo_stroke(cr);
-#if defined (__LDESK__)
       cairo_set_line_width(cr, 4.0);
-#else
-      cairo_set_line_width(cr, PAN_LINE_EXTRA);
-#endif
       cairo_set_source_rgba(cr, COLOUR_ALARM);
       cairo_arc(cr, cx, cx, radius + 2, (min_angle + 54.0 * bydb) * M_PI / 180.0, max_angle * M_PI / 180.0);
       cairo_stroke(cr);
@@ -385,11 +377,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_arc(cr, cx, cx, radius + 8, radians, radians);
       cairo_line_to(cr, cx, cx);
       cairo_stroke(cr);
-#if defined (__LDESK__)
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
-#else
-      cairo_set_source_rgba(cr, COLOUR_METER);
-#endif
       snprintf(sf, 32, "%d dBm", (int)(max_rxlvl - 0.5)); // assume max_rxlvl < 0 in roundig
 
       if (METER_WIDTH < 210) {
@@ -401,7 +389,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       }
 
       cairo_show_text(cr, sf);
-#if defined (__LDESK__)
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
 #if defined (__APPLE__)
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -420,7 +407,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_set_font_size(cr, 16);
       cairo_move_to(cr, cx + 65, cx - radius - 3);
       cairo_show_text(cr, sf);
-#endif
     }
     break;
 
@@ -868,9 +854,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
 
         cairo_stroke(cr);
-#if defined (__LDESK__)
         cairo_select_font_face(cr, "FreeSans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-#endif
         cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
         cairo_move_to(cr, 20, Y4);
         cairo_show_text(cr, "3");
@@ -955,7 +939,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
 
       if (size > METER_HEIGHT / 3) { size = METER_HEIGHT / 3; }
 
-#if defined (__LDESK__)
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
 #if defined (__APPLE__)
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -983,14 +966,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_show_text(cr, sf);
       }
 
-#else
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      cairo_set_font_size(cr, size);
-      snprintf(sf, 32, "%-3d dBm", (int)(max_rxlvl - 0.5));  // assume max_rxlvl < 0 in rounding
-      cairo_text_extents(cr, sf, &extents);
-      cairo_move_to(cr, METER_WIDTH - extents.width - 5, Y2);
-      cairo_show_text(cr, sf);
-#endif
       break;
 
     case POWER:
@@ -1017,11 +992,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
 
         cairo_set_source_rgba(cr, COLOUR_ATTN);
-#if defined (__LDESK__)
         cairo_move_to(cr, 5, Y2 - 12);
-#else
-        cairo_move_to(cr, 5, Y2);
-#endif
         cairo_show_text(cr, sf);
 
         if (can_transmit) {
@@ -1033,11 +1004,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
 
         snprintf(sf, 32, "SWR %1.1f:1", swr);
-#if defined (__LDESK__)
         cairo_move_to(cr, METER_WIDTH / 2, Y2 - 12);
-#else
-        cairo_move_to(cr, METER_WIDTH / 2, Y2);
-#endif
         cairo_show_text(cr, sf);
       }
 
@@ -1049,8 +1016,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_move_to(cr, METER_WIDTH / 2, Y4);
         cairo_show_text(cr, sf);
       }
-
-#if defined (__LDESK__)
 
       if (!duplex && !cwmode) {
         if (!tune) {
@@ -1129,7 +1094,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
       }
 
-#endif
       break;
     }
   }

@@ -423,7 +423,7 @@ static void ps_ant_cb(GtkWidget *widget, gpointer data) {
 static void enable_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     int val = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
     int _mode = vfo_get_tx_mode();
 #endif
     clear_fields();
@@ -447,7 +447,7 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
       gtk_entry_set_text(GTK_ENTRY(tx_att), "");
     }
 
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
 
     // PS make no sense in CW and FM !
     if (can_transmit && (_mode == modeUSB || _mode == modeLSB || _mode == modeDIGL || _mode == modeDIGU || _mode == modeAM
@@ -552,13 +552,9 @@ void ps_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[32];
   snprintf(_title, 32, "%s - Pure Signal", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Pure Signal");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));

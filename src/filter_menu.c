@@ -312,13 +312,13 @@ static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
 }
 
 static void rxtx_filter_cb(GtkToggleButton *btn, gpointer user_data) {
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
   int mode = vfo_get_tx_mode();
 #endif
   int v = gtk_toggle_button_get_active(btn) ? 1 : 0;
   transmitter->use_rx_filter = v;
   tx_set_filter(transmitter);     // Filter neu setzen
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
   mode_settings[mode].use_rx_filter = v;
   copy_mode_settings(mode);
 #endif
@@ -613,12 +613,12 @@ void filter_menu(GtkWidget *parent) {
     //
     if (m == modeCWU || m == modeCWL) {
       if (transmitter->use_rx_filter) { // sanity check, RX = TX filter edges make no sense in mode CW
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
         int current_tx_mode = vfo_get_tx_mode();
 #endif
         transmitter->use_rx_filter = 0; // switch TX=RX filter edge off
         tx_set_filter(transmitter);  // update TX filter settings
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
         mode_settings[current_tx_mode].use_rx_filter = 0;
         copy_mode_settings(current_tx_mode);
 #endif

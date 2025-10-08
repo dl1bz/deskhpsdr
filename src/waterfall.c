@@ -28,11 +28,9 @@
 #include "radio.h"
 #include "vfo.h"
 #include "band.h"
-#if defined (__LDESK__)
-  #include "appearance.h"
-  #include "audio.h"
-  #include "toolset.h"
-#endif
+#include "appearance.h"
+#include "audio.h"
+#include "toolset.h"
 #include "waterfall.h"
 #include "rx_panadapter.h"
 #include "message.h"

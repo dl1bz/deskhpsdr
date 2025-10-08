@@ -67,12 +67,10 @@
 #ifdef TTS
   #include "tts.h"
 #endif
-#if defined (__LDESK__)
-  #include "sliders.h"
-  #include "noise_menu.h"
-  #include "rigctl.h"
-  #include "midi.h"
-#endif
+#include "sliders.h"
+#include "noise_menu.h"
+#include "rigctl.h"
+#include "midi.h"
 #include "trx_logo.h"
 
 struct utsname unameData;
@@ -232,7 +230,6 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     tts_atten();
     break;
 #endif
-#if defined (__LDESK__)
 
   // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T
   case GDK_KEY_b:
@@ -347,10 +344,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     }
 
     break;
-#endif
 
   case GDK_KEY_space:
-#if defined (__LDESK__)
 
     // DH0DM: changed the logic here for combination with the tune key
     // if tuning is active space will stop tuning and not switching to mox with
@@ -370,25 +365,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       }
     }
 
-#else
-
-    if (can_transmit) {
-      if (radio_get_tune() == 1) {
-        radio_set_tune(0);
-      }
-
-      if (radio_get_mox() == 1) {
-        radio_set_mox(0);
-      } else if (TransmitAllowed()) {
-        radio_set_mox(1);
-      } else {
-        tx_set_out_of_band(transmitter);
-      }
-    }
-
-#endif
     break;
-#if defined (__LDESK__)
 
   case GDK_KEY_Page_Down: {
     double _vol = active_receiver->volume;
@@ -413,36 +390,27 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     set_af_gain(active_receiver->id, _vol);
   }
   break;
-#endif
 
   case  GDK_KEY_d:
-#if defined (__LDESK__)
   case  GDK_KEY_Left:
     if (event->state & GDK_SHIFT_MASK) {
       // vfo_id_step(1 - active_receiver->id, -10); // for VFO B
       vfo_step(-10);
     } else {
-#endif
       vfo_step(-1);
-#if defined (__LDESK__)
     }
 
-#endif
     break;
 
   case GDK_KEY_u:
-#if defined (__LDESK__)
   case GDK_KEY_Right:
     if (event->state & GDK_SHIFT_MASK) {
       // vfo_id_step(1 - active_receiver->id, 10); // for VFO B
       vfo_step(10);
     } else {
-#endif
       vfo_step(1);
-#if defined (__LDESK__)
     }
 
-#endif
     break;
 
   //
@@ -457,7 +425,6 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case  GDK_KEY_D:
     vfo_id_step(1 - active_receiver->id, -10);
     break;
-#if defined (__LDESK__)
 
   case GDK_KEY_q:
     if (event->state & GDK_CONTROL_MASK) {
@@ -495,7 +462,6 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     g_idle_add(ext_vfo_update, NULL);
   }
   break;
-#endif
 #endif
 
   //
@@ -652,26 +618,16 @@ static int init(void *data) {
   return 0;
 }
 
-#if defined (__LDESK__)
 static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
-#else
-static void activate_pihpsdr(GtkApplication *app, gpointer data) {
-#endif
   // Hier setzen wir den GTK-Mainloop-Thread
   deskhpsdr_main_thread = pthread_self();
   g_mutex_init(&vfo_timer.lock);
   g_mutex_init(&vfoa_timer.lock);
   g_mutex_init(&vfob_timer.lock);
-#if defined (__LDESK__)
   char text[2048];
-#else
-  char text[256];
-#endif
-#if defined (__LDESK__)
   char config_directory[1024];
   (void) getcwd(config_directory, sizeof(config_directory));
   g_strlcat(config_directory, "/", 1024);
-#endif
   t_print("Build: %s (Branch: %s, Commit: %s, Date: %s)\n", build_version, build_branch, build_commit, build_date);
   t_print("GTK+ version %u.%u.%u\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
   uname(&unameData);
@@ -733,14 +689,10 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("create top level window\n");
   top_window = gtk_application_window_new (app);
   gtk_widget_set_size_request(top_window, 100, 100);
-#if defined (__LDESK__)
   const char *used_theme = get_current_gtk_theme();
   char _title[64];
   snprintf(_title, 64, "%s by DL1BZ %s [GTK Theme: %s]", PGNAME, build_version, used_theme);
   gtk_window_set_title (GTK_WINDOW (top_window), _title);
-#else
-  gtk_window_set_title (GTK_WINDOW (top_window), "piHPSDR");
-#endif
   //
   // do not use GTK_WIN_POS_CENTER_ALWAYS, since this will let the
   // window jump back to the center each time the window is
@@ -753,9 +705,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   //
   gtk_window_set_position(GTK_WINDOW(top_window), GTK_WIN_POS_CENTER);
   gtk_window_set_resizable(GTK_WINDOW(top_window), FALSE);
-#if defined (__LDESK__)
   gtk_window_set_deletable(GTK_WINDOW(top_window), FALSE); // remove close button in main window
-#endif
   //
   // Get the position of the top window, and then determine
   // to which monitor this position belongs.
@@ -772,18 +722,9 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   screen_width = rect.width;
   screen_height = rect.height;
   t_print("Monitor: width=%d height=%d\n", screen_width, screen_height);
-#if defined (__LDESK__)
   display_width  = 1280;
   display_height = 600;
   full_screen    = 0;
-#else
-  // Start with 800x480, since this width is required for the "discovery" screen.
-  // Go to "full screen" mode if display nearly matches 800x480
-  // This is all overridden later for the radio from the props file
-  display_width  = 800;
-  display_height = 480;
-  full_screen    = 0;
-#endif
 
   //
   // Go to full-screen mode by default, if the screen size is approx. 800*480
@@ -811,12 +752,8 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   g_signal_connect(top_window, "key_press_event", G_CALLBACK(keypress_cb), NULL);
   t_print("create grid\n");
   topgrid = gtk_grid_new();
-#if defined (__LDESK__)
   // we make the first startup windows smaller, looks better
   gtk_widget_set_size_request(topgrid, display_width * 0.75, display_height * 0.6);
-#else
-  gtk_widget_set_size_request(topgrid, display_width, display_height);
-#endif
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing (GTK_GRID(topgrid), 10);
@@ -825,7 +762,6 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   t_print("add image to grid\n");
   gtk_grid_attach(GTK_GRID(topgrid), trx_logo_widget, 0, 0, 1, 2);
   t_print("create pi label\n");
-#if defined (__LDESK__)
   snprintf(text, 2048,
            "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
            "deskHPSDR by Heiko Amft, DL1BZ (dl1bz@bzsax.de)");
@@ -833,53 +769,29 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   gtk_widget_set_name(pi_label, "big_txt");
   gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(topgrid), pi_label, 1, 0, 3, 1);
-#else
-  GtkWidget *pi_label = gtk_label_new("piHPSDR by John Melton G0ORX/N6LYT");
-  gtk_widget_set_name(pi_label, "big_txt");
-  gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
-  t_print("add pi label to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), pi_label, 1, 0, 3, 1);
-#endif
   t_print("create build label\n");
-#if defined (__LDESK__)
   snprintf(text, 2048,
            "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nWDSP version: %d.%02d\nUsed Audio module: %s\nWorking Directory: %s",
            build_version, build_date, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100,
            build_audio, config_directory);
-#else
-  snprintf(text, 256, "Built %s, Version %s\nOptions: %s\nAudio module: %s",
-           build_date, build_version, build_options, build_audio);
-#endif
   GtkWidget *build_date_label = gtk_label_new(text);
   gtk_widget_set_name(build_date_label, "med_txt");
   gtk_widget_set_halign(build_date_label, GTK_ALIGN_START);
   t_print("add build label to grid\n");
-#if defined (__LDESK__)
   gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 2, 3, 1);
-#else
-  gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 1, 3, 1);
-#endif
   t_print("create status\n");
   status_label = gtk_label_new(NULL);
   gtk_widget_set_name(status_label, "med_txt");
   gtk_widget_set_halign(status_label, GTK_ALIGN_START);
   t_print("add status to grid\n");
-#if defined (__LDESK__)
   gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 3, 3, 1);
-#else
-  gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 2, 3, 1);
-#endif
   gtk_widget_show_all(top_window);
   t_print("g_idle_add: init\n");
   g_idle_add(init, NULL);
 }
 
 int main(int argc, char **argv) {
-#if defined (__LDESK__)
   GtkApplication *deskhpsdr;
-#else
-  GtkApplication *pihpsdr;
-#endif
   int rc;
   char name[1024];
 
@@ -887,14 +799,10 @@ int main(int argc, char **argv) {
   // If invoked with -V, print version and FPGA firmware compatibility information
   //
   if (argc >= 2 && !strcmp("-V", argv[1])) {
-#if defined (__LDESK__)
     uname(&unameData);
     fprintf(stderr, "deskHPSDR version %s [%s] (branch %s - commit %s), built date %s with %s\n", build_version,
             unameData.machine,
             build_branch, build_commit, build_date, __VERSION__);
-#else
-    fprintf(stderr, "piHPSDR version and commit: %s, %s; built %s\n", build_version, build_commit, build_date);
-#endif
     fprintf(stderr, "Compile-time options      : %sAudioModule=%s\n", build_options, build_audio);
 #ifdef SATURN
     fprintf(stderr, "SATURN min:max minor FPGA : %d:%d\n", saturn_minor_version_min(), saturn_minor_version_max());
@@ -915,7 +823,6 @@ int main(int argc, char **argv) {
   rc = getpriority(PRIO_PROCESS, 0);
   t_print("Base priority after adjustment: %d\n", rc);
   startup(argv[0]);
-#if defined (__LDESK__)
   t_print("%s: init global cURL...\n", __FUNCTION__);
   curl_global_init(CURL_GLOBAL_ALL);
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
@@ -928,15 +835,6 @@ int main(int argc, char **argv) {
   g_mutex_clear(&vfo_timer.lock);
   g_mutex_clear(&vfoa_timer.lock);
   g_mutex_clear(&vfob_timer.lock);
-#else
-  snprintf(name, 1024, "org.g0orx.pihpsdr.pid%d", getpid());
-  t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
-  pihpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
-  g_signal_connect(pihpsdr, "activate", G_CALLBACK(activate_pihpsdr), NULL);
-  rc = g_application_run(G_APPLICATION(pihpsdr), argc, argv);
-  t_print("exiting ...\n");
-  g_object_unref(pihpsdr);
-#endif
   return rc;
 }
 
@@ -963,7 +861,6 @@ int fatal_error(void *data) {
 
   if (top_window) {
     GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
-#if defined (__LDESK__)
     GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(top_window),
                         flags,
                         GTK_MESSAGE_ERROR,
@@ -971,15 +868,6 @@ int fatal_error(void *data) {
                         "<span color='red' size='x-large' weight='bold'>deskHPSDR termination due to fatal error:</span>"
                         "\n\n<span size='x-large'>   %s</span>\n\n",
                         msg);
-#else
-    GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(top_window),
-                        flags,
-                        GTK_MESSAGE_ERROR,
-                        GTK_BUTTONS_CLOSE,
-                        "<span color='red' size='x-large' weight='bold'>piHPSDR termination due to fatal error:</span>"
-                        "\n\n<span size='x-large'>   %s</span>\n\n",
-                        msg);
-#endif
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }

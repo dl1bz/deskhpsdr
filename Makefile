@@ -150,15 +150,6 @@ SOLAR_LIBS=libsolar/libsolar.a `$(PKG_CONFIG) --libs libcurl libxml-2.0`
 
 ##############################################################################
 #
-#  Activate all deskHPSDR code per default
-#
-##############################################################################
-
-DESKTOP_OPTIONS=-D__LDESK__
-CPP_DEFINES += -D__LDESK__
-
-##############################################################################
-#
 # Add support for extended noise reduction, if requested
 # This implies that one compiles against a wdsp.h e.g. in /usr/local/include,
 # and links with a WDSP shared lib e.g. in /usr/local/lib
@@ -996,7 +987,7 @@ DEPEND:
 	export LC_ALL=C && makedepend -DTCI -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DEXTNR -DGPIO \
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
-		-D__LDESK__ -D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
+		-D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
 		-D__WMAP__ -D__EQ12__ -D__TAHOEFIX__ \
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND

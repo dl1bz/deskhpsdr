@@ -2628,9 +2628,6 @@ static void radio_restore_state() {
   GetPropI0("display_width",                                 display_width);
   GetPropI0("display_height",                                display_height);
   GetPropI0("full_screen",                                   full_screen);
-#if defined (__USELESS__)
-  GetPropI0("rx_stack_horizontal",                           rx_stack_horizontal);
-#endif
   GetPropI0("vfo_layout",                                    vfo_layout);
   GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   GetPropI0("capture_max",                                   capture_max);
@@ -2883,9 +2880,6 @@ void radio_save_state() {
   SetPropI0("display_width",                                 display_width);
   SetPropI0("display_height",                                display_height);
   SetPropI0("full_screen",                                   full_screen);
-#if defined (__USELESS__)
-  SetPropI0("rx_stack_horizontal",                           rx_stack_horizontal);
-#endif
   SetPropI0("vfo_layout",                                    vfo_layout);
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   SetPropI0("capture_max",                                   capture_max);

@@ -89,11 +89,7 @@ void startup(const char *path) {
   //
   // try to create a file with an unique file name
   //
-#if defined (__LDESK__)
   snprintf(filename, PATH_MAX, "deskHPSDR.myFile.%ld", (long) getpid());
-#else
-  snprintf(filename, PATH_MAX, "piHPSDR.myFile.%ld", (long) getpid());
-#endif
   rc = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0700);
 
   if (rc >= 0) {
@@ -141,11 +137,7 @@ void startup(const char *path) {
   }
 
 #ifdef __APPLE__
-#if defined (__LDESK__)
   snprintf(workdir, PATH_MAX, "%s/Library/Application Support/deskHPSDR", homedir);
-#else
-  snprintf(workdir, PATH_MAX, "%s/Library/Application Support/piHPSDR", homedir);
-#endif
 
   if (stat(workdir, &statbuf) < 0) {
     mkdir (workdir, 0700);
@@ -164,11 +156,7 @@ void startup(const char *path) {
     mkdir (workdir, 0700);
   }
 
-#if defined (__LDESK__)
   snprintf(workdir, PATH_MAX, "%s/.config/deskhpsdr", homedir);
-#else
-  snprintf(workdir, PATH_MAX, "%s/.config/pihpsdr", homedir);
-#endif
 
   if (stat(workdir, &statbuf) < 0) {
     mkdir (workdir, 0700);
@@ -198,12 +186,7 @@ void startup(const char *path) {
   //  Make two local files for stdout and stderr, to allow
   //  post-mortem debugging
   //
-#if defined (__LDESK__)
   (void) freopen("deskhpsdr.stdout", "w", stdout);
   (void) freopen("deskhpsdr.stderr", "w", stderr);
-#else
-  (void) freopen("pihpsdr.stdout", "w", stdout);
-  (void) freopen("pihpsdr.stderr", "w", stderr);
-#endif
   t_print("%s: working dir changed to %s\n", __FUNCTION__, workdir);
 }

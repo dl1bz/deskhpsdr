@@ -306,11 +306,7 @@ void saturn_register_init() {
 bool is_already_running() {
   FILE *fp;
   char path[1035];
-#if defined (__LDESK__)
   fp = popen("lsof /dev/xdma0_user | grep deskhpsdr", "r");
-#else
-  fp = popen("lsof /dev/xdma0_user | grep pihpsdr", "r");
-#endif
 
   if (fp == NULL) {
     t_print("Failed to run command in %s\n", __FUNCTION__ );
@@ -320,11 +316,7 @@ bool is_already_running() {
   while (fgets(path, sizeof(path), fp) != NULL) {}
 
   pclose(fp);
-#if defined (__LDESK__)
   return (strstr(path, "deskhpsdr") == NULL) ? false : true;
-#else
-  return (strstr(path, "pihpsdr") == NULL) ? false : true;
-#endif
 }
 
 #define SATURNPRODUCTID 1                               // Saturn, any version

@@ -39,11 +39,7 @@ struct _SERIALPORT {
 typedef struct _SERIALPORT SERIALPORT;
 
 #define MAX_SERIAL 3
-#if defined (__LDESK__)
-  extern SERIALPORT SerialPorts[MAX_SERIAL + 2];
-#else
-  extern SERIALPORT SerialPorts[MAX_SERIAL];
-#endif
+extern SERIALPORT SerialPorts[MAX_SERIAL + 2];
 extern gboolean rigctl_debug;
 
 extern void launch_tcp_rigctl (void);
@@ -51,12 +47,10 @@ extern int launch_serial_rigctl (int id);
 extern void disable_serial_rigctl (int id);
 extern int rigctl_tcp_running();
 extern void  shutdown_tcp_rigctl(void);
-#if defined (__LDESK__)
-  extern void launch_serptt(void);
-  extern void launch_sertune(void);
-  extern int serptt_fd;
-  extern int sertune_fd;
-#endif
+extern void launch_serptt(void);
+extern void launch_sertune(void);
+extern int serptt_fd;
+extern int sertune_fd;
 #if defined (__AUTOG__)
   extern void launch_autogain_hl2(void);
   extern void restart_autogain_hl2(void);

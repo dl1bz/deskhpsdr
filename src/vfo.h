@@ -138,9 +138,6 @@ struct _mode_settings {
 #endif
   int compressor;                   // TX compressor on/off
   double compressor_level;          // TX compressor level
-#if defined (__LDESK__) && defined (__USELESS__)
-  double mic_gain;                  // TX mic gain
-#endif
   int dexp;                         // Downward Expander (DEXP) on/off
   int dexp_trigger;                 // DEXP trigger level (dB)
   double dexp_tau;                  // DEXP averaging time constant
@@ -166,7 +163,7 @@ struct _mode_settings {
   double cfc_lvl[11];               // CFC compression at corner frequency
   double cfc_post[11];              // CFC post-EQ gain at corner frequency
 #endif
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
   int local_microphone;
   char microphone_name[128];
   int puresignal;
@@ -176,7 +173,7 @@ struct _mode_settings {
 
 extern struct _mode_settings mode_settings[];
 extern void copy_mode_settings(int mode);
-#if defined (__LDESK__) && defined (__CPYMODE__)
+#if defined (__CPYMODE__)
   extern GMutex copy_string_mutex;
 #endif
 

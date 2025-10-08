@@ -45,9 +45,7 @@
 #include "ext.h"
 #include "new_menu.h"
 #include "message.h"
-#if defined (__LDESK__)
-  #include <wdsp.h>
-#endif
+#include <wdsp.h>
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
@@ -126,14 +124,12 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     cairo_paint (cr);
     // filter
     filter_left = filter_right = 0.5 * mywidth;
-#if defined (__LDESK__)
     static double _mic_av;
     static double _eq_av;
     static double _lvlr_av;
     static double _cfc_av;
     static double _proc_av;
     static double _out_av;
-#endif
 
     if (txmode != modeCWU && txmode != modeCWL) {
       cairo_set_source_rgba(cr, COLOUR_PAN_FILTER);
@@ -381,7 +377,6 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     if (tx->dialog) {
       char text[64];
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-#if defined (__LDESK__)
       int _xpos = 0;
       int _ypos = 80;
 
@@ -393,9 +388,6 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
       cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-#else
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-#endif
       int row = 0;
 
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
@@ -422,8 +414,6 @@ void tx_panadapter_update(TRANSMITTER *tx) {
         cairo_move_to(cr, _xpos, row);
         cairo_show_text(cr, text);
       }
-
-#if defined (__LDESK__)
 
       if (duplex && !cwmode) {
         cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
@@ -510,8 +500,6 @@ void tx_panadapter_update(TRANSMITTER *tx) {
           cairo_set_source_rgba(cr, COLOUR_METER);
         }
       }
-
-#endif
     }
 
     if (tx->panadapter_peaks_on != 0) {

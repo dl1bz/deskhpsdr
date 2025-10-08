@@ -37,21 +37,16 @@
   #include "tci.h"
 #endif
 #include "message.h"
+#include "main.h"
 
 static GtkWidget *dialog = NULL;
-#if defined (__LDESK__)
-  static GtkWidget *serial_baud[MAX_SERIAL + 2];
-  static GtkWidget *serial_enable[MAX_SERIAL + 2];
-  static GtkWidget *serial_swapRtsDtr[MAX_SERIAL + 2];
-  static GtkWidget *rigctld_btn;
-  static GtkWidget *rigctl_andromeda_btn;
-  static GtkWidget *rigctl_port_select;
-  static GtkWidget *tci_port_select;
-  #include "main.h"
-#else
-  static GtkWidget *serial_baud[MAX_SERIAL];
-  static GtkWidget *serial_enable[MAX_SERIAL];
-#endif
+static GtkWidget *serial_baud[MAX_SERIAL + 2];
+static GtkWidget *serial_enable[MAX_SERIAL + 2];
+static GtkWidget *serial_swapRtsDtr[MAX_SERIAL + 2];
+static GtkWidget *rigctld_btn;
+static GtkWidget *rigctl_andromeda_btn;
+static GtkWidget *rigctl_port_select;
+static GtkWidget *tci_port_select;
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -233,11 +228,8 @@ static gboolean rigctl_reload_menu(gpointer data) {
 
 static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
-#if defined (__LDESK__)
 
   if (id < MAX_SERIAL) {
-#endif
-
     if ((SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))) {
       if (launch_serial_rigctl(id) == 0) {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
@@ -246,8 +238,6 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
     } else {
       disable_serial_rigctl(id);
     }
-
-#if defined (__LDESK__)
   } else {
     SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
@@ -262,7 +252,6 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
     g_idle_add(rigctl_reload_menu, NULL); // execute in main thread
   }
 
-#endif
   t_print("%s: Serial enable : ID=%d Enabled=%d\n", __FUNCTION__, id, SerialPorts[id].enable);
 }
 
@@ -329,7 +318,6 @@ void rigctl_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[32];
 #ifdef TCI
   snprintf(_title, 32, "%s - CAT/TCI", PGNAME);
@@ -337,13 +325,6 @@ void rigctl_menu(GtkWidget *parent) {
 #else
   snprintf(_title, 32, "%s - CAT", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#endif
-#else
-#ifdef TCI
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - CAT/TCI");
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - CAT");
-#endif
 #endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
@@ -512,8 +493,6 @@ void rigctl_menu(GtkWidget *parent) {
     }
   }
 
-#if defined (__LDESK__)
-
   //-----------------------------------------------------------------------------------------------------------------
   if (can_transmit) {
     char str[64];
@@ -617,7 +596,6 @@ void rigctl_menu(GtkWidget *parent) {
   }
 
   //-----------------------------------------------------------------------------------------------------------------
-#endif
   // row++;
   // w = gtk_check_button_new_with_label("Enable RigCtl Debug Logging");
   // gtk_widget_set_name(w, "boldlabel");

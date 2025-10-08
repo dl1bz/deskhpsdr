@@ -64,13 +64,9 @@ void toolbar_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-#if defined (__LDESK__)
   char _title[64];
   snprintf(_title, 64, "%s - Toolbar configuration", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Toolbar configuration");
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -84,11 +80,7 @@ void toolbar_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 3, 1);
   int lfunction = 0;
-#if defined (__LDESK__)
   const int max_switches = 11;
-#else
-  const int max_switches = 8;
-#endif
 
   for (lfunction = 0; lfunction < MAX_FUNCTIONS; lfunction++) {
     SWITCH *sw = switches_controller1[lfunction];
