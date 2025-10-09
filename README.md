@@ -82,12 +82,12 @@ This overwrite local changes, which are different from the remote repo at Github
 
 So far, deskHPSDR has been successfully tested on the following systems:<br>
 * iMac 21" i5 running macOS 14 aka Sonoma
-* Macbook Air M1 running macOS 15 aka Sequoia
+* Macbook Air M1 running macOS 26 aka Tahoe
 * Raspberry Pi5 with NVMe-HAT running 64bit PiOS and X11 environment
 * *Raspberry Pi 3B+ works too, but with limitations (panadapter framerate only 10fps, if want more the CPU hasn't enough power)*
 * a hamradio friend of mine has checked it on a Desktop Linux Ubuntu LTS for me, works too
 
-**All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1 under macOS 14 and 15**
+**All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1 under macOS 14, macOS 15 and macOS 26**
 **There are no issues with the Hermes Lite 2 and deskHPSDR yet, but it is not possible to check ALL other exist SDR devices.**
 
 ## Credits
