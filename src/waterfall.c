@@ -161,6 +161,12 @@ waterfall_draw_cb (GtkWidget *widget,
       && !rx_stack_horizontal) {
     char _text[128];
     cairo_set_source_rgba(cr, COLOUR_ATTN);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
     snprintf(_text, 128, "%d db", g_noise_level);
     cairo_text_extents_t nf_extents;
     cairo_text_extents(cr, _text, &nf_extents);

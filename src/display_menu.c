@@ -68,6 +68,11 @@ static gboolean close_cb () {
   return TRUE;
 }
 
+static void chkbtn_clock_toggle_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
 static void sel_cb(GtkWidget *widget, gpointer data) {
   //
   // Handle radio button in the top row, this selects
@@ -343,6 +348,7 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
   GtkWidget *frames_per_second_r = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
+  gtk_widget_set_tooltip_text(frames_per_second_r, "Refresh rate in frames per second for panadapter and waterfall");
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(frames_per_second_r), (double)active_receiver->fps);
   gtk_widget_show(frames_per_second_r);
   gtk_grid_attach(GTK_GRID(general_grid), frames_per_second_r, col, row, 1, 1);
@@ -527,42 +533,40 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(general_grid), time_r, col + 1, row, 1, 1);
   g_signal_connect(time_r, "value_changed", G_CALLBACK(time_value_changed_cb), NULL);
   row++;
-  GtkWidget *filled_b = gtk_check_button_new_with_label("Fill Panadapter");
-  gtk_widget_set_name (filled_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (filled_b), active_receiver->display_filled);
-  gtk_widget_show(filled_b);
-  gtk_grid_attach(GTK_GRID(general_grid), filled_b, col, row, 1, 1);
-  g_signal_connect(filled_b, "toggled", G_CALLBACK(filled_cb), NULL);
-  GtkWidget *gradient_b = gtk_check_button_new_with_label("Gradient");
-  gtk_widget_set_name (gradient_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (gradient_b), active_receiver->display_gradient);
-  gtk_widget_show(gradient_b);
-  gtk_grid_attach(GTK_GRID(general_grid), gradient_b, col + 1, row, 1, 1);
-  g_signal_connect(gradient_b, "toggled", G_CALLBACK(gradient_cb), NULL);
-  row++;
+  //------------------------------------------------------------------------------------------------------------
   GtkWidget *b_display_panadapter = gtk_check_button_new_with_label("Display Panadapter");
   gtk_widget_set_name (b_display_panadapter, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_panadapter), active_receiver->display_panadapter);
   gtk_widget_show(b_display_panadapter);
   gtk_grid_attach(GTK_GRID(general_grid), b_display_panadapter, col, row, 1, 1);
   g_signal_connect(b_display_panadapter, "toggled", G_CALLBACK(display_panadapter_cb), NULL);
-
+  row++;
   //------------------------------------------------------------------------------------------------------------
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-    GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Show ADC0 OVF Alarm");
-    gtk_widget_set_name (b_display_panadapter_ovf, "stdlabel_blue");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_panadapter_ovf), active_receiver->panadapter_ovf_on);
-
-    if (!autogain_enabled) {
-      gtk_widget_hide(b_display_panadapter_ovf);
-    } else {
-      gtk_widget_show(b_display_panadapter_ovf);
-      gtk_widget_set_sensitive(b_display_panadapter_ovf, TRUE);
-      gtk_grid_attach(GTK_GRID(general_grid), b_display_panadapter_ovf, col + 1, row, 1, 1);
-      g_signal_connect(b_display_panadapter_ovf, "toggled", G_CALLBACK(display_panadapter_ovf_cb), NULL);
-    }
-  }
-
+  GtkWidget *filled_b = gtk_check_button_new_with_label("Fill Panadapter");
+  gtk_widget_set_name (filled_b, "boldlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (filled_b), active_receiver->display_filled);
+  gtk_widget_show(filled_b);
+  gtk_grid_attach(GTK_GRID(general_grid), filled_b, col, row, 1, 1);
+  g_signal_connect(filled_b, "toggled", G_CALLBACK(filled_cb), NULL);
+  row++;
+  //------------------------------------------------------------------------------------------------------------
+  GtkWidget *gradient_b = gtk_check_button_new_with_label("Gradient Panadapter");
+  gtk_widget_set_name (gradient_b, "boldlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (gradient_b), active_receiver->display_gradient);
+  gtk_widget_show(gradient_b);
+  gtk_grid_attach(GTK_GRID(general_grid), gradient_b, col, row, 1, 1);
+  g_signal_connect(gradient_b, "toggled", G_CALLBACK(gradient_cb), NULL);
+  row++;
+  //------------------------------------------------------------------------------------------------------------
+  GtkWidget *b_display_waterfall = gtk_check_button_new_with_label("Display Waterfall");
+  gtk_widget_set_name (b_display_waterfall, "boldlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_waterfall), active_receiver->display_waterfall);
+  gtk_widget_show(b_display_waterfall);
+  gtk_grid_attach(GTK_GRID(general_grid), b_display_waterfall, col, row, 1, 1);
+  g_signal_connect(b_display_waterfall, "toggled", G_CALLBACK(display_waterfall_cb), NULL);
+  //------------------------------------------------------------------------------------------------------------
+  row = row - 3;
+  col++;
   GtkWidget *b_display_info_bar = gtk_check_button_new_with_label("Display Info Bar");
   gtk_widget_set_name (b_display_info_bar, "boldlabel_blue");
 
@@ -573,25 +577,53 @@ void display_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_info_bar), display_info_bar);
   }
 
-  gtk_grid_attach(GTK_GRID(general_grid), b_display_info_bar, col + 1, row + 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(general_grid), b_display_info_bar, col, row, 1, 1);
   g_signal_connect(b_display_info_bar, "toggled", G_CALLBACK(toggle_info_bar_cb), NULL);
-
   //------------------------------------------------------------------------------------------------------------
+  row++;
+
   if (can_transmit) {
     b_display_solardata = gtk_check_button_new_with_label("Show Solardata in Info Bar");
     gtk_widget_set_name (b_display_solardata, "stdlabel_blue");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_solardata), display_solardata);
-    gtk_grid_attach(GTK_GRID(general_grid), b_display_solardata, col + 1, row + 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(general_grid), b_display_solardata, col, row, 1, 1);
     g_signal_connect(b_display_solardata, "toggled", G_CALLBACK(toggle_display_solardata_cb), NULL);
   }
 
   //------------------------------------------------------------------------------------------------------------
-  GtkWidget *b_display_waterfall = gtk_check_button_new_with_label("Display Waterfall");
-  gtk_widget_set_name (b_display_waterfall, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_waterfall), active_receiver->display_waterfall);
-  gtk_widget_show(b_display_waterfall);
-  gtk_grid_attach(GTK_GRID(general_grid), b_display_waterfall, col, ++row, 1, 1);
-  g_signal_connect(b_display_waterfall, "toggled", G_CALLBACK(display_waterfall_cb), NULL);
+  row++;
+
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Show ADC0 OVF Alarm");
+    gtk_widget_set_name (b_display_panadapter_ovf, "stdlabel_blue");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_panadapter_ovf), active_receiver->panadapter_ovf_on);
+
+    if (!autogain_enabled) {
+      gtk_widget_hide(b_display_panadapter_ovf);
+    } else {
+      gtk_widget_show(b_display_panadapter_ovf);
+      gtk_widget_set_sensitive(b_display_panadapter_ovf, TRUE);
+      gtk_grid_attach(GTK_GRID(general_grid), b_display_panadapter_ovf, col, row, 1, 1);
+      g_signal_connect(b_display_panadapter_ovf, "toggled", G_CALLBACK(display_panadapter_ovf_cb), NULL);
+    }
+  }
+
+  //------------------------------------------------------------------------------------------------------------
+  row++;
+  GtkWidget *ChkBtn_clock = gtk_check_button_new_with_label("Show clock & UDP broadcast");
+  gtk_widget_set_name(ChkBtn_clock, "stdlabel_blue");
+  // gtk_widget_set_margin_start(ChkBtn_clock, 20);    // linker Rand (Anfang)
+  gtk_widget_set_tooltip_text(ChkBtn_clock,
+                              "Show additional monitoring data from\n"
+                              "external PA controller, SWR meter and PA-LPF\n"
+                              "sent via network as UDP broadcast\n"
+                              "(special monitoring hard- and software required)\n\n"
+                              "If no valid UDP data will be received, a clock with local time\n"
+                              "will be shown instead.");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_clock), display_clock);
+  gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_clock, col, row, 1, 1);
+  g_signal_connect(ChkBtn_clock, "toggled", G_CALLBACK(chkbtn_clock_toggle_cb), &display_clock);
+  //------------------------------------------------------------------------------------------------------------
   //
   // Peaks container and controls therein
   //

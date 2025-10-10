@@ -1301,88 +1301,92 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   cairo_select_font_face(cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
-  double rx200_x = 0.0;
-  double rt_rx200_y = 15.0;
-  double rt_rx200_w = 305.0;
-  double rt_rx200_h = 60.0;
 
-  if (can_transmit && rx200_udp_valid) {
+  if (can_transmit && display_clock) {
+    if (rx200_udp_valid) {
+      double rx200_x = 0.0;
+      double rt_rx200_y = 15.0;
+      double rt_rx200_w = 305.0;
+      double rt_rx200_h = 60.0;
 #ifdef __WMAP__
-    cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
 #else
-    cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
 #endif
-    cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
-    cairo_fill(cr);
-    cairo_set_source_rgba(cr, COLOUR_WHITE);
-    snprintf(_text, 128, "Fwd:");
-    cairo_move_to(cr, width - 300, 30.0);
-    cairo_show_text(cr, _text);
-    snprintf(_text, 128, "Ref:");
-    cairo_move_to(cr, width - 300, 50.0);
-    cairo_show_text(cr, _text);
-    cairo_text_extents_t rx200_extents;
-    snprintf(_text, 128, "%s W", g_rx200_data[0]);
-    cairo_text_extents(cr, _text, &rx200_extents);
-    rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
-    cairo_move_to(cr, rx200_x, 30.0);
-    cairo_show_text(cr, _text);
-    snprintf(_text, 128, "%s W", g_rx200_data[1]);
-    cairo_text_extents(cr, _text, &rx200_extents);
-    rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
-    cairo_move_to(cr, rx200_x, 50.0);
-    cairo_show_text(cr, _text);
-    snprintf(_text, 128, "%s", g_rx200_data[3]);
-    cairo_move_to(cr, width - 190.0, 30.0);
-    cairo_show_text(cr, _text);
+      cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
+      cairo_fill(cr);
+      cairo_set_source_rgba(cr, COLOUR_WHITE);
+      snprintf(_text, 128, "Fwd:");
+      cairo_move_to(cr, width - 300, 30.0);
+      cairo_show_text(cr, _text);
+      snprintf(_text, 128, "Ref:");
+      cairo_move_to(cr, width - 300, 50.0);
+      cairo_show_text(cr, _text);
+      cairo_text_extents_t rx200_extents;
+      snprintf(_text, 128, "%s W", g_rx200_data[0]);
+      cairo_text_extents(cr, _text, &rx200_extents);
+      rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
+      cairo_move_to(cr, rx200_x, 30.0);
+      cairo_show_text(cr, _text);
+      snprintf(_text, 128, "%s W", g_rx200_data[1]);
+      cairo_text_extents(cr, _text, &rx200_extents);
+      rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
+      cairo_move_to(cr, rx200_x, 50.0);
+      cairo_show_text(cr, _text);
+      snprintf(_text, 128, "%s", g_rx200_data[3]);
+      cairo_move_to(cr, width - 190.0, 30.0);
+      cairo_show_text(cr, _text);
 
-    if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
-      snprintf(_text, 128, "SWR:");
+      if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
+        snprintf(_text, 128, "SWR:");
+      } else {
+        snprintf(_text, 128, " ");
+      }
+
+      cairo_move_to(cr, width - 190.0, 50.0);
+      cairo_show_text(cr, _text);
+
+      if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
+        snprintf(_text, 128, "%s:1", g_rx200_data[2]);
+      } else {
+        snprintf(_text, 128, " ");
+      }
+
+      cairo_text_extents(cr, _text, &rx200_extents);
+      rx200_x = width - 90.0 - (rx200_extents.width + rx200_extents.x_bearing);
+      cairo_move_to(cr, rx200_x, 50.0);
+      cairo_show_text(cr, _text);
     } else {
       snprintf(_text, 128, " ");
+      cairo_move_to(cr, width - 300.0, 30.0);
+      cairo_show_text(cr, _text);
+      cairo_move_to(cr, width - 300.0, 50.0);
+      cairo_show_text(cr, _text);
+      cairo_move_to(cr, width - 190.0, 50.0);
+      cairo_show_text(cr, _text);
+      cairo_move_to(cr, width - 190.0, 30.0);
+      get_local_time(zeitString, sizeof(zeitString));
+      snprintf(_text, 128, "%s", zeitString);
+      cairo_show_text(cr, _text);
     }
-
-    cairo_move_to(cr, width - 190.0, 50.0);
-    cairo_show_text(cr, _text);
-
-    if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
-      snprintf(_text, 128, "%s:1", g_rx200_data[2]);
-    } else {
-      snprintf(_text, 128, " ");
-    }
-
-    cairo_text_extents(cr, _text, &rx200_extents);
-    rx200_x = width - 90.0 - (rx200_extents.width + rx200_extents.x_bearing);
-    cairo_move_to(cr, rx200_x, 50.0);
-    cairo_show_text(cr, _text);
-  } else {
-    snprintf(_text, 128, " ");
-    cairo_move_to(cr, width - 300.0, 30.0);
-    cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 300.0, 50.0);
-    cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 190.0, 50.0);
-    cairo_show_text(cr, _text);
-    cairo_move_to(cr, width - 190.0, 30.0);
-    get_local_time(zeitString, sizeof(zeitString));
-    snprintf(_text, 128, "%s", zeitString);
-    cairo_show_text(cr, _text);
   }
 
-  if (can_transmit && lpf_udp_valid) {
-    if (strcasecmp(g_lpf_data[5], "true") == 0) {
-      cairo_set_source_rgba(cr, COLOUR_ORANGE);
-    } else {
-      cairo_set_source_rgba(cr, COLOUR_WHITE);
-    }
+  if (can_transmit && display_clock) {
+    if (lpf_udp_valid) {
+      if (strcasecmp(g_lpf_data[5], "true") == 0) {
+        cairo_set_source_rgba(cr, COLOUR_ORANGE);
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_WHITE);
+      }
 
-    cairo_move_to(cr, width - 300.0, 70.0);
-    snprintf(_text, 128, "LPF %s", g_lpf_data[0]);
-    cairo_show_text(cr, _text);
-  } else {
-    snprintf(_text, 128, " ");
-    cairo_move_to(cr, width - 300.0, 70.0);
-    cairo_show_text(cr, _text);
+      cairo_move_to(cr, width - 300.0, 70.0);
+      snprintf(_text, 128, "LPF %s", g_lpf_data[0]);
+      cairo_show_text(cr, _text);
+    } else {
+      snprintf(_text, 128, " ");
+      cairo_move_to(cr, width - 300.0, 70.0);
+      cairo_show_text(cr, _text);
+    }
   }
 
   if (TxInhibit) {
