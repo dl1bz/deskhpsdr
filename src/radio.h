@@ -163,6 +163,7 @@ extern int display_extra_sliders;
 extern int display_toolbar;
 extern double percent_pan_wf;
 extern int display_info_bar;
+extern int display_clock;
 extern int display_solardata;
 extern char radio_bgcolor_rgb_hex[8];
 
