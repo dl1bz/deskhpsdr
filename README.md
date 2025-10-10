@@ -2,7 +2,13 @@
 
 <img src="https://github.com/dl1bz/deskhpsdr/blob/master/release/deskhpsdr/screenshot.png" width="1024px" />
 
-This is a hamradio application for SDR devices with HPSDR protocol 1 and 2, based at codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr). But anywhere, it's not piHPSDR and has no backward dependencies to piHPSDR. My goal was to make an more optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In the case mini-display you need to fallback to piHPSDR, deskHPSDR don't support this anymore.
+## The concept behind - what it's make for and what it isn't for
+
+It's a hamradio application for SDR devices using the HPSDR protocol 1 (aka "old protocol")and 2 (aka "new protocol") and based at previous codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr) since it was forked from piHPSDR in October 2024. But anywhere, it's no more piHPSDR yet and has no backward dependencies to piHPSDR. My goal was to make an more optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In the case mini-display you need to fallback to piHPSDR, deskHPSDR don't support this anymore.
+
+This SDR app is made primary as an "all-day-use" SDR transceiver GUI frontend. The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices. SoapySDR API is supported, but is not actively developed further.
+
+deskHPSDR not made as a "measurement tool" or for other, very special purposes where SDR devices are used. There are other, more specialized apps for such cases - use these for your special purposes. It's a - not more, not less - SDR transceiver GUI frontend for use in hamradio which will be actively and continuously developed. All things outside the hamradio universe will be not supported generally. The support for commercial SDR products is very limited, because they are mostly not Open Source hardware like the Hermes Lite 2. I do not see myself as obligated to support such SDRs or manufacturers while they make money from their hardware. deskHPSDR is and remains open source. deskHPSDR is a non-commercial hobby software project, which can be used completely free without any kind of payments.
 
 **deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. deskHPSDR hasn't a special Client-Server-Mode like pihpsdr (make no sense, we HAVE network-connected SDR devices yet).
 
@@ -83,7 +89,8 @@ This overwrite local changes, which are different from the remote repo at Github
 So far, deskHPSDR has been successfully tested on the following systems:<br>
 * iMac 21" i5 running macOS 14 aka Sonoma
 * Macbook Air M1 running macOS 26 aka Tahoe
-* Raspberry Pi5 with NVMe-HAT running 64bit PiOS and X11 environment
+* old Macbook Pro i7 & old Macbook Air i5 running Linux Mint "Faye" Debian-Edition
+* Raspberry Pi5 with NVMe-HAT running 64bit PiOS (based at Debian "Bookworm") and X11 environment
 * *Raspberry Pi 3B+ works too, but with limitations (panadapter framerate only 10fps, if want more the CPU hasn't enough power)*
 * a hamradio friend of mine has checked it on a Desktop Linux Ubuntu LTS for me, works too
 
@@ -99,10 +106,12 @@ Special thanks to:<br>
 - Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
 - all of the active users for support deskHPSDR
 
-## Exclusion of any Guarantee and any Warrenty
+## Exclusion of any Guarantee and any Warrenty and limited Support
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 All what you do with this code is at your very own risk. The code is published "as it is" without right of any kind of support or similiar services.
+
+**There are no rights or obligations to get any kind of support for deskHPSDR from me, I publish the source code "as it is".**
