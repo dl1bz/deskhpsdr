@@ -1592,11 +1592,11 @@ void *handler_ep6(void *arg) {
     }
 
     // plug in sequence numbers
-    *(uint32_t *)(buffer + 4) = htonl(counter);
-    // buffer[4] = (counter >> 24) & 0xFF;
-    // buffer[5] = (counter >> 16) & 0xFF;
-    // buffer[6] = (counter >>  8) & 0xFF;
-    // buffer[7] = (counter >>   ) & 0xFF;
+    // *(uint32_t *)(buffer + 4) = htonl(counter);
+    buffer[4] = (counter >> 24) & 0xFF;
+    buffer[5] = (counter >> 16) & 0xFF;
+    buffer[6] = (counter >>  8) & 0xFF;
+    buffer[7] = (counter >>  0) & 0xFF;
     ++counter;
     //
     //              This defines the distortion as well as the amplification
