@@ -68,8 +68,8 @@ static gpointer discover_receive_thread(gpointer data);
 //
 static void discover(struct ifaddrs* iface, int discflag) {
   int rc;
-  struct sockaddr_in *sa;
-  struct sockaddr_in *mask;
+  // struct sockaddr_in *sa;
+  // struct sockaddr_in *mask;
   struct sockaddr_in to_addr = {0};
   int flags;
   struct timeval tv;
@@ -94,12 +94,14 @@ static void discover(struct ifaddrs* iface, int discflag) {
       return;
     }
 
-    sa = (struct sockaddr_in *) iface->ifa_addr;
-    mask = (struct sockaddr_in *) iface->ifa_netmask;
-    interface_netmask.sin_addr.s_addr = mask->sin_addr.s_addr;
+    // sa = (struct sockaddr_in *) iface->ifa_addr;
+    // mask = (struct sockaddr_in *) iface->ifa_netmask;
+    // interface_netmask.sin_addr.s_addr = mask->sin_addr.s_addr;
+    memcpy(&interface_addr, iface->ifa_addr, sizeof(interface_addr));
+    memcpy(&interface_netmask, iface->ifa_netmask, sizeof(interface_netmask));
     // bind to this interface and the discovery port
     interface_addr.sin_family = AF_INET;
-    interface_addr.sin_addr.s_addr = sa->sin_addr.s_addr;
+    // interface_addr.sin_addr.s_addr = sa->sin_addr.s_addr;
     interface_addr.sin_port = htons(0); // system assigned port
 
     if (bind(discovery_socket, (struct sockaddr * )&interface_addr, sizeof(interface_addr)) < 0) {
