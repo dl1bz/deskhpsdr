@@ -10,7 +10,7 @@
 
 static AVSpeechSynthesizer *synth = NULL;
 
-void MacTTS(char *text) {
+void MacTTS(const char *text) {
 
   //
   // Convert C string to a NSString and init an AVSpeechUtterance instance

@@ -74,7 +74,7 @@
 // tts_send: send broadcast UDP packet containing a string
 //           on MacOS do both: send UDP packet and use MacTTS
 //
-void tts_send(char *msg) {
+void tts_send(const char *msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   if (sock >= 0) {

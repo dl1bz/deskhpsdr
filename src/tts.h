@@ -20,7 +20,7 @@
 */
 
 #ifdef TTS
-  void tts_send(char *msg);
+  void tts_send(const char *msg);
   void tts_freq(void);
   void tts_mode(void);
   void tts_filter(void);

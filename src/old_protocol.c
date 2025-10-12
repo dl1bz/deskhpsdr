@@ -160,7 +160,7 @@ static int metis_offset = 8;
 
 static int metis_write(unsigned char ep, unsigned const char* buffer, int length);
 static void metis_start_stop(int command);
-static void metis_send_buffer(unsigned char* buffer, int length);
+static void metis_send_buffer(const unsigned char* buffer, int length);
 static void metis_restart(void);
 
 static void open_tcp_socket(void);
@@ -3496,7 +3496,7 @@ static void metis_start_stop(int command) {
   }
 }
 
-static void metis_send_buffer(unsigned char* buffer, int length) {
+static void metis_send_buffer(const unsigned char* buffer, int length) {
   //
   // Send using either the UDP or TCP socket. Do not use TCP for
   // packets that are not 1032 bytes long
