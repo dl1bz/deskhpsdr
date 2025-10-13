@@ -1868,18 +1868,15 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRtrainZetaThresh(rx->id, rx->nr2_trained_threshold);
   SetRXAEMNRtrainT2(rx->id, rx->nr2_trained_t2);
 
-  /*
   if ((GetWDSPVersion() % 100) > 26) {
     SetRXAEMNRpost2Taper (rx->id, rx->nr2_post_taper);
     SetRXAEMNRpost2Nlevel(rx->id, (double) rx->nr2_post_nlevel);
     SetRXAEMNRpost2Factor(rx->id, (double) rx->nr2_post_factor);
     SetRXAEMNRpost2Rate(rx->id, (double) rx->nr2_post_rate);
-    // SetRXAEMNRaeRun(rx->id, 1);                  // ArtifactElminiation ON
     SetRXAEMNRpost2Run(rx->id, rx->nr2_post);
   }
-  */
 
-  SetRXAEMNRaeRun(rx->id, rx->nr2_ae);
+  SetRXAEMNRaeRun(rx->id, rx->nr2_ae); // ArtifactElminiation ON
   SetRXAEMNRRun(rx->id, (rx->nr == 2));
   //
   // e) ANF

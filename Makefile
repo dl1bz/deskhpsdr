@@ -153,8 +153,8 @@ CPP_DEFINES=
 CPP_SOURCES=
 CPP_INCLUDE=
 
-WDSP_INCLUDE=-I./wdsp-1.26
-WDSP_LIBS=wdsp-1.26/libwdsp.a `$(PKG_CONFIG) --libs fftw3`
+WDSP_INCLUDE=-I./wdsp-1.27
+WDSP_LIBS=wdsp-1.27/libwdsp.a `$(PKG_CONFIG) --libs fftw3`
 
 SOLAR_INCLUDE=-I./libsolar
 SOLAR_LIBS=libsolar/libsolar.a `$(PKG_CONFIG) --libs libcurl libxml-2.0`
@@ -856,7 +856,7 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 	$(shell git update-index --assume-unchanged make.config.deskhpsdr)
 	$(info ...continue...)
 ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-1.26
+	@+make -C wdsp-1.27
 endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
@@ -1022,7 +1022,7 @@ all:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 install-Darwin: all
 	@echo "Install deskHPSDR for macOS..."
 ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-1.26
+	@+make -C wdsp-1.27
 endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
