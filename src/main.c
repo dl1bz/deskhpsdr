@@ -690,8 +690,9 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   top_window = gtk_application_window_new (app);
   gtk_widget_set_size_request(top_window, 100, 100);
   const char *used_theme = get_current_gtk_theme();
-  char _title[64];
-  snprintf(_title, 64, "%s by DL1BZ %s [GTK Theme: %s]", PGNAME, build_version, used_theme);
+  char _title[128];
+  snprintf(_title, 128, "%s by DL1BZ %s [GTK Theme: %s]  WDSP Version %d.%02d", PGNAME, build_version, used_theme,
+           GetWDSPVersion() / 100, GetWDSPVersion() % 100);
   gtk_window_set_title (GTK_WINDOW (top_window), _title);
   //
   // do not use GTK_WIN_POS_CENTER_ALWAYS, since this will let the

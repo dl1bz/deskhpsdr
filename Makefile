@@ -917,7 +917,6 @@ clean:
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp ]; then $(MAKE) -C wdsp clean; fi
-	@if [ -d wdsp-1.25 ]; then $(MAKE) -C wdsp-1.25 clean; fi
 	@if [ -d wdsp-1.26 ]; then $(MAKE) -C wdsp-1.26 clean; fi
 	@if [ -d wdsp-1.27 ]; then $(MAKE) -C wdsp-1.27 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
@@ -933,7 +932,6 @@ uninstall:
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp ]; then $(MAKE) -C wdsp clean; fi
-	@if [ -d wdsp-1.25 ]; then $(MAKE) -C wdsp-1.25 clean; fi
 	@if [ -d wdsp-1.26 ]; then $(MAKE) -C wdsp-1.26 clean; fi
 	@if [ -d wdsp-1.27 ]; then $(MAKE) -C wdsp-1.27 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi

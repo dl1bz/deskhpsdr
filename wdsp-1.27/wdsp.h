@@ -4,6 +4,8 @@
 extern "C" {
 #endif
 
+#define WDSP127
+
 #define INREAL    float
 #define OUTREAL   float
 #define dINREAL   float

@@ -1867,6 +1867,7 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRnpeMethod(rx->id, rx->nr2_npe_method);
   SetRXAEMNRtrainZetaThresh(rx->id, rx->nr2_trained_threshold);
   SetRXAEMNRtrainT2(rx->id, rx->nr2_trained_t2);
+#ifdef WDSP127
 
   if ((GetWDSPVersion() % 100) > 26) {
     SetRXAEMNRpost2Taper (rx->id, rx->nr2_post_taper);
@@ -1876,6 +1877,7 @@ void rx_set_noise(const RECEIVER *rx) {
     SetRXAEMNRpost2Run(rx->id, rx->nr2_post);
   }
 
+#endif
   SetRXAEMNRaeRun(rx->id, rx->nr2_ae); // ArtifactElminiation ON
   SetRXAEMNRRun(rx->id, (rx->nr == 2));
   //

@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <wdsp.h>
 
 #include "appearance.h"
 #include "adc.h"
@@ -1369,20 +1370,24 @@ void radio_start_radio() {
   case NEW_PROTOCOL:
     if (have_saturn_xdma) {
       // radio has no ip and MAC
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s v%d) on %s",
+      snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s v%d) on %s",
                PGNAME,
                build_version,
                unameData.machine,
+               GetWDSPVersion() / 100,
+               GetWDSPVersion() % 100,
                radio->name,
                p,
                radio->software_version,
                iface);
     } else if (device == DEVICE_OZY) {
       // radio has no ip, and name is "Ozy USB"
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s)",
+      snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s)",
                PGNAME,
                build_version,
                unameData.machine,
+               GetWDSPVersion() / 100,
+               GetWDSPVersion() % 100,
                radio->name,
                p,
                version);
@@ -1391,10 +1396,12 @@ void radio_start_radio() {
       // it does not fit  in windows 640 pixels wide.
       // if needed, the MAC address of the radio can be
       // found in the ABOUT menu.
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s) %s on %s",
+      snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s) %s on %s",
                PGNAME,
                build_version,
                unameData.machine,
+               GetWDSPVersion() / 100,
+               GetWDSPVersion() % 100,
                radio->name,
                p,
                version,
@@ -1405,10 +1412,12 @@ void radio_start_radio() {
     break;
 
   case SOAPYSDR_PROTOCOL:
-    snprintf(text, 1024, "%s by DL1BZ %s[%s] SDR Device: %s (%s %s)",
+    snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s)",
              PGNAME,
              build_version,
              unameData.machine,
+             GetWDSPVersion() / 100,
+             GetWDSPVersion() % 100,
              radio->name,
              p,
              version);
