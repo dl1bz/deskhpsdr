@@ -322,6 +322,15 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.nr2_gain_method", rx->id,              rx->nr2_gain_method);
   SetPropI1("receiver.%d.nr2_npe_method", rx->id,               rx->nr2_npe_method);
   SetPropI1("receiver.%d.nr2_ae", rx->id,                       rx->nr2_ae);
+
+  if ((GetWDSPVersion() % 100) > 26) {
+    SetPropI1("receiver.%d.nr2_post", rx->id,                   rx->nr2_post);
+    SetPropI1("receiver.%d.nr2_post_taper", rx->id,             rx->nr2_post_taper);
+    SetPropI1("receiver.%d.nr2_post_nlevel", rx->id,            rx->nr2_post_nlevel);
+    SetPropI1("receiver.%d.nr2_post_factor", rx->id,            rx->nr2_post_factor);
+    SetPropI1("receiver.%d.nr2_post_rate", rx->id,              rx->nr2_post_rate);
+  }
+
   SetPropF1("receiver.%d.nr2_trained_threshold", rx->id,        rx->nr2_trained_threshold);
   SetPropF1("receiver.%d.nr2_trained_t2", rx->id,               rx->nr2_trained_t2);
   SetPropI1("receiver.%d.nb2_mode", rx->id,                     rx->nb2_mode);
@@ -439,6 +448,15 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.nr2_gain_method", rx->id,              rx->nr2_gain_method);
   GetPropI1("receiver.%d.nr2_npe_method", rx->id,               rx->nr2_npe_method);
   GetPropI1("receiver.%d.nr2_ae", rx->id,                       rx->nr2_ae);
+
+  if ((GetWDSPVersion() % 100) > 26) {
+    GetPropI1("receiver.%d.nr2_post", rx->id,                   rx->nr2_post);
+    GetPropI1("receiver.%d.nr2_post_taper", rx->id,             rx->nr2_post_taper);
+    GetPropI1("receiver.%d.nr2_post_nlevel", rx->id,            rx->nr2_post_nlevel);
+    GetPropI1("receiver.%d.nr2_post_factor", rx->id,            rx->nr2_post_factor);
+    GetPropI1("receiver.%d.nr2_post_rate", rx->id,              rx->nr2_post_rate);
+  }
+
   GetPropF1("receiver.%d.nr2_trained_threshold", rx->id,        rx->nr2_trained_threshold);
   GetPropF1("receiver.%d.nr2_trained_t2", rx->id,               rx->nr2_trained_t2);
   GetPropI1("receiver.%d.nb2_mode", rx->id,                     rx->nb2_mode);
@@ -792,6 +810,15 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->nr2_gain_method = 2;          // Gamma
   rx->nr2_npe_method = 0;           // OSMS
   rx->nr2_ae = 1;                   // Artifact Elimination is "on"
+
+  if ((GetWDSPVersion() % 100) > 26) {
+    rx->nr2_post = 0;
+    rx->nr2_post_taper = 12;
+    rx->nr2_post_nlevel = 15;
+    rx->nr2_post_factor = 15;
+    rx->nr2_post_rate = 5;
+  }
+
   rx->nr2_trained_threshold = -0.5; // Threshold if gain method is "Trained"
   rx->nr2_trained_t2 = 0.2;         // t2 value for trained threshold
   //
@@ -1840,6 +1867,18 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRnpeMethod(rx->id, rx->nr2_npe_method);
   SetRXAEMNRtrainZetaThresh(rx->id, rx->nr2_trained_threshold);
   SetRXAEMNRtrainT2(rx->id, rx->nr2_trained_t2);
+
+  /*
+  if ((GetWDSPVersion() % 100) > 26) {
+    SetRXAEMNRpost2Taper (rx->id, rx->nr2_post_taper);
+    SetRXAEMNRpost2Nlevel(rx->id, (double) rx->nr2_post_nlevel);
+    SetRXAEMNRpost2Factor(rx->id, (double) rx->nr2_post_factor);
+    SetRXAEMNRpost2Rate(rx->id, (double) rx->nr2_post_rate);
+    // SetRXAEMNRaeRun(rx->id, 1);                  // ArtifactElminiation ON
+    SetRXAEMNRpost2Run(rx->id, rx->nr2_post);
+  }
+  */
+
   SetRXAEMNRaeRun(rx->id, rx->nr2_ae);
   SetRXAEMNRRun(rx->id, (rx->nr == 2));
   //

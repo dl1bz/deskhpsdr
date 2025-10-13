@@ -121,6 +121,11 @@ typedef struct _receiver {
   int nr2_gain_method;
   int nr2_npe_method;
   int nr2_ae;
+  int nr2_post; // post-NR2 corrections on/off
+  int nr2_post_nlevel;
+  int nr2_post_factor;
+  int nr2_post_rate;
+  int nr2_post_taper;
   double nr2_trained_threshold;
   double nr2_trained_t2;
 

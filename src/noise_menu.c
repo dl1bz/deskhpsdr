@@ -33,6 +33,8 @@
 #include "radio.h"
 #include "vfo.h"
 #include "ext.h"
+#include "message.h"
+#include "wdsp.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -71,6 +73,15 @@ void update_noise() {
     mode_settings[mode].anf = active_receiver->anf;
     mode_settings[mode].snb = active_receiver->snb;
     mode_settings[mode].nr2_ae = active_receiver->nr2_ae;
+
+    if ((GetWDSPVersion() % 100) > 26) {
+      mode_settings[mode].nr2_post = active_receiver->nr2_post;
+      mode_settings[mode].nr2_post_taper = active_receiver->nr2_post_taper;
+      mode_settings[mode].nr2_post_nlevel = active_receiver->nr2_post_nlevel;
+      mode_settings[mode].nr2_post_factor = active_receiver->nr2_post_factor;
+      mode_settings[mode].nr2_post_rate = active_receiver->nr2_post_rate;
+    }
+
     mode_settings[mode].nr_agc = active_receiver->nr_agc;
     mode_settings[mode].nb2_mode = active_receiver->nb2_mode;
     mode_settings[mode].nr2_gain_method = active_receiver->nr2_gain_method;

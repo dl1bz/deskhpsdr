@@ -104,6 +104,11 @@ struct _mode_settings {
   int    nr2_gain_method;
   int    nr2_npe_method;
   int    nr2_ae;
+  int    nr2_post;
+  int    nr2_post_taper;
+  int    nr2_post_nlevel;
+  int    nr2_post_factor;
+  int    nr2_post_rate;
   double nr2_trained_threshold;
   double nr2_trained_t2;
   const char *desc;
