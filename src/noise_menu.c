@@ -294,6 +294,7 @@ void noise_menu(GtkWidget *parent) {
   //---------------------------------------------------------------------------------
   GtkWidget *b_snb = gtk_check_button_new_with_label("SNB");
   gtk_widget_set_name(b_snb, "boldlabel");
+  gtk_widget_set_tooltip_text(b_snb, "Spectral Noise Blanker");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_snb), active_receiver->snb);
   gtk_widget_show(b_snb);
   gtk_grid_attach(GTK_GRID(grid), b_snb, 0, 1, 1, 1);
@@ -301,6 +302,7 @@ void noise_menu(GtkWidget *parent) {
   //---------------------------------------------------------------------------------
   GtkWidget *b_anf = gtk_check_button_new_with_label("ANF");
   gtk_widget_set_name(b_anf, "boldlabel");
+  gtk_widget_set_tooltip_text(b_anf, "Auto Notch Filter");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_anf), active_receiver->anf);
   gtk_widget_show(b_anf);
   gtk_grid_attach(GTK_GRID(grid), b_anf, 1, 1, 1, 1);
@@ -433,19 +435,6 @@ void noise_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(nr_grid), npe_combo, 3, 0, 1, 1);
   g_signal_connect(npe_combo, "changed", G_CALLBACK(npe_cb), NULL);
   //
-  /*
-  GtkWidget *pos_title = gtk_label_new("NR/NR2/ANF Position");
-  gtk_widget_set_name(pos_title, "boldlabel");
-  gtk_widget_set_halign(pos_title, GTK_ALIGN_END);
-  gtk_widget_show(pos_title);
-  gtk_grid_attach(GTK_GRID(nr_grid), pos_title, 0, 1, 1, 1);
-  GtkWidget *pos_combo = gtk_combo_box_text_new();
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(pos_combo), NULL, "Pre AGC");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(pos_combo), NULL, "Post AGC");
-  gtk_combo_box_set_active(GTK_COMBO_BOX(pos_combo), active_receiver->nr_agc);
-  my_combo_attach(GTK_GRID(nr_grid), pos_combo, 1, 1, 1, 1);
-  g_signal_connect(pos_combo, "changed", G_CALLBACK(pos_cb), NULL);
-  */
   GtkWidget *box_ae = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
   GtkWidget *l_ae = gtk_label_new("NR2 Artifact Elimination");
   gtk_widget_set_name(l_ae, "boldlabel");
