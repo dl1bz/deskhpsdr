@@ -94,6 +94,7 @@ endif
 UNAME_S := $(shell uname -s)
 CURRDIR := $(shell pwd)
 UNAME_R := $(shell uname -r | sed 's/\..*//')
+ARCH := $(shell uname -m)
 
 # Get git commit version and date
 GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
@@ -108,10 +109,20 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 # release) and against unused parameters (those regularly occur in GTK callbacks).
 #
 ifeq ($(GDB), ON)
-CFLAGS?=-g -O0 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
+	CFLAGS?= -g -O0
 else
-CFLAGS?=-O3 -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations
+	CFLAGS?= -O3
 endif
+
+# global compiler directives
+CFLAGS += -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations -Wcast-align
+
+# ifneq (,$(findstring arm,$(ARCH)))
+# 	CFLAGS += -Wformat=2 -Wshadow -Wpointer-arith -Wcast-qual -Wnull-dereference -Wshorten-64-to-32 -Wvla
+# endif
+# ifneq (,$(findstring aarch64,$(ARCH)))
+# 	CFLAGS += -Wformat=2 -Wshadow -Wpointer-arith -Wcast-qual -Wnull-dereference -Wshorten-64-to-32 -Wvla
+# endif
 
 LINK?=$(CC)
 

@@ -175,7 +175,8 @@ int https_ok(const char* hostname, int mit_cert_check) {
 
   addr.sin_family = AF_INET;
   addr.sin_port = htons(443);
-  addr.sin_addr = *((struct in_addr*)host->h_addr);
+  // addr.sin_addr = *((struct in_addr*)host->h_addr);
+  memcpy(&addr.sin_addr, host->h_addr, sizeof(struct in_addr));
   memset(&(addr.sin_zero), 0, 8);
 
   if (connect(server, (struct sockaddr * )&addr, sizeof(addr)) < 0) {
