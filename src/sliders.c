@@ -85,8 +85,10 @@ static GtkWidget *squelch_scale;
 static gulong     squelch_signal_id;
 static GtkWidget *squelch_enable;
 static GtkWidget *tune_drive_label;
+static GtkWidget *tune_drive_btn;
 static GtkWidget *tune_drive_scale;
 static gulong tune_drive_scale_signal_id;
+static gulong tune_drive_btn_signal_id;
 static GtkWidget *local_mic_input;
 static gulong local_mic_input_signal_id;
 static GtkWidget *local_mic_label;
@@ -967,19 +969,16 @@ void update_slider_tune_drive_scale(gboolean show_widget) {
 
     if (show_widget && !transmitter->tune_use_drive) {
       gtk_widget_set_sensitive(tune_drive_scale, TRUE);
-      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE\nDrv");
-      gtk_widget_set_name(tune_drive_label, "slider2_blue");
       gtk_widget_show(tune_drive_scale);
+      gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE with TUNE Drive:\nSet tune level in percent of maximum TX PWR");
     } else {
       gtk_widget_set_sensitive(tune_drive_scale, FALSE);
       gtk_widget_hide(tune_drive_scale);
-      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE =\nTX Pwr");
-      gtk_widget_set_name(tune_drive_label, "label2_grey");
+      gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE Drive = TX PWR");
     }
 
     g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_widget_queue_draw(tune_drive_scale);
-    gtk_widget_queue_draw(tune_drive_label);
   }
 }
 
@@ -1064,6 +1063,29 @@ void update_slider_binaural_btn() {
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON (binaural_btn), binaural_btn_signal_id);
     gtk_widget_queue_draw(binaural_btn);
   }
+}
+
+void update_slider_tune_drive_btn() {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (tune_drive_btn), tune_drive_btn_signal_id);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tune_drive_btn), radio_get_tune());
+
+    if (radio_get_tune()) {
+      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNING");
+    } else {
+      gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE");
+    }
+
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (tune_drive_btn), tune_drive_btn_signal_id);
+    gtk_widget_queue_draw(tune_drive_btn);
+  }
+}
+
+static void tune_drive_toggle_cb(GtkWidget *widget, gpointer data) {
+  // int state = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  int state = radio_get_tune();
+  radio_tune_update(!state);
+  update_slider_tune_drive_btn();
 }
 
 #if defined (__AUTOG__)
@@ -1640,16 +1662,30 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     GtkWidget *box_Z3_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z3_left, box_left_width, widget_height);
     //-----------------------------------------------------------------------------------------------------------
-    // tune_drive_label
-    tune_drive_label = gtk_label_new("TUNE Drv");
-    gtk_widget_set_name(tune_drive_label, "boldlabel_border_blue");
+    // tune_drive_button
+    tune_drive_btn = gtk_toggle_button_new_with_label("TUNE");
+    gtk_widget_set_name(tune_drive_btn, "front_toggle_button");
+
+    if (!transmitter->tune_use_drive) {
+      gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE with TUNE Drive:\nSet tune level in percent of maximum TX PWR");
+    } else if (transmitter->tune_use_drive) {
+      gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE Drive = TX PWR");
+    }
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tune_drive_btn), radio_get_tune());
+    // begin label definition inside button
+    tune_drive_label = gtk_bin_get_child(GTK_BIN(tune_drive_btn));
+    gtk_label_set_justify(GTK_LABEL(tune_drive_label), GTK_JUSTIFY_CENTER);
+    // end label definition
     // Label breiter erzwingen
-    gtk_widget_set_size_request(tune_drive_label, 105, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(tune_drive_label, 5);
-    gtk_widget_set_margin_bottom(tune_drive_label, 5);
-    gtk_widget_set_margin_end(tune_drive_label, 0);    // rechter Rand (Ende)
-    gtk_widget_set_halign(tune_drive_label, GTK_ALIGN_START);
-    gtk_widget_set_valign(tune_drive_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_size_request(tune_drive_btn, 105, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(tune_drive_btn, 5);
+    gtk_widget_set_margin_bottom(tune_drive_btn, 5);
+    gtk_widget_set_margin_end(tune_drive_btn, 0);    // rechter Rand (Ende)
+    gtk_widget_set_halign(tune_drive_btn, GTK_ALIGN_START);
+    gtk_widget_set_valign(tune_drive_btn, GTK_ALIGN_CENTER);
+    tune_drive_btn_signal_id = g_signal_connect(G_OBJECT(tune_drive_btn), "toggled", G_CALLBACK(tune_drive_toggle_cb),
+                               NULL);
     //-------------------------------------------------------------------------------------------
     // tune_drive_scale
     tune_drive_scale = gtk_spin_button_new_with_range(1, 100, 1);
@@ -1665,7 +1701,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed",
                                  G_CALLBACK(tune_drive_changed_cb), NULL);
     // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_scale, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------
     preamp_btn = gtk_toggle_button_new_with_label("Mic\nPreA");
@@ -1851,6 +1887,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
   } else {
     tune_drive_label = NULL;
+    tune_drive_btn = NULL;
     tune_drive_scale = NULL;
     local_mic_label = NULL;
     local_mic_button = NULL;

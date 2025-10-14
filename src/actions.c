@@ -1716,6 +1716,7 @@ int process_action(void *data) {
     if (a->mode == PRESSED) {
       int state = radio_get_tune();
       radio_tune_update(!state);
+      update_slider_tune_drive_btn();
     }
 
     break;
