@@ -30,6 +30,7 @@
 #include "fft_menu.h"
 #include "radio.h"
 #include "message.h"
+#include "ext.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -68,7 +69,13 @@ static void filter_type_cb(GtkToggleButton *widget, gpointer data) {
     break;
 
   case 8:
-    // NOTREACHED
+    if (can_transmit) {
+      transmitter->low_latency = type;
+      tx_set_latency(transmitter);
+      tx_set_compressor(transmitter);
+      g_idle_add(ext_vfo_update, NULL);
+    }
+
     break;
   }
 
@@ -160,28 +167,24 @@ void fft_menu(GtkWidget *parent) {
       chan = 8;
       fsize = transmitter->fft_size;
       dsize = transmitter->dsp_size;
-      ftype = 0;
+      ftype = transmitter->low_latency;
     }
 
     gtk_grid_attach(GTK_GRID(grid), w, col, 1, 1, 1);
-
-    if (chan == 8) {
-      //
-      // To enable CESSB overshoot correction with TX compression, we cannot
-      // allow low latency filters for TX
-      //
-      w = gtk_label_new("Linear Phase");
-      gtk_widget_set_name(w, "boldlabel");
-      gtk_grid_attach(GTK_GRID(grid), w, col, 2, 1, 1);
-    } else {
-      w = gtk_combo_box_text_new();
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Linear Phase");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Low Latency");
-      gtk_combo_box_set_active(GTK_COMBO_BOX(w), ftype);
-      my_combo_attach(GTK_GRID(grid), w, col, 2, 1, 1);
-      g_signal_connect(w, "changed", G_CALLBACK(filter_type_cb), GINT_TO_POINTER(chan));
-    }
-
+    //
+    // To enable CESSB overshoot correction with TX compression, we cannot
+    // allow low latency filters for TX
+    //
+    w = gtk_combo_box_text_new();
+    gtk_widget_set_tooltip_text(w, "TX Low Latency sets CESSB option to *DISABLED*\n\n"
+                                   "These two functions cannot be used simultaneously.\n"
+                                   "Setting to Linear Phase is REQUIRED when using CESSB.\n\n"
+                                   "Note: RX is not affected. Selection is unrestricted.");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Linear Phase");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Low Latency");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), ftype);
+    my_combo_attach(GTK_GRID(grid), w, col, 2, 1, 1);
+    g_signal_connect(w, "changed", G_CALLBACK(filter_type_cb), GINT_TO_POINTER(chan));
     //
     // The filter size must be a power of two and at least equal to the dsp size
     // Apart from that, we allow values from 1k ... 32k.

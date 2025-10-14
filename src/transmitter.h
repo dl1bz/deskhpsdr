@@ -37,6 +37,7 @@ typedef struct _transmitter {
   int buffer_size;
   int dsp_size;
   int fft_size;
+  int low_latency;
   int pixels;
   int samples;
   int output_samples;
@@ -257,6 +258,7 @@ extern void   tx_set_deviation(const TRANSMITTER *tx);
 extern void   tx_set_dexp(const TRANSMITTER *tx);
 extern void   tx_set_displaying(TRANSMITTER *tx);
 extern void   tx_set_equalizer(TRANSMITTER *tx);
+extern void   tx_set_latency(TRANSMITTER *tx);
 extern void   tx_set_fft_size(const TRANSMITTER *tx);
 extern void   tx_set_filter(TRANSMITTER *tx);
 extern void   tx_set_framerate(TRANSMITTER *tx);

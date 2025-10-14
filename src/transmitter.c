@@ -328,6 +328,7 @@ void tx_reconfigure(TRANSMITTER *tx, int pixels, int width, int height) {
 
 void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.alcmode",           tx->id,               tx->alcmode);
+  SetPropI1("transmitter.%d.low_latency",       tx->id,               tx->low_latency);
   SetPropI1("transmitter.%d.fft_size",          tx->id,               tx->fft_size);
   SetPropI1("transmitter.%d.fps",               tx->id,               tx->fps);
   SetPropI1("transmitter.%d.filter_low",        tx->id,               tx->filter_low);
@@ -437,6 +438,7 @@ void tx_save_state(const TRANSMITTER *tx) {
 
 static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.alcmode",           tx->id,               tx->alcmode);
+  GetPropI1("transmitter.%d.low_latency",       tx->id,               tx->low_latency);
   GetPropI1("transmitter.%d.fft_size",          tx->id,               tx->fft_size);
   GetPropI1("transmitter.%d.fps",               tx->id,               tx->fps);
   GetPropI1("transmitter.%d.filter_low",        tx->id,               tx->filter_low);
@@ -908,6 +910,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->display_filled = 0;
   tx->dsp_size = 2048;
   tx->fft_size = 2048;
+  tx->low_latency = 0;
   tx->alcmode = ALC_PEAK;
   g_mutex_init(&tx->display_mutex);
   tx->update_timer_id = 0;
@@ -1263,6 +1266,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx_set_am_carrier_level(tx);
   tx_set_ctcss(tx);
   tx_set_fft_size(tx);
+  tx_set_latency(tx);
   tx_set_pre_emphasize(tx);
   tx_set_mic_gain(tx);
   tx_set_compressor(tx);
@@ -2352,7 +2356,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXACompressorGain(tx->id, tx->compressor_level);
   SetTXACompressorRun(tx->id, tx->compressor); // PROC on/off
 
-  if (tx->compressor && tx->cessb_enable && tx->compressor_level > 0) {
+  if (tx->compressor && tx->cessb_enable && tx->compressor_level > 0 && !tx->low_latency) {
     SetTXAosctrlRun(tx->id, tx->compressor); // CESSB on
     t_print("%s: CESSB enabled\n", __FUNCTION__);
   } else {
@@ -2448,6 +2452,16 @@ void tx_set_equalizer(TRANSMITTER *tx) {
 
 void tx_set_fft_size(const TRANSMITTER *tx) {
   TXASetNC(tx->id, tx->fft_size);
+  t_print("%s: Set TX fft_size = %d\n", __FUNCTION__, tx->fft_size);
+}
+
+void tx_set_latency(TRANSMITTER *tx) {
+  if (tx->low_latency && tx->cessb_enable) {
+    tx->cessb_enable = 0;
+  }
+
+  TXASetMP(tx->id, tx->low_latency);
+  t_print("%s: Set TX low_latency = %d\n", __FUNCTION__, tx->low_latency);
 }
 
 void tx_set_mic_gain(const TRANSMITTER *tx) {
