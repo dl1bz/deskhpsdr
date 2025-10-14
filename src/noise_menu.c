@@ -35,6 +35,7 @@
 #include "ext.h"
 #include "message.h"
 #include "wdsp.h"
+#include "sliders.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -124,6 +125,7 @@ static void anf_cb(GtkWidget *widget, gpointer data) {
 static void snb_cb(GtkWidget *widget, gpointer data) {
   active_receiver->snb = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   update_noise();
+  update_slider_snb_button(TRUE);
 }
 
 static void post_cb(GtkWidget *widget, gpointer data) {

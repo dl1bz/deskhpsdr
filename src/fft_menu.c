@@ -31,6 +31,7 @@
 #include "radio.h"
 #include "message.h"
 #include "ext.h"
+#include "sliders.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -55,6 +56,7 @@ static void binaural_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = receiver[id];
   rx->binaural = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   rx_set_af_binaural(rx);
+  update_slider_binaural_btn();
 }
 
 static void filter_type_cb(GtkToggleButton *widget, gpointer data) {

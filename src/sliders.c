@@ -51,6 +51,7 @@
 #include "audio.h"
 #include "tx_menu.h"
 #include "toolset.h"
+#include "noise_menu.h"
 
 static int width;
 static int height;
@@ -108,6 +109,12 @@ static GtkWidget *preamp_btn;
 static gulong preamp_btn_signal_id;
 static GtkWidget *preamp_scale;
 static gulong preamp_scale_signal_id;
+static GtkWidget *binaural_btn;
+static GtkWidget *binaural_label;
+static gulong binaural_btn_signal_id;
+static GtkWidget *snb_btn;
+static GtkWidget *snb_label;
+static gulong snb_btn_signal_id;
 
 char txpwr_ttip_txt[64];
 
@@ -733,6 +740,16 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   rx_set_squelch(active_receiver);
 }
 
+static void binaural_toggle_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->binaural = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  rx_set_af_binaural(active_receiver);
+}
+
+static void snb_toggle_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->snb = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  update_noise();
+}
+
 static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
   int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
@@ -1021,6 +1038,31 @@ void update_slider_autogain_btn() {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_btn), autogain_enabled);
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_btn), autogain_btn_signal_id);
     gtk_widget_queue_draw(autogain_btn);
+  }
+}
+
+void update_slider_snb_button(gboolean show_widget) {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (snb_btn), snb_btn_signal_id);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (snb_btn), active_receiver->snb);
+
+    if (show_widget) {
+      gtk_widget_set_sensitive(snb_btn, TRUE);
+    } else {
+      gtk_widget_set_sensitive(snb_btn, FALSE);
+    }
+
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (snb_btn), snb_btn_signal_id);
+    gtk_widget_queue_draw(snb_btn);
+  }
+}
+
+void update_slider_binaural_btn() {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (binaural_btn), binaural_btn_signal_id);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (binaural_btn), active_receiver->binaural);
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (binaural_btn), binaural_btn_signal_id);
+    gtk_widget_queue_draw(binaural_btn);
   }
 }
 
@@ -1534,14 +1576,61 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //-------------------------------------------------------------------------------------------
   squelch_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
   gtk_widget_set_margin_end(squelch_scale, 0);  // rechter Rand (Ende)
+  gtk_widget_set_size_request(squelch_scale, box_right_width * 2 / 6, -1);  // z.B. 100px
   gtk_widget_set_hexpand(squelch_scale, FALSE);  // fülle Box nicht nach rechts
   gtk_range_set_increments(GTK_RANGE(squelch_scale), 1.0, 1.0);
   gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
   gtk_widget_set_tooltip_text(squelch_scale, "Set Squelch Threshold");
+
+  for (int i = 0; i <= 100; i += 25) {
+    gtk_scale_add_mark(GTK_SCALE(squelch_scale), i, GTK_POS_TOP, NULL);
+  }
+
   squelch_signal_id = g_signal_connect(G_OBJECT(squelch_scale), "value_changed", G_CALLBACK(squelch_value_changed_cb),
                                        NULL);
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_scale, TRUE, TRUE, 0);
+  //-------------------------------------------------------------------------------------------
+  binaural_btn = gtk_toggle_button_new_with_label("BIN");
+  gtk_widget_set_name(binaural_btn, "front_toggle_button");
+  gtk_widget_set_tooltip_text(binaural_btn, "Outputs I and Q on the Left\n"
+                                            "and Right audio channels");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(binaural_btn), active_receiver->binaural);
+  // begin label definition inside button
+  binaural_label = gtk_bin_get_child(GTK_BIN(binaural_btn));
+  gtk_label_set_justify(GTK_LABEL(binaural_label), GTK_JUSTIFY_CENTER);
+  // end label definition
+  gtk_widget_set_size_request(binaural_btn, box_right_width / 6, -1);  // z.B. 100px
+  gtk_widget_set_margin_top(binaural_btn, 5);
+  gtk_widget_set_margin_bottom(binaural_btn, 5);
+  gtk_widget_set_margin_end(binaural_btn, 5);    // rechter Rand (Ende)
+  gtk_widget_set_margin_start(binaural_btn, 5);    // linker Rand (Anfang)
+  gtk_widget_set_halign(binaural_btn, GTK_ALIGN_START);
+  gtk_widget_set_valign(binaural_btn, GTK_ALIGN_CENTER);
+  binaural_btn_signal_id = g_signal_connect(G_OBJECT(binaural_btn), "toggled", G_CALLBACK(binaural_toggle_cb), NULL);
+  // Widgets in Box packen
+  gtk_box_pack_start(GTK_BOX(box_Z2_right), binaural_btn, FALSE, FALSE, 0);
+  //-------------------------------------------------------------------------------------------
+  snb_btn = gtk_toggle_button_new_with_label("SNB");
+  gtk_widget_set_name(snb_btn, "front_toggle_button");
+  gtk_widget_set_tooltip_text(snb_btn, "Spectral Noise Blanker");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(snb_btn), active_receiver->snb);
+  // begin label definition inside button
+  snb_label = gtk_bin_get_child(GTK_BIN(snb_btn));
+  gtk_label_set_justify(GTK_LABEL(snb_label), GTK_JUSTIFY_CENTER);
+  // end label definition
+  gtk_widget_set_size_request(snb_btn, box_right_width / 6, -1);  // z.B. 100px
+  gtk_widget_set_margin_top(snb_btn, 5);
+  gtk_widget_set_margin_bottom(snb_btn, 5);
+  gtk_widget_set_margin_end(snb_btn, 5);    // rechter Rand (Ende)
+  gtk_widget_set_margin_start(snb_btn, 5);    // linker Rand (Anfang)
+  gtk_widget_set_halign(snb_btn, GTK_ALIGN_START);
+  gtk_widget_set_valign(snb_btn, GTK_ALIGN_CENTER);
+  snb_btn_signal_id = g_signal_connect(G_OBJECT(snb_btn), "toggled", G_CALLBACK(snb_toggle_cb), NULL);
+  // Widgets in Box packen
+  gtk_box_pack_start(GTK_BOX(box_Z2_right), snb_btn, FALSE, FALSE, 0);
+  //-------------------------------------------------------------------------------------------
+  // Box ins Grid Spalte 3 Zeile 2
   gtk_grid_attach(GTK_GRID(sliders), box_Z2_right, 2, 1, 1, 1);  // Zeile 0 Spalte 2
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1749,7 +1838,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
     gtk_grid_attach(GTK_GRID(sliders), box_Z3_right, 2, 2, 1, 1);
 
-    // sanity check, if DIGIMODE selected set BBCOMPR and LEV inactive
+    // sanity check, if DIGIMODE selected set PreAmp, SNB, BBCOMPR and LEV inactive
     if (selected_mode == modeDIGL || selected_mode == modeDIGU) {
       gtk_widget_set_sensitive(preamp_scale, FALSE);
       gtk_widget_set_sensitive(preamp_btn, FALSE);
@@ -1757,6 +1846,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_sensitive(bbcompr_btn, FALSE);
       gtk_widget_set_sensitive(lev_scale, FALSE);
       gtk_widget_set_sensitive(lev_btn, FALSE);
+      // gtk_widget_set_sensitive(snb_btn, FALSE);
       gtk_widget_queue_draw(sliders);
     }
   } else {
