@@ -63,7 +63,9 @@ static enum ACTION scale_status = NO_ACTION;
 static GtkWidget *scale_dialog;
 
 static GtkWidget *af_gain_label;
+static GtkWidget *af_gain_btn;
 static GtkWidget *af_gain_scale;
+static gulong    af_gain_btn_signal_id;
 static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
 static GtkWidget *agc_gain_label;
@@ -1068,7 +1070,7 @@ void update_slider_binaural_btn() {
 void update_slider_tune_drive_btn() {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (tune_drive_btn), tune_drive_btn_signal_id);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tune_drive_btn), radio_get_tune());
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tune_drive_btn), !(radio_get_tune()));
 
     if (radio_get_tune()) {
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNING");
@@ -1086,6 +1088,32 @@ static void tune_drive_toggle_cb(GtkWidget *widget, gpointer data) {
   int state = radio_get_tune();
   radio_tune_update(!state);
   update_slider_tune_drive_btn();
+}
+
+void update_slider_af_gain_btn() {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (af_gain_btn), af_gain_btn_signal_id);
+    // invert button, red = MUTE, green = Playback
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (af_gain_btn), !active_receiver->mute_radio);
+
+    if (active_receiver->mute_radio) {
+      gtk_label_set_text(GTK_LABEL(af_gain_label), "MUTE");
+      gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY Audio");
+    } else {
+      gtk_label_set_text(GTK_LABEL(af_gain_label), "Volume");
+      gtk_widget_set_tooltip_text(af_gain_btn, "Press button for MUTE Audio");
+    }
+
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (af_gain_btn), af_gain_btn_signal_id);
+    gtk_widget_queue_draw(af_gain_btn);
+  }
+}
+
+static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
+  // int state = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  active_receiver->mute_radio = !active_receiver->mute_radio;
+  g_idle_add(ext_vfo_update, NULL);
+  update_slider_af_gain_btn();
 }
 
 #if defined (__AUTOG__)
@@ -1195,15 +1223,33 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   GtkWidget *box_Z1_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(box_Z1_left, box_left_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  af_gain_label = gtk_label_new("Volume");
-  gtk_widget_set_name(af_gain_label, "boldlabel_border_blue");
+  af_gain_btn = gtk_toggle_button_new_with_label("Volume");
+  // gtk_widget_set_name(af_gain_btn, "medium_toggle_button");
+  gtk_widget_set_name(af_gain_btn, "front_toggle_button");
+
+  if (!active_receiver->mute_radio) {
+    gtk_widget_set_tooltip_text(af_gain_btn, "Press button for MUTE Audio");
+  } else if (active_receiver->mute_radio) {
+    gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY Audio");
+  }
+
+  // invert button, red = MUTE, green = Playback
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->mute_radio);
+  // begin label definition inside button
+  af_gain_label = gtk_bin_get_child(GTK_BIN(af_gain_btn));
+  gtk_label_set_justify(GTK_LABEL(af_gain_label), GTK_JUSTIFY_CENTER);
+  // end label definition
   // Label breiter erzwingen
-  gtk_widget_set_size_request(af_gain_label, 105, -1);  // z.B. 105px
-  gtk_widget_set_margin_top(af_gain_label, 5);
-  gtk_widget_set_margin_bottom(af_gain_label, 5);
-  gtk_widget_set_halign(af_gain_label, GTK_ALIGN_START);
-  gtk_widget_set_valign(af_gain_label, GTK_ALIGN_CENTER);
+  gtk_widget_set_size_request(af_gain_btn, 105, -1);  // z.B. 100px
+  gtk_widget_set_margin_top(af_gain_btn, 5);
+  gtk_widget_set_margin_bottom(af_gain_btn, 5);
+  gtk_widget_set_margin_end(af_gain_btn, 0);    // rechter Rand (Ende)
+  gtk_widget_set_halign(af_gain_btn, GTK_ALIGN_START);
+  gtk_widget_set_valign(af_gain_btn, GTK_ALIGN_CENTER);
+  af_gain_btn_signal_id = g_signal_connect(G_OBJECT(af_gain_btn), "toggled", G_CALLBACK(af_gain_toggle_cb),
+                          NULL);
+  // Widgets in Box packen
+  gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_btn, FALSE, FALSE, 0);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.0);
   gtk_widget_set_tooltip_text(af_gain_scale, "Set AF Volume");
@@ -1218,8 +1264,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   g_signal_connect(G_OBJECT(af_gain_scale), "value_changed", G_CALLBACK(afgain_value_changed_cb), NULL);
   // Widgets in Box packen
-  gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_label, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_scale, TRUE, TRUE, 0);
+  //-----------------------------------------------------------------------------------------------------------
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(sliders), box_Z1_left, 0, 0, 1, 1);  // Zeile 0 Spalte 0
   //-----------------------------------------------------------------------------------------------------------
@@ -1614,7 +1660,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_scale, TRUE, TRUE, 0);
   //-------------------------------------------------------------------------------------------
   binaural_btn = gtk_toggle_button_new_with_label("BIN");
-  gtk_widget_set_name(binaural_btn, "front_toggle_button");
+  gtk_widget_set_name(binaural_btn, "medium_toggle_button");
+  // gtk_widget_set_name(binaural_btn, "front_toggle_button");
   gtk_widget_set_tooltip_text(binaural_btn, "Outputs I and Q on the Left\n"
                                             "and Right audio channels");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(binaural_btn), active_receiver->binaural);
@@ -1634,7 +1681,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(box_Z2_right), binaural_btn, FALSE, FALSE, 0);
   //-------------------------------------------------------------------------------------------
   snb_btn = gtk_toggle_button_new_with_label("SNB");
-  gtk_widget_set_name(snb_btn, "front_toggle_button");
+  // gtk_widget_set_name(snb_btn, "front_toggle_button");
+  gtk_widget_set_name(snb_btn, "medium_toggle_button");
   gtk_widget_set_tooltip_text(snb_btn, "Spectral Noise Blanker");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(snb_btn), active_receiver->snb);
   // begin label definition inside button
@@ -1665,6 +1713,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // tune_drive_button
     tune_drive_btn = gtk_toggle_button_new_with_label("TUNE");
     gtk_widget_set_name(tune_drive_btn, "front_toggle_button");
+    // gtk_widget_set_name(tune_drive_btn, "medium_toggle_button");
 
     if (!transmitter->tune_use_drive) {
       gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE with TUNE Drive:\nSet tune level in percent of maximum TX PWR");
@@ -1672,7 +1721,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE Drive = TX PWR");
     }
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tune_drive_btn), radio_get_tune());
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tune_drive_btn), !(radio_get_tune()));
     // begin label definition inside button
     tune_drive_label = gtk_bin_get_child(GTK_BIN(tune_drive_btn));
     gtk_label_set_justify(GTK_LABEL(tune_drive_label), GTK_JUSTIFY_CENTER);

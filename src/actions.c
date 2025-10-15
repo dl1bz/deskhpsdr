@@ -1197,6 +1197,7 @@ int process_action(void *data) {
     if (a->mode == PRESSED) {
       active_receiver->mute_radio = !active_receiver->mute_radio;
       g_idle_add(ext_vfo_update, NULL);
+      update_slider_af_gain_btn();
     }
 
     break;
