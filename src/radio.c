@@ -2615,6 +2615,7 @@ void radio_set_split(int val) {
     radio_tx_vfo_changed();
     radio_set_alex_antennas();
     g_idle_add(ext_vfo_update, NULL);
+    update_slider_split_btn();
   }
 }
 

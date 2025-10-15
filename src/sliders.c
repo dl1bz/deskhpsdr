@@ -117,6 +117,13 @@ static gulong binaural_btn_signal_id;
 static GtkWidget *snb_btn;
 static GtkWidget *snb_label;
 static gulong snb_btn_signal_id;
+static GtkWidget *split_btn;
+static GtkWidget *split_label;
+static gulong split_btn_signal_id;
+static GtkWidget *swap_btn;
+static GtkWidget *swap_label;
+static GtkWidget *equal_btn;
+static GtkWidget *equal_label;
 
 char txpwr_ttip_txt[64];
 
@@ -1111,6 +1118,37 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
   update_slider_af_gain_btn();
 }
 
+void update_slider_split_btn() {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (split_btn), split_btn_signal_id);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (split_btn), split);
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (split_btn), split_btn_signal_id);
+    gtk_widget_queue_draw(split_btn);
+  }
+}
+
+static void split_btn_toggle_cb(GtkWidget *widget, gpointer data) {
+  int new = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_set_split(new);
+  update_slider_split_btn();
+}
+
+static void swap_btn_pressed_cb(GtkWidget *widget, gpointer data) {
+  vfo_a_swap_b();
+}
+
+static void swap_btn_released_cb(GtkWidget *widget, gpointer data) {
+  return;
+}
+
+static void equal_btn_pressed_cb(GtkWidget *widget, gpointer data) {
+  vfo_a_to_b();
+}
+
+static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
+  return;
+}
+
 #if defined (__AUTOG__)
 static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
@@ -1793,7 +1831,67 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_scale, FALSE, FALSE, 0);
-    //-------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------
+    split_btn = gtk_toggle_button_new_with_label("VFO\nSplit");
+    gtk_widget_set_name(split_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(split_btn, "Enable Split");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(split_btn), split);
+    // begin label definition inside button
+    split_label = gtk_bin_get_child(GTK_BIN(split_btn));
+    gtk_label_set_justify(GTK_LABEL(split_label), GTK_JUSTIFY_CENTER);
+    // end label definition
+    gtk_widget_set_size_request(split_btn, 55, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(split_btn, 5);
+    gtk_widget_set_margin_bottom(split_btn, 5);
+    gtk_widget_set_margin_start(split_btn, 5);
+    gtk_widget_set_margin_end(split_btn, 0);
+    gtk_widget_set_halign(split_btn, GTK_ALIGN_START);
+    gtk_widget_set_valign(split_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(split_btn, FALSE);  // fülle Box nicht nach rechts
+    split_btn_signal_id = g_signal_connect(split_btn, "toggled", G_CALLBACK(split_btn_toggle_cb), NULL);
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z3_left), split_btn, FALSE, FALSE, 0);
+    //-----------------------------------------------------------------------------------------------------------
+    swap_btn = gtk_button_new_with_label("VFO\nA←→B");
+    gtk_widget_set_name(swap_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(swap_btn, "Swap VFO A←→B");
+    // begin label definition inside button
+    swap_label = gtk_bin_get_child(GTK_BIN(swap_btn));
+    gtk_label_set_justify(GTK_LABEL(swap_label), GTK_JUSTIFY_CENTER);
+    // end label definition
+    gtk_widget_set_size_request(swap_btn, 55, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(swap_btn, 5);
+    gtk_widget_set_margin_bottom(swap_btn, 5);
+    gtk_widget_set_margin_start(swap_btn, 5);
+    gtk_widget_set_margin_end(swap_btn, 5);
+    gtk_widget_set_halign(swap_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(swap_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(swap_btn, FALSE);  // fülle Box nicht nach rechts
+    g_signal_connect(swap_btn, "pressed", G_CALLBACK(swap_btn_pressed_cb), NULL);
+    g_signal_connect(swap_btn, "released", G_CALLBACK(swap_btn_released_cb), NULL);
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z3_left), swap_btn, FALSE, FALSE, 0);
+    //-----------------------------------------------------------------------------------------------------------
+    equal_btn = gtk_button_new_with_label("VFO\nA=B");
+    gtk_widget_set_name(equal_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(equal_btn, "Set VFO A = VFO B");
+    // begin label definition inside button
+    equal_label = gtk_bin_get_child(GTK_BIN(equal_btn));
+    gtk_label_set_justify(GTK_LABEL(equal_label), GTK_JUSTIFY_CENTER);
+    // end label definition
+    gtk_widget_set_size_request(equal_btn, 55, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(equal_btn, 5);
+    gtk_widget_set_margin_bottom(equal_btn, 5);
+    gtk_widget_set_margin_start(equal_btn, 0);
+    gtk_widget_set_margin_end(equal_btn, 5);
+    gtk_widget_set_halign(equal_btn, GTK_ALIGN_END);
+    gtk_widget_set_valign(equal_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(equal_btn, FALSE);  // fülle Box nicht nach rechts
+    g_signal_connect(equal_btn, "pressed", G_CALLBACK(equal_btn_pressed_cb), NULL);
+    g_signal_connect(equal_btn, "released", G_CALLBACK(equal_btn_released_cb), NULL);
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z3_left), equal_btn, FALSE, FALSE, 0);
+    //-----------------------------------------------------------------------------------------------------------
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
     gtk_grid_attach(GTK_GRID(sliders), box_Z3_left, 0, 2, 1, 1);
@@ -1949,6 +2047,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     tune_drive_label = NULL;
     tune_drive_btn = NULL;
     tune_drive_scale = NULL;
+    split_btn = NULL;
+    split_label = NULL;
+    swap_btn = NULL;
+    swap_label = NULL;
+    equal_btn = NULL;
+    equal_label = NULL;
     local_mic_label = NULL;
     local_mic_button = NULL;
     local_mic_input = NULL;

@@ -358,6 +358,17 @@ char *css =
   "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
   "    color: darkblue;\n"                        // text if selected
   "    }\n"
+  "  #medium_toggle_button:active {\n"
+  "    padding: 1px;\n"
+  "    border: 1px solid darkblue;\n"
+  "    border-radius: 6px;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
+  "    font-size: 16px;\n"
+  "    font-weight: bold;\n"
+  "    background-image: none;\n"
+  "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
+  "    color: darkblue;\n"                        // text if selected
+  "    }\n"
   "  #front_toggle_button {\n"
   "    padding: 1px;\n"
   "    border: 1px solid darkblue;\n"
