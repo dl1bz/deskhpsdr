@@ -181,7 +181,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 
     // setup to address
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
     to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     //
     // This will use the subnet-specific broadcast address
@@ -216,7 +216,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
 
     if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
       return;

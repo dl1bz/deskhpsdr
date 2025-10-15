@@ -126,7 +126,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
 
     // setup to address
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
     to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     //
     // This will use the subnet-specific broadcast address
@@ -156,18 +156,35 @@ static void discover(struct ifaddrs* iface, int discflag) {
     //
     // Send METIS detection packet via UDP to ipaddr_radio
     // To be able to connect later, we have to specify INADDR_ANY
+    // Support both IP addresses and hostnames via getaddrinfo()
     //
     interface_addr.sin_family = AF_INET;
     interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
 
-    if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
-      return;
+    // Try to resolve hostname or IP address
+    struct addrinfo hints, *result = NULL;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    if (getaddrinfo(ipaddr_radio, NULL, &hints, &result) == 0 && result != NULL) {
+      // Successfully resolved
+      memcpy(&to_addr, result->ai_addr, sizeof(struct sockaddr_in));
+      to_addr.sin_port = htons(radio_port);
+      freeaddrinfo(result);
+      t_print("discover: resolved %s to %s\n", ipaddr_radio, inet_ntoa(to_addr.sin_addr));
+    } else {
+      // Fallback to inet_aton for backward compatibility
+      if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
+        t_print("discover: failed to resolve %s\n", ipaddr_radio);
+        return;
+      }
     }
 
-    t_print("discover: looking for HPSDR device with IP %s\n", ipaddr_radio);
+    t_print("discover: looking for HPSDR device at %s\n", ipaddr_radio);
     discovery_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     if (discovery_socket < 0) {
@@ -185,7 +202,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     //
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
 
     if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
       return;
@@ -372,7 +389,7 @@ static gpointer discover_receive_thread(gpointer data) {
   struct timeval tv;
   int i;
   t_print("discover_receive_thread\n");
-  tv.tv_sec = 2;
+  tv.tv_sec = 10;  // Increased timeout for remote connections
   tv.tv_usec = 0;
   setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
   len = sizeof(addr);
@@ -682,7 +699,8 @@ void old_discovery() {
 
   if (!is_local) { discover(NULL, 2); }
 
-  discover(NULL, 3);
+  // TCP discovery disabled for remote connections - uncomment if needed
+  // discover(NULL, 3);
   t_print( "discovery found %d devices\n", devices);
 
   for (i = 0; i < devices; i++) {
