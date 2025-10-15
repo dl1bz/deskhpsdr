@@ -372,21 +372,21 @@ void discovery() {
     if (discover_only_stemlab) {
       status_text("Stemlab ... Looking for SDR apps");
     } else {
-      status_text("Protocol 1 ... Discovering Devices");
+      status_text("Protocol 1 ... Discovering Devices (Wait for up to 10 seconds)");
     }
 
     old_discovery();
   }
 
   if (enable_protocol_2 && !discover_only_stemlab) {
-    status_text("Protocol 2 ... Discovering Devices");
+    status_text("Protocol 2 ... Discovering Devices (Wait for up to 10 seconds)");
     new_discovery();
   }
 
 #ifdef SOAPYSDR
 
   if (enable_soapy_protocol && !discover_only_stemlab) {
-    status_text("SoapySDR ... Discovering Devices");
+    status_text("SoapySDR ... Discovering Devices (Wait for up to 10 seconds)");
     soapy_discovery();
   }
 
@@ -632,6 +632,8 @@ void discovery() {
   gtk_grid_attach(GTK_GRID(grid), tcp_b, 1, row, 1, 1);
   tcpaddr = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(tcpaddr), IPADDR_LEN);
+  gtk_widget_set_tooltip_text(tcpaddr, "Input IP Address or Hostname\n"
+                                      "(Hostname will be resolved via DNS)");
   gtk_grid_attach(GTK_GRID(grid), tcpaddr, 2, row, 1, 1);
   gtk_entry_set_text(GTK_ENTRY(tcpaddr), ipaddr_radio);
   g_signal_connect (tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
@@ -651,6 +653,8 @@ void discovery() {
   char port_str[8];
   snprintf(port_str, sizeof(port_str), "%d", radio_port);
   gtk_entry_set_text(GTK_ENTRY(tcpport), port_str);
+  gtk_widget_set_tooltip_text(tcpport, "Input Portnumber\n"
+                                      "(default Port 1024)");
   gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
   g_signal_connect (tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
   gtk_container_add (GTK_CONTAINER (content), grid);
