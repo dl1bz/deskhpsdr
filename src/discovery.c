@@ -63,7 +63,7 @@ static DISCOVERED *d;
 static GtkWidget *apps_combobox[MAX_DEVICES];
 
 GtkWidget *tcpaddr;
-#define IPADDR_LEN 20
+#define IPADDR_LEN 64  // Increased to support hostnames
 static char ipaddr_buf[IPADDR_LEN] = "";
 char *ipaddr_radio = &ipaddr_buf[0];
 
@@ -213,9 +213,23 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
     return TRUE;
   }
 
-  if (inet_pton(AF_INET, cp, &(sa.sin_addr)) != 1) {
-    // if text is non-empty but also not a valid IP addr,
-    // do nothing
+  // Accept both IP addresses and hostnames
+  // Try to validate as IP first, but if it fails, accept it anyway (could be hostname)
+  int is_valid_ip = (inet_pton(AF_INET, cp, &(sa.sin_addr)) == 1);
+
+  // Additional check: hostname should contain valid characters
+  int is_valid_hostname = 1;
+  for (int i = 0; i < len; i++) {
+    char c = cp[i];
+    if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+          (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '_')) {
+      is_valid_hostname = 0;
+      break;
+    }
+  }
+
+  if (!is_valid_ip && !is_valid_hostname) {
+    // Neither valid IP nor valid hostname
     return TRUE;
   }
 
@@ -572,7 +586,7 @@ void discovery() {
   gtk_widget_set_name(tcp_b, "boldlabel_blue");
   gtk_grid_attach(GTK_GRID(grid), tcp_b, 1, row, 1, 1);
   tcpaddr = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(tcpaddr), 20);
+  gtk_entry_set_max_length(GTK_ENTRY(tcpaddr), IPADDR_LEN);
   gtk_grid_attach(GTK_GRID(grid), tcpaddr, 2, row, 1, 1);
   gtk_entry_set_text(GTK_ENTRY(tcpaddr), ipaddr_radio);
   g_signal_connect (tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
