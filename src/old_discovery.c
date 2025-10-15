@@ -126,7 +126,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
 
     // setup to address
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
     to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     //
     // This will use the subnet-specific broadcast address
@@ -162,7 +162,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
 
     // Try to resolve hostname or IP address
     struct addrinfo hints, *result = NULL;
@@ -173,7 +173,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     if (getaddrinfo(ipaddr_radio, NULL, &hints, &result) == 0 && result != NULL) {
       // Successfully resolved
       memcpy(&to_addr, result->ai_addr, sizeof(struct sockaddr_in));
-      to_addr.sin_port = htons(DISCOVERY_PORT);
+      to_addr.sin_port = htons(radio_port);
       freeaddrinfo(result);
       t_print("discover: resolved %s to %s\n", ipaddr_radio, inet_ntoa(to_addr.sin_addr));
     } else {
@@ -202,7 +202,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     //
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(DISCOVERY_PORT);
+    to_addr.sin_port = htons(radio_port);
 
     if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
       return;

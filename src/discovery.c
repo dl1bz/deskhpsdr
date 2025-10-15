@@ -63,9 +63,11 @@ static DISCOVERED *d;
 static GtkWidget *apps_combobox[MAX_DEVICES];
 
 GtkWidget *tcpaddr;
+GtkWidget *tcpport;
 #define IPADDR_LEN 64  // Increased to support hostnames
 static char ipaddr_buf[IPADDR_LEN] = "";
 char *ipaddr_radio = &ipaddr_buf[0];
+int radio_port = 1024;  // Default discovery port
 
 int discover_only_stemlab = 0;
 
@@ -244,6 +246,35 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
   return FALSE;
 }
 
+static gboolean radio_port_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  const char *cp;
+  int port;
+  cp = gtk_entry_get_text(GTK_ENTRY(tcpport));
+
+  if (strlen(cp) == 0) {
+    // If empty, use default port
+    radio_port = 1024;
+    return TRUE;
+  }
+
+  port = atoi(cp);
+
+  if (port < 1 || port > 65535) {
+    // Invalid port number
+    return TRUE;
+  }
+
+  radio_port = port;
+  FILE *fp = fopen("radio.port", "w");
+
+  if (fp) {
+    fprintf(fp, "%d\n", radio_port);
+    fclose(fp);
+  }
+
+  return FALSE;
+}
+
 void discovery() {
   //
   // On the discovery screen, make the combo-boxes "touchscreen-friendly"
@@ -267,6 +298,20 @@ void discovery() {
 
       ipaddr_radio[len] = 0;
     }
+  }
+
+  // Try to locate port
+  fp = fopen("radio.port", "r");
+
+  if (fp) {
+    char port_buf[8];
+    if (fgets(port_buf, sizeof(port_buf), fp)) {
+      int port = atoi(port_buf);
+      if (port >= 1 && port <= 65535) {
+        radio_port = port;
+      }
+    }
+    fclose(fp);
   }
 
 #ifdef USBOZY
@@ -597,6 +642,17 @@ void discovery() {
   gtk_widget_set_margin_end(exit_b, 10);
   g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), exit_b, 3, row, 1, 1);
+  row++;
+  GtkWidget *port_b = gtk_label_new("Radio UDP Port:");
+  gtk_widget_set_name(port_b, "boldlabel_blue");
+  gtk_grid_attach(GTK_GRID(grid), port_b, 1, row, 1, 1);
+  tcpport = gtk_entry_new();
+  gtk_entry_set_max_length(GTK_ENTRY(tcpport), 6);
+  char port_str[8];
+  snprintf(port_str, sizeof(port_str), "%d", radio_port);
+  gtk_entry_set_text(GTK_ENTRY(tcpport), port_str);
+  gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
+  g_signal_connect (tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
   gtk_container_add (GTK_CONTAINER (content), grid);
   gtk_widget_show_all(discovery_dialog);
   t_print("showing device dialog\n");
