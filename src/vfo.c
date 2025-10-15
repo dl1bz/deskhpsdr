@@ -1109,7 +1109,6 @@ void vfo_id_mode_changed(int id, int m) {
       update_slider_bbcompr_button(FALSE);
       update_slider_lev_scale(FALSE);
       update_slider_lev_button(FALSE);
-      update_slider_preamp_scale(FALSE);
       update_slider_preamp_button(FALSE);
       // update_slider_snb_button(FALSE);
     } else if (display_sliders) {
@@ -1117,7 +1116,6 @@ void vfo_id_mode_changed(int id, int m) {
       update_slider_bbcompr_button(TRUE);
       update_slider_lev_scale(TRUE);
       update_slider_lev_button(TRUE);
-      update_slider_preamp_scale(TRUE);
       update_slider_preamp_button(TRUE);
       // update_slider_snb_button(TRUE);
     }

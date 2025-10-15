@@ -111,8 +111,6 @@ static gulong lev_scale_signal_id;
 static GtkWidget *preamp_label;
 static GtkWidget *preamp_btn;
 static gulong preamp_btn_signal_id;
-static GtkWidget *preamp_scale;
-static gulong preamp_scale_signal_id;
 static GtkWidget *binaural_btn;
 static GtkWidget *binaural_label;
 static gulong binaural_btn_signal_id;
@@ -862,6 +860,7 @@ static void preamp_btn_toggle_cb(GtkWidget *widget, gpointer data) {
 
   tx_set_mic_gain(transmitter);
   g_idle_add(ext_vfo_update, NULL);
+  update_slider_preamp_button(TRUE);
 }
 
 static void lev_scale_changed_cb(GtkWidget *widget, gpointer data) {
@@ -871,13 +870,6 @@ static void lev_scale_changed_cb(GtkWidget *widget, gpointer data) {
   mode_settings[mode].lev_gain = v;
   copy_mode_settings(mode);
   tx_set_compressor(transmitter);
-  g_idle_add(ext_vfo_update, NULL);
-}
-
-static void preamp_scale_changed_cb(GtkWidget *widget, gpointer data) {
-  double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  transmitter->addgain_gain = v;
-  tx_set_mic_gain(transmitter);
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -943,6 +935,26 @@ void update_slider_preamp_button(gboolean show_widget) {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (preamp_btn), preamp_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (preamp_btn), transmitter->addgain_enable);
+    char preamp_tip[256];
+
+    if (transmitter->addgain_enable) {
+      snprintf(preamp_tip, sizeof(preamp_tip),
+               "Switch the Mic Preamplifier ON or OFF\n"
+               "[Always OFF in DIGU/DIGL]\n"
+               "Additional gain on top of Mic Gain\n"
+               "Current Mic Gain %+ddb + Current Preamp Gain %+ddb = %+ddb\n\n"
+               "Adjust this value in Menu → TX Menu.", (int)transmitter->mic_gain, (int)transmitter->addgain_gain,
+               (int)(transmitter->mic_gain + transmitter->addgain_gain));
+    } else {
+      snprintf(preamp_tip, sizeof(preamp_tip),
+               "Switch the Mic Preamplifier ON or OFF\n"
+               "[Always OFF in DIGU/DIGL]\n"
+               "Additional gain on top of Mic Gain\n"
+               "Current Mic Gain %+ddb\n\n"
+               "Adjust this value in Menu → TX Menu.", (int)transmitter->mic_gain);
+    }
+
+    gtk_widget_set_tooltip_text(preamp_btn, preamp_tip);
 
     if (show_widget) {
       gtk_widget_set_sensitive(preamp_btn, TRUE);
@@ -1013,23 +1025,6 @@ void update_slider_lev_scale(gboolean show_widget) {
 
     g_signal_handler_unblock(G_OBJECT(lev_scale), lev_scale_signal_id);
     gtk_widget_queue_draw(lev_scale);
-  }
-}
-
-void update_slider_preamp_scale(gboolean show_widget) {
-  if (display_sliders) {
-    g_signal_handler_block(G_OBJECT(preamp_scale), preamp_scale_signal_id);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), transmitter->addgain_gain);
-
-    if (show_widget && transmitter->addgain_enable) {
-      gtk_widget_set_sensitive(preamp_scale, TRUE);
-    } else {
-      gtk_widget_set_sensitive(preamp_scale, FALSE);
-    }
-
-    g_signal_handler_unblock(G_OBJECT(preamp_scale), preamp_scale_signal_id);
-    gtk_widget_queue_draw(preamp_scale);
-    // gtk_widget_queue_draw(preamp_label);
   }
 }
 
@@ -1475,11 +1470,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // Hauptcontainer: horizontale Box für RF Gain
     GtkWidget *box_Z2_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z2_left, box_left_width, widget_height);
+    gtk_widget_set_hexpand(box_Z2_left, FALSE);
+    gtk_widget_set_vexpand(box_Z2_left, FALSE);
+    gtk_widget_set_halign(box_Z2_left, GTK_ALIGN_START);
     //-----------------------------------------------------------------------------------------------------------
     char _label[32];
     snprintf(_label, 32, "Mic Gain");
     mic_gain_label = gtk_label_new(_label);
-    // gtk_widget_set_size_request(mic_gain_label, 2 * widget_height, widget_height - 10);
     gtk_widget_set_name(mic_gain_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(mic_gain_label, 105, -1);  // z.B. 100px
@@ -1493,6 +1490,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if (optimize_for_touchscreen) {
       mic_gain_scale = gtk_spin_button_new_with_range(-12.0, 50.0, 1.0);
+      // gtk_widget_set_size_request(mic_gain_scale, box_left_width * 3 / 6, -1);  // z.B. 100px
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double)transmitter->mic_gain);
@@ -1501,11 +1499,14 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_margin_start(mic_gain_scale, 3);
       gtk_widget_set_margin_end(mic_gain_scale, 0);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(mic_gain_scale, FALSE);  // fülle Box nicht nach rechts
+      gtk_widget_set_halign(mic_gain_scale, GTK_ALIGN_START);
       gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_scale, FALSE, FALSE, 0);
     } else {
       mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
+      gtk_widget_set_size_request(mic_gain_scale, (int)floor(box_left_width - 105 - 55 - 15), -1);  // z.B. 100px
       gtk_widget_set_margin_end(mic_gain_scale, 0);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(mic_gain_scale, FALSE);  // fülle Box nicht nach rechts
+      gtk_widget_set_halign(mic_gain_scale, GTK_ALIGN_START);
       gtk_range_set_increments (GTK_RANGE(mic_gain_scale), 1.0, 1.0);
       gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
 
@@ -1513,12 +1514,52 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_scale_add_mark(GTK_SCALE(mic_gain_scale), i, GTK_POS_TOP, NULL);
       }
 
-      gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_scale, TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_scale, FALSE, FALSE, 0);
     }
 
     gtk_widget_set_tooltip_text(mic_gain_scale, "Set Mic Gain in db");
     mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
                                G_CALLBACK(micgain_value_changed_cb), NULL);
+    //-----------------------------------------------------------------------------------------------------------
+    preamp_btn = gtk_toggle_button_new_with_label("Mic\nPreA");
+    gtk_widget_set_name(preamp_btn, "front_toggle_button");
+    char preamp_tip[256];
+
+    if (transmitter->addgain_enable) {
+      snprintf(preamp_tip, sizeof(preamp_tip),
+               "Switch the Mic Preamplifier ON or OFF\n"
+               "[Always OFF in DIGU/DIGL]\n"
+               "Additional gain on top of Mic Gain\n"
+               "Current Mic Gain %+ddb + Current Preamp Gain %+ddb = %+ddb\n\n"
+               "Adjust this value in Menu → TX Menu.", (int)transmitter->mic_gain, (int)transmitter->addgain_gain,
+               (int)(transmitter->mic_gain + transmitter->addgain_gain));
+    } else {
+      snprintf(preamp_tip, sizeof(preamp_tip),
+               "Switch the Mic Preamplifier ON or OFF\n"
+               "[Always OFF in DIGU/DIGL]\n"
+               "Additional gain on top of Mic Gain\n"
+               "Current Mic Gain %+ddb\n\n"
+               "Adjust this value in Menu → TX Menu.", (int)transmitter->mic_gain);
+    }
+
+    gtk_widget_set_tooltip_text(preamp_btn, preamp_tip);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preamp_btn), transmitter->addgain_enable);
+    // begin label definition inside button
+    preamp_label = gtk_bin_get_child(GTK_BIN(preamp_btn));
+    gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
+    // end label definition
+    gtk_widget_set_size_request(preamp_btn, 55, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(preamp_btn, 0);
+    gtk_widget_set_margin_bottom(preamp_btn, 0);
+    gtk_widget_set_margin_start(preamp_btn, 0);
+    gtk_widget_set_margin_end(preamp_btn, 0);
+    gtk_widget_set_halign(preamp_btn, GTK_ALIGN_END);
+    gtk_widget_set_valign(preamp_btn, GTK_ALIGN_CENTER);
+    preamp_btn_signal_id = g_signal_connect(preamp_btn, "toggled", G_CALLBACK(preamp_btn_toggle_cb), NULL);
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z2_left), preamp_btn, FALSE, FALSE, 0);
+    //-----------------------------------------------------------------------------------------------------------
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     gtk_grid_attach(GTK_GRID(sliders), box_Z2_left, 0, 1, 1, 1);  // Spalte 0 Zeile 1
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //-----------------------------------------------------------------------------------------------------------
@@ -1753,39 +1794,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_scale, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------
-    preamp_btn = gtk_toggle_button_new_with_label("Mic\nPreA");
-    gtk_widget_set_name(preamp_btn, "front_toggle_button");
-    gtk_widget_set_tooltip_text(preamp_btn, "Mic Preamplifier ON / OFF");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preamp_btn), transmitter->addgain_enable);
-    // begin label definition inside button
-    preamp_label = gtk_bin_get_child(GTK_BIN(preamp_btn));
-    gtk_label_set_justify(GTK_LABEL(preamp_label), GTK_JUSTIFY_CENTER);
-    // end label definition
-    gtk_widget_set_size_request(preamp_btn, 55, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(preamp_btn, 0);
-    gtk_widget_set_margin_bottom(preamp_btn, 0);
-    gtk_widget_set_margin_start(preamp_btn, 5);
-    gtk_widget_set_halign(preamp_btn, GTK_ALIGN_START);
-    gtk_widget_set_valign(preamp_btn, GTK_ALIGN_CENTER);
-    preamp_btn_signal_id = g_signal_connect(preamp_btn, "toggled", G_CALLBACK(preamp_btn_toggle_cb), NULL);
-    //-------------------------------------------------------------------------------------------
-    preamp_scale = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
-    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(preamp_scale), TRUE);
-    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(preamp_scale), TRUE);
-    gtk_widget_set_tooltip_text(preamp_scale, "Mic Preamp Gain in db");
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(preamp_scale), (double)transmitter->addgain_gain);
-    gtk_widget_set_margin_top(preamp_scale, 5);
-    gtk_widget_set_margin_bottom(preamp_scale, 5);
-    gtk_widget_set_margin_end(preamp_scale, 0);  // rechter Rand (Ende)
-    gtk_widget_set_hexpand(preamp_scale, FALSE);  // fülle Box nicht nach rechts
-    preamp_scale_signal_id = g_signal_connect(G_OBJECT(preamp_scale), "value_changed", G_CALLBACK(preamp_scale_changed_cb),
-                             NULL);
-    // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z3_left), preamp_btn, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box_Z3_left), preamp_scale, FALSE, FALSE, 0);
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
     gtk_grid_attach(GTK_GRID(sliders), box_Z3_left, 0, 2, 1, 1);
-    //-------------------------------------------------------------------------------------------
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     //-------------------------------------------------------------------------------------------
     if (n_input_devices > 0) {
@@ -1925,7 +1937,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     // sanity check, if DIGIMODE selected set PreAmp, SNB, BBCOMPR and LEV inactive
     if (selected_mode == modeDIGL || selected_mode == modeDIGU) {
-      gtk_widget_set_sensitive(preamp_scale, FALSE);
       gtk_widget_set_sensitive(preamp_btn, FALSE);
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
       gtk_widget_set_sensitive(bbcompr_btn, FALSE);
@@ -1947,9 +1958,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     lev_label = NULL;
     lev_btn = NULL;
     lev_scale = NULL;
-    preamp_label = NULL;
-    preamp_btn = NULL;
-    preamp_scale = NULL;
   }
 
   gtk_widget_show_all(sliders);

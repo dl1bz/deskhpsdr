@@ -681,9 +681,8 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
     case TX_ADDGAIN_GAIN:
       transmitter->addgain_gain = v;
       tx_set_mic_gain(transmitter);
-      update_slider_preamp_button(TRUE);
-      update_slider_preamp_scale(TRUE);
       g_idle_add(ext_vfo_update, NULL);
+      update_slider_preamp_button(TRUE);
       break;
 
     case TX_SWR_ALARM:

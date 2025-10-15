@@ -2487,7 +2487,6 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
 
   if (can_transmit && display_sliders) {
     update_slider_preamp_button(TRUE);
-    update_slider_preamp_scale(TRUE);
   }
 }
 
