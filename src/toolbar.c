@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "actions.h"
 #include "gpio.h"
 #include "toolbar.h"
@@ -123,7 +124,7 @@ static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event,
 
 GtkWidget *toolbar_init(int my_width, int my_height) {
   width = my_width;
-  height = my_height;
+  height = my_height - 10;
   // height = 20;
   int button_width = width / 11;
   const char *button_css;

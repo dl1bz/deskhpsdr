@@ -342,7 +342,7 @@ char *css =
   "    border: 1px solid darkblue;\n"
   "    border-radius: 6px;\n"
   "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
-  "    font-size: 16px;\n"
+  "    font-size: 13px;\n"
   "    font-weight: bold;\n"
   "    background-image: none;\n"
   "    color: darkblue;\n"
@@ -352,7 +352,7 @@ char *css =
   "    border: 1px solid darkblue;\n"
   "    border-radius: 6px;\n"
   "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
-  "    font-size: 16px;\n"
+  "    font-size: 13px;\n"
   "    font-weight: bold;\n"
   "    background-image: none;\n"
   "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
@@ -363,7 +363,7 @@ char *css =
   "    border: 1px solid darkblue;\n"
   "    border-radius: 6px;\n"
   "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
-  "    font-size: 16px;\n"
+  "    font-size: 13px;\n"
   "    font-weight: bold;\n"
   "    background-image: none;\n"
   "    background-color: rgb(0%, 100%, 0%);\n"    // background if selected
@@ -430,6 +430,12 @@ char *css =
   "    margin: 0px;\n"
   "    font-size: 15px;\n"
   "    font-family: Tahoma, Sans;\n"
+  "    }\n"
+  "  #front_spin_button {\n"
+  "    padding: 1px;\n"
+  "    font-family: 'JetBrains Mono', Tahoma, Sans;\n"
+  "    font-size: 13px;\n"
+  "    font-weight: bold;\n"
   "    }\n"
   ;
 

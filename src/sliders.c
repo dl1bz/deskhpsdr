@@ -1223,7 +1223,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
   int box_left_width = (int)floor(my_width / 3); // abrunden auf ganze Zahl
-  int box_right_width = box_left_width;
+  int box_right_width = box_left_width - 50;
   int box_middle_width = my_width - box_left_width - box_right_width - 50;
   t_print("%s: my_width = %d box_left_width = %d box_middle_width = %d box_right_width = %d (summe = %d)\n",
           __FUNCTION__, my_width, box_left_width, box_middle_width, box_right_width,
@@ -1253,8 +1253,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   g_return_val_if_fail(!(have_rx_gain && have_rx_att), sliders);
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für Volume
-  GtkWidget *box_Z1_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+  GtkWidget *box_Z1_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(box_Z1_left, box_left_width, widget_height);
+  gtk_box_set_spacing(GTK_BOX(box_Z1_left), 5);
   //-----------------------------------------------------------------------------------------------------------
   af_gain_btn = gtk_toggle_button_new_with_label("Volume");
   // gtk_widget_set_name(af_gain_btn, "medium_toggle_button");
@@ -1274,8 +1275,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // end label definition
   // Label breiter erzwingen
   gtk_widget_set_size_request(af_gain_btn, 105, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(af_gain_btn, 5);
-  gtk_widget_set_margin_bottom(af_gain_btn, 5);
+  gtk_widget_set_margin_top(af_gain_btn, 0);
+  gtk_widget_set_margin_bottom(af_gain_btn, 0);
   gtk_widget_set_margin_end(af_gain_btn, 0);    // rechter Rand (Ende)
   gtk_widget_set_halign(af_gain_btn, GTK_ALIGN_START);
   gtk_widget_set_valign(af_gain_btn, GTK_ALIGN_CENTER);
@@ -1303,16 +1304,17 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_grid_attach(GTK_GRID(sliders), box_Z1_left, 0, 0, 1, 1);  // Zeile 0 Spalte 0
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für AGC
-  GtkWidget *box_Z1_middle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+  GtkWidget *box_Z1_middle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(box_Z1_middle, box_middle_width, widget_height);
+  gtk_box_set_spacing(GTK_BOX(box_Z1_middle), 5);
   //-----------------------------------------------------------------------------------------------------------
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   agc_gain_label = gtk_label_new("AGC");
   gtk_widget_set_name(agc_gain_label, "boldlabel_border_blue");
   // Label breiter erzwingen
   gtk_widget_set_size_request(agc_gain_label, 90, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(agc_gain_label, 5);
-  gtk_widget_set_margin_bottom(agc_gain_label, 5);
+  gtk_widget_set_margin_top(agc_gain_label, 0);
+  gtk_widget_set_margin_bottom(agc_gain_label, 0);
   gtk_widget_set_margin_end(agc_gain_label, 0);    // rechter Rand (Ende)
   gtk_widget_set_margin_start(agc_gain_label, 0);    // linker Rand (Anfang)
   gtk_widget_set_halign(agc_gain_label, GTK_ALIGN_START);
@@ -1323,12 +1325,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (optimize_for_touchscreen) {
     agc_scale = gtk_spin_button_new_with_range(-20.0, 120.0, 1.0);
+    gtk_widget_set_name(agc_scale, "front_spin_button");
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(agc_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(agc_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_scale), (double)active_receiver->agc_gain);
     gtk_widget_set_margin_top(agc_scale, 5);
     gtk_widget_set_margin_bottom(agc_scale, 5);
-    gtk_widget_set_margin_start(agc_scale, 3);
+    gtk_widget_set_margin_start(agc_scale, 0);
     gtk_widget_set_margin_end(agc_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(agc_scale, FALSE);  // fülle Box nicht nach rechts
     // Widgets in Box packen
@@ -1362,8 +1365,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #if defined (__AUTOG__)
     //-----------------------------------------------------------------------------------------------------------
     // Hauptcontainer: horizontale Box für RF Gain
-    GtkWidget *box_Z1_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+    GtkWidget *box_Z1_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z1_right, box_right_width, widget_height);
+    gtk_box_set_spacing(GTK_BOX(box_Z1_right), 5);
     //-----------------------------------------------------------------------------------------------------------
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
@@ -1376,8 +1380,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(autogain_btn, "medium_toggle_button");
     // Label breiter erzwingen
     gtk_widget_set_size_request(autogain_btn, 90, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(autogain_btn, 5);
-    gtk_widget_set_margin_bottom(autogain_btn, 5);
+    gtk_widget_set_margin_top(autogain_btn, 0);
+    gtk_widget_set_margin_bottom(autogain_btn, 0);
     gtk_widget_set_margin_end(autogain_btn, 0);    // rechter Rand (Ende)
     gtk_widget_set_margin_start(autogain_btn, 0);    // linker Rand (Anfang)
     gtk_widget_set_halign(autogain_btn, GTK_ALIGN_START);
@@ -1391,8 +1395,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #else
     //-----------------------------------------------------------------------------------------------------------
     // Hauptcontainer: horizontale Box für RF Gain
-    GtkWidget *box_Z1_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+    GtkWidget *box_Z1_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z1_right, box_right_width, widget_height);
+    gtk_box_set_spacing(GTK_BOX(box_Z1_right), 5);
     //-----------------------------------------------------------------------------------------------------------
 
     if (device == DEVICE_HERMES_LITE2) {
@@ -1404,8 +1409,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(rf_gain_label, 90, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(rf_gain_label, 5);
-    gtk_widget_set_margin_bottom(rf_gain_label, 5);
+    gtk_widget_set_margin_top(rf_gain_label, 0);
+    gtk_widget_set_margin_bottom(rf_gain_label, 0);
     gtk_widget_set_margin_end(rf_gain_label, 0);    // rechter Rand (Ende)
     gtk_widget_set_margin_start(rf_gain_label, 0);    // linker Rand (Anfang)
     gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_START);
@@ -1423,6 +1428,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
 
     g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed", G_CALLBACK(rf_gain_value_changed_cb), NULL);
+    gtk_widget_set_margin_start(rf_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_margin_end(rf_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(rf_gain_scale, FALSE);  // fülle Box nicht nach rechts
     // Widgets in Box packen
@@ -1438,15 +1444,16 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   if (have_rx_att) {
     //-----------------------------------------------------------------------------------------------------------
     // Hauptcontainer: horizontale Box für RF Gain
-    GtkWidget *box_Z1_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+    GtkWidget *box_Z1_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z1_right, box_right_width, widget_height);
+    gtk_box_set_spacing(GTK_BOX(box_Z1_right), 5);
     //-----------------------------------------------------------------------------------------------------------
     attenuation_label = gtk_label_new("ATT");
     gtk_widget_set_name(attenuation_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(attenuation_label, 90, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(attenuation_label, 5);
-    gtk_widget_set_margin_bottom(attenuation_label, 5);
+    gtk_widget_set_margin_top(attenuation_label, 0);
+    gtk_widget_set_margin_bottom(attenuation_label, 0);
     gtk_widget_set_margin_end(attenuation_label, 0);    // rechter Rand (Ende)
     gtk_widget_set_margin_start(attenuation_label, 0);    // linker Rand (Anfang)
     gtk_widget_set_halign(attenuation_label, GTK_ALIGN_START);
@@ -1488,7 +1495,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(c25_att_combobox), "36",  "+36 dB");
   g_signal_connect(G_OBJECT(c25_att_combobox), "changed",
                    G_CALLBACK(c25_att_combobox_changed), NULL);
-  c25_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  c25_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
   gtk_box_pack_start(GTK_BOX(c25_box), c25_att_label,     FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(c25_box), c25_att_combobox,  TRUE,  TRUE,  0);
   gtk_widget_set_hexpand(c25_box, TRUE);
@@ -1506,11 +1513,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit) {
     // Hauptcontainer: horizontale Box für RF Gain
-    GtkWidget *box_Z2_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+    GtkWidget *box_Z2_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z2_left, box_left_width, widget_height);
-    gtk_widget_set_hexpand(box_Z2_left, FALSE);
-    gtk_widget_set_vexpand(box_Z2_left, FALSE);
-    gtk_widget_set_halign(box_Z2_left, GTK_ALIGN_START);
+    gtk_box_set_spacing(GTK_BOX(box_Z2_left), 5);
     //-----------------------------------------------------------------------------------------------------------
     char _label[32];
     snprintf(_label, 32, "Mic Gain");
@@ -1518,8 +1523,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(mic_gain_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(mic_gain_label, 105, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(mic_gain_label, 5);
-    gtk_widget_set_margin_bottom(mic_gain_label, 5);
+    gtk_widget_set_margin_top(mic_gain_label, 0);
+    gtk_widget_set_margin_bottom(mic_gain_label, 0);
     gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_START);
     gtk_widget_set_valign(mic_gain_label, GTK_ALIGN_CENTER);
     // Widgets in Box packen
@@ -1528,13 +1533,14 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if (optimize_for_touchscreen) {
       mic_gain_scale = gtk_spin_button_new_with_range(-12.0, 50.0, 1.0);
+      gtk_widget_set_name(mic_gain_scale, "front_spin_button");
       // gtk_widget_set_size_request(mic_gain_scale, box_left_width * 3 / 6, -1);  // z.B. 100px
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double)transmitter->mic_gain);
       gtk_widget_set_margin_top(mic_gain_scale, 5);
       gtk_widget_set_margin_bottom(mic_gain_scale, 5);
-      gtk_widget_set_margin_start(mic_gain_scale, 3);
+      gtk_widget_set_margin_start(mic_gain_scale, 0);
       gtk_widget_set_margin_end(mic_gain_scale, 0);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(mic_gain_scale, FALSE);  // fülle Box nicht nach rechts
       gtk_widget_set_halign(mic_gain_scale, GTK_ALIGN_START);
@@ -1602,8 +1608,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //-----------------------------------------------------------------------------------------------------------
     // Hauptcontainer: horizontale Box für TX Pwr
-    GtkWidget *box_Z2_middle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+    GtkWidget *box_Z2_middle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z2_middle, box_middle_width, widget_height);
+    gtk_box_set_spacing(GTK_BOX(box_Z2_middle), 5);
 
     //-----------------------------------------------------------------------------------------------------------
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && pa_enabled && !have_radioberry1
@@ -1616,8 +1623,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(drive_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(drive_label, 90, -1);
-    gtk_widget_set_margin_top(drive_label, 5);
-    gtk_widget_set_margin_bottom(drive_label, 5);
+    gtk_widget_set_margin_top(drive_label, 0);
+    gtk_widget_set_margin_bottom(drive_label, 0);
     gtk_widget_set_margin_end(drive_label, 0);    // rechter Rand (Ende)
     gtk_widget_set_margin_start(drive_label, 0);    // linker Rand (Anfang)
     gtk_widget_set_halign(drive_label, GTK_ALIGN_START);
@@ -1628,11 +1635,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       if (optimize_for_touchscreen) {
         drive_scale = gtk_spin_button_new_with_range(0.0, 5.0, 0.1);
+        gtk_widget_set_name(drive_scale, "front_spin_button");
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_widget_set_margin_top(drive_scale, 5);
         gtk_widget_set_margin_bottom(drive_scale, 5);
-        gtk_widget_set_margin_start(drive_scale, 3);
+        gtk_widget_set_margin_start(drive_scale, 0);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
@@ -1648,11 +1656,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     } else {
       if (optimize_for_touchscreen) {
         drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
+        gtk_widget_set_name(drive_scale, "front_spin_button");
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_widget_set_margin_top(drive_scale, 5);
         gtk_widget_set_margin_bottom(drive_scale, 5);
-        gtk_widget_set_margin_start(drive_scale, 3);
+        gtk_widget_set_margin_start(drive_scale, 0);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
@@ -1700,15 +1709,16 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für SQL
-  GtkWidget *box_Z2_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+  GtkWidget *box_Z2_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(box_Z2_right, box_right_width, widget_height);
+  gtk_box_set_spacing(GTK_BOX(box_Z2_right), 5);
   //-----------------------------------------------------------------------------------------------------------
   squelch_enable = gtk_toggle_button_new_with_label("SQL");
   gtk_widget_set_name(squelch_enable, "medium_toggle_button");
   gtk_widget_set_tooltip_text(squelch_enable, "Squelch ON / OFF");
   gtk_widget_set_size_request(squelch_enable, 90, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(squelch_enable, 5);
-  gtk_widget_set_margin_bottom(squelch_enable, 5);
+  gtk_widget_set_margin_top(squelch_enable, 0);
+  gtk_widget_set_margin_bottom(squelch_enable, 0);
   gtk_widget_set_margin_end(squelch_enable, 0);    // rechter Rand (Ende)
   gtk_widget_set_margin_start(squelch_enable, 0);    // linker Rand (Anfang)
   gtk_widget_set_halign(squelch_enable, GTK_ALIGN_START);
@@ -1749,10 +1759,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_label_set_justify(GTK_LABEL(binaural_label), GTK_JUSTIFY_CENTER);
   // end label definition
   gtk_widget_set_size_request(binaural_btn, box_right_width / 6, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(binaural_btn, 5);
-  gtk_widget_set_margin_bottom(binaural_btn, 5);
-  gtk_widget_set_margin_end(binaural_btn, 5);    // rechter Rand (Ende)
-  gtk_widget_set_margin_start(binaural_btn, 5);    // linker Rand (Anfang)
+  gtk_widget_set_margin_top(binaural_btn, 0);
+  gtk_widget_set_margin_bottom(binaural_btn, 0);
+  gtk_widget_set_margin_end(binaural_btn, 0);    // rechter Rand (Ende)
+  gtk_widget_set_margin_start(binaural_btn, 0);    // linker Rand (Anfang)
   gtk_widget_set_halign(binaural_btn, GTK_ALIGN_START);
   gtk_widget_set_valign(binaural_btn, GTK_ALIGN_CENTER);
   binaural_btn_signal_id = g_signal_connect(G_OBJECT(binaural_btn), "toggled", G_CALLBACK(binaural_toggle_cb), NULL);
@@ -1769,10 +1779,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_label_set_justify(GTK_LABEL(snb_label), GTK_JUSTIFY_CENTER);
   // end label definition
   gtk_widget_set_size_request(snb_btn, box_right_width / 6, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(snb_btn, 5);
-  gtk_widget_set_margin_bottom(snb_btn, 5);
-  gtk_widget_set_margin_end(snb_btn, 5);    // rechter Rand (Ende)
-  gtk_widget_set_margin_start(snb_btn, 5);    // linker Rand (Anfang)
+  gtk_widget_set_margin_top(snb_btn, 0);
+  gtk_widget_set_margin_bottom(snb_btn, 0);
+  gtk_widget_set_margin_end(snb_btn, 0);    // rechter Rand (Ende)
+  gtk_widget_set_margin_start(snb_btn, 0);    // linker Rand (Anfang)
   gtk_widget_set_halign(snb_btn, GTK_ALIGN_START);
   gtk_widget_set_valign(snb_btn, GTK_ALIGN_CENTER);
   snb_btn_signal_id = g_signal_connect(G_OBJECT(snb_btn), "toggled", G_CALLBACK(snb_toggle_cb), NULL);
@@ -1786,8 +1796,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   if (can_transmit && display_sliders) {
     //-----------------------------------------------------------------------------------------------------------
     // Hauptcontainer: horizontale Box für TUNE DRV + MicPreAmp
-    GtkWidget *box_Z3_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+    GtkWidget *box_Z3_left = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z3_left, box_left_width, widget_height);
+    gtk_box_set_spacing(GTK_BOX(box_Z3_left), 5);
     //-----------------------------------------------------------------------------------------------------------
     // tune_drive_button
     tune_drive_btn = gtk_toggle_button_new_with_label("TUNE");
@@ -1807,16 +1818,18 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // end label definition
     // Label breiter erzwingen
     gtk_widget_set_size_request(tune_drive_btn, 105, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(tune_drive_btn, 5);
-    gtk_widget_set_margin_bottom(tune_drive_btn, 5);
+    gtk_widget_set_margin_top(tune_drive_btn, 0);
+    gtk_widget_set_margin_bottom(tune_drive_btn, 0);
     gtk_widget_set_margin_end(tune_drive_btn, 0);    // rechter Rand (Ende)
     gtk_widget_set_halign(tune_drive_btn, GTK_ALIGN_START);
     gtk_widget_set_valign(tune_drive_btn, GTK_ALIGN_CENTER);
     tune_drive_btn_signal_id = g_signal_connect(G_OBJECT(tune_drive_btn), "toggled", G_CALLBACK(tune_drive_toggle_cb),
                                NULL);
+    gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------
     // tune_drive_scale
     tune_drive_scale = gtk_spin_button_new_with_range(1, 100, 1);
+    gtk_widget_set_name(tune_drive_scale, "front_spin_button");
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
@@ -1829,7 +1842,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed",
                                  G_CALLBACK(tune_drive_changed_cb), NULL);
     // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_scale, FALSE, FALSE, 0);
     //-----------------------------------------------------------------------------------------------------------
     split_btn = gtk_toggle_button_new_with_label("VFO\nSplit");
@@ -1841,9 +1853,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_label_set_justify(GTK_LABEL(split_label), GTK_JUSTIFY_CENTER);
     // end label definition
     gtk_widget_set_size_request(split_btn, 55, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(split_btn, 5);
-    gtk_widget_set_margin_bottom(split_btn, 5);
-    gtk_widget_set_margin_start(split_btn, 5);
+    gtk_widget_set_margin_top(split_btn, 0);
+    gtk_widget_set_margin_bottom(split_btn, 0);
+    gtk_widget_set_margin_start(split_btn, 3);
     gtk_widget_set_margin_end(split_btn, 0);
     gtk_widget_set_halign(split_btn, GTK_ALIGN_START);
     gtk_widget_set_valign(split_btn, GTK_ALIGN_CENTER);
@@ -1860,10 +1872,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_label_set_justify(GTK_LABEL(swap_label), GTK_JUSTIFY_CENTER);
     // end label definition
     gtk_widget_set_size_request(swap_btn, 55, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(swap_btn, 5);
-    gtk_widget_set_margin_bottom(swap_btn, 5);
-    gtk_widget_set_margin_start(swap_btn, 5);
-    gtk_widget_set_margin_end(swap_btn, 5);
+    gtk_widget_set_margin_top(swap_btn, 0);
+    gtk_widget_set_margin_bottom(swap_btn, 0);
+    gtk_widget_set_margin_start(swap_btn, 3);
+    gtk_widget_set_margin_end(swap_btn, 0);
     gtk_widget_set_halign(swap_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(swap_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(swap_btn, FALSE);  // fülle Box nicht nach rechts
@@ -1880,10 +1892,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_label_set_justify(GTK_LABEL(equal_label), GTK_JUSTIFY_CENTER);
     // end label definition
     gtk_widget_set_size_request(equal_btn, 55, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(equal_btn, 5);
-    gtk_widget_set_margin_bottom(equal_btn, 5);
-    gtk_widget_set_margin_start(equal_btn, 0);
-    gtk_widget_set_margin_end(equal_btn, 5);
+    gtk_widget_set_margin_top(equal_btn, 0);
+    gtk_widget_set_margin_bottom(equal_btn, 0);
+    gtk_widget_set_margin_start(equal_btn, 3);
+    gtk_widget_set_margin_end(equal_btn, 0);
     gtk_widget_set_halign(equal_btn, GTK_ALIGN_END);
     gtk_widget_set_valign(equal_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(equal_btn, FALSE);  // fülle Box nicht nach rechts
@@ -1901,8 +1913,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     if (n_input_devices > 0) {
       //-----------------------------------------------------------------------------------------------------------
       // Hauptcontainer: horizontale Box für TUNE DRV + MicPreAmp
-      GtkWidget *box_Z3_middle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+      GtkWidget *box_Z3_middle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
       gtk_widget_set_size_request(box_Z3_middle, box_middle_width, widget_height);
+      gtk_box_set_spacing(GTK_BOX(box_Z3_middle), 5);
       //-----------------------------------------------------------------------------------------------------------
       local_mic_button = gtk_toggle_button_new_with_label("Local\nMic");
       gtk_widget_set_name(local_mic_button, "front_toggle_button");
@@ -1927,7 +1940,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_tooltip_text(local_mic_input, "Select local audio input device");
       gtk_widget_set_margin_top(local_mic_input, 5);
       gtk_widget_set_margin_bottom(local_mic_input, 5);
-      gtk_widget_set_margin_end(local_mic_input, 0);  // rechter Rand (Ende)
+      gtk_widget_set_margin_start(local_mic_input, 3);
+      gtk_widget_set_margin_end(local_mic_input, 3);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(local_mic_input, FALSE);  // fülle Box nicht nach rechts
 
       for (int i = 0; i < n_input_devices; i++) {
@@ -1967,8 +1981,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     //-----------------------------------------------------------------------------------------------------------
     // Hauptcontainer: horizontale Box
-    GtkWidget *box_Z3_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
+    GtkWidget *box_Z3_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z3_right, box_right_width, widget_height);
+    gtk_box_set_spacing(GTK_BOX(box_Z3_right), 5);
     //-----------------------------------------------------------------------------------------------------------
     bbcompr_btn = gtk_toggle_button_new_with_label("Speech\nProc");
     gtk_widget_set_name(bbcompr_btn, "front_toggle_button");
@@ -1987,12 +2002,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     bbcompr_scale = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
+    gtk_widget_set_name(bbcompr_scale, "front_spin_button");
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
     gtk_widget_set_tooltip_text(bbcompr_scale, "Speech Processor Gain in db");
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(bbcompr_scale), (double)transmitter->compressor_level);
     gtk_widget_set_margin_top(bbcompr_scale, 5);
     gtk_widget_set_margin_bottom(bbcompr_scale, 5);
-    gtk_widget_set_margin_start(bbcompr_scale, 5);
+    gtk_widget_set_margin_start(bbcompr_scale, 3);
     gtk_widget_set_margin_end(bbcompr_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(bbcompr_scale, FALSE);  // fülle Box nicht nach rechts
     bbcompr_scale_signal_id = g_signal_connect(G_OBJECT(bbcompr_scale), "value_changed",
@@ -2012,18 +2028,20 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(lev_btn, 55, -1);  // z.B. 100px
     gtk_widget_set_margin_top(lev_btn, 0);
     gtk_widget_set_margin_bottom(lev_btn, 0);
-    gtk_widget_set_margin_start(lev_btn, 10);
+    gtk_widget_set_margin_start(lev_btn, 0);
     gtk_widget_set_halign(lev_btn, GTK_ALIGN_START);
     gtk_widget_set_valign(lev_btn, GTK_ALIGN_CENTER);
     lev_btn_signal_id = g_signal_connect(lev_btn, "toggled", G_CALLBACK(lev_btn_toggle_cb), NULL);
     //-------------------------------------------------------------------------------------------
     lev_scale = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    gtk_widget_set_name(lev_scale, "front_spin_button");
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(lev_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(lev_scale), TRUE);
     gtk_widget_set_tooltip_text(lev_scale, "Leveler Gain in db");
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(lev_scale), (double)transmitter->lev_gain);
     gtk_widget_set_margin_top(lev_scale, 5);
     gtk_widget_set_margin_bottom(lev_scale, 5);
+    gtk_widget_set_margin_start(lev_scale, 3);
     gtk_widget_set_margin_end(lev_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(lev_scale, FALSE);  // fülle Box nicht nach rechts
     lev_scale_signal_id = g_signal_connect(G_OBJECT(lev_scale), "value_changed", G_CALLBACK(lev_scale_changed_cb), NULL);
