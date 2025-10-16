@@ -393,24 +393,64 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 
   case  GDK_KEY_d:
   case  GDK_KEY_Left:
-    if (event->state & GDK_SHIFT_MASK) {
-      // vfo_id_step(1 - active_receiver->id, -10); // for VFO B
+#ifdef __APPLE__
+
+    // Shift + Option
+    if ( (event->state & (GDK_SHIFT_MASK | GDK_MOD1_MASK)) == (GDK_SHIFT_MASK | GDK_MOD1_MASK) ) {
+      vfo_id_step(1 - active_receiver->id, -10);
+    }
+    // nur Shift
+    else if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
+      vfo_step(-10);
+    }
+    // nur Option
+    else if ( (event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK ) {
+      vfo_id_step(1 - active_receiver->id, -1);
+    } else {
+      vfo_step(-1);
+    }
+
+#else
+
+    // Nicht-macOS: nur Shift beschleunigt
+    if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
       vfo_step(-10);
     } else {
       vfo_step(-1);
     }
 
+#endif
     break;
 
   case GDK_KEY_u:
   case GDK_KEY_Right:
-    if (event->state & GDK_SHIFT_MASK) {
-      // vfo_id_step(1 - active_receiver->id, 10); // for VFO B
+#ifdef __APPLE__
+
+    // Shift + Option
+    if ( (event->state & (GDK_SHIFT_MASK | GDK_MOD1_MASK)) == (GDK_SHIFT_MASK | GDK_MOD1_MASK) ) {
+      vfo_id_step(1 - active_receiver->id, 10);
+    }
+    // nur Shift
+    else if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
+      vfo_step(10);
+    }
+    // nur Option
+    else if ( (event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK ) {
+      vfo_id_step(1 - active_receiver->id, 1);
+    } else {
+      vfo_step(1);
+    }
+
+#else
+
+    // Nicht-macOS: nur Shift beschleunigt
+    if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
       vfo_step(10);
     } else {
       vfo_step(1);
     }
 
+#endif
     break;
 
   //

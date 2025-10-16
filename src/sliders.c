@@ -1130,6 +1130,11 @@ void update_slider_split_btn() {
 static void split_btn_toggle_cb(GtkWidget *widget, gpointer data) {
   int new = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_set_split(new);
+
+  if (new == 1) {
+    vfo_a_to_b();
+  }
+
   update_slider_split_btn();
 }
 
@@ -1846,7 +1851,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-----------------------------------------------------------------------------------------------------------
     split_btn = gtk_toggle_button_new_with_label("VFO\nSplit");
     gtk_widget_set_name(split_btn, "medium_toggle_button");
-    gtk_widget_set_tooltip_text(split_btn, "Enable Split");
+    gtk_widget_set_tooltip_text(split_btn, "Enable split mode:\n\n"
+                                           "In split mode with a single receiver:\n"
+                                           "RX is on VFO A and TX is on VFO B.\n\n"
+                                           "In split mode with two receivers:\n"
+                                           "RX1 is for RX and RX2 is for TX.\n\n"
+                                           "Note: When split mode is activated, VFO B is set to VFO A once.");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(split_btn), split);
     // begin label definition inside button
     split_label = gtk_bin_get_child(GTK_BIN(split_btn));
