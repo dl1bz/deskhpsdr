@@ -376,21 +376,21 @@ void discovery() {
     if (discover_only_stemlab) {
       status_text("Stemlab ... Looking for SDR apps");
     } else {
-      status_text("Protocol 1 ... Discovering Devices (Wait for up to 10 seconds)");
+      status_text("Protocol 1 ... Discovering Devices (Wait for up to 5 seconds)");
     }
 
     old_discovery();
   }
 
   if (enable_protocol_2 && !discover_only_stemlab) {
-    status_text("Protocol 2 ... Discovering Devices (Wait for up to 10 seconds)");
+    status_text("Protocol 2 ... Discovering Devices (Wait for up to 5 seconds)");
     new_discovery();
   }
 
 #ifdef SOAPYSDR
 
   if (enable_soapy_protocol && !discover_only_stemlab) {
-    status_text("SoapySDR ... Discovering Devices (Wait for up to 10 seconds)");
+    status_text("SoapySDR ... Discovering Devices (Wait for up to 5 seconds)");
     soapy_discovery();
   }
 

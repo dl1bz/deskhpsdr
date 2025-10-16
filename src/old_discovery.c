@@ -388,7 +388,7 @@ static gpointer discover_receive_thread(gpointer data) {
   struct timeval tv;
   int i;
   t_print("discover_receive_thread\n");
-  tv.tv_sec = 10;  // Increased timeout for remote connections
+  tv.tv_sec = 5;  // Increased timeout for remote connections
   tv.tv_usec = 0;
   setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
   len = sizeof(addr);
