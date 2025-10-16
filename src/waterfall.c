@@ -299,7 +299,6 @@ void waterfall_update(RECEIVER *rx) {
     if (!freq_changed) {
       memmove(&pixels[rowstride], pixels, (height - 1)*rowstride);
       float soffset;
-      float average;
       unsigned char *p;
       p = pixels;
       samples = rx->pixel_samples;
@@ -321,15 +320,15 @@ void waterfall_update(RECEIVER *rx) {
         soffset += (float)(12 * rx->alex_attenuation - 18 * rx->preamp - 18 * rx->dither);
       }
 
-      average = 0.0F;
-
-      for (int i = 0; i < width; i++) {
-        average += (samples[i + pan] + soffset);
-      }
-
       if (rx->waterfall_automatic) {
-        wf_low = average / (float)width;
-        wf_high = wf_low + 50.0F;
+        float average = 0.0F;
+
+        for (int i = 0; i < width; i++) {
+          average += samples[i];
+        }
+
+        wf_low = (average / (float)width) + soffset - 5.0F;
+        wf_high = wf_low + 55.0F;
       } else {
         wf_low  = (float) rx->waterfall_low;
         wf_high = (float) rx->waterfall_high;

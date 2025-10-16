@@ -163,7 +163,6 @@ static void discover(struct ifaddrs* iface, int discflag) {
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(radio_port);
-
     // Try to resolve hostname or IP address
     struct addrinfo hints, *result = NULL;
     memset(&hints, 0, sizeof(hints));

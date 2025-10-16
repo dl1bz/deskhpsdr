@@ -218,11 +218,12 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
   // Accept both IP addresses and hostnames
   // Try to validate as IP first, but if it fails, accept it anyway (could be hostname)
   int is_valid_ip = (inet_pton(AF_INET, cp, &(sa.sin_addr)) == 1);
-
   // Additional check: hostname should contain valid characters
   int is_valid_hostname = 1;
+
   for (int i = 0; i < len; i++) {
     char c = cp[i];
+
     if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
           (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '_')) {
       is_valid_hostname = 0;
@@ -305,12 +306,15 @@ void discovery() {
 
   if (fp) {
     char port_buf[8];
+
     if (fgets(port_buf, sizeof(port_buf), fp)) {
       int port = atoi(port_buf);
+
       if (port >= 1 && port <= 65535) {
         radio_port = port;
       }
     }
+
     fclose(fp);
   }
 
@@ -633,7 +637,7 @@ void discovery() {
   tcpaddr = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(tcpaddr), IPADDR_LEN);
   gtk_widget_set_tooltip_text(tcpaddr, "Input IP Address or Hostname\n"
-                                      "(Hostname will be resolved via DNS)");
+                                       "(Hostname will be resolved via DNS)");
   gtk_grid_attach(GTK_GRID(grid), tcpaddr, 2, row, 1, 1);
   gtk_entry_set_text(GTK_ENTRY(tcpaddr), ipaddr_radio);
   g_signal_connect (tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
@@ -654,7 +658,7 @@ void discovery() {
   snprintf(port_str, sizeof(port_str), "%d", radio_port);
   gtk_entry_set_text(GTK_ENTRY(tcpport), port_str);
   gtk_widget_set_tooltip_text(tcpport, "Input Portnumber\n"
-                                      "(default Port 1024)");
+                                       "(default Port 1024)");
   gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
   g_signal_connect (tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
   gtk_container_add (GTK_CONTAINER (content), grid);
