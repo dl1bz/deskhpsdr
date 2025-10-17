@@ -458,6 +458,7 @@ int process_action(void *data) {
 
       rx_set_agc(active_receiver);
       g_idle_add(ext_vfo_update, NULL);
+      update_slider_agc_btn();
     }
 
     break;

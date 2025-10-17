@@ -124,8 +124,20 @@ static GtkWidget *swap_btn;
 static GtkWidget *swap_label;
 static GtkWidget *equal_btn;
 static GtkWidget *equal_label;
+static GtkWidget *agc_label;
+static GtkWidget *agc_btn;
+static gulong agc_btn_signal_id;
 
 char txpwr_ttip_txt[64];
+
+// --- AGC Labels ---
+static const char *agc_labels[] = {
+  "AGC-OFF",
+  "AGC-L",
+  "AGC-S",
+  "AGC-M",
+  "AGC-F"
+};
 
 //
 // general tool for displaying a pop-up slider. This can also be used for a value for which there
@@ -1154,6 +1166,27 @@ static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
   return;
 }
 
+void update_slider_agc_btn() {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON (agc_btn), agc_btn_signal_id);
+    gtk_button_set_label(GTK_BUTTON(agc_btn), agc_labels[active_receiver->agc]);
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (agc_btn), agc_btn_signal_id);
+    gtk_widget_queue_draw(agc_btn);
+  }
+}
+
+static void agc_btn_pressed_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->agc++;
+
+  if (active_receiver->agc >= AGC_LAST) {
+    active_receiver->agc = 0;
+  }
+
+  rx_set_agc(active_receiver);
+  gtk_button_set_label(GTK_BUTTON(agc_btn), agc_labels[active_receiver->agc]);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 #if defined (__AUTOG__)
 static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
@@ -1313,19 +1346,27 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_size_request(box_Z1_middle, box_middle_width, widget_height);
   gtk_box_set_spacing(GTK_BOX(box_Z1_middle), 5);
   //-----------------------------------------------------------------------------------------------------------
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  agc_gain_label = gtk_label_new("AGC");
-  gtk_widget_set_name(agc_gain_label, "boldlabel_border_blue");
-  // Label breiter erzwingen
-  gtk_widget_set_size_request(agc_gain_label, 90, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(agc_gain_label, 0);
-  gtk_widget_set_margin_bottom(agc_gain_label, 0);
-  gtk_widget_set_margin_end(agc_gain_label, 0);    // rechter Rand (Ende)
-  gtk_widget_set_margin_start(agc_gain_label, 0);    // linker Rand (Anfang)
-  gtk_widget_set_halign(agc_gain_label, GTK_ALIGN_START);
-  gtk_widget_set_valign(agc_gain_label, GTK_ALIGN_CENTER);
+  agc_btn = gtk_button_new_with_label(agc_labels[active_receiver->agc]);
+  gtk_widget_set_name(agc_btn, "medium_toggle_button");
+  gtk_widget_set_tooltip_text(agc_btn, "Set AGC speed:\n"
+                                       "OFF → LONG → SLOW → MIDDLE → FAST");
+  // begin label definition inside button
+  agc_label = gtk_bin_get_child(GTK_BIN(agc_btn));
+  gtk_label_set_justify(GTK_LABEL(agc_label), GTK_JUSTIFY_CENTER);
+  // end label definition
+  gtk_widget_set_size_request(agc_btn, 90, -1);  // z.B. 100px
+  gtk_widget_set_margin_top(agc_btn, 0);
+  gtk_widget_set_margin_bottom(agc_btn, 0);
+  gtk_widget_set_margin_start(agc_btn, 0);
+  gtk_widget_set_margin_end(agc_btn, 0);
+  gtk_widget_set_halign(agc_btn, GTK_ALIGN_START);
+  gtk_widget_set_valign(agc_btn, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(agc_btn, FALSE);  // fülle Box nicht nach rechts
+  agc_btn_signal_id = g_signal_connect(agc_btn, "pressed", G_CALLBACK(agc_btn_pressed_cb), NULL);
+  // g_signal_connect(agc_btn, "released", G_CALLBACK(agc_btn_pressed_cb), NULL);
   // Widgets in Box packen
-  gtk_box_pack_start(GTK_BOX(box_Z1_middle), agc_gain_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(box_Z1_middle), agc_btn, FALSE, FALSE, 0);
+  //-----------------------------------------------------------------------------------------------------------
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (optimize_for_touchscreen) {
