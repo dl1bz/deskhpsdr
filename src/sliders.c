@@ -1627,31 +1627,35 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // g_signal_connect(agc_btn, "released", G_CALLBACK(agc_btn_pressed_cb), NULL);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
+
     //-------------------------------------------------------------------------------------------
-    ps_btn = gtk_toggle_button_new_with_label("PS");
-    // gtk_widget_set_name(snb_btn, "front_toggle_button");
-    gtk_widget_set_name(ps_btn, "medium_toggle_button");
-    gtk_widget_set_tooltip_text(ps_btn, "Pure Signal ON / OFF\n"
-                                        "(aka Digital Predistortion [DPD] for RF)\n"
-                                        "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
-                                        "Please check first PS Menu for correct settings.\n"
-                                        "When using an external PA, an RF sampler is required\n"
-                                        "to provide RF signal feedback to the SDR.");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ps_btn), transmitter->puresignal);
-    // begin label definition inside button
-    ps_label = gtk_bin_get_child(GTK_BIN(ps_btn));
-    gtk_label_set_justify(GTK_LABEL(ps_label), GTK_JUSTIFY_CENTER);
-    // end label definition
-    gtk_widget_set_size_request(ps_btn, box_right_width / 6, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(ps_btn, 0);
-    gtk_widget_set_margin_bottom(ps_btn, 0);
-    gtk_widget_set_margin_end(ps_btn, 0);    // rechter Rand (Ende)
-    gtk_widget_set_margin_start(ps_btn, 0);    // linker Rand (Anfang)
-    gtk_widget_set_halign(ps_btn, GTK_ALIGN_START);
-    gtk_widget_set_valign(ps_btn, GTK_ALIGN_CENTER);
-    ps_btn_signal_id = g_signal_connect(G_OBJECT(ps_btn), "toggled", G_CALLBACK(ps_toggle_cb), NULL);
-    // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z1_right), ps_btn, FALSE, FALSE, 0);
+    if (can_transmit) {
+      ps_btn = gtk_toggle_button_new_with_label("PS");
+      // gtk_widget_set_name(snb_btn, "front_toggle_button");
+      gtk_widget_set_name(ps_btn, "medium_toggle_button");
+      gtk_widget_set_tooltip_text(ps_btn, "Pure Signal ON / OFF\n"
+                                          "(aka Digital Predistortion [DPD] for RF)\n"
+                                          "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
+                                          "Please check first PS Menu for correct settings.\n"
+                                          "When using an external PA, an RF sampler is required\n"
+                                          "to provide RF signal feedback to the SDR.");
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ps_btn), transmitter->puresignal);
+      // begin label definition inside button
+      ps_label = gtk_bin_get_child(GTK_BIN(ps_btn));
+      gtk_label_set_justify(GTK_LABEL(ps_label), GTK_JUSTIFY_CENTER);
+      // end label definition
+      gtk_widget_set_size_request(ps_btn, box_right_width / 6, -1);  // z.B. 100px
+      gtk_widget_set_margin_top(ps_btn, 0);
+      gtk_widget_set_margin_bottom(ps_btn, 0);
+      gtk_widget_set_margin_end(ps_btn, 0);    // rechter Rand (Ende)
+      gtk_widget_set_margin_start(ps_btn, 0);    // linker Rand (Anfang)
+      gtk_widget_set_halign(ps_btn, GTK_ALIGN_START);
+      gtk_widget_set_valign(ps_btn, GTK_ALIGN_CENTER);
+      ps_btn_signal_id = g_signal_connect(G_OBJECT(ps_btn), "toggled", G_CALLBACK(ps_toggle_cb), NULL);
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z1_right), ps_btn, FALSE, FALSE, 0);
+    }
+
     //-------------------------------------------------------------------------------------------
     gtk_grid_attach(GTK_GRID(sliders), box_Z1_right, 2, 0, 1, 1);  // Zeile 0 Spalte 2
   } else {
