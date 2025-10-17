@@ -147,6 +147,7 @@ enum ACTION {
   PS,
   MENU_PS,
   PTT,
+  QSPLT,
   RCL0,
   RCL1,
   RCL2,

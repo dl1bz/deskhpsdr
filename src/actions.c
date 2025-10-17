@@ -184,6 +184,7 @@ ACTION_TABLE ActionTable[] = {
   {PS,                  "PS On/Off",            "PST",          MIDI_KEY   | CONTROLLER_SWITCH},
   {MENU_PS,             "PS Menu",              "PS",           MIDI_KEY   | CONTROLLER_SWITCH},
   {PTT,                 "PTT",                  "PTT",          MIDI_KEY   | CONTROLLER_SWITCH},
+  {QSPLT,               "Quick Split",          "QSPLT",        MIDI_KEY   | CONTROLLER_SWITCH},
   {RCL0,                "Rcl 0",                "RCL0",         MIDI_KEY   | CONTROLLER_SWITCH},
   {RCL1,                "Rcl 1",                "RCL1",         MIDI_KEY   | CONTROLLER_SWITCH},
   {RCL2,                "Rcl 2",                "RCL2",         MIDI_KEY   | CONTROLLER_SWITCH},
@@ -1442,6 +1443,28 @@ int process_action(void *data) {
   case PTT:
     if (a->mode == PRESSED || a->mode == RELEASED) {
       radio_mox_update(a->mode == PRESSED);
+    }
+
+    break;
+
+  case QSPLT:
+    if (a->mode == PRESSED) {
+      long long f_vfo_a, f_vfo_b;
+      int _mode = vfo[active_receiver->id].mode;
+      f_vfo_a = vfo[VFO_A].ctun ? vfo[VFO_A].ctun_frequency : vfo[VFO_A].frequency;
+      f_vfo_b = vfo[VFO_B].ctun ? vfo[VFO_B].ctun_frequency : vfo[VFO_B].frequency;
+
+      if (_mode == modeUSB || _mode == modeLSB || _mode == modeDSB) {
+        f_vfo_b = f_vfo_a + 5000.0;
+      } else if (_mode == modeCWL || _mode == modeCWU) {
+        f_vfo_b = f_vfo_a + 1000.0;
+      }
+
+      radio_set_split(1);
+      vfo_a_to_b();
+      vfo_set_frequency(VFO_B, f_vfo_b);
+      g_idle_add(ext_vfo_update, NULL);
+      t_print("QRG: VFO_A = %lld VFO_B = %lld\n", f_vfo_a, f_vfo_b);
     }
 
     break;
