@@ -794,7 +794,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   t_print("create grid\n");
   topgrid = gtk_grid_new();
   // we make the first startup windows smaller, looks better
-  gtk_widget_set_size_request(topgrid, display_width * 0.75, display_height * 0.6);
+  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.7);
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing (GTK_GRID(topgrid), 10);
@@ -804,12 +804,14 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_grid_attach(GTK_GRID(topgrid), trx_logo_widget, 0, 0, 1, 2);
   t_print("create pi label\n");
   snprintf(text, 2048,
-           "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
-           "deskHPSDR by Heiko Amft, DL1BZ (dl1bz@bzsax.de)");
-  GtkWidget *pi_label = gtk_label_new(text);
-  gtk_widget_set_name(pi_label, "big_txt");
-  gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), pi_label, 1, 0, 3, 1);
+           "\n"
+           "deskHPSDR by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n\n"
+           "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
+           "(+ limited Soapy-API support)\n\n");
+  GtkWidget *deskhpsdr_label = gtk_label_new(text);
+  gtk_widget_set_name(deskhpsdr_label, "big_txt");
+  gtk_widget_set_halign(deskhpsdr_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_label, 1, 0, 3, 1);
   t_print("create build label\n");
   snprintf(text, 2048,
            "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nWDSP version: %d.%02d\nUsed Audio module: %s\nWorking Directory: %s",

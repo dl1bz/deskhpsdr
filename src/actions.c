@@ -1259,6 +1259,10 @@ int process_action(void *data) {
       }
 
       update_noise();
+
+      if (display_sliders && have_rx_gain) {
+        update_slider_nr_btn();
+      }
     }
 
     break;
@@ -1436,6 +1440,10 @@ int process_action(void *data) {
       }
 
 #endif
+
+      if (display_sliders && have_rx_gain) {
+        update_slider_ps_btn();
+      }
     }
 
     break;

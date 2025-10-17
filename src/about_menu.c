@@ -110,7 +110,8 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_halign(hpsdr_logo_widget, GTK_ALIGN_CENTER);  // Horizontal zentrieren
   gtk_widget_set_valign(hpsdr_logo_widget, GTK_ALIGN_START);   // Vertikal oben ausrichten
   gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
-  snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2 and SOAPY-API\n"
+  snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
+                       "(+ limited Soapy-API support)\n"
                        "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
                        "(contains code portions of piHPSDR by G0ORX/N6LYT and DL1YCF)\n\n"
                        "    Credits:\n"
