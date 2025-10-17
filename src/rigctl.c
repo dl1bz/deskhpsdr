@@ -3018,6 +3018,10 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         receiver[0]->agc = agc;
         rx_set_agc(receiver[0]);
         g_idle_add(ext_vfo_update, NULL);
+
+        if (display_sliders) {
+          update_slider_agc_btn();
+        }
       }
 
       break;
@@ -5663,6 +5667,10 @@ int parse_cmd(void *data) {
         receiver[0]->agc = atoi(&command[2]) / 5;
         rx_set_agc(receiver[0]);
         g_idle_add(ext_vfo_update, NULL);
+
+        if (display_sliders) {
+          update_slider_agc_btn();
+        }
       }
 
       break;

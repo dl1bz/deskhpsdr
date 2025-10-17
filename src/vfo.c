@@ -940,6 +940,10 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
       update_slider_local_mic_button();
     }
   }
+
+  if (display_sliders) {
+    update_slider_agc_btn();
+  }
 }
 
 void vfo_band_changed(int id, int b) {
