@@ -312,17 +312,19 @@ static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
 }
 
 static void rxtx_filter_cb(GtkToggleButton *btn, gpointer user_data) {
+  if (can_transmit) {
 #if defined (__CPYMODE__)
-  int mode = vfo_get_tx_mode();
+    int mode = vfo_get_tx_mode();
 #endif
-  int v = gtk_toggle_button_get_active(btn) ? 1 : 0;
-  transmitter->use_rx_filter = v;
-  tx_set_filter(transmitter);     // Filter neu setzen
+    int v = gtk_toggle_button_get_active(btn) ? 1 : 0;
+    transmitter->use_rx_filter = v;
+    tx_set_filter(transmitter);     // Filter neu setzen
 #if defined (__CPYMODE__)
-  mode_settings[mode].use_rx_filter = v;
-  copy_mode_settings(mode);
+    mode_settings[mode].use_rx_filter = v;
+    copy_mode_settings(mode);
 #endif
-  g_idle_add(ext_vfo_update, NULL);
+    g_idle_add(ext_vfo_update, NULL);
+  }
 }
 
 void filter_menu(GtkWidget *parent) {
@@ -354,7 +356,7 @@ void filter_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 2, 1);
 
   //-----------------------------------------------------------------------------------------
-  if (m != modeCWL && m != modeCWU) {
+  if (can_transmit && m != modeCWL && m != modeCWU) {
     rxtx_filter_btn = gtk_check_button_new_with_label("Set TX = RX filter edges");
     gtk_widget_set_name(rxtx_filter_btn, "boldlabel_blue");
     gtk_widget_set_tooltip_text(rxtx_filter_btn,
@@ -612,7 +614,7 @@ void filter_menu(GtkWidget *parent) {
     // Add a checkbox for the CW audio peak filter, if the mode is CWU/CWL
     //
     if (m == modeCWU || m == modeCWL) {
-      if (transmitter->use_rx_filter) { // sanity check, RX = TX filter edges make no sense in mode CW
+      if (can_transmit && transmitter->use_rx_filter) { // sanity check, RX = TX filter edges make no sense in mode CW
 #if defined (__CPYMODE__)
         int current_tx_mode = vfo_get_tx_mode();
 #endif
