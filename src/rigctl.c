@@ -507,63 +507,46 @@ static void* autogain_thread_function(void* arg) {
   return NULL;
 }
 
-/*
 void launch_autogain_hl2() {
-  if (autogain_enabled) {
-    if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
-      t_perror("---- ERROR: cannot start autogain_thread ----\n"); // return EXIT_FAILURE;
-    }
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if (autogain_enabled) {
+      if (!autogain_thread_running) {
+        autogain_thread_running = 1;
 
-    t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
-  } else {
-    pthread_cancel(autogain_thread);
-    t_print("---- Shutdown HL2 AutoGain Thread ----\n");
-  }
-}
-*/
-void launch_autogain_hl2() {
-  if (autogain_enabled) {
-    if (!autogain_thread_running) {
-      autogain_thread_running = 1;
-
-      if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
-        t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
-      } else {
-        t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
+        if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
+          t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
+        } else {
+          t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
+        }
+      }
+    } else {
+      if (autogain_thread_running) {
+        autogain_thread_running = 0;           // Stop-Signal setzen
+        // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten
+        pthread_cancel(autogain_thread);
+        t_print("---- Shutdown HL2 AutoGain Thread ----\n");
       }
     }
-  } else {
+  }
+}
+
+void restart_autogain_hl2() {
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     if (autogain_thread_running) {
       autogain_thread_running = 0;           // Stop-Signal setzen
       // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten
       pthread_cancel(autogain_thread);
-      t_print("---- Shutdown HL2 AutoGain Thread ----\n");
+      t_print("---- Stop HL2 AutoGain Thread ----\n");
     }
-  }
-}
 
-/*
-void restart_autogain_hl2() {
-  pthread_cancel(autogain_thread);
-  t_print("%s\n", __FUNCTION__);
-  launch_autogain_hl2();
-}
-*/
-void restart_autogain_hl2() {
-  if (autogain_thread_running) {
-    autogain_thread_running = 0;           // Stop-Signal setzen
-    // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten
-    pthread_cancel(autogain_thread);
-    t_print("---- Stop HL2 AutoGain Thread ----\n");
-  }
+    autogain_thread_running = 1;             // Neustart vorbereiten
 
-  autogain_thread_running = 1;             // Neustart vorbereiten
-
-  if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
-    autogain_thread_running = 0;
-    t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
-  } else {
-    t_print("---- Restart HL2 AutoGain Thread ----\n");
+    if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
+      autogain_thread_running = 0;
+      t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
+    } else {
+      t_print("---- Restart HL2 AutoGain Thread ----\n");
+    }
   }
 }
 

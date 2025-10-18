@@ -1537,31 +1537,48 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-----------------------------------------------------------------------------------------------------------
 #if defined (__AUTOG__)
 
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && can_transmit) {
       autogain_btn = gtk_toggle_button_new_with_label("RxPGA");
       gtk_widget_set_tooltip_text(autogain_btn, "AutoGain ON/OFF");
+      gtk_widget_set_name(autogain_btn, "medium_toggle_button");
+      // Label breiter erzwingen
+      gtk_widget_set_size_request(autogain_btn, 90, -1);  // z.B. 100px
+      gtk_widget_set_margin_top(autogain_btn, 0);
+      gtk_widget_set_margin_bottom(autogain_btn, 0);
+      gtk_widget_set_margin_end(autogain_btn, 0);    // rechter Rand (Ende)
+      gtk_widget_set_margin_start(autogain_btn, 0);    // linker Rand (Anfang)
+      gtk_widget_set_halign(autogain_btn, GTK_ALIGN_START);
+      gtk_widget_set_valign(autogain_btn, GTK_ALIGN_CENTER);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
+      // begin label definition inside button
+      rf_gain_label = gtk_bin_get_child(GTK_BIN(autogain_btn));
+      g_signal_connect(autogain_btn, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z1_right), autogain_btn, FALSE, FALSE, 0);
     } else {
-      autogain_btn = gtk_toggle_button_new_with_label("RF Gain");
+      // if not HL2 make sure, that all autogain is OFF
+      if (autogain_enabled || autogain_time_enabled) {
+        autogain_enabled = 0;
+        autogain_time_enabled = 0;
+      }
+
+      rf_gain_label = gtk_label_new("RF Gain");
+      gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
+      // Label breiter erzwingen
+      gtk_widget_set_size_request(rf_gain_label, 90, -1);  // z.B. 100px
+      gtk_widget_set_margin_top(rf_gain_label, 0);
+      gtk_widget_set_margin_bottom(rf_gain_label, 0);
+      gtk_widget_set_margin_end(rf_gain_label, 0);    // rechter Rand (Ende)
+      gtk_widget_set_margin_start(rf_gain_label, 0);    // linker Rand (Anfang)
+      gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_START);
+      gtk_widget_set_valign(rf_gain_label, GTK_ALIGN_CENTER);
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z1_right), rf_gain_label, FALSE, FALSE, 0);
     }
 
-    gtk_widget_set_name(autogain_btn, "medium_toggle_button");
-    // Label breiter erzwingen
-    gtk_widget_set_size_request(autogain_btn, 90, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(autogain_btn, 0);
-    gtk_widget_set_margin_bottom(autogain_btn, 0);
-    gtk_widget_set_margin_end(autogain_btn, 0);    // rechter Rand (Ende)
-    gtk_widget_set_margin_start(autogain_btn, 0);    // linker Rand (Anfang)
-    gtk_widget_set_halign(autogain_btn, GTK_ALIGN_START);
-    gtk_widget_set_valign(autogain_btn, GTK_ALIGN_CENTER);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
-    // begin label definition inside button
-    rf_gain_label = gtk_bin_get_child(GTK_BIN(autogain_btn));
-    g_signal_connect(autogain_btn, "toggled", G_CALLBACK(autogain_enable_cb), NULL);
-    // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z1_right), autogain_btn, FALSE, FALSE, 0);
 #else
 
-    if (device == DEVICE_HERMES_LITE2) {
+    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       rf_gain_label = gtk_label_new("RxPGA");
     } else {
       rf_gain_label = gtk_label_new("RF Gain");
