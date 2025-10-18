@@ -126,14 +126,19 @@ CFLAGS += -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprec
 
 LINK?=$(CC)
 
-# ifeq ($(UNAME_S),Darwin)
+ifeq ($(UNAME_S),Darwin)
 # SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
 # ARCH_FLAGS := -arch arm64 -arch x86_64
 # CFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT) -I./src -I/usr/local/include
 # LDFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT)
+LDFLAGS += -Wl,-rpath,/usr/local/lib
 # CFLAGS += -mmacosx-version-min=13.0
 # LINK   += -mmacosx-version-min=13.0
-# endif
+endif
+
+ifeq ($(UNAME_S),Linux)
+LDFLAGS += -Wl,--enable-new-dtags -Wl,-rpath,/usr/local/lib
+endif
 
 #
 # The "official" way to compile+link with pthreads is now to use the -pthread option
