@@ -1264,7 +1264,7 @@ static void agc_btn_pressed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void update_slider_ps_btn() {
-  if (display_sliders && have_rx_gain) {
+  if (can_transmit && display_sliders && have_rx_gain) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (ps_btn), ps_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ps_btn), transmitter->puresignal);
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON (ps_btn), ps_btn_signal_id);
@@ -1629,7 +1629,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
 
     //-------------------------------------------------------------------------------------------
-    if (can_transmit) {
+    if (can_transmit && display_sliders) {
       ps_btn = gtk_toggle_button_new_with_label("PS");
       // gtk_widget_set_name(snb_btn, "front_toggle_button");
       gtk_widget_set_name(ps_btn, "medium_toggle_button");
@@ -1654,6 +1654,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       ps_btn_signal_id = g_signal_connect(G_OBJECT(ps_btn), "toggled", G_CALLBACK(ps_toggle_cb), NULL);
       // Widgets in Box packen
       gtk_box_pack_start(GTK_BOX(box_Z1_right), ps_btn, FALSE, FALSE, 0);
+    } else {
+      ps_btn = NULL;
+      ps_label = NULL;
     }
 
     //-------------------------------------------------------------------------------------------
@@ -1662,8 +1665,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     rf_gain_label = NULL;
     autogain_btn = NULL;
     rf_gain_scale = NULL;
-    ps_btn = NULL;
-    ps_label = NULL;
   }
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
