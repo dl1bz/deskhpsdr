@@ -68,6 +68,7 @@ static GtkWidget *af_gain_scale;
 static gulong    af_gain_btn_signal_id;
 static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
+static gulong rf_gain_scale_signal_id;
 static GtkWidget *attenuation_label = NULL;
 static GtkWidget *attenuation_scale = NULL;
 static GtkWidget *c25_box = NULL;
@@ -1067,7 +1068,7 @@ void update_slider_lev_scale(gboolean show_widget) {
 }
 
 void update_slider_autogain_btn() {
-  if (display_sliders) {
+  if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_btn), autogain_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_btn), autogain_enabled);
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON (autogain_btn), autogain_btn_signal_id);
@@ -1336,6 +1337,23 @@ void show_diversity_phase() {
   show_popup_slider(DIV_PHASE, 0, -180.0, 180.0, 0.1, div_phase, "Diversity Phase");
 }
 
+void update_rf_gain_scale_soapy() {
+#ifdef SOAPYSDR
+
+  if (display_sliders && device == SOAPYSDR_USB_DEVICE) {
+    if (radio->info.soapy.rx_gains > 0) {
+      int soapy_gain = soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[0]);
+      g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_gain_scale_signal_id);
+      gtk_range_set_value (GTK_RANGE(rf_gain_scale), (double)soapy_gain);
+      g_signal_handler_unblock(G_OBJECT(rf_gain_scale), rf_gain_scale_signal_id);
+      gtk_widget_queue_draw(rf_gain_scale);
+      t_print("%s: soapy_gain = %d\n", __FUNCTION__, soapy_gain);
+    }
+  }
+
+#endif
+}
+
 // will ce called from radio.c and initializing the slider surface depend from the selected screen size
 GtkWidget *sliders_init(int my_width, int my_height) {
   // width = my_width - 50;
@@ -1562,7 +1580,18 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         autogain_time_enabled = 0;
       }
 
+      autogain_btn = NULL;
+#ifdef SOAPYSDR
+
+      if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
+        rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[0]);
+      } else {
+        rf_gain_label = gtk_label_new("RF Gain");
+      }
+
+#else
       rf_gain_label = gtk_label_new("RF Gain");
+#endif
       gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
       // Label breiter erzwingen
       gtk_widget_set_size_request(rf_gain_label, 90, -1);  // z.B. 100px
@@ -1580,6 +1609,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       rf_gain_label = gtk_label_new("RxPGA");
+#ifdef SOAPYSDR
+    } else if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
+      rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[0]);
+#endif
     } else {
       rf_gain_label = gtk_label_new("RF Gain");
     }
@@ -1605,7 +1638,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
     }
 
-    g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed", G_CALLBACK(rf_gain_value_changed_cb), NULL);
+    rf_gain_scale_signal_id = g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed",
+                              G_CALLBACK(rf_gain_value_changed_cb), NULL);
     gtk_widget_set_margin_start(rf_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_margin_end(rf_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(rf_gain_scale, FALSE);  // fülle Box nicht nach rechts

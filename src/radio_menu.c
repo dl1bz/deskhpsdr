@@ -89,6 +89,7 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
     adc[active_receiver->adc].gain = gain;
     soapy_protocol_set_gain_element(active_receiver, (char *)gtk_widget_get_name(widget), (int) gain);
+    update_rf_gain_scale_soapy();
   }
 }
 
