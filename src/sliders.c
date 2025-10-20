@@ -508,7 +508,13 @@ static void rf_gain_value_changed_cb(GtkWidget *widget, gpointer data) {
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    soapy_protocol_set_gain(active_receiver);
+    if (strcmp(radio->name, "sdrplay") == 0) {
+      soapy_protocol_set_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rx_gains()],
+                                      (int)adc[active_receiver->adc].gain);
+    } else {
+      soapy_protocol_set_gain(active_receiver);
+    }
+
     break;
 #endif
 
@@ -1337,17 +1343,18 @@ void show_diversity_phase() {
   show_popup_slider(DIV_PHASE, 0, -180.0, 180.0, 0.1, div_phase, "Diversity Phase");
 }
 
-void update_rf_gain_scale_soapy() {
+void update_rf_gain_scale_soapy(int idx) {
 #ifdef SOAPYSDR
 
   if (display_sliders && device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
-      int soapy_gain = soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[0]);
       g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_gain_scale_signal_id);
-      gtk_range_set_value (GTK_RANGE(rf_gain_scale), (double)soapy_gain);
+      gtk_range_set_value (GTK_RANGE(rf_gain_scale), (double)soapy_protocol_get_gain_element(active_receiver,
+                           radio->info.soapy.rx_gain[idx]));
       g_signal_handler_unblock(G_OBJECT(rf_gain_scale), rf_gain_scale_signal_id);
       gtk_widget_queue_draw(rf_gain_scale);
-      t_print("%s: soapy_gain = %d\n", __FUNCTION__, soapy_gain);
+      t_print("%s: rf_gain_scale value = %f\n", __FUNCTION__, (double)soapy_protocol_get_gain_element(active_receiver,
+              radio->info.soapy.rx_gain[idx]));
     }
   }
 
@@ -1584,7 +1591,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #ifdef SOAPYSDR
 
       if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
-        rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[0]);
+        rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rx_gains()]);
       } else {
         rf_gain_label = gtk_label_new("RF Gain");
       }
@@ -1611,7 +1618,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       rf_gain_label = gtk_label_new("RxPGA");
 #ifdef SOAPYSDR
     } else if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
-      rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[0]);
+      rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rx_gains()]);
 #endif
     } else {
       rf_gain_label = gtk_label_new("RF Gain");
@@ -1630,11 +1637,38 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_right), rf_gain_label, FALSE, FALSE, 0);
 #endif
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef SOAPYSDR
+
+    if (device == SOAPYSDR_USB_DEVICE) {
+      if (radio->info.soapy.rx_gains > 0) {
+        rxgain_index_0 = index_rx_gains();
+
+        if (adc[0].min_gain != radio->info.soapy.rx_range[rxgain_index_0].minimum) {
+          adc[0].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
+        }
+
+        if (adc[0].max_gain != radio->info.soapy.rx_range[rxgain_index_0].maximum) {
+          adc[0].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;
+        }
+
+        if (adc[0].gain < adc[0].min_gain || adc[0].gain > adc[0].max_gain) {
+          adc[0].gain = adc[0].min_gain;
+        }
+      }
+    }
+
+#endif
+    t_print("%s: adc[0].min_gain = %f adc[0].max_gain = %f\n", __FUNCTION__, adc[0].min_gain, adc[0].max_gain);
     rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, adc[0].min_gain, adc[0].max_gain, 1.0);
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
     gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
+    double steps = 1.0;
 
-    for (float i = adc[0].min_gain; i <= adc[0].max_gain; i += 12.0) {
+    if (adc[0].max_gain > 10) { steps = 10.0; }
+
+    if (adc[0].max_gain > 99) { steps = 20.0; }
+
+    for (double i = adc[0].min_gain; i <= adc[0].max_gain; i += steps) {
       gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
     }
 

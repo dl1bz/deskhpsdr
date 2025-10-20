@@ -114,6 +114,9 @@ int suppress_popup_sliders = 0;
 
 int controller = NO_CONTROLLER;
 
+int rxgain_index_0 = 0;
+int rxgain_index_1 = 0;
+
 GtkWidget *fixed;
 static GtkWidget *hide_b;
 static GtkWidget *menu_b;
@@ -1065,6 +1068,25 @@ static void radio_create_visual() {
   att_type_changed();                // ... and this hides the „wrong“ ones.
 }
 
+int index_rx_gains () {
+  int rxgain_index = 0;
+#ifdef SOAPYSDR
+
+  if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
+    for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
+      t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
+
+      if (strcmp(radio->info.soapy.rx_gain[gain_index], "RFGR") == 0) {
+        rxgain_index = gain_index;
+      }
+    }
+  }
+
+#endif
+  return rxgain_index;
+  t_print("%s: index = %d\n", __FUNCTION__, rxgain_index);
+}
+
 void radio_start_radio() {
   //
   // Debug code. Placed here at the start of the program. piHPSDR  implicitly assumes
@@ -1549,10 +1571,12 @@ void radio_start_radio() {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
-      adc[0].min_gain = radio->info.soapy.rx_range[0].minimum;
-      adc[0].max_gain = radio->info.soapy.rx_range[0].maximum;;
+      rxgain_index_0 = index_rx_gains();
+      adc[0].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
+      adc[0].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;;
       adc[0].gain = adc[0].min_gain;
-      t_print("%s: radio->info.soapy.rx_gains = %d\n", __FUNCTION__, radio->info.soapy.rx_gains);
+      t_print("%s: adc[0].min_gain = %f, adc[0].max_gain = %f, adc[0].gain = %f\n", __FUNCTION__, adc[0].min_gain,
+              adc[0].max_gain, adc[0].gain);
     }
   }
 
@@ -1582,9 +1606,12 @@ void radio_start_radio() {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
-      adc[1].min_gain = radio->info.soapy.rx_range[0].minimum;
-      adc[1].max_gain = radio->info.soapy.rx_range[0].maximum;;
+      rxgain_index_1 = index_rx_gains();
+      adc[1].min_gain = radio->info.soapy.rx_range[rxgain_index_1].minimum;
+      adc[1].max_gain = radio->info.soapy.rx_range[rxgain_index_1].maximum;;
       adc[1].gain = adc[1].min_gain;
+      t_print("%s: adc[1].min_gain = %f, adc[1].max_gain = %f, adc[1].gain = %f\n", __FUNCTION__, adc[1].min_gain,
+              adc[1].max_gain, adc[1].gain);
     }
 
     radio_sample_rate = radio->info.soapy.sample_rate;
@@ -1726,26 +1753,32 @@ void radio_start_radio() {
     //t_print("radio: set rf_gain=%f\n",rx->rf_gain);
     soapy_protocol_set_gain(rx);
 
-    //-------------------------------------------------------------------------------------
-    if ((strcmp(radio->name, "sdrplay") == 0) && (radio->info.soapy.rx_gains > 1)) {
-      if (radio->info.soapy.rx_has_automatic_gain) {
-        adc[0].agc = FALSE;
-        soapy_protocol_set_automatic_gain(rx, adc[0].agc);
-      }
+    if (strcmp(radio->name, "sdrplay") == 0) {
+      t_print("%s: Bias-T: %d agc_setpoint = %d\n", __FUNCTION__, soapy_protocol_get_bias_t(rx),
+              soapy_protocol_get_agc_setpoint(rx));
+    }
 
+    //-------------------------------------------------------------------------------------
+    if (strcmp(radio->name, "sdrplay") == 0 && radio->info.soapy.rx_gains > 1) {
       for (int gain_id = 0; gain_id < (int)radio->info.soapy.rx_gains; gain_id++) {
         if (strcmp(radio->info.soapy.rx_gain[gain_id], "IFGR") == 0) {
-          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 40.0);
+          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 59.0);
         }
 
         if (strcmp(radio->info.soapy.rx_gain[gain_id], "RFGR") == 0) {
           soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 0.0);
+          adc[0].gain = (double)soapy_protocol_get_gain_element(rx, radio->info.soapy.rx_gain[gain_id]);
         }
+      }
+
+      if (radio->info.soapy.rx_has_automatic_gain) {
+        adc[0].agc = TRUE;
+        soapy_protocol_set_automatic_gain(rx, adc[0].agc);
       }
     }
 
     //-------------------------------------------------------------------------------------
-    update_rf_gain_scale_soapy();
+    update_rf_gain_scale_soapy(rxgain_index_0);
   }
 
 #endif

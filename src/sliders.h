@@ -69,7 +69,7 @@ extern void set_squelch(RECEIVER *rx);
 extern void show_diversity_gain(void);
 extern void show_diversity_phase(void);
 
-extern void update_rf_gain_scale_soapy(void);
+extern void update_rf_gain_scale_soapy(int idx);
 
 void show_popup_slider(enum ACTION action, int rx, double min, double max, double delta, double value,
                        const char *title);

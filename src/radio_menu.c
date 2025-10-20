@@ -89,7 +89,7 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
     adc[active_receiver->adc].gain = gain;
     soapy_protocol_set_gain_element(active_receiver, (char *)gtk_widget_get_name(widget), (int) gain);
-    update_rf_gain_scale_soapy();
+    update_rf_gain_scale_soapy(index_rx_gains());
   }
 }
 
@@ -1193,8 +1193,9 @@ void radio_menu(GtkWidget *parent) {
 
         GtkWidget *rx_gain = gtk_spin_button_new_with_range(range.minimum, range.maximum, range.step);
         gtk_widget_set_name (rx_gain, radio->info.soapy.rx_gain[i]);
-        int value = soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[i]);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain), (double)value);
+        double value = (double)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[i]);
+        t_print("%s: gain[%d] value = %f\n", __FUNCTION__, i, value);
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain), value);
         gtk_grid_attach(GTK_GRID(grid), rx_gain, 1, row, 1, 1);
         g_signal_connect(rx_gain, "value_changed", G_CALLBACK(rx_gain_element_changed_cb), NULL);
         row++;

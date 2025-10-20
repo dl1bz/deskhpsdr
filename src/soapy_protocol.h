@@ -49,4 +49,8 @@ void soapy_protocol_set_tx_gain_element(TRANSMITTER *tx, char *name, int gain);
 int soapy_protocol_get_tx_gain_element(TRANSMITTER *tx, char *name);
 void soapy_protocol_iq_samples(float isample, float qsample);
 void soapy_protocol_set_mic_sample_rate(int rate);
+void soapy_protocol_set_bias_t(gboolean enable);
+gboolean soapy_protocol_get_bias_t(RECEIVER *rx);
+int soapy_protocol_get_rfgain_sel(RECEIVER *rx);
+int soapy_protocol_get_agc_setpoint(RECEIVER *rx);
 #endif

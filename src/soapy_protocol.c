@@ -548,11 +548,14 @@ void soapy_protocol_set_tx_antenna(TRANSMITTER *tx, int ant) {
 void soapy_protocol_set_gain(RECEIVER *rx) {
   int rc;
   t_print("soapy_protocol_set_gain: adc=%d gain=%f\n", rx->adc, (double)adc[rx->adc].gain);
-  rc = SoapySDRDevice_setGain(soapy_device, SOAPY_SDR_RX, rx->adc, adc[rx->adc].gain);
+  rc = SoapySDRDevice_setGain(soapy_device, SOAPY_SDR_RX, rx->adc, (double)adc[rx->adc].gain);
 
   if (rc != 0) {
     t_print("soapy_protocol: SoapySDRDevice_setGain failed: %s\n", SoapySDR_errToStr(rc));
   }
+
+  t_print("%s: soapy_protocol_get_gain = %f\n", __FUNCTION__, SoapySDRDevice_getGain(soapy_device, SOAPY_SDR_RX,
+          rx->adc));
 }
 
 void soapy_protocol_set_gain_element(const RECEIVER *rx, char *name, int gain) {
@@ -599,6 +602,45 @@ int soapy_protocol_get_tx_gain_element(TRANSMITTER *tx, char *name) {
 gboolean soapy_protocol_get_automatic_gain(RECEIVER *rx) {
   gboolean mode = SoapySDRDevice_getGainMode(soapy_device, SOAPY_SDR_RX, rx->adc);
   return mode;
+}
+
+void soapy_protocol_set_bias_t(gboolean enable) {
+  const char *key = (radio && strcmp(radio->name, "sdrplay") == 0) ? "biasT_ctrl" : "biastee";
+  const char *value = enable ? "true" : "false";
+  int rc = SoapySDRDevice_writeSetting(soapy_device, key, value);
+
+  if (rc != 0) {
+    t_print("%s: SoapySDRDevice_writeSetting(%s=%s) failed: %s\n",
+            __FUNCTION__, key, value, SoapySDR_errToStr(rc));
+  }
+}
+
+gboolean soapy_protocol_get_bias_t(RECEIVER *rx) {
+  const char *key = (radio && strcmp(radio->name, "sdrplay") == 0) ? "biasT_ctrl" : "biastee";
+  const char *val = SoapySDRDevice_readSetting(soapy_device, key);
+
+  if (val == NULL) { return -1; }
+
+  // return (strcmp(val, "true") == 0) ? 1 : 0;
+  return (strcmp(val, "true") == 0) ? TRUE : FALSE;
+}
+
+int soapy_protocol_get_rfgain_sel(RECEIVER *rx) {
+  const char *val = SoapySDRDevice_readSetting(soapy_device, "rfgain_sel");
+  t_print("%s: rfgain_sel raw = '%s'\n", __FUNCTION__, val ? val : "NULL");
+
+  if (val == NULL) { return -1; }
+
+  return atoi(val);
+}
+
+int soapy_protocol_get_agc_setpoint(RECEIVER *rx) {
+  const char *val = SoapySDRDevice_readSetting(soapy_device, "agc_setpoint");
+  t_print("%s: agc_setpoint raw = '%s'\n", __FUNCTION__, val ? val : "NULL");
+
+  if (val == NULL) { return -1; }
+
+  return atoi(val);
 }
 
 void soapy_protocol_set_automatic_gain(RECEIVER *rx, gboolean mode) {
