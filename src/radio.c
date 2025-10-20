@@ -1766,7 +1766,7 @@ void radio_start_radio() {
         }
 
         if (strcmp(radio->info.soapy.rx_gain[gain_id], "RFGR") == 0) {
-          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 0.0);
+          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 1.0);
           adc[0].gain = (double)soapy_protocol_get_gain_element(rx, radio->info.soapy.rx_gain[gain_id]);
         }
       }
@@ -1774,11 +1774,12 @@ void radio_start_radio() {
       if (radio->info.soapy.rx_has_automatic_gain) {
         adc[0].agc = TRUE;
         soapy_protocol_set_automatic_gain(rx, adc[0].agc);
+        rx_gain_calibration = -46;
       }
     }
 
     //-------------------------------------------------------------------------------------
-    update_rf_gain_scale_soapy(rxgain_index_0);
+    update_rf_gain_scale_soapy(index_rx_gains());
   }
 
 #endif
@@ -2686,7 +2687,7 @@ static void radio_restore_state() {
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
   GetPropI0("display_info_bar",                              display_info_bar);
-  GetPropI0("display_clock",                          display_clock);
+  GetPropI0("display_clock",                                 display_clock);
   GetPropI0("display_solardata",                             display_solardata);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
