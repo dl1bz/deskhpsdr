@@ -265,7 +265,7 @@ static void display_panadapter_ovf_cb(GtkWidget *widget, gpointer data) {
 static void toggle_info_bar_cb(GtkWidget *widget, gpointer data) {
   display_info_bar = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
-  if (can_transmit && display_info_bar) {
+  if (display_info_bar) {
     gtk_widget_set_sensitive(GTK_WIDGET(b_display_solardata), TRUE);
     // gtk_widget_set_visible(GTK_WIDGET(b_display_solardata), TRUE);
     // gtk_widget_show(GTK_WIDGET(b_display_solardata));
@@ -581,15 +581,11 @@ void display_menu(GtkWidget *parent) {
   g_signal_connect(b_display_info_bar, "toggled", G_CALLBACK(toggle_info_bar_cb), NULL);
   //------------------------------------------------------------------------------------------------------------
   row++;
-
-  if (can_transmit) {
-    b_display_solardata = gtk_check_button_new_with_label("Show Solardata in Info Bar");
-    gtk_widget_set_name (b_display_solardata, "stdlabel_blue");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_solardata), display_solardata);
-    gtk_grid_attach(GTK_GRID(general_grid), b_display_solardata, col, row, 1, 1);
-    g_signal_connect(b_display_solardata, "toggled", G_CALLBACK(toggle_display_solardata_cb), NULL);
-  }
-
+  b_display_solardata = gtk_check_button_new_with_label("Show Solardata in Info Bar");
+  gtk_widget_set_name (b_display_solardata, "stdlabel_blue");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_solardata), display_solardata);
+  gtk_grid_attach(GTK_GRID(general_grid), b_display_solardata, col, row, 1, 1);
+  g_signal_connect(b_display_solardata, "toggled", G_CALLBACK(toggle_display_solardata_cb), NULL);
   //------------------------------------------------------------------------------------------------------------
   row++;
 

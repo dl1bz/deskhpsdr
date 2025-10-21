@@ -1068,7 +1068,7 @@ static void radio_create_visual() {
   att_type_changed();                // ... and this hides the „wrong“ ones.
 }
 
-int index_rx_gains () {
+int index_rx_gains() {
   int rxgain_index = 0;
 #ifdef SOAPYSDR
 
@@ -1085,6 +1085,25 @@ int index_rx_gains () {
 #endif
   return rxgain_index;
   t_print("%s: index = %d\n", __FUNCTION__, rxgain_index);
+}
+
+int index_if_gains() {
+  int ifgain_index = -1;
+#ifdef SOAPYSDR
+
+  if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
+    for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
+      t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
+
+      if (strcmp(radio->info.soapy.rx_gain[gain_index], "IFGR") == 0) {
+        ifgain_index = gain_index;
+      }
+    }
+  }
+
+#endif
+  return ifgain_index;
+  t_print("%s: index = %d\n", __FUNCTION__, ifgain_index);
 }
 
 void radio_start_radio() {

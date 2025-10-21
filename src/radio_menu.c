@@ -89,7 +89,9 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
     adc[active_receiver->adc].gain = gain;
     soapy_protocol_set_gain_element(active_receiver, (char *)gtk_widget_get_name(widget), (int) gain);
+    t_print("%s: %s gain = %d\n", __FUNCTION__, (char *)gtk_widget_get_name(widget), gain);
     update_rf_gain_scale_soapy(index_rx_gains());
+    update_ifgr_scale_soapy(index_if_gains());
   }
 }
 
@@ -107,7 +109,11 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
     adc[active_receiver->adc].agc = agc;
     soapy_protocol_set_automatic_gain(active_receiver, agc);
 
-    if (!agc) { soapy_protocol_set_gain(active_receiver); }
+    if (!agc && strcmp(radio->name, "sdrplay") != 0) {
+      soapy_protocol_set_gain(active_receiver);
+    }
+
+    update_slider_hwagc_btn();
   }
 }
 

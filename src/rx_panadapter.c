@@ -1069,27 +1069,25 @@ void rx_panadapter_update(RECEIVER *rx) {
 #endif
       cairo_move_to(cr, 10.0, myheight - 10);
       cairo_show_text(cr, _text);
+    }
 
-      if (display_solardata) {
-        check_and_run(1); // 0=no_log_output, 1=print_to_log
-        // g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
+    if (display_solardata) {
+      check_and_run(1); // 0=no_log_output, 1=print_to_log
+      // g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
 #if defined (__APPLE__)
-        cairo_move_to(cr, (mywidth / 4) + 20, myheight - 10);
+      cairo_move_to(cr, (mywidth / 4) + 20, myheight - 10);
 #else
-        cairo_move_to(cr, (mywidth / 4) - 50, myheight - 10);
+      cairo_move_to(cr, (mywidth / 4) - 50, myheight - 10);
 #endif
 
-        if (sunspots != -1) {
-          snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
-        } else {
-          snprintf(_text, 128, " ");
-        }
-
-        cairo_set_source_rgba(cr, COLOUR_ATTN);
-        cairo_show_text(cr, _text);
+      if (sunspots != -1) {
+        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+      } else {
+        snprintf(_text, 128, " ");
       }
-    } else {
-      display_solardata = 0;
+
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_show_text(cr, _text);
     }
   }
 

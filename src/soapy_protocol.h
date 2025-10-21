@@ -53,4 +53,6 @@ void soapy_protocol_set_bias_t(gboolean enable);
 gboolean soapy_protocol_get_bias_t(RECEIVER *rx);
 int soapy_protocol_get_rfgain_sel(RECEIVER *rx);
 int soapy_protocol_get_agc_setpoint(RECEIVER *rx);
+void soapy_protocol_set_agc_setpoint(RECEIVER *rx, int setpoint);
+void soapy_protocol_set_rfgain_sel(RECEIVER *rx, int value);
 #endif

@@ -634,6 +634,21 @@ int soapy_protocol_get_rfgain_sel(RECEIVER *rx) {
   return atoi(val);
 }
 
+void soapy_protocol_set_rfgain_sel(RECEIVER *rx, int value) {
+  char buf[8];
+
+  if (value < 0 || value > 8) { return; }  // Wertebereich absichern
+
+  snprintf(buf, sizeof(buf), "%d", value);
+  int rc = SoapySDRDevice_writeSetting(soapy_device, "rfgain_sel", buf);
+
+  if (rc != 0) {
+    t_print("%s: SoapySDRDevice_writeSetting(rfgain_sel=%s) failed: %s\n",
+            __FUNCTION__, buf, SoapySDR_errToStr(rc));
+  }
+}
+
+
 int soapy_protocol_get_agc_setpoint(RECEIVER *rx) {
   const char *val = SoapySDRDevice_readSetting(soapy_device, "agc_setpoint");
   t_print("%s: agc_setpoint raw = '%s'\n", __FUNCTION__, val ? val : "NULL");
@@ -643,6 +658,23 @@ int soapy_protocol_get_agc_setpoint(RECEIVER *rx) {
   return atoi(val);
 }
 
+void soapy_protocol_set_agc_setpoint(RECEIVER *rx, int setpoint) {
+  char buf[8];
+  int rc;
+
+  if (setpoint < -60 || setpoint > 0) { return; }
+
+  snprintf(buf, sizeof(buf), "%d", setpoint);
+  rc = SoapySDRDevice_writeSetting(soapy_device, "agc_setpoint", buf);
+
+  if (rc != 0) {
+    t_print("%s: SoapySDRDevice_writeSetting(agc_setpoint=%s) failed: %s\n",
+            __FUNCTION__, buf, SoapySDR_errToStr(rc));
+  }
+
+  t_print("%s: agc_setpoint = %s\n", __FUNCTION__, SoapySDRDevice_readSetting(soapy_device, "agc_setpoint"));
+}
+
 void soapy_protocol_set_automatic_gain(RECEIVER *rx, gboolean mode) {
   int rc;
   rc = SoapySDRDevice_setGainMode(soapy_device, SOAPY_SDR_RX, rx->adc, mode);
@@ -650,4 +682,6 @@ void soapy_protocol_set_automatic_gain(RECEIVER *rx, gboolean mode) {
   if (rc != 0) {
     t_print("soapy_protocol: SoapySDRDevice_getGainMode failed: %s\n", SoapySDR_errToStr(rc));
   }
+
+  t_print("%s: GainMode = %d\n", __FUNCTION__, SoapySDRDevice_getGainMode(soapy_device, SOAPY_SDR_RX, rx->adc));
 }

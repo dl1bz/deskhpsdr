@@ -43,6 +43,11 @@ extern void update_slider_split_btn(void);
 extern void update_slider_agc_btn(void);
 extern void update_slider_ps_btn(void);
 extern void update_slider_nr_btn(void);
+#ifdef SOAPYSDR
+  extern void update_slider_hwagc_btn(void);
+  extern void update_rf_gain_scale_soapy(int idx);
+  extern void update_ifgr_scale_soapy(int idx);
+#endif
 extern void update_slider_bbcompr_scale(gboolean show_widget);
 extern void update_slider_bbcompr_button(gboolean show_widget);
 extern void update_slider_lev_button(gboolean show_widget);
@@ -68,8 +73,6 @@ extern void set_squelch(RECEIVER *rx);
 
 extern void show_diversity_gain(void);
 extern void show_diversity_phase(void);
-
-extern void update_rf_gain_scale_soapy(int idx);
 
 void show_popup_slider(enum ACTION action, int rx, double min, double max, double delta, double value,
                        const char *title);
