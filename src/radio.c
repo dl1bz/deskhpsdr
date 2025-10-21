@@ -1360,7 +1360,7 @@ void radio_start_radio() {
   char version[32];
   char ip[32];
   char iface[64];
-  char text[1024];
+  char text[2048];
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
@@ -1453,7 +1453,7 @@ void radio_start_radio() {
     break;
 
   case SOAPYSDR_PROTOCOL:
-    snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s)",
+    snprintf(text, 2048, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s %s %s)",
              PGNAME,
              build_version,
              unameData.machine,
@@ -1461,7 +1461,9 @@ void radio_start_radio() {
              GetWDSPVersion() % 100,
              radio->name,
              p,
-             version);
+             radio->info.soapy.driver_key,
+             radio->info.soapy.hardware_key,
+             radio->info.soapy.version);
     break;
   }
 

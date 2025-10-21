@@ -174,8 +174,8 @@ void about_menu(GtkWidget *parent) {
 
   case SOAPYSDR_PROTOCOL:
     snprintf(line, 512, "Device: %s (via SoapySDR)\n"
-                        "    %s (%s)",
-             radio->name, radio->info.soapy.hardware_key, radio->info.soapy.driver_key);
+                        "    %s %s",
+             radio->name, radio->info.soapy.driver_key, radio->info.soapy.hardware_key);
     g_strlcat(text, line, 1024);
     break;
 #endif

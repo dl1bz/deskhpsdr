@@ -52,6 +52,9 @@
 #if defined (__WMAP__)
   #include "map_d.h"
 #endif
+#ifdef SOAPYSDR
+  #include "soapy_protocol.h"
+#endif
 
 char zeitString[20];
 static time_t last_noisefloor_calc_time = 0;  // Zeit der letzten Berechnung
@@ -1368,6 +1371,66 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_show_text(cr, _text);
     }
   }
+
+#ifdef SOAPYSDR
+
+  if (!can_transmit && display_clock) {
+    double rt_rx_y = 15.0;
+    double rt_rx_w = 255.0;
+    double rt_rx_h = 60.0;
+#ifdef __WMAP__
+    cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+#else
+    cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+#endif
+    cairo_rectangle(cr, width - rt_rx_w, rt_rx_y, rt_rx_w, rt_rx_h); // x, y, Breite, Höhe
+    cairo_fill(cr);
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    cairo_move_to(cr, width - 250.0, 30.0);
+    get_local_time(zeitString, sizeof(zeitString));
+    snprintf(_text, 128, "%s", zeitString);
+    cairo_show_text(cr, _text);
+
+    if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
+      if (adc[active_receiver->adc].agc) {
+        snprintf(_text, 128, "HW-AGC: ON");
+        cairo_move_to(cr, width - 250.0, 50.0);
+        cairo_show_text(cr, _text);
+        snprintf(_text, 128, "(%d dbFS)", soapy_protocol_get_agc_setpoint(active_receiver));
+        cairo_move_to(cr, width - 145.0, 50.0);
+        cairo_show_text(cr, _text);
+        snprintf(_text, 128, "IFGR:%d (auto)", (int)soapy_protocol_get_gain_element(active_receiver,
+                 radio->info.soapy.rx_gain[index_if_gains()]));
+      } else {
+        snprintf(_text, 128, "HW-AGC: OFF");
+        cairo_move_to(cr, width - 250.0, 50.0);
+        cairo_show_text(cr, _text);
+        snprintf(_text, 128, "IFGR:%d", (int)soapy_protocol_get_gain_element(active_receiver,
+                 radio->info.soapy.rx_gain[index_if_gains()]));
+      }
+
+      cairo_move_to(cr, width - 175.0, 70.0);
+      cairo_show_text(cr, _text);
+      snprintf(_text, 128, "RFGR:%d", (int)soapy_protocol_get_gain_element(active_receiver,
+               radio->info.soapy.rx_gain[index_rx_gains()]));
+      cairo_move_to(cr, width - 250.0, 70.0);
+      cairo_show_text(cr, _text);
+
+      if (soapy_protocol_get_bias_t(active_receiver)) {
+        cairo_set_source_rgba(cr, COLOUR_ALARM);
+        snprintf(_text, 128, "B-T");
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_SHADE);
+        snprintf(_text, 128, "B-T");
+      }
+
+      cairo_move_to(cr, width - 45.0, 30.0);
+      cairo_show_text(cr, _text);
+      //----------------------------------------------------
+    }
+  }
+
+#endif
 
   if (can_transmit && display_clock) {
     if (lpf_udp_valid) {

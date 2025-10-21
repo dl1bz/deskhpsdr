@@ -1253,7 +1253,7 @@ void update_rf_gain_scale_soapy(int idx) {
 
 void update_ifgr_scale_soapy(int idx) {
   if (display_sliders && device == SOAPYSDR_USB_DEVICE) {
-    if (radio->info.soapy.rx_gains > 0) {
+    if (radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
       g_signal_handler_block(G_OBJECT(ifgr_scale), ifgr_scale_signal_id);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(ifgr_scale), (double)soapy_protocol_get_gain_element(active_receiver,
                                 radio->info.soapy.rx_gain[idx]));
