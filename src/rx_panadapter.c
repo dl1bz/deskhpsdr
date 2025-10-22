@@ -59,6 +59,11 @@
 char zeitString[20];
 static time_t last_noisefloor_calc_time = 0;  // Zeit der letzten Berechnung
 int g_noise_level = 0;
+int val_agcsetpoint = 0;
+int val_hwagc = 0;
+int val_rfgr = 0;
+int val_ifgr = 0;
+gboolean val_biast = FALSE;
 
 #if defined (__WMAP__)
 //------------------------------------------------------------------------------
@@ -1130,6 +1135,7 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
 }
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   char text[64];
+  static unsigned int msg_cycle = 0;
 
   if (display_warnings) {
     //
@@ -1392,36 +1398,43 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_show_text(cr, _text);
 
     if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
+      if (msg_cycle == 0) {
+        val_agcsetpoint = soapy_protocol_get_agc_setpoint(active_receiver);
+        val_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
+        val_rfgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rf_gain()]);
+        val_biast = soapy_protocol_get_bias_t(active_receiver);
+      }
+
       if (adc[active_receiver->adc].agc) {
         snprintf(_text, 128, "HW-AGC: ON");
         cairo_move_to(cr, width - 250.0, 50.0);
+        cairo_set_source_rgba(cr, COLOUR_ATTN);
         cairo_show_text(cr, _text);
-        snprintf(_text, 128, "(%d dbFS)", soapy_protocol_get_agc_setpoint(active_receiver));
+        snprintf(_text, 128, "(%d dbFS)", val_agcsetpoint);
         cairo_move_to(cr, width - 145.0, 50.0);
         cairo_show_text(cr, _text);
-        snprintf(_text, 128, "IFGR:%d (auto)", (int)soapy_protocol_get_gain_element(active_receiver,
-                 radio->info.soapy.rx_gain[index_if_gains()]));
+        snprintf(_text, 128, "IFGR:%d (auto)", val_ifgr);
       } else {
         snprintf(_text, 128, "HW-AGC: OFF");
         cairo_move_to(cr, width - 250.0, 50.0);
+        cairo_set_source_rgba(cr, COLOUR_WHITE);
         cairo_show_text(cr, _text);
-        snprintf(_text, 128, "IFGR:%d", (int)soapy_protocol_get_gain_element(active_receiver,
-                 radio->info.soapy.rx_gain[index_if_gains()]));
+        snprintf(_text, 128, "IFGR:%d", val_ifgr);
       }
 
       cairo_move_to(cr, width - 175.0, 70.0);
       cairo_show_text(cr, _text);
-      snprintf(_text, 128, "RFGR:%d", (int)soapy_protocol_get_gain_element(active_receiver,
-               radio->info.soapy.rx_gain[index_rx_gains()]));
+      cairo_set_source_rgba(cr, COLOUR_WHITE);
+      snprintf(_text, 128, "RFGR:%d", val_rfgr);
       cairo_move_to(cr, width - 250.0, 70.0);
       cairo_show_text(cr, _text);
 
-      if (soapy_protocol_get_bias_t(active_receiver)) {
-        cairo_set_source_rgba(cr, COLOUR_ALARM);
-        snprintf(_text, 128, "B-T");
+      if (val_biast) {
+        cairo_set_source_rgba(cr, COLOUR_ATTN);
+        snprintf(_text, 128, "BIAS");
       } else {
         cairo_set_source_rgba(cr, COLOUR_SHADE);
-        snprintf(_text, 128, "B-T");
+        snprintf(_text, 128, "BIAS");
       }
 
       cairo_move_to(cr, width - 45.0, 30.0);
@@ -1613,5 +1626,11 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       break;
     }
+  }
+
+  msg_cycle++;
+
+  if (msg_cycle >= fps) {
+    msg_cycle = 0;
   }
 }

@@ -1068,14 +1068,13 @@ static void radio_create_visual() {
   att_type_changed();                // ... and this hides the „wrong“ ones.
 }
 
-int index_rx_gains() {
+int index_rf_gain() {
   int rxgain_index = 0;
 #ifdef SOAPYSDR
 
   if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
     for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
-      t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
-
+      // t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
       if (strcmp(radio->info.soapy.rx_gain[gain_index], "RFGR") == 0) {
         rxgain_index = gain_index;
       }
@@ -1087,14 +1086,13 @@ int index_rx_gains() {
   t_print("%s: index = %d\n", __FUNCTION__, rxgain_index);
 }
 
-int index_if_gains() {
+int index_if_gain() {
   int ifgain_index = -1;
 #ifdef SOAPYSDR
 
   if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
     for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
-      t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
-
+      // t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
       if (strcmp(radio->info.soapy.rx_gain[gain_index], "IFGR") == 0) {
         ifgain_index = gain_index;
       }
@@ -1592,7 +1590,7 @@ void radio_start_radio() {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
-      rxgain_index_0 = index_rx_gains();
+      rxgain_index_0 = index_rf_gain();
       adc[0].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
       adc[0].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;;
       adc[0].gain = adc[0].min_gain;
@@ -1627,7 +1625,7 @@ void radio_start_radio() {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
-      rxgain_index_1 = index_rx_gains();
+      rxgain_index_1 = index_rf_gain();
       adc[1].min_gain = radio->info.soapy.rx_range[rxgain_index_1].minimum;
       adc[1].max_gain = radio->info.soapy.rx_range[rxgain_index_1].maximum;;
       adc[1].gain = adc[1].min_gain;
@@ -1800,7 +1798,7 @@ void radio_start_radio() {
     }
 
     //-------------------------------------------------------------------------------------
-    update_rf_gain_scale_soapy(index_rx_gains());
+    update_rf_gain_scale_soapy(index_rf_gain());
   }
 
 #endif

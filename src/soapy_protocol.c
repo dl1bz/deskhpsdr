@@ -651,7 +651,7 @@ void soapy_protocol_set_rfgain_sel(RECEIVER *rx, int value) {
 
 int soapy_protocol_get_agc_setpoint(RECEIVER *rx) {
   const char *val = SoapySDRDevice_readSetting(soapy_device, "agc_setpoint");
-  t_print("%s: agc_setpoint raw = '%s'\n", __FUNCTION__, val ? val : "NULL");
+  // t_print("%s: agc_setpoint raw = '%s'\n", __FUNCTION__, val ? val : "NULL");
 
   if (val == NULL) { return -1; }
 

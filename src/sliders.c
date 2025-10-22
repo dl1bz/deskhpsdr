@@ -516,7 +516,7 @@ static void rf_gain_value_changed_cb(GtkWidget *widget, gpointer data) {
 
   case SOAPYSDR_PROTOCOL:
     if (strcmp(radio->name, "sdrplay") == 0) {
-      soapy_protocol_set_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rx_gains()],
+      soapy_protocol_set_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rf_gain()],
                                       (int)adc[active_receiver->adc].gain);
     } else {
       soapy_protocol_set_gain(active_receiver);
@@ -1193,11 +1193,11 @@ static void hwagc_scale_value_changed_cb(GtkWidget *widget, gpointer data) {
 static void ifgr_scale_value_changed_cb(GtkWidget *widget, gpointer data) {
   double spin_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  if (index_if_gains() > -1 && !adc[active_receiver->adc].agc) {
-    soapy_protocol_set_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gains()], (int)spin_value);
+  if (index_if_gain() > -1 && !adc[active_receiver->adc].agc) {
+    soapy_protocol_set_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()], (int)spin_value);
   }
 
-  if (index_if_gains() > -1) { update_ifgr_scale_soapy(index_if_gains()); }
+  if (index_if_gain() > -1) { update_ifgr_scale_soapy(index_if_gain()); }
 }
 
 
@@ -1212,12 +1212,12 @@ void update_slider_hwagc_btn() {
         gtk_label_set_text(GTK_LABEL(hwagc_label), "HW-AGC");
         gtk_widget_set_sensitive(hwagc_scale, TRUE);
 
-        if (index_if_gains() > -1) { gtk_widget_set_sensitive(ifgr_scale, FALSE); }
+        if (index_if_gain() > -1) { gtk_widget_set_sensitive(ifgr_scale, FALSE); }
       } else {
         gtk_label_set_text(GTK_LABEL(hwagc_label), "IFGR");
         gtk_widget_set_sensitive(hwagc_scale, FALSE);
 
-        if (index_if_gains() > -1) { gtk_widget_set_sensitive(ifgr_scale, TRUE); }
+        if (index_if_gain() > -1) { gtk_widget_set_sensitive(ifgr_scale, TRUE); }
       }
 
       gtk_widget_queue_draw(hwagc_btn);
@@ -1664,7 +1664,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #ifdef SOAPYSDR
 
       if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
-        rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rx_gains()]);
+        rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rf_gain()]);
       } else {
         rf_gain_label = gtk_label_new("RF Gain");
       }
@@ -1691,7 +1691,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       rf_gain_label = gtk_label_new("RxPGA");
 #ifdef SOAPYSDR
     } else if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
-      rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rx_gains()]);
+      rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rf_gain()]);
 #endif
     } else {
       rf_gain_label = gtk_label_new("RF Gain");
@@ -1714,7 +1714,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     if (device == SOAPYSDR_USB_DEVICE) {
       if (radio->info.soapy.rx_gains > 0) {
-        rxgain_index_0 = index_rx_gains();
+        rxgain_index_0 = index_rf_gain();
 
         if (adc[0].min_gain != radio->info.soapy.rx_range[rxgain_index_0].minimum) {
           adc[0].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
@@ -2167,10 +2167,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), hwagc_scale, FALSE, FALSE, 0);
         //---------------------------------------------------------------------------------------------------------
         // hole Daten...
-        int check_ifgr_index = index_if_gains();
+        int check_ifgr_index = index_if_gain();
 
         if (check_ifgr_index >= 0) {
-          SoapySDRRange ifgr_range = radio->info.soapy.rx_range[index_if_gains()];
+          SoapySDRRange ifgr_range = radio->info.soapy.rx_range[index_if_gain()];
 
           if (ifgr_range.step == 0.0) { ifgr_range.step = 1.0; }
 
@@ -2195,7 +2195,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
           gtk_widget_set_halign(ifgr_scale, GTK_ALIGN_START);
           gtk_widget_set_valign(ifgr_scale, GTK_ALIGN_CENTER);
           gtk_widget_set_hexpand(ifgr_scale, FALSE);  // fülle Box nicht nach rechts
-          int ifgr_value = soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gains()]);
+          int ifgr_value = soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
           gtk_spin_button_set_value(GTK_SPIN_BUTTON(ifgr_scale), ifgr_value);
           ifgr_scale_signal_id = g_signal_connect(G_OBJECT(ifgr_scale), "value_changed",
                                                   G_CALLBACK(ifgr_scale_value_changed_cb), NULL);

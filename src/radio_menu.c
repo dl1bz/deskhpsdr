@@ -90,8 +90,8 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     adc[active_receiver->adc].gain = gain;
     soapy_protocol_set_gain_element(active_receiver, (char *)gtk_widget_get_name(widget), (int) gain);
     t_print("%s: %s gain = %d\n", __FUNCTION__, (char *)gtk_widget_get_name(widget), gain);
-    update_rf_gain_scale_soapy(index_rx_gains());
-    update_ifgr_scale_soapy(index_if_gains());
+    update_rf_gain_scale_soapy(index_rf_gain());
+    update_ifgr_scale_soapy(index_if_gain());
   }
 }
 
