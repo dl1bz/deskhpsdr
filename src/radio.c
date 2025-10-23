@@ -1074,7 +1074,6 @@ int index_rf_gain() {
 
   if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
     for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
-      // t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
       if (strcmp(radio->info.soapy.rx_gain[gain_index], "RFGR") == 0) {
         rxgain_index = gain_index;
       }
@@ -1092,7 +1091,6 @@ int index_if_gain() {
 
   if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
     for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
-      // t_print("%s: radio->info.soapy.rx_gain[%d] = %s\n", __FUNCTION__, gain_index, radio->info.soapy.rx_gain[gain_index]);
       if (strcmp(radio->info.soapy.rx_gain[gain_index], "IFGR") == 0) {
         ifgain_index = gain_index;
       }
@@ -1449,8 +1447,8 @@ void radio_start_radio() {
     }
 
     break;
-
 #ifdef SOAPYSDR
+
   case SOAPYSDR_PROTOCOL:
     snprintf(text, 2048, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s %s %s)",
              PGNAME,
@@ -1627,9 +1625,9 @@ void radio_start_radio() {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
-      rxgain_index_1 = index_rf_gain();
-      adc[1].min_gain = radio->info.soapy.rx_range[rxgain_index_1].minimum;
-      adc[1].max_gain = radio->info.soapy.rx_range[rxgain_index_1].maximum;;
+      rxgain_index_0 = index_rf_gain();
+      adc[1].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
+      adc[1].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;;
       adc[1].gain = adc[1].min_gain;
       t_print("%s: adc[1].min_gain = %f, adc[1].max_gain = %f, adc[1].gain = %f\n", __FUNCTION__, adc[1].min_gain,
               adc[1].max_gain, adc[1].gain);
@@ -1771,35 +1769,20 @@ void radio_start_radio() {
     }
 
     soapy_protocol_start_receiver(rx);
+
     //t_print("radio: set rf_gain=%f\n",rx->rf_gain);
-    soapy_protocol_set_gain(rx);
+    if (strcmp(radio->info.soapy.hardware_key, "RSP2") != 0) {
+      soapy_protocol_set_gain(rx);
+      t_print("%s: Is not RSP2\n", __FUNCTION__);
+    } else {
+      t_print("%s: Is %s\n", __FUNCTION__, radio->info.soapy.hardware_key);
+    }
 
     if (strcmp(radio->name, "sdrplay") == 0) {
       t_print("%s: Bias-T: %d agc_setpoint = %d\n", __FUNCTION__, soapy_protocol_get_bias_t(rx),
               soapy_protocol_get_agc_setpoint(rx));
     }
 
-    //-------------------------------------------------------------------------------------
-    if (strcmp(radio->name, "sdrplay") == 0 && radio->info.soapy.rx_gains > 1) {
-      for (int gain_id = 0; gain_id < (int)radio->info.soapy.rx_gains; gain_id++) {
-        if (strcmp(radio->info.soapy.rx_gain[gain_id], "IFGR") == 0) {
-          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 59.0);
-        }
-
-        if (strcmp(radio->info.soapy.rx_gain[gain_id], "RFGR") == 0) {
-          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 1.0);
-          adc[0].gain = (double)soapy_protocol_get_gain_element(rx, radio->info.soapy.rx_gain[gain_id]);
-        }
-      }
-
-      if (radio->info.soapy.rx_has_automatic_gain) {
-        adc[0].agc = TRUE;
-        soapy_protocol_set_automatic_gain(rx, adc[0].agc);
-        rx_gain_calibration = -46;
-      }
-    }
-
-    //-------------------------------------------------------------------------------------
     update_rf_gain_scale_soapy(index_rf_gain());
   }
 

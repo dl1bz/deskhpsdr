@@ -483,6 +483,11 @@ void soapy_protocol_stop() {
   running = FALSE;
 }
 
+int soapy_protocol_get_rx_frequency_mhz(RECEIVER *rx) {
+  double freq_hz = SoapySDRDevice_getFrequency(soapy_device, SOAPY_SDR_RX, rx->adc);
+  return (int)((freq_hz / 1e6) + 0.5);
+}
+
 void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
   if (soapy_device != NULL) {
     int id = rx->id;
@@ -563,7 +568,6 @@ void soapy_protocol_set_gain(RECEIVER *rx) {
 }
 
 int soapy_protocol_get_rx_gain(RECEIVER *rx) {
-  t_print("%s: rx->adc = %d\n", __FUNCTION__, rx->adc);
   double gain = SoapySDRDevice_getGain(soapy_device, SOAPY_SDR_RX, rx->adc);
 
   if (gain < 0) { return -1; }
@@ -709,4 +713,18 @@ void soapy_protocol_set_automatic_gain(RECEIVER *rx, gboolean mode) {
   }
 
   t_print("%s: GainMode = %d\n", __FUNCTION__, SoapySDRDevice_getGainMode(soapy_device, SOAPY_SDR_RX, rx->adc));
+}
+
+double get_sdrplay_RFGR_gain(RECEIVER *rx, int RFGR_step) {
+  double freq_hz = SoapySDRDevice_getFrequency(soapy_device, SOAPY_SDR_RX, rx->adc);
+  int freq_mhz = (int)((freq_hz / 1e6) + 0.5); // Hz in MHz
+
+  if (radio && strcmp(radio->name, "sdrplay") == 0) {
+    if (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0 && freq_mhz <= 420) {
+      double att_in_db = RFGR_RSP2_420[RFGR_step];
+      return att_in_db;
+    }
+  } else {
+    return (double)RFGR_step;
+  }
 }

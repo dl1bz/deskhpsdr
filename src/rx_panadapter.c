@@ -305,6 +305,17 @@ void rx_panadapter_update(RECEIVER *rx) {
   //
   const BAND *band = band_get_band(vfoband);
   int calib = rx_gain_calibration - band->gain;
+
+  if (device == SOAPYSDR_USB_DEVICE && (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0)) {
+    int v_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
+    int v_rfgr = get_sdrplay_RFGR_gain(active_receiver, (int)soapy_protocol_get_gain_element(active_receiver,
+                                       radio->info.soapy.rx_gain[index_rf_gain()]));
+    adc[rx->adc].gain = 0;
+    adc[rx->adc].attenuation = 0;
+    adc[rx->adc].gain = (double)v_ifgr + (double)v_rfgr;
+    // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __FUNCTION__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
+  }
+
   soffset = (double) calib + (double)adc[rx->adc].attenuation - adc[rx->adc].gain;
 
   //
@@ -1403,6 +1414,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         val_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
         val_rfgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rf_gain()]);
         val_biast = soapy_protocol_get_bias_t(active_receiver);
+        t_print("%s: RFGR real value: %f\n", __FUNCTION__, get_sdrplay_RFGR_gain(active_receiver, val_rfgr));
       }
 
       if (adc[active_receiver->adc].agc) {
@@ -1422,10 +1434,16 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         snprintf(_text, 128, "IFGR:%d", val_ifgr);
       }
 
-      cairo_move_to(cr, width - 175.0, 70.0);
+      cairo_move_to(cr, width - 140.0, 70.0);
       cairo_show_text(cr, _text);
       cairo_set_source_rgba(cr, COLOUR_WHITE);
-      snprintf(_text, 128, "RFGR:%d", val_rfgr);
+
+      if (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0) {
+        snprintf(_text, 128, "RFGR:%d (%d)", val_rfgr, (int)get_sdrplay_RFGR_gain(active_receiver, val_rfgr));
+      } else {
+        snprintf(_text, 128, "RFGR:%d ()", val_rfgr);
+      }
+
       cairo_move_to(cr, width - 250.0, 70.0);
       cairo_show_text(cr, _text);
 

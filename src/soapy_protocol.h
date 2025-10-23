@@ -32,6 +32,7 @@ void soapy_protocol_start_receiver(RECEIVER *rx);
 void soapy_protocol_init(gboolean hf);
 void soapy_protocol_stop(void);
 void soapy_protocol_stop_receiver(const RECEIVER *rx);
+int soapy_protocol_get_rx_frequency_mhz(RECEIVER *rx);
 void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v);
 void soapy_protocol_set_rx_antenna(RECEIVER *rx, int ant);
 void soapy_protocol_set_lna_gain(RECEIVER *rx, int gain);
@@ -59,4 +60,5 @@ int soapy_protocol_get_rfgain_sel(RECEIVER *rx);
 int soapy_protocol_get_agc_setpoint(RECEIVER *rx);
 void soapy_protocol_set_agc_setpoint(RECEIVER *rx, int setpoint);
 void soapy_protocol_set_rfgain_sel(RECEIVER *rx, int value);
+double get_sdrplay_RFGR_gain(RECEIVER *rx, int RFGR_step);
 #endif
