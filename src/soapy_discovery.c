@@ -258,9 +258,10 @@ static void get_info(char *driver) {
     discovered[devices].info.soapy.rx_range = malloc(rx_gains_length * sizeof(SoapySDRRange));
 
     for (size_t i = 0; i < rx_gains_length; i++) {
-      t_print("RX gain %s\n", rx_gains[i]);
+      t_print("%s: RX rx_gains_length %d gain %s\n", __FUNCTION__, (int)rx_gains_length, rx_gains[i]);
       SoapySDRRange rx_range = SoapySDRDevice_getGainElementRange(sdr, SOAPY_SDR_RX, 0, rx_gains[i]);
-      t_print("RX gain available: %s, %f -> %f step=%f\n", rx_gains[i], rx_range.minimum, rx_range.maximum, rx_range.step);
+      t_print("%s: RX gain available: %s, %f -> %f step=%f\n", __FUNCTION__, rx_gains[i], rx_range.minimum, rx_range.maximum,
+              rx_range.step);
       discovered[devices].info.soapy.rx_range[i] = rx_range;
     }
 

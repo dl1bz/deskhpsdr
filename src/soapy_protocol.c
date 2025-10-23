@@ -67,6 +67,10 @@ static int max_tx_samples;
 static float *output_buffer;
 static int output_buffer_index;
 
+const unsigned RFGR_RSP2_420[9] = {
+  0, 10, 15, 21, 24, 34, 39, 45, 64
+};
+
 // cppcheck-suppress unusedFunction
 SoapySDRDevice *get_soapy_device() {
   return soapy_device;
@@ -556,6 +560,27 @@ void soapy_protocol_set_gain(RECEIVER *rx) {
 
   t_print("%s: soapy_protocol_get_gain = %f\n", __FUNCTION__, SoapySDRDevice_getGain(soapy_device, SOAPY_SDR_RX,
           rx->adc));
+}
+
+int soapy_protocol_get_rx_gain(RECEIVER *rx) {
+  t_print("%s: rx->adc = %d\n", __FUNCTION__, rx->adc);
+  double gain = SoapySDRDevice_getGain(soapy_device, SOAPY_SDR_RX, rx->adc);
+
+  if (gain < 0) { return -1; }
+
+  return (int)gain;
+}
+
+void soapy_protocol_get_settings_info(RECEIVER *rx) {
+  size_t count = 0;
+  const SoapySDRArgInfo *infos_const = SoapySDRDevice_getSettingInfo(soapy_device, &count);
+  SoapySDRArgInfo *infos = (SoapySDRArgInfo *)infos_const;
+
+  for (size_t i = 0; i < count; i++) {
+    t_print("%s: Setting: %s (%s)\n", __FUNCTION__, infos[i].key, infos[i].name);
+  }
+
+  SoapySDRArgInfoList_clear(infos, count);
 }
 
 void soapy_protocol_set_gain_element(const RECEIVER *rx, char *name, int gain) {

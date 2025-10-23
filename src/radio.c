@@ -1450,6 +1450,7 @@ void radio_start_radio() {
 
     break;
 
+#ifdef SOAPYSDR
   case SOAPYSDR_PROTOCOL:
     snprintf(text, 2048, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s %s %s)",
              PGNAME,
@@ -1463,6 +1464,7 @@ void radio_start_radio() {
              radio->info.soapy.hardware_key,
              radio->info.soapy.version);
     break;
+#endif
   }
 
   gtk_window_set_title (GTK_WINDOW (top_window), text);

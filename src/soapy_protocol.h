@@ -22,6 +22,8 @@
 #ifndef _SOAPY_PROTOCOL_H
 #define _SOAPY_PROTOCOL_H
 
+extern const unsigned RFGR_RSP2_420[9];
+
 SoapySDRDevice *get_soapy_device(void);
 
 void soapy_protocol_create_receiver(RECEIVER *rx);
@@ -34,6 +36,8 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v);
 void soapy_protocol_set_rx_antenna(RECEIVER *rx, int ant);
 void soapy_protocol_set_lna_gain(RECEIVER *rx, int gain);
 void soapy_protocol_set_gain(RECEIVER *rx);
+int soapy_protocol_get_rx_gain(RECEIVER *rx);
+void soapy_protocol_get_settings_info(RECEIVER *rx);
 void soapy_protocol_set_gain_element(const RECEIVER *rx, char *name, int gain);
 int soapy_protocol_get_gain_element(RECEIVER *rx, char *name);
 void soapy_protocol_change_sample_rate(RECEIVER *rx);
