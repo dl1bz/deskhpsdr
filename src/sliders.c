@@ -548,7 +548,7 @@ void set_rf_gain(int rx, double value) {
   adc[rxadc].gain = value;
 #ifdef SOAPYSDR
 
-  if (protocol == SOAPYSDR_PROTOCOL) {
+  if (protocol == SOAPYSDR_PROTOCOL && radio && strcmp(radio->name, "sdrplay") != 0) {
     soapy_protocol_set_gain(receiver[rx]);
   }
 

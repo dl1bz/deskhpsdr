@@ -721,10 +721,12 @@ double get_sdrplay_RFGR_gain(RECEIVER *rx, int RFGR_step) {
 
   if (radio && strcmp(radio->name, "sdrplay") == 0) {
     if (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0 && freq_mhz <= 420) {
+      if (RFGR_step < 0 || RFGR_step >= (int)(sizeof(RFGR_RSP2_420) / sizeof(RFGR_RSP2_420[0]))) { return (double)RFGR_step; }
+
       double att_in_db = RFGR_RSP2_420[RFGR_step];
       return att_in_db;
     }
-  } else {
-    return (double)RFGR_step;
   }
+
+  return (double)RFGR_step;
 }

@@ -1778,12 +1778,32 @@ void radio_start_radio() {
       t_print("%s: Is %s\n", __FUNCTION__, radio->info.soapy.hardware_key);
     }
 
+    if (strcmp(radio->name, "sdrplay") == 0 && radio->info.soapy.rx_gains > 1) {
+      for (int gain_id = 0; gain_id < (int)radio->info.soapy.rx_gains; gain_id++) {
+        if (strcmp(radio->info.soapy.rx_gain[gain_id], "RFGR") == 0) {
+          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 1.0);
+        }
+      }
+    }
+
+    if (radio->info.soapy.rx_has_automatic_gain) {
+      adc[0].agc = TRUE;
+      soapy_protocol_set_automatic_gain(rx, adc[0].agc);
+    }
+
     if (strcmp(radio->name, "sdrplay") == 0) {
       t_print("%s: Bias-T: %d agc_setpoint = %d\n", __FUNCTION__, soapy_protocol_get_bias_t(rx),
               soapy_protocol_get_agc_setpoint(rx));
+
+      if (rx->panadapter_autoscale_enabled) {
+        rx->panadapter_autoscale_enabled = 0;
+        radio_reconfigure();
+        g_idle_add(ext_vfo_update, NULL);
+      }
     }
 
     update_rf_gain_scale_soapy(index_rf_gain());
+    update_slider_hwagc_btn();
   }
 
 #endif

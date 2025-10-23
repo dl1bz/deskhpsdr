@@ -305,6 +305,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   //
   const BAND *band = band_get_band(vfoband);
   int calib = rx_gain_calibration - band->gain;
+#ifdef SOAPYSDR
 
   if (device == SOAPYSDR_USB_DEVICE && (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0)) {
     int v_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
@@ -316,6 +317,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __FUNCTION__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
   }
 
+#endif
   soffset = (double) calib + (double)adc[rx->adc].attenuation - adc[rx->adc].gain;
 
   //
