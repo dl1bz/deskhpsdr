@@ -677,6 +677,15 @@ void soapy_protocol_set_rfgain_sel(RECEIVER *rx, int value) {
   }
 }
 
+const char *soapy_protocol_get_if_mode(RECEIVER *rx) {
+  const char *val = SoapySDRDevice_readSetting(soapy_device, "if_mode");
+
+  if (val == NULL) { return NULL; }
+
+  static char buf[16];
+  snprintf(buf, sizeof(buf), "%s", val);
+  return buf;
+}
 
 int soapy_protocol_get_agc_setpoint(RECEIVER *rx) {
   const char *val = SoapySDRDevice_readSetting(soapy_device, "agc_setpoint");

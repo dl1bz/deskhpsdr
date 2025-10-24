@@ -1804,6 +1804,13 @@ void radio_start_radio() {
 
     update_rf_gain_scale_soapy(index_rf_gain());
     update_slider_hwagc_btn();
+
+    // char if_mode[16];
+    if (radio && strcmp(radio->name, "sdrplay") == 0) {
+      // snprintf(if_mode, sizeof(if_mode), "%s", soapy_protocol_get_if_mode(active_receiver));
+      // t_print("%s: if_mode = %s\n", __FUNCTION__, if_mode);
+      soapy_protocol_get_settings_info(active_receiver);
+    }
   }
 
 #endif
@@ -2880,8 +2887,12 @@ static void radio_restore_state() {
     GetPropI1("radio.adc[%d].attenuation", i,                adc[i].attenuation);
     GetPropI1("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
     GetPropF1("radio.adc[%d].gain", i,                       adc[i].gain);
-    GetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
-    GetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+
+    if (radio && strcmp(radio->name, "sdrplay") != 0) {
+      GetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
+      GetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+    }
+
     GetPropI1("radio.adc[%d].agc", i,                        adc[i].agc);
     GetPropI1("radio.dac[%d].antenna", i,                    dac[i].antenna);
     GetPropF1("radio.dac[%d].gain", i,                       dac[i].gain);
@@ -3105,8 +3116,12 @@ void radio_save_state() {
     SetPropI1("radio.adc[%d].attenuation", i,                adc[i].attenuation);
     SetPropI1("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
     SetPropF1("radio.adc[%d].gain", i,                       adc[i].gain);
-    SetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
-    SetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+
+    if (radio && strcmp(radio->name, "sdrplay") != 0) {
+      SetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
+      SetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+    }
+
     SetPropI1("radio.adc[%d].agc", i,                        adc[i].agc);
     SetPropI1("radio.dac[%d].antenna", i,                    dac[i].antenna);
     SetPropF1("radio.dac[%d].gain", i,                       dac[i].gain);

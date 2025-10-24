@@ -1416,7 +1416,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         val_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
         val_rfgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rf_gain()]);
         val_biast = soapy_protocol_get_bias_t(active_receiver);
-        t_print("%s: RFGR real value: %f\n", __FUNCTION__, get_sdrplay_RFGR_gain(active_receiver, val_rfgr));
+        // t_print("%s: RFGR real value: %f\n", __FUNCTION__, get_sdrplay_RFGR_gain(active_receiver, val_rfgr));
       }
 
       if (adc[active_receiver->adc].agc) {
