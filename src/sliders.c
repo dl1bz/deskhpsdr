@@ -134,13 +134,13 @@ static GtkWidget *nr_btn;
 static GtkWidget *nr_label;
 static gulong nr_btn_signal_id;
 #ifdef SOAPYSDR
-static GtkWidget *hwagc_btn;
-static GtkWidget *hwagc_label;
-static gulong hwagc_btn_signal_id;
-static GtkWidget *hwagc_scale;
-static gulong hwagc_scale_signal_id;
-static GtkWidget *ifgr_scale;
-static gulong ifgr_scale_signal_id;
+  static GtkWidget *hwagc_btn;
+  static GtkWidget *hwagc_label;
+  static gulong hwagc_btn_signal_id;
+  static GtkWidget *hwagc_scale;
+  static gulong hwagc_scale_signal_id;
+  static GtkWidget *ifgr_scale;
+  static gulong ifgr_scale_signal_id;
 #endif
 static GtkStyleContext *nr_context;
 static GtkStyleContext *agc_context;
