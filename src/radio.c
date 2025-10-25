@@ -1771,9 +1771,9 @@ void radio_start_radio() {
     soapy_protocol_start_receiver(rx);
 
     //t_print("radio: set rf_gain=%f\n",rx->rf_gain);
-    if (strcmp(radio->info.soapy.hardware_key, "RSP2") != 0) {
+    if (strcmp(radio->name, "sdrplay") != 0) {
       soapy_protocol_set_gain(rx);
-      t_print("%s: Is not RSP2\n", __FUNCTION__);
+      t_print("%s: Is not SDRPlay\n", __FUNCTION__);
     } else {
       t_print("%s: Is %s\n", __FUNCTION__, radio->info.soapy.hardware_key);
     }
@@ -1811,6 +1811,8 @@ void radio_start_radio() {
       // t_print("%s: if_mode = %s\n", __FUNCTION__, if_mode);
       soapy_protocol_get_settings_info(active_receiver);
     }
+
+    soapy_protocol_get_driver(rx);
   }
 
 #endif

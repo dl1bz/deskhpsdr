@@ -67,10 +67,6 @@ static int max_tx_samples;
 static float *output_buffer;
 static int output_buffer_index;
 
-const unsigned RFGR_RSP2_420[9] = {
-  0, 10, 15, 21, 24, 34, 39, 45, 64
-};
-
 // cppcheck-suppress unusedFunction
 SoapySDRDevice *get_soapy_device() {
   return soapy_device;
@@ -633,6 +629,14 @@ gboolean soapy_protocol_get_automatic_gain(RECEIVER *rx) {
   return mode;
 }
 
+void soapy_protocol_get_driver(RECEIVER *rx) {
+  char buf[32];
+  const char *driver = SoapySDRDevice_getDriverKey(soapy_device);
+  snprintf(buf, sizeof(buf), "%s", driver);
+  t_print("%s: driver = %s\n", __FUNCTION__, buf);
+  return;
+}
+
 void soapy_protocol_set_bias_t(gboolean enable) {
   const char *key = (radio && strcmp(radio->name, "sdrplay") == 0) ? "biasT_ctrl" : "biastee";
   const char *value = enable ? "true" : "false";
@@ -724,18 +728,3 @@ void soapy_protocol_set_automatic_gain(RECEIVER *rx, gboolean mode) {
   t_print("%s: GainMode = %d\n", __FUNCTION__, SoapySDRDevice_getGainMode(soapy_device, SOAPY_SDR_RX, rx->adc));
 }
 
-double get_sdrplay_RFGR_gain(RECEIVER *rx, int RFGR_step) {
-  double freq_hz = SoapySDRDevice_getFrequency(soapy_device, SOAPY_SDR_RX, rx->adc);
-  int freq_mhz = (int)((freq_hz / 1e6) + 0.5); // Hz in MHz
-
-  if (radio && strcmp(radio->name, "sdrplay") == 0) {
-    if (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0 && freq_mhz <= 420) {
-      if (RFGR_step < 0 || RFGR_step >= (int)(sizeof(RFGR_RSP2_420) / sizeof(RFGR_RSP2_420[0]))) { return (double)RFGR_step; }
-
-      double att_in_db = RFGR_RSP2_420[RFGR_step];
-      return att_in_db;
-    }
-  }
-
-  return (double)RFGR_step;
-}

@@ -63,6 +63,10 @@ int val_agcsetpoint = 0;
 int val_hwagc = 0;
 int val_rfgr = 0;
 int val_ifgr = 0;
+int val_currGain = 0;
+char txt_ifgr[16];
+char txt_rfgr[16];
+char txt_currGain[16];
 gboolean val_biast = FALSE;
 
 #if defined (__WMAP__)
@@ -307,13 +311,11 @@ void rx_panadapter_update(RECEIVER *rx) {
   int calib = rx_gain_calibration - band->gain;
 #ifdef SOAPYSDR
 
-  if (device == SOAPYSDR_USB_DEVICE && (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0)) {
-    int v_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
-    int v_rfgr = get_sdrplay_RFGR_gain(active_receiver, (int)soapy_protocol_get_gain_element(active_receiver,
-                                       radio->info.soapy.rx_gain[index_rf_gain()]));
+  if (device == SOAPYSDR_USB_DEVICE && strcmp(radio->name, "sdrplay") == 0) {
+    int v_Gain = (int)soapy_protocol_get_gain_element(active_receiver, "CURRENT");
     adc[rx->adc].gain = 0;
     adc[rx->adc].attenuation = 0;
-    adc[rx->adc].gain = (double)v_ifgr + (double)v_rfgr;
+    adc[rx->adc].gain = v_Gain;
     // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __FUNCTION__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
   }
 
@@ -718,34 +720,6 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
   //---------------------------------------------------------------------------------------
-
-  /*
-  #ifdef GPIO
-    if(rx->id==0 && controller==CONTROLLER1) {
-
-      cairo_set_source_rgba(cr,COLOUR_ATTN);
-      cairo_set_font_size(cr,DISPLAY_FONT_SIZE3);
-      if(ENABLE_E2_ENCODER) {
-        cairo_move_to(cr, mywidth-200,70);
-        snprintf(text,"%s (%s)",encoder_string[e2_encoder_action],sw_string[e2_sw_action]);
-        cairo_show_text(cr, text);
-      }
-
-      if(ENABLE_E3_ENCODER) {
-        cairo_move_to(cr, mywidth-200,90);
-        snprintf(text, 64, "%s (%s)",encoder_string[e3_encoder_action],sw_string[e3_sw_action]);
-        cairo_show_text(cr, text);
-      }
-
-      if(ENABLE_E4_ENCODER) {
-        cairo_move_to(cr, mywidth-200,110);
-        snprintf(text, 64, "%s (%s)",encoder_string[e4_encoder_action],sw_string[e4_sw_action]);
-        cairo_show_text(cr, text);
-      }
-    }
-  #endif
-  */
-
   if (rx->panadapter_autoscale_enabled) {
     double noise_floor_level = -175.0; // inital value
     double ignore_noise_percentile = 60.0; // means 80%
@@ -1071,7 +1045,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (can_transmit) {
 #if defined (__APPLE__)
-      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
+      snprintf(_text, sizeof(_text), "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
 #else
       int _audioindex = 0;
 
@@ -1082,9 +1056,10 @@ void rx_panadapter_update(RECEIVER *rx) {
           }
         }
 
-        snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(input_devices[_audioindex].description, 28));
+        snprintf(_text, sizeof(_text), "[%d] %s", active_receiver->id, truncate_text_3p(input_devices[_audioindex].description,
+                 28));
       } else {
-        snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
+        snprintf(_text, sizeof(_text), "NO AUDIO INPUT DETECTED");
       }
 
 #endif
@@ -1102,9 +1077,10 @@ void rx_panadapter_update(RECEIVER *rx) {
 #endif
 
       if (sunspots != -1) {
-        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+        snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray,
+                 geomagfield);
       } else {
-        snprintf(_text, 128, " ");
+        snprintf(_text, sizeof(_text), " ");
       }
 
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -1246,7 +1222,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     if (high_swr_seen) {
       static unsigned int swr_protection_count = 0;
       cairo_move_to(cr, 100.0, 90.0);
-      snprintf(text, 64, "! High SWR");
+      snprintf(text, sizeof(text), "! High SWR");
       cairo_show_text(cr, text);
       swr_protection_count++;
 
@@ -1289,7 +1265,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #endif
     cairo_move_to(cr, 380.0, 30.0);
 #if defined (__APPLE__)
-    snprintf(_text, 128, "%s", transmitter->microphone_name);
+    snprintf(_text, sizeof(_text), "%s", transmitter->microphone_name);
 #else
     int _audioindex = 0;
 
@@ -1300,9 +1276,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         }
       }
 
-      snprintf(_text, 128, "%s", input_devices[_audioindex].description);
+      snprintf(_text, sizeof(_text), "%s", input_devices[_audioindex].description);
     } else {
-      snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
+      snprintf(_text, sizeof(_text), "NO AUDIO INPUT DETECTED");
     }
 
 #endif
@@ -1336,40 +1312,40 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
       cairo_fill(cr);
       cairo_set_source_rgba(cr, COLOUR_WHITE);
-      snprintf(_text, 128, "Fwd:");
+      snprintf(_text, sizeof(_text), "Fwd:");
       cairo_move_to(cr, width - 300, 30.0);
       cairo_show_text(cr, _text);
-      snprintf(_text, 128, "Ref:");
+      snprintf(_text, sizeof(_text), "Ref:");
       cairo_move_to(cr, width - 300, 50.0);
       cairo_show_text(cr, _text);
       cairo_text_extents_t rx200_extents;
-      snprintf(_text, 128, "%s W", g_rx200_data[0]);
+      snprintf(_text, sizeof(_text), "%s W", g_rx200_data[0]);
       cairo_text_extents(cr, _text, &rx200_extents);
       rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
       cairo_move_to(cr, rx200_x, 30.0);
       cairo_show_text(cr, _text);
-      snprintf(_text, 128, "%s W", g_rx200_data[1]);
+      snprintf(_text, sizeof(_text), "%s W", g_rx200_data[1]);
       cairo_text_extents(cr, _text, &rx200_extents);
       rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
       cairo_move_to(cr, rx200_x, 50.0);
       cairo_show_text(cr, _text);
-      snprintf(_text, 128, "%s", g_rx200_data[3]);
+      snprintf(_text, sizeof(_text), "%s", g_rx200_data[3]);
       cairo_move_to(cr, width - 190.0, 30.0);
       cairo_show_text(cr, _text);
 
       if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
-        snprintf(_text, 128, "SWR:");
+        snprintf(_text, sizeof(_text), "SWR:");
       } else {
-        snprintf(_text, 128, " ");
+        snprintf(_text, sizeof(_text), " ");
       }
 
       cairo_move_to(cr, width - 190.0, 50.0);
       cairo_show_text(cr, _text);
 
       if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
-        snprintf(_text, 128, "%s:1", g_rx200_data[2]);
+        snprintf(_text, sizeof(_text), "%s:1", g_rx200_data[2]);
       } else {
-        snprintf(_text, 128, " ");
+        snprintf(_text, sizeof(_text), " ");
       }
 
       cairo_text_extents(cr, _text, &rx200_extents);
@@ -1377,7 +1353,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, rx200_x, 50.0);
       cairo_show_text(cr, _text);
     } else {
-      snprintf(_text, 128, " ");
+      snprintf(_text, sizeof(_text), " ");
       cairo_move_to(cr, width - 300.0, 30.0);
       cairo_show_text(cr, _text);
       cairo_move_to(cr, width - 300.0, 50.0);
@@ -1386,7 +1362,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_show_text(cr, _text);
       cairo_move_to(cr, width - 190.0, 30.0);
       get_local_time(zeitString, sizeof(zeitString));
-      snprintf(_text, 128, "%s", zeitString);
+      snprintf(_text, sizeof(_text), "%s", zeitString);
       cairo_show_text(cr, _text);
     }
   }
@@ -1407,54 +1383,60 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_move_to(cr, width - 250.0, 30.0);
     get_local_time(zeitString, sizeof(zeitString));
-    snprintf(_text, 128, "%s", zeitString);
+    snprintf(_text, sizeof(_text), "%s", zeitString);
     cairo_show_text(cr, _text);
 
     if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
       if (msg_cycle == 0) {
         val_agcsetpoint = soapy_protocol_get_agc_setpoint(active_receiver);
-        val_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
-        val_rfgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rf_gain()]);
+        snprintf(txt_ifgr, sizeof(txt_ifgr), "%s", radio->info.soapy.rx_gain[index_if_gain()]);
+        snprintf(txt_rfgr, sizeof(txt_rfgr), "%s", radio->info.soapy.rx_gain[index_rf_gain()]);
+        snprintf(txt_currGain, sizeof(txt_currGain), "CURRENT");
+        val_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, txt_ifgr);
+        val_rfgr = (int)soapy_protocol_get_gain_element(active_receiver, txt_rfgr);
+        val_currGain = (int)soapy_protocol_get_gain_element(active_receiver, txt_currGain);
         val_biast = soapy_protocol_get_bias_t(active_receiver);
-        // t_print("%s: RFGR real value: %f\n", __FUNCTION__, get_sdrplay_RFGR_gain(active_receiver, val_rfgr));
+        t_print("%s: current Gain = %d\n", __FUNCTION__, (int)soapy_protocol_get_gain_element(active_receiver, txt_currGain));
       }
 
       if (adc[active_receiver->adc].agc) {
-        snprintf(_text, 128, "HW-AGC: ON");
+        snprintf(_text, sizeof(_text), "HW-AGC: ON");
         cairo_move_to(cr, width - 250.0, 50.0);
         cairo_set_source_rgba(cr, COLOUR_ATTN);
         cairo_show_text(cr, _text);
-        snprintf(_text, 128, "(%d dbFS)", val_agcsetpoint);
-        cairo_move_to(cr, width - 145.0, 50.0);
+        //---------------------------------------------------
+        snprintf(_text, sizeof(_text), "(%ddbFS)", val_agcsetpoint);
+        cairo_move_to(cr, width - 110.0, 50.0);
         cairo_show_text(cr, _text);
-        snprintf(_text, 128, "IFGR:%d (auto)", val_ifgr);
+        //---------------------------------------------------
+        cairo_set_source_rgba(cr, COLOUR_SHADE);
+        snprintf(_text, sizeof(_text), "%s:%ddb", txt_ifgr, val_ifgr);
       } else {
-        snprintf(_text, 128, "HW-AGC: OFF");
+        snprintf(_text, sizeof(_text), "HW-AGC: OFF");
         cairo_move_to(cr, width - 250.0, 50.0);
-        cairo_set_source_rgba(cr, COLOUR_WHITE);
+        cairo_set_source_rgba(cr, COLOUR_SHADE);
         cairo_show_text(cr, _text);
-        snprintf(_text, 128, "IFGR:%d", val_ifgr);
+        cairo_set_source_rgba(cr, COLOUR_ATTN);
+        snprintf(_text, sizeof(_text), "%s:%ddb", txt_ifgr, val_ifgr);
       }
 
-      cairo_move_to(cr, width - 140.0, 70.0);
+      cairo_move_to(cr, width - 110.0, 70.0);
+      cairo_show_text(cr, _text);
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      snprintf(_text, sizeof(_text), "%s:%d", txt_rfgr, val_rfgr);
+      cairo_move_to(cr, width - 180.0, 70.0);
       cairo_show_text(cr, _text);
       cairo_set_source_rgba(cr, COLOUR_WHITE);
-
-      if (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0) {
-        snprintf(_text, 128, "RFGR:%d (%d)", val_rfgr, (int)get_sdrplay_RFGR_gain(active_receiver, val_rfgr));
-      } else {
-        snprintf(_text, 128, "RFGR:%d ()", val_rfgr);
-      }
-
+      snprintf(_text, sizeof(_text), "G:%ddb", val_currGain);
       cairo_move_to(cr, width - 250.0, 70.0);
       cairo_show_text(cr, _text);
 
       if (val_biast) {
         cairo_set_source_rgba(cr, COLOUR_ATTN);
-        snprintf(_text, 128, "BIAS");
+        snprintf(_text, sizeof(_text), "BIAS");
       } else {
         cairo_set_source_rgba(cr, COLOUR_SHADE);
-        snprintf(_text, 128, "BIAS");
+        snprintf(_text, sizeof(_text), "BIAS");
       }
 
       cairo_move_to(cr, width - 45.0, 30.0);
@@ -1474,10 +1456,10 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       }
 
       cairo_move_to(cr, width - 300.0, 70.0);
-      snprintf(_text, 128, "LPF %s", g_lpf_data[0]);
+      snprintf(_text, sizeof(_text), "LPF %s", g_lpf_data[0]);
       cairo_show_text(cr, _text);
     } else {
-      snprintf(_text, 128, " ");
+      snprintf(_text, sizeof(_text), " ");
       cairo_move_to(cr, width - 300.0, 70.0);
       cairo_show_text(cr, _text);
     }
@@ -1515,7 +1497,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max1 = v; }
 
-      snprintf(text, 64, "%0.0f°C", max1);
+      snprintf(text, sizeof(text), "%0.0f°C", max1);
       flag = 1;
       break;
 
@@ -1529,7 +1511,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max1 = v; }
 
-      snprintf(text, 64, "%0.1fV", max1);
+      snprintf(text, sizeof(text), "%0.1fV", max1);
       flag = 1;
       break;
 
@@ -1555,7 +1537,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max2 = v; }
 
-      snprintf(text, 64, "%0.0fmA", max2);
+      snprintf(text, sizeof(text), "%0.0fmA", max2);
       flag = 1;
       break;
 
@@ -1568,7 +1550,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max2 = v; }
 
-      snprintf(text, 64, "%0.1fA", max2);
+      snprintf(text, sizeof(text), "%0.1fA", max2);
       flag = 1;
       break;
 
@@ -1580,7 +1562,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max2 = v; }
 
-      snprintf(text, 64, "%0.1fA", max2);
+      snprintf(text, sizeof(text), "%0.1fA", max2);
       flag = 1;
       break;
 

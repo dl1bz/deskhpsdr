@@ -314,13 +314,11 @@ void waterfall_update(RECEIVER *rx) {
       //
 #ifdef SOAPYSDR
 
-      if (device == SOAPYSDR_USB_DEVICE && (strcmp(radio->info.soapy.hardware_key, "RSP2") == 0)) {
-        int v_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
-        int v_rfgr = get_sdrplay_RFGR_gain(active_receiver, (int)soapy_protocol_get_gain_element(active_receiver,
-                                           radio->info.soapy.rx_gain[index_rf_gain()]));
+      if (device == SOAPYSDR_USB_DEVICE && strcmp(radio->name, "sdrplay") == 0) {
+        int v_Gain = (int)soapy_protocol_get_gain_element(active_receiver, "CURRENT");
         adc[rx->adc].gain = 0;
         adc[rx->adc].attenuation = 0;
-        adc[rx->adc].gain = (double)v_ifgr + (double)v_rfgr;
+        adc[rx->adc].gain = v_Gain;
         // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __FUNCTION__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
       }
 
