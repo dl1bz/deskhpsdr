@@ -24,7 +24,7 @@
 * 10/12/2016, Rick Koch / N1GP adapted Phil's verilog code from
 *             the openHPSDR Hermes iambic.v implementation to work
 *             with John's pihpsdr project. This allows one to work
-*             CW solely from the pihpsdr unit remotely.
+*             CW solely from the deskhpsdr unit remotely.
 *
 * ---------------------------------------------------------------------------------
 *         Copywrite (C) Phil Harman VK6PH May 2014

@@ -857,7 +857,7 @@ int main(int argc, char **argv) {
   //
   // The following call will most likely fail (until this program
   // has the privileges to reduce the nice value). But if the
-  // privilege is there, it may help to run piHPSDR at a lower nice
+  // privilege is there, it may help to run deskHPSDR at a lower nice
   // value.
   //
   rc = getpriority(PRIO_PROCESS, 0);

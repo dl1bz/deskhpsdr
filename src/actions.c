@@ -1947,17 +1947,17 @@ int process_action(void *data) {
     //
     // This is a PTT signal from an external keyer (either MIDI or GPIO connected).
     // In addition to activating PTT, we have to set MIDI_cw_is_active to temporarily
-    // enable CW from piHPSDR even if CW is handled  in the radio.
+    // enable CW from deskHPSDR even if CW is handled  in the radio.
     //
     // This is to support a configuration where a key is attached to (and handled in)
     // the radio, while a contest logger controls a keyer whose key up/down events
     // arrive via MIDI/GPIO.
     //
     // When KEYER_PTT is removed, clear MIDI_CW_is_active to (re-)allow CW being handled in the
-    // radio. piHPSDR then goes RX unless "Radio PTT" is seen, which indicates that either
+    // radio. deskHPSDR then goes RX unless "Radio PTT" is seen, which indicates that either
     // a footswitch has been pushed, or that the radio went TX due to operating a Morse key
     // attached to the radio.
-    // In both cases, piHPSDR stays TX and the radio will induce the TX/RX transition by removing radio_ptt.
+    // In both cases, deskHPSDR stays TX and the radio will induce the TX/RX transition by removing radio_ptt.
     //
     switch (a->mode) {
     case PRESSED:

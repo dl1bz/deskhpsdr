@@ -17,9 +17,6 @@
 #  (Bookworm) running on Raspberry Pi5 (4GB & SSD-HAT) with
 #  X11-Desktop-Environment
 #
-#  This script was adopted from libinstall.sh (piHPSDR)
-#  by Heiko/DL1BZ for using only with deskHPSDR and renamed
-#  now to prep_linux.sh
 #
 #  2024, November 21th
 #
@@ -42,7 +39,7 @@
 #
 # a) determine the location of THIS script
 #    (this is where the files should be located)
-#    and assume this is in the pihpsdr directory
+#    and assume this is in the deskhpsdr directory
 #
 ################################################################
 

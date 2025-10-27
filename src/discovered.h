@@ -35,7 +35,7 @@
 //
 // To avoid probing both the protocol and the device, device numbers
 // need to be unique across protocols, and should be defined here
-// for all protocols, even if piHPSDR is not compiled for that
+// for all protocols, even if deskHPSDR is not compiled for that
 // protocol (so define DEVICE_OZY and SOAPYSDR_USB_DEVICE in all cases!)
 //
 #define DEVICE_METIS               0

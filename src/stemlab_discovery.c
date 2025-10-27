@@ -268,7 +268,7 @@ void stemlab_cleanup() {
 //
 // So, on MacOS, just configure your STEMLAB/HAMLAB to this
 // fixed IP address and you need not open a browser to start
-// SDR *before* you can use piHPSDR.
+// SDR *before* you can use deskHPSDR.
 //
 // After starting the app in the main discover menu, we
 // have to re-discover to get full info and start the radio.

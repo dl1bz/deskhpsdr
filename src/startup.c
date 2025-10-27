@@ -20,7 +20,7 @@
 */
 
 //
-// The startup function first tries to detect whether piHPSDR is running
+// The startup function first tries to detect whether deskHPSDR is running
 // in its own directory (as usual for compiled-from-the-source installations),
 // or whether it is started from a desktop icon and resides in /usr/bin or
 // /usr/local/bin.
@@ -30,11 +30,11 @@
 //
 // - create a working directory, if it not yet exists
 // - make this the current working directory
-// - create files pihpsdr.stdout and pihpsdr.stderr there, and connect them
+// - create files deskhpsdr.stdout and deskhpsdr.stderr there, and connect them
 //   with stdout and stderr
 //
-// The working directory on Linux is $HOME/.config/pihpsdr, on MacOS it is
-// "$HOME/Library/Application Support/piHPSDR".
+// The working directory on Linux is $HOME/.config/deskhpsdr, on MacOS it is
+// "$HOME/Library/Application Support/deskHPSDR".
 //
 // If something goes wrong (e.g. the $HOME environment variable does not exist,
 // the working directory exists but is not a directory, or cannot be created)
@@ -76,7 +76,7 @@ void startup(const char *path) {
   static IOPMAssertionID keep_awake = 0;
   //
   //  This is to prevent "going to sleep" or activating the screen saver
-  //  while piHPSDR is running
+  //  while deskHPSDR is running
   //
   //  works from macOS 10.6 so no check on availability needed.
   //  no return check is needed: if it fails, it fails.
@@ -99,13 +99,13 @@ void startup(const char *path) {
   }
 
   //
-  // Look whether file pihpsdr.sh or directory release/pihpsdr exists
+  // Look whether file deskhpsdr.sh or directory release/deskhpsdr exists
   //
-  rc = stat("pihpsdr.sh", &statbuf);
+  rc = stat("deskhpsdr.sh", &statbuf);
 
   if (rc == 0 && (S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode))) { found = 1;}
 
-  rc = stat("release/pihpsdr", &statbuf);
+  rc = stat("release/deskhpsdr", &statbuf);
 
   if (rc == 0 && S_ISDIR(statbuf.st_mode)) { found = 1;}
 

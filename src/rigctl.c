@@ -5681,7 +5681,7 @@ int parse_cmd(void *data) {
       //DESCR     Get radio model ID
       //READ      ID;
       //RESP      IDxxx;
-      //NOTE      piHPSDR responds ID019; (so does the Kenwood TS-2000)
+      //NOTE      deskHPSDR responds ID019; (so does the Kenwood TS-2000)
       //ENDDEF
       g_strlcpy(reply, "ID019;", sizeof(reply));
       send_resp(client->fd, reply);

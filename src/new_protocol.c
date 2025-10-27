@@ -711,7 +711,7 @@ static void new_protocol_high_priority() {
   pthread_mutex_lock(&hi_prio_mutex);
   memset(high_priority_buffer_to_radio, 0, sizeof(high_priority_buffer_to_radio));
   //
-  // If piHPSDR is not (yet) transmitting, but a PTT signal came from the
+  // If deskHPSDR is not (yet) transmitting, but a PTT signal came from the
   // radio, set HighPrio data accoring to the TX state as early as possible.
   // To this end, radio_is_transmitting() is ORed with radio_ptt.
   //
@@ -771,7 +771,7 @@ static void new_protocol_high_priority() {
     DDCfrequency[id] += frequency_calibration -  vfo[id].lo;
   }
 
-  // CW mode from the Host; disabled since pihpsdr does not use this CW option.
+  // CW mode from the Host; disabled since deskhpsdr does not use this CW option.
   high_priority_buffer_to_radio[5] = 0x00;
 
   if (diversity_enabled && !xmit) {
@@ -2020,7 +2020,7 @@ static gpointer new_protocol_thread(gpointer data) {
 
     if (!P2running) {
       //
-      // When leaving piHPSDR, it may happen that the protocol has been stopped while
+      // When leaving deskHPSDR, it may happen that the protocol has been stopped while
       // we were doing "recvfrom". In this case, we want to let the main
       // thread terminate gracefully, including writing the props files.
       //

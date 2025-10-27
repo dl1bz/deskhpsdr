@@ -2229,7 +2229,7 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
       //
       // The "CWX" method in the HL2 firmware behaves erroneously
       // if the CW input from the KEY/PTT jack is activated.
-      // To make piHPSDR immune to this problem, the least significant
+      // To make deskHPSDR immune to this problem, the least significant
       // bit of the I (and Q) samples are cleared.
       // The resolution of the IQ samples is thus reduced from 16 to 15 bits,
       // but since the HL2 DAC is 12-bit this is no problem.
@@ -2525,7 +2525,7 @@ void ozy_send_buffer() {
     //  Now we set the bits for Ant1/2/3 (RX and TX may be different)
     //  ATTENTION:
     //  When doing CW handled in radio, the radio may start TXing
-    //  before piHPSDR has slewn down the receivers, slewn up the
+    //  before deskHPSDR has slewn down the receivers, slewn up the
     //  transmitter and goes TX. Then, if different Ant1/2/3
     //  antennas are chosen for RX and TX, parts of the first
     //  RF dot may arrive at the RX antenna and do bad things
@@ -2833,7 +2833,7 @@ void ozy_send_buffer() {
       // need to add tx attenuation and rx ADC selection
       output_buffer[C0] = 0x1C;
 
-      // set adc of the two RX associated with the two piHPSDR receivers
+      // set adc of the two RX associated with the two deskHPSDR receivers
       if (diversity_enabled) {
         // use ADC0 for RX1 and ADC1 for RX2 (fixed setting)
         output_buffer[C1] |= 0x04;

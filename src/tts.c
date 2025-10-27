@@ -21,12 +21,12 @@
 
 //
 // tts stands for "Text to Speech". This feature is meant to make
-// piHPSDR accessible for persons with limited eye-sight or are
+// deskHPSDR accessible for persons with limited eye-sight or are
 // even blind.
 //
 // To pull down expectations: I cannot implement Text-to-Speech in
-// piHPSDR, this is simply out-of-scope. What is done here is
-// to provide hooks to use Text-to-Speech together with piHPSDR.
+// deskHPSDR, this is simply out-of-scope. What is done here is
+// to provide hooks to use Text-to-Speech together with deskHPSDR.
 //
 // To this end, the core function tts_send puts a message (character
 // string) into a promiscous (broadcast) UDP packet and sends it out
@@ -41,7 +41,7 @@
 // calls tts_freq() (see main.c)
 //
 // A very simple "UDP listener" (udplistener.c) is provided for
-// demonstration purpose. This program is not part of piHPSDR but
+// demonstration purpose. This program is not part of deskHPSDR but
 // a self-contained program that can be
 // run on the same computer or another computer on the same network.
 // This UDP listener starts either "eSpeak" or "festival" as

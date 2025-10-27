@@ -507,7 +507,7 @@ void radio_reconfigure_screen() {
   }
 
   //
-  // Re-configure the piHPSDR screen after dimensions have changed
+  // Re-configure the deskHPSDR screen after dimensions have changed
   // Start with removing the toolbar, the slider area and the zoom/pan area
   // (these will be re-constructed in due course)
   //
@@ -1104,7 +1104,7 @@ int index_if_gain() {
 
 void radio_start_radio() {
   //
-  // Debug code. Placed here at the start of the program. piHPSDR  implicitly assumes
+  // Debug code. Placed here at the start of the program. deskHPSDR  implicitly assumes
   //             that the entires in the action table (actions.c) are sorted by their
   //             action enum values (actions.h).
   //             This will produce no output if the ActionTable is sorted correctly.
@@ -1211,7 +1211,7 @@ void radio_start_radio() {
     //
     // by default, assume there is a penelope board (no PennyLane)
     // when using an ATLAS bus system, to avoid TX overdrive due to
-    // missing IQ scaling. Furthermore, piHPSDR assumes the presence
+    // missing IQ scaling. Furthermore, deskHPSDR assumes the presence
     // of a Mercury board, so use that as the default clock source
     // (until changed in the RADIO menu)
     //
@@ -1400,7 +1400,7 @@ void radio_start_radio() {
   status_text(text);
 
   //
-  // text for top bar of piHPSDR Window
+  // text for top bar of deskHPSDR Window
   //
   switch (protocol) {
   case ORIGINAL_PROTOCOL:

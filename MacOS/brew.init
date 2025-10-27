@@ -12,7 +12,7 @@ xcode-select --install
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 
 #
-# All needed for pihpsdr
+# All needed for deskhpsdr
 #
 brew install gtk+3
 brew install pkg-config

@@ -20,7 +20,7 @@
 */
 
 /*
- * MIDI support for pihpsdr
+ * MIDI support for deskhpsdr
  *
  * Midi support works in three layers
  *
@@ -35,7 +35,7 @@
  * Layer-2: MIDI device specific
  * -----------------------------
  *
- * Layer2 translates MIDI commands into pihpsdr actions. This is done with
+ * Layer2 translates MIDI commands into deskhpsdr actions. This is done with
  * a table-driven algorithm, such that the same translator can be used for
  * any MIDI device provided the tables have been set up correctly.
  * It seems overly complicated to create a user interface for setting up
@@ -44,11 +44,11 @@
  * Layer-2 has SDR applications in mind, but is not necessarily specific
  * to pihpsr. It calls the Layer-3 function.
  *
- * Layer-3: pihpsdr specific
+ * Layer-3: deskhpsdr specific
  * -------------------------
  *
  * Layer 3, finally, implements all the "actions" we can make, such as TUNE
- * or VFO. This Layer calls pihpsdr functions.
+ * or VFO. This Layer calls deskhpsdr functions.
  *
  * One word to MIDI channels. Usually, a MIDI device can be configured to use
  * a specific channel, such that different keyboards use different channels.
@@ -131,7 +131,7 @@ void MidiAddCommand(int note, struct desc *desc);
 void MidiReleaseCommands(void);
 
 //
-// Layer-3 entry point (called by Layer2). In Layer-3, all the pihpsdr
+// Layer-3 entry point (called by Layer2). In Layer-3, all the deskhpsdr
 // actions (such as changing the VFO frequency) are performed.
 // The implementation of DoTheMIDI is tightly bound to pihpsr and contains
 // tons of invocations of g_idle_add with routines from ext.c

@@ -870,7 +870,7 @@ void radio_menu(GtkWidget *parent) {
     // This option is for ATLAS systems which *only* have an OZY
     // and a JANUS board (the RF front end then is either SDR-1000 or SoftRock)
     //
-    // It is assumed that the SDR-1000 is controlled outside piHPSDR
+    // It is assumed that the SDR-1000 is controlled outside deskHPSDR
     //
     if (device == DEVICE_OZY) {
       ChkBtn = gtk_check_button_new_with_label("Janus Only");

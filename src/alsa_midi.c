@@ -20,7 +20,7 @@
 */
 
 /*
- * MIDI support for pihpsdr
+ * MIDI support for deskhpsdr
  *
  * This is the "Layer-1" for ALSA-MIDI (Linux)
  * For further comments see file mac_midi.c

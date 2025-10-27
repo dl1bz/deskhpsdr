@@ -80,7 +80,7 @@ extern bool MOXAsserted;
 // For "minor" versions up to 17, there is no "major" one.
 // For "minor" version 18,  the "major" version is 1
 // With each firmware update, the "minor" version is increased (it is not reset upon advancinc the major)
-// The "major" version is increased if piHPSDR compatibility is broken
+// The "major" version is increased if deskHPSDR compatibility is broken
 //
 #define FIRMWARE_MIN_MINOR    8               // Minimum FPGA "minor" software version that this software requires
 #define FIRMWARE_MAX_MINOR   18               // Maximum FPGA "minor" software version that this software is tested on
@@ -302,7 +302,7 @@ void saturn_register_init() {
   SetBalancedMicInput(false);
 }
 
-// is there already a pihpsdr running and using xdma?
+// is there already a deskhpsdr running and using xdma?
 bool is_already_running() {
   FILE *fp;
   char path[1035];

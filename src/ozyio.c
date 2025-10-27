@@ -29,7 +29,7 @@
 
 /*
 * modified by Bob Wisdom VK4YA May 2015 to create ozymetis
-* modified further Laurence Barker G8NJJ to add USB functionality to pihpsdr
+* modified further Laurence Barker G8NJJ to add USB functionality to deskhpsdr
 */
 
 #include <gtk/gtk.h>
@@ -631,12 +631,12 @@ static int file_exists (const char * fileName) {
 //
 // - current working directory
 // - directory "release" within the current working directory
-// - directory "release/pihpsdr" within the current working directory
+// - directory "release/deskhpsdr" within the current working directory
 // - directory where the executable resides
 // - directory "release" in the directory where the executable resides
-// - directory "release/pihpsdr" in the directory where the executable resides
-// - /usr/share/pihpsdr
-// - /usr/local/share/pihpsdr
+// - directory "release/deskhpsdr" in the directory where the executable resides
+// - /usr/share/deskhpsdr
+// - /usr/local/share/deskhpsdr
 //
 static void filePath (char *sOut, const char *sIn, size_t len) {
   int rc;
@@ -650,8 +650,8 @@ static void filePath (char *sOut, const char *sIn, size_t len) {
 
   if (file_exists(sOut)) { return; }
 
-  // c) cwd/release/pihpsdr/sIn
-  snprintf(sOut, len, "release/pihpsdr/%s", sIn);
+  // c) cwd/release/deskhpsdr/sIn
+  snprintf(sOut, len, "release/deskhpsdr/%s", sIn);
 
   if (file_exists(sOut)) { return; }
 
@@ -675,19 +675,19 @@ static void filePath (char *sOut, const char *sIn, size_t len) {
 
     if (file_exists(sOut)) { return; }
 
-    // f) <exedir>/release/pihpsdr/sIn
-    snprintf(sOut, len, "%s/release/pihpsdr/%s", xPath, sIn);
+    // f) <exedir>/release/deskhpsdr/sIn
+    snprintf(sOut, len, "%s/release/deskhpsdr/%s", xPath, sIn);
 
     if (file_exists(sOut)) { return; }
   }
 
-  // g) /usr/share/pihpsdr/sIn
-  snprintf(sOut, len, "/usr/share/pihpsdr/%s", sIn);
+  // g) /usr/share/deskhpsdr/sIn
+  snprintf(sOut, len, "/usr/share/deskhpsdr/%s", sIn);
 
   if (file_exists(sOut)) { return; }
 
-  // h) /usr/local/share/pihpsdr/sIn
-  snprintf(sOut, len, "/usr/local/share/pihpsdr/%s", sIn);
+  // h) /usr/local/share/deskhpsdr/sIn
+  snprintf(sOut, len, "/usr/local/share/deskhpsdr/%s", sIn);
 
   if (file_exists(sOut)) { return; }
 

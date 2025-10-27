@@ -158,7 +158,7 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
   // Subsequent mouse moves (without a button pressed) then led to
   // wild VFO frequency changes. The first temporary solution was to
   // ignore all button press events if a (sub-)menu window is open, but
-  // this reduces piHPSDR functionality. Now we solve this problem by
+  // this reduces deskHPSDR functionality. Now we solve this problem by
   // looking HERE if the mouse button is pressed, and if not, ignore the
   // move.
   //
@@ -822,7 +822,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->nr2_trained_threshold = -0.5; // Threshold if gain method is "Trained"
   rx->nr2_trained_t2 = 0.2;         // t2 value for trained threshold
   //
-  // It has been reported that the piHPSDR noise blankers do not function
+  // It has been reported that the deskHPSDR noise blankers do not function
   // satisfactorily. I could reproduce this after building an "impulse noise source"
   // into the HPSDR simulator, and also confirmed that a popular Windows SDR program
   // has much better NB/NB2 performance.

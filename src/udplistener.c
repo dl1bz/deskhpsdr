@@ -20,7 +20,7 @@
 */
 
 //
-// Stand-alone "UDP listener" program for use with the piHPSDR
+// Stand-alone "UDP listener" program for use with the deskHPSDR
 // Text-to-Speech hook.
 //
 // This program will grap UDP packets (which may be broadcast)
@@ -61,7 +61,7 @@ int main() {
   struct sockaddr_in from;       // filled in recvfrm: where the packet came from
   socklen_t lenaddr;
   ssize_t bytes;                  // size (in bytes) of a received packet
-  char msg[130];                 // buffer for message from piHPSDR, with extra space for EOL
+  char msg[130];                 // buffer for message from deskHPSDR, with extra space for EOL
   struct timeval tv;             // timeout for UDP receives
   //
   // On MacOS, the /bin/say program will ONLY process the input

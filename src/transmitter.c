@@ -1628,7 +1628,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
     int updown;
     float cwsample;
     //
-    //  'piHPSDR' CW sets the variables cw_key_up and cw_key_down
+    //  'deskHPSDR' CW sets the variables cw_key_up and cw_key_down
     //  to the number of samples for the next down/up sequence.
     //  cw_key_down can be zero, for inserting some space
     //
@@ -1741,7 +1741,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
       int s = 0;
 
       //
-      // The scaling should ensure that a piHPSDR-generated side tone
+      // The scaling should ensure that a deskHPSDR-generated side tone
       // has the same volume than a FGPA-generated one.
       // Note cwsample = 0.00196 * level = 0.0 ... 0.25
       //
@@ -1939,7 +1939,7 @@ void tx_set_filter(TRANSMITTER *tx) {
   case modeFMN:
     //
     // FMN: the TX bandpass is applied to the signal *before* the FM modulator.
-    //      While WDSP is (meanwhile) more flexible here, piHPSDR still assumes
+    //      While WDSP is (meanwhile) more flexible here, deskHPSDR still assumes
     //      that the max audio frequency used in FMN is 3000 Hz.
     //      BTW, the FM modulator then contains an additional bandpass filter
     //      with corner frequencies from Carsons's rule, +/-(Deviation + AudioHighCut)

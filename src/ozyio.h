@@ -29,7 +29,7 @@
 
 /*
 * modified by Bob Wisdom VK4YA May 2015 to create ozymetis
-* modified further Laurence Barker G8NJJ to add USB functionality to pihpsdr
+* modified further Laurence Barker G8NJJ to add USB functionality to deskhpsdr
 */
 
 /*

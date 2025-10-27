@@ -674,7 +674,7 @@ void new_menu() {
     row = 2;
     col++;
     //
-    // Sixth column: Menus for controlling piHPSDR
+    // Sixth column: Menus for controlling deskHPSDR
     //               Toolbar, RigCtl, MIDI, Encoders, Switches
     //
     GtkWidget *toolbar_b = gtk_button_new_with_label("Toolbar");
