@@ -36,8 +36,10 @@
 #include "channel.h"
 #include "discovered.h"
 #include "actions.h"
-#include "gpio.h"
-#include "i2c.h"
+#ifdef GPIO
+  #include "gpio.h"
+  #include "i2c.h"
+#endif
 #include "message.h"
 
 #ifdef GPIO

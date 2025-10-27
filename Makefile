@@ -198,6 +198,15 @@ GPIO=
 SATURN=
 endif
 
+ifeq ($(UNAME_S), Linux)
+GPIOD_VERSION := $(shell pkg-config --modversion libgpiod 2>/dev/null)
+GPIOD_MAJOR := $(word 1,$(subst ., ,$(GPIOD_VERSION)))
+
+ifeq ($(GPIOD_MAJOR),2)
+GPIO=
+endif
+endif
+
 ##############################################################################
 #
 # Add modules for MIDI if requested.
@@ -884,9 +893,10 @@ endif
 # On MacOS, cppcheck usually cannot find the system include files so we suppress any
 # warnings therefrom, as well as warnings for functions defined in some
 # library but never called.
-# Furthermore, we can use --check-level=exhaustive on MacOS
-# since there we have new newest version (>2.11), while on RaspPi we still have
-# older versions.
+#
+# We want to use the --check-level=exhaustive flag for cppcheck. A sufficiently
+# recent version of cppcheck if available on MacOS, and for Debian since
+# version 13 "Trixie" which introduced kernel version 6.12
 #
 ##############################################################################
 
@@ -897,8 +907,6 @@ CPP_OPTIONS= --inline-suppr --enable=all --suppress=unmatchedSuppression
 ifeq ($(UNAME_S), Darwin)
 CPP_OPTIONS += -D__APPLE__
 CPP_OPTIONS += --check-level=exhaustive
-CPP_OPTIONS += --suppress=missingIncludeSystem
-CPP_OPTIONS += --suppress=unusedFunction
 else
 CPP_OPTIONS += -D__linux__
 CPP_OPTIONS += --suppress=missingIncludeSystem
