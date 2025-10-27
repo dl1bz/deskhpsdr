@@ -87,7 +87,11 @@ static void callsign_box_cb(GtkWidget *widget, gpointer data) {
 static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
   if (device == SOAPYSDR_USB_DEVICE) {
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-    adc[active_receiver->adc].gain = gain;
+
+    if (strcmp(radio->name, "sdrplay") != 0) {
+      adc[active_receiver->adc].gain = gain;
+    }
+
     soapy_protocol_set_gain_element(active_receiver, (char *)gtk_widget_get_name(widget), (int) gain);
     t_print("%s: %s gain = %d\n", __FUNCTION__, (char *)gtk_widget_get_name(widget), gain);
     update_rf_gain_scale_soapy(index_rf_gain());
@@ -1188,23 +1192,25 @@ void radio_menu(GtkWidget *parent) {
       // Draw a spin-button for each range
       //
       for (size_t i = 0; i < radio->info.soapy.rx_gains; i++) {
-        label = gtk_label_new(radio->info.soapy.rx_gain[i]);
-        gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
-        col++;
-        SoapySDRRange range = radio->info.soapy.rx_range[i];
+        if (strcmp(radio->info.soapy.rx_gain[i], "CURRENT") != 0) {
+          label = gtk_label_new(radio->info.soapy.rx_gain[i]);
+          gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+          col++;
+          SoapySDRRange range = radio->info.soapy.rx_range[i];
 
-        if (range.step == 0.0) {
-          range.step = 1.0;
+          if (range.step == 0.0) {
+            range.step = 1.0;
+          }
+
+          GtkWidget *rx_gain = gtk_spin_button_new_with_range(range.minimum, range.maximum, range.step);
+          gtk_widget_set_name (rx_gain, radio->info.soapy.rx_gain[i]);
+          double value = (double)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[i]);
+          t_print("%s: gain[%d] value = %f\n", __FUNCTION__, i, value);
+          gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain), value);
+          gtk_grid_attach(GTK_GRID(grid), rx_gain, 1, row, 1, 1);
+          g_signal_connect(rx_gain, "value_changed", G_CALLBACK(rx_gain_element_changed_cb), NULL);
+          row++;
         }
-
-        GtkWidget *rx_gain = gtk_spin_button_new_with_range(range.minimum, range.maximum, range.step);
-        gtk_widget_set_name (rx_gain, radio->info.soapy.rx_gain[i]);
-        double value = (double)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[i]);
-        t_print("%s: gain[%d] value = %f\n", __FUNCTION__, i, value);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain), value);
-        gtk_grid_attach(GTK_GRID(grid), rx_gain, 1, row, 1, 1);
-        g_signal_connect(rx_gain, "value_changed", G_CALLBACK(rx_gain_element_changed_cb), NULL);
-        row++;
       }
     }
 
