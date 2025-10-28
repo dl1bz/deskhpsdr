@@ -728,3 +728,23 @@ void soapy_protocol_set_automatic_gain(RECEIVER *rx, gboolean mode) {
   t_print("%s: GainMode = %d\n", __FUNCTION__, SoapySDRDevice_getGainMode(soapy_device, SOAPY_SDR_RX, rx->adc));
 }
 
+gboolean soapy_protocol_check_sdrplay_mod(RECEIVER *rx) {
+  gboolean driver_flag = FALSE;
+
+  if (radio->info.soapy.rx_has_automatic_gain && radio->info.soapy.rx_gains > 1
+      && (strcmp(radio->name, "sdrplay") == 0)) {
+    for (size_t i = 0; i < radio->info.soapy.rx_gains; i++) {
+      if (strcmp(radio->info.soapy.rx_gain[i], "CURRENT") == 0) {
+        driver_flag = TRUE;
+        t_print("%s: Required RX Gain \"%s\" in SDRPlay_Soapy_module at index %d\n", __FUNCTION__, radio->info.soapy.rx_gain[i],
+                i);
+      }
+    }
+  }
+
+  if (!driver_flag) {
+    t_print("%s: WRONG SDRPlay_Soapy_module !\n", __FUNCTION__);
+  }
+
+  return driver_flag;
+}

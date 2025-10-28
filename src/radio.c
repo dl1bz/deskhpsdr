@@ -1102,6 +1102,24 @@ int index_if_gain() {
   t_print("%s: index = %d\n", __FUNCTION__, ifgain_index);
 }
 
+static void on_response(GtkDialog *dialog, gint response_id, gpointer user_data) {
+  // GtkWindow *parent = gtk_window_get_transient_for(GTK_WINDOW(dialog));
+  gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+static void show_message(GtkWindow *parent, const char *text) {
+  GtkWidget *dialog = gtk_message_dialog_new(parent,
+                      GTK_DIALOG_MODAL,
+                      GTK_MESSAGE_INFO,
+                      GTK_BUTTONS_OK,
+                      NULL);
+  gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), text);
+  gtk_window_set_title(GTK_WINDOW(dialog), "deskHPSDR Error Message");
+  gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
+  g_signal_connect(dialog, "response", G_CALLBACK(on_response), NULL);
+  gtk_widget_show(dialog);
+}
+
 void radio_start_radio() {
   //
   // Debug code. Placed here at the start of the program. deskHPSDR  implicitly assumes
@@ -1805,11 +1823,25 @@ void radio_start_radio() {
     update_rf_gain_scale_soapy(index_rf_gain());
     update_slider_hwagc_btn();
 
-    // char if_mode[16];
     if (radio && strcmp(radio->name, "sdrplay") == 0) {
-      // snprintf(if_mode, sizeof(if_mode), "%s", soapy_protocol_get_if_mode(active_receiver));
-      // t_print("%s: if_mode = %s\n", __FUNCTION__, if_mode);
       soapy_protocol_get_settings_info(active_receiver);
+      t_print("%s: has correct driver: %d\n", __FUNCTION__, soapy_protocol_check_sdrplay_mod(active_receiver));
+
+      if (soapy_protocol_check_sdrplay_mod(active_receiver) == FALSE) {
+        char msg_txt_win[2048];
+        snprintf(msg_txt_win, sizeof(msg_txt_win),
+                 "<span color='red' size='x-large' weight='bold'>deskHPSDR critical error:</span>"
+                 "<span size='large' weight='bold'>\n\nBroken SoapySDRPlay3 plugin detected:\n"
+                 "RX Gain \"CURRENT\" doesn't exist.\n"
+                 "\nThis is a known issue, because the official SoapySDRPlay3 plugin code is broken.\n"
+                 "</span>"
+                 "<span color='red' size='large' weight='bold'>\nYour SDRplay can be used, but calculation of the RX panadapter, S-meter and waterfall is not possible.</span>"
+                 "<span size='large' weight='bold'>\n\nSolution:\nRemove the current SoapySDRPlay3 plugin and replace it with the SoapySDRPlay3 plugin using branch \"get-current-gain\".\n"
+                 "DO NOT USE the \"master\" branch.\n\n"
+                 "Get the required source of SoapySDRPlay3 plugin from\nhttps://github.com/pothosware/SoapySDRPlay3\nand rebuild &amp; install the plugin new."
+                 "</span>\n\n");
+        show_message(GTK_WINDOW(top_window), msg_txt_win);
+      }
     }
 
     soapy_protocol_get_driver(rx);

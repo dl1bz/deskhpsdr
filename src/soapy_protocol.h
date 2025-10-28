@@ -60,4 +60,5 @@ const char *soapy_protocol_get_if_mode(RECEIVER *rx);
 int soapy_protocol_get_agc_setpoint(RECEIVER *rx);
 void soapy_protocol_set_agc_setpoint(RECEIVER *rx, int setpoint);
 void soapy_protocol_set_rfgain_sel(RECEIVER *rx, int value);
+gboolean soapy_protocol_check_sdrplay_mod(RECEIVER *rx);
 #endif
