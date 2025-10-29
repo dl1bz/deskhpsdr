@@ -205,6 +205,14 @@ GPIOD_MAJOR := $(word 1,$(subst ., ,$(GPIOD_VERSION)))
 ifeq ($(GPIOD_MAJOR),2)
 GPIO=
 endif
+
+ifeq ($(GPIO),ON)
+ifeq ($(GPIOD_MAJOR),1)
+else
+GPIO=
+endif
+endif
+
 endif
 
 ##############################################################################

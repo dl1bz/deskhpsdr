@@ -429,7 +429,9 @@ static void* keyer_thread(void *arg) {
           // If both paddles are pressed (should not happen), then
           // the dash paddle wins.
           if (*kdash) {                  // send manual dashes
+#ifdef GPIO
             gpio_set_cw(1);
+#endif
             cw_key_down = 960000; // max. 20 sec to protect hardware
             cw_key_up = 0;
             key_state = STRAIGHT;
@@ -452,7 +454,9 @@ static void* keyer_thread(void *arg) {
         // Wait for dash paddle being released in "straight key" mode.
         //
         if (! *kdash) {
+#ifdef GPIO
           gpio_set_cw(0);
+#endif
           cw_key_down = 0;
           cw_key_up = 0;
           key_state = CHECK;
@@ -466,7 +470,9 @@ static void* keyer_thread(void *arg) {
         //
         dash_memory = 0;
         dash_held = *kdash;
+#ifdef GPIO
         gpio_set_cw(1);
+#endif
         cw_key_down = dot_samples;
         cw_key_up = dot_samples;
         key_state = SENDDOT;
@@ -478,7 +484,9 @@ static void* keyer_thread(void *arg) {
         // wait for dot being complete
         //
         if (cw_key_down == 0) {
+#ifdef GPIO
           gpio_set_cw(0);
+#endif
           key_state = DOTDELAY;
         }
 
@@ -529,7 +537,9 @@ static void* keyer_thread(void *arg) {
       case PREDASH:
         dot_memory =  0;
         dot_held = *kdot;  // remember if dot is still held at beginning of the dash
+#ifdef GPIO
         gpio_set_cw(1);
+#endif
         cw_key_down = dash_samples;
         cw_key_up = dot_samples;
         key_state = SENDDASH;
@@ -541,7 +551,9 @@ static void* keyer_thread(void *arg) {
         // wait for dash being complete
         //
         if (cw_key_down == 0) {
+#ifdef GPIO
           gpio_set_cw(0);
+#endif
           key_state = DASHDELAY;
         }
 
