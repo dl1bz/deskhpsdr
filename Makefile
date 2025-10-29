@@ -204,10 +204,12 @@ GPIOD_MAJOR := $(word 1,$(subst ., ,$(GPIOD_VERSION)))
 
 ifeq ($(GPIOD_MAJOR),2)
 GPIO=
+$(info libgpiod V2 detected. This is not supported, disable GPIO support...)
 endif
 
 ifeq ($(GPIO),ON)
 ifeq ($(GPIOD_MAJOR),1)
+$(info libgpiod V1 detected. Compile with GPIO support)
 else
 GPIO=
 endif
