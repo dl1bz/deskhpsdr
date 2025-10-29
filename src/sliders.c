@@ -1450,28 +1450,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   }
 
   t_print("sliders_init: width=%d height=%d widget_height=%d\n", width, height, widget_height);
-  const char *csslabel;
-  int tpix;
-
-  if (width < 1441) {
-    tpix   =  width / 12;
-  } else {
-    tpix   =  width / 15;
-  }
-
-  //
-  // Depending on the width for the Label, we can increase the
-  // font size. Note the minimum value for tpix is 71
-  // (for a 640-pix-screen)
-  //
-  if (tpix < 75 ) {
-    csslabel = "slider1";
-  } else if (tpix < 85) {
-    csslabel = "slider2";
-  } else {
-    csslabel = "slider3";
-  }
-
   int box_left_width = (int)floor(my_width / 3); // abrunden auf ganze Zahl
   int box_right_width = box_left_width - 50;
   int box_middle_width = my_width - box_left_width - box_right_width - 50;
@@ -1859,6 +1837,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
     gtk_range_set_value (GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
     gtk_range_set_increments (GTK_RANGE(attenuation_scale), 1.0, 1.0);
+
+    for (double i = 0.0; i <= 31.0; i += 5.0) {
+      gtk_scale_add_mark(GTK_SCALE(attenuation_scale), i, GTK_POS_TOP, NULL);
+    }
+
     g_signal_connect(G_OBJECT(attenuation_scale), "value_changed", G_CALLBACK(attenuation_value_changed_cb), NULL);
     gtk_widget_set_margin_end(attenuation_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(attenuation_scale, FALSE);  // fülle Box nicht nach rechts
@@ -1872,16 +1855,23 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // C25: eine Box (Label kompakt, Combo flexibel) in Z0/S2
-  c25_att_label = gtk_label_new("Att/Pre");
-  gtk_widget_set_name(c25_att_label, csslabel);
-  gtk_widget_set_margin_top(c25_att_label, 5);
-  gtk_widget_set_margin_bottom(c25_att_label, 5);
-  gtk_label_set_xalign(GTK_LABEL(c25_att_label), 1.0);
+  c25_att_label = gtk_label_new("ATT/Pre");
+  gtk_widget_set_name(c25_att_label, "boldlabel_border_blue");
+  // Label breiter erzwingen
+  gtk_widget_set_size_request(c25_att_label, 90, -1);  // z.B. 100px
+  gtk_widget_set_margin_top(c25_att_label, 0);
+  gtk_widget_set_margin_bottom(c25_att_label, 0);
+  gtk_widget_set_margin_end(c25_att_label, 0);    // rechter Rand (Ende)
+  gtk_widget_set_margin_start(c25_att_label, 0);    // linker Rand (Anfang)
+  gtk_widget_set_halign(c25_att_label, GTK_ALIGN_START);
   gtk_widget_set_valign(c25_att_label, GTK_ALIGN_CENTER);
   c25_att_combobox = gtk_combo_box_text_new();
-  gtk_widget_set_name(c25_att_combobox, csslabel);
-  gtk_widget_set_hexpand(c25_att_combobox, TRUE);
-  gtk_widget_set_halign(c25_att_combobox, GTK_ALIGN_FILL);
+  gtk_widget_set_name(c25_att_combobox, "boldlabel");
+  gtk_widget_set_margin_top(c25_att_combobox, 5);
+  gtk_widget_set_margin_bottom(c25_att_combobox, 5);
+  gtk_widget_set_margin_start(c25_att_combobox, 3);
+  gtk_widget_set_margin_end(c25_att_combobox, 3);  // rechter Rand (Ende)
+  gtk_widget_set_hexpand(c25_att_combobox, FALSE);  // fülle Box nicht nach rechts
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(c25_att_combobox), "-36", "-36 dB");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(c25_att_combobox), "-24", "-24 dB");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(c25_att_combobox), "-12", "-12 dB");
@@ -1892,10 +1882,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                    G_CALLBACK(c25_att_combobox_changed), NULL);
   c25_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
   gtk_box_pack_start(GTK_BOX(c25_box), c25_att_label,     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(c25_box), c25_att_combobox,  TRUE,  TRUE,  0);
-  gtk_widget_set_hexpand(c25_box, TRUE);
-  gtk_widget_set_halign(c25_box, GTK_ALIGN_FILL);
-  gtk_widget_set_valign(c25_box, GTK_ALIGN_CENTER);
+  gtk_box_pack_start(GTK_BOX(c25_box), c25_att_combobox,  FALSE, FALSE, 0);
+  gtk_box_set_spacing(GTK_BOX(c25_box), 5);
+  gtk_widget_set_size_request(c25_box, box_right_width, widget_height);
   gtk_grid_attach(GTK_GRID(sliders), c25_box, /*col*/ 2, /*row*/ 0, /*w*/ 1, /*h*/ 1);
 
   if (filter_board == CHARLY25) {
@@ -2087,6 +2076,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       } else {
         gtk_range_set_increments (GTK_RANGE(drive_scale), 1.0, 1.0);
         gtk_range_set_value (GTK_RANGE(drive_scale), radio_get_drive());
+
+        for (float i = 0.0; i <= 100.0; i += 25.0) {
+          gtk_scale_add_mark(GTK_SCALE(drive_scale), i, GTK_POS_TOP, NULL);
+        }
       }
     }
 

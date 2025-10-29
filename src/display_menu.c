@@ -444,11 +444,9 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_show(waterfall_automatic_b);
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_automatic_b, col, row, 1, 1);
   g_signal_connect(waterfall_automatic_b, "toggled", G_CALLBACK(waterfall_automatic_cb), NULL);
-  //--------------------------------------------------------------------------------------------------------------
-#ifdef SOAPYSDR
 
-  if (radio && strcmp(radio->name, "sdrplay") != 0) {
-#endif
+  //--------------------------------------------------------------------------------------------------------------
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     label = gtk_label_new("Panadapter Automatic:\n(Related to Noisefloor)");
     gtk_widget_set_name (label, "boldlabel_blue");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
@@ -460,7 +458,6 @@ void display_menu(GtkWidget *parent) {
     gtk_widget_show(panadapter_autoscale_btn);
     gtk_grid_attach(GTK_GRID(general_grid), panadapter_autoscale_btn, 1, row + 1, 1, 1);
     g_signal_connect(panadapter_autoscale_btn, "toggled", G_CALLBACK(panadapter_autoscale_toggle_cb), NULL);
-#ifdef SOAPYSDR
   } else {
     if (active_receiver->panadapter_autoscale_enabled) {
       active_receiver->panadapter_autoscale_enabled = 0;
@@ -469,7 +466,6 @@ void display_menu(GtkWidget *parent) {
     }
   }
 
-#endif
   //--------------------------------------------------------------------------------------------------------------
   col = 2;
   row = 1;
