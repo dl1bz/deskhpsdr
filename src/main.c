@@ -802,16 +802,23 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_container_add (GTK_CONTAINER (top_window), topgrid);
   t_print("add image to grid\n");
   gtk_grid_attach(GTK_GRID(topgrid), trx_logo_widget, 0, 0, 1, 2);
-  t_print("create pi label\n");
+  t_print("create deskHPSDR label\n");
+  //----------------------------------------------------------------------------------
   snprintf(text, 2048,
-           "\n"
-           "deskHPSDR by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n\n"
-           "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
-           "(+ limited Soapy-API support)\n\n");
+           "\ndeskHPSDR by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n");
   GtkWidget *deskhpsdr_label = gtk_label_new(text);
   gtk_widget_set_name(deskhpsdr_label, "big_txt");
   gtk_widget_set_halign(deskhpsdr_label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_label, 1, 0, 3, 1);
+  //----------------------------------------------------------------------------------
+  snprintf(text, 2048,
+           "Ham Radio SDR Transceiver Frontend Application\n"
+           "compatible with OpenHPSDR Protocols 1 and 2 & Soapy (with limited support)\n");
+  GtkWidget *deskhpsdr_sub_label = gtk_label_new(text);
+  gtk_widget_set_name(deskhpsdr_sub_label, "med_bold_txt");
+  gtk_widget_set_halign(deskhpsdr_sub_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_sub_label, 1, 1, 3, 1);
+  //----------------------------------------------------------------------------------
   t_print("create build label\n");
   snprintf(text, 2048,
            "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nWDSP version: %d.%02d\nUsed Audio module: %s\nWorking Directory: %s",
@@ -821,13 +828,13 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_widget_set_name(build_date_label, "med_txt");
   gtk_widget_set_halign(build_date_label, GTK_ALIGN_START);
   t_print("add build label to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 2, 3, 1);
+  gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 3, 3, 1);
   t_print("create status\n");
   status_label = gtk_label_new(NULL);
   gtk_widget_set_name(status_label, "med_txt");
   gtk_widget_set_halign(status_label, GTK_ALIGN_START);
   t_print("add status to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 3, 3, 1);
+  gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 4, 3, 1);
   gtk_widget_show_all(top_window);
   t_print("g_idle_add: init\n");
   g_idle_add(init, NULL);

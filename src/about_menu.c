@@ -110,24 +110,24 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_halign(hpsdr_logo_widget, GTK_ALIGN_CENTER);  // Horizontal zentrieren
   gtk_widget_set_valign(hpsdr_logo_widget, GTK_ALIGN_START);   // Vertikal oben ausrichten
   gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
-  snprintf(text, 2048, "Hamradio SDR-Software for HPSDR protocol 1 & 2\n"
-                       "(+ limited Soapy-API support)\n"
-                       "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
-                       "(contains code portions of piHPSDR by G0ORX/N6LYT and DL1YCF)\n\n"
-                       "    Credits:\n"
-                       "    Warren C. Pratt, NR0V: WDSP Library\n"
-                       "    John Melton, G0ORX/N6LYT: first and initial version of piHPSDR\n"
-                       "    Christoph van Wüllen, DL1YCF: Continuation & current version piHPSDR\n"
-                       "    Richie, MW0LGE: Developer of main version Thetis\n"
-                       "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
-                       "    Ramakrishnan, VU3RDD: patched WDSP with NR3 & NR4 support\n"
-                       "    Francesco Cozzi, IZ7KHR: improved SDR device discovery\n\n"
-                       "Build OS: %s %s @ %s\n"
-                       "Build compiler: %s\n"
-                       "Build date: %s (Branch: %s, Commit: %s)\n"
-                       "Build version: %s\n"
-                       "Build options: %s\n"
-                       "WDSP version: %d.%02d\n\n",
+  snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
+                               "compatible with OpenHPSDR protocol 1 and 2 & Soapy (with limited support)\n"
+                               "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
+                               "(contains code portions of piHPSDR by G0ORX/N6LYT and DL1YCF)\n\n"
+                               "    Credits:\n"
+                               "    Warren C. Pratt, NR0V: WDSP signal processing library development\n"
+                               "    John Melton, G0ORX/N6LYT: first and initial version of piHPSDR\n"
+                               "    Christoph van Wüllen, DL1YCF: Continuation & current version piHPSDR\n"
+                               "    Richie, MW0LGE: Developer of main version Thetis\n"
+                               "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
+                               "    Ramakrishnan, VU3RDD: patched WDSP with NR3 & NR4 support\n"
+                               "    Francesco Cozzi, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n\n"
+                               "Build OS: %s %s @ %s\n"
+                               "Build compiler: %s\n"
+                               "Build date: %s (Branch: %s, Commit: %s)\n"
+                               "Build version: %s\n"
+                               "Build options: %s\n"
+                               "WDSP version: %d.%02d\n\n",
            unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_branch, build_commit,
            build_version,
            build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100);
@@ -136,9 +136,10 @@ void about_menu(GtkWidget *parent) {
   case ORIGINAL_PROTOCOL:
   case NEW_PROTOCOL:
     if (device == DEVICE_OZY) {
-      snprintf(line, 512, "Device:  OZY (via USB)  Protocol %s v%d.%d", radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
+      snprintf(line, sizeof(line), "Device:  OZY (via USB)  Protocol %s v%d.%d",
+               radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                radio->software_version / 10, radio->software_version % 10);
-      g_strlcat(text, line, 1024);
+      g_strlcat(text, line, sizeof(text));
     } else {
       char interface_addr[64];
       char addr[64];
@@ -146,13 +147,13 @@ void about_menu(GtkWidget *parent) {
       g_strlcpy(interface_addr, inet_ntoa(radio->info.network.interface_address.sin_addr), 64);
 
       if (have_saturn_xdma) {
-        snprintf(line, 512, "Device: Saturn (via XDMA), Protocol %s, v%d.%d\n",
+        snprintf(line, sizeof(line), "Device: Saturn (via XDMA), Protocol %s, v%d.%d\n",
                  radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                  radio->software_version / 10, radio->software_version % 10);
       } else {
-        snprintf(line, 512, "SDR Device: %s, Protocol %s, Firmware v%d.%d\n"
-                            "    MAC address SDR: %02X:%02X:%02X:%02X:%02X:%02X\n"
-                            "    IP address SDR: %s [on %s w/ local IP %s]",
+        snprintf(line, sizeof(line), "SDR Device: %s, Protocol %s, Firmware v%d.%d\n"
+                                     "    MAC address SDR: %02X:%02X:%02X:%02X:%02X:%02X\n"
+                                     "    IP address SDR: %s [on %s w/ local IP %s]",
                  radio->name, radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                  radio->software_version / 10, radio->software_version % 10,
                  radio->info.network.mac_address[0],
@@ -166,17 +167,17 @@ void about_menu(GtkWidget *parent) {
                  interface_addr);
       }
 
-      g_strlcat(text, line, 1024);
+      g_strlcat(text, line, sizeof(text));
     }
 
     break;
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    snprintf(line, 512, "Device: %s (via SoapySDR)\n"
-                        "    %s %s",
+    snprintf(line, sizeof(line), "Device: %s (via SoapySDR)\n"
+                                 "    %s %s",
              radio->name, radio->info.soapy.driver_key, radio->info.soapy.hardware_key);
-    g_strlcat(text, line, 1024);
+    g_strlcat(text, line, sizeof(text));
     break;
 #endif
   }
