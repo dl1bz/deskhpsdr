@@ -1107,6 +1107,7 @@ static void on_response(GtkDialog *dialog, gint response_id, gpointer user_data)
   gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
+static void show_message(GtkWindow *parent, const char *text) __attribute__((unused));
 static void show_message(GtkWindow *parent, const char *text) {
   GtkWidget *dialog = gtk_message_dialog_new(parent,
                       GTK_DIALOG_MODAL,
