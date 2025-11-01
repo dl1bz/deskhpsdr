@@ -226,7 +226,7 @@ static unsigned char get_SWert(short int dbm) {
 
 //----------------------------------------------------------------------------------------------
 
-void get_local_time(char *zeitString, size_t groesse) {
+static void get_local_time(char *zeitString, size_t groesse) {
   // Aktuelle Zeit abrufen
   time_t aktuelleZeit;
   time(&aktuelleZeit);
@@ -234,16 +234,35 @@ void get_local_time(char *zeitString, size_t groesse) {
   struct tm Zeit;
   // Zeit in UTC konvertieren (Thread-sicher)
   gmtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+
   // Zeit in lokales Format konvertieren
   // localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
   // Formatierter Zeit-String erstellen
-  snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
-           Zeit.tm_mday,
-           Zeit.tm_mon + 1, // Monate beginnen bei 0
-           Zeit.tm_year + 1900, // Jahre ab 1900
-           Zeit.tm_hour,
-           Zeit.tm_min,
-           Zeit.tm_sec);
+  if (region == REGION_UK) {
+    snprintf(zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
+             Zeit.tm_mday,
+             Zeit.tm_mon + 1,
+             Zeit.tm_year + 1900,
+             Zeit.tm_hour,
+             Zeit.tm_min,
+             Zeit.tm_sec);
+  } else if (region == REGION_US) {
+    snprintf(zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
+             Zeit.tm_mon + 1,
+             Zeit.tm_mday,
+             Zeit.tm_year + 1900,
+             Zeit.tm_hour,
+             Zeit.tm_min,
+             Zeit.tm_sec);
+  } else {
+    snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
+             Zeit.tm_mday,
+             Zeit.tm_mon + 1, // Monate beginnen bei 0
+             Zeit.tm_year + 1900, // Jahre ab 1900
+             Zeit.tm_hour,
+             Zeit.tm_min,
+             Zeit.tm_sec);
+  }
 }
 
 static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
