@@ -3,6 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
+	<string>org.deskhpsdr.app</string>
+	<key>CFBundleName</key>
+	<string>deskHPSDR</string>
+	<key>CFBundleDisplayName</key>
 	<string>deskHPSDR</string>
 	<key>CFBundleExecutable</key>
 	<string>deskhpsdr</string>
@@ -12,13 +16,21 @@
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
 	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>2.6.60</string>
+	<key>CFBundleVersion</key>
+	<string>20660</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow for using Sound input devices</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Allow discovery and communication with devices via UDP</string>
 	<key>NSHighResolutionCapable</key>
-	<string>YES</string>
+	<true/>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
 </dict>
 </plist>
