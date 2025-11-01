@@ -1,8 +1,5 @@
 /* Copyright (C)
 * 2019 - Christoph van Wüllen, DL1YCF
-* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
-*
-*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -97,13 +94,14 @@ static int ddcenable[NUMRECEIVERS];
 static int adcmap[NUMRECEIVERS];
 static int rxrate[NUMRECEIVERS];
 static int syncddc[NUMRECEIVERS];
+static double p2noisefac[NUMRECEIVERS];
 
 //data from tx specific packet
 static int dac = -1;
 static int cwmode = -1;
 static int sidelevel = -1;
 static int sidefreq = -1;
-static int speed = -1;
+static int cwspeed = -1;
 static int weight = -1;
 static int hang = -1;
 static int delay = -1;
@@ -502,6 +500,7 @@ void *ddc_specific_thread(void *data) {
         modified = 1;
         rxrate[i] = rc;
         modified = 1;
+        p2noisefac[i] = sqrt((double)rxrate[i]);
       }
 
       if (syncddc[i] != buffer[1363 + i]) {
@@ -626,9 +625,9 @@ void *duc_specific_thread(void *data) {
       t_print("TX: CW sidetone freq: %d\n", sidefreq);
     }
 
-    if (speed != buffer[9]) {
-      speed = buffer[9];
-      t_print("TX: CW keyer speed: %d wpm\n", speed);
+    if (cwspeed != buffer[9]) {
+      cwspeed = buffer[9];
+      t_print("TX: CW keyer speed: %d wpm\n", cwspeed);
     }
 
     if (weight != buffer[10]) {
@@ -1185,6 +1184,12 @@ void *rx_thread(void *data) {
       syncadc = 0;
     }
 
+    if (speed == 1) {
+      wait = (wait * 99) / 100;
+    } else if (speed == -1) {
+      wait = (wait * 101) / 100;
+    }
+
     //
     // ADC0 RX: noise + 14.1 MHz signal at -73 dBm
     // ADC0 TX: noise + distorted TX signal
@@ -1221,15 +1226,15 @@ void *rx_thread(void *data) {
       //
       // produce noise depending on the ADC
       //
-      i1sample = i0sample = noiseItab[noisept];
-      q1sample = q0sample = noiseQtab[noisept++];
+      i1sample = i0sample = noiseItab[noisept] * p2noisefac[myddc];
+      q1sample = q0sample = noiseQtab[noisept++] * p2noisefac[myddc];
 
       if (noisept == LENNOISE) { noisept = rand_r(&seed) / NOISEDIV; }
 
       //
       // PS: produce sample PAIRS,
       // a) distorted TX data (with Drive and Attenuation and ADC noise)
-      // b) original TX data (normalized)
+      // b) original TX data (normalised)
       //
       // DIV: produce sample PAIRS,
       // a) add man-made-noise on I-sample of RX channel
@@ -1629,12 +1634,14 @@ void *send_highprio_thread(void *data) {
       buffer[7] = txdrive;  // Exciter Power
 
       if (alex0_enable > 0) {
+        // ALEX Fwd power
         rc = (int) ((4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
         buffer[14] = (rc >> 8) & 0xFF;
-        buffer[15] = (rc     ) & 0xFF;  // Alex0 forward power
-        rc = (int) ((4095.0 / c1) * sqrt(0.05 * maxpwr * txlevel * c2));
+        buffer[15] = (rc     ) & 0xFF;
+        // ALEX Rev power, make it TX dridve dependent to get a handle to vary the SWR
+        rc = (int) (txdrv_dbl * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
         buffer[22] = (rc >> 8) & 0xFF;
-        buffer[23] = (rc     ) & 0xFF;  // Alex0 reverse power
+        buffer[23] = (rc     ) & 0xFF;
       }
     }
 
@@ -1831,7 +1838,14 @@ void *mic_thread(void *data) {
     *p++ = (seqnum >>  0) & 0xFF;
     seqnum++;
     // 64 samples with 48000 kHz, makes 1333333 nsec
-    delay.tv_nsec += 1333333;
+
+    if (speed == 0) {
+      delay.tv_nsec += 1333333;
+    } else if (speed == 1) {
+      delay.tv_nsec += 1320000;
+    } else if (speed == -1) {
+      delay.tv_nsec += 1346666;
+    }
 
     while (delay.tv_nsec >= 1000000000) {
       delay.tv_nsec -= 1000000000;

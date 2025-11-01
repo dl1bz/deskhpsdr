@@ -1,8 +1,5 @@
 /* Copyright (C)
 * 2019 - Christoph van Wüllen, DL1YCF
-* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
-*
-*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -64,7 +61,7 @@ EXTERN int OLDDEVICE;
 EXTERN int NEWDEVICE;
 
 //
-// A table of (random) noise with about -90 dBm on the whole spectrum
+// A table of (random) noise the whole spectrum
 // This is a very long table such that there is no audible "beating"
 // pattern even at very high sample rates.
 //
@@ -146,6 +143,10 @@ EXTERN uint8_t radio_ptt, radio_dash, radio_dot;
 EXTERN uint8_t radio_io1, radio_io2, radio_io3, radio_io4;
 EXTERN uint8_t radio_io5, radio_io6, radio_io8;
 
+//
+// Flag for modifying the clock speed of the radio
+//
+EXTERN int speed;
 //
 // message printing
 //
