@@ -4,7 +4,7 @@
 
 ## The concept behind - what it's make for and what it isn't for
 
-It's a hamradio application for SDR devices using the HPSDR protocol 1 (aka "old protocol")and 2 (aka "new protocol") and based at previous codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr) since it was forked from piHPSDR in October 2024. But anywhere, it's no more piHPSDR yet and has no backward dependencies to piHPSDR. My goal was to make an more optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 like such for Raspberry Pi or similiar devices. In the case mini-display you need to fallback to piHPSDR, deskHPSDR don't support this anymore.
+It's a hamradio application for SDR devices using the HPSDR protocol 1 (aka "old protocol") or 2 (aka "new protocol") and based at previous codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr) since it was forked from piHPSDR in October 2024. But anywhere, it's no more piHPSDR yet and has no backward dependencies to piHPSDR. My goal was to make an more optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 and SoCs like the Raspberry Pi or similar devices are not within the scope of this application. In the case mini-display you need to fallback to piHPSDR, deskHPSDR don't support this anymore.
 
 **deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Limited additional SoapySDR support is also available.**
 
@@ -18,7 +18,7 @@ My main focus of deskHPSDR development, the improvements and additional function
 
 ## deskHPSDR was forked once from pihpsdr
 
-piHPSDR was [first developed](https://github.com/g0orx/pihpsdr) by [John Melton, G0ORX/N6LYT](https://github.com/g0orx) a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His version [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date version of piHPSDR and  is actively being developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>
+piHPSDR was [initiated and first developed](https://github.com/g0orx/pihpsdr) by [John Melton, G0ORX/N6LYT](https://github.com/g0orx) a few years ago.<br>Later Christoph, DL1YCF, had continued the development of piHPSDR. His fork [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date and current version of piHPSDR today and being actively developed by him up to now.<br><br>So his codebase of piHPSDR was my starting point end of October, 2024. But anyway, there is and will be no direct collaboration between piHPSDR and deskHPSDR.<br><br>
 Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they are not available in piHPSDR. Things that deskHPSDR doesn't need have also been removed (e.g. the build-in client-server-mode), they exist furthermore in piHPSDR, but are no longer as parts of deskHPSDR. deskHPSDR is now a kind of evolution from piHPSDR with completely different objectives.
 
 ## Requirements
@@ -81,8 +81,9 @@ Background about this: I made a mistake in the ```.gitignore```, but I correct i
 
 If ```git pull``` failed, you can also try this:<br>
 ```
-$ git pull
+$ git pull --all
 $ git reset --hard origin/master
+$ git pull --all
 ```
 This overwrite local changes, which are different from the remote repo at Github.com and set the status equal between local and remote.
 

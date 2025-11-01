@@ -26,6 +26,16 @@
 	<string>Allow for using Sound input devices</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Allow discovery and communication with devices via UDP</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_udp._udp</string>
+	</array>
+	<key>NSLocalNetworkAllowBroadcasts</key>
+	<true/>
+	<key>NSLocalNetworkPorts</key>
+	<array>
+		<string>1024</string>
+	</array>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>CFBundleInfoDictionaryVersion</key>

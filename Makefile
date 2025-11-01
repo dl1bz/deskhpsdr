@@ -1067,14 +1067,6 @@ endif
 	@if [ -f "${CURRDIR}/MacOS/rigctld_deskhpsdr" ]; then \
 		cp "${CURRDIR}/MacOS/rigctld_deskhpsdr" deskHPSDR.app/Contents/Resources; \
 	fi
-	@sleep 1
-	@if [ -x /usr/bin/codesign ]; then \
-		echo "Codesign deskHPSDR against possible problems with gatekeeper..."; \
-		codesign --force --deep --sign - "deskHPSDR.app"; \
-		sleep 1; \
-		echo "Verify deskHPSDR codesign..."; \
-		codesign --verify --deep --strict --verbose=2 "deskHPSDR.app"; \
-	fi
 	@echo "Copy additional needed Fonts..."
 	@mkdir -p "$(HOME)/Library/Fonts"
 	@cp -R fonts/ttf/Roboto "${HOME}/Library/Fonts"
@@ -1087,6 +1079,14 @@ endif
 	@git update-index --assume-unchanged make.config.deskhpsdr
 	@echo "Copy deskHPSDR to your Desktop..."
 	@mv deskHPSDR.app "${HOME}/Desktop"
+	@sleep 1
+	@if [ -x /usr/bin/codesign ]; then \
+		echo "Codesign deskHPSDR against possible problems with gatekeeper..."; \
+		codesign --force --deep --sign - "${HOME}/Desktop/deskHPSDR.app"; \
+		sleep 1; \
+		echo "Verify deskHPSDR codesign..."; \
+		codesign --verify --deep --strict --verbose=2 "${HOME}/Desktop/deskHPSDR.app"; \
+	fi
 	@echo "Starting deskHPSDR..."
 	@open -a "${HOME}/Desktop/deskHPSDR.app"
 
