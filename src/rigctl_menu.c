@@ -372,7 +372,12 @@ void rigctl_menu(GtkWidget *parent) {
   rigctld_btn = gtk_check_button_new_with_label(" + start rigctld at port 4533");
   gtk_widget_set_name(rigctld_btn, "boldlabel_blue");
   gtk_widget_set_tooltip_text(rigctld_btn,
-                              "Start an external rigctld at port 4533\nfor using deskHPSDR with Hamlib-supported apps\n\nUse |Hamlib NET rigctl| as rig selection\nand 127.0.0.1:4533 as port in the app\n\nCW keying over CAT with rigctld is supported");
+                              "Start the external rigctld at fixed port 4533\n"
+                              "for using deskHPSDR with Hamlib-supported apps\n\n"
+                              "⚠️ rigctld needs to be built first from the deskHPSDR source folder using the build-rigctld.sh script\n\n"
+                              "Use |Hamlib NET rigctl| as rig selection\n"
+                              "and 127.0.0.1:4533 as port in the app\n\n"
+                              "CW keying over CAT with rigctld is supported");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctld_btn), use_rigctld);
   gtk_grid_attach(GTK_GRID(grid), rigctld_btn, 3, row, 2, 1);
   g_signal_connect(rigctld_btn, "toggled", G_CALLBACK(rigctld_btn_cb), NULL);
