@@ -1,15 +1,24 @@
 ACTION=="remove", GOTO="g2_serial_end"
 SUBSYSTEM!="tty", GOTO="g2_serial_end"
+
 # kernel must have made it a tty
 KERNEL!="ttyUSB[0-9]*|ttyACM[0-9]*|ttyS[0-9]*|ttyAMA[0-9]*", GOTO="g2_serial_end"
+
 # detect G2 with Rpi-CM4 and Mk2 8" control front
 # Rpi-CM4 UART3, base register address 0x7e201600, mapped to 0xfe201600
 ATTR{iomem_base}=="0xFE201600", SYMLINK+="serial/by-id/g2-front-9600", GOTO="g2_other"
+
+# detect G2 with Rpi-CM5 and Mk2 8" control front on UART2 (pins 7, 29)
+# Rpi-CM4 UART2, base register address 0x1F00038000
+ATTR{iomem_base}=="0x1F00038000", SYMLINK+="serial/by-id/g2-front-9600", GOTO="g2_other"
+
 # G2 Front V2, Radxa CM5 modification with Arduino Nano Every
 ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0058", SYMLINK+="serial/by-id/g2-front-9600", GOTO="g2_other"
 # G2 Front V1, Radxa CM5 modification with Waveshare RP2040 Zero
 ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="0003", SYMLINK+="serial/by-id/g2-front-115200"
+
 LABEL="g2_other"
 # Aries Arduino nano 33 IoT
 ATTRS{idVendor}=="2341", ATTRS{idProduct}=="8057", SYMLINK+="serial/by-id/aries-atu-115200"
+
 LABEL="g2_serial_end"
