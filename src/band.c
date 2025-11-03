@@ -774,8 +774,8 @@ int TransmitAllowed() {
 }
 
 void band_plus(int id) {
-  long long frequency_min = radio->frequency_min;
-  long long frequency_max = radio->frequency_max;
+  // long long frequency_min = radio->frequency_min;
+  // long long frequency_max = radio->frequency_max;
   int b = vfo[id].band;
   int found = 0;
 
@@ -788,23 +788,26 @@ void band_plus(int id) {
     band = (BAND*)band_get_band(b);
 
     if (strlen(band->title) > 0) {
-      if (b < BANDS) {
-        if (!(band->frequencyMin == 0.0 && band->frequencyMax == 0.0)) {
-          if (band->frequencyMin < frequency_min || band->frequencyMax > frequency_max) {
-            continue;
-          }
-        }
-      }
-
+      /*
+            if (b < BANDS) {
+              if (!(band->frequencyMin == 0.0 && band->frequencyMax == 0.0)) {
+                if (band->frequencyMin < frequency_min || band->frequencyMax > frequency_max) {
+                  continue;
+                }
+              }
+            }
+      */
       vfo_band_changed(id, b);
-      found = 1;
+
+      // found = 1;
+      if (vfo[id].band == b) { found = 1; }
     }
   }
 }
 
 void band_minus(int id) {
-  long long frequency_min = radio->frequency_min;
-  long long frequency_max = radio->frequency_max;
+  // long long frequency_min = radio->frequency_min;
+  // long long frequency_max = radio->frequency_max;
   int b = vfo[id].band;
   int found = 0;
 
@@ -817,14 +820,17 @@ void band_minus(int id) {
     band = (BAND*)band_get_band(b);
 
     if (strlen(band->title) > 0) {
-      if (b < BANDS) {
-        if (band->frequencyMin < frequency_min || band->frequencyMax > frequency_max) {
-          continue;
-        }
-      }
-
+      /*
+            if (b < BANDS) {
+              if (band->frequencyMin < frequency_min || band->frequencyMax > frequency_max) {
+                continue;
+              }
+            }
+      */
       vfo_band_changed(id, b);
-      found = 1;
+
+      // found = 1;
+      if (vfo[id].band == b) { found = 1; }
     }
   }
 }

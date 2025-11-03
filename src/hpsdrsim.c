@@ -237,19 +237,22 @@ void my_signal_handler(int sig) {
   struct sigaction sa;
   restore_terminal_attributes();
   memset(&sa, 0, sizeof(sa));
+
   switch (sig) {
-    case SIGINT:
-      sigaction(SIGINT, &sigint_action, NULL);
-      raise(SIGINT);
-      break;
-    case SIGTERM:
-      sigaction(SIGTERM, &sigterm_action, NULL);
-      raise(SIGTERM);
-      break;
-    default:
-      _exit(EXIT_FAILURE);
-      // NOTREACHED
-     break;
+  case SIGINT:
+    sigaction(SIGINT, &sigint_action, NULL);
+    raise(SIGINT);
+    break;
+
+  case SIGTERM:
+    sigaction(SIGTERM, &sigterm_action, NULL);
+    raise(SIGTERM);
+    break;
+
+  default:
+    _exit(EXIT_FAILURE);
+    // NOTREACHED
+    break;
   }
 }
 
@@ -386,7 +389,6 @@ int main(int argc, char *argv[]) {
   tios_new.c_lflag &= ~ICANON;
   tios_new.c_lflag &= ~ECHO;
   tcsetattr(0, TCSANOW, &tios_new);
-
   //
   // Establish a new signal handler for SIGINT and SIGTERM,
   // that takes care of the restoration of terminal attributes
