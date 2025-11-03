@@ -28,12 +28,10 @@ LINUX/SoapySDR
 LINUX/SoapyPlutoSDR
 LINUX/SoapyRTLSDR
 wdsp/WDSP_Guide.pdf
-wdsp/libwdsp.a
-wdsp/*.o
-wdsp-1.25/libwdsp.a
-wdsp-1.25/*.o
-wdsp-1.26/libwdsp.a
-wdsp-1.26/*.o
+wdsp-1.27/libwdsp.a
+wdsp-1.27/*.o
+wdsp-1.28/libwdsp.a
+wdsp-1.28/*.o
 libsolar/libsolar.a
 make.config.deskhpsdr
 .vscode/*
