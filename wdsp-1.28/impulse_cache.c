@@ -113,7 +113,7 @@ void free_impulse_cache(void) {
   }
 }
 
-double* get_impulse_cache_entry(size_t bucket, HASH_T hash) {
+double* get_impulse_cache_entry(size_t bucket, HASH_T hash, int N) {
   if (!_run) { return NULL; }
 
   int use;
@@ -129,7 +129,7 @@ double* get_impulse_cache_entry(size_t bucket, HASH_T hash) {
   cache_entry* e = _cache_heads[bucket];
 
   while (e) {
-    if (e->hash == hash) {
+    if (e->hash == hash && e->N == N) {
       if (prev) {
         prev->next = e->next;
         e->next = _cache_heads[bucket];

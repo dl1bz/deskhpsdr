@@ -220,7 +220,7 @@ double* fir_bandpass (int N, double f_low, double f_high, double samplerate, int
   params.samplerate = samplerate;
   params.scale = scale;
   HASH_T h = fnv1a_hash(&params, sizeof(params));
-  double* imp = get_impulse_cache_entry(FIR_CACHE, h);
+  double* imp = get_impulse_cache_entry(FIR_CACHE, h, N);
 
   if (imp) { return imp; }
 
@@ -374,6 +374,30 @@ void analytic (int N, double* in, double* out) {
 }
 
 void mp_imp (int N, double* fir, double* mpfir, int pfactor, int polarity) {
+  // check for previous in the cache
+  struct Params {
+    int N;
+    int pfactor;
+    int polarity;
+  };
+  struct Params params;
+  memset(&params, 0, sizeof(params));
+  params.N = N;
+  params.pfactor = pfactor;
+  params.polarity = polarity;
+  HASH_T h = fnv1a_hash(&params, sizeof(params));
+  size_t arr_len = N * sizeof(complex);
+  HASH_T hf = fnv1a_hash((uint8_t*)fir, arr_len);
+  h ^= hf + GOLDEN_RATIO + (h << 6) + (h >> 2);
+  double* imp = get_impulse_cache_entry(MP_CACHE, h, N);
+
+  if (imp) {
+    memcpy(mpfir, imp, N * sizeof(complex)); // need to copy into mpfir
+    _aligned_free (imp);
+    return;
+  }
+
+  //
   int i;
   int size = N * pfactor;
   double inv_PN = 1.0 / (double)size;
@@ -430,6 +454,8 @@ void mp_imp (int N, double* fir, double* mpfir, int pfactor, int polarity) {
   _aligned_free (mag);
   _aligned_free (firfreq);
   _aligned_free (firpad);
+  // store in cache
+  add_impulse_to_cache(MP_CACHE, h, N, mpfir);
 }
 
 // impulse response of a zero frequency filter comprising a cascade of two resonators,
