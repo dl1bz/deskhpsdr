@@ -207,11 +207,20 @@ typedef struct _transmitter {
 #endif
   int eq_ctfmode;
 
+  // --- Zusatzfenster: TX Levelanzeigen ---
+  GtkWidget *levels_dialog;
+  GtkWidget *levels_area;
+  cairo_surface_t *levels_surface;
+  int levels_width, levels_height;
+  int show_levels;
+  int levels_x_pos, levels_y_pos;
+
 } TRANSMITTER;
 
 extern TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height);
 
 void tx_create_dialog(TRANSMITTER *tx);
+void tx_create_levels_window(TRANSMITTER *tx);
 void tx_reconfigure(TRANSMITTER *tx, int pixels, int width, int height);
 
 //

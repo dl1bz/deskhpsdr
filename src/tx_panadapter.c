@@ -89,6 +89,146 @@ tx_panadapter_draw_cb (GtkWidget *widget,
   return FALSE;
 }
 
+static inline double tx_norm_db(double v, double min_db, double max_db) {
+  if (v < min_db) { v = min_db; }
+
+  if (v > max_db) { v = max_db; }
+
+  return 100.0 * (v - min_db) / (max_db - min_db);
+}
+
+// Render der Levelanzeigen in die Offscreen-Surface des Zusatzfensters
+static void tx_levels_render(TRANSMITTER *tx) {
+  if (!tx || !tx->levels_surface || !tx->levels_area) { return; }
+
+  // Maße vom Widget holen, nicht aus der Surface
+  int w = gtk_widget_get_allocated_width(tx->levels_area);
+  int h = gtk_widget_get_allocated_height(tx->levels_area);
+  char level_label[32];
+  // Rohwerte (dB)
+  double mic_db = GetTXAMeter(tx->id, TXA_MIC_AV);
+  double eq_db  = GetTXAMeter(tx->id, TXA_EQ_AV);
+  double lvl_db = GetTXAMeter(tx->id, TXA_LVLR_AV);
+  double cfc_db = GetTXAMeter(tx->id, TXA_CFC_AV);
+  double prc_db = GetTXAMeter(tx->id, TXA_COMP_AV);
+  double out_db = GetTXAMeter(tx->id, TXA_OUT_AV);
+  double alc_db = GetTXAMeter(tx->id, TXA_ALC_PK);
+
+  // Unterkante auf -100 dB begrenzen
+  if (mic_db < -100.0) { mic_db = -100.0; }
+
+  if (eq_db  < -100.0) { eq_db  = -100.0; }
+
+  if (lvl_db < -100.0) { lvl_db = -100.0; }
+
+  if (cfc_db < -100.0) { cfc_db = -100.0; }
+
+  if (prc_db < -100.0) { prc_db = -100.0; }
+
+  if (out_db < -100.0) { out_db = -100.0; }
+
+  if (alc_db < -100.0) { alc_db = -100.0; }
+
+  double val_db[7];
+  val_db[0] = mic_db;
+  val_db[1] = eq_db;
+  val_db[2] = lvl_db;
+  val_db[3] = cfc_db;
+  val_db[4] = prc_db;
+  val_db[5] = out_db;
+  val_db[6] = alc_db;
+  // Mapping: Mic/EQ/Lev/CFC/PROC = [-60..+10] dB, OUT = [-40..+10] dB
+  double pct_vals[7];
+  pct_vals[0] = tx_norm_db(mic_db, -60.0, 10.0);
+  pct_vals[1] = tx_norm_db(eq_db,  -60.0, 10.0);
+  pct_vals[2] = tx_norm_db(lvl_db, -60.0, 10.0);
+  pct_vals[3] = tx_norm_db(cfc_db, -60.0, 10.0);
+  pct_vals[4] = tx_norm_db(prc_db, -60.0, 10.0);
+  pct_vals[5] = tx_norm_db(out_db, -40.0, 10.0); // Full-scale = +10 dB
+  pct_vals[6] = tx_norm_db(alc_db, -60.0, 10.0);
+  const char *labels[] = {"Mic", "TX-EQ", "Leveler", "CFC", "PROC", "Out", "ALC"};
+  const int N = 7;
+  cairo_t *cr = cairo_create(tx->levels_surface);
+  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+  cairo_paint(cr);
+  int margin = 20;
+  int bar_h  = ((h - 2 * margin) / N) * 0.4;  // 40 % der alten Höhe
+
+  if (bar_h < 4) { bar_h = 4; }
+
+  int bar_w  = w - 2 * margin;
+  int y = margin;
+
+  for (int i = 0; i < N; i++) {
+    // Label
+    cairo_set_source_rgba(cr, COLOUR_PAN_TEXT);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_move_to(cr, margin, y - 2);
+    snprintf(level_label, sizeof(level_label), "Level %d - %s", (int)i, labels[i]);
+    cairo_show_text(cr, level_label);
+    cairo_move_to(cr, w / 2 - 20, y - 2);
+
+    if (i == 6) {
+      snprintf(level_label, sizeof(level_label), "%+.1f db", val_db[i]);
+    } else {
+      snprintf(level_label, sizeof(level_label), "%+.1f dbV", val_db[i]);
+    }
+
+    cairo_show_text(cr, level_label);
+    cairo_move_to(cr, w - 35, y - 2);
+    snprintf(level_label, sizeof(level_label), "+10");
+    cairo_set_source_rgba(cr, COLOUR_ALARM);
+    cairo_show_text(cr, level_label);
+    cairo_set_source_rgba(cr, COLOUR_PAN_TEXT);
+    // --- Segmentierte Hintergrund-Skala (3 Bereiche) ---
+    double min_db = (i == 5) ? -40.0 : -60.0;
+    double max_db = 10.0;
+    double px_per_db = bar_w / (max_db - min_db);
+    double x_min  = margin;
+    double x_neg5 = margin + (-5.0 - min_db) * px_per_db;
+    double x_0    = margin + (0.0  - min_db) * px_per_db;
+    double x_max  = margin + bar_w;
+
+    if (x_neg5 > x_min) {
+      cairo_set_line_width(cr, PAN_LINE_THIN);
+      cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
+      cairo_rectangle(cr, x_min, y + 4, x_neg5 - x_min, bar_h);
+      cairo_stroke(cr);
+    }
+
+    if (x_0 > x_neg5) {
+      cairo_set_source_rgba(cr, 0.0, 0.85, 0.0, 1.0); // grün
+      cairo_rectangle(cr, x_neg5, y + 4, x_0 - x_neg5, bar_h);
+      cairo_fill_preserve(cr);
+      cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
+      cairo_stroke(cr);
+    }
+
+    if (x_max > x_0) {
+      cairo_set_source_rgba(cr, 0.9, 0.0, 0.0, 1.0); // rot
+      cairo_rectangle(cr, x_0, y + 4, x_max - x_0, bar_h);
+      cairo_fill_preserve(cr);
+      cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
+      cairo_stroke(cr);
+    }
+
+    // --- Pegelbalken darüber ---
+    double fill_w = (pct_vals[i] / 100.0) * bar_w;
+
+    if (fill_w < 0) { fill_w = 0; }
+
+    if (fill_w > bar_w) { fill_w = bar_w; }
+
+    cairo_set_source_rgba(cr, COLOUR_PAN_FILL2);
+    cairo_rectangle(cr, margin, y + 4, fill_w, bar_h);
+    cairo_fill(cr);
+    y += bar_h + 20;
+  }
+
+  cairo_destroy(cr);
+}
+
 // cppcheck-suppress constParameterCallback
 static gboolean tx_panadapter_button_press_event_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   switch (event->button) {
@@ -415,7 +555,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
         cairo_show_text(cr, text);
       }
 
-      if (duplex && !cwmode) {
+      if (duplex && !cwmode && !tx->show_levels) {
         cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
         cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
         cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
@@ -703,6 +843,12 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     cairo_destroy (cr);
     gtk_widget_queue_draw (tx->panadapter);
+  }
+
+  // Zusatzfenster aktualisieren, falls aktiv
+  if (tx->levels_surface && tx->levels_area) {
+    tx_levels_render(tx);
+    gtk_widget_queue_draw(tx->levels_area);
   }
 }
 

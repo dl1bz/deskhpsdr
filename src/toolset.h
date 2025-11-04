@@ -30,6 +30,9 @@ extern int solar_flux;
 extern char geomagfield[32];
 extern char xray[16];
 
+extern void get_screen_size(int *width, int *height);
+extern void get_window_position(GtkWindow *window, int *x, int *y);
+extern void get_window_geometry(GtkWindow *widget, int *x, int *y, int *width, int *height);
 extern int is_pi(void);
 extern int https_ok(const char* hostname, int mit_cert_check);
 extern void check_and_run(int is_dbg);

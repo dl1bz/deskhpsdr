@@ -41,6 +41,7 @@
 #include "meter.h"
 #include "toolbar.h"
 #include "tx_panadapter.h"
+#include "appearance.h"
 #include "waterfall.h"
 #include "receiver.h"
 #include "transmitter.h"
@@ -58,6 +59,7 @@
 #endif
 #include "sintab.h"
 #include "message.h"
+#include "toolset.h"
 
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
@@ -434,6 +436,9 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.cessb_enable",      tx->id,               tx->cessb_enable);
   SetPropI1("transmitter.%d.addgain_enable",    tx->id,               tx->addgain_enable);
   SetPropF1("transmitter.%d.addgain_gain",      tx->id,               tx->addgain_gain);
+  SetPropI1("transmitter.%d.levels_x_pos",      tx->id,               tx->levels_x_pos);
+  SetPropI1("transmitter.%d.levels_y_pos",      tx->id,               tx->levels_y_pos);
+  SetPropI1("transmitter.%d.show_levels",       tx->id,               tx->show_levels);
 }
 
 static void tx_restore_state(TRANSMITTER *tx) {
@@ -534,6 +539,9 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.cessb_enable",      tx->id,               tx->cessb_enable);
   GetPropI1("transmitter.%d.addgain_enable",    tx->id,               tx->addgain_enable);
   GetPropF1("transmitter.%d.addgain_gain",      tx->id,               tx->addgain_gain);
+  GetPropI1("transmitter.%d.levels_x_pos",      tx->id,               tx->levels_x_pos);
+  GetPropI1("transmitter.%d.levels_y_pos",      tx->id,               tx->levels_y_pos);
+  GetPropI1("transmitter.%d.show_levels",       tx->id,               tx->show_levels);
 }
 
 static double compute_power(double p) {
@@ -869,6 +877,84 @@ void tx_create_dialog(TRANSMITTER *tx) {
   g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
 }
 
+// -----------------------------------------------------------
+// TX LEVELS WINDOW
+// -----------------------------------------------------------
+static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
+  TRANSMITTER *tx = (TRANSMITTER *)data;
+  int w = gtk_widget_get_allocated_width(widget);
+  int h = gtk_widget_get_allocated_height(widget);
+
+  if (tx->levels_surface) { cairo_surface_destroy(tx->levels_surface); }
+
+  tx->levels_surface = gdk_window_create_similar_surface(
+                         gtk_widget_get_window(widget),
+                         CAIRO_CONTENT_COLOR,
+                         w, h);
+  cairo_t *cr = cairo_create(tx->levels_surface);
+  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+  cairo_paint(cr);
+  cairo_destroy(cr);
+  return TRUE;
+}
+
+static gboolean tx_levels_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
+  TRANSMITTER *tx = (TRANSMITTER *)data;
+
+  if (tx->levels_surface) {
+    cairo_set_source_surface(cr, tx->levels_surface, 0, 0);
+    cairo_paint(cr);
+  }
+
+  return FALSE;
+}
+
+void tx_create_levels_window(TRANSMITTER *tx) {
+  if (tx->levels_dialog) {
+    gtk_widget_destroy(tx->levels_dialog);
+    tx->levels_dialog = NULL;
+  }
+
+  int w, h;
+  get_screen_size(&w, &h);
+
+  if (tx->levels_x_pos <= 0) { tx->levels_x_pos = w - tx->levels_width - 100; }
+
+  if (tx->levels_y_pos <= 0) { tx->levels_y_pos = 100; }
+
+  t_print("%s w = %d h = %d tx->levels_x_pos = %d tx->levels_y_pos = %d\n", __FUNCTION__, w, h, tx->levels_x_pos,
+          tx->levels_y_pos);
+  tx->levels_dialog = gtk_dialog_new();
+  gtk_window_set_transient_for(GTK_WINDOW(tx->levels_dialog), GTK_WINDOW(top_window));
+  gtk_window_set_resizable(GTK_WINDOW(tx->levels_dialog), FALSE);
+  // --- Kein Fokus, Hauptfenster behält Tastatureingaben ---
+  gtk_window_set_accept_focus(GTK_WINDOW(tx->levels_dialog), FALSE);
+  gtk_widget_set_can_focus(tx->levels_dialog, FALSE);
+  char levels_title[32];
+  GtkWidget *hb = gtk_header_bar_new();
+  gtk_window_set_titlebar(GTK_WINDOW(tx->levels_dialog), hb);
+  gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(hb), FALSE); // schliessen button entfernen
+  snprintf(levels_title, sizeof(levels_title), "TX Audio Levels");
+  gtk_header_bar_set_title(GTK_HEADER_BAR(hb), levels_title);
+  // --- Tastatureingaben aktivieren (wie im Duplex-Dialog) ---
+  gtk_widget_add_events(tx->levels_dialog, GDK_KEY_PRESS_MASK);
+  g_signal_connect(tx->levels_dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
+  gtk_window_set_position(GTK_WINDOW(tx->levels_dialog), GTK_WIN_POS_NONE);
+  gtk_window_set_default_size(GTK_WINDOW(tx->levels_dialog), tx->levels_width, tx->levels_height);
+  gtk_window_move(GTK_WINDOW(tx->levels_dialog), tx->levels_x_pos, tx->levels_y_pos); // Position bei Bedarf anpassen
+  GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->levels_dialog));
+  tx->levels_area = gtk_drawing_area_new();
+  gtk_widget_set_size_request(tx->levels_area, tx->levels_width, tx->levels_height);
+  g_signal_connect(tx->levels_area, "configure-event", G_CALLBACK(tx_levels_configure_cb), tx);
+  g_signal_connect(tx->levels_area, "draw",            G_CALLBACK(tx_levels_draw_cb),      tx);
+  gtk_container_add(GTK_CONTAINER(content), tx->levels_area);
+  g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  gtk_widget_show_all(tx->levels_dialog);
+  gtk_window_move(GTK_WINDOW(tx->levels_dialog), tx->levels_x_pos, tx->levels_y_pos); // zweite Sicherung nach show
+  // Hauptfenster aktiv lassen (falls gewünscht)
+  gtk_window_present(GTK_WINDOW(top_window));
+}
+
 static void tx_create_visual(TRANSMITTER *tx) {
   //
   // This creates a panadapter within the main window
@@ -1161,6 +1247,15 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->eq_gain[11] = 0.0;
   tx->eq_gain[12] = 0.0;
 #endif
+  // --- Defaults für TX-Level-Fenster ---
+  tx->levels_dialog  = NULL;
+  tx->levels_area    = NULL;
+  tx->levels_surface = NULL;
+  tx->levels_width   = 260;
+  tx->levels_height  = 220;
+  tx->show_levels    = 0;   // per Property/Code später aktivieren
+  tx->levels_x_pos   = 0;
+  tx->levels_y_pos   = 0;
   //
   // Some of these values cannot be changed.
   // If using PURESIGNAL and displaying the feedback signal,
@@ -2111,14 +2206,44 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
              );
 }
 
+// --- TX Levels: Fenster steuern ---
+static inline void tx_levels_show(TRANSMITTER *tx) {
+  int txmode = vfo_get_tx_mode();
+
+  if (!tx || !tx->show_levels || tune) { return; }
+
+  if (tx->levels_dialog) { return; }                 // schon offen
+
+  if (txmode == modeCWU || txmode == modeCWL || txmode == modeDIGU || txmode == modeDIGL) { return; } // nicht bei CW
+
+  tx_create_levels_window(tx);                   // erstellt Dialog+Area
+  tx_panadapter_update(tx);                      // sofort erster Frame
+}
+
+static inline void tx_levels_hide(TRANSMITTER *tx) {
+  if (!tx) { return; }
+
+  if (tx->levels_surface) { cairo_surface_destroy(tx->levels_surface); tx->levels_surface = NULL; }
+
+  if (tx->levels_dialog)  {
+    gtk_window_get_position(GTK_WINDOW(tx->levels_dialog), &tx->levels_x_pos, &tx->levels_y_pos);
+    gtk_widget_destroy(tx->levels_dialog);
+    tx->levels_dialog  = NULL;
+  }
+
+  tx->levels_area = NULL;
+}
+
 void tx_off(const TRANSMITTER *tx) {
   // switch TX OFF, wait until slew-down completed
   SetChannelState(tx->id, 0, 1);
+  tx_levels_hide((TRANSMITTER*)tx);
 }
 
 void tx_on(const TRANSMITTER *tx) {
   // switch TX ON
   SetChannelState(tx->id, 1, 0);
+  tx_levels_show((TRANSMITTER*)tx);
 }
 
 void tx_ps_getinfo(const TRANSMITTER *tx, int *info) {

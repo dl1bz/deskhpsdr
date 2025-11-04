@@ -58,6 +58,50 @@ int solar_flux = -1;
 char geomagfield[32];
 char xray[16];
 
+/*
+  int w, h;
+  get_screen_size(&w, &h);
+  printf("Screen: %d x %d\n", w, h);
+*/
+void get_screen_size(int *width, int *height) {
+  if (!width || !height) { return; }
+
+  *width = *height = 0;
+  GdkDisplay *display = gdk_display_get_default();
+
+  if (!display) { return; }
+
+  GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
+
+  if (!monitor) { return; }
+
+  GdkRectangle geo;
+  gdk_monitor_get_geometry(monitor, &geo);
+  *width = geo.width;
+  *height = geo.height;
+}
+
+/*
+int x, y;
+get_main_window_position(GTK_WINDOW(top_window), &x, &y);
+printf("Main window at %d,%d\n", x, y);
+*/
+void get_window_position(GtkWindow *window, int *x, int *y) {
+  if (!window || !x || !y) { return; }
+
+  *x = *y = 0;
+  // funktioniert zuverlässig unter X11, unter Wayland meist (0,0)
+  gtk_window_get_position(window, x, y);
+}
+
+void get_window_geometry(GtkWindow *widget, int *x, int *y, int *width, int *height) {
+  if (!widget || !x || !y || !width || !height) { return; }
+
+  *x = *y = *width = *height = 0;
+  gtk_window_get_position(widget, x, y);
+  gtk_window_get_size(widget, width, height);
+}
+
 int is_pi(void) {
 #if defined(__APPLE__)
   // macOS oder iOS: kein Raspberry Pi

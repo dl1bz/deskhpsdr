@@ -170,6 +170,12 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
   display_pacurr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static void display_levels_cb(GtkWidget *widget, gpointer data) {
+  if (can_transmit) {
+    transmitter->show_levels = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  }
+}
+
 // Funktion zur Überprüfung, ob der String ein gültiges Hex-Format hat
 gboolean is_valid_hex(const char *str) {
   if (str[0] != '#' || strlen(str) != 7) {
@@ -381,7 +387,7 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
   row++;
   col = 0;
-  label = gtk_label_new("This version is for Desktops,\ntherefore no VFO bar layouts available !");
+  label = gtk_label_new("deskHPSDR is made for Desktops,\ntherefore no VFO bar layouts available !");
   gtk_widget_set_name(label, "boldlabel_red");
   gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
   gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
@@ -440,12 +446,35 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_show(b_display_warnings);
   gtk_grid_attach(GTK_GRID(grid), b_display_warnings, 0, row, 1, 1);
   g_signal_connect(b_display_warnings, "toggled", G_CALLBACK(display_warnings_cb), NULL);
+  //------------------------------------------------------------------------------------------
   GtkWidget *b_display_pacurr = gtk_check_button_new_with_label("Display PA current");
   gtk_widget_set_name (b_display_pacurr, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_pacurr), display_pacurr);
   gtk_widget_show(b_display_pacurr);
   gtk_grid_attach(GTK_GRID(grid), b_display_pacurr, 1, row, 1, 1);
   g_signal_connect(b_display_pacurr, "toggled", G_CALLBACK(display_pacurr_cb), NULL);
+
+  //------------------------------------------------------------------------------------------
+  if (can_transmit) {
+    GtkWidget *b_display_levels = gtk_check_button_new_with_label("Display TX Audio Level window");
+    gtk_widget_set_name (b_display_levels, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(b_display_levels,
+                                "ONLY DURING TX = ACTIVE\n(except selected mode CW-L/CW-U/DIGI-U/DIGI-L):\n"
+                                "Show an additional window displaying all critical\nTX audio chain levels in realtime.\n"
+                                "- levels are displayed in dBV, except ALC which is shown in dB\n"
+                                "- GREEN segment covers the range from -5dBV to 0dBV\n"
+                                "- RED segment covers the range from 0dBV to +10dBV\n\n"
+                                "0 dbV = 1.0 Veff\n\n"
+                                "All audio levels must remain below the red segment to avoid distortion,"
+                                "the maximum level should be kept within the green segment.\n\n"
+                                "It's essential to correctly adjust EVERY part of the TX audio chain !");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_levels), transmitter->show_levels);
+    gtk_widget_show(b_display_levels);
+    gtk_grid_attach(GTK_GRID(grid), b_display_levels, 2, row, 2, 1);
+    g_signal_connect(b_display_levels, "toggled", G_CALLBACK(display_levels_cb), NULL);
+  }
+
+  //------------------------------------------------------------------------------------------
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
