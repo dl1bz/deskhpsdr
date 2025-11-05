@@ -147,8 +147,8 @@ static void tx_levels_render(TRANSMITTER *tx) {
   val_db[2] = lvl_db;
   val_db[3] = cfc_db;
   val_db[4] = prc_db;
-  val_db[5] = out_db;
-  val_db[6] = alc_db;
+  val_db[5] = alc_db;
+  val_db[6] = out_db;
   // Mapping: Mic/EQ/Lev/CFC/PROC = [-60..+10] dB, OUT = [-40..+10] dB
   double pct_vals[7];
   pct_vals[0] = tx_norm_db(mic_db, -60.0, 10.0);
@@ -156,9 +156,9 @@ static void tx_levels_render(TRANSMITTER *tx) {
   pct_vals[2] = tx_norm_db(lvl_db, -60.0, 10.0);
   pct_vals[3] = tx_norm_db(cfc_db, -60.0, 10.0);
   pct_vals[4] = tx_norm_db(prc_db, -60.0, 10.0);
-  pct_vals[5] = tx_norm_db(out_db, -40.0, 10.0); // Full-scale = +10 dB
-  pct_vals[6] = tx_norm_db(alc_db, -60.0, 10.0);
-  const char *labels[] = {"Mic", "TX-EQ", "Leveler", "CFC", "PROC", "Out", "ALC"};
+  pct_vals[5] = tx_norm_db(alc_db, -60.0, 10.0);
+  pct_vals[6] = tx_norm_db(out_db, -40.0, 10.0); // Full-scale = +10 dB
+  const char *labels[] = {"Mic", "TX-EQ", "Leveler", "CFC", "PROC", "ALC", "Out"};
   const int N = 7;
   cairo_t *cr = cairo_create(tx->levels_surface);
   cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
@@ -185,7 +185,7 @@ static void tx_levels_render(TRANSMITTER *tx) {
     cairo_show_text(cr, level_label);
     cairo_move_to(cr, w / 2 - 20, y - 2);
 
-    if (i == 6) {
+    if (i == 5) {
       snprintf(level_label, sizeof(level_label), "%+.1f db", val_db[i]);
     } else {
       snprintf(level_label, sizeof(level_label), "%+.1f dbV", val_db[i]);
@@ -194,27 +194,36 @@ static void tx_levels_render(TRANSMITTER *tx) {
     cairo_show_text(cr, level_label);
     cairo_move_to(cr, w - 35, y - 2);
     snprintf(level_label, sizeof(level_label), "+10");
-    cairo_set_source_rgba(cr, COLOUR_ALARM);
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_show_text(cr, level_label);
     cairo_set_source_rgba(cr, COLOUR_PAN_TEXT);
-    // --- Segmentierte Hintergrund-Skala (3 Bereiche) ---
-    double min_db = (i == 5) ? -40.0 : -60.0;
+    // --- Segmentierte Hintergrund-Skala (4 Bereiche) ---
+    double min_db = (i == 6) ? -40.0 : -60.0;
     double max_db = 10.0;
     double px_per_db = bar_w / (max_db - min_db);
     double x_min  = margin;
+    double x_neg10 = margin + (-10.0 - min_db) * px_per_db;
     double x_neg5 = margin + (-5.0 - min_db) * px_per_db;
     double x_0    = margin + (0.0  - min_db) * px_per_db;
     double x_max  = margin + bar_w;
 
-    if (x_neg5 > x_min) {
+    if (x_neg10 > x_min) {
       cairo_set_line_width(cr, PAN_LINE_THIN);
       cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
-      cairo_rectangle(cr, x_min, y + 4, x_neg5 - x_min, bar_h);
+      cairo_rectangle(cr, x_min, y + 4, x_neg10 - x_min, bar_h);
+      cairo_stroke(cr);
+    }
+
+    if (x_neg5 > x_neg10) {
+      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+      cairo_rectangle(cr, x_neg10, y + 4, x_0 - x_neg10, bar_h);
+      cairo_fill_preserve(cr);
+      cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
       cairo_stroke(cr);
     }
 
     if (x_0 > x_neg5) {
-      cairo_set_source_rgba(cr, 0.0, 0.85, 0.0, 1.0); // grün
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
       cairo_rectangle(cr, x_neg5, y + 4, x_0 - x_neg5, bar_h);
       cairo_fill_preserve(cr);
       cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
@@ -222,7 +231,7 @@ static void tx_levels_render(TRANSMITTER *tx) {
     }
 
     if (x_max > x_0) {
-      cairo_set_source_rgba(cr, 0.9, 0.0, 0.0, 1.0); // rot
+      cairo_set_source_rgba(cr, COLOUR_ALARM_WEAK);
       cairo_rectangle(cr, x_0, y + 4, x_max - x_0, bar_h);
       cairo_fill_preserve(cr);
       cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
@@ -236,7 +245,7 @@ static void tx_levels_render(TRANSMITTER *tx) {
 
     if (fill_w > bar_w) { fill_w = bar_w; }
 
-    cairo_set_source_rgba(cr, COLOUR_PAN_FILL2);
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_rectangle(cr, margin, y + 4, fill_w, bar_h);
     cairo_fill(cr);
     y += bar_h + 20;
