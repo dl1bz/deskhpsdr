@@ -163,9 +163,13 @@ static void tx_levels_render(TRANSMITTER *tx) {
     // Label
     cairo_set_source_rgba(cr, COLOUR_PAN_TEXT);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#ifdef __APPLE__
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE1);
+#endif
     cairo_move_to(cr, margin, y - 2);
-    snprintf(level_label, sizeof(level_label), "Level %d - %s", (int)i, labels[i]);
+    snprintf(level_label, sizeof(level_label), "%d - %s", (int)i, labels[i]);
     cairo_show_text(cr, level_label);
     cairo_move_to(cr, w / 2 - 20, y - 2);
 
