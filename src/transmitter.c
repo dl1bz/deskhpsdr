@@ -439,6 +439,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.levels_x_pos",      tx->id,               tx->levels_x_pos);
   SetPropI1("transmitter.%d.levels_y_pos",      tx->id,               tx->levels_y_pos);
   SetPropI1("transmitter.%d.show_levels",       tx->id,               tx->show_levels);
+  SetPropI1("transmitter.%d.show_af_peak",      tx->id,               tx->show_af_peak);
 }
 
 static void tx_restore_state(TRANSMITTER *tx) {
@@ -542,6 +543,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.levels_x_pos",      tx->id,               tx->levels_x_pos);
   GetPropI1("transmitter.%d.levels_y_pos",      tx->id,               tx->levels_y_pos);
   GetPropI1("transmitter.%d.show_levels",       tx->id,               tx->show_levels);
+  GetPropI1("transmitter.%d.show_af_peak",      tx->id,               tx->show_af_peak);
 }
 
 static double compute_power(double p) {
@@ -934,7 +936,13 @@ void tx_create_levels_window(TRANSMITTER *tx) {
   GtkWidget *hb = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(tx->levels_dialog), hb);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(hb), FALSE); // schliessen button entfernen
-  snprintf(levels_title, sizeof(levels_title), "TX Audio Levels");
+
+  if (tx->show_af_peak) {
+    snprintf(levels_title, sizeof(levels_title), "TX Audio Levels [Peak]");
+  } else {
+    snprintf(levels_title, sizeof(levels_title), "TX Audio Levels [Avg]");
+  }
+
   gtk_header_bar_set_title(GTK_HEADER_BAR(hb), levels_title);
   // --- Tastatureingaben aktivieren (wie im Duplex-Dialog) ---
   gtk_widget_add_events(tx->levels_dialog, GDK_KEY_PRESS_MASK);
@@ -1253,7 +1261,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->levels_surface = NULL;
   tx->levels_width   = 260;
   tx->levels_height  = 220;
-  tx->show_levels    = 0;   // per Property/Code später aktivieren
+  tx->show_levels    = 1;   // per Property/Code später aktivieren
+  tx->show_af_peak   = 0;
   tx->levels_x_pos   = 0;
   tx->levels_y_pos   = 0;
   //

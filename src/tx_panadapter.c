@@ -105,13 +105,25 @@ static void tx_levels_render(TRANSMITTER *tx) {
   int w = gtk_widget_get_allocated_width(tx->levels_area);
   int h = gtk_widget_get_allocated_height(tx->levels_area);
   char level_label[32];
+  double mic_db, eq_db, lvl_db, cfc_db, prc_db, out_db;
+
   // Rohwerte (dB)
-  double mic_db = GetTXAMeter(tx->id, TXA_MIC_AV);
-  double eq_db  = GetTXAMeter(tx->id, TXA_EQ_AV);
-  double lvl_db = GetTXAMeter(tx->id, TXA_LVLR_AV);
-  double cfc_db = GetTXAMeter(tx->id, TXA_CFC_AV);
-  double prc_db = GetTXAMeter(tx->id, TXA_COMP_AV);
-  double out_db = GetTXAMeter(tx->id, TXA_OUT_AV);
+  if (tx->show_af_peak) {
+    mic_db = GetTXAMeter(tx->id, TXA_MIC_PK);
+    eq_db  = GetTXAMeter(tx->id, TXA_EQ_PK);
+    lvl_db = GetTXAMeter(tx->id, TXA_LVLR_PK);
+    cfc_db = GetTXAMeter(tx->id, TXA_CFC_PK);
+    prc_db = GetTXAMeter(tx->id, TXA_COMP_PK);
+    out_db = GetTXAMeter(tx->id, TXA_OUT_PK);
+  } else {
+    mic_db = GetTXAMeter(tx->id, TXA_MIC_AV);
+    eq_db  = GetTXAMeter(tx->id, TXA_EQ_AV);
+    lvl_db = GetTXAMeter(tx->id, TXA_LVLR_AV);
+    cfc_db = GetTXAMeter(tx->id, TXA_CFC_AV);
+    prc_db = GetTXAMeter(tx->id, TXA_COMP_AV);
+    out_db = GetTXAMeter(tx->id, TXA_OUT_AV);
+  }
+
   double alc_db = GetTXAMeter(tx->id, TXA_ALC_PK);
 
   // Unterkante auf -100 dB begrenzen

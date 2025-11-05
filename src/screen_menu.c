@@ -48,6 +48,8 @@ static guint apply_timeout = 0;
 static GtkWidget *bgcolor_text_input;
 static gulong bgcolor_text_input_signal_id;
 static GtkWidget *display_extras_btn;
+static GtkWidget *b_display_af_peak = NULL;
+static gulong b_af_peak_signal_id;
 
 //
 // local copies of global variables
@@ -173,6 +175,22 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
 static void display_levels_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->show_levels = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+    if (!transmitter->show_levels) {
+      g_signal_handler_block(b_display_af_peak, b_af_peak_signal_id);
+      transmitter->show_af_peak = 0;
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_af_peak), transmitter->show_af_peak);
+      g_signal_handler_unblock(b_display_af_peak, b_af_peak_signal_id);
+      gtk_widget_set_sensitive(b_display_af_peak, FALSE);
+    } else {
+      gtk_widget_set_sensitive(b_display_af_peak, TRUE);
+    }
+  }
+}
+
+static void display_levels_af_peak_cb(GtkWidget *widget, gpointer data) {
+  if (can_transmit) {
+    transmitter->show_af_peak = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   }
 }
 
@@ -456,6 +474,7 @@ void screen_menu(GtkWidget *parent) {
 
   //------------------------------------------------------------------------------------------
   if (can_transmit) {
+    row++;
     GtkWidget *b_display_levels = gtk_check_button_new_with_label("Display TX Audio Level window");
     gtk_widget_set_name (b_display_levels, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_display_levels,
@@ -470,8 +489,24 @@ void screen_menu(GtkWidget *parent) {
                                 "It's essential to correctly adjust EVERY part of the TX audio chain !");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_levels), transmitter->show_levels);
     gtk_widget_show(b_display_levels);
-    gtk_grid_attach(GTK_GRID(grid), b_display_levels, 2, row, 2, 1);
+    gtk_grid_attach(GTK_GRID(grid), b_display_levels, 0, row, 2, 1);
     g_signal_connect(b_display_levels, "toggled", G_CALLBACK(display_levels_cb), NULL);
+    //----------------------------------------------------------------------------------------
+    b_display_af_peak = gtk_check_button_new_with_label("TX Audio Level as Peak");
+    gtk_widget_set_name (b_display_af_peak, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(b_display_af_peak, "Show TX Audio AF levels as Peak (default is Average)");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_af_peak), transmitter->show_af_peak);
+    gtk_widget_show(b_display_af_peak);
+    gtk_grid_attach(GTK_GRID(grid), b_display_af_peak, 2, row, 1, 1);
+    b_af_peak_signal_id = g_signal_connect(b_display_af_peak, "toggled", G_CALLBACK(display_levels_af_peak_cb), NULL);
+
+    if (!transmitter->show_levels) {
+      gtk_widget_set_sensitive(b_display_af_peak, FALSE);
+    } else {
+      gtk_widget_set_sensitive(b_display_af_peak, TRUE);
+    }
+
+    //----------------------------------------------------------------------------------------
   }
 
   //------------------------------------------------------------------------------------------

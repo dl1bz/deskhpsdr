@@ -212,7 +212,7 @@ typedef struct _transmitter {
   GtkWidget *levels_area;
   cairo_surface_t *levels_surface;
   int levels_width, levels_height;
-  int show_levels;
+  int show_levels, show_af_peak;
   int levels_x_pos, levels_y_pos;
 
 } TRANSMITTER;
