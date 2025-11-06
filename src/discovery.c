@@ -496,7 +496,7 @@ void discovery() {
       // Voraussetzung: DEVICE_HERMES_LITE2 & NEW_DEVICE_HERMES_LITE2 ist im Projekt definiert.
       // Spalte 4 ist in Nicht-STEMlab-Pfaden frei.
       if ((d->device == DEVICE_HERMES_LITE2 || d->device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1
-          && !have_radioberry2) {
+          && !have_radioberry2 && !have_radioberry3) {
         GtkWidget *reboot_button = gtk_button_new_with_label("Reboot");
         gtk_widget_set_name(reboot_button, "discovery_btn");
         gtk_widget_set_tooltip_text(reboot_button, "Reboot this SDR Device");

@@ -993,6 +993,7 @@ void gpio_set_defaults(int ctrlr) {
       PTTIN_LINE = -1;
       PTTOUT_LINE = -1;
       CWOUT_LINE = -1;
+      t_print("Forced RadioBerry1 GPIO settings\n");
     }
 
     if (have_radioberry2) {
@@ -1002,6 +1003,17 @@ void gpio_set_defaults(int ctrlr) {
       PTTIN_LINE = -1;
       PTTOUT_LINE = -1;
       CWOUT_LINE = -1;
+      t_print("Forced RadioBerry2 GPIO settings\n");
+    }
+
+    if (have_radioberry3) {
+      CWL_LINE = 17;
+      CWR_LINE = 13;
+      CWKEY_LINE = -1;
+      PTTIN_LINE = -1;
+      PTTOUT_LINE = -1;
+      CWOUT_LINE = -1;
+      t_print("Forced RadioBerry3 GPIO settings\n");
     }
 
     memcpy(my_encoders, encoders_no_controller, sizeof(my_encoders));

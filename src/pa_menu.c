@@ -313,7 +313,7 @@ void pa_menu(GtkWidget *parent) {
     }
 
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1
-        && !have_radioberry2) {
+        && !have_radioberry2 && !have_radioberry3) {
       // Calibrate-Seite: Grid in VBox einbetten und Footer unten anhängen
       GtkWidget *calib_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
       gtk_box_pack_start(GTK_BOX(calib_page), grid, TRUE, TRUE, 0);
