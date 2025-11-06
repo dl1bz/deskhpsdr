@@ -134,8 +134,10 @@ static void enforce_x11_backend_policy(void) {
 
   if ((xdg && g_ascii_strcasecmp(xdg, "wayland") == 0) || (w && *w)) {
     show_error_dialog_and_exit(
-      "Using the Wayland backend is not supported.\n"
-      "An Xorg session is required.");
+      "Using the Wayland backend is not supported.\n\n"
+      "An Xorg session is required.\n\n"
+      "The Wayland X11 backend breaks some GTK API functions,\n"
+      "which deskHPSDR needs. Xorg works correctly.");
   }
 
   g_setenv("GDK_BACKEND", "x11", TRUE);
