@@ -533,7 +533,7 @@ void radio_change_region(int r) {
     bandstack60.entries = CA_BANDSTACK_ENTRIES;
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_CA;
-    break;    
+    break;
   }
 }
 
