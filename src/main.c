@@ -33,6 +33,16 @@
 #include <curl/curl.h>
 #include <pthread.h>
 
+#ifdef GDK_WINDOWING_X11
+#include <gdk/gdkx.h>
+#endif
+#ifdef GDK_WINDOWING_WAYLAND
+#include <gdk/gdkwayland.h>
+#endif
+#ifdef GDK_WINDOWING_QUARTZ
+#include <gdk/gdkquartz.h>
+#endif
+
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
 #include "appearance.h"
@@ -162,19 +172,20 @@ static void prefer_x11_backend(void) {
 
 #if !defined(__APPLE__) && !defined(__WAYLAND__)
 static void assert_x11_or_fail(void) {
-  GdkDisplay *d = gdk_display_get_default();
-  const char *name = d ? gdk_display_get_name(d) : "";
+    GdkDisplay *d = gdk_display_get_default();
 
-  if (!name || g_strcmp0(name, "X11") != 0) {
-    show_error_dialog_and_exit(
-      "Using the Wayland backend is not supported.\n\n"
-      "An Xorg session is required.\n\n"
-      "The Wayland X11 backend breaks some GTK API functions,\n"
-      "which deskHPSDR needs. Xorg works correctly.");
-  }
-}
+#ifdef GDK_WINDOWING_X11
+    if (GDK_IS_X11_DISPLAY(d)) return;             // Xorg oder XWayland → OK
 #endif
 
+    // alles andere (Wayland, kein XWayland, unbekannt) → blocken
+    show_error_dialog_and_exit(
+        "Using the Wayland backend is not supported.\n\n"
+        "An Xorg/XWayland session is required.\n\n"
+        "The Wayland backend breaks some GTK APIs needed by deskHPSDR."
+    );
+}
+#endif
 
 void status_text(const char *text) {
   gtk_label_set_text(GTK_LABEL(status_label), text);
