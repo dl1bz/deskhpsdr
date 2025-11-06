@@ -194,6 +194,7 @@ CPP_INCLUDE +=$(SOLAR_INCLUDE)
 ifeq ($(UNAME_S), Darwin)
 GPIO=
 SATURN=
+WAYLAND=
 endif
 
 ifeq ($(UNAME_S), Linux)
@@ -428,6 +429,11 @@ TAHOEFIX_OPTIONS=-D__TAHOEFIX__
 endif
 CPP_DEFINES += -D__TAHOEFIX__
 
+ifeq ($(WAYLAND), ON)
+WAYLAND_OPTIONS=-D__WAYLAND__
+endif
+CPP_DEFINES += -D__WAYLAND__
+
 ##############################################################################
 #
 # Options for audio module
@@ -578,6 +584,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(REG1_OPTIONS) \
 	$(WMAP_OPTIONS) \
 	$(EQ12_OPTIONS) \
+	$(WAYLAND_OPTIONS) \
 	$(TAHOEFIX_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
@@ -1020,7 +1027,7 @@ DEPEND:
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
-		-D__WMAP__ -D__EQ12__ -D__TAHOEFIX__ \
+		-D__WMAP__ -D__EQ12__ -D__WAYLAND__ -D__TAHOEFIX__ \
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND
 

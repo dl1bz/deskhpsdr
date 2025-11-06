@@ -93,7 +93,7 @@ static GtkWidget *status_label;
 
 pthread_t deskhpsdr_main_thread;  // global
 
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(__WAYLAND__)
 static void show_error_dialog_and_exit(const char *msg) {
   int argc = 0;
   char **argv = NULL;
@@ -124,6 +124,7 @@ static void show_error_dialog_and_exit(const char *msg) {
 }
 #endif
 
+#if !defined(__WAYLAND__)
 static void enforce_x11_backend_policy(void) {
 #if defined(__APPLE__)
   g_setenv("GDK_BACKEND", "quartz", TRUE);
@@ -144,6 +145,7 @@ static void enforce_x11_backend_policy(void) {
   gdk_set_allowed_backends("x11");
 #endif
 }
+#endif
 
 void status_text(const char *text) {
   gtk_label_set_text(GTK_LABEL(status_label), text);
@@ -893,7 +895,9 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 }
 
 int main(int argc, char **argv) {
+#if !defined(__WAYLAND__)
   enforce_x11_backend_policy();
+#endif
   GtkApplication *deskhpsdr;
   int rc;
   char name[1024];
