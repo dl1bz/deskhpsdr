@@ -728,12 +728,14 @@ void radio_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "UK Channels");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "US Channels");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "WRC15");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "CA Channels");
   gtk_combo_box_set_active(GTK_COMBO_BOX(region_combo), region);
   gtk_widget_set_tooltip_text(region_combo,
                               "Select an option if want see colored channel marker\nin the RX panadapter.\n\n"
                               "UK - UK Channelizing 60m\n"
                               "US - US Channelizing 60m\n"
                               "WRC15 - ONE Channel according to the WRC15 recommendation for 60m\n"
+                              "CA - CA Channelizing 60m\n"
                               "NONE - No channel markers");
   my_combo_attach(GTK_GRID(grid), region_combo, 2, row, 1, 1);
   g_signal_connect(region_combo, "changed", G_CALLBACK(region_cb), NULL);

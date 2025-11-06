@@ -115,6 +115,14 @@ static BANDSTACK_ENTRY bandstack_entries60_UK[] = {
   {5405000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
+static BANDSTACK_ENTRY bandstack_entries60_CA[] = {
+  {5332000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}, // default channels for
+  {5348000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}, // 60m band, US regulations
+  {5358500LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
+  {5373000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
+  {5405000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
+};
+
 #if defined (__REG1__)
 static BANDSTACK_ENTRY bandstack_entries40[] = {
   {7001000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
@@ -459,6 +467,13 @@ static CHANNEL band_channels_60m_US[US_CHANNEL_ENTRIES] = {
   {5405000LL, 3000LL}
 };
 
+static CHANNEL band_channels_60m_CA[CA_CHANNEL_ENTRIES] = {
+  {5332000LL, 3000LL},
+  {5348000LL, 3000LL},
+  {5359000LL, 15000LL},
+  {5373000LL, 3000LL},
+  {5405000LL, 3000LL}
+};
 //
 // channel_entires and band_channels_60m are used in the RX panadapter
 // to mark the "channels"
@@ -511,6 +526,14 @@ void radio_change_region(int r) {
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_WRC15;
     break;
+
+  case REGION_CA:
+    channel_entries = CA_CHANNEL_ENTRIES;
+    band_channels_60m = &band_channels_60m_CA[0];
+    bandstack60.entries = CA_BANDSTACK_ENTRIES;
+    bandstack60.current_entry = 0;
+    bandstack60.entry = bandstack_entries60_CA;
+    break;    
   }
 }
 

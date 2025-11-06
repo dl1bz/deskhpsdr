@@ -97,11 +97,13 @@ typedef struct _CHANNEL CHANNEL;
 #define US_BANDSTACK_ENTRIES 5
 #define VFO_BANDSTACK_ENTRIES 5
 #define WRC15_BANDSTACK_ENTRIES 5
+#define CA_BANDSTACK_ENTRIES 5
 
 #define UK_CHANNEL_ENTRIES 11
 #define US_CHANNEL_ENTRIES 5
 #define VFO_CHANNEL_ENTRIES 1
 #define WRC15_CHANNEL_ENTRIES 1
+#define CA_CHANNEL_ENTRIES 5
 
 extern int channel_entries;
 extern CHANNEL *band_channels_60m;
