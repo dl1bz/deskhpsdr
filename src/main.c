@@ -93,6 +93,56 @@ static GtkWidget *status_label;
 
 pthread_t deskhpsdr_main_thread;  // global
 
+#if !defined(__APPLE__)
+static void show_error_dialog_and_exit(const char *msg) {
+  int argc = 0;
+  char **argv = NULL;
+
+  if (!gtk_init_check(&argc, &argv)) {
+    g_printerr("%s\n", msg);
+    _exit(1);
+  }
+
+  GtkWidget *dlg = gtk_message_dialog_new(
+                     NULL,
+                     GTK_DIALOG_MODAL,
+                     GTK_MESSAGE_ERROR,
+                     GTK_BUTTONS_NONE,
+                     "%s", msg
+                   );
+  gtk_window_set_title(GTK_WINDOW(dlg), "deskHPSDR");
+  gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
+  gtk_window_set_resizable(GTK_WINDOW(dlg), FALSE);
+  gtk_dialog_set_default_response(GTK_DIALOG(dlg), GTK_RESPONSE_NONE);
+  gtk_dialog_add_button(GTK_DIALOG(dlg), "_Close", GTK_RESPONSE_CLOSE);
+
+  if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_CLOSE) {
+    gtk_widget_destroy(dlg);
+    _exit(1);
+  }
+}
+#endif
+
+static void enforce_x11_backend_policy(void) {
+#if defined(__APPLE__)
+  g_setenv("GDK_BACKEND", "quartz", TRUE);
+  gdk_set_allowed_backends("quartz");
+#else
+  const char *xdg = g_getenv("XDG_SESSION_TYPE");
+  const char *w   = g_getenv("WAYLAND_DISPLAY");
+
+  if ((xdg && g_ascii_strcasecmp(xdg, "wayland") == 0) || (w && *w)) {
+    show_error_dialog_and_exit(
+      "Using the Wayland backend is not supported.\n"
+      "An Xorg session is required.");
+  }
+
+  g_setenv("GDK_BACKEND", "x11", TRUE);
+  gdk_set_allowed_backends("x11");
+#endif
+}
+
 void status_text(const char *text) {
   gtk_label_set_text(GTK_LABEL(status_label), text);
   usleep(100000);
@@ -841,6 +891,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 }
 
 int main(int argc, char **argv) {
+  enforce_x11_backend_policy();
   GtkApplication *deskhpsdr;
   int rc;
   char name[1024];
