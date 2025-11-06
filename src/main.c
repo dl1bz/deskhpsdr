@@ -110,7 +110,7 @@ static void show_error_dialog_and_exit(const char *msg) {
                      GTK_BUTTONS_NONE,
                      "%s", msg
                    );
-  gtk_window_set_title(GTK_WINDOW(dlg), "deskHPSDR");
+  gtk_window_set_title(GTK_WINDOW(dlg), "deskHPSDR - ERROR");
   gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
   gtk_window_set_resizable(GTK_WINDOW(dlg), FALSE);
@@ -124,6 +124,7 @@ static void show_error_dialog_and_exit(const char *msg) {
 }
 #endif
 
+/*
 #if !defined(__WAYLAND__)
 static void enforce_x11_backend_policy(void) {
 #if defined(__APPLE__)
@@ -146,6 +147,34 @@ static void enforce_x11_backend_policy(void) {
 #endif
 }
 #endif
+*/
+
+static void prefer_x11_backend(void) {
+#if defined(__APPLE__)
+  g_setenv("GDK_BACKEND", "quartz", TRUE);
+  gdk_set_allowed_backends("quartz");
+#else
+  // X11 bevorzugen; unter Wayland → XWayland
+  g_setenv("GDK_BACKEND", "x11", TRUE);
+  gdk_set_allowed_backends("x11");
+#endif
+}
+
+#if !defined(__APPLE__) && !defined(__WAYLAND__)
+static void assert_x11_or_fail(void) {
+  GdkDisplay *d = gdk_display_get_default();
+  const char *name = d ? gdk_display_get_name(d) : "";
+
+  if (!name || g_strcmp0(name, "X11") != 0) {
+    show_error_dialog_and_exit(
+      "Using the Wayland backend is not supported.\n\n"
+      "An Xorg session is required.\n\n"
+      "The Wayland X11 backend breaks some GTK API functions,\n"
+      "which deskHPSDR needs. Xorg works correctly.");
+  }
+}
+#endif
+
 
 void status_text(const char *text) {
   gtk_label_set_text(GTK_LABEL(status_label), text);
@@ -895,9 +924,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 }
 
 int main(int argc, char **argv) {
-#if !defined(__WAYLAND__)
-  enforce_x11_backend_policy();
-#endif
+  prefer_x11_backend(); // vor gtk_application_new()
   GtkApplication *deskhpsdr;
   int rc;
   char name[1024];
@@ -935,6 +962,9 @@ int main(int argc, char **argv) {
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
   t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
+#if !defined(__APPLE__) && !defined(__WAYLAND__)
+  assert_x11_or_fail(); // direkt nach gtk_application_new()
+#endif
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
   t_print("exiting ...\n");
