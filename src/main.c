@@ -21,6 +21,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include <math.h>
+#include <locale.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -138,6 +139,8 @@ static void enforce_x11_backend_policy(void) {
   g_setenv("GDK_BACKEND", "quartz", TRUE);
   gdk_set_allowed_backends("quartz");
 #else
+  g_setenv("GDK_BACKEND", "x11", TRUE);
+  gdk_set_allowed_backends("x11");
   const char *xdg = g_getenv("XDG_SESSION_TYPE");
   const char *w   = g_getenv("WAYLAND_DISPLAY");
 
@@ -151,8 +154,6 @@ static void enforce_x11_backend_policy(void) {
       "If you agree and understand, select Continue to proceed.");
   }
 
-  g_setenv("GDK_BACKEND", "x11", TRUE);
-  gdk_set_allowed_backends("x11");
 #endif
   const char *result_x11_be = g_getenv("GDK_BACKEND");
   const char *result_x11_sess = g_getenv("XDG_SESSION_TYPE");
@@ -916,6 +917,7 @@ int main(int argc, char **argv) {
   GtkApplication *deskhpsdr;
   int rc;
   char name[1024];
+  setlocale(LC_ALL, "C");
 
   //
   // If invoked with -V, print version and FPGA firmware compatibility information
