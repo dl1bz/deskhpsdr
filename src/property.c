@@ -207,3 +207,24 @@ void setProperty(const char* name, const char* value) {
   }
 }
 
+//
+// Utility function myatof
+//
+// Now we force the C locale, but data in the props file may still have been written
+// out using local conventions (e.g. a comma instead of a decimal point in Germany)
+// To handle (at least) this case, all commas in the input string are replaced by
+// decimal points and then this is fed to atof()
+//
+double myatof(const char* string) {
+  char *lstr = strdup(string);
+  double ret;
+
+  for (char *cp = lstr; *cp; cp++) {
+    if (*cp == ',') { *cp = '.'; }
+  }
+
+  ret = atof(lstr);
+  free(lstr);
+  return ret;
+}
+

@@ -42,12 +42,6 @@ static int myvfo;  //  VFO the menu is referring to
 static GtkWidget *dialog = NULL;
 static GtkWidget *label;
 
-//
-// Note that the decimal point is hard-wired to a point,
-// which may be incompatible with the LOCALE setting
-// such that atof() and friends do not understand it.
-// This is taken care of below
-//
 static char *btn_labels[] = {"1", "2", "3",
                              "4", "5", "6",
                              "7", "8", "9",
@@ -307,8 +301,12 @@ void vfo_num_pad(int action, int id) {
 
   case -5:  // Decimal point
 
-    // if there is already a decimal point in the string,
+    //
+    // If there is already a decimal point in the string,
     // do not add another one
+    // The "locale" stuff is no longer needed (but does no harm)
+    // since we now force the "C" locale in the program.
+    //
     if (index(buffer, *(locale->decimal_point)) == NULL &&
         len <= sizeof(vfo[id].entered_frequency) - 2) {
       buffer[len++] = *(locale->decimal_point);

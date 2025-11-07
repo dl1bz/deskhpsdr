@@ -677,6 +677,8 @@ static GdkPixbuf *create_pixbuf_from_data() {
 static int init(void *data) {
   char wisdom_directory[1024];
   t_print("%s\n", __FUNCTION__);
+  t_print("LC_ALL=%s\n", setlocale(LC_ALL, NULL));
+  t_print("LC_NUMERIC=%s\n", setlocale(LC_NUMERIC, NULL));
   audio_get_cards();
   cursor_arrow = gdk_cursor_new(GDK_ARROW);
   cursor_watch = gdk_cursor_new(GDK_WATCH);
@@ -917,7 +919,6 @@ int main(int argc, char **argv) {
   GtkApplication *deskhpsdr;
   int rc;
   char name[1024];
-  setlocale(LC_ALL, "C");
 
   //
   // If invoked with -V, print version and FPGA firmware compatibility information
@@ -941,16 +942,18 @@ int main(int argc, char **argv) {
   // privilege is there, it may help to run deskHPSDR at a lower nice
   // value.
   //
+  startup(argv[0]);
+  setlocale(LC_ALL, "C");
   rc = getpriority(PRIO_PROCESS, 0);
   t_print("Base priority on startup: %d\n", rc);
   setpriority(PRIO_PROCESS, 0, -10);
   rc = getpriority(PRIO_PROCESS, 0);
   t_print("Base priority after adjustment: %d\n", rc);
-  startup(argv[0]);
   t_print("%s: init global cURL...\n", __FUNCTION__);
   curl_global_init(CURL_GLOBAL_ALL);
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
   t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
+  gtk_disable_setlocale();  // keep having a decimal point as a decimal point
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);

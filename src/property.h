@@ -37,6 +37,7 @@ extern void loadProperties(const char* filename);
 extern char* getProperty(const char* name);
 extern void setProperty(const char* name, const char* value);
 extern void saveProperties(const char* filename);
+extern double myatof(const char* string);
 
 //
 // Some macros to get/set properties.
@@ -59,7 +60,7 @@ extern void saveProperties(const char* filename);
 
 #define GetPropF0(a,b)  { \
   const char *value=getProperty(a); \
-  if (value) { b = atof(value); } \
+  if (value) { b = myatof(value); } \
 }
 
 #define GetPropS0(a,b)  { \
@@ -83,7 +84,7 @@ extern void saveProperties(const char* filename);
   char name[128]; \
   snprintf(name, sizeof(name), a, b); \
   const char *value=getProperty(name); \
-  if (value) { c = atof(value); } \
+  if (value) { c = myatof(value); } \
 }
 
 #define GetPropS1(a,b,c) { \
@@ -111,7 +112,7 @@ extern void saveProperties(const char* filename);
   char name[128]; \
   snprintf(name, sizeof(name), a, b, c); \
   const char *value=getProperty(name); \
-  if (value) { d = atof(value); } \
+  if (value) { d = myatof(value); } \
 }
 
 #define GetPropS2(a,b,c,d) { \
