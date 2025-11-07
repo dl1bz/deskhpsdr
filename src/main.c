@@ -748,7 +748,6 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   t_print("release: %s\n", unameData.release);
   t_print("version: %s\n", unameData.version);
   t_print("machine: %s\n", unameData.machine);
-  load_css();
   GdkDisplay *display = gdk_display_get_default();
 
   if (display == NULL) {
@@ -758,28 +757,13 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 
   screen = gdk_display_get_default_screen(display);
 #ifdef __linux__
-  const char *desktop_env = getenv("XDG_CURRENT_DESKTOP");
-
-  if (desktop_env) {
-    t_print("Detected Desktop Environment: %s\n", desktop_env);
-
-    if (g_strrstr(desktop_env, "KDE")      ||
-        g_strrstr(desktop_env, "LXQt")     ||
-        g_strrstr(desktop_env, "LXDE")     ||
-        g_strrstr(desktop_env, "Cinnamon") ||
-        g_strrstr(desktop_env, "UNKNOWN")) {
-      t_print("Forcing GTK theme to Adwaita for better compatibility\n");
-      gtk_settings_set_string_property(
-        gtk_settings_get_default(),
-        "gtk-theme-name",
-        "Adwaita",
-        NULL
-      );
-    }
-  } else {
-    t_print("Desktop environment not detected – no GTK theme override\n");
-  }
-
+  t_print("Forcing GTK theme to Adwaita\n");
+  gtk_settings_set_string_property(
+    gtk_settings_get_default(),
+    "gtk-theme-name",
+    "Adwaita",
+    "application"
+  );
 #else
   t_print("Non-Linux system – skipping GTK theme override\n");
 #endif
@@ -795,6 +779,8 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
     _exit(0);
   }
 
+  // Jetzt erst CSS laden, damit es das Theme übersteuert
+  load_css();
   //
   // Create top window with minimum size
   //
