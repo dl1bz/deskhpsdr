@@ -675,7 +675,8 @@ static GdkPixbuf *create_pixbuf_from_data() {
 }
 
 static int init(void *data) {
-  char wisdom_directory[1024];
+  char wisdom_directory[1025];
+  char text[1024];
   t_print("%s\n", __FUNCTION__);
   t_print("LC_ALL=%s\n", setlocale(LC_ALL, NULL));
   t_print("LC_NUMERIC=%s\n", setlocale(LC_NUMERIC, NULL));
@@ -688,8 +689,8 @@ static int init(void *data) {
   // If there is one, the "wisdom thread" takes no time
   // Depending on the WDSP version, the file is wdspWisdom or wdspWisdom00.
   //
-  (void) getcwd(wisdom_directory, sizeof(wisdom_directory));
-  g_strlcat(wisdom_directory, "/", 1024);
+  (void) getcwd(text, sizeof(text));
+  snprintf(wisdom_directory, sizeof(wisdom_directory), "%s/", text);
   t_print("Securing wisdom file in directory: %s\n", wisdom_directory);
   status_text("Checking FFTW Wisdom file ...");
   wisdom_running = 1;
@@ -704,8 +705,7 @@ static int init(void *data) {
       gtk_main_iteration ();
     }
 
-    char text[1024];
-    snprintf(text, 1024, "Please do not close this window until wisdom plans are completed ...\n\n... %s",
+    snprintf(text, sizeof(text), "Please do not close this window until wisdom plans are completed ...\n\n... %s",
              wisdom_get_status());
     status_text(text);
   }
