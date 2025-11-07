@@ -139,12 +139,12 @@ static void enforce_x11_backend_policy(void) {
   g_setenv("GDK_BACKEND", "quartz", TRUE);
   gdk_set_allowed_backends("quartz");
 #else
-  g_setenv("GDK_BACKEND", "x11", TRUE);
-  gdk_set_allowed_backends("x11");
   const char *xdg = g_getenv("XDG_SESSION_TYPE");
   const char *w   = g_getenv("WAYLAND_DISPLAY");
 
   if ((xdg && g_ascii_strcasecmp(xdg, "wayland") == 0) || (w && *w)) {
+    g_setenv("DESKHPSDR_WAYLAND_NOTICE", "1", TRUE);
+    /*
     show_error_dialog(
       "\nYou are using Wayland as X11 backend, which is not supported by deskHPSDR.\n\n"
       "Using Xorg instead Wayland as X11 backend is strongly recommended.\n\n"
@@ -152,8 +152,11 @@ static void enforce_x11_backend_policy(void) {
       "relies on. deskHPSDR is able to run under Wayland, but some GTK APIs\n"
       "do not behave as expected, which results in restricted functionality.\n\n"
       "If you agree and understand, select Continue to proceed.");
+    */
   }
 
+  g_setenv("GDK_BACKEND", "x11", TRUE);
+  gdk_set_allowed_backends("x11");
 #endif
   const char *result_x11_be = g_getenv("GDK_BACKEND");
   const char *result_x11_sess = g_getenv("XDG_SESSION_TYPE");
@@ -952,6 +955,19 @@ int main(int argc, char **argv) {
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
   t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
+#if !defined(__WAYLAND__)
+
+  if (g_getenv("DESKHPSDR_WAYLAND_NOTICE")) {
+    show_error_dialog(
+      "\nYou are using Wayland as X11 backend, which is not supported by deskHPSDR.\n\n"
+      "Using Xorg instead Wayland as X11 backend is strongly recommended.\n\n"
+      "The Wayland X11 backend break some GTK API functions that deskHPSDR\n"
+      "relies on. deskHPSDR is able to run under Wayland, but some GTK APIs\n"
+      "do not behave as expected, which results in restricted functionality.\n\n"
+      "If you agree and understand, select Continue to proceed.");
+  }
+
+#endif
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
   t_print("exiting ...\n");
