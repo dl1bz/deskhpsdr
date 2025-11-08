@@ -724,19 +724,21 @@ static int init(void *data) {
 }
 
 static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
-#if !defined(__WAYLAND__)
+  /*
+  #if !defined(__WAYLAND__)
 
-  if (g_getenv("DESKHPSDR_WAYLAND_NOTICE")) {
-    show_error_dialog(
-      "\nYou are using Wayland as X11 backend, which is not supported by deskHPSDR.\n\n"
-      "Using Xorg instead Wayland as X11 backend is strongly recommended.\n\n"
-      "The Wayland X11 backend break some GTK API functions that deskHPSDR\n"
-      "relies on. deskHPSDR is able to run under Wayland, but some GTK APIs\n"
-      "do not behave as expected, which results in restricted functionality.\n\n"
-      "If you agree and understand, select Continue to proceed.");
-  }
+    if (g_getenv("DESKHPSDR_WAYLAND_NOTICE")) {
+      show_error_dialog(
+        "\nYou are using Wayland as X11 backend, which is not supported by deskHPSDR.\n\n"
+        "Using Xorg instead Wayland as X11 backend is strongly recommended.\n\n"
+        "The Wayland X11 backend break some GTK API functions that deskHPSDR\n"
+        "relies on. deskHPSDR is able to run under Wayland, but some GTK APIs\n"
+        "do not behave as expected, which results in restricted functionality.\n\n"
+        "If you agree and understand, select Continue to proceed.");
+    }
 
-#endif
+  #endif
+  */
   // Hier setzen wir den GTK-Mainloop-Thread
   deskhpsdr_main_thread = pthread_self();
   g_mutex_init(&vfo_timer.lock);

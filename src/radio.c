@@ -478,20 +478,39 @@ static int set_full_screen(gpointer data) {
   // Put the top window in full-screen mode, if full_screen is set
   //
   if (flag) {
-    //
-    // Window-to-fullscreen-transition
-    //
-    gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+    if (use_wayland) {
+      gtk_window_fullscreen(GTK_WINDOW(top_window));
+    } else {
+      //
+      // Window-to-fullscreen-transition
+      //
+      gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+    }
   } else {
-    //
-    // FullScreen to window transition. Place window in the center of the screen
-    //
-    gtk_window_move(GTK_WINDOW(top_window),
-                    (screen_width - display_width) / 2,
-                    (screen_height - display_height) / 2);
+    if (!use_wayland) {
+      //
+      // FullScreen to window transition. Place window in the center of the screen
+      //
+      gtk_window_move(GTK_WINDOW(top_window),
+                      (screen_width - display_width) / 2,
+                      (screen_height - display_height) / 2);
+    }
   }
 
   return G_SOURCE_REMOVE;
+}
+
+// Destroy-only removal helper to avoid fragile unparent paths.
+// gtk_widget_destroy() safely unparents and disposes the subtree.
+static void destroy_widget_safe(GtkWidget **pchild) {
+  if (!pchild) { return; }
+
+  GtkWidget *w = *pchild;
+
+  if (!GTK_IS_WIDGET(w)) { *pchild = NULL; return; }
+
+  gtk_widget_destroy(w);
+  *pchild = NULL;
 }
 
 void radio_reconfigure_screen() {
@@ -516,18 +535,21 @@ void radio_reconfigure_screen() {
   int my_height = my_fullscreen ? screen_height : display_height;
 
   if (toolbar) {
-    gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
-    toolbar = NULL;
+    // gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
+    // toolbar = NULL;
+    destroy_widget_safe(&toolbar);
   }
 
   if (sliders) {
-    gtk_container_remove(GTK_CONTAINER(fixed), sliders);
-    sliders = NULL;
+    // gtk_container_remove(GTK_CONTAINER(fixed), sliders);
+    // sliders = NULL;
+    destroy_widget_safe(&sliders);
   }
 
   if (zoompan) {
-    gtk_container_remove(GTK_CONTAINER(fixed), zoompan);
-    zoompan = NULL;
+    // gtk_container_remove(GTK_CONTAINER(fixed), zoompan);
+    // zoompan = NULL;
+    destroy_widget_safe(&zoompan);
   }
 
   choose_vfo_layout();
@@ -555,12 +577,14 @@ void radio_reconfigure_screen() {
   }
 
   if (last_fullscreen != full_screen && my_fullscreen) {
-    //
-    // A window-to-fullscreen transition
-    // here we move the window, the transition is then
-    // scheduled at the end of this function
-    //
-    gtk_window_move(GTK_WINDOW(top_window), 0, 0);
+    if (!use_wayland) {
+      //
+      // A window-to-fullscreen transition
+      // here we move the window, the transition is then
+      // scheduled at the end of this function
+      //
+      gtk_window_move(GTK_WINDOW(top_window), 0, 0);
+    }
   }
 
   gtk_window_resize(GTK_WINDOW(top_window), my_width, my_height);
@@ -701,8 +725,9 @@ void radio_reconfigure() {
     y += ZOOMPAN_HEIGHT;
   } else {
     if (zoompan != NULL) {
-      gtk_container_remove(GTK_CONTAINER(fixed), zoompan);
-      zoompan = NULL;
+      // gtk_container_remove(GTK_CONTAINER(fixed), zoompan);
+      // zoompan = NULL;
+      destroy_widget_safe(&zoompan);
     }
   }
 
@@ -725,8 +750,9 @@ void radio_reconfigure() {
     }
   } else {
     if (sliders != NULL) {
-      gtk_container_remove(GTK_CONTAINER(fixed), sliders);
-      sliders = NULL;
+      // gtk_container_remove(GTK_CONTAINER(fixed), sliders);
+      // sliders = NULL;
+      destroy_widget_safe(&sliders);
     }
   }
 
@@ -741,8 +767,9 @@ void radio_reconfigure() {
     gtk_widget_show_all(toolbar);
   } else {
     if (toolbar != NULL) {
-      gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
-      toolbar = NULL;
+      // gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
+      // toolbar = NULL;
+      destroy_widget_safe(&toolbar);
     }
   }
 

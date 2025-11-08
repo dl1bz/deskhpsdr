@@ -440,6 +440,8 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.levels_y_pos",      tx->id,               tx->levels_y_pos);
   SetPropI1("transmitter.%d.show_levels",       tx->id,               tx->show_levels);
   SetPropI1("transmitter.%d.show_af_peak",      tx->id,               tx->show_af_peak);
+  SetPropI1("transmitter.%d.use_levels_popup",  tx->id,               tx->use_levels_popup);
+  SetPropI1("transmitter.%d.inner_levels_popup", tx->id,               tx->inner_levels_popup);
 }
 
 static void tx_restore_state(TRANSMITTER *tx) {
@@ -544,6 +546,8 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.levels_y_pos",      tx->id,               tx->levels_y_pos);
   GetPropI1("transmitter.%d.show_levels",       tx->id,               tx->show_levels);
   GetPropI1("transmitter.%d.show_af_peak",      tx->id,               tx->show_af_peak);
+  GetPropI1("transmitter.%d.use_levels_popup",  tx->id,               tx->use_levels_popup);
+  GetPropI1("transmitter.%d.inner_levels_popup", tx->id,               tx->inner_levels_popup);
 }
 
 static double compute_power(double p) {
@@ -911,6 +915,30 @@ static gboolean tx_levels_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
   return FALSE;
 }
 
+/* Callback: Popover anzeigen, wenn Anchor gemappt */
+static void levels_show_popover_cb(GtkWidget * anchor, gpointer popover_ptr) {
+  int gap;
+  GtkWidget *pop = GTK_WIDGET(popover_ptr);
+  GtkAllocation a;
+  gtk_widget_get_allocation(anchor, &a);
+  /* Adwaita GTK3: ~12px Pfeil + ~6px Padding → -18 ist meist bündig */
+  gap = -1;
+  GdkRectangle rect = { a.width + gap, a.height / 2, 1, 1 };
+  t_print("%s: full_screen = %d transmitter->inner_levels_popup = %d\n", __FUNCTION__, full_screen,
+          transmitter->inner_levels_popup);
+#ifdef __linux__
+
+  if (!full_screen && !transmitter->inner_levels_popup) {
+    /* Popover darf außerhalb des Parentfensters erscheinen */
+    gtk_popover_set_constrain_to(GTK_POPOVER(pop), GTK_POPOVER_CONSTRAINT_NONE);
+  }
+
+#endif
+  gtk_popover_set_pointing_to(GTK_POPOVER(pop), &rect);
+  gtk_widget_show_all(pop);
+  gtk_window_present(GTK_WINDOW(top_window)); /* Fokus bleibt im Mainwindow */
+}
+
 void tx_create_levels_window(TRANSMITTER *tx) {
   if (tx->levels_dialog) {
     gtk_widget_destroy(tx->levels_dialog);
@@ -918,49 +946,85 @@ void tx_create_levels_window(TRANSMITTER *tx) {
   }
 
   int w, h;
-  get_screen_size(&w, &h);
-
-  if (tx->levels_x_pos <= 0) { tx->levels_x_pos = w - tx->levels_width - 100; }
-
-  if (tx->levels_y_pos <= 0) { tx->levels_y_pos = 100; }
-
-  t_print("%s w = %d h = %d tx->levels_x_pos = %d tx->levels_y_pos = %d\n", __FUNCTION__, w, h, tx->levels_x_pos,
-          tx->levels_y_pos);
-  tx->levels_dialog = gtk_dialog_new();
-  gtk_window_set_transient_for(GTK_WINDOW(tx->levels_dialog), GTK_WINDOW(top_window));
-  gtk_window_set_resizable(GTK_WINDOW(tx->levels_dialog), FALSE);
-  // --- Kein Fokus, Hauptfenster behält Tastatureingaben ---
-  gtk_window_set_accept_focus(GTK_WINDOW(tx->levels_dialog), FALSE);
-  gtk_widget_set_can_focus(tx->levels_dialog, FALSE);
-  char levels_title[32];
-  GtkWidget *hb = gtk_header_bar_new();
-  gtk_window_set_titlebar(GTK_WINDOW(tx->levels_dialog), hb);
-  gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(hb), FALSE); // schliessen button entfernen
-
-  if (tx->show_af_peak) {
-    snprintf(levels_title, sizeof(levels_title), "TX Audio Levels [Peak]");
-  } else {
-    snprintf(levels_title, sizeof(levels_title), "TX Audio Levels [Avg]");
-  }
-
-  gtk_header_bar_set_title(GTK_HEADER_BAR(hb), levels_title);
-  // --- Tastatureingaben aktivieren (wie im Duplex-Dialog) ---
-  gtk_widget_add_events(tx->levels_dialog, GDK_KEY_PRESS_MASK);
-  g_signal_connect(tx->levels_dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
-  gtk_window_set_position(GTK_WINDOW(tx->levels_dialog), GTK_WIN_POS_NONE);
-  gtk_window_set_default_size(GTK_WINDOW(tx->levels_dialog), tx->levels_width, tx->levels_height);
-  gtk_window_move(GTK_WINDOW(tx->levels_dialog), tx->levels_x_pos, tx->levels_y_pos); // Position bei Bedarf anpassen
-  GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->levels_dialog));
+  // Content einmal bauen
   tx->levels_area = gtk_drawing_area_new();
   gtk_widget_set_size_request(tx->levels_area, tx->levels_width, tx->levels_height);
   g_signal_connect(tx->levels_area, "configure-event", G_CALLBACK(tx_levels_configure_cb), tx);
   g_signal_connect(tx->levels_area, "draw",            G_CALLBACK(tx_levels_draw_cb),      tx);
-  gtk_container_add(GTK_CONTAINER(content), tx->levels_area);
-  g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(close_cb), NULL);
-  gtk_widget_show_all(tx->levels_dialog);
-  gtk_window_move(GTK_WINDOW(tx->levels_dialog), tx->levels_x_pos, tx->levels_y_pos); // zweite Sicherung nach show
-  // Hauptfenster aktiv lassen (falls gewünscht)
-  gtk_window_present(GTK_WINDOW(top_window));
+
+  if (use_wayland || full_screen || transmitter->use_levels_popup) {
+    /* Anchor bestimmen: Child des Hauptfensters, NICHT das Fenster selbst */
+    GtkWidget *anchor = NULL;
+
+    if (GTK_IS_BIN(top_window)) {
+      anchor = gtk_bin_get_child(GTK_BIN(top_window));
+    }
+
+    if (!anchor) {
+      anchor = topgrid;   /* Fallback falls vorhanden */
+    }
+
+    if (!anchor) {
+      /* Kein gültiger Anchor → sauberer Fallback in den X11-Dialogpfad unten */
+      goto X11_FALLBACK;
+    }
+
+    /* <<< Debug-Ausgabe HIER einfügen >>> */
+    t_print("%s: WAYLAND ANCHOR mapped=%d  visible=%d  realized=%d  type=%s  parent=%s\n",
+            __FUNCTION__,
+            gtk_widget_get_mapped(anchor),
+            gtk_widget_get_visible(anchor),
+            gtk_widget_get_realized(anchor),
+            G_OBJECT_TYPE_NAME(anchor),
+            G_OBJECT_TYPE_NAME(gtk_widget_get_parent(anchor)));
+    /* Popover erzeugen */
+    GtkWidget *levels_popover = gtk_popover_new(anchor);
+    gtk_popover_set_position(GTK_POPOVER(levels_popover), GTK_POS_RIGHT);
+    gtk_popover_set_modal(GTK_POPOVER(levels_popover), FALSE);
+    /* Inhalt */
+    GtkWidget *levels_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add(GTK_CONTAINER(levels_popover), levels_box);
+    gtk_box_pack_start(GTK_BOX(levels_box), tx->levels_area, TRUE, TRUE, 0);
+    tx->levels_dialog = levels_popover;
+    g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(close_cb), NULL);
+
+    if (gtk_widget_get_mapped(anchor)) {
+      levels_show_popover_cb(anchor, tx->levels_dialog);
+    } else {
+      g_signal_connect(anchor, "map", G_CALLBACK(levels_show_popover_cb), tx->levels_dialog);
+    }
+
+    return;  /* WICHTIG: NICHT weiter in den X11-Code laufen */
+  } else {
+X11_FALLBACK:
+    // X11-Pfad unverändert
+    // X11: klassischer Dialog mit fixer Position
+    get_screen_size(&w, &h);
+
+    if (tx->levels_x_pos <= 0) { tx->levels_x_pos = w - tx->levels_width - 100; }
+
+    if (tx->levels_y_pos <= 0) { tx->levels_y_pos = 100; }
+
+    GtkWidget *dlg = gtk_dialog_new();
+    gtk_window_set_transient_for(GTK_WINDOW(dlg), GTK_WINDOW(top_window));
+    gtk_window_set_resizable(GTK_WINDOW(dlg), FALSE);
+    gtk_window_set_accept_focus(GTK_WINDOW(dlg), FALSE);
+    gtk_widget_set_can_focus(dlg, FALSE);
+    GtkWidget *hb = gtk_header_bar_new();
+    gtk_window_set_titlebar(GTK_WINDOW(dlg), hb);
+    gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(hb), FALSE);
+    gtk_header_bar_set_title(GTK_HEADER_BAR(hb),
+                             tx->show_af_peak ? "TX Audio Levels [Peak]" : "TX Audio Levels [Avg]");
+    gtk_window_set_default_size(GTK_WINDOW(dlg), tx->levels_width, tx->levels_height);
+    gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_NONE);
+    GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+    gtk_container_add(GTK_CONTAINER(content), tx->levels_area);
+    tx->levels_dialog = dlg;                           // einheitliches Handle
+    g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(close_cb), NULL);
+    gtk_widget_show_all(tx->levels_dialog);
+    gtk_window_move(GTK_WINDOW(tx->levels_dialog), tx->levels_x_pos, tx->levels_y_pos);
+    gtk_window_present(GTK_WINDOW(top_window));        // Fokus im Main-Window
+  }
 }
 
 static void tx_create_visual(TRANSMITTER *tx) {
@@ -1262,6 +1326,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->levels_width   = 260;
   tx->levels_height  = 220;
   tx->show_levels    = 1;   // per Property/Code später aktivieren
+  tx->use_levels_popup = 0;
+  tx->inner_levels_popup = 1;
   tx->show_af_peak   = 0;
   tx->levels_x_pos   = 0;
   tx->levels_y_pos   = 0;

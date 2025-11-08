@@ -107,7 +107,7 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 # release) and against unused parameters (those regularly occur in GTK callbacks).
 #
 ifeq ($(GDB), ON)
-	CFLAGS?= -g -O0
+	CFLAGS?= -g -O0 -DG_ENABLE_DEBUG
 else
 	CFLAGS?= -O3
 endif

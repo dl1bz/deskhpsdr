@@ -50,6 +50,12 @@ static gulong bgcolor_text_input_signal_id;
 static GtkWidget *display_extras_btn;
 static GtkWidget *b_display_af_peak = NULL;
 static gulong b_af_peak_signal_id;
+static GtkWidget *b_use_levels_popup = NULL;
+static gulong b_use_levels_popup_signal_id;
+#ifdef __linux__
+  static GtkWidget *b_inner_levels_popup = NULL;
+  static gulong b_inner_levels_popup_signal_id;
+#endif
 
 //
 // local copies of global variables
@@ -182,8 +188,16 @@ static void display_levels_cb(GtkWidget *widget, gpointer data) {
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_af_peak), transmitter->show_af_peak);
       g_signal_handler_unblock(b_display_af_peak, b_af_peak_signal_id);
       gtk_widget_set_sensitive(b_display_af_peak, FALSE);
+      gtk_widget_set_sensitive(b_use_levels_popup, FALSE);
+#ifdef __linux__
+      gtk_widget_set_sensitive(b_inner_levels_popup, FALSE);
+#endif
     } else {
       gtk_widget_set_sensitive(b_display_af_peak, TRUE);
+      gtk_widget_set_sensitive(b_use_levels_popup, TRUE);
+#ifdef __linux__
+      gtk_widget_set_sensitive(b_inner_levels_popup, TRUE);
+#endif
     }
   }
 }
@@ -193,6 +207,30 @@ static void display_levels_af_peak_cb(GtkWidget *widget, gpointer data) {
     transmitter->show_af_peak = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   }
 }
+
+static void b_use_levels_popup_cb(GtkWidget *widget, gpointer data) {
+  if (can_transmit) {
+    if (use_wayland) {
+      transmitter->use_levels_popup = 1;
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), transmitter->use_levels_popup);
+    } else {
+      transmitter->use_levels_popup = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    }
+  }
+}
+
+#ifdef __linux__
+static void b_inner_levels_popup_cb(GtkWidget *widget, gpointer data) {
+  if (can_transmit) {
+    if (full_screen) {
+      transmitter->inner_levels_popup = 1;
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), transmitter->inner_levels_popup);
+    } else {
+      transmitter->inner_levels_popup = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    }
+  }
+}
+#endif
 
 // Funktion zur Überprüfung, ob der String ein gültiges Hex-Format hat
 gboolean is_valid_hex(const char *str) {
@@ -475,7 +513,22 @@ void screen_menu(GtkWidget *parent) {
   //------------------------------------------------------------------------------------------
   if (can_transmit) {
     row++;
-    GtkWidget *b_display_levels = gtk_check_button_new_with_label("Display TX Audio Level window");
+    GtkWidget *label_levels = gtk_label_new(NULL);
+    gtk_label_set_use_markup(GTK_LABEL(label_levels), TRUE);
+
+    if (use_wayland) {
+      gtk_label_set_markup(GTK_LABEL(label_levels), "<u>TX Audio Levels Display Settings</u> [Wayland compatibility mode]");
+    } else {
+      gtk_label_set_markup(GTK_LABEL(label_levels), "<u>TX Audio Levels Display Settings</u>");
+    }
+
+    gtk_widget_set_name (label_levels, "boldlabel_blue");
+    gtk_widget_set_halign(label_levels, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(label_levels, 5);
+    gtk_grid_attach(GTK_GRID(grid), label_levels, 0, row, 2, 1);
+    gtk_widget_show(label_levels);
+    row++;
+    GtkWidget *b_display_levels = gtk_check_button_new_with_label("Display TX AF Levels");
     gtk_widget_set_name (b_display_levels, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_display_levels,
                                 "ONLY DURING TX = ACTIVE\n(except selected mode CW-L/CW-U/DIGI-U/DIGI-L):\n"
@@ -489,15 +542,15 @@ void screen_menu(GtkWidget *parent) {
                                 "It's essential to correctly adjust EVERY part of the TX audio chain !");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_levels), transmitter->show_levels);
     gtk_widget_show(b_display_levels);
-    gtk_grid_attach(GTK_GRID(grid), b_display_levels, 0, row, 2, 1);
+    gtk_grid_attach(GTK_GRID(grid), b_display_levels, 0, row, 1, 1);
     g_signal_connect(b_display_levels, "toggled", G_CALLBACK(display_levels_cb), NULL);
     //----------------------------------------------------------------------------------------
-    b_display_af_peak = gtk_check_button_new_with_label("TX Audio Level as Peak");
+    b_display_af_peak = gtk_check_button_new_with_label("Show as Peak");
     gtk_widget_set_name (b_display_af_peak, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_display_af_peak, "Show TX Audio AF levels as Peak (default is Average)");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_af_peak), transmitter->show_af_peak);
     gtk_widget_show(b_display_af_peak);
-    gtk_grid_attach(GTK_GRID(grid), b_display_af_peak, 2, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), b_display_af_peak, 1, row, 1, 1);
     b_af_peak_signal_id = g_signal_connect(b_display_af_peak, "toggled", G_CALLBACK(display_levels_af_peak_cb), NULL);
 
     if (!transmitter->show_levels) {
@@ -506,6 +559,58 @@ void screen_menu(GtkWidget *parent) {
       gtk_widget_set_sensitive(b_display_af_peak, TRUE);
     }
 
+    //----------------------------------------------------------------------------------------
+    b_use_levels_popup = gtk_check_button_new_with_label("Use Popup");
+    gtk_widget_set_name (b_use_levels_popup, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(b_use_levels_popup, "If ENABLED,\n"
+                                                    "show the TX Audio AF levels as Popup instead\n"
+                                                    "of a separate, detached window.\n\n"
+                                                    "REQUIRED if X11 backend running with Wayland !\n\n"
+                                                    "Note: If Wayland is used, this option\n"
+                                                    "cannot be modified and appears unresponsive.");
+
+    if (use_wayland) {
+      transmitter->use_levels_popup = 1;
+    }
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_use_levels_popup), transmitter->use_levels_popup);
+    gtk_widget_show(b_use_levels_popup);
+    gtk_grid_attach(GTK_GRID(grid), b_use_levels_popup, 2, row, 1, 1);
+    b_use_levels_popup_signal_id = g_signal_connect(b_use_levels_popup, "toggled", G_CALLBACK(b_use_levels_popup_cb), NULL);
+
+    if (!transmitter->show_levels || use_wayland) {
+      gtk_widget_set_sensitive(b_use_levels_popup, FALSE);
+    } else {
+      gtk_widget_set_sensitive(b_use_levels_popup, TRUE);
+    }
+
+#ifdef __linux__
+    //----------------------------------------------------------------------------------------
+    b_inner_levels_popup = gtk_check_button_new_with_label("Show Popup inside");
+    gtk_widget_set_name (b_inner_levels_popup, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(b_inner_levels_popup, "Show TX Audio Levels Popup:\n"
+                                                      "ENABLED: inside deskHPSDR main window [right in the middle]\n"
+                                                      "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
+                                                      "If Fullscreen selected, TX Audio Levels Popup is ever\n"
+                                                      "inside deskHPSDR main window [right in the middle]");
+
+    if (full_screen) {
+      transmitter->inner_levels_popup = 1;
+    }
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_inner_levels_popup), transmitter->inner_levels_popup);
+    gtk_widget_show(b_inner_levels_popup);
+    gtk_grid_attach(GTK_GRID(grid), b_inner_levels_popup, 3, row, 1, 1);
+    b_inner_levels_popup_signal_id = g_signal_connect(b_inner_levels_popup, "toggled", G_CALLBACK(b_inner_levels_popup_cb),
+                                     NULL);
+
+    if (!transmitter->show_levels) {
+      gtk_widget_set_sensitive(b_inner_levels_popup, FALSE);
+    } else {
+      gtk_widget_set_sensitive(b_inner_levels_popup, TRUE);
+    }
+
+#endif
     //----------------------------------------------------------------------------------------
   }
 
