@@ -84,6 +84,8 @@ int screen_width;
 int full_screen;
 int this_monitor;
 
+int use_wayland;
+
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;
 
@@ -130,6 +132,7 @@ static void enforce_x11_backend_policy(void) {
 #if defined(__APPLE__)
   // g_setenv("GDK_BACKEND", "quartz", TRUE);
   // gdk_set_allowed_backends("quartz");
+  use_wayland = 0;
   return;
 #else
   const char *xdg = g_getenv("XDG_SESSION_TYPE");
@@ -137,6 +140,9 @@ static void enforce_x11_backend_policy(void) {
 
   if ((xdg && g_ascii_strcasecmp(xdg, "wayland") == 0) || (w && *w)) {
     g_setenv("DESKHPSDR_WAYLAND_NOTICE", "1", TRUE);
+    use_wayland = 1;
+  } else {
+    use_wayland = 0;
   }
 
   // g_setenv("GDK_BACKEND", "x11", TRUE);
@@ -938,7 +944,7 @@ int main(int argc, char **argv) {
   t_print("%s: init global cURL...\n", __FUNCTION__);
   curl_global_init(CURL_GLOBAL_ALL);
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
-  t_print("%s: gtk_application_new: %s\n", __FUNCTION__, name);
+  t_print("%s: gtk_application_new: %s -> X11 backend use Wayland ? : %d\n", __FUNCTION__, name, use_wayland);
   gtk_disable_setlocale();  // keep having a decimal point as a decimal point
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
