@@ -689,9 +689,19 @@ static int init(void *data) {
   t_print("LC_ALL=%s\n", setlocale(LC_ALL, NULL));
   t_print("LC_NUMERIC=%s\n", setlocale(LC_NUMERIC, NULL));
   audio_get_cards();
-  cursor_arrow = gdk_cursor_new(GDK_ARROW);
-  cursor_watch = gdk_cursor_new(GDK_WATCH);
-  gdk_window_set_cursor(gtk_widget_get_window(top_window), cursor_watch);
+  {
+    GdkDisplay *dpy = gdk_display_get_default();
+    /* Wayland: named cursors sind stabiler */
+    cursor_arrow = gdk_cursor_new_from_name(dpy, "default");
+
+    if (!cursor_arrow) { cursor_arrow = gdk_cursor_new(GDK_ARROW); }
+
+    cursor_watch = gdk_cursor_new_from_name(dpy, "wait");
+
+    if (!cursor_watch) { cursor_watch = gdk_cursor_new(GDK_WATCH); }
+
+    gdk_window_set_cursor(gtk_widget_get_window(top_window), cursor_watch);
+  }
   //
   // Let WDSP (via FFTW) check for wisdom file in current dir
   // If there is one, the "wisdom thread" takes no time
@@ -724,6 +734,9 @@ static int init(void *data) {
   g_timeout_add(100, delayed_discovery, NULL);
   return 0;
 }
+
+/* optional: Cursor-Objekte später freigeben, z.B. am Programmende */
+/* g_object_unref(cursor_arrow); g_object_unref(cursor_watch); */
 
 static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   /*
@@ -827,9 +840,17 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   // Get the position of the top window, and then determine
   // to which monitor this position belongs.
   //
-  int x, y;
-  gtk_window_get_position(GTK_WINDOW(top_window), &x, &y);
-  this_monitor = gdk_screen_get_monitor_at_point(screen, x, y);
+  int x = 0, y = 0;
+
+  if (!use_wayland) {
+    gtk_window_get_position(GTK_WINDOW(top_window), &x, &y);
+    this_monitor = gdk_screen_get_monitor_at_point(screen, x, y);
+  } else {
+    /* Wayland: Positionsabfragen sind unzuverlässig → Primary Monitor nehmen */
+    int pm = gdk_screen_get_primary_monitor(screen);
+    this_monitor = (pm >= 0) ? pm : 0;
+  }
+
   t_print("Monitor Number within Screen=%d\n", this_monitor);
   //
   // Determine the size of "our" monitor
@@ -856,7 +877,13 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 
   if (full_screen) {
     t_print("full screen\n");
-    gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+
+    if (use_wayland) {
+      /* Wayland: Monitor-Auswahl liegt beim Compositor */
+      gtk_window_fullscreen(GTK_WINDOW(top_window));
+    } else {
+      gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+    }
   }
 
   // load the TRX logo now only from the included trx_logo.h
