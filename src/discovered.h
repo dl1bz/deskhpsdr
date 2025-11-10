@@ -24,6 +24,7 @@
 
 #include <netinet/in.h>
 #ifdef SOAPYSDR
+  #include <glib.h>
   #include <SoapySDR/Device.h>
 #endif
 
