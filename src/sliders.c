@@ -1456,6 +1456,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   t_print("%s: my_width = %d box_left_width = %d box_middle_width = %d box_right_width = %d (summe = %d)\n",
           __FUNCTION__, my_width, box_left_width, box_middle_width, box_right_width,
           box_left_width + box_middle_width + box_right_width);
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   /* Basic layout GRID "sliders"
   *
@@ -1469,7 +1470,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   * +------------------------------+------------------------------+------------------------------+ -+-
   *
   */
+  if (sliders) {
+    destroy_widget_safe(&sliders);
+  }
+
   sliders = gtk_grid_new();
+  WEAKEN(sliders);
   gtk_widget_set_size_request (sliders, width, height);
   gtk_grid_set_row_homogeneous(GTK_GRID(sliders), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(sliders), FALSE);
@@ -1486,6 +1492,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_set_spacing(GTK_BOX(box_Z1_left), 5);
   //-----------------------------------------------------------------------------------------------------------
   af_gain_btn = gtk_toggle_button_new_with_label("Volume");
+  WEAKEN(af_gain_btn);
   // gtk_widget_set_name(af_gain_btn, "medium_toggle_button");
   gtk_widget_set_name(af_gain_btn, "front_toggle_button");
 
@@ -1514,6 +1521,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_btn, FALSE, FALSE, 0);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.0);
+  WEAKEN(af_gain_scale);
   gtk_widget_set_tooltip_text(af_gain_scale, "Set AF Volume");
   gtk_widget_set_margin_end(af_gain_scale, 0);  // rechter Rand (Ende)
   gtk_widget_set_hexpand(af_gain_scale, FALSE);  // fülle Box nicht nach rechts
@@ -1537,6 +1545,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_set_spacing(GTK_BOX(box_Z1_middle), 5);
   //-----------------------------------------------------------------------------------------------------------
   agc_btn = gtk_button_new_with_label(agc_labels[active_receiver->agc]);
+  WEAKEN(agc_btn);
   gtk_widget_set_name(agc_btn, "medium_toggle_button");
   agc_context = gtk_widget_get_style_context(agc_btn);
 
@@ -1569,6 +1578,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (optimize_for_touchscreen) {
     agc_gain_scale = gtk_spin_button_new_with_range(-20.0, 120.0, 1.0);
+    WEAKEN(agc_gain_scale);
     gtk_widget_set_name(agc_gain_scale, "front_spin_button");
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(agc_gain_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(agc_gain_scale), TRUE);
@@ -1582,6 +1592,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_middle), agc_gain_scale, FALSE, FALSE, 0);
   } else {
     agc_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -20.0, 120.0, 1.0);
+    WEAKEN(agc_gain_scale);
     gtk_range_set_increments (GTK_RANGE(agc_gain_scale), 1.0, 1.0);
     gtk_range_set_value (GTK_RANGE(agc_gain_scale), (double)active_receiver->agc_gain);
 
@@ -1617,6 +1628,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && can_transmit) {
       autogain_btn = gtk_toggle_button_new_with_label("RxPGA");
+      WEAKEN(autogain_btn);
       gtk_widget_set_tooltip_text(autogain_btn, "AutoGain ON/OFF");
       gtk_widget_set_name(autogain_btn, "medium_toggle_button");
       // Label breiter erzwingen
@@ -1652,6 +1664,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #else
       rf_gain_label = gtk_label_new("RF Gain");
 #endif
+      WEAKEN(rf_gain_label);
       gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
       // Label breiter erzwingen
       gtk_widget_set_size_request(rf_gain_label, 90, -1);  // z.B. 100px
@@ -1677,6 +1690,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       rf_gain_label = gtk_label_new("RF Gain");
     }
 
+    WEAKEN(rf_gain_label);
     gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(rf_gain_label, 90, -1);  // z.B. 100px
@@ -1713,6 +1727,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #endif
     t_print("%s: adc[0].min_gain = %f adc[0].max_gain = %f\n", __FUNCTION__, adc[0].min_gain, adc[0].max_gain);
     rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, adc[0].min_gain, adc[0].max_gain, 1.0);
+    WEAKEN(rf_gain_scale);
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
     gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
     double steps = 1.0;
@@ -1742,6 +1757,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_right), rf_gain_scale, TRUE, TRUE, 0);
     //-------------------------------------------------------------------------------------------
     nr_btn = gtk_button_new_with_label(nr_labels[active_receiver->nr]);
+    WEAKEN(nr_btn);
     nr_context = gtk_widget_get_style_context(nr_btn);
 
     if (active_receiver->nr > 0) {
@@ -1777,6 +1793,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     if (can_transmit && display_sliders) {
       ps_btn = gtk_toggle_button_new_with_label("PS");
+      WEAKEN(ps_btn);
       // gtk_widget_set_name(snb_btn, "front_toggle_button");
       gtk_widget_set_name(ps_btn, "medium_toggle_button");
       gtk_widget_set_tooltip_text(ps_btn, "Pure Signal ON / OFF\n"
@@ -1822,6 +1839,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_set_spacing(GTK_BOX(box_Z1_right), 5);
     //-----------------------------------------------------------------------------------------------------------
     attenuation_label = gtk_label_new("ATT");
+    WEAKEN(attenuation_label);
     gtk_widget_set_name(attenuation_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(attenuation_label, 90, -1);  // z.B. 100px
@@ -1835,6 +1853,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_label, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
+    WEAKEN(attenuation_scale);
     gtk_range_set_value (GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
     gtk_range_set_increments (GTK_RANGE(attenuation_scale), 1.0, 1.0);
 
@@ -2002,6 +2021,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       drive_label = gtk_label_new("TXPwr(%)");
     }
 
+    WEAKEN(drive_label);
     gtk_widget_set_name(drive_label, "boldlabel_border_blue");
     // Label breiter erzwingen
     gtk_widget_set_size_request(drive_label, 90, -1);
@@ -2017,6 +2037,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       if (optimize_for_touchscreen) {
         drive_scale = gtk_spin_button_new_with_range(0.0, 5.0, 0.1);
+        WEAKEN(drive_scale);
         gtk_widget_set_name(drive_scale, "front_spin_button");
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
@@ -2028,6 +2049,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
       } else {
         drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
+        WEAKEN(drive_scale);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, TRUE, TRUE, 0);
@@ -2038,6 +2060,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     } else {
       if (optimize_for_touchscreen) {
         drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
+        WEAKEN(drive_scale);
         gtk_widget_set_name(drive_scale, "front_spin_button");
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
@@ -2049,6 +2072,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
       } else {
         drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
+        WEAKEN(drive_scale);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, TRUE, TRUE, 0);
@@ -2107,6 +2131,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       if (radio->info.soapy.rx_has_automatic_gain) {
         //---------------------------------------------------------------------------------------------------------
         hwagc_btn = gtk_toggle_button_new_with_label("HW-AGC");
+        WEAKEN(hwagc_btn);
         gtk_widget_set_name(hwagc_btn, "medium_toggle_button");
         char hwagc_tip[1024];
         snprintf(hwagc_tip, sizeof(hwagc_tip), "%s %s Hardware-AGC ON/OFF\n\n"
@@ -2140,6 +2165,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), hwagc_btn, FALSE, FALSE, 0);
         //---------------------------------------------------------------------------------------------------------
         hwagc_scale = gtk_spin_button_new_with_range(-60, 0, 1);
+        WEAKEN(hwagc_scale);
         gtk_widget_set_name(hwagc_scale, "front_spin_button");
         gtk_widget_set_tooltip_text(hwagc_scale, "AGC_Setpoint defines the target level (dbFS)\n"
                                                  "to which the SDRplay hardware AGC regulates.\n\n"
@@ -2170,6 +2196,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
           if (ifgr_range.step == 0.0) { ifgr_range.step = 1.0; }
 
           ifgr_scale = gtk_spin_button_new_with_range((int)ifgr_range.minimum, (int)ifgr_range.maximum, (int)ifgr_range.step);
+          WEAKEN(ifgr_scale);
           char ifgr_tip[1024];
           snprintf(ifgr_tip, sizeof(ifgr_tip), "[IFGR] IF Gain Reduction\n"
                                                "Controls the gain after the LNA (RF stage) in the IF section.\n"
@@ -2226,6 +2253,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_set_spacing(GTK_BOX(box_Z2_right), 5);
   //-----------------------------------------------------------------------------------------------------------
   squelch_enable = gtk_toggle_button_new_with_label("SQL");
+  WEAKEN(squelch_enable);
   gtk_widget_set_name(squelch_enable, "medium_toggle_button");
   gtk_widget_set_tooltip_text(squelch_enable, "Squelch ON / OFF");
   gtk_widget_set_size_request(squelch_enable, 90, -1);  // z.B. 100px
@@ -2244,6 +2272,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_enable, FALSE, FALSE, 0);
   //-------------------------------------------------------------------------------------------
   squelch_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
+  WEAKEN(squelch_scale);
   gtk_widget_set_margin_end(squelch_scale, 0);  // rechter Rand (Ende)
   gtk_widget_set_size_request(squelch_scale, box_right_width * 2 / 6, -1);  // z.B. 100px
   gtk_widget_set_hexpand(squelch_scale, FALSE);  // fülle Box nicht nach rechts
@@ -2261,6 +2290,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_scale, TRUE, TRUE, 0);
   //-------------------------------------------------------------------------------------------
   binaural_btn = gtk_toggle_button_new_with_label("BIN");
+  WEAKEN(binaural_btn);
   gtk_widget_set_name(binaural_btn, "medium_toggle_button");
   // gtk_widget_set_name(binaural_btn, "front_toggle_button");
   gtk_widget_set_tooltip_text(binaural_btn, "Outputs I and Q on the Left\n"
@@ -2282,6 +2312,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(box_Z2_right), binaural_btn, FALSE, FALSE, 0);
   //-------------------------------------------------------------------------------------------
   snb_btn = gtk_toggle_button_new_with_label("SNB");
+  WEAKEN(snb_btn);
   // gtk_widget_set_name(snb_btn, "front_toggle_button");
   gtk_widget_set_name(snb_btn, "medium_toggle_button");
   gtk_widget_set_tooltip_text(snb_btn, "Spectral Noise Blanker");
@@ -2314,6 +2345,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-----------------------------------------------------------------------------------------------------------
     // tune_drive_button
     tune_drive_btn = gtk_toggle_button_new_with_label("TUNE");
+    WEAKEN(tune_drive_btn);
     gtk_widget_set_name(tune_drive_btn, "front_toggle_button");
     // gtk_widget_set_name(tune_drive_btn, "medium_toggle_button");
 
@@ -2341,6 +2373,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-------------------------------------------------------------------------------------------
     // tune_drive_scale
     tune_drive_scale = gtk_spin_button_new_with_range(1, 100, 1);
+    WEAKEN(tune_drive_scale);
     gtk_widget_set_name(tune_drive_scale, "front_spin_button");
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
@@ -2357,6 +2390,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_scale, FALSE, FALSE, 0);
     //-----------------------------------------------------------------------------------------------------------
     split_btn = gtk_toggle_button_new_with_label("VFO\nSplit");
+    WEAKEN(split_btn);
     gtk_widget_set_name(split_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(split_btn, "Enable split mode:\n\n"
                                            "In split mode with a single receiver:\n"
@@ -2382,6 +2416,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z3_left), split_btn, FALSE, FALSE, 0);
     //-----------------------------------------------------------------------------------------------------------
     swap_btn = gtk_button_new_with_label("VFO\nA←→B");
+    WEAKEN(swap_btn);
     gtk_widget_set_name(swap_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(swap_btn, "Swap VFO A←→B");
     // begin label definition inside button
@@ -2402,6 +2437,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z3_left), swap_btn, FALSE, FALSE, 0);
     //-----------------------------------------------------------------------------------------------------------
     equal_btn = gtk_button_new_with_label("VFO\nA=B");
+    WEAKEN(equal_btn);
     gtk_widget_set_name(equal_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(equal_btn, "Set VFO A = VFO B");
     // begin label definition inside button
@@ -2435,6 +2471,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_box_set_spacing(GTK_BOX(box_Z3_middle), 5);
       //-----------------------------------------------------------------------------------------------------------
       local_mic_button = gtk_toggle_button_new_with_label("Local\nMic");
+      WEAKEN(local_mic_button);
       gtk_widget_set_name(local_mic_button, "front_toggle_button");
       gtk_widget_set_tooltip_text(local_mic_button,
                                   "Set use of local connected audio input device\n(e.g. local Mic) ON / OFF");
@@ -2453,6 +2490,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
       //-------------------------------------------------------------------------------------------
       local_mic_input = gtk_combo_box_text_new();
+      WEAKEN(local_mic_input);
       gtk_widget_set_name(local_mic_input, "boldlabel");
       gtk_widget_set_tooltip_text(local_mic_input, "Select local audio input device");
       gtk_widget_set_margin_top(local_mic_input, 5);
@@ -2503,6 +2541,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_set_spacing(GTK_BOX(box_Z3_right), 5);
     //-----------------------------------------------------------------------------------------------------------
     bbcompr_btn = gtk_toggle_button_new_with_label("Speech\nProc");
+    WEAKEN(bbcompr_btn);
     gtk_widget_set_name(bbcompr_btn, "front_toggle_button");
     gtk_widget_set_tooltip_text(bbcompr_btn, "Speech Processor ON/OFF");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bbcompr_btn), transmitter->compressor);
@@ -2518,6 +2557,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     bbcompr_btn_signal_id = g_signal_connect(bbcompr_btn, "toggled", G_CALLBACK(bbcompr_btn_toggle_cb), NULL);
     //-------------------------------------------------------------------------------------------
     bbcompr_scale = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    WEAKEN(bbcompr_scale);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
     gtk_widget_set_name(bbcompr_scale, "front_spin_button");
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(bbcompr_scale), TRUE);
@@ -2535,6 +2575,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z3_right), bbcompr_scale, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------
     lev_btn = gtk_toggle_button_new_with_label("Mic\nLeveler");
+    WEAKEN(lev_btn);
     gtk_widget_set_name(lev_btn, "front_toggle_button");
     gtk_widget_set_tooltip_text(lev_btn, "Mic Leveler ON/OFF");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lev_btn), transmitter->lev_enable);
@@ -2551,6 +2592,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     lev_btn_signal_id = g_signal_connect(lev_btn, "toggled", G_CALLBACK(lev_btn_toggle_cb), NULL);
     //-------------------------------------------------------------------------------------------
     lev_scale = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    WEAKEN(lev_scale);
     gtk_widget_set_name(lev_scale, "front_spin_button");
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(lev_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(lev_scale), TRUE);

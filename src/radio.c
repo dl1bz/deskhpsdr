@@ -500,17 +500,27 @@ static int set_full_screen(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-// Destroy-only removal helper to avoid fragile unparent paths.
-// gtk_widget_destroy() safely unparents and disposes the subtree.
-static void destroy_widget_safe(GtkWidget **pchild) {
-  if (!pchild) { return; }
+static gboolean destroy_cb(gpointer data) {
+  if (GTK_IS_WIDGET(data)) { gtk_widget_destroy(GTK_WIDGET(data)); }
 
-  GtkWidget *w = *pchild;
+  return G_SOURCE_REMOVE;
+}
 
-  if (!GTK_IS_WIDGET(w)) { *pchild = NULL; return; }
+void destroy_widget_safe(GtkWidget **pwidget) {
+  if (!pwidget) { return; }
 
-  gtk_widget_destroy(w);
-  *pchild = NULL;
+  GtkWidget *w = *pwidget;
+  *pwidget = NULL;                    // Pointer sofort invalidieren
+
+  if (!w || !GTK_IS_WIDGET(w)) { return; }
+
+  // nur im GTK-Main-Thread direkt zerstören
+  if (g_main_context_is_owner(g_main_context_default())) {
+    gtk_widget_destroy(w);
+  } else {
+    // aus Worker-Thread: in Main-Loop schedulen
+    g_idle_add_full(G_PRIORITY_HIGH_IDLE, destroy_cb, w, NULL);
+  }
 }
 
 void radio_reconfigure_screen() {

@@ -35,6 +35,7 @@
 #include "actions.h"
 #include "ext.h"
 #include "message.h"
+#include "toolset.h"
 
 static int width;
 static int height;
@@ -181,6 +182,9 @@ void remote_set_pan(int rx, double value) {
 }
 
 GtkWidget *zoompan_init(int my_width, int my_height) {
+  if (zoompan) {
+    destroy_widget_safe(&zoompan);
+  }
   // width = my_width - 50;
   width = my_width;
   height = my_height;
@@ -194,6 +198,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   t_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __FUNCTION__, zoombox_width, panbox_width,
           zoombox_width + panbox_width);
   zoompan = gtk_grid_new();
+  WEAKEN(zoompan);
   gtk_widget_set_size_request (zoompan, width, height);
   gtk_grid_set_row_homogeneous(GTK_GRID(zoompan), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(zoompan), FALSE);
@@ -207,6 +212,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_size_request(zoom_box, zoombox_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
   zoom_label = gtk_label_new("Zoom");
+  WEAKEN(zoom_label);
   gtk_widget_set_name(zoom_label, "boldlabel_border_blue");
   // Label breiter erzwingen
   gtk_widget_set_size_request(zoom_label, 105, -1);  // z.B. 100px
@@ -217,6 +223,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_valign(zoom_label, GTK_ALIGN_CENTER);
   //-----------------------------------------------------------------------------------------------------------
   zoom_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, MAX_ZOOM, 1.00);
+  WEAKEN(zoom_scale);
   gtk_widget_set_tooltip_text(zoom_scale, "Zoom into the Panadapter");
   gtk_widget_set_margin_end(zoom_scale, 0);  // rechter Rand (Ende)
   gtk_range_set_increments (GTK_RANGE(zoom_scale), 1.0, 1.0);
@@ -240,6 +247,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_size_request(pan_box, panbox_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
   pan_label = gtk_label_new("Pan");
+  WEAKEN(pan_label);
   gtk_widget_set_name(pan_label, "boldlabel_border_blue");
   // Label breiter erzwingen
   gtk_widget_set_size_request(pan_label, 90, -1);
@@ -251,6 +259,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   //-----------------------------------------------------------------------------------------------------------
   pan_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0,
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
+  WEAKEN(pan_scale);
   gtk_widget_set_tooltip_text(pan_scale, "Move the spectrum left or right\nif Zoom > 1");
   gtk_widget_set_margin_end(pan_scale, 10); // rechter Rand (Ende)
   gtk_widget_set_hexpand(pan_scale, TRUE);

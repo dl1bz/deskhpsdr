@@ -23,6 +23,9 @@
 #pragma once
 #include "radio.h"      // bringt TRANSMITTER-Typ
 
+#define WEAKEN(w)  g_object_add_weak_pointer(G_OBJECT((w)), (gpointer*)&(w))
+#define UNWEAKEN(w)  if (w) g_object_remove_weak_pointer(G_OBJECT((w)), (gpointer*)&(w))
+
 extern int sunspots;
 extern int a_index;
 extern int k_index;

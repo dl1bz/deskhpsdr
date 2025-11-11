@@ -46,6 +46,7 @@
 #include "new_menu.h"
 #include "ext.h"
 #include "message.h"
+#include "main.h"
 
 int function = 0;
 
@@ -116,7 +117,12 @@ static void toolbar_button_released_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEvent
 
 GtkWidget *toolbar_init(int my_width, int my_height) {
   width = my_width;
-  height = my_height - 10;
+
+  if (!full_screen) {
+    height = my_height - 10;
+  } else {
+    height = my_height;
+  }
 
   if (height < 1) { height = 1; }
 
@@ -145,6 +151,7 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   }
 
   toolbar = gtk_grid_new();
+  g_object_add_weak_pointer(G_OBJECT(toolbar), (gpointer*)&toolbar);
   gtk_widget_set_size_request (toolbar, width, height);
 #ifdef __linux__
   gtk_widget_set_margin_top(toolbar, 10);
@@ -156,6 +163,7 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   for (int i = 0; i < TOOLBAR_BTN_COUNT; i++) {
     //----------------------------------------------------------------------------------------------------------------------
     sim_s[i] = gtk_button_new_with_label(ActionTable[toolbar_switches[i].switch_function].button_str);
+    g_object_add_weak_pointer(G_OBJECT(sim_s[i]), (gpointer*)&sim_s[i]);
     gtk_widget_set_name(sim_s[i], button_css);
     gtk_widget_set_size_request (sim_s[i], button_width, height);
     g_signal_connect(G_OBJECT(sim_s[i]), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(i));
@@ -173,8 +181,10 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
     char lbl[LABEL_LEN];
     snprintf(lbl, sizeof(lbl), "FNC(%d)", function);
     sim_sfunc = gtk_button_new_with_label(lbl);
+    g_object_add_weak_pointer(G_OBJECT(sim_sfunc), (gpointer*)&sim_sfunc);
   } else {
     sim_sfunc = gtk_button_new_with_label(ActionTable[toolbar_switches[FUNC_INDEX].switch_function].button_str);
+    g_object_add_weak_pointer(G_OBJECT(sim_sfunc), (gpointer*)&sim_sfunc);
   }
 
   gtk_widget_set_name(sim_sfunc, button_css);
