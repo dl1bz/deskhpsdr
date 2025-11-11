@@ -576,7 +576,7 @@ void radio_reconfigure_screen() {
     full_screen_timeout = g_timeout_add(1000, set_full_screen, GINT_TO_POINTER(0));
   }
 
-  if (last_fullscreen != full_screen && my_fullscreen) {
+  if (last_fullscreen != my_fullscreen && my_fullscreen) {
     if (!use_wayland) {
       //
       // A window-to-fullscreen transition
@@ -587,7 +587,11 @@ void radio_reconfigure_screen() {
     }
   }
 
-  gtk_window_resize(GTK_WINDOW(top_window), my_width, my_height);
+  /* Unter Wayland im Fullscreen kein explizites Resize erzwingen */
+  if (!(use_wayland && my_fullscreen)) {
+    gtk_window_resize(GTK_WINDOW(top_window), my_width, my_height);
+  }
+
   //
   // Move Hide and Menu buttons, meter to new position
   //
@@ -616,11 +620,16 @@ void radio_reconfigure_screen() {
   radio_reconfigure();
 
   if (last_fullscreen != my_fullscreen && my_fullscreen) {
-    //
-    // For some reason, going to full-screen immediately does not
-    // work on MacOS, so do this after 1 second
-    //
-    full_screen_timeout = g_timeout_add(1000, set_full_screen, GINT_TO_POINTER(1));
+    if (use_wayland) {
+      /* Wayland: sofort Fullscreen, kein Timeout */
+      set_full_screen(GINT_TO_POINTER(1));
+    } else {
+      //
+      // For some reason, going to full-screen immediately does not
+      // work on MacOS, so do this after 1 second
+      //
+      full_screen_timeout = g_timeout_add(1000, set_full_screen, GINT_TO_POINTER(1));
+    }
   }
 
   g_idle_add(ext_vfo_update, NULL);
@@ -1906,7 +1915,14 @@ void radio_start_radio() {
 
 #endif
   g_idle_add(ext_vfo_update, NULL);
-  gdk_window_set_cursor(gtk_widget_get_window(top_window), gdk_cursor_new(GDK_ARROW));
+  {
+    GdkWindow  *w = gtk_widget_get_window(top_window);
+    GdkDisplay *d = gdk_window_get_display(w);
+    GdkCursor  *c = use_wayland ? gdk_cursor_new_from_name(d, "default")
+                    : gdk_cursor_new(GDK_ARROW);
+    gdk_window_set_cursor(w, c);
+    g_object_unref(c);
+  }
 #ifdef MIDI
 
   for (int i = 0; i < n_midi_devices; i++) {
@@ -2840,7 +2856,7 @@ static void radio_restore_state() {
   // (GDK_GRAVITY_NORTH_WEST) where the "position" refers to the top left corner
   // of the window.
   //
-  if ((window_x_pos < screen_width - 100) && (window_y_pos < screen_height - 100)) {
+  if (!use_wayland && (window_x_pos < screen_width - 100) && (window_y_pos < screen_height - 100)) {
     gtk_window_move(GTK_WINDOW(top_window), window_x_pos, window_y_pos);
   }
 

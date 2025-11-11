@@ -276,6 +276,13 @@ static gboolean radio_port_cb (GtkWidget *widget, GdkEventButton *event, gpointe
   return FALSE;
 }
 
+/* -- Wrapper für Wayland-sichere Button-Signale ("clicked") -- */
+static void start_clicked(GtkButton *btn, gpointer data)    { (void)btn; start_cb(NULL, NULL, data); }
+static void reboot_clicked(GtkButton *btn, gpointer data)   { (void)btn; reboot_cb(NULL, NULL, data); }
+static void discover_clicked(GtkButton *btn, gpointer data) { (void)btn; discover_cb(NULL, NULL, data); }
+static void protocols_clicked(GtkButton *btn, gpointer data) { (void)btn; protocols_cb(NULL, NULL, data); }
+static void exit_clicked(GtkButton *btn, gpointer data)     { (void)btn; exit_cb(NULL, NULL, data); }
+
 void discovery() {
   //
   // On the discovery screen, make the combo-boxes "touchscreen-friendly"
@@ -399,7 +406,20 @@ void discovery() {
   // subsequent discoveries check all protocols enabled.
   discover_only_stemlab = 0;
   t_print("discovery: found %d devices\n", devices);
-  gdk_window_set_cursor(gtk_widget_get_window(top_window), gdk_cursor_new(GDK_ARROW));
+  /* Wayland-sicheres Cursor-Setzen mit Cleanup */
+  {
+    GdkWindow  *w = gtk_widget_get_window(top_window);
+
+    if (w) {
+      GdkDisplay *d = gdk_window_get_display(w);
+      GdkCursor  *c = gdk_cursor_new_from_name(d, "default");
+
+      if (!c) { c = gdk_cursor_new(GDK_ARROW); }
+
+      gdk_window_set_cursor(w, c);
+      g_object_unref(c);
+    }
+  }
   discovery_dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(discovery_dialog), GTK_WINDOW(top_window));
   GtkWidget *headerbar = gtk_header_bar_new();
@@ -490,7 +510,7 @@ void discovery() {
       gtk_widget_set_valign(start_button, GTK_ALIGN_CENTER);
       gtk_widget_show(start_button);
       gtk_grid_attach(GTK_GRID(grid), start_button, 3, row, 1, 1);
-      g_signal_connect(start_button, "button-press-event", G_CALLBACK(start_cb), (gpointer)d);
+      g_signal_connect(start_button, "clicked", G_CALLBACK(start_clicked), (gpointer)d);
 
       // Reboot-Button für Hermes Lite 2
       // Voraussetzung: DEVICE_HERMES_LITE2 & NEW_DEVICE_HERMES_LITE2 ist im Projekt definiert.
@@ -503,7 +523,7 @@ void discovery() {
         gtk_widget_set_margin_top(reboot_button, 10);
         gtk_widget_set_margin_start(reboot_button, 5);
         gtk_grid_attach(GTK_GRID(grid), reboot_button, 4, row, 1, 1);
-        g_signal_connect(reboot_button, "button-press-event", G_CALLBACK(reboot_cb), (gpointer)d);
+        g_signal_connect(reboot_button, "clicked", G_CALLBACK(reboot_clicked), (gpointer)d);
       }
 
       // if not available then cannot start it
@@ -618,19 +638,12 @@ void discovery() {
   gtk_combo_box_set_active(GTK_COMBO_BOX(gpio), controller);
   g_signal_connect(gpio, "changed", G_CALLBACK(gpio_changed_cb), NULL);
   GtkWidget *discover_b = gtk_button_new_with_label("Discover");
-  g_signal_connect (discover_b, "button-press-event", G_CALLBACK(discover_cb), NULL);
+  g_signal_connect (discover_b, "clicked", G_CALLBACK(discover_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), discover_b, 1, row, 1, 1);
   GtkWidget *protocols_b = gtk_button_new_with_label("Protocols");
-  g_signal_connect (protocols_b, "button-press-event", G_CALLBACK(protocols_cb), NULL);
+  g_signal_connect (protocols_b, "clicked", G_CALLBACK(protocols_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), protocols_b, 2, row, 1, 1);
   row++;
-#ifdef GPIO
-#if 0
-  GtkWidget *gpio_b = gtk_button_new_with_label("Configure GPIO");
-  g_signal_connect (gpio_b, "button-press-event", G_CALLBACK(gpio_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), gpio_b, 0, row, 1, 1);
-#endif
-#endif
   GtkWidget *tcp_b = gtk_label_new("Radio IP Addr:");
   gtk_widget_set_name(tcp_b, "boldlabel_blue");
   gtk_grid_attach(GTK_GRID(grid), tcp_b, 1, row, 1, 1);
@@ -646,7 +659,7 @@ void discovery() {
   gtk_widget_set_name(exit_b, "discovery_btn");
   gtk_widget_set_margin_start(exit_b, 10);
   gtk_widget_set_margin_end(exit_b, 10);
-  g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
+  g_signal_connect (exit_b, "clicked", G_CALLBACK(exit_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), exit_b, 3, row, 1, 1);
   row++;
   GtkWidget *port_b = gtk_label_new("Radio UDP Port:");

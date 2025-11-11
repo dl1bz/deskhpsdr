@@ -139,6 +139,8 @@ static void enforce_x11_backend_policy(void) {
   const char *w   = g_getenv("WAYLAND_DISPLAY");
 
   if ((xdg && g_ascii_strcasecmp(xdg, "wayland") == 0) || (w && *w)) {
+    g_setenv("GDK_BACKEND", "wayland", TRUE);
+    gdk_set_allowed_backends("wayland");
     g_setenv("DESKHPSDR_WAYLAND_NOTICE", "1", TRUE);
     use_wayland = 1;
   } else {
@@ -687,9 +689,19 @@ static int init(void *data) {
   t_print("LC_ALL=%s\n", setlocale(LC_ALL, NULL));
   t_print("LC_NUMERIC=%s\n", setlocale(LC_NUMERIC, NULL));
   audio_get_cards();
-  cursor_arrow = gdk_cursor_new(GDK_ARROW);
-  cursor_watch = gdk_cursor_new(GDK_WATCH);
-  gdk_window_set_cursor(gtk_widget_get_window(top_window), cursor_watch);
+  {
+    GdkDisplay *dpy = gdk_display_get_default();
+    /* Wayland: named cursors sind stabiler */
+    cursor_arrow = gdk_cursor_new_from_name(dpy, "default");
+
+    if (!cursor_arrow) { cursor_arrow = gdk_cursor_new(GDK_ARROW); }
+
+    cursor_watch = gdk_cursor_new_from_name(dpy, "wait");
+
+    if (!cursor_watch) { cursor_watch = gdk_cursor_new(GDK_WATCH); }
+
+    gdk_window_set_cursor(gtk_widget_get_window(top_window), cursor_watch);
+  }
   //
   // Let WDSP (via FFTW) check for wisdom file in current dir
   // If there is one, the "wisdom thread" takes no time
@@ -723,6 +735,9 @@ static int init(void *data) {
   return 0;
 }
 
+/* optional: Cursor-Objekte später freigeben, z.B. am Programmende */
+/* g_object_unref(cursor_arrow); g_object_unref(cursor_watch); */
+
 static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   /*
   #if !defined(__WAYLAND__)
@@ -747,10 +762,18 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   char text[2048];
   char config_directory[1024];
   (void) getcwd(config_directory, sizeof(config_directory));
+  const char *x11_be = g_getenv("GDK_BACKEND");
   g_strlcat(config_directory, "/", 1024);
   t_print("Build: %s (Branch: %s, Commit: %s, Date: %s)\n", build_version, build_branch, build_commit, build_date);
   t_print("GTK+ version %u.%u.%u\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
   uname(&unameData);
+
+  if (x11_be && *x11_be != '\0') {
+    t_print("X11 Backend: %s\n", x11_be);
+  } else {
+    t_print("X11 Backend not set.\n");
+  }
+
   t_print("sysname: %s\n", unameData.sysname);
   t_print("nodename: %s\n", unameData.nodename);
   t_print("release: %s\n", unameData.release);
@@ -817,9 +840,17 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   // Get the position of the top window, and then determine
   // to which monitor this position belongs.
   //
-  int x, y;
-  gtk_window_get_position(GTK_WINDOW(top_window), &x, &y);
-  this_monitor = gdk_screen_get_monitor_at_point(screen, x, y);
+  int x = 0, y = 0;
+
+  if (!use_wayland) {
+    gtk_window_get_position(GTK_WINDOW(top_window), &x, &y);
+    this_monitor = gdk_screen_get_monitor_at_point(screen, x, y);
+  } else {
+    /* Wayland: Positionsabfragen sind unzuverlässig → Primary Monitor nehmen */
+    int pm = gdk_screen_get_primary_monitor(screen);
+    this_monitor = (pm >= 0) ? pm : 0;
+  }
+
   t_print("Monitor Number within Screen=%d\n", this_monitor);
   //
   // Determine the size of "our" monitor
@@ -846,7 +877,13 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 
   if (full_screen) {
     t_print("full screen\n");
-    gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+
+    if (use_wayland) {
+      /* Wayland: Monitor-Auswahl liegt beim Compositor */
+      gtk_window_fullscreen(GTK_WINDOW(top_window));
+    } else {
+      gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+    }
   }
 
   // load the TRX logo now only from the included trx_logo.h
@@ -887,9 +924,9 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   //----------------------------------------------------------------------------------
   t_print("create build label\n");
   snprintf(text, 2048,
-           "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nWDSP version: %d.%02d\nUsed Audio module: %s\nWorking Directory: %s",
+           "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nWDSP version: %d.%02d\nUsed Audio module: %s\nWorking Directory: %s\nX11 backend: %s",
            build_version, build_date, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100,
-           build_audio, config_directory);
+           build_audio, config_directory, x11_be);
   GtkWidget *build_date_label = gtk_label_new(text);
   gtk_widget_set_name(build_date_label, "med_txt");
   gtk_widget_set_halign(build_date_label, GTK_ALIGN_START);
