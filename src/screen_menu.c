@@ -585,33 +585,36 @@ void screen_menu(GtkWidget *parent) {
     }
 
 #ifdef __linux__
+
     //----------------------------------------------------------------------------------------
-    b_inner_levels_popup = gtk_check_button_new_with_label("Show Popup inside");
-    gtk_widget_set_name (b_inner_levels_popup, "boldlabel_blue");
-    gtk_widget_set_tooltip_text(b_inner_levels_popup, "Show TX Audio Levels Popup:\n"
-                                                      "ENABLED: inside deskHPSDR main window [right in the middle]\n"
-                                                      "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
-                                                      "If Fullscreen selected, TX Audio Levels Popup is ever\n"
-                                                      "inside deskHPSDR main window [right in the middle]");
+    if (use_wayland) {
+      b_inner_levels_popup = gtk_check_button_new_with_label("Show Popup inside");
+      gtk_widget_set_name (b_inner_levels_popup, "boldlabel_blue");
+      gtk_widget_set_tooltip_text(b_inner_levels_popup, "Show TX Audio Levels Popup:\n"
+                                                        "ENABLED: inside deskHPSDR main window [right in the middle]\n"
+                                                        "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
+                                                        "If Fullscreen selected, TX Audio Levels Popup is ever\n"
+                                                        "inside deskHPSDR main window [right in the middle]");
 
-    if (full_screen) {
-      transmitter->inner_levels_popup = 1;
+      if (full_screen) {
+        transmitter->inner_levels_popup = 1;
+      }
+
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_inner_levels_popup), transmitter->inner_levels_popup);
+      gtk_widget_show(b_inner_levels_popup);
+      gtk_grid_attach(GTK_GRID(grid), b_inner_levels_popup, 3, row, 1, 1);
+      b_inner_levels_popup_signal_id = g_signal_connect(b_inner_levels_popup, "toggled", G_CALLBACK(b_inner_levels_popup_cb),
+                                       NULL);
+
+      if (!transmitter->show_levels) {
+        gtk_widget_set_sensitive(b_inner_levels_popup, FALSE);
+      } else {
+        gtk_widget_set_sensitive(b_inner_levels_popup, TRUE);
+      }
     }
 
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_inner_levels_popup), transmitter->inner_levels_popup);
-    gtk_widget_show(b_inner_levels_popup);
-    gtk_grid_attach(GTK_GRID(grid), b_inner_levels_popup, 3, row, 1, 1);
-    b_inner_levels_popup_signal_id = g_signal_connect(b_inner_levels_popup, "toggled", G_CALLBACK(b_inner_levels_popup_cb),
-                                     NULL);
-
-    if (!transmitter->show_levels) {
-      gtk_widget_set_sensitive(b_inner_levels_popup, FALSE);
-    } else {
-      gtk_widget_set_sensitive(b_inner_levels_popup, TRUE);
-    }
-
+    //----------------------------------------------------------------------------------------
 #endif
-    //----------------------------------------------------------------------------------------
   }
 
   //------------------------------------------------------------------------------------------
