@@ -854,6 +854,12 @@ gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
   return FALSE;
 }
 
+/* Wrapper, damit wir 'clicked' nutzen können */
+static void hide_clicked(GtkButton *btn, gpointer data) {
+  (void)btn;
+  hideall_cb(NULL, NULL, data);
+}
+
 static void radio_create_visual() {
   int y = 0;
   fixed = gtk_fixed_new();
@@ -879,7 +885,8 @@ static void radio_create_visual() {
   gtk_widget_set_name(hide_b, "boldlabel_vfo_sf");
   gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
   gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
+  // g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
+  g_signal_connect(hide_b, "clicked", G_CALLBACK(hide_clicked), NULL);
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
