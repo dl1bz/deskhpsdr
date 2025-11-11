@@ -815,8 +815,19 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     gtk_button_set_label(GTK_BUTTON(hide_b), "Show");
     old_zoom = display_zoompan;
     old_slid = display_sliders;
+#ifdef __linux__
     old_tool = display_toolbar;
     display_toolbar = display_sliders = display_zoompan = 0;
+#else
+
+    if (!full_screen) {
+      old_tool = display_toolbar;
+      display_toolbar = display_sliders = display_zoompan = 0;
+    } else {
+      display_sliders = display_zoompan = 0;
+    }
+
+#endif
     radio_reconfigure();
   } else {
     //
@@ -827,7 +838,15 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
     display_zoompan = old_zoom;
     display_sliders = old_slid;
+#ifdef __linux__
     display_toolbar = old_tool;
+#else
+
+    if (!full_screen) {
+      display_toolbar = old_tool;
+    }
+
+#endif
     radio_reconfigure();
   }
 
@@ -863,6 +882,12 @@ gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
   return FALSE;
 }
 
+/* Wrapper, damit wir 'clicked' nutzen können */
+static void hide_clicked(GtkButton *btn, gpointer data) {
+  (void)btn;
+  hideall_cb(NULL, NULL, data);
+}
+
 static void radio_create_visual() {
   int y = 0;
   fixed = gtk_fixed_new();
@@ -888,7 +913,8 @@ static void radio_create_visual() {
   gtk_widget_set_name(hide_b, "boldlabel_vfo_sf");
   gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
   gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
+  // g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
+  g_signal_connect(hide_b, "clicked", G_CALLBACK(hide_clicked), NULL);
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
