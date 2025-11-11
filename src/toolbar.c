@@ -53,8 +53,9 @@ static int width;
 static int height;
 
 static GtkWidget *toolbar = NULL;
+enum { TOOLBAR_BTN_COUNT = 10, FUNC_INDEX = 10, GRID_SPAN = 4, GRID_COLS = 11, LABEL_LEN = 16 };
 
-GtkWidget *sim_s[10] = { NULL };
+static GtkWidget *sim_s[TOOLBAR_BTN_COUNT] = { NULL };
 
 static GtkWidget *sim_sfunc;
 
@@ -66,22 +67,27 @@ void update_toolbar_labels() {
     // If the toolbar has not yet been on display,
     // sim_s0 and friends are NULL
     //
-    for (int i = 0; i < 10; i++) {
-      gtk_button_set_label(GTK_BUTTON(sim_s[i]), ActionTable[toolbar_switches[i].switch_function].button_str);
+    for (int i = 0; i < TOOLBAR_BTN_COUNT; i++) {
+      if (sim_s[i]) {
+        gtk_button_set_label(GTK_BUTTON(sim_s[i]),
+                             ActionTable[toolbar_switches[i].switch_function].button_str);
+      }
     }
 
-    if (toolbar_switches[10].switch_function == FUNCTION) {
-      char lbl[16];
+    if (sim_sfunc && toolbar_switches[FUNC_INDEX].switch_function == FUNCTION) {
+      char lbl[LABEL_LEN];
       snprintf(lbl, sizeof(lbl), "FNC(%d)", function);
       gtk_button_set_label(GTK_BUTTON(sim_sfunc), lbl);
     } else {
-      gtk_button_set_label(GTK_BUTTON(sim_sfunc), ActionTable[toolbar_switches[10].switch_function].button_str);
+      if (sim_sfunc)
+        gtk_button_set_label(GTK_BUTTON(sim_sfunc),
+                             ActionTable[toolbar_switches[FUNC_INDEX].switch_function].button_str);
     }
   }
 }
 
 // cppcheck-suppress constParameterCallback
-static void toolbar_button_press_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static void toolbar_button_press_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event, gpointer data) {
   int i = GPOINTER_TO_INT(data);
 
   //
@@ -93,28 +99,16 @@ static void toolbar_button_press_cb(GtkWidget *widget, GdkEventButton *event, gp
   // This is our "easter egg" for the FUNC toolbar button. A secondary (right) click
   // cycles backwards
   //
-  if (i == 10  && event->button == GDK_BUTTON_SECONDARY) {
+  if (i == FUNC_INDEX && event->button == GDK_BUTTON_SECONDARY) {
     schedule_action(FUNCTIONREV, PRESSED, 0);
   } else {
     schedule_action(toolbar_switches[i].switch_function, PRESSED, 0);
   }
 }
 
-// Destroy-only removal helper to avoid fragile unparent paths.
-// gtk_widget_destroy() safely unparents and disposes the subtree.
-static void destroy_widget_safe(GtkWidget **pchild) {
-  if (!pchild) { return; }
-
-  GtkWidget *w = *pchild;
-
-  if (!GTK_IS_WIDGET(w)) { *pchild = NULL; return; }
-
-  gtk_widget_destroy(w);
-  *pchild = NULL;
-}
-
 // cppcheck-suppress constParameterCallback
-static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static void toolbar_button_released_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event G_GNUC_UNUSED,
+                                       gpointer data) {
   int i = GPOINTER_TO_INT(data);
   //t_print("%s: %d action=%d\n",__FUNCTION__,i,toolbar_switches[i].switch_function);
   schedule_action(toolbar_switches[i].switch_function, RELEASED, 0);
@@ -123,8 +117,11 @@ static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event,
 GtkWidget *toolbar_init(int my_width, int my_height) {
   width = my_width;
   height = my_height - 10;
+
+  if (height < 1) { height = 1; }
+
   // height = 20;
-  int button_width = width / 11;
+  int button_width = MAX(1, width / GRID_COLS);
   const char *button_css;
   t_print("toolbar_init: width=%d height=%d button_width=%d\n", width, height, button_width);
 
@@ -140,7 +137,11 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   toolbar_switches = switches_controller1[function];
 
   if (toolbar) {
-    destroy_widget_safe(&toolbar);
+    g_clear_pointer(&toolbar, gtk_widget_destroy);
+
+    for (int i = 0; i < TOOLBAR_BTN_COUNT; ++i) { sim_s[i] = NULL; }
+
+    sim_sfunc = NULL;
   }
 
   toolbar = gtk_grid_new();
@@ -150,9 +151,9 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
 #endif
   gtk_grid_set_column_homogeneous(GTK_GRID(toolbar), TRUE);
   int btn_col = 0;
-  int col_width = 4;
+  int col_width = GRID_SPAN;
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < TOOLBAR_BTN_COUNT; i++) {
     //----------------------------------------------------------------------------------------------------------------------
     sim_s[i] = gtk_button_new_with_label(ActionTable[toolbar_switches[i].switch_function].button_str);
     gtk_widget_set_name(sim_s[i], button_css);
@@ -161,26 +162,27 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
     g_signal_connect(G_OBJECT(sim_s[i]), "button-release-event", G_CALLBACK(toolbar_button_released_cb),
                      GINT_TO_POINTER(i));
     gtk_grid_attach(GTK_GRID(toolbar), sim_s[i], btn_col, 0, col_width, 1);
-    btn_col += 4;
+    btn_col += GRID_SPAN;
     //----------------------------------------------------------------------------------------------------------------------
   }
 
   //
   // For the FUNC button, include the layer in the description
   //
-  if (toolbar_switches[10].switch_function == FUNCTION) {
-    char lbl[16];
+  if (toolbar_switches[FUNC_INDEX].switch_function == FUNCTION) {
+    char lbl[LABEL_LEN];
     snprintf(lbl, sizeof(lbl), "FNC(%d)", function);
     sim_sfunc = gtk_button_new_with_label(lbl);
   } else {
-    sim_sfunc = gtk_button_new_with_label(ActionTable[toolbar_switches[10].switch_function].button_str);
+    sim_sfunc = gtk_button_new_with_label(ActionTable[toolbar_switches[FUNC_INDEX].switch_function].button_str);
   }
 
   gtk_widget_set_name(sim_sfunc, button_css);
   gtk_widget_set_size_request (sim_sfunc, button_width, height);
-  g_signal_connect(G_OBJECT(sim_sfunc), "button-press-event", G_CALLBACK(toolbar_button_press_cb), GINT_TO_POINTER(10));
+  g_signal_connect(G_OBJECT(sim_sfunc), "button-press-event", G_CALLBACK(toolbar_button_press_cb),
+                   GINT_TO_POINTER(FUNC_INDEX));
   g_signal_connect(G_OBJECT(sim_sfunc), "button-release-event", G_CALLBACK(toolbar_button_released_cb),
-                   GINT_TO_POINTER(10));
+                   GINT_TO_POINTER(FUNC_INDEX));
   gtk_grid_attach(GTK_GRID(toolbar), sim_sfunc, btn_col, 0, col_width, 1);
   gtk_widget_show_all(toolbar);
   return toolbar;

@@ -536,8 +536,8 @@ CPP_SOURCES += src/tci.c
 #
 ##############################################################################
 
-GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0`
-GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0`
+GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0`
+GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0 gio-2.0`
 CPP_INCLUDE += $(GTKINCLUDE)
 
 ##############################################################################

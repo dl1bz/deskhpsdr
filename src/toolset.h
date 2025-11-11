@@ -30,6 +30,7 @@ extern int solar_flux;
 extern char geomagfield[32];
 extern char xray[16];
 
+extern void toolset_init(void);
 extern void get_screen_size(int *width, int *height);
 extern void get_window_position(GtkWindow *window, int *x, int *y);
 extern void get_window_geometry(GtkWindow *widget, int *x, int *y, int *width, int *height);

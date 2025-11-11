@@ -73,6 +73,7 @@
 #include "rigctl.h"
 #include "midi.h"
 #include "trx_logo.h"
+#include "toolset.h"
 
 struct utsname unameData;
 
@@ -984,6 +985,7 @@ int main(int argc, char **argv) {
   t_print("Base priority after adjustment: %d\n", rc);
   t_print("%s: init global cURL...\n", __FUNCTION__);
   curl_global_init(CURL_GLOBAL_ALL);
+  toolset_init();
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
   t_print("%s: gtk_application_new: %s -> X11 backend use Wayland ? : %d\n", __FUNCTION__, name, use_wayland);
   gtk_disable_setlocale();  // keep having a decimal point as a decimal point

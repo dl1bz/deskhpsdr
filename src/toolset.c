@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <semaphore.h>
 #include <netdb.h>
 #include <math.h>
@@ -49,7 +50,7 @@
   #define N_EQ 10
 #endif
 
-GMutex solar_data_mutex;
+static GMutex solar_data_mutex;
 
 int sunspots = -1;
 int a_index = -1;
@@ -63,6 +64,11 @@ char xray[16];
   get_screen_size(&w, &h);
   printf("Screen: %d x %d\n", w, h);
 */
+
+void toolset_init(void) {
+  g_mutex_init(&solar_data_mutex);
+}
+
 void get_screen_size(int *width, int *height) {
   if (!width || !height) { return; }
 
@@ -264,32 +270,7 @@ cleanup:
   return erfolg;
 }
 
-/*
-// get Solar Data without threading -> can block the GTK main thread/GUI -> bad
-void assign_solar_data(int is_dbg) {
-  time_t now = time(NULL);
-  const char* host = "www.hamqsl.com";
-
-  if (https_ok(host, 0)) {
-    SolarData sd = fetch_solar_data();
-    sunspots = sd.sunspots;
-    solar_flux = (int)sd.solarflux;
-    a_index = sd.aindex;
-    k_index = sd.kindex;
-    g_strlcpy(geomagfield, sd.geomagfield, sizeof(sd.geomagfield));
-    g_strlcpy(xray, sd.xray, sizeof(sd.xray));
-
-    if (is_dbg) {
-      t_print("%s fetch data from %s at %s", __FUNCTION__, host, ctime(&now));
-      t_print("%s Sunspots: %d, Flux: %d, A: %d, K: %d, X:%s, GMF:%s\n", __FUNCTION__, sunspots, solar_flux, a_index, k_index,
-              xray, geomagfield);
-    }
-  } else {
-    t_print("%s failed: host %s not reachable\n", __FUNCTION__, host);
-  }
-}
-*/
-
+/* OLD
 static void *solar_thread_func(void *arg) {
   int is_dbg = GPOINTER_TO_INT(arg);
   time_t now = time(NULL);
@@ -306,8 +287,8 @@ static void *solar_thread_func(void *arg) {
       solar_flux = (int)sd.solarflux;
       a_index = sd.aindex;
       k_index = sd.kindex;
-      g_strlcpy(geomagfield, sd.geomagfield, sizeof(sd.geomagfield));
-      g_strlcpy(xray, sd.xray, sizeof(sd.xray));
+      g_strlcpy(geomagfield, sd.geomagfield, sizeof(geomagfield));
+      g_strlcpy(xray, sd.xray, sizeof(xray));
       g_mutex_unlock(&solar_data_mutex);
 
       if (is_dbg) {
@@ -324,13 +305,80 @@ static void *solar_thread_func(void *arg) {
 
   return NULL;
 }
+*/
+
+static void *solar_thread_func(void *arg) {
+  int is_dbg = (int)(intptr_t)arg;
+  // int is_dbg = GPOINTER_TO_INT(arg);
+  const char *host = "www.hamqsl.com";
+  // threadsicheren Timestamp bauen
+  GDateTime *dt = g_date_time_new_now_local();
+  g_autofree gchar *ts = g_date_time_format(dt, "%F %T");
+  g_date_time_unref(dt);
+
+  if (!https_ok(host, 0)) {
+    g_mutex_lock(&solar_data_mutex);
+    sunspots   = -1;
+    solar_flux = -1;
+    a_index    = -1;
+    k_index    = -1;
+    geomagfield[0] = '\0';
+    xray[0]       = '\0';
+    g_mutex_unlock(&solar_data_mutex);
+    t_print("%s failed: host %s not reachable at %s\n", __FUNCTION__, host, ts);
+    return NULL;
+  }
+
+  SolarData sd = fetch_solar_data();
+
+  if (sd.sunspots != -1) {
+    g_mutex_lock(&solar_data_mutex);
+    sunspots   = sd.sunspots;
+    solar_flux = (int)sd.solarflux;
+    a_index    = sd.aindex;
+    k_index    = sd.kindex;
+    g_strlcpy(geomagfield, sd.geomagfield, sizeof(geomagfield));
+    g_strlcpy(xray,        sd.xray,        sizeof(xray));
+    g_mutex_unlock(&solar_data_mutex);
+
+    if (is_dbg) {
+      t_print("fetch data from %s at %s\n", host, ts);
+      t_print("Sunspots:%d Flux:%d A:%d K:%d X:%s GMF:%s\n",
+              sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+    }
+  } else {
+    g_mutex_lock(&solar_data_mutex);
+    sunspots   = -1;
+    solar_flux = -1;
+    a_index    = -1;
+    k_index    = -1;
+    geomagfield[0] = '\0';
+    xray[0]       = '\0';
+    g_mutex_unlock(&solar_data_mutex);
+    t_print("%s: ERROR: invalid data from %s at %s\n", __FUNCTION__, host, ts);
+  }
+
+  return NULL;
+}
 
 // get Solar Data with threading -> best solution
+/* OLD
 static void assign_solar_data_async(int is_dbg) {
   pthread_t solar_thread;
 
   if (pthread_create(&solar_thread, NULL, solar_thread_func, GINT_TO_POINTER(is_dbg)) == 0) {
     pthread_detach(solar_thread); // kein join nötig
+  } else {
+    t_print("%s: ERROR: solar_data_fetch thread not started...\n", __FUNCTION__);
+  }
+}
+*/
+
+static void assign_solar_data_async(int is_dbg) {
+  pthread_t solar_thread;
+
+  if (pthread_create(&solar_thread, NULL, solar_thread_func, (void * )(intptr_t)is_dbg) == 0) {
+    pthread_detach(solar_thread);  // kein join nötig
   } else {
     t_print("%s: ERROR: solar_data_fetch thread not started...\n", __FUNCTION__);
   }
