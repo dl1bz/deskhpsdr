@@ -130,8 +130,8 @@ static void show_error_dialog(const char *msg) {
 
 static void enforce_x11_backend_policy(void) {
 #if defined(__APPLE__)
-  // g_setenv("GDK_BACKEND", "quartz", TRUE);
-  // gdk_set_allowed_backends("quartz");
+  g_setenv("GDK_BACKEND", "quartz", TRUE);
+  gdk_set_allowed_backends("quartz");
   use_wayland = 0;
   return;
 #else
@@ -144,6 +144,8 @@ static void enforce_x11_backend_policy(void) {
     g_setenv("DESKHPSDR_WAYLAND_NOTICE", "1", TRUE);
     use_wayland = 1;
   } else {
+    g_setenv("GDK_BACKEND", "x11", TRUE);
+    gdk_set_allowed_backends("x11");
     use_wayland = 0;
   }
 
