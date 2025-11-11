@@ -588,6 +588,7 @@ void old_protocol_stop() {
 
   t_print("%s\n", __FUNCTION__);
   pthread_mutex_lock(&send_ozy_mutex);
+  P1running = 0;
   metis_start_stop(0);
   pthread_mutex_unlock(&send_ozy_mutex);
 }
@@ -3400,6 +3401,11 @@ static void metis_restart() {
   // starting. This also sends some vital C&C data.
   // Note we send 504 audio samples = 8 OZY buffers =  4 METIS buffers
   //
+
+  if (device != DEVICE_OZY) {
+    P1running = 1;  // set it HERE so outgoing data will not be suppressed
+  }
+
   command = 1;
 
   for (i = 0; i < 504; i++) {
@@ -3429,7 +3435,6 @@ static void metis_start_stop(int command) {
   }
 
 #endif
-  P1running = command;
 
   if (device == DEVICE_OZY) { return; }
 
