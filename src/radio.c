@@ -856,13 +856,12 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     gtk_button_set_label(GTK_BUTTON(hide_b), "Show");
     old_zoom = display_zoompan;
     old_slid = display_sliders;
-#ifdef __linux__
     old_tool = display_toolbar;
+#ifdef __linux__
     display_toolbar = display_sliders = display_zoompan = 0;
 #else
 
     if (!full_screen) {
-      old_tool = display_toolbar;
       display_toolbar = display_sliders = display_zoompan = 0;
     } else {
       display_sliders = display_zoompan = 0;
@@ -879,15 +878,7 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
     display_zoompan = old_zoom;
     display_sliders = old_slid;
-#ifdef __linux__
     display_toolbar = old_tool;
-#else
-
-    if (!full_screen) {
-      display_toolbar = old_tool;
-    }
-
-#endif
     radio_reconfigure();
   }
 

@@ -53,7 +53,7 @@ int function = 0;
 static int width;
 static int height;
 
-static GtkWidget *toolbar = NULL;
+// static GtkWidget *toolbar = NULL;
 enum { TOOLBAR_BTN_COUNT = 10, FUNC_INDEX = 10, GRID_SPAN = 4, GRID_COLS = 11, LABEL_LEN = 16 };
 
 static GtkWidget *sim_s[TOOLBAR_BTN_COUNT] = { NULL };
@@ -142,16 +142,13 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   t_print("toolbar_init: button_css=%s\n", button_css);
   toolbar_switches = switches_controller1[function];
 
-  if (toolbar) {
-    g_clear_pointer(&toolbar, gtk_widget_destroy);
-
-    for (int i = 0; i < TOOLBAR_BTN_COUNT; ++i) { sim_s[i] = NULL; }
-
-    sim_sfunc = NULL;
+  // Sim-State immer beim Neuaufbau zurücksetzen
+  for (int i = 0; i < TOOLBAR_BTN_COUNT; ++i) {
+    sim_s[i] = NULL;
   }
 
-  toolbar = gtk_grid_new();
-  g_object_add_weak_pointer(G_OBJECT(toolbar), (gpointer*)&toolbar);
+  sim_sfunc = NULL;
+  GtkWidget *toolbar = gtk_grid_new();
   gtk_widget_set_size_request (toolbar, width, height);
 #ifdef __linux__
   gtk_widget_set_margin_top(toolbar, 10);
