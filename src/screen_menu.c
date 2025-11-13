@@ -42,8 +42,8 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *wide_b = NULL;
 static GtkWidget *height_b = NULL;
 static GtkWidget *full_b = NULL;
-static GtkWidget *vfo_b = NULL;
-static gulong vfo_signal_id;
+// static GtkWidget *vfo_b = NULL;
+// static gulong vfo_signal_id;
 static guint apply_timeout = 0;
 static GtkWidget *bgcolor_text_input;
 static gulong bgcolor_text_input_signal_id;
@@ -88,9 +88,9 @@ static int apply(gpointer data) {
   //
   if (vfo_layout != my_vfo_layout) {
     my_vfo_layout = vfo_layout;
-    g_signal_handler_block(G_OBJECT(vfo_b), vfo_signal_id);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
-    g_signal_handler_unblock(G_OBJECT(vfo_b), vfo_signal_id);
+    // g_signal_handler_block(G_OBJECT(vfo_b), vfo_signal_id);
+    // gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
+    // g_signal_handler_unblock(G_OBJECT(vfo_b), vfo_signal_id);
   }
 
   return G_SOURCE_REMOVE;

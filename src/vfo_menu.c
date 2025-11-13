@@ -236,6 +236,7 @@ void vfo_menu(GtkWidget *parent, int id) {
   gtk_widget_set_name(vfo_label, "boldlabel");
   gtk_widget_set_halign(vfo_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), vfo_label, 3, 3, 1, 1);
+  //------------------------------------------------------------------------------------
   GtkWidget *vfo_b = gtk_combo_box_text_new();
   int ind = vfo_get_stepindex(myvfo);
 
@@ -249,6 +250,7 @@ void vfo_menu(GtkWidget *parent, int id) {
 
   g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
   my_combo_attach(GTK_GRID(grid), vfo_b, 4, 3, 1, 1);
+  //------------------------------------------------------------------------------------
   row = 4;
   GtkWidget *lock_b = gtk_check_button_new_with_label("Lock VFOs");
   gtk_widget_set_name(lock_b, "boldlabel");

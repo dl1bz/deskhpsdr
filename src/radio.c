@@ -408,6 +408,7 @@ void radio_stop() {
   }
 }
 
+/*
 static void choose_vfo_layout() {
   //
   // a) secure that vfo_layout is a valid pointer
@@ -463,6 +464,20 @@ static void choose_vfo_layout() {
   // give 50 extra pixels to the meter
   //
   if (vfo_layout_list[vfo_layout].width < VFO_WIDTH - 50) {
+    VFO_WIDTH -= 50;
+    METER_WIDTH += 50;
+  }
+}
+*/
+
+static void choose_vfo_layout() {
+  g_return_if_fail(vfo_layout_list[0].width > 0);
+  vfo_layout = 0;
+  METER_WIDTH = MIN_METER_WIDTH;
+  VFO_WIDTH = full_screen ? screen_width : display_width;
+  VFO_WIDTH -= (MENU_WIDTH + METER_WIDTH);
+
+  if (vfo_layout_list[0].width < VFO_WIDTH - 50) {
     VFO_WIDTH -= 50;
     METER_WIDTH += 50;
   }
