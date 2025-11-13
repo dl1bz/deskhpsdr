@@ -501,25 +501,41 @@ static int set_full_screen(gpointer data) {
 }
 
 static gboolean destroy_cb(gpointer data) {
-  if (GTK_IS_WIDGET(data)) { gtk_widget_destroy(GTK_WIDGET(data)); }
+  GtkWidget *w = GTK_WIDGET(data);
+
+  if (GTK_IS_WIDGET(w)) {
+    gtk_widget_destroy(w);
+  }
 
   return G_SOURCE_REMOVE;
 }
 
 void destroy_widget_safe(GtkWidget **pwidget) {
-  if (!pwidget) { return; }
+  if (!pwidget) {
+    return;
+  }
 
   GtkWidget *w = *pwidget;
-  *pwidget = NULL;                    // Pointer sofort invalidieren
+  *pwidget = NULL;  // sofort invalidieren
 
-  if (!w || !GTK_IS_WIDGET(w)) { return; }
+  if (!w) {
+    return;
+  }
 
-  // nur im GTK-Main-Thread direkt zerstören
+  // Bin ich im GTK-/Main-Thread?
   if (g_main_context_is_owner(g_main_context_default())) {
-    gtk_widget_destroy(w);
+    // Hier ist GTK-Zugriff erlaubt
+    if (GTK_IS_WIDGET(w)) {
+      gtk_widget_destroy(w);
+    }
   } else {
-    // aus Worker-Thread: in Main-Loop schedulen
-    g_idle_add_full(G_PRIORITY_HIGH_IDLE, destroy_cb, w, NULL);
+    // Worker-Thread: nur schedulen, GTK nur im Callback anfassen
+    g_idle_add_full(
+      G_PRIORITY_HIGH_IDLE,
+      destroy_cb,
+      g_object_ref(w),   // Schutz bis zum Callback
+      (GDestroyNotify)g_object_unref
+    );
   }
 }
 

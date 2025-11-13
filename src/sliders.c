@@ -1471,7 +1471,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   *
   */
   if (sliders) {
-    destroy_widget_safe(&sliders);
+    g_clear_pointer(&sliders, gtk_widget_destroy);
   }
 
   sliders = gtk_grid_new();

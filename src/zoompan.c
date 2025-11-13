@@ -183,8 +183,9 @@ void remote_set_pan(int rx, double value) {
 
 GtkWidget *zoompan_init(int my_width, int my_height) {
   if (zoompan) {
-    destroy_widget_safe(&zoompan);
+    g_clear_pointer(&zoompan, gtk_widget_destroy);
   }
+
   // width = my_width - 50;
   width = my_width;
   height = my_height;
