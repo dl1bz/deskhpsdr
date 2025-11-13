@@ -94,6 +94,10 @@
 #include "exit_menu.h"
 #include "message.h"
 
+#if defined(__APPLE__)
+  static int dock_guard_pixels = 0;  // wird zur Laufzeit bestimmt
+#endif
+
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
 
@@ -485,6 +489,99 @@ static void choose_vfo_layout() {
 
 static guint full_screen_timeout = 0;
 
+static void measure_decoration_height(void) __attribute__((unused));
+static void measure_decoration_height(void) {
+#if defined(__APPLE__)
+
+  if (dock_guard_pixels != 0) { return; }  // schon bestimmt
+
+  if (!gtk_widget_get_realized(top_window)) { return; }
+
+  GdkWindow *gw = gtk_widget_get_window(top_window);
+
+  if (!gw) { return; }
+
+  GtkAllocation alloc;
+  gtk_widget_get_allocation(top_window, &alloc);   // Client-Innenfläche
+  GdkRectangle frame;
+  gdk_window_get_frame_extents(gw, &frame);        // inkl. Titelbar/Border
+  int deco = frame.height - alloc.height;
+
+  if (deco > 0 && deco < 200) {   // sanity check
+    dock_guard_pixels = deco;
+  }
+
+#endif
+}
+
+static int set_full_screen(gpointer data) {
+  full_screen_timeout = 0;
+  int flag = GPOINTER_TO_INT(data);
+#if defined(__APPLE__)
+
+  if (flag) {
+    // Einmalig Dekohöhe messen im normalen Fensterzustand
+    measure_decoration_height();
+    GdkScreen *gdk_screen = gdk_screen_get_default();
+    GdkRectangle wa;
+    gdk_screen_get_monitor_workarea(gdk_screen, this_monitor, &wa);
+    // Zielhöhe = Workarea minus Deko-Höhe, damit der Client-Bereich
+    // nicht in den Dock-Bereich hineinragt.
+    int fs_height = wa.height;
+
+    if (dock_guard_pixels > 0 && dock_guard_pixels < fs_height) {
+      fs_height -= dock_guard_pixels;
+    }
+
+    gtk_window_move(GTK_WINDOW(top_window), wa.x, wa.y);
+    gtk_window_resize(GTK_WINDOW(top_window), wa.width, fs_height);
+    // Maximieren kannst du dir dann sparen, wenn du selbst resizest,
+    // oder du lässt es weg, um kein weiteres WM-Magic zu triggern.
+    // gtk_window_maximize(GTK_WINDOW(top_window));
+    screen_height = fs_height;
+    full_screen = 1;
+  } else {
+    gtk_window_unmaximize(GTK_WINDOW(top_window));
+    gtk_window_resize(GTK_WINDOW(top_window), display_width, display_height);
+    gtk_window_move(GTK_WINDOW(top_window),
+                    (screen_width  - display_width)  / 2,
+                    (screen_height - display_height) / 2);
+    full_screen = 0;
+  }
+
+#else
+
+  //
+  // Put the top window in full-screen mode, if full_screen is set
+  //
+  if (flag) {
+    if (use_wayland) {
+      gtk_window_fullscreen(GTK_WINDOW(top_window));
+    } else {
+      //
+      // Window-to-fullscreen-transition
+      //
+      gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+    }
+  } else {
+    if (!use_wayland) {
+      //
+      // FullScreen to window transition. Place window in the center of the screen
+      //
+      gtk_window_move(GTK_WINDOW(top_window),
+                      (screen_width - display_width) / 2,
+                      (screen_height - display_height) / 2);
+    }
+  }
+
+#endif
+#if __APPLE__
+  radio_reconfigure();
+#endif
+  return G_SOURCE_REMOVE;
+}
+
+/*
 static int set_full_screen(gpointer data) {
   full_screen_timeout = 0;
   int flag = GPOINTER_TO_INT(data);
@@ -514,6 +611,7 @@ static int set_full_screen(gpointer data) {
 
   return G_SOURCE_REMOVE;
 }
+*/
 
 static gboolean destroy_cb(gpointer data) {
   GtkWidget *w = GTK_WIDGET(data);
@@ -806,6 +904,7 @@ void radio_reconfigure() {
     }
   }
 
+  /*
   if (display_toolbar) {
     if (toolbar == NULL) {
       toolbar = toolbar_init(my_width, TOOLBAR_HEIGHT);
@@ -820,6 +919,27 @@ void radio_reconfigure() {
       // gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
       // toolbar = NULL;
       destroy_widget_safe(&toolbar);
+    }
+  }
+  */
+
+  if (display_toolbar) {
+    if (toolbar == NULL) {
+      // Einmalig erzeugen und in das Fixed einhängen
+      toolbar = toolbar_init(my_width, TOOLBAR_HEIGHT);
+      gtk_fixed_put(GTK_FIXED(fixed), toolbar, 0, y);
+    } else {
+      // Bestehende Toolbar nur verschieben und ggf. Größe anpassen
+      gtk_widget_set_size_request(toolbar, my_width, TOOLBAR_HEIGHT);
+      // Bereits existente Toolbar nur verschieben
+      gtk_fixed_move(GTK_FIXED(fixed), toolbar, 0, y);
+    }
+
+    gtk_widget_show_all(toolbar);
+  } else {
+    if (toolbar != NULL) {
+      // NICHT mehr zerstören – nur verstecken
+      gtk_widget_hide(toolbar);
     }
   }
 
@@ -857,17 +977,7 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     old_zoom = display_zoompan;
     old_slid = display_sliders;
     old_tool = display_toolbar;
-#ifdef __linux__
     display_toolbar = display_sliders = display_zoompan = 0;
-#else
-
-    if (!full_screen) {
-      display_toolbar = display_sliders = display_zoompan = 0;
-    } else {
-      display_sliders = display_zoompan = 0;
-    }
-
-#endif
     radio_reconfigure();
   } else {
     //

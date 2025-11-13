@@ -826,6 +826,9 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   snprintf(_title, 128, "%s by DL1BZ %s [GTK Theme: %s]  WDSP Version %d.%02d", PGNAME, build_version, used_theme,
            GetWDSPVersion() / 100, GetWDSPVersion() % 100);
   gtk_window_set_title (GTK_WINDOW (top_window), _title);
+#if defined(__APPLE__)
+  gtk_window_set_hide_titlebar_when_maximized(GTK_WINDOW(top_window), TRUE);
+#endif
   //
   // do not use GTK_WIN_POS_CENTER_ALWAYS, since this will let the
   // window jump back to the center each time the window is
