@@ -1287,7 +1287,7 @@ static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_nr_btn() {
   if (display_sliders && have_rx_gain) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON (nr_btn), nr_btn_signal_id);
+    g_signal_handler_block(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
 
     if (active_receiver->nr > 0) {
@@ -1296,7 +1296,7 @@ void update_slider_nr_btn() {
       gtk_style_context_remove_class(nr_context, "active");
     }
 
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (nr_btn), nr_btn_signal_id);
+    g_signal_handler_unblock(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_widget_queue_draw(nr_btn);
   }
 }
@@ -1332,9 +1332,9 @@ static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_agc_btn() {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON (agc_btn), agc_btn_signal_id);
+    g_signal_handler_block(G_OBJECT(agc_btn), agc_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(agc_btn), agc_labels[active_receiver->agc]);
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (agc_btn), agc_btn_signal_id);
+    g_signal_handler_unblock(G_OBJECT(agc_btn), agc_btn_signal_id);
     gtk_widget_queue_draw(agc_btn);
 
     if (active_receiver->agc > 0) {

@@ -97,8 +97,9 @@ static int apply(gpointer data) {
 }
 
 void schedule_apply() {
-  if (apply_timeout > 0) {
+  if (apply_timeout != 0) {
     g_source_remove(apply_timeout);
+    apply_timeout = 0;
   }
 
   apply_timeout = g_timeout_add(500, apply, NULL);

@@ -60,11 +60,7 @@ static guint vfo_timeout = 0;
 
 // cppcheck-suppress constParameterCallback
 static int vfo_timeout_cb(void * data) {
-  if (vfo_timeout > 0) {
-    g_source_remove(vfo_timeout);
-    vfo_timeout = 0;
-  }
-
+  vfo_timeout = 0;
   vfo_update();
   return G_SOURCE_REMOVE;
 }
