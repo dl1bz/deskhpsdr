@@ -94,6 +94,26 @@ CURRDIR := $(shell pwd)
 UNAME_R := $(shell uname -r | sed 's/\..*//')
 ARCH := $(shell uname -m)
 
+PKG_CONFIG = pkg-config
+
+ifeq ($(UNAME_S), Linux)
+
+WK41 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo yes)
+WK40 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.0 && echo yes)
+
+ifeq ($(WK41),yes)
+$(info WebKitGTK 4.1 found, continue...)
+else ifeq ($(WK40),yes)
+$(info WebKitGTK 4.0 found, continue...)
+else
+$(info WebKitGTK not found: webkit2gtk-4.1 or webkit2gtk-4.0 are NOT installed, but required now.)
+$(info Please install WebKitGTK (webkit2gtk) first!)
+$(info Debian Bookworm has package: webkit2gtk-4.0)
+$(info Debian Trixie   has package: webkit2gtk-4.1)
+$(error Stopping build: install WebKitGTK (e.g. via apt) and retry.)
+endif
+endif
+
 # Get git commit version and date
 GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
 GIT_VERSION := $(shell git describe --abbrev=0 --tags --always --dirty)
@@ -144,8 +164,6 @@ endif
 #
 CFLAGS+=-pthread -I./src
 LINK+=-pthread
-
-PKG_CONFIG = pkg-config
 
 ##############################################################################
 # CPP_DEFINES and CPP_SOURCES are "filled" with all  possible options,
