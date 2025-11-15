@@ -100,7 +100,7 @@
 
 #ifdef __linux__
   #include <webkit2/webkit2.h>
-  static GtkWidget *atu_window = NULL;
+  static GHashTable *linux_dock_windows = NULL;
 #endif
 
 #include "macos_webview.h"
@@ -1077,6 +1077,62 @@ static void open_atu_window(void) {
 }
 */
 
+#ifdef __linux__
+static void linux_dock_window_destroyed_cb(GtkWidget *widget, gpointer user_data) {
+  char *id = (char *)user_data;
+
+  if (linux_dock_windows) {
+    g_hash_table_remove(linux_dock_windows, id);
+
+    if (g_hash_table_size(linux_dock_windows) == 0) {
+      g_hash_table_destroy(linux_dock_windows);
+      linux_dock_windows = NULL;
+    }
+  }
+
+  g_free(id);
+}
+
+static void linux_open_webview_window_with_id(
+  const char *id,
+  const char *url,
+  const char *title,
+  int x,
+  int y,
+  int w,
+  int h
+) {
+  if (!linux_dock_windows) {
+    linux_dock_windows = g_hash_table_new_full(g_str_hash, g_str_equal,
+                         g_free, NULL);
+  }
+
+  GtkWidget *window = g_hash_table_lookup(linux_dock_windows, id);
+
+  if (window) {
+    // Optional: Position nachziehen
+    // gtk_window_move(GTK_WINDOW(window), x, y);
+    gtk_window_present(GTK_WINDOW(window));
+    return;
+  }
+
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_default_size(GTK_WINDOW(window), w, h);
+  gtk_window_set_title(GTK_WINDOW(window), title);
+  WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(web_view));
+  webkit_web_view_load_uri(web_view, url);
+  gtk_window_move(GTK_WINDOW(window), x, y);
+  // ID duplizieren, als Key im Hash und als user_data im Callback verwenden
+  char *id_copy = g_strdup(id);
+  g_hash_table_insert(linux_dock_windows, id_copy, window);
+  g_signal_connect(window, "destroy",
+                   G_CALLBACK(linux_dock_window_destroyed_cb),
+                   g_strdup(id));   // eigener Duplicate für Callback
+  gtk_widget_show_all(window);
+}
+#endif
+
 // bezogen auf top_window
 void open_atu_window(GtkWindow *top_window) {
   // 1. Monitor-Geometrie holen (primärer Monitor)
@@ -1092,6 +1148,9 @@ void open_atu_window(GtkWindow *top_window) {
   // mgeo.x/mgeo.y = Ursprung (oben-links) dieses Monitors
   // mgeo.width/height = Größe
   // 2. GTK-Top-Window-Position/-Größe (oben-links)
+  const char *win_id    = "atu";
+  const char *win_title = "ATU Control by DL1BZ";
+  const char *win_url   = "http://192.168.253.95:8801";
   int win_x = 0, win_y = 0;
   int win_w = 0, win_h = 0;
   gtk_window_get_position(top_window, &win_x, &win_y);
@@ -1123,9 +1182,9 @@ void open_atu_window(GtkWindow *top_window) {
 
 #ifdef __APPLE__
   macos_open_webview_window_with_id(
-    "atu",
-    "http://192.168.253.95:8801",
-    "ATU Control by DL1BZ",
+    win_id,
+    win_url,
+    win_title,
     cocoa_x,
     cocoa_y,
     wv_w,
@@ -1133,26 +1192,17 @@ void open_atu_window(GtkWindow *top_window) {
   );
 #endif
 #ifdef __linux__
-
-  if (atu_window) {
-    gtk_window_present(GTK_WINDOW(atu_window));
-    return;
-  }
-
-  atu_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_default_size(GTK_WINDOW(atu_window), wv_w, wv_h);
-  gtk_window_set_title(GTK_WINDOW(atu_window), "ATU Control by DL1BZ");
-  WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-  gtk_container_add(GTK_CONTAINER(atu_window), GTK_WIDGET(web_view));
-  webkit_web_view_load_uri(web_view, "http://192.168.253.95:8801");
-  /* Linux-Fenster rechts neben das Hauptfenster setzen */
   int linux_x = win_x + win_w;   // direkt rechts vom GTK-Fenster
   int linux_y = win_y;           // gleiche Oberkante
-  gtk_window_move(GTK_WINDOW(atu_window), linux_x, linux_y);
-  g_signal_connect(atu_window, "destroy",
-                   G_CALLBACK(gtk_widget_destroyed),
-                   &atu_window);
-  gtk_widget_show_all(atu_window);
+  linux_open_webview_window_with_id(
+    win_id,
+    win_url,
+    win_title,
+    linux_x,
+    linux_y,
+    wv_w,
+    wv_h
+  );
 #endif
 }
 
