@@ -768,7 +768,8 @@ static void new_protocol_high_priority() {
       DDCfrequency[id] += (long long)cw_keyer_sidetone_frequency;
     }
 
-    DDCfrequency[id] += frequency_calibration -  vfo[id].lo;
+    // DDCfrequency[id] += frequency_calibration -  vfo[id].lo;
+    DDCfrequency[id] = (DDCfrequency[id] - vfo[id].lo) * (1.0 + ppm_factor / 1e6);
   }
 
   // CW mode from the Host; disabled since deskhpsdr does not use this CW option.
@@ -825,7 +826,8 @@ static void new_protocol_high_priority() {
     txfreq += vfo[txvfo].xit;
   }
 
-  DUCfrequency = txfreq - vfo[txvfo].lo + frequency_calibration;
+  // DUCfrequency = txfreq - vfo[txvfo].lo + frequency_calibration;
+  DUCfrequency = (txfreq - vfo[txvfo].lo) * (1.0 + ppm_factor / 1e6);
   phase = (unsigned long)(((double)DUCfrequency) * 34.952533333333333333333333333333);
 
   if (xmit && transmitter->puresignal) {

@@ -124,7 +124,7 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
 #endif
 
 static void calibration_value_changed_cb(GtkWidget *widget, gpointer data) {
-  frequency_calibration = (long long)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  ppm_factor = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 }
 
 static void rx_gain_calibration_value_changed_cb(GtkWidget *widget, gpointer data) {
@@ -1103,14 +1103,19 @@ void radio_menu(GtkWidget *parent) {
   row++;
   // cppcheck-suppress redundantAssignment
   col = 0;
-  label = gtk_label_new("Frequency\nCalibration (Hz):");
-  gtk_widget_set_name(label, "boldlabel");
+  label = gtk_label_new("Freq. Calibration\n(ppm factor):");
+  gtk_widget_set_name(label, "boldlabel_blue");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
-  GtkWidget *calibration_b = gtk_spin_button_new_with_range(-9999.0, 9999.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(calibration_b), (double)frequency_calibration);
+  GtkWidget *calibration_b = gtk_spin_button_new_with_range(-100.0, 100.0, 0.1);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(calibration_b), ppm_factor);
   gtk_widget_set_tooltip_text(calibration_b,
-                              "Use a high-precision RF generator and\nadjust a possible frequency inaccuracy.");
+                              "Frequency calibration as pure ppm factor\n"
+                              "with range -100.0..+100.0 in 0.1 steps,\n"
+                              "because in this case we don't need\n"
+                              "the exact calibration frequency.\n\n"
+                              "Use a high-precision RF generator and\n"
+                              "adjust a possible frequency inaccuracy.");
   gtk_widget_set_hexpand(calibration_b, FALSE);  // fülle Box nicht nach rechts
   gtk_widget_set_halign(calibration_b, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), calibration_b, col, row, 1, 1);

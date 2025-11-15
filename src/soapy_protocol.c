@@ -495,7 +495,8 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
       f += (long long)cw_keyer_sidetone_frequency;
     }
 
-    f += frequency_calibration - vfo[v].lo;
+    // f += frequency_calibration - vfo[v].lo;
+    f = (f - vfo[v].lo) * (1.0 + ppm_factor / 1e6);
     int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
 
     if (rc != 0) {
@@ -514,7 +515,8 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
       f += vfo[v].xit;
     }
 
-    f += frequency_calibration - vfo[v].lo;
+    // f += frequency_calibration - vfo[v].lo;
+    f = (f - vfo[v].lo) * (1.0 + ppm_factor / 1e6);
     //t_print("soapy_protocol_set_tx_frequency: %f\n",f);
     int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
 

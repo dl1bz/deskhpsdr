@@ -1477,7 +1477,8 @@ static long long channel_freq(int chan) {
     }
 
     // if (vfo[vfonum].xit_enabled) { freq += vfo[vfonum].xit; }
-    freq += frequency_calibration - vfo[vfonum].lo;
+    // freq += frequency_calibration - vfo[vfonum].lo;
+    freq = (freq - vfo[vfonum].lo) * (1.0 + ppm_factor / 1e6);
   } else {
     //
     // determine RX frequency associated with VFO #vfonum
@@ -1493,7 +1494,8 @@ static long long channel_freq(int chan) {
       freq += (long long)cw_keyer_sidetone_frequency;
     }
 
-    freq += frequency_calibration - vfo[vfonum].lo;
+    // freq += frequency_calibration - vfo[vfonum].lo;
+    freq = (freq - vfo[vfonum].lo) * (1.0 + ppm_factor / 1e6);
   }
 
   // freq += frequency_calibration;
@@ -2629,7 +2631,8 @@ void ozy_send_buffer() {
       //  txfreq is the "on the air" frequency (for out-of-band checking)
       //
       long long DUCfrequency = channel_freq(-1);
-      long long txfreq = DUCfrequency + vfo[txvfo].lo - frequency_calibration;
+      // long long txfreq = DUCfrequency + vfo[txvfo].lo - frequency_calibration;
+      long long txfreq = (long long)((DUCfrequency + vfo[txvfo].lo) / (1.0 + ppm_factor / 1e6));
 
       //
       // Fast "out-of-band" check. If out-of-band, set TX drive to zero.

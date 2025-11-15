@@ -133,6 +133,7 @@ static GtkWidget *toolbar;
 
 // RX and TX calibration
 long long frequency_calibration = 0LL;
+double ppm_factor = 0.0;
 
 int sat_mode;
 
@@ -3065,6 +3066,7 @@ static void radio_restore_state() {
   GetPropF0("vox_threshold",                                 vox_threshold);
   GetPropF0("vox_hang",                                      vox_hang);
   GetPropI0("calibration",                                   frequency_calibration);
+  GetPropF0("ppm_factor",                                    ppm_factor);
   GetPropI0("receivers",                                     receivers);
   GetPropI0("iqswap",                                        iqswap);
   GetPropI0("rx_gain_calibration",                           rx_gain_calibration);
@@ -3302,7 +3304,8 @@ void radio_save_state() {
   SetPropI0("vox_enabled",                                   vox_enabled);
   SetPropF0("vox_threshold",                                 vox_threshold);
   SetPropF0("vox_hang",                                      vox_hang);
-  SetPropI0("calibration",                                   frequency_calibration);
+  // SetPropI0("calibration",                                frequency_calibration);
+  SetPropF0("ppm_factor",                                    ppm_factor);
   SetPropI0("receivers",                                     receivers);
   SetPropI0("iqswap",                                        iqswap);
   SetPropI0("rx_gain_calibration",                           rx_gain_calibration);

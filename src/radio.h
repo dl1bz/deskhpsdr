@@ -58,6 +58,7 @@ extern gboolean radio_is_remote;
 extern GtkWidget *fixed;
 
 extern long long frequency_calibration;
+extern double ppm_factor;
 
 enum _filter_board_enum {
   NO_FILTER_BOARD = 0,
