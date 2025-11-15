@@ -147,6 +147,7 @@ static void enforce_x11_backend_policy(void) {
   } else {
     g_setenv("GDK_BACKEND", "x11", TRUE);
     gdk_set_allowed_backends("x11");
+    g_setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", TRUE);
     use_wayland = 0;
   }
 

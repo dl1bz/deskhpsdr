@@ -1107,6 +1107,7 @@ static void linux_open_webview_window_with_id(
                          g_free, NULL);
   }
 
+  // g_setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", TRUE);
   GtkWidget *window = g_hash_table_lookup(linux_dock_windows, id);
 
   if (window) {
