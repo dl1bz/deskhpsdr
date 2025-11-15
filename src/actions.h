@@ -34,6 +34,9 @@ enum ACTION {
   AGC_GAIN,
   AGC_GAIN_RX1,
   AGC_GAIN_RX2,
+#ifdef __APPLE__
+  ATU_WIN,
+#endif
   MENU_AGC,
   ANF,
   ATTENUATION,

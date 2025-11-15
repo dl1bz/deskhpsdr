@@ -561,7 +561,7 @@ SYSLIBS=-lrt
 endif
 
 ifeq ($(UNAME_S), Darwin)
-SYSLIBS=-framework IOKit
+SYSLIBS=-framework IOKit -framework Cocoa -framework WebKit
 endif
 
 ##############################################################################
@@ -600,6 +600,13 @@ else
 endif
 
 .m.o:
+ifeq ($(GDB), ON)
+	$(COMPILE) -g -c -o $@ $<
+else
+	$(COMPILE) -c -o $@ $<
+endif
+
+%.o: %.mm
 ifeq ($(GDB), ON)
 	$(COMPILE) -g -c -o $@ $<
 else
@@ -871,6 +878,10 @@ src/vox_menu.o \
 src/xvtr_menu.o \
 src/waterfall.o \
 src/zoompan.o
+
+ifeq ($(UNAME_S), Darwin)
+	OBJS += src/macos_webview.o
+endif
 
 ##############################################################################
 #

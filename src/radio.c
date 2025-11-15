@@ -98,6 +98,8 @@
   static int dock_guard_pixels = 0;  // wird zur Laufzeit bestimmt
 #endif
 
+#include "macos_webview.h"
+
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
 
@@ -1029,6 +1031,102 @@ gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
 static void hide_clicked(GtkButton *btn, gpointer data) {
   (void)btn;
   hideall_cb(NULL, NULL, data);
+}
+
+/*
+// bezogen auf Bildschirm
+static void open_atu_window(void) {
+  GdkDisplay *display = gdk_display_get_default();
+  GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
+
+  int width  = 0;
+  int height = 0;
+
+  if (monitor) {
+    GdkRectangle geometry;
+    gdk_monitor_get_geometry(monitor, &geometry);
+
+    width  = geometry.width;
+    height = geometry.height;
+    // Jetzt hast du die Bildschirmauflösung
+  }
+
+  // Fenstergröße
+  const int win_w = 430;
+  const int win_h = 430;
+
+  // Rechts oben platzieren
+  int pos_x = (width  > win_w) ? (width  - win_w) : 0;
+  int pos_y = (height > win_h) ? (height - win_h) : 0;
+
+#ifdef __APPLE__
+  macos_open_webview_window(
+    "http://192.168.253.95:8801",
+    "ATU Control by DL1BZ",
+    pos_x, pos_y, // X/Y
+    430, 430    // W/H
+  );
+#else
+    // unter Linux/Windows ggf. ignorieren oder Log ausgeben
+#endif
+}
+*/
+
+// bezogen auf top_window
+void open_atu_window(GtkWindow *top_window) {
+  // 1. Monitor-Geometrie holen (primärer Monitor)
+  GdkDisplay  *display = gdk_display_get_default();
+  GdkMonitor  *monitor = gdk_display_get_primary_monitor(display);
+
+  if (!monitor) {
+    return; // defensiv
+  }
+
+  GdkRectangle mgeo;
+  gdk_monitor_get_geometry(monitor, &mgeo);
+  // mgeo.x/mgeo.y = Ursprung (oben-links) dieses Monitors
+  // mgeo.width/height = Größe
+  // 2. GTK-Top-Window-Position/-Größe (oben-links)
+  int win_x = 0, win_y = 0;
+  int win_w = 0, win_h = 0;
+  gtk_window_get_position(top_window, &win_x, &win_y);
+  gtk_window_get_size(top_window, &win_w, &win_h);
+  t_print("%s: win_x=%d win_y=%d win_w=%d win_h=%d\n",
+          __FUNCTION__, win_x, win_y, win_w, win_h);
+  // 3. WebView-Fenstergröße
+  const int wv_w = 430;
+  const int wv_h = 430;
+  // 4. Position des GTK-Fensters relativ zum Monitor bestimmen
+  int rel_x = win_x - mgeo.x; // Abstand von linker Monitor-Kante
+  int rel_y = win_y - mgeo.y; // Abstand von oberer Monitor-Kante
+  // Rechts neben dem GTK-Fenster (im GDK-System, oben-links)
+  int right_x_rel = rel_x + win_w;
+  int top_y_rel   = rel_y;
+  // 5. Auf Cocoa-System (unten-links) mappen
+  int screen_height = mgeo.height;
+  int cocoa_x = mgeo.x + right_x_rel;
+  int cocoa_y = mgeo.y + (screen_height - top_y_rel - wv_h);
+
+  // 6. Clamping, damit wir nicht außerhalb landen
+  if (cocoa_x + wv_w > mgeo.x + mgeo.width) {
+    cocoa_x = mgeo.x + mgeo.width - wv_w;
+  }
+
+  if (cocoa_y < mgeo.y) {
+    cocoa_y = mgeo.y;
+  }
+
+#ifdef __APPLE__
+  macos_open_webview_window_with_id(
+    "atu",
+    "http://192.168.253.95:8801",
+    "ATU Control by DL1BZ",
+    cocoa_x,
+    cocoa_y,
+    wv_w,
+    wv_h
+  );
+#endif
 }
 
 static void radio_create_visual() {

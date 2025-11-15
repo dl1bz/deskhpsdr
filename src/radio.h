@@ -377,6 +377,7 @@ extern void   reassign_pa_trim(void);
 extern int    index_rf_gain(void);
 extern int    index_if_gain(void);
 extern void   destroy_widget_safe(GtkWidget **pwidget);
+extern void   open_atu_window(GtkWindow *top_window);
 
 extern int compare_doubles(const void *a, const void *b);
 

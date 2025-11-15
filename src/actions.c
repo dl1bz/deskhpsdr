@@ -71,6 +71,9 @@ ACTION_TABLE ActionTable[] = {
   {AGC_GAIN,            "AGC Gain",             "AGCGain",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {AGC_GAIN_RX1,        "AGC Gain\nRX1",        "AGCGain1",     MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {AGC_GAIN_RX2,        "AGC Gain\nRX2",        "AGCGain2",     MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
+#ifdef __APPLE__
+  {ATU_WIN,             "ATU\nWindow",          "ATU-WIN",      TYPE_NONE},
+#endif
   {MENU_AGC,            "AGC\nMenu",            "AGC-M",        MIDI_KEY   | CONTROLLER_SWITCH},
   {ANF,                 "ANF",                  "ANF",          MIDI_KEY   | CONTROLLER_SWITCH},
   {ATTENUATION,         "Atten",                "ATTEN",        MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -485,6 +488,17 @@ int process_action(void *data) {
     }
 
     break;
+#ifdef __APPLE__
+
+  case ATU_WIN:
+    if (a->mode == PRESSED) {
+      if (can_transmit) {
+        open_atu_window(GTK_WINDOW(top_window));
+      }
+    }
+
+    break;
+#endif
 
   case ANF:
     if (a->mode == PRESSED) {
