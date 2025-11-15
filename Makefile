@@ -536,8 +536,29 @@ CPP_SOURCES += src/tci.c
 #
 ##############################################################################
 
+# ifeq ($(UNAME_S), Linux)
+# WEBKIT_PKG := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1 || echo webkit2gtk-4.0)
+# GTKINCLUDE := $(shell $(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG))
+# GTKLIBS    := $(shell $(PKG_CONFIG) --libs   gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG))
+# endif
+
+# ifeq ($(UNAME_S), Darwin)
+# GTKINCLUDE := $(shell $(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0)
+# GTKLIBS    := $(shell $(PKG_CONFIG) --libs   gtk+-3.0 glib-2.0 gio-2.0)
+# endif
+
+ifeq ($(UNAME_S), Linux)
+# WebKit-Version automatisch ermitteln: 4.1 (Trixie) oder Fallback 4.0 (Bookworm)
+WEBKIT_PKG := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1 || echo webkit2gtk-4.0)
+GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG)`
+GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG)`
+endif
+
+ifeq ($(UNAME_S), Darwin)
 GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0`
 GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0 gio-2.0`
+endif
+
 CPP_INCLUDE += $(GTKINCLUDE)
 
 ##############################################################################

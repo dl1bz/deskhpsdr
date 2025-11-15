@@ -98,6 +98,11 @@
   static int dock_guard_pixels = 0;  // wird zur Laufzeit bestimmt
 #endif
 
+#ifdef __linux__
+  #include <webkit2/webkit2.h>
+  static GtkWidget *atu_window = NULL;
+#endif
+
 #include "macos_webview.h"
 
 #define min(x,y) (x<y?x:y)
@@ -1126,6 +1131,28 @@ void open_atu_window(GtkWindow *top_window) {
     wv_w,
     wv_h
   );
+#endif
+#ifdef __linux__
+
+  if (atu_window) {
+    gtk_window_present(GTK_WINDOW(atu_window));
+    return;
+  }
+
+  atu_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_default_size(GTK_WINDOW(atu_window), wv_w, wv_h);
+  gtk_window_set_title(GTK_WINDOW(atu_window), "ATU Control by DL1BZ");
+  WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  gtk_container_add(GTK_CONTAINER(atu_window), GTK_WIDGET(web_view));
+  webkit_web_view_load_uri(web_view, "http://192.168.253.95:8801");
+  /* Linux-Fenster rechts neben das Hauptfenster setzen */
+  int linux_x = win_x + win_w;   // direkt rechts vom GTK-Fenster
+  int linux_y = win_y;           // gleiche Oberkante
+  gtk_window_move(GTK_WINDOW(atu_window), linux_x, linux_y);
+  g_signal_connect(atu_window, "destroy",
+                   G_CALLBACK(gtk_widget_destroyed),
+                   &atu_window);
+  gtk_widget_show_all(atu_window);
 #endif
 }
 
