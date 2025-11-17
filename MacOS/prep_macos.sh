@@ -14,6 +14,26 @@
 #
 ######################################################
 
+#
+# This installs the "command line tools", these are necessary to install the
+# homebrew universe
+#
+# xcode-select --install
+
+if ! xcode-select -p >/dev/null 2>&1; then
+    read -p "Xcode command line tools not installed, but required. Install now? (Y/n) " answer_clt
+    case "$answer_clt" in
+        [Nn])
+            echo "Xcode CLT will be not installed. Abort script prep_macos.sh ..."
+            exit 1
+            ;;
+        *)
+            echo "Install Xcode command line tools..."
+            xcode-select --install
+            ;;
+    esac
+fi
+
 ################################################################
 #
 # a) MacOS does not have "realpath" so we need to fiddle around
@@ -28,11 +48,28 @@ THISDIR="$(cd "$(dirname "$0")" && pwd -P)"
 #    (this does no harm if HomeBrew is already installed)
 #
 ################################################################
-  
+
 #
 # This installes the core of the homebrew universe
 #
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+# updated install URL, show https://brew.sh/
+#
+# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+if ! command -v brew >/dev/null 2>&1; then
+    echo "Homebrew is not installed."
+    read -p "Install Homebrew now ? (Y/n) " answer_hb
+    case "$answer_hb" in
+        [Nn])
+            echo "Homebrew will not be installed. Abort script prep_macos.sh ..."
+            exit 1
+            ;;
+        *)
+            echo "Install Homebrew now..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            ;;
+    esac
+fi
 
 #
 # At this point, there is a "brew" command either in /usr/local/bin (Intel Mac) or in
@@ -153,6 +190,9 @@ $BREW install python-setuptools
 #
 $BREW tap pothosware/pothos
 $BREW reinstall soapysdr
+#
+# We don't install specific Soapy device support anymore, that's users own task !
+#
 # $BREW reinstall pothosware/pothos/soapyplutosdr
 # $BREW reinstall pothosware/pothos/limesuite
 # $BREW reinstall pothosware/pothos/soapyrtlsdr
@@ -161,10 +201,3 @@ $BREW reinstall soapysdr
 # $BREW reinstall pothosware/pothos/soapyhackrf
 # $BREW reinstall pothosware/pothos/soapyredpitaya
 # $BREW reinstall pothosware/pothos/soapyrtlsdr
-
-################################################################
-#
-# This is for PrivacyProtection
-#
-################################################################
-$BREW analytics off
