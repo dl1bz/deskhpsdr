@@ -1308,7 +1308,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_move_to(cr, 60, 30);
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_set_font_size(cr, 22);
-    snprintf(_text, 32, "%s", own_callsign);
+    snprintf(_text, sizeof(_text), "%s", own_callsign);
     cairo_show_text(cr, _text);
   }
 

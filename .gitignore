@@ -27,12 +27,14 @@ LINUX/rigctld_deskhpsdr
 LINUX/SoapySDR
 LINUX/SoapyPlutoSDR
 LINUX/SoapyRTLSDR
-wdsp/WDSP_Guide.pdf
 wdsp-1.27/libwdsp.a
 wdsp-1.27/*.o
 wdsp-1.28/libwdsp.a
 wdsp-1.28/*.o
 libsolar/libsolar.a
+libsolar/*.o
+libtelnet/libtelnet.a
+libtelnet/*.o
 make.config.deskhpsdr
 .vscode/*
 src/.vscode/*

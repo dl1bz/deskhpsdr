@@ -58,6 +58,7 @@
 #include "fft_menu.h"
 #include "main.h"
 #include "actions.h"
+#include "extras_menu.h"
 #include "gpio.h"
 #include "old_protocol.h"
 #include "new_protocol.h"
@@ -218,6 +219,13 @@ static gboolean oc_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) 
   oc_menu(top_window);
   return TRUE;
 }
+
+static gboolean extras_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  cleanup();
+  extras_menu(top_window);
+  return TRUE;
+}
+
 
 static gboolean xvtr_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   cleanup();
@@ -668,6 +676,11 @@ void new_menu() {
       gtk_grid_attach(GTK_GRID(grid), oc_b, col, row, 1, 1);
       row++;
     }
+
+    GtkWidget *extras_b = gtk_button_new_with_label("Extras");
+    g_signal_connect (extras_b, "button-press-event", G_CALLBACK(extras_cb), NULL);
+    gtk_grid_attach(GTK_GRID(grid), extras_b, col, row, 1, 1);
+    row++;
 
     if (row > maxrow) { maxrow = row; }
 

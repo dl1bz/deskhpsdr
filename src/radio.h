@@ -186,7 +186,20 @@ struct audio_profile {
 };
 
 extern struct audio_profile mic_prof;
-extern gchar own_callsign[32];
+extern char own_callsign[32];
+extern char dxc_login[16];
+extern char dxc_address[32];
+extern long int dxc_port;
+extern int dxcwin_x;
+extern int dxcwin_y;
+extern int dxcwin_w;
+extern int dxcwin_h;
+extern int dxcwin_open;
+extern int atuwin_wv_w;
+extern int atuwin_wv_h;
+extern char atuwin_TITLE[32];
+extern char atuwin_URL[64];
+extern char atuwin_ACTION[9];
 extern int autogain_enabled;
 extern int autogain_time_enabled;
 
@@ -377,7 +390,7 @@ extern void   reassign_pa_trim(void);
 extern int    index_rf_gain(void);
 extern int    index_if_gain(void);
 extern void   destroy_widget_safe(GtkWidget **pwidget);
-extern void   open_atu_window(GtkWindow *top_window);
+extern void   open_atu_window(GtkWindow *top_window,  const char *win_title, const char *win_url);
 
 extern int compare_doubles(const void *a, const void *b);
 

@@ -233,7 +233,20 @@ int mic_input_xlr = 0;
 struct audio_profile mic_prof = {0, {"NOMIC", "NOMIC", "NOMIC"}};
 int autogain_enabled = 0;
 int autogain_time_enabled = 0;
-gchar own_callsign[32] = "YOUR_CALLSIGN";
+char own_callsign[32] = "YOUR_CALLSIGN";
+char dxc_login[16] = "YOUR_CALLSIGN";
+char dxc_address[32] = "db0erf.de";
+long int dxc_port = 41113;
+int dxcwin_x = -1;
+int dxcwin_y = -1;
+int dxcwin_w = -1;
+int dxcwin_h = -1;
+int dxcwin_open = 0;
+int atuwin_wv_w = 430;
+int atuwin_wv_h = 430;
+char atuwin_TITLE[32] = "User Win Title";
+char atuwin_URL[64] = "https://bsdworld.org/DXCC/cqzone/14/latest.webp";
+char atuwin_ACTION[9] = "USER-WIN";
 int receivers;
 
 ADC adc[2];
@@ -1135,7 +1148,7 @@ static void linux_open_webview_window_with_id(
 #endif
 
 // bezogen auf top_window
-void open_atu_window(GtkWindow *top_window) {
+void open_atu_window(GtkWindow *top_window,  const char *win_title, const char *win_url) {
   // 1. Monitor-Geometrie holen (primärer Monitor)
   GdkDisplay  *display = gdk_display_get_default();
   GdkMonitor  *monitor = gdk_display_get_primary_monitor(display);
@@ -1150,8 +1163,8 @@ void open_atu_window(GtkWindow *top_window) {
   // mgeo.width/height = Größe
   // 2. GTK-Top-Window-Position/-Größe (oben-links)
   const char *win_id    = "atu";
-  const char *win_title = "ATU Control by DL1BZ";
-  const char *win_url   = "http://192.168.253.95:8801";
+  // const char *win_title = "ATU Control by DL1BZ";
+  // const char *win_url   = "http://192.168.253.95:8801";
   int win_x = 0, win_y = 0;
   int win_w = 0, win_h = 0;
   gtk_window_get_position(top_window, &win_x, &win_y);
@@ -1159,8 +1172,8 @@ void open_atu_window(GtkWindow *top_window) {
   t_print("%s: win_x=%d win_y=%d win_w=%d win_h=%d\n",
           __FUNCTION__, win_x, win_y, win_w, win_h);
   // 3. WebView-Fenstergröße
-  const int wv_w = 430;
-  const int wv_h = 430;
+  // int wv_w = 430;
+  // int wv_h = 430;
   // 4. Position des GTK-Fensters relativ zum Monitor bestimmen
   int rel_x = win_x - mgeo.x; // Abstand von linker Monitor-Kante
   int rel_y = win_y - mgeo.y; // Abstand von oberer Monitor-Kante
@@ -1170,11 +1183,11 @@ void open_atu_window(GtkWindow *top_window) {
   // 5. Auf Cocoa-System (unten-links) mappen
   int screen_height = mgeo.height;
   int cocoa_x = mgeo.x + right_x_rel;
-  int cocoa_y = mgeo.y + (screen_height - top_y_rel - wv_h);
+  int cocoa_y = mgeo.y + (screen_height - top_y_rel - atuwin_wv_h);
 
   // 6. Clamping, damit wir nicht außerhalb landen
-  if (cocoa_x + wv_w > mgeo.x + mgeo.width) {
-    cocoa_x = mgeo.x + mgeo.width - wv_w;
+  if (cocoa_x + atuwin_wv_w > mgeo.x + mgeo.width) {
+    cocoa_x = mgeo.x + mgeo.width - atuwin_wv_w;
   }
 
   if (cocoa_y < mgeo.y) {
@@ -1188,8 +1201,8 @@ void open_atu_window(GtkWindow *top_window) {
     win_title,
     cocoa_x,
     cocoa_y,
-    wv_w,
-    wv_h
+    atuwin_wv_w,
+    atuwin_wv_h
   );
 #endif
 #ifdef __linux__
@@ -1201,8 +1214,8 @@ void open_atu_window(GtkWindow *top_window) {
     win_title,
     linux_x,
     linux_y,
-    wv_w,
-    wv_h
+    atuwin_wv_w,
+    atuwin_wv_h
   );
 #endif
 }
@@ -3302,6 +3315,18 @@ static void radio_restore_state() {
   GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
   GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
   GetPropS0("own_callsign",                                own_callsign);
+  GetPropS0("dxc_login",                                   dxc_login);
+  GetPropS0("dxc_address",                                 dxc_address);
+  GetPropI0("dxc_port",                                    dxc_port);
+  GetPropI0("dxcwin_x",                                    dxcwin_x);
+  GetPropI0("dxcwin_y",                                    dxcwin_y);
+  GetPropI0("dxcwin_w",                                    dxcwin_w);
+  GetPropI0("dxcwin_h",                                    dxcwin_h);
+  GetPropI0("atuwin_wv_w",                                 atuwin_wv_w);
+  GetPropI0("atuwin_wv_h",                                 atuwin_wv_h);
+  GetPropS0("atuwin_TITLE",                                atuwin_TITLE);
+  GetPropS0("atuwin_URL",                                  atuwin_URL);
+  GetPropS0("atuwin_ACTION",                               atuwin_ACTION);
 
   for (int i = 0; i < n_adc; i++) {
     GetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
@@ -3532,6 +3557,18 @@ void radio_save_state() {
   SetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
   SetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1, SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
   SetPropS0("own_callsign",                                own_callsign);
+  SetPropS0("dxc_login",                                   dxc_login);
+  SetPropS0("dxc_address",                                 dxc_address);
+  SetPropI0("dxc_port",                                    dxc_port);
+  SetPropI0("dxcwin_x",                                    dxcwin_x);
+  SetPropI0("dxcwin_y",                                    dxcwin_y);
+  SetPropI0("dxcwin_w",                                    dxcwin_w);
+  SetPropI0("dxcwin_h",                                    dxcwin_h);
+  SetPropI0("atuwin_wv_w",                                 atuwin_wv_w);
+  SetPropI0("atuwin_wv_h",                                 atuwin_wv_h);
+  SetPropS0("atuwin_TITLE",                                atuwin_TITLE);
+  SetPropS0("atuwin_URL",                                  atuwin_URL);
+  SetPropS0("atuwin_ACTION",                               atuwin_ACTION);
 
   for (int i = 0; i < n_adc; i++) {
     SetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);

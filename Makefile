@@ -180,6 +180,9 @@ WDSP_LIBS=wdsp-1.28/libwdsp.a `$(PKG_CONFIG) --libs fftw3`
 SOLAR_INCLUDE=-I./libsolar
 SOLAR_LIBS=libsolar/libsolar.a `$(PKG_CONFIG) --libs libcurl libxml-2.0`
 
+TELNET_INCLUDE=-I./libtelnet
+TELNET_LIBS=libtelnet/libtelnet.a
+
 ##############################################################################
 #
 # Add support for extended noise reduction, if requested
@@ -196,6 +199,7 @@ endif
 CPP_DEFINES += -DEXTNR
 CPP_INCLUDE +=$(WDSP_INCLUDE)
 CPP_INCLUDE +=$(SOLAR_INCLUDE)
+CPP_INCLUDE +=$(TELNET_INCLUDE)
 
 ##############################################################################
 #
@@ -628,7 +632,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
 
-INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
+INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 
 .c.o:
@@ -659,7 +663,7 @@ endif
 ##############################################################################
 
 LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTKLIBS) $(GPIO_LIBS) $(SOAPYSDRLIBS) $(STEMLAB_LIBS) \
-	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) -lm $(SYSLIBS)
+	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lm $(SYSLIBS)
 
 ##############################################################################
 #
@@ -693,10 +697,12 @@ src/discovered.c \
 src/discovery.c \
 src/display_menu.c \
 src/diversity_menu.c \
+src/dxcluster.c \
 src/encoder_menu.c \
 src/equalizer_menu.c \
 src/exit_menu.c \
 src/ext.c \
+src/extras_menu.c \
 src/fft_menu.c \
 src/filter.c \
 src/filter_menu.c \
@@ -780,10 +786,12 @@ src/discovered.h \
 src/discovery.h \
 src/display_menu.h \
 src/diversity_menu.h \
+src/dxcluster.h \
 src/encoder_menu.h \
 src/equalizer_menu.h \
 src/exit_menu.h \
 src/ext.h \
+src/extras_menu.h \
 src/fft_menu.h \
 src/filter.h \
 src/filter_menu.h \
@@ -861,10 +869,12 @@ src/discovered.o \
 src/discovery.o \
 src/display_menu.o \
 src/diversity_menu.o \
+src/dxcluster.o \
 src/encoder_menu.o \
 src/equalizer_menu.o \
 src/exit_menu.o \
 src/ext.o \
+src/extras_menu.o \
 src/fft_menu.o \
 src/filter.o \
 src/filter_menu.o \
@@ -940,6 +950,9 @@ endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
 endif
+ifneq (z$(TELNET_INCLUDE), z)
+	@+make -C libtelnet
+endif
 	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
 		$(TCI_OBJS) $(LIBS)
@@ -994,10 +1007,9 @@ clean:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp ]; then $(MAKE) -C wdsp clean; fi
-	@if [ -d wdsp-1.27 ]; then $(MAKE) -C wdsp-1.27 clean; fi
 	@if [ -d wdsp-1.28 ]; then $(MAKE) -C wdsp-1.28 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
+	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)
 	@-rm -rf $(PROGRAM).app
 endif
@@ -1009,10 +1021,9 @@ uninstall:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp ]; then $(MAKE) -C wdsp clean; fi
-	@if [ -d wdsp-1.27 ]; then $(MAKE) -C wdsp-1.27 clean; fi
 	@if [ -d wdsp-1.28 ]; then $(MAKE) -C wdsp-1.28 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
+	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 	@echo "Remove installed deskHPSDR binary..."
 ifeq ($(UNAME_S), Darwin)
 	@-rm -rf $(PROGRAM).app
@@ -1102,6 +1113,9 @@ ifneq (z$(WDSP_INCLUDE), z)
 endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
+endif
+ifneq (z$(TELNET_INCLUDE), z)
+	@+make -C libtelnet
 endif
 	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
 		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \

@@ -50,6 +50,7 @@
 #include "equalizer_menu.h"
 #include "exit_menu.h"
 #include "message.h"
+#include "dxcluster.h"
 
 //
 // The "short button text" (button_str) needs to be present in ALL cases, and must be different
@@ -71,7 +72,7 @@ ACTION_TABLE ActionTable[] = {
   {AGC_GAIN,            "AGC Gain",             "AGCGain",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {AGC_GAIN_RX1,        "AGC Gain\nRX1",        "AGCGain1",     MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {AGC_GAIN_RX2,        "AGC Gain\nRX2",        "AGCGain2",     MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
-  {ATU_WIN,             "ATU\nWindow",          "ATU-WIN",      TYPE_NONE},
+  {ATU_WIN,             atuwin_ACTION,          atuwin_ACTION,  TYPE_NONE},
   {MENU_AGC,            "AGC\nMenu",            "AGC-M",        MIDI_KEY   | CONTROLLER_SWITCH},
   {ANF,                 "ANF",                  "ANF",          MIDI_KEY   | CONTROLLER_SWITCH},
   {ATTENUATION,         "Atten",                "ATTEN",        MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -126,6 +127,7 @@ ACTION_TABLE ActionTable[] = {
   {DIV_PHASE_FINE,      "DIV Phase\nFine",      "DIVPF",        MIDI_WHEEL | CONTROLLER_ENCODER},
   {MENU_DIVERSITY,      "DIV\nMenu",            "DIV-M",        MIDI_KEY   | CONTROLLER_SWITCH},
   {DUPLEX,              "Duplex",               "DUP",          MIDI_KEY   | CONTROLLER_SWITCH},
+  {DXC_WIN,             "DXC\nWindow",          "DXC-WIN",      TYPE_NONE},
   {FILTER_MINUS,        "Filter -",             "FL-",          MIDI_KEY   | CONTROLLER_SWITCH},
   {FILTER_PLUS,         "Filter +",             "FL+",          MIDI_KEY   | CONTROLLER_SWITCH},
   {FILTER_CUT_LOW,      "Filter Cut\nLow",      "FCUTL",        MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -310,6 +312,27 @@ MULTI_TABLE multi_action_table[] = {
   {ZOOM,             "Zoom"}
 };
 
+static gboolean get_window_frame(GtkWindow *win, int *x, int *y, int *w, int *h) {
+  GdkWindow *gdk_win = gtk_widget_get_window(GTK_WIDGET(win));
+
+  if (!gdk_win) {
+    return FALSE;  /* Fenster noch nicht realisiert */
+  }
+
+  GdkRectangle rect;
+  gdk_window_get_frame_extents(gdk_win, &rect);
+
+  if (x) { *x = rect.x; }
+
+  if (y) { *y = rect.y; }
+
+  if (w) { *w = rect.width; }
+
+  if (h) { *h = rect.height; }
+
+  return TRUE;
+}
+
 static int repeat_cb(gpointer data) {
   //
   // This is periodically called to execute the same action
@@ -489,10 +512,50 @@ int process_action(void *data) {
 
   case ATU_WIN:
     if (a->mode == PRESSED) {
-      if (can_transmit) {
-        open_atu_window(GTK_WINDOW(top_window));
-      }
+      open_atu_window(GTK_WINDOW(top_window),
+                      atuwin_TITLE,
+                      atuwin_URL);
     }
+
+    break;
+
+  case DXC_WIN:
+    if (a->mode == PRESSED) {
+      int twx, twy, tww, twh;
+
+      if (dxcwin_x < 0 || dxcwin_y < 0 || dxcwin_w < 0 || dxcwin_h < 0) {
+        if (!full_screen && get_window_frame(GTK_WINDOW(top_window), &twx, &twy, &tww, &twh)) {
+          t_print("twx=%d twy=%d tww=%d twh=%d\n", twx, twy, tww, twh);
+          dxcluster_open_window(
+            dxc_address,
+            dxc_port,
+            dxc_login,
+#ifdef __APPLE__
+            tww / 2,        // width
+#else
+            tww * 2 / 3,    // width
+#endif
+            200,            // height
+            twx,            // pos_x
+#ifdef __APPLE__
+            twy + twh + 30  // pos_y
+#else
+            twy + twh       // pos_y
+#endif
+          );
+        } // calculated win
+      } else {
+        dxcluster_open_window(
+          dxc_address,
+          dxc_port,
+          dxc_login,
+          dxcwin_w,
+          dxcwin_h,
+          dxcwin_x,
+          dxcwin_y
+        );
+      }
+    } // main
 
     break;
 
