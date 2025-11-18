@@ -1,3 +1,49 @@
+===============================================================================
+Installation on Arch Linux
+===============================================================================
+
+For Arch Linux and derivatives (like Manjaro), the installation is managed
+through the provided PKGBUILD file. This is the standard way to build and
+install packages on Arch-based systems.
+
+Since this package is not yet available in the Arch User Repository (AUR),
+you can build it manually from the source.
+
+1. Prerequisites
+
+First, ensure you have the necessary tools for building packages. This is
+provided by the 'base-devel' group. You also need 'git' to clone the repository.
+
+$ sudo pacman -Syu --needed base-devel git
+
+2. Clone the repository
+
+$ git clone https://github.com/dl1bz/deskhpsdr.git
+$ cd deskhpsdr
+
+3. Build and Install
+
+Now, you can use 'makepkg' to automatically handle dependencies, build the
+source code, and install the package. The '-s' flag will install the needed
+dependencies, and the '-i' flag will install the package after a successful
+build.
+
+$ makepkg -is
+
+After the installation, deskhpsdr should be available in your application menu.
+
+4. Updating the package
+
+To update the package, navigate to the repository directory, pull the latest
+changes, and run makepkg again.
+
+$ cd deskhpsdr
+$ git pull
+$ makepkg -is
+
+===============================================================================
+
+
 Here the instructions for compile the deskHPSDR app under Linux.
 You need to have basic knowledge, how you work with the shell.
 
