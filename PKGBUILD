@@ -18,7 +18,6 @@ depends=(
     'i2c-tools'
     'libgpiod'
     'libpulse'
-    'pulseaudio'
     'libpcap'
     'json-c'
     'gnome-themes-extra'
