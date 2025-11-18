@@ -44,6 +44,8 @@ pkgver() {
 prepare() {
   cd "${srcdir}/${_pkgname}"
   sed -i 's/CFLAGS?=/CFLAGS+=/' wdsp-1.28/Makefile
+  sed -i 's|Exec=/usr/local/bin/deskhpsdr|Exec=/usr/bin/deskhpsdr|' LINUX/deskHPSDR.desktop
+  sed -i 's|Icon=/usr/local/share/deskhpsdr/trx_icon.png|Icon=deskhpsdr|' LINUX/deskHPSDR.desktop
 }
 
 build() {
