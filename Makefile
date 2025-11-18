@@ -933,10 +933,7 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 	$(COMPILE) -c -o src/version.o src/version.c
 	$(info Prevent make.config.deskhpsdr: can be changed now.)
 	$(shell git update-index --assume-unchanged make.config.deskhpsdr)
-	$(info ...continue...)
-ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-1.28
-endif
+	@+make -C wdsp-1.28 CFLAGS+="-D_GNU_SOURCE"endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
 endif

@@ -3,7 +3,7 @@
 # This one creates libwdsp.a intended for statis linking
 #
 
-CFLAGS?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses
+CFLAGS+= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses
 
 FFTWINCLUDE=`pkg-config --cflags fftw3`
 
