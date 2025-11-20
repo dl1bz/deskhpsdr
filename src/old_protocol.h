@@ -23,6 +23,7 @@
 #define _OLD_PROTOCOL_H
 
 extern void hl2_iob_set_antenna_tuner(unsigned char value);
+extern void hl2_iob_trigger_ah4_tune(void);
 
 extern void old_protocol_stop(void);
 extern void old_protocol_run(void);

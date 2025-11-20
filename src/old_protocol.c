@@ -214,6 +214,7 @@ static pthread_mutex_t send_audio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
 
 void hl2_iob_set_antenna_tuner(unsigned char value) {
+  t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __FUNCTION__, value, hl2_iob_present);
   unsigned char buffer[OZY_BUFFER_SIZE];
   int i;
 
@@ -253,6 +254,10 @@ void hl2_iob_set_antenna_tuner(unsigned char value) {
   pthread_mutex_lock(&send_ozy_mutex);
   metis_write(0x02, buffer, OZY_BUFFER_SIZE);
   pthread_mutex_unlock(&send_ozy_mutex);
+}
+
+void hl2_iob_trigger_ah4_tune(void) {
+  hl2_iob_set_antenna_tuner(1);
 }
 
 //

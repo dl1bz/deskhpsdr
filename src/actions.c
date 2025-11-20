@@ -1839,8 +1839,11 @@ int process_action(void *data) {
       int new_state = !state;           // Zielstatus
       radio_tune_update(new_state);
       update_slider_tune_drive_btn();
-      // HL2-IOB: Antennentuner mit TUNE-State koppeln
-      hl2_iob_set_antenna_tuner(new_state ? 1 : 0);
+
+      if (new_state) {
+        // nur beim Einschalten von TUNE das AH-4 Kommando feuern
+        hl2_iob_set_antenna_tuner(1);
+      }
     }
 
     break;
