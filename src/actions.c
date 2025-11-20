@@ -1835,14 +1835,18 @@ int process_action(void *data) {
 
   case TUNE_IOB:
     if (a->mode == PRESSED) {
-      int state = radio_get_tune();     // aktueller TUNE-Status
-      int new_state = !state;           // Zielstatus
-      radio_tune_update(new_state);
+      int state = radio_get_tune();
+      radio_tune_update(!state);
       update_slider_tune_drive_btn();
 
-      if (new_state) {
-        // nur beim Einschalten von TUNE das AH-4 Kommando feuern
-        hl2_iob_set_antenna_tuner(1);
+      if (device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
+        if (!state) {
+          // TUNE wird eingeschaltet → AH-4 Tune anfordern
+          hl2_iob_set_antenna_tuner(1);
+        } else {
+          // TUNE wird ausgeschaltet → AH-4 regelt selbst,
+          // kein "0" schreiben
+        }
       }
     }
 

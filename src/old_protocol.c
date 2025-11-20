@@ -256,10 +256,6 @@ void hl2_iob_set_antenna_tuner(unsigned char value) {
   pthread_mutex_unlock(&send_ozy_mutex);
 }
 
-void hl2_iob_trigger_ah4_tune(void) {
-  hl2_iob_set_antenna_tuner(1);
-}
-
 //
 // Ring buffer for outgoing samples.
 // Samples going to the radio are produced in big chunks.
