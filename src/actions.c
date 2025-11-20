@@ -32,6 +32,7 @@
 #include "radio.h"
 #include "radio_menu.h"
 #include "new_menu.h"
+#include "old_protocol.h"
 #include "new_protocol.h"
 #include "ps_menu.h"
 #include "agc.h"
@@ -233,6 +234,7 @@ ACTION_TABLE ActionTable[] = {
   {TOOLBAR7,            "ToolBar7",             "TBAR7",        MIDI_KEY   | CONTROLLER_SWITCH},
   {TOOLBAR8,            "ToolBar8",             "TBAR8",        MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE,                "Tune",                 "TUNE",         MIDI_KEY   | CONTROLLER_SWITCH},
+  {TUNE_IOB,            "Tune IOB",             "TUNE-IOB",     MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_DRIVE,          "Tune\nDrv",            "TUNDRV",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TUNE_FULL,           "Tune\nFull",           "TUNF",         MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_MEMORY,         "Tune\nMem",            "TUNM",         MIDI_KEY   | CONTROLLER_SWITCH},
@@ -1827,6 +1829,18 @@ int process_action(void *data) {
       int state = radio_get_tune();
       radio_tune_update(!state);
       update_slider_tune_drive_btn();
+    }
+
+    break;
+
+  case TUNE_IOB:
+    if (a->mode == PRESSED) {
+      int state = radio_get_tune();     // aktueller TUNE-Status
+      int new_state = !state;           // Zielstatus
+      radio_tune_update(new_state);
+      update_slider_tune_drive_btn();
+      // HL2-IOB: Antennentuner mit TUNE-State koppeln
+      hl2_iob_set_antenna_tuner(new_state ? 1 : 0);
     }
 
     break;

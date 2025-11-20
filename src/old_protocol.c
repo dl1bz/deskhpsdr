@@ -69,6 +69,10 @@
 #define C3 6
 #define C4 7
 
+#ifndef REG_ANTENNA_TUNER
+  #define REG_ANTENNA_TUNER 7
+#endif
+
 #define DATA_PORT 1024
 
 #define SYNC 0x7F
@@ -208,6 +212,48 @@ static pthread_mutex_t send_audio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 // TCP and USB-OZY since there the communication is a byte stream.
 //
 static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
+
+void hl2_iob_set_antenna_tuner(unsigned char value) {
+  unsigned char buffer[OZY_BUFFER_SIZE];
+  int i;
+
+  /* Nur auf Hermes Lite 2 aktiv werden */
+  if (device != DEVICE_HERMES_LITE2) {
+    return;
+  }
+
+  /* IO-Board nicht vorhanden → nichts tun */
+  if (!hl2_iob_present) {
+    return;
+  }
+
+  /* kompletten 512-Byte-C&C-Frame auf 0 setzen */
+  for (i = 0; i < OZY_BUFFER_SIZE; i++) {
+    buffer[i] = 0x00;
+  }
+
+  /* OZY-SYNC-Bytes setzen */
+  buffer[SYNC0] = SYNC;
+  buffer[SYNC1] = SYNC;
+  buffer[SYNC2] = SYNC;
+  /*
+   * HL2-IOB: I2C-2 write ohne ACK
+   * C0 = 0x7A       -> I2C-2 write (no ACK)
+   * C1 = 0x06       -> write
+   * C2 = 0x80|0x1d  -> I2C-Adresse des IO-Boards
+   * C3 = REG_ANTENNA_TUNER (7)
+   * C4 = value      -> zu schreibender Wert
+   */
+  buffer[C0] = 0x7A;              // I2C-2 without ACK
+  buffer[C1] = 0x06;              // write
+  buffer[C2] = 0x80 | 0x1d;       // I2C addr of HL2 IO board
+  buffer[C3] = REG_ANTENNA_TUNER; // Register 7
+  buffer[C4] = value;             // Datenbyte
+  /* Zugriff auf metis_buffer/offset serialisieren */
+  pthread_mutex_lock(&send_ozy_mutex);
+  metis_write(0x02, buffer, OZY_BUFFER_SIZE);
+  pthread_mutex_unlock(&send_ozy_mutex);
+}
 
 //
 // Ring buffer for outgoing samples.
