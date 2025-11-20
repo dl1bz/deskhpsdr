@@ -238,6 +238,9 @@ ACTION_TABLE ActionTable[] = {
   {TUNE_DRIVE,          "Tune\nDrv",            "TUNDRV",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TUNE_FULL,           "Tune\nFull",           "TUNF",         MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_MEMORY,         "Tune\nMem",            "TUNM",         MIDI_KEY   | CONTROLLER_SWITCH},
+  {AH4_START,           "AH-4\nStart",          "AH4-STRT",     MIDI_KEY   | CONTROLLER_SWITCH},
+  {AH4_READ,            "AH-4\nRead",           "AH4-READ",     TYPE_NONE},
+  {AH4_BYP,             "AH-4\nBypass",         "AH4-BYP",      TYPE_NONE},
   {DRIVE,               "TX Drive",             "TXDRV",        MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TWO_TONE,            "Two-Tone",             "2TONE",        MIDI_KEY   | CONTROLLER_SWITCH},
   {MENU_TX,             "TX\nMenu",             "TX-M",         MIDI_KEY   | CONTROLLER_SWITCH},
@@ -1833,13 +1836,14 @@ int process_action(void *data) {
 
     break;
 
+  case AH4_START:
   case TUNE_IOB:
     if (a->mode == PRESSED) {
       int state = radio_get_tune();
       radio_tune_update(!state);
       update_slider_tune_drive_btn();
 
-      if (device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
+      if (device == DEVICE_HERMES_LITE2) {
         if (!state) {
           // TUNE wird eingeschaltet → AH-4 Tune anfordern
           hl2_iob_set_antenna_tuner(1);
@@ -1847,6 +1851,34 @@ int process_action(void *data) {
           // TUNE wird ausgeschaltet → AH-4 regelt selbst,
           // kein "0" schreiben
         }
+      }
+    }
+
+    break;
+
+  case AH4_BYP:
+    if (a->mode == PRESSED) {
+      if (device == DEVICE_HERMES_LITE2) {
+        // AH-4 Bypass anfordern
+        hl2_iob_set_antenna_tuner(2);
+      }
+    }
+
+    break;
+
+  case AH4_READ:
+    if (a->mode == PRESSED) {
+      unsigned char s = hl2_iob_get_antenna_tuner_status();
+      t_print("AH4: Status raw = 0x%02X\n", s);
+
+      if (s == 0x00) {
+        t_print("AH4: Tune end (OK)\n");
+      } else if (s == 0xEE) {
+        t_print("AH4: RF needed (Transmit!)\n");
+      } else if (s >= 0xF0) {
+        t_print("AH4: Errorcode 0x%02X\n", s);
+      } else {
+        t_print("AH4: Progress status %u\n", s);
       }
     }
 
