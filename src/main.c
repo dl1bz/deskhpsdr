@@ -300,6 +300,13 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
 #endif
 
+  case GDK_KEY_F10:
+    if (main_menu == NULL) {
+      new_menu();
+    }
+
+    break;
+
   // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T
   case GDK_KEY_b:
     start_band();
