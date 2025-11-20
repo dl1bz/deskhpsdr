@@ -213,6 +213,12 @@ static pthread_mutex_t send_audio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 //
 static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
 
+static unsigned char hl2_iob_tuner_status = 0;
+
+unsigned char hl2_iob_get_antenna_tuner_status(void) {
+  return hl2_iob_tuner_status;
+}
+
 void hl2_iob_set_antenna_tuner(unsigned char value) {
   t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __FUNCTION__, value, hl2_iob_present);
   unsigned char buffer[OZY_BUFFER_SIZE];
@@ -1659,18 +1665,32 @@ static void process_control_bytes() {
     int addr = (control_in[0] & 0x7E) >> 1;
 
     //
-    // Since querying the IOB is the only "I2C read" we do, the ACK can only refer
-    // to the IOB query.
+    // 1) Board-Detect über REG_BOARD_ID (0x41): alle Datenbytes = 0xF1
     //
-    if (addr == 0x3D && control_in[1] == 0xF1
-        && control_in[2] == 0xF1
-        && control_in[3] == 0xF1
-        && control_in[4] == 0xF1
-        && !hl2_iob_present) {
+    if (!hl2_iob_present &&
+        addr == 0x3D &&
+        control_in[1] == 0xF1 &&
+        control_in[2] == 0xF1 &&
+        control_in[3] == 0xF1 &&
+        control_in[4] == 0xF1) {
       t_print("HL2IOB: board detected\n");
       hl2_iob_present = 1;
+    } else if (hl2_iob_present) {
+      //
+      // 2) Alle weiteren I2C-Reads gehen ans IO-Board.
+      //    Laut HL2IOBoard-Doku liefert ein Read von REG_ANTENNA_TUNER
+      //    das Register selbst plus die nächsten drei Register.
+      //    Das erste Byte ist der Tuner-Status:
+      //      0x00 -> Tune erfolgreich
+      //      0xEE -> "send RF" (Tastung aktiv halten)
+      //      >=0xF0 -> Fehlercode
+      //
+      hl2_iob_tuner_status = control_in[1];
     }
 
+    //
+    // ACK-Pakete sind rein für das IO-Board – hier fertig behandeln.
+    //
     return;
   }
 
@@ -3081,22 +3101,13 @@ void ozy_send_buffer() {
         break;
 
       case 1:
-
-        //
-        // If there is no HL2 IO board presend, do not query
-        // at high rate. We arrive here every 75 msec,
-        // so it is sufficient to do the query once in 25
-        // visits (every 2 seconds). If we do not send a query,
-        // a default PTT hang/TX latency packet will be sent.
-        //
         if (hl2_query_count == 0) {
           output_buffer[C0] = 0xFA;       // I2C-2 *with* ACK
           output_buffer[C1] = 0x07;       // read
-          output_buffer[C2] = 0x80 | 0x41; // i2c addr
+          output_buffer[C2] = 0x80 | 0x41;// i2c addr
           output_buffer[C3] = 0x00;       // register
           output_buffer[C4] = 0x00;       // data (ignored on read)
           hl2_query_count = 25;
-          //t_print("HL2IOB: Queried board ID\n");
         } else {
           hl2_query_count--;
         }
@@ -3223,8 +3234,25 @@ void ozy_send_buffer() {
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 14;                           // REG_FCODE_RX2
         output_buffer[C4] = hl2_iob_rx2_code;             // one-byte code
-        hl2_command_loop = 0;
+        hl2_command_loop = 11;
         //t_print("HL2IOB: Sent RX2 freq code %d\n", hl2_iob_rx2_code);
+        break;
+
+      case 11:
+        //
+        // HL2-IOB: REG_ANTENNA_TUNER (AH-4 Status) lesen
+        //  - C0 = 0xFA: I2C-2 mit ACK
+        //  - C1 = 0x07: read
+        //  - C2 = 0x80 | 0x1d: IO-Board I2C-Adresse
+        //  - C3 = REG_ANTENNA_TUNER (7)
+        //  - C4 = dummy (ignored on read)
+        //
+        output_buffer[C0] = 0xFA;                         // I2C-2 *with* ACK
+        output_buffer[C1] = 0x07;                         // read
+        output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr (HL2 IO board)
+        output_buffer[C3] = REG_ANTENNA_TUNER;            // tuner status register
+        output_buffer[C4] = 0x00;                         // data (ignored on read)
+        hl2_command_loop = 0;
         break;
 
       case 20:
