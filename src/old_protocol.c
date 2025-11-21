@@ -1663,6 +1663,8 @@ static void process_control_bytes() {
     // a HL2 IO-board.
     //
     int addr = (control_in[0] & 0x7E) >> 1;
+    t_print("HL2IOB-ACK: addr=0x%02X C1=0x%02X C2=0x%02X C3=0x%02X C4=0x%02X\n",
+            addr, control_in[1], control_in[2], control_in[3], control_in[4]);
 
     //
     // 1) Board-Detect über REG_BOARD_ID (0x41): alle Datenbytes = 0xF1
@@ -1675,7 +1677,7 @@ static void process_control_bytes() {
         control_in[4] == 0xF1) {
       t_print("HL2IOB: board detected\n");
       hl2_iob_present = 1;
-    } else if (hl2_iob_present) {
+    } else if (hl2_iob_present && addr == 0x3D) {
       //
       // 2) Alle weiteren I2C-Reads gehen ans IO-Board.
       //    Laut HL2IOBoard-Doku liefert ein Read von REG_ANTENNA_TUNER
@@ -1686,6 +1688,7 @@ static void process_control_bytes() {
       //      >=0xF0 -> Fehlercode
       //
       hl2_iob_tuner_status = control_in[1];
+      t_print("HL2IOB: tuner status = 0x%02X\n", hl2_iob_tuner_status);
     }
 
     //
