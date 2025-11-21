@@ -1663,8 +1663,8 @@ static void process_control_bytes() {
     // a HL2 IO-board.
     //
     int addr = (control_in[0] & 0x7E) >> 1;
-    t_print("HL2IOB-ACK: addr=0x%02X C1=0x%02X C2=0x%02X C3=0x%02X C4=0x%02X\n",
-            addr, control_in[1], control_in[2], control_in[3], control_in[4]);
+    // t_print("HL2IOB-ACK: addr=0x%02X C1=0x%02X C2=0x%02X C3=0x%02X C4=0x%02X\n",
+    //        addr, control_in[1], control_in[2], control_in[3], control_in[4]);
 
     //
     // 1) Board-Detect über REG_BOARD_ID (0x41): alle Datenbytes = 0xF1
@@ -1687,8 +1687,8 @@ static void process_control_bytes() {
       //      0xEE -> "send RF" (Tastung aktiv halten)
       //      >=0xF0 -> Fehlercode
       //
-      hl2_iob_tuner_status = control_in[1];
-      t_print("HL2IOB: tuner status = 0x%02X\n", hl2_iob_tuner_status);
+      hl2_iob_tuner_status = control_in[4];
+      t_print("HL2IOB: C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
     }
 
     //
