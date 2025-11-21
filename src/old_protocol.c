@@ -174,7 +174,7 @@ static int how_many_receivers(void);
 //
 // "HermesLite-II I/O Bord detected" flag
 //
-static int hl2_iob_present = 0;
+int hl2_iob_present = 0;
 
 #define COMMON_MERCURY_FREQUENCY 0x80
 #define PENELOPE_MIC 0x80

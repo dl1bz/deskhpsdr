@@ -22,6 +22,8 @@
 #ifndef _OLD_PROTOCOL_H
 #define _OLD_PROTOCOL_H
 
+extern int hl2_iob_present;
+
 extern void hl2_iob_set_antenna_tuner(unsigned char value);
 extern unsigned char hl2_iob_get_antenna_tuner_status(void);
 
