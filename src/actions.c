@@ -1838,20 +1838,80 @@ int process_action(void *data) {
 
   case AH4_START:
   case TUNE_IOB:
-    if (a->mode == PRESSED) {
-      int state = radio_get_tune();
-      radio_tune_update(!state);
-      update_slider_tune_drive_btn();
+    switch (a->mode) {
+    case PRESSED: {
+      int state     = radio_get_tune();
+      int new_state = !state;
 
       if (device == DEVICE_HERMES_LITE2) {
         if (!state) {
-          // TUNE wird eingeschaltet → AH-4 Tune anfordern
+          // 1. TUNE-Button gedrückt, TUNE war aus → AH-4-Sequenz starten, aber KEINE RF
           hl2_iob_set_antenna_tuner(1);
+          t_print("AH4: start sequence, wait for 0xEE\n");
+          // 2. Poll-Loop starten
+          schedule_action(AH4_START, RELATIVE, 0);
         } else {
-          // TUNE wird ausgeschaltet → AH-4 regelt selbst,
-          // kein "0" schreiben
+          // TUNE war an → User will aus, RF/TUNE sofort aus
+          radio_tune_update(0);
+          update_slider_tune_drive_btn();
+          t_print("AH4: user TUNE off\n");
         }
+      } else {
+        // Nicht-HL2: bestehendes TUNE-Verhalten unverändert lassen
+        radio_tune_update(new_state);
+        update_slider_tune_drive_btn();
       }
+
+      break;
+    }
+
+    case RELATIVE: {
+      // interner Poll-Schritt, wird nur über schedule_action() ausgelöst
+      if (device != DEVICE_HERMES_LITE2) {
+        break;
+      }
+
+      unsigned char s = hl2_iob_get_antenna_tuner_status();
+      t_print("AH4: Status raw = 0x%02X\n", s);
+
+      if (s == 0xEE) {
+        // 3./4. Warten bis 0xEE → JETZT RF aktivieren
+        if (!radio_get_tune()) {
+          radio_tune_update(1);
+          update_slider_tune_drive_btn();
+          t_print("AH4: RF on (0xEE)\n");
+        }
+
+        // weiter pollen, bis 0x00 oder Fehler kommt
+        schedule_action(AH4_START, RELATIVE, 0);
+      } else if (s == 0x00) {
+        // 5. Tune fertig (OK) → RF wieder aus
+        if (radio_get_tune()) {
+          radio_tune_update(0);
+          update_slider_tune_drive_btn();
+        }
+
+        t_print("AH4: Tune end (OK)\n");
+      } else if (s >= 0xF0) {
+        // 5. Fehler → RF aus
+        if (radio_get_tune()) {
+          radio_tune_update(0);
+          update_slider_tune_drive_btn();
+        }
+
+        t_print("AH4: Errorcode 0x%02X\n", s);
+      } else {
+        // Progress-Werte → weiter pollen, RF-Zustand unverändert lassen
+        t_print("AH4: Progress status %u\n", s);
+        schedule_action(AH4_START, RELATIVE, 0);
+      }
+
+      break;
+    }
+
+    default:
+      // RELEASED usw. ignorieren
+      break;
     }
 
     break;
