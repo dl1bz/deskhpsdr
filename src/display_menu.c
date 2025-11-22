@@ -29,6 +29,7 @@
 #include "main.h"
 #include "new_menu.h"
 #include "display_menu.h"
+#include "old_protocol.h"
 #include "radio.h"
 #include "ext.h"
 
@@ -69,6 +70,11 @@ static gboolean close_cb () {
 }
 
 static void chkbtn_clock_toggle_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
+static void chkbtn_ah4_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
@@ -629,6 +635,21 @@ void display_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_clock), display_clock);
   gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_clock, col, row, 1, 1);
   g_signal_connect(ChkBtn_clock, "toggled", G_CALLBACK(chkbtn_clock_toggle_cb), &display_clock);
+
+  //------------------------------------------------------------------------------------------------------------
+  if (can_transmit && device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
+    row++;
+    GtkWidget *ChkBtn_ah4 = gtk_check_button_new_with_label("Show AH4 state");
+    gtk_widget_set_name(ChkBtn_ah4, "stdlabel_blue");
+    // gtk_widget_set_margin_start(ChkBtn_ah4, 20);    // linker Rand (Anfang)
+    gtk_widget_set_tooltip_text(ChkBtn_ah4,
+                                "Only if IO board installed and using an AH4 ATU:\n"
+                                "If ENABLED, show AH4 state onscreen on Panadapter.");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_ah4), display_ah4);
+    gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_ah4, col, row, 1, 1);
+    g_signal_connect(ChkBtn_ah4, "toggled", G_CALLBACK(chkbtn_ah4_toggle_cb), &display_ah4);
+  }
+
   //------------------------------------------------------------------------------------------------------------
   //
   // Peaks container and controls therein

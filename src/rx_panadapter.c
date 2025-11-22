@@ -42,6 +42,7 @@
 #include "actions.h"
 #include "message.h"
 #include "toolset.h"
+#include "old_protocol.h"
 #ifdef GPIO
   #include "gpio.h"
 #endif
@@ -1324,7 +1325,13 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       double rt_rx200_w = 305.0;
       double rt_rx200_h = 60.0;
 #ifdef __WMAP__
-      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+
+      if (radio_is_transmitting()) {
+        cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+      } else {
+        cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+      }
+
 #else
       cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
 #endif
@@ -1393,7 +1400,13 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     double rt_rx_w = 255.0;
     double rt_rx_h = 60.0;
 #ifdef __WMAP__
-    cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+
+    if (radio_is_transmitting()) {
+      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+    } else {
+      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+    }
+
 #else
     cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
 #endif
@@ -1482,6 +1495,41 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, width - 300.0, 70.0);
       cairo_show_text(cr, _text);
     }
+  }
+
+  if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4 && hl2_iob_present) {
+#ifdef __WMAP__
+
+    if (radio_is_transmitting()) {
+      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+    } else {
+      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+    }
+
+#else
+    cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+#endif
+    cairo_rectangle(cr, width - 155, 75, width - 155, 20); // x, y, Breite, Höhe
+    cairo_fill(cr);
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    cairo_move_to(cr, width - 150.0, 90.0);
+    unsigned char ah4s = hl2_iob_get_antenna_tuner_status();
+    // unsigned char ah4s = 0x00; // for testing only
+    char ah4_state[16];
+
+    if (ah4s == 0x00) {
+      snprintf(ah4_state, sizeof(ah4_state), "READY");
+    } else if (ah4s == 0xEE) {
+      snprintf(ah4_state, sizeof(ah4_state), "RF sensing");
+    } else if (ah4s >= 0xF0) {
+      cairo_set_source_rgba(cr, GRAD_CORAL);
+      snprintf(ah4_state, sizeof(ah4_state), "ERROR 0x%02X", ah4s);
+    } else {
+      snprintf(ah4_state, sizeof(ah4_state), "STATE 0x%02X", ah4s);
+    }
+
+    snprintf(_text, sizeof(_text), "AH4: %s", ah4_state);
+    cairo_show_text(cr, _text);
   }
 
   if (TxInhibit) {

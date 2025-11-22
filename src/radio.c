@@ -220,6 +220,7 @@ double percent_pan_wf = 50.0;
 int display_info_bar = 0;
 int display_clock = 0;
 int display_solardata = 0;
+int display_ah4 = 0;
 char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
 
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
@@ -3159,6 +3160,7 @@ static void radio_restore_state() {
   GetPropI0("display_info_bar",                              display_info_bar);
   GetPropI0("display_clock",                                 display_clock);
   GetPropI0("display_solardata",                             display_solardata);
+  GetPropI0("display_ah4",                                   display_ah4);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
   GetPropI0("display_extra_sliders",                         display_extra_sliders);
@@ -3366,6 +3368,12 @@ static void radio_restore_state() {
     t_print("%s: using HL2: re-assign pa_trim[]\n", __FUNCTION__);
   }
 
+  if (device = DEVICE_HERMES_LITE2 && !hl2_iob_present) {
+    if (display_ah4) {
+      display_ah4 = 0;
+    }
+  }
+
   //
   // Sanity check part 2:
   //
@@ -3429,6 +3437,7 @@ void radio_save_state() {
   SetPropI0("display_info_bar",                              display_info_bar);
   SetPropI0("display_clock",                                 display_clock);
   SetPropI0("display_solardata",                             display_solardata);
+  SetPropI0("display_ah4",                                   display_ah4);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
   SetPropI0("display_extra_sliders",                         display_extra_sliders);

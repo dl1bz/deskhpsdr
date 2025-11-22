@@ -170,6 +170,7 @@ extern double percent_pan_wf;
 extern int display_info_bar;
 extern int display_clock;
 extern int display_solardata;
+extern int display_ah4;
 extern char radio_bgcolor_rgb_hex[8];
 
 extern int mic_linein;
