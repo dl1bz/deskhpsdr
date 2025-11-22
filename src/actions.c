@@ -1882,12 +1882,12 @@ int process_action(void *data) {
         break;
       }
 
-      // Nur hier gegen "kein IO-Board" absichern
+      // wenn kein IO-Board: Polling sauber abbrechen
       extern int hl2_iob_present;
 
       if (!hl2_iob_present) {
         t_print("AH4: no IO board present, abort polling\n");
-        break;                       // KEIN weiteres schedule_action -> keine Endlosschleife
+        break;
       }
 
       unsigned char s = hl2_iob_get_antenna_tuner_status();
@@ -1909,20 +1909,25 @@ int process_action(void *data) {
           radio_tune_update(0);
           update_slider_tune_drive_btn();
           t_print("AH4: Tune end (OK)\n");
+          // kein weiteres schedule_action → Zyklus beendet
         } else {
           // direkt nach Start: 0x00 = idle → weiter warten
           t_print("AH4: initial/idle 0x00, waiting for tuner activity\n");
           schedule_action(AH4_START, RELATIVE, 0);
         }
       } else if (s >= 0xF0) {
-        // Fehler → RF aus (falls an)
         if (radio_get_tune()) {
+          // echter Fehler während RF aktiv → sauber abbrechen
           radio_tune_update(0);
           update_slider_tune_drive_btn();
+          t_print("AH4: Errorcode 0x%02X (RF active, abort)\n", s);
+          // kein neues schedule_action → Zyklus beendet
+        } else {
+          // Fehlerstatus bei noch nicht aktivem TUNE/RF:
+          // als "stale error" aus vorherigem Versuch behandeln
+          t_print("AH4: stale error 0x%02X while RF off, waiting for new cycle\n", s);
+          schedule_action(AH4_START, RELATIVE, 0);
         }
-
-        t_print("AH4: Errorcode 0x%02X\n", s);
-        // KEIN neues schedule_action -> Zyklus beendet
       } else {
         // Progress-Werte → weiter pollen, RF-Zustand unverändert lassen
         t_print("AH4: Progress status %u\n", s);
