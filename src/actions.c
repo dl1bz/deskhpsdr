@@ -239,8 +239,9 @@ ACTION_TABLE ActionTable[] = {
   {TUNE_FULL,           "Tune\nFull",           "TUNF",         MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_MEMORY,         "Tune\nMem",            "TUNM",         MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_START,           "AH-4\nStart",          "AH4-STRT",     MIDI_KEY   | CONTROLLER_SWITCH},
+  {AH4_RUN,             "AH-4\nRun",            "AH4-RUN",      MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_READ,            "AH-4\nRead",           "AH4-READ",     TYPE_NONE},
-  {AH4_BYP,             "AH-4\nBypass",         "AH4-BYP",      TYPE_NONE},
+  {AH4_BYP,             "AH-4\nBypass",         "AH4-BYP",      MIDI_KEY   | CONTROLLER_SWITCH},
   {DRIVE,               "TX Drive",             "TXDRV",        MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TWO_TONE,            "Two-Tone",             "2TONE",        MIDI_KEY   | CONTROLLER_SWITCH},
   {MENU_TX,             "TX\nMenu",             "TX-M",         MIDI_KEY   | CONTROLLER_SWITCH},
@@ -1950,6 +1951,119 @@ int process_action(void *data) {
     }
 
     break;
+
+  //----------------------------------------------------------------------------------------------------------
+
+  case AH4_RUN: {
+    // Merker: nach Fehler keine neuen Starts, bis der Tuner wieder 0x00 meldet
+    static int ah4_error_lock = 0;
+
+    switch (a->mode) {
+    case PRESSED: {
+      int state     = radio_get_tune();
+      int new_state = !state;
+
+      if (device == DEVICE_HERMES_LITE2) {
+        if (!state) {
+          // TUNE war aus → neuer Tune-Versuch
+          if (ah4_error_lock) {
+            // Letzter Versuch endete im Error-State → blockieren, bis 0x00 kommt
+            t_print("AH4: error lock active, wait for status 0x00 before retry\n");
+          } else {
+            // sauberer Start: Tuner anstoßen, aber KEINE HF
+            hl2_iob_set_antenna_tuner(1);
+            t_print("AH4: start sequence, waiting for 0xEE\n");
+            schedule_action(AH4_RUN, RELATIVE, 0);
+          }
+        } else {
+          // TUNE war an → User beendet Tune manuell, HF aus
+          radio_tune_update(0);
+          update_slider_tune_drive_btn();
+          t_print("AH4: user TUNE off\n");
+        }
+      } else {
+        // Nicht-HL2 → unverändertes TUNE-Verhalten
+        radio_tune_update(new_state);
+        update_slider_tune_drive_btn();
+      }
+
+      break;
+    }
+
+    case RELATIVE: {
+      // Poll-Schritt, nur für HL2 relevant
+      if (device != DEVICE_HERMES_LITE2) {
+        break;
+      }
+
+      // Kein IO-Board → Polling beenden
+      if (!hl2_iob_present) {
+        t_print("AH4: no IO board present, abort polling\n");
+        break;
+      }
+
+      unsigned char s = hl2_iob_get_antenna_tuner_status();
+      t_print("AH4: Status raw = 0x%02X\n", s);
+
+      if (s == 0xEE) {
+        // HF erst bei 0xEE aktivieren
+        if (!radio_get_tune()) {
+          radio_tune_update(1);
+          update_slider_tune_drive_btn();
+          t_print("AH4: RF on (0xEE)\n");
+        }
+
+        // weiter pollen, bis 0x00 (OK) oder Error kommt
+        schedule_action(AH4_RUN, RELATIVE, 0);
+      } else if (s == 0x00) {
+        if (radio_get_tune()) {
+          // HF war aktiv → sauberer Abschluss
+          radio_tune_update(0);
+          update_slider_tune_drive_btn();
+          t_print("AH4: Tune end (OK)\n");
+          // hier kein weiteres schedule_action nötig
+        } else if (ah4_error_lock) {
+          // Error-State wird mit 0x00 wieder freigegeben
+          ah4_error_lock = 0;
+          t_print("AH4: status 0x00 after error, retries enabled\n");
+          // kein weiteres schedule_action; System ist wieder idle
+        } else {
+          // initiales/idle 0x00 nach Start → weiter auf Aktivität warten
+          t_print("AH4: idle 0x00, waiting for tuner activity\n");
+          schedule_action(AH4_RUN, RELATIVE, 0);
+        }
+      } else if (s >= 0xF0) {
+        // Error: HF aus, neuen Versuch sperren, bis 0x00 kommt
+        ah4_error_lock = 1;
+
+        if (radio_get_tune()) {
+          radio_tune_update(0);
+          update_slider_tune_drive_btn();
+          t_print("AH4: Errorcode 0x%02X, RF off, locked until 0x00\n", s);
+        } else {
+          t_print("AH4: Errorcode 0x%02X, locked until 0x00\n", s);
+        }
+
+        // weiter pollen, um den Übergang zurück auf 0x00 zu sehen
+        schedule_action(AH4_RUN, RELATIVE, 0);
+      } else {
+        // Progress-Werte (z.B. 0x04) → RF-Zustand unverändert, weiter pollen
+        t_print("AH4: Progress status %u\n", s);
+        schedule_action(AH4_RUN, RELATIVE, 0);
+      }
+
+      break;
+    }
+
+    default:
+      // RELEASED usw. ignorieren
+      break;
+    }
+
+    break;
+  }
+
+  //----------------------------------------------------------------------------------------------------------
 
   case AH4_BYP:
     if (a->mode == PRESSED) {
