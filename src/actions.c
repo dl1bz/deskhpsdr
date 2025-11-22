@@ -1836,8 +1836,19 @@ int process_action(void *data) {
 
     break;
 
-  case AH4_START:
   case TUNE_IOB:
+    if (a->mode == PRESSED) {
+      if (device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
+        break; // placeholder
+      } else {
+        t_print("%s: No Hermes Lite 2 with IO board detected. No action.\n", __FUNCTION__);
+        break;
+      }
+    }
+
+    break;
+
+  case AH4_START:
     switch (a->mode) {
     case PRESSED: {
       int state     = radio_get_tune();
@@ -1845,10 +1856,10 @@ int process_action(void *data) {
 
       if (device == DEVICE_HERMES_LITE2) {
         if (!state) {
-          // 1. TUNE-Button gedrückt, TUNE war aus → AH-4-Sequenz starten, aber KEINE RF
+          // TUNE-Button gedrückt, TUNE war aus → AH-4-Sequenz starten, aber KEINE RF
           hl2_iob_set_antenna_tuner(1);
           t_print("AH4: start sequence, wait for 0xEE\n");
-          // 2. Poll-Loop starten
+          // Poll-Loop starten
           schedule_action(AH4_START, RELATIVE, 0);
         } else {
           // TUNE war an → User will aus, RF/TUNE sofort aus
@@ -1871,11 +1882,19 @@ int process_action(void *data) {
         break;
       }
 
+      // Nur hier gegen "kein IO-Board" absichern
+      extern int hl2_iob_present;
+
+      if (!hl2_iob_present) {
+        t_print("AH4: no IO board present, abort polling\n");
+        break;                       // KEIN weiteres schedule_action -> keine Endlosschleife
+      }
+
       unsigned char s = hl2_iob_get_antenna_tuner_status();
       t_print("AH4: Status raw = 0x%02X\n", s);
 
       if (s == 0xEE) {
-        // 3./4. Warten bis 0xEE → JETZT RF aktivieren
+        // Warten bis 0xEE → JETZT RF aktivieren
         if (!radio_get_tune()) {
           radio_tune_update(1);
           update_slider_tune_drive_btn();
@@ -1885,21 +1904,25 @@ int process_action(void *data) {
         // weiter pollen, bis 0x00 oder Fehler kommt
         schedule_action(AH4_START, RELATIVE, 0);
       } else if (s == 0x00) {
-        // 5. Tune fertig (OK) → RF wieder aus
         if (radio_get_tune()) {
+          // Wir waren schon im TUNE-Mode → jetzt wirklich Ende OK
           radio_tune_update(0);
           update_slider_tune_drive_btn();
+          t_print("AH4: Tune end (OK)\n");
+        } else {
+          // direkt nach Start: 0x00 = idle → weiter warten
+          t_print("AH4: initial/idle 0x00, waiting for tuner activity\n");
+          schedule_action(AH4_START, RELATIVE, 0);
         }
-
-        t_print("AH4: Tune end (OK)\n");
       } else if (s >= 0xF0) {
-        // 5. Fehler → RF aus
+        // Fehler → RF aus (falls an)
         if (radio_get_tune()) {
           radio_tune_update(0);
           update_slider_tune_drive_btn();
         }
 
         t_print("AH4: Errorcode 0x%02X\n", s);
+        // KEIN neues schedule_action -> Zyklus beendet
       } else {
         // Progress-Werte → weiter pollen, RF-Zustand unverändert lassen
         t_print("AH4: Progress status %u\n", s);
