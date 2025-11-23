@@ -70,6 +70,108 @@ char txt_rfgr[16];
 char txt_currGain[16];
 gboolean val_biast = FALSE;
 
+typedef struct {
+  long long freq;      // absolute RF-Frequenz in Hz
+  gboolean enabled;
+  char label[32];
+  gint64 expire_time;  // 0 = nie automatisch entfernen, sonst Monotonic-Time (us)
+} PAN_LABEL;
+
+typedef struct {
+  int index;
+  double x;
+  int row;
+} PAN_LABEL_POS;
+
+#define MAX_PAN_LABEL_ROWS 4      // z. B. max. 4 „Zeilen“ für Labels
+#define PAN_LABEL_MIN_DX   40.0   // Mindestabstand in Pixeln in einer Zeile
+#define MAX_PAN_LABELS 16
+
+static PAN_LABEL pan_labels[MAX_PAN_LABELS];
+static int pan_label_count = 0;
+
+/* interner Helfer: freien Slot für ein neues Label ermitteln
+* - bevorzugt deaktivierte Einträge wiederverwenden
+* - wenn alle Slots belegt/aktiv sind: FIFO -> ältestes Label (Index 0) raus
+*/
+static PAN_LABEL *pan_label_get_slot(void) {
+  int i;
+
+  /* 1) deaktivierte Einträge wiederverwenden */
+  for (i = 0; i < pan_label_count; i++) {
+    if (!pan_labels[i].enabled) {
+      return &pan_labels[i];
+    }
+  }
+
+  /* 2) noch Platz im Array: anhängen */
+  if (pan_label_count < MAX_PAN_LABELS) {
+    return &pan_labels[pan_label_count++];
+  }
+
+  /* 3) FIFO: ältestes Label (Index 0) verwerfen, Rest nach vorne schieben */
+  memmove(&pan_labels[0], &pan_labels[1],
+          (MAX_PAN_LABELS - 1) * sizeof(PAN_LABEL));
+  pan_label_count = MAX_PAN_LABELS - 1;
+  return &pan_labels[pan_label_count++];
+}
+
+static int pan_label_cmp(const void *a, const void *b) {
+  const PAN_LABEL_POS *pa = (const PAN_LABEL_POS *)a;
+  const PAN_LABEL_POS *pb = (const PAN_LABEL_POS *)b;
+
+  if (pa->x < pb->x) { return -1; }
+
+  if (pa->x > pb->x) { return 1; }
+
+  return 0;
+}
+
+// Example:
+// pan_add_label(7100000LL, "Beacon");
+// pan_add_label(7074000LL, "Relais");
+
+void pan_add_label(long long freq, const char *text) {
+  PAN_LABEL *pl;
+
+  if (text == NULL) {
+    return;
+  }
+
+  pl = pan_label_get_slot();
+  pl->freq = freq;
+  pl->enabled = TRUE;
+  g_strlcpy(pl->label, text, sizeof(pl->label));
+  pl->expire_time = 0;  /* 0 => kein automatisches Entfernen */
+}
+
+// Example:
+// pan_add_label_timeout(7100000LL, "Spot", 5000);  // 5 Sekunden sichtbar
+
+void pan_add_label_timeout(long long freq, const char *text, int lifetime_ms) {
+  PAN_LABEL *pl;
+
+  if (text == NULL) {
+    return;
+  }
+
+  pl = pan_label_get_slot();
+  pl->freq = freq;
+  pl->enabled = TRUE;
+  g_strlcpy(pl->label, text, sizeof(pl->label));
+
+  if (lifetime_ms > 0) {
+    gint64 now = g_get_monotonic_time();  /* us */
+    pl->expire_time = now + (gint64)lifetime_ms * 1000;
+  } else {
+    pl->expire_time = 0;  /* 0 => kein Timeout */
+  }
+}
+
+void pan_clear_labels(void) {
+  pan_label_count = 0;
+}
+
 #if defined (__WMAP__)
 //------------------------------------------------------------------------------
 static GdkPixbuf *worldmap_scaled = NULL;
@@ -501,6 +603,102 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   cairo_set_line_width(cr, PAN_LINE_THIN);
   cairo_stroke(cr);
+
+  //--------------------------------------------------------------------------------------------
+  /* Custom Labels auf exakten Frequenzen (nur Text, mit Timeout + Y-Staffelung) */
+  if (pan_label_count > 0) {
+    PAN_LABEL_POS pos[MAX_PAN_LABELS];
+    int pos_count = 0;
+    gint64 now = g_get_monotonic_time();  /* us */
+
+    /* Sichtbare Labels einsammeln, abgelaufene deaktivieren */
+    for (int m = 0; m < pan_label_count; m++) {
+      PAN_LABEL *pl = &pan_labels[m];
+
+      if (!pl->enabled) {
+        continue;
+      }
+
+      /* Timeout-Check */
+      if (pl->expire_time != 0 && now >= pl->expire_time) {
+        pl->enabled = FALSE;
+        continue;
+      }
+
+      /* Außerhalb des sichtbaren Frequenzbereichs */
+      if (pl->freq < min_display || pl->freq > max_display) {
+        continue;
+      }
+
+      double x = (double)(pl->freq - min_display) / HzPerPixel;
+      pos[pos_count].index = m;
+      pos[pos_count].x = x;
+      pos[pos_count].row = 0;
+      pos_count++;
+
+      if (pos_count >= MAX_PAN_LABELS) {
+        break;
+      }
+    }
+
+    if (pos_count > 0) {
+      double last_x_in_row[MAX_PAN_LABEL_ROWS];
+
+      /* Reiheninitialisierung */
+      for (int r = 0; r < MAX_PAN_LABEL_ROWS; r++) {
+        last_x_in_row[r] = -1e9;
+      }
+
+      /* Links-nach-rechts sortieren */
+      qsort(pos, pos_count, sizeof(PAN_LABEL_POS), pan_label_cmp);
+
+      /* Reihen (Y-Level) zuweisen, um Überlappung zu minimieren */
+      for (int i = 0; i < pos_count; i++) {
+        double x = pos[i].x;
+        int assigned_row = 0;
+        gboolean placed = FALSE;
+
+        for (int r = 0; r < MAX_PAN_LABEL_ROWS; r++) {
+          if (fabs(x - last_x_in_row[r]) >= PAN_LABEL_MIN_DX) {
+            assigned_row = r;
+            last_x_in_row[r] = x;
+            placed = TRUE;
+            break;
+          }
+        }
+
+        if (!placed) {
+          /* Fallback: erste Reihe */
+          assigned_row = 0;
+        }
+
+        pos[i].row = assigned_row;
+      }
+
+      /* Labels zeichnen */
+      for (int i = 0; i < pos_count; i++) {
+        PAN_LABEL *pl = &pan_labels[pos[i].index];
+        double x = pos[i].x;
+        int row = pos[i].row;
+        cairo_set_source_rgba(cr, COLOUR_WHITE);
+        cairo_select_font_face(cr,
+                               DISPLAY_FONT_BOLD,
+                               CAIRO_FONT_SLANT_NORMAL,
+                               CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
+        cairo_text_extents_t te;
+        cairo_text_extents(cr, pl->label, &te);
+        /* Basis-Y unter der Skala; Zeilen vertikal staffeln */
+        double base_y = 10.0 + marker_extra + te.height + 2.0;
+        double row_height = te.height + 4.0;
+        double y = base_y + (double)row * row_height;
+        cairo_move_to(cr, x - te.width / 2.0, y);
+        cairo_show_text(cr, pl->label);
+      }
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------
 
   // band edges
   if (band->frequencyMin != 0LL) {

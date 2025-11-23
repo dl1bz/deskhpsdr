@@ -52,6 +52,7 @@
 #include "exit_menu.h"
 #include "message.h"
 #include "dxcluster.h"
+#include "rx_panadapter.h"
 
 //
 // The "short button text" (button_str) needs to be present in ALL cases, and must be different
@@ -129,6 +130,7 @@ ACTION_TABLE ActionTable[] = {
   {MENU_DIVERSITY,      "DIV\nMenu",            "DIV-M",        MIDI_KEY   | CONTROLLER_SWITCH},
   {DUPLEX,              "Duplex",               "DUP",          MIDI_KEY   | CONTROLLER_SWITCH},
   {DXC_WIN,             "DXC\nWindow",          "DXC-WIN",      TYPE_NONE},
+  {DXC_TEST,            "DXC\nTest",            "DXC-TEST",     TYPE_NONE},
   {FILTER_MINUS,        "Filter -",             "FL-",          MIDI_KEY   | CONTROLLER_SWITCH},
   {FILTER_PLUS,         "Filter +",             "FL+",          MIDI_KEY   | CONTROLLER_SWITCH},
   {FILTER_CUT_LOW,      "Filter Cut\nLow",      "FCUTL",        MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -561,6 +563,16 @@ int process_action(void *data) {
         );
       }
     } // main
+
+    break;
+
+  case DXC_TEST:
+    if (a->mode == PRESSED) {
+      // Testdrive
+      // pan_add_label_timeout(7100000LL, "DL1BZ", 30000);
+      // pan_add_label_timeout(7101000LL, "DL2BZ", 20000);
+      // pan_add_label_timeout(7102000LL, "DL3BZ", 10000);
+    }
 
     break;
 
