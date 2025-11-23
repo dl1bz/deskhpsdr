@@ -1520,7 +1520,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     if (ah4s == 0x00) {
       snprintf(ah4_state, sizeof(ah4_state), "READY");
     } else if (ah4s == 0xEE) {
-      snprintf(ah4_state, sizeof(ah4_state), "RF sensing");
+      snprintf(ah4_state, sizeof(ah4_state), "RF needed");
     } else if (ah4s >= 0xF0) {
       cairo_set_source_rgba(cr, GRAD_CORAL);
       snprintf(ah4_state, sizeof(ah4_state), "ERROR 0x%02X", ah4s);

@@ -240,7 +240,6 @@ ACTION_TABLE ActionTable[] = {
   {TUNE_MEMORY,         "Tune\nMem",            "TUNM",         MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_START,           "AH-4\nStart",          "AH4-STRT",     MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_RUN,             "AH-4\nRun",            "AH4-RUN",      MIDI_KEY   | CONTROLLER_SWITCH},
-  {AH4_READ,            "AH-4\nRead",           "AH4-READ",     TYPE_NONE},
   {AH4_BYP,             "AH-4\nBypass",         "AH4-BYP",      MIDI_KEY   | CONTROLLER_SWITCH},
   {DRIVE,               "TX Drive",             "TXDRV",        MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TWO_TONE,            "Two-Tone",             "2TONE",        MIDI_KEY   | CONTROLLER_SWITCH},
@@ -2070,34 +2069,6 @@ int process_action(void *data) {
       if (device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
         // AH-4 Bypass anfordern
         hl2_iob_set_antenna_tuner(2);
-      }
-    }
-
-    break;
-
-  case AH4_READ:
-    if (a->mode == PRESSED) {
-      if (device != DEVICE_HERMES_LITE2) {
-        t_print("%s: AH4: No Hermes Lite 2 detected, abort...\n", __FUNCTION__);
-        break;
-      }
-
-      if (!hl2_iob_present) {
-        t_print("%s AH4: No Hermes Lite 2 with IO board present, abort...\n", __FUNCTION__);
-        break;
-      }
-
-      unsigned char s = hl2_iob_get_antenna_tuner_status();
-      t_print("AH4: Status raw = 0x%02X\n", s);
-
-      if (s == 0x00) {
-        t_print("AH4: Tune end (OK)\n");
-      } else if (s == 0xEE) {
-        t_print("AH4: RF needed (Transmit!)\n");
-      } else if (s >= 0xF0) {
-        t_print("AH4: Errorcode 0x%02X\n", s);
-      } else {
-        t_print("AH4: Progress status %u\n", s);
       }
     }
 
