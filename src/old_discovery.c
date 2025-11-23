@@ -488,7 +488,7 @@ static gpointer discover_receive_thread(gpointer data) {
               g_strlcpy(discovered[devices].name, "HermesLite V2", sizeof(discovered[devices].name));
               discovered[devices].device = DEVICE_HERMES_LITE2;
               // t_print("discovered HL2: Gateware Major Version=%d Minor Version=%d\n", buffer[9], buffer[21]);
-              t_print("==> HL2: Gateware Major Version=%d Minor Version=%d\n", buffer[9], buffer[21]);
+              t_print("%s: ==> HL2: Gateware Major Version=%d Minor Version=%d\n", __FUNCTION__, buffer[9], buffer[21]);
 
               if (buffer[11] & 0xA0) {
                 t_print("==> HL2: fixed IP %d.%d.%d.%d (DHCP overrides)\n", buffer[13], buffer[14], buffer[15], buffer[16]);
