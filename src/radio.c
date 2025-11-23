@@ -3368,12 +3368,6 @@ static void radio_restore_state() {
     t_print("%s: using HL2: re-assign pa_trim[]\n", __FUNCTION__);
   }
 
-  if (device == DEVICE_HERMES_LITE2 && !hl2_iob_present) {
-    if (display_ah4) {
-      display_ah4 = 0;
-    }
-  }
-
   //
   // Sanity check part 2:
   //
