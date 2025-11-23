@@ -637,7 +637,7 @@ void display_menu(GtkWidget *parent) {
   g_signal_connect(ChkBtn_clock, "toggled", G_CALLBACK(chkbtn_clock_toggle_cb), &display_clock);
 
   //------------------------------------------------------------------------------------------------------------
-  if (can_transmit && device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
+  if (can_transmit && device == DEVICE_HERMES_LITE2) {
     row++;
     GtkWidget *ChkBtn_ah4 = gtk_check_button_new_with_label("Show AH4 state");
     gtk_widget_set_name(ChkBtn_ah4, "stdlabel_blue");

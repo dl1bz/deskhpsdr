@@ -1497,7 +1497,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
 
-  if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4 && hl2_iob_present) {
+  if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4) {
 #ifdef __WMAP__
 
     if (radio_is_transmitting()) {
