@@ -83,9 +83,9 @@ typedef struct {
   int row;
 } PAN_LABEL_POS;
 
-#define MAX_PAN_LABEL_ROWS 4      // z. B. max. 4 „Zeilen“ für Labels
+#define MAX_PAN_LABEL_ROWS 6      // z. B. max. 6 „Zeilen“ für Labels
 #define PAN_LABEL_MIN_DX   40.0   // Mindestabstand in Pixeln in einer Zeile
-#define MAX_PAN_LABELS 16
+#define MAX_PAN_LABELS 32
 
 static PAN_LABEL pan_labels[MAX_PAN_LABELS];
 static int pan_label_count = 0;
@@ -170,6 +170,27 @@ void pan_add_label_timeout(long long freq, const char *text, int lifetime_ms) {
 
 void pan_clear_labels(void) {
   pan_label_count = 0;
+}
+
+/* DX-Spot-Label hinzufügen, Frequenz in kHz (wie typischerweise aus dem Cluster) */
+void pan_add_dx_spot(double freq_khz, const char *dxcall) {
+  long long freq_hz;
+  char label[32];
+  int lt_in_min;
+  int lt_in_ms;
+  lt_in_min = 15;
+  lt_in_ms = lt_in_min * 60000;
+
+  if (dxcall == NULL || freq_khz <= 0.0) {
+    return;
+  }
+
+  /* Cluster-Frequenz kHz → Hz, sauber gerundet */
+  freq_hz = (long long)(freq_khz * 1000.0 + 0.5);
+  /* Label-Text – hier nur das Call, ggf. später erweitern */
+  g_strlcpy(label, dxcall, sizeof(label));
+  /* Sichtbarkeit in ms */
+  pan_add_label_timeout(freq_hz, label, (int)lt_in_ms);
 }
 
 #if defined (__WMAP__)

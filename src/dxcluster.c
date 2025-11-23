@@ -35,6 +35,7 @@
 #include <libtelnet.h>
 #include "dxcluster.h"
 #include "radio.h"
+#include "rx_panadapter.h"
 
 typedef struct {
   GtkWidget      *window;
@@ -48,6 +49,7 @@ typedef struct {
   GtkTextTag     *tag_self;
   char           *callsign;
   guint           io_watch_id;   /* GSource-ID von g_io_add_watch */
+  GString        *linebuf;       /* Puffer für unvollständige Telnet-Zeilen */
 } DxClusterCtx;
 
 /* Singleton-Kontext */
@@ -60,6 +62,111 @@ static const telnet_telopt_t telopts[] = {
   { TELNET_TELOPT_MSSP,      TELNET_WONT, TELNET_DONT },
   { -1, 0, 0 }
 };
+
+/* -------------------------------------------------------------------------- */
+/*                Parser: DX-Spot-Zeilen aus dem Cluster auswerten            */
+/* -------------------------------------------------------------------------- */
+
+/* Eine komplette Textzeile aus dem DX-Cluster auswerten:
+ * Typische Form:
+ *   "DX de DL1BZ: 14074.0 K1ABC ..."
+ * Wir extrahieren:
+ *   - Frequenz in kHz
+ *   - DX-Call
+ * und reichen das an den Panadapter weiter.
+ */
+static void dxcluster_process_line(DxClusterCtx *ctx, const char *line) {
+  const char *p;
+  const char *needle_dx = "DX de ";
+  (void)ctx;
+
+  if (!line || !*line) {
+    return;
+  }
+
+  p = strstr(line, needle_dx);
+
+  if (!p) {
+    return;  /* keine DX-Zeile */
+  }
+
+  p += strlen(needle_dx);
+
+  /* Spotter-Call überspringen bis ':' oder Whitespace */
+  while (*p && *p != ':' && !g_ascii_isspace((guchar) * p)) {
+    p++;
+  }
+
+  /* ':' und Whitespace überspringen */
+  while (*p == ':' || g_ascii_isspace((guchar) * p)) {
+    p++;
+  }
+
+  if (!*p) {
+    return;
+  }
+
+  /* Frequenz (kHz) parsen */
+  char *endptr = NULL;
+  double freq_khz = g_ascii_strtod(p, &endptr);
+
+  if (endptr == p || freq_khz <= 0.0) {
+    return;
+  }
+
+  /* hinter der Frequenz weiterspringen */
+  p = endptr;
+
+  /* Whitespace vor dem DX-Call überspringen */
+  while (g_ascii_isspace((guchar) * p)) {
+    p++;
+  }
+
+  if (!*p) {
+    return;
+  }
+
+  /* DX-Call bis zum nächsten Whitespace */
+  char dxcall[32];
+  int i = 0;
+
+  while (*p && !g_ascii_isspace((guchar) * p) && i < (int)sizeof(dxcall) - 1) {
+    dxcall[i++] = *p++;
+  }
+
+  dxcall[i] = '\0';
+
+  if (i == 0) {
+    return;
+  }
+
+  /* DX-Spot als Label in den Panadapter pushen */
+  pan_add_dx_spot(freq_khz, dxcall);
+}
+
+/* Telnet-Datenstrom in Zeilen zerlegen und je Zeile dxcluster_process_line() rufen */
+static void dxcluster_feed_parser(DxClusterCtx *ctx, const char *data, size_t len) {
+  if (!ctx || !ctx->linebuf || !data || len == 0) {
+    return;
+  }
+
+  for (size_t i = 0; i < len; i++) {
+    char c = data[i];
+
+    if (c == '\r' || c == '\n') {
+      if (ctx->linebuf->len > 0) {
+        /* komplette Zeile liegt im Buffer */
+        dxcluster_process_line(ctx, ctx->linebuf->str);
+        g_string_truncate(ctx->linebuf, 0);
+      }
+
+      /* Mehrere \r\n hintereinander ignorieren */
+      continue;
+    }
+
+    g_string_append_c(ctx->linebuf, c);
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -163,6 +270,10 @@ dxcluster_telnet_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_
 
   switch (ev->type) {
   case TELNET_EV_DATA:
+    // dxcluster_append_text(ctx, ev->data.buffer, ev->data.size);
+    /* Rohdaten an den Zeilenparser für DX-Spots übergeben */
+    dxcluster_feed_parser(ctx, ev->data.buffer, ev->data.size);
+    /* Und unverändert im Fenster anzeigen */
     dxcluster_append_text(ctx, ev->data.buffer, ev->data.size);
     break;
 
@@ -323,6 +434,10 @@ dxcluster_on_window_destroy(GtkWidget *widget, gpointer user_data) {
     g_free(ctx->callsign);
   }
 
+  if (ctx->linebuf) {
+    g_string_free(ctx->linebuf, TRUE);
+  }
+
   if (g_dxcluster_ctx == ctx) {
     g_dxcluster_ctx = NULL;
   }
@@ -390,6 +505,7 @@ dxcluster_open_window(const char *host,
   ctx->window      = window;
   ctx->text_view   = textview;
   ctx->text_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
+  ctx->linebuf     = g_string_new(NULL);
   ctx->entry       = entry;
 #ifdef __linux__
   /* Styleklassen, CSS kommt aus deskHPSDR */
