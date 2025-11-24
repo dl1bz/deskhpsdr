@@ -23,6 +23,7 @@
 #define _PANADAPTER_H
 
 // int compare_doubles(const void *a, const void *b);
+void panadapter_set_max_label_rows(int r);
 void pan_add_label(long long freq, const char *text);
 void pan_add_label_timeout(long long freq, const char *text, int lifetime_ms);
 void pan_clear_labels(void);

@@ -83,12 +83,19 @@ typedef struct {
   int row;
 } PAN_LABEL_POS;
 
-#define MAX_PAN_LABEL_ROWS 6      // z. B. max. 6 „Zeilen“ für Labels
 #define PAN_LABEL_MIN_DX   40.0   // Mindestabstand in Pixeln in einer Zeile
 #define MAX_PAN_LABELS 32
 
 static PAN_LABEL pan_labels[MAX_PAN_LABELS];
 static int pan_label_count = 0;
+
+void panadapter_set_max_label_rows(int r) {
+  if (r < 1) { r = 1; }
+
+  if (r > 32) { r = 32; }   /* arbitrary upper limit */
+
+  max_pan_label_rows = r;
+}
 
 /* Prüft, ob ein DX-Spot-Label mit gleicher Frequenz und gleichem Text schon existiert.
  * Falls ja: expire_time aktualisieren und TRUE zurückgeben.
@@ -215,8 +222,12 @@ void pan_clear_labels(void) {
 void pan_add_dx_spot(double freq_khz, const char *dxcall) {
   long long freq_hz;
   char label[32];
-  int lifetime_min = 15;
-  int lifetime_ms = lifetime_min * 60000;
+
+  if (pan_spot_lifetime_min < 1) { pan_spot_lifetime_min = 1; } // 1min minimum
+
+  if (pan_spot_lifetime_min > 720) { pan_spot_lifetime_min = 720; } // 720min = 12h = maximum
+
+  int lifetime_ms = pan_spot_lifetime_min * 60000;
 
   if (dxcall == NULL || freq_khz <= 0.0) {
     return;
@@ -706,10 +717,10 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
 
     if (pos_count > 0) {
-      double last_x_in_row[MAX_PAN_LABEL_ROWS];
+      double last_x_in_row[max_pan_label_rows];
 
       /* Reiheninitialisierung */
-      for (int r = 0; r < MAX_PAN_LABEL_ROWS; r++) {
+      for (int r = 0; r < max_pan_label_rows; r++) {
         last_x_in_row[r] = -1e9;
       }
 
@@ -722,7 +733,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         int assigned_row = 0;
         gboolean placed = FALSE;
 
-        for (int r = 0; r < MAX_PAN_LABEL_ROWS; r++) {
+        for (int r = 0; r < max_pan_label_rows; r++) {
           if (fabs(x - last_x_in_row[r]) >= PAN_LABEL_MIN_DX) {
             assigned_row = r;
             last_x_in_row[r] = x;

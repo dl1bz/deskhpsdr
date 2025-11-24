@@ -173,6 +173,9 @@ extern int display_solardata;
 extern int display_ah4;
 extern char radio_bgcolor_rgb_hex[8];
 
+extern int max_pan_label_rows;
+extern int pan_spot_lifetime_min;
+
 extern int mic_linein;
 extern double linein_gain;
 extern int mic_boost;

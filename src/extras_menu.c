@@ -30,6 +30,7 @@
 #include "new_menu.h"
 #include "radio.h"
 #include "message.h"
+#include "rx_panadapter.h"
 
 static GtkWidget *dialog = NULL;
 static gulong dxc_login_box_signal_id;
@@ -159,6 +160,22 @@ static void dxc_port_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data
   }
 }
 
+static void dxspot_lifetime_spin_btn_cb(GtkSpinButton *spin, gpointer user_data) {
+  pan_spot_lifetime_min = gtk_spin_button_get_value_as_int(spin);
+
+  /* Sicherheitsnetz */
+  if (pan_spot_lifetime_min < 1) {
+    pan_spot_lifetime_min = 1;
+  } else if (pan_spot_lifetime_min > 720) {
+    pan_spot_lifetime_min = 720;
+  }
+}
+
+static void dxspot_max_rows_spin_btn_cb(GtkSpinButton *spin, gpointer user_data) {
+  int val = gtk_spin_button_get_value_as_int(spin);
+  panadapter_set_max_label_rows(val);
+}
+
 static void atuwin_w_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data) {
   atuwin_wv_w = gtk_spin_button_get_value_as_int(spin);
 
@@ -268,6 +285,76 @@ void extras_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), dxc_port_spin_btn, col, row, 1, 1);
   g_signal_connect(dxc_port_spin_btn, "value-changed", G_CALLBACK(dxc_port_spin_btn_changed_cb), NULL);
   //--------------------------------------------------------------------------------
+  //--------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  t_label = gtk_label_new(NULL);
+  gtk_label_set_use_markup(GTK_LABEL(t_label), TRUE);
+  gtk_label_set_markup(GTK_LABEL(t_label), "<u>DX Spots on RX Panadapter Setup</u>");
+  gtk_widget_set_name(t_label, "boldlabel_blue");
+  gtk_widget_set_margin_top(t_label, 10);
+  gtk_widget_set_margin_bottom(t_label, 10);
+  gtk_widget_set_halign(t_label, GTK_ALIGN_START);
+  gtk_widget_set_margin_start(t_label, 5);
+  gtk_grid_attach(GTK_GRID(grid), t_label, col, row, 3, 1);
+  //--------------------------------------------------------------------------------
+  //--------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  label = gtk_label_new("DX Spots\nLifetime:");
+  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+  col++;
+  GtkAdjustment *dxspot_lifetime_adj = gtk_adjustment_new(
+                                         pan_spot_lifetime_min,     // initialer Portwert
+                                         1,            // Minimum
+                                         720,        // Maximum
+                                         1,            // Schrittweite
+                                         10,           // Page-Increment (Pfeiltasten halten)
+                                         0
+                                       );
+  GtkWidget *dxspot_lifetime_spin_btn = gtk_spin_button_new(dxspot_lifetime_adj, 1.0, 0);
+  gtk_widget_set_tooltip_text(dxspot_lifetime_spin_btn,
+                              "DX spot lifetime (minutes) before removal from the RX panadapter.\n\n"
+                              "min: 1min\n"
+                              "max: 720min (12h)\n"
+                              "default: 15min");
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dxspot_lifetime_spin_btn), TRUE);
+  gtk_grid_attach(GTK_GRID(grid), dxspot_lifetime_spin_btn, col, row, 1, 1);
+  g_signal_connect(dxspot_lifetime_spin_btn, "value-changed", G_CALLBACK(dxspot_lifetime_spin_btn_cb), NULL);
+  //--------------------------------------------------------------------------------
+  col++;
+  label = gtk_label_new("DX Spots\nmax. rows:");
+  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+  col++;
+  GtkAdjustment *dxspot_max_rows_adj = gtk_adjustment_new(
+                                         max_pan_label_rows,     // initialer Portwert
+                                         1,            // Minimum
+                                         32,           // Maximum
+                                         1,            // Schrittweite
+                                         10,           // Page-Increment (Pfeiltasten halten)
+                                         0
+                                       );
+  GtkWidget *dxspot_max_rows_spin_btn = gtk_spin_button_new(dxspot_max_rows_adj, 1.0, 0);
+  gtk_widget_set_tooltip_text(dxspot_max_rows_spin_btn, "Max stacked label rows (RX panadapter).\n\n"
+                                                        "min: 1 row\n"
+                                                        "max: 32 rows\n"
+                                                        "default: 6 rows");
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dxspot_max_rows_spin_btn), TRUE);
+  gtk_grid_attach(GTK_GRID(grid), dxspot_max_rows_spin_btn, col, row, 1, 1);
+  g_signal_connect(dxspot_max_rows_spin_btn, "value-changed", G_CALLBACK(dxspot_max_rows_spin_btn_cb), NULL);
+
+  if (dxcwin_open) {
+    gtk_widget_set_sensitive(dxc_login_box, FALSE);
+    gtk_widget_set_sensitive(dxc_login_box_btn, FALSE);
+    gtk_widget_set_sensitive(dxc_address_box, FALSE);
+    gtk_widget_set_sensitive(dxc_address_box_btn, FALSE);
+    gtk_widget_set_sensitive(dxc_port_spin_btn, FALSE);
+    gtk_widget_set_sensitive(dxspot_lifetime_spin_btn, FALSE);
+    gtk_widget_set_sensitive(dxspot_max_rows_spin_btn, FALSE);
+  }
+
   //--------------------------------------------------------------------------------
   row++;
   col = 0;

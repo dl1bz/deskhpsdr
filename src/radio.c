@@ -223,6 +223,9 @@ int display_solardata = 0;
 int display_ah4 = 0;
 char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
 
+int max_pan_label_rows = 6;
+int pan_spot_lifetime_min = 15;
+
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
 double linein_gain = 0.0;  // -34.0 ... +12.5 in steps of 1.5 dB
 int mic_boost = 0;
@@ -3171,6 +3174,8 @@ static void radio_restore_state() {
   GetPropI0("vfo_layout",                                    vfo_layout);
   GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   GetPropI0("capture_max",                                   capture_max);
+  GetPropI0("max_pan_label_rows",                            max_pan_label_rows);
+  GetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
 
   //
   // TODO: I think some further options related to the GUI
@@ -3442,6 +3447,8 @@ void radio_save_state() {
   SetPropI0("vfo_layout",                                    vfo_layout);
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   SetPropI0("capture_max",                                   capture_max);
+  SetPropI0("max_pan_label_rows",                            max_pan_label_rows);
+  SetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
   SetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
   //
   // TODO: I think some further options related to the GUI
