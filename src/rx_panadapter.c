@@ -90,6 +90,46 @@ typedef struct {
 static PAN_LABEL pan_labels[MAX_PAN_LABELS];
 static int pan_label_count = 0;
 
+/* Prüft, ob ein DX-Spot-Label mit gleicher Frequenz und gleichem Text schon existiert.
+ * Falls ja: expire_time aktualisieren und TRUE zurückgeben.
+ * Falls nein: FALSE (neues Label muss angelegt werden).
+*/
+static gboolean pan_dxspot_update_if_exists(long long freq_hz, const char *text, int lifetime_ms) {
+  gint64 now;
+  int i;
+
+  if (text == NULL) {
+    return FALSE;
+  }
+
+  for (i = 0; i < pan_label_count; i++) {
+    PAN_LABEL *pl = &pan_labels[i];
+
+    if (!pl->enabled) {
+      continue;
+    }
+
+    if (pl->freq != freq_hz) {
+      continue;
+    }
+
+    if (g_strcmp0(pl->label, text) != 0) {
+      continue;
+    }
+
+    if (lifetime_ms > 0) {
+      now = g_get_monotonic_time();      /* us */
+      pl->expire_time = now + (gint64)lifetime_ms * 1000;
+    } else {
+      pl->expire_time = 0;
+    }
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
 /* interner Helfer: freien Slot für ein neues Label ermitteln
 * - bevorzugt deaktivierte Einträge wiederverwenden
 * - wenn alle Slots belegt/aktiv sind: FIFO -> ältestes Label (Index 0) raus
@@ -172,14 +212,11 @@ void pan_clear_labels(void) {
   pan_label_count = 0;
 }
 
-/* DX-Spot-Label hinzufügen, Frequenz in kHz (wie typischerweise aus dem Cluster) */
 void pan_add_dx_spot(double freq_khz, const char *dxcall) {
   long long freq_hz;
   char label[32];
-  int lt_in_min;
-  int lt_in_ms;
-  lt_in_min = 15;
-  lt_in_ms = lt_in_min * 60000;
+  int lifetime_min = 15;
+  int lifetime_ms = lifetime_min * 60000;
 
   if (dxcall == NULL || freq_khz <= 0.0) {
     return;
@@ -189,8 +226,14 @@ void pan_add_dx_spot(double freq_khz, const char *dxcall) {
   freq_hz = (long long)(freq_khz * 1000.0 + 0.5);
   /* Label-Text – hier nur das Call, ggf. später erweitern */
   g_strlcpy(label, dxcall, sizeof(label));
-  /* Sichtbarkeit in ms */
-  pan_add_label_timeout(freq_hz, label, (int)lt_in_ms);
+
+  /* Doublet-Check: gleicher Call auf gleicher Frequenz? -> nur Timeout erneuern */
+  if (pan_dxspot_update_if_exists(freq_hz, label, lifetime_ms)) {
+    return;
+  }
+
+  /* Kein bestehender Eintrag -> neues Label anlegen */
+  pan_add_label_timeout(freq_hz, label, lifetime_ms);
 }
 
 #if defined (__WMAP__)
