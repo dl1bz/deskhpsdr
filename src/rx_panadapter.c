@@ -83,8 +83,8 @@ typedef struct {
   int row;
 } PAN_LABEL_POS;
 
-#define PAN_LABEL_MIN_DX   40.0   // Mindestabstand in Pixeln in einer Zeile
-#define MAX_PAN_LABELS 32
+#define PAN_LABEL_MIN_DX 40.0   // Mindestabstand in Pixeln in einer Zeile
+#define MAX_PAN_LABELS 64 // max. saved DX spots
 
 static PAN_LABEL pan_labels[MAX_PAN_LABELS];
 static int pan_label_count = 0;
