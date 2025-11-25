@@ -1767,7 +1767,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4 && !rx_stack_horizontal
       && active_receiver->display_panadapter) {
     cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
-    cairo_rectangle(cr, width - 445.0, 15.0, 135.0, 20); // x, y, Breite, Höhe
+    cairo_rectangle(cr, width - 445.0, 15.0, 135.0, 20.0); // x, y, Breite, Höhe
     cairo_fill_preserve(cr);   // füllt, Pfad bleibt erhalten
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_set_line_width(cr, 2.0);
