@@ -351,8 +351,8 @@ void extras_menu(GtkWidget *parent) {
     gtk_widget_set_sensitive(dxc_address_box, FALSE);
     gtk_widget_set_sensitive(dxc_address_box_btn, FALSE);
     gtk_widget_set_sensitive(dxc_port_spin_btn, FALSE);
-    gtk_widget_set_sensitive(dxspot_lifetime_spin_btn, FALSE);
-    gtk_widget_set_sensitive(dxspot_max_rows_spin_btn, FALSE);
+    // gtk_widget_set_sensitive(dxspot_lifetime_spin_btn, FALSE);
+    // gtk_widget_set_sensitive(dxspot_max_rows_spin_btn, FALSE);
   }
 
   //--------------------------------------------------------------------------------
