@@ -1556,7 +1556,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
-    cairo_move_to(cr, 380.0, 30.0);
+    cairo_move_to(cr, 375.0, 30.0);
 #if defined (__APPLE__)
     snprintf(_text, sizeof(_text), "%s", transmitter->microphone_name);
 #else
@@ -1581,7 +1581,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   if (strcmp(own_callsign, "YOUR_CALLSIGN") != 0) {
     cairo_move_to(cr, 60, 30);
     cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_set_font_size(cr, 22);
+    cairo_set_font_size(cr, 18);
     snprintf(_text, sizeof(_text), "%s", own_callsign);
     cairo_show_text(cr, _text);
   }
@@ -1764,24 +1764,18 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
 
-  if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4) {
-#ifdef __WMAP__
-
-    if (can_transmit && radio_is_transmitting()) {
-      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
-    } else {
-      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
-    }
-
-#else
+  if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4 && !rx_stack_horizontal
+      && active_receiver->display_panadapter) {
     cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
-#endif
-    cairo_rectangle(cr, width - 155, 75, width - 155, 20); // x, y, Breite, Höhe
-    cairo_fill(cr);
+    cairo_rectangle(cr, width - 445.0, 15.0, 135.0, 20); // x, y, Breite, Höhe
+    cairo_fill_preserve(cr);   // füllt, Pfad bleibt erhalten
     cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_move_to(cr, width - 150.0, 90.0);
+    cairo_set_line_width(cr, 2.0);
+    cairo_stroke(cr);  // nur Rand, keine Füllung
+    cairo_move_to(cr, width - 440.0, 30.0);
+    cairo_set_font_size(cr, 14);
     unsigned char ah4s = hl2_iob_get_antenna_tuner_status();
-    // unsigned char ah4s = 0x00; // for testing only
+    // unsigned char ah4s = 0xEE; // for testing only
     char ah4_state[16];
 
     if (ah4s == 0x00) {
