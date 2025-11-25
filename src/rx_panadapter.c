@@ -1599,7 +1599,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       double rt_rx200_h = 60.0;
 #ifdef __WMAP__
 
-      if (radio_is_transmitting()) {
+      if (can_transmit && radio_is_transmitting()) {
         cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
       } else {
         cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
@@ -1673,13 +1673,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     double rt_rx_w = 255.0;
     double rt_rx_h = 60.0;
 #ifdef __WMAP__
-
-    if (radio_is_transmitting()) {
-      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
-    } else {
-      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
-    }
-
+    cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
 #else
     cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
 #endif
@@ -1773,7 +1767,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4) {
 #ifdef __WMAP__
 
-    if (radio_is_transmitting()) {
+    if (can_transmit && radio_is_transmitting()) {
       cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
     } else {
       cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
