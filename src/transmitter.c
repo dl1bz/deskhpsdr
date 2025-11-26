@@ -1208,7 +1208,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->drive_scale = 1.0;
   tx->drive_iscal = 1.0;
   tx->do_scale = 0;
-  tx->compressor = 0;
+  tx->compressor = 1;
   tx->compressor_level = 4.0;
   tx->cfc              =       0;
   tx->cfc_eq           =       0;
@@ -1268,10 +1268,10 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->dexp_filter      =       0;
   tx->dexp_filter_low  =    1000;
   tx->dexp_filter_high =    2000;
-  tx->lev_gain         =    15.0;
+  tx->lev_gain         =     5.0;
   tx->lev_attack       =       1;
   tx->lev_decay        =     500;
-  tx->lev_enable       =       0;
+  tx->lev_enable       =       1;
   tx->phrot_enable     =       0;
   tx->phrot_stage      =       8;
   tx->phrot_freq       =   338.0;

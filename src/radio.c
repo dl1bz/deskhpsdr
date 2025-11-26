@@ -216,7 +216,7 @@ int display_zoompan = 0;
 int display_sliders = 0;
 int display_extra_sliders = 1;
 int display_toolbar = 0;
-double percent_pan_wf = 50.0;
+double percent_pan_wf = 70.0;
 int display_info_bar = 0;
 int display_clock = 0;
 int display_solardata = 0;
@@ -339,7 +339,7 @@ int OCfull_tune_time = 2800; // ms
 int OCmemory_tune_time = 550; // ms
 long long tune_timeout;
 
-int analog_meter = 0;
+int analog_meter = 1;
 
 int eer_pwm_min = 100;
 int eer_pwm_max = 800;
