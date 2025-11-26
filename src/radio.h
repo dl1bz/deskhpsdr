@@ -137,6 +137,8 @@ enum _sat_mode_enum {
   RSAT_MODE
 };
 
+extern int backup_index;
+
 extern int rxgain_index_0;
 extern int rxgain_index_1;
 

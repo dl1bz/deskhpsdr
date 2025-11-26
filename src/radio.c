@@ -152,6 +152,8 @@ DISCOVERED *radio = NULL;
 gboolean radio_is_remote = FALSE;     // only used with CLIENT_SERVER
 
 static char property_path[128];
+static char property_path_bak[128];
+int backup_index = 0;
 static GMutex property_mutex;
 
 RECEIVER *receiver[8];
@@ -3158,6 +3160,7 @@ static void radio_restore_state() {
   // For consistency, all variables should get default values HERE,
   // but this is too much for the moment.
   //
+  GetPropI0("backup_index",                                  backup_index);
   GetPropF0("percent_pan_wf",                                percent_pan_wf);
   GetPropI0("WindowPositionX",                               window_x_pos);
   GetPropI0("WindowPositionY",                               window_y_pos);
@@ -3401,6 +3404,14 @@ void radio_save_state() {
   g_mutex_lock(&property_mutex);
   clearProperties();
 
+  if (radio && radio->name[0] != '\0') {
+    backup_index++;
+
+    if (backup_index < 1) { backup_index = 1; }
+
+    if (backup_index > 9) { backup_index = 1; }
+  }
+
   //
   // Save the receiver and transmitter data structures. These
   // are restored in create_receiver/create_transmitter
@@ -3423,6 +3434,7 @@ void radio_save_state() {
   // Obtain window position and save in props file
   //
   gtk_window_get_position(GTK_WINDOW(top_window), &window_x_pos, &window_y_pos);
+  SetPropI0("backup_index",                                  backup_index);
   SetPropF0("percent_pan_wf",                                percent_pan_wf);
   SetPropI0("WindowPositionX",                               window_x_pos);
   SetPropI0("WindowPositionY",                               window_y_pos);
@@ -3613,6 +3625,13 @@ void radio_save_state() {
 #endif
   saveProperties(property_path);
   sync();
+
+  if (radio && radio->name[0] != '\0') {
+    snprintf(property_path_bak, sizeof(property_path_bak), "bak%d_%s_%s", (int)backup_index, radio->name, property_path);
+    saveProperties(property_path_bak);
+    sync();
+  }
+
   g_mutex_unlock(&property_mutex);
 }
 
