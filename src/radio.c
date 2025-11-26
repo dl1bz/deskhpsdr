@@ -2098,7 +2098,8 @@ void radio_start_radio() {
     break;
   }
 
-  receivers = RECEIVERS;
+  // receivers = RECEIVERS;
+  receivers = 1; // we start ever with only one RX
   radio_restore_state();
   radio_change_region(region);
   radio_create_visual();
