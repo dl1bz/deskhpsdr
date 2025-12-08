@@ -173,7 +173,7 @@ sudo dnf -y install git gcc-gfortran gettext cppcheck dos2unix \
 libzstd-devel python3-devel fftw-devel gtk3-devel \
 openssl-devel alsa-lib-devel libcurl-devel  libusb1-devel \
 libgpiod-devel  pulseaudio-libs-devel  libpcap-devel  \
-json-c-devel  gnome-themes-extra  SoapySDR-devel
+json-c-devel  gnome-themes-extra  SoapySDR-devel webkit2gtk4.1-devel
 
 else
 	echo "This script is only for Debian and Fedora based or similiar LINUX distributions"
