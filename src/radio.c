@@ -223,7 +223,7 @@ int display_info_bar = 0;
 int display_clock = 0;
 int display_solardata = 0;
 int display_ah4 = 0;
-char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
+char radio_bgcolor_rgb_hex[8] = "#262626";
 
 int max_pan_label_rows = 6;
 int pan_spot_lifetime_min = 15;
@@ -1038,7 +1038,7 @@ gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
   GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
 
   if (strlen(radio_bgcolor_rgb_hex) != 7) {
-    g_strlcpy(radio_bgcolor_rgb_hex, "#E6E6FA", sizeof(radio_bgcolor_rgb_hex));
+    g_strlcpy(radio_bgcolor_rgb_hex, "#262626", sizeof(radio_bgcolor_rgb_hex));
   }
 
   // Definiere und prüfe die Hintergrundfarbe
