@@ -60,8 +60,6 @@ int n_output_devices;
 AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 
 GMutex audio_mutex;
-int n_input_devices = 0;
-int n_output_devices = 0;
 
 //
 // We now use callback functions to provide the "headphone" audio data,
@@ -112,6 +110,32 @@ static volatile int     mic_ring_inpt = 0;
 
 static int cwmode = 0;  // used to detect TRX transitions in CW
 
+void audio_release_cards(void) {
+  g_mutex_lock(&audio_mutex);
+
+  for (int i = 0; i < n_input_devices; i++) {
+    g_free(input_devices[i].name);
+    g_free(input_devices[i].description);
+  }
+
+  for (int i = 0; i < n_output_devices; i++) {
+    g_free(output_devices[i].name);
+    g_free(output_devices[i].description);
+  }
+
+  n_input_devices  = 0;
+  n_output_devices = 0;
+  memset(input_devices, 0, sizeof(input_devices));
+  memset(output_devices, 0, sizeof(output_devices));
+  g_mutex_unlock(&audio_mutex);
+  /*
+   * Optional, aber sauber:
+   * Nur terminieren, wenn du später auch wieder Pa_Initialize() aufrufst
+   * (was bei dir der Fall ist).
+   */
+  Pa_Terminate();
+}
+
 //
 // AUDIO_GET_CARDS
 //
@@ -122,7 +146,13 @@ void audio_get_cards() {
   int numDevices;
   PaStreamParameters inputParameters, outputParameters;
   PaError err;
-  g_mutex_init(&audio_mutex);
+  static gsize mutex_inited = 0;
+
+  if (g_once_init_enter(&mutex_inited)) {
+    g_mutex_init(&audio_mutex);
+    g_once_init_leave(&mutex_inited, 1);
+  }
+
   err = Pa_Initialize();
 
   if ( err != paNoError ) {
@@ -322,6 +352,12 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
         rx->local_audio_buffer_outpt = newpt;
       }
     }
+  } else {
+    // local_audio_buffer is NULL: output must still be defined -> silence
+    for (unsigned int i = 0; i < framesPerBuffer; i++) {
+      *out++ = 0.0;
+      *out++ = 0.0;
+    }
   }
 
   g_mutex_unlock(&rx->local_audio_mutex);
@@ -426,7 +462,6 @@ float audio_get_next_mic_sample() {
 
     MEMORY_BARRIER;
     sample = mic_ring_buffer[mic_ring_outpt];
-    // atomic update of read pointer
     MEMORY_BARRIER;
     mic_ring_outpt = newpt;
   }
@@ -556,6 +591,7 @@ void audio_close_input() {
 
   if (mic_ring_buffer != NULL) {
     g_free(mic_ring_buffer);
+    mic_ring_buffer = NULL;
   }
 
   g_mutex_unlock(&audio_mutex);

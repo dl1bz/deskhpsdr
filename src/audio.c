@@ -53,6 +53,7 @@ static const int cw_high_water = 1152;                // high water mark for CW
 #include <semaphore.h>
 
 #include <alsa/asoundlib.h>
+#include <glib.h>
 
 #include "radio.h"
 #include "receiver.h"
@@ -689,6 +690,7 @@ static void *mic_read_thread(gpointer arg) {
         // complete.
         //
         if (mic_ring_buffer != NULL) {
+          g_mutex_lock(&audio_mutex);
           // do not increase mic_ring_write_pt *here* since it must
           // not assume an illegal value at any time
           newpt = mic_ring_write_pt + 1;
@@ -701,6 +703,8 @@ static void *mic_read_thread(gpointer arg) {
             // atomic update of mic_ring_write_pt
             mic_ring_write_pt = newpt;
           }
+
+          g_mutex_unlock(&audio_mutex);
         }
       }
     }
@@ -735,6 +739,26 @@ float audio_get_next_mic_sample() {
   return sample;
 }
 
+void audio_release_cards(void) {
+  g_mutex_lock(&audio_mutex);
+
+  for (int i = 0; i < n_input_devices; i++) {
+    g_free(input_devices[i].name);
+    g_free(input_devices[i].description);
+  }
+
+  for (int i = 0; i < n_output_devices; i++) {
+    g_free(output_devices[i].name);
+    g_free(output_devices[i].description);
+  }
+
+  n_input_devices = 0;
+  n_output_devices = 0;
+  memset(input_devices, 0, sizeof(input_devices));
+  memset(output_devices, 0, sizeof(output_devices));
+  g_mutex_unlock(&audio_mutex);
+}
+
 void audio_get_cards() {
   snd_ctl_card_info_t *info;
   snd_pcm_info_t *pcminfo;
@@ -744,7 +768,13 @@ void audio_get_cards() {
   char *device_id;
   int card = -1;
   t_print("%s\n", __FUNCTION__);
-  g_mutex_init(&audio_mutex);
+  static gsize mutex_inited = 0;
+
+  if (g_once_init_enter(&mutex_inited)) {
+    g_mutex_init(&audio_mutex);
+    g_once_init_leave(&mutex_inited, 1);
+  }
+
   g_mutex_lock(&audio_mutex);
 
   for (int i = 0; i < n_input_devices; i++) {
