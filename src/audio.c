@@ -66,6 +66,17 @@ static const int cw_high_water = 1152;                // high water mark for CW
 int audio = 0;
 GMutex audio_mutex;
 
+// audio_mutex is used from multiple call paths; ensure it is initialized
+// regardless of whether audio_get_cards() has been called.
+static void audio_init_mutex_once(void) {
+  static gsize mutex_inited = 0;
+
+  if (g_once_init_enter(&mutex_inited)) {
+    g_mutex_init(&audio_mutex);
+    g_once_init_leave(&mutex_inited, 1);
+  }
+}
+
 static snd_pcm_t *record_handle = NULL;
 static snd_pcm_format_t record_audio_format;
 
@@ -73,7 +84,7 @@ static void *mic_buffer = NULL;
 
 static GThread *mic_read_thread_id = NULL;
 
-static int running = FALSE;
+static gint running = 0;
 
 //
 // TODO: include SND_PCM_FORMAT_IEC958_SUBFRAME_LE, such that ALSA
@@ -110,12 +121,18 @@ int audio_open_output(RECEIVER *rx) {
   unsigned int rate = 48000;
   unsigned int channels = 2;
   int soft_resample = 1;
+
+  if (rx == NULL || rx->audio_name[0] == '\0') {
+    t_print("%s: no output device selected\n", __FUNCTION__);
+    return -1;
+  }
+
   t_print("%s: rx=%d %s buffer_size=%d\n", __FUNCTION__, rx->id, rx->audio_name, out_buffer_size);
   int i;
   char hw[128];
   i = 0;
 
-  while (i < 127 && rx->audio_name[i] != ' ') {
+  while (i < 127 && rx->audio_name[i] != ' ' && rx->audio_name[i] != '\0') {
     hw[i] = rx->audio_name[i];
     i++;
   }
@@ -189,6 +206,7 @@ int audio_open_output(RECEIVER *rx) {
 }
 
 int audio_open_input() {
+  audio_init_mutex_once();
   int err;
   unsigned int rate = 48000;
   unsigned int channels = 1;
@@ -200,11 +218,17 @@ int audio_open_input() {
     return -1;
   }
 
+  if (transmitter == NULL ||
+      transmitter->microphone_name[0] == '\0') {
+    t_print("%s: no input device selected\n", __FUNCTION__);
+    return -1;
+  }
+
   t_print("%s: %s\n", __FUNCTION__, transmitter->microphone_name);
   t_print("%s: mic_buffer_size=%d\n", __FUNCTION__, mic_buffer_size);
   i = 0;
 
-  while (i < 63 && transmitter->microphone_name[i] != ' ') {
+  while (i < 63 && transmitter->microphone_name[i] != ' ' && transmitter->microphone_name[i] != '\0') {
     hw[i] = transmitter->microphone_name[i];
     i++;
   }
@@ -289,10 +313,13 @@ int audio_open_input() {
 
   t_print("%s: creating mic_read_thread\n", __FUNCTION__);
   GError *error = NULL;
+  // publish "running" before starting the thread (thread reads it)
+  g_atomic_int_set(&running, 1);
   mic_read_thread_id = g_thread_try_new("microphone", mic_read_thread, NULL, &error);
 
   if (!mic_read_thread_id ) {
     t_print("g_thread_new failed on mic_read_thread: %s\n", error->message);
+    g_atomic_int_set(&running, 0);
     g_mutex_unlock(&audio_mutex);
     audio_close_input();
     return -1;
@@ -320,15 +347,22 @@ void audio_close_output(RECEIVER *rx) {
 }
 
 void audio_close_input() {
+  audio_init_mutex_once();
   t_print("%s: enter\n", __FUNCTION__);
-  running = FALSE;
+  g_atomic_int_set(&running, 0);
+  // Do not join while holding audio_mutex; mic_read_thread locks audio_mutex.
+  GThread *thr = NULL;
   g_mutex_lock(&audio_mutex);
+  thr = mic_read_thread_id;
+  mic_read_thread_id = NULL;
+  g_mutex_unlock(&audio_mutex);
 
-  if (mic_read_thread_id != NULL) {
+  if (thr != NULL) {
     t_print("%s: wait for thread to complete\n", __FUNCTION__);
-    g_thread_join(mic_read_thread_id);
-    mic_read_thread_id = NULL;
+    g_thread_join(thr);
   }
+
+  g_mutex_lock(&audio_mutex);
 
   if (record_handle != NULL) {
     t_print("%s: snd_pcm_close\n", __FUNCTION__);
@@ -642,11 +676,9 @@ static void *mic_read_thread(gpointer arg) {
     return NULL;
   }
 
-  running = TRUE;
-
-  while (running) {
+  while (g_atomic_int_get(&running)) {
     if ((rc = snd_pcm_readi (record_handle, mic_buffer, mic_buffer_size)) != mic_buffer_size) {
-      if (running) {
+      if (g_atomic_int_get(&running)) {
         if (rc < 0) {
           t_print("%s: read from audio interface failed (%s)\n",
                   __FUNCTION__,
@@ -719,6 +751,7 @@ static void *mic_read_thread(gpointer arg) {
 // from ring buffer
 //
 float audio_get_next_mic_sample() {
+  audio_init_mutex_once();
   float sample;
   g_mutex_lock(&audio_mutex);
 
@@ -740,6 +773,7 @@ float audio_get_next_mic_sample() {
 }
 
 void audio_release_cards(void) {
+  audio_init_mutex_once();
   g_mutex_lock(&audio_mutex);
 
   for (int i = 0; i < n_input_devices; i++) {
@@ -760,21 +794,14 @@ void audio_release_cards(void) {
 }
 
 void audio_get_cards() {
+  audio_init_mutex_once();
   snd_ctl_card_info_t *info;
   snd_pcm_info_t *pcminfo;
   snd_ctl_card_info_alloca(&info);
   snd_pcm_info_alloca(&pcminfo);
   int i;
-  char *device_id;
   int card = -1;
   t_print("%s\n", __FUNCTION__);
-  static gsize mutex_inited = 0;
-
-  if (g_once_init_enter(&mutex_inited)) {
-    g_mutex_init(&audio_mutex);
-    g_once_init_leave(&mutex_inited, 1);
-  }
-
   g_mutex_lock(&audio_mutex);
 
   for (int i = 0; i < n_input_devices; i++) {
@@ -791,7 +818,9 @@ void audio_get_cards() {
   n_output_devices = 0;
   memset(input_devices, 0, sizeof(input_devices));
   memset(output_devices, 0, sizeof(output_devices));
-  g_mutex_unlock(&audio_mutex);
+
+  // keep audio_mutex locked for the entire enumeration to avoid races
+  // with UI/other threads reading device lists.
 
   while (snd_card_next(&card) >= 0 && card >= 0) {
     snd_ctl_t *handle;
@@ -816,38 +845,40 @@ void audio_get_cards() {
       snd_pcm_info_set_stream(pcminfo, SND_PCM_STREAM_CAPTURE);
 
       if (snd_ctl_pcm_info(handle, pcminfo) == 0) {
-        device_id = g_new(char, 128);
-        snprintf(device_id, 128, "plughw:%d,%d %s", card, dev, snd_ctl_card_info_get_name(info));
-
         if (n_input_devices < MAX_AUDIO_DEVICES) {
-          // the two allocated strings will never be free'd
-          input_devices[n_input_devices].name = g_strdup(device_id);
-          input_devices[n_input_devices].description = g_strdup(device_id);
+          // Key without spaces (stable identifier)
+          input_devices[n_input_devices].name =
+            g_strdup_printf("plughw:%d,%d", card, dev);
+          // User-facing description (can contain spaces)
+          input_devices[n_input_devices].description =
+            g_strdup_printf("plughw:%d,%d %s",
+                            card, dev, snd_ctl_card_info_get_name(info));
           input_devices[n_input_devices].index = 0; // not used
           n_input_devices++;
-          t_print("input_device: %s\n", device_id);
+          t_print("input_device: %s (%s)\n",
+                  input_devices[n_input_devices - 1].name,
+                  input_devices[n_input_devices - 1].description);
         }
-
-        g_free(device_id);
       }
 
       // ouput devices
       snd_pcm_info_set_stream(pcminfo, SND_PCM_STREAM_PLAYBACK);
 
       if (snd_ctl_pcm_info(handle, pcminfo) == 0) {
-        device_id = g_new(char, 128);
-        snprintf(device_id, 128, "plughw:%d,%d %s", card, dev, snd_ctl_card_info_get_name(info));
-
         if (n_output_devices < MAX_AUDIO_DEVICES) {
-          // the two allocated strings will never be free'd
-          output_devices[n_output_devices].name = g_strdup(device_id);
-          output_devices[n_output_devices].description = g_strdup(device_id);
+          // Key without spaces (stable identifier)
+          output_devices[n_output_devices].name =
+            g_strdup_printf("plughw:%d,%d", card, dev);
+          // User-facing description (can contain spaces)
+          output_devices[n_output_devices].description =
+            g_strdup_printf("plughw:%d,%d %s",
+                            card, dev, snd_ctl_card_info_get_name(info));
           output_devices[n_output_devices].index = 0; // not used
           n_output_devices++;
-          t_print("output_device: %s\n", device_id);
+          t_print("output_device: %s (%s)\n",
+                  output_devices[n_output_devices - 1].name,
+                  output_devices[n_output_devices - 1].description);
         }
-
-        g_free(device_id);
       }
     }
 
@@ -857,9 +888,10 @@ void audio_get_cards() {
   // look for dmix and dsnoop
   void **hints, **n;
   char *name, *descr, *io;
+  hints = NULL;
 
   if (snd_device_name_hint(-1, "pcm", &hints) < 0) {
-    return;
+    goto out_unlock;
   }
 
   n = hints;
@@ -869,38 +901,52 @@ void audio_get_cards() {
     descr = snd_device_name_get_hint(*n, "DESC");
     io = snd_device_name_get_hint(*n, "IOID");
 
+    if (name == NULL) {
+      if (descr != NULL) { free(descr); }
+
+      if (io != NULL) { free(io); }
+
+      n++;
+      continue;
+    }
+
     if (strncmp("dmix:", name, 5) == 0) {
       if (n_output_devices < MAX_AUDIO_DEVICES) {
         output_devices[n_output_devices].name = g_strdup(name);
-        output_devices[n_output_devices].description = g_strdup(descr);
+        output_devices[n_output_devices].description = g_strdup(descr ? descr : name);
 
-        for (i = 0; i < strlen(descr); i++) {
-          if (output_devices[n_output_devices].description[i] == '\n') {
-            output_devices[n_output_devices].description[i] = '\0';
-            break;
+        if (descr != NULL) {
+          for (i = 0; i < (int)strlen(output_devices[n_output_devices].description); i++) {
+            if (output_devices[n_output_devices].description[i] == '\n') {
+              output_devices[n_output_devices].description[i] = '\0';
+              break;
+            }
           }
         }
 
         output_devices[n_output_devices].index = 0; // not used
         n_output_devices++;
-        t_print("output_device: name=%s descr=%s\n", name, descr);
+        t_print("output_device: name=%s descr=%s\n", name, descr ? descr : "(null)");
       }
 
 #ifdef INCLUDE_SNOOP
     } else if (strncmp("dsnoop:", name, 6) == 0) {
       if (n_input_devices < MAX_AUDIO_DEVICES) {
         input_devices[n_input_devices].name = g_strdup(name);
+        input_devices[n_input_devices].description = g_strdup(descr ? descr : name);
 
-        for (i = 0; i < strlen(descr); i++) {
-          if (input_devices[n_input_devices].description[i] == '\n') {
-            input_devices[n_input_devices].description[i] = '\0';
-            break;
+        if (descr != NULL) {
+          for (i = 0; i < (int)strlen(input_devices[n_input_devices].description); i++) {
+            if (input_devices[n_input_devices].description[i] == '\n') {
+              input_devices[n_input_devices].description[i] = '\0';
+              break;
+            }
           }
         }
 
         input_devices[n_input_devices].index = 0; // not used
         n_input_devices++;
-        t_print("input_device: name=%s descr=%s\n", name, descr);
+        t_print("input_device: name=%s descr=%s\n", name, descr ? descr : "(null)");
       }
 
 #endif
@@ -926,5 +972,10 @@ void audio_get_cards() {
     n++;
   }
 
-  snd_device_name_free_hint(hints);
+out_unlock:
+  g_mutex_unlock(&audio_mutex);
+
+  if (hints != NULL) {
+    snd_device_name_free_hint(hints);
+  }
 }
