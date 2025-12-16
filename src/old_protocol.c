@@ -37,6 +37,7 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <stdatomic.h>
 #include <signal.h>
 
 #include "MacOS.h"
@@ -58,7 +59,12 @@
   #include "toolset.h"
 #endif
 
-#define min(x,y) (x<y?x:y)
+/* Avoid macro clashes with system headers */
+#ifdef min
+  #undef min
+#endif
+static inline __attribute__((unused))
+int op_min_int(int x, int y) { return (x < y) ? x : y; }
 
 #define SYNC0 0
 #define SYNC1 1
@@ -142,7 +148,7 @@ static int tx_fifo_flag = 0;
 static int current_rx = 0;
 
 static int mic_samples = 0;
-static int mic_sample_divisor = 1;
+static atomic_int mic_sample_divisor;
 
 static int radio_dash = 0;
 static int radio_dot = 0;
@@ -295,16 +301,14 @@ void hl2_iob_set_antenna_tuner(unsigned char value) {
 //  #define TXRINGBUFLEN 32256          // 80 msec
 
 static unsigned char *TXRINGBUF = NULL;
-static volatile int txring_inptr  = 0;  // pointer updated when writing into the ring buffer
-static volatile int txring_outptr = 0;  // pointer updated when reading from the ring buffer
-static volatile int txring_flag   = 0;  // 0: RX, 1: TX
-static volatile int txring_count  = 0;  // a sample counter
-static volatile int txring_drain  = 0;  // a flag for draining the output buffer
+static atomic_int txring_inptr;   // pointer updated when writing into the ring buffer
+static atomic_int txring_outptr;  // pointer updated when reading from the ring buffer
+static atomic_int txring_flag;    // 0: RX, 1: TX
+static atomic_int txring_count;   // a sample counter
+static atomic_int txring_drain;   // a flag for draining the output buffer
 
 #ifdef __APPLE__
-  static volatile int sleep_short = 250000;   // in ns
-  static volatile int sleep_long  = 1500000;  // in ns
-  static volatile int sr = 0;
+  static atomic_int sr;
 #endif
 
 //
@@ -317,28 +321,20 @@ static volatile int txring_drain  = 0;  // a flag for draining the output buffer
 #else
   #define RXRINGBUFLEN (1024 * 512)   // must be multiple of 1024 since we queue double-buffers
 #endif
+
 static unsigned char *RXRINGBUF = NULL;
-static volatile int rxring_inptr  = 0;  // pointer updated when writing into the ring buffer
-static volatile int rxring_outptr = 0;  // pointer updated when reading from the ring buffer
-static volatile int rxring_count  = 0;  // a sample counter
+static atomic_int rxring_inptr;   // pointer updated when writing into the ring buffer
+static atomic_int rxring_outptr;  // pointer updated when reading from the ring buffer
+static atomic_int rxring_count;   // a sample counter
 
 #ifdef __APPLE__
 void old_protocol_update_timing(void) {
-  sr = 48000 * mic_sample_divisor;
+  int div = atomic_load_explicit(&mic_sample_divisor, memory_order_relaxed);
+  int sr_local = 48000 * div;
   int receivers = how_many_receivers();
-
-  if      (sr <= 48000)  { sleep_short = 800000; sleep_long  = 2000000; }
-  else if (sr <= 96000)  { sleep_short = 400000; sleep_long  = 1750000; }
-  else if (sr <= 192000) { sleep_short = 250000; sleep_long  = 1500000; }
-  else                   { sleep_short = 100000; sleep_long  = 1000000; }
-
-  if (receivers > 2) {
-    sleep_short -= 50000;
-    sleep_long  -= 250000;
-  }
-
-  t_print("%s: SR=%dk RX=%d → short=%d µs, long=%d ms\n",
-          __FUNCTION__, sr / 1000, receivers, sleep_short / 1000, sleep_long / 1000000);
+  atomic_store_explicit(&sr, sr_local, memory_order_relaxed);
+  t_print("%s: SR=%dk RX=%d\n",
+          __FUNCTION__, sr_local / 1000, receivers);
 }
 #endif
 
@@ -348,42 +344,53 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   struct timespec target_time;
   clock_gettime(CLOCK_MONOTONIC, &target_time);  // Startzeitpunkt initialisieren
   old_protocol_update_timing();
-  t_print("%s: sr=%d\n", __FUNCTION__, sr);
+  t_print("%s: sr=%d\n", __FUNCTION__, atomic_load_explicit(&sr, memory_order_relaxed));
 
   for (;;) {
     sem_wait(txring_sem);
-    nptr = txring_outptr + 1008;
+    int out = atomic_load_explicit(&txring_outptr, memory_order_relaxed);
+    int in  = atomic_load_explicit(&txring_inptr,  memory_order_acquire);
+
+    if (out == in) {
+      continue; // nichts zu senden
+    }
+
+    nptr = out + 1008;
 
     if (nptr >= TXRINGBUFLEN) { nptr = 0; }
 
     // Falls TX gestoppt ist oder Drain-Modus aktiv → skip
-    if (!P1running || txring_drain) {
-      txring_outptr = nptr;
+    if (!P1running || atomic_load_explicit(&txring_drain, memory_order_acquire)) {
+      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
       continue;
     }
 
     // Versuche exklusiven Zugriff auf TX-Sende-Buffer
     if (pthread_mutex_trylock(&send_ozy_mutex)) {
-      txring_outptr = nptr;
+      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
       continue;
     }
 
     // Keine Samples vorhanden → skip
-    if (txring_outptr == nptr) {
+    out = atomic_load_explicit(&txring_outptr, memory_order_relaxed);
+    in  = atomic_load_explicit(&txring_inptr,  memory_order_acquire);
+
+    if (out == in) {
       pthread_mutex_unlock(&send_ozy_mutex);
       continue;
     }
 
     // ➤ Sende genau 1 Paket (besteht aus 2 × 504 Bytes = 1032 Bytes)
-    memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr], 504);
+    memcpy(output_buffer + 8, &TXRINGBUF[out], 504);
     ozy_send_buffer();
-    memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr + 504], 504);
+    memcpy(output_buffer + 8, &TXRINGBUF[out + 504], 504);
     ozy_send_buffer();
     MEMORY_BARRIER;
-    txring_outptr = nptr;
+    atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
     pthread_mutex_unlock(&send_ozy_mutex);
     // 🕒 Dynamisch berechneter Abstand je nach aktueller Sample-Rate
-    int interval_us = 126 * 1000000 / (sr ? sr : 48000);
+    int sr_local = atomic_load_explicit(&sr, memory_order_relaxed);
+    int interval_us = 126 * 1000000 / (sr_local ? sr_local : 48000);
     // ➤ Zielzeitpunkt für nächstes Paket berechnen
     target_time.tv_nsec += interval_us * 1000;
 
@@ -420,12 +427,19 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   //
   for (;;) {
     sem_wait(&txring_sem);
-    nptr = txring_outptr + 1008;
+    int out = atomic_load_explicit(&txring_outptr, memory_order_relaxed);
+    int in  = atomic_load_explicit(&txring_inptr,  memory_order_acquire);
+
+    if (out == in) {
+      continue; // nichts zu senden
+    }
+
+    nptr = out + 1008;
 
     if (nptr >= TXRINGBUFLEN) { nptr = 0; }
 
-    if (!P1running || txring_drain) {
-      txring_outptr = nptr;
+    if (!P1running || atomic_load_explicit(&txring_drain, memory_order_acquire)) {
+      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
       continue;
     }
 
@@ -437,7 +451,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
       // the sample rate, en/dis-abling PureSignal or
       // DIVERSITY, or executing the RESTART button.
       //
-      txring_outptr = nptr;
+      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
     } else {
       //
       // We used to have a fixed sleeping time of 2000 usec, and
@@ -456,7 +470,10 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
       double now;
       clock_gettime(CLOCK_MONOTONIC, &ts);
       now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
-      FIFO -= (now - last) * 48000.0;
+      // Use effective TX sample rate (was hardcoded 48k)
+      const int div = atomic_load_explicit(&mic_sample_divisor, memory_order_relaxed);
+      const double tx_sr = 48000.0 * (double)div;
+      FIFO -= (now - last) * (tx_sr > 0.0 ? tx_sr : 48000.0);
       last = now;
 
       if (FIFO < 0.0) {
@@ -494,12 +511,12 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
       }
 
       FIFO += 126.0;  // number of samples in THIS packet
-      memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr    ], 504);
+      memcpy(output_buffer + 8, &TXRINGBUF[out], 504);
       ozy_send_buffer();
-      memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr + 504], 504);
+      memcpy(output_buffer + 8, &TXRINGBUF[out + 504], 504);
       ozy_send_buffer();
       MEMORY_BARRIER;
-      txring_outptr = nptr;
+      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
       pthread_mutex_unlock(&send_ozy_mutex);
     }
   }
@@ -507,129 +524,6 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   return NULL;
 }
 #endif
-
-/*
-static gpointer old_protocol_txiq_thread(gpointer data) {
-  int nptr;
-#ifdef __APPLE__
-  old_protocol_update_timing();
-#endif
-
-  //
-  // Ideally, an output METIS buffer with 126 samples is sent every 2625 usec.
-  // We thus wait until we have 126 samples, and then send a packet.
-  // Upon RX, the packets come from the RX thread and contain the receiver audio,
-  // and the rate in which packets fly in strongly depends on the receiver sample
-  // rate:
-  // Each WDSP "fexchange" event, with a fixed buffer size of 1024, produces
-  // between 128 (384k sample rate) and 1024 (48k sample rate) audio samples,
-  // which therefore arrive every 2.7 msec (384k) up to every 21.3 msec (48k).
-  //
-  // When TXing, a bunch of 1024 TX IQ samples is produced every 21.3 msec.
-  //
-  // If "txring_drain" is set, drain the buffer
-  //
-  for (;;) {
-#ifdef __APPLE__
-    sem_wait(txring_sem);
-#else
-    sem_wait(&txring_sem);
-#endif
-    nptr = txring_outptr + 1008;
-
-    if (nptr >= TXRINGBUFLEN) { nptr = 0; }
-
-    if (!P1running || txring_drain) {
-      txring_outptr = nptr;
-      continue;
-    }
-
-    if (pthread_mutex_trylock(&send_ozy_mutex)) {
-      //
-      // This can only happen if the GUI thread initiates
-      // a protocol stop/start sequence, as it does e.g.
-      // when changing the number of receivers, changing
-      // the sample rate, en/dis-abling PureSignal or
-      // DIVERSITY, or executing the RESTART button.
-      //
-      txring_outptr = nptr;
-    } else {
-      //
-      // We used to have a fixed sleeping time of 2000 usec, and
-      // observed that the sleep was sometimes too long, especially
-      // at 48k sample rate.
-      // The idea is now to monitor how fast we actually send
-      // the packets, and FIFO is the coarse (!) estimation of the
-      // FPGA-FIFO filling level.
-      // If we lag behind and FIFO goes low, send packets with
-      // little or no delay. Never sleep longer than 2000 usec, the
-      // fixed time we had before.
-      //
-      struct timespec ts;
-      static double last = -9999.9;
-      static double FIFO = 0.0;
-      double now;
-      clock_gettime(CLOCK_MONOTONIC, &ts);
-      now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
-      FIFO -= (now - last) * 48000.0;
-      last = now;
-
-      if (FIFO < 0.0) {
-        FIFO = 0.0;
-      }
-
-      //
-      // Depending on how we estimate the FIFO filling, wait
-      // 2000usec, or 500 usec, or nothing before sending
-      // out the next packet.
-      //
-      // Note that in reality, the "sleep" is a little bit longer
-      // than specified by ts (we cannot rely on a wake-up in time).
-      //
-      if (FIFO > 1500.0) {
-#ifdef __APPLE__
-        ts.tv_nsec += sleep_long;
-#else
-        // Wait about 2000 usec before sending the next packet.
-        ts.tv_nsec += 2000000;
-#endif
-
-        if (ts.tv_nsec > 999999999) {
-          ts.tv_sec++;
-          ts.tv_nsec -= 1000000000;
-        }
-
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      } else if (FIFO > 300.0) {
-#ifdef __APPLE__
-        ts.tv_nsec += sleep_short;
-#else
-        // Wait about 500 usec before sending the next packet.
-        ts.tv_nsec += 500000;
-#endif
-
-        if (ts.tv_nsec > 999999999) {
-          ts.tv_sec++;
-          ts.tv_nsec -= 1000000000;
-        }
-
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      }
-
-      FIFO += 126.0;  // number of samples in THIS packet
-      memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr    ], 504);
-      ozy_send_buffer();
-      memcpy(output_buffer + 8, &TXRINGBUF[txring_outptr + 504], 504);
-      ozy_send_buffer();
-      MEMORY_BARRIER;
-      txring_outptr = nptr;
-      pthread_mutex_unlock(&send_ozy_mutex);
-    }
-  }
-
-  return NULL;
-}
-*/
 
 void old_protocol_stop() {
   //
@@ -654,7 +548,10 @@ void old_protocol_run() {
 }
 
 void old_protocol_set_mic_sample_rate(int rate) {
-  mic_sample_divisor = rate / 48000;
+  atomic_store_explicit(&mic_sample_divisor, rate / 48000, memory_order_relaxed);
+#ifdef __APPLE__
+  old_protocol_update_timing();
+#endif
 }
 
 //
@@ -664,6 +561,10 @@ void old_protocol_set_mic_sample_rate(int rate) {
 //
 void old_protocol_init(int rate) {
   int i;
+#ifdef __APPLE__
+  atomic_init(&sr,          0);
+#endif
+  atomic_init(&mic_sample_divisor, 1);
   t_print("%s: num_hpsdr_receivers=%d\n", __FUNCTION__, how_many_receivers());
   t_print("%s: RX ring buffer size: %d bytes\n", __FUNCTION__, RXRINGBUFLEN);
   t_print("%s: TX ring buffer size: %d bytes\n", __FUNCTION__, TXRINGBUFLEN);
@@ -676,9 +577,25 @@ void old_protocol_init(int rate) {
     RXRINGBUF = g_new(unsigned char, RXRINGBUFLEN);
   }
 
+  // Atomics init (explicit, so state is well-defined even if globals persist)
+  atomic_store_explicit(&txring_inptr,  0, memory_order_relaxed);
+  atomic_store_explicit(&txring_outptr, 0, memory_order_relaxed);
+  atomic_store_explicit(&txring_flag,   0, memory_order_relaxed);
+  atomic_store_explicit(&txring_count,  0, memory_order_relaxed);
+  atomic_store_explicit(&txring_drain,  0, memory_order_relaxed);
+  atomic_store_explicit(&rxring_inptr,  0, memory_order_relaxed);
+  atomic_store_explicit(&rxring_outptr, 0, memory_order_relaxed);
+  atomic_store_explicit(&rxring_count,  0, memory_order_relaxed);
 #ifdef __APPLE__
   txring_sem = apple_sem(0);
   rxring_sem = apple_sem(0);
+
+  if (!txring_sem || !rxring_sem) {
+    t_print("%s: apple_sem() failed (txring_sem=%p rxring_sem=%p)\n",
+            __FUNCTION__, (void*)txring_sem, (void*)rxring_sem);
+    return;
+  }
+
 #else
   (void) sem_init(&txring_sem, 0, 0);
   (void) sem_init(&rxring_sem, 0, 0);
@@ -2059,41 +1976,46 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
   // in one shot since this halves the number of semamphore operations
   // at no cost (buffer fly in in pairs anyway)
   //
-  if (rxring_count < 0) {
-    rxring_count++;
+  int rc = atomic_load_explicit(&rxring_count, memory_order_relaxed);
+
+  if (rc < 0) {
+    (void) atomic_fetch_add_explicit(&rxring_count, 1, memory_order_relaxed);
     return;
   }
 
-  int nptr = rxring_inptr + 1024;
+  int in  = atomic_load_explicit(&rxring_inptr,  memory_order_relaxed);
+  int out = atomic_load_explicit(&rxring_outptr, memory_order_acquire);
+  int nptr = in + 1024;
 
   if (nptr >= RXRINGBUFLEN) { nptr = 0; }
 
 #ifdef __APPLE__
 
-  if (nptr == rxring_outptr) {
+  if (nptr == out) {
     t_print("%s: RX input buffer overflow — overwriting oldest buffer.\n", __FUNCTION__);
     // Ältestes Paket verwerfen, indem der out-pointer auf das nächste Element zeigt
-    rxring_outptr = (rxring_outptr + 1024) % RXRINGBUFLEN;
+    out = (out + 1024) % RXRINGBUFLEN;
+    atomic_store_explicit(&rxring_outptr, out, memory_order_release);
   }
 
-  memcpy((void *)(&RXRINGBUF[rxring_inptr]), buf1, 512);
-  memcpy((void *)(&RXRINGBUF[rxring_inptr + 512]), buf2, 512);
+  memcpy((void *)(&RXRINGBUF[in]),       buf1, 512);
+  memcpy((void *)(&RXRINGBUF[in + 512]), buf2, 512);
   MEMORY_BARRIER;
-  rxring_inptr = nptr;
+  atomic_store_explicit(&rxring_inptr, nptr, memory_order_release);
   sem_post(rxring_sem);
 #else
 
-  if (nptr != rxring_outptr) {
-    memcpy((void *)(&RXRINGBUF[rxring_inptr    ]), buf1, 512);
-    memcpy((void *)(&RXRINGBUF[rxring_inptr + 512]), buf2, 512);
+  if (nptr != out) {
+    memcpy((void *)(&RXRINGBUF[in]),       buf1, 512);
+    memcpy((void *)(&RXRINGBUF[in + 512]), buf2, 512);
     MEMORY_BARRIER;
-    rxring_inptr = nptr;
+    atomic_store_explicit(&rxring_inptr, nptr, memory_order_release);
     sem_post(&rxring_sem);
   } else {
     t_print("%s: input buffer overflow.\n", __FUNCTION__);
     // if an overflow is encountered, skip the next 256 input buffers
     // to allow a "fresh start"
-    rxring_count = -256;
+    atomic_store_explicit(&rxring_count, -256, memory_order_relaxed);
   }
 
 #endif
@@ -2115,7 +2037,8 @@ static gpointer process_ozy_input_buffer_thread(gpointer arg) {
 #else
     sem_wait(&rxring_sem);
 #endif
-    int nptr = rxring_outptr + 1024;
+    int out = atomic_load_explicit(&rxring_outptr, memory_order_relaxed);
+    int nptr = out + 1024;
 
     if (nptr >= RXRINGBUFLEN) { nptr = 0; }
 
@@ -2126,12 +2049,10 @@ static gpointer process_ozy_input_buffer_thread(gpointer arg) {
     st_rxfdbk = rx_feedback_channel();
     st_txfdbk = tx_feedback_channel();
 
-    for (int i = 0; i < 1024; i++) {
-      process_ozy_byte(RXRINGBUF[rxring_outptr + i] & 0xFF);
-    }
+    for (int i = 0; i < 1024; i++) { process_ozy_byte(RXRINGBUF[out + i] & 0xFF); }
 
     MEMORY_BARRIER;
-    rxring_outptr = nptr;
+    atomic_store_explicit(&rxring_outptr, nptr, memory_order_release);
   }
 
   return NULL;
@@ -2140,50 +2061,42 @@ static gpointer process_ozy_input_buffer_thread(gpointer arg) {
 void old_protocol_audio_samples(short left_audio_sample, short right_audio_sample) {
   if (!radio_is_transmitting()) {
     pthread_mutex_lock(&send_audio_mutex);
+    int tc = atomic_load_explicit(&txring_count, memory_order_relaxed);
 
-    if (txring_count < 0) {
-      txring_count++;
+    if (tc < 0) {
+      (void) atomic_fetch_add_explicit(&txring_count, 1, memory_order_relaxed);
       pthread_mutex_unlock(&send_audio_mutex);
       return;
     }
 
 #ifdef __APPLE__
 
-    if (txring_flag) {
-      struct timespec start, now;
-      clock_gettime(CLOCK_MONOTONIC, &start);
-      txring_drain = 1;
-
-      for (;;) {
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        long elapsed_us = (now.tv_sec - start.tv_sec) * 1000000 +
-                          (now.tv_nsec - start.tv_nsec) / 1000;
-
-        if (elapsed_us > 5000) { break; }
-      }
-
-      txring_drain = 0;
-      txring_flag = 0;
+    if (atomic_load_explicit(&txring_flag, memory_order_acquire)) {
+      struct timespec ts = { .tv_sec = 0, .tv_nsec = 5000000 }; // 5ms
+      atomic_store_explicit(&txring_drain, 1, memory_order_release);
+      nanosleep(&ts, NULL);
+      atomic_store_explicit(&txring_drain, 0, memory_order_release);
+      atomic_store_explicit(&txring_flag,  0, memory_order_release);
     }
 
 #else
 
-    if (txring_flag) {
+    if (atomic_load_explicit(&txring_flag, memory_order_acquire)) {
       //
       // First time we arrive here after a TX->RX transition:
       // set the "drain" flag, wait 5 msec, clear it
       // This should drain the txiq ring buffer
       //
-      txring_drain = 1;
+      atomic_store_explicit(&txring_drain, 1, memory_order_release);
       usleep(5000);
-      txring_drain = 0;
-      txring_flag = 0;
+      atomic_store_explicit(&txring_drain, 0, memory_order_release);
+      atomic_store_explicit(&txring_flag,  0, memory_order_release);
     }
 
 #endif
-    // int iptr = txring_inptr + 8 * txring_count;
-    // int iptr = txring_inptr + TXRING_AUDIO_SAMPLE_BYTES * txring_count;
-    int iptr = (txring_inptr + TXRING_AUDIO_SAMPLE_BYTES * txring_count) % TXRINGBUFLEN;
+    int in = atomic_load_explicit(&txring_inptr, memory_order_relaxed);
+    tc = atomic_load_explicit(&txring_count, memory_order_relaxed);
+    int iptr = (in + TXRING_AUDIO_SAMPLE_BYTES * tc) % TXRINGBUFLEN;
 
     //
     // The HL2 makes no use of audio samples, but instead
@@ -2207,27 +2120,27 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
     TXRINGBUF[iptr++] = 0;
     TXRINGBUF[iptr++] = 0;
     TXRINGBUF[iptr++] = 0;
-    txring_count++;
+    (void) atomic_fetch_add_explicit(&txring_count, 1, memory_order_relaxed);
+    tc = atomic_load_explicit(&txring_count, memory_order_relaxed);
 
-    // if (txring_count >= 126) {
-    if (txring_count >= TXRING_AUDIO_FRAMES_PER_BLOCK) { // also 126
-      // int nptr = txring_inptr + 1008;
-      int nptr = txring_inptr + TXRING_AUDIO_SAMPLE_BYTES * TXRING_AUDIO_FRAMES_PER_BLOCK;
+    if (tc >= TXRING_AUDIO_FRAMES_PER_BLOCK) { // also 126
+      in = atomic_load_explicit(&txring_inptr, memory_order_relaxed);
+      int out = atomic_load_explicit(&txring_outptr, memory_order_acquire);
+      int nptr = in + TXRING_AUDIO_SAMPLE_BYTES * TXRING_AUDIO_FRAMES_PER_BLOCK;
 
       if (nptr >= TXRINGBUFLEN) { nptr = 0; }
 
-      if (nptr != txring_outptr) {
+      if (nptr != out) {
 #ifdef __APPLE__
         sem_post(txring_sem);
 #else
         sem_post(&txring_sem);
 #endif
-        txring_inptr = nptr;
-        txring_count = 0;
+        atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
+        atomic_store_explicit(&txring_count, 0,   memory_order_relaxed);
       } else {
         t_print("%s: output buffer overflow.\n", __FUNCTION__);
-        // txring_count = -1260;
-        txring_count = -TXRING_AUDIO_FRAMES_PER_BLOCK * 10;
+        atomic_store_explicit(&txring_count, -TXRING_AUDIO_FRAMES_PER_BLOCK * 10, memory_order_relaxed);
       }
     }
 
@@ -2238,19 +2151,20 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 void old_protocol_iq_samples(int isample, int qsample, int side) {
   if (radio_is_transmitting()) {
     pthread_mutex_lock(&send_audio_mutex);
+    int tc = atomic_load_explicit(&txring_count, memory_order_relaxed);
 
-    if (txring_count < 0) {
-      txring_count++;
+    if (tc < 0) {
+      (void) atomic_fetch_add_explicit(&txring_count, 1, memory_order_relaxed);
       pthread_mutex_unlock(&send_audio_mutex);
       return;
     }
 
 #ifdef __APPLE__
 
-    if (!txring_flag) {
+    if (!atomic_load_explicit(&txring_flag, memory_order_acquire)) {
       struct timespec start, now;
       clock_gettime(CLOCK_MONOTONIC, &start);
-      txring_drain = 1;
+      atomic_store_explicit(&txring_drain, 1, memory_order_release);
 
       for (;;) {
         clock_gettime(CLOCK_MONOTONIC, &now);
@@ -2260,27 +2174,29 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
         if (elapsed_us > 5000) { break; }
       }
 
-      txring_drain = 0;
-      txring_flag = 1;
+      atomic_store_explicit(&txring_drain, 0, memory_order_release);
+      atomic_store_explicit(&txring_flag,  1, memory_order_release);
     }
 
 #else
 
-    if (!txring_flag) {
+    if (!atomic_load_explicit(&txring_flag, memory_order_acquire)) {
       //
       // First time we arrive here after a RX->TX transition:
       // set the "drain" flag, wait 5 msec, clear it
       // This should drain the txiq ring buffer (which also
       // contains the audio samples) for minimum CW side tone latency.
       //
-      txring_drain = 1;
+      atomic_store_explicit(&txring_drain, 1, memory_order_release);
       usleep(5000);
-      txring_drain = 0;
-      txring_flag = 1;
+      atomic_store_explicit(&txring_drain, 0, memory_order_release);
+      atomic_store_explicit(&txring_flag,  1, memory_order_release);
     }
 
 #endif
-    int iptr = txring_inptr + 8 * txring_count;
+    int in = atomic_load_explicit(&txring_inptr, memory_order_relaxed);
+    tc = atomic_load_explicit(&txring_count, memory_order_relaxed);
+    int iptr = in + 8 * tc;
 
     //
     // The HL2 makes no use of audio samples, but instead
@@ -2320,29 +2236,60 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
       TXRINGBUF[iptr++] = qsample;
     }
 
-    txring_count++;
+    (void) atomic_fetch_add_explicit(&txring_count, 1, memory_order_relaxed);
+    tc = atomic_load_explicit(&txring_count, memory_order_relaxed);
 
-    if (txring_count >= 126) {
-      int nptr = txring_inptr + 1008;
+    if (tc >= 126) {
+      int out = atomic_load_explicit(&txring_outptr, memory_order_acquire);
+      in = atomic_load_explicit(&txring_inptr, memory_order_relaxed);
+      int nptr = in + 1008;
 
       if (nptr >= TXRINGBUFLEN) { nptr = 0; }
 
-      if (nptr != txring_outptr) {
+      if (nptr != out) {
 #ifdef __APPLE__
         sem_post(txring_sem);
 #else
         sem_post(&txring_sem);
 #endif
-        txring_inptr = nptr;
-        txring_count = 0;
+        atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
+        atomic_store_explicit(&txring_count, 0,   memory_order_relaxed);
       } else {
         t_print("%s: output buffer overflow.\n", __FUNCTION__);
-        txring_count = -1260;
+        atomic_store_explicit(&txring_count, -1260, memory_order_relaxed);
       }
     }
 
     pthread_mutex_unlock(&send_audio_mutex);
   }
+}
+
+static inline unsigned char hl2_tx_latency_ms(int txvfo) {
+  /*
+   * Sticky fallback: if HL2 reports a real TX FIFO underrun during TX,
+   * force conservative latency for the rest of this TX phase.
+   * Reset when leaving TX.
+   */
+  static int sticky = 0;
+
+  if (!radio_is_transmitting()) {
+    sticky = 0;
+  } else if (tx_fifo_underrun) {
+    sticky = 1;
+  }
+
+  /* Safety first: TUNE / PureSignal / sticky -> conservative */
+  if (sticky || tune || (transmitter && transmitter->puresignal)) {
+    return 40;
+  }
+
+  /* CW low latency */
+  if (vfo[txvfo].mode == modeCWU || vfo[txvfo].mode == modeCWL) {
+    return 12;
+  }
+
+  /* Default */
+  return 40;
 }
 
 void ozy_send_buffer() {
@@ -3079,15 +3026,19 @@ void ozy_send_buffer() {
       // the TX frequency. Therefore a valid packet setting the PTT hang time
       // and the TX latency is prepeared for any value of hl2_command_loop.
       //
-      // A latency of 40 msec means that we first send 1920
-      // TX iq samples before HL2 starts TXing. This should be
-      // enough to prevent underflows and leave some head-room.
+      // Default latency is 40 msec (conservative). For CW we may use a lower
+      // latency for snappier TX, with sticky fallback to 40 msec if HL2 reports
+      // a real TX FIFO underrun during this TX phase.
+      //
+      // A latency of 40 msec means that we first send 1920 TX iq samples
+      // before HL2 starts TXing. This should be enough to prevent underflows
+      // and leave some head-room.
       // My measurements indicate that the TX FIFO can hold about
       // 75 msec or 3600 samples (cum grano salis).
       //
       output_buffer[C0] = 0x2E;
       output_buffer[C3] = 20; // 20 msec PTT hang time, only bits 4:0
-      output_buffer[C4] = 40; // 40 msec TX latency,    only bits 6:0
+      output_buffer[C4] = hl2_tx_latency_ms(txvfo);
 
       //
       switch (hl2_command_loop) {
@@ -3423,9 +3374,8 @@ static int metis_write(unsigned char ep, unsigned const char* buffer, int length
     metis_buffer[7] = (send_sequence) & 0xFF;
     send_sequence++;
 #ifdef __APPLE__
-    extern volatile int txring_flag;
 
-    if (txring_flag) {
+    if (atomic_load_explicit(&txring_flag, memory_order_relaxed)) {
       static struct timespec last_ts = {0};
       struct timespec now_ts;
       clock_gettime(CLOCK_MONOTONIC, &now_ts);
