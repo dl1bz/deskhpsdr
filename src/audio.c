@@ -239,7 +239,7 @@ int audio_open_input() {
   for (i = 0; i < FORMATS; i++) {
     g_mutex_lock(&audio_mutex);
 
-    if ((err = snd_pcm_open (&record_handle, hw, SND_PCM_STREAM_CAPTURE, SND_PCM_ASYNC)) < 0) {
+    if ((err = snd_pcm_open (&record_handle, hw, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
       t_print("%s: cannot open audio device %s (%s)\n",
               __FUNCTION__,
               hw,
@@ -318,7 +318,10 @@ int audio_open_input() {
   mic_read_thread_id = g_thread_try_new("microphone", mic_read_thread, NULL, &error);
 
   if (!mic_read_thread_id ) {
-    t_print("g_thread_new failed on mic_read_thread: %s\n", error->message);
+    t_print("g_thread_new failed on mic_read_thread: %s\n", error ? error->message : "(no error)");
+
+    if (error) { g_error_free(error); }
+
     g_atomic_int_set(&running, 0);
     g_mutex_unlock(&audio_mutex);
     audio_close_input();
@@ -691,38 +694,38 @@ static void *mic_read_thread(gpointer arg) {
     } else {
       int newpt;
 
-      // process the mic input
-      for (i = 0; i < mic_buffer_size; i++) {
-        switch (record_audio_format) {
-        case SND_PCM_FORMAT_S16_LE:
-          short_buffer = (int16_t *)mic_buffer;
-          sample = (float)short_buffer[i] / 32767.0f;
-          break;
+      //
+      // put samples into ring buffer (lock once per block, not per sample)
+      // Note: check on the mic ring buffer is not necessary since audio_close_input()
+      // waits for this thread to complete.
+      //
+      if (mic_ring_buffer != NULL) {
+        g_mutex_lock(&audio_mutex);
 
-        case SND_PCM_FORMAT_S32_LE:
-          long_buffer = (int32_t *)mic_buffer;
-          sample = (float)long_buffer[i] / 2147483647.0F;
-          break;
+        // process the mic input
+        for (i = 0; i < mic_buffer_size; i++) {
+          switch (record_audio_format) {
+          case SND_PCM_FORMAT_S16_LE:
+            short_buffer = (int16_t *)mic_buffer;
+            sample = (float)short_buffer[i] / 32767.0f;
+            break;
 
-        case SND_PCM_FORMAT_FLOAT_LE:
-          float_buffer = (float *)mic_buffer;
-          sample = float_buffer[i];
-          break;
+          case SND_PCM_FORMAT_S32_LE:
+            long_buffer = (int32_t *)mic_buffer;
+            sample = (float)long_buffer[i] / 2147483647.0F;
+            break;
 
-        default:
-          t_print("%s: CATASTROPHIC ERROR: unknown sound format\n", __FUNCTION__);
-          sample = 0.0;
-          break;
-        }
+          case SND_PCM_FORMAT_FLOAT_LE:
+            float_buffer = (float *)mic_buffer;
+            sample = float_buffer[i];
+            break;
 
-        //
-        // put sample into ring buffer
-        // Note check on the mic ring buffer is not necessary
-        // since audio_close_input() waits for this thread to
-        // complete.
-        //
-        if (mic_ring_buffer != NULL) {
-          g_mutex_lock(&audio_mutex);
+          default:
+            t_print("%s: CATASTROPHIC ERROR: unknown sound format\n", __FUNCTION__);
+            sample = 0.0;
+            break;
+          }
+
           // do not increase mic_ring_write_pt *here* since it must
           // not assume an illegal value at any time
           newpt = mic_ring_write_pt + 1;
@@ -735,9 +738,9 @@ static void *mic_read_thread(gpointer arg) {
             // atomic update of mic_ring_write_pt
             mic_ring_write_pt = newpt;
           }
-
-          g_mutex_unlock(&audio_mutex);
         }
+
+        g_mutex_unlock(&audio_mutex);
       }
     }
   }
