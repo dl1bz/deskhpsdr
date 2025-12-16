@@ -92,6 +92,28 @@ static float *local_microphone_buffer = NULL;
 static GThread *mic_read_thread_id = 0;
 static gint running;   // atomic: use g_atomic_int_get/set
 
+static void audio_free_device_lists_locked(void) {
+  // audio_mutex MUSS gehalten werden!
+  for (int i = 0; i < n_input_devices; i++) {
+    if (input_devices[i].name) { g_free(input_devices[i].name); input_devices[i].name = NULL; }
+
+    if (input_devices[i].description) { g_free(input_devices[i].description); input_devices[i].description = NULL; }
+
+    input_devices[i].index = 0;
+  }
+
+  for (int i = 0; i < n_output_devices; i++) {
+    if (output_devices[i].name) { g_free(output_devices[i].name); output_devices[i].name = NULL; }
+
+    if (output_devices[i].description) { g_free(output_devices[i].description); output_devices[i].description = NULL; }
+
+    output_devices[i].index = 0;
+  }
+
+  n_input_devices = 0;
+  n_output_devices = 0;
+}
+
 static void source_list_cb(pa_context *context, const pa_source_info *s, int eol, void *data) {
   audio_init_mutexes_once();
 
@@ -223,8 +245,7 @@ static void state_cb(pa_context *c, void *userdata) {
     t_print("audio: state_cb: PA_CONTEXT_READY\n");
     // get a list of the output devices
     g_mutex_lock(&audio_mutex);
-    n_input_devices = 0;
-    n_output_devices = 0;
+    audio_free_device_lists_locked();
     g_mutex_unlock(&audio_mutex);
     // replace op safely
     pa_operation *newop = pa_context_get_sink_info_list(pa_ctx, sink_list_cb, NULL);
@@ -293,15 +314,15 @@ void audio_release_cards(void) {
   enum_done = 0;
   enum_ok   = 0;
   g_mutex_unlock(&enum_mutex);
-  // Device-Listen zurücksetzen (Ownership bleibt wie bisher)
+  // Device-Listen freigeben
   g_mutex_lock(&audio_mutex);
-  n_input_devices  = 0;
-  n_output_devices = 0;
+  audio_free_device_lists_locked();
   g_mutex_unlock(&audio_mutex);
 }
 
 void audio_get_cards() {
   audio_init_mutexes_once();
+  audio_release_cards();
   g_mutex_lock(&enum_mutex);
   enum_done = 0;
   enum_ok = 0;
@@ -362,6 +383,11 @@ void audio_get_cards() {
       main_loop = NULL;
       main_loop_api = NULL;
     }
+
+    // Free any partially enumerated device lists to avoid leaks on fail/timeout.
+    g_mutex_lock(&audio_mutex);
+    audio_free_device_lists_locked();
+    g_mutex_unlock(&audio_mutex);
   }
 }
 
