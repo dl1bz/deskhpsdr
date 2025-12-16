@@ -99,11 +99,29 @@ static void source_list_cb(pa_context *context, const pa_source_info *s, int eol
 static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, void *data) {
   if (eol > 0) {
     for (int i = 0; i < n_output_devices; i++) {
-      t_print("Output: %d: %s (%s)\n", output_devices[i].index, output_devices[i].name, output_devices[i].description);
+      t_print("Output: %d: %s (%s)\n",
+              output_devices[i].index,
+              output_devices[i].name,
+              output_devices[i].description);
     }
 
     op = pa_context_get_source_info_list(pa_ctx, source_list_cb, NULL);
-  } else if (n_output_devices < MAX_AUDIO_DEVICES) {
+
+    if (op == NULL) {
+      g_mutex_lock(&enum_mutex);
+      enum_done = 1;
+      enum_ok = 0;
+      g_cond_signal(&enum_cond);
+      g_mutex_unlock(&enum_mutex);
+    }
+
+    return;
+  }
+
+  // eol == 0: valid sink entry
+  if (!s) { return; }
+
+  if (n_output_devices < MAX_AUDIO_DEVICES) {
     output_devices[n_output_devices].name = g_strdup(s->name);
     output_devices[n_output_devices].description = g_strdup(s->description);
     output_devices[n_output_devices].index = s->index;
@@ -217,13 +235,22 @@ void audio_get_cards() {
   pa_ctx = pa_context_new(main_loop_api, "deskHPSDR");
   pa_context_set_state_callback(pa_ctx, state_cb, NULL);
   pa_context_connect(pa_ctx, NULL, 0, NULL);
-  // Wait for enumeration to complete, but never block indefinitely
+  // Wait for enumeration to complete, but never block indefinitely.
+  // IMPORTANT: pump GLib main context so PulseAudio callbacks can run.
   gint64 deadline = g_get_monotonic_time() + 2 * G_TIME_SPAN_SECOND;
   g_mutex_lock(&enum_mutex);
 
   while (!enum_done) {
-    if (!g_cond_wait_until(&enum_cond, &enum_mutex, deadline)) {
-      // timeout
+    g_mutex_unlock(&enum_mutex);
+
+    // Process pending main-context events (PulseAudio GLib mainloop callbacks)
+    while (g_main_context_iteration(NULL, FALSE)) { /* drain */ }
+
+    // avoid busy loop
+    g_usleep(1000); // 1ms
+    g_mutex_lock(&enum_mutex);
+
+    if (g_get_monotonic_time() >= deadline) {
       enum_done = 1;
       enum_ok = 0;
       break;
