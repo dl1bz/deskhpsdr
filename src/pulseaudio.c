@@ -46,6 +46,12 @@ AUDIO_DEVICE input_devices[MAX_AUDIO_DEVICES];
 int n_output_devices;
 AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 
+GMutex audio_mutex;
+GMutex mic_ring_mutex;
+static GMutex enum_mutex;
+static GCond  enum_cond;
+static GMutex op_mutex;
+
 // One-time init for mutexes/conds used across multiple entry points.
 static gsize mutexes_inited = 0;
 static void audio_init_mutexes_once(void) {
@@ -72,8 +78,6 @@ static guint64  mic_overrun_drops = 0;   // Anzahl verworfener Samples wegen vol
 static guint64  mic_overrun_events = 0;  // Anzahl Overrun-Situationen (mind. 1 Drop)
 
 // Device enumeration sync (avoid blocking audio_mutex forever)
-static GMutex enum_mutex;
-static GCond  enum_cond;
 static int    enum_done = 0;
 static int    enum_ok = 0;
 
@@ -82,15 +86,11 @@ static pa_mainloop_api *main_loop_api;
 static pa_operation *op;
 static pa_context *pa_ctx;
 // protect 'op' against concurrent set/unref
-static GMutex op_mutex;
 static pa_simple* microphone_stream;
 static int local_microphone_buffer_offset;
 static float *local_microphone_buffer = NULL;
 static GThread *mic_read_thread_id = 0;
 static gint running;   // atomic: use g_atomic_int_get/set
-
-GMutex audio_mutex;
-GMutex mic_ring_mutex;
 
 static void source_list_cb(pa_context *context, const pa_source_info *s, int eol, void *data) {
   audio_init_mutexes_once();
