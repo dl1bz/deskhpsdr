@@ -198,7 +198,7 @@ typedef struct _receiver {
   int local_audio;
   int mute_when_not_active;
   int audio_device;
-  gchar audio_name[128];
+  gchar audio_name[512];
 
 #if defined(PORTAUDIO) && defined(PULSEAUDIO) && defined(ALSA)
   // this is only possible for "cppcheck" runs
