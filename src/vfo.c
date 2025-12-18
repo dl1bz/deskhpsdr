@@ -348,7 +348,7 @@ static void modesettingsRestoreState() {
     mode_settings[i].phrot_enable = 0;
 #if defined (__CPYMODE__)
     mode_settings[i].local_microphone = 0;
-    g_strlcpy(mode_settings[i].microphone_name, "NOMIC", 128);
+    g_strlcpy(mode_settings[i].microphone_name, "NOMIC", sizeof(mode_settings[i].microphone_name));
     mode_settings[i].puresignal = 0;
     mode_settings[i].use_rx_filter = 0;
 #endif

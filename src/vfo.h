@@ -170,7 +170,7 @@ struct _mode_settings {
 #endif
 #if defined (__CPYMODE__)
   int local_microphone;
-  char microphone_name[128];
+  gchar microphone_name[512];
   int puresignal;
   int use_rx_filter;
 #endif
