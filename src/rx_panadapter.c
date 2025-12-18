@@ -50,9 +50,7 @@
   #include "ozyio.h"
 #endif
 #include "audio.h"
-#if defined (__WMAP__)
-  #include "map_d.h"
-#endif
+#include "map_d.h"
 #ifdef SOAPYSDR
   #include "soapy_protocol.h"
 #endif
@@ -247,7 +245,6 @@ void pan_add_dx_spot(double freq_khz, const char *dxcall) {
   pan_add_label_timeout(freq_hz, label, lifetime_ms);
 }
 
-#if defined (__WMAP__)
 //------------------------------------------------------------------------------
 static GdkPixbuf *worldmap_scaled = NULL;
 
@@ -291,7 +288,6 @@ static void draw_image(cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offse
   cairo_paint(cr);  // Bild zeichnen
 }
 //------------------------------------------------------------------------------
-#endif
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
@@ -307,11 +303,13 @@ static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfig
                            CAIRO_CONTENT_COLOR,
                            mywidth, myheight);
   cairo_t *cr = cairo_create(rx->panadapter_surface);
-#if defined (__WMAP__)
-  cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
-#else
-  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
-#endif
+
+  if (display_wmap) {
+    cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
+  } else {
+    cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+  }
+
   cairo_paint(cr);
   cairo_destroy(cr);
   return TRUE;
@@ -479,19 +477,21 @@ void rx_panadapter_update(RECEIVER *rx) {
   samples = rx->pixel_samples;
   cairo_t *cr;
   cr = cairo_create (rx->panadapter_surface);
-#if defined (__WMAP__)
-  //------------------------------------------------------------------------------
-  init_worldmap_pixbuf(mywidth, myheight);  // nur wenn nötig
 
-  if (worldmap_scaled) {
-    draw_image(cr, worldmap_scaled, 0, 0);
+  if (display_wmap) {
+    //------------------------------------------------------------------------------
+    init_worldmap_pixbuf(mywidth, myheight);  // nur wenn nötig
+
+    if (worldmap_scaled) {
+      draw_image(cr, worldmap_scaled, 0, 0);
+    }
+
+    //------------------------------------------------------------------------------
+    cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
+  } else {
+    cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
   }
 
-  //------------------------------------------------------------------------------
-  cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
-#else
-  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
-#endif
   cairo_rectangle(cr, 0, 0, mywidth, myheight);
   cairo_fill(cr);
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
@@ -1597,17 +1597,17 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       double rt_rx200_y = 15.0;
       double rt_rx200_w = 305.0;
       double rt_rx200_h = 60.0;
-#ifdef __WMAP__
 
-      if (can_transmit && radio_is_transmitting()) {
-        cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+      if (display_wmap) {
+        if (can_transmit && radio_is_transmitting()) {
+          cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+        } else {
+          cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+        }
       } else {
-        cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+        cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
       }
 
-#else
-      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
-#endif
       cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
       cairo_fill(cr);
       cairo_set_source_rgba(cr, COLOUR_WHITE);
@@ -1672,11 +1672,13 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     double rt_rx_y = 15.0;
     double rt_rx_w = 255.0;
     double rt_rx_h = 60.0;
-#ifdef __WMAP__
-    cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
-#else
-    cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
-#endif
+
+    if (display_wmap) {
+      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+    } else {
+      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+    }
+
     cairo_rectangle(cr, width - rt_rx_w, rt_rx_y, rt_rx_w, rt_rx_h); // x, y, Breite, Höhe
     cairo_fill(cr);
     cairo_set_source_rgba(cr, COLOUR_WHITE);

@@ -173,6 +173,7 @@ extern int display_info_bar;
 extern int display_clock;
 extern int display_solardata;
 extern int display_ah4;
+extern int display_wmap;
 extern char radio_bgcolor_rgb_hex[8];
 
 extern int max_pan_label_rows;

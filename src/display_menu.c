@@ -69,12 +69,7 @@ static gboolean close_cb () {
   return TRUE;
 }
 
-static void chkbtn_clock_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int *) data;
-  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-}
-
-static void chkbtn_ah4_toggle_cb(GtkWidget *widget, gpointer data) {
+static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
@@ -453,16 +448,19 @@ void display_menu(GtkWidget *parent) {
 
   //--------------------------------------------------------------------------------------------------------------
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    row++;
+    col = 0;
     label = gtk_label_new("Panadapter Automatic:\n(Related to Noisefloor)");
     gtk_widget_set_name (label, "boldlabel_blue");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_RIGHT);
-    gtk_grid_attach(GTK_GRID(general_grid), label, 0, row + 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
+    col++;
     GtkWidget *panadapter_autoscale_btn = gtk_check_button_new();
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (panadapter_autoscale_btn),
                                   active_receiver->panadapter_autoscale_enabled);
     gtk_widget_show(panadapter_autoscale_btn);
-    gtk_grid_attach(GTK_GRID(general_grid), panadapter_autoscale_btn, 1, row + 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(general_grid), panadapter_autoscale_btn, col, row, 1, 1);
     g_signal_connect(panadapter_autoscale_btn, "toggled", G_CALLBACK(panadapter_autoscale_toggle_cb), NULL);
   } else {
     if (active_receiver->panadapter_autoscale_enabled) {
@@ -472,6 +470,16 @@ void display_menu(GtkWidget *parent) {
     }
   }
 
+  //------------------------------------------------------------------------------------------------------------
+  row++;
+  col = 2;
+  GtkWidget *ChkBtn_wmap = gtk_check_button_new_with_label("Show Worldmap");
+  gtk_widget_set_name(ChkBtn_wmap, "boldlabel_blue");
+  gtk_widget_set_tooltip_text(ChkBtn_wmap,
+                              "Show Worldmap as RX Panadpter background");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_wmap), display_wmap);
+  gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_wmap, col, row, 1, 1);
+  g_signal_connect(ChkBtn_wmap, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_wmap);
   //--------------------------------------------------------------------------------------------------------------
   col = 2;
   row = 1;
@@ -634,7 +642,7 @@ void display_menu(GtkWidget *parent) {
                               "will be shown instead.");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_clock), display_clock);
   gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_clock, col, row, 1, 1);
-  g_signal_connect(ChkBtn_clock, "toggled", G_CALLBACK(chkbtn_clock_toggle_cb), &display_clock);
+  g_signal_connect(ChkBtn_clock, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_clock);
 
   //------------------------------------------------------------------------------------------------------------
   if (can_transmit && device == DEVICE_HERMES_LITE2) {
@@ -647,7 +655,7 @@ void display_menu(GtkWidget *parent) {
                                 "If ENABLED, show AH4 state onscreen on Panadapter.");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_ah4), display_ah4);
     gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_ah4, col, row, 1, 1);
-    g_signal_connect(ChkBtn_ah4, "toggled", G_CALLBACK(chkbtn_ah4_toggle_cb), &display_ah4);
+    g_signal_connect(ChkBtn_ah4, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_ah4);
   }
 
   //------------------------------------------------------------------------------------------------------------

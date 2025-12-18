@@ -33,7 +33,6 @@ ATU=OFF
 COPYMODE=OFF
 AUTOGAIN=OFF
 REGION1=OFF
-WMAP=OFF
 EQ12=OFF
 DEVEL=OFF
 TAHOEFIX=ON
@@ -56,7 +55,6 @@ TAHOEFIX=ON
 #  COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
 #  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
 #  REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
-#  WMAP         | If ON, a Worldmap is shown as Backgroundimage of RX Panadapter -> NEED more CPU consumption !
 #  EQ12         | If ON, use 12-band EQ instead of 10-band EQ
 #  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
 #  TAHOEFIX     | If ON, a fix for macOS 26 Tahoe will be activated
@@ -430,11 +428,6 @@ REG1_OPTIONS=-D__REG1__
 endif
 CPP_DEFINES += -D__REG1__
 
-ifeq ($(WMAP), ON)
-WMAP_OPTIONS=-D__WMAP__
-endif
-CPP_DEFINES += -D__WMAP__
-
 ifeq ($(EQ12), ON)
 EQ12_OPTIONS=-D__EQ12__
 endif
@@ -625,7 +618,6 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(AUTOGAIN_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(REG1_OPTIONS) \
-	$(WMAP_OPTIONS) \
 	$(EQ12_OPTIONS) \
 	$(WAYLAND_OPTIONS) \
 	$(TAHOEFIX_OPTIONS) \
@@ -1088,7 +1080,7 @@ DEPEND:
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
-		-D__WMAP__ -D__EQ12__ -D__WAYLAND__ -D__TAHOEFIX__ \
+		-D__EQ12__ -D__WAYLAND__ -D__TAHOEFIX__ \
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND
 

@@ -223,6 +223,7 @@ int display_info_bar = 0;
 int display_clock = 0;
 int display_solardata = 0;
 int display_ah4 = 0;
+int display_wmap = 0;
 char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
 
 int max_pan_label_rows = 6;
@@ -3168,6 +3169,7 @@ static void radio_restore_state() {
   GetPropI0("display_clock",                                 display_clock);
   GetPropI0("display_solardata",                             display_solardata);
   GetPropI0("display_ah4",                                   display_ah4);
+  GetPropI0("display_wmap",                                  display_wmap);
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
   GetPropI0("display_extra_sliders",                         display_extra_sliders);
@@ -3450,6 +3452,7 @@ void radio_save_state() {
   SetPropI0("display_clock",                                 display_clock);
   SetPropI0("display_solardata",                             display_solardata);
   SetPropI0("display_ah4",                                   display_ah4);
+  SetPropI0("display_wmap",                                  display_wmap);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
   SetPropI0("display_extra_sliders",                         display_extra_sliders);

@@ -39,11 +39,10 @@ ATU=OFF
 COPYMODE=OFF
 AUTOGAIN=ON
 REGION1=ON
-WMAP=ON
 ```
 Please use ```AUTOGAIN=ON``` only if your SDR is a Hermes Lite 2, otherwise set ```AUTOGAIN=OFF```.<br>
 ```GPIO``` will only work with Raspberry Pi. Let ```ATU=OFF``` and ```COPYMODE=OFF```, these are special functions they work only with **my own** SDR system.<br>
-```REGION1=ON``` set the band borders in the RX panadpter to IARU Region 1 (if OFF all is US based) and ```WMAP=ON``` show a worldmap as background instead of the pure black background. The pic for the worldmap is taken from Thetis. **The worldmap as background maybe increase the CPU usage**. If your system hasn't enough CPU power and this is a problem, better set ```WMAP=OFF```.<br>
+```REGION1=ON``` set the band borders in the RX panadpter to IARU Region 1 (if OFF all is US based).<br>
 deskHPSDR is made for desktop systems, they all have enough CPU power. But my tests were shown, with a Raspberry Pi5 the worldmap works too without any issues.<br>
 **Not defined or non existent options are ever interpreted like ```OFF```**.
 
