@@ -806,6 +806,7 @@ static void snb_toggle_cb(GtkWidget *widget, gpointer data) {
   update_noise();
 }
 
+/*
 static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
   int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
@@ -834,6 +835,41 @@ static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
 
   t_print("%s: mode: %d transmitter->local_microphone: %d mode_settings[%d].local_microphone %d\n",
           __FUNCTION__, mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
+  copy_mode_settings(mode);
+  g_idle_add(ext_vfo_update, NULL);
+#endif
+}
+*/
+
+static void local_mic_toggle_cb(GtkToggleButton *btn, gpointer data)
+{
+  TRANSMITTER *tx = (TRANSMITTER*)data;
+  gboolean v = gtk_toggle_button_get_active(btn);
+
+  if (v) {
+    int rc = audio_open_input();
+    if (rc == 0) {
+      tx->local_microphone = 1;
+    } else {
+      tx->local_microphone = 0;
+
+      // Re-entrancy sauber blocken
+      g_signal_handlers_block_by_func(btn, G_CALLBACK(local_mic_toggle_cb), data);
+      gtk_toggle_button_set_active(btn, FALSE);
+      g_signal_handlers_unblock_by_func(btn, G_CALLBACK(local_mic_toggle_cb), data);
+
+      t_print("%s: audio_open_input failed rc=%d\n", __FUNCTION__, rc);
+    }
+  } else {
+    if (tx->local_microphone) {
+      tx->local_microphone = 0;
+      audio_close_input();
+    }
+  }
+
+#if defined (__CPYMODE__)
+  int mode = vfo_get_tx_mode();
+  mode_settings[mode].local_microphone = tx->local_microphone ? 1 : 0;
   copy_mode_settings(mode);
   g_idle_add(ext_vfo_update, NULL);
 #endif
@@ -2487,7 +2523,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       local_mic_label = gtk_bin_get_child(GTK_BIN(local_mic_button));
       gtk_label_set_justify(GTK_LABEL(local_mic_label), GTK_JUSTIFY_CENTER);
       // end label definition
-      local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
+      // local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
+      local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), transmitter);
       //-------------------------------------------------------------------------------------------
       local_mic_input = gtk_combo_box_text_new();
       WEAKEN(local_mic_input);
