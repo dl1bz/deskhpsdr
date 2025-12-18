@@ -64,9 +64,7 @@
 #include "wdsp.h"
 
 
-#if defined (__CPYMODE__)
-  GMutex copy_string_mutex;
-#endif
+GMutex copy_string_mutex;
 
 static int my_width;
 static int my_height;

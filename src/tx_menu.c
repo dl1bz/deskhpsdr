@@ -993,12 +993,12 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
     audio_close_input();
   }
 
+  g_mutex_lock(&copy_string_mutex);
   g_strlcpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
 #if defined (__CPYMODE__)
-  g_mutex_lock(&copy_string_mutex);
-  g_strlcpy(mode_settings[_mode].microphone_name, transmitter->microphone_name, sizeof(transmitter->microphone_name));
-  g_mutex_unlock(&copy_string_mutex);
+  g_strlcpy(mode_settings[_mode].microphone_name, input_devices[i].name, sizeof(mode_settings[_mode].microphone_name));
 #endif
+  g_mutex_unlock(&copy_string_mutex);
 
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {

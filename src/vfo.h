@@ -178,9 +178,7 @@ struct _mode_settings {
 
 extern struct _mode_settings mode_settings[];
 extern void copy_mode_settings(int mode);
-#if defined (__CPYMODE__)
-  extern GMutex copy_string_mutex;
-#endif
+extern GMutex copy_string_mutex;
 
 #define STEPS 17
 extern char *step_labels[];
