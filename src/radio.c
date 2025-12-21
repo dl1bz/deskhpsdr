@@ -202,6 +202,7 @@ int tx_out_of_band_allowed = 0;
 
 int filter_board = ALEX;
 int pa_enabled = 1;
+int enable_hl2_ah4_gateware = 0;
 int pa_power = PA_1W;
 const int pa_power_list[] = {1, 5, 10, 30, 50, 100, 200, 500, 1000};
 double pa_trim[11];
@@ -3227,6 +3228,11 @@ static void radio_restore_state() {
   GetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   GetPropI0("filter_board",                                  filter_board);
   GetPropI0("pa_enabled",                                    pa_enabled);
+
+  if (device == DEVICE_HERMES_LITE2) {
+    GetPropI0("enable_hl2_ah4_gateware",                     enable_hl2_ah4_gateware);
+  }
+
   GetPropI0("rx200_udp_port",                                rx200_udp_port);
   GetPropI0("pa_power",                                      pa_power);
   GetPropI0("mic_boost",                                     mic_boost);
@@ -3491,6 +3497,11 @@ void radio_save_state() {
   SetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   SetPropI0("filter_board",                                  filter_board);
   SetPropI0("pa_enabled",                                    pa_enabled);
+
+  if (device == DEVICE_HERMES_LITE2) {
+    SetPropI0("enable_hl2_ah4_gateware",                     enable_hl2_ah4_gateware);
+  }
+
   SetPropI0("rx200_udp_port",                                rx200_udp_port);
   SetPropI0("pa_power",                                      pa_power);
   SetPropI0("mic_boost",                                     mic_boost);
