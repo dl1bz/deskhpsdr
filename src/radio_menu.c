@@ -1035,11 +1035,11 @@ void radio_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
       g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_cl1_input);
       row++;
-      ChkBtn = gtk_check_button_new_with_label("HL2 AH4 Gateware support");
+      ChkBtn = gtk_check_button_new_with_label("HL2 AH-4 TUNE support");
       gtk_widget_set_name(ChkBtn, "boldlabel_blue");
       gtk_widget_set_tooltip_text(ChkBtn,
-                                  "Enable AH-4 support in the HL2 gateware.\n\n"
-                                  "Note: If enabled, the detection process results\n"
+                                  "Enable AH-4 TUNE support in the HL2 gateware.\n\n"
+                                  "Note: If enabled, the AH-4 detection process results\n"
                                   "in a short delay before the RF carrier is generated.\n\n"
                                   "If you use an AH-4 controlled by the IO board, leave this\n"
                                   "option OFF !");
