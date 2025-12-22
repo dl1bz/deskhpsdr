@@ -643,8 +643,9 @@ void display_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_clock), display_clock);
   gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_clock, col, row, 1, 1);
   g_signal_connect(ChkBtn_clock, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_clock);
-
   //------------------------------------------------------------------------------------------------------------
+#ifdef __AH4IOB__
+
   if (can_transmit && device == DEVICE_HERMES_LITE2) {
     row++;
     GtkWidget *ChkBtn_ah4 = gtk_check_button_new_with_label("Show AH4 state");
@@ -666,6 +667,7 @@ void display_menu(GtkWidget *parent) {
     }
   }
 
+#endif
   //------------------------------------------------------------------------------------------------------------
   //
   // Peaks container and controls therein

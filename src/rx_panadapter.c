@@ -1766,6 +1766,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
 
+#ifdef __AH4IOB__
+
   if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4 && !rx_stack_horizontal
       && active_receiver->display_panadapter) {
     cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
@@ -1794,6 +1796,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     snprintf(_text, sizeof(_text), "AH4: %s", ah4_state);
     cairo_show_text(cr, _text);
   }
+
+#endif
 
   if (TxInhibit) {
     cairo_set_source_rgba(cr, COLOUR_ALARM);
