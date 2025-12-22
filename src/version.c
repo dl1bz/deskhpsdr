@@ -67,6 +67,9 @@ char build_options[] =
 #ifdef __EQ12__
   "EQ12 "
 #endif
+#ifdef __AH4IOB__
+  "AH4IOB "
+#endif
 #ifdef __TAHOEFIX__
   "TAHOEFIX "
 #endif

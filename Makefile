@@ -34,6 +34,7 @@ COPYMODE=OFF
 AUTOGAIN=OFF
 REGION1=OFF
 EQ12=OFF
+AH4IOB=OFF
 DEVEL=OFF
 TAHOEFIX=ON
 
@@ -56,6 +57,7 @@ TAHOEFIX=ON
 #  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
 #  REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
 #  EQ12         | If ON, use 12-band EQ instead of 10-band EQ
+#  AH4IOB       | If ON, enable support for AH-4 compatible ATU using the Hermes Lite 2 IO board
 #  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
 #  TAHOEFIX     | If ON, a fix for macOS 26 Tahoe will be activated
 #
@@ -433,6 +435,11 @@ EQ12_OPTIONS=-D__EQ12__
 endif
 CPP_DEFINES += -D__EQ12__
 
+ifeq ($(AH4IOB), ON)
+AH4IOB_OPTIONS=-D__AH4IOB__
+endif
+CPP_DEFINES += -D__AH4IOB__
+
 # if OS is Linux, but TAHOEFIX is set, remove this
 ifeq ($(UNAME_S), Linux)
 	TAHOEFIX=
@@ -615,6 +622,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(DESKTOP_OPTIONS) \
 	$(ATU_OPTIONS) \
 	$(COPYMODE_OPTIONS) \
+	$(AH4IOB_OPTIONS) \
 	$(AUTOGAIN_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(REG1_OPTIONS) \
