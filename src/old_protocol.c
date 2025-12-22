@@ -2727,20 +2727,44 @@ void ozy_send_buffer() {
         }
       }
 
+      /*
+            if (device == DEVICE_HERMES_LITE2) {
+              // do not set any Apollo/Alex bits (ADDR=0x09 bits 0:23)
+              // ADDR=0x09 bit 19 follows "PA enable" state
+              // ADDR=0x09 bit 20 follows "TUNE" state
+              // ADDR=0x09 bit 18 always cleared (external tuner enabled)
+              output_buffer[C2] = 0x00;
+              output_buffer[C3] = 0x00;
+              output_buffer[C4] = 0x00;
+
+              if (pa_enabled && !txband->disablePA) { output_buffer[C2] |= 0x08; }
+
+              if (tune && enable_hl2_atu_gateware) {
+                output_buffer[C2] |= 0x10;
+              }
+            }
+      */
       if (device == DEVICE_HERMES_LITE2) {
-        // do not set any Apollo/Alex bits (ADDR=0x09 bits 0:23)
-        // ADDR=0x09 bit 19 follows "PA enable" state
-        // ADDR=0x09 bit 20 follows "TUNE" state
-        // ADDR=0x09 bit 18 always cleared (external tuner enabled)
-        output_buffer[C2] = 0x00;
-        output_buffer[C3] = 0x00;
-        output_buffer[C4] = 0x00;
+        /* ADDR = 0x09, bits 0..23 */
+        uint32_t alex09 = 0;
 
-        if (pa_enabled && !txband->disablePA) { output_buffer[C2] |= 0x08; }
-
-        if (tune && enable_hl2_atu_gateware) {
-          output_buffer[C2] |= 0x10;
+        /* Bit 19: PA enable */
+        if (pa_enabled && !txband->disablePA) {
+          alex09 |= (1u << 19);
         }
+
+        /* Bit 20: AH-4 gateware tune request
+         * Only if explicitly enabled for this device.
+         * Bit 17 and Bit 18 are intentionally left cleared.
+         */
+        if (enable_hl2_atu_gateware && tune) {
+          alex09 |= (1u << 20);
+        }
+
+        /* write back to C2/C3/C4 */
+        output_buffer[C2] = (uint8_t)( alex09        & 0xFF);
+        output_buffer[C3] = (uint8_t)((alex09 >> 8)  & 0xFF);
+        output_buffer[C4] = (uint8_t)((alex09 >> 16) & 0xFF);
       }
 
       command = 4;
