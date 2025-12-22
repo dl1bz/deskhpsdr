@@ -1994,7 +1994,7 @@ void vfo_update() {
     cairo_move_to(cr, vfl->ps_x, vfl->ps_y);
 
     if (transmitter->puresignal) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2201,12 +2201,12 @@ void vfo_update() {
     }
 
     if (transmitter->cfc && !transmitter->cfc_eq) {
-      snprintf(temp_text, 32, "CFC PR");
+      snprintf(temp_text, 32, "CFC PR %+d", (int) transmitter->cfc_lvl[0]);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
 
     if (!transmitter->cfc && transmitter->cfc_eq) {
-      snprintf(temp_text, 32, "CFC PO");
+      snprintf(temp_text, 32, "CFC PO %+d", (int) transmitter->cfc_post[0]);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
 
@@ -2501,6 +2501,26 @@ void vfo_update() {
     cairo_show_text(cr, temp_text);
   }
 
+  if (can_transmit && device == DEVICE_HERMES_LITE2) {
+    cairo_move_to(cr, vfl->split_x, 59);
+    if (enable_hl2_atu_gateware) {
+      cairo_set_source_rgba(cr, COLOUR_OK);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+    }
+
+    cairo_show_text(cr, "ATU");
+
+    cairo_move_to(cr, vfl->dexp_x, 59);
+    if (pa_enabled) {
+      cairo_set_source_rgba(cr, COLOUR_OK);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+    }
+
+    cairo_show_text(cr, "PA");
+  }
+
   // -----------------------------------------------------------
   //
   // Draw string indicating SPLIT status
@@ -2564,7 +2584,7 @@ void vfo_update() {
     }
 
     snprintf(temp_text, 32, "CESSB");
-    cairo_move_to(cr, vfl->dup_x + 35, vfl->dup_y + 22);
+    cairo_move_to(cr, vfl->dup_x + 38, vfl->dup_y + 15);
     cairo_show_text(cr, temp_text);
   }
 

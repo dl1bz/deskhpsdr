@@ -1857,7 +1857,7 @@ int process_action(void *data) {
       if (device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
         if (!state) {
           // TUNE wird eingeschaltet
-          hl2_iob_set_antenna_tuner(1);
+          hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
         } else {
           // TUNE wird ausgeschaltet
           // kein "0" schreiben
@@ -1968,6 +1968,11 @@ int process_action(void *data) {
   case AH4_RUN: {
     // Merker: nach Fehler keine neuen Starts, bis der Tuner wieder 0x00 meldet
     static int ah4_error_lock = 0;
+
+    // make sure that enable_hl2_atu_gateware is OFF, we use the ATU only with the IO board
+    if (device == DEVICE_HERMES_LITE2 && enable_hl2_atu_gateware) {
+      enable_hl2_atu_gateware = 0;
+    }
 
     switch (a->mode) {
     case PRESSED: {
