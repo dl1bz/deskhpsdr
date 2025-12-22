@@ -651,11 +651,19 @@ void display_menu(GtkWidget *parent) {
     gtk_widget_set_name(ChkBtn_ah4, "stdlabel_blue");
     // gtk_widget_set_margin_start(ChkBtn_ah4, 20);    // linker Rand (Anfang)
     gtk_widget_set_tooltip_text(ChkBtn_ah4,
-                                "Only if IO board installed and using an AH4 ATU:\n"
-                                "If ENABLED, show AH4 state onscreen on Panadapter.");
+                                "Only if IO board installed and using the AH4 ATU support:\n"
+                                "If ENABLED, show the AH4 state onscreen on Panadapter.\n\n"
+                                "It's not usable if using the AH-4 controlled via Gateware,\n"
+                                "in this case check Radio Menu for correct setting.");
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_ah4), display_ah4);
     gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_ah4, col, row, 1, 1);
     g_signal_connect(ChkBtn_ah4, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_ah4);
+
+    if (!enable_hl2_atu_gateware) {
+      gtk_widget_set_sensitive(ChkBtn_ah4, TRUE);
+    } else {
+      gtk_widget_set_sensitive(ChkBtn_ah4, FALSE);
+    }
   }
 
   //------------------------------------------------------------------------------------------------------------

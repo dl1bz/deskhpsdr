@@ -2738,7 +2738,7 @@ void ozy_send_buffer() {
 
         if (pa_enabled && !txband->disablePA) { output_buffer[C2] |= 0x08; }
 
-        if (tune && enable_hl2_ah4_gateware) {
+        if (tune && enable_hl2_atu_gateware) {
           output_buffer[C2] |= 0x10;
         }
       }

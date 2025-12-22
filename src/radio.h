@@ -161,7 +161,7 @@ extern int tx_out_of_band_allowed;
 extern int filter_board;
 extern int pa_enabled;
 extern int pa_power;
-extern int enable_hl2_ah4_gateware;
+extern int enable_hl2_atu_gateware;
 extern double pa_trim[11];
 extern const int pa_power_list[];
 
