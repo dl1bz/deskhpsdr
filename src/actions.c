@@ -240,9 +240,11 @@ ACTION_TABLE ActionTable[] = {
   {TUNE_DRIVE,          "Tune\nDrv",            "TUNDRV",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TUNE_FULL,           "Tune\nFull",           "TUNF",         MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_MEMORY,         "Tune\nMem",            "TUNM",         MIDI_KEY   | CONTROLLER_SWITCH},
+#ifdef __AH4IOB__
   {AH4_START,           "AH-4\nStart",          "AH4-STRT",     MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_RUN,             "AH-4\nRun",            "AH4-RUN",      MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_BYP,             "AH-4\nBypass",         "AH4-BYP",      MIDI_KEY   | CONTROLLER_SWITCH},
+#endif
   {DRIVE,               "TX Drive",             "TXDRV",        MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TWO_TONE,            "Two-Tone",             "2TONE",        MIDI_KEY   | CONTROLLER_SWITCH},
   {MENU_TX,             "TX\nMenu",             "TX-M",         MIDI_KEY   | CONTROLLER_SWITCH},
@@ -1869,6 +1871,7 @@ int process_action(void *data) {
     }
 
     break;
+#ifdef __AH4IOB__
 
   case AH4_START:
     switch (a->mode) {
@@ -2019,7 +2022,8 @@ int process_action(void *data) {
       }
 
       unsigned char s = hl2_iob_get_antenna_tuner_status();
-      t_print("AH4: Status raw = 0x%02X\n", s);
+
+      // t_print("AH4: Status raw = 0x%02X\n", s);
 
       if (s == 0xEE) {
         // HF erst bei 0xEE aktivieren
@@ -2064,7 +2068,7 @@ int process_action(void *data) {
         schedule_action(AH4_RUN, RELATIVE, 0);
       } else {
         // Progress-Werte (z.B. 0x04) → RF-Zustand unverändert, weiter pollen
-        t_print("AH4: Progress status %u\n", s);
+        // t_print("AH4: Progress status %u\n", s);
         schedule_action(AH4_RUN, RELATIVE, 0);
       }
 
@@ -2090,6 +2094,7 @@ int process_action(void *data) {
     }
 
     break;
+#endif
 
   case TUNE_DRIVE:
     if (can_transmit) {

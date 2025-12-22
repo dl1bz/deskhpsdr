@@ -2503,6 +2503,7 @@ void vfo_update() {
 
   if (can_transmit && device == DEVICE_HERMES_LITE2) {
     cairo_move_to(cr, vfl->split_x, 59);
+
     if (enable_hl2_atu_gateware) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
@@ -2510,8 +2511,8 @@ void vfo_update() {
     }
 
     cairo_show_text(cr, "ATU");
-
     cairo_move_to(cr, vfl->dexp_x, 59);
+
     if (pa_enabled) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
