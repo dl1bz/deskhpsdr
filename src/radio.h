@@ -175,6 +175,8 @@ extern int display_clock;
 extern int display_solardata;
 extern int display_ah4;
 extern int display_wmap;
+extern int pan_peak_hold_enabled;
+extern float pan_peak_hold_hold_sec;
 extern char radio_bgcolor_rgb_hex[8];
 
 extern int max_pan_label_rows;

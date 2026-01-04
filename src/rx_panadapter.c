@@ -28,6 +28,7 @@
 #include <semaphore.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <stdint.h>
 
 #include "appearance.h"
 #include "agc.h"
@@ -67,6 +68,35 @@ char txt_ifgr[16];
 char txt_rfgr[16];
 char txt_currGain[16];
 gboolean val_biast = FALSE;
+
+//----------------------------------------------------------------------------------------------
+// Peak-and-Hold (spectrum trace) with configurable hold time
+
+#define PAN_PEAK_HOLD_MAX_RX 8
+
+typedef struct {
+  float    *buf;   // peak values (samples domain)
+  uint16_t *age;   // frames since last peak
+  int size;
+} PAN_PEAK_HOLD;
+
+static PAN_PEAK_HOLD pan_peak_hold[PAN_PEAK_HOLD_MAX_RX];
+static float pan_peak_hold_decay_db_per_sec = 6.0f;
+
+void rx_panadapter_peak_hold_clear(RECEIVER *rx) {
+  if (!rx) { return; }
+
+  if (rx->id < 0 || rx->id >= PAN_PEAK_HOLD_MAX_RX) { return; }
+
+  PAN_PEAK_HOLD *ph = &pan_peak_hold[rx->id];
+
+  if (ph->buf && ph->age) {
+    for (int i = 0; i < ph->size; i++) {
+      ph->buf[i] = -200.0f;
+      ph->age[i] = UINT16_MAX;
+    }
+  }
+}
 
 typedef struct {
   long long freq;      // absolute RF-Frequenz in Hz
@@ -841,6 +871,56 @@ void rx_panadapter_update(RECEIVER *rx) {
   int pan = rx->pan;
   samples[pan] = -200.0;
   samples[mywidth - 1 + pan] = -200.0;
+
+  //---------------------------------------------------------------------------------------
+  // Peak-and-Hold update (fixed 100 ms hold)
+  if (pan_peak_hold_enabled && rx->id >= 0 && rx->id < PAN_PEAK_HOLD_MAX_RX) {
+    PAN_PEAK_HOLD *ph = &pan_peak_hold[rx->id];
+
+    if (ph->size != mywidth) {
+      float *nbuf = realloc(ph->buf, mywidth * sizeof(float));
+      uint16_t *nage = realloc(ph->age, mywidth * sizeof(uint16_t));
+
+      if (nbuf && nage) {
+        ph->buf = nbuf;
+        ph->age = nage;
+        ph->size = mywidth;
+
+        for (int i = 0; i < mywidth; i++) {
+          ph->buf[i] = -200.0f;
+          ph->age[i] = UINT16_MAX;
+        }
+      }
+    }
+
+    if (ph->buf && ph->age && rx->fps > 0) {
+      const int hold_frames =
+        (int)(pan_peak_hold_hold_sec * (float)rx->fps + 0.5f);
+      const float decay_per_frame =
+        pan_peak_hold_decay_db_per_sec / (float)rx->fps;
+
+      for (int i = 0; i < mywidth; i++) {
+        float cur = (float)samples[i + pan];
+        float peak = ph->buf[i];
+        uint16_t age = ph->age[i];
+
+        if (cur > peak) {
+          peak = cur;
+          age = 0;
+        } else {
+          if (age < UINT16_MAX) { age++; }
+
+          if (age > hold_frames) {
+            peak -= decay_per_frame;
+          }
+        }
+
+        ph->buf[i] = peak;
+        ph->age[i] = age;
+      }
+    }
+  }
+
   //
   // most HPSDR only have attenuation (no gain), while HermesLite-II and SOAPY use gain (no attenuation)
   //
@@ -942,6 +1022,30 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
   cairo_stroke(cr);
+
+  //---------------------------------------------------------------------------------------
+  // Peak-and-Hold trace rendering
+  if (pan_peak_hold_enabled && rx->id >= 0 && rx->id < PAN_PEAK_HOLD_MAX_RX) {
+    PAN_PEAK_HOLD *ph = &pan_peak_hold[rx->id];
+
+    if (ph->buf && ph->size == mywidth) {
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+      cairo_set_line_width(cr, PAN_LINE_THIN);
+      double y = (double)ph->buf[0] + soffset;
+      y = floor((rx->panadapter_high - y) * myheight /
+                (rx->panadapter_high - rx->panadapter_low));
+      cairo_move_to(cr, 0.0, y);
+
+      for (int i = 1; i < mywidth; i++) {
+        y = (double)ph->buf[i] + soffset;
+        y = floor((rx->panadapter_high - y) * myheight /
+                  (rx->panadapter_high - rx->panadapter_low));
+        cairo_line_to(cr, (double)i, y);
+      }
+
+      cairo_stroke(cr);
+    }
+  }
 
   if (gradient) {
     cairo_pattern_destroy(gradient);
