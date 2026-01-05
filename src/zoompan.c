@@ -48,6 +48,10 @@ static GtkWidget *pan_label;
 static GtkWidget *pan_scale;
 static gulong pan_signal_id;
 static GMutex pan_zoom_mutex;
+static GtkWidget *peak_btn;
+static GtkWidget *peak_label;
+static gulong peak_btn_signal_id;
+static GMutex peak_mutex;
 
 int zoompan_active_receiver_changed(void *data) {
   if (display_zoompan) {
@@ -128,6 +132,13 @@ void remote_set_zoom(int rx, double value) {
   g_signal_handler_unblock(G_OBJECT(zoom_scale), zoom_signal_id);
   g_mutex_unlock(&pan_zoom_mutex);
   //t_print("remote_set_zoom: EXIT\n");
+}
+
+static void toggle_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+  g_mutex_lock(&peak_mutex);
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  g_mutex_unlock(&peak_mutex);
 }
 
 static void pan_value_changed_cb(GtkWidget *widget, gpointer data) {
@@ -246,7 +257,26 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   // Hauptcontainer: horizontale Box für Pan
   GtkWidget *pan_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(pan_box, panbox_width, widget_height);
-  //-----------------------------------------------------------------------------------------------------------
+  //-------------------------------------------------------------------------------------------
+  peak_btn = gtk_toggle_button_new_with_label("PEAK");
+  WEAKEN(peak_btn);
+  gtk_widget_set_name(peak_btn, "medium_toggle_button");
+  // gtk_widget_set_name(binaural_btn, "front_toggle_button");
+  gtk_widget_set_tooltip_text(peak_btn, "Toggle Peak & Hold in RX Panadapter");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(peak_btn), pan_peak_hold_enabled);
+  // begin label definition inside button
+  peak_label = gtk_bin_get_child(GTK_BIN(peak_btn));
+  gtk_label_set_justify(GTK_LABEL(peak_label), GTK_JUSTIFY_CENTER);
+  // end label definition
+  gtk_widget_set_size_request(peak_btn, 90, -1);  // z.B. 100px
+  gtk_widget_set_margin_top(peak_btn, 5);
+  gtk_widget_set_margin_bottom(peak_btn, 5);
+  gtk_widget_set_margin_end(peak_btn, 5);    // rechter Rand (Ende)
+  gtk_widget_set_margin_start(peak_btn, 0);    // linker Rand (Anfang)
+  gtk_widget_set_halign(peak_btn, GTK_ALIGN_START);
+  gtk_widget_set_valign(peak_btn, GTK_ALIGN_CENTER);
+  peak_btn_signal_id = g_signal_connect(peak_btn, "toggled", G_CALLBACK(toggle_cb), &pan_peak_hold_enabled);
+  //-------------------------------------------------------------------------------------------
   pan_label = gtk_label_new("Pan");
   WEAKEN(pan_label);
   gtk_widget_set_name(pan_label, "boldlabel_border_blue");
@@ -254,6 +284,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_size_request(pan_label, 90, -1);
   gtk_widget_set_margin_top(pan_label, 5);
   gtk_widget_set_margin_bottom(pan_label, 5);
+  gtk_widget_set_margin_start(pan_label, 5);    // linker Rand (Anfang)
   gtk_widget_set_margin_end(pan_label, 0);  // rechter Rand (Ende)
   gtk_widget_set_halign(pan_label, GTK_ALIGN_START);
   gtk_widget_set_valign(pan_label, GTK_ALIGN_CENTER);
@@ -275,11 +306,13 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   }
 
   // Widgets in Box packen
+  gtk_box_pack_start(GTK_BOX(pan_box), peak_btn, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(pan_box), pan_label, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(pan_box), pan_scale, TRUE, TRUE, 0);
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(zoompan), pan_box, /* column */ 1, /* row */ 0, /* width */ 1, /* height */ 1);
   gtk_widget_show_all(pan_box);
   g_mutex_init(&pan_zoom_mutex);
+  g_mutex_init(&peak_mutex);
   return zoompan;
 }

@@ -1029,8 +1029,8 @@ void rx_panadapter_update(RECEIVER *rx) {
     PAN_PEAK_HOLD *ph = &pan_peak_hold[rx->id];
 
     if (ph->buf && ph->size == mywidth) {
-      cairo_set_source_rgba(cr, COLOUR_ORANGE);
-      cairo_set_line_width(cr, PAN_LINE_THIN);
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+      cairo_set_line_width(cr, PAN_LINE_THICK);
       double y = (double)ph->buf[0] + soffset;
       y = floor((rx->panadapter_high - y) * myheight /
                 (rx->panadapter_high - rx->panadapter_low));

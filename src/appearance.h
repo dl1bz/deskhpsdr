@@ -156,6 +156,7 @@
 //
 #define PAN_LINE_THIN  0.5
 #define PAN_LINE_THICK 1.0
+#define PAN_LINE_PEAK  1.6
 #define PAN_LINE_EXTRA 2.0  // used for really important things such as band edges, and the analog meter needle.
 
 //
