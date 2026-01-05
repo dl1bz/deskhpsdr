@@ -71,8 +71,12 @@ gboolean val_biast = FALSE;
 
 //----------------------------------------------------------------------------------------------
 // Peak-and-Hold (spectrum trace) with configurable hold time
+// Peak mode from INI (used only when pan_peak_hold_enabled==1): 1=Peak Hold (max per bin), 2=Peak Decay (hold+decay)
 
 #define PAN_PEAK_HOLD_MAX_RX 8
+static int pan_peak_hold_mode_last[PAN_PEAK_HOLD_MAX_RX] = { 0 };
+static long long pan_peak_min_display_last[PAN_PEAK_HOLD_MAX_RX] = { 0 };
+static int pan_peak_min_display_valid[PAN_PEAK_HOLD_MAX_RX] = { 0 };
 
 typedef struct {
   float    *buf;   // peak values (samples domain)
@@ -88,10 +92,48 @@ void rx_panadapter_peak_hold_clear(RECEIVER *rx) {
 
   if (rx->id < 0 || rx->id >= PAN_PEAK_HOLD_MAX_RX) { return; }
 
+  // reset shift baseline for this RX
+  pan_peak_min_display_valid[rx->id] = 0;
   PAN_PEAK_HOLD *ph = &pan_peak_hold[rx->id];
 
   if (ph->buf && ph->age) {
     for (int i = 0; i < ph->size; i++) {
+      ph->buf[i] = -200.0f;
+      ph->age[i] = UINT16_MAX;
+    }
+  }
+}
+
+static void rx_panadapter_peak_hold_shift(PAN_PEAK_HOLD *ph, int width, int dp) {
+  if (!ph || !ph->buf || !ph->age) { return; }
+
+  if (dp == 0) { return; }
+
+  if (dp >= width || dp <= -width) {
+    for (int i = 0; i < width; i++) {
+      ph->buf[i] = -200.0f;
+      ph->age[i] = UINT16_MAX;
+    }
+
+    return;
+  }
+
+  if (dp > 0) {
+    // shift left by dp: new[x] = old[x+dp]
+    memmove(&ph->buf[0], &ph->buf[dp], (size_t)(width - dp) * sizeof(float));
+    memmove(&ph->age[0], &ph->age[dp], (size_t)(width - dp) * sizeof(uint16_t));
+
+    for (int i = width - dp; i < width; i++) {
+      ph->buf[i] = -200.0f;
+      ph->age[i] = UINT16_MAX;
+    }
+  } else {
+    // shift right by -dp
+    int sh = -dp;
+    memmove(&ph->buf[sh], &ph->buf[0], (size_t)(width - sh) * sizeof(float));
+    memmove(&ph->age[sh], &ph->age[0], (size_t)(width - sh) * sizeof(uint16_t));
+
+    for (int i = 0; i < sh; i++) {
       ph->buf[i] = -200.0f;
       ph->age[i] = UINT16_MAX;
     }
@@ -873,9 +915,15 @@ void rx_panadapter_update(RECEIVER *rx) {
   samples[mywidth - 1 + pan] = -200.0;
 
   //---------------------------------------------------------------------------------------
-  // Peak-and-Hold update (fixed 100 ms hold)
+  // Peak-and-Hold update
   if (pan_peak_hold_enabled && rx->id >= 0 && rx->id < PAN_PEAK_HOLD_MAX_RX) {
     PAN_PEAK_HOLD *ph = &pan_peak_hold[rx->id];
+
+    // Auto-clear on mode change (prevents immediate decay after Peak Hold mode)
+    if (pan_peak_hold_mode_last[rx->id] != pan_peak_hold_mode) {
+      rx_panadapter_peak_hold_clear(rx);
+      pan_peak_hold_mode_last[rx->id] = pan_peak_hold_mode;
+    }
 
     if (ph->size != mywidth) {
       float *nbuf = realloc(ph->buf, mywidth * sizeof(float));
@@ -890,33 +938,76 @@ void rx_panadapter_update(RECEIVER *rx) {
           ph->buf[i] = -200.0f;
           ph->age[i] = UINT16_MAX;
         }
+
+        pan_peak_min_display_valid[rx->id] = 0;
       }
     }
 
     if (ph->buf && ph->age && rx->fps > 0) {
-      const int hold_frames =
-        (int)(pan_peak_hold_hold_sec * (float)rx->fps + 0.5f);
-      const float decay_per_frame =
-        pan_peak_hold_decay_db_per_sec / (float)rx->fps;
+      // Shift peak buffer to follow the same frequency->pixel mapping as the spectrum.
+      // min_display = vfo[rx->id].frequency - (sample_rate/2) + pan*hz_per_pixel
+      {
+        long long half = (long long)rx->sample_rate / 2LL;
+        long long min_display = vfo[rx->id].frequency - half
+                                + (long long)llround((double)rx->pan * rx->hz_per_pixel);
 
-      for (int i = 0; i < mywidth; i++) {
-        float cur = (float)samples[i + pan];
-        float peak = ph->buf[i];
-        uint16_t age = ph->age[i];
-
-        if (cur > peak) {
-          peak = cur;
-          age = 0;
+        if (!pan_peak_min_display_valid[rx->id]) {
+          pan_peak_min_display_last[rx->id] = min_display;
+          pan_peak_min_display_valid[rx->id] = 1;
         } else {
-          if (age < UINT16_MAX) { age++; }
+          long long df = min_display - pan_peak_min_display_last[rx->id];
 
-          if (age > hold_frames) {
-            peak -= decay_per_frame;
+          if (df != 0 && rx->hz_per_pixel > 0.0) {
+            int dp = (int)llround((double)df / rx->hz_per_pixel);
+
+            if (dp != 0) {
+              // If min_display increases, spectrum content shifts left => shift peak buffer left (dp>0).
+              rx_panadapter_peak_hold_shift(ph, mywidth, dp);
+              pan_peak_min_display_last[rx->id] = min_display;
+            }
           }
         }
+      }
 
-        ph->buf[i] = peak;
-        ph->age[i] = age;
+      if (pan_peak_hold_mode == 1) {
+        // Peak Hold (Thetis): display the largest signal per bin while enabled
+        for (int i = 0; i < mywidth; i++) {
+          float cur = (float)samples[i + pan];
+          float peak = ph->buf[i];
+
+          if (cur > peak) {
+            peak = cur;
+          }
+
+          ph->buf[i] = peak;
+          ph->age[i] = UINT16_MAX;
+        }
+      } else {
+        // Default: Peak Decay (hold for pan_peak_hold_hold_sec seconds, then decay)
+        const int hold_frames =
+          (int)(pan_peak_hold_hold_sec * (float)rx->fps + 0.5f);
+        const float decay_per_frame =
+          pan_peak_hold_decay_db_per_sec / (float)rx->fps;
+
+        for (int i = 0; i < mywidth; i++) {
+          float cur = (float)samples[i + pan];
+          float peak = ph->buf[i];
+          uint16_t age = ph->age[i];
+
+          if (cur > peak) {
+            peak = cur;
+            age = 0;
+          } else {
+            if (age < UINT16_MAX) { age++; }
+
+            if (age > hold_frames) {
+              peak -= decay_per_frame;
+            }
+          }
+
+          ph->buf[i] = peak;
+          ph->age[i] = age;
+        }
       }
     }
   }

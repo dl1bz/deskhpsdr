@@ -28,6 +28,7 @@ void pan_add_label(long long freq, const char *text);
 void pan_add_label_timeout(long long freq, const char *text, int lifetime_ms);
 void pan_clear_labels(void);
 void pan_add_dx_spot(double freq_khz, const char *dxcall);
+void rx_panadapter_peak_hold_clear(RECEIVER *rx);
 void rx_panadapter_update(RECEIVER* rx);
 void rx_panadapter_init(RECEIVER *rx, int width, int height);
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps);

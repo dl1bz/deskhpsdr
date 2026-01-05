@@ -36,6 +36,7 @@
 #include "ext.h"
 #include "message.h"
 #include "toolset.h"
+#include "rx_panadapter.h"
 
 static int width;
 static int height;
@@ -136,6 +137,11 @@ void remote_set_zoom(int rx, double value) {
 
 static void toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
+
+  if (active_receiver) {
+    rx_panadapter_peak_hold_clear(active_receiver);
+  }
+
   g_mutex_lock(&peak_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   g_mutex_unlock(&peak_mutex);
