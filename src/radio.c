@@ -226,7 +226,7 @@ int display_solardata = 0;
 int display_ah4 = 0;
 int display_wmap = 0;
 int pan_peak_hold_enabled = 0;
-int pan_peak_mode = 0;
+int pan_peak_hold_mode = 0;
 float pan_peak_hold_hold_sec = 0.5f;
 
 char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
@@ -3175,7 +3175,7 @@ static void radio_restore_state() {
   GetPropI0("display_solardata",                             display_solardata);
   GetPropI0("display_ah4",                                   display_ah4);
   GetPropI0("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
-  GetPropI0("pan_peak_mode",                                 pan_peak_mode);
+  GetPropI0("pan_peak_hold_mode",                            pan_peak_hold_mode);
   GetPropF0("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
   GetPropI0("display_wmap",                                  display_wmap);
   GetPropI0("display_zoompan",                               display_zoompan);
@@ -3466,7 +3466,7 @@ void radio_save_state() {
   SetPropI0("display_solardata",                             display_solardata);
   SetPropI0("display_ah4",                                   display_ah4);
   SetPropI0("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
-  SetPropI0("pan_peak_mode",                                 pan_peak_mode);
+  SetPropI0("pan_peak_hold_mode",                            pan_peak_hold_mode);
   SetPropF0("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
   SetPropI0("display_wmap",                                  display_wmap);
   SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
