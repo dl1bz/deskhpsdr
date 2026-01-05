@@ -85,7 +85,6 @@ typedef struct {
 } PAN_PEAK_HOLD;
 
 static PAN_PEAK_HOLD pan_peak_hold[PAN_PEAK_HOLD_MAX_RX];
-static float pan_peak_hold_decay_db_per_sec = 6.0f;
 
 void rx_panadapter_peak_hold_clear(RECEIVER *rx) {
   if (!rx) { return; }

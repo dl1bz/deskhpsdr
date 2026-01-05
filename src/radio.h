@@ -178,6 +178,7 @@ extern int display_wmap;
 extern int pan_peak_hold_enabled;
 extern int pan_peak_hold_mode;
 extern float pan_peak_hold_hold_sec;
+extern float pan_peak_hold_decay_db_per_sec;
 extern char radio_bgcolor_rgb_hex[8];
 
 extern int max_pan_label_rows;

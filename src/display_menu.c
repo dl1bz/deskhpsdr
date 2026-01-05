@@ -32,10 +32,12 @@
 #include "old_protocol.h"
 #include "radio.h"
 #include "ext.h"
+#include "message.h"
 
 enum _containers {
   GENERAL_CONTAINER = 1,
-  PEAKS_CONTAINER
+  PEAKS_CONTAINER,
+  PH_CONTAINER
 };
 
 static int which_container = GENERAL_CONTAINER;
@@ -43,14 +45,13 @@ static int which_container = GENERAL_CONTAINER;
 
 static GtkWidget *general_container;
 static GtkWidget *peaks_container;
+static GtkWidget *peak_hold_container;
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *waterfall_high_r = NULL;
 static GtkWidget *waterfall_low_r = NULL;
 static GtkWidget *panadapter_high_r = NULL;
 static GtkWidget *panadapter_low_r = NULL;
-static GtkWidget *general_container;
-static GtkWidget *peaks_container;
 static GtkWidget *b_display_solardata;
 
 static void cleanup() {
@@ -74,37 +75,40 @@ static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static void cb_pan_peak_hold_mode_changed(GtkComboBox *combo, gpointer unused) {
+  const gchar *id = gtk_combo_box_get_active_id(combo);
+
+  if (!id) { return; }
+
+  /* nur 1 oder 2 zulässig */
+  pan_peak_hold_mode = (id[0] == '2') ? 2 : 1;
+}
+
+static void peak_hold_timer_cb(GtkSpinButton *sb, gpointer unused) {
+  pan_peak_hold_hold_sec = (float)gtk_spin_button_get_value(sb);
+}
+
+static void peak_hold_decay_cb(GtkSpinButton *sb, gpointer unused) {
+  pan_peak_hold_decay_db_per_sec = (float)gtk_spin_button_get_value(sb);
+}
+
 static void sel_cb(GtkWidget *widget, gpointer data) {
   //
   // Handle radio button in the top row, this selects
   // which sub-menu is active
   //
+  if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+    return;  /* wichtig: Deaktivierung ignorieren */
+  }
+
   int c = GPOINTER_TO_INT(data);
-  GtkWidget *my_container;
-
-  switch (c) {
-  case GENERAL_CONTAINER:
-    my_container = general_container;
-    //which_container = GENERAL_CONTAINER;
-    break;
-
-  case PEAKS_CONTAINER:
-    my_container = peaks_container;
-    //which_container = PEAKS_CONTAINER;
-    break;
-
-  default:
-    // We should never come here
-    my_container = NULL;
-    break;
-  }
-
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-    gtk_widget_show(my_container);
-    which_container = c;
-  } else {
-    gtk_widget_hide(my_container);
-  }
+  which_container = c;
+  gtk_widget_set_visible(general_container,
+                         c == GENERAL_CONTAINER);
+  gtk_widget_set_visible(peaks_container,
+                         c == PEAKS_CONTAINER);
+  gtk_widget_set_visible(peak_hold_container,
+                         c == PH_CONTAINER);
 }
 
 static void detector_cb(GtkToggleButton *widget, gpointer data) {
@@ -309,6 +313,7 @@ void display_menu(GtkWidget *parent) {
   int row = 0;
   int col = 0;
   GtkWidget *btn;
+  GtkWidget *pbtn;
   GtkWidget *mbtn; // main button for radio buttons
   btn = gtk_button_new_with_label("Close");
   gtk_widget_set_name(btn, "close_button");
@@ -320,19 +325,25 @@ void display_menu(GtkWidget *parent) {
   //
   general_container = gtk_fixed_new();
   peaks_container = gtk_fixed_new();
+  peak_hold_container = gtk_fixed_new();
   col++;
   mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "General Settings");
   gtk_widget_set_name(mbtn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), (which_container == GENERAL_CONTAINER));
-  gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 2, 1);
-  g_signal_connect(mbtn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(GENERAL_CONTAINER));
+  gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
+  g_signal_connect(mbtn, "clicked", G_CALLBACK(sel_cb), GINT_TO_POINTER(GENERAL_CONTAINER));
   col++;
+  pbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peak Blobs & Hold");
+  gtk_widget_set_name(pbtn, "boldlabel_blue");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pbtn), (which_container == PH_CONTAINER));
+  gtk_grid_attach(GTK_GRID(grid), pbtn, col, row, 1, 1);
+  g_signal_connect(pbtn, "clicked", G_CALLBACK(sel_cb), GINT_TO_POINTER(PH_CONTAINER));
   col++;
-  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peaks Labels");
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peak Labels");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == PEAKS_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
-  g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(PEAKS_CONTAINER));
+  g_signal_connect(btn, "clicked", G_CALLBACK(sel_cb), GINT_TO_POINTER(PEAKS_CONTAINER));
   //
   // General container and controls therein
   //
@@ -679,7 +690,7 @@ void display_menu(GtkWidget *parent) {
   gtk_container_add(GTK_CONTAINER(peaks_container), peaks_grid);
   col = 0;
   row = 0;
-  GtkWidget *b_panadapter_peaks_on = gtk_check_button_new_with_label("Show Peak Labels on Panadapter");
+  GtkWidget *b_panadapter_peaks_on = gtk_check_button_new_with_label("Enable Peak Labels on Panadapter");
   gtk_widget_set_name(b_panadapter_peaks_on, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_on), active_receiver->panadapter_peaks_on);
   gtk_widget_show(b_panadapter_peaks_on);
@@ -687,7 +698,7 @@ void display_menu(GtkWidget *parent) {
   g_signal_connect(b_panadapter_peaks_on, "toggled", G_CALLBACK(panadapter_peaks_on_cb), NULL);
   row++;
   //----------------------------------------------------------------------------------------------------------
-  GtkWidget *b_panadapter_peaks_as_smeter = gtk_check_button_new_with_label("Show Peak Labels as S-Meter values");
+  GtkWidget *b_panadapter_peaks_as_smeter = gtk_check_button_new_with_label("Peak Labels as S-Meter values");
   gtk_widget_set_name(b_panadapter_peaks_as_smeter, "boldlabel_blue");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_panadapter_peaks_as_smeter),
                                active_receiver->panadapter_peaks_as_smeter);
@@ -696,7 +707,7 @@ void display_menu(GtkWidget *parent) {
   g_signal_connect(b_panadapter_peaks_as_smeter, "toggled", G_CALLBACK(panadapter_peaks_as_smeter_cb), NULL);
   row++;
   //----------------------------------------------------------------------------------------------------------
-  GtkWidget *b_pan_peaks_in_passband = gtk_check_button_new_with_label("Show Peaks in Passband Only");
+  GtkWidget *b_pan_peaks_in_passband = gtk_check_button_new_with_label("Peak Labels in Passband Only");
   gtk_widget_set_name(b_pan_peaks_in_passband, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_peaks_in_passband),
                                active_receiver->panadapter_peaks_in_passband_filled);
@@ -759,6 +770,71 @@ void display_menu(GtkWidget *parent) {
     gtk_widget_set_sensitive(panadapter_low_r, FALSE);
   }
 
+  //
+  // Peaks & Hold container and controls therein
+  //
+  gtk_grid_attach(GTK_GRID(grid), peak_hold_container, 0, 1, 4, 1);
+  GtkWidget *peak_hold_grid = gtk_grid_new();
+  gtk_grid_set_column_spacing(GTK_GRID(peak_hold_grid), 10);
+  gtk_grid_set_row_homogeneous(GTK_GRID(peak_hold_grid), TRUE);
+  gtk_container_add(GTK_CONTAINER(peak_hold_container), peak_hold_grid);
+  //--------------------------------------------------------------------------------------------
+  col = 0;
+  row = 0;
+  GtkWidget *pan_peak_hold_label = gtk_label_new("Type of Peak & Hold function:");
+  gtk_widget_set_name(pan_peak_hold_label, "boldlabel");
+  gtk_widget_set_halign(pan_peak_hold_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), pan_peak_hold_label, col, row, 2, 1);
+  //--------------------------------------------------------------------------------------------
+  col += 2;
+  GtkWidget *pan_peak_hold_combo = gtk_combo_box_text_new();
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(pan_peak_hold_combo), "1", "Peaks hold");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(pan_peak_hold_combo), "2", "Peaks decay");
+  gtk_combo_box_set_active_id(GTK_COMBO_BOX(pan_peak_hold_combo), (pan_peak_hold_mode == 2) ? "2" : "1");
+  gtk_widget_set_can_focus(pan_peak_hold_combo, TRUE);
+  g_signal_connect(pan_peak_hold_combo, "changed", G_CALLBACK(cb_pan_peak_hold_mode_changed), NULL);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), pan_peak_hold_combo, col, row, 2, 1);
+  gtk_widget_show(pan_peak_hold_combo);
+  //--------------------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  GtkWidget *pan_peak_hold_timer_label = gtk_label_new("Peak Hold time (s):");
+  gtk_widget_set_name(pan_peak_hold_timer_label, "boldlabel");
+  gtk_widget_set_halign(pan_peak_hold_timer_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), pan_peak_hold_timer_label, col, row, 2, 1);
+  col += 2;
+  GtkAdjustment *peak_hold_timer = gtk_adjustment_new(
+                                     pan_peak_hold_hold_sec,   // start
+                                     0.1,       // min
+                                     5.0,       // max
+                                     0.1,       // step increment
+                                     0.5,       // page increment
+                                     0.0
+                                   );
+  GtkWidget *peak_hold_timer_spin_btn = gtk_spin_button_new(peak_hold_timer, 0.1, 1);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(peak_hold_timer_spin_btn), TRUE);
+  g_signal_connect(peak_hold_timer_spin_btn, "value-changed", G_CALLBACK(peak_hold_timer_cb), NULL);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_hold_timer_spin_btn, col, row, 1, 1);
+  //--------------------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  GtkWidget *pan_peak_hold_decay_label = gtk_label_new("Drop (dbm/s):");
+  gtk_widget_set_name(pan_peak_hold_decay_label, "boldlabel");
+  gtk_widget_set_halign(pan_peak_hold_decay_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), pan_peak_hold_decay_label, col, row, 2, 1);
+  col += 2;
+  GtkAdjustment *peak_hold_decay = gtk_adjustment_new(
+                                     pan_peak_hold_decay_db_per_sec,   // start
+                                     1.0,       // min
+                                     10.0,      // max
+                                     0.5,       // step increment
+                                     1.0,       // page increment
+                                     0.0
+                                   );
+  GtkWidget *peak_hold_decay_spin_btn = gtk_spin_button_new(peak_hold_decay, 1.0, 1);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(peak_hold_decay_spin_btn), TRUE);
+  g_signal_connect(peak_hold_decay_spin_btn, "value-changed", G_CALLBACK(peak_hold_decay_cb), NULL);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_hold_decay_spin_btn, col, row, 1, 1);
   gtk_widget_show_all(dialog);
 
   // Only show one of the General, Peaks containers
@@ -769,11 +845,17 @@ void display_menu(GtkWidget *parent) {
   switch (which_container) {
   case GENERAL_CONTAINER:
     gtk_widget_hide(peaks_container);
+    gtk_widget_hide(peak_hold_container);
     break;
 
   case PEAKS_CONTAINER:
     gtk_widget_hide(general_container);
+    gtk_widget_hide(peak_hold_container);
     break;
+
+  case PH_CONTAINER:
+    gtk_widget_hide(general_container);
+    gtk_widget_hide(peaks_container);
   }
 }
 
