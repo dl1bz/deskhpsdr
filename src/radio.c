@@ -225,7 +225,7 @@ int display_clock = 0;
 int display_solardata = 0;
 int display_ah4 = 0;
 int display_wmap = 0;
-int pan_peak_hold_enabled = 1;
+int pan_peak_hold_enabled = 0;
 float pan_peak_hold_hold_sec = 0.5f;
 
 char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
