@@ -176,6 +176,7 @@ extern int display_solardata;
 extern int display_ah4;
 extern int display_wmap;
 extern int pan_peak_hold_enabled;
+extern int pan_peak_mode;
 extern float pan_peak_hold_hold_sec;
 extern char radio_bgcolor_rgb_hex[8];
 
