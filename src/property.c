@@ -215,16 +215,21 @@ void setProperty(const char* name, const char* value) {
 // To handle (at least) this case, all commas in the input string are replaced by
 // decimal points and then this is fed to atof()
 //
-double myatof(const char* string) {
-  char *lstr = strdup(string);
+double myatof(const char *string) {
+  if (!string || !*string) {
+    return 0.0;
+  }
+
+  char *lstr = g_strdup(string);
   double ret;
 
   for (char *cp = lstr; *cp; cp++) {
-    if (*cp == ',') { *cp = '.'; }
+    if (*cp == ',') {
+      *cp = '.';
+    }
   }
 
   ret = atof(lstr);
-  free(lstr);
+  g_free(lstr);
   return ret;
 }
-
