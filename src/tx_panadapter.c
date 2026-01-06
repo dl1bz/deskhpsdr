@@ -47,6 +47,24 @@
 #include "message.h"
 #include <wdsp.h>
 
+#define TX_PAN_DECAY_MAX_TX 16
+static float *tx_pan_decay_db[TX_PAN_DECAY_MAX_TX];
+static int    tx_pan_decay_sz[TX_PAN_DECAY_MAX_TX];
+static int    tx_pan_decay_enabled_last[TX_PAN_DECAY_MAX_TX];
+
+static void tx_pan_decay_reset(TRANSMITTER *tx) {
+  if (!tx) { return; }
+
+  if (tx->id < 0 || tx->id >= TX_PAN_DECAY_MAX_TX) { return; }
+
+  if (tx_pan_decay_db[tx->id]) {
+    g_free(tx_pan_decay_db[tx->id]);
+    tx_pan_decay_db[tx->id] = NULL;
+  }
+
+  tx_pan_decay_sz[tx->id] = 0;
+}
+
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
 tx_panadapter_configure_event_cb (GtkWidget         *widget,
@@ -447,6 +465,61 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     cairo_line_to(cr, vfofreq, (double)myheight);
     cairo_stroke(cr);
     // signal
+    /* Peak decay line state update (fast attack / slow release) */
+    float *decay_db = NULL;
+
+    if (tx->id >= 0 && tx->id < TX_PAN_DECAY_MAX_TX) {
+      int decay_enabled =
+        pan_peak_hold_enabled &&
+        pan_peak_hold_decay_db_per_sec > 0.0f &&
+        tx->fps > 0.0f;
+
+      if (tx_pan_decay_enabled_last[tx->id] != decay_enabled) {
+        tx_pan_decay_enabled_last[tx->id] = decay_enabled;
+        tx_pan_decay_reset(tx);
+      }
+
+      if (decay_enabled) {
+        if (tx_pan_decay_sz[tx->id] != tx->pixels) {
+          tx_pan_decay_reset(tx);
+          tx_pan_decay_db[tx->id] = g_new0(float, tx->pixels);
+          tx_pan_decay_sz[tx->id] = tx->pixels;
+
+          /* initialize with current spectrum to avoid a ramp-in artifact */
+          for (int i = 0; i < tx->pixels; i++) {
+            tx_pan_decay_db[tx->id][i] = samples[i];
+          }
+        } else if (tx_pan_decay_db[tx->id] == NULL && tx->pixels > 0) {
+          tx_pan_decay_db[tx->id] = g_new0(float, tx->pixels);
+          tx_pan_decay_sz[tx->id] = tx->pixels;
+
+          for (int i = 0; i < tx->pixels; i++) {
+            tx_pan_decay_db[tx->id][i] = samples[i];
+          }
+        }
+
+        if (tx_pan_decay_db[tx->id]) {
+          float decay_db_per_frame = pan_peak_hold_decay_db_per_sec / tx->fps;
+
+          if (decay_db_per_frame < 0.0f) { decay_db_per_frame = 0.0f; }
+
+          for (int i = 0; i < tx->pixels; i++) {
+            float cur = samples[i];
+            float prev = tx_pan_decay_db[tx->id][i];
+
+            if (cur >= prev) {
+              tx_pan_decay_db[tx->id][i] = cur; /* fast attack */
+            } else {
+              float v = prev - decay_db_per_frame;
+              tx_pan_decay_db[tx->id][i] = (v > cur) ? v : cur; /* slow release */
+            }
+          }
+
+          decay_db = tx_pan_decay_db[tx->id];
+        }
+      }
+    }
+
     double s1;
     int offset = (tx->pixels / 2) - (mywidth / 2);
     samples[offset] = -200.0;
@@ -467,7 +540,8 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     }
 
     if (tx->display_filled) {
-      cairo_set_source_rgba(cr, COLOUR_PAN_FILL2);
+      // cairo_set_source_rgba(cr, COLOUR_PAN_FILL2);
+      cairo_set_source_rgba(cr, GRAD_GREEN_WEAK);
       cairo_close_path (cr);
       cairo_fill_preserve (cr);
       cairo_set_line_width(cr, PAN_LINE_THIN);
@@ -477,37 +551,34 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     }
 
     cairo_stroke(cr);
-    /*
-     * Controller1:
-     * Draw at the right edge of the TX panadapter the
-     * functions associated with the three encoders.
-     *
-    #ifdef GPIO
-      if(controller==CONTROLLER1 && tx->dialog == NULL) {
-        char text[64];
 
-        cairo_set_source_rgba(cr,COLOUR_ATTN);
-        cairo_set_font_size(cr,DISPLAY_FONT_SIZE3);
-        if(ENABLE_E2_ENCODER) {
-          cairo_move_to(cr, mywidth-200,70);
-          snprintf(text, 64, "%s (%s)",encoder_string[e2_encoder_action],sw_string[e2_sw_action]);
-          cairo_show_text(cr, text);
-        }
+    /* Draw peak-decay line (no fill) */
+    if (decay_db) {
+      double d1;
+      d1 = (double)decay_db[offset];
+      d1 = floor((tx->panadapter_high - d1)
+                 * (double) myheight
+                 / (tx->panadapter_high - tx->panadapter_low));
+      cairo_move_to(cr, 0.0, d1);
 
-        if(ENABLE_E3_ENCODER) {
-          cairo_move_to(cr, mywidth-200,90);
-          snprintf(text, 64, "%s (%s)",encoder_string[e3_encoder_action],sw_string[e3_sw_action]);
-          cairo_show_text(cr, text);
-        }
-
-        if(ENABLE_E4_ENCODER) {
-          cairo_move_to(cr, mywidth-200,110);
-          snprintf(text, 64, "%s (%s)",encoder_string[e4_encoder_action],sw_string[e4_sw_action]);
-          cairo_show_text(cr, text);
-        }
+      for (int i = 1; i < mywidth; i++) {
+        double d2;
+        d2 = (double)decay_db[i + offset];
+        d2 = floor((tx->panadapter_high - d2)
+                   * (double) myheight
+                   / (tx->panadapter_high - tx->panadapter_low));
+        cairo_line_to(cr, (double)i, d2);
       }
-    #endif
-    */
+
+      cairo_set_source_rgba(cr,
+                            peak_line_col.r,
+                            peak_line_col.g,
+                            peak_line_col.b,
+                            peak_line_col.a);
+      cairo_set_line_width(cr, PAN_LINE_THICK);
+      cairo_stroke(cr);
+    }
+
     //
     // When doing CW, the signal is produced outside WDSP, so
     // it makes no sense to display a PureSignal status. The
