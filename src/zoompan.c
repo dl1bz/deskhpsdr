@@ -147,6 +147,14 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   g_mutex_unlock(&peak_mutex);
 }
 
+void update_peak_btn() {
+  if (display_zoompan) {
+    g_signal_handler_block(G_OBJECT(peak_btn), peak_btn_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(peak_btn), pan_peak_hold_enabled);
+    g_signal_handler_unblock(G_OBJECT(peak_btn), peak_btn_signal_id);
+  }
+}
+
 static void pan_value_changed_cb(GtkWidget *widget, gpointer data) {
   //t_print("pan_value_changed_cb\n");
   g_mutex_lock(&pan_zoom_mutex);

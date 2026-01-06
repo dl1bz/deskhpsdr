@@ -33,6 +33,8 @@
 #include "radio.h"
 #include "ext.h"
 #include "message.h"
+#include "zoompan.h"
+#include "rx_panadapter.h"
 
 enum _containers {
   GENERAL_CONTAINER = 1,
@@ -54,6 +56,8 @@ static GtkWidget *panadapter_high_r = NULL;
 static GtkWidget *panadapter_low_r = NULL;
 static GtkWidget *b_display_solardata;
 
+static GMutex peak_mutex;
+
 static void cleanup() {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
@@ -73,6 +77,22 @@ static gboolean close_cb () {
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
+static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+
+  if (active_receiver) {
+    rx_panadapter_peak_hold_clear(active_receiver);
+  }
+
+  g_mutex_lock(&peak_mutex);
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  g_mutex_unlock(&peak_mutex);
+
+  if (display_zoompan) {
+    update_peak_btn();
+  }
 }
 
 static void cb_pan_peak_hold_mode_changed(GtkComboBox *combo, gpointer unused) {
@@ -778,9 +798,21 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_set_column_spacing(GTK_GRID(peak_hold_grid), 10);
   gtk_grid_set_row_homogeneous(GTK_GRID(peak_hold_grid), TRUE);
   gtk_container_add(GTK_CONTAINER(peak_hold_container), peak_hold_grid);
-  //--------------------------------------------------------------------------------------------
   col = 0;
   row = 0;
+  GtkWidget *ChkBtn_peak_label = gtk_label_new("Enable PEAK & HOLD");
+  gtk_widget_set_name(ChkBtn_peak_label, "boldlabel");
+  gtk_widget_set_halign(ChkBtn_peak_label, GTK_ALIGN_END);
+  gtk_widget_set_margin_end(ChkBtn_peak_label, 5);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), ChkBtn_peak_label, col, row, 2, 1);
+  col += 2;
+  GtkWidget *ChkBtn_peak = gtk_check_button_new();
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_peak), pan_peak_hold_enabled);
+  g_signal_connect(ChkBtn_peak, "toggled", G_CALLBACK(chkbtn_peak_cb), &pan_peak_hold_enabled);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), ChkBtn_peak, col, row, 2, 1);
+  //--------------------------------------------------------------------------------------------
+  col = 0;
+  row++;
   GtkWidget *pan_peak_hold_label = gtk_label_new("Type of Peak & Hold function:");
   gtk_widget_set_name(pan_peak_hold_label, "boldlabel");
   gtk_widget_set_halign(pan_peak_hold_label, GTK_ALIGN_END);
@@ -857,5 +889,7 @@ void display_menu(GtkWidget *parent) {
     gtk_widget_hide(general_container);
     gtk_widget_hide(peaks_container);
   }
+
+  g_mutex_init(&peak_mutex);
 }
 
