@@ -73,6 +73,28 @@ extern double myatof(const char* string);
   if (value) { b = String2Action(value); } \
 }
 
+#define GetPropC0(key_, col_)  { \
+  const char *value=getProperty(key_); \
+  if (value) { \
+    char tmp[128]; \
+    g_strlcpy(tmp, value, sizeof(tmp)); \
+    char *p0 = tmp; \
+    char *p1 = strchr(p0, ';'); \
+    if (p1) { *p1++ = '\0'; \
+      char *p2 = strchr(p1, ';'); \
+      if (p2) { *p2++ = '\0'; \
+        char *p3 = strchr(p2, ';'); \
+        if (p3) { *p3++ = '\0'; \
+          (col_).r = myatof(p0); \
+          (col_).g = myatof(p1); \
+          (col_).b = myatof(p2); \
+          (col_).a = myatof(p3); \
+        } \
+      } \
+    } \
+  } \
+}
+
 #define GetPropI1(a,b,c) { \
   char name[128]; \
   snprintf(name, sizeof(name), a, b); \
@@ -164,6 +186,13 @@ extern double myatof(const char* string);
 
 #define SetPropS0(a,b) { \
   setProperty(a, b); \
+}
+
+#define SetPropC0(key_, col_) { \
+  char value[128]; \
+  snprintf(value, sizeof(value), "%f;%f;%f;%f", \
+           (double)((col_).r), (double)((col_).g), (double)((col_).b), (double)((col_).a)); \
+  setProperty(key_, value); \
 }
 
 #define SetPropI1(a,b,c) { \

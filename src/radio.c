@@ -231,6 +231,7 @@ float pan_peak_hold_hold_sec = 2.0f;
 float pan_peak_hold_decay_db_per_sec = 6.0f;
 
 char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
+cairo_rgba_t peak_line_col = { 0.70, 0.70, 0.70, 1.00 };
 
 int max_pan_label_rows = 6;
 int pan_spot_lifetime_min = 15;
@@ -3216,6 +3217,7 @@ static void radio_restore_state() {
   }
 
   GetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
+  GetPropC0("peak_line_col",                                 peak_line_col);
   GetPropI0("enable_auto_tune",                              enable_auto_tune);
   GetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
   GetPropI0("radio_sample_rate",                             radio_sample_rate);
@@ -3485,6 +3487,7 @@ void radio_save_state() {
   SetPropI0("max_pan_label_rows",                            max_pan_label_rows);
   SetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
   SetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
+  SetPropC0("peak_line_col",                                 peak_line_col);
   //
   // TODO: I think some further options related to the GUI
   // have to be moved up here for Client-Server operation

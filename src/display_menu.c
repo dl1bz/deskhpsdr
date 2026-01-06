@@ -95,6 +95,16 @@ static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
+static void peak_line_colour_set(GtkColorButton *btn, gpointer user_data) {
+  cairo_rgba_t *c = (cairo_rgba_t *)user_data;
+  GdkRGBA g;
+  gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
+  c->r = g.red;
+  c->g = g.green;
+  c->b = g.blue;
+  c->a = g.alpha;
+}
+
 static void cb_pan_peak_hold_mode_changed(GtkComboBox *combo, gpointer unused) {
   const gchar *id = gtk_combo_box_get_active_id(combo);
 
@@ -867,6 +877,19 @@ void display_menu(GtkWidget *parent) {
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(peak_hold_decay_spin_btn), TRUE);
   g_signal_connect(peak_hold_decay_spin_btn, "value-changed", G_CALLBACK(peak_hold_decay_cb), NULL);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_hold_decay_spin_btn, col, row, 1, 1);
+  row++;
+  col = 0;
+  GtkWidget *peak_col_btn_label = gtk_label_new("Choose PEAK line color");
+  gtk_widget_set_name(peak_col_btn_label, "boldlabel");
+  gtk_widget_set_halign(peak_col_btn_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_col_btn_label, col, row, 2, 1);
+  col += 2;
+  GtkWidget *peak_col_btn = gtk_color_button_new();
+  gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(peak_col_btn), TRUE);
+  GdkRGBA peak_col_init = { peak_line_col.r, peak_line_col.g, peak_line_col.b, peak_line_col.a };
+  gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(peak_col_btn), &peak_col_init);
+  g_signal_connect(peak_col_btn, "color-set", G_CALLBACK(peak_line_colour_set), &peak_line_col);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_col_btn, col, row, 1, 1);
   gtk_widget_show_all(dialog);
 
   // Only show one of the General, Peaks containers
