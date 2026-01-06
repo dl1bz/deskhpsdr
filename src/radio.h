@@ -179,13 +179,13 @@ extern int pan_peak_hold_enabled;
 extern int pan_peak_hold_mode;
 extern float pan_peak_hold_hold_sec;
 extern float pan_peak_hold_decay_db_per_sec;
-extern char radio_bgcolor_rgb_hex[8];
 
 typedef struct {
   double r, g, b, a;
 } cairo_rgba_t;
 
 extern cairo_rgba_t peak_line_col;
+extern cairo_rgba_t radio_bgcolor;
 
 extern int max_pan_label_rows;
 extern int pan_spot_lifetime_min;

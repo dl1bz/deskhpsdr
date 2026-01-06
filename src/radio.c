@@ -229,9 +229,8 @@ int pan_peak_hold_enabled = 0;
 int pan_peak_hold_mode = 2;
 float pan_peak_hold_hold_sec = 2.0f;
 float pan_peak_hold_decay_db_per_sec = 6.0f;
-
-char radio_bgcolor_rgb_hex[8] = "#E6E6FA";
 cairo_rgba_t peak_line_col = { 0.70, 0.70, 0.70, 1.00 };
+cairo_rgba_t radio_bgcolor = { 0.902, 0.902, 0.980, 1.0 }; // #E6E6FA default
 
 int max_pan_label_rows = 6;
 int pan_spot_lifetime_min = 15;
@@ -1043,19 +1042,17 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
 }
 
 gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
-  GdkRGBA bgcolor;  // Deklaration der GdkRGBA-Struktur
-
-  if (strlen(radio_bgcolor_rgb_hex) != 7) {
-    g_strlcpy(radio_bgcolor_rgb_hex, "#E6E6FA", sizeof(radio_bgcolor_rgb_hex));
-  }
-
-  // Definiere und prüfe die Hintergrundfarbe
-  if (is_valid_hex(radio_bgcolor_rgb_hex) && is_valid_rgb(radio_bgcolor_rgb_hex)) {
-    gdk_rgba_parse(&bgcolor, radio_bgcolor_rgb_hex);
-    gtk_widget_override_background_color(widget, GTK_STATE_FLAG_NORMAL, &bgcolor);
-    gtk_widget_queue_draw(widget);
-  }
-
+  (void)data;
+  GdkRGBA bgcolor = {
+    radio_bgcolor.r,
+    radio_bgcolor.g,
+    radio_bgcolor.b,
+    radio_bgcolor.a
+  };
+  gtk_widget_override_background_color(widget,
+                                       GTK_STATE_FLAG_NORMAL,
+                                       &bgcolor);
+  gtk_widget_queue_draw(widget);
   return FALSE;
 }
 
@@ -3216,7 +3213,7 @@ static void radio_restore_state() {
     gtk_window_move(GTK_WINDOW(top_window), window_x_pos, window_y_pos);
   }
 
-  GetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
+  GetPropC0("radio_bgcolor",                                 radio_bgcolor);
   GetPropC0("peak_line_col",                                 peak_line_col);
   GetPropI0("enable_auto_tune",                              enable_auto_tune);
   GetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
@@ -3486,7 +3483,7 @@ void radio_save_state() {
   SetPropI0("capture_max",                                   capture_max);
   SetPropI0("max_pan_label_rows",                            max_pan_label_rows);
   SetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
-  SetPropS0("radio_bgcolor_rgb_hex",                         radio_bgcolor_rgb_hex);
+  SetPropC0("radio_bgcolor",                                 radio_bgcolor);
   SetPropC0("peak_line_col",                                 peak_line_col);
   //
   // TODO: I think some further options related to the GUI

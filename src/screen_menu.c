@@ -45,8 +45,6 @@ static GtkWidget *full_b = NULL;
 // static GtkWidget *vfo_b = NULL;
 // static gulong vfo_signal_id;
 static guint apply_timeout = 0;
-static GtkWidget *bgcolor_text_input;
-static gulong bgcolor_text_input_signal_id;
 static GtkWidget *display_extras_btn;
 static GtkWidget *b_display_af_peak = NULL;
 static gulong b_af_peak_signal_id;
@@ -233,48 +231,15 @@ static void b_inner_levels_popup_cb(GtkWidget *widget, gpointer data) {
 }
 #endif
 
-// Funktion zur Überprüfung, ob der String ein gültiges Hex-Format hat
-gboolean is_valid_hex(const char *str) {
-  if (str[0] != '#' || strlen(str) != 7) {
-    return FALSE;  // Muss mit # beginnen und 7 Zeichen lang sein
-  }
-
-  for (int i = 1; i < 7; i++) {
-    if (!isxdigit(str[i])) {
-      return FALSE;  // Überprüft, ob jedes Zeichen hexadezimal ist
-    }
-  }
-
-  return TRUE;  // Gültig, wenn alle Zeichen Hexadezimal sind
-}
-
-gboolean is_valid_rgb(const char *str) {
-  int r, g, b;
-  return sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3 ? TRUE : FALSE;
-}
-
-static void bgcolor_button_clicked(GtkWidget *widget, gpointer data) {
-  GtkEntry *bgcolor_text_input = GTK_ENTRY(data);  // Das GtkEntry-Widget
-  const gchar *text = gtk_entry_get_text(bgcolor_text_input);  // Hole den eingegebenen Text
-  gchar *mod_text = g_strdup(text); // Umkopieren weil text unveränderbar
-  g_strup(mod_text); // in Grossbuchstaben konvertieren
-
-  if (is_valid_hex(mod_text) && is_valid_rgb(mod_text)) {
-    g_strlcpy(radio_bgcolor_rgb_hex, mod_text, sizeof(radio_bgcolor_rgb_hex));
-    radio_set_bgcolor(top_window, NULL);
-  } else {
-    t_print("%s: ERROR: wrong RGB entry %s\n", __FUNCTION__, mod_text);
-  }
-
-  // bgcolor_text_input aktualisieren
-  g_signal_handler_block(bgcolor_text_input, bgcolor_text_input_signal_id);
-  gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor_rgb_hex);
-  g_signal_handler_unblock(bgcolor_text_input, bgcolor_text_input_signal_id);
-  gtk_widget_queue_draw(GTK_WIDGET(bgcolor_text_input));
-}
-
-static void bgcolor_entry_activate(GtkWidget *widget, gpointer data) {
-  bgcolor_button_clicked(NULL, data);  // Simuliert den Klick des OK-Buttons
+static void bg_colour_set(GtkColorButton *btn, gpointer user_data) {
+  cairo_rgba_t *c = (cairo_rgba_t *)user_data;
+  GdkRGBA g;
+  gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
+  c->r = g.red;
+  c->g = g.green;
+  c->b = g.blue;
+  c->a = g.alpha;
+  radio_set_bgcolor(top_window, NULL);
 }
 
 // Callback für den Button-Klick
@@ -404,24 +369,6 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 2, 1);
   g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &optimize_for_touchscreen);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  GtkWidget *bgcolor_label = gtk_label_new("Backgrund Color\n#RRGGBB (hex)");
-  gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
-  gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
-  gtk_widget_set_halign(bgcolor_label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), bgcolor_label, 1, 3, 1, 1);
-  bgcolor_text_input = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(bgcolor_text_input), 7);
-  gtk_entry_set_text(GTK_ENTRY(bgcolor_text_input), radio_bgcolor_rgb_hex);
-  gtk_grid_attach(GTK_GRID(grid), bgcolor_text_input, 2, 3, 1, 1);
-  bgcolor_text_input_signal_id = g_signal_connect(bgcolor_text_input, "activate", G_CALLBACK(bgcolor_entry_activate),
-                                 bgcolor_text_input);
-  gtk_widget_show(bgcolor_text_input);
-  GtkWidget *bgcolor_btn = gtk_button_new_with_label("Set");
-  gtk_widget_set_halign(bgcolor_btn, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), bgcolor_btn, 3, 3, 1, 1);
-  g_signal_connect(bgcolor_btn, "clicked", G_CALLBACK(bgcolor_button_clicked), bgcolor_text_input);
-  gtk_widget_show(bgcolor_btn);
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   row++;
   label = gtk_label_new("Window Width:");
   gtk_widget_set_name(label, "boldlabel");
@@ -450,20 +397,37 @@ void screen_menu(GtkWidget *parent) {
   gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 2, 1);
   gtk_widget_set_margin_start(label, 10);  // Abstand am Anfang
-  col++;
+  col += 2;
   label = gtk_label_new("Minimum Screensize must\n be 1280x600 or higher !");
   gtk_widget_set_name(label, "boldlabel_red");
   gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
   gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
-  gtk_grid_attach(GTK_GRID(grid), label, 2, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 2, 1);
   gtk_widget_set_margin_start(label, 10);  // Abstand am Anfang
-  col++;
+  col = 0;
   row++;
   full_b = gtk_check_button_new_with_label("Full Screen Mode");
   gtk_widget_set_name(full_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(full_b), my_full_screen);
-  gtk_grid_attach(GTK_GRID(grid), full_b, 0, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), full_b, col, row, 1, 1);
   g_signal_connect(full_b, "toggled", G_CALLBACK(full_cb), NULL);
+  col++;
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  GtkWidget *bgcolor_label = gtk_label_new("Select Backgrund Color");
+  gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
+  gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
+  gtk_widget_set_halign(bgcolor_label, GTK_ALIGN_END);
+  gtk_widget_set_margin_end(bgcolor_label, 5);
+  gtk_grid_attach(GTK_GRID(grid), bgcolor_label, col, row, 1, 1);
+  col++;
+  GtkWidget *bg_col_btn = gtk_color_button_new();
+  gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(bg_col_btn), TRUE);
+  GdkRGBA bg_col_init = { radio_bgcolor.r, radio_bgcolor.g, radio_bgcolor.b, radio_bgcolor.a };
+  gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(bg_col_btn), &bg_col_init);
+  g_signal_connect(bg_col_btn, "color-set", G_CALLBACK(bg_colour_set), &radio_bgcolor);
+  gtk_widget_set_tooltip_text(bg_col_btn, "Set background color of slider surface\n\n"
+                                          "Default color is RGB #E6E6FA");
+  gtk_grid_attach(GTK_GRID(grid), bg_col_btn, col, row, 1, 1);
   row++;
   GtkWidget *b_display_zoompan = gtk_check_button_new_with_label("Display Zoom/Pan");
   gtk_widget_set_name (b_display_zoompan, "boldlabel");
