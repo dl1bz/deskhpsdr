@@ -476,9 +476,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       }
 
       int decay_enabled =
-        pan_peak_hold_enabled &&
-        pan_peak_hold_decay_db_per_sec > 0.0f &&
-        tx->fps > 0.0f;
+        pan_peak_hold_enabled && pan_peak_hold_decay_db_per_sec > 0.0f;
 
       if (tx_pan_decay_enabled_last[tx->id] != decay_enabled) {
         tx_pan_decay_enabled_last[tx->id] = decay_enabled;
@@ -505,7 +503,14 @@ void tx_panadapter_update(TRANSMITTER *tx) {
         }
 
         if (tx_pan_decay_db[tx->id]) {
-          float decay_db_per_frame = pan_peak_hold_decay_db_per_sec / tx->fps;
+          float decay_db_per_frame = 0.0f;
+
+          if (tx->fps > 0.0f) {
+            decay_db_per_frame = pan_peak_hold_decay_db_per_sec / tx->fps;
+          } else {
+            /* fps not available yet -> keep peak-hold line visible, no release */
+            decay_db_per_frame = 0.0f;
+          }
 
           if (decay_db_per_frame < 0.0f) { decay_db_per_frame = 0.0f; }
 
@@ -527,22 +532,36 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     }
 
     double s1;
-    int offset = (tx->pixels / 2) - (mywidth / 2);
-    samples[offset] = -200.0;
-    samples[offset + mywidth - 1] = -200.0;
+    int draw_width = mywidth;
+
+    if (draw_width > tx->pixels) { draw_width = tx->pixels; }
+
+    int offset = (tx->pixels / 2) - (draw_width / 2);
+
+    if (offset < 0) { offset = 0; }
+
+    if (offset + draw_width > tx->pixels) { offset = tx->pixels - draw_width; }
+
+    if (draw_width > 0) {
+      samples[offset] = -200.0f;
+      samples[offset + draw_width - 1] = -200.0f;
+    }
+
     s1 = (double)samples[offset];
     s1 = floor((tx->panadapter_high - s1)
                * (double) myheight
                / (tx->panadapter_high - tx->panadapter_low));
     cairo_move_to(cr, 0.0, s1);
+    int span = draw_width;
+    int den = (mywidth > 1) ? (mywidth - 1) : 1;
 
-    for (int i = 1; i < mywidth; i++) {
-      double s2;
-      s2 = (double)samples[i + offset];
+    for (int x = 1; x < mywidth; x++) {
+      int idx = offset + (int)(((long long)x * (long long)(span - 1)) / (long long)den);
+      double s2 = (double)samples[idx];
       s2 = floor((tx->panadapter_high - s2)
                  * (double) myheight
                  / (tx->panadapter_high - tx->panadapter_low));
-      cairo_line_to(cr, (double)i, s2);
+      cairo_line_to(cr, (double)x, s2);
     }
 
     if (tx->display_filled) {
@@ -569,21 +588,23 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     /* Draw peak-decay line (no fill) */
     // if (decay_db) {
-    if (decay_db && offset >= 0 && offset + mywidth <= tx->pixels) {
+    if (!duplex && decay_db && draw_width > 0 && offset >= 0 && offset + draw_width <= tx->pixels) {
       double d1;
       d1 = (double)decay_db[offset];
       d1 = floor((tx->panadapter_high - d1)
                  * (double) myheight
                  / (tx->panadapter_high - tx->panadapter_low));
       cairo_move_to(cr, 0.0, d1);
+      int span = draw_width;
+      int den = (mywidth > 1) ? (mywidth - 1) : 1;
 
-      for (int i = 1; i < mywidth; i++) {
-        double d2;
-        d2 = (double)decay_db[i + offset];
+      for (int x = 1; x < mywidth; x++) {
+        int idx = offset + (int)(((long long)x * (long long)(span - 1)) / (long long)den);
+        double d2 = (double)decay_db[idx];
         d2 = floor((tx->panadapter_high - d2)
                    * (double) myheight
                    / (tx->panadapter_high - tx->panadapter_low));
-        cairo_line_to(cr, (double)i, d2);
+        cairo_line_to(cr, (double)x, d2);
       }
 
       cairo_set_source_rgba(cr,
