@@ -549,6 +549,7 @@ void ps_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   g_signal_connect (dialog, "destroy", G_CALLBACK(close_cb), NULL);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);

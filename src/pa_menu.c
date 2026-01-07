@@ -216,6 +216,7 @@ static void max_power_changed_cb(GtkWidget *widget, gpointer data) {
 void pa_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -227,6 +228,10 @@ void pa_menu(GtkWidget *parent) {
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *notebook = gtk_notebook_new();
   GtkWidget *grid0 = gtk_grid_new();
+  /* Ensure the notebook area itself is painted with the desired background */
+  win_set_bgcolor(notebook, &mwin_bgcolor);
+  gtk_widget_set_hexpand(notebook, TRUE);
+  gtk_widget_set_vexpand(notebook, TRUE);
   gtk_grid_set_column_spacing (GTK_GRID(grid0), 10);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
@@ -258,6 +263,9 @@ void pa_menu(GtkWidget *parent) {
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+    win_set_bgcolor(grid, &mwin_bgcolor);
+    gtk_widget_set_hexpand(grid, TRUE);
+    gtk_widget_set_vexpand(grid, TRUE);
     int bands = radio_max_band();
     int b = 0;
 
@@ -316,6 +324,11 @@ void pa_menu(GtkWidget *parent) {
         && !have_radioberry2 && !have_radioberry3) {
       // Calibrate-Seite: Grid in VBox einbetten und Footer unten anhängen
       GtkWidget *calib_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+      win_set_bgcolor(calib_page, &mwin_bgcolor);
+      gtk_widget_set_hexpand(calib_page, TRUE);
+      gtk_widget_set_vexpand(calib_page, TRUE);
+      gtk_widget_set_hexpand(grid, TRUE);
+      gtk_widget_set_vexpand(grid, TRUE);
       gtk_box_pack_start(GTK_BOX(calib_page), grid, TRUE, TRUE, 0);
       char pa_menu_footer_txt[256];
       snprintf(pa_menu_footer_txt, sizeof(pa_menu_footer_txt),
@@ -337,6 +350,9 @@ void pa_menu(GtkWidget *parent) {
 
   calibgrid = gtk_grid_new();
   gtk_grid_set_column_spacing (GTK_GRID(calibgrid), 10);
+  win_set_bgcolor(calibgrid, &mwin_bgcolor);
+  gtk_widget_set_hexpand(calibgrid, TRUE);
+  gtk_widget_set_vexpand(calibgrid, TRUE);
   new_calib(FALSE);
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), calibgrid, gtk_label_new("Watt Meter Calibrate"));
   gtk_grid_attach(GTK_GRID(grid0), notebook, 0, 1, 6, 1);

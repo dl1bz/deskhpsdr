@@ -126,6 +126,7 @@ void band_menu(GtkWidget *parent) {
   int i, j;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   char title[64];
   snprintf(title, 64, "%s - Band (VFO-%s)", PGNAME, active_receiver->id == 0 ? "A" : "B");
   GtkWidget *headerbar = gtk_header_bar_new();

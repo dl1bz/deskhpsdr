@@ -94,6 +94,7 @@ void mode_menu(GtkWidget *parent) {
   int i;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   char title[64];
   snprintf(title, 64, "%s - Mode (RX%d VFO-%s)", PGNAME, active_receiver->id + 1, active_receiver->id == 0 ? "A" : "B");
   GtkWidget *headerbar = gtk_header_bar_new();

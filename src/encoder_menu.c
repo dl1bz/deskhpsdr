@@ -95,6 +95,7 @@ void encoder_menu(GtkWidget *parent) {
   GtkWidget *widget;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   char title[64];
 
   switch (controller) {

@@ -231,6 +231,8 @@ float pan_peak_hold_hold_sec = 2.0f;
 float pan_peak_hold_decay_db_per_sec = 6.0f;
 cairo_rgba_t peak_line_col = { 0.70, 0.70, 0.70, 1.00 };
 cairo_rgba_t radio_bgcolor = { 0.902, 0.902, 0.980, 1.0 }; // #E6E6FA default
+cairo_rgba_t tx_pan_fill_col = { 0.00, 1.00, 0.00, 1.00 };
+cairo_rgba_t mwin_bgcolor = { 0.965, 0.965, 0.965, 1.0 };
 
 int max_pan_label_rows = 6;
 int pan_spot_lifetime_min = 15;
@@ -1041,17 +1043,11 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
   _exit(0);
 }
 
-gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data) {
-  (void)data;
-  GdkRGBA bgcolor = {
-    radio_bgcolor.r,
-    radio_bgcolor.g,
-    radio_bgcolor.b,
-    radio_bgcolor.a
-  };
+gboolean win_set_bgcolor(GtkWidget *widget, gpointer data) {
+  const GdkRGBA *bgcolor = (const GdkRGBA *)data;
   gtk_widget_override_background_color(widget,
                                        GTK_STATE_FLAG_NORMAL,
-                                       &bgcolor);
+                                       bgcolor);
   gtk_widget_queue_draw(widget);
   return FALSE;
 }
@@ -1238,7 +1234,7 @@ static void radio_create_visual() {
   gtk_container_remove(GTK_CONTAINER(top_window), topgrid);
   gtk_container_add(GTK_CONTAINER(top_window), fixed);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  radio_set_bgcolor(top_window, NULL);
+  win_set_bgcolor(top_window, &radio_bgcolor);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   //t_print("radio: vfo_init\n");
   int my_height = full_screen ? screen_height : display_height;
@@ -3214,6 +3210,8 @@ static void radio_restore_state() {
   }
 
   GetPropC0("radio_bgcolor",                                 radio_bgcolor);
+  GetPropC0("mwin_bgcolor",                                  mwin_bgcolor);
+  GetPropC0("tx_pan_fill_col",                               tx_pan_fill_col);
   GetPropC0("peak_line_col",                                 peak_line_col);
   GetPropI0("enable_auto_tune",                              enable_auto_tune);
   GetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
@@ -3484,6 +3482,8 @@ void radio_save_state() {
   SetPropI0("max_pan_label_rows",                            max_pan_label_rows);
   SetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
   SetPropC0("radio_bgcolor",                                 radio_bgcolor);
+  SetPropC0("mwin_bgcolor",                                  mwin_bgcolor);
+  SetPropC0("tx_pan_fill_col",                               tx_pan_fill_col);
   SetPropC0("peak_line_col",                                 peak_line_col);
   //
   // TODO: I think some further options related to the GUI

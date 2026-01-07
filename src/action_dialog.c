@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 #include "main.h"
 #include "actions.h"
+#include "radio.h"
 
 #define GRID_WIDTH 6
 
@@ -62,6 +63,8 @@ int action_dialog(GtkWidget *parent, int filter, enum ACTION currentAction) {
   GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_widget_set_size_request(scrolled_window, 750, 400);
+  win_set_bgcolor(scrolled_window, &radio_bgcolor);
+  win_set_bgcolor(dialog, &radio_bgcolor);
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 2);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 2);

@@ -61,6 +61,7 @@ void toolbar_menu(GtkWidget *parent) {
   GtkWidget *widget;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &radio_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -92,9 +93,11 @@ void toolbar_menu(GtkWidget *parent) {
         gchar text[16];
         snprintf(text, 16, "FNC(%d)", lfunction);
         widget = gtk_button_new_with_label(text);
+        gtk_widget_set_name(widget, "small_button");
         gtk_grid_attach(GTK_GRID(grid), widget, i, lfunction + 1, 1, 1);
       } else {
         widget = gtk_button_new_with_label(ActionTable[sw[i].switch_function].button_str);
+        gtk_widget_set_name(widget, "small_button");
         gtk_grid_attach(GTK_GRID(grid), widget, i, lfunction + 1, 1, 1);
         g_signal_connect(widget, "button-press-event", G_CALLBACK(switch_cb), (gpointer) &sw[i]);
       }

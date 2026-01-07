@@ -95,7 +95,7 @@ static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-static void peak_line_colour_set(GtkColorButton *btn, gpointer user_data) {
+static void line_colour_set(GtkColorButton *btn, gpointer user_data) {
   cairo_rgba_t *c = (cairo_rgba_t *)user_data;
   GdkRGBA g;
   gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
@@ -327,6 +327,7 @@ void display_menu(GtkWidget *parent) {
   GtkWidget *label;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -879,7 +880,7 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_hold_decay_spin_btn, col, row, 1, 1);
   row++;
   col = 0;
-  GtkWidget *peak_col_btn_label = gtk_label_new("Choose PEAK line color");
+  GtkWidget *peak_col_btn_label = gtk_label_new("PEAK & HOLD line color");
   gtk_widget_set_name(peak_col_btn_label, "boldlabel");
   gtk_widget_set_halign(peak_col_btn_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_col_btn_label, col, row, 2, 1);
@@ -888,8 +889,22 @@ void display_menu(GtkWidget *parent) {
   gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(peak_col_btn), TRUE);
   GdkRGBA peak_col_init = { peak_line_col.r, peak_line_col.g, peak_line_col.b, peak_line_col.a };
   gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(peak_col_btn), &peak_col_init);
-  g_signal_connect(peak_col_btn, "color-set", G_CALLBACK(peak_line_colour_set), &peak_line_col);
+  g_signal_connect(peak_col_btn, "color-set", G_CALLBACK(line_colour_set), &peak_line_col);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_col_btn, col, row, 1, 1);
+  row++;
+  col = 0;
+  GtkWidget *tx_pan_fill_col_btn_label = gtk_label_new("TX pan line/fill color");
+  gtk_widget_set_name(tx_pan_fill_col_btn_label, "boldlabel");
+  gtk_widget_set_halign(tx_pan_fill_col_btn_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), tx_pan_fill_col_btn_label, col, row, 2, 1);
+  col += 2;
+  GtkWidget *tx_pan_fill_col_btn = gtk_color_button_new();
+  gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(tx_pan_fill_col_btn), TRUE);
+  GdkRGBA tx_pan_fill_col_init = { tx_pan_fill_col.r, tx_pan_fill_col.g, tx_pan_fill_col.b, tx_pan_fill_col.a };
+  gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(tx_pan_fill_col_btn), &tx_pan_fill_col_init);
+  g_signal_connect(tx_pan_fill_col_btn, "color-set", G_CALLBACK(line_colour_set), &tx_pan_fill_col);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), tx_pan_fill_col_btn, col, row, 1, 1);
+  //-------------------------------------------------------------------------------------------------------------------
   gtk_widget_show_all(dialog);
 
   // Only show one of the General, Peaks containers

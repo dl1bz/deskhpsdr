@@ -83,6 +83,7 @@ void about_menu(GtkWidget *parent) {
   struct utsname unameData;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 20); // 20px leer zwischen Fenster und Content
   char title[64];
   uname(&unameData);

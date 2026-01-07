@@ -266,6 +266,7 @@ static void nr4_threshold_cb(GtkWidget *widget, gpointer data) {
 void noise_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   char title[64];
 #ifdef EXTNR
   snprintf(title, 64, "%s - Noise (RX%d VFO-%s) [NR1-NR4]", PGNAME, active_receiver->id + 1,

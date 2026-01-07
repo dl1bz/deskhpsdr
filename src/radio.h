@@ -186,6 +186,8 @@ typedef struct {
 
 extern cairo_rgba_t peak_line_col;
 extern cairo_rgba_t radio_bgcolor;
+extern cairo_rgba_t tx_pan_fill_col;
+extern cairo_rgba_t mwin_bgcolor;
 
 extern int max_pan_label_rows;
 extern int pan_spot_lifetime_min;
@@ -414,7 +416,7 @@ extern int compare_doubles(const void *a, const void *b);
 
 extern int optimize_for_touchscreen;
 extern void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol);
-extern gboolean radio_set_bgcolor(GtkWidget *widget, gpointer data);
+extern gboolean win_set_bgcolor(GtkWidget *widget, gpointer data);
 
 //
 // Macro for a memory barrier, preventing changing the execution order

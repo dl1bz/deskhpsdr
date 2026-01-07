@@ -51,6 +51,7 @@
 static float *tx_pan_decay_db[TX_PAN_DECAY_MAX_TX];
 static int    tx_pan_decay_sz[TX_PAN_DECAY_MAX_TX];
 static int    tx_pan_decay_enabled_last[TX_PAN_DECAY_MAX_TX];
+static int    tx_pan_decay_duplex_last[TX_PAN_DECAY_MAX_TX];
 
 static void tx_pan_decay_reset(TRANSMITTER *tx) {
   if (!tx) { return; }
@@ -469,6 +470,11 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     float *decay_db = NULL;
 
     if (tx->id >= 0 && tx->id < TX_PAN_DECAY_MAX_TX) {
+      if (tx_pan_decay_duplex_last[tx->id] != duplex) {
+        tx_pan_decay_duplex_last[tx->id] = duplex;
+        tx_pan_decay_reset(tx);
+      }
+
       int decay_enabled =
         pan_peak_hold_enabled &&
         pan_peak_hold_decay_db_per_sec > 0.0f &&
@@ -541,19 +547,29 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     if (tx->display_filled) {
       // cairo_set_source_rgba(cr, COLOUR_PAN_FILL2);
-      cairo_set_source_rgba(cr, GRAD_GREEN_WEAK);
+      cairo_set_source_rgba(cr,
+                            tx_pan_fill_col.r,
+                            tx_pan_fill_col.g,
+                            tx_pan_fill_col.b,
+                            tx_pan_fill_col.a);
       cairo_close_path (cr);
       cairo_fill_preserve (cr);
       cairo_set_line_width(cr, PAN_LINE_THIN);
     } else {
-      cairo_set_source_rgba(cr, COLOUR_PAN_FILL3);
+      // cairo_set_source_rgba(cr, COLOUR_PAN_FILL3);
+      cairo_set_source_rgba(cr,
+                            tx_pan_fill_col.r,
+                            tx_pan_fill_col.g,
+                            tx_pan_fill_col.b,
+                            tx_pan_fill_col.a);
       cairo_set_line_width(cr, PAN_LINE_THICK);
     }
 
     cairo_stroke(cr);
 
     /* Draw peak-decay line (no fill) */
-    if (decay_db) {
+    // if (decay_db) {
+    if (decay_db && offset >= 0 && offset + mywidth <= tx->pixels) {
       double d1;
       d1 = (double)decay_db[offset];
       d1 = floor((tx->panadapter_high - d1)

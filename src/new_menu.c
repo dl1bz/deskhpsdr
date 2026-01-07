@@ -476,6 +476,7 @@ void new_menu() {
   if (main_menu == NULL) {
     main_menu = gtk_dialog_new();
     gtk_window_set_transient_for(GTK_WINDOW(main_menu), GTK_WINDOW(top_window));
+    win_set_bgcolor(main_menu, &mwin_bgcolor);
     GtkWidget *headerbar = gtk_header_bar_new();
     gtk_window_set_titlebar(GTK_WINDOW(main_menu), headerbar);
     gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
