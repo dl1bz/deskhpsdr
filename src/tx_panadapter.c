@@ -535,6 +535,11 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     if (draw_width > tx->pixels) { draw_width = tx->pixels; }
 
+    if (draw_width <= 0 || tx->pixels <= 0) {
+      cairo_destroy(cr);
+      return;
+    }
+
     int offset = (tx->pixels / 2) - (draw_width / 2);
 
     if (offset < 0) { offset = 0; }
