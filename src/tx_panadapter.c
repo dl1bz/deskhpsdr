@@ -75,6 +75,10 @@ tx_panadapter_configure_event_cb (GtkWidget         *widget,
   int mywidth = gtk_widget_get_allocated_width (tx->panadapter);
   int myheight = gtk_widget_get_allocated_height (tx->panadapter);
 
+  if (mywidth <= 1 || myheight <= 1) {
+    return TRUE;
+  }
+
   if (tx->panadapter_surface) {
     cairo_surface_destroy (tx->panadapter_surface);
   }
@@ -296,6 +300,12 @@ void tx_panadapter_update(TRANSMITTER *tx) {
   if (tx->panadapter_surface) {
     int mywidth = gtk_widget_get_allocated_width (tx->panadapter);
     int myheight = gtk_widget_get_allocated_height (tx->panadapter);
+
+    /* After duplex->normal reconfigure GTK can report transient 0-sized allocation.
+     * Drawing with myheight==0 degenerates the plot (everything collapses to y=0).
+     */
+    if (mywidth <= 1 || myheight <= 1) { return; }
+
     int txvfo = vfo_get_tx_vfo();
     int txmode = vfo_get_tx_mode();
     double filter_left, filter_right;
