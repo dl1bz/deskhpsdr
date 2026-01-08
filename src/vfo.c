@@ -2464,7 +2464,7 @@ void vfo_update() {
     cairo_move_to(cr, vfl->vox_x, vfl->vox_y);
 
     if (vox_enabled) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2531,7 +2531,7 @@ void vfo_update() {
     cairo_move_to(cr, vfl->split_x, vfl->split_y);
 
     if (split) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2548,7 +2548,7 @@ void vfo_update() {
     cairo_move_to(cr, vfl->sat_x, vfl->sat_y);
 
     if (sat_mode != SAT_NONE) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2567,7 +2567,7 @@ void vfo_update() {
   // -----------------------------------------------------------
   if (can_transmit && vfl->dup_x != 0) {
     if (duplex) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
