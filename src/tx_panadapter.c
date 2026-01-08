@@ -472,7 +472,6 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     if (tx->id >= 0 && tx->id < TX_PAN_DECAY_MAX_TX) {
       if (tx_pan_decay_duplex_last[tx->id] != duplex) {
         tx_pan_decay_duplex_last[tx->id] = duplex;
-        tx_pan_decay_reset(tx);
       }
 
       int decay_enabled =
@@ -587,22 +586,35 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     cairo_stroke(cr);
 
     /* Draw peak-decay line (no fill) */
-    // if (decay_db) {
-    if (!duplex && decay_db && draw_width > 0 && offset >= 0 && offset + draw_width <= tx->pixels) {
-      double d1;
-      d1 = (double)decay_db[offset];
+    if (!duplex && decay_db && tx->pixels > 0 && mywidth > 0) {
+      int span = draw_width;
+
+      if (span <= 0 || span > tx->pixels) { span = tx->pixels; }
+
+      int den = (mywidth > 1) ? (mywidth - 1) : 1;
+      int idx0 = offset;
+
+      if (idx0 < 0) { idx0 = 0; }
+
+      if (idx0 >= tx->pixels) { idx0 = tx->pixels - 1; }
+
+      double d1 = (double)decay_db[idx0];
       d1 = floor((tx->panadapter_high - d1)
-                 * (double) myheight
+                 * (double)myheight
                  / (tx->panadapter_high - tx->panadapter_low));
       cairo_move_to(cr, 0.0, d1);
-      int span = draw_width;
-      int den = (mywidth > 1) ? (mywidth - 1) : 1;
 
       for (int x = 1; x < mywidth; x++) {
-        int idx = offset + (int)(((long long)x * (long long)(span - 1)) / (long long)den);
+        int idx = offset +
+                  (int)(((long long)x * (long long)(span - 1)) / (long long)den);
+
+        if (idx < 0) { idx = 0; }
+
+        if (idx >= tx->pixels) { idx = tx->pixels - 1; }
+
         double d2 = (double)decay_db[idx];
         d2 = floor((tx->panadapter_high - d2)
-                   * (double) myheight
+                   * (double)myheight
                    / (tx->panadapter_high - tx->panadapter_low));
         cairo_line_to(cr, (double)x, d2);
       }

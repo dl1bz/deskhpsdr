@@ -23,7 +23,6 @@
 #define _PANADAPTER_H
 
 void tx_panadapter_update(TRANSMITTER *tx);
-
 void tx_panadapter_init(TRANSMITTER *tx, int width, int height);
 
 #endif
