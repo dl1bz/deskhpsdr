@@ -226,6 +226,7 @@ int display_solardata = 0;
 int display_ah4 = 0;
 int display_wmap = 0;
 int pan_peak_hold_enabled = 0;
+int pan_peak_hold_TX_enabled = 0;
 int pan_peak_hold_mode = 2;
 float pan_peak_hold_hold_sec = 2.0f;
 float pan_peak_hold_decay_db_per_sec = 6.0f;
@@ -3170,6 +3171,7 @@ static void radio_restore_state() {
   GetPropI0("display_solardata",                             display_solardata);
   GetPropI0("display_ah4",                                   display_ah4);
   GetPropI0("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
+  GetPropI0("pan_peak_hold_TX_enabled",                      pan_peak_hold_TX_enabled);
   GetPropI0("pan_peak_hold_mode",                            pan_peak_hold_mode);
   GetPropF0("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
   GetPropF0("pan_peak_hold_decay_db_per_sec",                pan_peak_hold_decay_db_per_sec);
@@ -3465,6 +3467,7 @@ void radio_save_state() {
   SetPropI0("display_solardata",                             display_solardata);
   SetPropI0("display_ah4",                                   display_ah4);
   SetPropI0("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
+  SetPropI0("pan_peak_hold_TX_enabled",                      pan_peak_hold_TX_enabled);
   SetPropI0("pan_peak_hold_mode",                            pan_peak_hold_mode);
   SetPropF0("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
   SetPropF0("pan_peak_hold_decay_db_per_sec",                pan_peak_hold_decay_db_per_sec);

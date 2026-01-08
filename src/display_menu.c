@@ -79,6 +79,13 @@ static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static void chkbtn_peakTX_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+  g_mutex_lock(&peak_mutex);
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  g_mutex_unlock(&peak_mutex);
+}
+
 static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
 
@@ -811,7 +818,7 @@ void display_menu(GtkWidget *parent) {
   gtk_container_add(GTK_CONTAINER(peak_hold_container), peak_hold_grid);
   col = 0;
   row = 0;
-  GtkWidget *ChkBtn_peak_label = gtk_label_new("Enable PEAK & HOLD");
+  GtkWidget *ChkBtn_peak_label = gtk_label_new("Enable PEAKS & HOLD");
   gtk_widget_set_name(ChkBtn_peak_label, "boldlabel");
   gtk_widget_set_halign(ChkBtn_peak_label, GTK_ALIGN_END);
   gtk_widget_set_margin_end(ChkBtn_peak_label, 5);
@@ -824,7 +831,7 @@ void display_menu(GtkWidget *parent) {
   //--------------------------------------------------------------------------------------------
   col = 0;
   row++;
-  GtkWidget *pan_peak_hold_label = gtk_label_new("Type of Peak & Hold function:");
+  GtkWidget *pan_peak_hold_label = gtk_label_new("Type of Peaks & Hold function:");
   gtk_widget_set_name(pan_peak_hold_label, "boldlabel");
   gtk_widget_set_halign(pan_peak_hold_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), pan_peak_hold_label, col, row, 2, 1);
@@ -841,7 +848,7 @@ void display_menu(GtkWidget *parent) {
   //--------------------------------------------------------------------------------------------
   row++;
   col = 0;
-  GtkWidget *pan_peak_hold_timer_label = gtk_label_new("Peak Hold time (s):");
+  GtkWidget *pan_peak_hold_timer_label = gtk_label_new("Peaks Hold time (s):");
   gtk_widget_set_name(pan_peak_hold_timer_label, "boldlabel");
   gtk_widget_set_halign(pan_peak_hold_timer_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), pan_peak_hold_timer_label, col, row, 2, 1);
@@ -880,7 +887,25 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_hold_decay_spin_btn, col, row, 1, 1);
   row++;
   col = 0;
-  GtkWidget *peak_col_btn_label = gtk_label_new("PEAK & HOLD line color");
+  GtkWidget *ChkBtn_peakTX_label = gtk_label_new("Enable PEAKS & HOLD for TX");
+  gtk_widget_set_tooltip_text(ChkBtn_peakTX_label, "Enable Peaks & Hold function for TX panadapter\n\n"
+                                                   "Usable only as Peaks Decay, Peaks Hold not available with TX.\n"
+                                                   "NOT usable if Duplex TX mode active !");
+  gtk_widget_set_name(ChkBtn_peakTX_label, "boldlabel");
+  gtk_widget_set_halign(ChkBtn_peakTX_label, GTK_ALIGN_END);
+  gtk_widget_set_margin_end(ChkBtn_peakTX_label, 5);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), ChkBtn_peakTX_label, col, row, 2, 1);
+  col += 2;
+  GtkWidget *ChkBtn_peakTX = gtk_check_button_new();
+  gtk_widget_set_tooltip_text(ChkBtn_peakTX, "Enable Peaks & Hold function for TX panadapter\n\n"
+                                             "Usable only as Peaks Decay, Peaks Hold not available with TX.\n"
+                                             "NOT usable if Duplex TX mode active !");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_peakTX), pan_peak_hold_TX_enabled);
+  g_signal_connect(ChkBtn_peakTX, "toggled", G_CALLBACK(chkbtn_peakTX_cb), &pan_peak_hold_TX_enabled);
+  gtk_grid_attach(GTK_GRID(peak_hold_grid), ChkBtn_peakTX, col, row, 2, 1);
+  row++;
+  col = 0;
+  GtkWidget *peak_col_btn_label = gtk_label_new("PEAKS & HOLD line color");
   gtk_widget_set_name(peak_col_btn_label, "boldlabel");
   gtk_widget_set_halign(peak_col_btn_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), peak_col_btn_label, col, row, 2, 1);

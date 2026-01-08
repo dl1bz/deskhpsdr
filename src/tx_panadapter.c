@@ -485,7 +485,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       }
 
       int decay_enabled =
-        pan_peak_hold_enabled && pan_peak_hold_decay_db_per_sec > 0.0f;
+        pan_peak_hold_enabled && pan_peak_hold_TX_enabled && pan_peak_hold_decay_db_per_sec > 0.0f;
 
       if (tx_pan_decay_enabled_last[tx->id] != decay_enabled) {
         tx_pan_decay_enabled_last[tx->id] = decay_enabled;

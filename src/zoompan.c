@@ -272,7 +272,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   GtkWidget *pan_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(pan_box, panbox_width, widget_height);
   //-------------------------------------------------------------------------------------------
-  peak_btn = gtk_toggle_button_new_with_label("PEAK");
+  peak_btn = gtk_toggle_button_new_with_label("PEAKS");
   WEAKEN(peak_btn);
   gtk_widget_set_name(peak_btn, "medium_toggle_button");
   // gtk_widget_set_name(binaural_btn, "front_toggle_button");
