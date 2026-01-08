@@ -380,26 +380,35 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 2, 1);
   g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &optimize_for_touchscreen);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Zeile 2 als Box ab Spalte 0
+  GtkWidget *Z2_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
   row++;
-  label = gtk_label_new("Window Width:");
+  label = gtk_label_new("Main Window Width:");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
-  col++;
+  gtk_widget_set_margin_start(label, 20);
+  gtk_box_pack_start(GTK_BOX(Z2_box), label, FALSE, FALSE, 0);
+  //---
   wide_b = gtk_spin_button_new_with_range(1280.0, (double) screen_width, 32.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
-  gtk_grid_attach(GTK_GRID(grid), wide_b, col, row, 1, 1);
+  gtk_widget_set_margin_top(wide_b, 5);
+  gtk_widget_set_margin_bottom(wide_b, 5);
+  gtk_box_pack_start(GTK_BOX(Z2_box), wide_b, FALSE, FALSE, 0);
   g_signal_connect(wide_b, "value-changed", G_CALLBACK(width_cb), NULL);
-  col++;
-  label = gtk_label_new("Window Height:");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  //--
+  label = gtk_label_new("Main Window Height:");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
-  col++;
+  gtk_widget_set_margin_start(label, 15);
+  gtk_box_pack_start(GTK_BOX(Z2_box), label, FALSE, FALSE, 0);
+  //--
   height_b = gtk_spin_button_new_with_range(600.0, (double) screen_height, 16.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(height_b), (double) my_display_height);
-  gtk_grid_attach(GTK_GRID(grid), height_b, col, row, 1, 1);
+  gtk_widget_set_margin_top(height_b, 5);
+  gtk_widget_set_margin_bottom(height_b, 5);
+  gtk_box_pack_start(GTK_BOX(Z2_box), height_b, FALSE, FALSE, 0);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
+  // Box ins Grid
+  gtk_grid_attach(GTK_GRID(grid), Z2_box, col, row, 4, 1);
+  //---------------------------------------------------------------------------------------------------
   row++;
   col = 0;
   label = gtk_label_new("deskHPSDR is made for Desktops,\ntherefore no VFO bar layouts available !");
