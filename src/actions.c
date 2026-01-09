@@ -109,7 +109,7 @@ ACTION_TABLE ActionTable[] = {
   {BI_NAURAL,           "Binaural",             "BINAURAL",     TYPE_NONE},
   {MENU_BAND,           "Band\nMenu",           "BAND",         MIDI_KEY   | CONTROLLER_SWITCH},
   {MENU_BANDSTACK,      "BndStack\nMenu",       "BSTK",         MIDI_KEY   | CONTROLLER_SWITCH},
-  {CAPTURE,             "Capture",              "CAPTUR",       MIDI_KEY   | CONTROLLER_SWITCH},
+  {CAPTURE,             "Capture",              "CAPTURE",      MIDI_KEY   | CONTROLLER_SWITCH},
   {COMP_ENABLE,         "Cmpr On/Off",          "COMP",         MIDI_KEY   | CONTROLLER_SWITCH},
   {COMPRESSION,         "Cmpr Level",           "COMPVAL",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {CTUN,                "CTUN",                 "CTUN",         MIDI_KEY   | CONTROLLER_SWITCH},
