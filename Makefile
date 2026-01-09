@@ -707,6 +707,7 @@ src/fft_menu.c \
 src/filter.c \
 src/filter_menu.c \
 src/gpio.c \
+src/greyline.c \
 src/i2c.c \
 src/iambic.c \
 src/led.c \
@@ -796,6 +797,7 @@ src/fft_menu.h \
 src/filter.h \
 src/filter_menu.h \
 src/gpio.h \
+src/greyline.h \
 src/iambic.h \
 src/i2c.h \
 src/led.h \
@@ -879,6 +881,7 @@ src/fft_menu.o \
 src/filter.o \
 src/filter_menu.o \
 src/gpio.o \
+src/greyline.o \
 src/iambic.o \
 src/i2c.o \
 src/led.o \

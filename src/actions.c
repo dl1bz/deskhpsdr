@@ -52,6 +52,7 @@
 #include "exit_menu.h"
 #include "message.h"
 #include "dxcluster.h"
+#include "greyline.h"
 #include "rx_panadapter.h"
 
 //
@@ -140,6 +141,7 @@ ACTION_TABLE ActionTable[] = {
   {MENU_FILTER,         "RX Filter\nMenu",      "RXFILT",       MIDI_KEY   | CONTROLLER_SWITCH},
   {FUNCTION,            "Function",             "FUNC",         MIDI_KEY   | CONTROLLER_SWITCH},
   {FUNCTIONREV,         "FuncRev",              "FUNC-",        MIDI_KEY   | CONTROLLER_SWITCH},
+  {GL_WIN,              "Grayline\nWindow",     "GRAYLINE",     TYPE_NONE},
   {IF_SHIFT,            "IF Shift",             "IFSHFT",       MIDI_WHEEL | CONTROLLER_ENCODER},
   {IF_SHIFT_RX1,        "IF Shift\nRX1",        "IFSHFT1",      MIDI_WHEEL | CONTROLLER_ENCODER},
   {IF_SHIFT_RX2,        "IF Shift\nRX2",        "IFSHFT2",      MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -1076,6 +1078,15 @@ int process_action(void *data) {
       if (controller == CONTROLLER1) {
         switches = switches_controller1[function];
       }
+    }
+
+    break;
+
+  case GL_WIN:
+    if (a->mode == PRESSED) {
+      const char *qth_locator = "JO71FE";
+      // open_greyline_win(window_width, window_height, locator);
+      open_greyline_win(800, qth_locator);
     }
 
     break;
