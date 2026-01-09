@@ -1084,9 +1084,8 @@ int process_action(void *data) {
 
   case GL_WIN:
     if (a->mode == PRESSED) {
-      const char *qth_locator = "JO71FE";
       // open_greyline_win(window_width, window_height, locator);
-      open_greyline_win(800, qth_locator);
+      open_greyline_win((int)display_width * 2 / 3, own_locator);
     }
 
     break;

@@ -53,6 +53,7 @@
 static GtkWidget *dialog = NULL;
 static GtkWidget *n2adr_hpf_btn = NULL;
 static gulong callsign_box_signal_id;
+static gulong locator_box_signal_id;
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -530,6 +531,26 @@ static void callsign_button_clicked(GtkWidget *widget, gpointer data) {
   }
 
   gtk_widget_queue_draw(GTK_WIDGET(callsign_box));
+  // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
+  cleanup();
+}
+
+static void locator_button_clicked(GtkWidget *widget, gpointer data) {
+  GtkEntry *locator_box = GTK_ENTRY(data);
+  const gchar *text = gtk_entry_get_text(locator_box);
+  gsize len = text ? strlen(text) : 0;
+
+  if (text && len >= 3 && len < sizeof(own_locator)) {
+    gchar *upper = g_ascii_strup(text, -1);  // oder g_strup(text)
+    g_strlcpy(own_locator, upper, sizeof(own_locator));
+    g_free(upper);
+  } else {
+    g_signal_handler_block(locator_box, locator_box_signal_id);
+    gtk_entry_set_text(locator_box, own_locator);
+    g_signal_handler_unblock(locator_box, locator_box_signal_id);
+  }
+
+  gtk_widget_queue_draw(GTK_WIDGET(locator_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
 }
@@ -1150,23 +1171,41 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_size_request(Sep, -1, 3);
   gtk_grid_attach(GTK_GRID(grid), Sep, col, row, 5, 1);
   row++;
+  //---------------------------------------------------------------------------------------------------
+  // Zeile als Box ab Spalte 0
+  GtkWidget *Data_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
   col = 0;
   label = gtk_label_new("Your Callsign:");
   gtk_widget_set_name(label, "boldlabel_blue");
-  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+  gtk_widget_set_margin_start(label, 5);
+  gtk_widget_set_margin_end(label, 5);
+  gtk_box_pack_start(GTK_BOX(Data_box), label, FALSE, FALSE, 0);
   GtkWidget *callsign_box = gtk_entry_new();
-  col++;
   gtk_entry_set_max_length(GTK_ENTRY(callsign_box), sizeof(own_callsign) - 1);
   gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
-  gtk_grid_attach(GTK_GRID(grid), callsign_box, col, row, 1, 1);
+  gtk_box_pack_start(GTK_BOX(Data_box), callsign_box, FALSE, FALSE, 0);
   callsign_box_signal_id = g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_button_clicked), callsign_box);
-  // col += 2;
-  col++;
   GtkWidget *callsign_box_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(callsign_box_btn, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), callsign_box_btn, col, row, 1, 1);
+  gtk_box_pack_start(GTK_BOX(Data_box), callsign_box_btn, FALSE, FALSE, 0);
   g_signal_connect(callsign_box_btn, "clicked", G_CALLBACK(callsign_button_clicked), callsign_box);
-  gtk_widget_show(callsign_box_btn);
+  //---------------------------------------------------------------------------------------------------
+  label = gtk_label_new("Your Locator:");
+  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_widget_set_margin_start(label, 25);
+  gtk_widget_set_margin_end(label, 5);
+  gtk_box_pack_start(GTK_BOX(Data_box), label, FALSE, FALSE, 0);
+  GtkWidget *locator_box = gtk_entry_new();
+  gtk_entry_set_max_length(GTK_ENTRY(locator_box), sizeof(own_locator) - 1);
+  gtk_entry_set_text(GTK_ENTRY(locator_box), own_locator);
+  gtk_box_pack_start(GTK_BOX(Data_box), locator_box, FALSE, FALSE, 0);
+  locator_box_signal_id = g_signal_connect(locator_box, "activate", G_CALLBACK(locator_button_clicked), locator_box);
+  GtkWidget *locator_box_btn = gtk_button_new_with_label("Set");
+  gtk_widget_set_halign(locator_box_btn, GTK_ALIGN_START);
+  gtk_box_pack_start(GTK_BOX(Data_box), locator_box_btn, FALSE, FALSE, 0);
+  g_signal_connect(locator_box_btn, "clicked", G_CALLBACK(locator_button_clicked), locator_box);
+  gtk_grid_attach(GTK_GRID(grid), Data_box, col, row, 4, 1);
+  //---------------------------------------------------------------------------------------------------
 #ifdef SOAPYSDR
   row++;
   col = 0;

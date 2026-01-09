@@ -208,6 +208,7 @@ struct audio_profile {
 
 extern struct audio_profile mic_prof;
 extern char own_callsign[16];
+extern char own_locator[15];
 extern char dxc_login[16];
 extern char dxc_address[32];
 extern long int dxc_port;
