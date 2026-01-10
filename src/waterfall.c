@@ -87,7 +87,7 @@ waterfall_draw_cb (GtkWidget *widget,
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (display_info_bar && active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
       || active_receiver->display_panadapter == 1) && rx->id == 0 && !rx_stack_horizontal) {
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.70);
     cairo_rectangle(cr, 0.0, b_height - box_height, b_width, box_height);
     cairo_fill(cr);
     cairo_set_source_rgba(cr, COLOUR_WHITE);

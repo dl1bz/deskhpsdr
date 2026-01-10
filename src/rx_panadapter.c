@@ -1505,7 +1505,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     // Y coordinate to the top left corner of the rectangle
     // width of the rectangle
     // height of the rectangle
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.70);
     cairo_rectangle(cr, 0.0, myheight - 30, mywidth, 30.0);
     cairo_fill(cr);
     cairo_set_source_rgba(cr, COLOUR_WHITE);
