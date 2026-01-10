@@ -18,8 +18,7 @@
 */
 
 #include "greyline.h"
-#include "day_jpg.h"
-
+#include "wmap_fhd_jpg.h"
 #include <gtk/gtk.h>
 #include <glib.h>
 #include <ctype.h>

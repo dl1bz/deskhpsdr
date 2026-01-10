@@ -141,7 +141,7 @@ ACTION_TABLE ActionTable[] = {
   {MENU_FILTER,         "RX Filter\nMenu",      "RXFILT",       MIDI_KEY   | CONTROLLER_SWITCH},
   {FUNCTION,            "Function",             "FUNC",         MIDI_KEY   | CONTROLLER_SWITCH},
   {FUNCTIONREV,         "FuncRev",              "FUNC-",        MIDI_KEY   | CONTROLLER_SWITCH},
-  {GL_WIN,              "Grayline\nWindow",     "GRAYLINE",     TYPE_NONE},
+  {GL_WIN,              "Greyline\nWindow",     "GREYLINE",     TYPE_NONE},
   {IF_SHIFT,            "IF Shift",             "IFSHFT",       MIDI_WHEEL | CONTROLLER_ENCODER},
   {IF_SHIFT_RX1,        "IF Shift\nRX1",        "IFSHFT1",      MIDI_WHEEL | CONTROLLER_ENCODER},
   {IF_SHIFT_RX2,        "IF Shift\nRX2",        "IFSHFT2",      MIDI_WHEEL | CONTROLLER_ENCODER},
