@@ -1805,12 +1805,12 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (display_wmap) {
         if (can_transmit && radio_is_transmitting()) {
-          cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+          cairo_set_source_rgba(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80 ); // Hintergrund
         } else {
-          cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+          cairo_set_source_rgba(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255, 0.80); // Hintergrund
         }
       } else {
-        cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+        cairo_set_source_rgba(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80); // Hintergrund
       }
 
       cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
@@ -1879,9 +1879,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     double rt_rx_h = 60.0;
 
     if (display_wmap) {
-      cairo_set_source_rgb(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255); // Hintergrund
+      cairo_set_source_rgba(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255, 0.80); // Hintergrund
     } else {
-      cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+      cairo_set_source_rgba(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80); // Hintergrund
     }
 
     cairo_rectangle(cr, width - rt_rx_w, rt_rx_y, rt_rx_w, rt_rx_h); // x, y, Breite, Höhe
