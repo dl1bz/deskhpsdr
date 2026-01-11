@@ -221,6 +221,49 @@ static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned char hl2_iob_tuner_status = 0;
 
+#ifdef __AH4IOB__
+//
+// Fast-Path: HL2 IO-Board ACK sniffing
+// Purpose: Update IO-board state immediately in RX thread, independent of RX ringbuffer backlog.
+// Frame layout: [0..2]=0x7F SYNC, [3]=C0, [4]=C1, [5]=C2, [6]=C3, [7]=C4
+//
+static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
+  if (device != DEVICE_HERMES_LITE2) {
+    return;
+  }
+
+  // only accept well-formed OZY frames
+  if (buf[0] != SYNC || buf[1] != SYNC || buf[2] != SYNC) {
+    return;
+  }
+
+  const unsigned char c0 = buf[3];
+
+  if ((c0 & 0x80) == 0) {
+    return; // not an ACK response
+  }
+
+  const int addr = (c0 & 0x7E) >> 1;
+  const unsigned char c1 = buf[4];
+  const unsigned char c2 = buf[5];
+  const unsigned char c3 = buf[6];
+  const unsigned char c4 = buf[7];
+
+  // Board detect: addr==0x3D and all data bytes == 0xF1
+  if (!hl2_iob_present &&
+      addr == 0x3D &&
+      c1 == 0xF1 && c2 == 0xF1 && c3 == 0xF1 && c4 == 0xF1) {
+    hl2_iob_present = 1;
+    return;
+  }
+
+  // IO-board readback: first status byte is C4 (matches existing process_control_bytes() logic)
+  if (hl2_iob_present && addr == 0x3D) {
+    hl2_iob_tuner_status = c4;
+  }
+}
+#endif
+
 unsigned char hl2_iob_get_antenna_tuner_status(void) {
   return hl2_iob_tuner_status;
 }
@@ -1976,6 +2019,11 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
   // in one shot since this halves the number of semamphore operations
   // at no cost (buffer fly in in pairs anyway)
   //
+#ifdef __AH4IOB__
+  // Fast-Path: handle HL2 IO-board ACKs immediately (independent of ringbuffer backlog)
+  hl2_iob_fastpath_sniff_512(buf1);
+  hl2_iob_fastpath_sniff_512(buf2);
+#endif
   int rc = atomic_load_explicit(&rxring_count, memory_order_relaxed);
 
   if (rc < 0) {
