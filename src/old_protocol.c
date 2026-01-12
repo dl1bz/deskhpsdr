@@ -1711,9 +1711,9 @@ static void process_control_bytes() {
               atomic_load_explicit(&hl2_iob_present, memory_order_relaxed));
     } else if (present && addr == 0x3D) {
       atomic_store_explicit(&hl2_iob_tuner_status, control_in[4], memory_order_relaxed);
-      t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n",
-              control_in[4],
-              atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed));
+      // t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n",
+      //        control_in[4],
+      //        atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed));
 #else
       hl2_iob_present = 1;
       t_print("%s: set hl2_iob_present = %d\n", __FUNCTION__, hl2_iob_present);
