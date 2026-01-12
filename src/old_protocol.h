@@ -28,6 +28,10 @@ int hl2_iob_is_present(void);
 extern void hl2_iob_set_antenna_tuner(unsigned char value);
 extern unsigned char hl2_iob_get_antenna_tuner_status(void);
 
+#ifdef __AH4IOB__
+  extern int hl2_pa_enable_suppressed;
+#endif
+
 extern void old_protocol_stop(void);
 extern void old_protocol_run(void);
 

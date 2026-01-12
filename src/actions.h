@@ -202,7 +202,6 @@ enum ACTION {
   TUNE_FULL,
   TUNE_MEMORY,
 #ifdef __AH4IOB__
-  AH4_START,
   AH4_RUN,
   AH4_BYP,
 #endif

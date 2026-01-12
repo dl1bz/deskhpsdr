@@ -187,6 +187,7 @@ static int how_many_receivers(void);
   // force:  force next HL2-slot to do Reg7 read once (to guarantee <50ms at start)
   static atomic_int hl2_iob_reg7_fastpoll_active = 0;
   static atomic_int hl2_iob_reg7_fastpoll_force  = 0;
+  int hl2_pa_enable_suppressed = 0;
 #else
   int hl2_iob_present = 0;
 #endif
@@ -2861,8 +2862,13 @@ void ozy_send_buffer() {
         output_buffer[C2] = 0x00;
         output_buffer[C3] = 0x00;
         output_buffer[C4] = 0x00;
+#ifdef __AH4IOB__
+
+        if (pa_enabled && !txband->disablePA && !hl2_pa_enable_suppressed) {
+#else
 
         if (pa_enabled && !txband->disablePA) {
+#endif
           output_buffer[C2] |= 0x08; /* PA enable */
         }
 
@@ -2873,6 +2879,7 @@ void ozy_send_buffer() {
 
       command = 4;
     }
+
     break;
 
     case 4:
@@ -2968,7 +2975,13 @@ void ozy_send_buffer() {
           output_buffer[C1] = 0x20 | (adc[1].attenuation & 0x1F);
         }
 
+#ifdef __AH4IOB__
+
+        if (radio_is_transmitting() && pa_enabled && !txband->disablePA && !hl2_pa_enable_suppressed) {
+#else
+
         if (radio_is_transmitting() && pa_enabled && !txband->disablePA) {
+#endif
           output_buffer[C1] = 0x3F;
         }
       }
@@ -3402,42 +3415,42 @@ void ozy_send_buffer() {
       command = 1;
     }
     break;
-    }
   }
+}
 
   // set mox
-  if (radio_is_transmitting()) {
-    if (txmode == modeCWU || txmode == modeCWL) {
-      //
-      //    For "internal" CW, we should not set
-      //    the MOX bit, everything is done in the FPGA.
-      //
-      //    However, if we are doing CAT CW, local CW or tuning/TwoTone,
-      //    we must put the SDR into TX mode *here*.
-      //
-      if (tune || CAT_cw_is_active
-          || MIDI_cw_is_active
-          || !cw_keyer_internal
-          || transmitter->twotone
-          || radio_ptt) {
-        output_buffer[C0] |= 0x01;
-      }
-    } else {
-      // not doing CW? always set MOX if transmitting
+if (radio_is_transmitting()) {
+  if (txmode == modeCWU || txmode == modeCWL) {
+    //
+    //    For "internal" CW, we should not set
+    //    the MOX bit, everything is done in the FPGA.
+    //
+    //    However, if we are doing CAT CW, local CW or tuning/TwoTone,
+    //    we must put the SDR into TX mode *here*.
+    //
+    if (tune || CAT_cw_is_active
+        || MIDI_cw_is_active
+        || !cw_keyer_internal
+        || transmitter->twotone
+        || radio_ptt) {
       output_buffer[C0] |= 0x01;
     }
+  } else {
+    // not doing CW? always set MOX if transmitting
+    output_buffer[C0] |= 0x01;
   }
+}
 
   //
   // if we have a USB interfaced Ozy device:
   //
-  if (device == DEVICE_OZY) {
+if (device == DEVICE_OZY) {
 #ifdef USBOZY
-    ozyusb_write(output_buffer, OZY_BUFFER_SIZE);
+  ozyusb_write(output_buffer, OZY_BUFFER_SIZE);
 #endif
-  } else {
-    metis_write(0x02, output_buffer, OZY_BUFFER_SIZE);
-  }
+} else {
+  metis_write(0x02, output_buffer, OZY_BUFFER_SIZE);
+}
 
   //t_print("C0=%02X C1=%02X C2=%02X C3=%02X C4=%02X\n",
   //                output_buffer[C0],output_buffer[C1],output_buffer[C2],output_buffer[C3],output_buffer[C4]);

@@ -243,7 +243,6 @@ ACTION_TABLE ActionTable[] = {
   {TUNE_FULL,           "Tune\nFull",           "TUNF",         MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_MEMORY,         "Tune\nMem",            "TUNM",         MIDI_KEY   | CONTROLLER_SWITCH},
 #ifdef __AH4IOB__
-  {AH4_START,           "AH-4\nStart",          "AH4-STRT",     MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_RUN,             "AH-4\nRun",            "AH4-RUN",      MIDI_KEY   | CONTROLLER_SWITCH},
   {AH4_BYP,             "AH-4\nBypass",         "AH4-BYP",      MIDI_KEY   | CONTROLLER_SWITCH},
 #endif
@@ -344,7 +343,7 @@ static gboolean get_window_frame(GtkWindow *win, int *x, int *y, int *w, int *h)
   return TRUE;
 }
 
-static int repeat_cb(gpointer data) {
+static gboolean repeat_cb(gpointer data) {
   //
   // This is periodically called to execute the same action
   // again and agin (e.g. while the RIT button is kept being
@@ -355,12 +354,45 @@ static int repeat_cb(gpointer data) {
     return G_SOURCE_REMOVE;
   }
 
-  // process the repeat_action
   PROCESS_ACTION *a = g_new(PROCESS_ACTION, 1);
   *a = repeat_action;
-  process_action(a);
-  return TRUE;
+  process_action(a);                 // übernimmt g_free()
+  return G_SOURCE_CONTINUE;
 }
+
+#ifdef __AH4IOB__
+static void stop_repeat_action(void) {
+  repeat_timer_released = TRUE;
+
+  if (repeat_timer != 0) {
+    g_source_remove(repeat_timer);
+    repeat_timer = 0;
+  }
+
+  t_print("g_timeout_stop\n");
+}
+
+static void start_repeat_action(PROCESS_ACTION *repaction, guint timerval) {
+  static guint savedtimerval = 0;
+  repeat_action = *repaction;
+
+  if (repeat_timer == 0) {
+    // Why not use gpointer data for repeat_action ?
+    repeat_timer = g_timeout_add(timerval, repeat_cb, NULL);
+    repeat_timer_released = FALSE;
+    t_print("g_timeout_add %d\n", timerval);
+  } else {
+    if (savedtimerval != timerval) {
+      stop_repeat_action();
+      repeat_timer = g_timeout_add(timerval, repeat_cb, NULL);
+      repeat_timer_released = FALSE;
+      t_print("g_timeout_readd %d\n", timerval);
+    }
+  }
+
+  savedtimerval = timerval;
+}
+#endif
 
 static inline double KnobOrWheel(const PROCESS_ACTION *a, double oldval, double minval, double maxval, double inc) {
   //
@@ -1657,7 +1689,13 @@ int process_action(void *data) {
         repeat_timer_released = FALSE;
       }
     } else {
+      // Stop immediately; otherwise a quick re-press can be blocked until the next timer tick.
       repeat_timer_released = TRUE;
+
+      if (repeat_timer != 0) {
+        g_source_remove(repeat_timer);
+        repeat_timer = 0;
+      }
     }
 
     break;
@@ -1674,6 +1712,11 @@ int process_action(void *data) {
       }
     } else {
       repeat_timer_released = TRUE;
+
+      if (repeat_timer != 0) {
+        g_source_remove(repeat_timer);
+        repeat_timer = 0;
+      }
     }
 
     break;
@@ -1883,105 +1926,7 @@ int process_action(void *data) {
     break;
 #ifdef __AH4IOB__
 
-  case AH4_START:
-    switch (a->mode) {
-    case PRESSED: {
-      int state     = radio_get_tune();
-      int new_state = !state;
-
-      if (device == DEVICE_HERMES_LITE2) {
-        if (!state) {
-          // TUNE-Button gedrückt, TUNE war aus → AH-4-Sequenz starten, aber KEINE RF
-          hl2_iob_set_antenna_tuner(1);
-          t_print("%s AH4: start sequence, wait for 0xEE\n", __FUNCTION__);
-          // Poll-Loop starten
-          schedule_action(AH4_START, RELATIVE, 0);
-        } else {
-          // TUNE war an → User will aus, RF/TUNE sofort aus
-          radio_tune_update(0);
-          update_slider_tune_drive_btn();
-          t_print("%s AH4: user TUNE off\n", __FUNCTION__);
-        }
-      } else {
-        // Nicht-HL2: bestehendes TUNE-Verhalten unverändert lassen
-        radio_tune_update(new_state);
-        update_slider_tune_drive_btn();
-      }
-
-      break;
-    }
-
-    case RELATIVE: {
-      // interner Poll-Schritt, wird nur über schedule_action() ausgelöst
-      if (device != DEVICE_HERMES_LITE2) {
-        break;
-      }
-
-      if (!hl2_iob_is_present()) {
-        t_print("%s AH4: no IO board present, abort polling\n", __FUNCTION__);
-        break;
-      }
-
-      unsigned char s = hl2_iob_get_antenna_tuner_status();
-      t_print("%s AH4: Status raw = 0x%02X\n", __FUNCTION__, s);
-
-      if (s == 0xEE) {
-        // Warten bis 0xEE → JETZT RF aktivieren
-        if (!radio_get_tune()) {
-          radio_tune_update(1);
-          update_slider_tune_drive_btn();
-          t_print("%s AH4: RF on (0xEE)\n", __FUNCTION__);
-        }
-
-        // weiter pollen, bis 0x00 oder Fehler kommt
-        schedule_action(AH4_START, RELATIVE, 0);
-      } else if (s == 0x00) {
-        if (radio_get_tune()) {
-          // Wir waren schon im TUNE-Mode → jetzt wirklich Ende OK
-          radio_tune_update(0);
-          update_slider_tune_drive_btn();
-          t_print("%s AH4: Tune end (OK)\n", __FUNCTION__);
-          // kein weiteres schedule_action → Zyklus beendet
-        } else {
-          // direkt nach Start: 0x00 = idle → weiter warten
-          t_print("%s AH4: initial/idle 0x00, waiting for tuner activity\n", __FUNCTION__);
-          schedule_action(AH4_START, RELATIVE, 0);
-        }
-      } else if (s >= 0xF0) {
-        if (radio_get_tune()) {
-          // echter Fehler während RF aktiv → sauber abbrechen
-          radio_tune_update(0);
-          update_slider_tune_drive_btn();
-          t_print("%s AH4: Errorcode 0x%02X (RF active, abort)\n", __FUNCTION__, s);
-          // kein neues schedule_action → Zyklus beendet
-        } else {
-          // Fehlerstatus bei noch nicht aktivem TUNE/RF:
-          // als "stale error" aus vorherigem Versuch behandeln
-          t_print("%s AH4: stale error 0x%02X while RF off, waiting for new cycle\n", __FUNCTION__, s);
-          schedule_action(AH4_START, RELATIVE, 0);
-        }
-      } else {
-        // Progress-Werte → weiter pollen, RF-Zustand unverändert lassen
-        t_print("%s AH4: Progress status %u\n", __FUNCTION__, s);
-        schedule_action(AH4_START, RELATIVE, 0);
-      }
-
-      break;
-    }
-
-    default:
-      // RELEASED usw. ignorieren
-      break;
-    }
-
-    break;
-
-  //----------------------------------------------------------------------------------------------------------
-
   case AH4_RUN: {
-    // Merker: nach Fehler keine neuen Starts, bis der Tuner wieder 0x00 meldet
-    static int ah4_error_lock = 0;
-
     // make sure that enable_hl2_atu_gateware is OFF, we use the ATU only with the IO board
     if (device == DEVICE_HERMES_LITE2 && enable_hl2_atu_gateware) {
       enable_hl2_atu_gateware = 0;
@@ -1995,19 +1940,26 @@ int process_action(void *data) {
       if (device == DEVICE_HERMES_LITE2) {
         if (!state) {
           // TUNE war aus → neuer Tune-Versuch
-          if (ah4_error_lock) {
+          if (hl2_iob_get_antenna_tuner_status() >= 0xF0) {
             // Letzter Versuch endete im Error-State → blockieren, bis 0x00 kommt
-            t_print("AH4: error lock active, wait for status 0x00 before retry\n");
+            t_print("AH4: error lock active, reschedule and wait for status 0x00 before retry\n");
           } else {
             // sauberer Start: Tuner anstoßen, aber KEINE HF
+            hl2_pa_enable_suppressed = 1;
+            radio_tune_update(1);
+            update_slider_tune_drive_btn();
+            // sauberer Start: Tuner anstoßen, HF mit PA ausgeschaltet (hl2_pa_enable_suppressed)
+            // HF mit PA ausgeschaltet ist eine Abhilfe für "modulation not immediately applied issue"
             hl2_iob_set_antenna_tuner(1);
             t_print("AH4: start sequence, waiting for 0xEE\n");
-            schedule_action(AH4_RUN, RELATIVE, 0);
+            a->mode = RELATIVE;
+            start_repeat_action(a, 1);
           }
         } else {
           // TUNE war an → User beendet Tune manuell, HF aus
           radio_tune_update(0);
           update_slider_tune_drive_btn();
+          hl2_pa_enable_suppressed = 0;
           t_print("AH4: user TUNE off\n");
         }
       } else {
@@ -2033,39 +1985,22 @@ int process_action(void *data) {
 
       unsigned char s = hl2_iob_get_antenna_tuner_status();
 
-      // t_print("AH4: Status raw = 0x%02X\n", s);
-
       if (s == 0xEE) {
         // HF erst bei 0xEE aktivieren
-        if (!radio_get_tune()) {
-          radio_tune_update(1);
-          update_slider_tune_drive_btn();
+        if (hl2_pa_enable_suppressed) {
+          hl2_pa_enable_suppressed = 0;
           t_print("AH4: RF on (0xEE)\n");
         }
-
-        // weiter pollen, bis 0x00 (OK) oder Error kommt
-        schedule_action(AH4_RUN, RELATIVE, 0);
       } else if (s == 0x00) {
-        if (radio_get_tune()) {
+        if (radio_get_tune() && !hl2_pa_enable_suppressed) {
           // HF war aktiv → sauberer Abschluss
           radio_tune_update(0);
           update_slider_tune_drive_btn();
           t_print("AH4: Tune end (OK)\n");
+          stop_repeat_action();
           // hier kein weiteres schedule_action nötig
-        } else if (ah4_error_lock) {
-          // Error-State wird mit 0x00 wieder freigegeben
-          ah4_error_lock = 0;
-          t_print("AH4: status 0x00 after error, retries enabled\n");
-          // kein weiteres schedule_action; System ist wieder idle
-        } else {
-          // initiales/idle 0x00 nach Start → weiter auf Aktivität warten
-          t_print("AH4: idle 0x00, waiting for tuner activity\n");
-          schedule_action(AH4_RUN, RELATIVE, 0);
         }
       } else if (s >= 0xF0) {
-        // Error: HF aus, neuen Versuch sperren, bis 0x00 kommt
-        ah4_error_lock = 1;
-
         if (radio_get_tune()) {
           radio_tune_update(0);
           update_slider_tune_drive_btn();
@@ -2074,14 +2009,15 @@ int process_action(void *data) {
           t_print("AH4: Errorcode 0x%02X, locked until 0x00\n", s);
         }
 
-        // weiter pollen, um den Übergang zurück auf 0x00 zu sehen
-        schedule_action(AH4_RUN, RELATIVE, 0);
-      } else {
-        // Progress-Werte (z.B. 0x04) → RF-Zustand unverändert, weiter pollen
-        // t_print("AH4: Progress status %u\n", s);
-        schedule_action(AH4_RUN, RELATIVE, 0);
+        stop_repeat_action();
+        hl2_pa_enable_suppressed = 0;
       }
 
+      static unsigned char prevs = 0xFF;
+
+      if (prevs != s) { t_print("AH4: Status 0x%02X\n", s); }
+
+      prevs = s;
       break;
     }
 
@@ -2256,6 +2192,11 @@ int process_action(void *data) {
       }
     } else {
       repeat_timer_released = TRUE;
+
+      if (repeat_timer != 0) {
+        g_source_remove(repeat_timer);
+        repeat_timer = 0;
+      }
     }
 
     break;
@@ -2271,6 +2212,11 @@ int process_action(void *data) {
       }
     } else {
       repeat_timer_released = TRUE;
+
+      if (repeat_timer != 0) {
+        g_source_remove(repeat_timer);
+        repeat_timer = 0;
+      }
     }
 
     break;
