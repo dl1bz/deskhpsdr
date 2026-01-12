@@ -182,6 +182,11 @@ static int how_many_receivers(void);
 //
 #ifdef __AH4IOB__
   static atomic_int hl2_iob_present = 0;
+  // Reg7 fast-poll control:
+  // active: fast-poll enabled from Reg7 start-bit (0x01) until status done/error
+  // force:  force next HL2-slot to do Reg7 read once (to guarantee <50ms at start)
+  static atomic_int hl2_iob_reg7_fastpoll_active = 0;
+  static atomic_int hl2_iob_reg7_fastpoll_force  = 0;
 #else
   int hl2_iob_present = 0;
 #endif
@@ -274,6 +279,12 @@ static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
       atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
       t_print("%s: HL2IOB (fastpath): C4 0x%02X -> 0x%02X\n", __FUNCTION__, oldv, c4);
     }
+
+    // Stop fast-poll when tune is done (0x00) or error (>=0xF0)
+    if (c4 == 0x00 || c4 >= 0xF0) {
+      atomic_store_explicit(&hl2_iob_reg7_fastpoll_active, 0, memory_order_relaxed);
+      atomic_store_explicit(&hl2_iob_reg7_fastpoll_force,  0, memory_order_relaxed);
+    }
   }
 }
 #endif
@@ -346,6 +357,16 @@ void hl2_iob_set_antenna_tuner(unsigned char value) {
   pthread_mutex_lock(&send_ozy_mutex);
   metis_write(0x02, buffer, OZY_BUFFER_SIZE);
   pthread_mutex_unlock(&send_ozy_mutex);
+#ifdef __AH4IOB__
+
+  // Enable fast-poll for Reg7 only when starting tune (start-bit 0x01).
+  // Force ensures first Reg7 read in the next HL2 slot (~35ms) => <50ms at start.
+  if (value & 0x01) {
+    atomic_store_explicit(&hl2_iob_reg7_fastpoll_active, 1, memory_order_relaxed);
+    atomic_store_explicit(&hl2_iob_reg7_fastpoll_force,  1, memory_order_relaxed);
+  }
+
+#endif
 }
 
 //
@@ -3148,6 +3169,32 @@ void ozy_send_buffer() {
       output_buffer[C0] = 0x2E;
       output_buffer[C3] = 20; // 20 msec PTT hang time, only bits 4:0
       output_buffer[C4] = hl2_tx_latency_ms(txvfo);
+#ifdef __AH4IOB__
+
+      //
+      // Reg7 fast-poll interleave:
+      // - If "force" is set: do Reg7 read immediately in this HL2 slot (guarantee fast start).
+      // - If "active" is set: interleave Reg7 read every other HL2 slot, otherwise normal round-robin.
+      //
+      if (atomic_load_explicit(&hl2_iob_present, memory_order_relaxed) &&
+          atomic_load_explicit(&hl2_iob_reg7_fastpoll_active, memory_order_relaxed)) {
+        static int hl2_iob_reg7_interleave_toggle = 0; // local to this scheduling point
+        int force = atomic_load_explicit(&hl2_iob_reg7_fastpoll_force, memory_order_relaxed);
+
+        if (force) {
+          atomic_store_explicit(&hl2_iob_reg7_fastpoll_force, 0, memory_order_relaxed);
+          hl2_iob_reg7_interleave_toggle = 1;  // next slot: let normal rr run
+          hl2_command_loop = 11;
+        } else {
+          hl2_iob_reg7_interleave_toggle ^= 1;
+
+          if (hl2_iob_reg7_interleave_toggle == 0) {
+            hl2_command_loop = 11;
+          }
+        }
+      }
+
+#endif
 
       //
       switch (hl2_command_loop) {
