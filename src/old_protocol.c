@@ -267,7 +267,13 @@ static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
 
   // IO-board readback: first status byte is C4 (matches existing process_control_bytes() logic)
   if (atomic_load_explicit(&hl2_iob_present, memory_order_relaxed) && addr == 0x3D) {
-    atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
+    // atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
+    unsigned char oldv = atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed);
+
+    if (oldv != c4) {
+      atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
+      t_print("%s: HL2IOB (fastpath): C4 0x%02X -> 0x%02X\n", __FUNCTION__, oldv, c4);
+    }
   }
 }
 #endif
@@ -1683,7 +1689,7 @@ static void process_control_bytes() {
               atomic_load_explicit(&hl2_iob_present, memory_order_relaxed));
     } else if (present && addr == 0x3D) {
       atomic_store_explicit(&hl2_iob_tuner_status, control_in[4], memory_order_relaxed);
-      t_print("HL2IOB: C4=0x%02X tuner status = 0x%02X\n",
+      t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n",
               control_in[4],
               atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed));
 #else
@@ -1700,7 +1706,7 @@ static void process_control_bytes() {
       //      >=0xF0 -> Fehlercode
       //
       hl2_iob_tuner_status = control_in[4];
-      t_print("HL2IOB: C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
+      t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
 #endif
     }
 
