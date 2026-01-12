@@ -1866,7 +1866,7 @@ int process_action(void *data) {
       radio_tune_update(!state);
       update_slider_tune_drive_btn();
 
-      if (device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
+      if (device == DEVICE_HERMES_LITE2 && hl2_iob_is_present()) {
         if (!state) {
           // TUNE wird eingeschaltet
           hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
@@ -1917,7 +1917,7 @@ int process_action(void *data) {
         break;
       }
 
-      if (!hl2_iob_present) {
+      if (!hl2_iob_is_present()) {
         t_print("%s AH4: no IO board present, abort polling\n", __FUNCTION__);
         break;
       }
@@ -2026,7 +2026,7 @@ int process_action(void *data) {
       }
 
       // Kein IO-Board → Polling beenden
-      if (!hl2_iob_present) {
+      if (!hl2_iob_is_present()) {
         t_print("AH4: no IO board present, abort polling\n");
         break;
       }
@@ -2097,7 +2097,7 @@ int process_action(void *data) {
 
   case AH4_BYP:
     if (a->mode == PRESSED) {
-      if (device == DEVICE_HERMES_LITE2 && hl2_iob_present) {
+      if (device == DEVICE_HERMES_LITE2 && hl2_iob_is_present()) {
         // AH-4 Bypass anfordern
         hl2_iob_set_antenna_tuner(2);
       }

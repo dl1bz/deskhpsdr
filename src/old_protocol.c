@@ -180,7 +180,11 @@ static int how_many_receivers(void);
 //
 // "HermesLite-II I/O Bord detected" flag
 //
-int hl2_iob_present = 0;
+#ifdef __AH4IOB__
+  static atomic_int hl2_iob_present = 0;
+#else
+  int hl2_iob_present = 0;
+#endif
 
 #define COMMON_MERCURY_FREQUENCY 0x80
 #define PENELOPE_MIC 0x80
@@ -219,7 +223,11 @@ static pthread_mutex_t send_audio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 //
 static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
 
-static unsigned char hl2_iob_tuner_status = 0;
+#ifdef __AH4IOB__
+  static atomic_uchar hl2_iob_tuner_status = 0;
+#else
+  static unsigned char hl2_iob_tuner_status = 0;
+#endif
 
 #ifdef __AH4IOB__
 //
@@ -250,26 +258,43 @@ static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
   const unsigned char c4 = buf[7];
 
   // Board detect: addr==0x3D and all data bytes == 0xF1
-  if (!hl2_iob_present &&
+  if (!atomic_load_explicit(&hl2_iob_present, memory_order_relaxed) &&
       addr == 0x3D &&
       c1 == 0xF1 && c2 == 0xF1 && c3 == 0xF1 && c4 == 0xF1) {
-    hl2_iob_present = 1;
+    atomic_store_explicit(&hl2_iob_present, 1, memory_order_relaxed);
     return;
   }
 
   // IO-board readback: first status byte is C4 (matches existing process_control_bytes() logic)
-  if (hl2_iob_present && addr == 0x3D) {
-    hl2_iob_tuner_status = c4;
+  if (atomic_load_explicit(&hl2_iob_present, memory_order_relaxed) && addr == 0x3D) {
+    atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
   }
 }
 #endif
 
 unsigned char hl2_iob_get_antenna_tuner_status(void) {
+#ifdef __AH4IOB__
+  return atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed);
+#else
   return hl2_iob_tuner_status;
+#endif
+}
+
+int hl2_iob_is_present(void) {
+#ifdef __AH4IOB__
+  return atomic_load_explicit(&hl2_iob_present, memory_order_relaxed);
+#else
+  return hl2_iob_present;
+#endif
 }
 
 void hl2_iob_set_antenna_tuner(unsigned char value) {
+#ifdef __AH4IOB__
+  int present = atomic_load_explicit(&hl2_iob_present, memory_order_relaxed);
+  t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __FUNCTION__, value, present);
+#else
   t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __FUNCTION__, value, hl2_iob_present);
+#endif
   unsigned char buffer[OZY_BUFFER_SIZE];
   int i;
 
@@ -279,7 +304,13 @@ void hl2_iob_set_antenna_tuner(unsigned char value) {
   }
 
   /* IO-Board nicht vorhanden → nichts tun */
+#ifdef __AH4IOB__
+
+  if (!present) {
+#else
+
   if (!hl2_iob_present) {
+#endif
     return;
   }
 
@@ -486,86 +517,87 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
       continue;
     }
 
-    if (pthread_mutex_trylock(&send_ozy_mutex)) {
-      //
-      // This can only happen if the GUI thread initiates
-      // a protocol stop/start sequence, as it does e.g.
-      // when changing the number of receivers, changing
-      // the sample rate, en/dis-abling PureSignal or
-      // DIVERSITY, or executing the RESTART button.
-      //
-      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
-    } else {
-      //
-      // We used to have a fixed sleeping time of 2000 usec, and
-      // observed that the sleep was sometimes too long, especially
-      // at 48k sample rate.
-      // The idea is now to monitor how fast we actually send
-      // the packets, and FIFO is the coarse (!) estimation of the
-      // FPGA-FIFO filling level.
-      // If we lag behind and FIFO goes low, send packets with
-      // little or no delay. Never sleep longer than 2000 usec, the
-      // fixed time we had before.
-      //
-      struct timespec ts;
-      static double last = -9999.9;
-      static double FIFO = 0.0;
-      double now;
-      clock_gettime(CLOCK_MONOTONIC, &ts);
-      now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
-      // Use effective TX sample rate (was hardcoded 48k)
-      const int div = atomic_load_explicit(&mic_sample_divisor, memory_order_relaxed);
-      const double tx_sr = 48000.0 * (double)div;
-      FIFO -= (now - last) * (tx_sr > 0.0 ? tx_sr : 48000.0);
-      last = now;
+    //
+    // We used to have a fixed sleeping time of 2000 usec, and
+    // observed that the sleep was sometimes too long, especially
+    // at 48k sample rate.
+    // The idea is now to monitor how fast we actually send
+    // the packets, and FIFO is the coarse (!) estimation of the
+    // FPGA-FIFO filling level.
+    // If we lag behind and FIFO goes low, send packets with
+    // little or no delay. Never sleep longer than 2000 usec, the
+    // fixed time we had before.
+    //
+    struct timespec ts;
+    static double last = -9999.9;
+    static double FIFO = 0.0;
+    double now;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
+    // Use effective TX sample rate (was hardcoded 48k)
+    const int div = atomic_load_explicit(&mic_sample_divisor, memory_order_relaxed);
+    const double tx_sr = 48000.0 * (double)div;
+    FIFO -= (now - last) * (tx_sr > 0.0 ? tx_sr : 48000.0);
+    last = now;
 
-      if (FIFO < 0.0) {
-        FIFO = 0.0;
-      }
-
-      //
-      // Depending on how we estimate the FIFO filling, wait
-      // 2000usec, or 500 usec, or nothing before sending
-      // out the next packet.
-      //
-      // Note that in reality, the "sleep" is a little bit longer
-      // than specified by ts (we cannot rely on a wake-up in time).
-      //
-      if (FIFO > 1500.0) {
-        // Wait about 2000 usec before sending the next packet.
-        ts.tv_nsec += 2000000;
-
-        if (ts.tv_nsec > 999999999) {
-          ts.tv_sec++;
-          ts.tv_nsec -= 1000000000;
-        }
-
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      } else if (FIFO > 300.0) {
-        // Wait about 500 usec before sending the next packet.
-        ts.tv_nsec += 500000;
-
-        if (ts.tv_nsec > 999999999) {
-          ts.tv_sec++;
-          ts.tv_nsec -= 1000000000;
-        }
-
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      }
-
-      FIFO += 126.0;  // number of samples in THIS packet
-      memcpy(output_buffer + 8, &TXRINGBUF[out], 504);
-      ozy_send_buffer();
-      memcpy(output_buffer + 8, &TXRINGBUF[out + 504], 504);
-      ozy_send_buffer();
-      MEMORY_BARRIER;
-      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
-      pthread_mutex_unlock(&send_ozy_mutex);
+    if (FIFO < 0.0) {
+      FIFO = 0.0;
     }
-  }
 
-  return NULL;
+    //
+    // Depending on how we estimate the FIFO filling, wait
+    // 2000usec, or 500 usec, or nothing before sending
+    // out the next packet.
+    //
+    // Note that in reality, the "sleep" is a little bit longer
+    // than specified by ts (we cannot rely on a wake-up in time).
+    //
+    if (FIFO > 1500.0) {
+      // Wait about 2000 usec before sending the next packet.
+      ts.tv_nsec += 2000000;
+
+      if (ts.tv_nsec > 999999999) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000;
+      }
+
+      clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+    } else if (FIFO > 300.0) {
+      // Wait about 500 usec before sending the next packet.
+      ts.tv_nsec += 500000;
+
+      if (ts.tv_nsec > 999999999) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000;
+      }
+
+      clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+    }
+
+    FIFO += 126.0;  // number of samples in THIS packet
+
+    //
+    // Try to take exclusive access to TX send buffer only for the actual send.
+    // If GUI holds the mutex (stop/start), skip this TX packet cleanly.
+    //
+    if (pthread_mutex_trylock(&send_ozy_mutex)) {
+      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+      continue;
+    }
+
+    memcpy(output_buffer + 8, &TXRINGBUF[out], 504);
+    ozy_send_buffer();
+    memcpy(output_buffer + 8, &TXRINGBUF[out + 504], 504);
+    ozy_send_buffer();
+    pthread_mutex_unlock(&send_ozy_mutex);
+    MEMORY_BARRIER;
+    atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+  }
 }
+
+return NULL;
+}
+
 #endif
 
 void old_protocol_stop() {
@@ -1623,6 +1655,9 @@ static void process_control_bytes() {
     // a HL2 IO-board.
     //
     int addr = (control_in[0] & 0x7E) >> 1;
+#ifdef __AH4IOB__
+    int present = atomic_load_explicit(&hl2_iob_present, memory_order_relaxed);
+#endif
 
     // t_print("HL2IOB-ACK: addr=0x%02X C1=0x%02X C2=0x%02X C3=0x%02X C4=0x%02X\n",
     //        addr, control_in[1], control_in[2], control_in[3], control_in[4]);
@@ -1630,13 +1665,28 @@ static void process_control_bytes() {
     //
     // 1) Board-Detect über REG_BOARD_ID (0x41): alle Datenbytes = 0xF1
     //
-    if (!hl2_iob_present &&
-        addr == 0x3D &&
-        control_in[1] == 0xF1 &&
-        control_in[2] == 0xF1 &&
-        control_in[3] == 0xF1 &&
-        control_in[4] == 0xF1) {
+    if (
+#ifdef __AH4IOB__
+      !present &&
+#else
+      !hl2_iob_present &&
+#endif
+      addr == 0x3D &&
+      control_in[1] == 0xF1 &&
+      control_in[2] == 0xF1 &&
+      control_in[3] == 0xF1 &&
+      control_in[4] == 0xF1) {
       t_print("%s: HL2IOB: board detected\n", __FUNCTION__);
+#ifdef __AH4IOB__
+      atomic_store_explicit(&hl2_iob_present, 1, memory_order_relaxed);
+      t_print("%s: set hl2_iob_present = %d\n", __FUNCTION__,
+              atomic_load_explicit(&hl2_iob_present, memory_order_relaxed));
+    } else if (present && addr == 0x3D) {
+      atomic_store_explicit(&hl2_iob_tuner_status, control_in[4], memory_order_relaxed);
+      t_print("HL2IOB: C4=0x%02X tuner status = 0x%02X\n",
+              control_in[4],
+              atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed));
+#else
       hl2_iob_present = 1;
       t_print("%s: set hl2_iob_present = %d\n", __FUNCTION__, hl2_iob_present);
     } else if (hl2_iob_present && addr == 0x3D) {
@@ -1651,6 +1701,7 @@ static void process_control_bytes() {
       //
       hl2_iob_tuner_status = control_in[4];
       t_print("HL2IOB: C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
+#endif
     }
 
     //
@@ -3100,7 +3151,13 @@ void ozy_send_buffer() {
           hl2_new_cl1_setting = hl2_cl1_input;
           hl2_cl1_loop = 0;
           hl2_command_loop = 20; // Send 24 data pairs
-        } else if (hl2_iob_present) {
+        } else if (
+#ifdef __AH4IOB__
+          atomic_load_explicit(&hl2_iob_present, memory_order_relaxed)
+#else
+          hl2_iob_present
+#endif
+        ) {
           hl2_command_loop = 2;
         } else {
           hl2_command_loop = 1;
