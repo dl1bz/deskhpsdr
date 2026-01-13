@@ -64,8 +64,8 @@ static int mic_samples = 0;
 static int mic_sample_divisor = 1;
 
 static int max_tx_samples;
-static float *output_buffer;
-static int output_buffer_index;
+static float *tx_output_buffer = NULL;
+static int tx_output_buffer_index;
 
 // cppcheck-suppress unusedFunction
 SoapySDRDevice *get_soapy_device() {
@@ -254,8 +254,12 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
     max_tx_samples = 2 * tx->fft_size;
   }
 
+  if (tx_output_buffer) {
+    g_free(tx_output_buffer);
+  }
+
   t_print("%s: max_tx_samples=%d\n", __FUNCTION__, max_tx_samples);
-  output_buffer = (float *)malloc(max_tx_samples * sizeof(float) * 2);
+  tx_output_buffer = g_new(float, 2 * max_tx_samples);
 }
 
 void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
@@ -302,7 +306,7 @@ void soapy_protocol_init(gboolean hf) {
   SoapySDRKwargs_set(&args, "driver", radio->name);
 
   if (strcmp(radio->name, "rtlsdr") == 0) {
-    snprintf(temp, 32, "%d", radio->info.soapy.rtlsdr_count);
+    snprintf(temp, sizeof(temp), "%d", radio->info.soapy.rtlsdr_count);
     SoapySDRKwargs_set(&args, "rtl", temp);
 
     if (hf) {
@@ -311,7 +315,7 @@ void soapy_protocol_init(gboolean hf) {
       SoapySDRKwargs_set(&args, "direct_samp", "0");
     }
   } else if (strcmp(radio->name, "sdrplay") == 0) {
-    snprintf(temp, 32, "SDRplay Dev%d", radio->info.soapy.sdrplay_count);
+    snprintf(temp, sizeof(temp), "SDRplay Dev%d", radio->info.soapy.sdrplay_count);
     t_print("%s: label=%s\n", __FUNCTION__, temp);
     SoapySDRKwargs_set(&args, "label", temp);
   }
@@ -351,7 +355,6 @@ static void *receive_thread(void *arg) {
   RECEIVER *rx = (RECEIVER *)arg;
   float *buffer = g_new(float, max_samples * 2);
   void *buffs[] = {buffer};
-  float fsample;
   running = TRUE;
   t_print("soapy_protocol: receive_thread\n");
   size_t channel = rx->adc;
@@ -387,13 +390,11 @@ static void *receive_thread(void *arg) {
           mic_samples++;
 
           if (mic_samples >= mic_sample_divisor) { // reduce to 48000
-            if (transmitter != NULL) {
-              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
-            } else {
-              fsample = 0.0F;
-            }
-
-            tx_add_mic_sample(transmitter, fsample);
+            //
+            // We have no mic samples, this call only
+            // sets the heart beat
+            //
+            tx_add_mic_sample(transmitter, 0);
             mic_samples = 0;
           }
         }
@@ -413,13 +414,7 @@ static void *receive_thread(void *arg) {
           mic_samples++;
 
           if (mic_samples >= mic_sample_divisor) { // reduce to 48000
-            if (transmitter != NULL) {
-              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
-            } else {
-              fsample = 0.0F;
-            }
-
-            tx_add_mic_sample(transmitter, fsample);
+            tx_add_mic_sample(transmitter, 0);
             mic_samples = 0;
           }
         }
@@ -449,17 +444,17 @@ void soapy_protocol_iq_samples(float isample, float qsample) {
     // upon RX.
     //
     if (iqswap) {
-      output_buffer[(output_buffer_index * 2)] = qsample;
-      output_buffer[(output_buffer_index * 2) + 1] = isample;
+      tx_output_buffer[(tx_output_buffer_index * 2)] = qsample;
+      tx_output_buffer[(tx_output_buffer_index * 2) + 1] = isample;
     } else {
-      output_buffer[(output_buffer_index * 2)] = isample;
-      output_buffer[(output_buffer_index * 2) + 1] = qsample;
+      tx_output_buffer[(tx_output_buffer_index * 2)] = isample;
+      tx_output_buffer[(tx_output_buffer_index * 2) + 1] = qsample;
     }
 
-    output_buffer_index++;
+    tx_output_buffer_index++;
 
-    if (output_buffer_index >= max_tx_samples) {
-      const void *tx_buffs[] = {output_buffer};
+    if (tx_output_buffer_index >= max_tx_samples) {
+      const void *tx_buffs[] = {tx_output_buffer};
       long long timeNs = 0;
       long timeoutUs = 100000L;
       int elements = SoapySDRDevice_writeStream(soapy_device, tx_stream, tx_buffs, max_tx_samples, &flags, timeNs, timeoutUs);
@@ -468,7 +463,7 @@ void soapy_protocol_iq_samples(float isample, float qsample) {
         t_print("soapy_protocol_iq_samples: writeStream returned %d for %d elements\n", elements, max_tx_samples);
       }
 
-      output_buffer_index = 0;
+      tx_output_buffer_index = 0;
     }
   }
 }
