@@ -520,7 +520,12 @@ void display_menu(GtkWidget *parent) {
   }
 
   //------------------------------------------------------------------------------------------------------------
-  row++;
+  if (can_transmit) {
+    row++;
+  } else {
+    row += 2;
+  }
+
   col = 2;
   GtkWidget *ChkBtn_wmap = gtk_check_button_new_with_label("Show Worldmap");
   gtk_widget_set_name(ChkBtn_wmap, "boldlabel_blue");
