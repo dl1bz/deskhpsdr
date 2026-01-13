@@ -621,9 +621,8 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
     MEMORY_BARRIER;
     atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
   }
-}
 
-return NULL;
+  return NULL;
 }
 
 #endif
