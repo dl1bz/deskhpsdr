@@ -520,7 +520,7 @@ void display_menu(GtkWidget *parent) {
   }
 
   //------------------------------------------------------------------------------------------------------------
-  if (can_transmit) {
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     row++;
   } else {
     row += 2;
