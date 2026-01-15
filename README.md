@@ -1,4 +1,6 @@
-# deskHPSDR by DL1BZ
+# deskHPSDR by DL1BZ 
+
+**This fork by DANIEL PECHMANN, PU2ODM implements 3DSS (3D waterfall display)**
 
 <img src="https://github.com/dl1bz/deskhpsdr/blob/master/release/deskhpsdr/screenshot.png" width="1024px" />
 
