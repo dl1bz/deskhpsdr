@@ -32,6 +32,7 @@
 #include "audio.h"
 #include "toolset.h"
 #include "waterfall.h"
+#include "waterfall3dss.h"
 #include "rx_panadapter.h"
 #include "message.h"
 #ifdef SOAPYSDR
@@ -207,6 +208,13 @@ static gboolean waterfall_scroll_event_cb (GtkWidget *widget, GdkEventScroll *ev
 }
 
 void waterfall_update(RECEIVER *rx) {
+  // Escolhe entre 2D (Cairo) e 3DSS (OpenGL) baseado no modo
+  if (rx->waterfall_mode == 1) {
+    waterfall3dss_update(rx);
+    return;
+  }
+  
+  // Modo 2D original (Cairo)
   if (rx->pixbuf) {
     const float *samples;
     long long vfofreq = vfo[rx->id].frequency; // access only once to be thread-safe
@@ -407,7 +415,7 @@ void waterfall_update(RECEIVER *rx) {
   }
 }
 
-void waterfall_init(RECEIVER *rx, int width, int height) {
+static void waterfall_init_2d(RECEIVER *rx, int width, int height) {
   my_width = width;
   my_height = height;
   rx->pixbuf = NULL;
@@ -440,4 +448,15 @@ void waterfall_init(RECEIVER *rx, int width, int height) {
                          | GDK_SCROLL_MASK
                          | GDK_POINTER_MOTION_MASK
                          | GDK_POINTER_MOTION_HINT_MASK);
+}
+
+// Public function that chooses between 2D and 3DSS
+void waterfall_init(RECEIVER *rx, int width, int height) {
+  if (rx->waterfall_mode == 1) {
+    g_print("[Waterfall] Initializing 3DSS (OpenGL) mode\n");
+    waterfall3dss_init(rx, width, height);
+  } else {
+    g_print("[Waterfall] Initializing 2D (Cairo) mode\n");
+    waterfall_init_2d(rx, width, height);
+  }
 }
