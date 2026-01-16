@@ -193,6 +193,9 @@ typedef struct _receiver {
   int waterfall_low;
   int waterfall_high;
   int waterfall_automatic;
+  int waterfall_mode;  // 0=2D (Cairo), 1=3DSS (OpenGL)
+  int last_waterfall_mode;  // Track mode changes for dynamic switching
+  int waterfall3dss_palette;  // Color palette: 0=Rainbow, 1=Ocean, 2=Green, 3=Gray, 4=Hot, 5=Cool, 6=Plasma
   cairo_surface_t *panadapter_surface;
   GdkPixbuf *pixbuf;
   int local_audio;
