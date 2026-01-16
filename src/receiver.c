@@ -301,8 +301,6 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.waterfall_low", rx->id,                rx->waterfall_low);
   SetPropI1("receiver.%d.waterfall_high", rx->id,               rx->waterfall_high);
   SetPropI1("receiver.%d.waterfall_automatic", rx->id,          rx->waterfall_automatic);
-  SetPropI1("receiver.%d.waterfall_mode", rx->id,               rx->waterfall_mode);
-  SetPropI1("receiver.%d.waterfall3dss_palette", rx->id,        rx->waterfall3dss_palette);
 
   if (have_alex_att) {
     SetPropI1("receiver.%d.alex_attenuation", rx->id,           rx->alex_attenuation);
@@ -429,8 +427,6 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.waterfall_low", rx->id,                rx->waterfall_low);
   GetPropI1("receiver.%d.waterfall_high", rx->id,               rx->waterfall_high);
   GetPropI1("receiver.%d.waterfall_automatic", rx->id,          rx->waterfall_automatic);
-  GetPropI1("receiver.%d.waterfall_mode", rx->id,               rx->waterfall_mode);
-  GetPropI1("receiver.%d.waterfall3dss_palette", rx->id,        rx->waterfall3dss_palette);
 
   if (have_alex_att) {
     GetPropI1("receiver.%d.alex_attenuation", rx->id,           rx->alex_attenuation);
@@ -550,21 +546,10 @@ void rx_reconfigure(RECEIVER *rx, int height) {
   }
 
   if (rx->display_waterfall) {
-    // Check if we need to recreate waterfall due to mode change
-    int need_recreate = (rx->waterfall != NULL && rx->last_waterfall_mode != rx->waterfall_mode);
-    
-    if (rx->waterfall == NULL || need_recreate) {
-      if (need_recreate) {
-        t_print("%s: recreating waterfall due to mode change from %d to %d\n", 
-                __FUNCTION__, rx->last_waterfall_mode, rx->waterfall_mode);
-        gtk_container_remove(GTK_CONTAINER(rx->panel), rx->waterfall);
-        rx->waterfall = NULL;
-      }
-      t_print("%s: waterfall_init: width:%d height:%d mode:%d\n", 
-              __FUNCTION__, rx->width, myheight_wf, rx->waterfall_mode);
+    if (rx->waterfall == NULL) {
+      t_print("%s: waterfall_init: width:%d height:%d\n", __FUNCTION__, rx->width, myheight_wf);
       waterfall_init(rx, rx->width, myheight_wf);
       gtk_fixed_put(GTK_FIXED(rx->panel), rx->waterfall, 0, y); // y=0 if ONLY waterfall is present
-      rx->last_waterfall_mode = rx->waterfall_mode;
     } else {
       // set the size
       t_print("%s: waterfall set_size_request: width:%d height:%d\n", __FUNCTION__, rx->width, myheight_wf);
@@ -808,9 +793,6 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->waterfall_high = -55;
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;
-  rx->waterfall_mode = 0;  // 0=2D (Cairo), 1=3DSS (OpenGL)
-  rx->last_waterfall_mode = -1;  // Force initial creation
-  rx->waterfall3dss_palette = 0;  // Rainbow palette
   rx->display_filled = 1;
   rx->display_gradient = 1;
   rx->display_detector_mode = DET_AVERAGE;

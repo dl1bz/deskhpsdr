@@ -286,26 +286,6 @@ static void waterfall_automatic_cb(GtkWidget *widget, gpointer data) {
   gtk_widget_set_sensitive(waterfall_low_r, !val);
 }
 
-static void waterfall_mode_cb(GtkWidget *widget, gpointer data) {
-  int new_mode = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)) ? 1 : 0;
-  
-  if (active_receiver->waterfall_mode != new_mode) {
-    active_receiver->waterfall_mode = new_mode;
-    g_print("[Display Menu] Switching waterfall to %s mode\n", new_mode ? "3DSS" : "2D");
-    radio_reconfigure();
-  }
-}
-
-static void waterfall3dss_palette_cb(GtkWidget *widget, gpointer data) {
-  int new_palette = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-  
-  if (new_palette >= 0 && active_receiver->waterfall3dss_palette != new_palette) {
-    active_receiver->waterfall3dss_palette = new_palette;
-    g_print("[Display Menu] Waterfall 3DSS palette changed to %d\n", new_palette);
-    // No need to recreate waterfall, just redraw
-  }
-}
-
 static void display_waterfall_cb(GtkWidget *widget, gpointer data) {
   active_receiver->display_waterfall = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_reconfigure();
@@ -515,39 +495,6 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_automatic_b, col, row, 1, 1);
   g_signal_connect(waterfall_automatic_b, "toggled", G_CALLBACK(waterfall_automatic_cb), NULL);
 
-  row++;
-  col = 0;
-  label = gtk_label_new("Waterfall 3DSS Mode:");
-  gtk_widget_set_name (label, "boldlabel");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
-  col++;
-  GtkWidget *waterfall_mode_b = gtk_check_button_new_with_label("3D OpenGL");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (waterfall_mode_b), active_receiver->waterfall_mode);
-  gtk_widget_show(waterfall_mode_b);
-  gtk_grid_attach(GTK_GRID(general_grid), waterfall_mode_b, col, row, 1, 1);
-  g_signal_connect(waterfall_mode_b, "toggled", G_CALLBACK(waterfall_mode_cb), NULL);
-
-  row++;
-  col = 0;
-  label = gtk_label_new("3DSS Color Palette:");
-  gtk_widget_set_name (label, "boldlabel");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
-  col++;
-  GtkWidget *palette_combo = gtk_combo_box_text_new();
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(palette_combo), NULL, "Rainbow");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(palette_combo), NULL, "Ocean");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(palette_combo), NULL, "Green");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(palette_combo), NULL, "Gray");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(palette_combo), NULL, "Hot");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(palette_combo), NULL, "Cool");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(palette_combo), NULL, "Plasma");
-  gtk_combo_box_set_active(GTK_COMBO_BOX(palette_combo), active_receiver->waterfall3dss_palette);
-  gtk_widget_show(palette_combo);
-  gtk_grid_attach(GTK_GRID(general_grid), palette_combo, col, row, 1, 1);
-  g_signal_connect(palette_combo, "changed", G_CALLBACK(waterfall3dss_palette_cb), NULL);
-
   //--------------------------------------------------------------------------------------------------------------
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     row++;
@@ -573,7 +520,7 @@ void display_menu(GtkWidget *parent) {
   }
 
   //------------------------------------------------------------------------------------------------------------
-  if (can_transmit) {
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     row++;
   } else {
     row += 2;

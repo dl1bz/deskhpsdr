@@ -663,7 +663,7 @@ endif
 ##############################################################################
 
 LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTKLIBS) $(GPIO_LIBS) $(SOAPYSDRLIBS) $(STEMLAB_LIBS) \
-	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lepoxy -lm $(SYSLIBS)
+	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lm $(SYSLIBS)
 
 ##############################################################################
 #
@@ -754,7 +754,6 @@ src/vfo_menu.c \
 src/vox.c \
 src/vox_menu.c \
 src/waterfall.c \
-src/waterfall3dss.c \
 src/xvtr_menu.c \
 src/zoompan.c
 
@@ -845,7 +844,6 @@ src/vfo_menu.h \
 src/vox.h \
 src/vox_menu.h \
 src/waterfall.h \
-src/waterfall3dss.h \
 src/xvtr_menu.h \
 src/zoompan.h
 
@@ -931,7 +929,6 @@ src/vox.o \
 src/vox_menu.o \
 src/xvtr_menu.o \
 src/waterfall.o \
-src/waterfall3dss.o \
 src/zoompan.o
 
 ifeq ($(UNAME_S), Darwin)
