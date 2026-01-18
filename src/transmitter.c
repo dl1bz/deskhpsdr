@@ -1084,8 +1084,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
     break;
 
   case SOAPYSDR_PROTOCOL:
-    // tx->iq_output_rate = soapy_radio_sample_rate;
-    tx->iq_output_rate = radio_sample_rate;
+    tx->iq_output_rate = soapy_radio_sample_rate;
     break;
   }
 
@@ -1771,14 +1770,14 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   // If there is captured data to re-play, replace incoming
   // mic samples by captured data.
   //
-  if (capture_state == CAP_REPLAY) {
+  if (capture_state == CAP_XMIT) {
     if (capture_replay_pointer < capture_record_pointer) {
       mic_sample_double = capture_data[capture_replay_pointer++];
     } else {
-      // switching the state to REPLAY_DONE takes care that the
-      // CAPTURE switch is "pressed" only once
-      capture_state = CAP_REPLAY_DONE;
-      schedule_action(CAPTURE, PRESSED, 0);
+      // switching the state to XMIT_DONE takes care that the
+      // originating action is "pressed" only once
+      capture_state = CAP_XMIT_DONE;
+      schedule_action(capture_trigger_action, PRESSED, 0);
     }
   }
 
@@ -2638,6 +2637,35 @@ void tx_set_dexp(const TRANSMITTER *tx) {
   SetDEXPHighCut(0, (double) tx->dexp_filter_high);
   SetDEXPRunSideChannelFilter(0, tx->dexp_filter);
   SetDEXPRun(0, tx->dexp);
+}
+
+void tx_xmit_captured_data_start(const TRANSMITTER *tx) {
+  //
+  // Turn OFF compression etc. without affecting the mode_settings
+  // and without changing the TX data
+  //
+  SetTXAEQRun(tx->id, 0);
+  SetTXAPanelGain1(tx->id, 1.0);
+  SetTXALevelerSt(tx->id, 0);
+  SetTXACFCOMPPeqRun(tx->id, 0);
+  SetTXACFCOMPRun(tx->id, 0);
+  SetTXAosctrlRun(tx->id, 0);
+  SetTXACompressorRun(tx->id, 0);
+  SetDEXPRun(0, 0);
+}
+
+void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
+  //
+  // Restore compression, mic gain etc. (without affecting the mode_settings)
+  // from the TX data
+  //
+  SetTXAEQRun(tx->id, tx->eq_enable);
+  SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+  SetTXALevelerSt(tx->id, tx->lev_enable);
+  SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
+  SetTXACFCOMPRun(tx->id, tx->cfc);
+  SetTXAosctrlRun(tx->id, tx->compressor && (tx->compressor_level > 0.0));
+  SetTXACompressorRun(tx->id, tx->compressor);
 }
 
 void tx_set_equalizer(TRANSMITTER *tx) {

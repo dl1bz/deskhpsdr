@@ -203,6 +203,7 @@ ACTION_TABLE ActionTable[] = {
   {RCL7,                "Rcl 7",                "RCL7",         MIDI_KEY   | CONTROLLER_SWITCH},
   {RCL8,                "Rcl 8",                "RCL8",         MIDI_KEY   | CONTROLLER_SWITCH},
   {RCL9,                "Rcl 9",                "RCL9",         MIDI_KEY   | CONTROLLER_SWITCH},
+  {REPLAY,              "Replay",               "REPLAY",       MIDI_KEY   | CONTROLLER_SWITCH},
   {RF_GAIN,             "RF Gain",              "RFGAIN",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX1,         "RF Gain\nRX1",         "RFGAIN1",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX2,         "RF Gain\nRX2",         "RFGAIN2",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -853,8 +854,9 @@ int process_action(void *data) {
 
     break;
 
+  case REPLAY:
   case CAPTURE:
-    if (can_transmit && a->mode == PRESSED) {
+    if (a->mode == PRESSED) {
       switch (capture_state) {
       case CAP_INIT:
         //
@@ -874,13 +876,23 @@ int process_action(void *data) {
         // either play-back (TX) or start a new recording (RX)
         //
         if (radio_is_transmitting()) {
-          radio_start_playback();
-          capture_replay_pointer = 0;
-          capture_state = CAP_REPLAY;
+          if (can_transmit) {
+            radio_start_xmit_captured_data();  // adjust Mic gain etc.
+            capture_replay_pointer = 0;
+            capture_trigger_action = a->action;   // CAPTURE oder REPLAY
+            capture_state = CAP_XMIT;
+          }
         } else {
-          radio_start_capture();
-          capture_record_pointer = 0;
-          capture_state = CAP_RECORDING;
+          if (a->action == CAPTURE) {
+            radio_start_capture();
+            capture_record_pointer = 0;
+            capture_trigger_action = CAPTURE;
+            capture_state = CAP_RECORDING;
+          } else {
+            capture_replay_pointer = 0;
+            capture_trigger_action = REPLAY;
+            capture_state = CAP_REPLAY;
+          }
         }
 
         break;
@@ -896,14 +908,27 @@ int process_action(void *data) {
         capture_state = CAP_AVAIL;
         break;
 
+      case CAP_XMIT:
+      case CAP_XMIT_DONE:
+
+        //
+        // The two states only differ in whether playback stops due
+        // to user request (CAP_XMIT) or because the entire recording
+        // has been re-played.
+        //
+        if (can_transmit) {
+          radio_end_xmit_captured_data();  // restore Mic gain etc.
+        }
+
+        capture_state = CAP_AVAIL;
+        break;
+
       case CAP_REPLAY:
       case CAP_REPLAY_DONE:
         //
-        // The two states only differ in whether playback stops due
-        // to user request (CAP_REPLAY) or because the entire recording
-        // has been re-played.
+        // Replay stops, either due to user request, or since
+        // all data has been replayed
         //
-        radio_end_playback();
         capture_state = CAP_AVAIL;
         break;
 

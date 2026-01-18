@@ -1143,23 +1143,61 @@ static void rx_process_buffer(RECEIVER *rx) {
   double left_sample, right_sample;
   short left_audio_sample, right_audio_sample;
   int i;
+  double scale = 0.6 * pow(10.0, -0.05 * rx->volume);
+  double unscale = 1.0 / scale;
 
   //t_print("%s: rx=%p id=%d output_samples=%d audio_output_buffer=%p\n",__FUNCTION__,rx,rx->id,rx->output_samples,rx->audio_output_buffer);
   for (i = 0; i < rx->output_samples; i++) {
     if (radio_is_transmitting() && (!duplex || mute_rx_while_transmitting)) {
       left_sample = 0.0;
       right_sample = 0.0;
-      left_audio_sample = 0;
-      right_audio_sample = 0;
     } else {
       left_sample = rx->audio_output_buffer[i * 2];
       right_sample = rx->audio_output_buffer[(i * 2) + 1];
-      left_audio_sample = (short)(left_sample * 32767.0);
-      right_audio_sample = (short)(right_sample * 32767.0);
     }
 
+    if (rx == active_receiver) {
+      //
+      // If re-playing captured data locally, replace incoming
+      // audio samples by captured data (active RX only)
+      //
+      if (capture_state == CAP_REPLAY) {
+        if (capture_replay_pointer < capture_record_pointer) {
+          left_sample = right_sample = 0.70710678 * unscale * capture_data[capture_replay_pointer++];
+        } else {
+          //
+          // switching the state to REPLAY_DONE takes care that the
+          // REPLAY switch is "pressed" only once
+          capture_state = CAP_REPLAY_DONE;
+          schedule_action(REPLAY, PRESSED, 0);
+        }
+      }
+
+      //
+      // If CAPTURing, record the audio samples *before*
+      // manipulating them
+      //
+      if (capture_state == CAP_RECORDING) {
+        if (capture_record_pointer < capture_max) {
+          // double scale = 0.6 * pow(10.0, -0.05 * rx->volume);
+          capture_data[capture_record_pointer++] = scale * (left_sample + right_sample);
+        } else {
+          // switching the state to RECORD_DONE takes care that the
+          // CAPTURE switch is "pressed" only once
+          capture_state = CAP_RECORD_DONE;
+          schedule_action(CAPTURE, PRESSED, 0);
+        }
+      }
+    }
+
+    // Convert to protocol samples AFTER REPLAY (so protocol path gets replayed audio),
+    // but BEFORE local-audio muting/channeling (so "Mute Radio" still doesn't affect local audio semantics).
+    left_audio_sample  = (short)(left_sample  * 32767.0);
+    right_audio_sample = (short)(right_sample * 32767.0);
+
     if (rx->local_audio) {
-      if (rx->mute_radio || (rx != active_receiver && rx->mute_when_not_active)) {
+      // if (rx->mute_radio || (rx != active_receiver && rx->mute_when_not_active)) {
+      if (rx != active_receiver && rx->mute_when_not_active) {
         left_sample = 0.0;
         right_sample = 0.0;
       } else {
@@ -1178,22 +1216,6 @@ static void rx_process_buffer(RECEIVER *rx) {
       }
 
       audio_write(rx, (float)left_sample, (float)right_sample);
-    }
-
-    if (rx == active_receiver && capture_state == CAP_RECORDING) {
-      if (capture_record_pointer < capture_max) {
-        //
-        // normalize samples:
-        // when using AGC, the samples of strong s9 signals are about 0.8
-        //
-        double scale = 0.6 * pow(10.0, -0.05 * rx->volume);
-        capture_data[capture_record_pointer++] = scale * (left_sample + right_sample);
-      } else {
-        // switching the state to RECORD_DONE takes care that the
-        // CAPTURE switch is "pressed" only once
-        capture_state = CAP_RECORD_DONE;
-        schedule_action(CAPTURE, PRESSED, 0);
-      }
     }
 
     if (rx == active_receiver && !pre_mox) {

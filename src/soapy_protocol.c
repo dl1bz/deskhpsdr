@@ -108,7 +108,7 @@ void soapy_protocol_change_sample_rate(RECEIVER *rx) {
   //
   // We stick to the hardware sample rate and use the WDSP resampler
   //
-  if (rx->sample_rate == radio_sample_rate) {
+  if (rx->sample_rate == soapy_radio_sample_rate) {
     if (rx->resample_buffer != NULL) {
       g_free(rx->resample_buffer);
       rx->resample_buffer = NULL;
@@ -130,9 +130,10 @@ void soapy_protocol_change_sample_rate(RECEIVER *rx) {
       rx->resampler = NULL;
     }
 
-    rx->resample_buffer_size = 2 * max_samples / (radio_sample_rate / rx->sample_rate);
+    rx->resample_buffer_size = 2 * max_samples / (soapy_radio_sample_rate / rx->sample_rate);
     rx->resample_buffer = g_new(double, rx->resample_buffer_size);
-    rx->resampler = create_resample (1, max_samples, rx->buffer, rx->resample_buffer, radio_sample_rate, rx->sample_rate,
+    rx->resampler = create_resample (1, max_samples, rx->buffer, rx->resample_buffer, soapy_radio_sample_rate,
+                                     rx->sample_rate,
                                      0.0, 0, 1.0);
   }
 }
@@ -147,12 +148,13 @@ void soapy_protocol_create_receiver(RECEIVER *rx) {
     t_print("%s: SoapySDRDevice_setBandwidth(%f) failed: %s\n", __FUNCTION__, (double)bandwidth, SoapySDR_errToStr(rc));
   }
 
-  t_print("%s: setting samplerate=%f device=%p adc=%d mic_sample_divisor=%d\n", __FUNCTION__, (double)radio_sample_rate,
+  t_print("%s: setting samplerate=%f device=%p adc=%d mic_sample_divisor=%d\n", __FUNCTION__,
+          (double)soapy_radio_sample_rate,
           soapy_device, rx->adc, mic_sample_divisor);
-  rc = SoapySDRDevice_setSampleRate(soapy_device, SOAPY_SDR_RX, rx->adc, (double)radio_sample_rate);
+  rc = SoapySDRDevice_setSampleRate(soapy_device, SOAPY_SDR_RX, rx->adc, (double)soapy_radio_sample_rate);
 
   if (rc != 0) {
-    t_print("%s: SoapySDRDevice_setSampleRate(%f) failed: %s\n", __FUNCTION__, (double)radio_sample_rate,
+    t_print("%s: SoapySDRDevice_setSampleRate(%f) failed: %s\n", __FUNCTION__, (double)soapy_radio_sample_rate,
             SoapySDR_errToStr(rc));
   }
 
@@ -186,14 +188,15 @@ void soapy_protocol_create_receiver(RECEIVER *rx) {
 
   rx->buffer = g_new(double, max_samples * 2);
 
-  if (rx->sample_rate == radio_sample_rate) {
+  if (rx->sample_rate == soapy_radio_sample_rate) {
     rx->resample_buffer = NULL;
     rx->resampler = NULL;
     rx->resample_buffer_size = 0;
   } else {
-    rx->resample_buffer_size = 2 * max_samples / (radio_sample_rate / rx->sample_rate);
+    rx->resample_buffer_size = 2 * max_samples / (soapy_radio_sample_rate / rx->sample_rate);
     rx->resample_buffer = g_new(double, rx->resample_buffer_size);
-    rx->resampler = create_resample (1, max_samples, rx->buffer, rx->resample_buffer, radio_sample_rate, rx->sample_rate,
+    rx->resampler = create_resample (1, max_samples, rx->buffer, rx->resample_buffer, soapy_radio_sample_rate,
+                                     rx->sample_rate,
                                      0.0, 0, 1.0);
   }
 
@@ -380,7 +383,7 @@ static void *receive_thread(void *arg) {
         isample = rx->resample_buffer[i * 2];
         qsample = rx->resample_buffer[(i * 2) + 1];
 
-        if (iqswap) {
+        if (soapy_iqswap) {
           rx_add_iq_samples(rx, qsample, isample);
         } else {
           rx_add_iq_samples(rx, isample, qsample);
@@ -404,7 +407,7 @@ static void *receive_thread(void *arg) {
         isample = rx->buffer[i * 2];
         qsample = rx->buffer[(i * 2) + 1];
 
-        if (iqswap) {
+        if (soapy_iqswap) {
           rx_add_iq_samples(rx, qsample, isample);
         } else {
           rx_add_iq_samples(rx, isample, qsample);
@@ -439,11 +442,11 @@ void soapy_protocol_iq_samples(float isample, float qsample) {
 
   if (radio_is_transmitting()) {
     //
-    // The "iqswap" logic has now been removed  from transmitter.c
+    // The "soapy_iqswap" logic has now been removed  from transmitter.c
     // and moved here, because this is where it is also handled
     // upon RX.
     //
-    if (iqswap) {
+    if (soapy_iqswap) {
       tx_output_buffer[(tx_output_buffer_index * 2)] = qsample;
       tx_output_buffer[(tx_output_buffer_index * 2) + 1] = isample;
     } else {

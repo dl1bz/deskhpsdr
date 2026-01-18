@@ -145,8 +145,8 @@ double ppm_factor = 0.0;
 int sat_mode;
 
 int region = REGION_VFO;
-int radio_sample_rate;   // alias for radio->info.soapy.sample_rate
-gboolean iqswap;
+int soapy_radio_sample_rate;   // alias for radio->info.soapy.sample_rate
+gboolean soapy_iqswap;
 
 DISCOVERED *radio = NULL;
 gboolean radio_is_remote = FALSE;     // only used with CLIENT_SERVER
@@ -339,6 +339,7 @@ int have_alex_att = 0;
 int have_preamp = 0;
 int have_dither = 1;
 int have_saturn_xdma = 0;
+int have_lime = 0;
 int have_radioberry1 = 0;
 int have_radioberry2 = 0;
 int have_radioberry3 = 0;
@@ -384,6 +385,7 @@ double div_phase = 0.0;    // phase for diversity (in degrees, 0 ... 360)
 // (Equalizers are switched off during capture and replay)
 //
 int capture_state = CAP_INIT;
+enum ACTION capture_trigger_action = CAPTURE;
 int capture_max = 480000;  // 10 seconds
 int capture_record_pointer;
 int capture_replay_pointer;
@@ -1575,6 +1577,10 @@ void radio_start_radio() {
     }
   }
 
+  if (device == SOAPYSDR_USB_DEVICE && !strcmp(radio->name, "lime")) {
+    have_lime = 1;
+  }
+
 #ifdef GPIO
 
   //
@@ -1961,7 +1967,7 @@ void radio_start_radio() {
     break;
   }
 
-  iqswap = 0;
+  soapy_iqswap = 0;
 
   //
   // In most cases, ALEX is the best default choice for the filter board.
@@ -1970,7 +1976,7 @@ void radio_start_radio() {
   // with data from the props file.
   //
   if (device == SOAPYSDR_USB_DEVICE) {
-    iqswap = 1;
+    soapy_iqswap = 1;
     receivers = 1;
     filter_board = NO_FILTER_BOARD;
   }
@@ -2058,7 +2064,7 @@ void radio_start_radio() {
               adc[1].max_gain, adc[1].gain);
     }
 
-    radio_sample_rate = radio->info.soapy.sample_rate;
+    soapy_radio_sample_rate = radio->info.soapy.sample_rate;
   }
 
 #endif
@@ -2390,6 +2396,26 @@ static void rxtx(int state) {
   if (!can_transmit) {
     t_print("WARNING: rxtx called but no transmitter!");
     return;
+  }
+
+  //
+  // Abort any running Capture, Transmit, Replay
+  //
+  switch (capture_state) {
+  case CAP_RECORDING:
+    capture_state = CAP_RECORD_DONE;
+    schedule_action(CAPTURE, PRESSED, 0);
+    break;
+
+  case CAP_XMIT:
+    capture_state = CAP_XMIT_DONE;
+    schedule_action(capture_trigger_action, PRESSED, 0);
+    break;
+
+  case CAP_REPLAY:
+    capture_state = CAP_REPLAY_DONE;
+    schedule_action(REPLAY, PRESSED, 0);
+    break;
   }
 
   pre_mox = state && !duplex;
@@ -3218,7 +3244,7 @@ static void radio_restore_state() {
   GetPropC0("peak_line_col",                                 peak_line_col);
   GetPropI0("enable_auto_tune",                              enable_auto_tune);
   GetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
-  GetPropI0("radio_sample_rate",                             radio_sample_rate);
+  GetPropI0("soapy_radio_sample_rate",                       soapy_radio_sample_rate);
   GetPropI0("diversity_enabled",                             diversity_enabled);
   GetPropF0("diversity_gain",                                div_gain);
   GetPropF0("diversity_phase",                               div_phase);
@@ -3285,7 +3311,7 @@ static void radio_restore_state() {
   GetPropI0("calibration",                                   frequency_calibration);
   GetPropF0("ppm_factor",                                    ppm_factor);
   GetPropI0("receivers",                                     receivers);
-  GetPropI0("iqswap",                                        iqswap);
+  GetPropI0("soapy_iqswap",                                  soapy_iqswap);
   GetPropI0("rx_gain_calibration",                           rx_gain_calibration);
   GetPropF0("drive_digi_max",                                drive_digi_max);
   GetPropI0("split",                                         split);
@@ -3496,7 +3522,7 @@ void radio_save_state() {
   //
   SetPropI0("enable_auto_tune",                              enable_auto_tune);
   SetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
-  SetPropI0("radio_sample_rate",                             radio_sample_rate);
+  SetPropI0("soapy_radio_sample_rate",                       soapy_radio_sample_rate);
   SetPropI0("diversity_enabled",                             diversity_enabled);
   SetPropF0("diversity_gain",                                div_gain);
   SetPropF0("diversity_phase",                               div_phase);
@@ -3563,7 +3589,7 @@ void radio_save_state() {
   // SetPropI0("calibration",                                frequency_calibration);
   SetPropF0("ppm_factor",                                    ppm_factor);
   SetPropI0("receivers",                                     receivers);
-  SetPropI0("iqswap",                                        iqswap);
+  SetPropI0("soapy_iqswap",                                  soapy_iqswap);
   SetPropI0("rx_gain_calibration",                           rx_gain_calibration);
   SetPropF0("drive_digi_max",                                drive_digi_max);
   SetPropI0("split",                                         split);
@@ -3905,6 +3931,18 @@ void radio_end_capture() {
   //
   for (int i = 0; i < receivers; i++) {
     rx_set_equalizer(receiver[i]);
+  }
+}
+
+void radio_start_xmit_captured_data() {
+  if (can_transmit) {
+    tx_xmit_captured_data_start(transmitter);
+  }
+}
+
+void radio_end_xmit_captured_data() {
+  if (can_transmit) {
+    tx_xmit_captured_data_end(transmitter);
   }
 }
 

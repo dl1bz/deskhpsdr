@@ -243,6 +243,10 @@ extern int    tx_get_pixels(TRANSMITTER *tx);
 extern void   tx_off(const TRANSMITTER *tx);
 extern void   tx_on(const TRANSMITTER *tx);
 
+
+extern void   tx_xmit_captured_data_start(const TRANSMITTER *tx);
+extern void   tx_xmit_captured_data_end(const TRANSMITTER *tx);
+
 extern void   tx_ps_getinfo(const TRANSMITTER *tx, int *info);
 extern double tx_ps_getmx(const TRANSMITTER *tx);
 extern double tx_ps_getpk(const TRANSMITTER *tx);

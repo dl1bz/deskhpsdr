@@ -82,8 +82,10 @@ enum _capture_state {
   CAP_RECORDING,           // audio is being recorded
   CAP_RECORD_DONE,         // record buffer full
   CAP_AVAIL,               // audio recording finished
-  CAP_REPLAY,              // audio is being re-played
-  CAP_REPLAY_DONE,         // all audio has been sent
+  CAP_XMIT,                // captured audio is being transmitted
+  CAP_XMIT_DONE,           // captured audio data transmission ended
+  CAP_REPLAY,              // captured audio is replayed locally
+  CAP_REPLAY_DONE,         // captured audio replay ended
   CAP_GOTOSLEEP,           // hide capture state display
   CAP_SLEEPING             // capture state is hidden
 };
@@ -144,8 +146,8 @@ extern int rxgain_index_1;
 
 extern int sat_mode;
 
-extern int radio_sample_rate;
-extern gboolean iqswap;
+extern int soapy_radio_sample_rate;
+extern gboolean soapy_iqswap;
 
 extern int atlas_penelope;
 extern int atlas_clock_source_10mhz;
@@ -317,6 +319,7 @@ extern double div_cos, div_sin;
 extern double div_gain, div_phase;
 
 extern int capture_state;
+extern enum ACTION capture_trigger_action;
 extern int capture_max;
 extern int capture_record_pointer;
 extern int capture_replay_pointer;
@@ -330,6 +333,7 @@ extern int have_preamp;          // switchable preamp
 extern int have_dither;          // Dither bit can be used
 extern int have_alex_att;        // ALEX board does have 0/10/20/30 dB attenuator
 extern int have_saturn_xdma;     // Saturn can use Network or XDMA interface
+extern int have_lime;            // The radio is a LIME-SDR
 extern int have_radioberry1;     // RadioBerry with first-generation  firmware
 extern int have_radioberry2;     // RadioBerry with second-generation firmware
 extern int have_radioberry3;     // RadioBerry with third-generation firmware (pio support)
@@ -402,6 +406,8 @@ extern void   radio_set_satmode(int mode);
 extern int    radio_max_band(void);
 extern void   radio_start_playback(void);
 extern void   radio_end_playback(void);
+extern void   radio_start_xmit_captured_data(void);
+extern void   radio_end_xmit_captured_data(void);
 extern void   radio_start_capture(void);
 extern void   radio_end_capture(void);
 extern void   radio_protocol_run(void);

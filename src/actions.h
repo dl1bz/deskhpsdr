@@ -162,6 +162,7 @@ enum ACTION {
   RCL7,
   RCL8,
   RCL9,
+  REPLAY,
   RF_GAIN,
   RF_GAIN_RX1,
   RF_GAIN_RX2,

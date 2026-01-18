@@ -1092,9 +1092,9 @@ void radio_menu(GtkWidget *parent) {
   case SOAPYSDR_USB_DEVICE: {
     ChkBtn = gtk_check_button_new_with_label("Swap IQ");
     gtk_widget_set_name(ChkBtn, "boldlabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), iqswap);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), soapy_iqswap);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &iqswap);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &soapy_iqswap);
     col++;
 
     if (radio->info.soapy.rx_has_automatic_gain) {
