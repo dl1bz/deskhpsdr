@@ -58,6 +58,35 @@ static double bandwidth = 2000000.0;
 static GThread *receive_thread_id = NULL;
 static gpointer receive_thread(gpointer data);
 
+/*
+ * LIME integration policy:
+ * - Use Soapy's PPM correction for LimeSDR (avoid app-side scaling).
+ * - Keep TX gain at 0 dB while receiving to minimize LO leakage.
+ * - Kick TX auto-calibration by setting TX gain to ~30 dB before TX stream activation.
+ * - Best-effort enable oversampling/decimation via OVERSAMPLING=32.
+ */
+
+static void soapy_lime_set_freq_corr_ppm(const int direction, const size_t channel, const double ppm) {
+  if (!have_lime) {
+    return;
+  }
+
+  if (SoapySDRDevice_hasFrequencyCorrection(soapy_device, direction, channel)) {
+    (void)SoapySDRDevice_setFrequencyCorrection(soapy_device, direction, channel, ppm);
+  } else {
+    /* Fallback: "CORR" is defined as PPM error correction in SoapySDR */
+    (void)SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "CORR", ppm, NULL);
+  }
+}
+
+static void soapy_lime_tx_gain_set(const size_t channel, const double gain_db) {
+  if (!have_lime) {
+    return;
+  }
+
+  (void)SoapySDRDevice_setGain(soapy_device, SOAPY_SDR_TX, channel, gain_db);
+}
+
 static gboolean running;
 
 static int mic_samples = 0;
@@ -141,11 +170,16 @@ void soapy_protocol_change_sample_rate(RECEIVER *rx) {
 void soapy_protocol_create_receiver(RECEIVER *rx) {
   int rc;
   mic_sample_divisor = rx->sample_rate / 48000;
-  t_print("%s: device=%p adc=%d setting bandwidth=%f\n", __FUNCTION__, soapy_device, rx->adc, bandwidth);
-  rc = SoapySDRDevice_setBandwidth(soapy_device, SOAPY_SDR_RX, rx->adc, bandwidth);
+  /*
+   * LIME: for oversampling/decimation setups, request a wide RF bandwidth
+   * (pre-decimation). Best effort - fall back to the configured bandwidth.
+   */
+  const double bw_req = have_lime ? (double)soapy_radio_sample_rate : bandwidth;
+  t_print("%s: device=%p adc=%d setting bandwidth=%f\n", __FUNCTION__, soapy_device, rx->adc, bw_req);
+  rc = SoapySDRDevice_setBandwidth(soapy_device, SOAPY_SDR_RX, rx->adc, bw_req);
 
   if (rc != 0) {
-    t_print("%s: SoapySDRDevice_setBandwidth(%f) failed: %s\n", __FUNCTION__, (double)bandwidth, SoapySDR_errToStr(rc));
+    t_print("%s: SoapySDRDevice_setBandwidth(%f) failed: %s\n", __FUNCTION__, (double)bw_req, SoapySDR_errToStr(rc));
   }
 
   t_print("%s: setting samplerate=%f device=%p adc=%d mic_sample_divisor=%d\n", __FUNCTION__,
@@ -156,6 +190,18 @@ void soapy_protocol_create_receiver(RECEIVER *rx) {
   if (rc != 0) {
     t_print("%s: SoapySDRDevice_setSampleRate(%f) failed: %s\n", __FUNCTION__, (double)soapy_radio_sample_rate,
             SoapySDR_errToStr(rc));
+  }
+
+  if (have_lime) {
+    /* Best effort: enable oversampling/decimation in the Lime driver. */
+    rc = SoapySDRDevice_writeSetting(soapy_device, "OVERSAMPLING", "32");
+
+    if (rc != 0) {
+      t_print("%s: setting OVERSAMPLING=32 failed: %s\n", __FUNCTION__, SoapySDR_errToStr(rc));
+    }
+
+    /* While receiving: keep TX muted to reduce LO leakage into RX. */
+    soapy_lime_tx_gain_set((size_t)rx->adc, 0.0);
   }
 
   size_t channel = rx->adc;
@@ -207,6 +253,15 @@ void soapy_protocol_start_receiver(RECEIVER *rx) {
   int rc;
   t_print("%s: id=%d soapy_device=%p rx_stream=%p\n", __FUNCTION__, rx->id, soapy_device, rx_stream);
   size_t channel = rx->adc;
+
+  if (have_lime) {
+    /* Re-assert PPM correction at stream start (RX and TX for the same channel index). */
+    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_RX, channel, ppm_factor);
+    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_TX, channel, ppm_factor);
+    /* While receiving: keep TX muted to reduce LO leakage. */
+    soapy_lime_tx_gain_set(channel, 0.0);
+  }
+
   double rate = SoapySDRDevice_getSampleRate(soapy_device, SOAPY_SDR_RX, rx->adc);
   t_print("%s: rate=%f\n", __FUNCTION__, rate);
   t_print("%s: activate Stream\n", __FUNCTION__);
@@ -230,6 +285,12 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
   if (rc != 0) {
     t_print("%s: SoapySDRDevice_setSampleRate(%f) failed: %s\n", __FUNCTION__, (double)tx->iq_output_rate,
             SoapySDR_errToStr(rc));
+  }
+
+  if (have_lime) {
+    /* Ensure Soapy PPM correction is applied for this TX channel and keep TX muted by default. */
+    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_TX, (size_t)tx->dac, ppm_factor);
+    soapy_lime_tx_gain_set((size_t)tx->dac, 0.0);
   }
 
   size_t channel = tx->dac;
@@ -267,6 +328,17 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
 
 void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
   int rc;
+  double old_gain = -1.0;
+
+  if (have_lime) {
+    /*
+     * LIME: kick LMS auto-calibration at TX start.
+     * Use a moderate drive level before activating the TX stream.
+     */
+    old_gain = SoapySDRDevice_getGain(soapy_device, SOAPY_SDR_TX, tx->dac);
+    soapy_lime_tx_gain_set((size_t)tx->dac, 30.0);
+  }
+
   double rate = SoapySDRDevice_getSampleRate(soapy_device, SOAPY_SDR_TX, tx->dac);
   t_print("soapy_protocol_start_transmitter: activateStream rate=%f\n", rate);
   rc = SoapySDRDevice_activateStream(soapy_device, tx_stream, 0, 0LL, 0);
@@ -274,6 +346,11 @@ void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
   if (rc != 0) {
     t_print("soapy_protocol_start_transmitter: SoapySDRDevice_activateStream failed: %s\n", SoapySDR_errToStr(rc));
     g_idle_add(fatal_error, "Soapy Start TX Stream Failed");
+  }
+
+  if (have_lime && old_gain >= 0.0) {
+    /* Restore configured TX gain after the initial auto-calibration kick. */
+    soapy_lime_tx_gain_set((size_t)tx->dac, old_gain);
   }
 }
 
@@ -297,6 +374,11 @@ void soapy_protocol_stop_transmitter(TRANSMITTER *tx) {
   if (rc != 0) {
     t_print("soapy_protocol_stop_transmitter: SoapySDRDevice_deactivateStream failed: %s\n", SoapySDR_errToStr(rc));
     g_idle_add(fatal_error, "Soapy Stop TX Stream Failed");
+  }
+
+  if (have_lime) {
+    /* Back to RX: keep TX muted to reduce LO leakage. */
+    soapy_lime_tx_gain_set((size_t)tx->dac, 0.0);
   }
 }
 
@@ -494,7 +576,16 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
     }
 
     // f += frequency_calibration - vfo[v].lo;
-    f = (f - vfo[v].lo) * (1.0 + ppm_factor / 1e6);
+    f = (f - vfo[v].lo);
+
+    /*
+     * For LimeSDR, use Soapy's frequency correction (PPM) instead of
+     * app-side scaling to avoid double-correction.
+     */
+    if (!have_lime) {
+      f = (long long)((double)f * (1.0 + ppm_factor / 1e6));
+    }
+
     int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
 
     if (rc != 0) {
@@ -514,7 +605,13 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
     }
 
     // f += frequency_calibration - vfo[v].lo;
-    f = (f - vfo[v].lo) * (1.0 + ppm_factor / 1e6);
+    f = (f - vfo[v].lo);
+
+    /* See RX: Lime uses Soapy PPM correction, others use app-side scaling. */
+    if (!have_lime) {
+      f = (long long)((double)f * (1.0 + ppm_factor / 1e6));
+    }
+
     //t_print("soapy_protocol_set_tx_frequency: %f\n",f);
     int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
 
