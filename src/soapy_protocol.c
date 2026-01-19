@@ -649,6 +649,8 @@ void soapy_protocol_set_tx_antenna(TRANSMITTER *tx, int ant) {
 
 void soapy_protocol_set_tx_antenna_lime(int ant) {
   if (soapy_device != NULL) {
+    if (!have_lime) { return; }
+
     if (ant >= (int) radio->soapy.tx.antennas) { ant = (int) radio->soapy.tx.antennas - 1; }
 
     t_print("%s: set_tx_antenna: %s\n", __FUNCTION__, radio->soapy.tx.antenna[ant]);
