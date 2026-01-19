@@ -647,6 +647,19 @@ void soapy_protocol_set_tx_antenna(TRANSMITTER *tx, int ant) {
   }
 }
 
+void soapy_protocol_set_tx_antenna_lime(int ant) {
+  if (soapy_device != NULL) {
+    if (ant >= (int) radio->soapy.tx.antennas) { ant = (int) radio->soapy.tx.antennas - 1; }
+
+    t_print("%s: set_tx_antenna: %s\n", __FUNCTION__, radio->soapy.tx.antenna[ant]);
+    int rc = SoapySDRDevice_setAntenna(soapy_device, SOAPY_SDR_TX, 0, radio->soapy.tx.antenna[ant]);
+
+    if (rc != 0) {
+      t_print("%s: SetAntenna failed: %s\n", __FUNCTION__, SoapySDR_errToStr(rc));
+    }
+  }
+}
+
 void soapy_protocol_set_gain(RECEIVER *rx) {
   int rc;
   t_print("soapy_protocol_set_gain: adc=%d gain=%f\n", rx->adc, (double)adc[rx->adc].gain);
@@ -678,6 +691,52 @@ void soapy_protocol_get_settings_info(RECEIVER *rx) {
   }
 
   SoapySDRArgInfoList_clear(infos, count);
+}
+
+void soapy_protocol_set_rx_gain(int id) {
+  int rc;
+  rc = SoapySDRDevice_setGain(soapy_device, SOAPY_SDR_RX, id, adc[id].gain);
+
+  if (rc != 0) {
+    t_print("%s: SetGain failed: %s\n", __FUNCTION__, SoapySDR_errToStr(rc));
+  }
+}
+
+void soapy_protocol_rx_attenuate(int id) {
+  //
+  // Make this receiver temporarily "deaf". This may be useful while TXing
+  //
+  int rc;
+  //t_print("%s: id=%d gain=%f\n", __FUNCTION__, id, adc[id].min_gain);
+  rc = SoapySDRDevice_setGain(soapy_device, SOAPY_SDR_RX, id, adc[id].min_gain);
+
+  if (rc != 0) {
+    t_print("%s: SetGain failed: %s\n", __FUNCTION__, SoapySDR_errToStr(rc));
+  }
+}
+
+void soapy_protocol_rx_unattenuate(int id) {
+  //
+  // Restore nominal RF gain to recover from having "deaf-ened" it
+  // This must not do any harm if receivers have not been "deaf-ened" before
+  // (this is the case in DUPLEX).
+  //
+  soapy_protocol_set_rx_gain(id);
+}
+
+void soapy_protocol_set_rx_gain_element(int id, char *name, double gain) {
+  int rc;
+  t_print("%s: id=%d %s=%f\n", __FUNCTION__, id, name, gain);
+  rc = SoapySDRDevice_setGainElement(soapy_device, SOAPY_SDR_RX, id, name, gain);
+
+  if (rc != 0) {
+    t_print("%s: SetGainElement %s failed: %s\n", __FUNCTION__, name, SoapySDR_errToStr(rc));
+  }
+
+  //
+  // The overall gain has now changed. So we need to query it and set the gain
+  //
+  adc[id].gain = SoapySDRDevice_getGain(soapy_device, SOAPY_SDR_RX, id);
 }
 
 void soapy_protocol_set_gain_element(const RECEIVER *rx, char *name, int gain) {
