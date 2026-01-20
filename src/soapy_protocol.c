@@ -86,13 +86,40 @@ static void soapy_lime_tx_gain_set(const size_t channel, const double gain_db) {
     return;
   }
 
+  if (soapy_device == NULL) {
+    return;
+  }
+
   (void)SoapySDRDevice_setGain(soapy_device, SOAPY_SDR_TX, channel, gain_db);
 }
 
 static int soapy_lime_set_lo_bb(const int direction, const size_t channel, const double target_hz) {
-  const double lo_window_min = 1.0e6;
-  const double lo_window_max = 5.0e6;
-  const double preferred_off = 3.0e6;
+  /*
+   * LimeSDR tuning policy (sample-rate aware): keep RF LO fixed when possible,
+   * move BB/NCO offset instead.
+   *
+   * With low hardware sample rates (e.g. 768 kS/s), the BB offset is limited
+   * to approximately +/-Fs/2. Therefore the classical 1..5 MHz window cannot
+   * be used; we derive a practical window from the current sample rate.
+   *
+   * Returns 0 on success; non-zero SoapySDR error code on failure.
+   */
+  if (soapy_device == NULL) {
+    return SOAPY_SDR_TIMEOUT;
+  }
+
+  const double fs = SoapySDRDevice_getSampleRate(soapy_device, direction, channel);
+
+  if (!(fs > 0.0)) {
+    return SOAPY_SDR_TIMEOUT;
+  }
+
+  /* Keep away from DC and away from Nyquist edge */
+  const double lo_window_min = fmax(20000.0, 0.06 * fs); /* >=20 kHz or 6% of Fs */
+  const double lo_window_max = 0.40 * fs;               /* 40% of Fs */
+  const double preferred_off = 0.26 * fs;               /* ~200 kHz @ 768 kS/s */
+  const double max_abs_off = 0.45 * fs;                 /* hard guard (< Nyquist) */
+  int did_set_rf = 0;
   int rc;
   double lo_freq = SoapySDRDevice_getFrequencyComponent(soapy_device, direction, channel, "RF");
   const int rf_valid = (lo_freq > 0.0);
@@ -101,19 +128,49 @@ static int soapy_lime_set_lo_bb(const int direction, const size_t channel, const
     lo_freq = target_hz - preferred_off;
   }
 
-  const double off_abs = fabs(target_hz - lo_freq);
-  const int lo_ok = (off_abs >= lo_window_min && off_abs <= lo_window_max);
+  double off = target_hz - lo_freq;
+  double off_abs = fabs(off);
 
-  /* If RF was not valid OR offset is outside window, choose a new LO and set it */
-  if (!rf_valid || !lo_ok) {
-    lo_freq = target_hz - preferred_off;
+  /* If BB offset would violate Nyquist, force a new LO immediately */
+  if (off_abs > max_abs_off) {
+    lo_freq = target_hz - ((off >= 0.0) ? preferred_off : -preferred_off);
     rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "RF", lo_freq, NULL);
 
-    if (rc != 0) { return rc; }
+    if (rc != 0) {
+      return rc;
+    }
+
+    return SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "BB", target_hz - lo_freq, NULL);
   }
 
-  /* Set BB so that RF+BB = target */
-  return SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "BB", target_hz - lo_freq, NULL);
+  const int lo_ok = (off_abs >= lo_window_min && off_abs <= lo_window_max);
+
+  /* If RF is not valid OR offset is outside window, choose and set a new LO */
+  if (!rf_valid || !lo_ok) {
+    lo_freq = target_hz - ((off >= 0.0) ? preferred_off : -preferred_off);
+    rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "RF", lo_freq, NULL);
+
+    if (rc != 0) {
+      return rc;
+    }
+
+    did_set_rf = 1;
+  }
+
+  /* Set BB so that RF + BB == target */
+  rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "BB", target_hz - lo_freq, NULL);
+
+  if (did_set_rf) {
+    t_print("LIME TUNE: RF+BB  dir=%s ch=%zu RF=%0.0f BB=%0.0f (fs=%0.0f)\n",
+            direction == SOAPY_SDR_RX ? "RX" : "TX",
+            channel, lo_freq, target_hz - lo_freq, fs);
+  } else {
+    t_print("LIME TUNE: BB-only dir=%s ch=%zu RF=%0.0f BB=%0.0f (fs=%0.0f)\n",
+            direction == SOAPY_SDR_RX ? "RX" : "TX",
+            channel, lo_freq, target_hz - lo_freq, fs);
+  }
+
+  return rc;
 }
 
 static gboolean running;
