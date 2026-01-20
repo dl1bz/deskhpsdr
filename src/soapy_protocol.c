@@ -90,32 +90,30 @@ static void soapy_lime_tx_gain_set(const size_t channel, const double gain_db) {
 }
 
 static int soapy_lime_set_lo_bb(const int direction, const size_t channel, const double target_hz) {
-  // Best-effort implementation.
-  // If RF/BB components are not supported, caller should fall back to setFrequency().
   const double lo_window_min = 1.0e6;
   const double lo_window_max = 5.0e6;
+  const double preferred_off = 3.0e6;
   int rc;
   double lo_freq = SoapySDRDevice_getFrequencyComponent(soapy_device, direction, channel, "RF");
+  const int rf_valid = (lo_freq > 0.0);
 
-  if (!(lo_freq > 0.0)) {
-    lo_freq = target_hz - 3.0e6;
+  if (!rf_valid) {
+    lo_freq = target_hz - preferred_off;
   }
 
-  const double diff = fabs(target_hz - lo_freq);
-  const int lo_ok = (diff >= lo_window_min && diff <= lo_window_max);
+  const double off_abs = fabs(target_hz - lo_freq);
+  const int lo_ok = (off_abs >= lo_window_min && off_abs <= lo_window_max);
 
-  if (!lo_ok) {
-    lo_freq = target_hz - 3.0e6;
+  /* If RF was not valid OR offset is outside window, choose a new LO and set it */
+  if (!rf_valid || !lo_ok) {
+    lo_freq = target_hz - preferred_off;
     rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "RF", lo_freq, NULL);
 
-    if (rc != 0) {
-      return rc;
-    }
+    if (rc != 0) { return rc; }
   }
 
-  // Set BB offset so the effective tuned frequency becomes target_hz.
-  rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "BB", target_hz - lo_freq, NULL);
-  return rc;
+  /* Set BB so that RF+BB = target */
+  return SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "BB", target_hz - lo_freq, NULL);
 }
 
 static gboolean running;
