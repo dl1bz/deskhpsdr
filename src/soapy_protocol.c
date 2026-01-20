@@ -54,6 +54,7 @@ static SoapySDRDevice *soapy_device;
 static int max_samples;
 
 static double bandwidth = 2000000.0;
+static double bw_lime = 768000.0;
 
 static GThread *receive_thread_id = NULL;
 static gpointer receive_thread(gpointer data);
@@ -66,7 +67,7 @@ static gpointer receive_thread(gpointer data);
  * - Best-effort enable oversampling/decimation via OVERSAMPLING=32.
  */
 
-static void soapy_lime_set_freq_corr_ppm(const int direction, const size_t channel, const double ppm) {
+void soapy_lime_set_freq_corr_ppm(const int direction, const size_t channel, const double ppm) {
   if (!have_lime) {
     return;
   }
@@ -174,7 +175,7 @@ void soapy_protocol_create_receiver(RECEIVER *rx) {
    * LIME: for oversampling/decimation setups, request a wide RF bandwidth
    * (pre-decimation). Best effort - fall back to the configured bandwidth.
    */
-  const double bw_req = have_lime ? (double)soapy_radio_sample_rate : bandwidth;
+  const double bw_req = have_lime ? (double)soapy_radio_sample_rate : bw_lime;
   t_print("%s: device=%p adc=%d setting bandwidth=%f\n", __FUNCTION__, soapy_device, rx->adc, bw_req);
   rc = SoapySDRDevice_setBandwidth(soapy_device, SOAPY_SDR_RX, rx->adc, bw_req);
 
@@ -647,6 +648,7 @@ void soapy_protocol_set_tx_antenna(TRANSMITTER *tx, int ant) {
   }
 }
 
+/*
 void soapy_protocol_set_tx_antenna_lime(int ant) {
   if (soapy_device != NULL) {
     if (!have_lime) { return; }
@@ -661,6 +663,7 @@ void soapy_protocol_set_tx_antenna_lime(int ant) {
     }
   }
 }
+*/
 
 void soapy_protocol_set_gain(RECEIVER *rx) {
   int rc;

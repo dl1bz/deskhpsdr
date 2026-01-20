@@ -2312,6 +2312,7 @@ void tx_off(const TRANSMITTER *tx) {
   // switch TX OFF, wait until slew-down completed
   SetChannelState(tx->id, 0, 1);
   tx_levels_hide((TRANSMITTER*)tx);
+/*
 #ifdef SOAPYSDR
 
   if (have_lime) {
@@ -2332,13 +2333,15 @@ void tx_off(const TRANSMITTER *tx) {
   }
 
 #endif
+*/
 }
 
 void tx_on(const TRANSMITTER *tx) {
   // switch TX ON
   SetChannelState(tx->id, 1, 0);
   tx_levels_show((TRANSMITTER*)tx);
-#ifdef SOAPYSDR
+/*
+  #ifdef SOAPYSDR
 
   if (have_lime) {
     //
@@ -2362,6 +2365,7 @@ void tx_on(const TRANSMITTER *tx) {
   }
 
 #endif
+*/
 }
 
 void tx_ps_getinfo(const TRANSMITTER *tx, int *info) {

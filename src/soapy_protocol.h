@@ -26,6 +26,7 @@ SoapySDRDevice *get_soapy_device(void);
 
 void soapy_protocol_create_receiver(RECEIVER *rx);
 void soapy_protocol_start_receiver(RECEIVER *rx);
+void soapy_lime_set_freq_corr_ppm(const int direction, const size_t channel, const double ppm);
 
 void soapy_protocol_init(gboolean hf);
 void soapy_protocol_stop(void);
@@ -48,7 +49,7 @@ void soapy_protocol_start_transmitter(TRANSMITTER *tx);
 void soapy_protocol_stop_transmitter(TRANSMITTER *tx);
 void soapy_protocol_set_tx_frequency(TRANSMITTER *tx);
 void soapy_protocol_set_tx_antenna(TRANSMITTER *tx, int ant);
-void soapy_protocol_set_tx_antenna_lime(int ant);
+// void soapy_protocol_set_tx_antenna_lime(int ant);
 void soapy_protocol_set_tx_gain(TRANSMITTER *tx, int gain);
 void soapy_protocol_set_tx_gain_element(TRANSMITTER *tx, char *name, int gain);
 int soapy_protocol_get_tx_gain_element(TRANSMITTER *tx, char *name);

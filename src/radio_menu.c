@@ -111,8 +111,18 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
 
 #endif
 
-static void calibration_value_changed_cb(GtkWidget *widget, gpointer data) {
+static void ppm_value_changed_cb(GtkWidget *widget, gpointer data) {
   ppm_factor = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+#ifdef SOAPYSDR
+
+  if (have_lime) {
+    SoapySDRDevice *sdr = get_soapy_device();
+    size_t channel = active_receiver->adc;
+    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_RX, channel, ppm_factor);
+    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_TX, channel, ppm_factor);
+  }
+
+#endif
 }
 
 static void rx_gain_calibration_value_changed_cb(GtkWidget *widget, gpointer data) {
@@ -1131,19 +1141,19 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel_blue");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
-  GtkWidget *calibration_b = gtk_spin_button_new_with_range(-100.0, 100.0, 0.1);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(calibration_b), ppm_factor);
-  gtk_widget_set_tooltip_text(calibration_b,
+  GtkWidget *ppm_btn = gtk_spin_button_new_with_range(-100.0, 100.0, 0.1);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ppm_btn), ppm_factor);
+  gtk_widget_set_tooltip_text(ppm_btn,
                               "Frequency calibration as pure ppm factor\n"
                               "with range -100.0..+100.0 in 0.1 steps,\n"
                               "because in this case we don't need\n"
                               "the exact calibration frequency.\n\n"
                               "Use a high-precision RF generator and\n"
                               "adjust a possible frequency inaccuracy.");
-  gtk_widget_set_hexpand(calibration_b, FALSE);  // fülle Box nicht nach rechts
-  gtk_widget_set_halign(calibration_b, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), calibration_b, col, row, 1, 1);
-  g_signal_connect(calibration_b, "value_changed", G_CALLBACK(calibration_value_changed_cb), NULL);
+  gtk_widget_set_hexpand(ppm_btn, FALSE);  // fülle Box nicht nach rechts
+  gtk_widget_set_halign(ppm_btn, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), ppm_btn, col, row, 1, 1);
+  g_signal_connect(ppm_btn, "value_changed", G_CALLBACK(ppm_value_changed_cb), NULL);
   //
   // Calibration of the RF front end
   //
