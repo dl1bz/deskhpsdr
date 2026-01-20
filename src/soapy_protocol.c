@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <math.h>
 
 #include <wdsp.h>   // only needed for the resampler
 
@@ -86,6 +87,35 @@ static void soapy_lime_tx_gain_set(const size_t channel, const double gain_db) {
   }
 
   (void)SoapySDRDevice_setGain(soapy_device, SOAPY_SDR_TX, channel, gain_db);
+}
+
+static int soapy_lime_set_lo_bb(const int direction, const size_t channel, const double target_hz) {
+  // Best-effort implementation.
+  // If RF/BB components are not supported, caller should fall back to setFrequency().
+  const double lo_window_min = 1.0e6;
+  const double lo_window_max = 5.0e6;
+  int rc;
+  double lo_freq = SoapySDRDevice_getFrequencyComponent(soapy_device, direction, channel, "RF");
+
+  if (!(lo_freq > 0.0)) {
+    lo_freq = target_hz - 3.0e6;
+  }
+
+  const double diff = fabs(target_hz - lo_freq);
+  const int lo_ok = (diff >= lo_window_min && diff <= lo_window_max);
+
+  if (!lo_ok) {
+    lo_freq = target_hz - 3.0e6;
+    rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "RF", lo_freq, NULL);
+
+    if (rc != 0) {
+      return rc;
+    }
+  }
+
+  // Set BB offset so the effective tuned frequency becomes target_hz.
+  rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "BB", target_hz - lo_freq, NULL);
+  return rc;
 }
 
 static gboolean running;
@@ -587,7 +617,19 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
       f = (long long)((double)f * (1.0 + ppm_factor / 1e6));
     }
 
-    int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
+    int rc;
+
+    if (have_lime) {
+      // LimeSDR: keep LO fixed when possible and move the BB offset.
+      rc = soapy_lime_set_lo_bb(SOAPY_SDR_RX, (size_t)rx->adc, (double)f);
+
+      if (rc != 0) {
+        // Fallback: classic tuning.
+        rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
+      }
+    } else {
+      rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
+    }
 
     if (rc != 0) {
       t_print("soapy_protocol: SoapySDRDevice_setFrequency(RX) failed: %s\n", SoapySDR_errToStr(rc));
@@ -614,7 +656,17 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
     }
 
     //t_print("soapy_protocol_set_tx_frequency: %f\n",f);
-    int rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
+    int rc;
+
+    if (have_lime) {
+      rc = soapy_lime_set_lo_bb(SOAPY_SDR_TX, (size_t)tx->dac, (double)f);
+
+      if (rc != 0) {
+        rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
+      }
+    } else {
+      rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
+    }
 
     if (rc != 0) {
       t_print("soapy_protocol: SoapySDRDevice_setFrequency(TX) failed: %s\n", SoapySDR_errToStr(rc));
