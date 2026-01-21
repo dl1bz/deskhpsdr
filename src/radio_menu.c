@@ -113,16 +113,8 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
 
 static void ppm_value_changed_cb(GtkWidget *widget, gpointer data) {
   ppm_factor = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-#ifdef SOAPYSDR
-
-  if (have_lime) {
-    SoapySDRDevice *sdr = get_soapy_device();
-    size_t channel = active_receiver->adc;
-    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_RX, channel, ppm_factor);
-    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_TX, channel, ppm_factor);
-  }
-
-#endif
+  rx_frequency_changed(active_receiver);
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 static void rx_gain_calibration_value_changed_cb(GtkWidget *widget, gpointer data) {

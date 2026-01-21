@@ -177,6 +177,8 @@ static gboolean running;
 
 static int mic_samples = 0;
 static int mic_sample_divisor = 1;
+static double soapy_last_ppm_rx = 1e99;
+static double soapy_last_ppm_tx = 1e99;
 
 static int max_tx_samples;
 static float *tx_output_buffer;
@@ -636,9 +638,16 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
     int id = rx->id;
     long long f = vfo[v].frequency;
 
-    if (vfo[id].mode == modeCWU) {
+    if (have_lime) {
+      if (soapy_last_ppm_rx != ppm_factor) {
+        soapy_lime_set_freq_corr_ppm(SOAPY_SDR_RX, (size_t)rx->adc, ppm_factor);
+        soapy_last_ppm_rx = ppm_factor;
+      }
+    }
+
+    if (vfo[v].mode == modeCWU) {
       f -= (long long)cw_keyer_sidetone_frequency;
-    } else if (vfo[id].mode == modeCWL) {
+    } else if (vfo[v].mode == modeCWL) {
       f += (long long)cw_keyer_sidetone_frequency;
     }
 
@@ -656,12 +665,20 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
     int rc;
 
     if (have_lime) {
-      // LimeSDR: keep LO fixed when possible and move the BB offset.
-      rc = soapy_lime_set_lo_bb(SOAPY_SDR_RX, (size_t)rx->adc, (double)f);
-
-      if (rc != 0) {
-        // Fallback: classic tuning.
+      /*
+       * LimeSDR: when ppm_factor is non-zero, prefer classic tuning so that
+       * Soapy's frequency correction is applied consistently by the driver.
+       */
+      if (ppm_factor != 0.0) {
         rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
+      } else {
+        // LimeSDR: keep LO fixed when possible and move the BB offset.
+        rc = soapy_lime_set_lo_bb(SOAPY_SDR_RX, (size_t)rx->adc, (double)f);
+
+        if (rc != 0) {
+          // Fallback: classic tuning.
+          rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
+        }
       }
     } else {
       rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
@@ -679,6 +696,13 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
     long long f;
     f = vfo[v].ctun ? vfo[v].ctun_frequency : vfo[v].frequency;
 
+    if (have_lime) {
+      if (soapy_last_ppm_tx != ppm_factor) {
+        soapy_lime_set_freq_corr_ppm(SOAPY_SDR_TX, (size_t)tx->dac, ppm_factor);
+        soapy_last_ppm_tx = ppm_factor;
+      }
+    }
+
     if (vfo[v].xit_enabled) {
       f += vfo[v].xit;
     }
@@ -695,10 +719,15 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
     int rc;
 
     if (have_lime) {
-      rc = soapy_lime_set_lo_bb(SOAPY_SDR_TX, (size_t)tx->dac, (double)f);
-
-      if (rc != 0) {
+      /* See RX: for non-zero ppm_factor prefer classic tuning for reliable correction. */
+      if (ppm_factor != 0.0) {
         rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
+      } else {
+        rc = soapy_lime_set_lo_bb(SOAPY_SDR_TX, (size_t)tx->dac, (double)f);
+
+        if (rc != 0) {
+          rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
+        }
       }
     } else {
       rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
