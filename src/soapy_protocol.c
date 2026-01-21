@@ -710,20 +710,12 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
     int rc;
 
     if (have_lime) {
-      /*
-       * LimeSDR: when ppm_factor is non-zero, prefer classic tuning so that
-       * Soapy's frequency correction is applied consistently by the driver.
-       */
-      if (ppm_factor != 0.0) {
-        rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
-      } else {
-        // LimeSDR: keep LO fixed when possible and move the BB offset.
-        rc = soapy_lime_set_lo_bb(SOAPY_SDR_RX, (size_t)rx->adc, (double)f);
+      // LimeSDR: keep LO fixed when possible and move the BB offset.
+      rc = soapy_lime_set_lo_bb(SOAPY_SDR_RX, (size_t)rx->adc, (double)f);
 
-        if (rc != 0) {
-          // Fallback: classic tuning.
-          rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
-        }
+      if (rc != 0) {
+        // Fallback: classic tuning.
+        rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
       }
     } else {
       rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
@@ -764,15 +756,10 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
     int rc;
 
     if (have_lime) {
-      /* See RX: for non-zero ppm_factor prefer classic tuning for reliable correction. */
-      if (ppm_factor != 0.0) {
-        rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
-      } else {
-        rc = soapy_lime_set_lo_bb(SOAPY_SDR_TX, (size_t)tx->dac, (double)f);
+      rc = soapy_lime_set_lo_bb(SOAPY_SDR_TX, (size_t)tx->dac, (double)f);
 
-        if (rc != 0) {
-          rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
-        }
+      if (rc != 0) {
+        rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
       }
     } else {
       rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
