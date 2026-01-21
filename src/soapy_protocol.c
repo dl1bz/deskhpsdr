@@ -64,7 +64,7 @@ static int mic_samples = 0;
 static int mic_sample_divisor = 1;
 
 static int max_tx_samples;
-static float *tx_output_buffer = NULL;
+static float *tx_output_buffer;
 static int tx_output_buffer_index;
 
 // cppcheck-suppress unusedFunction
@@ -257,12 +257,8 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
     max_tx_samples = 2 * tx->fft_size;
   }
 
-  if (tx_output_buffer) {
-    g_free(tx_output_buffer);
-  }
-
   t_print("%s: max_tx_samples=%d\n", __FUNCTION__, max_tx_samples);
-  tx_output_buffer = g_new(float, 2 * max_tx_samples);
+  tx_output_buffer = (float *)malloc(max_tx_samples * sizeof(float) * 2);
 }
 
 void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
@@ -358,6 +354,7 @@ static void *receive_thread(void *arg) {
   RECEIVER *rx = (RECEIVER *)arg;
   float *buffer = g_new(float, max_samples * 2);
   void *buffs[] = {buffer};
+  float fsample;
   running = TRUE;
   t_print("soapy_protocol: receive_thread\n");
   size_t channel = rx->adc;
@@ -393,11 +390,13 @@ static void *receive_thread(void *arg) {
           mic_samples++;
 
           if (mic_samples >= mic_sample_divisor) { // reduce to 48000
-            //
-            // We have no mic samples, this call only
-            // sets the heart beat
-            //
-            tx_add_mic_sample(transmitter, 0);
+            if (transmitter != NULL) {
+              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
+            } else {
+              fsample = 0.0F;
+            }
+
+            tx_add_mic_sample(transmitter, fsample);
             mic_samples = 0;
           }
         }
@@ -417,7 +416,13 @@ static void *receive_thread(void *arg) {
           mic_samples++;
 
           if (mic_samples >= mic_sample_divisor) { // reduce to 48000
-            tx_add_mic_sample(transmitter, 0);
+            if (transmitter != NULL) {
+              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
+            } else {
+              fsample = 0.0F;
+            }
+
+            tx_add_mic_sample(transmitter, fsample);
             mic_samples = 0;
           }
         }
