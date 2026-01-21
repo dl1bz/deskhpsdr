@@ -1205,7 +1205,7 @@ void vfo_a_to_b() {
   int oldmode = vfo[VFO_B].mode;
   vfo[VFO_B] = vfo[VFO_A];
 
-  if (vfo[VFO_B].mode != oldmode && receivers > 1) {
+  if (vfo[VFO_B].mode != oldmode && receivers == 2) {
     vfo_apply_mode_settings(receiver[1]);
   }
 
@@ -1231,7 +1231,7 @@ void vfo_a_swap_b() {
   if (vfo[VFO_A].mode != vfo[VFO_B].mode) {
     vfo_apply_mode_settings(receiver[0]);
 
-    if (receivers > 1) {
+    if (receivers == 2) {
       vfo_apply_mode_settings(receiver[1]);
     }
   }
@@ -1380,7 +1380,10 @@ void vfo_id_step(int id, int steps) {
       break;
     }
 
-    rx_frequency_changed(receiver[id]);
+    if (id < receivers) {
+      rx_frequency_changed(receiver[id]);
+    }
+
     g_idle_add(ext_vfo_update, NULL);
   }
 }
@@ -1507,7 +1510,10 @@ void vfo_id_move(int id, long long hz, int round) {
       break;
     }
 
-    rx_frequency_changed(receiver[id]);
+    if (id < receivers) {
+      rx_frequency_changed(receiver[id]);
+    }
+
     g_idle_add(ext_vfo_update, NULL);
   }
 }
@@ -1613,7 +1619,10 @@ void vfo_id_move_to(int id, long long hz) {
       break;
     }
 
-    rx_vfo_changed(receiver[id]);
+    if (id < receivers) {
+      rx_vfo_changed(receiver[id]);
+    }
+
     g_idle_add(ext_vfo_update, NULL);
   }
 }
