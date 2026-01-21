@@ -57,6 +57,9 @@ static int max_samples;
 static double bandwidth = 2000000.0;
 static double bw_lime = 768000.0;
 
+/* Drop a few RX blocks after an RF LO retune (Lime) to suppress transients */
+static volatile int soapy_rx_drop_blocks = 0;
+
 static GThread *receive_thread_id = NULL;
 static gpointer receive_thread(gpointer data);
 
@@ -182,8 +185,6 @@ static gboolean running;
 
 static int mic_samples = 0;
 static int mic_sample_divisor = 1;
-/* Drop a few RX blocks after an RF LO retune (Lime) to suppress transients */
-static volatile int soapy_rx_drop_blocks = 0;
 static double soapy_last_ppm_rx = 1e99;
 static double soapy_last_ppm_tx = 1e99;
 
