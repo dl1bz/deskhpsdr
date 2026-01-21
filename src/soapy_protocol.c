@@ -160,6 +160,11 @@ static int soapy_lime_set_lo_bb(const int direction, const size_t channel, const
   /* Set BB so that RF + BB == target */
   rc = SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "BB", target_hz - lo_freq, NULL);
 
+  /* If we changed RF LO on RX, drop a few subsequent RX blocks to avoid audible zzz */
+  if (did_set_rf && direction == SOAPY_SDR_RX) {
+    soapy_rx_drop_blocks = 4; /* start value: 4 blocks; tune 3..6 if needed */
+  }
+
   if (did_set_rf) {
     t_print("LIME TUNE: RF+BB  dir=%s ch=%zu RF=%0.0f BB=%0.0f (fs=%0.0f)\n",
             direction == SOAPY_SDR_RX ? "RX" : "TX",
@@ -177,6 +182,8 @@ static gboolean running;
 
 static int mic_samples = 0;
 static int mic_sample_divisor = 1;
+/* Drop a few RX blocks after an RF LO retune (Lime) to suppress transients */
+static volatile int soapy_rx_drop_blocks = 0;
 static double soapy_last_ppm_rx = 1e99;
 static double soapy_last_ppm_tx = 1e99;
 
@@ -531,6 +538,22 @@ static void *receive_thread(void *arg) {
     if (rx->resampler != NULL) {
       int samples = xresample(rx->resampler);
 
+      /* If we are dropping due to a recent LO retune: keep TX heartbeat, but do NOT feed WDSP */
+      if (have_lime && soapy_rx_drop_blocks > 0) {
+        soapy_rx_drop_blocks--;
+
+        if (can_transmit) {
+          mic_samples += samples;
+
+          while (mic_samples >= mic_sample_divisor) {
+            tx_add_mic_sample(transmitter, 0);
+            mic_samples -= mic_sample_divisor;
+          }
+        }
+
+        continue;
+      }
+
       for (i = 0; i < samples; i++) {
         isample = rx->resample_buffer[i * 2];
         qsample = rx->resample_buffer[(i * 2) + 1];
@@ -555,6 +578,22 @@ static void *receive_thread(void *arg) {
         }
       }
     } else {
+      /* Drop path without resampler: keep TX heartbeat, skip WDSP */
+      if (have_lime && soapy_rx_drop_blocks > 0) {
+        soapy_rx_drop_blocks--;
+
+        if (can_transmit) {
+          mic_samples += elements;
+
+          while (mic_samples >= mic_sample_divisor) {
+            tx_add_mic_sample(transmitter, 0);
+            mic_samples -= mic_sample_divisor;
+          }
+        }
+
+        continue;
+      }
+
       for (i = 0; i < elements; i++) {
         isample = rx->buffer[i * 2];
         qsample = rx->buffer[(i * 2) + 1];
