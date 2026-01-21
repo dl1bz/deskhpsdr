@@ -189,6 +189,10 @@ SoapySDRDevice *get_soapy_device() {
 
 void soapy_protocol_set_mic_sample_rate(int rate) {
   mic_sample_divisor = rate / 48000;
+
+  if (mic_sample_divisor < 1) {
+    mic_sample_divisor = 1;
+  }
 }
 
 void soapy_protocol_change_sample_rate(RECEIVER *rx) {
@@ -196,30 +200,6 @@ void soapy_protocol_change_sample_rate(RECEIVER *rx) {
   // rx->mutex already locked, so we can call this  only
   // if the radio is stopped -- we cannot change the resampler
   // while the receive thread is stuck in rx_add_iq_samples()
-  //
-#if 0
-  //
-  //  sample code to query, set, and query the sample rate
-  //  (without using a resampler). However, going to lower
-  //  sample rates should also involve going to smaller
-  //  band widths, otherwise there will be aliases
-  //
-  int rc;
-  double d;
-  t_print("%s: setting samplerate=%f\n", __FUNCTION__, (double)rx->sample_rate);
-  d = SoapySDRDevice_getSampleRate(soapy_device, SOAPY_SDR_RX, rx->adc);
-  d = SoapySDRDevice_getBandwidth(soapy_device, SOAPY_SDR_RX, rx->adc);
-  rc = SoapySDRDevice_setSampleRate(soapy_device, SOAPY_SDR_RX, rx->adc, (double)rx->sample_rate);
-
-  if (rc != 0) {
-    t_print("%s: SoapySDRDevice_setSampleRate(%f) failed: %s\n", __FUNCTION__, (double)rx->sample_rate,
-            SoapySDR_errToStr(rc));
-  }
-
-  d = SoapySDRDevice_getSampleRate(soapy_device, SOAPY_SDR_RX, rx->adc);
-  d = SoapySDRDevice_getBandwidth(soapy_device, SOAPY_SDR_RX, rx->adc);
-#endif
-
   //
   // We stick to the hardware sample rate and use the WDSP resampler
   //
@@ -525,6 +505,7 @@ static void *receive_thread(void *arg) {
   running = TRUE;
   t_print("soapy_protocol: receive_thread\n");
   size_t channel = rx->adc;
+  const int is_rx1 = (channel == 0);
 
   while (running) {
     int elements = SoapySDRDevice_readStream(soapy_device, rx_stream[channel], buffs, max_samples, &flags, &timeNs,
@@ -553,18 +534,16 @@ static void *receive_thread(void *arg) {
           rx_add_iq_samples(rx, isample, qsample);
         }
 
-        if (can_transmit) {
+        if (is_rx1) {
           mic_samples++;
 
           if (mic_samples >= mic_sample_divisor) { // reduce to 48000
-            if (transmitter != NULL) {
-              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
-            } else {
-              fsample = 0.0F;
-            }
-
-            tx_add_mic_sample(transmitter, fsample);
             mic_samples = 0;
+
+            if (can_transmit && transmitter != NULL) {
+              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
+              tx_add_mic_sample(transmitter, fsample);
+            }
           }
         }
       }
@@ -579,18 +558,16 @@ static void *receive_thread(void *arg) {
           rx_add_iq_samples(rx, isample, qsample);
         }
 
-        if (can_transmit) {
+        if (is_rx1) {
           mic_samples++;
 
           if (mic_samples >= mic_sample_divisor) { // reduce to 48000
-            if (transmitter != NULL) {
-              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
-            } else {
-              fsample = 0.0F;
-            }
-
-            tx_add_mic_sample(transmitter, fsample);
             mic_samples = 0;
+
+            if (can_transmit && transmitter != NULL) {
+              fsample = transmitter->local_microphone ? audio_get_next_mic_sample() : 0.0F;
+              tx_add_mic_sample(transmitter, fsample);
+            }
           }
         }
       }
