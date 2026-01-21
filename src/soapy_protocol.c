@@ -181,7 +181,7 @@ static double soapy_last_ppm_rx = 1e99;
 static double soapy_last_ppm_tx = 1e99;
 
 static int max_tx_samples;
-static float *tx_output_buffer;
+static float *tx_output_buffer = NULL;
 static int tx_output_buffer_index;
 
 // cppcheck-suppress unusedFunction
@@ -386,8 +386,13 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
     max_tx_samples = 2 * tx->fft_size;
   }
 
+  if (tx_output_buffer) {
+    g_free(tx_output_buffer);
+  }
+
   t_print("%s: max_tx_samples=%d\n", __FUNCTION__, max_tx_samples);
-  tx_output_buffer = (float *)malloc(max_tx_samples * sizeof(float) * 2);
+  // tx_output_buffer = (float *)malloc(max_tx_samples * sizeof(float) * 2);
+  tx_output_buffer = g_new(float, 2 * max_tx_samples);
 }
 
 void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
