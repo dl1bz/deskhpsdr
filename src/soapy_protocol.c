@@ -410,14 +410,12 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
 
 void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
   int rc;
-  double old_gain = -1.0;
 
   if (have_lime) {
     /*
      * LIME: kick LMS auto-calibration at TX start.
      * Use a moderate drive level before activating the TX stream.
      */
-    old_gain = SoapySDRDevice_getGain(soapy_device, SOAPY_SDR_TX, tx->dac);
     soapy_lime_tx_gain_set((size_t)tx->dac, 30.0);
   }
 
@@ -428,11 +426,12 @@ void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
   if (rc != 0) {
     t_print("soapy_protocol_start_transmitter: SoapySDRDevice_activateStream failed: %s\n", SoapySDR_errToStr(rc));
     g_idle_add(fatal_error, "Soapy Start TX Stream Failed");
+    return;
   }
 
-  if (have_lime && old_gain >= 0.0) {
-    /* Restore configured TX gain after the initial auto-calibration kick. */
-    soapy_lime_tx_gain_set((size_t)tx->dac, old_gain);
+  if (have_lime) {
+    /* After autocal kick, force nominal drive (old_gain may have been 0 due to RX muting). */
+    soapy_lime_tx_gain_set((size_t)tx->dac, (double)tx->drive);
   }
 }
 
