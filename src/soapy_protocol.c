@@ -57,6 +57,9 @@ static int max_samples;
 static double bandwidth = 2000000.0;
 static double bw_lime = 768000.0;
 
+static double soapy_last_ppm_rx = 1e99;
+static double soapy_last_ppm_tx = 1e99;
+
 /* Drop a few RX blocks after an RF LO retune (Lime) to suppress transients */
 static volatile int soapy_rx_drop_blocks = 0;
 
@@ -81,6 +84,29 @@ void soapy_lime_set_freq_corr_ppm(const int direction, const size_t channel, con
   } else {
     /* Fallback: "CORR" is defined as PPM error correction in SoapySDR */
     (void)SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "CORR", ppm, NULL);
+  }
+}
+
+static void soapy_lime_refresh_ppm_if_needed(const size_t rx_channel) {
+  /* Apply PPM correction immediately when ppm_factor changes, even without a retune. */
+  if (!have_lime || soapy_device == NULL) {
+    return;
+  }
+
+  /* RX PPM immer sauber halten */
+  if (soapy_last_ppm_rx != ppm_factor) {
+    soapy_lime_set_freq_corr_ppm(SOAPY_SDR_RX, rx_channel, ppm_factor);
+    soapy_last_ppm_rx = ppm_factor;
+  }
+
+  /* TX PPM nur dann anfassen, wenn TX-Objekt + TX-Stream existieren */
+  if (transmitter != NULL && tx_stream != NULL) {
+    const size_t tx_channel = (size_t)transmitter->dac;
+
+    if (soapy_last_ppm_tx != ppm_factor) {
+      soapy_lime_set_freq_corr_ppm(SOAPY_SDR_TX, tx_channel, ppm_factor);
+      soapy_last_ppm_tx = ppm_factor;
+    }
   }
 }
 
@@ -185,8 +211,6 @@ static gboolean running;
 
 static int mic_samples = 0;
 static int mic_sample_divisor = 1;
-static double soapy_last_ppm_rx = 1e99;
-static double soapy_last_ppm_tx = 1e99;
 
 static int max_tx_samples;
 static float *tx_output_buffer = NULL;
@@ -523,6 +547,8 @@ static void *receive_thread(void *arg) {
   const int is_rx1 = (channel == 0);
 
   while (running) {
+    /* Keep Lime PPM correction in sync with ppm_factor changes. */
+    soapy_lime_refresh_ppm_if_needed((size_t)rx->adc);
     int elements = SoapySDRDevice_readStream(soapy_device, rx_stream[channel], buffs, max_samples, &flags, &timeNs,
                    timeoutUs);
 
@@ -680,7 +706,6 @@ int soapy_protocol_get_rx_frequency_mhz(RECEIVER *rx) {
 
 void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
   if (soapy_device != NULL) {
-    int id = rx->id;
     long long f = vfo[v].frequency;
 
     if (have_lime) {
@@ -716,6 +741,7 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
       if (rc != 0) {
         // Fallback: classic tuning.
         rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
+        soapy_rx_drop_blocks = 4;
       }
     } else {
       rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
