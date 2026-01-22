@@ -147,16 +147,13 @@ void rx_dc_block_floats(rx_dc_blocker_t *s, float *iq, int n_complex) {
  */
 
 void soapy_lime_set_freq_corr_ppm(const int direction, const size_t channel, const double ppm) {
-  if (!have_lime) {
-    return;
-  }
-
-  if (SoapySDRDevice_hasFrequencyCorrection(soapy_device, direction, channel)) {
-    (void)SoapySDRDevice_setFrequencyCorrection(soapy_device, direction, channel, ppm);
-  } else {
-    /* Fallback: "CORR" is defined as PPM error correction in SoapySDR */
-    (void)SoapySDRDevice_setFrequencyComponent(soapy_device, direction, channel, "CORR", ppm, NULL);
-  }
+  /* Option 1: PPM correction is applied in app-side frequency scaling for LimeSDR.
+   * Do NOT use Soapy frequency correction here, as it is not reliably persistent on Lime retunes.
+   */
+  (void)direction;
+  (void)channel;
+  (void)ppm;
+  return;
 }
 
 static void soapy_lime_refresh_ppm_if_needed(const size_t rx_channel) {
@@ -830,10 +827,14 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
     f = (f - vfo[v].lo);
 
     /*
-     * For LimeSDR, use Soapy's frequency correction (PPM) instead of
-     * app-side scaling to avoid double-correction.
+     * PPM correction:
+     * - LimeSDR: apply app-side scaling (robust, like other app).
+     * - Others : keep existing app-side scaling.
      */
-    if (!have_lime) {
+    if (have_lime) {
+      const long long cal_0p1ppm = llround(ppm_factor * 10.0);
+      f = (long long)((__int128)f * (10000000LL + cal_0p1ppm) / 10000000LL);
+    } else {
       f = (long long)((double)f * (1.0 + ppm_factor / 1e6));
     }
 
@@ -884,8 +885,11 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
     // f += frequency_calibration - vfo[v].lo;
     f = (f - vfo[v].lo);
 
-    /* See RX: Lime uses Soapy PPM correction, others use app-side scaling. */
-    if (!have_lime) {
+    /* PPM correction: Lime uses app-side scaling; others keep existing scaling. */
+    if (have_lime) {
+      const long long cal_0p1ppm = llround(ppm_factor * 10.0);
+      f = (long long)((__int128)f * (10000000LL + cal_0p1ppm) / 10000000LL);
+    } else {
       f = (long long)((double)f * (1.0 + ppm_factor / 1e6));
     }
 
