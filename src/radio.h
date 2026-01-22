@@ -334,6 +334,7 @@ extern int have_dither;          // Dither bit can be used
 extern int have_alex_att;        // ALEX board does have 0/10/20/30 dB attenuator
 extern int have_saturn_xdma;     // Saturn can use Network or XDMA interface
 extern int have_lime;            // The radio is a LIME-SDR
+extern int have_sdrplay;         // The radio is a SDRPlay
 extern int have_radioberry1;     // RadioBerry with first-generation  firmware
 extern int have_radioberry2;     // RadioBerry with second-generation firmware
 extern int have_radioberry3;     // RadioBerry with third-generation firmware (pio support)

@@ -340,6 +340,7 @@ int have_preamp = 0;
 int have_dither = 1;
 int have_saturn_xdma = 0;
 int have_lime = 0;
+int have_sdrplay = 0;
 int have_radioberry1 = 0;
 int have_radioberry2 = 0;
 int have_radioberry3 = 0;
@@ -1581,6 +1582,10 @@ void radio_start_radio() {
     have_lime = 1;
   }
 
+  if (device == SOAPYSDR_USB_DEVICE && !strcmp(radio->name, "sdrplay")) {
+    have_sdrplay = 1;
+  }
+
 #ifdef GPIO
 
   //
@@ -2475,8 +2480,13 @@ static void rxtx(int state) {
 #ifdef SOAPYSDR
 
     case SOAPYSDR_PROTOCOL:
-      soapy_protocol_set_tx_frequency(transmitter);
-      //soapy_protocol_start_transmitter(transmitter);
+      if (have_lime) {
+        soapy_protocol_rxtx(transmitter);
+      } else {
+        soapy_protocol_set_tx_frequency(transmitter);
+        //soapy_protocol_start_transmitter(transmitter);
+      }
+
       break;
 #endif
     }
@@ -2507,6 +2517,10 @@ static void rxtx(int state) {
 #ifdef SOAPYSDR
 
     case SOAPYSDR_PROTOCOL:
+      if (have_lime) {
+        soapy_protocol_txrx(active_receiver);
+      }
+
       //soapy_protocol_stop_transmitter(transmitter);
       break;
 #endif

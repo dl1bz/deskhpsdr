@@ -56,6 +56,7 @@ static int max_samples;
 
 static double bandwidth = 2000000.0;
 const double rx_bw_lime = 12000000.0;
+// const double rx_bw_sdrplay = 6000000.0;
 
 static double soapy_last_ppm_rx = 1e99;
 static double soapy_last_ppm_tx = 1e99;
@@ -346,11 +347,14 @@ void soapy_protocol_create_receiver(RECEIVER *rx) {
     bandwidth = rx_bw_lime;
   }
 
+  // if (have_sdrplay) {
+  //   bandwidth = rx_bw_sdrplay;
+  // }
   /*
    * LIME: for oversampling/decimation setups, request a wide RF bandwidth
    * (pre-decimation). Best effort - fall back to the configured bandwidth.
    */
-  const double bw_req = have_lime ? (double)soapy_radio_sample_rate : bandwidth;
+  const double bw_req = have_lime || have_sdrplay ? bandwidth : (double)soapy_radio_sample_rate;
   t_print("%s: device=%p adc=%d setting bandwidth=%f\n", __FUNCTION__, soapy_device, rx->adc, bw_req);
   rc = SoapySDRDevice_setBandwidth(soapy_device, SOAPY_SDR_RX, rx->adc, bw_req);
 
@@ -802,6 +806,10 @@ int soapy_protocol_get_rx_frequency_mhz(RECEIVER *rx) {
 }
 
 void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
+  if (v < 0) {
+    v = VFO_A;
+  }
+
   if (soapy_device != NULL) {
     long long f = vfo[v].frequency;
 
@@ -1180,4 +1188,67 @@ gboolean soapy_protocol_check_sdrplay_mod(RECEIVER *rx) {
   }
 
   return driver_flag;
+}
+
+void soapy_protocol_rxtx(TRANSMITTER *tx) {
+  //
+  // Do everything that needs be done for a RX->TX transition
+  //
+  // This is called from rxtx() after the WDSP receivers are slewed down
+  // (unless using DUPLEX) and the WDSP transmitter is slewed up.
+  //
+  // This routine is *never* called if there is no transmitter!
+  //
+  if (have_lime) {
+    //
+    // LIME:
+    // - "mute" receivers if not running duplex,
+    // - execute TRX relay via GPIO,
+    // - (re-)connect TX antenna (since it was disconnected upon TXRX)
+    // - (re-)set nominal TX drive (since it was set to zero upon TXRX)
+    //
+    if (!duplex) {
+      soapy_protocol_rx_attenuate(active_receiver->id);
+    }
+
+    const char *bank = "MAIN";
+    t_print("%s: Setting LIME GPIO to 1\n", __FUNCTION__);
+    SoapySDRDevice_writeGPIODir(soapy_device, bank, 0xFF);
+    SoapySDRDevice_writeGPIO(soapy_device, bank, 0x01);
+    usleep(30000);
+    soapy_protocol_set_tx_antenna(tx, dac[0].antenna);
+    soapy_protocol_set_tx_gain(tx, tx->drive);
+  }
+
+  soapy_protocol_set_tx_frequency(tx);
+}
+
+void soapy_protocol_txrx(RECEIVER *rx) {
+  //
+  // Do everything that needs be done for a TX->RX transition
+  //
+  // This is called from rxtx() after the WDSP transmitter is slewed down
+  // and the WDSP receivers are slewed up (in non-DUPLEX case)
+  //
+  // This routine is *never* called if there is no transmitter!
+  //
+  //
+  if (have_lime) {
+    //
+    // LIME: DO NOT STOP the transmitter, but
+    // - set TX gain to zero,
+    // - disconnect antenna,
+    // - execute TRX relay,
+    // - set RX gains to nominal value
+    //
+    soapy_protocol_set_tx_gain(transmitter, 0); // TX drive is 0
+    soapy_protocol_set_tx_antenna(transmitter, 0); // 0 is NONE
+    const char *bank = "MAIN"; //set GPIO to signal the relay to RX
+    t_print("%s: Setting LIME GPIO to 0\n", __FUNCTION__);
+    SoapySDRDevice_writeGPIODir(soapy_device, bank, 0xFF);
+    SoapySDRDevice_writeGPIO(soapy_device, bank, 0x00);
+    soapy_protocol_rx_unattenuate(active_receiver->id);
+  }
+
+  soapy_protocol_set_rx_frequency(active_receiver, active_receiver->id);
 }

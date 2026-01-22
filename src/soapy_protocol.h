@@ -67,4 +67,7 @@ void soapy_protocol_set_rx_gain(int id);
 void soapy_protocol_set_rx_gain_element(int id, char *name, double gain);
 void soapy_protocol_rx_attenuate(int id);
 void soapy_protocol_rx_unattenuate(int id);
+void soapy_protocol_rxtx(TRANSMITTER *tx);
+void soapy_protocol_txrx(RECEIVER *rx);
+
 #endif
