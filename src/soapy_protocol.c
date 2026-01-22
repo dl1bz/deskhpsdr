@@ -55,7 +55,7 @@ static SoapySDRDevice *soapy_device;
 static int max_samples;
 
 static double bandwidth = 2000000.0;
-static double bw_lime = 768000.0;
+const double rx_bw_lime = 12000000.0;
 
 static double soapy_last_ppm_rx = 1e99;
 static double soapy_last_ppm_tx = 1e99;
@@ -65,6 +65,77 @@ static volatile int soapy_rx_drop_blocks = 0;
 
 static GThread *receive_thread_id = NULL;
 static gpointer receive_thread(gpointer data);
+
+/* ---------------- RX DC blocker (IIR) ----------------
+ * Removes DC/near-DC spur (center "tune" line) in RX IQ.
+ * Enabled only for Lime via have_lime trigger.
+ */
+typedef struct {
+  double r;
+  double x1_i, y1_i;
+  double x1_q, y1_q;
+  int inited;
+} rx_dc_blocker_t;
+
+static rx_dc_blocker_t rx_dc[2]; /* support up to 2 RX channels */
+
+static inline void rx_dc_init(rx_dc_blocker_t *s, double r) {
+  s->r = r;
+  s->x1_i = s->y1_i = 0.0;
+  s->x1_q = s->y1_q = 0.0;
+  s->inited = 1;
+}
+
+static inline void rx_dc_block_doubles(rx_dc_blocker_t *s, double *iq, int n_complex) {
+  /* iq: interleaved I/Q as double */
+  const double r = s->r;
+  double x1_i = s->x1_i, y1_i = s->y1_i;
+  double x1_q = s->x1_q, y1_q = s->y1_q;
+
+  for (int k = 0; k < n_complex; k++) {
+    const double x_i = iq[2 * k + 0];
+    const double x_q = iq[2 * k + 1];
+    const double y_i = (x_i - x1_i) + r * y1_i;
+    const double y_q = (x_q - x1_q) + r * y1_q;
+    iq[2 * k + 0] = y_i;
+    iq[2 * k + 1] = y_q;
+    x1_i = x_i;
+    y1_i = y_i;
+    x1_q = x_q;
+    y1_q = y_q;
+  }
+
+  s->x1_i = x1_i;
+  s->y1_i = y1_i;
+  s->x1_q = x1_q;
+  s->y1_q = y1_q;
+}
+
+static inline __attribute__((unused))
+void rx_dc_block_floats(rx_dc_blocker_t *s, float *iq, int n_complex) {
+  /* iq: interleaved I/Q as float */
+  const double r = s->r;
+  double x1_i = s->x1_i, y1_i = s->y1_i;
+  double x1_q = s->x1_q, y1_q = s->y1_q;
+
+  for (int k = 0; k < n_complex; k++) {
+    const double x_i = (double)iq[2 * k + 0];
+    const double x_q = (double)iq[2 * k + 1];
+    const double y_i = (x_i - x1_i) + r * y1_i;
+    const double y_q = (x_q - x1_q) + r * y1_q;
+    iq[2 * k + 0] = (float)y_i;
+    iq[2 * k + 1] = (float)y_q;
+    x1_i = x_i;
+    y1_i = y_i;
+    x1_q = x_q;
+    y1_q = y_q;
+  }
+
+  s->x1_i = x1_i;
+  s->y1_i = y1_i;
+  s->x1_q = x1_q;
+  s->y1_q = y1_q;
+}
 
 /*
  * LIME integration policy:
@@ -270,11 +341,16 @@ void soapy_protocol_change_sample_rate(RECEIVER *rx) {
 void soapy_protocol_create_receiver(RECEIVER *rx) {
   int rc;
   mic_sample_divisor = rx->sample_rate / 48000;
+
+  if (have_lime) {
+    bandwidth = rx_bw_lime;
+  }
+
   /*
    * LIME: for oversampling/decimation setups, request a wide RF bandwidth
    * (pre-decimation). Best effort - fall back to the configured bandwidth.
    */
-  const double bw_req = have_lime ? (double)soapy_radio_sample_rate : bw_lime;
+  const double bw_req = have_lime ? (double)soapy_radio_sample_rate : bandwidth;
   t_print("%s: device=%p adc=%d setting bandwidth=%f\n", __FUNCTION__, soapy_device, rx->adc, bw_req);
   rc = SoapySDRDevice_setBandwidth(soapy_device, SOAPY_SDR_RX, rx->adc, bw_req);
 
@@ -546,6 +622,15 @@ static void *receive_thread(void *arg) {
   size_t channel = rx->adc;
   const int is_rx1 = (channel == 0);
 
+  if (have_lime) {
+    const int idx = (channel < 2) ? (int)channel : 0;
+
+    if (!rx_dc[idx].inited) {
+      /* For Fs=768k: r=0.998 is a good start (strong DC removal, minimal impact) */
+      rx_dc_init(&rx_dc[idx], 0.998);
+    }
+  }
+
   while (running) {
     /* Keep Lime PPM correction in sync with ppm_factor changes. */
     soapy_lime_refresh_ppm_if_needed((size_t)rx->adc);
@@ -564,6 +649,12 @@ static void *receive_thread(void *arg) {
 
     if (rx->resampler != NULL) {
       int samples = xresample(rx->resampler);
+
+      /* Lime RX DC blocker on resampler output (double interleaved) */
+      if (have_lime) {
+        const int idx = (channel < 2) ? (int)channel : 0;
+        rx_dc_block_doubles(&rx_dc[idx], rx->resample_buffer, samples);
+      }
 
       /* If we are dropping due to a recent LO retune: keep TX heartbeat, but do NOT feed WDSP */
       if (have_lime && soapy_rx_drop_blocks > 0) {
@@ -605,6 +696,12 @@ static void *receive_thread(void *arg) {
         }
       }
     } else {
+      /* Lime RX DC blocker on direct stream buffer (float interleaved) */
+      if (have_lime) {
+        const int idx = (channel < 2) ? (int)channel : 0;
+        rx_dc_block_doubles(&rx_dc[idx], rx->buffer, elements);
+      }
+
       /* Drop path without resampler: keep TX heartbeat, skip WDSP */
       if (have_lime && soapy_rx_drop_blocks > 0) {
         soapy_rx_drop_blocks--;
