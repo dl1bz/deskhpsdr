@@ -853,11 +853,15 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
       rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_RX, rx->adc, (double)f, NULL);
     }
 
+#if 0
+
     if (have_lime && rc == 0) {
       // LIME: re-assert PPM correction after tuning (driver may lose it on retune)
       soapy_lime_set_freq_corr_ppm(SOAPY_SDR_RX, (size_t)rx->adc, ppm_factor);
       soapy_last_ppm_rx = ppm_factor;
     }
+
+#endif
 
     if (rc != 0) {
       t_print("soapy_protocol: SoapySDRDevice_setFrequency(RX) failed: %s\n", SoapySDR_errToStr(rc));
@@ -870,6 +874,7 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
     int v = vfo_get_tx_vfo();
     long long f;
     f = vfo[v].ctun ? vfo[v].ctun_frequency : vfo[v].frequency;
+#if 0
 
     if (have_lime) {
       if (soapy_last_ppm_tx != ppm_factor) {
@@ -877,6 +882,8 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
         soapy_last_ppm_tx = ppm_factor;
       }
     }
+
+#endif
 
     if (vfo[v].xit_enabled) {
       f += vfo[v].xit;
@@ -906,11 +913,15 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
       rc = SoapySDRDevice_setFrequency(soapy_device, SOAPY_SDR_TX, tx->dac, (double) f, NULL);
     }
 
+#if 0
+
     if (have_lime && rc == 0) {
       // LIME: re-assert PPM correction after tuning (driver may lose it on retune)
       soapy_lime_set_freq_corr_ppm(SOAPY_SDR_TX, (size_t)tx->dac, ppm_factor);
       soapy_last_ppm_tx = ppm_factor;
     }
+
+#endif
 
     if (rc != 0) {
       t_print("soapy_protocol: SoapySDRDevice_setFrequency(TX) failed: %s\n", SoapySDR_errToStr(rc));
