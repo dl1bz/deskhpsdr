@@ -415,7 +415,7 @@ void soapy_protocol_start_receiver(RECEIVER *rx) {
    */
   if (have_lime && !soapy_rx_cal_done) {
     char bw_str[32];
-    snprintf(bw_str, sizeof(bw_str), "%.0f", bandwidth);
+    snprintf(bw_str, sizeof(bw_str), "%.0f", rx_bw_lime);
     t_print("%s: LIME RX CALIBRATE chan=%ld bw=%s\n",
             __FUNCTION__, channel, bw_str);
     SoapySDRDevice_writeChannelSetting(
@@ -509,7 +509,9 @@ void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
      * Use a moderate drive level before activating the TX stream.
      */
     /* Set calibration bandwidth before activating TX stream */
-    (void)SoapySDRDevice_writeSetting(soapy_device, "CALIBRATE", "12000000");
+    char bw_str[32];
+    snprintf(bw_str, sizeof(bw_str), "%.0f", rx_bw_lime);
+    (void)SoapySDRDevice_writeSetting(soapy_device, "CALIBRATE", bw_str);
     soapy_lime_tx_gain_set((size_t)tx->dac, 30.0);
   }
 
