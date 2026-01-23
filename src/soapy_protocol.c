@@ -775,19 +775,12 @@ void soapy_protocol_set_rx_frequency(RECEIVER *rx, int v) {
 
     // f += frequency_calibration - vfo[v].lo;
     f = (f - vfo[v].lo);
-
     /*
      * PPM correction:
      * - LimeSDR: apply app-side scaling (robust, like other app).
      * - Others : keep existing app-side scaling.
      */
-    if (have_lime) {
-      const long long cal_0p1ppm = llround(ppm_factor * 10.0);
-      f = (long long)((__int128)f * (10000000LL + cal_0p1ppm) / 10000000LL);
-    } else {
-      f = (long long)((double)f * (1.0 + ppm_factor / 1e6));
-    }
-
+    f = apply_ppm_ll(f);
     int rc;
 
     if (have_lime) {
@@ -821,15 +814,8 @@ void soapy_protocol_set_tx_frequency(TRANSMITTER *tx) {
 
     // f += frequency_calibration - vfo[v].lo;
     f = (f - vfo[v].lo);
-
     /* PPM correction: Lime uses app-side scaling; others keep existing scaling. */
-    if (have_lime) {
-      const long long cal_0p1ppm = llround(ppm_factor * 10.0);
-      f = (long long)((__int128)f * (10000000LL + cal_0p1ppm) / 10000000LL);
-    } else {
-      f = (long long)((double)f * (1.0 + ppm_factor / 1e6));
-    }
-
+    f = apply_ppm_ll(f);
     //t_print("soapy_protocol_set_tx_frequency: %f\n",f);
     int rc;
 

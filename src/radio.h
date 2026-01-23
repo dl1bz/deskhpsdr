@@ -22,6 +22,7 @@
 #ifndef _RADIO_H
 #define _RADIO_H
 
+#include <math.h>
 #include "adc.h"
 #include "dac.h"
 #include "discovered.h"
@@ -59,6 +60,7 @@ extern GtkWidget *fixed;
 
 extern long long frequency_calibration;
 extern double ppm_factor;
+extern long long apply_ppm_ll(long long f_hz);
 
 enum _filter_board_enum {
   NO_FILTER_BOARD = 0,
