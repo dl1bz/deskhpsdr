@@ -48,6 +48,7 @@ void soapy_protocol_start_transmitter(TRANSMITTER *tx);
 void soapy_protocol_stop_transmitter(TRANSMITTER *tx);
 void soapy_protocol_set_tx_frequency(TRANSMITTER *tx);
 void soapy_protocol_set_tx_antenna(TRANSMITTER *tx, int ant);
+// void soapy_protocol_set_tx_antenna_lime(int ant);
 void soapy_protocol_set_tx_gain(TRANSMITTER *tx, int gain);
 void soapy_protocol_set_tx_gain_element(TRANSMITTER *tx, char *name, int gain);
 int soapy_protocol_get_tx_gain_element(TRANSMITTER *tx, char *name);
@@ -61,4 +62,11 @@ int soapy_protocol_get_agc_setpoint(RECEIVER *rx);
 void soapy_protocol_set_agc_setpoint(RECEIVER *rx, int setpoint);
 void soapy_protocol_set_rfgain_sel(RECEIVER *rx, int value);
 gboolean soapy_protocol_check_sdrplay_mod(RECEIVER *rx);
+void soapy_protocol_set_rx_gain(int id);
+void soapy_protocol_set_rx_gain_element(int id, char *name, double gain);
+void soapy_protocol_rx_attenuate(int id);
+void soapy_protocol_rx_unattenuate(int id);
+void soapy_protocol_rxtx(TRANSMITTER *tx);
+void soapy_protocol_txrx(RECEIVER *rx);
+
 #endif

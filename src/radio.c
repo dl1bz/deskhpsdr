@@ -340,6 +340,7 @@ int have_preamp = 0;
 int have_dither = 1;
 int have_saturn_xdma = 0;
 int have_lime = 0;
+int have_sdrplay = 0;
 int have_radioberry1 = 0;
 int have_radioberry2 = 0;
 int have_radioberry3 = 0;
@@ -452,67 +453,10 @@ void radio_stop() {
   }
 }
 
-/*
-static void choose_vfo_layout() {
-  //
-  // a) secure that vfo_layout is a valid pointer
-  // b) secure that the VFO layout width fits
-  //
-  int rc;
-  const VFO_BAR_LAYOUT *vfl;
-  rc = 1;
-  vfl = vfo_layout_list;
-
-  // make sure vfo_layout points to a valid entry in vfo_layout_list
-  for (;;) {
-    if (vfl->width < 0) { break; }
-
-    if ((vfl - vfo_layout_list) == vfo_layout) { rc = 0; }
-
-    vfl++;
-  }
-
-  if (rc) {
-    vfo_layout = 0;
-  }
-
-  METER_WIDTH = MIN_METER_WIDTH;
-  VFO_WIDTH = full_screen ? screen_width : display_width;
-  VFO_WIDTH -= (MENU_WIDTH + METER_WIDTH);
-
-  //
-  // If chosen layout does not fit:
-  // Choose the first largest layout that fits
-  // with a minimum-width meter
-  //
-  if (vfo_layout_list[vfo_layout].width > VFO_WIDTH) {
-    vfl = vfo_layout_list;
-
-    for (;;) {
-      if (vfl->width < 0) {
-        vfl--;
-        break;
-      }
-
-      if (vfl->width <= VFO_WIDTH) { break; }
-
-      vfl++;
-    }
-
-    vfo_layout = vfl - vfo_layout_list;
-    t_print("%s: vfo_layout changed (width=%d)\n", __FUNCTION__, vfl->width);
-  }
-
-  //
-  // If chosen layout leaves at least 50 pixels unused:
-  // give 50 extra pixels to the meter
-  //
-  if (vfo_layout_list[vfo_layout].width < VFO_WIDTH - 50) {
-    VFO_WIDTH -= 50;
-    METER_WIDTH += 50;
-  }
+long long apply_ppm_ll(long long f_hz) {
+  const long long cal_0p1ppm = llround(ppm_factor * 10.0);
+  return (long long)((__int128)f_hz * (10000000LL + cal_0p1ppm) / 10000000LL);
 }
-*/
 
 static void choose_vfo_layout() {
   g_return_if_fail(vfo_layout_list[0].width > 0);
@@ -1581,6 +1525,10 @@ void radio_start_radio() {
     have_lime = 1;
   }
 
+  if (device == SOAPYSDR_USB_DEVICE && !strcmp(radio->name, "sdrplay")) {
+    have_sdrplay = 1;
+  }
+
 #ifdef GPIO
 
   //
@@ -2475,8 +2423,13 @@ static void rxtx(int state) {
 #ifdef SOAPYSDR
 
     case SOAPYSDR_PROTOCOL:
-      soapy_protocol_set_tx_frequency(transmitter);
-      //soapy_protocol_start_transmitter(transmitter);
+      if (have_lime) {
+        soapy_protocol_rxtx(transmitter);
+      } else {
+        soapy_protocol_set_tx_frequency(transmitter);
+        //soapy_protocol_start_transmitter(transmitter);
+      }
+
       break;
 #endif
     }
@@ -2507,6 +2460,10 @@ static void rxtx(int state) {
 #ifdef SOAPYSDR
 
     case SOAPYSDR_PROTOCOL:
+      if (have_lime) {
+        soapy_protocol_txrx(active_receiver);
+      }
+
       //soapy_protocol_stop_transmitter(transmitter);
       break;
 #endif
