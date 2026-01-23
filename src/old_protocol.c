@@ -1550,7 +1550,7 @@ static long long channel_freq(int chan) {
 
     // if (vfo[vfonum].xit_enabled) { freq += vfo[vfonum].xit; }
     // freq += frequency_calibration - vfo[vfonum].lo;
-    freq = (freq - vfo[vfonum].lo) * (1.0 + ppm_factor / 1e6);
+    freq = apply_ppm_ll(freq - vfo[vfonum].lo);
   } else {
     //
     // determine RX frequency associated with VFO #vfonum
@@ -1567,7 +1567,7 @@ static long long channel_freq(int chan) {
     }
 
     // freq += frequency_calibration - vfo[vfonum].lo;
-    freq = (freq - vfo[vfonum].lo) * (1.0 + ppm_factor / 1e6);
+    freq = apply_ppm_ll(freq - vfo[vfonum].lo);
   }
 
   // freq += frequency_calibration;
