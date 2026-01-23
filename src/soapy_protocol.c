@@ -60,6 +60,7 @@ const double rx_bw_lime = 12000000.0;
 
 /* Drop a few RX blocks after an RF LO retune (Lime) to suppress transients */
 static volatile int soapy_rx_drop_blocks = 0;
+static volatile int soapy_rx_cal_done = 0;
 
 static GThread *receive_thread_id = NULL;
 static gpointer receive_thread(gpointer data);
@@ -404,6 +405,23 @@ void soapy_protocol_start_receiver(RECEIVER *rx) {
   t_print("%s: rate=%f\n", __FUNCTION__, rate);
   t_print("%s: activate Stream\n", __FUNCTION__);
   rc = SoapySDRDevice_activateStream(soapy_device, rx_stream[channel], 0, 0LL, 0);
+
+  /*
+   * Lime RX calibration:
+   * LO, sample rate and bandwidth are fixed.
+   * Frequency tuning is done via baseband offset.
+   * Therefore calibration is required only once at startup.
+   */
+  if (have_lime && !soapy_rx_cal_done) {
+    char bw_str[32];
+    snprintf(bw_str, sizeof(bw_str), "%.0f", bandwidth);
+    t_print("%s: LIME RX CALIBRATE chan=%ld bw=%s\n",
+            __FUNCTION__, channel, bw_str);
+    SoapySDRDevice_writeChannelSetting(
+      soapy_device, SOAPY_SDR_RX, channel, "CALIBRATE", bw_str);
+    soapy_rx_drop_blocks = 3;
+    soapy_rx_cal_done = 1;
+  }
 
   if (rc != 0) {
     t_print("%s: SoapySDRDevice_activateStream failed: %s\n", __FUNCTION__, SoapySDR_errToStr(rc));
