@@ -26,7 +26,6 @@ SoapySDRDevice *get_soapy_device(void);
 
 void soapy_protocol_create_receiver(RECEIVER *rx);
 void soapy_protocol_start_receiver(RECEIVER *rx);
-void soapy_lime_set_freq_corr_ppm(const int direction, const size_t channel, const double ppm);
 
 void soapy_protocol_init(gboolean hf);
 void soapy_protocol_stop(void);
