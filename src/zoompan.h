@@ -22,7 +22,7 @@
 #ifndef _ZOOMPAN_H
 #define _ZOOMPAN_H
 
-#define MAX_ZOOM 8
+#define MAX_ZOOM 16
 
 extern GtkWidget *zoompan_init(int my_width, int my_height);
 extern int zoompan_active_receiver_changed(void *data);

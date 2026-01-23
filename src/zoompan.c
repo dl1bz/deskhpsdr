@@ -256,7 +256,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_hexpand(zoom_scale, FALSE);  // fülle Box nicht nach rechts
   gtk_range_set_value (GTK_RANGE(zoom_scale), active_receiver->zoom);
 
-  for (float i = 1.0; i <= 8.0; i += 1.0) {
+  for (float i = 1.0; i <= 16.0; i += 1.0) {
     gtk_scale_add_mark(GTK_SCALE(zoom_scale), i, GTK_POS_TOP, NULL);
   }
 

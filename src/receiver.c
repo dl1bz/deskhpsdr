@@ -1548,7 +1548,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const double span_max_freq = 0.0;
   const int clip = 0;
   const int window_type = 2; // 5 = Kaiser, 2 = Hann
-  const int afft_size = 16384;
+  int afft_size = 16384;
   const int pixels = rx->pixels;
   const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
 
@@ -1560,13 +1560,23 @@ void rx_set_analyzer(const RECEIVER *rx) {
   if (rx->id == PS_RX_FEEDBACK) {
     fscLin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
     fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
+  } else {
+    // echte Zoom-Auflösung: FFT folgt grob width*zoom, aber in Stufen
+    int want = rx->width * rx->zoom;
+
+    if (want <= 16384) { afft_size = 16384; }
+    else if (want <= 32768) { afft_size = 32768; }
+    else if (want <= 65536) { afft_size = 65536; }
+    else if (want <= 131072) { afft_size = 131072; }
+    else { afft_size = 262144; }
   }
 
   int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
                                     keep_time * (double) afft_size * (double) rx->fps);
   int overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
-  t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d\n", rx->id, rx->buffer_size,
-          overlap, rx->pixels, window_type);
+  t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d afft_size=%d\n", rx->id,
+          rx->buffer_size,
+          overlap, rx->pixels, window_type, afft_size);
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination
