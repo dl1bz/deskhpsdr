@@ -1140,21 +1140,14 @@ void rx_vfo_changed(RECEIVER *rx) {
 //////////////////////////////////////////////////////////////////////////////////////
 
 static void rx_process_buffer(RECEIVER *rx) {
-  double left_sample, right_sample;
-  short left_audio_sample, right_audio_sample;
-  int i;
   double scale = 0.6 * pow(10.0, -0.05 * rx->volume);
   double unscale = 1.0 / scale;
+  // Without DUPLEX; xmit will always be false.
+  int xmit = radio_is_transmitting();
 
-  //t_print("%s: rx=%p id=%d output_samples=%d audio_output_buffer=%p\n",__FUNCTION__,rx,rx->id,rx->output_samples,rx->audio_output_buffer);
-  for (i = 0; i < rx->output_samples; i++) {
-    if (radio_is_transmitting() && (!duplex || mute_rx_while_transmitting)) {
-      left_sample = 0.0;
-      right_sample = 0.0;
-    } else {
-      left_sample = rx->audio_output_buffer[i * 2];
-      right_sample = rx->audio_output_buffer[(i * 2) + 1];
-    }
+  for (int i = 0; i < rx->output_samples; i++) {
+    double left_sample = rx->audio_output_buffer[i * 2];
+    double right_sample = rx->audio_output_buffer[(i * 2) + 1];
 
     if (rx == active_receiver) {
       //
@@ -1190,57 +1183,44 @@ static void rx_process_buffer(RECEIVER *rx) {
       }
     }
 
-    // Convert to protocol samples AFTER REPLAY (so protocol path gets replayed audio),
-    // but BEFORE local-audio muting/channeling (so "Mute Radio" still doesn't affect local audio semantics).
-    left_audio_sample  = (short)(left_sample  * 32767.0);
-    right_audio_sample = (short)(right_sample * 32767.0);
+    if (xmit && mute_rx_while_transmitting) {
+      left_sample = 0.0;
+      right_sample = 0.0;
+    }
+
+    if (rx->mute_radio || (rx != active_receiver && rx->mute_when_not_active)) {
+      left_sample = 0.0;
+      right_sample = 0.0;
+    }
+
+    switch (rx->audio_channel) {
+    case STEREO:
+      break;
+
+    case LEFT:
+      right_sample = 0.0;
+      break;
+
+    case RIGHT:
+      left_sample = 0.0;
+      break;
+    }
+
+    short left_audio_sample  = (short)(left_sample  * 32767.0);
+    short right_audio_sample = (short)(right_sample * 32767.0);
 
     if (rx->local_audio) {
-      // if (rx->mute_radio || (rx != active_receiver && rx->mute_when_not_active)) {
-      if (rx != active_receiver && rx->mute_when_not_active) {
-        left_sample = 0.0;
-        right_sample = 0.0;
-      } else {
-        switch (rx->audio_channel) {
-        case STEREO:
-          break;
-
-        case LEFT:
-          right_sample = 0.0;
-          break;
-
-        case RIGHT:
-          left_sample = 0.0;
-          break;
-        }
-      }
-
       audio_write(rx, (float)left_sample, (float)right_sample);
     }
 
-    if (rx == active_receiver && !pre_mox) {
-      //
-      // Note the "Mute Radio" checkbox in the RX menu mutes the
-      // audio in the HPSDR data stream *only*, local audio is
-      // not affected.
-      //
+    if (rx == active_receiver) {
       switch (protocol) {
       case ORIGINAL_PROTOCOL:
-        if (rx->mute_radio) {
-          old_protocol_audio_samples((short)0, (short)0);
-        } else {
-          old_protocol_audio_samples(left_audio_sample, right_audio_sample);
-        }
-
+        old_protocol_audio_samples(left_audio_sample, right_audio_sample);
         break;
 
       case NEW_PROTOCOL:
-        if (rx->mute_radio) {
-          new_protocol_audio_samples((short)0, (short)0);
-        } else {
-          new_protocol_audio_samples(left_audio_sample, right_audio_sample);
-        }
-
+        new_protocol_audio_samples(left_audio_sample, right_audio_sample);
         break;
 
       case SOAPYSDR_PROTOCOL:
