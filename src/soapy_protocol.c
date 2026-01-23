@@ -32,6 +32,7 @@
 #include <SoapySDR/Formats.h>
 #include <SoapySDR/Version.h>
 #include <SoapySDR/Logger.h>
+#include <SoapySDR/Types.h>
 
 #include "band.h"
 #include "channel.h"
@@ -449,8 +450,18 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
 
   size_t channel = tx->dac;
   t_print("%s: SoapySDRDevice_setupStream: channel=%ld\n", __FUNCTION__, channel);
+  SoapySDRKwargs args = {};
+
+  if (have_lime) {
+    /* Ensure TX auto-calibration is NOT skipped */
+    SoapySDRKwargs_set(&args, "skipCal", "false");
+  }
+
 #if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION < 0x00080000)
-  rc = SoapySDRDevice_setupStream(soapy_device, &tx_stream, SOAPY_SDR_TX, SOAPY_SDR_CF32, &channel, 1, NULL);
+  rc = SoapySDRDevice_setupStream(soapy_device, &tx_stream,
+                                  SOAPY_SDR_TX, SOAPY_SDR_CF32,
+                                  &channel, 1,
+                                  have_lime ? &args : NULL);
 
   if (rc != 0) {
     t_print("%s: SoapySDRDevice_setupStream (TX) failed: %s\n", __FUNCTION__, SoapySDR_errToStr(rc));
@@ -458,7 +469,10 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
   }
 
 #else
-  tx_stream = SoapySDRDevice_setupStream(soapy_device, SOAPY_SDR_TX, SOAPY_SDR_CF32, &channel, 1, NULL);
+  tx_stream = SoapySDRDevice_setupStream(soapy_device,
+                                         SOAPY_SDR_TX, SOAPY_SDR_CF32,
+                                         &channel, 1,
+                                         have_lime ? &args : NULL);
 
   if (tx_stream == NULL) {
     t_print("%s: SoapySDRDevice_setupStream (TX) failed: %s\n", __FUNCTION__, SoapySDR_errToStr(rc));
@@ -466,6 +480,11 @@ void soapy_protocol_create_transmitter(TRANSMITTER *tx) {
   }
 
 #endif
+
+  if (have_lime) {
+    SoapySDRKwargs_clear(&args);
+  }
+
   max_tx_samples = SoapySDRDevice_getStreamMTU(soapy_device, tx_stream);
 
   if (max_tx_samples > (2 * tx->fft_size)) {
@@ -489,6 +508,8 @@ void soapy_protocol_start_transmitter(TRANSMITTER *tx) {
      * LIME: kick LMS auto-calibration at TX start.
      * Use a moderate drive level before activating the TX stream.
      */
+    /* Set calibration bandwidth before activating TX stream */
+    (void)SoapySDRDevice_writeSetting(soapy_device, "CALIBRATE", "12000000");
     soapy_lime_tx_gain_set((size_t)tx->dac, 30.0);
   }
 
