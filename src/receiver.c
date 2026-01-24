@@ -1206,8 +1206,17 @@ static void rx_process_buffer(RECEIVER *rx) {
       break;
     }
 
-    short left_audio_sample  = (short)(left_sample  * 32767.0);
-    short right_audio_sample = (short)(right_sample * 32767.0);
+    if (left_sample >  1.0f) { left_sample =  1.0f; }
+
+    if (left_sample < -1.0f) { left_sample = -1.0f; }
+
+    short left_audio_sample  = (short)(left_sample  * 32767.0f);
+
+    if (right_sample >  1.0f) { right_sample =  1.0f; }
+
+    if (right_sample < -1.0f) { right_sample = -1.0f; }
+
+    short right_audio_sample = (short)(right_sample * 32767.0f);
 
     if (rx->local_audio) {
       audio_write(rx, (float)left_sample, (float)right_sample);
