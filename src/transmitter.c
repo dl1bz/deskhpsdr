@@ -1672,7 +1672,9 @@ static void tx_full_buffer(TRANSMITTER *tx) {
 
         for (j = 0; j < tx->output_samples; j++) {
           double ramp = tx->cw_sig_rf[j];       // between 0.0 and 1.0
-          isample = floor(gain * ramp + 0.5);   // always non-negative, isample is just the pulse envelope
+          // isample = floor(gain * ramp + 0.5);   // always non-negative, isample is just the pulse envelope
+          // replacement
+          isample = (long)(gain * ramp + 0.5);  // always non-negative, isample is just the pulse envelope
           sidetone = sidevol * ramp * sine_generator(&p1radio, &p2radio, cw_keyer_sidetone_frequency);
           old_protocol_iq_samples(isample, 0, sidetone);
         }
@@ -1692,7 +1694,9 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         //
         for (j = 0; j < tx->output_samples; j++) {
           double ramp = tx->cw_sig_rf[j];                  // between 0.0 and 1.0
-          isample = floor(0.896 * gain * ramp + 0.5);      // always non-negative, isample is just the pulse envelope
+          // isample = floor(0.896 * gain * ramp + 0.5);      // always non-negative, isample is just the pulse envelope
+          // replacement
+          isample = (long)(0.896 * gain * ramp + 0.5);     // always non-negative, isample is just the pulse envelope
           new_protocol_iq_samples(isample, 0);
         }
 
@@ -1721,8 +1725,11 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         double is, qs;
         is = tx->iq_output_buffer[j * 2];
         qs = tx->iq_output_buffer[(j * 2) + 1];
-        isample = is >= 0.0 ? (long)floor(is * gain + 0.5) : (long)ceil(is * gain - 0.5);
-        qsample = qs >= 0.0 ? (long)floor(qs * gain + 0.5) : (long)ceil(qs * gain - 0.5);
+        // isample = is >= 0.0 ? (long)floor(is * gain + 0.5) : (long)ceil(is * gain - 0.5);
+        // qsample = qs >= 0.0 ? (long)floor(qs * gain + 0.5) : (long)ceil(qs * gain - 0.5);
+        // replacement
+        isample = (long)(is * gain + (is >= 0.0 ? 0.5 : -0.5));
+        qsample = (long)(qs * gain + (qs >= 0.0 ? 0.5 : -0.5));
 
         switch (protocol) {
         case ORIGINAL_PROTOCOL:

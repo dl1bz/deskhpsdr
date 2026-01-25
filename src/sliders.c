@@ -141,6 +141,9 @@ static gulong nr_btn_signal_id;
   static gulong hwagc_scale_signal_id;
   static GtkWidget *ifgr_scale;
   static gulong ifgr_scale_signal_id;
+  static GtkWidget *soapy_rfgain_btn;
+  static GtkWidget *soapy_rfgain_label;
+  static gulong soapy_rfgain_btn_signal_id;
 #endif
 static GtkStyleContext *nr_context;
 static GtkStyleContext *agc_context;
@@ -1406,6 +1409,27 @@ void update_slider_ps_btn() {
   }
 }
 
+#ifdef SOAPYSDR
+static void soapy_rfgain_cycle_cb(GtkButton *btn, gpointer user_data) {
+  (void)user_data;  // bewusst ungenutzt
+  size_t n = radio->info.soapy.rx_gains;
+
+  if (n == 0) { return; }
+
+  int idx = GPOINTER_TO_INT(
+              g_object_get_data(G_OBJECT(btn), "rx-gain-idx")
+            );
+  idx = (idx + 1) % (int)n;
+  g_object_set_data(G_OBJECT(btn), "rx-gain-idx", GINT_TO_POINTER(idx));
+  GtkWidget *lbl = gtk_bin_get_child(GTK_BIN(btn));
+  const char *txt = radio->info.soapy.rx_gain[idx];
+
+  if (!txt) { txt = ""; }
+
+  gtk_label_set_text(GTK_LABEL(lbl), txt);
+}
+#endif
+
 static void ps_toggle_cb(GtkWidget *widget, gpointer data) {
 #if defined (__CPYMODE__)
   int _mode = vfo[active_receiver->id].mode;
@@ -1823,6 +1847,40 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // g_signal_connect(agc_btn, "released", G_CALLBACK(agc_btn_pressed_cb), NULL);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
+    //-------------------------------------------------------------------------------------------
+#ifdef SOAPYSDR
+
+    if (display_sliders && device == SOAPYSDR_USB_DEVICE && have_sdrplay) {
+      soapy_rfgain_btn = gtk_button_new_with_label("RF Gain");
+      WEAKEN(soapy_rfgain_btn);
+      gtk_widget_set_name(soapy_rfgain_btn, "medium_toggle_button");
+      soapy_rfgain_label = gtk_bin_get_child(GTK_BIN(soapy_rfgain_btn));
+      gtk_label_set_justify(GTK_LABEL(soapy_rfgain_label), GTK_JUSTIFY_CENTER);
+      gtk_widget_set_size_request(soapy_rfgain_btn, box_right_width / 6, -1);  // z.B. 100px
+      gtk_widget_set_margin_top(soapy_rfgain_btn, 0);
+      gtk_widget_set_margin_bottom(soapy_rfgain_btn, 0);
+      gtk_widget_set_margin_end(soapy_rfgain_btn, 0);    // rechter Rand (Ende)
+      gtk_widget_set_margin_start(soapy_rfgain_btn, 0);    // linker Rand (Anfang)
+      gtk_widget_set_halign(soapy_rfgain_btn, GTK_ALIGN_START);
+      gtk_widget_set_valign(soapy_rfgain_btn, GTK_ALIGN_CENTER);
+
+      /* initiales Label aus der Liste setzen (wenn vorhanden) */
+      if (radio->info.soapy.rx_gains > 0 && radio->info.soapy.rx_gain[0]) {
+        gtk_label_set_text(GTK_LABEL(soapy_rfgain_label), radio->info.soapy.rx_gain[0]);
+      }
+
+      /* Index am Button speichern */
+      g_object_set_data(G_OBJECT(soapy_rfgain_btn), "rx-gain-idx", GINT_TO_POINTER(0));
+      /* WICHTIG: clicked statt toggled, und radio als user_data */
+      soapy_rfgain_btn_signal_id = g_signal_connect(soapy_rfgain_btn, "clicked", G_CALLBACK(soapy_rfgain_cycle_cb), NULL);
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z1_right), soapy_rfgain_btn, FALSE, FALSE, 0);
+    } else {
+      soapy_rfgain_btn = NULL;
+      soapy_rfgain_label = NULL;
+    }
+
+#endif
 
     //-------------------------------------------------------------------------------------------
     if (can_transmit && display_sliders && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
