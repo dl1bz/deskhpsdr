@@ -112,7 +112,7 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_valign(hpsdr_logo_widget, GTK_ALIGN_START);   // Vertikal oben ausrichten
   gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
   snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
-                               "compatible with OpenHPSDR protocol 1 and 2 & Soapy (with limited support)\n"
+                               "compatible with OpenHPSDR protocol 1 and 2 & Soapy (only limited support)\n"
                                "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
                                "(contains code portions of piHPSDR by G0ORX/N6LYT and DL1YCF)\n\n"
                                "    Credits:\n"

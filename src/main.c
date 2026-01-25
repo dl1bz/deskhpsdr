@@ -930,7 +930,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   //----------------------------------------------------------------------------------
   snprintf(text, 2048,
            "Ham Radio SDR Transceiver Frontend Application\n"
-           "compatible with OpenHPSDR Protocols 1 and 2 & Soapy (with limited support)\n");
+           "compatible with OpenHPSDR Protocols 1 and 2 & Soapy (only limited support)\n");
   GtkWidget *deskhpsdr_sub_label = gtk_label_new(text);
   gtk_widget_set_name(deskhpsdr_sub_label, "med_bold_txt");
   gtk_widget_set_halign(deskhpsdr_sub_label, GTK_ALIGN_START);
