@@ -735,6 +735,7 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), get_pk, col, row, 1, 1);
   gtk_entry_set_width_chars(GTK_ENTRY(get_pk), 10);
   col++;
+  //------------------------------------------------------------------------
   lbl = gtk_label_new("SetPk");
   gtk_widget_set_name(lbl, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), lbl, col, row, 1, 1);
@@ -746,6 +747,7 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), set_pk, col, row, 1, 1);
   gtk_entry_set_width_chars(GTK_ENTRY(set_pk), 10);
   g_signal_connect(set_pk, "activate", G_CALLBACK(setpk_cb), NULL);
+  //------------------------------------------------------------------------
   col++;
   lbl = gtk_label_new("TX ATT");
   gtk_widget_set_name(lbl, "boldlabel");

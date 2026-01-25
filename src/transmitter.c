@@ -360,6 +360,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.ps_ptol",           tx->id,               tx->ps_ptol);
   SetPropF1("transmitter.%d.ps_moxdelay",       tx->id,               tx->ps_moxdelay);
   SetPropF1("transmitter.%d.ps_loopdelay",      tx->id,               tx->ps_loopdelay);
+  SetPropF1("transmitter.%d.ps_setpk",          tx->id,               tx->ps_setpk);
   SetPropI1("transmitter.%d.attenuation",       tx->id,               tx->attenuation);
   SetPropI1("transmitter.%d.ctcss_enabled",     tx->id,               tx->ctcss_enabled);
   SetPropI1("transmitter.%d.ctcss",             tx->id,               tx->ctcss);
@@ -476,6 +477,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.ps_ptol",           tx->id,               tx->ps_ptol);
   GetPropF1("transmitter.%d.ps_moxdelay",       tx->id,               tx->ps_moxdelay);
   GetPropF1("transmitter.%d.ps_loopdelay",      tx->id,               tx->ps_loopdelay);
+  GetPropF1("transmitter.%d.ps_setpk",          tx->id,               tx->ps_setpk);
   GetPropI1("transmitter.%d.attenuation",       tx->id,               tx->attenuation);
   GetPropI1("transmitter.%d.ctcss_enabled",     tx->id,               tx->ctcss_enabled);
   GetPropI1("transmitter.%d.ctcss",             tx->id,               tx->ctcss);
@@ -1994,23 +1996,6 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
     if (radio_is_transmitting()) {
       int txmode = vfo_get_tx_mode();
       int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
-#if 0
-      //
-      // Special code to document the amplitude of the TX IQ samples.
-      // This can be used to determine the "PK" value for an unknown
-      // radio.
-      //
-      double pkmax = 0.0, pkval;
-
-      for (int i = 0; i < rx_feedback->buffer_size; i++) {
-        pkval = tx_feedback->iq_input_buffer[2 * i] * tx_feedback->iq_input_buffer[2 * i] +
-                tx_feedback->iq_input_buffer[2 * i + 1] * tx_feedback->iq_input_buffer[2 * i + 1];
-
-        if (pkval > pkmax) { pkmax = pkval; }
-      }
-
-      t_print("PK MEASURED: %f\n", sqrt(pkmax));
-#endif
 
       if (!cwmode) {
         //
@@ -2449,6 +2434,7 @@ void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
 }
 
 void tx_ps_setparams(const TRANSMITTER *tx) {
+  SetPSHWPeak(tx->id, tx->ps_setpk);
   SetPSMapMode(tx->id, tx->ps_map);
   SetPSPtol(tx->id, tx->ps_ptol ? 0.4 : 0.8);
   SetPSIntsAndSpi(tx->id, tx->ps_ints, tx->ps_spi);
