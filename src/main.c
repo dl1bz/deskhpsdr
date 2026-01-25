@@ -831,7 +831,8 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_widget_set_size_request(top_window, 100, 100);
   const char *used_theme = get_current_gtk_theme();
   char _title[128];
-  snprintf(_title, 128, "%s by DL1BZ %s [GTK Theme: %s]  WDSP Version %d.%02d", PGNAME, build_version, used_theme,
+  snprintf(_title, sizeof(_title), "%s by DL1BZ %s [GTK Theme: %s]  WDSP Version %d.%02d", PGNAME, build_version,
+           used_theme,
            GetWDSPVersion() / 100, GetWDSPVersion() % 100);
   gtk_window_set_title (GTK_WINDOW (top_window), _title);
 #if defined(__APPLE__)
@@ -910,48 +911,62 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   g_signal_connect(top_window, "key_press_event", G_CALLBACK(keypress_cb), NULL);
   t_print("create grid\n");
   topgrid = gtk_grid_new();
+  int row = 0;
+  int col = 0;
   // we make the first startup windows smaller, looks better
-  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.7);
+  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.8);
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing (GTK_GRID(topgrid), 10);
   t_print("add grid\n");
   gtk_container_add (GTK_CONTAINER (top_window), topgrid);
   t_print("add image to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), trx_logo_widget, 0, 0, 1, 2);
+  gtk_grid_attach(GTK_GRID(topgrid), trx_logo_widget, col, row, 1, 2);
   t_print("create deskHPSDR label\n");
   //----------------------------------------------------------------------------------
-  snprintf(text, 2048,
+  col++;
+  snprintf(text, sizeof(text),
            "\ndeskHPSDR by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n");
   GtkWidget *deskhpsdr_label = gtk_label_new(text);
   gtk_widget_set_name(deskhpsdr_label, "big_txt");
   gtk_widget_set_halign(deskhpsdr_label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_label, 1, 0, 3, 1);
+  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------
-  snprintf(text, 2048,
-           "Ham Radio SDR Transceiver Frontend Application\n"
-           "compatible with OpenHPSDR Protocols 1 and 2 & Soapy (only limited support)\n");
+  row++;
+  snprintf(text, sizeof(text),
+           "Open Source Ham Radio SDR Transceiver Frontend Application\n"
+           "compatible with OpenHPSDR Protocols 1 and 2");
   GtkWidget *deskhpsdr_sub_label = gtk_label_new(text);
   gtk_widget_set_name(deskhpsdr_sub_label, "med_bold_txt");
   gtk_widget_set_halign(deskhpsdr_sub_label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_sub_label, 1, 1, 3, 1);
+  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_sub_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------
+  row++;
+  snprintf(text, sizeof(text),
+           "& partially Soapy API (only with limited device support)\n");
+  GtkWidget *deskhpsdr_soapy_sub_label = gtk_label_new(text);
+  gtk_widget_set_name(deskhpsdr_soapy_sub_label, "small_bold_txt_blue");
+  gtk_widget_set_halign(deskhpsdr_soapy_sub_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_soapy_sub_label, col, row, 3, 1);
+  //----------------------------------------------------------------------------------
+  row += 2;
   t_print("create build label\n");
-  snprintf(text, 2048,
-           "Version %s (build %s from %s branch)\nUsed Compiler: %s\nActivated Compiler Options:\n%s\nWDSP version: %d.%02d\nUsed Audio module: %s\nWorking Directory: %s\nX11 backend: %s",
+  snprintf(text, sizeof(text),
+           "Version %s (build %s from %s branch)\ncompiled with %s\nActivated Compiler Macros:\n%s\nCurrent WDSP version: %d.%02d\nSelected Audio module: %s\nWorking Directory: %s\nX11 backend: %s",
            build_version, build_date, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100,
            build_audio, config_directory, x11_be);
   GtkWidget *build_date_label = gtk_label_new(text);
   gtk_widget_set_name(build_date_label, "med_txt");
   gtk_widget_set_halign(build_date_label, GTK_ALIGN_START);
   t_print("add build label to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 3, 3, 1);
+  gtk_grid_attach(GTK_GRID(topgrid), build_date_label, col, row, 3, 1);
+  row++;
   t_print("create status\n");
   status_label = gtk_label_new(NULL);
   gtk_widget_set_name(status_label, "med_txt");
   gtk_widget_set_halign(status_label, GTK_ALIGN_START);
   t_print("add status to grid\n");
-  gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 4, 3, 1);
+  gtk_grid_attach(GTK_GRID(topgrid), status_label, col, row, 3, 1);
   gtk_widget_show_all(top_window);
   t_print("g_idle_add: init\n");
   g_idle_add(init, NULL);
