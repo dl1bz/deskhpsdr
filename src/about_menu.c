@@ -2,7 +2,7 @@
 * 2017 - John Melton, G0ORX/N6LYT
 * 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
-*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
+*   This source code has been forked and was adapted from pihpsdr by DL1YCF to deskHPSDR in October 2024
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -111,14 +111,14 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_halign(hpsdr_logo_widget, GTK_ALIGN_CENTER);  // Horizontal zentrieren
   gtk_widget_set_valign(hpsdr_logo_widget, GTK_ALIGN_START);   // Vertikal oben ausrichten
   gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
-  snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
-                               "compatible with OpenHPSDR protocol 1 and 2 & Soapy (only limited support)\n"
+  snprintf(text, sizeof(text), "Open Source Ham Radio SDR Transceiver Frontend Application\n"
+                               "compatible with OpenHPSDR protocol 1 and 2 & partially Soapy API\n\n"
                                "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
-                               "(contains code portions of piHPSDR by G0ORX/N6LYT and DL1YCF)\n\n"
+                               "(contains code portions of pihpsdr by G0ORX/N6LYT and DL1YCF)\n\n"
                                "    Credits:\n"
                                "    Warren C. Pratt, NR0V: WDSP signal processing library development\n"
-                               "    John Melton, G0ORX/N6LYT: first and initial version of piHPSDR\n"
-                               "    Christoph van Wüllen, DL1YCF: Continuation & current version piHPSDR\n"
+                               "    John Melton, G0ORX/N6LYT: first and initial version of pihpsdr\n"
+                               "    Christoph van Wüllen, DL1YCF: Continuation & current version pihpsdr\n"
                                "    Richie, MW0LGE: Developer of main version Thetis\n"
                                "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
                                "    Ramakrishnan, VU3RDD: patched WDSP with NR3 & NR4 support\n"
