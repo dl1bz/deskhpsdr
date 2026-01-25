@@ -3418,6 +3418,10 @@ void radio_save_state() {
   // are restored in create_receiver/create_transmitter
   //
   for (int i = 0; i < RECEIVERS; i++) {
+    if (receiver[i]->zoom > 8) {
+      receiver[i]->zoom = 8;
+    }
+
     rx_save_state(receiver[i]);
   }
 

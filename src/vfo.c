@@ -2293,7 +2293,7 @@ void vfo_update() {
   //
   // -----------------------------------------------------------
   if (vfl->ctun_x != 0) {
-    cairo_move_to(cr, vfl->ctun_x, vfl->ctun_y);
+    cairo_move_to(cr, vfl->ctun_x + 5, vfl->ctun_y);
 
     if (vfo[id].ctun) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
