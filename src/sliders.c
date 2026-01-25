@@ -1825,7 +1825,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
 
     //-------------------------------------------------------------------------------------------
-    if (can_transmit && display_sliders) {
+    if (can_transmit && display_sliders && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
       ps_btn = gtk_toggle_button_new_with_label("PS");
       WEAKEN(ps_btn);
       // gtk_widget_set_name(snb_btn, "front_toggle_button");

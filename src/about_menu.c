@@ -87,7 +87,7 @@ void about_menu(GtkWidget *parent) {
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 20); // 20px leer zwischen Fenster und Content
   char title[64];
   uname(&unameData);
-  snprintf(title, 64, "%s - About", PGNAME);
+  snprintf(title, sizeof(title), "%s - About", PGNAME);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
