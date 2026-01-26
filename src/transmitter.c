@@ -1341,6 +1341,54 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->display_detector_mode = DET_PEAK;
   tx->display_average_time  = 120.0;
   tx->display_average_mode  = AVG_LOGRECURSIVE;
+
+  //
+  // If the pk value is slightly too large, this does no harm, but
+  // if it is slightly too small, very strange things can happen.
+  // Therefore it is good to "measure" this value and then slightly
+  // increase it.
+  //
+  switch (protocol) {
+  case NEW_PROTOCOL:
+    switch (device) {
+    case NEW_DEVICE_SATURN:
+      tx->ps_setpk = 0.6121;
+      break;
+
+    default:
+      // recommended "new protocol value"
+      tx->ps_setpk = 0.2899;
+      break;
+    }
+
+    break;
+
+  case ORIGINAL_PROTOCOL:
+    switch (device) {
+    case DEVICE_HERMES_LITE2:
+      // measured value: 0.2386
+      tx->ps_setpk = 0.2400;
+      break;
+
+    case DEVICE_STEMLAB:
+      // measured value: 0.4155
+      tx->ps_setpk = 0.4160;
+      break;
+
+    default:
+      // recommended "old protocol" value
+      tx->ps_setpk = 0.4067;
+      break;
+    }
+
+    break;
+
+  default:
+    // NOTREACHED
+    tx->ps_setpk = 1.000;
+    break;
+  }
+
   //
   // Modify these values from the props file
   //
@@ -1448,6 +1496,11 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx_set_detector(tx);
   tx_set_average(tx);
   tx_create_visual(tx);
+
+  if (protocol == NEW_PROTOCOL || protocol == ORIGINAL_PROTOCOL) {
+    tx_ps_setparams(tx);
+  }
+
   return tx;
 }
 
@@ -2435,6 +2488,7 @@ void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
 
 void tx_ps_setparams(const TRANSMITTER *tx) {
   SetPSHWPeak(tx->id, tx->ps_setpk);
+  t_print("%s: TX id=%d PS tx->ps_setpk=%g\n", __FUNCTION__, tx->id, tx->ps_setpk);
   SetPSMapMode(tx->id, tx->ps_map);
   SetPSPtol(tx->id, tx->ps_ptol ? 0.4 : 0.8);
   SetPSIntsAndSpi(tx->id, tx->ps_ints, tx->ps_spi);
@@ -2449,7 +2503,7 @@ void tx_ps_setparams(const TRANSMITTER *tx) {
 void tx_ps_setpk(const TRANSMITTER *tx, double peak) {
   SetPSHWPeak(tx->id, peak);
 #ifdef WDSPTXDEBUG
-  t_print("TX id=%d PS HWpeak=%g\n", tx->id, peak);
+  t_print("%s: TX id=%d PS HWpeak=%g\n", __FUNCTION__, tx->id, peak);
 #endif
 }
 

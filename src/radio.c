@@ -1303,59 +1303,6 @@ static void radio_create_visual() {
                                  protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
       receiver[PS_RX_FEEDBACK] = rx_create_pure_signal_receiver(PS_RX_FEEDBACK,
                                  protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
-
-      //
-      // If the pk value is slightly too large, this does no harm, but
-      // if it is slightly too small, very strange things can happen.
-      // Therefore it is good to "measure" this value and then slightly
-      // increase it.
-      //
-      switch (protocol) {
-      case NEW_PROTOCOL:
-        switch (device) {
-        case NEW_DEVICE_SATURN:
-          tx_ps_setpk(transmitter, 0.6121);
-          transmitter->ps_setpk = 0.6121;
-          break;
-
-        default:
-          // recommended "new protocol value"
-          tx_ps_setpk(transmitter, 0.2899);
-          transmitter->ps_setpk = 0.2899;
-          break;
-        }
-
-        break;
-
-      case ORIGINAL_PROTOCOL:
-        switch (device) {
-        case DEVICE_HERMES_LITE2:
-          // measured value: 0.2386
-          tx_ps_setpk(transmitter, 0.2400);
-          transmitter->ps_setpk = 0.2400;
-          break;
-
-        case DEVICE_STEMLAB:
-          // measured value: 0.4155
-          tx_ps_setpk(transmitter, 0.4160);
-          transmitter->ps_setpk = 0.4160;
-          break;
-
-        default:
-          // recommended "old protocol" value
-          tx_ps_setpk(transmitter, 0.4067);
-          transmitter->ps_setpk = 0.4067;
-          break;
-        }
-
-        break;
-
-      default:
-        // NOTREACHED
-        tx_ps_setpk(transmitter, 1.0000);
-        transmitter->ps_setpk = 1.000;
-        break;
-      }
     }
   }
 

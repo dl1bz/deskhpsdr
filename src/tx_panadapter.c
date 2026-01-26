@@ -672,6 +672,35 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       }
 
       cairo_show_text(cr, "Correcting");
+
+      if (info[4] > 181) {
+        cairo_set_source_rgb(cr, 0.0, 0.0, 1.0);  // blau
+      } else if (info[4] > 128) {
+        cairo_set_source_rgba(cr, COLOUR_OK);     // grün
+      } else if (info[4] > 90) {
+        cairo_set_source_rgb(cr, 1.0, 1.0, 0.0);  // gelb
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_ALARM);  // rot
+      }
+
+      if (tx->dialog) {
+        cairo_move_to(cr, (mywidth / 2) + 10, myheight - 50);
+      } else {
+        cairo_rectangle(cr, (mywidth / 2) + 195, myheight - 25, 130, 22);
+        cairo_set_line_width(cr, 1.5);
+        cairo_stroke(cr);
+        cairo_move_to(cr, (mywidth / 2) + 200, myheight - 10);
+      }
+
+      char feedback_text[64];
+
+      if (tx->dialog) {
+        snprintf(feedback_text, sizeof(feedback_text), "Feedback %d", info[4]);
+      } else {
+        snprintf(feedback_text, sizeof(feedback_text), "Feedback Level %d", info[4]);
+      }
+
+      cairo_show_text(cr, feedback_text);
     }
 
     if (tx->dialog) {
