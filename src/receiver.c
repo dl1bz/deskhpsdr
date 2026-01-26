@@ -671,8 +671,9 @@ RECEIVER *rx_create_pure_signal_receiver(int id, int sample_rate, int width, int
   // For a PureSignal receiver, most parameters are not needed
   // so we fill the entire data with zeroes
   //
-  RECEIVER *rx = malloc(sizeof(RECEIVER));
-  memset (rx, 0, sizeof(RECEIVER));
+  // RECEIVER *rx = malloc(sizeof(RECEIVER));
+  // memset (rx, 0, sizeof(RECEIVER));
+  RECEIVER *rx = g_new0(RECEIVER, 1);
   //
   // Setting the non-zero parameters.
   // a PS_TX_FEEDBACK receiver only needs and id and the iq_input_buffer (nothing else).
