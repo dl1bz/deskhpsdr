@@ -203,7 +203,7 @@ static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, vo
 static void state_cb(pa_context *c, void *userdata) {
   pa_context_state_t state;
   state = pa_context_get_state(c);
-  t_print("%s: %d\n", __FUNCTION__, state);
+  t_print("%s: %d\n", __func__, state);
 
   switch  (state) {
   // There are just here for reference
@@ -320,7 +320,7 @@ void audio_release_cards(void) {
   g_mutex_unlock(&audio_mutex);
 }
 
-void audio_get_cards() {
+void audio_get_cards(void){
   audio_init_mutexes_once();
   audio_release_cards();
   g_mutex_lock(&enum_mutex);
@@ -358,7 +358,7 @@ void audio_get_cards() {
   g_mutex_unlock(&enum_mutex);
 
   if (!ok) {
-    t_print("%s: pulseaudio device enumeration timeout/fail\n", __FUNCTION__);
+    t_print("%s: pulseaudio device enumeration timeout/fail\n", __func__);
     // Cleanup on failure/timeout to avoid leaking contexts/mainloops or leaving
     // callbacks running in the background.
     g_mutex_lock(&op_mutex);
@@ -397,7 +397,7 @@ int audio_open_output(RECEIVER *rx) {
   int err;
 
   if (rx == NULL || rx->audio_name[0] == '\0') {
-    t_print("%s: no output device selected\n", __FUNCTION__);
+    t_print("%s: no output device selected\n", __func__);
     return -1;
   }
 
@@ -429,11 +429,11 @@ int audio_open_output(RECEIVER *rx) {
   if (rx->playstream != NULL) {
     rx->local_audio_buffer_offset = 0;
     rx->local_audio_buffer = g_new0(float, 2 * out_buffer_size);
-    t_print("%s: allocated local_audio_buffer %p size %ld bytes\n", __FUNCTION__, rx->local_audio_buffer,
+    t_print("%s: allocated local_audio_buffer %p size %ld bytes\n", __func__, rx->local_audio_buffer,
             2 * out_buffer_size * sizeof(float));
   } else {
     result = -1;
-    t_print("%s: pa-simple_new failed: err=%d\n", __FUNCTION__, err);
+    t_print("%s: pa-simple_new failed: err=%d\n", __func__, err);
   }
 
   g_mutex_unlock(&rx->local_audio_mutex);
@@ -442,7 +442,7 @@ int audio_open_output(RECEIVER *rx) {
 
 static void *mic_read_thread(gpointer arg) {
   int err;
-  t_print("%s: running=%d\n", __FUNCTION__, g_atomic_int_get(&running));
+  t_print("%s: running=%d\n", __func__, g_atomic_int_get(&running));
 
   while (g_atomic_int_get(&running)) {
     //
@@ -456,7 +456,7 @@ static void *mic_read_thread(gpointer arg) {
 
     if (rc < 0) {
       g_atomic_int_set(&running, 0);
-      t_print("%s: simple_read returned %d error=%d (%s)\n", __FUNCTION__, rc, err, pa_strerror(err));
+      t_print("%s: simple_read returned %d error=%d (%s)\n", __func__, rc, err, pa_strerror(err));
     } else {
       // If shutdown was requested while we were blocked in pa_simple_read(),
       // do not attempt to take locks or write into buffers.
@@ -499,16 +499,16 @@ static void *mic_read_thread(gpointer arg) {
       if (had_overrun && (mic_overrun_events % 100 == 0)) {
         t_print("%s: MIC RING OVERRUN: events=%" G_GUINT64_FORMAT
                 " dropped=%" G_GUINT64_FORMAT "\n",
-                __FUNCTION__, mic_overrun_events, mic_overrun_drops);
+                __func__, mic_overrun_events, mic_overrun_drops);
       }
     }
   }
 
-  t_print("%s: exit\n", __FUNCTION__);
+  t_print("%s: exit\n", __func__);
   return NULL;
 }
 
-int audio_open_input() {
+int audio_open_input(void){
   pa_sample_spec sample_spec;
 
   if (!can_transmit) {
@@ -516,7 +516,7 @@ int audio_open_input() {
   }
 
   if (transmitter == NULL || transmitter->microphone_name[0] == '\0') {
-    t_print("%s: no input device selected\n", __FUNCTION__);
+    t_print("%s: no input device selected\n", __func__);
     return -1;
   }
 
@@ -542,12 +542,12 @@ int audio_open_input() {
                                        );
 
   if (new_stream == NULL) {
-    t_print("%s: pa_simple_new (RECORD) failed err=%d (%s)\n", __FUNCTION__, err, pa_strerror(err));
+    t_print("%s: pa_simple_new (RECORD) failed err=%d (%s)\n", __func__, err, pa_strerror(err));
     return -1;
   }
 
   float *new_local_buf = g_new0(float, mic_buffer_size);
-  t_print("%s: allocating ring buffer\n", __FUNCTION__);
+  t_print("%s: allocating ring buffer\n", __func__);
   float *new_ring_buf = (float *) g_new(float, MICRINGLEN);
 
   if (new_local_buf == NULL || new_ring_buf == NULL) {
@@ -572,11 +572,11 @@ int audio_open_input() {
   mic_overrun_drops = 0;
   mic_overrun_events = 0;
   g_mutex_unlock(&mic_ring_mutex);
-  t_print("%s: PULSEAUDIO mic_read_thread\n", __FUNCTION__);
+  t_print("%s: PULSEAUDIO mic_read_thread\n", __func__);
   mic_read_thread_id = g_thread_new("mic_thread", mic_read_thread, NULL);
 
   if (!mic_read_thread_id) {
-    t_print("%s: g_thread_new failed on mic_read_thread\n", __FUNCTION__);
+    t_print("%s: g_thread_new failed on mic_read_thread\n", __func__);
     g_atomic_int_set(&running, 0);
     // Rollback sauber freigeben
     g_mutex_lock(&audio_mutex);
@@ -617,13 +617,13 @@ void audio_close_output(RECEIVER *rx) {
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
-void audio_close_input() {
+void audio_close_input(void){
   g_atomic_int_set(&running, 0);
 
   // Join WITHOUT holding audio_mutex to avoid deadlock:
   // mic_read_thread uses mic_ring_mutex while writing into the ringbuffer.
   if (mic_read_thread_id != NULL) {
-    t_print("%s: wait for mic thread to complete\n", __FUNCTION__);
+    t_print("%s: wait for mic thread to complete\n", __func__);
     g_thread_join(mic_read_thread_id);
     mic_read_thread_id = NULL;
   }
@@ -656,13 +656,13 @@ void audio_close_input() {
 // Utility function for retrieving mic samples
 // from ring buffer
 //
-float audio_get_next_mic_sample() {
+float audio_get_next_mic_sample(void){
   float sample;
   g_mutex_lock(&mic_ring_mutex);
 
   if ((mic_ring_buffer == NULL) || (mic_ring_read_pt == mic_ring_write_pt)) {
     // no buffer, or nothing in buffer: insert silence
-    //t_print("%s: no samples\n",__FUNCTION__);
+    //t_print("%s: no samples\n",__func__);
     sample = 0.0;
   } else {
     int newpt = mic_ring_read_pt + 1;
@@ -700,7 +700,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
                                &err);
 
       if (rc != 0) {
-        t_print("%s: simple_write failed err=%d\n", __FUNCTION__, err);
+        t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
 
       rx->local_audio_buffer_offset = 0;
@@ -738,7 +738,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
                                &err);
 
       if (rc != 0) {
-        t_print("%s: simple_write failed err=%d\n", __FUNCTION__, err);
+        t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
 
       rx->local_audio_buffer_offset = 0;

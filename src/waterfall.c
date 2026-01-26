@@ -319,7 +319,7 @@ void waterfall_update(RECEIVER *rx) {
         adc[rx->adc].gain = 0;
         adc[rx->adc].attenuation = 0;
         adc[rx->adc].gain = v_Gain;
-        // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __FUNCTION__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
+        // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __func__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
       }
 
 #endif

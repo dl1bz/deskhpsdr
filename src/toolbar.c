@@ -62,7 +62,7 @@ static GtkWidget *sim_sfunc;
 
 SWITCH *toolbar_switches = switches_controller1[0];
 
-void update_toolbar_labels() {
+void update_toolbar_labels(void){
   if (sim_s[0]) {
     //
     // If the toolbar has not yet been on display,
@@ -111,7 +111,7 @@ static void toolbar_button_press_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventBut
 static void toolbar_button_released_cb(GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event G_GNUC_UNUSED,
                                        gpointer data) {
   int i = GPOINTER_TO_INT(data);
-  //t_print("%s: %d action=%d\n",__FUNCTION__,i,toolbar_switches[i].switch_function);
+  //t_print("%s: %d action=%d\n",__func__,i,toolbar_switches[i].switch_function);
   schedule_action(toolbar_switches[i].switch_function, RELEASED, 0);
 }
 

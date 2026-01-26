@@ -113,7 +113,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
 
     g_strlcpy(addr, inet_ntoa(sa->sin_addr), sizeof(addr));
     g_strlcpy(net_mask, inet_ntoa(mask->sin_addr), sizeof(net_mask));
-    t_print("%s: bound to interface %s address %s mask %s\n", __FUNCTION__, interface_name, addr, net_mask);
+    t_print("%s: bound to interface %s address %s mask %s\n", __func__, interface_name, addr, net_mask);
     // allow broadcast on the socket
     int on = 1;
     rc = setsockopt(discovery_socket, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
@@ -313,7 +313,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
   }
 
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
-  t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
+  t_print("%s: execute TAHOE hotfix\n", __func__);
 
   //-- start fix for Tahoe --
   // Send discovery packet 3x to mitigate macOS first-UDP-drop
@@ -411,7 +411,7 @@ static gpointer discover_receive_thread(gpointer data) {
 
       if (status == 2 || status == 3) {
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
-        t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
+        t_print("%s: execute TAHOE hotfix\n", __func__);
         // -- start fix for Tahoe: de-duplicate discovery responses by MAC --
         unsigned char mac_tmp[6];
 
@@ -488,7 +488,7 @@ static gpointer discover_receive_thread(gpointer data) {
               g_strlcpy(discovered[devices].name, "HermesLite V2", sizeof(discovered[devices].name));
               discovered[devices].device = DEVICE_HERMES_LITE2;
               // t_print("discovered HL2: Gateware Major Version=%d Minor Version=%d\n", buffer[9], buffer[21]);
-              t_print("%s: ==> HL2: Gateware Major Version=%d Minor Version=%d\n", __FUNCTION__, buffer[9], buffer[21]);
+              t_print("%s: ==> HL2: Gateware Major Version=%d Minor Version=%d\n", __func__, buffer[9], buffer[21]);
 
               if (buffer[11] & 0xA0) {
                 t_print("==> HL2: fixed IP %d.%d.%d.%d (DHCP overrides)\n", buffer[13], buffer[14], buffer[15], buffer[16]);
@@ -555,13 +555,13 @@ static gpointer discover_receive_thread(gpointer data) {
           discovered[devices].use_routing = 0;
           discovered[devices].supported_receivers = 2;
           t_print("%s: device=%d name=%s software_version=%d status=%d\n",
-                  __FUNCTION__,
+                  __func__,
                   discovered[devices].device,
                   discovered[devices].name,
                   discovered[devices].software_version,
                   discovered[devices].status);
           t_print("%s: address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s min=%0.3f MHz max=%0.3f MHz\n",
-                  __FUNCTION__,
+                  __func__,
                   inet_ntoa(discovered[devices].info.network.address.sin_addr),
                   discovered[devices].info.network.mac_address[0],
                   discovered[devices].info.network.mac_address[1],
@@ -584,7 +584,7 @@ static gpointer discover_receive_thread(gpointer data) {
 }
 
 // Funktion zum Überprüfen, ob es ein Raspberry Pi ist
-static int is_raspberry_pi_linux() {
+static int is_raspberry_pi_linux(void){
   FILE *fp = fopen("/proc/cpuinfo", "r");
 
   if (fp == NULL) {
@@ -607,7 +607,7 @@ static int is_raspberry_pi_linux() {
 }
 
 // Funktion zum Überprüfen, ob es ein macOS-System ist
-static int is_macos() {
+static int is_macos(void){
 #ifdef __APPLE__
   // Wir können sysctl verwenden, um die Hardware zu überprüfen
   size_t len = 0;
@@ -632,7 +632,7 @@ static int is_macos() {
   return 0; // Kein macOS erkannt
 }
 
-void old_discovery() {
+void old_discovery(void){
   struct ifaddrs *addrs, *ifa;
   int i, is_local;
   int ist_macos, ist_raspi;
@@ -719,5 +719,5 @@ void old_discovery() {
 
   ist_macos = is_macos() ? 1 : 0;
   ist_raspi = is_raspberry_pi_linux() ? 1 : 0;
-  t_print("%s: macOS = %d Raspberry Pi = %d Lokal = %d\n", __FUNCTION__, ist_macos, ist_raspi, is_local);
+  t_print("%s: macOS = %d Raspberry Pi = %d Lokal = %d\n", __func__, ist_macos, ist_raspi, is_local);
 }

@@ -288,7 +288,7 @@ static void  process_mic_data(const unsigned char *buffer);
 // 5 new ones. The buffers are *never* released to the
 // operating system, but marked free upon a protocol restart.
 //
-static mybuffer *get_my_buffer() {
+static mybuffer *get_my_buffer(void) {
   int i;
   mybuffer *bp = buflist;
 
@@ -320,31 +320,31 @@ static mybuffer *get_my_buffer() {
   return buflist;
 }
 
-void schedule_high_priority() {
+void schedule_high_priority(void){
   if (protocol == NEW_PROTOCOL) {
     new_protocol_high_priority();
   }
 }
 
-void schedule_general() {
+void schedule_general(void){
   if (protocol == NEW_PROTOCOL) {
     new_protocol_general();
   }
 }
 
-void schedule_receive_specific() {
+void schedule_receive_specific(void){
   if (protocol == NEW_PROTOCOL) {
     new_protocol_receive_specific();
   }
 }
 
-void schedule_transmit_specific() {
+void schedule_transmit_specific(void){
   if (protocol == NEW_PROTOCOL) {
     new_protocol_transmit_specific();
   }
 }
 
-void update_action_table() {
+void update_action_table(void){
   //
   // Depending on the values of mox, puresignal, and diversity,
   // determine the actions to be taken when a DDC packet arrives
@@ -442,7 +442,7 @@ void update_action_table() {
   }
 }
 
-void new_protocol_init() {
+void new_protocol_init(void){
   int i;
 
   //
@@ -454,12 +454,12 @@ void new_protocol_init() {
   // These are allocated once and forever
   //
   if (TXIQRINGBUF != NULL) {
-    t_print("%s: WARNING: TXIQRINGBUF non-NULL\n", __FUNCTION__);
+    t_print("%s: WARNING: TXIQRINGBUF non-NULL\n", __func__);
     g_free(TXIQRINGBUF);
   }
 
   if (RXAUDIORINGBUF != NULL) {
-    t_print("%s: WARNING: RXAUDIO_RINGGBUF non-NULL\n", __FUNCTION__);
+    t_print("%s: WARNING: RXAUDIO_RINGGBUF non-NULL\n", __func__);
     g_free(RXAUDIORINGBUF);
   }
 
@@ -636,7 +636,7 @@ void new_protocol_init() {
   new_protocol_menu_start();
 }
 
-static void new_protocol_general() {
+static void new_protocol_general(void){
   const BAND *band;
   int rc;
   pthread_mutex_lock(&general_mutex);
@@ -694,7 +694,7 @@ static void new_protocol_general() {
   pthread_mutex_unlock(&general_mutex);
 }
 
-static void new_protocol_high_priority() {
+static void new_protocol_high_priority(void){
   int rxant, txant;
   long long DDCfrequency[2];  // DDC frequencies of the radio
   long long DUCfrequency;     // DUC frequency of the radio
@@ -1400,7 +1400,7 @@ static void new_protocol_high_priority() {
   pthread_mutex_unlock(&hi_prio_mutex);
 }
 
-static void new_protocol_transmit_specific() {
+static void new_protocol_transmit_specific(void){
   pthread_mutex_lock(&tx_spec_mutex);
   int txmode = vfo_get_tx_mode();
   memset(transmit_specific_buffer, 0, sizeof(transmit_specific_buffer));
@@ -1533,7 +1533,7 @@ static void new_protocol_transmit_specific() {
   pthread_mutex_unlock(&tx_spec_mutex);
 }
 
-static void new_protocol_receive_specific() {
+static void new_protocol_receive_specific(void){
   int i;
   int xmit;
   pthread_mutex_lock(&rx_spec_mutex);
@@ -1647,7 +1647,7 @@ static void new_protocol_receive_specific() {
 //
 // Function available to e.g. rigctl to stop the protocol
 //
-void new_protocol_menu_stop() {
+void new_protocol_menu_stop(void){
   fd_set fds;
   struct timeval tv;
   char *buffer;
@@ -1706,7 +1706,7 @@ void new_protocol_menu_stop() {
 //
 // Function available e.g. to rigctl to (re-) start the new protocol
 //
-void new_protocol_menu_start() {
+void new_protocol_menu_start(void){
   //
   // reset sequence numbers, action table, etc.
   //
@@ -1758,7 +1758,7 @@ void new_protocol_menu_start() {
 
   if (major_version > 15) {
     // Tahoe workaround: erste UDPs „primen“
-    t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __FUNCTION__, major_version);
+    t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __func__, major_version);
 
     for (int n = 0; n < 3; n++) {
       new_protocol_general();
@@ -1780,7 +1780,7 @@ void new_protocol_menu_start() {
       usleep(30000);
     }
   } else {
-    t_print("%s: macOS major version: %d\n", __FUNCTION__, major_version);
+    t_print("%s: macOS major version: %d\n", __func__, major_version);
     new_protocol_general();
     usleep(50000);                    // let FPGA digest the port numbers
     new_protocol_high_priority();
@@ -2179,7 +2179,7 @@ void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
 #endif
     mic_inptr = nptr;
   } else {
-    t_print("%s: buffer overflow.\n", __FUNCTION__);
+    t_print("%s: buffer overflow.\n", __func__);
     mybuf->free = 1;
     // skip 16 mic buffers (21 msec)
     mic_count = -16;
@@ -2188,7 +2188,7 @@ void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
 
 void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
   if (ddc < 0 || ddc >= MAX_DDC) {
-    t_print("%s: invalid DDC(%d) seen!\n", __FUNCTION__, ddc);
+    t_print("%s: invalid DDC(%d) seen!\n", __func__, ddc);
     mybuf->free = 1;
     return;
   }
@@ -2214,7 +2214,7 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
                            + (buffer[3] & 0xFF);
 
   if (ddc_sequence[ddc] != sequence) {
-    t_print("%s: DDC(%d) sequence error: expected %ld got %ld\n", __FUNCTION__, ddc, ddc_sequence[ddc], sequence);
+    t_print("%s: DDC(%d) sequence error: expected %ld got %ld\n", __func__, ddc, ddc_sequence[ddc], sequence);
     sequence_errors++;
   }
 
@@ -2234,7 +2234,7 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
     sem_post(&iq_sem[ddc]);
 #endif
   } else {
-    t_print("%s: DDC(%d) buffer overflow.\n", __FUNCTION__, ddc);
+    t_print("%s: DDC(%d) buffer overflow.\n", __func__, ddc);
     mybuf->free = 1;
     // skip 128 incoming buffers
     iq_count[ddc] = -128;
@@ -2287,7 +2287,7 @@ static gpointer iq_thread(gpointer data) {
     if (expected_sequence == 0) { expected_sequence = sequence; }
 
     if (sequence != expected_sequence) {
-      t_print("%s: DDC(%d) sequence error: expected %ld got %ld\n", __FUNCTION__, ddc, expected_sequence, sequence);
+      t_print("%s: DDC(%d) sequence error: expected %ld got %ld\n", __func__, ddc, expected_sequence, sequence);
       sequence_errors++;
     }
 
@@ -2339,7 +2339,7 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
     + ((long long)(buffer[10] & 0xFF) << 8)
     + ((long long)(buffer[11] & 0xFF)   );
   int bitspersample = ((buffer[12] & 0xFF) << 8) + (buffer[13] & 0xFF);
-  t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __FUNCTION__, rx->id, bitspersample, samplesperframe);
+  t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __func__, rx->id, bitspersample, samplesperframe);
 #endif
   b = 16;
   int i;
@@ -2384,7 +2384,7 @@ static void process_div_iq_data(const unsigned char*buffer) {
     + ((long long)(buffer[10] & 0xFF) << 8)
     + ((long long)(buffer[11] & 0xFF)    );
   int bitspersample = ((buffer[12] & 0xFF) << 8) + (buffer[13] & 0xFF);
-  t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __FUNCTION__, rx->id, bitspersample, samplesperframe);
+  t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __func__, rx->id, bitspersample, samplesperframe);
 #endif
   b = 16;
   int i;
@@ -2440,7 +2440,7 @@ static void process_ps_iq_data(const unsigned char *buffer) {
     + ((long long)(buffer[10] & 0xFF) << 8)
     + ((long long)(buffer[11] & 0xFF)   );
   int bitspersample = ((buffer[12] & 0xFF) << 8) + (buffer[13] & 0xFF);
-  t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __FUNCTION__, rx->id, bitspersample, samplesperframe);
+  t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __func__, rx->id, bitspersample, samplesperframe);
 #endif
   b = 16;
   int i;
@@ -2482,7 +2482,7 @@ static void process_ps_iq_data(const unsigned char *buffer) {
   }
 }
 
-static void process_high_priority() {
+static void process_high_priority(void){
   unsigned long sequence;
   int previous_ptt;
   int previous_dot;
@@ -2707,7 +2707,7 @@ void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sa
 #endif
         rxaudio_count = 0;
       } else {
-        t_print("%s: buffer overflow\n", __FUNCTION__);
+        t_print("%s: buffer overflow\n", __func__);
         // skip some audio samples
         rxaudio_count = -4096;
       }
@@ -2764,7 +2764,7 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 #endif
       rxaudio_count = 0;
     } else {
-      t_print("%s: buffer overflow\n", __FUNCTION__);
+      t_print("%s: buffer overflow\n", __func__);
       // skip some audio samples
       rxaudio_count = -4096;
     }
@@ -2811,7 +2811,7 @@ void new_protocol_iq_samples(int isample, int qsample) {
       sem_post(&txiq_sem);
 #endif
     } else {
-      t_print("%s: output buffer overflow\n", __FUNCTION__);
+      t_print("%s: output buffer overflow\n", __func__);
       // skip 4800 samples ( 25 msec @ 192k )
       txiq_count = -4800;
     }

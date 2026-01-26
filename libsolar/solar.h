@@ -28,6 +28,6 @@ typedef struct {
   char geomagfield[32];
 } SolarData;
 
-SolarData fetch_solar_data();
+SolarData fetch_solar_data(void);
 
 #endif // SOLAR_H

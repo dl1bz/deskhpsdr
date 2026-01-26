@@ -433,9 +433,9 @@ static gboolean launch_autogain_hl2_wrapper(gpointer data) {
 }
 #endif
 
-static void radio_restore_state();
+static void radio_restore_state(void);
 
-void radio_stop() {
+void radio_stop(void){
   if (can_transmit) {
     t_print("radio_stop: TX: stop display update\n");
     transmitter->displaying = 0;
@@ -458,7 +458,7 @@ long long apply_ppm_ll(long long f_hz) {
   return (long long)((__int128)f_hz * (10000000LL + cal_0p1ppm) / 10000000LL);
 }
 
-static void choose_vfo_layout() {
+static void choose_vfo_layout(void){
   g_return_if_fail(vfo_layout_list[0].width > 0);
   vfo_layout = 0;
   METER_WIDTH = MIN_METER_WIDTH;
@@ -636,7 +636,7 @@ void destroy_widget_safe(GtkWidget **pwidget) {
   }
 }
 
-void radio_reconfigure_screen() {
+void radio_reconfigure_screen(void){
   GdkWindow *gw = gtk_widget_get_window(top_window);
   GdkWindowState ws = gdk_window_get_state(GDK_WINDOW(gw));
   int last_fullscreen = SET(ws & GDK_WINDOW_STATE_FULLSCREEN);
@@ -758,10 +758,10 @@ void radio_reconfigure_screen() {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void radio_reconfigure() {
+void radio_reconfigure(void){
   int i;
   int y;
-  t_print("%s: receivers=%d\n", __FUNCTION__, receivers);
+  t_print("%s: receivers=%d\n", __func__, receivers);
   int my_height = full_screen ? screen_height : display_height;
   int my_width  = full_screen ? screen_width  : display_width;
   rx_height = my_height - VFO_HEIGHT;
@@ -1125,7 +1125,7 @@ void open_atu_window(GtkWindow *top_window,  const char *win_title, const char *
   gtk_window_get_position(top_window, &win_x, &win_y);
   gtk_window_get_size(top_window, &win_w, &win_h);
   t_print("%s: win_x=%d win_y=%d win_w=%d win_h=%d\n",
-          __FUNCTION__, win_x, win_y, win_w, win_h);
+          __func__, win_x, win_y, win_w, win_h);
   // 3. WebView-Fenstergröße
   // int wv_w = 430;
   // int wv_h = 430;
@@ -1175,7 +1175,7 @@ void open_atu_window(GtkWindow *top_window,  const char *win_title, const char *
 #endif
 }
 
-static void radio_create_visual() {
+static void radio_create_visual(void){
   int y = 0;
   fixed = gtk_fixed_new();
   g_object_ref(topgrid);  // so it does not get deleted
@@ -1194,7 +1194,7 @@ static void radio_create_visual() {
   meter = meter_init(METER_WIDTH, METER_HEIGHT);
   gtk_fixed_put(GTK_FIXED(fixed), meter, VFO_WIDTH, y);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+  t_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   hide_b = gtk_button_new_with_label("Hide");
   gtk_widget_set_name(hide_b, "boldlabel_vfo_sf");
@@ -1205,7 +1205,7 @@ static void radio_create_visual() {
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+  t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   menu_b = gtk_button_new_with_label("Menu");
   gtk_widget_set_tooltip_text(menu_b, "Main Menu and Settings");
@@ -1215,7 +1215,7 @@ static void radio_create_visual() {
   gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __FUNCTION__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+  t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
           y);
   exit_b = gtk_button_new_with_label("Exit");
   gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
@@ -1371,7 +1371,7 @@ static void radio_create_visual() {
   att_type_changed();                // ... and this hides the „wrong“ ones.
 }
 
-int index_rf_gain() {
+int index_rf_gain(void){
   int rxgain_index = 0;
 #ifdef SOAPYSDR
 
@@ -1385,10 +1385,10 @@ int index_rf_gain() {
 
 #endif
   return rxgain_index;
-  t_print("%s: index = %d\n", __FUNCTION__, rxgain_index);
+  t_print("%s: index = %d\n", __func__, rxgain_index);
 }
 
-int index_if_gain() {
+int index_if_gain(void){
   int ifgain_index = -1;
 #ifdef SOAPYSDR
 
@@ -1402,7 +1402,7 @@ int index_if_gain() {
 
 #endif
   return ifgain_index;
-  t_print("%s: index = %d\n", __FUNCTION__, ifgain_index);
+  t_print("%s: index = %d\n", __func__, ifgain_index);
 }
 
 static void on_response(GtkDialog *dialog, gint response_id, gpointer user_data) {
@@ -1424,7 +1424,7 @@ static void show_message(GtkWindow *parent, const char *text) {
   gtk_widget_show(dialog);
 }
 
-void radio_start_radio() {
+void radio_start_radio(void){
   //
   // Debug code. Placed here at the start of the program. deskHPSDR  implicitly assumes
   //             that the entires in the action table (actions.c) are sorted by their
@@ -1926,7 +1926,7 @@ void radio_start_radio() {
       adc[0].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
       adc[0].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;;
       adc[0].gain = adc[0].min_gain;
-      t_print("%s: adc[0].min_gain = %f, adc[0].max_gain = %f, adc[0].gain = %f\n", __FUNCTION__, adc[0].min_gain,
+      t_print("%s: adc[0].min_gain = %f, adc[0].max_gain = %f, adc[0].gain = %f\n", __func__, adc[0].min_gain,
               adc[0].max_gain, adc[0].gain);
     }
   }
@@ -1961,7 +1961,7 @@ void radio_start_radio() {
       adc[1].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
       adc[1].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;;
       adc[1].gain = adc[1].min_gain;
-      t_print("%s: adc[1].min_gain = %f, adc[1].max_gain = %f, adc[1].gain = %f\n", __FUNCTION__, adc[1].min_gain,
+      t_print("%s: adc[1].min_gain = %f, adc[1].max_gain = %f, adc[1].gain = %f\n", __func__, adc[1].min_gain,
               adc[1].max_gain, adc[1].gain);
     }
 
@@ -1992,18 +1992,18 @@ void radio_start_radio() {
   display_sliders = 1;
   display_toolbar = 1;
 #endif
-  t_print("%s: setup RECEIVERS protocol=%d\n", __FUNCTION__, protocol);
+  t_print("%s: setup RECEIVERS protocol=%d\n", __func__, protocol);
 
   switch (protocol) {
   case SOAPYSDR_PROTOCOL:
-    t_print("%s: setup RECEIVERS SOAPYSDR\n", __FUNCTION__);
+    t_print("%s: setup RECEIVERS SOAPYSDR\n", __func__);
     RECEIVERS = 1;
     PS_TX_FEEDBACK = 1;
     PS_RX_FEEDBACK = 2;
     break;
 
   default:
-    t_print("%s: setup RECEIVERS default\n", __FUNCTION__);
+    t_print("%s: setup RECEIVERS default\n", __func__);
     RECEIVERS = 2;
     PS_TX_FEEDBACK = (RECEIVERS);
     PS_RX_FEEDBACK = (RECEIVERS + 1);
@@ -2106,9 +2106,9 @@ void radio_start_radio() {
     //t_print("radio: set rf_gain=%f\n",rx->rf_gain);
     if (strcmp(radio->name, "sdrplay") != 0) {
       soapy_protocol_set_gain(rx);
-      t_print("%s: Is not SDRPlay\n", __FUNCTION__);
+      t_print("%s: Is not SDRPlay\n", __func__);
     } else {
-      t_print("%s: Is %s\n", __FUNCTION__, radio->info.soapy.hardware_key);
+      t_print("%s: Is %s\n", __func__, radio->info.soapy.hardware_key);
     }
 
     if (strcmp(radio->name, "sdrplay") == 0 && radio->info.soapy.rx_gains > 1) {
@@ -2125,7 +2125,7 @@ void radio_start_radio() {
     }
 
     if (strcmp(radio->name, "sdrplay") == 0) {
-      t_print("%s: Bias-T: %d agc_setpoint = %d\n", __FUNCTION__, soapy_protocol_get_bias_t(rx),
+      t_print("%s: Bias-T: %d agc_setpoint = %d\n", __func__, soapy_protocol_get_bias_t(rx),
               soapy_protocol_get_agc_setpoint(rx));
 
       if (rx->panadapter_autoscale_enabled) {
@@ -2140,7 +2140,7 @@ void radio_start_radio() {
 
     if (radio && strcmp(radio->name, "sdrplay") == 0) {
       soapy_protocol_get_settings_info(active_receiver);
-      t_print("%s: has correct driver: %d\n", __FUNCTION__, soapy_protocol_check_sdrplay_mod(active_receiver));
+      t_print("%s: has correct driver: %d\n", __func__, soapy_protocol_check_sdrplay_mod(active_receiver));
 
       if (soapy_protocol_check_sdrplay_mod(active_receiver) == FALSE) {
         char msg_txt_win[2048];
@@ -2197,7 +2197,7 @@ void radio_start_radio() {
 #endif
 }
 
-void reassign_pa_trim() {
+void reassign_pa_trim(void){
   for (int j = 0; j < 11; j++) {
     pa_trim[j] = j * pa_power_list[pa_power] * 0.1;
   }
@@ -2531,7 +2531,7 @@ void radio_tune_update(int state) {
 }
 
 void radio_set_mox(int state) {
-  //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox,vox,tune,state);
+  //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   if (!can_transmit) { return; }
 
   if (state && TxInhibit) { return; }
@@ -2572,12 +2572,12 @@ void radio_set_mox(int state) {
   }
 }
 
-int radio_get_mox() {
+int radio_get_mox(void){
   return mox;
 }
 
 void radio_set_vox(int state) {
-  //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox,vox,tune,state);
+  //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   if (!can_transmit) { return; }
 
   if (mox || tune) { return; }
@@ -2594,7 +2594,7 @@ void radio_set_vox(int state) {
 }
 
 void radio_set_tune(int state) {
-  t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox, vox, tune, state);
+  t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox, vox, tune, state);
 
   if (!can_transmit) { return; }
 
@@ -2809,8 +2809,8 @@ void radio_set_tune(int state) {
         set_drive(transmitter->stored_drive);
       }
 
-      t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-      t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
+      t_print("%s: stored drive level: %.1f\n", __func__, transmitter->stored_drive);
+      t_print("%s: current drive level: %.1f\n", __func__, radio_get_drive());
 #endif
 #if defined (__AUTOG__)
 
@@ -2827,15 +2827,15 @@ void radio_set_tune(int state) {
   schedule_receive_specific();
 }
 
-int radio_get_tune() {
+int radio_get_tune(void){
   return tune;
 }
 
-int radio_is_transmitting() {
+int radio_is_transmitting(void){
   return mox | vox | tune;
 }
 
-double radio_get_drive() {
+double radio_get_drive(void){
   if (can_transmit) {
     return transmitter->drive;
   } else {
@@ -2864,7 +2864,7 @@ static int calcLevel(double d) {
   return level;
 }
 
-void radio_calc_drive_level() {
+void radio_calc_drive_level(void){
   int level;
 
   if (!can_transmit) { return; }
@@ -2961,21 +2961,21 @@ void radio_calc_drive_level() {
   }
 
   //if (transmitter->do_scale) {
-  //  t_print("%s: Level=%d Fac=%f\n", __FUNCTION__, transmitter->drive_level, transmitter->drive_scale);
+  //  t_print("%s: Level=%d Fac=%f\n", __func__, transmitter->drive_level, transmitter->drive_scale);
   //} else {
-  //  t_print("%s: Level=%d\n", __FUNCTION__, transmitter->drive_level);
+  //  t_print("%s: Level=%d\n", __func__, transmitter->drive_level);
   //}
   schedule_high_priority();
 }
 
 void radio_set_drive(double value) {
-  t_print("%s: drive=%f\n", __FUNCTION__, value);
+  t_print("%s: drive=%f\n", __func__, value);
 
   if (!can_transmit) { return; }
 
 #if defined (__HAVEATU__)
   transmitter->drive = (double) value;
-  t_print("%s: transmitter_drive: %f\n", __FUNCTION__, (double) transmitter->drive);
+  t_print("%s: transmitter_drive: %f\n", __func__, (double) transmitter->drive);
 #else
   transmitter->drive = value;
 #endif
@@ -3004,7 +3004,7 @@ void radio_set_rf_gain(const RECEIVER *rx) {
 #endif
 }
 
-void radio_set_alex_antennas() {
+void radio_set_alex_antennas(void){
   //
   // Obtain band of VFO-A and transmitter, set ALEX RX/TX antennas
   // and the step attenuator
@@ -3032,7 +3032,7 @@ void radio_set_alex_antennas() {
   schedule_general();               // possibly update PA disable
 }
 
-void radio_tx_vfo_changed() {
+void radio_tx_vfo_changed(void){
   //
   // When changing the active receiver or changing the split status,
   // the VFO that controls the transmitter my flip between VFOA/VFOB.
@@ -3072,7 +3072,7 @@ void radio_set_alex_attenuation(int v) {
   schedule_high_priority();
 }
 
-void radio_split_toggle() {
+void radio_split_toggle(void){
   radio_set_split(!split);
 }
 
@@ -3091,8 +3091,8 @@ void radio_set_split(int val) {
   }
 }
 
-static void radio_restore_state() {
-  t_print("%s: path=%s\n", __FUNCTION__, property_path);
+static void radio_restore_state(void){
+  t_print("%s: path=%s\n", __func__, property_path);
   g_mutex_lock(&property_mutex);
   loadProperties(property_path);
   //
@@ -3323,12 +3323,12 @@ static void radio_restore_state() {
 #ifdef MIDI
   midiRestoreState();
 #endif
-  t_print("%s: radio state (except receiver/transmitter) restored.\n", __FUNCTION__);
+  t_print("%s: radio state (except receiver/transmitter) restored.\n", __func__);
 
   if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
                      device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2)) {
     reassign_pa_trim();
-    t_print("%s: using HL2: re-assign pa_trim[]\n", __FUNCTION__);
+    t_print("%s: using HL2: re-assign pa_trim[]\n", __func__);
   }
 
   //
@@ -3354,7 +3354,7 @@ static void radio_restore_state() {
   g_mutex_unlock(&property_mutex);
 }
 
-void radio_save_state() {
+void radio_save_state(void){
   g_mutex_lock(&property_mutex);
   clearProperties();
 
@@ -3666,7 +3666,7 @@ void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int span
 // (xvtr bands are not counted here)
 //
 
-int radio_max_band() {
+int radio_max_band(void){
   int max = BANDS - 1;
 
   switch (device) {
@@ -3690,7 +3690,7 @@ int radio_max_band() {
   return max;
 }
 
-void radio_protocol_stop() {
+void radio_protocol_stop(void){
   //
   // paranoia ...
   //
@@ -3714,7 +3714,7 @@ void radio_protocol_stop() {
   }
 }
 
-void radio_protocol_run() {
+void radio_protocol_run(void){
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     old_protocol_run();
@@ -3732,7 +3732,7 @@ void radio_protocol_run() {
   }
 }
 
-void radio_protocol_restart() {
+void radio_protocol_restart(void){
   radio_protocol_stop();
   usleep(200000);
   radio_protocol_run();
@@ -3779,7 +3779,7 @@ static gpointer auto_tune_thread(gpointer data) {
   return NULL;
 }
 
-void radio_start_auto_tune() {
+void radio_start_auto_tune(void){
   static GThread *tune_thread_id = NULL;
 
   if (tune_thread_id) {
@@ -3796,7 +3796,7 @@ void radio_start_auto_tune() {
 // The next four functions implement a temporary change
 // of settings during capture/replay.
 //
-void radio_start_capture() {
+void radio_start_capture(void){
   //
   // - turn off  equalizers for both RX but keep the state in rx
   //
@@ -3808,7 +3808,7 @@ void radio_start_capture() {
   }
 }
 
-void radio_end_capture() {
+void radio_end_capture(void){
   //
   // - normalize what has been captured
   // - restore  RX equalizer on/off flags
@@ -3826,7 +3826,7 @@ void radio_end_capture() {
     if (t > max) { max = t; }
   }
 
-  //t_print("%s: max=%f\n", __FUNCTION__, max);
+  //t_print("%s: max=%f\n", __func__, max);
 
   if (max > 0.05) {
     //
@@ -3848,19 +3848,19 @@ void radio_end_capture() {
   }
 }
 
-void radio_start_xmit_captured_data() {
+void radio_start_xmit_captured_data(void){
   if (can_transmit) {
     tx_xmit_captured_data_start(transmitter);
   }
 }
 
-void radio_end_xmit_captured_data() {
+void radio_end_xmit_captured_data(void){
   if (can_transmit) {
     tx_xmit_captured_data_end(transmitter);
   }
 }
 
-void radio_start_playback() {
+void radio_start_playback(void){
   //
   // - turn off TX equalizer   but keep equalizer  info in transmitter->eq_enable
   // - turn off TX compression but keep compressor info in transmitter->compression
@@ -3898,7 +3898,7 @@ void radio_start_playback() {
   transmitter->phrot_enable = phrot_enable;
 }
 
-void radio_end_playback() {
+void radio_end_playback(void){
   //
   // re-inforce settings stored in transmitter:
   // - TX equalizer on/off

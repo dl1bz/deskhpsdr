@@ -258,9 +258,9 @@ static void get_info(char *driver) {
     discovered[devices].info.soapy.rx_range = malloc(rx_gains_length * sizeof(SoapySDRRange));
 
     for (size_t i = 0; i < rx_gains_length; i++) {
-      t_print("%s: RX rx_gains_length %d gain %s\n", __FUNCTION__, (int)rx_gains_length, rx_gains[i]);
+      t_print("%s: RX rx_gains_length %d gain %s\n", __func__, (int)rx_gains_length, rx_gains[i]);
       SoapySDRRange rx_range = SoapySDRDevice_getGainElementRange(sdr, SOAPY_SDR_RX, 0, rx_gains[i]);
-      t_print("%s: RX gain available: %s, %f -> %f step=%f\n", __FUNCTION__, rx_gains[i], rx_range.minimum, rx_range.maximum,
+      t_print("%s: RX gain available: %s, %f -> %f step=%f\n", __func__, rx_gains[i], rx_range.minimum, rx_range.maximum,
               rx_range.step);
       discovered[devices].info.soapy.rx_range[i] = rx_range;
     }
@@ -307,14 +307,14 @@ static void get_info(char *driver) {
   free(ranges);
 }
 
-void soapy_discovery() {
+void soapy_discovery(void){
   size_t length;
   SoapySDRKwargs input_args = {};
-  t_print("%s\n", __FUNCTION__);
+  t_print("%s\n", __func__);
   rtlsdr_count = 0;
   SoapySDRKwargs_set(&input_args, "hostname", "pluto.local");
   SoapySDRKwargs *results = SoapySDRDevice_enumerate(&input_args, &length);
-  t_print("%s: length=%d\n", __FUNCTION__, (int)length);
+  t_print("%s: length=%d\n", __func__, (int)length);
 
   for (size_t i = 0; i < length; i++) {
     for (size_t j = 0; j < results[i].size; j++) {

@@ -146,6 +146,8 @@ endif
 
 # global compiler directives
 CFLAGS += -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations -Wcast-align
+# only for code check
+# CFLAGS += -Wstrict-prototypes -Wold-style-definition
 
 # ifneq (,$(findstring arm,$(ARCH)))
 # 	CFLAGS += -Wformat=2 -Wshadow -Wpointer-arith -Wcast-qual -Wnull-dereference -Wshorten-64-to-32 -Wvla

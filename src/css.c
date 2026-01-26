@@ -515,7 +515,7 @@ char *css =
   "    }\n"
   ;
 
-void load_css() {
+void load_css(void){
   GtkCssProvider *provider = gtk_css_provider_new();
   GdkDisplay *display = gdk_display_get_default();
   GdkScreen *screen = gdk_display_get_default_screen(display);
@@ -527,19 +527,19 @@ void load_css() {
   gtk_css_provider_load_from_path(provider, css_filename, &error);
 
   if (!error) {
-    t_print("%s: CSS data loaded from file %s\n", __FUNCTION__, css_filename);
+    t_print("%s: CSS data loaded from file %s\n", __func__, css_filename);
   } else {
     t_print("%s: failed to load CSS data from file %s: %s\n",
-            __FUNCTION__, css_filename, extract_short_msg(error->message));
+            __func__, css_filename, extract_short_msg(error->message));
     g_clear_error(&error);
     // 2. Laden aus Hardcoded-String
     gtk_css_provider_load_from_data(provider, css, -1, &error);
 
     if (!error) {
-      t_print("%s: hard-coded CSS data successfully loaded\n", __FUNCTION__);
+      t_print("%s: hard-coded CSS data successfully loaded\n", __func__);
     } else {
       t_print("%s: failed to load hard-coded CSS data: %s\n",
-              __FUNCTION__, extract_short_msg(error->message));
+              __func__, extract_short_msg(error->message));
       g_clear_error(&error);
     }
   }
@@ -551,14 +551,14 @@ void save_css(GtkWidget *widget, gpointer data) {
   FILE *file = fopen(css_filename, "w");
 
   if (file == NULL) {
-    t_print("%s: Error opening %s for writing\n", __FUNCTION__, css_filename);
+    t_print("%s: Error opening %s for writing\n", __func__, css_filename);
     return;
   }
 
   if (fputs(css, file) == EOF) {
-    t_print("%s: Error writing to %s\n", __FUNCTION__, css_filename);
+    t_print("%s: Error writing to %s\n", __func__, css_filename);
   } else {
-    t_print("%s: Hard-coded CSS successfully written to %s\n", __FUNCTION__, css_filename);
+    t_print("%s: Hard-coded CSS successfully written to %s\n", __func__, css_filename);
   }
 
   fclose(file);
@@ -571,9 +571,9 @@ void remove_css(GtkWidget *widget, gpointer data) {
   int rc = remove(css_filename);
 
   if (rc == 0) {
-    t_print("%s: %s successfully deleted\n", __FUNCTION__, css_filename);
+    t_print("%s: %s successfully deleted\n", __func__, css_filename);
   } else {
-    t_print("%s: Error deleting %s\n", __FUNCTION__, css_filename);
+    t_print("%s: Error deleting %s\n", __func__, css_filename);
   }
 
   load_css();

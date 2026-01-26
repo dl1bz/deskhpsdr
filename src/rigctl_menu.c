@@ -48,7 +48,7 @@ static GtkWidget *rigctl_andromeda_btn;
 static GtkWidget *rigctl_port_select;
 static GtkWidget *tci_port_select;
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -59,7 +59,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -252,7 +252,7 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
     g_idle_add(rigctl_reload_menu, NULL); // execute in main thread
   }
 
-  t_print("%s: Serial enable : ID=%d Enabled=%d\n", __FUNCTION__, id, SerialPorts[id].enable);
+  t_print("%s: Serial enable : ID=%d Enabled=%d\n", __func__, id, SerialPorts[id].enable);
 }
 
 // Set Baud Rate
@@ -299,7 +299,7 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
   SerialPorts[id].baud = new;
 
   if (SerialPorts[id].enable) {
-    t_print("%s: closing/re-opening serial port %s\n", __FUNCTION__, SerialPorts[id].port);
+    t_print("%s: closing/re-opening serial port %s\n", __func__, SerialPorts[id].port);
     disable_serial_rigctl(id);
 
     if (launch_serial_rigctl(id) == 0) {
@@ -308,7 +308,7 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
     }
   }
 
-  t_print("%s: Baud rate changed: Port=%s Baud=%d\n", __FUNCTION__, SerialPorts[id].port, SerialPorts[id].baud);
+  t_print("%s: Baud rate changed: Port=%s Baud=%d\n", __func__, SerialPorts[id].port, SerialPorts[id].baud);
 }
 
 void rigctl_menu(GtkWidget *parent) {

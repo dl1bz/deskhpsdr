@@ -48,11 +48,11 @@
 static GtkWidget *i2c_sw_text[16];
 
 static void response_event(GtkWidget *dialog, int id, gpointer user_data) {
-  t_print("%s: id=%d\n", __FUNCTION__, id);
+  t_print("%s: id=%d\n", __func__, id);
 
   if (id == GTK_RESPONSE_ACCEPT) {
     gpioSaveState();
-    t_print("%s: ACCEPT\n", __FUNCTION__);
+    t_print("%s: ACCEPT\n", __func__);
   }
 
   gtk_widget_destroy(dialog);

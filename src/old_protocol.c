@@ -278,7 +278,7 @@ static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
 
     if (oldv != c4) {
       atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
-      t_print("%s: HL2IOB (fastpath): C4 0x%02X -> 0x%02X\n", __FUNCTION__, oldv, c4);
+      t_print("%s: HL2IOB (fastpath): C4 0x%02X -> 0x%02X\n", __func__, oldv, c4);
     }
 
     // Stop fast-poll when tune is done (0x00) or error (>=0xF0)
@@ -309,9 +309,9 @@ int hl2_iob_is_present(void) {
 void hl2_iob_set_antenna_tuner(unsigned char value) {
 #ifdef __AH4IOB__
   int present = atomic_load_explicit(&hl2_iob_present, memory_order_relaxed);
-  t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __FUNCTION__, value, present);
+  t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __func__, value, present);
 #else
-  t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __FUNCTION__, value, hl2_iob_present);
+  t_print("%s: HL2IOB: set antenna_tuner = 0x%02X hl2_iob_present = %d\n", __func__, value, hl2_iob_present);
 #endif
   unsigned char buffer[OZY_BUFFER_SIZE];
   int i;
@@ -436,7 +436,7 @@ void old_protocol_update_timing(void) {
   int receivers = how_many_receivers();
   atomic_store_explicit(&sr, sr_local, memory_order_relaxed);
   t_print("%s: SR=%dk RX=%d\n",
-          __FUNCTION__, sr_local / 1000, receivers);
+          __func__, sr_local / 1000, receivers);
 }
 #endif
 
@@ -446,7 +446,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   struct timespec target_time;
   clock_gettime(CLOCK_MONOTONIC, &target_time);  // Startzeitpunkt initialisieren
   old_protocol_update_timing();
-  t_print("%s: sr=%d\n", __FUNCTION__, atomic_load_explicit(&sr, memory_order_relaxed));
+  t_print("%s: sr=%d\n", __func__, atomic_load_explicit(&sr, memory_order_relaxed));
 
   for (;;) {
     sem_wait(txring_sem);
@@ -627,7 +627,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
 
 #endif
 
-void old_protocol_stop() {
+void old_protocol_stop(void){
   //
   // Mutex is needed since in the TCP case, sending TX IQ packets
   // must not occur while the "stop" packet is sent.
@@ -635,15 +635,15 @@ void old_protocol_stop() {
   //
   if (device == DEVICE_OZY) { return; }
 
-  t_print("%s\n", __FUNCTION__);
+  t_print("%s\n", __func__);
   pthread_mutex_lock(&send_ozy_mutex);
   P1running = 0;
   metis_start_stop(0);
   pthread_mutex_unlock(&send_ozy_mutex);
 }
 
-void old_protocol_run() {
-  t_print("%s\n", __FUNCTION__);
+void old_protocol_run(void){
+  t_print("%s\n", __func__);
   pthread_mutex_lock(&send_ozy_mutex);
   metis_restart();
   pthread_mutex_unlock(&send_ozy_mutex);
@@ -667,9 +667,9 @@ void old_protocol_init(int rate) {
   atomic_init(&sr,          0);
 #endif
   atomic_init(&mic_sample_divisor, 1);
-  t_print("%s: num_hpsdr_receivers=%d\n", __FUNCTION__, how_many_receivers());
-  t_print("%s: RX ring buffer size: %d bytes\n", __FUNCTION__, RXRINGBUFLEN);
-  t_print("%s: TX ring buffer size: %d bytes\n", __FUNCTION__, TXRINGBUFLEN);
+  t_print("%s: num_hpsdr_receivers=%d\n", __func__, how_many_receivers());
+  t_print("%s: RX ring buffer size: %d bytes\n", __func__, RXRINGBUFLEN);
+  t_print("%s: TX ring buffer size: %d bytes\n", __func__, TXRINGBUFLEN);
 
   if (TXRINGBUF == NULL) {
     TXRINGBUF = g_new(unsigned char, TXRINGBUFLEN);
@@ -694,7 +694,7 @@ void old_protocol_init(int rate) {
 
   if (!txring_sem || !rxring_sem) {
     t_print("%s: apple_sem() failed (txring_sem=%p rxring_sem=%p)\n",
-            __FUNCTION__, (void*)txring_sem, (void*)rxring_sem);
+            __func__, (void*)txring_sem, (void*)rxring_sem);
     return;
   }
 
@@ -763,7 +763,7 @@ void old_protocol_init(int rate) {
 // EP4 is the bandscope endpoint (not yet used)
 // EP6 is the "normal" USB frame endpoint
 //
-static void start_usb_receive_threads() {
+static void start_usb_receive_threads(void){
   t_print("old_protocol starting USB receive thread\n");
   g_thread_new( "OZYEP6", ozy_ep6_rx_thread, NULL);
   g_thread_new( "OZYI2C", ozy_i2c_thread, NULL);
@@ -864,7 +864,7 @@ static gpointer ozy_ep6_rx_thread(gpointer arg) {
     //
     if (!P1running) { continue; }
 
-    //t_print("%s: read %d bytes\n",__FUNCTION__,bytes);
+    //t_print("%s: read %d bytes\n",__func__,bytes);
     if (bytes == 0) {
       t_print("old_protocol_ep6_read: ozy_read returned 0 bytes... retrying\n");
       continue;
@@ -884,7 +884,7 @@ static gpointer ozy_ep6_rx_thread(gpointer arg) {
 
 #endif
 
-static void open_udp_socket() {
+static void open_udp_socket(void){
   int tmp;
 
   if (data_socket >= 0) {
@@ -1006,11 +1006,11 @@ static void open_udp_socket() {
   // Set value of data_socket only after everything succeeded
   //
   data_socket = tmp;
-  t_print("%s: UDP socket established: %d for %s:%d\n", __FUNCTION__, data_socket, inet_ntoa(data_addr.sin_addr),
+  t_print("%s: UDP socket established: %d for %s:%d\n", __func__, data_socket, inet_ntoa(data_addr.sin_addr),
           ntohs(data_addr.sin_port));
 }
 
-static void open_tcp_socket() {
+static void open_tcp_socket(void){
   int tmp;
 
   if (tcp_socket >= 0) {
@@ -1179,7 +1179,7 @@ static gpointer receive_thread(gpointer arg) {
 
           if (bytes_read < 0 && errno != EAGAIN) { t_perror("old_protocol recvfrom UDP:"); }
 
-          //t_print("%s: bytes_read=%d\n",__FUNCTION__,bytes_read);
+          //t_print("%s: bytes_read=%d\n",__func__,bytes_read);
         } else {
           //
           // This could happen in METIS start/stop sequences when using TCP
@@ -1416,7 +1416,7 @@ static gpointer receive_thread(gpointer arg) {
 //
 //
 
-static int rx_feedback_channel() {
+static int rx_feedback_channel(void){
   //
   // For radios with small FPGAS only supporting 2 RX, use RX1.
   // Else, use the last RX before the TX feedback channel.
@@ -1455,7 +1455,7 @@ static int rx_feedback_channel() {
   return ret;
 }
 
-static int tx_feedback_channel() {
+static int tx_feedback_channel(void){
   //
   // Radios with small FPGAs use RX2
   // HERMES uses RX4,
@@ -1574,7 +1574,7 @@ static long long channel_freq(int chan) {
   return freq;
 }
 
-static int how_many_receivers() {
+static int how_many_receivers(void){
   //
   // For DIVERSITY, we need at least two RX channels
   // When PureSignal is active, we need to include the TX DAC channel.
@@ -1651,7 +1651,7 @@ double right_sample_double_aux;
 static int nsamples;
 static int iq_samples;
 
-static void process_control_bytes() {
+static void process_control_bytes(void){
   int previous_ptt;
   int previous_dot;
   int previous_dash;
@@ -1703,10 +1703,10 @@ static void process_control_bytes() {
       control_in[2] == 0xF1 &&
       control_in[3] == 0xF1 &&
       control_in[4] == 0xF1) {
-      t_print("%s: HL2IOB: board detected\n", __FUNCTION__);
+      t_print("%s: HL2IOB: board detected\n", __func__);
 #ifdef __AH4IOB__
       atomic_store_explicit(&hl2_iob_present, 1, memory_order_relaxed);
-      t_print("%s: set hl2_iob_present = %d\n", __FUNCTION__,
+      t_print("%s: set hl2_iob_present = %d\n", __func__,
               atomic_load_explicit(&hl2_iob_present, memory_order_relaxed));
     } else if (present && addr == 0x3D) {
       atomic_store_explicit(&hl2_iob_tuner_status, control_in[4], memory_order_relaxed);
@@ -1715,7 +1715,7 @@ static void process_control_bytes() {
       //        atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed));
 #else
       hl2_iob_present = 1;
-      t_print("%s: set hl2_iob_present = %d\n", __FUNCTION__, hl2_iob_present);
+      t_print("%s: set hl2_iob_present = %d\n", __func__, hl2_iob_present);
     } else if (hl2_iob_present && addr == 0x3D) {
       //
       // 2) Alle weiteren I2C-Reads gehen ans IO-Board.
@@ -2118,7 +2118,7 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
 #ifdef __APPLE__
 
   if (nptr == out) {
-    t_print("%s: RX input buffer overflow — overwriting oldest buffer.\n", __FUNCTION__);
+    t_print("%s: RX input buffer overflow — overwriting oldest buffer.\n", __func__);
     // Ältestes Paket verwerfen, indem der out-pointer auf das nächste Element zeigt
     out = (out + 1024) % RXRINGBUFLEN;
     atomic_store_explicit(&rxring_outptr, out, memory_order_release);
@@ -2138,7 +2138,7 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
     atomic_store_explicit(&rxring_inptr, nptr, memory_order_release);
     sem_post(&rxring_sem);
   } else {
-    t_print("%s: input buffer overflow.\n", __FUNCTION__);
+    t_print("%s: input buffer overflow.\n", __func__);
     // if an overflow is encountered, skip the next 256 input buffers
     // to allow a "fresh start"
     atomic_store_explicit(&rxring_count, -256, memory_order_relaxed);
@@ -2265,7 +2265,7 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
         atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
         atomic_store_explicit(&txring_count, 0,   memory_order_relaxed);
       } else {
-        t_print("%s: output buffer overflow.\n", __FUNCTION__);
+        t_print("%s: output buffer overflow.\n", __func__);
         atomic_store_explicit(&txring_count, -TXRING_AUDIO_FRAMES_PER_BLOCK * 10, memory_order_relaxed);
       }
     }
@@ -2381,7 +2381,7 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
         atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
         atomic_store_explicit(&txring_count, 0,   memory_order_relaxed);
       } else {
-        t_print("%s: output buffer overflow.\n", __FUNCTION__);
+        t_print("%s: output buffer overflow.\n", __func__);
         atomic_store_explicit(&txring_count, -1260, memory_order_relaxed);
       }
     }
@@ -2418,7 +2418,7 @@ static inline unsigned char hl2_tx_latency_ms(int txvfo) {
   return 40;
 }
 
-void ozy_send_buffer() {
+void ozy_send_buffer(void){
   int txmode = vfo_get_tx_mode();
   int txvfo = vfo_get_tx_vfo();
   int rxvfo = active_receiver->id;
@@ -3471,9 +3471,9 @@ static void ozyusb_write(unsigned char* buffer, int length) {
 
   if (i != length) {
     if (i == USB_TIMEOUT) {
-      t_print("%s: ozy_write timeout for %d bytes\n", __FUNCTION__, length);
+      t_print("%s: ozy_write timeout for %d bytes\n", __func__, length);
     } else {
-      t_print("%s: ozy_write for %d bytes returned %d\n", __FUNCTION__, length, i);
+      t_print("%s: ozy_write for %d bytes returned %d\n", __func__, length, i);
     }
   }
 
@@ -3500,16 +3500,16 @@ static void ozyusb_write(unsigned char* buffer, int length) {
   // and write the 4 usb frames to the usb in one 2k packet
         i = ozy_write(EP2_OUT_ID,usb_output_buffer,EP6_BUFFER_SIZE);
 
-        //t_print("%s: written %d\n",__FUNCTION__,i);
+        //t_print("%s: written %d\n",__func__,i);
 
         if(i != EP6_BUFFER_SIZE)
         {
           if(i==USB_TIMEOUT) {
             while(i==USB_TIMEOUT) {
-              t_print("%s: USB_TIMEOUT: ozy_write ...\n",__FUNCTION__);
+              t_print("%s: USB_TIMEOUT: ozy_write ...\n",__func__);
               i = ozy_write(EP2_OUT_ID,usb_output_buffer,EP6_BUFFER_SIZE);
             }
-            t_print("%s: ozy_write TIMEOUT\n",__FUNCTION__);
+            t_print("%s: ozy_write TIMEOUT\n",__func__);
           } else {
             t_perror("old_protocol: OzyWrite ozy failed");
           }
@@ -3583,9 +3583,9 @@ static int metis_write(unsigned char ep, unsigned const char* buffer, int length
   return length;
 }
 
-static void metis_restart() {
+static void metis_restart(void){
   int i;
-  t_print("%s\n", __FUNCTION__);
+  t_print("%s\n", __func__);
 
   //
   // In TCP-ONLY mode, we possibly need to re-connect
@@ -3639,7 +3639,7 @@ static void metis_restart() {
 static void metis_start_stop(int command) {
   int i;
   unsigned char buffer[1032];
-  t_print("%s: %d\n", __FUNCTION__, command);
+  t_print("%s: %d\n", __func__, command);
 #ifdef __APPLE__
   // Dynamische Anpassung von Puffergrößen und Sleep-Timing bei Start/Stop/Umschaltung
   sr = 48000 * mic_sample_divisor;
@@ -3669,14 +3669,14 @@ static void metis_start_stop(int command) {
     if (major_version > 15) {
       //-- start fix for Tahoe --
       // Send Start/Stop packet 3x to mitigate macOS first-UDP-drop
-      t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __FUNCTION__, major_version);
+      t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __func__, major_version);
 
       for (int n = 0; n < 3; n++) {
         metis_send_buffer(buffer, 64);
         usleep(30000); // 30 ms
       }
     } else {
-      t_print("%s: macOS major version: %d\n", __FUNCTION__, major_version);
+      t_print("%s: macOS major version: %d\n", __func__, major_version);
       metis_send_buffer(buffer, 64);
     }
 
@@ -3720,7 +3720,7 @@ static void metis_send_buffer(const unsigned char* buffer, int length) {
   // Send using either the UDP or TCP socket. Do not use TCP for
   // packets that are not 1032 bytes long
   //
-  //t_print("%s: length=%d\n",__FUNCTION__,length);
+  //t_print("%s: length=%d\n",__func__,length);
   if (tcp_socket >= 0) {
     if (length != 1032) {
       t_print("PROGRAMMING ERROR: TCP LENGTH != 1032\n");
@@ -3732,11 +3732,11 @@ static void metis_send_buffer(const unsigned char* buffer, int length) {
     }
   } else if (data_socket >= 0) {
     int bytes_sent;
-    //t_print("%s: sendto %d for %s:%d length=%d\n",__FUNCTION__,data_socket,inet_ntoa(data_addr.sin_addr),ntohs(data_addr.sin_port),length);
+    //t_print("%s: sendto %d for %s:%d length=%d\n",__func__,data_socket,inet_ntoa(data_addr.sin_addr),ntohs(data_addr.sin_port),length);
     bytes_sent = sendto(data_socket, buffer, length, 0, (struct sockaddr*)&data_addr, sizeof(data_addr));
 
     if (bytes_sent != length) {
-      t_print("%s: UDP sendto failed: %d: %s\n", __FUNCTION__, errno, strerror(errno));
+      t_print("%s: UDP sendto failed: %d: %s\n", __func__, errno, strerror(errno));
     }
   } else {
     // This should not happen

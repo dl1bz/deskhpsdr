@@ -39,7 +39,7 @@ static gulong atuwin_title_box_signal_id;
 static gulong atuwin_url_box_signal_id;
 static gulong atuwin_action_box_signal_id;
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -50,7 +50,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }

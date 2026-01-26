@@ -217,14 +217,14 @@ static mybuffer *get_my_buffer(int numlist) {
     num_buf[numlist]++;
   }
 
-  t_print("%s: number of buffer[%s] %s to %d\n", __FUNCTION__, desc,
+  t_print("%s: number of buffer[%s] %s to %d\n", __func__, desc,
           first ? "set" : "increased", num_buf[numlist]);
   // Mark the first buffer in list as used and return that one.
   buflist[numlist]->free = 0;
   return buflist[numlist];
 }
 
-void saturn_free_buffers() {
+void saturn_free_buffers(void){
   mybuffer *mybuf;
 
   for (int i = 0; i < MAXMYBUF; i++) {
@@ -269,7 +269,7 @@ bool CreateDynamicMemory(void) {                            // return true if er
   return Result;
 }
 
-void saturn_register_init() {
+void saturn_register_init(void){
   ESoftwareID ID;
   unsigned int Version = GetFirmwareVersion(&ID);
   //
@@ -309,7 +309,7 @@ bool is_already_running() {
   fp = popen("lsof /dev/xdma0_user | grep deskhpsdr", "r");
 
   if (fp == NULL) {
-    t_print("Failed to run command in %s\n", __FUNCTION__ );
+    t_print("Failed to run command in %s\n", __func__ );
     exit(1);
   }
 
@@ -324,7 +324,7 @@ bool is_already_running() {
 #define SATURNPRIMARYCONFIGID 4                         // "primary" configuration id
 #define VADDRPRODVERSIONREG 0XC004
 
-void saturn_discovery() {
+void saturn_discovery(void){
   struct stat sb;
 
   if (devices < MAX_DEVICES && stat("/dev/xdma0_user", &sb) == 0 && S_ISCHR(sb.st_mode)) {
@@ -458,19 +458,19 @@ void saturn_discovery() {
 static int DMADUCWritefile_fd = -1;               // DMA read file device
 static unsigned char* DUCIQBasePtr;               // ptr to DMA location in I/Q memory
 
-void saturn_init_duc_iq() {
+void saturn_init_duc_iq(void){
   // variables for DMA buffer
   //
   uint8_t* IQWriteBuffer = NULL;              // data for DMA to write to DUC
   uint32_t IQBufferSize = VDMADUCBUFFERSIZE;
-  t_print("%s: Initializing DUC I/Q data\n", __FUNCTION__);
+  t_print("%s: Initializing DUC I/Q data\n", __func__);
   //
   // setup DMA buffer
   //
   posix_memalign((void**)&IQWriteBuffer, VALIGNMENT, IQBufferSize);
 
   if (!IQWriteBuffer) {
-    t_print("%s: I/Q TX write buffer allocation failed\n", __FUNCTION__);
+    t_print("%s: I/Q TX write buffer allocation failed\n", __func__);
     exit(-1);
   }
 
@@ -483,7 +483,7 @@ void saturn_init_duc_iq() {
   DMADUCWritefile_fd = open(VDUCDMADEVICE, O_WRONLY);
 
   if (DMADUCWritefile_fd < 0) {
-    t_print("%s: XDMA write device open failed for TX I/Q data\n", __FUNCTION__);
+    t_print("%s: XDMA write device open failed for TX I/Q data\n", __func__);
     exit(-1);
   }
 
@@ -570,20 +570,20 @@ static unsigned char* SpkBasePtr;
 static unsigned char* SpkReadPtr;               // pointer for reading out a spkr sample
 static unsigned char* SpkHeadPtr;               // ptr to 1st free location in spk memory
 
-void saturn_init_speaker_audio() {
+void saturn_init_speaker_audio(void){
   //
   // variables for DMA buffer
   //
   uint8_t* SpkWriteBuffer = NULL;             // data for DMA to write to spkr
   uint32_t SpkBufferSize = VDMASPKBUFFERSIZE;
-  t_print("%s\n", __FUNCTION__);
+  t_print("%s\n", __func__);
   //
   // setup DMA buffer
   //
   posix_memalign((void**)&SpkWriteBuffer, VALIGNMENT, SpkBufferSize);
 
   if (!SpkWriteBuffer) {
-    t_print("%s: spkr write buffer allocation failed\n", __FUNCTION__);
+    t_print("%s: spkr write buffer allocation failed\n", __func__);
     exit(-1);
   }
 
@@ -598,7 +598,7 @@ void saturn_init_speaker_audio() {
   DMASpkWritefile_fd = open(VSPKDMADEVICE, O_WRONLY);
 
   if (DMASpkWritefile_fd < 0) {
-    t_print("%s: XDMA write device open failed for spk data\n", __FUNCTION__);
+    t_print("%s: XDMA write device open failed for spk data\n", __func__);
     exit(-1);
   }
 
@@ -653,11 +653,11 @@ void saturn_handle_speaker_audio(const uint8_t *UDPInBuffer) {
   return;
 }
 
-void saturn_exit() {
+void saturn_exit(void){
   //
   // clean exit
   //
-  t_print("%s: Exiting\n", __FUNCTION__);
+  t_print("%s: Exiting\n", __func__);
   Exiting = true;
   SDRActive = false;
   SetMOX(false);
@@ -673,12 +673,12 @@ void saturn_exit() {
 
 #define VHIGHPRIOTIYFROMSDRSIZE 60
 
-void start_saturn_high_priority_thread() {
-  t_print("%s: \n", __FUNCTION__);
+void start_saturn_high_priority_thread(void){
+  t_print("%s: \n", __func__);
   saturn_high_priority_thread_id = g_thread_new( "SATURN HP OUT", saturn_high_priority_thread, NULL);
 
   if (!saturn_high_priority_thread_id) {
-    t_print("%s: g_thread_new failed\n", __FUNCTION__);
+    t_print("%s: g_thread_new failed\n", __func__);
     exit(-1);
   }
 }
@@ -714,7 +714,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
     datagram.msg_iovlen = 1;
     datagram.msg_name = &DestAddr;                   // MAC addr & port to send to
     datagram.msg_namelen = sizeof(DestAddr);
-    t_print("starting %s\n", __FUNCTION__);
+    t_print("starting %s\n", __func__);
 
     //
     // this is the main loop. SDR is running. transfer data;
@@ -816,22 +816,22 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
     }
   }
 
-  t_print("ending: %s\n", __FUNCTION__);
+  t_print("ending: %s\n", __func__);
   return NULL;
 }
 
-void start_saturn_micaudio_thread() {
-  t_print("%s\n", __FUNCTION__);
+void start_saturn_micaudio_thread(void){
+  t_print("%s\n", __func__);
   saturn_micaudio_thread_id = g_thread_new( "SATURN MIC", saturn_micaudio_thread, NULL);
 
   if (!saturn_micaudio_thread_id) {
-    t_print("%s: g_thread_new failed\n", __FUNCTION__);
+    t_print("%s: g_thread_new failed\n", __func__);
     exit(-1);
   }
 }
 
 static gpointer saturn_micaudio_thread(gpointer arg) {
-  t_print( "%s\n", __FUNCTION__);
+  t_print( "%s\n", __func__);
   //
   // variables for DMA buffer
   //
@@ -857,7 +857,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
   posix_memalign((void**)&MicReadBuffer, VALIGNMENT, MicBufferSize);
 
   if (!MicReadBuffer) {
-    t_print("%s: mic read buffer allocation failed\n", __FUNCTION__);
+    t_print("%s: mic read buffer allocation failed\n", __func__);
     exit(-1);
   }
 
@@ -870,7 +870,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
   DMAReadfile_fd = open(VMICDMADEVICE, O_RDONLY);
 
   if (DMAReadfile_fd < 0) {
-    t_print("%s: XDMA read device open failed for mic data\n", __FUNCTION__);
+    t_print("%s: XDMA read device open failed for mic data\n", __func__);
     exit(-1);
   }
 
@@ -883,7 +883,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
   ResetDMAStreamFIFO(eMicCodecDMA);
   RegisterValue = ReadFIFOMonitorChannel(eMicCodecDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
                                          &Current);  // read the FIFO Depth register
-  t_print("%s: mic FIFO Depth register = %08x (should be ~0)\n", __FUNCTION__, RegisterValue);
+  t_print("%s: mic FIFO Depth register = %08x (should be ~0)\n", __func__, RegisterValue);
 
   //
   // planned strategy: just DMA mic data when available; don't copy and DMA a larger amount.
@@ -907,7 +907,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
     datagram.msg_iovlen = 1;
     datagram.msg_name = &DestAddr;                   // MAC addr & port to send to
     datagram.msg_namelen = sizeof(DestAddr);
-    t_print("starting %s\n", __FUNCTION__);
+    t_print("starting %s\n", __func__);
 
     while (SDRActive) {
       //
@@ -982,16 +982,16 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
     }
   }
 
-  t_print("ending: %s\n", __FUNCTION__);
+  t_print("ending: %s\n", __func__);
   return NULL;
 }
 
-void start_saturn_receive_thread() {
-  t_print("%s\n", __FUNCTION__);
+void start_saturn_receive_thread(void){
+  t_print("%s\n", __func__);
   saturn_rx_thread_id = g_thread_new( "SATURN RX", saturn_rx_thread, NULL);
 
   if (!saturn_rx_thread_id) {
-    t_print("%s: g_thread_new failed\n", __FUNCTION__);
+    t_print("%s: g_thread_new failed\n", __func__);
     exit(-1);
   }
 }
@@ -1000,7 +1000,7 @@ extern struct ThreadSocketData SocketData[VPORTTABLESIZE];
 extern struct sockaddr_in reply_addr;
 
 static gpointer saturn_rx_thread(gpointer arg) {
-  t_print( "%s\n", __FUNCTION__);
+  t_print( "%s\n", __func__);
   //
   // memory buffers
   //
@@ -1039,7 +1039,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
   DMATransferSize = VDMATRANSFERSIZE;                         // initial size, but can be changed
 
   if (CreateDynamicMemory()) {
-    t_print("%s: CreateDynamicMemory Failed\n", __FUNCTION__);
+    t_print("%s: CreateDynamicMemory Failed\n", __func__);
     exit(-1);
   }
 
@@ -1050,7 +1050,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
   IQReadfile_fd = open(VDDCDMADEVICE, O_RDONLY);
 
   if (IQReadfile_fd < 0) {
-    t_print("%s: XDMA read device open failed for DDC data\n", __FUNCTION__);
+    t_print("%s: XDMA read device open failed for DDC data\n", __func__);
     exit(-1);
   }
 
@@ -1067,7 +1067,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
   ResetDMAStreamFIFO(eRXDDCDMA);
   RegisterValue = ReadFIFOMonitorChannel(eRXDDCDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
                                          &Current); // read the FIFO Depth register
-  t_print("%s: DDC FIFO Depth register = %08x (should be ~0)\n", __FUNCTION__, RegisterValue);
+  t_print("%s: DDC FIFO Depth register = %08x (should be ~0)\n", __func__, RegisterValue);
   SetByteSwapping(true);                                            // h/w to generate network byte order
   //
   // thread loop. runs continuously until commanded by main loop to exit
@@ -1078,7 +1078,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
   //
   // enable Saturn DDC to transfer data
   //
-  t_print("%s: enable data transfer\n", __FUNCTION__);
+  t_print("%s: enable data transfer\n", __func__);
   SetRXDDCEnabled(true);
   HeaderFound = false;
 
@@ -1100,7 +1100,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
       datagram[DDC].msg_namelen = sizeof(DestAddr);
     }
 
-    t_print("starting %s\n", __FUNCTION__);
+    t_print("starting %s\n", __func__);
 
     while (SDRActive) {
       //
@@ -1236,7 +1236,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
         }
 
       if (HeaderFound == false) {                                      // if rate flag not set
-        t_print("%s: Rate word not found when expected. rate= %08x\n", __FUNCTION__, RateWord);
+        t_print("%s: Rate word not found when expected. rate= %08x\n", __func__, RateWord);
         exit(1);
       }
 
@@ -1253,7 +1253,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
 
       while (DecodeByteCount >= 16) {                     // minimum size to try!
         if (*(DMAReadPtr + 7) != 0x80) {
-          t_print("%s: header not found for rate word at addr %p\n", __FUNCTION__, DMAReadPtr);
+          t_print("%s: header not found for rate word at addr %p\n", __func__, DMAReadPtr);
           exit(1);
         } else {                                                                          // analyse word, then process
           // cppcheck-suppress constVariablePointer
@@ -1319,11 +1319,11 @@ static gpointer saturn_rx_thread(gpointer arg) {
     }
   }
 
-  t_print("ending: %s\n", __FUNCTION__);
+  t_print("ending: %s\n", __func__);
   return NULL;
 }
 
-void saturn_init() {
+void saturn_init(void){
   saturn_init_speaker_audio();
   saturn_init_duc_iq();
   start_saturn_receive_thread();
@@ -1735,10 +1735,10 @@ void saturn_handle_duc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
 //
 // Some functions calls to get the "allowed" SATURN FPGA version numbers
 //
-int saturn_minor_version_min() { return FIRMWARE_MIN_MINOR; }
+int saturn_minor_version_min(void){ return FIRMWARE_MIN_MINOR; }
 
-int saturn_minor_version_max() { return FIRMWARE_MAX_MINOR; }
+int saturn_minor_version_max(void){ return FIRMWARE_MAX_MINOR; }
 
-int saturn_major_version_min() { return FIRMWARE_MIN_MAJOR; }
+int saturn_major_version_min(void){ return FIRMWARE_MIN_MAJOR; }
 
-int saturn_major_version_max() { return FIRMWARE_MAX_MAJOR; }
+int saturn_major_version_max(void){ return FIRMWARE_MAX_MAJOR; }

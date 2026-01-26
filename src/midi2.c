@@ -54,7 +54,7 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
   struct desc *desc;
   int new;
 #ifdef MIDIDEBUG
-  t_print("%s:EVENT=%d CHAN=%d NOTE=%d VAL=%d\n", __FUNCTION__, event, channel, note, val);
+  t_print("%s:EVENT=%d CHAN=%d NOTE=%d VAL=%d\n", __func__, event, channel, note, val);
 #endif
 
   //
@@ -71,15 +71,15 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
     desc = MidiCommandsTable[note];
   }
 
-  //t_print("%s: init DESC=%p\n",__FUNCTION__,desc);
+  //t_print("%s: init DESC=%p\n",__func__,desc);
   while (desc) {
-    //t_print("%s: DESC=%p next=%p CHAN=%d EVENT=%d\n",__FUNCTION__,desc,desc->next,desc->channel,desc->event);
+    //t_print("%s: DESC=%p next=%p CHAN=%d EVENT=%d\n",__func__,desc,desc->next,desc->channel,desc->event);
     if ((desc->channel == channel || desc->channel == -1) && (desc->event == event)) {
       // Found matching entry
       switch (desc->event) {
       case EVENT_NONE:
         // this cannot happen
-        t_print("%s: Unknown Event\n", __FUNCTION__);
+        t_print("%s: Unknown Event\n", __func__);
         break;
 
       case MIDI_NOTE:
@@ -107,7 +107,7 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
           if ((val >= desc->vfr1) && (val <= desc->vfr2)) { new = 16; }
 
           //                      t_print("%s: WHEEL PARAMS: val=%d new=%d thrs=%d/%d, %d/%d, %d/%d, %d/%d, %d/%d, %d/%d\n",
-          //                               __FUNCTION__,
+          //                               __func__,
           //                               val, new, desc->vfl1, desc->vfl2, desc->fl1, desc->fl2, desc->lft1, desc->lft2,
           //                               desc->rgt1, desc->rgt2, desc->fr1, desc->fr2, desc->vfr1, desc->vfr2);
           if (new != 0) { DoTheMidi(desc->action, desc->type, new); }
@@ -132,11 +132,11 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
 
   if (!desc) {
     // Nothing found. This is nothing to worry about, but log the key to stderr
-    if (event == MIDI_PITCH) { t_print("%s: Unassigned PitchBend Value=%d\n", __FUNCTION__, val); }
+    if (event == MIDI_PITCH) { t_print("%s: Unassigned PitchBend Value=%d\n", __func__, val); }
 
-    if (event == MIDI_NOTE ) { t_print("%s: Unassigned Key Note=%d Val=%d\n", __FUNCTION__, note, val); }
+    if (event == MIDI_NOTE ) { t_print("%s: Unassigned Key Note=%d Val=%d\n", __func__, note, val); }
 
-    if (event == MIDI_CTRL ) { t_print("%s: Unassigned Controller Ctl=%d Val=%d\n", __FUNCTION__, note, val); }
+    if (event == MIDI_CTRL ) { t_print("%s: Unassigned Controller Ctl=%d Val=%d\n", __func__, note, val); }
   }
 }
 
@@ -144,7 +144,7 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
  * Release data from MidiCommandsTable
  */
 
-void MidiReleaseCommands() {
+void MidiReleaseCommands(void){
   int i;
   struct desc *loop, *new;
 
@@ -339,12 +339,12 @@ int ReadLegacyMidiFile(char *filename) {
   enum MIDIevent event;
   char c;
   MidiReleaseCommands();
-  t_print("%s: %s\n", __FUNCTION__, filename);
+  t_print("%s: %s\n", __func__, filename);
   fpin = fopen(filename, "r");
 
-  //t_print("%s: fpin=%p\n",__FUNCTION__,fpin);
+  //t_print("%s: fpin=%p\n",__func__,fpin);
   if (!fpin) {
-    t_print("%s: failed to open MIDI device\n", __FUNCTION__);
+    t_print("%s: failed to open MIDI device\n", __func__);
     return -1;
   }
 
@@ -375,7 +375,7 @@ int ReadLegacyMidiFile(char *filename) {
       cp++;
     }
 
-    //t_print("\n%s:INP:%s\n",__FUNCTION__,zeile);
+    //t_print("\n%s:INP:%s\n",__func__,zeile);
     chan = -1;                // default: any channel
     t1 = t2 = t3 = t4 = -1;   // default threshold values
     t5 = 0;
@@ -397,27 +397,27 @@ int ReadLegacyMidiFile(char *filename) {
       sscanf(cp + 4, "%d", &key);
       event = MIDI_NOTE;
       type = MIDI_KEY;
-      //t_print("%s: MIDI:KEY:%d\n",__FUNCTION__, key);
+      //t_print("%s: MIDI:KEY:%d\n",__func__, key);
     }
 
     if ((cp = strstr(zeile, "CTRL="))) {
       sscanf(cp + 5, "%d", &key);
       event = MIDI_CTRL;
       type = MIDI_KNOB;
-      //t_print("%s: MIDI:CTL:%d\n",__FUNCTION__, key);
+      //t_print("%s: MIDI:CTL:%d\n",__func__, key);
     }
 
     if ((cp = strstr(zeile, "PITCH "))) {
       event = MIDI_PITCH;
       type = MIDI_KNOB;
-      //t_print("%s: MIDI:PITCH\n",__FUNCTION__);
+      //t_print("%s: MIDI:PITCH\n",__func__);
     }
 
     //
     // If event is still undefined, skip line
     //
     if (event == EVENT_NONE) {
-      //t_print("%s: no event found: %s\n", __FUNCTION__, zeile);
+      //t_print("%s: no event found: %s\n", __func__, zeile);
       continue;
     }
 
@@ -434,19 +434,19 @@ int ReadLegacyMidiFile(char *filename) {
 
       if (chan < 0 || chan > 15) { chan = -1; }
 
-      //t_print("%s:CHAN:%d\n",__FUNCTION__,chan);
+      //t_print("%s:CHAN:%d\n",__func__,chan);
     }
 
     if ((cp = strstr(zeile, "WHEEL")) && (type == MIDI_KNOB)) {
       // change type from MIDI_KNOB to MIDI_WHEEL
       type = MIDI_WHEEL;
-      //t_print("%s:WHEEL\n",__FUNCTION__);
+      //t_print("%s:WHEEL\n",__func__);
     }
 
     if ((cp = strstr(zeile, "THR="))) {
       sscanf(cp + 4, "%d %d %d %d %d %d %d %d %d %d %d %d",
              &t1, &t2, &t3, &t4, &t5, &t6, &t7, &t8, &t9, &t10, &t11, &t12);
-      //t_print("%s: THR:%d/%d, %d/%d, %d/%d, %d/%d, %d/%d, %d/%d\n",__FUNCTION__,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12);
+      //t_print("%s: THR:%d/%d, %d/%d, %d/%d, %d/%d, %d/%d, %d/%d\n",__func__,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12);
     }
 
     if ((cp = strstr(zeile, "ACTION="))) {
@@ -487,12 +487,12 @@ int ReadLegacyMidiFile(char *filename) {
     // We have a linked list for each key value to speed up searches
     //
     if (event == MIDI_PITCH) {
-      //t_print("%s: Insert desc=%p in CMDS[128] table\n",__FUNCTION__,desc);
+      //t_print("%s: Insert desc=%p in CMDS[128] table\n",__func__,desc);
       MidiAddCommand(128, desc);
     }
 
     if (event == MIDI_NOTE || event == MIDI_CTRL) {
-      //t_print("%s: Insert desc=%p in CMDS[%d] table\n",__FUNCTION__,desc,key);
+      //t_print("%s: Insert desc=%p in CMDS[%d] table\n",__func__,desc,key);
       MidiAddCommand(key, desc);
     }
   }

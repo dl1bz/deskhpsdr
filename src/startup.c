@@ -113,7 +113,7 @@ void startup(const char *path) {
   // Most likely, piHPDSR is expected to run in the current working directory
   //
   if (writeable && found) {
-    t_print("%s: working directory not changed.\n", __FUNCTION__);
+    t_print("%s: working directory not changed.\n", __func__);
     return;
   }
 
@@ -132,7 +132,7 @@ void startup(const char *path) {
 
   if (homedir == NULL) {
     // non-recoverable error
-    t_print("%s: home dir not found, working directory not changed.\n", __FUNCTION__);
+    t_print("%s: home dir not found, working directory not changed.\n", __func__);
     return;
   }
 
@@ -178,7 +178,7 @@ void startup(const char *path) {
   //
   if (chdir(workdir) != 0) {
     // unrecoverable error, could not chdir to target
-    t_print("%s: Could not chdir to working dir %s\n", __FUNCTION__, workdir);
+    t_print("%s: Could not chdir to working dir %s\n", __func__, workdir);
     return;
   }
 
@@ -188,5 +188,5 @@ void startup(const char *path) {
   //
   (void) freopen("deskhpsdr.stdout", "w", stdout);
   (void) freopen("deskhpsdr.stderr", "w", stderr);
-  t_print("%s: working dir changed to %s\n", __FUNCTION__, workdir);
+  t_print("%s: working dir changed to %s\n", __func__, workdir);
 }

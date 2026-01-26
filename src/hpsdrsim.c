@@ -221,7 +221,7 @@ static struct sigaction sigterm_action;
 // a SIGINT or SIGTERM is received.
 // This restores terminal settings on stdin
 //
-void restore_terminal_attributes() {
+void restore_terminal_attributes(void){
   tcsetattr(0, TCSANOW, &tios_old);
 }
 

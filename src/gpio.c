@@ -106,9 +106,9 @@ void gpio_set_ptt(int state) {
 #ifdef GPIO
 
   if (pttout_line) {
-    //t_print("%s: state=%d\n", __FUNCTION__, state);
+    //t_print("%s: state=%d\n", __func__, state);
     if (gpiod_line_set_value(pttout_line, NOT(state)) < 0) {
-      t_print("%s failed: %s\n", __FUNCTION__, g_strerror(errno));
+      t_print("%s failed: %s\n", __func__, g_strerror(errno));
     }
   }
 
@@ -119,9 +119,9 @@ void gpio_set_cw(int state) {
 #ifdef GPIO
 
   if (cwout_line) {
-    //t_print("%s: state=%d\n", __FUNCTION__, state);
+    //t_print("%s: state=%d\n", __func__, state);
     if (gpiod_line_set_value(cwout_line, NOT(state)) < 0) {
-      t_print("%s failed: %s\n", __FUNCTION__, g_strerror(errno));
+      t_print("%s failed: %s\n", __func__, g_strerror(errno));
     }
   }
 
@@ -501,13 +501,13 @@ SWITCH *switches = NULL;
 static GThread *rotary_encoder_thread_id;
 static uint64_t epochMilli;
 
-static void initialiseEpoch() {
+static void initialiseEpoch(void){
   struct timespec ts ;
   clock_gettime (CLOCK_MONOTONIC_RAW, &ts) ;
   epochMilli = (uint64_t)ts.tv_sec * (uint64_t)1000    + (uint64_t)(ts.tv_nsec / 1000000L) ;
 }
 
-static unsigned int millis () {
+static unsigned int millis(void){
   uint64_t now ;
   struct  timespec ts ;
   clock_gettime (CLOCK_MONOTONIC_RAW, &ts) ;
@@ -521,14 +521,14 @@ static gpointer rotary_encoder_thread(gpointer data) {
   enum ACTION_MODE mode;
   int val;
   usleep(250000);
-  t_print("%s\n", __FUNCTION__);
+  t_print("%s\n", __func__);
 
   while (TRUE) {
     g_mutex_lock(&encoder_mutex);
 
     for (i = 0; i < MAX_ENCODERS; i++) {
       if (encoders[i].bottom_encoder_enabled && encoders[i].bottom_encoder_pos != 0) {
-        //t_print("%s: BOTTOM encoder %d pos=%d\n",__FUNCTION__,i,encoders[i].bottom_encoder_pos);
+        //t_print("%s: BOTTOM encoder %d pos=%d\n",__func__,i,encoders[i].bottom_encoder_pos);
         action = encoders[i].bottom_encoder_function;
         mode = RELATIVE;
         val = encoders[i].bottom_encoder_pos;
@@ -537,7 +537,7 @@ static gpointer rotary_encoder_thread(gpointer data) {
       }
 
       if (encoders[i].top_encoder_enabled && encoders[i].top_encoder_pos != 0) {
-        //t_print("%s: TOP encoder %d pos=%d\n",__FUNCTION__,i,encoders[i].top_encoder_pos);
+        //t_print("%s: TOP encoder %d pos=%d\n",__func__,i,encoders[i].top_encoder_pos);
         action = encoders[i].top_encoder_function;
         mode = RELATIVE;
         val = encoders[i].top_encoder_pos;
@@ -555,7 +555,7 @@ static gpointer rotary_encoder_thread(gpointer data) {
 
 static void process_encoder(int e, int l, int addr, int val) {
   guchar pinstate;
-  //t_print("%s: encoder=%d level=%d addr=0x%02X val=%d\n",__FUNCTION__,e,l,addr,val);
+  //t_print("%s: encoder=%d level=%d addr=0x%02X val=%d\n",__func__,e,l,addr,val);
   g_mutex_lock(&encoder_mutex);
 
   switch (l) {
@@ -566,7 +566,7 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].bottom_encoder_b_value << 1) | encoders[e].bottom_encoder_a_value;
       encoders[e].bottom_encoder_state = encoder_state_table[encoders[e].bottom_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].bottom_encoder_state);
+      //t_print("%s: state=%02X\n",__func__,encoders[e].bottom_encoder_state);
       switch (encoders[e].bottom_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -583,7 +583,7 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d BOTTOM pos=%d\n",__FUNCTION__,e,encoders[e].bottom_encoder_pos);
+      //t_print("%s: %d BOTTOM pos=%d\n",__func__,e,encoders[e].bottom_encoder_pos);
       break;
 
     case B:
@@ -591,7 +591,7 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].bottom_encoder_b_value << 1) | encoders[e].bottom_encoder_a_value;
       encoders[e].bottom_encoder_state = encoder_state_table[encoders[e].bottom_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].bottom_encoder_state);
+      //t_print("%s: state=%02X\n",__func__,encoders[e].bottom_encoder_state);
       switch (encoders[e].bottom_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -608,7 +608,7 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d BOTTOM pos=%d\n",__FUNCTION__,e,encoders[e].bottom_encoder_pos);
+      //t_print("%s: %d BOTTOM pos=%d\n",__func__,e,encoders[e].bottom_encoder_pos);
       break;
     }
 
@@ -621,7 +621,7 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].top_encoder_b_value << 1) | encoders[e].top_encoder_a_value;
       encoders[e].top_encoder_state = encoder_state_table[encoders[e].top_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].top_encoder_state);
+      //t_print("%s: state=%02X\n",__func__,encoders[e].top_encoder_state);
       switch (encoders[e].top_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -638,7 +638,7 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d TOP pos=%d\n",__FUNCTION__,e,encoders[e].top_encoder_pos);
+      //t_print("%s: %d TOP pos=%d\n",__func__,e,encoders[e].top_encoder_pos);
       break;
 
     case B:
@@ -646,7 +646,7 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].top_encoder_b_value << 1) | encoders[e].top_encoder_a_value;
       encoders[e].top_encoder_state = encoder_state_table[encoders[e].top_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].top_encoder_state);
+      //t_print("%s: state=%02X\n",__func__,encoders[e].top_encoder_state);
       switch (encoders[e].top_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -663,7 +663,7 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d TOP pos=%d\n",__FUNCTION__,e,encoders[e].top_encoder_pos);
+      //t_print("%s: %d TOP pos=%d\n",__func__,e,encoders[e].top_encoder_pos);
       break;
     }
 
@@ -677,7 +677,7 @@ static void process_edge(int offset, int value) {
   int i;
   unsigned int t;
   gboolean found;
-  //t_print("%s: offset=%d value=%d\n",__FUNCTION__,offset,value);
+  //t_print("%s: offset=%d value=%d\n",__func__,offset,value);
   found = FALSE;
 
   //
@@ -685,30 +685,30 @@ static void process_edge(int offset, int value) {
   //
   for (i = 0; i < MAX_ENCODERS; i++) {
     if (encoders[i].bottom_encoder_enabled && encoders[i].bottom_encoder_address_a == offset) {
-      //t_print("%s: found %d encoder %d bottom A\n",__FUNCTION__,offset,i);
+      //t_print("%s: found %d encoder %d bottom A\n",__func__,offset,i);
       process_encoder(i, BOTTOM_ENCODER, A, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].bottom_encoder_enabled && encoders[i].bottom_encoder_address_b == offset) {
-      //t_print("%s: found %d encoder %d bottom B\n",__FUNCTION__,offset,i);
+      //t_print("%s: found %d encoder %d bottom B\n",__func__,offset,i);
       process_encoder(i, BOTTOM_ENCODER, B, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].top_encoder_enabled && encoders[i].top_encoder_address_a == offset) {
-      //t_print("%s: found %d encoder %d top A\n",__FUNCTION__,offset,i);
+      //t_print("%s: found %d encoder %d top A\n",__func__,offset,i);
       process_encoder(i, TOP_ENCODER, A, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].top_encoder_enabled && encoders[i].top_encoder_address_b == offset) {
-      //t_print("%s: found %d encoder %d top B\n",__FUNCTION__,offset,i);
+      //t_print("%s: found %d encoder %d top B\n",__func__,offset,i);
       process_encoder(i, TOP_ENCODER, B, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].switch_enabled && encoders[i].switch_address == offset) {
-      //t_print("%s: found %d encoder %d switch\n",__FUNCTION__,offset,i);
+      //t_print("%s: found %d encoder %d switch\n",__func__,offset,i);
       t = millis();
 
-      //t_print("%s: found %d encoder %d switch value=%d t=%u\n",__FUNCTION__,offset,i,value,t);
+      //t_print("%s: found %d encoder %d switch value=%d t=%u\n",__func__,offset,i,value,t);
       if (t < encoders[i].switch_debounce) {
         return;
       }
@@ -769,14 +769,14 @@ static void process_edge(int offset, int value) {
   for (i = 0; i < MAX_SWITCHES; i++) {
     if (switches[i].switch_enabled && switches[i].switch_address == offset) {
       t = millis();
-      //t_print("%s: found %d switch %d value=%d t=%u\n",__FUNCTION__,offset,i,value,t);
+      //t_print("%s: found %d switch %d value=%d t=%u\n",__func__,offset,i,value,t);
       found = TRUE;
 
       if (t < switches[i].switch_debounce) {
         return;
       }
 
-      //t_print("%s: switches=%p function=%d (%s)\n",__FUNCTION__,switches,switches[i].switch_function,sw_string[switches[i].switch_function]);
+      //t_print("%s: switches=%p function=%d (%s)\n",__func__,switches,switches[i].switch_function,sw_string[switches[i].switch_function]);
       switches[i].switch_debounce = t + settle_time;
       schedule_action(switches[i].switch_function, value, 0);
       break;
@@ -785,25 +785,25 @@ static void process_edge(int offset, int value) {
 
   if (found) { return; }
 
-  t_print("%s: could not find %d\n", __FUNCTION__, offset);
+  t_print("%s: could not find %d\n", __func__, offset);
 }
 
 // cppcheck-suppress constParameterCallback
 static int interrupt_cb(int event_type, unsigned int line, const struct timespec *timeout, void* data) {
-  //t_print("%s: event=%d line=%d\n",__FUNCTION__,event_type,line);
+  //t_print("%s: event=%d line=%d\n",__func__,event_type,line);
   switch (event_type) {
   case GPIOD_CTXLESS_EVENT_CB_TIMEOUT:
     // timeout - ignore
-    //t_print("%s: Ignore timeout\n",__FUNCTION__);
+    //t_print("%s: Ignore timeout\n",__func__);
     break;
 
   case GPIOD_CTXLESS_EVENT_CB_RISING_EDGE:
-    //t_print("%s: Ignore RISING EDGE\n",__FUNCTION__);
+    //t_print("%s: Ignore RISING EDGE\n",__func__);
     process_edge(line, RELEASED);
     break;
 
   case GPIOD_CTXLESS_EVENT_CB_FALLING_EDGE:
-    //t_print("%s: Process FALLING EDGE\n",__FUNCTION__);
+    //t_print("%s: Process FALLING EDGE\n",__func__);
     process_edge(line, PRESSED);
     break;
   }
@@ -899,7 +899,7 @@ void gpio_default_switch_actions(int ctrlr) {
 //  and my_switches, including GPIO lines etc.
 //
 void gpio_set_defaults(int ctrlr) {
-  t_print("%s: %d\n", __FUNCTION__, ctrlr);
+  t_print("%s: %d\n", __func__, ctrlr);
 
   switch (ctrlr) {
   case CONTROLLER1:
@@ -1024,7 +1024,7 @@ void gpio_set_defaults(int ctrlr) {
   }
 }
 
-void gpioRestoreState() {
+void gpioRestoreState(void){
   loadProperties("gpio.props");
   GetPropI0("controller",                                         controller);
 #ifndef GPIO
@@ -1070,7 +1070,7 @@ void gpioRestoreState() {
   }
 }
 
-void gpioSaveState() {
+void gpioSaveState(void){
   clearProperties();
   SetPropI0("controller",                                         controller);
 
@@ -1107,7 +1107,7 @@ void gpioSaveState() {
   saveProperties("gpio.props");
 }
 
-void gpioRestoreActions() {
+void gpioRestoreActions(void){
   int props_controller = NO_CONTROLLER;
   gpio_set_defaults(controller);
   //
@@ -1141,7 +1141,7 @@ void gpioRestoreActions() {
   }
 }
 
-void gpioSaveActions() {
+void gpioSaveActions(void){
   char name[128];
   char value[128];
   //
@@ -1198,7 +1198,7 @@ void gpioSaveActions() {
 static gpointer monitor_thread(gpointer arg) {
   struct timespec t;
   // thread to monitor gpio events
-  t_print("%s: monitoring %d lines.\n", __FUNCTION__, lines);
+  t_print("%s: monitoring %d lines.\n", __func__, lines);
 
   if (gpio_device == NULL) {
     return NULL;
@@ -1216,10 +1216,10 @@ static gpointer monitor_thread(gpointer arg) {
               consumer, &t, NULL, interrupt_cb, NULL);
 
   if (ret < 0) {
-    t_print("%s: ctxless event monitor failed: %s\n", __FUNCTION__, g_strerror(errno));
+    t_print("%s: ctxless event monitor failed: %s\n", __func__, g_strerror(errno));
   }
 
-  t_print("%s: exit\n", __FUNCTION__);
+  t_print("%s: exit\n", __func__);
   return NULL;
 }
 
@@ -1230,11 +1230,11 @@ static int setup_input_line(struct gpiod_chip *chip, int offset, gboolean pullup
   //
   int ret;
   struct gpiod_line_request_config config;
-  t_print("%s: %d\n", __FUNCTION__, offset);
+  t_print("%s: %d\n", __func__, offset);
   struct gpiod_line *line = gpiod_chip_get_line(chip, offset);
 
   if (!line) {
-    t_print("%s: get line %d failed: %s\n", __FUNCTION__, offset, g_strerror(errno));
+    t_print("%s: get line %d failed: %s\n", __func__, offset, g_strerror(errno));
     return -1;
   }
 
@@ -1248,7 +1248,7 @@ static int setup_input_line(struct gpiod_chip *chip, int offset, gboolean pullup
   ret = gpiod_line_request(line, &config, 1);
 
   if (ret < 0) {
-    t_print("%s: line %d gpiod_line_request failed: %s\n", __FUNCTION__, offset, g_strerror(errno));
+    t_print("%s: line %d gpiod_line_request failed: %s\n", __func__, offset, g_strerror(errno));
     return ret;
   }
 
@@ -1264,11 +1264,11 @@ static struct gpiod_line *setup_output_line(struct gpiod_chip *chip, int offset,
   // (in case of failure: NULL).
   //
   struct gpiod_line_request_config config;
-  t_print("%s: %d\n", __FUNCTION__, offset);
+  t_print("%s: %d\n", __func__, offset);
   struct gpiod_line *line = gpiod_chip_get_line(chip, offset);
 
   if (!line) {
-    t_print("%s: get_line failed for offset %d: %s\n", __FUNCTION__, offset, g_strerror(errno));
+    t_print("%s: get_line failed for offset %d: %s\n", __func__, offset, g_strerror(errno));
     return NULL;
   }
 
@@ -1277,7 +1277,7 @@ static struct gpiod_line *setup_output_line(struct gpiod_chip *chip, int offset,
   config.flags = 0;  // active High
 
   if (gpiod_line_request(line, &config, initialValue) < 0) {
-    t_print("%s: line_request failed for offset %d: %s\n", __FUNCTION__, offset, g_strerror(errno));
+    t_print("%s: line_request failed for offset %d: %s\n", __func__, offset, g_strerror(errno));
     gpiod_line_release(line);
     return NULL;
   }
@@ -1291,7 +1291,7 @@ static struct gpiod_line *setup_output_line(struct gpiod_chip *chip, int offset,
 // With a G2_V2 controller gpio_init() is essentially a no-op,
 // since no special lines are defined (have_button is not set)
 //
-int gpio_init() {
+int gpio_init(void){
 #ifdef GPIO
   int ret = 0;
   initialiseEpoch();
@@ -1317,17 +1317,17 @@ int gpio_init() {
   // If no success so far, give up
   //
   if (chip == NULL) {
-    t_print("%s: open chip failed: %s\n", __FUNCTION__, g_strerror(errno));
+    t_print("%s: open chip failed: %s\n", __func__, g_strerror(errno));
     ret = -1;
     goto err;
   }
 
-  t_print("%s: GPIO device=%s\n", __FUNCTION__, gpio_device);
+  t_print("%s: GPIO device=%s\n", __func__, gpio_device);
 
   if (controller == CONTROLLER1 || controller == CONTROLLER2_V1 || controller == CONTROLLER2_V2
       || controller == G2_FRONTPANEL) {
     // setup encoders
-    t_print("%s: setup encoders\n", __FUNCTION__);
+    t_print("%s: setup encoders\n", __func__);
 
     for (int i = 0; i < MAX_ENCODERS; i++) {
       if (encoders[i].bottom_encoder_enabled) {
@@ -1358,7 +1358,7 @@ int gpio_init() {
     }
 
     // setup switches
-    t_print("%s: setup switches\n", __FUNCTION__);
+    t_print("%s: setup switches\n", __func__);
 
     for (int i = 0; i < MAX_SWITCHES; i++) {
       if (switches[i].switch_enabled) {
@@ -1371,7 +1371,7 @@ int gpio_init() {
 
   if (controller == CONTROLLER2_V1 || controller == CONTROLLER2_V2 || controller == G2_FRONTPANEL) {
     i2c_init();
-    t_print("%s: setup i2c interrupt %d\n", __FUNCTION__, I2C_INTERRUPT);
+    t_print("%s: setup i2c interrupt %d\n", __func__, I2C_INTERRUPT);
 
     if ((ret = setup_input_line(chip, I2C_INTERRUPT, TRUE)) < 0) {
       goto err;
@@ -1387,7 +1387,7 @@ int gpio_init() {
 
   if (CWL_LINE >= 0) {
     if (setup_input_line(chip, CWL_LINE, TRUE) < 0) {
-      t_print("%s: CWL line setup failed\n", __FUNCTION__);
+      t_print("%s: CWL line setup failed\n", __func__);
     } else {
       have_button = 1;
     }
@@ -1395,7 +1395,7 @@ int gpio_init() {
 
   if (CWR_LINE >= 0) {
     if (setup_input_line(chip, CWR_LINE, TRUE) < 0) {
-      t_print("%s: CWR line setup failed\n", __FUNCTION__);
+      t_print("%s: CWR line setup failed\n", __func__);
     } else {
       have_button = 1;
     }
@@ -1403,7 +1403,7 @@ int gpio_init() {
 
   if (CWKEY_LINE >= 0) {
     if (setup_input_line(chip, CWKEY_LINE, TRUE) < 0) {
-      t_print("%s: CWKEY line setup failed\n", __FUNCTION__);
+      t_print("%s: CWKEY line setup failed\n", __func__);
     } else {
       have_button = 1;
     }
@@ -1411,7 +1411,7 @@ int gpio_init() {
 
   if (PTTIN_LINE >= 0) {
     if (setup_input_line(chip, PTTIN_LINE, TRUE) < 0) {
-      t_print("%s: CWKEY line setup failed\n", __FUNCTION__);
+      t_print("%s: CWKEY line setup failed\n", __func__);
     } else {
       have_button = 1;
     }
@@ -1429,19 +1429,19 @@ int gpio_init() {
 
   if (have_button || (controller != NO_CONTROLLER && controller != G2_V2)) {
     monitor_thread_id = g_thread_new( "gpiod monitor", monitor_thread, NULL);
-    t_print("%s: monitor_thread: id=%p\n", __FUNCTION__, monitor_thread_id);
+    t_print("%s: monitor_thread: id=%p\n", __func__, monitor_thread_id);
   }
 
   if (controller != NO_CONTROLLER && controller != G2_V2) {
     rotary_encoder_thread_id = g_thread_new( "encoders", rotary_encoder_thread, NULL);
-    t_print("%s: rotary_encoder_thread: id=%p\n", __FUNCTION__, rotary_encoder_thread_id);
+    t_print("%s: rotary_encoder_thread: id=%p\n", __func__, rotary_encoder_thread_id);
   }
 
 #endif
   return 0;
 #ifdef GPIO
 err:
-  t_print("%s: err\n", __FUNCTION__);
+  t_print("%s: err\n", __func__);
 
   if (chip != NULL) {
     gpiod_chip_close(chip);
@@ -1453,7 +1453,7 @@ err:
 #endif
 }
 
-void gpio_close() {
+void gpio_close(void){
 #ifdef GPIO
 
   if (chip != NULL) { gpiod_chip_close(chip); }

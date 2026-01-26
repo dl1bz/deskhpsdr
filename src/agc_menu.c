@@ -40,7 +40,7 @@ static GtkWidget *agc_hang_threshold_scale;
 static gulong threshold_scale_signal_id;
 static GtkWidget *dialog = NULL;
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -51,12 +51,12 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
 
-static void update_agc_hang_threshold_scale() {
+static void update_agc_hang_threshold_scale(void){
   g_signal_handler_block(G_OBJECT(agc_hang_threshold_scale), threshold_scale_signal_id);
 
   if (active_receiver->agc == AGC_LONG || active_receiver->agc == AGC_SLOW) {

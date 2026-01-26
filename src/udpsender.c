@@ -38,7 +38,7 @@ void tts_send(char *msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   int optval = 1;
   struct sockaddr_in addr;
-  printf("%s: sending >>>%s<<<\n", __FUNCTION__, msg);
+  printf("%s: sending >>>%s<<<\n", __func__, msg);
   setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
   setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
@@ -50,7 +50,7 @@ void tts_send(char *msg) {
   close(sock);
 }
 
-int main() {
+int main(void){
   int turn = 0;
   char msg[64];
 

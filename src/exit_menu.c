@@ -47,16 +47,16 @@
 
 static GtkWidget *dialog = NULL;
 
-void stop_program() {
+void stop_program(void){
 #ifdef GPIO
   gpio_close();
-  t_print("%s: GPIO closed\n", __FUNCTION__);
+  t_print("%s: GPIO closed\n", __func__);
 #endif
   radio_protocol_stop();
-  t_print("%s: protocol stopped\n", __FUNCTION__);
+  t_print("%s: protocol stopped\n", __func__);
   radio_stop();
-  t_print("%s: radio stopped\n", __FUNCTION__);
-  t_print("%s: cleanup global cURL...\n", __FUNCTION__);
+  t_print("%s: radio stopped\n", __func__);
+  t_print("%s: cleanup global cURL...\n", __func__);
   curl_global_cleanup();
 
   if (rigctl_tcp_enable) {
@@ -76,10 +76,10 @@ void stop_program() {
   }
 
   radio_save_state();
-  t_print("%s: radio state saved\n", __FUNCTION__);
+  t_print("%s: radio state saved\n", __func__);
 }
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -90,7 +90,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }

@@ -297,10 +297,10 @@ static void *solar_thread_func(void *arg) {
                 sunspots, solar_flux, a_index, k_index, xray, geomagfield);
       }
     } else {
-      t_print("%s: ERROR: invalid data from %s at %s", __FUNCTION__, host, ctime(&now));
+      t_print("%s: ERROR: invalid data from %s at %s", __func__, host, ctime(&now));
     }
   } else {
-    t_print("%s failed: host %s at %s not reachable\n", __FUNCTION__, host, ctime(&now));
+    t_print("%s failed: host %s at %s not reachable\n", __func__, host, ctime(&now));
   }
 
   return NULL;
@@ -325,7 +325,7 @@ static void *solar_thread_func(void *arg) {
     geomagfield[0] = '\0';
     xray[0]       = '\0';
     g_mutex_unlock(&solar_data_mutex);
-    t_print("%s failed: host %s not reachable at %s\n", __FUNCTION__, host, ts);
+    t_print("%s failed: host %s not reachable at %s\n", __func__, host, ts);
     return NULL;
   }
 
@@ -355,7 +355,7 @@ static void *solar_thread_func(void *arg) {
     geomagfield[0] = '\0';
     xray[0]       = '\0';
     g_mutex_unlock(&solar_data_mutex);
-    t_print("%s: ERROR: invalid data from %s at %s\n", __FUNCTION__, host, ts);
+    t_print("%s: ERROR: invalid data from %s at %s\n", __func__, host, ts);
   }
 
   return NULL;
@@ -369,7 +369,7 @@ static void assign_solar_data_async(int is_dbg) {
   if (pthread_create(&solar_thread, NULL, solar_thread_func, GINT_TO_POINTER(is_dbg)) == 0) {
     pthread_detach(solar_thread); // kein join nötig
   } else {
-    t_print("%s: ERROR: solar_data_fetch thread not started...\n", __FUNCTION__);
+    t_print("%s: ERROR: solar_data_fetch thread not started...\n", __func__);
   }
 }
 */
@@ -380,7 +380,7 @@ static void assign_solar_data_async(int is_dbg) {
   if (pthread_create(&solar_thread, NULL, solar_thread_func, (void * )(intptr_t)is_dbg) == 0) {
     pthread_detach(solar_thread);  // kein join nötig
   } else {
-    t_print("%s: ERROR: solar_data_fetch thread not started...\n", __FUNCTION__);
+    t_print("%s: ERROR: solar_data_fetch thread not started...\n", __func__);
   }
 }
 
@@ -522,7 +522,7 @@ void sort_cfc(TRANSMITTER *tx) {
     tx->cfc_post[k] = p[k];
   }
 
-  t_print("%s: CFC_FREQ sorted\n", __FUNCTION__);
+  t_print("%s: CFC_FREQ sorted\n", __func__);
 }
 
 void sort_tx_eq(TRANSMITTER *tx) {
@@ -545,7 +545,7 @@ void sort_tx_eq(TRANSMITTER *tx) {
     tx->eq_gain[k] = g[k];
   }
 
-  t_print("%s: TX_EQ_FREQ sorted\n", __FUNCTION__);
+  t_print("%s: TX_EQ_FREQ sorted\n", __func__);
 }
 
 #if defined (__HAVEATU__)

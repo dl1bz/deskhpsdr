@@ -487,7 +487,7 @@ int process_action(void *data) {
   double value;
   int i;
 
-  //t_print("%s: a=%p action=%d mode=%d value=%d\n",__FUNCTION__,a,a->action,a->mode,a->val);
+  //t_print("%s: a=%p action=%d mode=%d value=%d\n",__func__,a,a->action,a->mode,a->val);
   switch (a->action) {
   case A_SWAP_B:
     if (a->mode == PRESSED) {
@@ -1943,7 +1943,7 @@ int process_action(void *data) {
           // kein "0" schreiben
         }
       } else {
-        t_print("%s: No Hermes Lite 2 with IO board detected. No action.\n", __FUNCTION__);
+        t_print("%s: No Hermes Lite 2 with IO board detected. No action.\n", __func__);
         break;
       }
     }
@@ -2326,9 +2326,9 @@ int process_action(void *data) {
 
   default:
     if (a->action >= 0 && a->action < ACTIONS) {
-      t_print("%s: UNKNOWN PRESSED SWITCH ACTION %d (%s)\n", __FUNCTION__, a->action, ActionTable[a->action].str);
+      t_print("%s: UNKNOWN PRESSED SWITCH ACTION %d (%s)\n", __func__, a->action, ActionTable[a->action].str);
     } else {
-      t_print("%s: INVALID PRESSED SWITCH ACTION %d\n", __FUNCTION__, a->action);
+      t_print("%s: INVALID PRESSED SWITCH ACTION %d\n", __func__, a->action);
     }
 
     break;
@@ -2370,7 +2370,7 @@ int String2Action(const char *str) {
 // status = 1: "active" (normal) state (status in yellow)
 // status = 2: "select" state (status in red)
 //
-int  GetMultifunctionStatus() {
+int GetMultifunctionStatus(void){
   if (multi_first) {
     return 0;
   }

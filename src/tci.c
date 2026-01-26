@@ -117,7 +117,7 @@ static gpointer tci_listener(gpointer data);
 // enabled in the props file, and from the CAT/TCI menu
 // if TCI is enabled there.
 //
-void launch_tci () {
+void launch_tci(void){
   t_print( "---- LAUNCHING TCI SERVER ----\n");
   tci_running = 1;
   //
@@ -158,8 +158,8 @@ static void force_close(CLIENT *client) {
 // Shut down TCI system. Called from CAT/TCI menu
 // if TCI is disabled there.
 //
-void shutdown_tci() {
-  t_print("%s: server_socket=%d\n", __FUNCTION__, server_socket);
+void shutdown_tci(void){
+  t_print("%s: server_socket=%d\n", __func__, server_socket);
   tci_running = 0;
 
   //
@@ -694,7 +694,7 @@ static gpointer tci_server(gpointer data) {
   struct timeval tv;
   tv.tv_sec = 0;
   tv.tv_usec = 100000;
-  t_print("%s: starting TCI server on port %d\n", __FUNCTION__, port);
+  t_print("%s: starting TCI server on port %d\n", __func__, port);
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
 
   if (server_socket < 0) {
@@ -780,7 +780,7 @@ static gpointer tci_server(gpointer data) {
       continue;
     }
 
-    t_print("%s: slot= %d connected with fd=%d\n", __FUNCTION__, spare, fd);
+    t_print("%s: slot= %d connected with fd=%d\n", __func__, spare, fd);
 
     if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO,  &tv, sizeof(tv)) < 0) {
       t_perror("TCIClntSetTimeOut");
@@ -902,7 +902,7 @@ static int digest_frame(const unsigned char *buff, char *msg,  int offset, int *
 
   if (len == 127) {
     // Do not even try
-    t_print("%s: excessive length\n", __FUNCTION__);
+    t_print("%s: excessive length\n", __func__);
     return 0;
   }
 
@@ -947,7 +947,7 @@ static int digest_frame(const unsigned char *buff, char *msg,  int offset, int *
 //
 static gpointer tci_listener(gpointer data) {
   CLIENT *client = (CLIENT *)data;
-  t_print("%s: starting client: socket=%d\n", __FUNCTION__, client->fd);
+  t_print("%s: starting client: socket=%d\n", __func__, client->fd);
   // update CAT status onscreen
   cat_control++;
   g_idle_add(ext_vfo_update, NULL);
@@ -1202,7 +1202,7 @@ static gpointer tci_listener(gpointer data) {
   tci_send_text(client, "stop;");
   tci_send_close(client);
   force_close(client);
-  t_print("%s: leaving thread\n", __FUNCTION__);
+  t_print("%s: leaving thread\n", __func__);
   // update CAT status onscreen
   cat_control--;
   g_idle_add(ext_vfo_update, NULL);

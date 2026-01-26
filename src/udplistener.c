@@ -54,7 +54,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-int main() {
+int main(void){
   int optval;
   int udpsock;                   // UDP listening socket
   struct sockaddr_in addr;       // address to listen to

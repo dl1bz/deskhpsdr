@@ -136,7 +136,7 @@ const char* getModeName(int mode) {
   }
 }
 
-static void vfo_save_bandstack() {
+static void vfo_save_bandstack(void){
   BANDSTACK *bandstack = bandstack_get_bandstack(vfo[0].band);
   bandstack->current_entry = vfo[0].bandstack;
   BANDSTACK_ENTRY *entry = &bandstack->entry[vfo[0].bandstack];
@@ -153,7 +153,7 @@ static void vfo_save_bandstack() {
   }
 }
 
-static void modesettingsSaveState() {
+static void modesettingsSaveState(void){
   for (int i = 0; i < MODES; i++) {
     mode_settings[i].desc = getModeName(i); // save description of numeric mode number for better reading
     SetPropI1("modeset.%d.filter", i,                mode_settings[i].filter);
@@ -246,7 +246,7 @@ static void modesettingsSaveState() {
   }
 }
 
-static void modesettingsRestoreState() {
+static void modesettingsRestoreState(void){
   for (int i = 0; i < MODES; i++) {
     //
     // set defaults that depend on  the mode: filter, agc, step
@@ -565,11 +565,11 @@ void copy_mode_settings(int mode) {
     break;
 
   default:
-    t_print("%s: Mode %s has no copy condition.\n", __FUNCTION__, getModeName(mode));
+    t_print("%s: Mode %s has no copy condition.\n", __func__, getModeName(mode));
   }
 }
 
-void vfo_save_state() {
+void vfo_save_state(void){
   vfo_save_bandstack();
 
   for (int i = 0; i < MAX_VFOS; i++) {
@@ -594,7 +594,7 @@ void vfo_save_state() {
   modesettingsSaveState();
 }
 
-void vfo_restore_state() {
+void vfo_restore_state(void){
   for (int i = 0; i < MAX_VFOS; i++) {
     //
     // Set defaults, using a simple heuristics to get a
@@ -700,7 +700,7 @@ static inline void vfo_adjust_band(int v, long long f) {
   vfo[v].band = get_band_from_frequency(f);
 
   if (b != vfo[v].band) {
-    t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, (int) v,
+    t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, (int) v,
             (int) vfo[v].band, (int) b);
 #if defined (__HAVEATU__)
 
@@ -712,8 +712,8 @@ static inline void vfo_adjust_band(int v, long long f) {
         set_drive(1.0);
       }
 
-      t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-      t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
+      t_print("%s: stored drive level: %.1f\n", __func__, transmitter->stored_drive);
+      t_print("%s: current drive level: %.1f\n", __func__, radio_get_drive());
     }
 
 #endif
@@ -721,7 +721,7 @@ static inline void vfo_adjust_band(int v, long long f) {
 
     if (can_transmit && autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       autogain_is_adjusted = 0;
-      t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
+      t_print("%s: autogain_is_adjusted=%d\n", __func__, autogain_is_adjusted);
     }
 
 #endif
@@ -732,7 +732,7 @@ static inline void vfo_adjust_band(int v, long long f) {
   radio_set_alex_antennas();
 }
 
-void vfo_xvtr_changed() {
+void vfo_xvtr_changed(void){
   //
   // It may happen that the XVTR band is messed up in the sense
   // that the resulting radio frequency exceeds the limits.
@@ -775,10 +775,10 @@ void vfo_xvtr_changed() {
 }
 
 #if defined (__CPYMODE__)
-static void audio_reload_input() {
+static void audio_reload_input(void){
   if (transmitter->local_microphone) {
     audio_close_input();
-    t_print("%s: audio in closed\n", __FUNCTION__);
+    t_print("%s: audio in closed\n", __func__);
   }
 
   if (transmitter->local_microphone) {
@@ -786,7 +786,7 @@ static void audio_reload_input() {
       transmitter->local_microphone = 0;
     }
 
-    t_print("%s: audio in re-open\n", __FUNCTION__);
+    t_print("%s: audio in re-open\n", __func__);
   }
 }
 
@@ -910,9 +910,9 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
 #if defined (__CPYMODE__)
     audio_reload_input();
     tx_ps_onoff(transmitter, transmitter->puresignal);
-    t_print("%s: state Pure Signal %d\n", __FUNCTION__, transmitter->puresignal);
+    t_print("%s: state Pure Signal %d\n", __func__, transmitter->puresignal);
     tx_set_filter(transmitter);
-    t_print("%s: state transmitter->use_rx_filter: %d\n", __FUNCTION__, transmitter->use_rx_filter);
+    t_print("%s: state transmitter->use_rx_filter: %d\n", __func__, transmitter->use_rx_filter);
 #endif
     tx_set_compressor(transmitter);
     tx_set_dexp(transmitter);
@@ -956,7 +956,7 @@ void vfo_band_changed(int id, int b) {
   // Note the LO frequency of the *new* band must be subtracted here
   //
   if (b != vfo[id].band) {
-    t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __FUNCTION__, id, b,
+    t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, id, b,
             (int) vfo[id].band);
 #if defined (__HAVEATU__)
 
@@ -968,8 +968,8 @@ void vfo_band_changed(int id, int b) {
         set_drive(1.0);
       }
 
-      t_print("%s: stored drive level: %.1f\n", __FUNCTION__, transmitter->stored_drive);
-      t_print("%s: current drive level: %.1f\n", __FUNCTION__, radio_get_drive());
+      t_print("%s: stored drive level: %.1f\n", __func__, transmitter->stored_drive);
+      t_print("%s: current drive level: %.1f\n", __func__, radio_get_drive());
     }
 
 #endif
@@ -986,7 +986,7 @@ void vfo_band_changed(int id, int b) {
 
     if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       autogain_is_adjusted = 0;
-      t_print("%s: autogain_is_adjusted=%d\n", __FUNCTION__, autogain_is_adjusted);
+      t_print("%s: autogain_is_adjusted=%d\n", __func__, autogain_is_adjusted);
     }
 
 #endif
@@ -1180,7 +1180,7 @@ void vfo_id_filter_changed(int id, int f) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void vfo_vfos_changed() {
+void vfo_vfos_changed(void){
   //
   // Use this when there are large changes in the VFOs.
   // Apply the new data
@@ -1201,7 +1201,7 @@ void vfo_vfos_changed() {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void vfo_a_to_b() {
+void vfo_a_to_b(void){
   int oldmode = vfo[VFO_B].mode;
   vfo[VFO_B] = vfo[VFO_A];
 
@@ -1212,7 +1212,7 @@ void vfo_a_to_b() {
   vfo_vfos_changed();
 }
 
-void vfo_b_to_a() {
+void vfo_b_to_a(void){
   int oldmode = vfo[VFO_A].mode;
   vfo[VFO_A] = vfo[VFO_B];
 
@@ -1223,7 +1223,7 @@ void vfo_b_to_a() {
   vfo_vfos_changed();
 }
 
-void vfo_a_swap_b() {
+void vfo_a_swap_b(void){
   struct  _vfo temp = vfo[VFO_A];
   vfo[VFO_A]        = vfo[VFO_B];
   vfo[VFO_B]        = temp;
@@ -1632,7 +1632,7 @@ static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, g
   RECEIVER *rx = active_receiver;
 
   if (!rx) {
-    t_print("%s: no active RX\n", __FUNCTION__);
+    t_print("%s: no active RX\n", __func__);
     return FALSE;
   }
 
@@ -1675,7 +1675,7 @@ static gboolean vfo_draw_cb (GtkWidget *widget,
 // is determined by the current vfo_layout
 // Elements whose x-coordinate is zero are not drawn
 //
-void vfo_update() {
+void vfo_update(void){
   char wid[6];
 
   if (!vfo_surface) { return; }
@@ -2669,7 +2669,7 @@ GtkWidget* vfo_init(int width, int height) {
 // transmitter
 //
 
-int vfo_get_tx_vfo() {
+int vfo_get_tx_vfo(void){
   int txvfo = active_receiver->id;
 
   if (split) { txvfo = 1 - txvfo; }
@@ -2677,7 +2677,7 @@ int vfo_get_tx_vfo() {
   return txvfo;
 }
 
-int vfo_get_tx_mode() {
+int vfo_get_tx_mode(void){
   int txvfo = active_receiver->id;
 
   if (split) { txvfo = 1 - txvfo; }
@@ -2685,7 +2685,7 @@ int vfo_get_tx_mode() {
   return vfo[txvfo].mode;
 }
 
-long long vfo_get_tx_freq() {
+long long vfo_get_tx_freq(void) {
   int txvfo = active_receiver->id;
 
   if (split) { txvfo = 1 - txvfo; }
@@ -2705,7 +2705,7 @@ void vfo_xit_value(long long value ) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void vfo_xit_toggle() {
+void vfo_xit_toggle(void){
   int id = vfo_get_tx_vfo();
   TOGGLE(vfo[id].xit_enabled);
   schedule_high_priority();

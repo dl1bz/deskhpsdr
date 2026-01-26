@@ -194,7 +194,7 @@ static gpointer rigctl_client (gpointer data);
 #define RXCHECK_ERR(id, what) if (id >= 0 && id < receivers) { what; } else { implemented = FALSE; }
 #define RXCHECK(id, what)     if (id >= 0 && id < receivers) { what; }
 
-int rigctl_tcp_running() {
+int rigctl_tcp_running(void){
   return (server_socket >= 0);
 }
 
@@ -222,7 +222,7 @@ static gboolean update_serptt_cts(gpointer user_data) {
 
     // Wenn PTT (Push To Talk) an ist
     if (serptt_cts) {
-      t_print("%s: serial PTT ON\n", __FUNCTION__);
+      t_print("%s: serial PTT ON\n", __func__);
 #if defined (__HAVEATU__)
 
       // Wenn der Sender gestimmt ist, wird eine Funktion mit Idle hinzugefügt
@@ -237,7 +237,7 @@ static gboolean update_serptt_cts(gpointer user_data) {
       g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
 #endif
     } else {
-      t_print("%s: serial PTT OFF\n", __FUNCTION__);
+      t_print("%s: serial PTT OFF\n", __func__);
       // Wenn PTT aus ist, wird eine Funktion mit Timeout hinzugefügt
       g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(0));
     }
@@ -255,7 +255,7 @@ static gpointer monitor_serptt_cts_thread(gpointer user_data) {
       SerialPorts[MAX_SERIAL + 1].enable = 0;
     }
 
-    t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL + 1].port);
+    t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL + 1].port);
   }
 
   while (fd >= 0) {  // Solange fd gültig ist
@@ -281,7 +281,7 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
       SerialPorts[MAX_SERIAL].enable = 0;
     }
 
-    t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL].port);
+    t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL].port);
   }
 
   while (!(fd < 0)) {
@@ -289,7 +289,7 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
 
     /*
     if (mox || vox || tune) {
-      t_print("%s: MOX: %d VOX: %d TUNE: %d\n", __FUNCTION__, mox, vox, tune); // add debug output
+      t_print("%s: MOX: %d VOX: %d TUNE: %d\n", __func__, mox, vox, tune); // add debug output
     }
     */
 
@@ -328,13 +328,13 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
   return NULL;
 }
 
-void launch_serptt() {
+void launch_serptt(void){
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     serptt_fd = open(SerialPorts[MAX_SERIAL + 1].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
 
     if (serptt_fd < 0) {
       SerialPorts[MAX_SERIAL + 1].enable = 0;
-      t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL + 1].port);
+      t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL + 1].port);
     } else {
       serptt_thread_id = g_thread_new("serPTT-Monitoring", monitor_serptt_cts_thread, &serptt_fd);
       t_print("---- LAUNCHING serPTT control Thread Id %d ----\n", serptt_thread_id);
@@ -349,7 +349,7 @@ void launch_serptt() {
   }
 }
 
-void launch_sertune() {
+void launch_sertune(void){
   int status_sertune;
 
   if (SerialPorts[MAX_SERIAL].enable) {
@@ -357,7 +357,7 @@ void launch_sertune() {
 
     if (sertune_fd < 0) {
       SerialPorts[MAX_SERIAL].enable = 0;
-      t_print("%s: ERROR open serial port %s failed\n", __FUNCTION__, SerialPorts[MAX_SERIAL].port);
+      t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL].port);
     } else {
       ioctl(sertune_fd, TIOCMGET, &status_sertune);  // get state
       status_sertune &= ~TIOCM_RTS;                  // clear RTS
@@ -410,7 +410,7 @@ static void* autogain_thread_function(void* arg) {
 
     if (elapsed_time > 10 && autogain_first_run) {          // set a delay of 10s
       autogain_first_run = !autogain_first_run;             // clear state of autogain_first_run
-      t_print("%s: Clear state autogain_first_run = %d after %ds delay\n", __FUNCTION__, autogain_first_run,
+      t_print("%s: Clear state autogain_first_run = %d after %ds delay\n", __func__, autogain_first_run,
               (int)elapsed_time);
     }
 
@@ -454,7 +454,7 @@ static void* autogain_thread_function(void* arg) {
           g_usleep(500000);  // wait 0.5s
         }
 
-        t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __FUNCTION__, active_receiver->id, (int)gain);
+        t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __func__, active_receiver->id, (int)gain);
       }
 
       if (!radio_is_transmitting() && !radio_ptt && adc1_error_count >= adc_count_limit && !autogain_first_run) {
@@ -497,7 +497,7 @@ static void* autogain_thread_function(void* arg) {
         pthread_mutex_lock(&autogain_mutex);
         autogain_is_adjusted = 0;
         pthread_mutex_unlock(&autogain_mutex);
-        t_print("%s: recall time-controlled autogain adjustment\n", __FUNCTION__);
+        t_print("%s: recall time-controlled autogain adjustment\n", __func__);
       }
     }
 
@@ -507,14 +507,14 @@ static void* autogain_thread_function(void* arg) {
   return NULL;
 }
 
-void launch_autogain_hl2() {
+void launch_autogain_hl2(void){
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     if (autogain_enabled) {
       if (!autogain_thread_running) {
         autogain_thread_running = 1;
 
         if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
-          t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
+          t_print("%s: ERROR cannot start autogain_thread\n", __func__);
         } else {
           t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
         }
@@ -530,7 +530,7 @@ void launch_autogain_hl2() {
   }
 }
 
-void restart_autogain_hl2() {
+void restart_autogain_hl2(void){
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     if (autogain_thread_running) {
       autogain_thread_running = 0;           // Stop-Signal setzen
@@ -543,7 +543,7 @@ void restart_autogain_hl2() {
 
     if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
       autogain_thread_running = 0;
-      t_print("%s: ERROR cannot start autogain_thread\n", __FUNCTION__);
+      t_print("%s: ERROR cannot start autogain_thread\n", __func__);
     } else {
       t_print("---- Restart HL2 AutoGain Thread ----\n");
     }
@@ -616,14 +616,14 @@ static void *rx200_udp_listener(void *arg) {
     pthread_exit(NULL);
   }
 
-  t_print("%s: starting RX200 UDP-Listener at port %d\n", __FUNCTION__, port);
+  t_print("%s: starting RX200 UDP-Listener at port %d\n", __func__, port);
 
   // while (atomic_load(&toggle_listener)) { // Überprüfen, ob der Listener aktiv bleiben soll
   while (1) { // Überprüfen, ob der Listener aktiv bleiben soll, 1 = immer ohne Abbruchcondition
     int len = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
 
     if (len < 0) {
-      t_print("%s: ERROR: invalid incoming UDP data\n", __FUNCTION__);
+      t_print("%s: ERROR: invalid incoming UDP data\n", __func__);
       rx200_udp_valid = 0;
       continue;
     }
@@ -653,7 +653,7 @@ static void *rx200_udp_listener(void *arg) {
       rx200_udp_valid = 1;
       json_object_put(parsed_json); // Speicher freigeben
     } else {
-      t_print("%s: RX200: invalid JSON data received: %s\n", __FUNCTION__, buffer);
+      t_print("%s: RX200: invalid JSON data received: %s\n", __func__, buffer);
     }
   }
 
@@ -690,14 +690,14 @@ static void *lpf_udp_listener(void *arg) {
     pthread_exit(NULL);
   }
 
-  t_print("%s: starting LPF UDP-Listener at port %d\n", __FUNCTION__, port);
+  t_print("%s: starting LPF UDP-Listener at port %d\n", __func__, port);
 
   // while (atomic_load(&toggle_listener)) { // Überprüfen, ob der Listener aktiv bleiben soll
   while (1) { // Überprüfen, ob der Listener aktiv bleiben soll, 1 = immer ohne Abbruchcondition
     int len = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
 
     if (len < 0) {
-      t_print("%s: ERROR: invalid incoming UDP data\n", __FUNCTION__);
+      t_print("%s: ERROR: invalid incoming UDP data\n", __func__);
       lpf_udp_valid = 0;
       continue;
     }
@@ -725,7 +725,7 @@ static void *lpf_udp_listener(void *arg) {
       lpf_udp_valid = 1;
       json_object_put(parsed_json); // Speicher freigeben
     } else {
-      t_print("%s: LPF: invalid JSON data received: %s\n", __FUNCTION__, buffer);
+      t_print("%s: LPF: invalid JSON data received: %s\n", __func__, buffer);
     }
   }
 
@@ -773,7 +773,7 @@ static char* find_in_path(const char* binary_name) {
 }
 
 #ifdef __APPLE__
-static int start_from_app_bundle() {
+static int start_from_app_bundle(void){
   char exe_path[PATH_MAX];
   uint32_t size = sizeof(exe_path);
 
@@ -791,9 +791,9 @@ static int start_from_app_bundle() {
 }
 
 // Funktion, um den Pfad zur rigctld_deskhpsdr zu ermitteln
-static char* mac_get_rigctld_path() {
+static char* mac_get_rigctld_path(void) {
   if (start_from_app_bundle()) {
-    t_print("%s: macOS: %s start from .app bundle.\n", __FUNCTION__, PGNAME);
+    t_print("%s: macOS: %s start from .app bundle.\n", __func__, PGNAME);
     char exec_path[PATH_MAX];
     uint32_t size = sizeof(exec_path);
 
@@ -812,20 +812,20 @@ static char* mac_get_rigctld_path() {
 
     return rigctld_path;
   } else {
-    t_print("%s: macOS: %s start from command line.\n", __FUNCTION__, PGNAME);
+    t_print("%s: macOS: %s start from command line.\n", __func__, PGNAME);
     return find_in_path("rigctld_deskhpsdr");
   }
 }
 #endif
 
-static void start_rigctld() {
+static void start_rigctld(void){
   char rigctld_target_port[16];
   snprintf(rigctld_target_port, sizeof(rigctld_target_port), ":%u", rigctl_tcp_port);
-  t_print("%s: rigctld_target_port is %s\n", __FUNCTION__, rigctld_target_port);
+  t_print("%s: rigctld_target_port is %s\n", __func__, rigctld_target_port);
   pid_t running_pid = get_pid_by_name("rigctld_deskhpsdr");
 
   if (running_pid > 0) {
-    t_print("%s: Stop old rigctld (PID %d)...\n", __FUNCTION__, running_pid);
+    t_print("%s: Stop old rigctld (PID %d)...\n", __func__, running_pid);
     kill(running_pid, SIGTERM);
     waitpid(running_pid, NULL, 0);
     rigctld_pid = 0;
@@ -846,7 +846,7 @@ static void start_rigctld() {
     return;
   }
 
-  t_print("%s: rigctld_deskhpsdr gefunden: %s\n", __FUNCTION__, rigctld_path);
+  t_print("%s: rigctld_deskhpsdr gefunden: %s\n", __func__, rigctld_path);
   char *args[] = {
     rigctld_path,
     "-t", "4533",
@@ -859,7 +859,7 @@ static void start_rigctld() {
 
   if (status == 0) {
     rigctld_pid = pid;
-    t_print("%s: rigctld gestartet mit PID %d\n", __FUNCTION__, pid);
+    t_print("%s: rigctld gestartet mit PID %d\n", __func__, pid);
   } else {
     rigctld_enabled = 0;
     t_perror("posix_spawn fehlgeschlagen\n");
@@ -867,10 +867,10 @@ static void start_rigctld() {
 }
 
 // Funktion zum Stoppen von rigctld
-void stop_rigctld() {
+void stop_rigctld(void){
   if (rigctld_pid == 0) { return; }  // Läuft nicht
 
-  t_print("%s:Stoppe rigctld (PID %d)...\n", __FUNCTION__, rigctld_pid);
+  t_print("%s:Stoppe rigctld (PID %d)...\n", __func__, rigctld_pid);
   kill(rigctld_pid, SIGTERM);  // Oder SIGKILL bei Bedarf
   waitpid(rigctld_pid, NULL, 0);  // Warten bis beendet
   rigctld_pid = 0;
@@ -894,8 +894,8 @@ static void* rigctld_control_thread(void* arg) {
   return NULL;
 }
 
-void launch_rx200_monitor() {
-  t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __FUNCTION__);
+void launch_rx200_monitor(void){
+  t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __func__);
 
   // RX200 UDP Listener-Thread starten
   if (pthread_create(&rx200_listener_thread, NULL, rx200_udp_listener, &rx200_udp_port) != 0) {
@@ -905,9 +905,9 @@ void launch_rx200_monitor() {
 }
 
 // Funktion zum Starten des Steuer-Threads
-void launch_rigctld_monitor() {
+void launch_rigctld_monitor(void){
   if (use_rigctld) {
-    t_print("---- LAUNCHING RIGCTLD SERVER ----\n", __FUNCTION__);
+    t_print("---- LAUNCHING RIGCTLD SERVER ----\n", __func__);
 
     if (pthread_create(&rigctld_thread, NULL, rigctld_control_thread, NULL) != 0) {
       t_perror("ERROR: cannot start rigctld thread\n");
@@ -918,8 +918,8 @@ void launch_rigctld_monitor() {
   }
 }
 
-void launch_lpf_monitor() {
-  t_print("---- LAUNCHING LPF UDP Monitor ----\n", __FUNCTION__);
+void launch_lpf_monitor(void){
+  t_print("---- LAUNCHING LPF UDP Monitor ----\n", __func__);
 
   // LPF UDP Listener-Thread starten
   if (pthread_create(&lpf_listener_thread, NULL, lpf_udp_listener, &lpf_udp_port) != 0) {
@@ -928,11 +928,11 @@ void launch_lpf_monitor() {
   }
 }
 
-void shutdown_tcp_rigctl() {
+void shutdown_tcp_rigctl(void){
   struct linger linger = { 0 };
   linger.l_onoff = 1;
   linger.l_linger = 0;
-  t_print("%s: server_socket=%d\n", __FUNCTION__, server_socket);
+  t_print("%s: server_socket=%d\n", __func__, server_socket);
   tcp_running = 0;
   rigctld_enabled = 0;
 
@@ -953,12 +953,12 @@ void shutdown_tcp_rigctl() {
     tcp_client[id].running = 0;
 
     if (tcp_client[id].fd != -1) {
-      // t_print("%s: setting SO_LINGER to 0 for client_socket: %d\n", __FUNCTION__, tcp_client[id].fd);
+      // t_print("%s: setting SO_LINGER to 0 for client_socket: %d\n", __func__, tcp_client[id].fd);
       if (setsockopt(tcp_client[id].fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
         t_perror("setsockopt(...,SO_LINGER,...) failed for client:");
       }
 
-      t_print("%s: closing client socket: %d\n", __FUNCTION__, tcp_client[id].fd);
+      t_print("%s: closing client socket: %d\n", __func__, tcp_client[id].fd);
       close(tcp_client[id].fd);
       tcp_client[id].fd = -1;
     }
@@ -973,12 +973,12 @@ void shutdown_tcp_rigctl() {
   // Close server socket
   //
   if (server_socket >= 0) {
-    // t_print("%s: setting SO_LINGER to 0 for server_socket: %d\n", __FUNCTION__, server_socket);
+    // t_print("%s: setting SO_LINGER to 0 for server_socket: %d\n", __func__, server_socket);
     if (setsockopt(server_socket, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
       t_perror("setsockopt(...,SO_LINGER,...) failed for server:");
     }
 
-    t_print("%s: closing server_socket: %d\n", __FUNCTION__, server_socket);
+    t_print("%s: closing server_socket: %d\n", __func__, server_socket);
     close(server_socket);
     server_socket = -1;
   }
@@ -1008,7 +1008,7 @@ static int dashsamples;
 // problem, and without too much "busy waiting". We just take a nap until 10 msec
 // before we have to act, and then wait several times for 1 msec until we can shoot.
 //
-static void send_dash() {
+static void send_dash(void){
   for (;;) {
     int TimeToGo = cw_key_up + cw_key_down;
 
@@ -1031,7 +1031,7 @@ static void send_dash() {
   cw_key_up   = dotsamples;
 }
 
-static void send_dot() {
+static void send_dot(void){
   for (;;) {
     int TimeToGo = cw_key_up + cw_key_down;
 
@@ -1882,7 +1882,7 @@ static gboolean andromeda_oneshot_handler(gpointer data) {
 static gpointer rigctl_server(gpointer data) {
   int port = GPOINTER_TO_INT(data);
   int on = 1;
-  t_print("%s: starting TCP server on port %d\n", __FUNCTION__, port);
+  t_print("%s: starting TCP server on port %d\n", __func__, port);
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
 
   if (server_socket < 0) {
@@ -1947,7 +1947,7 @@ static gpointer rigctl_server(gpointer data) {
     // A slot is available, try to get connection via accept()
     // (this initializes fd, address, address_length)
     //
-    t_print("%s: slot= %d waiting for connection\n", __FUNCTION__, spare);
+    t_print("%s: slot= %d waiting for connection\n", __func__, spare);
     tcp_client[spare].fd = accept(server_socket, (struct sockaddr*)&tcp_client[spare].address,
                                   &tcp_client[spare].address_length);
 
@@ -1957,7 +1957,7 @@ static gpointer rigctl_server(gpointer data) {
       continue;
     }
 
-    t_print("%s: slot= %d connected with fd=%d\n", __FUNCTION__, spare, tcp_client[spare].fd);
+    t_print("%s: slot= %d connected with fd=%d\n", __func__, spare, tcp_client[spare].fd);
     //
     // Setting TCP_NODELAY may (or may not) improve responsiveness
     // by *disabling* Nagle's algorithm for clustering small packets
@@ -2015,7 +2015,7 @@ static gpointer rigctl_server(gpointer data) {
 
 static gpointer rigctl_client (gpointer data) {
   CLIENT *client = (CLIENT *)data;
-  t_print("%s: starting rigctl_client: socket=%d\n", __FUNCTION__, client->fd);
+  t_print("%s: starting rigctl_client: socket=%d\n", __func__, client->fd);
   g_mutex_lock(&mutex_numcat);
   cat_control++;
 
@@ -2059,14 +2059,14 @@ static gpointer rigctl_client (gpointer data) {
 
   // Release the last "command" buffer (that has not yet been used)
   g_free(command);
-  t_print("%s: Leaving rigctl_client thread\n", __FUNCTION__);
+  t_print("%s: Leaving rigctl_client thread\n", __func__);
 
   //
   // If rigctl is disabled via the GUI, the connections are closed by shutdown_rigctl_ports()
   // but even the we should decrement cat_control
   //
   if (client->fd != -1) {
-    // t_print("%s: setting SO_LINGER to 0 for client_socket: %d\n", __FUNCTION__, client->fd);
+    // t_print("%s: setting SO_LINGER to 0 for client_socket: %d\n", __func__, client->fd);
     struct linger linger = { 0 };
     linger.l_onoff = 1;
     linger.l_linger = 0;
@@ -7148,7 +7148,7 @@ static gpointer serial_server(gpointer data) {
   int i;
   fd_set fds;
   struct timeval tv;
-  t_print("%s: Entering Thread\n", __FUNCTION__);
+  t_print("%s: Entering Thread\n", __func__);
   g_mutex_lock(&mutex_numcat);
   cat_control++;
   // if (rigctl_debug) { t_print("RIGCTL: SER INC cat_control=%d\n", cat_control); }
@@ -7243,14 +7243,14 @@ static gpointer serial_server(gpointer data) {
   // if (rigctl_debug) { t_print("RIGCTL: SER DEC - cat_control=%d\n", cat_control); }
   g_mutex_unlock(&mutex_numcat);
   g_idle_add(ext_vfo_update, NULL);
-  t_print("%s: Exiting Thread, running=%d\n", __FUNCTION__, client->running);
+  t_print("%s: Exiting Thread, running=%d\n", __func__, client->running);
   return NULL;
 }
 
 int launch_serial_rigctl (int id) {
   int fd;
   int baud;
-  t_print("%s:  Port %s\n", __FUNCTION__, SerialPorts[id].port);
+  t_print("%s:  Port %s\n", __func__, SerialPorts[id].port);
   //
   // Use O_NONBLOCK to prevent "hanging" upon open(), set blocking mode
   // later.
@@ -7262,7 +7262,7 @@ int launch_serial_rigctl (int id) {
     return 0 ;
   }
 
-  t_print("%s: serial port fd=%d\n", __FUNCTION__, fd);
+  t_print("%s: serial port fd=%d\n", __func__, fd);
   serial_client[id].fd = fd;
   // hard-wired parity = NONE
   baud = SerialPorts[id].baud;
@@ -7274,7 +7274,7 @@ int launch_serial_rigctl (int id) {
     baud = B9600;
   }
 
-  t_print("%s: Baud rate=%d\n", __FUNCTION__, baud);
+  t_print("%s: Baud rate=%d\n", __func__, baud);
   serial_client[id].fifo = 0;
 
   if (set_interface_attribs (fd, baud, 0) == 0) {
@@ -7285,7 +7285,7 @@ int launch_serial_rigctl (int id) {
     // than a serial line (most likely a FIFO), but it
     // can still be used.
     //
-    t_print("%s: serial port is probably a FIFO\n", __FUNCTION__);
+    t_print("%s: serial port is probably a FIFO\n", __func__);
     serial_client[id].fifo = 1;
   }
 
@@ -7332,7 +7332,7 @@ int launch_serial_rigctl (int id) {
 
 // Serial Port close
 void disable_serial_rigctl (int id) {
-  t_print("%s: Close Serial Port %s\n", __FUNCTION__, SerialPorts[id].port);
+  t_print("%s: Close Serial Port %s\n", __func__, SerialPorts[id].port);
 
   if (serial_client[id].andromeda_timer != 0) {
     g_source_remove(serial_client[id].andromeda_timer);
@@ -7368,7 +7368,7 @@ void disable_serial_rigctl (int id) {
   }
 }
 
-void launch_tcp_rigctl () {
+void launch_tcp_rigctl(void){
   t_print( "---- LAUNCHING RIGCTL SERVER ----\n");
   tcp_running = 1;
 

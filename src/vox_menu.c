@@ -94,7 +94,7 @@ static gpointer level_thread(gpointer arg) {
   return NULL;
 }
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -105,7 +105,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -116,7 +116,7 @@ static gboolean enable_cb (GtkWidget *widget, GdkEventButton *event, gpointer da
   return TRUE;
 }
 
-static void start_level_thread() {
+static void start_level_thread(void){
   run_level = 1;
   level_thread_id = g_thread_new( "VOX level", level_thread, NULL);
   t_print("level_thread: id=%p\n", level_thread_id);

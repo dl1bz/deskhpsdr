@@ -73,7 +73,7 @@ int discover_only_stemlab = 0;
 
 int delayed_discovery(gpointer data);
 
-static gboolean close_cb() {
+static gboolean close_cb(void){
   // There is nothing to clean up
   return TRUE;
 }
@@ -152,10 +152,10 @@ static gboolean reboot_cb (GtkWidget *widget, GdkEventButton *event, gpointer da
 
   if (rc == 0) {
     status_text("HL2: reboot command sent\n");
-    t_print("%s: HL2: reboot command sent\n", __FUNCTION__);
+    t_print("%s: HL2: reboot command sent\n", __func__);
   } else {
     status_text("HL2: reboot send error\n");
-    t_print("%s: HL2: reboot send error\n", __FUNCTION__);
+    t_print("%s: HL2: reboot send error\n", __func__);
   }
 
   return TRUE;
@@ -283,7 +283,7 @@ static void discover_clicked(GtkButton *btn, gpointer data) { (void)btn; discove
 static void protocols_clicked(GtkButton *btn, gpointer data) { (void)btn; protocols_cb(NULL, NULL, data); }
 static void exit_clicked(GtkButton *btn, gpointer data)     { (void)btn; exit_cb(NULL, NULL, data); }
 
-void discovery() {
+void discovery(void){
   //
   // On the discovery screen, make the combo-boxes "touchscreen-friendly"
   //
@@ -567,7 +567,7 @@ void discovery() {
         if ((d->info.network.interface_address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr) ==
             (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
 
-        t_print("%s: d->status=%d\n", __FUNCTION__, d->status);
+        t_print("%s: d->status=%d\n", __func__, d->status);
 
         if (devices > 0 && d->status == STATE_AVAILABLE) {
           can_connect = 1;
@@ -691,7 +691,7 @@ void discovery() {
   // and then the discovery process is re-initiated for RedPitya
   // devices only.
   //
-  t_print("%s: devices=%d autostart=%d\n", __FUNCTION__, devices, autostart);
+  t_print("%s: devices=%d autostart=%d\n", __func__, devices, autostart);
 
   if (devices == 1 && autostart) {
     d = &discovered[0];

@@ -147,7 +147,7 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   g_mutex_unlock(&peak_mutex);
 }
 
-void update_peak_btn() {
+void update_peak_btn(void){
   if (display_zoompan) {
     g_signal_handler_block(G_OBJECT(peak_btn), peak_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(peak_btn), pan_peak_hold_enabled);
@@ -214,14 +214,14 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   // width = my_width - 50;
   width = my_width;
   height = my_height;
-  t_print("%s: width=%d height=%d\n", __FUNCTION__, width, height);
+  t_print("%s: width=%d height=%d\n", __func__, width, height);
   int widget_height = 0;
   widget_height = height;
   // int zoombox_width = (int)floor(width / 2.95); // Breite zoom_box
   int zoombox_width = (int)floor(width / 3); // Breite zoom_box
   // int panbox_width = width / 2.68; // Breite pan_box
   int panbox_width = width - zoombox_width; // Breite pan_box: Gesamtbreite - Breite zoom_box
-  t_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __FUNCTION__, zoombox_width, panbox_width,
+  t_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __func__, zoombox_width, panbox_width,
           zoombox_width + panbox_width);
   zoompan = gtk_grid_new();
   WEAKEN(zoompan);

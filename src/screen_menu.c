@@ -94,7 +94,7 @@ static int apply(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-void schedule_apply() {
+void schedule_apply(void){
   if (apply_timeout != 0) {
     g_source_remove(apply_timeout);
     apply_timeout = 0;
@@ -103,7 +103,7 @@ void schedule_apply() {
   apply_timeout = g_timeout_add(500, apply, NULL);
 }
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -114,7 +114,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -124,7 +124,7 @@ void screen_menu_cleanup(void) {
 }
 
 static void reload_css_cb(GtkWidget *widget, gpointer data) {
-  t_print("%s: Reload CSS...\n", __FUNCTION__);
+  t_print("%s: Reload CSS...\n", __func__);
   load_css();
 }
 
@@ -338,7 +338,7 @@ void screen_menu(GtkWidget *parent) {
 
   //--------------------------------------------------------------------------------------------
   if (file_present(css_filename)) {
-    t_print("%s: %s exist\n", __FUNCTION__, css_filename);
+    t_print("%s: %s exist\n", __func__, css_filename);
     // Remove CSS Button (Spalte 1, gleiche Zeile)
     gtk_grid_attach(GTK_GRID(css_button_grid), remove_css_btn, 1, 0, 1, 1);
     gtk_widget_set_hexpand(remove_css_btn, FALSE);
@@ -354,7 +354,7 @@ void screen_menu(GtkWidget *parent) {
     gtk_widget_set_valign(reload_css_btn, GTK_ALIGN_CENTER);
     gtk_widget_show(reload_css_btn);
   } else {
-    t_print("%s: %s don't exist\n", __FUNCTION__, css_filename);
+    t_print("%s: %s don't exist\n", __func__, css_filename);
     // Save CSS Button (Spalte 1, gleiche Zeile)
     gtk_grid_attach(GTK_GRID(css_button_grid), save_css_btn, 1, 0, 1, 1);
     gtk_widget_set_hexpand(save_css_btn, FALSE);

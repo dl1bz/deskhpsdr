@@ -537,7 +537,7 @@ void radio_change_region(int r) {
   }
 }
 
-void bandSaveState() {
+void bandSaveState(void){
   for (int b = 0; b < BANDS + XVTRS; b++) {
     //
     // Skip non-assigned transverter bands
@@ -581,7 +581,7 @@ void bandSaveState() {
   }
 }
 
-void bandRestoreState() {
+void bandRestoreState(void){
   for (int b = 0; b < BANDS + XVTRS; b++) {
     //
     // For the "normal" (non-XVTR) bands, do not change the title,
@@ -747,7 +747,7 @@ char* getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
 
 #endif
 
-int TransmitAllowed() {
+int TransmitAllowed(void){
   int result;
   long long txfreq, flow, fhigh;
   int txb, txvfo, txmode;
@@ -792,7 +792,7 @@ int TransmitAllowed() {
   }
 
   result = flow >= txband->frequencyMin && fhigh <= txband->frequencyMax;
-  t_print("%s: CANTRANSMIT: low=%lld  high=%lld transmit=%d\n", __FUNCTION__, flow, fhigh, result);
+  t_print("%s: CANTRANSMIT: low=%lld  high=%lld transmit=%d\n", __func__, flow, fhigh, result);
   return result;
 }
 

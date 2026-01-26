@@ -128,22 +128,22 @@ static int check_file(int p) {
   FILE *file = fopen(DateiName, "r");  // Versucht, die Datei im Lesemodus zu öffnen
 
   if (file) {
-    t_print("%s: Access file %s successful.\n", __FUNCTION__, DateiName);
+    t_print("%s: Access file %s successful.\n", __func__, DateiName);
     fclose(file); // Datei wurde erfolgreich geöffnet, also existiert sie
     return 1;     // Datei existiert
   } else {
-    t_print("%s: Access file %s failed.\n", __FUNCTION__, DateiName);
+    t_print("%s: Access file %s failed.\n", __func__, DateiName);
     return 0;     // Datei existiert nicht
   }
 }
 
-static void audioLoadProfile() {
+static void audioLoadProfile(void){
   int i = modeLSB;
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
 
   if (!access(DateiName, F_OK)) {
-    t_print("%s: Mode i=%d\n", __FUNCTION__, i);
+    t_print("%s: Mode i=%d\n", __func__, i);
     loadProperties(DateiName);
     GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
     GetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
@@ -247,17 +247,17 @@ static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
     if (!access(DateiName, F_OK)) {
       audioLoadProfile();
       start_tx();
-      t_print("%s: Mode %d accepted, file %s exist...loaded Mic Profile %d successful.\n", __FUNCTION__, _mode, DateiName,
+      t_print("%s: Mode %d accepted, file %s exist...loaded Mic Profile %d successful.\n", __func__, _mode, DateiName,
               mic_prof.nr);
     } else {
-      t_print("%s: Mode %d accepted, but file %s don't exist.\n", __FUNCTION__, _mode, DateiName);
+      t_print("%s: Mode %d accepted, but file %s don't exist.\n", __func__, _mode, DateiName);
     }
   } else {
-    t_print("%s: Mic Profile %d not loaded, Mode %d not supported.\n", __FUNCTION__, mic_prof.nr, _mode);
+    t_print("%s: Mic Profile %d not loaded, Mode %d not supported.\n", __func__, mic_prof.nr, _mode);
   }
 }
 
-void audioSaveProfile() {
+void audioSaveProfile(void){
   clearProperties();
   // save only for LSB
   int i = modeLSB;
@@ -326,21 +326,21 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
   if (_mode < 3) {
 #if !defined (__APPLE__)
     g_strlcpy(mic_prof.desc[mic_prof.nr], input_devices[_audioindex].description, sizeof(mic_prof.desc[mic_prof.nr]));
-    t_print("%s: Mic: %s / %s\n", __FUNCTION__, input_devices[_audioindex].description, mic_prof.desc[mic_prof.nr]);
+    t_print("%s: Mic: %s / %s\n", __func__, input_devices[_audioindex].description, mic_prof.desc[mic_prof.nr]);
 #else
     g_strlcpy(mic_prof.desc[mic_prof.nr], transmitter->microphone_name, sizeof(mic_prof.desc[mic_prof.nr]));
-    t_print("%s: Mic: %s / %s\n", __FUNCTION__, transmitter->microphone_name, mic_prof.desc[mic_prof.nr]);
+    t_print("%s: Mic: %s / %s\n", __func__, transmitter->microphone_name, mic_prof.desc[mic_prof.nr]);
 #endif
     audioSaveProfile();
     start_tx();
-    t_print("%s: Mic Profile %d saved, Mode %d supported.\n", __FUNCTION__, mic_prof.nr, _mode);
+    t_print("%s: Mic Profile %d saved, Mode %d supported.\n", __func__, mic_prof.nr, _mode);
     gtk_widget_set_sensitive(load_button, TRUE);
     // Force the GUI to update
     gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
     // Flush the GDK event queue to force GUI updates
     gdk_flush();  // Ensure that all updates are processed
   } else {
-    t_print("%s: Mic Profile %d not saved, Mode %d not supported.\n", __FUNCTION__, mic_prof.nr, _mode);
+    t_print("%s: Mic Profile %d not saved, Mode %d not supported.\n", __func__, mic_prof.nr, _mode);
     return;
   }
 }
@@ -394,7 +394,7 @@ gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer d
   return FALSE;
 }
 
-void showAudioProfileSaveDialog() {
+void showAudioProfileSaveDialog(void){
   GtkWidget *aprof_dialog_win;
   GtkWidget *grid;
   GtkWidget *label;
@@ -470,7 +470,7 @@ void showAudioProfileSaveDialog() {
   gtk_widget_show_all(aprof_dialog_win);
 }
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -486,7 +486,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -983,7 +983,7 @@ static void ctcss_frequency_cb(GtkWidget *widget, gpointer data) {
 void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   gboolean flag = GPOINTER_TO_INT(data);
-  t_print("%s: Flag: %d\n", __FUNCTION__, flag);
+  t_print("%s: Flag: %d\n", __func__, flag);
 #if defined (__CPYMODE__)
   int _mode = vfo_get_tx_mode();
 #endif
@@ -1010,7 +1010,7 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   }
 
 #if defined (__CPYMODE__)
-  t_print("%s: mode: %d, mode_settings %s size: %d\n", __FUNCTION__, _mode, mode_settings[_mode].microphone_name,
+  t_print("%s: mode: %d, mode_settings %s size: %d\n", __func__, _mode, mode_settings[_mode].microphone_name,
           sizeof(mode_settings[_mode].microphone_name));
   copy_mode_settings(_mode);
 #endif

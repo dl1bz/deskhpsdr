@@ -44,7 +44,7 @@ static GtkWidget *spin[11];
 
 static void reset_cb(GtkWidget *widget, gpointer data);
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -55,7 +55,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -183,7 +183,7 @@ static void show_W(int watts, gboolean reset) {
   }
 }
 
-static void clear_W() {
+static void clear_W(void){
   int i;
 
   for (i = 0; i < 10; i++) {

@@ -315,7 +315,7 @@ int sliders_active_receiver_changed(void *data) {
 }
 
 void set_attenuation_value(double value) {
-  //t_print("%s value=%f\n",__FUNCTION__,value);
+  //t_print("%s value=%f\n",__func__,value);
   if (!have_rx_att) { return; }
 
   adc[active_receiver->adc].attenuation = (int)value;
@@ -338,13 +338,13 @@ static void attenuation_value_changed_cb(GtkWidget *widget, gpointer data) {
   schedule_high_priority();
 }
 
-void att_type_changed() {
+void att_type_changed(void){
   //
   // This function manages a transition from/to a CHARLY25 filter board
   // Note all sliders might be non-existent, e.g. if sliders are not
   // displayed at all. So verify all widgets are non-NULL
   //
-  //t_print("%s\n",__FUNCTION__);
+  //t_print("%s\n",__func__);
   if (filter_board == CHARLY25) {
     if (attenuation_label != NULL) { gtk_widget_hide(attenuation_label); }
 
@@ -432,7 +432,7 @@ static void c25_att_combobox_changed(GtkWidget *widget, gpointer data) {
   }
 }
 
-void update_c25_att() {
+void update_c25_att(void){
   //
   // Only effective with the CHARLY25 filter board.
   // Change the Att/Preamp combo-box to the current attenuation status
@@ -470,7 +470,7 @@ static void agcgain_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void set_agc_gain(int rx, double value) {
-  //t_print("%s value=%f\n",__FUNCTION__, value);
+  //t_print("%s value=%f\n",__func__, value);
   if (rx >= receivers) { return; }
 
   receiver[rx]->agc_gain = value;
@@ -549,7 +549,7 @@ void set_rf_gain(int rx, double value) {
   if (rx >= receivers) { return; }
 
   int rxadc = receiver[rx]->adc;
-  //t_print("%s rx=%d adc=%d val=%f\n",__FUNCTION__, rx, rxadc, value);
+  //t_print("%s rx=%d adc=%d val=%f\n",__func__, rx, rxadc, value);
   adc[rxadc].gain = value;
 #ifdef SOAPYSDR
 
@@ -582,7 +582,7 @@ void set_rf_gain(int rx, double value) {
 }
 
 void show_filter_width(int rx, int width) {
-  //t_print("%s width=%d\n",__FUNCTION__, width);
+  //t_print("%s width=%d\n",__func__, width);
   char title[64];
   int min, max;
   snprintf(title, 64, "Filter Width RX%d (Hz)", rx + 1);
@@ -605,7 +605,7 @@ void show_filter_width(int rx, int width) {
 }
 
 void show_filter_shift(int rx, int shift) {
-  //t_print("%s shift=%d\n",__FUNCTION__, shift);
+  //t_print("%s shift=%d\n",__func__, shift);
   char title[64];
   int min, max;
   snprintf(title, 64, "Filter SHIFT RX%d (Hz)", rx + 1);
@@ -628,13 +628,13 @@ static void micgain_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void set_linein_gain(double value) {
-  //t_print("%s value=%f\n",__FUNCTION__, value);
+  //t_print("%s value=%f\n",__func__, value);
   linein_gain = value;
   show_popup_slider(LINEIN_GAIN, 0, -34.0, 12.0, 1.0, linein_gain, "LineIn Gain");
 }
 
 void set_mic_gain(double value) {
-  //t_print("%s value=%f\n",__FUNCTION__, value);
+  //t_print("%s value=%f\n",__func__, value);
   if (can_transmit) {
     transmitter->mic_gain = value;
     tx_set_mic_gain(transmitter);
@@ -656,7 +656,7 @@ void set_mic_gain(double value) {
 }
 
 void set_drive(double value) {
-  //t_print("%s value=%f\n",__FUNCTION__,value);
+  //t_print("%s value=%f\n",__func__,value);
   int txmode = vfo_get_tx_mode();
 
   if (txmode == modeDIGU || txmode == modeDIGL) {
@@ -706,7 +706,7 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
     value *= 20;
   }
 
-  t_print("%s: value=%f at device %d\n", __FUNCTION__, value, device);
+  t_print("%s: value=%f at device %d\n", __func__, value, device);
   int txmode = vfo_get_tx_mode();
 
   if (txmode == modeDIGU || txmode == modeDIGL) {
@@ -734,7 +734,7 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void show_filter_high(int rx, int var) {
-  //t_print("%s var=%d\n",__FUNCTION__,var);
+  //t_print("%s var=%d\n",__func__,var);
   char title[64];
   int min, max;
   snprintf(title, 64, "Filter Cut High RX%d (Hz)", rx + 1);
@@ -837,7 +837,7 @@ static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
   }
 
   t_print("%s: mode: %d transmitter->local_microphone: %d mode_settings[%d].local_microphone %d\n",
-          __FUNCTION__, mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
+          __func__, mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
   copy_mode_settings(mode);
   g_idle_add(ext_vfo_update, NULL);
 #endif
@@ -859,7 +859,7 @@ static void local_mic_toggle_cb(GtkToggleButton *btn, gpointer data) {
       g_signal_handlers_block_by_func(btn, G_CALLBACK(local_mic_toggle_cb), data);
       gtk_toggle_button_set_active(btn, FALSE);
       g_signal_handlers_unblock_by_func(btn, G_CALLBACK(local_mic_toggle_cb), data);
-      t_print("%s: audio_open_input failed rc=%d\n", __FUNCTION__, rc);
+      t_print("%s: audio_open_input failed rc=%d\n", __func__, rc);
     }
   } else {
     if (tx->local_microphone) {
@@ -966,7 +966,7 @@ static void lev_scale_changed_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_local_mic_input(int src) {
   if (display_sliders) {
-    // t_print("%s: local_mic_input = %d src = %d\n", __FUNCTION__, gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input)), src);
+    // t_print("%s: local_mic_input = %d src = %d\n", __func__, gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input)), src);
     if (src != gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input))) {
       g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
 
@@ -1058,7 +1058,7 @@ void update_slider_preamp_button(gboolean show_widget) {
   }
 }
 
-void update_slider_local_mic_button() {
+void update_slider_local_mic_button(void){
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
@@ -1119,7 +1119,7 @@ void update_slider_lev_scale(gboolean show_widget) {
   }
 }
 
-void update_slider_autogain_btn() {
+void update_slider_autogain_btn(void){
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_btn), autogain_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_btn), autogain_enabled);
@@ -1144,7 +1144,7 @@ void update_slider_snb_button(gboolean show_widget) {
   }
 }
 
-void update_slider_binaural_btn() {
+void update_slider_binaural_btn(void){
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (binaural_btn), binaural_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (binaural_btn), active_receiver->binaural);
@@ -1153,7 +1153,7 @@ void update_slider_binaural_btn() {
   }
 }
 
-void update_slider_tune_drive_btn() {
+void update_slider_tune_drive_btn(void){
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (tune_drive_btn), tune_drive_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tune_drive_btn), !(radio_get_tune()));
@@ -1176,7 +1176,7 @@ static void tune_drive_toggle_cb(GtkWidget *widget, gpointer data) {
   update_slider_tune_drive_btn();
 }
 
-void update_slider_af_gain_btn() {
+void update_slider_af_gain_btn(void){
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (af_gain_btn), af_gain_btn_signal_id);
     // invert button, red = MUTE, green = Playback
@@ -1202,7 +1202,7 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
   update_slider_af_gain_btn();
 }
 
-void update_slider_split_btn() {
+void update_slider_split_btn(void){
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (split_btn), split_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (split_btn), split);
@@ -1240,7 +1240,7 @@ static void ifgr_scale_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 
-void update_slider_hwagc_btn() {
+void update_slider_hwagc_btn(void){
   if (display_sliders && device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_has_automatic_gain) {
     if (strcmp(radio->name, "sdrplay") == 0) {
       g_signal_handler_block(GTK_TOGGLE_BUTTON (hwagc_btn), hwagc_btn_signal_id);
@@ -1283,7 +1283,7 @@ void update_rf_gain_scale_soapy(int idx) {
                            radio->info.soapy.rx_gain[idx]));
       g_signal_handler_unblock(G_OBJECT(rf_gain_scale), rf_gain_scale_signal_id);
       gtk_widget_queue_draw(rf_gain_scale);
-      t_print("%s: idx = %d rf_gain_scale value = %f\n", __FUNCTION__, idx,
+      t_print("%s: idx = %d rf_gain_scale value = %f\n", __func__, idx,
               (double)soapy_protocol_get_gain_element(active_receiver,
                   radio->info.soapy.rx_gain[idx]));
     }
@@ -1298,7 +1298,7 @@ void update_ifgr_scale_soapy(int idx) {
                                 radio->info.soapy.rx_gain[idx]));
       g_signal_handler_unblock(G_OBJECT(ifgr_scale), ifgr_scale_signal_id);
       gtk_widget_queue_draw(ifgr_scale);
-      t_print("%s: idx = %d ifgr_scale value = %f\n", __FUNCTION__, idx,
+      t_print("%s: idx = %d ifgr_scale value = %f\n", __func__, idx,
               (double)soapy_protocol_get_gain_element(active_receiver,
                   radio->info.soapy.rx_gain[idx]));
     }
@@ -1322,7 +1322,7 @@ static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
   return;
 }
 
-void update_slider_nr_btn() {
+void update_slider_nr_btn(void){
   if (display_sliders && have_rx_gain) {
     g_signal_handler_block(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
@@ -1367,7 +1367,7 @@ static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-void update_slider_agc_btn() {
+void update_slider_agc_btn(void){
   if (display_sliders) {
     g_signal_handler_block(G_OBJECT(agc_btn), agc_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(agc_btn), agc_labels[active_receiver->agc]);
@@ -1400,7 +1400,7 @@ static void agc_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-void update_slider_ps_btn() {
+void update_slider_ps_btn(void){
   if (can_transmit && display_sliders && have_rx_gain) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (ps_btn), ps_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ps_btn), transmitter->puresignal);
@@ -1466,7 +1466,7 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
 #endif
 
 void set_squelch(RECEIVER *rx) {
-  //t_print("%s\n",__FUNCTION__);
+  //t_print("%s\n",__func__);
   //
   // automatically enable/disable squelch if squelch value changed
   // you can still enable/disable squelch via the check-box, but
@@ -1486,11 +1486,11 @@ void set_squelch(RECEIVER *rx) {
   }
 }
 
-void show_diversity_gain() {
+void show_diversity_gain(void){
   show_popup_slider(DIV_GAIN, 0, -27.0, 27.0, 0.01, div_gain, "Diversity Gain");
 }
 
-void show_diversity_phase() {
+void show_diversity_phase(void){
   show_popup_slider(DIV_PHASE, 0, -180.0, 180.0, 0.1, div_phase, "Diversity Phase");
 }
 
@@ -1512,7 +1512,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   int box_right_width = box_left_width - 50;
   int box_middle_width = my_width - box_left_width - box_right_width - 50;
   t_print("%s: my_width = %d box_left_width = %d box_middle_width = %d box_right_width = %d (summe = %d)\n",
-          __FUNCTION__, my_width, box_left_width, box_middle_width, box_right_width,
+          __func__, my_width, box_left_width, box_middle_width, box_right_width,
           box_left_width + box_middle_width + box_right_width);
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1783,7 +1783,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
 
 #endif
-    t_print("%s: adc[0].min_gain = %f adc[0].max_gain = %f\n", __FUNCTION__, adc[0].min_gain, adc[0].max_gain);
+    t_print("%s: adc[0].min_gain = %f adc[0].max_gain = %f\n", __func__, adc[0].min_gain, adc[0].max_gain);
     rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, adc[0].min_gain, adc[0].max_gain, 1.0);
     WEAKEN(rf_gain_scale);
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);

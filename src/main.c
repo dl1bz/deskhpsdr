@@ -157,7 +157,7 @@ static void enforce_x11_backend_policy(void) {
   const char *result_x11_be = g_getenv("GDK_BACKEND");
   const char *result_x11_sess = g_getenv("XDG_SESSION_TYPE");
   const char *result_x11_wayland = g_getenv("WAYLAND_DISPLAY");
-  t_print("%s: GDK_BACKEND = %s XDG_SESSION_TYPE = %s WAYLAND_DISPLAY = %s\n", __FUNCTION__, result_x11_be,
+  t_print("%s: GDK_BACKEND = %s XDG_SESSION_TYPE = %s WAYLAND_DISPLAY = %s\n", __func__, result_x11_be,
           result_x11_sess, result_x11_wayland);
 }
 #endif
@@ -176,7 +176,7 @@ static int wisdom_running = 0;
 
 static void* wisdom_thread(void *arg) {
   int wdsp_subversion = GetWDSPVersion() % 100;
-  t_print("%s: WDSP Subversion: %d\n", __FUNCTION__, wdsp_subversion);
+  t_print("%s: WDSP Subversion: %d\n", __func__, wdsp_subversion);
 #ifdef EXTNR
   WDSPwisdom ((char *)arg);
 #else
@@ -672,7 +672,7 @@ gboolean main_delete (GtkWidget *widget) {
   _exit(0);
 }
 
-static GdkPixbuf *create_pixbuf_from_data() {
+static GdkPixbuf *create_pixbuf_from_data(void) {
   GInputStream *mem_stream;
   GdkPixbuf *pixbuf, *scaled_pixbuf;
   GError *error = NULL;
@@ -696,7 +696,7 @@ static GdkPixbuf *create_pixbuf_from_data() {
 static int init(void *data) {
   char wisdom_directory[1025];
   char text[1024];
-  t_print("%s\n", __FUNCTION__);
+  t_print("%s\n", __func__);
   t_print("LC_ALL=%s\n", setlocale(LC_ALL, NULL));
   t_print("LC_NUMERIC=%s\n", setlocale(LC_NUMERIC, NULL));
   audio_get_cards();
@@ -1009,11 +1009,11 @@ int main(int argc, char **argv) {
   setpriority(PRIO_PROCESS, 0, -10);
   rc = getpriority(PRIO_PROCESS, 0);
   t_print("Base priority after adjustment: %d\n", rc);
-  t_print("%s: init global cURL...\n", __FUNCTION__);
+  t_print("%s: init global cURL...\n", __func__);
   curl_global_init(CURL_GLOBAL_ALL);
   toolset_init();
   snprintf(name, 1024, "org.dl1bz.deskhpsdr.pid%d", getpid());
-  t_print("%s: gtk_application_new: %s -> X11 backend use Wayland ? : %d\n", __FUNCTION__, name, use_wayland);
+  t_print("%s: gtk_application_new: %s -> X11 backend use Wayland ? : %d\n", __func__, name, use_wayland);
   gtk_disable_setlocale();  // keep having a decimal point as a decimal point
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);

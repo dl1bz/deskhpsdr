@@ -141,8 +141,8 @@ void audio_release_cards(void) {
 //
 // This inits PortAudio and looks for suitable input and output channels
 //
-void audio_get_cards() {
-  t_print("%s: PORTAUDIO call audio_get_cards\n", __FUNCTION__);
+void audio_get_cards(void){
+  t_print("%s: PORTAUDIO call audio_get_cards\n", __func__);
   int numDevices;
   PaStreamParameters inputParameters, outputParameters;
   PaError err;
@@ -156,7 +156,7 @@ void audio_get_cards() {
   err = Pa_Initialize();
 
   if ( err != paNoError ) {
-    t_print("%s: init error %s\n", __FUNCTION__, Pa_GetErrorText(err));
+    t_print("%s: init error %s\n", __func__, Pa_GetErrorText(err));
     return;
   }
 
@@ -189,7 +189,7 @@ void audio_get_cards() {
         n_input_devices++;
       }
 
-      t_print("%s: INPUT DEVICE, No=%d, Name=%s\n", __FUNCTION__, i, deviceInfo->name);
+      t_print("%s: INPUT DEVICE, No=%d, Name=%s\n", __func__, i, deviceInfo->name);
     }
 
     outputParameters.device = i;
@@ -206,7 +206,7 @@ void audio_get_cards() {
         n_output_devices++;
       }
 
-      t_print("%s: OUTPUT DEVICE, No=%d, Name=%s\n", __FUNCTION__, i, deviceInfo->name);
+      t_print("%s: OUTPUT DEVICE, No=%d, Name=%s\n", __func__, i, deviceInfo->name);
     }
   }
 
@@ -223,8 +223,8 @@ void audio_get_cards() {
 int pa_mic_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 int pa_out_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 
-int audio_open_input() {
-  t_print("%s: PORTAUDIO call audio_open_input\n", __FUNCTION__);
+int audio_open_input(void){
+  t_print("%s: PORTAUDIO call audio_open_input\n", __func__);
   PaError err;
   PaStreamParameters inputParameters;
   int i;
@@ -246,7 +246,7 @@ int audio_open_input() {
     }
   }
 
-  t_print("%s: name=%s PADEV=%d\n", __FUNCTION__, transmitter->microphone_name, padev);
+  t_print("%s: name=%s PADEV=%d\n", __func__, transmitter->microphone_name, padev);
 
   //
   // Device name possibly came from props file and device is no longer there
@@ -276,7 +276,7 @@ int audio_open_input() {
                       paNoFlag, pa_mic_cb, NULL);
 
   if (err != paNoError) {
-    t_print("%s: open stream error %s\n", __FUNCTION__, Pa_GetErrorText(err));
+    t_print("%s: open stream error %s\n", __func__, Pa_GetErrorText(err));
     record_handle = NULL;
     g_mutex_unlock(&audio_mutex);
     return -1;
@@ -288,7 +288,7 @@ int audio_open_input() {
   if (mic_ring_buffer == NULL) {
     Pa_CloseStream(record_handle);
     record_handle = NULL;
-    t_print("%s: alloc buffer failed.\n", __FUNCTION__);
+    t_print("%s: alloc buffer failed.\n", __func__);
     g_mutex_unlock(&audio_mutex);
     return -1;
   }
@@ -296,7 +296,7 @@ int audio_open_input() {
   err = Pa_StartStream(record_handle);
 
   if (err != paNoError) {
-    t_print("%s: start stream error %s\n", __FUNCTION__, Pa_GetErrorText(err));
+    t_print("%s: start stream error %s\n", __func__, Pa_GetErrorText(err));
     Pa_CloseStream(record_handle);
     record_handle = NULL;
     g_free(mic_ring_buffer);
@@ -323,7 +323,7 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
   RECEIVER *rx = (RECEIVER *)userdata;
 
   if (out == NULL) {
-    t_print("%s: bogus audio buffer in callback\n", __FUNCTION__);
+    t_print("%s: bogus audio buffer in callback\n", __func__);
     return paContinue;
   }
 
@@ -375,7 +375,7 @@ int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
 
   if (in == NULL) {
     // This should not happen, so we do not send silence etc.
-    t_print("%s: bogus audio buffer in callback\n", __FUNCTION__);
+    t_print("%s: bogus audio buffer in callback\n", __func__);
     return paContinue;
   }
 
@@ -444,7 +444,7 @@ int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
 // Utility function for retrieving mic samples
 // from ring buffer
 //
-float audio_get_next_mic_sample() {
+float audio_get_next_mic_sample(void){
   float sample;
   g_mutex_lock(&audio_mutex);
 
@@ -492,7 +492,7 @@ int audio_open_output(RECEIVER *rx) {
     }
   }
 
-  t_print("%s: name=%s PADEV=%d\n", __FUNCTION__, rx->audio_name, padev);
+  t_print("%s: name=%s PADEV=%d\n", __func__, rx->audio_name, padev);
 
   //
   // Device name possibly came from props file and device is no longer there
@@ -523,7 +523,7 @@ int audio_open_output(RECEIVER *rx) {
                       paNoFlag, pa_out_cb, rx);
 
   if (err != paNoError) {
-    t_print("%s: open stream error %s\n", __FUNCTION__, Pa_GetErrorText(err));
+    t_print("%s: open stream error %s\n", __func__, Pa_GetErrorText(err));
     rx->playstream = NULL;
     g_mutex_unlock(&rx->local_audio_mutex);
     return -1;
@@ -537,7 +537,7 @@ int audio_open_output(RECEIVER *rx) {
   rx->local_audio_buffer_outpt = 0;
 
   if (rx->local_audio_buffer == NULL) {
-    t_print("%s: allocate buffer failed\n", __FUNCTION__);
+    t_print("%s: allocate buffer failed\n", __func__);
     Pa_CloseStream(rx->playstream);
     rx->playstream = NULL;
     g_mutex_unlock(&rx->local_audio_mutex);
@@ -547,7 +547,7 @@ int audio_open_output(RECEIVER *rx) {
   err = Pa_StartStream(rx->playstream);
 
   if (err != paNoError) {
-    t_print("%s: error starting stream:%s\n", __FUNCTION__, Pa_GetErrorText(err));
+    t_print("%s: error starting stream:%s\n", __func__, Pa_GetErrorText(err));
     Pa_CloseStream(rx->playstream);
     rx->playstream = NULL;
     g_free(rx->local_audio_buffer);
@@ -568,22 +568,22 @@ int audio_open_output(RECEIVER *rx) {
 //
 // close a TX microphone stream
 //
-void audio_close_input() {
-  t_print("%s: PORTAUDIO call audio_close_input\n", __FUNCTION__);
-  t_print("%s: micname=%s\n", __FUNCTION__, transmitter->microphone_name);
+void audio_close_input(void){
+  t_print("%s: PORTAUDIO call audio_close_input\n", __func__);
+  t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
   g_mutex_lock(&audio_mutex);
 
   if (record_handle != NULL) {
     PaError err = Pa_StopStream(record_handle);
 
     if (err != paNoError) {
-      t_print("%s: error stopping stream: %s\n", __FUNCTION__, Pa_GetErrorText(err));
+      t_print("%s: error stopping stream: %s\n", __func__, Pa_GetErrorText(err));
     }
 
     err = Pa_CloseStream(record_handle);
 
     if (err != paNoError) {
-      t_print("%s: %s\n", __FUNCTION__, Pa_GetErrorText(err));
+      t_print("%s: %s\n", __func__, Pa_GetErrorText(err));
     }
 
     record_handle = NULL;
@@ -603,7 +603,7 @@ void audio_close_input() {
 // shut down the stream connected with audio from one of the RX
 //
 void audio_close_output(RECEIVER *rx) {
-  t_print("%s: device=%s\n", __FUNCTION__, rx->audio_name);
+  t_print("%s: device=%s\n", __func__, rx->audio_name);
   g_mutex_lock(&rx->local_audio_mutex);
 
   if (rx->local_audio_buffer != NULL) {
@@ -615,13 +615,13 @@ void audio_close_output(RECEIVER *rx) {
     PaError err = Pa_StopStream(rx->playstream);
 
     if (err != paNoError) {
-      t_print("%s: stop stream error %s\n", __FUNCTION__, Pa_GetErrorText(err));
+      t_print("%s: stop stream error %s\n", __func__, Pa_GetErrorText(err));
     }
 
     err = Pa_CloseStream(rx->playstream);
 
     if (err != paNoError) {
-      t_print("%s: close stream error %s\n", __FUNCTION__, Pa_GetErrorText(err));
+      t_print("%s: close stream error %s\n", __func__, Pa_GetErrorText(err));
     }
 
     rx->playstream = NULL;
@@ -690,7 +690,7 @@ int audio_write (RECEIVER *rx, float left, float right) {
 
       MEMORY_BARRIER;
       rx->local_audio_buffer_inpt = oldpt;
-      //t_print("%s: buffer was nearly empty, inserted silence.\n", __FUNCTION__);
+      //t_print("%s: buffer was nearly empty, inserted silence.\n", __func__);
     }
 
     if (avail > MY_RING_HIGH_WATER) {
@@ -707,7 +707,7 @@ int audio_write (RECEIVER *rx, float left, float right) {
       if (oldpt < 0) { oldpt += MY_RING_BUFFER_SIZE; }
 
       rx->local_audio_buffer_inpt = oldpt;
-      t_print("%s: buffer was nearly full, deleted audio\n", __FUNCTION__);
+      t_print("%s: buffer was nearly full, deleted audio\n", __func__);
     }
 
     //

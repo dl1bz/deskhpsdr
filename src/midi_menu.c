@@ -120,7 +120,7 @@ enum {
 };
 
 static int updatePanel(int state);
-static void updateDescription();
+static void updateDescription(void);
 static void load_store(void);
 
 static char *Event2String(enum MIDIevent event);
@@ -128,7 +128,7 @@ static enum MIDIevent String2Event(const char *str);
 static char *Type2String(enum ACTIONtype type);
 static enum ACTIONtype String2Type(const char *str);
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -141,7 +141,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -200,7 +200,7 @@ static void type_changed_cb(GtkWidget *widget, gpointer data) {
     return;
   }
 
-  //t_print("%s: type=%s action=%d type=%d\n",__FUNCTION__,type,thisAction,thisType);
+  //t_print("%s: type=%s action=%d type=%d\n",__func__,type,thisAction,thisType);
   thisType = String2Type(type);
 
   //
@@ -217,10 +217,10 @@ static void type_changed_cb(GtkWidget *widget, gpointer data) {
 static gboolean action_cb(GtkWidget *widget, gpointer data) {
   if (thisType == TYPE_NONE) { return TRUE; }
 
-  //t_print("%s: type=%d action=%d\n", __FUNCTION__, thisType, thisAction);
+  //t_print("%s: type=%d action=%d\n", __func__, thisType, thisAction);
   ignore_incoming_events = 1;
   thisAction = action_dialog(dialog, thisType, thisAction);
-  //t_print("%s: new action=%d\n", __FUNCTION__, thisAction);
+  //t_print("%s: new action=%d\n", __func__, thisAction);
   gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
   updateDescription();
   ignore_incoming_events = 0;
@@ -228,7 +228,7 @@ static gboolean action_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void row_inserted_cb(GtkTreeModel *tree_model, GtkTreePath *path, GtkTreeIter *iter, gpointer user_data) {
-  //t_print("%s\n",__FUNCTION__);
+  //t_print("%s\n",__func__);
   gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, NULL, FALSE);
 }
 
@@ -272,7 +272,7 @@ static void tree_selection_changed_cb (GtkTreeSelection *selection, gpointer dat
   }
 }
 
-static void find_current_cmd() {
+static void find_current_cmd(void){
   struct desc *cmd;
   cmd = MidiCommandsTable[thisNote];
 
@@ -421,14 +421,14 @@ static void add_store(int key, const struct desc *cmd) {
   if (scrolled_window != NULL) {
     GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
 
-    //t_print("%s: adjustment=%f lower=%f upper=%f\n",__FUNCTION__,gtk_adjustment_get_value(adjustment),gtk_adjustment_get_lower(adjustment),gtk_adjustment_get_upper(adjustment));
+    //t_print("%s: adjustment=%f lower=%f upper=%f\n",__func__,gtk_adjustment_get_value(adjustment),gtk_adjustment_get_lower(adjustment),gtk_adjustment_get_upper(adjustment));
     if (gtk_adjustment_get_value(adjustment) != 0.0) {
       gtk_adjustment_set_value(adjustment, 0.0);
     }
   }
 }
 
-static void load_store() {
+static void load_store(void){
   struct desc *cmd;
   gtk_list_store_clear(store);
 
@@ -442,7 +442,7 @@ static void load_store() {
   }
 }
 
-static void updateDescription() {
+static void updateDescription(void){
   char str_channel[64];
   char str_note[64];
   int  addFlag = 0;
@@ -514,9 +514,9 @@ static void delete_cb(GtkButton *widget, GdkEventButton *event, gpointer user_da
   struct desc *previous_cmd;
   struct desc *next_cmd;
 
-  //t_print("%s: thisNote=%d current_cmd=%p\n", __FUNCTION__, thisNote, current_cmd);
+  //t_print("%s: thisNote=%d current_cmd=%p\n", __func__, thisNote, current_cmd);
   if (current_cmd == NULL) {
-    t_print("%s: current_cmd is NULL!\n", __FUNCTION__);
+    t_print("%s: current_cmd is NULL!\n", __func__);
     return;
   }
 
@@ -883,7 +883,7 @@ static int updatePanel(int state) {
 
     default:
       // This cannot happen
-      t_print("%s: Unknown Event in UPDATE_NEW\n", __FUNCTION__);
+      t_print("%s: Unknown Event in UPDATE_NEW\n", __func__);
     }
 
     gtk_combo_box_set_active (GTK_COMBO_BOX(newType), 0);
@@ -944,7 +944,7 @@ static int updatePanel(int state) {
 
     default:
       // cannot happen
-      t_print("%s: Unknown event in  UPDATE_EXISTING\n", __FUNCTION__);
+      t_print("%s: Unknown event in  UPDATE_EXISTING\n", __func__);
       break;
     }
 
@@ -956,7 +956,7 @@ static int updatePanel(int state) {
     gtk_label_set_text(GTK_LABEL(newMax), text);
     find_current_cmd();
 
-    //t_print("%s: current_cmd %p\n", __FUNCTION__, current_cmd);
+    //t_print("%s: current_cmd %p\n", __func__, current_cmd);
     if (current_cmd != NULL) {
       thisVfl1  = current_cmd->vfl1;
       thisVfl2  = current_cmd->vfl2;
@@ -1111,11 +1111,11 @@ void NewMidiConfigureEvent(enum MIDIevent event, int channel, int note, int val)
   data->channel = channel;
   data->note = note;
   data->val = val;
-  //t_print("%s: Event=%d Chan=%d Note=%d Val=%d\n", __FUNCTION__, event, channel, note, val);
+  //t_print("%s: Event=%d Chan=%d Note=%d Val=%d\n", __func__, event, channel, note, val);
   g_idle_add(ProcessNewMidiConfigureEvent, data);
 }
 
-void midiSaveState() {
+void midiSaveState(void){
   char name[128];
   char value[128];
   struct desc *cmd;
@@ -1139,7 +1139,7 @@ void midiSaveState() {
     while (cmd != NULL) {
       entry++;
       int channel = cmd->channel;
-      //t_print("%s:  channel=%d key=%d entry=%d event=%s type=%s action=%s\n",__FUNCTION__,channel,i,entry, Event2String(cmd->event),Type2String(cmd->type),ActionTable[cmd->action].str);
+      //t_print("%s:  channel=%d key=%d entry=%d event=%s type=%s action=%s\n",__func__,channel,i,entry, Event2String(cmd->event),Type2String(cmd->type),ActionTable[cmd->action].str);
       SetPropI2("midi[%d].entry[%d].channel", i, entry,                      channel);
       SetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel,   Event2String(cmd->event));
       SetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    Type2String(cmd->type));
@@ -1174,7 +1174,7 @@ void midiSaveState() {
   }
 }
 
-void midiRestoreState() {
+void midiRestoreState(void){
   char str[128];
   int channel;
   int event;
@@ -1189,7 +1189,7 @@ void midiRestoreState() {
   int i, j;
   get_midi_devices();
   MidiReleaseCommands();
-  //t_print("%s\n",__FUNCTION__);
+  //t_print("%s\n",__func__);
   GetPropI0("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
 
   //
@@ -1205,7 +1205,7 @@ void midiRestoreState() {
     for (j = 0; j < n_midi_devices; j++) {
       if (strcmp(midi_devices[j].name, str) == 0) {
         midi_devices[j].active = 1;
-        t_print("%s: MIDI device %s active=%d\n", __FUNCTION__, str, midi_devices[j].active);
+        t_print("%s: MIDI device %s active=%d\n", __func__, str, midi_devices[j].active);
       }
     }
   }

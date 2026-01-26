@@ -45,7 +45,7 @@ static GtkWidget *phase_coarse_scale = NULL;
 static double gain_coarse, gain_fine;
 static double phase_coarse, phase_fine;
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -60,7 +60,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -75,7 +75,7 @@ static void diversity_cb(GtkWidget *widget, gpointer data) {
 // The DIVERSITY rotation parameters must be re-calculated
 // each time the gain or the phase changes.
 //
-static void set_gain_phase() {
+static void set_gain_phase(void){
   double amplitude, arg;
   amplitude = pow(10.0, 0.05 * div_gain);
   arg = div_phase * 0.017453292519943295769236907684886;

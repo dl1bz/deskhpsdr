@@ -45,7 +45,7 @@ extern gboolean rigctl_debug;
 extern void launch_tcp_rigctl (void);
 extern int launch_serial_rigctl (int id);
 extern void disable_serial_rigctl (int id);
-extern int rigctl_tcp_running();
+extern int rigctl_tcp_running(void);
 extern void  shutdown_tcp_rigctl(void);
 extern void launch_serptt(void);
 extern void launch_sertune(void);

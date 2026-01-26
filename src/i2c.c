@@ -83,7 +83,7 @@ static int write_byte_data(unsigned char reg, unsigned char data) {
   int rc;
 
   if ((rc = i2c_smbus_write_byte_data(i2cfd, reg, data & 0xFF)) < 0) {
-    t_print("%s: write REG_GCONF config failed: addr=%02X %s\n", __FUNCTION__, i2c_address_1, g_strerror(errno));
+    t_print("%s: write REG_GCONF config failed: addr=%02X %s\n", __func__, i2c_address_1, g_strerror(errno));
   }
 
   return rc;
@@ -105,7 +105,7 @@ static unsigned int read_word_data(unsigned char reg) {
   return data & 0xFFFF;
 }
 
-void i2c_interrupt() {
+void i2c_interrupt(void){
   unsigned int flags;
   int i;
   g_mutex_lock(&i2c_mutex);
@@ -122,13 +122,13 @@ void i2c_interrupt() {
 
     unsigned int ints = read_word_data(0x10);
 
-    //t_print("%s: flags=%04X ints=%04X\n",__FUNCTION__,flags,ints);
+    //t_print("%s: flags=%04X ints=%04X\n",__func__,flags,ints);
     // only those bits in "ints" matter where the corresponding position
     // in "flags" is set. We have a PRESSED or RELEASED event depending on
     // whether the bit in "ints" is set or clear.
     for (i = 0; i < 16 && flags; i++) { // leave loop if no bits left in "flags"
       if (i2c_sw[i] & flags) {
-        //t_print("%s: switches=%p sw=%d action=%d\n",__FUNCTION__,switches,i,switches[i].switch_function);
+        //t_print("%s: switches=%p sw=%d action=%d\n",__func__,switches,i,switches[i].switch_function);
         // The input line associated with switch #i has triggered an interrupt
         // clear *this* bit in flags
         flags &= ~i2c_sw[i];
@@ -140,20 +140,20 @@ void i2c_interrupt() {
   g_mutex_unlock(&i2c_mutex);
 }
 
-void i2c_init() {
+void i2c_init(void){
   int flags;
-  t_print("%s: open i2c device %s\n", __FUNCTION__, i2c_device);
+  t_print("%s: open i2c device %s\n", __func__, i2c_device);
   i2cfd = open(i2c_device, O_RDWR);
 
   if (i2cfd < 0) {
-    t_print("%s: open i2c device %s failed: %s\n", __FUNCTION__, i2c_device, g_strerror(errno));
+    t_print("%s: open i2c device %s failed: %s\n", __func__, i2c_device, g_strerror(errno));
     return;
   }
 
-  t_print("%s: open i2c device %s fd=%d\n", __FUNCTION__, i2c_device, i2cfd);
+  t_print("%s: open i2c device %s fd=%d\n", __func__, i2c_device, i2cfd);
 
   if (ioctl(i2cfd, I2C_SLAVE, i2c_address_1) < 0) {
-    t_print("%s: ioctl i2c slave %d failed: %s\n", __FUNCTION__, i2c_address_1, g_strerror(errno));
+    t_print("%s: ioctl i2c slave %d failed: %s\n", __func__, i2c_address_1, g_strerror(errno));
     return;
   }
 

@@ -169,7 +169,7 @@ void   *audio_thread(void *);
 
 static double txlevel;
 
-int new_protocol_running() {
+int new_protocol_running(void){
   if (run) { return 1; }
   else { return 0; }
 }

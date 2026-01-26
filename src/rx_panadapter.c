@@ -344,7 +344,7 @@ static void init_worldmap_pixbuf(int w, int h) {
   g_object_unref(mem_stream);
 
   if (!raw_pixbuf) {
-    t_print("%s: ERROR loading map pic: %s\n", __FUNCTION__, error->message);
+    t_print("%s: ERROR loading map pic: %s\n", __func__, error->message);
     g_error_free(error);
     return;
   }
@@ -584,7 +584,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     adc[rx->adc].gain = 0;
     adc[rx->adc].attenuation = 0;
     adc[rx->adc].gain = v_Gain;
-    // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __FUNCTION__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
+    // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __func__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
   }
 
 #endif
@@ -1260,7 +1260,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         || difftime(current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
       if (abs(autoscale_panadapter_with_offset(noise_floor_level, -5) - rx->panadapter_low) > 10
           || rx->panadapter_low < autoscale_panadapter_with_offset(noise_floor_level, -5)) {
-        t_print("%s: rx->panadapter_low: %d noise_floor: %d\n", __FUNCTION__, rx->panadapter_low,
+        t_print("%s: rx->panadapter_low: %d noise_floor: %d\n", __func__, rx->panadapter_low,
                 autoscale_panadapter_with_offset(noise_floor_level, -5));
         rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5) - panadapter_scale_corr_f;
       }
@@ -1902,7 +1902,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         val_rfgr = (int)soapy_protocol_get_gain_element(active_receiver, txt_rfgr);
         val_currGain = (int)soapy_protocol_get_gain_element(active_receiver, txt_currGain);
         val_biast = soapy_protocol_get_bias_t(active_receiver);
-        t_print("%s: current Gain = %d\n", __FUNCTION__, (int)soapy_protocol_get_gain_element(active_receiver, txt_currGain));
+        t_print("%s: current Gain = %d\n", __func__, (int)soapy_protocol_get_gain_element(active_receiver, txt_currGain));
       }
 
       if (adc[active_receiver->adc].agc) {

@@ -80,7 +80,7 @@ void tts_send(const char *msg) {
   if (sock >= 0) {
     int optval = 1;
     struct sockaddr_in addr;
-    //t_print("%s: sending >>>%s<<<\n", __FUNCTION__, msg);
+    //t_print("%s: sending >>>%s<<<\n", __func__, msg);
     setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
@@ -101,7 +101,7 @@ void tts_send(const char *msg) {
 // tts_freq: form a message reporting the current frequency,
 //           and send this string via tts_send
 //
-void tts_freq() {
+void tts_freq(void){
   long long freq;
   long kilo;
   int hertz;
@@ -124,7 +124,7 @@ void tts_freq() {
 // tts_mode: form a string reporting the current mode, and
 //           send it via tts_send
 //
-void tts_mode() {
+void tts_mode(void){
   int v = active_receiver->id;
   int m = vfo[v].mode;
 
@@ -171,7 +171,7 @@ void tts_mode() {
 // tts_filter: form a string reporting the filter width, and send
 //             it via tts_send
 //
-void tts_filter() {
+void tts_filter(void){
   char msg[128];
   int w = active_receiver->filter_high - active_receiver->filter_low;
   snprintf(msg, sizeof(msg), "Filter width %d Hertz", w);
@@ -183,7 +183,7 @@ void tts_filter() {
 //             via tts_send
 //             NOTE: no averaging performed here!
 //
-void tts_smeter() {
+void tts_smeter(void){
   int s;
   int plus;
   int val = (int) active_receiver->meter;
@@ -218,7 +218,7 @@ void tts_smeter() {
 //
 // tts_txdrive: report value of TX drive slider
 //
-void tts_txdrive() {
+void tts_txdrive(void){
   if (can_transmit) {
     char msg[128];
     snprintf(msg, sizeof(msg), "T X drive %d", transmitter->drive);
@@ -229,7 +229,7 @@ void tts_txdrive() {
 //
 // tts_atten: report preamp or attenuator value
 //
-void tts_atten() {
+void tts_atten(void){
   char msg[128];
   int level = adc[active_receiver->adc].attenuation - adc[active_receiver->adc].gain;
 

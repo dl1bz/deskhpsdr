@@ -44,7 +44,7 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
   return total;
 }
 
-SolarData fetch_solar_data() {
+SolarData fetch_solar_data(void) {
   SolarData data = {0};
   data.sunspots = -1; // Errorindicator
   struct MemoryStruct chunk = {malloc(1), 0};

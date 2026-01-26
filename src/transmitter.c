@@ -107,7 +107,7 @@ double ctcss_frequencies[CTCSS_FREQUENCIES] = {
 static int p1radio = 0, p2radio = 0; // sine tone to the radio
 static int p1local = 0, p2local = 0; // sine tone to local audio
 
-static gboolean close_cb() {
+static gboolean close_cb(void){
   // there is nothing to clean up
   return TRUE;
 }
@@ -274,7 +274,7 @@ static void init_ve3nea_ramp(double *ramp, int width) {
 #endif
 
 void tx_set_ramps(TRANSMITTER *tx) {
-  //t_print("%s: new width=%d\n", __FUNCTION__, cw_ramp_width);
+  //t_print("%s: new width=%d\n", __func__, cw_ramp_width);
   //
   // Calculate a new CW ramp. This may be called from the CW menu
   // if the ramp width changes.
@@ -308,7 +308,7 @@ void tx_set_ramps(TRANSMITTER *tx) {
 void tx_reconfigure(TRANSMITTER *tx, int pixels, int width, int height) {
   if (width != tx->width || height != tx->height) {
     g_mutex_lock(&tx->display_mutex);
-    t_print("%s: width=%d height=%d\n", __FUNCTION__, width, height);
+    t_print("%s: width=%d height=%d\n", __func__, width, height);
     tx->width = width;
     tx->height = height;
     gtk_widget_set_size_request(tx->panel, width, height);
@@ -932,7 +932,7 @@ static void levels_show_popover_cb(GtkWidget * anchor, gpointer popover_ptr) {
   /* Adwaita GTK3: ~12px Pfeil + ~6px Padding → -18 ist meist bündig */
   gap = -1;
   GdkRectangle rect = { a.width + gap, a.height / 2, 1, 1 };
-  t_print("%s: full_screen = %d transmitter->inner_levels_popup = %d\n", __FUNCTION__, full_screen,
+  t_print("%s: full_screen = %d transmitter->inner_levels_popup = %d\n", __func__, full_screen,
           transmitter->inner_levels_popup);
 #ifdef __linux__
 
@@ -979,7 +979,7 @@ void tx_create_levels_window(TRANSMITTER *tx) {
 
     /* <<< Debug-Ausgabe HIER einfügen >>> */
     t_print("%s: WAYLAND ANCHOR mapped=%d  visible=%d  realized=%d  type=%s  parent=%s\n",
-            __FUNCTION__,
+            __func__,
             gtk_widget_get_mapped(anchor),
             gtk_widget_get_visible(anchor),
             gtk_widget_get_realized(anchor),
@@ -1039,7 +1039,7 @@ static void tx_create_visual(TRANSMITTER *tx) {
   //
   // This creates a panadapter within the main window
   //
-  t_print("%s: id=%d width=%d height=%d\n", __FUNCTION__, tx->id, tx->width, tx->height);
+  t_print("%s: id=%d width=%d height=%d\n", __func__, tx->id, tx->width, tx->height);
 
   if (tx->dialog != NULL) {
     gtk_widget_destroy(tx->dialog);
@@ -1173,7 +1173,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->displaying = 0;
   tx->alex_antenna = 0; // default: ANT1
   t_print("%s: id=%d buffer_size=%d dsp_rate=%d iq_output_rate=%d output_samples=%d width=%d height=%d\n",
-          __FUNCTION__,
+          __func__,
           tx->id, tx->buffer_size, tx->dsp_rate, tx->iq_output_rate, tx->output_samples,
           tx->width, tx->height);
   tx->filter_low = tx_filter_low;
@@ -1442,7 +1442,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
               1.0,                   // antivox gain
               1.0);                  // antivox tau
   t_print("%s: OpenChannel id=%d buffer_size=%d dsp_size=%d fft_size=%d dspRate=%d outputRate=%d\n",
-          __FUNCTION__,
+          __func__,
           tx->id,
           tx->buffer_size,
           tx->dsp_size,
@@ -2138,7 +2138,7 @@ void tx_set_filter(TRANSMITTER *tx) {
       break;
     }
 
-    t_print("%s: tx->use_rx_filter: %d, set RX filter high %d, set RX filter low %d\n", __FUNCTION__, tx->use_rx_filter,
+    t_print("%s: tx->use_rx_filter: %d, set RX filter high %d, set RX filter low %d\n", __func__, tx->use_rx_filter,
             high, low);
   }
 
@@ -2192,7 +2192,7 @@ void tx_set_filter(TRANSMITTER *tx) {
     tx->filter_low = 7000;
     tx->filter_high = 17000;
     break;
-    t_print("%s: set TX filter high %d, set TX filter low %d\n", __FUNCTION__, tx->filter_high, tx->filter_low);
+    t_print("%s: set TX filter high %d, set TX filter low %d\n", __func__, tx->filter_high, tx->filter_low);
   }
 
   tx_set_bandpass(tx);
@@ -2499,7 +2499,7 @@ void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
 
 void tx_ps_setparams(const TRANSMITTER *tx) {
   SetPSHWPeak(tx->id, tx->ps_setpk);
-  t_print("%s: TX id=%d PS tx->ps_setpk=%g\n", __FUNCTION__, tx->id, tx->ps_setpk);
+  t_print("%s: TX id=%d PS tx->ps_setpk=%g\n", __func__, tx->id, tx->ps_setpk);
   SetPSMapMode(tx->id, tx->ps_map);
   SetPSPtol(tx->id, tx->ps_ptol ? 0.4 : 0.8);
   SetPSIntsAndSpi(tx->id, tx->ps_ints, tx->ps_spi);
@@ -2514,7 +2514,7 @@ void tx_ps_setparams(const TRANSMITTER *tx) {
 void tx_ps_setpk(const TRANSMITTER *tx, double peak) {
   SetPSHWPeak(tx->id, peak);
 #ifdef WDSPTXDEBUG
-  t_print("%s: TX id=%d PS HWpeak=%g\n", __FUNCTION__, tx->id, peak);
+  t_print("%s: TX id=%d PS HWpeak=%g\n", __func__, tx->id, peak);
 #endif
 }
 
@@ -2590,12 +2590,12 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXALevelerTop(tx->id, tx->lev_gain);
   SetTXALevelerSt(tx->id, tx->lev_enable); // Leveler on/off
   t_print("%s: Leveler state %d , gain %.1fdb, attack %dms, decay %dms\n",
-          __FUNCTION__, tx->lev_enable, tx->lev_gain, tx->lev_attack, tx->lev_decay);
+          __func__, tx->lev_enable, tx->lev_gain, tx->lev_attack, tx->lev_decay);
   SetTXAPHROTCorner(tx->id, tx->phrot_freq);   // Phase Rotator corner frequency in Hz
   SetTXAPHROTNstages(tx->id, tx->phrot_stage); // Phase Rotator stages
   SetTXAPHROTRun(tx->id, tx->phrot_enable);    // Phase Rotator on/off
   t_print("%s: PH-ROT state %d, stages %d, freq %.1fHz\n",
-          __FUNCTION__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
+          __func__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
 #if defined (__EQ12__)
   SetTXACFCOMPprofile(tx->id, 12, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
 #else
@@ -2607,7 +2607,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   // SetTXACFCOMPRun(tx->id, tx->cfc);
   SetTXACFCOMPPeqRun(tx->id, tx->cfc_eq); // Post CFC on/off
   t_print("%s: pre CFC state %d with Level %.1fdb, post CFC state: %d with Level %.1fdb\n",
-          __FUNCTION__, tx->cfc, tx->cfc_lvl[0], tx->cfc_eq, tx->cfc_post[0]);
+          __func__, tx->cfc, tx->cfc_lvl[0], tx->cfc_eq, tx->cfc_post[0]);
   // CESSB overshoot control used only with COMP
   // SetTXAosctrlRun(tx->id, tx->compressor);
   SetTXACompressorGain(tx->id, tx->compressor_level);
@@ -2615,14 +2615,14 @@ void tx_set_compressor(TRANSMITTER *tx) {
 
   if (tx->compressor && tx->cessb_enable && tx->compressor_level > 0 && !tx->low_latency) {
     SetTXAosctrlRun(tx->id, tx->compressor); // CESSB on
-    t_print("%s: CESSB enabled\n", __FUNCTION__);
+    t_print("%s: CESSB enabled\n", __func__);
   } else {
     SetTXAosctrlRun(tx->id, 0); // CESSB off
-    t_print("%s: CESSB disabled\n", __FUNCTION__);
+    t_print("%s: CESSB disabled\n", __func__);
   }
 
   t_print("%s: Baseband-Compr state %d, level %.1f\n",
-          __FUNCTION__, tx->compressor, tx->compressor_level);
+          __func__, tx->compressor, tx->compressor_level);
 
   if (can_transmit && display_sliders) {
     update_slider_lev_scale(TRUE);
@@ -2634,7 +2634,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
 
 void tx_set_eq_ctfmode(const TRANSMITTER *tx) {
   SetTXAEQCtfmode(tx->id, tx->eq_ctfmode);
-  t_print("%s: TX-EQ Ctfmode: %d\n", __FUNCTION__, tx->eq_ctfmode);
+  t_print("%s: TX-EQ Ctfmode: %d\n", __func__, tx->eq_ctfmode);
 }
 
 void tx_set_ctcss(const TRANSMITTER *tx) {
@@ -2733,12 +2733,12 @@ void tx_set_equalizer(TRANSMITTER *tx) {
   SetTXAEQProfile(tx->id, 10, tx->eq_freq, tx->eq_gain);
 #endif
   SetTXAEQRun(tx->id, tx->eq_enable);
-  t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __FUNCTION__, tx->eq_enable, tx->eq_gain[0]);
+  t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __func__, tx->eq_enable, tx->eq_gain[0]);
 }
 
 void tx_set_fft_size(const TRANSMITTER *tx) {
   TXASetNC(tx->id, tx->fft_size);
-  t_print("%s: Set TX fft_size = %d\n", __FUNCTION__, tx->fft_size);
+  t_print("%s: Set TX fft_size = %d\n", __func__, tx->fft_size);
 }
 
 void tx_set_latency(TRANSMITTER *tx) {
@@ -2747,7 +2747,7 @@ void tx_set_latency(TRANSMITTER *tx) {
   }
 
   TXASetMP(tx->id, tx->low_latency);
-  t_print("%s: Set TX low_latency = %d\n", __FUNCTION__, tx->low_latency);
+  t_print("%s: Set TX low_latency = %d\n", __func__, tx->low_latency);
 }
 
 void tx_set_mic_gain(const TRANSMITTER *tx) {
@@ -2762,10 +2762,10 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
 
   if (_mode == modeDIGL || _mode == modeDIGU) {
     SetTXAPanelGain1(tx->id, 1.0);
-    t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __FUNCTION__);
+    t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __func__);
   } else {
     SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
-    t_print("%s: set input gain to %.1fdb\n", __FUNCTION__, _gain);
+    t_print("%s: set input gain to %.1fdb\n", __func__, _gain);
   }
 
   t_print("TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
@@ -2786,7 +2786,7 @@ void tx_set_mode(TRANSMITTER* tx, int mode) {
       }
 
       SetTXAPanelGain1(tx->id, 1.0);
-      t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __FUNCTION__);
+      t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __func__);
     } else {
       _gain = tx->mic_gain;
 
@@ -2795,7 +2795,7 @@ void tx_set_mode(TRANSMITTER* tx, int mode) {
       }
 
       SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
-      t_print("%s: Restore input gain: %.1fdb\n", __FUNCTION__, _gain);
+      t_print("%s: Restore input gain: %.1fdb\n", __func__, _gain);
     }
 
     SetTXAMode(tx->id, mode);

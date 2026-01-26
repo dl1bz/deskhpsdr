@@ -381,7 +381,7 @@ extern int lpf_udp_port;
 //
 extern void   radio_tune_update(int state);
 extern void   radio_mox_update(int state);
-extern void   radio_save_state();
+extern void radio_save_state(void);
 extern void   radio_stop(void);
 extern void   radio_reconfigure(void);
 extern void   radio_reconfigure_screen(void);

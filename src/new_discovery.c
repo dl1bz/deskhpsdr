@@ -67,7 +67,7 @@ void print_device(int i) {
           discovered[i].info.network.interface_name);
 }
 
-void new_discovery() {
+void new_discovery(void){
   struct ifaddrs *addrs, *ifa;
   int i, is_local;
   getifaddrs(&addrs);
@@ -168,7 +168,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 
     g_strlcpy(addr, inet_ntoa(sa->sin_addr), sizeof(addr));
     g_strlcpy(net_mask, inet_ntoa(mask->sin_addr), sizeof(net_mask));
-    t_print("%s: bound to interface %s address %s mask %s\n", __FUNCTION__, interface_name, addr, net_mask);
+    t_print("%s: bound to interface %s address %s mask %s\n", __func__, interface_name, addr, net_mask);
     // allow broadcast on the socket
     int on = 1;
     rc = setsockopt(discovery_socket, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
@@ -255,7 +255,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
   }
 
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
-  t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
+  t_print("%s: execute TAHOE hotfix\n", __func__);
 
   //-- start fix for Tahoe --
   // Tahoe workaround: erstes UDP nach bind() kann gedroppt werden → dreifach senden
@@ -338,7 +338,7 @@ gpointer new_discover_receive_thread(gpointer data) {
 
         if (status == 2 || status == 3) {
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
-          t_print("%s: execute TAHOE hotfix\n", __FUNCTION__);
+          t_print("%s: execute TAHOE hotfix\n", __func__);
           // -- start fix for Tahoe: de-duplicate discovery responses by MAC --
           unsigned char mac_tmp[6];
 

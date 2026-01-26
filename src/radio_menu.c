@@ -55,7 +55,7 @@ static GtkWidget *n2adr_hpf_btn = NULL;
 static gulong callsign_box_signal_id;
 static gulong locator_box_signal_id;
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -66,7 +66,7 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb () {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
@@ -81,7 +81,7 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     }
 
     soapy_protocol_set_gain_element(active_receiver, (char *)gtk_widget_get_name(widget), (int) gain);
-    t_print("%s: %s gain = %d\n", __FUNCTION__, (char *)gtk_widget_get_name(widget), gain);
+    t_print("%s: %s gain = %d\n", __func__, (char *)gtk_widget_get_name(widget), gain);
     update_rf_gain_scale_soapy(index_rf_gain());
     update_ifgr_scale_soapy(index_if_gain());
   }
@@ -142,7 +142,7 @@ static void capture_time_changed_cb(GtkWidget *widget, gpointer data) {
   capture_record_pointer = 0;
   capture_replay_pointer = 0;
   capture_state = CAP_INIT;
-  t_print("%s: time: %d capture_max: %d\n", __FUNCTION__, t, capture_max);
+  t_print("%s: time: %d capture_max: %d\n", __func__, t, capture_max);
 }
 //-------------------------------------------------------------------------------------
 
@@ -187,7 +187,7 @@ static void split_cb(GtkWidget *widget, gpointer data) {
 //
 // call-able from outside, e.g. toolbar or MIDI, through g_idle_add
 //
-void setDuplex() {
+void setDuplex(void){
   if (!can_transmit) { return; }
 
   if (duplex) {
@@ -225,7 +225,7 @@ static void sat_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void n2adr_oc_settings() {
+void n2adr_oc_settings(void){
   //
   // set OC outputs for each band according to the N2ADR board requirements
   // unlike load_filters(), this can be executed outside the GTK queue
@@ -254,7 +254,7 @@ void n2adr_oc_settings() {
   schedule_high_priority();
 }
 
-void n2adr_oc_settings_tx() {
+void n2adr_oc_settings_tx(void){
   //
   // set OC outputs for each band according to the N2ADR board requirements
   // unlike load_filters(), this can be executed outside the GTK queue
@@ -297,7 +297,7 @@ void n2adr_oc_settings_tx() {
   schedule_high_priority();
 }
 
-void load_filters() {
+void load_filters(void){
   switch (filter_board) {
   case N2ADR_TX:
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
@@ -1271,7 +1271,7 @@ void radio_menu(GtkWidget *parent) {
           GtkWidget *rx_gain = gtk_spin_button_new_with_range(range.minimum, range.maximum, range.step);
           gtk_widget_set_name (rx_gain, radio->info.soapy.rx_gain[i]);
           double value = (double)soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[i]);
-          t_print("%s: gain[%d] value = %f\n", __FUNCTION__, i, value);
+          t_print("%s: gain[%d] value = %f\n", __func__, i, value);
           gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_gain), value);
           gtk_grid_attach(GTK_GRID(grid), rx_gain, 1, row, 1, 1);
           g_signal_connect(rx_gain, "value_changed", G_CALLBACK(rx_gain_element_changed_cb), NULL);

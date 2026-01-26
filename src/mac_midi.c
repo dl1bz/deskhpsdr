@@ -239,7 +239,7 @@ static MIDIPortRef myMIDIports[MAX_MIDI_DEVICES];
 static MIDIClientRef myClients[MAX_MIDI_DEVICES];
 
 void close_midi_device(int index) {
-  t_print("%s index=%d\n", __FUNCTION__, index);
+  t_print("%s index=%d\n", __func__, index);
 
   if (index < 0 || index >= MAX_MIDI_DEVICES) { return; }
 
@@ -254,7 +254,7 @@ void close_midi_device(int index) {
 
 void register_midi_device(int index) {
   OSStatus osret;
-  t_print("%s: index=%d\n", __FUNCTION__, index);
+  t_print("%s: index=%d\n", __func__, index);
 
   //
   //  Register a callback routine for the device
@@ -267,21 +267,21 @@ void register_midi_device(int index) {
   osret = MIDIClientCreate(CFSTR("deskHPSDR"), NULL, NULL, &myClients[index]);
 
   if (osret != 0) {
-    t_print("%s: MIDIClientCreate failed with ret=%d\n", __FUNCTION__, (int) osret);
+    t_print("%s: MIDIClientCreate failed with ret=%d\n", __func__, (int) osret);
     return;
   }
 
   osret = MIDIInputPortCreate(myClients[index], CFSTR("FromMIDI"), ReadMIDIdevice, NULL, &myMIDIports[index]);
 
   if (osret != 0) {
-    t_print("%s: MIDIInputPortCreate failed with ret=%d\n", __FUNCTION__, (int) osret);
+    t_print("%s: MIDIInputPortCreate failed with ret=%d\n", __func__, (int) osret);
     return;
   }
 
   osret = MIDIPortConnectSource(myMIDIports[index], MIDIGetSource(index), NULL);
 
   if (osret != 0) {
-    t_print("%s: MIDIPortConnectSource failed with ret=%d\n", __FUNCTION__, (int) osret);
+    t_print("%s: MIDIPortConnectSource failed with ret=%d\n", __func__, (int) osret);
     return;
   }
 
@@ -292,7 +292,7 @@ void register_midi_device(int index) {
   return;
 }
 
-void get_midi_devices() {
+void get_midi_devices(void){
   int n;
   int i;
   CFStringRef pname;   // MacOS name of the device
@@ -345,7 +345,7 @@ void get_midi_devices() {
       //
       if (strlen(name) == 0) { snprintf(name, 128, "NoPort%d", n_midi_devices); }
 
-      t_print("%s: %s\n", __FUNCTION__, name);
+      t_print("%s: %s\n", __func__, name);
 
       if (midi_devices[n_midi_devices].name != NULL) {
         if (strncmp(name, midi_devices[n_midi_devices].name, sizeof(name))) {
@@ -384,7 +384,7 @@ void get_midi_devices() {
     if (n_midi_devices >= MAX_MIDI_DEVICES) { break; }
   }
 
-  t_print("%s: number of devices=%d\n", __FUNCTION__, n_midi_devices);
+  t_print("%s: number of devices=%d\n", __func__, n_midi_devices);
 
   //
   // Get rid of all devices lingering around above the high-water mark

@@ -43,7 +43,7 @@ static GtkWidget *lo_error[BANDS + XVTRS];
 static GtkWidget *gain[BANDS + XVTRS];
 static GtkWidget *disable_pa[BANDS + XVTRS];
 
-static void save_xvtr () {
+static void save_xvtr(void){
   for (int i = BANDS; i < BANDS + XVTRS; i++) {
     const char *txt;
     char f[16];
@@ -139,7 +139,7 @@ void pa_disable_cb(GtkWidget *widget, gpointer data) {
   xvtr->disablePA = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
-static void cleanup() {
+static void cleanup(void){
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -151,12 +151,12 @@ static void cleanup() {
   }
 }
 
-static gboolean close_cb() {
+static gboolean close_cb(void){
   cleanup();
   return TRUE;
 }
 
-static gboolean update_cb() {
+static gboolean update_cb(void){
   save_xvtr();
   return TRUE;
 }
