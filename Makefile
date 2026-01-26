@@ -1021,6 +1021,7 @@ cppcheck:
 clean:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
+	rm -f src/*.orig
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-1.28 ]; then $(MAKE) -C wdsp-1.28 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
