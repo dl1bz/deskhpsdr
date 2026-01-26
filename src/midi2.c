@@ -144,7 +144,7 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
  * Release data from MidiCommandsTable
  */
 
-void MidiReleaseCommands(void){
+void MidiReleaseCommands(void) {
   int i;
   struct desc *loop, *new;
 

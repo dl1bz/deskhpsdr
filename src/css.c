@@ -515,7 +515,7 @@ char *css =
   "    }\n"
   ;
 
-void load_css(void){
+void load_css(void) {
   GtkCssProvider *provider = gtk_css_provider_new();
   GdkDisplay *display = gdk_display_get_default();
   GdkScreen *screen = gdk_display_get_default_screen(display);

@@ -308,7 +308,7 @@ void close_midi_device(int index) {
   }
 }
 
-void get_midi_devices(void){
+void get_midi_devices(void) {
   snd_ctl_t *ctl;
   snd_rawmidi_info_t *info;
   int card, device, subs, sub, ret;

@@ -56,7 +56,7 @@ static GtkWidget *var1_spin_high;
 static GtkWidget *var2_spin_low;
 static GtkWidget *var2_spin_high;
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -144,7 +144,7 @@ static gboolean default_cb (GtkWidget *widget, GdkEventButton *event, gpointer d
   return FALSE;
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }

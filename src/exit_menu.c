@@ -47,7 +47,7 @@
 
 static GtkWidget *dialog = NULL;
 
-void stop_program(void){
+void stop_program(void) {
 #ifdef GPIO
   gpio_close();
   t_print("%s: GPIO closed\n", __func__);
@@ -79,7 +79,7 @@ void stop_program(void){
   t_print("%s: radio state saved\n", __func__);
 }
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -90,7 +90,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }

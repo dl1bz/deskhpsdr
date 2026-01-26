@@ -435,7 +435,7 @@ static gboolean launch_autogain_hl2_wrapper(gpointer data) {
 
 static void radio_restore_state(void);
 
-void radio_stop(void){
+void radio_stop(void) {
   if (can_transmit) {
     t_print("radio_stop: TX: stop display update\n");
     transmitter->displaying = 0;
@@ -458,7 +458,7 @@ long long apply_ppm_ll(long long f_hz) {
   return (long long)((__int128)f_hz * (10000000LL + cal_0p1ppm) / 10000000LL);
 }
 
-static void choose_vfo_layout(void){
+static void choose_vfo_layout(void) {
   g_return_if_fail(vfo_layout_list[0].width > 0);
   vfo_layout = 0;
   METER_WIDTH = MIN_METER_WIDTH;
@@ -636,7 +636,7 @@ void destroy_widget_safe(GtkWidget **pwidget) {
   }
 }
 
-void radio_reconfigure_screen(void){
+void radio_reconfigure_screen(void) {
   GdkWindow *gw = gtk_widget_get_window(top_window);
   GdkWindowState ws = gdk_window_get_state(GDK_WINDOW(gw));
   int last_fullscreen = SET(ws & GDK_WINDOW_STATE_FULLSCREEN);
@@ -758,7 +758,7 @@ void radio_reconfigure_screen(void){
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void radio_reconfigure(void){
+void radio_reconfigure(void) {
   int i;
   int y;
   t_print("%s: receivers=%d\n", __func__, receivers);
@@ -1175,7 +1175,7 @@ void open_atu_window(GtkWindow *top_window,  const char *win_title, const char *
 #endif
 }
 
-static void radio_create_visual(void){
+static void radio_create_visual(void) {
   int y = 0;
   fixed = gtk_fixed_new();
   g_object_ref(topgrid);  // so it does not get deleted
@@ -1371,7 +1371,7 @@ static void radio_create_visual(void){
   att_type_changed();                // ... and this hides the „wrong“ ones.
 }
 
-int index_rf_gain(void){
+int index_rf_gain(void) {
   int rxgain_index = 0;
 #ifdef SOAPYSDR
 
@@ -1388,7 +1388,7 @@ int index_rf_gain(void){
   t_print("%s: index = %d\n", __func__, rxgain_index);
 }
 
-int index_if_gain(void){
+int index_if_gain(void) {
   int ifgain_index = -1;
 #ifdef SOAPYSDR
 
@@ -1424,7 +1424,7 @@ static void show_message(GtkWindow *parent, const char *text) {
   gtk_widget_show(dialog);
 }
 
-void radio_start_radio(void){
+void radio_start_radio(void) {
   //
   // Debug code. Placed here at the start of the program. deskHPSDR  implicitly assumes
   //             that the entires in the action table (actions.c) are sorted by their
@@ -2197,7 +2197,7 @@ void radio_start_radio(void){
 #endif
 }
 
-void reassign_pa_trim(void){
+void reassign_pa_trim(void) {
   for (int j = 0; j < 11; j++) {
     pa_trim[j] = j * pa_power_list[pa_power] * 0.1;
   }
@@ -2572,7 +2572,7 @@ void radio_set_mox(int state) {
   }
 }
 
-int radio_get_mox(void){
+int radio_get_mox(void) {
   return mox;
 }
 
@@ -2827,15 +2827,15 @@ void radio_set_tune(int state) {
   schedule_receive_specific();
 }
 
-int radio_get_tune(void){
+int radio_get_tune(void) {
   return tune;
 }
 
-int radio_is_transmitting(void){
+int radio_is_transmitting(void) {
   return mox | vox | tune;
 }
 
-double radio_get_drive(void){
+double radio_get_drive(void) {
   if (can_transmit) {
     return transmitter->drive;
   } else {
@@ -2864,7 +2864,7 @@ static int calcLevel(double d) {
   return level;
 }
 
-void radio_calc_drive_level(void){
+void radio_calc_drive_level(void) {
   int level;
 
   if (!can_transmit) { return; }
@@ -3004,7 +3004,7 @@ void radio_set_rf_gain(const RECEIVER *rx) {
 #endif
 }
 
-void radio_set_alex_antennas(void){
+void radio_set_alex_antennas(void) {
   //
   // Obtain band of VFO-A and transmitter, set ALEX RX/TX antennas
   // and the step attenuator
@@ -3032,7 +3032,7 @@ void radio_set_alex_antennas(void){
   schedule_general();               // possibly update PA disable
 }
 
-void radio_tx_vfo_changed(void){
+void radio_tx_vfo_changed(void) {
   //
   // When changing the active receiver or changing the split status,
   // the VFO that controls the transmitter my flip between VFOA/VFOB.
@@ -3072,7 +3072,7 @@ void radio_set_alex_attenuation(int v) {
   schedule_high_priority();
 }
 
-void radio_split_toggle(void){
+void radio_split_toggle(void) {
   radio_set_split(!split);
 }
 
@@ -3091,7 +3091,7 @@ void radio_set_split(int val) {
   }
 }
 
-static void radio_restore_state(void){
+static void radio_restore_state(void) {
   t_print("%s: path=%s\n", __func__, property_path);
   g_mutex_lock(&property_mutex);
   loadProperties(property_path);
@@ -3354,7 +3354,7 @@ static void radio_restore_state(void){
   g_mutex_unlock(&property_mutex);
 }
 
-void radio_save_state(void){
+void radio_save_state(void) {
   g_mutex_lock(&property_mutex);
   clearProperties();
 
@@ -3666,7 +3666,7 @@ void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int span
 // (xvtr bands are not counted here)
 //
 
-int radio_max_band(void){
+int radio_max_band(void) {
   int max = BANDS - 1;
 
   switch (device) {
@@ -3690,7 +3690,7 @@ int radio_max_band(void){
   return max;
 }
 
-void radio_protocol_stop(void){
+void radio_protocol_stop(void) {
   //
   // paranoia ...
   //
@@ -3714,7 +3714,7 @@ void radio_protocol_stop(void){
   }
 }
 
-void radio_protocol_run(void){
+void radio_protocol_run(void) {
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     old_protocol_run();
@@ -3732,7 +3732,7 @@ void radio_protocol_run(void){
   }
 }
 
-void radio_protocol_restart(void){
+void radio_protocol_restart(void) {
   radio_protocol_stop();
   usleep(200000);
   radio_protocol_run();
@@ -3779,7 +3779,7 @@ static gpointer auto_tune_thread(gpointer data) {
   return NULL;
 }
 
-void radio_start_auto_tune(void){
+void radio_start_auto_tune(void) {
   static GThread *tune_thread_id = NULL;
 
   if (tune_thread_id) {
@@ -3796,7 +3796,7 @@ void radio_start_auto_tune(void){
 // The next four functions implement a temporary change
 // of settings during capture/replay.
 //
-void radio_start_capture(void){
+void radio_start_capture(void) {
   //
   // - turn off  equalizers for both RX but keep the state in rx
   //
@@ -3808,7 +3808,7 @@ void radio_start_capture(void){
   }
 }
 
-void radio_end_capture(void){
+void radio_end_capture(void) {
   //
   // - normalize what has been captured
   // - restore  RX equalizer on/off flags
@@ -3848,19 +3848,19 @@ void radio_end_capture(void){
   }
 }
 
-void radio_start_xmit_captured_data(void){
+void radio_start_xmit_captured_data(void) {
   if (can_transmit) {
     tx_xmit_captured_data_start(transmitter);
   }
 }
 
-void radio_end_xmit_captured_data(void){
+void radio_end_xmit_captured_data(void) {
   if (can_transmit) {
     tx_xmit_captured_data_end(transmitter);
   }
 }
 
-void radio_start_playback(void){
+void radio_start_playback(void) {
   //
   // - turn off TX equalizer   but keep equalizer  info in transmitter->eq_enable
   // - turn off TX compression but keep compressor info in transmitter->compression
@@ -3898,7 +3898,7 @@ void radio_start_playback(void){
   transmitter->phrot_enable = phrot_enable;
 }
 
-void radio_end_playback(void){
+void radio_end_playback(void) {
   //
   // re-inforce settings stored in transmitter:
   // - TX equalizer on/off

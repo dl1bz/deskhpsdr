@@ -73,7 +73,7 @@ int discover_only_stemlab = 0;
 
 int delayed_discovery(gpointer data);
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   // There is nothing to clean up
   return TRUE;
 }
@@ -283,7 +283,7 @@ static void discover_clicked(GtkButton *btn, gpointer data) { (void)btn; discove
 static void protocols_clicked(GtkButton *btn, gpointer data) { (void)btn; protocols_cb(NULL, NULL, data); }
 static void exit_clicked(GtkButton *btn, gpointer data)     { (void)btn; exit_cb(NULL, NULL, data); }
 
-void discovery(void){
+void discovery(void) {
   //
   // On the discovery screen, make the combo-boxes "touchscreen-friendly"
   //

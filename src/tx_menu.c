@@ -137,7 +137,7 @@ static int check_file(int p) {
   }
 }
 
-static void audioLoadProfile(void){
+static void audioLoadProfile(void) {
   int i = modeLSB;
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
@@ -257,7 +257,7 @@ static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-void audioSaveProfile(void){
+void audioSaveProfile(void) {
   clearProperties();
   // save only for LSB
   int i = modeLSB;
@@ -394,7 +394,7 @@ gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer d
   return FALSE;
 }
 
-void showAudioProfileSaveDialog(void){
+void showAudioProfileSaveDialog(void) {
   GtkWidget *aprof_dialog_win;
   GtkWidget *grid;
   GtkWidget *label;
@@ -470,7 +470,7 @@ void showAudioProfileSaveDialog(void){
   gtk_widget_show_all(aprof_dialog_win);
 }
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -486,7 +486,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }

@@ -128,7 +128,7 @@ static enum MIDIevent String2Event(const char *str);
 static char *Type2String(enum ACTIONtype type);
 static enum ACTIONtype String2Type(const char *str);
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -141,7 +141,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }
@@ -272,7 +272,7 @@ static void tree_selection_changed_cb (GtkTreeSelection *selection, gpointer dat
   }
 }
 
-static void find_current_cmd(void){
+static void find_current_cmd(void) {
   struct desc *cmd;
   cmd = MidiCommandsTable[thisNote];
 
@@ -428,7 +428,7 @@ static void add_store(int key, const struct desc *cmd) {
   }
 }
 
-static void load_store(void){
+static void load_store(void) {
   struct desc *cmd;
   gtk_list_store_clear(store);
 
@@ -442,7 +442,7 @@ static void load_store(void){
   }
 }
 
-static void updateDescription(void){
+static void updateDescription(void) {
   char str_channel[64];
   char str_note[64];
   int  addFlag = 0;
@@ -1115,7 +1115,7 @@ void NewMidiConfigureEvent(enum MIDIevent event, int channel, int note, int val)
   g_idle_add(ProcessNewMidiConfigureEvent, data);
 }
 
-void midiSaveState(void){
+void midiSaveState(void) {
   char name[128];
   char value[128];
   struct desc *cmd;
@@ -1174,7 +1174,7 @@ void midiSaveState(void){
   }
 }
 
-void midiRestoreState(void){
+void midiRestoreState(void) {
   char str[128];
   int channel;
   int event;

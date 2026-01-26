@@ -50,7 +50,7 @@ void tts_send(char *msg) {
   close(sock);
 }
 
-int main(void){
+int main(void) {
   int turn = 0;
   char msg[64];
 

@@ -67,7 +67,7 @@ void print_device(int i) {
           discovered[i].info.network.interface_name);
 }
 
-void new_discovery(void){
+void new_discovery(void) {
   struct ifaddrs *addrs, *ifa;
   int i, is_local;
   getifaddrs(&addrs);

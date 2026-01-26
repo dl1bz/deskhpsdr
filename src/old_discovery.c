@@ -584,7 +584,7 @@ static gpointer discover_receive_thread(gpointer data) {
 }
 
 // Funktion zum Überprüfen, ob es ein Raspberry Pi ist
-static int is_raspberry_pi_linux(void){
+static int is_raspberry_pi_linux(void) {
   FILE *fp = fopen("/proc/cpuinfo", "r");
 
   if (fp == NULL) {
@@ -607,7 +607,7 @@ static int is_raspberry_pi_linux(void){
 }
 
 // Funktion zum Überprüfen, ob es ein macOS-System ist
-static int is_macos(void){
+static int is_macos(void) {
 #ifdef __APPLE__
   // Wir können sysctl verwenden, um die Hardware zu überprüfen
   size_t len = 0;
@@ -632,7 +632,7 @@ static int is_macos(void){
   return 0; // Kein macOS erkannt
 }
 
-void old_discovery(void){
+void old_discovery(void) {
   struct ifaddrs *addrs, *ifa;
   int i, is_local;
   int ist_macos, ist_raspi;

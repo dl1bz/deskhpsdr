@@ -147,7 +147,7 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   g_mutex_unlock(&peak_mutex);
 }
 
-void update_peak_btn(void){
+void update_peak_btn(void) {
   if (display_zoompan) {
     g_signal_handler_block(G_OBJECT(peak_btn), peak_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(peak_btn), pan_peak_hold_enabled);

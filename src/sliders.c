@@ -338,7 +338,7 @@ static void attenuation_value_changed_cb(GtkWidget *widget, gpointer data) {
   schedule_high_priority();
 }
 
-void att_type_changed(void){
+void att_type_changed(void) {
   //
   // This function manages a transition from/to a CHARLY25 filter board
   // Note all sliders might be non-existent, e.g. if sliders are not
@@ -432,7 +432,7 @@ static void c25_att_combobox_changed(GtkWidget *widget, gpointer data) {
   }
 }
 
-void update_c25_att(void){
+void update_c25_att(void) {
   //
   // Only effective with the CHARLY25 filter board.
   // Change the Att/Preamp combo-box to the current attenuation status
@@ -1058,7 +1058,7 @@ void update_slider_preamp_button(gboolean show_widget) {
   }
 }
 
-void update_slider_local_mic_button(void){
+void update_slider_local_mic_button(void) {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (local_mic_button), local_mic_toggle_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_mic_button), transmitter->local_microphone);
@@ -1119,7 +1119,7 @@ void update_slider_lev_scale(gboolean show_widget) {
   }
 }
 
-void update_slider_autogain_btn(void){
+void update_slider_autogain_btn(void) {
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (autogain_btn), autogain_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_btn), autogain_enabled);
@@ -1144,7 +1144,7 @@ void update_slider_snb_button(gboolean show_widget) {
   }
 }
 
-void update_slider_binaural_btn(void){
+void update_slider_binaural_btn(void) {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (binaural_btn), binaural_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (binaural_btn), active_receiver->binaural);
@@ -1153,7 +1153,7 @@ void update_slider_binaural_btn(void){
   }
 }
 
-void update_slider_tune_drive_btn(void){
+void update_slider_tune_drive_btn(void) {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (tune_drive_btn), tune_drive_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tune_drive_btn), !(radio_get_tune()));
@@ -1176,7 +1176,7 @@ static void tune_drive_toggle_cb(GtkWidget *widget, gpointer data) {
   update_slider_tune_drive_btn();
 }
 
-void update_slider_af_gain_btn(void){
+void update_slider_af_gain_btn(void) {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (af_gain_btn), af_gain_btn_signal_id);
     // invert button, red = MUTE, green = Playback
@@ -1202,7 +1202,7 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
   update_slider_af_gain_btn();
 }
 
-void update_slider_split_btn(void){
+void update_slider_split_btn(void) {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (split_btn), split_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (split_btn), split);
@@ -1240,7 +1240,7 @@ static void ifgr_scale_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 
-void update_slider_hwagc_btn(void){
+void update_slider_hwagc_btn(void) {
   if (display_sliders && device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_has_automatic_gain) {
     if (strcmp(radio->name, "sdrplay") == 0) {
       g_signal_handler_block(GTK_TOGGLE_BUTTON (hwagc_btn), hwagc_btn_signal_id);
@@ -1322,7 +1322,7 @@ static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
   return;
 }
 
-void update_slider_nr_btn(void){
+void update_slider_nr_btn(void) {
   if (display_sliders && have_rx_gain) {
     g_signal_handler_block(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
@@ -1367,7 +1367,7 @@ static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-void update_slider_agc_btn(void){
+void update_slider_agc_btn(void) {
   if (display_sliders) {
     g_signal_handler_block(G_OBJECT(agc_btn), agc_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(agc_btn), agc_labels[active_receiver->agc]);
@@ -1400,7 +1400,7 @@ static void agc_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-void update_slider_ps_btn(void){
+void update_slider_ps_btn(void) {
   if (can_transmit && display_sliders && have_rx_gain) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (ps_btn), ps_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ps_btn), transmitter->puresignal);
@@ -1486,11 +1486,11 @@ void set_squelch(RECEIVER *rx) {
   }
 }
 
-void show_diversity_gain(void){
+void show_diversity_gain(void) {
   show_popup_slider(DIV_GAIN, 0, -27.0, 27.0, 0.01, div_gain, "Diversity Gain");
 }
 
-void show_diversity_phase(void){
+void show_diversity_phase(void) {
   show_popup_slider(DIV_PHASE, 0, -180.0, 180.0, 0.1, div_phase, "Diversity Phase");
 }
 

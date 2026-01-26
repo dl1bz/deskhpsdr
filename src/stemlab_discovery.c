@@ -252,7 +252,7 @@ int stemlab_start_app(const char * const app_id) {
   return 0;
 }
 
-void stemlab_cleanup(void){
+void stemlab_cleanup(void) {
   if (curl_initialised) {
     curl_global_cleanup();
   }
@@ -274,7 +274,7 @@ void stemlab_cleanup(void){
 // have to re-discover to get full info and start the radio.
 //
 
-void stemlab_discovery(void){
+void stemlab_discovery(void) {
   char txt[150];
   CURL *curl_handle;
   CURLcode curl_error;

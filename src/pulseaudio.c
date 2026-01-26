@@ -320,7 +320,7 @@ void audio_release_cards(void) {
   g_mutex_unlock(&audio_mutex);
 }
 
-void audio_get_cards(void){
+void audio_get_cards(void) {
   audio_init_mutexes_once();
   audio_release_cards();
   g_mutex_lock(&enum_mutex);
@@ -508,7 +508,7 @@ static void *mic_read_thread(gpointer arg) {
   return NULL;
 }
 
-int audio_open_input(void){
+int audio_open_input(void) {
   pa_sample_spec sample_spec;
 
   if (!can_transmit) {
@@ -617,7 +617,7 @@ void audio_close_output(RECEIVER *rx) {
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
-void audio_close_input(void){
+void audio_close_input(void) {
   g_atomic_int_set(&running, 0);
 
   // Join WITHOUT holding audio_mutex to avoid deadlock:
@@ -656,7 +656,7 @@ void audio_close_input(void){
 // Utility function for retrieving mic samples
 // from ring buffer
 //
-float audio_get_next_mic_sample(void){
+float audio_get_next_mic_sample(void) {
   float sample;
   g_mutex_lock(&mic_ring_mutex);
 

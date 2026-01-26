@@ -194,7 +194,7 @@ static gpointer rigctl_client (gpointer data);
 #define RXCHECK_ERR(id, what) if (id >= 0 && id < receivers) { what; } else { implemented = FALSE; }
 #define RXCHECK(id, what)     if (id >= 0 && id < receivers) { what; }
 
-int rigctl_tcp_running(void){
+int rigctl_tcp_running(void) {
   return (server_socket >= 0);
 }
 
@@ -328,7 +328,7 @@ static gpointer monitor_sertune_thread(gpointer user_data) {
   return NULL;
 }
 
-void launch_serptt(void){
+void launch_serptt(void) {
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     serptt_fd = open(SerialPorts[MAX_SERIAL + 1].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
 
@@ -349,7 +349,7 @@ void launch_serptt(void){
   }
 }
 
-void launch_sertune(void){
+void launch_sertune(void) {
   int status_sertune;
 
   if (SerialPorts[MAX_SERIAL].enable) {
@@ -507,7 +507,7 @@ static void* autogain_thread_function(void* arg) {
   return NULL;
 }
 
-void launch_autogain_hl2(void){
+void launch_autogain_hl2(void) {
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     if (autogain_enabled) {
       if (!autogain_thread_running) {
@@ -530,7 +530,7 @@ void launch_autogain_hl2(void){
   }
 }
 
-void restart_autogain_hl2(void){
+void restart_autogain_hl2(void) {
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     if (autogain_thread_running) {
       autogain_thread_running = 0;           // Stop-Signal setzen
@@ -773,7 +773,7 @@ static char* find_in_path(const char* binary_name) {
 }
 
 #ifdef __APPLE__
-static int start_from_app_bundle(void){
+static int start_from_app_bundle(void) {
   char exe_path[PATH_MAX];
   uint32_t size = sizeof(exe_path);
 
@@ -818,7 +818,7 @@ static char* mac_get_rigctld_path(void) {
 }
 #endif
 
-static void start_rigctld(void){
+static void start_rigctld(void) {
   char rigctld_target_port[16];
   snprintf(rigctld_target_port, sizeof(rigctld_target_port), ":%u", rigctl_tcp_port);
   t_print("%s: rigctld_target_port is %s\n", __func__, rigctld_target_port);
@@ -867,7 +867,7 @@ static void start_rigctld(void){
 }
 
 // Funktion zum Stoppen von rigctld
-void stop_rigctld(void){
+void stop_rigctld(void) {
   if (rigctld_pid == 0) { return; }  // Läuft nicht
 
   t_print("%s:Stoppe rigctld (PID %d)...\n", __func__, rigctld_pid);
@@ -894,7 +894,7 @@ static void* rigctld_control_thread(void* arg) {
   return NULL;
 }
 
-void launch_rx200_monitor(void){
+void launch_rx200_monitor(void) {
   t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __func__);
 
   // RX200 UDP Listener-Thread starten
@@ -905,7 +905,7 @@ void launch_rx200_monitor(void){
 }
 
 // Funktion zum Starten des Steuer-Threads
-void launch_rigctld_monitor(void){
+void launch_rigctld_monitor(void) {
   if (use_rigctld) {
     t_print("---- LAUNCHING RIGCTLD SERVER ----\n", __func__);
 
@@ -918,7 +918,7 @@ void launch_rigctld_monitor(void){
   }
 }
 
-void launch_lpf_monitor(void){
+void launch_lpf_monitor(void) {
   t_print("---- LAUNCHING LPF UDP Monitor ----\n", __func__);
 
   // LPF UDP Listener-Thread starten
@@ -928,7 +928,7 @@ void launch_lpf_monitor(void){
   }
 }
 
-void shutdown_tcp_rigctl(void){
+void shutdown_tcp_rigctl(void) {
   struct linger linger = { 0 };
   linger.l_onoff = 1;
   linger.l_linger = 0;
@@ -1008,7 +1008,7 @@ static int dashsamples;
 // problem, and without too much "busy waiting". We just take a nap until 10 msec
 // before we have to act, and then wait several times for 1 msec until we can shoot.
 //
-static void send_dash(void){
+static void send_dash(void) {
   for (;;) {
     int TimeToGo = cw_key_up + cw_key_down;
 
@@ -1031,7 +1031,7 @@ static void send_dash(void){
   cw_key_up   = dotsamples;
 }
 
-static void send_dot(void){
+static void send_dot(void) {
   for (;;) {
     int TimeToGo = cw_key_up + cw_key_down;
 
@@ -7368,7 +7368,7 @@ void disable_serial_rigctl (int id) {
   }
 }
 
-void launch_tcp_rigctl(void){
+void launch_tcp_rigctl(void) {
   t_print( "---- LAUNCHING RIGCTL SERVER ----\n");
   tcp_running = 1;
 

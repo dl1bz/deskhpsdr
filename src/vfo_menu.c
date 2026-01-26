@@ -57,7 +57,7 @@ static int btn_actions[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, -5, 0, -6, -2, -3, -4, -1
 
 static GtkWidget *btn[16];
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -69,7 +69,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }
@@ -149,7 +149,7 @@ static void split_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-static void set_btn_state(void){
+static void set_btn_state(void) {
   int i;
 
   for (i = 0; i < 16; i++) {

@@ -44,7 +44,7 @@ gboolean enable_usbozy;
 gboolean enable_saturn_xdma;
 gboolean autostart;
 
-static void protocolsSaveState(void){
+static void protocolsSaveState(void) {
   clearProperties();
   SetPropI0("enable_protocol_1",     enable_protocol_1);
   SetPropI0("enable_protocol_2",     enable_protocol_2);
@@ -56,7 +56,7 @@ static void protocolsSaveState(void){
   saveProperties("protocols.props");
 }
 
-void protocolsRestoreState(void){
+void protocolsRestoreState(void) {
   loadProperties("protocols.props");
   //
   // Set defauls
@@ -78,7 +78,7 @@ void protocolsRestoreState(void){
   clearProperties();
 }
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     gtk_widget_destroy(dialog);
     dialog = NULL;
@@ -86,7 +86,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }

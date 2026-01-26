@@ -224,7 +224,7 @@ static mybuffer *get_my_buffer(int numlist) {
   return buflist[numlist];
 }
 
-void saturn_free_buffers(void){
+void saturn_free_buffers(void) {
   mybuffer *mybuf;
 
   for (int i = 0; i < MAXMYBUF; i++) {
@@ -269,7 +269,7 @@ bool CreateDynamicMemory(void) {                            // return true if er
   return Result;
 }
 
-void saturn_register_init(void){
+void saturn_register_init(void) {
   ESoftwareID ID;
   unsigned int Version = GetFirmwareVersion(&ID);
   //
@@ -324,7 +324,7 @@ bool is_already_running() {
 #define SATURNPRIMARYCONFIGID 4                         // "primary" configuration id
 #define VADDRPRODVERSIONREG 0XC004
 
-void saturn_discovery(void){
+void saturn_discovery(void) {
   struct stat sb;
 
   if (devices < MAX_DEVICES && stat("/dev/xdma0_user", &sb) == 0 && S_ISCHR(sb.st_mode)) {
@@ -458,7 +458,7 @@ void saturn_discovery(void){
 static int DMADUCWritefile_fd = -1;               // DMA read file device
 static unsigned char* DUCIQBasePtr;               // ptr to DMA location in I/Q memory
 
-void saturn_init_duc_iq(void){
+void saturn_init_duc_iq(void) {
   // variables for DMA buffer
   //
   uint8_t* IQWriteBuffer = NULL;              // data for DMA to write to DUC
@@ -570,7 +570,7 @@ static unsigned char* SpkBasePtr;
 static unsigned char* SpkReadPtr;               // pointer for reading out a spkr sample
 static unsigned char* SpkHeadPtr;               // ptr to 1st free location in spk memory
 
-void saturn_init_speaker_audio(void){
+void saturn_init_speaker_audio(void) {
   //
   // variables for DMA buffer
   //
@@ -653,7 +653,7 @@ void saturn_handle_speaker_audio(const uint8_t *UDPInBuffer) {
   return;
 }
 
-void saturn_exit(void){
+void saturn_exit(void) {
   //
   // clean exit
   //
@@ -673,7 +673,7 @@ void saturn_exit(void){
 
 #define VHIGHPRIOTIYFROMSDRSIZE 60
 
-void start_saturn_high_priority_thread(void){
+void start_saturn_high_priority_thread(void) {
   t_print("%s: \n", __func__);
   saturn_high_priority_thread_id = g_thread_new( "SATURN HP OUT", saturn_high_priority_thread, NULL);
 
@@ -820,7 +820,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
   return NULL;
 }
 
-void start_saturn_micaudio_thread(void){
+void start_saturn_micaudio_thread(void) {
   t_print("%s\n", __func__);
   saturn_micaudio_thread_id = g_thread_new( "SATURN MIC", saturn_micaudio_thread, NULL);
 
@@ -986,7 +986,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
   return NULL;
 }
 
-void start_saturn_receive_thread(void){
+void start_saturn_receive_thread(void) {
   t_print("%s\n", __func__);
   saturn_rx_thread_id = g_thread_new( "SATURN RX", saturn_rx_thread, NULL);
 
@@ -1323,7 +1323,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
   return NULL;
 }
 
-void saturn_init(void){
+void saturn_init(void) {
   saturn_init_speaker_audio();
   saturn_init_duc_iq();
   start_saturn_receive_thread();
@@ -1735,10 +1735,10 @@ void saturn_handle_duc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
 //
 // Some functions calls to get the "allowed" SATURN FPGA version numbers
 //
-int saturn_minor_version_min(void){ return FIRMWARE_MIN_MINOR; }
+int saturn_minor_version_min(void) { return FIRMWARE_MIN_MINOR; }
 
-int saturn_minor_version_max(void){ return FIRMWARE_MAX_MINOR; }
+int saturn_minor_version_max(void) { return FIRMWARE_MAX_MINOR; }
 
-int saturn_major_version_min(void){ return FIRMWARE_MIN_MAJOR; }
+int saturn_major_version_min(void) { return FIRMWARE_MIN_MAJOR; }
 
-int saturn_major_version_max(void){ return FIRMWARE_MAX_MAJOR; }
+int saturn_major_version_max(void) { return FIRMWARE_MAX_MAJOR; }

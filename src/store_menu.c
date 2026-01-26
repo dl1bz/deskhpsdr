@@ -37,7 +37,7 @@ static GtkWidget *dialog = NULL;
 
 GtkWidget *store_button[NUM_OF_MEMORYS];
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -48,7 +48,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }

@@ -90,7 +90,7 @@ unsigned int penny_fp = 0, penny_rp = 0, penny_alc = 0;
 unsigned int mercury_overload[2] = {0, 0};
 unsigned char ozy_firmware_version[9];
 
-static int ozy_open(void){
+static int ozy_open(void) {
   int rc;
 
   if (init == 0) {
@@ -127,7 +127,7 @@ static int ozy_open(void){
   return 0;
 }
 
-static int ozy_close(void){
+static int ozy_close(void) {
   int rc;
   rc = libusb_attach_kernel_driver(ozy_handle, 0);
 
@@ -569,7 +569,7 @@ void writepenny(int reset, int mode) {
   }
 }
 
-void ozy_i2c_readvars(void){
+void ozy_i2c_readvars(void) {
   int rc = 0;
   unsigned char buffer[8];
   t_print("ozy_i2c_init: starting\n");
@@ -700,7 +700,7 @@ static void filePath (char *sOut, const char *sIn, size_t len) {
 // initialise a USB ozy device.
 // renamed as "initialise" and combined with the "ozyinit" code
 //
-int ozy_initialise(void){
+int ozy_initialise(void) {
   int rc;
 
   if (strlen(ozy_firmware) == 0) { filePath (ozy_firmware, "ozyfw-sdr1k.hex", sizeof(ozy_firmware)); }
@@ -746,7 +746,7 @@ int ozy_initialise(void){
 // returns 1 if a device found on USB
 //
 //
-int ozy_discover(void){
+int ozy_discover(void) {
   int success = 0;            // function return code
 
   if (init == 0) {

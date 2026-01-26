@@ -87,7 +87,7 @@ int menu_active_receiver_changed(void *data) {
   return FALSE;
 }
 
-static void cleanup(void){
+static void cleanup(void) {
   if (main_menu != NULL) {
     gtk_widget_destroy(main_menu);
     main_menu = NULL;
@@ -101,7 +101,7 @@ static void cleanup(void){
   active_menu = NO_MENU;
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }
@@ -239,12 +239,12 @@ static gboolean equalizer_cb (GtkWidget *widget, GdkEventButton *event, gpointer
   return TRUE;
 }
 
-void start_rx(void){
+void start_rx(void) {
   cleanup();
   rx_menu(top_window);
 }
 
-void start_meter(void){
+void start_meter(void) {
   cleanup();
   meter_menu(top_window);
 }
@@ -255,7 +255,7 @@ static gboolean meter_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
   return TRUE;
 }
 
-void start_band(void){
+void start_band(void) {
   int old_menu = active_menu;
   cleanup();
 
@@ -265,7 +265,7 @@ void start_band(void){
   }
 }
 
-void start_bandstack(void){
+void start_bandstack(void) {
   int old_menu = active_menu;
   cleanup();
 
@@ -275,7 +275,7 @@ void start_bandstack(void){
   }
 }
 
-void start_mode(void){
+void start_mode(void) {
   int old_menu = active_menu;
   cleanup();
 
@@ -285,7 +285,7 @@ void start_mode(void){
   }
 }
 
-void start_filter(void){
+void start_filter(void) {
   int old_menu = active_menu;
   cleanup();
 
@@ -337,7 +337,7 @@ static gboolean store_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
   return TRUE;
 }
 
-void start_noise(void){
+void start_noise(void) {
   int old_menu = active_menu;
   cleanup();
 
@@ -353,7 +353,7 @@ static gboolean agc_cb (GtkWidget *widget, GdkEventButton *event, gpointer data)
   return TRUE;
 }
 
-void start_agc(void){
+void start_agc(void) {
   int old_menu = active_menu;
   cleanup();
 
@@ -363,7 +363,7 @@ void start_agc(void){
   }
 }
 
-void start_vox(void){
+void start_vox(void) {
   cleanup();
   vox_menu(top_window);
 }
@@ -374,7 +374,7 @@ static gboolean vox_cb (GtkWidget *widget, GdkEventButton *event, gpointer data)
   return TRUE;
 }
 
-void start_dsp(void){
+void start_dsp(void) {
   cleanup();
   fft_menu(top_window);
 }
@@ -385,7 +385,7 @@ static gboolean dsp_cb (GtkWidget *widget, GdkEventButton *event, gpointer data)
   return TRUE;
 }
 
-void start_diversity(void){
+void start_diversity(void) {
   cleanup();
   diversity_menu(top_window);
 }
@@ -412,7 +412,7 @@ void start_vfo(int vfo) {
   }
 }
 
-void start_store(void){
+void start_store(void) {
   int old_menu = active_menu;
   cleanup();
 
@@ -422,7 +422,7 @@ void start_store(void){
   }
 }
 
-void start_tx(void){
+void start_tx(void) {
   cleanup();
 
   if (can_transmit) {
@@ -436,7 +436,7 @@ static gboolean tx_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) 
   return TRUE;
 }
 
-void start_ps(void){
+void start_ps(void) {
   cleanup();
 
   if (can_transmit) {
@@ -451,7 +451,7 @@ static gboolean ps_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) 
 }
 
 #ifdef MIDI
-void start_midi(void){
+void start_midi(void) {
   cleanup();
   midi_menu(top_window);
 }
@@ -464,7 +464,7 @@ static gboolean midi_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
 
 #endif
 
-void new_menu(void){
+void new_menu(void) {
   int col, row, maxrow;
   int _mode = vfo_get_tx_mode();
 

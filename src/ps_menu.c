@@ -55,7 +55,7 @@ static GtkWidget *entry[INFO_SIZE];
 
 static void ps_off_on(void);
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -82,7 +82,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   radio_mox_update(0);
   cleanup();
   return TRUE;
@@ -109,7 +109,7 @@ static void setpk_cb(GtkWidget *widget, gpointer data) {
   gtk_entry_set_text(GTK_ENTRY(set_pk), text);
 }
 
-static void clear_fields(void){
+static void clear_fields(void) {
   //
   // This clears most of the text fields and puts
   // the "Feedback" and "Correcting" string in black colour.
@@ -388,7 +388,7 @@ static int info_thread(gpointer arg) {
 // Restart PS:
 // PS reset, wait 100 msec, PS resume
 //
-static void ps_off_on(void){
+static void ps_off_on(void) {
   if (transmitter->puresignal) {
     tx_ps_reset(transmitter);
     usleep(100000);

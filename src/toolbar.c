@@ -62,7 +62,7 @@ static GtkWidget *sim_sfunc;
 
 SWITCH *toolbar_switches = switches_controller1[0];
 
-void update_toolbar_labels(void){
+void update_toolbar_labels(void) {
   if (sim_s[0]) {
     //
     // If the toolbar has not yet been on display,

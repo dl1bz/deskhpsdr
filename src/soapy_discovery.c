@@ -307,7 +307,7 @@ static void get_info(char *driver) {
   free(ranges);
 }
 
-void soapy_discovery(void){
+void soapy_discovery(void) {
   size_t length;
   SoapySDRKwargs input_args = {};
   t_print("%s\n", __func__);

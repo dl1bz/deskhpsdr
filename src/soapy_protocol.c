@@ -790,7 +790,7 @@ void soapy_protocol_iq_samples(float isample, float qsample) {
 }
 
 // cppcheck-suppress unusedFunction
-void soapy_protocol_stop(void){
+void soapy_protocol_stop(void) {
   t_print("soapy_protocol_stop\n");
   running = FALSE;
 }

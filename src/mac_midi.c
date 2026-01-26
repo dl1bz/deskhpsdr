@@ -292,7 +292,7 @@ void register_midi_device(int index) {
   return;
 }
 
-void get_midi_devices(void){
+void get_midi_devices(void) {
   int n;
   int i;
   CFStringRef pname;   // MacOS name of the device

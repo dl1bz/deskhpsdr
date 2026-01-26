@@ -141,7 +141,7 @@ void audio_release_cards(void) {
 //
 // This inits PortAudio and looks for suitable input and output channels
 //
-void audio_get_cards(void){
+void audio_get_cards(void) {
   t_print("%s: PORTAUDIO call audio_get_cards\n", __func__);
   int numDevices;
   PaStreamParameters inputParameters, outputParameters;
@@ -223,7 +223,7 @@ void audio_get_cards(void){
 int pa_mic_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 int pa_out_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 
-int audio_open_input(void){
+int audio_open_input(void) {
   t_print("%s: PORTAUDIO call audio_open_input\n", __func__);
   PaError err;
   PaStreamParameters inputParameters;
@@ -444,7 +444,7 @@ int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
 // Utility function for retrieving mic samples
 // from ring buffer
 //
-float audio_get_next_mic_sample(void){
+float audio_get_next_mic_sample(void) {
   float sample;
   g_mutex_lock(&audio_mutex);
 
@@ -568,7 +568,7 @@ int audio_open_output(RECEIVER *rx) {
 //
 // close a TX microphone stream
 //
-void audio_close_input(void){
+void audio_close_input(void) {
   t_print("%s: PORTAUDIO call audio_close_input\n", __func__);
   t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
   g_mutex_lock(&audio_mutex);

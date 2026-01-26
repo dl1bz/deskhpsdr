@@ -43,12 +43,12 @@ static int vox_timeout_cb(gpointer data) {
   return FALSE;
 }
 
-double vox_get_peak(void){
+double vox_get_peak(void) {
   double result = peak;
   return result;
 }
 
-void clear_vox(void){
+void clear_vox(void) {
   peak = 0.0;
 }
 
@@ -98,7 +98,7 @@ void update_vox(TRANSMITTER *tx) {
 //
 // If no vox time-out is hanging, this function is a no-op
 //
-void vox_cancel(void){
+void vox_cancel(void) {
   if (vox_timeout) {
     g_source_remove(vox_timeout);
     vox_timeout = 0;

@@ -2370,7 +2370,7 @@ int String2Action(const char *str) {
 // status = 1: "active" (normal) state (status in yellow)
 // status = 2: "select" state (status in red)
 //
-int GetMultifunctionStatus(void){
+int GetMultifunctionStatus(void) {
   if (multi_first) {
     return 0;
   }

@@ -236,7 +236,7 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
                            struct timespec *__rem);
 #endif
 
-void keyer_update(void){
+void keyer_update(void) {
   //
   // This function will take notice of changes in the following variables
   //
@@ -622,7 +622,7 @@ static void* keyer_thread(void *arg) {
   return NULL;
 }
 
-void keyer_close(void){
+void keyer_close(void) {
   t_print(".... closing keyer thread.\n");
   running = 0;
   // keyer thread may be sleeping, so wake it up
@@ -639,7 +639,7 @@ void keyer_close(void){
 #endif
 }
 
-int keyer_init(void){
+int keyer_init(void) {
   int rc;
   t_print(".... starting keyer thread.\n");
 #ifdef __APPLE__

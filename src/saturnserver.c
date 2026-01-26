@@ -206,14 +206,14 @@ void* CheckForActivity(void *arg) {
 //
 // perform ordely shutdown of the program
 //
-void shutdown_saturn_server(void){
+void shutdown_saturn_server(void) {
   ServerActive = false;
   close(SocketData[0].Socketid);                          // close incoming data socket
   ExitRequested = true;
   t_print("Shutdown COMPLETE\n");
 }
 
-void start_saturn_server(void){
+void start_saturn_server(void) {
   ExitRequested = false;
 
   if (pthread_create(&saturn_server_thread, NULL, saturn_server, NULL) < 0) {

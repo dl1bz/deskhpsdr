@@ -627,7 +627,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
 
 #endif
 
-void old_protocol_stop(void){
+void old_protocol_stop(void) {
   //
   // Mutex is needed since in the TCP case, sending TX IQ packets
   // must not occur while the "stop" packet is sent.
@@ -642,7 +642,7 @@ void old_protocol_stop(void){
   pthread_mutex_unlock(&send_ozy_mutex);
 }
 
-void old_protocol_run(void){
+void old_protocol_run(void) {
   t_print("%s\n", __func__);
   pthread_mutex_lock(&send_ozy_mutex);
   metis_restart();
@@ -763,7 +763,7 @@ void old_protocol_init(int rate) {
 // EP4 is the bandscope endpoint (not yet used)
 // EP6 is the "normal" USB frame endpoint
 //
-static void start_usb_receive_threads(void){
+static void start_usb_receive_threads(void) {
   t_print("old_protocol starting USB receive thread\n");
   g_thread_new( "OZYEP6", ozy_ep6_rx_thread, NULL);
   g_thread_new( "OZYI2C", ozy_i2c_thread, NULL);
@@ -884,7 +884,7 @@ static gpointer ozy_ep6_rx_thread(gpointer arg) {
 
 #endif
 
-static void open_udp_socket(void){
+static void open_udp_socket(void) {
   int tmp;
 
   if (data_socket >= 0) {
@@ -1010,7 +1010,7 @@ static void open_udp_socket(void){
           ntohs(data_addr.sin_port));
 }
 
-static void open_tcp_socket(void){
+static void open_tcp_socket(void) {
   int tmp;
 
   if (tcp_socket >= 0) {
@@ -1416,7 +1416,7 @@ static gpointer receive_thread(gpointer arg) {
 //
 //
 
-static int rx_feedback_channel(void){
+static int rx_feedback_channel(void) {
   //
   // For radios with small FPGAS only supporting 2 RX, use RX1.
   // Else, use the last RX before the TX feedback channel.
@@ -1455,7 +1455,7 @@ static int rx_feedback_channel(void){
   return ret;
 }
 
-static int tx_feedback_channel(void){
+static int tx_feedback_channel(void) {
   //
   // Radios with small FPGAs use RX2
   // HERMES uses RX4,
@@ -1574,7 +1574,7 @@ static long long channel_freq(int chan) {
   return freq;
 }
 
-static int how_many_receivers(void){
+static int how_many_receivers(void) {
   //
   // For DIVERSITY, we need at least two RX channels
   // When PureSignal is active, we need to include the TX DAC channel.
@@ -1651,7 +1651,7 @@ double right_sample_double_aux;
 static int nsamples;
 static int iq_samples;
 
-static void process_control_bytes(void){
+static void process_control_bytes(void) {
   int previous_ptt;
   int previous_dot;
   int previous_dash;
@@ -2418,7 +2418,7 @@ static inline unsigned char hl2_tx_latency_ms(int txvfo) {
   return 40;
 }
 
-void ozy_send_buffer(void){
+void ozy_send_buffer(void) {
   int txmode = vfo_get_tx_mode();
   int txvfo = vfo_get_tx_vfo();
   int rxvfo = active_receiver->id;
@@ -3583,7 +3583,7 @@ static int metis_write(unsigned char ep, unsigned const char* buffer, int length
   return length;
 }
 
-static void metis_restart(void){
+static void metis_restart(void) {
   int i;
   t_print("%s\n", __func__);
 

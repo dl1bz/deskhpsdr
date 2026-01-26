@@ -320,31 +320,31 @@ static mybuffer *get_my_buffer(void) {
   return buflist;
 }
 
-void schedule_high_priority(void){
+void schedule_high_priority(void) {
   if (protocol == NEW_PROTOCOL) {
     new_protocol_high_priority();
   }
 }
 
-void schedule_general(void){
+void schedule_general(void) {
   if (protocol == NEW_PROTOCOL) {
     new_protocol_general();
   }
 }
 
-void schedule_receive_specific(void){
+void schedule_receive_specific(void) {
   if (protocol == NEW_PROTOCOL) {
     new_protocol_receive_specific();
   }
 }
 
-void schedule_transmit_specific(void){
+void schedule_transmit_specific(void) {
   if (protocol == NEW_PROTOCOL) {
     new_protocol_transmit_specific();
   }
 }
 
-void update_action_table(void){
+void update_action_table(void) {
   //
   // Depending on the values of mox, puresignal, and diversity,
   // determine the actions to be taken when a DDC packet arrives
@@ -442,7 +442,7 @@ void update_action_table(void){
   }
 }
 
-void new_protocol_init(void){
+void new_protocol_init(void) {
   int i;
 
   //
@@ -636,7 +636,7 @@ void new_protocol_init(void){
   new_protocol_menu_start();
 }
 
-static void new_protocol_general(void){
+static void new_protocol_general(void) {
   const BAND *band;
   int rc;
   pthread_mutex_lock(&general_mutex);
@@ -694,7 +694,7 @@ static void new_protocol_general(void){
   pthread_mutex_unlock(&general_mutex);
 }
 
-static void new_protocol_high_priority(void){
+static void new_protocol_high_priority(void) {
   int rxant, txant;
   long long DDCfrequency[2];  // DDC frequencies of the radio
   long long DUCfrequency;     // DUC frequency of the radio
@@ -1400,7 +1400,7 @@ static void new_protocol_high_priority(void){
   pthread_mutex_unlock(&hi_prio_mutex);
 }
 
-static void new_protocol_transmit_specific(void){
+static void new_protocol_transmit_specific(void) {
   pthread_mutex_lock(&tx_spec_mutex);
   int txmode = vfo_get_tx_mode();
   memset(transmit_specific_buffer, 0, sizeof(transmit_specific_buffer));
@@ -1533,7 +1533,7 @@ static void new_protocol_transmit_specific(void){
   pthread_mutex_unlock(&tx_spec_mutex);
 }
 
-static void new_protocol_receive_specific(void){
+static void new_protocol_receive_specific(void) {
   int i;
   int xmit;
   pthread_mutex_lock(&rx_spec_mutex);
@@ -1647,7 +1647,7 @@ static void new_protocol_receive_specific(void){
 //
 // Function available to e.g. rigctl to stop the protocol
 //
-void new_protocol_menu_stop(void){
+void new_protocol_menu_stop(void) {
   fd_set fds;
   struct timeval tv;
   char *buffer;
@@ -1706,7 +1706,7 @@ void new_protocol_menu_stop(void){
 //
 // Function available e.g. to rigctl to (re-) start the new protocol
 //
-void new_protocol_menu_start(void){
+void new_protocol_menu_start(void) {
   //
   // reset sequence numbers, action table, etc.
   //
@@ -2482,7 +2482,7 @@ static void process_ps_iq_data(const unsigned char *buffer) {
   }
 }
 
-static void process_high_priority(void){
+static void process_high_priority(void) {
   unsigned long sequence;
   int previous_ptt;
   int previous_dot;

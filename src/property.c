@@ -30,7 +30,7 @@
 
 PROPERTY* properties = NULL;
 
-void clearProperties(void){
+void clearProperties(void) {
   if (properties != NULL) {
     // free all the properties
     PROPERTY *next;

@@ -45,7 +45,7 @@ static GtkWidget *nb_container;
   static GtkWidget *nr4_container;
 #endif
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -56,12 +56,12 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }
 
-void update_noise(void){
+void update_noise(void) {
   int id = active_receiver->id;
 
   //

@@ -117,7 +117,7 @@ static gpointer tci_listener(gpointer data);
 // enabled in the props file, and from the CAT/TCI menu
 // if TCI is enabled there.
 //
-void launch_tci(void){
+void launch_tci(void) {
   t_print( "---- LAUNCHING TCI SERVER ----\n");
   tci_running = 1;
   //
@@ -158,7 +158,7 @@ static void force_close(CLIENT *client) {
 // Shut down TCI system. Called from CAT/TCI menu
 // if TCI is disabled there.
 //
-void shutdown_tci(void){
+void shutdown_tci(void) {
   t_print("%s: server_socket=%d\n", __func__, server_socket);
   tci_running = 0;
 

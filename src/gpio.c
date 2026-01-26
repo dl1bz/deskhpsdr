@@ -501,13 +501,13 @@ SWITCH *switches = NULL;
 static GThread *rotary_encoder_thread_id;
 static uint64_t epochMilli;
 
-static void initialiseEpoch(void){
+static void initialiseEpoch(void) {
   struct timespec ts ;
   clock_gettime (CLOCK_MONOTONIC_RAW, &ts) ;
   epochMilli = (uint64_t)ts.tv_sec * (uint64_t)1000    + (uint64_t)(ts.tv_nsec / 1000000L) ;
 }
 
-static unsigned int millis(void){
+static unsigned int millis(void) {
   uint64_t now ;
   struct  timespec ts ;
   clock_gettime (CLOCK_MONOTONIC_RAW, &ts) ;
@@ -1024,7 +1024,7 @@ void gpio_set_defaults(int ctrlr) {
   }
 }
 
-void gpioRestoreState(void){
+void gpioRestoreState(void) {
   loadProperties("gpio.props");
   GetPropI0("controller",                                         controller);
 #ifndef GPIO
@@ -1070,7 +1070,7 @@ void gpioRestoreState(void){
   }
 }
 
-void gpioSaveState(void){
+void gpioSaveState(void) {
   clearProperties();
   SetPropI0("controller",                                         controller);
 
@@ -1107,7 +1107,7 @@ void gpioSaveState(void){
   saveProperties("gpio.props");
 }
 
-void gpioRestoreActions(void){
+void gpioRestoreActions(void) {
   int props_controller = NO_CONTROLLER;
   gpio_set_defaults(controller);
   //
@@ -1141,7 +1141,7 @@ void gpioRestoreActions(void){
   }
 }
 
-void gpioSaveActions(void){
+void gpioSaveActions(void) {
   char name[128];
   char value[128];
   //
@@ -1291,7 +1291,7 @@ static struct gpiod_line *setup_output_line(struct gpiod_chip *chip, int offset,
 // With a G2_V2 controller gpio_init() is essentially a no-op,
 // since no special lines are defined (have_button is not set)
 //
-int gpio_init(void){
+int gpio_init(void) {
 #ifdef GPIO
   int ret = 0;
   initialiseEpoch();
@@ -1453,7 +1453,7 @@ err:
 #endif
 }
 
-void gpio_close(void){
+void gpio_close(void) {
 #ifdef GPIO
 
   if (chip != NULL) { gpiod_chip_close(chip); }

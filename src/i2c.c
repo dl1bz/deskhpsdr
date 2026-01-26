@@ -105,7 +105,7 @@ static unsigned int read_word_data(unsigned char reg) {
   return data & 0xFFFF;
 }
 
-void i2c_interrupt(void){
+void i2c_interrupt(void) {
   unsigned int flags;
   int i;
   g_mutex_lock(&i2c_mutex);
@@ -140,7 +140,7 @@ void i2c_interrupt(void){
   g_mutex_unlock(&i2c_mutex);
 }
 
-void i2c_init(void){
+void i2c_init(void) {
   int flags;
   t_print("%s: open i2c device %s\n", __func__, i2c_device);
   i2cfd = open(i2c_device, O_RDWR);

@@ -37,7 +37,7 @@
 
 MEM mem[NUM_OF_MEMORYS];  // This makes it a compile time option
 
-void memSaveState(void){
+void memSaveState(void) {
   for (int b = 0; b < NUM_OF_MEMORYS; b++) {
     SetPropI1("mem.%d.sat_mode", b,        mem[b].sat_mode);
     SetPropI1("mem.%d.freqA", b,           mem[b].frequency);
@@ -59,7 +59,7 @@ void memSaveState(void){
   }
 }
 
-void memRestoreState(void){
+void memRestoreState(void) {
   for (int b = 0; b < NUM_OF_MEMORYS; b++) {
     //
     // Set defaults

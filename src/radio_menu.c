@@ -55,7 +55,7 @@ static GtkWidget *n2adr_hpf_btn = NULL;
 static gulong callsign_box_signal_id;
 static gulong locator_box_signal_id;
 
-static void cleanup(void){
+static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -66,7 +66,7 @@ static void cleanup(void){
   }
 }
 
-static gboolean close_cb(void){
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }
@@ -187,7 +187,7 @@ static void split_cb(GtkWidget *widget, gpointer data) {
 //
 // call-able from outside, e.g. toolbar or MIDI, through g_idle_add
 //
-void setDuplex(void){
+void setDuplex(void) {
   if (!can_transmit) { return; }
 
   if (duplex) {
@@ -225,7 +225,7 @@ static void sat_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void n2adr_oc_settings(void){
+void n2adr_oc_settings(void) {
   //
   // set OC outputs for each band according to the N2ADR board requirements
   // unlike load_filters(), this can be executed outside the GTK queue
@@ -254,7 +254,7 @@ void n2adr_oc_settings(void){
   schedule_high_priority();
 }
 
-void n2adr_oc_settings_tx(void){
+void n2adr_oc_settings_tx(void) {
   //
   // set OC outputs for each band according to the N2ADR board requirements
   // unlike load_filters(), this can be executed outside the GTK queue
@@ -297,7 +297,7 @@ void n2adr_oc_settings_tx(void){
   schedule_high_priority();
 }
 
-void load_filters(void){
+void load_filters(void) {
   switch (filter_board) {
   case N2ADR_TX:
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2

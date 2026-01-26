@@ -205,7 +205,7 @@ int audio_open_output(RECEIVER *rx) {
   return 0;
 }
 
-int audio_open_input(void){
+int audio_open_input(void) {
   audio_init_mutex_once();
   int err;
   unsigned int rate = 48000;
@@ -349,7 +349,7 @@ void audio_close_output(RECEIVER *rx) {
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
-void audio_close_input(void){
+void audio_close_input(void) {
   audio_init_mutex_once();
   t_print("%s: enter\n", __func__);
   g_atomic_int_set(&running, 0);
@@ -753,7 +753,7 @@ static void *mic_read_thread(gpointer arg) {
 // Utility function for retrieving mic samples
 // from ring buffer
 //
-float audio_get_next_mic_sample(void){
+float audio_get_next_mic_sample(void) {
   audio_init_mutex_once();
   float sample;
   g_mutex_lock(&audio_mutex);
@@ -796,7 +796,7 @@ void audio_release_cards(void) {
   g_mutex_unlock(&audio_mutex);
 }
 
-void audio_get_cards(void){
+void audio_get_cards(void) {
   audio_init_mutex_once();
   snd_ctl_card_info_t *info;
   snd_pcm_info_t *pcminfo;
