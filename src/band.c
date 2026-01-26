@@ -86,11 +86,11 @@ static BANDSTACK_ENTRY bandstack_entries60_VFO[] = {
 };
 
 static BANDSTACK_ENTRY bandstack_entries60_WRC15[] = {
-  {5352750LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
   {5354000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
   {5357000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
   {5360000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
-  {5363000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
+  {5363000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
+  {5352750LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0}
 };
 
 static BANDSTACK_ENTRY bandstack_entries60_US[] = {
@@ -460,19 +460,19 @@ static CHANNEL band_channels_60m_WRC15[WRC15_CHANNEL_ENTRIES] =
 {{5359000LL, 15000LL}};
 
 static CHANNEL band_channels_60m_US[US_CHANNEL_ENTRIES] = {
-  {5332000LL, 3000LL},
-  {5348000LL, 3000LL},
-  {5358500LL, 3000LL},
-  {5373000LL, 3000LL},
-  {5405000LL, 3000LL}
+  {5332000LL, 3000LL},   // Ch1 center 5332.0 kHz, 3 kHz
+  {5348000LL, 3000LL},   // Ch2 center 5348.0 kHz, 3 kHz
+  {5359000LL, 15000LL},  // WRC-15 segment 5351.5–5366.5 kHz (center 5359.0), 15 kHz
+  {5373000LL, 3000LL},   // Ch4 center 5373.0 kHz, 3 kHz
+  {5405000LL, 3000LL}    // Ch5 center 5405.0 kHz, 3 kHz
 };
 
 static CHANNEL band_channels_60m_CA[CA_CHANNEL_ENTRIES] = {
-  {5332000LL, 3000LL},
-  {5348000LL, 3000LL},
-  {5359000LL, 15000LL},
-  {5373000LL, 3000LL},
-  {5405000LL, 3000LL}
+  {5332000LL, 3000LL},   // 5332.0 kHz
+  {5348000LL, 3000LL},   // 5348.0 kHz
+  {5358500LL, 3000LL},   // 5358.5 kHz  (WICHTIG!)
+  {5373000LL, 3000LL},   // 5373.0 kHz
+  {5405000LL, 3000LL}    // 5405.0 kHz
 };
 //
 // channel_entires and band_channels_60m are used in the RX panadapter
