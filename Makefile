@@ -132,6 +132,18 @@ else
 	CFLAGS?= -O3
 endif
 
+# clang detection (macOS: CC may be "cc" but still clang)
+IS_CLANG := $(shell $(CC) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0)
+
+# clang-only: ensure lrint is emitted as intrinsic (TX-IQ hotpath)
+# Apply only to transmitter.o to avoid side-effects in other modules.
+ifeq ($(IS_CLANG),1)
+  src/transmitter.o: CFLAGS += \
+    -fno-math-errno \
+	-fno-trapping-math \
+	-fdenormal-fp-math=positive-zero
+endif
+
 # global compiler directives
 CFLAGS += -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprecated-declarations -Wcast-align
 

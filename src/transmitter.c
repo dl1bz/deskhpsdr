@@ -112,6 +112,12 @@ static gboolean close_cb() {
   return TRUE;
 }
 
+#if defined (__clang__)
+static inline long q_round(double x, double gain) {
+  return __builtin_lrint(x * gain);
+}
+#endif
+
 static int clear_out_of_band_warning(gpointer data) {
   //
   // One-shot timer for clearing the "Out of band" message
@@ -1783,8 +1789,13 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         // isample = is >= 0.0 ? (long)floor(is * gain + 0.5) : (long)ceil(is * gain - 0.5);
         // qsample = qs >= 0.0 ? (long)floor(qs * gain + 0.5) : (long)ceil(qs * gain - 0.5);
         // replacement
+#if defined(__clang__)
+        isample = q_round(is, gain);
+        qsample = q_round(qs, gain);
+#else
         isample = (long)(is * gain + (is >= 0.0 ? 0.5 : -0.5));
         qsample = (long)(qs * gain + (qs >= 0.0 ? 0.5 : -0.5));
+#endif
 
         switch (protocol) {
         case ORIGINAL_PROTOCOL:
