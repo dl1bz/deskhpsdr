@@ -342,7 +342,8 @@ CPP_SOURCES += src/saturnmain.c src/saturn_menu.c
 
 ifeq ($(USBOZY),ON)
 USBOZY_OPTIONS=-D USBOZY
-USBOZY_LIBS=-lusb-1.0
+USBOZY_INCLUDE=`$(PKG_CONFIG) --cflags libusb-1.0`
+USBOZY_LIBS=`$(PKG_CONFIG) --libs libusb-1.0`
 USBOZY_SOURCES= \
 src/ozyio.c
 USBOZY_HEADERS= \
@@ -352,6 +353,7 @@ src/ozyio.o
 endif
 CPP_DEFINES += -DUSBOZY
 CPP_SOURCES += src/ozyio.c
+CPP_INCLUDE += `$(PKG_CONFIG) --cflags libusb-1.0`
 
 ##############################################################################
 #
@@ -361,7 +363,13 @@ CPP_SOURCES += src/ozyio.c
 
 ifeq ($(SOAPYSDR),ON)
 SOAPYSDR_OPTIONS=-D SOAPYSDR
-SOAPYSDRLIBS=-lSoapySDR
+ifeq ($(UNAME_S), Darwin)
+SOAPYSDR_LIBS=`$(PKG_CONFIG) --libs soapysdr`
+SOAPYSDR_INCLUDE=`$(PKG_CONFIG) --cflags soapysdr`
+else
+SOAPYSDR_INCLUDE= -I/usr/local/include
+SOAPYSDR_LIBS= -L/usr/local/lib -lSoapySDR
+endif
 SOAPYSDR_SOURCES= \
 src/soapy_discovery.c \
 src/soapy_protocol.c
@@ -374,7 +382,11 @@ src/soapy_protocol.o
 endif
 CPP_DEFINES += -DSOAPYSDR
 CPP_SOURCES += src/soapy_discovery.c src/soapy_protocol.c
-
+ifeq ($(UNAME_S), Darwin)
+CPP_INCLUDE +=`$(PKG_CONFIG) --cflags soapysdr`
+else
+CPP_INCLUDE += -I/usr/local/include
+endif
 ##############################################################################
 #
 # Add libraries for GPIO support, if requested
@@ -574,28 +586,28 @@ CPP_SOURCES += src/tci.c
 
 # ifeq ($(UNAME_S), Linux)
 # WEBKIT_PKG := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1 || echo webkit2gtk-4.0)
-# GTKINCLUDE := $(shell $(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG))
-# GTKLIBS    := $(shell $(PKG_CONFIG) --libs   gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG))
+# GTK_INCLUDE := $(shell $(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG))
+# GTK_LIBS    := $(shell $(PKG_CONFIG) --libs   gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG))
 # endif
 
 # ifeq ($(UNAME_S), Darwin)
-# GTKINCLUDE := $(shell $(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0)
-# GTKLIBS    := $(shell $(PKG_CONFIG) --libs   gtk+-3.0 glib-2.0 gio-2.0)
+# GTK_INCLUDE := $(shell $(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0)
+# GTK_LIBS    := $(shell $(PKG_CONFIG) --libs   gtk+-3.0 glib-2.0 gio-2.0)
 # endif
 
 ifeq ($(UNAME_S), Linux)
 # WebKit-Version automatisch ermitteln: 4.1 (Trixie) oder Fallback 4.0 (Bookworm)
 WEBKIT_PKG := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1 || echo webkit2gtk-4.0)
-GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG)`
-GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG)`
+GTK_INCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG)`
+GTK_LIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0 gio-2.0 $(WEBKIT_PKG)`
 endif
 
 ifeq ($(UNAME_S), Darwin)
-GTKINCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0`
-GTKLIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0 gio-2.0`
+GTK_INCLUDE=`$(PKG_CONFIG) --cflags gtk+-3.0 glib-2.0 gio-2.0`
+GTK_LIBS=`$(PKG_CONFIG) --libs gtk+-3.0 glib-2.0 gio-2.0`
 endif
 
-CPP_INCLUDE += $(GTKINCLUDE)
+CPP_INCLUDE += $(GTK_INCLUDE)
 
 ##############################################################################
 #
@@ -614,11 +626,11 @@ CPP_INCLUDE += $(JSON_INCLUDE)
 ##############################################################################
 
 ifeq ($(UNAME_S), Linux)
-SYSLIBS=-lrt
+SYS_LIBS=-lrt
 endif
 
 ifeq ($(UNAME_S), Darwin)
-SYSLIBS=-framework IOKit -framework Cocoa -framework WebKit
+SYS_LIBS=-framework IOKit -framework Cocoa -framework WebKit
 endif
 
 ##############################################################################
@@ -646,7 +658,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
 
-INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
+INCLUDES=$(GTK_INCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 
 .c.o:
@@ -672,12 +684,12 @@ endif
 
 ##############################################################################
 #
-# All the libraries we need to link with (including WDSP, libm, $(SYSLIBS))
+# All the libraries we need to link with (including WDSP, libm, $(SYS_LIBS))
 #
 ##############################################################################
 
-LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTKLIBS) $(GPIO_LIBS) $(SOAPYSDRLIBS) $(STEMLAB_LIBS) \
-	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lm $(SYSLIBS)
+LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTK_LIBS) $(GPIO_LIBS) $(SOAPYSDR_LIBS) $(STEMLAB_LIBS) \
+	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lm $(SYS_LIBS)
 
 ##############################################################################
 #
