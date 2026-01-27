@@ -41,7 +41,7 @@
 #include <sys/stat.h> // for stat
 #include <unistd.h>   // for readlink, sleep, getcwd
 
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 
 #include "ozyio.h"
 #include "message.h"
