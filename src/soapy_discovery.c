@@ -252,6 +252,24 @@ static void get_info(char *driver) {
       g_strlcpy(discovered[devices].info.soapy.version, "", sizeof(discovered[devices].info.soapy.version));
     }
 
+    gboolean has_fullgain = FALSE;
+    discovered[devices].info.soapy.rx_full_range = SoapySDRDevice_getGainRange(sdr, SOAPY_SDR_RX, 0);
+
+    if (discovered[devices].info.soapy.rx_full_range.minimum ==
+        discovered[devices].info.soapy.rx_full_range.maximum) {
+      t_print("%s: RX FULL gain NOT provided by driver (has_fullgain=%d)\n", __func__, has_fullgain);
+    } else {
+      if (strcmp(driver, "sdrplay") != 0) { has_fullgain = TRUE; }
+
+      t_print("%s: RX FULL gain: %f -> %f step=%f (has_fullgain=%d)\n",
+              __func__,
+              discovered[devices].info.soapy.rx_full_range.minimum,
+              discovered[devices].info.soapy.rx_full_range.maximum,
+              discovered[devices].info.soapy.rx_full_range.step,
+              has_fullgain);
+    }
+
+    discovered[devices].info.soapy.has_fullgain = has_fullgain;
     discovered[devices].info.soapy.rx_channels = rx_channels;
     discovered[devices].info.soapy.rx_gains = rx_gains_length;
     discovered[devices].info.soapy.rx_gain = rx_gains;

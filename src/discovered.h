@@ -128,6 +128,7 @@ struct _DISCOVERED {
       size_t rx_gains;
       char **rx_gain;
       SoapySDRRange *rx_range;
+      SoapySDRRange rx_full_range;   /* Overall / Full RX gain range */
       gboolean rx_has_automatic_gain;
       gboolean rx_has_automatic_dc_offset_correction;
       size_t rx_antennas;
@@ -141,6 +142,7 @@ struct _DISCOVERED {
       size_t sensors;
       char **sensor;
       gboolean has_temp;
+      gboolean has_fullgain;
       char address[64];
     } soapy;
 
