@@ -17,7 +17,19 @@ TARGET_DIR="/usr/local"
 
 echo "Build all requirements for WDSP 1.29 with NR3 and NR4 support"
 echo ""
-echo "Script $SCRIPT_NAME was executed under OS $OS_TYPE"
+echo "This Script $SCRIPT_NAME is running under OS $OS_TYPE"
+
+if [ -f "$SRC_DIR"/.WDSP_libs_updated ]; then
+  echo ""
+  echo "+----------------------------------+"
+  echo "| Required libs already updated.   |"
+  echo "| No need to run this script again.|"
+  echo "+----------------------------------+"
+  echo ""
+  echo "Exit this script."
+  echo ""
+  exit 1
+fi
 
 if [ "$OS_TYPE" = "Darwin" ]; then
   BREW=junk
@@ -94,7 +106,16 @@ else
     cd "$NR4_DIR/libspecbleach"
     echo "Remove old lib if exists..."
     sudo rm -f "$TARGET_DIR/lib/"libspecbleach*
+    if [ "$OS_TYPE" = "Linux" ]; then
+      sudo ldconfig
+    fi
     meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=both
     meson compile -C build -v
     sudo meson install -C build
 fi
+
+if [ "$OS_TYPE" = "Linux" ]; then
+  sudo ldconfig
+fi
+
+printf '' > "$SRC_DIR"/.WDSP_libs_updated
