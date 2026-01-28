@@ -977,7 +977,7 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
 	$(info Prevent make.config.deskhpsdr: can be changed now.)
-	$(shell git update-index --assume-unchanged make.config.deskhpsdr)
+	@git update-index --assume-unchanged make.config.deskhpsdr 2>/dev/null || true
 	$(info ...continue...)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp-1.29
@@ -995,7 +995,7 @@ ifeq ($(UNAME_S),Darwin)
 else
 	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
-		$(TCI_OBJS) $(LIBS)
+		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 endif
 
 ##############################################################################
@@ -1146,15 +1146,10 @@ prepare: .WDSP_libs_updated
 	@echo "==> Update WDSP requirements missing → running update_libs.sh"
 	@./update_libs.sh
 
-# .PHONY: install app macapp x11install
-# app macapp x11install: install
-
 .PHONY: install install-Darwin install-Linux
 
 install: prepare install-$(UNAME_S)
 
-# all:	prepare $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-#		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
 all: prepare $(PROGRAM)
 
 install-Darwin: all
