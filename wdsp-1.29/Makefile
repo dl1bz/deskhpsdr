@@ -1,15 +1,17 @@
+#######################################################################################
+# Copyright (C) 2026
+# Heiko Amft, DL1BZ (Project deskHPSDR)
 #
-# Makefile for WDSP library
-# This one creates libwdsp.a intended for statis linking
+# All code published unter the GPLv3
+#
+#######################################################################################
+#
+# Makefile for static WDSP library
 #
 
 CFLAGS?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses
 
-# ifneq ($(NR34LIB), ON)
-#  CFLAGS += -I../rnnoise/include -I../libspecbleach/include
-# endif
-
-CFLAGS += -I/usr/local/include
+# CFLAGS += -I/usr/local/include
 
 EXTRA_INCLUDE := $(shell pkg-config --cflags fftw3 fftw3f rnnoise libspecbleach)
 
