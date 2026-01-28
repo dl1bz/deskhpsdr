@@ -28,7 +28,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
   if [ -x /opt/homebrew/bin/brew ]; then
     BREW=/opt/homebrew/bin/brew
   fi
-  if [ $BREW == "junk" ]; then
+  if [ "$BREW" = "junk" ]; then
     echo "HomeBrew installation obviously failed..."
     echo "Stopping script $SCRIPT_NAME."
     exit 1
@@ -44,6 +44,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     $BREW install wget
 else
     sudo apt-get --yes update
+    sudo apt-get --yes install build-essential pkg-config
     sudo apt-get --yes install libtool
     sudo apt-get --yes install automake
     sudo apt-get --yes install autoconf
@@ -92,7 +93,7 @@ else
     echo "Installing libspecbleach..."
     cd "$NR4_DIR/libspecbleach"
     echo "Remove old lib if exists..."
-    sudo rm -f "$TARGET_DIR/lib/libspecbleach*"
+    sudo rm -f "$TARGET_DIR/lib/"libspecbleach*
     meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=both
     meson compile -C build -v
     sudo meson install -C build
