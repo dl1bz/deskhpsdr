@@ -988,9 +988,15 @@ endif
 ifneq (z$(TELNET_INCLUDE), z)
 	@+make -C libtelnet
 endif
+ifeq ($(UNAME_S),Darwin)
+	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
+		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
+		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
+else
 	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
 		$(TCI_OBJS) $(LIBS)
+endif
 
 ##############################################################################
 #
@@ -1147,23 +1153,13 @@ prepare: .WDSP_libs_updated
 
 install: prepare install-$(UNAME_S)
 
-all:	prepare $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
-		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
+# all:	prepare $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
+#		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
+all: prepare $(PROGRAM)
 
 install-Darwin: all
 	@echo "Install deskHPSDR for macOS..."
-ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-1.29
-endif
-ifneq (z$(SOLAR_INCLUDE), z)
-	@+make -C libsolar
-endif
-ifneq (z$(TELNET_INCLUDE), z)
-	@+make -C libtelnet
-endif
-	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
-		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
-		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
+	@make
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
 	@echo "Remove old deskHPSDR.app container from \"${HOME}/Desktop\" ..."

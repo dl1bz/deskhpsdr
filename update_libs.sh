@@ -118,4 +118,6 @@ if [ "$OS_TYPE" = "Linux" ]; then
   sudo ldconfig
 fi
 
+cd "$SRC_DIR"
+
 printf '' > "$SRC_DIR"/.WDSP_libs_updated
