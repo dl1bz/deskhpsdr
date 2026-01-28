@@ -85,12 +85,6 @@ ARCH := $(shell uname -m)
 PKG_CONFIG = pkg-config
 .DEFAULT_GOAL := all
 
-ifeq ($(UNAME_S), Linux)
-$(info Migration to WDSP version 1.29 in progress...)
-$(info Compiling under Linux not possible yet - please wait.)
-$(info Do git pull from time to time and try - if I'm ready you don't see this message anymore.)
-$(error STOP)
-
 WK41 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo yes)
 WK40 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.0 && echo yes)
 
