@@ -1,4 +1,4 @@
-/*	div.h
+/*  div.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,18 +27,17 @@ warren@wpratt.com
 #ifndef _div_h
 #define _div_h
 
-typedef struct _div
-{
-	int run;
-	int nr;							// number of receivers to mix
-	int size;						// size of input/output buffers
-	double **in;					// input buffers
-	double *out;					// output buffer
-	int output;						// which rcvr to output; ==nr for mix
-	double *Irotate;
-	double *Qrotate;
-	CRITICAL_SECTION cs_update;
-	double *legacy[4];																	///////////// legacy interface - remove
+typedef struct _div {
+  int run;
+  int nr;             // number of receivers to mix
+  int size;           // size of input/output buffers
+  double **in;          // input buffers
+  double *out;          // output buffer
+  int output;           // which rcvr to output; ==nr for mix
+  double *Irotate;
+  double *Qrotate;
+  CRITICAL_SECTION cs_update;
+  double *legacy[4];                                  ///////////// legacy interface - remove
 } mdiv, *MDIV;
 
 extern MDIV create_div (int run, int nr, int size, double **in, double *out);

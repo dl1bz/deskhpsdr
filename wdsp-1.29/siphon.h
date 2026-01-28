@@ -1,4 +1,4 @@
-/*	siphon.h
+/*  siphon.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -25,37 +25,36 @@ warren@pratt.one
 */
 
 // 'siphon' collects samples in a buffer.  These samples can then be PULLED from the buffer
-//	in either raw or FFT'd form.
+//  in either raw or FFT'd form.
 
 #ifndef _siphon_h
 #define _siphon_h
 
-typedef struct _siphon
-{
-	int run;
-	int position;
-	int mode;
-	int disp;
-	int insize;
-	double* in;
-	int sipsize;	// NOTE:  sipsize MUST BE A POWER OF TWO!!
-	double* sipbuff;
-	int outsize;
-	int idx;
-	double* sipout;
-	int fftsize;
-	double* specout;
-	volatile long specmode;
-	fftw_plan sipplan;
-	double* window;
-	CRITICAL_SECTION update;
-	int n_alloc_disps;			// number of additional allocated displays for this channel
-	int* alloc_run;				// vector of corresponding 'run' variables for the additional allocated disps
-	int* alloc_disp;			// vector of 'disp' identifiers for the additional allocated disps
+typedef struct _siphon {
+  int run;
+  int position;
+  int mode;
+  int disp;
+  int insize;
+  double* in;
+  int sipsize;  // NOTE:  sipsize MUST BE A POWER OF TWO!!
+  double* sipbuff;
+  int outsize;
+  int idx;
+  double* sipout;
+  int fftsize;
+  double* specout;
+  volatile long specmode;
+  fftw_plan sipplan;
+  double* window;
+  CRITICAL_SECTION update;
+  int n_alloc_disps;      // number of additional allocated displays for this channel
+  int* alloc_run;       // vector of corresponding 'run' variables for the additional allocated disps
+  int* alloc_disp;      // vector of 'disp' identifiers for the additional allocated disps
 } siphon, *SIPHON;
 
 extern SIPHON create_siphon (int run, int position, int mode, int disp, int insize, double* in, int sipsize,
-	int fftsize, int specmode);
+                             int fftsize, int specmode);
 
 extern void destroy_siphon (SIPHON a);
 
@@ -69,17 +68,18 @@ extern void setSamplerate_siphon (SIPHON a, int rate);
 
 extern void setSize_siphon (SIPHON a, int size);
 
-extern __declspec (dllexport) void TXASetSipAllocDisps (int channel, int n_alloc_disps, int* alloc_run, int* alloc_disp);
+extern __declspec (dllexport) void TXASetSipAllocDisps (int channel, int n_alloc_disps, int* alloc_run,
+    int* alloc_disp);
 
 // RXA Properties
 
-extern __declspec (dllexport) void RXAGetaSipF	(int channel, float* out, int size);
+extern __declspec (dllexport) void RXAGetaSipF  (int channel, float* out, int size);
 
 extern __declspec (dllexport) void RXAGetaSipF1 (int channel, float* out, int size);
 
 // TXA Properties
 
-extern __declspec (dllexport) void TXAGetaSipF	(int channel, float* out, int size);
+extern __declspec (dllexport) void TXAGetaSipF  (int channel, float* out, int size);
 
 extern __declspec (dllexport) void TXAGetaSipF1 (int channel, float* out, int size);
 
@@ -87,7 +87,8 @@ extern __declspec (dllexport) void TXAGetSpecF1 (int channel, float* out);
 
 // Calls for External Use
 
-extern __declspec (dllexport) void create_siphonEXT (int id, int run, int insize, int sipsize, int fftsize, int specmode);
+extern __declspec (dllexport) void create_siphonEXT (int id, int run, int insize, int sipsize, int fftsize,
+    int specmode);
 
 extern __declspec (dllexport) void destroy_siphonEXT (int id);
 

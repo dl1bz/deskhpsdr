@@ -1,4 +1,4 @@
-/*	gain.h
+/*  gain.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,19 +27,19 @@ warren@wpratt.com
 #ifndef _gain_h
 #define _gain_h
 
-typedef struct _gain
-{
-	int run;
-	int* prun;
-	int size;
-	double* in;
-	double* out;
-	double Igain;
-	double Qgain;
-	CRITICAL_SECTION cs_update;
-}gain, *GAIN;
+typedef struct _gain {
+  int run;
+  int* prun;
+  int size;
+  double* in;
+  double* out;
+  double Igain;
+  double Qgain;
+  CRITICAL_SECTION cs_update;
+} gain, *GAIN;
 
-__declspec (dllexport) GAIN create_gain (int run, int* prun, int size, double* in, double* out, double Igain, double Qgain);
+__declspec (dllexport) GAIN create_gain (int run, int* prun, int size, double* in, double* out, double Igain,
+    double Qgain);
 
 __declspec (dllexport) void destroy_gain (GAIN a);
 

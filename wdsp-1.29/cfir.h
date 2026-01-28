@@ -1,4 +1,4 @@
-/*	cfir.h
+/*  cfir.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,29 +27,28 @@ warren@wpratt.com
 #ifndef _cfir_h
 #define _cfir_h
 #include "firmin.h"
-typedef struct _cfir
-{
-	int run;
-	int size;
-	int nc;
-	int mp;
-	double* in;
-	double* out;
-	int runrate;
-	int cicrate;
-	int DD;
-	int R;
-	int Pairs;
-	double cutoff;
-	double scale;
-	int xtype;
-	double xbw;
-	int wintype;
-	FIRCORE p;
+typedef struct _cfir {
+  int run;
+  int size;
+  int nc;
+  int mp;
+  double* in;
+  double* out;
+  int runrate;
+  int cicrate;
+  int DD;
+  int R;
+  int Pairs;
+  double cutoff;
+  double scale;
+  int xtype;
+  double xbw;
+  int wintype;
+  FIRCORE p;
 } cfir, *CFIR;
 
 extern CFIR create_cfir (int run, int size, int nc, int mp, double* in, double* out, int runrate, int cicrate,
-	int DD, int R, int Pairs, double cutoff, int xtype, double xbw, int wintype);
+                         int DD, int R, int Pairs, double cutoff, int xtype, double xbw, int wintype);
 
 extern void destroy_cfir (CFIR a);
 
@@ -66,7 +65,7 @@ extern void setSize_cfir (CFIR a, int size);
 extern void setOutRate_cfir (CFIR a, int rate);
 
 extern double* cfir_impulse (int N, int DD, int R, int Pairs, double runrate, double cicrate,
-	double cutoff, int xtype, double xbw, int rtype, double scale, int wintype);
+                             double cutoff, int xtype, double xbw, int rtype, double scale, int wintype);
 
 extern __declspec (dllexport) void SetTXACFIRRun(int channel, int run);
 

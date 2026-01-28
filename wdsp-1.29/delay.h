@@ -1,4 +1,4 @@
-/*	delay.h
+/*  delay.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,34 +27,33 @@ warren@wpratt.com
 #ifndef _delay_h
 #define _delay_h
 
-#define WSDEL	1025	// number of supported whole sample delays
+#define WSDEL 1025  // number of supported whole sample delays
 
-typedef struct _delay
-{
-	int run;			// run
-	int size;			// number of input samples per buffer
-	double* in;			// input buffer
-	double* out;		// output buffer
-	int rate;			// samplerate
-	double tdelta;		// delay increment required (seconds)
-	double tdelay;		// delay requested (seconds)
+typedef struct _delay {
+  int run;      // run
+  int size;     // number of input samples per buffer
+  double* in;     // input buffer
+  double* out;    // output buffer
+  int rate;     // samplerate
+  double tdelta;    // delay increment required (seconds)
+  double tdelay;    // delay requested (seconds)
 
-	int L;				// interpolation factor
-	int ncoef;			// number of coefficients
-	int cpp;			// coefficients per phase
-	double ft;			// normalized cutoff frequency
-	double* h;			// coefficients
-	int snum;			// starting sample number (0 for sub-sample delay)
-	int phnum;			// phase number
+  int L;        // interpolation factor
+  int ncoef;      // number of coefficients
+  int cpp;      // coefficients per phase
+  double ft;      // normalized cutoff frequency
+  double* h;      // coefficients
+  int snum;     // starting sample number (0 for sub-sample delay)
+  int phnum;      // phase number
 
-	int idx_in;			// index for input into ring
-	int rsize;			// ring size in complex samples
-	double* ring;		// ring buffer
+  int idx_in;     // index for input into ring
+  int rsize;      // ring size in complex samples
+  double* ring;   // ring buffer
 
-	double adelta;		// actual delay increment
-	double adelay;		// actual delay
+  double adelta;    // actual delay increment
+  double adelay;    // actual delay
 
-	CRITICAL_SECTION cs_update;
+  CRITICAL_SECTION cs_update;
 
 } delay, *DELAY;
 
@@ -70,7 +69,7 @@ extern void xdelay (DELAY a);
 
 extern void SetDelayRun (DELAY a, int run);
 
-extern double SetDelayValue (DELAY a, double delay);		// returns actual delay in seconds
+extern double SetDelayValue (DELAY a, double delay);    // returns actual delay in seconds
 
 extern void SetDelayBuffs (DELAY a, int size, double* in, double* out);
 

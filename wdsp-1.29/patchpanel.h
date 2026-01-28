@@ -1,4 +1,4 @@
-/*	patchpanel.h
+/*  patchpanel.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,21 +27,21 @@ warren@wpratt.com
 #ifndef _patchpanel_h
 #define _patchpanel_h
 
-typedef struct _patchpanel
-{
-	int channel;
-	int run;
-	int size;
-	double* in;
-	double* out;
-	double gain1;
-	double gain2I;
-	double gain2Q;
-	int inselect;
-	int copy;
+typedef struct _patchpanel {
+  int channel;
+  int run;
+  int size;
+  double* in;
+  double* out;
+  double gain1;
+  double gain2I;
+  double gain2Q;
+  int inselect;
+  int copy;
 } panel, *PANEL;
 
-extern PANEL create_panel (int channel, int run, int size, double* in, double* out, double gain1, double gain2I, double gain2Q, int inselect, int copy);
+extern PANEL create_panel (int channel, int run, int size, double* in, double* out, double gain1, double gain2I,
+                           double gain2Q, int inselect, int copy);
 
 extern void destroy_panel (PANEL a);
 

@@ -1,4 +1,4 @@
-/*	apfshadow.h
+/*  apfshadow.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -26,17 +26,16 @@ warren@pratt.one
 
 #ifndef _apfshadow_h
 #define _apfshadow_h
-typedef struct _apfshadow
-{
-	int selection;
-	int run;
-	double f_center;
-	double bandwidth;
-	double gain;
+typedef struct _apfshadow {
+  int selection;
+  int run;
+  double f_center;
+  double bandwidth;
+  double gain;
 } apfshadow, *APFSHADOW;
 
 extern APFSHADOW create_apfshadow (int selection, int run,
-	double f_center, double bandwidth, double gain);
+                                   double f_center, double bandwidth, double gain);
 
 extern void destroy_apfshadow (APFSHADOW a);
 #endif

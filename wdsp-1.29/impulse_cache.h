@@ -1,4 +1,4 @@
-/*	impulse_cache.h
+/*  impulse_cache.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -29,14 +29,14 @@ mw0lge@grange-lane.co.uk
 //============================================================================================//
 // Dual-Licensing Statement (Applies Only to Author's Contributions, Richard Samphire MW0LGE) //
 // ------------------------------------------------------------------------------------------ //
-// For any code originally written by Richard Samphire MW0LGE, or for any modifications		  //
-// made by him, the copyright holder for those portions (Richard Samphire) reserves the		  //
-// right to use, license, and distribute such code under different terms, including			  //
-// closed-source and proprietary licences, in addition to the GNU General Public License	  //
+// For any code originally written by Richard Samphire MW0LGE, or for any modifications     //
+// made by him, the copyright holder for those portions (Richard Samphire) reserves the     //
+// right to use, license, and distribute such code under different terms, including       //
+// closed-source and proprietary licences, in addition to the GNU General Public License    //
 // granted above. Nothing in this statement restricts any rights granted to recipients under  //
-// the GNU GPL. Code contributed by others (not Richard Samphire) remains licensed under	  //
-// its original terms and is not affected by this dual-licensing statement in any way.		  //
-// Richard Samphire can be reached by email at :  mw0lge@grange-lane.co.uk					  //
+// the GNU GPL. Code contributed by others (not Richard Samphire) remains licensed under    //
+// its original terms and is not affected by this dual-licensing statement in any way.      //
+// Richard Samphire can be reached by email at :  mw0lge@grange-lane.co.uk            //
 //============================================================================================//
 
 #ifndef _impulse_cache_h
@@ -46,30 +46,30 @@ mw0lge@grange-lane.co.uk
 #include <stddef.h>
 
 #if defined(_WIN64)
-	// 64-bit build
-	extern uint64_t fnv1a_hash64(const void* data, size_t len);
-	#define GOLDEN_RATIO_64 0x9E3779B97F4A7C15ULL
+  // 64-bit build
+  extern uint64_t fnv1a_hash64(const void* data, size_t len);
+  #define GOLDEN_RATIO_64 0x9E3779B97F4A7C15ULL
 
-	#define HASH_T		 uint64_t
-	#define fnv1a_hash	 fnv1a_hash64
-	#define GOLDEN_RATIO GOLDEN_RATIO_64
+  #define HASH_T     uint64_t
+  #define fnv1a_hash   fnv1a_hash64
+  #define GOLDEN_RATIO GOLDEN_RATIO_64
 #else
-	// 32-bit build
-	extern uint32_t fnv1a_hash32(const void* data, size_t len);
-	#define GOLDEN_RATIO_32 0x9e3779b9U
+  // 32-bit build
+  extern uint32_t fnv1a_hash32(const void* data, size_t len);
+  #define GOLDEN_RATIO_32 0x9e3779b9U
 
-	#define HASH_T		 uint32_t
-	#define fnv1a_hash	 fnv1a_hash32
-	#define GOLDEN_RATIO GOLDEN_RATIO_32
+  #define HASH_T     uint32_t
+  #define fnv1a_hash   fnv1a_hash32
+  #define GOLDEN_RATIO GOLDEN_RATIO_32
 #endif
 
-#define MAX_CACHE_ENTRIES		4096	// max number of cache entires per cache bucket
-#define CACHE_BUCKETS			4		// 4 cache buckets, for fir_bandpass, mp, eq, fc. Unique indexes in the #defines below
+#define MAX_CACHE_ENTRIES   4096  // max number of cache entires per cache bucket
+#define CACHE_BUCKETS     4   // 4 cache buckets, for fir_bandpass, mp, eq, fc. Unique indexes in the #defines below
 
-#define FIR_CACHE	0
-#define MP_CACHE	1
-#define EQ_CACHE	2
-#define FC_CACHE	3
+#define FIR_CACHE 0
+#define MP_CACHE  1
+#define EQ_CACHE  2
+#define FC_CACHE  3
 
 double* get_impulse_cache_entry(size_t bucket, HASH_T hash, int N);
 void add_impulse_to_cache(size_t bucket, HASH_T hash, int N, double* impulse);

@@ -1,4 +1,4 @@
-/*	fir.h
+/*  fir.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -30,7 +30,8 @@ extern double* fir_fsamp_odd (int N, double* A, int rtype, double scale, int win
 
 extern double* fir_fsamp (int N, double* A, int rtype, double scale, int wintype);
 
-extern double* fir_bandpass (int N, double f_low, double f_high, double samplerate, int wintype, int rtype, double scale);
+extern double* fir_bandpass (int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
+                             double scale);
 
 extern double* get_fsamp_window(int N, int wintype);
 

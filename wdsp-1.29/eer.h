@@ -1,4 +1,4 @@
-/*	eer.h
+/*  eer.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,28 +27,28 @@ warren@wpratt.com
 #ifndef _eer_h
 #define _eer_h
 
-typedef struct _eer
-{
-	int run;
-	int amiq;
-	int size;
-	double* in;
-	double* out;
-	double* outM;
-	int rate;
-	double mgain;
-	double pgain;
-	int rundelays;
-	double mdelay;
-	double pdelay;
-	DELAY mdel;
-	DELAY pdel;
-	CRITICAL_SECTION cs_update;
-	double *legacy;																										////////////  legacy interface - remove
-	double *legacyM;																									////////////  legacy interface - remove
+typedef struct _eer {
+  int run;
+  int amiq;
+  int size;
+  double* in;
+  double* out;
+  double* outM;
+  int rate;
+  double mgain;
+  double pgain;
+  int rundelays;
+  double mdelay;
+  double pdelay;
+  DELAY mdel;
+  DELAY pdel;
+  CRITICAL_SECTION cs_update;
+  double *legacy;                                                   ////////////  legacy interface - remove
+  double *legacyM;                                                  ////////////  legacy interface - remove
 } eer, *EER;
 
-__declspec (dllexport) EER create_eer (int run, int size, double* in, double* out, double* outM, int rate, double mgain, double pgain, int rundelays, double mdelay, double pdelay, int amiq);
+__declspec (dllexport) EER create_eer (int run, int size, double* in, double* out, double* outM, int rate, double mgain,
+                                       double pgain, int rundelays, double mdelay, double pdelay, int amiq);
 
 __declspec (dllexport) void destroy_eer (EER a);
 

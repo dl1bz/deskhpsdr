@@ -1,4 +1,4 @@
-/*	shift.h
+/*  shift.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,18 +27,17 @@ warren@wpratt.com
 #ifndef _shift_h
 #define _shift_h
 
-typedef struct _shift
-{
-	int run;
-	int size;
-	double* in;
-	double* out;
-	double rate;
-	double shift;
-	double phase;
-	double delta;
-	double cos_delta;
-	double sin_delta;
+typedef struct _shift {
+  int run;
+  int size;
+  double* in;
+  double* out;
+  double rate;
+  double shift;
+  double phase;
+  double delta;
+  double cos_delta;
+  double sin_delta;
 } shift, *SHIFT;
 
 extern SHIFT create_shift (int run, int size, double* in, double* out, int rate, double fshift);

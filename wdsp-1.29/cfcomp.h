@@ -1,4 +1,4 @@
-/*	cfcomp.h
+/*  cfcomp.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,75 +27,76 @@ warren@wpratt.com
 #ifndef _cfcomp_h
 #define _cfcomp_h
 
-typedef struct _cfcomp
-{
-	int run;
-	int position;
-	int bsize;
-	double* in;
-	double* out;
-	int fsize;
-	int ovrlp;
-	int incr;
-	double* window;
-	int iasize;
-	double* inaccum;
-	double* forfftin;
-	double* forfftout;
-	int msize;
-	double* cmask;
-	double* mask;
-	int mask_ready;
-	double* cfc_gain;
-	double* revfftin;
-	double* revfftout;
-	double** save;
-	int oasize;
-	double* outaccum;
-	double rate;
-	int wintype;
-	double pregain;
-	double postgain;
-	int nsamps;
-	int iainidx;
-	int iaoutidx;
-	int init_oainidx;
-	int oainidx;
-	int oaoutidx;
-	int saveidx;
-	fftw_plan Rfor;
-	fftw_plan Rrev;
+typedef struct _cfcomp {
+  int run;
+  int position;
+  int bsize;
+  double* in;
+  double* out;
+  int fsize;
+  int ovrlp;
+  int incr;
+  double* window;
+  int iasize;
+  double* inaccum;
+  double* forfftin;
+  double* forfftout;
+  int msize;
+  double* cmask;
+  double* mask;
+  int mask_ready;
+  double* cfc_gain;
+  double* revfftin;
+  double* revfftout;
+  double** save;
+  int oasize;
+  double* outaccum;
+  double rate;
+  int wintype;
+  double pregain;
+  double postgain;
+  int nsamps;
+  int iainidx;
+  int iaoutidx;
+  int init_oainidx;
+  int oainidx;
+  int oaoutidx;
+  int saveidx;
+  fftw_plan Rfor;
+  fftw_plan Rrev;
 
-	int comp_method;
-	int nfreqs;
-	double* F;
-	double* G;
-	double* E;
-	double* fp;
-	double* gp;
-	double* ep;
-	double* comp;
-	double precomp;
-	double precomplin;
-	double* peq;
-	int peq_run;
-	double prepeq;
-	double prepeqlin;
-	double winfudge;
+  int comp_method;
+  int nfreqs;
+  double* F;
+  double* G;
+  double* E;
+  double* fp;
+  double* gp;
+  double* ep;
+  double* comp;
+  double precomp;
+  double precomplin;
+  double* peq;
+  int peq_run;
+  double prepeq;
+  double prepeqlin;
+  double winfudge;
 
-	double gain;
-	double mtau;
-	double mmult;
-	// display stuff
-	double dtau;
-	double dmult;
-	double* delta;
-	double* delta_copy;
-	double* cfc_gain_copy;
-}cfcomp, *CFCOMP;
+  double gain;
+  double mtau;
+  double mmult;
+  // display stuff
+  double dtau;
+  double dmult;
+  double* delta;
+  double* delta_copy;
+  double* cfc_gain_copy;
+} cfcomp, *CFCOMP;
 
-extern CFCOMP create_cfcomp (int run, int position, int peq_run, int size, double* in, double* out, int fsize, int ovrlp,
-	int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double* F, double* G, double* E, double mtau, double dtau);
+extern CFCOMP create_cfcomp (int run, int position, int peq_run, int size, double* in, double* out, int fsize,
+                             int ovrlp,
+                             int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double* F, double* G, double* E,
+                             double mtau, double dtau);
 
 extern void destroy_cfcomp (CFCOMP a);
 

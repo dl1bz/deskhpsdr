@@ -1,4 +1,4 @@
-/*	slew.h
+/*  slew.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,25 +27,25 @@ warren@wpratt.com
 #ifndef _slew_h
 #define _slew_h
 
-typedef struct _uslew
-{
-	int channel;
-	volatile long *ch_upslew;
-	int size;
-	double* in;
-	double* out;
-	double rate;
-	double tdelay;
-	double tupslew;
-	int runmode;
-	int state;
-	int count;
-	int ndelup;
-	int ntup;
-	double* cup;
+typedef struct _uslew {
+  int channel;
+  volatile long *ch_upslew;
+  int size;
+  double* in;
+  double* out;
+  double rate;
+  double tdelay;
+  double tupslew;
+  int runmode;
+  int state;
+  int count;
+  int ndelup;
+  int ntup;
+  double* cup;
 } uslew, *USLEW;
 
-extern USLEW create_uslew (int channel, volatile long *ch_upslew, int size, double* in, double* out, double rate, double tdelay, double tupslew);
+extern USLEW create_uslew (int channel, volatile long *ch_upslew, int size, double* in, double* out, double rate,
+                           double tdelay, double tupslew);
 
 extern void destroy_uslew (USLEW a);
 

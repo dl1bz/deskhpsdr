@@ -1,4 +1,4 @@
-/*	iqc.h
+/*  iqc.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,33 +27,31 @@ warren@wpratt.com
 #ifndef _iqc_h
 #define _iqc_h
 
-typedef struct _iqc
-{
-	volatile long run;
-	volatile long busy;
-	int size;
-	double* in;
-	double* out;
-	double rate;
-	int ints;
-	double* t;
-	int cset;
-	double* cm[2];
-	double* cc[2];
-	double* cs[2];
-	double tup;
-	double* cup;
-	int count;
-	int ntup;
-	int state;
-	struct
-	{
-		int spi;
-		int* cpi;
-		int full_ints;
-		int count;
-		CRITICAL_SECTION cs;
-	} dog;
+typedef struct _iqc {
+  volatile long run;
+  volatile long busy;
+  int size;
+  double* in;
+  double* out;
+  double rate;
+  int ints;
+  double* t;
+  int cset;
+  double* cm[2];
+  double* cc[2];
+  double* cs[2];
+  double tup;
+  double* cup;
+  int count;
+  int ntup;
+  int state;
+  struct {
+    int spi;
+    int* cpi;
+    int full_ints;
+    int count;
+    CRITICAL_SECTION cs;
+  } dog;
 } iqc, *IQC;
 
 extern IQC create_iqc (int run, int size, double* in, double* out, double rate, int ints, double tup, int spi);

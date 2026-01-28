@@ -1,4 +1,4 @@
-/*	ammod.h
+/*  ammod.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,17 +27,16 @@ warren@wpratt.com
 #ifndef _ammod_h
 #define _ammod_h
 
-typedef struct _ammod
-{
-	int run;
-	int mode;
-	int size;
-	double* in;
-	double* out;
-	double c_level;
-	double a_level;
-	double mult;
-}ammod, *AMMOD;
+typedef struct _ammod {
+  int run;
+  int mode;
+  int size;
+  double* in;
+  double* out;
+  double c_level;
+  double a_level;
+  double mult;
+} ammod, *AMMOD;
 
 extern AMMOD create_ammod (int run, int mode, int size, double* in, double* out, double c_level);
 

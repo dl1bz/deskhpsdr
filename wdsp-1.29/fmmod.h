@@ -1,4 +1,4 @@
-/*	fmmod.h
+/*  fmmod.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,36 +27,36 @@ warren@wpratt.com
 #ifndef _fmmod_h
 #define _fmmod_h
 #include "firmin.h"
-typedef struct _fmmod
-{
-	int run;
-	int size;
-	double* in;
-	double* out;
-	double samplerate;
-	double deviation;
-	double f_low;
-	double f_high;
-	int ctcss_run;
-	double ctcss_level;
-	double ctcss_freq;
-	// for ctcss gen
-	double tscale;
-	double tphase;
-	double tdelta;
-	// mod
-	double sphase;
-	double sdelta;
-	// bandpass
-	int bp_run;
-	double bp_fc;
-	int nc;
-	int mp;
-	FIRCORE p;
-}fmmod, *FMMOD;
+typedef struct _fmmod {
+  int run;
+  int size;
+  double* in;
+  double* out;
+  double samplerate;
+  double deviation;
+  double f_low;
+  double f_high;
+  int ctcss_run;
+  double ctcss_level;
+  double ctcss_freq;
+  // for ctcss gen
+  double tscale;
+  double tphase;
+  double tdelta;
+  // mod
+  double sphase;
+  double sdelta;
+  // bandpass
+  int bp_run;
+  double bp_fc;
+  int nc;
+  int mp;
+  FIRCORE p;
+} fmmod, *FMMOD;
 
-extern FMMOD create_fmmod (int run, int size, double* in, double* out, int rate, double dev, double f_low, double f_high,
-	int ctcss_run, double ctcss_level, double ctcss_freq, int bp_run, int nc, int mp);
+extern FMMOD create_fmmod (int run, int size, double* in, double* out, int rate, double dev, double f_low,
+                           double f_high,
+                           int ctcss_run, double ctcss_level, double ctcss_freq, int bp_run, int nc, int mp);
 
 extern void destroy_fmmod (FMMOD a);
 

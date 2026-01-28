@@ -1,4 +1,4 @@
-/*	compress.h
+/*  compress.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -27,23 +27,22 @@ warren@wpratt.com
 #ifndef _compressor_h
 #define _compressor_h
 
-typedef struct _compressor
-{
-	int run;
-	int buffsize;
-	double *inbuff;
-	double *outbuff;
-	double gain;
+typedef struct _compressor {
+  int run;
+  int buffsize;
+  double *inbuff;
+  double *outbuff;
+  double gain;
 } compressor, *COMPRESSOR;
 
 extern void xcompressor (COMPRESSOR a);
 
 extern COMPRESSOR create_compressor (
-				int run,
-				int buffsize,
-				double* inbuff,
-				double* outbuff,
-				double gain );
+  int run,
+  int buffsize,
+  double* inbuff,
+  double* outbuff,
+  double gain );
 
 extern void destroy_compressor (COMPRESSOR a);
 

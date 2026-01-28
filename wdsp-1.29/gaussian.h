@@ -1,4 +1,4 @@
-/*	gaussian.h
+/*  gaussian.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -24,36 +24,35 @@ warren@pratt.one
 */
 
 /********************************************************************************************************
-*																										*
-*									Partitioned Overlap-Save Gaussian									*
-*																										*
+*                                                   *
+*                 Partitioned Overlap-Save Gaussian                 *
+*                                                   *
 ********************************************************************************************************/
 
 
 #ifndef _gaussian_h
 #define _gaussian_h
 #include "firmin.h"
-typedef struct _gaussian
-{
-	int run;					// 0 - filter is OFF; 1 - filter is ON
-	int position;				// position in sequence in which to execute the filter
-	int size;					// input/output buffer size
-	int nc;						// number of filter coefficients; if'0', will be automatically calculated
-	int nc_var;					// '0' filter size will not be adjusted; '1' filter size adjusted per nsigma
-	double* in;					// pointer to input buffer
-	double* out;				// pointer to output buffer
-	double f_center;			// filter center frequency (Hz)
-	double bandwidth;			// filter bandwidth (Hz)
-	double samplerate;			// sample_rate (samples/sec)
-	double gain;				// gain to be applied to filter output
-	double scale;				// internal filter scale factor based upon gain
-	double nsigma;				// number of 'sigma' on each side of center to extend the Gaussian curve
-	int mode;					// Mode to get output:	0 => CWL; 1 => CWU; 2 => CWL + CWU
-	FIRCORE p;					// pointer to partititioned overlap-save filter
-}gaussian, *GAUSSIAN;
+typedef struct _gaussian {
+  int run;          // 0 - filter is OFF; 1 - filter is ON
+  int position;       // position in sequence in which to execute the filter
+  int size;         // input/output buffer size
+  int nc;           // number of filter coefficients; if'0', will be automatically calculated
+  int nc_var;         // '0' filter size will not be adjusted; '1' filter size adjusted per nsigma
+  double* in;         // pointer to input buffer
+  double* out;        // pointer to output buffer
+  double f_center;      // filter center frequency (Hz)
+  double bandwidth;     // filter bandwidth (Hz)
+  double samplerate;      // sample_rate (samples/sec)
+  double gain;        // gain to be applied to filter output
+  double scale;       // internal filter scale factor based upon gain
+  double nsigma;        // number of 'sigma' on each side of center to extend the Gaussian curve
+  int mode;         // Mode to get output:  0 => CWL; 1 => CWU; 2 => CWL + CWU
+  FIRCORE p;          // pointer to partititioned overlap-save filter
+} gaussian, *GAUSSIAN;
 
 extern GAUSSIAN create_gaussian(int run, int position, int size, int nc, double* in, double* out,
-	double f_center, double bandwidth, int samplerate, double gain, double nsigma, int mode);
+                                double f_center, double bandwidth, int samplerate, double gain, double nsigma, int mode);
 
 extern void destroy_gaussian(GAUSSIAN a);
 

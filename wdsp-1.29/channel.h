@@ -1,4 +1,4 @@
-/*	channel.h
+/*  channel.h
 
 This file is part of a program that implements a Software-Defined Radio.
 
@@ -28,38 +28,38 @@ warren@wpratt.com
 #define _setupchannel_h
 #include "comm.h"
 
-struct _ch
-{
-	int type;
-	volatile long run;			// when 1, thread loops; when 0, thread terminates
-	volatile long exchange;		// when 1, fexchange() operates; when 0, it just returns
-	int in_rate;				// input samplerate
-	int out_rate;				// output samplerate
-	int in_size;				// input buffsize (complex samples) in a fexchange() operation
-	int dsp_rate;				// sample rate for mainstream dsp processing
-	int dsp_size;				// number complex samples processed per buffer in mainstream dsp processing
-	int dsp_insize;				// size (complex samples) of the output of the r1 (input) buffer
-	int dsp_outsize;			// size (complex samples) of the input of the r2 (output) buffer
-	int out_size;				// output buffsize (complex samples) in a fexchange() operation
-	CRITICAL_SECTION csDSP;		// used to block dsp while parameters are updated or buffers flushed
-	CRITICAL_SECTION csEXCH;	// used to block fexchange() while parameters are updated or buffers flushed
-	int state;					// 0 for channel OFF; 1 for channel ON
-	double tdelayup;
-	double tslewup;
-	double tdelaydown;
-	double tslewdown;
-	int bfo;					// 'block_for_output', block fexchange until output is available
-	volatile long flushflag;
-	struct	//io buffers
-	{
-		IOB pc, pd, pe, pf;		// copies for console calls, dsp, exchange, and flush thread
-		volatile long ch_upslew;
-	} iob;
+struct _ch {
+  int type;
+  volatile long run;      // when 1, thread loops; when 0, thread terminates
+  volatile long exchange;   // when 1, fexchange() operates; when 0, it just returns
+  int in_rate;        // input samplerate
+  int out_rate;       // output samplerate
+  int in_size;        // input buffsize (complex samples) in a fexchange() operation
+  int dsp_rate;       // sample rate for mainstream dsp processing
+  int dsp_size;       // number complex samples processed per buffer in mainstream dsp processing
+  int dsp_insize;       // size (complex samples) of the output of the r1 (input) buffer
+  int dsp_outsize;      // size (complex samples) of the input of the r2 (output) buffer
+  int out_size;       // output buffsize (complex samples) in a fexchange() operation
+  CRITICAL_SECTION csDSP;   // used to block dsp while parameters are updated or buffers flushed
+  CRITICAL_SECTION csEXCH;  // used to block fexchange() while parameters are updated or buffers flushed
+  int state;          // 0 for channel OFF; 1 for channel ON
+  double tdelayup;
+  double tslewup;
+  double tdelaydown;
+  double tslewdown;
+  int bfo;          // 'block_for_output', block fexchange until output is available
+  volatile long flushflag;
+  struct { //io buffers
+    IOB pc, pd, pe, pf;   // copies for console calls, dsp, exchange, and flush thread
+    volatile long ch_upslew;
+  } iob;
 };
 
 extern struct _ch ch[];
 
-PORT void OpenChannel (int channel, int in_size, int dsp_size, int input_samplerate, int dsp_rate, int output_samplerate, int type, int state, double tdelayup, double tslewup, double tdelaydown, double tslewdown, int bfo);
+PORT void OpenChannel (int channel, int in_size, int dsp_size, int input_samplerate, int dsp_rate,
+                       int output_samplerate, int type, int state, double tdelayup, double tslewup, double tdelaydown, double tslewdown,
+                       int bfo);
 
 PORT void CloseChannel (int channel);
 
