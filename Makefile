@@ -85,6 +85,7 @@ ARCH := $(shell uname -m)
 PKG_CONFIG = pkg-config
 .DEFAULT_GOAL := all
 
+ifeq ($(UNAME_S), Linux)
 WK41 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo yes)
 WK40 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.0 && echo yes)
 
