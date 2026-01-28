@@ -192,16 +192,18 @@ CPP_SOURCES=
 CPP_INCLUDE=
 
 ifeq ($(UNAME_S),Darwin)
-FFTW_A := $(BREW_LIBDIR)/libfftw3.a $(BREW_LIBDIR)/libfftw3f.a
+FFTW_CFLAGS := -I$(BREW_INCDIR)
+FFTW_LIBS := $(BREW_LIBDIR)/libfftw3.a $(BREW_LIBDIR)/libfftw3f.a
 else
-FFTW_A := /usr/local/lib/libfftw3.a /usr/local/lib/libfftw3f.a
+FFTW_CFLAGS := $(shell pkg-config --cflags fftw3 fftw3f)
+FFTW_LIBS := $(shell pkg-config --libs fftw3 fftw3f)
 endif
 
-WDSP_INCLUDE=-I./wdsp-1.29
+WDSP_INCLUDE=-I./wdsp-1.29 $(FFTW_CFLAGS)
 WDSP_LIBS=wdsp-1.29/libwdsp.a \
           /usr/local/lib/librnnoise.a \
 		  /usr/local/lib/libspecbleach.a \
-		  $(FFTW_A)
+		  $(FFTW_LIBS)
 
 SOLAR_INCLUDE=-I./libsolar
 SOLAR_LIBS=libsolar/libsolar.a `$(PKG_CONFIG) --libs libcurl libxml-2.0`
