@@ -21,6 +21,7 @@ DEPEND
 DEPEND.bak
 nr4-install.txt
 nr4/*
+wdsp-nr4-libs/*
 hamlib-static/
 MacOS/rigctld_deskhpsdr
 LINUX/rigctld_deskhpsdr

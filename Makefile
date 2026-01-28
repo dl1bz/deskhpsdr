@@ -26,7 +26,6 @@ SATURN=OFF
 USBOZY=OFF
 SOAPYSDR=OFF
 STEMLAB=OFF
-EXTENDED_NR=OFF
 TTS=ON
 AUDIO=PULSE
 ATU=OFF
@@ -50,7 +49,6 @@ TAHOEFIX=ON
 #  USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs  libusb-1.0)
 #  SOAPYSDR     | If ON, deskHPSDR can talk to radios supported via SoapySDR-API library
 #  STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
-#  EXTENDED_NR  | If ON, deskHPSDR can use extended noise reduction (VU3RDD WDSP version) -> EXPERIMENTAL !
 #  AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux (use PulseAudio recommend)
 #  ATU          | If ON, acticate some special functions if using an external ATU
 #  COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
@@ -77,16 +75,6 @@ TAHOEFIX=ON
 #################################################################################################################
 
 -include make.config.deskhpsdr
-
-ifeq ($(EXTENDED_NR),ON)
-ifeq ("$(wildcard /usr/local/include/wdsp.h)","")
-$(info ---------------------------------------------------)
-$(info ERROR: EXTENDED_NR=ON is set, but /usr/local/include/wdsp.h not found!)
-$(info Please first run script build_wdsp_nr4.sh before you set EXTENDED_NR=ON !)
-$(info ---------------------------------------------------)
-$(error Cannot continue - STOP here.)
-endif
-endif
 
 # get the OS Name
 UNAME_S := $(shell uname -s)
@@ -159,11 +147,22 @@ CFLAGS += -Wall -Wextra -Wimplicit-fallthrough -Wno-unused-parameter -Wno-deprec
 LINK?=$(CC)
 
 ifeq ($(UNAME_S),Darwin)
+ifeq ($(shell command -v brew >/dev/null 2>&1 && echo yes),)
+$(error Homebrew (brew) is not installed – Please install Homebrew (brew) first !)
+endif
+BREW_PREFIX := $(shell command -v brew >/dev/null 2>&1 && brew --prefix)
+BREW_LIBDIR := $(BREW_PREFIX)/lib
+BREW_PCDIR  := $(BREW_LIBDIR)/pkgconfig
+BREW_INCDIR := $(BREW_PREFIX)/include
 # SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
 # ARCH_FLAGS := -arch arm64 -arch x86_64
 # CFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT) -I./src -I/usr/local/include
 # LDFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT)
-LDFLAGS += -Wl,-rpath,/usr/local/lib
+# LDFLAGS += -Wl,-rpath,/usr/local/lib
+ifneq ($(BREW_PREFIX),)
+  export PKG_CONFIG_PATH := $(BREW_PCDIR):$(PKG_CONFIG_PATH)
+  LDFLAGS += -Wl,-rpath,/usr/local/lib -Wl,-rpath,$(BREW_LIBDIR)
+endif
 # CFLAGS += -mmacosx-version-min=13.0
 # LINK   += -mmacosx-version-min=13.0
 endif
@@ -188,8 +187,13 @@ CPP_DEFINES=
 CPP_SOURCES=
 CPP_INCLUDE=
 
-WDSP_INCLUDE=-I./wdsp-1.28
-WDSP_LIBS=wdsp-1.28/libwdsp.a `$(PKG_CONFIG) --libs fftw3`
+FFTW_A := $(BREW_LIBDIR)/libfftw3.a $(BREW_LIBDIR)/libfftw3f.a
+
+WDSP_INCLUDE=-I./wdsp-1.29
+WDSP_LIBS=wdsp-1.29/libwdsp.a \
+          /usr/local/lib/librnnoise.a \
+		  /usr/local/lib/libspecbleach.a \
+		  $(FFTW_A)
 
 SOLAR_INCLUDE=-I./libsolar
 SOLAR_LIBS=libsolar/libsolar.a `$(PKG_CONFIG) --libs libcurl libxml-2.0`
@@ -199,17 +203,13 @@ TELNET_LIBS=libtelnet/libtelnet.a
 
 ##############################################################################
 #
-# Add support for extended noise reduction, if requested
-# This implies that one compiles against a wdsp.h e.g. in /usr/local/include,
-# and links with a WDSP shared lib e.g. in /usr/local/lib
+# Add support for extended noise reduction
 #
 ##############################################################################
 
-ifeq ($(EXTENDED_NR), ON)
-EXTNR_OPTIONS=-DEXTNR
-WDSP_INCLUDE=
-WDSP_LIBS=-lwdsp `$(PKG_CONFIG) --libs fftw3`
-endif
+NR4_OPTIONS=-DEXTNR
+# WDSP_INCLUDE=
+# WDSP_LIBS=-lwdsp `$(PKG_CONFIG) --libs fftw3`
 CPP_DEFINES += -DEXTNR
 CPP_INCLUDE +=$(WDSP_INCLUDE)
 CPP_INCLUDE +=$(SOLAR_INCLUDE)
@@ -655,7 +655,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(EQ12_OPTIONS) \
 	$(WAYLAND_OPTIONS) \
 	$(TAHOEFIX_OPTIONS) \
-	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
+	$(AUDIO_OPTIONS) $(NR4_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
 
 INCLUDES=$(GTK_INCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
@@ -974,7 +974,7 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 	$(shell git update-index --assume-unchanged make.config.deskhpsdr)
 	$(info ...continue...)
 ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-1.28
+	@+make -C wdsp-1.29
 endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
@@ -1037,7 +1037,7 @@ clean:
 	rm -f src/*.o
 	rm -f src/*.orig
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp-1.28 ]; then $(MAKE) -C wdsp-1.28 clean; fi
+	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)
@@ -1051,7 +1051,7 @@ uninstall:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp-1.28 ]; then $(MAKE) -C wdsp-1.28 clean; fi
+	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 	@echo "Remove installed deskHPSDR binary..."
@@ -1139,7 +1139,7 @@ all:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 install-Darwin: all
 	@echo "Install deskHPSDR for macOS..."
 ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-1.28
+	@+make -C wdsp-1.29
 endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar

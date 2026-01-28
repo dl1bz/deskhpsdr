@@ -39,6 +39,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     $BREW install fftw
     $BREW install meson
     $BREW install ninja
+    $BREW install wget
 else
     sudo apt-get --yes update
     sudo apt-get --yes install libtool
@@ -81,7 +82,7 @@ fi
 
 cd "$NR4_DIR"
 # git clone --depth=1 https://github.com/vu3rdd/libspecbleach
-git clone --depth=1 https://github.com/dl1bz/libspecbleach
+git clone https://github.com/dl1bz/libspecbleach
 if [ ! -d "$NR4_DIR/libspecbleach" ]; then
     echo "Error: '$NR4_DIR/libspecbleach' download error."
     echo "Stopping script $SCRIPT_NAME.."
@@ -89,6 +90,9 @@ if [ ! -d "$NR4_DIR/libspecbleach" ]; then
 else
     echo "Installing libspecbleach..."
     cd "$NR4_DIR/libspecbleach"
+    echo "Remove old lib if exists..."
+    sudo rm -f /usr/local/lib/libspecbleach*
+    git checkout wdsp128 && git pull --all
     meson build --buildtype=release --prefix=/usr/local --libdir=lib
     meson compile -C build -v
     sudo meson install -C build
@@ -104,8 +108,6 @@ if [ ! -d "$NR4_DIR/wdsp" ]; then
 else
     echo "Installing patched WDSP library..."
     cd "$NR4_DIR/wdsp"
-    # if want using old WDSP 1.25
-    # git checkout fe7f2a5b13da20276056b38683ef29a6f6dfba3e
     make NEW_NR_ALGORITHMS=1
     sudo make install
 fi

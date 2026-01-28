@@ -99,6 +99,9 @@ sudo apt-get --yes install cppcheck
 sudo apt-get --yes install dos2unix
 sudo apt-get --yes install libzstd-dev
 sudo apt-get --yes install python3-dev
+sudo apt-get --yes install wget
+sudo apt-get --yes install meson
+sudo apt-get --yes install ninja
 
 # ---------------------------------------
 # Install libraries necessary for deskHPSDR

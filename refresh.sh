@@ -1,0 +1,99 @@
+#!/bin/sh
+
+###############################################################################################################
+# Copyright (C) 2025
+# Heiko Amft, DL1BZ (Project deskHPSDR)
+#
+# All code published unter the GPLv3
+#
+###############################################################################################################
+
+OS_TYPE=$(uname)
+SCRIPT_NAME=$(basename "$0")
+SRC_DIR="${PWD}"
+NR4_DIR="${PWD}/wdsp-nr4-libs"
+# DO NOT CHANGE TARGET_DIR !!!
+TARGET_DIR="/usr/local"
+
+echo "Build all requirements for WDSP 1.29 with NR3 and NR4 support"
+echo ""
+echo "Script $SCRIPT_NAME was executed under OS $OS_TYPE"
+
+if [ "$OS_TYPE" = "Darwin" ]; then
+  BREW=junk
+  if [ -x /usr/local/bin/brew ]; then
+    BREW=/usr/local/bin/brew
+  fi
+
+  if [ -x /opt/homebrew/bin/brew ]; then
+    BREW=/opt/homebrew/bin/brew
+  fi
+  if [ $BREW == "junk" ]; then
+    echo "HomeBrew installation obviously failed..."
+    echo "Stopping script $SCRIPT_NAME."
+    exit 1
+  fi
+    $BREW update
+    $BREW upgrade
+    $BREW install libtool
+    $BREW install automake
+    $BREW install autoconf
+    $BREW install fftw
+    $BREW install meson
+    $BREW install ninja
+    $BREW install wget
+else
+    sudo apt-get --yes update
+    sudo apt-get --yes install libtool
+    sudo apt-get --yes install automake
+    sudo apt-get --yes install autoconf
+    sudo apt-get --yes install git
+    sudo apt-get --yes install libfftw3-dev
+    sudo apt-get --yes install meson
+    sudo apt-get --yes install ninja
+    sudo apt-get --yes install wget
+fi
+
+if [ -d "$NR4_DIR" ]; then
+  rm -fr "$NR4_DIR"
+  mkdir -p "$NR4_DIR"
+else
+  mkdir -p "$NR4_DIR"
+fi
+
+if [ ! -d "$NR4_DIR" ]; then
+    echo "Error: '$NR4_DIR' cannot create"
+    echo "Stopping script $SCRIPT_NAME."
+    exit 1
+fi
+
+cd "$NR4_DIR"
+git clone --depth=1 https://github.com/xiph/rnnoise.git
+if [ ! -d "$NR4_DIR/rnnoise" ]; then
+    echo "Error: '$NR4_DIR/rnnoise' download error."
+    echo "Stopping script $SCRIPT_NAME."
+    exit 1
+else
+    echo "Installing rnnoise..."
+    cd "$NR4_DIR/rnnoise"
+    ./autogen.sh
+    ./configure --prefix="$TARGET_DIR"
+    make
+    sudo make install
+fi
+
+cd "$NR4_DIR"
+git clone --depth=1 https://github.com/lucianodato/libspecbleach
+if [ ! -d "$NR4_DIR/libspecbleach" ]; then
+    echo "Error: '$NR4_DIR/libspecbleach' download error."
+    echo "Stopping script $SCRIPT_NAME.."
+    exit 1
+else
+    echo "Installing libspecbleach..."
+    cd "$NR4_DIR/libspecbleach"
+    echo "Remove old lib if exists..."
+    sudo rm -f "$TARGET_DIR/lib/libspecbleach*"
+    meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=both
+    meson compile -C build -v
+    sudo meson install -C build
+fi

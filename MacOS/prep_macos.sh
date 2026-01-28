@@ -171,6 +171,12 @@ $BREW install fftw
 $BREW install openssl@3
 $BREW install libusb
 $BREW install json-c
+$BREW install wget
+$BREW install libtool
+$BREW install automake
+$BREW install autoconf
+$BREW install meson
+$BREW install ninja
 ################################################################
 #
 # This is for the SoapySDR universe
