@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ###############################################################################################################
-# Copyright (C) 2025
+# Copyright (C) 2026
 # Heiko Amft, DL1BZ (Project deskHPSDR)
 #
 # All code published unter the GPLv3
@@ -11,7 +11,7 @@
 OS_TYPE=$(uname)
 SCRIPT_NAME=$(basename "$0")
 SRC_DIR="${PWD}"
-NR4_DIR="${PWD}/wdsp-nr4-libs"
+NR4_DIR="${PWD}/wdsp-nr4-newlibs"
 # DO NOT CHANGE TARGET_DIR !!!
 TARGET_DIR="/usr/local"
 
@@ -68,7 +68,7 @@ if [ ! -d "$NR4_DIR" ]; then
 fi
 
 cd "$NR4_DIR"
-git clone --depth=1 https://github.com/xiph/rnnoise.git
+git clone --depth=1 https://github.com/dl1bz/rnnoise.git
 if [ ! -d "$NR4_DIR/rnnoise" ]; then
     echo "Error: '$NR4_DIR/rnnoise' download error."
     echo "Stopping script $SCRIPT_NAME."
@@ -83,7 +83,7 @@ else
 fi
 
 cd "$NR4_DIR"
-git clone --depth=1 https://github.com/lucianodato/libspecbleach
+git clone --depth=1 https://github.com/dl1bz/libspecbleach
 if [ ! -d "$NR4_DIR/libspecbleach" ]; then
     echo "Error: '$NR4_DIR/libspecbleach' download error."
     echo "Stopping script $SCRIPT_NAME.."

@@ -85,6 +85,10 @@ ARCH := $(shell uname -m)
 PKG_CONFIG = pkg-config
 
 ifeq ($(UNAME_S), Linux)
+echo "Migration to WDSP version 1.29 in progress..."
+echo "Compiling under Linux not possible yet - please wait."
+echo "Do git pull from time to time and try - if I'm ready you don't see this message anymore."
+exit 1
 
 WK41 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo yes)
 WK40 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.0 && echo yes)
@@ -160,8 +164,8 @@ BREW_INCDIR := $(BREW_PREFIX)/include
 # LDFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT)
 # LDFLAGS += -Wl,-rpath,/usr/local/lib
 ifneq ($(BREW_PREFIX),)
-  export PKG_CONFIG_PATH := $(BREW_PCDIR):$(PKG_CONFIG_PATH)
-  LDFLAGS += -Wl,-rpath,/usr/local/lib -Wl,-rpath,$(BREW_LIBDIR)
+export PKG_CONFIG_PATH := $(BREW_PCDIR):$(PKG_CONFIG_PATH)
+LDFLAGS += -Wl,-rpath,/usr/local/lib -Wl,-rpath,$(BREW_LIBDIR)
 endif
 # CFLAGS += -mmacosx-version-min=13.0
 # LINK   += -mmacosx-version-min=13.0
@@ -187,7 +191,11 @@ CPP_DEFINES=
 CPP_SOURCES=
 CPP_INCLUDE=
 
+ifeq ($(UNAME_S),Darwin)
 FFTW_A := $(BREW_LIBDIR)/libfftw3.a $(BREW_LIBDIR)/libfftw3f.a
+else
+FFTW_A := /usr/local/lib/libfftw3.a /usr/local/lib/libfftw3f.a
+endif
 
 WDSP_INCLUDE=-I./wdsp-1.29
 WDSP_LIBS=wdsp-1.29/libwdsp.a \

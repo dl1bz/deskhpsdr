@@ -13,6 +13,12 @@ SCRIPT_NAME=$(basename "$0")
 SRC_DIR="${PWD}"
 NR4_DIR="${PWD}/nr4"
 
+if [ -d "$SRC_DIR/wdsp-1.29" ]; then
+echo "This script is only working with WDSP library version =< 1.28, but newer version 1.29 found."
+echo "Stop here and exit this script."
+exit 1
+fi
+
 echo "Build WDSP as shared library with NR3 and NR4 support"
 echo ""
 echo "Script $SCRIPT_NAME was executed under OS $OS_TYPE"
