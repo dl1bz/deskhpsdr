@@ -83,6 +83,7 @@ UNAME_R := $(shell uname -r | sed 's/\..*//')
 ARCH := $(shell uname -m)
 
 PKG_CONFIG = pkg-config
+.DEFAULT_GOAL := all
 
 ifeq ($(UNAME_S), Linux)
 $(info Migration to WDSP version 1.29 in progress...)
@@ -1136,14 +1137,22 @@ DEPEND:
 
 #########################################################################################################
 
+.PHONY: prepare
+
+prepare: .WDSP_libs_updated
+
+.WDSP_libs_updated:
+	@echo "==> Update WDSP requirements missing → running update_libs.sh"
+	@./update_libs.sh
+
 # .PHONY: install app macapp x11install
 # app macapp x11install: install
 
 .PHONY: install install-Darwin install-Linux
 
-install: install-$(UNAME_S)
+install: prepare install-$(UNAME_S)
 
-all:	$(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
+all:	prepare $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
 
 install-Darwin: all
