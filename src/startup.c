@@ -30,8 +30,6 @@
 //
 // - create a working directory, if it not yet exists
 // - make this the current working directory
-// - create files deskhpsdr.stdout and deskhpsdr.stderr there, and connect them
-//   with stdout and stderr
 //
 // The working directory on Linux is $HOME/.config/deskhpsdr, on MacOS it is
 // "$HOME/Library/Application Support/deskHPSDR".
@@ -66,9 +64,6 @@ char workdir[PATH_MAX];
 
 void startup(const char *path) {
   struct stat statbuf;
-  char filename[PATH_MAX];
-  int writeable;
-  int found;
   int rc;
   const char *homedir;
   const struct passwd *pwd;
@@ -84,38 +79,6 @@ void startup(const char *path) {
   IOPMAssertionCreateWithName (kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
                                CFSTR ("deskHPSDR"), &keep_awake);
 #endif
-  writeable = 0;  // if zero, the current dir is not writeable
-  found = 0;      // if nonzero, protocols.props found in current dir
-  //
-  // try to create a file with an unique file name
-  //
-  snprintf(filename, PATH_MAX, "deskHPSDR.myFile.%ld", (long) getpid());
-  rc = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0700);
-
-  if (rc >= 0) {
-    writeable = 1;
-    close (rc);
-    unlink(filename);
-  }
-
-  //
-  // Look whether file deskhpsdr.sh or directory release/deskhpsdr exists
-  //
-  rc = stat("deskhpsdr.sh", &statbuf);
-
-  if (rc == 0 && (S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode))) { found = 1;}
-
-  rc = stat("release/deskhpsdr", &statbuf);
-
-  if (rc == 0 && S_ISDIR(statbuf.st_mode)) { found = 1;}
-
-  //
-  // Most likely, piHPDSR is expected to run in the current working directory
-  //
-  if (writeable && found) {
-    t_print("%s: working directory not changed.\n", __func__);
-    return;
-  }
 
   //
   // Get home dir
@@ -131,8 +94,35 @@ void startup(const char *path) {
   }
 
   if (homedir == NULL) {
-    // non-recoverable error
-    t_print("%s: home dir not found, working directory not changed.\n", __func__);
+    // If $HOME cannot be determined: stay in CWD if writable, otherwise fall back to /tmp/deskhpsdr.
+    if (access(".", W_OK) == 0) {
+      return;
+    }
+
+    g_strlcpy(workdir, "/tmp/deskhpsdr", PATH_MAX);
+
+    if (stat(workdir, &statbuf) < 0) {
+      if (mkdir(workdir, 0755) != 0) {
+        t_print("%s: Could not create %s\n", __func__, workdir);
+        return;
+      }
+    } else if (!S_ISDIR(statbuf.st_mode)) {
+      t_print("%s: %s exists but is not a directory\n", __func__, workdir);
+      return;
+    } else {
+      if (chmod(workdir, 0755) != 0) {
+        t_print("%s: Could not chmod %s to 0755\n", __func__, workdir);
+        return;
+      }
+    }
+
+    if (chdir(workdir) != 0) {
+      t_print("%s: Could not chdir to working dir %s\n", __func__, workdir);
+    } else {
+      (void) freopen("deskhpsdr.log", "w", stdout);
+      (void) freopen("deskhpsdr.err", "w", stderr);
+      t_print("%s: working dir changed to %s\n", __func__, workdir);
+    }
     return;
   }
 
@@ -186,7 +176,7 @@ void startup(const char *path) {
   //  Make two local files for stdout and stderr, to allow
   //  post-mortem debugging
   //
-  (void) freopen("deskhpsdr.stdout", "w", stdout);
-  (void) freopen("deskhpsdr.stderr", "w", stderr);
+  (void) freopen("deskhpsdr.log", "w", stdout);
+  (void) freopen("deskhpsdr.err", "w", stderr);
   t_print("%s: working dir changed to %s\n", __func__, workdir);
 }
