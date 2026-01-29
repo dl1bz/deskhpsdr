@@ -1661,7 +1661,12 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         }
 
 #else
-        cairo_show_text(cr, "ADC0 overload");
+        if (active_receiver->panadapter_ovf_on && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
+          cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
+        } else if (device != DEVICE_HERMES_LITE2 && device != NEW_DEVICE_HERMES_LITE2) {
+          cairo_show_text(cr, "ADC0 overload");
+        }
 #endif
       }
 
