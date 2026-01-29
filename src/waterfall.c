@@ -161,7 +161,7 @@ waterfall_draw_cb (GtkWidget *widget,
   if (active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
       || active_receiver->display_panadapter == 1) && rx->id == 0 && active_receiver->panadapter_autoscale_enabled
       && !rx_stack_horizontal) {
-    char _text[128];
+    char _text[64];
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
@@ -169,11 +169,32 @@ waterfall_draw_cb (GtkWidget *widget,
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
-    snprintf(_text, 128, "%d db", g_noise_level);
+    snprintf(_text, sizeof(_text), "%d db", g_noise_level);
     cairo_text_extents_t nf_extents;
     cairo_text_extents(cr, _text, &nf_extents);
-    double _x =  60 - nf_extents.width;
+    double _x =  65 - nf_extents.width;
     cairo_move_to(cr, _x, 15);
+    cairo_show_text(cr, _text);
+  }
+
+  if (active_receiver->display_waterfall && rx->id == 0 && !rx_stack_horizontal) {
+    char _text[64];
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+    if (active_receiver->sample_rate >= 1000000) {
+      snprintf(_text, sizeof(_text), "SR %dM", active_receiver->sample_rate / 1000000);
+    } else {
+      snprintf(_text, sizeof(_text), "SR %dk", active_receiver->sample_rate / 1000);
+    }
+    cairo_text_extents_t nf_extents;
+    cairo_text_extents(cr, _text, &nf_extents);
+    double _x =  65 - nf_extents.width;
+    cairo_move_to(cr, _x, 35);
     cairo_show_text(cr, _text);
   }
 
