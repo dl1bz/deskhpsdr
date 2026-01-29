@@ -165,10 +165,8 @@ static const char *nr_labels[] = {
   "NR-OFF",
   "NR",
   "NR2",
-#ifdef EXTNR
   "NR3",
   "NR4"
-#endif
 };
 
 //
@@ -1341,15 +1339,8 @@ void update_slider_nr_btn(void) {
 static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   int id = active_receiver->id;
   active_receiver->nr++;
-#ifdef EXTNR
 
   if (active_receiver->nr > 4) { active_receiver->nr = 0; }
-
-#else
-
-  if (active_receiver->nr > 2) { active_receiver->nr = 0; }
-
-#endif
 
   if (id == 0) {
     int mode = vfo[id].mode;
@@ -1826,11 +1817,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-#ifdef EXTNR
                                         "OFF → NR → NR2 → NR3 → NR4");
-#else
-                                        "OFF → NR → NR2");
-#endif
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
     gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);

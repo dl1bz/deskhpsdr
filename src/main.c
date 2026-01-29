@@ -177,21 +177,13 @@ static int wisdom_running = 0;
 static void* wisdom_thread(void *arg) {
   int wdsp_subversion = GetWDSPVersion() % 100;
   t_print("%s: WDSP Subversion: %d\n", __func__, wdsp_subversion);
-#ifdef EXTNR
-  WDSPwisdom ((char *)arg);
-#else
 
-  if (wdsp_subversion < 26) {
-    WDSPwisdom ((char *)arg);
+  if (WDSPwisdom ((char *)arg)) {
+    t_print("%s: WDSP wisdom file has been rebuilt.\n", __func__);
   } else {
-    if (WDSPwisdom ((char *)arg)) {
-      t_print("WDSP wisdom file has been rebuilt.\n");
-    } else {
-      t_print("Re-using existing WDSP wisdom file.\n");
-    }
+    t_print("%s: Re-using existing WDSP wisdom file.\n", __func__);
   }
 
-#endif
   wisdom_running = 0;
   return NULL;
 }
@@ -376,8 +368,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
 
   case GDK_KEY_r:
+
     // toggle NR
-#ifdef EXTNR
     if (active_receiver->nr == 0) {
       active_receiver->nr = 1;
     } else if (active_receiver->nr == 1) {
@@ -390,17 +382,6 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       active_receiver->nr = 0;
     }
 
-#else
-
-    if (active_receiver->nr == 0) {
-      active_receiver->nr = 1;
-    } else if (active_receiver->nr == 1) {
-      active_receiver->nr = 2;
-    } else {
-      active_receiver->nr = 0;
-    }
-
-#endif
     update_noise();
     break;
 

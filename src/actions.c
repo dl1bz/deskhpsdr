@@ -1405,15 +1405,8 @@ int process_action(void *data) {
     if (a->mode == PRESSED) {
       int id = active_receiver->id;
       active_receiver->nr++;
-#ifdef EXTNR
 
       if (active_receiver->nr > 4) { active_receiver->nr = 0; }
-
-#else
-
-      if (active_receiver->nr > 2) { active_receiver->nr = 0; }
-
-#endif
 
       if (id == 0) {
         int mode = vfo[id].mode;

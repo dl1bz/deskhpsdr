@@ -338,13 +338,11 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropF1("receiver.%d.nb_advtime", rx->id,                   rx->nb_advtime);
   SetPropF1("receiver.%d.nb_hang", rx->id,                      rx->nb_hang);
   SetPropF1("receiver.%d.nb_thresh", rx->id,                    rx->nb_thresh);
-#ifdef EXTNR
   SetPropF1("receiver.%d.nr4_reduction_amount", rx->id,         rx->nr4_reduction_amount);
   SetPropF1("receiver.%d.nr4_smoothing_factor", rx->id,         rx->nr4_smoothing_factor);
   SetPropF1("receiver.%d.nr4_whitening_factor", rx->id,         rx->nr4_whitening_factor);
   SetPropF1("receiver.%d.nr4_noise_rescale", rx->id,            rx->nr4_noise_rescale);
   SetPropF1("receiver.%d.nr4_post_filter_threshold", rx->id,    rx->nr4_post_filter_threshold);
-#endif
   SetPropI1("receiver.%d.deviation", rx->id,                    rx->deviation);
   SetPropI1("receiver.%d.squelch_enable", rx->id,               rx->squelch_enable);
   SetPropF1("receiver.%d.squelch", rx->id,                      rx->squelch);
@@ -464,13 +462,11 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropF1("receiver.%d.nb_advtime", rx->id,                   rx->nb_advtime);
   GetPropF1("receiver.%d.nb_hang", rx->id,                      rx->nb_hang);
   GetPropF1("receiver.%d.nb_thresh", rx->id,                    rx->nb_thresh);
-#ifdef EXTNR
   GetPropF1("receiver.%d.nr4_reduction_amount", rx->id,         rx->nr4_reduction_amount);
   GetPropF1("receiver.%d.nr4_smoothing_factor", rx->id,         rx->nr4_smoothing_factor);
   GetPropF1("receiver.%d.nr4_whitening_factor", rx->id,         rx->nr4_whitening_factor);
   GetPropF1("receiver.%d.nr4_noise_rescale", rx->id,            rx->nr4_noise_rescale);
   GetPropF1("receiver.%d.nr4_post_filter_threshold", rx->id,    rx->nr4_post_filter_threshold);
-#endif
   GetPropI1("receiver.%d.deviation", rx->id,                    rx->deviation);
   GetPropI1("receiver.%d.squelch_enable", rx->id,               rx->squelch_enable);
   GetPropF1("receiver.%d.squelch", rx->id,                      rx->squelch);
@@ -838,13 +834,11 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->nb_hang =    0.00001;       // Lag=0.01     in the DSP menu
   rx->nb_thresh =  4.95;          // Threshold=30 in the DSP menu
   rx->nb2_mode = 0;               // Zero mode
-#ifdef EXTNR
   rx->nr4_reduction_amount = 10.0;
   rx->nr4_smoothing_factor = 0.0;
   rx->nr4_whitening_factor = 0.0;
   rx->nr4_noise_rescale = 2.0;
   rx->nr4_post_filter_threshold = -10.0;
-#endif
   const BAND *b = band_get_band(vfo[rx->id].band);
   rx->alex_antenna = b->alexRxAntenna;
 
@@ -1911,7 +1905,6 @@ void rx_set_noise(const RECEIVER *rx) {
   // f) SNB
   //
   SetRXASNBARun(rx->id, rx->snb);
-#ifdef EXTNR
   //
   // These WDSP functions only exist in a special, non-official version
   //
@@ -1927,7 +1920,6 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXASBNRnoiseRescale(rx->id,        rx->nr4_noise_rescale);
   SetRXASBNRpostFilterThreshold(rx->id, rx->nr4_post_filter_threshold);
   SetRXASBNRRun(rx->id, (rx->nr == 4));
-#endif
 }
 
 void rx_set_offset(const RECEIVER *rx, long long offset) {

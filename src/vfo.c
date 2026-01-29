@@ -183,13 +183,11 @@ static void modesettingsSaveState(void) {
     SetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     SetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
     SetPropS1("modeset.%d.mode_description", i,      mode_settings[i].desc);
-#ifdef EXTNR
     SetPropF1("modeset.%d.nr4_reduction_amount", i,  mode_settings[i].nr4_reduction_amount);
     SetPropF1("modeset.%d.nr4_smoothing_factor", i,  mode_settings[i].nr4_smoothing_factor);
     SetPropF1("modeset.%d.nr4_whitening_factor", i,  mode_settings[i].nr4_whitening_factor);
     SetPropF1("modeset.%d.nr4_noise_rescale", i,     mode_settings[i].nr4_noise_rescale);
     SetPropF1("modeset.%d.nr4_post_filter_threshold", i, mode_settings[i].nr4_post_filter_threshold);
-#endif
     SetPropI1("modeset.%d.anf", i,                   mode_settings[i].anf);
     SetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
     SetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
@@ -315,13 +313,11 @@ static void modesettingsRestoreState(void) {
 
     mode_settings[i].nr2_trained_threshold = -0.5;
     mode_settings[i].nr2_trained_t2 = 0.2;
-#ifdef EXTNR
     mode_settings[i].nr4_reduction_amount = 10.0;
     mode_settings[i].nr4_smoothing_factor = 0.0;
     mode_settings[i].nr4_whitening_factor = 0.0;
     mode_settings[i].nr4_noise_rescale = 2.0;
     mode_settings[i].nr4_post_filter_threshold = 2.0;
-#endif
     mode_settings[i].anf = 0;
     mode_settings[i].snb = 0;
     mode_settings[i].en_rxeq = 0;
@@ -474,13 +470,11 @@ static void modesettingsRestoreState(void) {
 
     GetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     GetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
-#ifdef EXTNR
     GetPropF1("modeset.%d.nr4_reduction_amount", i,  mode_settings[i].nr4_reduction_amount);
     GetPropF1("modeset.%d.nr4_smoothing_factor", i,  mode_settings[i].nr4_smoothing_factor);
     GetPropF1("modeset.%d.nr4_whitening_factor", i,  mode_settings[i].nr4_whitening_factor);
     GetPropF1("modeset.%d.nr4_noise_rescale", i,     mode_settings[i].nr4_noise_rescale);
     GetPropF1("modeset.%d.nr4_post_filter_threshold", i, mode_settings[i].nr4_post_filter_threshold);
-#endif
     GetPropI1("modeset.%d.anf", i,                   mode_settings[i].anf);
     GetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
     GetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
@@ -829,13 +823,11 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
 
   rx->nr2_trained_threshold     = mode_settings[m].nr2_trained_threshold;
   rx->nr2_trained_t2            = mode_settings[m].nr2_trained_t2;
-#ifdef EXTNR
   rx->nr4_reduction_amount      = mode_settings[m].nr4_reduction_amount;
   rx->nr4_smoothing_factor      = mode_settings[m].nr4_smoothing_factor;
   rx->nr4_whitening_factor      = mode_settings[m].nr4_whitening_factor;
   rx->nr4_noise_rescale         = mode_settings[m].nr4_noise_rescale;
   rx->nr4_post_filter_threshold = mode_settings[m].nr4_post_filter_threshold;
-#endif
   rx->anf                       = mode_settings[m].anf;
   rx->snb                       = mode_settings[m].snb;
   rx->agc                       = mode_settings[m].agc;
@@ -2089,7 +2081,6 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR2");
       break;
-#ifdef EXTNR
 
     case 3:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -2100,7 +2091,6 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR4");
       break;
-#endif
 
     default:
       cairo_set_source_rgba(cr, COLOUR_SHADE);

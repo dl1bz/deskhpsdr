@@ -121,7 +121,6 @@ void about_menu(GtkWidget *parent) {
                                "    Christoph van Wüllen, DL1YCF: Continuation & current version pihpsdr\n"
                                "    Richie, MW0LGE: Developer of main version Thetis\n"
                                "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
-                               "    Ramakrishnan, VU3RDD: patched WDSP with NR3 & NR4 support\n"
                                "    Francesco Cozzi, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n\n"
                                "Build OS: %s %s @ %s\n"
                                "Build compiler: %s\n"

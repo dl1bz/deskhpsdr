@@ -49,9 +49,6 @@ char build_options[] =
 #ifdef STEMLAB_DISCOVERY
   "STEMLAB "
 #endif
-#ifdef EXTNR
-  "EXTNR "
-#endif
 #ifdef __HAVEATU__
   "ATU "
 #endif

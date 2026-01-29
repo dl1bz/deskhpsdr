@@ -186,11 +186,13 @@ waterfall_draw_cb (GtkWidget *widget,
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
+
     if (active_receiver->sample_rate >= 1000000) {
       snprintf(_text, sizeof(_text), "SR %dM", active_receiver->sample_rate / 1000000);
     } else {
       snprintf(_text, sizeof(_text), "SR %dk", active_receiver->sample_rate / 1000);
     }
+
     cairo_text_extents_t nf_extents;
     cairo_text_extents(cr, _text, &nf_extents);
     double _x =  65 - nf_extents.width;

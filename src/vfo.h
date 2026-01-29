@@ -112,13 +112,11 @@ struct _mode_settings {
   double nr2_trained_threshold;
   double nr2_trained_t2;
   const char *desc;
-#ifdef EXTNR
-  double nr4_reduction_amount;      // NR4 parameters, only used if compiled with EXTNR
+  double nr4_reduction_amount;      // NR4 parameters
   double nr4_smoothing_factor;
   double nr4_whitening_factor;
   double nr4_noise_rescale;
   double nr4_post_filter_threshold;
-#endif
   int anf;                          // Automatic notch filter
   int snb;                          // Spectral noise blanker
   int agc;                          // AGC characteristics (slow/medium/fast etc.)
