@@ -268,7 +268,8 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     cairo_text_extents_t extents;
     cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
     cairo_paint (cr);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE14);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 
     switch (meter_type) {
     case SMETER: {
@@ -296,7 +297,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       }
 
       bydb = (max_angle - min_angle) / 114.0;
-      cairo_set_line_width(cr, PAN_LINE_THICK);
+      cairo_set_line_width(cr, PAN_LINE_EXTRA);
       cairo_set_source_rgba(cr, COLOUR_METER);
       cairo_arc(cr, cx, cx, radius, (min_angle + 6.0 * bydb) * M_PI / 180.0, max_angle * M_PI / 180.0);
       cairo_stroke(cr);
@@ -304,7 +305,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_set_source_rgba(cr, COLOUR_ALARM);
       cairo_arc(cr, cx, cx, radius + 2, (min_angle + 54.0 * bydb) * M_PI / 180.0, max_angle * M_PI / 180.0);
       cairo_stroke(cr);
-      cairo_set_line_width(cr, PAN_LINE_THICK);
+      cairo_set_line_width(cr, PAN_LINE_EXTRA);
       cairo_set_source_rgba(cr, COLOUR_METER);
 
       for (i = 1; i < 10; i++) {
@@ -319,7 +320,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           cairo_stroke(cr);
           snprintf(sf, 32, "%d", i);
           cairo_text_extents(cr, sf, &extents);
-          cairo_arc(cr, cx, cx, radius + 5, radians, radians);
+          cairo_arc(cr, cx, cx, radius + 6, radians, radians);
           cairo_get_current_point(cr, &x, &y);
           cairo_new_path(cr);
           //
@@ -345,20 +346,26 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_arc(cr, cx, cx, radius + 4, radians, radians);
         cairo_get_current_point(cr, &x, &y);
         cairo_arc(cr, cx, cx, radius, radians, radians);
+        cairo_set_line_width(cr, 2.0);
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
         cairo_line_to(cr, x, y);
         cairo_stroke(cr);
         snprintf(sf, 32, "+%d", i);
         cairo_text_extents(cr, sf, &extents);
-        cairo_arc(cr, cx, cx, radius + 5, radians, radians);
+        cairo_arc(cr, cx, cx, radius + 7, radians, radians);
         cairo_get_current_point(cr, &x, &y);
         cairo_new_path(cr);
         x += extents.width * (x / (2.0 * cx) - 1.0);
         cairo_move_to(cr, x, y);
+        cairo_set_source_rgba(cr, COLOUR_ALARM);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
         cairo_show_text(cr, sf);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE14);
+        cairo_set_source_rgba(cr, COLOUR_METER);
         cairo_new_path(cr);
       }
 
-      cairo_set_line_width(cr, PAN_LINE_EXTRA);
+      cairo_set_line_width(cr, PAN_LINE_ZEIGER);
       cairo_set_source_rgba(cr, COLOUR_METER);
 
       if (vfo[active_receiver->id].frequency > 30000000LL) {

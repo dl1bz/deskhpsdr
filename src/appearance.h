@@ -52,10 +52,11 @@
 #define DISPLAY_FONT_UDP          "JetBrains Mono"
 #define DISPLAY_FONT_UDP_B        "JetBrains Mono ExtraBold"
 
-#define DISPLAY_FONT_SIZE1 10                       // no longer used, this is too small for elder hams
-#define DISPLAY_FONT_SIZE2 12                       // used for SWR, FWD in Tx meter, S-meter ticks, and panadapter labels
-#define DISPLAY_FONT_SIZE3 16                       // used for warning/info in panadapters
-#define DISPLAY_FONT_SIZE4 20                       // only used for server IP addr in client mode
+#define DISPLAY_FONT_SIZE1  10                       // no longer used, this is too small for elder hams
+#define DISPLAY_FONT_SIZE2  12                       // used for SWR, FWD in Tx meter, S-meter ticks, and panadapter labels
+#define DISPLAY_FONT_SIZE14 14
+#define DISPLAY_FONT_SIZE3  16                       // used for warning/info in panadapters
+#define DISPLAY_FONT_SIZE4  20                       // only used for server IP addr in client mode
 
 //
 // Colours. They are given as a 4-tuple (RGB and opacity).
@@ -154,10 +155,11 @@
 // thin and thick line widths in the panadapers
 // "thick" and "extra" also used in the analog meter
 //
-#define PAN_LINE_THIN  0.5
-#define PAN_LINE_THICK 1.0
-#define PAN_LINE_PEAK  1.6
-#define PAN_LINE_EXTRA 2.0  // used for really important things such as band edges, and the analog meter needle.
+#define PAN_LINE_THIN   0.5
+#define PAN_LINE_THICK  1.0
+#define PAN_LINE_PEAK   1.6
+#define PAN_LINE_EXTRA  2.0  // used for really important things such as band edges, and the analog meter needle.
+#define PAN_LINE_ZEIGER 3.0  // analog S-Meter Zeiger
 
 //
 // This data structure contains the size of the VFO bar, and the position of its elements
