@@ -15,11 +15,17 @@ NR4_DIR="${PWD}/wdsp-nr4-newlibs"
 # DO NOT CHANGE TARGET_DIR !!!
 TARGET_DIR="/usr/local"
 
+REINSTALL=0
+
+for arg in "$@"; do
+  [ "$arg" = "reinstall" ] && REINSTALL=1
+done
+
 echo "Build all requirements for WDSP 1.29 with NR3 and NR4 support"
 echo ""
 echo "This Script $SCRIPT_NAME is running under OS $OS_TYPE"
 
-if [ -f "$SRC_DIR"/.WDSP_libs_updated ]; then
+if [ -f "$SRC_DIR"/.WDSP_libs_updated ] && [ "$REINSTALL" -eq 0 ]; then
   echo ""
   echo "+----------------------------------+"
   echo "| Required libs already updated.   |"
