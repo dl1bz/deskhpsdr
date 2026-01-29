@@ -1030,6 +1030,31 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       display_panadapter_messages(cr, mywidth, tx->fps);
     }
 
+    char _text[64];
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#if defined (__APPLE__)
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+#else
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+#endif
+    cairo_text_extents_t nf_extents;
+    double _x = 0.0;
+
+    if (tx->puresignal) {
+      snprintf(_text, sizeof(_text), "SR %dk PS %dk",
+               receiver[0]->sample_rate / 1000,
+               receiver[PS_RX_FEEDBACK]->sample_rate / 1000);
+      cairo_text_extents(cr, _text, &nf_extents);
+      _x =  130 - nf_extents.width;
+    } else {
+      snprintf(_text, sizeof(_text), "SR %dk", receiver[0]->sample_rate / 1000);
+      cairo_text_extents(cr, _text, &nf_extents);
+      _x =  65 - nf_extents.width;
+    }
+
+    cairo_move_to(cr, _x, myheight - 10);
+    cairo_show_text(cr, _text);
     cairo_destroy (cr);
     gtk_widget_queue_draw (tx->panadapter);
   }
