@@ -37,6 +37,10 @@ if [ -f "$SRC_DIR"/.WDSP_libs_updated ] && [ "$REINSTALL" -eq 0 ]; then
   exit 1
 fi
 
+if [ -f "$SRC_DIR"/.WDSP_libs_updated ]; then
+  rm -f "$SRC_DIR"/.WDSP_libs_updated
+fi
+
 if [ "$OS_TYPE" = "Darwin" ]; then
   BREW=junk
   if [ -x /usr/local/bin/brew ]; then
@@ -128,4 +132,10 @@ fi
 
 cd "$SRC_DIR"
 
-printf '' > "$SRC_DIR"/.WDSP_libs_updated
+if [ -f "$TARGET_DIR"/lib/libspecbleach.a ] && [ -f "$TARGET_DIR"/lib/librnnoise.a ]; then
+    printf '' > "$SRC_DIR"/.WDSP_libs_updated
+    echo "Library build correct, continue..."
+else
+    echo "Library build FAILED...EXIT script."
+    exit 1
+fi
