@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ###############################################################################################################
-# Copyright (C) 2025
+# Copyright (C) 2025, 2026
 # Heiko Amft, DL1BZ (Project deskHPSDR)
 #
 # All code published unter the GPLv3
@@ -18,7 +18,7 @@
 #  X11-Desktop-Environment
 #
 #
-#  2024, November 21th
+#  2026, January 29th
 #
 ################################################################
 #
@@ -32,14 +32,6 @@
 #  Don't forget to activate Soapy-Support in the file
 #  make.config.deskhpsdr with SOAPYSDR=ON
 #  DON'T EDIT THE Makefile itself !
-#
-################################################################
-
-################################################################
-#
-# a) determine the location of THIS script
-#    (this is where the files should be located)
-#    and assume this is in the deskhpsdr directory
 #
 ################################################################
 
@@ -102,6 +94,8 @@ sudo apt-get --yes install python3-dev
 sudo apt-get --yes install wget
 sudo apt-get --yes install meson
 sudo apt-get --yes install ninja
+sudo apt-get --yes install clang
+sudo apt-get --yes install llvm
 
 # ---------------------------------------
 # Install libraries necessary for deskHPSDR
@@ -166,21 +160,28 @@ elif  [ "$(grep -Ei 'fedora' /etc/*release)" ]; then
 #
 # Fedora installation support added by Heath, NQ7T  - not by me
 #
-# I (DL1BZ) don't give any support as Maintainer of the deskHPSDR project
-# for *not* Debian based distributions !
+# I (DL1BZ) don't give any support as Maintainer of the deskHPSDR
+# project for *not* Debian based distributions !
 #
 ################################################################
 
 sudo dnf group install -y c-development
 sudo dnf -y install git gcc-gfortran gettext cppcheck dos2unix \
 libzstd-devel python3-devel fftw-devel gtk3-devel \
-openssl-devel alsa-lib-devel libcurl-devel  libusb1-devel \
-libgpiod-devel  pulseaudio-libs-devel  libpcap-devel  \
-json-c-devel  gnome-themes-extra  SoapySDR-devel webkit2gtk4.1-devel
+openssl-devel alsa-lib-devel libcurl-devel libusb1-devel \
+libgpiod-devel pulseaudio-libs-devel libpcap-devel \
+json-c-devel gnome-themes-extra SoapySDR-devel webkit2gtk4.1-devel \
+llvm-devel clang-devel lld-libs lld make autoconf automake meson \
+ninja-build wget
 
 else
-	echo "This script is only for Debian and Fedora based or similiar LINUX distributions"
-	echo "You need to prepare your Linux system by another way or manually."
-	echo "Here we can't help, sorry...exiting this script"
+	echo "This script is only for Debian based Linux platforms or similiar LINUX distributions."
+	echo "Fedora was a contribution from a Heath, NQ7T and I add this,"
+	echo "but I don't give any support for this."
+	echo "-----------------------------------------------------"
+	echo "Outside the Debian based universe you need to prepare"
+	echo "your Linux system by another way or manually."
+	echo "Here I can't help, sorry...exiting this script"
+	echo "-----------------------------------------------------"
 	exit 1
 fi
