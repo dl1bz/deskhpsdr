@@ -93,7 +93,7 @@ sudo apt-get --yes install libzstd-dev
 sudo apt-get --yes install python3-dev
 sudo apt-get --yes install wget
 sudo apt-get --yes install meson
-sudo apt-get --yes install ninja
+sudo apt-get --yes install ninja-build
 sudo apt-get --yes install clang
 sudo apt-get --yes install llvm
 

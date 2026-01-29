@@ -63,8 +63,10 @@ else
     sudo apt-get --yes install git
     sudo apt-get --yes install libfftw3-dev
     sudo apt-get --yes install meson
-    sudo apt-get --yes install ninja
+    sudo apt-get --yes install ninja-build
     sudo apt-get --yes install wget
+    sudo apt-get --yes install llvm
+    sudo apt-get --yes install clang
 fi
 
 if [ -d "$NR4_DIR" ]; then
