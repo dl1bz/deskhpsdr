@@ -1,0 +1,455 @@
+/* Copyright (C)
+* 2024-2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
+*
+*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
+*
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 3 of the License, or
+*   (at your option) any later version.
+*
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*
+*
+* Voice Keyer (WAV) for deskHPSDR
+*
+* Policy: ONLY RIFF/WAVE, PCM16, MONO, 48000 Hz.
+* Implementation: load WAV into existing capture_data[] and use existing CAP_XMIT injection
+* (tx_add_mic_sample()).
+*/
+
+#include <gtk/gtk.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+
+#include "voice_keyer.h"
+#include "radio.h"
+#include "actions.h"
+#include "property.h"
+#include "radio.h"
+
+static GtkWidget *vk_window = NULL;
+static GtkWidget *vk_label_file = NULL;
+static GtkWidget *vk_label_status = NULL;
+static GtkWidget *vk_btn_play = NULL;
+
+static char *vk_path = NULL;
+
+// Voice Keyer MOX ownership + watchdog (internal)
+static int vk_keyed_mox = 0;
+static guint vk_mox_watch_id = 0;
+
+
+int is_vk = 0;
+
+static uint32_t rd_u32_le(const uint8_t *p) {
+  return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+static uint16_t rd_u16_le(const uint8_t *p) {
+  return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static void set_status(const char *msg) {
+  if (vk_label_status) {
+    gtk_label_set_text(GTK_LABEL(vk_label_status), msg ? msg : "");
+  }
+}
+
+static void error_dialog(GtkWindow *parent, const char *msg) {
+  GtkWidget *d = gtk_message_dialog_new(parent,
+                                        GTK_DIALOG_MODAL,
+                                        GTK_MESSAGE_ERROR,
+                                        GTK_BUTTONS_CLOSE,
+                                        "%s", msg ? msg : "Error");
+  gtk_dialog_run(GTK_DIALOG(d));
+  gtk_widget_destroy(d);
+}
+
+static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **err_out) {
+  gsize len = 0;
+  guint8 *buf = NULL;
+
+  if (err_out) {
+    *err_out = NULL;
+  }
+
+  if (!g_file_get_contents(path, (gchar **)&buf, &len, NULL)) {
+    if (err_out) {
+      *err_out = g_strdup("Cannot read file.");
+    }
+
+    return FALSE;
+  }
+
+  if (len < 44 || memcmp(buf, "RIFF", 4) != 0 || memcmp(buf + 8, "WAVE", 4) != 0) {
+    if (err_out) {
+      *err_out = g_strdup("Not a RIFF/WAVE file.");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  uint32_t fmt_off = 0, fmt_sz = 0;
+  uint32_t data_off = 0, data_sz = 0;
+  uint32_t off = 12;
+
+  while (off + 8 <= len) {
+    const uint8_t *ck = buf + off;
+    uint32_t cksz = rd_u32_le(ck + 4);
+
+    if (off + 8 + cksz > len) {
+      break;
+    }
+
+    if (memcmp(ck, "fmt ", 4) == 0) {
+      fmt_off = off + 8;
+      fmt_sz = cksz;
+    }
+
+    if (memcmp(ck, "data", 4) == 0) {
+      data_off = off + 8;
+      data_sz = cksz;
+    }
+
+    off += 8 + cksz + (cksz & 1);
+  }
+
+  if (!fmt_off || fmt_sz < 16 || !data_off || !data_sz) {
+    if (err_out) {
+      *err_out = g_strdup("WAV missing fmt/data chunk.");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  const uint8_t *fmt = buf + fmt_off;
+  uint16_t audio_format = rd_u16_le(fmt + 0);
+  uint16_t num_channels = rd_u16_le(fmt + 2);
+  uint32_t sample_rate = rd_u32_le(fmt + 4);
+  uint16_t bits_per_sample = rd_u16_le(fmt + 14);
+
+  if (audio_format != 1) {
+    if (err_out) {
+      *err_out = g_strdup("WAV must be PCM (format 1).");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  if (num_channels != 1) {
+    if (err_out) {
+      *err_out = g_strdup("WAV must be MONO.");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  if (bits_per_sample != 16) {
+    if (err_out) {
+      *err_out = g_strdup("WAV must be 16-bit PCM.");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  if (sample_rate != 48000) {
+    if (err_out) {
+      *err_out = g_strdup("WAV must be 48000 Hz.");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  uint32_t samples = data_sz / sizeof(int16_t);
+
+  if ((int)samples <= 0) {
+    if (err_out) {
+      *err_out = g_strdup("WAV has no audio samples.");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  // Do not resize capture_max here. Operator can set capture time in the existing UI.
+  if ((int)samples > capture_max) {
+    if (err_out) {
+      *err_out = g_strdup("WAV is longer than current capture buffer. Increase CAPTURE time.");
+    }
+
+    g_free(buf);
+    return FALSE;
+  }
+
+  if (capture_data == NULL) {
+    capture_data = g_new(double, capture_max);
+  }
+
+  const guint8 *p = buf + data_off;
+
+  for (uint32_t i = 0; i < samples; i++) {
+    int16_t s;
+    memcpy(&s, p, sizeof(s));
+    capture_data[i] = (double)s / 32768.0;
+    p += sizeof(s);
+  }
+
+  capture_record_pointer = (int)samples;
+  capture_replay_pointer = 0;
+  capture_state = CAP_AVAIL;
+  g_free(buf);
+  return TRUE;
+}
+
+static void on_load_clicked(GtkButton *btn, gpointer user_data) {
+  (void)btn;
+  GtkWindow *parent = GTK_WINDOW(user_data);
+  GtkWidget *dlg = gtk_file_chooser_dialog_new("Load WAV (48k/mono/PCM16)",
+                   parent,
+                   GTK_FILE_CHOOSER_ACTION_OPEN,
+                   "_Cancel", GTK_RESPONSE_CANCEL,
+                   "_Open", GTK_RESPONSE_ACCEPT,
+                   NULL);
+  GtkFileFilter *filter = gtk_file_filter_new();
+  gtk_file_filter_set_name(filter, "WAV files (*.wav)");
+  gtk_file_filter_add_pattern(filter, "*.wav");
+  gtk_file_filter_add_pattern(filter, "*.WAV");
+  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dlg), filter);
+
+  if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
+    char *path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
+
+    if (path) {
+      char *err = NULL;
+
+      if (!load_wav_pcm16_mono_48k_into_capture(path, &err)) {
+        error_dialog(parent, err ? err : "WAV load failed.");
+        g_free(err);
+        set_status("Load failed.");
+
+        if (vk_btn_play) {
+          gtk_widget_set_sensitive(vk_btn_play, FALSE);
+        }
+      } else {
+        g_free(vk_path);
+        vk_path = g_strdup(path);
+
+        if (vk_label_file) {
+          gtk_label_set_text(GTK_LABEL(vk_label_file), vk_path);
+        }
+
+        double seconds = (double)capture_record_pointer / 48000.0;
+        char msg[128];
+        snprintf(msg, sizeof(msg), "Loaded: %d samples (%.2f s)", capture_record_pointer, seconds);
+        set_status(msg);
+
+        if (vk_btn_play) {
+          gtk_widget_set_sensitive(vk_btn_play, TRUE);
+        }
+      }
+
+      g_free(path);
+    }
+  }
+
+  gtk_widget_destroy(dlg);
+}
+
+
+// State machine for deterministic MOX handling (avoid race with radio_is_transmitting()
+// and ensure radio_end_xmit_captured_data() has run before unkeying MOX).
+typedef enum {
+  VK_WATCH_NONE = 0,
+  VK_WATCH_WAIT_TX_ON,
+  VK_WATCH_WAIT_PLAYBACK_END
+} vk_watch_mode_t;
+
+static vk_watch_mode_t vk_watch_mode = VK_WATCH_NONE;
+
+static void vk_watch_stop(void) {
+  if (vk_mox_watch_id != 0) {
+    g_source_remove(vk_mox_watch_id);
+    vk_mox_watch_id = 0;
+  }
+
+  vk_watch_mode = VK_WATCH_NONE;
+}
+
+static void vk_trigger_tx_playback(void) {
+  // Preconditions are checked by caller. This uses the existing CAPTURE state machine.
+  capture_replay_pointer = 0;
+  capture_state = CAP_AVAIL;
+  is_vk  = 1;
+  is_cap = 0;
+  schedule_action(VK_PLAYBACK, PRESSED, 0);
+}
+
+static gboolean vk_mox_watch_cb(gpointer data) {
+  (void)data;
+
+  switch (vk_watch_mode) {
+  case VK_WATCH_WAIT_TX_ON:
+
+    // Wait until TX is actually on, then trigger the CAPTURE TX-playback path.
+    if (radio_is_transmitting()) {
+      vk_trigger_tx_playback();
+      vk_watch_mode = VK_WATCH_WAIT_PLAYBACK_END;
+      set_status("TX started.");
+    }
+
+    return G_SOURCE_CONTINUE;
+
+  case VK_WATCH_WAIT_PLAYBACK_END:
+
+    // Playback ended when capture leaves CAP_XMIT/CAP_XMIT_DONE (actions.c sets CAP_AVAIL).
+    if (capture_state != CAP_XMIT && capture_state != CAP_XMIT_DONE) {
+      if (vk_keyed_mox) {
+        radio_set_mox(0);
+        vk_keyed_mox = 0;
+      }
+
+      vk_watch_stop();
+      set_status("TX ended.");
+      return G_SOURCE_REMOVE;
+    }
+
+    return G_SOURCE_CONTINUE;
+
+  default:
+    vk_watch_stop();
+    return G_SOURCE_REMOVE;
+  }
+}
+
+static void on_play_clicked(GtkButton *btn, gpointer user_data) {
+  (void)btn;
+  GtkWindow *parent = GTK_WINDOW(user_data);
+
+  if (capture_data == NULL || capture_record_pointer <= 0) {
+    error_dialog(parent, "No WAV loaded.");
+    return;
+  }
+
+  if (!can_transmit) {
+    error_dialog(parent, "Transmit not available (can_transmit=0).");
+    return;
+  }
+
+  // Stop any previous watchdog
+  vk_watch_stop();
+  // Ensure TX is on (CAPTURE plays back via TX only if radio_is_transmitting() is true).
+  vk_keyed_mox = 0;
+
+  if (!radio_is_transmitting()) {
+    radio_set_mox(1);
+    vk_keyed_mox = 1;
+    // MOX enabling may not be instantaneous; avoid racing into the RX-path (CAP_RECORDING).
+    vk_watch_mode = VK_WATCH_WAIT_TX_ON;
+    vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
+    set_status("Enabling TX (MOX)...");
+    return;
+  }
+
+  // TX already on -> trigger immediately
+  // TX already on -> trigger immediately
+  vk_trigger_tx_playback();
+
+  // If we keyed MOX earlier (unlikely here), watch for end to unkey. (vk_keyed_mox==0 in this branch)
+  if (vk_keyed_mox) {
+    vk_watch_mode = VK_WATCH_WAIT_PLAYBACK_END;
+    vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
+  }
+}
+
+static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
+  (void)btn;
+  (void)user_data;
+
+  // If we are still waiting for TX-on, cancel and roll back MOX.
+  if (vk_watch_mode == VK_WATCH_WAIT_TX_ON) {
+    vk_watch_stop();
+
+    if (vk_keyed_mox) {
+      radio_set_mox(0);
+      vk_keyed_mox = 0;
+    }
+
+    set_status("Stopped.");
+    return;
+  }
+
+  // Request stop via existing CAPTURE state machine stop path (restores Mic gain etc.).
+  if (capture_state == CAP_XMIT || capture_state == CAP_XMIT_DONE) {
+    is_vk  = 1;
+    is_cap = 0;
+    schedule_action(VK_PLAYBACK, PRESSED, 0);
+  }
+
+  // Do NOT unkey MOX immediately here (would race with radio_end_xmit_captured_data()).
+  // Instead, watch until playback actually ends and then unkey if we keyed MOX.
+  if (vk_keyed_mox) {
+    vk_watch_stop();
+    vk_watch_mode = VK_WATCH_WAIT_PLAYBACK_END;
+    vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
+    set_status("Stopping TX...");
+  } else {
+    set_status("Stopped.");
+  }
+}
+
+void voice_keyer_show(void) {
+  if (vk_window != NULL) {
+    gtk_window_present(GTK_WINDOW(vk_window));
+    return;
+  }
+
+  vk_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(vk_window), "Voice Keyer (WAV)");
+  gtk_window_set_default_size(GTK_WINDOW(vk_window), 520, 160);
+  gtk_container_set_border_width(GTK_CONTAINER(vk_window), 10);
+  GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  gtk_container_add(GTK_CONTAINER(vk_window), vbox);
+  GtkWidget *row1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_pack_start(GTK_BOX(vbox), row1, FALSE, FALSE, 0);
+  GtkWidget *btn_load = gtk_button_new_with_label("Load WAV…");
+  gtk_box_pack_start(GTK_BOX(row1), btn_load, FALSE, FALSE, 0);
+  vk_btn_play = gtk_button_new_with_label("Play");
+  gtk_widget_set_sensitive(vk_btn_play, FALSE);
+  gtk_box_pack_start(GTK_BOX(row1), vk_btn_play, FALSE, FALSE, 0);
+  GtkWidget *btn_stop = gtk_button_new_with_label("Stop");
+  gtk_box_pack_start(GTK_BOX(row1), btn_stop, FALSE, FALSE, 0);
+  GtkWidget *row2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_pack_start(GTK_BOX(vbox), row2, FALSE, FALSE, 0);
+  GtkWidget *lbl_file = gtk_label_new("File:");
+  gtk_box_pack_start(GTK_BOX(row2), lbl_file, FALSE, FALSE, 0);
+  vk_label_file = gtk_label_new(vk_path ? vk_path : "(none)");
+  gtk_label_set_xalign(GTK_LABEL(vk_label_file), 0.0f);
+  gtk_box_pack_start(GTK_BOX(row2), vk_label_file, TRUE, TRUE, 0);
+  GtkWidget *row3 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_pack_start(GTK_BOX(vbox), row3, FALSE, FALSE, 0);
+  GtkWidget *lbl_status = gtk_label_new("Status:");
+  gtk_box_pack_start(GTK_BOX(row3), lbl_status, FALSE, FALSE, 0);
+  vk_label_status = gtk_label_new("Load 48kHz/mono/PCM16 WAV.");
+  gtk_label_set_xalign(GTK_LABEL(vk_label_status), 0.0f);
+  gtk_box_pack_start(GTK_BOX(row3), vk_label_status, TRUE, TRUE, 0);
+  g_signal_connect(btn_load, "clicked", G_CALLBACK(on_load_clicked), vk_window);
+  g_signal_connect(vk_btn_play, "clicked", G_CALLBACK(on_play_clicked), vk_window);
+  g_signal_connect(btn_stop, "clicked", G_CALLBACK(on_stop_clicked), vk_window);
+  g_signal_connect(vk_window, "destroy", G_CALLBACK(gtk_widget_destroyed), &vk_window);
+  gtk_widget_show_all(vk_window);
+}
+

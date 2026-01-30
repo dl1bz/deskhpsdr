@@ -163,6 +163,8 @@ enum ACTION {
   RCL8,
   RCL9,
   REPLAY,
+  VOICE_KEYER,
+  VK_PLAYBACK,
   RF_GAIN,
   RF_GAIN_RX1,
   RF_GAIN_RX2,
@@ -265,6 +267,7 @@ typedef struct process_action {
 } PROCESS_ACTION;
 
 extern ACTION_TABLE ActionTable[ACTIONS + 1];
+extern int is_cap;
 
 extern int process_action(void *data);
 extern void schedule_action(enum ACTION action, enum ACTION_MODE mode, int val);

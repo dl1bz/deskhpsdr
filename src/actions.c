@@ -54,6 +54,7 @@
 #include "dxcluster.h"
 #include "greyline.h"
 #include "rx_panadapter.h"
+#include "voice_keyer.h"
 
 //
 // The "short button text" (button_str) needs to be present in ALL cases, and must be different
@@ -204,6 +205,7 @@ ACTION_TABLE ActionTable[] = {
   {RCL8,                "Rcl 8",                "RCL8",         MIDI_KEY   | CONTROLLER_SWITCH},
   {RCL9,                "Rcl 9",                "RCL9",         MIDI_KEY   | CONTROLLER_SWITCH},
   {REPLAY,              "Replay",               "REPLAY",       MIDI_KEY   | CONTROLLER_SWITCH},
+  {VOICE_KEYER,         "Voice Keyer",          "VKEYER",       MIDI_KEY   | CONTROLLER_SWITCH},
   {RF_GAIN,             "RF Gain",              "RFGAIN",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX1,         "RF Gain\nRX1",         "RFGAIN1",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX2,         "RF Gain\nRX2",         "RFGAIN2",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -287,6 +289,8 @@ static gboolean multi_select_active;
 static gboolean multi_first = TRUE;
 static unsigned int multi_action = 0;
 #define VMAXMULTIACTION 28
+
+int is_cap = 0;
 
 //
 // The strings in the following table are chosen
@@ -854,6 +858,56 @@ int process_action(void *data) {
 
     break;
 
+  case VOICE_KEYER:
+    if (a->mode == PRESSED) {
+      voice_keyer_show();
+    }
+
+    break;
+
+  case VK_PLAYBACK:
+    if (a->mode == PRESSED) {
+      switch (capture_state) {
+      case CAP_AVAIL:
+
+        //
+        // Voice-Keyer TX playback: ONLY TX branch, never start recording, never REPLAY.
+        // Caller (VK window) is responsible for MOX timing; we only start playback
+        // if TX is already active.
+        //
+        if (radio_is_transmitting()) {
+          if (can_transmit) {
+            is_vk = 1;
+            is_cap = 0;
+            radio_start_xmit_captured_data();  // adjust Mic gain etc.
+            capture_replay_pointer = 0;
+            capture_trigger_action = VK_PLAYBACK;
+            capture_state = CAP_XMIT;
+          }
+        }
+
+        break;
+
+      case CAP_XMIT:
+      case CAP_XMIT_DONE:
+
+        //
+        // Stop TX playback (user stop or playback finished).
+        //
+        if (can_transmit) {
+          radio_end_xmit_captured_data();  // restore Mic gain etc.
+        }
+
+        capture_state = CAP_AVAIL;
+        break;
+
+      default:
+        break;
+      }
+    }
+
+    break;
+
   case REPLAY:
   case CAPTURE:
     if (a->mode == PRESSED) {
@@ -877,6 +931,8 @@ int process_action(void *data) {
         //
         if (radio_is_transmitting()) {
           if (can_transmit) {
+            is_vk = 0;
+            is_cap = 1;
             radio_start_xmit_captured_data();  // adjust Mic gain etc.
             capture_replay_pointer = 0;
             capture_trigger_action = a->action;   // CAPTURE oder REPLAY

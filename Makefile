@@ -781,6 +781,7 @@ src/vfo.c \
 src/vfo_menu.c \
 src/vox.c \
 src/vox_menu.c \
+src/voice_keyer.c \
 src/waterfall.c \
 src/xvtr_menu.c \
 src/zoompan.c
@@ -871,6 +872,7 @@ src/vfo.h \
 src/vfo_menu.h \
 src/vox.h \
 src/vox_menu.h \
+src/voice_keyer.h \
 src/waterfall.h \
 src/xvtr_menu.h \
 src/zoompan.h
@@ -956,6 +958,7 @@ src/vfo_menu.o \
 src/vox.o \
 src/vox_menu.o \
 src/xvtr_menu.o \
+src/voice_keyer.o \
 src/waterfall.o \
 src/zoompan.o
 

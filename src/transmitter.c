@@ -60,6 +60,7 @@
 #include "sintab.h"
 #include "message.h"
 #include "toolset.h"
+#include "voice_keyer.h"
 
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
@@ -2700,32 +2701,45 @@ void tx_set_dexp(const TRANSMITTER *tx) {
 }
 
 void tx_xmit_captured_data_start(const TRANSMITTER *tx) {
+  t_print("%s is_vk=%d is_cap=%d\n", __func__, is_vk, is_cap);
+
   //
   // Turn OFF compression etc. without affecting the mode_settings
   // and without changing the TX data
   //
-  SetTXAEQRun(tx->id, 0);
-  SetTXAPanelGain1(tx->id, 1.0);
-  SetTXALevelerSt(tx->id, 0);
-  SetTXACFCOMPPeqRun(tx->id, 0);
-  SetTXACFCOMPRun(tx->id, 0);
-  SetTXAosctrlRun(tx->id, 0);
-  SetTXACompressorRun(tx->id, 0);
-  SetDEXPRun(0, 0);
+  if (is_cap) {
+    SetTXAEQRun(tx->id, 0);
+    SetTXAPanelGain1(tx->id, 1.0);
+    SetTXALevelerSt(tx->id, 0);
+    SetTXACFCOMPPeqRun(tx->id, 0);
+    SetTXACFCOMPRun(tx->id, 0);
+    SetTXAosctrlRun(tx->id, 0);
+    SetTXACompressorRun(tx->id, 0);
+    SetDEXPRun(0, 0);
+  } else if (is_vk) {
+    SetTXAPanelGain1(tx->id, 1.0);
+    SetDEXPRun(0, 0);
+  }
 }
 
 void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
+  t_print("%s is_vk=%d is_cap=%d\n", __func__, is_vk, is_cap);
+
   //
   // Restore compression, mic gain etc. (without affecting the mode_settings)
   // from the TX data
   //
-  SetTXAEQRun(tx->id, tx->eq_enable);
-  SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
-  SetTXALevelerSt(tx->id, tx->lev_enable);
-  SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
-  SetTXACFCOMPRun(tx->id, tx->cfc);
-  SetTXAosctrlRun(tx->id, tx->compressor && (tx->compressor_level > 0.0));
-  SetTXACompressorRun(tx->id, tx->compressor);
+  if (is_cap) {
+    SetTXAEQRun(tx->id, tx->eq_enable);
+    SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+    SetTXALevelerSt(tx->id, tx->lev_enable);
+    SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
+    SetTXACFCOMPRun(tx->id, tx->cfc);
+    SetTXAosctrlRun(tx->id, tx->compressor && (tx->compressor_level > 0.0));
+    SetTXACompressorRun(tx->id, tx->compressor);
+  } else if (is_vk) {
+    SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+  }
 }
 
 void tx_set_equalizer(TRANSMITTER *tx) {
