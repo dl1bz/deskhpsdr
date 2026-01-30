@@ -33,14 +33,13 @@
 #include "radio.h"
 #include "actions.h"
 #include "property.h"
-#include "radio.h"
 
 static GtkWidget *vk_window = NULL;
 static GtkWidget *vk_label_file = NULL;
 static GtkWidget *vk_label_status = NULL;
 static GtkWidget *vk_btn_play = NULL;
 
-static char *vk_path = NULL;
+static char vk_path[1024] = {0};
 
 // Voice Keyer MOX ownership + watchdog (internal)
 static int vk_keyed_mox = 0;
@@ -48,6 +47,19 @@ static guint vk_mox_watch_id = 0;
 
 
 int is_vk = 0;
+
+static void voicekeyerSaveState(void) {
+  clearProperties();
+  SetPropS0("vk_path", vk_path);
+  saveProperties("voicekeyer.props");
+}
+
+static void voicekeyerRestoreState(void) {
+  loadProperties("voicekeyer.props");
+  vk_path[0] = 0;
+  GetPropS0("vk_path", vk_path);
+  clearProperties();
+}
 
 static uint32_t rd_u32_le(const uint8_t *p) {
   return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
@@ -215,6 +227,88 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
   return TRUE;
 }
 
+static const char *vk_basename_no_ext(const char *path) {
+  char *base = g_path_get_basename(path);
+  static char buf[256];
+  g_strlcpy(buf, base, sizeof(buf));
+  g_free(base);
+  char *dot = g_strrstr(buf, ".wav");
+
+  if (dot) {
+    *dot = '\0';
+  }
+
+  return buf;
+}
+
+static void vk_set_play_button_label_from_path(const char *path) {
+  if (!vk_btn_play) {
+    return;
+  }
+
+  if (!path || !path[0]) {
+    gtk_button_set_label(GTK_BUTTON(vk_btn_play), "Play");
+    return;
+  }
+
+  char buf[256];
+  char *base = g_path_get_basename(path);
+  g_strlcpy(buf, base, sizeof(buf));
+  g_free(base);
+  char *dot = g_strrstr(buf, ".wav");
+
+  if (dot) {
+    *dot = '\0';
+  }
+
+  gtk_button_set_label(GTK_BUTTON(vk_btn_play), buf);
+}
+
+static void vk_autoload_if_configured(GtkWindow *parent) {
+  if (vk_path[0] == 0) {
+    return;
+  }
+
+  char *err = NULL;
+
+  if (!load_wav_pcm16_mono_48k_into_capture(vk_path, &err)) {
+    /* silent failure: reset state */
+    g_free(err);
+    vk_path[0] = 0;
+    voicekeyerSaveState();   /* persist the cleared path */
+    capture_record_pointer = 0;
+    capture_replay_pointer = 0;
+    capture_state = CAP_INIT;
+
+    if (vk_label_file) {
+      gtk_label_set_text(GTK_LABEL(vk_label_file), "(none)");
+    }
+
+    if (vk_btn_play) {
+      gtk_widget_set_sensitive(vk_btn_play, FALSE);
+    }
+
+    /* reset play button label */
+    vk_set_play_button_label_from_path(NULL);
+    return;
+  }
+
+  if (vk_label_file) {
+    gtk_label_set_text(GTK_LABEL(vk_label_file), vk_path);
+  }
+
+  /* set play button label to filename without .wav */
+  vk_set_play_button_label_from_path(vk_path);
+  double seconds = (double)capture_record_pointer / 48000.0;
+  char msg[128];
+  snprintf(msg, sizeof(msg), "Loaded: %d samples (%.2f s)", capture_record_pointer, seconds);
+  set_status(msg);
+
+  if (vk_btn_play) {
+    gtk_widget_set_sensitive(vk_btn_play, TRUE);
+  }
+}
+
 static void on_load_clicked(GtkButton *btn, gpointer user_data) {
   (void)btn;
   GtkWindow *parent = GTK_WINDOW(user_data);
@@ -245,8 +339,9 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
           gtk_widget_set_sensitive(vk_btn_play, FALSE);
         }
       } else {
-        g_free(vk_path);
-        vk_path = g_strdup(path);
+        g_strlcpy(vk_path, path, sizeof(vk_path));
+        voicekeyerSaveState();
+        vk_set_play_button_label_from_path(vk_path);
 
         if (vk_label_file) {
           gtk_label_set_text(GTK_LABEL(vk_label_file), vk_path);
@@ -315,8 +410,8 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 
   case VK_WATCH_WAIT_PLAYBACK_END:
 
-    // Playback ended when capture leaves CAP_XMIT/CAP_XMIT_DONE (actions.c sets CAP_AVAIL).
-    if (capture_state != CAP_XMIT && capture_state != CAP_XMIT_DONE) {
+    // Playback ended when capture leaves CAP_XMIT. CAP_XMIT_DONE is already "ended enough".
+    if (capture_state != CAP_XMIT) {
       if (vk_keyed_mox) {
         radio_set_mox(0);
         vk_keyed_mox = 0;
@@ -338,6 +433,13 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   (void)btn;
   GtkWindow *parent = GTK_WINDOW(user_data);
+
+  /* Prevent re-trigger during active playback (would cancel watchdog / lose MOX ownership) */
+  if (vk_watch_mode == VK_WATCH_WAIT_PLAYBACK_END ||
+      capture_state == CAP_XMIT ||
+      capture_state == CAP_XMIT_DONE) {
+    return;
+  }
 
   if (capture_data == NULL || capture_record_pointer <= 0) {
     error_dialog(parent, "No WAV loaded.");
@@ -365,14 +467,10 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   }
 
   // TX already on -> trigger immediately
-  // TX already on -> trigger immediately
   vk_trigger_tx_playback();
-
-  // If we keyed MOX earlier (unlikely here), watch for end to unkey. (vk_keyed_mox==0 in this branch)
-  if (vk_keyed_mox) {
-    vk_watch_mode = VK_WATCH_WAIT_PLAYBACK_END;
-    vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
-  }
+  // Always watch for playback end (unkeys MOX only if we own it).
+  vk_watch_mode = VK_WATCH_WAIT_PLAYBACK_END;
+  vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
 }
 
 static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
@@ -417,6 +515,7 @@ void voice_keyer_show(void) {
     return;
   }
 
+  voicekeyerRestoreState();
   vk_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(vk_window), "Voice Keyer (WAV)");
   gtk_window_set_default_size(GTK_WINDOW(vk_window), 520, 160);
@@ -436,7 +535,7 @@ void voice_keyer_show(void) {
   gtk_box_pack_start(GTK_BOX(vbox), row2, FALSE, FALSE, 0);
   GtkWidget *lbl_file = gtk_label_new("File:");
   gtk_box_pack_start(GTK_BOX(row2), lbl_file, FALSE, FALSE, 0);
-  vk_label_file = gtk_label_new(vk_path ? vk_path : "(none)");
+  vk_label_file = gtk_label_new(vk_path[0] ? vk_path : "(none)");
   gtk_label_set_xalign(GTK_LABEL(vk_label_file), 0.0f);
   gtk_box_pack_start(GTK_BOX(row2), vk_label_file, TRUE, TRUE, 0);
   GtkWidget *row3 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
@@ -450,6 +549,7 @@ void voice_keyer_show(void) {
   g_signal_connect(vk_btn_play, "clicked", G_CALLBACK(on_play_clicked), vk_window);
   g_signal_connect(btn_stop, "clicked", G_CALLBACK(on_stop_clicked), vk_window);
   g_signal_connect(vk_window, "destroy", G_CALLBACK(gtk_widget_destroyed), &vk_window);
+  vk_autoload_if_configured(GTK_WINDOW(vk_window));
   gtk_widget_show_all(vk_window);
 }
 

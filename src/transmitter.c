@@ -2731,14 +2731,16 @@ void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
   //
   if (is_cap) {
     SetTXAEQRun(tx->id, tx->eq_enable);
-    SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+    // SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+    tx_set_mic_gain(tx);
     SetTXALevelerSt(tx->id, tx->lev_enable);
     SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
     SetTXACFCOMPRun(tx->id, tx->cfc);
     SetTXAosctrlRun(tx->id, tx->compressor && (tx->compressor_level > 0.0));
     SetTXACompressorRun(tx->id, tx->compressor);
   } else if (is_vk) {
-    SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+    // SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
+    tx_set_mic_gain(tx);
   }
 }
 
