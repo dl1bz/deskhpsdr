@@ -138,6 +138,12 @@ static void capture_time_changed_cb(GtkWidget *widget, gpointer data) {
   }
 
   capture_max = t * 48000;
+
+  if (capture_data != NULL) {
+    g_free(capture_data);
+    capture_data = NULL;
+  }
+
   capture_data = g_new(double, capture_max);
   capture_record_pointer = 0;
   capture_replay_pointer = 0;

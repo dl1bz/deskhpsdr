@@ -79,7 +79,6 @@ void startup(const char *path) {
   IOPMAssertionCreateWithName (kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
                                CFSTR ("deskHPSDR"), &keep_awake);
 #endif
-
   //
   // Get home dir
   //
@@ -123,6 +122,7 @@ void startup(const char *path) {
       (void) freopen("deskhpsdr.err", "w", stderr);
       t_print("%s: working dir changed to %s\n", __func__, workdir);
     }
+
     return;
   }
 
