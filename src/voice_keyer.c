@@ -43,7 +43,6 @@ static GtkWidget *vk_btn_play[VK_SLOTS] = { NULL };
 static GtkWidget *vk_btn_load[VK_SLOTS] = { NULL };
 
 static char vk_paths[VK_SLOTS][1024] = {{0}};
-static char *vk_path = vk_paths[0];
 
 // Voice Keyer MOX ownership + watchdog (internal)
 static int vk_keyed_mox = 0;
@@ -267,16 +266,11 @@ static const char *vk_basename_no_ext(const char *path) {
   return buf;
 }
 
-static void vk_set_play_button_label_from_path(const char *path) {
-  if (!vk_btn_play[0]) {
-    return;
-  }
+static void vk_set_play_button_label_from_path(GtkWidget *btn, const char *path) {
+  if (!btn) { return; }
 
   if (!path || !path[0]) {
-    for (int i = 0; i < VK_SLOTS; i++) {
-      gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]), "Play");
-    }
-
+    gtk_button_set_label(GTK_BUTTON(btn), "Play");
     return;
   }
 
@@ -286,13 +280,9 @@ static void vk_set_play_button_label_from_path(const char *path) {
   g_free(base);
   char *dot = g_strrstr(buf, ".wav");
 
-  if (dot) {
-    *dot = '\0';
-  }
+  if (dot) { *dot = '\0'; }
 
-  for (int i = 0; i < VK_SLOTS; i++) {
-    gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]), buf);
-  }
+  gtk_button_set_label(GTK_BUTTON(btn), buf);
 }
 
 /* Update UI according to playback lock / active slot */
@@ -321,51 +311,6 @@ static void vk_update_slot_ui(void) {
   }
 }
 
-static void vk_autoload_if_configured(GtkWindow *parent) {
-  if (vk_path[0] == 0) {
-    return;
-  }
-
-  char *err = NULL;
-
-  if (!load_wav_pcm16_mono_48k_into_capture(vk_path, &err)) {
-    /* silent failure: reset state */
-    g_free(err);
-    vk_path[0] = 0;
-    voicekeyerSaveState();   /* persist the cleared path */
-    capture_record_pointer = 0;
-    capture_replay_pointer = 0;
-    capture_state = CAP_INIT;
-
-    if (vk_label_file) {
-      gtk_label_set_text(GTK_LABEL(vk_label_file), "(none)");
-    }
-
-    if (vk_btn_play) {
-      gtk_widget_set_sensitive(vk_btn_play, FALSE);
-    }
-
-    /* reset play button label */
-    vk_set_play_button_label_from_path(NULL);
-    return;
-  }
-
-  if (vk_label_file) {
-    gtk_label_set_text(GTK_LABEL(vk_label_file), vk_path);
-  }
-
-  /* set play button label to filename without .wav */
-  vk_set_play_button_label_from_path(vk_path);
-  double seconds = (double)capture_record_pointer / 48000.0;
-  char msg[128];
-  snprintf(msg, sizeof(msg), "Loaded: %d samples (%.2f s)", capture_record_pointer, seconds);
-  set_status(msg);
-
-  if (vk_btn_play) {
-    gtk_widget_set_sensitive(vk_btn_play, TRUE);
-  }
-}
-
 static void on_load_clicked(GtkButton *btn, gpointer user_data) {
   int slot = GPOINTER_TO_INT(user_data);
   GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(btn)));
@@ -385,36 +330,20 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
     char *path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
 
     if (path) {
-      char *err = NULL;
+      /* Lazy-load: store path only, load WAV on Play */
+      g_strlcpy(vk_paths[slot], path, sizeof(vk_paths[slot]));
+      voicekeyerSaveState();
 
-      if (!load_wav_pcm16_mono_48k_into_capture(path, &err)) {
-        error_dialog(parent, err ? err : "WAV load failed.");
-        g_free(err);
-        set_status("Load failed.");
-
-        if (vk_btn_play[slot]) {
-          gtk_widget_set_sensitive(vk_btn_play[slot], FALSE);
-        }
-      } else {
-        g_strlcpy(vk_paths[slot], path, sizeof(vk_paths[slot]));
-        voicekeyerSaveState();
-        gtk_button_set_label(GTK_BUTTON(vk_btn_play[slot]),
-                             vk_basename_no_ext(vk_paths[slot]));
-
-        if (vk_label_file[slot]) {
-          gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), vk_paths[slot]);
-        }
-
-        double seconds = (double)capture_record_pointer / 48000.0;
-        char msg[128];
-        snprintf(msg, sizeof(msg), "Loaded: %d samples (%.2f s)", capture_record_pointer, seconds);
-        set_status(msg);
-
-        if (vk_btn_play[slot]) {
-          gtk_widget_set_sensitive(vk_btn_play[slot], TRUE);
-        }
+      if (vk_label_file[slot]) {
+        gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), vk_paths[slot]);
       }
 
+      if (vk_btn_play[slot]) {
+        gtk_widget_set_sensitive(vk_btn_play[slot], TRUE);
+        vk_set_play_button_label_from_path(vk_btn_play[slot], vk_paths[slot]);
+      }
+
+      set_status("Path set.");
       g_free(path);
     }
   }
@@ -511,9 +440,27 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
     return;
   }
 
-  if (capture_data == NULL || capture_record_pointer <= 0) {
-    error_dialog(parent, "No WAV loaded.");
-    return;
+  {
+    char *err = NULL;
+
+    if (!load_wav_pcm16_mono_48k_into_capture(vk_paths[slot], &err)) {
+      error_dialog(parent, err ? err : "WAV load failed.");
+      g_free(err);
+      vk_paths[slot][0] = 0;
+      voicekeyerSaveState();
+
+      if (vk_label_file[slot]) {
+        gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), "(none)");
+      }
+
+      if (vk_btn_play[slot]) {
+        gtk_widget_set_sensitive(vk_btn_play[slot], FALSE);
+        vk_set_play_button_label_from_path(vk_btn_play[slot], NULL);
+      }
+
+      set_status("Load failed (slot cleared).");
+      return;
+    }
   }
 
   if (!can_transmit) {
@@ -638,7 +585,7 @@ void voice_keyer_show(void) {
   gtk_box_pack_start(GTK_BOX(row3), vk_label_status, TRUE, TRUE, 0);
   g_signal_connect(btn_stop, "clicked", G_CALLBACK(on_stop_clicked), vk_window);
   g_signal_connect(vk_window, "destroy", G_CALLBACK(gtk_widget_destroyed), &vk_window);
-  vk_autoload_if_configured(GTK_WINDOW(vk_window));
+  vk_update_slot_ui();
   gtk_widget_show_all(vk_window);
 }
 
