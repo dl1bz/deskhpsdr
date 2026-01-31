@@ -48,6 +48,11 @@ static char *vk_path = vk_paths[0];
 static int vk_keyed_mox = 0;
 static guint vk_mox_watch_id = 0;
 
+// Voice Keyer playback lock (internal)
+// Future-proof for VK_SLOTS > 1: only one playback at a time.
+static int vk_play_lock = 0;
+static int vk_active_slot = -1;
+
 
 int is_vk = 0;
 
@@ -432,6 +437,9 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 
     // Playback ended when capture leaves CAP_XMIT. CAP_XMIT_DONE is already "ended enough".
     if (capture_state != CAP_XMIT) {
+      vk_play_lock = 0;
+      vk_active_slot = -1;
+
       if (vk_keyed_mox) {
         radio_set_mox(0);
         vk_keyed_mox = 0;
@@ -446,6 +454,8 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 
   default:
     vk_watch_stop();
+    vk_play_lock = 0;
+    vk_active_slot = -1;
     return G_SOURCE_REMOVE;
   }
 }
@@ -453,6 +463,11 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   (void)btn;
   GtkWindow *parent = GTK_WINDOW(user_data);
+
+  /* Hard lock: ignore Play while VK playback is active */
+  if (vk_play_lock) {
+    return;
+  }
 
   /* Prevent re-trigger during active playback (would cancel watchdog / lose MOX ownership) */
   if (vk_watch_mode == VK_WATCH_WAIT_PLAYBACK_END ||
@@ -473,6 +488,9 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
 
   // Stop any previous watchdog
   vk_watch_stop();
+  // Acquire lock for slot 0 (UI still single-slot)
+  vk_play_lock = 1;
+  vk_active_slot = 0;
   // Ensure TX is on (CAPTURE plays back via TX only if radio_is_transmitting() is true).
   vk_keyed_mox = 0;
 
@@ -506,6 +524,8 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
       vk_keyed_mox = 0;
     }
 
+    vk_play_lock = 0;
+    vk_active_slot = -1;
     set_status("Stopped.");
     return;
   }
@@ -525,6 +545,8 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
     vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
     set_status("Stopping TX...");
   } else {
+    vk_play_lock = 0;
+    vk_active_slot = -1;
     set_status("Stopped.");
   }
 }
