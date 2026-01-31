@@ -34,12 +34,13 @@
 #include "actions.h"
 #include "property.h"
 
-static GtkWidget *vk_window = NULL;
-static GtkWidget *vk_label_file = NULL;
-static GtkWidget *vk_label_status = NULL;
-static GtkWidget *vk_btn_play = NULL;
-
 #define VK_SLOTS 6
+
+static GtkWidget *vk_window = NULL;
+static GtkWidget *vk_label_file[VK_SLOTS] = { NULL };
+static GtkWidget *vk_label_status = NULL;
+static GtkWidget *vk_btn_play[VK_SLOTS] = { NULL };
+static GtkWidget *vk_btn_load[VK_SLOTS] = { NULL };
 
 static char vk_paths[VK_SLOTS][1024] = {{0}};
 static char *vk_path = vk_paths[0];
@@ -267,12 +268,15 @@ static const char *vk_basename_no_ext(const char *path) {
 }
 
 static void vk_set_play_button_label_from_path(const char *path) {
-  if (!vk_btn_play) {
+  if (!vk_btn_play[0]) {
     return;
   }
 
   if (!path || !path[0]) {
-    gtk_button_set_label(GTK_BUTTON(vk_btn_play), "Play");
+    for (int i = 0; i < VK_SLOTS; i++) {
+      gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]), "Play");
+    }
+
     return;
   }
 
@@ -286,7 +290,9 @@ static void vk_set_play_button_label_from_path(const char *path) {
     *dot = '\0';
   }
 
-  gtk_button_set_label(GTK_BUTTON(vk_btn_play), buf);
+  for (int i = 0; i < VK_SLOTS; i++) {
+    gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]), buf);
+  }
 }
 
 static void vk_autoload_if_configured(GtkWindow *parent) {
@@ -335,8 +341,8 @@ static void vk_autoload_if_configured(GtkWindow *parent) {
 }
 
 static void on_load_clicked(GtkButton *btn, gpointer user_data) {
-  (void)btn;
-  GtkWindow *parent = GTK_WINDOW(user_data);
+  int slot = GPOINTER_TO_INT(user_data);
+  GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(btn)));
   GtkWidget *dlg = gtk_file_chooser_dialog_new("Load WAV (48k/mono/PCM16)",
                    parent,
                    GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -360,16 +366,17 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
         g_free(err);
         set_status("Load failed.");
 
-        if (vk_btn_play) {
-          gtk_widget_set_sensitive(vk_btn_play, FALSE);
+        if (vk_btn_play[slot]) {
+          gtk_widget_set_sensitive(vk_btn_play[slot], FALSE);
         }
       } else {
-        g_strlcpy(vk_paths[0], path, sizeof(vk_paths[0]));
+        g_strlcpy(vk_paths[slot], path, sizeof(vk_paths[slot]));
         voicekeyerSaveState();
-        vk_set_play_button_label_from_path(vk_path);
+        gtk_button_set_label(GTK_BUTTON(vk_btn_play[slot]),
+                             vk_basename_no_ext(vk_paths[slot]));
 
-        if (vk_label_file) {
-          gtk_label_set_text(GTK_LABEL(vk_label_file), vk_path);
+        if (vk_label_file[slot]) {
+          gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), vk_paths[slot]);
         }
 
         double seconds = (double)capture_record_pointer / 48000.0;
@@ -377,8 +384,8 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
         snprintf(msg, sizeof(msg), "Loaded: %d samples (%.2f s)", capture_record_pointer, seconds);
         set_status(msg);
 
-        if (vk_btn_play) {
-          gtk_widget_set_sensitive(vk_btn_play, TRUE);
+        if (vk_btn_play[slot]) {
+          gtk_widget_set_sensitive(vk_btn_play[slot], TRUE);
         }
       }
 
@@ -461,8 +468,8 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 }
 
 static void on_play_clicked(GtkButton *btn, gpointer user_data) {
-  (void)btn;
-  GtkWindow *parent = GTK_WINDOW(user_data);
+  int slot = GPOINTER_TO_INT(user_data);
+  GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(btn)));
 
   /* Hard lock: ignore Play while VK playback is active */
   if (vk_play_lock) {
@@ -488,9 +495,9 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
 
   // Stop any previous watchdog
   vk_watch_stop();
-  // Acquire lock for slot 0 (UI still single-slot)
+  // Acquire lock for selected slot
   vk_play_lock = 1;
-  vk_active_slot = 0;
+  vk_active_slot = slot;
   // Ensure TX is on (CAPTURE plays back via TX only if radio_is_transmitting() is true).
   vk_keyed_mox = 0;
 
@@ -564,22 +571,34 @@ void voice_keyer_show(void) {
   gtk_container_set_border_width(GTK_CONTAINER(vk_window), 10);
   GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
   gtk_container_add(GTK_CONTAINER(vk_window), vbox);
-  GtkWidget *row1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-  gtk_box_pack_start(GTK_BOX(vbox), row1, FALSE, FALSE, 0);
-  GtkWidget *btn_load = gtk_button_new_with_label("Load WAV…");
-  gtk_box_pack_start(GTK_BOX(row1), btn_load, FALSE, FALSE, 0);
-  vk_btn_play = gtk_button_new_with_label("Play");
-  gtk_widget_set_sensitive(vk_btn_play, FALSE);
-  gtk_box_pack_start(GTK_BOX(row1), vk_btn_play, FALSE, FALSE, 0);
+  GtkWidget *row_top = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_pack_start(GTK_BOX(vbox), row_top, FALSE, FALSE, 0);
   GtkWidget *btn_stop = gtk_button_new_with_label("Stop");
-  gtk_box_pack_start(GTK_BOX(row1), btn_stop, FALSE, FALSE, 0);
-  GtkWidget *row2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-  gtk_box_pack_start(GTK_BOX(vbox), row2, FALSE, FALSE, 0);
-  GtkWidget *lbl_file = gtk_label_new("File:");
-  gtk_box_pack_start(GTK_BOX(row2), lbl_file, FALSE, FALSE, 0);
-  vk_label_file = gtk_label_new(vk_path[0] ? vk_path : "(none)");
-  gtk_label_set_xalign(GTK_LABEL(vk_label_file), 0.0f);
-  gtk_box_pack_start(GTK_BOX(row2), vk_label_file, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(row_top), btn_stop, FALSE, FALSE, 0);
+
+  for (int i = 0; i < VK_SLOTS; i++) {
+    GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_box_pack_start(GTK_BOX(vbox), row, FALSE, FALSE, 0);
+    vk_btn_load[i] = gtk_button_new_with_label("Load");
+    gtk_box_pack_start(GTK_BOX(row), vk_btn_load[i], FALSE, FALSE, 0);
+    vk_btn_play[i] = gtk_button_new_with_label("Play");
+    gtk_widget_set_sensitive(vk_btn_play[i], vk_paths[i][0] != 0);
+    gtk_box_pack_start(GTK_BOX(row), vk_btn_play[i], FALSE, FALSE, 0);
+    vk_label_file[i] = gtk_label_new(vk_paths[i][0] ? vk_paths[i] : "(none)");
+    gtk_label_set_xalign(GTK_LABEL(vk_label_file[i]), 0.0f);
+    gtk_box_pack_start(GTK_BOX(row), vk_label_file[i], TRUE, TRUE, 0);
+
+    if (vk_paths[i][0]) {
+      gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]),
+                           vk_basename_no_ext(vk_paths[i]));
+    }
+
+    g_signal_connect(vk_btn_load[i], "clicked",
+                     G_CALLBACK(on_load_clicked), GINT_TO_POINTER(i));
+    g_signal_connect(vk_btn_play[i], "clicked",
+                     G_CALLBACK(on_play_clicked), GINT_TO_POINTER(i));
+  }
+
   GtkWidget *row3 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
   gtk_box_pack_start(GTK_BOX(vbox), row3, FALSE, FALSE, 0);
   GtkWidget *lbl_status = gtk_label_new("Status:");
@@ -587,8 +606,6 @@ void voice_keyer_show(void) {
   vk_label_status = gtk_label_new("Load 48kHz/mono/PCM16 WAV.");
   gtk_label_set_xalign(GTK_LABEL(vk_label_status), 0.0f);
   gtk_box_pack_start(GTK_BOX(row3), vk_label_status, TRUE, TRUE, 0);
-  g_signal_connect(btn_load, "clicked", G_CALLBACK(on_load_clicked), vk_window);
-  g_signal_connect(vk_btn_play, "clicked", G_CALLBACK(on_play_clicked), vk_window);
   g_signal_connect(btn_stop, "clicked", G_CALLBACK(on_stop_clicked), vk_window);
   g_signal_connect(vk_window, "destroy", G_CALLBACK(gtk_widget_destroyed), &vk_window);
   vk_autoload_if_configured(GTK_WINDOW(vk_window));
