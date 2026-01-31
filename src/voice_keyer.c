@@ -295,6 +295,32 @@ static void vk_set_play_button_label_from_path(const char *path) {
   }
 }
 
+/* Update UI according to playback lock / active slot */
+static void vk_update_slot_ui(void) {
+  for (int i = 0; i < VK_SLOTS; i++) {
+    if (!vk_btn_play[i]) {
+      continue;
+    }
+
+    if (!vk_play_lock) {
+      /* idle state */
+      gtk_widget_set_sensitive(vk_btn_play[i],
+                               vk_paths[i][0] != 0);
+      vk_set_play_button_label_from_path(
+        vk_btn_play[i],
+        vk_paths[i][0] ? vk_paths[i] : NULL
+      );
+    } else {
+      if (i == vk_active_slot) {
+        gtk_widget_set_sensitive(vk_btn_play[i], TRUE);
+        gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]), "▶ PLAYING");
+      } else {
+        gtk_widget_set_sensitive(vk_btn_play[i], FALSE);
+      }
+    }
+  }
+}
+
 static void vk_autoload_if_configured(GtkWindow *parent) {
   if (vk_path[0] == 0) {
     return;
@@ -446,6 +472,7 @@ static gboolean vk_mox_watch_cb(gpointer data) {
     if (capture_state != CAP_XMIT) {
       vk_play_lock = 0;
       vk_active_slot = -1;
+      vk_update_slot_ui();
 
       if (vk_keyed_mox) {
         radio_set_mox(0);
@@ -463,6 +490,7 @@ static gboolean vk_mox_watch_cb(gpointer data) {
     vk_watch_stop();
     vk_play_lock = 0;
     vk_active_slot = -1;
+    vk_update_slot_ui();
     return G_SOURCE_REMOVE;
   }
 }
@@ -498,6 +526,7 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   // Acquire lock for selected slot
   vk_play_lock = 1;
   vk_active_slot = slot;
+  vk_update_slot_ui();
   // Ensure TX is on (CAPTURE plays back via TX only if radio_is_transmitting() is true).
   vk_keyed_mox = 0;
 
@@ -533,6 +562,7 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
 
     vk_play_lock = 0;
     vk_active_slot = -1;
+    vk_update_slot_ui();
     set_status("Stopped.");
     return;
   }
