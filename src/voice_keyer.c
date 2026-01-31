@@ -39,7 +39,10 @@ static GtkWidget *vk_label_file = NULL;
 static GtkWidget *vk_label_status = NULL;
 static GtkWidget *vk_btn_play = NULL;
 
-static char vk_path[1024] = {0};
+#define VK_SLOTS 6
+
+static char vk_paths[VK_SLOTS][1024] = {{0}};
+static char *vk_path = vk_paths[0];
 
 // Voice Keyer MOX ownership + watchdog (internal)
 static int vk_keyed_mox = 0;
@@ -50,14 +53,31 @@ int is_vk = 0;
 
 static void voicekeyerSaveState(void) {
   clearProperties();
-  SetPropS0("vk_path", vk_path);
+
+  for (int i = 0; i < VK_SLOTS; i++) {
+    SetPropS1("vk_path[%d]", i, vk_paths[i]);
+  }
+
   saveProperties("voicekeyer.props");
 }
 
 static void voicekeyerRestoreState(void) {
   loadProperties("voicekeyer.props");
-  vk_path[0] = 0;
-  GetPropS0("vk_path", vk_path);
+
+  for (int i = 0; i < VK_SLOTS; i++) {
+    vk_paths[i][0] = 0;
+  }
+
+  for (int i = 0; i < VK_SLOTS; i++) {
+    char name[128];
+    snprintf(name, sizeof(name), "vk_path[%d]", i);
+    const char *value = getProperty(name);
+
+    if (value) {
+      g_strlcpy(vk_paths[i], value, sizeof(vk_paths[i]));
+    }
+  }
+
   clearProperties();
 }
 
@@ -339,7 +359,7 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
           gtk_widget_set_sensitive(vk_btn_play, FALSE);
         }
       } else {
-        g_strlcpy(vk_path, path, sizeof(vk_path));
+        g_strlcpy(vk_paths[0], path, sizeof(vk_paths[0]));
         voicekeyerSaveState();
         vk_set_play_button_label_from_path(vk_path);
 
