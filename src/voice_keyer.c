@@ -25,6 +25,7 @@
 */
 
 #include <gtk/gtk.h>
+#include <glib.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -33,8 +34,14 @@
 #include "radio.h"
 #include "actions.h"
 #include "property.h"
+#include "message.h"
+#include "new_menu.h"
+#include "main.h"
 
 #define VK_SLOTS 6
+#define VK_MAX_SECONDS 30
+#define VK_SAMPLE_RATE 48000
+#define VK_MAX_SAMPLES (VK_MAX_SECONDS * VK_SAMPLE_RATE)
 
 static GtkWidget *vk_window = NULL;
 static GtkWidget *vk_label_file[VK_SLOTS] = { NULL };
@@ -92,6 +99,19 @@ static uint32_t rd_u32_le(const uint8_t *p) {
 
 static uint16_t rd_u16_le(const uint8_t *p) {
   return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static void cleanup(void) {
+  if (vk_window != NULL) {
+    voicekeyerSaveState();
+    gtk_widget_destroy(vk_window);
+    vk_window = NULL;
+  }
+}
+
+static gboolean close_cb(void) {
+  cleanup();
+  return TRUE;
 }
 
 static void set_status(const char *msg) {
@@ -543,20 +563,31 @@ void voice_keyer_show(void) {
 
   voicekeyerRestoreState();
   vk_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title(GTK_WINDOW(vk_window), "Voice Keyer (WAV)");
+  gtk_window_set_transient_for(GTK_WINDOW(vk_window), GTK_WINDOW(top_window));
+  win_set_bgcolor(vk_window, &mwin_bgcolor);
+  char win_title[32];
+  snprintf(win_title, sizeof(win_title), "%s - Voice Keyer", PGNAME);
+  gtk_window_set_title(GTK_WINDOW(vk_window), win_title);
   gtk_window_set_default_size(GTK_WINDOW(vk_window), 520, 160);
   gtk_container_set_border_width(GTK_CONTAINER(vk_window), 10);
   GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
   gtk_container_add(GTK_CONTAINER(vk_window), vbox);
   GtkWidget *row_top = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
   gtk_box_pack_start(GTK_BOX(vbox), row_top, FALSE, FALSE, 0);
-  GtkWidget *btn_stop = gtk_button_new_with_label("Stop");
+  GtkWidget *close_btn = gtk_button_new_with_label("Close");
+  gtk_widget_set_name(close_btn, "close_button");
+  g_signal_connect(close_btn, "clicked", G_CALLBACK(close_cb), NULL);
+  gtk_box_pack_start(GTK_BOX(row_top), close_btn, FALSE, FALSE, 0);
+  GtkWidget *btn_stop = gtk_button_new_with_label("Stop XMIT");
+  gtk_widget_set_name(btn_stop, "close_button");
+  gtk_widget_set_tooltip_text(btn_stop, "Stop XMIT playback");
   gtk_box_pack_start(GTK_BOX(row_top), btn_stop, FALSE, FALSE, 0);
 
   for (int i = 0; i < VK_SLOTS; i++) {
     GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     gtk_box_pack_start(GTK_BOX(vbox), row, FALSE, FALSE, 0);
-    vk_btn_load[i] = gtk_button_new_with_label("Load");
+    vk_btn_load[i] = gtk_button_new_with_label("Load WAV");
+    gtk_widget_set_tooltip_text(vk_btn_load[i], "Load WAV file (required format 48kHz/mono/PCM16)");
     gtk_box_pack_start(GTK_BOX(row), vk_btn_load[i], FALSE, FALSE, 0);
     vk_btn_play[i] = gtk_button_new_with_label("Play");
     gtk_widget_set_sensitive(vk_btn_play[i], vk_paths[i][0] != 0);
