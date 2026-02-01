@@ -23,6 +23,10 @@
 /* Public API */
 void voice_keyer_show(void);
 
+void voice_keyer_play_slot(int slot);   /* slot: 0..VK_SLOTS-1 */
+void voice_keyer_stop(void);
+int  voice_keyer_is_open(void);
+
 /* Global source flag used by TX captured-data chain */
 extern int is_vk;
 

@@ -207,6 +207,13 @@ ACTION_TABLE ActionTable[] = {
   {REPLAY,              "Replay",               "REPLAY",       MIDI_KEY   | CONTROLLER_SWITCH},
   {VOICE_KEYER,         "Voice Keyer",          "VKEYER",       MIDI_KEY   | CONTROLLER_SWITCH},
   {VK_PLAYBACK,         "VK Playback",          "VKPLAYB",      TYPE_HIDE},
+  {VK_PLAY_SLOT_1,      "VK Playback T1",       "VK-PLAY-T1",   TYPE_NONE},
+  {VK_PLAY_SLOT_2,      "VK Playback T2",       "VK-PLAY-T2",   TYPE_NONE},
+  {VK_PLAY_SLOT_3,      "VK Playback T3",       "VK-PLAY-T3",   TYPE_NONE},
+  {VK_PLAY_SLOT_4,      "VK Playback T4",       "VK-PLAY-T4",   TYPE_NONE},
+  {VK_PLAY_SLOT_5,      "VK Playback T5",       "VK-PLAY-T5",   TYPE_NONE},
+  {VK_PLAY_SLOT_6,      "VK Playback T6",       "VK-PLAY-T6",   TYPE_NONE},
+  {VK_STOP,             "VK Stop XMIT",         "VK-STOP-TX",   TYPE_NONE},
   {RF_GAIN,             "RF Gain",              "RFGAIN",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX1,         "RF Gain\nRX1",         "RFGAIN1",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX2,         "RF Gain\nRX2",         "RFGAIN2",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -905,6 +912,37 @@ int process_action(void *data) {
       default:
         break;
       }
+    }
+
+    break;
+
+  case VK_PLAY_SLOT_1:
+  case VK_PLAY_SLOT_2:
+  case VK_PLAY_SLOT_3:
+  case VK_PLAY_SLOT_4:
+  case VK_PLAY_SLOT_5:
+  case VK_PLAY_SLOT_6:
+    if (a->mode == PRESSED) {
+      int slot = a->action - VK_PLAY_SLOT_1;  // ergibt 0..5
+
+      if (slot >= 0 && slot < 6) {
+        if (!voice_keyer_is_open()) {
+          voice_keyer_show();
+        }
+
+        voice_keyer_play_slot(slot);
+      }
+    }
+
+    break;
+
+  case VK_STOP:
+    if (a->mode == PRESSED) {
+      if (!voice_keyer_is_open()) {
+        voice_keyer_show();
+      }
+
+      voice_keyer_stop();
     }
 
     break;

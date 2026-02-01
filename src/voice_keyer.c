@@ -101,17 +101,33 @@ static uint16_t rd_u16_le(const uint8_t *p) {
   return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
-static void cleanup(void) {
-  if (vk_window != NULL) {
-    voicekeyerSaveState();
-    gtk_widget_destroy(vk_window);
-    vk_window = NULL;
-  }
-}
+static void close_cb(GtkButton *button, gpointer user_data) {
+  (void)button;
+  (void)user_data;
 
-static gboolean close_cb(void) {
-  cleanup();
-  return TRUE;
+  if (vk_window == NULL) {
+    return;
+  }
+
+  /* MUSS IMMER: State sichern, egal ob wir schließen dürfen */
+  voicekeyerSaveState();
+
+  /* Wenn Playback läuft: nicht schließen */
+  if (vk_active_slot >= 0 || vk_play_lock) {
+    GtkWidget *dlg = gtk_message_dialog_new(
+                       GTK_WINDOW(vk_window),
+                       GTK_DIALOG_MODAL,
+                       GTK_MESSAGE_WARNING,
+                       GTK_BUTTONS_OK,
+                       "Voice Keyer läuft noch.\n"
+                       "Bitte Playback stoppen, bevor das Fenster geschlossen wird.");
+    gtk_dialog_run(GTK_DIALOG(dlg));
+    gtk_widget_destroy(dlg);
+    return;
+  }
+
+  /* Jetzt wirklich schließen */
+  gtk_widget_destroy(vk_window);
 }
 
 static void set_status(const char *msg) {
@@ -579,6 +595,49 @@ static gboolean vk_key_release_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_d
   return FALSE;
 }
 
+void voice_keyer_play_slot(int slot) {
+  if (!vk_window) { return; }                 // VK-Fenster nicht offen
+
+  if (slot < 0 || slot >= VK_SLOTS) { return; }
+
+  if (!vk_btn_play[slot]) { return; }         // UI noch nicht gebaut
+
+  if (!gtk_widget_get_sensitive(vk_btn_play[slot])) { return; } // kein File / gelockt
+
+  on_play_clicked(GTK_BUTTON(vk_btn_play[slot]), GINT_TO_POINTER(slot));
+}
+
+void voice_keyer_stop(void) {
+  if (!vk_window) { return; }
+
+  on_stop_clicked(NULL, NULL);
+}
+
+int voice_keyer_is_open(void) {
+  return vk_window != NULL;
+}
+
+static gboolean on_vk_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+  (void)event;
+  (void)user_data;
+
+  if (vk_active_slot >= 0 || vk_play_lock) {
+    GtkWidget *dlg = gtk_message_dialog_new(
+                       GTK_WINDOW(widget),
+                       GTK_DIALOG_MODAL,
+                       GTK_MESSAGE_WARNING,
+                       GTK_BUTTONS_OK,
+                       "Voice Keyer läuft noch.\n"
+                       "Bitte Playback stoppen, bevor das Fenster geschlossen wird.");
+    gtk_dialog_run(GTK_DIALOG(dlg));
+    gtk_widget_destroy(dlg);
+    return TRUE;
+  }
+
+  voicekeyerSaveState();  // Save on real close via WM
+  return FALSE;
+}
+
 static void use_tx_audiochain_btn_cb(GtkToggleButton *cbtn, gpointer user_data) {
   int *flag = (int *)user_data;
   *flag = gtk_toggle_button_get_active(cbtn) ? 1 : 0;
@@ -596,6 +655,7 @@ void voice_keyer_show(void) {
   gtk_widget_add_events(vk_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
   g_signal_connect(vk_window, "key-press-event", G_CALLBACK(vk_key_press_cb), NULL);
   g_signal_connect(vk_window, "key-release-event", G_CALLBACK(vk_key_release_cb), NULL);
+  g_signal_connect(vk_window, "delete-event", G_CALLBACK(on_vk_delete_event), NULL);
   gtk_window_set_transient_for(GTK_WINDOW(vk_window), GTK_WINDOW(top_window));
   win_set_bgcolor(vk_window, &mwin_bgcolor);
   char win_title[32];
