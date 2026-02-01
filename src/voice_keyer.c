@@ -555,6 +555,12 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
   }
 }
 
+static void use_tx_audiochain_btn_cb(GtkToggleButton *cbtn, gpointer user_data) {
+  int *flag = (int *)user_data;
+  *flag = gtk_toggle_button_get_active(cbtn) ? 1 : 0;
+  t_print("%s use_tx_audiochain = %d\n", __func__, use_tx_audiochain);
+}
+
 void voice_keyer_show(void) {
   if (vk_window != NULL) {
     gtk_window_present(GTK_WINDOW(vk_window));
@@ -582,6 +588,15 @@ void voice_keyer_show(void) {
   gtk_widget_set_name(btn_stop, "close_button");
   gtk_widget_set_tooltip_text(btn_stop, "Stop XMIT playback");
   gtk_box_pack_start(GTK_BOX(row_top), btn_stop, FALSE, FALSE, 0);
+  GtkWidget *tx_audiochain_btn = gtk_check_button_new_with_label("XMIT through WDSP TX audiochain");
+  gtk_widget_set_tooltip_text(tx_audiochain_btn, "If ENABLED, audio from file goes through the whole\n"
+                                                 "WDSP TX audio chain like TX-EQ, CFC, Limiter, Speech Processor\n"
+                                                 "except the Mic Gain ▶ always set to 0.0db if playback.\n\n"
+                                                 "If DISABLED, the WDSP TX audio chain is set to BYPASS\n"
+                                                 "and the audio file will be sent flat without any editing.");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tx_audiochain_btn), use_tx_audiochain);
+  g_signal_connect(tx_audiochain_btn, "toggled", G_CALLBACK(use_tx_audiochain_btn_cb), &use_tx_audiochain);
+  gtk_box_pack_start(GTK_BOX(row_top), tx_audiochain_btn, FALSE, FALSE, 0);
 
   for (int i = 0; i < VK_SLOTS; i++) {
     GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);

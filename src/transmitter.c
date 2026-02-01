@@ -2717,13 +2717,24 @@ void tx_xmit_captured_data_start(const TRANSMITTER *tx) {
     SetTXACompressorRun(tx->id, 0);
     SetDEXPRun(0, 0);
   } else if (is_vk) {
-    SetTXAPanelGain1(tx->id, 1.0);
-    SetDEXPRun(0, 0);
+    if (use_tx_audiochain) {
+      SetTXAPanelGain1(tx->id, 1.0);
+      SetDEXPRun(0, 0);
+    } else {
+      SetTXAEQRun(tx->id, 0);
+      SetTXAPanelGain1(tx->id, 1.0);
+      SetTXALevelerSt(tx->id, 0);
+      SetTXACFCOMPPeqRun(tx->id, 0);
+      SetTXACFCOMPRun(tx->id, 0);
+      SetTXAosctrlRun(tx->id, 0);
+      SetTXACompressorRun(tx->id, 0);
+      SetDEXPRun(0, 0);
+    }
   }
 }
 
 void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
-  t_print("%s is_vk=%d is_cap=%d\n", __func__, is_vk, is_cap);
+  t_print("%s is_vk=%d is_cap=%d use_tx_audiochain=%d\n", __func__, is_vk, is_cap, use_tx_audiochain);
 
   //
   // Restore compression, mic gain etc. (without affecting the mode_settings)
@@ -2731,7 +2742,6 @@ void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
   //
   if (is_cap) {
     SetTXAEQRun(tx->id, tx->eq_enable);
-    // SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
     tx_set_mic_gain(tx);
     SetTXALevelerSt(tx->id, tx->lev_enable);
     SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
@@ -2739,8 +2749,17 @@ void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
     SetTXAosctrlRun(tx->id, tx->compressor && (tx->compressor_level > 0.0));
     SetTXACompressorRun(tx->id, tx->compressor);
   } else if (is_vk) {
-    // SetTXAPanelGain1(tx->id, pow(10.0, tx->mic_gain * 0.05));
-    tx_set_mic_gain(tx);
+    if (use_tx_audiochain) {
+      tx_set_mic_gain(tx);
+    } else {
+      SetTXAEQRun(tx->id, tx->eq_enable);
+      tx_set_mic_gain(tx);
+      SetTXALevelerSt(tx->id, tx->lev_enable);
+      SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
+      SetTXACFCOMPRun(tx->id, tx->cfc);
+      SetTXAosctrlRun(tx->id, tx->compressor && (tx->compressor_level > 0.0));
+      SetTXACompressorRun(tx->id, tx->compressor);
+    }
   }
 }
 

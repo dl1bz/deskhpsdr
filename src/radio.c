@@ -215,6 +215,8 @@ int lpf_udp_port = 7355;    // Portnummer für den LPF UDP Listener
 char g_lpf_data[6][64];
 int lpf_udp_valid = 0;
 
+int use_tx_audiochain = 1;
+
 int display_zoompan = 0;
 int display_sliders = 0;
 int display_extra_sliders = 1;
@@ -3292,6 +3294,7 @@ static void radio_restore_state(void) {
   GetPropS0("atuwin_TITLE",                                atuwin_TITLE);
   GetPropS0("atuwin_URL",                                  atuwin_URL);
   GetPropS0("atuwin_ACTION",                               atuwin_ACTION);
+  GetPropI0("use_tx_audiochain",                           use_tx_audiochain);
 
   for (int i = 0; i < n_adc; i++) {
     GetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
@@ -3565,6 +3568,7 @@ void radio_save_state(void) {
   SetPropS0("atuwin_TITLE",                                atuwin_TITLE);
   SetPropS0("atuwin_URL",                                  atuwin_URL);
   SetPropS0("atuwin_ACTION",                               atuwin_ACTION);
+  SetPropI0("use_tx_audiochain",                           use_tx_audiochain);
 
   for (int i = 0; i < n_adc; i++) {
     SetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);

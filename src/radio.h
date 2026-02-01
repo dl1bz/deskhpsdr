@@ -374,6 +374,8 @@ extern char g_lpf_data[6][64];
 extern int lpf_udp_valid;
 extern int lpf_udp_port;
 
+extern int use_tx_audiochain;
+
 
 //
 // All global functions declared here start with "radio_",
