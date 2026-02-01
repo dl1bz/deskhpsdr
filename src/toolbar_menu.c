@@ -66,7 +66,7 @@ void toolbar_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   char _title[64];
-  snprintf(_title, 64, "%s - Toolbar configuration", PGNAME);
+  snprintf(_title, sizeof(_title), "%s - Toolbar configuration", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
@@ -91,7 +91,7 @@ void toolbar_menu(GtkWidget *parent) {
         // Rightmost switch is hardwired to FUNCTION
         sw[i].switch_function = FUNCTION;
         gchar text[16];
-        snprintf(text, 16, "FNC(%d)", lfunction);
+        snprintf(text, sizeof(text), "FNC(%d)", lfunction);
         widget = gtk_button_new_with_label(text);
         gtk_widget_set_name(widget, "small_button");
         gtk_grid_attach(GTK_GRID(grid), widget, i, lfunction + 1, 1, 1);

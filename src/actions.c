@@ -206,6 +206,7 @@ ACTION_TABLE ActionTable[] = {
   {RCL9,                "Rcl 9",                "RCL9",         MIDI_KEY   | CONTROLLER_SWITCH},
   {REPLAY,              "Replay",               "REPLAY",       MIDI_KEY   | CONTROLLER_SWITCH},
   {VOICE_KEYER,         "Voice Keyer",          "VKEYER",       MIDI_KEY   | CONTROLLER_SWITCH},
+  {VK_PLAYBACK,         "VK Playback",          "VKPLAYB",      TYPE_HIDE},
   {RF_GAIN,             "RF Gain",              "RFGAIN",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX1,         "RF Gain\nRX1",         "RFGAIN1",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {RF_GAIN_RX2,         "RF Gain\nRX2",         "RFGAIN2",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -2404,10 +2405,14 @@ void Action2String(int id, char *str, size_t len) {
 // This is used to specify actions in the props files.
 //
 int String2Action(const char *str) {
-  int i;
+  for (int i = 0; i < ACTIONS; i++) {
+    if (ActionTable[i].type & TYPE_HIDE) {
+      continue;
+    }
 
-  for (i = 0; i < ACTIONS; i++) {
-    if (!strcmp(str, ActionTable[i].button_str)) { return i; }
+    if (!strcmp(str, ActionTable[i].button_str)) {
+      return i;
+    }
   }
 
   return NO_ACTION;

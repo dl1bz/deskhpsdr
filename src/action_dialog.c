@@ -73,6 +73,8 @@ int action_dialog(GtkWidget *parent, int filter, enum ACTION currentAction) {
   j = 0;
 
   for (i = 0; i < ACTIONS; i++) {
+    if (ActionTable[i].type & TYPE_HIDE) { continue; }
+
     if ((ActionTable[i].type & filter) || (ActionTable[i].type == TYPE_NONE)) {
       GtkWidget *button = gtk_toggle_button_new_with_label(ActionTable[i].str);
       gtk_widget_set_name(button, "small_toggle_button");

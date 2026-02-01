@@ -261,6 +261,8 @@ static void tree_selection_changed_cb (GtkTreeSelection *selection, gpointer dat
       thisAction = NO_ACTION;
 
       for (int i = 0; i < ACTIONS; i++) {
+        if (ActionTable[i].type & TYPE_HIDE) { continue; }
+
         if (strcmp(ActionTable[i].button_str, str_action) == 0 && (thisType & ActionTable[i].type)) {
           thisAction = ActionTable[i].action;
           break;
@@ -1064,6 +1066,8 @@ int ProcessNewMidiConfigureEvent(void * data) {
           thisAction = NO_ACTION;
 
           for (int i = 0; i < ACTIONS; i++) {
+            if (ActionTable[i].type & TYPE_HIDE) { continue; }
+
             if (!strcmp(ActionTable[i].button_str, str_action) && (ActionTable[i].type & thisType)) {
               thisAction = ActionTable[i].action;
               break;
@@ -1323,6 +1327,7 @@ static enum MIDIevent String2Event(const char *str) {
 
 static char *Type2String(enum ACTIONtype type) {
   switch (type) {
+  case TYPE_HIDE:
   case TYPE_NONE:
   default:
     return "NONE";
