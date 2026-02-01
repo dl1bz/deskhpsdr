@@ -25,6 +25,7 @@ void voice_keyer_show(void);
 
 void voice_keyer_play_slot(int slot);   /* slot: 0..VK_SLOTS-1 */
 void voice_keyer_stop(void);
+void voice_keyer_stop_for_ptt_takeover(void);
 int  voice_keyer_is_open(void);
 
 /* Global source flag used by TX captured-data chain */

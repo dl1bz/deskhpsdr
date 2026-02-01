@@ -571,6 +571,8 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
   }
 }
 
+
+
 static gboolean vk_key_press_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_data) {
   (void)w;
   (void)user_data;
@@ -613,9 +615,52 @@ void voice_keyer_stop(void) {
   on_stop_clicked(NULL, NULL);
 }
 
+/* Stop VK playback because an external PTT wants to take over (mic). */
+void voice_keyer_stop_for_ptt_takeover(void) {
+  /* Wenn VK nicht aktiv ist: nichts zu tun */
+  if (!vk_play_lock &&
+      vk_watch_mode != VK_WATCH_WAIT_TX_ON &&
+      capture_state != CAP_XMIT &&
+      capture_state != CAP_XMIT_DONE) {
+    return;
+  }
+
+  /*
+   * Entscheidend: VK darf MOX jetzt NICHT mehr "besitzen",
+   * sonst würde der Watchdog ggf. wieder unkeyen.
+   */
+  vk_keyed_mox = 0;
+
+  /* Wenn VK noch auf TX-on wartet: Watchdog stoppen + Lock freigeben */
+  if (vk_watch_mode == VK_WATCH_WAIT_TX_ON) {
+    vk_watch_stop();
+    vk_play_lock = 0;
+    vk_active_slot = -1;
+    vk_update_slot_ui();
+    set_status("VK stopped (PTT takeover).");
+    return;
+  }
+
+  /* Wenn bereits XMIT Playback läuft: sauber über die Capture-State-Maschine stoppen */
+  if (capture_state == CAP_XMIT || capture_state == CAP_XMIT_DONE) {
+    is_vk  = 1;
+    is_cap = 0;
+    schedule_action(VK_PLAYBACK, PRESSED, 0);
+  }
+
+  /* Lock/UI zurücksetzen – MOX bleibt an (weil vk_keyed_mox=0) */
+  vk_watch_stop();
+  vk_play_lock = 0;
+  vk_active_slot = -1;
+  vk_update_slot_ui();
+  set_status("VK stopped (PTT takeover).");
+}
+
 int voice_keyer_is_open(void) {
   return vk_window != NULL;
 }
+
+
 
 static gboolean on_vk_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
   (void)event;
