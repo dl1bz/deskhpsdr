@@ -555,6 +555,30 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
   }
 }
 
+static gboolean vk_key_press_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_data) {
+  (void)w;
+  (void)user_data;
+
+  if (ev->keyval == GDK_KEY_space) {
+    schedule_action(MOX, PRESSED, 1);
+    return TRUE;   // block default GTK button activation
+  }
+
+  return FALSE;
+}
+
+static gboolean vk_key_release_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_data) {
+  (void)w;
+  (void)user_data;
+
+  if (ev->keyval == GDK_KEY_space) {
+    schedule_action(MOX, RELEASED, 0);
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
 static void use_tx_audiochain_btn_cb(GtkToggleButton *cbtn, gpointer user_data) {
   int *flag = (int *)user_data;
   *flag = gtk_toggle_button_get_active(cbtn) ? 1 : 0;
@@ -569,6 +593,9 @@ void voice_keyer_show(void) {
 
   voicekeyerRestoreState();
   vk_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_widget_add_events(vk_window, GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
+  g_signal_connect(vk_window, "key-press-event", G_CALLBACK(vk_key_press_cb), NULL);
+  g_signal_connect(vk_window, "key-release-event", G_CALLBACK(vk_key_release_cb), NULL);
   gtk_window_set_transient_for(GTK_WINDOW(vk_window), GTK_WINDOW(top_window));
   win_set_bgcolor(vk_window, &mwin_bgcolor);
   char win_title[32];
