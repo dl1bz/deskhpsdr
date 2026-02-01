@@ -587,9 +587,15 @@ void voice_keyer_show(void) {
     GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     gtk_box_pack_start(GTK_BOX(vbox), row, FALSE, FALSE, 0);
     vk_btn_load[i] = gtk_button_new_with_label("Load WAV");
-    gtk_widget_set_tooltip_text(vk_btn_load[i], "Load WAV file (required format 48kHz/mono/PCM16)");
+    gtk_widget_set_tooltip_text(vk_btn_load[i], "Load WAV file (required format 48kHz/mono/PCM16)\n\n"
+                                                "The max. playback length is ever equal with the\n"
+                                                "setting in Radio Menu <Audio Capture Time>, so first adjust\n"
+                                                "this value in Radio Menu. The upper limit is MAX 120s.");
     gtk_box_pack_start(GTK_BOX(row), vk_btn_load[i], FALSE, FALSE, 0);
     vk_btn_play[i] = gtk_button_new_with_label("Play");
+    gtk_widget_set_tooltip_text(vk_btn_play[i], "XMIT this file.\n\n"
+                                                "No monitoring over local audio output !\n"
+                                                "Use STOP button for end XMIT or XMIT interruption");
     gtk_widget_set_sensitive(vk_btn_play[i], vk_paths[i][0] != 0);
     gtk_box_pack_start(GTK_BOX(row), vk_btn_play[i], FALSE, FALSE, 0);
     vk_label_file[i] = gtk_label_new(vk_paths[i][0] ? vk_paths[i] : "(none)");
