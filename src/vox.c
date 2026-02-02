@@ -32,6 +32,12 @@ static guint vox_timeout = 0;
 static double peak = 0.0;
 
 static int vox_timeout_cb(gpointer data) {
+  // Wenn VK gerade Replay macht, VOX darf TX nicht abwerfen.
+  // Timer weiterlaufen lassen -> Hang wird effektiv verlängert.
+  if (capture_state == CAP_XMIT) {
+    return TRUE;   // Callback behalten, später erneut prüfen
+  }
+
   //
   // First set vox_timeout to zero (via vox_cancel())
   // indicating no "hanging" timeout
@@ -53,6 +59,11 @@ void clear_vox(void) {
 }
 
 void update_vox(TRANSMITTER *tx) {
+  /* Voice Keyer Replay läuft -> VOX ignorieren, sonst schaltet VOX quer */
+  if (capture_state == CAP_XMIT) {
+    return;
+  }
+
   // calculate peak microphone input
   // assumes it is interleaved left and right channel with length samples
   peak = 0.0;

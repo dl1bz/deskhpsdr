@@ -85,10 +85,12 @@ int ext_tune_update(void *data) {
 
 int ext_mox_update(void *data) {
   int state = GPOINTER_TO_INT(data);
+
   /* Nur bei externer PTT ON: VK abbrechen, Mic übernimmt */
   if (state) {
     voice_keyer_stop_for_ptt_takeover();
   }
+
   radio_mox_update(state);
   return G_SOURCE_REMOVE;
 }
