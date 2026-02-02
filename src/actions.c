@@ -875,6 +875,47 @@ int process_action(void *data) {
     break;
 
   case VK_REPLAY:
+    if (a->mode == PRESSED) {
+      switch (capture_state) {
+      case CAP_INIT:
+        //
+        // Ensure buffer exists; then behave like CAP_AVAIL in same press.
+        //
+        capture_data = g_new(double, capture_max);
+        capture_record_pointer = 0;
+        capture_replay_pointer = 0;
+        capture_state = CAP_AVAIL;
+
+      /* fall through */
+
+      case CAP_AVAIL:
+
+        //
+        // VK REPLAY (RX only): start local replay, never record, never TX playback.
+        // Assumption: capture_data/capture_record_pointer contain valid audio
+        // (e.g. loaded from .wav by VK).
+        //
+        if (capture_record_pointer == 0) { break; }
+
+        capture_replay_pointer = 0;
+        capture_trigger_action = VK_REPLAY;
+        capture_state = CAP_REPLAY;
+        break;
+
+      case CAP_REPLAY:
+      case CAP_REPLAY_DONE:
+        //
+        // Stop VK replay (user stop or replay finished).
+        //
+        capture_state = CAP_AVAIL;
+        break;
+
+      default:
+        // Do nothing in other states (recording, xmit, sleeping, etc.)
+        break;
+      }
+    }
+
     break;
 
   case VK_PLAYBACK:

@@ -1161,7 +1161,7 @@ static void rx_process_buffer(RECEIVER *rx) {
           if (capture_trigger_action == CAPTURE || capture_trigger_action == REPLAY) {
             schedule_action(REPLAY, PRESSED, 0);
           } else {
-            schedule_action(capture_trigger_action, PRESSED, 0);
+            capture_state = CAP_AVAIL; // VK: Ende, kein Re-Dispatch
           }
         }
       }
@@ -1182,7 +1182,7 @@ static void rx_process_buffer(RECEIVER *rx) {
           if (capture_trigger_action == CAPTURE || capture_trigger_action == REPLAY) {
             schedule_action(CAPTURE, PRESSED, 0);
           } else {
-            schedule_action(capture_trigger_action, PRESSED, 0);
+            capture_state = CAP_AVAIL; // VK: Ende, kein Re-Dispatch
           }
         }
       }

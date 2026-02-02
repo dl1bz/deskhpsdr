@@ -340,6 +340,16 @@ static void vk_update_slot_ui(void) {
         vk_btn_play[i],
         vk_paths[i][0] ? vk_paths[i] : "No file assigned"
       );
+
+      if (vk_btn_replay[i]) {
+        gtk_widget_set_sensitive(vk_btn_replay[i],
+                                 vk_paths[i][0] != 0);
+        gtk_button_set_label(GTK_BUTTON(vk_btn_replay[i]), "Listen");
+        gtk_widget_set_tooltip_text(
+          vk_btn_replay[i],
+          vk_paths[i][0] ? vk_paths[i] : "No file assigned"
+        );
+      }
     } else {
       if (i == vk_active_slot) {
         gtk_widget_set_sensitive(vk_btn_play[i], TRUE);
@@ -351,6 +361,11 @@ static void vk_update_slot_ui(void) {
         );
       } else {
         gtk_widget_set_sensitive(vk_btn_play[i], FALSE);
+      }
+
+      /* Disable local replay while VK TX playback is active */
+      if (vk_btn_replay[i]) {
+        gtk_widget_set_sensitive(vk_btn_replay[i], FALSE);
       }
     }
   }
@@ -539,6 +554,56 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   // Always watch for playback end (unkeys MOX only if we own it).
   vk_watch_mode = VK_WATCH_WAIT_PLAYBACK_END;
   vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
+}
+
+static void on_replay_clicked(GtkButton *btn, gpointer user_data) {
+  int slot = GPOINTER_TO_INT(user_data);
+  GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(btn)));
+
+  /* Do not interfere with active VK TX playback watchdog / MOX ownership */
+  if (vk_play_lock) {
+    return;
+  }
+
+  /* Toggle stop if already replaying */
+  if (capture_state == CAP_REPLAY || capture_state == CAP_REPLAY_DONE) {
+    schedule_action(REPLAY, PRESSED, 0);
+    vk_active_slot = -1;
+    vk_update_slot_ui();
+    return;
+  }
+
+  {
+    char *err = NULL;
+
+    if (!load_wav_pcm16_mono_48k_into_capture(vk_paths[slot], &err)) {
+      error_dialog(parent, err ? err : "WAV load failed.");
+      g_free(err);
+      vk_paths[slot][0] = 0;
+      voicekeyerSaveState();
+
+      if (vk_btn_play[slot]) {
+        gtk_widget_set_sensitive(vk_btn_play[slot], FALSE);
+        vk_set_play_button_label_from_path(vk_btn_play[slot], NULL);
+      }
+
+      if (vk_btn_replay[slot]) {
+        gtk_widget_set_sensitive(vk_btn_replay[slot], FALSE);
+        gtk_button_set_label(GTK_BUTTON(vk_btn_replay[slot]), "Listen");
+      }
+
+      set_status("Load failed (slot cleared).");
+      vk_update_slot_ui();
+      return;
+    }
+  }
+
+  /* Start local replay via existing REPLAY state machine */
+  vk_active_slot = slot;
+  capture_replay_pointer = 0;
+  capture_state = CAP_AVAIL;
+  schedule_action(REPLAY, PRESSED, 0);
+  vk_update_slot_ui();
 }
 
 static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
@@ -769,6 +834,8 @@ void voice_keyer_show(void) {
                      G_CALLBACK(on_load_clicked), GINT_TO_POINTER(i));
     g_signal_connect(vk_btn_play[i], "clicked",
                      G_CALLBACK(on_play_clicked), GINT_TO_POINTER(i));
+    g_signal_connect(vk_btn_replay[i], "clicked",
+                     G_CALLBACK(on_replay_clicked), GINT_TO_POINTER(i));
   }
 
   GtkWidget *row3 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
