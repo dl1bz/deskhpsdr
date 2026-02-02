@@ -887,7 +887,7 @@ int process_action(void *data) {
         capture_state = CAP_AVAIL;
 
       /* fall through */
-
+        __attribute__((fallthrough));
       case CAP_AVAIL:
 
         //
