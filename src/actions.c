@@ -206,6 +206,7 @@ ACTION_TABLE ActionTable[] = {
   {RCL9,                "Rcl 9",                "RCL9",         MIDI_KEY   | CONTROLLER_SWITCH},
   {REPLAY,              "Replay",               "REPLAY",       MIDI_KEY   | CONTROLLER_SWITCH},
   {VOICE_KEYER,         "Voice Keyer",          "VKEYER",       MIDI_KEY   | CONTROLLER_SWITCH},
+  {VK_REPLAY,           "VK Replay",            "VKREPLAY",     TYPE_HIDE},
   {VK_PLAYBACK,         "VK Playback",          "VKPLAYB",      TYPE_HIDE},
   {VK_PLAY_SLOT_1,      "VK Playback T1",       "VK-PLAY-T1",   MIDI_KEY   | CONTROLLER_SWITCH},
   {VK_PLAY_SLOT_2,      "VK Playback T2",       "VK-PLAY-T2",   MIDI_KEY   | CONTROLLER_SWITCH},
@@ -869,6 +870,33 @@ int process_action(void *data) {
   case VOICE_KEYER:
     if (a->mode == PRESSED) {
       voice_keyer_show();
+    }
+
+    break;
+
+  case VK_REPLAY:
+    if (a->mode == PRESSED) {
+      switch (capture_state) {
+      case CAP_AVAIL:
+        //
+        // Voice-Keyer REPLAY (RX only): never record, never TX playback.
+        //
+        capture_replay_pointer = 0;
+        capture_trigger_action = VK_REPLAY;
+        capture_state = CAP_REPLAY;
+        break;
+
+      case CAP_REPLAY:
+      case CAP_REPLAY_DONE:
+        //
+        // Stop REPLAY (user stop or replay finished).
+        //
+        capture_state = CAP_AVAIL;
+        break;
+
+      default:
+        break;
+      }
     }
 
     break;

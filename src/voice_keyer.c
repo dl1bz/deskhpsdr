@@ -42,9 +42,10 @@
 #define VK_MAX_SAMPLES (VK_MAX_SECONDS * VK_SAMPLE_RATE)
 
 static GtkWidget *vk_window = NULL;
-static GtkWidget *vk_label_file[VK_SLOTS] = { NULL };
+// static GtkWidget *vk_label_file[VK_SLOTS] = { NULL };
 static GtkWidget *vk_label_status = NULL;
 static GtkWidget *vk_btn_play[VK_SLOTS] = { NULL };
+static GtkWidget *vk_btn_replay[VK_SLOTS] = { NULL };
 static GtkWidget *vk_btn_load[VK_SLOTS] = { NULL };
 
 static char vk_paths[VK_SLOTS][1024] = {{0}};
@@ -117,8 +118,8 @@ static void close_cb(GtkButton *button, gpointer user_data) {
                        GTK_DIALOG_MODAL,
                        GTK_MESSAGE_WARNING,
                        GTK_BUTTONS_OK,
-                       "Voice Keyer läuft noch.\n"
-                       "Bitte Playback stoppen, bevor das Fenster geschlossen wird.");
+                       "Voice Keyer is still running.\n"
+                       "Please stop playback before closing the window.");
     gtk_dialog_run(GTK_DIALOG(dlg));
     gtk_widget_destroy(dlg);
     return;
@@ -334,10 +335,20 @@ static void vk_update_slot_ui(void) {
         vk_btn_play[i],
         vk_paths[i][0] ? vk_paths[i] : NULL
       );
+      /* Tooltip: voller Pfad oder Hinweis */
+      gtk_widget_set_tooltip_text(
+        vk_btn_play[i],
+        vk_paths[i][0] ? vk_paths[i] : "No file assigned"
+      );
     } else {
       if (i == vk_active_slot) {
         gtk_widget_set_sensitive(vk_btn_play[i], TRUE);
         gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]), "▶ PLAYING");
+        /* Tooltip auch während PLAYING aktuell halten */
+        gtk_widget_set_tooltip_text(
+          vk_btn_play[i],
+          vk_paths[i][0] ? vk_paths[i] : "No file assigned"
+        );
       } else {
         gtk_widget_set_sensitive(vk_btn_play[i], FALSE);
       }
@@ -368,9 +379,9 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
       g_strlcpy(vk_paths[slot], path, sizeof(vk_paths[slot]));
       voicekeyerSaveState();
 
-      if (vk_label_file[slot]) {
-        gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), vk_paths[slot]);
-      }
+      // if (vk_label_file[slot]) {
+      // gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), vk_paths[slot]);
+      // }
 
       if (vk_btn_play[slot]) {
         gtk_widget_set_sensitive(vk_btn_play[slot], TRUE);
@@ -382,6 +393,8 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
     }
   }
 
+  // UI komplett aktualisieren (Label/Sensitivity/Tooltip)
+  vk_update_slot_ui();
   gtk_widget_destroy(dlg);
 }
 
@@ -483,9 +496,9 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
       vk_paths[slot][0] = 0;
       voicekeyerSaveState();
 
-      if (vk_label_file[slot]) {
-        gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), "(none)");
-      }
+      // if (vk_label_file[slot]) {
+      // gtk_label_set_text(GTK_LABEL(vk_label_file[slot]), "(none)");
+      // }
 
       if (vk_btn_play[slot]) {
         gtk_widget_set_sensitive(vk_btn_play[slot], FALSE);
@@ -565,6 +578,7 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
   } else {
     vk_play_lock = 0;
     vk_active_slot = -1;
+    vk_update_slot_ui();
     set_status("Stopped.");
   }
 }
@@ -658,8 +672,6 @@ int voice_keyer_is_open(void) {
   return vk_window != NULL;
 }
 
-
-
 static gboolean on_vk_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
   (void)event;
   (void)user_data;
@@ -670,8 +682,8 @@ static gboolean on_vk_delete_event(GtkWidget *widget, GdkEvent *event, gpointer 
                        GTK_DIALOG_MODAL,
                        GTK_MESSAGE_WARNING,
                        GTK_BUTTONS_OK,
-                       "Voice Keyer läuft noch.\n"
-                       "Bitte Playback stoppen, bevor das Fenster geschlossen wird.");
+                       "Voice Keyer is still running.\n"
+                       "Please stop playback before closing the window.");
     gtk_dialog_run(GTK_DIALOG(dlg));
     gtk_widget_destroy(dlg);
     return TRUE;
@@ -738,11 +750,9 @@ void voice_keyer_show(void) {
                                                 "this value in Radio Menu. The upper limit is MAX 120s.");
     gtk_box_pack_start(GTK_BOX(row), vk_btn_load[i], FALSE, FALSE, 0);
     vk_btn_play[i] = gtk_button_new_with_label("Play");
-    gtk_widget_set_tooltip_text(vk_btn_play[i], "XMIT this file.\n\n"
-                                                "No monitoring over local audio output !\n"
-                                                "Use STOP button for end XMIT or XMIT interruption");
     gtk_widget_set_sensitive(vk_btn_play[i], vk_paths[i][0] != 0);
-    gtk_box_pack_start(GTK_BOX(row), vk_btn_play[i], FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(row), vk_btn_play[i], TRUE, TRUE, 0);
+    /*
     vk_label_file[i] = gtk_label_new(vk_paths[i][0] ? vk_paths[i] : "(none)");
     gtk_label_set_xalign(GTK_LABEL(vk_label_file[i]), 0.0f);
     gtk_box_pack_start(GTK_BOX(row), vk_label_file[i], TRUE, TRUE, 0);
@@ -751,7 +761,10 @@ void voice_keyer_show(void) {
       gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]),
                            vk_basename_no_ext(vk_paths[i]));
     }
-
+    */
+    vk_btn_replay[i] = gtk_button_new_with_label("Listen");
+    gtk_widget_set_sensitive(vk_btn_replay[i], vk_paths[i][0] != 0);
+    gtk_box_pack_start(GTK_BOX(row), vk_btn_replay[i], FALSE, FALSE, 0);
     g_signal_connect(vk_btn_load[i], "clicked",
                      G_CALLBACK(on_load_clicked), GINT_TO_POINTER(i));
     g_signal_connect(vk_btn_play[i], "clicked",
