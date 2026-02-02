@@ -885,9 +885,9 @@ int process_action(void *data) {
         capture_record_pointer = 0;
         capture_replay_pointer = 0;
         capture_state = CAP_AVAIL;
-
-      /* fall through */
+        /* fall through */
         __attribute__((fallthrough));
+
       case CAP_AVAIL:
 
         //

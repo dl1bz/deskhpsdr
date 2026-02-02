@@ -57,6 +57,8 @@ static guint vk_mox_watch_id = 0;
 // Voice Keyer playback lock (internal)
 // Future-proof for VK_SLOTS > 1: only one playback at a time.
 static int vk_play_lock = 0;
+static int vk_replay_lock = 0;
+static guint vk_replay_watch_id = 0;
 static int vk_active_slot = -1;
 
 
@@ -329,8 +331,14 @@ static void vk_update_slot_ui(void) {
 
     if (!vk_play_lock) {
       /* idle state */
-      gtk_widget_set_sensitive(vk_btn_play[i],
-                               vk_paths[i][0] != 0);
+      /* During local replay: disable TX playback buttons (XMIT) */
+      if (vk_replay_lock) {
+        gtk_widget_set_sensitive(vk_btn_play[i], FALSE);
+      } else {
+        gtk_widget_set_sensitive(vk_btn_play[i],
+                                 vk_paths[i][0] != 0);
+      }
+
       vk_set_play_button_label_from_path(
         vk_btn_play[i],
         vk_paths[i][0] ? vk_paths[i] : NULL
@@ -342,9 +350,24 @@ static void vk_update_slot_ui(void) {
       );
 
       if (vk_btn_replay[i]) {
-        gtk_widget_set_sensitive(vk_btn_replay[i],
-                                 vk_paths[i][0] != 0);
-        gtk_button_set_label(GTK_BUTTON(vk_btn_replay[i]), "Listen");
+        const int replay_active = vk_replay_lock;
+
+        if (replay_active) {
+          /* During replay: only active slot can stop */
+          gtk_widget_set_sensitive(vk_btn_replay[i],
+                                   i == vk_active_slot);
+
+          if (i == vk_active_slot) {
+            gtk_button_set_label(GTK_BUTTON(vk_btn_replay[i]), "▶ REPLAYING");
+          } else {
+            gtk_button_set_label(GTK_BUTTON(vk_btn_replay[i]), "Listen");
+          }
+        } else {
+          gtk_widget_set_sensitive(vk_btn_replay[i],
+                                   vk_paths[i][0] != 0);
+          gtk_button_set_label(GTK_BUTTON(vk_btn_replay[i]), "Listen");
+        }
+
         gtk_widget_set_tooltip_text(
           vk_btn_replay[i],
           vk_paths[i][0] ? vk_paths[i] : "No file assigned"
@@ -556,6 +579,22 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
 }
 
+static gboolean vk_replay_watch_cb(gpointer data) {
+  (void)data;
+
+  /* Keep watching until replay ends */
+  if (capture_state == CAP_REPLAY || capture_state == CAP_REPLAY_DONE) {
+    return TRUE;
+  }
+
+  vk_replay_lock = 0;
+  vk_replay_watch_id = 0;
+  vk_active_slot = -1;
+  set_status("VK Replay: finished");
+  vk_update_slot_ui();
+  return FALSE;
+}
+
 static void on_replay_clicked(GtkButton *btn, gpointer user_data) {
   int slot = GPOINTER_TO_INT(user_data);
   GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(btn)));
@@ -568,6 +607,14 @@ static void on_replay_clicked(GtkButton *btn, gpointer user_data) {
   /* Toggle stop if already replaying */
   if (capture_state == CAP_REPLAY || capture_state == CAP_REPLAY_DONE) {
     schedule_action(REPLAY, PRESSED, 0);
+    vk_replay_lock = 0;
+    set_status("VK Replay: stopped");
+
+    if (vk_replay_watch_id) {
+      g_source_remove(vk_replay_watch_id);
+      vk_replay_watch_id = 0;
+    }
+
     vk_active_slot = -1;
     vk_update_slot_ui();
     return;
@@ -600,6 +647,17 @@ static void on_replay_clicked(GtkButton *btn, gpointer user_data) {
 
   /* Start local replay via existing REPLAY state machine */
   vk_active_slot = slot;
+  vk_replay_lock = 1;
+  {
+    char msg[64];
+    snprintf(msg, sizeof(msg), "VK Replay: slot %d", slot + 1);
+    set_status(msg);
+  }
+
+  if (!vk_replay_watch_id) {
+    vk_replay_watch_id = g_timeout_add(50, vk_replay_watch_cb, NULL);
+  }
+
   capture_replay_pointer = 0;
   capture_state = CAP_AVAIL;
   schedule_action(REPLAY, PRESSED, 0);
@@ -829,6 +887,7 @@ void voice_keyer_show(void) {
     */
     vk_btn_replay[i] = gtk_button_new_with_label("Listen");
     gtk_widget_set_sensitive(vk_btn_replay[i], vk_paths[i][0] != 0);
+    gtk_widget_set_size_request(vk_btn_replay[i], 150, -1);
     gtk_box_pack_start(GTK_BOX(row), vk_btn_replay[i], FALSE, FALSE, 0);
     g_signal_connect(vk_btn_load[i], "clicked",
                      G_CALLBACK(on_load_clicked), GINT_TO_POINTER(i));
