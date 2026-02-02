@@ -289,7 +289,7 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
   return TRUE;
 }
 
-static const char *vk_basename_no_ext(const char *path) {
+__attribute__((unused)) static const char *vk_basename_no_ext(const char *path) {
   char *base = g_path_get_basename(path);
   static char buf[256];
   g_strlcpy(buf, base, sizeof(buf));
