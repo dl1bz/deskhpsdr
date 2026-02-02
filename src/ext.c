@@ -37,6 +37,7 @@
 #include "ext.h"
 #include "zoompan.h"
 #include "equalizer_menu.h"
+#include "voice_keyer.h"
 
 //
 // The following calls functions can be called usig g_idle_add
@@ -83,7 +84,12 @@ int ext_tune_update(void *data) {
 }
 
 int ext_mox_update(void *data) {
-  radio_mox_update(GPOINTER_TO_INT(data));
+  int state = GPOINTER_TO_INT(data);
+  /* Nur bei externer PTT ON: VK abbrechen, Mic übernimmt */
+  if (state) {
+    voice_keyer_stop_for_ptt_takeover();
+  }
+  radio_mox_update(state);
   return G_SOURCE_REMOVE;
 }
 
