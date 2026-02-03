@@ -197,8 +197,8 @@ endif
 
 WDSP_INCLUDE=-I./wdsp-1.29 $(FFTW_CFLAGS)
 WDSP_LIBS=wdsp-1.29/libwdsp.a \
-          /usr/local/lib/librnnoise.a \
-		  /usr/local/lib/libspecbleach.a \
+          wdsp-libs/lib/librnnoise.a \
+		  wdsp-libs/lib/libspecbleach.a \
 		  $(FFTW_LIBS)
 
 SOLAR_INCLUDE=-I./libsolar
@@ -1139,9 +1139,9 @@ DEPEND:
 
 .PHONY: prepare
 
-prepare: .WDSP_libs_updated
+prepare: .WDSP_libs_updated_V2
 
-.WDSP_libs_updated:
+.WDSP_libs_updated_V2:
 	@echo "==> Update WDSP requirements missing → running update_libs.sh"
 	@./update_libs.sh
 

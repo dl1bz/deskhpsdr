@@ -11,9 +11,10 @@
 OS_TYPE=$(uname)
 SCRIPT_NAME=$(basename "$0")
 SRC_DIR="${PWD}"
-NR4_DIR="${PWD}/wdsp-nr4-newlibs"
+NR4_DIR="${PWD}/wdsp-libs"
 # DO NOT CHANGE TARGET_DIR !!!
-TARGET_DIR="/usr/local"
+TARGET_DIR=$NR4_DIR
+CHECK_FILE=".WDSP_libs_updated_V2"
 
 REINSTALL=0
 
@@ -25,7 +26,7 @@ echo "Build all requirements for WDSP 1.29 with NR3 and NR4 support"
 echo ""
 echo "This Script $SCRIPT_NAME is running under OS $OS_TYPE"
 
-if [ -f "$SRC_DIR"/.WDSP_libs_updated ] && [ "$REINSTALL" -eq 0 ]; then
+if [ -f "$SRC_DIR"/"$CHECK_FILE" ] && [ "$REINSTALL" -eq 0 ]; then
   echo ""
   echo "+----------------------------------+"
   echo "| Required libs already updated.   |"
@@ -37,8 +38,8 @@ if [ -f "$SRC_DIR"/.WDSP_libs_updated ] && [ "$REINSTALL" -eq 0 ]; then
   exit 1
 fi
 
-if [ -f "$SRC_DIR"/.WDSP_libs_updated ]; then
-  rm -f "$SRC_DIR"/.WDSP_libs_updated
+if [ -f "$SRC_DIR"/"$CHECK_FILE" ]; then
+  rm -f "$SRC_DIR"/"$CHECK_FILE"
 fi
 
 if [ "$OS_TYPE" = "Darwin" ]; then
@@ -104,7 +105,7 @@ else
     ./autogen.sh
     ./configure --prefix="$TARGET_DIR"
     make
-    sudo make install
+    make install
 fi
 
 cd "$NR4_DIR"
@@ -116,24 +117,15 @@ if [ ! -d "$NR4_DIR/libspecbleach" ]; then
 else
     echo "Installing libspecbleach..."
     cd "$NR4_DIR/libspecbleach"
-    echo "Remove old lib if exists..."
-    sudo rm -f "$TARGET_DIR/lib/"libspecbleach*
-    if [ "$OS_TYPE" = "Linux" ]; then
-      sudo ldconfig
-    fi
     meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=both
     meson compile -C build -v
-    sudo meson install -C build
-fi
-
-if [ "$OS_TYPE" = "Linux" ]; then
-  sudo ldconfig
+    meson install -C build
 fi
 
 cd "$SRC_DIR"
 
 if [ -f "$TARGET_DIR"/lib/libspecbleach.a ] && [ -f "$TARGET_DIR"/lib/librnnoise.a ]; then
-    printf '' > "$SRC_DIR"/.WDSP_libs_updated
+    printf '' > "$SRC_DIR"/"$CHECK_FILE"
     echo "Library build correct, continue..."
 else
     echo "Library build FAILED...EXIT script."

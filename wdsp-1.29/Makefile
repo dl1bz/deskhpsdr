@@ -13,7 +13,8 @@ CFLAGS?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses
 
 # CFLAGS += -I/usr/local/include
 
-EXTRA_INCLUDE := $(shell pkg-config --cflags fftw3 fftw3f rnnoise libspecbleach)
+EXTRA_INCLUDE := $(shell PKG_CONFIG_PATH=../wdsp-libs/lib/pkgconfig:$(PKG_CONFIG_PATH) \
+                         pkg-config --cflags fftw3 fftw3f rnnoise libspecbleach)
 
 COMPILE=$(CC) $(CFLAGS) $(EXTRA_INCLUDE)
 

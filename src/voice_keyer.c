@@ -274,12 +274,27 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
   }
 
   const guint8 *p = buf + data_off;
+  /* DC blocker state (reset per import) */
+  double x1 = 0.0, y1 = 0.0;
+  const double R = 0.999;  /* 48 kHz: sanfter DC-Block */
 
   for (uint32_t i = 0; i < samples; i++) {
-    int16_t s;
-    memcpy(&s, p, sizeof(s));
-    capture_data[i] = (double)s / 32768.0;
-    p += sizeof(s);
+    gint16 s_le;
+    memcpy(&s_le, p, sizeof(s_le));
+    const gint16 s = GINT16_FROM_LE(s_le);
+    double x = (double)s / 32768.0 * 0.9;
+    /* DC blocker: y[n] = x[n] - x[n-1] + R*y[n-1] */
+    double y = x - x1 + R * y1;
+    x1 = x;
+    y1 = y;
+
+    /* safety clamp */
+    if (y > 1.0) { y = 1.0; }
+
+    if (y < -1.0) { y = -1.0; }
+
+    capture_data[i] = y;
+    p += sizeof(s_le);
   }
 
   capture_record_pointer = (int)samples;
