@@ -82,6 +82,7 @@ sudo apt-get --yes install gfortran
 sudo apt-get --yes install git
 sudo apt-get --yes install pkg-config
 sudo apt-get --yes install cmake
+sudo apt-get --yes install perl
 sudo apt-get --yes install autoconf
 sudo apt-get --yes install autopoint
 sudo apt-get --yes install gettext

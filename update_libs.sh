@@ -58,6 +58,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
   fi
     $BREW update
     $BREW upgrade
+    $BREW install perl
     $BREW install libtool
     $BREW install automake
     $BREW install autoconf
