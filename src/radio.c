@@ -389,7 +389,7 @@ double div_phase = 0.0;    // phase for diversity (in degrees, 0 ... 360)
 //
 int capture_state = CAP_INIT;
 enum ACTION capture_trigger_action = CAPTURE;
-int capture_max = 480000;  // 10 seconds
+int capture_max = 1440000;  // 30 seconds
 int capture_record_pointer;
 int capture_replay_pointer;
 double *capture_data = NULL;
