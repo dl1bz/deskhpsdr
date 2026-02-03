@@ -80,6 +80,69 @@ else
     sudo apt-get --yes install clang
 fi
 
+echo "=== Environment sanity check ==="
+
+# ---- shell ----
+[ -n "${SHELL:-}" ] || { echo "ERROR: SHELL not set"; exit 1; }
+
+# ---- basic tools ----
+for tool in uname git make cc; do
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "ERROR: required tool '$tool' not found"
+        exit 1
+    }
+done
+
+# ---- perl / autoreconf (critical for autogen.sh) ----
+if command -v autoreconf >/dev/null 2>&1; then
+    AR_SHEBANG=$(head -n 1 "$(command -v autoreconf)" 2>/dev/null || true)
+    case "$AR_SHEBANG" in
+        '#!'*perl*)
+            PERL_PATH=$(printf '%s\n' "$AR_SHEBANG" | sed 's/^#!//')
+            if [ ! -x "$PERL_PATH" ]; then
+                echo "ERROR: autoreconf perl interpreter not found:"
+                echo "       $PERL_PATH"
+                echo "HINT : reinstall autoconf/automake or install perl via package manager"
+                exit 1
+            fi
+            ;;
+    esac
+else
+    echo "ERROR: autoreconf not found"
+    exit 1
+fi
+
+# ---- autoconf / automake ----
+for tool in autoconf automake libtool; do
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "ERROR: required autotools component '$tool' not found"
+        exit 1
+    }
+done
+
+# ---- meson / ninja ----
+for tool in meson ninja; do
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "ERROR: required build tool '$tool' not found"
+        exit 1
+    }
+done
+
+# ---- compiler sanity ----
+cc --version >/dev/null 2>&1 || {
+    echo "ERROR: C compiler not functional"
+    exit 1
+}
+
+# ---- architecture info (diagnostic only) ----
+echo "INFO : OS        = $(uname -s)"
+echo "INFO : ARCH      = $(uname -m)"
+echo "INFO : CC        = $(command -v cc)"
+echo "INFO : AUTORECONF= $(command -v autoreconf)"
+echo "INFO : PERL      = $(command -v perl 2>/dev/null || echo 'not found')"
+echo "=== Environment OK ==="
+echo
+
 [ -n "$NR4_DIR" ] && [ "$NR4_DIR" != "/" ] || exit 1
 rm -rf -- "$NR4_DIR"
 mkdir -p -- "$NR4_DIR"
