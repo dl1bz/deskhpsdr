@@ -1793,7 +1793,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(dexp_grid), label, 2, row, 1, 1);
-  btn = gtk_spin_button_new_with_range(100.00, 10000.0, 10.0);
+  btn = gtk_spin_button_new_with_range(0.00, 1200.0, 25.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->dexp_filter_low);
   gtk_grid_attach(GTK_GRID(dexp_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(DEXP_FILTER_LOW));
@@ -1810,7 +1810,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(dexp_grid), label, 2, row, 1, 1);
-  btn = gtk_spin_button_new_with_range(100.00, 10000.0, 10.0);
+  btn = gtk_spin_button_new_with_range(800.00, 10000.0, 25.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->dexp_filter_high);
   gtk_grid_attach(GTK_GRID(dexp_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(DEXP_FILTER_HIGH));
