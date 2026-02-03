@@ -321,18 +321,35 @@ static void audioLoadProfile(const char *filename) {
 // erwartet: void audioSaveProfile(const char *filename);
 // erwartet: char workdir[];  (oder kompatibel)
 
+static char *ensure_prop_extension(const char *path) {
+  if (!path) { return NULL; }
+
+  // Falls schon .prop
+  if (g_str_has_suffix(path, ".prop")) {
+    return g_strdup(path);
+  }
+
+  // Sonst .prop anhängen
+  return g_strconcat(path, ".prop", NULL);
+}
+
 static void save_native_response_cb(GtkNativeDialog *ndlg, gint response_id, gpointer user_data) {
   if (response_id == GTK_RESPONSE_ACCEPT) {
     char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(ndlg));
 
     if (filename && *filename) {
-      audioSaveProfile(filename);
+      char *fixed = ensure_prop_extension(filename);
+
+      if (fixed) {
+        audioSaveProfile(fixed);
+        g_free(fixed);
+      }
     }
 
     g_free(filename);
   }
 
-  g_object_unref(ndlg);  // native dialog freigeben
+  g_object_unref(ndlg);
 }
 
 static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
@@ -352,7 +369,7 @@ static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
   // Default-Dateiname vorschlagen
   {
     char defname[64];
-    snprintf(defname, sizeof(defname), "audio_profile_%d.prop", mic_prof.nr);
+    snprintf(defname, sizeof(defname), "audio_profile_%d", mic_prof.nr);
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(native), defname);
   }
   // Optional: Filter
@@ -1245,7 +1262,7 @@ void tx_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(tx_grid), trennline, col, row, 5, 1);
     row++;
     col += 3;
-    load_button = gtk_button_new_with_label("Load");
+    load_button = gtk_button_new_with_label("Activate");
     gtk_widget_set_name(load_button, "boldlabel_blue");
     gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
     g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);

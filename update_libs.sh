@@ -80,12 +80,9 @@ else
     sudo apt-get --yes install clang
 fi
 
-if [ -d "$NR4_DIR" ]; then
-  rm -fr "$NR4_DIR"
-  mkdir -p "$NR4_DIR"
-else
-  mkdir -p "$NR4_DIR"
-fi
+[ -n "$NR4_DIR" ] && [ "$NR4_DIR" != "/" ] || exit 1
+rm -rf -- "$NR4_DIR"
+mkdir -p -- "$NR4_DIR"
 
 if [ ! -d "$NR4_DIR" ]; then
     echo "Error: '$NR4_DIR' cannot create"
@@ -93,39 +90,39 @@ if [ ! -d "$NR4_DIR" ]; then
     exit 1
 fi
 
-cd "$NR4_DIR"
-git clone --depth=1 https://github.com/dl1bz/rnnoise.git
+cd "$NR4_DIR" || exit 1
+git clone --depth=1 https://github.com/dl1bz/rnnoise.git || exit 1
 if [ ! -d "$NR4_DIR/rnnoise" ]; then
     echo "Error: '$NR4_DIR/rnnoise' download error."
     echo "Stopping script $SCRIPT_NAME."
     exit 1
 else
     echo "Installing rnnoise..."
-    cd "$NR4_DIR/rnnoise"
-    ./autogen.sh
-    ./configure --prefix="$TARGET_DIR"
-    make
-    make install
+    cd "$NR4_DIR/rnnoise" || exit 1
+    ./autogen.sh || exit 1
+    ./configure --prefix="$TARGET_DIR" --disable-shared --enable-static || exit 1
+    make || exit 1
+    make install || exit 1
 fi
 
-cd "$NR4_DIR"
-git clone --depth=1 https://github.com/dl1bz/libspecbleach
+cd "$NR4_DIR" || exit 1
+git clone --depth=1 https://github.com/dl1bz/libspecbleach || exit 1
 if [ ! -d "$NR4_DIR/libspecbleach" ]; then
     echo "Error: '$NR4_DIR/libspecbleach' download error."
     echo "Stopping script $SCRIPT_NAME.."
     exit 1
 else
     echo "Installing libspecbleach..."
-    cd "$NR4_DIR/libspecbleach"
-    meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=both
-    meson compile -C build -v
-    meson install -C build
+    cd "$NR4_DIR/libspecbleach" || exit 1
+    meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=static || exit 1
+    meson compile -C build -v || exit 1
+    meson install -C build || exit 1
 fi
 
-cd "$SRC_DIR"
+cd "$SRC_DIR" || exit 1
 
-if [ -f "$TARGET_DIR"/lib/libspecbleach.a ] && [ -f "$TARGET_DIR"/lib/librnnoise.a ]; then
-    printf '' > "$SRC_DIR"/"$CHECK_FILE"
+if [ -f "$TARGET_DIR/lib/libspecbleach.a" ] && [ -f "$TARGET_DIR/lib/librnnoise.a" ]; then
+    : > "$SRC_DIR/$CHECK_FILE"
     echo "Library build correct, continue..."
 else
     echo "Library build FAILED...EXIT script."
