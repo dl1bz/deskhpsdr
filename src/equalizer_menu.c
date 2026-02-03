@@ -57,7 +57,9 @@ static void cleanup(void) {
 
     if (_mode < 3 && can_transmit) {
       showAudioProfileSaveDialog();
-      // audioSaveProfile();
+      // char fn[64];
+      // snprintf(fn, sizeof(fn), "audio_profile_%d.prop", mic_prof.nr);
+      // audioSaveProfile(fn);
     }
   }
 }
