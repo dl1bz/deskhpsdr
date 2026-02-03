@@ -24,6 +24,7 @@
 
 #include <gtk/gtk.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -409,9 +410,71 @@ static void vk_update_slot_ui(void) {
   }
 }
 
+#ifdef __APPLE__
 static void on_load_clicked(GtkButton *btn, gpointer user_data) {
   int slot = GPOINTER_TO_INT(user_data);
-  GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(btn)));
+
+  if (slot < 0 || slot >= VK_SLOTS) {
+    set_status("Invalid slot.");
+    return;
+  }
+
+  GtkWidget *toplevel = gtk_widget_get_toplevel(GTK_WIDGET(btn));
+  GtkWindow *parent = GTK_IS_WINDOW(toplevel) ? GTK_WINDOW(toplevel) : NULL;
+  GtkFileChooserNative *dlg = gtk_file_chooser_native_new(
+                                "Load WAV (48k/mono/PCM16)",
+                                parent,
+                                GTK_FILE_CHOOSER_ACTION_OPEN,
+                                "_Open",
+                                "_Cancel"
+                              );
+  GtkFileFilter *filter = gtk_file_filter_new();
+  gtk_file_filter_set_name(filter, "WAV files (*.wav)");
+  gtk_file_filter_add_pattern(filter, "*.wav");
+  gtk_file_filter_add_pattern(filter, "*.WAV");
+  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dlg), filter);
+
+  if (gtk_native_dialog_run(GTK_NATIVE_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
+    char *path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
+
+    if (path) {
+      if (g_access(path, R_OK) != 0) {
+        set_status("File not readable.");
+        g_free(path);
+        goto out;
+      }
+
+      /* Lazy-load: store path only, load WAV on Play */
+      g_strlcpy(vk_paths[slot], path, sizeof(vk_paths[slot]));
+      voicekeyerSaveState();
+
+      if (vk_btn_play[slot]) {
+        gtk_widget_set_sensitive(vk_btn_play[slot], TRUE);
+        vk_set_play_button_label_from_path(vk_btn_play[slot], vk_paths[slot]);
+      }
+
+      set_status("Path set.");
+      g_free(path);
+    }
+  }
+
+out:
+  // UI komplett aktualisieren (Label/Sensitivity/Tooltip)
+  vk_update_slot_ui();
+  g_object_unref(dlg);
+}
+
+#else
+static void on_load_clicked(GtkButton *btn, gpointer user_data) {
+  int slot = GPOINTER_TO_INT(user_data);
+
+  if (slot < 0 || slot >= VK_SLOTS) {
+    set_status("Invalid slot.");
+    return;
+  }
+
+  GtkWidget *toplevel = gtk_widget_get_toplevel(GTK_WIDGET(btn));
+  GtkWindow *parent = GTK_IS_WINDOW(toplevel) ? GTK_WINDOW(toplevel) : NULL;
   GtkWidget *dlg = gtk_file_chooser_dialog_new("Load WAV (48k/mono/PCM16)",
                    parent,
                    GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -428,6 +491,12 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
     char *path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
 
     if (path) {
+      if (g_access(path, R_OK) != 0) {
+        set_status("File not readable.");
+        g_free(path);
+        goto out;
+      }
+
       /* Lazy-load: store path only, load WAV on Play */
       g_strlcpy(vk_paths[slot], path, sizeof(vk_paths[slot]));
       voicekeyerSaveState();
@@ -446,11 +515,12 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
     }
   }
 
+out:
   // UI komplett aktualisieren (Label/Sensitivity/Tooltip)
   vk_update_slot_ui();
   gtk_widget_destroy(dlg);
 }
-
+#endif
 
 // State machine for deterministic MOX handling (avoid race with radio_is_transmitting()
 // and ensure radio_end_xmit_captured_data() has run before unkeying MOX).
