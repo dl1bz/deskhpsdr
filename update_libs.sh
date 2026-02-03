@@ -112,13 +112,25 @@ else
     exit 1
 fi
 
-# ---- autoconf / automake ----
-for tool in autoconf automake libtool; do
+# ---- autoconf / automake / libtoolize ----
+for tool in autoconf automake; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "ERROR: required autotools component '$tool' not found"
         exit 1
     }
 done
+
+if [ "$(uname -s)" = "Darwin" ]; then
+    command -v glibtoolize >/dev/null 2>&1 || {
+        echo "ERROR: required tool 'glibtoolize' not found (brew install libtool)"
+        exit 1
+    }
+else
+    command -v libtoolize >/dev/null 2>&1 || {
+        echo "ERROR: required tool 'libtoolize' not found"
+        exit 1
+    }
+fi
 
 # ---- meson / ninja ----
 for tool in meson ninja; do
@@ -186,8 +198,8 @@ cd "$SRC_DIR" || exit 1
 
 if [ -f "$TARGET_DIR/lib/libspecbleach.a" ] && [ -f "$TARGET_DIR/lib/librnnoise.a" ]; then
     : > "$SRC_DIR/$CHECK_FILE"
-    echo "Library build correct, continue..."
+    echo "Libraries build correct, continue..."
 else
-    echo "Library build FAILED...EXIT script."
+    echo "One or more Libraries build FAILED...EXIT script."
     exit 1
 fi
