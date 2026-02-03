@@ -14,7 +14,7 @@ SRC_DIR="${PWD}"
 NR4_DIR="${PWD}/wdsp-libs"
 # DO NOT CHANGE TARGET_DIR !!!
 TARGET_DIR=$NR4_DIR
-CHECK_FILE=".WDSP_libs_updated_V2"
+CHECK_FILE=".WDSP_libs_updated_V3"
 
 REINSTALL=0
 

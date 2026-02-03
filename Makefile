@@ -1139,9 +1139,9 @@ DEPEND:
 
 .PHONY: prepare
 
-prepare: .WDSP_libs_updated_V2
+prepare: .WDSP_libs_updated_V3
 
-.WDSP_libs_updated_V2:
+.WDSP_libs_updated_V3:
 	@echo "==> Update WDSP requirements missing → running update_libs.sh"
 	@./update_libs.sh
 
