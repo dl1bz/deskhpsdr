@@ -531,6 +531,8 @@ typedef enum {
 } vk_watch_mode_t;
 
 static vk_watch_mode_t vk_watch_mode = VK_WATCH_NONE;
+// Latch: becomes 1 after we have actually entered CAP_XMIT (avoids race vs schedule_action)
+static int vk_seen_xmit = 0;
 
 static void vk_watch_stop(void) {
   if (vk_mox_watch_id != 0) {
@@ -547,6 +549,7 @@ static void vk_trigger_tx_playback(void) {
   capture_state = CAP_AVAIL;
   is_vk  = 1;
   is_cap = 0;
+  vk_seen_xmit = 0;
   schedule_action(VK_PLAYBACK, PRESSED, 0);
 }
 
@@ -566,6 +569,16 @@ static gboolean vk_mox_watch_cb(gpointer data) {
     return G_SOURCE_CONTINUE;
 
   case VK_WATCH_WAIT_PLAYBACK_END:
+
+    // Avoid race: after vk_trigger_tx_playback() we are still CAP_AVAIL until VK_PLAYBACK is processed.
+    // Only consider playback "ended" after we have actually seen CAP_XMIT at least once.
+    if (!vk_seen_xmit) {
+      if (capture_state == CAP_XMIT) {
+        vk_seen_xmit = 1;
+      }
+
+      return G_SOURCE_CONTINUE;
+    }
 
     // Playback ended when capture leaves CAP_XMIT. CAP_XMIT_DONE is already "ended enough".
     if (capture_state != CAP_XMIT) {
