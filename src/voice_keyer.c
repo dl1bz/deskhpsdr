@@ -543,6 +543,30 @@ static void vk_watch_stop(void) {
   vk_watch_mode = VK_WATCH_NONE;
 }
 
+static void vk_abort_tx(const char *reason) {
+  // Stop watcher first (avoid it re-triggering actions)
+  vk_watch_stop();
+  // Reset capture/replay path (safe fallback if state machine got desynced)
+  capture_state = CAP_AVAIL;
+  capture_replay_pointer = 0;
+  // Clear VK mode flags so VOX logic & UI unblock
+  is_vk = 0;
+  is_cap = 0;
+  // Release UI locks
+  vk_play_lock = 0;
+  vk_active_slot = -1;
+  vk_watch_mode = VK_WATCH_NONE;
+  vk_update_slot_ui();
+
+  // Drop MOX only if we own it
+  if (vk_keyed_mox) {
+    radio_set_mox(0);
+    vk_keyed_mox = 0;
+  }
+
+  set_status(reason ? reason : "TX aborted.");
+}
+
 static void vk_trigger_tx_playback(void) {
   // Preconditions are checked by caller. This uses the existing CAPTURE state machine.
   capture_replay_pointer = 0;
@@ -601,6 +625,7 @@ static gboolean vk_mox_watch_cb(gpointer data) {
     return G_SOURCE_CONTINUE;
 
   default:
+    is_vk = 0;
     vk_watch_stop();
     vk_play_lock = 0;
     vk_active_slot = -1;
@@ -793,12 +818,16 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
     return;
   }
 
-  // Request stop via existing CAPTURE state machine stop path (restores Mic gain etc.).
-  if (capture_state == CAP_XMIT || capture_state == CAP_XMIT_DONE) {
-    is_vk  = 1;
-    is_cap = 0;
-    schedule_action(VK_PLAYBACK, PRESSED, 0);
+  // If the CAPTURE state machine is not in a TX state, fall back to a hard abort.
+  if (capture_state != CAP_XMIT && capture_state != CAP_XMIT_DONE) {
+    vk_abort_tx("Stopped.");
+    return;
   }
+
+  // Request stop via existing CAPTURE state machine stop path (restores Mic gain etc.).
+  is_vk  = 1;
+  is_cap = 0;
+  schedule_action(VK_PLAYBACK, PRESSED, 0);
 
   // Do NOT unkey MOX immediately here (would race with radio_end_xmit_captured_data()).
   // Instead, watch until playback actually ends and then unkey if we keyed MOX.
@@ -808,14 +837,9 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
     vk_mox_watch_id = g_timeout_add(20, vk_mox_watch_cb, NULL);
     set_status("Stopping TX...");
   } else {
-    vk_play_lock = 0;
-    vk_active_slot = -1;
-    vk_update_slot_ui();
-    set_status("Stopped.");
+    vk_abort_tx("Stopped.");
   }
 }
-
-
 
 static gboolean vk_key_press_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_data) {
   (void)w;
@@ -908,17 +932,9 @@ static gboolean on_vk_delete_event(GtkWidget *widget, GdkEvent *event, gpointer 
   (void)event;
   (void)user_data;
 
+  // If VK is still active, hard-abort so the window can always be closed deterministically.
   if (vk_active_slot >= 0 || vk_play_lock) {
-    GtkWidget *dlg = gtk_message_dialog_new(
-                       GTK_WINDOW(widget),
-                       GTK_DIALOG_MODAL,
-                       GTK_MESSAGE_WARNING,
-                       GTK_BUTTONS_OK,
-                       "Voice Keyer is still running.\n"
-                       "Please stop playback before closing the window.");
-    gtk_dialog_run(GTK_DIALOG(dlg));
-    gtk_widget_destroy(dlg);
-    return TRUE;
+    vk_abort_tx("VK aborted on window close.");
   }
 
   voicekeyerSaveState();  // Save on real close via WM
