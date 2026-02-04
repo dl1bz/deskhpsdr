@@ -591,6 +591,9 @@ static gboolean vk_mox_watch_cb(gpointer data) {
         vk_keyed_mox = 0;
       }
 
+      // VK finished -> re-enable VOX logic again
+      is_vk = 0;
+
       vk_watch_stop();
       set_status("TX ended.");
       return G_SOURCE_REMOVE;
@@ -610,6 +613,15 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   int slot = GPOINTER_TO_INT(user_data);
   GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(btn)));
+
+  /*
+   * Policy A: Block Voice Keyer playback while TUNE is active.
+   * Reason: TRX is transmitting in TUNE state; mixing VK playback into that state is undefined / unwanted.
+   */
+  if (tune) {
+    error_dialog(parent, "Playback blocked: TUNE is active.");
+    return;
+  }
 
   /* Hard lock: ignore Play while VK playback is active */
   if (vk_play_lock) {
@@ -660,7 +672,7 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
   // Ensure TX is on (CAPTURE plays back via TX only if radio_is_transmitting() is true).
   vk_keyed_mox = 0;
 
-  if (!radio_is_transmitting()) {
+  if (!radio_get_mox()) {
     radio_set_mox(1);
     vk_keyed_mox = 1;
     // MOX enabling may not be instantaneous; avoid racing into the RX-path (CAP_RECORDING).
