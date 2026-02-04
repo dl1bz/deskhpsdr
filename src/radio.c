@@ -455,9 +455,24 @@ void radio_stop(void) {
   }
 }
 
+/*
 long long apply_ppm_ll(long long f_hz) {
   const long long cal_0p1ppm = llround(ppm_factor * 10.0);
   return (long long)((__int128)f_hz * (10000000LL + cal_0p1ppm) / 10000000LL);
+}
+*/
+long long apply_ppm_ll(long long f_hz) {
+  const long long cal_0p1ppm = llround(ppm_factor * 10.0);
+  const long long scale  = 10000000LL;
+  const long long factor = scale + cal_0p1ppm;
+#if defined(__SIZEOF_INT128__)
+  return (long long)(((__int128)f_hz * factor) / scale);
+#else
+  // Overflow-sicher ohne __int128 (32-bit ARM)
+  const long long q = f_hz / scale;
+  const long long r = f_hz % scale;
+  return (q * factor) + ((r * factor) / scale);
+#endif
 }
 
 static void choose_vfo_layout(void) {
