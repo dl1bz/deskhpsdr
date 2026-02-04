@@ -89,7 +89,7 @@ if [ "$REINSTALL" -eq 1 ]; then
 echo "=== Environment sanity check ==="
 
 # ---- shell ----
-[ -n "${SHELL:-}" ] || { echo "ERROR: SHELL not set"; exit 1; }
+[ -n "${SHELL:-}" ] || echo "WARN : SHELL not set"
 
 # ---- basic tools ----
 for tool in uname git make cc; do
@@ -99,24 +99,21 @@ for tool in uname git make cc; do
     }
 done
 
-# ---- perl / autoreconf (critical for autogen.sh) ----
-if command -v autoreconf >/dev/null 2>&1; then
-    AR_SHEBANG=$(head -n 1 "$(command -v autoreconf)" 2>/dev/null || true)
-    case "$AR_SHEBANG" in
-        '#!'*perl*)
-            PERL_PATH=$(printf '%s\n' "$AR_SHEBANG" | sed 's/^#!//')
-            if [ ! -x "$PERL_PATH" ]; then
-                echo "ERROR: autoreconf perl interpreter not found:"
-                echo "       $PERL_PATH"
-                echo "HINT : reinstall autoconf/automake or install perl via package manager"
-                exit 1
-            fi
-            ;;
-    esac
-else
+# ---- autoreconf / perl (critical for autogen.sh) ----
+command -v autoreconf >/dev/null 2>&1 || {
     echo "ERROR: autoreconf not found"
     exit 1
-fi
+}
+
+autoreconf --version >/dev/null 2>&1 || {
+    echo "ERROR: autoreconf not executable"
+    exit 1
+}
+
+command -v perl >/dev/null 2>&1 || {
+    echo "ERROR: perl not found"
+    exit 1
+}
 
 # ---- autoconf / automake / libtoolize ----
 for tool in autoconf automake; do
