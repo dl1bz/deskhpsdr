@@ -29,7 +29,7 @@ echo "This Script $SCRIPT_NAME is running under OS $OS_TYPE"
 if [ -f "$SRC_DIR"/"$CHECK_FILE" ] && [ "$REINSTALL" -eq 0 ]; then
   echo ""
   echo "+----------------------------------+"
-  echo "| Required libs already updated.   |"
+  echo "| Required libs already build.     |"
   echo "| No need to run this script again.|"
   echo "+----------------------------------+"
   echo ""
@@ -38,8 +38,9 @@ if [ -f "$SRC_DIR"/"$CHECK_FILE" ] && [ "$REINSTALL" -eq 0 ]; then
   exit 1
 fi
 
-if [ -f "$SRC_DIR"/"$CHECK_FILE" ]; then
-  rm -f "$SRC_DIR"/"$CHECK_FILE"
+if [ "$REINSTALL" -eq 0 ]; then
+  echo "Delete old checkfile..."
+  rm -f "$SRC_DIR"/.WDSP_libs_updated*
 fi
 
 if [ "$OS_TYPE" = "Darwin" ]; then
@@ -59,6 +60,7 @@ if [ "$OS_TYPE" = "Darwin" ]; then
     $BREW update
     $BREW upgrade
     $BREW install perl
+    $BREW install gettext
     $BREW install libtool
     $BREW install automake
     $BREW install autoconf
@@ -69,6 +71,8 @@ if [ "$OS_TYPE" = "Darwin" ]; then
 else
     sudo apt-get --yes update
     sudo apt-get --yes install build-essential pkg-config
+    sudo apt-get --yes install perl
+    sudo spt-get --yes install gettext
     sudo apt-get --yes install libtool
     sudo apt-get --yes install automake
     sudo apt-get --yes install autoconf
@@ -81,6 +85,7 @@ else
     sudo apt-get --yes install clang
 fi
 
+if [ "$REINSTALL" -eq 1 ]; then
 echo "=== Environment sanity check ==="
 
 # ---- shell ----
@@ -155,6 +160,7 @@ echo "INFO : AUTORECONF= $(command -v autoreconf)"
 echo "INFO : PERL      = $(command -v perl 2>/dev/null || echo 'not found')"
 echo "=== Environment OK ==="
 echo
+fi
 
 [ -n "$NR4_DIR" ] && [ "$NR4_DIR" != "/" ] || exit 1
 rm -rf -- "$NR4_DIR"

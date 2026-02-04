@@ -593,7 +593,6 @@ static gboolean vk_mox_watch_cb(gpointer data) {
 
       // VK finished -> re-enable VOX logic again
       is_vk = 0;
-
       vk_watch_stop();
       set_status("TX ended.");
       return G_SOURCE_REMOVE;
