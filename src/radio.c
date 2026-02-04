@@ -455,12 +455,12 @@ void radio_stop(void) {
   }
 }
 
-/*
+#ifdef __APPLE__
 long long apply_ppm_ll(long long f_hz) {
   const long long cal_0p1ppm = llround(ppm_factor * 10.0);
   return (long long)((__int128)f_hz * (10000000LL + cal_0p1ppm) / 10000000LL);
 }
-*/
+#else
 long long apply_ppm_ll(long long f_hz) {
   const long long cal_0p1ppm = llround(ppm_factor * 10.0);
   const long long scale  = 10000000LL;
@@ -474,6 +474,7 @@ long long apply_ppm_ll(long long f_hz) {
   return (q * factor) + ((r * factor) / scale);
 #endif
 }
+#endif
 
 static void choose_vfo_layout(void) {
   g_return_if_fail(vfo_layout_list[0].width > 0);
