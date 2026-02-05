@@ -72,7 +72,7 @@ else
     sudo apt-get --yes update
     sudo apt-get --yes install build-essential pkg-config
     sudo apt-get --yes install perl
-    sudo spt-get --yes install gettext
+    sudo apt-get --yes install gettext
     sudo apt-get --yes install libtool
     sudo apt-get --yes install automake
     sudo apt-get --yes install autoconf
