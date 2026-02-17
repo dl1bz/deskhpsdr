@@ -495,6 +495,55 @@ static void tci_send_mode(CLIENT *client, int v) {
   }
 }
 
+static int tci_parse_mode(const char *mode_str) {
+  // mode_str is already lowercased by the TCI parser
+  if (!strcmp(mode_str, "lsb"))  { return modeLSB; }
+  if (!strcmp(mode_str, "usb"))  { return modeUSB; }
+  if (!strcmp(mode_str, "dsb"))  { return modeDSB; }
+  if (!strcmp(mode_str, "cw"))   { return modeCWU; }
+  if (!strcmp(mode_str, "cwl"))  { return modeCWL; }
+  if (!strcmp(mode_str, "cwu"))  { return modeCWU; }
+  if (!strcmp(mode_str, "fmn"))  { return modeFMN; }
+  if (!strcmp(mode_str, "fm"))   { return modeFMN; }
+  if (!strcmp(mode_str, "am"))   { return modeAM; }
+  if (!strcmp(mode_str, "digu")) { return modeDIGU; }
+  if (!strcmp(mode_str, "spec")) { return modeSPEC; }
+  if (!strcmp(mode_str, "digl")) { return modeDIGL; }
+  if (!strcmp(mode_str, "sam"))  { return modeSAM; }
+  if (!strcmp(mode_str, "drm"))  { return modeDRM; }
+  return -1;
+}
+
+typedef struct {
+  int vfo_id;
+  int mode;
+} TCI_MODE_CHANGE;
+
+static int tci_mode_change_cb(void *data) {
+  TCI_MODE_CHANGE *mc = (TCI_MODE_CHANGE *)data;
+  vfo_id_mode_changed(mc->vfo_id, mc->mode);
+  g_free(mc);
+  return G_SOURCE_REMOVE;
+}
+
+static void tci_set_mode(CLIENT *client, int VfoNr, const char *mode_str) {
+  if (VfoNr < 0 || VfoNr > 1) { return; }
+
+  int m = tci_parse_mode(mode_str);
+
+  if (m < 0) {
+    t_print("TCI%d unknown mode: %s\n", client->seq, mode_str);
+    tci_send_mode(client, VfoNr);
+    return;
+  }
+
+  TCI_MODE_CHANGE *mc = g_new(TCI_MODE_CHANGE, 1);
+  mc->vfo_id = VfoNr;
+  mc->mode = m;
+  g_idle_add(tci_mode_change_cb, mc);
+  tci_send_mode(client, VfoNr);
+}
+
 static void tci_send_trx_count(CLIENT *client) {
   tci_send_text(client, "trx_count:2;");
 }
@@ -1062,7 +1111,8 @@ static gpointer tci_listener(gpointer data) {
         // trx_count               tci_send_trx_count()
         // trx                     tci_send_mox()          do not change mox
         // rx_sensors_enable:x,y;  enable:=arg1        sending interval always 1 second, ignore y
-        // modulation:x;           tci_send_mode(arg1)     do not change mode, ignore y
+        // modulation:x;           tci_send_mode(arg1)     report mode for VFO x
+        // modulation:x,y;         tci_set_mode(x,y)       set VFO x to mode y
         // vfo:x,y;                tci_send_vfo(x,y)       do not change frequency
         // rx_smeter,x,y;          tci_send_smeter(x)      undocumented, ignore y
         //
@@ -1139,7 +1189,13 @@ static gpointer tci_listener(gpointer data) {
           client->txsensor = (*arg[1] == '1' || !strcmp(arg[1], "true"));
           g_mutex_unlock(&tci_mutex);
         } else if (!strcmp(arg[0], "modulation") && argc > 1) {
-          tci_send_mode(client, (*arg[1] == '1') ? 1 : 0);
+          int VfoNr = (*arg[1] == '1') ? 1 : 0;
+
+          if (argc > 2 && arg[2] != NULL) {
+            tci_set_mode(client, VfoNr, arg[2]);
+          } else {
+            tci_send_mode(client, VfoNr);
+          }
         } else if (!strcmp(arg[0], "vfo") && argc > 2) {
           if (arg[1] != NULL && arg[3] != NULL) {
             int VfoNr = atoi(arg[1]);
