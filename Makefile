@@ -1180,16 +1180,17 @@ install-Darwin: all
 	@-fc-cache -f
 	@sleep 1
 	@git update-index --assume-unchanged make.config.deskhpsdr
-	@echo "Copy deskHPSDR to your Desktop..."
-	@mv deskHPSDR.app "${HOME}/Desktop"
-	@sleep 1
 	@if [ -x /usr/bin/codesign ]; then \
+		echo "Strip extended attributes before codesigning..."; \
+		xattr -cr deskHPSDR.app; \
 		echo "Codesign deskHPSDR against possible problems with gatekeeper..."; \
-		codesign --force --deep --sign - "${HOME}/Desktop/deskHPSDR.app"; \
+		codesign --force --deep --sign - deskHPSDR.app; \
 		sleep 1; \
 		echo "Verify deskHPSDR codesign..."; \
-		codesign --verify --deep --strict --verbose=2 "${HOME}/Desktop/deskHPSDR.app"; \
+		codesign --verify --deep --strict --verbose=2 deskHPSDR.app; \
 	fi
+	@echo "Copy deskHPSDR to your Desktop..."
+	@mv deskHPSDR.app "${HOME}/Desktop"
 	@echo "Starting deskHPSDR..."
 	@open -a "${HOME}/Desktop/deskHPSDR.app"
 
