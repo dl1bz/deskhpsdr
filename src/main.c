@@ -750,9 +750,11 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   */
   // Hier setzen wir den GTK-Mainloop-Thread
   deskhpsdr_main_thread = pthread_self();
+#ifdef MIDI
   g_mutex_init(&vfo_timer.lock);
   g_mutex_init(&vfoa_timer.lock);
   g_mutex_init(&vfob_timer.lock);
+#endif
   char text[2048];
   char config_directory[1024];
   (void) getcwd(config_directory, sizeof(config_directory));
@@ -1003,9 +1005,11 @@ int main(int argc, char **argv) {
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
   t_print("exiting ...\n");
   g_object_unref(deskhpsdr);
+#ifdef MIDI
   g_mutex_clear(&vfo_timer.lock);
   g_mutex_clear(&vfoa_timer.lock);
   g_mutex_clear(&vfob_timer.lock);
+#endif
   return rc;
 }
 
