@@ -82,6 +82,12 @@ CURRDIR := $(shell pwd)
 UNAME_R := $(shell uname -r | sed 's/\..*//')
 ARCH := $(shell uname -m)
 
+# Desktop directory (Linux may be localized, e.g. "Schreibtisch")
+DESKTOP_DIR ?= $(HOME)/Desktop
+ifeq ($(UNAME_S),Linux)
+DESKTOP_DIR := $(shell command -v xdg-user-dir >/dev/null 2>&1 && xdg-user-dir DESKTOP || echo "$(HOME)/Desktop")
+endif
+
 PKG_CONFIG = pkg-config
 .DEFAULT_GOAL := all
 
@@ -1076,7 +1082,7 @@ else
 	@-sudo killall rigctld_deskhpsdr || true
 	@-sudo rm -f /usr/local/bin/rigctld_deskhpsdr
 	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
-	@-rm -f ${HOME}/Desktop/deskHPSDR.desktop
+	@-rm -f "$(DESKTOP_DIR)"/deskHPSDR.desktop
 	@echo "Update Desktop database..."
 	@command -v update-database-desktop >/dev/null 2>&1 && update-database-desktop || :
 endif
@@ -1158,8 +1164,8 @@ install-Darwin: all
 	@make
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
-	@echo "Remove old deskHPSDR.app container from \"${HOME}/Desktop\" ..."
-	@rm -rf "${HOME}/Desktop/deskHPSDR.app"
+	@echo "Remove old deskHPSDR.app container from \"$(DESKTOP_DIR)\" ..."
+	@rm -rf "$(DESKTOP_DIR)/deskHPSDR.app"
 	@mkdir -p deskHPSDR.app/Contents/MacOS
 	@mkdir -p deskHPSDR.app/Contents/Frameworks
 	@mkdir -p deskHPSDR.app/Contents/Resources
@@ -1192,9 +1198,9 @@ install-Darwin: all
 		codesign --verify --deep --strict --verbose=2 deskHPSDR.app; \
 	fi
 	@echo "Copy deskHPSDR to your Desktop..."
-	@mv deskHPSDR.app "${HOME}/Desktop"
+	@mv deskHPSDR.app "$(DESKTOP_DIR)"
 	@echo "Starting deskHPSDR..."
-	@open -a "${HOME}/Desktop/deskHPSDR.app"
+	@open -a "$(DESKTOP_DIR)/deskHPSDR.app"
 
 install-Linux: all
 	@echo "Install deskHPSDR for Linux..."
@@ -1244,10 +1250,10 @@ install-Linux: all
 	@-rm -f "${HOME}/.local/share/applications/deskHPSDR.desktop"
 	@cp LINUX/deskHPSDR.desktop "${HOME}/.local/share/applications"
 	@echo "Create a link for deskHPSDR at the Desktop..."
-	@-rm -f "${HOME}/Desktop/deskHPSDR.desktop"
+	@-rm -f "$(DESKTOP_DIR)"/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desklnk "${CURRDIR}/deskHPSDR.desktop"
 	@echo "URL=${HOME}/.local/share/applications/deskHPSDR.desktop" >> "${CURRDIR}/deskHPSDR.desktop"
-	@install -m 0755 -t "${HOME}/Desktop" "${CURRDIR}/deskHPSDR.desktop"
+	@install -m 0755 -t "$(DESKTOP_DIR)" "${CURRDIR}/deskHPSDR.desktop"
 	@-rm -f "${CURRDIR}/deskHPSDR.desktop"
 	@sudo sync
 	@echo "Update Desktop database..."
