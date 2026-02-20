@@ -19,23 +19,23 @@
 #
 #######################################################################################
 
-TCI=ON
-GPIO=OFF
-MIDI=ON
-SATURN=OFF
-USBOZY=OFF
-SOAPYSDR=OFF
-STEMLAB=OFF
-TTS=ON
-AUDIO=PULSE
-ATU=OFF
-COPYMODE=OFF
-AUTOGAIN=OFF
-REGION1=OFF
-EQ12=OFF
-AH4IOB=OFF
-DEVEL=OFF
-TAHOEFIX=ON
+TCI      ?= ON
+GPIO     ?= OFF
+MIDI     ?= ON
+SATURN   ?= OFF
+USBOZY   ?= OFF
+SOAPYSDR ?= OFF
+STEMLAB  ?= OFF
+TTS      ?= ON
+AUDIO    ?= PULSE
+ATU      ?= OFF
+COPYMODE ?= OFF
+AUTOGAIN ?= OFF
+REGION1  ?= OFF
+EQ12     ?= OFF
+AH4IOB   ?= OFF
+DEVEL    ?= OFF
+TAHOEFIX ?= ON
 
 #################################################################################################################
 #
@@ -230,9 +230,9 @@ CPP_INCLUDE +=$(TELNET_INCLUDE)
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
-GPIO=
-SATURN=
-WAYLAND=
+override GPIO    := OFF
+override SATURN  := OFF
+override WAYLAND := OFF
 endif
 
 ifeq ($(UNAME_S), Linux)
@@ -240,7 +240,7 @@ GPIOD_VERSION := $(shell pkg-config --modversion libgpiod 2>/dev/null)
 GPIOD_MAJOR := $(word 1,$(subst ., ,$(GPIOD_VERSION)))
 
 ifeq ($(GPIOD_MAJOR),2)
-GPIO=
+override GPIO := OFF
 $(info libgpiod V2 detected. This is not supported, disable GPIO support...)
 endif
 
@@ -248,7 +248,7 @@ ifeq ($(GPIO),ON)
 ifeq ($(GPIOD_MAJOR),1)
 $(info libgpiod V1 detected. Compile with GPIO support)
 else
-GPIO=
+override GPIO := OFF
 endif
 endif
 
@@ -261,8 +261,11 @@ endif
 #
 ##############################################################################
 
+ifeq ($(UNAME_S),Darwin)
+override MIDI := ON
+endif
 ifeq ($(MIDI),ON)
-MIDI_OPTIONS=-D MIDI
+MIDI_OPTIONS=-DMIDI
 MIDI_HEADERS= src/midi_layer.h src/midi_menu.h src/alsa_midi.h
 ifeq ($(UNAME_S), Darwin)
 MIDI_SOURCES= src/mac_midi.c src/midi2.c src/midi3.c src/midi_menu.c
@@ -287,7 +290,7 @@ CPP_SOURCES += src/alsa_midi.c src/midi2.c src/midi3.c src/midi_menu.c
 ##############################################################################
 
 ifeq ($(TTS),ON)
-TTS_OPTIONS=-D TTS
+TTS_OPTIONS=-DTTS
 TTS_HEADERS= src/tts.h src/MacTTS.h
 ifeq ($(UNAME_S), Darwin)
 TTS_SOURCES= src/tts.c src/MacTTS.m
@@ -295,7 +298,7 @@ TTS_OBJS= src/tts.o src/MacTTS.o
 TTS_LIBS= -framework Foundation -framework AVFoundation
 endif
 ifeq ($(UNAME_S), Linux)
-TTS_OPTIONS=-D TTS
+TTS_OPTIONS=-DTTS
 TTS_HEADERS= src/tts.h src/MacTTS.h
 TTS_SOURCES= src/tts.c
 TTS_OBJS= src/tts.o
@@ -311,7 +314,7 @@ CPP_SOURCES += src/tts.c
 ##############################################################################
 
 ifeq ($(SATURN),ON)
-SATURN_OPTIONS=-D SATURN
+SATURN_OPTIONS=-DSATURN
 SATURN_SOURCES= \
 src/saturndrivers.c \
 src/saturnregisters.c \
@@ -343,7 +346,7 @@ CPP_SOURCES += src/saturnmain.c src/saturn_menu.c
 ##############################################################################
 
 ifeq ($(USBOZY),ON)
-USBOZY_OPTIONS=-D USBOZY
+USBOZY_OPTIONS=-DUSBOZY
 USBOZY_INCLUDE=`$(PKG_CONFIG) --cflags libusb-1.0`
 USBOZY_LIBS=`$(PKG_CONFIG) --libs libusb-1.0`
 USBOZY_SOURCES= \
@@ -364,7 +367,7 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libusb-1.0`
 ##############################################################################
 
 ifeq ($(SOAPYSDR),ON)
-SOAPYSDR_OPTIONS=-D SOAPYSDR
+SOAPYSDR_OPTIONS=-DSOAPYSDR
 ifeq ($(UNAME_S), Darwin)
 SOAPYSDR_LIBS=`$(PKG_CONFIG) --libs soapysdr`
 SOAPYSDR_INCLUDE=`$(PKG_CONFIG) --cflags soapysdr`
@@ -396,10 +399,9 @@ endif
 ##############################################################################
 
 ifeq ($(GPIO),ON)
-GPIO_OPTIONS=-D GPIO
-GPIOD_VERSION=$(shell pkg-config --modversion libgpiod)
+GPIO_OPTIONS=-DGPIO
 ifeq ($(GPIOD_VERSION),1.2)
-GPIO_OPTIONS += -D OLD_GPIOD
+GPIO_OPTIONS += -DOLD_GPIOD
 endif
 GPIO_LIBS=-lgpiod -li2c
 endif
@@ -416,7 +418,7 @@ CPP_DEFINES += -DGPIO
 ##############################################################################
 
 ifeq ($(STEMLAB), ON)
-STEMLAB_OPTIONS=-D STEMLAB_DISCOVERY
+STEMLAB_OPTIONS=-DSTEMLAB_DISCOVERY
 STEMLAB_INCLUDE=`$(PKG_CONFIG) --cflags libcurl`
 STEMLAB_LIBS=`$(PKG_CONFIG) --libs libcurl`
 STEMLAB_SOURCES=src/stemlab_discovery.c
@@ -470,7 +472,7 @@ CPP_DEFINES += -D__AH4IOB__
 
 # if OS is Linux, but TAHOEFIX is set, remove this
 ifeq ($(UNAME_S), Linux)
-	TAHOEFIX=
+override TAHOEFIX := OFF
 endif
 
 # only if using macOS 26 Tahoe, fix a SDR detection issue
@@ -493,11 +495,11 @@ CPP_DEFINES += -D__WAYLAND__
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
-  AUDIO=PORTAUDIO
+override AUDIO := PORTAUDIO
 endif
 ifeq ($(UNAME_S), Linux)
   ifneq ($(AUDIO) , ALSA)
-    AUDIO=PULSE
+    override AUDIO := PULSE
   endif
 endif
 
@@ -658,7 +660,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(WAYLAND_OPTIONS) \
 	$(TAHOEFIX_OPTIONS) \
 	$(AUDIO_OPTIONS) $(TCI_OPTIONS) \
-	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"' -D GIT_BRANCH='"$(GIT_BRANCH)"'
+	-DGIT_DATE='"$(GIT_DATE)"' -DGIT_VERSION='"$(GIT_VERSION)"' -DGIT_COMMIT='"$(GIT_COMMIT)"' -DGIT_BRANCH='"$(GIT_BRANCH)"'
 
 INCLUDES=$(GTK_INCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
@@ -690,7 +692,7 @@ endif
 #
 ##############################################################################
 
-LIBS=	$(LDFLAGS) $(AUDIO_LIBS) $(USBOZY_LIBS) $(GTK_LIBS) $(GPIO_LIBS) $(SOAPYSDR_LIBS) $(STEMLAB_LIBS) \
+LIBS=	$(AUDIO_LIBS) $(USBOZY_LIBS) $(GTK_LIBS) $(GPIO_LIBS) $(SOAPYSDR_LIBS) $(STEMLAB_LIBS) \
 	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lm $(SYS_LIBS)
 
 ##############################################################################
