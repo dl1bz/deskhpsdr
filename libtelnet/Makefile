@@ -26,7 +26,7 @@ ifeq ($(UNAME_S),Darwin)
 # SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
 # ARCH_FLAGS := -arch arm64 -arch x86_64
 # CFLAGS += -mmacosx-version-min=13.0 $(ARCH_FLAGS) -isysroot $(SDKROOT) -I/usr/local/include
-CFLAGS += -mmacosx-version-min=13.0
+CFLAGS += -mmacosx-version-min=14.0
 endif
 
 OBJS := libtelnet.o
