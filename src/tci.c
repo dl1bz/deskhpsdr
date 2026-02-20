@@ -498,19 +498,33 @@ static void tci_send_mode(CLIENT *client, int v) {
 static int tci_parse_mode(const char *mode_str) {
   // mode_str is already lowercased by the TCI parser
   if (!strcmp(mode_str, "lsb"))  { return modeLSB; }
+
   if (!strcmp(mode_str, "usb"))  { return modeUSB; }
+
   if (!strcmp(mode_str, "dsb"))  { return modeDSB; }
+
   if (!strcmp(mode_str, "cw"))   { return modeCWU; }
+
   if (!strcmp(mode_str, "cwl"))  { return modeCWL; }
+
   if (!strcmp(mode_str, "cwu"))  { return modeCWU; }
+
   if (!strcmp(mode_str, "fmn"))  { return modeFMN; }
+
   if (!strcmp(mode_str, "fm"))   { return modeFMN; }
+
   if (!strcmp(mode_str, "am"))   { return modeAM; }
+
   if (!strcmp(mode_str, "digu")) { return modeDIGU; }
+
   if (!strcmp(mode_str, "spec")) { return modeSPEC; }
+
   if (!strcmp(mode_str, "digl")) { return modeDIGL; }
+
   if (!strcmp(mode_str, "sam"))  { return modeSAM; }
+
   if (!strcmp(mode_str, "drm"))  { return modeDRM; }
+
   return -1;
 }
 
