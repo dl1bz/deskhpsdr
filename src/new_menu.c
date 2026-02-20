@@ -65,7 +65,7 @@
 #include "mode.h"
 #include "vfo.h"
 #ifdef MIDI
-  #include "midi.h"
+  #include "midi_layer.h"
   #include "midi_menu.h"
 #endif
 #include "screen_menu.h"

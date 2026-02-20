@@ -52,7 +52,7 @@
 #include "dac.h"
 #include "radio.h"
 #include "actions.h"
-#include "midi.h"
+#include "midi_layer.h"
 #include "midi_menu.h"
 #include "alsa_midi.h"
 #include "message.h"

@@ -61,8 +61,8 @@
  * must generate MIDI events on different channels
  */
 
-#ifndef _MIDI_H
-#define _MIDI_H
+#ifndef DESKHPSDR_MIDI_LAYER_H
+#define DESKHPSDR_MIDI_LAYER_H
 
 //
 // MIDIevent encodes the actual MIDI event "seen" in Layer-1 and

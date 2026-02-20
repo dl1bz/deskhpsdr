@@ -81,7 +81,7 @@
 #include "rigctl_menu.h"
 #include "screen_menu.h"
 #ifdef MIDI
-  #include "midi.h"
+  #include "midi_layer.h"
   #include "alsa_midi.h"
   #include "midi_menu.h"
 #endif

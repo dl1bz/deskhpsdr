@@ -34,7 +34,7 @@
 #include "actions.h"
 #include "message.h"
 #include "rigctl.h"
-#include "midi.h"
+#include "midi_layer.h"
 
 VFO_TIMER vfo_timer  = { VFO,  0, 0, {0} };
 VFO_TIMER vfoa_timer = { VFOA, 0, 0, {0} };

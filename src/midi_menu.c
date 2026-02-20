@@ -39,7 +39,7 @@
 #include "radio.h"
 #include "actions.h"
 #include "action_dialog.h"
-#include "midi.h"
+#include "midi_layer.h"
 #include "alsa_midi.h"
 #include "new_menu.h"
 #include "midi_menu.h"

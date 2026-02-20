@@ -71,7 +71,7 @@
 #include "sliders.h"
 #include "noise_menu.h"
 #include "rigctl.h"
-#include "midi.h"
+#include "midi_layer.h"
 #include "trx_logo.h"
 #include "toolset.h"
 
