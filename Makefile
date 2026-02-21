@@ -65,6 +65,22 @@ TAHOEFIX ?= ON
 #
 #################################################################################################################
 
+# ------------------------------------------------------------------
+# User config bootstrap:
+# If make.config.deskhpsdr is missing, copy from template BEFORE include.
+# ------------------------------------------------------------------
+CONFIG_FILE := make.config.deskhpsdr
+CONFIG_TEMPLATE := make.config.deskhpsdr.template
+
+ifeq ($(wildcard $(CONFIG_FILE)),)
+  ifneq ($(wildcard $(CONFIG_TEMPLATE)),)
+    $(info Creating $(CONFIG_FILE) from $(CONFIG_TEMPLATE) ...)
+    $(shell cp -n "$(CONFIG_TEMPLATE)" "$(CONFIG_FILE)" >/dev/null 2>&1 || cp "$(CONFIG_TEMPLATE)" "$(CONFIG_FILE)")
+  else
+    $(warning Missing $(CONFIG_FILE) and also missing $(CONFIG_TEMPLATE) - using defaults only.)
+  endif
+endif
+
 -include make.config.deskhpsdr
 
 # get the OS Name
