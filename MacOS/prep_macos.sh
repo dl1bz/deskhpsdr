@@ -196,8 +196,8 @@ $BREW install python-setuptools
 # re-install may be necessary (note parts of this
 # is always compiled from the sources).
 #
-$BREW tap pothosware/pothos
-$BREW reinstall soapysdr
+# $BREW tap pothosware/pothos
+# $BREW reinstall soapysdr
 #
 # We don't install specific Soapy device support anymore, that's users own task !
 #
