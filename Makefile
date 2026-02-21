@@ -990,9 +990,6 @@ endif
 $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
-	$(info Prevent make.config.deskhpsdr: can be changed now.)
-	@git update-index --assume-unchanged make.config.deskhpsdr 2>/dev/null || true
-	$(info ...continue...)
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C wdsp-1.29
 endif
@@ -1194,7 +1191,6 @@ install-Darwin: all
 	@echo "Rebuild font cache..."
 	@-fc-cache -f
 	@sleep 1
-	@git update-index --assume-unchanged make.config.deskhpsdr
 	@if [ -x /usr/bin/codesign ]; then \
 		echo "Strip extended attributes before codesigning..."; \
 		xattr -cr deskHPSDR.app; \
@@ -1267,15 +1263,11 @@ install-Linux: all
 #	@command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database || :
 	@update-desktop-database ~/.local/share/applications >/dev/null 2>&1 || :
 	@sleep 1
-	@echo "Prevent make.config.deskhpsdr: can be changed now."
-	@git update-index --assume-unchanged make.config.deskhpsdr
 
 .PHONY: update
 update:
 	@+make clean
 	@sleep 1
-	@echo "Prevent make.config.deskhpsdr: can be changed now."
-	@git update-index --assume-unchanged make.config.deskhpsdr
 	@echo "Checkout deskHPSDR master branch..."
 	@git checkout master
 	@sleep 1
