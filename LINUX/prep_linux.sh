@@ -118,9 +118,9 @@ sudo apt-get --yes install libpcap-dev
 sudo apt-get --yes install libjson-c-dev
 sudo apt-get --yes install gnome-themes-extra
 
-# ----------------------------------------------
-# Install standard libraries necessary for SOAPY
-# ----------------------------------------------
+# -----------------------------------------------------
+# Install standard libraries necessary for SDR support
+# -----------------------------------------------------
 
 sudo apt-get install --yes libaio-dev
 sudo apt-get install --yes libavahi-client-dev
@@ -129,30 +129,30 @@ sudo apt-get install --yes libiio-dev
 sudo apt-get install --yes bison
 sudo apt-get install --yes flex
 sudo apt-get install --yes libxml2-dev
-sudo apt-get install --yes librtlsdr-dev
+# sudo apt-get install --yes librtlsdr-dev
 
 ################################################################
 #
-# c) download and install SoapySDR core
+# download and install SoapySDR core is now "deprecated"
 #
 ################################################################
 
-echo "=============================================================="
-echo
-echo "... installing SoapySDR core"
-echo
-echo "=============================================================="
+# echo "=============================================================="
+# echo
+# echo "... installing SoapySDR core"
+# echo
+# echo "=============================================================="
 
 cd $THISDIR
-yes | rm -r SoapySDR
-git clone https://github.com/pothosware/SoapySDR.git
+# yes | rm -r SoapySDR
+# git clone https://github.com/pothosware/SoapySDR.git
 
-cd $THISDIR/SoapySDR
-mkdir build
-cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make -j$(nproc)
-sudo make install
+# cd $THISDIR/SoapySDR
+# mkdir build
+# cd build
+# cmake -DCMAKE_INSTALL_PREFIX=/usr/local ..
+# make -j$(nproc)
+# sudo make install
 sudo ldconfig
 
 elif  [ "$(grep -Ei 'fedora' /etc/*release)" ]; then
@@ -171,7 +171,7 @@ sudo dnf -y install git gcc-gfortran gettext cppcheck dos2unix \
 libzstd-devel python3-devel fftw-devel gtk3-devel \
 openssl-devel alsa-lib-devel libcurl-devel libusb1-devel \
 libgpiod-devel pulseaudio-libs-devel libpcap-devel \
-json-c-devel gnome-themes-extra SoapySDR-devel webkit2gtk4.1-devel \
+json-c-devel gnome-themes-extra webkit2gtk4.1-devel \
 llvm-devel clang-devel lld-libs lld make autoconf automake meson \
 ninja-build wget
 

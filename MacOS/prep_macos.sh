@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ###############################################################################################################
-# Copyright (C) 2025
+# Copyright (C) 2025, 2026
 # Heiko Amft, DL1BZ (Project deskHPSDR)
 #
 # All code published unter the GPLv3
