@@ -517,11 +517,11 @@ static void resume_cb(GtkWidget *widget, gpointer data) {
   // A very high attenuation value here could lead to no PS calculation
   // done in WDSP, and hence no attenuation adjustment.
   // If not auto-adjusting, do not change attenuation value.
-  if (transmitter->auto_on) {
-    transmitter->attenuation = 0;
-  }
-
   if (transmitter->puresignal) {
+    if (transmitter->twotone && transmitter->auto_on) {
+      transmitter->attenuation = 0;
+    }
+
     tx_ps_resume(transmitter);
   }
 }
