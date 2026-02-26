@@ -991,7 +991,7 @@ void shutdown_tcp_rigctl(void) {
 //  CW ring buffer
 //
 
-#define CW_BUF_SIZE 80
+#define CW_BUF_SIZE 512
 static char cw_buf[CW_BUF_SIZE];
 static int  cw_buf_in = 0, cw_buf_out = 0;
 
