@@ -30,6 +30,8 @@
 #include <time.h>
 #include <stdint.h>
 
+#include <wdsp.h>
+
 #include "appearance.h"
 #include "agc.h"
 #include "band.h"
@@ -44,6 +46,7 @@
 #include "message.h"
 #include "toolset.h"
 #include "old_protocol.h"
+#include "ext.h"
 #ifdef GPIO
   #include "gpio.h"
 #endif
@@ -465,7 +468,136 @@ static gboolean panadapter_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data
   return FALSE;
 }
 
+static double panadapter_get_cursor_rf_frequency(RECEIVER *rx, double x) {
+  double hz_per_pixel = rx->hz_per_pixel;
+  long long frequency = vfo[rx->id].frequency;
+  int mode = vfo[rx->id].mode;
+  double half = (double)rx->sample_rate / 2.0;
+  double min_display;
+
+  if (diversity_enabled && rx->id == 1) {
+    frequency = vfo[0].frequency;
+    mode = vfo[0].mode;
+  }
+
+  if (mode == modeCWU) {
+    frequency -= cw_keyer_sidetone_frequency;
+  } else if (mode == modeCWL) {
+    frequency += cw_keyer_sidetone_frequency;
+  }
+
+  min_display = (double)frequency - half + ((double)rx->pan * hz_per_pixel);
+  return min_display + (x * hz_per_pixel);
+}
+
+static void panadapter_set_single_mnf_notch(RECEIVER *rx, double fcenter) {
+  long long tunefreq = vfo[rx->id].frequency;
+  int mode = vfo[rx->id].mode;
+  double shift = 0.0;
+  double minwidth = 0.0;
+  int nnotches = 0;
+
+  if (diversity_enabled && rx->id == 1) {
+    tunefreq = vfo[0].frequency;
+    mode = vfo[0].mode;
+  }
+
+  if (mode == modeCWU) {
+    shift = -(double)cw_keyer_sidetone_frequency;
+  } else if (mode == modeCWL) {
+    shift = (double)cw_keyer_sidetone_frequency;
+  }
+
+  RXANBPSetTuneFrequency(rx->id, (double)tunefreq);
+  RXANBPSetShiftFrequency(rx->id, shift);
+  RXANBPSetAutoIncrease(rx->id, 1);
+  RXANBPGetMinNotchWidth(rx->id, &minwidth);
+
+  if (rx->mnf_fbw < minwidth) {
+    rx->mnf_fbw = minwidth;
+  }
+
+  /* komplette Notchliste löschen */
+  RXANBPGetNumNotches(rx->id, &nnotches);
+
+  while (nnotches > 0) {
+    RXANBPDeleteNotch(rx->id, nnotches - 1);
+    nnotches--;
+  }
+
+  /* genau einen neuen Notch anlegen */
+  if (RXANBPAddNotch(rx->id, 0, fcenter, rx->mnf_fbw, 1) == 0) {
+    RXANBPSetNotchesRun(rx->id, rx->mnf ? 1 : 0);
+  }
+
+  t_print("%s: notch center frequency: %.6f MHz, notch bandwidth: %.1f, enabled=%d\n",
+          __func__,
+          fcenter / 1e6,
+          rx->mnf_fbw,
+          rx->mnf);
+}
+
+void rx_update_mnf_from_gui(RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+
+  if (rx->mnf_cfreq <= 0.0) {
+    return;
+  }
+
+  panadapter_set_single_mnf_notch(rx, rx->mnf_cfreq);
+}
+
+void rx_update_mnf_run_from_gui(RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+
+  RXANBPSetNotchesRun(rx->id, rx->mnf ? 1 : 0);
+  t_print("%s: notch_enable=%d\n", __func__, rx->mnf);
+
+  if (rx->panadapter != NULL) {
+    gtk_widget_queue_draw(rx->panadapter);
+  }
+}
+
 static gboolean panadapter_button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  RECEIVER *rx = (RECEIVER *)data;
+
+  if (event->button == GDK_BUTTON_SECONDARY) {
+    /* SHIFT + Right Click → MNF löschen */
+    if (event->state & GDK_SHIFT_MASK) {
+      int nnotches = 0;
+      RXANBPGetNumNotches(rx->id, &nnotches);
+
+      while (nnotches > 0) {
+        RXANBPDeleteNotch(rx->id, nnotches - 1);
+        nnotches--;
+      }
+
+      rx->mnf = 0;
+      RXANBPSetNotchesRun(rx->id, 0);
+      gtk_widget_queue_draw(widget);
+      return TRUE;
+    }
+
+    double fcenter = panadapter_get_cursor_rf_frequency(rx, event->x);
+
+    if (active_receiver != NULL) {
+      active_receiver->mnf_cfreq = fcenter;
+    }
+
+    if (active_receiver->mnf) {
+      panadapter_set_single_mnf_notch(rx, fcenter);
+    } else {
+      g_idle_add(ext_start_noise, NULL);
+    }
+
+    gtk_widget_queue_draw(widget);
+    return TRUE;
+  }
+
   return rx_button_press_event(widget, event, data);
 }
 
@@ -777,6 +909,43 @@ void rx_panadapter_update(RECEIVER *rx) {
   double filter_right = ((double)mywidth * 0.5) - (double)rx->pan + (((double)rx->filter_high + offset) / HzPerPixel);
   cairo_rectangle(cr, filter_left, 0.0, filter_right - filter_left, myheight);
   cairo_fill(cr);
+
+  //----------------------------------------------------------------------------------------------
+  // MNF
+  if (rx->mnf && rx->mnf_cfreq > 0.0) {
+    if (rx->mnf_cfreq >= (double)min_display &&
+        rx->mnf_cfreq <= (double)max_display) {
+      double mnf_x = (rx->mnf_cfreq - (double)min_display) / HzPerPixel;
+      double mnf_w = rx->mnf_fbw / HzPerPixel;
+      double mnf_left = mnf_x - (mnf_w * 0.5);
+      cairo_save(cr);
+      /* Breitenbereich */
+      cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 0.30);
+      cairo_rectangle(cr, mnf_left, 0.0, mnf_w, myheight);
+      cairo_fill(cr);
+      /* Mittellinie */
+      double dashes[] = {4.0, 4.0};
+      cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 0.9);
+      cairo_set_line_width(cr, 2.0);
+      cairo_set_dash(cr, dashes, 2, 0);
+      cairo_move_to(cr, mnf_x + 0.5, 0.0);
+      cairo_line_to(cr, mnf_x + 0.5, myheight);
+      cairo_stroke(cr);
+      cairo_set_dash(cr, NULL, 0, 0);
+      /* Label */
+      cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 0.9);
+      cairo_select_font_face(cr,
+                             DISPLAY_FONT_BOLD,
+                             CAIRO_FONT_SLANT_NORMAL,
+                             CAIRO_FONT_WEIGHT_BOLD);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_move_to(cr, mnf_x + 6, 22);
+      cairo_show_text(cr, "MNF");
+      cairo_restore(cr);
+    }
+  }
+
+  //----------------------------------------------------------------------------------------------
 
   // plot the levels
   if (active) {

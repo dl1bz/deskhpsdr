@@ -102,6 +102,9 @@ typedef struct _receiver {
   int nr;
   int anf;
   int snb;
+  int mnf;
+  double mnf_cfreq;
+  double mnf_fbw;
 
   //
   // NR/NR2/ANF: position

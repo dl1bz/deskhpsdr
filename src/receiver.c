@@ -326,6 +326,9 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.nr", rx->id,                           rx->nr);
   SetPropI1("receiver.%d.anf", rx->id,                          rx->anf);
   SetPropI1("receiver.%d.snb", rx->id,                          rx->snb);
+  // SetPropI1("receiver.%d.mnf", rx->id,                          rx->mnf);
+  SetPropF1("receiver.%d.mnf_cfreq", rx->id,                    rx->mnf_cfreq);
+  SetPropF1("receiver.%d.mnf_fbw", rx->id,                      rx->mnf_fbw);
   SetPropI1("receiver.%d.nr_agc", rx->id,                       rx->nr_agc);
   SetPropI1("receiver.%d.nr2_gain_method", rx->id,              rx->nr2_gain_method);
   SetPropI1("receiver.%d.nr2_npe_method", rx->id,               rx->nr2_npe_method);
@@ -450,6 +453,9 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.nr", rx->id,                           rx->nr);
   GetPropI1("receiver.%d.anf", rx->id,                          rx->anf);
   GetPropI1("receiver.%d.snb", rx->id,                          rx->snb);
+  // GetPropI1("receiver.%d.mnf", rx->id,                          rx->mnf);
+  GetPropF1("receiver.%d.mnf_cfreq", rx->id,                    rx->mnf_cfreq);
+  GetPropF1("receiver.%d.mnf_fbw", rx->id,                      rx->mnf_fbw);
   GetPropI1("receiver.%d.nr_agc", rx->id,                       rx->nr_agc);
   GetPropI1("receiver.%d.nr2_gain_method", rx->id,              rx->nr2_gain_method);
   GetPropI1("receiver.%d.nr2_npe_method", rx->id,               rx->nr2_npe_method);
@@ -811,6 +817,9 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->nr = 0;
   rx->anf = 0;
   rx->snb = 0;
+  rx->mnf = 0;
+  rx->mnf_cfreq = 0.0;
+  rx->mnf_fbw = 80.0;
   rx->nr_agc = 0;                   // NR/NR2/ANF before AGC
   rx->nr2_gain_method = 2;          // Gamma
   rx->nr2_npe_method = 0;           // OSMS
