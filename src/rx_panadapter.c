@@ -759,7 +759,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
   long long half = (long long)rx->sample_rate / 2LL;
-  double vfofreq = ((double) rx->pixels * 0.5) - (double)rx->pan;
+  double vfofreq = ((double)mywidth * 0.5) - (double)rx->pan;
 
   //
   //
@@ -777,7 +777,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
   long long min_display = frequency - half + (long long)((double)rx->pan * HzPerPixel);
-  long long max_display = min_display + (long long)((double)rx->width * HzPerPixel);
+  long long max_display = min_display + (long long)((double)mywidth * HzPerPixel);
 
   if (vfoband == band60 && band_channels_60m != NULL && region > 0) {
     for (i = 0; i < channel_entries; i++) {
@@ -795,8 +795,8 @@ void rx_panadapter_update(RECEIVER *rx) {
   // Filter edges.
   //
   cairo_set_source_rgba (cr, COLOUR_PAN_FILTER);
-  double filter_left = ((double)rx->pixels * 0.5) - (double)rx->pan + (((double)rx->filter_low + offset) / HzPerPixel);
-  double filter_right = ((double)rx->pixels * 0.5) - (double)rx->pan + (((double)rx->filter_high + offset) / HzPerPixel);
+  double filter_left = ((double)mywidth * 0.5) - (double)rx->pan + (((double)rx->filter_low + offset) / HzPerPixel);
+  double filter_right = ((double)mywidth * 0.5) - (double)rx->pan + (((double)rx->filter_high + offset) / HzPerPixel);
   cairo_rectangle(cr, filter_left, 0.0, filter_right - filter_left, myheight);
   cairo_fill(cr);
 
@@ -834,7 +834,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   // pixels distance between frequency markers,
   // and then round upwards to the  next 1/2/5 seris
   //
-  divisor = (rx->sample_rate * 65) / rx->pixels;
+  divisor = (rx->sample_rate * 65) / mywidth;
 
   if (divisor > 500000LL) { divisor = 1000000LL; }
   else if (divisor > 200000LL) { divisor = 500000LL; }
@@ -851,7 +851,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   // Calculate the actual distance of frequency markers
   // (in pixels)
   //
-  int marker_distance = (rx->pixels * divisor) / rx->sample_rate;
+  int marker_distance = (mywidth * divisor) / rx->sample_rate;
   f = ((min_display / divisor) * divisor) + divisor;
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   //
