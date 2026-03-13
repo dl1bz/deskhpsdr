@@ -391,14 +391,9 @@ static void panadapter_apply_cursor(GtkWidget *widget) {
 
   if (window != NULL) {
     GdkCursor *cursor = g_object_get_data(G_OBJECT(widget), "pan_crosshair_cursor");
-    GdkWindow *toplevel = gdk_window_get_effective_toplevel(window);
 
     if (cursor != NULL) {
       gdk_window_set_cursor(window, cursor);
-
-      if (toplevel != NULL && toplevel != window) {
-        gdk_window_set_cursor(toplevel, cursor);
-      }
     }
   }
 }
@@ -409,10 +404,6 @@ static void panadapter_apply_cursor(GtkWidget *widget) {
  */
 static gboolean panadapter_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
   RECEIVER *rx = (RECEIVER *)data;
-
-  if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "pan_mouse_inside"))) {
-    panadapter_apply_cursor(widget);
-  }
 
   if (rx->panadapter_surface) {
     cairo_set_source_surface (cr, rx->panadapter_surface, 0.0, 0.0);
@@ -480,16 +471,6 @@ static gboolean panadapter_button_release_event_cb(GtkWidget *widget, GdkEventBu
   return rx_button_release_event(widget, event, data);
 }
 
-static gboolean panadapter_apply_cursor_idle(gpointer data) {
-  GtkWidget *panadapter = GTK_WIDGET(data);
-
-  if (gtk_widget_get_realized(panadapter)) {
-    panadapter_apply_cursor(panadapter);
-  }
-
-  return G_SOURCE_REMOVE;
-}
-
 static gboolean panadapter_motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
   panadapter_apply_cursor(widget);
   g_object_set_data(G_OBJECT(widget), "pan_mouse_x", GINT_TO_POINTER((int)event->x));
@@ -526,6 +507,7 @@ static GdkCursor *create_crosshair_cursor(GdkDisplay *display) {
 static gboolean panadapter_enter_notify_event_cb(GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
   g_object_set_data(G_OBJECT(widget), "pan_mouse_inside", GINT_TO_POINTER(1));
   panadapter_apply_cursor(widget);
+  gtk_widget_queue_draw(widget);
   return FALSE;
 }
 
@@ -537,24 +519,8 @@ static gboolean panadapter_leave_notify_event_cb(GtkWidget *widget, GdkEventCros
     gdk_window_set_cursor(window, NULL);
   }
 
+  gtk_widget_queue_draw(widget);
   return FALSE;
-}
-
-static gboolean panadapter_toplevel_focus_in_event_cb(GtkWidget *widget, GdkEventFocus *event, gpointer data) {
-  GtkWidget *panadapter = GTK_WIDGET(data);
-  gtk_widget_queue_draw(panadapter);
-  g_idle_add(panadapter_apply_cursor_idle, panadapter);
-  return FALSE;
-}
-
-static void panadapter_realize_cb(GtkWidget *widget, gpointer data) {
-  GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
-
-  if (GTK_IS_WINDOW(toplevel)) {
-    g_signal_connect(toplevel, "focus-in-event",
-                     G_CALLBACK(panadapter_toplevel_focus_in_event_cb),
-                     widget);
-  }
 }
 
 // cppcheck-suppress constParameterCallback
@@ -1091,7 +1057,21 @@ void rx_panadapter_update(RECEIVER *rx) {
       // min_display = vfo[rx->id].frequency - (sample_rate/2) + pan*hz_per_pixel
       {
         long long half = (long long)rx->sample_rate / 2LL;
-        long long min_display = vfo[rx->id].frequency - half
+        long long ph_frequency = vfo[rx->id].frequency;
+        int ph_mode = vfo[rx->id].mode;
+
+        if (diversity_enabled && rx->id == 1) {
+          ph_frequency = vfo[0].frequency;
+          ph_mode = vfo[0].mode;
+        }
+
+        if (ph_mode == modeCWU) {
+          ph_frequency -= cw_keyer_sidetone_frequency;
+        } else if (ph_mode == modeCWL) {
+          ph_frequency += cw_keyer_sidetone_frequency;
+        }
+
+        long long min_display = ph_frequency - half
                                 + (long long)llround((double)rx->pan * rx->hz_per_pixel);
 
         if (!pan_peak_min_display_valid[rx->id]) {
@@ -1745,8 +1725,6 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
                     G_CALLBACK (panadapter_draw_cb), rx);
   g_signal_connect (rx->panadapter, "configure-event",
                     G_CALLBACK (panadapter_configure_event_cb), rx);
-  g_signal_connect (rx->panadapter, "realize",
-                    G_CALLBACK (panadapter_realize_cb), NULL);
   /* Event signals */
   g_signal_connect (rx->panadapter, "motion-notify-event",
                     G_CALLBACK (panadapter_motion_notify_event_cb), rx);
@@ -1772,8 +1750,7 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
                          | GDK_POINTER_MOTION_MASK
                          | GDK_POINTER_MOTION_HINT_MASK
                          | GDK_ENTER_NOTIFY_MASK
-                         | GDK_LEAVE_NOTIFY_MASK
-                         | GDK_FOCUS_CHANGE_MASK);
+                         | GDK_LEAVE_NOTIFY_MASK);
 }
 
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
