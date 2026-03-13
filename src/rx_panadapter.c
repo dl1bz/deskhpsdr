@@ -413,12 +413,36 @@ static gboolean panadapter_motion_notify_event_cb(GtkWidget *widget, GdkEventMot
   return rx_motion_notify_event(widget, event, data);
 }
 
+static GdkCursor *create_crosshair_cursor(GdkDisplay *display) {
+  int size = 24;
+  int center = size / 2;
+  cairo_surface_t *surface =
+    cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
+  cairo_t *cr = cairo_create(surface);
+  /* gelbes Kreuz */
+  // cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 1.0);
+  /* weisses Kreuz */
+  cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+  cairo_set_line_width(cr, 2);
+  cairo_move_to(cr, center, 0);
+  cairo_line_to(cr, center, size);
+  cairo_move_to(cr, 0, center);
+  cairo_line_to(cr, size, center);
+  cairo_stroke(cr);
+  cairo_destroy(cr);
+  GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface(surface, 0, 0, size, size);
+  cairo_surface_destroy(surface);
+  GdkCursor *cursor = gdk_cursor_new_from_pixbuf(display, pixbuf, center, center);
+  g_object_unref(pixbuf);
+  return cursor;
+}
+
 static gboolean panadapter_enter_notify_event_cb(GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
   GdkWindow *window = gtk_widget_get_window(widget);
 
   if (window != NULL) {
     GdkDisplay *display = gdk_window_get_display(window);
-    GdkCursor *cursor = gdk_cursor_new_for_display(display, GDK_CROSSHAIR);
+    GdkCursor *cursor = create_crosshair_cursor(display);
     gdk_window_set_cursor(window, cursor);
     g_object_unref(cursor);
   }
