@@ -393,7 +393,9 @@ static void panadapter_apply_cursor(GtkWidget *widget) {
     GdkCursor *cursor = g_object_get_data(G_OBJECT(widget), "pan_crosshair_cursor");
 
     if (cursor != NULL) {
-      gdk_window_set_cursor(window, cursor);
+      if (gdk_window_get_cursor(window) != cursor) {
+        gdk_window_set_cursor(window, cursor);
+      }
     }
   }
 }
@@ -505,6 +507,8 @@ static GdkCursor *create_crosshair_cursor(GdkDisplay *display) {
 }
 
 static gboolean panadapter_enter_notify_event_cb(GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
+  g_object_set_data(G_OBJECT(widget), "pan_mouse_x", GINT_TO_POINTER((int)event->x));
+  g_object_set_data(G_OBJECT(widget), "pan_mouse_y", GINT_TO_POINTER((int)event->y));
   g_object_set_data(G_OBJECT(widget), "pan_mouse_inside", GINT_TO_POINTER(1));
   panadapter_apply_cursor(widget);
   gtk_widget_queue_draw(widget);
@@ -562,19 +566,27 @@ static const char* (dbm2smeter[NUM_SWERTE + 1]) = {
 
 static unsigned char get_SWert(short int dbm) {
   int i;
+  long long freq;
+  const short int *lowlimits;
+  const short int *uplimits;
+
+  if (active_receiver == NULL) {
+    return NUM_SWERTE;
+  }
+
+  freq = vfo[active_receiver->id].frequency;
+
+  if (freq > 30000000LL) {
+    lowlimits = lowlimitsUKW;
+    uplimits = uplimitsUKW;
+  } else {
+    lowlimits = lowlimitsHF;
+    uplimits = uplimitsHF;
+  }
 
   for (i = 0; i < NUM_SWERTE; i++) {
-    // if VFO > 30 MHz reference S9 = -93dbm
-    if (vfo[active_receiver->id].frequency > 30000000LL) {
-      if ((dbm >= lowlimitsUKW[i]) && (dbm <= uplimitsUKW[i])) {
-        return i;
-      }
-
-      // if VFO <= 30 MHz reference S9 = -73dbm
-    } else {
-      if ((dbm >= lowlimitsHF[i]) && (dbm <= uplimitsHF[i])) {
-        return i;
-      }
+    if ((dbm >= lowlimits[i]) && (dbm <= uplimits[i])) {
+      return i;
     }
   }
 
