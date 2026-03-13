@@ -413,6 +413,29 @@ static gboolean panadapter_motion_notify_event_cb(GtkWidget *widget, GdkEventMot
   return rx_motion_notify_event(widget, event, data);
 }
 
+static gboolean panadapter_enter_notify_event_cb(GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
+  GdkWindow *window = gtk_widget_get_window(widget);
+
+  if (window != NULL) {
+    GdkDisplay *display = gdk_window_get_display(window);
+    GdkCursor *cursor = gdk_cursor_new_for_display(display, GDK_CROSSHAIR);
+    gdk_window_set_cursor(window, cursor);
+    g_object_unref(cursor);
+  }
+
+  return FALSE;
+}
+
+static gboolean panadapter_leave_notify_event_cb(GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
+  GdkWindow *window = gtk_widget_get_window(widget);
+
+  if (window != NULL) {
+    gdk_window_set_cursor(window, NULL);
+  }
+
+  return FALSE;
+}
+
 // cppcheck-suppress constParameterCallback
 static gboolean panadapter_scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data) {
   return rx_scroll_event(widget, event, data);
@@ -1600,6 +1623,10 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
                     G_CALLBACK (panadapter_button_press_event_cb), rx);
   g_signal_connect (rx->panadapter, "button-release-event",
                     G_CALLBACK (panadapter_button_release_event_cb), rx);
+  g_signal_connect (rx->panadapter, "enter-notify-event",
+                    G_CALLBACK (panadapter_enter_notify_event_cb), rx);
+  g_signal_connect (rx->panadapter, "leave-notify-event",
+                    G_CALLBACK (panadapter_leave_notify_event_cb), rx);
   g_signal_connect(rx->panadapter, "scroll_event",
                    G_CALLBACK(panadapter_scroll_event_cb), rx);
   /* Ask to receive events the drawing area doesn't normally
@@ -1612,8 +1639,11 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
                          | GDK_BUTTON1_MOTION_MASK
                          | GDK_SCROLL_MASK
                          | GDK_POINTER_MOTION_MASK
-                         | GDK_POINTER_MOTION_HINT_MASK);
+                         | GDK_POINTER_MOTION_HINT_MASK
+                         | GDK_ENTER_NOTIFY_MASK
+                         | GDK_LEAVE_NOTIFY_MASK);
 }
+
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   char text[64];
   static unsigned int msg_cycle = 0;
