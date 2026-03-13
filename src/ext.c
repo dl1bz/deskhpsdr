@@ -118,6 +118,11 @@ int ext_start_rx(void *data) {
   return G_SOURCE_REMOVE;
 }
 
+int ext_start_noise(void *data) {
+  start_noise();
+  return G_SOURCE_REMOVE;
+}
+
 // cppcheck-suppress constParameterPointer
 int ext_start_tx(void *data) {
   start_tx();
