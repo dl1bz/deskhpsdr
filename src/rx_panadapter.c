@@ -687,6 +687,52 @@ static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
   return value;
 }
 
+static long long panadapter_next_divisor(long long divisor) {
+  if (divisor < 1LL) {
+    return 1LL;
+  }
+
+  if (divisor == 1LL) {
+    return 2LL;
+  } else if (divisor == 2LL) {
+    return 5LL;
+  } else if (divisor == 5LL) {
+    return 10LL;
+  } else if (divisor == 10LL) {
+    return 20LL;
+  } else if (divisor == 20LL) {
+    return 50LL;
+  } else if (divisor == 50LL) {
+    return 100LL;
+  } else if (divisor == 100LL) {
+    return 200LL;
+  } else if (divisor == 200LL) {
+    return 500LL;
+  } else if (divisor == 500LL) {
+    return 1000LL;
+  } else if (divisor == 1000LL) {
+    return 2000LL;
+  } else if (divisor == 2000LL) {
+    return 5000LL;
+  } else if (divisor == 5000LL) {
+    return 10000LL;
+  } else if (divisor == 10000LL) {
+    return 20000LL;
+  } else if (divisor == 20000LL) {
+    return 50000LL;
+  } else if (divisor == 50000LL) {
+    return 100000LL;
+  } else if (divisor == 100000LL) {
+    return 200000LL;
+  } else if (divisor == 200000LL) {
+    return 500000LL;
+  } else if (divisor == 500000LL) {
+    return 1000000LL;
+  }
+
+  return divisor * 2LL;
+}
+
 void rx_panadapter_update(RECEIVER *rx) {
   if (!rx || !rx->panadapter_surface) {
     return;
@@ -904,6 +950,16 @@ void rx_panadapter_update(RECEIVER *rx) {
   else if (divisor >      2LL) { divisor =      5LL; }
   else if (divisor >      1LL) { divisor =      2LL; }
   else { divisor = 1LL; }
+
+  {
+    const double min_marker_px = 40.0;
+    double marker_px = (double)divisor / HzPerPixel;
+
+    while (marker_px < min_marker_px) {
+      divisor = panadapter_next_divisor(divisor);
+      marker_px = (double)divisor / HzPerPixel;
+    }
+  }
 
   //
   // Calculate the actual distance of frequency markers
