@@ -266,6 +266,7 @@ int atuwin_wv_h = 430;
 char atuwin_TITLE[32] = "User Win Title";
 char atuwin_URL[64] = "https://bsdworld.org/DXCC/cqzone/14/latest.webp";
 char atuwin_ACTION[9] = "USER-WIN";
+int save_zoom_state = 0;
 int receivers;
 
 ADC adc[2];
@@ -3310,6 +3311,7 @@ static void radio_restore_state(void) {
   GetPropS0("atuwin_TITLE",                                atuwin_TITLE);
   GetPropS0("atuwin_URL",                                  atuwin_URL);
   GetPropS0("atuwin_ACTION",                               atuwin_ACTION);
+  GetPropI0("save_zoom_state",                             save_zoom_state);
   GetPropI0("use_tx_audiochain",                           use_tx_audiochain);
 
   for (int i = 0; i < n_adc; i++) {
@@ -3584,6 +3586,7 @@ void radio_save_state(void) {
   SetPropS0("atuwin_TITLE",                                atuwin_TITLE);
   SetPropS0("atuwin_URL",                                  atuwin_URL);
   SetPropS0("atuwin_ACTION",                               atuwin_ACTION);
+  SetPropI0("save_zoom_state",                             save_zoom_state);
   SetPropI0("use_tx_audiochain",                           use_tx_audiochain);
 
   for (int i = 0; i < n_adc; i++) {

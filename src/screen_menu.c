@@ -177,6 +177,10 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
   display_pacurr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+static void save_zoom_state_cb(GtkWidget *widget, gpointer data) {
+  save_zoom_state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
 static void display_levels_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->show_levels = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -521,6 +525,15 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_show(b_display_pacurr);
   gtk_grid_attach(GTK_GRID(grid), b_display_pacurr, 1, row, 1, 1);
   g_signal_connect(b_display_pacurr, "toggled", G_CALLBACK(display_pacurr_cb), NULL);
+  //------------------------------------------------------------------------------------------
+  GtkWidget *b_save_zoom_state = gtk_check_button_new_with_label("Save Zoom Level");
+  gtk_widget_set_name(b_save_zoom_state, "boldlabel");
+  gtk_widget_set_tooltip_text(b_save_zoom_state, "Enabled:  Save the current zoom level for next app start\n"
+                                                 "Disabled: Start the app always with zoom level = 1");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_save_zoom_state), save_zoom_state);
+  gtk_widget_show(b_save_zoom_state);
+  gtk_grid_attach(GTK_GRID(grid), b_save_zoom_state, 2, row, 1, 1);
+  g_signal_connect(b_save_zoom_state, "toggled", G_CALLBACK(save_zoom_state_cb), NULL);
 
   //------------------------------------------------------------------------------------------
   if (can_transmit) {

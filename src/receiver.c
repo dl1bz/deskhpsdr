@@ -358,7 +358,11 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.squelch_enable", rx->id,               rx->squelch_enable);
   SetPropF1("receiver.%d.squelch", rx->id,                      rx->squelch);
   SetPropI1("receiver.%d.binaural", rx->id,                     rx->binaural);
-  SetPropI1("receiver.%d.zoom", rx->id,                         rx->zoom);
+
+  if (save_zoom_state) {
+    SetPropI1("receiver.%d.zoom", rx->id,                       rx->zoom);
+  }
+
   SetPropI1("receiver.%d.pan", rx->id,                          rx->pan);
   SetPropI1("receiver.%d.eq_enable", rx->id,                    rx->eq_enable);
 
@@ -485,7 +489,11 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.squelch_enable", rx->id,               rx->squelch_enable);
   GetPropF1("receiver.%d.squelch", rx->id,                      rx->squelch);
   GetPropI1("receiver.%d.binaural", rx->id,                     rx->binaural);
-  GetPropI1("receiver.%d.zoom", rx->id,                         rx->zoom);
+
+  if (save_zoom_state) {
+    GetPropI1("receiver.%d.zoom", rx->id,                       rx->zoom);
+  }
+
   GetPropI1("receiver.%d.pan", rx->id,                          rx->pan);
   GetPropI1("receiver.%d.eq_enable", rx->id,                    rx->eq_enable);
 

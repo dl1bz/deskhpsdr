@@ -226,6 +226,7 @@ extern int atuwin_wv_h;
 extern char atuwin_TITLE[32];
 extern char atuwin_URL[64];
 extern char atuwin_ACTION[9];
+extern int save_zoom_state;
 extern int autogain_enabled;
 extern int autogain_time_enabled;
 
