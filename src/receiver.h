@@ -333,6 +333,7 @@ extern void   rx_set_framerate(RECEIVER *rx);
 extern void   rx_set_frequency(RECEIVER *rx, long long frequency);
 extern void   rx_set_mode(const RECEIVER* rx);
 extern void   rx_set_noise(const RECEIVER *rx);
+extern void   rx_set_notch(const RECEIVER *rx);
 extern void   rx_set_offset(const RECEIVER *rx, long long offset);
 extern void   rx_set_squelch(const RECEIVER *rx);
 

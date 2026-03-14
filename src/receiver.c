@@ -1961,6 +1961,71 @@ void rx_set_offset(const RECEIVER *rx, long long offset) {
   }
 }
 
+void rx_set_notch(const RECEIVER *rx) {
+  long long tunefreq;
+  int mode;
+  double shift = 0.0;
+  double minwidth = 0.0;
+  double width;
+  int nnotches = 0;
+  int rc;
+
+  if (rx == NULL) {
+    return;
+  }
+
+  tunefreq = vfo[rx->id].frequency;
+  mode = vfo[rx->id].mode;
+  width = rx->mnf_fbw;
+
+  if (diversity_enabled && rx->id == 1) {
+    tunefreq = vfo[0].frequency;
+    mode = vfo[0].mode;
+  }
+
+  if (mode == modeCWU) {
+    shift = -(double)cw_keyer_sidetone_frequency;
+  } else if (mode == modeCWL) {
+    shift = (double)cw_keyer_sidetone_frequency;
+  }
+
+  RXANBPSetTuneFrequency(rx->id, (double)tunefreq);
+  RXANBPSetShiftFrequency(rx->id, shift);
+  RXANBPSetAutoIncrease(rx->id, 1);
+  RXANBPGetMinNotchWidth(rx->id, &minwidth);
+
+  if (width < minwidth) {
+    width = minwidth;
+  }
+
+  /* komplette Notchliste löschen */
+  RXANBPGetNumNotches(rx->id, &nnotches);
+
+  while (nnotches > 0) {
+    RXANBPDeleteNotch(rx->id, nnotches - 1);
+    nnotches--;
+  }
+
+  /* neuen Notch anlegen (wenn Frequenz gesetzt) */
+  if (rx->mnf_cfreq > 0.0) {
+    rc = RXANBPAddNotch(rx->id, 0, rx->mnf_cfreq, width, 1);
+
+    if (rc != 0) {
+      t_print("%s: RXANBPAddNotch failed\n", __func__);
+      RXANBPSetNotchesRun(rx->id, 0);
+      return;
+    }
+  }
+
+  /* Filter global aktivieren/deaktivieren */
+  RXANBPSetNotchesRun(rx->id, rx->mnf ? 1 : 0);
+  t_print("%s: notch center frequency: %.6f MHz, notch bandwidth: %.1f Hz, enabled=%d\n",
+          __func__,
+          rx->mnf_cfreq / 1e6,
+          width,
+          rx->mnf);
+}
+
 void rx_set_squelch(const RECEIVER *rx) {
   //
   // This applies the squelch mode stored in rx

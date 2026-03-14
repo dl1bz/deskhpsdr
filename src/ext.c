@@ -135,6 +135,11 @@ int ext_update_noise(void *data) {
   return G_SOURCE_REMOVE;
 }
 
+int ext_update_notch(void *data) {
+  update_notch();
+  return G_SOURCE_REMOVE;
+}
+
 // cppcheck-suppress constParameterPointer
 int ext_update_eq(void *data) {
   update_eq();

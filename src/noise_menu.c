@@ -36,7 +36,6 @@
 #include "message.h"
 #include "wdsp.h"
 #include "sliders.h"
-#include "rx_panadapter.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -104,6 +103,15 @@ void update_noise(void) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+void update_notch(void) {
+  if (active_receiver == NULL) {
+    return;
+  }
+
+  rx_set_notch(active_receiver);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 static void nb_cb(GtkToggleButton *widget, gpointer data) {
   active_receiver->nb = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
   update_noise();
@@ -126,27 +134,13 @@ static void snb_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void mnf_cb(GtkWidget *widget, gpointer data) {
-  RECEIVER *rx = active_receiver;
-
-  if (rx == NULL) {
-    return;
-  }
-
-  rx->mnf = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
-  rx_update_mnf_run_from_gui(rx);
-  update_noise();
+  active_receiver->mnf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  update_notch();
 }
 
 static void mnf_fbw_cb(GtkWidget *widget, gpointer data) {
-  RECEIVER *rx = active_receiver;
-
-  if (rx == NULL) {
-    return;
-  }
-
-  rx->mnf_fbw = (double)(gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)));
-  rx_update_mnf_from_gui(rx);
-  update_noise();
+  active_receiver->mnf_fbw = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  update_notch();
 }
 
 static void post_cb(GtkWidget *widget, gpointer data) {

@@ -30,8 +30,6 @@
 #include <time.h>
 #include <stdint.h>
 
-#include <wdsp.h>
-
 #include "appearance.h"
 #include "agc.h"
 #include "band.h"
@@ -47,6 +45,7 @@
 #include "toolset.h"
 #include "old_protocol.h"
 #include "ext.h"
+#include "noise_menu.h"
 #ifdef GPIO
   #include "gpio.h"
 #endif
@@ -470,126 +469,42 @@ static gboolean panadapter_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data
 
 static double panadapter_get_cursor_rf_frequency(RECEIVER *rx, double x) {
   double hz_per_pixel = rx->hz_per_pixel;
-  long long frequency = vfo[rx->id].frequency;
+  double frequency = (double)vfo[rx->id].frequency;
   int mode = vfo[rx->id].mode;
-  double half = (double)rx->sample_rate / 2.0;
+  double half = (double)rx->sample_rate * 0.5;
   double min_display;
 
   if (diversity_enabled && rx->id == 1) {
-    frequency = vfo[0].frequency;
+    frequency = (double)vfo[0].frequency;
     mode = vfo[0].mode;
   }
 
   if (mode == modeCWU) {
-    frequency -= cw_keyer_sidetone_frequency;
+    frequency -= (double)cw_keyer_sidetone_frequency;
   } else if (mode == modeCWL) {
-    frequency += cw_keyer_sidetone_frequency;
+    frequency += (double)cw_keyer_sidetone_frequency;
   }
 
-  min_display = (double)frequency - half + ((double)rx->pan * hz_per_pixel);
+  min_display = frequency - half + ((double)rx->pan * hz_per_pixel);
   return min_display + (x * hz_per_pixel);
-}
-
-static void panadapter_set_single_mnf_notch(RECEIVER *rx, double fcenter) {
-  long long tunefreq = vfo[rx->id].frequency;
-  int mode = vfo[rx->id].mode;
-  double shift = 0.0;
-  double minwidth = 0.0;
-  int nnotches = 0;
-
-  if (diversity_enabled && rx->id == 1) {
-    tunefreq = vfo[0].frequency;
-    mode = vfo[0].mode;
-  }
-
-  if (mode == modeCWU) {
-    shift = -(double)cw_keyer_sidetone_frequency;
-  } else if (mode == modeCWL) {
-    shift = (double)cw_keyer_sidetone_frequency;
-  }
-
-  RXANBPSetTuneFrequency(rx->id, (double)tunefreq);
-  RXANBPSetShiftFrequency(rx->id, shift);
-  RXANBPSetAutoIncrease(rx->id, 1);
-  RXANBPGetMinNotchWidth(rx->id, &minwidth);
-
-  if (rx->mnf_fbw < minwidth) {
-    rx->mnf_fbw = minwidth;
-  }
-
-  /* komplette Notchliste löschen */
-  RXANBPGetNumNotches(rx->id, &nnotches);
-
-  while (nnotches > 0) {
-    RXANBPDeleteNotch(rx->id, nnotches - 1);
-    nnotches--;
-  }
-
-  /* genau einen neuen Notch anlegen */
-  if (RXANBPAddNotch(rx->id, 0, fcenter, rx->mnf_fbw, 1) == 0) {
-    RXANBPSetNotchesRun(rx->id, rx->mnf ? 1 : 0);
-  }
-
-  t_print("%s: notch center frequency: %.6f MHz, notch bandwidth: %.1f, enabled=%d\n",
-          __func__,
-          fcenter / 1e6,
-          rx->mnf_fbw,
-          rx->mnf);
-}
-
-void rx_update_mnf_from_gui(RECEIVER *rx) {
-  if (rx == NULL) {
-    return;
-  }
-
-  if (rx->mnf_cfreq <= 0.0) {
-    return;
-  }
-
-  panadapter_set_single_mnf_notch(rx, rx->mnf_cfreq);
-}
-
-void rx_update_mnf_run_from_gui(RECEIVER *rx) {
-  if (rx == NULL) {
-    return;
-  }
-
-  RXANBPSetNotchesRun(rx->id, rx->mnf ? 1 : 0);
-  t_print("%s: notch_enable=%d\n", __func__, rx->mnf);
-
-  if (rx->panadapter != NULL) {
-    gtk_widget_queue_draw(rx->panadapter);
-  }
 }
 
 static gboolean panadapter_button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   RECEIVER *rx = (RECEIVER *)data;
 
   if (event->button == GDK_BUTTON_SECONDARY) {
-    /* SHIFT + Right Click → MNF löschen */
     if (event->state & GDK_SHIFT_MASK) {
-      int nnotches = 0;
-      RXANBPGetNumNotches(rx->id, &nnotches);
-
-      while (nnotches > 0) {
-        RXANBPDeleteNotch(rx->id, nnotches - 1);
-        nnotches--;
-      }
-
       rx->mnf = 0;
-      RXANBPSetNotchesRun(rx->id, 0);
+      rx->mnf_cfreq = 0.0;
+      update_notch();
       gtk_widget_queue_draw(widget);
       return TRUE;
     }
 
-    double fcenter = panadapter_get_cursor_rf_frequency(rx, event->x);
+    rx->mnf_cfreq = panadapter_get_cursor_rf_frequency(rx, event->x);
 
-    if (active_receiver != NULL) {
-      active_receiver->mnf_cfreq = fcenter;
-    }
-
-    if (active_receiver->mnf) {
-      panadapter_set_single_mnf_notch(rx, fcenter);
+    if (rx->mnf) {
+      update_notch();
     } else {
       g_idle_add(ext_start_noise, NULL);
     }

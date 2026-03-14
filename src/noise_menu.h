@@ -22,3 +22,4 @@
 extern void noise_menu(GtkWidget *parent);
 
 extern void update_noise(void);
+extern void update_notch(void);
