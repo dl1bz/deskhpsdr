@@ -42,7 +42,9 @@ static int width;
 static int height;
 
 static GtkWidget *zoompan;
+static GtkWidget *zoom_btn;
 static GtkWidget *zoom_label;
+static gulong zoom_btn_signal_id;
 static GtkWidget *zoom_scale;
 static gulong zoom_signal_id;
 static GtkWidget *pan_label;
@@ -53,6 +55,7 @@ static GtkWidget *peak_btn;
 static GtkWidget *peak_label;
 static gulong peak_btn_signal_id;
 static GMutex peak_mutex;
+static GMutex zoom_mutex;
 
 int zoompan_active_receiver_changed(void *data) {
   if (display_zoompan) {
@@ -135,7 +138,7 @@ void remote_set_zoom(int rx, double value) {
   //t_print("remote_set_zoom: EXIT\n");
 }
 
-static void toggle_cb(GtkWidget *widget, gpointer data) {
+static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
 
   if (active_receiver) {
@@ -147,11 +150,26 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   g_mutex_unlock(&peak_mutex);
 }
 
+static void zoom_toggle_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+  g_mutex_lock(&zoom_mutex);
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  g_mutex_unlock(&zoom_mutex);
+}
+
 void update_peak_btn(void) {
   if (display_zoompan) {
     g_signal_handler_block(G_OBJECT(peak_btn), peak_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(peak_btn), pan_peak_hold_enabled);
     g_signal_handler_unblock(G_OBJECT(peak_btn), peak_btn_signal_id);
+  }
+}
+
+void update_zoom_btn(void) {
+  if (display_zoompan) {
+    g_signal_handler_block(G_OBJECT(zoom_btn), zoom_btn_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_btn), save_zoom_state);
+    g_signal_handler_unblock(G_OBJECT(zoom_btn), zoom_btn_signal_id);
   }
 }
 
@@ -237,16 +255,25 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   GtkWidget *zoom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 5px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(zoom_box, zoombox_width, widget_height);
   //-----------------------------------------------------------------------------------------------------------
-  zoom_label = gtk_label_new("Zoom");
-  WEAKEN(zoom_label);
-  gtk_widget_set_name(zoom_label, "boldlabel_border_blue");
-  // Label breiter erzwingen
-  gtk_widget_set_size_request(zoom_label, 105, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(zoom_label, 5);
-  gtk_widget_set_margin_bottom(zoom_label, 5);
-  gtk_widget_set_margin_end(zoom_label, 5);    // rechter Rand (Ende)
-  gtk_widget_set_halign(zoom_label, GTK_ALIGN_START);
-  gtk_widget_set_valign(zoom_label, GTK_ALIGN_CENTER);
+  zoom_btn = gtk_toggle_button_new_with_label("Zoom");
+  WEAKEN(zoom_btn);
+  gtk_widget_set_name(zoom_btn, "medium_toggle_button");
+  // gtk_widget_set_name(zoom_btn, "front_toggle_button");
+  gtk_widget_set_tooltip_text(zoom_btn, "Enabled:  Save the current zoom level for next app start\n"
+                                        "Disabled: Start the app always with zoom level = 1");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_btn), save_zoom_state);
+  // begin label definition inside button
+  zoom_label = gtk_bin_get_child(GTK_BIN(zoom_btn));
+  gtk_label_set_justify(GTK_LABEL(zoom_label), GTK_JUSTIFY_CENTER);
+  // end label definition
+  gtk_widget_set_size_request(zoom_btn, 105, -1);  // z.B. 100px
+  gtk_widget_set_margin_top(zoom_btn, 5);
+  gtk_widget_set_margin_bottom(zoom_btn, 5);
+  gtk_widget_set_margin_end(zoom_btn, 5);    // rechter Rand (Ende)
+  gtk_widget_set_margin_start(zoom_btn, 0);    // linker Rand (Anfang)
+  gtk_widget_set_halign(zoom_btn, GTK_ALIGN_START);
+  gtk_widget_set_valign(zoom_btn, GTK_ALIGN_CENTER);
+  zoom_btn_signal_id = g_signal_connect(zoom_btn, "toggled", G_CALLBACK(zoom_toggle_cb), &save_zoom_state);
   //-----------------------------------------------------------------------------------------------------------
   zoom_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 1.0, MAX_ZOOM, 1.00);
   WEAKEN(zoom_scale);
@@ -262,7 +289,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
 
   zoom_signal_id = g_signal_connect(G_OBJECT(zoom_scale), "value_changed", G_CALLBACK(zoom_value_changed_cb), NULL);
   // Widgets in Box packen
-  gtk_box_pack_start(GTK_BOX(zoom_box), zoom_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(zoom_box), zoom_btn, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(zoom_box), zoom_scale, TRUE, TRUE, 0);
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(zoompan), zoom_box, /* column */ 0, /* row */ 0, /* width */ 1, /* height */ 1);
@@ -289,7 +316,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_margin_start(peak_btn, 0);    // linker Rand (Anfang)
   gtk_widget_set_halign(peak_btn, GTK_ALIGN_START);
   gtk_widget_set_valign(peak_btn, GTK_ALIGN_CENTER);
-  peak_btn_signal_id = g_signal_connect(peak_btn, "toggled", G_CALLBACK(toggle_cb), &pan_peak_hold_enabled);
+  peak_btn_signal_id = g_signal_connect(peak_btn, "toggled", G_CALLBACK(peak_toggle_cb), &pan_peak_hold_enabled);
   //-------------------------------------------------------------------------------------------
   pan_label = gtk_label_new("Pan");
   WEAKEN(pan_label);

@@ -38,6 +38,8 @@
 #include "vfo.h"
 #include "ext.h"
 
+#include "zoompan.h"
+
 static GtkWidget *dialog = NULL;
 static GtkWidget *wide_b = NULL;
 static GtkWidget *height_b = NULL;
@@ -179,6 +181,7 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
 
 static void save_zoom_state_cb(GtkWidget *widget, gpointer data) {
   save_zoom_state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  update_zoom_btn();
 }
 
 static void display_levels_cb(GtkWidget *widget, gpointer data) {

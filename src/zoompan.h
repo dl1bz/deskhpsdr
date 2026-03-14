@@ -34,4 +34,5 @@ extern void remote_set_pan(int rx, double value);
 extern void remote_set_zoom(int rx, double value);
 
 extern void update_peak_btn(void);
+extern void update_zoom_btn(void);
 #endif
