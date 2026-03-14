@@ -914,7 +914,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   // (in pixels)
   //
   int marker_distance = (mywidth * divisor) / rx->sample_rate;
-  f = ((min_display / divisor) * divisor) + divisor;
+  f = ((long long)floor(min_display / (double)divisor) * divisor) + divisor;
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   //
   // If space is available, increase font size of freq. labels a bit
