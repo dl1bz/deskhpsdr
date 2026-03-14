@@ -801,15 +801,15 @@ void rx_panadapter_update(RECEIVER *rx) {
     vfofreq -= (double) cw_keyer_sidetone_frequency / HzPerPixel;
   }
 
-  long long min_display = frequency - half + (long long)((double)rx->pan * HzPerPixel);
-  long long max_display = min_display + (long long)((double)mywidth * HzPerPixel);
+  double min_display = (double)frequency - (double)half + ((double)rx->pan * HzPerPixel);
+  double max_display = min_display + ((double)mywidth * HzPerPixel);
 
   if (vfoband == band60 && band_channels_60m != NULL && region > 0) {
     for (i = 0; i < channel_entries; i++) {
       long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
       long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
-      double x1 = (double) (low_freq - min_display) / HzPerPixel;
-      double x2 = (double) (hi_freq - min_display) / HzPerPixel;
+      double x1 = ((double)low_freq - min_display) / HzPerPixel;
+      double x2 = ((double)hi_freq - min_display) / HzPerPixel;
       cairo_set_source_rgba(cr, COLOUR_PAN_60M_OPQ);
       cairo_rectangle(cr, x1, 0.0, x2 - x1, myheight);
       cairo_fill(cr);
@@ -828,9 +828,9 @@ void rx_panadapter_update(RECEIVER *rx) {
   //----------------------------------------------------------------------------------------------
   // MNF
   if (rx->mnf && rx->mnf_cfreq > 0.0) {
-    if (rx->mnf_cfreq >= (double)min_display &&
-        rx->mnf_cfreq <= (double)max_display) {
-      double mnf_x = (rx->mnf_cfreq - (double)min_display) / HzPerPixel;
+    if (rx->mnf_cfreq >= min_display &&
+        rx->mnf_cfreq <= max_display) {
+      double mnf_x = (rx->mnf_cfreq - min_display) / HzPerPixel;
       double mnf_w = rx->mnf_fbw / HzPerPixel;
       double mnf_left = mnf_x - (mnf_w * 0.5);
       cairo_save(cr);
@@ -923,7 +923,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
 
   while (f < max_display) {
-    double x = (double)(f - min_display) / HzPerPixel;
+    double x = ((double)f - min_display) / HzPerPixel;
     cairo_move_to(cr, x, 0);
     cairo_line_to(cr, x, myheight);
 
@@ -982,7 +982,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         continue;
       }
 
-      double x = (double)(pl->freq - min_display) / HzPerPixel;
+      double x = ((double)pl->freq - min_display) / HzPerPixel;
       pos[pos_count].index = m;
       pos[pos_count].x = x;
       pos[pos_count].row = 0;
@@ -1057,16 +1057,16 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_source_rgba(cr, COLOUR_ALARM);
     cairo_set_line_width(cr, PAN_LINE_THICK);
 
-    if ((min_display < band->frequencyMin) && (max_display > band->frequencyMin)) {
-      double x = (double)(band->frequencyMin - min_display) / HzPerPixel;
+    if ((min_display < (double)band->frequencyMin) && (max_display > (double)band->frequencyMin)) {
+      double x = ((double)band->frequencyMin - min_display) / HzPerPixel;
       cairo_move_to(cr, x, 0);
       cairo_line_to(cr, x, myheight);
       cairo_set_line_width(cr, PAN_LINE_EXTRA);
       cairo_stroke(cr);
     }
 
-    if ((min_display < band->frequencyMax) && (max_display > band->frequencyMax)) {
-      double x = (double) (band->frequencyMax - min_display) / HzPerPixel;
+    if ((min_display < (double)band->frequencyMax) && (max_display > (double)band->frequencyMax)) {
+      double x = ((double)band->frequencyMax - min_display) / HzPerPixel;
       cairo_move_to(cr, x, 0);
       cairo_line_to(cr, x, myheight);
       cairo_set_line_width(cr, PAN_LINE_EXTRA);
