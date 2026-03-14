@@ -883,7 +883,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   // pixels distance between frequency markers,
   // and then round upwards to the  next 1/2/5 seris
   //
-  divisor = (rx->sample_rate * 65) / mywidth;
+  divisor = (long long)(HzPerPixel * 65.0);
 
   if (divisor > 500000LL) { divisor = 1000000LL; }
   else if (divisor > 200000LL) { divisor = 500000LL; }
@@ -894,7 +894,16 @@ void rx_panadapter_update(RECEIVER *rx) {
   else if (divisor >   5000LL) { divisor =  10000LL; }
   else if (divisor >   2000LL) { divisor =   5000LL; }
   else if (divisor >   1000LL) { divisor =   2000LL; }
-  else { divisor =   1000LL; }
+  else if (divisor >    500LL) { divisor =   1000LL; }
+  else if (divisor >    200LL) { divisor =    500LL; }
+  else if (divisor >    100LL) { divisor =    200LL; }
+  else if (divisor >     50LL) { divisor =    100LL; }
+  else if (divisor >     20LL) { divisor =     50LL; }
+  else if (divisor >     10LL) { divisor =     20LL; }
+  else if (divisor >      5LL) { divisor =     10LL; }
+  else if (divisor >      2LL) { divisor =      5LL; }
+  else if (divisor >      1LL) { divisor =      2LL; }
+  else { divisor = 1LL; }
 
   //
   // Calculate the actual distance of frequency markers
