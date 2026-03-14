@@ -687,19 +687,6 @@ static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
   return value;
 }
 
-/*
-int compare_doubles(const void *a, const void *b) {
-  double arg1 = *(const double *)a;
-  double arg2 = *(const double *)b;
-
-  if (arg1 < arg2) { return -1; }
-
-  if (arg1 > arg2) { return 1; }
-
-  return 0;
-}
-*/
-
 void rx_panadapter_update(RECEIVER *rx) {
   if (!rx || !rx->panadapter_surface) {
     return;
