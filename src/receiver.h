@@ -190,6 +190,7 @@ typedef struct _receiver {
   int panadapter_peaks_as_smeter;
   int panadapter_ovf_on;
   int panadapter_autoscale_enabled;
+  int pan_peak_preserve;
 
   int waterfall_low;
   int waterfall_high;

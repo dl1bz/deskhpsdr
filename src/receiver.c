@@ -809,6 +809,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_peaks_as_smeter = 0;
   rx->panadapter_ovf_on  = 1;
   rx->panadapter_autoscale_enabled = 0;
+  rx->pan_peak_preserve = 0;
   rx->waterfall_high = -55;
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;

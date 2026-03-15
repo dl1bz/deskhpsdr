@@ -1295,20 +1295,24 @@ void rx_panadapter_update(RECEIVER *rx) {
   for (i = 1; i < mywidth; i++) {
     double s2;
 
-    if (i == mywidth - 1) {
-      s2 = (double)samples[i + pan] + soffset;
+    if (rx->pan_peak_preserve) {
+      if (i == mywidth - 1) {
+        s2 = (double)samples[i + pan] + soffset;
+      } else {
+        double yv = (double)samples[i + pan - 1];
+
+        if ((double)samples[i + pan] > yv) {
+          yv = (double)samples[i + pan];
+        }
+
+        if ((double)samples[i + pan + 1] > yv) {
+          yv = (double)samples[i + pan + 1];
+        }
+
+        s2 = yv + soffset;
+      }
     } else {
-      double yv = (double)samples[i + pan - 1];
-
-      if ((double)samples[i + pan] > yv) {
-        yv = (double)samples[i + pan];
-      }
-
-      if ((double)samples[i + pan + 1] > yv) {
-        yv = (double)samples[i + pan + 1];
-      }
-
-      s2 = yv + soffset;
+      s2 = (double)samples[i + pan] + soffset;
     }
 
     s2 = floor((rx->panadapter_high - s2)
