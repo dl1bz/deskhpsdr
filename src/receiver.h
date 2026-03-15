@@ -191,6 +191,7 @@ typedef struct _receiver {
   int panadapter_ovf_on;
   int panadapter_autoscale_enabled;
   int pan_peak_preserve;
+  int pan_window_type;
 
   int waterfall_low;
   int waterfall_high;

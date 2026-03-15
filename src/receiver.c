@@ -300,6 +300,7 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   SetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
   SetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
+  SetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
   SetPropI1("receiver.%d.display_waterfall", rx->id,            rx->display_waterfall);
   SetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   SetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
@@ -432,6 +433,7 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   GetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
   GetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
+  GetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
   GetPropI1("receiver.%d.display_waterfall", rx->id,            rx->display_waterfall);
   GetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   GetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
@@ -812,6 +814,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_ovf_on  = 1;
   rx->panadapter_autoscale_enabled = 0;
   rx->pan_peak_preserve = 0;
+  rx->pan_window_type = 5;
   rx->waterfall_high = -55;
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;
@@ -1589,7 +1592,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const double span_min_freq = 0.0;
   const double span_max_freq = 0.0;
   const int clip = 0;
-  const int window_type = 2; // 5 = Kaiser, 2 = Hann
+  const int window_type = rx->pan_window_type; // 5 = Kaiser, 2 = Hann
   int afft_size = 16384;
   const int pixels = rx->pixels;
   const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth

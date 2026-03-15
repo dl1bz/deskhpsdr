@@ -198,6 +198,31 @@ static void pan_peak_preserve_cb(GtkWidget *widget, gpointer data) {
   }
 
   g_idle_add(ext_vfo_update, NULL);
+  radio_reconfigure();
+}
+
+static void pan_window_type_cb(GtkComboBox *widget, gpointer data) {
+  int state = gtk_combo_box_get_active(widget);
+
+  if (!active_receiver->display_panadapter) {
+    return;
+  }
+
+  if (state < 0 || state > 6) {
+    state = 5;  /* Kaiser */
+  }
+
+  t_print("%s: WDSP RX: select new FFT_window_type = %d\n", __func__, state);
+
+  for (int i = 0; i < RECEIVERS; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->pan_window_type = state;
+      rx_set_analyzer(receiver[i]);
+    }
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
+  radio_reconfigure();
 }
 
 static void display_levels_cb(GtkWidget *widget, gpointer data) {
@@ -303,8 +328,8 @@ void screen_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  char _title[32];
-  snprintf(_title, 32, "%s - Screen Layout", PGNAME);
+  char _title[64];
+  snprintf(_title, sizeof(_title), "%s - Screen Options & Layout", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
@@ -565,6 +590,22 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_show(b_pan_peak_preserve);
   gtk_grid_attach(GTK_GRID(grid), b_pan_peak_preserve, 1, row, 1, 1);
   g_signal_connect(b_pan_peak_preserve, "toggled", G_CALLBACK(pan_peak_preserve_cb), NULL);
+  //------------------------------------------------------------------------------------------
+  /* ComboBox */
+  GtkWidget *fft_window_combo = gtk_combo_box_text_new();
+  gtk_widget_set_tooltip_text(fft_window_combo, "[RX] FFT Window Type");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Rectangular");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "4-term Blackman-Harris");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Hann");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Flat-top");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Hamming");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Kaiser");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "7-term Blackman-Harris");
+  /* aktuellen Wert setzen */
+  gtk_combo_box_set_active(GTK_COMBO_BOX(fft_window_combo), active_receiver->pan_window_type);
+  gtk_grid_attach(GTK_GRID(grid), fft_window_combo, 2, row, 1, 1);
+  /* Callback */
+  g_signal_connect(fft_window_combo, "changed", G_CALLBACK(pan_window_type_cb), NULL);
 
   //------------------------------------------------------------------------------------------
   if (can_transmit) {
