@@ -184,6 +184,22 @@ static void save_zoom_state_cb(GtkWidget *widget, gpointer data) {
   update_zoom_btn();
 }
 
+// static void pan_peak_preserve_cb(GtkWidget *widget, gpointer data) {
+//   active_receiver->pan_peak_preserve = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+// }
+
+static void pan_peak_preserve_cb(GtkWidget *widget, gpointer data) {
+  gboolean state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  for (int i = 0; i < RECEIVERS; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->pan_peak_preserve = state;
+    }
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 static void display_levels_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->show_levels = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -529,14 +545,26 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), b_display_pacurr, 1, row, 1, 1);
   g_signal_connect(b_display_pacurr, "toggled", G_CALLBACK(display_pacurr_cb), NULL);
   //------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------
+  row++;
   GtkWidget *b_save_zoom_state = gtk_check_button_new_with_label("Save Zoom Level");
   gtk_widget_set_name(b_save_zoom_state, "boldlabel");
   gtk_widget_set_tooltip_text(b_save_zoom_state, "Enabled:  Save the current zoom level for next app start\n"
                                                  "Disabled: Start the app always with zoom level = 1");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_save_zoom_state), save_zoom_state);
   gtk_widget_show(b_save_zoom_state);
-  gtk_grid_attach(GTK_GRID(grid), b_save_zoom_state, 2, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), b_save_zoom_state, 0, row, 1, 1);
   g_signal_connect(b_save_zoom_state, "toggled", G_CALLBACK(save_zoom_state_cb), NULL);
+  //------------------------------------------------------------------------------------------
+  GtkWidget *b_pan_peak_preserve = gtk_check_button_new_with_label("Preserve Narrow Peaks");
+  gtk_widget_set_name(b_pan_peak_preserve, "boldlabel");
+  gtk_widget_set_tooltip_text(b_pan_peak_preserve,
+                              "Uses a local peak detector to preserve narrow signals in the panadapter display.\n"
+                              "Improves visibility at high zoom levels but slightly modifies exact amplitudes.");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_pan_peak_preserve), active_receiver->pan_peak_preserve);
+  gtk_widget_show(b_pan_peak_preserve);
+  gtk_grid_attach(GTK_GRID(grid), b_pan_peak_preserve, 1, row, 1, 1);
+  g_signal_connect(b_pan_peak_preserve, "toggled", G_CALLBACK(pan_peak_preserve_cb), NULL);
 
   //------------------------------------------------------------------------------------------
   if (can_transmit) {
