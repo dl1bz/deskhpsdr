@@ -638,7 +638,10 @@ void screen_menu(GtkWidget *parent) {
   //------------------------------------------------------------------------------------------
   /* ComboBox */
   GtkWidget *fft_window_combo = gtk_combo_box_text_new();
-  gtk_widget_set_tooltip_text(fft_window_combo, "[RX] FFT Window Type");
+  gtk_widget_set_tooltip_text(fft_window_combo, "[RX] FFT Window Type\n"
+                                                "Selects the FFT window used for spectrum processing.\n"
+                                                "Different windows trade off frequency resolution,\n"
+                                                "side-lobe suppression and amplitude accuracy.");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Rectangular");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "4-term Blackman-Harris");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Hann");
