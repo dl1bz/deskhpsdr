@@ -301,6 +301,7 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
   SetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
   SetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
+  SetPropI1("receiver.%d.pan_fft_size", rx->id,                 rx->pan_fft_size);
   SetPropI1("receiver.%d.display_waterfall", rx->id,            rx->display_waterfall);
   SetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   SetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
@@ -434,6 +435,7 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
   GetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
   GetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
+  GetPropI1("receiver.%d.pan_fft_size", rx->id,                 rx->pan_fft_size);
   GetPropI1("receiver.%d.display_waterfall", rx->id,            rx->display_waterfall);
   GetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   GetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
@@ -815,6 +817,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_autoscale_enabled = 0;
   rx->pan_peak_preserve = 0;
   rx->pan_window_type = 5;
+  rx->pan_fft_size = 0;   /* Auto */
   rx->waterfall_high = -55;
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;
@@ -1593,7 +1596,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const double span_max_freq = 0.0;
   const int clip = 0;
   const int window_type = rx->pan_window_type; // 5 = Kaiser, 2 = Hann
-  int afft_size = 16384;
+  int afft_size;
   const int pixels = rx->pixels;
   const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
 
@@ -1603,25 +1606,30 @@ void rx_set_analyzer(const RECEIVER *rx) {
   // spectrum thus have to clip off
   //
   if (rx->id == PS_RX_FEEDBACK) {
+    afft_size = 16384;
     fscLin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
     fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
   } else {
-    // echte Zoom-Auflösung: FFT folgt grob width*zoom, aber in Stufen
-    int want = rx->width * rx->zoom;
+    if (rx->pan_fft_size > 0) {
+      afft_size = rx->pan_fft_size;
+    } else {
+      int want = rx->width * rx->zoom;
 
-    if (want <= 16384) { afft_size = 16384; }
-    else if (want <= 32768) { afft_size = 32768; }
-    else if (want <= 65536) { afft_size = 65536; }
-    else if (want <= 131072) { afft_size = 131072; }
-    else { afft_size = 262144; }
+      if (want <= 16384) { afft_size = 16384; }
+      else if (want <= 32768) { afft_size = 32768; }
+      else if (want <= 65536) { afft_size = 65536; }
+      else if (want <= 131072) { afft_size = 131072; }
+      else { afft_size = 262144; }
+    }
   }
 
   int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
                                     keep_time * (double) afft_size * (double) rx->fps);
   int overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
-  t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d afft_size=%d\n", rx->id,
+  t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d afft_size=%d bin_width=%.3f Hz\n",
+          rx->id,
           rx->buffer_size,
-          overlap, rx->pixels, window_type, afft_size);
+          overlap, rx->pixels, window_type, afft_size, (double)rx->sample_rate / (double)afft_size);
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination

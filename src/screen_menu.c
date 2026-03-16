@@ -225,6 +225,51 @@ static void pan_window_type_cb(GtkComboBox *widget, gpointer data) {
   radio_reconfigure();
 }
 
+static void pan_fft_size_cb(GtkComboBox *widget, gpointer data) {
+  int state = gtk_combo_box_get_active(widget);
+  int fft_size;
+
+  switch (state) {
+  case 0:
+    fft_size = 0;
+    break;
+
+  case 1:
+    fft_size = 16384;
+    break;
+
+  case 2:
+    fft_size = 32768;
+    break;
+
+  case 3:
+    fft_size = 65536;
+    break;
+
+  case 4:
+    fft_size = 131072;
+    break;
+
+  case 5:
+    fft_size = 262144;
+    break;
+
+  default:
+    fft_size = 0;
+    break;
+  }
+
+  for (int i = 0; i < RECEIVERS; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->pan_fft_size = fft_size;
+      rx_set_analyzer(receiver[i]);
+    }
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
+  radio_reconfigure();
+}
+
 static void display_levels_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->show_levels = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -599,13 +644,59 @@ void screen_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Hann");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Flat-top");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Hamming");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Kaiser");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Kaiser (default)");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "7-term Blackman-Harris");
   /* aktuellen Wert setzen */
   gtk_combo_box_set_active(GTK_COMBO_BOX(fft_window_combo), active_receiver->pan_window_type);
   gtk_grid_attach(GTK_GRID(grid), fft_window_combo, 2, row, 1, 1);
   /* Callback */
   g_signal_connect(fft_window_combo, "changed", G_CALLBACK(pan_window_type_cb), NULL);
+  //------------------------------------------------------------------------------------------
+  GtkWidget *fft_size_combo = gtk_combo_box_text_new();
+  gtk_widget_set_tooltip_text(fft_size_combo, "Selects the FFT size used for the RX panadapter.\n"
+                                              "Larger FFT sizes improve frequency resolution but reduce display speed.\n"
+                                              "\nSimilar to Thetis Bin Width/Hz: rx->sample_rate / fft_size");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "Auto (default)");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "16384");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "32768");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "65536");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "131072");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "262144");
+  int fft_state = 0;
+
+  switch (active_receiver->pan_fft_size) {
+  case 0:
+    fft_state = 0;
+    break;
+
+  case 16384:
+    fft_state = 1;
+    break;
+
+  case 32768:
+    fft_state = 2;
+    break;
+
+  case 65536:
+    fft_state = 3;
+    break;
+
+  case 131072:
+    fft_state = 4;
+    break;
+
+  case 262144:
+    fft_state = 5;
+    break;
+
+  default:
+    fft_state = 0;
+    break;
+  }
+
+  gtk_combo_box_set_active(GTK_COMBO_BOX(fft_size_combo), fft_state);
+  gtk_grid_attach(GTK_GRID(grid), fft_size_combo, 3, row, 1, 1);
+  g_signal_connect(fft_size_combo, "changed", G_CALLBACK(pan_fft_size_cb), NULL);
 
   //------------------------------------------------------------------------------------------
   if (can_transmit) {
