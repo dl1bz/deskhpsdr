@@ -1612,6 +1612,15 @@ void rx_set_analyzer(const RECEIVER *rx) {
   } else {
     if (rx->pan_fft_size > 0) {
       afft_size = rx->pan_fft_size;
+
+      if (afft_size != 16384 &&
+          afft_size != 32768 &&
+          afft_size != 65536 &&
+          afft_size != 131072 &&
+          afft_size != 262144) {
+        t_print("%s: invalid pan_fft_size=%d, fallback to 16384\n", __func__, afft_size);
+        afft_size = 16384;
+      }
     } else {
       int want = rx->width * rx->zoom;
 

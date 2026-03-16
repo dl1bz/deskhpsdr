@@ -618,7 +618,7 @@ void screen_menu(GtkWidget *parent) {
   //------------------------------------------------------------------------------------------
   row++;
   GtkWidget *b_save_zoom_state = gtk_check_button_new_with_label("Save Zoom Level");
-  gtk_widget_set_name(b_save_zoom_state, "boldlabel");
+  gtk_widget_set_name(b_save_zoom_state, "boldlabel_blue");
   gtk_widget_set_tooltip_text(b_save_zoom_state, "Enabled:  Save the current zoom level for next app start\n"
                                                  "Disabled: Start the app always with zoom level = 1");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_save_zoom_state), save_zoom_state);
@@ -627,7 +627,7 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(b_save_zoom_state, "toggled", G_CALLBACK(save_zoom_state_cb), NULL);
   //------------------------------------------------------------------------------------------
   GtkWidget *b_pan_peak_preserve = gtk_check_button_new_with_label("Preserve Narrow Peaks");
-  gtk_widget_set_name(b_pan_peak_preserve, "boldlabel");
+  gtk_widget_set_name(b_pan_peak_preserve, "boldlabel_blue");
   gtk_widget_set_tooltip_text(b_pan_peak_preserve,
                               "Uses a local peak detector to preserve narrow signals in the panadapter display.\n"
                               "Improves visibility at high zoom levels but slightly modifies exact amplitudes.");
@@ -660,11 +660,26 @@ void screen_menu(GtkWidget *parent) {
                                               "Larger FFT sizes improve frequency resolution but reduce display speed.\n"
                                               "\nSimilar to Thetis Bin Width/Hz: rx->sample_rate / fft_size");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "Auto (default)");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "16384");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "32768");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "65536");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "131072");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "262144");
+  int fft_base = 16384;
+  double combobox_sr = 0.0;
+
+  if (active_receiver != NULL) {
+    combobox_sr = (double)active_receiver->sample_rate;
+  }
+
+  for (int i = 0; i < 5; i++) {
+    char buf[32];
+
+    if (combobox_sr > 0.0) {
+      snprintf(buf, sizeof(buf), "%d = %.3f Hz", fft_base, combobox_sr / (double)fft_base);
+    } else {
+      snprintf(buf, sizeof(buf), "%d", fft_base);
+    }
+
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, buf);
+    fft_base *= 2;
+  }
+
   int fft_state = 0;
 
   switch (active_receiver->pan_fft_size) {
