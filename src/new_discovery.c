@@ -69,8 +69,17 @@ void print_device(int i) {
 
 void new_discovery(void) {
   struct ifaddrs *addrs, *ifa;
-  int i, is_local;
-  getifaddrs(&addrs);
+  struct in_addr resolved_addr;
+  struct addrinfo hints, *res = NULL;
+  int i, is_local, rc;
+  int resolved = 0;
+  rc = getifaddrs(&addrs);
+
+  if (rc != 0) {
+    t_perror("new_discovery: getifaddrs failed");
+    return;
+  }
+
   ifa = addrs;
 
   while (ifa) {
@@ -105,10 +114,33 @@ void new_discovery(void) {
   // it via a routed UDP packet.
   //
   is_local = 0;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_DGRAM;
+  rc = getaddrinfo(ipaddr_radio, NULL, &hints, &res);
+
+  if (rc == 0 && res != NULL) {
+    if (res->ai_family == AF_INET &&
+        res->ai_addrlen >= (socklen_t)sizeof(struct sockaddr_in)) {
+      struct sockaddr_in addr;
+      memcpy(&addr, res->ai_addr, sizeof(addr));
+      resolved_addr = addr.sin_addr;
+      resolved = 1;
+    }
+
+    freeaddrinfo(res);
+    res = NULL;
+  }
 
   for (i = 0; i < devices; i++) {
-    if (!strncmp(inet_ntoa(discovered[i].info.network.address.sin_addr), ipaddr_radio, 20)
-        && discovered[i].protocol == NEW_PROTOCOL) {
+    if (discovered[i].protocol != NEW_PROTOCOL) {
+      continue;
+    }
+
+    if ((resolved &&
+         discovered[i].info.network.address.sin_addr.s_addr == resolved_addr.s_addr) ||
+        (!resolved &&
+         strcmp(inet_ntoa(discovered[i].info.network.address.sin_addr), ipaddr_radio) == 0)) {
       is_local = 1;
     }
   }
@@ -208,18 +240,45 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 #endif
     break;
 
-  case 2:
+  case 2: {
     //
-    // prepeare socket for sending an UPD packet to ipaddr_radio
+    // prepare socket for sending an UDP packet to ipaddr_radio
     //
+    struct addrinfo hints, *res = NULL;
+    int gai_rc;
     interface_addr.sin_family = AF_INET;
     interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(&to_addr, 0, sizeof(to_addr));
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(radio_port);
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    gai_rc = getaddrinfo(ipaddr_radio, NULL, &hints, &res);
 
-    if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
-      return;
+    if (gai_rc == 0 && res != NULL) {
+      if (res->ai_family == AF_INET &&
+          res->ai_addrlen >= (socklen_t)sizeof(struct sockaddr_in)) {
+        struct sockaddr_in addr;
+        memcpy(&addr, res->ai_addr, sizeof(addr));
+        to_addr.sin_addr = addr.sin_addr;
+        freeaddrinfo(res);
+      } else {
+        freeaddrinfo(res);
+        t_print("new_discover: resolved address for %s is not valid AF_INET\n",
+                ipaddr_radio);
+        return;
+      }
+    } else {
+      if (res != NULL) {
+        freeaddrinfo(res);
+      }
+
+      if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
+        t_print("new_discover: cannot resolve radio address %s: %s\n",
+                ipaddr_radio, gai_strerror(gai_rc));
+        return;
+      }
     }
 
     t_print("discover: looking for HPSDR device with IP %s\n", ipaddr_radio);
@@ -229,8 +288,8 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       t_perror("discover: create socket failed for discovery_socket:");
       return;
     }
-
-    break;
+  }
+  break;
 
   default:
     return;
@@ -238,8 +297,15 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
   }
 
   int optval = 1;
-  setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-  setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+
+  if (setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0) {
+    t_perror("new_discover: setsockopt SO_REUSEADDR failed");
+  }
+
+  if (setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) != 0) {
+    t_perror("new_discover: setsockopt SO_REUSEPORT failed");
+  }
+
   rc = devices;
   // start a receive thread to collect discovery response packets
   discover_thread_id = g_thread_new( "new discover receive", new_discover_receive_thread, NULL);
@@ -321,6 +387,10 @@ gpointer new_discover_receive_thread(gpointer data) {
     int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &len);
 
     if (bytes_read < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        break;
+      }
+
       t_print("new_discover: bytes read %d\n", bytes_read);
       t_perror("new_discover: recvfrom socket failed for discover_receive_thread");
       break;
