@@ -278,7 +278,6 @@ int main(int argc, char *argv[]) {
   int bytes_read, bytes_left;
   uint32_t *code0 = (uint32_t *) buffer;  // fast access to code of first buffer
   double run, off, off2, inc;
-  int listen_port = 1024;
   struct timeval tvzero = {0, 0};
   fd_set fds;
   int fd;
@@ -372,21 +371,10 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    if (!strncmp(argv[i], "-port", 5)) {
-      if (i < argc - 1) {
-        sscanf(argv[++i], "%d", &listen_port);
-
-        if (listen_port < 1 || listen_port > 65535) { listen_port = 1024; }
-
-        continue;
-      }
-    }
-
     t_print("Unknown option: %s\n", argv[i]);
     t_print("Valid options are: -atlas | -metis  | -hermes     | -hermes2     | -angelia |\n");
     t_print("                   -orion | -orion2 | -hermeslite | -hermeslite2 | -c25     |\n");
     t_print("                   -diversity | -fast | -slow    |\n");
-    t_print("                   -port <num>\n");
     t_print("                   -nb <num> <width>\n");
     exit(8);
   }
@@ -630,7 +618,7 @@ int main(int argc, char *argv[]) {
   memset(&addr_udp, 0, sizeof(addr_udp));
   addr_udp.sin_family = AF_INET;
   addr_udp.sin_addr.s_addr = htonl(INADDR_ANY);
-  addr_udp.sin_port = htons(listen_port);
+  addr_udp.sin_port = htons(1024);
 
   if (bind(sock_udp, (struct sockaddr *)&addr_udp, sizeof(addr_udp)) < 0) {
     t_perror("bind");
