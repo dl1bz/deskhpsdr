@@ -171,6 +171,9 @@ struct hl2word {
   unsigned char c4;
 } hl2addr[128];
 
+int bind_addr_valid;
+struct in_addr bind_addr;
+
 const double hl2drv[16] = { 0.421697, 0.446684, 0.473151, 0.501187, 0.530884, 0.562341, 0.595662,
                             0.630957, 0.668344, 0.707946, 0.749894, 0.794328, 0.841395, 0.891251,
                             0.944061, 1.000000
@@ -257,6 +260,8 @@ void my_signal_handler(int sig) {
 
 
 int main(int argc, char *argv[]) {
+  bind_addr_valid = 0;
+  memset(&bind_addr, 0, sizeof(bind_addr));
   int i, j, size;
   int count = 0;
   pthread_t thread;
@@ -371,10 +376,25 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    if (!strncmp(argv[i], "-bind", 5)) {
+      if (i < argc - 1) {
+        if (inet_aton(argv[++i], &bind_addr) == 0) {
+          t_print("Invalid bind address: %s\n", argv[i]);
+          exit(8);
+        }
+
+        bind_addr_valid = 1;
+        continue;
+      } else {
+        t_print("Missing IPv4 after -bind\n");
+        exit(8);
+      }
+    }
+
     t_print("Unknown option: %s\n", argv[i]);
     t_print("Valid options are: -atlas | -metis  | -hermes     | -hermes2     | -angelia |\n");
     t_print("                   -orion | -orion2 | -hermeslite | -hermeslite2 | -c25     |\n");
-    t_print("                   -diversity | -fast | -slow    |\n");
+    t_print("                   -diversity | -fast | -slow | -bind <ipv4>\n");
     t_print("                   -nb <num> <width>\n");
     exit(8);
   }
@@ -617,7 +637,13 @@ int main(int argc, char *argv[]) {
   setsockopt(sock_udp, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
   memset(&addr_udp, 0, sizeof(addr_udp));
   addr_udp.sin_family = AF_INET;
-  addr_udp.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  if (bind_addr_valid) {
+    addr_udp.sin_addr = bind_addr;
+  } else {
+    addr_udp.sin_addr.s_addr = htonl(INADDR_ANY);
+  }
+
   addr_udp.sin_port = htons(1024);
 
   if (bind(sock_udp, (struct sockaddr *)&addr_udp, sizeof(addr_udp)) < 0) {

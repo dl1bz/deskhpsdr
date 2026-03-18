@@ -54,6 +54,9 @@
 EXTERN int ODEVICE;
 EXTERN int NDEVICE;
 
+EXTERN int bind_addr_valid;
+EXTERN struct in_addr bind_addr;
+
 //
 // A table of (random) noise the whole spectrum
 // This is a very long table such that there is no audible "beating"
