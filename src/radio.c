@@ -3623,7 +3623,8 @@ void radio_save_state(void) {
   sync();
 
   if (radio && radio->name[0] != '\0' && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
-    snprintf(property_path_bak, sizeof(property_path_bak), "bak%d_%s_%s_%s", (int)backup_index, radio->name, inet_ntoa(radio->info.network.address.sin_addr), property_path);
+    snprintf(property_path_bak, sizeof(property_path_bak), "bak%d_%s_%s_%s", (int)backup_index, radio->name,
+             inet_ntoa(radio->info.network.address.sin_addr), property_path);
     saveProperties(property_path_bak);
     sync();
   }
