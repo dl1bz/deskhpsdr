@@ -152,7 +152,7 @@ DISCOVERED *radio = NULL;
 gboolean radio_is_remote = FALSE;     // only used with CLIENT_SERVER
 
 static char property_path[128];
-static char property_path_bak[128];
+static char property_path_bak[256];
 int backup_index = 0;
 static GMutex property_mutex;
 
@@ -3622,8 +3622,8 @@ void radio_save_state(void) {
   saveProperties(property_path);
   sync();
 
-  if (radio && radio->name[0] != '\0') {
-    snprintf(property_path_bak, sizeof(property_path_bak), "bak%d_%s_%s", (int)backup_index, radio->name, property_path);
+  if (radio && radio->name[0] != '\0' && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
+    snprintf(property_path_bak, sizeof(property_path_bak), "bak%d_%s_%s_%s", (int)backup_index, radio->name, inet_ntoa(radio->info.network.address.sin_addr), property_path);
     saveProperties(property_path_bak);
     sync();
   }
