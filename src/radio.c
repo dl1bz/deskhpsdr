@@ -251,6 +251,7 @@ int mic_input_xlr = 0;
 struct audio_profile mic_prof = {0, {"NOMIC", "NOMIC", "NOMIC"}};
 int autogain_enabled = 0;
 int autogain_time_enabled = 0;
+int block_cat_rx_if_tune = 1;
 char own_callsign[16] = "YOUR_CALLSIGN";
 char own_locator[15] = "JO01AA";
 char dxc_login[16] = "YOUR_CALLSIGN";
@@ -3214,6 +3215,7 @@ static void radio_restore_state(void) {
 
   GetPropI0("autogain_enabled",                              autogain_enabled);
   GetPropI0("autogain_time_enabled",                         autogain_time_enabled);
+  GetPropI0("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
   GetPropI0("tx_filter_low",                                 tx_filter_low);
   GetPropI0("tx_filter_high",                                tx_filter_high);
   GetPropI0("cw_keys_reversed",                              cw_keys_reversed);
@@ -3498,6 +3500,7 @@ void radio_save_state(void) {
 
   SetPropI0("autogain_enabled",                              autogain_enabled);
   SetPropI0("autogain_time_enabled",                         autogain_time_enabled);
+  SetPropI0("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
   SetPropI0("tx_filter_low",                                 tx_filter_low);
   SetPropI0("tx_filter_high",                                tx_filter_high);
   SetPropI0("cw_keys_reversed",                              cw_keys_reversed);

@@ -1151,20 +1151,29 @@ void update_slider_binaural_btn(void) {
   }
 }
 
-void update_slider_tune_drive_btn(void) {
-  if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON (tune_drive_btn), tune_drive_btn_signal_id);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tune_drive_btn), !(radio_get_tune()));
+static gboolean update_slider_tune_drive_btn_main(gpointer data) {
+  gboolean current_tune_state = GPOINTER_TO_INT(data);
 
-    if (radio_get_tune()) {
+  if (display_sliders) {
+    g_signal_handler_block(GTK_TOGGLE_BUTTON(tune_drive_btn), tune_drive_btn_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tune_drive_btn), !current_tune_state);
+
+    if (current_tune_state) {
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNING");
     } else {
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE");
     }
 
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (tune_drive_btn), tune_drive_btn_signal_id);
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(tune_drive_btn), tune_drive_btn_signal_id);
     gtk_widget_queue_draw(tune_drive_btn);
   }
+
+  return G_SOURCE_REMOVE;
+}
+
+void update_slider_tune_drive_btn(void) {
+  gboolean current_tune_state = radio_get_tune();
+  g_main_context_invoke(NULL, update_slider_tune_drive_btn_main, GINT_TO_POINTER(current_tune_state));
 }
 
 static void tune_drive_toggle_cb(GtkWidget *widget, gpointer data) {

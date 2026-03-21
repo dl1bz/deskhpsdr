@@ -6381,10 +6381,11 @@ int parse_cmd(void *data) {
       if (command[2] == ';') {
         int state = radio_get_tune();
 
-        if (!state) {
-          radio_mox_update(0);
+        if (state && block_cat_rx_if_tune) {
+          t_print("%s: TUNE state = %d -> switch to RX via CAT blocked during TUNE\n", __func__, state);
         } else {
-          t_print("%s: TUNE state = %d -> switch to RX via CAT blocked until TUNE finished.\n", __func__, state);
+          radio_mox_update(0);
+          update_slider_tune_drive_btn();
         }
       }
 

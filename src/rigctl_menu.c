@@ -64,6 +64,12 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+static void block_cat_rx_if_tune_cb(GtkWidget *widget, gpointer data) {
+  if (can_transmit) {
+    block_cat_rx_if_tune = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  }
+}
+
 static void tcp_autoreporting_cb(GtkWidget *widget, gpointer data) {
   rigctl_tcp_autoreporting = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
@@ -347,8 +353,18 @@ void rigctl_menu(GtkWidget *parent) {
 #endif
   gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_debug);
-  gtk_grid_attach(GTK_GRID(grid), w, 4, row, 4, 1);
+  gtk_grid_attach(GTK_GRID(grid), w, 2, row, 2, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(rigctl_debug_cb), NULL);
+  GtkWidget *block_cat_rx_if_tune_btn = gtk_check_button_new_with_label("Block [RX] CAT command during TUNE");
+  gtk_widget_set_tooltip_text(block_cat_rx_if_tune_btn,
+                              "If ENABLED, the [RX] CAT command is blocked if the radio is in active TUNE state.\n\n"
+                              "Some apps (e.g. iDigi) send a [RX] CAT command, if they aren't switch to [TX] by itself.\n"
+                              "In this case a running TUNE process will be stopped immediately.\n"
+                              "This option change this behavior and block the [RX] CAT command during an active TUNE.");
+  gtk_widget_set_name(block_cat_rx_if_tune_btn, "boldlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (block_cat_rx_if_tune_btn), block_cat_rx_if_tune);
+  gtk_grid_attach(GTK_GRID(grid), block_cat_rx_if_tune_btn, 4, row, 2, 1);
+  g_signal_connect(block_cat_rx_if_tune_btn, "toggled", G_CALLBACK(block_cat_rx_if_tune_cb), NULL);
   row++;
   w = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_widget_set_size_request(w, -1, 3);

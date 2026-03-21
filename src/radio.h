@@ -229,6 +229,7 @@ extern char atuwin_ACTION[9];
 extern int save_zoom_state;
 extern int autogain_enabled;
 extern int autogain_time_enabled;
+extern int block_cat_rx_if_tune;
 
 extern int receivers;
 
