@@ -6379,7 +6379,13 @@ int parse_cmd(void *data) {
       //SET       RX;
       //ENDDEF
       if (command[2] == ';') {
-        radio_mox_update(0);
+        int state = radio_get_tune();
+
+        if (!state) {
+          radio_mox_update(0);
+        } else {
+          t_print("%s: TUNE state = %d -> switch to RX via CAT blocked until TUNE finished.\n", __func__, state);
+        }
       }
 
       break;
