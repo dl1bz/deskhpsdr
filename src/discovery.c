@@ -471,10 +471,10 @@ void discovery(void) {
                    d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2", d->software_version,
                    d->fpga_version, macStr);
         } else {
-          snprintf(text, sizeof(text), "%s (%s %s) %s (%s) on %s: ",
+          snprintf(text, sizeof(text), "%s %s (%s) %s (%s) on %s: ",
                    d->name,
-                   d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2",
                    version,
+                   d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2",
                    inet_ntoa(d->info.network.address.sin_addr),
                    macStr,
                    d->info.network.interface_name);
