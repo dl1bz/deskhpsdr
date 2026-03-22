@@ -286,6 +286,7 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.sample_rate", rx->id,                  rx->sample_rate);
   SetPropI1("receiver.%d.filter_low", rx->id,                   rx->filter_low);
   SetPropI1("receiver.%d.filter_high", rx->id,                  rx->filter_high);
+  SetPropI1("receiver.%d.use_cw_dp_filter", rx->id,             rx->use_cw_dp_filter);
   SetPropI1("receiver.%d.fps", rx->id,                          rx->fps);
   SetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
   SetPropI1("receiver.%d.panadapter_high", rx->id,              rx->panadapter_high);
@@ -420,6 +421,7 @@ void rx_restore_state(RECEIVER *rx) {
 
   GetPropI1("receiver.%d.filter_low", rx->id,                   rx->filter_low);
   GetPropI1("receiver.%d.filter_high", rx->id,                  rx->filter_high);
+  GetPropI1("receiver.%d.use_cw_dp_filter", rx->id,             rx->use_cw_dp_filter);
   GetPropI1("receiver.%d.fps", rx->id,                          rx->fps);
   GetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
   GetPropI1("receiver.%d.panadapter_high", rx->id,              rx->panadapter_high);
@@ -898,6 +900,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->binaural = 0;
   rx->filter_high = 525;
   rx->filter_low = 275;
+  rx->use_cw_dp_filter = 1;
   rx->deviation = 2500;
   rx->mute_radio = 0;
 #ifdef __APPLE__
@@ -1835,14 +1838,26 @@ void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
 
     if (w < 0.0) { w = -w; }      // This happens with CWL
 
-    if (w < 25.0) { w = 25.0; }   // Do not go below 25 Hz
+    if (w < 25.0) { w = 25.0; }   // Do not go below 25 Hz to avoid ringing
 
-    SetRXASPCWFreq(rx->id, freq);
-    SetRXASPCWBandwidth(rx->id, w);
-    SetRXASPCWGain(rx->id, 1.50);
+    if (rx->use_cw_dp_filter) {
+      // new since WDSP 1.29
+      SetRXADoublepoleFreqs(rx->id, freq, w);
+      SetRXADoublepoleGain(rx->id, 1.50);
+    } else {
+      SetRXASPCWFreq(rx->id, freq);
+      SetRXASPCWBandwidth(rx->id, w);
+      SetRXASPCWGain(rx->id, 1.50);
+    }
   }
 
-  SetRXASPCWRun(rx->id, state);
+  if (rx->use_cw_dp_filter) {
+    // new since WDSP 1.29
+    SetRXADoublepoleRun(rx->id, state);
+  } else {
+    SetRXASPCWRun(rx->id, state);
+  }
+  t_print("%s: rx->use_cw_dp_filter = %d state = %d\n", __func__, rx->use_cw_dp_filter, state);
 }
 
 void rx_set_detector(const RECEIVER *rx) {

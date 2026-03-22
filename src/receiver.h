@@ -170,6 +170,7 @@ typedef struct _receiver {
 
   int filter_low;
   int filter_high;
+  int use_cw_dp_filter;
 
   int width;
   int height;

@@ -89,6 +89,19 @@ static void cw_peak_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+static void use_cw_dp_filter_cb(GtkWidget *widget, gpointer data) {
+  gboolean state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  for (int i = 0; i < RECEIVERS; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->use_cw_dp_filter = state;
+    }
+  }
+
+  rx_filter_changed(active_receiver);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 static gboolean default_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int mode = vfo[active_receiver->id].mode;
   int f = GPOINTER_TO_INT(data);
@@ -632,8 +645,19 @@ void filter_menu(GtkWidget *parent) {
       gtk_widget_set_name(cw_peak_b, "boldlabel");
       gtk_widget_set_halign(cw_peak_b, GTK_ALIGN_START);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_peak_b), vfo[active_receiver->id].cwAudioPeakFilter);
-      gtk_grid_attach(GTK_GRID(grid), cw_peak_b, 2, 0, 5, 1);
+      gtk_grid_attach(GTK_GRID(grid), cw_peak_b, 2, 0, 4, 1);
       g_signal_connect(cw_peak_b, "toggled", G_CALLBACK(cw_peak_cb), NULL);
+
+      GtkWidget *use_cw_dp_filter_btn = gtk_check_button_new_with_label("'double pole' CW Audio peak filter");
+      gtk_widget_set_tooltip_text(use_cw_dp_filter_btn,
+                                  "If enabled:\n"
+                                  "Use the newer 'double pole' CW Audio peak filter,\n"
+                                  "which is available since WDSP 1.29");
+      gtk_widget_set_name(use_cw_dp_filter_btn, "boldlabel");
+      gtk_widget_set_halign(use_cw_dp_filter_btn, GTK_ALIGN_START);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (use_cw_dp_filter_btn), active_receiver->use_cw_dp_filter);
+      g_signal_connect(use_cw_dp_filter_btn, "toggled", G_CALLBACK(use_cw_dp_filter_cb), NULL);
+      gtk_grid_attach(GTK_GRID(grid), use_cw_dp_filter_btn, 6, 0, 4, 1);
     }
   }
 
