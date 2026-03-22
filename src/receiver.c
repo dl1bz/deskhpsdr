@@ -1857,6 +1857,7 @@ void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
   } else {
     SetRXASPCWRun(rx->id, state);
   }
+
   t_print("%s: rx->use_cw_dp_filter = %d state = %d\n", __func__, rx->use_cw_dp_filter, state);
 }
 

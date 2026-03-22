@@ -1785,17 +1785,17 @@ void radio_start_radio(void) {
       // it does not fit  in windows 640 pixels wide.
       // if needed, the MAC address of the radio can be
       // found in the ABOUT menu.
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s) %s on %s",
+      snprintf(text, 1024, "%s by DL1BZ %s[%s] :: WDSP Version %d.%02d :: SDR Device: %s (%s) %s on %s [%s]",
                PGNAME,
                build_version,
                unameData.machine,
                GetWDSPVersion() / 100,
                GetWDSPVersion() % 100,
                radio->name,
-               p,
                version,
                ip,
-               iface);
+               iface,
+               p);
     }
 
     break;

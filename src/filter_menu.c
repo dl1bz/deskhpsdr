@@ -647,7 +647,6 @@ void filter_menu(GtkWidget *parent) {
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_peak_b), vfo[active_receiver->id].cwAudioPeakFilter);
       gtk_grid_attach(GTK_GRID(grid), cw_peak_b, 2, 0, 4, 1);
       g_signal_connect(cw_peak_b, "toggled", G_CALLBACK(cw_peak_cb), NULL);
-
       GtkWidget *use_cw_dp_filter_btn = gtk_check_button_new_with_label("'double pole' CW Audio peak filter");
       gtk_widget_set_tooltip_text(use_cw_dp_filter_btn,
                                   "If enabled:\n"
