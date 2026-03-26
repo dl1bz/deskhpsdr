@@ -1842,6 +1842,7 @@ void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
 
     if (rx->use_cw_dp_filter) {
       // new since WDSP 1.29
+      SetRXASPCWSelection(rx->id, 0); // select new double pole filter type
       SetRXADoublepoleFreqs(rx->id, freq, w);
       SetRXADoublepoleGain(rx->id, 1.50);
     } else {
