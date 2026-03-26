@@ -1840,23 +1840,24 @@ void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
 
     if (w < 25.0) { w = 25.0; }   // Do not go below 25 Hz to avoid ringing
 
-    if (rx->use_cw_dp_filter) {
-      // new since WDSP 1.29
-      SetRXASPCWSelection(rx->id, 0); // select new double pole filter type
-      SetRXADoublepoleFreqs(rx->id, freq, w);
-      SetRXADoublepoleGain(rx->id, 1.50);
-    } else {
-      SetRXASPCWFreq(rx->id, freq);
-      SetRXASPCWBandwidth(rx->id, w);
-      SetRXASPCWGain(rx->id, 1.50);
-    }
+    SetRXADoublepoleFreqs(rx->id, freq, w);
+    SetRXADoublepoleGain(rx->id, 1.50);
+    SetRXABiQuadFreq (rx->id, freq);
+    SetRXABiQuadBandwidth (rx->id, w);
+    SetRXABiQuadGain (rx->id, 1.50);
   }
 
   if (rx->use_cw_dp_filter) {
     // new since WDSP 1.29
+    SetRXAMatchedRun (rx->id, 0);
+    SetRXAGaussianRun (rx->id, 0);
+    SetRXABiQuadRun (rx->id, 0);
     SetRXADoublepoleRun(rx->id, state);
   } else {
-    SetRXASPCWRun(rx->id, state);
+    SetRXADoublepoleRun (rx->id, 0);
+    SetRXAMatchedRun (rx->id, 0);
+    SetRXAGaussianRun (rx->id, 0);
+    SetRXABiQuadRun (rx->id, state);
   }
 
   t_print("%s: rx->use_cw_dp_filter = %d state = %d\n", __func__, rx->use_cw_dp_filter, state);
