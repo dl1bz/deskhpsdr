@@ -1833,46 +1833,36 @@ void rx_set_bandpass(const RECEIVER *rx) {
 }
 
 void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
-  /*
-    If using the WDSP wrapper function set SetRXASPCWxxx() deskHPSDR crash with unknown reason.
-    If I execute inside of the wrapper function included steps manually step-by-step,
-    this crash problem is gone.
-  */
-  if (state) {
-    double w = 0.25 * (rx->filter_high - rx->filter_low);
+  double w = 0.25 * (rx->filter_high - rx->filter_low);
+  int filter_selection;
 
-    if (w < 0.0) { w = -w; }      // This happens with CWL
+  if (w < 0.0) { w = -w; }      // This happens with CWL
 
-    if (w < 25.0) { w = 25.0; }   // Do not go below 25 Hz to avoid ringing
+  if (w < 25.0) { w = 25.0; }   // Do not go below 25 Hz to avoid ringing
 
-    // initialize ALL used CW filter types in deskHPSDR (BiQuad and DoublePole)
-    SetRXADoublepoleFreqs(rx->id, freq, w);
-    SetRXADoublepoleGain(rx->id, 1.50);
-    SetRXABiQuadFreq (rx->id, freq);
-    SetRXABiQuadBandwidth (rx->id, w);
-    SetRXABiQuadGain (rx->id, 1.50);
-  }
+  SetRXASPCWFreq(rx->id, freq);
+  SetRXASPCWBandwidth(rx->id, w);
+  SetRXASPCWGain(rx->id, 1.50);
+  SetRXASPCWRun(rx->id, state);
 
   if (rx->use_cw_dp_filter) {
     // new since WDSP 1.29: a double pole CW filter
-    //
-    // switch OFF all unsed filter types
-    SetRXAMatchedRun (rx->id, 0);
-    SetRXAGaussianRun (rx->id, 0);
-    SetRXABiQuadRun (rx->id, 0);
-    // switch ON double pole CW filter
-    SetRXADoublepoleRun(rx->id, state);
+    filter_selection = 0;
   } else {
     // use BiQuad CW filter (which should be the default CW filter -> look into WDSP documentation)
-    //
-    // switch OFF all unsed filter types
-    SetRXADoublepoleRun (rx->id, 0);
-    SetRXAMatchedRun (rx->id, 0);
-    SetRXAGaussianRun (rx->id, 0);
-    // switch ON BiQuad CW filter
-    SetRXABiQuadRun (rx->id, state);
+    filter_selection = 3;
   }
 
+  /*
+    WDSP APF selections 1 (Matched) and 2 (Gaussian) crash reproducibly
+    in deskHPSDR RX processing. Only selection 0 (Double-pole) and
+    selection 3 (Bi-quad) are allowed here.
+  */
+  if (filter_selection == 1 || filter_selection == 2) {
+    filter_selection = 3; // prevent for using Matched or Gaussian filter type
+  }
+
+  SetRXASPCWSelection(rx->id, filter_selection);
   t_print("%s: rx->use_cw_dp_filter = %d state = %d\n", __func__, rx->use_cw_dp_filter, state);
 }
 
