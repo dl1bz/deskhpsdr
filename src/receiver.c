@@ -1833,6 +1833,11 @@ void rx_set_bandpass(const RECEIVER *rx) {
 }
 
 void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
+  /*
+    If using the WDSP wrapper function set SetRXASPCWxxx() deskHPSDR crash with unknown reason.
+    If I execute inside of the wrapper function included steps manually step-by-step,
+    this crash problem is gone.
+  */
   if (state) {
     double w = 0.25 * (rx->filter_high - rx->filter_low);
 
@@ -1840,6 +1845,7 @@ void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
 
     if (w < 25.0) { w = 25.0; }   // Do not go below 25 Hz to avoid ringing
 
+    // initialize ALL used CW filter types in deskHPSDR (BiQuad and DoublePole)
     SetRXADoublepoleFreqs(rx->id, freq, w);
     SetRXADoublepoleGain(rx->id, 1.50);
     SetRXABiQuadFreq (rx->id, freq);
@@ -1848,15 +1854,22 @@ void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
   }
 
   if (rx->use_cw_dp_filter) {
-    // new since WDSP 1.29
+    // new since WDSP 1.29: a double pole CW filter
+    //
+    // switch OFF all unsed filter types
     SetRXAMatchedRun (rx->id, 0);
     SetRXAGaussianRun (rx->id, 0);
     SetRXABiQuadRun (rx->id, 0);
+    // switch ON double pole CW filter
     SetRXADoublepoleRun(rx->id, state);
   } else {
+    // use BiQuad CW filter (which should be the default CW filter -> look into WDSP documentation)
+    //
+    // switch OFF all unsed filter types
     SetRXADoublepoleRun (rx->id, 0);
     SetRXAMatchedRun (rx->id, 0);
     SetRXAGaussianRun (rx->id, 0);
+    // switch ON BiQuad CW filter
     SetRXABiQuadRun (rx->id, state);
   }
 
