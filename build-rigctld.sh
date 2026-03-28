@@ -17,7 +17,11 @@ USE_HAMLIB_456=ON
 #
 OS_TYPE=$(uname)
 HAMLIB_DIR="${PWD}/hamlib-static"
-HAMLIB_GIT="https://github.com/Hamlib/Hamlib.git"
+if [ "$OS_TYPE" = "Darwin" ]; then
+  HAMLIB_GIT="https://github.com/dl1bz/Hamlib.git"
+else
+  HAMLIB_GIT="https://github.com/Hamlib/Hamlib.git"
+fi
 SRC_DIR="${PWD}"
 
 if [ ! -d "$HAMLIB_DIR" ]; then
