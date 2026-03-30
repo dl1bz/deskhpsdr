@@ -1727,7 +1727,11 @@ static void process_control_bytes(void) {
       //      >=0xF0 -> Fehlercode
       //
       hl2_iob_tuner_status = control_in[4];
-      t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
+
+      if (!fake_iob) {
+        t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
+      }
+
 #endif
     }
 
@@ -3239,11 +3243,16 @@ void ozy_send_buffer(void) {
 
       case 1:
         if (hl2_query_count == 0) {
-          output_buffer[C0] = 0xFA;       // I2C-2 *with* ACK
-          output_buffer[C1] = 0x07;       // read
-          output_buffer[C2] = 0x80 | 0x41;// i2c addr
-          output_buffer[C3] = 0x00;       // register
-          output_buffer[C4] = 0x00;       // data (ignored on read)
+          if (!fake_iob) {
+            output_buffer[C0] = 0xFA;       // I2C-2 *with* ACK
+            output_buffer[C1] = 0x07;       // read
+            output_buffer[C2] = 0x80 | 0x41;// i2c addr
+            output_buffer[C3] = 0x00;       // register
+            output_buffer[C4] = 0x00;       // data (ignored on read)
+          } else {
+            hl2_iob_present = 1;            // FORCE DETECT
+          }
+
           hl2_query_count = 25;
         } else {
           hl2_query_count--;

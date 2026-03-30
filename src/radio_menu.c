@@ -1034,6 +1034,23 @@ void radio_menu(GtkWidget *parent) {
 
   col = 2;
 
+  if (device == DEVICE_HERMES_LITE2) {
+    row++;
+    ChkBtn = gtk_check_button_new_with_label("HL2 Force Pico as IOB");
+    gtk_widget_set_name(ChkBtn, "boldlabel");
+    gtk_widget_set_tooltip_text(ChkBtn,
+                                "Bypass the IO Board auto-detection on 0x41 using PCA9536D\n"
+                                "if we use only a Raspberry Pico with N2ADRs Pico IO Board Software\n"
+                                "without using a 'real' IO Board.\n\n"
+                                "If ENABLED, we force deskHPSDR that an IO Board is connected.\n"
+                                "This activate the required I2C communication for\n"
+                                "the connected Raspberry Pico on SDA2/SCL2");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), fake_iob);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &fake_iob);
+    row--;
+  }
+
   switch (device) {
   case NEW_DEVICE_ORION2:
   case NEW_DEVICE_SATURN: {

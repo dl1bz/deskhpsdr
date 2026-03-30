@@ -216,6 +216,7 @@ char g_lpf_data[6][64];
 int lpf_udp_valid = 0;
 
 int use_tx_audiochain = 1;
+int fake_iob = 0;
 
 int display_zoompan = 0;
 int display_sliders = 0;
@@ -3196,6 +3197,7 @@ static void radio_restore_state(void) {
 
   if (device == DEVICE_HERMES_LITE2) {
     GetPropI0("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
+    GetPropI0("fake_iob",                                    fake_iob);
   }
 
   GetPropI0("rx200_udp_port",                                rx200_udp_port);
@@ -3481,6 +3483,7 @@ void radio_save_state(void) {
 
   if (device == DEVICE_HERMES_LITE2) {
     SetPropI0("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
+    SetPropI0("fake_iob",                                    fake_iob);
   }
 
   SetPropI0("rx200_udp_port",                                rx200_udp_port);
