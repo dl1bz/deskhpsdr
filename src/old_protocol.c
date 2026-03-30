@@ -3243,6 +3243,23 @@ void ozy_send_buffer(void) {
 
       case 1:
         if (hl2_query_count == 0) {
+          /*
+           * N2ADRs IO Board use a hard-wired PCA9536D for the board detection on 0x41 (look schematic N2ADR IO Board)
+           * If we want using only a Raspberry Pico on the I2C Bus for our own DIY projects, we need bypass this detection,
+           * because we havn't an PCA9536D installed.
+           * Solution in this case: We jump over this detection routine a set simply hl2_iob_present = 1 and give deskHPSDR
+           * the information, we HAVE such an IO Board. This starts the needed protocol extensions for communication via I2C
+           * with our Raspberry Pico only. So you can use N2ADRs firmware code base for your own projects without buying the
+           * IO Board for the HL2.
+           *
+           * Example:
+           * I build and program a LPF controller for my PA using only a Raspberry Pico. I adapt N2ADR firmware code base
+           * and create an own appliction for the Pico with some special functions. I need for this the current frequency of the HL2 to
+           * switch the LPF, because my LPF is very special and has a different gradation than usual. And I use the register 7 for control my
+           * PTT line between HL2 and PA, in the case of TUNE the PTT line is interrupted between HL2 and PA, otherwise the PTT line is active.
+           * For all this I create a special design for this LPF controller without the need of the HL2 IO Board.
+           *
+          */
           if (!fake_iob) {
             output_buffer[C0] = 0xFA;       // I2C-2 *with* ACK
             output_buffer[C1] = 0x07;       // read
