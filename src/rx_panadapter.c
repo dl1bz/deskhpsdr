@@ -2278,6 +2278,11 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, width - 300.0, 70.0);
       snprintf(_text, sizeof(_text), "LPF %s", g_lpf_data[0]);
       cairo_show_text(cr, _text);
+    } else if (fake_iob) {
+      cairo_set_source_rgba(cr, COLOUR_WHITE);
+      cairo_move_to(cr, width - 300.0, 70.0);
+      snprintf(_text, sizeof(_text), "Pico on I²C active");
+      cairo_show_text(cr, _text);
     } else {
       snprintf(_text, sizeof(_text), " ");
       cairo_move_to(cr, width - 300.0, 70.0);

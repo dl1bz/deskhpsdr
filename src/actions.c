@@ -2072,8 +2072,12 @@ int process_action(void *data) {
           // TUNE wird eingeschaltet
           hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
         } else {
+          if (fake_iob) {
+            hl2_iob_set_antenna_tuner(0); // reset tuner status wenn nur Pico verwendet
+          }
+
           // TUNE wird ausgeschaltet
-          // kein "0" schreiben
+          // kein "0" schreiben wenn original IO Board
         }
       } else {
         t_print("%s: No Hermes Lite 2 with IO board detected. No action.\n", __func__);
