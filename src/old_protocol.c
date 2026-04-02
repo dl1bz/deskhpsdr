@@ -55,6 +55,7 @@
 #include "ext.h"
 #include "iambic.h"
 #include "message.h"
+#include "rigctl.h"
 #ifdef __APPLE__
   #include "toolset.h"
 #endif
@@ -78,6 +79,11 @@ int op_min_int(int x, int y) { return (x < y) ? x : y; }
 #ifndef REG_ANTENNA_TUNER
   #define REG_ANTENNA_TUNER 7
 #endif
+
+#define REG_FIRMWARE_MAJOR  9
+#define REG_FIRMWARE_MINOR  10
+#define REG_LPF_DETECT      33
+#define REG_LPF_STATUS      34
 
 #define DATA_PORT 1024
 
@@ -177,6 +183,10 @@ static void open_tcp_socket(void);
 static void open_udp_socket(void);
 static int how_many_receivers(void);
 
+static int hl2_iob_detect_phase = 0;              // 0 = 0x41, 1 = 0x1d/REG_LPF_DETECT
+static int hl2_iob_detect_expect_major = 0;       // nächster 0x3D-Readback gehört zum 0x1D-Major-Detect
+static int hl2_iob_last_read_reg = -1;
+
 //
 // "HermesLite-II I/O Bord detected" flag
 //
@@ -190,6 +200,7 @@ static int how_many_receivers(void);
   int hl2_pa_enable_suppressed = 0;
 #else
   int hl2_iob_present = 0;
+  int hl2_pico_present = 0;
 #endif
 
 #define COMMON_MERCURY_FREQUENCY 0x80
@@ -233,6 +244,7 @@ static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
   static atomic_uchar hl2_iob_tuner_status = 0;
 #else
   static unsigned char hl2_iob_tuner_status = 0;
+  static unsigned char hl2_iob_lpf_status = 0;
 #endif
 
 #ifdef __AH4IOB__
@@ -304,6 +316,46 @@ int hl2_iob_is_present(void) {
 #else
   return hl2_iob_present;
 #endif
+}
+
+int hl2_pico_is_present(void) {
+  return hl2_pico_present;
+}
+
+const char* hl2_lpf_status_to_string(uint8_t status) {
+  switch (status) {
+  case 0x01:
+    return "160m (R1)";
+
+  case 0x02:
+    return "80m (R2)";
+
+  case 0x04:
+    return "60m/40m/30m (R3)";
+
+  case 0x08:
+    return "20m/17m (R4)";
+
+  case 0x10:
+    return "15m (R5)";
+
+  case 0x20:
+    return "12m/10m (R6)";
+
+  case 0x00:
+    return "OFF";
+
+  default:
+    return "UNKNOWN";
+  }
+}
+
+unsigned char hl2_iob_get_lpf_status(void) {
+  return hl2_iob_lpf_status;
+}
+
+const char* hl2_iob_get_lpf_status_str(void) {
+  return hl2_lpf_status_to_string(hl2_iob_lpf_status);
 }
 
 void hl2_iob_set_antenna_tuner(unsigned char value) {
@@ -1716,6 +1768,14 @@ static void process_control_bytes(void) {
 #else
       hl2_iob_present = 1;
       t_print("%s: set hl2_iob_present = %d\n", __func__, hl2_iob_present);
+    } else if (!hl2_iob_present && addr == 0x3D && hl2_iob_detect_expect_major) {
+      hl2_iob_detect_expect_major = 0;
+
+      if (control_in[4] == 0xEF) {
+        hl2_iob_present = 1;
+        hl2_pico_present = 1;
+        t_print("%s: HL2 Pico: detected via 0x1D REG_LPF_STATUS=%d match 0xEF\n", __func__, REG_LPF_STATUS);
+      }
     } else if (hl2_iob_present && addr == 0x3D) {
       //
       // 2) Alle weiteren I2C-Reads gehen ans IO-Board.
@@ -1726,10 +1786,18 @@ static void process_control_bytes(void) {
       //      0xEE -> "send RF" (Tastung aktiv halten)
       //      >=0xF0 -> Fehlercode
       //
-      hl2_iob_tuner_status = control_in[4];
+      if (hl2_iob_last_read_reg == REG_LPF_STATUS) {
+        hl2_iob_lpf_status = control_in[4];
 
-      if (!fake_iob) {
-        t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
+        if (rigctl_debug) {
+          t_print("LPF: 0x%02X (%s)\n", hl2_iob_lpf_status, hl2_lpf_status_to_string(hl2_iob_lpf_status));
+        }
+      } else {
+        hl2_iob_tuner_status = control_in[4];
+
+        if (rigctl_debug) {
+          t_print("HL2IOB: C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
+        }
       }
 
 #endif
@@ -3260,14 +3328,30 @@ void ozy_send_buffer(void) {
            * For all this I create a special design for this LPF controller without the need of the HL2 IO Board.
            *
           */
-          if (!fake_iob) {
-            output_buffer[C0] = 0xFA;       // I2C-2 *with* ACK
-            output_buffer[C1] = 0x07;       // read
-            output_buffer[C2] = 0x80 | 0x41;// i2c addr
-            output_buffer[C3] = 0x00;       // register
-            output_buffer[C4] = 0x00;       // data (ignored on read)
-          } else {
-            hl2_iob_present = 1;            // FORCE DETECT
+          // 1) Override bleibt erhalten
+          if (force_iob) {
+            hl2_iob_present = 1;
+          }
+          // 2) Standard/Fallback Detection im Wechsel:
+          //    Phase 0 -> PCA9536 auf 0x41
+          //    Phase 1 -> Pico auf 0x1d / REG_LPF_DETECT
+          else if (!hl2_iob_present) {
+            output_buffer[C0] = 0xFA;
+            output_buffer[C1] = 0x07;
+
+            if (hl2_iob_detect_phase == 0) {
+              output_buffer[C2] = 0x80 | 0x41;
+              output_buffer[C3] = 0x00;
+              output_buffer[C4] = 0x00;
+              hl2_iob_detect_phase = 1;
+              hl2_iob_detect_expect_major = 0;
+            } else {
+              output_buffer[C2] = 0x80 | 0x1d;
+              output_buffer[C3] = REG_LPF_DETECT;
+              output_buffer[C4] = 0x00;
+              hl2_iob_detect_phase = 0;
+              hl2_iob_detect_expect_major = 1;
+            }
           }
 
           hl2_query_count = 25;
@@ -3415,6 +3499,25 @@ void ozy_send_buffer(void) {
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr (HL2 IO board)
         output_buffer[C3] = REG_ANTENNA_TUNER;            // tuner status register
         output_buffer[C4] = 0x00;                         // data (ignored on read)
+        hl2_iob_last_read_reg = REG_ANTENNA_TUNER;
+        hl2_command_loop = hl2_pico_present ? 12 : 0;
+        break;
+
+      case 12:
+        //
+        // Pico LPF: REG_LPF_STATUS (Bitmaske) lesen
+        //  - C0 = 0xFA: I2C-2 mit ACK
+        //  - C1 = 0x07: read
+        //  - C2 = 0x80 | 0x1d: IO-Board / Pico I2C-Adresse
+        //  - C3 = REG_LPF_STATUS (34)
+        //  - C4 = dummy (ignored on read)
+        //
+        output_buffer[C0] = 0xFA;                         // I2C-2 *with* ACK
+        output_buffer[C1] = 0x07;                         // read
+        output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
+        output_buffer[C3] = REG_LPF_STATUS;               // Pico LPF status register
+        output_buffer[C4] = 0x00;                         // data (ignored on read)
+        hl2_iob_last_read_reg = REG_LPF_STATUS;
         hl2_command_loop = 0;
         break;
 

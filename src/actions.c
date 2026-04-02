@@ -2072,7 +2072,7 @@ int process_action(void *data) {
           // TUNE wird eingeschaltet
           hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
         } else {
-          if (fake_iob) {
+          if (hl2_pico_present) {
             hl2_iob_set_antenna_tuner(0); // reset tuner status wenn nur Pico verwendet
           }
 

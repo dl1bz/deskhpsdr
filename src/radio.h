@@ -376,7 +376,7 @@ extern char g_lpf_data[6][64];
 extern int lpf_udp_valid;
 extern int lpf_udp_port;
 
-extern int fake_iob;
+extern int force_iob;
 extern int use_tx_audiochain;
 
 

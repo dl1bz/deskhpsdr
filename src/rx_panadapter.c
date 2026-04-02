@@ -2268,24 +2268,20 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #endif
 
   if (can_transmit && display_clock) {
-    if (lpf_udp_valid) {
-      if (strcasecmp(g_lpf_data[5], "true") == 0) {
-        cairo_set_source_rgba(cr, COLOUR_ORANGE);
-      } else {
-        cairo_set_source_rgba(cr, COLOUR_WHITE);
-      }
-
-      cairo_move_to(cr, width - 300.0, 70.0);
-      snprintf(_text, sizeof(_text), "LPF %s", g_lpf_data[0]);
-      cairo_show_text(cr, _text);
-    } else if (fake_iob) {
+    double y_pos;
+    if (rx200_udp_valid) {
+      y_pos = 70.0;
+    } else {
+      y_pos = 50.0;
+    }
+    if (hl2_pico_is_present() && hl2_iob_get_lpf_status() != 0x00) {
       cairo_set_source_rgba(cr, COLOUR_WHITE);
-      cairo_move_to(cr, width - 300.0, 70.0);
-      snprintf(_text, sizeof(_text), "Pico on I²C active");
+      cairo_move_to(cr, width - 190.0, y_pos);
+      snprintf(_text, sizeof(_text), "LPF %s", hl2_iob_get_lpf_status_str());
       cairo_show_text(cr, _text);
     } else {
       snprintf(_text, sizeof(_text), " ");
-      cairo_move_to(cr, width - 300.0, 70.0);
+      cairo_move_to(cr, width - 190.0, y_pos);
       cairo_show_text(cr, _text);
     }
   }

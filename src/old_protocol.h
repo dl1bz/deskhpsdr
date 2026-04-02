@@ -23,10 +23,14 @@
 #define _OLD_PROTOCOL_H
 
 // extern int hl2_iob_present;
+extern int hl2_pico_present;
 int hl2_iob_is_present(void);
+int hl2_pico_is_present(void);
 
 extern void hl2_iob_set_antenna_tuner(unsigned char value);
 extern unsigned char hl2_iob_get_antenna_tuner_status(void);
+extern unsigned char hl2_iob_get_lpf_status(void);
+extern const char* hl2_iob_get_lpf_status_str(void);
 
 #ifdef __AH4IOB__
   extern int hl2_pa_enable_suppressed;

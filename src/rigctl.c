@@ -337,7 +337,7 @@ void launch_serptt(void) {
       t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL + 1].port);
     } else {
       serptt_thread_id = g_thread_new("serPTT-Monitoring", monitor_serptt_cts_thread, &serptt_fd);
-      t_print("---- LAUNCHING serPTT control Thread Id %d ----\n", serptt_thread_id);
+      t_print("---- LAUNCHING serPTT control Thread at %s ----\n", SerialPorts[MAX_SERIAL + 1].port);
     }
   } else {
     if (serptt_thread_id) {
