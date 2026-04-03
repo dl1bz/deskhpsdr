@@ -1177,23 +1177,31 @@ void update_slider_tune_drive_btn(void) {
   g_main_context_invoke(NULL, update_slider_tune_drive_btn_main, GINT_TO_POINTER(current_tune_state));
 }
 
-static void tune_drive_toggle_cb(GtkWidget *widget, gpointer data) {
-  // int state = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
-  int state = radio_get_tune();
-  radio_tune_update(!state);
-  update_slider_tune_drive_btn();
-
-  if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present()) {
-    if (!state) {
-      // TUNE wird eingeschaltet
-      hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
-    } else {
-      hl2_iob_set_antenna_tuner(0); // reset tuner status wenn nur Pico verwendet
-    }
-
-    // TUNE wird ausgeschaltet
-    // kein "0" schreiben wenn original IO Board
+static gboolean tune_drive_button_press_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data) {
+  if (event->type != GDK_BUTTON_PRESS) {
+    return FALSE;
   }
+
+  int state = radio_get_tune();
+
+  if (event->button == 1) {
+    radio_tune_update(!state);
+
+    if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present()) {
+      if (!state) {
+        hl2_iob_set_antenna_tuner(1);
+      } else {
+        hl2_iob_set_antenna_tuner(0);
+      }
+    }
+  } else if (event->button == 3) {
+    radio_tune_update(!state);
+  } else {
+    return FALSE;
+  }
+
+  update_slider_tune_drive_btn();
+  return TRUE;
 }
 
 void update_slider_af_gain_btn(void) {
@@ -2468,7 +2476,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_end(tune_drive_btn, 0);    // rechter Rand (Ende)
     gtk_widget_set_halign(tune_drive_btn, GTK_ALIGN_START);
     gtk_widget_set_valign(tune_drive_btn, GTK_ALIGN_CENTER);
-    tune_drive_btn_signal_id = g_signal_connect(G_OBJECT(tune_drive_btn), "toggled", G_CALLBACK(tune_drive_toggle_cb),
+    gtk_widget_add_events(tune_drive_btn, GDK_BUTTON_PRESS_MASK);
+    tune_drive_btn_signal_id = g_signal_connect(G_OBJECT(tune_drive_btn),
+                               "button-press-event",
+                               G_CALLBACK(tune_drive_button_press_cb),
                                NULL);
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------

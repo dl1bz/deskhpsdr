@@ -2052,39 +2052,68 @@ int process_action(void *data) {
 
     break;
 
-  case TUNE:
-    if (a->mode == PRESSED) {
-      int state = radio_get_tune();
+  case TUNE: {
+    int state = radio_get_tune();
+
+    switch (a->mode) {
+    case PRESSED:
       radio_tune_update(!state);
-      update_slider_tune_drive_btn();
+
+      if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present() && !state) {
+        hl2_iob_set_antenna_tuner(1);
+      }
+
+      break;
+
+    case RELEASED:
+      radio_tune_update(!state);
+
+      if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present() && state) {
+        hl2_iob_set_antenna_tuner(0);
+      }
+
+      break;
+
+    case RELATIVE:
+    case ABSOLUTE:
+    default:
+      // should not happen
+      break;
     }
 
+    update_slider_tune_drive_btn();
     break;
+  }
 
   case TUNE_IOB:
-    if (a->mode == PRESSED) {
+    if (device == DEVICE_HERMES_LITE2 && hl2_iob_is_present()) {
       int state = radio_get_tune();
-      radio_tune_update(!state);
-      update_slider_tune_drive_btn();
 
-      if (device == DEVICE_HERMES_LITE2 && hl2_iob_is_present()) {
+      switch (a->mode) {
+      case PRESSED:
+        radio_tune_update(!state);
+
         if (!state) {
-          // TUNE wird eingeschaltet
-          hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
-        } else {
-          if (hl2_pico_present) {
-            hl2_iob_set_antenna_tuner(0); // reset tuner status wenn nur Pico verwendet
-          }
-
-          // TUNE wird ausgeschaltet
-          // kein "0" schreiben wenn original IO Board
+          hl2_iob_set_antenna_tuner(1);
         }
-      } else {
-        t_print("%s: No Hermes Lite 2 with IO board detected. No action.\n", __func__);
+
+        break;
+
+      case RELEASED:
+        radio_tune_update(!state);
+        break;
+
+      case RELATIVE:
+      case ABSOLUTE:
+      default:
+        // should not happen
         break;
       }
+    } else {
+      t_print("%s: No Hermes Lite 2 with IO board detected. No action.\n", __func__);
     }
 
+    update_slider_tune_drive_btn();
     break;
 #ifdef __AH4IOB__
 
