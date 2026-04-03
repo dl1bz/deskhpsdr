@@ -2206,10 +2206,17 @@ int process_action(void *data) {
 
   case TUNE_DRIVE:
     if (can_transmit) {
-      value = KnobOrWheel(a, (double) transmitter->tune_drive, 0.0, 100.0, 1.0);
+      value = KnobOrWheel(a, (double) transmitter->tune_drive, 1.0, 100.0, 1.0);
       transmitter->tune_drive = (int) value;
       transmitter->tune_use_drive = 0;
-      show_popup_slider(TUNE_DRIVE, 0, 0.0, 100.0, 1.0, value, "TUNE DRIVE");
+
+      if (!display_sliders || !display_extra_sliders) {
+        show_popup_slider(TUNE_DRIVE, 0, 1.0, 100.0, 1.0, value, "TUNE DRIVE");
+      }
+
+      if (display_extra_sliders) {
+        update_slider_tune_drive_scale(TRUE);
+      }
     }
 
     break;

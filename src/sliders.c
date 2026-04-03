@@ -1185,13 +1185,14 @@ static void tune_drive_toggle_cb(GtkWidget *widget, gpointer data) {
 
   if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present()) {
     if (!state) {
-        // TUNE wird eingeschaltet
-        hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
+      // TUNE wird eingeschaltet
+      hl2_iob_set_antenna_tuner(1); // "fire-and-forget"
     } else {
-        hl2_iob_set_antenna_tuner(0); // reset tuner status wenn nur Pico verwendet
+      hl2_iob_set_antenna_tuner(0); // reset tuner status wenn nur Pico verwendet
     }
-          // TUNE wird ausgeschaltet
-          // kein "0" schreiben wenn original IO Board
+
+    // TUNE wird ausgeschaltet
+    // kein "0" schreiben wenn original IO Board
   }
 }
 
