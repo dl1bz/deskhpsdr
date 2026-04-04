@@ -1979,12 +1979,8 @@ int process_action(void *data) {
   case SHUTDOWN:
     if (a->mode == PRESSED) {
       stop_program();
-#ifdef __APPLE__
-      (void) system("shutdown -h now");
-#else
-      (void) system("sudo shutdown -h -P now");
-#endif
-      _exit(0);
+      execl("/sbin/shutdown", "shutdown", "-h", "now", (char *)NULL);
+      _exit(1);
     }
 
     break;
