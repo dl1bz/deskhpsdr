@@ -1980,9 +1980,9 @@ int process_action(void *data) {
     if (a->mode == PRESSED) {
       stop_program();
 #ifdef __APPLE__
-      (void) system("shutdown -h now");
+      (void)system("/usr/bin/osascript -e 'do shell script \"/sbin/shutdown -h now\" with administrator privileges'");
 #else
-      (void) system("sudo shutdown -h -P now");
+      (void)system("/usr/bin/loginctl poweroff");
 #endif
       _exit(0);
     }
