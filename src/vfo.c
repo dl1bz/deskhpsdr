@@ -2442,7 +2442,7 @@ void vfo_update(void) {
 
     if (hl2_pico_is_present()) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
-      snprintf(temp_text, sizeof(temp_text), "IO: Pico only");
+      snprintf(temp_text, sizeof(temp_text), "IO: Pico or SoC");
       cairo_show_text(cr, temp_text);
     } else if (hl2_iob_is_present()) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
