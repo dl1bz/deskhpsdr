@@ -98,8 +98,8 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .mute_y = 75,
     .tuned_x = 417,
     .tuned_y = 90,
-    .preamp_x = 830,
-    .preamp_y = 89,
+    .iob_x = 830,
+    .iob_y = 89,
 
     .mgain_x = 5,
     .mgain_y = 90,

@@ -44,6 +44,7 @@
 #include "radio.h"
 #include "receiver.h"
 #include "transmitter.h"
+#include "old_protocol.h"
 #include "new_protocol.h"
 #ifdef SOAPYSDR
   #include "soapy_protocol.h"
@@ -2433,23 +2434,23 @@ void vfo_update(void) {
     }
 
 #endif
+  }
 
-    if (vfl->preamp_x != 0) {
-      cairo_move_to(cr, vfl->preamp_x, vfl->preamp_y);
+  // IO device indicator
+  if (vfl->iob_x != 0 && device == DEVICE_HERMES_LITE2) {
+    cairo_move_to(cr, vfl->iob_x, vfl->iob_y);
 
-      if (transmitter->addgain_enable) {
-        cairo_set_source_rgba(cr, COLOUR_ATTN);
-
-        if (transmitter->addgain_gain > 0) {
-          snprintf(temp_text, 32, "Mic PreAmp +%.0fdb", transmitter->addgain_gain);
-        } else {
-          snprintf(temp_text, 32, "Mic PreAmp");
-        }
-      } else {
-        cairo_set_source_rgba(cr, COLOUR_SHADE);
-        snprintf(temp_text, 32, "Mic PreAmp");
-      }
-
+    if (hl2_pico_is_present()) {
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      snprintf(temp_text, sizeof(temp_text), "IO: Pico only");
+      cairo_show_text(cr, temp_text);
+    } else if (hl2_iob_is_present()) {
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      snprintf(temp_text, sizeof(temp_text), "IO: N2ADR Board");
+      cairo_show_text(cr, temp_text);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+      snprintf(temp_text, sizeof(temp_text), "IO: none");
       cairo_show_text(cr, temp_text);
     }
   }
@@ -2496,7 +2497,13 @@ void vfo_update(void) {
   if (can_transmit && vfl->mgain_x != 0) {
     cairo_move_to(cr, vfl->mgain_x, vfl->mgain_y);
     cairo_set_source_rgba(cr, COLOUR_ATTN);
-    snprintf(temp_text, 32, "MicG %+d", (int)transmitter->mic_gain);
+
+    if (transmitter->addgain_enable) {
+      snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int)transmitter->mic_gain + (int)transmitter->addgain_gain);
+    } else {
+      snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int)transmitter->mic_gain);
+    }
+
     cairo_show_text(cr, temp_text);
   }
 

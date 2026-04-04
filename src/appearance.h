@@ -201,7 +201,7 @@ struct _VFO_BAR_LAYOUT {
   int dup_x,   dup_y;
   int mute_x,  mute_y;
   int tuned_x, tuned_y;
-  int preamp_x, preamp_y;
+  int iob_x,   iob_y;
   int base_x,  base_y;
   int filter_x, filter_y;
   int multifn_x, multifn_y;

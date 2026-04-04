@@ -250,6 +250,7 @@ ACTION_TABLE ActionTable[] = {
   {TOOLBAR7,            "ToolBar7",             "TBAR7",        MIDI_KEY   | CONTROLLER_SWITCH},
   {TOOLBAR8,            "ToolBar8",             "TBAR8",        MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE,                "Tune",                 "TUNE",         MIDI_KEY   | CONTROLLER_SWITCH},
+  {TUNE_T,              "Tune\n(toggle)",       "TUNE-T",       MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_IOB,            "Tune IOB",             "TUNE-IOB",     MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_DRIVE,          "Tune\nDrv",            "TUNDRV",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TUNE_FULL,           "Tune\nFull",           "TUNF",         MIDI_KEY   | CONTROLLER_SWITCH},
@@ -2079,6 +2080,25 @@ int process_action(void *data) {
     default:
       // should not happen
       break;
+    }
+
+    update_slider_tune_drive_btn();
+    break;
+  }
+
+  case TUNE_T: {
+    int state = radio_get_tune();
+
+    if (a->mode == PRESSED) {
+      radio_tune_update(!state);
+
+      if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present()) {
+        if (!state) {
+          hl2_iob_set_antenna_tuner(1);
+        } else {
+          hl2_iob_set_antenna_tuner(0);
+        }
+      }
     }
 
     update_slider_tune_drive_btn();

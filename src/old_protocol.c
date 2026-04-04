@@ -304,21 +304,26 @@ static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
 
 unsigned char hl2_iob_get_antenna_tuner_status(void) {
 #ifdef __AH4IOB__
+  g_idle_add(ext_vfo_update, NULL);
   return atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed);
 #else
+  g_idle_add(ext_vfo_update, NULL);
   return hl2_iob_tuner_status;
 #endif
 }
 
 int hl2_iob_is_present(void) {
 #ifdef __AH4IOB__
+  g_idle_add(ext_vfo_update, NULL);
   return atomic_load_explicit(&hl2_iob_present, memory_order_relaxed);
 #else
+  g_idle_add(ext_vfo_update, NULL);
   return hl2_iob_present;
 #endif
 }
 
 int hl2_pico_is_present(void) {
+  g_idle_add(ext_vfo_update, NULL);
   return hl2_pico_present;
 }
 
