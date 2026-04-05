@@ -1983,7 +1983,9 @@ int process_action(void *data) {
 #ifdef __APPLE__
       (void)system("/usr/bin/osascript -e 'do shell script \"/sbin/shutdown -h now\" with administrator privileges'");
 #else
-      (void)system("/usr/bin/loginctl poweroff");
+    if (system("/usr/bin/systemctl poweroff") != 0) {
+      (void)system("/usr/sbin/poweroff");
+    }
 #endif
       _exit(0);
     }
