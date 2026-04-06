@@ -147,7 +147,7 @@ static gboolean about_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
 static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   cleanup();
   stop_program();
-  _exit(0);
+  exit(EXIT_SUCCESS);
   return TRUE;
 }
 

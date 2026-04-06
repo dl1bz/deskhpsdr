@@ -198,7 +198,7 @@ static gboolean discover_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
 
 static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   gtk_widget_destroy(discovery_dialog);
-  _exit(0);
+  exit(EXIT_SUCCESS);
   return TRUE;
 }
 

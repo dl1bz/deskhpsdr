@@ -5155,7 +5155,7 @@ int parse_cmd(void *data) {
     //SET       \#S;
     //ENDDEF
     if (command[1] == 'S' && command[2] == ';') {
-      schedule_action(SHUTDOWN, PRESSED, 0);
+      schedule_action(EXIT_APP, PRESSED, 0);
     } else {
       implemented = FALSE;
     }
@@ -6189,7 +6189,7 @@ int parse_cmd(void *data) {
         int pwrc = atoi(&command[2]);
 
         if ( pwrc == 0 ) {
-          schedule_action(SHUTDOWN, PRESSED, 0);
+          schedule_action(EXIT_APP, PRESSED, 0);
         } else {
           // power-on command. Should there be a reply?
           // snprintf(reply, 256, "PS1;");

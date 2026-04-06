@@ -528,7 +528,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_q:
     if (event->state & GDK_CONTROL_MASK) {
       stop_program();
-      _exit(0);
+      exit(EXIT_SUCCESS);
     }
 
     break;
@@ -652,7 +652,8 @@ gboolean main_delete (GtkWidget *widget) {
     stop_program();
   }
 
-  _exit(0);
+  exit(EXIT_SUCCESS);
+  return TRUE;
 }
 
 static GdkPixbuf *create_pixbuf_from_data(void) {
@@ -779,7 +780,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 
   if (display == NULL) {
     t_print("no default display!\n");
-    _exit(0);
+    exit(EXIT_FAILURE);
   }
 
   screen = gdk_display_get_default_screen(display);
@@ -803,7 +804,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 
   if (screen == NULL) {
     t_print("no default screen!\n");
-    _exit(0);
+    exit(EXIT_FAILURE);
   }
 
   // Jetzt erst CSS laden, damit es das Theme übersteuert

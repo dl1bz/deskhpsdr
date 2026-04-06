@@ -192,7 +192,7 @@ enum ACTION {
   RX1,
   RX2,
   SAT,
-  SHUTDOWN,
+  EXIT_APP,
   SNB,
   SPLIT,
   SQUELCH,

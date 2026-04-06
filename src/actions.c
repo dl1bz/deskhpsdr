@@ -235,7 +235,7 @@ ACTION_TABLE ActionTable[] = {
   {RX1,                 "RX1",                  "RX1",          MIDI_KEY   | CONTROLLER_SWITCH},
   {RX2,                 "RX2",                  "RX2",          MIDI_KEY   | CONTROLLER_SWITCH},
   {SAT,                 "SAT",                  "SAT",          MIDI_KEY   | CONTROLLER_SWITCH},
-  {SHUTDOWN,            "Shutdown\nOS",         "SDWN",         MIDI_KEY   | CONTROLLER_SWITCH},
+  {EXIT_APP,            "EXIT\nApp",            "EXIT",         MIDI_KEY   | CONTROLLER_SWITCH},
   {SNB,                 "SNB",                  "SNB",          MIDI_KEY   | CONTROLLER_SWITCH},
   {SPLIT,               "Split",                "SPLIT",        MIDI_KEY   | CONTROLLER_SWITCH},
   {SQUELCH,             "Squelch",              "SQUELCH",      MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
@@ -1977,17 +1977,10 @@ int process_action(void *data) {
 
     break;
 
-  case SHUTDOWN:
+  case EXIT_APP:
     if (a->mode == PRESSED) {
       stop_program();
-#ifdef __APPLE__
-      (void)system("/usr/bin/osascript -e 'do shell script \"/sbin/shutdown -h now\" with administrator privileges'");
-#else
-    if (system("/usr/bin/systemctl poweroff") != 0) {
-      (void)system("/usr/sbin/poweroff");
-    }
-#endif
-      _exit(0);
+      exit(EXIT_SUCCESS);
     }
 
     break;

@@ -98,7 +98,8 @@ static gboolean close_cb(void) {
 // cppcheck-suppress constParameterCallback
 static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   stop_program();
-  _exit(0);
+  exit(EXIT_SUCCESS);
+  return TRUE;
 }
 
 /*
