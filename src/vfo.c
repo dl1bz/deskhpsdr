@@ -2407,7 +2407,6 @@ void vfo_update(void) {
     }
 
 #endif
-#if defined (__HAVEATU__)
     cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 50);
 
     if (active_receiver->panadapter_autoscale_enabled) {
@@ -2418,6 +2417,7 @@ void vfo_update(void) {
 
     snprintf(temp_text, 32, "NFA");
     cairo_show_text(cr, temp_text);
+#if defined (__HAVEATU__)
 
     if (vfl->tuned_x != 0) {
       cairo_move_to(cr, vfl->tuned_x, vfl->tuned_y);
