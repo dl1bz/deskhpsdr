@@ -697,10 +697,14 @@ static inline void vfo_adjust_band(int v, long long f) {
   if (b != vfo[v].band) {
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, (int) v,
             (int) vfo[v].band, (int) b);
-#if defined (__HAVEATU__)
 
     if (can_transmit) {
       transmitter->is_tuned = 0;
+    }
+
+#if defined (__HAVEATU__)
+
+    if (can_transmit) {
       transmitter->stored_drive = radio_get_drive();
 
       if (!transmitter->is_tuned) {
@@ -951,10 +955,14 @@ void vfo_band_changed(int id, int b) {
   if (b != vfo[id].band) {
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, id, b,
             (int) vfo[id].band);
-#if defined (__HAVEATU__)
 
     if (can_transmit) {
       transmitter->is_tuned = 0;
+    }
+
+#if defined (__HAVEATU__)
+
+    if (can_transmit) {
       transmitter->stored_drive = radio_get_drive();
 
       if (!transmitter->is_tuned) {
@@ -2417,7 +2425,6 @@ void vfo_update(void) {
 
     snprintf(temp_text, 32, "NFA");
     cairo_show_text(cr, temp_text);
-#if defined (__HAVEATU__)
 
     if (vfl->tuned_x != 0) {
       cairo_move_to(cr, vfl->tuned_x, vfl->tuned_y);
@@ -2432,8 +2439,6 @@ void vfo_update(void) {
 
       cairo_show_text(cr, temp_text);
     }
-
-#endif
   }
 
   // IO device indicator

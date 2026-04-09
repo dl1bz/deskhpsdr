@@ -1206,8 +1206,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->am_carrier_level = 0.5;
   tx->drive = 50;
   tx->tune_drive = 2;
-#if defined (__HAVEATU__)
   tx->is_tuned = 0;
+#if defined (__HAVEATU__)
   tx->stored_drive = 0.0;
 #endif
   tx->mic_gain = 0.0;

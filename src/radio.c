@@ -2824,8 +2824,8 @@ void radio_set_tune(int state) {
 
       tune = state;
       radio_calc_drive_level();
-#if defined (__HAVEATU__)
       transmitter->is_tuned = 1;
+#if defined (__HAVEATU__)
 
       if (transmitter->stored_drive > 0) {
         set_drive(transmitter->stored_drive);
