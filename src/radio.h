@@ -386,7 +386,7 @@ extern int use_tx_audiochain;
 //
 extern void   radio_tune_update(int state);
 extern void   radio_mox_update(int state);
-extern void radio_save_state(void);
+extern void   radio_save_state(void);
 extern void   radio_stop(void);
 extern void   radio_reconfigure(void);
 extern void   radio_reconfigure_screen(void);
@@ -403,7 +403,8 @@ extern void   radio_set_tune(int state);
 extern int    radio_get_tune(void);
 extern void   radio_set_vox(int state);
 extern double radio_get_drive(void);
-extern void   radio_set_drive(double d);
+extern int    radio_get_drive_as_int(void);
+extern void   radio_set_drive(double value);
 extern void   radio_calc_drive_level(void);
 extern void   radio_calc_tune_drive_level(void);
 extern void   radio_set_rf_gain(const RECEIVER *rx);

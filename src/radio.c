@@ -2865,6 +2865,14 @@ double radio_get_drive(void) {
   }
 }
 
+int radio_get_drive_as_int(void) {
+  if (can_transmit) {
+    return transmitter->drive;
+  } else {
+    return 0;
+  }
+}
+
 static int calcLevel(double d) {
   int level = 0;
   int v = vfo_get_tx_vfo();
@@ -2991,15 +2999,15 @@ void radio_calc_drive_level(void) {
 }
 
 void radio_set_drive(double value) {
-  t_print("%s: drive=%f\n", __func__, value);
+  t_print("%s: drive=%d\n", __func__, (int)value);
 
   if (!can_transmit) { return; }
 
 #if defined (__HAVEATU__)
-  transmitter->drive = (double) value;
-  t_print("%s: transmitter_drive: %f\n", __func__, (double) transmitter->drive);
+  transmitter->drive = (int)value;
+  t_print("%s: transmitter_drive: %d\n", __func__, transmitter->drive);
 #else
-  transmitter->drive = value;
+  transmitter->drive = (int)value;
 #endif
 
   switch (protocol) {

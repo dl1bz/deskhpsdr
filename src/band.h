@@ -86,6 +86,13 @@ struct _BAND {
 
 typedef struct _BAND BAND;
 
+struct _BANDSETTINGS {
+  int tx_drive;
+  int tune_drive;
+};
+
+typedef struct _BANDSETTINGS BANDSETTINGS;
+
 struct _CHANNEL {
   long long frequency;
   long long width;
@@ -113,6 +120,7 @@ extern CHANNEL *band_channels_60m;
 //extern CHANNEL band_channels_60m_VFO[VFO_CHANNEL_ENTRIES];
 
 extern BAND *band_get_band(int b);
+extern BANDSETTINGS *band_get_settings(int b);
 extern int get_band_from_frequency(long long f);
 
 extern BANDSTACK *bandstack_get_bandstack(int band);

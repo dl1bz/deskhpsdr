@@ -714,6 +714,17 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
 
   radio_set_drive(value);
 
+  if (can_transmit) {
+    int v = vfo_get_tx_vfo();
+    int b = vfo[v].band;
+    BANDSETTINGS *bs = band_get_settings(b);
+
+    if (bs != NULL && value > 0.0 && value <= 100.0) {
+      bs->tx_drive = radio_get_drive_as_int();
+      t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
+    }
+  }
+
   if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
     value /= 20;
   }
@@ -877,6 +888,9 @@ static void local_mic_toggle_cb(GtkToggleButton *btn, gpointer data) {
 
 static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   int value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  int v_tx = vfo_get_tx_vfo();
+  int b = vfo[v_tx].band;
+  BANDSETTINGS *bs = band_get_settings(b);
 
   if (value < 1) { value = 1; }
 
@@ -884,6 +898,11 @@ static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
 
   transmitter->tune_drive = value;
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), transmitter->tune_drive);
+
+  if (bs != NULL) {
+    bs->tune_drive = transmitter->tune_drive;
+    t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
+  }
 
   if (can_transmit && transmitter->tune_use_drive) {
     transmitter->tune_use_drive = 0;

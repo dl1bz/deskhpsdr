@@ -34,6 +34,8 @@
 
 int xvtr_band = BANDS;
 
+static BANDSETTINGS band_settings[BANDS + XVTRS];
+
 char* outOfBand = "Out of band";
 
 /* --------------------------------------------------------------------------*/
@@ -491,6 +493,14 @@ BAND *band_get_band(int b) {
   return band;
 }
 
+BANDSETTINGS *band_get_settings(int b) {
+  if (b < 0 || b >= BANDS + XVTRS) {
+    return NULL;
+  }
+
+  return &band_settings[b];
+}
+
 void radio_change_region(int r) {
   region = r;
 
@@ -566,6 +576,24 @@ void bandSaveState(void) {
     SetPropI1("band.%d.OCrx", b,               bands[b].OCrx);
     SetPropI1("band.%d.OCtx", b,               bands[b].OCtx);
 
+    if (can_transmit) {
+      if (band_settings[b].tx_drive <= 0) {
+        band_settings[b].tx_drive = radio_get_drive_as_int();
+      }
+
+      SetPropI1("band.%d.tx_drive", b,           band_settings[b].tx_drive);
+
+      if (band_settings[b].tune_drive <= 0) {
+        if (transmitter->tune_use_drive) {
+          band_settings[b].tune_drive = radio_get_drive_as_int();
+        } else {
+          band_settings[b].tune_drive = transmitter->tune_drive;
+        }
+      }
+
+      SetPropI1("band.%d.tune_drive", b,         band_settings[b].tune_drive);
+    }
+
     for (int stack = 0; stack < bands[b].bandstack->entries; stack++) {
       BANDSTACK_ENTRY *entry = bands[b].bandstack->entry;
       entry += stack;
@@ -607,6 +635,8 @@ void bandRestoreState(void) {
     GetPropI1("band.%d.alexTxAntenna", b,      bands[b].alexTxAntenna);
     GetPropI1("band.%d.alexAttenuation", b,    bands[b].alexAttenuation);
     GetPropF1("band.%d.pa_calibration", b,     bands[b].pa_calibration);
+    GetPropI1("band.%d.tx_drive", b,           band_settings[b].tx_drive);
+    GetPropI1("band.%d.tune_drive", b,         band_settings[b].tune_drive);
     GetPropI1("band.%d.OCrx", b,               bands[b].OCrx);
     GetPropI1("band.%d.OCtx", b,               bands[b].OCtx);
 
@@ -642,6 +672,22 @@ void bandRestoreState(void) {
 
     if (bands[b].pa_calibration > 70.0) {
       bands[b].pa_calibration = 70.0;
+    }
+
+    if (band_settings[b].tx_drive < 0) {
+      band_settings[b].tx_drive = 0;
+    }
+
+    if (band_settings[b].tx_drive > 100) {
+      band_settings[b].tx_drive = 100;
+    }
+
+    if (band_settings[b].tune_drive < 0) {
+      band_settings[b].tune_drive = 0;
+    }
+
+    if (band_settings[b].tune_drive > 100) {
+      band_settings[b].tune_drive = 100;
     }
   }
 }
@@ -709,7 +755,6 @@ int get_band_from_frequency(long long f) {
 
   return found;
 }
-
 #if 0
 char* getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
   char* result = outOfBand;
@@ -744,9 +789,7 @@ char* getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
   t_print("getFrequencyInfo %lld is %s\n", frequency, result);
   return result;
 }
-
 #endif
-
 int TransmitAllowed(void) {
   int result;
   long long txfreq, flow, fhigh;
@@ -795,7 +838,6 @@ int TransmitAllowed(void) {
   t_print("%s: CANTRANSMIT: low=%lld  high=%lld transmit=%d\n", __func__, flow, fhigh, result);
   return result;
 }
-
 void band_plus(int id) {
   // long long frequency_min = radio->frequency_min;
   // long long frequency_max = radio->frequency_max;
@@ -827,7 +869,6 @@ void band_plus(int id) {
     }
   }
 }
-
 void band_minus(int id) {
   // long long frequency_min = radio->frequency_min;
   // long long frequency_max = radio->frequency_max;

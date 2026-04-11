@@ -32,6 +32,7 @@
 #include "filter.h"
 #include "mode.h"
 #include "vfo.h"
+#include "band.h"
 #include "new_protocol.h"
 #include "message.h"
 #include "property.h"
@@ -715,6 +716,9 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
   // Handle ALL spin-buttons in this menu
   //
   int mode = vfo_get_tx_mode();
+  int v_tx = vfo_get_tx_vfo();
+  int b = vfo[v_tx].band;
+  BANDSETTINGS *bs = band_get_settings(b);
   int c = GPOINTER_TO_INT(data);
   double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   int    vi = (v >= 0.0) ? (int) (v + 0.5) : (int) (v - 0.5);
@@ -775,6 +779,11 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
 
     case TX_TUNE_DRIVE:
       transmitter->tune_drive = vi;
+
+      if (bs != NULL) {
+        bs->tune_drive = transmitter->tune_drive;
+        t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
+      }
 
       if (can_transmit && display_sliders) {
         if (transmitter->tune_use_drive) {
