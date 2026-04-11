@@ -29,24 +29,26 @@
 #include <arpa/inet.h>
 
 #ifdef __APPLE__
-  #include <net/if_types.h>
-  #include <net/if_dl.h>
+  #include <sys/ioctl.h>
+  #include <net/if_media.h>
 #endif
 
-int nw_is_wired(const char *remote_ip) {
+static int nw_get_ifname_for_remote_ip(const char *remote_ip, char *ifname, size_t ifname_len) {
   int sock = -1;
   struct sockaddr_in remote;
   struct sockaddr_in local;
   socklen_t len;
-  int result = -1;
+  struct ifaddrs *ifaddr = NULL;
+  struct ifaddrs *ifa;
+  int rc = -1;
 
-  if (remote_ip == NULL) {
+  if (remote_ip == NULL || ifname == NULL || ifname_len == 0) {
     return -1;
   }
 
-#ifdef __APPLE__
   memset(&remote, 0, sizeof(remote));
   memset(&local, 0, sizeof(local));
+  ifname[0] = '\0';
   sock = socket(AF_INET, SOCK_DGRAM, 0);
 
   if (sock < 0) {
@@ -54,7 +56,7 @@ int nw_is_wired(const char *remote_ip) {
   }
 
   remote.sin_family = AF_INET;
-  remote.sin_port = htons(1025);
+  remote.sin_port = htons(1025);  // nur für Routenwahl
 
   if (inet_pton(AF_INET, remote_ip, &remote.sin_addr) != 1) {
     close(sock);
@@ -74,9 +76,7 @@ int nw_is_wired(const char *remote_ip) {
   }
 
   close(sock);
-  struct ifaddrs *ifaddr = NULL;
-  struct ifaddrs *ifa;
-  struct ifaddrs *ifa2;
+  sock = -1;
 
   if (getifaddrs(&ifaddr) != 0) {
     return -1;
@@ -99,37 +99,67 @@ int nw_is_wired(const char *remote_ip) {
       continue;
     }
 
-    for (ifa2 = ifaddr; ifa2 != NULL; ifa2 = ifa2->ifa_next) {
-      struct sockaddr_dl sdl;
-
-      if (ifa2->ifa_addr == NULL) {
-        continue;
-      }
-
-      if (strcmp(ifa->ifa_name, ifa2->ifa_name) != 0) {
-        continue;
-      }
-
-      if (ifa2->ifa_addr->sa_family != AF_LINK) {
-        continue;
-      }
-
-      memcpy(&sdl, ifa2->ifa_addr, sizeof(sdl));
-
-      if (sdl.sdl_type == IFT_ETHER) {
-        result = 1;
-      } else {
-        result = 0;
-      }
-
-      break;
+    if (ifa->ifa_name == NULL || ifa->ifa_name[0] == '\0') {
+      continue;
     }
 
+    strncpy(ifname, ifa->ifa_name, ifname_len - 1);
+    ifname[ifname_len - 1] = '\0';
+    rc = 0;
     break;
   }
 
   freeifaddrs(ifaddr);
-  return result;
+  return rc;
+}
+
+#ifdef __APPLE__
+static int nw_is_wired_macos(const char *remote_ip) {
+  char ifname[IFNAMSIZ];
+  struct ifmediareq ifmr;
+  int sock;
+  int type;
+
+  if (nw_get_ifname_for_remote_ip(remote_ip, ifname, sizeof(ifname)) != 0) {
+    return -1;
+  }
+
+  sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+  if (sock < 0) {
+    return -1;
+  }
+
+  memset(&ifmr, 0, sizeof(ifmr));
+  strncpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name) - 1);
+  ifmr.ifm_name[sizeof(ifmr.ifm_name) - 1] = '\0';
+
+  if (ioctl(sock, SIOCGIFMEDIA, &ifmr) < 0) {
+    close(sock);
+    return -1;
+  }
+
+  close(sock);
+  type = IFM_TYPE(ifmr.ifm_active);
+
+  if (type == IFM_ETHER) {
+    return 1;
+  }
+
+#ifdef IFM_IEEE80211
+
+  if (type == IFM_IEEE80211) {
+    return 0;
+  }
+
+#endif
+  return 0;
+}
+#endif
+
+int nw_is_wired(const char *remote_ip) {
+#ifdef __APPLE__
+  return nw_is_wired_macos(remote_ip);
 #else
   (void)remote_ip;
   return -1;

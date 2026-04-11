@@ -56,6 +56,7 @@
 #include "message.h"
 #include "version.h"
 #include "new_menu.h"
+#include "nw_toolset.h"
 
 static GtkWidget *discovery_dialog;
 static DISCOVERED *d;
@@ -80,6 +81,19 @@ static gboolean close_cb(void) {
 
 static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   radio = (DISCOVERED *)data;
+#ifdef __APPLE__
+  {
+    char ip[INET_ADDRSTRLEN];
+    const char *p = inet_ntop(AF_INET, &radio->info.network.address.sin_addr, ip, sizeof(ip));
+
+    if (p != NULL) {
+      int wired = nw_is_wired(ip);
+      t_print("%s: radio_ip=%s nw_is_wired=%d\n", __func__, ip, wired);
+    } else {
+      t_print("%s: inet_ntop failed\n", __func__);
+    }
+  }
+#endif
 #ifdef STEMLAB_DISCOVERY
 
   // We need to start the STEMlab app before destroying the dialog, since
