@@ -764,6 +764,7 @@ src/new_discovery.c \
 src/new_menu.c \
 src/new_protocol.c \
 src/noise_menu.c \
+src/nw_toolset.c \
 src/oc_menu.c \
 src/old_discovery.c \
 src/old_protocol.c \
@@ -855,6 +856,7 @@ src/new_discovery.h \
 src/new_menu.h \
 src/new_protocol.h \
 src/noise_menu.h \
+src/nw_toolset.h \
 src/oc_menu.h \
 src/old_discovery.h \
 src/old_protocol.h \
@@ -940,6 +942,7 @@ src/new_discovery.o \
 src/new_menu.o \
 src/new_protocol.o \
 src/noise_menu.o \
+src/nw_toolset.o \
 src/oc_menu.o \
 src/old_discovery.o \
 src/old_protocol.o \

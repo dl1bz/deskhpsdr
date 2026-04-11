@@ -396,11 +396,11 @@ static void tci_send_limits(CLIENT *client, int v) {
 static void tci_send_drive(CLIENT *client, int v) {
   char msg[MAXMSGSIZE];
   int tx_drive;
-  tx_drive = radio_get_drive();
+  tx_drive = radio_get_drive_as_int();
 
   if (v < 0 || v > 1) { return; }
 
-  snprintf(msg, MAXMSGSIZE, "drive:%d,%d;", v, (int) tx_drive);
+  snprintf(msg, MAXMSGSIZE, "drive:%d,%d;", v, tx_drive);
   tci_send_text(client, msg);
 }
 

@@ -99,6 +99,7 @@ enum _tx_choices {
   TX_COMP_ENABLE,
   TX_CTCSS_ENABLE,
   TX_TUNE_USE_DRIVE,
+  TX_DRIVE_PER_BAND,
   TX_SWR_PROTECTION,
   TX_USE_RX_FILTER,
   TX_LOCAL_MIC,
@@ -1012,6 +1013,11 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       update_slider_tune_drive_scale(TRUE);
       break;
 
+    case TX_DRIVE_PER_BAND:
+      transmitter->drive_per_band = v;
+      update_slider_tune_drive_scale(TRUE);
+      break;
+
     case TX_SWR_PROTECTION:
       transmitter->swr_protection = v;
       break;
@@ -1469,8 +1475,11 @@ void tx_menu(GtkWidget *parent) {
     gtk_widget_set_sensitive (tx_spin_high, FALSE);
   }
 
-  btn = gtk_check_button_new_with_label("Tune use drive");
+  btn = gtk_check_button_new_with_label("Tune Drive ≙ TX drive");
   gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_tooltip_text(btn,
+                              "ENABLED: [TUNE_DRIVE] use [TX_DRIVE] settings.\n\n"
+                              "DISABLED: [TUNE_DRIVE] use own settings.");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->tune_use_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_TUNE_USE_DRIVE));
@@ -1481,9 +1490,20 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(btn), 0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->tune_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_TUNE_DRIVE));
+  row++;
+  col = 2;
+  btn = gtk_check_button_new_with_label("Use Drive levels per Band");
+  gtk_widget_set_name(btn, "boldlabel");
+  gtk_widget_set_tooltip_text(btn,
+                              "ENABLED: Settings for [TX_DRIVE] and [TUNE_DRIVE] will be saved and restored per band.\n\n"
+                              "DISABLED: Global settings for [TX_DRIVE] and [TUNE_DRIVE] will be used for all bands.");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->drive_per_band);
+  gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 2, 1);
+  g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_DRIVE_PER_BAND));
   row++;
   col = 0;
   label = gtk_label_new("Panadapter High");

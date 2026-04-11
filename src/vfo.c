@@ -702,12 +702,12 @@ static inline void vfo_adjust_band(int v, long long f) {
       transmitter->is_tuned = 0;
       BANDSETTINGS *bs = band_get_settings(b);
 
-      if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100) {
+      if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100 && transmitter->drive_per_band) {
         set_drive((double)bs->tx_drive);
         t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
       }
 
-      if (bs != NULL && bs->tune_drive > 0 && bs->tune_drive <= 100) {
+      if (bs != NULL && bs->tune_drive > 0 && bs->tune_drive <= 100 && transmitter->drive_per_band) {
         transmitter->tune_drive = bs->tune_drive;
         update_slider_tune_drive_scale(TRUE);
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
@@ -958,12 +958,12 @@ void vfo_band_changed(int id, int b) {
       transmitter->is_tuned = 0;
       BANDSETTINGS *bs = band_get_settings(b);
 
-      if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100) {
+      if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100 && transmitter->drive_per_band) {
         set_drive((double)bs->tx_drive);
         t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
       }
 
-      if (bs != NULL && bs->tune_drive > 0 && bs->tune_drive <= 100) {
+      if (bs != NULL && bs->tune_drive > 0 && bs->tune_drive <= 100 && transmitter->drive_per_band) {
         transmitter->tune_drive = bs->tune_drive;
         update_slider_tune_drive_scale(TRUE);
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);

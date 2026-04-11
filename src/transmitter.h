@@ -118,6 +118,7 @@ typedef struct _transmitter {
   int tune_drive;
   int is_tuned;
   int drive_level;      // amplitude (0-255) corresponding to "drive"
+  int drive_per_band;   // save drive per band
   int do_scale;         // apply TX iq scaling
   double drive_scale;   // additional TX iq scaling required
   double drive_iscal;   // inverse of drive_scale
