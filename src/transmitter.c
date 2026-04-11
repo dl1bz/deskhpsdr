@@ -374,17 +374,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.deviation",         tx->id,               tx->deviation);
   SetPropI1("transmitter.%d.pre_emphasize",     tx->id,               tx->pre_emphasize);
   SetPropF1("transmitter.%d.am_carrier_level",  tx->id,               tx->am_carrier_level);
-#if defined (__HAVEATU__)
-
-  if (transmitter->is_tuned) {
-    SetPropI1("transmitter.%d.drive",           tx->id,               tx->drive);
-  } else {
-    SetPropI1("transmitter.%d.drive",           tx->id,               tx->stored_drive);
-  }
-
-#else
   SetPropI1("transmitter.%d.drive",             tx->id,               tx->drive);
-#endif
   SetPropF1("transmitter.%d.mic_gain",          tx->id,               tx->mic_gain);
   SetPropI1("transmitter.%d.tune_drive",        tx->id,               tx->tune_drive);
   SetPropI1("transmitter.%d.tune_use_drive",    tx->id,               tx->tune_use_drive);
@@ -1207,9 +1197,6 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->drive = 50;
   tx->tune_drive = 2;
   tx->is_tuned = 0;
-#if defined (__HAVEATU__)
-  tx->stored_drive = 0.0;
-#endif
   tx->mic_gain = 0.0;
   tx->tune_use_drive = 0;
   tx->drive_level = 0;
@@ -1400,9 +1387,6 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   // Modify these values from the props file
   //
   tx_restore_state(tx);
-#if defined (__HAVEATU__)
-  tx->stored_drive = tx->drive;
-#endif
   //
   // allocate buffers
   //

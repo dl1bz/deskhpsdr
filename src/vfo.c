@@ -714,20 +714,6 @@ static inline void vfo_adjust_band(int v, long long f) {
       }
     }
 
-#if defined (__HAVEATU__)
-
-    if (can_transmit) {
-      transmitter->stored_drive = radio_get_drive();
-
-      if (!transmitter->is_tuned) {
-        set_drive(1.0);
-      }
-
-      t_print("%s: stored drive level: %.1f\n", __func__, transmitter->stored_drive);
-      t_print("%s: current drive level: %.1f\n", __func__, radio_get_drive());
-    }
-
-#endif
 #if defined (__AUTOG__)
 
     if (can_transmit && autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
@@ -984,20 +970,6 @@ void vfo_band_changed(int id, int b) {
       }
     }
 
-#if defined (__HAVEATU__)
-
-    if (can_transmit) {
-      transmitter->stored_drive = radio_get_drive();
-
-      if (!transmitter->is_tuned) {
-        set_drive(1.0);
-      }
-
-      t_print("%s: stored drive level: %.1f\n", __func__, transmitter->stored_drive);
-      t_print("%s: current drive level: %.1f\n", __func__, radio_get_drive());
-    }
-
-#endif
     band = band_get_band(b);
     bandstack = bandstack_get_bandstack(b);
     long long f = bandstack->entry[bandstack->current_entry].frequency;

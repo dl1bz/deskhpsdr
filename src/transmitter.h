@@ -117,9 +117,6 @@ typedef struct _transmitter {
   int tune_use_drive;
   int tune_drive;
   int is_tuned;
-#if defined (__HAVEATU__)
-  double stored_drive;
-#endif
   int drive_level;      // amplitude (0-255) corresponding to "drive"
   int do_scale;         // apply TX iq scaling
   double drive_scale;   // additional TX iq scaling required

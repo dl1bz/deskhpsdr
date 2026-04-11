@@ -2825,15 +2825,6 @@ void radio_set_tune(int state) {
       tune = state;
       radio_calc_drive_level();
       transmitter->is_tuned = 1;
-#if defined (__HAVEATU__)
-
-      if (transmitter->stored_drive > 0) {
-        set_drive(transmitter->stored_drive);
-      }
-
-      t_print("%s: stored drive level: %.1f\n", __func__, transmitter->stored_drive);
-      t_print("%s: current drive level: %.1f\n", __func__, radio_get_drive());
-#endif
 #if defined (__AUTOG__)
 
       if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
@@ -3003,12 +2994,7 @@ void radio_set_drive(double value) {
 
   if (!can_transmit) { return; }
 
-#if defined (__HAVEATU__)
   transmitter->drive = (int)value;
-  t_print("%s: transmitter_drive: %d\n", __func__, transmitter->drive);
-#else
-  transmitter->drive = (int)value;
-#endif
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
