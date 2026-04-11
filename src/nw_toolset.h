@@ -20,6 +20,9 @@
 #ifndef NW_TOOLSET_H
 #define NW_TOOLSET_H
 
+#include <stddef.h>
+
 int nw_is_wired(const char *remote_ip);
+int nw_get_ifname_for_remote_ip(const char *remote_ip, char *ifname, size_t ifname_len);
 
 #endif

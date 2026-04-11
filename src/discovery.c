@@ -30,6 +30,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
+#include <net/if.h>
 
 #include "discovered.h"
 #include "old_discovery.h"
@@ -84,11 +85,17 @@ static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
 #ifdef __APPLE__
   {
     char ip[INET_ADDRSTRLEN];
+    char ifname[IFNAMSIZ] = {0};
     const char *p = inet_ntop(AF_INET, &radio->info.network.address.sin_addr, ip, sizeof(ip));
 
     if (p != NULL) {
       int wired = nw_is_wired(ip);
-      t_print("%s: radio_ip=%s nw_is_wired=%d\n", __func__, ip, wired);
+
+      if (nw_get_ifname_for_remote_ip(ip, ifname, sizeof(ifname)) == 0) {
+        t_print("%s: SDR_radio_ip=%s local_if=%s nw_is_wired=%d\n", __func__, ip, ifname, wired);
+      } else {
+        t_print("%s: SDR_radio_ip=%s local_if=? nw_is_wired=%d\n", __func__, ip, wired);
+      }
     } else {
       t_print("%s: inet_ntop failed\n", __func__);
     }
