@@ -54,7 +54,7 @@ int nw_is_wired(const char *remote_ip) {
   }
 
   remote.sin_family = AF_INET;
-  remote.sin_port = htons(1025);  // nur für die Routenwahl
+  remote.sin_port = htons(1025);
 
   if (inet_pton(AF_INET, remote_ip, &remote.sin_addr) != 1) {
     close(sock);
@@ -83,6 +83,8 @@ int nw_is_wired(const char *remote_ip) {
   }
 
   for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    struct sockaddr_in ifa_addr;
+
     if (ifa->ifa_addr == NULL) {
       continue;
     }
@@ -91,13 +93,15 @@ int nw_is_wired(const char *remote_ip) {
       continue;
     }
 
-    struct sockaddr_in *ifa_addr = (struct sockaddr_in *)ifa->ifa_addr;
+    memcpy(&ifa_addr, ifa->ifa_addr, sizeof(ifa_addr));
 
-    if (ifa_addr->sin_addr.s_addr != local.sin_addr.s_addr) {
+    if (ifa_addr.sin_addr.s_addr != local.sin_addr.s_addr) {
       continue;
     }
 
     for (ifa2 = ifaddr; ifa2 != NULL; ifa2 = ifa2->ifa_next) {
+      struct sockaddr_dl sdl;
+
       if (ifa2->ifa_addr == NULL) {
         continue;
       }
@@ -106,19 +110,19 @@ int nw_is_wired(const char *remote_ip) {
         continue;
       }
 
-      if (ifa2->ifa_addr->sa_family == AF_LINK) {
-        struct sockaddr_dl *sdl = (struct sockaddr_dl *)ifa2->ifa_addr;
-
-        if (sdl->sdl_type == IFT_ETHER) {
-          result = 1;
-        } else if (sdl->sdl_type == IFT_IEEE80211) {
-          result = 0;
-        } else {
-          result = 0;
-        }
-
-        break;
+      if (ifa2->ifa_addr->sa_family != AF_LINK) {
+        continue;
       }
+
+      memcpy(&sdl, ifa2->ifa_addr, sizeof(sdl));
+
+      if (sdl.sdl_type == IFT_ETHER) {
+        result = 1;
+      } else {
+        result = 0;
+      }
+
+      break;
     }
 
     break;
