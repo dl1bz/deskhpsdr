@@ -213,6 +213,7 @@ typedef struct _receiver {
   int local_audio_buffer_inpt;
   int local_audio_buffer_outpt;
   int local_audio_buffer_offset;
+  int local_audio_channels;
   void *local_audio_buffer;
   snd_pcm_t *playback_handle;
   snd_pcm_format_t local_audio_format;
@@ -221,6 +222,7 @@ typedef struct _receiver {
   PaStream *playstream;
   volatile int local_audio_buffer_inpt;    // pointer in audio ring-buffer
   volatile int local_audio_buffer_outpt;   // pointer in audio ring-buffer
+  int local_audio_channels;
   float *local_audio_buffer;
 #endif
 #if !defined(PORTAUDIO) && !defined(PULSEAUDIO) && defined(ALSA)

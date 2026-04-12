@@ -863,6 +863,11 @@ int process_action(void *data) {
 
   case BI_NAURAL:
     if (!radio_is_transmitting() && a->mode == PRESSED) {
+      if (active_receiver->local_audio_channels == 1) {
+        t_print("%s: binaural not allowed on mono output\n", __func__);
+        break;
+      }
+
       TOGGLE(active_receiver->binaural);
       rx_set_af_binaural(active_receiver);
     }

@@ -348,7 +348,16 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_w:
 
     // toggle binaural audio (w)ide
-    if (!radio_is_transmitting() && active_receiver->binaural > 0) {
+    if (radio_is_transmitting()) {
+      break;
+    }
+
+    if (active_receiver->local_audio_channels == 1) {
+      t_print("%s: binaural not allowed on mono output\n", __func__);
+      break;
+    }
+
+    if (active_receiver->binaural > 0) {
       active_receiver->binaural = 0;
     } else {
       active_receiver->binaural = 1;

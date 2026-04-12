@@ -54,7 +54,17 @@ static gboolean close_cb(void) {
 static void binaural_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   RECEIVER *rx = receiver[id];
-  rx->binaural = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+
+  if (rx->local_audio_channels == 1) {
+    rx->binaural = 0;
+    g_signal_handlers_block_by_func(widget, G_CALLBACK(binaural_cb), data);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
+    g_signal_handlers_unblock_by_func(widget, G_CALLBACK(binaural_cb), data);
+    update_slider_binaural_btn();
+    return;
+  }
+
+  rx->binaural = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   rx_set_af_binaural(rx);
   update_slider_binaural_btn();
 }
@@ -216,7 +226,16 @@ void fft_menu(GtkWidget *parent) {
 
     if (i < receivers) {
       w = gtk_check_button_new();
+      gtk_widget_set_tooltip_text(w, "Outputs I and Q on the Left and Right audio channels.\n\n"
+                                     "If Audio Output Device is Mono,\n"
+                                     "Binaural option is not available");
+
+      if (receiver[i]->local_audio_channels == 1) {
+        receiver[i]->binaural = 0;
+      }
+
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), receiver[i]->binaural);
+      gtk_widget_set_sensitive(w, receiver[i]->local_audio_channels > 1);
       gtk_grid_attach(GTK_GRID(grid), w, col, 4, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(binaural_cb), GINT_TO_POINTER(chan));
     }

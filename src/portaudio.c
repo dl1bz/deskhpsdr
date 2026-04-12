@@ -193,10 +193,10 @@ void audio_get_cards(void) {
     }
 
     outputParameters.device = i;
-    outputParameters.channelCount = 2;  // audio output samples are stereo
     outputParameters.sampleFormat = paFloat32;
     outputParameters.suggestedLatency = 0; /* ignored by Pa_IsFormatSupported() */
     outputParameters.hostApiSpecificStreamInfo = NULL;
+    outputParameters.channelCount = 2;  // prefer stereo
 
     if (Pa_IsFormatSupported(NULL, &outputParameters, 48000.0) == paFormatIsSupported) {
       if (n_output_devices < MAX_AUDIO_DEVICES) {
@@ -206,7 +206,20 @@ void audio_get_cards(void) {
         n_output_devices++;
       }
 
-      t_print("%s: OUTPUT DEVICE, No=%d, Name=%s\n", __func__, i, deviceInfo->name);
+      t_print("%s: OUTPUT DEVICE, No=%d, Name=%s (stereo)\n", __func__, i, deviceInfo->name);
+    } else {
+      outputParameters.channelCount = 1;  // mono fallback
+
+      if (Pa_IsFormatSupported(NULL, &outputParameters, 48000.0) == paFormatIsSupported) {
+        if (n_output_devices < MAX_AUDIO_DEVICES) {
+          output_devices[n_output_devices].name = g_strdup(deviceInfo->name);
+          output_devices[n_output_devices].description = g_strdup(deviceInfo->name);
+          output_devices[n_output_devices].index = i;
+          n_output_devices++;
+        }
+
+        t_print("%s: OUTPUT DEVICE, No=%d, Name=%s (mono)\n", __func__, i, deviceInfo->name);
+      }
     }
   }
 
@@ -339,11 +352,40 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
     for (unsigned int i = 0; i < framesPerBuffer; i++) {
       if (rx->local_audio_buffer_inpt == newpt) {
         // Ring buffer empty, send zero sample
-        *out++ = 0.0;
-        *out++ = 0.0;
+        if (rx->local_audio_channels == 2) {
+          *out++ = 0.0f;
+          *out++ = 0.0f;
+        } else {
+          *out++ = 0.0f;
+        }
       } else {
-        *out++ = rx->local_audio_buffer[2 * newpt];
-        *out++ = rx->local_audio_buffer[2 * newpt + 1];
+        float left = rx->local_audio_buffer[2 * newpt];
+        float right = rx->local_audio_buffer[2 * newpt + 1];
+
+        if (rx->local_audio_channels == 2) {
+          *out++ = left;
+          *out++ = right;
+        } else {
+          float mono;
+
+          switch (rx->audio_channel) {
+          case LEFT:
+            mono = left;
+            break;
+
+          case RIGHT:
+            mono = right;
+            break;
+
+          case STEREO:
+          default:
+            mono = 0.5f * (left + right);
+            break;
+          }
+
+          *out++ = mono;
+        }
+
         newpt++;
 
         if (newpt >= MY_RING_BUFFER_SIZE) { newpt = 0; }
@@ -355,8 +397,12 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
   } else {
     // local_audio_buffer is NULL: output must still be defined -> silence
     for (unsigned int i = 0; i < framesPerBuffer; i++) {
-      *out++ = 0.0;
-      *out++ = 0.0;
+      if (rx->local_audio_channels == 2) {
+        *out++ = 0.0f;
+        *out++ = 0.0f;
+      } else {
+        *out++ = 0.0f;
+      }
     }
   }
 
@@ -488,7 +534,6 @@ int audio_open_output(RECEIVER *rx) {
 
   g_mutex_lock(&rx->local_audio_mutex);
   bzero(&outputParameters, sizeof(outputParameters)); //not necessary if you are filling in all the fields
-  outputParameters.channelCount = 2;   // audio output is stereo
   outputParameters.device = padev;
   outputParameters.hostApiSpecificStreamInfo = NULL;
   outputParameters.sampleFormat = paFloat32;
@@ -504,8 +549,23 @@ int audio_open_output(RECEIVER *rx) {
 #else
   outputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
 #endif
+  outputParameters.channelCount = 2;   // prefer stereo
+  rx->local_audio_channels = 2;
+
+  if (Pa_IsFormatSupported(NULL, &outputParameters, 48000.0) != paFormatIsSupported) {
+    outputParameters.channelCount = 1;
+    rx->local_audio_channels = 1;
+  }
+
+  if (rx->local_audio_channels == 1 && rx->binaural) {
+    t_print("%s: disabling binaural for mono output device %s\n", __func__, rx->audio_name);
+    rx->binaural = 0;
+    rx_set_af_binaural(rx);
+  }
+
   err = Pa_OpenStream(&(rx->playstream), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
                       paNoFlag, pa_out_cb, rx);
+  t_print("%s: opened output with %d channel(s)\n", __func__, rx->local_audio_channels);
 
   if (err != paNoError) {
     t_print("%s: open stream error %s\n", __func__, Pa_GetErrorText(err));

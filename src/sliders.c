@@ -1164,9 +1164,14 @@ void update_slider_snb_button(gboolean show_widget) {
 
 void update_slider_binaural_btn(void) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON (binaural_btn), binaural_btn_signal_id);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (binaural_btn), active_receiver->binaural);
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON (binaural_btn), binaural_btn_signal_id);
+    if (active_receiver->local_audio_channels == 1) {
+      active_receiver->binaural = 0;
+    }
+
+    g_signal_handler_block(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(binaural_btn), active_receiver->binaural);
+    gtk_widget_set_sensitive(binaural_btn, active_receiver->local_audio_channels > 1);
+    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
     gtk_widget_queue_draw(binaural_btn);
   }
 }
@@ -2421,9 +2426,16 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   WEAKEN(binaural_btn);
   gtk_widget_set_name(binaural_btn, "medium_toggle_button");
   // gtk_widget_set_name(binaural_btn, "front_toggle_button");
-  gtk_widget_set_tooltip_text(binaural_btn, "Outputs I and Q on the Left\n"
-                                            "and Right audio channels");
+  gtk_widget_set_tooltip_text(binaural_btn, "Outputs I and Q on the Left and Right audio channels.\n\n"
+                                            "If Audio Output Device is Mono,\n"
+                                            "Binaural option is not available");
+
+  if (active_receiver->local_audio_channels == 1) {
+    active_receiver->binaural = 0;
+  }
+
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(binaural_btn), active_receiver->binaural);
+  gtk_widget_set_sensitive(binaural_btn, active_receiver->local_audio_channels > 1);
   // begin label definition inside button
   binaural_label = gtk_bin_get_child(GTK_BIN(binaural_btn));
   gtk_label_set_justify(GTK_LABEL(binaural_label), GTK_JUSTIFY_CENTER);
@@ -2432,7 +2444,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_margin_top(binaural_btn, 0);
   gtk_widget_set_margin_bottom(binaural_btn, 0);
   gtk_widget_set_margin_end(binaural_btn, 0);    // rechter Rand (Ende)
-  gtk_widget_set_margin_start(binaural_btn, 0);    // linker Rand (Anfang)
+  gtk_widget_set_margin_start(binaural_btn, 0);  // linker Rand (Anfang)
   gtk_widget_set_halign(binaural_btn, GTK_ALIGN_START);
   gtk_widget_set_valign(binaural_btn, GTK_ALIGN_CENTER);
   binaural_btn_signal_id = g_signal_connect(G_OBJECT(binaural_btn), "toggled", G_CALLBACK(binaural_toggle_cb), NULL);
