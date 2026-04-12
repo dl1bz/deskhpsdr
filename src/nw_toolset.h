@@ -22,6 +22,12 @@
 
 #include <stddef.h>
 
+typedef struct {
+  int is_wired;   // 1 = Ethernet, 0 = WiFi/unknown
+} NW_SETTINGS;
+
+extern NW_SETTINGS nw_settings;
+
 int nw_is_wired(const char *remote_ip);
 int nw_get_ifname_for_remote_ip(const char *remote_ip, char *ifname, size_t ifname_len);
 

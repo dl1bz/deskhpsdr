@@ -60,6 +60,7 @@
 #include "iambic.h"
 #include "rigctl.h"
 #include "message.h"
+#include "nw_toolset.h"
 
 #ifdef SATURN
   #include "saturnmain.h"
@@ -527,6 +528,7 @@ void new_protocol_init(void) {
     socklen_t optlen = sizeof(optval);
     setsockopt(data_socket, SOL_SOCKET, SO_REUSEADDR, &optval, optlen);
     setsockopt(data_socket, SOL_SOCKET, SO_REUSEPORT, &optval, optlen);
+
     //
     // We need a receive buffer with a decent size, to be able to
     // store several incoming packets if they arrive in a burst.
@@ -544,13 +546,21 @@ void new_protocol_init(void) {
     //            we set them to: RCVBUF: 0x40000, SNDBUF: 0x10000
     // then getsockopt() returns: RCVBUF: 0x40000, SNDBUF: 0x10000
     //
-    optval = 0x40000;
+    if (nw_settings.is_wired) {
+      optval = 0x40000;
+    } else {
+      optval = 0x80000;
+    }
 
     if (setsockopt(data_socket, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
       t_perror("data_socket: set SO_RCVBUF");
     }
 
-    optval = 0x10000;
+    if (nw_settings.is_wired) {
+      optval = 0x10000;
+    } else {
+      optval = 0x20000;
+    }
 
     if (setsockopt(data_socket, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
       t_perror("data_socket: set SO_SNDBUF");
@@ -1872,7 +1882,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
       // 1000usec, or 300 usec, or nothing, before sending
       // out the next packet.
       //
-      if (FIFO > 500.0) {
+      if ((!nw_settings.is_wired && FIFO > 900.0) || ( nw_settings.is_wired && FIFO > 500.0)) {
         // Wait about 1000 usec before sending the next packet.
         ts.tv_nsec += 1000000;
 
@@ -1882,7 +1892,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
         }
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      } else if (FIFO > 250.0) {
+      } else if ((!nw_settings.is_wired && FIFO > 450.0) || ( nw_settings.is_wired && FIFO > 250.0)) {
         // Wait about 300 usec before sending the next packet.
         ts.tv_nsec += 300000;
 
@@ -1973,7 +1983,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
         FIFO = 0.0;
       }
 
-      if (FIFO > 1250.0)  {
+      if ((!nw_settings.is_wired && FIFO > 1800.0) || ( nw_settings.is_wired && FIFO > 1250.0)) {
         //
         // Wait about 1000 usec before sending the next packet.
         // In reality, it takes a little longer before we resume work
@@ -2839,7 +2849,16 @@ void* new_protocol_timer_thread(void* arg) {
   // schedule_XXXXX() whenever a state variable has changed
   //
   int cycling = 0;
-  usleep(100000);                               // wait for things to settle down
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  ts.tv_nsec += 100000000;                      // wait for things to settle down
+
+  if (ts.tv_nsec >= 1000000000) {
+    ts.tv_nsec -= 1000000000;
+    ts.tv_sec++;
+  }
+
+  clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
 
   while (P2running) {
     cycling++;
@@ -2868,7 +2887,14 @@ void* new_protocol_timer_thread(void* arg) {
       break;
     }
 
-    usleep(100000);
+    ts.tv_nsec += 100000000;
+
+    if (ts.tv_nsec >= 1000000000) {
+      ts.tv_nsec -= 1000000000;
+      ts.tv_sec++;
+    }
+
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
   }
 
   return NULL;

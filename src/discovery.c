@@ -91,10 +91,18 @@ static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
     if (p != NULL) {
       int wired = nw_is_wired(ip);
 
-      if (nw_get_ifname_for_remote_ip(ip, ifname, sizeof(ifname)) == 0) {
-        t_print("%s: SDR_radio_ip=%s local_if=%s nw_is_wired=%d\n", __func__, ip, ifname, wired);
+      if (wired == 1) {
+        nw_settings.is_wired = 1;
       } else {
-        t_print("%s: SDR_radio_ip=%s local_if=? nw_is_wired=%d\n", __func__, ip, wired);
+        nw_settings.is_wired = 0;
+      }
+
+      if (nw_get_ifname_for_remote_ip(ip, ifname, sizeof(ifname)) == 0) {
+        t_print("%s: SDR_radio_ip=%s if=%s wired=%d nw_settings.is_wired=%d\n",
+                __func__, ip, ifname, wired, nw_settings.is_wired);
+      } else {
+        t_print("%s: SDR_radio_ip=%s if=? wired=%d nw_settings.is_wired=%d\n",
+                __func__, ip, wired, nw_settings.is_wired);
       }
     } else {
       t_print("%s: inet_ntop failed\n", __func__);

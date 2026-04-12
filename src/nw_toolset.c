@@ -33,6 +33,10 @@
   #include <net/if_media.h>
 #endif
 
+NW_SETTINGS nw_settings = {
+  .is_wired = 1
+};
+
 int nw_get_ifname_for_remote_ip(const char *remote_ip, char *ifname, size_t ifname_len) {
   int sock = -1;
   struct sockaddr_in remote;
