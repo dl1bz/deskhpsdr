@@ -441,7 +441,7 @@ void rx_menu(GtkWidget *parent) {
   }
 
   if (n_output_devices > 0) {
-    local_audio_b = gtk_check_button_new_with_label("Local Audio Output:");
+    local_audio_b = gtk_check_button_new_with_label("Use Local Audio Output:");
     gtk_widget_set_name(local_audio_b, "boldlabel");
     gtk_widget_set_halign(local_audio_b, GTK_ALIGN_START);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_audio_b), active_receiver->local_audio);
@@ -471,9 +471,9 @@ void rx_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), output, 2, 2, 1, 1);
     g_signal_connect(output, "changed", G_CALLBACK(local_output_changed_cb), NULL);
     GtkWidget *channel = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Stereo");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Left");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Right");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Stereo / Mono Downmix (L+R)");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Left Channel only");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Right Channel only");
 
     switch (active_receiver->audio_channel) {
     case STEREO:
