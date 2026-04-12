@@ -164,6 +164,9 @@ static int nw_is_wired_macos(const char *remote_ip) {
 int nw_is_wired(const char *remote_ip) {
 #ifdef __APPLE__
   return nw_is_wired_macos(remote_ip);
+#elif defined(__linux__)
+  (void)remote_ip;
+  return 1;
 #else
   (void)remote_ip;
   return -1;

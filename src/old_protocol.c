@@ -56,6 +56,7 @@
 #include "iambic.h"
 #include "message.h"
 #include "rigctl.h"
+#include "nw_toolset.h"
 #ifdef __APPLE__
   #include "toolset.h"
 #endif
@@ -987,13 +988,21 @@ static void open_udp_socket(void) {
   //            we set them to: RCVBUF: 0x40000, SNDBUF: 0x10000
   // then getsockopt() returns: RCVBUF: 0x40000, SNDBUF: 0x10000
   //
-  optval = 0x40000;
+  if (nw_settings.is_wired) {
+    optval = 0x40000;
+  } else {
+    optval = 0x80000;
+  }
 
   if (setsockopt(tmp, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
     t_perror("data_socket: set SO_RCVBUF");
   }
 
-  optval = 0x10000;
+  if (nw_settings.is_wired) {
+    optval = 0x10000;
+  } else {
+    optval = 0x20000;
+  }
 
   if (setsockopt(tmp, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
     t_perror("data_socket: set SO_SNDBUF");
@@ -1131,7 +1140,11 @@ static void open_tcp_socket(void) {
   //            we set them to: RCVBUF: 0x40000, SNDBUF: 0x10000
   // then getsockopt() returns: RCVBUF: 0x40000, SNDBUF: 0x10000
   //
-  optval = 0x40000;
+  if (nw_settings.is_wired) {
+    optval = 0x40000;
+  } else {
+    optval = 0x80000;
+  }
 
   if (setsockopt(tmp, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
     t_perror("tcp_socket: set SO_RCVBUF");
@@ -1140,7 +1153,11 @@ static void open_tcp_socket(void) {
     return;
   }
 
-  optval = 0x10000;
+  if (nw_settings.is_wired) {
+    optval = 0x10000;
+  } else {
+    optval = 0x20000;
+  }
 
   if (setsockopt(tmp, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
     t_perror("tcp_socket: set SO_SNDBUF");
