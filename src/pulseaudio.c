@@ -394,6 +394,7 @@ void audio_get_cards(void) {
 int audio_open_output(RECEIVER *rx) {
   int result = 0;
   pa_sample_spec sample_spec;
+  pa_buffer_attr attr;
   int err;
 
   if (rx == NULL || rx->audio_name[0] == '\0') {
@@ -403,37 +404,56 @@ int audio_open_output(RECEIVER *rx) {
 
   g_mutex_lock(&rx->local_audio_mutex);
   sample_spec.rate = 48000;
-  sample_spec.channels = 2;
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
-  pa_buffer_attr attr;
   attr.maxlength = (uint32_t) -1;
-  // 1 Block = out_buffer_size Frames * 2 Kanäle * float
-  const uint32_t one_block_bytes = (uint32_t)(out_buffer_size * 2 * sizeof(float));
-  attr.tlength  = one_block_bytes * 4;   // Zielpuffer: 4 Blöcke
-  attr.minreq   = one_block_bytes;       // Nachschub in 1-Block-Schritten
-  attr.prebuf   = one_block_bytes;       // Prebuffer: 1 Block
   attr.fragsize = (uint32_t) -1;         // bei Playback irrelevant
   char stream_id[16];
   snprintf(stream_id, 16, "RX-%d", rx->id);
-  rx->playstream = pa_simple_new(NULL, // Use the default server.
-                                 "deskHPSDR",          // Our application's name.
+  sample_spec.channels = 2;
+  rx->local_audio_channels = 2;
+  uint32_t one_block_bytes = (uint32_t)(out_buffer_size * sample_spec.channels * sizeof(float));
+  attr.tlength = one_block_bytes * 4;   // Zielpuffer: 4 Blöcke
+  attr.minreq  = one_block_bytes;       // Nachschub in 1-Block-Schritten
+  attr.prebuf  = one_block_bytes;       // Prebuffer: 1 Block
+  rx->playstream = pa_simple_new(NULL,
+                                 "deskHPSDR",
                                  PA_STREAM_PLAYBACK,
                                  rx->audio_name,
-                                 stream_id,          // Description of our stream.
-                                 &sample_spec,       // Our sample format.
-                                 NULL,               // Use default channel map
-                                 &attr,              // Use attributes
-                                 &err                // error code if returns NULL
-                                );
+                                 stream_id,
+                                 &sample_spec,
+                                 NULL,
+                                 &attr,
+                                 &err);
+
+  if (rx->playstream == NULL) {
+    t_print("%s: pa_simple_new stereo failed: err=%d (%s)\n", __func__, err, pa_strerror(err));
+    sample_spec.channels = 1;
+    rx->local_audio_channels = 1;
+    one_block_bytes = (uint32_t)(out_buffer_size * sample_spec.channels * sizeof(float));
+    attr.tlength = one_block_bytes * 4;
+    attr.minreq  = one_block_bytes;
+    attr.prebuf  = one_block_bytes;
+    rx->playstream = pa_simple_new(NULL,
+                                   "deskHPSDR",
+                                   PA_STREAM_PLAYBACK,
+                                   rx->audio_name,
+                                   stream_id,
+                                   &sample_spec,
+                                   NULL,
+                                   &attr,
+                                   &err);
+  }
 
   if (rx->playstream != NULL) {
     rx->local_audio_buffer_offset = 0;
-    rx->local_audio_buffer = g_new0(float, 2 * out_buffer_size);
-    t_print("%s: allocated local_audio_buffer %p size %ld bytes\n", __func__, rx->local_audio_buffer,
-            2 * out_buffer_size * sizeof(float));
+    rx->local_audio_buffer = g_new0(float, rx->local_audio_channels * out_buffer_size);
+    t_print("%s: allocated local_audio_buffer %p size %ld bytes channels=%d\n", __func__,
+            rx->local_audio_buffer,
+            (long)(rx->local_audio_channels * out_buffer_size * sizeof(float)),
+            rx->local_audio_channels);
   } else {
     result = -1;
-    t_print("%s: pa-simple_new failed: err=%d\n", __func__, err);
+    t_print("%s: pa_simple_new mono failed: err=%d (%s)\n", __func__, err, pa_strerror(err));
   }
 
   g_mutex_unlock(&rx->local_audio_mutex);
@@ -689,14 +709,19 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     // and rx->local_audio_buffer will not be destroyes until we
     // are finished here.
     //
-    rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = sample;
-    rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
+    if (rx->local_audio_channels == 2) {
+      rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = sample;
+      rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
+    } else {
+      rx->local_audio_buffer[rx->local_audio_buffer_offset] = sample;
+    }
+
     rx->local_audio_buffer_offset++;
 
     if (rx->local_audio_buffer_offset >= out_buffer_size) {
       int rc = pa_simple_write(rx->playstream,
                                rx->local_audio_buffer,
-                               out_buffer_size * sizeof(float) * 2,
+                               out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
 
       if (rc != 0) {
@@ -715,6 +740,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   int result = 0;
   int err;
   int txmode = vfo_get_tx_mode();
+  float mono_sample = 0.0f;
 
   if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
     return 0;
@@ -727,14 +753,36 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
     // Since this is mutex-protected, we know that both rx->playstream
     // and rx->local_audio_buffer will not be destroyes until we
     // are finished here.
-    rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
-    rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
+    if (rx->local_audio_channels == 1) {
+      switch (rx->audio_channel) {
+      case LEFT:
+        mono_sample = left_sample;
+        break;
+
+      case RIGHT:
+        mono_sample = right_sample;
+        break;
+
+      case STEREO:
+      default:
+        mono_sample = 0.5f * (left_sample + right_sample);
+        break;
+      }
+    }
+
+    if (rx->local_audio_channels == 2) {
+      rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
+      rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
+    } else {
+      rx->local_audio_buffer[rx->local_audio_buffer_offset] = mono_sample;
+    }
+
     rx->local_audio_buffer_offset++;
 
     if (rx->local_audio_buffer_offset >= out_buffer_size) {
       int rc = pa_simple_write(rx->playstream,
                                rx->local_audio_buffer,
-                               out_buffer_size * sizeof(float) * 2,
+                               out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
 
       if (rc != 0) {
