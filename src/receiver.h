@@ -236,6 +236,7 @@ typedef struct _receiver {
   pa_simple *playstream;
   float *local_audio_buffer;
   int local_audio_buffer_offset;
+  int local_audio_channels;
 #endif
 
   GMutex local_audio_mutex;
