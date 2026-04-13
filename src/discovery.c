@@ -82,7 +82,6 @@ static gboolean close_cb(void) {
 
 static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   radio = (DISCOVERED *)data;
-#ifdef __APPLE__
   {
     char ip[INET_ADDRSTRLEN];
     char ifname[IFNAMSIZ] = {0};
@@ -108,7 +107,6 @@ static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
       t_print("%s: inet_ntop failed\n", __func__);
     }
   }
-#endif
 #ifdef STEMLAB_DISCOVERY
 
   // We need to start the STEMlab app before destroying the dialog, since

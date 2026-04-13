@@ -33,6 +33,11 @@
   #include <net/if_media.h>
 #endif
 
+#ifdef __linux__
+  #include <stdio.h>
+  #include <sys/stat.h>
+#endif
+
 NW_SETTINGS nw_settings = {
   .is_wired = 1
 };
@@ -161,12 +166,53 @@ static int nw_is_wired_macos(const char *remote_ip) {
 }
 #endif
 
+#ifdef __linux__
+static int nw_is_wired_linux(const char *remote_ip) {
+  char ifname[IFNAMSIZ];
+  char path[256];
+  FILE *fp;
+  struct stat st;
+  int type = -1;
+
+  if (nw_get_ifname_for_remote_ip(remote_ip, ifname, sizeof(ifname)) != 0) {
+    return -1;
+  }
+
+  snprintf(path, sizeof(path), "/sys/class/net/%s/wireless", ifname);
+
+  if (stat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+    return 0;
+  }
+
+  snprintf(path, sizeof(path), "/sys/class/net/%s/type", ifname);
+  fp = fopen(path, "r");
+
+  if (fp == NULL) {
+    return -1;
+  }
+
+  if (fscanf(fp, "%d", &type) != 1) {
+    fclose(fp);
+    return -1;
+  }
+
+  fclose(fp);
+
+  if (type == 1) {   // ARPHRD_ETHER
+    return 1;
+  }
+
+  return -1;
+}
+#endif
+
 int nw_is_wired(const char *remote_ip) {
 #ifdef __APPLE__
   return nw_is_wired_macos(remote_ip);
 #elif defined(__linux__)
-  (void)remote_ip;
-  return 1;
+  // (void)remote_ip;
+  // return 1;
+  return nw_is_wired_linux(remote_ip);
 #else
   (void)remote_ip;
   return -1;
