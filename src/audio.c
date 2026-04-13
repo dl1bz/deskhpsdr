@@ -155,19 +155,35 @@ int audio_open_output(RECEIVER *rx) {
     t_print("%s: handle=%p\n", __func__, rx->playback_handle);
     t_print("%s: trying format %s (%s)\n", __func__, snd_pcm_format_name(formats[i]),
             snd_pcm_format_description(formats[i]));
+    channels = 2;
 
-    if ((err = snd_pcm_set_params (rx->playback_handle, formats[i], SND_PCM_ACCESS_RW_INTERLEAVED, channels, rate,
-                                   soft_resample, out_latency)) < 0) {
-      t_print("%s: snd_pcm_set_params failed: %s\n", __func__, snd_strerror(err));
-      g_mutex_unlock(&rx->local_audio_mutex);
+    if ((err = snd_pcm_set_params(rx->playback_handle, formats[i], SND_PCM_ACCESS_RW_INTERLEAVED, channels, rate,
+                                  soft_resample, out_latency)) < 0) {
+      t_print("%s: snd_pcm_set_params stereo failed: %s\n", __func__, snd_strerror(err));
       audio_close_output(rx);
-      continue;
-    } else {
-      t_print("%s: using format %s (%s)\n", __func__, snd_pcm_format_name(formats[i]),
-              snd_pcm_format_description(formats[i]));
-      rx->local_audio_format = formats[i];
-      break;
+
+      if ((err = snd_pcm_open(&rx->playback_handle, hw, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) < 0) {
+        t_print("%s: cannot reopen audio device %s (%s)\n", __func__, hw, snd_strerror(err));
+        g_mutex_unlock(&rx->local_audio_mutex);
+        return err;
+      }
+
+      channels = 1;
+
+      if ((err = snd_pcm_set_params(rx->playback_handle, formats[i], SND_PCM_ACCESS_RW_INTERLEAVED, channels, rate,
+                                    soft_resample, out_latency)) < 0) {
+        t_print("%s: snd_pcm_set_params mono failed: %s\n", __func__, snd_strerror(err));
+        g_mutex_unlock(&rx->local_audio_mutex);
+        audio_close_output(rx);
+        continue;
+      }
     }
+
+    t_print("%s: using format %s (%s), channels=%u\n", __func__, snd_pcm_format_name(formats[i]),
+            snd_pcm_format_description(formats[i]), channels);
+    rx->local_audio_format = formats[i];
+    rx->local_audio_channels = (int)channels;
+    break;
   }
 
   if (i >= FORMATS) {
@@ -180,17 +196,17 @@ int audio_open_output(RECEIVER *rx) {
   switch (rx->local_audio_format) {
   case SND_PCM_FORMAT_S16_LE:
     t_print("%s: local_audio_buffer: size=%d sample=%ld\n", __func__, out_buffer_size, sizeof(int16_t));
-    rx->local_audio_buffer = g_new(int16_t, 2 * out_buffer_size);
+    rx->local_audio_buffer = g_new(int16_t, rx->local_audio_channels * out_buffer_size);
     break;
 
   case SND_PCM_FORMAT_S32_LE:
     t_print("%s: local_audio_buffer: size=%d sample=%ld\n", __func__, out_buffer_size, sizeof(int32_t));
-    rx->local_audio_buffer = g_new(int32_t, 2 * out_buffer_size);
+    rx->local_audio_buffer = g_new(int32_t, rx->local_audio_channels * out_buffer_size);
     break;
 
   case SND_PCM_FORMAT_FLOAT_LE:
     t_print("%s: local_audio_buffer: size=%d sample=%ld\n", __func__, out_buffer_size, sizeof(float));
-    rx->local_audio_buffer = g_new(float, 2 * out_buffer_size);
+    rx->local_audio_buffer = g_new(float, rx->local_audio_channels * out_buffer_size);
     break;
 
   default:
@@ -199,8 +215,8 @@ int audio_open_output(RECEIVER *rx) {
     break;
   }
 
-  t_print("%s: rx=%d audio_device=%d handle=%p buffer=%p size=%d\n", __func__, rx->id, rx->audio_device,
-          rx->playback_handle, rx->local_audio_buffer, out_buffer_size);
+  t_print("%s: rx=%d audio_device=%d handle=%p buffer=%p size=%d channels=%d\n", __func__, rx->id, rx->audio_device,
+          rx->playback_handle, rx->local_audio_buffer, out_buffer_size, rx->local_audio_channels);
   g_mutex_unlock(&rx->local_audio_mutex);
   return 0;
 }
@@ -419,22 +435,37 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     switch (rx->local_audio_format) {
     case SND_PCM_FORMAT_S16_LE: {
       int16_t *short_buffer = (int16_t *)rx->local_audio_buffer;
-      short_buffer[rx->local_audio_buffer_offset * 2] = (int16_t)(sample * 32767.0F);
-      short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int16_t)(sample * 32767.0F);
+
+      if (rx->local_audio_channels == 2) {
+        short_buffer[rx->local_audio_buffer_offset * 2] = (int16_t)(sample * 32767.0F);
+        short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int16_t)(sample * 32767.0F);
+      } else {
+        short_buffer[rx->local_audio_buffer_offset] = (int16_t)(sample * 32767.0F);
+      }
     }
     break;
 
     case SND_PCM_FORMAT_S32_LE: {
       int32_t *long_buffer = (int32_t *)rx->local_audio_buffer;
-      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(sample * 2147483647.0F);
-      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(sample * 2147483647.0F);
+
+      if (rx->local_audio_channels == 2) {
+        long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(sample * 2147483647.0F);
+        long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(sample * 2147483647.0F);
+      } else {
+        long_buffer[rx->local_audio_buffer_offset] = (int32_t)(sample * 2147483647.0F);
+      }
     }
     break;
 
     case SND_PCM_FORMAT_FLOAT_LE: {
       float *float_buffer = (float *)rx->local_audio_buffer;
-      float_buffer[rx->local_audio_buffer_offset * 2] = sample;
-      float_buffer[(rx->local_audio_buffer_offset * 2) + 1] =  sample;
+
+      if (rx->local_audio_channels == 2) {
+        float_buffer[rx->local_audio_buffer_offset * 2] = sample;
+        float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
+      } else {
+        float_buffer[rx->local_audio_buffer_offset] = sample;
+      }
     }
     break;
 
@@ -467,22 +498,37 @@ int cw_audio_write(RECEIVER *rx, float sample) {
           switch (rx->local_audio_format) {
           case SND_PCM_FORMAT_S16_LE: {
             int16_t *short_buffer = (int16_t *)rx->local_audio_buffer;
-            short_buffer[rx->local_audio_buffer_offset * 2] = 0;
-            short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0;
+
+            if (rx->local_audio_channels == 2) {
+              short_buffer[rx->local_audio_buffer_offset * 2] = 0;
+              short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0;
+            } else {
+              short_buffer[rx->local_audio_buffer_offset] = 0;
+            }
           }
           break;
 
           case SND_PCM_FORMAT_S32_LE: {
             int32_t* long_buffer = (int32_t *)rx->local_audio_buffer;
-            long_buffer[rx->local_audio_buffer_offset * 2] = 0;
-            long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0;
+
+            if (rx->local_audio_channels == 2) {
+              long_buffer[rx->local_audio_buffer_offset * 2] = 0;
+              long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0;
+            } else {
+              long_buffer[rx->local_audio_buffer_offset] = 0;
+            }
           }
           break;
 
           case SND_PCM_FORMAT_FLOAT_LE: {
             float *float_buffer = (float *)rx->local_audio_buffer;
-            float_buffer[rx->local_audio_buffer_offset * 2] = 0.0;
-            float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0.0;
+
+            if (rx->local_audio_channels == 2) {
+              float_buffer[rx->local_audio_buffer_offset * 2] = 0.0;
+              float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0.0;
+            } else {
+              float_buffer[rx->local_audio_buffer_offset] = 0.0;
+            }
           }
           break;
 
@@ -537,6 +583,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
 int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   snd_pcm_sframes_t delay;
   int txmode = vfo_get_tx_mode();
+  float mono_sample = 0.0f;
 
   //
   // We have to stop the stream here if a CW side tone may occur.
@@ -554,25 +601,57 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   g_mutex_lock(&rx->local_audio_mutex);
 
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
+    if (rx->local_audio_channels == 1) {
+      switch (rx->audio_channel) {
+      case LEFT:
+        mono_sample = left_sample;
+        break;
+
+      case RIGHT:
+        mono_sample = right_sample;
+        break;
+
+      case STEREO:
+      default:
+        mono_sample = 0.5f * (left_sample + right_sample);
+        break;
+      }
+    }
+
     switch (rx->local_audio_format) {
     case SND_PCM_FORMAT_S16_LE: {
       int16_t *short_buffer = (int16_t *)rx->local_audio_buffer;
-      short_buffer[rx->local_audio_buffer_offset * 2] = (int16_t)(left_sample * 32767.0F);
-      short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int16_t)(right_sample * 32767.0F);
+
+      if (rx->local_audio_channels == 2) {
+        short_buffer[rx->local_audio_buffer_offset * 2] = (int16_t)(left_sample * 32767.0F);
+        short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int16_t)(right_sample * 32767.0F);
+      } else {
+        short_buffer[rx->local_audio_buffer_offset] = (int16_t)(mono_sample * 32767.0F);
+      }
     }
     break;
 
     case SND_PCM_FORMAT_S32_LE: {
       int32_t *long_buffer = (int32_t *)rx->local_audio_buffer;
-      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(left_sample * 2147483647.0F);
-      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(right_sample * 2147483647.0F);
+
+      if (rx->local_audio_channels == 2) {
+        long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(left_sample * 2147483647.0F);
+        long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(right_sample * 2147483647.0F);
+      } else {
+        long_buffer[rx->local_audio_buffer_offset] = (int32_t)(mono_sample * 2147483647.0F);
+      }
     }
     break;
 
     case SND_PCM_FORMAT_FLOAT_LE: {
       float *float_buffer = (float *)rx->local_audio_buffer;
-      float_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
-      float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
+
+      if (rx->local_audio_channels == 2) {
+        float_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
+        float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
+      } else {
+        float_buffer[rx->local_audio_buffer_offset] = mono_sample;
+      }
     }
     break;
 
@@ -600,18 +679,18 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
 
           switch (rx->local_audio_format) {
           case SND_PCM_FORMAT_S16_LE:
-            silence = g_new(int16_t, 2 * num);
-            len = 2 * num * sizeof(int16_t);
+            silence = g_new(int16_t, rx->local_audio_channels * num);
+            len = rx->local_audio_channels * num * sizeof(int16_t);
             break;
 
           case SND_PCM_FORMAT_S32_LE:
-            silence = g_new(int32_t, 2 * num);
-            len = 2 * num * sizeof(int32_t);
+            silence = g_new(int32_t, rx->local_audio_channels * num);
+            len = rx->local_audio_channels * num * sizeof(int32_t);
             break;
 
           case SND_PCM_FORMAT_FLOAT_LE:
-            silence = g_new(float, 2 * num);
-            len = 2 * num * sizeof(float);
+            silence = g_new(float, rx->local_audio_channels * num);
+            len = rx->local_audio_channels * num * sizeof(float);
             break;
 
           default:
