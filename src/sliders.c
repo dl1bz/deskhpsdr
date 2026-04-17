@@ -892,7 +892,7 @@ static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   int b = vfo[v_tx].band;
   BANDSETTINGS *bs = band_get_settings(b);
 
-  if (value < 1) { value = 1; }
+  if (value < 0) { value = 0; }
 
   if (value > 100) { value = 100; }
 
@@ -1088,6 +1088,9 @@ void update_slider_local_mic_button(void) {
 void update_slider_tune_drive_scale(gboolean show_widget) {
   if (display_sliders) {
     g_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
+    gtk_spin_button_set_increments(GTK_SPIN_BUTTON(tune_drive_scale),
+                                   transmitter->tune_drive_step,
+                                   transmitter->tune_drive_step);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
 
     if (show_widget && !transmitter->tune_use_drive) {
@@ -2515,7 +2518,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------
     // tune_drive_scale
-    tune_drive_scale = gtk_spin_button_new_with_range(1, 100, 1);
+    tune_drive_scale = gtk_spin_button_new_with_range(0, 100, transmitter->tune_drive_step);
     WEAKEN(tune_drive_scale);
     gtk_widget_set_name(tune_drive_scale, "front_spin_button");
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);

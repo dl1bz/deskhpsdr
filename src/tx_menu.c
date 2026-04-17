@@ -44,6 +44,8 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *input;
 static GtkWidget *tx_spin_low;
 static GtkWidget *tx_spin_high;
+static GtkWidget *tx_tune_drive_spin;
+static gulong tx_tune_drive_spin_signal_id;
 
 static GtkWidget *tx_container;
 static GtkWidget *cfc_container;
@@ -629,6 +631,8 @@ static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
+    tx_tune_drive_spin = NULL;
+    tx_tune_drive_spin_signal_id = 0;
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
@@ -1194,11 +1198,35 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
+static void tune_drive_step_changed_cb(GtkComboBox *widget, gpointer data) {
+  const gchar *id;
+  id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(widget));
+
+  if (id == NULL) {
+    return;
+  }
+
+  transmitter->tune_drive_step = atoi(id);
+
+  if (tx_tune_drive_spin != NULL) {
+    g_signal_handler_block(G_OBJECT(tx_tune_drive_spin), tx_tune_drive_spin_signal_id);
+    gtk_spin_button_set_increments(GTK_SPIN_BUTTON(tx_tune_drive_spin),
+                                   (double)transmitter->tune_drive_step,
+                                   (double)transmitter->tune_drive_step);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_tune_drive_spin),
+                              (double)transmitter->tune_drive);
+    g_signal_handler_unblock(G_OBJECT(tx_tune_drive_spin), tx_tune_drive_spin_signal_id);
+  }
+
+  update_slider_tune_drive_scale(TRUE);
+}
+
 void tx_menu(GtkWidget *parent) {
   char temp[32];
   GtkWidget *btn;
   GtkWidget *mbtn;  // main button for radio buttons
   GtkWidget *label;
+  GtkWidget *combo;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);
@@ -1489,11 +1517,14 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
-  btn = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
+  btn = gtk_spin_button_new_with_range(0.0, 100.0, (double)transmitter->tune_drive_step);
+  tx_tune_drive_spin = btn;
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(btn), 0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->tune_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
-  g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_TUNE_DRIVE));
+  tx_tune_drive_spin_signal_id = g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb),
+                                 GINT_TO_POINTER(TX_TUNE_DRIVE));
+  //---------------------------------------------------------------------------------------------------------------
   row++;
   col = 2;
   btn = gtk_check_button_new_with_label("Use Drive levels per Band");
@@ -1502,8 +1533,54 @@ void tx_menu(GtkWidget *parent) {
                               "ENABLED: Settings for [TX_DRIVE] and [TUNE_DRIVE] will be saved and restored per band.\n\n"
                               "DISABLED: Global settings for [TX_DRIVE] and [TUNE_DRIVE] will be used for all bands.");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->drive_per_band);
-  gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_DRIVE_PER_BAND));
+  //---------------------------------------------------------------------------------------------------------------
+  col += 1;
+  label = gtk_label_new("Tune Drive Stepping");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
+  col++;
+  combo = gtk_combo_box_text_new();
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "1",  "1");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "5",  "5");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "10", "10");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "20", "20");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "25", "25");
+
+  gtk_widget_set_tooltip_text(combo,
+                              "Select step size for TUNE DRIVE");
+
+  switch (transmitter->tune_drive_step) {
+  case 1:
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "1");
+    break;
+
+  case 5:
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "5");
+    break;
+
+  case 10:
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "10");
+    break;
+
+  case 20:
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "20");
+    break;
+
+  case 25:
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "25");
+    break;
+
+  default:
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "1");
+    break;
+  }
+
+  g_signal_connect(combo, "changed", G_CALLBACK(tune_drive_step_changed_cb), NULL);
+  gtk_grid_attach(GTK_GRID(tx_grid), combo, col, row, 1, 1);
+  //---------------------------------------------------------------------------------------------------------------
   row++;
   col = 0;
   label = gtk_label_new("Panadapter High");
