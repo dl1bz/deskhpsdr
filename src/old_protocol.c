@@ -201,8 +201,9 @@ static int hl2_iob_last_read_reg = -1;
   int hl2_pa_enable_suppressed = 0;
 #else
   int hl2_iob_present = 0;
-  int hl2_pico_present = 0;
 #endif
+
+int hl2_pico_present = 0;
 
 #define COMMON_MERCURY_FREQUENCY 0x80
 #define PENELOPE_MIC 0x80
@@ -245,8 +246,9 @@ static pthread_mutex_t send_ozy_mutex   = PTHREAD_MUTEX_INITIALIZER;
   static atomic_uchar hl2_iob_tuner_status = 0;
 #else
   static unsigned char hl2_iob_tuner_status = 0;
-  static unsigned char hl2_iob_lpf_status = 0;
 #endif
+
+static unsigned char hl2_iob_lpf_status = 0;
 
 #ifdef __AH4IOB__
 //

@@ -1548,7 +1548,6 @@ void tx_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "10", "10");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "20", "20");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "25", "25");
-
   gtk_widget_set_tooltip_text(combo,
                               "Select step size for TUNE DRIVE");
 
