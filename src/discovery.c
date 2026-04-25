@@ -81,7 +81,18 @@ static gboolean close_cb(void) {
 }
 
 static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  radio = (DISCOVERED *)data;
+  /* korrektes Gerät aus der Discover-Liste selektieren */
+  selected_device = GPOINTER_TO_INT(data);
+
+  /* Safety: Index validieren */
+  if (selected_device < 0 || selected_device >= devices) {
+    t_print("%s: invalid selected_device=%d devices=%d\n", __func__, selected_device, devices);
+    return TRUE;
+  }
+
+  radio = &discovered[selected_device];
+  t_print("%s: selected_device=%d protocol=%d device=%d name=%s\n",
+          __func__, selected_device, radio->protocol, radio->device, radio->name);
   {
     char ip[INET_ADDRSTRLEN];
     char ifname[IFNAMSIZ] = {0};
@@ -537,7 +548,7 @@ void discovery(void) {
       gtk_widget_set_valign(start_button, GTK_ALIGN_CENTER);
       gtk_widget_show(start_button);
       gtk_grid_attach(GTK_GRID(grid), start_button, 3, row, 1, 1);
-      g_signal_connect(start_button, "clicked", G_CALLBACK(start_clicked), (gpointer)d);
+      g_signal_connect(start_button, "clicked", G_CALLBACK(start_clicked), GINT_TO_POINTER(d - discovered));
 
       // Reboot-Button für Hermes Lite 2
       // Voraussetzung: DEVICE_HERMES_LITE2 & NEW_DEVICE_HERMES_LITE2 ist im Projekt definiert.
@@ -724,7 +735,9 @@ void discovery(void) {
     d = &discovered[0];
 
     if (d->status == STATE_AVAILABLE) {
-      if (start_cb(NULL, NULL, (gpointer)d)) { return; }
+      if (start_cb(NULL, NULL, GINT_TO_POINTER(d - discovered))) {
+        return;
+      }
     }
   }
 }
