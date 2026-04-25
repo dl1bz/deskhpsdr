@@ -2542,6 +2542,15 @@ static void process_high_priority(void) {
   tx_fifo_underrun |= (buffer[4] & 0x20) >> 5;
   adc0_overload |= buffer[5] & 0x01;
   adc1_overload |= ((buffer[5] & 0x02) >> 1);
+
+  if ((buffer[5] & 0x03) != 0) {
+    t_print("%s: ADC overload flags buffer[5]=0x%02X adc0=%d adc1=%d\n",
+            __func__,
+            buffer[5],
+            buffer[5] & 0x01,
+            (buffer[5] & 0x02) >> 1);
+  }
+
   //
   // During RX, HighPrio packets arrive every 50 msec
   // During TX, HighPrio packets arrive every    msec

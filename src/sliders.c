@@ -1378,7 +1378,7 @@ static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
 }
 
 void update_slider_nr_btn(void) {
-  if (display_sliders && have_rx_gain) {
+  if (display_sliders && (have_rx_gain || have_rx_att)) {
     g_signal_handler_block(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
 
@@ -2002,10 +2002,43 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_hexpand(attenuation_scale, FALSE);  // fülle Box nicht nach rechts
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_scale, TRUE, TRUE, 0);
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    nr_btn = gtk_button_new_with_label(nr_labels[active_receiver->nr]);
+    WEAKEN(nr_btn);
+    nr_context = gtk_widget_get_style_context(nr_btn);
+
+    if (active_receiver->nr > 0) {
+      gtk_style_context_add_class(nr_context, "active");
+    } else {
+      gtk_style_context_remove_class(nr_context, "active");
+    }
+
+    gtk_widget_set_name(nr_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
+                                        "OFF → NR → NR2 → NR3 → NR4");
+    // begin label definition inside button
+    nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
+    gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);
+    // end label definition
+    gtk_widget_set_size_request(nr_btn, box_right_width / 6, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(nr_btn, 0);
+    gtk_widget_set_margin_bottom(nr_btn, 0);
+    gtk_widget_set_margin_start(nr_btn, 0);
+    gtk_widget_set_margin_end(nr_btn, 0);
+    gtk_widget_set_halign(nr_btn, GTK_ALIGN_START);
+    gtk_widget_set_valign(nr_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(nr_btn, FALSE);  // fülle Box nicht nach rechts
+    nr_btn_signal_id = g_signal_connect(nr_btn, "pressed", G_CALLBACK(nr_btn_pressed_cb), NULL);
+    // g_signal_connect(agc_btn, "released", G_CALLBACK(agc_btn_pressed_cb), NULL);
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     gtk_grid_attach(GTK_GRID(sliders), box_Z1_right, 2, 0, 1, 1);  // Zeile 0 Spalte 2
   } else {
     attenuation_label = NULL;
     attenuation_scale = NULL;
+    nr_btn = NULL;
+    nr_btn_signal_id = 0;
   }
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -120,6 +120,7 @@ static void nb_cb(GtkToggleButton *widget, gpointer data) {
 static void nr_cb(GtkToggleButton *widget, gpointer data) {
   active_receiver->nr = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
   update_noise();
+  update_slider_nr_btn();
 }
 
 static void anf_cb(GtkWidget *widget, gpointer data) {
