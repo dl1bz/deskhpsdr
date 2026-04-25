@@ -399,9 +399,10 @@ gpointer new_discover_receive_thread(gpointer data) {
     t_print("new_discover: received %d bytes\n", bytes_read);
 
     if (bytes_read == 1444) {
-      if (devices > 0) {
-        break;
-      }
+      // if (devices > 0) {
+      //   break;
+      // }
+      continue; // no break if P1 devices were detetcted earlier => full P2 discovery run
     } else {
       if (buffer[0] == 0 && buffer[1] == 0 && buffer[2] == 0 && buffer[3] == 0) {
         int status = buffer[4] & 0xFF;
