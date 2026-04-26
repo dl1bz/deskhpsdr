@@ -496,7 +496,8 @@ void display_menu(GtkWidget *parent) {
   g_signal_connect(waterfall_automatic_b, "toggled", G_CALLBACK(waterfall_automatic_cb), NULL);
 
   //--------------------------------------------------------------------------------------------------------------
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  // if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
     col = 0;
     label = gtk_label_new("Panadapter Automatic:\n(Related to Noisefloor)");
