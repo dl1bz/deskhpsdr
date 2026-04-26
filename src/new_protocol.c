@@ -696,8 +696,28 @@ static void new_protocol_general(void) {
   } else {
     if ((rc = sendto(data_socket, general_buffer, sizeof(general_buffer), 0, (struct sockaddr * )&base_addr,
                      base_addr_length)) < 0) {
+#ifdef __DEVEL__
+      int err = errno;
+
+      if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {
+        t_print("%s: transient sendto general failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
+                __func__,
+                data_socket,
+                err,
+                strerror(err),
+                inet_ntoa(base_addr.sin_addr),
+                ntohs(base_addr.sin_port),
+                (long)sizeof(general_buffer),
+                base_addr_length);
+        pthread_mutex_unlock(&general_mutex);
+        return;
+      }
+
+#endif
       g_idle_add(fatal_error, "GP send failed (Network down?)");
       P2running = 0;
+      // pthread_mutex_unlock(&general_mutex);
+      // return;
     }
 
     if (rc != sizeof(general_buffer)) {
@@ -1402,7 +1422,7 @@ static void new_protocol_high_priority(void) {
     if ((rc = sendto(data_socket, high_priority_buffer_to_radio, sizeof(high_priority_buffer_to_radio), 0,
                      (struct sockaddr * )&high_priority_addr, high_priority_addr_length)) < 0) {
       int err = errno;
-#ifdef __APPLE__
+#ifdef __DEVEL__
 
       /* Tahoe: transient network/ARP/route race – do NOT abort */
       if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {
@@ -1671,7 +1691,7 @@ static void new_protocol_receive_specific(void) {
     if ((rc = sendto(data_socket, receive_specific_buffer, sizeof(receive_specific_buffer), 0,
                      (struct sockaddr * )&receiver_addr, receiver_addr_length)) < 0) {
       int err = errno;
-#ifdef __APPLE__
+#ifdef __DEVEL__
 
       /* Tahoe: transient network/ARP/route race – do NOT abort */
       if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {

@@ -152,7 +152,7 @@ static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
   // of the status label
   //
   status_text("Starting Radio ...\n");
-  g_timeout_add(50, ext_start_radio, NULL);
+  g_timeout_add(100, ext_start_radio, NULL);
   gtk_widget_destroy(discovery_dialog);
   return TRUE;
 }
