@@ -1744,7 +1744,7 @@ int process_action(void *data) {
 
 #endif
 
-      if (display_sliders && have_rx_gain) {
+      if (display_sliders && (have_rx_gain || have_rx_att)) {
         update_slider_ps_btn();
       }
     }

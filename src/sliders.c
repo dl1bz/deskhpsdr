@@ -1449,7 +1449,7 @@ static void agc_btn_pressed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void update_slider_ps_btn(void) {
-  if (can_transmit && display_sliders && have_rx_gain) {
+  if (can_transmit && display_sliders && (have_rx_gain || have_rx_att)) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON (ps_btn), ps_btn_signal_id);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ps_btn), transmitter->puresignal);
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON (ps_btn), ps_btn_signal_id);

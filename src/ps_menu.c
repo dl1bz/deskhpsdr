@@ -33,6 +33,7 @@
 #include "vfo.h"
 #include "ext.h"
 #include "message.h"
+#include "sliders.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *feedback_l;
@@ -458,6 +459,7 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
 
     copy_mode_settings(_mode);
 #endif
+    update_slider_ps_btn();
   }
 }
 
