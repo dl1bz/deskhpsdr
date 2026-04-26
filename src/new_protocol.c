@@ -443,6 +443,31 @@ void update_action_table(void) {
   }
 }
 
+#ifdef __APPLE__
+static void p2_prime_route(void) {
+  int s;
+  struct sockaddr_in a;
+  char dummy = 0;
+  unsigned int ifindex = if_nametoindex(radio->info.network.interface_name);
+  s = socket(AF_INET, SOCK_DGRAM, 0);
+
+  if (s < 0) {
+    return;
+  }
+
+  if (ifindex > 0) {
+    (void)setsockopt(s, IPPROTO_IP, IP_BOUND_IF, &ifindex, sizeof(ifindex));
+  }
+
+  memset(&a, 0, sizeof(a));
+  a.sin_family = AF_INET;
+  a.sin_addr = radio->info.network.address.sin_addr;
+  a.sin_port = htons(GENERAL_REGISTERS_FROM_HOST_PORT);
+  (void)sendto(s, &dummy, sizeof(dummy), 0, (struct sockaddr *)&a, sizeof(a));
+  close(s);
+}
+#endif
+
 void new_protocol_init(void) {
   int i;
 
@@ -598,6 +623,23 @@ void new_protocol_init(void) {
       t_perror("data_socket: IP_TOS");
     }
 
+#ifdef __APPLE__
+    {
+      unsigned int ifindex = if_nametoindex(radio->info.network.interface_name);
+
+      if (ifindex > 0) {
+        if (setsockopt(data_socket, IPPROTO_IP, IP_BOUND_IF, &ifindex, sizeof(ifindex)) < 0) {
+          t_perror("data_socket: IP_BOUND_IF");
+        } else {
+          t_print("new_protocol_init: data_socket %d bound to ifname=%s ifindex=%u\n",
+                  data_socket, radio->info.network.interface_name, ifindex);
+        }
+      } else {
+        t_print("new_protocol_init: if_nametoindex(%s) failed\n", radio->info.network.interface_name);
+      }
+    }
+#endif
+
     // bind to the interface
     if (bind(data_socket, (struct sockaddr * )&radio->info.network.interface_address,
              radio->info.network.interface_length) < 0) {
@@ -696,28 +738,15 @@ static void new_protocol_general(void) {
   } else {
     if ((rc = sendto(data_socket, general_buffer, sizeof(general_buffer), 0, (struct sockaddr * )&base_addr,
                      base_addr_length)) < 0) {
-#ifdef __DEVEL__
       int err = errno;
-
-      if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {
-        t_print("%s: transient sendto general failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
-                __func__,
-                data_socket,
-                err,
-                strerror(err),
-                inet_ntoa(base_addr.sin_addr),
-                ntohs(base_addr.sin_port),
-                (long)sizeof(general_buffer),
-                base_addr_length);
-        pthread_mutex_unlock(&general_mutex);
-        return;
-      }
-
-#endif
+      t_print("%s: sendto general failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
+              __func__, data_socket, err, strerror(err),
+              inet_ntoa(base_addr.sin_addr), ntohs(base_addr.sin_port),
+              (long)sizeof(general_buffer), base_addr_length);
       g_idle_add(fatal_error, "GP send failed (Network down?)");
       P2running = 0;
-      // pthread_mutex_unlock(&general_mutex);
-      // return;
+      pthread_mutex_unlock(&general_mutex);
+      return;
     }
 
     if (rc != sizeof(general_buffer)) {
@@ -1422,34 +1451,14 @@ static void new_protocol_high_priority(void) {
     if ((rc = sendto(data_socket, high_priority_buffer_to_radio, sizeof(high_priority_buffer_to_radio), 0,
                      (struct sockaddr * )&high_priority_addr, high_priority_addr_length)) < 0) {
       int err = errno;
-#ifdef __DEVEL__
-
-      /* Tahoe: transient network/ARP/route race – do NOT abort */
-      if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {
-        t_print("%s: transient sendto high_priority failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
-                __func__,
-                data_socket,
-                err,
-                strerror(err),
-                inet_ntoa(high_priority_addr.sin_addr),
-                ntohs(high_priority_addr.sin_port),
-                (long)sizeof(high_priority_buffer_to_radio),
-                high_priority_addr_length);
-        return;
-      }
-
-#endif
       t_print("%s: sendto high_priority failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
-              __func__,
-              data_socket,
-              err,
-              strerror(err),
-              inet_ntoa(high_priority_addr.sin_addr),
-              ntohs(high_priority_addr.sin_port),
-              (long)sizeof(high_priority_buffer_to_radio),
-              high_priority_addr_length);
+              __func__, data_socket, err, strerror(err),
+              inet_ntoa(high_priority_addr.sin_addr), ntohs(high_priority_addr.sin_port),
+              (long)sizeof(high_priority_buffer_to_radio), high_priority_addr_length);
       g_idle_add(fatal_error, "HP send failed (Network down?)");
       P2running = 0;
+      pthread_mutex_unlock(&hi_prio_mutex);
+      return;
     } else if (rc != sizeof(high_priority_buffer_to_radio)) {
       t_print("sendto socket for high_priority: %d rather than %ld\n", rc, (long)sizeof(high_priority_buffer_to_radio));
     }
@@ -1580,8 +1589,15 @@ static void new_protocol_transmit_specific(void) {
 
     if ((rc = sendto(data_socket, transmit_specific_buffer, sizeof(transmit_specific_buffer), 0,
                      (struct sockaddr * )&transmitter_addr, transmitter_addr_length)) < 0) {
+      int err = errno;
+      t_print("%s: sendto transmit_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
+              __func__, data_socket, err, strerror(err),
+              inet_ntoa(transmitter_addr.sin_addr), ntohs(transmitter_addr.sin_port),
+              (long)sizeof(transmit_specific_buffer), transmitter_addr_length);
       g_idle_add(fatal_error, "TxSpec send failed (Network down?)");
       P2running = 0;
+      pthread_mutex_unlock(&tx_spec_mutex);
+      return;
     }
 
     if (rc != sizeof(transmit_specific_buffer)) {
@@ -1691,34 +1707,14 @@ static void new_protocol_receive_specific(void) {
     if ((rc = sendto(data_socket, receive_specific_buffer, sizeof(receive_specific_buffer), 0,
                      (struct sockaddr * )&receiver_addr, receiver_addr_length)) < 0) {
       int err = errno;
-#ifdef __DEVEL__
-
-      /* Tahoe: transient network/ARP/route race – do NOT abort */
-      if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {
-        t_print("%s: transient sendto receive_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
-                __func__,
-                data_socket,
-                err,
-                strerror(err),
-                inet_ntoa(receiver_addr.sin_addr),
-                ntohs(receiver_addr.sin_port),
-                (long)sizeof(receive_specific_buffer),
-                receiver_addr_length);
-        return;
-      }
-
-#endif
       t_print("%s: sendto receive_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
-              __func__,
-              data_socket,
-              err,
-              strerror(err),
-              inet_ntoa(receiver_addr.sin_addr),
-              ntohs(receiver_addr.sin_port),
-              (long)sizeof(receive_specific_buffer),
-              receiver_addr_length);
+              __func__, data_socket, err, strerror(err),
+              inet_ntoa(receiver_addr.sin_addr), ntohs(receiver_addr.sin_port),
+              (long)sizeof(receive_specific_buffer), receiver_addr_length);
       g_idle_add(fatal_error, "RxSpec send failed (Network down?)");
       P2running = 0;
+      pthread_mutex_unlock(&rx_spec_mutex);
+      return;
     } else if (rc != sizeof(receive_specific_buffer)) {
       t_print("sendto socket for receive_specific: %d rather than %ld\n", rc, (long)sizeof(receive_specific_buffer));
     }
@@ -1838,50 +1834,19 @@ void new_protocol_menu_start(void) {
     new_protocol_thread_id = g_thread_new( "P2 main", new_protocol_thread, NULL);
   }
 
-#if defined (__APPLE__) && defined (__TAHOEFIX__)
+#ifdef __APPLE__
   int major_version = get_macos_major_version();
-
-  if (major_version > 15) {
-    // Tahoe workaround: erste UDPs „primen“
-    t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __func__, major_version);
-
-    for (int n = 0; n < 3; n++) {
-      new_protocol_general();
-      usleep(30000);
-    }
-
-    for (int n = 0; n < 3; n++) {
-      new_protocol_high_priority();
-      usleep(30000);
-    }
-
-    for (int n = 0; n < 3; n++) {
-      new_protocol_transmit_specific();
-      usleep(30000);
-    }
-
-    for (int n = 0; n < 3; n++) {
-      new_protocol_receive_specific();
-      usleep(30000);
-    }
-  } else {
-    t_print("%s: macOS major version: %d\n", __func__, major_version);
-    new_protocol_general();
-    usleep(50000);                    // let FPGA digest the port numbers
-    new_protocol_high_priority();
-    usleep(50000);                    // let FPGA digest the "run" command
-    new_protocol_transmit_specific();
-    new_protocol_receive_specific();
-  }
-
-#else
-  new_protocol_general();
-  usleep(50000);                    // let FPGA digest the port numbers
-  new_protocol_high_priority();
-  usleep(50000);                    // let FPGA digest the "run" command
-  new_protocol_transmit_specific();
-  new_protocol_receive_specific();
+  t_print("%s: macOS major version: %d => prime macOS route\n", __func__, major_version);
+  p2_prime_route();
+  usleep(100000);
 #endif
+  new_protocol_general();
+  usleep(100000);                    // let FPGA digest the port numbers
+  new_protocol_high_priority();
+  usleep(100000);                    // let FPGA digest the "run" command
+  new_protocol_transmit_specific();
+  usleep(50000);
+  new_protocol_receive_specific();
   new_protocol_timer_thread_id = g_thread_new( "P2 task", new_protocol_timer_thread, NULL);
 }
 
