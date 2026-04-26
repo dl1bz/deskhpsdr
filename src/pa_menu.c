@@ -244,6 +244,9 @@ void pa_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "1W");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "5W");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "10W");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "15W");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "20W");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "25W");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "30W");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "50W");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(max_power_b), NULL, "100W");

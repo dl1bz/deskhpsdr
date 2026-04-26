@@ -204,7 +204,7 @@ int filter_board = ALEX;
 int pa_enabled = 1;
 int enable_hl2_atu_gateware = 0;
 int pa_power = PA_1W;
-const int pa_power_list[] = {1, 5, 10, 30, 50, 100, 200, 500, 1000};
+const int pa_power_list[] = {1, 5, 10, 15, 20, 25, 30, 50, 100, 200, 500, 1000};
 double pa_trim[11];
 
 int rx200_udp_port = 5573;  // Portnummer für den RX200 UDP Listener
