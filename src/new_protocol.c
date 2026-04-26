@@ -607,6 +607,11 @@ void new_protocol_init(void) {
 
     t_print("new_protocol_init: data_socket %d bound to interface %s:%d\n", data_socket,
             inet_ntoa(radio->info.network.interface_address.sin_addr), ntohs(radio->info.network.interface_address.sin_port));
+    t_print("new_protocol_init: radio address %s:%d interface_length=%d address_length=%d\n",
+            inet_ntoa(radio->info.network.address.sin_addr),
+            ntohs(radio->info.network.address.sin_port),
+            radio->info.network.interface_length,
+            radio->info.network.address_length);
     memcpy(&base_addr, &radio->info.network.address, radio->info.network.address_length);
     base_addr_length = radio->info.network.address_length;
     base_addr.sin_port = htons(GENERAL_REGISTERS_FROM_HOST_PORT);
@@ -1396,11 +1401,36 @@ static void new_protocol_high_priority(void) {
 
     if ((rc = sendto(data_socket, high_priority_buffer_to_radio, sizeof(high_priority_buffer_to_radio), 0,
                      (struct sockaddr * )&high_priority_addr, high_priority_addr_length)) < 0) {
+      int err = errno;
+#ifdef __APPLE__
+
+      /* Tahoe: transient network/ARP/route race – do NOT abort */
+      if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {
+        t_print("%s: transient sendto high_priority failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
+                __func__,
+                data_socket,
+                err,
+                strerror(err),
+                inet_ntoa(high_priority_addr.sin_addr),
+                ntohs(high_priority_addr.sin_port),
+                (long)sizeof(high_priority_buffer_to_radio),
+                high_priority_addr_length);
+        return;
+      }
+
+#endif
+      t_print("%s: sendto high_priority failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
+              __func__,
+              data_socket,
+              err,
+              strerror(err),
+              inet_ntoa(high_priority_addr.sin_addr),
+              ntohs(high_priority_addr.sin_port),
+              (long)sizeof(high_priority_buffer_to_radio),
+              high_priority_addr_length);
       g_idle_add(fatal_error, "HP send failed (Network down?)");
       P2running = 0;
-    }
-
-    if (rc != sizeof(high_priority_buffer_to_radio)) {
+    } else if (rc != sizeof(high_priority_buffer_to_radio)) {
       t_print("sendto socket for high_priority: %d rather than %ld\n", rc, (long)sizeof(high_priority_buffer_to_radio));
     }
   }
@@ -1640,11 +1670,36 @@ static void new_protocol_receive_specific(void) {
 
     if ((rc = sendto(data_socket, receive_specific_buffer, sizeof(receive_specific_buffer), 0,
                      (struct sockaddr * )&receiver_addr, receiver_addr_length)) < 0) {
+      int err = errno;
+#ifdef __APPLE__
+
+      /* Tahoe: transient network/ARP/route race – do NOT abort */
+      if (err == EHOSTUNREACH || err == EHOSTDOWN || err == ENETUNREACH) {
+        t_print("%s: transient sendto receive_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
+                __func__,
+                data_socket,
+                err,
+                strerror(err),
+                inet_ntoa(receiver_addr.sin_addr),
+                ntohs(receiver_addr.sin_port),
+                (long)sizeof(receive_specific_buffer),
+                receiver_addr_length);
+        return;
+      }
+
+#endif
+      t_print("%s: sendto receive_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
+              __func__,
+              data_socket,
+              err,
+              strerror(err),
+              inet_ntoa(receiver_addr.sin_addr),
+              ntohs(receiver_addr.sin_port),
+              (long)sizeof(receive_specific_buffer),
+              receiver_addr_length);
       g_idle_add(fatal_error, "RxSpec send failed (Network down?)");
       P2running = 0;
-    }
-
-    if (rc != sizeof(receive_specific_buffer)) {
+    } else if (rc != sizeof(receive_specific_buffer)) {
       t_print("sendto socket for receive_specific: %d rather than %ld\n", rc, (long)sizeof(receive_specific_buffer));
     }
   }
