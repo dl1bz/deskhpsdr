@@ -1835,9 +1835,6 @@ void new_protocol_menu_stop(void) {
 
       free(buffer);
     }
-
-    close(data_socket);
-    data_socket = -1;
   }
 }
 
