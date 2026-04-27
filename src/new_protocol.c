@@ -2480,6 +2480,23 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
     // The "obscure" constant 1.1920928955078125E-7 is 1/(2^23)
     leftsampledouble = (double)leftsample * 1.1920928955078125E-7;
     rightsampledouble = (double)rightsample * 1.1920928955078125E-7;
+
+    if (protocol == NEW_PROTOCOL && rx->sample_rate == 48000) {
+      switch (device) {
+      case NEW_DEVICE_HERMES: {
+        // Brick2 P2: 48 kHz delivers higher IQ amplitude (~+29 dB vs >=96 kHz)
+        // Normalize here so S-meter and spectrum stay consistent across sample rates
+        const double p2_48k_gain = 0.0354813389;  // -29 dB
+        leftsampledouble *= p2_48k_gain;
+        rightsampledouble *= p2_48k_gain;
+        break;
+      }
+
+      default:
+        break;
+      }
+    }
+
     rx_add_iq_samples(rx, leftsampledouble, rightsampledouble);
   }
 }
