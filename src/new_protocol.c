@@ -647,6 +647,29 @@ void new_protocol_init(void) {
       g_idle_add(fatal_error, "Bind failed for data socket");
     }
 
+    {
+      struct sockaddr_in local;
+      socklen_t local_len = sizeof(local);
+
+      if (getsockname(data_socket, (struct sockaddr *)&local, &local_len) == 0) {
+        t_print("new_protocol_init: data_socket real local %s:%d\n",
+                inet_ntoa(local.sin_addr),
+                ntohs(local.sin_port));
+      } else {
+        t_perror("new_protocol_init: getsockname data_socket");
+      }
+    }
+
+    {
+      struct timeval rcv_timeout;
+      rcv_timeout.tv_sec = 0;
+      rcv_timeout.tv_usec = 100000;  // 100 ms
+
+      if (setsockopt(data_socket, SOL_SOCKET, SO_RCVTIMEO, &rcv_timeout, sizeof(rcv_timeout)) < 0) {
+        t_perror("data_socket: SO_RCVTIMEO");
+      }
+    }
+
     t_print("new_protocol_init: data_socket %d bound to interface %s:%d\n", data_socket,
             inet_ntoa(radio->info.network.interface_address.sin_addr), ntohs(radio->info.network.interface_address.sin_port));
     t_print("new_protocol_init: radio address %s:%d interface_length=%d address_length=%d\n",
@@ -751,6 +774,13 @@ static void new_protocol_general(void) {
 
     if (rc != sizeof(general_buffer)) {
       t_print("sendto socket for general: %d rather than %ld\n", rc, (long)sizeof(general_buffer));
+#ifdef __DVL__
+    } else {
+      t_print("%s: sendto general OK rc=%d dst=%s:%d\n",
+              __func__,
+              rc,
+              inet_ntoa(base_addr.sin_addr), ntohs(base_addr.sin_port));
+#endif
     }
   }
 
@@ -1461,6 +1491,13 @@ static void new_protocol_high_priority(void) {
       return;
     } else if (rc != sizeof(high_priority_buffer_to_radio)) {
       t_print("sendto socket for high_priority: %d rather than %ld\n", rc, (long)sizeof(high_priority_buffer_to_radio));
+#ifdef __DVL__
+    } else {
+      t_print("%s: sendto high_priority OK rc=%d dst=%s:%d\n",
+              __func__,
+              rc,
+              inet_ntoa(high_priority_addr.sin_addr), ntohs(high_priority_addr.sin_port));
+#endif
     }
   }
 
@@ -1602,6 +1639,13 @@ static void new_protocol_transmit_specific(void) {
 
     if (rc != sizeof(transmit_specific_buffer)) {
       t_print("sendto socket for transmit_specific: %d rather than %ld\n", rc, (long)sizeof(transmit_specific_buffer));
+#ifdef __DVL__
+    } else {
+      t_print("%s: sendto transmit_specific OK rc=%d dst=%s:%d\n",
+              __func__,
+              rc,
+              inet_ntoa(transmitter_addr.sin_addr), ntohs(transmitter_addr.sin_port));
+#endif
     }
   }
 
@@ -1717,6 +1761,13 @@ static void new_protocol_receive_specific(void) {
       return;
     } else if (rc != sizeof(receive_specific_buffer)) {
       t_print("sendto socket for receive_specific: %d rather than %ld\n", rc, (long)sizeof(receive_specific_buffer));
+#ifdef __DVL__
+    } else {
+      t_print("%s: sendto receive_specific OK rc=%d dst=%s:%d\n",
+              __func__,
+              rc,
+              inet_ntoa(receiver_addr.sin_addr), ntohs(receiver_addr.sin_port));
+#endif
     }
   }
 
@@ -1765,22 +1816,28 @@ void new_protocol_menu_stop(void) {
   // let the FPGA rest a while
   usleep(200000); // 200 ms
 
-  if (!have_saturn_xdma) {
-    //
-    // drain all data that might still wait in the data_socket.
-    // (use select() and read until nothing is left)
-    //
-    FD_ZERO(&fds);
-    FD_SET(data_socket, &fds);
-    tv.tv_usec = 50000;
-    tv.tv_sec = 0;
+  if (!have_saturn_xdma && data_socket != -1) {
     buffer = malloc(NET_BUFFER_SIZE);
 
-    while (select(data_socket + 1, &fds, NULL, NULL, &tv) > 0) {
-      recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*)&addr, &length);
+    if (buffer != NULL) {
+      while (1) {
+        FD_ZERO(&fds);
+        FD_SET(data_socket, &fds);
+        tv.tv_usec = 50000;
+        tv.tv_sec = 0;
+
+        if (select(data_socket + 1, &fds, NULL, NULL, &tv) <= 0) {
+          break;
+        }
+
+        recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*)&addr, &length);
+      }
+
+      free(buffer);
     }
 
-    free(buffer);
+    close(data_socket);
+    data_socket = -1;
   }
 }
 
@@ -1820,17 +1877,23 @@ void new_protocol_menu_start(void) {
   }
 
   P2running = 1;
+  t_print("%s: P2running set\n", __func__);
 #ifdef __APPLE__
   txiq_sem = apple_sem(0);
   rxaudio_sem = apple_sem(0);
 #else
   (void)sem_init(&txiq_sem, 0, 0); // check return value!
+  t_print("%s: txiq_sem initialized\n", __func__);
   (void)sem_init(&rxaudio_sem, 0, 0); // check return value!
+  t_print("%s: rxaudio_sem initialized\n", __func__);
 #endif
   new_protocol_rxaudio_thread_id = g_thread_new( "P2 SPKR", new_protocol_rxaudio_thread, NULL);
+  t_print("%s: P2 SPKR thread started\n", __func__);
   new_protocol_txiq_thread_id = g_thread_new( "P2 TXIQ", new_protocol_txiq_thread, NULL);
+  t_print("%s: P2 TXIQ thread started\n", __func__);
 
   if (!have_saturn_xdma) {
+    t_print("%s: P2 main thread started\n", __func__);
     new_protocol_thread_id = g_thread_new( "P2 main", new_protocol_thread, NULL);
   }
 
@@ -1840,11 +1903,15 @@ void new_protocol_menu_start(void) {
   p2_prime_route();
   usleep(100000);
 #endif
+  t_print("%s: send general\n", __func__);
   new_protocol_general();
+  t_print("%s: send high_priority\n", __func__);
   usleep(100000);                    // let FPGA digest the port numbers
   new_protocol_high_priority();
+  t_print("%s: send tx_specific\n", __func__);
   usleep(100000);                    // let FPGA digest the "run" command
   new_protocol_transmit_specific();
+  t_print("%s: send rx_specific\n", __func__);
   usleep(50000);
   new_protocol_receive_specific();
   new_protocol_timer_thread_id = g_thread_new( "P2 task", new_protocol_timer_thread, NULL);
@@ -2081,6 +2148,11 @@ static gpointer new_protocol_thread(gpointer data) {
     }
 
     if (bytesread < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        mybuf->free = 1;
+        continue;
+      }
+
       t_perror("recvfrom socket failed for new_protocol_thread:");
       g_idle_add(fatal_error, "P2 receive (Network problem?)");
       P2running = 0;
@@ -2088,8 +2160,15 @@ static gpointer new_protocol_thread(gpointer data) {
     }
 
     sourceport = ntohs(addr.sin_port);
-
     //t_print("new_protocol_thread: recvd %d bytes on port %d\n",bytesread,sourceport);
+#ifdef __DVL__
+
+    if (sourceport == RX_IQ_TO_HOST_PORT_0 || sourceport == HIGH_PRIORITY_TO_HOST_PORT) {
+      t_print("new_protocol_thread: recvd %d bytes from %s:%d\n", bytesread, inet_ntoa(addr.sin_addr), sourceport);
+    }
+
+#endif
+
     switch (sourceport) {
     case RX_IQ_TO_HOST_PORT_0:
     case RX_IQ_TO_HOST_PORT_1:
