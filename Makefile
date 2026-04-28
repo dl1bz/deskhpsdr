@@ -562,7 +562,14 @@ CPP_SOURCES += src/audio.c
 ifeq ($(AUDIO), PORTAUDIO)
 AUDIO_OPTIONS=-DPORTAUDIO -DPA_USE_COREAUDIO
 AUDIO_INCLUDE=`$(PKG_CONFIG) --cflags portaudio-2.0`
-AUDIO_LIBS=`$(PKG_CONFIG) --libs portaudio-2.0`
+# AUDIO_LIBS=`$(PKG_CONFIG) --libs portaudio-2.0`
+AUDIO_LIBS=$(BREW_LIBDIR)/libportaudio.a \
+	-framework CoreAudio \
+	-framework AudioToolbox \
+	-framework AudioUnit \
+	-framework CoreFoundation \
+	-framework CoreServices \
+	-framework CoreMIDI
 AUDIO_SOURCES=src/portaudio.c
 AUDIO_OBJS=src/portaudio.o
 endif
@@ -581,7 +588,12 @@ endif
 ifeq ($(TCI), ON)
 TCI_OPTIONS=-DTCI
 TCI_INCLUDE=`$(PKG_CONFIG) --cflags openssl`
+# TCI_LIBS=`$(PKG_CONFIG) --libs openssl`
+ifeq ($(UNAME_S), Darwin)
+TCI_LIBS=$(BREW_LIBDIR)/libssl.a $(BREW_LIBDIR)/libcrypto.a
+else
 TCI_LIBS=`$(PKG_CONFIG) --libs openssl`
+endif
 TCI_SOURCES=src/tci.c
 TCI_OBJS=src/tci.o
 endif
@@ -633,7 +645,12 @@ CPP_INCLUDE += $(GTK_INCLUDE)
 ##############################################################################
 
 JSON_INCLUDE=`$(PKG_CONFIG) --cflags json-c`
+# JSON_LIBS=`$(PKG_CONFIG) --libs json-c`
+ifeq ($(UNAME_S),Darwin)
+JSON_LIBS=$(BREW_LIBDIR)/libjson-c.a
+else
 JSON_LIBS=`$(PKG_CONFIG) --libs json-c`
+endif
 CPP_INCLUDE += $(JSON_INCLUDE)
 
 ##############################################################################
