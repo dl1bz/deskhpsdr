@@ -80,6 +80,9 @@
 
 #define PI 3.1415926535897932F
 
+#define P2_SOFT_ADC_OVF_POS_THRESHOLD  8388607
+#define P2_SOFT_ADC_OVF_NEG_THRESHOLD -8388608
+
 /*
  * A new 'action table' defines what to to
  * with a sample packet received from a DDC
@@ -2477,6 +2480,14 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
     rightsample  = (int)((signed char)buffer[b++]) << 16;
     rightsample |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
     rightsample |= (int)((unsigned char)buffer[b++] & 0xFF);
+
+    if (leftsample >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
+        leftsample <= P2_SOFT_ADC_OVF_NEG_THRESHOLD ||
+        rightsample >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
+        rightsample <= P2_SOFT_ADC_OVF_NEG_THRESHOLD) {
+      adc0_overload = 1;
+    }
+
     // The "obscure" constant 1.1920928955078125E-7 is 1/(2^23)
     leftsampledouble = (double)leftsample * 1.1920928955078125E-7;
     rightsampledouble = (double)rightsample * 1.1920928955078125E-7;

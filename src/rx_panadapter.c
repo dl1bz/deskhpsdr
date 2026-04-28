@@ -1954,39 +1954,44 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     if (adc0_overload || adc1_overload) {
       static unsigned int adc_error_count = 0;
       cairo_move_to(cr, 100.0, 70.0);
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
 
       if (adc0_overload && !adc1_overload) {
-#if defined (__AUTOG__)
+        if (active_receiver->panadapter_ovf_on) {
+#if defined(__AUTOG__)
 
-        if (!autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
-          cairo_set_source_rgba(cr, COLOUR_ALARM);
-          cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
-        } else if (active_receiver->panadapter_ovf_on && autogain_enabled && (device == DEVICE_HERMES_LITE2
-                   || device == NEW_DEVICE_HERMES_LITE2)) {
-          cairo_set_source_rgba(cr, COLOUR_ALARM);
-          cairo_show_text(cr, "ADC0 OVF");
-        }
+          if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+            if (!autogain_enabled) {
+              cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
+            } else {
+              cairo_show_text(cr, "ADC0 OVF");
+            }
+          } else {
+            cairo_show_text(cr, "ADC0 overload");
+          }
 
 #else
 
-        if (active_receiver->panadapter_ovf_on && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
-          cairo_set_source_rgba(cr, COLOUR_ALARM);
-          cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
-        } else if (device != DEVICE_HERMES_LITE2 && device != NEW_DEVICE_HERMES_LITE2) {
-          cairo_show_text(cr, "ADC0 overload");
-        }
+          if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+            cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
+          } else {
+            cairo_show_text(cr, "ADC0 overload");
+          }
 
 #endif
+        }
       }
 
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-
       if (adc1_overload && !adc0_overload) {
-        cairo_show_text(cr, "ADC1 overload");
+        if (active_receiver->panadapter_ovf_on) {
+          cairo_show_text(cr, "ADC1 overload");
+        }
       }
 
       if (adc0_overload && adc1_overload) {
-        cairo_show_text(cr, "ADC0+1 overload");
+        if (active_receiver->panadapter_ovf_on) {
+          cairo_show_text(cr, "ADC0+1 overload");
+        }
       }
 
       adc_error_count++;
