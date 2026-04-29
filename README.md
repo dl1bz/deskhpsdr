@@ -16,6 +16,8 @@ deskHPSDR not made as a "measurement tool" or for other, very special purposes w
 
 My main focus of deskHPSDR development, the improvements and additional functions against piHPSDR is the Hermes Lite 2 SDR Transceiver and his similar devices based on the same hardware platform (like the SquareSDR). Other SDR devices can be used too if supported, but I cannot check it. The second focus is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The third focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, less for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
+**There are no plans to adapt deskHPSDR for running with WINDOWS ! It's made for UNIX style OS like macOS or Linux.**
+
 ### deskHPSDR was forked a single time from pihpsdr and is now an independent codebase
 
 pihpsdr was [initiated and first developed](https://github.com/g0orx/pihpsdr) by [John Melton, G0ORX/N6LYT](https://github.com/g0orx) a few years ago.<br>Later Christoph, DL1YCF, had continued the development of pihpsdr. His fork [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date and current version of pihpsdr today and being actively developed by him up to now.<br><br>His pihpsdr codebase as of the end of October 2024 was the starting point for the development of deskHPSDR. There was, is, and will be no direct collaboration between pihpsdr and deskHPSDR.<br><br>
@@ -51,7 +53,7 @@ deskHPSDR is primarily developed for and under macOS. Made as a cross-platform a
 
 ### Version 2.6.x (current version)
 
-On March 4, 2025 the **first final version 2.6 of deskHPSDR** is published. This version will not get any brand-new base functions, only bugfixes if any become known or improvements if I think there's still something to be done yet.<br>
+On March 4, 2025 the **first final version 2.6 of deskHPSDR** was published.<br>
 Further development will start later from version 2.7.x by the end of 2026.<br>
 
 Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
