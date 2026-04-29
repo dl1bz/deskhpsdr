@@ -1377,7 +1377,7 @@ static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
   return;
 }
 
-void update_slider_nr_btn(void) {
+void update_slider_nr_btn(gboolean show_widget) {
   if (display_sliders && (have_rx_gain || have_rx_att)) {
     g_signal_handler_block(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
@@ -1386,6 +1386,12 @@ void update_slider_nr_btn(void) {
       gtk_style_context_add_class(nr_context, "active");
     } else {
       gtk_style_context_remove_class(nr_context, "active");
+    }
+
+    if (show_widget) {
+      gtk_widget_set_sensitive(nr_btn, TRUE);
+    } else {
+      gtk_widget_set_sensitive(nr_btn, FALSE);
     }
 
     g_signal_handler_unblock(G_OBJECT(nr_btn), nr_btn_signal_id);

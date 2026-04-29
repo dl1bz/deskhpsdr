@@ -101,6 +101,18 @@ void update_noise(void) {
 
   rx_set_noise(active_receiver);
   g_idle_add(ext_vfo_update, NULL);
+
+  if (display_sliders) {
+    int mode = vfo[id].mode;
+
+    if (mode == modeDIGL || mode == modeDIGU) {
+      update_slider_nr_btn(FALSE);
+      update_slider_snb_button(FALSE);
+    } else {
+      update_slider_nr_btn(TRUE);
+      update_slider_snb_button(TRUE);
+    }
+  }
 }
 
 void update_notch(void) {
@@ -120,7 +132,6 @@ static void nb_cb(GtkToggleButton *widget, gpointer data) {
 static void nr_cb(GtkToggleButton *widget, gpointer data) {
   active_receiver->nr = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
   update_noise();
-  update_slider_nr_btn();
 }
 
 static void anf_cb(GtkWidget *widget, gpointer data) {
@@ -131,7 +142,6 @@ static void anf_cb(GtkWidget *widget, gpointer data) {
 static void snb_cb(GtkWidget *widget, gpointer data) {
   active_receiver->snb = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   update_noise();
-  update_slider_snb_button(TRUE);
 }
 
 static void mnf_cb(GtkWidget *widget, gpointer data) {
