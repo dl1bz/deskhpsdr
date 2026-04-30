@@ -10,6 +10,8 @@ GNUmakefile
 *.patch
 *.a
 deskhpsdr
+!release/
+!release/deskhpsdr
 deskHPSDR.app
 hpsdrsim
 wdspWisdom*

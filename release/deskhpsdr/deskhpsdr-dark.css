@@ -1,0 +1,808 @@
+/* deskHPSDR Industrial SDR Dark Theme - flat 2D */
+
+  * { font-family:'JetBrains Mono', Tahoma, Sans; }
+  combobox { font-size: 15px; }
+  button   { font-size: 15px; background-image: none; border-width: 2px; }
+  button:hover {
+    background-image: none;
+    box-shadow: none;
+  }
+  scrolledwindow viewport button:hover {
+    background-image: none;
+    border-width: 3px;
+  }
+  checkbutton label { font-size: 15px; }
+  spinbutton { font-size: 15px; }
+  radiobutton label  { font-size: 15px; }
+  scale { font-size: 15px; }
+  entry { font-size: 15px; }
+  textview.dxcluster-textview-linux {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 12pt;
+  }
+  entry.dxcluster-entry-linux {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 12pt;
+  }
+  textview.dxcluster-textview {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 14pt;
+  }
+  entry.dxcluster-entry {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 14pt;
+  }
+  notebook { font-size: 15px; }
+  tooltip, GtkWindow.tooltip {
+    text-shadow: none;
+    opacity: 1.0;
+    background-color: #202630;
+    background-image: none;
+    color: #e7edf4;
+  }
+  tooltip label, GtkWindow.tooltip label {
+    color: #e7edf4;
+    opacity: 1.0;
+    text-shadow: none;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+  }
+  #boldlabel {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 15px;
+  }
+  #boldlabel_vfo_sf {
+    padding: 3px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    background-image: none;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 15px;
+    color: #4da3ff;
+  }
+  #boldlabel_vfo_sf:hover {
+    background-color: #4da3ff;
+    background-image: none;
+  }
+  #boldlabel_red {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 15px;
+    color: #ff5f6d;
+  }
+  #boldlabel_blue {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 15px;
+    color: #4da3ff;
+  }
+  #boldlabel_border_blue {
+    padding: 3px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 16px;
+    color: #4da3ff;
+  }
+  #boldlabel_border_black {
+    padding: 3px;
+    border: 2px solid #e7edf4;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 16px;
+    color: #e7edf4;
+  }
+  #stdlabel {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 15px;
+  }
+  #stdlabel_blue {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 15px;
+    color: #4da3ff;
+  }
+  #smalllabel {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 13px;
+  }
+  #smalllabel_bold {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  #smalllabel_red {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 13px;
+    color: #ff5f6d
+  }
+  #smalllabel_red_bold {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 13px;
+    color: #ff5f6d
+  }
+  #smalllabel_blue_bold {
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 13px;
+    color: #4da3ff
+  }
+  #slider0   {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  #slider1   {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  #slider2   {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 16px;
+  }
+  #slider2_blue {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 16px;
+    color: #4da3ff;
+  }
+  #slider2_red {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 16px;
+    color: #ff5f6d;
+  }
+  #label2_grey {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 18px;
+    color: #9da8b7;
+  }
+  #slider3   {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-weight: normal;
+    font-size: 22px;
+  }
+  #big_txt {
+    font-family: Tahoma, Sans;
+    font-size: 22px;
+    font-weight: bold;
+    }
+  #med_txt {
+    font-family: Tahoma, Sans;
+    font-size: 18px;
+    }
+  #med_bold_txt {
+    font-family: Tahoma, Sans;
+    font-size: 18px;
+    font-weight: bold;
+    }
+  #small_txt {
+    font-family: Tahoma, Sans;
+    font-weight: bold;
+    font-size: 12px;
+    }
+  #small_bold_txt {
+    font-family: Tahoma, Sans;
+    font-weight: bold;
+    font-size: 16px;
+    }
+  #small_bold_txt_blue {
+    font-family: Tahoma, Sans;
+    font-weight: bold;
+    font-size: 16px;
+    color: #4da3ff;
+    }
+  #discovery_btn {
+    padding: 3px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 18px;
+    font-weight: bold;
+    background-image: none;
+    color: #4da3ff;
+    }
+  #discovery_btn:hover {
+    background-color: #4da3ff;
+    background-image: none;
+    }
+  #close_button {
+    padding: 5px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 15px;
+    font-weight: bold;
+    border: 1px solid rgb(50%, 50%, 50%);
+    background-image: none;
+    }
+  #close_button:hover {
+    background-color: #4da3ff;
+    background-image: none;
+    }
+  #small_button {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 15px;
+    font-weight: bold;
+    color: #4da3ff;
+    background-image: none;
+    }
+  #medium_button {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 20px;
+    font-weight: bold;
+    color: #4da3ff;
+    background-image: none;
+    }
+  #medium_button:hover {
+    background-color: #4da3ff;
+    background-image: none;
+    }
+  #large_button {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 25px;
+    font-weight: bold;
+    color: #4da3ff;
+    background-image: none;
+    }
+  #small_button_with_border {
+    padding: 3px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 15px;
+    border: 1px solid rgb(50%, 50%, 50%);
+    }
+  #small_toggle_button {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 15px;
+    font-weight: bold;
+    background-image: none;
+    color: #4da3ff;
+    }
+  #small_toggle_button:checked {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 15px;
+    font-weight: bold;
+    background-image: none;
+    background-color: #4da3ff;
+    color: rgb(0%, 0%, 0%);
+    }
+  #medium_toggle_button {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+    font-weight: bold;
+    background-image: none;
+    color: #4da3ff;
+    }
+  #medium_toggle_button.active {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+    font-weight: bold;
+    background-image: none;
+    background-color: #4da3ff;
+    color: #4da3ff;
+    }
+  #medium_toggle_button:checked {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+    font-weight: bold;
+    background-image: none;
+    background-color: #4da3ff;
+    color: #4da3ff;
+    }
+  #medium_toggle_button:active {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+    font-weight: bold;
+    background-image: none;
+    background-color: #4da3ff;
+    color: #4da3ff;
+    }
+  #front_toggle_button {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+    font-weight: bold;
+    background-image: none;
+    background-color: rgb(100%, 20%, 20%);
+    color: rgb(100%, 100%, 100%);
+    }
+  #front_toggle_button:checked {
+    padding: 1px;
+    border: 1px solid #4da3ff;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+    font-weight: bold;
+    background-image: none;
+    background-color: #4da3ff;
+    color: rgb(0%, 0%, 0%);
+    }
+  #front_toggle_button:disabled {
+    padding: 1px;
+    border: 1px solid #48515f;
+    border-radius: 6px;
+    background-color: #2a2f38;
+    color: #737d8b;
+    }
+  #front_toggle_button:checked:disabled {
+    padding: 1px;
+    border: 1px solid #48515f;
+    border-radius: 6px;
+    background-color: #2a2f38;
+    color: #737d8b;
+    }
+  #popup_scale slider {
+    background: #4da3ff;
+    }
+  #popup_scale trough {
+    background: #1f4f7a;
+    }
+  #popup_scale value {
+    color: rgb(100%, 10%, 10%);
+    font-size: 15px;
+    }
+  checkbutton:checked > check {
+    border: 1px solid rgb(50%, 50%, 50%);
+    background-color: #4da3ff;
+    border-color: #4da3ff;
+    background-image: none;
+    }
+  radiobutton radio {
+    border: 1px solid rgb(50%, 50%, 50%);
+    }
+  headerbar {
+    min-height: 0px;
+    padding: 0px;
+    margin: 0px;
+    font-size: 15px;
+    font-family: Tahoma, Sans;
+    }
+  scale value {
+    color: #4da3ff;
+    font-weight: bold;
+    }
+  scale marks {
+    color: #4da3ff;
+    }
+  scale mark {
+    color: #4da3ff;
+    }
+  scale slider {
+    color: #4da3ff;
+    }
+  scale trough {
+    color: #4da3ff;
+    }
+  #front_spin_button {
+    padding: 1px;
+    font-family: 'JetBrains Mono', Tahoma, Sans;
+    font-size: 13px;
+    font-weight: bold;
+    }
+
+/* ---- Industrial SDR Dark Base ------------------------------------------------ */
+* {
+  color: #e7edf4;
+  background-image: none;
+  text-shadow: none;
+  box-shadow: none;
+  border-image: none;
+  -gtk-icon-shadow: none;
+}
+
+window,
+dialog,
+.background,
+GtkWindow,
+GtkDialog,
+box,
+grid,
+fixed,
+eventbox,
+viewport,
+scrolledwindow,
+notebook,
+notebook > stack,
+notebook > header,
+paned,
+frame,
+revealer,
+layout {
+  background-color: #111318;
+  color: #e7edf4;
+  background-image: none;
+  box-shadow: none;
+}
+
+/* Nur echtes Top-Level Fenster */
+window {
+  border: 1px solid #2f3540;
+}
+
+window:focus {
+  border-color: #4da3ff;
+}
+
+headerbar,
+menubar,
+menu,
+menuitem,
+popover,
+popup,
+combobox,
+combobox box,
+combobox window,
+combobox menu,
+combobox menuitem {
+  background-color: #1b1f27;
+  color: #e7edf4;
+  background-image: none;
+  box-shadow: none;
+}
+
+label {
+  background-color: transparent;
+  color: #e7edf4;
+}
+
+/* ---- Flat 2D Buttons -------------------------------------------------------- */
+button,
+#small_button,
+#medium_button,
+#large_button,
+#discovery_btn,
+#close_button,
+#small_button_with_border,
+#small_toggle_button,
+#medium_toggle_button,
+#front_toggle_button,
+spinbutton button,
+combobox button {
+  background-color: #202630;
+  background-image: none;
+  color: #e7edf4;
+  border: 2px solid #556070;
+  border-radius: 5px;
+  box-shadow: none;
+  text-shadow: none;
+  outline: none;
+}
+
+button:hover,
+#small_button:hover,
+#medium_button:hover,
+#large_button:hover,
+#discovery_btn:hover,
+#close_button:hover,
+#small_button_with_border:hover,
+#small_toggle_button:hover,
+#medium_toggle_button:hover,
+#front_toggle_button:hover,
+spinbutton button:hover,
+combobox button:hover {
+  background-color: #252c38;
+  background-image: none;
+  color: #e7edf4;
+  border-color: #6bb6ff;
+  box-shadow: none;
+}
+
+button:active,
+button:checked,
+button.active,
+#small_toggle_button:active,
+#small_toggle_button:checked,
+#small_toggle_button.active,
+#medium_toggle_button:active,
+#medium_toggle_button:checked,
+#medium_toggle_button.active,
+#front_toggle_button:active,
+#front_toggle_button:checked,
+#front_toggle_button.active,
+spinbutton button:active,
+combobox button:active {
+  background-color: #4da3ff;
+  background-image: none;
+  color: #07111d;
+  border-color: #4da3ff;
+  box-shadow: none;
+}
+
+button:disabled,
+#small_button:disabled,
+#medium_button:disabled,
+#large_button:disabled,
+#discovery_btn:disabled,
+#close_button:disabled,
+#small_toggle_button:disabled,
+#medium_toggle_button:disabled,
+#front_toggle_button:disabled,
+spinbutton button:disabled,
+combobox button:disabled {
+  background-color: #2a2f38;
+  background-image: none;
+  color: #737d8b;
+  border-color: #48515f;
+  box-shadow: none;
+}
+
+button:focus,
+spinbutton button:focus,
+combobox button:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #4da3ff;
+}
+
+/* ---- Entries / Spinbuttons / Textviews ------------------------------------- */
+entry,
+spinbutton,
+spinbutton entry,
+textview,
+textview text,
+.view {
+  background-color: #171a21;
+  background-image: none;
+  color: #e7edf4;
+  border: 1px solid #556070;
+  border-radius: 4px;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+entry:focus,
+spinbutton:focus,
+spinbutton entry:focus,
+textview:focus,
+.view:focus {
+  border-color: #4da3ff;
+  box-shadow: none;
+}
+
+selection,
+.view:selected,
+textview text selection,
+entry selection {
+  background-color: #2f8cff;
+  color: #07111d;
+}
+
+/* ---- Labels by existing IDs ------------------------------------------------- */
+#boldlabel,
+#stdlabel,
+#smalllabel,
+#smalllabel_bold,
+#slider0,
+#slider1,
+#slider2,
+#slider3,
+#big_txt,
+#med_txt,
+#med_bold_txt,
+#small_txt,
+#small_bold_txt {
+  color: #e7edf4;
+  background-color: transparent;
+}
+
+#boldlabel_blue,
+#boldlabel_vfo_sf,
+#boldlabel_border_blue,
+#stdlabel_blue,
+#smalllabel_blue_bold,
+#slider2_blue,
+#small_bold_txt_blue {
+  color: #4da3ff;
+  background-color: transparent;
+}
+
+#boldlabel_red,
+#smalllabel_red,
+#smalllabel_red_bold,
+#slider2_red {
+  color: #ff5f6d;
+  background-color: transparent;
+}
+
+#label2_grey {
+  color: #9da8b7;
+  background-color: transparent;
+}
+
+#boldlabel_border_black,
+#boldlabel_border_blue,
+#boldlabel_vfo_sf {
+  border-color: #556070;
+  color: #e7edf4;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+#boldlabel_vfo_sf:hover {
+  background-color: #252c38;
+  color: #4da3ff;
+}
+
+/* ---- Sliders / Scales ------------------------------------------------------- */
+scale,
+scale trough,
+scale slider,
+scale highlight,
+scale value,
+scale marks,
+scale mark {
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+scale value,
+scale marks,
+scale mark {
+  color: #4da3ff;
+  font-weight: bold;
+}
+
+scale trough {
+  background-color: #202630;
+  border: 1px solid #556070;
+  min-height: 6px;
+  border-radius: 3px;
+}
+
+scale highlight {
+  background-color: #4da3ff;
+  border-radius: 3px;
+}
+
+scale slider,
+#popup_scale slider {
+  background-color: #4da3ff;
+  border: 1px solid #6bb6ff;
+  border-radius: 4px;
+  min-width: 14px;
+  min-height: 14px;
+}
+
+#popup_scale trough {
+  background-color: #202630;
+}
+
+#popup_scale value {
+  color: #ff5f6d;
+}
+
+/* ---- Check / Radio ---------------------------------------------------------- */
+checkbutton,
+radiobutton,
+checkbutton label,
+radiobutton label {
+  color: #e7edf4;
+  background-color: transparent;
+}
+
+checkbutton check,
+radiobutton radio {
+  background-color: #171a21;
+  border: 2px solid #556070;
+  box-shadow: none;
+  background-image: none;
+}
+
+checkbutton:checked > check,
+radiobutton:checked > radio {
+  background-color: #4da3ff;
+  border-color: #4da3ff;
+  color: #07111d;
+}
+
+/* ---- Tooltips --------------------------------------------------------------- */
+tooltip,
+GtkWindow.tooltip {
+  background-color: #202630;
+  color: #e7edf4;
+  border: 1px solid #748196;
+  opacity: 1.0;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+tooltip label,
+GtkWindow.tooltip label {
+  color: #e7edf4;
+  opacity: 1.0;
+  text-shadow: none;
+  background-color: transparent;
+}
+
+*:disabled,
+*:disabled {
+  color: #737d8b;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+textview.dxcluster-textview-linux,
+entry.dxcluster-entry-linux,
+textview.dxcluster-textview,
+entry.dxcluster-entry {
+  background-color: #171a21;
+  color: #e7edf4;
+  border-color: #556070;
+}
+
+/* ---- Hard UI status colors -------------------------------------------------- */
+#front_toggle_button {
+  background-color: #ff5f6d;
+  color: #07111d;
+  border-color: #ff5f6d;
+}
+
+#front_toggle_button:checked {
+  background-color: #4da3ff;
+  color: #07111d;
+  border-color: #4da3ff;
+}
+
+#front_toggle_button:disabled,
+#front_toggle_button:checked:disabled {
+  background-color: #2a2f38;
+  color: #737d8b;
+  border-color: #48515f;
+}
+
+/* ---- Safety catch-all against light dialog content ------------------------- */
+dialog *:not(button):not(entry):not(textview):not(scale):not(check):not(radio):not(slider),
+window *:not(button):not(entry):not(textview):not(scale):not(check):not(radio):not(slider) {
+  background-image: none;
+  box-shadow: none;
+}
