@@ -236,7 +236,7 @@ float pan_peak_hold_decay_db_per_sec = 6.0f;
 cairo_rgba_t peak_line_col = { 0.70, 0.70, 0.70, 1.00 };
 cairo_rgba_t radio_bgcolor = { 0.902, 0.902, 0.980, 1.0 }; // #E6E6FA default
 cairo_rgba_t tx_pan_fill_col = { 0.00, 1.00, 0.00, 1.00 };
-cairo_rgba_t mwin_bgcolor = { 0.965, 0.965, 0.965, 1.0 };
+cairo_rgba_t mwin_bgcolor = { 0.965, 0.965, 0.965, 1.0 }; // #F6F6F6 default
 
 int max_pan_label_rows = 6;
 int pan_spot_lifetime_min = 15;

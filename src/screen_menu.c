@@ -561,6 +561,8 @@ void screen_menu(GtkWidget *parent) {
   GdkRGBA win_bg_col_init = { mwin_bgcolor.r, mwin_bgcolor.g, mwin_bgcolor.b, mwin_bgcolor.a };
   gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(win_bg_col_btn), &win_bg_col_init);
   g_signal_connect(win_bg_col_btn, "color-set", G_CALLBACK(win_bg_colour_set), &mwin_bgcolor);
+  gtk_widget_set_tooltip_text(win_bg_col_btn, "Set background color of Menu surface\n\n"
+                                              "Default color is RGB #F6F6F6");
   gtk_widget_set_margin_top(win_bg_col_btn, 5);
   gtk_widget_set_margin_bottom(win_bg_col_btn, 5);
   gtk_box_pack_start(GTK_BOX(Z3_box), win_bg_col_btn, FALSE, FALSE, 0);
