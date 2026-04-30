@@ -527,16 +527,17 @@ void load_css(void) {
   // 1. Laden aus Datei
   if (g_file_test("deskhpsdr-dark.css", G_FILE_TEST_EXISTS)) {
     css_filename = "deskhpsdr-dark.css";
+    css_dark_theme = 1;
+  } else {
+    css_dark_theme = 0;
   }
 
   gtk_css_provider_load_from_path(provider, css_filename, &error);
 
   if (!error) {
-    use_css_file = 1;
     t_print("%s: CSS data loaded from file %s\n", __func__, css_filename);
     css_filename = "deskhpsdr.css";
   } else {
-    use_css_file = 0;
     t_print("%s: failed to load CSS data from file %s: %s\n",
             __func__, css_filename, extract_short_msg(error->message));
     g_clear_error(&error);

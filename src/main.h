@@ -44,7 +44,7 @@ extern int screen_height;
 extern int this_monitor;
 
 extern int use_wayland;
-extern int use_css_file;
+extern int css_dark_theme;
 
 extern int full_screen;
 extern GtkWidget *top_window;

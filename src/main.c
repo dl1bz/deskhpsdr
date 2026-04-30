@@ -88,7 +88,7 @@ int full_screen;
 int this_monitor;
 
 int use_wayland;
-int use_css_file;
+int css_dark_theme;
 
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;

@@ -1204,7 +1204,7 @@ static void radio_create_visual(void) {
   gtk_container_remove(GTK_CONTAINER(top_window), topgrid);
   gtk_container_add(GTK_CONTAINER(top_window), fixed);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: load_css ? : %d\n", __func__, use_css_file);
+  t_print("%s: css_dark_theme ? : %d\n", __func__, css_dark_theme);
   win_set_bgcolor(top_window, &radio_bgcolor);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   //t_print("radio: vfo_init\n");
