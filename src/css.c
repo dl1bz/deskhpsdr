@@ -523,12 +523,18 @@ void load_css(void) {
   gtk_style_context_add_provider_for_screen(screen,
       GTK_STYLE_PROVIDER(provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
   // 1. Laden aus Datei
+  if (g_file_test("deskhpsdr-dark.css", G_FILE_TEST_EXISTS)) {
+    css_filename = "deskhpsdr-dark.css";
+  }
+
   gtk_css_provider_load_from_path(provider, css_filename, &error);
 
   if (!error) {
     use_css_file = 1;
     t_print("%s: CSS data loaded from file %s\n", __func__, css_filename);
+    css_filename = "deskhpsdr.css";
   } else {
     use_css_file = 0;
     t_print("%s: failed to load CSS data from file %s: %s\n",
