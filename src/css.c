@@ -527,6 +527,7 @@ void load_css(void) {
   gtk_css_provider_load_from_path(provider, css_filename, &error);
 
   if (!error) {
+    use_css_file = 1;
     t_print("%s: CSS data loaded from file %s\n", __func__, css_filename);
   } else {
     t_print("%s: failed to load CSS data from file %s: %s\n",
@@ -536,6 +537,7 @@ void load_css(void) {
     gtk_css_provider_load_from_data(provider, css, -1, &error);
 
     if (!error) {
+      use_css_file = 0;
       t_print("%s: hard-coded CSS data successfully loaded\n", __func__);
     } else {
       t_print("%s: failed to load hard-coded CSS data: %s\n",
