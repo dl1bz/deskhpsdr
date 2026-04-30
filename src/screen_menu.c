@@ -529,43 +529,47 @@ void screen_menu(GtkWidget *parent) {
   //---------------------------------------------------------------------------------------------------
   // Zeile als Box ab Spalte 1
   GtkWidget *Z3_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-  GtkWidget *bgcolor_label = gtk_label_new("Slider Background Color");
-  gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
-  gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
-  gtk_widget_set_halign(bgcolor_label, GTK_ALIGN_END);
-  gtk_widget_set_margin_start(bgcolor_label, 5);
-  gtk_widget_set_margin_end(bgcolor_label, 5);
-  gtk_box_pack_start(GTK_BOX(Z3_box), bgcolor_label, FALSE, FALSE, 0);
-  //---
-  GtkWidget *bg_col_btn = gtk_color_button_new();
-  gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(bg_col_btn), TRUE);
-  GdkRGBA bg_col_init = { radio_bgcolor.r, radio_bgcolor.g, radio_bgcolor.b, radio_bgcolor.a };
-  gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(bg_col_btn), &bg_col_init);
-  g_signal_connect(bg_col_btn, "color-set", G_CALLBACK(bg_colour_set), &radio_bgcolor);
-  gtk_widget_set_tooltip_text(bg_col_btn, "Set background color of Slider front surface\n\n"
-                                          "Default color is RGB #E6E6FA");
-  gtk_widget_set_margin_top(bg_col_btn, 5);
-  gtk_widget_set_margin_bottom(bg_col_btn, 5);
-  gtk_box_pack_start(GTK_BOX(Z3_box), bg_col_btn, FALSE, FALSE, 0);
-  //---
-  GtkWidget *w_bgcolor_label = gtk_label_new("Menu Background Color");
-  gtk_label_set_justify(GTK_LABEL(w_bgcolor_label), GTK_JUSTIFY_CENTER);
-  gtk_widget_set_name(w_bgcolor_label, "boldlabel_blue");
-  gtk_widget_set_halign(w_bgcolor_label, GTK_ALIGN_END);
-  gtk_widget_set_margin_start(w_bgcolor_label, 5);
-  gtk_widget_set_margin_end(w_bgcolor_label, 5);
-  gtk_box_pack_start(GTK_BOX(Z3_box), w_bgcolor_label, FALSE, FALSE, 0);
-  //---
-  GtkWidget *win_bg_col_btn = gtk_color_button_new();
-  gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(win_bg_col_btn), TRUE);
-  GdkRGBA win_bg_col_init = { mwin_bgcolor.r, mwin_bgcolor.g, mwin_bgcolor.b, mwin_bgcolor.a };
-  gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(win_bg_col_btn), &win_bg_col_init);
-  g_signal_connect(win_bg_col_btn, "color-set", G_CALLBACK(win_bg_colour_set), &mwin_bgcolor);
-  gtk_widget_set_tooltip_text(win_bg_col_btn, "Set background color of Menu surface\n\n"
-                                              "Default color is RGB #F6F6F6");
-  gtk_widget_set_margin_top(win_bg_col_btn, 5);
-  gtk_widget_set_margin_bottom(win_bg_col_btn, 5);
-  gtk_box_pack_start(GTK_BOX(Z3_box), win_bg_col_btn, FALSE, FALSE, 0);
+
+  if (!css_dark_theme) {
+    GtkWidget *bgcolor_label = gtk_label_new("Slider Background Color");
+    gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_name(bgcolor_label, "boldlabel_blue");
+    gtk_widget_set_halign(bgcolor_label, GTK_ALIGN_END);
+    gtk_widget_set_margin_start(bgcolor_label, 5);
+    gtk_widget_set_margin_end(bgcolor_label, 5);
+    gtk_box_pack_start(GTK_BOX(Z3_box), bgcolor_label, FALSE, FALSE, 0);
+    //---
+    GtkWidget *bg_col_btn = gtk_color_button_new();
+    gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(bg_col_btn), TRUE);
+    GdkRGBA bg_col_init = { radio_bgcolor.r, radio_bgcolor.g, radio_bgcolor.b, radio_bgcolor.a };
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(bg_col_btn), &bg_col_init);
+    g_signal_connect(bg_col_btn, "color-set", G_CALLBACK(bg_colour_set), &radio_bgcolor);
+    gtk_widget_set_tooltip_text(bg_col_btn, "Set background color of Slider front surface\n\n"
+                                            "Default color is RGB #E6E6FA");
+    gtk_widget_set_margin_top(bg_col_btn, 5);
+    gtk_widget_set_margin_bottom(bg_col_btn, 5);
+    gtk_box_pack_start(GTK_BOX(Z3_box), bg_col_btn, FALSE, FALSE, 0);
+    //---
+    GtkWidget *w_bgcolor_label = gtk_label_new("Menu Background Color");
+    gtk_label_set_justify(GTK_LABEL(w_bgcolor_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_name(w_bgcolor_label, "boldlabel_blue");
+    gtk_widget_set_halign(w_bgcolor_label, GTK_ALIGN_END);
+    gtk_widget_set_margin_start(w_bgcolor_label, 5);
+    gtk_widget_set_margin_end(w_bgcolor_label, 5);
+    gtk_box_pack_start(GTK_BOX(Z3_box), w_bgcolor_label, FALSE, FALSE, 0);
+    //---
+    GtkWidget *win_bg_col_btn = gtk_color_button_new();
+    gtk_color_button_set_use_alpha(GTK_COLOR_BUTTON(win_bg_col_btn), TRUE);
+    GdkRGBA win_bg_col_init = { mwin_bgcolor.r, mwin_bgcolor.g, mwin_bgcolor.b, mwin_bgcolor.a };
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(win_bg_col_btn), &win_bg_col_init);
+    g_signal_connect(win_bg_col_btn, "color-set", G_CALLBACK(win_bg_colour_set), &mwin_bgcolor);
+    gtk_widget_set_tooltip_text(win_bg_col_btn, "Set background color of Menu surface\n\n"
+                                                "Default color is RGB #F6F6F6");
+    gtk_widget_set_margin_top(win_bg_col_btn, 5);
+    gtk_widget_set_margin_bottom(win_bg_col_btn, 5);
+    gtk_box_pack_start(GTK_BOX(Z3_box), win_bg_col_btn, FALSE, FALSE, 0);
+  }
+
   //---------------------------------------------------------------------------------------------------
   // Box ins Grid
   gtk_grid_attach(GTK_GRID(grid), Z3_box, col, row, 3, 1);

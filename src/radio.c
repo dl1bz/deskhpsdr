@@ -3372,6 +3372,11 @@ static void radio_restore_state(void) {
     n2adr_oc_settings_tx(); // Apply default OC settings for N2ADR board (if RX the LPF is OFF)
   }
 
+  if (css_dark_theme) {
+    radio_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
+    mwin_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
+  }
+
   g_mutex_unlock(&property_mutex);
 }
 
