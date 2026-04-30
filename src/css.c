@@ -520,13 +520,13 @@ void load_css(void) {
   GdkDisplay *display = gdk_display_get_default();
   GdkScreen *screen = gdk_display_get_default_screen(display);
   GError *error = NULL;
-  gtk_style_context_add_provider_for_screen(screen,
-      GTK_STYLE_PROVIDER(provider),
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   // 1. Laden aus Datei
   gtk_css_provider_load_from_path(provider, css_filename, &error);
 
   if (!error) {
+    gtk_style_context_add_provider_for_screen(screen,
+        GTK_STYLE_PROVIDER(provider),
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     t_print("%s: CSS data loaded from file %s\n", __func__, css_filename);
   } else {
     t_print("%s: failed to load CSS data from file %s: %s\n",
@@ -536,12 +536,34 @@ void load_css(void) {
     gtk_css_provider_load_from_data(provider, css, -1, &error);
 
     if (!error) {
+      gtk_style_context_add_provider_for_screen(screen,
+          GTK_STYLE_PROVIDER(provider),
+          GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
       t_print("%s: hard-coded CSS data successfully loaded\n", __func__);
     } else {
       t_print("%s: failed to load hard-coded CSS data: %s\n",
               __func__, extract_short_msg(error->message));
       g_clear_error(&error);
     }
+  }
+
+  if (g_file_test("deskhpsdr-dark.css", G_FILE_TEST_EXISTS)) {
+    GtkCssProvider *dark_provider = gtk_css_provider_new();
+    GError *dark_error = NULL;
+    gtk_css_provider_load_from_path(dark_provider, "deskhpsdr-dark.css", &dark_error);
+
+    if (!dark_error) {
+      gtk_style_context_add_provider_for_screen(screen,
+          GTK_STYLE_PROVIDER(dark_provider),
+          GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+      t_print("%s: CSS dark overlay loaded from file deskhpsdr-dark.css\n", __func__);
+    } else {
+      t_print("%s: failed to load CSS dark overlay from file deskhpsdr-dark.css: %s\n",
+              __func__, extract_short_msg(dark_error->message));
+      g_clear_error(&dark_error);
+    }
+
+    g_object_unref(dark_provider);
   }
 
   g_object_unref(provider);
