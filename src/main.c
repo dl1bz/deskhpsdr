@@ -818,6 +818,8 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   }
 
   // Jetzt erst CSS laden, damit es das Theme übersteuert
+  t_print("%s: config_directory = %s\n", __func__, config_directory);
+  StartConfigLoad();
   load_css();
   //
   // Create top window with minimum size

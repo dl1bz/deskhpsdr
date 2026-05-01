@@ -66,6 +66,8 @@ static int my_full_screen;
 static int my_vfo_layout;
 static int my_rx_stack_horizontal;
 
+void screen_menu(GtkWidget *parent);
+
 //
 // It has been reported (and I could reproduce)
 // that hitting the width or heigth
@@ -359,6 +361,22 @@ static void display_extras_btn_cb(GtkWidget *widget, gpointer data) {
   schedule_apply();
 }
 
+static void css_theme_changed_cb(GtkComboBox *combo, gpointer user_data) {
+  css_dark_theme = (gtk_combo_box_get_active(combo) == 1);
+
+  if (css_dark_theme) {
+    radio_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
+    mwin_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
+  } else {
+    radio_bgcolor = (cairo_rgba_t) { 0.902, 0.902, 0.980, 1.0 };
+    mwin_bgcolor = (cairo_rgba_t) { 0.965, 0.965, 0.965, 1.0 };
+  }
+
+  load_css();
+  win_set_bgcolor(top_window, &radio_bgcolor);
+  screen_menu_cleanup();
+  screen_menu(top_window);
+}
 
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
@@ -399,10 +417,12 @@ void screen_menu(GtkWidget *parent) {
   //--------------------------------------------------------------------------------------------
   GtkWidget *save_css_btn = gtk_button_new_with_label("Save CSS");
   gtk_widget_set_tooltip_text(save_css_btn,
-                              "Save the hardcoded internal CSS to a file deskhpsdr.css\n"
+                              "Save the hardcoded internal CSS to a corresponding file\n"
                               "in the working directory for editing (e.g. change fonts, colors etc.)\n\n"
+                              "Default theme filename: deskhpsdr.css\n"
+                              "Dark theme filename: deskhpsdr-dark.css\n\n"
                               "You can edit this saved file and make your own adjustments\n"
-                              "If deskhpsdr detect this file deskhpsdr.css, it will be used instead of the hardcoded CSS defintions\n\n"
+                              "If deskhpsdr detect this file, it will be used instead of the hardcoded CSS defintions\n\n"
                               "Be aware, a GTK CSS is not identical with a HTML CSS, you need to know, what you do !\n\n"
                               "There is NO SUPPORT for this special option");
   gtk_widget_set_name(save_css_btn, "boldlabel_blue");
@@ -411,8 +431,8 @@ void screen_menu(GtkWidget *parent) {
   //--------------------------------------------------------------------------------------------
   GtkWidget *remove_css_btn = gtk_button_new_with_label("Remove CSS");
   gtk_widget_set_tooltip_text(remove_css_btn,
-                              "Remove the deskhpsdr.css file from the working directory\n"
-                              "Make first a backup of your deskhpsdr.css if exist and used\n"
+                              "Remove the corresponding CSS file from the working directory\n"
+                              "Make first a backup of your CSS file if exist and used\n"
                               "This bring back the use of internal, hardcoded CSS defintions\n"
                               "IF YOU DO THIS, ALL YOUR OWN CHANGES WILL BE LOST !\n\n"
                               "There is NO SUPPORT for this special option");
@@ -422,7 +442,7 @@ void screen_menu(GtkWidget *parent) {
   //--------------------------------------------------------------------------------------------
   GtkWidget *reload_css_btn = gtk_button_new_with_label("Reload CSS");
   gtk_widget_set_tooltip_text(reload_css_btn,
-                              "Reload the deskhpsdr.css file from the working directory\n"
+                              "Reload the corresponding CSS file from the working directory\n"
                               "This allows you to apply edits to the CSS without restarting deskHPSDR\n\n"
                               "Be aware, a GTK CSS is not identical with a HTML CSS, you need to know, what you do!\n\n"
                               "There is NO SUPPORT for this special option");
@@ -464,14 +484,35 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), css_button_grid, col + 1, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // Optimize for touchscreen
-  GtkWidget *ChkBtn_tscreen = gtk_check_button_new_with_label("Optimize for TouchScreen");
+  GtkWidget *ChkBtn_tscreen = gtk_check_button_new_with_label("Optimize for Touch");
   gtk_widget_set_name(ChkBtn_tscreen, "boldlabel");
   gtk_widget_set_margin_start(ChkBtn_tscreen, 20);    // linker Rand (Anfang)
   gtk_widget_set_tooltip_text(ChkBtn_tscreen,
                               "Change the design of some buttons and\nsliders for easier use with a touch screen");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_tscreen), optimize_for_touchscreen);
-  gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 1, 1);
   g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &optimize_for_touchscreen);
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  /* ComboBox */
+  GtkWidget *css_theme_combo = gtk_combo_box_text_new();
+  gtk_widget_set_tooltip_text(css_theme_combo,
+                              "Choose your prefered theme:\n\n"
+                              "Default: Standard theme bright\n"
+                              "Dark: Theme for dark mode\n\n"
+                              "Notes:\n"
+                              "1. [Slider Background Color] and [Menu Background Color]\n"
+                              "not available if theme Dark is active.\n"
+                              "2. Switch back to theme Default resets [Slider Background Color]\n"
+                              "and [Menu Background Color] to predefined default colors.");
+  gtk_widget_set_margin_top(css_theme_combo, 5);
+  gtk_widget_set_margin_bottom(css_theme_combo, 5);
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(css_theme_combo), NULL, "Default Theme");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(css_theme_combo), NULL, "Dark Theme");
+  /* aktuellen Wert setzen */
+  gtk_combo_box_set_active(GTK_COMBO_BOX(css_theme_combo), css_dark_theme);
+  gtk_grid_attach(GTK_GRID(grid), css_theme_combo, 3, 0, 1, 1);
+  /* Callback */
+  g_signal_connect(css_theme_combo, "changed", G_CALLBACK(css_theme_changed_cb), NULL);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // Zeile 2 als Box ab Spalte 0
   GtkWidget *Z2_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -544,7 +585,8 @@ void screen_menu(GtkWidget *parent) {
     GdkRGBA bg_col_init = { radio_bgcolor.r, radio_bgcolor.g, radio_bgcolor.b, radio_bgcolor.a };
     gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(bg_col_btn), &bg_col_init);
     g_signal_connect(bg_col_btn, "color-set", G_CALLBACK(bg_colour_set), &radio_bgcolor);
-    gtk_widget_set_tooltip_text(bg_col_btn, "Set background color of Slider front surface\n\n"
+    gtk_widget_set_tooltip_text(bg_col_btn, "Default theme only:\n"
+                                            "Set background color of Slider front surface\n\n"
                                             "Default color is RGB #E6E6FA");
     gtk_widget_set_margin_top(bg_col_btn, 5);
     gtk_widget_set_margin_bottom(bg_col_btn, 5);
@@ -563,7 +605,8 @@ void screen_menu(GtkWidget *parent) {
     GdkRGBA win_bg_col_init = { mwin_bgcolor.r, mwin_bgcolor.g, mwin_bgcolor.b, mwin_bgcolor.a };
     gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(win_bg_col_btn), &win_bg_col_init);
     g_signal_connect(win_bg_col_btn, "color-set", G_CALLBACK(win_bg_colour_set), &mwin_bgcolor);
-    gtk_widget_set_tooltip_text(win_bg_col_btn, "Set background color of Menu surface\n\n"
+    gtk_widget_set_tooltip_text(win_bg_col_btn, "Default theme only:\n"
+                                                "Set background color of Menu surface\n\n"
                                                 "Default color is RGB #F6F6F6");
     gtk_widget_set_margin_top(win_bg_col_btn, 5);
     gtk_widget_set_margin_bottom(win_bg_col_btn, 5);
@@ -644,6 +687,8 @@ void screen_menu(GtkWidget *parent) {
   //------------------------------------------------------------------------------------------
   /* ComboBox */
   GtkWidget *fft_window_combo = gtk_combo_box_text_new();
+  gtk_widget_set_margin_top(fft_window_combo, 5);
+  gtk_widget_set_margin_bottom(fft_window_combo, 5);
   gtk_widget_set_tooltip_text(fft_window_combo, "[RX] FFT Window Type\n"
                                                 "Selects the FFT window used for spectrum processing.\n"
                                                 "Different windows trade off frequency resolution,\n"
@@ -662,6 +707,8 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(fft_window_combo, "changed", G_CALLBACK(pan_window_type_cb), NULL);
   //------------------------------------------------------------------------------------------
   GtkWidget *fft_size_combo = gtk_combo_box_text_new();
+  gtk_widget_set_margin_top(fft_size_combo, 5);
+  gtk_widget_set_margin_bottom(fft_size_combo, 5);
   gtk_widget_set_tooltip_text(fft_size_combo, "Selects the FFT size used for the RX panadapter.\n"
                                               "Larger FFT sizes improve frequency resolution but reduce display speed.\n"
                                               "\nSimilar to Thetis Bin Width/Hz: rx->sample_rate / fft_size");

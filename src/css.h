@@ -20,7 +20,10 @@
 */
 
 extern char *css;
+extern char *css_dark;
 extern const char *css_filename;
+extern void StartConfigSave(void);
+extern void StartConfigLoad(void);
 extern void load_css(void);
 extern void save_css(GtkWidget *widget, gpointer data);
 extern void remove_css(GtkWidget *widget, gpointer data);
