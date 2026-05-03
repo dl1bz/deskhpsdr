@@ -1178,7 +1178,7 @@ void radio_menu(GtkWidget *parent) {
     GtkWidget *hermes_combo = gtk_combo_box_text_new();
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(hermes_combo), NULL, "Generic HERMES");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(hermes_combo), NULL, "Anan-10E/100B");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(hermes_combo), NULL, "Brick SDR");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(hermes_combo), NULL, "Brick/Brick2 SDR");
     gtk_combo_box_set_active(GTK_COMBO_BOX(hermes_combo), hermes_mode);
     gtk_grid_attach(GTK_GRID(grid), hermes_combo, col, row, 1, 1);
     g_signal_connect(hermes_combo, "changed", G_CALLBACK(hermes_mode_cb), NULL);
