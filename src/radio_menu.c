@@ -491,7 +491,11 @@ static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
   //
   if (sscanf(p, "%d", &samplerate) != 1) { return; }
 
-  radio_change_sample_rate(samplerate);
+  if (protocol == NEW_PROTOCOL) {
+    rx_change_sample_rate(active_receiver, samplerate);
+  } else {
+    radio_change_sample_rate(samplerate);
+  }
 }
 
 static void receivers_cb(GtkToggleButton *widget, gpointer data) {
