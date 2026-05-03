@@ -262,8 +262,11 @@ void rx_menu(GtkWidget *parent) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "96000");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "192000");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "384000");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "768000");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "1536000");
+
+      if (hermes_mode != HERMES_MODE_BRICK) {
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "768000");
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "1536000");
+      }
 
       switch (active_receiver->sample_rate) {
       case 48000:
@@ -298,6 +301,8 @@ void rx_menu(GtkWidget *parent) {
     row++;
     break;
     }
+
+    t_print("%s: have_alex_att = %d\n", __func__, have_alex_att);
 
     if (filter_board == ALEX && active_receiver->adc == 0 && have_alex_att) {
       //

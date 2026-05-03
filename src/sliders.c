@@ -1979,8 +1979,14 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     GtkWidget *box_Z1_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
     gtk_widget_set_size_request(box_Z1_right, box_right_width, widget_height);
     gtk_box_set_spacing(GTK_BOX(box_Z1_right), 5);
+
     //-----------------------------------------------------------------------------------------------------------
-    attenuation_label = gtk_label_new("ATT");
+    if (hermes_mode == HERMES_MODE_BRICK) {
+      attenuation_label = gtk_label_new("S-ATT");
+    } else {
+      attenuation_label = gtk_label_new("ATT");
+    }
+
     WEAKEN(attenuation_label);
     gtk_widget_set_name(attenuation_label, "boldlabel_border_blue");
     // Label breiter erzwingen
@@ -1996,6 +2002,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
     WEAKEN(attenuation_scale);
+    gtk_widget_set_tooltip_text(attenuation_scale,
+                                "RX Step Attenuator for adjustment RF Gain:\n"
+                                "Range 0db - 31db");
     gtk_range_set_value (GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
     gtk_range_set_increments (GTK_RANGE(attenuation_scale), 1.0, 1.0);
 

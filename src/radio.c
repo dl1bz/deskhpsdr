@@ -191,6 +191,7 @@ int hl2_cl1_input = 0;
 // radios.
 //
 int anan10E = 0;
+int hermes_mode = HERMES_MODE_GENERIC;
 
 int adc0_filter_bypass = 0; // Bypass ADC0 filters on receive
 int adc1_filter_bypass = 0; // Bypass ADC1 filters on receiver  (ANAN-7000/8000/G2)
@@ -3070,6 +3071,22 @@ void radio_tx_vfo_changed(void) {
   schedule_general();               // possibly update PA disable
 }
 
+void radio_reset_all_alex_attenuation(void) {
+  for (int b = 0; b < BANDS; b++) {
+    BAND *band = band_get_band(b);
+
+    if (band != NULL) {
+      band->alexAttenuation = 0;
+    }
+  }
+
+  if (receiver[0] != NULL) {
+    receiver[0]->alex_attenuation = 0;
+  }
+
+  t_print("%s: Set alexAttenuation for ALL BANDS to zero\n", __func__);
+}
+
 void radio_set_alex_attenuation(int v) {
   //
   // Change the value of the step attenuator. Store it
@@ -3077,6 +3094,10 @@ void radio_set_alex_attenuation(int v) {
   // and in the receiver[0] data structure
   //
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+    if (hermes_mode == HERMES_MODE_BRICK) {
+      v = 0;
+    }
+
     //
     // Store new value of the step attenuator in band data structure
     // (v can be 0,1,2,3)
@@ -3187,6 +3208,7 @@ static void radio_restore_state(void) {
   GetPropI0("hl2_audio_codec",                               hl2_audio_codec);
   GetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
   GetPropI0("anan10E",                                       anan10E);
+  GetPropI0("hermes_mode",                                   hermes_mode);
   GetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   GetPropI0("filter_board",                                  filter_board);
   GetPropI0("pa_enabled",                                    pa_enabled);
@@ -3336,6 +3358,23 @@ static void radio_restore_state(void) {
     GetPropF1("radio.dac[%d].gain", i,                       dac[i].gain);
   }
 
+  switch (hermes_mode) {
+  case HERMES_MODE_ANAN10E:
+    anan10E = 1;
+    break;
+
+  case HERMES_MODE_BRICK:
+    anan10E = 0;
+    have_alex_att = 0;
+    radio_reset_all_alex_attenuation();
+    break;
+
+  default:
+    hermes_mode = HERMES_MODE_GENERIC;
+    anan10E = 0;
+    break;
+  }
+
   filterRestoreState();
   bandRestoreState();
   memRestoreState();
@@ -3478,6 +3517,7 @@ void radio_save_state(void) {
   SetPropI0("hl2_audio_codec",                               hl2_audio_codec);
   SetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
   SetPropI0("anan10E",                                       anan10E);
+  SetPropI0("hermes_mode",                                   hermes_mode);
   SetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   SetPropI0("filter_board",                                  filter_board);
   SetPropI0("pa_enabled",                                    pa_enabled);

@@ -178,10 +178,38 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   radio_reconfigure_screen();
 }
 
-static void anan10e_cb(GtkWidget *widget, gpointer data) {
+static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
+  int mode = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+
+  if (mode == hermes_mode) {
+    return;
+  }
+
   radio_protocol_stop();
   usleep(200000);
-  anan10E = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  hermes_mode = mode;
+
+  switch (hermes_mode) {
+  case HERMES_MODE_GENERIC:
+    anan10E = 0;
+    break;
+
+  case HERMES_MODE_ANAN10E:
+    anan10E = 1;
+    break;
+
+  case HERMES_MODE_BRICK:
+    anan10E = 0;
+    have_alex_att = 0;
+    break;
+
+  default:
+    hermes_mode = HERMES_MODE_GENERIC;
+    anan10E = 0;
+    break;
+  }
+
+  radio_save_state();
   radio_protocol_run();
 }
 
@@ -625,9 +653,54 @@ void radio_menu(GtkWidget *parent) {
   row++;
 
   switch (protocol) {
-  case NEW_PROTOCOL:
-    // Sample rate changes handled in the RX menu
-    break;
+  case NEW_PROTOCOL: {
+    label = gtk_label_new("Sample Rate:");
+    gtk_widget_set_name(label, "boldlabel");
+    gtk_widget_set_halign(label, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+    row++;
+    GtkWidget *sample_rate_combo_box = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "48000");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "96000");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "192000");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "384000");
+
+    if (hermes_mode != HERMES_MODE_BRICK) {
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "768000");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "1536000");
+    }
+
+    switch (active_receiver->sample_rate) {
+    case 48000:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 0);
+      break;
+
+    case 96000:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 1);
+      break;
+
+    case 192000:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 2);
+      break;
+
+    case 384000:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 3);
+      break;
+
+    case 768000:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 4);
+      break;
+
+    case 1536000:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 5);
+      break;
+    }
+
+    my_combo_attach(GTK_GRID(grid), sample_rate_combo_box, 0, row, 1, 1);
+    g_signal_connect(sample_rate_combo_box, "changed", G_CALLBACK(sample_rate_cb), NULL);
+    row++;
+  }
+  break;
 
   case ORIGINAL_PROTOCOL: {
     label = gtk_label_new("Sample Rate:");
@@ -1102,11 +1175,13 @@ void radio_menu(GtkWidget *parent) {
   case DEVICE_HERMES:
   case NEW_DEVICE_HERMES:
   case NEW_DEVICE_HERMES2: {
-    ChkBtn = gtk_check_button_new_with_label("Anan-10E/100B");
-    gtk_widget_set_name(ChkBtn, "boldlabel");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), anan10E);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(anan10e_cb), NULL);
+    GtkWidget *hermes_combo = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(hermes_combo), NULL, "Generic HERMES");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(hermes_combo), NULL, "Anan-10E/100B");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(hermes_combo), NULL, "Brick SDR");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(hermes_combo), hermes_mode);
+    gtk_grid_attach(GTK_GRID(grid), hermes_combo, col, row, 1, 1);
+    g_signal_connect(hermes_combo, "changed", G_CALLBACK(hermes_mode_cb), NULL);
     col++;
   }
   break;

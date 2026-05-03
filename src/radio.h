@@ -116,6 +116,12 @@ enum _display_enum {
   AVG_TIMEWINDOW
 };
 
+typedef enum {
+  HERMES_MODE_GENERIC = 0,
+  HERMES_MODE_ANAN10E = 1,
+  HERMES_MODE_BRICK   = 2
+} HERMES_MODE;
+
 extern int region;
 
 extern int RECEIVERS;
@@ -356,6 +362,7 @@ extern gboolean display_pacurr;
 extern int hl2_audio_codec;
 extern int hl2_cl1_input;
 extern int anan10E;
+extern int hermes_mode;
 
 extern int adc0_filter_bypass;   // Bypass ADC0 filters on receive
 extern int adc1_filter_bypass;   // Bypass ADC1 filters on receiver  (ANAN-7000/8000/G2)
@@ -412,6 +419,7 @@ extern void   radio_calc_drive_level(void);
 extern void   radio_calc_tune_drive_level(void);
 extern void   radio_set_rf_gain(const RECEIVER *rx);
 extern void   radio_set_attenuation(int value);
+extern void   radio_reset_all_alex_attenuation(void);
 extern void   radio_set_alex_attenuation(int v);
 extern int    radio_is_transmitting(void);
 extern void   radio_set_satmode(int mode);
