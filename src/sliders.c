@@ -337,6 +337,14 @@ static void attenuation_value_changed_cb(GtkWidget *widget, gpointer data) {
   schedule_high_priority();
 }
 
+void update_attenuation_label(void) {
+  if (hermes_mode == HERMES_MODE_BRICK) {
+    gtk_label_set_text(GTK_LABEL(attenuation_label), "S-ATT");
+  } else {
+    gtk_label_set_text(GTK_LABEL(attenuation_label), "ATT");
+  }
+}
+
 void att_type_changed(void) {
   //
   // This function manages a transition from/to a CHARLY25 filter board

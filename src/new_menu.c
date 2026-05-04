@@ -75,6 +75,7 @@
 
 GtkWidget *main_menu = NULL;
 GtkWidget *sub_menu = NULL;
+static GtkWidget *restart_b = NULL;
 
 int active_menu = NO_MENU;
 
@@ -498,7 +499,15 @@ void new_menu(void) {
     gtk_widget_set_name(close_b, "close_button");
     g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
-    GtkWidget *restart_b = gtk_button_new_with_label("Restart HPSDR protocol");
+
+    if (protocol == ORIGINAL_PROTOCOL) {
+      restart_b = gtk_button_new_with_label("Restart Protocol P1");
+    } else if (protocol == NEW_PROTOCOL) {
+      restart_b = gtk_button_new_with_label("Restart Protocol P2");
+    } else {
+      restart_b = gtk_button_new_with_label("Restart Protocol");
+    }
+
     g_signal_connect (restart_b, "button-press-event", G_CALLBACK(restart_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), restart_b, 2, 0, 2, 1);
     char _label[32];
@@ -673,8 +682,16 @@ void new_menu(void) {
 
     if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
       GtkWidget *oc_b = gtk_button_new_with_label("OC");
+      gtk_widget_set_no_show_all(oc_b, hermes_mode == HERMES_MODE_BRICK);
       g_signal_connect (oc_b, "button-press-event", G_CALLBACK(oc_cb), NULL);
       gtk_grid_attach(GTK_GRID(grid), oc_b, col, row, 1, 1);
+
+      if (hermes_mode == HERMES_MODE_BRICK) {
+        gtk_widget_hide(oc_b);
+      } else {
+        gtk_widget_show(oc_b);
+      }
+
       row++;
     }
 

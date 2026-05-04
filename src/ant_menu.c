@@ -65,6 +65,11 @@ static void rx_ant_cb(GtkToggleButton *widget, gpointer data) {
   int b = GPOINTER_TO_INT(data);
   int ant = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
   BAND *band = band_get_band(b);
+
+  if (hermes_mode == HERMES_MODE_BRICK) {
+    ant = 0;
+  }
+
   band->alexRxAntenna = ant;
   radio_set_alex_antennas();
 }
@@ -73,6 +78,11 @@ static void tx_ant_cb(GtkToggleButton *widget, gpointer data) {
   int b = GPOINTER_TO_INT(data);
   int ant = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
   BAND *band = band_get_band(b);
+
+  if (hermes_mode == HERMES_MODE_BRICK) {
+    ant = 0;
+  }
+
   band->alexTxAntenna = ant;
   radio_set_alex_antennas();
 }
@@ -159,23 +169,31 @@ static void show_hf(void) {
       col++;
       GtkWidget *rxcombo = gtk_combo_box_text_new();
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ant1");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ant2");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ant3");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ext1");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ext2");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Xvtr");
-      gtk_combo_box_set_active(GTK_COMBO_BOX(rxcombo), band->alexRxAntenna);
+
+      if (hermes_mode != HERMES_MODE_BRICK) {
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ant2");
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ant3");
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ext1");
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Ext2");
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rxcombo), NULL, "Xvtr");
+      }
+
+      gtk_combo_box_set_active(GTK_COMBO_BOX(rxcombo),
+                               hermes_mode == HERMES_MODE_BRICK ? 0 : band->alexRxAntenna);
       my_combo_attach(GTK_GRID(mygrid), rxcombo, col, row, 1, 1);
-      // g_signal_connect(rxcombo, "changed", G_CALLBACK(rx_ant_cb), GINT_TO_POINTER(i));
       g_signal_connect(rxcombo, "changed", G_CALLBACK(rx_ant_cb), GINT_TO_POINTER(b));
       col++;
       GtkWidget *txcombo = gtk_combo_box_text_new();
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(txcombo), NULL, "Ant1");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(txcombo), NULL, "Ant2");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(txcombo), NULL, "Ant3");
-      gtk_combo_box_set_active(GTK_COMBO_BOX(txcombo), band->alexTxAntenna);
+
+      if (hermes_mode != HERMES_MODE_BRICK) {
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(txcombo), NULL, "Ant2");
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(txcombo), NULL, "Ant3");
+      }
+
+      gtk_combo_box_set_active(GTK_COMBO_BOX(txcombo),
+                               hermes_mode == HERMES_MODE_BRICK ? 0 : band->alexTxAntenna);
       my_combo_attach(GTK_GRID(mygrid), txcombo, col, row, 1, 1);
-      // g_signal_connect(txcombo, "changed", G_CALLBACK(tx_ant_cb), GINT_TO_POINTER(i));
       g_signal_connect(txcombo, "changed", G_CALLBACK(tx_ant_cb), GINT_TO_POINTER(b));
       col++;
       col++;
@@ -324,9 +342,22 @@ void ant_menu(GtkWidget *parent) {
     g_signal_connect(hf_rb, "toggled", G_CALLBACK(hf_rb_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), hf_rb, 1, 0, 1, 1);
     GtkWidget *xvtr_rb = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(hf_rb), "XVTR");
+    gtk_widget_set_no_show_all(xvtr_rb, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(xvtr_rb, "boldlabel");
     g_signal_connect(xvtr_rb, "toggled", G_CALLBACK(xvtr_rb_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), xvtr_rb, 2, 0, 1, 1);
+
+    if (hermes_mode == HERMES_MODE_BRICK) {
+      gtk_widget_hide(xvtr_rb);
+    } else {
+      gtk_widget_show(xvtr_rb);
+    }
+  }
+
+  if (device == NEW_DEVICE_HERMES && hermes_mode == HERMES_MODE_BRICK) {
+    GtkWidget *label = gtk_label_new("Brick SDR: has fixed ANT input,\nPS input is dedicated feedback.");
+    gtk_widget_set_name(label, "boldlabel");
+    gtk_grid_attach(GTK_GRID(grid), label, 3, 0, 5, 1);
   }
 
   if (device == NEW_DEVICE_HERMES || device == NEW_DEVICE_ANGELIA || device == NEW_DEVICE_ORION ||
@@ -337,15 +368,25 @@ void ant_menu(GtkWidget *parent) {
     //               differs in how to do PS feedback.
     //
     GtkWidget *new_pa_b = gtk_check_button_new_with_label("ANAN 100/200 new PA board");
+    gtk_widget_set_no_show_all(new_pa_b, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(new_pa_b, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(new_pa_b), new_pa_board);
     gtk_grid_attach(GTK_GRID(grid), new_pa_b, 3, 0, 5, 1);
     g_signal_connect(new_pa_b, "toggled", G_CALLBACK(newpa_cb), NULL);
+
+    if (hermes_mode == HERMES_MODE_BRICK) {
+      gtk_widget_hide(new_pa_b);
+    } else {
+      gtk_widget_show(new_pa_b);
+    }
   }
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     show_hf();
-    show_xvtr();
+
+    if (hermes_mode != HERMES_MODE_BRICK) {
+      show_xvtr();
+    }
   }
 
 #ifdef SOAPYSDR

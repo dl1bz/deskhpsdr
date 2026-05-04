@@ -62,7 +62,7 @@ int action_dialog(GtkWidget *parent, int filter, enum ACTION currentAction) {
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_widget_set_size_request(scrolled_window, 750, 400);
+  gtk_widget_set_size_request(scrolled_window, 850, 450);
   win_set_bgcolor(scrolled_window, &radio_bgcolor);
   win_set_bgcolor(dialog, &radio_bgcolor);
   GtkWidget *grid = gtk_grid_new();
@@ -70,6 +70,8 @@ int action_dialog(GtkWidget *parent, int filter, enum ACTION currentAction) {
   gtk_grid_set_row_spacing(GTK_GRID(grid), 2);
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+  // gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
+  // gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
   j = 0;
 
   for (i = 0; i < ACTIONS; i++) {
@@ -116,7 +118,7 @@ int action_dialog(GtkWidget *parent, int filter, enum ACTION currentAction) {
   width  = nat.width;
   height = nat.height;
 
-  if (width < 750) { width = 750; }
+  if (width < 850) { width = 850; }
 
   if (nat.width  > display_width -  50) { width  = display_width -  50; }
 

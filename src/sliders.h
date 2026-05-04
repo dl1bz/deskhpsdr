@@ -43,6 +43,7 @@ extern void update_slider_split_btn(void);
 extern void update_slider_agc_btn(void);
 extern void update_slider_ps_btn(void);
 extern void update_slider_nr_btn(gboolean show_widget);
+extern void update_attenuation_label(void);
 #ifdef SOAPYSDR
   extern void update_slider_hwagc_btn(void);
   extern void update_rf_gain_scale_soapy(int idx);

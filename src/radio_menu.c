@@ -52,6 +52,8 @@
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *n2adr_hpf_btn = NULL;
+static GtkWidget *ChkBtn_txinhibit = NULL;
+static GtkWidget *ChkBtn_autotune = NULL;
 static gulong callsign_box_signal_id;
 static gulong locator_box_signal_id;
 
@@ -201,6 +203,9 @@ static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
   case HERMES_MODE_BRICK:
     anan10E = 0;
     have_alex_att = 0;
+    enable_tx_inhibit = 0;
+    enable_auto_tune = 0;
+    new_pa_board = 0;
     break;
 
   default:
@@ -209,6 +214,15 @@ static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
     break;
   }
 
+  if (hermes_mode == HERMES_MODE_BRICK) {
+    gtk_widget_hide(ChkBtn_txinhibit);
+    gtk_widget_hide(ChkBtn_autotune);
+  } else {
+    gtk_widget_show(ChkBtn_txinhibit);
+    gtk_widget_show(ChkBtn_autotune);
+  }
+
+  update_attenuation_label();
   radio_save_state();
   radio_protocol_run();
 }
@@ -1214,23 +1228,37 @@ void radio_menu(GtkWidget *parent) {
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
-    ChkBtn = gtk_check_button_new_with_label("Enable TxInhibit Input");
-    gtk_widget_set_name(ChkBtn, "boldlabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), enable_tx_inhibit);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn, 0, row, 2, 1);
-    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &enable_tx_inhibit);
-    ChkBtn = gtk_check_button_new_with_label("Enable AutoTune Input");
-    gtk_widget_set_name(ChkBtn, "boldlabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), enable_auto_tune);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn, 2, row, 2, 1);
-    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &enable_auto_tune);
+    ChkBtn_txinhibit = gtk_check_button_new_with_label("Enable TxInhibit Input");
+    gtk_widget_set_no_show_all(ChkBtn_txinhibit, hermes_mode == HERMES_MODE_BRICK);
+    gtk_widget_set_name(ChkBtn_txinhibit, "boldlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_txinhibit), enable_tx_inhibit);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn_txinhibit, 0, row, 2, 1);
+    g_signal_connect(ChkBtn_txinhibit, "toggled", G_CALLBACK(toggle_cb), &enable_tx_inhibit);
+    //----------------------------------------------------------------------------------------
+    ChkBtn_autotune = gtk_check_button_new_with_label("Enable AutoTune Input");
+    gtk_widget_set_no_show_all(ChkBtn_autotune, hermes_mode == HERMES_MODE_BRICK);
+    gtk_widget_set_name(ChkBtn_autotune, "boldlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_autotune), enable_auto_tune);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn_autotune, 2, row, 2, 1);
+    g_signal_connect(ChkBtn_autotune, "toggled", G_CALLBACK(toggle_cb), &enable_auto_tune);
+
+    //----------------------------------------------------------------------------------------
+    if (hermes_mode == HERMES_MODE_BRICK) {
+      enable_tx_inhibit = 0;
+      enable_auto_tune = 0;
+      gtk_widget_hide(ChkBtn_txinhibit);
+      gtk_widget_hide(ChkBtn_autotune);
+    } else {
+      gtk_widget_show(ChkBtn_txinhibit);
+      gtk_widget_show(ChkBtn_autotune);
+    }
   }
 
   row++;
   // cppcheck-suppress redundantAssignment
   col = 0;
   label = gtk_label_new("Freq. Calibration\n(ppm factor):");
-  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
   GtkWidget *ppm_btn = gtk_spin_button_new_with_range(-100.0, 100.0, 0.1);
