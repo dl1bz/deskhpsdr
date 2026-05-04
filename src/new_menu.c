@@ -681,17 +681,20 @@ void new_menu(void) {
     row++;
 
     if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-      GtkWidget *oc_b = gtk_button_new_with_label("OC");
-      gtk_widget_set_no_show_all(oc_b, hermes_mode == HERMES_MODE_BRICK);
+      GtkWidget *oc_b = gtk_button_new_with_label("OC Output");
+      gtk_widget_set_tooltip_text(oc_b,
+                                  "Open Collector Output\n"
+                                  "(if supported by SDR device)");
+      // gtk_widget_set_no_show_all(oc_b, hermes_mode == HERMES_MODE_BRICK);
       g_signal_connect (oc_b, "button-press-event", G_CALLBACK(oc_cb), NULL);
       gtk_grid_attach(GTK_GRID(grid), oc_b, col, row, 1, 1);
-
+      /*
       if (hermes_mode == HERMES_MODE_BRICK) {
         gtk_widget_hide(oc_b);
       } else {
         gtk_widget_show(oc_b);
       }
-
+      */
       row++;
     }
 

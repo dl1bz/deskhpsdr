@@ -254,6 +254,9 @@ static unsigned char high_priority_buffer_to_radio[1444];
 static unsigned char transmit_specific_buffer[60];
 static unsigned char receive_specific_buffer[1444];
 
+static unsigned char last_oc_state = 0xFF;
+static int last_oc_xmit = -1, last_oc_tune = -1;
+
 //
 // new_protocol_receive_specific and friends are not thread-safe, but called
 // periodically from  timer thread *and* asynchronously from everywhere else
@@ -994,6 +997,24 @@ static void new_protocol_high_priority(void) {
     }
   } else {
     high_priority_buffer_to_radio[1401] = rxband->OCrx << 1;
+  }
+
+  //
+  // OC monitor: shows the OpenCollector state deskHPSDR sends to the radio.
+  // This is NOT a hardware readback. It logs the P2 high-priority byte only.
+  //
+  if (high_priority_buffer_to_radio[1401] != last_oc_state ||
+      xmit != last_oc_xmit ||
+      tune != last_oc_tune) {
+    unsigned char oc = high_priority_buffer_to_radio[1401] >> 1;
+    last_oc_state = high_priority_buffer_to_radio[1401];
+    last_oc_xmit = xmit;
+    last_oc_tune = tune;
+    t_print("%s: OC send state=0x%02X pins=%d%d%d%d%d%d%d raw1401=0x%02X xmit=%d tune=%d band_rx=%s band_tx=%s\n",
+            __func__, oc,
+            !!(oc & 0x01), !!(oc & 0x02), !!(oc & 0x04), !!(oc & 0x08),
+            !!(oc & 0x10), !!(oc & 0x20), !!(oc & 0x40),
+            high_priority_buffer_to_radio[1401], xmit, tune, rxband->title, txband->title);
   }
 
   //
