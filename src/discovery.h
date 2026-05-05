@@ -25,3 +25,4 @@ extern int delayed_discovery(gpointer data);
 extern void discovery(void);
 extern char *ipaddr_radio;
 extern int radio_port;
+extern int active_device_index;

@@ -547,6 +547,9 @@ gpointer new_discover_receive_thread(gpointer data) {
                     discovered[devices].info.network.interface_name);
             discovered[devices].frequency_min = frequency_min;
             discovered[devices].frequency_max = frequency_max;
+            t_print("new_discover: frequency range min=%0.3f MHz max=%0.3f MHz\n",
+                    discovered[devices].frequency_min * 1E-6,
+                    discovered[devices].frequency_max * 1E-6);
             devices++;
           }
         }

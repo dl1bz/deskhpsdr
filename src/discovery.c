@@ -71,6 +71,8 @@ static char ipaddr_buf[IPADDR_LEN] = "";
 char *ipaddr_radio = &ipaddr_buf[0];
 int radio_port = 1024;  // Default discovery port
 
+int active_device_index;
+
 int discover_only_stemlab = 0;
 
 int delayed_discovery(gpointer data);
@@ -90,6 +92,7 @@ static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer dat
     return TRUE;
   }
 
+  active_device_index = selected_device;
   radio = &discovered[selected_device];
   t_print("%s: selected_device=%d protocol=%d device=%d name=%s\n",
           __func__, selected_device, radio->protocol, radio->device, radio->name);
