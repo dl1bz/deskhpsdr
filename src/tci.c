@@ -299,8 +299,8 @@ static void tci_send_limits(CLIENT *client) {
            (long long)client->device->frequency_max);
   tci_send_text(client, msg);
   snprintf(msg, MAXMSGSIZE, "if_limits:%lld,%lld;",
-           -(long long)receiver[0]->sample_rate / 2,
-           (long long)receiver[0]->sample_rate / 2);
+           -(long long)(receiver[0]->sample_rate / 2),
+           (long long)(receiver[0]->sample_rate / 2));
   tci_send_text(client, msg);
 }
 
