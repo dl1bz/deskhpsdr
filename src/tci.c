@@ -90,9 +90,11 @@ typedef struct _client {
   int rxsensor;                 // enable transmit of S meter data
   int txsensor;                 // enable transmit of drive data
   int idle_queued;              // counter
-  struct lws *wsi;                // libwebsockets connection
-  GQueue *lws_tx_queue;           // queued RESPONSE objects for LWS writable callback
-  int initial_sent;               // initial state already sent via LWS
+  struct lws *wsi;              // libwebsockets connection
+  GQueue *lws_tx_queue;         // queued RESPONSE objects for LWS writable callback
+  int initial_sent;             // initial state already sent via LWS
+  DISCOVERED *device;           // device bound to this TCI client
+  int device_index;             // discovery index bound to this TCI client
 } CLIENT;
 
 typedef struct _response {
@@ -289,9 +291,12 @@ static void tci_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
 
 static void tci_send_limits(CLIENT *client) {
   char msg[MAXMSGSIZE];
+
+  if (client == NULL || client->device == NULL || receiver[0] == NULL) { return; }
+
   snprintf(msg, MAXMSGSIZE, "vfo_limits:%lld,%lld;",
-           (long long)discovered[active_device_index].frequency_min,
-           (long long)discovered[active_device_index].frequency_max);
+           (long long)client->device->frequency_min,
+           (long long)client->device->frequency_max);
   tci_send_text(client, msg);
   snprintf(msg, MAXMSGSIZE, "if_limits:%lld,%lld;",
            -(long long)receiver[0]->sample_rate / 2,
@@ -860,6 +865,8 @@ static void tci_init_client(CLIENT *client, int fd, int seq) {
   client->wsi             = NULL;
   client->lws_tx_queue    = NULL;
   client->initial_sent    =  0;
+  client->device          = NULL;
+  client->device_index    = -1;
 }
 
 static void tci_process_ws_payload(CLIENT *client, int type, char *msg) {
@@ -1082,6 +1089,8 @@ static int tci_lws_callback(struct lws *wsi, enum lws_callback_reasons reason,
     tci_init_client(client, lws_get_socket_fd(wsi), ++tci_lws_seq);
     client->wsi = wsi;
     client->lws_tx_queue = g_queue_new();
+    client->device_index = active_device_index;
+    client->device = &discovered[client->device_index];
     t_print("%s: starting client: socket=%d\n", __func__, client->seq);
     cat_control++;
     g_idle_add(ext_vfo_update, NULL);
