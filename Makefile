@@ -586,19 +586,21 @@ endif
 #
 ##############################################################################
 ifeq ($(TCI), ON)
-TCI_OPTIONS=-DTCI
-TCI_INCLUDE=`$(PKG_CONFIG) --cflags openssl`
+# TCI_OPTIONS=-DTCI
+TCI_OPTIONS=-DTCI -D__TCI_LWS__
+TCI_INCLUDE=`$(PKG_CONFIG) --cflags openssl` `$(PKG_CONFIG) --cflags libwebsockets`
 # TCI_LIBS=`$(PKG_CONFIG) --libs openssl`
 ifeq ($(UNAME_S), Darwin)
-TCI_LIBS=$(BREW_LIBDIR)/libssl.a $(BREW_LIBDIR)/libcrypto.a
+TCI_LIBS=$(BREW_LIBDIR)/libssl.a $(BREW_LIBDIR)/libcrypto.a `$(PKG_CONFIG) --static --libs libwebsockets`
 else
-TCI_LIBS=`$(PKG_CONFIG) --libs openssl`
+TCI_LIBS=`$(PKG_CONFIG) --libs openssl` `$(PKG_CONFIG) --libs libwebsockets`
 endif
 TCI_SOURCES=src/tci.c
 TCI_OBJS=src/tci.o
 endif
-CPP_INCLUDE += `$(PKG_CONFIG) --cflags openssl`
-CPP_DEFINES += -DTCI
+CPP_INCLUDE += `$(PKG_CONFIG) --cflags openssl` `$(PKG_CONFIG) --cflags libwebsockets`
+# CPP_DEFINES += -DTCI
+CPP_DEFINES += -DTCI -D__TCI_LWS__
 CPP_SOURCES += src/tci.c
 
 ##############################################################################

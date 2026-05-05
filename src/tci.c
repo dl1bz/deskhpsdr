@@ -43,6 +43,10 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
+#ifdef __TCI_LWS__
+  #include <libwebsockets.h>
+#endif
+
 #include "radio.h"
 #include "vfo.h"
 #include "rigctl.h"
@@ -76,6 +80,10 @@ enum OpCode {
 static GThread *tci_server_thread_id = NULL;
 static int tci_running = 0;
 
+#ifdef __TCI_LWS__
+  static struct lws_context *tci_lws_context = NULL;
+#endif
+
 static int server_socket = -1;
 static struct sockaddr_in server_address;
 
@@ -98,6 +106,11 @@ typedef struct _client {
   int rxsensor;                 // enable transmit of S meter data
   int txsensor;                 // enable transmit of drive data
   int idle_queued;              // counter
+#ifdef __TCI_LWS__
+  struct lws *wsi;                // libwebsockets connection
+  GQueue *lws_tx_queue;           // queued RESPONSE objects for LWS writable callback
+  int initial_sent;               // initial state already sent via LWS
+#endif
 } CLIENT;
 
 typedef struct _response {
@@ -112,6 +125,9 @@ static GMutex tci_mutex;
 
 static gpointer tci_server(gpointer data);
 static gpointer tci_listener(gpointer data);
+#ifdef __TCI_LWS__
+  static gpointer tci_lws_server(gpointer data);
+#endif
 
 typedef struct {
   char *cmd;
@@ -144,7 +160,12 @@ void launch_tci(void) {
   //
   // Start TCI server
   //
-  tci_server_thread_id = g_thread_new( "tci server", tci_server, GINT_TO_POINTER(tci_port));
+  // immer alten stabilen TCI starten
+  tci_server_thread_id = g_thread_new("tci server", tci_server, GINT_TO_POINTER(tci_port));
+#ifdef __TCI_LWS__
+  // LWS zusätzlich auf Port+1 starten (Testbetrieb)
+  g_thread_new("tci lws server", tci_lws_server, GINT_TO_POINTER(tci_port + 1));
+#endif
 }
 
 //
@@ -182,6 +203,13 @@ static void force_close(CLIENT *client) {
 void shutdown_tci(void) {
   t_print("%s: server_socket=%d\n", __func__, server_socket);
   tci_running = 0;
+#ifdef __TCI_LWS__
+
+  if (tci_lws_context != NULL) {
+    lws_cancel_service(tci_lws_context);
+  }
+
+#endif
 
   //
   // Terminate all active TCI connections and join with listener threads
@@ -359,6 +387,25 @@ static int tci_queue_frame(CLIENT *client, int type, const char *msg, int check_
   }
 
   client->idle_queued++;
+#ifdef __TCI_LWS__
+
+  if (client->wsi != NULL) {
+    if (client->lws_tx_queue == NULL) {
+      client->lws_tx_queue = g_queue_new();
+    }
+
+    g_queue_push_tail(client->lws_tx_queue, resp);
+    lws_callback_on_writable(client->wsi);
+
+    if (tci_lws_context != NULL) {
+      lws_cancel_service(tci_lws_context);
+    }
+
+    g_mutex_unlock(&tci_mutex);
+    return 1;
+  }
+
+#endif
   g_mutex_unlock(&tci_mutex);
   g_idle_add(tci_send_frame, resp);
   return 1;
@@ -1085,6 +1132,10 @@ static void tci_init_client(CLIENT *client, int fd, int seq) {
   client->idle_queued     =  0;
   client->tci_timer       =  0;
   client->thread_id       = NULL;
+#ifdef __TCI_LWS__
+  client->wsi             = NULL;
+  client->lws_tx_queue    = NULL;
+#endif
 }
 
 static gpointer tci_server(gpointer data) {
@@ -1303,20 +1354,7 @@ static void tci_process_ws_payload(CLIENT *client, int type, char *msg) {
   }
 }
 
-//
-// TCI "Listener". It starts with sending  initialisation data, and then
-// listens for incoming commands (and ignores all of them!).
-// It only responds to incoming PING and CLOSE packets.
-//
-static gpointer tci_listener(gpointer data) {
-  CLIENT *client = (CLIENT *)data;
-  t_print("%s: starting client: socket=%d\n", __func__, client->fd);
-  // update CAT status onscreen
-  cat_control++;
-  g_idle_add(ext_vfo_update, NULL);
-  int offset = 0;
-  unsigned char buff [MAXDATASIZE];
-  char msg [MAXDATASIZE];
+static void tci_send_initial_state(CLIENT *client) {
   //
   // Send initial state info to client
   // using emulatation Expert SunSDR2Pro
@@ -1372,6 +1410,232 @@ static gpointer tci_listener(gpointer data) {
   tci_send_keyer_cwspeed(client);
   tci_send_text(client, "start;");
   tci_send_text(client, "ready;");
+}
+
+
+#ifdef __TCI_LWS__
+static void tci_lws_free_queue(CLIENT *client) {
+  if (client == NULL || client->lws_tx_queue == NULL) { return; }
+
+  while (!g_queue_is_empty(client->lws_tx_queue)) {
+    RESPONSE *resp = (RESPONSE *)g_queue_pop_head(client->lws_tx_queue);
+    g_free(resp);
+  }
+
+  g_queue_free(client->lws_tx_queue);
+  client->lws_tx_queue = NULL;
+}
+
+static int tci_lws_write_queued(CLIENT *client) {
+  RESPONSE *resp = NULL;
+
+  if (client == NULL) { return 0; }
+
+  g_mutex_lock(&tci_mutex);
+
+  if (client->lws_tx_queue != NULL && !g_queue_is_empty(client->lws_tx_queue)) {
+    resp = (RESPONSE *)g_queue_pop_head(client->lws_tx_queue);
+  }
+
+  g_mutex_unlock(&tci_mutex);
+
+  if (resp == NULL) { return 0; }
+
+  if (resp->type == opCLOSE) {
+    g_free(resp);
+    return -1;
+  }
+
+  unsigned char buf[LWS_PRE + MAXMSGSIZE];
+  size_t len = strlen(resp->msg);
+  enum lws_write_protocol protocol = LWS_WRITE_TEXT;
+
+  if (resp->type == opPING) {
+    protocol = LWS_WRITE_PING;
+  } else if (resp->type == opPONG) {
+    protocol = LWS_WRITE_PONG;
+  }
+
+  memcpy(&buf[LWS_PRE], resp->msg, len);
+  int rc = lws_write(client->wsi, &buf[LWS_PRE], len, protocol);
+  g_free(resp);
+  g_mutex_lock(&tci_mutex);
+
+  if (client->idle_queued > 0) {
+    client->idle_queued--;
+  }
+
+  if (rc < 0) {
+    client->running = 0;
+    g_mutex_unlock(&tci_mutex);
+    return -1;
+  }
+
+  if (client->lws_tx_queue != NULL && !g_queue_is_empty(client->lws_tx_queue)) {
+    lws_callback_on_writable(client->wsi);
+  }
+
+  g_mutex_unlock(&tci_mutex);
+  return 0;
+}
+
+static int tci_lws_callback(struct lws *wsi, enum lws_callback_reasons reason,
+                            void *user, void *in, size_t len) {
+  CLIENT *client = (CLIENT *)user;
+
+  switch (reason) {
+  case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION: {
+    char uri[256] = {0};
+    char proto[256] = {0};
+    char ua[256] = {0};
+    lws_hdr_copy(wsi, uri,   sizeof(uri),   WSI_TOKEN_GET_URI);
+    lws_hdr_copy(wsi, proto, sizeof(proto), WSI_TOKEN_PROTOCOL);
+    lws_hdr_copy(wsi, ua,    sizeof(ua),    WSI_TOKEN_HTTP_USER_AGENT);
+    t_print("LWS HANDSHAKE uri=%s\n", uri);
+    t_print("LWS HANDSHAKE protocol=%s\n", proto);
+    t_print("LWS HANDSHAKE user-agent=%s\n", ua);
+    return 0;
+  }
+
+  case LWS_CALLBACK_HTTP: {
+    char uri[256];
+    uri[0] = 0;
+    lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI);
+    t_print("LWS HTTP uri=%s\n", uri);
+    return 0;
+  }
+
+  case LWS_CALLBACK_ESTABLISHED:
+    if (rigctl_debug) {
+      char proto[128];
+      char uri[256];
+      proto[0] = 0;
+      uri[0] = 0;
+      lws_hdr_copy(wsi, proto, sizeof(proto), WSI_TOKEN_PROTOCOL);
+      lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI);
+      t_print("LWS ESTABLISHED uri=%s protocol=%s\n", uri, proto);
+    }
+
+    static int lws_seq = 0;
+    tci_init_client(client, lws_get_socket_fd(wsi), ++lws_seq);
+    client->wsi = wsi;
+    client->lws_tx_queue = g_queue_new();
+    t_print("%s: starting client: socket=%d\n", __func__, client->seq);
+    cat_control++;
+    g_idle_add(ext_vfo_update, NULL);
+    client->initial_sent = 0;
+    lws_callback_on_writable(wsi);
+    client->tci_timer = g_timeout_add(500, tci_reporter, client);
+    break;
+
+  case LWS_CALLBACK_RECEIVE:
+    if (rigctl_debug) { t_print("LWS RECEIVE len=%zu\n", len); }
+
+    if (lws_frame_is_binary(wsi)) {
+      // aktuell ignorieren (kein Audio)
+      break;
+    } else {
+      char msg[MAXDATASIZE];
+      size_t n = (len < sizeof(msg) - 1) ? len : sizeof(msg) - 1;
+      memcpy(msg, in, n);
+      msg[n] = 0;
+      tci_process_ws_payload(client, opTEXT, msg);
+    }
+
+    break;
+
+  case LWS_CALLBACK_SERVER_WRITEABLE:
+    if (rigctl_debug && client != NULL && client->lws_tx_queue != NULL &&
+        !g_queue_is_empty(client->lws_tx_queue)) {
+      t_print("LWS WRITEABLE queued=%u\n",
+              g_queue_get_length(client->lws_tx_queue));
+    }
+
+    if (!client->initial_sent) {
+      tci_send_initial_state(client);
+      client->initial_sent = 1;
+    }
+
+    return tci_lws_write_queued(client);
+
+  case LWS_CALLBACK_CLOSED:
+    if (rigctl_debug) {
+      t_print("LWS CLOSED client=%d\n", client ? client->seq : -1);
+    }
+
+    g_mutex_lock(&tci_mutex);
+    client->running = 0;
+    g_mutex_unlock(&tci_mutex);
+
+    if (client->tci_timer != 0) {
+      g_source_remove(client->tci_timer);
+      client->tci_timer = 0;
+    }
+
+    tci_lws_free_queue(client);
+    t_print("%s: leaving client\n", __func__);
+    cat_control--;
+    g_idle_add(ext_vfo_update, NULL);
+    break;
+
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+static const struct lws_protocols tci_lws_protocols[] = {
+  { "chat",       tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
+  { "superchat",  tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
+  { "tci",        tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
+  LWS_PROTOCOL_LIST_TERM
+};
+
+static gpointer tci_lws_server(gpointer data) {
+  struct lws_context_creation_info info;
+  int port = GPOINTER_TO_INT(data);
+  memset(&info, 0, sizeof(info));
+  signal(SIGPIPE, SIG_IGN);
+  info.port = port;
+  info.protocols = tci_lws_protocols;
+  info.gid = -1;
+  info.uid = -1;
+  // WICHTIG: HTTP/WS korrekt aktivieren
+  info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+  t_print("%s: starting TCI LWS server on port %d\n", __func__, port);
+  tci_lws_context = lws_create_context(&info);
+
+  if (tci_lws_context == NULL) {
+    t_print("%s: lws_create_context failed\n", __func__);
+    return NULL;
+  }
+
+  while (tci_running) {
+    lws_service(tci_lws_context, 50);
+  }
+
+  lws_context_destroy(tci_lws_context);
+  tci_lws_context = NULL;
+  return NULL;
+}
+#endif
+
+//
+// TCI "Listener". It starts with sending  initialisation data, and then
+// listens for incoming commands (and ignores all of them!).
+// It only responds to incoming PING and CLOSE packets.
+//
+static gpointer tci_listener(gpointer data) {
+  CLIENT *client = (CLIENT *)data;
+  t_print("%s: starting client: socket=%d\n", __func__, client->fd);
+  // update CAT status onscreen
+  cat_control++;
+  g_idle_add(ext_vfo_update, NULL);
+  int offset = 0;
+  unsigned char buff [MAXDATASIZE];
+  char msg [MAXDATASIZE];
+  tci_send_initial_state(client);
 
   while (client->running) {
     int numbytes;
