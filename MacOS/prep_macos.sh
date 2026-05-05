@@ -171,6 +171,7 @@ $BREW install fftw
 $BREW install openssl@3
 $BREW install libusb
 $BREW install json-c
+$BREW install libwebsockets
 $BREW install wget
 $BREW install gettext
 $BREW install perl

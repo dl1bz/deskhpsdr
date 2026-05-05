@@ -95,8 +95,20 @@ ifeq ($(UNAME_S),Linux)
 DESKTOP_DIR := $(shell command -v xdg-user-dir >/dev/null 2>&1 && xdg-user-dir DESKTOP || echo "$(HOME)/Desktop")
 endif
 
-PKG_CONFIG = pkg-config
+PKG_CONFIG ?= pkg-config
 .DEFAULT_GOAL := all
+
+LWS := $(shell $(PKG_CONFIG) --exists "libwebsockets >= 4.0" && echo yes || echo no)
+
+ifeq ($(LWS),yes)
+$(info libwebsockets exists, continue build process...)
+else
+$(info libwebsockets not found: libwebsockets NOT installed, but required now.)
+$(info Please install libwebsockets first!)
+$(info Linux package: libwebsockets-dev)
+$(info macOS Homebrew package: libwebsockets)
+$(error Stopping build: install libwebsockets (e.g. via apt if Linux or brew install if macOS) and retry.)
+endif
 
 ifeq ($(UNAME_S), Linux)
 WK41 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo yes)
