@@ -46,9 +46,6 @@ char build_options[] =
 #ifdef STEMLAB_DISCOVERY
   "STEMLAB "
 #endif
-#ifdef __HAVEATU__
-  "ATU "
-#endif
 #ifdef __CPYMODE__
   "COPYMODE "
 #endif

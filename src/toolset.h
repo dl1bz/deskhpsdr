@@ -49,9 +49,6 @@ extern int file_present(const char *filename);
 extern const char* extract_short_msg(const char *msg);
 extern void sort_cfc(TRANSMITTER *tx);
 extern void sort_tx_eq(TRANSMITTER *tx);
-#if defined (__HAVEATU__)
-  extern void show_NOTUNE_dialog(GtkWindow *parent);
-#endif
 #ifdef __APPLE__
   extern int get_macos_major_version(void);
 #endif

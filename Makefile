@@ -458,11 +458,6 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 #
 ##############################################################################
 
-ifeq ($(ATU), ON)
-ATU_OPTIONS=-D__HAVEATU__
-endif
-CPP_DEFINES += -D__HAVEATU__
-
 ifeq ($(COPYMODE), ON)
 COPYMODE_OPTIONS=-D__CPYMODE__
 endif
@@ -1165,7 +1160,7 @@ DEPEND:
 	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DGPIO \
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
-		-D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
+		-D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
 		-D__EQ12__ -D__WAYLAND__ -D__TAHOEFIX__ -D__AH4IOB__\
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND

@@ -735,21 +735,8 @@ static void tci_cmd_trx_count(CLIENT *client, const TCI_CMD *cmd) {
 static void tci_cmd_trx(CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 2) {
     if (tci_bool(cmd->argv[1])) {
-#if defined (__HAVEATU__)
-
-      if (transmitter->is_tuned) {
-        g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
-        t_print("TCI%d TX request valid - TX is tuned\n", client->seq);
-      } else {
-        tci_send_mox(client);
-        t_print("TCI%d TX request invalid - TX not tuned\n", client->seq);
-        show_NOTUNE_dialog(GTK_WINDOW(top_window));
-      }
-
-#else
       g_idle_add(ext_mox_update, GINT_TO_POINTER(1));
       t_print("TCI%d TX request\n", client->seq);
-#endif
     } else {
       g_timeout_add(50, ext_mox_update, GINT_TO_POINTER(0));
       t_print("TCI%d RX request\n", client->seq);
