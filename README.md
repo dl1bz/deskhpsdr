@@ -4,13 +4,13 @@
 
 ## The concept behind - what it's make for and what it isn't for
 
-It's a hamradio application for SDR devices using the HPSDR protocol 1 (aka "old protocol") or 2 (aka "new protocol") and based at previous codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr) since it was forked from piHPSDR in October 2024. But anywhere, it's no more piHPSDR yet and has no backward dependencies to piHPSDR. My goal was to make an more optimzed version running with Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600 and SoCs like the Raspberry Pi or similar devices are not within the scope of this application. In the case mini-display you need to fallback to piHPSDR, deskHPSDR don't support this anymore.
+It's a hamradio application for SDR devices using the OpenHPSDR protocol 1 (P1 aka "old protocol") or 2 (P2 aka "new protocol") and based at previous codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr) since it was forked from piHPSDR in October 2024 without any backward dependencies to piHPSDR. My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
 
 **deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Some limited SoapySDR support is current available, but Soapy support is official discontinued now.**
 
 The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices. SoapySDR API is supported, but is not actively developed further.
 
-deskHPSDR not made as a "measurement tool" or for other, very special purposes where SDR devices are used. There are other, more specialized apps for such cases - use these for your special purposes. It's a - not more, not less - SDR transceiver GUI frontend for use in hamradio which will be actively and continuously developed. All things outside the hamradio universe will be not supported generally. The support for commercial SDR products is very limited, because they are mostly not Open Source hardware like the Hermes Lite 2. I do not see myself as obligated to support such SDRs or manufacturers while they make money from their hardware. deskHPSDR is and remains open source. deskHPSDR is a non-commercial hobby software project, which can be used completely free without any kind of payments.
+deskHPSDR is not made as a "measurement tool" or for other, very special purposes where SDR devices are used. There are other, more specialized apps for such cases - use these for your special purposes. It's - not more, not less - a SDR transceiver GUI frontend for use in hamradio which will be actively and continuously developed. All things outside the hamradio universe are generally not supported by this app. The support for commercial SDR products is limited, because they are mostly not Open Source hardware like the Hermes Lite 2. deskHPSDR is Open Source and a full non-commercial hobby software project by DL1BZ, which can be used completely free without any kind of payments, but respect all copyrights.
 
 **deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. deskHPSDR hasn't a special Client-Server-Mode like pihpsdr (make no sense, we HAVE network-connected SDR devices yet).
 
@@ -20,8 +20,7 @@ My main focus of deskHPSDR development, the improvements and additional function
 
 ### deskHPSDR was forked a single time from pihpsdr and is now an independent codebase
 
-pihpsdr was [initiated and first developed](https://github.com/g0orx/pihpsdr) by [John Melton, G0ORX/N6LYT](https://github.com/g0orx) a few years ago.<br>Later Christoph, DL1YCF, had continued the development of pihpsdr. His fork [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date and current version of pihpsdr today and being actively developed by him up to now.<br><br>His pihpsdr codebase as of the end of October 2024 was the starting point for the development of deskHPSDR. There was, is, and will be no direct collaboration between pihpsdr and deskHPSDR.<br><br>
-Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they are not available in pihpdsr. Things that deskHPSDR doesn't need have also been removed (e.g. the build-in client-server-mode), they exist furthermore in pihpsdr, but are no longer as parts of deskHPSDR. deskHPSDR originated from pihpsdr but has evolved into an independent project with entirely different goals and objectives.<br><br>Please don't compare deskHPSDR with pihpsdr - now they are two different apps with two different concepts.
+pihpsdr was [initiated and first developed](https://github.com/g0orx/pihpsdr) by [John Melton, G0ORX/N6LYT](https://github.com/g0orx) a few years ago.<br>Later Christoph, DL1YCF, had continued the development of pihpsdr. His fork [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date and current version of pihpsdr today and being actively developed by him up to now.<br><br>His pihpsdr codebase as of the end of October 2024 was the starting point for the development of deskHPSDR. There was, is, and will be no direct collaboration between pihpsdr and deskHPSDR, deskHPSDR go an entire own way.<br>Please also don't compare deskHPSDR with pihpsdr - they are two different apps with two different concepts.
 
 ## Requirements
 
@@ -33,7 +32,7 @@ Today deskHPSDR go an entire own way. deskHPSDR has got many new functions they 
 * a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices. Per default Soapy-API is disabled, if needed you must activate Soapy-API support in the ```make.config.deskhpsdr``` as an user-defined option. Please note, development support for Soapy has been discontinued now.
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the ```Notes_if_using_HERMES-Lite-2.md```
-* if using a Raspberry Pi: Revision 5 (aka "Pi5") with >= 8GB RAM is strongly recommended
+* if want using a Raspberry Pi: Revision 5 (aka "Pi5") with >= 8GB RAM is strongly recommended, but deskHPSDR is not optimized for such SoC
 
 ## I want use now deskHPSDR. What I need to do ?
 
@@ -45,7 +44,7 @@ I will never publish any ready-compiled binaries, neither for macOS nor for Linu
 deskHPSDR is under active development, because software projects never finished. My focus with deskHPSDR is Fonie/SSB and Digimodes, less CW. Primary OS platform is macOS, but not Linux.<br>
 My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.<br>
 
-deskHPSDR is primarily developed for and under macOS. Made as a cross-platform app, it runs on Linux, but Linux is and will be not a priority.
+deskHPSDR is primarily developed for and under macOS. But made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority.
 
 ## Latest Changes
 
@@ -89,11 +88,11 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 
 **All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1 under macOS 15 and macOS 26**
 **There are no issues with the Hermes Lite 2 and deskHPSDR yet, but it is not possible to check ALL other exist SDR devices.**
-**Additional tests from time to time with a Brick2 14bit SDR transceiver are also carried out with P2 OpenHPSDR protocol.**
+**Additional tests with my new Brick2 14bit SDR transceiver are also carried out with P2 OpenHPSDR protocol.**
 
 ## Credits
 
-Big thanks and huge respect to all involved developers for their previous great work on pihpsdr until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
+Big thanks and huge respect to all involved developers for their previous and current work on pihpsdr until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
 Special thanks to:<br>
 - my wife for her great patience and understanding
 - John Melton G0ORX & Christoph van Wüllen DL1YCF for their earlier and current pihpsdr development
