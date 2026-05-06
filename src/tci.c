@@ -74,6 +74,7 @@ static int tci_running = 0;
 static struct lws_context *tci_lws_context = NULL;
 static int tci_lws_seq = 0;
 static int tci_lws_pending_writable = 0;
+static int tci_apply_in_progress = 0;
 
 typedef struct _client {
   int seq;                      // Seq. number of the client
@@ -129,6 +130,18 @@ static void tci_handle_text(CLIENT *client, char *msg);
 static const TCI_DISPATCH tci_dispatch[];
 
 static void tci_send_smeter(CLIENT *client, int v);
+
+static void tci_begin_apply(void) {
+  tci_apply_in_progress = 1;
+}
+
+static void tci_end_apply(void) {
+  tci_apply_in_progress = 0;
+}
+
+int tci_is_applying(void) {
+  return tci_apply_in_progress;
+}
 
 
 
@@ -288,6 +301,30 @@ void tci_mox_changed(int state) {
   tci_broadcast_mox_state(state);
 }
 
+static void tci_broadcast_tune_state(int state) {
+  GList *clients = tci_clients_snapshot();
+
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *)l->data;
+
+    if (client != NULL && client->running) {
+      if (state) {
+        tci_send_text(client, "tune:0,true;");
+      } else {
+        tci_send_text(client, "tune:0,false;");
+      }
+    }
+  }
+
+  g_list_free(clients);
+}
+
+void tci_tune_changed(int state) {
+  if (!tci_running) { return; }
+
+  tci_broadcast_tune_state(state);
+}
+
 //
 // There are four (!) frequencies to report, namely for RX0/1 channel0/1.
 // RX=0 channel=0: reports VFO-A frequency, all other combination report VFO-B
@@ -334,6 +371,8 @@ static void tci_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
 
   if (Ch < 0 || Ch > 1) { return; }
 
+  tci_begin_apply();
+
   if (VfoNr  == VFO_A) {
     vfo_set_frequency(VFO_A, SetFreq);
     client->last_fa = SetFreq;
@@ -344,6 +383,7 @@ static void tci_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
     g_idle_add(ext_vfo_update, NULL);
   }
 
+  tci_end_apply();
   tci_broadcast_vfo(VfoNr, Ch);
 }
 
@@ -386,12 +426,61 @@ static void tci_send_split(CLIENT *client) {
   }
 }
 
+static void tci_send_tx_enable(CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  snprintf(msg, MAXMSGSIZE, "tx_enable:0,%s;",
+           can_transmit ? "true" : "false");
+  tci_send_text(client, msg);
+}
+
+static void tci_send_tune(CLIENT *client) {
+  if (tune) {
+    tci_send_text(client, "tune:0,true;");
+  } else {
+    tci_send_text(client, "tune:0,false;");
+  }
+}
+
 static void tci_send_txfreq(CLIENT *client) {
   char msg[MAXMSGSIZE];
   long long f = vfo_get_tx_freq();
   snprintf(msg, MAXMSGSIZE, "tx_frequency:%lld;", f);
   tci_send_text(client, msg);
   client->last_fx = f;
+}
+
+static void tci_broadcast_txfreq(void) {
+  GList *clients = tci_clients_snapshot();
+
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *)l->data;
+
+    if (client != NULL && client->running) {
+      tci_send_txfreq(client);
+    }
+  }
+
+  g_list_free(clients);
+}
+
+static void tci_broadcast_split(void) {
+  GList *clients = tci_clients_snapshot();
+
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *)l->data;
+
+    if (client != NULL && client->running) {
+      tci_send_split(client);
+    }
+  }
+
+  g_list_free(clients);
+}
+
+void tci_split_changed(void) {
+  if (!tci_running) { return; }
+
+  tci_broadcast_split();
 }
 
 static const char *tci_mode_name(int m) {
@@ -472,6 +561,45 @@ static void tci_broadcast_mode_value(int v, int m) {
   g_list_free(clients);
 }
 
+void tci_vfo_changed(int id) {
+  if (!tci_running) { return; }
+
+  if (id == VFO_A) {
+    tci_broadcast_vfo(VFO_A, 0);
+  } else if (id == VFO_B) {
+    tci_broadcast_vfo(VFO_A, 1);
+    tci_broadcast_vfo(VFO_B, 0);
+    tci_broadcast_vfo(VFO_B, 1);
+  }
+}
+
+void tci_vfos_changed(void) {
+  if (!tci_running) { return; }
+
+  tci_broadcast_vfo(VFO_A, 0);
+  tci_broadcast_vfo(VFO_A, 1);
+  tci_broadcast_vfo(VFO_B, 0);
+  tci_broadcast_vfo(VFO_B, 1);
+  tci_broadcast_mode_value(VFO_A, vfo[VFO_A].mode);
+  tci_broadcast_mode_value(VFO_B, vfo[VFO_B].mode);
+  tci_broadcast_txfreq();
+  tci_broadcast_split();
+}
+
+void tci_mode_changed(int id) {
+  if (!tci_running) { return; }
+
+  if (id < VFO_A || id > VFO_B) { return; }
+
+  tci_broadcast_mode_value(id, vfo[id].mode);
+}
+
+void tci_tx_frequency_changed(void) {
+  if (!tci_running) { return; }
+
+  tci_broadcast_txfreq();
+}
+
 static int tci_parse_mode(const char *mode_str) {
   if (mode_str == NULL) { return -1; }
 
@@ -513,7 +641,9 @@ typedef struct {
 
 static int tci_mode_change_cb(void *data) {
   TCI_MODE_CHANGE *mc = (TCI_MODE_CHANGE *)data;
+  tci_begin_apply();
   vfo_id_mode_changed(mc->vfo_id, mc->mode);
+  tci_end_apply();
   g_free(mc);
   return G_SOURCE_REMOVE;
 }
@@ -537,7 +667,9 @@ static void tci_set_mode(CLIENT *client, int VfoNr, const char *mode_str) {
 }
 
 static void tci_send_trx_count(CLIENT *client) {
-  tci_send_text(client, "trx_count:2;");
+  char msg[MAXMSGSIZE];
+  snprintf(msg, MAXMSGSIZE, "trx_count:%d;", receivers);
+  tci_send_text(client, msg);
 }
 
 static void tci_send_macros_cwspeed(CLIENT *client) {
@@ -980,7 +1112,7 @@ static void tci_send_initial_state(CLIENT *client) {
   // tci_send_text(client, "device:SunSDR2PRO;");
   tci_send_text(client, "protocol:ExpertSDR3,2.0;");
   tci_send_text(client, "device:SunSDR2QRP;");
-  tci_send_text(client, "receive_only:false;");
+  tci_send_text(client, can_transmit ? "receive_only:false;" : "receive_only:true;");
   tci_send_trx_count(client);
   tci_send_text(client, "channels_count:2;");
   //
@@ -994,33 +1126,31 @@ static void tci_send_initial_state(CLIENT *client) {
   tci_send_limits(client);
   tci_send_text(client, "modulations_list:LSB,USB,DSB,CW,FMN,AM,DIGU,SPEC,DIGL,SAM,DRM;");
   tci_send_dds(client, VFO_A);
-  tci_send_dds(client, VFO_B);
   tci_send_text(client, "if:0,0,0;");
   tci_send_text(client, "if:0,1,0;");
-  tci_send_text(client, "if:1,0,0;");
-  tci_send_text(client, "if:1,1,0;");
   tci_send_vfo(client, VFO_A, 0);
   tci_send_vfo(client, VFO_A, 1);
-  tci_send_vfo(client, VFO_B, 0);
-  tci_send_vfo(client, VFO_B, 1);
   tci_send_mode(client, VFO_A);
-  tci_send_mode(client, VFO_B);
+
+  if (receivers > 1) {
+    tci_send_dds(client, VFO_B);
+    tci_send_text(client, "if:1,0,0;");
+    tci_send_text(client, "if:1,1,0;");
+    tci_send_vfo(client, VFO_B, 0);
+    tci_send_vfo(client, VFO_B, 1);
+    tci_send_mode(client, VFO_B);
+  }
+
   tci_send_text(client, "rx_enable:0,true;");
 
-  if (receivers == 1) {
-    tci_send_text(client, "rx_enable:1,false;");
-  } else {
+  if (receivers > 1) {
     tci_send_text(client, "rx_enable:1,true;");
   }
 
-  tci_send_text(client, "tx_enable:0,true;");
-  tci_send_text(client, "tx_enable:1,false;");
-  tci_send_text(client, "split_enable:0,false;");
-  tci_send_text(client, "split_enable:1,false;");
+  tci_send_tx_enable(client);
+  tci_send_split(client);
   tci_send_mox(client);
-  tci_send_text(client, "trx:1,false;");
-  tci_send_text(client, "tune:0,false;");
-  tci_send_text(client, "tune:1,false;");
+  tci_send_tune(client);
   tci_send_text(client, "mute:false;");
   tci_send_macros_cwspeed(client);
   tci_send_text(client, "cw_macros_delay:10;");

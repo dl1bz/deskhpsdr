@@ -2585,8 +2585,11 @@ void radio_set_mox(int state) {
   tune = 0;
   vox  = 0;
 #ifdef TCI
-  t_print("%s: TCI mox changed state=%d\n", __func__, state);
-  tci_mox_changed(state);
+
+  if (!tci_is_applying()) {
+    tci_mox_changed(state);
+  }
+
 #endif
 
   switch (protocol) {
@@ -2627,6 +2630,8 @@ void radio_set_tune(int state) {
   if (!can_transmit) { return; }
 
   if (state && TxInhibit) { return; }
+
+  int tune_changed = (tune != state);
 
   // if state==tune, this function is a no-op
   if (tune != state) {
@@ -2841,6 +2846,13 @@ void radio_set_tune(int state) {
     }
   }
 
+#ifdef TCI
+
+  if (tune_changed && !tci_is_applying()) {
+    tci_tune_changed(state);
+  }
+
+#endif
   schedule_high_priority();
   schedule_transmit_specific();
   schedule_receive_specific();
@@ -3128,6 +3140,14 @@ void radio_set_split(int val) {
     split = val;
     radio_tx_vfo_changed();
     radio_set_alex_antennas();
+#ifdef TCI
+
+    if (!tci_is_applying()) {
+      tci_split_changed();
+      tci_tx_frequency_changed();
+    }
+
+#endif
     g_idle_add(ext_vfo_update, NULL);
     update_slider_split_btn();
   }

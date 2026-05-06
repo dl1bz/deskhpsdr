@@ -54,6 +54,10 @@
 #include "toolbar.h"
 #include "new_menu.h"
 #include "rigctl.h"
+#ifdef TCI
+  #include "tci.h"
+  extern int tci_is_applying(void);
+#endif
 #include "ext.h"
 #include "filter.h"
 #include "actions.h"
@@ -1127,6 +1131,14 @@ void vfo_id_mode_changed(int id, int m) {
   schedule_high_priority();       // update frequencies
   schedule_transmit_specific();   // update "CW" flag
   g_idle_add(ext_vfo_update, NULL);
+#ifdef TCI
+
+  if (!tci_is_applying()) {
+    tci_mode_changed(id);
+    tci_tx_frequency_changed();
+  }
+
+#endif
 }
 
 void vfo_deviation_changed(int dev) {
@@ -1196,6 +1208,13 @@ void vfo_vfos_changed(void) {
   //
   schedule_transmit_specific();
   g_idle_add(ext_vfo_update, NULL);
+#ifdef TCI
+
+  if (!tci_is_applying()) {
+    tci_vfos_changed();
+  }
+
+#endif
 }
 
 void vfo_a_to_b(void) {
@@ -1382,6 +1401,19 @@ void vfo_id_step(int id, int steps) {
     }
 
     g_idle_add(ext_vfo_update, NULL);
+#ifdef TCI
+
+    if (!tci_is_applying()) {
+      tci_vfo_changed(id);
+
+      if (sat_mode != SAT_NONE) {
+        tci_vfo_changed(sid);
+      }
+
+      tci_tx_frequency_changed();
+    }
+
+#endif
   }
 }
 
@@ -1512,6 +1544,19 @@ void vfo_id_move(int id, long long hz, int round) {
     }
 
     g_idle_add(ext_vfo_update, NULL);
+#ifdef TCI
+
+    if (!tci_is_applying()) {
+      tci_vfo_changed(id);
+
+      if (sat_mode != SAT_NONE) {
+        tci_vfo_changed(sid);
+      }
+
+      tci_tx_frequency_changed();
+    }
+
+#endif
   }
 }
 
@@ -1621,6 +1666,19 @@ void vfo_id_move_to(int id, long long hz) {
     }
 
     g_idle_add(ext_vfo_update, NULL);
+#ifdef TCI
+
+    if (!tci_is_applying()) {
+      tci_vfo_changed(id);
+
+      if (sat_mode != SAT_NONE) {
+        tci_vfo_changed(sid);
+      }
+
+      tci_tx_frequency_changed();
+    }
+
+#endif
   }
 }
 
@@ -2831,6 +2889,14 @@ void vfo_set_frequency(int v, long long f) {
   }
 
   g_idle_add(ext_vfo_update, NULL);
+#ifdef TCI
+
+  if (!tci_is_applying()) {
+    tci_vfo_changed(v);
+    tci_tx_frequency_changed();
+  }
+
+#endif
 }
 
 //

@@ -26,3 +26,10 @@ extern int tci_txonly; // only report TX frequency
 void launch_tci(void);
 void shutdown_tci(void);
 void tci_mox_changed(int state);
+void tci_vfo_changed(int id);
+void tci_vfos_changed(void);
+void tci_mode_changed(int id);
+void tci_tx_frequency_changed(void);
+int tci_is_applying(void);
+void tci_tune_changed(int state);
+void tci_split_changed(void);
