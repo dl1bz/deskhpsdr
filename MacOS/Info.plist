@@ -19,7 +19,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>2.6</string>
 	<key>CFBundleVersion</key>
-	<string>20685</string>
+	<string>20686</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -32,6 +32,8 @@
 	<array>
 		<string>1024</string>
 		<string>1025</string>
+		<string>1026</string>
+		<string>1027</string>
 	</array>
 	<key>NSHighResolutionCapable</key>
 	<true/>
