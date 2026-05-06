@@ -15,7 +15,6 @@
 #
 #######################################################################################
 
-TCI      ?= ON
 GPIO     ?= OFF
 MIDI     ?= ON
 SATURN   ?= OFF
@@ -37,7 +36,6 @@ TAHOEFIX ?= ON
 #
 #  Explanation of compile time options
 #
-#  TCI          | If ON, compile with TCI support (needs OpenSSL)
 #  GPIO         | If ON, compile with GPIO support (RaspPi only, needs libgpiod)
 #  MIDI         | If ON, compile with MIDI support
 #  TTS          | If ON, compile with TTS support and activate TTS
@@ -594,11 +592,9 @@ endif
 
 ##############################################################################
 #
-# Add TCI support, if requested
+# TCI support
 #
 ##############################################################################
-ifeq ($(TCI), ON)
-TCI_OPTIONS=-DTCI
 TCI_INCLUDE=`$(PKG_CONFIG) --cflags openssl` `$(PKG_CONFIG) --cflags libwebsockets`
 ifeq ($(UNAME_S), Darwin)
 TCI_LIBS=$(BREW_LIBDIR)/libwebsockets.a $(BREW_LIBDIR)/libssl.a $(BREW_LIBDIR)/libcrypto.a
@@ -607,9 +603,7 @@ TCI_LIBS=`$(PKG_CONFIG) --libs openssl` `$(PKG_CONFIG) --libs libwebsockets`
 endif
 TCI_SOURCES=src/tci.c
 TCI_OBJS=src/tci.o
-endif
 CPP_INCLUDE += `$(PKG_CONFIG) --cflags openssl` `$(PKG_CONFIG) --cflags libwebsockets`
-CPP_DEFINES += -DTCI
 CPP_SOURCES += src/tci.c
 
 ##############################################################################
@@ -700,7 +694,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(EQ12_OPTIONS) \
 	$(WAYLAND_OPTIONS) \
 	$(TAHOEFIX_OPTIONS) \
-	$(AUDIO_OPTIONS) $(TCI_OPTIONS) \
+	$(AUDIO_OPTIONS) \
 	-DGIT_DATE='"$(GIT_DATE)"' -DGIT_VERSION='"$(GIT_VERSION)"' -DGIT_COMMIT='"$(GIT_COMMIT)"' -DGIT_BRANCH='"$(GIT_BRANCH)"'
 
 INCLUDES=$(GTK_INCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
@@ -1168,7 +1162,7 @@ bootloader:	src/bootloader.c
 DEPEND:
 	rm -f DEPEND
 	touch DEPEND
-	export LC_ALL=C && makedepend -DTCI -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DGPIO \
+	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DGPIO \
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__HAVEATU__ -D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \

@@ -2040,13 +2040,10 @@ void radio_start_radio(void) {
   radio_change_region(region);
   radio_create_visual();
   radio_reconfigure_screen();
-#ifdef TCI
 
   if (tci_enable) {
     launch_tci();
   }
-
-#endif
 
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
@@ -2584,13 +2581,10 @@ void radio_set_mox(int state) {
   mox  = state;
   tune = 0;
   vox  = 0;
-#ifdef TCI
 
   if (!tci_is_applying()) {
     tci_mox_changed(state);
   }
-
-#endif
 
   switch (protocol) {
   case NEW_PROTOCOL:
@@ -2846,13 +2840,10 @@ void radio_set_tune(int state) {
     }
   }
 
-#ifdef TCI
-
   if (tune_changed && !tci_is_applying()) {
     tci_tune_changed(state);
   }
 
-#endif
   schedule_high_priority();
   schedule_transmit_specific();
   schedule_receive_specific();
@@ -3140,14 +3131,12 @@ void radio_set_split(int val) {
     split = val;
     radio_tx_vfo_changed();
     radio_set_alex_antennas();
-#ifdef TCI
 
     if (!tci_is_applying()) {
       tci_split_changed();
       tci_tx_frequency_changed();
     }
 
-#endif
     g_idle_add(ext_vfo_update, NULL);
     update_slider_split_btn();
   }
@@ -3295,11 +3284,9 @@ static void radio_restore_state(void) {
   GetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   GetPropI0("radio.display_warnings",                        display_warnings);
   GetPropI0("radio.display_pacurr",                          display_pacurr);
-#ifdef TCI
-  GetPropI0("tci_enable",                                  tci_enable);
-  GetPropI0("tci_port",                                    tci_port);
-  GetPropI0("tci_txonly",                                  tci_txonly);
-#endif
+  GetPropI0("tci_enable",                                    tci_enable);
+  GetPropI0("tci_port",                                      tci_port);
+  GetPropI0("tci_txonly",                                    tci_txonly);
   GetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   GetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   GetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -3604,11 +3591,9 @@ void radio_save_state(void) {
   SetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   SetPropI0("radio.display_warnings",                        display_warnings);
   SetPropI0("radio.display_pacurr",                          display_pacurr);
-#ifdef TCI
-  SetPropI0("tci_enable",                                  tci_enable);
-  SetPropI0("tci_port",                                    tci_port);
-  SetPropI0("tci_txonly",                                  tci_txonly);
-#endif
+  SetPropI0("tci_enable",                                    tci_enable);
+  SetPropI0("tci_port",                                      tci_port);
+  SetPropI0("tci_txonly",                                    tci_txonly);
   SetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   SetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   SetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);

@@ -34,9 +34,6 @@ char build_options[] =
 #ifdef SATURN
   "SATURN "
 #endif
-#ifdef TCI
-  "TCI "
-#endif
 #ifdef TTS
   "TTS "
 #endif

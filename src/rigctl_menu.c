@@ -33,9 +33,7 @@
 #include "band.h"
 #include "radio.h"
 #include "vfo.h"
-#ifdef TCI
-  #include "tci.h"
-#endif
+#include "tci.h"
 #include "message.h"
 #include "main.h"
 
@@ -93,7 +91,6 @@ static void rigctl_debug_cb(GtkWidget *widget, gpointer data) {
   // t_print("---------- RIGCTL DEBUG %s ----------\n", rigctl_debug ? "ON" : "OFF");
 }
 
-#ifdef TCI
 static void tci_enable_cb(GtkWidget *widget, gpointer data) {
   tci_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
@@ -117,8 +114,6 @@ static void tci_port_changed_cb(GtkWidget *widget, gpointer data) {
 static void tci_txonly_changed_cb(GtkWidget *widget, gpointer data) {
   tci_txonly = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
-
-#endif
 
 static void rigctl_tcp_enable_cb(GtkWidget *widget, gpointer data) {
   rigctl_tcp_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -326,31 +321,20 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   char _title[32];
-#ifdef TCI
   snprintf(_title, 32, "%s - CAT/TCI", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#else
-  snprintf(_title, 32, "%s - CAT", PGNAME);
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-#endif
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-#ifdef TCI
   gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
-#endif
   gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
   int row = 0;
   w = gtk_button_new_with_label("Close");
   gtk_widget_set_name(w, "close_button");
   g_signal_connect (w, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 2, 1);
-#ifdef TCI
   w = gtk_check_button_new_with_label("Enable CAT/TCI Debug Logging");
-#else
-  w = gtk_check_button_new_with_label("Enable CAT Debug Logging");
-#endif
   gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_debug);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 2, 1);
@@ -618,13 +602,6 @@ void rigctl_menu(GtkWidget *parent) {
   }
 
   //-----------------------------------------------------------------------------------------------------------------
-  // row++;
-  // w = gtk_check_button_new_with_label("Enable RigCtl Debug Logging");
-  // gtk_widget_set_name(w, "boldlabel");
-  // gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_debug);
-  // gtk_grid_attach(GTK_GRID(grid), w, 0, row, 4, 1);
-  // g_signal_connect(w, "toggled", G_CALLBACK(rigctl_debug_cb), NULL);
-#ifdef TCI
   row++;
   w = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_widget_set_size_request(w, -1, 3);
@@ -664,7 +641,6 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_name(w, "boldlabel_red");
   gtk_widget_set_halign(w, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 6, 1);
-#endif
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
