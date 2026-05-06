@@ -2584,6 +2584,10 @@ void radio_set_mox(int state) {
   mox  = state;
   tune = 0;
   vox  = 0;
+#ifdef TCI
+  t_print("%s: TCI mox changed state=%d\n", __func__, state);
+  tci_mox_changed(state);
+#endif
 
   switch (protocol) {
   case NEW_PROTOCOL:

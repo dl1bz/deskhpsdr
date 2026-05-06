@@ -73,6 +73,7 @@ static int tci_running = 0;
 
 static struct lws_context *tci_lws_context = NULL;
 static int tci_lws_seq = 0;
+static int tci_lws_pending_writable = 0;
 
 typedef struct _client {
   int seq;                      // Seq. number of the client
@@ -104,6 +105,7 @@ typedef struct _response {
 } RESPONSE;
 
 static GMutex tci_mutex;
+static GList *tci_clients = NULL;
 
 static gpointer tci_lws_server(gpointer data);
 static void tci_lws_free_queue(CLIENT *client);
@@ -127,6 +129,8 @@ static void tci_handle_text(CLIENT *client, char *msg);
 static const TCI_DISPATCH tci_dispatch[];
 
 static void tci_send_smeter(CLIENT *client, int v);
+
+
 
 //
 // Launch TCI system. Called upon program start if TCI is
@@ -193,13 +197,13 @@ static int tci_queue_frame(CLIENT *client, int type, const char *msg, int check_
     }
 
     g_queue_push_tail(client->lws_tx_queue, resp);
-    lws_callback_on_writable(client->wsi);
+    tci_lws_pending_writable = 1;
+    g_mutex_unlock(&tci_mutex);
 
     if (tci_lws_context != NULL) {
       lws_cancel_service(tci_lws_context);
     }
 
-    g_mutex_unlock(&tci_mutex);
     return 1;
   }
 
@@ -217,6 +221,14 @@ static void tci_send_text(CLIENT *client, const char *msg) {
   if (rigctl_debug && client != NULL) { t_print("TCI%d response: %s\n", client->seq, msg ? msg : "(null)"); }
 
   (void)tci_queue_frame(client, opTEXT, msg, 1);
+}
+
+static GList *tci_clients_snapshot(void) {
+  GList *clients;
+  g_mutex_lock(&tci_mutex);
+  clients = g_list_copy(tci_clients);
+  g_mutex_unlock(&tci_mutex);
+  return clients;
 }
 
 //
@@ -242,6 +254,38 @@ static void tci_send_mox(CLIENT *client) {
     tci_send_text(client, "trx:0,false;");
     client->last_mox = 0;
   }
+}
+
+static void tci_send_mox_state(CLIENT *client, int state) {
+  if (client == NULL) { return; }
+
+  if (state) {
+    tci_send_text(client, "trx:0,true;");
+    client->last_mox = 1;
+  } else {
+    tci_send_text(client, "trx:0,false;");
+    client->last_mox = 0;
+  }
+}
+
+static void tci_broadcast_mox_state(int state) {
+  GList *clients = tci_clients_snapshot();
+
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *)l->data;
+
+    if (client != NULL && client->running) {
+      tci_send_mox_state(client, state);
+    }
+  }
+
+  g_list_free(clients);
+}
+
+void tci_mox_changed(int state) {
+  if (!tci_running) { return; }
+
+  tci_broadcast_mox_state(state);
 }
 
 //
@@ -271,6 +315,20 @@ static void tci_send_vfo(CLIENT *client, int v, int c) {
   tci_send_text(client, msg);
 }
 
+static void tci_broadcast_vfo(int v, int c) {
+  GList *clients = tci_clients_snapshot();
+
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *)l->data;
+
+    if (client != NULL && client->running) {
+      tci_send_vfo(client, v, c);
+    }
+  }
+
+  g_list_free(clients);
+}
+
 static void tci_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
   if (VfoNr < 0 || VfoNr > 1) { return; }
 
@@ -286,7 +344,7 @@ static void tci_set_vfo(CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
     g_idle_add(ext_vfo_update, NULL);
   }
 
-  tci_send_vfo(client, VfoNr, Ch);
+  tci_broadcast_vfo(VfoNr, Ch);
 }
 
 static void tci_send_limits(CLIENT *client) {
@@ -336,67 +394,55 @@ static void tci_send_txfreq(CLIENT *client) {
   client->last_fx = f;
 }
 
-static void tci_send_mode(CLIENT *client, int v) {
-  int m;
-  const char *mode;
-  char msg[MAXMSGSIZE];
-
-  if (v < 0 || v > 1) { return; }
-
-  m = vfo[v].mode;
-
+static const char *tci_mode_name(int m) {
   switch (m) {
   case modeLSB:
-    mode = "LSB";
-    break;
+    return "LSB";
 
   case modeUSB:
-    mode = "USB";
-    break;
+    return "USB";
 
   case modeDSB:
-    mode = "DSB";
-    break;
+    return "DSB";
 
   case modeCWL:
   case modeCWU:
-    mode = "CW";
-    break;
+    return "CW";
 
   case modeFMN:
-    mode = "FM";
-    break;
+    return "FM";
 
   case modeAM:
-    mode = "AM";
-    break;
+    return "AM";
 
   case modeDIGU:
-    mode = "DIGU";
-    break;
+    return "DIGU";
 
   case modeSPEC:
-    mode = "SPEC";
-    break;
+    return "SPEC";
 
   case modeDIGL:
-    mode = "DIGL";
-    break;
+    return "DIGL";
 
   case modeSAM:
-    mode = "SAM";
-    break;
+    return "SAM";
 
   case modeDRM:
-    mode = "DRM";
-    break;
+    return "DRM";
 
-  default:   // should not happen
-    mode = "USB";
-    break;
+  default:
+    return "USB";
   }
+}
 
-  snprintf(msg, MAXMSGSIZE, "modulation:%d,%s;", v, mode);
+static void tci_send_mode_value(CLIENT *client, int v, int m) {
+  char msg[MAXMSGSIZE];
+
+  if (client == NULL) { return; }
+
+  if (v < 0 || v > 1) { return; }
+
+  snprintf(msg, MAXMSGSIZE, "modulation:%d,%s;", v, tci_mode_name(m));
   tci_send_text(client, msg);
 
   if (v == 0) {
@@ -404,6 +450,26 @@ static void tci_send_mode(CLIENT *client, int v) {
   } else {
     client->last_mb = m;
   }
+}
+
+static void tci_send_mode(CLIENT *client, int v) {
+  if (v < 0 || v > 1) { return; }
+
+  tci_send_mode_value(client, v, vfo[v].mode);
+}
+
+static void tci_broadcast_mode_value(int v, int m) {
+  GList *clients = tci_clients_snapshot();
+
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *)l->data;
+
+    if (client != NULL && client->running) {
+      tci_send_mode_value(client, v, m);
+    }
+  }
+
+  g_list_free(clients);
 }
 
 static int tci_parse_mode(const char *mode_str) {
@@ -467,7 +533,7 @@ static void tci_set_mode(CLIENT *client, int VfoNr, const char *mode_str) {
   mc->vfo_id = VfoNr;
   mc->mode = m;
   g_idle_add(tci_mode_change_cb, mc);
-  tci_send_mode(client, VfoNr);
+  tci_broadcast_mode_value(VfoNr, m);
 }
 
 static void tci_send_trx_count(CLIENT *client) {
@@ -779,6 +845,17 @@ static gboolean tci_reporter(gpointer data) {
     tci_send_txfreq(client);
   }
 
+  int sp = (vfo_get_tx_vfo() == VFO_B);
+  int mx = radio_is_transmitting();
+
+  if (sp != client->last_split) {
+    tci_send_split(client);
+  }
+
+  if (mx != client->last_mox) {
+    tci_send_mox(client);
+  }
+
   if (!tci_txonly) {
     //
     // If S-meter reading is requested, send info each time
@@ -808,8 +885,6 @@ static gboolean tci_reporter(gpointer data) {
     long long fb = vfo[VFO_B].ctun ? vfo[VFO_B].ctun_frequency : vfo[VFO_B].frequency;
     int       ma = vfo[VFO_A].mode;
     int       mb = vfo[VFO_B].mode;
-    int       sp = (vfo_get_tx_vfo() == VFO_B);
-    int       mx = radio_is_transmitting();
 
     if (fa != client->last_fa) {
       tci_send_vfo(client, 0, 0);
@@ -827,14 +902,6 @@ static gboolean tci_reporter(gpointer data) {
 
     if (mb  != client->last_mb) {
       tci_send_mode(client, 1);
-    }
-
-    if (sp != client->last_split) {
-      tci_send_split(client);
-    }
-
-    if (mx != client->last_mox) {
-      tci_send_mox(client);
     }
   }
 
@@ -1091,6 +1158,9 @@ static int tci_lws_callback(struct lws *wsi, enum lws_callback_reasons reason,
     client->lws_tx_queue = g_queue_new();
     client->device_index = active_device_index;
     client->device = &discovered[client->device_index];
+    g_mutex_lock(&tci_mutex);
+    tci_clients = g_list_append(tci_clients, client);
+    g_mutex_unlock(&tci_mutex);
     t_print("%s: starting client: socket=%d\n", __func__, client->seq);
     cat_control++;
     g_idle_add(ext_vfo_update, NULL);
@@ -1140,6 +1210,7 @@ static int tci_lws_callback(struct lws *wsi, enum lws_callback_reasons reason,
     g_mutex_lock(&tci_mutex);
     client->running = 0;
     client->wsi = NULL;
+    tci_clients = g_list_remove(tci_clients, client);
     g_mutex_unlock(&tci_mutex);
 
     if (client->tci_timer != 0) {
@@ -1191,7 +1262,41 @@ static gpointer tci_lws_server(gpointer data) {
   }
 
   while (tci_running) {
-    lws_service(tci_lws_context, 50);
+    int do_writable = 0;
+    g_mutex_lock(&tci_mutex);
+
+    if (tci_lws_pending_writable) {
+      tci_lws_pending_writable = 0;
+      do_writable = 1;
+    }
+
+    g_mutex_unlock(&tci_mutex);
+
+    if (do_writable) {
+      GList *clients = tci_clients_snapshot();
+
+      for (GList *l = clients; l != NULL; l = l->next) {
+        CLIENT *client = (CLIENT *)l->data;
+        struct lws *wsi = NULL;
+        g_mutex_lock(&tci_mutex);
+
+        if (client != NULL && client->running && client->wsi != NULL &&
+            client->lws_tx_queue != NULL && !g_queue_is_empty(client->lws_tx_queue)) {
+          wsi = client->wsi;
+        }
+
+        g_mutex_unlock(&tci_mutex);
+
+        if (wsi != NULL) {
+          lws_callback_on_writable(wsi);
+        }
+      }
+
+      g_list_free(clients);
+    }
+
+    lws_service(tci_lws_context, 0);
+    g_usleep(1000);
   }
 
   lws_context_destroy(tci_lws_context);

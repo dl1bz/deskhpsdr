@@ -25,3 +25,4 @@ extern int tci_txonly; // only report TX frequency
 
 void launch_tci(void);
 void shutdown_tci(void);
+void tci_mox_changed(int state);
