@@ -33,3 +33,6 @@ void tci_tx_frequency_changed(void);
 int tci_is_applying(void);
 void tci_tune_changed(int state);
 void tci_split_changed(void);
+void tci_begin_tune_transition(void);
+void tci_end_tune_transition(void);
+int tci_is_tune_transition(void);

@@ -2553,6 +2553,8 @@ void radio_tune_update(int state) {
 
 void radio_set_mox(int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
+  int was_tune = tune;
+
   if (!can_transmit) { return; }
 
   if (state && TxInhibit) { return; }
@@ -2582,7 +2584,7 @@ void radio_set_mox(int state) {
   tune = 0;
   vox  = 0;
 
-  if (!tci_is_applying()) {
+  if (!tci_is_applying() && (!was_tune || state)) {
     tci_mox_changed(state);
   }
 
@@ -2842,6 +2844,7 @@ void radio_set_tune(int state) {
 
   if (tune_changed && !tci_is_applying()) {
     tci_tune_changed(state);
+    tci_mox_changed(state);
   }
 
   schedule_high_priority();

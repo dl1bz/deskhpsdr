@@ -75,6 +75,7 @@ static struct lws_context *tci_lws_context = NULL;
 static int tci_lws_seq = 0;
 static int tci_lws_pending_writable = 0;
 static int tci_apply_in_progress = 0;
+static int tci_tune_transition = 0;
 
 typedef struct _client {
   int seq;                      // Seq. number of the client
@@ -143,7 +144,17 @@ int tci_is_applying(void) {
   return tci_apply_in_progress;
 }
 
+void tci_begin_tune_transition(void) {
+  tci_tune_transition = 1;
+}
 
+void tci_end_tune_transition(void) {
+  tci_tune_transition = 0;
+}
+
+int tci_is_tune_transition(void) {
+  return tci_tune_transition;
+}
 
 //
 // Launch TCI system. Called upon program start if TCI is
@@ -271,6 +282,8 @@ static void tci_send_mox(CLIENT *client) {
 
 static void tci_send_mox_state(CLIENT *client, int state) {
   if (client == NULL) { return; }
+
+  if (client->last_mox == state) { return; }
 
   if (state) {
     tci_send_text(client, "trx:0,true;");
@@ -971,7 +984,7 @@ static gboolean tci_reporter(gpointer data) {
     tci_send_split(client);
   }
 
-  if (mx != client->last_mox) {
+  if (!tci_is_tune_transition() && mx != client->last_mox) {
     tci_send_mox(client);
   }
 
