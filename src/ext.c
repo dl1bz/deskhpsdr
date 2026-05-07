@@ -38,6 +38,7 @@
 #include "zoompan.h"
 #include "equalizer_menu.h"
 #include "voice_keyer.h"
+#include "old_protocol.h"
 
 //
 // The following calls functions can be called usig g_idle_add
@@ -79,7 +80,19 @@ int ext_vfo_update(void *data) {
 }
 
 int ext_tune_update(void *data) {
-  radio_tune_update(GPOINTER_TO_INT(data));
+  int state = GPOINTER_TO_INT(data);
+  int old_state = radio_get_tune();
+  radio_tune_update(state);
+
+  if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present()) {
+    if (!old_state && state) {
+      hl2_iob_set_antenna_tuner(1);
+    } else if (old_state && !state) {
+      hl2_iob_set_antenna_tuner(0);
+    }
+  }
+
+  update_slider_tune_drive_btn();
   return G_SOURCE_REMOVE;
 }
 

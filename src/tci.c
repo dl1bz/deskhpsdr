@@ -1,6 +1,5 @@
 /* Copyright (C)
-* 2024 - Christoph van W"ullen, DL1YCF
-* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
+* 2024,2025, 2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
 *   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
 *
@@ -20,8 +19,8 @@
 */
 
 //
-// Minimal stripped-down TCI server for use with logbook programs
-// and possibly PAs. This is built upon  a "light-weight" websocket server.
+// TCI server based on libwebsockets
+// complete rebuild for deskHPSDR by DL1BZ
 //
 
 #include <gtk/gtk.h>
@@ -759,6 +758,16 @@ static void tci_cmd_trx(CLIENT *client, const TCI_CMD *cmd) {
   }
 }
 
+static void tci_cmd_tune(CLIENT *client, const TCI_CMD *cmd) {
+  if (cmd->argc >= 2) {
+    int state = tci_bool(cmd->argv[1]);
+    g_idle_add(ext_tune_update, GINT_TO_POINTER(state));
+    t_print("TCI%d TUNE request=%d\n", client->seq, state);
+  } else {
+    tci_send_tune(client);
+  }
+}
+
 static void tci_cmd_rx_sensors_enable(CLIENT *client, const TCI_CMD *cmd) {
   g_mutex_lock(&tci_mutex);
   client->rxsensor = tci_bool(cmd->argv[0]);
@@ -828,6 +837,7 @@ static void tci_cmd_stop(CLIENT *client, const TCI_CMD *cmd) {
 static const TCI_DISPATCH tci_dispatch[] = {
   { "trx_count",         0,  0, tci_cmd_trx_count },
   { "trx",               0, -1, tci_cmd_trx },
+  { "tune",              0, -1, tci_cmd_tune },
   { "rx_sensors_enable", 1,  2, tci_cmd_rx_sensors_enable },
   { "tx_sensors_enable", 1,  2, tci_cmd_tx_sensors_enable },
   { "modulation",        1,  2, tci_cmd_modulation },
