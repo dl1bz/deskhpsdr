@@ -96,7 +96,7 @@ endif
 PKG_CONFIG ?= pkg-config
 .DEFAULT_GOAL := all
 
-LWS := $(shell $(PKG_CONFIG) --exists "libwebsockets >= 4.0" && echo yes || echo no)
+LWS := $(shell $(PKG_CONFIG) --exists libwebsockets && echo yes || echo no)
 
 ifeq ($(LWS),yes)
 $(info libwebsockets exists, continue build process...)
