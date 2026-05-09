@@ -1379,7 +1379,11 @@ static const struct lws_protocols tci_lws_protocols[] = {
   { "chat",       tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
   { "superchat",  tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
   { "tci",        tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
+#ifdef __APPLE__
   LWS_PROTOCOL_LIST_TERM
+#else
+  { NULL, NULL, 0, 0 }
+#endif
 };
 
 static gpointer tci_lws_server(gpointer data) {
