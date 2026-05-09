@@ -50,6 +50,10 @@
 #define MAXMSGSIZE      512
 #define TCI_MAX_ARGS 16
 
+#ifndef LWS_PROTOCOL_LIST_TERM
+  #define LWS_PROTOCOL_LIST_TERM { NULL, NULL, 0, 0, 0, NULL, 0 }
+#endif
+
 int tci_enable = 0;
 int tci_port   = 50001;
 int tci_txonly = 0;
@@ -1379,11 +1383,7 @@ static const struct lws_protocols tci_lws_protocols[] = {
   { "chat",       tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
   { "superchat",  tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
   { "tci",        tci_lws_callback, sizeof(CLIENT), MAXDATASIZE, 0, NULL, 0 },
-#ifdef __APPLE__
   LWS_PROTOCOL_LIST_TERM
-#else
-  { NULL, NULL, 0, 0, 0, NULL, 0 }
-#endif
 };
 
 static gpointer tci_lws_server(gpointer data) {
