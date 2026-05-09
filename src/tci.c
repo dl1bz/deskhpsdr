@@ -1382,7 +1382,7 @@ static const struct lws_protocols tci_lws_protocols[] = {
 #ifdef __APPLE__
   LWS_PROTOCOL_LIST_TERM
 #else
-  { NULL, NULL, 0, 0, 0 }
+  { NULL, NULL, 0, 0, 0, NULL, 0 }
 #endif
 };
 
