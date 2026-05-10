@@ -2840,7 +2840,7 @@ void tx_set_singletone(const TRANSMITTER *tx, int state, double freq) {
   //
   if (state) {
     SetTXAPostGenToneFreq(tx->id, freq);
-    SetTXAPostGenToneMag(tx->id, 0.99999);
+    SetTXAPostGenToneMag(tx->id, protocol == NEW_PROTOCOL ? 0.90000 : 0.99999);
     SetTXAPostGenMode(tx->id, 0);
     SetTXAPostGenRun(tx->id, 1);
   } else {
