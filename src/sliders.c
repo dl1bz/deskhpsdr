@@ -662,6 +662,32 @@ void set_mic_gain(double value) {
   }
 }
 
+void update_drive_scale(void) {
+  int txmode = vfo_get_tx_mode();
+  double value;
+  value = radio_get_drive();
+
+  if (device == DEVICE_HERMES_LITE2) { return; }
+
+  if (txmode == modeDIGU || txmode == modeDIGL) {
+    if (value > drive_digi_max) { value = drive_digi_max; }
+  }
+
+  if (display_sliders) {
+    g_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
+
+    if (optimize_for_touchscreen) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), value);
+    } else {
+      gtk_range_set_value (GTK_RANGE(drive_scale), value);
+    }
+
+    g_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
+  } else {
+    show_popup_slider(DRIVE, 0, 0.0, drive_max, 1.0, value, "TX Drive");
+  }
+}
+
 void set_drive(double value) {
   //t_print("%s value=%f\n",__func__,value);
   int txmode = vfo_get_tx_mode();

@@ -596,10 +596,10 @@ TCI_LIBS=$(BREW_LIBDIR)/libwebsockets.a $(BREW_LIBDIR)/libssl.a $(BREW_LIBDIR)/l
 else
 TCI_LIBS=`$(PKG_CONFIG) --libs openssl` `$(PKG_CONFIG) --libs libwebsockets`
 endif
-TCI_SOURCES=src/tci.c
-TCI_OBJS=src/tci.o
+TCI_SOURCES=src/tci.c src/tci_audio.c
+TCI_OBJS=src/tci.o src/tci_audio.o
 CPP_INCLUDE += `$(PKG_CONFIG) --cflags openssl` `$(PKG_CONFIG) --cflags libwebsockets`
-CPP_SOURCES += src/tci.c
+CPP_SOURCES += src/tci.c src/tci_audio.c
 
 ##############################################################################
 #

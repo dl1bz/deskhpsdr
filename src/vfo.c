@@ -2538,7 +2538,14 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (can_transmit && vfl->mgain_x != 0) {
     cairo_move_to(cr, vfl->mgain_x, vfl->mgain_y);
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    int id = active_receiver->id;
+    int m = vfo[id].mode;
+
+    if (m == modeDIGU || m == modeDIGL) {
+      cairo_set_source_rgba(cr, COLOUR_SHADE);
+    } else {
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+    }
 
     if (transmitter->addgain_enable) {
       snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int)transmitter->mic_gain + (int)transmitter->addgain_gain);

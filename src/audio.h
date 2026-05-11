@@ -46,6 +46,10 @@ extern int audio_write(RECEIVER *rx, float left_sample, float right_sample);
 extern int cw_audio_write(RECEIVER *rx, float sample);
 extern void audio_release_cards(void);
 extern void audio_get_cards(void);
+#ifdef PORTAUDIO
+  extern int audio_open_tci_monitor(const char *audio_name);
+  extern void audio_close_tci_monitor(void);
+#endif
 char * audio_get_error_string(int err);
 float  audio_get_next_mic_sample(void);
 #endif

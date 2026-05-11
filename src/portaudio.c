@@ -51,6 +51,7 @@
 #include "audio.h"
 #include "message.h"
 #include "vfo.h"
+#include "tci_audio.h"
 
 static PaStream *record_handle = NULL;
 
@@ -93,6 +94,8 @@ GMutex audio_mutex;
 //
 
 #define MY_AUDIO_BUFFER_SIZE  128
+#define TCI_MONITOR_FRAMES_PER_BUFFER 1024
+#define TCI_MONITOR_UNDERRUN_LOG_INTERVAL 100
 #define MY_RING_BUFFER_SIZE  9600
 #define MY_RING_LOW_WATER     512
 #define MY_RING_HIGH_WATER   9000
@@ -109,8 +112,13 @@ static volatile int     mic_ring_outpt = 0;
 static volatile int     mic_ring_inpt = 0;
 
 static int cwmode = 0;  // used to detect TRX transitions in CW
+static PaStream *tci_monitor_handle = NULL;
+static GMutex tci_monitor_mutex;
+static int tci_monitor_channels = 2;
+static unsigned int tci_monitor_underruns = 0;
 
 void audio_release_cards(void) {
+  audio_close_tci_monitor();
   g_mutex_lock(&audio_mutex);
 
   for (int i = 0; i < n_input_devices; i++) {
@@ -150,6 +158,7 @@ void audio_get_cards(void) {
 
   if (g_once_init_enter(&mutex_inited)) {
     g_mutex_init(&audio_mutex);
+    g_mutex_init(&tci_monitor_mutex);
     g_once_init_leave(&mutex_inited, 1);
   }
 
@@ -235,6 +244,7 @@ void audio_get_cards(void) {
 
 int pa_mic_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 int pa_out_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
+int pa_tci_monitor_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 
 int audio_open_input(void) {
   t_print("%s: PORTAUDIO call audio_open_input\n", __func__);
@@ -323,6 +333,164 @@ int audio_open_input(void) {
   //
   g_mutex_unlock(&audio_mutex);
   return 0;
+}
+
+//
+// PortAudio call-back function for local TCI audio monitor output
+//
+int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
+                      const PaStreamCallbackTimeInfo* timeInfo,
+                      PaStreamCallbackFlags statusFlags,
+                      void *userdata) {
+  float *out = (float *)outputBuffer;
+  float buffer[TCI_MONITOR_FRAMES_PER_BUFFER * TCI_AUDIO_CHANNELS];
+  guint frames;
+  unsigned long requested_frames = framesPerBuffer;
+
+  if (out == NULL) {
+    t_print("%s: bogus audio buffer in callback\n", __func__);
+    return paContinue;
+  }
+
+  if (requested_frames > TCI_MONITOR_FRAMES_PER_BUFFER) {
+    requested_frames = TCI_MONITOR_FRAMES_PER_BUFFER;
+  }
+
+  frames = tci_audio_monitor_read(buffer, (guint)requested_frames);
+
+  if (frames < requested_frames) {
+    tci_monitor_underruns++;
+
+    if ((tci_monitor_underruns % TCI_MONITOR_UNDERRUN_LOG_INTERVAL) == 1) {
+      t_print("%s: underrun frames=%u requested=%lu count=%u\n", __func__, frames, requested_frames, tci_monitor_underruns);
+    }
+  }
+
+  for (unsigned int i = 0; i < framesPerBuffer; i++) {
+    float left = 0.0f;
+    float right = 0.0f;
+
+    if (i < frames) {
+      left = buffer[(i * TCI_AUDIO_CHANNELS)];
+      right = buffer[(i * TCI_AUDIO_CHANNELS) + 1];
+    }
+
+    if (tci_monitor_channels == 2) {
+      *out++ = left;
+      *out++ = right;
+    } else {
+      *out++ = 0.5f * (left + right);
+    }
+  }
+
+  return paContinue;
+}
+
+int audio_open_tci_monitor(const char *audio_name) {
+  PaError err;
+  PaStreamParameters outputParameters;
+  int padev = -1;
+
+  if (audio_name == NULL) { return -1; }
+
+  for (int i = 0; i < n_output_devices; i++) {
+    if (!strcmp(audio_name, output_devices[i].name)) {
+      padev = output_devices[i].index;
+      break;
+    }
+  }
+
+  t_print("%s: name=%s PADEV=%d\n", __func__, audio_name, padev);
+
+  if (padev < 0) { return -1; }
+
+  g_mutex_lock(&tci_monitor_mutex);
+
+  if (tci_monitor_handle != NULL) {
+    g_mutex_unlock(&tci_monitor_mutex);
+    return 0;
+  }
+
+  bzero(&outputParameters, sizeof(outputParameters));
+  const PaDeviceInfo *info = Pa_GetDeviceInfo(padev);
+
+  if (info == NULL) {
+    g_mutex_unlock(&tci_monitor_mutex);
+    return -1;
+  }
+
+  outputParameters.device = padev;
+  outputParameters.hostApiSpecificStreamInfo = NULL;
+  outputParameters.sampleFormat = paFloat32;
+  outputParameters.suggestedLatency = info->defaultHighOutputLatency;
+#ifdef __APPLE__
+  static PaMacCoreStreamInfo macCoreInfo;
+  macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
+  macCoreInfo.hostApiType = paCoreAudio;
+  macCoreInfo.version = 0x01;
+  macCoreInfo.flags = paMacCoreChangeDeviceParameters | paMacCoreFailIfConversionRequired;
+  outputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
+#else
+  outputParameters.hostApiSpecificStreamInfo = NULL;
+#endif
+  outputParameters.channelCount = 2;
+  tci_monitor_channels = 2;
+
+  if (Pa_IsFormatSupported(NULL, &outputParameters, TCI_AUDIO_SAMPLE_RATE) != paFormatIsSupported) {
+    outputParameters.channelCount = 1;
+    tci_monitor_channels = 1;
+  }
+
+  tci_monitor_underruns = 0;
+  err = Pa_OpenStream(&tci_monitor_handle, NULL, &outputParameters, TCI_AUDIO_SAMPLE_RATE, TCI_MONITOR_FRAMES_PER_BUFFER,
+                      paNoFlag, pa_tci_monitor_cb, NULL);
+
+  if (err != paNoError) {
+    t_print("%s: open stream error %s\n", __func__, Pa_GetErrorText(err));
+    tci_monitor_handle = NULL;
+    g_mutex_unlock(&tci_monitor_mutex);
+    return -1;
+  }
+
+  tci_audio_monitor_set_active(1);
+  err = Pa_StartStream(tci_monitor_handle);
+
+  if (err != paNoError) {
+    t_print("%s: start stream error %s\n", __func__, Pa_GetErrorText(err));
+    Pa_CloseStream(tci_monitor_handle);
+    tci_monitor_handle = NULL;
+    tci_audio_monitor_set_active(0);
+    g_mutex_unlock(&tci_monitor_mutex);
+    return -1;
+  }
+
+  t_print("%s: opened TCI monitor with %d channel(s), fpb=%d\n", __func__, tci_monitor_channels,
+          TCI_MONITOR_FRAMES_PER_BUFFER);
+  g_mutex_unlock(&tci_monitor_mutex);
+  return 0;
+}
+
+void audio_close_tci_monitor(void) {
+  PaStream *s = NULL;
+  g_mutex_lock(&tci_monitor_mutex);
+  s = tci_monitor_handle;
+  tci_monitor_handle = NULL;
+  tci_audio_monitor_set_active(0);
+  g_mutex_unlock(&tci_monitor_mutex);
+
+  if (s != NULL) {
+    PaError err = Pa_StopStream(s);
+
+    if (err != paNoError) {
+      t_print("%s: stop stream error %s\n", __func__, Pa_GetErrorText(err));
+    }
+
+    err = Pa_CloseStream(s);
+
+    if (err != paNoError) {
+      t_print("%s: close stream error %s\n", __func__, Pa_GetErrorText(err));
+    }
+  }
 }
 
 //

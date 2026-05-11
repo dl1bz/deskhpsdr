@@ -26,6 +26,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "new_menu.h"
 #include "rigctl_menu.h"
@@ -36,6 +37,7 @@
 #include "tci.h"
 #include "message.h"
 #include "main.h"
+#include "audio.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *serial_baud[MAX_SERIAL + 2];
@@ -312,6 +314,64 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
   t_print("%s: Baud rate changed: Port=%s Baud=%d\n", __func__, SerialPorts[id].port, SerialPorts[id].baud);
 }
 
+static int tci_txaudio_scale_to_index(double scale) {
+  if (fabs(scale - 1.0) < 0.0001) {
+    return 0;
+  }
+
+  if (fabs(scale - 0.70710678) < 0.0001) {
+    return 1;
+  }
+
+  if (fabs(scale - 0.50118723) < 0.0001) {
+    return 2;
+  }
+
+  if (fabs(scale - 0.25118864) < 0.0001) {
+    return 3;
+  }
+
+  return 1;   // default = -3 dB
+}
+
+static void tci_txaudio_gain_cb(GtkWidget *widget, gpointer data) {
+  RECEIVER *rx = (RECEIVER *)data;
+
+  switch (gtk_combo_box_get_active(GTK_COMBO_BOX(widget))) {
+  default:
+  case 0:
+    rx->tci_txaudio_scale = 1.0;
+    break;
+
+  case 1:
+    rx->tci_txaudio_scale = 0.70710678;
+    break;
+
+  case 2:
+    rx->tci_txaudio_scale = 0.50118723;
+    break;
+
+  case 3:
+    rx->tci_txaudio_scale = 0.25118864;
+    break;
+  }
+
+  t_print("%s: rx->tci_txaudio_scale = %0.4f\n", __func__, rx->tci_txaudio_scale);
+}
+
+#ifdef PORTAUDIO
+static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int *) data;
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (tci_audio_monitor) {
+    audio_open_tci_monitor(active_receiver->audio_name);
+  } else {
+    audio_close_tci_monitor();
+  }
+}
+#endif
+
 void rigctl_menu(GtkWidget *parent) {
   GtkWidget *w;
   dialog = gtk_dialog_new();
@@ -336,6 +396,10 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 2, 1);
   w = gtk_check_button_new_with_label("Enable CAT/TCI Debug Logging");
   gtk_widget_set_name(w, "boldlabel");
+  gtk_widget_set_tooltip_text(w,
+                              "Enable more debug output for CAT communications\n"
+                              "Use it carefully - log level and logfile will be\n"
+                              "drastically increased !");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_debug);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 2, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(rigctl_debug_cb), NULL);
@@ -612,7 +676,8 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_halign(w, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
   tci_port_select = gtk_spin_button_new_with_range(1025, 65535, 1);
-  gtk_widget_set_tooltip_text(tci_port_select, "Select TCI port");
+  gtk_widget_set_tooltip_text(tci_port_select, "Select TCI port\n"
+                                               "(only accessible if TCI is OFF)");
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tci_port_select), (double)tci_port);
   gtk_grid_attach(GTK_GRID(grid), tci_port_select, 1, row, 1, 1);
   g_signal_connect(tci_port_select, "value_changed", G_CALLBACK(tci_port_changed_cb), NULL);
@@ -625,22 +690,61 @@ void rigctl_menu(GtkWidget *parent) {
 
   w = gtk_check_button_new_with_label("Enable");
   gtk_widget_set_name(w, "boldlabel");
-  gtk_widget_set_tooltip_text(w, "Enable / Disable TCI");
+  gtk_widget_set_tooltip_text(w, "Enable / Disable TCI\n"
+                                 "For change the TCI server port TCI\n"
+                                 "need to be switched OFF");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_enable);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_enable_cb), NULL);
+  //------------------------------------------------------------------------------------------------------------------------
+  int col = 1;
+  row++;
+  w = gtk_label_new("TCI Audio ATT");
+  gtk_widget_set_name(w, "boldlabel");
+  gtk_widget_set_halign(w, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
+  row++;
+  GtkWidget *combo = gtk_combo_box_text_new();
+  gtk_widget_set_tooltip_text(combo,
+                              "Attenuate the sampling amplitude for outgoing TCI audio.\n"
+                              "WSJT-X or JTDX should show an input level\n"
+                              "around -65db on their RX level scale.");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL,  "0 dB");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL, "-3 dB");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL, "-6 dB");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL, "-12 dB");
+  gtk_widget_set_halign(combo, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(grid), combo, col, row, 1, 1);
+
+  if (active_receiver != NULL) {
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), tci_txaudio_scale_to_index(active_receiver->tci_txaudio_scale));
+    g_signal_connect(combo, "changed", G_CALLBACK(tci_txaudio_gain_cb), active_receiver);
+  }
+
+  //------------------------------------------------------------------------------------------------------------------------
+  row--;
+  col++;
   w = gtk_check_button_new_with_label("Report TX Frequency Only");
   gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_txonly);
   gtk_widget_show(w);
-  gtk_grid_attach(GTK_GRID(grid), w, 3, row, 3, 1);
+  gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_txonly_changed_cb), NULL);
+  //------------------------------------------------------------------------------------------------------------------------
+#ifdef PORTAUDIO
   row++;
-  w = gtk_label_new("No TCI Audio, no TCI CW Keying - only pure CAT control over TCI supported !\nUse virtual audio cable connections instead for your needed audio routing\nbetween deskHPSDR and your external app.");
-  gtk_widget_set_name(w, "boldlabel_red");
+  w = gtk_check_button_new_with_label("TCI Audio Monitor");
+  gtk_widget_set_tooltip_text(w,
+                              "Switch on an audio monitor for incoming TCI Audio\n"
+                              "of an application which send TCI audio to deskHPSDR.");
+  gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_halign(w, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), w, 0, row, 6, 1);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_audio_monitor);
+  gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
+  g_signal_connect(w, "toggled", G_CALLBACK(chkbtn_toggle_cb), &tci_audio_monitor);
+#endif
+  //------------------------------------------------------------------------------------------------------------------------
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

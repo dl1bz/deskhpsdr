@@ -192,6 +192,7 @@ int hl2_cl1_input = 0;
 //
 int anan10E = 0;
 int hermes_mode = HERMES_MODE_GENERIC;
+int tci_audio_monitor = 0;
 
 int adc0_filter_bypass = 0; // Bypass ADC0 filters on receive
 int adc1_filter_bypass = 0; // Bypass ADC1 filters on receiver  (ANAN-7000/8000/G2)
@@ -3225,6 +3226,7 @@ static void radio_restore_state(void) {
   GetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
   GetPropI0("anan10E",                                       anan10E);
   GetPropI0("hermes_mode",                                   hermes_mode);
+  GetPropI0("tci_audio_monitor",                             tci_audio_monitor);
   GetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   GetPropI0("filter_board",                                  filter_board);
   GetPropI0("pa_enabled",                                    pa_enabled);
@@ -3532,6 +3534,7 @@ void radio_save_state(void) {
   SetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
   SetPropI0("anan10E",                                       anan10E);
   SetPropI0("hermes_mode",                                   hermes_mode);
+  SetPropI0("tci_audio_monitor",                             tci_audio_monitor);
   SetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   SetPropI0("filter_board",                                  filter_board);
   SetPropI0("pa_enabled",                                    pa_enabled);

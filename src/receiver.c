@@ -54,6 +54,8 @@
 #include "ext.h"
 #include "new_menu.h"
 #include "message.h"
+#include "tci.h"
+#include "tci_audio.h"
 
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
@@ -319,6 +321,7 @@ void rx_save_state(const RECEIVER *rx) {
   }
 
   SetPropF1("receiver.%d.volume", rx->id,                       rx->volume);
+  SetPropF1("receiver.%d.tci_txaudio_scale", rx->id,            rx->tci_txaudio_scale);
   SetPropI1("receiver.%d.agc", rx->id,                          rx->agc);
   SetPropF1("receiver.%d.agc_gain", rx->id,                     rx->agc_gain);
   SetPropF1("receiver.%d.agc_slope", rx->id,                    rx->agc_slope);
@@ -454,6 +457,7 @@ void rx_restore_state(RECEIVER *rx) {
   }
 
   GetPropF1("receiver.%d.volume", rx->id,                       rx->volume);
+  GetPropF1("receiver.%d.tci_txaudio_scale", rx->id,            rx->tci_txaudio_scale);
   GetPropI1("receiver.%d.agc", rx->id,                          rx->agc);
   GetPropF1("receiver.%d.agc_gain", rx->id,                     rx->agc_gain);
   GetPropF1("receiver.%d.agc_slope", rx->id,                    rx->agc_slope);
@@ -829,6 +833,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->display_average_mode = AVG_LOGRECURSIVE;
   rx->display_average_time = 250.0;
   rx->volume = -20.0;
+  rx->tci_txaudio_scale = 1.0;
   rx->dither = 0;
   rx->random = 0;
   rx->preamp = 0;
@@ -1260,6 +1265,10 @@ static void rx_process_buffer(RECEIVER *rx) {
     if (right_sample < -1.0f) { right_sample = -1.0f; }
 
     short right_audio_sample = (short)(right_sample * 32767.0f);
+    // tci_audio_rx_sample(rx, (float)left_sample, (float)right_sample);
+    tci_audio_rx_sample(rx,
+                        (float)(left_sample * rx->tci_txaudio_scale),
+                        (float)(right_sample * rx->tci_txaudio_scale));
 
     if (rx->local_audio) {
       audio_write(rx, (float)left_sample, (float)right_sample);

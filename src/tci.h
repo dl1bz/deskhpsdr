@@ -19,6 +19,8 @@
 *
 */
 
+#include "receiver.h"
+
 extern int tci_enable;
 extern int tci_port;   // usually 40001
 extern int tci_txonly; // only report TX frequency
@@ -36,3 +38,4 @@ void tci_split_changed(void);
 void tci_begin_tune_transition(void);
 void tci_end_tune_transition(void);
 int tci_is_tune_transition(void);
+void tci_rx_audio_sample(RECEIVER *rx, float left, float right);
