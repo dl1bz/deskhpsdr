@@ -23,7 +23,6 @@ SOAPYSDR ?= OFF
 STEMLAB  ?= OFF
 TTS      ?= OFF
 AUDIO    ?= PULSE
-ATU      ?= OFF
 COPYMODE ?= OFF
 AUTOGAIN ?= OFF
 REGION1  ?= OFF
@@ -44,7 +43,6 @@ TAHOEFIX ?= ON
 #  SOAPYSDR     | If ON, deskHPSDR can talk to radios supported via SoapySDR-API library
 #  STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
 #  AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux (use PulseAudio recommend)
-#  ATU          | If ON, acticate some special functions if using an external ATU
 #  COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
 #  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
 #  REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
@@ -680,7 +678,6 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(STEMLAB_OPTIONS) \
 	$(TTS_OPTIONS) \
 	$(DESKTOP_OPTIONS) \
-	$(ATU_OPTIONS) \
 	$(COPYMODE_OPTIONS) \
 	$(AH4IOB_OPTIONS) \
 	$(AUTOGAIN_OPTIONS) \

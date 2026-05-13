@@ -1,5 +1,4 @@
 # CC     = clang
-TCI      = ON
 GPIO     = OFF
 MIDI     = ON
 SATURN   = OFF
@@ -8,7 +7,6 @@ SOAPYSDR = OFF
 STEMLAB  = OFF
 TTS      = OFF
 AUDIO    = PULSE
-ATU      = OFF
 COPYMODE = OFF
 AUTOGAIN = OFF
 REGION1  = OFF
