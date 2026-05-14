@@ -30,6 +30,7 @@
 #include "radio.h"
 #include "vfo.h"
 #include "message.h"
+#include "startup.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -41,6 +42,7 @@ static GtkWidget *calibgrid;
 // a "single shot" calibration
 //
 static GtkWidget *spin[11];
+static GtkWidget *pa_r_spin[BANDS + XVTRS];
 
 static void reset_cb(GtkWidget *widget, gpointer data);
 
@@ -48,6 +50,7 @@ static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
+    memset(pa_r_spin, 0, sizeof(pa_r_spin));
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
@@ -58,6 +61,23 @@ static void cleanup(void) {
 static gboolean close_cb(void) {
   cleanup();
   return TRUE;
+}
+
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  dialog = NULL;
+  memset(pa_r_spin, 0, sizeof(pa_r_spin));
+  sub_menu = NULL;
+  active_menu = NO_MENU;
+  radio_save_state();
+}
+
+static void update_pa_calibration_widgets(void) {
+  for (int b = 0; b < BANDS + XVTRS; b++) {
+    if (pa_r_spin[b] != NULL) {
+      BAND *band = band_get_band(b);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(pa_r_spin[b]), band->pa_calibration);
+    }
+  }
 }
 
 static void pa_value_changed_cb(GtkWidget *widget, gpointer data) {
@@ -213,7 +233,74 @@ static void max_power_changed_cb(GtkWidget *widget, gpointer data) {
   gtk_widget_show_all(calibgrid);
 }
 
+static void save_cb(GtkWidget *widget, gpointer data) {
+  GtkWidget *msg;
+  PaCalibrationSave();
+  msg = gtk_message_dialog_new(GTK_WINDOW(dialog),
+                               GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                               GTK_MESSAGE_INFO,
+                               GTK_BUTTONS_OK,
+                               "PA calibration saved");
+  gtk_window_set_transient_for(GTK_WINDOW(msg), GTK_WINDOW(dialog));
+  gtk_window_set_position(GTK_WINDOW(msg), GTK_WIN_POS_CENTER_ON_PARENT);
+  gtk_dialog_run(GTK_DIALOG(msg));
+  gtk_widget_destroy(msg);
+}
+
+static void pa_calibration_load_native_response_cb(GtkNativeDialog *native,
+    gint response,
+    gpointer user_data) {
+  gchar *filename;
+  GtkWidget *msg;
+
+  if (response == GTK_RESPONSE_ACCEPT) {
+    filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
+
+    if (filename != NULL) {
+      PaCalibrationLoad(filename);
+      update_pa_calibration_widgets();
+      msg = gtk_message_dialog_new(GTK_WINDOW(dialog),
+                                   GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                   GTK_MESSAGE_INFO,
+                                   GTK_BUTTONS_OK,
+                                   "PA calibration loaded");
+      gtk_window_set_transient_for(GTK_WINDOW(msg), GTK_WINDOW(dialog));
+      gtk_window_set_position(GTK_WINDOW(msg), GTK_WIN_POS_CENTER_ON_PARENT);
+      gtk_dialog_run(GTK_DIALOG(msg));
+      gtk_widget_destroy(msg);
+      g_free(filename);
+    }
+  }
+
+  g_object_unref(native);
+}
+
+static void load_cb(GtkWidget *widget, gpointer user_data) {
+  GtkFileChooserNative *native;
+  GtkFileFilter *filter;
+  native = gtk_file_chooser_native_new("Import deskHPSDR PA Calibration",
+                                       GTK_WINDOW(dialog),
+                                       GTK_FILE_CHOOSER_ACTION_OPEN,
+                                       "_Open",
+                                       "_Cancel");
+
+  if (*workdir) {
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(native), workdir);
+  }
+
+  filter = gtk_file_filter_new();
+  gtk_file_filter_set_name(filter, "PA Calibration (*.props)");
+  gtk_file_filter_add_pattern(filter, "*.props");
+  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(native), filter);
+  g_signal_connect(native,
+                   "response",
+                   G_CALLBACK(pa_calibration_load_native_response_cb),
+                   NULL);
+  gtk_native_dialog_show(GTK_NATIVE_DIALOG(native));
+}
+
 void pa_menu(GtkWidget *parent) {
+  memset(pa_r_spin, 0, sizeof(pa_r_spin));
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);
@@ -224,7 +311,7 @@ void pa_menu(GtkWidget *parent) {
   snprintf(_title, 32, "%s - PA Calibration", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect (dialog, "destroy", G_CALLBACK (destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *notebook = gtk_notebook_new();
   GtkWidget *grid0 = gtk_grid_new();
@@ -235,7 +322,7 @@ void pa_menu(GtkWidget *parent) {
   gtk_grid_set_column_spacing (GTK_GRID(grid0), 10);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect (close_b, "clicked", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid0), close_b, 0, 0, 1, 1);
   GtkWidget *max_power_label = gtk_label_new("MAX Power");
   gtk_widget_set_name(max_power_label, "boldlabel");
@@ -262,6 +349,17 @@ void pa_menu(GtkWidget *parent) {
   gtk_widget_show(tx_out_of_band_b);
   gtk_grid_attach(GTK_GRID(grid0), tx_out_of_band_b, 3, 0, 1, 1);
   g_signal_connect(tx_out_of_band_b, "toggled", G_CALLBACK(tx_out_of_band_cb), NULL);
+  //-------------------------------------------------------------------------------------------
+  GtkWidget *save_b = gtk_button_new_with_label("Save");
+  gtk_widget_set_name(save_b, "close_button");
+  g_signal_connect(save_b, "clicked", G_CALLBACK(save_cb), NULL);
+  gtk_grid_attach(GTK_GRID(grid0), save_b, 4, 0, 1, 1);
+  //-------------------------------------------------------------------------------------------
+  GtkWidget *load_b = gtk_button_new_with_label("Import");
+  gtk_widget_set_name(load_b, "close_button");
+  g_signal_connect(load_b, "clicked", G_CALLBACK(load_cb), NULL);
+  gtk_grid_attach(GTK_GRID(grid0), load_b, 5, 0, 1, 1);
+  //-------------------------------------------------------------------------------------------
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     GtkWidget *grid = gtk_grid_new();
@@ -285,6 +383,7 @@ void pa_menu(GtkWidget *parent) {
       gtk_widget_show(band_label);
       gtk_grid_attach(GTK_GRID(grid), band_label, (b / 6) * 2, (b % 6) + 1, 1, 1);
       GtkWidget *pa_r = gtk_spin_button_new_with_range(38.8, 100.0, 0.1);
+      pa_r_spin[bandGen] = pa_r;
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(pa_r), (double)band->pa_calibration);
       gtk_widget_show(pa_r);
       gtk_grid_attach(GTK_GRID(grid), pa_r, ((b / 6) * 2) + 1, (b % 6) + 1, 1, 1);
@@ -299,6 +398,7 @@ void pa_menu(GtkWidget *parent) {
       gtk_widget_show(band_label);
       gtk_grid_attach(GTK_GRID(grid), band_label, (b / 6) * 2, (b % 6) + 1, 1, 1);
       GtkWidget *pa_r = gtk_spin_button_new_with_range(38.8, 100.0, 0.1);
+      pa_r_spin[i] = pa_r;
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(pa_r), (double)band->pa_calibration);
       gtk_widget_show(pa_r);
       gtk_grid_attach(GTK_GRID(grid), pa_r, ((b / 6) * 2) + 1, (b % 6) + 1, 1, 1);
@@ -315,6 +415,7 @@ void pa_menu(GtkWidget *parent) {
         gtk_widget_show(band_label);
         gtk_grid_attach(GTK_GRID(grid), band_label, (b / 6) * 2, (b % 6) + 1, 1, 1);
         GtkWidget *pa_r = gtk_spin_button_new_with_range(38.8, 100.0, 0.1);
+        pa_r_spin[i] = pa_r;
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(pa_r), (double)band->pa_calibration);
         gtk_widget_show(pa_r);
         gtk_grid_attach(GTK_GRID(grid), pa_r, ((b / 6) * 2) + 1, (b % 6) + 1, 1, 1);

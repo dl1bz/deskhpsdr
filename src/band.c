@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "bandstack.h"
 #include "band.h"
@@ -897,4 +898,96 @@ void band_minus(int id) {
       if (vfo[id].band == b) { found = 1; }
     }
   }
+}
+
+static void make_pa_calibration_filename(char *buffer,
+    size_t size,
+    const char *radio_name) {
+  char name[64];
+  size_t i;
+  strncpy(name, radio_name, sizeof(name) - 1);
+  name[sizeof(name) - 1] = '\0';
+
+  for (i = 0; name[i] != '\0'; i++) {
+    if (!isalnum((unsigned char)name[i])) {
+      name[i] = '_';
+    }
+  }
+
+  snprintf(buffer,
+           size,
+           "pa_calibration_%s.props",
+           name);
+}
+
+void PaCalibrationSave(void) {
+  char filename[128];
+  make_pa_calibration_filename(filename,
+                               sizeof(filename),
+                               radio->name);
+  clearProperties();
+
+  for (int b = 0; b < BANDS + XVTRS; b++) {
+    if (strlen(bands[b].title) == 0) {
+      continue;
+    }
+
+    SetPropS0("settings", "pa_calib");
+    SetPropF1("band.%d.pa_calibration",
+              b,
+              bands[b].pa_calibration);
+  }
+
+  saveProperties(filename);
+  t_print("%s: saved %s\n",
+          __func__,
+          filename);
+}
+
+void PaCalibrationLoad(const char *filename) {
+  char settings[64];
+
+  if (filename == NULL || access(filename, F_OK) != 0) {
+    return;
+  }
+
+  clearProperties();
+  loadProperties(filename);
+  strcpy(settings, "");
+  GetPropS0("settings", settings);
+
+  if (strcmp(settings, "pa_calib") != 0) {
+    t_print("%s: cannot load %s: no valid pa_calibration file\n",
+            __func__,
+            filename);
+    clearProperties();
+    return;
+  } else {
+    t_print("%s: valid pa_calibration file, loading...\n",
+            __func__,
+            filename);
+  }
+
+  for (int b = 0; b < BANDS + XVTRS; b++) {
+    if (strlen(bands[b].title) == 0) {
+      continue;
+    }
+
+    GetPropF1("band.%d.pa_calibration",
+              b,
+              bands[b].pa_calibration);
+
+    if (bands[b].pa_calibration < 38.8) {
+      bands[b].pa_calibration = 38.8;
+    }
+
+    if (bands[b].pa_calibration > 70.0) {
+      bands[b].pa_calibration = 70.0;
+    }
+  }
+
+  clearProperties();
+  t_print("%s: loaded %s\n",
+          __func__,
+          filename);
 }
