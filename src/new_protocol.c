@@ -449,8 +449,8 @@ void update_action_table(void) {
   }
 }
 
-#ifdef __APPLE__
 static void p2_prime_route(void) {
+#ifdef __APPLE__
   int s;
   struct sockaddr_in a;
   char dummy = 0;
@@ -471,8 +471,45 @@ static void p2_prime_route(void) {
   a.sin_port = htons(GENERAL_REGISTERS_FROM_HOST_PORT);
   (void)sendto(s, &dummy, sizeof(dummy), 0, (struct sockaddr *)&a, sizeof(a));
   close(s);
-}
 #endif
+}
+
+static int p2_route_retry_errno(int err) {
+  return err == EHOSTDOWN || err == EHOSTUNREACH || err == ENETDOWN || err == ENETUNREACH;
+}
+
+static ssize_t p2_sendto_route_retry(int fd, const void *buf, size_t len, int flags,
+                                     const struct sockaddr *addr, socklen_t addrlen,
+                                     const char *tag) {
+  ssize_t rc = sendto(fd, buf, len, flags, addr, addrlen);
+
+  if (rc >= 0 || !p2_route_retry_errno(errno)) {
+    return rc;
+  }
+
+  int first_err = errno;
+  t_print("%s: first sendto failed errno=%d (%s), retry route/sendto\n",
+          tag, first_err, strerror(first_err));
+
+  for (int attempt = 0; attempt < 3; attempt++) {
+    p2_prime_route();
+    usleep(50000);
+    rc = sendto(fd, buf, len, flags, addr, addrlen);
+
+    if (rc >= 0) {
+      t_print("%s: sendto recovered after route retry %d\n",
+              tag, attempt + 1);
+      return rc;
+    }
+
+    if (!p2_route_retry_errno(errno)) {
+      return rc;
+    }
+  }
+
+  errno = first_err;
+  return -1;
+}
 
 void new_protocol_init(void) {
   int i;
@@ -765,8 +802,8 @@ static void new_protocol_general(void) {
     saturn_handle_general_packet(false, general_buffer);
 #endif
   } else {
-    if ((rc = sendto(data_socket, general_buffer, sizeof(general_buffer), 0, (struct sockaddr * )&base_addr,
-                     base_addr_length)) < 0) {
+    if ((rc = p2_sendto_route_retry(data_socket, general_buffer, sizeof(general_buffer), 0, (struct sockaddr * )&base_addr,
+                                    base_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto general failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
@@ -1502,8 +1539,8 @@ static void new_protocol_high_priority(void) {
   } else {
     int rc;
 
-    if ((rc = sendto(data_socket, high_priority_buffer_to_radio, sizeof(high_priority_buffer_to_radio), 0,
-                     (struct sockaddr * )&high_priority_addr, high_priority_addr_length)) < 0) {
+    if ((rc = p2_sendto_route_retry(data_socket, high_priority_buffer_to_radio, sizeof(high_priority_buffer_to_radio), 0,
+                                    (struct sockaddr * )&high_priority_addr, high_priority_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto high_priority failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
@@ -1648,8 +1685,8 @@ static void new_protocol_transmit_specific(void) {
   } else {
     int rc;
 
-    if ((rc = sendto(data_socket, transmit_specific_buffer, sizeof(transmit_specific_buffer), 0,
-                     (struct sockaddr * )&transmitter_addr, transmitter_addr_length)) < 0) {
+    if ((rc = p2_sendto_route_retry(data_socket, transmit_specific_buffer, sizeof(transmit_specific_buffer), 0,
+                                    (struct sockaddr * )&transmitter_addr, transmitter_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto transmit_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
@@ -1772,8 +1809,8 @@ static void new_protocol_receive_specific(void) {
   } else {
     int rc;
 
-    if ((rc = sendto(data_socket, receive_specific_buffer, sizeof(receive_specific_buffer), 0,
-                     (struct sockaddr * )&receiver_addr, receiver_addr_length)) < 0) {
+    if ((rc = p2_sendto_route_retry(data_socket, receive_specific_buffer, sizeof(receive_specific_buffer), 0,
+                                    (struct sockaddr * )&receiver_addr, receiver_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto receive_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
