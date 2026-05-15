@@ -53,14 +53,14 @@ static int my_height;
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
-waterfall_configure_event_cb (GtkWidget         *widget,
-                              GdkEventConfigure *event,
-                              gpointer           data) {
-  RECEIVER *rx = (RECEIVER *)data;
-  my_width = gtk_widget_get_allocated_width (widget);
-  my_height = gtk_widget_get_allocated_height (widget);
+waterfall_configure_event_cb(GtkWidget         *widget,
+                             GdkEventConfigure *event,
+                             gpointer           data) {
+  RECEIVER *rx = (RECEIVER*) data;
+  my_width = gtk_widget_get_allocated_width(widget);
+  my_height = gtk_widget_get_allocated_height(widget);
   rx->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, my_width, my_height);
-  unsigned char *pixels = gdk_pixbuf_get_pixels (rx->pixbuf);
+  unsigned char *pixels = gdk_pixbuf_get_pixels(rx->pixbuf);
   memset(pixels, 0, my_width * my_height * 3);
   return TRUE;
 }
@@ -70,10 +70,10 @@ waterfall_configure_event_cb (GtkWidget         *widget,
  * clipped to only draw the exposed areas of the widget
  */
 static gboolean
-waterfall_draw_cb (GtkWidget *widget,
-                   cairo_t   *cr,
-                   gpointer   data) {
-  const RECEIVER *rx = (RECEIVER *)data;
+waterfall_draw_cb(GtkWidget *widget,
+                  cairo_t   *cr,
+                  gpointer   data) {
+  const RECEIVER *rx = (RECEIVER*) data;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   GtkAllocation allocation;
   gtk_widget_get_allocation(rx->waterfall, &allocation);
@@ -81,8 +81,8 @@ waterfall_draw_cb (GtkWidget *widget,
   int b_height = allocation.height;
   int box_height = 30;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  gdk_cairo_set_source_pixbuf (cr, rx->pixbuf, 0, 0);
-  cairo_paint (cr); // vor dem Zeichnen der Box aufrufen, sinst wird der pixbuf überschrieben !
+  gdk_cairo_set_source_pixbuf(cr, rx->pixbuf, 0, 0);
+  cairo_paint(cr);  // vor dem Zeichnen der Box aufrufen, sinst wird der pixbuf überschrieben !
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (display_info_bar && active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
@@ -205,27 +205,27 @@ waterfall_draw_cb (GtkWidget *widget,
 }
 
 static gboolean
-waterfall_button_press_event_cb (GtkWidget      *widget,
-                                 GdkEventButton *event,
-                                 gpointer        data) {
+waterfall_button_press_event_cb(GtkWidget      *widget,
+                                GdkEventButton *event,
+                                gpointer        data) {
   return rx_button_press_event(widget, event, data);
 }
 
 static gboolean
-waterfall_button_release_event_cb (GtkWidget      *widget,
-                                   GdkEventButton *event,
-                                   gpointer        data) {
+waterfall_button_release_event_cb(GtkWidget      *widget,
+                                  GdkEventButton *event,
+                                  gpointer        data) {
   return rx_button_release_event(widget, event, data);
 }
 
-static gboolean waterfall_motion_notify_event_cb (GtkWidget      *widget,
+static gboolean waterfall_motion_notify_event_cb(GtkWidget      *widget,
     GdkEventMotion *event,
     gpointer        data) {
   return rx_motion_notify_event(widget, event, data);
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean waterfall_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, gpointer data) {
+static gboolean waterfall_scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data) {
   return rx_scroll_event(widget, event, data);
 }
 
@@ -236,11 +236,11 @@ void waterfall_update(RECEIVER *rx) {
     int  freq_changed = 0;                    // flag whether we have just "rotated"
     int pan = rx->pan;
     int zoom = rx->zoom;
-    unsigned char *pixels = gdk_pixbuf_get_pixels (rx->pixbuf);
+    unsigned char *pixels = gdk_pixbuf_get_pixels(rx->pixbuf);
     int width = gdk_pixbuf_get_width(rx->pixbuf);
     int height = gdk_pixbuf_get_height(rx->pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(rx->pixbuf);
-    hz_per_pixel = (double)rx->sample_rate / ((double)my_width * rx->zoom);
+    hz_per_pixel = (double) rx->sample_rate / ((double) my_width * rx->zoom);
 
     //
     // The existing waterfall corresponds to a VFO frequency rx->waterfall_frequency, a zoom value rx->waterfall_zoom and
@@ -258,7 +258,7 @@ void waterfall_update(RECEIVER *rx) {
         //
         // Frequency and/or PAN value changed: possibly shift waterfall
         //
-        int rotfreq = (int)((double)(rx->waterfall_frequency - vfofreq) / hz_per_pixel); // shift due to freq. change
+        int rotfreq = (int)((double)(rx->waterfall_frequency - vfofreq) / hz_per_pixel);    // shift due to freq. change
         int rotpan  = rx->waterfall_pan - pan;                                        // shift due to pan   change
         int rotate_pixels = rotfreq + rotpan;
 
@@ -293,7 +293,7 @@ void waterfall_update(RECEIVER *rx) {
 
           if (rotfreq != 0) {
             freq_changed = 1;
-            rx->waterfall_frequency -= lround(rotfreq * hz_per_pixel); // this is not necessarily vfofreq!
+            rx->waterfall_frequency -= lround(rotfreq * hz_per_pixel);  // this is not necessarily vfofreq!
           }
 
           rx->waterfall_pan = pan;
@@ -322,7 +322,7 @@ void waterfall_update(RECEIVER *rx) {
     // improvement.
     //
     if (!freq_changed) {
-      memmove(&pixels[rowstride], pixels, (height - 1)*rowstride);
+      memmove(&pixels[rowstride], pixels, (height - 1) *rowstride);
       float soffset;
       unsigned char *p;
       p = pixels;
@@ -338,7 +338,7 @@ void waterfall_update(RECEIVER *rx) {
 #ifdef SOAPYSDR
 
       if (device == SOAPYSDR_USB_DEVICE && strcmp(radio->name, "sdrplay") == 0) {
-        int v_Gain = (int)soapy_protocol_get_gain_element(active_receiver, "CURRENT");
+        int v_Gain = (int) soapy_protocol_get_gain_element(active_receiver, "CURRENT");
         adc[rx->adc].gain = 0;
         adc[rx->adc].attenuation = 0;
         adc[rx->adc].gain = v_Gain;
@@ -363,7 +363,7 @@ void waterfall_update(RECEIVER *rx) {
           average += samples[i];
         }
 
-        wf_low = (average / (float)width) + soffset - 5.0F;
+        wf_low = (average / (float) width) + soffset - 5.0F;
         wf_high = wf_low + 55.0F;
       } else {
         wf_low  = (float) rx->waterfall_low;
@@ -426,7 +426,7 @@ void waterfall_update(RECEIVER *rx) {
       }
     }
 
-    gtk_widget_queue_draw (rx->waterfall);
+    gtk_widget_queue_draw(rx->waterfall);
   }
 }
 
@@ -436,31 +436,31 @@ void waterfall_init(RECEIVER *rx, int width, int height) {
   rx->pixbuf = NULL;
   rx->waterfall_frequency = 0;
   rx->waterfall_sample_rate = 0;
-  rx->waterfall = gtk_drawing_area_new ();
-  gtk_widget_set_size_request (rx->waterfall, width, height);
+  rx->waterfall = gtk_drawing_area_new();
+  gtk_widget_set_size_request(rx->waterfall, width, height);
   /* Signals used to handle the backing surface */
-  g_signal_connect (rx->waterfall, "draw",
-                    G_CALLBACK (waterfall_draw_cb), rx);
-  g_signal_connect (rx->waterfall, "configure-event",
-                    G_CALLBACK (waterfall_configure_event_cb), rx);
+  g_signal_connect(rx->waterfall, "draw",
+                   G_CALLBACK(waterfall_draw_cb), rx);
+  g_signal_connect(rx->waterfall, "configure-event",
+                   G_CALLBACK(waterfall_configure_event_cb), rx);
   /* Event signals */
-  g_signal_connect (rx->waterfall, "motion-notify-event",
-                    G_CALLBACK (waterfall_motion_notify_event_cb), rx);
-  g_signal_connect (rx->waterfall, "button-press-event",
-                    G_CALLBACK (waterfall_button_press_event_cb), rx);
-  g_signal_connect (rx->waterfall, "button-release-event",
-                    G_CALLBACK (waterfall_button_release_event_cb), rx);
+  g_signal_connect(rx->waterfall, "motion-notify-event",
+                   G_CALLBACK(waterfall_motion_notify_event_cb), rx);
+  g_signal_connect(rx->waterfall, "button-press-event",
+                   G_CALLBACK(waterfall_button_press_event_cb), rx);
+  g_signal_connect(rx->waterfall, "button-release-event",
+                   G_CALLBACK(waterfall_button_release_event_cb), rx);
   g_signal_connect(rx->waterfall, "scroll_event",
                    G_CALLBACK(waterfall_scroll_event_cb), rx);
   /* Ask to receive events the drawing area doesn't normally
    * subscribe to. In particular, we need to ask for the
    * button press and motion notify events that want to handle.
    */
-  gtk_widget_set_events (rx->waterfall, gtk_widget_get_events (rx->waterfall)
-                         | GDK_BUTTON_PRESS_MASK
-                         | GDK_BUTTON_RELEASE_MASK
-                         | GDK_BUTTON1_MOTION_MASK
-                         | GDK_SCROLL_MASK
-                         | GDK_POINTER_MOTION_MASK
-                         | GDK_POINTER_MOTION_HINT_MASK);
+  gtk_widget_set_events(rx->waterfall, gtk_widget_get_events(rx->waterfall)
+                        | GDK_BUTTON_PRESS_MASK
+                        | GDK_BUTTON_RELEASE_MASK
+                        | GDK_BUTTON1_MOTION_MASK
+                        | GDK_SCROLL_MASK
+                        | GDK_POINTER_MOTION_MASK
+                        | GDK_POINTER_MOTION_HINT_MASK);
 }

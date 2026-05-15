@@ -55,24 +55,24 @@ typedef struct _anf {
 } anf, *ANF;
 
 extern ANF create_anf (
-  int run,
-  int position,
-  int buff_size,
-  double *in_buff,
-  double *out_buff,
-  int dline_size,
-  int n_taps,
-  int delay,
-  double two_mu,
-  double gamma,
+        int run,
+        int position,
+        int buff_size,
+        double *in_buff,
+        double *out_buff,
+        int dline_size,
+        int n_taps,
+        int delay,
+        double two_mu,
+        double gamma,
 
-  double lidx,
-  double lidx_min,
-  double lidx_max,
-  double ngamma,
-  double den_mult,
-  double lincr,
-  double ldecr
+        double lidx,
+        double lidx_min,
+        double lidx_max,
+        double ngamma,
+        double den_mult,
+        double lincr,
+        double ldecr
 );
 
 extern void destroy_anf (ANF a);

@@ -96,7 +96,7 @@ static inline long long ROUND(long long freq, int nsteps, int step) {
 struct _vfo vfo[MAX_VFOS];
 struct _mode_settings mode_settings[MODES];
 
-const char* getModeName(int mode) {
+const char *getModeName(int mode) {
   switch (mode) {
   case modeLSB:
     return "LSB";
@@ -158,7 +158,7 @@ static void vfo_save_bandstack(void) {
 
 static void modesettingsSaveState(void) {
   for (int i = 0; i < MODES; i++) {
-    mode_settings[i].desc = getModeName(i); // save description of numeric mode number for better reading
+    mode_settings[i].desc = getModeName(i);  // save description of numeric mode number for better reading
     SetPropI1("modeset.%d.filter", i,                mode_settings[i].filter);
     SetPropI1("modeset.%d.cwPeak", i,                mode_settings[i].cwPeak);
     SetPropI1("modeset.%d.step", i,                  mode_settings[i].step);
@@ -601,7 +601,7 @@ void vfo_restore_state(void) {
       vfo[i].band            = band430;
       vfo[i].bandstack       = 0;
       vfo[i].frequency       = 434010000;
-    } else if (radio->frequency_min < 144E6 && radio->frequency_max > 146E6 ) {
+    } else if (radio->frequency_min < 144E6 && radio->frequency_max > 146E6) {
       vfo[i].band            = band144;
       vfo[i].bandstack       = 0;
       vfo[i].frequency       = 145000000;
@@ -705,7 +705,7 @@ static inline void vfo_adjust_band(int v, long long f) {
       BANDSETTINGS *bs = band_get_settings(b);
 
       if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100 && transmitter->drive_per_band) {
-        set_drive((double)bs->tx_drive);
+        set_drive((double) bs->tx_drive);
         t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
       }
 
@@ -961,7 +961,7 @@ void vfo_band_changed(int id, int b) {
       BANDSETTINGS *bs = band_get_settings(b);
 
       if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100 && transmitter->drive_per_band) {
-        set_drive((double)bs->tx_drive);
+        set_drive((double) bs->tx_drive);
         t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
       }
 
@@ -1171,7 +1171,7 @@ void vfo_id_filter_changed(int id, int f) {
   // should also apply to the other receiver, if it is running.
   // Otherwise the filter and rx settings do not coincide.
   //
-  if (f == filterVar1 || f == filterVar2 ) {
+  if (f == filterVar1 || f == filterVar2) {
     for (int i = 0; i < receivers; i++) {
       rx_filter_changed(receiver[i]);
     }
@@ -1326,7 +1326,7 @@ void vfo_id_step(int id, int steps) {
       long long frequency = vfo[id].frequency;
       long long rx_low = ROUND(vfo[id].ctun_frequency, steps, vfo[id].step) + myrx->filter_low;
       long long rx_high = ROUND(vfo[id].ctun_frequency, steps, vfo[id].step) + myrx->filter_high;
-      long long half = (long long)myrx->sample_rate / 2LL;
+      long long half = (long long) myrx->sample_rate / 2LL;
       long long min_freq = frequency - half;
       long long max_freq = frequency + half;
 
@@ -1454,7 +1454,7 @@ void vfo_id_move(int id, long long hz, int round) {
       long long frequency = vfo[id].frequency;
       long long rx_low = vfo[id].ctun_frequency + hz + myrx->filter_low;
       long long rx_high = vfo[id].ctun_frequency + hz + myrx->filter_high;
-      long long half = (long long)myrx->sample_rate / 2LL;
+      long long half = (long long) myrx->sample_rate / 2LL;
       long long min_freq = frequency - half;
       long long max_freq = frequency + half;
 
@@ -1568,7 +1568,7 @@ void vfo_id_move_to(int id, long long hz) {
   // long long offset = hz;
   long long half = (long long)(myrx->sample_rate / 2);
   // long long f;
-  long long f = (vfo[id].frequency - half) + hz + ((double)myrx->pan * myrx->hz_per_pixel);
+  long long f = (vfo[id].frequency - half) + hz + ((double) myrx->pan * myrx->hz_per_pixel);
 
   if (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU) {
     // offset = ROUND(hz, 0, vfo[id].step);
@@ -1666,7 +1666,7 @@ void vfo_id_move_to(int id, long long hz) {
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, gpointer data) {
+static gboolean vfo_scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data) {
   RECEIVER *rx = active_receiver;
 
   if (!rx) {
@@ -1678,32 +1678,32 @@ static gboolean vfo_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, g
   return rx_scroll_event(widget, event, rx);
 }
 
-static gboolean vfo_configure_event_cb (GtkWidget         *widget,
-                                        GdkEventConfigure *event,
-                                        gpointer           data) {
+static gboolean vfo_configure_event_cb(GtkWidget         *widget,
+                                       GdkEventConfigure *event,
+                                       gpointer           data) {
   if (vfo_surface) {
-    cairo_surface_destroy (vfo_surface);
+    cairo_surface_destroy(vfo_surface);
   }
 
-  vfo_surface = gdk_window_create_similar_surface (gtk_widget_get_window (widget),
+  vfo_surface = gdk_window_create_similar_surface(gtk_widget_get_window(widget),
                 CAIRO_CONTENT_COLOR,
-                gtk_widget_get_allocated_width (widget),
-                gtk_widget_get_allocated_height (widget));
+                gtk_widget_get_allocated_width(widget),
+                gtk_widget_get_allocated_height(widget));
   /* Initialize the surface to black */
   cairo_t *cr;
-  cr = cairo_create (vfo_surface);
+  cr = cairo_create(vfo_surface);
   cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
-  cairo_paint (cr);
+  cairo_paint(cr);
   cairo_destroy(cr);
   g_idle_add(ext_vfo_update, NULL);
   return TRUE;
 }
 
-static gboolean vfo_draw_cb (GtkWidget *widget,
-                             cairo_t   *cr,
-                             gpointer   data) {
-  cairo_set_source_surface (cr, vfo_surface, 0.0, 0.0);
-  cairo_paint (cr);
+static gboolean vfo_draw_cb(GtkWidget *widget,
+                            cairo_t   *cr,
+                            gpointer   data) {
+  cairo_set_source_surface(cr, vfo_surface, 0.0, 0.0);
+  cairo_paint(cr);
   return FALSE;
 }
 
@@ -1740,10 +1740,10 @@ void vfo_update(void) {
   }
 
   if (w < 995) {
-    w = 10 * ((w + 5) / 10); // between 0 and 990
+    w = 10 * ((w + 5) / 10);  // between 0 and 990
     snprintf(wid, sizeof(wid), "%3d", w);
   } else if (w < 9950) {
-    w = 100 * ((w + 50) / 100); // between 1000 and 9900
+    w = 100 * ((w + 50) / 100);  // between 1000 and 9900
     // print "2.7k" for a width of 2700
     snprintf(wid, sizeof(wid), "%d.%dk", w / 1000, (w % 1000) / 100);
   } else {
@@ -1762,9 +1762,9 @@ void vfo_update(void) {
   const FILTER* band_filter = &band_filters[f];
   char temp_text[32];
   cairo_t *cr;
-  cr = cairo_create (vfo_surface);
+  cr = cairo_create(vfo_surface);
   cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
-  cairo_paint (cr);
+  cairo_paint(cr);
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 
   // -----------------------------------------------------------
@@ -2548,9 +2548,9 @@ void vfo_update(void) {
     }
 
     if (transmitter->addgain_enable) {
-      snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int)transmitter->mic_gain + (int)transmitter->addgain_gain);
+      snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int) transmitter->mic_gain + (int) transmitter->addgain_gain);
     } else {
-      snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int)transmitter->mic_gain);
+      snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int) transmitter->mic_gain);
     }
 
     cairo_show_text(cr, temp_text);
@@ -2663,12 +2663,12 @@ void vfo_update(void) {
     cairo_show_text(cr, temp_text);
   }
 
-  cairo_destroy (cr);
-  gtk_widget_queue_draw (vfo_panel);
+  cairo_destroy(cr);
+  gtk_widget_queue_draw(vfo_panel);
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean vfo_press_event_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean vfo_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int v;
 
   switch (event->button) {
@@ -2689,23 +2689,23 @@ static gboolean vfo_press_event_cb (GtkWidget *widget, GdkEventButton *event, gp
   return TRUE;
 }
 
-GtkWidget* vfo_init(int width, int height) {
+GtkWidget *vfo_init(int width, int height) {
   my_width = width;
   my_height = height;
-  vfo_panel = gtk_drawing_area_new ();
-  gtk_widget_set_size_request (vfo_panel, width, height);
-  g_signal_connect (vfo_panel, "configure-event",
-                    G_CALLBACK (vfo_configure_event_cb), NULL);
-  g_signal_connect (vfo_panel, "draw",
-                    G_CALLBACK (vfo_draw_cb), NULL);
+  vfo_panel = gtk_drawing_area_new();
+  gtk_widget_set_size_request(vfo_panel, width, height);
+  g_signal_connect(vfo_panel, "configure-event",
+                   G_CALLBACK(vfo_configure_event_cb), NULL);
+  g_signal_connect(vfo_panel, "draw",
+                   G_CALLBACK(vfo_draw_cb), NULL);
   /* Event signals */
-  g_signal_connect (vfo_panel, "button-press-event",
-                    G_CALLBACK (vfo_press_event_cb), NULL);
+  g_signal_connect(vfo_panel, "button-press-event",
+                   G_CALLBACK(vfo_press_event_cb), NULL);
   g_signal_connect(vfo_panel, "scroll_event",
                    G_CALLBACK(vfo_scroll_event_cb), NULL);
-  gtk_widget_set_events (vfo_panel, gtk_widget_get_events (vfo_panel)
-                         | GDK_BUTTON_PRESS_MASK
-                         | GDK_SCROLL_MASK);
+  gtk_widget_set_events(vfo_panel, gtk_widget_get_events(vfo_panel)
+                        | GDK_BUTTON_PRESS_MASK
+                        | GDK_SCROLL_MASK);
   return vfo_panel;
 }
 
@@ -2743,7 +2743,7 @@ long long vfo_get_tx_freq(void) {
   }
 }
 
-void vfo_xit_value(long long value ) {
+void vfo_xit_value(long long value) {
   int id = vfo_get_tx_vfo();
   vfo[id].xit = value;
   vfo[id].xit_enabled = value ? 1 : 0;

@@ -45,7 +45,7 @@ int main() {
     return -1;
   }
 
-  fd = open ("zetaHat.bin", O_RDONLY);
+  fd = open("zetaHat.bin", O_RDONLY);
 
   if (fd < 0) {
     printf("Could not open file 'zetaHat.bin'\n");

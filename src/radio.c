@@ -434,44 +434,44 @@ static SaturnSerialPort SaturnSerialPortsList[] = {
 };
 
 #if defined (__AUTOG__)
-static gboolean launch_autogain_hl2_wrapper(gpointer data) {
+static gboolean launch_autogain_hl2_wrapper (gpointer data) {
   launch_autogain_hl2();
   return FALSE;
 }
 #endif
 
-static void radio_restore_state(void);
+static void radio_restore_state (void);
 
-void radio_stop(void) {
+void radio_stop (void) {
   if (can_transmit) {
-    t_print("radio_stop: TX: stop display update\n");
+    t_print ("radio_stop: TX: stop display update\n");
     transmitter->displaying = 0;
-    tx_set_displaying(transmitter);
-    t_print("radio_stop: TX id=%d: close\n", transmitter->id);
-    tx_close(transmitter);
+    tx_set_displaying (transmitter);
+    t_print ("radio_stop: TX id=%d: close\n", transmitter->id);
+    tx_close (transmitter);
   }
 
   for (int i = 0; i < RECEIVERS; i++) {
-    t_print("radio_stop: RX id=%d: stop display update\n", receiver[i]->id);
+    t_print ("radio_stop: RX id=%d: stop display update\n", receiver[i]->id);
     receiver[i]->displaying = 0;
-    rx_set_displaying(receiver[i]);
-    t_print("radio_stop: RX id=%d: close\n", receiver[i]->id);
-    rx_close(receiver[i]);
+    rx_set_displaying (receiver[i]);
+    t_print ("radio_stop: RX id=%d: close\n", receiver[i]->id);
+    rx_close (receiver[i]);
   }
 }
 
 #ifdef __APPLE__
-long long apply_ppm_ll(long long f_hz) {
-  const long long cal_0p1ppm = llround(ppm_factor * 10.0);
-  return (long long)((__int128)f_hz * (10000000LL + cal_0p1ppm) / 10000000LL);
+long long apply_ppm_ll (long long f_hz) {
+  const long long cal_0p1ppm = llround (ppm_factor * 10.0);
+  return (long long) ((__int128) f_hz * (10000000LL + cal_0p1ppm) / 10000000LL);
 }
 #else
-long long apply_ppm_ll(long long f_hz) {
-  const long long cal_0p1ppm = llround(ppm_factor * 10.0);
+long long apply_ppm_ll (long long f_hz) {
+  const long long cal_0p1ppm = llround (ppm_factor * 10.0);
   const long long scale  = 10000000LL;
   const long long factor = scale + cal_0p1ppm;
 #if defined(__SIZEOF_INT128__)
-  return (long long)(((__int128)f_hz * factor) / scale);
+  return (long long) (((__int128) f_hz * factor) / scale);
 #else
   // Overflow-sicher ohne __int128 (32-bit ARM)
   const long long q = f_hz / scale;
@@ -481,8 +481,8 @@ long long apply_ppm_ll(long long f_hz) {
 }
 #endif
 
-static void choose_vfo_layout(void) {
-  g_return_if_fail(vfo_layout_list[0].width > 0);
+static void choose_vfo_layout (void) {
+  g_return_if_fail (vfo_layout_list[0].width > 0);
   vfo_layout = 0;
   METER_WIDTH = MIN_METER_WIDTH;
   VFO_WIDTH = full_screen ? screen_width : display_width;
@@ -496,22 +496,22 @@ static void choose_vfo_layout(void) {
 
 static guint full_screen_timeout = 0;
 
-static void measure_decoration_height(void) __attribute__((unused));
-static void measure_decoration_height(void) {
+static void measure_decoration_height (void) __attribute__ ((unused));
+static void measure_decoration_height (void) {
 #if defined(__APPLE__)
 
   if (dock_guard_pixels != 0) { return; }  // schon bestimmt
 
-  if (!gtk_widget_get_realized(top_window)) { return; }
+  if (!gtk_widget_get_realized (top_window)) { return; }
 
-  GdkWindow *gw = gtk_widget_get_window(top_window);
+  GdkWindow *gw = gtk_widget_get_window (top_window);
 
   if (!gw) { return; }
 
   GtkAllocation alloc;
-  gtk_widget_get_allocation(top_window, &alloc);   // Client-Innenfläche
+  gtk_widget_get_allocation (top_window, &alloc);  // Client-Innenfläche
   GdkRectangle frame;
-  gdk_window_get_frame_extents(gw, &frame);        // inkl. Titelbar/Border
+  gdk_window_get_frame_extents (gw, &frame);       // inkl. Titelbar/Border
   int deco = frame.height - alloc.height;
 
   if (deco > 0 && deco < 200) {   // sanity check
@@ -521,9 +521,9 @@ static void measure_decoration_height(void) {
 #endif
 }
 
-static int set_full_screen(gpointer data) {
+static int set_full_screen (gpointer data) {
   full_screen_timeout = 0;
-  int flag = GPOINTER_TO_INT(data);
+  int flag = GPOINTER_TO_INT (data);
 #if defined(__APPLE__)
 
   if (flag) {
@@ -531,7 +531,7 @@ static int set_full_screen(gpointer data) {
     measure_decoration_height();
     GdkScreen *gdk_screen = gdk_screen_get_default();
     GdkRectangle wa;
-    gdk_screen_get_monitor_workarea(gdk_screen, this_monitor, &wa);
+    gdk_screen_get_monitor_workarea (gdk_screen, this_monitor, &wa);
     // Zielhöhe = Workarea minus Deko-Höhe, damit der Client-Bereich
     // nicht in den Dock-Bereich hineinragt.
     int fs_height = wa.height;
@@ -540,19 +540,19 @@ static int set_full_screen(gpointer data) {
       fs_height -= dock_guard_pixels;
     }
 
-    gtk_window_move(GTK_WINDOW(top_window), wa.x, wa.y);
-    gtk_window_resize(GTK_WINDOW(top_window), wa.width, fs_height);
+    gtk_window_move (GTK_WINDOW (top_window), wa.x, wa.y);
+    gtk_window_resize (GTK_WINDOW (top_window), wa.width, fs_height);
     // Maximieren kannst du dir dann sparen, wenn du selbst resizest,
     // oder du lässt es weg, um kein weiteres WM-Magic zu triggern.
     // gtk_window_maximize(GTK_WINDOW(top_window));
     screen_height = fs_height;
     full_screen = 1;
   } else {
-    gtk_window_unmaximize(GTK_WINDOW(top_window));
-    gtk_window_resize(GTK_WINDOW(top_window), display_width, display_height);
-    gtk_window_move(GTK_WINDOW(top_window),
-                    (screen_width  - display_width)  / 2,
-                    (screen_height - display_height) / 2);
+    gtk_window_unmaximize (GTK_WINDOW (top_window));
+    gtk_window_resize (GTK_WINDOW (top_window), display_width, display_height);
+    gtk_window_move (GTK_WINDOW (top_window),
+                     (screen_width  - display_width)  / 2,
+                     (screen_height - display_height) / 2);
     full_screen = 0;
   }
 
@@ -563,21 +563,21 @@ static int set_full_screen(gpointer data) {
   //
   if (flag) {
     if (use_wayland) {
-      gtk_window_fullscreen(GTK_WINDOW(top_window));
+      gtk_window_fullscreen (GTK_WINDOW (top_window));
     } else {
       //
       // Window-to-fullscreen-transition
       //
-      gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+      gtk_window_fullscreen_on_monitor (GTK_WINDOW (top_window), screen, this_monitor);
     }
   } else {
     if (!use_wayland) {
       //
       // FullScreen to window transition. Place window in the center of the screen
       //
-      gtk_window_move(GTK_WINDOW(top_window),
-                      (screen_width - display_width) / 2,
-                      (screen_height - display_height) / 2);
+      gtk_window_move (GTK_WINDOW (top_window),
+                       (screen_width - display_width) / 2,
+                       (screen_height - display_height) / 2);
     }
   }
 
@@ -620,17 +620,17 @@ static int set_full_screen(gpointer data) {
 }
 */
 
-static gboolean destroy_cb(gpointer data) {
-  GtkWidget *w = GTK_WIDGET(data);
+static gboolean destroy_cb (gpointer data) {
+  GtkWidget *w = GTK_WIDGET (data);
 
-  if (GTK_IS_WIDGET(w)) {
-    gtk_widget_destroy(w);
+  if (GTK_IS_WIDGET (w)) {
+    gtk_widget_destroy (w);
   }
 
   return G_SOURCE_REMOVE;
 }
 
-void destroy_widget_safe(GtkWidget **pwidget) {
+void destroy_widget_safe (GtkWidget** pwidget) {
   if (!pwidget) {
     return;
   }
@@ -643,31 +643,31 @@ void destroy_widget_safe(GtkWidget **pwidget) {
   }
 
   // Bin ich im GTK-/Main-Thread?
-  if (g_main_context_is_owner(g_main_context_default())) {
+  if (g_main_context_is_owner (g_main_context_default())) {
     // Hier ist GTK-Zugriff erlaubt
-    if (GTK_IS_WIDGET(w)) {
-      gtk_widget_destroy(w);
+    if (GTK_IS_WIDGET (w)) {
+      gtk_widget_destroy (w);
     }
   } else {
     // Worker-Thread: nur schedulen, GTK nur im Callback anfassen
-    g_idle_add_full(
-      G_PRIORITY_HIGH_IDLE,
-      destroy_cb,
-      g_object_ref(w),   // Schutz bis zum Callback
-      (GDestroyNotify)g_object_unref
+    g_idle_add_full (
+            G_PRIORITY_HIGH_IDLE,
+            destroy_cb,
+            g_object_ref (w),  // Schutz bis zum Callback
+            (GDestroyNotify) g_object_unref
     );
   }
 }
 
-void radio_reconfigure_screen(void) {
-  GdkWindow *gw = gtk_widget_get_window(top_window);
-  GdkWindowState ws = gdk_window_get_state(GDK_WINDOW(gw));
-  int last_fullscreen = SET(ws & GDK_WINDOW_STATE_FULLSCREEN);
-  int my_fullscreen = SET(full_screen);  // this will not change during this procedure
+void radio_reconfigure_screen (void) {
+  GdkWindow *gw = gtk_widget_get_window (top_window);
+  GdkWindowState ws = gdk_window_get_state (GDK_WINDOW (gw));
+  int last_fullscreen = SET (ws & GDK_WINDOW_STATE_FULLSCREEN);
+  int my_fullscreen = SET (full_screen); // this will not change during this procedure
 
   if (last_fullscreen != my_fullscreen) {
     if (full_screen_timeout > 0) {
-      g_source_remove(full_screen_timeout);
+      g_source_remove (full_screen_timeout);
       full_screen_timeout = 0;
     }
   }
@@ -683,19 +683,19 @@ void radio_reconfigure_screen(void) {
   if (toolbar) {
     // gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
     // toolbar = NULL;
-    destroy_widget_safe(&toolbar);
+    destroy_widget_safe (&toolbar);
   }
 
   if (sliders) {
     // gtk_container_remove(GTK_CONTAINER(fixed), sliders);
     // sliders = NULL;
-    destroy_widget_safe(&sliders);
+    destroy_widget_safe (&sliders);
   }
 
   if (zoompan) {
     // gtk_container_remove(GTK_CONTAINER(fixed), zoompan);
     // zoompan = NULL;
-    destroy_widget_safe(&zoompan);
+    destroy_widget_safe (&zoompan);
   }
 
   choose_vfo_layout();
@@ -714,12 +714,12 @@ void radio_reconfigure_screen(void) {
     //
     // A full-screen to window transition
     //
-    gtk_window_unfullscreen(GTK_WINDOW(top_window));
+    gtk_window_unfullscreen (GTK_WINDOW (top_window));
     //
     // For some reason, moving the window immediately does not work
     // on MacOS, therefore do this after waiting a second
     //
-    full_screen_timeout = g_timeout_add(1000, set_full_screen, GINT_TO_POINTER(0));
+    full_screen_timeout = g_timeout_add (1000, set_full_screen, GINT_TO_POINTER (0));
   }
 
   if (last_fullscreen != my_fullscreen && my_fullscreen) {
@@ -729,27 +729,27 @@ void radio_reconfigure_screen(void) {
       // here we move the window, the transition is then
       // scheduled at the end of this function
       //
-      gtk_window_move(GTK_WINDOW(top_window), 0, 0);
+      gtk_window_move (GTK_WINDOW (top_window), 0, 0);
     }
   }
 
   /* Unter Wayland im Fullscreen kein explizites Resize erzwingen */
-  if (!(use_wayland && my_fullscreen)) {
-    gtk_window_resize(GTK_WINDOW(top_window), my_width, my_height);
+  if (! (use_wayland && my_fullscreen)) {
+    gtk_window_resize (GTK_WINDOW (top_window), my_width, my_height);
   }
 
   //
   // Move Hide and Menu buttons, meter to new position
   //
-  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  gtk_widget_set_size_request(exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, 1);
-  gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT / 2 + 9);
-  gtk_fixed_move(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 16);
-  gtk_widget_set_size_request(meter,  METER_WIDTH, METER_HEIGHT);
-  gtk_fixed_move(GTK_FIXED(fixed), meter, VFO_WIDTH, 0);
-  gtk_widget_set_size_request(vfo_panel, VFO_WIDTH, VFO_HEIGHT);
+  gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_widget_set_size_request (exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
+  gtk_fixed_move (GTK_FIXED (fixed), menu_b, VFO_WIDTH + METER_WIDTH, 1);
+  gtk_fixed_move (GTK_FIXED (fixed), hide_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT / 2 + 9);
+  gtk_fixed_move (GTK_FIXED (fixed), exit_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT + 16);
+  gtk_widget_set_size_request (meter,  METER_WIDTH, METER_HEIGHT);
+  gtk_fixed_move (GTK_FIXED (fixed), meter, VFO_WIDTH, 0);
+  gtk_widget_set_size_request (vfo_panel, VFO_WIDTH, VFO_HEIGHT);
 
   // Adjust position of the TX panel.
   // This must even be done in duplex mode, if we switch back
@@ -768,23 +768,23 @@ void radio_reconfigure_screen(void) {
   if (last_fullscreen != my_fullscreen && my_fullscreen) {
     if (use_wayland) {
       /* Wayland: sofort Fullscreen, kein Timeout */
-      set_full_screen(GINT_TO_POINTER(1));
+      set_full_screen (GINT_TO_POINTER (1));
     } else {
       //
       // For some reason, going to full-screen immediately does not
       // work on MacOS, so do this after 1 second
       //
-      full_screen_timeout = g_timeout_add(1000, set_full_screen, GINT_TO_POINTER(1));
+      full_screen_timeout = g_timeout_add (1000, set_full_screen, GINT_TO_POINTER (1));
     }
   }
 
-  g_idle_add(ext_vfo_update, NULL);
+  g_idle_add (ext_vfo_update, NULL);
 }
 
-void radio_reconfigure(void) {
+void radio_reconfigure (void) {
   int i;
   int y;
-  t_print("%s: receivers=%d\n", __func__, receivers);
+  t_print ("%s: receivers=%d\n", __func__, receivers);
   int my_height = full_screen ? screen_height : display_height;
   int my_width  = full_screen ? screen_width  : display_width;
   rx_height = my_height - VFO_HEIGHT;
@@ -838,11 +838,11 @@ void radio_reconfigure(void) {
     for (i = 0; i < receivers; i++) {
       RECEIVER *rx = receiver[i];
       rx->width = my_width / receivers;
-      rx_update_zoom(rx);
-      rx_reconfigure(rx, rx_height);
+      rx_update_zoom (rx);
+      rx_reconfigure (rx, rx_height);
 
       if (!radio_is_transmitting() || duplex) {
-        gtk_fixed_move(GTK_FIXED(fixed), rx->panel, x, y);
+        gtk_fixed_move (GTK_FIXED (fixed), rx->panel, x, y);
       }
 
       rx->x = x;
@@ -855,11 +855,11 @@ void radio_reconfigure(void) {
     for (i = 0; i < receivers; i++) {
       RECEIVER *rx = receiver[i];
       rx->width = my_width;
-      rx_update_zoom(rx);
-      rx_reconfigure(rx, rx_height / receivers);
+      rx_update_zoom (rx);
+      rx_reconfigure (rx, rx_height / receivers);
 
       if (!radio_is_transmitting() || duplex) {
-        gtk_fixed_move(GTK_FIXED(fixed), rx->panel, 0, y);
+        gtk_fixed_move (GTK_FIXED (fixed), rx->panel, 0, y);
       }
 
       rx->x = 0;
@@ -870,44 +870,44 @@ void radio_reconfigure(void) {
 
   if (display_zoompan) {
     if (zoompan == NULL) {
-      zoompan = zoompan_init(my_width, ZOOMPAN_HEIGHT);
-      gtk_fixed_put(GTK_FIXED(fixed), zoompan, 0, y);
+      zoompan = zoompan_init (my_width, ZOOMPAN_HEIGHT);
+      gtk_fixed_put (GTK_FIXED (fixed), zoompan, 0, y);
     } else {
-      gtk_fixed_move(GTK_FIXED(fixed), zoompan, 0, y);
+      gtk_fixed_move (GTK_FIXED (fixed), zoompan, 0, y);
     }
 
-    gtk_widget_show_all(zoompan);
+    gtk_widget_show_all (zoompan);
     y += ZOOMPAN_HEIGHT;
   } else {
     if (zoompan != NULL) {
       // gtk_container_remove(GTK_CONTAINER(fixed), zoompan);
       // zoompan = NULL;
-      destroy_widget_safe(&zoompan);
+      destroy_widget_safe (&zoompan);
     }
   }
 
   if (display_sliders) {
     if (sliders == NULL) {
-      sliders = sliders_init(my_width, SLIDERS_HEIGHT);
-      gtk_fixed_put(GTK_FIXED(fixed), sliders, 0, y);
+      sliders = sliders_init (my_width, SLIDERS_HEIGHT);
+      gtk_fixed_put (GTK_FIXED (fixed), sliders, 0, y);
     } else {
-      gtk_fixed_move(GTK_FIXED(fixed), sliders, 0, y);
+      gtk_fixed_move (GTK_FIXED (fixed), sliders, 0, y);
     }
 
-    gtk_widget_show_all(sliders);  // ... this shows both C25 and Alex ATT/Preamp, and both Mic/Linein sliders
+    gtk_widget_show_all (sliders); // ... this shows both C25 and Alex ATT/Preamp, and both Mic/Linein sliders
     att_type_changed();            // ... and this hides the „wrong“ ones.
     y += SLIDERS_HEIGHT;
 
     if (can_transmit && display_extra_sliders) {
-      sliders_show_row(2);
+      sliders_show_row (2);
     } else {
-      sliders_hide_row(2);
+      sliders_hide_row (2);
     }
   } else {
     if (sliders != NULL) {
       // gtk_container_remove(GTK_CONTAINER(fixed), sliders);
       // sliders = NULL;
-      destroy_widget_safe(&sliders);
+      destroy_widget_safe (&sliders);
     }
   }
 
@@ -933,25 +933,25 @@ void radio_reconfigure(void) {
   if (display_toolbar) {
     if (toolbar == NULL) {
       // Einmalig erzeugen und in das Fixed einhängen
-      toolbar = toolbar_init(my_width, TOOLBAR_HEIGHT);
-      gtk_fixed_put(GTK_FIXED(fixed), toolbar, 0, y);
+      toolbar = toolbar_init (my_width, TOOLBAR_HEIGHT);
+      gtk_fixed_put (GTK_FIXED (fixed), toolbar, 0, y);
     } else {
       // Bestehende Toolbar nur verschieben und ggf. Größe anpassen
-      gtk_widget_set_size_request(toolbar, my_width, TOOLBAR_HEIGHT);
+      gtk_widget_set_size_request (toolbar, my_width, TOOLBAR_HEIGHT);
       // Bereits existente Toolbar nur verschieben
-      gtk_fixed_move(GTK_FIXED(fixed), toolbar, 0, y);
+      gtk_fixed_move (GTK_FIXED (fixed), toolbar, 0, y);
     }
 
-    gtk_widget_show_all(toolbar);
+    gtk_widget_show_all (toolbar);
   } else {
     if (toolbar != NULL) {
       // NICHT mehr zerstören – nur verstecken
-      gtk_widget_hide(toolbar);
+      gtk_widget_hide (toolbar);
     }
   }
 
   if (can_transmit && !duplex) {
-    tx_reconfigure(transmitter, my_width, my_width, rx_height);
+    tx_reconfigure (transmitter, my_width, my_width, rx_height);
   }
 }
 
@@ -980,7 +980,7 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     // Hide everything but store old status
     //
     hide_status = 1;
-    gtk_button_set_label(GTK_BUTTON(hide_b), "Show");
+    gtk_button_set_label (GTK_BUTTON (hide_b), "Show");
     old_zoom = display_zoompan;
     old_slid = display_sliders;
     old_tool = display_toolbar;
@@ -991,8 +991,8 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     // Re-display everything
     //
     hide_status = 0;
-    gtk_button_set_label(GTK_BUTTON(hide_b), "Hide");
-    gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
+    gtk_button_set_label (GTK_BUTTON (hide_b), "Hide");
+    gtk_widget_set_tooltip_text (hide_b, "Hide all buttons and slider");
     display_zoompan = old_zoom;
     display_sliders = old_slid;
     display_toolbar = old_tool;
@@ -1011,23 +1011,23 @@ static gboolean menu_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
 // cppcheck-suppress constParameterCallback
 static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   stop_program();
-  exit(EXIT_SUCCESS);
+  exit (EXIT_SUCCESS);
   return TRUE;
 }
 
-gboolean win_set_bgcolor(GtkWidget *widget, gpointer data) {
-  const GdkRGBA *bgcolor = (const GdkRGBA *)data;
-  gtk_widget_override_background_color(widget,
-                                       GTK_STATE_FLAG_NORMAL,
-                                       bgcolor);
-  gtk_widget_queue_draw(widget);
+gboolean win_set_bgcolor (GtkWidget *widget, gpointer data) {
+  const GdkRGBA *bgcolor = (const GdkRGBA*) data;
+  gtk_widget_override_background_color (widget,
+                                        GTK_STATE_FLAG_NORMAL,
+                                        bgcolor);
+  gtk_widget_queue_draw (widget);
   return FALSE;
 }
 
 /* Wrapper, damit wir 'clicked' nutzen können */
-static void hide_clicked(GtkButton *btn, gpointer data) {
-  (void)btn;
-  hideall_cb(NULL, NULL, data);
+static void hide_clicked (GtkButton *btn, gpointer data) {
+  (void) btn;
+  hideall_cb (NULL, NULL, data);
 }
 
 /*
@@ -1070,74 +1070,74 @@ static void open_atu_window(void) {
 */
 
 #ifdef __linux__
-static void linux_dock_window_destroyed_cb(GtkWidget *widget, gpointer user_data) {
-  char *id = (char *)user_data;
+static void linux_dock_window_destroyed_cb (GtkWidget *widget, gpointer user_data) {
+  char *id = (char*) user_data;
 
   if (linux_dock_windows) {
-    g_hash_table_remove(linux_dock_windows, id);
+    g_hash_table_remove (linux_dock_windows, id);
 
-    if (g_hash_table_size(linux_dock_windows) == 0) {
-      g_hash_table_destroy(linux_dock_windows);
+    if (g_hash_table_size (linux_dock_windows) == 0) {
+      g_hash_table_destroy (linux_dock_windows);
       linux_dock_windows = NULL;
     }
   }
 
-  g_free(id);
+  g_free (id);
 }
 
-static void linux_open_webview_window_with_id(
-  const char *id,
-  const char *url,
-  const char *title,
-  int x,
-  int y,
-  int w,
-  int h
+static void linux_open_webview_window_with_id (
+        const char *id,
+        const char *url,
+        const char *title,
+        int x,
+        int y,
+        int w,
+        int h
 ) {
   if (!linux_dock_windows) {
-    linux_dock_windows = g_hash_table_new_full(g_str_hash, g_str_equal,
+    linux_dock_windows = g_hash_table_new_full (g_str_hash, g_str_equal,
                          g_free, NULL);
   }
 
   // g_setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", TRUE);
-  GtkWidget *window = g_hash_table_lookup(linux_dock_windows, id);
+  GtkWidget *window = g_hash_table_lookup (linux_dock_windows, id);
 
   if (window) {
     // Optional: Position nachziehen
     // gtk_window_move(GTK_WINDOW(window), x, y);
-    gtk_window_present(GTK_WINDOW(window));
+    gtk_window_present (GTK_WINDOW (window));
     return;
   }
 
-  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_default_size(GTK_WINDOW(window), w, h);
-  gtk_window_set_title(GTK_WINDOW(window), title);
-  WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(web_view));
-  webkit_web_view_load_uri(web_view, url);
-  gtk_window_move(GTK_WINDOW(window), x, y);
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_default_size (GTK_WINDOW (window), w, h);
+  gtk_window_set_title (GTK_WINDOW (window), title);
+  WebKitWebView *web_view = WEBKIT_WEB_VIEW (webkit_web_view_new());
+  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (web_view));
+  webkit_web_view_load_uri (web_view, url);
+  gtk_window_move (GTK_WINDOW (window), x, y);
   // ID duplizieren, als Key im Hash und als user_data im Callback verwenden
-  char *id_copy = g_strdup(id);
-  g_hash_table_insert(linux_dock_windows, id_copy, window);
-  g_signal_connect(window, "destroy",
-                   G_CALLBACK(linux_dock_window_destroyed_cb),
-                   g_strdup(id));   // eigener Duplicate für Callback
-  gtk_widget_show_all(window);
+  char *id_copy = g_strdup (id);
+  g_hash_table_insert (linux_dock_windows, id_copy, window);
+  g_signal_connect (window, "destroy",
+                    G_CALLBACK (linux_dock_window_destroyed_cb),
+                    g_strdup (id));  // eigener Duplicate für Callback
+  gtk_widget_show_all (window);
 }
 #endif
 
 // bezogen auf top_window
-void open_atu_window(GtkWindow *top_window,  const char *win_title, const char *win_url) {
+void open_atu_window (GtkWindow *top_window,  const char* win_title, const char* win_url) {
   // 1. Monitor-Geometrie holen (primärer Monitor)
   GdkDisplay  *display = gdk_display_get_default();
-  GdkMonitor  *monitor = gdk_display_get_primary_monitor(display);
+  GdkMonitor  *monitor = gdk_display_get_primary_monitor (display);
 
   if (!monitor) {
     return; // defensiv
   }
 
   GdkRectangle mgeo;
-  gdk_monitor_get_geometry(monitor, &mgeo);
+  gdk_monitor_get_geometry (monitor, &mgeo);
   // mgeo.x/mgeo.y = Ursprung (oben-links) dieses Monitors
   // mgeo.width/height = Größe
   // 2. GTK-Top-Window-Position/-Größe (oben-links)
@@ -1146,10 +1146,10 @@ void open_atu_window(GtkWindow *top_window,  const char *win_title, const char *
   // const char *win_url   = "http://192.168.253.95:8801";
   int win_x = 0, win_y = 0;
   int win_w = 0, win_h = 0;
-  gtk_window_get_position(top_window, &win_x, &win_y);
-  gtk_window_get_size(top_window, &win_w, &win_h);
-  t_print("%s: win_x=%d win_y=%d win_w=%d win_h=%d\n",
-          __func__, win_x, win_y, win_w, win_h);
+  gtk_window_get_position (top_window, &win_x, &win_y);
+  gtk_window_get_size (top_window, &win_w, &win_h);
+  t_print ("%s: win_x=%d win_y=%d win_w=%d win_h=%d\n",
+           __func__, win_x, win_y, win_w, win_h);
   // 3. WebView-Fenstergröße
   // int wv_w = 430;
   // int wv_h = 430;
@@ -1174,80 +1174,80 @@ void open_atu_window(GtkWindow *top_window,  const char *win_title, const char *
   }
 
 #ifdef __APPLE__
-  macos_open_webview_window_with_id(
-    win_id,
-    win_url,
-    win_title,
-    cocoa_x,
-    cocoa_y,
-    atuwin_wv_w,
-    atuwin_wv_h
+  macos_open_webview_window_with_id (
+          win_id,
+          win_url,
+          win_title,
+          cocoa_x,
+          cocoa_y,
+          atuwin_wv_w,
+          atuwin_wv_h
   );
 #endif
 #ifdef __linux__
   int linux_x = win_x + win_w;   // direkt rechts vom GTK-Fenster
   int linux_y = win_y;           // gleiche Oberkante
-  linux_open_webview_window_with_id(
-    win_id,
-    win_url,
-    win_title,
-    linux_x,
-    linux_y,
-    atuwin_wv_w,
-    atuwin_wv_h
+  linux_open_webview_window_with_id (
+          win_id,
+          win_url,
+          win_title,
+          linux_x,
+          linux_y,
+          atuwin_wv_w,
+          atuwin_wv_h
   );
 #endif
 }
 
-static void radio_create_visual(void) {
+static void radio_create_visual (void) {
   int y = 0;
   fixed = gtk_fixed_new();
-  g_object_ref(topgrid);  // so it does not get deleted
-  gtk_container_remove(GTK_CONTAINER(top_window), topgrid);
-  gtk_container_add(GTK_CONTAINER(top_window), fixed);
+  g_object_ref (topgrid); // so it does not get deleted
+  gtk_container_remove (GTK_CONTAINER (top_window), topgrid);
+  gtk_container_add (GTK_CONTAINER (top_window), fixed);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: css_dark_theme ? : %d\n", __func__, css_dark_theme);
-  win_set_bgcolor(top_window, &radio_bgcolor);
+  t_print ("%s: css_dark_theme ? : %d\n", __func__, css_dark_theme);
+  win_set_bgcolor (top_window, &radio_bgcolor);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   //t_print("radio: vfo_init\n");
   int my_height = full_screen ? screen_height : display_height;
   int my_width  = full_screen ? screen_width  : display_width;
   VFO_WIDTH = my_width - MENU_WIDTH - METER_WIDTH;
-  vfo_panel = vfo_init(VFO_WIDTH, VFO_HEIGHT);
-  gtk_fixed_put(GTK_FIXED(fixed), vfo_panel, 0, y);
+  vfo_panel = vfo_init (VFO_WIDTH, VFO_HEIGHT);
+  gtk_fixed_put (GTK_FIXED (fixed), vfo_panel, 0, y);
   //t_print("radio: meter_init\n");
-  meter = meter_init(METER_WIDTH, METER_HEIGHT);
-  gtk_fixed_put(GTK_FIXED(fixed), meter, VFO_WIDTH, y);
+  meter = meter_init (METER_WIDTH, METER_HEIGHT);
+  gtk_fixed_put (GTK_FIXED (fixed), meter, VFO_WIDTH, y);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
-          y);
-  hide_b = gtk_button_new_with_label("Hide");
-  gtk_widget_set_name(hide_b, "boldlabel_vfo_sf");
-  gtk_widget_set_tooltip_text(hide_b, "Hide all buttons and slider");
+  t_print ("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+           y);
+  hide_b = gtk_button_new_with_label ("Hide");
+  gtk_widget_set_name (hide_b, "boldlabel_vfo_sf");
+  gtk_widget_set_tooltip_text (hide_b, "Hide all buttons and slider");
   gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
   // g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
-  g_signal_connect(hide_b, "clicked", G_CALLBACK(hide_clicked), NULL);
-  gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y + 1);
+  g_signal_connect (hide_b, "clicked", G_CALLBACK (hide_clicked), NULL);
+  gtk_fixed_put (GTK_FIXED (fixed), hide_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
-          y);
-  menu_b = gtk_button_new_with_label("Menu");
-  gtk_widget_set_tooltip_text(menu_b, "Main Menu and Settings");
-  gtk_widget_set_name(menu_b, "boldlabel_vfo_sf");
+  t_print ("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+           y);
+  menu_b = gtk_button_new_with_label ("Menu");
+  gtk_widget_set_tooltip_text (menu_b, "Main Menu and Settings");
+  gtk_widget_set_name (menu_b, "boldlabel_vfo_sf");
   gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  g_signal_connect (menu_b, "button-press-event", G_CALLBACK(menu_cb), NULL) ;
-  gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y + 1);
+  g_signal_connect (menu_b, "button-press-event", G_CALLBACK (menu_cb), NULL) ;
+  gtk_fixed_put (GTK_FIXED (fixed), menu_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
-          y);
-  exit_b = gtk_button_new_with_label("Exit");
-  gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
-  gtk_widget_set_name(exit_b, "boldlabel_vfo_sf");
+  t_print ("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+           y);
+  exit_b = gtk_button_new_with_label ("Exit");
+  gtk_widget_set_tooltip_text (exit_b, "Close and Exit this App");
+  gtk_widget_set_name (exit_b, "boldlabel_vfo_sf");
   gtk_widget_set_size_request (exit_b, MENU_WIDTH, MENU_HEIGHT * 2 / 3);
-  g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL) ;
-  gtk_fixed_put(GTK_FIXED(fixed), exit_b, VFO_WIDTH + METER_WIDTH, y + 2);
+  g_signal_connect (exit_b, "button-press-event", G_CALLBACK (exit_cb), NULL) ;
+  gtk_fixed_put (GTK_FIXED (fixed), exit_b, VFO_WIDTH + METER_WIDTH, y + 2);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   rx_height = my_height - VFO_HEIGHT;
@@ -1269,16 +1269,16 @@ static void radio_create_visual(void) {
   // If upon startup, we only should display one panel, we do the switch below
   //
   for (int i = 0; i < RECEIVERS; i++) {
-    receiver[i] = rx_create_receiver(CHANNEL_RX0 + i, my_width, my_width, rx_height / RECEIVERS);
-    rx_set_squelch(receiver[i]);
+    receiver[i] = rx_create_receiver (CHANNEL_RX0 + i, my_width, my_width, rx_height / RECEIVERS);
+    rx_set_squelch (receiver[i]);
     receiver[i]->x = 0;
     receiver[i]->y = y;
     // Upon startup, if RIT or CTUN is active, tell WDSP.
     receiver[i]->displaying = 1;
-    rx_set_displaying(receiver[i]);
-    rx_set_offset(receiver[i], vfo[i].offset);
-    gtk_fixed_put(GTK_FIXED(fixed), receiver[i]->panel, 0, y);
-    g_object_ref((gpointer)receiver[i]->panel);
+    rx_set_displaying (receiver[i]);
+    rx_set_offset (receiver[i], vfo[i].offset);
+    gtk_fixed_put (GTK_FIXED (fixed), receiver[i]->panel, 0, y);
+    g_object_ref ((gpointer) receiver[i]->panel);
     y += rx_height / RECEIVERS;
   }
 
@@ -1312,9 +1312,9 @@ static void radio_create_visual(void) {
 
   if (radio_has_transmitter) {
     if (duplex) {
-      transmitter = tx_create_transmitter(CHANNEL_TX, 4 * tx_dialog_width, tx_dialog_width, tx_dialog_height);
+      transmitter = tx_create_transmitter (CHANNEL_TX, 4 * tx_dialog_width, tx_dialog_width, tx_dialog_height);
     } else {
-      transmitter = tx_create_transmitter(CHANNEL_TX, my_width, my_width, rx_height);
+      transmitter = tx_create_transmitter (CHANNEL_TX, my_width, my_width, rx_height);
     }
 
     can_transmit = 1;
@@ -1323,23 +1323,23 @@ static void radio_create_visual(void) {
     radio_calc_drive_level();
 
     if (protocol == NEW_PROTOCOL || protocol == ORIGINAL_PROTOCOL) {
-      tx_ps_set_sample_rate(transmitter, protocol == NEW_PROTOCOL ? 192000 : active_receiver->sample_rate);
-      receiver[PS_TX_FEEDBACK] = rx_create_pure_signal_receiver(PS_TX_FEEDBACK,
+      tx_ps_set_sample_rate (transmitter, protocol == NEW_PROTOCOL ? 192000 : active_receiver->sample_rate);
+      receiver[PS_TX_FEEDBACK] = rx_create_pure_signal_receiver (PS_TX_FEEDBACK,
                                  protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
-      receiver[PS_RX_FEEDBACK] = rx_create_pure_signal_receiver(PS_RX_FEEDBACK,
+      receiver[PS_RX_FEEDBACK] = rx_create_pure_signal_receiver (PS_RX_FEEDBACK,
                                  protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
     }
   }
 
   // init local keyer if enabled
   if (cw_keyer_internal == 0) {
-    t_print("Initialize keyer.....\n");
+    t_print ("Initialize keyer.....\n");
     keyer_update();
   }
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
-    old_protocol_init(receiver[0]->sample_rate);
+    old_protocol_init (receiver[0]->sample_rate);
     break;
 
   case NEW_PROTOCOL:
@@ -1348,33 +1348,33 @@ static void radio_create_visual(void) {
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    soapy_protocol_init(FALSE);
+    soapy_protocol_init (FALSE);
     break;
 #endif
   }
 
   if (display_zoompan) {
-    zoompan = zoompan_init(my_width, ZOOMPAN_HEIGHT);
-    gtk_fixed_put(GTK_FIXED(fixed), zoompan, 0, y);
+    zoompan = zoompan_init (my_width, ZOOMPAN_HEIGHT);
+    gtk_fixed_put (GTK_FIXED (fixed), zoompan, 0, y);
     y += ZOOMPAN_HEIGHT;
   }
 
   if (display_sliders) {
     //t_print("create sliders\n");
-    sliders = sliders_init(my_width, SLIDERS_HEIGHT);
-    gtk_fixed_put(GTK_FIXED(fixed), sliders, 0, y);
+    sliders = sliders_init (my_width, SLIDERS_HEIGHT);
+    gtk_fixed_put (GTK_FIXED (fixed), sliders, 0, y);
     y += SLIDERS_HEIGHT;
 
     if (can_transmit && display_extra_sliders) {
-      sliders_show_row(2);
+      sliders_show_row (2);
     } else {
-      sliders_hide_row(2);
+      sliders_hide_row (2);
     }
   }
 
   if (display_toolbar) {
-    toolbar = toolbar_init(my_width, TOOLBAR_HEIGHT);
-    gtk_fixed_put(GTK_FIXED(fixed), toolbar, 0, y);
+    toolbar = toolbar_init (my_width, TOOLBAR_HEIGHT);
+    gtk_fixed_put (GTK_FIXED (fixed), toolbar, 0, y);
   }
 
   //
@@ -1383,26 +1383,26 @@ static void radio_create_visual(void) {
   // the number of receivers otherwise radio_change_receivers
   // will do nothing.
   //
-  t_print("radio_create_visual: receivers=%d RECEIVERS=%d\n", receivers, RECEIVERS);
+  t_print ("radio_create_visual: receivers=%d RECEIVERS=%d\n", receivers, RECEIVERS);
 
   if (receivers != RECEIVERS) {
     int r = receivers;
     receivers = RECEIVERS;
-    t_print("radio_create_visual: calling radio_change_receivers: receivers=%d r=%d\n", receivers, r);
-    radio_change_receivers(r);
+    t_print ("radio_create_visual: calling radio_change_receivers: receivers=%d r=%d\n", receivers, r);
+    radio_change_receivers (r);
   }
 
   gtk_widget_show_all (top_window);  // ... this shows both the HPSDR and C25 preamp/att sliders
   att_type_changed();                // ... and this hides the „wrong“ ones.
 }
 
-int index_rf_gain(void) {
+int index_rf_gain (void) {
   int rxgain_index = 0;
 #ifdef SOAPYSDR
 
-  if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
-    for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
-      if (strcmp(radio->info.soapy.rx_gain[gain_index], "RFGR") == 0) {
+  if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp (radio->name, "sdrplay") == 0) {
+    for (int gain_index = 0; gain_index < (int) radio->info.soapy.rx_gains; gain_index++) {
+      if (strcmp (radio->info.soapy.rx_gain[gain_index], "RFGR") == 0) {
         rxgain_index = gain_index;
       }
     }
@@ -1410,16 +1410,16 @@ int index_rf_gain(void) {
 
 #endif
   return rxgain_index;
-  t_print("%s: index = %d\n", __func__, rxgain_index);
+  t_print ("%s: index = %d\n", __func__, rxgain_index);
 }
 
-int index_if_gain(void) {
+int index_if_gain (void) {
   int ifgain_index = -1;
 #ifdef SOAPYSDR
 
-  if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
-    for (int gain_index = 0; gain_index < (int)radio->info.soapy.rx_gains; gain_index++) {
-      if (strcmp(radio->info.soapy.rx_gain[gain_index], "IFGR") == 0) {
+  if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp (radio->name, "sdrplay") == 0) {
+    for (int gain_index = 0; gain_index < (int) radio->info.soapy.rx_gains; gain_index++) {
+      if (strcmp (radio->info.soapy.rx_gain[gain_index], "IFGR") == 0) {
         ifgain_index = gain_index;
       }
     }
@@ -1427,29 +1427,29 @@ int index_if_gain(void) {
 
 #endif
   return ifgain_index;
-  t_print("%s: index = %d\n", __func__, ifgain_index);
+  t_print ("%s: index = %d\n", __func__, ifgain_index);
 }
 
-static void on_response(GtkDialog *dialog, gint response_id, gpointer user_data) {
+static void on_response (GtkDialog *dialog, gint response_id, gpointer user_data) {
   // GtkWindow *parent = gtk_window_get_transient_for(GTK_WINDOW(dialog));
-  gtk_widget_destroy(GTK_WIDGET(dialog));
+  gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
-static void show_message(GtkWindow *parent, const char *text) __attribute__((unused));
-static void show_message(GtkWindow *parent, const char *text) {
-  GtkWidget *dialog = gtk_message_dialog_new(parent,
+static void show_message (GtkWindow *parent, const char* text) __attribute__ ((unused));
+static void show_message (GtkWindow *parent, const char* text) {
+  GtkWidget *dialog = gtk_message_dialog_new (parent,
                       GTK_DIALOG_MODAL,
                       GTK_MESSAGE_INFO,
                       GTK_BUTTONS_OK,
                       NULL);
-  gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), text);
-  gtk_window_set_title(GTK_WINDOW(dialog), "deskHPSDR Error Message");
-  gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
-  g_signal_connect(dialog, "response", G_CALLBACK(on_response), NULL);
-  gtk_widget_show(dialog);
+  gtk_message_dialog_set_markup (GTK_MESSAGE_DIALOG (dialog), text);
+  gtk_window_set_title (GTK_WINDOW (dialog), "deskHPSDR Error Message");
+  gtk_window_set_deletable (GTK_WINDOW (dialog), FALSE);
+  g_signal_connect (dialog, "response", G_CALLBACK (on_response), NULL);
+  gtk_widget_show (dialog);
 }
 
-void radio_start_radio(void) {
+void radio_start_radio (void) {
   //
   // Debug code. Placed here at the start of the program. deskHPSDR  implicitly assumes
   //             that the entires in the action table (actions.c) are sorted by their
@@ -1460,12 +1460,12 @@ void radio_start_radio(void) {
   //
   for (enum ACTION i = 0; i < ACTIONS; i++) {
     if (i != ActionTable[i].action) {
-      t_print("WARNING: action table messed up\n");
-      t_print("WARNING: Position %d Action=%d str=%s\n", i, ActionTable[i].action, ActionTable[i].button_str);
+      t_print ("WARNING: action table messed up\n");
+      t_print ("WARNING: Position %d Action=%d str=%s\n", i, ActionTable[i].action, ActionTable[i].button_str);
     }
   }
 
-  gdk_window_set_cursor(gtk_widget_get_window(top_window), gdk_cursor_new(GDK_WATCH));
+  gdk_window_set_cursor (gtk_widget_get_window (top_window), gdk_cursor_new (GDK_WATCH));
   //
   // The behaviour of pop-up menus (Combo-Boxes) can be set to
   // "mouse friendly" (standard case) and "touchscreen friendly"
@@ -1485,7 +1485,7 @@ void radio_start_radio(void) {
   device = radio->device;
 
   if (device == DEVICE_HERMES_LITE2) {
-    if (realpath("/dev/radioberry", NULL) != NULL) {
+    if (realpath ("/dev/radioberry", NULL) != NULL) {
       //
       // This is a RadioBerry.
       //
@@ -1499,11 +1499,11 @@ void radio_start_radio(void) {
     }
   }
 
-  if (device == SOAPYSDR_USB_DEVICE && !strcmp(radio->name, "lime")) {
+  if (device == SOAPYSDR_USB_DEVICE && !strcmp (radio->name, "lime")) {
     have_lime = 1;
   }
 
-  if (device == SOAPYSDR_USB_DEVICE && !strcmp(radio->name, "sdrplay")) {
+  if (device == SOAPYSDR_USB_DEVICE && !strcmp (radio->name, "sdrplay")) {
     have_sdrplay = 1;
   }
 
@@ -1514,12 +1514,12 @@ void radio_start_radio(void) {
   // we must first set the RadioBerry flags
   //
   if (gpio_init() < 0) {
-    t_print("GPIO failed to initialize\n");
+    t_print ("GPIO failed to initialize\n");
   }
 
 #endif
 
-  if (device == NEW_DEVICE_SATURN && (strcmp(radio->info.network.interface_name, "XDMA") == 0)) {
+  if (device == NEW_DEVICE_SATURN && (strcmp (radio->info.network.interface_name, "XDMA") == 0)) {
     have_saturn_xdma = 1;
   }
 
@@ -1534,7 +1534,7 @@ void radio_start_radio(void) {
     SerialPorts[id].autoreporting = 0;
     SerialPorts[id].g2 = 0;
     SerialPorts[id].swapRtsDtr = 0;
-    snprintf(SerialPorts[id].port, sizeof(SerialPorts[id].port), "/dev/ttyACM%d", id);
+    snprintf (SerialPorts[id].port, sizeof (SerialPorts[id].port), "/dev/ttyACM%d", id);
   }
 
   // On G2-Ultra systems, we need to know the serial port used for the
@@ -1547,7 +1547,7 @@ void radio_start_radio(void) {
   //
   if (have_saturn_xdma) {
     for (SaturnSerialPort *ChkSerial = SaturnSerialPortsList; ChkSerial->port != NULL; ChkSerial++) {
-      char *cp = realpath(ChkSerial->port, NULL);
+      char *cp = realpath (ChkSerial->port, NULL);
 
       if (cp != NULL) {
         SerialPorts[MAX_SERIAL - 1].enable = 1;
@@ -1555,11 +1555,11 @@ void radio_start_radio(void) {
         SerialPorts[MAX_SERIAL - 1].baud = ChkSerial->baud;
         SerialPorts[MAX_SERIAL - 1].autoreporting = 0;
         SerialPorts[MAX_SERIAL - 1].g2 = 1;
-        snprintf(SerialPorts[MAX_SERIAL - 1].port, sizeof(SerialPorts[MAX_SERIAL - 1].port), "%s", cp);
-        t_print("Serial port %s used for G2 panel with %d baud\n", cp, ChkSerial->baud);
+        snprintf (SerialPorts[MAX_SERIAL - 1].port, sizeof (SerialPorts[MAX_SERIAL - 1].port), "%s", cp);
+        t_print ("Serial port %s used for G2 panel with %d baud\n", cp, ChkSerial->baud);
         break;
       } else {
-        t_print("Serial port %s not found.\n", ChkSerial->port);
+        t_print ("Serial port %s not found.\n", ChkSerial->port);
       }
     }
   }
@@ -1616,9 +1616,9 @@ void radio_start_radio(void) {
     break;
 
   case SOAPYSDR_USB_DEVICE:
-    if (strcmp(radio->name, "lime") == 0) {
+    if (strcmp (radio->name, "lime") == 0) {
       drive_max = 64.0;
-    } else if (strcmp(radio->name, "plutosdr") == 0) {
+    } else if (strcmp (radio->name, "plutosdr") == 0) {
       drive_max = 89.0;
     }
 
@@ -1717,31 +1717,31 @@ void radio_start_radio(void) {
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
-    g_strlcpy(p, "Protocol 1", 32);
-    snprintf(version, 32, "v%d.%d",
-             radio->software_version / 10,
-             radio->software_version % 10);
-    snprintf(ip, 32, "%s", inet_ntoa(radio->info.network.address.sin_addr));
-    snprintf(iface, 64, "%s", radio->info.network.interface_name);
+    g_strlcpy (p, "Protocol 1", 32);
+    snprintf (version, 32, "v%d.%d",
+              radio->software_version / 10,
+              radio->software_version % 10);
+    snprintf (ip, 32, "%s", inet_ntoa (radio->info.network.address.sin_addr));
+    snprintf (iface, 64, "%s", radio->info.network.interface_name);
     break;
 
   case NEW_PROTOCOL:
-    g_strlcpy(p, "Protocol 2", 32);
-    snprintf(version, 32, "v%d.%d",
-             radio->software_version / 10,
-             radio->software_version % 10);
-    snprintf(ip, 32, "%s", inet_ntoa(radio->info.network.address.sin_addr));
-    snprintf(iface, 64, "%s", radio->info.network.interface_name);
+    g_strlcpy (p, "Protocol 2", 32);
+    snprintf (version, 32, "v%d.%d",
+              radio->software_version / 10,
+              radio->software_version % 10);
+    snprintf (ip, 32, "%s", inet_ntoa (radio->info.network.address.sin_addr));
+    snprintf (iface, 64, "%s", radio->info.network.interface_name);
     break;
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    g_strlcpy(p, "SoapySDR", 32);
-    snprintf(version, 32, "%4.20s v%d.%d.%d",
-             radio->info.soapy.driver_key,
-             (radio->software_version % 10000) / 100,
-             (radio->software_version % 100) / 10,
-             radio->software_version % 10);
+    g_strlcpy (p, "SoapySDR", 32);
+    snprintf (version, 32, "%4.20s v%d.%d.%d",
+              radio->info.soapy.driver_key,
+              (radio->software_version % 10000) / 100,
+              (radio->software_version % 100) / 10,
+              radio->software_version % 10);
     break;
 #endif
   }
@@ -1750,11 +1750,11 @@ void radio_start_radio(void) {
   // "Starting" message in status text
   // Note for OZY devices, the name is "Ozy USB"
   //
-  snprintf(text, 1024, "Starting %s (%s %s)",
-           radio->name,
-           p,
-           version);
-  status_text(text);
+  snprintf (text, 1024, "Starting %s (%s %s)",
+            radio->name,
+            p,
+            version);
+  status_text (text);
 
   //
   // text for top bar of deskHPSDR Window
@@ -1764,60 +1764,60 @@ void radio_start_radio(void) {
   case NEW_PROTOCOL:
     if (have_saturn_xdma) {
       // radio has no ip and MAC
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s v%d) on %s",
-               PGNAME,
-               build_version,
-               unameData.machine,
-               GetWDSPVersion() / 100,
-               GetWDSPVersion() % 100,
-               radio->name,
-               p,
-               radio->software_version,
-               iface);
+      snprintf (text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s v%d) on %s",
+                PGNAME,
+                build_version,
+                unameData.machine,
+                GetWDSPVersion() / 100,
+                GetWDSPVersion() % 100,
+                radio->name,
+                p,
+                radio->software_version,
+                iface);
     } else if (device == DEVICE_OZY) {
       // radio has no ip, and name is "Ozy USB"
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s)",
-               PGNAME,
-               build_version,
-               unameData.machine,
-               GetWDSPVersion() / 100,
-               GetWDSPVersion() % 100,
-               radio->name,
-               p,
-               version);
+      snprintf (text, 1024, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s)",
+                PGNAME,
+                build_version,
+                unameData.machine,
+                GetWDSPVersion() / 100,
+                GetWDSPVersion() % 100,
+                radio->name,
+                p,
+                version);
     } else {
       // radio MAC address removed from the top bar otherwise
       // it does not fit  in windows 640 pixels wide.
       // if needed, the MAC address of the radio can be
       // found in the ABOUT menu.
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] :: WDSP Version %d.%02d :: SDR Device: %s (%s) %s on %s [%s]",
-               PGNAME,
-               build_version,
-               unameData.machine,
-               GetWDSPVersion() / 100,
-               GetWDSPVersion() % 100,
-               radio->name,
-               version,
-               ip,
-               iface,
-               p);
+      snprintf (text, 1024, "%s by DL1BZ %s[%s] :: WDSP Version %d.%02d :: SDR Device: %s (%s) %s on %s [%s]",
+                PGNAME,
+                build_version,
+                unameData.machine,
+                GetWDSPVersion() / 100,
+                GetWDSPVersion() % 100,
+                radio->name,
+                version,
+                ip,
+                iface,
+                p);
     }
 
     break;
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    snprintf(text, 2048, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s %s %s)",
-             PGNAME,
-             build_version,
-             unameData.machine,
-             GetWDSPVersion() / 100,
-             GetWDSPVersion() % 100,
-             radio->name,
-             p,
-             radio->info.soapy.driver_key,
-             radio->info.soapy.hardware_key,
-             radio->info.soapy.version);
+    snprintf (text, 2048, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s %s %s)",
+              PGNAME,
+              build_version,
+              unameData.machine,
+              GetWDSPVersion() / 100,
+              GetWDSPVersion() % 100,
+              radio->name,
+              p,
+              radio->info.soapy.driver_key,
+              radio->info.soapy.hardware_key,
+              radio->info.soapy.version);
     break;
 #endif
   }
@@ -1829,30 +1829,30 @@ void radio_start_radio(void) {
   //
   switch (device) {
   case DEVICE_OZY:
-    snprintf(property_path, sizeof(property_path), "ozy.props");
+    snprintf (property_path, sizeof (property_path), "ozy.props");
     break;
 
   case SOAPYSDR_USB_DEVICE:
-    snprintf(property_path, sizeof(property_path), "%s.props", radio->name);
+    snprintf (property_path, sizeof (property_path), "%s.props", radio->name);
     break;
 
   default:
     if (have_saturn_xdma) {
-      snprintf(property_path, sizeof(property_path), "saturn.xdma.props");
+      snprintf (property_path, sizeof (property_path), "saturn.xdma.props");
     } else {
-      snprintf(property_path, sizeof(property_path), "%02X-%02X-%02X-%02X-%02X-%02X.props",
-               radio->info.network.mac_address[0],
-               radio->info.network.mac_address[1],
-               radio->info.network.mac_address[2],
-               radio->info.network.mac_address[3],
-               radio->info.network.mac_address[4],
-               radio->info.network.mac_address[5]);
+      snprintf (property_path, sizeof (property_path), "%02X-%02X-%02X-%02X-%02X-%02X.props",
+                radio->info.network.mac_address[0],
+                radio->info.network.mac_address[1],
+                radio->info.network.mac_address[2],
+                radio->info.network.mac_address[3],
+                radio->info.network.mac_address[4],
+                radio->info.network.mac_address[5]);
     }
 
     break;
   }
 
-  for (unsigned int i = 0; i < strlen(property_path); i++) {
+  for (unsigned int i = 0; i < strlen (property_path); i++) {
     if (property_path[i] == '/') { property_path[i] = '.'; }
   }
 
@@ -1880,7 +1880,7 @@ void radio_start_radio(void) {
     break;
 
   case SOAPYSDR_USB_DEVICE:
-    if (strcmp(radio->name, "lime") == 0) {
+    if (strcmp (radio->name, "lime") == 0) {
       n_adc = 2;
     } else {
       n_adc = 1;
@@ -1951,8 +1951,8 @@ void radio_start_radio(void) {
       adc[0].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
       adc[0].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;;
       adc[0].gain = adc[0].min_gain;
-      t_print("%s: adc[0].min_gain = %f, adc[0].max_gain = %f, adc[0].gain = %f\n", __func__, adc[0].min_gain,
-              adc[0].max_gain, adc[0].gain);
+      t_print ("%s: adc[0].min_gain = %f, adc[0].max_gain = %f, adc[0].gain = %f\n", __func__, adc[0].min_gain,
+               adc[0].max_gain, adc[0].gain);
     }
   }
 
@@ -1986,8 +1986,8 @@ void radio_start_radio(void) {
       adc[1].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
       adc[1].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;;
       adc[1].gain = adc[1].min_gain;
-      t_print("%s: adc[1].min_gain = %f, adc[1].max_gain = %f, adc[1].gain = %f\n", __func__, adc[1].min_gain,
-              adc[1].max_gain, adc[1].gain);
+      t_print ("%s: adc[1].min_gain = %f, adc[1].max_gain = %f, adc[1].gain = %f\n", __func__, adc[1].min_gain,
+               adc[1].max_gain, adc[1].gain);
     }
 
     soapy_radio_sample_rate = radio->info.soapy.sample_rate;
@@ -2017,18 +2017,18 @@ void radio_start_radio(void) {
   display_sliders = 1;
   display_toolbar = 1;
 #endif
-  t_print("%s: setup RECEIVERS protocol=%d\n", __func__, protocol);
+  t_print ("%s: setup RECEIVERS protocol=%d\n", __func__, protocol);
 
   switch (protocol) {
   case SOAPYSDR_PROTOCOL:
-    t_print("%s: setup RECEIVERS SOAPYSDR\n", __func__);
+    t_print ("%s: setup RECEIVERS SOAPYSDR\n", __func__);
     RECEIVERS = 1;
     PS_TX_FEEDBACK = 1;
     PS_RX_FEEDBACK = 2;
     break;
 
   default:
-    t_print("%s: setup RECEIVERS default\n", __func__);
+    t_print ("%s: setup RECEIVERS default\n", __func__);
     RECEIVERS = 2;
     PS_TX_FEEDBACK = (RECEIVERS);
     PS_RX_FEEDBACK = (RECEIVERS + 1);
@@ -2038,7 +2038,7 @@ void radio_start_radio(void) {
   // receivers = RECEIVERS;
   receivers = 1; // we start ever with only one RX
   radio_restore_state();
-  radio_change_region(region);
+  radio_change_region (region);
   radio_create_visual();
   radio_reconfigure_screen();
 
@@ -2066,10 +2066,10 @@ void radio_start_radio(void) {
 #if defined (__AUTOG__)
 
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && autogain_enabled) {
-    if (pthread_equal(pthread_self(), deskhpsdr_main_thread)) {
+    if (pthread_equal (pthread_self(), deskhpsdr_main_thread)) {
       launch_autogain_hl2();
     } else {
-      g_idle_add((GSourceFunc)launch_autogain_hl2_wrapper, NULL);
+      g_idle_add ((GSourceFunc) launch_autogain_hl2_wrapper, NULL);
     }
   }
 
@@ -2086,7 +2086,7 @@ void radio_start_radio(void) {
     // If serial port is enabled but no success, clear "enable" flag
     //
     if (SerialPorts[id].enable) {
-      SerialPorts[id].enable = launch_serial_rigctl(id);
+      SerialPorts[id].enable = launch_serial_rigctl (id);
     }
   }
 
@@ -2094,7 +2094,7 @@ void radio_start_radio(void) {
     radio_calc_drive_level();
 
     if (transmitter->puresignal) {
-      tx_ps_onoff(transmitter, 1);
+      tx_ps_onoff (transmitter, 1);
     }
   }
 
@@ -2103,96 +2103,96 @@ void radio_start_radio(void) {
 
   if (protocol == SOAPYSDR_PROTOCOL) {
     RECEIVER *rx = receiver[0];
-    soapy_protocol_create_receiver(rx);
+    soapy_protocol_create_receiver (rx);
 
     if (can_transmit) {
-      soapy_protocol_create_transmitter(transmitter);
-      soapy_protocol_set_tx_antenna(transmitter, dac[0].antenna);
-      soapy_protocol_set_tx_gain(transmitter, transmitter->drive);
-      soapy_protocol_set_tx_frequency(transmitter);
-      soapy_protocol_start_transmitter(transmitter);
+      soapy_protocol_create_transmitter (transmitter);
+      soapy_protocol_set_tx_antenna (transmitter, dac[0].antenna);
+      soapy_protocol_set_tx_gain (transmitter, transmitter->drive);
+      soapy_protocol_set_tx_frequency (transmitter);
+      soapy_protocol_start_transmitter (transmitter);
     }
 
-    soapy_protocol_set_rx_antenna(rx, adc[0].antenna);
-    soapy_protocol_set_rx_frequency(rx, VFO_A);
-    soapy_protocol_set_automatic_gain(rx, adc[0].agc);
+    soapy_protocol_set_rx_antenna (rx, adc[0].antenna);
+    soapy_protocol_set_rx_frequency (rx, VFO_A);
+    soapy_protocol_set_automatic_gain (rx, adc[0].agc);
 
-    if (!adc[0].agc) { soapy_protocol_set_gain(rx); }
+    if (!adc[0].agc) { soapy_protocol_set_gain (rx); }
 
     if (vfo[0].ctun) {
-      rx_set_frequency(rx, vfo[0].ctun_frequency);
+      rx_set_frequency (rx, vfo[0].ctun_frequency);
     }
 
-    soapy_protocol_start_receiver(rx);
+    soapy_protocol_start_receiver (rx);
 
     //t_print("radio: set rf_gain=%f\n",rx->rf_gain);
-    if (strcmp(radio->name, "sdrplay") != 0) {
-      soapy_protocol_set_gain(rx);
-      t_print("%s: Is not SDRPlay\n", __func__);
+    if (strcmp (radio->name, "sdrplay") != 0) {
+      soapy_protocol_set_gain (rx);
+      t_print ("%s: Is not SDRPlay\n", __func__);
     } else {
-      t_print("%s: Is %s\n", __func__, radio->info.soapy.hardware_key);
+      t_print ("%s: Is %s\n", __func__, radio->info.soapy.hardware_key);
     }
 
-    if (strcmp(radio->name, "sdrplay") == 0 && radio->info.soapy.rx_gains > 1) {
-      for (int gain_id = 0; gain_id < (int)radio->info.soapy.rx_gains; gain_id++) {
-        if (strcmp(radio->info.soapy.rx_gain[gain_id], "RFGR") == 0) {
-          soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[gain_id], 1.0);
+    if (strcmp (radio->name, "sdrplay") == 0 && radio->info.soapy.rx_gains > 1) {
+      for (int gain_id = 0; gain_id < (int) radio->info.soapy.rx_gains; gain_id++) {
+        if (strcmp (radio->info.soapy.rx_gain[gain_id], "RFGR") == 0) {
+          soapy_protocol_set_gain_element (rx, radio->info.soapy.rx_gain[gain_id], 1.0);
         }
       }
     }
 
     if (radio->info.soapy.rx_has_automatic_gain) {
       adc[0].agc = TRUE;
-      soapy_protocol_set_automatic_gain(rx, adc[0].agc);
+      soapy_protocol_set_automatic_gain (rx, adc[0].agc);
     }
 
-    if (strcmp(radio->name, "sdrplay") == 0) {
-      t_print("%s: Bias-T: %d agc_setpoint = %d\n", __func__, soapy_protocol_get_bias_t(rx),
-              soapy_protocol_get_agc_setpoint(rx));
+    if (strcmp (radio->name, "sdrplay") == 0) {
+      t_print ("%s: Bias-T: %d agc_setpoint = %d\n", __func__, soapy_protocol_get_bias_t (rx),
+               soapy_protocol_get_agc_setpoint (rx));
 
       if (rx->panadapter_autoscale_enabled) {
         rx->panadapter_autoscale_enabled = 0;
         radio_reconfigure();
-        g_idle_add(ext_vfo_update, NULL);
+        g_idle_add (ext_vfo_update, NULL);
       }
     }
 
-    update_rf_gain_scale_soapy(index_rf_gain());
+    update_rf_gain_scale_soapy (index_rf_gain());
     update_slider_hwagc_btn();
 
-    if (radio && strcmp(radio->name, "sdrplay") == 0) {
-      soapy_protocol_get_settings_info(active_receiver);
-      t_print("%s: has correct driver: %d\n", __func__, soapy_protocol_check_sdrplay_mod(active_receiver));
+    if (radio && strcmp (radio->name, "sdrplay") == 0) {
+      soapy_protocol_get_settings_info (active_receiver);
+      t_print ("%s: has correct driver: %d\n", __func__, soapy_protocol_check_sdrplay_mod (active_receiver));
 
-      if (soapy_protocol_check_sdrplay_mod(active_receiver) == FALSE) {
+      if (soapy_protocol_check_sdrplay_mod (active_receiver) == FALSE) {
         char msg_txt_win[2048];
-        snprintf(msg_txt_win, sizeof(msg_txt_win),
-                 "<span color='red' size='x-large' weight='bold'>deskHPSDR critical error:</span>"
-                 "<span size='large' weight='bold'>\n\nBroken SoapySDRPlay3 plugin detected:\n"
-                 "RX Gain \"CURRENT\" doesn't exist.\n"
-                 "\nThis is a known issue, because the official SoapySDRPlay3 plugin code is broken.\n"
-                 "</span>"
-                 "<span color='red' size='large' weight='bold'>\nYour SDRplay can be used, but calculation of the RX panadapter, S-meter and waterfall is not possible.</span>"
-                 "<span size='large' weight='bold'>\n\nSolution:\nRemove the current SoapySDRPlay3 plugin and replace it with the SoapySDRPlay3 plugin using branch \"get-current-gain\".\n"
-                 "DO NOT USE the \"master\" branch.\n\n"
-                 "Get the required source of SoapySDRPlay3 plugin from\nhttps://github.com/pothosware/SoapySDRPlay3\nand rebuild &amp; install the plugin new."
-                 "</span>\n\n");
-        show_message(GTK_WINDOW(top_window), msg_txt_win);
+        snprintf (msg_txt_win, sizeof (msg_txt_win),
+                  "<span color='red' size='x-large' weight='bold'>deskHPSDR critical error:</span>"
+                  "<span size='large' weight='bold'>\n\nBroken SoapySDRPlay3 plugin detected:\n"
+                  "RX Gain \"CURRENT\" doesn't exist.\n"
+                  "\nThis is a known issue, because the official SoapySDRPlay3 plugin code is broken.\n"
+                  "</span>"
+                  "<span color='red' size='large' weight='bold'>\nYour SDRplay can be used, but calculation of the RX panadapter, S-meter and waterfall is not possible.</span>"
+                  "<span size='large' weight='bold'>\n\nSolution:\nRemove the current SoapySDRPlay3 plugin and replace it with the SoapySDRPlay3 plugin using branch \"get-current-gain\".\n"
+                  "DO NOT USE the \"master\" branch.\n\n"
+                  "Get the required source of SoapySDRPlay3 plugin from\nhttps://github.com/pothosware/SoapySDRPlay3\nand rebuild &amp; install the plugin new."
+                  "</span>\n\n");
+        show_message (GTK_WINDOW (top_window), msg_txt_win);
       }
     }
 
-    soapy_protocol_get_driver(rx);
+    soapy_protocol_get_driver (rx);
   }
 
 #endif
-  g_idle_add(ext_vfo_update, NULL);
+  g_idle_add (ext_vfo_update, NULL);
   {
-    GdkWindow  *w = gtk_widget_get_window(top_window);
-    GdkDisplay *d = gdk_window_get_display(w);
-    GdkCursor  *c = use_wayland ? gdk_cursor_new_from_name(d, "default")
-                    : gdk_cursor_new(GDK_ARROW);
-    gdk_window_set_cursor(w, c);
-    g_object_unref(c);
+    GdkWindow  *w = gtk_widget_get_window (top_window);
+    GdkDisplay *d = gdk_window_get_display (w);
+    GdkCursor  *c = use_wayland ? gdk_cursor_new_from_name (d, "default")
+                    : gdk_cursor_new (GDK_ARROW);
+    gdk_window_set_cursor (w, c);
+    g_object_unref (c);
   }
 #ifdef MIDI
 
@@ -2205,7 +2205,7 @@ void radio_start_radio(void) {
       // it will be set again.
       //
       midi_devices[i].active = 0;
-      register_midi_device(i);
+      register_midi_device (i);
     }
   }
 
@@ -2219,14 +2219,14 @@ void radio_start_radio(void) {
 #endif
 }
 
-void reassign_pa_trim(void) {
+void reassign_pa_trim (void) {
   for (int j = 0; j < 11; j++) {
     pa_trim[j] = j * pa_power_list[pa_power] * 0.1;
   }
 }
 
-void radio_change_receivers(int r) {
-  t_print("radio_change_receivers: from %d to %d\n", receivers, r);
+void radio_change_receivers (int r) {
+  t_print ("radio_change_receivers: from %d to %d\n", receivers, r);
 
   // The button in the radio menu will call this function even if the
   // number of receivers has not changed.
@@ -2243,29 +2243,29 @@ void radio_change_receivers(int r) {
   switch (r) {
   case 1:
     receiver[1]->displaying = 0;
-    rx_set_displaying(receiver[1]);
-    gtk_container_remove(GTK_CONTAINER(fixed), receiver[1]->panel);
+    rx_set_displaying (receiver[1]);
+    gtk_container_remove (GTK_CONTAINER (fixed), receiver[1]->panel);
     receivers = 1;
     break;
 
   case 2:
-    gtk_fixed_put(GTK_FIXED(fixed), receiver[1]->panel, 0, 0);
+    gtk_fixed_put (GTK_FIXED (fixed), receiver[1]->panel, 0, 0);
     receiver[1]->displaying = 1;
-    rx_set_displaying(receiver[1]);
+    rx_set_displaying (receiver[1]);
     receivers = 2;
 
     //
     // Make sure RX2 shares the sample rate  with RX1 when running P1.
     //
     if (protocol == ORIGINAL_PROTOCOL && receiver[1]->sample_rate != receiver[0]->sample_rate) {
-      rx_change_sample_rate(receiver[1], receiver[0]->sample_rate);
+      rx_change_sample_rate (receiver[1], receiver[0]->sample_rate);
     }
 
     break;
   }
 
   radio_reconfigure_screen();
-  rx_set_active(receiver[0]);
+  rx_set_active (receiver[0]);
   schedule_high_priority();
 
   if (protocol == ORIGINAL_PROTOCOL) {
@@ -2273,7 +2273,7 @@ void radio_change_receivers(int r) {
   }
 }
 
-void radio_change_sample_rate(int rate) {
+void radio_change_sample_rate (int rate) {
   int i;
 
   //
@@ -2286,15 +2286,15 @@ void radio_change_sample_rate(int rate) {
       radio_protocol_stop();
 
       for (i = 0; i < receivers; i++) {
-        rx_change_sample_rate(receiver[i], rate);
+        rx_change_sample_rate (receiver[i], rate);
       }
 
-      rx_change_sample_rate(receiver[PS_RX_FEEDBACK], rate);
-      old_protocol_set_mic_sample_rate(rate);
+      rx_change_sample_rate (receiver[PS_RX_FEEDBACK], rate);
+      old_protocol_set_mic_sample_rate (rate);
       radio_protocol_run();
 
       if (can_transmit) {
-        tx_ps_set_sample_rate(transmitter, rate);
+        tx_ps_set_sample_rate (transmitter, rate);
       }
     }
 
@@ -2304,7 +2304,7 @@ void radio_change_sample_rate(int rate) {
   case SOAPYSDR_PROTOCOL:
     if (receiver[0]->sample_rate != rate) {
       radio_protocol_stop();
-      rx_change_sample_rate(receiver[0], rate);
+      rx_change_sample_rate (receiver[0], rate);
       radio_protocol_run();
     }
 
@@ -2313,11 +2313,11 @@ void radio_change_sample_rate(int rate) {
   }
 }
 
-static void rxtx(int state) {
+static void rxtx (int state) {
   int i;
 
   if (!can_transmit) {
-    t_print("WARNING: rxtx called but no transmitter!");
+    t_print ("WARNING: rxtx called but no transmitter!");
     return;
   }
 
@@ -2327,17 +2327,17 @@ static void rxtx(int state) {
   switch (capture_state) {
   case CAP_RECORDING:
     capture_state = CAP_RECORD_DONE;
-    schedule_action(CAPTURE, PRESSED, 0);
+    schedule_action (CAPTURE, PRESSED, 0);
     break;
 
   case CAP_XMIT:
     capture_state = CAP_XMIT_DONE;
-    schedule_action(capture_trigger_action, PRESSED, 0);
+    schedule_action (capture_trigger_action, PRESSED, 0);
     break;
 
   case CAP_REPLAY:
     capture_state = CAP_REPLAY_DONE;
-    schedule_action(REPLAY, PRESSED, 0);
+    schedule_action (REPLAY, PRESSED, 0);
     break;
   }
 
@@ -2359,49 +2359,49 @@ static void rxtx(int state) {
         // (especially with PureSignal or DIVERSITY).
         // Therefore, wait for *all* receivers to complete
         // their slew-down before going TX.
-        rx_off(receiver[i]);
+        rx_off (receiver[i]);
         receiver[i]->displaying = 0;
-        rx_set_displaying(receiver[i]);
-        g_object_ref((gpointer)receiver[i]->panel);
+        rx_set_displaying (receiver[i]);
+        g_object_ref ((gpointer) receiver[i]->panel);
 
         if (receiver[i]->panadapter != NULL) {
-          g_object_ref((gpointer)receiver[i]->panadapter);
+          g_object_ref ((gpointer) receiver[i]->panadapter);
         }
 
         if (receiver[i]->waterfall != NULL) {
-          g_object_ref((gpointer)receiver[i]->waterfall);
+          g_object_ref ((gpointer) receiver[i]->waterfall);
         }
 
-        gtk_container_remove(GTK_CONTAINER(fixed), receiver[i]->panel);
+        gtk_container_remove (GTK_CONTAINER (fixed), receiver[i]->panel);
       }
     }
 
     if (transmitter->dialog) {
-      gtk_widget_show_all(transmitter->dialog);
+      gtk_widget_show_all (transmitter->dialog);
 
       if (transmitter->dialog_x != -1 && transmitter->dialog_y != -1) {
-        gtk_window_move(GTK_WINDOW(transmitter->dialog), transmitter->dialog_x, transmitter->dialog_y);
+        gtk_window_move (GTK_WINDOW (transmitter->dialog), transmitter->dialog_x, transmitter->dialog_y);
       }
     } else {
-      gtk_fixed_put(GTK_FIXED(fixed), transmitter->panel, transmitter->x, transmitter->y);
+      gtk_fixed_put (GTK_FIXED (fixed), transmitter->panel, transmitter->x, transmitter->y);
     }
 
     if (transmitter->puresignal) {
-      tx_ps_mox(transmitter, 1);
+      tx_ps_mox (transmitter, 1);
     }
 
-    tx_on(transmitter);
+    tx_on (transmitter);
     transmitter->displaying = 1;
-    tx_set_displaying(transmitter);
+    tx_set_displaying (transmitter);
 
     switch (protocol) {
 #ifdef SOAPYSDR
 
     case SOAPYSDR_PROTOCOL:
       if (have_lime) {
-        soapy_protocol_rxtx(transmitter);
+        soapy_protocol_rxtx (transmitter);
       } else {
-        soapy_protocol_set_tx_frequency(transmitter);
+        soapy_protocol_set_tx_frequency (transmitter);
         //soapy_protocol_start_transmitter(transmitter);
       }
 
@@ -2418,15 +2418,15 @@ static void rxtx(int state) {
     static int snapshot = 0;
     snapshot++;
     char fname[32];
-    snprintf(fname, 32, "TXDUMP%d.iqdata", snapshot);
-    FILE *fp = fopen(fname, "w");
+    snprintf (fname, 32, "TXDUMP%d.iqdata", snapshot);
+    FILE *fp = fopen (fname, "w");
 
     if (fp) {
       for (int i = 0; i < rxiq_count; i++) {
-        fprintf(fp, "%d  %ld  %ld\n", i, rxiqi[i], rxiqq[i]);
+        fprintf (fp, "%d  %ld  %ld\n", i, rxiqi[i], rxiqq[i]);
       }
 
-      fclose(fp);
+      fclose (fp);
     }
 
 #endif
@@ -2436,7 +2436,7 @@ static void rxtx(int state) {
 
     case SOAPYSDR_PROTOCOL:
       if (have_lime) {
-        soapy_protocol_txrx(active_receiver);
+        soapy_protocol_txrx (active_receiver);
       }
 
       //soapy_protocol_stop_transmitter(transmitter);
@@ -2445,18 +2445,18 @@ static void rxtx(int state) {
     }
 
     if (transmitter->puresignal) {
-      tx_ps_mox(transmitter, 0);
+      tx_ps_mox (transmitter, 0);
     }
 
-    tx_off(transmitter);
+    tx_off (transmitter);
     transmitter->displaying = 0;
-    tx_set_displaying(transmitter);
+    tx_set_displaying (transmitter);
 
     if (transmitter->dialog) {
-      gtk_window_get_position(GTK_WINDOW(transmitter->dialog), &transmitter->dialog_x, &transmitter->dialog_y);
-      gtk_widget_hide(transmitter->dialog);
+      gtk_window_get_position (GTK_WINDOW (transmitter->dialog), &transmitter->dialog_x, &transmitter->dialog_y);
+      gtk_widget_hide (transmitter->dialog);
     } else {
-      gtk_container_remove(GTK_CONTAINER(fixed), transmitter->panel);
+      gtk_container_remove (GTK_CONTAINER (fixed), transmitter->panel);
     }
 
     if (!duplex) {
@@ -2500,10 +2500,10 @@ static void rxtx(int state) {
       }
 
       for (i = 0; i < receivers; i++) {
-        gtk_fixed_put(GTK_FIXED(fixed), receiver[i]->panel, receiver[i]->x, receiver[i]->y);
-        rx_on(receiver[i]);
+        gtk_fixed_put (GTK_FIXED (fixed), receiver[i]->panel, receiver[i]->x, receiver[i]->y);
+        rx_on (receiver[i]);
         receiver[i]->displaying = 1;
-        rx_set_displaying(receiver[i]);
+        rx_set_displaying (receiver[i]);
         //
         // There might be some left-over samples in the RX buffer that were filled in
         // *before* going TX, delete them
@@ -2522,37 +2522,37 @@ static void rxtx(int state) {
   }
 
 #ifdef GPIO
-  gpio_set_ptt(state);
+  gpio_set_ptt (state);
 #endif
 }
 
-void radio_mox_update(int state) {
+void radio_mox_update (int state) {
   if (!can_transmit) { return; }
 
   if (state && !TransmitAllowed()) {
     state = 0;
-    tx_set_out_of_band(transmitter);
+    tx_set_out_of_band (transmitter);
   }
 
-  radio_set_mox(state);
-  g_idle_add(ext_vfo_update, NULL);
+  radio_set_mox (state);
+  g_idle_add (ext_vfo_update, NULL);
 }
 
-void radio_tune_update(int state) {
+void radio_tune_update (int state) {
   if (!can_transmit) { return; }
 
-  radio_set_mox(0);  // This will also cancel VOX and TUNE
+  radio_set_mox (0); // This will also cancel VOX and TUNE
 
   if (state && !TransmitAllowed()) {
     state = 0;
-    tx_set_out_of_band(transmitter);
+    tx_set_out_of_band (transmitter);
   }
 
-  radio_set_tune(state);
-  g_idle_add(ext_vfo_update, NULL);
+  radio_set_tune (state);
+  g_idle_add (ext_vfo_update, NULL);
 }
 
-void radio_set_mox(int state) {
+void radio_set_mox (int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   int was_tune = tune;
 
@@ -2567,7 +2567,7 @@ void radio_set_mox(int state) {
   // - deactivating MOX while VOX is pending makes a TX/RX transition
   //
   if (tune) {
-    radio_set_tune(0);
+    radio_set_tune (0);
   }
 
   vox_cancel();  // remove time-out
@@ -2578,7 +2578,7 @@ void radio_set_mox(int state) {
   // transition is necessary.
   //
   if (state != radio_is_transmitting()) {
-    rxtx(state);
+    rxtx (state);
   }
 
   mox  = state;
@@ -2586,7 +2586,7 @@ void radio_set_mox(int state) {
   vox  = 0;
 
   if (!tci_is_applying() && (!was_tune || state)) {
-    tci_mox_changed(state);
+    tci_mox_changed (state);
   }
 
   switch (protocol) {
@@ -2600,11 +2600,11 @@ void radio_set_mox(int state) {
   }
 }
 
-int radio_get_mox(void) {
+int radio_get_mox (void) {
   return mox;
 }
 
-void radio_set_vox(int state) {
+void radio_set_vox (int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   if (!can_transmit) { return; }
 
@@ -2613,7 +2613,7 @@ void radio_set_vox(int state) {
   if (state && TxInhibit) { return; }
 
   if (vox != state) {
-    rxtx(state);
+    rxtx (state);
   }
 
   vox = state;
@@ -2621,8 +2621,8 @@ void radio_set_vox(int state) {
   schedule_receive_specific();
 }
 
-void radio_set_tune(int state) {
-  t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox, vox, tune, state);
+void radio_set_tune (int state) {
+  t_print ("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox, vox, tune, state);
 
   if (!can_transmit) { return; }
 
@@ -2635,7 +2635,7 @@ void radio_set_tune(int state) {
     vox_cancel();
 
     if (vox || mox) {
-      rxtx(0);
+      rxtx (0);
       vox = 0;
       mox = 0;
     }
@@ -2667,13 +2667,13 @@ void radio_set_tune(int state) {
       transmitter->cfc_eq = 0;
       transmitter->compressor = 0;
       // set off if TUNEing, but restore later
-      tx_set_compressor(transmitter);
+      tx_set_compressor (transmitter);
 
       if (can_transmit && display_sliders) {
-        update_slider_bbcompr_scale(FALSE);
-        update_slider_bbcompr_button(FALSE);
-        update_slider_lev_scale(FALSE);
-        update_slider_lev_button(FALSE);
+        update_slider_bbcompr_scale (FALSE);
+        update_slider_bbcompr_button (FALSE);
+        update_slider_lev_scale (FALSE);
+        update_slider_lev_button (FALSE);
       }
 
       //
@@ -2705,23 +2705,23 @@ void radio_set_tune(int state) {
         //
         // So before start tuning: Reset PS engine
         //
-        tx_ps_reset(transmitter);
-        usleep(50000);
+        tx_ps_reset (transmitter);
+        usleep (50000);
       }
 
       if (full_tune) {
         if (OCfull_tune_time != 0) {
           struct timeval te;
-          gettimeofday(&te, NULL);
-          tune_timeout = (te.tv_sec * 1000LL + te.tv_usec / 1000) + (long long)OCfull_tune_time;
+          gettimeofday (&te, NULL);
+          tune_timeout = (te.tv_sec * 1000LL + te.tv_usec / 1000) + (long long) OCfull_tune_time;
         }
       }
 
       if (memory_tune) {
         if (OCmemory_tune_time != 0) {
           struct timeval te;
-          gettimeofday(&te, NULL);
-          tune_timeout = (te.tv_sec * 1000LL + te.tv_usec / 1000) + (long long)OCmemory_tune_time;
+          gettimeofday (&te, NULL);
+          tune_timeout = (te.tv_sec * 1000LL + te.tv_usec / 1000) + (long long) OCmemory_tune_time;
         }
       }
     }
@@ -2736,9 +2736,9 @@ void radio_set_tune(int state) {
           // (especially with PureSignal or DIVERSITY)
           // Therefore, wait for *all* receivers to complete
           // their slew-down before going TX.
-          rx_off(receiver[i]);
+          rx_off (receiver[i]);
           receiver[i]->displaying = 0;
-          rx_set_displaying(receiver[i]);
+          rx_set_displaying (receiver[i]);
           schedule_high_priority();
         }
       }
@@ -2773,31 +2773,31 @@ void radio_set_tune(int state) {
       }
 
 #endif
-      tx_set_singletone(transmitter, 1, freq);
+      tx_set_singletone (transmitter, 1, freq);
 
       switch (txmode) {
       case modeCWL:
         cw_keyer_internal = 0;
-        tx_set_mode(transmitter, modeLSB);
+        tx_set_mode (transmitter, modeLSB);
         break;
 
       case modeCWU:
         cw_keyer_internal = 0;
-        tx_set_mode(transmitter, modeUSB);
+        tx_set_mode (transmitter, modeUSB);
         break;
       }
 
       tune = state;
       radio_calc_drive_level();
-      rxtx(state);
+      rxtx (state);
     } else {
-      tx_set_singletone(transmitter, 0, 0.0);
-      rxtx(state);
+      tx_set_singletone (transmitter, 0, 0.0);
+      rxtx (state);
 
       switch (pre_tune_mode) {
       case modeCWL:
       case modeCWU:
-        tx_set_mode(transmitter, pre_tune_mode);
+        tx_set_mode (transmitter, pre_tune_mode);
         cw_keyer_internal = pre_tune_cw_internal;
         break;
       }
@@ -2808,25 +2808,25 @@ void radio_set_tune(int state) {
         // If we have done a "PS reset" when we started tuning,
         // resume PS engine now.
         //
-        tx_ps_resume(transmitter);
+        tx_ps_resume (transmitter);
       }
 
       // restore settings we switched off earlier
-      tx_set_compressor(transmitter);
+      tx_set_compressor (transmitter);
       int id = active_receiver->id;
       int m = vfo[id].mode;
 
       if (can_transmit && display_sliders) {
         if (m == modeDIGU || m == modeDIGL) {
-          update_slider_bbcompr_scale(FALSE);
-          update_slider_bbcompr_button(FALSE);
-          update_slider_lev_scale(FALSE);
-          update_slider_lev_button(FALSE);
+          update_slider_bbcompr_scale (FALSE);
+          update_slider_bbcompr_button (FALSE);
+          update_slider_lev_scale (FALSE);
+          update_slider_lev_button (FALSE);
         } else {
-          update_slider_bbcompr_scale(TRUE);
-          update_slider_bbcompr_button(TRUE);
-          update_slider_lev_scale(TRUE);
-          update_slider_lev_button(TRUE);
+          update_slider_bbcompr_scale (TRUE);
+          update_slider_bbcompr_button (TRUE);
+          update_slider_lev_scale (TRUE);
+          update_slider_lev_button (TRUE);
         }
       }
 
@@ -2844,8 +2844,8 @@ void radio_set_tune(int state) {
   }
 
   if (tune_changed && !tci_is_applying()) {
-    tci_tune_changed(state);
-    tci_mox_changed(state);
+    tci_tune_changed (state);
+    tci_mox_changed (state);
   }
 
   schedule_high_priority();
@@ -2853,15 +2853,15 @@ void radio_set_tune(int state) {
   schedule_receive_specific();
 }
 
-int radio_get_tune(void) {
+int radio_get_tune (void) {
   return tune;
 }
 
-int radio_is_transmitting(void) {
+int radio_is_transmitting (void) {
   return mox | vox | tune;
 }
 
-double radio_get_drive(void) {
+double radio_get_drive (void) {
   if (can_transmit) {
     return transmitter->drive;
   } else {
@@ -2869,7 +2869,7 @@ double radio_get_drive(void) {
   }
 }
 
-int radio_get_drive_as_int(void) {
+int radio_get_drive_as_int (void) {
   if (can_transmit) {
     return transmitter->drive;
   } else {
@@ -2877,15 +2877,15 @@ int radio_get_drive_as_int(void) {
   }
 }
 
-static int calcLevel(double d) {
+static int calcLevel (double d) {
   int level = 0;
   int v = vfo_get_tx_vfo();
-  const BAND *band = band_get_band(vfo[v].band);
-  double target_dbm = 10.0 * log10(d * 1000.0);
+  const BAND *band = band_get_band (vfo[v].band);
+  double target_dbm = 10.0 * log10 (d * 1000.0);
   double gbb = band->pa_calibration;
   target_dbm -= gbb;
-  double target_volts = sqrt(pow(10, target_dbm * 0.1) * 0.05);
-  double volts = min((target_volts / 0.8), 1.0);
+  double target_volts = sqrt (pow (10, target_dbm * 0.1) * 0.05);
+  double volts = min ((target_volts / 0.8), 1.0);
   double actual_volts = volts * (1.0 / 0.98);
 
   if (actual_volts < 0.0) {
@@ -2894,19 +2894,19 @@ static int calcLevel(double d) {
     actual_volts = 1.0;
   }
 
-  level = (int)(actual_volts * 255.0);
+  level = (int) (actual_volts * 255.0);
   return level;
 }
 
-void radio_calc_drive_level(void) {
+void radio_calc_drive_level (void) {
   int level;
 
   if (!can_transmit) { return; }
 
   if (tune && !transmitter->tune_use_drive) {
-    level = calcLevel(transmitter->tune_drive);
+    level = calcLevel (transmitter->tune_drive);
   } else {
-    level = calcLevel(transmitter->drive);
+    level = calcLevel (transmitter->drive);
   }
 
   //
@@ -3002,12 +3002,12 @@ void radio_calc_drive_level(void) {
   schedule_high_priority();
 }
 
-void radio_set_drive(double value) {
-  t_print("%s: drive=%d\n", __func__, (int)value);
+void radio_set_drive (double value) {
+  t_print ("%s: drive=%d\n", __func__, (int) value);
 
   if (!can_transmit) { return; }
 
-  transmitter->drive = (int)value;
+  transmitter->drive = (int) value;
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
@@ -3017,23 +3017,23 @@ void radio_set_drive(double value) {
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    soapy_protocol_set_tx_gain(transmitter, transmitter->drive);
+    soapy_protocol_set_tx_gain (transmitter, transmitter->drive);
     break;
 #endif
   }
 }
 
-void radio_set_satmode(int mode) {
+void radio_set_satmode (int mode) {
   sat_mode = mode;
 }
 
-void radio_set_rf_gain(const RECEIVER *rx) {
+void radio_set_rf_gain (const RECEIVER *rx) {
 #ifdef SOAPYSDR
-  soapy_protocol_set_gain_element(rx, radio->info.soapy.rx_gain[rx->adc], (int)adc[rx->adc].gain);
+  soapy_protocol_set_gain_element (rx, radio->info.soapy.rx_gain[rx->adc], (int) adc[rx->adc].gain);
 #endif
 }
 
-void radio_set_alex_antennas(void) {
+void radio_set_alex_antennas (void) {
   //
   // Obtain band of VFO-A and transmitter, set ALEX RX/TX antennas
   // and the step attenuator
@@ -3044,7 +3044,7 @@ void radio_set_alex_antennas(void) {
   const BAND *band;
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-    band = band_get_band(vfo[VFO_A].band);
+    band = band_get_band (vfo[VFO_A].band);
     receiver[0]->alex_antenna = band->alexRxAntenna;
 
     if (filter_board != CHARLY25) {
@@ -3052,7 +3052,7 @@ void radio_set_alex_antennas(void) {
     }
 
     if (can_transmit) {
-      band = band_get_band(vfo[vfo_get_tx_vfo()].band);
+      band = band_get_band (vfo[vfo_get_tx_vfo()].band);
       transmitter->alex_antenna = band->alexTxAntenna;
     }
   }
@@ -3061,7 +3061,7 @@ void radio_set_alex_antennas(void) {
   schedule_general();               // possibly update PA disable
 }
 
-void radio_tx_vfo_changed(void) {
+void radio_tx_vfo_changed (void) {
   //
   // When changing the active receiver or changing the split status,
   // the VFO that controls the transmitter my flip between VFOA/VFOB.
@@ -3073,7 +3073,7 @@ void radio_tx_vfo_changed(void) {
   // is also due.
   //
   if (can_transmit) {
-    tx_set_mode(transmitter, vfo_get_tx_mode());
+    tx_set_mode (transmitter, vfo_get_tx_mode());
     radio_calc_drive_level();
   }
 
@@ -3082,9 +3082,9 @@ void radio_tx_vfo_changed(void) {
   schedule_general();               // possibly update PA disable
 }
 
-void radio_reset_all_alex_attenuation(void) {
+void radio_reset_all_alex_attenuation (void) {
   for (int b = 0; b < BANDS; b++) {
-    BAND *band = band_get_band(b);
+    BAND *band = band_get_band (b);
 
     if (band != NULL) {
       band->alexAttenuation = 0;
@@ -3095,10 +3095,10 @@ void radio_reset_all_alex_attenuation(void) {
     receiver[0]->alex_attenuation = 0;
   }
 
-  t_print("%s: Set alexAttenuation for ALL BANDS to zero\n", __func__);
+  t_print ("%s: Set alexAttenuation for ALL BANDS to zero\n", __func__);
 }
 
-void radio_set_alex_attenuation(int v) {
+void radio_set_alex_attenuation (int v) {
   //
   // Change the value of the step attenuator. Store it
   // in the "band" data structure of the current band,
@@ -3113,7 +3113,7 @@ void radio_set_alex_attenuation(int v) {
     // Store new value of the step attenuator in band data structure
     // (v can be 0,1,2,3)
     //
-    BAND *band = band_get_band(vfo[VFO_A].band);
+    BAND *band = band_get_band (vfo[VFO_A].band);
     band->alexAttenuation = v;
     receiver[0]->alex_attenuation = v;
   }
@@ -3121,11 +3121,11 @@ void radio_set_alex_attenuation(int v) {
   schedule_high_priority();
 }
 
-void radio_split_toggle(void) {
-  radio_set_split(!split);
+void radio_split_toggle (void) {
+  radio_set_split (!split);
 }
 
-void radio_set_split(int val) {
+void radio_set_split (int val) {
   //
   // "split" *must only* be set through this interface,
   // since it may change the TX band and thus requires
@@ -3141,45 +3141,45 @@ void radio_set_split(int val) {
       tci_tx_frequency_changed();
     }
 
-    g_idle_add(ext_vfo_update, NULL);
+    g_idle_add (ext_vfo_update, NULL);
     update_slider_split_btn();
   }
 }
 
-static void radio_restore_state(void) {
-  t_print("%s: path=%s\n", __func__, property_path);
-  g_mutex_lock(&property_mutex);
-  loadProperties(property_path);
+static void radio_restore_state (void) {
+  t_print ("%s: path=%s\n", __func__, property_path);
+  g_mutex_lock (&property_mutex);
+  loadProperties (property_path);
   //
   // For consistency, all variables should get default values HERE,
   // but this is too much for the moment.
   //
-  GetPropI0("backup_index",                                  backup_index);
-  GetPropF0("percent_pan_wf",                                percent_pan_wf);
-  GetPropI0("WindowPositionX",                               window_x_pos);
-  GetPropI0("WindowPositionY",                               window_y_pos);
-  GetPropI0("display_info_bar",                              display_info_bar);
-  GetPropI0("display_clock",                                 display_clock);
-  GetPropI0("display_solardata",                             display_solardata);
-  GetPropI0("display_ah4",                                   display_ah4);
-  GetPropI0("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
-  GetPropI0("pan_peak_hold_TX_enabled",                      pan_peak_hold_TX_enabled);
-  GetPropI0("pan_peak_hold_mode",                            pan_peak_hold_mode);
-  GetPropF0("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
-  GetPropF0("pan_peak_hold_decay_db_per_sec",                pan_peak_hold_decay_db_per_sec);
-  GetPropI0("display_wmap",                                  display_wmap);
-  GetPropI0("display_zoompan",                               display_zoompan);
-  GetPropI0("display_sliders",                               display_sliders);
-  GetPropI0("display_extra_sliders",                         display_extra_sliders);
-  GetPropI0("display_toolbar",                               display_toolbar);
-  GetPropI0("display_width",                                 display_width);
-  GetPropI0("display_height",                                display_height);
-  GetPropI0("full_screen",                                   full_screen);
-  GetPropI0("vfo_layout",                                    vfo_layout);
-  GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
-  GetPropI0("capture_max",                                   capture_max);
-  GetPropI0("max_pan_label_rows",                            max_pan_label_rows);
-  GetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
+  GetPropI0 ("backup_index",                                  backup_index);
+  GetPropF0 ("percent_pan_wf",                                percent_pan_wf);
+  GetPropI0 ("WindowPositionX",                               window_x_pos);
+  GetPropI0 ("WindowPositionY",                               window_y_pos);
+  GetPropI0 ("display_info_bar",                              display_info_bar);
+  GetPropI0 ("display_clock",                                 display_clock);
+  GetPropI0 ("display_solardata",                             display_solardata);
+  GetPropI0 ("display_ah4",                                   display_ah4);
+  GetPropI0 ("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
+  GetPropI0 ("pan_peak_hold_TX_enabled",                      pan_peak_hold_TX_enabled);
+  GetPropI0 ("pan_peak_hold_mode",                            pan_peak_hold_mode);
+  GetPropF0 ("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
+  GetPropF0 ("pan_peak_hold_decay_db_per_sec",                pan_peak_hold_decay_db_per_sec);
+  GetPropI0 ("display_wmap",                                  display_wmap);
+  GetPropI0 ("display_zoompan",                               display_zoompan);
+  GetPropI0 ("display_sliders",                               display_sliders);
+  GetPropI0 ("display_extra_sliders",                         display_extra_sliders);
+  GetPropI0 ("display_toolbar",                               display_toolbar);
+  GetPropI0 ("display_width",                                 display_width);
+  GetPropI0 ("display_height",                                display_height);
+  GetPropI0 ("full_screen",                                   full_screen);
+  GetPropI0 ("vfo_layout",                                    vfo_layout);
+  GetPropI0 ("optimize_touchscreen",                          optimize_for_touchscreen);
+  GetPropI0 ("capture_max",                                   capture_max);
+  GetPropI0 ("max_pan_label_rows",                            max_pan_label_rows);
+  GetPropI0 ("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
 
   //
   // TODO: I think some further options related to the GUI
@@ -3189,9 +3189,9 @@ static void radio_restore_state(void) {
   // the very end of this function. However, if the radio is remote we will return
   // from this function in due course so have to check some things here.
   //
-  if (display_width  > screen_width  ) { display_width  = screen_width; }
+  if (display_width  > screen_width) { display_width  = screen_width; }
 
-  if (display_height > screen_height ) { display_height = screen_height; }
+  if (display_height > screen_height) { display_height = screen_height; }
 
   //
   // Re-position top window to the position in the props file, provided
@@ -3200,114 +3200,114 @@ static void radio_restore_state(void) {
   // of the window.
   //
   if (!use_wayland && (window_x_pos < screen_width - 100) && (window_y_pos < screen_height - 100)) {
-    gtk_window_move(GTK_WINDOW(top_window), window_x_pos, window_y_pos);
+    gtk_window_move (GTK_WINDOW (top_window), window_x_pos, window_y_pos);
   }
 
-  GetPropC0("radio_bgcolor",                                 radio_bgcolor);
-  GetPropC0("mwin_bgcolor",                                  mwin_bgcolor);
-  GetPropC0("tx_pan_fill_col",                               tx_pan_fill_col);
-  GetPropC0("peak_line_col",                                 peak_line_col);
-  GetPropI0("enable_auto_tune",                              enable_auto_tune);
-  GetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
-  GetPropI0("soapy_radio_sample_rate",                       soapy_radio_sample_rate);
-  GetPropI0("diversity_enabled",                             diversity_enabled);
-  GetPropF0("diversity_gain",                                div_gain);
-  GetPropF0("diversity_phase",                               div_phase);
-  GetPropF0("diversity_cos",                                 div_cos);
-  GetPropF0("diversity_sin",                                 div_sin);
-  GetPropI0("new_pa_board",                                  new_pa_board);
-  GetPropI0("region",                                        region);
-  GetPropI0("atlas_penelope",                                atlas_penelope);
-  GetPropI0("atlas_clock_source_10mhz",                      atlas_clock_source_10mhz);
-  GetPropI0("atlas_clock_source_128mhz",                     atlas_clock_source_128mhz);
-  GetPropI0("atlas_mic_source",                              atlas_mic_source);
-  GetPropI0("atlas_janus",                                   atlas_janus);
-  GetPropI0("hl2_audio_codec",                               hl2_audio_codec);
-  GetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
-  GetPropI0("anan10E",                                       anan10E);
-  GetPropI0("hermes_mode",                                   hermes_mode);
-  GetPropI0("tci_audio_monitor",                             tci_audio_monitor);
-  GetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
-  GetPropI0("filter_board",                                  filter_board);
-  GetPropI0("pa_enabled",                                    pa_enabled);
+  GetPropC0 ("radio_bgcolor",                                 radio_bgcolor);
+  GetPropC0 ("mwin_bgcolor",                                  mwin_bgcolor);
+  GetPropC0 ("tx_pan_fill_col",                               tx_pan_fill_col);
+  GetPropC0 ("peak_line_col",                                 peak_line_col);
+  GetPropI0 ("enable_auto_tune",                              enable_auto_tune);
+  GetPropI0 ("enable_tx_inhibit",                             enable_tx_inhibit);
+  GetPropI0 ("soapy_radio_sample_rate",                       soapy_radio_sample_rate);
+  GetPropI0 ("diversity_enabled",                             diversity_enabled);
+  GetPropF0 ("diversity_gain",                                div_gain);
+  GetPropF0 ("diversity_phase",                               div_phase);
+  GetPropF0 ("diversity_cos",                                 div_cos);
+  GetPropF0 ("diversity_sin",                                 div_sin);
+  GetPropI0 ("new_pa_board",                                  new_pa_board);
+  GetPropI0 ("region",                                        region);
+  GetPropI0 ("atlas_penelope",                                atlas_penelope);
+  GetPropI0 ("atlas_clock_source_10mhz",                      atlas_clock_source_10mhz);
+  GetPropI0 ("atlas_clock_source_128mhz",                     atlas_clock_source_128mhz);
+  GetPropI0 ("atlas_mic_source",                              atlas_mic_source);
+  GetPropI0 ("atlas_janus",                                   atlas_janus);
+  GetPropI0 ("hl2_audio_codec",                               hl2_audio_codec);
+  GetPropI0 ("hl2_cl1_input",                                 hl2_cl1_input)
+  GetPropI0 ("anan10E",                                       anan10E);
+  GetPropI0 ("hermes_mode",                                   hermes_mode);
+  GetPropI0 ("tci_audio_monitor",                             tci_audio_monitor);
+  GetPropI0 ("tx_out_of_band",                                tx_out_of_band_allowed);
+  GetPropI0 ("filter_board",                                  filter_board);
+  GetPropI0 ("pa_enabled",                                    pa_enabled);
 
   if (device == DEVICE_HERMES_LITE2) {
-    GetPropI0("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
-    GetPropI0("force_iob",                                   force_iob);
+    GetPropI0 ("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
+    GetPropI0 ("force_iob",                                   force_iob);
   }
 
-  GetPropI0("rx200_udp_port",                                rx200_udp_port);
-  GetPropI0("pa_power",                                      pa_power);
-  GetPropI0("mic_boost",                                     mic_boost);
-  GetPropI0("mic_linein",                                    mic_linein);
-  GetPropF0("linein_gain",                                   linein_gain);
-  GetPropI0("mic_ptt_enabled",                               mic_ptt_enabled);
-  GetPropI0("mic_bias_enabled",                              mic_bias_enabled);
-  GetPropI0("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
-  GetPropI0("mic_input_xlr",                                 mic_input_xlr);
-  GetPropI0("mic_profile_nr",                                mic_prof.nr);
+  GetPropI0 ("rx200_udp_port",                                rx200_udp_port);
+  GetPropI0 ("pa_power",                                      pa_power);
+  GetPropI0 ("mic_boost",                                     mic_boost);
+  GetPropI0 ("mic_linein",                                    mic_linein);
+  GetPropF0 ("linein_gain",                                   linein_gain);
+  GetPropI0 ("mic_ptt_enabled",                               mic_ptt_enabled);
+  GetPropI0 ("mic_bias_enabled",                              mic_bias_enabled);
+  GetPropI0 ("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
+  GetPropI0 ("mic_input_xlr",                                 mic_input_xlr);
+  GetPropI0 ("mic_profile_nr",                                mic_prof.nr);
 
   for (int i = 0; i < 3; i++) {
-    GetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
+    GetPropS1 ("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
-  GetPropI0("autogain_enabled",                              autogain_enabled);
-  GetPropI0("autogain_time_enabled",                         autogain_time_enabled);
-  GetPropI0("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
-  GetPropI0("tx_filter_low",                                 tx_filter_low);
-  GetPropI0("tx_filter_high",                                tx_filter_high);
-  GetPropI0("cw_keys_reversed",                              cw_keys_reversed);
-  GetPropI0("cw_keyer_speed",                                cw_keyer_speed);
-  GetPropI0("cw_keyer_mode",                                 cw_keyer_mode);
-  GetPropI0("cw_keyer_weight",                               cw_keyer_weight);
-  GetPropI0("cw_keyer_spacing",                              cw_keyer_spacing);
-  GetPropI0("cw_keyer_internal",                             cw_keyer_internal);
-  GetPropI0("cw_keyer_sidetone_volume",                      cw_keyer_sidetone_volume);
-  GetPropI0("cw_keyer_ptt_delay",                            cw_keyer_ptt_delay);
-  GetPropI0("cw_keyer_hang_time",                            cw_keyer_hang_time);
-  GetPropI0("cw_keyer_sidetone_frequency",                   cw_keyer_sidetone_frequency);
-  GetPropI0("cw_breakin",                                    cw_breakin);
+  GetPropI0 ("autogain_enabled",                              autogain_enabled);
+  GetPropI0 ("autogain_time_enabled",                         autogain_time_enabled);
+  GetPropI0 ("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
+  GetPropI0 ("tx_filter_low",                                 tx_filter_low);
+  GetPropI0 ("tx_filter_high",                                tx_filter_high);
+  GetPropI0 ("cw_keys_reversed",                              cw_keys_reversed);
+  GetPropI0 ("cw_keyer_speed",                                cw_keyer_speed);
+  GetPropI0 ("cw_keyer_mode",                                 cw_keyer_mode);
+  GetPropI0 ("cw_keyer_weight",                               cw_keyer_weight);
+  GetPropI0 ("cw_keyer_spacing",                              cw_keyer_spacing);
+  GetPropI0 ("cw_keyer_internal",                             cw_keyer_internal);
+  GetPropI0 ("cw_keyer_sidetone_volume",                      cw_keyer_sidetone_volume);
+  GetPropI0 ("cw_keyer_ptt_delay",                            cw_keyer_ptt_delay);
+  GetPropI0 ("cw_keyer_hang_time",                            cw_keyer_hang_time);
+  GetPropI0 ("cw_keyer_sidetone_frequency",                   cw_keyer_sidetone_frequency);
+  GetPropI0 ("cw_breakin",                                    cw_breakin);
   //GetPropI0("cw_ramp_width",                                 cw_ramp_width);
-  GetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
-  GetPropI0("n2adr_hpf_enable",                              n2adr_hpf_enable);
-  GetPropI0("OCtune",                                        OCtune);
-  GetPropI0("OCfull_tune_time",                              OCfull_tune_time);
-  GetPropI0("OCmemory_tune_time",                            OCmemory_tune_time);
-  GetPropI0("analog_meter",                                  analog_meter);
-  GetPropI0("vox_enabled",                                   vox_enabled);
-  GetPropF0("vox_threshold",                                 vox_threshold);
-  GetPropF0("vox_hang",                                      vox_hang);
-  GetPropI0("calibration",                                   frequency_calibration);
-  GetPropF0("ppm_factor",                                    ppm_factor);
-  GetPropI0("receivers",                                     receivers);
-  GetPropI0("soapy_iqswap",                                  soapy_iqswap);
-  GetPropI0("rx_gain_calibration",                           rx_gain_calibration);
-  GetPropF0("drive_digi_max",                                drive_digi_max);
-  GetPropI0("split",                                         split);
-  GetPropI0("duplex",                                        duplex);
-  GetPropI0("sat_mode",                                      sat_mode);
-  GetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
-  GetPropI0("radio.display_warnings",                        display_warnings);
-  GetPropI0("radio.display_pacurr",                          display_pacurr);
-  GetPropI0("tci_enable",                                    tci_enable);
-  GetPropI0("tci_port",                                      tci_port);
-  GetPropI0("tci_txonly",                                    tci_txonly);
-  GetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
-  GetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
-  GetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
-  GetPropI0("rigctl_port_base",                              rigctl_tcp_port);
-  GetPropI0("rigctl_debug",                                  rigctl_debug);
-  GetPropI0("use_rigctld",                                   use_rigctld);
-  GetPropI0("mute_spkr_amp",                                 mute_spkr_amp);
-  GetPropI0("adc0_filter_bypass",                            adc0_filter_bypass);
-  GetPropI0("adc1_filter_bypass",                            adc1_filter_bypass);
+  GetPropI0 ("vfo_encoder_divisor",                           vfo_encoder_divisor);
+  GetPropI0 ("n2adr_hpf_enable",                              n2adr_hpf_enable);
+  GetPropI0 ("OCtune",                                        OCtune);
+  GetPropI0 ("OCfull_tune_time",                              OCfull_tune_time);
+  GetPropI0 ("OCmemory_tune_time",                            OCmemory_tune_time);
+  GetPropI0 ("analog_meter",                                  analog_meter);
+  GetPropI0 ("vox_enabled",                                   vox_enabled);
+  GetPropF0 ("vox_threshold",                                 vox_threshold);
+  GetPropF0 ("vox_hang",                                      vox_hang);
+  GetPropI0 ("calibration",                                   frequency_calibration);
+  GetPropF0 ("ppm_factor",                                    ppm_factor);
+  GetPropI0 ("receivers",                                     receivers);
+  GetPropI0 ("soapy_iqswap",                                  soapy_iqswap);
+  GetPropI0 ("rx_gain_calibration",                           rx_gain_calibration);
+  GetPropF0 ("drive_digi_max",                                drive_digi_max);
+  GetPropI0 ("split",                                         split);
+  GetPropI0 ("duplex",                                        duplex);
+  GetPropI0 ("sat_mode",                                      sat_mode);
+  GetPropI0 ("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
+  GetPropI0 ("radio.display_warnings",                        display_warnings);
+  GetPropI0 ("radio.display_pacurr",                          display_pacurr);
+  GetPropI0 ("tci_enable",                                    tci_enable);
+  GetPropI0 ("tci_port",                                      tci_port);
+  GetPropI0 ("tci_txonly",                                    tci_txonly);
+  GetPropI0 ("rigctl_tcp_enable",                             rigctl_tcp_enable);
+  GetPropI0 ("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
+  GetPropI0 ("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
+  GetPropI0 ("rigctl_port_base",                              rigctl_tcp_port);
+  GetPropI0 ("rigctl_debug",                                  rigctl_debug);
+  GetPropI0 ("use_rigctld",                                   use_rigctld);
+  GetPropI0 ("mute_spkr_amp",                                 mute_spkr_amp);
+  GetPropI0 ("adc0_filter_bypass",                            adc0_filter_bypass);
+  GetPropI0 ("adc1_filter_bypass",                            adc1_filter_bypass);
 #ifdef SATURN
-  GetPropI0("client_enable_tx",                              client_enable_tx);
-  GetPropI0("saturn_server_en",                              saturn_server_en);
+  GetPropI0 ("client_enable_tx",                              client_enable_tx);
+  GetPropI0 ("saturn_server_en",                              saturn_server_en);
 #endif
 
   for (int i = 0; i < 11; i++) {
-    GetPropF1("pa_trim[%d]", i,                              pa_trim[i]);
+    GetPropF1 ("pa_trim[%d]", i,                              pa_trim[i]);
   }
 
   for (int id = 0; id < MAX_SERIAL; id++) {
@@ -3315,11 +3315,11 @@ static void radio_restore_state(void) {
     // Do not overwrite a "detected" port
     //
     if (!SerialPorts[id].g2) {
-      GetPropS1("rigctl_serial_port[%d]", id,                  SerialPorts[id].port);
-      GetPropI1("rigctl_serial_enable[%d]", id,                SerialPorts[id].enable);
-      GetPropI1("rigctl_serial_andromeda[%d]", id,             SerialPorts[id].andromeda);
-      GetPropI1("rigctl_serial_baud_rate[%i]", id,             SerialPorts[id].baud);
-      GetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
+      GetPropS1 ("rigctl_serial_port[%d]", id,                  SerialPorts[id].port);
+      GetPropI1 ("rigctl_serial_enable[%d]", id,                SerialPorts[id].enable);
+      GetPropI1 ("rigctl_serial_andromeda[%d]", id,             SerialPorts[id].andromeda);
+      GetPropI1 ("rigctl_serial_baud_rate[%i]", id,             SerialPorts[id].baud);
+      GetPropI1 ("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
 
       if (SerialPorts[id].andromeda) {
         SerialPorts[id].baud = B9600;
@@ -3327,51 +3327,51 @@ static void radio_restore_state(void) {
     }
   }
 
-  GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
-  GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
-  GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
-  GetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,      SerialPorts[MAX_SERIAL].swapRtsDtr);
-  GetPropS1("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
-  GetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
-  GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
-  GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
-  GetPropS0("own_callsign",                                own_callsign);
-  GetPropS0("own_locator",                                 own_locator);
-  GetPropS0("dxc_login",                                   dxc_login);
-  GetPropS0("dxc_address",                                 dxc_address);
-  GetPropI0("dxc_port",                                    dxc_port);
-  GetPropI0("dxcwin_x",                                    dxcwin_x);
-  GetPropI0("dxcwin_y",                                    dxcwin_y);
-  GetPropI0("dxcwin_w",                                    dxcwin_w);
-  GetPropI0("dxcwin_h",                                    dxcwin_h);
-  GetPropI0("atuwin_wv_w",                                 atuwin_wv_w);
-  GetPropI0("atuwin_wv_h",                                 atuwin_wv_h);
-  GetPropS0("atuwin_TITLE",                                atuwin_TITLE);
-  GetPropS0("atuwin_URL",                                  atuwin_URL);
-  GetPropS0("atuwin_ACTION",                               atuwin_ACTION);
-  GetPropI0("save_zoom_state",                             save_zoom_state);
-  GetPropI0("use_tx_audiochain",                           use_tx_audiochain);
+  GetPropS1 ("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
+  GetPropI1 ("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
+  GetPropI1 ("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  GetPropI1 ("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,      SerialPorts[MAX_SERIAL].swapRtsDtr);
+  GetPropS1 ("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
+  GetPropI1 ("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
+  GetPropI1 ("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
+  GetPropI1 ("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
+  GetPropS0 ("own_callsign",                                own_callsign);
+  GetPropS0 ("own_locator",                                 own_locator);
+  GetPropS0 ("dxc_login",                                   dxc_login);
+  GetPropS0 ("dxc_address",                                 dxc_address);
+  GetPropI0 ("dxc_port",                                    dxc_port);
+  GetPropI0 ("dxcwin_x",                                    dxcwin_x);
+  GetPropI0 ("dxcwin_y",                                    dxcwin_y);
+  GetPropI0 ("dxcwin_w",                                    dxcwin_w);
+  GetPropI0 ("dxcwin_h",                                    dxcwin_h);
+  GetPropI0 ("atuwin_wv_w",                                 atuwin_wv_w);
+  GetPropI0 ("atuwin_wv_h",                                 atuwin_wv_h);
+  GetPropS0 ("atuwin_TITLE",                                atuwin_TITLE);
+  GetPropS0 ("atuwin_URL",                                  atuwin_URL);
+  GetPropS0 ("atuwin_ACTION",                               atuwin_ACTION);
+  GetPropI0 ("save_zoom_state",                             save_zoom_state);
+  GetPropI0 ("use_tx_audiochain",                           use_tx_audiochain);
 
   for (int i = 0; i < n_adc; i++) {
-    GetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
-    GetPropI1("radio.adc[%d].hpf", i,                        adc[i].hpf);
-    GetPropI1("radio.adc[%d].lpf", i,                        adc[i].lpf);
-    GetPropI1("radio.adc[%d].antenna", i,                    adc[i].antenna);
-    GetPropI1("radio.adc[%d].dither", i,                     adc[i].dither);
-    GetPropI1("radio.adc[%d].random", i,                     adc[i].random);
-    GetPropI1("radio.adc[%d].preamp", i,                     adc[i].preamp);
-    GetPropI1("radio.adc[%d].attenuation", i,                adc[i].attenuation);
-    GetPropI1("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
-    GetPropF1("radio.adc[%d].gain", i,                       adc[i].gain);
+    GetPropI1 ("radio.adc[%d].filters", i,                    adc[i].filters);
+    GetPropI1 ("radio.adc[%d].hpf", i,                        adc[i].hpf);
+    GetPropI1 ("radio.adc[%d].lpf", i,                        adc[i].lpf);
+    GetPropI1 ("radio.adc[%d].antenna", i,                    adc[i].antenna);
+    GetPropI1 ("radio.adc[%d].dither", i,                     adc[i].dither);
+    GetPropI1 ("radio.adc[%d].random", i,                     adc[i].random);
+    GetPropI1 ("radio.adc[%d].preamp", i,                     adc[i].preamp);
+    GetPropI1 ("radio.adc[%d].attenuation", i,                adc[i].attenuation);
+    GetPropI1 ("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
+    GetPropF1 ("radio.adc[%d].gain", i,                       adc[i].gain);
 
-    if (radio && strcmp(radio->name, "sdrplay") != 0) {
-      GetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
-      GetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+    if (radio && strcmp (radio->name, "sdrplay") != 0) {
+      GetPropF1 ("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
+      GetPropF1 ("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
     }
 
-    GetPropI1("radio.adc[%d].agc", i,                        adc[i].agc);
-    GetPropI1("radio.dac[%d].antenna", i,                    dac[i].antenna);
-    GetPropF1("radio.dac[%d].gain", i,                       dac[i].gain);
+    GetPropI1 ("radio.adc[%d].agc", i,                        adc[i].agc);
+    GetPropI1 ("radio.dac[%d].antenna", i,                    dac[i].antenna);
+    GetPropF1 ("radio.dac[%d].gain", i,                       dac[i].gain);
   }
 
   switch (hermes_mode) {
@@ -3399,12 +3399,12 @@ static void radio_restore_state(void) {
 #ifdef MIDI
   midiRestoreState();
 #endif
-  t_print("%s: radio state (except receiver/transmitter) restored.\n", __func__);
+  t_print ("%s: radio state (except receiver/transmitter) restored.\n", __func__);
 
   if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
                      device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2)) {
     reassign_pa_trim();
-    t_print("%s: using HL2: re-assign pa_trim[]\n", __func__);
+    t_print ("%s: using HL2: re-assign pa_trim[]\n", __func__);
   }
 
   //
@@ -3432,11 +3432,11 @@ static void radio_restore_state(void) {
     mwin_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
   }
 
-  g_mutex_unlock(&property_mutex);
+  g_mutex_unlock (&property_mutex);
 }
 
-void radio_save_state(void) {
-  g_mutex_lock(&property_mutex);
+void radio_save_state (void) {
+  g_mutex_lock (&property_mutex);
   clearProperties();
 
   if (radio && radio->name[0] != '\0') {
@@ -3456,27 +3456,28 @@ void radio_save_state(void) {
       receiver[i]->zoom = 8;
     }
 
-    rx_save_state(receiver[i]);
+    rx_save_state (receiver[i]);
   }
 
   if (can_transmit) {
     // The only variables of interest in this receiver are
     // the alex_antenna an the adc
     if (receiver[PS_RX_FEEDBACK]) {
-      rx_save_state(receiver[PS_RX_FEEDBACK]);
+      rx_save_state (receiver[PS_RX_FEEDBACK]);
     }
 
-    tx_save_state(transmitter);
+    tx_save_state (transmitter);
   }
 
   //
   // Obtain window position and save in props file
   //
-  gtk_window_get_position(GTK_WINDOW(top_window), &window_x_pos, &window_y_pos);
-  SetPropI0("backup_index",                                  backup_index);
-  SetPropF0("percent_pan_wf",                                percent_pan_wf);
-  SetPropI0("WindowPositionX",                               window_x_pos);
-  SetPropI0("WindowPositionY",                               window_y_pos);
+  gtk_window_get_position (GTK_WINDOW (top_window), &window_x_pos, &window_y_pos);
+  SetPropI0 ("backup_index",                                  backup_index);
+  SetPropI0 ("device_id",                                     device);
+  SetPropF0 ("percent_pan_wf",                                percent_pan_wf);
+  SetPropI0 ("WindowPositionX",                               window_x_pos);
+  SetPropI0 ("WindowPositionY",                               window_y_pos);
   //
   // What comes now is essentially copied from radio_restore_state,
   // with "GetProp" replaced by "SetProp".
@@ -3485,192 +3486,192 @@ void radio_save_state(void) {
   // Use the "saved" Zoompan/Slider/Toolbar display status
   // if they are currently hidden via the "Hide" button
   //
-  SetPropI0("display_info_bar",                              display_info_bar);
-  SetPropI0("display_clock",                                 display_clock);
-  SetPropI0("display_solardata",                             display_solardata);
-  SetPropI0("display_ah4",                                   display_ah4);
-  SetPropI0("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
-  SetPropI0("pan_peak_hold_TX_enabled",                      pan_peak_hold_TX_enabled);
-  SetPropI0("pan_peak_hold_mode",                            pan_peak_hold_mode);
-  SetPropF0("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
-  SetPropF0("pan_peak_hold_decay_db_per_sec",                pan_peak_hold_decay_db_per_sec);
-  SetPropI0("display_wmap",                                  display_wmap);
-  SetPropI0("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
-  SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
-  SetPropI0("display_extra_sliders",                         display_extra_sliders);
-  SetPropI0("display_toolbar",                               hide_status ? old_tool : display_toolbar);
-  SetPropI0("display_width",                                 display_width);
-  SetPropI0("display_height",                                display_height);
-  SetPropI0("full_screen",                                   full_screen);
-  SetPropI0("vfo_layout",                                    vfo_layout);
-  SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
-  SetPropI0("capture_max",                                   capture_max);
-  SetPropI0("max_pan_label_rows",                            max_pan_label_rows);
-  SetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
-  SetPropC0("radio_bgcolor",                                 radio_bgcolor);
-  SetPropC0("mwin_bgcolor",                                  mwin_bgcolor);
-  SetPropC0("tx_pan_fill_col",                               tx_pan_fill_col);
-  SetPropC0("peak_line_col",                                 peak_line_col);
+  SetPropI0 ("display_info_bar",                              display_info_bar);
+  SetPropI0 ("display_clock",                                 display_clock);
+  SetPropI0 ("display_solardata",                             display_solardata);
+  SetPropI0 ("display_ah4",                                   display_ah4);
+  SetPropI0 ("pan_peak_hold_enabled",                         pan_peak_hold_enabled);
+  SetPropI0 ("pan_peak_hold_TX_enabled",                      pan_peak_hold_TX_enabled);
+  SetPropI0 ("pan_peak_hold_mode",                            pan_peak_hold_mode);
+  SetPropF0 ("pan_peak_hold_hold_sec",                        pan_peak_hold_hold_sec);
+  SetPropF0 ("pan_peak_hold_decay_db_per_sec",                pan_peak_hold_decay_db_per_sec);
+  SetPropI0 ("display_wmap",                                  display_wmap);
+  SetPropI0 ("display_zoompan",                               hide_status ? old_zoom : display_zoompan);
+  SetPropI0 ("display_sliders",                               hide_status ? old_slid : display_sliders);
+  SetPropI0 ("display_extra_sliders",                         display_extra_sliders);
+  SetPropI0 ("display_toolbar",                               hide_status ? old_tool : display_toolbar);
+  SetPropI0 ("display_width",                                 display_width);
+  SetPropI0 ("display_height",                                display_height);
+  SetPropI0 ("full_screen",                                   full_screen);
+  SetPropI0 ("vfo_layout",                                    vfo_layout);
+  SetPropI0 ("optimize_touchscreen",                          optimize_for_touchscreen);
+  SetPropI0 ("capture_max",                                   capture_max);
+  SetPropI0 ("max_pan_label_rows",                            max_pan_label_rows);
+  SetPropI0 ("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
+  SetPropC0 ("radio_bgcolor",                                 radio_bgcolor);
+  SetPropC0 ("mwin_bgcolor",                                  mwin_bgcolor);
+  SetPropC0 ("tx_pan_fill_col",                               tx_pan_fill_col);
+  SetPropC0 ("peak_line_col",                                 peak_line_col);
   //
   // TODO: I think some further options related to the GUI
   // have to be moved up here for Client-Server operation
   //
-  SetPropI0("enable_auto_tune",                              enable_auto_tune);
-  SetPropI0("enable_tx_inhibit",                             enable_tx_inhibit);
-  SetPropI0("soapy_radio_sample_rate",                       soapy_radio_sample_rate);
-  SetPropI0("diversity_enabled",                             diversity_enabled);
-  SetPropF0("diversity_gain",                                div_gain);
-  SetPropF0("diversity_phase",                               div_phase);
-  SetPropF0("diversity_cos",                                 div_cos);
-  SetPropF0("diversity_sin",                                 div_sin);
-  SetPropI0("new_pa_board",                                  new_pa_board);
-  SetPropI0("region",                                        region);
-  SetPropI0("atlas_penelope",                                atlas_penelope);
-  SetPropI0("atlas_clock_source_10mhz",                      atlas_clock_source_10mhz);
-  SetPropI0("atlas_clock_source_128mhz",                     atlas_clock_source_128mhz);
-  SetPropI0("atlas_mic_source",                              atlas_mic_source);
-  SetPropI0("atlas_janus",                                   atlas_janus);
-  SetPropI0("hl2_audio_codec",                               hl2_audio_codec);
-  SetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
-  SetPropI0("anan10E",                                       anan10E);
-  SetPropI0("hermes_mode",                                   hermes_mode);
-  SetPropI0("tci_audio_monitor",                             tci_audio_monitor);
-  SetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
-  SetPropI0("filter_board",                                  filter_board);
-  SetPropI0("pa_enabled",                                    pa_enabled);
+  SetPropI0 ("enable_auto_tune",                              enable_auto_tune);
+  SetPropI0 ("enable_tx_inhibit",                             enable_tx_inhibit);
+  SetPropI0 ("soapy_radio_sample_rate",                       soapy_radio_sample_rate);
+  SetPropI0 ("diversity_enabled",                             diversity_enabled);
+  SetPropF0 ("diversity_gain",                                div_gain);
+  SetPropF0 ("diversity_phase",                               div_phase);
+  SetPropF0 ("diversity_cos",                                 div_cos);
+  SetPropF0 ("diversity_sin",                                 div_sin);
+  SetPropI0 ("new_pa_board",                                  new_pa_board);
+  SetPropI0 ("region",                                        region);
+  SetPropI0 ("atlas_penelope",                                atlas_penelope);
+  SetPropI0 ("atlas_clock_source_10mhz",                      atlas_clock_source_10mhz);
+  SetPropI0 ("atlas_clock_source_128mhz",                     atlas_clock_source_128mhz);
+  SetPropI0 ("atlas_mic_source",                              atlas_mic_source);
+  SetPropI0 ("atlas_janus",                                   atlas_janus);
+  SetPropI0 ("hl2_audio_codec",                               hl2_audio_codec);
+  SetPropI0 ("hl2_cl1_input",                                 hl2_cl1_input)
+  SetPropI0 ("anan10E",                                       anan10E);
+  SetPropI0 ("hermes_mode",                                   hermes_mode);
+  SetPropI0 ("tci_audio_monitor",                             tci_audio_monitor);
+  SetPropI0 ("tx_out_of_band",                                tx_out_of_band_allowed);
+  SetPropI0 ("filter_board",                                  filter_board);
+  SetPropI0 ("pa_enabled",                                    pa_enabled);
 
   if (device == DEVICE_HERMES_LITE2) {
-    SetPropI0("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
-    SetPropI0("force_iob",                                   force_iob);
+    SetPropI0 ("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
+    SetPropI0 ("force_iob",                                   force_iob);
   }
 
-  SetPropI0("rx200_udp_port",                                rx200_udp_port);
-  SetPropI0("pa_power",                                      pa_power);
-  SetPropI0("mic_boost",                                     mic_boost);
-  SetPropI0("mic_linein",                                    mic_linein);
-  SetPropF0("linein_gain",                                   linein_gain);
-  SetPropI0("mic_ptt_enabled",                               mic_ptt_enabled);
-  SetPropI0("mic_bias_enabled",                              mic_bias_enabled);
-  SetPropI0("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
-  SetPropI0("mic_input_xlr",                                 mic_input_xlr);
-  SetPropI0("mic_profile_nr",                                mic_prof.nr);
+  SetPropI0 ("rx200_udp_port",                                rx200_udp_port);
+  SetPropI0 ("pa_power",                                      pa_power);
+  SetPropI0 ("mic_boost",                                     mic_boost);
+  SetPropI0 ("mic_linein",                                    mic_linein);
+  SetPropF0 ("linein_gain",                                   linein_gain);
+  SetPropI0 ("mic_ptt_enabled",                               mic_ptt_enabled);
+  SetPropI0 ("mic_bias_enabled",                              mic_bias_enabled);
+  SetPropI0 ("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
+  SetPropI0 ("mic_input_xlr",                                 mic_input_xlr);
+  SetPropI0 ("mic_profile_nr",                                mic_prof.nr);
 
   for (int i = 0; i < 3; i++) {
-    SetPropS1("mic_profile.%d.desc", i,                      mic_prof.desc[i])
+    SetPropS1 ("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
 
-  SetPropI0("autogain_enabled",                              autogain_enabled);
-  SetPropI0("autogain_time_enabled",                         autogain_time_enabled);
-  SetPropI0("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
-  SetPropI0("tx_filter_low",                                 tx_filter_low);
-  SetPropI0("tx_filter_high",                                tx_filter_high);
-  SetPropI0("cw_keys_reversed",                              cw_keys_reversed);
-  SetPropI0("cw_keyer_speed",                                cw_keyer_speed);
-  SetPropI0("cw_keyer_mode",                                 cw_keyer_mode);
-  SetPropI0("cw_keyer_weight",                               cw_keyer_weight);
-  SetPropI0("cw_keyer_spacing",                              cw_keyer_spacing);
-  SetPropI0("cw_keyer_internal",                             cw_keyer_internal);
-  SetPropI0("cw_keyer_sidetone_volume",                      cw_keyer_sidetone_volume);
-  SetPropI0("cw_keyer_ptt_delay",                            cw_keyer_ptt_delay);
-  SetPropI0("cw_keyer_hang_time",                            cw_keyer_hang_time);
-  SetPropI0("cw_keyer_sidetone_frequency",                   cw_keyer_sidetone_frequency);
-  SetPropI0("cw_breakin",                                    cw_breakin);
+  SetPropI0 ("autogain_enabled",                              autogain_enabled);
+  SetPropI0 ("autogain_time_enabled",                         autogain_time_enabled);
+  SetPropI0 ("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
+  SetPropI0 ("tx_filter_low",                                 tx_filter_low);
+  SetPropI0 ("tx_filter_high",                                tx_filter_high);
+  SetPropI0 ("cw_keys_reversed",                              cw_keys_reversed);
+  SetPropI0 ("cw_keyer_speed",                                cw_keyer_speed);
+  SetPropI0 ("cw_keyer_mode",                                 cw_keyer_mode);
+  SetPropI0 ("cw_keyer_weight",                               cw_keyer_weight);
+  SetPropI0 ("cw_keyer_spacing",                              cw_keyer_spacing);
+  SetPropI0 ("cw_keyer_internal",                             cw_keyer_internal);
+  SetPropI0 ("cw_keyer_sidetone_volume",                      cw_keyer_sidetone_volume);
+  SetPropI0 ("cw_keyer_ptt_delay",                            cw_keyer_ptt_delay);
+  SetPropI0 ("cw_keyer_hang_time",                            cw_keyer_hang_time);
+  SetPropI0 ("cw_keyer_sidetone_frequency",                   cw_keyer_sidetone_frequency);
+  SetPropI0 ("cw_breakin",                                    cw_breakin);
   //SetPropI0("cw_ramp_width",                                 cw_ramp_width);
-  SetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
-  SetPropI0("n2adr_hpf_enable",                              n2adr_hpf_enable);
-  SetPropI0("OCtune",                                        OCtune);
-  SetPropI0("OCfull_tune_time",                              OCfull_tune_time);
-  SetPropI0("OCmemory_tune_time",                            OCmemory_tune_time);
-  SetPropI0("analog_meter",                                  analog_meter);
-  SetPropI0("vox_enabled",                                   vox_enabled);
-  SetPropF0("vox_threshold",                                 vox_threshold);
-  SetPropF0("vox_hang",                                      vox_hang);
+  SetPropI0 ("vfo_encoder_divisor",                           vfo_encoder_divisor);
+  SetPropI0 ("n2adr_hpf_enable",                              n2adr_hpf_enable);
+  SetPropI0 ("OCtune",                                        OCtune);
+  SetPropI0 ("OCfull_tune_time",                              OCfull_tune_time);
+  SetPropI0 ("OCmemory_tune_time",                            OCmemory_tune_time);
+  SetPropI0 ("analog_meter",                                  analog_meter);
+  SetPropI0 ("vox_enabled",                                   vox_enabled);
+  SetPropF0 ("vox_threshold",                                 vox_threshold);
+  SetPropF0 ("vox_hang",                                      vox_hang);
   // SetPropI0("calibration",                                frequency_calibration);
-  SetPropF0("ppm_factor",                                    ppm_factor);
-  SetPropI0("receivers",                                     receivers);
-  SetPropI0("soapy_iqswap",                                  soapy_iqswap);
-  SetPropI0("rx_gain_calibration",                           rx_gain_calibration);
-  SetPropF0("drive_digi_max",                                drive_digi_max);
-  SetPropI0("split",                                         split);
-  SetPropI0("duplex",                                        duplex);
-  SetPropI0("sat_mode",                                      sat_mode);
-  SetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
-  SetPropI0("radio.display_warnings",                        display_warnings);
-  SetPropI0("radio.display_pacurr",                          display_pacurr);
-  SetPropI0("tci_enable",                                    tci_enable);
-  SetPropI0("tci_port",                                      tci_port);
-  SetPropI0("tci_txonly",                                    tci_txonly);
-  SetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
-  SetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
-  SetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
-  SetPropI0("rigctl_port_base",                              rigctl_tcp_port);
-  SetPropI0("rigctl_debug",                                  rigctl_debug);
-  SetPropI0("use_rigctld",                                   use_rigctld);
-  SetPropI0("mute_spkr_amp",                                 mute_spkr_amp);
-  SetPropI0("adc0_filter_bypass",                            adc0_filter_bypass);
-  SetPropI0("adc1_filter_bypass",                            adc1_filter_bypass);
+  SetPropF0 ("ppm_factor",                                    ppm_factor);
+  SetPropI0 ("receivers",                                     receivers);
+  SetPropI0 ("soapy_iqswap",                                  soapy_iqswap);
+  SetPropI0 ("rx_gain_calibration",                           rx_gain_calibration);
+  SetPropF0 ("drive_digi_max",                                drive_digi_max);
+  SetPropI0 ("split",                                         split);
+  SetPropI0 ("duplex",                                        duplex);
+  SetPropI0 ("sat_mode",                                      sat_mode);
+  SetPropI0 ("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
+  SetPropI0 ("radio.display_warnings",                        display_warnings);
+  SetPropI0 ("radio.display_pacurr",                          display_pacurr);
+  SetPropI0 ("tci_enable",                                    tci_enable);
+  SetPropI0 ("tci_port",                                      tci_port);
+  SetPropI0 ("tci_txonly",                                    tci_txonly);
+  SetPropI0 ("rigctl_tcp_enable",                             rigctl_tcp_enable);
+  SetPropI0 ("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
+  SetPropI0 ("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
+  SetPropI0 ("rigctl_port_base",                              rigctl_tcp_port);
+  SetPropI0 ("rigctl_debug",                                  rigctl_debug);
+  SetPropI0 ("use_rigctld",                                   use_rigctld);
+  SetPropI0 ("mute_spkr_amp",                                 mute_spkr_amp);
+  SetPropI0 ("adc0_filter_bypass",                            adc0_filter_bypass);
+  SetPropI0 ("adc1_filter_bypass",                            adc1_filter_bypass);
 #ifdef SATURN
-  SetPropI0("client_enable_tx",                              client_enable_tx);
-  SetPropI0("saturn_server_en",                              saturn_server_en);
+  SetPropI0 ("client_enable_tx",                              client_enable_tx);
+  SetPropI0 ("saturn_server_en",                              saturn_server_en);
 #endif
 
   for (int i = 0; i < 11; i++) {
-    SetPropF1("pa_trim[%d]", i,                              pa_trim[i]);
+    SetPropF1 ("pa_trim[%d]", i,                              pa_trim[i]);
   }
 
   for (int id = 0; id < MAX_SERIAL; id++) {
-    SetPropI1("rigctl_serial_enable[%d]", id,                SerialPorts[id].enable);
-    SetPropI1("rigctl_serial_andromeda[%d]", id,             SerialPorts[id].andromeda);
-    SetPropI1("rigctl_serial_baud_rate[%i]", id,             SerialPorts[id].baud);
-    SetPropS1("rigctl_serial_port[%d]", id,                  SerialPorts[id].port);
-    SetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
+    SetPropI1 ("rigctl_serial_enable[%d]", id,                SerialPorts[id].enable);
+    SetPropI1 ("rigctl_serial_andromeda[%d]", id,             SerialPorts[id].andromeda);
+    SetPropI1 ("rigctl_serial_baud_rate[%i]", id,             SerialPorts[id].baud);
+    SetPropS1 ("rigctl_serial_port[%d]", id,                  SerialPorts[id].port);
+    SetPropI1 ("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
   }
 
-  SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
-  SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
-  SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
-  SetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,      SerialPorts[MAX_SERIAL].swapRtsDtr);
-  SetPropS1("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
-  SetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
-  SetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
-  SetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
-  SetPropS0("own_callsign",                                own_callsign);
-  SetPropS0("own_locator",                                 own_locator);
-  SetPropS0("dxc_login",                                   dxc_login);
-  SetPropS0("dxc_address",                                 dxc_address);
-  SetPropI0("dxc_port",                                    dxc_port);
-  SetPropI0("dxcwin_x",                                    dxcwin_x);
-  SetPropI0("dxcwin_y",                                    dxcwin_y);
-  SetPropI0("dxcwin_w",                                    dxcwin_w);
-  SetPropI0("dxcwin_h",                                    dxcwin_h);
-  SetPropI0("atuwin_wv_w",                                 atuwin_wv_w);
-  SetPropI0("atuwin_wv_h",                                 atuwin_wv_h);
-  SetPropS0("atuwin_TITLE",                                atuwin_TITLE);
-  SetPropS0("atuwin_URL",                                  atuwin_URL);
-  SetPropS0("atuwin_ACTION",                               atuwin_ACTION);
-  SetPropI0("save_zoom_state",                             save_zoom_state);
-  SetPropI0("use_tx_audiochain",                           use_tx_audiochain);
+  SetPropS1 ("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
+  SetPropI1 ("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
+  SetPropI1 ("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
+  SetPropI1 ("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,      SerialPorts[MAX_SERIAL].swapRtsDtr);
+  SetPropS1 ("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
+  SetPropI1 ("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
+  SetPropI1 ("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
+  SetPropI1 ("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
+  SetPropS0 ("own_callsign",                                own_callsign);
+  SetPropS0 ("own_locator",                                 own_locator);
+  SetPropS0 ("dxc_login",                                   dxc_login);
+  SetPropS0 ("dxc_address",                                 dxc_address);
+  SetPropI0 ("dxc_port",                                    dxc_port);
+  SetPropI0 ("dxcwin_x",                                    dxcwin_x);
+  SetPropI0 ("dxcwin_y",                                    dxcwin_y);
+  SetPropI0 ("dxcwin_w",                                    dxcwin_w);
+  SetPropI0 ("dxcwin_h",                                    dxcwin_h);
+  SetPropI0 ("atuwin_wv_w",                                 atuwin_wv_w);
+  SetPropI0 ("atuwin_wv_h",                                 atuwin_wv_h);
+  SetPropS0 ("atuwin_TITLE",                                atuwin_TITLE);
+  SetPropS0 ("atuwin_URL",                                  atuwin_URL);
+  SetPropS0 ("atuwin_ACTION",                               atuwin_ACTION);
+  SetPropI0 ("save_zoom_state",                             save_zoom_state);
+  SetPropI0 ("use_tx_audiochain",                           use_tx_audiochain);
 
   for (int i = 0; i < n_adc; i++) {
-    SetPropI1("radio.adc[%d].filters", i,                    adc[i].filters);
-    SetPropI1("radio.adc[%d].hpf", i,                        adc[i].hpf);
-    SetPropI1("radio.adc[%d].lpf", i,                        adc[i].lpf);
-    SetPropI1("radio.adc[%d].antenna", i,                    adc[i].antenna);
-    SetPropI1("radio.adc[%d].dither", i,                     adc[i].dither);
-    SetPropI1("radio.adc[%d].random", i,                     adc[i].random);
-    SetPropI1("radio.adc[%d].preamp", i,                     adc[i].preamp);
-    SetPropI1("radio.adc[%d].attenuation", i,                adc[i].attenuation);
-    SetPropI1("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
-    SetPropF1("radio.adc[%d].gain", i,                       adc[i].gain);
+    SetPropI1 ("radio.adc[%d].filters", i,                    adc[i].filters);
+    SetPropI1 ("radio.adc[%d].hpf", i,                        adc[i].hpf);
+    SetPropI1 ("radio.adc[%d].lpf", i,                        adc[i].lpf);
+    SetPropI1 ("radio.adc[%d].antenna", i,                    adc[i].antenna);
+    SetPropI1 ("radio.adc[%d].dither", i,                     adc[i].dither);
+    SetPropI1 ("radio.adc[%d].random", i,                     adc[i].random);
+    SetPropI1 ("radio.adc[%d].preamp", i,                     adc[i].preamp);
+    SetPropI1 ("radio.adc[%d].attenuation", i,                adc[i].attenuation);
+    SetPropI1 ("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
+    SetPropF1 ("radio.adc[%d].gain", i,                       adc[i].gain);
 
-    if (radio && strcmp(radio->name, "sdrplay") != 0) {
-      SetPropF1("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
-      SetPropF1("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
+    if (radio && strcmp (radio->name, "sdrplay") != 0) {
+      SetPropF1 ("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
+      SetPropF1 ("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
     }
 
-    SetPropI1("radio.adc[%d].agc", i,                        adc[i].agc);
-    SetPropI1("radio.dac[%d].antenna", i,                    dac[i].antenna);
-    SetPropF1("radio.dac[%d].gain", i,                       dac[i].gain);
+    SetPropI1 ("radio.adc[%d].agc", i,                        adc[i].agc);
+    SetPropI1 ("radio.dac[%d].antenna", i,                    dac[i].antenna);
+    SetPropF1 ("radio.dac[%d].gain", i,                       dac[i].gain);
   }
 
   filterSaveState();
@@ -3681,17 +3682,17 @@ void radio_save_state(void) {
 #ifdef MIDI
   midiSaveState();
 #endif
-  saveProperties(property_path);
+  saveProperties (property_path);
   sync();
 
   if (radio && radio->name[0] != '\0' && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
-    snprintf(property_path_bak, sizeof(property_path_bak), "bak%d_%s_%s_%s", (int)backup_index, radio->name,
-             inet_ntoa(radio->info.network.address.sin_addr), property_path);
-    saveProperties(property_path_bak);
+    snprintf (property_path_bak, sizeof (property_path_bak), "bak%d_%s_%s_%s", (int) backup_index, radio->name,
+              inet_ntoa (radio->info.network.address.sin_addr), property_path);
+    saveProperties (property_path_bak);
     sync();
   }
 
-  g_mutex_unlock(&property_mutex);
+  g_mutex_unlock (&property_mutex);
 }
 
 
@@ -3715,12 +3716,12 @@ void radio_save_state(void) {
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 // cppcheck-suppress constParameterCallback
-static gboolean eventbox_callback(GtkWidget *widget, GdkEvent *event, gpointer data) {
+static gboolean eventbox_callback (GtkWidget *widget, GdkEvent *event, gpointer data) {
   //
   // data is the ComboBox that is contained in the EventBox
   //
   if (event->type == GDK_BUTTON_RELEASE) {
-    gtk_combo_box_popup(GTK_COMBO_BOX(data));
+    gtk_combo_box_popup (GTK_COMBO_BOX (data));
   }
 
   return TRUE;
@@ -3734,15 +3735,15 @@ static gboolean eventbox_callback(GtkWidget *widget, GdkEvent *event, gpointer d
 // pop-up the menu which then goes to the foreground.
 // Then, the choice can be made from the menu in the usual way.
 //
-void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol) {
+void my_combo_attach (GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol) {
   if (optimize_for_touchscreen) {
     GtkWidget *eventbox = gtk_event_box_new();
-    g_signal_connect( eventbox, "event",   G_CALLBACK(eventbox_callback),   combo);
-    gtk_container_add(GTK_CONTAINER(eventbox), combo);
-    gtk_event_box_set_above_child(GTK_EVENT_BOX(eventbox), TRUE);
-    gtk_grid_attach(GTK_GRID(grid), eventbox, row, col, spanrow, spancol);
+    g_signal_connect (eventbox, "event",   G_CALLBACK (eventbox_callback),   combo);
+    gtk_container_add (GTK_CONTAINER (eventbox), combo);
+    gtk_event_box_set_above_child (GTK_EVENT_BOX (eventbox), TRUE);
+    gtk_grid_attach (GTK_GRID (grid), eventbox, row, col, spanrow, spancol);
   } else {
-    gtk_grid_attach(GTK_GRID(grid), combo, row, col, spanrow, spancol);
+    gtk_grid_attach (GTK_GRID (grid), combo, row, col, spanrow, spancol);
   }
 }
 
@@ -3752,7 +3753,7 @@ void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int span
 // (xvtr bands are not counted here)
 //
 
-int radio_max_band(void) {
+int radio_max_band (void) {
   int max = BANDS - 1;
 
   switch (device) {
@@ -3776,12 +3777,12 @@ int radio_max_band(void) {
   return max;
 }
 
-void radio_protocol_stop(void) {
+void radio_protocol_stop (void) {
   //
   // paranoia ...
   //
-  radio_mox_update(0);
-  usleep(100000);
+  radio_mox_update (0);
+  usleep (100000);
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
@@ -3794,13 +3795,13 @@ void radio_protocol_stop(void) {
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    soapy_protocol_stop_receiver(receiver[0]);
+    soapy_protocol_stop_receiver (receiver[0]);
     break;
 #endif
   }
 }
 
-void radio_protocol_run(void) {
+void radio_protocol_run (void) {
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     old_protocol_run();
@@ -3812,19 +3813,19 @@ void radio_protocol_run(void) {
 #ifdef SOAPYSDR
 
   case SOAPYSDR_PROTOCOL:
-    soapy_protocol_start_receiver(receiver[0]);
+    soapy_protocol_start_receiver (receiver[0]);
     break;
 #endif
   }
 }
 
-void radio_protocol_restart(void) {
+void radio_protocol_restart (void) {
   radio_protocol_stop();
-  usleep(200000);
+  usleep (200000);
   radio_protocol_run();
 }
 
-static gpointer auto_tune_thread(gpointer data) {
+static gpointer auto_tune_thread (gpointer data) {
   //
   // This routine is triggered when an "auto tune" event
   // occurs, which usually is triggered by an input.
@@ -3840,61 +3841,61 @@ static gpointer auto_tune_thread(gpointer data) {
   // but  it may stop tuning before.
   //
   int count = 0;
-  g_idle_add(ext_tune_update, GINT_TO_POINTER(1));
+  g_idle_add (ext_tune_update, GINT_TO_POINTER (1));
 
   for (;;) {
     if (count >= 0) {
       count++;
     }
 
-    usleep(50000);
+    usleep (50000);
 
     if (auto_tune_end) {
-      g_idle_add(ext_tune_update, GINT_TO_POINTER(0));
+      g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       break;
     }
 
     if (count >= 200) {
-      g_idle_add(ext_tune_update, GINT_TO_POINTER(0));
+      g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       count = -1;
     }
   }
 
-  usleep(50000);       // debouncing
+  usleep (50000);      // debouncing
   auto_tune_flag = 0;
   return NULL;
 }
 
-void radio_start_auto_tune(void) {
+void radio_start_auto_tune (void) {
   static GThread *tune_thread_id = NULL;
 
   if (tune_thread_id) {
     auto_tune_end  = 1;
-    g_thread_join(tune_thread_id);
+    g_thread_join (tune_thread_id);
   }
 
   auto_tune_flag = 1;
   auto_tune_end  = 0;
-  tune_thread_id = g_thread_new("TUNE", auto_tune_thread, NULL);
+  tune_thread_id = g_thread_new ("TUNE", auto_tune_thread, NULL);
 }
 
 //
 // The next four functions implement a temporary change
 // of settings during capture/replay.
 //
-void radio_start_capture(void) {
+void radio_start_capture (void) {
   //
   // - turn off  equalizers for both RX but keep the state in rx
   //
   for (int i = 0; i < receivers; i++) {
     int eq = receiver[i]->eq_enable;
     receiver[i]->eq_enable = 0;
-    rx_set_equalizer(receiver[i]);
+    rx_set_equalizer (receiver[i]);
     receiver[i]->eq_enable = eq;
   }
 }
 
-void radio_end_capture(void) {
+void radio_end_capture (void) {
   //
   // - normalize what has been captured
   // - restore  RX equalizer on/off flags
@@ -3907,7 +3908,7 @@ void radio_end_capture(void) {
   //       the quietest bands.
   //
   for (int i = 0; i < capture_record_pointer; i++) {
-    double t = fabs(capture_data[i]);
+    double t = fabs (capture_data[i]);
 
     if (t > max) { max = t; }
   }
@@ -3930,23 +3931,23 @@ void radio_end_capture(void) {
   // re-activate equalizers if they had been active before
   //
   for (int i = 0; i < receivers; i++) {
-    rx_set_equalizer(receiver[i]);
+    rx_set_equalizer (receiver[i]);
   }
 }
 
-void radio_start_xmit_captured_data(void) {
+void radio_start_xmit_captured_data (void) {
   if (can_transmit) {
-    tx_xmit_captured_data_start(transmitter);
+    tx_xmit_captured_data_start (transmitter);
   }
 }
 
-void radio_end_xmit_captured_data(void) {
+void radio_end_xmit_captured_data (void) {
   if (can_transmit) {
-    tx_xmit_captured_data_end(transmitter);
+    tx_xmit_captured_data_end (transmitter);
   }
 }
 
-void radio_start_playback(void) {
+void radio_start_playback (void) {
   //
   // - turn off TX equalizer   but keep equalizer  info in transmitter->eq_enable
   // - turn off TX compression but keep compressor info in transmitter->compression
@@ -3970,10 +3971,10 @@ void radio_start_playback(void) {
   transmitter->dexp = 0;
   transmitter->lev_enable = 0;
   transmitter->phrot_enable = 0;
-  tx_set_equalizer(transmitter);
-  tx_set_mic_gain(transmitter);
-  tx_set_compressor(transmitter);
-  tx_set_dexp(transmitter);
+  tx_set_equalizer (transmitter);
+  tx_set_mic_gain (transmitter);
+  tx_set_compressor (transmitter);
+  tx_set_dexp (transmitter);
   transmitter->compressor = comp;
   transmitter->cfc = cfc;
   transmitter->cfc_eq = cfc_eq;
@@ -3984,7 +3985,7 @@ void radio_start_playback(void) {
   transmitter->phrot_enable = phrot_enable;
 }
 
-void radio_end_playback(void) {
+void radio_end_playback (void) {
   //
   // re-inforce settings stored in transmitter:
   // - TX equalizer on/off
@@ -3992,18 +3993,18 @@ void radio_end_playback(void) {
   // - TX mic gain setting
   // - CFC and DEXP
   //
-  tx_set_equalizer(transmitter);
-  tx_set_mic_gain(transmitter);
-  tx_set_compressor(transmitter);
-  tx_set_dexp(transmitter);
+  tx_set_equalizer (transmitter);
+  tx_set_mic_gain (transmitter);
+  tx_set_compressor (transmitter);
+  tx_set_dexp (transmitter);
 }
 
 //
 // utility function needed e.g. for qsort
 //
-int compare_doubles(const void *a, const void *b) {
-  double arg1 = *(const double *)a;
-  double arg2 = *(const double *)b;
+int compare_doubles (const void* a, const void* b) {
+  double arg1 = * (const double*) a;
+  double arg2 = * (const double*) b;
 
   if (arg1 < arg2) { return -1; }
 

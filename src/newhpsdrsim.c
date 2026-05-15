@@ -162,10 +162,10 @@ void   *ddc_specific_thread(void*);
 void   *duc_specific_thread(void*);
 void   *highprio_thread(void*);
 void   *send_highprio_thread(void*);
-void   *rx_thread(void *);
-void   *tx_thread(void *);
-void   *mic_thread(void *);
-void   *audio_thread(void *);
+void   *rx_thread(void*);
+void   *tx_thread(void*);
+void   *mic_thread(void*);
+void   *audio_thread(void*);
 
 static double txlevel;
 
@@ -174,14 +174,14 @@ int new_protocol_running() {
   else { return 0; }
 }
 
-void new_protocol_general_packet(unsigned char *buffer) {
+void new_protocol_general_packet(unsigned char* buffer) {
   static unsigned long seqnum = 0;
   unsigned long seqold;
   int rc;
   seqold = seqnum;
   seqnum = (buffer[0] >> 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
 
-  if (seqnum != 0 && seqnum != seqold + 1 ) {
+  if (seqnum != 0 && seqnum != seqold + 1) {
     t_print("GP: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
   }
 
@@ -401,7 +401,7 @@ void new_protocol_general_packet(unsigned char *buffer) {
   }
 }
 
-void *ddc_specific_thread(void *data) {
+void *ddc_specific_thread(void* data) {
   int sock;
   struct sockaddr_in addr;
   socklen_t lenaddr = sizeof(addr);
@@ -418,17 +418,17 @@ void *ddc_specific_thread(void *data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   tv.tv_sec = 0;
   tv.tv_usec = 10000;
-  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(ddc_port);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: RX specific: bind");
     close(sock);
     return NULL;
@@ -438,7 +438,7 @@ void *ddc_specific_thread(void *data) {
   seqnum = 0;
 
   while (run) {
-    rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr *)&addr, &lenaddr);
+    rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr*) &addr, &lenaddr);
 
     if (rc < 0 && errno != EAGAIN) {
       t_perror("***** ERROR: DDC specific thread: recvmsg");
@@ -458,7 +458,7 @@ void *ddc_specific_thread(void *data) {
     t_print("DDC SPEC rcvd seq=%lu\n", seqnum);
 #endif
 
-    if (seqnum != 0 && seqnum != seqold + 1 ) {
+    if (seqnum != 0 && seqnum != seqold + 1) {
       t_print("RXspec: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
     }
 
@@ -500,7 +500,7 @@ void *ddc_specific_thread(void *data) {
         modified = 1;
         rxrate[i] = rc;
         modified = 1;
-        p2noisefac[i] = sqrt((double)rxrate[i]);
+        p2noisefac[i] = sqrt((double) rxrate[i]);
       }
 
       if (syncddc[i] != buffer[1363 + i]) {
@@ -543,7 +543,7 @@ void *ddc_specific_thread(void *data) {
   return NULL;
 }
 
-void *duc_specific_thread(void *data) {
+void *duc_specific_thread(void* data) {
   int sock;
   struct sockaddr_in addr;
   socklen_t lenaddr = sizeof(addr);
@@ -559,17 +559,17 @@ void *duc_specific_thread(void *data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   tv.tv_sec = 0;
   tv.tv_usec = 10000;
-  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(duc_port);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: TXspec: bind");
     close(sock);
     return NULL;
@@ -578,7 +578,7 @@ void *duc_specific_thread(void *data) {
   seqnum = 0;
 
   while (run) {
-    rc = recvfrom(sock, buffer, 60, 0, (struct sockaddr *)&addr, &lenaddr);
+    rc = recvfrom(sock, buffer, 60, 0, (struct sockaddr*) &addr, &lenaddr);
 
     if (rc < 0 && errno != EAGAIN) {
       t_perror("***** ERROR: TXspec: recvmsg");
@@ -599,7 +599,7 @@ void *duc_specific_thread(void *data) {
     t_print("DUC SPEC rcvd seq=%lu\n", seqnum);
 #endif
 
-    if (seqnum != 0 && seqnum != seqold + 1 ) {
+    if (seqnum != 0 && seqnum != seqold + 1) {
       t_print("TX: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
     }
 
@@ -742,7 +742,7 @@ void *duc_specific_thread(void *data) {
   return NULL;
 }
 
-void *highprio_thread(void *data) {
+void *highprio_thread(void* data) {
   int sock;
   struct sockaddr_in addr;
   socklen_t lenaddr = sizeof(addr);
@@ -762,17 +762,17 @@ void *highprio_thread(void *data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   tv.tv_sec = 0;
   tv.tv_usec = 10000;
-  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(hp_port);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: HP: bind");
     close(sock);
     return NULL;
@@ -780,7 +780,7 @@ void *highprio_thread(void *data) {
 
   while (1) {
     //
-    rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr *)&addr, &lenaddr);
+    rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr*) &addr, &lenaddr);
 
     if (watchdog_count > 5000) {
       t_print("HP: watchdog barked\n");
@@ -807,7 +807,7 @@ void *highprio_thread(void *data) {
     t_print("HP rcvd seq=%lu\n", seqnum);
 #endif
 
-    if (seqnum != 0 && seqnum != seqold + 1 ) {
+    if (seqnum != 0 && seqnum != seqold + 1) {
       t_print("HP: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
     }
 
@@ -830,7 +830,7 @@ void *highprio_thread(void *data) {
         }
 
         for (i = 0; i < NUMRECEIVERS; i++) {
-          if (pthread_create(&rx_thread_id[i], NULL, rx_thread, (void *) (uintptr_t) i) < 0) {
+          if (pthread_create(&rx_thread_id[i], NULL, rx_thread, (void *)(uintptr_t) i) < 0) {
             t_perror("***** ERROR: Create RX thread");
           }
         }
@@ -865,8 +865,8 @@ void *highprio_thread(void *data) {
 
       if (ptt == 0) {
         txptr = -1;
-        memset(isample, 0, sizeof(double)*NEWRTXLEN);
-        memset(qsample, 0, sizeof(double)*NEWRTXLEN);
+        memset(isample, 0, sizeof(double) *NEWRTXLEN);
+        memset(qsample, 0, sizeof(double) *NEWRTXLEN);
       }
 
 #ifdef LOGFIRST
@@ -1066,7 +1066,7 @@ void *highprio_thread(void *data) {
   return NULL;
 }
 
-void *rx_thread(void *data) {
+void *rx_thread(void* data) {
   int sock;
   struct sockaddr_in addr;
   // One instance of this thread is started for each DDC
@@ -1098,7 +1098,7 @@ void *rx_thread(void *data) {
   tonearg2 = 0.0;
   t3p = 0;
   int flg;
-  myddc = (int) (uintptr_t) data;
+  myddc = (int)(uintptr_t) data;
 
   if (myddc < 0 || myddc >= NUMRECEIVERS) { return NULL; }
 
@@ -1112,14 +1112,14 @@ void *rx_thread(void *data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(ddc0_port + myddc);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: RXthread: bind");
     close(sock);
     return NULL;
@@ -1170,17 +1170,17 @@ void *rx_thread(void *data) {
     //
     if (myadc == 0 && labs(7100000L - rxfreq[myddc]) < 500 * myrate) {
       off = (double)(7100000 - rxfreq[myddc]);
-      tonedelta = -6.283185307179586476925286766559 * off / ((double) (1000 * myrate));
+      tonedelta = -6.283185307179586476925286766559 * off / ((double)(1000 * myrate));
       do_tone = 3;
     } else if (myadc == 0 && labs(14100000L - rxfreq[myddc]) < 500 * myrate) {
       off = (double)(14100000 - rxfreq[myddc]);
-      tonedelta = -6.283185307179586476925286766559 * off / ((double) (1000 * myrate));
+      tonedelta = -6.283185307179586476925286766559 * off / ((double)(1000 * myrate));
       do_tone = 1;
     } else if (myadc == 0 && labs(21100000L - rxfreq[myddc]) < 500 * myrate) {
       off = (double)(21100000 - rxfreq[myddc]);
-      tonedelta = -6.283185307179586476925286766559 * off / ((double) (1000 * myrate));
+      tonedelta = -6.283185307179586476925286766559 * off / ((double)(1000 * myrate));
       off2 = (double)(21100900 - rxfreq[myddc]);
-      tonedelta2 = -6.283185307179586476925286766559 * off2 / ((double) (1000 * myrate));
+      tonedelta2 = -6.283185307179586476925286766559 * off2 / ((double)(1000 * myrate));
       do_tone = 2;
     } else if (myadc == 0 && myrate == 192 && labs(3500000L - rxfreq[myddc]) < 500 * myrate) {
       do_tone = 4;
@@ -1408,7 +1408,7 @@ void *rx_thread(void *data) {
 
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &tsdelay, NULL);
 
-    if (sendto(sock, buffer, 1444, 0, (struct sockaddr * )&addr_new, sizeof(addr_new)) < 0) {
+    if (sendto(sock, buffer, 1444, 0, (struct sockaddr *) &addr_new, sizeof(addr_new)) < 0) {
       t_perror("***** ERROR: RX thread sendto");
       break;
     }
@@ -1421,7 +1421,7 @@ void *rx_thread(void *data) {
 //
 // This thread receives data (TX samples) from the PC
 //
-void *tx_thread(void * data) {
+void *tx_thread(void* data) {
   int sock;
   struct sockaddr_in addr;
   socklen_t lenaddr = sizeof(addr);
@@ -1448,17 +1448,17 @@ void *tx_thread(void * data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   tv.tv_sec = 0;
   tv.tv_usec = 1000;
-  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(duc0_port);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: TX: bind");
     close(sock);
     return NULL;
@@ -1467,7 +1467,7 @@ void *tx_thread(void * data) {
   seqnum = 0;
 
   while (run) {
-    rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr *)&addr, &lenaddr);
+    rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr*) &addr, &lenaddr);
 
     if (rc < 0 && errno != EAGAIN) {
       t_perror("***** ERROR: TX thread: recvmsg");
@@ -1485,7 +1485,7 @@ void *tx_thread(void * data) {
     seqold = seqnum;
     seqnum = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
 
-    if (seqnum != 0 && seqnum != seqold + 1 ) {
+    if (seqnum != 0 && seqnum != seqold + 1) {
       t_print("TXthread: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
     }
 
@@ -1516,10 +1516,10 @@ void *tx_thread(void * data) {
 
     for (i = 0; i < 240; i++) {
       // process 240 TX iq samples
-      samp1  = (int)((signed char) (*p++)) << 16;
+      samp1  = (int)((signed char)(*p++)) << 16;
       samp1 |= (int)((((unsigned char)(*p++)) << 8) & 0xFF00);
       samp1 |= (int)((unsigned char)(*p++) & 0xFF);
-      samp2  = (int)((signed char) (*p++)) << 16;
+      samp2  = (int)((signed char)(*p++)) << 16;
       samp2 |= (int)((((unsigned char)(*p++)) << 8) & 0xFF00);
       samp2 |= (int)((unsigned char)(*p++) & 0xFF);
       di = (double) samp1 / 8388608.0;
@@ -1578,7 +1578,7 @@ void *tx_thread(void * data) {
   return NULL;
 }
 
-void *send_highprio_thread(void *data) {
+void *send_highprio_thread(void* data) {
   int sock;
   struct timespec tsdelay;
   struct sockaddr_in addr;
@@ -1596,14 +1596,14 @@ void *send_highprio_thread(void *data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(shp_port);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: SendHighPrio thread: bind");
     close(sock);
     return NULL;
@@ -1677,7 +1677,7 @@ void *send_highprio_thread(void *data) {
 
     if (radio_ptt)  { uc |= 1; }
 
-    if (radio_dot ) { uc |= 2; }
+    if (radio_dot) { uc |= 2; }
 
     if (radio_dash) { uc |= 4; }
 
@@ -1689,13 +1689,13 @@ void *send_highprio_thread(void *data) {
 
       if (alex0_enable > 0) {
         // ALEX Fwd power
-        rc = (int) ((4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
+        rc = (int)((4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
         buffer[14] = (rc >> 8) & 0xFF;
-        buffer[15] = (rc     ) & 0xFF;
+        buffer[15] = (rc) & 0xFF;
         // ALEX Rev power, make it TX dridve dependent to get a handle to vary the SWR
-        rc = (int) (0.1 * txdrv_dbl * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
+        rc = (int)(0.1 * txdrv_dbl * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
         buffer[22] = (rc >> 8) & 0xFF;
-        buffer[23] = (rc     ) & 0xFF;
+        buffer[23] = (rc) & 0xFF;
       }
     }
 
@@ -1724,7 +1724,7 @@ void *send_highprio_thread(void *data) {
     buffer[59] = uc;   // Digital user inputs
     radio_digi_changed = 0;
 
-    if (sendto(sock, buffer, 60, 0, (struct sockaddr * )&addr_new, sizeof(addr_new)) < 0) {
+    if (sendto(sock, buffer, 60, 0, (struct sockaddr *) &addr_new, sizeof(addr_new)) < 0) {
       t_perror("***** ERROR: HP send thread sendto");
       break;
     }
@@ -1761,7 +1761,7 @@ void *send_highprio_thread(void *data) {
 //
 // This thread receives the audio samples and plays them
 //
-void *audio_thread(void *data) {
+void *audio_thread(void* data) {
   int sock;
   struct sockaddr_in addr;
   socklen_t lenaddr = sizeof(addr);
@@ -1781,17 +1781,17 @@ void *audio_thread(void *data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   tv.tv_sec = 0;
   tv.tv_usec = 1000;
-  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(audio_port);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: Audio: bind");
     close(sock);
     return NULL;
@@ -1800,7 +1800,7 @@ void *audio_thread(void *data) {
   seqnum = 0;
 
   while (run) {
-    rc = recvfrom(sock, buffer, 260, 0, (struct sockaddr *)&addr, &lenaddr);
+    rc = recvfrom(sock, buffer, 260, 0, (struct sockaddr*) &addr, &lenaddr);
     watchdog_count++;
 
     if (rc < 0 && errno != EAGAIN) {
@@ -1819,7 +1819,7 @@ void *audio_thread(void *data) {
     seqold = seqnum;
     seqnum = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
 
-    if (seqnum != 0 && seqnum != seqold + 1 ) {
+    if (seqnum != 0 && seqnum != seqold + 1) {
       t_print("Audio thread: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
     }
 
@@ -1827,9 +1827,9 @@ void *audio_thread(void *data) {
     p = buffer + 4;
 
     for (int i = 0; i < 64; i++) {
-      lsample  = (int)((signed char) (*p++)) << 8;
+      lsample  = (int)((signed char)(*p++)) << 8;
       lsample |= (int)(((unsigned char)(*p++)) & 0xFF);
-      rsample  = (int)((signed char) (*p++)) << 8;
+      rsample  = (int)((signed char)(*p++)) << 8;
       rsample |= (int)(((unsigned char)(*p++)) & 0xFF);
 
       if (first_audio_count >= 0 && first_audio_count < 144000) {
@@ -1856,7 +1856,7 @@ void *audio_thread(void *data) {
     // just skip the audio samples
   }
 
-  close (sock);
+  close(sock);
   return NULL;
 }
 
@@ -1864,7 +1864,7 @@ void *audio_thread(void *data) {
 // The microphone thread just sends silence, that is
 // a "zeroed" mic frame every 1.333 msec
 //
-void *mic_thread(void *data) {
+void *mic_thread(void* data) {
   int sock;
   unsigned long seqnum = 0;
   struct sockaddr_in addr;
@@ -1879,14 +1879,14 @@ void *mic_thread(void *data) {
     return NULL;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(mic_port);
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     t_perror("***** ERROR: Mic thread: bind");
     close(sock);
     return NULL;
@@ -1920,7 +1920,7 @@ void *mic_thread(void *data) {
 
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &delay, NULL);
 
-    if (sendto(sock, buffer, 132, 0, (struct sockaddr * )&addr_new, sizeof(addr_new)) < 0) {
+    if (sendto(sock, buffer, 132, 0, (struct sockaddr *) &addr_new, sizeof(addr_new)) < 0) {
       t_perror("***** ERROR: Mic thread sendto");
       break;
     }

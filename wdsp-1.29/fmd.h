@@ -32,8 +32,8 @@ warren@wpratt.com
 typedef struct _fmd {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double f_low;           // audio low cutoff
   double f_high;            // audio high cutoff
@@ -58,7 +58,7 @@ typedef struct _fmd {
   double deviation;
   double again;
   // for de-emphasis filter
-  double* audio;
+  double *audio;
   FIRCORE pde;
   int nc_de;
   int mp_de;
@@ -78,9 +78,9 @@ typedef struct _fmd {
   double lim_pre_gain;
 } fmd, *FMD;
 
-extern FMD create_fmd ( int run, int size, double* in, double* out, int rate, double deviation,
-                        double f_low, double f_high, double fmin, double fmax, double zeta, double omegaN, double tau,
-                        double afgain, int sntch_run, double ctcss_freq, int nc_de, int mp_de, int nc_aud, int mp_aud);
+extern FMD create_fmd (int run, int size, double* in, double* out, int rate, double deviation,
+                       double f_low, double f_high, double fmin, double fmax, double zeta, double omegaN, double tau,
+                       double afgain, int sntch_run, double ctcss_freq, int nc_de, int mp_de, int nc_aud, int mp_aud);
 
 extern void destroy_fmd (FMD a);
 

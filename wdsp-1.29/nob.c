@@ -56,20 +56,20 @@ void initBlanker(ANB a) {
 }
 
 PORT
-ANB create_anb  (
-  int run,
-  int buffsize,
-  double* in,
-  double* out,
-  double samplerate,
-  double tau,
-  double hangtime,
-  double advtime,
-  double backtau,
-  double threshold
+ANB create_anb(
+        int run,
+        int buffsize,
+        double *in,
+        double *out,
+        double samplerate,
+        double tau,
+        double hangtime,
+        double advtime,
+        double backtau,
+        double threshold
 ) {
   ANB a;
-  a = (ANB) malloc0 (sizeof(anb));
+  a = (ANB) malloc0(sizeof(anb));
   a->run = run;
   a->buffsize = buffsize;
   a->in = in;
@@ -80,40 +80,40 @@ ANB create_anb  (
   a->advtime = advtime;
   a->backtau = backtau;
   a->threshold = threshold;
-  a->wave = (double *) malloc0 (((int)(MAX_SAMPLERATE * MAX_TAU) + 1) * sizeof(double));
+  a->wave = (double*) malloc0(((int)(MAX_SAMPLERATE * MAX_TAU) + 1) * sizeof(double));
   a->dline_size = (int)((MAX_TAU + MAX_ADVTIME) * MAX_SAMPLERATE) + 1;
-  a->dline = (double *) malloc0 (a->dline_size * sizeof(complex));
-  InitializeCriticalSectionAndSpinCount (&a->cs_update, 2500);
+  a->dline = (double*) malloc0(a->dline_size * sizeof(complex));
+  InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   initBlanker(a);
-  a->legacy = (double *) malloc0 (2048 * sizeof (
-                                    complex));                           /////////////// legacy interface - remove
+  a->legacy = (double*) malloc0(2048 * sizeof(
+                                        complex));                           /////////////// legacy interface - remove
   return a;
 }
 
 PORT
-void destroy_anb (ANB a) {
-  DeleteCriticalSection (&a->cs_update);
-  _aligned_free (a->legacy);                                            /////////////// legacy interface - remove
-  _aligned_free (a->dline);
-  _aligned_free (a->wave);
-  _aligned_free (a);
+void destroy_anb(ANB a) {
+  DeleteCriticalSection(&a->cs_update);
+  _aligned_free(a->legacy);                                             /////////////// legacy interface - remove
+  _aligned_free(a->dline);
+  _aligned_free(a->wave);
+  _aligned_free(a);
 }
 
 PORT
-void flush_anb (ANB a) {
-  EnterCriticalSection (&a->cs_update);
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+void flush_anb(ANB a) {
+  EnterCriticalSection(&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void xanb (ANB a) {
+void xanb(ANB a) {
   double scale;
   double mag;
   int i;
 
   if (a->run) {
-    EnterCriticalSection (&a->cs_update);
+    EnterCriticalSection(&a->cs_update);
 
     for (i = 0; i < a->buffsize; i++) {
       mag = sqrt(a->in[2 * i + 0] * a->in[2 * i + 0] + a->in[2 * i + 1] * a->in[2 * i + 1]);
@@ -198,25 +198,25 @@ void xanb (ANB a) {
       if (++a->out_idx == a->dline_size) { a->out_idx = 0; }
     }
 
-    LeaveCriticalSection (&a->cs_update);
+    LeaveCriticalSection(&a->cs_update);
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->buffsize * sizeof (complex));
+    memcpy(a->out, a->in, a->buffsize * sizeof(complex));
   }
 }
 
-void setBuffers_anb (ANB a, double* in, double* out) {
+void setBuffers_anb(ANB a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-void setSamplerate_anb (ANB a, int rate) {
+void setSamplerate_anb(ANB a, int rate) {
   a->samplerate = rate;
-  initBlanker (a);
+  initBlanker(a);
 }
 
-void setSize_anb (ANB a, int size) {
+void setSize_anb(ANB a, int size) {
   a->buffsize = size;
-  initBlanker (a);
+  initBlanker(a);
 }
 
 
@@ -245,64 +245,64 @@ void setSize_anb (ANB a, int size) {
 ********************************************************************************************************/
 
 PORT
-void pSetRCVRANBRun (ANB a, int run) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBRun(ANB a, int run) {
+  EnterCriticalSection(&a->cs_update);
   a->run = run;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void pSetRCVRANBBuffsize (ANB a, int size) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBBuffsize(ANB a, int size) {
+  EnterCriticalSection(&a->cs_update);
   a->buffsize = size;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void pSetRCVRANBSamplerate (ANB a, int rate) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBSamplerate(ANB a, int rate) {
+  EnterCriticalSection(&a->cs_update);
   a->samplerate = (double) rate;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void pSetRCVRANBTau (ANB a, double tau) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBTau(ANB a, double tau) {
+  EnterCriticalSection(&a->cs_update);
   a->tau = tau;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void pSetRCVRANBHangtime (ANB a, double time) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBHangtime(ANB a, double time) {
+  EnterCriticalSection(&a->cs_update);
   a->hangtime = time;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void pSetRCVRANBAdvtime (ANB a, double time) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBAdvtime(ANB a, double time) {
+  EnterCriticalSection(&a->cs_update);
   a->advtime = time;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void pSetRCVRANBBacktau (ANB a, double tau) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBBacktau(ANB a, double tau) {
+  EnterCriticalSection(&a->cs_update);
   a->backtau = tau;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void pSetRCVRANBThreshold (ANB a, double thresh) {
-  EnterCriticalSection (&a->cs_update);
+void pSetRCVRANBThreshold(ANB a, double thresh) {
+  EnterCriticalSection(&a->cs_update);
   a->threshold = thresh;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 /********************************************************************************************************
@@ -312,108 +312,108 @@ void pSetRCVRANBThreshold (ANB a, double thresh) {
 ********************************************************************************************************/
 
 #define MAX_EXT_ANBS  (32)            // maximum number of NOBs called from outside wdsp
-__declspec (align (16)) ANB panb[MAX_EXT_ANBS];   // array of pointers for NOBs used EXTERNAL to wdsp
+__declspec(align(16)) ANB panb[MAX_EXT_ANBS];     // array of pointers for NOBs used EXTERNAL to wdsp
 
 PORT
-void create_anbEXT  (
-  int id,
-  int run,
-  int buffsize,
-  double samplerate,
-  double tau,
-  double hangtime,
-  double advtime,
-  double backtau,
-  double threshold
+void create_anbEXT(
+        int id,
+        int run,
+        int buffsize,
+        double samplerate,
+        double tau,
+        double hangtime,
+        double advtime,
+        double backtau,
+        double threshold
 ) {
-  panb[id] = create_anb (run, buffsize, 0, 0, samplerate, tau, hangtime, advtime, backtau, threshold);
+  panb[id] = create_anb(run, buffsize, 0, 0, samplerate, tau, hangtime, advtime, backtau, threshold);
 }
 
 PORT
-void destroy_anbEXT (int id) {
-  destroy_anb (panb[id]);
+void destroy_anbEXT(int id) {
+  destroy_anb(panb[id]);
 }
 
 PORT
-void flush_anbEXT (int id) {
-  flush_anb (panb[id]);
+void flush_anbEXT(int id) {
+  flush_anb(panb[id]);
 }
 
 PORT
-void xanbEXT (int id, double* in, double* out) {
+void xanbEXT(int id, double* in, double* out) {
   ANB a = panb[id];
   a->in = in;
   a->out = out;
-  xanb (a);
+  xanb(a);
 }
 
 PORT
-void SetEXTANBRun (int id, int run) {
+void SetEXTANBRun(int id, int run) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->run = run;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetEXTANBBuffsize (int id, int size) {
+void SetEXTANBBuffsize(int id, int size) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->buffsize = size;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetEXTANBSamplerate (int id, int rate) {
+void SetEXTANBSamplerate(int id, int rate) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->samplerate = (double) rate;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetEXTANBTau (int id, double tau) {
+void SetEXTANBTau(int id, double tau) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->tau = tau;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetEXTANBHangtime (int id, double time) {
+void SetEXTANBHangtime(int id, double time) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->hangtime = time;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetEXTANBAdvtime (int id, double time) {
+void SetEXTANBAdvtime(int id, double time) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->advtime = time;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetEXTANBBacktau (int id, double tau) {
+void SetEXTANBBacktau(int id, double tau) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->backtau = tau;
-  initBlanker (a);
-  LeaveCriticalSection (&a->cs_update);
+  initBlanker(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetEXTANBThreshold (int id, double thresh) {
+void SetEXTANBThreshold(int id, double thresh) {
   ANB a = panb[id];
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->threshold = thresh;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 /********************************************************************************************************
@@ -423,7 +423,7 @@ void SetEXTANBThreshold (int id, double thresh) {
 ********************************************************************************************************/
 
 PORT
-void xanbEXTF (int id, float *I, float *Q) {
+void xanbEXTF(int id, float* I, float* Q) {
   int i;
   ANB a = panb[id];
   a->in = a->legacy;
@@ -434,7 +434,7 @@ void xanbEXTF (int id, float *I, float *Q) {
     a->legacy[2 * i + 1] = (double)Q[i];
   }
 
-  xanb (a);
+  xanb(a);
 
   for (i = 0; i < a->buffsize; i++) {
     I[i] = (float)a->legacy[2 * i + 0];

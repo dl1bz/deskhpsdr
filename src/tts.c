@@ -74,7 +74,7 @@
 // tts_send: send broadcast UDP packet containing a string
 //           on MacOS do both: send UDP packet and use MacTTS
 //
-void tts_send(const char *msg) {
+void tts_send(const char* msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   if (sock >= 0) {
@@ -88,7 +88,7 @@ void tts_send(const char *msg) {
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     addr.sin_port = htons(19080);
-    sendto(sock, msg, strlen(msg), 0, (struct sockaddr * ) &addr, sizeof(addr));
+    sendto(sock, msg, strlen(msg), 0, (struct sockaddr*) &addr, sizeof(addr));
     close(sock);
   }
 
@@ -203,7 +203,7 @@ void tts_smeter(void) {
   if (s > 9) {
     s = 9;
     // for "plus" only use 10, 20, ...
-    plus = 10 * (( val + 73) / 10);
+    plus = 10 * ((val + 73) / 10);
   }
 
   if (plus <= 0) {

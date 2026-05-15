@@ -199,7 +199,7 @@
 #include "vfo.h"
 #include "message.h"
 
-static void* keyer_thread(void *arg);
+static void *keyer_thread(void* arg);
 static pthread_t keyer_thread_id;
 
 #define MY_PRIORITY (90)
@@ -315,7 +315,7 @@ void keyer_event(int left, int state) {
   }
 }
 
-static void* keyer_thread(void *arg) {
+static void *keyer_thread(void* arg) {
   struct timespec loop_delay;
   int interval = 1000000; // 1 ms
   int i;

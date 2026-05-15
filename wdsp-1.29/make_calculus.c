@@ -33,7 +33,7 @@ int main() {
     return -1;
   }
 
-  fd = open ("calculus", O_RDONLY);
+  fd = open("calculus", O_RDONLY);
 
   if (fd < 0) {
     printf("Could not open file 'calculus'\n");

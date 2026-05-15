@@ -82,7 +82,7 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
-static gboolean start_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   /* korrektes Gerät aus der Discover-Liste selektieren */
   selected_device = GPOINTER_TO_INT(data);
 
@@ -181,13 +181,13 @@ static int hl2_send_reboot_1025(const struct sockaddr_in *dst_in) {
   msg[8] = 0x01;
   struct sockaddr_in to = *dst_in;
   to.sin_port = htons(1025);
-  ssize_t n = sendto(s, msg, sizeof msg, 0, (struct sockaddr*)&to, sizeof to);
+  ssize_t n = sendto(s, msg, sizeof msg, 0, (struct sockaddr*) &to, sizeof to);
   close(s);
-  return (n == (ssize_t)sizeof msg) ? 0 : -1;
+  return (n == (ssize_t) sizeof msg) ? 0 : -1;
 }
 
-static gboolean reboot_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  DISCOVERED *radio = (DISCOVERED *)data;
+static gboolean reboot_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  DISCOVERED *radio = (DISCOVERED*) data;
   struct sockaddr_in dst = radio->info.network.address;
   int rc = hl2_send_reboot_1025(&dst);
 
@@ -202,14 +202,14 @@ static gboolean reboot_cb (GtkWidget *widget, GdkEventButton *event, gpointer da
   return TRUE;
 }
 
-static gboolean protocols_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean protocols_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   configure_protocols(discovery_dialog);
   return TRUE;
 }
 
 #ifdef GPIO
 #ifdef GPIO_CONFIGURE_LINES
-static gboolean gpio_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean gpio_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   configure_gpio(discovery_dialog);
   return TRUE;
 }
@@ -231,19 +231,19 @@ static void gpio_changed_cb(GtkWidget *widget, gpointer data) {
   gpioSaveState();
 }
 
-static gboolean discover_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean discover_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   gtk_widget_destroy(discovery_dialog);
   g_timeout_add(100, delayed_discovery, NULL);
   return TRUE;
 }
 
-static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean exit_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   gtk_widget_destroy(discovery_dialog);
   exit(EXIT_SUCCESS);
   return TRUE;
 }
 
-static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean radio_ip_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   struct sockaddr_in sa;
   int len;
   const char *cp;
@@ -258,7 +258,7 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
 
   // Accept both IP addresses and hostnames
   // Try to validate as IP first, but if it fails, accept it anyway (could be hostname)
-  int is_valid_ip = (inet_pton(AF_INET, cp, &(sa.sin_addr)) == 1);
+  int is_valid_ip = (inet_pton(AF_INET, cp, & (sa.sin_addr)) == 1);
   // Additional check: hostname should contain valid characters
   int is_valid_hostname = 1;
 
@@ -288,7 +288,7 @@ static gboolean radio_ip_cb (GtkWidget *widget, GdkEventButton *event, gpointer 
   return FALSE;
 }
 
-static gboolean radio_port_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean radio_port_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   const char *cp;
   int port;
   cp = gtk_entry_get_text(GTK_ENTRY(tcpport));
@@ -318,11 +318,11 @@ static gboolean radio_port_cb (GtkWidget *widget, GdkEventButton *event, gpointe
 }
 
 /* -- Wrapper für Wayland-sichere Button-Signale ("clicked") -- */
-static void start_clicked(GtkButton *btn, gpointer data)    { (void)btn; start_cb(NULL, NULL, data); }
-static void reboot_clicked(GtkButton *btn, gpointer data)   { (void)btn; reboot_cb(NULL, NULL, data); }
-static void discover_clicked(GtkButton *btn, gpointer data) { (void)btn; discover_cb(NULL, NULL, data); }
-static void protocols_clicked(GtkButton *btn, gpointer data) { (void)btn; protocols_cb(NULL, NULL, data); }
-static void exit_clicked(GtkButton *btn, gpointer data)     { (void)btn; exit_cb(NULL, NULL, data); }
+static void start_clicked(GtkButton *btn, gpointer data)    { (void) btn; start_cb(NULL, NULL, data); }
+static void reboot_clicked(GtkButton *btn, gpointer data)   { (void) btn; reboot_cb(NULL, NULL, data); }
+static void discover_clicked(GtkButton *btn, gpointer data) { (void) btn; discover_cb(NULL, NULL, data); }
+static void protocols_clicked(GtkButton *btn, gpointer data) { (void) btn; protocols_cb(NULL, NULL, data); }
+static void exit_clicked(GtkButton *btn, gpointer data)     { (void) btn; exit_cb(NULL, NULL, data); }
 
 void discovery(void) {
   //
@@ -475,7 +475,7 @@ void discovery(void) {
   content = gtk_dialog_get_content_area(GTK_DIALOG(discovery_dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
   int row = 0;
 
   if (devices == 0) {
@@ -525,7 +525,8 @@ void discovery(void) {
 
       case SOAPYSDR_PROTOCOL:
 #ifdef SOAPYSDR
-        snprintf(text, sizeof(text), "%s (Protocol SOAPY_SDR %s) on %s", d->name, d->info.soapy.version, d->info.soapy.address);
+        snprintf(text, sizeof(text), "%s (Protocol SOAPY_SDR %s) on %s", d->name, d->info.soapy.version,
+                 d->info.soapy.address);
 #endif
         break;
 
@@ -564,7 +565,7 @@ void discovery(void) {
         gtk_widget_set_margin_top(reboot_button, 10);
         gtk_widget_set_margin_start(reboot_button, 5);
         gtk_grid_attach(GTK_GRID(grid), reboot_button, 4, row, 1, 1);
-        g_signal_connect(reboot_button, "clicked", G_CALLBACK(reboot_clicked), (gpointer)d);
+        g_signal_connect(reboot_button, "clicked", G_CALLBACK(reboot_clicked), (gpointer) d);
       }
 
       // if not available then cannot start it
@@ -679,10 +680,10 @@ void discovery(void) {
   gtk_combo_box_set_active(GTK_COMBO_BOX(gpio), controller);
   g_signal_connect(gpio, "changed", G_CALLBACK(gpio_changed_cb), NULL);
   GtkWidget *discover_b = gtk_button_new_with_label("Discover");
-  g_signal_connect (discover_b, "clicked", G_CALLBACK(discover_clicked), NULL);
+  g_signal_connect(discover_b, "clicked", G_CALLBACK(discover_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), discover_b, 1, row, 1, 1);
   GtkWidget *protocols_b = gtk_button_new_with_label("Protocols");
-  g_signal_connect (protocols_b, "clicked", G_CALLBACK(protocols_clicked), NULL);
+  g_signal_connect(protocols_b, "clicked", G_CALLBACK(protocols_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), protocols_b, 2, row, 1, 1);
   row++;
   GtkWidget *tcp_b = gtk_label_new("Radio IP Addr:");
@@ -694,13 +695,13 @@ void discovery(void) {
                                        "(Hostname will be resolved via DNS)");
   gtk_grid_attach(GTK_GRID(grid), tcpaddr, 2, row, 1, 1);
   gtk_entry_set_text(GTK_ENTRY(tcpaddr), ipaddr_radio);
-  g_signal_connect (tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
+  g_signal_connect(tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
   GtkWidget *exit_b = gtk_button_new_with_label("Exit");
   gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
   gtk_widget_set_name(exit_b, "discovery_btn");
   gtk_widget_set_margin_start(exit_b, 10);
   gtk_widget_set_margin_end(exit_b, 10);
-  g_signal_connect (exit_b, "clicked", G_CALLBACK(exit_clicked), NULL);
+  g_signal_connect(exit_b, "clicked", G_CALLBACK(exit_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), exit_b, 3, row, 1, 1);
   row++;
   GtkWidget *port_b = gtk_label_new("Radio UDP Port:");
@@ -714,8 +715,8 @@ void discovery(void) {
   gtk_widget_set_tooltip_text(tcpport, "Input Portnumber\n"
                                        "(default Port 1024)");
   gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
-  g_signal_connect (tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
-  gtk_container_add (GTK_CONTAINER (content), grid);
+  g_signal_connect(tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
+  gtk_container_add(GTK_CONTAINER(content), grid);
   gtk_widget_show_all(discovery_dialog);
   t_print("showing device dialog\n");
   //

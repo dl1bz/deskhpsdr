@@ -503,15 +503,15 @@ static uint64_t epochMilli;
 
 static void initialiseEpoch(void) {
   struct timespec ts ;
-  clock_gettime (CLOCK_MONOTONIC_RAW, &ts) ;
-  epochMilli = (uint64_t)ts.tv_sec * (uint64_t)1000    + (uint64_t)(ts.tv_nsec / 1000000L) ;
+  clock_gettime(CLOCK_MONOTONIC_RAW, &ts) ;
+  epochMilli = (uint64_t) ts.tv_sec * (uint64_t) 1000    + (uint64_t)(ts.tv_nsec / 1000000L) ;
 }
 
 static unsigned int millis(void) {
   uint64_t now ;
   struct  timespec ts ;
-  clock_gettime (CLOCK_MONOTONIC_RAW, &ts) ;
-  now  = (uint64_t)ts.tv_sec * (uint64_t)1000 + (uint64_t)(ts.tv_nsec / 1000000L) ;
+  clock_gettime(CLOCK_MONOTONIC_RAW, &ts) ;
+  now  = (uint64_t) ts.tv_sec * (uint64_t) 1000 + (uint64_t)(ts.tv_nsec / 1000000L) ;
   return (uint32_t)(now - epochMilli) ;
 }
 
@@ -547,7 +547,7 @@ static gpointer rotary_encoder_thread(gpointer data) {
     }
 
     g_mutex_unlock(&encoder_mutex);
-    usleep(100000); // sleep for 100ms
+    usleep(100000);  // sleep for 100ms
   }
 
   return NULL;
@@ -1211,9 +1211,9 @@ static gpointer monitor_thread(gpointer arg) {
   t.tv_sec = 60;
   t.tv_nsec = 0;
   int ret = gpiod_ctxless_event_monitor_multiple(
-              gpio_device, GPIOD_CTXLESS_EVENT_BOTH_EDGES,
-              monitor_lines, lines, FALSE,
-              consumer, &t, NULL, interrupt_cb, NULL);
+                    gpio_device, GPIOD_CTXLESS_EVENT_BOTH_EDGES,
+                    monitor_lines, lines, FALSE,
+                    consumer, &t, NULL, interrupt_cb, NULL);
 
   if (ret < 0) {
     t_print("%s: ctxless event monitor failed: %s\n", __func__, g_strerror(errno));
@@ -1428,12 +1428,12 @@ int gpio_init(void) {
   }
 
   if (have_button || (controller != NO_CONTROLLER && controller != G2_V2)) {
-    monitor_thread_id = g_thread_new( "gpiod monitor", monitor_thread, NULL);
+    monitor_thread_id = g_thread_new("gpiod monitor", monitor_thread, NULL);
     t_print("%s: monitor_thread: id=%p\n", __func__, monitor_thread_id);
   }
 
   if (controller != NO_CONTROLLER && controller != G2_V2) {
-    rotary_encoder_thread_id = g_thread_new( "encoders", rotary_encoder_thread, NULL);
+    rotary_encoder_thread_id = g_thread_new("encoders", rotary_encoder_thread, NULL);
     t_print("%s: rotary_encoder_thread: id=%p\n", __func__, rotary_encoder_thread_id);
   }
 

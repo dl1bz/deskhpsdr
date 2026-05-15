@@ -36,21 +36,21 @@ typedef struct _siphon {
   int mode;
   int disp;
   int insize;
-  double* in;
+  double *in;
   int sipsize;  // NOTE:  sipsize MUST BE A POWER OF TWO!!
-  double* sipbuff;
+  double *sipbuff;
   int outsize;
   int idx;
-  double* sipout;
+  double *sipout;
   int fftsize;
-  double* specout;
+  double *specout;
   volatile long specmode;
   fftw_plan sipplan;
-  double* window;
+  double *window;
   CRITICAL_SECTION update;
   int n_alloc_disps;      // number of additional allocated displays for this channel
-  int* alloc_run;       // vector of corresponding 'run' variables for the additional allocated disps
-  int* alloc_disp;      // vector of 'disp' identifiers for the additional allocated disps
+  int *alloc_run;       // vector of corresponding 'run' variables for the additional allocated disps
+  int *alloc_disp;      // vector of 'disp' identifiers for the additional allocated disps
 } siphon, *SIPHON;
 
 extern SIPHON create_siphon (int run, int position, int mode, int disp, int insize, double* in, int sipsize,
@@ -69,7 +69,7 @@ extern void setSamplerate_siphon (SIPHON a, int rate);
 extern void setSize_siphon (SIPHON a, int size);
 
 extern __declspec (dllexport) void TXASetSipAllocDisps (int channel, int n_alloc_disps, int* alloc_run,
-    int* alloc_disp);
+    int *alloc_disp);
 
 // RXA Properties
 

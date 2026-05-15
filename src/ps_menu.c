@@ -147,7 +147,7 @@ static void clear_fields(void) {
 // this is essentially a no-op.
 //
 int ps_calibration_timer(gpointer arg) {
-  guint *timer = (guint *)arg;
+  guint *timer = (guint*) arg;
   static int state = -1;
 
   if (!transmitter->twotone) {
@@ -216,7 +216,7 @@ int ps_calibration_timer(gpointer arg) {
             delta_att = -15;
           } else {
             // calculate new delta, this mostly succeeds in one step
-            delta_att = (int) lround(20.0 * log10((double)info[4] / 152.293));
+            delta_att = (int) lround(20.0 * log10((double) info[4] / 152.293));
           }
 
           new_att = transmitter->attenuation + delta_att;
@@ -401,7 +401,7 @@ static void ps_off_on(void) {
 // select route for PS feedback signal.
 //
 static void ps_ant_cb(GtkWidget *widget, gpointer data) {
-  int val = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
   switch (val) {
   case 0:
@@ -422,7 +422,7 @@ static void ps_ant_cb(GtkWidget *widget, gpointer data) {
 
 static void enable_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
-    int val = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+    int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 #if defined (__CPYMODE__)
     int _mode = vfo_get_tx_mode();
 #endif
@@ -430,7 +430,7 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
     tx_ps_onoff(transmitter, val);
 
     if (val) {
-      if ( transmitter->auto_on) {
+      if (transmitter->auto_on) {
         char label[16];
         snprintf(label, 16, "%d", transmitter->attenuation);
         gtk_entry_set_text(GTK_ENTRY(tx_att), label);
@@ -464,25 +464,25 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void tol_cb(GtkWidget *widget, gpointer data) {
-  transmitter->ps_ptol = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  transmitter->ps_ptol = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   tx_ps_setparams(transmitter);
   ps_off_on();
 }
 
 static void oneshot_cb(GtkWidget *widget, gpointer data) {
-  transmitter->ps_oneshot = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  transmitter->ps_oneshot = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   tx_ps_setparams(transmitter);
   ps_off_on();
 }
 
 static void map_cb(GtkWidget *widget, gpointer data) {
-  transmitter->ps_map = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  transmitter->ps_map = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   tx_ps_setparams(transmitter);
   ps_off_on();
 }
 
 static void auto_cb(GtkWidget *widget, gpointer data) {
-  transmitter->auto_on = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  transmitter->auto_on = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (transmitter->puresignal) {
     if (transmitter->auto_on) {
@@ -548,7 +548,7 @@ void ps_menu(GtkWidget *parent) {
   int i;
   char text[16];
   dialog = gtk_dialog_new();
-  g_signal_connect (dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();
@@ -557,24 +557,24 @@ void ps_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Pure Signal", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   int row = 0;
   int col = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   gtk_widget_set_name(close_b, "close_button");
   row++;
   col = 0;
   GtkWidget *enable_b = gtk_check_button_new_with_label("Enable PS");
   gtk_widget_set_name(enable_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enable_b), transmitter->puresignal);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_b), transmitter->puresignal);
   gtk_grid_attach(GTK_GRID(grid), enable_b, col, row, 1, 1);
   g_signal_connect(enable_b, "toggled", G_CALLBACK(enable_cb), NULL);
   col++;
@@ -587,7 +587,7 @@ void ps_menu(GtkWidget *parent) {
   col++;
   GtkWidget *auto_b = gtk_check_button_new_with_label("Auto Attenuate");
   gtk_widget_set_name(auto_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (auto_b), transmitter->auto_on);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_b), transmitter->auto_on);
   gtk_grid_attach(GTK_GRID(grid), auto_b, col, row, 1, 1);
   g_signal_connect(auto_b, "toggled", G_CALLBACK(auto_cb), NULL);
   col++;
@@ -647,20 +647,20 @@ void ps_menu(GtkWidget *parent) {
   col++;
   GtkWidget *map_b = gtk_check_button_new_with_label("PS MAP");
   gtk_widget_set_name(map_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (map_b), transmitter->ps_map);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(map_b), transmitter->ps_map);
   gtk_grid_attach(GTK_GRID(grid), map_b, col, row, 1, 1);
   g_signal_connect(map_b, "toggled", G_CALLBACK(map_cb), NULL);
   col++;
   GtkWidget *tol_b = gtk_check_button_new_with_label("PS Relax Tolerance");
   gtk_widget_set_name(tol_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tol_b), transmitter->ps_ptol);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tol_b), transmitter->ps_ptol);
   gtk_grid_attach(GTK_GRID(grid), tol_b, col, row, 2, 1);
   g_signal_connect(tol_b, "toggled", G_CALLBACK(tol_cb), NULL);
   col++;
   col++;
   GtkWidget *oneshot_b = gtk_check_button_new_with_label("OneShot");
   gtk_widget_set_name(oneshot_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (oneshot_b), transmitter->ps_oneshot);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(oneshot_b), transmitter->ps_oneshot);
   gtk_grid_attach(GTK_GRID(grid), oneshot_b, col, row, 1, 1);
   g_signal_connect(oneshot_b, "toggled", G_CALLBACK(oneshot_cb), NULL);
   row++;
@@ -762,7 +762,7 @@ void ps_menu(GtkWidget *parent) {
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     tx_att_spin = gtk_spin_button_new_with_range(-29.0, 31.0, 1.0);
   } else {
-    tx_att_spin = gtk_spin_button_new_with_range(  0.0, 31.0, 1.0);
+    tx_att_spin = gtk_spin_button_new_with_range(0.0, 31.0, 1.0);
   }
 
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);

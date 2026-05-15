@@ -41,7 +41,7 @@ VFO_TIMER vfoa_timer = { VFOA, 0, 0, {0} };
 VFO_TIMER vfob_timer = { VFOB, 0, 0, {0} };
 
 static int vfo_timeout_cb(gpointer data) {
-  VFO_TIMER *timer = (VFO_TIMER *)data;
+  VFO_TIMER *timer = (VFO_TIMER*) data;
   g_mutex_lock(&timer->lock);
   t_print("%s: action=%d val=%d\n", __func__, timer->action, timer->val);
   schedule_action(timer->action, RELATIVE, timer->val);

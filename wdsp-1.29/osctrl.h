@@ -41,8 +41,8 @@ typedef struct _osctrl {
   double bw;            // bandwidth
   int pn;             // "peak stretcher" window, samples
   int dl_len;           // delay line length, samples
-  double* dl;           // delay line for complex samples
-  double* dlenv;          // delay line for envelope values
+  double *dl;           // delay line for complex samples
+  double *dlenv;          // delay line for envelope values
   int in_idx;           // input index for dl
   int out_idx;          // output index for dl
   double max_env;         // maximum env value in env delay line
@@ -52,12 +52,12 @@ typedef struct _osctrl {
 extern void xosctrl (OSCTRL a);
 
 extern OSCTRL create_osctrl (
-  int run,
-  int size,
-  double* inbuff,
-  double* outbuff,
-  int rate,
-  double osgain );
+        int run,
+        int size,
+        double *inbuff,
+        double *outbuff,
+        int rate,
+        double osgain);
 
 extern void destroy_osctrl (OSCTRL a);
 

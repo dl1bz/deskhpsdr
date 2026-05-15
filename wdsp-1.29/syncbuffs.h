@@ -31,7 +31,7 @@ warren@pratt.one
 #define SYNCB_MULT    (3)
 typedef struct _syncb {
   void (*exf)(void);              // pointer to function to execute after output buffer is filled
-  double** out;               // pointer to array of output buffers
+  double **out;               // pointer to array of output buffers
   int nstreams;               // number of streams of data being buffered
   int   max_in_size;              // max input number of complex samples
   int   max_outsize;              // max output number of complex samples
@@ -40,7 +40,7 @@ typedef struct _syncb {
   int   r1_size;                // size of a single maximum sized transfer
   int   r1_active_buffsize;         // size of ring (in complex samples)
 
-  double** r1_baseptr;            // array of pointers, one to each ring
+  double **r1_baseptr;            // array of pointers, one to each ring
   int   r1_inidx;               // in 'double', actual index into the buffer is 2 times this
   int   r1_outidx;              // in 'double', actual index into the buffer is 2 times this
   int   r1_unqueuedsamps;           // number of input samples not yet queued/released for execution
@@ -62,7 +62,7 @@ extern void Syncbound (SYNCB a, int nsamples, double** in);
 
 extern void syncbdata (SYNCB a);
 
-extern void syncb_main (void *p);
+extern void syncb_main (void* p);
 
 extern void SetSYNCBRingOutsize (SYNCB a, int size);
 
@@ -84,9 +84,9 @@ typedef struct _dumfilt {
   int opsize;                 // number of complex samples exchanged per call
   int inidx;                  // input index into ring (complex samples)
   int outidx;                 // output index from ring (complex samples)
-  double* in;                 // pointer to input buffer  (may be same as output buffer)
-  double* out;                // pointer to output buffer  (may be same as input buffer)
-  double* ring;               // pointer to ring buffer
+  double *in;                 // pointer to input buffer  (may be same as output buffer)
+  double *out;                // pointer to output buffer  (may be same as input buffer)
+  double *ring;               // pointer to ring buffer
 } dumfilt, *DUMFILT;
 
 extern DUMFILT create_dumfilt (int run, int delay, int opsize, double* in, double* out);

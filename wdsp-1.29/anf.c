@@ -26,27 +26,27 @@ warren@wpratt.com
 
 #include "comm.h"
 
-ANF create_anf  (
-  int run,
-  int position,
-  int buff_size,
-  double *in_buff,
-  double *out_buff,
-  int dline_size,
-  int n_taps,
-  int delay,
-  double two_mu,
-  double gamma,
+ANF create_anf(
+        int run,
+        int position,
+        int buff_size,
+        double *in_buff,
+        double *out_buff,
+        int dline_size,
+        int n_taps,
+        int delay,
+        double two_mu,
+        double gamma,
 
-  double lidx,
-  double lidx_min,
-  double lidx_max,
-  double ngamma,
-  double den_mult,
-  double lincr,
-  double ldecr
+        double lidx,
+        double lidx_min,
+        double lidx_max,
+        double ngamma,
+        double den_mult,
+        double lincr,
+        double ldecr
 ) {
-  ANF a = (ANF) malloc0 (sizeof(anf));
+  ANF a = (ANF) malloc0(sizeof(anf));
   a->run = run;
   a->position = position;
   a->buff_size = buff_size;
@@ -66,13 +66,13 @@ ANF create_anf  (
   a->den_mult = den_mult;
   a->lincr = lincr;
   a->ldecr = ldecr;
-  memset (a->d, 0, sizeof(double) * ANF_DLINE_SIZE);
-  memset (a->w, 0, sizeof(double) * ANF_DLINE_SIZE);
+  memset(a->d, 0, sizeof(double) * ANF_DLINE_SIZE);
+  memset(a->w, 0, sizeof(double) * ANF_DLINE_SIZE);
   return a;
 }
 
-void destroy_anf (ANF a) {
-  _aligned_free (a);
+void destroy_anf(ANF a) {
+  _aligned_free(a);
 }
 
 void xanf(ANF a, int position) {
@@ -120,28 +120,28 @@ void xanf(ANF a, int position) {
       a->in_idx = (a->in_idx + a->mask) & a->mask;
     }
   } else if (a->in_buff != a->out_buff) {
-    memcpy (a->out_buff, a->in_buff, a->buff_size * sizeof (complex));
+    memcpy(a->out_buff, a->in_buff, a->buff_size * sizeof(complex));
   }
 }
 
-void flush_anf (ANF a) {
-  memset (a->d, 0, sizeof(double) * ANF_DLINE_SIZE);
-  memset (a->w, 0, sizeof(double) * ANF_DLINE_SIZE);
+void flush_anf(ANF a) {
+  memset(a->d, 0, sizeof(double) * ANF_DLINE_SIZE);
+  memset(a->w, 0, sizeof(double) * ANF_DLINE_SIZE);
   a->in_idx = 0;
 }
 
-void setBuffers_anf (ANF a, double* in, double* out) {
+void setBuffers_anf(ANF a, double* in, double* out) {
   a->in_buff = in;
   a->out_buff = out;
 }
 
-void setSamplerate_anf (ANF a, int rate) {
-  flush_anf (a);
+void setSamplerate_anf(ANF a, int rate) {
+  flush_anf(a);
 }
 
-void setSize_anf (ANF a, int size) {
+void setSize_anf(ANF a, int size) {
   a->buff_size = size;
-  flush_anf (a);
+  flush_anf(a);
 }
 
 /********************************************************************************************************
@@ -151,70 +151,70 @@ void setSize_anf (ANF a, int size) {
 ********************************************************************************************************/
 
 PORT void
-SetRXAANFRun (int channel, int run) {
+SetRXAANFRun(int channel, int run) {
   ANF a = rxa[channel].anf.p;
 
   if (a->run != run) {
-    RXAbp1Check (channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
-                 rxa[channel].emnr.p->run, run, rxa[channel].anr.p->run,
-                 rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
-    EnterCriticalSection (&ch[channel].csDSP);
+    RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
+                rxa[channel].emnr.p->run, run, rxa[channel].anr.p->run,
+                rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
+    EnterCriticalSection(&ch[channel].csDSP);
     a->run = run;
-    RXAbp1Set (channel);
-    flush_anf (a);
-    LeaveCriticalSection (&ch[channel].csDSP);
+    RXAbp1Set(channel);
+    flush_anf(a);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 }
 
 
 PORT void
-SetRXAANFVals (int channel, int taps, int delay, double gain, double leakage) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANFVals(int channel, int taps, int delay, double gain, double leakage) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anf.p->n_taps = taps;
   rxa[channel].anf.p->delay = delay;
   rxa[channel].anf.p->two_mu = gain;      //try two_mu = 1e-4
   rxa[channel].anf.p->gamma = leakage;    //try gamma = 0.10
-  flush_anf (rxa[channel].anf.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anf(rxa[channel].anf.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANFTaps (int channel, int taps) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANFTaps(int channel, int taps) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anf.p->n_taps = taps;
-  flush_anf (rxa[channel].anf.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anf(rxa[channel].anf.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANFDelay (int channel, int delay) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANFDelay(int channel, int delay) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anf.p->delay = delay;
-  flush_anf (rxa[channel].anf.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anf(rxa[channel].anf.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANFGain (int channel, double gain) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANFGain(int channel, double gain) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anf.p->two_mu = gain;
-  flush_anf (rxa[channel].anf.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anf(rxa[channel].anf.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANFLeakage (int channel, double leakage) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANFLeakage(int channel, double leakage) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anf.p->gamma = leakage;
-  flush_anf (rxa[channel].anf.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anf(rxa[channel].anf.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANFPosition (int channel, int position) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANFPosition(int channel, int position) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anf.p->position = position;
   rxa[channel].bp1.p->position = position;
-  flush_anf (rxa[channel].anf.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anf(rxa[channel].anf.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

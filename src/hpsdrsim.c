@@ -198,8 +198,8 @@ static int sock_udp;
 static int enable_thread = 0;
 static int active_thread = 0;
 
-static void process_ep2(uint8_t *frame);
-static void *handler_ep6(void *arg);
+static void process_ep2(uint8_t* frame);
+static void *handler_ep6(void* arg);
 
 static double  last_i_sample = 0.0;
 static double  last_q_sample = 0.0;
@@ -259,7 +259,7 @@ void my_signal_handler(int sig) {
 }
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   bind_addr_valid = 0;
   memset(&bind_addr, 0, sizeof(bind_addr));
   int i, j, size;
@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
   uint32_t last_seqnum = 0xffffffff, seqnum;  // sequence number of received packet
   int udp_retries = 0;
   int bytes_read, bytes_left;
-  uint32_t *code0 = (uint32_t *) buffer;  // fast access to code of first buffer
+  uint32_t *code0 = (uint32_t*) buffer;   // fast access to code of first buffer
   double run, off, off2, inc;
   struct timeval tvzero = {0, 0};
   fd_set fds;
@@ -566,7 +566,7 @@ int main(int argc, char *argv[]) {
     off = 0.0;
 
     for (i = 0; i < LENDIV; i++) {
-      if ( divtab[i] > off) { off = divtab[i]; }
+      if (divtab[i] > off) { off = divtab[i]; }
 
       if (-divtab[i] > off) { off = -divtab[i]; }
     }
@@ -621,8 +621,8 @@ int main(int argc, char *argv[]) {
   //      clear TX fifo
   //
   txptr = -1;
-  memset (isample, 0, OLDRTXLEN * sizeof(double));
-  memset (qsample, 0, OLDRTXLEN * sizeof(double));
+  memset(isample, 0, OLDRTXLEN * sizeof(double));
+  memset(qsample, 0, OLDRTXLEN * sizeof(double));
 
   if ((sock_udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     t_perror("socket");
@@ -630,11 +630,11 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  setsockopt(sock_udp, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-  setsockopt(sock_udp, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes));
+  setsockopt(sock_udp, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(sock_udp, SOL_SOCKET, SO_REUSEPORT, (void*) &yes, sizeof(yes));
   tv.tv_sec = 0;
   tv.tv_usec = 1000;
-  setsockopt(sock_udp, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(sock_udp, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
   memset(&addr_udp, 0, sizeof(addr_udp));
   addr_udp.sin_family = AF_INET;
 
@@ -646,7 +646,7 @@ int main(int argc, char *argv[]) {
 
   addr_udp.sin_port = htons(1024);
 
-  if (bind(sock_udp, (struct sockaddr *)&addr_udp, sizeof(addr_udp)) < 0) {
+  if (bind(sock_udp, (struct sockaddr *) &addr_udp, sizeof(addr_udp)) < 0) {
     t_perror("bind");
     restore_terminal_attributes();
     return EXIT_FAILURE;
@@ -658,25 +658,25 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
+  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
   int tcpmaxseg = 1032;
-  setsockopt(sock_TCP_Server, IPPROTO_TCP, TCP_MAXSEG, (const char *)&tcpmaxseg, sizeof(int));
+  setsockopt(sock_TCP_Server, IPPROTO_TCP, TCP_MAXSEG, (const char*) &tcpmaxseg, sizeof(int));
   int sndbufsize = 65535;
   int rcvbufsize = 65535;
-  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_SNDBUF, (const char *)&sndbufsize, sizeof(int));
-  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_RCVBUF, (const char *)&rcvbufsize, sizeof(int));
+  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_SNDBUF, (const char*) &sndbufsize, sizeof(int));
+  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_RCVBUF, (const char*) &rcvbufsize, sizeof(int));
   tv.tv_sec = 0;
   tv.tv_usec = 1000;
-  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(sock_TCP_Server, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
 
-  if (bind(sock_TCP_Server, (struct sockaddr *)&addr_udp, sizeof(addr_udp)) < 0) {
+  if (bind(sock_TCP_Server, (struct sockaddr *) &addr_udp, sizeof(addr_udp)) < 0) {
     t_perror("bind tcp");
     restore_terminal_attributes();
     return EXIT_FAILURE;
   }
 
   listen(sock_TCP_Server, 1024);
-  t_print( "Listening for TCP client connection request\n");
+  t_print("Listening for TCP client connection request\n");
   int flags = fcntl(sock_TCP_Server, F_GETFL, 0);
   fcntl(sock_TCP_Server, F_SETFL, flags | O_NONBLOCK);
 
@@ -751,7 +751,7 @@ int main(int argc, char *argv[]) {
       bytes_left = 1032;
 
       while (bytes_left > 0) {
-        size = recvfrom(sock_TCP_Client, buffer + bytes_read, (size_t)bytes_left, 0, NULL, 0);
+        size = recvfrom(sock_TCP_Client, buffer + bytes_read, (size_t) bytes_left, 0, NULL, 0);
 
         if (size < 0 && errno == EAGAIN) { continue; }
 
@@ -791,7 +791,7 @@ int main(int argc, char *argv[]) {
       }
     } else {
       lenaddr = sizeof(addr_from);
-      bytes_read = recvfrom(sock_udp, buffer, 1032, 0, (struct sockaddr *)&addr_from, &lenaddr);
+      bytes_read = recvfrom(sock_udp, buffer, 1032, 0, (struct sockaddr*) &addr_from, &lenaddr);
 
       if (bytes_read > 0) {
         udp_retries = 0;
@@ -812,7 +812,7 @@ int main(int argc, char *argv[]) {
     // If nothing has arrived via UDP for some time, try to open TCP connection.
     // "for some time" means 10 subsequent un-successful UDP rcvmmsg() calls
     if (sock_TCP_Client < 0 && udp_retries > 10 && ODEVICE != DEV_NONE) {
-      if ((sock_TCP_Client = accept(sock_TCP_Server, (struct sockaddr *)&addr_from, &lenaddr)) > -1) {
+      if ((sock_TCP_Client = accept(sock_TCP_Server, (struct sockaddr *) &addr_from, &lenaddr)) > -1) {
         t_print("sock_TCP_Client: Connected from %s\n", inet_ntoa(addr_from.sin_addr));
       }
 
@@ -821,7 +821,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (count >= 5000 && active_thread) {
-      t_print( "WATCHDOG STOP the transmission via handler_ep6\n");
+      t_print("WATCHDOG STOP the transmission via handler_ep6\n");
       enable_thread = 0;
 
       while (active_thread) { usleep(1000); }
@@ -849,7 +849,7 @@ int main(int argc, char *argv[]) {
 
       // processing an invalid packet is too dangerous -- skip it!
       if (bytes_read != 1032) {
-        t_print("InvalidLength: RvcMsg Code=0x%08x Len=%d\n", code, (int)bytes_read);
+        t_print("InvalidLength: RvcMsg Code=0x%08x Len=%d\n", code, (int) bytes_read);
         break;
       }
 
@@ -857,7 +857,7 @@ int main(int argc, char *argv[]) {
       seqnum = ((buffer[4] & 0xFF) << 24) + ((buffer[5] & 0xFF) << 16) + ((buffer[6] & 0xFF) << 8) + (buffer[7] & 0xFF);
 
       if (seqnum != last_seqnum + 1) {
-        t_print("SEQ ERROR: last %ld, recvd %ld\n", (long)last_seqnum, (long)seqnum);
+        t_print("SEQ ERROR: last %ld, recvd %ld\n", (long) last_seqnum, (long) seqnum);
       }
 
       last_seqnum = seqnum;
@@ -869,7 +869,7 @@ int main(int argc, char *argv[]) {
         // weak single-tone signal at 7100 kHz
         //
         off = (double)(7100000 - rx_freq[0]);
-        tonedelta = -6.283185307179586476925286766559 * off / ((double) (48000 << rate));
+        tonedelta = -6.283185307179586476925286766559 * off / ((double)(48000 << rate));
         do_tone = 3;
         t3l = 9600 << rate;
       } else if (labs(14100000L - rx_freq[0]) < (24000 << rate)) {
@@ -877,16 +877,16 @@ int main(int argc, char *argv[]) {
         // -73 dBm single-tone signal at 14100 kHz
         //
         off = (double)(14100000 - rx_freq[0]);
-        tonedelta = -6.283185307179586476925286766559 * off / ((double) (48000 << rate));
+        tonedelta = -6.283185307179586476925286766559 * off / ((double)(48000 << rate));
         do_tone = 1;
       } else if (labs(21100000L - rx_freq[0]) < (24000 << rate)) {
         //
         // two -73 dBm signals at 21100.0 and 21000.9 kHz
         //
         off = (double)(21100000 - rx_freq[0]);
-        tonedelta = -6.283185307179586476925286766559 * off / ((double) (48000 << rate));
+        tonedelta = -6.283185307179586476925286766559 * off / ((double)(48000 << rate));
         off2 = (double)(21100900 - rx_freq[0]);
-        tonedelta2 = -6.283185307179586476925286766559 * off2 / ((double) (48000 << rate));
+        tonedelta2 = -6.283185307179586476925286766559 * off2 / ((double)(48000 << rate));
         do_tone = 2;
       } else {
         do_tone = 0;
@@ -913,10 +913,10 @@ int main(int argc, char *argv[]) {
         for (j = 0; j < 126; j++) {
           bp += 4; // skip audio samples
           sample  = (int)((signed char) * bp++) << 8;
-          sample |= (int) ((signed char) * bp++ & 0xFF);
+          sample |= (int)((signed char) * bp++ & 0xFF);
           disample = (double) sample * 0.000030517578125; // division by 32768
           sample  = (int)((signed char) * bp++) << 8;
-          sample |= (int) ((signed char) * bp++ & 0xFF);
+          sample |= (int)((signed char) * bp++ & 0xFF);
           dqsample = (double) sample * 0.000030517578125;
           sum += (disample * disample + dqsample * dqsample);
 
@@ -989,7 +989,7 @@ int main(int argc, char *argv[]) {
 
       // processing an invalid packet is too dangerous -- skip it!
       if (bytes_read != 63) {
-        t_print("InvalidLength: RvcMsg Code=0x%08x Len=%d\n", code, (int)bytes_read);
+        t_print("InvalidLength: RvcMsg Code=0x%08x Len=%d\n", code, (int) bytes_read);
         break;
       }
 
@@ -998,8 +998,8 @@ int main(int argc, char *argv[]) {
         break;  // Swallow P1 detection requests
       }
 
-      t_print( "Respond to an incoming Metis detection request from %s / code: 0x%08x\n", inet_ntoa(addr_from.sin_addr),
-               code);
+      t_print("Respond to an incoming Metis detection request from %s / code: 0x%08x\n", inet_ntoa(addr_from.sin_addr),
+              code);
       memset(buffer, 0, 60);
       buffer[0] = 0xEF;
       buffer[1] = 0xFE;
@@ -1033,7 +1033,7 @@ int main(int argc, char *argv[]) {
         // We simply suppress the response in this (very unlikely) case.
         if (!active_thread) {
           if (send(sock_TCP_Client, buffer, 60, 0) < 0) {
-            t_print( "TCP send error occurred when responding to an incoming Metis detection request!\n");
+            t_print("TCP send error occurred when responding to an incoming Metis detection request!\n");
           }
 
           // close the TCP socket which was only used for the detection
@@ -1041,7 +1041,7 @@ int main(int argc, char *argv[]) {
           sock_TCP_Client = -1;
         }
       } else {
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
       }
 
       break;
@@ -1055,7 +1055,7 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      t_print( "STOP the transmission via handler_ep6 / code: 0x%08x\n", code);
+      t_print("STOP the transmission via handler_ep6 / code: 0x%08x\n", code);
       enable_thread = 0;
 
       while (active_thread) { usleep(1000); }
@@ -1084,7 +1084,7 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      t_print( "START the PC-to-SDR handler thread / code: 0x%08x\n", code);
+      t_print("START the PC-to-SDR handler thread / code: 0x%08x\n", code);
       enable_thread = 0;
 
       while (active_thread) { usleep(1000); }
@@ -1136,7 +1136,7 @@ int main(int argc, char *argv[]) {
         buffer[6] = MAC4;
         buffer[7] = MAC5; // specifies type of radio
         buffer[8] = MAC6; // encodes old protocol
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
 
         if (blks == cnt) { t_print("\n\n Programming Done!\n"); }
 
@@ -1156,7 +1156,7 @@ int main(int argc, char *argv[]) {
         buffer[6] = MAC4;
         buffer[7] = MAC5; // specifies type of radio
         buffer[8] = MAC6; // encodes old protocol
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
         break;
       }
 
@@ -1167,7 +1167,7 @@ int main(int argc, char *argv[]) {
         t_print("IP  address is %03d:%03d:%03d:%03d\n", buffer[9], buffer[10], buffer[11], buffer[12]);
         buffer[2] = 0x02;
         memset(buffer + 9, 0, 54);
-        sendto(sock_udp, buffer, 63, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(sock_udp, buffer, 63, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
         break;
       }
 
@@ -1196,7 +1196,7 @@ int main(int argc, char *argv[]) {
         buffer[20] = 2;
         buffer[21] = 1;
         buffer[22] = 3;
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
         break;
       }
 
@@ -1221,9 +1221,9 @@ int main(int argc, char *argv[]) {
         buffer[20] = 2;
         buffer[21] = 1;
         buffer[22] = 3;
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
-        sleep(5); // pretend erase takes 5 seconds
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
+        sleep(5);  // pretend erase takes 5 seconds
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
         break;
       }
 
@@ -1245,7 +1245,7 @@ int main(int argc, char *argv[]) {
 
         for (j = 9; j <= 264; j++) { checksum += buffer[j]; }
 
-        memset(buffer + 4, 0, 56); // keep seq. no
+        memset(buffer + 4, 0, 56);  // keep seq. no
         buffer[ 4] = 0x04;
         buffer [5] = MAC1;
         buffer[ 6] = MAC2;
@@ -1256,8 +1256,8 @@ int main(int argc, char *argv[]) {
         buffer[11] = 103;
         buffer[12] = NDEVICE;
         buffer[13] = (checksum >> 8) & 0xFF;
-        buffer[14] = (checksum     ) & 0xFF;
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        buffer[14] = (checksum) & 0xFF;
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
 
         if (seq + 1 == blk) { t_print("\n\nProgramming Done!\n"); }
 
@@ -1304,7 +1304,7 @@ int main(int argc, char *argv[]) {
         buffer[20] = 2;
         buffer[21] = 1;
         buffer[22] = 3;
-        sendto(sock_udp, buffer, 60, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(sock_udp, buffer, 60, 0, (struct sockaddr*) &addr_from, sizeof(addr_from));
         break;
       }
 
@@ -1358,15 +1358,15 @@ int main(int argc, char *argv[]) {
 
 #define chk_data(a,b,c) if ((a) != b) { b = (a); t_print("%20s= %08lx (%10ld)\n", c, (long) b, (long) b ); }
 
-void process_ep2(uint8_t *frame) {
+void process_ep2(uint8_t* frame) {
   int rc;
   int mod;
 
   if (!(frame[0] & 1) && ptt) {
     // TX/RX transition: reset TX fifo
     txptr = -1;
-    memset (isample, 0, OLDRTXLEN * sizeof(double));
-    memset (qsample, 0, OLDRTXLEN * sizeof(double));
+    memset(isample, 0, OLDRTXLEN * sizeof(double));
+    memset(qsample, 0, OLDRTXLEN * sizeof(double));
   }
 
   chk_data(frame[0] & 1, ptt, "PTT");
@@ -1622,7 +1622,7 @@ void process_ep2(uint8_t *frame) {
     //
     if (frame[3] & 0x40) {
       chk_data((frame[3] & 0x3f), txatt, "HL2 TX ATT");
-      txatt_dbl = pow(10.0, -0.05 * (double) (31 - txatt));
+      txatt_dbl = pow(10.0, -0.05 * (double)(31 - txatt));
     } else {
       chk_data((frame[3] & 0x1f), txatt, "TX ATT");
       txatt_dbl = pow(10.0, -0.05 * (double) txatt);
@@ -1686,7 +1686,7 @@ void process_ep2(uint8_t *frame) {
   }
 }
 
-void *handler_ep6(void *arg) {
+void *handler_ep6(void* arg) {
   int i, j, k, n, size;
   int header_offset;
   uint32_t counter;
@@ -1745,7 +1745,7 @@ void *handler_ep6(void *arg) {
     buffer[4] = (counter >> 24) & 0xFF;
     buffer[5] = (counter >> 16) & 0xFF;
     buffer[6] = (counter >>  8) & 0xFF;
-    buffer[7] = (counter      ) & 0xFF;
+    buffer[7] = (counter) & 0xFF;
     ++counter;
     //
     //              This defines the distortion as well as the amplification
@@ -1787,9 +1787,9 @@ void *handler_ep6(void *arg) {
 
       if (radio_dash) { C0 |= 2; }
 
-      if (radio_dot ) { C0 |= 4; }
+      if (radio_dot) { C0 |= 4; }
 
-      *(pointer + 3) = C0;
+      * (pointer + 3) = C0;
 
       switch (header_offset) {
       case 0:
@@ -1823,13 +1823,13 @@ void *handler_ep6(void *arg) {
 
         if (radio_io4) { C1 |= 16; }
 
-        *(pointer + 4) = C1;
+        * (pointer + 4) = C1;
 
         if (ODEVICE == DEV_HERMES_LITE2) {
-          *(pointer + 4) = 0;
+          * (pointer + 4) = 0;
           // C2/C3 is TX FIFO count
-          *(pointer + 5) = 0;
-          *(pointer + 6) = 0;
+          * (pointer + 5) = 0;
+          * (pointer + 6) = 0;
         }
 
         header_offset = 8;
@@ -1838,39 +1838,39 @@ void *handler_ep6(void *arg) {
       case 8:
         if (ODEVICE == DEV_HERMES_LITE2) {
           // HL2: temperature
-          *(pointer + 4) =  4;
-          *(pointer + 5) =  0; // value = 1024, 31.5 degrees
+          * (pointer + 4) =  4;
+          * (pointer + 5) =  0; // value = 1024, 31.5 degrees
         } else {
           // AIN5: Exciter power
-          *(pointer + 4) = 0;       // about 500 mW
-          *(pointer + 5) = txdrive;
+          * (pointer + 4) = 0;      // about 500 mW
+          * (pointer + 5) = txdrive;
         }
 
         // AIN1: Forward Power
-        j = (int) ((4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
-        *(pointer + 6) = (j >> 8) & 0xFF;
-        *(pointer + 7) = (j     ) & 0xFF;
+        j = (int)((4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
+        * (pointer + 6) = (j >> 8) & 0xFF;
+        * (pointer + 7) = (j) & 0xFF;
         header_offset = 16;
         break;
 
       case 16:
         // AIN2: Reverse power, depends on TX drive to get a handle to vary the SWR
-        j = (int) (txdrv_dbl * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
-        *(pointer + 4) = (j >> 8) & 0xFF;
-        *(pointer + 5) = (j     ) & 0xFF;
+        j = (int)(txdrv_dbl * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
+        * (pointer + 4) = (j >> 8) & 0xFF;
+        * (pointer + 5) = (j) & 0xFF;
         // AIN3: ADC0 (PA current for HL2, PA voltage for others)
-        *(pointer + 6) =  2;
-        *(pointer + 7) =  0; // value = 1024,
+        * (pointer + 6) =  2;
+        * (pointer + 7) =  0; // value = 1024,
         header_offset = 24;
         break;
 
       case 24:
         // AIN4:
-        *(pointer + 4) =  4;
-        *(pointer + 5) =  0; // value = 1024,
+        * (pointer + 4) =  4;
+        * (pointer + 5) =  0; // value = 1024,
         // AIN6: supply_voltage
-        *(pointer + 6) = 4;
-        *(pointer + 7) = 0;  // value = 1024
+        * (pointer + 6) = 4;
+        * (pointer + 7) = 0; // value = 1024
         header_offset = 32;
         break;
 
@@ -1916,7 +1916,7 @@ void *handler_ep6(void *arg) {
         } else if (diversity && do_tone == 1) {
           // man made noise to ADC1 samples
           adc1isample = (noiseItab[noiseIQpt] * p1noisefac + cos(tonearg) * fac1 + divtab[divpt] * fac2) * 8388607.0;
-          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + sin(tonearg) * fac1                   ) * 8388607.0;
+          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + sin(tonearg) * fac1) * 8388607.0;
         } else if (do_tone == 1) {
           adc1isample = (noiseItab[noiseIQpt] * p1noisefac + cos(tonearg) * fac1) * 8388607.0;
           adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + sin(tonearg) * fac1) * 8388607.0;
@@ -1927,8 +1927,8 @@ void *handler_ep6(void *arg) {
           adc1isample = (noiseItab[noiseIQpt] * p1noisefac + cos(tonearg) * fac1a) * 8388607.0;
           adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + sin(tonearg) * fac1a) * 8388607.0;
         } else {
-          adc1isample = (noiseItab[noiseIQpt] * p1noisefac ) * 8388607.0;
-          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac ) * 8388607.0;
+          adc1isample = (noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
+          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac) * 8388607.0;
         }
 
         // ADC2: noise RX, feedback sig. on TX (only STEMlab)
@@ -2036,11 +2036,11 @@ void *handler_ep6(void *arg) {
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &delay, NULL);
 
     if (sock_TCP_Client > -1) {
-      if (sendto(sock_TCP_Client, buffer, 1032, 0, (struct sockaddr *)&addr_old, sizeof(addr_old)) < 0) {
-        t_print( "TCP sendmsg error occurred at sequence number: %u !\n", counter);
+      if (sendto(sock_TCP_Client, buffer, 1032, 0, (struct sockaddr *) &addr_old, sizeof(addr_old)) < 0) {
+        t_print("TCP sendmsg error occurred at sequence number: %u !\n", counter);
       }
     } else {
-      sendto(sock_udp, buffer, 1032, 0, (struct sockaddr *)&addr_old, sizeof(addr_old));
+      sendto(sock_udp, buffer, 1032, 0, (struct sockaddr*) &addr_old, sizeof(addr_old));
     }
   }
 
@@ -2048,7 +2048,7 @@ void *handler_ep6(void *arg) {
   return NULL;
 }
 
-void t_print(const char *format, ...) {
+void t_print(const char* format, ...) {
   va_list(args);
   va_start(args, format);
   struct timespec ts;
@@ -2077,6 +2077,6 @@ void t_print(const char *format, ...) {
   printf("%10.6f %s", now - starttime, line);
 }
 
-void t_perror(const char *string) {
+void t_perror(const char* string) {
   t_print("%s: %s\n", string, strerror(errno));
 }

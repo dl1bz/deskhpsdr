@@ -284,11 +284,11 @@ static gpointer new_protocol_timer_thread(gpointer data);
 static gpointer high_priority_thread(gpointer data);
 static gpointer mic_line_thread(gpointer data);
 static gpointer iq_thread(gpointer data);
-static void  process_iq_data(const unsigned char *buffer, RECEIVER *rx);
-static void  process_ps_iq_data(const unsigned char *buffer);
-static void process_div_iq_data(const unsigned char *buffer);
+static void  process_iq_data(const unsigned char* buffer, RECEIVER *rx);
+static void  process_ps_iq_data(const unsigned char* buffer);
+static void process_div_iq_data(const unsigned char* buffer);
 static void  process_high_priority(void);
-static void  process_mic_data(const unsigned char *buffer);
+static void  process_mic_data(const unsigned char* buffer);
 
 //
 // Obtain a free buffer. If no one is available allocate
@@ -462,14 +462,14 @@ static void p2_prime_route(void) {
   }
 
   if (ifindex > 0) {
-    (void)setsockopt(s, IPPROTO_IP, IP_BOUND_IF, &ifindex, sizeof(ifindex));
+    (void) setsockopt(s, IPPROTO_IP, IP_BOUND_IF, &ifindex, sizeof(ifindex));
   }
 
   memset(&a, 0, sizeof(a));
   a.sin_family = AF_INET;
   a.sin_addr = radio->info.network.address.sin_addr;
   a.sin_port = htons(GENERAL_REGISTERS_FROM_HOST_PORT);
-  (void)sendto(s, &dummy, sizeof(dummy), 0, (struct sockaddr *)&a, sizeof(a));
+  (void) sendto(s, &dummy, sizeof(dummy), 0, (struct sockaddr*) &a, sizeof(a));
   close(s);
 #endif
 }
@@ -478,7 +478,7 @@ static int p2_route_retry_errno(int err) {
   return err == EHOSTDOWN || err == EHOSTUNREACH || err == ENETDOWN || err == ENETUNREACH;
 }
 
-static ssize_t p2_sendto_route_retry(int fd, const void *buf, size_t len, int flags,
+static ssize_t p2_sendto_route_retry(int fd, const void* buf, size_t len, int flags,
                                      const struct sockaddr *addr, socklen_t addrlen,
                                      const char *tag) {
   ssize_t rc = sendto(fd, buf, len, flags, addr, addrlen);
@@ -556,17 +556,17 @@ void new_protocol_init(void) {
   }
 
 #else
-  (void)sem_init(&high_priority_sem_ready, 0, 0); // check return value!
-  (void)sem_init(&high_priority_sem_buffer, 0, 0); // check return value!
-  (void)sem_init(&mic_line_sem, 0, 0); // check return value!
+  (void) sem_init(&high_priority_sem_ready, 0, 0);  // check return value!
+  (void) sem_init(&high_priority_sem_buffer, 0, 0);  // check return value!
+  (void) sem_init(&mic_line_sem, 0, 0);  // check return value!
 
   for (i = 0; i < MAX_DDC; i++) {
-    (void)sem_init(&iq_sem[i], 0, 0); // check return value!
+    (void) sem_init(&iq_sem[i], 0, 0);  // check return value!
   }
 
 #endif
-  high_priority_thread_id = g_thread_new( "P2 HP", high_priority_thread, NULL);
-  mic_line_thread_id = g_thread_new( "P2 MIC", mic_line_thread, NULL);
+  high_priority_thread_id = g_thread_new("P2 HP", high_priority_thread, NULL);
+  mic_line_thread_id = g_thread_new("P2 MIC", mic_line_thread, NULL);
 
   for (i = 0; i < MAX_DDC; i++) {
     char text[16];
@@ -684,7 +684,7 @@ void new_protocol_init(void) {
 #endif
 
     // bind to the interface
-    if (bind(data_socket, (struct sockaddr * )&radio->info.network.interface_address,
+    if (bind(data_socket, (struct sockaddr *) &radio->info.network.interface_address,
              radio->info.network.interface_length) < 0) {
       t_perror("bind socket failed for data_socket:");
       g_idle_add(fatal_error, "Bind failed for data socket");
@@ -694,7 +694,7 @@ void new_protocol_init(void) {
       struct sockaddr_in local;
       socklen_t local_len = sizeof(local);
 
-      if (getsockname(data_socket, (struct sockaddr *)&local, &local_len) == 0) {
+      if (getsockname(data_socket, (struct sockaddr *) &local, &local_len) == 0) {
         t_print("new_protocol_init: data_socket real local %s:%d\n",
                 inet_ntoa(local.sin_addr),
                 ntohs(local.sin_port));
@@ -769,7 +769,7 @@ static void new_protocol_general(void) {
   general_buffer[0] = (general_sequence >> 24) & 0xFF;
   general_buffer[1] = (general_sequence >> 16) & 0xFF;
   general_buffer[2] = (general_sequence >>  8) & 0xFF;
-  general_buffer[3] = (general_sequence      ) & 0xFF;
+  general_buffer[3] = (general_sequence) & 0xFF;
   // use defaults apart from
   general_buffer[37] = 0x08; //  phase word (not frequency)
   general_buffer[38] = 0x01; //  enable hardware timer
@@ -802,13 +802,14 @@ static void new_protocol_general(void) {
     saturn_handle_general_packet(false, general_buffer);
 #endif
   } else {
-    if ((rc = p2_sendto_route_retry(data_socket, general_buffer, sizeof(general_buffer), 0, (struct sockaddr * )&base_addr,
+    if ((rc = p2_sendto_route_retry(data_socket, general_buffer, sizeof(general_buffer), 0,
+                                    (struct sockaddr *) &base_addr,
                                     base_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto general failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
               inet_ntoa(base_addr.sin_addr), ntohs(base_addr.sin_port),
-              (long)sizeof(general_buffer), base_addr_length);
+              (long) sizeof(general_buffer), base_addr_length);
       g_idle_add(fatal_error, "GP send failed (Network down?)");
       P2running = 0;
       pthread_mutex_unlock(&general_mutex);
@@ -816,7 +817,7 @@ static void new_protocol_general(void) {
     }
 
     if (rc != sizeof(general_buffer)) {
-      t_print("sendto socket for general: %d rather than %ld\n", rc, (long)sizeof(general_buffer));
+      t_print("sendto socket for general: %d rather than %ld\n", rc, (long) sizeof(general_buffer));
 #ifdef __DVL__
     } else {
       t_print("%s: sendto general OK rc=%d dst=%s:%d\n",
@@ -862,7 +863,7 @@ static void new_protocol_high_priority(void) {
   high_priority_buffer_to_radio[0] = (high_priority_sequence >> 24) & 0xFF;
   high_priority_buffer_to_radio[1] = (high_priority_sequence >> 16) & 0xFF;
   high_priority_buffer_to_radio[2] = (high_priority_sequence >>  8) & 0xFF;
-  high_priority_buffer_to_radio[3] = (high_priority_sequence      ) & 0xFF;
+  high_priority_buffer_to_radio[3] = (high_priority_sequence) & 0xFF;
   high_priority_buffer_to_radio[4] = P2running;
 
   if (xmit) {
@@ -900,9 +901,9 @@ static void new_protocol_high_priority(void) {
     DDCfrequency[id] = vfo[id].frequency;
 
     if (vfo[id].mode == modeCWU) {
-      DDCfrequency[id] -= (long long)cw_keyer_sidetone_frequency;
+      DDCfrequency[id] -= (long long) cw_keyer_sidetone_frequency;
     } else if (vfo[id].mode == modeCWL) {
-      DDCfrequency[id] += (long long)cw_keyer_sidetone_frequency;
+      DDCfrequency[id] += (long long) cw_keyer_sidetone_frequency;
     }
 
     // DDCfrequency[id] += frequency_calibration -  vfo[id].lo;
@@ -918,15 +919,15 @@ static void new_protocol_high_priority(void) {
     // This is overridden later if we do PureSignal TX
     // The "obscure" constant 34.952533333333333333333333333333 is 4294967296/122880000
     //
-    phase = (unsigned long)(((double)DDCfrequency[0]) * 34.952533333333333333333333333333);
+    phase = (unsigned long)(((double) DDCfrequency[0]) * 34.952533333333333333333333333333);
     high_priority_buffer_to_radio[ 9] = (phase >> 24) & 0xFF;
     high_priority_buffer_to_radio[10] = (phase >> 16) & 0xFF;
     high_priority_buffer_to_radio[11] = (phase >>  8) & 0xFF;
-    high_priority_buffer_to_radio[12] = (phase      ) & 0xFF;
+    high_priority_buffer_to_radio[12] = (phase) & 0xFF;
     high_priority_buffer_to_radio[13] = (phase >> 24) & 0xFF;
     high_priority_buffer_to_radio[14] = (phase >> 16) & 0xFF;
     high_priority_buffer_to_radio[15] = (phase >>  8) & 0xFF;
-    high_priority_buffer_to_radio[16] = (phase      ) & 0xFF;
+    high_priority_buffer_to_radio[16] = (phase) & 0xFF;
   } else {
     //
     // Set frequencies for all receivers
@@ -938,18 +939,18 @@ static void new_protocol_high_priority(void) {
     if (device == NEW_DEVICE_ANGELIA  || device == NEW_DEVICE_ORION ||
         device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN) { ddc = 2; }
 
-    phase = (unsigned long)(((double)DDCfrequency[0]) * 34.952533333333333333333333333333);
+    phase = (unsigned long)(((double) DDCfrequency[0]) * 34.952533333333333333333333333333);
     high_priority_buffer_to_radio[ 9 + (ddc * 4)] = (phase >> 24) & 0xFF;
     high_priority_buffer_to_radio[10 + (ddc * 4)] = (phase >> 16) & 0xFF;
     high_priority_buffer_to_radio[11 + (ddc * 4)] = (phase >>  8) & 0xFF;
-    high_priority_buffer_to_radio[12 + (ddc * 4)] = (phase      ) & 0xFF;
+    high_priority_buffer_to_radio[12 + (ddc * 4)] = (phase) & 0xFF;
 
     if (receivers > 1) {
-      phase = (unsigned long)(((double)DDCfrequency[1]) * 34.952533333333333333333333333333);
+      phase = (unsigned long)(((double) DDCfrequency[1]) * 34.952533333333333333333333333333);
       high_priority_buffer_to_radio[13 + (ddc * 4)] = (phase >> 24) & 0xFF;
       high_priority_buffer_to_radio[14 + (ddc * 4)] = (phase >> 16) & 0xFF;
       high_priority_buffer_to_radio[15 + (ddc * 4)] = (phase >>  8) & 0xFF;
-      high_priority_buffer_to_radio[16 + (ddc * 4)] = (phase      ) & 0xFF;
+      high_priority_buffer_to_radio[16 + (ddc * 4)] = (phase) & 0xFF;
     }
   }
 
@@ -965,7 +966,7 @@ static void new_protocol_high_priority(void) {
 
   // DUCfrequency = txfreq - vfo[txvfo].lo + frequency_calibration;
   DUCfrequency = apply_ppm_ll(txfreq - vfo[txvfo].lo);
-  phase = (unsigned long)(((double)DUCfrequency) * 34.952533333333333333333333333333);
+  phase = (unsigned long)(((double) DUCfrequency) * 34.952533333333333333333333333333);
 
   if (xmit && transmitter->puresignal) {
     //
@@ -974,11 +975,11 @@ static void new_protocol_high_priority(void) {
     high_priority_buffer_to_radio[ 9] = (phase >> 24) & 0xFF;
     high_priority_buffer_to_radio[10] = (phase >> 16) & 0xFF;
     high_priority_buffer_to_radio[11] = (phase >>  8) & 0xFF;
-    high_priority_buffer_to_radio[12] = (phase      ) & 0xFF;
+    high_priority_buffer_to_radio[12] = (phase) & 0xFF;
     high_priority_buffer_to_radio[13] = (phase >> 24) & 0xFF;
     high_priority_buffer_to_radio[14] = (phase >> 16) & 0xFF;
     high_priority_buffer_to_radio[15] = (phase >>  8) & 0xFF;
-    high_priority_buffer_to_radio[16] = (phase      ) & 0xFF;
+    high_priority_buffer_to_radio[16] = (phase) & 0xFF;
   }
 
   //
@@ -987,7 +988,7 @@ static void new_protocol_high_priority(void) {
   high_priority_buffer_to_radio[329] = (phase >> 24) & 0xFF;
   high_priority_buffer_to_radio[330] = (phase >> 16) & 0xFF;
   high_priority_buffer_to_radio[331] = (phase >>  8) & 0xFF;
-  high_priority_buffer_to_radio[332] = (phase      ) & 0xFF;
+  high_priority_buffer_to_radio[332] = (phase) & 0xFF;
   int power = 0;
 
   //
@@ -1007,7 +1008,7 @@ static void new_protocol_high_priority(void) {
   //
   if (rigctl_tcp_running()) {
     high_priority_buffer_to_radio[1398] = (rigctl_tcp_port >> 8) & 0xFF;
-    high_priority_buffer_to_radio[1399] = (rigctl_tcp_port     ) & 0xFF;
+    high_priority_buffer_to_radio[1399] = (rigctl_tcp_port) & 0xFF;
   } else {
     high_priority_buffer_to_radio[1398] = 0;
     high_priority_buffer_to_radio[1399] = 0;
@@ -1492,12 +1493,12 @@ static void new_protocol_high_priority(void) {
   high_priority_buffer_to_radio[1432] = (alex0 >> 24) & 0xFF;
   high_priority_buffer_to_radio[1433] = (alex0 >> 16) & 0xFF;
   high_priority_buffer_to_radio[1434] = (alex0 >>  8) & 0xFF;
-  high_priority_buffer_to_radio[1435] = (alex0      ) & 0xFF;
+  high_priority_buffer_to_radio[1435] = (alex0) & 0xFF;
   //t_print("ALEX0 bits:  %02X %02X %02X %02X\n",high_priority_buffer_to_radio[1432],high_priority_buffer_to_radio[1433],high_priority_buffer_to_radio[1434],high_priority_buffer_to_radio[1435]);
   high_priority_buffer_to_radio[1428] = (alex1 >> 24) & 0xFF;
   high_priority_buffer_to_radio[1429] = (alex1 >> 16) & 0xFF;
   high_priority_buffer_to_radio[1430] = (alex1 >>  8) & 0xFF;
-  high_priority_buffer_to_radio[1431] = (alex1      ) & 0xFF;
+  high_priority_buffer_to_radio[1431] = (alex1) & 0xFF;
   //t_print("ALEX0 bits:  %02X %02X %02X %02X\n",high_priority_buffer_to_radio[1428],high_priority_buffer_to_radio[1429],high_priority_buffer_to_radio[1430],high_priority_buffer_to_radio[1431]);
   //
   // ADC step attenuator of ADC0 and ADC1
@@ -1540,18 +1541,18 @@ static void new_protocol_high_priority(void) {
     int rc;
 
     if ((rc = p2_sendto_route_retry(data_socket, high_priority_buffer_to_radio, sizeof(high_priority_buffer_to_radio), 0,
-                                    (struct sockaddr * )&high_priority_addr, high_priority_addr_length, __func__)) < 0) {
+                                    (struct sockaddr *) &high_priority_addr, high_priority_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto high_priority failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
               inet_ntoa(high_priority_addr.sin_addr), ntohs(high_priority_addr.sin_port),
-              (long)sizeof(high_priority_buffer_to_radio), high_priority_addr_length);
+              (long) sizeof(high_priority_buffer_to_radio), high_priority_addr_length);
       g_idle_add(fatal_error, "HP send failed (Network down?)");
       P2running = 0;
       pthread_mutex_unlock(&hi_prio_mutex);
       return;
     } else if (rc != sizeof(high_priority_buffer_to_radio)) {
-      t_print("sendto socket for high_priority: %d rather than %ld\n", rc, (long)sizeof(high_priority_buffer_to_radio));
+      t_print("sendto socket for high_priority: %d rather than %ld\n", rc, (long) sizeof(high_priority_buffer_to_radio));
 #ifdef __DVL__
     } else {
       t_print("%s: sendto high_priority OK rc=%d dst=%s:%d\n",
@@ -1574,7 +1575,7 @@ static void new_protocol_transmit_specific(void) {
   transmit_specific_buffer[0] = (tx_specific_sequence >> 24) & 0xFF;
   transmit_specific_buffer[1] = (tx_specific_sequence >> 16) & 0xFF;
   transmit_specific_buffer[2] = (tx_specific_sequence >>  8) & 0xFF;
-  transmit_specific_buffer[3] = (tx_specific_sequence      ) & 0xFF;
+  transmit_specific_buffer[3] = (tx_specific_sequence) & 0xFF;
   transmit_specific_buffer[4] = 1; // 1 DAC
   transmit_specific_buffer[5] = 0; //  default no CW
 
@@ -1622,11 +1623,11 @@ static void new_protocol_transmit_specific(void) {
 
   transmit_specific_buffer[ 6] = cw_keyer_sidetone_volume & 0x7F;
   transmit_specific_buffer[ 7] = (cw_keyer_sidetone_frequency >> 8) & 0xFF;
-  transmit_specific_buffer[ 8] = (cw_keyer_sidetone_frequency     ) & 0xFF;
+  transmit_specific_buffer[ 8] = (cw_keyer_sidetone_frequency) & 0xFF;
   transmit_specific_buffer[ 9] = cw_keyer_speed;
   transmit_specific_buffer[10] = cw_keyer_weight;
   transmit_specific_buffer[11] = (cw_keyer_hang_time >> 8) & 0xFF;
-  transmit_specific_buffer[12] = (cw_keyer_hang_time     ) & 0xFF;
+  transmit_specific_buffer[12] = (cw_keyer_hang_time) & 0xFF;
   transmit_specific_buffer[13] = rfdelay;
   transmit_specific_buffer[14] = 0;
   transmit_specific_buffer[15] = 0;   // should be 192: TX sample rate 192k
@@ -1686,12 +1687,12 @@ static void new_protocol_transmit_specific(void) {
     int rc;
 
     if ((rc = p2_sendto_route_retry(data_socket, transmit_specific_buffer, sizeof(transmit_specific_buffer), 0,
-                                    (struct sockaddr * )&transmitter_addr, transmitter_addr_length, __func__)) < 0) {
+                                    (struct sockaddr *) &transmitter_addr, transmitter_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto transmit_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
               inet_ntoa(transmitter_addr.sin_addr), ntohs(transmitter_addr.sin_port),
-              (long)sizeof(transmit_specific_buffer), transmitter_addr_length);
+              (long) sizeof(transmit_specific_buffer), transmitter_addr_length);
       g_idle_add(fatal_error, "TxSpec send failed (Network down?)");
       P2running = 0;
       pthread_mutex_unlock(&tx_spec_mutex);
@@ -1699,7 +1700,7 @@ static void new_protocol_transmit_specific(void) {
     }
 
     if (rc != sizeof(transmit_specific_buffer)) {
-      t_print("sendto socket for transmit_specific: %d rather than %ld\n", rc, (long)sizeof(transmit_specific_buffer));
+      t_print("sendto socket for transmit_specific: %d rather than %ld\n", rc, (long) sizeof(transmit_specific_buffer));
 #ifdef __DVL__
     } else {
       t_print("%s: sendto transmit_specific OK rc=%d dst=%s:%d\n",
@@ -1723,7 +1724,7 @@ static void new_protocol_receive_specific(void) {
   receive_specific_buffer[0] = (rx_specific_sequence >> 24) & 0xFF;
   receive_specific_buffer[1] = (rx_specific_sequence >> 16) & 0xFF;
   receive_specific_buffer[2] = (rx_specific_sequence >>  8) & 0xFF;
-  receive_specific_buffer[3] = (rx_specific_sequence      ) & 0xFF;
+  receive_specific_buffer[3] = (rx_specific_sequence) & 0xFF;
   receive_specific_buffer[4] = n_adc; // number of ADCs
 
   for (i = 0; i < receivers; i++) {
@@ -1753,7 +1754,7 @@ static void new_protocol_receive_specific(void) {
 
     receive_specific_buffer[17 + (ddc * 6)] = receiver[i]->adc;
     receive_specific_buffer[18 + (ddc * 6)] = ((receiver[i]->sample_rate / 1000) >> 8) & 0xFF;
-    receive_specific_buffer[19 + (ddc * 6)] = ((receiver[i]->sample_rate / 1000)     ) & 0xFF;
+    receive_specific_buffer[19 + (ddc * 6)] = ((receiver[i]->sample_rate / 1000)) & 0xFF;
     receive_specific_buffer[22 + (ddc * 6)] = 24;
   }
 
@@ -1790,12 +1791,12 @@ static void new_protocol_receive_specific(void) {
     receive_specific_buffer[6] |= receiver[0]->random;                             // random DDC0: take value from RX1
     receive_specific_buffer[6] |= (receiver[0]->random) << 1;                      // random DDC1: take value from RX1
     receive_specific_buffer[17] = 0;                                               // ADC0 associated with DDC0
-    receive_specific_buffer[18] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF; // sample rate MSB
-    receive_specific_buffer[19] = ((receiver[0]->sample_rate / 1000)     ) & 0xFF; // sample rate LSB
+    receive_specific_buffer[18] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF;  // sample rate MSB
+    receive_specific_buffer[19] = ((receiver[0]->sample_rate / 1000)) & 0xFF;       // sample rate LSB
     receive_specific_buffer[22] = 24;                                              // bits per sample
     receive_specific_buffer[23] = 1;                                               // ADC1 associated with DDC1
-    receive_specific_buffer[24] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF; // sample rate MSB
-    receive_specific_buffer[25] = ((receiver[0]->sample_rate / 1000)     ) & 0xFF; // sample rate LSB
+    receive_specific_buffer[24] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF;  // sample rate MSB
+    receive_specific_buffer[25] = ((receiver[0]->sample_rate / 1000)) & 0xFF;       // sample rate LSB
     receive_specific_buffer[26] = 24;                                              // bits per sample
     receive_specific_buffer[1363] = 0x02;                                          // sync DDC1 to DDC0
     receive_specific_buffer[7] = 1;                                                // enable  DDC0 but disable all others
@@ -1810,18 +1811,18 @@ static void new_protocol_receive_specific(void) {
     int rc;
 
     if ((rc = p2_sendto_route_retry(data_socket, receive_specific_buffer, sizeof(receive_specific_buffer), 0,
-                                    (struct sockaddr * )&receiver_addr, receiver_addr_length, __func__)) < 0) {
+                                    (struct sockaddr *) &receiver_addr, receiver_addr_length, __func__)) < 0) {
       int err = errno;
       t_print("%s: sendto receive_specific failed: fd=%d errno=%d (%s) dst=%s:%d len=%ld addrlen=%d\n",
               __func__, data_socket, err, strerror(err),
               inet_ntoa(receiver_addr.sin_addr), ntohs(receiver_addr.sin_port),
-              (long)sizeof(receive_specific_buffer), receiver_addr_length);
+              (long) sizeof(receive_specific_buffer), receiver_addr_length);
       g_idle_add(fatal_error, "RxSpec send failed (Network down?)");
       P2running = 0;
       pthread_mutex_unlock(&rx_spec_mutex);
       return;
     } else if (rc != sizeof(receive_specific_buffer)) {
-      t_print("sendto socket for receive_specific: %d rather than %ld\n", rc, (long)sizeof(receive_specific_buffer));
+      t_print("sendto socket for receive_specific: %d rather than %ld\n", rc, (long) sizeof(receive_specific_buffer));
 #ifdef __DVL__
     } else {
       t_print("%s: sendto receive_specific OK rc=%d dst=%s:%d\n",
@@ -1875,7 +1876,7 @@ void new_protocol_menu_stop(void) {
   g_thread_join(new_protocol_timer_thread_id);
   new_protocol_high_priority();
   // let the FPGA rest a while
-  usleep(200000); // 200 ms
+  usleep(200000);  // 200 ms
 
   if (!have_saturn_xdma && data_socket != -1) {
     buffer = malloc(NET_BUFFER_SIZE);
@@ -1891,7 +1892,7 @@ void new_protocol_menu_stop(void) {
           break;
         }
 
-        recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*)&addr, &length);
+        recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*) &addr, &length);
       }
 
       free(buffer);
@@ -1940,19 +1941,19 @@ void new_protocol_menu_start(void) {
   txiq_sem = apple_sem(0);
   rxaudio_sem = apple_sem(0);
 #else
-  (void)sem_init(&txiq_sem, 0, 0); // check return value!
+  (void) sem_init(&txiq_sem, 0, 0);  // check return value!
   t_print("%s: txiq_sem initialized\n", __func__);
-  (void)sem_init(&rxaudio_sem, 0, 0); // check return value!
+  (void) sem_init(&rxaudio_sem, 0, 0);  // check return value!
   t_print("%s: rxaudio_sem initialized\n", __func__);
 #endif
-  new_protocol_rxaudio_thread_id = g_thread_new( "P2 SPKR", new_protocol_rxaudio_thread, NULL);
+  new_protocol_rxaudio_thread_id = g_thread_new("P2 SPKR", new_protocol_rxaudio_thread, NULL);
   t_print("%s: P2 SPKR thread started\n", __func__);
-  new_protocol_txiq_thread_id = g_thread_new( "P2 TXIQ", new_protocol_txiq_thread, NULL);
+  new_protocol_txiq_thread_id = g_thread_new("P2 TXIQ", new_protocol_txiq_thread, NULL);
   t_print("%s: P2 TXIQ thread started\n", __func__);
 
   if (!have_saturn_xdma) {
     t_print("%s: P2 main thread started\n", __func__);
-    new_protocol_thread_id = g_thread_new( "P2 main", new_protocol_thread, NULL);
+    new_protocol_thread_id = g_thread_new("P2 main", new_protocol_thread, NULL);
   }
 
 #ifdef __APPLE__
@@ -1972,7 +1973,7 @@ void new_protocol_menu_start(void) {
   t_print("%s: send rx_specific\n", __func__);
   usleep(50000);
   new_protocol_receive_specific();
-  new_protocol_timer_thread_id = g_thread_new( "P2 task", new_protocol_timer_thread, NULL);
+  new_protocol_timer_thread_id = g_thread_new("P2 task", new_protocol_timer_thread, NULL);
 }
 
 static gpointer new_protocol_rxaudio_thread(gpointer data) {
@@ -2008,7 +2009,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
     audiobuffer[0] = (audio_sequence >> 24) & 0xFF;
     audiobuffer[1] = (audio_sequence >> 16) & 0xFF;
     audiobuffer[2] = (audio_sequence >>  8) & 0xFF;
-    audiobuffer[3] = (audio_sequence      ) & 0xFF;
+    audiobuffer[3] = (audio_sequence) & 0xFF;
     audio_sequence++;
     memcpy(&audiobuffer[4], &RXAUDIORINGBUF[rxaudio_outptr], 256);
     MEMORY_BARRIER;
@@ -2047,7 +2048,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
       // 1000usec, or 300 usec, or nothing, before sending
       // out the next packet.
       //
-      if ((!nw_settings.is_wired && FIFO > 900.0) || ( nw_settings.is_wired && FIFO > 500.0)) {
+      if ((!nw_settings.is_wired && FIFO > 900.0) || (nw_settings.is_wired && FIFO > 500.0)) {
         // Wait about 1000 usec before sending the next packet.
         ts.tv_nsec += 1000000;
 
@@ -2057,7 +2058,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
         }
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      } else if ((!nw_settings.is_wired && FIFO > 450.0) || ( nw_settings.is_wired && FIFO > 250.0)) {
+      } else if ((!nw_settings.is_wired && FIFO > 450.0) || (nw_settings.is_wired && FIFO > 250.0)) {
         // Wait about 300 usec before sending the next packet.
         ts.tv_nsec += 300000;
 
@@ -2070,7 +2071,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
       }
 
       FIFO += 64.0;  // number of samples in THIS packet
-      int rc = sendto(data_socket, audiobuffer, sizeof(audiobuffer), 0, (struct sockaddr*)&audio_addr, audio_addr_length);
+      int rc = sendto(data_socket, audiobuffer, sizeof(audiobuffer), 0, (struct sockaddr*) &audio_addr, audio_addr_length);
 
       if (rc < 0) {
         g_idle_add(fatal_error, "Audio send failed (Network down?)");
@@ -2078,7 +2079,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
       }
 
       if (rc != sizeof(audiobuffer)) {
-        t_print("sendto socket failed for %ld bytes of audio: %d\n", (long)sizeof(audiobuffer), rc);
+        t_print("sendto socket failed for %ld bytes of audio: %d\n", (long) sizeof(audiobuffer), rc);
       }
     }
   }
@@ -2110,7 +2111,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
     iqbuffer[0] = (tx_iq_sequence >> 24) & 0xFF;
     iqbuffer[1] = (tx_iq_sequence >> 16) & 0xFF;
     iqbuffer[2] = (tx_iq_sequence >>  8) & 0xFF;
-    iqbuffer[3] = (tx_iq_sequence      ) & 0xFF;
+    iqbuffer[3] = (tx_iq_sequence) & 0xFF;
     tx_iq_sequence++;
     nptr = txiq_outptr + 1440;
 
@@ -2148,7 +2149,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
         FIFO = 0.0;
       }
 
-      if ((!nw_settings.is_wired && FIFO > 1800.0) || ( nw_settings.is_wired && FIFO > 1250.0)) {
+      if ((!nw_settings.is_wired && FIFO > 1800.0) || (nw_settings.is_wired && FIFO > 1250.0)) {
         //
         // Wait about 1000 usec before sending the next packet.
         // In reality, it takes a little longer before we resume work
@@ -2165,7 +2166,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
 
       FIFO += 240.0;  // number of samples in THIS packet
 
-      if (sendto(data_socket, iqbuffer, sizeof(iqbuffer), 0, (struct sockaddr * )&iq_addr, iq_addr_length) < 0) {
+      if (sendto(data_socket, iqbuffer, sizeof(iqbuffer), 0, (struct sockaddr *) &iq_addr, iq_addr_length) < 0) {
         g_idle_add(fatal_error, "TX IQ send failed (Network down?)");
         P2running = 0;
       }
@@ -2193,7 +2194,7 @@ static gpointer new_protocol_thread(gpointer data) {
     unsigned char *buffer;
     mybuf = get_my_buffer();
     buffer = mybuf->buffer;
-    bytesread = recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*)&addr, &length);
+    bytesread = recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*) &addr, &length);
 
     if (!P2running) {
       //
@@ -2305,7 +2306,7 @@ static gpointer mic_line_thread(gpointer data) {
 
     if (nptr >= MICRINGBUFLEN) { nptr = 0; }
 
-    mybuf = (mybuffer *) mic_line_buffer[mic_outptr];
+    mybuf = (mybuffer*) mic_line_buffer[mic_outptr];
     MEMORY_BARRIER;
     mic_outptr = nptr;
 
@@ -2465,7 +2466,7 @@ static gpointer iq_thread(gpointer data) {
     // This can happen when restarting the protocol
     if (mybuf->free) { continue; }
 
-    buffer = (unsigned char *) mybuf->buffer;
+    buffer = (unsigned char*) mybuf->buffer;
     //
     //  TEMP: perform additional sequence check
     //
@@ -2508,7 +2509,7 @@ static gpointer iq_thread(gpointer data) {
   return NULL;
 }
 
-static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
+static void process_iq_data(const unsigned char* buffer, RECEIVER *rx) {
   int b;
   int leftsample;
   int rightsample;
@@ -2517,14 +2518,14 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
   int samplesperframe = ((buffer[14] & 0xFF) << 8) + (buffer[15] & 0xFF);
 #ifdef P2IQDEBUG
   long long timestamp =
-    ((long long)(buffer[4] & 0xFF) << 56)
-    + ((long long)(buffer[5] & 0xFF) << 48)
-    + ((long long)(buffer[6] & 0xFF) << 40)
-    + ((long long)(buffer[7] & 0xFF) << 32)
-    + ((long long)(buffer[8] & 0xFF) << 24)
-    + ((long long)(buffer[9] & 0xFF) << 16)
-    + ((long long)(buffer[10] & 0xFF) << 8)
-    + ((long long)(buffer[11] & 0xFF)   );
+          ((long long)(buffer[4] & 0xFF) << 56)
+          + ((long long)(buffer[5] & 0xFF) << 48)
+          + ((long long)(buffer[6] & 0xFF) << 40)
+          + ((long long)(buffer[7] & 0xFF) << 32)
+          + ((long long)(buffer[8] & 0xFF) << 24)
+          + ((long long)(buffer[9] & 0xFF) << 16)
+          + ((long long)(buffer[10] & 0xFF) << 8)
+          + ((long long)(buffer[11] & 0xFF));
   int bitspersample = ((buffer[12] & 0xFF) << 8) + (buffer[13] & 0xFF);
   t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __func__, rx->id, bitspersample, samplesperframe);
 #endif
@@ -2533,11 +2534,11 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
 
   for (i = 0; i < samplesperframe; i++) {
     leftsample   = (int)((signed char) buffer[b++]) << 16;
-    leftsample  |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    leftsample  |= (int)((unsigned char)buffer[b++] & 0xFF);
-    rightsample  = (int)((signed char)buffer[b++]) << 16;
-    rightsample |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    rightsample |= (int)((unsigned char)buffer[b++] & 0xFF);
+    leftsample  |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    leftsample  |= (int)((unsigned char) buffer[b++] & 0xFF);
+    rightsample  = (int)((signed char) buffer[b++]) << 16;
+    rightsample |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    rightsample |= (int)((unsigned char) buffer[b++] & 0xFF);
 
     if (leftsample >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
         leftsample <= P2_SOFT_ADC_OVF_NEG_THRESHOLD ||
@@ -2547,8 +2548,8 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
     }
 
     // The "obscure" constant 1.1920928955078125E-7 is 1/(2^23)
-    leftsampledouble = (double)leftsample * 1.1920928955078125E-7;
-    rightsampledouble = (double)rightsample * 1.1920928955078125E-7;
+    leftsampledouble = (double) leftsample * 1.1920928955078125E-7;
+    rightsampledouble = (double) rightsample * 1.1920928955078125E-7;
 
     if (protocol == NEW_PROTOCOL && rx->sample_rate == 48000) {
       switch (device) {
@@ -2574,7 +2575,7 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
 // This is the same as process_ps_iq_data except that add_div_iq_samples is called
 // at the end
 //
-static void process_div_iq_data(const unsigned char*buffer) {
+static void process_div_iq_data(const unsigned char* buffer) {
   int b;
   int leftsample0;
   int rightsample0;
@@ -2587,14 +2588,14 @@ static void process_div_iq_data(const unsigned char*buffer) {
   int samplesperframe = ((buffer[14] & 0xFF) << 8) + (buffer[15] & 0xFF);
 #ifdef P2IQDEBUG
   long long timestamp =
-    ((long long)(buffer[4] & 0xFF) << 56)
-    + ((long long)(buffer[5] & 0xFF) << 48)
-    + ((long long)(buffer[6] & 0xFF) << 40)
-    + ((long long)(buffer[7] & 0xFF) << 32)
-    + ((long long)(buffer[8] & 0xFF) << 24)
-    + ((long long)(buffer[9] & 0xFF) << 16)
-    + ((long long)(buffer[10] & 0xFF) << 8)
-    + ((long long)(buffer[11] & 0xFF)    );
+          ((long long)(buffer[4] & 0xFF) << 56)
+          + ((long long)(buffer[5] & 0xFF) << 48)
+          + ((long long)(buffer[6] & 0xFF) << 40)
+          + ((long long)(buffer[7] & 0xFF) << 32)
+          + ((long long)(buffer[8] & 0xFF) << 24)
+          + ((long long)(buffer[9] & 0xFF) << 16)
+          + ((long long)(buffer[10] & 0xFF) << 8)
+          + ((long long)(buffer[11] & 0xFF));
   int bitspersample = ((buffer[12] & 0xFF) << 8) + (buffer[13] & 0xFF);
   t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __func__, rx->id, bitspersample, samplesperframe);
 #endif
@@ -2603,21 +2604,21 @@ static void process_div_iq_data(const unsigned char*buffer) {
 
   for (i = 0; i < samplesperframe; i += 2) {
     leftsample0   = (int)((signed char) buffer[b++]) << 16;
-    leftsample0  |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    leftsample0  |= (int)((unsigned char)buffer[b++] & 0xFF);
-    rightsample0  = (int)((signed char)buffer[b++]) << 16;
-    rightsample0 |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    rightsample0 |= (int)((unsigned char)buffer[b++] & 0xFF);
-    leftsampledouble0 = (double)leftsample0 * 1.1920928955078125E-7;
-    rightsampledouble0 = (double)rightsample0 * 1.1920928955078125E-7;
+    leftsample0  |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    leftsample0  |= (int)((unsigned char) buffer[b++] & 0xFF);
+    rightsample0  = (int)((signed char) buffer[b++]) << 16;
+    rightsample0 |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    rightsample0 |= (int)((unsigned char) buffer[b++] & 0xFF);
+    leftsampledouble0 = (double) leftsample0 * 1.1920928955078125E-7;
+    rightsampledouble0 = (double) rightsample0 * 1.1920928955078125E-7;
     leftsample1   = (int)((signed char) buffer[b++]) << 16;
-    leftsample1  |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    leftsample1  |= (int)((unsigned char)buffer[b++] & 0xFF);
-    rightsample1  = (int)((signed char)buffer[b++]) << 16;
-    rightsample1 |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    rightsample1 |= (int)((unsigned char)buffer[b++] & 0xFF);
-    leftsampledouble1 = (double)leftsample1 * 1.1920928955078125E-7;
-    rightsampledouble1 = (double)rightsample1 * 1.1920928955078125E-7;
+    leftsample1  |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    leftsample1  |= (int)((unsigned char) buffer[b++] & 0xFF);
+    rightsample1  = (int)((signed char) buffer[b++]) << 16;
+    rightsample1 |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    rightsample1 |= (int)((unsigned char) buffer[b++] & 0xFF);
+    leftsampledouble1 = (double) leftsample1 * 1.1920928955078125E-7;
+    rightsampledouble1 = (double) rightsample1 * 1.1920928955078125E-7;
     rx_add_div_iq_samples(receiver[0], leftsampledouble0, rightsampledouble0, leftsampledouble1, rightsampledouble1);
 
     //
@@ -2629,7 +2630,7 @@ static void process_div_iq_data(const unsigned char*buffer) {
   }
 }
 
-static void process_ps_iq_data(const unsigned char *buffer) {
+static void process_ps_iq_data(const unsigned char* buffer) {
   int samplesperframe;
   int b;
   int leftsample0;
@@ -2643,14 +2644,14 @@ static void process_ps_iq_data(const unsigned char *buffer) {
   samplesperframe = ((buffer[14] & 0xFF) << 8) + (buffer[15] & 0xFF);
 #ifdef P2IQDEBUG
   long long timestamp =
-    ((long long)(buffer[4] & 0xFF) << 56)
-    + ((long long)(buffer[5] & 0xFF) << 48)
-    + ((long long)(buffer[6] & 0xFF) << 40)
-    + ((long long)(buffer[7] & 0xFF) << 32)
-    + ((long long)(buffer[8] & 0xFF) << 24)
-    + ((long long)(buffer[9] & 0xFF) << 16)
-    + ((long long)(buffer[10] & 0xFF) << 8)
-    + ((long long)(buffer[11] & 0xFF)   );
+          ((long long)(buffer[4] & 0xFF) << 56)
+          + ((long long)(buffer[5] & 0xFF) << 48)
+          + ((long long)(buffer[6] & 0xFF) << 40)
+          + ((long long)(buffer[7] & 0xFF) << 32)
+          + ((long long)(buffer[8] & 0xFF) << 24)
+          + ((long long)(buffer[9] & 0xFF) << 16)
+          + ((long long)(buffer[10] & 0xFF) << 8)
+          + ((long long)(buffer[11] & 0xFF));
   int bitspersample = ((buffer[12] & 0xFF) << 8) + (buffer[13] & 0xFF);
   t_print("%s: rx=%d bitspersample=%d samplesperframe=%d\n", __func__, rx->id, bitspersample, samplesperframe);
 #endif
@@ -2659,21 +2660,21 @@ static void process_ps_iq_data(const unsigned char *buffer) {
 
   for (i = 0; i < samplesperframe; i += 2) {
     leftsample0   = (int)((signed char) buffer[b++]) << 16;
-    leftsample0  |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    leftsample0  |= (int)((unsigned char)buffer[b++] & 0xFF);
-    rightsample0  = (int)((signed char)buffer[b++]) << 16;
-    rightsample0 |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    rightsample0 |= (int)((unsigned char)buffer[b++] & 0xFF);
-    leftsampledouble0 = (double)leftsample0 * 1.1920928955078125E-7;
-    rightsampledouble0 = (double)rightsample0 * 1.1920928955078125E-7;
+    leftsample0  |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    leftsample0  |= (int)((unsigned char) buffer[b++] & 0xFF);
+    rightsample0  = (int)((signed char) buffer[b++]) << 16;
+    rightsample0 |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    rightsample0 |= (int)((unsigned char) buffer[b++] & 0xFF);
+    leftsampledouble0 = (double) leftsample0 * 1.1920928955078125E-7;
+    rightsampledouble0 = (double) rightsample0 * 1.1920928955078125E-7;
     leftsample1   = (int)((signed char) buffer[b++]) << 16;
-    leftsample1  |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    leftsample1  |= (int)((unsigned char)buffer[b++] & 0xFF);
-    rightsample1  = (int)((signed char)buffer[b++]) << 16;
-    rightsample1 |= (int)((((unsigned char)buffer[b++]) << 8) & 0xFF00);
-    rightsample1 |= (int)((unsigned char)buffer[b++] & 0xFF);
-    leftsampledouble1 = (double)leftsample1 * 1.1920928955078125E-7;
-    rightsampledouble1 = (double)rightsample1 * 1.1920928955078125E-7;
+    leftsample1  |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    leftsample1  |= (int)((unsigned char) buffer[b++] & 0xFF);
+    rightsample1  = (int)((signed char) buffer[b++]) << 16;
+    rightsample1 |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
+    rightsample1 |= (int)((unsigned char) buffer[b++] & 0xFF);
+    leftsampledouble1 = (double) leftsample1 * 1.1920928955078125E-7;
+    rightsampledouble1 = (double) rightsample1 * 1.1920928955078125E-7;
     tx_add_ps_iq_samples(transmitter, leftsampledouble1, rightsampledouble1, leftsampledouble0, rightsampledouble0);
     //t_print("%06x,%06x %06x,%06x\n",leftsample0,rightsample0,leftsample1,rightsample1);
 #if defined(DUMP_TX_DATA)
@@ -2724,7 +2725,7 @@ static void process_high_priority(void) {
   previous_ptt = radio_ptt;
   previous_dot = radio_dot;
   previous_dash = radio_dash;
-  radio_ptt  = (buffer[4]     ) & 0x01;
+  radio_ptt  = (buffer[4]) & 0x01;
   radio_dot  = (buffer[4] >> 1) & 0x01;
   radio_dash = (buffer[4] >> 2) & 0x01;
 
@@ -2805,7 +2806,7 @@ static void process_high_priority(void) {
   if (!cw_keyer_internal) {
     if (radio_dash != previous_dash) { keyer_event(0, radio_dash); }
 
-    if (radio_dot  != previous_dot ) { keyer_event(1, radio_dot ); }
+    if (radio_dot  != previous_dot) { keyer_event(1, radio_dot); }
   }
 
   if (previous_ptt != radio_ptt) {
@@ -2841,7 +2842,7 @@ static void process_high_priority(void) {
   }
 }
 
-static void process_mic_data(const unsigned char *buffer) {
+static void process_mic_data(const unsigned char* buffer) {
   unsigned long sequence;
   int b;
   int i;
@@ -2858,7 +2859,7 @@ static void process_mic_data(const unsigned char *buffer) {
 
   for (i = 0; i < MIC_SAMPLES; i++) {
     short sample = (short)(buffer[b++] << 8);
-    sample |= (short) (buffer[b++] & 0xFF);
+    sample |= (short)(buffer[b++] & 0xFF);
 
     //
     // If PTT comes from the radio, possibly use audio from BOTH sources
@@ -2909,9 +2910,9 @@ void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sa
 
     int iptr = rxaudio_inptr + 4 * rxaudio_count;
     RXAUDIORINGBUF[iptr++] = (left_audio_sample  >> 8) & 0xFF;
-    RXAUDIORINGBUF[iptr++] = (left_audio_sample      ) & 0xFF;
+    RXAUDIORINGBUF[iptr++] = (left_audio_sample) & 0xFF;
     RXAUDIORINGBUF[iptr++] = (right_audio_sample >> 8) & 0xFF;
-    RXAUDIORINGBUF[iptr++] = (right_audio_sample     ) & 0xFF;
+    RXAUDIORINGBUF[iptr++] = (right_audio_sample) & 0xFF;
     rxaudio_count++;
 
     if (rxaudio_count >= 64) {
@@ -2966,9 +2967,9 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 
   int iptr = rxaudio_inptr + 4 * rxaudio_count;
   RXAUDIORINGBUF[iptr++] = (left_audio_sample  >> 8) & 0xFF;
-  RXAUDIORINGBUF[iptr++] = (left_audio_sample      ) & 0xFF;
+  RXAUDIORINGBUF[iptr++] = (left_audio_sample) & 0xFF;
   RXAUDIORINGBUF[iptr++] = (right_audio_sample >> 8) & 0xFF;
-  RXAUDIORINGBUF[iptr++] = (right_audio_sample     ) & 0xFF;
+  RXAUDIORINGBUF[iptr++] = (right_audio_sample) & 0xFF;
   rxaudio_count++;
 
   if (rxaudio_count >= 64) {
@@ -3012,10 +3013,10 @@ void new_protocol_iq_samples(int isample, int qsample) {
   int iptr = txiq_inptr + 6 * txiq_count;
   TXIQRINGBUF[iptr++] = (isample >> 16) & 0xFF;
   TXIQRINGBUF[iptr++] = (isample >>  8) & 0xFF;
-  TXIQRINGBUF[iptr++] = (isample      ) & 0xFF;
+  TXIQRINGBUF[iptr++] = (isample) & 0xFF;
   TXIQRINGBUF[iptr++] = (qsample >> 16) & 0xFF;
   TXIQRINGBUF[iptr++] = (qsample >>  8) & 0xFF;
-  TXIQRINGBUF[iptr++] = (qsample      ) & 0xFF;
+  TXIQRINGBUF[iptr++] = (qsample) & 0xFF;
   txiq_count++;
 
   if (txiq_count >= 240) {
@@ -3040,7 +3041,7 @@ void new_protocol_iq_samples(int isample, int qsample) {
 }
 
 // cppcheck-suppress constParameterCallback
-void* new_protocol_timer_thread(void* arg) {
+void *new_protocol_timer_thread(void* arg) {
   //
   // Periodically send HighPriority as well as General packets.
   // A general packet is, for example,

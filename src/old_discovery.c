@@ -68,8 +68,8 @@ static gpointer discover_receive_thread(gpointer data);
 //
 static void discover(struct ifaddrs* iface, int discflag) {
   int rc;
-  struct sockaddr_in *sa = (struct sockaddr_in *)&interface_addr;
-  struct sockaddr_in *mask = (struct sockaddr_in *)&interface_netmask;
+  struct sockaddr_in *sa = (struct sockaddr_in*) &interface_addr;
+  struct sockaddr_in *mask = (struct sockaddr_in*) &interface_netmask;
   char addr[16];
   char net_mask[16];
   struct sockaddr_in to_addr = {0};
@@ -103,11 +103,11 @@ static void discover(struct ifaddrs* iface, int discflag) {
 
     // bind to this interface and the discovery port
     interface_addr.sin_family = AF_INET;
-    interface_addr.sin_port = htons(0); // system assigned port
+    interface_addr.sin_port = htons(0);  // system assigned port
 
-    if (bind(discovery_socket, (struct sockaddr * )&interface_addr, sizeof(interface_addr)) < 0) {
+    if (bind(discovery_socket, (struct sockaddr *) &interface_addr, sizeof(interface_addr)) < 0) {
       t_perror("discover: bind socket failed for discovery_socket:");
-      close (discovery_socket);
+      close(discovery_socket);
       return;
     }
 
@@ -120,7 +120,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
 
     if (rc != 0) {
       t_print("discover: cannot set SO_BROADCAST: rc=%d\n", rc);
-      close (discovery_socket);
+      close(discovery_socket);
       return;
     }
 
@@ -228,7 +228,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     // Step 1. Make socket non-blocking and connect()
     flags = fcntl(discovery_socket, F_GETFL, 0);
     fcntl(discovery_socket, F_SETFL, flags | O_NONBLOCK);
-    rc = connect(discovery_socket, (const struct sockaddr *)&to_addr, sizeof(to_addr));
+    rc = connect(discovery_socket, (const struct sockaddr*) &to_addr, sizeof(to_addr));
 
     if ((rc < 0) && (errno != EINPROGRESS)) {
       t_perror("discover: connect() failed for TCP discovery_socket:");
@@ -289,7 +289,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
   setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
   rc = devices;
   // start a receive thread to collect discovery response packets
-  discover_thread_id = g_thread_new( "old discover receive", discover_receive_thread, NULL);
+  discover_thread_id = g_thread_new("old discover receive", discover_receive_thread, NULL);
 
   // send discovery packet
   // If this is a TCP connection, send a "long" packet
@@ -318,21 +318,21 @@ static void discover(struct ifaddrs* iface, int discflag) {
   //-- start fix for Tahoe --
   // Send discovery packet 3x to mitigate macOS first-UDP-drop
   for (int n = 0; n < 3; n++) {
-    if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
+    if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
       t_perror("discover: sendto socket failed for discovery_socket:");
       close(discovery_socket);
       return;
     }
 
-    usleep(30000); // 30 ms
+    usleep(30000);  // 30 ms
   }
 
   //-- end fix for Tahoe --
 #else
 
-  if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
+  if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
     t_perror("discover: sendto socket failed for discovery_socket:");
-    close (discovery_socket);
+    close(discovery_socket);
     return;
   }
 
@@ -353,7 +353,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
       //
       // METIS detection UDP packet sent to fixed IP address got a valid response.
       //
-      memcpy((void *)&discovered[rc].info.network.address, (void *)&to_addr, sizeof(to_addr));
+      memcpy((void*) &discovered[rc].info.network.address, (void*) &to_addr, sizeof(to_addr));
       discovered[rc].info.network.address_length = sizeof(to_addr);
       g_strlcpy(discovered[rc].info.network.interface_name, "UDP", sizeof(discovered[rc].info.network.interface_name));
       discovered[rc].use_routing = 1;
@@ -370,7 +370,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
       // Patch the IP addr into the device field
       // and set the "use TCP" flag.
       //
-      memcpy((void*)&discovered[rc].info.network.address, (void*)&to_addr, sizeof(to_addr));
+      memcpy((void*) &discovered[rc].info.network.address, (void*) &to_addr, sizeof(to_addr));
       discovered[rc].info.network.address_length = sizeof(to_addr);
       g_strlcpy(discovered[rc].info.network.interface_name, "TCP", sizeof(discovered[rc].info.network.interface_name));
       discovered[rc].use_routing = 1;
@@ -390,11 +390,11 @@ static gpointer discover_receive_thread(gpointer data) {
   t_print("discover_receive_thread\n");
   tv.tv_sec = 5;  // Increased timeout for remote connections
   tv.tv_usec = 0;
-  setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+  setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &tv, sizeof(struct timeval));
   len = sizeof(addr);
 
   while (1) {
-    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 1032, (struct sockaddr*)&addr, &len);
+    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 1032, (struct sockaddr*) &addr, &len);
 
     if (bytes_read < 0) {
       t_print("discovery: bytes read %d\n", bytes_read);
@@ -543,10 +543,11 @@ static gpointer discover_receive_thread(gpointer data) {
           }
 
           discovered[devices].status = status;
-          memcpy((void*)&discovered[devices].info.network.address, (void*)&addr, sizeof(addr));
+          memcpy((void*) &discovered[devices].info.network.address, (void*) &addr, sizeof(addr));
           discovered[devices].info.network.address_length = sizeof(addr);
-          memcpy((void*)&discovered[devices].info.network.interface_address, (void*)&interface_addr, sizeof(interface_addr));
-          memcpy((void*)&discovered[devices].info.network.interface_netmask, (void*)&interface_netmask,
+          memcpy((void*) &discovered[devices].info.network.interface_address, (void*) &interface_addr,
+                 sizeof(interface_addr));
+          memcpy((void*) &discovered[devices].info.network.interface_netmask, (void*) &interface_netmask,
                  sizeof(interface_netmask));
           discovered[devices].info.network.interface_length = sizeof(interface_addr);
           g_strlcpy(discovered[devices].info.network.interface_name, interface_name,
@@ -614,7 +615,7 @@ static int is_macos(void) {
   char *model = NULL;
 
   if (sysctlbyname("hw.model", NULL, &len, NULL, 0) == 0) {
-    model = (char*)malloc(len);
+    model = (char*) malloc(len);
 
     if (model != NULL) {
       if (sysctlbyname("hw.model", model, &len, NULL, 0) == 0) {
@@ -660,16 +661,16 @@ void old_discovery(void) {
       //
       if (ifa->ifa_addr) {
         if (
-          ifa->ifa_addr->sa_family == AF_INET
+                ifa->ifa_addr->sa_family == AF_INET
 #ifdef __APPLE__
-          && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
+                && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
 #endif
-          && (ifa->ifa_flags & IFF_UP) == IFF_UP
-          && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
+                && (ifa->ifa_flags & IFF_UP) == IFF_UP
+                && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
 #ifndef __APPLE__
-          && strncmp("veth", ifa->ifa_name, 4)
-          && strncmp("dock", ifa->ifa_name, 4)
-          && strncmp("hass", ifa->ifa_name, 4)
+                && strncmp("veth", ifa->ifa_name, 4)
+                && strncmp("dock", ifa->ifa_name, 4)
+                && strncmp("hass", ifa->ifa_name, 4)
 #endif
         ) {
           discover(ifa, 1);   // send UDP broadcast packet to interface
@@ -700,7 +701,7 @@ void old_discovery(void) {
 
   // TCP discovery disabled for remote connections - uncomment if needed
   // discover(NULL, 3);
-  t_print( "discovery found %d devices\n", devices);
+  t_print("discovery found %d devices\n", devices);
 
   for (i = 0; i < devices; i++) {
     t_print("discovery: found device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s\n",

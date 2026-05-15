@@ -126,21 +126,21 @@ static GThread *saturn_high_priority_thread_id;
 // code to allocate and free dynamic allocated memory
 // first the memory buffers:
 //
-uint8_t* DMAReadBuffer = NULL;                                                          // data for DMA read from DDC
+uint8_t *DMAReadBuffer = NULL;                                                          // data for DMA read from DDC
 uint32_t DMABufferSize = VDMABUFFERSIZE;
-unsigned char*
+unsigned char *
 DMAReadPtr;                                                              // pointer for 1st available location in DMA memory
-unsigned char*
+unsigned char *
 DMAHeadPtr;                                                              // ptr to 1st free location in DMA memory
-unsigned char*
+unsigned char *
 DMABasePtr;                                                              // ptr to target DMA location in DMA memory
 
-uint8_t* DDCSampleBuffer[VNUMDDC];                          // buffer per DDC
-unsigned char*
+uint8_t *DDCSampleBuffer[VNUMDDC];                          // buffer per DDC
+unsigned char *
 IQReadPtr[VNUMDDC];                                                      // pointer for reading out an I or Q sample
-unsigned char*
+unsigned char *
 IQHeadPtr[VNUMDDC];                                                      // ptr to 1st free location in I/Q memory
-unsigned char*
+unsigned char *
 IQBasePtr[VNUMDDC];                                                      // ptr to DMA location in I/Q memory
 
 // Memory buffers to be exchanged with PiHPSDR APIs
@@ -254,7 +254,7 @@ bool CreateDynamicMemory(void) {                            // return true if er
   //
   // then create the buffer for DMA, and initialise its pointers
   //
-  posix_memalign((void**)&DMAReadBuffer, VALIGNMENT, DMABufferSize);
+  posix_memalign((void**) &DMAReadBuffer, VALIGNMENT, DMABufferSize);
 
   if (!DMAReadBuffer) {
     t_print("I/Q read buffer allocation failed\n");
@@ -309,7 +309,7 @@ bool is_already_running() {
   fp = popen("lsof /dev/xdma0_user | grep deskhpsdr", "r");
 
   if (fp == NULL) {
-    t_print("Failed to run command in %s\n", __func__ );
+    t_print("Failed to run command in %s\n", __func__);
     exit(1);
   }
 
@@ -351,7 +351,7 @@ void saturn_discovery(void) {
     //
     SoftwareInformation = RegisterRead(VADDRSWVERSIONREG);
     ProductInformation = RegisterRead(VADDRPRODVERSIONREG);
-    ClockInfo    = (SoftwareInformation      ) & 0xF;               // 4 clock bits
+    ClockInfo    = (SoftwareInformation) & 0xF;                     // 4 clock bits
     MinorVersion = (SoftwareInformation >>  4) & 0xFFFF;            // 16 bit minor sw version
     MajorVersion = (SoftwareInformation >> 25) & 0x7F;              //  7 bit major sw version
     SWID         = (SoftwareInformation >> 20) & 0x1F;              //  5 bit software ID
@@ -456,18 +456,18 @@ void saturn_discovery(void) {
 #define VDMADUCTRANSFERSIZE 1440                       // write 1 message at a time
 
 static int DMADUCWritefile_fd = -1;               // DMA read file device
-static unsigned char* DUCIQBasePtr;               // ptr to DMA location in I/Q memory
+static unsigned char *DUCIQBasePtr;               // ptr to DMA location in I/Q memory
 
 void saturn_init_duc_iq(void) {
   // variables for DMA buffer
   //
-  uint8_t* IQWriteBuffer = NULL;              // data for DMA to write to DUC
+  uint8_t *IQWriteBuffer = NULL;              // data for DMA to write to DUC
   uint32_t IQBufferSize = VDMADUCBUFFERSIZE;
   t_print("%s: Initializing DUC I/Q data\n", __func__);
   //
   // setup DMA buffer
   //
-  posix_memalign((void**)&IQWriteBuffer, VALIGNMENT, IQBufferSize);
+  posix_memalign((void**) &IQWriteBuffer, VALIGNMENT, IQBufferSize);
 
   if (!IQWriteBuffer) {
     t_print("%s: I/Q TX write buffer allocation failed\n", __func__);
@@ -500,10 +500,10 @@ void saturn_init_duc_iq(void) {
 
 static int TXActive = 0;   // The client actively transmitting, 0-none, 1-xdma, 2-network
 
-void saturn_handle_duc_iq(bool FromNetwork, uint8_t *UDPInBuffer) {
+void saturn_handle_duc_iq(bool FromNetwork, uint8_t* UDPInBuffer) {
   uint32_t Cntr;                                          // sample counter
-  uint8_t* SrcPtr;                                        // pointer to data from Thetis
-  uint8_t* DestPtr;                                       // pointer to DMA buffer data
+  uint8_t *SrcPtr;                                        // pointer to data from Thetis
+  uint8_t *DestPtr;                                       // pointer to DMA buffer data
   uint32_t DepthDUC = 0;
   unsigned int Current;                                   // current occupied locations in FIFO
   bool FIFODUCOverflow, FIFODUCUnderflow, FIFODUCOverThreshold;
@@ -552,12 +552,12 @@ void saturn_handle_duc_iq(bool FromNetwork, uint8_t *UDPInBuffer) {
   DestPtr = DUCIQBasePtr;
 
   for (Cntr = 0; Cntr < VIQDUCSAMPLESPERFRAME; Cntr++) {                 // samplecounter
-    *DestPtr++ = *(SrcPtr + 3);                         // get I sample (3 bytes)
-    *DestPtr++ = *(SrcPtr + 4);
-    *DestPtr++ = *(SrcPtr + 5);
-    *DestPtr++ = *(SrcPtr + 0);                         // get Q sample (3 bytes)
-    *DestPtr++ = *(SrcPtr + 1);
-    *DestPtr++ = *(SrcPtr + 2);
+    *DestPtr++ = * (SrcPtr + 3);                        // get I sample (3 bytes)
+    *DestPtr++ = * (SrcPtr + 4);
+    *DestPtr++ = * (SrcPtr + 5);
+    *DestPtr++ = * (SrcPtr + 0);                        // get Q sample (3 bytes)
+    *DestPtr++ = * (SrcPtr + 1);
+    *DestPtr++ = * (SrcPtr + 2);
     SrcPtr += 6;                                        // point at next source sample
   }
 
@@ -566,21 +566,21 @@ void saturn_handle_duc_iq(bool FromNetwork, uint8_t *UDPInBuffer) {
 }
 
 static int DMASpkWritefile_fd = -1;
-static unsigned char* SpkBasePtr;
-static unsigned char* SpkReadPtr;               // pointer for reading out a spkr sample
-static unsigned char* SpkHeadPtr;               // ptr to 1st free location in spk memory
+static unsigned char *SpkBasePtr;
+static unsigned char *SpkReadPtr;               // pointer for reading out a spkr sample
+static unsigned char *SpkHeadPtr;               // ptr to 1st free location in spk memory
 
 void saturn_init_speaker_audio(void) {
   //
   // variables for DMA buffer
   //
-  uint8_t* SpkWriteBuffer = NULL;             // data for DMA to write to spkr
+  uint8_t *SpkWriteBuffer = NULL;             // data for DMA to write to spkr
   uint32_t SpkBufferSize = VDMASPKBUFFERSIZE;
   t_print("%s\n", __func__);
   //
   // setup DMA buffer
   //
-  posix_memalign((void**)&SpkWriteBuffer, VALIGNMENT, SpkBufferSize);
+  posix_memalign((void**) &SpkWriteBuffer, VALIGNMENT, SpkBufferSize);
 
   if (!SpkWriteBuffer) {
     t_print("%s: spkr write buffer allocation failed\n", __func__);
@@ -607,7 +607,7 @@ void saturn_init_speaker_audio(void) {
   return;
 }
 
-void saturn_handle_speaker_audio(const uint8_t *UDPInBuffer) {
+void saturn_handle_speaker_audio(const uint8_t* UDPInBuffer) {
   //uint32_t RegVal = 0;    //debug
   bool FIFOSpkOverflow, FIFOSpkUnderflow, FIFOSpkOverThreshold;;
   uint32_t DepthSpk = 0;
@@ -675,7 +675,7 @@ void saturn_exit(void) {
 
 void start_saturn_high_priority_thread(void) {
   t_print("%s: \n", __func__);
-  saturn_high_priority_thread_id = g_thread_new( "SATURN HP OUT", saturn_high_priority_thread, NULL);
+  saturn_high_priority_thread_id = g_thread_new("SATURN HP OUT", saturn_high_priority_thread, NULL);
 
   if (!saturn_high_priority_thread_id) {
     t_print("%s: g_thread_new failed\n", __func__);
@@ -729,32 +729,32 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
       uint8_t PTTBits;                                          // PTT bits - and change means a new message needed
       mybuffer *mybuf = get_my_buffer(HPMYBUF);
       ReadStatusRegister();
-      PTTBits = (uint8_t)GetP2PTTKeyInputs();
-      *(uint8_t *)(UDPBuffer + 4) = *(uint8_t *)(mybuf->buffer + 4) = PTTBits;
+      PTTBits = (uint8_t) GetP2PTTKeyInputs();
+      * (uint8_t*)(UDPBuffer + 4) = * (uint8_t*)(mybuf->buffer + 4) = PTTBits;
       // Byte = (uint8_t)GetADCOverflow();
       // *(uint8_t *)(UDPBuffer + 5) = *(uint8_t *)(mybuf->buffer + 5) = Byte;
       // Byte = (uint8_t)GetUserIOBits();
-      ADCOverflows |= (uint8_t)GetADCOverflow();
-      *(uint8_t *)(UDPBuffer + 5) = *(uint8_t *)(mybuf->buffer + 5) = ADCOverflows,
+      ADCOverflows |= (uint8_t) GetADCOverflow();
+      * (uint8_t*)(UDPBuffer + 5) = * (uint8_t*)(mybuf->buffer + 5) = ADCOverflows,
       ADCOverflows = 0;                                                                // clear it once reported
       Byte = (uint8_t)
              GetUserIOBits();                                                 // user I/O bits                                          // user I/O bits
-      *(uint8_t *)(UDPBuffer + 59) = *(uint8_t *)(mybuf->buffer + 59) = Byte;
-      Word = (uint16_t)GetAnalogueIn(4);
-      *(uint16_t *)(UDPBuffer + 6) = *(uint16_t *)(mybuf->buffer + 6) = htons(Word);   // exciter power
-      Word = (uint16_t)GetAnalogueIn(0);
-      *(uint16_t *)(UDPBuffer + 14) = *(uint16_t *)(mybuf->buffer + 14) = htons(Word); // forward power
-      Word = (uint16_t)GetAnalogueIn(1);
-      *(uint16_t *)(UDPBuffer + 22) = *(uint16_t *)(mybuf->buffer + 22) = htons(Word); // reverse power
-      Word = (uint16_t)GetAnalogueIn(5);
-      *(uint16_t *)(UDPBuffer + 49) = *(uint16_t *)(mybuf->buffer + 49) = htons(Word); // supply voltage
-      Word = (uint16_t)GetAnalogueIn(2);
-      *(uint16_t *)(UDPBuffer + 57) = *(uint16_t *)(mybuf->buffer + 57) = htons(Word); // AIN3 user_analog1
-      Word = (uint16_t)GetAnalogueIn(3);
-      *(uint16_t *)(UDPBuffer + 55) = *(uint16_t *)(mybuf->buffer + 55) = htons(Word); // AIN4 user_analog2
+      * (uint8_t*)(UDPBuffer + 59) = * (uint8_t*)(mybuf->buffer + 59) = Byte;
+      Word = (uint16_t) GetAnalogueIn(4);
+      * (uint16_t*)(UDPBuffer + 6) = * (uint16_t*)(mybuf->buffer + 6) = htons(Word);      // exciter power
+      Word = (uint16_t) GetAnalogueIn(0);
+      * (uint16_t*)(UDPBuffer + 14) = * (uint16_t*)(mybuf->buffer + 14) = htons(Word);      // forward power
+      Word = (uint16_t) GetAnalogueIn(1);
+      * (uint16_t*)(UDPBuffer + 22) = * (uint16_t*)(mybuf->buffer + 22) = htons(Word);      // reverse power
+      Word = (uint16_t) GetAnalogueIn(5);
+      * (uint16_t*)(UDPBuffer + 49) = * (uint16_t*)(mybuf->buffer + 49) = htons(Word);      // supply voltage
+      Word = (uint16_t) GetAnalogueIn(2);
+      * (uint16_t*)(UDPBuffer + 57) = * (uint16_t*)(mybuf->buffer + 57) = htons(Word);      // AIN3 user_analog1
+      Word = (uint16_t) GetAnalogueIn(3);
+      * (uint16_t*)(UDPBuffer + 55) = * (uint16_t*)(mybuf->buffer + 55) = htons(Word);      // AIN4 user_analog2
 
       if (TXActive != 2) {
-        *(uint32_t *)mybuf->buffer = htonl(SequenceCounter++);       // add sequence count
+        * (uint32_t*) mybuf->buffer = htonl(SequenceCounter++);      // add sequence count
         saturn_post_high_priority(mybuf);
       } else {
         mybuf->free = 1;
@@ -762,7 +762,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
 
       if (ServerActive) {
         if (TXActive != 1) {
-          *(uint32_t *)UDPBuffer = htonl(SequenceCounter2++);        // add sequence count
+          * (uint32_t*) UDPBuffer = htonl(SequenceCounter2++);       // add sequence count
           iovecinst.iov_base = UDPBuffer;
           memcpy(&DestAddr, &reply_addr, sizeof(struct
                                                 sockaddr_in));           // local copy of PC destination address (reply_addr is global)
@@ -788,7 +788,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
       while (SleepCount-- > 0) {
         ReadStatusRegister();
 
-        if ((uint8_t)GetP2PTTKeyInputs() != PTTBits) {
+        if ((uint8_t) GetP2PTTKeyInputs() != PTTBits) {
           break;
         }
 
@@ -799,7 +799,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
         // take care that a HighPrio packet is sent "soon" after
         // a new ADC overflow has been detected.
         //
-        ADCOverflows |= (uint8_t)GetADCOverflow();
+        ADCOverflows |= (uint8_t) GetADCOverflow();
 
         if (ADCOverflows != 0 && SleepCount > 100)  {
           // We come here during RX only
@@ -822,7 +822,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
 
 void start_saturn_micaudio_thread(void) {
   t_print("%s\n", __func__);
-  saturn_micaudio_thread_id = g_thread_new( "SATURN MIC", saturn_micaudio_thread, NULL);
+  saturn_micaudio_thread_id = g_thread_new("SATURN MIC", saturn_micaudio_thread, NULL);
 
   if (!saturn_micaudio_thread_id) {
     t_print("%s: g_thread_new failed\n", __func__);
@@ -831,13 +831,13 @@ void start_saturn_micaudio_thread(void) {
 }
 
 static gpointer saturn_micaudio_thread(gpointer arg) {
-  t_print( "%s\n", __func__);
+  t_print("%s\n", __func__);
   //
   // variables for DMA buffer
   //
-  uint8_t* MicReadBuffer = NULL;              // data for DMA read from DDC
+  uint8_t *MicReadBuffer = NULL;              // data for DMA read from DDC
   uint32_t MicBufferSize = VDMAMICBUFFERSIZE;
-  unsigned char* MicBasePtr;                // ptr to DMA location in mic memory
+  unsigned char *MicBasePtr;                // ptr to DMA location in mic memory
   uint32_t Depth;
   int DMAReadfile_fd = -1;                  // DMA read file device
   uint32_t RegisterValue;
@@ -854,7 +854,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
   //
   // setup DMA buffer
   //
-  posix_memalign((void**)&MicReadBuffer, VALIGNMENT, MicBufferSize);
+  posix_memalign((void**) &MicReadBuffer, VALIGNMENT, MicBufferSize);
 
   if (!MicReadBuffer) {
     t_print("%s: mic read buffer allocation failed\n", __func__);
@@ -947,7 +947,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
       DMAReadFromFPGA(DMAReadfile_fd, MicBasePtr, VDMAMICTRANSFERSIZE, VADDRMICSTREAMREAD);
       // create the packet
       mybuffer *mybuf = get_my_buffer(MICMYBUF);
-      *(uint32_t*)mybuf->buffer = htonl(SequenceCounter++);        // add sequence count
+      * (uint32_t*) mybuf->buffer = htonl(SequenceCounter++);      // add sequence count
 
       if (TXActive == 2) {
         memset(mybuf->buffer + 4, 0, VDMAMICTRANSFERSIZE);  // copy in mic samples
@@ -962,7 +962,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
         memcpy(&DestAddr, &reply_addr, sizeof(struct
                                               sockaddr_in));           // local copy of PC destination address (reply_addr is global)
         // create the packet into UDPBuffer
-        *(uint32_t*)UDPBuffer = htonl(SequenceCounter2++);        // add sequence count
+        * (uint32_t*) UDPBuffer = htonl(SequenceCounter2++);      // add sequence count
 
         if (TXActive == 1) {
           memset(UDPBuffer + 4, 0, VDMAMICTRANSFERSIZE);  // copy in mic samples
@@ -988,7 +988,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
 
 void start_saturn_receive_thread(void) {
   t_print("%s\n", __func__);
-  saturn_rx_thread_id = g_thread_new( "SATURN RX", saturn_rx_thread, NULL);
+  saturn_rx_thread_id = g_thread_new("SATURN RX", saturn_rx_thread, NULL);
 
   if (!saturn_rx_thread_id) {
     t_print("%s: g_thread_new failed\n", __func__);
@@ -1000,7 +1000,7 @@ extern struct ThreadSocketData SocketData[VPORTTABLESIZE];
 extern struct sockaddr_in reply_addr;
 
 static gpointer saturn_rx_thread(gpointer arg) {
-  t_print( "%s\n", __func__);
+  t_print("%s\n", __func__);
   //
   // memory buffers
   //
@@ -1026,7 +1026,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
   uint32_t DDCCounts[VNUMDDC];                                // number of samples per DDC in a frame
   uint32_t RateWord = 0;                                          // DDC rate word from buffer
   uint32_t HdrWord;                                           // check word read form DMA's data
-  uint16_t* SrcWordPtr, * DestWordPtr;                        // 16 bit read & write pointers
+  uint16_t *SrcWordPtr, *DestWordPtr;                         // 16 bit read & write pointers
   uint32_t PrevRateWord;                                      // last used rate word
   uint32_t Cntr;                                              // sample word counter
   bool HeaderFound;
@@ -1112,10 +1112,10 @@ static gpointer saturn_rx_thread(gpointer arg) {
         while ((IQHeadPtr[DDC] - IQReadPtr[DDC]) > VIQBYTESPERFRAME) {
           //                    t_print("enough data for packet: DDC= %d\n", DDC);
           mybuffer *mybuf = get_my_buffer(DDCMYBUF);
-          *(uint32_t*)mybuf->buffer = htonl(SequenceCounter[DDC]++);     // add sequence count
+          * (uint32_t*) mybuf->buffer = htonl(SequenceCounter[DDC]++);   // add sequence count
           memset(mybuf->buffer + 4, 0, 8);                               // clear the timestamp data
-          *(uint16_t*)(mybuf->buffer + 12) = htons(24);                  // bits per sample
-          *(uint16_t*)(mybuf->buffer + 14) = htons(VIQSAMPLESPERFRAME);  // I/Q samples for ths frame
+          * (uint16_t*)(mybuf->buffer + 12) = htons(24);                 // bits per sample
+          * (uint16_t*)(mybuf->buffer + 14) = htons(VIQSAMPLESPERFRAME);   // I/Q samples for ths frame
           //
           // now add I/Q data & post outgoing packet
           //
@@ -1189,7 +1189,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
 #endif
 
       //    t_print("read: depth = %d\n", Depth);
-      while (Depth < (DMATransferSize / 8U)) { // 8 bytes per location
+      while (Depth < (DMATransferSize / 8U)) {  // 8 bytes per location
         usleep(500);               // 1ms wait
         Depth = ReadFIFOMonitorChannel(eRXDDCDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
                                        &Current);  // read the FIFO Depth register
@@ -1227,7 +1227,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
       //            DumpMemoryBuffer(DMAReadPtr, DMATransferSize);
       if (HeaderFound == false)                                                   // 1st time: look for header
         for (Cntr = 16; Cntr < (DMAHeadPtr - DMAReadPtr); Cntr += 8) {           // search for rate word; ignoring 1st
-          if (*(DMAReadPtr + Cntr + 7) == 0x80) {
+          if (* (DMAReadPtr + Cntr + 7) == 0x80) {
             //                        t_print("found header at offset=%x\n", Cntr);
             HeaderFound = true;
             DMAReadPtr += Cntr;                                             // point read buffer where header is
@@ -1252,12 +1252,12 @@ static gpointer saturn_rx_thread(gpointer arg) {
       DecodeByteCount = DMAHeadPtr - DMAReadPtr;
 
       while (DecodeByteCount >= 16) {                     // minimum size to try!
-        if (*(DMAReadPtr + 7) != 0x80) {
+        if (* (DMAReadPtr + 7) != 0x80) {
           t_print("%s: header not found for rate word at addr %p\n", __func__, DMAReadPtr);
           exit(1);
         } else {                                                                          // analyse word, then process
           // cppcheck-suppress constVariablePointer
-          uint32_t *LongWordPtr = (uint32_t*)DMAReadPtr;                                  // get 32 bit ptr
+          uint32_t *LongWordPtr = (uint32_t*) DMAReadPtr;                                 // get 32 bit ptr
           RateWord = *LongWordPtr;                                                        // read rate word
 
           if (RateWord != PrevRateWord) {
@@ -1269,13 +1269,13 @@ static gpointer saturn_rx_thread(gpointer arg) {
           if (DecodeByteCount >= ((FrameLength + 1) * 8)) {                               // if bytes for header & frame
             //THEN COPY DMA DATA TO I / Q BUFFERS
             DMAReadPtr += 8;                                                              // point to 1st location past rate word
-            SrcWordPtr = (uint16_t*)DMAReadPtr;                                           // read sample data in 16 bit chunks
+            SrcWordPtr = (uint16_t*) DMAReadPtr;                                          // read sample data in 16 bit chunks
 
             for (DDC = 0; DDC < VNUMDDC; DDC++) {
               HdrWord = DDCCounts[DDC];                                                   // number of words for this DDC. reuse variable
 
               if (HdrWord != 0) {
-                DestWordPtr = (uint16_t *)IQHeadPtr[DDC];
+                DestWordPtr = (uint16_t*) IQHeadPtr[DDC];
 
                 for (Cntr = 0; Cntr < HdrWord; Cntr++) {                                  // count 64 bit words
                   *DestWordPtr++ = *SrcWordPtr++;                                         // move 48 bits of sample data
@@ -1331,7 +1331,7 @@ void saturn_init(void) {
   start_saturn_high_priority_thread();
 }
 
-void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
+void saturn_handle_high_priority(bool FromNetwork, unsigned char* UDPInBuffer) {
   bool RunBit;                                          // true if "run" bit set
   uint8_t Byte, Byte2;                                  // received dat being decoded
   uint32_t LongWord;
@@ -1342,14 +1342,14 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
   bool PAEnable;
   int DDCLoop = (FromNetwork) ? 6 : 4;
   int DDCOffset = (FromNetwork) ? 0 : 6;
-  FPGAVersion = GetFirmwareVersion(&FPGASWID); // get version of FPGA code
+  FPGAVersion = GetFirmwareVersion(&FPGASWID);  // get version of FPGA code
 
   //t_print("high priority %sbuffer received\n", (FromNetwork)?"network ":"");
   //
   // now properly decode DDC frequencies
   //
   for (i = 0; i < DDCLoop; i++) {
-    LongWord = ntohl(*(uint32_t *)(UDPInBuffer + i * 4 + 9));
+    LongWord = ntohl(* (uint32_t*)(UDPInBuffer + i * 4 + 9));
     SetDDCFrequency(i + DDCOffset, LongWord, true);                 // temporarily set above
   }
 
@@ -1400,11 +1400,11 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
     TXActive = (IsTXMode) ? 1 : 0;
   }
 
-  SetMOX((bool)TXActive);
+  SetMOX((bool) TXActive);
   //
   // DUC frequency & drive level
   //
-  LongWord = ntohl(*(uint32_t *)(UDPInBuffer + 329));
+  LongWord = ntohl(* (uint32_t*)(UDPInBuffer + 329));
   SetDUCFrequency(LongWord, true);
   Byte = (uint8_t)(UDPInBuffer[345]);
   SetTXDriveLevel(Byte);
@@ -1435,37 +1435,37 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
   // The word from 1398 is not yet used and overwritten here
   // cppcheck-suppress redundantAssignment
   //
-  Word = ntohs(*(uint16_t *)(UDPInBuffer + 1428));
+  Word = ntohs(* (uint16_t*)(UDPInBuffer + 1428));
   Word = (Word >> 8) & 0x0007;                          // new data TX ant bits. if not set, must be legacy client app
 
   if ((FPGAVersion >= 12) && (Word != 0)) {             // if new firmware && client app supports it
     //t_print("new FPGA code, new client data\n");
-    Word = ntohs(*(uint16_t *)(UDPInBuffer + 1428));    // copy word with TX ant settings to filt/TXant register
+    Word = ntohs(* (uint16_t*)(UDPInBuffer + 1428));     // copy word with TX ant settings to filt/TXant register
     PAEnable = (bool)((Word >> 11) & 1);
     //t_print("new FPGA code, legacy client data, PA enable = %d\n", (int)PAEnable);
     AlexManualTXFilters(Word, true);
-    Word = ntohs(*(uint16_t *)(UDPInBuffer + 1432));    // copy word with RX ant settings to filt/RXant register
+    Word = ntohs(* (uint16_t*)(UDPInBuffer + 1432));     // copy word with RX ant settings to filt/RXant register
     AlexManualTXFilters(Word, false);
   } else if (FPGAVersion >= 12) {                       // new hardware but no client app support
     //t_print("new FPGA code, new client data\n");
-    Word = ntohs(*(uint16_t *)(UDPInBuffer + 1432));    // copy word with TX/RX ant settings to both registers
+    Word = ntohs(* (uint16_t*)(UDPInBuffer + 1432));     // copy word with TX/RX ant settings to both registers
     PAEnable = (bool)((Word >> 11) & 1);
     //t_print("new FPGA code, legacy client data, PA enable = %d\n", (int)PAEnable);
     AlexManualTXFilters(Word, true);
     AlexManualTXFilters(Word, false);
   } else {                                              // old FPGA hardware
     //t_print("old FPGA code\n");
-    Word = ntohs(*(uint16_t *)(UDPInBuffer + 1432));    // copy word with TX/RX ant settings to original register
+    Word = ntohs(* (uint16_t*)(UDPInBuffer + 1432));     // copy word with TX/RX ant settings to original register
     PAEnable = (bool)((Word >> 11) & 1);
     //t_print("new FPGA code, legacy client data, PA enable = %d\n", (int)PAEnable);
     AlexManualTXFilters(Word, false);
   }
 
-  SetPAEnabled(PAEnable); // activate PA if client app wants it
+  SetPAEnabled(PAEnable);  // activate PA if client app wants it
   // RX filters
-  Word = ntohs(*(uint16_t *)(UDPInBuffer + 1430));
+  Word = ntohs(* (uint16_t*)(UDPInBuffer + 1430));
   AlexManualRXFilters(Word, 2);
-  Word = ntohs(*(uint16_t *)(UDPInBuffer + 1434));
+  Word = ntohs(* (uint16_t*)(UDPInBuffer + 1434));
   AlexManualRXFilters(Word, 0);
   //
   // RX atten during TX and RX
@@ -1478,11 +1478,11 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
   // CWX bits
   //
   Byte = (uint8_t)(UDPInBuffer[5]);      // CWX
-  SetCWXBits((bool)(Byte & 1), (bool)((Byte >> 2) & 1), (bool)((Byte >> 1) & 1)); // enabled, dash, dot
+  SetCWXBits((bool)(Byte & 1), (bool)((Byte >> 2) & 1), (bool)((Byte >> 1) & 1));         // enabled, dash, dot
   return;
 }
 
-void saturn_handle_general_packet(bool FromNetwork, uint8_t *PacketBuffer) {
+void saturn_handle_general_packet(bool FromNetwork, uint8_t* PacketBuffer) {
   uint16_t Port;                                  // port number from table
   uint8_t Byte;
 
@@ -1493,42 +1493,42 @@ void saturn_handle_general_packet(bool FromNetwork, uint8_t *PacketBuffer) {
   // now set the other data carried by this packet
   // wideband capture data:
   //
-  Byte = *(uint8_t*)(PacketBuffer + 23);              // get wideband enables
+  Byte = * (uint8_t*)(PacketBuffer + 23);             // get wideband enables
   SetWidebandEnable(eADC1, (bool)(Byte & 1));
   SetWidebandEnable(eADC2, (bool)(Byte & 2));
-  Port = ntohs(*(uint16_t*)(PacketBuffer + 24));      // wideband sample count
+  Port = ntohs(* (uint16_t*)(PacketBuffer + 24));     // wideband sample count
   SetWidebandSampleCount(Port);
-  Byte = *(uint8_t*)(PacketBuffer + 26);              // wideband sample size
+  Byte = * (uint8_t*)(PacketBuffer + 26);             // wideband sample size
   SetWidebandSampleSize(Byte);
-  Byte = *(uint8_t*)(PacketBuffer + 27);              // wideband update rate
+  Byte = * (uint8_t*)(PacketBuffer + 27);             // wideband update rate
   SetWidebandUpdateRate(Byte);
-  Byte = *(uint8_t*)(PacketBuffer + 28);              // wideband packets per frame
+  Byte = * (uint8_t*)(PacketBuffer + 28);             // wideband packets per frame
   SetWidebandPacketsPerFrame(Byte);
   //
   // envelope PWM data:
   //
-  Port = ntohs(*(uint16_t*)(PacketBuffer + 33));      // PWM min
+  Port = ntohs(* (uint16_t*)(PacketBuffer + 33));     // PWM min
   SetMinPWMWidth(Port);
-  Port = ntohs(*(uint16_t*)(PacketBuffer + 35));      // PWM max
+  Port = ntohs(* (uint16_t*)(PacketBuffer + 35));     // PWM max
   SetMaxPWMWidth(Port);
   //
   // various bits
   //
-  Byte = *(uint8_t*)(PacketBuffer + 37);              // flag bits
+  Byte = * (uint8_t*)(PacketBuffer + 37);             // flag bits
   EnableTimeStamp((bool)(Byte & 1));
   EnableVITA49((bool)(Byte & 2));
   SetFreqPhaseWord((bool)(Byte & 8));
-  Byte = *(uint8_t*)(PacketBuffer + 38);              // enable timeout
+  Byte = * (uint8_t*)(PacketBuffer + 38);             // enable timeout
   HW_Timer_Enable = ((bool)(Byte & 1));
-  Byte = *(uint8_t*)(PacketBuffer + 58);              // Only Bit0 used for "PA enable"
+  Byte = * (uint8_t*)(PacketBuffer + 58);             // Only Bit0 used for "PA enable"
   SetPAEnabled((bool)(Byte & 1));
   //SetApolloEnabled((bool)(Byte & 2));
-  Byte = *(uint8_t*)(PacketBuffer + 59);              // Alex enable bits
+  Byte = * (uint8_t*)(PacketBuffer + 59);             // Alex enable bits
   SetAlexEnabled(Byte);
   return;
 }
 
-void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
+void saturn_handle_ddc_specific(bool FromNetwork, unsigned char* UDPInBuffer) {
   uint8_t Byte1, Byte2;                                 // received data
   uint16_t Word;                                        // 16 bit read value
   EADCSelect ADC = eADC1;                               // ADC to use for a DDC
@@ -1539,10 +1539,10 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
   if (!FromNetwork) {
     bool Dither, Random;                                  // ADC bits
     // get ADC details:
-    Byte1 = *(uint8_t*)(UDPInBuffer + 4);                 // get ADC count
+    Byte1 = * (uint8_t*)(UDPInBuffer + 4);                // get ADC count
     SetADCCount(Byte1);
-    Byte1 = *(uint8_t*)(UDPInBuffer + 5);                 // get ADC Dither bits
-    Byte2 = *(uint8_t*)(UDPInBuffer + 6);                 // get ADC Random bits
+    Byte1 = * (uint8_t*)(UDPInBuffer + 5);                // get ADC Dither bits
+    Byte2 = * (uint8_t*)(UDPInBuffer + 6);                // get ADC Random bits
     Dither  = (bool)(Byte1 & 1);
     Random  = (bool)(Byte2 & 1);
     SetADCOptions(eADC1, false, Dither, Random);          // ADC1 settings
@@ -1559,16 +1559,16 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
   // reuse "random" for DDC enabled.
   // be aware an interleaved "odd" DDC will usually be set to disabled, and we need to revert this!
   //
-  Word = *(uint16_t*)(UDPInBuffer + 7);                 // get DDC enables 15:0 (note it is already low byte 1st!)
+  Word = * (uint16_t*)(UDPInBuffer + 7);                // get DDC enables 15:0 (note it is already low byte 1st!)
 
   for (int i = 0; i < DDCLoop; i++) {
     uint16_t Word2;                                   // 16 bit read value
     bool Enabled, Interleaved;                        // DDC settings
     Enabled = (bool)(Word & 1);                       // get enable state
-    Byte1 = *(uint8_t*)(UDPInBuffer + i * 6 + 17);    // get ADC for this DDC
-    Word2 = *(uint16_t*)(UDPInBuffer + i * 6 + 18);   // get sample rate for this DDC
+    Byte1 = * (uint8_t*)(UDPInBuffer + i * 6 + 17);   // get ADC for this DDC
+    Word2 = * (uint16_t*)(UDPInBuffer + i * 6 + 18);  // get sample rate for this DDC
     Word2 = ntohs(Word2);                             // swap byte order
-    Byte2 = *(uint8_t*)(UDPInBuffer + i * 6 + 22);    // get sample size for this DDC
+    Byte2 = * (uint8_t*)(UDPInBuffer + i * 6 + 22);   // get sample size for this DDC
     SetDDCSampleSize(i + DDCOffset, Byte2);
 
     if (Byte1 == 0) {
@@ -1594,7 +1594,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
     // (reuse the Dither variable)
     switch (i) {
     case 0:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1363);          // get DDC0 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1363);         // get DDC0 synch
 
       if (Byte1 == 0b00000010) {
         Interleaved = true;  // set interleave
@@ -1603,7 +1603,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
       break;
 
     case 1:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1363);          // get DDC0 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1363);         // get DDC0 synch
 
       if (Byte1 == 0b00000010) {                        // if synch to DDC1
         Enabled = true;  // enable DDC1
@@ -1612,7 +1612,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
       break;
 
     case 2:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1365);          // get DDC2 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1365);         // get DDC2 synch
 
       if (Byte1 == 0b00001000) {
         Interleaved = true;  // set interleave
@@ -1621,7 +1621,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
       break;
 
     case 3:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1365);          // get DDC2 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1365);         // get DDC2 synch
 
       if (Byte1 == 0b00001000) {                        // if synch to DDC3
         Enabled = true;  // enable DDC3
@@ -1630,7 +1630,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
       break;
 
     case 4:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1367);          // get DDC4 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1367);         // get DDC4 synch
 
       if (Byte1 == 0b00100000) {
         Interleaved = true;  // set interleave
@@ -1639,7 +1639,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
       break;
 
     case 5:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1367);          // get DDC4 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1367);         // get DDC4 synch
 
       if (Byte1 == 0b00100000) {                        // if synch to DDC5
         Enabled = true;  // enable DDC5
@@ -1648,7 +1648,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
       break;
 
     case 6:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1369);          // get DDC6 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1369);         // get DDC6 synch
 
       if (Byte1 == 0b10000000) {
         Interleaved = true;  // set interleave
@@ -1657,7 +1657,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
       break;
 
     case 7:
-      Byte1 = *(uint8_t*)(UDPInBuffer + 1369);          // get DDC6 synch
+      Byte1 = * (uint8_t*)(UDPInBuffer + 1369);         // get DDC6 synch
 
       if (Byte1 == 0b10000000) {                        // if synch to DDC7
         Enabled = true;  // enable DDC7
@@ -1674,7 +1674,7 @@ void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
   return;
 }
 
-void saturn_handle_duc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
+void saturn_handle_duc_specific(bool FromNetwork, unsigned char* UDPInBuffer) {
   uint8_t Byte;
   uint16_t SidetoneFreq;                                // freq for audio sidetone
   uint8_t IambicSpeed;                                  // WPM
@@ -1692,25 +1692,25 @@ void saturn_handle_duc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
   }
 
   // iambic settings
-  IambicSpeed = *(uint8_t*)(UDPInBuffer + 9);             // keyer speed
-  IambicWeight = *(uint8_t*)(UDPInBuffer + 10);           // keyer weight
-  Byte = *(uint8_t*)(UDPInBuffer + 5);                    // keyer bool bits
+  IambicSpeed = * (uint8_t*)(UDPInBuffer + 9);            // keyer speed
+  IambicWeight = * (uint8_t*)(UDPInBuffer + 10);          // keyer weight
+  Byte = * (uint8_t*)(UDPInBuffer + 5);                   // keyer bool bits
   SetCWIambicKeyer(IambicSpeed, IambicWeight, (bool)((Byte >> 2) & 1), (bool)((Byte >> 5) & 1),
                    (bool)((Byte >> 6) & 1), (bool)((Byte >> 3) & 1), (bool)((Byte >> 7) & 1));
   // general CW settings
   SetCWSidetoneEnabled((bool)((Byte >> 4) & 1));
-  EnableCW((bool)((Byte >> 1) & 1), (bool)((Byte >> 7) & 1)); // CW enabled bit, breakin bit
-  SidetoneVolume = *(uint8_t*)(UDPInBuffer + 6);          // keyer speed
-  SidetoneFreq = *(uint16_t*)(UDPInBuffer + 7);           // get frequency
+  EnableCW((bool)((Byte >> 1) & 1), (bool)((Byte >> 7) & 1));        // CW enabled bit, breakin bit
+  SidetoneVolume = * (uint8_t*)(UDPInBuffer + 6);         // keyer speed
+  SidetoneFreq = * (uint16_t*)(UDPInBuffer + 7);          // get frequency
   SidetoneFreq = ntohs(SidetoneFreq);                     // convert from big endian
   SetCWSidetoneVol(SidetoneVolume);
   SetCWSidetoneFrequency(SidetoneFreq);
-  CWRFDelay = *(uint8_t*)(UDPInBuffer + 13);              // delay before CW on
-  CWHangDelay = *(uint16_t*)(UDPInBuffer + 11);           // delay before CW off
+  CWRFDelay = * (uint8_t*)(UDPInBuffer + 13);             // delay before CW on
+  CWHangDelay = * (uint16_t*)(UDPInBuffer + 11);          // delay before CW off
   CWHangDelay = ntohs(CWHangDelay);                       // convert from big endian
   SetCWPTTDelay(CWRFDelay);
   SetCWHangTime(CWHangDelay);
-  CWRampTime = *(uint8_t*)(UDPInBuffer + 17);             // ramp transition time
+  CWRampTime = * (uint8_t*)(UDPInBuffer + 17);            // ramp transition time
 
   if (CWRampTime != 0) {                                  // if ramp period supported by client app
     uint32_t CWRampTime_us = 1000 * CWRampTime;
@@ -1718,16 +1718,16 @@ void saturn_handle_duc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
   }
 
   // mic and line in options
-  Byte = *(uint8_t*)(UDPInBuffer + 50);                   // mic/line options
+  Byte = * (uint8_t*)(UDPInBuffer + 50);                  // mic/line options
   SetMicBoost((bool)((Byte >> 1) & 1));
   SetMicLineInput((bool)(Byte & 1));
   SetOrionMicOptions((bool)((Byte >> 3) & 1), (bool)((Byte >> 4) & 1), (bool)((~Byte >> 2) & 1));
   SetBalancedMicInput((bool)((Byte >> 5) & 1));
-  Byte = *(uint8_t*)(UDPInBuffer + 51);                   // line in gain
+  Byte = * (uint8_t*)(UDPInBuffer + 51);                  // line in gain
   SetCodecLineInGain(Byte);
-  Byte = *(uint8_t*)(UDPInBuffer + 58);                   // ADC1 att on TX
+  Byte = * (uint8_t*)(UDPInBuffer + 58);                  // ADC1 att on TX
   SetADCAttenuator(eADC2, Byte, false, true);
-  Byte = *(uint8_t*)(UDPInBuffer + 59);                   // ADC1 att on TX
+  Byte = * (uint8_t*)(UDPInBuffer + 59);                  // ADC1 att on TX
   SetADCAttenuator(eADC1, Byte, false, true);
   return;
 }

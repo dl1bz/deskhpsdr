@@ -55,12 +55,12 @@ enum rxaMeterType {
 };
 
 struct _rxa {
-  double* inbuff;
-  double* outbuff;
-  double* midbuff;
+  double *inbuff;
+  double *outbuff;
+  double *midbuff;
   int mode;
   double meter[RXA_METERTYPE_LAST];
-  CRITICAL_SECTION* pmtupdate[RXA_METERTYPE_LAST];
+  CRITICAL_SECTION *pmtupdate[RXA_METERTYPE_LAST];
   struct {
     METER p;
   } smeter, adcmeter, agcmeter;
@@ -159,35 +159,35 @@ struct _rxa {
 
 extern struct _rxa rxa[];
 
-extern void create_rxa (int channel);
+extern void create_rxa(int channel);
 
-extern void destroy_rxa (int channel);
+extern void destroy_rxa(int channel);
 
-extern void flush_rxa (int channel);
+extern void flush_rxa(int channel);
 
-extern void xrxa (int channel);
+extern void xrxa(int channel);
 
-extern void setInputSamplerate_rxa (int channel);
+extern void setInputSamplerate_rxa(int channel);
 
-extern void setOutputSamplerate_rxa (int channel);
+extern void setOutputSamplerate_rxa(int channel);
 
-extern void setDSPSamplerate_rxa (int channel);
+extern void setDSPSamplerate_rxa(int channel);
 
-extern void setDSPBuffsize_rxa (int channel);
+extern void setDSPBuffsize_rxa(int channel);
 
 // RXA Properties
 
-extern __declspec (dllexport) void SetRXAMode (int channel, int mode);
+extern __declspec(dllexport) void SetRXAMode(int channel, int mode);
 
-extern void RXAResCheck (int channel);
+extern void RXAResCheck(int channel);
 
-extern void RXAbp1Check (int channel, int amd_run, int snba_run, int emnr_run, int anf_run, int anr_run, int rnnr_run,
-                         int sbnr_run);  // NR3 + NR4 support
+extern void RXAbp1Check(int channel, int amd_run, int snba_run, int emnr_run, int anf_run, int anr_run, int rnnr_run,
+                        int sbnr_run);  // NR3 + NR4 support
 
-extern void RXAbp1Set (int channel);
+extern void RXAbp1Set(int channel);
 
-extern void RXAbpsnbaCheck (int channel, int mode, int notch_run);
+extern void RXAbpsnbaCheck(int channel, int mode, int notch_run);
 
-extern void RXAbpsnbaSet (int channel);
+extern void RXAbpsnbaSet(int channel);
 
 #endif

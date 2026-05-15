@@ -32,10 +32,10 @@ warren@wpratt.com
 *                                                   *
 ********************************************************************************************************/
 
-void calc_snotch (SNOTCH a) {
+void calc_snotch(SNOTCH a) {
   double fn, qk, qr, csn;
   fn = a->f / (double)a->rate;
-  csn = cos (TWOPI * fn);
+  csn = cos(TWOPI * fn);
   qr = 1.0 - 3.0 * a->bw;
   qk = (1.0 - 2.0 * qr * csn + qr * qr) / (2.0 * (1.0 - csn));
   a->a0 = + qk;
@@ -43,11 +43,11 @@ void calc_snotch (SNOTCH a) {
   a->a2 = + qk;
   a->b1 = + 2.0 * qr * csn;
   a->b2 = - qr * qr;
-  flush_snotch (a);
+  flush_snotch(a);
 }
 
-SNOTCH create_snotch (int run, int size, double* in, double* out, int rate, double f, double bw) {
-  SNOTCH a = (SNOTCH) malloc0 (sizeof (snotch));
+SNOTCH create_snotch(int run, int size, double* in, double* out, int rate, double f, double bw) {
+  SNOTCH a = (SNOTCH) malloc0(sizeof(snotch));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -55,22 +55,22 @@ SNOTCH create_snotch (int run, int size, double* in, double* out, int rate, doub
   a->rate = rate;
   a->f = f;
   a->bw = bw;
-  InitializeCriticalSectionAndSpinCount ( &a->cs_update, 2500 );
-  calc_snotch (a);
+  InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
+  calc_snotch(a);
   return a;
 }
 
-void destroy_snotch (SNOTCH a) {
-  DeleteCriticalSection (&a->cs_update);
-  _aligned_free (a);
+void destroy_snotch(SNOTCH a) {
+  DeleteCriticalSection(&a->cs_update);
+  _aligned_free(a);
 }
 
-void flush_snotch (SNOTCH a) {
+void flush_snotch(SNOTCH a) {
   a->x1 = a->x2 = a->y1 = a->y2 = 0.0;
 }
 
-void xsnotch (SNOTCH a) {
-  EnterCriticalSection (&a->cs_update);
+void xsnotch(SNOTCH a) {
+  EnterCriticalSection(&a->cs_update);
 
   if (a->run) {
     int i;
@@ -84,25 +84,25 @@ void xsnotch (SNOTCH a) {
       a->x1 = a->x0;
     }
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_snotch (SNOTCH a, double* in, double* out) {
+void setBuffers_snotch(SNOTCH a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-void setSamplerate_snotch (SNOTCH a, int rate) {
+void setSamplerate_snotch(SNOTCH a, int rate) {
   a->rate = rate;
-  calc_snotch (a);
+  calc_snotch(a);
 }
 
-void setSize_snotch (SNOTCH a, int size) {
+void setSize_snotch(SNOTCH a, int size) {
   a->size = size;
-  flush_snotch (a);
+  flush_snotch(a);
 }
 
 /********************************************************************************************************
@@ -111,17 +111,17 @@ void setSize_snotch (SNOTCH a, int size) {
 *                                                   *
 ********************************************************************************************************/
 
-void SetSNCTCSSFreq (SNOTCH a, double freq) {
-  EnterCriticalSection (&a->cs_update);
+void SetSNCTCSSFreq(SNOTCH a, double freq) {
+  EnterCriticalSection(&a->cs_update);
   a->f = freq;
-  calc_snotch (a);
-  LeaveCriticalSection (&a->cs_update);
+  calc_snotch(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
-void SetSNCTCSSRun (SNOTCH a, int run) {
-  EnterCriticalSection (&a->cs_update);
+void SetSNCTCSSRun(SNOTCH a, int run) {
+  EnterCriticalSection(&a->cs_update);
   a->run = run;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 
@@ -131,7 +131,7 @@ void SetSNCTCSSRun (SNOTCH a, int run) {
 *                                                   *
 ********************************************************************************************************/
 
-void calc_speak (SPEAK a) {
+void calc_speak(SPEAK a) {
   double ratio;
   double f_corr, g_corr, bw_corr, bw_parm, A, f_min;
 
@@ -157,7 +157,7 @@ void calc_speak (SPEAK a) {
       double fn, qk, qr, csn;
       a->fgain = a->gain / g_corr;
       fn = a->f / (double)a->rate / f_corr;
-      csn = cos (TWOPI * fn);
+      csn = cos(TWOPI * fn);
       qr = 1.0 - 3.0 * a->bw / (double)a->rate * bw_parm;
       qk = (1.0 - 2.0 * qr * csn + qr * qr) / (2.0 * (1.0 - csn));
       a->a0 = 1.0 - qk;
@@ -196,27 +196,27 @@ void calc_speak (SPEAK a) {
       if (a->f < f_min) { a->f = f_min; }
 
       w0 = TWOPI * a->f / (double)a->rate;
-      sn = sin (w0);
+      sn = sin(w0);
       a->cbw = bw_corr * a->f;
       c = sn * sinh(0.5 * log((a->f + 0.5 * a->cbw * bw_parm) / (a->f - 0.5 * a->cbw * bw_parm)) * w0 / sn);
       den = 1.0 + c / A;
       a->a0 = (1.0 + c * A) / den;
-      a->a1 = - 2.0 * cos (w0) / den;
+      a->a1 = - 2.0 * cos(w0) / den;
       a->a2 = (1 - c * A) / den;
       a->b1 = - a->a1;
-      a->b2 = - (1 - c / A ) / den;
-      a->fgain = a->gain / pow (A * A, (double)a->nstages);
+      a->b2 = - (1 - c / A) / den;
+      a->fgain = a->gain / pow(A * A, (double)a->nstages);
     }
 
     break;
   }
 
-  flush_speak (a);
+  flush_speak(a);
 }
 
-SPEAK create_speak (int run, int size, double* in, double* out, int rate, double f, double bw, double gain, int nstages,
-                    int design) {
-  SPEAK a = (SPEAK) malloc0 (sizeof (speak));
+SPEAK create_speak(int run, int size, double* in, double* out, int rate, double f, double bw, double gain, int nstages,
+                   int design) {
+  SPEAK a = (SPEAK) malloc0(sizeof(speak));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -227,29 +227,29 @@ SPEAK create_speak (int run, int size, double* in, double* out, int rate, double
   a->gain = gain;
   a->nstages = nstages;
   a->design = design;
-  a->x0 = (double *) malloc0 (a->nstages * sizeof (complex));
-  a->x1 = (double *) malloc0 (a->nstages * sizeof (complex));
-  a->x2 = (double *) malloc0 (a->nstages * sizeof (complex));
-  a->y0 = (double *) malloc0 (a->nstages * sizeof (complex));
-  a->y1 = (double *) malloc0 (a->nstages * sizeof (complex));
-  a->y2 = (double *) malloc0 (a->nstages * sizeof (complex));
-  InitializeCriticalSectionAndSpinCount ( &a->cs_update, 2500 );
-  calc_speak (a);
+  a->x0 = (double*) malloc0(a->nstages * sizeof(complex));
+  a->x1 = (double*) malloc0(a->nstages * sizeof(complex));
+  a->x2 = (double*) malloc0(a->nstages * sizeof(complex));
+  a->y0 = (double*) malloc0(a->nstages * sizeof(complex));
+  a->y1 = (double*) malloc0(a->nstages * sizeof(complex));
+  a->y2 = (double*) malloc0(a->nstages * sizeof(complex));
+  InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
+  calc_speak(a);
   return a;
 }
 
-void destroy_speak (SPEAK a) {
-  DeleteCriticalSection (&a->cs_update);
-  _aligned_free (a->y2);
-  _aligned_free (a->y1);
-  _aligned_free (a->y0);
-  _aligned_free (a->x2);
-  _aligned_free (a->x1);
-  _aligned_free (a->x0);
-  _aligned_free (a);
+void destroy_speak(SPEAK a) {
+  DeleteCriticalSection(&a->cs_update);
+  _aligned_free(a->y2);
+  _aligned_free(a->y1);
+  _aligned_free(a->y0);
+  _aligned_free(a->x2);
+  _aligned_free(a->x1);
+  _aligned_free(a->x0);
+  _aligned_free(a);
 }
 
-void flush_speak (SPEAK a) {
+void flush_speak(SPEAK a) {
   int i;
 
   for (i = 0; i < a->nstages; i++) {
@@ -258,8 +258,8 @@ void flush_speak (SPEAK a) {
   }
 }
 
-void xspeak (SPEAK a) {
-  EnterCriticalSection (&a->cs_update);
+void xspeak(SPEAK a) {
+  EnterCriticalSection(&a->cs_update);
 
   if (a->run) {
     int i, j, n;
@@ -286,25 +286,25 @@ void xspeak (SPEAK a) {
       }
     }
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_speak (SPEAK a, double* in, double* out) {
+void setBuffers_speak(SPEAK a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-void setSamplerate_speak (SPEAK a, int rate) {
+void setSamplerate_speak(SPEAK a, int rate) {
   a->rate = rate;
-  calc_speak (a);
+  calc_speak(a);
 }
 
-void setSize_speak (SPEAK a, int size) {
+void setSize_speak(SPEAK a, int size) {
   a->size = size;
-  flush_speak (a);
+  flush_speak(a);
 }
 
 /********************************************************************************************************
@@ -314,38 +314,38 @@ void setSize_speak (SPEAK a, int size) {
 ********************************************************************************************************/
 
 PORT
-void SetRXABiQuadRun (int channel, int run) {
+void SetRXABiQuadRun(int channel, int run) {
   SPEAK a = rxa[channel].speak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->run = run;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXABiQuadFreq (int channel, double freq) {
+void SetRXABiQuadFreq(int channel, double freq) {
   SPEAK a = rxa[channel].speak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->f = freq;
-  calc_speak (a);
-  LeaveCriticalSection (&a->cs_update);
+  calc_speak(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXABiQuadBandwidth (int channel, double bw) {
+void SetRXABiQuadBandwidth(int channel, double bw) {
   SPEAK a = rxa[channel].speak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->bw = bw;
-  calc_speak (a);
-  LeaveCriticalSection (&a->cs_update);
+  calc_speak(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXABiQuadGain (int channel, double gain) {
+void SetRXABiQuadGain(int channel, double gain) {
   SPEAK a = rxa[channel].speak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->gain = gain;
-  calc_speak (a);
-  LeaveCriticalSection (&a->cs_update);
+  calc_speak(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 /********************************************************************************************************
@@ -354,39 +354,39 @@ void SetRXABiQuadGain (int channel, double gain) {
 *                                                   *
 ********************************************************************************************************/
 
-void calc_mpeak (MPEAK a) {
+void calc_mpeak(MPEAK a) {
   int i;
-  a->tmp = (double *) malloc0 (a->size * sizeof (complex));
-  a->mix = (double *) malloc0 (a->size * sizeof (complex));
+  a->tmp = (double*) malloc0(a->size * sizeof(complex));
+  a->mix = (double*) malloc0(a->size * sizeof(complex));
 
   for (i = 0; i < a->npeaks; i++) {
-    a->pfil[i] = create_speak ( 1,
-                                a->size,
-                                a->in,
-                                a->tmp,
-                                a->rate,
-                                a->f[i],
-                                a->bw[i],
-                                a->gain[i],
-                                a->nstages,
-                                1 );
+    a->pfil[i] = create_speak(1,
+                              a->size,
+                              a->in,
+                              a->tmp,
+                              a->rate,
+                              a->f[i],
+                              a->bw[i],
+                              a->gain[i],
+                              a->nstages,
+                              1);
   }
 }
 
-void decalc_mpeak (MPEAK a) {
+void decalc_mpeak(MPEAK a) {
   int i;
 
   for (i = 0; i < a->npeaks; i++) {
-    destroy_speak (a->pfil[i]);
+    destroy_speak(a->pfil[i]);
   }
 
-  _aligned_free (a->mix);
-  _aligned_free (a->tmp);
+  _aligned_free(a->mix);
+  _aligned_free(a->tmp);
 }
 
-MPEAK create_mpeak (int run, int size, double* in, double* out, int rate, int npeaks, int* enable, double* f,
-                    double* bw, double* gain, int nstages) {
-  MPEAK a = (MPEAK) malloc0 (sizeof (mpeak));
+MPEAK create_mpeak(int run, int size, double* in, double* out, int rate, int npeaks, int* enable, double* f,
+                   double *bw, double *gain, int nstages) {
+  MPEAK a = (MPEAK) malloc0(sizeof(mpeak));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -394,49 +394,49 @@ MPEAK create_mpeak (int run, int size, double* in, double* out, int rate, int np
   a->rate = rate;
   a->npeaks = npeaks;
   a->nstages = nstages;
-  a->enable  = (int *) malloc0 (a->npeaks * sizeof (int));
-  a->f  = (double *) malloc0 (a->npeaks * sizeof (double));
-  a->bw = (double *) malloc0 (a->npeaks * sizeof (double));
-  a->gain = (double *) malloc0 (a->npeaks * sizeof (double));
-  memcpy (a->enable, enable, a->npeaks * sizeof (int));
-  memcpy (a->f, f, a->npeaks * sizeof (double));
-  memcpy (a->bw, bw, a->npeaks * sizeof (double));
-  memcpy (a->gain, gain, a->npeaks * sizeof (double));
-  a->pfil = (SPEAK *) malloc0 (a->npeaks * sizeof (SPEAK));
-  InitializeCriticalSectionAndSpinCount ( &a->cs_update, 2500 );
-  calc_mpeak (a);
+  a->enable  = (int*) malloc0(a->npeaks * sizeof(int));
+  a->f  = (double*) malloc0(a->npeaks * sizeof(double));
+  a->bw = (double*) malloc0(a->npeaks * sizeof(double));
+  a->gain = (double*) malloc0(a->npeaks * sizeof(double));
+  memcpy(a->enable, enable, a->npeaks * sizeof(int));
+  memcpy(a->f, f, a->npeaks * sizeof(double));
+  memcpy(a->bw, bw, a->npeaks * sizeof(double));
+  memcpy(a->gain, gain, a->npeaks * sizeof(double));
+  a->pfil = (SPEAK*) malloc0(a->npeaks * sizeof(SPEAK));
+  InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
+  calc_mpeak(a);
   return a;
 }
 
-void destroy_mpeak (MPEAK a) {
-  decalc_mpeak (a);
-  DeleteCriticalSection (&a->cs_update);
-  _aligned_free (a->pfil);
-  _aligned_free (a->gain);
-  _aligned_free (a->bw);
-  _aligned_free (a->f);
-  _aligned_free (a->enable);
-  _aligned_free (a);
+void destroy_mpeak(MPEAK a) {
+  decalc_mpeak(a);
+  DeleteCriticalSection(&a->cs_update);
+  _aligned_free(a->pfil);
+  _aligned_free(a->gain);
+  _aligned_free(a->bw);
+  _aligned_free(a->f);
+  _aligned_free(a->enable);
+  _aligned_free(a);
 }
 
-void flush_mpeak (MPEAK a) {
+void flush_mpeak(MPEAK a) {
   int i;
 
   for (i = 0; i < a->npeaks; i++) {
-    flush_speak (a->pfil[i]);
+    flush_speak(a->pfil[i]);
   }
 }
 
-void xmpeak (MPEAK a) {
-  EnterCriticalSection (&a->cs_update);
+void xmpeak(MPEAK a) {
+  EnterCriticalSection(&a->cs_update);
 
   if (a->run) {
     int i, j;
-    memset (a->mix, 0, a->size * sizeof (complex));
+    memset(a->mix, 0, a->size * sizeof(complex));
 
     for (i = 0; i < a->npeaks; i++) {
       if (a->enable[i]) {
-        xspeak (a->pfil[i]);
+        xspeak(a->pfil[i]);
 
         for (j = 0; j < 2 * a->size; j++) {
           a->mix[j] += a->tmp[j];
@@ -444,31 +444,31 @@ void xmpeak (MPEAK a) {
       }
     }
 
-    memcpy (a->out, a->mix, a->size * sizeof (complex));
+    memcpy(a->out, a->mix, a->size * sizeof(complex));
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_mpeak (MPEAK a, double* in, double* out) {
-  decalc_mpeak (a);
+void setBuffers_mpeak(MPEAK a, double* in, double* out) {
+  decalc_mpeak(a);
   a->in = in;
   a->out = out;
-  calc_mpeak (a);
+  calc_mpeak(a);
 }
 
-void setSamplerate_mpeak (MPEAK a, int rate) {
-  decalc_mpeak (a);
+void setSamplerate_mpeak(MPEAK a, int rate) {
+  decalc_mpeak(a);
   a->rate = rate;
-  calc_mpeak (a);
+  calc_mpeak(a);
 }
 
-void setSize_mpeak (MPEAK a, int size) {
-  decalc_mpeak (a);
+void setSize_mpeak(MPEAK a, int size) {
+  decalc_mpeak(a);
   a->size = size;
-  calc_mpeak (a);
+  calc_mpeak(a);
 }
 
 /********************************************************************************************************
@@ -478,57 +478,57 @@ void setSize_mpeak (MPEAK a, int size) {
 ********************************************************************************************************/
 
 PORT
-void SetRXAmpeakRun (int channel, int run) {
+void SetRXAmpeakRun(int channel, int run) {
   MPEAK a = rxa[channel].mpeak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->run = run;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXAmpeakNpeaks (int channel, int npeaks) {
+void SetRXAmpeakNpeaks(int channel, int npeaks) {
   MPEAK a = rxa[channel].mpeak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->npeaks = npeaks;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXAmpeakFilEnable (int channel, int fil, int enable) {
+void SetRXAmpeakFilEnable(int channel, int fil, int enable) {
   MPEAK a = rxa[channel].mpeak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->enable[fil] = enable;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXAmpeakFilFreq (int channel, int fil, double freq) {
+void SetRXAmpeakFilFreq(int channel, int fil, double freq) {
   MPEAK a = rxa[channel].mpeak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->f[fil] = freq;
   a->pfil[fil]->f = freq;
   calc_speak(a->pfil[fil]);
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXAmpeakFilBw (int channel, int fil, double bw) {
+void SetRXAmpeakFilBw(int channel, int fil, double bw) {
   MPEAK a = rxa[channel].mpeak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->bw[fil] = bw;
   a->pfil[fil]->bw = bw;
   calc_speak(a->pfil[fil]);
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetRXAmpeakFilGain (int channel, int fil, double gain) {
+void SetRXAmpeakFilGain(int channel, int fil, double gain) {
   MPEAK a = rxa[channel].mpeak.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->gain[fil] = gain;
   a->pfil[fil]->gain = gain;
   calc_speak(a->pfil[fil]);
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 
@@ -538,20 +538,20 @@ void SetRXAmpeakFilGain (int channel, int fil, double gain) {
 *                                                   *
 ********************************************************************************************************/
 
-void calc_phrot (PHROT a) {
+void calc_phrot(PHROT a) {
   double g;
-  a->x0 = (double *) malloc0 (a->nstages * sizeof (double));
-  a->x1 = (double *) malloc0 (a->nstages * sizeof (double));
-  a->y0 = (double *) malloc0 (a->nstages * sizeof (double));
-  a->y1 = (double *) malloc0 (a->nstages * sizeof (double));
-  g = tan (PI * a->fc / (double)a->rate);
+  a->x0 = (double*) malloc0(a->nstages * sizeof(double));
+  a->x1 = (double*) malloc0(a->nstages * sizeof(double));
+  a->y0 = (double*) malloc0(a->nstages * sizeof(double));
+  a->y1 = (double*) malloc0(a->nstages * sizeof(double));
+  g = tan(PI * a->fc / (double)a->rate);
   a->b0 = (g - 1.0) / (g + 1.0);
   a->b1 = 1.0;
   a->a1 = a->b0;
 }
 
-PHROT create_phrot (int run, int size, double* in, double* out, int rate, double fc, int nstages) {
-  PHROT a = (PHROT) malloc0 (sizeof (phrot));
+PHROT create_phrot(int run, int size, double* in, double* out, int rate, double fc, int nstages) {
+  PHROT a = (PHROT) malloc0(sizeof(phrot));
   a->reverse = 0;
   a->run = run;
   a->size = size;
@@ -560,33 +560,33 @@ PHROT create_phrot (int run, int size, double* in, double* out, int rate, double
   a->rate = rate;
   a->fc = fc;
   a->nstages = nstages;
-  InitializeCriticalSectionAndSpinCount ( &a->cs_update, 2500 );
-  calc_phrot (a);
+  InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
+  calc_phrot(a);
   return a;
 }
 
-void decalc_phrot (PHROT a) {
-  _aligned_free (a->y1);
-  _aligned_free (a->y0);
-  _aligned_free (a->x1);
-  _aligned_free (a->x0);
+void decalc_phrot(PHROT a) {
+  _aligned_free(a->y1);
+  _aligned_free(a->y0);
+  _aligned_free(a->x1);
+  _aligned_free(a->x0);
 }
 
-void destroy_phrot (PHROT a) {
-  decalc_phrot (a);
-  DeleteCriticalSection (&a->cs_update);
-  _aligned_free (a);
+void destroy_phrot(PHROT a) {
+  decalc_phrot(a);
+  DeleteCriticalSection(&a->cs_update);
+  _aligned_free(a);
 }
 
-void flush_phrot (PHROT a) {
-  memset (a->x0, 0, a->nstages * sizeof (double));
-  memset (a->x1, 0, a->nstages * sizeof (double));
-  memset (a->y0, 0, a->nstages * sizeof (double));
-  memset (a->y1, 0, a->nstages * sizeof (double));
+void flush_phrot(PHROT a) {
+  memset(a->x0, 0, a->nstages * sizeof(double));
+  memset(a->x1, 0, a->nstages * sizeof(double));
+  memset(a->y0, 0, a->nstages * sizeof(double));
+  memset(a->y1, 0, a->nstages * sizeof(double));
 }
 
-void xphrot (PHROT a) {
-  EnterCriticalSection (&a->cs_update);
+void xphrot(PHROT a) {
+  EnterCriticalSection(&a->cs_update);
 
   if (a->reverse) {
     for (int i = 0; i < a->size; i++) {
@@ -613,26 +613,26 @@ void xphrot (PHROT a) {
       a->out[2 * i + 0] = a->y0[a->nstages - 1];
     }
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_phrot (PHROT a, double* in, double* out) {
+void setBuffers_phrot(PHROT a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-void setSamplerate_phrot (PHROT a, int rate) {
-  decalc_phrot (a);
+void setSamplerate_phrot(PHROT a, int rate) {
+  decalc_phrot(a);
   a->rate = rate;
-  calc_phrot (a);
+  calc_phrot(a);
 }
 
-void setSize_phrot (PHROT a, int size) {
+void setSize_phrot(PHROT a, int size) {
   a->size = size;
-  flush_phrot (a);
+  flush_phrot(a);
 }
 
 /********************************************************************************************************
@@ -642,38 +642,38 @@ void setSize_phrot (PHROT a, int size) {
 ********************************************************************************************************/
 
 PORT
-void SetTXAPHROTRun (int channel, int run) {
+void SetTXAPHROTRun(int channel, int run) {
   PHROT a = txa[channel].phrot.p;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->run = run;
 
-  if (a->run) { flush_phrot (a); }
+  if (a->run) { flush_phrot(a); }
 
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetTXAPHROTCorner (int channel, double corner) {
+void SetTXAPHROTCorner(int channel, double corner) {
   PHROT a = txa[channel].phrot.p;
-  EnterCriticalSection (&a->cs_update);
-  decalc_phrot (a);
+  EnterCriticalSection(&a->cs_update);
+  decalc_phrot(a);
   a->fc = corner;
-  calc_phrot (a);
-  LeaveCriticalSection (&a->cs_update);
+  calc_phrot(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetTXAPHROTNstages (int channel, int nstages) {
+void SetTXAPHROTNstages(int channel, int nstages) {
   PHROT a = txa[channel].phrot.p;
-  EnterCriticalSection (&a->cs_update);
-  decalc_phrot (a);
+  EnterCriticalSection(&a->cs_update);
+  decalc_phrot(a);
   a->nstages = nstages;
-  calc_phrot (a);
-  LeaveCriticalSection (&a->cs_update);
+  calc_phrot(a);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 PORT
-void SetTXAPHROTReverse (int channel, int reverse) {
+void SetTXAPHROTReverse(int channel, int reverse) {
   PHROT a = txa[channel].phrot.p;
   EnterCriticalSection(&a->cs_update);
   a->reverse = reverse;

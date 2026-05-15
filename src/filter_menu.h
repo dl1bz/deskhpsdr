@@ -20,4 +20,4 @@
 */
 
 extern void filter_menu(GtkWidget *parent);
-extern int filter_select(void *data);
+extern int filter_select(void* data);

@@ -208,17 +208,17 @@ void extras_menu(GtkWidget *parent) {
   char _title[64];
   snprintf(_title, 64, "%s - Extras", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   //--------------------------------------------------------------------------------
   int row = 0;
   int col = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 2, 1);
   row++;
   col = 0;
@@ -274,12 +274,12 @@ void extras_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
   GtkAdjustment *dxc_port_adj = gtk_adjustment_new(
-                                  dxc_port,     // initialer Portwert
-                                  1,            // Minimum
-                                  65535,        // Maximum
-                                  1,            // Schrittweite
-                                  10,           // Page-Increment (Pfeiltasten halten)
-                                  0
+                                        dxc_port,     // initialer Portwert
+                                        1,            // Minimum
+                                        65535,        // Maximum
+                                        1,            // Schrittweite
+                                        10,           // Page-Increment (Pfeiltasten halten)
+                                        0
                                 );
   GtkWidget *dxc_port_spin_btn = gtk_spin_button_new(dxc_port_adj, 1.0, 0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dxc_port_spin_btn), TRUE);
@@ -307,12 +307,12 @@ void extras_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
   GtkAdjustment *dxspot_lifetime_adj = gtk_adjustment_new(
-                                         pan_spot_lifetime_min,     // initialer Portwert
-                                         1,            // Minimum
-                                         720,        // Maximum
-                                         1,            // Schrittweite
-                                         10,           // Page-Increment (Pfeiltasten halten)
-                                         0
+      pan_spot_lifetime_min,     // initialer Portwert
+      1,            // Minimum
+      720,        // Maximum
+      1,            // Schrittweite
+      10,           // Page-Increment (Pfeiltasten halten)
+      0
                                        );
   GtkWidget *dxspot_lifetime_spin_btn = gtk_spin_button_new(dxspot_lifetime_adj, 1.0, 0);
   gtk_widget_set_tooltip_text(dxspot_lifetime_spin_btn,
@@ -330,12 +330,12 @@ void extras_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
   GtkAdjustment *dxspot_max_rows_adj = gtk_adjustment_new(
-                                         max_pan_label_rows,     // initialer Portwert
-                                         1,            // Minimum
-                                         32,           // Maximum
-                                         1,            // Schrittweite
-                                         10,           // Page-Increment (Pfeiltasten halten)
-                                         0
+      max_pan_label_rows,     // initialer Portwert
+      1,            // Minimum
+      32,           // Maximum
+      1,            // Schrittweite
+      10,           // Page-Increment (Pfeiltasten halten)
+      0
                                        );
   GtkWidget *dxspot_max_rows_spin_btn = gtk_spin_button_new(dxspot_max_rows_adj, 1.0, 0);
   gtk_widget_set_tooltip_text(dxspot_max_rows_spin_btn, "Max stacked label rows (RX panadapter).\n\n"
@@ -422,12 +422,12 @@ void extras_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
   GtkAdjustment *atuwin_w_adj = gtk_adjustment_new(
-                                  atuwin_wv_w,     // initialer Portwert
-                                  400,          // Minimum
-                                  9999,         // Maximum
-                                  5,            // Schrittweite
-                                  50,           // Page-Increment (Pfeiltasten halten)
-                                  0
+                                        atuwin_wv_w,     // initialer Portwert
+                                        400,          // Minimum
+                                        9999,         // Maximum
+                                        5,            // Schrittweite
+                                        50,           // Page-Increment (Pfeiltasten halten)
+                                        0
                                 );
   GtkWidget *atuwin_w_spin_btn = gtk_spin_button_new(atuwin_w_adj, 1.0, 0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(atuwin_w_spin_btn), TRUE);
@@ -442,12 +442,12 @@ void extras_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
   GtkAdjustment *atuwin_h_adj = gtk_adjustment_new(
-                                  atuwin_wv_h,     // initialer Portwert
-                                  400,          // Minimum
-                                  9999,         // Maximum
-                                  5,            // Schrittweite
-                                  50,           // Page-Increment (Pfeiltasten halten)
-                                  0
+                                        atuwin_wv_h,     // initialer Portwert
+                                        400,          // Minimum
+                                        9999,         // Maximum
+                                        5,            // Schrittweite
+                                        50,           // Page-Increment (Pfeiltasten halten)
+                                        0
                                 );
   GtkWidget *atuwin_h_spin_btn = gtk_spin_button_new(atuwin_h_adj, 1.0, 0);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(atuwin_h_spin_btn), TRUE);
@@ -466,7 +466,8 @@ void extras_menu(GtkWidget *parent) {
   gtk_entry_set_text(GTK_ENTRY(atuwin_action_box), atuwin_ACTION);
   gtk_widget_set_margin_top(atuwin_action_box, 10);
   gtk_grid_attach(GTK_GRID(grid), atuwin_action_box, col, row, 1, 1);
-  atuwin_action_box_signal_id = g_signal_connect(atuwin_action_box, "activate", G_CALLBACK(atuwin_action_button_clicked),
+  atuwin_action_box_signal_id = g_signal_connect(atuwin_action_box, "activate",
+                                G_CALLBACK(atuwin_action_button_clicked),
                                 atuwin_action_box);
   col += 1;
   GtkWidget *atuwin_action_btn = gtk_button_new_with_label("Set");

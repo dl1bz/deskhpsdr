@@ -26,8 +26,8 @@ warren@wpratt.com
 
 #include "comm.h"
 
-AMMOD create_ammod (int run, int mode, int size, double* in, double* out, double c_level) {
-  AMMOD a = (AMMOD) malloc0 (sizeof (ammod));
+AMMOD create_ammod(int run, int mode, int size, double* in, double* out, double c_level) {
+  AMMOD a = (AMMOD) malloc0(sizeof(ammod));
   a->run = run;
   a->mode = mode;
   a->size = size;
@@ -35,18 +35,18 @@ AMMOD create_ammod (int run, int mode, int size, double* in, double* out, double
   a->out = out;
   a->c_level = c_level;
   a->a_level = 1.0 - a->c_level;
-  a->mult = 1.0 / sqrt (2.0);
+  a->mult = 1.0 / sqrt(2.0);
   return a;
 }
 
-void destroy_ammod (AMMOD a) {
-  _aligned_free (a);
+void destroy_ammod(AMMOD a) {
+  _aligned_free(a);
 }
 
-void flush_ammod (AMMOD a) {
+void flush_ammod(AMMOD a) {
 }
 
-void xammod (AMMOD a) {
+void xammod(AMMOD a) {
   if (a->run) {
     int i;
 
@@ -74,19 +74,19 @@ void xammod (AMMOD a) {
       break;
     }
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 }
 
-void setBuffers_ammod (AMMOD a, double* in, double* out) {
+void setBuffers_ammod(AMMOD a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-void setSamplerate_ammod (AMMOD a, int rate) {
+void setSamplerate_ammod(AMMOD a, int rate) {
 }
 
-void setSize_ammod (AMMOD a, int size) {
+void setSize_ammod(AMMOD a, int size) {
   a->size = size;
 }
 
@@ -97,9 +97,9 @@ void setSize_ammod (AMMOD a, int size) {
 ********************************************************************************************************/
 
 PORT void
-SetTXAAMCarrierLevel (int channel, double c_level) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetTXAAMCarrierLevel(int channel, double c_level) {
+  EnterCriticalSection(&ch[channel].csDSP);
   txa[channel].ammod.p->c_level = c_level;
   txa[channel].ammod.p->a_level = 1.0 - c_level;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

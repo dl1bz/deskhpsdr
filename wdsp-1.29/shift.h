@@ -30,8 +30,8 @@ warren@wpratt.com
 typedef struct _shift {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double shift;
   double phase;

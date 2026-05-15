@@ -44,13 +44,13 @@ typedef struct _cbl {
 
 extern CBL create_cbl
 (
-  int run,
-  int buff_size,
-  double *in_buff,
-  double *out_buff,
-  int mode,
-  int sample_rate,
-  double tau
+        int run,
+        int buff_size,
+        double *in_buff,
+        double *out_buff,
+        int mode,
+        int sample_rate,
+        double tau
 );
 
 extern void destroy_cbl (CBL a);

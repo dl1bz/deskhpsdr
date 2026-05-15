@@ -38,11 +38,11 @@ typedef struct _compressor {
 extern void xcompressor (COMPRESSOR a);
 
 extern COMPRESSOR create_compressor (
-  int run,
-  int buffsize,
-  double* inbuff,
-  double* outbuff,
-  double gain );
+        int run,
+        int buffsize,
+        double *inbuff,
+        double *outbuff,
+        double gain);
 
 extern void destroy_compressor (COMPRESSOR a);
 

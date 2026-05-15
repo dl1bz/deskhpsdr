@@ -59,7 +59,7 @@ static void server_enable_cb(GtkWidget *widget, gpointer data) {
     start_saturn_server();
   } else {
     client_enable_tx = 0;
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (client_enable_tx_b), 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(client_enable_tx_b), 0);
     shutdown_saturn_server();
   }
 
@@ -68,7 +68,7 @@ static void server_enable_cb(GtkWidget *widget, gpointer data) {
 
 #ifdef SATURNTEST
 static void client_enable_tx_cb(GtkWidget *widget, gpointer data) {
-  if (!saturn_server_en) { gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), 0); }
+  if (!saturn_server_en) { gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), 0); }
   else { client_enable_tx = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)); }
 }
 
@@ -90,23 +90,23 @@ void saturn_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Saturn", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
-  g_signal_connect (close_b, "pressed", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "pressed", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
   GtkWidget *server_enable_b = gtk_check_button_new_with_label("Saturn Server Enable");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (server_enable_b), saturn_server_en);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(server_enable_b), saturn_server_en);
   gtk_widget_show(server_enable_b);
   gtk_grid_attach(GTK_GRID(grid), server_enable_b, 0, 1, 1, 1);
   g_signal_connect(server_enable_b, "toggled", G_CALLBACK(server_enable_cb), NULL);
 #ifdef SATURNTEST
   client_enable_tx_b = gtk_check_button_new_with_label("Client Transmit Enable");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (client_enable_tx_b), client_enable_tx);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(client_enable_tx_b), client_enable_tx);
   gtk_widget_show(client_enable_tx_b);
   gtk_grid_attach(GTK_GRID(grid), client_enable_tx_b, 1, 1, 1, 1);
   g_signal_connect(client_enable_tx_b, "toggled", G_CALLBACK(client_enable_tx_cb), NULL);

@@ -63,7 +63,7 @@ static pthread_t midi_thread_id[MAX_MIDI_DEVICES];
 static char *midi_port[MAX_MIDI_DEVICES];
 static snd_rawmidi_t *midi_input[MAX_MIDI_DEVICES];
 
-static void* midi_thread(void *);
+static void *midi_thread(void*);
 
 static enum {
   STATE_SKIP,             // skip bytes
@@ -84,8 +84,8 @@ void configure_midi_device(gboolean state) {
   configure = state;
 }
 
-static void *midi_thread(void *arg) {
-  int index = (int) (uintptr_t) arg;
+static void *midi_thread(void* arg) {
+  int index = (int)(uintptr_t) arg;
   snd_rawmidi_t *input = midi_input[index];
   char *port = midi_port[index];
   int npfds;
@@ -260,8 +260,8 @@ void register_midi_device(int index) {
     return;
   }
 
-  snd_rawmidi_read(midi_input[index], NULL, 0); /* trigger reading */
-  ret = pthread_create(&midi_thread_id[index], NULL, midi_thread, (void *) (uintptr_t) index);
+  snd_rawmidi_read(midi_input[index], NULL, 0);  /* trigger reading */
+  ret = pthread_create(&midi_thread_id[index], NULL, midi_thread, (void*)(uintptr_t) index);
 
   if (ret < 0) {
     t_print("%s: Failed to create MIDI read thread\n", __func__);

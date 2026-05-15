@@ -32,8 +32,8 @@ warren@wpratt.com
 typedef struct _delay {
   int run;      // run
   int size;     // number of input samples per buffer
-  double* in;     // input buffer
-  double* out;    // output buffer
+  double *in;     // input buffer
+  double *out;    // output buffer
   int rate;     // samplerate
   double tdelta;    // delay increment required (seconds)
   double tdelay;    // delay requested (seconds)
@@ -42,13 +42,13 @@ typedef struct _delay {
   int ncoef;      // number of coefficients
   int cpp;      // coefficients per phase
   double ft;      // normalized cutoff frequency
-  double* h;      // coefficients
+  double *h;      // coefficients
   int snum;     // starting sample number (0 for sub-sample delay)
   int phnum;      // phase number
 
   int idx_in;     // index for input into ring
   int rsize;      // ring size in complex samples
-  double* ring;   // ring buffer
+  double *ring;   // ring buffer
 
   double adelta;    // actual delay increment
   double adelay;    // actual delay

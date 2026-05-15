@@ -279,10 +279,10 @@ typedef struct process_action {
 extern ACTION_TABLE ActionTable[ACTIONS + 1];
 extern int is_cap;
 
-extern int process_action(void *data);
-extern void schedule_action(enum ACTION action, enum ACTION_MODE mode, int val);
-extern void Action2String(const int id, char *str, size_t len);
-extern int  String2Action(const char *str);
-extern void GetMultifunctionString(char* str, size_t len);
-extern int  GetMultifunctionStatus(void);
+extern int process_action (void* data);
+extern void schedule_action (enum ACTION action, enum ACTION_MODE mode, int val);
+extern void Action2String (const int id, char* str, size_t len);
+extern int  String2Action (const char* str);
+extern void GetMultifunctionString (char* str, size_t len);
+extern int  GetMultifunctionStatus (void);
 #endif

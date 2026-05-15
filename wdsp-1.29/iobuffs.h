@@ -38,12 +38,12 @@ typedef struct _iobf {
   int   r1_active_buffsize;         // size of input pseudo-ring (in complex samples)
   int   r2_active_buffsize;         // size of output pseudo-ring (in complex samples)
 
-  double* r1_baseptr;             // pointer to input pseudo-ring
+  double *r1_baseptr;             // pointer to input pseudo-ring
   int   r1_inidx;               // in 'double', actual index into the buffer is 2 times this
   int   r1_outidx;              // in 'double', actual index into the buffer is 2 times this
   int   r1_unqueuedsamps;           // number of input samples not yet queued/released for execution
 
-  double* r2_baseptr;             // pointer to output pseudo-ring
+  double *r2_baseptr;             // pointer to output pseudo-ring
   int   r2_inidx;               // in 'double', actual index into the buffer is 2 times this
   int   r2_outidx;              // in 'double', actual index into the buffer is 2 times this
   int   r2_havesamps;             // number of processed samples in output pseudo-ring
@@ -63,10 +63,10 @@ typedef struct _iobf {
     int dcount;
     int ndelup;
     int ntup;
-    double* cup;
+    double *cup;
     int ndeldown;
     int ntdown;
-    double* cdown;
+    double *cdown;
     volatile long upflag;
     volatile long downflag;
   } slew;

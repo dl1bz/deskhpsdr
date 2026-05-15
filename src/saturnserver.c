@@ -143,10 +143,10 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
   //
   // set 1ms timeout, and re-use any recently open ports
   //
-  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
+  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
   ReadTimeout.tv_sec = 0;
   ReadTimeout.tv_usec = 1000;
-  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_RCVTIMEO, (void *)&ReadTimeout, sizeof(ReadTimeout));
+  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_RCVTIMEO, (void*) &ReadTimeout, sizeof(ReadTimeout));
   //
   // bind application to the specified port
   //
@@ -155,7 +155,7 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
   Ptr->addr_cmddata.sin_addr.s_addr = htonl(INADDR_ANY);
   Ptr->addr_cmddata.sin_port = htons(Ptr->Portid);
 
-  if (bind(Ptr->Socketid, (struct sockaddr *)&Ptr->addr_cmddata, sizeof(struct sockaddr_in)) < 0) {
+  if (bind(Ptr->Socketid, (struct sockaddr *) &Ptr->addr_cmddata, sizeof(struct sockaddr_in)) < 0) {
     t_perror("bind");
     return EXIT_FAILURE;
   }
@@ -164,7 +164,7 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
 
   socklen_t len = sizeof(checkin);
 
-  if (getsockname(Ptr->Socketid, (struct sockaddr *)&checkin, &len) == -1) {
+  if (getsockname(Ptr->Socketid, (struct sockaddr *) &checkin, &len) == -1) {
     t_perror("getsockname");
   }
 
@@ -177,7 +177,7 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
 // if no messages in a second, goes back to "inactive" state.
 //
 // cppcheck-suppress constParameterCallback
-void* CheckForActivity(void *arg) {
+void *CheckForActivity(void* arg) {
   while (1) {
     sleep(1000);                                   // wait for 1 second
     bool PreviouslyActiveState = ServerActive;     // see if active on entry
@@ -229,7 +229,7 @@ void start_saturn_server(void) {
 // has a loop that reads & processes incoming command packets
 // see protocol documentation
 //
-void* saturn_server(void *arg) {
+void *saturn_server(void* arg) {
   int i, size;
   uint8_t UDPInBuffer[VDISCOVERYSIZE];
   //
@@ -289,7 +289,7 @@ void* saturn_server(void *arg) {
 #endif
   MakeSocket(SocketData + VPORTDDCSPECIFIC, 0);          // create and bind a socket
 
-  if (pthread_create(&DDCSpecificThread, NULL, IncomingDDCSpecific, (void * )&SocketData[VPORTDDCSPECIFIC]) < 0) {
+  if (pthread_create(&DDCSpecificThread, NULL, IncomingDDCSpecific, (void *) &SocketData[VPORTDDCSPECIFIC]) < 0) {
     t_perror("pthread_create DDC specific");
     return NULL;
   }
@@ -297,7 +297,7 @@ void* saturn_server(void *arg) {
   pthread_detach(DDCSpecificThread);
   MakeSocket(SocketData + VPORTDUCSPECIFIC, 0);          // create and bind a socket
 
-  if (pthread_create(&DUCSpecificThread, NULL, IncomingDUCSpecific, (void * )&SocketData[VPORTDUCSPECIFIC]) < 0) {
+  if (pthread_create(&DUCSpecificThread, NULL, IncomingDUCSpecific, (void *) &SocketData[VPORTDUCSPECIFIC]) < 0) {
     t_perror("pthread_create DUC specific");
     return NULL;
   }
@@ -306,7 +306,7 @@ void* saturn_server(void *arg) {
   MakeSocket(SocketData + VPORTHIGHPRIORITYTOSDR, 0);          // create and bind a socket
 
   if (pthread_create(&HighPriorityToSDRThread, NULL, IncomingHighPriority,
-                     (void * )&SocketData[VPORTHIGHPRIORITYTOSDR]) < 0) {
+                     (void *) &SocketData[VPORTHIGHPRIORITYTOSDR]) < 0) {
     t_perror("pthread_create High priority to SDR");
     return NULL;
   }
@@ -315,7 +315,7 @@ void* saturn_server(void *arg) {
 #if 0
   MakeSocket(SocketData + VPORTSPKRAUDIO, 0);          // create and bind a socket
 
-  if (pthread_create(&SpkrAudioThread, NULL, IncomingSpkrAudio, (void * )&SocketData[VPORTSPKRAUDIO]) < 0) {
+  if (pthread_create(&SpkrAudioThread, NULL, IncomingSpkrAudio, (void *) &SocketData[VPORTSPKRAUDIO]) < 0) {
     t_perror("pthread_create speaker audio");
     return NULL;
   }
@@ -324,7 +324,7 @@ void* saturn_server(void *arg) {
 #endif
   MakeSocket(SocketData + VPORTDUCIQ, 0);          // create and bind a socket
 
-  if (pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void * )&SocketData[VPORTDUCIQ]) < 0) {
+  if (pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void *) &SocketData[VPORTDUCIQ]) < 0) {
     t_perror("pthread_create DUC I/Q");
     return NULL;
   }
@@ -336,10 +336,11 @@ void* saturn_server(void *arg) {
   // instead copy socket settings from DUCSPECIFIC socket:
   //
   SocketData[VPORTMICAUDIO].Socketid = SocketData[VPORTDUCSPECIFIC].Socketid;
-  memcpy(&SocketData[VPORTMICAUDIO].addr_cmddata, &SocketData[VPORTDUCSPECIFIC].addr_cmddata, sizeof(struct sockaddr_in));
+  memcpy(&SocketData[VPORTMICAUDIO].addr_cmddata, &SocketData[VPORTDUCSPECIFIC].addr_cmddata,
+         sizeof(struct sockaddr_in));
 #if 0
 
-  if (pthread_create(&MicThread, NULL, OutgoingMicSamples, (void * )&SocketData[VPORTMICAUDIO]) < 0) {
+  if (pthread_create(&MicThread, NULL, OutgoingMicSamples, (void *) &SocketData[VPORTMICAUDIO]) < 0) {
     t_perror("pthread_create Mic");
     return NULL;
   }
@@ -357,7 +358,7 @@ void* saturn_server(void *arg) {
 #if 0
 
   if (pthread_create(&HighPriorityFromSDRThread, NULL, OutgoingHighPriority,
-                     (void * )&SocketData[VPORTHIGHPRIORITYFROMSDR]) < 0) {
+                     (void *) &SocketData[VPORTHIGHPRIORITYFROMSDR]) < 0) {
     t_perror("pthread_create outgoing hi priority");
     return NULL;
   }
@@ -429,7 +430,7 @@ void* saturn_server(void *arg) {
         reply_addr.sin_family = AF_INET;
         reply_addr.sin_addr.s_addr = addr_from.sin_addr.s_addr;
         reply_addr.sin_port =
-          addr_from.sin_port;                       // (but each outgoing thread needs to set its own sin_port)
+                addr_from.sin_port;                       // (but each outgoing thread needs to set its own sin_port)
         saturn_handle_general_packet(true, UDPInBuffer);
         ReplyAddressSet = true;
 
@@ -453,7 +454,8 @@ void* saturn_server(void *arg) {
 
         memset(&UDPInBuffer, 0, VDISCOVERYREPLYSIZE);
         memcpy(&UDPInBuffer, DiscoveryReply, VDISCOVERYREPLYSIZE);
-        sendto(SocketData[0].Socketid, &UDPInBuffer, VDISCOVERYREPLYSIZE, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(SocketData[0].Socketid, &UDPInBuffer, VDISCOVERYREPLYSIZE, 0, (struct sockaddr*) &addr_from,
+               sizeof(addr_from));
         break;
 
       case 3:
@@ -487,13 +489,13 @@ void* saturn_server(void *arg) {
 //
 // listener thread for incoming high priority packets
 //
-void *IncomingHighPriority(void *arg) {                 // listener thread
+void *IncomingHighPriority(void* arg) {                 // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VHIGHPRIOTIYTOSDRSIZE];           // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData *)arg;
+  ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up high priority incoming thread with port %d\n", ThreadData->Portid);
 
@@ -538,13 +540,13 @@ void *IncomingHighPriority(void *arg) {                 // listener thread
 //
 // listener thread for incoming DDC specific packets
 //
-void *IncomingDDCSpecific(void *arg) {                  // listener thread
+void *IncomingDDCSpecific(void* arg) {                  // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VDDCSPECIFICSIZE];                // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData *)arg;
+  ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up DDC specific thread with port %d\n", ThreadData->Portid);
 
@@ -585,13 +587,13 @@ void *IncomingDDCSpecific(void *arg) {                  // listener thread
 //
 // listener thread for incoming DUC specific packets
 //
-void *IncomingDUCSpecific(void *arg) {                  // listener thread
+void *IncomingDUCSpecific(void* arg) {                  // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VDUCSPECIFICSIZE];                // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData *)arg;
+  ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up DUC specific thread with port %d\n", ThreadData->Portid);
 
@@ -644,7 +646,7 @@ void *IncomingDUCSpecific(void *arg) {                  // listener thread
 // if it turns out to be too inefficient, we'll have to try larger DMA.
 //
 #if 0
-void *IncomingSpkrAudio(void *arg) {                    // listener thread
+void *IncomingSpkrAudio(void* arg) {                    // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VSPEAKERAUDIOSIZE];               // incoming buffer
@@ -653,20 +655,20 @@ void *IncomingSpkrAudio(void *arg) {                    // listener thread
   //
   // variables for DMA buffer
   //
-  uint8_t* SpkWriteBuffer = NULL;             // data for DMA to write to spkr
+  uint8_t *SpkWriteBuffer = NULL;             // data for DMA to write to spkr
   uint32_t SpkBufferSize = VDMABUFFERSIZE;
-  unsigned char* SpkBasePtr;                // ptr to DMA location in spk memory
+  unsigned char *SpkBasePtr;                // ptr to DMA location in spk memory
   int DMAWritefile_fd = -1;               // DMA read file device
   bool FIFOOverflow, FIFOUnderflow, FIFOOverThreshold;
   unsigned int Current;
   //uint32_t RegVal = 0;                    // debug
-  ThreadData = (struct ThreadSocketData *)arg;
+  ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up speaker audio thread with port %d\n", ThreadData->Portid);
   //
   // setup DMA buffer
   //
-  posix_memalign((void**)&SpkWriteBuffer, VALIGNMENT, SpkBufferSize);
+  posix_memalign((void**) &SpkWriteBuffer, VALIGNMENT, SpkBufferSize);
 
   if (SpkWriteBuffer == NULL) {
     t_print("spkr write buffer allocation failed\n");
@@ -754,13 +756,13 @@ void *IncomingSpkrAudio(void *arg) {                    // listener thread
 // if sufficient FIFO data available: DMA that data and transfer it out.
 // if it turns out to be too inefficient, we'll have to try larger DMA.
 //
-void *IncomingDUCIQ(void *arg) {                        // listener thread
+void *IncomingDUCIQ(void* arg) {                        // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VDUCIQSIZE];                      // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData *)arg;
+  ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up incoming DUC I/Q thread with port %d\n", ThreadData->Portid);
 

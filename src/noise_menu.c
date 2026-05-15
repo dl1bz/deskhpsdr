@@ -125,22 +125,22 @@ void update_notch(void) {
 }
 
 static void nb_cb(GtkToggleButton *widget, gpointer data) {
-  active_receiver->nb = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  active_receiver->nb = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   update_noise();
 }
 
 static void nr_cb(GtkToggleButton *widget, gpointer data) {
-  active_receiver->nr = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  active_receiver->nr = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   update_noise();
 }
 
 static void anf_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->anf = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  active_receiver->anf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   update_noise();
 }
 
 static void snb_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->snb = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  active_receiver->snb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   update_noise();
 }
 
@@ -155,27 +155,27 @@ static void mnf_fbw_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void post_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr2_post = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  active_receiver->nr2_post = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   update_noise();
 }
 
 static void post_nlevel_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr2_post_nlevel = (int) (gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
+  active_receiver->nr2_post_nlevel = (int)(gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
   update_noise();
 }
 
 static void post_rate_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr2_post_rate = (int) (gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
+  active_receiver->nr2_post_rate = (int)(gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
   update_noise();
 }
 
 static void post_factor_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr2_post_factor = (int) (gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
+  active_receiver->nr2_post_factor = (int)(gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
   update_noise();
 }
 
 static void post_taper_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr2_post_taper = (int) (gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
+  active_receiver->nr2_post_taper = (int)(gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)) + 0.5);
   update_noise();
 }
 
@@ -185,22 +185,22 @@ static void ae_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void pos_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr_agc = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  active_receiver->nr_agc = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   update_noise();
 }
 
 static void mode_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nb2_mode = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  active_receiver->nb2_mode = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   update_noise();
 }
 
 static void gain_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr2_gain_method = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  active_receiver->nr2_gain_method = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   update_noise();
 }
 
 static void npe_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->nr2_npe_method = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  active_receiver->nr2_npe_method = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   update_noise();
 }
 
@@ -297,18 +297,18 @@ void noise_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   int row = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   //
   // First row: SNB/ANF/NR method
@@ -318,7 +318,7 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *b_snb = gtk_check_button_new_with_label("SNB");
   gtk_widget_set_name(b_snb, "boldlabel");
   gtk_widget_set_tooltip_text(b_snb, "Spectral Noise Blanker");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_snb), active_receiver->snb);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_snb), active_receiver->snb);
   gtk_widget_show(b_snb);
   gtk_grid_attach(GTK_GRID(grid), b_snb, 0, row, 1, 1);
   g_signal_connect(b_snb, "toggled", G_CALLBACK(snb_cb), NULL);
@@ -326,7 +326,7 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *b_anf = gtk_check_button_new_with_label("ANF");
   gtk_widget_set_name(b_anf, "boldlabel");
   gtk_widget_set_tooltip_text(b_anf, "Auto Notch Filter");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_anf), active_receiver->anf);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_anf), active_receiver->anf);
   gtk_widget_show(b_anf);
   gtk_grid_attach(GTK_GRID(grid), b_anf, 1, row, 1, 1);
   g_signal_connect(b_anf, "toggled", G_CALLBACK(anf_cb), NULL);
@@ -386,7 +386,7 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *b_mnf = gtk_check_button_new_with_label("MNF");
   gtk_widget_set_name(b_mnf, "boldlabel");
   gtk_widget_set_tooltip_text(b_mnf, "Enable Manual Notch Filter");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_mnf), active_receiver->mnf);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_mnf), active_receiver->mnf);
   gtk_widget_show(b_mnf);
   gtk_grid_attach(GTK_GRID(grid), b_mnf, 0, row, 1, 1);
   g_signal_connect(b_mnf, "toggled", G_CALLBACK(mnf_cb), NULL);
@@ -439,8 +439,8 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *nr_grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(nr_grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(nr_grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(nr_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(nr_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(nr_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(nr_grid), 5);
   //
   GtkWidget *gain_title = gtk_label_new("NR2 Gain Method");
   gtk_widget_set_name(gain_title, "boldlabel");
@@ -478,7 +478,7 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *l_ae = gtk_label_new("NR2 Artifact Elimination");
   gtk_widget_set_name(l_ae, "boldlabel");
   GtkWidget *b_ae = gtk_check_button_new();
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_ae), active_receiver->nr2_ae);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_ae), active_receiver->nr2_ae);
   g_signal_connect(b_ae, "toggled", G_CALLBACK(ae_cb), NULL);
   gtk_box_pack_start(GTK_BOX(box_ae), l_ae, FALSE, FALSE, 5);
   gtk_box_pack_start(GTK_BOX(box_ae), b_ae, FALSE, FALSE, 5);
@@ -491,7 +491,7 @@ void noise_menu(GtkWidget *parent) {
     GtkWidget *l_nr2_post = gtk_label_new("NR2 Post-Processing");
     gtk_widget_set_name(l_nr2_post, "boldlabel");
     GtkWidget *b_nr2_post = gtk_check_button_new();
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_nr2_post), active_receiver->nr2_post);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_nr2_post), active_receiver->nr2_post);
     g_signal_connect(b_nr2_post, "toggled", G_CALLBACK(post_cb), NULL);
     gtk_box_pack_start(GTK_BOX(box_nr2_post), l_nr2_post, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(box_nr2_post), b_nr2_post, FALSE, FALSE, 5);
@@ -581,8 +581,8 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *nb_grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(nb_grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(nb_grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(nb_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(nb_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(nb_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(nb_grid), 5);
   //
   GtkWidget *mode_title = gtk_label_new("NB2 mode");
   gtk_widget_set_name(mode_title, "boldlabel");
@@ -630,7 +630,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_widget_set_halign(thresh_title, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(nb_grid), thresh_title, 2, 2, 1, 1);
   GtkWidget *thresh_b = gtk_spin_button_new_with_range(15.0, 500.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(thresh_b), active_receiver->nb_thresh * 6.0606060606); // 1.0/0.165
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(thresh_b), active_receiver->nb_thresh * 6.0606060606);   // 1.0/0.165
   gtk_grid_attach(GTK_GRID(nb_grid), thresh_b, 3, 2, 1, 1);
   g_signal_connect(thresh_b, "changed", G_CALLBACK(thresh_cb), NULL);
   gtk_container_add(GTK_CONTAINER(nb_container), nb_grid);
@@ -642,15 +642,15 @@ void noise_menu(GtkWidget *parent) {
   GtkWidget *nr4_grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(nr4_grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(nr4_grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(nr4_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(nr4_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(nr4_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(nr4_grid), 5);
   //
   GtkWidget *nr4_reduction_title = gtk_label_new("NR4 Reduction (dB)");
   gtk_widget_set_name(nr4_reduction_title, "boldlabel");
   gtk_widget_set_halign(nr4_reduction_title, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_reduction_title, 0, 0, 1, 1);
   GtkWidget *nr4_reduction_b = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
-  gtk_spin_button_set_value (GTK_SPIN_BUTTON(nr4_reduction_b), active_receiver->nr4_reduction_amount);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(nr4_reduction_b), active_receiver->nr4_reduction_amount);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_reduction_b, 1, 0, 1, 1);
   g_signal_connect(G_OBJECT(nr4_reduction_b), "changed", G_CALLBACK(nr4_reduction_cb), NULL);
   //
@@ -659,7 +659,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_widget_set_halign(nr4_smoothing_title, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_smoothing_title, 2, 0, 1, 1);
   GtkWidget *nr4_smoothing_b = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
-  gtk_spin_button_set_value (GTK_SPIN_BUTTON(nr4_smoothing_b), active_receiver->nr4_smoothing_factor);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(nr4_smoothing_b), active_receiver->nr4_smoothing_factor);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_smoothing_b, 3, 0, 1, 1);
   g_signal_connect(G_OBJECT(nr4_smoothing_b), "changed", G_CALLBACK(nr4_smoothing_cb), NULL);
   //
@@ -668,7 +668,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_widget_set_halign(nr4_whitening_title, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_whitening_title, 0, 1, 1, 1);
   GtkWidget *nr4_whitening_b = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
-  gtk_spin_button_set_value (GTK_SPIN_BUTTON(nr4_whitening_b), active_receiver->nr4_whitening_factor);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(nr4_whitening_b), active_receiver->nr4_whitening_factor);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_whitening_b, 1, 1, 1, 1);
   g_signal_connect(G_OBJECT(nr4_whitening_b), "changed", G_CALLBACK(nr4_whitening_cb), NULL);
   //
@@ -677,7 +677,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_widget_set_halign(nr4_rescale_title, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_rescale_title, 2, 1, 1, 1);
   GtkWidget *nr4_rescale_b = gtk_spin_button_new_with_range(0.0, 12.0, 0.1);
-  gtk_spin_button_set_value (GTK_SPIN_BUTTON(nr4_rescale_b), active_receiver->nr4_noise_rescale);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(nr4_rescale_b), active_receiver->nr4_noise_rescale);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_rescale_b, 3, 1, 1, 1);
   g_signal_connect(G_OBJECT(nr4_rescale_b), "changed", G_CALLBACK(nr4_rescale_cb), NULL);
   //
@@ -686,7 +686,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_widget_set_halign(nr4_threshold_title, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_threshold_title, 1, 2, 2, 1);
   GtkWidget *nr4_threshold_b = gtk_spin_button_new_with_range(-10.0, 10.0, 0.1);
-  gtk_spin_button_set_value (GTK_SPIN_BUTTON(nr4_threshold_b), active_receiver->nr4_post_filter_threshold);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(nr4_threshold_b), active_receiver->nr4_post_filter_threshold);
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_threshold_b, 3, 2, 1, 1);
   g_signal_connect(G_OBJECT(nr4_threshold_b), "changed", G_CALLBACK(nr4_threshold_cb), NULL);
   gtk_container_add(GTK_CONTAINER(nr4_container), nr4_grid);

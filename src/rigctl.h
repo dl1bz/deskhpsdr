@@ -45,22 +45,22 @@ extern gboolean rigctl_debug;
 extern void launch_tcp_rigctl (void);
 extern int launch_serial_rigctl (int id);
 extern void disable_serial_rigctl (int id);
-extern int rigctl_tcp_running(void);
-extern void  shutdown_tcp_rigctl(void);
-extern void launch_serptt(void);
-extern void launch_sertune(void);
+extern int rigctl_tcp_running (void);
+extern void  shutdown_tcp_rigctl (void);
+extern void launch_serptt (void);
+extern void launch_sertune (void);
 extern int serptt_fd;
 extern int sertune_fd;
 #if defined (__AUTOG__)
-  extern void launch_autogain_hl2(void);
-  extern void restart_autogain_hl2(void);
+  extern void launch_autogain_hl2 (void);
+  extern void restart_autogain_hl2 (void);
   extern volatile int autogain_thread_running;
   extern pthread_t autogain_thread;
   extern pthread_mutex_t autogain_mutex;
 #endif
-extern void launch_rx200_monitor(void);
-extern void launch_lpf_monitor(void);
-extern void launch_rigctld_monitor(void);
+extern void launch_rx200_monitor (void);
+extern void launch_lpf_monitor (void);
+extern void launch_rigctld_monitor (void);
 extern int cat_control;
 extern unsigned int rigctl_tcp_port;
 extern volatile int rigctl_tcp_enable;
@@ -69,6 +69,6 @@ extern int rigctl_tcp_autoreporting;
 extern int autogain_is_adjusted;
 extern volatile int rigctld_enabled;
 extern volatile int use_rigctld;
-extern void stop_rigctld(void);
+extern void stop_rigctld (void);
 
 #endif // RIGCTL_H

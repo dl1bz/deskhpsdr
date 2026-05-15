@@ -62,7 +62,7 @@
 
 char workdir[PATH_MAX];
 
-void startup(const char *path) {
+void startup(const char* path) {
   struct stat statbuf;
   int rc;
   const char *homedir;
@@ -76,8 +76,8 @@ void startup(const char *path) {
   //  works from macOS 10.6 so no check on availability needed.
   //  no return check is needed: if it fails, it fails.
   //
-  IOPMAssertionCreateWithName (kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
-                               CFSTR ("deskHPSDR"), &keep_awake);
+  IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
+                              CFSTR("deskHPSDR"), &keep_awake);
 #endif
   //
   // Get home dir
@@ -130,7 +130,7 @@ void startup(const char *path) {
   snprintf(workdir, PATH_MAX, "%s/Library/Application Support/deskHPSDR", homedir);
 
   if (stat(workdir, &statbuf) < 0) {
-    mkdir (workdir, 0700);
+    mkdir(workdir, 0700);
   }
 
   rc = stat(workdir, &statbuf);
@@ -143,13 +143,13 @@ void startup(const char *path) {
   snprintf(workdir, PATH_MAX, "%s/.config", homedir);
 
   if (stat(workdir, &statbuf) < 0) {
-    mkdir (workdir, 0700);
+    mkdir(workdir, 0700);
   }
 
   snprintf(workdir, PATH_MAX, "%s/.config/deskhpsdr", homedir);
 
   if (stat(workdir, &statbuf) < 0) {
-    mkdir (workdir, 0700);
+    mkdir(workdir, 0700);
   }
 
 #endif

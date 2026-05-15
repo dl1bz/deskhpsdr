@@ -78,9 +78,9 @@ void t_print(const gchar *format, ...) {
   int hours = (int)(elapsed_time / 3600);
   int minutes = (int)((elapsed_time - (hours * 3600)) / 60);
   double seconds = elapsed_time - (hours * 3600) - (minutes * 60);
-  int millisec = (int)((seconds - (int)seconds) * 1000); // Millisekunden
+  int millisec = (int)((seconds - (int) seconds) * 1000);   // Millisekunden
   // Formatierte Zeit in den String schreiben
-  snprintf(time_str, sizeof(time_str), "%02d:%02d:%02d.%03d", hours, minutes, (int)seconds, millisec);
+  snprintf(time_str, sizeof(time_str), "%02d:%02d:%02d.%03d", hours, minutes, (int) seconds, millisec);
   //
   // Wir nutzen vsnprintf, um die varargs zu verarbeiten
   // g_print() wird einmalig aufgerufen, um Thread-Sicherheit zu gewährleisten

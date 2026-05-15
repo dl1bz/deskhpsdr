@@ -67,7 +67,7 @@ sem_t *apple_sem(int initial_value) {
 
   if (sem == SEM_FAILED) {
     t_perror("NewProtocol:SemOpen");
-    exit (-1);
+    exit(-1);
   }
 
   // we can unlink the semaphore NOW. It will remain functional

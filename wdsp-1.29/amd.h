@@ -76,20 +76,20 @@ typedef struct _amd {
 
 extern AMD create_amd
 (
-  int run,
-  int buff_size,
-  double *in_buff,
-  double *out_buff,
-  int mode,
-  int levelfade,
-  int sbmode,
-  int sample_rate,
-  double fmin,
-  double fmax,
-  double zeta,
-  double omegaN,
-  double tauR,
-  double tauI
+        int run,
+        int buff_size,
+        double *in_buff,
+        double *out_buff,
+        int mode,
+        int levelfade,
+        int sbmode,
+        int sample_rate,
+        double fmin,
+        double fmax,
+        double zeta,
+        double omegaN,
+        double tauR,
+        double tauI
 );
 
 extern void init_amd (AMD a);

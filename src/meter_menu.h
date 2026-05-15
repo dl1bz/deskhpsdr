@@ -19,4 +19,4 @@
 *
 */
 
-void meter_menu (GtkWidget *parent);
+void meter_menu(GtkWidget *parent);

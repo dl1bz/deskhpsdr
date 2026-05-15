@@ -49,25 +49,25 @@ typedef struct _calcc {
   double alpha;
 
   int tsamps;
-  double* env_TX;
-  double* env_RX;
-  double* x;
-  double* ym;
-  double* yc;
-  double* ys;
-  double* cat;
+  double *env_TX;
+  double *env_RX;
+  double *x;
+  double *ym;
+  double *yc;
+  double *ys;
+  double *cat;
 
-  double* t;
-  double* tmap;
-  double* cm;
-  double* cc;
-  double* cs;
-  double* cm_old;
-  double* rxs;
-  double* txs;
+  double *t;
+  double *tmap;
+  double *cm;
+  double *cc;
+  double *cs;
+  double *cm_old;
+  double *rxs;
+  double *txs;
   double ptol;
-  int* info;
-  int* binfo;
+  int *info;
+  int *binfo;
   double txdel;
   BLDR ccbld;
   volatile long savecorr_bypass;
@@ -89,9 +89,9 @@ typedef struct _calcc {
     int moxsamps;
     int moxcount;
     int count;
-    int* cpi;
-    int* sindex;
-    int* sbase;
+    int *cpi;
+    int *sindex;
+    int *sbase;
     int full_ints;
     int calcinprogress;
     volatile LONG calcdone;
@@ -104,13 +104,13 @@ typedef struct _calcc {
     CRITICAL_SECTION cs_SafeToEnd;
   } ctrl;
   struct _disp {
-    double* x;
-    double* ym;
-    double* yc;
-    double* ys;
-    double* cm;
-    double* cc;
-    double* cs;
+    double *x;
+    double *ym;
+    double *yc;
+    double *ys;
+    double *cm;
+    double *cc;
+    double *cs;
     CRITICAL_SECTION cs_disp;
   } disp;
   DELAY rxdelay;
@@ -120,12 +120,12 @@ typedef struct _calcc {
     char restfile[256];
     int ints;
     int channel;
-    double* pm;
-    double* pc;
-    double* ps;
+    double *pm;
+    double *pc;
+    double *ps;
   } util;
-  double* temptx;       //////////////////////////////////////////////////// temporary tx complex buffer - remove with new callback3port()
-  double* temprx;       //////////////////////////////////////////////////// temporary rx complex buffer - remove with new callback3port()
+  double *temptx;       //////////////////////////////////////////////////// temporary tx complex buffer - remove with new callback3port()
+  double *temprx;       //////////////////////////////////////////////////// temporary rx complex buffer - remove with new callback3port()
 } calcc, *CALCC;
 
 extern CALCC create_calcc (int channel, int runcal, int size, int rate, int ints, int spi, double hw_scale,

@@ -26,27 +26,27 @@ warren@wpratt.com
 
 #include "comm.h"
 
-ANR create_anr  (
-  int run,
-  int position,
-  int buff_size,
-  double *in_buff,
-  double *out_buff,
-  int dline_size,
-  int n_taps,
-  int delay,
-  double two_mu,
-  double gamma,
+ANR create_anr(
+        int run,
+        int position,
+        int buff_size,
+        double *in_buff,
+        double *out_buff,
+        int dline_size,
+        int n_taps,
+        int delay,
+        double two_mu,
+        double gamma,
 
-  double lidx,
-  double lidx_min,
-  double lidx_max,
-  double ngamma,
-  double den_mult,
-  double lincr,
-  double ldecr
+        double lidx,
+        double lidx_min,
+        double lidx_max,
+        double ngamma,
+        double den_mult,
+        double lincr,
+        double ldecr
 ) {
-  ANR a = (ANR) malloc0 (sizeof(anr));
+  ANR a = (ANR) malloc0(sizeof(anr));
   a->run = run;
   a->position = position;
   a->buff_size = buff_size;
@@ -66,16 +66,16 @@ ANR create_anr  (
   a->den_mult = den_mult;
   a->lincr = lincr;
   a->ldecr = ldecr;
-  memset (a->d, 0, sizeof(double) * ANR_DLINE_SIZE);
-  memset (a->w, 0, sizeof(double) * ANR_DLINE_SIZE);
+  memset(a->d, 0, sizeof(double) * ANR_DLINE_SIZE);
+  memset(a->w, 0, sizeof(double) * ANR_DLINE_SIZE);
   return a;
 }
 
-void destroy_anr (ANR a) {
-  _aligned_free (a);
+void destroy_anr(ANR a) {
+  _aligned_free(a);
 }
 
-void xanr (ANR a, int position) {
+void xanr(ANR a, int position) {
   int i, j, idx;
   double c0, c1;
   double y, error, sigma, inv_sigp;
@@ -120,26 +120,26 @@ void xanr (ANR a, int position) {
       a->in_idx = (a->in_idx + a->mask) & a->mask;
     }
   } else if (a->in_buff != a->out_buff) {
-    memcpy (a->out_buff, a->in_buff, a->buff_size * sizeof (complex));
+    memcpy(a->out_buff, a->in_buff, a->buff_size * sizeof(complex));
   }
 }
 
-void flush_anr (ANR a) {
-  memset (a->d, 0, sizeof(double) * ANR_DLINE_SIZE);
-  memset (a->w, 0, sizeof(double) * ANR_DLINE_SIZE);
+void flush_anr(ANR a) {
+  memset(a->d, 0, sizeof(double) * ANR_DLINE_SIZE);
+  memset(a->w, 0, sizeof(double) * ANR_DLINE_SIZE);
   a->in_idx = 0;
 }
 
-void setBuffers_anr (ANR a, double* in, double* out) {
+void setBuffers_anr(ANR a, double* in, double* out) {
   a->in_buff = in;
   a->out_buff = out;
 }
 
-void setSamplerate_anr (ANR a, int rate) {
+void setSamplerate_anr(ANR a, int rate) {
   flush_anr(a);
 }
 
-void setSize_anr (ANR a, int size) {
+void setSize_anr(ANR a, int size) {
   a->buff_size = size;
   flush_anr(a);
 }
@@ -151,69 +151,69 @@ void setSize_anr (ANR a, int size) {
 ********************************************************************************************************/
 
 PORT void
-SetRXAANRRun (int channel, int run) {
+SetRXAANRRun(int channel, int run) {
   ANR a = rxa[channel].anr.p;
 
   if (a->run != run) {
-    RXAbp1Check (channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
-                 rxa[channel].emnr.p->run, rxa[channel].anf.p->run, run,
-                 rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
-    EnterCriticalSection (&ch[channel].csDSP);
+    RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
+                rxa[channel].emnr.p->run, rxa[channel].anf.p->run, run,
+                rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
+    EnterCriticalSection(&ch[channel].csDSP);
     a->run = run;
-    RXAbp1Set (channel);
-    flush_anr (a);
-    LeaveCriticalSection (&ch[channel].csDSP);
+    RXAbp1Set(channel);
+    flush_anr(a);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 }
 
 PORT void
-SetRXAANRVals (int channel, int taps, int delay, double gain, double leakage) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANRVals(int channel, int taps, int delay, double gain, double leakage) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anr.p->n_taps = taps;
   rxa[channel].anr.p->delay = delay;
   rxa[channel].anr.p->two_mu = gain;
   rxa[channel].anr.p->gamma = leakage;
-  flush_anr (rxa[channel].anr.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anr(rxa[channel].anr.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANRTaps (int channel, int taps) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANRTaps(int channel, int taps) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anr.p->n_taps = taps;
-  flush_anr (rxa[channel].anr.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anr(rxa[channel].anr.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANRDelay (int channel, int delay) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANRDelay(int channel, int delay) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anr.p->delay = delay;
-  flush_anr (rxa[channel].anr.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anr(rxa[channel].anr.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANRGain (int channel, double gain) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANRGain(int channel, double gain) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anr.p->two_mu = gain;
-  flush_anr (rxa[channel].anr.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anr(rxa[channel].anr.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANRLeakage (int channel, double leakage) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANRLeakage(int channel, double leakage) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anr.p->gamma = leakage;
-  flush_anr (rxa[channel].anr.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anr(rxa[channel].anr.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
-SetRXAANRPosition (int channel, int position) {
-  EnterCriticalSection (&ch[channel].csDSP);
+SetRXAANRPosition(int channel, int position) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].anr.p->position = position;
   rxa[channel].bp1.p->position = position;
-  flush_anr (rxa[channel].anr.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  flush_anr(rxa[channel].anr.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

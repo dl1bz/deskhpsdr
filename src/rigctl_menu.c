@@ -128,7 +128,7 @@ static void rigctl_tcp_enable_cb(GtkWidget *widget, gpointer data) {
 
     if (use_rigctld) {
       rigctl_tcp_andromeda = 0;
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctl_andromeda_btn), rigctl_tcp_andromeda);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctl_andromeda_btn), rigctl_tcp_andromeda);
       gtk_widget_set_sensitive(rigctl_andromeda_btn, FALSE);
       rigctld_enabled = 1;
       launch_rigctld_monitor();
@@ -147,7 +147,7 @@ static void rigctld_btn_cb(GtkWidget *widget, gpointer data) {
 
   if (rigctl_tcp_enable && use_rigctld) {
     rigctl_tcp_andromeda = 0;
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctl_andromeda_btn), rigctl_tcp_andromeda);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctl_andromeda_btn), rigctl_tcp_andromeda);
     rigctld_enabled = 1;
     launch_rigctld_monitor();
     gtk_widget_set_sensitive(rigctl_andromeda_btn, FALSE);
@@ -187,7 +187,7 @@ static void tcp_andromeda_cb(GtkWidget *widget, gpointer data) {
   if (rigctl_tcp_enable && rigctl_tcp_andromeda) {
     rigctld_enabled = 0;
     use_rigctld = 0;
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctld_btn), use_rigctld);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctld_btn), use_rigctld);
     gtk_widget_set_sensitive(rigctld_btn, FALSE);
   } else {
     gtk_widget_set_sensitive(rigctld_btn, TRUE);
@@ -252,7 +252,7 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
       launch_serptt();
     }
 
-    g_idle_add(rigctl_reload_menu, NULL); // execute in main thread
+    g_idle_add(rigctl_reload_menu, NULL);  // execute in main thread
   }
 
   t_print("%s: Serial enable : ID=%d Enabled=%d\n", __func__, id, SerialPorts[id].enable);
@@ -335,7 +335,7 @@ static int tci_txaudio_scale_to_index(double scale) {
 }
 
 static void tci_txaudio_gain_cb(GtkWidget *widget, gpointer data) {
-  RECEIVER *rx = (RECEIVER *)data;
+  RECEIVER *rx = (RECEIVER*) data;
 
   switch (gtk_combo_box_get_active(GTK_COMBO_BOX(widget))) {
   default:
@@ -361,7 +361,7 @@ static void tci_txaudio_gain_cb(GtkWidget *widget, gpointer data) {
 
 #ifdef PORTAUDIO
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int *) data;
+  int *value = (int*) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (tci_audio_monitor) {
@@ -383,16 +383,16 @@ void rigctl_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - CAT/TCI", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   int row = 0;
   w = gtk_button_new_with_label("Close");
   gtk_widget_set_name(w, "close_button");
-  g_signal_connect (w, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(w, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 2, 1);
   w = gtk_check_button_new_with_label("Enable CAT/TCI Debug Logging");
   gtk_widget_set_name(w, "boldlabel");
@@ -400,7 +400,7 @@ void rigctl_menu(GtkWidget *parent) {
                               "Enable more debug output for CAT communications\n"
                               "Use it carefully - log level and logfile will be\n"
                               "drastically increased !");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_debug);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), rigctl_debug);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 2, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(rigctl_debug_cb), NULL);
   GtkWidget *block_cat_rx_if_tune_btn = gtk_check_button_new_with_label("Block [RX] CAT command during TUNE");
@@ -410,7 +410,7 @@ void rigctl_menu(GtkWidget *parent) {
                               "if they do not switch to [TX] on their own.\n"
                               "In this case, any active TUNE process is stopped immediately.\n");
   gtk_widget_set_name(block_cat_rx_if_tune_btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (block_cat_rx_if_tune_btn), block_cat_rx_if_tune);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(block_cat_rx_if_tune_btn), block_cat_rx_if_tune);
   gtk_grid_attach(GTK_GRID(grid), block_cat_rx_if_tune_btn, 4, row, 2, 1);
   g_signal_connect(block_cat_rx_if_tune_btn, "toggled", G_CALLBACK(block_cat_rx_if_tune_cb), NULL);
   row++;
@@ -423,7 +423,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_halign(w, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
   rigctl_port_select = gtk_spin_button_new_with_range(1025, 65535, 1);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(rigctl_port_select), (double)rigctl_tcp_port);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(rigctl_port_select), (double) rigctl_tcp_port);
   gtk_grid_attach(GTK_GRID(grid), rigctl_port_select, 1, row, 1, 1);
   g_signal_connect(rigctl_port_select, "value_changed", G_CALLBACK(rigctl_value_changed_cb), NULL);
 
@@ -443,7 +443,7 @@ void rigctl_menu(GtkWidget *parent) {
                               "Use |Hamlib NET rigctl| as rig selection\n"
                               "and 127.0.0.1:4533 as port in the app\n\n"
                               "CW keying over CAT with rigctld is supported");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctld_btn), use_rigctld);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctld_btn), use_rigctld);
   gtk_grid_attach(GTK_GRID(grid), rigctld_btn, 3, row, 2, 1);
   g_signal_connect(rigctld_btn, "toggled", G_CALLBACK(rigctld_btn_cb), NULL);
 
@@ -459,13 +459,13 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_tooltip_text(w,
                               "Enable network CAT port\nwith Kenwood TS2000 emulation as default\n(can be changed to Andromeda SDR emulation)");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_tcp_enable);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), rigctl_tcp_enable);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(rigctl_tcp_enable_cb), NULL);
   rigctl_andromeda_btn = gtk_check_button_new_with_label("Andromeda");
   gtk_widget_set_name(rigctl_andromeda_btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rigctl_andromeda_btn), rigctl_tcp_andromeda);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctl_andromeda_btn), rigctl_tcp_andromeda);
   gtk_grid_attach(GTK_GRID(grid), rigctl_andromeda_btn, 5, row, 1, 1);
   g_signal_connect(rigctl_andromeda_btn, "toggled", G_CALLBACK(tcp_andromeda_cb), NULL);
 
@@ -480,7 +480,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_show(rigctl_andromeda_btn);
   w = gtk_check_button_new_with_label("AutoRprt");
   gtk_widget_set_name(w, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), rigctl_tcp_autoreporting);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), rigctl_tcp_autoreporting);
   gtk_grid_attach(GTK_GRID(grid), w, 6, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tcp_autoreporting_cb), NULL);
 
@@ -491,7 +491,7 @@ void rigctl_menu(GtkWidget *parent) {
     //
     // If this serial port is used internally in a G2 simply state port name
     //
-    snprintf (str, 64, "Serial");
+    snprintf(str, 64, "Serial");
     w = gtk_label_new(str);
     gtk_widget_set_name(w, "boldlabel");
     gtk_widget_set_halign(w, GTK_ALIGN_END);
@@ -534,19 +534,19 @@ void rigctl_menu(GtkWidget *parent) {
       g_signal_connect(serial_baud[i], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(i));
       serial_enable[i] = gtk_check_button_new_with_label("Enable");
       gtk_widget_set_name(serial_enable[i], "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[i]), SerialPorts[i].enable);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[i]), SerialPorts[i].enable);
       gtk_grid_attach(GTK_GRID(grid), serial_enable[i], 4, row, 1, 1);
       g_signal_connect(serial_enable[i], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(i));
       w = gtk_check_button_new_with_label("Andromeda");
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_tooltip_text(w,
                                   "Use Apache Labs Andromeda SDR CAT emulation\ninstead of the Kenwood TS2000 CAT emulation");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), SerialPorts[i].andromeda);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), SerialPorts[i].andromeda);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(andromeda_cb), GINT_TO_POINTER(i));
       w = gtk_check_button_new_with_label("AutoRprt");
       gtk_widget_set_name(w, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), SerialPorts[i].autoreporting);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), SerialPorts[i].autoreporting);
       gtk_grid_attach(GTK_GRID(grid), w, 6, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(serial_autoreporting_cb), GINT_TO_POINTER(i));
     } else {
@@ -554,8 +554,8 @@ void rigctl_menu(GtkWidget *parent) {
       // If the Serial port is used for the G2 panel, just report port name.
       // If it is not enabled, this means the initial launch_serial() failed.
       //
-      snprintf (str, 64, "%s %s for G2-internal communication", SerialPorts[i].port,
-                SerialPorts[i].enable ? "used" : "failed");
+      snprintf(str, 64, "%s %s for G2-internal communication", SerialPorts[i].port,
+               SerialPorts[i].enable ? "used" : "failed");
       w = gtk_label_new(str);
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
@@ -571,7 +571,7 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_widget_set_size_request(w, -1, 3);
     gtk_grid_attach(GTK_GRID(grid), w, 0, row, 7, 1);
     row++;
-    snprintf (str, 64, "Serial");
+    snprintf(str, 64, "Serial");
     w = gtk_label_new(str);
     gtk_widget_set_name(w, "boldlabel_blue");
     gtk_widget_set_halign(w, GTK_ALIGN_END);
@@ -603,29 +603,29 @@ void rigctl_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL], 3, row, 1, 1);
     g_signal_connect(serial_baud[MAX_SERIAL], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_enable[MAX_SERIAL] =
-      gtk_check_button_new_with_label("Set RTS active during TUNE\nSet DTR active as PTT output");
+            gtk_check_button_new_with_label("Set RTS active during TUNE\nSet DTR active as PTT output");
     gtk_widget_set_name(serial_enable[MAX_SERIAL], "boldlabel_blue");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL]), SerialPorts[MAX_SERIAL].enable);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[MAX_SERIAL]), SerialPorts[MAX_SERIAL].enable);
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_swapRtsDtr[MAX_SERIAL] =
-      gtk_check_button_new_with_label("Swap RTS <-> DTR\n(if required)");
+            gtk_check_button_new_with_label("Swap RTS <-> DTR\n(if required)");
     gtk_widget_set_name(serial_swapRtsDtr[MAX_SERIAL], "boldlabel_blue");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_swapRtsDtr[MAX_SERIAL]), SerialPorts[MAX_SERIAL].swapRtsDtr);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_swapRtsDtr[MAX_SERIAL]), SerialPorts[MAX_SERIAL].swapRtsDtr);
     gtk_grid_attach(GTK_GRID(grid), serial_swapRtsDtr[MAX_SERIAL], 5, row, 1, 1);
     g_signal_connect(serial_swapRtsDtr[MAX_SERIAL], "toggled", G_CALLBACK(serial_swapRtsDtr_cb),
                      GINT_TO_POINTER(MAX_SERIAL));
 
     if (SerialPorts[MAX_SERIAL].enable) {
-      gtk_widget_set_sensitive (serial_swapRtsDtr[MAX_SERIAL], TRUE);
+      gtk_widget_set_sensitive(serial_swapRtsDtr[MAX_SERIAL], TRUE);
     } else {
-      gtk_widget_set_sensitive (serial_swapRtsDtr[MAX_SERIAL], FALSE);
+      gtk_widget_set_sensitive(serial_swapRtsDtr[MAX_SERIAL], FALSE);
     }
 
     //-----------------------------------------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------------------------------------
     row++;
-    snprintf (str, 64, "Serial");
+    snprintf(str, 64, "Serial");
     w = gtk_label_new(str);
     gtk_widget_set_name(w, "boldlabel_blue");
     gtk_widget_set_halign(w, GTK_ALIGN_END);
@@ -657,9 +657,9 @@ void rigctl_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL + 1], 3, row, 1, 1);
     g_signal_connect(serial_baud[MAX_SERIAL + 1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
     serial_enable[MAX_SERIAL + 1] =
-      gtk_check_button_new_with_label("Read RTS & CTS as PTT Input\n(shorten RTS+CTS set PTT active)");
+            gtk_check_button_new_with_label("Read RTS & CTS as PTT Input\n(shorten RTS+CTS set PTT active)");
     gtk_widget_set_name(serial_enable[MAX_SERIAL + 1], "boldlabel_blue");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (serial_enable[MAX_SERIAL + 1]), SerialPorts[MAX_SERIAL + 1].enable);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[MAX_SERIAL + 1]), SerialPorts[MAX_SERIAL + 1].enable);
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL + 1], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL + 1], "toggled", G_CALLBACK(serial_enable_cb),
                      GINT_TO_POINTER(MAX_SERIAL + 1));
@@ -678,7 +678,7 @@ void rigctl_menu(GtkWidget *parent) {
   tci_port_select = gtk_spin_button_new_with_range(1025, 65535, 1);
   gtk_widget_set_tooltip_text(tci_port_select, "Select TCI port\n"
                                                "(only accessible if TCI is OFF)");
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tci_port_select), (double)tci_port);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tci_port_select), (double) tci_port);
   gtk_grid_attach(GTK_GRID(grid), tci_port_select, 1, row, 1, 1);
   g_signal_connect(tci_port_select, "value_changed", G_CALLBACK(tci_port_changed_cb), NULL);
 
@@ -693,7 +693,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(w, "Enable / Disable TCI\n"
                                  "For change the TCI server port TCI\n"
                                  "need to be switched OFF");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_enable);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_enable);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_enable_cb), NULL);
@@ -727,7 +727,7 @@ void rigctl_menu(GtkWidget *parent) {
   col++;
   w = gtk_check_button_new_with_label("Report TX Frequency Only");
   gtk_widget_set_name(w, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_txonly);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_txonly);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_txonly_changed_cb), NULL);
@@ -740,7 +740,7 @@ void rigctl_menu(GtkWidget *parent) {
                               "of an application which send TCI audio to deskHPSDR.");
   gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_halign(w, GTK_ALIGN_START);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), tci_audio_monitor);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_audio_monitor);
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(chkbtn_toggle_cb), &tci_audio_monitor);
 #endif

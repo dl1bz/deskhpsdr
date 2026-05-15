@@ -40,7 +40,7 @@ extern void start_tx(void);
 extern void start_diversity(void);
 extern void start_ps(void);
 extern void encoder_step(int encoder, int step);
-extern int menu_active_receiver_changed(void *data);
+extern int menu_active_receiver_changed(void* data);
 
 enum _active_menu {
   NO_MENU = 0,
@@ -55,4 +55,4 @@ enum _active_menu {
 };
 
 extern int active_menu;
-static const char * const PGNAME = "deskHPSDR";
+static const char *const PGNAME = "deskHPSDR";

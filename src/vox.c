@@ -99,7 +99,7 @@ void update_vox(TRANSMITTER *tx) {
       }
 
       // re-init "vox hang" time
-      vox_timeout = g_timeout_add((int)vox_hang, vox_timeout_cb, NULL);
+      vox_timeout = g_timeout_add((int) vox_hang, vox_timeout_cb, NULL);
     }
 
     // if peak is not above threshold, do nothing (this shall be done later in the timeout event

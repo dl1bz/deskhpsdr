@@ -69,7 +69,7 @@ void toolset_init(void) {
   g_mutex_init(&solar_data_mutex);
 }
 
-void get_screen_size(int *width, int *height) {
+void get_screen_size(int* width, int* height) {
   if (!width || !height) { return; }
 
   *width = *height = 0;
@@ -92,7 +92,7 @@ int x, y;
 get_main_window_position(GTK_WINDOW(top_window), &x, &y);
 printf("Main window at %d,%d\n", x, y);
 */
-void get_window_position(GtkWindow *window, int *x, int *y) {
+void get_window_position(GtkWindow *window, int* x, int* y) {
   if (!window || !x || !y) { return; }
 
   *x = *y = 0;
@@ -100,7 +100,7 @@ void get_window_position(GtkWindow *window, int *x, int *y) {
   gtk_window_get_position(window, x, y);
 }
 
-void get_window_geometry(GtkWindow *widget, int *x, int *y, int *width, int *height) {
+void get_window_geometry(GtkWindow *widget, int* x, int* y, int* width, int* height) {
   if (!widget || !x || !y || !width || !height) { return; }
 
   *x = *y = *width = *height = 0;
@@ -227,9 +227,9 @@ int https_ok(const char* hostname, int mit_cert_check) {
   addr.sin_port = htons(443);
   // addr.sin_addr = *((struct in_addr*)host->h_addr);
   memcpy(&addr.sin_addr, host->h_addr, sizeof(struct in_addr));
-  memset(&(addr.sin_zero), 0, 8);
+  memset(& (addr.sin_zero), 0, 8);
 
-  if (connect(server, (struct sockaddr * )&addr, sizeof(addr)) < 0) {
+  if (connect(server, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     close(server);
     SSL_CTX_free(ctx);
     return 0;
@@ -307,8 +307,8 @@ static void *solar_thread_func(void *arg) {
 }
 */
 
-static void *solar_thread_func(void *arg) {
-  int is_dbg = (int)(intptr_t)arg;
+static void *solar_thread_func(void* arg) {
+  int is_dbg = (int)(intptr_t) arg;
   // int is_dbg = GPOINTER_TO_INT(arg);
   const char *host = "www.hamqsl.com";
   // threadsicheren Timestamp bauen
@@ -334,7 +334,7 @@ static void *solar_thread_func(void *arg) {
   if (sd.sunspots != -1) {
     g_mutex_lock(&solar_data_mutex);
     sunspots   = sd.sunspots;
-    solar_flux = (int)sd.solarflux;
+    solar_flux = (int) sd.solarflux;
     a_index    = sd.aindex;
     k_index    = sd.kindex;
     g_strlcpy(geomagfield, sd.geomagfield, sizeof(geomagfield));
@@ -377,7 +377,7 @@ static void assign_solar_data_async(int is_dbg) {
 static void assign_solar_data_async(int is_dbg) {
   pthread_t solar_thread;
 
-  if (pthread_create(&solar_thread, NULL, solar_thread_func, (void * )(intptr_t)is_dbg) == 0) {
+  if (pthread_create(&solar_thread, NULL, solar_thread_func, (void *)(intptr_t) is_dbg) == 0) {
     pthread_detach(solar_thread);  // kein join nötig
   } else {
     t_print("%s: ERROR: solar_data_fetch thread not started...\n", __func__);
@@ -400,36 +400,36 @@ void check_and_run(int is_dbg) {
     // Beim ersten Mal oder bei neuer x-Minuten-Marke
     if (first_run || is_minute_marker(aller_x_min)) {
       // assign_solar_data(is_dbg);
-      assign_solar_data_async(is_dbg); // nicht mehr direkt aufrufen! jetzt als Thread
+      assign_solar_data_async(is_dbg);  // nicht mehr direkt aufrufen! jetzt als Thread
       first_run = FALSE;
     }
   }
 }
 
 // Funktion zum Kürzen des Textes
-const char* truncate_text(const char* text, size_t max_length) {
+const char *truncate_text(const char* text, size_t max_length) {
   static char truncated[128];  // Ein statisches Array für den gekürzten Text
 
   if (strlen(text) > max_length) {
     g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
   } else {
-    g_strlcpy(truncated, text, sizeof(truncated));  // Sicheres Kopieren des Textes
+    g_strlcpy(truncated, text, sizeof(truncated));    // Sicheres Kopieren des Textes
   }
 
   return truncated;
 }
 
-char* truncate_text_malloc(const char* text, size_t max_length) {
+char *truncate_text_malloc(const char* text, size_t max_length) {
   size_t len = strlen(text);
 
   if (len > max_length) { len = max_length; }
 
-  char* truncated = g_malloc(len + 1);  // +1 für '\0'
+  char *truncated = g_malloc(len + 1);  // +1 für '\0'
   g_strlcpy(truncated, text, len + 1);  // sicheres Kopieren
   return truncated;  // muss mit g_free() freigegeben werden
 }
 
-char* truncate_text_3p(const char* text, size_t max_length) {
+char *truncate_text_3p(const char* text, size_t max_length) {
   size_t len = strlen(text);
 
   if (len <= max_length) {
@@ -444,7 +444,7 @@ char* truncate_text_3p(const char* text, size_t max_length) {
   }
 
   size_t cut_len = max_length - 3;  // Platz für Text ohne die drei Punkte
-  char* truncated = g_malloc(max_length + 1);  // +1 für '\0'
+  char *truncated = g_malloc(max_length + 1);  // +1 für '\0'
   g_strlcpy(truncated, text, cut_len + 1);     // +1, weil g_strlcpy inkl. Nullbyte
   strcat(truncated, "...");  // Anhängen
   return truncated;  // Muss mit g_free() freigegeben werden
@@ -456,7 +456,7 @@ gboolean check_and_run_idle_cb(gpointer data) {
   return FALSE; // Nur einmal ausführen
 }
 
-void to_uppercase(char *str) {
+void to_uppercase(char* str) {
   while (*str) {
     if (*str >= 'a' && *str <= 'z') {
       *str = *str - 32;
@@ -466,14 +466,14 @@ void to_uppercase(char *str) {
   }
 }
 
-int file_present(const char *filename) {
+int file_present(const char* filename) {
   return (access(filename, F_OK) == 0) ? 1 : 0;
 }
 
-const char* extract_short_msg(const char *msg) {
+const char *extract_short_msg(const char* msg) {
   const char *s = strrchr(msg, ':');
 
-  if (s && *(s + 1)) {
+  if (s && * (s + 1)) {
     s += 1;
 
     while (*s == ' ') { s++; }
@@ -486,16 +486,16 @@ const char* extract_short_msg(const char *msg) {
 
 static const TRANSMITTER *tx_ctx;
 
-static int cmp_cfc_idx(const void *xa, const void *xb) {
-  int i = *(const int*)xa;
-  int j = *(const int*)xb;
+static int cmp_cfc_idx(const void* xa, const void* xb) {
+  int i = * (const int*) xa;
+  int j = * (const int*) xb;
   return (tx_ctx->cfc_freq[i] > tx_ctx->cfc_freq[j]) -
          (tx_ctx->cfc_freq[i] < tx_ctx->cfc_freq[j]);
 }
 
-static int cmp_tx_eq_idx(const void *xa, const void *xb) {
-  int i = *(const int*)xa;
-  int j = *(const int*)xb;
+static int cmp_tx_eq_idx(const void* xa, const void* xb) {
+  int i = * (const int*) xa;
+  int j = * (const int*) xb;
   return (tx_ctx->eq_freq[i] > tx_ctx->eq_freq[j]) -
          (tx_ctx->eq_freq[i] < tx_ctx->eq_freq[j]);
 }

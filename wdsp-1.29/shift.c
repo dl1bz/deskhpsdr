@@ -26,14 +26,14 @@ warren@wpratt.com
 
 #include "comm.h"
 
-void calc_shift (SHIFT a) {
+void calc_shift(SHIFT a) {
   a->delta = TWOPI * a->shift / a->rate;
-  a->cos_delta = cos (a->delta);
-  a->sin_delta = sin (a->delta);
+  a->cos_delta = cos(a->delta);
+  a->sin_delta = sin(a->delta);
 }
 
-SHIFT create_shift (int run, int size, double* in, double* out, int rate, double fshift) {
-  SHIFT a = (SHIFT) malloc0 (sizeof (shift));
+SHIFT create_shift(int run, int size, double* in, double* out, int rate, double fshift) {
+  SHIFT a = (SHIFT) malloc0(sizeof(shift));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -41,24 +41,24 @@ SHIFT create_shift (int run, int size, double* in, double* out, int rate, double
   a->rate = (double)rate;
   a->shift = fshift;
   a->phase = 0.0;
-  calc_shift (a);
+  calc_shift(a);
   return a;
 }
 
-void destroy_shift (SHIFT a) {
-  _aligned_free (a);
+void destroy_shift(SHIFT a) {
+  _aligned_free(a);
 }
 
-void flush_shift (SHIFT a) {
+void flush_shift(SHIFT a) {
   a->phase = 0.0;
 }
 
-void xshift (SHIFT a) {
+void xshift(SHIFT a) {
   if (a->run) {
     int i;
     double I1, Q1, t1, t2;
-    double cos_phase = cos (a->phase);
-    double sin_phase = sin (a->phase);
+    double cos_phase = cos(a->phase);
+    double sin_phase = sin(a->phase);
 
     for (i = 0; i < a->size; i++) {
       I1 = a->in[2 * i + 0];
@@ -73,10 +73,10 @@ void xshift (SHIFT a) {
 
       if (a->phase >= TWOPI) { a->phase -= TWOPI; }
 
-      if (a->phase <   0.0 ) { a->phase += TWOPI; }
+      if (a->phase <   0.0) { a->phase += TWOPI; }
     }
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 }
 
@@ -85,15 +85,15 @@ void setBuffers_shift(SHIFT a, double* in, double* out) {
   a->out = out;
 }
 
-void setSamplerate_shift (SHIFT a, int rate) {
+void setSamplerate_shift(SHIFT a, int rate) {
   a->rate = rate;
   a->phase = 0.0;
   calc_shift(a);
 }
 
-void setSize_shift (SHIFT a, int size) {
+void setSize_shift(SHIFT a, int size) {
   a->size = size;
-  flush_shift (a);
+  flush_shift(a);
 }
 
 /********************************************************************************************************
@@ -103,16 +103,16 @@ void setSize_shift (SHIFT a, int size) {
 ********************************************************************************************************/
 
 PORT
-void SetRXAShiftRun (int channel, int run) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXAShiftRun(int channel, int run) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].shift.p->run = run;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAShiftFreq (int channel, double fshift) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXAShiftFreq(int channel, double fshift) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].shift.p->shift = fshift;
-  calc_shift (rxa[channel].shift.p);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  calc_shift(rxa[channel].shift.p);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

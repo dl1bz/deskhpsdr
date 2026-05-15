@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-void calc_cbl (CBL a) {
+void calc_cbl(CBL a) {
   a->prevIin  = 0.0;
   a->prevQin  = 0.0;
   a->prevIout = 0.0;
@@ -36,15 +36,15 @@ void calc_cbl (CBL a) {
 
 CBL create_cbl
 (
-  int run,
-  int buff_size,
-  double *in_buff,
-  double *out_buff,
-  int mode,
-  int sample_rate,
-  double tau
+        int run,
+        int buff_size,
+        double *in_buff,
+        double *out_buff,
+        int mode,
+        int sample_rate,
+        double tau
 ) {
-  CBL a = (CBL) malloc0 (sizeof(cbl));
+  CBL a = (CBL) malloc0(sizeof(cbl));
   a->run = run;
   a->buff_size = buff_size;
   a->in_buff = in_buff;
@@ -52,22 +52,22 @@ CBL create_cbl
   a->mode = mode;
   a->sample_rate = (double)sample_rate;
   a->tau = tau;
-  calc_cbl (a);
+  calc_cbl(a);
   return a;
 }
 
 void destroy_cbl(CBL a) {
-  _aligned_free (a);
+  _aligned_free(a);
 }
 
-void flush_cbl (CBL a) {
+void flush_cbl(CBL a) {
   a->prevIin  = 0.0;
   a->prevQin  = 0.0;
   a->prevIout = 0.0;
   a->prevQout = 0.0;
 }
 
-void xcbl (CBL a) {
+void xcbl(CBL a) {
   if (a->run) {
     int i;
     double tempI, tempQ;
@@ -85,23 +85,23 @@ void xcbl (CBL a) {
       if (fabs(a->prevQout = a->out_buff[2 * i + 1]) < 1.0e-100) { a->prevQout = 0.0; }
     }
   } else if (a->in_buff != a->out_buff) {
-    memcpy (a->out_buff, a->in_buff, a->buff_size * sizeof (complex));
+    memcpy(a->out_buff, a->in_buff, a->buff_size * sizeof(complex));
   }
 }
 
-void setBuffers_cbl (CBL a, double* in, double* out) {
+void setBuffers_cbl(CBL a, double* in, double* out) {
   a->in_buff = in;
   a->out_buff = out;
 }
 
-void setSamplerate_cbl (CBL a, int rate) {
+void setSamplerate_cbl(CBL a, int rate) {
   a->sample_rate = rate;
-  calc_cbl (a);
+  calc_cbl(a);
 }
 
-void setSize_cbl (CBL a, int size) {
+void setSize_cbl(CBL a, int size) {
   a->buff_size = size;
-  flush_cbl (a);
+  flush_cbl(a);
 }
 
 /********************************************************************************************************
@@ -112,7 +112,7 @@ void setSize_cbl (CBL a, int size) {
 
 PORT void
 SetRXACBLRun(int channel, int setit) {
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].cbl.p->run = setit;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

@@ -134,7 +134,7 @@ static void reload_css_cb(GtkWidget *widget, gpointer data) {
 
 
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int *) data;
+  int *value = (int*) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   schedule_general();
   schedule_transmit_specific();
@@ -279,7 +279,7 @@ static void display_levels_cb(GtkWidget *widget, gpointer data) {
     if (!transmitter->show_levels) {
       g_signal_handler_block(b_display_af_peak, b_af_peak_signal_id);
       transmitter->show_af_peak = 0;
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_af_peak), transmitter->show_af_peak);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_af_peak), transmitter->show_af_peak);
       g_signal_handler_unblock(b_display_af_peak, b_af_peak_signal_id);
       gtk_widget_set_sensitive(b_display_af_peak, FALSE);
       gtk_widget_set_sensitive(b_use_levels_popup, FALSE);
@@ -327,7 +327,7 @@ static void b_inner_levels_popup_cb(GtkWidget *widget, gpointer data) {
 #endif
 
 static void bg_colour_set(GtkColorButton *btn, gpointer user_data) {
-  cairo_rgba_t *c = (cairo_rgba_t *)user_data;
+  cairo_rgba_t *c = (cairo_rgba_t*) user_data;
   GdkRGBA g;
   gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
   c->r = g.red;
@@ -338,7 +338,7 @@ static void bg_colour_set(GtkColorButton *btn, gpointer user_data) {
 }
 
 static void win_bg_colour_set(GtkColorButton *btn, gpointer user_data) {
-  cairo_rgba_t *c = (cairo_rgba_t *)user_data;
+  cairo_rgba_t *c = (cairo_rgba_t*) user_data;
   GdkRGBA g;
   gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
   c->r = g.red;
@@ -394,26 +394,26 @@ void screen_menu(GtkWidget *parent) {
   char _title[64];
   snprintf(_title, sizeof(_title), "%s - Screen Options & Layout", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   int row = 0;
   int col = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   GtkWidget *css_button_grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(css_button_grid), TRUE);
   // gtk_grid_set_row_homogeneous(GTK_GRID(css_button_grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(css_button_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(css_button_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(css_button_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(css_button_grid), 5);
   //--------------------------------------------------------------------------------------------
   GtkWidget *save_css_btn = gtk_button_new_with_label("Save CSS");
   gtk_widget_set_tooltip_text(save_css_btn,
@@ -489,7 +489,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_margin_start(ChkBtn_tscreen, 20);    // linker Rand (Anfang)
   gtk_widget_set_tooltip_text(ChkBtn_tscreen,
                               "Change the design of some buttons and\nsliders for easier use with a touch screen");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn_tscreen), optimize_for_touchscreen);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_tscreen), optimize_for_touchscreen);
   gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 1, 1);
   g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &optimize_for_touchscreen);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -619,20 +619,20 @@ void screen_menu(GtkWidget *parent) {
   //---------------------------------------------------------------------------------------------------
   row++;
   GtkWidget *b_display_zoompan = gtk_check_button_new_with_label("Display Zoom/Pan");
-  gtk_widget_set_name (b_display_zoompan, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_zoompan), display_zoompan);
+  gtk_widget_set_name(b_display_zoompan, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_zoompan), display_zoompan);
   gtk_widget_show(b_display_zoompan);
   gtk_grid_attach(GTK_GRID(grid), b_display_zoompan, 0, row, 1, 1);
   g_signal_connect(b_display_zoompan, "toggled", G_CALLBACK(display_zoompan_cb), NULL);
   GtkWidget *b_display_sliders = gtk_check_button_new_with_label("Display Sliders");
-  gtk_widget_set_name (b_display_sliders, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_sliders), display_sliders);
+  gtk_widget_set_name(b_display_sliders, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_sliders), display_sliders);
   gtk_widget_show(b_display_sliders);
   gtk_grid_attach(GTK_GRID(grid), b_display_sliders, 1, row, 1, 1);
   g_signal_connect(b_display_sliders, "toggled", G_CALLBACK(display_sliders_cb), NULL);
   GtkWidget *b_display_toolbar = gtk_check_button_new_with_label("Display Toolbar");
-  gtk_widget_set_name (b_display_toolbar, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_toolbar), display_toolbar);
+  gtk_widget_set_name(b_display_toolbar, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_toolbar), display_toolbar);
   gtk_widget_show(b_display_toolbar);
   gtk_grid_attach(GTK_GRID(grid), b_display_toolbar, 2, row, 1, 1);
   g_signal_connect(b_display_toolbar, "toggled", G_CALLBACK(display_toolbar_cb), NULL);
@@ -640,7 +640,7 @@ void screen_menu(GtkWidget *parent) {
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit) {
     display_extras_btn = gtk_check_button_new_with_label("Display Extras");
-    gtk_widget_set_name (display_extras_btn, "boldlabel_blue");
+    gtk_widget_set_name(display_extras_btn, "boldlabel_blue");
     gtk_grid_attach(GTK_GRID(grid), display_extras_btn, 3, row, 1, 1);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(display_extras_btn), display_extra_sliders);
     int row_to_hide = 2; // from sliders.c
@@ -651,15 +651,15 @@ void screen_menu(GtkWidget *parent) {
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   row++;
   GtkWidget *b_display_warnings = gtk_check_button_new_with_label("Display Warnings");
-  gtk_widget_set_name (b_display_warnings, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_warnings), display_warnings);
+  gtk_widget_set_name(b_display_warnings, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_warnings), display_warnings);
   gtk_widget_show(b_display_warnings);
   gtk_grid_attach(GTK_GRID(grid), b_display_warnings, 0, row, 1, 1);
   g_signal_connect(b_display_warnings, "toggled", G_CALLBACK(display_warnings_cb), NULL);
   //------------------------------------------------------------------------------------------
   GtkWidget *b_display_pacurr = gtk_check_button_new_with_label("Display PA current");
-  gtk_widget_set_name (b_display_pacurr, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_pacurr), display_pacurr);
+  gtk_widget_set_name(b_display_pacurr, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_pacurr), display_pacurr);
   gtk_widget_show(b_display_pacurr);
   gtk_grid_attach(GTK_GRID(grid), b_display_pacurr, 1, row, 1, 1);
   g_signal_connect(b_display_pacurr, "toggled", G_CALLBACK(display_pacurr_cb), NULL);
@@ -670,7 +670,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(b_save_zoom_state, "boldlabel_blue");
   gtk_widget_set_tooltip_text(b_save_zoom_state, "Enabled:  Save the current zoom level for next app start\n"
                                                  "Disabled: Start the app always with zoom level = 1");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_save_zoom_state), save_zoom_state);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_save_zoom_state), save_zoom_state);
   gtk_widget_show(b_save_zoom_state);
   gtk_grid_attach(GTK_GRID(grid), b_save_zoom_state, 0, row, 1, 1);
   g_signal_connect(b_save_zoom_state, "toggled", G_CALLBACK(save_zoom_state_cb), NULL);
@@ -680,7 +680,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(b_pan_peak_preserve,
                               "Uses a local peak detector to preserve narrow signals in the panadapter display.\n"
                               "Improves visibility at high zoom levels but slightly modifies exact amplitudes.");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_pan_peak_preserve), active_receiver->pan_peak_preserve);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_peak_preserve), active_receiver->pan_peak_preserve);
   gtk_widget_show(b_pan_peak_preserve);
   gtk_grid_attach(GTK_GRID(grid), b_pan_peak_preserve, 1, row, 1, 1);
   g_signal_connect(b_pan_peak_preserve, "toggled", G_CALLBACK(pan_peak_preserve_cb), NULL);
@@ -717,14 +717,14 @@ void screen_menu(GtkWidget *parent) {
   double combobox_sr = 0.0;
 
   if (active_receiver != NULL) {
-    combobox_sr = (double)active_receiver->sample_rate;
+    combobox_sr = (double) active_receiver->sample_rate;
   }
 
   for (int i = 0; i < 5; i++) {
     char buf[32];
 
     if (combobox_sr > 0.0) {
-      snprintf(buf, sizeof(buf), "%d = %.3f Hz", fft_base, combobox_sr / (double)fft_base);
+      snprintf(buf, sizeof(buf), "%d = %.3f Hz", fft_base, combobox_sr / (double) fft_base);
     } else {
       snprintf(buf, sizeof(buf), "%d", fft_base);
     }
@@ -781,14 +781,14 @@ void screen_menu(GtkWidget *parent) {
       gtk_label_set_markup(GTK_LABEL(label_levels), "<u>TX Audio Levels Display Settings</u>");
     }
 
-    gtk_widget_set_name (label_levels, "boldlabel_blue");
+    gtk_widget_set_name(label_levels, "boldlabel_blue");
     gtk_widget_set_halign(label_levels, GTK_ALIGN_START);
     gtk_widget_set_margin_start(label_levels, 5);
     gtk_grid_attach(GTK_GRID(grid), label_levels, 0, row, 2, 1);
     gtk_widget_show(label_levels);
     row++;
     GtkWidget *b_display_levels = gtk_check_button_new_with_label("Display TX AF Levels");
-    gtk_widget_set_name (b_display_levels, "boldlabel_blue");
+    gtk_widget_set_name(b_display_levels, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_display_levels,
                                 "ONLY DURING TX = ACTIVE\n(except selected mode CW-L/CW-U/DIGI-U/DIGI-L):\n"
                                 "Show an additional window displaying all critical\nTX audio chain levels in realtime.\n"
@@ -799,15 +799,15 @@ void screen_menu(GtkWidget *parent) {
                                 "All audio levels must remain below the red segment to avoid distortion,"
                                 "the maximum level should be kept within the green segment.\n\n"
                                 "It's essential to correctly adjust EVERY part of the TX audio chain !");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_levels), transmitter->show_levels);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_levels), transmitter->show_levels);
     gtk_widget_show(b_display_levels);
     gtk_grid_attach(GTK_GRID(grid), b_display_levels, 0, row, 1, 1);
     g_signal_connect(b_display_levels, "toggled", G_CALLBACK(display_levels_cb), NULL);
     //----------------------------------------------------------------------------------------
     b_display_af_peak = gtk_check_button_new_with_label("Show as Peak");
-    gtk_widget_set_name (b_display_af_peak, "boldlabel_blue");
+    gtk_widget_set_name(b_display_af_peak, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_display_af_peak, "Show TX Audio AF levels as Peak (default is Average)");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_display_af_peak), transmitter->show_af_peak);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_af_peak), transmitter->show_af_peak);
     gtk_widget_show(b_display_af_peak);
     gtk_grid_attach(GTK_GRID(grid), b_display_af_peak, 1, row, 1, 1);
     b_af_peak_signal_id = g_signal_connect(b_display_af_peak, "toggled", G_CALLBACK(display_levels_af_peak_cb), NULL);
@@ -820,7 +820,7 @@ void screen_menu(GtkWidget *parent) {
 
     //----------------------------------------------------------------------------------------
     b_use_levels_popup = gtk_check_button_new_with_label("Use Popup");
-    gtk_widget_set_name (b_use_levels_popup, "boldlabel_blue");
+    gtk_widget_set_name(b_use_levels_popup, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_use_levels_popup, "If ENABLED,\n"
                                                     "show the TX Audio AF levels as Popup instead\n"
                                                     "of a separate, detached window.\n\n"
@@ -832,10 +832,11 @@ void screen_menu(GtkWidget *parent) {
       transmitter->use_levels_popup = 1;
     }
 
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_use_levels_popup), transmitter->use_levels_popup);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_use_levels_popup), transmitter->use_levels_popup);
     gtk_widget_show(b_use_levels_popup);
     gtk_grid_attach(GTK_GRID(grid), b_use_levels_popup, 2, row, 1, 1);
-    b_use_levels_popup_signal_id = g_signal_connect(b_use_levels_popup, "toggled", G_CALLBACK(b_use_levels_popup_cb), NULL);
+    b_use_levels_popup_signal_id = g_signal_connect(b_use_levels_popup, "toggled", G_CALLBACK(b_use_levels_popup_cb),
+                                   NULL);
 
     if (!transmitter->show_levels || use_wayland) {
       gtk_widget_set_sensitive(b_use_levels_popup, FALSE);
@@ -848,7 +849,7 @@ void screen_menu(GtkWidget *parent) {
     //----------------------------------------------------------------------------------------
     if (use_wayland) {
       b_inner_levels_popup = gtk_check_button_new_with_label("Show Popup inside");
-      gtk_widget_set_name (b_inner_levels_popup, "boldlabel_blue");
+      gtk_widget_set_name(b_inner_levels_popup, "boldlabel_blue");
       gtk_widget_set_tooltip_text(b_inner_levels_popup, "Show TX Audio Levels Popup:\n"
                                                         "ENABLED: inside deskHPSDR main window [right in the middle]\n"
                                                         "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
@@ -859,10 +860,11 @@ void screen_menu(GtkWidget *parent) {
         transmitter->inner_levels_popup = 1;
       }
 
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_inner_levels_popup), transmitter->inner_levels_popup);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_inner_levels_popup), transmitter->inner_levels_popup);
       gtk_widget_show(b_inner_levels_popup);
       gtk_grid_attach(GTK_GRID(grid), b_inner_levels_popup, 3, row, 1, 1);
-      b_inner_levels_popup_signal_id = g_signal_connect(b_inner_levels_popup, "toggled", G_CALLBACK(b_inner_levels_popup_cb),
+      b_inner_levels_popup_signal_id = g_signal_connect(b_inner_levels_popup, "toggled",
+                                       G_CALLBACK(b_inner_levels_popup_cb),
                                        NULL);
 
       if (!transmitter->show_levels) {

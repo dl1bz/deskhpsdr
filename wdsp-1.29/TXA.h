@@ -67,14 +67,14 @@ enum txaMeterType {
 };
 
 struct _txa {
-  double* inbuff;
-  double* outbuff;
-  double* midbuff;
+  double *inbuff;
+  double *outbuff;
+  double *midbuff;
   int mode;
   double f_low;
   double f_high;
   double meter[TXA_METERTYPE_LAST];
-  CRITICAL_SECTION* pmtupdate[TXA_METERTYPE_LAST];
+  CRITICAL_SECTION *pmtupdate[TXA_METERTYPE_LAST];
   struct {
     METER p;
   } micmeter, eqmeter, lvlrmeter, cfcmeter, compmeter, alcmeter, outmeter;
@@ -141,30 +141,30 @@ struct _txa {
 
 extern struct _txa txa[];
 
-extern void create_txa (int channel);
+extern void create_txa(int channel);
 
-extern void destroy_txa (int channel);
+extern void destroy_txa(int channel);
 
-extern void flush_txa (int channel);
+extern void flush_txa(int channel);
 
-extern void xtxa (int channel);
+extern void xtxa(int channel);
 
-extern int TXAUslewCheck (int channel);
+extern int TXAUslewCheck(int channel);
 
-extern void setInputSamplerate_txa (int channel);
+extern void setInputSamplerate_txa(int channel);
 
-extern void setOutputSamplerate_txa (int channel);
+extern void setOutputSamplerate_txa(int channel);
 
-extern void setDSPSamplerate_txa (int channel);
+extern void setDSPSamplerate_txa(int channel);
 
-extern void setDSPBuffsize_txa (int channel);
+extern void setDSPBuffsize_txa(int channel);
 
 // TXA Properties
 
-extern __declspec (dllexport) void SetTXAMode (int channel, int mode);
+extern __declspec(dllexport) void SetTXAMode(int channel, int mode);
 
-extern void TXAResCheck (int channel);
+extern void TXAResCheck(int channel);
 
-extern void TXASetupBPFilters (int channel);
+extern void TXASetupBPFilters(int channel);
 
 #endif

@@ -24,4 +24,4 @@ warren@wpratt.com
 
 */
 
-extern double mlog10 (double val);
+extern double mlog10(double val);

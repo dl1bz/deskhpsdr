@@ -63,7 +63,7 @@ static gboolean close_cb(void) {
 
 static void rx_ant_cb(GtkToggleButton *widget, gpointer data) {
   int b = GPOINTER_TO_INT(data);
-  int ant = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  int ant = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   BAND *band = band_get_band(b);
 
   if (hermes_mode == HERMES_MODE_BRICK) {
@@ -76,7 +76,7 @@ static void rx_ant_cb(GtkToggleButton *widget, gpointer data) {
 
 static void tx_ant_cb(GtkToggleButton *widget, gpointer data) {
   int b = GPOINTER_TO_INT(data);
-  int ant = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  int ant = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   BAND *band = band_get_band(b);
 
   if (hermes_mode == HERMES_MODE_BRICK) {
@@ -89,7 +89,7 @@ static void tx_ant_cb(GtkToggleButton *widget, gpointer data) {
 
 #ifdef SOAPYSDR
 static void adc0_antenna_cb(GtkComboBox *widget, gpointer data) {
-  ADC *myadc = (ADC *)data;
+  ADC *myadc = (ADC*) data;
   myadc->antenna = gtk_combo_box_get_active(widget);
   schedule_high_priority();
 
@@ -99,7 +99,7 @@ static void adc0_antenna_cb(GtkComboBox *widget, gpointer data) {
 }
 
 static void dac0_antenna_cb(GtkComboBox *widget, gpointer data) {
-  DAC *mydac = (DAC *)data;
+  DAC *mydac = (DAC*) data;
   mydac->antenna = gtk_combo_box_get_active(widget);
   schedule_high_priority();
 
@@ -118,7 +118,7 @@ static void show_hf(void) {
   GtkWidget *mygrid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(mygrid), FALSE);
   gtk_grid_set_row_homogeneous(GTK_GRID(mygrid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(mygrid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(mygrid), 5);
   label = gtk_label_new("Band");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(mygrid), label, 0, 0, 1, 1);
@@ -224,7 +224,7 @@ static void show_xvtr(void) {
   GtkWidget *mygrid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(mygrid), FALSE);
   gtk_grid_set_row_homogeneous(GTK_GRID(mygrid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(mygrid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(mygrid), 5);
   label = gtk_label_new("Band");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(mygrid), label, 0, 0, 1, 1);
@@ -296,13 +296,13 @@ static void show_xvtr(void) {
 static void hf_rb_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   if (xvtr_container != NULL) { gtk_widget_hide(xvtr_container); }
 
-  if (hf_container   != NULL) { gtk_widget_show(hf_container  ); }
+  if (hf_container   != NULL) { gtk_widget_show(hf_container); }
 }
 
 static void xvtr_rb_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   if (xvtr_container != NULL) { gtk_widget_show(xvtr_container); }
 
-  if (hf_container   != NULL) { gtk_widget_hide(hf_container  ); }
+  if (hf_container   != NULL) { gtk_widget_hide(hf_container); }
 }
 
 static void newpa_cb(GtkWidget *widget, gpointer data) {
@@ -325,14 +325,14 @@ void ant_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - ANT", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
 
   if (device != SOAPYSDR_USB_DEVICE) {

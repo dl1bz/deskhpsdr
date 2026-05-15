@@ -45,14 +45,14 @@
 // As we only run in the GTK+ main event loop, which is single-threaded and
 // non-preemptive, we shouldn't need any additional synchronisation mechanisms.
 static gboolean curl_initialised = FALSE;
-extern void status_text(const char *);
+extern void status_text(const char*);
 
 #define ERROR_PREFIX "stemlab_discovery: "
 
-static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data);
+static size_t app_list_cb(void* buffer, size_t size, size_t nmemb, void* data);
 
 // cppcheck-suppress constParameterCallback
-static size_t get_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
+static size_t get_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
   //
   // Scan output of original HEAD request, which is the HTML code of the
   // starting page. "barbone" RedPitayas running Alpine Linux will show
@@ -80,7 +80,7 @@ static size_t get_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
 }
 
 // cppcheck-suppress constParameterCallback
-static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
+static size_t app_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
   //
   // Analyze the JSON output of the "bazaar?app=" request and figure out
   // which applications are present. This is done the "pedestrian" way such
@@ -124,7 +124,7 @@ static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
 // the RedPitaya web server when starting the SDR application.
 //
 // cppcheck-suppress constParameterCallback
-static size_t alpine_start_callback(void *buffer, size_t size, size_t nmemb, void *data) {
+static size_t alpine_start_callback(void* buffer, size_t size, size_t nmemb, void* data) {
   //t_print("WEB-DEBUG:ALPINE-START: %s\n", buffer);
   return size * nmemb;
 }
@@ -134,10 +134,10 @@ static size_t alpine_start_callback(void *buffer, size_t size, size_t nmemb, voi
 // It should show a status:OK message in the JSON output.
 //
 // cppcheck-suppress constParameterCallback
-static size_t app_start_callback(void *buffer, size_t size, size_t nmemb, void *data) {
+static size_t app_start_callback(void* buffer, size_t size, size_t nmemb, void* data) {
   //t_print("WEB-DEBUG:STEMLAB-START: %s\n", buffer);
   if (strncmp(buffer, "{\"status\":\"OK\"}", size * nmemb) != 0) {
-    t_print( "stemlab_start: Receiver error from STEMlab\n");
+    t_print("stemlab_start: Receiver error from STEMlab\n");
     return 0;
   }
 
@@ -150,7 +150,7 @@ static size_t app_start_callback(void *buffer, size_t size, size_t nmemb, void *
 // the WRITEFUNCTION, but this way we can activate debut output in
 // alpine_start_cb.
 //
-int alpine_start_app(const char * const app_id) {
+int alpine_start_app(const char* const app_id) {
   // Dummy string, using the longest possible app id
   char app_start_url[] = "http://123.123.123.123/stemlab_sdr_transceiver_hpsdr_with_some_headroom";
   // The scripts on the "alpine" machine all contain code that
@@ -159,7 +159,7 @@ int alpine_start_app(const char * const app_id) {
   CURLcode curl_error = CURLE_OK;
 
   if (curl_handle == NULL) {
-    t_print( "alpine_start: Failed to create cURL handle\n");
+    t_print("alpine_start: Failed to create cURL handle\n");
     return -1;
   }
 
@@ -193,7 +193,7 @@ int alpine_start_app(const char * const app_id) {
 //
 // Starting the app on the STEMlab web server goes via the "bazaar"
 //
-int stemlab_start_app(const char * const app_id) {
+int stemlab_start_app(const char* const app_id) {
   // Dummy string, using the longest possible app id
   char app_start_url[] = "http://123.123.123.123/bazaar?start=stemlab_sdr_transceiver_hpsdr_headroom_max";
   //
@@ -209,7 +209,7 @@ int stemlab_start_app(const char * const app_id) {
   CURLcode curl_error = CURLE_OK;
 
   if (curl_handle == NULL) {
-    t_print( "stemlab_start: Failed to create cURL handle\n");
+    t_print("stemlab_start: Failed to create cURL handle\n");
     return -1;
   }
 
@@ -299,7 +299,7 @@ void stemlab_discovery(void) {
   curl_handle = curl_easy_init();
 
   if (curl_handle == NULL) {
-    t_print( "stemlab_start: Failed to create cURL handle\n");
+    t_print("stemlab_start: Failed to create cURL handle\n");
     return;
   }
 
@@ -319,7 +319,7 @@ void stemlab_discovery(void) {
   }
 
   if (curl_error != CURLE_OK) {
-    t_print( "STEMLAB ping error: %s\n", curl_easy_strerror(curl_error));
+    t_print("STEMLAB ping error: %s\n", curl_easy_strerror(curl_error));
     return;
   }
 
@@ -330,7 +330,7 @@ void stemlab_discovery(void) {
     curl_handle = curl_easy_init();
 
     if (curl_handle == NULL) {
-      t_print( "stemlab_start: Failed to create cURL handle\n");
+      t_print("stemlab_start: Failed to create cURL handle\n");
       return;
     }
 
@@ -348,13 +348,13 @@ void stemlab_discovery(void) {
     }
 
     if (curl_error != CURLE_OK) {
-      t_print( "STEMLAB app-list error: %s\n", curl_easy_strerror(curl_error));
+      t_print("STEMLAB app-list error: %s\n", curl_easy_strerror(curl_error));
       return;
     }
   }
 
   if (app_list == 0) {
-    t_print( "Could contact web server but no SDR apps found.\n");
+    t_print("Could contact web server but no SDR apps found.\n");
     return;
   }
 

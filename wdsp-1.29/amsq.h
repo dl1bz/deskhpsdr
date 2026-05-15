@@ -29,10 +29,10 @@ warren@wpratt.com
 typedef struct _amsq {
   int run;              // 0 if squelch system is OFF; 1 if it's ON
   int size;             // size of input/output buffers
-  double* in;             // squelch input signal buffer
-  double* out;            // squelch output signal buffer
-  double* trigger;          // pointer to trigger data source
-  double* trigsig;          // buffer containing trigger signal
+  double *in;             // squelch input signal buffer
+  double *out;            // squelch output signal buffer
+  double *trigger;          // pointer to trigger data source
+  double *trigsig;          // buffer containing trigger signal
   double rate;            // sample rate
   double avtau;           // time constant for averaging noise
   double avm;
@@ -44,8 +44,8 @@ typedef struct _amsq {
   double tdown;
   int ntup;
   int ntdown;
-  double* cup;
-  double* cdown;
+  double *cup;
+  double *cdown;
   double tail_thresh;
   double unmute_thresh;
   double min_tail;

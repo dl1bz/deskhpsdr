@@ -103,7 +103,7 @@ static void cw_keys_reversed_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void cw_keyer_mode_cb(GtkToggleButton *widget, gpointer data) {
-  int val = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   cw_keyer_mode = val;
   cw_changed();
 }
@@ -141,21 +141,21 @@ void cw_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - CW", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
-  gtk_grid_set_column_homogeneous (GTK_GRID(grid), FALSE);
-  gtk_grid_set_row_homogeneous (GTK_GRID(grid), TRUE);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
+  gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   col = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, col, 1, 1);
   GtkWidget *cw_keyer_internal_b = gtk_check_button_new_with_label("CW handled in Radio");
   gtk_widget_set_name(cw_keyer_internal_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_keyer_internal_b), cw_keyer_internal);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw_keyer_internal_b), cw_keyer_internal);
   gtk_widget_show(cw_keyer_internal_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_internal_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_internal_b, "toggled", G_CALLBACK(cw_keyer_internal_cb), NULL);
@@ -166,7 +166,7 @@ void cw_menu(GtkWidget *parent) {
   gtk_widget_show(cw_speed_label);
   gtk_grid_attach(GTK_GRID(grid), cw_speed_label, 0, col, 1, 1);
   GtkWidget *cw_keyer_speed_b = gtk_spin_button_new_with_range(1.0, 60.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_speed_b), (double)cw_keyer_speed);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_speed_b), (double) cw_keyer_speed);
   gtk_widget_show(cw_keyer_speed_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_speed_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_speed_b, "value_changed", G_CALLBACK(cw_keyer_speed_value_changed_cb), NULL);
@@ -174,12 +174,12 @@ void cw_menu(GtkWidget *parent) {
   GtkWidget *cw_breakin_b = gtk_check_button_new_with_label("CW Break-In, Delay (ms):");
   gtk_widget_set_name(cw_breakin_b, "boldlabel");
   gtk_widget_set_halign(cw_breakin_b, GTK_ALIGN_END);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_breakin_b), cw_breakin);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw_breakin_b), cw_breakin);
   gtk_widget_show(cw_breakin_b);
   gtk_grid_attach(GTK_GRID(grid), cw_breakin_b, 0, col, 1, 1);
   g_signal_connect(cw_breakin_b, "toggled", G_CALLBACK(cw_breakin_cb), NULL);
   GtkWidget *cw_keyer_hang_time_b = gtk_spin_button_new_with_range(0.0, 1000.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_hang_time_b), (double)cw_keyer_hang_time);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_hang_time_b), (double) cw_keyer_hang_time);
   gtk_widget_show(cw_keyer_hang_time_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_hang_time_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_hang_time_b, "value_changed", G_CALLBACK(cw_keyer_hang_time_value_changed_cb), NULL);
@@ -190,7 +190,7 @@ void cw_menu(GtkWidget *parent) {
   gtk_widget_show(cw_keyer_sidetone_level_label);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_sidetone_level_label, 0, col, 1, 1);
   GtkWidget *cw_keyer_sidetone_level_b = gtk_spin_button_new_with_range(0.0, 127.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_sidetone_level_b), (double)cw_keyer_sidetone_volume);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_sidetone_level_b), (double) cw_keyer_sidetone_volume);
   gtk_widget_show(cw_keyer_sidetone_level_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_sidetone_level_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_sidetone_level_b, "value_changed", G_CALLBACK(cw_keyer_sidetone_level_value_changed_cb),
@@ -202,7 +202,7 @@ void cw_menu(GtkWidget *parent) {
   gtk_widget_show(cw_keyer_sidetone_frequency_label);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_sidetone_frequency_label, 0, col, 1, 1);
   GtkWidget *cw_keyer_sidetone_frequency_b = gtk_spin_button_new_with_range(100.0, 1000.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_sidetone_frequency_b), (double)cw_keyer_sidetone_frequency);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_sidetone_frequency_b), (double) cw_keyer_sidetone_frequency);
   gtk_widget_show(cw_keyer_sidetone_frequency_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_sidetone_frequency_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_sidetone_frequency_b, "value_changed",
@@ -214,7 +214,7 @@ void cw_menu(GtkWidget *parent) {
   gtk_widget_show(cw_keyer_weight_label);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_weight_label, 0, col, 1, 1);
   GtkWidget *cw_keyer_weight_b = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_weight_b), (double)cw_keyer_weight);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_keyer_weight_b), (double) cw_keyer_weight);
   gtk_widget_show(cw_keyer_weight_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_weight_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_weight_b, "value_changed", G_CALLBACK(cw_keyer_weight_value_changed_cb), NULL);
@@ -248,13 +248,13 @@ void cw_menu(GtkWidget *parent) {
   col++;
   GtkWidget *cw_keys_reversed_b = gtk_check_button_new_with_label("Keys reversed");
   gtk_widget_set_name(cw_keys_reversed_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_keys_reversed_b), cw_keys_reversed);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw_keys_reversed_b), cw_keys_reversed);
   gtk_widget_show(cw_keys_reversed_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keys_reversed_b, 1, col, 1, 1);
   g_signal_connect(cw_keys_reversed_b, "toggled", G_CALLBACK(cw_keys_reversed_cb), NULL);
   GtkWidget *cw_keyer_spacing_b = gtk_check_button_new_with_label("Enforce letter spacing");
   gtk_widget_set_name(cw_keyer_spacing_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_keyer_spacing_b), cw_keyer_spacing);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw_keyer_spacing_b), cw_keyer_spacing);
   gtk_widget_show(cw_keyer_spacing_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_spacing_b, 0, col, 1, 1);
   g_signal_connect(cw_keyer_spacing_b, "toggled", G_CALLBACK(cw_keyer_spacing_cb), NULL);

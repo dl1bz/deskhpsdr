@@ -49,7 +49,7 @@ static gboolean close_cb(void) {
 }
 
 static gboolean switch_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
-  SWITCH *sw = (SWITCH *) data;
+  SWITCH *sw = (SWITCH*) data;
   int action = action_dialog(dialog, CONTROLLER_SWITCH, sw->switch_function);
   gtk_button_set_label(GTK_BUTTON(widget), ActionTable[action].button_str);
   sw->switch_function = action;
@@ -68,17 +68,17 @@ void toolbar_menu(GtkWidget *parent) {
   char _title[64];
   snprintf(_title, sizeof(_title), "%s - Toolbar configuration", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 3, 1);
   int lfunction = 0;
   const int max_switches = 11;

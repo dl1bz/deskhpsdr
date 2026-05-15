@@ -70,17 +70,17 @@ static gboolean making_active = FALSE;
 //
 
 void rx_weak_notify(gpointer data, GObject  *obj) {
-  RECEIVER *rx = (RECEIVER *)data;
+  RECEIVER *rx = (RECEIVER*) data;
   t_print("%s: id=%d obj=%p\n", __func__, rx->id, obj);
 }
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  const RECEIVER *rx = (RECEIVER *)data;
+  const RECEIVER *rx = (RECEIVER*) data;
 
   if (rx == active_receiver) {
     if (event->button == GDK_BUTTON_PRIMARY) {
-      last_x = (int)event->x;
+      last_x = (int) event->x;
       has_moved = FALSE;
       pressed = TRUE;
     } else if (event->button == GDK_BUTTON_SECONDARY) {
@@ -119,7 +119,7 @@ void rx_set_active(RECEIVER *rx) {
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER *)data;
+  RECEIVER *rx = (RECEIVER*) data;
 
   if (making_active) {
     making_active = FALSE;
@@ -134,15 +134,15 @@ gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpoin
     }
   } else {
     if (pressed) {
-      int x = (int)event->x;
+      int x = (int) event->x;
 
       if (event->button == GDK_BUTTON_PRIMARY) {
         if (has_moved) {
           // drag
-          vfo_move((long long)((float)(x - last_x)*rx->hz_per_pixel), TRUE);
+          vfo_move((long long)((float)(x - last_x) *rx->hz_per_pixel), TRUE);
         } else {
           // move to this frequency
-          vfo_move_to((long long)((float)x * rx->hz_per_pixel));
+          vfo_move_to((long long)((float) x * rx->hz_per_pixel));
         }
 
         last_x = x;
@@ -157,7 +157,7 @@ gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpoin
 gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
   int x, y;
   GdkModifierType state;
-  const RECEIVER *rx = (RECEIVER *)data;
+  const RECEIVER *rx = (RECEIVER*) data;
   //
   // This solves a problem observed since with GTK about mid-2023:
   // when re-focusing a (sub-)menu window after it has lost focus,
@@ -179,11 +179,11 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
   // of a menu, and should not move the VFO.
   //
   if (!making_active && pressed && button_down) {
-    gdk_window_get_device_position (event->window,
-                                    event->device,
-                                    &x,
-                                    &y,
-                                    &state);
+    gdk_window_get_device_position(event->window,
+                                   event->device,
+                                   &x,
+                                   &y,
+                                   &state);
     //
     // Sometimes it turned out to be difficult to "jump" to a
     // new frequency by just clicking in the panadaper. Futher analysis
@@ -201,7 +201,7 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
     if (moved) {
       if (has_moved || moved < -1 || moved > 1) {
-        vfo_move((long long)((float)moved * rx->hz_per_pixel), FALSE);
+        vfo_move((long long)((float) moved * rx->hz_per_pixel), FALSE);
         last_x = x;
         has_moved = TRUE;
       }
@@ -213,7 +213,7 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER *)data;
+  RECEIVER *rx = (RECEIVER*) data;
 
   if (!rx) {
     // Falls kein gültiger Zeiger übergeben wurde, mache nichts und verhindere Absturz
@@ -234,7 +234,7 @@ gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointe
     gboolean shift = (event->state & GDK_SHIFT_MASK) != 0;
     gboolean option = (event->state & GDK_MOD1_MASK) != 0;
 
-    if ((shift && !option) || (!shift && option)) { // XOR: Nur eine gedrückt
+    if ((shift && !option) || (!shift && option)) {   // XOR: Nur eine gedrückt
       vfo_step(event->direction == GDK_SCROLL_UP ? 10 : -10);
     } else {
       vfo_step(event->direction == GDK_SCROLL_UP ? 1 : -1);
@@ -559,7 +559,7 @@ void rx_reconfigure(RECEIVER *rx, int height) {
     if (rx->panadapter == NULL) {
       t_print("%s: panadapter_init: width:%d height:%d\n", __func__, rx->width, myheight_pan);
       rx_panadapter_init(rx, rx->width, myheight_pan);
-      gtk_fixed_put(GTK_FIXED(rx->panel), rx->panadapter, 0, y); // y=0 here always
+      gtk_fixed_put(GTK_FIXED(rx->panel), rx->panadapter, 0, y);   // y=0 here always
     } else {
       // set the size
       gtk_widget_set_size_request(rx->panadapter, rx->width, myheight_pan);
@@ -579,7 +579,7 @@ void rx_reconfigure(RECEIVER *rx, int height) {
     if (rx->waterfall == NULL) {
       t_print("%s: waterfall_init: width:%d height:%d\n", __func__, rx->width, myheight_wf);
       waterfall_init(rx, rx->width, myheight_wf);
-      gtk_fixed_put(GTK_FIXED(rx->panel), rx->waterfall, 0, y); // y=0 if ONLY waterfall is present
+      gtk_fixed_put(GTK_FIXED(rx->panel), rx->waterfall, 0, y);   // y=0 if ONLY waterfall is present
     } else {
       // set the size
       t_print("%s: waterfall set_size_request: width:%d height:%d\n", __func__, rx->width, myheight_wf);
@@ -599,7 +599,7 @@ void rx_reconfigure(RECEIVER *rx, int height) {
 }
 
 static int rx_update_display(gpointer data) {
-  RECEIVER *rx = (RECEIVER *)data;
+  RECEIVER *rx = (RECEIVER*) data;
 
   if (rx->displaying) {
     if (rx->pixels > 0) {
@@ -630,7 +630,7 @@ static int rx_update_display(gpointer data) {
         const BAND *band = band_get_band(b);
         int calib = rx_gain_calibration - band->gain;
         double level = rx_get_smeter(rx);
-        level += (double)calib + (double)adc[rx->adc].attenuation - adc[rx->adc].gain;
+        level += (double) calib + (double) adc[rx->adc].attenuation - adc[rx->adc].gain;
 
         if (filter_board == CHARLY25 && rx->adc == 0) {
           level += (double)(12 * rx->alex_attenuation - 18 * rx->preamp - 18 * rx->dither);
@@ -670,8 +670,8 @@ static void rx_create_visual(RECEIVER *rx) {
   int y = 0;
   rx->panel = gtk_fixed_new();
   t_print("%s: RXid=%d width=%d height=%d %p\n", __func__, rx->id, rx->width, rx->height, rx->panel);
-  g_object_weak_ref(G_OBJECT(rx->panel), rx_weak_notify, (gpointer)rx);
-  gtk_widget_set_size_request (rx->panel, rx->width, rx->height);
+  g_object_weak_ref(G_OBJECT(rx->panel), rx_weak_notify, (gpointer) rx);
+  gtk_widget_set_size_request(rx->panel, rx->width, rx->height);
   rx->panadapter = NULL;
   rx->waterfall = NULL;
   int height = rx->height;
@@ -682,14 +682,14 @@ static void rx_create_visual(RECEIVER *rx) {
 
   rx_panadapter_init(rx, rx->width, height);
   t_print("%s: panadapter height=%d y=%d %p\n", __func__, height, y, rx->panadapter);
-  g_object_weak_ref(G_OBJECT(rx->panadapter), rx_weak_notify, (gpointer)rx);
+  g_object_weak_ref(G_OBJECT(rx->panadapter), rx_weak_notify, (gpointer) rx);
   gtk_fixed_put(GTK_FIXED(rx->panel), rx->panadapter, 0, y);
   y += height;
 
   if (rx->display_waterfall) {
     waterfall_init(rx, rx->width, height);
     t_print("%s: waterfall height=%d y=%d %p\n", __func__, height, y, rx->waterfall);
-    g_object_weak_ref(G_OBJECT(rx->waterfall), rx_weak_notify, (gpointer)rx);
+    g_object_weak_ref(G_OBJECT(rx->waterfall), rx_weak_notify, (gpointer) rx);
     gtk_fixed_put(GTK_FIXED(rx->panel), rx->waterfall, 0, y);
   }
 
@@ -972,7 +972,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->audio_output_buffer = g_new(double, 2 * rx->output_samples);
   t_print("%s: RXid=%d output_samples=%d audio_output_buffer=%p\n", __func__, rx->id, rx->output_samples,
           rx->audio_output_buffer);
-  rx->hz_per_pixel = (double)rx->sample_rate / (double)rx->pixels;
+  rx->hz_per_pixel = (double) rx->sample_rate / (double) rx->pixels;
   // setup wdsp for this receiver
   t_print("%s: RXid=%d after restore adc=%d\n", __func__, rx->id, rx->adc);
   t_print("%s: OpenChannel RXid=%d buffer_size=%d dsp_size=%d fft_size=%d sample_rate=%d\n",
@@ -1059,7 +1059,7 @@ void rx_frequency_changed(RECEIVER *rx) {
 
   if (vfo[id].ctun) {
     long long frequency = vfo[id].frequency;
-    long long half = (long long)rx->sample_rate / 2LL;
+    long long half = (long long) rx->sample_rate / 2LL;
     long long rx_low = vfo[id].ctun_frequency + rx->filter_low;
     long long rx_high = vfo[id].ctun_frequency + rx->filter_high;
 
@@ -1082,8 +1082,8 @@ void rx_frequency_changed(RECEIVER *rx) {
       // current display range
       // TODO: what if this happens with CTUN "off"?
       //
-      long long min_display = frequency - half + (long long)((double)rx->pan * rx->hz_per_pixel);
-      long long max_display = min_display + (long long)((double)rx->width * rx->hz_per_pixel);
+      long long min_display = frequency - half + (long long)((double) rx->pan * rx->hz_per_pixel);
+      long long max_display = min_display + (long long)((double) rx->width * rx->hz_per_pixel);
 
       if (rx_low <= min_display) {
         rx->pan = rx->pan - (rx->width / 2);
@@ -1271,7 +1271,7 @@ static void rx_process_buffer(RECEIVER *rx) {
                         (float)(right_sample * rx->tci_txaudio_scale));
 
     if (rx->local_audio) {
-      audio_write(rx, (float)left_sample, (float)right_sample);
+      audio_write(rx, (float) left_sample, (float) right_sample);
     }
 
     if (rx == active_receiver) {
@@ -1305,11 +1305,11 @@ void rx_full_buffer(RECEIVER *rx) {
     //
     switch (rx->nb) {
     case 1:
-      xanbEXT (rx->id, rx->iq_input_buffer, rx->iq_input_buffer);
+      xanbEXT(rx->id, rx->iq_input_buffer, rx->iq_input_buffer);
       break;
 
     case 2:
-      xnobEXT (rx->id, rx->iq_input_buffer, rx->iq_input_buffer);
+      xnobEXT(rx->id, rx->iq_input_buffer, rx->iq_input_buffer);
       break;
 
     default:
@@ -1378,7 +1378,7 @@ void rx_update_zoom(RECEIVER *rx) {
   // since in both cases the analyzer must be restarted.
   //
   rx->pixels = rx->width * rx->zoom;
-  rx->hz_per_pixel = (double)rx->sample_rate / (double)rx->pixels;
+  rx->hz_per_pixel = (double) rx->sample_rate / (double) rx->pixels;
 
   if (rx->zoom == 1) {
     rx->pan = 0;
@@ -1437,7 +1437,7 @@ void rx_set_filter(RECEIVER *rx) {
     // Using Carson's rule and assuming max. audio  freq  of 3000 Hz
     //
     rx->deviation = vfo[id].deviation;
-    rx->filter_low = -(3000 + rx->deviation);
+    rx->filter_low = - (3000 + rx->deviation);
     rx->filter_high = (3000 + rx->deviation);
     break;
 
@@ -1486,7 +1486,7 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   schedule_receive_specific();
   int scale = rx->sample_rate / 48000;
   rx->output_samples = rx->buffer_size / scale;
-  rx->hz_per_pixel = (double)rx->sample_rate / (double)rx->width;
+  rx->hz_per_pixel = (double) rx->sample_rate / (double) rx->width;
   t_print("%s: id=%d rate=%d scale=%d buffer_size=%d output_samples=%d\n", __func__, rx->id, sample_rate, scale,
           rx->buffer_size, rx->output_samples);
 
@@ -1511,7 +1511,7 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   //
   // re-calculate AGC line for panadapter since it depends on sample rate
   //
-  GetRXAAGCThresh(rx->id, &rx->agc_thresh, 4096.0, (double)rx->sample_rate);
+  GetRXAAGCThresh(rx->id, &rx->agc_thresh, 4096.0, (double) rx->sample_rate);
 
   //
   // If the sample rate is reduced, the size of the audio output buffer must ber increased
@@ -1524,8 +1524,8 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   rx_off(rx);
   rx_set_analyzer(rx);
   SetInputSamplerate(rx->id, sample_rate);
-  SetEXTANBSamplerate (rx->id, sample_rate);
-  SetEXTNOBSamplerate (rx->id, sample_rate);
+  SetEXTANBSamplerate(rx->id, sample_rate);
+  SetEXTNOBSamplerate(rx->id, sample_rate);
 #ifdef SOAPYSDR
 
   if (protocol == SOAPYSDR_PROTOCOL) {
@@ -1539,7 +1539,7 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   // for a non-PS receiver, adjust pixels and hz_per_pixel depending on the zoom value
   //
   rx->pixels = rx->width * rx->zoom;
-  rx->hz_per_pixel = (double)rx->sample_rate / (double)rx->pixels;
+  rx->hz_per_pixel = (double) rx->sample_rate / (double) rx->pixels;
   g_mutex_unlock(&rx->mutex);
   t_print("%s: RXid=%d rate=%d buffer_size=%d output_samples=%d\n", __func__, rx->id, rx->sample_rate,
           rx->buffer_size, rx->output_samples);
@@ -1647,11 +1647,11 @@ void rx_set_analyzer(const RECEIVER *rx) {
 
   int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
                                     keep_time * (double) afft_size * (double) rx->fps);
-  int overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
+  int overlap = (int) fmax(0.0, ceil(afft_size - (double) rx->sample_rate / (double) rx->fps));
   t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d afft_size=%d bin_width=%.3f Hz\n",
           rx->id,
           rx->buffer_size,
-          overlap, rx->pixels, window_type, afft_size, (double)rx->sample_rate / (double)afft_size);
+          overlap, rx->pixels, window_type, afft_size, (double) rx->sample_rate / (double) afft_size);
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination
@@ -1742,7 +1742,7 @@ void rx_set_af_gain(const RECEIVER *rx) {
     amplitude = pow(10.0, 0.05 * volume);
   }
 
-  SetRXAPanelGain1 (rx->id, amplitude);
+  SetRXAPanelGain1(rx->id, amplitude);
 }
 
 void rx_set_agc(RECEIVER *rx) {
@@ -1764,14 +1764,14 @@ void rx_set_agc(RECEIVER *rx) {
     SetRXAAGCAttack(id, 2);
     SetRXAAGCHang(id, 2000);
     SetRXAAGCDecay(id, 2000);
-    SetRXAAGCHangThreshold(id, (int)rx->agc_hang_threshold);
+    SetRXAAGCHangThreshold(id, (int) rx->agc_hang_threshold);
     break;
 
   case AGC_SLOW:
     SetRXAAGCAttack(id, 2);
     SetRXAAGCHang(id, 1000);
     SetRXAAGCDecay(id, 500);
-    SetRXAAGCHangThreshold(id, (int)rx->agc_hang_threshold);
+    SetRXAAGCHangThreshold(id, (int) rx->agc_hang_threshold);
     break;
 
   case AGC_MEDIUM:
@@ -1793,7 +1793,7 @@ void rx_set_agc(RECEIVER *rx) {
   // Recalculate the "panadapter" AGC line positions.
   //
   GetRXAAGCHangLevel(id, &rx->agc_hang);
-  GetRXAAGCThresh(id, &rx->agc_thresh, 4096.0, (double)rx->sample_rate);
+  GetRXAAGCThresh(id, &rx->agc_thresh, 4096.0, (double) rx->sample_rate);
 
   //
   // Update mode settings, if this is RX1
@@ -1812,8 +1812,8 @@ void rx_set_average(const RECEIVER *rx) {
   //
   int wdspmode;
   double t = 0.001 * rx->display_average_time;
-  double display_avb = exp(-1.0 / ((double)rx->fps * t));
-  int display_average = max(2, (int)fmin(60, (double)rx->fps * t));
+  double display_avb = exp(-1.0 / ((double) rx->fps * t));
+  int display_average = max(2, (int) fmin(60, (double) rx->fps * t));
   SetDisplayAvBackmult(rx->id, 0, display_avb);
   SetDisplayNumAverage(rx->id, 0, display_average);
 
@@ -1847,7 +1847,7 @@ void rx_set_average(const RECEIVER *rx) {
 }
 
 void rx_set_bandpass(const RECEIVER *rx) {
-  RXASetPassband(rx->id, (double)rx->filter_low, (double)rx->filter_high);
+  RXASetPassband(rx->id, (double) rx->filter_low, (double) rx->filter_high);
 }
 
 void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
@@ -1913,7 +1913,7 @@ void rx_set_detector(const RECEIVER *rx) {
 }
 
 void rx_set_deviation(const RECEIVER *rx) {
-  SetRXAFMDeviation(rx->id, (double)rx->deviation);
+  SetRXAFMDeviation(rx->id, (double) rx->deviation);
 }
 
 void rx_set_equalizer(RECEIVER *rx) {
@@ -1983,7 +1983,7 @@ void rx_set_noise(const RECEIVER *rx) {
 #ifdef WDSP127
 
   if ((GetWDSPVersion() % 100) > 26) {
-    SetRXAEMNRpost2Taper (rx->id, rx->nr2_post_taper);
+    SetRXAEMNRpost2Taper(rx->id, rx->nr2_post_taper);
     SetRXAEMNRpost2Nlevel(rx->id, (double) rx->nr2_post_nlevel);
     SetRXAEMNRpost2Factor(rx->id, (double) rx->nr2_post_factor);
     SetRXAEMNRpost2Rate(rx->id, (double) rx->nr2_post_rate);
@@ -1991,7 +1991,7 @@ void rx_set_noise(const RECEIVER *rx) {
   }
 
 #endif
-  SetRXAEMNRaeRun(rx->id, rx->nr2_ae); // ArtifactElminiation ON
+  SetRXAEMNRaeRun(rx->id, rx->nr2_ae);  // ArtifactElminiation ON
   SetRXAEMNRRun(rx->id, (rx->nr == 2));
   //
   // e) ANF
@@ -2021,12 +2021,12 @@ void rx_set_noise(const RECEIVER *rx) {
 
 void rx_set_offset(const RECEIVER *rx, long long offset) {
   if (offset == 0) {
-    SetRXAShiftFreq(rx->id, (double)offset);
-    RXANBPSetShiftFrequency(rx->id, (double)offset);
+    SetRXAShiftFreq(rx->id, (double) offset);
+    RXANBPSetShiftFrequency(rx->id, (double) offset);
     SetRXAShiftRun(rx->id, 0);
   } else {
-    SetRXAShiftFreq(rx->id, (double)offset);
-    RXANBPSetShiftFrequency(rx->id, (double)offset);
+    SetRXAShiftFreq(rx->id, (double) offset);
+    RXANBPSetShiftFrequency(rx->id, (double) offset);
     SetRXAShiftRun(rx->id, 1);
   }
 }
@@ -2054,12 +2054,12 @@ void rx_set_notch(const RECEIVER *rx) {
   }
 
   if (mode == modeCWU) {
-    shift = -(double)cw_keyer_sidetone_frequency;
+    shift = - (double) cw_keyer_sidetone_frequency;
   } else if (mode == modeCWL) {
-    shift = (double)cw_keyer_sidetone_frequency;
+    shift = (double) cw_keyer_sidetone_frequency;
   }
 
-  RXANBPSetTuneFrequency(rx->id, (double)tunefreq);
+  RXANBPSetTuneFrequency(rx->id, (double) tunefreq);
   RXANBPSetShiftFrequency(rx->id, shift);
   RXANBPSetAutoIncrease(rx->id, 1);
   RXANBPGetMinNotchWidth(rx->id, &minwidth);

@@ -26,8 +26,8 @@ warren@wpratt.com
 
 #include "comm.h"
 
-DELAY create_delay (int run, int size, double* in, double* out, int rate, double tdelta, double tdelay) {
-  DELAY a = (DELAY) malloc0 (sizeof (delay));
+DELAY create_delay(int run, int size, double* in, double* out, int rate, double tdelta, double tdelay) {
+  DELAY a = (DELAY) malloc0(sizeof(delay));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -46,27 +46,27 @@ DELAY create_delay (int run, int size, double* in, double* out, int rate, double
   a->phnum %= a->L;
   a->idx_in = 0;
   a->adelay = a->adelta * (a->snum * a->L + a->phnum);
-  a->h = fir_bandpass (a->ncoef, -a->ft, +a->ft, 1.0, 1, 0, (double)a->L);
+  a->h = fir_bandpass(a->ncoef, -a->ft, +a->ft, 1.0, 1, 0, (double)a->L);
   a->rsize = a->cpp + (WSDEL - 1);
-  a->ring = (double *) malloc0 (a->rsize * sizeof (complex));
-  InitializeCriticalSectionAndSpinCount ( &a->cs_update, 2500 );
+  a->ring = (double*) malloc0(a->rsize * sizeof(complex));
+  InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   return a;
 }
 
-void destroy_delay (DELAY a) {
-  DeleteCriticalSection (&a->cs_update);
-  _aligned_free (a->ring);
-  _aligned_free (a->h);
-  _aligned_free (a);
+void destroy_delay(DELAY a) {
+  DeleteCriticalSection(&a->cs_update);
+  _aligned_free(a->ring);
+  _aligned_free(a->h);
+  _aligned_free(a);
 }
 
-void flush_delay (DELAY a) {
-  memset (a->ring, 0, a->cpp * sizeof (complex));
+void flush_delay(DELAY a) {
+  memset(a->ring, 0, a->cpp * sizeof(complex));
   a->idx_in = 0;
 }
 
-void xdelay (DELAY a) {
-  EnterCriticalSection (&a->cs_update);
+void xdelay(DELAY a) {
+  EnterCriticalSection(&a->cs_update);
 
   if (a->run) {
     int i, j, k, idx, n;
@@ -93,10 +93,10 @@ void xdelay (DELAY a) {
       if (--a->idx_in < 0) { a->idx_in = a->rsize - 1; }
     }
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
 /********************************************************************************************************
@@ -105,29 +105,29 @@ void xdelay (DELAY a) {
 *                                                   *
 ********************************************************************************************************/
 
-void SetDelayRun (DELAY a, int run) {
-  EnterCriticalSection (&a->cs_update);
+void SetDelayRun(DELAY a, int run) {
+  EnterCriticalSection(&a->cs_update);
   a->run = run;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }
 
-double SetDelayValue (DELAY a, double tdelay) {
+double SetDelayValue(DELAY a, double tdelay) {
   double adelay;
-  EnterCriticalSection (&a->cs_update);
+  EnterCriticalSection(&a->cs_update);
   a->tdelay = tdelay;
   a->phnum = (int)(0.5 + a->tdelay / a->adelta);
   a->snum = a->phnum / a->L;
   a->phnum %= a->L;
   a->adelay = a->adelta * (a->snum * a->L + a->phnum);
   adelay = a->adelay;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
   return adelay;
 }
 
-void SetDelayBuffs (DELAY a, int size, double* in, double* out) {
-  EnterCriticalSection (&a->cs_update);
+void SetDelayBuffs(DELAY a, int size, double* in, double* out) {
+  EnterCriticalSection(&a->cs_update);
   a->size = size;
   a->in = in;
   a->out = out;
-  LeaveCriticalSection (&a->cs_update);
+  LeaveCriticalSection(&a->cs_update);
 }

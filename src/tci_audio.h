@@ -27,7 +27,7 @@
 
 typedef struct _receiver RECEIVER;
 
-typedef void (*TCI_AUDIO_WAKEUP_CALLBACK)(void);
+typedef void (*TCI_AUDIO_WAKEUP_CALLBACK) (void);
 
 #define TCI_RX_AUDIO_MAX_RECEIVERS 2
 #define TCI_RX_AUDIO_RING_FRAMES 48000
@@ -43,9 +43,9 @@ typedef void (*TCI_AUDIO_WAKEUP_CALLBACK)(void);
 #define TCI_AUDIO_MONITOR_RING_FRAMES (48000 * 4)
 #define TCI_TX_AUDIO_RING_FRAMES (48000 * 4)
 
-void tci_audio_set_active(int active);
-int tci_audio_is_active(void);
-void tci_audio_set_wakeup_callback(TCI_AUDIO_WAKEUP_CALLBACK callback);
+void tci_audio_set_active (int active);
+int tci_audio_is_active (void);
+void tci_audio_set_wakeup_callback (TCI_AUDIO_WAKEUP_CALLBACK callback);
 
 typedef struct _tci_stream_header {
   uint32_t receiver;
@@ -62,20 +62,20 @@ typedef struct _tci_stream_header {
 #define TCI_AUDIO_RX_FRAME_MAX_BYTES \
   (sizeof(TCI_STREAM_HEADER) + (TCI_RX_AUDIO_FRAME_FRAMES * TCI_AUDIO_CHANNELS * sizeof(float)))
 
-void tci_audio_rx_sample(RECEIVER *rx, float left, float right);
-guint64 tci_audio_get_write_count(int receiver_id);
-guint tci_audio_get_frame(int receiver_id, guint64 *read_count, unsigned char *frame, size_t frame_size,
-                          size_t *frame_len);
-void tci_audio_handle_tx_frame(const unsigned char *data, size_t len);
+void tci_audio_rx_sample (RECEIVER *rx, float left, float right);
+guint64 tci_audio_get_write_count (int receiver_id);
+guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char* frame, size_t frame_size,
+                           size_t *frame_len);
+void tci_audio_handle_tx_frame (const unsigned char* data, size_t len);
 
-void tci_audio_tx_reset(void);
-void tci_audio_tx_set_active(int active);
-int tci_audio_tx_is_active(void);
-guint tci_audio_tx_read(float *out, guint frames);
-guint64 tci_audio_tx_available(void);
+void tci_audio_tx_reset (void);
+void tci_audio_tx_set_active (int active);
+int tci_audio_tx_is_active (void);
+guint tci_audio_tx_read (float* out, guint frames);
+guint64 tci_audio_tx_available (void);
 
-void tci_audio_monitor_set_active(int active);
-int tci_audio_monitor_is_active(void);
-guint tci_audio_monitor_read(float *out, guint frames);
+void tci_audio_monitor_set_active (int active);
+int tci_audio_monitor_is_active (void);
+guint tci_audio_monitor_read (float* out, guint frames);
 
 #endif

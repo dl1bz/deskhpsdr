@@ -127,13 +127,13 @@ static void adc_cb(GtkToggleButton *widget, gpointer data) {
 static void local_audio_cb(GtkWidget *widget, gpointer data) {
   t_print("local_audio_cb: rx=%d\n", active_receiver->id);
 
-  if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     if (audio_open_output(active_receiver) == 0) {
       active_receiver->local_audio = 1;
     } else {
       t_print("local_audio_cb: audio_open_output failed\n");
       active_receiver->local_audio = 0;
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
     }
   } else {
     if (active_receiver->local_audio) {
@@ -146,11 +146,11 @@ static void local_audio_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void mute_audio_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->mute_when_not_active = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  active_receiver->mute_when_not_active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 static void mute_radio_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->mute_radio = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  active_receiver->mute_radio = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 static void adc0_filter_bypass_cb(GtkWidget *widget, gpointer data) {
@@ -165,7 +165,7 @@ static void adc1_filter_bypass_cb(GtkWidget *widget, gpointer data) {
 
 #ifdef __APPLE__
 static void wheel_present_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->wheel_present = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  active_receiver->wheel_present = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 #endif
 
@@ -227,23 +227,23 @@ void rx_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
 #ifdef __APPLE__
   GtkWidget *wheel_present_btn = gtk_check_button_new_with_label("using Mouse with Wheel");
   gtk_widget_set_name(wheel_present_btn, "boldlabel_blue");
   gtk_widget_set_tooltip_text(wheel_present_btn,
                               "macOS only:\nIf ON, the mouse wheel can change the frequency\nIf OFF, you need to press OPTION + mouse wheel for frequency change");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (wheel_present_btn), active_receiver->wheel_present);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wheel_present_btn), active_receiver->wheel_present);
   gtk_widget_show(wheel_present_btn);
   gtk_grid_attach(GTK_GRID(grid), wheel_present_btn, 1, 0, 1, 1);
   g_signal_connect(wheel_present_btn, "toggled", G_CALLBACK(wheel_present_cb), NULL);
@@ -352,12 +352,12 @@ void rx_menu(GtkWidget *parent) {
         GtkWidget *dither_b = gtk_check_button_new_with_label("HL2 Band Volts / Dither Bit");
         gtk_widget_set_name(dither_b, "boldlabel");
         gtk_widget_set_tooltip_text(dither_b, "activate Band Voltage output at the Hermes Lite 2");
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dither_b), active_receiver->dither);
         gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
         g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
         GtkWidget *random_b = gtk_check_button_new_with_label("Random Bit");
         gtk_widget_set_name(random_b, "boldlabel");
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(random_b), active_receiver->random);
         gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
         autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
@@ -369,10 +369,10 @@ void rx_menu(GtkWidget *parent) {
         gtk_widget_set_tooltip_text(autogain_time_b,
                                     "Re-adjust RF Gain Automatic every 30s\nIf OFF, RF Gain Automatic adjust only one-time\nif band was changed");
 #if defined (__AUTOG__)
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_b), autogain_enabled);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_b), autogain_enabled);
         gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, row + 1, 1, 1);
         g_signal_connect(autogain_b, "toggled", G_CALLBACK(autogain_cb), NULL);
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (autogain_time_b), autogain_time_enabled);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_time_b), autogain_time_enabled);
 
         if (autogain_enabled) {
           gtk_widget_set_sensitive(autogain_time_b, TRUE);
@@ -386,12 +386,12 @@ void rx_menu(GtkWidget *parent) {
       } else {
         GtkWidget *dither_b = gtk_check_button_new_with_label("Dither Bit");
         gtk_widget_set_name(dither_b, "boldlabel");
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), active_receiver->dither);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dither_b), active_receiver->dither);
         gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
         g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
         GtkWidget *random_b = gtk_check_button_new_with_label("Random Bit");
         gtk_widget_set_name(random_b, "boldlabel");
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), active_receiver->random);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(random_b), active_receiver->random);
         gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
         g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
       }
@@ -402,7 +402,7 @@ void rx_menu(GtkWidget *parent) {
     if (have_preamp) {
       GtkWidget *preamp_b = gtk_check_button_new_with_label("Preamp");
       gtk_widget_set_name(preamp_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (preamp_b), active_receiver->preamp);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preamp_b), active_receiver->preamp);
       gtk_grid_attach(GTK_GRID(grid), preamp_b, 0, row, 1, 1);
       g_signal_connect(preamp_b, "toggled", G_CALLBACK(preamp_cb), NULL);
       row++;
@@ -413,7 +413,7 @@ void rx_menu(GtkWidget *parent) {
 
   GtkWidget *mute_audio_b = gtk_check_button_new_with_label("Mute when not active");
   gtk_widget_set_name(mute_audio_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mute_audio_b), active_receiver->mute_when_not_active);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mute_audio_b), active_receiver->mute_when_not_active);
   gtk_widget_show(mute_audio_b);
   gtk_grid_attach(GTK_GRID(grid), mute_audio_b, 0, row, 2, 1);
   g_signal_connect(mute_audio_b, "toggled", G_CALLBACK(mute_audio_cb), NULL);
@@ -421,7 +421,7 @@ void rx_menu(GtkWidget *parent) {
   if (protocol == ORIGINAL_PROTOCOL || protocol  == NEW_PROTOCOL) {
     GtkWidget *mute_radio_b = gtk_check_button_new_with_label("Mute Audio to Radio");
     gtk_widget_set_name(mute_radio_b, "boldlabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mute_radio_b), active_receiver->mute_radio);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mute_radio_b), active_receiver->mute_radio);
     gtk_widget_show(mute_radio_b);
     gtk_grid_attach(GTK_GRID(grid), mute_radio_b, 2, row, 1, 1);
     g_signal_connect(mute_radio_b, "toggled", G_CALLBACK(mute_radio_cb), NULL);
@@ -432,14 +432,14 @@ void rx_menu(GtkWidget *parent) {
   if (filter_board == ALEX) {
     GtkWidget *adc0_filter_bypass_b = gtk_check_button_new_with_label("Bypass ADC0 RX filters");
     gtk_widget_set_name(adc0_filter_bypass_b, "boldlabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (adc0_filter_bypass_b), adc0_filter_bypass);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(adc0_filter_bypass_b), adc0_filter_bypass);
     gtk_grid_attach(GTK_GRID(grid), adc0_filter_bypass_b, 0, row, 2, 1);
     g_signal_connect(adc0_filter_bypass_b, "toggled", G_CALLBACK(adc0_filter_bypass_cb), NULL);
 
     if (device == DEVICE_ORION2 || device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN) {
       GtkWidget *adc1_filter_bypass_b = gtk_check_button_new_with_label("Bypass ADC1 RX filters");
       gtk_widget_set_name(adc1_filter_bypass_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (adc1_filter_bypass_b), adc1_filter_bypass);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(adc1_filter_bypass_b), adc1_filter_bypass);
       gtk_grid_attach(GTK_GRID(grid), adc1_filter_bypass_b, 2, row, 1, 1);
       g_signal_connect(adc1_filter_bypass_b, "toggled", G_CALLBACK(adc1_filter_bypass_cb), NULL);
     }
@@ -449,7 +449,7 @@ void rx_menu(GtkWidget *parent) {
     local_audio_b = gtk_check_button_new_with_label("Use Local Audio Output:");
     gtk_widget_set_name(local_audio_b, "boldlabel");
     gtk_widget_set_halign(local_audio_b, GTK_ALIGN_START);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (local_audio_b), active_receiver->local_audio);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_audio_b), active_receiver->local_audio);
     gtk_widget_show(local_audio_b);
     gtk_grid_attach(GTK_GRID(grid), local_audio_b, 2, 1, 1, 1);
     g_signal_connect(local_audio_b, "toggled", G_CALLBACK(local_audio_cb), NULL);

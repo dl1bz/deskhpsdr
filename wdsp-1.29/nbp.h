@@ -32,11 +32,11 @@ typedef struct _notchdb {
   double tunefreq;
   double shift;
   int nn;
-  int* active;
-  double* fcenter;
-  double* fwidth;
-  double* nlow;
-  double* nhigh;
+  int *active;
+  double *fcenter;
+  double *fwidth;
+  double *nlow;
+  double *nhigh;
   int maxnotches;
 } notchdb, *NOTCHDB;
 
@@ -51,19 +51,19 @@ typedef struct _nbp {
   int size;       // buffer size
   int nc;         // number of filter coefficients
   int mp;         // minimum phase flag
-  double* in;       // input buffer
-  double* out;      // output buffer
+  double *in;       // input buffer
+  double *out;      // output buffer
   double flow;      // low bandpass cutoff freq
   double fhigh;     // high bandpass cutoff freq
-  double* impulse;    // filter impulse response
+  double *impulse;    // filter impulse response
   double rate;      // sample rate
   int wintype;      // filter window type
   double gain;      // filter gain
   int autoincr;     // auto-increment notch width
   int maxpb;        // maximum number of passbands
-  NOTCHDB* ptraddr;   // ptr to addr of notch-database data structure
-  double* bplow;      // array of passband lows
-  double* bphigh;     // array of passband highs
+  NOTCHDB *ptraddr;   // ptr to addr of notch-database data structure
+  double *bplow;      // array of passband lows
+  double *bphigh;     // array of passband highs
   int numpb;        // number of passbands
   FIRCORE p;
   int havnotch;

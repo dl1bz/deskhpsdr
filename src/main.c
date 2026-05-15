@@ -105,14 +105,14 @@ static gboolean block_delete(GtkWidget *w, GdkEvent *e, gpointer data) {
   return TRUE; // verhindert Schließen über Fenstermanager
 }
 
-static void show_error_dialog(const char *msg) __attribute__((unused));
-static void show_error_dialog(const char *msg) {
+static void show_error_dialog(const char* msg) __attribute__((unused));
+static void show_error_dialog(const char* msg) {
   GtkWidget *dlg = gtk_message_dialog_new(
-                     NULL,
-                     GTK_DIALOG_MODAL,
-                     GTK_MESSAGE_ERROR,
-                     GTK_BUTTONS_NONE,
-                     "%s", msg
+                           NULL,
+                           GTK_DIALOG_MODAL,
+                           GTK_MESSAGE_ERROR,
+                           GTK_BUTTONS_NONE,
+                           "%s", msg
                    );
   gtk_window_set_title(GTK_WINDOW(dlg), "deskHPSDR - Important notice");
   gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_CENTER_ALWAYS);
@@ -165,23 +165,23 @@ static void enforce_x11_backend_policy(void) {
 }
 #endif
 
-void status_text(const char *text) {
+void status_text(const char* text) {
   gtk_label_set_text(GTK_LABEL(status_label), text);
   usleep(100000);
 
-  while (gtk_events_pending ()) {
-    gtk_main_iteration ();
+  while (gtk_events_pending()) {
+    gtk_main_iteration();
   }
 }
 
 static pthread_t wisdom_thread_id;
 static int wisdom_running = 0;
 
-static void* wisdom_thread(void *arg) {
+static void *wisdom_thread(void* arg) {
   int wdsp_subversion = GetWDSPVersion() % 100;
   t_print("%s: WDSP Subversion: %d\n", __func__, wdsp_subversion);
 
-  if (WDSPwisdom ((char *)arg)) {
+  if (WDSPwisdom((char *) arg)) {
     t_print("%s: WDSP wisdom file has been rebuilt.\n", __func__);
   } else {
     t_print("%s: Re-using existing WDSP wisdom file.\n", __func__);
@@ -191,7 +191,7 @@ static void* wisdom_thread(void *arg) {
   return NULL;
 }
 
-const char* get_current_gtk_theme(void) {
+const char *get_current_gtk_theme(void) {
   GtkSettings *settings = gtk_settings_get_default();
   gchar *theme_name = NULL;
 
@@ -465,15 +465,15 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 #ifdef __APPLE__
 
     // Shift + Option
-    if ( (event->state & (GDK_SHIFT_MASK | GDK_MOD1_MASK)) == (GDK_SHIFT_MASK | GDK_MOD1_MASK) ) {
+    if ((event->state & (GDK_SHIFT_MASK | GDK_MOD1_MASK)) == (GDK_SHIFT_MASK | GDK_MOD1_MASK)) {
       vfo_id_step(1 - active_receiver->id, -10);
     }
     // nur Shift
-    else if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
+    else if ((event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK) {
       vfo_step(-10);
     }
     // nur Option
-    else if ( (event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK ) {
+    else if ((event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK) {
       vfo_id_step(1 - active_receiver->id, -1);
     } else {
       vfo_step(-1);
@@ -482,7 +482,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 #else
 
     // Nicht-macOS: nur Shift beschleunigt
-    if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
+    if ((event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK) {
       vfo_step(-10);
     } else {
       vfo_step(-1);
@@ -496,15 +496,15 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 #ifdef __APPLE__
 
     // Shift + Option
-    if ( (event->state & (GDK_SHIFT_MASK | GDK_MOD1_MASK)) == (GDK_SHIFT_MASK | GDK_MOD1_MASK) ) {
+    if ((event->state & (GDK_SHIFT_MASK | GDK_MOD1_MASK)) == (GDK_SHIFT_MASK | GDK_MOD1_MASK)) {
       vfo_id_step(1 - active_receiver->id, 10);
     }
     // nur Shift
-    else if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
+    else if ((event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK) {
       vfo_step(10);
     }
     // nur Option
-    else if ( (event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK ) {
+    else if ((event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK) {
       vfo_id_step(1 - active_receiver->id, 1);
     } else {
       vfo_step(1);
@@ -513,7 +513,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 #else
 
     // Nicht-macOS: nur Shift beschleunigt
-    if ( (event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ) {
+    if ((event->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK) {
       vfo_step(10);
     } else {
       vfo_step(1);
@@ -657,7 +657,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 }
 
 // cppcheck-suppress constParameterCallback
-gboolean main_delete (GtkWidget *widget) {
+gboolean main_delete(GtkWidget *widget) {
   if (radio != NULL) {
     stop_program();
   }
@@ -687,7 +687,7 @@ static GdkPixbuf *create_pixbuf_from_data(void) {
   return scaled_pixbuf;
 }
 
-static int init(void *data) {
+static int init(void* data) {
   char wisdom_directory[1025];
   char text[1024];
   t_print("%s\n", __func__);
@@ -722,10 +722,10 @@ static int init(void *data) {
   while (wisdom_running) {
     // wait for the wisdom thread to complete, meanwhile
     // handling any GTK events.
-    usleep(100000); // 100ms
+    usleep(100000);  // 100ms
 
-    while (gtk_events_pending ()) {
-      gtk_main_iteration ();
+    while (gtk_events_pending()) {
+      gtk_main_iteration();
     }
 
     snprintf(text, sizeof(text), "Please do not close this window until wisdom plans are completed ...\n\n... %s",
@@ -797,10 +797,10 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 #ifdef __linux__
   t_print("Forcing GTK theme to Adwaita\n");
   gtk_settings_set_string_property(
-    gtk_settings_get_default(),
-    "gtk-theme-name",
-    "Adwaita",
-    "application"
+          gtk_settings_get_default(),
+          "gtk-theme-name",
+          "Adwaita",
+          "application"
   );
 #else
   t_print("Non-Linux system – skipping GTK theme override\n");
@@ -825,14 +825,14 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   // Create top window with minimum size
   //
   t_print("create top level window\n");
-  top_window = gtk_application_window_new (app);
+  top_window = gtk_application_window_new(app);
   gtk_widget_set_size_request(top_window, 100, 100);
   const char *used_theme = get_current_gtk_theme();
   char _title[128];
   snprintf(_title, sizeof(_title), "%s by DL1BZ %s [GTK Theme: %s]  WDSP Version %d.%02d", PGNAME, build_version,
            used_theme,
            GetWDSPVersion() / 100, GetWDSPVersion() % 100);
-  gtk_window_set_title (GTK_WINDOW (top_window), _title);
+  gtk_window_set_title(GTK_WINDOW(top_window), _title);
 #if defined(__APPLE__)
   gtk_window_set_hide_titlebar_when_maximized(GTK_WINDOW(top_window), TRUE);
 #endif
@@ -848,7 +848,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   //
   gtk_window_set_position(GTK_WINDOW(top_window), GTK_WIN_POS_CENTER);
   gtk_window_set_resizable(GTK_WINDOW(top_window), FALSE);
-  gtk_window_set_deletable(GTK_WINDOW(top_window), FALSE); // remove close button in main window
+  gtk_window_set_deletable(GTK_WINDOW(top_window), FALSE);   // remove close button in main window
   //
   // Get the position of the top window, and then determine
   // to which monitor this position belongs.
@@ -901,7 +901,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
 
   // load the TRX logo now only from the included trx_logo.h
   GtkWidget *trx_logo_widget = gtk_image_new_from_pixbuf(create_pixbuf_from_data());
-  g_signal_connect (top_window, "delete-event", G_CALLBACK (main_delete), NULL);
+  g_signal_connect(top_window, "delete-event", G_CALLBACK(main_delete), NULL);
   //
   // We want to use the space-bar as an alternative to go to TX
   //
@@ -915,9 +915,9 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.8);
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
-  gtk_grid_set_column_spacing (GTK_GRID(topgrid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(topgrid), 10);
   t_print("add grid\n");
-  gtk_container_add (GTK_CONTAINER (top_window), topgrid);
+  gtk_container_add(GTK_CONTAINER(top_window), topgrid);
   t_print("add image to grid\n");
   gtk_grid_attach(GTK_GRID(topgrid), trx_logo_widget, col, row, 1, 2);
   t_print("create deskHPSDR label\n");
@@ -970,7 +970,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   g_idle_add(init, NULL);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 #if !defined(__WAYLAND__)
   enforce_x11_backend_policy();
 #endif
@@ -1026,7 +1026,7 @@ int main(int argc, char **argv) {
   return rc;
 }
 
-int fatal_error(void *data) {
+int fatal_error(void* data) {
   //
   // This replaces the calls to exit. It now emits
   // a GTK modal dialog waiting for user response.
@@ -1038,7 +1038,7 @@ int fatal_error(void *data) {
   // Note this must only be called from the "main thread", that is,
   // you can only invoke this function via g_idle_add()
   //
-  const gchar *msg = (gchar *) data;
+  const gchar *msg = (gchar*) data;
   static int quit = 0;
 
   if (quit) {
@@ -1049,7 +1049,7 @@ int fatal_error(void *data) {
 
   if (top_window) {
     GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
-    GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(top_window),
+    GtkWidget *dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(top_window),
                         flags,
                         GTK_MESSAGE_ERROR,
                         GTK_BUTTONS_CLOSE,

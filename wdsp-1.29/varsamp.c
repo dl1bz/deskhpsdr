@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-void calc_varsamp (VARSAMP a) {
+void calc_varsamp(VARSAMP a) {
   double min_rate, norm_rate;
   // double max_rate;
   double fc_norm_high, fc_norm_low;
@@ -35,7 +35,7 @@ void calc_varsamp (VARSAMP a) {
   a->inv_cvar = 1.0 / a->cvar;
   a->old_inv_cvar = a->inv_cvar;
   a->dicvar = 0.0;
-  a->delta = fabs (1.0 / a->cvar - 1.0);
+  a->delta = fabs(1.0 / a->cvar - 1.0);
   a->fc = a->fcin;
 
   if (a->out_rate >= a->in_rate) {
@@ -64,22 +64,22 @@ void calc_varsamp (VARSAMP a) {
   a->ncoef += (a->R - 1) * (a->ncoef - 1);
   a->h = fir_bandpass(a->ncoef, fc_norm_low, fc_norm_high, (double)a->R, 1, 0, (double)a->R * a->gain);
   // print_impulse ("imp.txt", a->ncoef, a->h, 0, 0);
-  a->ring = (double *)malloc0(a->rsize * sizeof(complex));
+  a->ring = (double*)malloc0(a->rsize * sizeof(complex));
   a->idx_in = a->rsize - 1;
   a->h_offset = 0.0;
-  a->hs = (double *)malloc0 (a->rsize * sizeof (double));
+  a->hs = (double*)malloc0(a->rsize * sizeof(double));
   a->isamps = 0.0;
 }
 
-void decalc_varsamp (VARSAMP a) {
-  _aligned_free (a->hs);
-  _aligned_free (a->ring);
-  _aligned_free (a->h);
+void decalc_varsamp(VARSAMP a) {
+  _aligned_free(a->hs);
+  _aligned_free(a->ring);
+  _aligned_free(a->h);
 }
 
-VARSAMP create_varsamp ( int run, int size, double* in, double* out,
-                         int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode) {
-  VARSAMP a = (VARSAMP) malloc0 (sizeof (varsamp));
+VARSAMP create_varsamp(int run, int size, double* in, double* out,
+                       int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode) {
+  VARSAMP a = (VARSAMP) malloc0(sizeof(varsamp));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -92,23 +92,23 @@ VARSAMP create_varsamp ( int run, int size, double* in, double* out,
   a->gain = gain;
   a->var = var;
   a->varmode = varmode;
-  calc_varsamp (a);
+  calc_varsamp(a);
   return a;
 }
 
-void destroy_varsamp (VARSAMP a) {
-  decalc_varsamp (a);
-  _aligned_free (a);
+void destroy_varsamp(VARSAMP a) {
+  decalc_varsamp(a);
+  _aligned_free(a);
 }
 
-void flush_varsamp (VARSAMP a) {
-  memset (a->ring, 0, a->rsize * sizeof (complex));
+void flush_varsamp(VARSAMP a) {
+  memset(a->ring, 0, a->rsize * sizeof(complex));
   a->idx_in = a->rsize - 1;
   a->h_offset = 0.0;
   a->isamps = 0.0;
 }
 
-void hshift (VARSAMP a) {
+void hshift(VARSAMP a) {
   int i, j, k;
   int hidx;
   double frac, pos;
@@ -121,9 +121,9 @@ void hshift (VARSAMP a) {
   }
 }
 
-int xvarsamp (VARSAMP a, double var) {
+int xvarsamp(VARSAMP a, double var) {
   int outsamps = 0;
-  uint64_t* picvar;
+  uint64_t *picvar;
   uint64_t N;
   a->var = var;
   a->old_inv_cvar = a->inv_cvar;
@@ -146,13 +146,13 @@ int xvarsamp (VARSAMP a, double var) {
       a->inv_cvar += a->dicvar;
       picvar = (uint64_t*)(&a->inv_cvar);
       N = *picvar & 0xffffffffffff0000;
-      a->inv_cvar = *((double *)&N);
+      a->inv_cvar = *((double*)&N);
       a->delta = 1.0 - a->inv_cvar;
 
       while (a->isamps < 1.0) {
         I = 0.0;
         Q = 0.0;
-        hshift (a);
+        hshift(a);
         a->h_offset += a->delta;
 
         while (a->h_offset >= 1.0) { a->h_offset -= 1.0; }
@@ -177,60 +177,60 @@ int xvarsamp (VARSAMP a, double var) {
       if (--a->idx_in < 0) { a->idx_in = a->rsize - 1; }
     }
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 
   return outsamps;
 }
 
-void setBuffers_varsamp (VARSAMP a, double* in, double* out) {
+void setBuffers_varsamp(VARSAMP a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-void setSize_varsamp (VARSAMP a, int size) {
+void setSize_varsamp(VARSAMP a, int size) {
   a->size = size;
-  flush_varsamp (a);
+  flush_varsamp(a);
 }
 
-void setInRate_varsamp (VARSAMP a, int rate) {
-  decalc_varsamp (a);
+void setInRate_varsamp(VARSAMP a, int rate) {
+  decalc_varsamp(a);
   a->in_rate = rate;
-  calc_varsamp (a);
+  calc_varsamp(a);
 }
 
-void setOutRate_varsamp (VARSAMP a, int rate) {
-  decalc_varsamp (a);
+void setOutRate_varsamp(VARSAMP a, int rate) {
+  decalc_varsamp(a);
   a->out_rate = rate;
-  calc_varsamp (a);
+  calc_varsamp(a);
 }
 
-void setFCLow_varsamp (VARSAMP a, double fc_low) {
+void setFCLow_varsamp(VARSAMP a, double fc_low) {
   if (fc_low != a->fc_low) {
-    decalc_varsamp (a);
+    decalc_varsamp(a);
     a->fc_low = fc_low;
-    calc_varsamp (a);
+    calc_varsamp(a);
   }
 }
 
-void setBandwidth_varsamp (VARSAMP a, double fc_low, double fc_high) {
+void setBandwidth_varsamp(VARSAMP a, double fc_low, double fc_high) {
   if (fc_low != a->fc_low || fc_high != a->fcin) {
-    decalc_varsamp (a);
+    decalc_varsamp(a);
     a->fc_low = fc_low;
     a->fcin = fc_high;
-    calc_varsamp (a);
+    calc_varsamp(a);
   }
 }
 
 // exported calls
 
 PORT
-void* create_varsampV (int in_rate, int out_rate, int R) {
-  return (void *)create_varsamp (1, 0, 0, 0, in_rate, out_rate, 0.0, -1.0, R, 1.0, 1.0, 1);
+void *create_varsampV(int in_rate, int out_rate, int R) {
+  return (void*)create_varsamp(1, 0, 0, 0, in_rate, out_rate, 0.0, -1.0, R, 1.0, 1.0, 1);
 }
 
 PORT
-void xvarsampV (double* input, double* output, int numsamps, double var, int* outsamps, void* ptr) {
+void xvarsampV(double* input, double* output, int numsamps, double var, int* outsamps, void* ptr) {
   VARSAMP a = (VARSAMP)ptr;
   a->in = input;
   a->out = output;
@@ -239,6 +239,6 @@ void xvarsampV (double* input, double* output, int numsamps, double var, int* ou
 }
 
 PORT
-void destroy_varsampV (void* ptr) {
-  destroy_varsamp ( (VARSAMP)ptr );
+void destroy_varsampV(void* ptr) {
+  destroy_varsamp((VARSAMP)ptr);
 }

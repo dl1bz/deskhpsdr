@@ -26,14 +26,14 @@ warren@pratt.one
 
 #include "comm.h"
 
-void start_syncbthread (SYNCB a) {
-  HANDLE handle = (HANDLE) _beginthread(syncb_main, 0, (void *)a);
-  SetThreadPriority (handle, THREAD_PRIORITY_HIGHEST);
+void start_syncbthread(SYNCB a) {
+  HANDLE handle = (HANDLE) _beginthread(syncb_main, 0, (void*)a);
+  SetThreadPriority(handle, THREAD_PRIORITY_HIGHEST);
 }
 
-SYNCB create_syncbuffs (int accept, int nstreams, int max_insize, int max_outsize, int outsize, double** out,
-                        void (*exf)(void)) {
-  SYNCB a = (SYNCB) malloc0 (sizeof(syncb));
+SYNCB create_syncbuffs(int accept, int nstreams, int max_insize, int max_outsize, int outsize, double** out,
+                       void (*exf)(void)) {
+  SYNCB a = (SYNCB) malloc0(sizeof(syncb));
   int i;
   a->accept = accept;
   a->nstreams = nstreams;
@@ -51,65 +51,65 @@ SYNCB create_syncbuffs (int accept, int nstreams, int max_insize, int max_outsiz
   }
 
   a->r1_active_buffsize = SYNCB_MULT * a->r1_size;
-  a->r1_baseptr = (double **) malloc0 (a->nstreams * sizeof (double *));
+  a->r1_baseptr = (double**) malloc0(a->nstreams * sizeof(double*));
 
   for (i = 0; i < a->nstreams; i++) {
-    a->r1_baseptr[i] = (double *) malloc0 (a->r1_active_buffsize * sizeof (complex));
+    a->r1_baseptr[i] = (double*) malloc0(a->r1_active_buffsize * sizeof(complex));
   }
 
   a->r1_inidx = 0;
   a->r1_outidx = 0;
   a->r1_unqueuedsamps = 0;
   a->Sem_BuffReady = CreateSemaphore(0, 0, 1000, 0);
-  InitializeCriticalSectionAndSpinCount ( &a->csIN, 2500 );
-  InitializeCriticalSectionAndSpinCount ( &a->csOUT,  2500 );
-  start_syncbthread (a);
+  InitializeCriticalSectionAndSpinCount(&a->csIN, 2500);
+  InitializeCriticalSectionAndSpinCount(&a->csOUT,  2500);
+  start_syncbthread(a);
   return a;
 }
 
-void destroy_syncbuffs (SYNCB a) {
+void destroy_syncbuffs(SYNCB a) {
   int i;
   InterlockedBitTestAndReset(&a->accept, 0);    // shut the Syncbound() gate to prevent new infusions
-  EnterCriticalSection (&a->csIN);        // wait until the current Inbound() infusion is finished
-  EnterCriticalSection (&a->csOUT);       // block the syncb thread before syncbdata()
-  Sleep (25);                   // wait for the thread to arrive at the top of the syncb_main() loop
+  EnterCriticalSection(&a->csIN);         // wait until the current Inbound() infusion is finished
+  EnterCriticalSection(&a->csOUT);        // block the syncb thread before syncbdata()
+  Sleep(25);                    // wait for the thread to arrive at the top of the syncb_main() loop
   InterlockedBitTestAndReset(&a->run, 0);     // set a trap for the syncb thread
   ReleaseSemaphore(a->Sem_BuffReady, 1, 0);   // be sure the syncb thread can pass WaitForSingleObject in syncb_main() //
-  LeaveCriticalSection (&a->csOUT);       // let the thread pass to the trap in syncbdata()
-  LeaveCriticalSection (&a->csIN);
-  Sleep (2);                    // wait for the syncb thread to die
-  DeleteCriticalSection (&a->csOUT);
-  DeleteCriticalSection (&a->csIN);
-  CloseHandle (a->Sem_BuffReady);
+  LeaveCriticalSection(&a->csOUT);        // let the thread pass to the trap in syncbdata()
+  LeaveCriticalSection(&a->csIN);
+  Sleep(2);                     // wait for the syncb thread to die
+  DeleteCriticalSection(&a->csOUT);
+  DeleteCriticalSection(&a->csIN);
+  CloseHandle(a->Sem_BuffReady);
 
   for (i = 0; i < a->nstreams; i++) {
-    _aligned_free (a->r1_baseptr[i]);
+    _aligned_free(a->r1_baseptr[i]);
   }
 
-  _aligned_free (a->r1_baseptr);
-  _aligned_free (a);
+  _aligned_free(a->r1_baseptr);
+  _aligned_free(a);
 }
 
-void flush_syncbuffs (SYNCB a) {
+void flush_syncbuffs(SYNCB a) {
   int i;
 
   for (i = 0; i < a->nstreams; i++) {
-    memset (a->r1_baseptr[i], 0, a->r1_active_buffsize * sizeof (complex));
+    memset(a->r1_baseptr[i], 0, a->r1_active_buffsize * sizeof(complex));
   }
 
   a->r1_inidx = 0;
   a->r1_outidx = 0;
   a->r1_unqueuedsamps = 0;
 
-  while (!WaitForSingleObject (a->Sem_BuffReady, 1)) ;
+  while (!WaitForSingleObject(a->Sem_BuffReady, 1)) ;
 }
 
-void Syncbound (SYNCB a, int nsamples, double** in) {
+void Syncbound(SYNCB a, int nsamples, double** in) {
   int i, n;
   int first, second;
 
-  if (_InterlockedAnd (&a->accept, 1)) {
-    EnterCriticalSection (&a->csIN);
+  if (_InterlockedAnd(&a->accept, 1)) {
+    EnterCriticalSection(&a->csIN);
 
     if (nsamples > (a->r1_active_buffsize - a->r1_inidx)) {
       first = a->r1_active_buffsize - a->r1_inidx;
@@ -120,13 +120,13 @@ void Syncbound (SYNCB a, int nsamples, double** in) {
     }
 
     for (i = 0; i < a->nstreams; i++) {
-      memcpy (a->r1_baseptr[i] + 2 * a->r1_inidx, in[i],         first  * sizeof (complex));
-      memcpy (a->r1_baseptr[i],         in[i] + 2 * first, second * sizeof (complex));
+      memcpy(a->r1_baseptr[i] + 2 * a->r1_inidx, in[i],         first  * sizeof(complex));
+      memcpy(a->r1_baseptr[i],         in[i] + 2 * first, second * sizeof(complex));
     }
 
     if ((a->r1_unqueuedsamps += nsamples) >= a->r1_outsize) {
       n = a->r1_unqueuedsamps / a->r1_outsize;
-      ReleaseSemaphore (a->Sem_BuffReady, n, 0);
+      ReleaseSemaphore(a->Sem_BuffReady, n, 0);
       a->r1_unqueuedsamps -= n * a->r1_outsize;
     }
 
@@ -134,17 +134,17 @@ void Syncbound (SYNCB a, int nsamples, double** in) {
       a->r1_inidx -= a->r1_active_buffsize;
     }
 
-    LeaveCriticalSection (&a->csIN);
+    LeaveCriticalSection(&a->csIN);
   }
 }
 
-void syncbdata (SYNCB a) {
+void syncbdata(SYNCB a) {
   int i;
   int first, second;
-  EnterCriticalSection (&a->csOUT);
+  EnterCriticalSection(&a->csOUT);
 
-  if (!_InterlockedAnd (&a->run, 1)) {
-    LeaveCriticalSection (&a->csOUT);
+  if (!_InterlockedAnd(&a->run, 1)) {
+    LeaveCriticalSection(&a->csOUT);
     _endthread();
   }
 
@@ -157,43 +157,43 @@ void syncbdata (SYNCB a) {
   }
 
   for (i = 0; i < a->nstreams; i++) {
-    memcpy (a->out[i],         a->r1_baseptr[i] + 2 * a->r1_outidx, first  * sizeof (complex));
-    memcpy (a->out[i] + 2 * first, a->r1_baseptr[i],          second * sizeof (complex));
+    memcpy(a->out[i],         a->r1_baseptr[i] + 2 * a->r1_outidx, first  * sizeof(complex));
+    memcpy(a->out[i] + 2 * first, a->r1_baseptr[i],          second * sizeof(complex));
   }
 
   if ((a->r1_outidx += a->r1_outsize) >= a->r1_active_buffsize) {
     a->r1_outidx -= a->r1_active_buffsize;
   }
 
-  LeaveCriticalSection (&a->csOUT);
+  LeaveCriticalSection(&a->csOUT);
 }
 
-void syncb_main (void *p) {
+void syncb_main(void* p) {
   SYNCB a = (SYNCB)p;
 
-  while (_InterlockedAnd (&a->run, 1)) {
-    WaitForSingleObject (a->Sem_BuffReady, INFINITE);
-    syncbdata (a);
+  while (_InterlockedAnd(&a->run, 1)) {
+    WaitForSingleObject(a->Sem_BuffReady, INFINITE);
+    syncbdata(a);
     a->exf();
   }
 
   _endthread();
 }
 
-void SetSYNCBRingOutsize (SYNCB a, int size) {
+void SetSYNCBRingOutsize(SYNCB a, int size) {
   InterlockedBitTestAndReset(&a->accept, 0);    // shut the Syncbound() gate to prevent new infusions
-  EnterCriticalSection (&a->csIN);        // wait until the current Syncbound() infusion is finished
-  EnterCriticalSection (&a->csOUT);       // block the syncb thread before syncbdata()
-  Sleep (25);                   // wait for the thread to arrive at the top of the syncb_main() loop
+  EnterCriticalSection(&a->csIN);         // wait until the current Syncbound() infusion is finished
+  EnterCriticalSection(&a->csOUT);        // block the syncb thread before syncbdata()
+  Sleep(25);                    // wait for the thread to arrive at the top of the syncb_main() loop
   InterlockedBitTestAndReset(&a->run, 0);     // set a trap for the syncb thread
   ReleaseSemaphore(a->Sem_BuffReady, 1, 0);   // be sure the syncb thread can pass WaitForSingleObject in syncb_main() //
-  LeaveCriticalSection (&a->csOUT);       // let the thread pass to the trap in syncbdata()
-  Sleep (2);                    // wait for the syncb thread to die
+  LeaveCriticalSection(&a->csOUT);        // let the thread pass to the trap in syncbdata()
+  Sleep(2);                     // wait for the syncb thread to die
   flush_syncbuffs(a);               // restore ring to pristine condition
   a->r1_outsize = size;             // set its new outsize
   InterlockedBitTestAndSet(&a->run, 0);     // remove the syncb thread trap
   start_syncbthread(a);             // start the syncb thread
-  LeaveCriticalSection (&a->csIN);        // enable Syncbound() processing
+  LeaveCriticalSection(&a->csIN);         // enable Syncbound() processing
   InterlockedBitTestAndSet(&a->accept, 0);    // open the Syncbound() gate
 }
 
@@ -203,32 +203,32 @@ void SetSYNCBRingOutsize (SYNCB a, int size) {
 *                                                   *
 ********************************************************************************************************/
 
-DUMFILT create_dumfilt (int run, int delay, int opsize, double* in, double* out) {
-  DUMFILT a = (DUMFILT) malloc0 (sizeof (dumfilt));
+DUMFILT create_dumfilt(int run, int delay, int opsize, double* in, double* out) {
+  DUMFILT a = (DUMFILT) malloc0(sizeof(dumfilt));
   a->run = run;
   a->delay = delay;
   a->opsize = opsize;
   a->rsize = a->opsize + a->delay;
   a->in = in;
   a->out = out;
-  a->ring = (double *) malloc0 (a->rsize * sizeof (complex));
+  a->ring = (double*) malloc0(a->rsize * sizeof(complex));
   a->outidx = 0;
   a->inidx = a->delay;
   return a;
 }
 
-void destroy_dumfilt (DUMFILT a) {
-  _aligned_free (a->ring);
-  _aligned_free (a);
+void destroy_dumfilt(DUMFILT a) {
+  _aligned_free(a->ring);
+  _aligned_free(a);
 }
 
-void flush_dumfilt (DUMFILT a) {
-  memset (a->ring, 0, a->rsize * sizeof (complex));
+void flush_dumfilt(DUMFILT a) {
+  memset(a->ring, 0, a->rsize * sizeof(complex));
   a->outidx = 0;
   a->inidx = a->delay;
 }
 
-void xdumfilt (DUMFILT a) {
+void xdumfilt(DUMFILT a) {
   int first, second;
 
   if (a->run) {
@@ -240,8 +240,8 @@ void xdumfilt (DUMFILT a) {
       second = 0;
     }
 
-    memcpy (a->ring + 2 * a->inidx, a->in,         first  * sizeof (complex));
-    memcpy (a->ring,        a->in + 2 * first, second * sizeof (complex));
+    memcpy(a->ring + 2 * a->inidx, a->in,         first  * sizeof(complex));
+    memcpy(a->ring,        a->in + 2 * first, second * sizeof(complex));
 
     if ((a->inidx += a->opsize) > a->rsize) { a->inidx -= a->rsize; }
 
@@ -253,8 +253,8 @@ void xdumfilt (DUMFILT a) {
       second = 0;
     }
 
-    memcpy (a->out,       a->ring + 2 * a->outidx, first  * sizeof (complex));
-    memcpy (a->out + 2 * first, a->ring,         second * sizeof (complex));
+    memcpy(a->out,       a->ring + 2 * a->outidx, first  * sizeof(complex));
+    memcpy(a->out + 2 * first, a->ring,         second * sizeof(complex));
 
     if ((a->outidx += a->opsize) > a->rsize) { a->outidx -= a->rsize; }
   }

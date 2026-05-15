@@ -124,8 +124,8 @@ void encoder_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
@@ -133,11 +133,11 @@ void encoder_menu(GtkWidget *parent) {
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
   GtkWidget *default_b = gtk_button_new_with_label("Defaults");
-  gtk_widget_set_name(default_b, "close_button"); // same looks as Close button
-  g_signal_connect (default_b, "button-press-event", G_CALLBACK(default_cb), NULL);
+  gtk_widget_set_name(default_b, "close_button");  // same looks as Close button
+  g_signal_connect(default_b, "button-press-event", G_CALLBACK(default_cb), NULL);
 
   switch (controller) {
   case CONTROLLER1:
@@ -396,7 +396,7 @@ void encoder_menu(GtkWidget *parent) {
         g_signal_connect(widget, "button-press-event", G_CALLBACK(encoder_bottom_cb), GINT_TO_POINTER(j));
         gtk_grid_attach(GTK_GRID(grid), widget, 4 * i, row++, 1, 1);
 
-        if  (j == 2 * i) {
+        if (j == 2 * i) {
           widget = gtk_label_new("  ");
           gtk_grid_attach(GTK_GRID(grid), widget, 4 * i, row++, 1, 1);
         }

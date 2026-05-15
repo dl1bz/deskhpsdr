@@ -27,7 +27,7 @@
 struct _FILTER {
   int low;
   int high;
-  char* title;
+  char *title;
 };
 
 typedef struct _FILTER FILTER;
@@ -59,11 +59,11 @@ extern const int var1_default_high[MODES];
 extern const int var2_default_low[MODES];
 extern const int var2_default_high[MODES];
 
-extern void filterSaveState(void);
-extern void filterRestoreState(void);
-extern void filter_width_changed(int id, int increment);
-extern void filter_shift_changed(int id, int increment);
-extern void filter_high_changed(int id, int increment);
-extern void filter_low_changed(int id, int increment);
-extern void filter_cut_default(int id);
+extern void filterSaveState (void);
+extern void filterRestoreState (void);
+extern void filter_width_changed (int id, int increment);
+extern void filter_shift_changed (int id, int increment);
+extern void filter_high_changed (int id, int increment);
+extern void filter_low_changed (int id, int increment);
+extern void filter_cut_default (int id);
 #endif

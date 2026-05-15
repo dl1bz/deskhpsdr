@@ -31,8 +31,8 @@ typedef struct _uslew {
   int channel;
   volatile long *ch_upslew;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double tdelay;
   double tupslew;
@@ -41,10 +41,10 @@ typedef struct _uslew {
   int count;
   int ndelup;
   int ntup;
-  double* cup;
+  double *cup;
 } uslew, *USLEW;
 
-extern USLEW create_uslew (int channel, volatile long *ch_upslew, int size, double* in, double* out, double rate,
+extern USLEW create_uslew (int channel, volatile long* ch_upslew, int size, double* in, double* out, double rate,
                            double tdelay, double tupslew);
 
 extern void destroy_uslew (USLEW a);

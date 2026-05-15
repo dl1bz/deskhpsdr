@@ -92,13 +92,13 @@ void new_discovery(void) {
     //
     if (ifa->ifa_addr) {
       if (
-        ifa->ifa_addr->sa_family == AF_INET
-        && (ifa->ifa_flags & IFF_UP) == IFF_UP
-        && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
-        && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
-        && strncmp("veth", ifa->ifa_name, 4)
-        && strncmp("dock", ifa->ifa_name, 4)
-        && strncmp("hass", ifa->ifa_name, 4)
+              ifa->ifa_addr->sa_family == AF_INET
+              && (ifa->ifa_flags & IFF_UP) == IFF_UP
+              && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
+              && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
+              && strncmp("veth", ifa->ifa_name, 4)
+              && strncmp("dock", ifa->ifa_name, 4)
+              && strncmp("hass", ifa->ifa_name, 4)
       ) {
         new_discover(ifa, 1);   // send UDP broadcast packet to interface
       }
@@ -121,7 +121,7 @@ void new_discovery(void) {
 
   if (rc == 0 && res != NULL) {
     if (res->ai_family == AF_INET &&
-        res->ai_addrlen >= (socklen_t)sizeof(struct sockaddr_in)) {
+        res->ai_addrlen >= (socklen_t) sizeof(struct sockaddr_in)) {
       struct sockaddr_in addr;
       memcpy(&addr, res->ai_addr, sizeof(addr));
       resolved_addr = addr.sin_addr;
@@ -147,7 +147,7 @@ void new_discovery(void) {
 
   if (!is_local) { new_discover(NULL, 2); }
 
-  t_print( "new_discovery found %d devices\n", devices);
+  t_print("new_discovery found %d devices\n", devices);
 
   for (i = 0; i < devices; i++) {
     print_device(i);
@@ -160,8 +160,8 @@ void new_discovery(void) {
 //
 static void new_discover(struct ifaddrs* iface, int discflag) {
   int rc;
-  struct sockaddr_in *sa = (struct sockaddr_in *)&interface_addr;
-  struct sockaddr_in *mask = (struct sockaddr_in *)&interface_netmask;
+  struct sockaddr_in *sa = (struct sockaddr_in*) &interface_addr;
+  struct sockaddr_in *mask = (struct sockaddr_in*) &interface_netmask;
   char addr[16];
   char net_mask[16];
   unsigned char buffer[60];
@@ -190,11 +190,11 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 
     // bind to this interface and the discovery port
     interface_addr.sin_family = AF_INET;
-    interface_addr.sin_port = htons(0); // system assigned port
+    interface_addr.sin_port = htons(0);  // system assigned port
 
-    if (bind(discovery_socket, (struct sockaddr * )&interface_addr, sizeof(interface_addr)) < 0) {
+    if (bind(discovery_socket, (struct sockaddr *) &interface_addr, sizeof(interface_addr)) < 0) {
       t_perror("new_discover: bind socket failed for discovery_socket\n");
-      close (discovery_socket);
+      close(discovery_socket);
       return;
     }
 
@@ -207,7 +207,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 
     if (rc != 0) {
       t_print("new_discover: cannot set SO_BROADCAST: rc=%d\n", rc);
-      close (discovery_socket);
+      close(discovery_socket);
       return;
     }
 
@@ -258,7 +258,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 
     if (gai_rc == 0 && res != NULL) {
       if (res->ai_family == AF_INET &&
-          res->ai_addrlen >= (socklen_t)sizeof(struct sockaddr_in)) {
+          res->ai_addrlen >= (socklen_t) sizeof(struct sockaddr_in)) {
         struct sockaddr_in addr;
         memcpy(&addr, res->ai_addr, sizeof(addr));
         to_addr.sin_addr = addr.sin_addr;
@@ -308,7 +308,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 
   rc = devices;
   // start a receive thread to collect discovery response packets
-  discover_thread_id = g_thread_new( "new discover receive", new_discover_receive_thread, NULL);
+  discover_thread_id = g_thread_new("new discover receive", new_discover_receive_thread, NULL);
   // send discovery packet
   buffer[0] = 0x00;
   buffer[1] = 0x00;
@@ -326,21 +326,21 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
   //-- start fix for Tahoe --
   // Tahoe workaround: erstes UDP nach bind() kann gedroppt werden → dreifach senden
   for (int n = 0; n < 3; n++) {
-    if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
+    if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
       t_perror("new_discover: sendto socket failed for discovery_socket\n");
       close(discovery_socket);
       return;
     }
 
-    usleep(30000); // 30 ms
+    usleep(30000);  // 30 ms
   }
 
   //-- end fix for Tahoe --
 #else
 
-  if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr * )&to_addr, sizeof(to_addr)) < 0) {
+  if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
     t_perror("new_discover: sendto socket failed for discovery_socket\n");
-    close (discovery_socket);
+    close(discovery_socket);
     return;
   }
 
@@ -361,7 +361,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       //
       // METIS detection UDP packet sent to fixed IP address got a valid response.
       //
-      memcpy((void *)&discovered[rc].info.network.address, (void *)&to_addr, sizeof(to_addr));
+      memcpy((void*) &discovered[rc].info.network.address, (void*) &to_addr, sizeof(to_addr));
       discovered[rc].info.network.address_length = sizeof(to_addr);
       g_strlcpy(discovered[rc].info.network.interface_name, "UDP", sizeof(discovered[rc].info.network.interface_name));
       discovered[rc].use_routing = 1;
@@ -380,11 +380,11 @@ gpointer new_discover_receive_thread(gpointer data) {
   double frequency_min, frequency_max;
   tv.tv_sec = 2;
   tv.tv_usec = 0;
-  setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+  setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &tv, sizeof(struct timeval));
   len = sizeof(addr);
 
   while (1) {
-    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &len);
+    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr*) &addr, &len);
 
     if (bytes_read < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -508,10 +508,11 @@ gpointer new_discover_receive_thread(gpointer data) {
               discovered[devices].info.network.mac_address[i] = buffer[i + 5];
             }
 
-            memcpy((void*)&discovered[devices].info.network.address, (void*)&addr, sizeof(addr));
+            memcpy((void*) &discovered[devices].info.network.address, (void*) &addr, sizeof(addr));
             discovered[devices].info.network.address_length = sizeof(addr);
-            memcpy((void*)&discovered[devices].info.network.interface_address, (void*)&interface_addr, sizeof(interface_addr));
-            memcpy((void*)&discovered[devices].info.network.interface_netmask, (void*)&interface_netmask,
+            memcpy((void*) &discovered[devices].info.network.interface_address, (void*) &interface_addr,
+                   sizeof(interface_addr));
+            memcpy((void*) &discovered[devices].info.network.interface_netmask, (void*) &interface_netmask,
                    sizeof(interface_netmask));
             discovered[devices].info.network.interface_length = sizeof(interface_addr);
             g_strlcpy(discovered[devices].info.network.interface_name, interface_name,

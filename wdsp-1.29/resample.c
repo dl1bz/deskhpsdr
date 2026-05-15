@@ -32,13 +32,13 @@ warren@wpratt.com
 *                                               *
 ************************************************************************************************/
 
-void calc_resample (RESAMPLE a) {
+void calc_resample(RESAMPLE a) {
   int x, y, z;
   int i, j, k;
   int min_rate;
   double full_rate;
   double fc_norm_high, fc_norm_low;
-  double* impulse;
+  double *impulse;
   a->fc = a->fcin;
   a->ncoef = a->ncoefin;
 
@@ -73,7 +73,7 @@ void calc_resample (RESAMPLE a) {
 
   a->ncoef = (a->ncoef / a->L + 1) * a->L;
   a->cpp = a->ncoef / a->L;
-  a->h = (double *)malloc0(a->ncoef * sizeof(double));
+  a->h = (double*)malloc0(a->ncoef * sizeof(double));
   impulse = fir_bandpass(a->ncoef, fc_norm_low, fc_norm_high, 1.0, 1, 0, a->gain * (double)a->L);
   i = 0;
 
@@ -83,21 +83,21 @@ void calc_resample (RESAMPLE a) {
     }
 
   a->ringsize = a->cpp;
-  a->ring = (double *)malloc0(a->ringsize * sizeof(complex));
+  a->ring = (double*)malloc0(a->ringsize * sizeof(complex));
   a->idx_in = a->ringsize - 1;
   a->phnum = 0;
   _aligned_free(impulse);
 }
 
-void decalc_resample (RESAMPLE a) {
+void decalc_resample(RESAMPLE a) {
   _aligned_free(a->ring);
   _aligned_free(a->h);
 }
 
 PORT
-RESAMPLE create_resample ( int run, int size, double* in, double* out, int in_rate, int out_rate, double fc, int ncoef,
-                           double gain) {
-  RESAMPLE a = (RESAMPLE) malloc0 (sizeof (resample));
+RESAMPLE create_resample(int run, int size, double* in, double* out, int in_rate, int out_rate, double fc, int ncoef,
+                         double gain) {
+  RESAMPLE a = (RESAMPLE) malloc0(sizeof(resample));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -108,25 +108,25 @@ RESAMPLE create_resample ( int run, int size, double* in, double* out, int in_ra
   a->fc_low = -1.0;   // could add to create_resample() parameters
   a->ncoefin = ncoef;
   a->gain = gain;
-  calc_resample (a);
+  calc_resample(a);
   return a;
 }
 
 PORT
-void destroy_resample (RESAMPLE a) {
-  decalc_resample (a);
-  _aligned_free (a);
+void destroy_resample(RESAMPLE a) {
+  decalc_resample(a);
+  _aligned_free(a);
 }
 
 PORT
-void flush_resample (RESAMPLE a) {
-  memset (a->ring, 0, a->ringsize * sizeof (complex));
+void flush_resample(RESAMPLE a) {
+  memset(a->ring, 0, a->ringsize * sizeof(complex));
   a->idx_in = a->ringsize - 1;
   a->phnum = 0;
 }
 
 PORT
-int xresample (RESAMPLE a) {
+int xresample(RESAMPLE a) {
   int outsamps = 0;
 
   if (a->run) {
@@ -136,8 +136,8 @@ int xresample (RESAMPLE a) {
     int cpp = a->cpp;
     int idx_in = a->idx_in;
     int ringsize = a->ringsize;
-    double* h = a->h;
-    double* ring = a->ring;
+    double *h = a->h;
+    double *ring = a->ring;
 
     for (i = 0; i < a->size; i++) {
       ring[2 * idx_in + 0] = a->in[2 * i + 0];
@@ -168,7 +168,7 @@ int xresample (RESAMPLE a) {
 
     a->idx_in = idx_in;
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->size * sizeof (complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 
   return outsamps;
@@ -181,47 +181,47 @@ void setBuffers_resample(RESAMPLE a, double* in, double* out) {
 
 void setSize_resample(RESAMPLE a, int size) {
   a->size = size;
-  flush_resample (a);
+  flush_resample(a);
 }
 
 void setInRate_resample(RESAMPLE a, int rate) {
-  decalc_resample (a);
+  decalc_resample(a);
   a->in_rate = rate;
-  calc_resample (a);
+  calc_resample(a);
 }
 
 void setOutRate_resample(RESAMPLE a, int rate) {
-  decalc_resample (a);
+  decalc_resample(a);
   a->out_rate = rate;
-  calc_resample (a);
+  calc_resample(a);
 }
 
-void setFCLow_resample (RESAMPLE a, double fc_low) {
+void setFCLow_resample(RESAMPLE a, double fc_low) {
   if (fc_low != a->fc_low) {
-    decalc_resample (a);
+    decalc_resample(a);
     a->fc_low = fc_low;
-    calc_resample (a);
+    calc_resample(a);
   }
 }
 
-void setBandwidth_resample (RESAMPLE a, double fc_low, double fc_high) {
+void setBandwidth_resample(RESAMPLE a, double fc_low, double fc_high) {
   if (fc_low != a->fc_low || fc_high != a->fcin) {
-    decalc_resample (a);
+    decalc_resample(a);
     a->fc_low = fc_low;
     a->fcin = fc_high;
-    calc_resample (a);
+    calc_resample(a);
   }
 }
 
 // exported calls
 
 PORT
-void* create_resampleV (int in_rate, int out_rate) {
-  return (void *)create_resample (1, 0, 0, 0, in_rate, out_rate, 0.0, 0, 1.0);
+void *create_resampleV(int in_rate, int out_rate) {
+  return (void*)create_resample(1, 0, 0, 0, in_rate, out_rate, 0.0, 0, 1.0);
 }
 
 PORT
-void xresampleV (double* input, double* output, int numsamps, int* outsamps, void* ptr) {
+void xresampleV(double* input, double* output, int numsamps, int* outsamps, void* ptr) {
   RESAMPLE a = (RESAMPLE)ptr;
   a->in = input;
   a->out = output;
@@ -230,8 +230,8 @@ void xresampleV (double* input, double* output, int numsamps, int* outsamps, voi
 }
 
 PORT
-void destroy_resampleV (void* ptr) {
-  destroy_resample ( (RESAMPLE)ptr );
+void destroy_resampleV(void* ptr) {
+  destroy_resample((RESAMPLE)ptr);
 }
 
 /************************************************************************************************
@@ -240,15 +240,15 @@ void destroy_resampleV (void* ptr) {
 *                                               *
 ************************************************************************************************/
 
-RESAMPLEF create_resampleF ( int run, int size, float* in, float* out, int in_rate, int out_rate) {
-  RESAMPLEF a = (RESAMPLEF) malloc0 (sizeof (resampleF));
+RESAMPLEF create_resampleF(int run, int size, float* in, float* out, int in_rate, int out_rate) {
+  RESAMPLEF a = (RESAMPLEF) malloc0(sizeof(resampleF));
   int x, y, z;
   int i, j, k;
   int min_rate;
   double full_rate;
   double fc;
   double fc_norm;
-  double* impulse;
+  double *impulse;
   a->run = run;
   a->size = size;
   a->in = in;
@@ -276,8 +276,8 @@ RESAMPLEF create_resampleF ( int run, int size, float* in, float* out, int in_ra
   a->ncoef = (int)(60.0 / fc_norm);
   a->ncoef = (a->ncoef / a->L + 1) * a->L;
   a->cpp = a->ncoef / a->L;
-  a->h = (double *) malloc0 (a->ncoef * sizeof (double));
-  impulse = fir_bandpass (a->ncoef, -fc_norm, +fc_norm, 1.0, 1, 0, (double)a->L);
+  a->h = (double*) malloc0(a->ncoef * sizeof(double));
+  impulse = fir_bandpass(a->ncoef, -fc_norm, +fc_norm, 1.0, 1, 0, (double)a->L);
   i = 0;
 
   for (j = 0; j < a->L; j ++)
@@ -286,26 +286,26 @@ RESAMPLEF create_resampleF ( int run, int size, float* in, float* out, int in_ra
     }
 
   a->ringsize = a->cpp;
-  a->ring = (double *) malloc0 (a->ringsize * sizeof (double));
+  a->ring = (double*) malloc0(a->ringsize * sizeof(double));
   a->idx_in = a->ringsize - 1;
   a->phnum = 0;
-  _aligned_free (impulse);
+  _aligned_free(impulse);
   return a;
 }
 
-void destroy_resampleF (RESAMPLEF a) {
-  _aligned_free (a->ring);
-  _aligned_free (a->h);
-  _aligned_free (a);
+void destroy_resampleF(RESAMPLEF a) {
+  _aligned_free(a->ring);
+  _aligned_free(a->h);
+  _aligned_free(a);
 }
 
-void flush_resampleF (RESAMPLEF a) {
-  memset (a->ring, 0, a->ringsize * sizeof (double));
+void flush_resampleF(RESAMPLEF a) {
+  memset(a->ring, 0, a->ringsize * sizeof(double));
   a->idx_in = a->ringsize - 1;
   a->phnum = 0;
 }
 
-int xresampleF (RESAMPLEF a) {
+int xresampleF(RESAMPLEF a) {
   int outsamps = 0;
 
   if (a->run) {
@@ -336,7 +336,7 @@ int xresampleF (RESAMPLEF a) {
       if (--a->idx_in < 0) { a->idx_in = a->ringsize - 1; }
     }
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->size * sizeof (float));
+    memcpy(a->out, a->in, a->size * sizeof(float));
   }
 
   return outsamps;
@@ -345,12 +345,12 @@ int xresampleF (RESAMPLEF a) {
 // Exported calls
 
 PORT
-void* create_resampleFV (int in_rate, int out_rate) {
-  return (void *)create_resampleF (1, 0, 0, 0, in_rate, out_rate);
+void *create_resampleFV(int in_rate, int out_rate) {
+  return (void*)create_resampleF(1, 0, 0, 0, in_rate, out_rate);
 }
 
 PORT
-void xresampleFV (float* input, float* output, int numsamps, int* outsamps, void* ptr) {
+void xresampleFV(float* input, float* output, int numsamps, int* outsamps, void* ptr) {
   RESAMPLEF a = (RESAMPLEF)ptr;
   a->in = input;
   a->out = output;
@@ -359,6 +359,6 @@ void xresampleFV (float* input, float* output, int numsamps, int* outsamps, void
 }
 
 PORT
-void destroy_resampleFV (void* ptr) {
-  destroy_resampleF ( (RESAMPLEF)ptr );
+void destroy_resampleFV(void* ptr) {
+  destroy_resampleF((RESAMPLEF)ptr);
 }

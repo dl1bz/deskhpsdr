@@ -80,7 +80,7 @@ void update_eq(void) {
   }
 }
 
-static void enable_cb (GtkWidget *widget, gpointer data) {
+static void enable_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   switch (eqid) {
@@ -113,7 +113,7 @@ static void enable_cb (GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-static void freq_changed_cb (GtkWidget *widget, gpointer data) {
+static void freq_changed_cb(GtkWidget *widget, gpointer data) {
   int mode;
   int i = GPOINTER_TO_INT(data);
   double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
@@ -144,7 +144,7 @@ static void freq_changed_cb (GtkWidget *widget, gpointer data) {
 }
 
 
-static void gain_changed_cb (GtkWidget *widget, gpointer data) {
+static void gain_changed_cb(GtkWidget *widget, gpointer data) {
   int i = GPOINTER_TO_INT(data);
   double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
@@ -222,16 +222,16 @@ void equalizer_menu(GtkWidget *parent) {
   char _title[64];
   snprintf(_title, 64, "%s - RX/TX Equalizer (Mic Profile:%d)", PGNAME, mic_prof.nr);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   col++;
   GtkWidget *rx1_sel = gtk_radio_button_new_with_label_from_widget(NULL, "RX1-EQ Settings");
@@ -312,13 +312,13 @@ void equalizer_menu(GtkWidget *parent) {
     myrow = 0;
     mycol = 0;
     GtkWidget *mygrid = gtk_grid_new();
-    gtk_grid_set_column_spacing (GTK_GRID(mygrid), 5);
-    gtk_grid_set_row_spacing (GTK_GRID(mygrid), 5);
+    gtk_grid_set_column_spacing(GTK_GRID(mygrid), 5);
+    gtk_grid_set_row_spacing(GTK_GRID(mygrid), 5);
     gtk_container_add(GTK_CONTAINER(mycontainer), mygrid);
     mbtn = gtk_check_button_new_with_label("Enable");
     gtk_widget_set_name(mbtn, "boldlabel");
     gtk_grid_attach(GTK_GRID(mygrid), mbtn, mycol, myrow, 1, 1);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mbtn), en);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mbtn), en);
     g_signal_connect(mbtn, "toggled", G_CALLBACK(enable_cb), GINT_TO_POINTER(myeq));
     mycol++;
     label = gtk_label_new("Added Frequency-Independent Gain:");

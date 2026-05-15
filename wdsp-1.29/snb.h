@@ -31,8 +31,8 @@ warren@wpratt.com
 
 typedef struct _snba {
   int run;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int inrate;
   int internalrate;
   int bsize;
@@ -42,30 +42,30 @@ typedef struct _snba {
   int iasize;
   int iainidx;
   int iaoutidx;
-  double* inaccum;
-  double* xbase;
-  double* xaux;
+  double *inaccum;
+  double *xbase;
+  double *xaux;
   int nsamps;
   int oasize;
   int oainidx;
   int oaoutidx;
   int init_oaoutidx;
-  double* outaccum;
+  double *outaccum;
 
   int resamprun;
   int isize;
   RESAMPLE inresamp;
   RESAMPLE outresamp;
-  double* inbuff;
-  double* outbuff;
+  double *inbuff;
+  double *outbuff;
   struct _exec {
     int asize;
-    double* a;
-    double* v;
-    int* detout;
-    double* savex;
-    double* xHout;
-    int* unfixed;
+    double *a;
+    double *v;
+    int *detout;
+    double *savex;
+    double *xHout;
+    int *unfixed;
     int npasses;
   } exec;
   struct _det {
@@ -74,8 +74,8 @@ typedef struct _snba {
     int b;
     int pre;
     int post;
-    double* vp;
-    double* vpwr;
+    double *vp;
+    double *vpwr;
   } sdet;
   struct _scan {
     double pmultmin;
@@ -83,17 +83,17 @@ typedef struct _snba {
   struct _wrk {
     int xHat_a1rows_max;
     int xHat_a2cols_max;
-    double* xHat_r;
-    double* xHat_ATAI;
-    double* xHat_A1;
-    double* xHat_A2;
-    double* xHat_P1;
-    double* xHat_P2;
-    double* trI_y;
-    double* trI_v;
-    double* dR_z;
-    double* asolve_r;
-    double* asolve_z;
+    double *xHat_r;
+    double *xHat_ATAI;
+    double *xHat_A1;
+    double *xHat_A2;
+    double *xHat_P1;
+    double *xHat_P2;
+    double *trI_y;
+    double *trI_v;
+    double *dR_z;
+    double *asolve_r;
+    double *asolve_z;
   } wrk;
   double out_low_cut;
   double out_high_cut;
@@ -125,10 +125,10 @@ typedef struct _bpsnba {
   int size;           // buffer size
   int nc;             // number of filter coefficients
   int mp;             // minimum phase flag
-  double* in;           // input buffer
-  double* out;          // output buffer
+  double *in;           // input buffer
+  double *out;          // output buffer
   int rate;           // sample rate
-  double* buff;         // internal buffer
+  double *buff;         // internal buffer
   NBP bpsnba;           // pointer to the notched bandpass filter, nbp
   double f_low;         // low cutoff frequency
   double f_high;          // high cutoff frequency
@@ -138,7 +138,7 @@ typedef struct _bpsnba {
   double gain;          // filter gain
   int autoincr;         // use auto increment for notch width
   int maxpb;            // maximum passband segments supported
-  NOTCHDB* ptraddr;       // pointer to address of NOTCH DATABASE
+  NOTCHDB *ptraddr;       // pointer to address of NOTCH DATABASE
 } bpsnba, *BPSNBA;
 
 extern void calc_bpsnba (BPSNBA a);

@@ -30,8 +30,8 @@ warren@wpratt.com
 typedef struct _fmmod {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double samplerate;
   double deviation;
   double f_low;

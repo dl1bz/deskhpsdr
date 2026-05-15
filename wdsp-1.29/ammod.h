@@ -31,8 +31,8 @@ typedef struct _ammod {
   int run;
   int mode;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double c_level;
   double a_level;
   double mult;

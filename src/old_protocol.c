@@ -167,7 +167,7 @@ static int command = 1;
 static gpointer receive_thread(gpointer arg);
 static gpointer process_ozy_input_buffer_thread(gpointer arg);
 
-static void queue_two_ozy_input_buffers(unsigned const char *buf1,
+static void queue_two_ozy_input_buffers(unsigned const char* buf1,
                                         unsigned const char *buf2);
 void ozy_send_buffer(void);
 
@@ -256,7 +256,7 @@ static unsigned char hl2_iob_lpf_status = 0;
 // Purpose: Update IO-board state immediately in RX thread, independent of RX ringbuffer backlog.
 // Frame layout: [0..2]=0x7F SYNC, [3]=C0, [4]=C1, [5]=C2, [6]=C3, [7]=C4
 //
-static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
+static inline void hl2_iob_fastpath_sniff_512(const unsigned char* buf) {
   if (device != DEVICE_HERMES_LITE2) {
     return;
   }
@@ -330,7 +330,7 @@ int hl2_pico_is_present(void) {
   return hl2_pico_present;
 }
 
-const char* hl2_lpf_status_to_string(uint8_t status) {
+const char *hl2_lpf_status_to_string(uint8_t status) {
   switch (status) {
   case 0x01:
     return "160m (R1)";
@@ -362,7 +362,7 @@ unsigned char hl2_iob_get_lpf_status(void) {
   return hl2_iob_lpf_status;
 }
 
-const char* hl2_iob_get_lpf_status_str(void) {
+const char *hl2_iob_get_lpf_status_str(void) {
   return hl2_lpf_status_to_string(hl2_iob_lpf_status);
 }
 
@@ -624,7 +624,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
     now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
     // Use effective TX sample rate (was hardcoded 48k)
     const int div = atomic_load_explicit(&mic_sample_divisor, memory_order_relaxed);
-    const double tx_sr = 48000.0 * (double)div;
+    const double tx_sr = 48000.0 * (double) div;
     FIFO -= (now - last) * (tx_sr > 0.0 ? tx_sr : 48000.0);
     last = now;
 
@@ -754,7 +754,7 @@ void old_protocol_init(int rate) {
 
   if (!txring_sem || !rxring_sem) {
     t_print("%s: apple_sem() failed (txring_sem=%p rxring_sem=%p)\n",
-            __func__, (void*)txring_sem, (void*)rxring_sem);
+            __func__, (void*) txring_sem, (void*) rxring_sem);
     return;
   }
 
@@ -804,7 +804,7 @@ void old_protocol_init(int rate) {
 #endif
     }
 
-    g_thread_new( "METIS", receive_thread, NULL);
+    g_thread_new("METIS", receive_thread, NULL);
   }
 
   t_print("old_protocol_init: prime radio\n");
@@ -825,8 +825,8 @@ void old_protocol_init(int rate) {
 //
 static void start_usb_receive_threads(void) {
   t_print("old_protocol starting USB receive thread\n");
-  g_thread_new( "OZYEP6", ozy_ep6_rx_thread, NULL);
-  g_thread_new( "OZYI2C", ozy_i2c_thread, NULL);
+  g_thread_new("OZYEP6", ozy_ep6_rx_thread, NULL);
+  g_thread_new("OZYI2C", ozy_i2c_thread, NULL);
 }
 
 //
@@ -851,7 +851,7 @@ static gpointer ozy_i2c_thread(gpointer arg) {
   //
   int penny;
   int last_penny = 0;  // unused value
-  t_print( "old_protocol: OZY I2C read thread\n");
+  t_print("old_protocol: OZY I2C read thread\n");
   cycle = 0;
 
   for (;;) {
@@ -913,11 +913,11 @@ static gpointer ozy_i2c_thread(gpointer arg) {
 // then processes them one at a time.
 //
 static gpointer ozy_ep6_rx_thread(gpointer arg) {
-  t_print( "old_protocol: USB EP6 receive_thread\n");
+  t_print("old_protocol: USB EP6 receive_thread\n");
   static unsigned char ep6_inbuffer[EP6_BUFFER_SIZE];
 
   for (;;) {
-    int bytes = ozy_read(EP6_IN_ID, ep6_inbuffer, EP6_BUFFER_SIZE); // read a 2K buffer at a time
+    int bytes = ozy_read(EP6_IN_ID, ep6_inbuffer, EP6_BUFFER_SIZE);  // read a 2K buffer at a time
 
     //
     // If the protocol has been stopped, just swallow all incoming packets
@@ -1060,7 +1060,7 @@ static void open_udp_socket(void) {
   t_print("binding UDP socket to %s:%d\n", inet_ntoa(radio->info.network.interface_address.sin_addr),
           ntohs(radio->info.network.interface_address.sin_port));
 
-  if (bind(tmp, (struct sockaddr * )&radio->info.network.interface_address, radio->info.network.interface_length) < 0) {
+  if (bind(tmp, (struct sockaddr *) &radio->info.network.interface_address, radio->info.network.interface_length) < 0) {
     t_perror("P1: bind socket:");
     g_idle_add(fatal_error, "P1: could not bind data socket");
     close(tmp);
@@ -1117,7 +1117,7 @@ static void open_tcp_socket(void) {
     return;
   }
 
-  if (connect(tmp, (const struct sockaddr *)&data_addr, sizeof(data_addr)) < 0) {
+  if (connect(tmp, (const struct sockaddr *) &data_addr, sizeof(data_addr)) < 0) {
     t_perror("tcp_socket: connect");
     close(tmp);
     tcp_socket = -1;  // zur Sicherheit explizit
@@ -1219,7 +1219,7 @@ static gpointer receive_thread(gpointer arg) {
   int ret, left;
   int ep;
   uint32_t sequence;
-  t_print( "old_protocol: receive_thread\n");
+  t_print("old_protocol: receive_thread\n");
   length = sizeof(addr);
 
   for (;;) {
@@ -1251,7 +1251,7 @@ static gpointer receive_thread(gpointer arg) {
             bytes_read = ret;                        // error case: discard whole packet
           }
         } else if (data_socket >= 0) {
-          bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &length);
+          bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr*) &addr, &length);
 
           if (bytes_read < 0 && errno != EAGAIN) { t_perror("old_protocol recvfrom UDP:"); }
 
@@ -1371,7 +1371,7 @@ static gpointer receive_thread(gpointer arg) {
           left = 1032;
 
           while (left > 0) {
-            ret = recvfrom(tcp_socket, buffer + bytes_read, (size_t)left, 0, NULL, 0);
+            ret = recvfrom(tcp_socket, buffer + bytes_read, (size_t) left, 0, NULL, 0);
 
             if (ret < 0 && errno == EAGAIN) { continue; }
 
@@ -1402,7 +1402,7 @@ static gpointer receive_thread(gpointer arg) {
           ret = select(data_socket + 1, &readfds, NULL, NULL, &timeout);
 
           if (ret > 0 && FD_ISSET(data_socket, &readfds)) {
-            bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &length);
+            bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr*) &addr, &length);
 
             if (bytes_read < 0 && errno != EAGAIN) {
               t_perror("UDP recvfrom failed:");
@@ -1434,11 +1434,11 @@ static gpointer receive_thread(gpointer arg) {
                      ((buffer[6] & 0xFF) << 8) | (buffer[7] & 0xFF);
 
           if (sequence != 0 && sequence != last_seq_num + 1) {
-            long diff = (long)sequence - (long)last_seq_num;
+            long diff = (long) sequence - (long) last_seq_num;
 
             if (diff > 1 || diff < 0) {
               t_print("SEQ ERROR: last %ld, recvd %ld (diff=%ld)\n",
-                      (long)last_seq_num, (long)sequence, diff);
+                      (long) last_seq_num, (long) sequence, diff);
               sequence_errors++;
             }
           }
@@ -1637,9 +1637,9 @@ static long long channel_freq(int chan) {
     freq = vfo[vfonum].frequency;
 
     if (vfo[vfonum].mode == modeCWU) {
-      freq -= (long long)cw_keyer_sidetone_frequency;
+      freq -= (long long) cw_keyer_sidetone_frequency;
     } else if (vfo[vfonum].mode == modeCWL) {
-      freq += (long long)cw_keyer_sidetone_frequency;
+      freq += (long long) cw_keyer_sidetone_frequency;
     }
 
     // freq += frequency_calibration - vfo[vfonum].lo;
@@ -1743,7 +1743,7 @@ static void process_control_bytes(void) {
   static unsigned int adc0_acc = 0;
   static unsigned int adc1_acc = 0;
   previous_ptt = radio_ptt;
-  radio_ptt  = (control_in[0]     ) & 0x01;
+  radio_ptt  = (control_in[0]) & 0x01;
 
   if (previous_ptt != radio_ptt) {
     g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
@@ -1770,15 +1770,15 @@ static void process_control_bytes(void) {
     //
     if (
 #ifdef __AH4IOB__
-      !present &&
+            !present &&
 #else
-      !hl2_iob_present &&
+            !hl2_iob_present &&
 #endif
-      addr == 0x3D &&
-      control_in[1] == 0xF1 &&
-      control_in[2] == 0xF1 &&
-      control_in[3] == 0xF1 &&
-      control_in[4] == 0xF1) {
+            addr == 0x3D &&
+            control_in[1] == 0xF1 &&
+            control_in[2] == 0xF1 &&
+            control_in[3] == 0xF1 &&
+            control_in[4] == 0xF1) {
       t_print("%s: HL2IOB: board detected\n", __func__);
 #ifdef __AH4IOB__
       atomic_store_explicit(&hl2_iob_present, 1, memory_order_relaxed);
@@ -1848,7 +1848,7 @@ static void process_control_bytes(void) {
   if (!cw_keyer_internal) {
     if (radio_dash != previous_dash) { keyer_event(0, radio_dash); }
 
-    if (radio_dot  != previous_dot ) { keyer_event(1, radio_dot ); }
+    if (radio_dot  != previous_dot) { keyer_event(1, radio_dot); }
   }
 
   switch ((control_in[0] >> 3) & 0x1F) {
@@ -1940,7 +1940,7 @@ static void process_control_bytes(void) {
 
   case 1:
     // Note HL2 uses this for the temperature
-    val = ((control_in[1] & 0xFF) << 8) | (control_in[2] & 0xFF); // HL2
+    val = ((control_in[1] & 0xFF) << 8) | (control_in[2] & 0xFF);  // HL2
     ex_acc = (15 * ex_acc) / 16  + val;
     exciter_power = ex_acc / 16;
     val = ((control_in[3] & 0xFF) << 8) | (control_in[4] & 0xFF);
@@ -2054,34 +2054,34 @@ static void process_ozy_byte(int b) {
     break;
 
   case LEFT_SAMPLE_HI:
-    left_sample = (int)((signed char)b << 16);
+    left_sample = (int)((signed char) b << 16);
     state++;
     break;
 
   case LEFT_SAMPLE_MID:
-    left_sample |= (int)((((unsigned char)b) << 8) & 0xFF00);
+    left_sample |= (int)((((unsigned char) b) << 8) & 0xFF00);
     state++;
     break;
 
   case LEFT_SAMPLE_LOW:
-    left_sample |= (int)((unsigned char)b & 0xFF);
-    left_sample_double = (double)left_sample * 1.1920928955078125E-7;
+    left_sample |= (int)((unsigned char) b & 0xFF);
+    left_sample_double = (double) left_sample * 1.1920928955078125E-7;
     state++;
     break;
 
   case RIGHT_SAMPLE_HI:
-    right_sample = (int)((signed char)b << 16);
+    right_sample = (int)((signed char) b << 16);
     state++;
     break;
 
   case RIGHT_SAMPLE_MID:
-    right_sample |= (int)((((unsigned char)b) << 8) & 0xFF00);
+    right_sample |= (int)((((unsigned char) b) << 8) & 0xFF00);
     state++;
     break;
 
   case RIGHT_SAMPLE_LOW:
-    right_sample |= (int)((unsigned char)b & 0xFF);
-    right_sample_double = (double)right_sample * 1.1920928955078125E-7;
+    right_sample |= (int)((unsigned char) b & 0xFF);
+    right_sample_double = (double) right_sample * 1.1920928955078125E-7;
 
     if (radio_is_transmitting() && transmitter->puresignal) {
       //
@@ -2185,7 +2185,7 @@ static void process_ozy_byte(int b) {
   }
 }
 
-static void queue_two_ozy_input_buffers(unsigned const char *buf1,
+static void queue_two_ozy_input_buffers(unsigned const char* buf1,
                                         unsigned const char *buf2) {
   //
   // To achieve minimum overhead in the RX thread, the data is
@@ -2220,16 +2220,16 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
     atomic_store_explicit(&rxring_outptr, out, memory_order_release);
   }
 
-  memcpy((void *)(&RXRINGBUF[in]),       buf1, 512);
-  memcpy((void *)(&RXRINGBUF[in + 512]), buf2, 512);
+  memcpy((void*)(&RXRINGBUF[in]),       buf1, 512);
+  memcpy((void*)(&RXRINGBUF[in + 512]), buf2, 512);
   MEMORY_BARRIER;
   atomic_store_explicit(&rxring_inptr, nptr, memory_order_release);
   sem_post(rxring_sem);
 #else
 
   if (nptr != out) {
-    memcpy((void *)(&RXRINGBUF[in]),       buf1, 512);
-    memcpy((void *)(&RXRINGBUF[in + 512]), buf2, 512);
+    memcpy((void*)(&RXRINGBUF[in]),       buf1, 512);
+    memcpy((void*)(&RXRINGBUF[in + 512]), buf2, 512);
     MEMORY_BARRIER;
     atomic_store_explicit(&rxring_inptr, nptr, memory_order_release);
     sem_post(&rxring_sem);
@@ -3010,7 +3010,7 @@ void ozy_send_buffer(void) {
       }
 
       // map input value -34 ... +12 onto 0 ... 31
-      output_buffer[C2] |=  (int)((linein_gain + 34.0) * 0.6739 + 0.5);
+      output_buffer[C2] |= (int)((linein_gain + 34.0) * 0.6739 + 0.5);
 
       if (transmitter->puresignal) {
         output_buffer[C2] |= 0x40;
@@ -3321,9 +3321,9 @@ void ozy_send_buffer(void) {
           hl2_command_loop = 20; // Send 24 data pairs
         } else if (
 #ifdef __AH4IOB__
-          atomic_load_explicit(&hl2_iob_present, memory_order_relaxed)
+                atomic_load_explicit(&hl2_iob_present, memory_order_relaxed)
 #else
-          hl2_iob_present
+                hl2_iob_present
 #endif
         ) {
           hl2_command_loop = 2;
@@ -3404,8 +3404,8 @@ void ozy_send_buffer(void) {
           hl2_iob_tx_freq += vfo[txvfo].xit;
         }
 
-        hl2_iob_rx1_code = (int)(0.5 + 15.47 * log((double)vfo[VFO_A].frequency / 18748.1));
-        hl2_iob_rx2_code = (int)(0.5 + 15.47 * log((double)vfo[VFO_B].frequency / 18748.1));
+        hl2_iob_rx1_code = (int)(0.5 + 15.47 * log((double) vfo[VFO_A].frequency / 18748.1));
+        hl2_iob_rx2_code = (int)(0.5 + 15.47 * log((double) vfo[VFO_B].frequency / 18748.1));
 
         // if there is only one RX, send RX1 freq code twice to overwrite any data
         // still stored.
@@ -3474,7 +3474,7 @@ void ozy_send_buffer(void) {
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 4;                            // REG_TX_FREQ_BYTE0
-        output_buffer[C4] = (hl2_iob_tx_freq      ) & 0xFF; // bits 0-7
+        output_buffer[C4] = (hl2_iob_tx_freq) & 0xFF;       // bits 0-7
         hl2_command_loop = 8;
         //t_print("HL2IOB: Sent TX freq %lld\n", hl2_iob_tx_freq);
         break;
@@ -3826,7 +3826,7 @@ static void metis_start_stop(int command) {
 
       for (int n = 0; n < 3; n++) {
         metis_send_buffer(buffer, 64);
-        usleep(30000); // 30 ms
+        usleep(30000);  // 30 ms
       }
     } else {
       t_print("%s: macOS major version: %d\n", __func__, major_version);
@@ -3886,7 +3886,7 @@ static void metis_send_buffer(const unsigned char* buffer, int length) {
   } else if (data_socket >= 0) {
     int bytes_sent;
     //t_print("%s: sendto %d for %s:%d length=%d\n",__func__,data_socket,inet_ntoa(data_addr.sin_addr),ntohs(data_addr.sin_port),length);
-    bytes_sent = sendto(data_socket, buffer, length, 0, (struct sockaddr*)&data_addr, sizeof(data_addr));
+    bytes_sent = sendto(data_socket, buffer, length, 0, (struct sockaddr*) &data_addr, sizeof(data_addr));
 
     if (bytes_sent != length) {
       t_print("%s: UDP sendto failed: %d: %s\n", __func__, errno, strerror(errno));

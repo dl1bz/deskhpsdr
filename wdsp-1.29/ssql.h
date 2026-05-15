@@ -33,9 +33,9 @@ typedef struct _ftov {        // Frequency to Voltage Converter
   int rate;             // sample-rate
   int rsize;              // rate * time_to_fill_ring, e.g., 48K/s * 50ms = 2400
   double fmax;            // frequency (Hz) for full output, e.g., 2000 (Hz)
-  double* in;             // pointer to the intput buffer for ftov
-  double* out;            // pointer to the output buffer for ftov
-  int* ring;              // pointer to the base of the ring
+  double *in;             // pointer to the intput buffer for ftov
+  double *out;            // pointer to the output buffer for ftov
+  int *ring;              // pointer to the base of the ring
   int rptr;             // index into the ring
   double inlast;            // holds last sample from previous buffer
   int rcount;             // count of zero-crossings currently in the ring
@@ -46,8 +46,8 @@ typedef struct _ftov {        // Frequency to Voltage Converter
 typedef struct _ssql {        // Syllabic Squelch
   int run;              // 0 if squelch system is OFF; 1 if it's ON
   int size;             // size of input/output buffers
-  double* in;             // squelch input signal buffer
-  double* out;            // squelch output signal buffer
+  double *in;             // squelch input signal buffer
+  double *out;            // squelch output signal buffer
   int rate;             // sample rate
   int state;              // state machine control
   int count;              // count variable for raised cosine transitions
@@ -55,15 +55,15 @@ typedef struct _ssql {        // Syllabic Squelch
   double tdown;           // time for turn-off transition
   int ntup;             // number of samples for turn-on transition
   int ntdown;             // number of samples for turn-off transition
-  double* cup;            // coefficients for up-slew
-  double* cdown;            // coefficients for down-slew
+  double *cup;            // coefficients for up-slew
+  double *cdown;            // coefficients for down-slew
   double muted_gain;          // audio gain while muted; 0.0 for complete silence
 
-  double* b1;             // buffer to hold output of dc-block function
-  double* ibuff;            // buffer containing only 'I' component
-  double* ftovbuff;         // buffer containing output of f to v converter
-  double* lpbuff;           // buffer containing output of low-pass filter
-  int* wdbuff;            // buffer containing output of window detector
+  double *b1;             // buffer to hold output of dc-block function
+  double *ibuff;            // buffer containing only 'I' component
+  double *ftovbuff;         // buffer containing output of f to v converter
+  double *lpbuff;           // buffer containing output of low-pass filter
+  int *wdbuff;            // buffer containing output of window detector
   CBL dcbl;             // pointer to DC Blocker data structure
   FTOV cvtr;              // pointer to F to V Converter data structure
   BQLP filt;              // pointer to Bi-Quad Low-Pass Filter data structure
@@ -83,8 +83,8 @@ typedef struct _ssql {        // Syllabic Squelch
   double tr_voltage;          // trigger voltage
   double mute_mult;         // multiplier for successive voltage calcs when muted
   double unmute_mult;         // multiplier for successive voltage calcs when unmuted
-  int* tr_signal;           // trigger signal, 0 or 1
-} ssql, * SSQL;
+  int *tr_signal;           // trigger signal, 0 or 1
+} ssql, *SSQL;
 
 extern SSQL create_ssql (int run, int size, double* in, double* out, int rate, double tup, double tdown,
                          double muted_gain, double tau_mute, double tau_unmute, double wthresh, double tr_thresh, int rsize, double fmax);

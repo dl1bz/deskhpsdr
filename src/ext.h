@@ -22,20 +22,20 @@
 //
 // The following calls functions can be called usig g_idle_add
 //
-extern int ext_start_radio(void *data);
-extern int ext_vfo_update(void *data);
-extern int ext_tune_update(void *data);
-extern int ext_mox_update(void *data);
-extern int ext_start_tx(void *data);        // is this necessary?
-extern int ext_start_rx(void *data);
-extern int ext_start_noise(void *data);
-extern int ext_start_vfo(void *data);
-extern int ext_start_band(void *data);
-extern int ext_update_noise(void *data);
-extern int ext_update_notch(void *data);
-extern int ext_update_eq(void *data);
-extern int ext_set_vox(void *data);
-extern int ext_set_duplex(void *data);      // is this necessary?
+extern int ext_start_radio(void* data);
+extern int ext_vfo_update(void* data);
+extern int ext_tune_update(void* data);
+extern int ext_mox_update(void* data);
+extern int ext_start_tx(void* data);        // is this necessary?
+extern int ext_start_rx(void* data);
+extern int ext_start_noise(void* data);
+extern int ext_start_vfo(void* data);
+extern int ext_start_band(void* data);
+extern int ext_update_noise(void* data);
+extern int ext_update_notch(void* data);
+extern int ext_update_eq(void* data);
+extern int ext_set_vox(void* data);
+extern int ext_set_duplex(void* data);      // is this necessary?
 
 ///////////////////////////////////////////////////////////
 //

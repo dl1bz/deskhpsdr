@@ -32,8 +32,8 @@ warren@pratt.one
 *                                                   *
 ********************************************************************************************************/
 
-FTOV create_ftov (int run, int size, int rate, int rsize, double fmax, double* in, double* out) {
-  FTOV a = (FTOV) malloc0 (sizeof (ftov));
+FTOV create_ftov(int run, int size, int rate, int rsize, double fmax, double* in, double* out) {
+  FTOV a = (FTOV) malloc0(sizeof(ftov));
   a->run = run;
   a->size = size;
   a->rate = rate;
@@ -42,7 +42,7 @@ FTOV create_ftov (int run, int size, int rate, int rsize, double fmax, double* i
   a->in = in;
   a->out = out;
   a->eps = 0.01;
-  a->ring = (int*) malloc0 (a->rsize * sizeof (int));
+  a->ring = (int*) malloc0(a->rsize * sizeof(int));
   a->rptr = 0;
   a->inlast = 0.0;
   a->rcount = 0;
@@ -52,19 +52,19 @@ FTOV create_ftov (int run, int size, int rate, int rsize, double fmax, double* i
   return a;
 }
 
-void destroy_ftov (FTOV a) {
-  _aligned_free (a->ring);
-  _aligned_free (a);
+void destroy_ftov(FTOV a) {
+  _aligned_free(a->ring);
+  _aligned_free(a);
 }
 
-void flush_ftov (FTOV a) {
-  memset (a->ring, 0, a->rsize * sizeof (int));
+void flush_ftov(FTOV a) {
+  memset(a->ring, 0, a->rsize * sizeof(int));
   a->rptr = 0;
   a->rcount = 0;
   a->inlast = 0.0;
 }
 
-void xftov (FTOV a) {
+void xftov(FTOV a) {
   // 'ftov' does frequency to voltage conversion looking only at zero crossings of an
   //     AC (DC blocked) signal, i.e., ignoring signal amplitude.
   if (a->run) {
@@ -74,14 +74,14 @@ void xftov (FTOV a) {
     }
 
     if ((a->inlast * a->in[0] < 0.0) &&           // different signs mean zero-crossing
-        (fabs (a->inlast - a->in[0]) > a->eps)) {
+        (fabs(a->inlast - a->in[0]) > a->eps)) {
       a->ring[a->rptr] = 1;               // set the ring location to '1'
       a->rcount++;                    // increment the count
     }
 
     if (++a->rptr == a->rsize) { a->rptr = 0; }         // increment and wrap the pointer as needed
 
-    a->out[0] = min (1.0, (double)a->rcount / a->div);    // calculate the output sample
+    a->out[0] = min(1.0, (double)a->rcount / a->div);     // calculate the output sample
     a->inlast = a->in[a->size - 1];             // save the last input sample for next buffer
 
     for (int i = 1; i < a->size; i++) {
@@ -91,7 +91,7 @@ void xftov (FTOV a) {
       }
 
       if ((a->in[i - 1] * a->in[i] < 0.0) &&        // different signs mean zero-crossing
-          (fabs (a->in[i - 1] - a->in[i]) > a->eps)) {
+          (fabs(a->in[i - 1] - a->in[i]) > a->eps)) {
         a->ring[a->rptr] = 1;             // set the ring location to '1'
         a->rcount++;                  // increment the count
       }
@@ -127,51 +127,51 @@ void compute_ssql_slews(SSQL a) {
   }
 }
 
-void calc_ssql (SSQL a) {
-  a->b1 = (double*) malloc0 (a->size * sizeof (complex));
-  a->dcbl = create_cbl (1, a->size, a->in, a->b1, 0, a->rate, 0.02);
-  a->ibuff = (double*) malloc0 (a->size * sizeof (double));
-  a->ftovbuff = (double*) malloc0(a->size * sizeof (double));
-  a->cvtr = create_ftov (1, a->size, a->rate, a->ftov_rsize, a->ftov_fmax, a->ibuff, a->ftovbuff);
-  a->lpbuff = (double*) malloc0 (a->size * sizeof (double));
-  a->filt = create_dbqlp (1, a->size, a->ftovbuff, a->lpbuff, a->rate, 11.3, 1.0, 1.0, 1);
-  a->wdbuff = (int*) malloc0 (a->size * sizeof (int));
-  a->tr_signal = (int*) malloc0 (a->size * sizeof (int));
+void calc_ssql(SSQL a) {
+  a->b1 = (double*) malloc0(a->size * sizeof(complex));
+  a->dcbl = create_cbl(1, a->size, a->in, a->b1, 0, a->rate, 0.02);
+  a->ibuff = (double*) malloc0(a->size * sizeof(double));
+  a->ftovbuff = (double*) malloc0(a->size * sizeof(double));
+  a->cvtr = create_ftov(1, a->size, a->rate, a->ftov_rsize, a->ftov_fmax, a->ibuff, a->ftovbuff);
+  a->lpbuff = (double*) malloc0(a->size * sizeof(double));
+  a->filt = create_dbqlp(1, a->size, a->ftovbuff, a->lpbuff, a->rate, 11.3, 1.0, 1.0, 1);
+  a->wdbuff = (int*) malloc0(a->size * sizeof(int));
+  a->tr_signal = (int*) malloc0(a->size * sizeof(int));
   // window detector
-  a->wdmult = exp (-1.0 / (a->rate * a->wdtau));
+  a->wdmult = exp(-1.0 / (a->rate * a->wdtau));
   a->wdaverage = 0.0;
   // trigger
   a->tr_voltage = a->tr_thresh;
-  a->mute_mult = 1.0 - exp (-1.0 / (a->rate * a->tr_tau_mute));
-  a->unmute_mult = 1.0 - exp (-1.0 / (a->rate * a->tr_tau_unmute));
+  a->mute_mult = 1.0 - exp(-1.0 / (a->rate * a->tr_tau_mute));
+  a->unmute_mult = 1.0 - exp(-1.0 / (a->rate * a->tr_tau_unmute));
   // level change
   a->ntup = (int)(a->tup * a->rate);
   a->ntdown = (int)(a->tdown * a->rate);
-  a->cup = (double*) malloc0 ((a->ntup + 1) * sizeof (double));
-  a->cdown = (double*) malloc0 ((a->ntdown + 1) * sizeof (double));
-  compute_ssql_slews (a);
+  a->cup = (double*) malloc0((a->ntup + 1) * sizeof(double));
+  a->cdown = (double*) malloc0((a->ntdown + 1) * sizeof(double));
+  compute_ssql_slews(a);
   // control
   a->state = 0;
   a->count = 0;
 }
 
-void decalc_ssql (SSQL a) {
-  _aligned_free (a->tr_signal);
-  _aligned_free (a->wdbuff);
-  destroy_dbqlp (a->filt);
-  _aligned_free (a->lpbuff);
-  destroy_ftov (a->cvtr);
-  _aligned_free (a->ftovbuff);
-  _aligned_free (a->ibuff);
-  destroy_cbl (a->dcbl);
-  _aligned_free (a->b1);
-  _aligned_free (a->cdown);
-  _aligned_free (a->cup);
+void decalc_ssql(SSQL a) {
+  _aligned_free(a->tr_signal);
+  _aligned_free(a->wdbuff);
+  destroy_dbqlp(a->filt);
+  _aligned_free(a->lpbuff);
+  destroy_ftov(a->cvtr);
+  _aligned_free(a->ftovbuff);
+  _aligned_free(a->ibuff);
+  destroy_cbl(a->dcbl);
+  _aligned_free(a->b1);
+  _aligned_free(a->cdown);
+  _aligned_free(a->cup);
 }
 
-SSQL create_ssql (int run, int size, double* in, double* out, int rate, double tup, double tdown,
-                  double muted_gain, double tau_mute, double tau_unmute, double wthresh, double tr_thresh, int rsize, double fmax) {
-  SSQL a = (SSQL) malloc0 (sizeof (ssql));
+SSQL create_ssql(int run, int size, double* in, double* out, int rate, double tup, double tdown,
+                 double muted_gain, double tau_mute, double tau_unmute, double wthresh, double tr_thresh, int rsize, double fmax) {
+  SSQL a = (SSQL) malloc0(sizeof(ssql));
   a->run = run;
   a->size = size;
   a->in = in;
@@ -189,25 +189,25 @@ SSQL create_ssql (int run, int size, double* in, double* out, int rate, double t
   a->wdtau = 0.5;
   a->ftov_rsize = rsize;
   a->ftov_fmax = fmax;
-  calc_ssql (a);
+  calc_ssql(a);
   return a;
 }
 
-void destroy_ssql (SSQL a) {
-  decalc_ssql (a);
-  _aligned_free (a);
+void destroy_ssql(SSQL a) {
+  decalc_ssql(a);
+  _aligned_free(a);
 }
 
-void flush_ssql (SSQL a) {
-  memset (a->b1, 0, a->size * sizeof (complex));
-  flush_cbl (a->dcbl);
-  memset (a->ibuff, 0, a->size * sizeof (double));
-  memset (a->ftovbuff, 0, a->size * sizeof (double));
-  flush_ftov (a->cvtr);
-  memset (a->lpbuff, 0, a->size * sizeof (double));
-  flush_dbqlp (a->filt);
-  memset (a->wdbuff, 0, a->size * sizeof (int));
-  memset (a->tr_signal, 0, a->size * sizeof (int));
+void flush_ssql(SSQL a) {
+  memset(a->b1, 0, a->size * sizeof(complex));
+  flush_cbl(a->dcbl);
+  memset(a->ibuff, 0, a->size * sizeof(double));
+  memset(a->ftovbuff, 0, a->size * sizeof(double));
+  flush_ftov(a->cvtr);
+  memset(a->lpbuff, 0, a->size * sizeof(double));
+  flush_dbqlp(a->filt);
+  memset(a->wdbuff, 0, a->size * sizeof(int));
+  memset(a->tr_signal, 0, a->size * sizeof(int));
 }
 
 enum _ssqlstate {
@@ -217,17 +217,17 @@ enum _ssqlstate {
   DECREASE
 };
 
-void xssql (SSQL a) {
+void xssql(SSQL a) {
   if (a->run) {
-    xcbl (a->dcbl);                     // dc block the input signal
+    xcbl(a->dcbl);                      // dc block the input signal
 
     for (int i = 0; i < a->size; i++) {         // extract 'I' component
       a->ibuff[i] = a->b1[2 * i];
     }
 
-    xftov (a->cvtr);                    // convert frequency to voltage, ignoring amplitude
+    xftov(a->cvtr);                     // convert frequency to voltage, ignoring amplitude
     // WriteAudioWDSP(20.0, a->rate, a->size, a->ftovbuff, 4, 0.99);
-    xdbqlp (a->filt);                   // low-pass filter
+    xdbqlp(a->filt);                    // low-pass filter
 
     // WriteAudioWDSP(20.0, a->rate, a->size, a->lpbuff, 4, 0.99);
     // calculate the output of the window detector for each sample
@@ -300,27 +300,27 @@ void xssql (SSQL a) {
       }
     }
   } else if (a->in != a->out) {
-    memcpy (a->out, a->in, a->size * sizeof(complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 }
 
-void setBuffers_ssql (SSQL a, double* in, double* out) {
-  decalc_ssql (a);
+void setBuffers_ssql(SSQL a, double* in, double* out) {
+  decalc_ssql(a);
   a->in = in;
   a->out = out;
-  calc_ssql (a);
+  calc_ssql(a);
 }
 
-void setSamplerate_ssql (SSQL a, int rate) {
-  decalc_ssql (a);
+void setSamplerate_ssql(SSQL a, int rate) {
+  decalc_ssql(a);
   a->rate = rate;
-  calc_ssql (a);
+  calc_ssql(a);
 }
 
-void setSize_ssql (SSQL a, int size) {
-  decalc_ssql (a);
+void setSize_ssql(SSQL a, int size) {
+  decalc_ssql(a);
   a->size = size;
-  calc_ssql (a);
+  calc_ssql(a);
 }
 
 /********************************************************************************************************
@@ -330,39 +330,39 @@ void setSize_ssql (SSQL a, int size) {
 ********************************************************************************************************/
 
 PORT
-void SetRXASSQLRun (int channel, int run) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXASSQLRun(int channel, int run) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].ssql.p->run = run;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXASSQLThreshold (int channel, double threshold) {
+void SetRXASSQLThreshold(int channel, double threshold) {
   // 'threshold' should be between 0.0 and 1.0
   // WU2O testing:  0.16 is a good default for 'threshold'; => 0.08 for 'wthresh'
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].ssql.p->wthresh = threshold / 2.0;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXASSQLTauMute (int channel, double tau_mute) {
+void SetRXASSQLTauMute(int channel, double tau_mute) {
   // reasonable (wide) range is 0.1 to 2.0
   // WU2O testing:  0.1 is good default value
   SSQL a = rxa[channel].ssql.p;
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   a->tr_tau_mute = tau_mute;
-  a->mute_mult = 1.0 - exp (-1.0 / (a->rate * a->tr_tau_mute));
-  LeaveCriticalSection (&ch[channel].csDSP);
+  a->mute_mult = 1.0 - exp(-1.0 / (a->rate * a->tr_tau_mute));
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXASSQLTauUnMute (int channel, double tau_unmute) {
+void SetRXASSQLTauUnMute(int channel, double tau_unmute) {
   // reasonable (wide) range is 0.1 to 1.0
   // WU2O testing:  0.1 is good default value
   SSQL a = rxa[channel].ssql.p;
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   a->tr_tau_unmute = tau_unmute;
-  a->unmute_mult = 1.0 - exp (-1.0 / (a->rate * a->tr_tau_unmute));
-  LeaveCriticalSection (&ch[channel].csDSP);
+  a->unmute_mult = 1.0 - exp(-1.0 / (a->rate * a->tr_tau_unmute));
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

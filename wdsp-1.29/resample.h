@@ -36,8 +36,8 @@ warren@wpratt.com
 typedef struct _resample {
   int run;      // run
   int size;     // number of input samples per buffer
-  double* in;     // input buffer for resampler
-  double* out;    // output buffer for resampler
+  double *in;     // input buffer for resampler
+  double *out;    // output buffer for resampler
   int in_rate;
   int out_rate;
   double fcin;
@@ -49,9 +49,9 @@ typedef struct _resample {
   int ncoef;      // number of coefficients
   int L;        // interpolation factor
   int M;        // decimation factor
-  double* h;      // coefficients
+  double *h;      // coefficients
   int ringsize;   // number of complex pairs the ring buffer holds
-  double* ring;   // ring buffer
+  double *ring;   // ring buffer
   int cpp;      // coefficients of the phase
   int phnum;      // phase number
 } resample, *RESAMPLE;
@@ -95,15 +95,15 @@ extern void setBandwidth_resample (RESAMPLE a, double fc_low, double fc_high);
 typedef struct _resampleF {
   int run;      // run
   int size;     // number of input samples per buffer
-  float* in;      // input buffer for resampler
-  float* out;     // output buffer for resampler
+  float *in;      // input buffer for resampler
+  float *out;     // output buffer for resampler
   int idx_in;     // index for input into ring
   int ncoef;      // number of coefficients
   int L;        // interpolation factor
   int M;        // decimation factor
-  double* h;      // coefficients
+  double *h;      // coefficients
   int ringsize;   // number of values the ring buffer holds
-  double* ring;   // ring buffer
+  double *ring;   // ring buffer
   int cpp;      // coefficients of the phase
   int phnum;      // phase number
 } resampleF, *RESAMPLEF;

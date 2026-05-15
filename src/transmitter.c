@@ -125,7 +125,7 @@ static int clear_out_of_band_warning(gpointer data) {
   // One-shot timer for clearing the "Out of band" message
   // in the VFO bar
   //
-  TRANSMITTER *tx = (TRANSMITTER *)data;
+  TRANSMITTER *tx = (TRANSMITTER*) data;
   tx->out_of_band = 0;
   g_idle_add(ext_vfo_update, NULL);
   return G_SOURCE_REMOVE;
@@ -157,7 +157,7 @@ static int clear_out_of_band_warning(gpointer data) {
 // - the phase is always continuous, even if there are frequency jumps
 ///////////////////////////////////////////////////////////////////////////
 
-static float sine_generator(int *phase1, int *phase2, int freq) {
+static float sine_generator(int* phase1, int* phase2, int freq) {
   register float val, s, d;
   register int p1 = *phase1;
   register int p2 = *phase2;
@@ -195,7 +195,7 @@ void tx_set_out_of_band(TRANSMITTER *tx) {
                              clear_out_of_band_warning, tx, NULL);
 }
 
-static void init_audio_ramp(double *ramp, int width) {
+static void init_audio_ramp(double* ramp, int width) {
   //
   // This is for the sidetone, we use a raised cosine ramp
   //
@@ -205,7 +205,7 @@ static void init_audio_ramp(double *ramp, int width) {
   }
 }
 
-static void init_dl1ycf_ramp(double *ramp, int width) {
+static void init_dl1ycf_ramp(double* ramp, int width) {
   //
   // ========================================================================
   //
@@ -255,7 +255,7 @@ static void init_dl1ycf_ramp(double *ramp, int width) {
 }
 
 #if 0
-static void init_ve3nea_ramp(double *ramp, int width) {
+static void init_ve3nea_ramp(double* ramp, int width) {
   //
   // Calculate a "VE3NEA" ramp (integrated Blackman-Harris-Window)
   // Output: ramp[0] ... ramp[width] contain numbers
@@ -574,11 +574,11 @@ static double compute_power(double p) {
   }
 
   double frac = (p - pa_trim[i]) / (pa_trim[i + 1] - pa_trim[i]);
-  return interval * ((1.0 - frac) * (double)i + frac * (double)(i + 1));
+  return interval * ((1.0 - frac) * (double) i + frac * (double)(i + 1));
 }
 
 static gboolean tx_update_display(gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER *)data;
+  TRANSMITTER *tx = (TRANSMITTER*) data;
   int rc;
 
   //t_print("tx_update_display: tx id=%d\n",tx->id);
@@ -783,9 +783,9 @@ static gboolean tx_update_display(gpointer data) {
 
     if (rev_power < 0) { rev_power = 0; }
 
-    v1 = ((double)fwd_power / 4095.0) * constant1;
+    v1 = ((double) fwd_power / 4095.0) * constant1;
     tx->fwd = (v1 * v1) / constant2;
-    v1 = ((double)rev_power / 4095.0) * constant1;
+    v1 = ((double) rev_power / 4095.0) * constant1;
     tx->rev = (v1 * v1) / rconstant2;
     //
     // compute_power does an interpolation is user-supplied pairs of
@@ -877,11 +877,11 @@ void tx_create_dialog(TRANSMITTER *tx) {
   gtk_window_set_titlebar(GTK_WINDOW(tx->dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), FALSE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "TX [duplex]");
-  g_signal_connect (tx->dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (tx->dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(tx->dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(tx->dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
-  gtk_widget_set_size_request (tx->panel, tx_dialog_width, tx_dialog_height);
+  gtk_widget_set_size_request(tx->panel, tx_dialog_width, tx_dialog_height);
   gtk_container_add(GTK_CONTAINER(content), tx->panel);
   gtk_widget_add_events(tx->dialog, GDK_KEY_PRESS_MASK);
   g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
@@ -891,16 +891,16 @@ void tx_create_dialog(TRANSMITTER *tx) {
 // TX LEVELS WINDOW
 // -----------------------------------------------------------
 static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER *)data;
+  TRANSMITTER *tx = (TRANSMITTER*) data;
   int w = gtk_widget_get_allocated_width(widget);
   int h = gtk_widget_get_allocated_height(widget);
 
   if (tx->levels_surface) { cairo_surface_destroy(tx->levels_surface); }
 
   tx->levels_surface = gdk_window_create_similar_surface(
-                         gtk_widget_get_window(widget),
-                         CAIRO_CONTENT_COLOR,
-                         w, h);
+                               gtk_widget_get_window(widget),
+                               CAIRO_CONTENT_COLOR,
+                               w, h);
   cairo_t *cr = cairo_create(tx->levels_surface);
   cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
   cairo_paint(cr);
@@ -908,8 +908,8 @@ static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *eve
   return TRUE;
 }
 
-static gboolean tx_levels_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER *)data;
+static gboolean tx_levels_draw_cb(GtkWidget *widget, cairo_t* cr, gpointer data) {
+  TRANSMITTER *tx = (TRANSMITTER*) data;
 
   if (tx->levels_surface) {
     cairo_set_source_surface(cr, tx->levels_surface, 0, 0);
@@ -940,7 +940,7 @@ static void levels_show_popover_cb(GtkWidget * anchor, gpointer popover_ptr) {
 #endif
   gtk_popover_set_pointing_to(GTK_POPOVER(pop), &rect);
   gtk_widget_show_all(pop);
-  gtk_window_present(GTK_WINDOW(top_window)); /* Fokus bleibt im Mainwindow */
+  gtk_window_present(GTK_WINDOW(top_window));    /* Fokus bleibt im Mainwindow */
 }
 
 void tx_create_levels_window(TRANSMITTER *tx) {
@@ -1043,7 +1043,7 @@ static void tx_create_visual(TRANSMITTER *tx) {
   }
 
   tx->panel = gtk_fixed_new();
-  gtk_widget_set_size_request (tx->panel, tx->width, tx->height);
+  gtk_widget_set_size_request(tx->panel, tx->width, tx->height);
 
   if (tx->display_panadapter) {
     tx_panadapter_init(tx, tx->width, tx->height);
@@ -1051,7 +1051,7 @@ static void tx_create_visual(TRANSMITTER *tx) {
   }
 
   gtk_widget_show_all(tx->panel);
-  g_object_ref((gpointer)tx->panel);
+  g_object_ref((gpointer) tx->panel);
 
   if (duplex) {
     tx_create_dialog(tx);
@@ -1459,7 +1459,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   //
   SetTXABandpassWindow(tx->id, 1);                      // 7-term Blackman-Harris
   SetTXABandpassRun(tx->id, 1);                         // enable TX bandpass
-  SetTXACFIRRun(tx->id, SET(protocol == NEW_PROTOCOL)); // P2 firmware requires this
+  SetTXACFIRRun(tx->id, SET(protocol == NEW_PROTOCOL));    // P2 firmware requires this
   SetTXAAMSQRun(tx->id, 0);                             // disable microphone noise gate
   SetTXAALCAttack(tx->id, 1);                           // ALC attac time-constant 1 msec
   SetTXAALCDecay(tx->id, 10);                           // ALC decay time-constant 10 msec
@@ -1764,7 +1764,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         //
         for (j = 0; j < tx->output_samples; j++) {
           double ramp = tx->cw_sig_rf[j];                   // between 0.0 and 1.0
-          soapy_protocol_iq_samples(0.0F, (float)ramp);     // SOAPY: just convert double to float
+          soapy_protocol_iq_samples(0.0F, (float) ramp);    // SOAPY: just convert double to float
         }
 
         break;
@@ -1801,7 +1801,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
 
         case SOAPYSDR_PROTOCOL:
           // SOAPY: just convert the double IQ samples (is,qs) to float.
-          soapy_protocol_iq_samples((float)is, (float)qs);
+          soapy_protocol_iq_samples((float) is, (float) qs);
           break;
 #endif
         }
@@ -1841,12 +1841,12 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   static double tci_resampler_s0 = 0.0;
   static double tci_resampler_s1 = 0.0;
   const guint tci_tx_prebuffer_frames = 4096;
-  const double tci_resampler_base_step = (double)TCI_AUDIO_SAMPLE_RATE / 48000.0;
+  const double tci_resampler_base_step = (double) TCI_AUDIO_SAMPLE_RATE / 48000.0;
   const double tci_resampler_target = 4096.0;
   const double tci_resampler_max_adjust = 0.005;
   const double tci_resampler_gain = 0.000001;
   const double tci_tx_gain = 0.707;
-  mic_sample_double = (double)mic_sample;
+  mic_sample_double = (double) mic_sample;
 
   if (tci_audio_tx_is_active()) {
     guint cache_available = (tci_tx_cache_len > tci_tx_cache_pos) ? (tci_tx_cache_len - tci_tx_cache_pos) : 0;
@@ -1872,7 +1872,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
         if (tci_tx_cache_pos < tci_tx_cache_len) {
           tci_resampler_s0 = tci_resampler_s1;
           tci_sample = tci_tx_cache[tci_tx_cache_pos++];
-          tci_resampler_s1 = (double)tci_sample;
+          tci_resampler_s1 = (double) tci_sample;
           tci_resampler_valid = 1;
 
           if (tci_resampler_phase >= 1.0) {
@@ -1985,7 +1985,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
     //
     cw_not_ready = 0;
 
-    if (cw_key_down > 0 ) {
+    if (cw_key_down > 0) {
       cw_key_down--;            // decrement key-up counter
       updown = 1;
     } else {
@@ -2086,13 +2086,13 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
           // data path:
           // level 0...127 ==> amplitude 0...32767
           //
-          s = (int) (cwsample * 131000.0);
+          s = (int)(cwsample * 131000.0);
         } else {
           //
           // This factor has been measured on my ANAN-7000 and implies
           // level 0...127 ==> amplitude 0...8191
           //
-          s = (int) (cwsample * 32768.0);
+          s = (int)(cwsample * 32768.0);
         }
       }
 
@@ -2120,7 +2120,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   }
 
   tx->mic_input_buffer[tx->samples * 2] = mic_sample_double;
-  tx->mic_input_buffer[(tx->samples * 2) + 1] = 0.0; //mic_sample_double;
+  tx->mic_input_buffer[(tx->samples * 2) + 1] = 0.0;  //mic_sample_double;
   tx->samples++;
 
   if (tx->samples == tx->buffer_size) {
@@ -2180,7 +2180,7 @@ void tx_set_displaying(TRANSMITTER *tx) {
     }
 
     tx->update_timer_id = gdk_threads_add_timeout_full(G_PRIORITY_HIGH_IDLE, 1000 / tx->fps, tx_update_display,
-                          (gpointer)tx, NULL);
+                          (gpointer) tx, NULL);
   } else {
     if (tx->update_timer_id > 0) {
       g_source_remove(tx->update_timer_id);
@@ -2382,7 +2382,7 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   //    1536                   768k                  49152 --> 65536
   //    1024                  1536k                            65536
   //
-  int afft_size = (int) (((long) tx->iq_output_rate * tx->pixels) / 24000L);
+  int afft_size = (int)(((long) tx->iq_output_rate * tx->pixels) / 24000L);
 
   if (afft_size <= 16384) {
     afft_size = 16384;       // our previous fixed value
@@ -2404,7 +2404,7 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   int overlap;
   int max_w = afft_size + (int) min(keep_time * (double) tx->iq_output_rate,
                                     keep_time * (double) afft_size * (double) tx->fps);
-  overlap = (int)max(0.0, ceil(afft_size - (double)tx->iq_output_rate / (double)tx->fps));
+  overlap = (int) max(0.0, ceil(afft_size - (double) tx->iq_output_rate / (double) tx->fps));
   t_print("TX SetAnalyzer fft_size=%d overlap=%d pixels=%d\n", afft_size, overlap, tx->pixels);
   SetAnalyzer(tx->id,                // id of the TXA channel
               n_pixout,              // 1 = "use same data for scope and waterfall"
@@ -2459,16 +2459,16 @@ static inline void tx_levels_hide(TRANSMITTER *tx) {
 void tx_off(const TRANSMITTER *tx) {
   // switch TX OFF, wait until slew-down completed
   SetChannelState(tx->id, 0, 1);
-  tx_levels_hide((TRANSMITTER*)tx);
+  tx_levels_hide((TRANSMITTER*) tx);
 }
 
 void tx_on(const TRANSMITTER *tx) {
   // switch TX ON
   SetChannelState(tx->id, 1, 0);
-  tx_levels_show((TRANSMITTER*)tx);
+  tx_levels_show((TRANSMITTER*) tx);
 }
 
-void tx_ps_getinfo(const TRANSMITTER *tx, int *info) {
+void tx_ps_getinfo(const TRANSMITTER *tx, int* info) {
   GetPSInfo(tx->id, info);
 }
 
@@ -2529,7 +2529,7 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
       if (rx_feedback) {
         // memset(rx_feedback->iq_input_buffer, 0, rx_feedback->buffer_size * sizeof(double));
         memset(rx_feedback->iq_input_buffer, 0,
-               (size_t)2 * rx_feedback->buffer_size * sizeof *rx_feedback->iq_input_buffer);
+               (size_t) 2 * rx_feedback->buffer_size * sizeof* rx_feedback->iq_input_buffer);
 
         //
         // In principle we could call pscc and GetPSINfo and repeat this until
@@ -2588,7 +2588,7 @@ void tx_ps_resume(const TRANSMITTER *tx) {
 }
 
 void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
-  SetPSFeedbackRate (tx->id, rate);
+  SetPSFeedbackRate(tx->id, rate);
 }
 
 void tx_ps_setparams(const TRANSMITTER *tx) {
@@ -2623,8 +2623,8 @@ void tx_set_average(const TRANSMITTER *tx) {
   //
   int wdspmode;
   double t = 0.001 * tx->display_average_time;
-  double display_avb = exp(-1.0 / ((double)tx->fps * t));
-  int display_average = max(2, (int)fmin(60, (double)tx->fps * t));
+  double display_avb = exp(-1.0 / ((double) tx->fps * t));
+  int display_average = max(2, (int) fmin(60, (double) tx->fps * t));
   SetDisplayAvBackmult(tx->id, 0, display_avb);
   SetDisplayNumAverage(tx->id, 0, display_average);
 
@@ -2682,11 +2682,11 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXALevelerAttack(tx->id, tx->lev_attack);
   SetTXALevelerDecay(tx->id, tx->lev_decay);
   SetTXALevelerTop(tx->id, tx->lev_gain);
-  SetTXALevelerSt(tx->id, tx->lev_enable); // Leveler on/off
+  SetTXALevelerSt(tx->id, tx->lev_enable);  // Leveler on/off
   t_print("%s: Leveler state %d , gain %.1fdb, attack %dms, decay %dms\n",
           __func__, tx->lev_enable, tx->lev_gain, tx->lev_attack, tx->lev_decay);
   SetTXAPHROTCorner(tx->id, tx->phrot_freq);   // Phase Rotator corner frequency in Hz
-  SetTXAPHROTNstages(tx->id, tx->phrot_stage); // Phase Rotator stages
+  SetTXAPHROTNstages(tx->id, tx->phrot_stage);  // Phase Rotator stages
   SetTXAPHROTRun(tx->id, tx->phrot_enable);    // Phase Rotator on/off
   t_print("%s: PH-ROT state %d, stages %d, freq %.1fHz\n",
           __func__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
@@ -2696,22 +2696,22 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXACFCOMPprofile(tx->id, 10, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
 #endif
   SetTXACFCOMPPrecomp(tx->id, tx->cfc_lvl[0]);
-  SetTXACFCOMPRun(tx->id, tx->cfc); // Pre CFC on/off
+  SetTXACFCOMPRun(tx->id, tx->cfc);  // Pre CFC on/off
   SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
   // SetTXACFCOMPRun(tx->id, tx->cfc);
-  SetTXACFCOMPPeqRun(tx->id, tx->cfc_eq); // Post CFC on/off
+  SetTXACFCOMPPeqRun(tx->id, tx->cfc_eq);  // Post CFC on/off
   t_print("%s: pre CFC state %d with Level %.1fdb, post CFC state: %d with Level %.1fdb\n",
           __func__, tx->cfc, tx->cfc_lvl[0], tx->cfc_eq, tx->cfc_post[0]);
   // CESSB overshoot control used only with COMP
   // SetTXAosctrlRun(tx->id, tx->compressor);
   SetTXACompressorGain(tx->id, tx->compressor_level);
-  SetTXACompressorRun(tx->id, tx->compressor); // PROC on/off
+  SetTXACompressorRun(tx->id, tx->compressor);  // PROC on/off
 
   if (tx->compressor && tx->cessb_enable && tx->compressor_level > 0 && !tx->low_latency) {
-    SetTXAosctrlRun(tx->id, tx->compressor); // CESSB on
+    SetTXAosctrlRun(tx->id, tx->compressor);  // CESSB on
     t_print("%s: CESSB enabled\n", __func__);
   } else {
-    SetTXAosctrlRun(tx->id, 0); // CESSB off
+    SetTXAosctrlRun(tx->id, 0);  // CESSB off
     t_print("%s: CESSB disabled\n", __func__);
   }
 
@@ -2768,7 +2768,7 @@ void tx_set_detector(const TRANSMITTER *tx) {
 }
 
 void tx_set_deviation(const TRANSMITTER *tx) {
-  SetTXAFMDeviation(tx->id, (double)tx->deviation);
+  SetTXAFMDeviation(tx->id, (double) tx->deviation);
 }
 
 void tx_set_dexp(const TRANSMITTER *tx) {
@@ -2990,7 +2990,7 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
       break;
     }
 
-    SetTXAPostGenTTMag (tx->id, 0.49999, 0.49999);
+    SetTXAPostGenTTMag(tx->id, 0.49999, 0.49999);
     SetTXAPostGenMode(tx->id, 1);
     SetTXAPostGenRun(tx->id, 1);
 

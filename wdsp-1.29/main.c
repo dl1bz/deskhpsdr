@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-void wdspmain (void *pargs) {
+void wdspmain(void* pargs) {
 #if defined(_WIN32)
   DWORD taskIndex = 0;
   HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);
@@ -37,20 +37,20 @@ void wdspmain (void *pargs) {
 #endif
   int channel = (int)(uintptr_t)pargs;
 
-  while (_InterlockedAnd (&ch[channel].run, 1)) {
+  while (_InterlockedAnd(&ch[channel].run, 1)) {
     WaitForSingleObject(ch[channel].iob.pd->Sem_BuffReady, INFINITE);
-    EnterCriticalSection (&ch[channel].csDSP);
+    EnterCriticalSection(&ch[channel].csDSP);
 
-    if (!_InterlockedAnd (&ch[channel].iob.pd->exec_bypass, 1)) {
+    if (!_InterlockedAnd(&ch[channel].iob.pd->exec_bypass, 1)) {
       switch (ch[channel].type) {
       case 0:   // rxa
-        dexchange (channel, rxa[channel].outbuff, rxa[channel].inbuff);
-        xrxa (channel);
+        dexchange(channel, rxa[channel].outbuff, rxa[channel].inbuff);
+        xrxa(channel);
         break;
 
       case 1:   // txa
-        dexchange (channel, txa[channel].outbuff, txa[channel].inbuff);
-        xtxa (channel);
+        dexchange(channel, txa[channel].outbuff, txa[channel].inbuff);
+        xtxa(channel);
         break;
 
       case 31:  //
@@ -58,24 +58,24 @@ void wdspmain (void *pargs) {
       }
     }
 
-    LeaveCriticalSection (&ch[channel].csDSP);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 
 #if defined(_WIN32)
 
-  if (hTask != 0) { AvRevertMmThreadCharacteristics (hTask); }
+  if (hTask != 0) { AvRevertMmThreadCharacteristics(hTask); }
 
 #endif
 }
 
-void create_main (int channel) {
+void create_main(int channel) {
   switch (ch[channel].type) {
   case 0:
-    create_rxa (channel);
+    create_rxa(channel);
     break;
 
   case 1:
-    create_txa (channel);
+    create_txa(channel);
     break;
 
   case 31:  //
@@ -83,14 +83,14 @@ void create_main (int channel) {
   }
 }
 
-void destroy_main (int channel) {
+void destroy_main(int channel) {
   switch (ch[channel].type) {
   case 0:
-    destroy_rxa (channel);
+    destroy_rxa(channel);
     break;
 
   case 1:
-    destroy_txa (channel);
+    destroy_txa(channel);
     break;
 
   case 31:  //
@@ -98,14 +98,14 @@ void destroy_main (int channel) {
   }
 }
 
-void flush_main (int channel) {
+void flush_main(int channel) {
   switch (ch[channel].type) {
   case 0:
-    flush_rxa (channel);
+    flush_rxa(channel);
     break;
 
   case 1:
-    flush_txa (channel);
+    flush_txa(channel);
     break;
 
   case 31:
@@ -113,14 +113,14 @@ void flush_main (int channel) {
   }
 }
 
-void setInputSamplerate_main (int channel) {
+void setInputSamplerate_main(int channel) {
   switch (ch[channel].type) {
   case 0:
-    setInputSamplerate_rxa (channel);
+    setInputSamplerate_rxa(channel);
     break;
 
   case 1:
-    setInputSamplerate_txa (channel);
+    setInputSamplerate_txa(channel);
     break;
 
   case 31:  //
@@ -128,14 +128,14 @@ void setInputSamplerate_main (int channel) {
   }
 }
 
-void setOutputSamplerate_main (int channel) {
+void setOutputSamplerate_main(int channel) {
   switch (ch[channel].type) {
   case 0:
-    setOutputSamplerate_rxa (channel);
+    setOutputSamplerate_rxa(channel);
     break;
 
   case 1:
-    setOutputSamplerate_txa (channel);
+    setOutputSamplerate_txa(channel);
     break;
 
   case 31:  //
@@ -143,14 +143,14 @@ void setOutputSamplerate_main (int channel) {
   }
 }
 
-void setDSPSamplerate_main (int channel) {
+void setDSPSamplerate_main(int channel) {
   switch (ch[channel].type) {
   case 0:
-    setDSPSamplerate_rxa (channel);
+    setDSPSamplerate_rxa(channel);
     break;
 
   case 1:
-    setDSPSamplerate_txa (channel);
+    setDSPSamplerate_txa(channel);
     break;
 
   case 31:  //
@@ -158,14 +158,14 @@ void setDSPSamplerate_main (int channel) {
   }
 }
 
-void setDSPBuffsize_main (int channel) {
+void setDSPBuffsize_main(int channel) {
   switch (ch[channel].type) {
   case 0:
-    setDSPBuffsize_rxa (channel);
+    setDSPBuffsize_rxa(channel);
     break;
 
   case 1:
-    setDSPBuffsize_txa (channel);
+    setDSPBuffsize_txa(channel);
     break;
 
   case 31:  //

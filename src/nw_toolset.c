@@ -42,7 +42,7 @@ NW_SETTINGS nw_settings = {
   .is_wired = 1
 };
 
-int nw_get_ifname_for_remote_ip(const char *remote_ip, char *ifname, size_t ifname_len) {
+int nw_get_ifname_for_remote_ip(const char* remote_ip, char* ifname, size_t ifname_len) {
   int sock = -1;
   struct sockaddr_in remote;
   struct sockaddr_in local;
@@ -72,14 +72,14 @@ int nw_get_ifname_for_remote_ip(const char *remote_ip, char *ifname, size_t ifna
     return -1;
   }
 
-  if (connect(sock, (struct sockaddr *)&remote, sizeof(remote)) < 0) {
+  if (connect(sock, (struct sockaddr *) &remote, sizeof(remote)) < 0) {
     close(sock);
     return -1;
   }
 
   len = sizeof(local);
 
-  if (getsockname(sock, (struct sockaddr *)&local, &len) < 0) {
+  if (getsockname(sock, (struct sockaddr *) &local, &len) < 0) {
     close(sock);
     return -1;
   }
@@ -123,7 +123,7 @@ int nw_get_ifname_for_remote_ip(const char *remote_ip, char *ifname, size_t ifna
 }
 
 #ifdef __APPLE__
-static int nw_is_wired_macos(const char *remote_ip) {
+static int nw_is_wired_macos(const char* remote_ip) {
   char ifname[IFNAMSIZ];
   struct ifmediareq ifmr;
   int sock;
@@ -167,7 +167,7 @@ static int nw_is_wired_macos(const char *remote_ip) {
 #endif
 
 #ifdef __linux__
-static int nw_is_wired_linux(const char *remote_ip) {
+static int nw_is_wired_linux(const char* remote_ip) {
   char ifname[IFNAMSIZ];
   char path[256];
   FILE *fp;
@@ -206,7 +206,7 @@ static int nw_is_wired_linux(const char *remote_ip) {
 }
 #endif
 
-int nw_is_wired(const char *remote_ip) {
+int nw_is_wired(const char* remote_ip) {
 #ifdef __APPLE__
   return nw_is_wired_macos(remote_ip);
 #elif defined(__linux__)
@@ -214,7 +214,7 @@ int nw_is_wired(const char *remote_ip) {
   // return 1;
   return nw_is_wired_linux(remote_ip);
 #else
-  (void)remote_ip;
+  (void) remote_ip;
   return -1;
 #endif
 }

@@ -95,7 +95,7 @@ static gboolean vfo_num_pad_cb(GtkWidget *widget, GdkEventButton *event, gpointe
       snprintf(output, 64, "<big><b>0</b></big>");
     }
 
-    gtk_label_set_markup (GTK_LABEL (label), output);
+    gtk_label_set_markup(GTK_LABEL(label), output);
   }
 
   return FALSE;
@@ -129,7 +129,7 @@ static void duplex_cb(GtkWidget *widget, gpointer data) {
     //
     // While transmitting, ignore checkbox
     //
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), duplex);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), duplex);
     return;
   }
 
@@ -138,13 +138,13 @@ static void duplex_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void ctun_cb(GtkWidget *widget, gpointer data) {
-  int state = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   vfo_ctun_update(myvfo, state);
   g_idle_add(ext_vfo_update, NULL);
 }
 
 static void split_cb(GtkWidget *widget, gpointer data) {
-  int state = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_set_split(state);
   g_idle_add(ext_vfo_update, NULL);
 }
@@ -175,22 +175,22 @@ void vfo_menu(GtkWidget *parent, int id) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 8);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 8);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 3, 1);
-  label = gtk_label_new (NULL);
+  label = gtk_label_new(NULL);
   gtk_label_set_markup(GTK_LABEL(label), "<big><b>0</b></big>");
   gtk_widget_set_size_request(label, 150, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 1, .5);
+  gtk_misc_set_alignment(GTK_MISC(label), 1, .5);
   gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 3, 1);
 
   for (i = 0; i < 16; i++) {
@@ -245,7 +245,7 @@ void vfo_menu(GtkWidget *parent, int id) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(vfo_b), NULL, step_labels[i]);
 
     if (i == ind) {
-      gtk_combo_box_set_active (GTK_COMBO_BOX(vfo_b), i);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), i);
     }
   }
 
@@ -255,25 +255,25 @@ void vfo_menu(GtkWidget *parent, int id) {
   row = 4;
   GtkWidget *lock_b = gtk_check_button_new_with_label("Lock VFOs");
   gtk_widget_set_name(lock_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (lock_b), locked);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lock_b), locked);
   gtk_grid_attach(GTK_GRID(grid), lock_b, 3, row, 2, 1);
   g_signal_connect(lock_b, "toggled", G_CALLBACK(lock_cb), NULL);
   row++;
   GtkWidget *duplex_b = gtk_check_button_new_with_label("Duplex");
   gtk_widget_set_name(duplex_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (duplex_b), duplex);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(duplex_b), duplex);
   gtk_grid_attach(GTK_GRID(grid), duplex_b, 3, row, 2, 1);
   g_signal_connect(duplex_b, "toggled", G_CALLBACK(duplex_cb), NULL);
   row++;
   GtkWidget *ctun_b = gtk_check_button_new_with_label("CTUN");
   gtk_widget_set_name(ctun_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ctun_b), vfo[myvfo].ctun);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ctun_b), vfo[myvfo].ctun);
   gtk_grid_attach(GTK_GRID(grid), ctun_b, 3, row, 2, 1);
   g_signal_connect(ctun_b, "toggled", G_CALLBACK(ctun_cb), NULL);
   row++;
   GtkWidget *split_b = gtk_check_button_new_with_label("Split");
   gtk_widget_set_name(split_b, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (split_b), split);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(split_b), split);
   gtk_grid_attach(GTK_GRID(grid), split_b, 3, row, 2, 1);
   g_signal_connect(split_b, "toggled", G_CALLBACK(split_cb), NULL);
   gtk_container_add(GTK_CONTAINER(content), grid);
@@ -310,9 +310,9 @@ void vfo_num_pad(int action, int id) {
     // The "locale" stuff is no longer needed (but does no harm)
     // since we now force the "C" locale in the program.
     //
-    if (index(buffer, *(locale->decimal_point)) == NULL &&
+    if (index(buffer, * (locale->decimal_point)) == NULL &&
         len <= sizeof(vfo[id].entered_frequency) - 2) {
-      buffer[len++] = *(locale->decimal_point);
+      buffer[len++] = * (locale->decimal_point);
       buffer[len] = 0;
     }
 
@@ -337,7 +337,7 @@ void vfo_num_pad(int action, int id) {
 
   case -2:  // Enter
     fd = atof(buffer) * mult;
-    fl = (long long) (fd + 0.5);
+    fl = (long long)(fd + 0.5);
     *buffer = 0;
 
     //

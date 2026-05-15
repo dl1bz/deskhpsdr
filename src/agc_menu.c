@@ -71,12 +71,12 @@ static void update_agc_hang_threshold_scale(void) {
 }
 
 static void agc_hang_threshold_value_changed_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->agc_hang_threshold = (int)gtk_range_get_value(GTK_RANGE(widget));
+  active_receiver->agc_hang_threshold = (int) gtk_range_get_value(GTK_RANGE(widget));
   rx_set_agc(active_receiver);
 }
 
-static void agc_cb (GtkToggleButton *widget, gpointer data) {
-  int val = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+static void agc_cb(GtkToggleButton *widget, gpointer data) {
+  int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   active_receiver->agc = val;
   rx_set_agc(active_receiver);
   g_idle_add(ext_vfo_update, NULL);
@@ -96,14 +96,14 @@ void agc_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
   gtk_widget_set_margin_top(grid, 0);    // Kein Abstand oben
-  gtk_widget_set_margin_bottom(grid, 0); // Kein Abstand unten
+  gtk_widget_set_margin_bottom(grid, 0);  // Kein Abstand unten
   gtk_widget_set_margin_start(grid, 3);  // Kein Abstand am Anfang
   gtk_widget_set_margin_end(grid, 3);    // Kein Abstand am Ende
   //----------------------------------------------------------------------------------------------------------
@@ -120,10 +120,10 @@ void agc_menu(GtkWidget *parent) {
   gtk_widget_set_halign(close_b, GTK_ALIGN_START);
   gtk_widget_set_valign(close_b, GTK_ALIGN_CENTER);
   gtk_widget_show(close_b);
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_box_pack_start(GTK_BOX(box_Z0), close_b, FALSE, FALSE, 0);
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
-  gtk_grid_attach(GTK_GRID(grid), box_Z0, 0, 0, 1, 1);  // Zeile 0 Spalte 0
+  gtk_grid_attach(GTK_GRID(grid), box_Z0, 0, 0, 1, 1);   // Zeile 0 Spalte 0
   //----------------------------------------------------------------------------------------------------------
   GtkWidget *box_Z1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(box_Z1, box_width, widget_heigth);
@@ -159,7 +159,7 @@ void agc_menu(GtkWidget *parent) {
   gtk_box_pack_start(GTK_BOX(box_Z1), agc_combo, FALSE, FALSE, 0);
   //----------------------------------------------------------------------------------------------------------
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
-  gtk_grid_attach(GTK_GRID(grid), box_Z1, 0, 1, 1, 1);  // Zeile 0 Spalte 0
+  gtk_grid_attach(GTK_GRID(grid), box_Z1, 0, 1, 1, 1);   // Zeile 0 Spalte 0
   //----------------------------------------------------------------------------------------------------------
   GtkWidget *box_Z2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
   gtk_widget_set_size_request(box_Z2, box_width, widget_heigth);
@@ -178,8 +178,8 @@ void agc_menu(GtkWidget *parent) {
   gtk_box_pack_start(GTK_BOX(box_Z2), agc_hang_threshold_label, FALSE, FALSE, 0);
   //----------------------------------------------------------------------------------------------------------
   agc_hang_threshold_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
-  gtk_range_set_increments (GTK_RANGE(agc_hang_threshold_scale), 1.0, 1.0);
-  gtk_range_set_value (GTK_RANGE(agc_hang_threshold_scale), active_receiver->agc_hang_threshold);
+  gtk_range_set_increments(GTK_RANGE(agc_hang_threshold_scale), 1.0, 1.0);
+  gtk_range_set_value(GTK_RANGE(agc_hang_threshold_scale), active_receiver->agc_hang_threshold);
 
   for (float i = 0.0; i <= 100.0; i += 50.0) {
     gtk_scale_add_mark(GTK_SCALE(agc_hang_threshold_scale), i, GTK_POS_TOP, NULL);
@@ -198,7 +198,7 @@ void agc_menu(GtkWidget *parent) {
   gtk_box_pack_start(GTK_BOX(box_Z2), agc_hang_threshold_scale, FALSE, FALSE, 0);
   //----------------------------------------------------------------------------------------------------------
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
-  gtk_grid_attach(GTK_GRID(grid), box_Z2, 0, 2, 1, 1);  // Zeile 0 Spalte 0
+  gtk_grid_attach(GTK_GRID(grid), box_Z2, 0, 2, 1, 1);   // Zeile 0 Spalte 0
   //----------------------------------------------------------------------------------------------------------
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;

@@ -54,7 +54,7 @@ It uses a non modified version of rmnoise and implements a ringbuffer to handle 
 #define FRAME_SIZE
 
 typedef struct _rnnr_ring_buffer {
-  float* buf;
+  float *buf;
   int capacity;
   int head;
   int tail;
@@ -76,10 +76,10 @@ typedef struct _rnnr {
 
   int buffer_size;
   int rate;
-  float* output_buffer;
+  float *output_buffer;
 
-  float* to_process_buffer;
-  float* processed_output_buffer;
+  float *to_process_buffer;
+  float *processed_output_buffer;
 
   rnnr_ring_buffer input_ring;
   rnnr_ring_buffer output_ring;
@@ -88,7 +88,7 @@ typedef struct _rnnr {
 
 } rnnr, *RNNR;
 
-extern RNNR create_rnnr (int run, int position, int size, double *in, double *out, int rate);
+extern RNNR create_rnnr (int run, int position, int size, double* in, double* out, int rate);
 extern void setSize_rnnr(RNNR a, int size);
 extern void setBuffers_rnnr (RNNR a, double* in, double* out);
 extern void destroy_rnnr (RNNR a);

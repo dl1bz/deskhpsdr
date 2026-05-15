@@ -67,7 +67,7 @@ char build_options[] =
 #ifdef __DVL__
   "DEV "
 #endif
-  "";
+        "";
 
 char build_audio[] =
 #ifdef ALSA

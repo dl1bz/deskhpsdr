@@ -31,8 +31,8 @@ typedef struct _patchpanel {
   int channel;
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double gain1;
   double gain2I;
   double gain2Q;

@@ -32,7 +32,7 @@
 static int rtlsdr_count = 0;
 static int sdrplay_count = 0;
 
-static void get_info(char *driver) {
+static void get_info(char* driver) {
   size_t rx_rates_length, tx_rates_length, rx_gains_length, tx_gains_length, ranges_length, rx_antennas_length,
          tx_antennas_length, rx_bandwidth_length, tx_bandwidth_length;
   SoapySDRKwargs args = {};
@@ -44,8 +44,8 @@ static void get_info(char *driver) {
   char gw_version[16];
   char hw_version[16];
   char p_version[16];
-  char** tx_antennas;
-  char** tx_gains;
+  char **tx_antennas;
+  char **tx_gains;
   t_print("soapy_discovery: get_info: %s\n", driver);
   g_strlcpy(fw_version, "", 16);
   g_strlcpy(gw_version, "", 16);
@@ -175,14 +175,14 @@ static void get_info(char *driver) {
   for (size_t i = 0; i < ranges_length; i++) t_print("RX freq range [%f MHz -> %f MHz step=%f]\n",
       ranges[i].minimum * 1E-6, ranges[i].maximum * 1E-6, ranges[i].step);
 
-  char** rx_antennas = SoapySDRDevice_listAntennas(sdr, SOAPY_SDR_RX, 0, &rx_antennas_length);
+  char **rx_antennas = SoapySDRDevice_listAntennas(sdr, SOAPY_SDR_RX, 0, &rx_antennas_length);
 
-  for (size_t i = 0; i < rx_antennas_length; i++) { t_print( "RX antenna: %s\n", rx_antennas[i]); }
+  for (size_t i = 0; i < rx_antennas_length; i++) { t_print("RX antenna: %s\n", rx_antennas[i]); }
 
   if (tx_channels > 0) {
     tx_antennas = SoapySDRDevice_listAntennas(sdr, SOAPY_SDR_TX, 0, &tx_antennas_length);
 
-    for (size_t i = 0; i < tx_antennas_length; i++) { t_print( "TX antenna: %s\n", tx_antennas[i]); }
+    for (size_t i = 0; i < tx_antennas_length; i++) { t_print("TX antenna: %s\n", tx_antennas[i]); }
   }
 
   char **rx_gains = SoapySDRDevice_listGains(sdr, SOAPY_SDR_RX, 0, &rx_gains_length);
@@ -198,7 +198,7 @@ static void get_info(char *driver) {
   size_t formats_length;
   char **formats = SoapySDRDevice_getStreamFormats(sdr, SOAPY_SDR_RX, 0, &formats_length);
 
-  for (size_t i = 0; i < formats_length; i++) { t_print( "RX format available: %s\n", formats[i]); }
+  for (size_t i = 0; i < formats_length; i++) { t_print("RX format available: %s\n", formats[i]); }
 
   size_t sensors;
   char **sensor = SoapySDRDevice_listSensors(sdr, &sensors);
@@ -206,7 +206,7 @@ static void get_info(char *driver) {
 
   for (size_t i = 0; i < sensors; i++) {
     char *value = SoapySDRDevice_readSensor(sdr, sensor[i]);
-    t_print( "Sensor:   %s=%s\n", sensor[i], value);
+    t_print("Sensor:   %s=%s\n", sensor[i], value);
 
     if ((strstr(sensor[i], "temp")) != NULL) {
       has_temp = TRUE;
@@ -276,7 +276,7 @@ static void get_info(char *driver) {
     discovered[devices].info.soapy.rx_range = malloc(rx_gains_length * sizeof(SoapySDRRange));
 
     for (size_t i = 0; i < rx_gains_length; i++) {
-      t_print("%s: RX rx_gains_length %d gain %s\n", __func__, (int)rx_gains_length, rx_gains[i]);
+      t_print("%s: RX rx_gains_length %d gain %s\n", __func__, (int) rx_gains_length, rx_gains[i]);
       SoapySDRRange rx_range = SoapySDRDevice_getGainElementRange(sdr, SOAPY_SDR_RX, 0, rx_gains[i]);
       t_print("%s: RX gain available: %s, %f -> %f step=%f\n", __func__, rx_gains[i], rx_range.minimum, rx_range.maximum,
               rx_range.step);
@@ -332,7 +332,7 @@ void soapy_discovery(void) {
   rtlsdr_count = 0;
   SoapySDRKwargs_set(&input_args, "hostname", "pluto.local");
   SoapySDRKwargs *results = SoapySDRDevice_enumerate(&input_args, &length);
-  t_print("%s: length=%d\n", __func__, (int)length);
+  t_print("%s: length=%d\n", __func__, (int) length);
 
   for (size_t i = 0; i < length; i++) {
     for (size_t j = 0; j < results[i].size; j++) {

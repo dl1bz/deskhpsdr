@@ -26,10 +26,10 @@ warren@wpratt.com
 
 #include "comm.h"
 
-void dR (int n, double* r, double* y, double* z) {
+void dR(int n, double* r, double* y, double* z) {
   int i, j, k;
   double alpha, beta, gamma;
-  memset (z, 0, (n - 1) * sizeof (double)); // work space
+  memset(z, 0, (n - 1) * sizeof(double));   // work space
   y[0] = -r[1];
   alpha = -r[1];
   beta = 1.0;
@@ -48,23 +48,23 @@ void dR (int n, double* r, double* y, double* z) {
       z[i] = y[i] + alpha * y[j];
     }
 
-    memcpy (y, z, (k + 1) * sizeof (double));
+    memcpy(y, z, (k + 1) * sizeof(double));
     y[k + 1] = alpha;
   }
 }
 
-void trI (
-  int n,
-  double* r,
-  double* B,
-  double* y,
-  double* v,
-  double* dR_z
+void trI(
+        int n,
+        double *r,
+        double *B,
+        double *y,
+        double *v,
+        double *dR_z
 ) {
   int i, j, ni, nj;
   double gamma, t, scale, b;
-  memset (y, 0, (n - 1) * sizeof (double)); // work space
-  memset (v, 0, (n - 1) * sizeof (double)); // work space
+  memset(y, 0, (n - 1) * sizeof(double));   // work space
+  memset(v, 0, (n - 1) * sizeof(double));   // work space
   scale = 1.0 / r[0];
 
   for (i = 0; i < n; i++) {
@@ -146,7 +146,7 @@ void asolve(int xsize, int asize, double* x, double* a, double* r, double* z) {
   }
 }
 
-void median (int n, double* a, double* med) {
+void median(int n, double* a, double* med) {
   int S0, S1, i, j, m, k;
   double x, t;
   S0 = 0;
@@ -219,23 +219,23 @@ void median (int n, double* a, double* med) {
 
 BLDR create_builder(int points, int ints) {
   // for the create function, 'points' and 'ints' are the MAXIMUM values that will be encountered
-  BLDR a = (BLDR)malloc0 (sizeof(bldr));
+  BLDR a = (BLDR)malloc0(sizeof(bldr));
   a->catxy = (double*)malloc0(2 * points * sizeof(double));
-  a->sx  = (double*)malloc0(  points * sizeof(double));
-  a->sy  = (double*)malloc0(  points * sizeof(double));
-  a->h   = (double*)malloc0(  ints   * sizeof(double));
-  a->p   = (int*) malloc0(  ints   * sizeof(int));
-  a->np  = (int*) malloc0(  ints   * sizeof(int));
-  a->taa   = (double*)malloc0(  ints   * sizeof(double));
-  a->tab   = (double*)malloc0(  ints   * sizeof(double));
-  a->tag   = (double*)malloc0(  ints   * sizeof(double));
-  a->tad   = (double*)malloc0(  ints   * sizeof(double));
-  a->tbb   = (double*)malloc0(  ints   * sizeof(double));
-  a->tbg   = (double*)malloc0(  ints   * sizeof(double));
-  a->tbd   = (double*)malloc0(  ints   * sizeof(double));
-  a->tgg   = (double*)malloc0(  ints   * sizeof(double));
-  a->tgd   = (double*)malloc0(  ints   * sizeof(double));
-  a->tdd   = (double*)malloc0(  ints   * sizeof(double));
+  a->sx  = (double*)malloc0(points * sizeof(double));
+  a->sy  = (double*)malloc0(points * sizeof(double));
+  a->h   = (double*)malloc0(ints   * sizeof(double));
+  a->p   = (int*) malloc0(ints   * sizeof(int));
+  a->np  = (int*) malloc0(ints   * sizeof(int));
+  a->taa   = (double*)malloc0(ints   * sizeof(double));
+  a->tab   = (double*)malloc0(ints   * sizeof(double));
+  a->tag   = (double*)malloc0(ints   * sizeof(double));
+  a->tad   = (double*)malloc0(ints   * sizeof(double));
+  a->tbb   = (double*)malloc0(ints   * sizeof(double));
+  a->tbg   = (double*)malloc0(ints   * sizeof(double));
+  a->tbd   = (double*)malloc0(ints   * sizeof(double));
+  a->tgg   = (double*)malloc0(ints   * sizeof(double));
+  a->tgd   = (double*)malloc0(ints   * sizeof(double));
+  a->tdd   = (double*)malloc0(ints   * sizeof(double));
   int nsize = 3 * ints + 1;
   int intp1 = ints + 1;
   int intm1 = ints - 1;
@@ -327,9 +327,9 @@ void flush_builder(BLDR a, int points, int ints) {
 }
 
 int fcompare(const void* a, const void* b) {
-  if (*(double * )a < * (double * )b) {
+  if (*(double *)a < * (double *)b) {
     return -1;
-  } else if (*(double * )a == *(double * )b) {
+  } else if (*(double *)a == *(double *)b) {
     return 0;
   } else {
     return 1;

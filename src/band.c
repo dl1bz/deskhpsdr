@@ -37,7 +37,7 @@ int xvtr_band = BANDS;
 
 static BANDSETTINGS band_settings[BANDS + XVTRS];
 
-char* outOfBand = "Out of band";
+char *outOfBand = "Out of band";
 
 /* --------------------------------------------------------------------------*/
 /**
@@ -757,11 +757,11 @@ int get_band_from_frequency(long long f) {
   return found;
 }
 #if 0
-char* getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
-  char* result = outOfBand;
+char *getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
+  char *result = outOfBand;
   int i;
-  long long flow = frequency + (long long)filter_low;
-  long long fhigh = frequency + (long long)filter_high;
+  long long flow = frequency + (long long) filter_low;
+  long long fhigh = frequency + (long long) filter_high;
   int b;
 
   for (b = 0; b < BANDS + XVTRS; b++) {
@@ -771,8 +771,8 @@ char* getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
       if (flow >= band->frequencyMin && fhigh <= band->frequencyMax) {
         if (b == band60) {
           for (i = 0; i < channel_entries; i++) {
-            long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
-            long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
+            long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long) 2);
+            long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long) 2);
 
             if (flow >= low_freq && fhigh <= hi_freq) {
               result = band->title;
@@ -851,7 +851,7 @@ void band_plus(int id) {
 
     if (b >= BANDS + XVTRS) { b = 0; }
 
-    band = (BAND*)band_get_band(b);
+    band = (BAND*) band_get_band(b);
 
     if (strlen(band->title) > 0) {
       /*
@@ -882,7 +882,7 @@ void band_minus(int id) {
 
     if (b < 0) { b = BANDS + XVTRS - 1; }
 
-    band = (BAND*)band_get_band(b);
+    band = (BAND*) band_get_band(b);
 
     if (strlen(band->title) > 0) {
       /*
@@ -900,7 +900,7 @@ void band_minus(int id) {
   }
 }
 
-static void make_pa_calibration_filename(char *buffer,
+static void make_pa_calibration_filename(char* buffer,
     size_t size,
     const char *radio_name) {
   char name[64];
@@ -909,7 +909,7 @@ static void make_pa_calibration_filename(char *buffer,
   name[sizeof(name) - 1] = '\0';
 
   for (i = 0; name[i] != '\0'; i++) {
-    if (!isalnum((unsigned char)name[i])) {
+    if (!isalnum((unsigned char) name[i])) {
       name[i] = '_';
     }
   }
@@ -932,7 +932,7 @@ void PaCalibrationSave(void) {
       continue;
     }
 
-    SetPropS0("settings", "pa_calib");
+    SetPropI0("device_id", device);
     SetPropF1("band.%d.pa_calibration",
               b,
               bands[b].pa_calibration);
@@ -944,24 +944,27 @@ void PaCalibrationSave(void) {
           filename);
 }
 
-void PaCalibrationLoad(const char *filename) {
-  char settings[64];
+gboolean PaCalibrationLoad(const char* filename) {
+  int device_from_import = -1;
 
   if (filename == NULL || access(filename, F_OK) != 0) {
-    return;
+    return FALSE;
   }
 
   clearProperties();
   loadProperties(filename);
-  strcpy(settings, "");
-  GetPropS0("settings", settings);
+  GetPropI0("device_id", device_from_import);
 
-  if (strcmp(settings, "pa_calib") != 0) {
-    t_print("%s: cannot load %s: no valid pa_calibration file\n",
+  if (device_from_import != device) {
+    t_print("%s: cannot load %s: pa_calibration device mismatch\n",
             __func__,
             filename);
+    t_print("%s: device saved in file: %d current running device: %d\n",
+            __func__,
+            device_from_import,
+            device);
     clearProperties();
-    return;
+    return FALSE;
   } else {
     t_print("%s: valid pa_calibration file, loading...\n",
             __func__,
@@ -990,4 +993,5 @@ void PaCalibrationLoad(const char *filename) {
   t_print("%s: loaded %s\n",
           __func__,
           filename);
+  return TRUE;
 }

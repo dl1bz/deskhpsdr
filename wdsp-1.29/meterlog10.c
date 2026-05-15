@@ -26,10 +26,10 @@ warren@wpratt.com
 
 #include "comm.h"
 
-__declspec (align (16)) static const int mbits  = 11;
-__declspec (align (16)) static const int mmask  = 2047;
-__declspec (align (16)) static const double mconv = 0.301029995663981;
-__declspec (align (16)) static const double mtable[2048] = {
+__declspec(align(16)) static const int mbits  = 11;
+__declspec(align(16)) static const int mmask  = 2047;
+__declspec(align(16)) static const double mconv = 0.301029995663981;
+__declspec(align(16)) static const double mtable[2048] = {
   0.0000000000000000e+000,  7.0426901124664325e-004,  1.4081943928083889e-003,  2.1117764798519820e-003,
   2.8150156070540383e-003,  3.5179121086019987e-003,  4.2204663181950848e-003,  4.9226785690452447e-003,
   5.6245491938781075e-003,  6.3260785249339207e-003,  7.0272668939685033e-003,  7.7281146322541816e-003,
@@ -545,8 +545,8 @@ __declspec (align (16)) static const double mtable[2048] = {
 };
 
 
-inline double mlog10 (double val) {
-  uint64_t* pin = (uint64_t*)(&val);
+inline double mlog10(double val) {
+  uint64_t *pin = (uint64_t*)(&val);
   uint64_t  N = *pin;
   int e = (int)(((N >> 52) & 2047) - 1023);
   int m = (int)((N >> (52 - mbits)) & mmask);

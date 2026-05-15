@@ -87,21 +87,21 @@ void switch_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Switch Actions", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 0);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 0);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 0);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 0);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
   GtkWidget *default_b = gtk_button_new_with_label("Defaults");
-  gtk_widget_set_name(default_b, "close_button"); // same looks as Close button
-  g_signal_connect (default_b, "button-press-event", G_CALLBACK(default_cb), NULL);
+  gtk_widget_set_name(default_b, "close_button");  // same looks as Close button
+  g_signal_connect(default_b, "button-press-event", G_CALLBACK(default_cb), NULL);
 
   switch (controller) {
   case CONTROLLER2_V1:
@@ -116,7 +116,7 @@ void switch_menu(GtkWidget *parent) {
 
   if (controller == CONTROLLER2_V1 || controller == CONTROLLER2_V2) {
     // 7 horizontal switches in row 8
-    for (int i = 0; i < 7; i++ ) {
+    for (int i = 0; i < 7; i++) {
       widget = gtk_button_new_with_label(ActionTable[switches[i].switch_function].str);
       gtk_widget_set_name(widget, "small_button_with_border");
       g_signal_connect(widget, "button-press-event", G_CALLBACK(switch_cb), GINT_TO_POINTER(i));

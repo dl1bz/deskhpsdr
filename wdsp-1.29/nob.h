@@ -30,8 +30,8 @@ warren@wpratt.com
 typedef struct _anb {
   int run;
   int buffsize;         // size of input/output buffer
-  double* in;           // input buffer
-  double* out;          // output buffer
+  double *in;           // input buffer
+  double *out;          // output buffer
   int dline_size;         // length of delay line which is 'double dline[length][2]'
   double *dline;          // pointer to delay line
   double samplerate;        // samplerate, used to convert times into sample counts
@@ -62,16 +62,16 @@ typedef struct _anb {
 } anb, *ANB;
 
 __declspec (dllexport) ANB create_anb (
-  int run,
-  int buffsize,
-  double* in,
-  double* out,
-  double samplerate,
-  double tau,
-  double hangtime,
-  double advtime,
-  double backtau,
-  double threshold
+        int run,
+        int buffsize,
+        double *in,
+        double *out,
+        double samplerate,
+        double tau,
+        double hangtime,
+        double advtime,
+        double backtau,
+        double threshold
 );
 
 __declspec (dllexport) void destroy_anb (ANB a);
@@ -81,15 +81,15 @@ __declspec (dllexport) void flush_anb (ANB a);
 __declspec (dllexport) void xanb (ANB a);
 
 extern __declspec (dllexport) void create_anbEXT  (
-  int id,
-  int run,
-  int buffsize,
-  double samplerate,
-  double tau,
-  double hangtime,
-  double advtime,
-  double backtau,
-  double threshold
+        int id,
+        int run,
+        int buffsize,
+        double samplerate,
+        double tau,
+        double hangtime,
+        double advtime,
+        double backtau,
+        double threshold
 );
 
 extern __declspec (dllexport) void destroy_anbEXT (int id);

@@ -34,11 +34,11 @@ warren@wpratt.com
 ********************************************************************************************************/
 
 PORT
-void *malloc0 (int size) {
+void *malloc0(int size) {
   int alignment = 16;
-  void* p = _aligned_malloc (size, alignment);
+  void *p = _aligned_malloc(size, alignment);
 
-  if (p != 0) { memset (p, 0, size); }
+  if (p != 0) { memset(p, 0, size); }
 
   return p;
 }
@@ -50,14 +50,14 @@ PORT void
 *NewCriticalSection() {
   // used by VAC
   LPCRITICAL_SECTION cs_ptr;
-  cs_ptr = (LPCRITICAL_SECTION)calloc (1, sizeof (CRITICAL_SECTION));
-  return (void *)cs_ptr;
+  cs_ptr = (LPCRITICAL_SECTION)calloc(1, sizeof(CRITICAL_SECTION));
+  return (void*)cs_ptr;
 }
 
 PORT void
-DestroyCriticalSection (LPCRITICAL_SECTION cs_ptr) {
+DestroyCriticalSection(LPCRITICAL_SECTION cs_ptr) {
   // used by VAC
-  free ((char *)cs_ptr);
+  free((char*)cs_ptr);
 }
 
 #endif
@@ -68,14 +68,14 @@ DestroyCriticalSection (LPCRITICAL_SECTION cs_ptr) {
 *                                                   *
 ********************************************************************************************************/
 
-void print_impulse (const char* filename, int N, double* impulse, int rtype, int pr_mode) {
+void print_impulse(const char* filename, int N, double* impulse, int rtype, int pr_mode) {
   int i;
   FILE* file;
 
   if (pr_mode == 0) {
-    file = fopen (filename, "w");
+    file = fopen(filename, "w");
   } else {
-    file = fopen (filename, "a");
+    file = fopen(filename, "a");
   }
 
   if (file) {
@@ -94,19 +94,19 @@ void print_impulse (const char* filename, int N, double* impulse, int rtype, int
 }
 
 PORT
-void analyze_bandpass_filter (int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
-                              double scale) {
-  double* linphase_imp;
-  double* minphase_imp = (double *) malloc0 (N * sizeof (complex));
-  linphase_imp = fir_bandpass (N, f_low, f_high, samplerate, wintype, rtype, scale);
-  mp_imp (N, linphase_imp, minphase_imp, 16, 0);
-  print_impulse ("linear_phase_impulse.txt",  N, linphase_imp, 1, 0);
-  print_impulse ("minimum_phase_impulse.txt", N, minphase_imp, 1, 0);
-  _aligned_free (minphase_imp);
-  _aligned_free (linphase_imp);
+void analyze_bandpass_filter(int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
+                             double scale) {
+  double *linphase_imp;
+  double *minphase_imp = (double*) malloc0(N * sizeof(complex));
+  linphase_imp = fir_bandpass(N, f_low, f_high, samplerate, wintype, rtype, scale);
+  mp_imp(N, linphase_imp, minphase_imp, 16, 0);
+  print_impulse("linear_phase_impulse.txt",  N, linphase_imp, 1, 0);
+  print_impulse("minimum_phase_impulse.txt", N, minphase_imp, 1, 0);
+  _aligned_free(minphase_imp);
+  _aligned_free(linphase_imp);
 }
 
-void print_peak_val (const char* filename, int N, double* buff, double thresh) {
+void print_peak_val(const char* filename, int N, double* buff, double thresh) {
   int i;
   static unsigned int seqnum;
   double peak = 0.0;
@@ -126,7 +126,7 @@ void print_peak_val (const char* filename, int N, double* buff, double thresh) {
   seqnum++;
 }
 
-void print_peak_env (const char* filename, int N, double* buff, double thresh) {
+void print_peak_env(const char* filename, int N, double* buff, double thresh) {
   int i;
   static unsigned int seqnum;
   double peak = 0.0;
@@ -134,7 +134,7 @@ void print_peak_env (const char* filename, int N, double* buff, double thresh) {
   FILE* file;
 
   for (i = 0; i < N; i++) {
-    new_peak = sqrt (buff[2 * i + 0] * buff[2 * i + 0] + buff[2 * i + 1] * buff[2 * i + 1]);
+    new_peak = sqrt(buff[2 * i + 0] * buff[2 * i + 0] + buff[2 * i + 1] * buff[2 * i + 1]);
 
     if (new_peak > peak) { peak = new_peak; }
   }
@@ -150,7 +150,7 @@ void print_peak_env (const char* filename, int N, double* buff, double thresh) {
   seqnum++;
 }
 
-void print_peak_env_f2 (const char* filename, int N, float* Ibuff, float* Qbuff) {
+void print_peak_env_f2(const char* filename, int N, float* Ibuff, float* Qbuff) {
   int i;
   double peak = 0.0;
   double new_peak;
@@ -158,7 +158,7 @@ void print_peak_env_f2 (const char* filename, int N, float* Ibuff, float* Qbuff)
 
   if (file = fopen(filename, "a")) {
     for (i = 0; i < N; i++) {
-      new_peak = sqrt (Ibuff[i] * Ibuff[i] + Qbuff[i] * Qbuff[i]);
+      new_peak = sqrt(Ibuff[i] * Ibuff[i] + Qbuff[i] * Qbuff[i]);
 
       if (new_peak > peak) { peak = new_peak; }
     }
@@ -169,12 +169,12 @@ void print_peak_env_f2 (const char* filename, int N, float* Ibuff, float* Qbuff)
   }
 }
 
-void print_iqc_values (const char* filename, int state, double env_in, double I, double Q, double ym, double yc,
-                       double ys, double thresh) {
+void print_iqc_values(const char* filename, int state, double env_in, double I, double Q, double ym, double yc,
+                      double ys, double thresh) {
   static unsigned int seqnum;
   double env_out;
   FILE* file;
-  env_out = sqrt (I * I + Q * Q);
+  env_out = sqrt(I * I + Q * Q);
 
   if (env_out > thresh) {
     if (file = fopen(filename, "a")) {
@@ -191,7 +191,7 @@ void print_iqc_values (const char* filename, int state, double env_in, double I,
 }
 
 PORT
-void print_buffer_parameters (const char* filename, int channel) {
+void print_buffer_parameters(const char* filename, int channel) {
   IOB a = ch[channel].iob.pc;
   FILE* file;
 
@@ -220,7 +220,7 @@ void print_buffer_parameters (const char* filename, int channel) {
   }
 }
 
-void print_meter (const char* filename, double* meter, int enum_av, int enum_pk, int enum_gain) {
+void print_meter(const char* filename, double* meter, int enum_av, int enum_pk, int enum_gain) {
   FILE* file;
 
   if (file = fopen(filename, "a")) {
@@ -235,18 +235,18 @@ void print_meter (const char* filename, double* meter, int enum_av, int enum_pk,
   }
 }
 
-void print_message (const char* filename, const char* message, int p0, int p1, int p2) {
+void print_message(const char* filename, const char* message, int p0, int p1, int p2) {
   FILE* file;
 
   if (file = fopen(filename, "a")) {
-    const char* msg = message;
+    const char *msg = message;
     fprintf(file, "%s	  %d	 %d		%d\n", msg, p0, p1, p2);
     fflush(file);
     fclose(file);
   }
 }
 
-void print_window_gain (const char* filename, int wintype, double inv_coherent_gain, double inherent_power_gain) {
+void print_window_gain(const char* filename, int wintype, double inv_coherent_gain, double inherent_power_gain) {
   FILE* file;
 
   if (file = fopen(filename, "a")) {
@@ -291,7 +291,7 @@ void print_window_gain (const char* filename, int wintype, double inv_coherent_g
   }
 }
 
-void print_deviation (const char* filename, double dpmax, double rate) {
+void print_deviation(const char* filename, double dpmax, double rate) {
   FILE* file;
 
   if (file = fopen(filename, "a")) {
@@ -302,7 +302,7 @@ void print_deviation (const char* filename, double dpmax, double rate) {
   }
 }
 
-void __cdecl CalccPrintSamples (void *pargs) {
+void __cdecl CalccPrintSamples(void* pargs) {
   int i;
   double env_tx, env_rx;
   int channel = (int)(uintptr_t)pargs;
@@ -329,10 +329,10 @@ void __cdecl CalccPrintSamples (void *pargs) {
 
 void doCalccPrintSamples(int channel) {
   // no sample buffering - use in single cal mode
-  _beginthread(CalccPrintSamples, 0, (void *)(uintptr_t)channel);
+  _beginthread(CalccPrintSamples, 0, (void*)(uintptr_t)channel);
 }
 
-void print_anb_parms (const char* filename, ANB a) {
+void print_anb_parms(const char* filename, ANB a) {
   FILE* file;
 
   if (file = fopen(filename, "a")) {
@@ -352,12 +352,12 @@ void print_anb_parms (const char* filename, ANB a) {
 // Audacity:  Import Raw Data, Signed 32-bit PCM, Little-endian, Mono/Stereo per mode selection, 48K rate
 
 int audiocount = 0;
-int* data = 0;
+int *data = 0;
 int ready = 0;
 int done = 0;
 
 void WriteAudioFile(void* arg) {
-  byte* dat = (byte *)arg;
+  byte* dat = (byte*)arg;
   FILE* file;
 
   // reverse bits of each byte (possibly needed on some platforms)
@@ -382,7 +382,7 @@ void WriteAudioFile(void* arg) {
   _endthread();
 }
 
-void WriteAudioWDSP (double seconds, int rate, int size, double* indata, int mode, double gain) {
+void WriteAudioWDSP(double seconds, int rate, int size, double* indata, int mode, double gain) {
   // seconds - number of seconds of audio to record
   // rate - sample rate
   // size - number of complex samples
@@ -436,14 +436,14 @@ void WriteAudioWDSP (double seconds, int rate, int size, double* indata, int mod
 
   if ((audiocount == n) && !done) {
     done = 1;
-    _beginthread(WriteAudioFile, 0, (void *)data);
+    _beginthread(WriteAudioFile, 0, (void*)data);
   }
 }
 
-void WriteScaledAudioFile (void* arg) {
+void WriteScaledAudioFile(void* arg) {
   typedef struct {
     int n;
-    double* ddata;
+    double *ddata;
   } *dstr;
   dstr dstruct = (dstr)arg;
   FILE* file;
@@ -451,7 +451,7 @@ void WriteScaledAudioFile (void* arg) {
   double max = 0.0;
   double abs_val;
   const double conv = 2147483647.0;
-  int *idata = (int *) malloc0 (dstruct->n * sizeof (int));
+  int *idata = (int*) malloc0 (dstruct->n * sizeof (int));
 
   for (i = 0; i < dstruct->n; i++) {
     abs_val = fabs (dstruct->ddata[i]);
@@ -463,7 +463,7 @@ void WriteScaledAudioFile (void* arg) {
 
   for (i = 0; i < dstruct->n; i++) {
     idata[i] = dstruct->ddata[i] >= 0.0 ? (int)floor(conv * dstruct->ddata[i] / max + 0.5) : (int)ceil(
-                 conv * dstruct->ddata[i] / max - 0.5);
+                       conv * dstruct->ddata[i] / max - 0.5);
   }
 
   if (file = fopen("AudioFile", "wb")) {
@@ -479,14 +479,14 @@ void WriteScaledAudioFile (void* arg) {
 }
 
 void WriteScaledAudio (
-  double seconds,     // number of seconds of audio to record
-  int rate,       // sample rate
-  int size,       // incoming buffer size
-  double* indata ) {  // pointer to incoming data buffer
+        double seconds,     // number of seconds of audio to record
+        int rate,       // sample rate
+        int size,       // incoming buffer size
+        double *indata) {   // pointer to incoming data buffer
   static int ready;
   typedef struct {
     int n;
-    double* ddata;
+    double *ddata;
   } dstr, *DSTR;
   static DSTR dstruct;
   static int count, complete;
@@ -495,7 +495,7 @@ void WriteScaledAudio (
   if (!ready) {
     dstruct = (DSTR) malloc0 (sizeof (dstr));
     dstruct->n = 2 * (int)(seconds * rate);
-    dstruct->ddata = (double *) malloc0 (dstruct->n * sizeof (double));
+    dstruct->ddata = (double*) malloc0 (dstruct->n * sizeof (double));
     ready = 1;
   }
 
@@ -508,7 +508,7 @@ void WriteScaledAudio (
 
   if ((count >= dstruct->n) && !complete) {
     complete = 1;
-    _beginthread (WriteScaledAudioFile, 0, (void *)dstruct);
+    _beginthread (WriteScaledAudioFile, 0, (void*)dstruct);
   }
 }
 #endif
@@ -519,15 +519,15 @@ void WriteScaledAudio (
 *                                                   *
 ********************************************************************************************************/
 
-double* model_bandpass(int nc, double f_low, double f_high, double rate, int wtype, int points) {
-  double* h = fir_bandpass(nc, f_low, f_high, rate, wtype, 1, 1.0 / (double)nc);
-  double* in = (double*)malloc0(points * sizeof(complex));
-  double* out = (double*)malloc0(points * sizeof(complex));
+double *model_bandpass(int nc, double f_low, double f_high, double rate, int wtype, int points) {
+  double *h = fir_bandpass(nc, f_low, f_high, rate, wtype, 1, 1.0 / (double)nc);
+  double *in = (double*)malloc0(points * sizeof(complex));
+  double *out = (double*)malloc0(points * sizeof(complex));
   memcpy(in, h, nc * sizeof(complex));
   fftw_plan p = fftw_plan_dft_1d(points, (fftw_complex*)in, (fftw_complex*)out, FFTW_FORWARD, FFTW_PATIENT);
   fftw_execute(p);
   fftw_destroy_plan(p);
-  double* mag = (double*)malloc0(points * sizeof(double));
+  double *mag = (double*)malloc0(points * sizeof(double));
   double mult = 1.0 / sqrt(out[0] * out[0] + out[1] * out[1]);
 
   for (int i = 0; i < points; i++) {
@@ -541,7 +541,7 @@ double* model_bandpass(int nc, double f_low, double f_high, double rate, int wty
   }
 
   // reverse normal-order
-  double* magrev = (double*)malloc0(points * sizeof(double));
+  double *magrev = (double*)malloc0(points * sizeof(double));
   memcpy(magrev, &mag[points / 2], points / 2 * sizeof(double));
   memcpy(&magrev[points / 2], mag, points / 2 * sizeof(double));
   _aligned_free(mag);
@@ -644,7 +644,7 @@ void test_bfcu() {
   create_bfcu(0, 1024, 16384, 48000.0, 1000.0, 16384);
   int lower_corner, upper_corner;
   getFilterCorners(0, &lower_corner, &upper_corner);
-  double* segment = (double*)malloc0(1025 * sizeof(double));
+  double *segment = (double*)malloc0(1025 * sizeof(double));
   getFilterCurve(0, 4096, 1, upper_corner - 512, upper_corner + 512, segment);
   print_bandpass_response("response", 1025, segment);
   _aligned_free(segment);

@@ -39,8 +39,8 @@ typedef struct _gaussian {
   int size;         // input/output buffer size
   int nc;           // number of filter coefficients; if'0', will be automatically calculated
   int nc_var;         // '0' filter size will not be adjusted; '1' filter size adjusted per nsigma
-  double* in;         // pointer to input buffer
-  double* out;        // pointer to output buffer
+  double *in;         // pointer to input buffer
+  double *out;        // pointer to output buffer
   double f_center;      // filter center frequency (Hz)
   double bandwidth;     // filter bandwidth (Hz)
   double samplerate;      // sample_rate (samples/sec)

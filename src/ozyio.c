@@ -76,7 +76,7 @@
 #define USB_TIMEOUT -7
 
 static int init = 0;                         // flag indicating libusb_init has been executed
-static libusb_device_handle* ozy_handle;
+static libusb_device_handle *ozy_handle;
 
 static char ozy_firmware[512] = {0};   // file name of OZY firmware file
 static char ozy_fpga[512] = {0};       // file name of OZY FPGA data
@@ -157,11 +157,11 @@ int ozy_write(int ep, unsigned char* buffer, int buffer_size) {
   int rc;
   int bytes;
   bytes = 0;
-  rc = libusb_bulk_transfer(ozy_handle, (unsigned char)ep, buffer, buffer_size, &bytes, OZY_IO_TIMEOUT);
+  rc = libusb_bulk_transfer(ozy_handle, (unsigned char) ep, buffer, buffer_size, &bytes, OZY_IO_TIMEOUT);
 
   if (rc == USB_TIMEOUT) {
     t_print("%s: timeout bytes=%d ep=%d\n", __func__, bytes, ep);
-    libusb_clear_halt(ozy_handle, (unsigned char)ep);
+    libusb_clear_halt(ozy_handle, (unsigned char) ep);
   }
 
   // this returns OK in all cases (?)
@@ -171,7 +171,7 @@ int ozy_write(int ep, unsigned char* buffer, int buffer_size) {
 int ozy_read(int ep, unsigned char* buffer, int buffer_size) {
   int rc;
   int bytes;
-  rc = libusb_bulk_transfer(ozy_handle, (unsigned char)ep, buffer, buffer_size, &bytes, OZY_IO_TIMEOUT);
+  rc = libusb_bulk_transfer(ozy_handle, (unsigned char) ep, buffer, buffer_size, &bytes, OZY_IO_TIMEOUT);
 
   if (rc == 0) {
     rc = bytes;
@@ -180,20 +180,20 @@ int ozy_read(int ep, unsigned char* buffer, int buffer_size) {
   return rc;
 }
 
-static int ozy_write_ram(int fx2_start_addr, unsigned char *bufp, int count) {
+static int ozy_write_ram(int fx2_start_addr, unsigned char* bufp, int count) {
   int pkt_size = MAX_EPO_PACKET_SIZE;
   int len = count;
   int bytes_written = 0;
   int addr;
 
-  for ( addr = fx2_start_addr; addr < fx2_start_addr + len; addr += pkt_size, bufp += pkt_size ) {
+  for (addr = fx2_start_addr; addr < fx2_start_addr + len; addr += pkt_size, bufp += pkt_size) {
     int nsize = len + fx2_start_addr - addr;
 
-    if ( nsize > pkt_size ) { nsize = pkt_size; }
+    if (nsize > pkt_size) { nsize = pkt_size; }
 
     int bytes_written_this_write = libusb_control_transfer(ozy_handle, 0x40, 0xa0, addr, 0, bufp, nsize, OZY_IO_TIMEOUT);
 
-    if ( bytes_written_this_write >= 0  ) {
+    if (bytes_written_this_write >= 0) {
       bytes_written += bytes_written_this_write;
     } else {
       return bytes_written_this_write;
@@ -206,19 +206,19 @@ static int ozy_write_ram(int fx2_start_addr, unsigned char *bufp, int count) {
 static int ozy_reset_cpu(int reset) {
   unsigned char write_buf;
 
-  if ( reset ) { write_buf = 1; }
+  if (reset) { write_buf = 1; }
   else { write_buf = 0; }
 
-  if ( ozy_write_ram(0xe600, &write_buf, 1) != 1 ) { return 0; }
+  if (ozy_write_ram(0xe600, &write_buf, 1) != 1) { return 0; }
   else { return 1; }
 }
 
 static unsigned int hexitToUInt(char c) {
   c = tolower(c);
 
-  if ( c >= '0' && c <= '9' ) {
+  if (c >= '0' && c <= '9') {
     return c - '0';
-  } else if ( c >= 'a' && c <= 'f' ) {
+  } else if (c >= 'a' && c <= 'f') {
     return 10 + (c - 'a');
   }
 
@@ -228,17 +228,17 @@ static unsigned int hexitToUInt(char c) {
 static int ishexit(unsigned char c) {
   c = tolower(c);
 
-  if ( c >= '0' && c <= '9' ) { return 1; }
+  if (c >= '0' && c <= '9') { return 1; }
 
-  if ( c >= 'a' && c <= 'f' ) { return 1; }
+  if (c >= 'a' && c <= 'f') { return 1; }
 
   return 0;
 }
 
-static int hexitsToUInt(char *p, int count) {
+static int hexitsToUInt(char* p, int count) {
   unsigned int result = 0;
 
-  for (int  i = 0; i < count; i++ ) {
+  for (int  i = 0; i < count; i++) {
     char c = *p;
     ++p;
 
@@ -254,7 +254,7 @@ static int hexitsToUInt(char *p, int count) {
   return result;
 }
 
-static int ozy_load_firmware(char *fnamep) {
+static int ozy_load_firmware(char* fnamep) {
   FILE *ifile;
   int linecount = 0;
   int length;
@@ -269,16 +269,16 @@ static int ozy_load_firmware(char *fnamep) {
   t_print("loading ozy firmware: %s\n", fnamep);
   ifile = fopen(fnamep, "r");
 
-  if ( ifile == NULL ) {
-    t_print( "Could not open: \'%s\'\n", fnamep);
+  if (ifile == NULL) {
+    t_print("Could not open: \'%s\'\n", fnamep);
     return 0;
   }
 
-  while (  fgets(readbuf, sizeof(readbuf), ifile) != NULL ) {
+  while (fgets(readbuf, sizeof(readbuf), ifile) != NULL) {
     ++linecount;
 
-    if ( readbuf[0] != ':' ) {
-      t_print( "ozy_upload_firmware: bad record\n");
+    if (readbuf[0] != ':') {
+      t_print("ozy_upload_firmware: bad record\n");
       return 0;
     }
 
@@ -286,38 +286,38 @@ static int ozy_load_firmware(char *fnamep) {
     addr = hexitsToUInt(readbuf + 3, 4);
     type = hexitsToUInt(readbuf + 7, 2);
 
-    if ( length < 0 || addr < 0 || type < 0 ) {
-      t_print( "ozy_upload_firmware: bad length, addr or type\n");
+    if (length < 0 || addr < 0 || type < 0) {
+      t_print("ozy_upload_firmware: bad length, addr or type\n");
       return 0;
     }
 
-    switch ( type ) {
+    switch (type) {
     case 0: /* record */
       my_cksum = (unsigned char)(length + (addr & 0xff) + ((addr >> 8) + type));
 
-      for ( i = 0; i < length; i++ ) {
+      for (i = 0; i < length; i++) {
         this_val = hexitsToUInt(readbuf + 9 + (i * 2), 2);
 #if 0
         t_print("i: %d val: 0x%02x\n", i, this_val);
 #endif
 
-        if ( this_val < 0 ) {
-          t_print( "ozy_upload_firmware: bad record data\n");
+        if (this_val < 0) {
+          t_print("ozy_upload_firmware: bad record data\n");
           return 0;
         }
 
-        wbuf[i] = (unsigned char)this_val;
+        wbuf[i] = (unsigned char) this_val;
         my_cksum += wbuf[i];
       }
 
       this_val = hexitsToUInt(readbuf + 9 + (length * 2), 2);
 
-      if ( this_val < 0 ) {
-        t_print( "ozy_upload_firmware: bad checksum data\n");
+      if (this_val < 0) {
+        t_print("ozy_upload_firmware: bad checksum data\n");
         return 0;
       }
 
-      cksum = (unsigned char)this_val;
+      cksum = (unsigned char) this_val;
 #if 0
       t_print("\n%s", readbuf);
       t_print("len: %d (0x%02x) addr: 0x%04x mychk: 0x%02x chk: 0x%02x",
@@ -325,12 +325,12 @@ static int ozy_load_firmware(char *fnamep) {
 #endif
 
       if (((cksum + my_cksum) & 0xff) != 0) {
-        t_print( "ozy_upload_firmware: bad checksum\n");
+        t_print("ozy_upload_firmware: bad checksum\n");
         return 0;
       }
 
-      if ( ozy_write_ram(addr, wbuf, length) < 1 ) {
-        t_print( "ozy_upload_firmware: bad write\n");
+      if (ozy_write_ram(addr, wbuf, length) < 1) {
+        t_print("ozy_upload_firmware: bad write\n");
         return 0;
       }
 
@@ -340,7 +340,7 @@ static int ozy_load_firmware(char *fnamep) {
       break;
 
     default: /* invalid */
-      t_print( "ozy_upload_firmware: invalid type\n");
+      t_print("ozy_upload_firmware: invalid type\n");
       return 0;
     }
   }
@@ -353,7 +353,7 @@ static int ozy_set_led(int which, int on) {
   int rc;
   int val;
 
-  if ( on ) {
+  if (on) {
     val = 1;
   } else {
     val = 0;
@@ -362,14 +362,14 @@ static int ozy_set_led(int which, int on) {
   rc = libusb_control_transfer(ozy_handle, VENDOR_REQ_TYPE_OUT, VENDOR_REQ_SET_LED,
                                val, which, NULL, 0, OZY_IO_TIMEOUT);
 
-  if ( rc < 0 ) {
+  if (rc < 0) {
     return 0;
   }
 
   return 1;
 }
 
-static int ozy_load_fpga(char *rbf_fnamep) {
+static int ozy_load_fpga(char* rbf_fnamep) {
   FILE *rbffile;
   unsigned char buf[MAX_EPO_PACKET_SIZE];
   int bytes_read;
@@ -378,16 +378,16 @@ static int ozy_load_fpga(char *rbf_fnamep) {
   t_print("loading ozy fpga: %s\n", rbf_fnamep);
   rbffile = fopen(rbf_fnamep, "rb");
 
-  if ( rbffile == NULL ) {
-    t_print( "Failed to open: \'%s\'\n", rbf_fnamep);
+  if (rbffile == NULL) {
+    t_print("Failed to open: \'%s\'\n", rbf_fnamep);
     return 0;
   }
 
   rc = libusb_control_transfer(ozy_handle, VENDOR_REQ_TYPE_OUT, VENDOR_REQ_FPGA_LOAD,
                                0, FL_BEGIN, NULL, 0, OZY_IO_TIMEOUT);
 
-  if ( rc < 0 ) {
-    t_print( "ozy_load_fpga: failed @ FL_BEGIN rc=%d\n", rc);
+  if (rc < 0) {
+    t_print("ozy_load_fpga: failed @ FL_BEGIN rc=%d\n", rc);
     fclose(rbffile);
     return 0;
   }
@@ -400,8 +400,8 @@ static int ozy_load_fpga(char *rbf_fnamep) {
                                  0, FL_XFER, buf, bytes_read, OZY_IO_TIMEOUT);
     total_bytes_xferd += bytes_read;
 
-    if ( rc < 0 ) {
-      t_print( "ozy_load_fpga: failed @ FL_XFER\n");
+    if (rc < 0) {
+      t_print("ozy_load_fpga: failed @ FL_XFER\n");
       fclose(rbffile);
       return 0;
     }
@@ -412,8 +412,8 @@ static int ozy_load_fpga(char *rbf_fnamep) {
   rc = libusb_control_transfer(ozy_handle, VENDOR_REQ_TYPE_OUT, VENDOR_REQ_FPGA_LOAD,
                                0, FL_END, NULL, 0, OZY_IO_TIMEOUT);
 
-  if ( rc < 0 ) {
-    t_print( "ozy_load_fpga: failed @ FL_END\n");
+  if (rc < 0) {
+    t_print("ozy_load_fpga: failed @ FL_END\n");
     return 0;
   }
 
@@ -477,7 +477,7 @@ void ozy_i2c_readpwr(int addr) {
 
   case I2C_MERC1_ADC_OFS:
     // adc overload
-    rc = ozy_i2c_read(buffer, 2, I2C_MERC1_ADC_OFS); // adc1 overflow status
+    rc = ozy_i2c_read(buffer, 2, I2C_MERC1_ADC_OFS);  // adc1 overflow status
 
     if (rc < 0) {
       t_perror("ozy_i2c_readpwr adc: failed");
@@ -491,7 +491,7 @@ void ozy_i2c_readpwr(int addr) {
 
   case I2C_MERC2_ADC_OFS:
     // adc overload
-    rc = ozy_i2c_read(buffer, 2, I2C_MERC2_ADC_OFS); // adc1 overflow status
+    rc = ozy_i2c_read(buffer, 2, I2C_MERC2_ADC_OFS);  // adc1 overflow status
 
     if (rc < 0) {
       t_perror("ozy_i2c_readpwr adc: failed");
@@ -585,7 +585,7 @@ void ozy_i2c_readvars(void) {
   }
 
   mercury_fw[0] = buffer[1];
-  t_print("mercury firmware 1=%d\n", (int)buffer[1]);
+  t_print("mercury firmware 1=%d\n", (int) buffer[1]);
   rc = ozy_i2c_read(buffer, 2, I2C_MERC2_FW);
 
   if (rc < 0) {
@@ -596,7 +596,7 @@ void ozy_i2c_readvars(void) {
     //
   } else {
     mercury_fw[1] = buffer[1];
-    t_print("mercury firmware 2=%d\n", (int)buffer[1]);
+    t_print("mercury firmware 2=%d\n", (int) buffer[1]);
   }
 
   rc = ozy_i2c_read(buffer, 2, I2C_PENNY_FW);
@@ -611,15 +611,15 @@ void ozy_i2c_readvars(void) {
   }
 
   penny_fw = buffer[1];
-  t_print("penny firmware=%d\n", (int)buffer[1]);
+  t_print("penny firmware=%d\n", (int) buffer[1]);
   writepenny(1, 1);
   t_print("penny TLV320 initialized\n");
 }
 
-static int file_exists (const char * fileName) {
+static int file_exists(const char* fileName) {
   struct stat buf;
-  int i = stat ( fileName, &buf );
-  return ( i == 0 ) ? 1 : 0 ;
+  int i = stat(fileName, &buf);
+  return (i == 0) ? 1 : 0 ;
 }
 
 #if defined(__linux__) || defined(__APPLE__)
@@ -638,7 +638,7 @@ static int file_exists (const char * fileName) {
 // - /usr/share/deskhpsdr
 // - /usr/local/share/deskhpsdr
 //
-static void filePath (char *sOut, const char *sIn, size_t len) {
+static void filePath(char* sOut, const char* sIn, size_t len) {
   int rc;
   // a) cwd/sIn
   snprintf(sOut, len, "%s", sIn);
@@ -656,15 +656,15 @@ static void filePath (char *sOut, const char *sIn, size_t len) {
   if (file_exists(sOut)) { return; }
 
   char xPath [PATH_MAX] = {0};
-  rc = readlink ("/proc/self/exe", xPath, sizeof(xPath));
+  rc = readlink("/proc/self/exe", xPath, sizeof(xPath));
 
   // try to detect the directory from which the executable has been loaded
   if (rc >= 0) {
     char *p;
 
-    if ((p = strrchr (xPath, '/'))) { *p = '\0'; }
+    if ((p = strrchr(xPath, '/'))) { *p = '\0'; }
 
-    t_print( "%d, Path of executable: %s\n", rc, xPath);
+    t_print("%d, Path of executable: %s\n", rc, xPath);
     // d) <exedir>/sIn
     snprintf(sOut, len, "%s/%s", xPath, sIn);
 
@@ -703,9 +703,9 @@ static void filePath (char *sOut, const char *sIn, size_t len) {
 int ozy_initialise(void) {
   int rc;
 
-  if (strlen(ozy_firmware) == 0) { filePath (ozy_firmware, "ozyfw-sdr1k.hex", sizeof(ozy_firmware)); }
+  if (strlen(ozy_firmware) == 0) { filePath(ozy_firmware, "ozyfw-sdr1k.hex", sizeof(ozy_firmware)); }
 
-  if (strlen(ozy_fpga) == 0) { filePath (ozy_fpga, "Ozy_Janus.rbf", sizeof(ozy_fpga)); }
+  if (strlen(ozy_fpga) == 0) { filePath(ozy_fpga, "Ozy_Janus.rbf", sizeof(ozy_fpga)); }
 
   // open ozy
   rc = ozy_open();

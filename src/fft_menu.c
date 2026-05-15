@@ -70,7 +70,7 @@ static void binaural_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void filter_type_cb(GtkToggleButton *widget, gpointer data) {
-  int type = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  int type = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   int channel  = GPOINTER_TO_INT(data);
 
   switch (channel) {
@@ -132,13 +132,13 @@ void fft_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - DSP", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   w = gtk_button_new_with_label("Close");
-  g_signal_connect (w, "button_press_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(w, "button_press_event", G_CALLBACK(close_cb), NULL);
   gtk_widget_set_name(w, "close_button");
   gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 1, 1);
   w = gtk_label_new("Filter Type");

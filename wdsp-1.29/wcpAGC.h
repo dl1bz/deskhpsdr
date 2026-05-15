@@ -38,8 +38,8 @@ typedef struct _wcpagc {
   int run;
   int mode;
   int pmode;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int io_buffsize;
   double sample_rate;
 
@@ -63,8 +63,8 @@ typedef struct _wcpagc {
   int in_index;
   int attack_buffsize;
 
-  double* ring;
-  double* abs_ring;
+  double *ring;
+  double *abs_ring;
   int ring_buffsize;
   double ring_max;
 
@@ -103,29 +103,29 @@ extern void loadWcpAGC (WCPAGC a);
 
 extern void xwcpagc (WCPAGC a);
 
-extern WCPAGC create_wcpagc ( int run,
-                              int mode,
-                              int pmode,
-                              double* in,
-                              double* out,
-                              int io_buffsize,
-                              int sample_rate,
-                              double tau_attack,
-                              double tau_decay,
-                              int n_tau,
-                              double max_gain,
-                              double var_gain,
-                              double fixed_gain,
-                              double max_input,
-                              double out_targ,
-                              double tau_fast_backaverage,
-                              double tau_fast_decay,
-                              double pop_ratio,
-                              int hang_enable,
-                              double tau_hang_backmult,
-                              double hangtime,
-                              double hang_thresh,
-                              double tau_hang_decay
+extern WCPAGC create_wcpagc (int run,
+                             int mode,
+                             int pmode,
+                             double *in,
+                             double *out,
+                             int io_buffsize,
+                             int sample_rate,
+                             double tau_attack,
+                             double tau_decay,
+                             int n_tau,
+                             double max_gain,
+                             double var_gain,
+                             double fixed_gain,
+                             double max_input,
+                             double out_targ,
+                             double tau_fast_backaverage,
+                             double tau_fast_decay,
+                             double pop_ratio,
+                             int hang_enable,
+                             double tau_hang_backmult,
+                             double hangtime,
+                             double hang_thresh,
+                             double tau_hang_decay
                             );
 
 extern void destroy_wcpagc (WCPAGC a);
@@ -150,15 +150,15 @@ extern AGCPORT void SetRXAAGCDecay (int channel, int decay);
 
 extern AGCPORT void SetRXAAGCHang (int channel, int hang);
 
-extern AGCPORT void GetRXAAGCHangLevel(int channel, double *hangLevel);
+extern AGCPORT void GetRXAAGCHangLevel(int channel, double* hangLevel);
 
 extern AGCPORT void SetRXAAGCHangLevel(int channel, double hangLevel);
 
-extern AGCPORT void GetRXAAGCHangThreshold(int channel, int *hangthreshold);
+extern AGCPORT void GetRXAAGCHangThreshold(int channel, int* hangthreshold);
 
 extern AGCPORT void SetRXAAGCHangThreshold (int channel, int hangthreshold);
 
-extern AGCPORT void GetRXAAGCTop(int channel, double *max_agc);
+extern AGCPORT void GetRXAAGCTop(int channel, double* max_agc);
 
 extern AGCPORT void SetRXAAGCTop (int channel, double max_agc);
 
@@ -166,7 +166,7 @@ extern AGCPORT void SetRXAAGCSlope (int channel, int slope);
 
 extern AGCPORT void SetRXAAGCThresh(int channel, double thresh, double size, double rate);
 
-extern AGCPORT void GetRXAAGCThresh(int channel, double *thresh, double size, double rate);
+extern AGCPORT void GetRXAAGCThresh(int channel, double* thresh, double size, double rate);
 
 // TXA Properties
 

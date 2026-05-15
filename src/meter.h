@@ -29,7 +29,7 @@ enum _meter_type_enum {
   POWER
 };
 
-extern GtkWidget* meter_init(int width, int height);
+extern GtkWidget *meter_init(int width, int height);
 extern void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double swr);
 
 #endif

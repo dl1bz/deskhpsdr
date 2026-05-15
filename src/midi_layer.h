@@ -126,7 +126,7 @@ void configure_midi_device(gboolean state);
 //
 
 void NewMidiEvent(enum MIDIevent event, int channel, int note, int val);
-int ReadLegacyMidiFile(char *filename);
+int ReadLegacyMidiFile(char* filename);
 void MidiAddCommand(int note, struct desc *desc);
 void MidiReleaseCommands(void);
 

@@ -41,7 +41,7 @@ warren@wpratt.com
 // Shanjie Zhang and Jianming Jin, "Computation of Special Functions."  New York, NY, John Wiley and Sons,
 //    Inc., 1996.  [Sample code given in FORTRAN]
 
-double bessI0 (double x) {
+double bessI0(double x) {
   double res, p;
 
   if (x == 0.0) {
@@ -52,8 +52,8 @@ double bessI0 (double x) {
     if (x <= 3.75) {
       p = x / 3.75;
       p = p * p;
-      res = ((((( 0.0045813  * p
-                  + 0.0360768) * p
+      res = (((((0.0045813  * p
+                 + 0.0360768) * p
                 + 0.2659732) * p
                + 1.2067492) * p
               + 3.0899424) * p
@@ -61,9 +61,9 @@ double bessI0 (double x) {
             + 1.0;
     } else {
       p = 3.75 / x;
-      res = exp (x) / sqrt (x)
-            * (((((((( + 0.00392377  * p
-                       - 0.01647633) * p
+      res = exp(x) / sqrt(x)
+            * ((((((((+ 0.00392377  * p
+                      - 0.01647633) * p
                      + 0.02635537) * p
                     - 0.02057706) * p
                    + 0.00916281) * p
@@ -77,7 +77,7 @@ double bessI0 (double x) {
   return res;
 }
 
-double bessI1 (double x) {
+double bessI1(double x) {
   double res, p;
 
   if (x == 0.0) {
@@ -89,8 +89,8 @@ double bessI1 (double x) {
       p = x / 3.75;
       p = p * p;
       res = x
-            * (((((( 0.00032411  * p
-                     + 0.00301532) * p
+            * ((((((0.00032411  * p
+                    + 0.00301532) * p
                    + 0.02658733) * p
                   + 0.15084934) * p
                  + 0.51498869) * p
@@ -98,9 +98,9 @@ double bessI1 (double x) {
                + 0.5);
     } else {
       p = 3.75 / x;
-      res = exp (x) / sqrt (x)
-            * (((((((( - 0.00420059  * p
-                       + 0.01787654) * p
+      res = exp(x) / sqrt(x)
+            * ((((((((- 0.00420059  * p
+                      + 0.01787654) * p
                      - 0.02895312) * p
                     + 0.02282967) * p
                    - 0.01031555) * p
@@ -120,7 +120,7 @@ double bessI1 (double x) {
 // Shanjie Zhang and Jianming Jin, "Computation of Special Functions."  New York, NY, John Wiley and Sons,
 //    Inc., 1996.  [Sample code given in FORTRAN]
 
-double e1xb (double x) {
+double e1xb(double x) {
   double e1, ga, r, t, t0;
   int k, m;
 
@@ -134,13 +134,13 @@ double e1xb (double x) {
       r = -r * k * x / ((k + 1.0) * (k + 1.0));
       e1 = e1 + r;
 
-      if ( fabs (r) <= fabs (e1) * 1.0e-15 ) {
+      if (fabs(r) <= fabs(e1) * 1.0e-15) {
         break;
       }
     }
 
     ga = 0.5772156649015328;
-    e1 = - ga - log (x) + x * e1;
+    e1 = - ga - log(x) + x * e1;
   } else {
     m = 20 + (int)(80.0 / x);
     t0 = 0.0;
@@ -150,7 +150,7 @@ double e1xb (double x) {
     }
 
     t = 1.0 / (x + t0);
-    e1 = exp (- x) * t;
+    e1 = exp(- x) * t;
   }
 
   return e1;
@@ -162,7 +162,7 @@ double e1xb (double x) {
 *                                                   *
 ********************************************************************************************************/
 
-void calc_window (EMNR a) {
+void calc_window(EMNR a) {
   int i;
   double arg, sum, inv_coherent_gain;
 
@@ -172,7 +172,7 @@ void calc_window (EMNR a) {
     sum = 0.0;
 
     for (i = 0; i < a->fsize; i++) {
-      a->window[i] = sqrt (0.54 - 0.46 * cos((double)i * arg));
+      a->window[i] = sqrt(0.54 - 0.46 * cos((double)i * arg));
       sum += a->window[i];
     }
 
@@ -186,7 +186,7 @@ void calc_window (EMNR a) {
   }
 }
 
-void interpM (double* res, double x, int nvals, double* xvals, double* yvals) {
+void interpM(double* res, double x, int nvals, double* xvals, double* yvals) {
   if (x <= xvals[0]) {
     *res = yvals[0];
   } else if (x >= xvals[nvals - 1]) {
@@ -197,18 +197,18 @@ void interpM (double* res, double x, int nvals, double* xvals, double* yvals) {
 
     while (x > xvals[idx]) { idx++; }
 
-    xllow  = log10 (xvals[idx - 1]);
-    xlhigh = log10 (xvals[idx]);
-    frac = (log10 (x) - xllow) / (xlhigh - xllow);
+    xllow  = log10(xvals[idx - 1]);
+    xlhigh = log10(xvals[idx]);
+    frac = (log10(x) - xllow) / (xlhigh - xllow);
     *res = yvals[idx - 1] + frac * (yvals[idx] - yvals[idx - 1]);
   }
 }
 
 int readZetaHat(const char* zeta_file, int* rows, int* cols,
-                double* gmin, double* gmax, double* ximin, double* ximax, double* zetaHat, int* zetaValid) {
+                double *gmin, double *gmax, double *ximin, double *ximax, double *zetaHat, int *zetaValid) {
   char zetaBinary[256];
   char bin[50] = ".bin";
-  sprintf (zetaBinary, "%s%s", zeta_file, bin);
+  sprintf(zetaBinary, "%s%s", zeta_file, bin);
   FILE* pzetaBinary;
   int e = 0;
 
@@ -247,15 +247,15 @@ int readZetaHat(const char* zeta_file, int* rows, int* cols,
     *ximin = CzetaXimin;
     *ximax = CzetaXimax;
     int nvals = (*rows) * (*cols);
-    memcpy (zetaHat,   CzetaHat,   nvals * sizeof (double));
-    memcpy (zetaValid, CzetaValid, nvals * sizeof (int));
+    memcpy(zetaHat,   CzetaHat,   nvals * sizeof(double));
+    memcpy(zetaValid, CzetaValid, nvals * sizeof(int));
   }
 
   return 0;
 }
 
 void CwriteZetaHat(const char* cfile, int zetaHat_rows, int zetaHat_cols,
-                   double zetaHat_gmin, double zetaHat_gmax, double zetaHat_ximin, double zetaHat_ximax, double* zetaHat, int* zetaValid) {
+                   double zetaHat_gmin, double zetaHat_gmax, double zetaHat_ximin, double zetaHat_ximax, double *zetaHat, int *zetaValid) {
   int n, i, j;
   char cfilename[256];
   char dot_c[50] = ".c";
@@ -346,24 +346,24 @@ void calc_emnr(EMNR a) {
   a->init_oainidx = a->oainidx;
   a->oaoutidx = 0;
   a->msize = a->fsize / 2 + 1;
-  a->window = (double *)malloc0(a->fsize * sizeof(double));
-  a->inaccum = (double *)malloc0(a->iasize * sizeof(double));
-  a->forfftin = (double *)malloc0(a->fsize * sizeof(double));
-  a->forfftout = (double *)malloc0(a->msize * sizeof(complex));
-  a->mask = (double *)malloc0(a->msize * sizeof(double));
-  a->revfftin = (double *)malloc0(a->msize * sizeof(complex));
-  a->revfftout = (double *)malloc0(a->fsize * sizeof(double));
-  a->save = (double **)malloc0(a->ovrlp * sizeof(double *));
+  a->window = (double*)malloc0(a->fsize * sizeof(double));
+  a->inaccum = (double*)malloc0(a->iasize * sizeof(double));
+  a->forfftin = (double*)malloc0(a->fsize * sizeof(double));
+  a->forfftout = (double*)malloc0(a->msize * sizeof(complex));
+  a->mask = (double*)malloc0(a->msize * sizeof(double));
+  a->revfftin = (double*)malloc0(a->msize * sizeof(complex));
+  a->revfftout = (double*)malloc0(a->fsize * sizeof(double));
+  a->save = (double**)malloc0(a->ovrlp * sizeof(double*));
 
   for (i = 0; i < a->ovrlp; i++) {
-    a->save[i] = (double *)malloc0(a->fsize * sizeof(double));
+    a->save[i] = (double*)malloc0(a->fsize * sizeof(double));
   }
 
-  a->outaccum = (double *)malloc0(a->oasize * sizeof(double));
+  a->outaccum = (double*)malloc0(a->oasize * sizeof(double));
   a->nsamps = 0;
   a->saveidx = 0;
-  a->Rfor = fftw_plan_dft_r2c_1d(a->fsize, a->forfftin, (fftw_complex *)a->forfftout, FFTW_ESTIMATE);
-  a->Rrev = fftw_plan_dft_c2r_1d(a->fsize, (fftw_complex *)a->revfftin, a->revfftout, FFTW_ESTIMATE);
+  a->Rfor = fftw_plan_dft_r2c_1d(a->fsize, a->forfftin, (fftw_complex*)a->forfftout, FFTW_ESTIMATE);
+  a->Rrev = fftw_plan_dft_c2r_1d(a->fsize, (fftw_complex*)a->revfftin, a->revfftout, FFTW_ESTIMATE);
   calc_window(a);
   //
   // g
@@ -391,16 +391,16 @@ void calc_emnr(EMNR a) {
 
   a->g.gmax = 10000.0;
   //
-  a->g.GG = (double *)malloc0(241 * 241 * sizeof(double));
-  a->g.GGS = (double *)malloc0(241 * 241 * sizeof(double));
+  a->g.GG = (double*)malloc0(241 * 241 * sizeof(double));
+  a->g.GGS = (double*)malloc0(241 * 241 * sizeof(double));
 
   if (a->g.fileb = fopen("calculus", "rb")) {
     fread(a->g.GG, sizeof(double), 241 * 241, a->g.fileb);
     fread(a->g.GGS, sizeof(double), 241 * 241, a->g.fileb);
     fclose(a->g.fileb);
   } else {
-    memcpy (a->g.GG,  GG,  241 * 241 * sizeof(double));
-    memcpy (a->g.GGS, GGS, 241 * 241 * sizeof(double));
+    memcpy(a->g.GG,  GG,  241 * 241 * sizeof(double));
+    memcpy(a->g.GGS, GGS, 241 * 241 * sizeof(double));
   }
 
   //
@@ -467,24 +467,24 @@ void calc_emnr(EMNR a) {
     db = 10.0 * log10(1.2) / (12.0 * 128 / 8000);
     a->np.nsmax[3] = pow(10.0, db / 10.0 * a->np.V * a->np.incr / a->np.rate);
   }
-  a->np.p = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.alphaOptHat = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.alphaHat = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.sigma2N = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.pbar = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.p2bar = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.Qeq = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.bmin = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.bmin_sub = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.k_mod = (int *)malloc0(a->np.msize * sizeof(int));
-  a->np.actmin = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.actmin_sub = (double *)malloc0(a->np.msize * sizeof(double));
-  a->np.lmin_flag = (int *)malloc0(a->np.msize * sizeof(int));
-  a->np.pmin_u = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.p = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.alphaOptHat = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.alphaHat = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.sigma2N = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.pbar = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.p2bar = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.Qeq = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.bmin = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.bmin_sub = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.k_mod = (int*)malloc0(a->np.msize * sizeof(int));
+  a->np.actmin = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.actmin_sub = (double*)malloc0(a->np.msize * sizeof(double));
+  a->np.lmin_flag = (int*)malloc0(a->np.msize * sizeof(int));
+  a->np.pmin_u = (double*)malloc0(a->np.msize * sizeof(double));
   a->np.actminbuff = (double**)malloc0(a->np.U   * sizeof(double*));
 
   for (i = 0; i < a->np.U; i++) {
-    a->np.actminbuff[i] = (double *)malloc0(a->np.msize * sizeof(double));
+    a->np.actminbuff[i] = (double*)malloc0(a->np.msize * sizeof(double));
   }
 
   {
@@ -530,10 +530,10 @@ void calc_emnr(EMNR a) {
   }
   a->nps.epsH1 = pow(10.0, 15.0 / 10.0);
   a->nps.epsH1r = a->nps.epsH1 / (1.0 + a->nps.epsH1);
-  a->nps.sigma2N = (double *)malloc0(a->nps.msize * sizeof(double));
-  a->nps.PH1y = (double *)malloc0(a->nps.msize * sizeof(double));
-  a->nps.Pbar = (double *)malloc0(a->nps.msize * sizeof(double));
-  a->nps.EN2y = (double *)malloc0(a->nps.msize * sizeof(double));
+  a->nps.sigma2N = (double*)malloc0(a->nps.msize * sizeof(double));
+  a->nps.PH1y = (double*)malloc0(a->nps.msize * sizeof(double));
+  a->nps.Pbar = (double*)malloc0(a->nps.msize * sizeof(double));
+  a->nps.EN2y = (double*)malloc0(a->nps.msize * sizeof(double));
 
   for (i = 0; i < a->nps.msize; i++) {
     a->nps.sigma2N[i] = 0.5;
@@ -546,10 +546,10 @@ void calc_emnr(EMNR a) {
   a->npl.msize = a->msize;
   a->npl.incr = a->incr;
   a->npl.Ysq = a->g.lambda_y;
-  a->npl.P  = (double*)malloc0 (a->npl.msize * sizeof(double));
-  a->npl.Pmin = (double*)malloc0 (a->npl.msize * sizeof(double));
-  a->npl.p  = (double*)malloc0 (a->npl.msize * sizeof(double));
-  a->npl.D  = (double*)malloc0 (a->npl.msize * sizeof(double));
+  a->npl.P  = (double*)malloc0(a->npl.msize * sizeof(double));
+  a->npl.Pmin = (double*)malloc0(a->npl.msize * sizeof(double));
+  a->npl.p  = (double*)malloc0(a->npl.msize * sizeof(double));
+  a->npl.D  = (double*)malloc0(a->npl.msize * sizeof(double));
   a->npl.lambda_d = a->g.lambda_d;
   {
     double tau = -256.0 / (20100.0 * log(0.7));
@@ -583,7 +583,7 @@ void calc_emnr(EMNR a) {
   a->ae.zetaThresh = 0.75;
   a->ae.psi    = 20.0;
   a->ae.t2 = 0.20;
-  a->ae.nmask = (double *)malloc0(a->ae.msize * sizeof(double));
+  a->ae.nmask = (double*)malloc0(a->ae.msize * sizeof(double));
   //
   // post2
   a->post2.run = 0;
@@ -666,9 +666,9 @@ void decalc_emnr(EMNR a) {
   _aligned_free(a->window);
 }
 
-EMNR create_emnr (int run, int position, int size, double* in, double* out, int fsize, int ovrlp,
-                  int rate, int wintype, double gain, int gain_method, int npe_method, int ae_run) {
-  EMNR a = (EMNR) malloc0 (sizeof (emnr));
+EMNR create_emnr(int run, int position, int size, double* in, double* out, int fsize, int ovrlp,
+                 int rate, int wintype, double gain, int gain_method, int npe_method, int ae_run) {
+  EMNR a = (EMNR) malloc0(sizeof(emnr));
   a->run = run;
   a->position = position;
   a->bsize = size;
@@ -682,19 +682,19 @@ EMNR create_emnr (int run, int position, int size, double* in, double* out, int 
   a->g.gain_method = gain_method;
   a->g.npe_method = npe_method;
   a->g.ae_run = ae_run;
-  calc_emnr (a);
+  calc_emnr(a);
   return a;
 }
 
-void flush_emnr (EMNR a) {
+void flush_emnr(EMNR a) {
   int i;
-  memset (a->inaccum, 0, a->iasize * sizeof (double));
+  memset(a->inaccum, 0, a->iasize * sizeof(double));
 
   for (i = 0; i < a->ovrlp; i++) {
-    memset (a->save[i], 0, a->fsize * sizeof (double));
+    memset(a->save[i], 0, a->fsize * sizeof(double));
   }
 
-  memset (a->outaccum, 0, a->oasize * sizeof (double));
+  memset(a->outaccum, 0, a->oasize * sizeof(double));
   a->nsamps = 0;
   a->iainidx  = 0;
   a->iaoutidx = 0;
@@ -703,9 +703,9 @@ void flush_emnr (EMNR a) {
   a->saveidx  = 0;
 }
 
-void destroy_emnr (EMNR a) {
-  decalc_emnr (a);
-  _aligned_free (a);
+void destroy_emnr(EMNR a) {
+  decalc_emnr(a);
+  _aligned_free(a);
 }
 
 void LambdaD(EMNR a) {
@@ -737,14 +737,14 @@ void LambdaD(EMNR a) {
   }
 
   SNR = sum_prev_p / sum_prev_sigma2N;
-  alphaMin = min (a->np.alphaMin_max_value, pow (SNR, a->np.snrq));
+  alphaMin = min(a->np.alphaMin_max_value, pow(SNR, a->np.snrq));
 
   for (k = 0; k < a->np.msize; k++)
     if (a->np.alphaOptHat[k] < alphaMin) { a->np.alphaOptHat[k] = alphaMin; }
 
   f1 = sum_prev_p / sum_lambda_y - 1.0;
   alphaCtilda = 1.0 / (1.0 + f1 * f1);
-  a->np.alphaC = a->np.alphaCsmooth * a->np.alphaC + (1.0 - a->np.alphaCsmooth) * max (alphaCtilda, a->np.alphaCmin);
+  a->np.alphaC = a->np.alphaCsmooth * a->np.alphaC + (1.0 - a->np.alphaCsmooth) * max(alphaCtilda, a->np.alphaCmin);
   f2 = a->np.alphaMax * a->np.alphaC;
 
   for (k = 0; k < a->np.msize; k++) {
@@ -758,7 +758,7 @@ void LambdaD(EMNR a) {
   invQbar = 0.0;
 
   for (k = 0; k < a->np.msize; k++) {
-    beta = min (a->np.betamax, a->np.alphaHat[k] * a->np.alphaHat[k]);
+    beta = min(a->np.betamax, a->np.alphaHat[k] * a->np.alphaHat[k]);
     a->np.pbar[k] = beta * a->np.pbar[k] + (1.0 - beta) * a->np.p[k];
     a->np.p2bar[k] = beta * a->np.p2bar[k] + (1.0 - beta) * a->np.p[k] * a->np.p[k];
     varHat = a->np.p2bar[k] - a->np.pbar[k] * a->np.pbar[k];
@@ -771,7 +771,7 @@ void LambdaD(EMNR a) {
   }
 
   invQbar /= (double)a->np.msize;
-  bc = 1.0 + a->np.av * sqrt (invQbar);
+  bc = 1.0 + a->np.av * sqrt(invQbar);
 
   for (k = 0; k < a->np.msize; k++) {
     QeqTilda  = (a->np.Qeq[k] - 2.0 * a->np.MofD) / (1.0 - a->np.MofD);
@@ -780,7 +780,7 @@ void LambdaD(EMNR a) {
     a->np.bmin_sub[k] = 1.0 + 2.0 * (a->np.V - 1.0) / QeqTildaSub;
   }
 
-  memset (a->np.k_mod, 0, a->np.msize * sizeof (int));
+  memset(a->np.k_mod, 0, a->np.msize * sizeof(int));
 
   for (k = 0; k < a->np.msize; k++) {
     f3 = a->np.p[k] * a->np.bmin[k] * bc;
@@ -793,7 +793,7 @@ void LambdaD(EMNR a) {
   }
 
   if (a->np.subwc == a->np.V) {
-    if    (invQbar < a->np.invQbar_points[0]) { noise_slope_max = a->np.nsmax[0]; }
+    if (invQbar < a->np.invQbar_points[0]) { noise_slope_max = a->np.nsmax[0]; }
     else if (invQbar < a->np.invQbar_points[1]) { noise_slope_max = a->np.nsmax[1]; }
     else if (invQbar < a->np.invQbar_points[2]) { noise_slope_max = a->np.nsmax[2]; }
     else { noise_slope_max = a->np.nsmax[3]; }
@@ -837,7 +837,7 @@ void LambdaD(EMNR a) {
       for (k = 0; k < a->np.msize; k++) {
         if (a->np.k_mod[k]) {
           a->np.lmin_flag[k] = 1;
-          a->np.sigma2N[k] = min (a->np.actmin_sub[k], a->np.pmin_u[k]);
+          a->np.sigma2N[k] = min(a->np.actmin_sub[k], a->np.pmin_u[k]);
           a->np.pmin_u[k] = a->np.sigma2N[k];
         }
       }
@@ -846,28 +846,28 @@ void LambdaD(EMNR a) {
     ++a->np.subwc;
   }
 
-  memcpy (a->np.lambda_d, a->np.sigma2N, a->np.msize * sizeof (double));
+  memcpy(a->np.lambda_d, a->np.sigma2N, a->np.msize * sizeof(double));
 }
 
-void LambdaDs (EMNR a) {
+void LambdaDs(EMNR a) {
   int k;
 
   for (k = 0; k < a->nps.msize; k++) {
-    a->nps.PH1y[k] = 1.0 / (1.0 + (1.0 + a->nps.epsH1) * exp (- a->nps.epsH1r * a->nps.lambda_y[k] / a->nps.sigma2N[k]));
+    a->nps.PH1y[k] = 1.0 / (1.0 + (1.0 + a->nps.epsH1) * exp(- a->nps.epsH1r * a->nps.lambda_y[k] / a->nps.sigma2N[k]));
     a->nps.Pbar[k] = a->nps.alpha_Pbar * a->nps.Pbar[k] + (1.0 - a->nps.alpha_Pbar) * a->nps.PH1y[k];
 
     if (a->nps.Pbar[k] > 0.99) {
-      a->nps.PH1y[k] = min (a->nps.PH1y[k], 0.99);
+      a->nps.PH1y[k] = min(a->nps.PH1y[k], 0.99);
     }
 
     a->nps.EN2y[k] = (1.0 - a->nps.PH1y[k]) * a->nps.lambda_y[k] + a->nps.PH1y[k] * a->nps.sigma2N[k];
     a->nps.sigma2N[k] = a->nps.alpha_pow * a->nps.sigma2N[k] + (1.0 - a->nps.alpha_pow) * a->nps.EN2y[k];
   }
 
-  memcpy (a->nps.lambda_d, a->nps.sigma2N, a->nps.msize * sizeof (double));
+  memcpy(a->nps.lambda_d, a->nps.sigma2N, a->nps.msize * sizeof(double));
 }
 
-void LambdaDl (EMNR a) {
+void LambdaDl(EMNR a) {
   double P_old, c, Sr, delta, I, alpha_s;
   c = (1.0 - a->npl.gamma) / (1.0 - a->npl.beta);
 
@@ -883,7 +883,7 @@ void LambdaDl (EMNR a) {
 
     Sr = a->npl.P[k] / a->npl.Pmin[k];
 
-    if    (k <= a->npl.delta_LF) { delta = a->npl.delta_0; }
+    if (k <= a->npl.delta_LF) { delta = a->npl.delta_0; }
     else if (k <= a->npl.delta_MF) { delta = a->npl.delta_1; }
     else { delta = a->npl.delta_2; }
 
@@ -895,7 +895,7 @@ void LambdaDl (EMNR a) {
     a->npl.D[k] = alpha_s * a->npl.D[k] + (1.0 - alpha_s) * a->npl.Ysq[k];
   }
 
-  memcpy (a->npl.lambda_d, a->npl.D, a->npl.msize * sizeof(double));
+  memcpy(a->npl.lambda_d, a->npl.D, a->npl.msize * sizeof(double));
 }
 
 /********************************************************************************************************
@@ -960,7 +960,7 @@ void aepf(EMNR a) {
     a->ae.nmask[k] /= (double)(2 * (a->ae.msize - k) - 1);
   }
 
-  memcpy (a->mask, a->ae.nmask, a->ae.msize * sizeof (double));
+  memcpy(a->mask, a->ae.nmask, a->ae.msize * sizeof(double));
 
   if (a->g.gain_method == 3 && zetaT < a->ae.t2)
     for (k = 0; k < a->ae.msize; k++) {
@@ -985,7 +985,7 @@ void post2(EMNR a) {
     double factor = a->post2.factor;
     double nlevel = a->post2.nlevel;
     double rate_decay = a->post2.rate_decay;
-    double* w = a->post2.w;
+    double *w = a->post2.w;
     int ilim = (int)(a->post2.taper * a->msize);
     double tdmag = 0.0, dmag = 0.0, dmult = 0.0;
 
@@ -1102,12 +1102,12 @@ double getKey(double* type, double gamma, double xi) {
   dg = (tg - 0.25 * ngamma1) / 0.25;
   dx = (tx - 0.25 * nxi1) / 0.25;
   return (1.0 - dg)  * (1.0 - dx) * type[241 * nxi1 + ngamma1]
-         +  (1.0 - dg)  *    dx  * type[241 * nxi2 + ngamma1]
+         + (1.0 - dg)  *    dx  * type[241 * nxi2 + ngamma1]
          +     dg   * (1.0 - dx) * type[241 * nxi1 + ngamma2]
          +     dg   *    dx  * type[241 * nxi2 + ngamma2];
 }
 
-int getZeta( EMNR a, double gamma, double eps, double* zeta) {
+int getZeta(EMNR a, double gamma, double eps, double* zeta) {
   int index, i_gamma, i_xi;
   double gamma_dB, xi_dB, gamma_per_cell, xi_per_cell;
   gamma_dB = 10.0 * mlog10(gamma);
@@ -1134,7 +1134,7 @@ int getZeta( EMNR a, double gamma, double eps, double* zeta) {
   return 0;
 }
 
-void calc_gain (EMNR a) {
+void calc_gain(EMNR a) {
   int k;
 
   for (k = 0; k < a->g.msize; k++) {
@@ -1160,18 +1160,18 @@ void calc_gain (EMNR a) {
     double gamma, eps_hat, v;
 
     for (k = 0; k < a->g.msize; k++) {
-      gamma = min (a->g.lambda_y[k] / a->g.lambda_d[k], a->g.gamma_max);
+      gamma = min(a->g.lambda_y[k] / a->g.lambda_d[k], a->g.gamma_max);
       eps_hat = a->g.alpha * a->g.prev_mask[k] * a->g.prev_mask[k] * a->g.prev_gamma[k]
-                + (1.0 - a->g.alpha) * max (gamma - 1.0, a->g.eps_floor);
+                + (1.0 - a->g.alpha) * max(gamma - 1.0, a->g.eps_floor);
       eps_hat = max(eps_hat, a->g.xi_min);
       v = (eps_hat / (1.0 + eps_hat)) * gamma;
-      a->g.mask[k] = a->g.gf1p5 * sqrt (v) / gamma * exp (- 0.5 * v)
-                     * ((1.0 + v) * bessI0 (0.5 * v) + v * bessI1 (0.5 * v));
+      a->g.mask[k] = a->g.gf1p5 * sqrt(v) / gamma * exp(- 0.5 * v)
+                     * ((1.0 + v) * bessI0(0.5 * v) + v * bessI1(0.5 * v));
       {
-        double v2 = min (v, 700.0);
+        double v2 = min(v, 700.0);
         double eta = a->g.mask[k] * a->g.mask[k] * a->g.lambda_y[k] / a->g.lambda_d[k];
         double eps = eta / (1.0 - a->g.q);
-        double witchHat = (1.0 - a->g.q) / a->g.q * exp (v2) / (1.0 + eps);
+        double witchHat = (1.0 - a->g.q) / a->g.q * exp(v2) / (1.0 + eps);
         a->g.mask[k] *= witchHat / (1.0 + witchHat);
       }
 
@@ -1190,13 +1190,13 @@ void calc_gain (EMNR a) {
     double gamma, eps_hat, v, ehr;
 
     for (k = 0; k < a->g.msize; k++) {
-      gamma = min (a->g.lambda_y[k] / a->g.lambda_d[k], a->g.gamma_max);
+      gamma = min(a->g.lambda_y[k] / a->g.lambda_d[k], a->g.gamma_max);
       eps_hat = a->g.alpha * a->g.prev_mask[k] * a->g.prev_mask[k] * a->g.prev_gamma[k]
-                + (1.0 - a->g.alpha) * max (gamma - 1.0, a->g.eps_floor);
+                + (1.0 - a->g.alpha) * max(gamma - 1.0, a->g.eps_floor);
       ehr = eps_hat / (1.0 + eps_hat);
       v = ehr * gamma;
 
-      if ((a->g.mask[k] = ehr * exp (min (700.0, 0.5 * e1xb(v)))) > a->g.gmax) { a->g.mask[k] = a->g.gmax; }
+      if ((a->g.mask[k] = ehr * exp(min(700.0, 0.5 * e1xb(v)))) > a->g.gmax) { a->g.mask[k] = a->g.gmax; }
 
       if (a->g.mask[k] != a->g.mask[k]) { a->g.mask[k] = 0.01; }
 
@@ -1279,7 +1279,7 @@ void calc_gain (EMNR a) {
   if (a->g.ae_run) { aepf(a); }
 }
 
-void xemnr (EMNR a, int pos) {
+void xemnr(EMNR a, int pos) {
   if (a->run && pos == a->position) {
     int i, j, k, sbuff, sbegin;
     double g1;
@@ -1298,7 +1298,7 @@ void xemnr (EMNR a, int pos) {
 
       a->iaoutidx = (a->iaoutidx + a->incr) % a->iasize;
       a->nsamps -= a->incr;
-      fftw_execute (a->Rfor);
+      fftw_execute(a->Rfor);
       calc_gain(a);
 
       for (i = 0; i < a->msize; i++) {
@@ -1308,7 +1308,7 @@ void xemnr (EMNR a, int pos) {
       }
 
       post2(a);
-      fftw_execute (a->Rrev);
+      fftw_execute(a->Rrev);
 
       for (i = 0; i < a->fsize; i++) {
         a->save[a->saveidx][i] = a->window[i] * a->revfftout[i];
@@ -1319,7 +1319,7 @@ void xemnr (EMNR a, int pos) {
         sbegin = a->incr * (a->ovrlp - i);
 
         for (j = sbegin, k = a->oainidx; j < a->incr + sbegin; j++, k = (k + 1) % a->oasize) {
-          if ( i == a->ovrlp) {
+          if (i == a->ovrlp) {
             a->outaccum[k]  = a->save[sbuff][j];
           } else {
             a->outaccum[k] += a->save[sbuff][j];
@@ -1337,25 +1337,25 @@ void xemnr (EMNR a, int pos) {
       a->oaoutidx = (a->oaoutidx + 1) % a->oasize;
     }
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->bsize * sizeof (complex));
+    memcpy(a->out, a->in, a->bsize * sizeof(complex));
   }
 }
 
-void setBuffers_emnr (EMNR a, double* in, double* out) {
+void setBuffers_emnr(EMNR a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-void setSamplerate_emnr (EMNR a, int rate) {
-  decalc_emnr (a);
+void setSamplerate_emnr(EMNR a, int rate) {
+  decalc_emnr(a);
   a->rate = rate;
-  calc_emnr (a);
+  calc_emnr(a);
 }
 
-void setSize_emnr (EMNR a, int size) {
-  decalc_emnr (a);
+void setSize_emnr(EMNR a, int size) {
+  decalc_emnr(a);
   a->bsize = size;
-  calc_emnr (a);
+  calc_emnr(a);
 }
 
 /********************************************************************************************************
@@ -1365,64 +1365,64 @@ void setSize_emnr (EMNR a, int size) {
 ********************************************************************************************************/
 
 PORT
-void SetRXAEMNRRun (int channel, int run) {
+void SetRXAEMNRRun(int channel, int run) {
   EMNR a = rxa[channel].emnr.p;
 
   if (a->run != run) {
-    RXAbp1Check (channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
-                 run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
-                 rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
-    EnterCriticalSection (&ch[channel].csDSP);
+    RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
+                run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
+                rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
+    EnterCriticalSection(&ch[channel].csDSP);
     a->run = run;
-    RXAbp1Set (channel);
-    LeaveCriticalSection (&ch[channel].csDSP);
+    RXAbp1Set(channel);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 }
 
 PORT
-void SetRXAEMNRgainMethod (int channel, int method) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXAEMNRgainMethod(int channel, int method) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].emnr.p->g.gain_method = method;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAEMNRnpeMethod (int channel, int method) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXAEMNRnpeMethod(int channel, int method) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].emnr.p->g.npe_method = method;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAEMNRaeRun (int channel, int run) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXAEMNRaeRun(int channel, int run) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].emnr.p->g.ae_run = run;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAEMNRPosition (int channel, int position) {
+void SetRXAEMNRPosition(int channel, int position) {
   EMNR a = rxa[channel].emnr.p;
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   a->position = position;
   rxa[channel].bp1.p->position  = position;
   flush_emnr(a);
   a->post2.olddmag = 0.0;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAEMNRaeZetaThresh (int channel, double zetathresh) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXAEMNRaeZetaThresh(int channel, double zetathresh) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].emnr.p->ae.zetaThresh = zetathresh;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAEMNRaePsi (int channel, double psi) {
-  EnterCriticalSection (&ch[channel].csDSP);
+void SetRXAEMNRaePsi(int channel, double psi) {
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].emnr.p->ae.psi = psi;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT

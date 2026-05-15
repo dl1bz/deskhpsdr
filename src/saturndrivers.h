@@ -91,7 +91,7 @@ void SetupFIFOMonitorChannel(EDMAStreamSelect Channel, bool EnableInterrupt);
 //   Current:           number of locations occupied (in either FIFO type)
 //
 uint32_t ReadFIFOMonitorChannel(EDMAStreamSelect Channel, bool* Overflowed, bool* OverThreshold, bool* Underflowed,
-                                unsigned int* Current);
+                                unsigned int *Current);
 
 //
 // reset a stream FIFO

@@ -95,17 +95,17 @@ static void voicekeyerRestoreState(void) {
   clearProperties();
 }
 
-static uint32_t rd_u32_le(const uint8_t *p) {
-  return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+static uint32_t rd_u32_le(const uint8_t* p) {
+  return (uint32_t) p[0] | ((uint32_t) p[1] << 8) | ((uint32_t) p[2] << 16) | ((uint32_t) p[3] << 24);
 }
 
-static uint16_t rd_u16_le(const uint8_t *p) {
-  return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+static uint16_t rd_u16_le(const uint8_t* p) {
+  return (uint16_t) p[0] | ((uint16_t) p[1] << 8);
 }
 
 static void close_cb(GtkButton *button, gpointer user_data) {
-  (void)button;
-  (void)user_data;
+  (void) button;
+  (void) user_data;
 
   if (vk_window == NULL) {
     return;
@@ -117,12 +117,12 @@ static void close_cb(GtkButton *button, gpointer user_data) {
   /* Wenn Playback läuft: nicht schließen */
   if (vk_active_slot >= 0 || vk_play_lock) {
     GtkWidget *dlg = gtk_message_dialog_new(
-                       GTK_WINDOW(vk_window),
-                       GTK_DIALOG_MODAL,
-                       GTK_MESSAGE_WARNING,
-                       GTK_BUTTONS_OK,
-                       "Voice Keyer is still running.\n"
-                       "Please stop playback before closing the window.");
+                             GTK_WINDOW(vk_window),
+                             GTK_DIALOG_MODAL,
+                             GTK_MESSAGE_WARNING,
+                             GTK_BUTTONS_OK,
+                             "Voice Keyer is still running.\n"
+                             "Please stop playback before closing the window.");
     gtk_dialog_run(GTK_DIALOG(dlg));
     gtk_widget_destroy(dlg);
     return;
@@ -132,13 +132,13 @@ static void close_cb(GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(vk_window);
 }
 
-static void set_status(const char *msg) {
+static void set_status(const char* msg) {
   if (vk_label_status) {
     gtk_label_set_text(GTK_LABEL(vk_label_status), msg ? msg : "");
   }
 }
 
-static void error_dialog(GtkWindow *parent, const char *msg) {
+static void error_dialog(GtkWindow *parent, const char* msg) {
   GtkWidget *d = gtk_message_dialog_new(parent,
                                         GTK_DIALOG_MODAL,
                                         GTK_MESSAGE_ERROR,
@@ -148,7 +148,7 @@ static void error_dialog(GtkWindow *parent, const char *msg) {
   gtk_widget_destroy(d);
 }
 
-static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **err_out) {
+static gboolean load_wav_pcm16_mono_48k_into_capture(const char* path, char** err_out) {
   gsize len = 0;
   guint8 *buf = NULL;
 
@@ -156,7 +156,7 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
     *err_out = NULL;
   }
 
-  if (!g_file_get_contents(path, (gchar **)&buf, &len, NULL)) {
+  if (!g_file_get_contents(path, (gchar * *) &buf, &len, NULL)) {
     if (err_out) {
       *err_out = g_strdup("Cannot read file.");
     }
@@ -251,7 +251,7 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
 
   uint32_t samples = data_sz / sizeof(int16_t);
 
-  if ((int)samples <= 0) {
+  if ((int) samples <= 0) {
     if (err_out) {
       *err_out = g_strdup("WAV has no audio samples.");
     }
@@ -261,7 +261,7 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
   }
 
   // Do not resize capture_max here. Operator can set capture time in the existing UI.
-  if ((int)samples > capture_max) {
+  if ((int) samples > capture_max) {
     if (err_out) {
       *err_out = g_strdup("WAV is longer than current capture buffer. Increase CAPTURE time.");
     }
@@ -283,7 +283,7 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
     gint16 s_le;
     memcpy(&s_le, p, sizeof(s_le));
     const gint16 s = GINT16_FROM_LE(s_le);
-    double x = (double)s / 32768.0 * 0.9;
+    double x = (double) s / 32768.0 * 0.9;
     /* DC blocker: y[n] = x[n] - x[n-1] + R*y[n-1] */
     double y = x - x1 + R * y1;
     x1 = x;
@@ -298,14 +298,14 @@ static gboolean load_wav_pcm16_mono_48k_into_capture(const char *path, char **er
     p += sizeof(s_le);
   }
 
-  capture_record_pointer = (int)samples;
+  capture_record_pointer = (int) samples;
   capture_replay_pointer = 0;
   capture_state = CAP_AVAIL;
   g_free(buf);
   return TRUE;
 }
 
-__attribute__((unused)) static const char *vk_basename_no_ext(const char *path) {
+__attribute__((unused)) static const char* vk_basename_no_ext(const char* path) {
   char *base = g_path_get_basename(path);
   static char buf[256];
   g_strlcpy(buf, base, sizeof(buf));
@@ -319,7 +319,7 @@ __attribute__((unused)) static const char *vk_basename_no_ext(const char *path) 
   return buf;
 }
 
-static void vk_set_play_button_label_from_path(GtkWidget *btn, const char *path) {
+static void vk_set_play_button_label_from_path(GtkWidget *btn, const char* path) {
   if (!btn) { return; }
 
   if (!path || !path[0]) {
@@ -356,13 +356,13 @@ static void vk_update_slot_ui(void) {
       }
 
       vk_set_play_button_label_from_path(
-        vk_btn_play[i],
-        vk_paths[i][0] ? vk_paths[i] : NULL
+              vk_btn_play[i],
+              vk_paths[i][0] ? vk_paths[i] : NULL
       );
       /* Tooltip: voller Pfad oder Hinweis */
       gtk_widget_set_tooltip_text(
-        vk_btn_play[i],
-        vk_paths[i][0] ? vk_paths[i] : "No file assigned"
+              vk_btn_play[i],
+              vk_paths[i][0] ? vk_paths[i] : "No file assigned"
       );
 
       if (vk_btn_replay[i]) {
@@ -385,8 +385,8 @@ static void vk_update_slot_ui(void) {
         }
 
         gtk_widget_set_tooltip_text(
-          vk_btn_replay[i],
-          vk_paths[i][0] ? vk_paths[i] : "No file assigned"
+                vk_btn_replay[i],
+                vk_paths[i][0] ? vk_paths[i] : "No file assigned"
         );
       }
     } else {
@@ -395,8 +395,8 @@ static void vk_update_slot_ui(void) {
         gtk_button_set_label(GTK_BUTTON(vk_btn_play[i]), "▶ PLAYING");
         /* Tooltip auch während PLAYING aktuell halten */
         gtk_widget_set_tooltip_text(
-          vk_btn_play[i],
-          vk_paths[i][0] ? vk_paths[i] : "No file assigned"
+                vk_btn_play[i],
+                vk_paths[i][0] ? vk_paths[i] : "No file assigned"
         );
       } else {
         gtk_widget_set_sensitive(vk_btn_play[i], FALSE);
@@ -422,11 +422,11 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data) {
   GtkWidget *toplevel = gtk_widget_get_toplevel(GTK_WIDGET(btn));
   GtkWindow *parent = GTK_IS_WINDOW(toplevel) ? GTK_WINDOW(toplevel) : NULL;
   GtkFileChooserNative *dlg = gtk_file_chooser_native_new(
-                                "Load WAV (48k/mono/PCM16)",
-                                parent,
-                                GTK_FILE_CHOOSER_ACTION_OPEN,
-                                "_Open",
-                                "_Cancel"
+                                      "Load WAV (48k/mono/PCM16)",
+                                      parent,
+                                      GTK_FILE_CHOOSER_ACTION_OPEN,
+                                      "_Open",
+                                      "_Cancel"
                               );
   GtkFileFilter *filter = gtk_file_filter_new();
   gtk_file_filter_set_name(filter, "WAV files (*.wav)");
@@ -543,7 +543,7 @@ static void vk_watch_stop(void) {
   vk_watch_mode = VK_WATCH_NONE;
 }
 
-static void vk_abort_tx(const char *reason) {
+static void vk_abort_tx(const char* reason) {
   // Stop watcher first (avoid it re-triggering actions)
   vk_watch_stop();
   // Reset capture/replay path (safe fallback if state machine got desynced)
@@ -578,7 +578,7 @@ static void vk_trigger_tx_playback(void) {
 }
 
 static gboolean vk_mox_watch_cb(gpointer data) {
-  (void)data;
+  (void) data;
 
   switch (vk_watch_mode) {
   case VK_WATCH_WAIT_TX_ON:
@@ -714,7 +714,7 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data) {
 }
 
 static gboolean vk_replay_watch_cb(gpointer data) {
-  (void)data;
+  (void) data;
 
   /* Keep watching until replay ends */
   if (capture_state == CAP_REPLAY || capture_state == CAP_REPLAY_DONE) {
@@ -799,8 +799,8 @@ static void on_replay_clicked(GtkButton *btn, gpointer user_data) {
 }
 
 static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
-  (void)btn;
-  (void)user_data;
+  (void) btn;
+  (void) user_data;
 
   // If we are still waiting for TX-on, cancel and roll back MOX.
   if (vk_watch_mode == VK_WATCH_WAIT_TX_ON) {
@@ -842,8 +842,8 @@ static void on_stop_clicked(GtkButton *btn, gpointer user_data) {
 }
 
 static gboolean vk_key_press_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_data) {
-  (void)w;
-  (void)user_data;
+  (void) w;
+  (void) user_data;
 
   if (ev->keyval == GDK_KEY_space) {
     schedule_action(MOX, PRESSED, 1);
@@ -854,8 +854,8 @@ static gboolean vk_key_press_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_dat
 }
 
 static gboolean vk_key_release_cb(GtkWidget *w, GdkEventKey *ev, gpointer user_data) {
-  (void)w;
-  (void)user_data;
+  (void) w;
+  (void) user_data;
 
   if (ev->keyval == GDK_KEY_space) {
     schedule_action(MOX, RELEASED, 0);
@@ -872,7 +872,7 @@ void voice_keyer_play_slot(int slot) {
 
   if (!vk_btn_play[slot]) { return; }         // UI noch nicht gebaut
 
-  if (!gtk_widget_get_sensitive(vk_btn_play[slot])) { return; } // kein File / gelockt
+  if (!gtk_widget_get_sensitive(vk_btn_play[slot])) { return; }   // kein File / gelockt
 
   on_play_clicked(GTK_BUTTON(vk_btn_play[slot]), GINT_TO_POINTER(slot));
 }
@@ -929,8 +929,8 @@ int voice_keyer_is_open(void) {
 }
 
 static gboolean on_vk_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  (void)event;
-  (void)user_data;
+  (void) event;
+  (void) user_data;
 
   // If VK is still active, hard-abort so the window can always be closed deterministically.
   if (vk_active_slot >= 0 || vk_play_lock) {
@@ -942,7 +942,7 @@ static gboolean on_vk_delete_event(GtkWidget *widget, GdkEvent *event, gpointer 
 }
 
 static void use_tx_audiochain_btn_cb(GtkToggleButton *cbtn, gpointer user_data) {
-  int *flag = (int *)user_data;
+  int *flag = (int*) user_data;
   *flag = gtk_toggle_button_get_active(cbtn) ? 1 : 0;
   t_print("%s use_tx_audiochain = %d\n", __func__, use_tx_audiochain);
 }

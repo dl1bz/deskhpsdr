@@ -527,7 +527,7 @@ void filter_cut_default(int id) {
 
   RECEIVER *rx = receiver[id];
   int f = vfo[id].filter;
-  FILTER *filter = &(filters[mode][f]);
+  FILTER *filter = & (filters[mode][f]);
 
   if (mode == modeCWU) {
     rx->filter_low = filter->low + cw_keyer_sidetone_frequency;

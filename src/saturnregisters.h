@@ -47,7 +47,7 @@
 //
 // protocol 2 handler for outgoing DDC I/Q data Packet from SDR
 //
-void *OutgoingDDCIQ(void *arg);
+void *OutgoingDDCIQ(void* arg);
 
 //
 // interface calls to get commands from PC settings
@@ -84,7 +84,7 @@ int CloseXDMADriver(void);
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAWriteToFPGA(int fd, unsigned char*SrcData, uint32_t Length, uint32_t AXIAddr);
+int DMAWriteToFPGA(int fd, unsigned char* SrcData, uint32_t Length, uint32_t AXIAddr);
 
 //
 // initiate a DMA from the FPGA with specified parameters
@@ -94,7 +94,7 @@ int DMAWriteToFPGA(int fd, unsigned char*SrcData, uint32_t Length, uint32_t AXIA
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAReadFromFPGA(int fd, unsigned char*DestData, uint32_t Length, uint32_t AXIAddr);
+int DMAReadFromFPGA(int fd, unsigned char* DestData, uint32_t Length, uint32_t AXIAddr);
 
 //
 // single 32 bit register read, from AXI-Lite bus
@@ -554,7 +554,7 @@ void SetRXDDCEnabled(bool IsEnabled);
 // If Breakin enabled, the key input engages TX automatically
 // and generates sidetone.
 //
-void EnableCW (bool Enabled, bool Breakin);
+void EnableCW(bool Enabled, bool Breakin);
 
 //
 // SetCWSidetoneVol(uint8_t Volume)
@@ -782,13 +782,13 @@ void CodecInitialise(void);
 // SetTXAmplitudeScaling (unsigned int Amplitude)
 // sets the overall TX amplitude. This is normally set to a constant determined during development.
 //
-void SetTXAmplitudeScaling (unsigned int Amplitude);
+void SetTXAmplitudeScaling(unsigned int Amplitude);
 
 //
 // SetTXModulationTestSourceFrequency (unsigned int Freq)
 // sets the TX modulation DDS source frequency. Only used for development.
 //
-void SetTXModulationTestSourceFrequency (unsigned int Freq);
+void SetTXModulationTestSourceFrequency(unsigned int Freq);
 
 //
 // SetTXModulationSource(ETXModulationSource Source)
@@ -801,7 +801,7 @@ void SetTXModulationSource(ETXModulationSource Source);
 // SetTXProtocol (bool Protocol)
 // sets whether TX configured for P1 (48KHz) or P2 (192KHz)
 //
-void SetTXProtocol (bool Protocol);
+void SetTXProtocol(bool Protocol);
 
 //
 // void ResetDUCMux(void)

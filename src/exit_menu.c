@@ -96,7 +96,7 @@ static gboolean close_cb(void) {
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean exit_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   stop_program();
   exit(EXIT_SUCCESS);
   return TRUE;
@@ -127,25 +127,25 @@ void exit_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Exit", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
   int row = 0;
   int col = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Cancel");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   row++;
   col = 0;
   GtkWidget *exit_b = gtk_button_new_with_label("Exit");
   gtk_widget_set_tooltip_text(exit_b, "Close and Exit this App");
-  g_signal_connect (exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
+  g_signal_connect(exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), exit_b, col, row, 1, 1);
   /*
   GtkWidget *reboot_b = gtk_button_new_with_label("Reboot");

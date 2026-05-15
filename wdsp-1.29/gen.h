@@ -30,8 +30,8 @@ warren@wpratt.com
 typedef struct _gen {
   int run;          // run
   int size;         // number of samples per buffer
-  double* in;         // input buffer (retained in case I want to mix in a generated signal)
-  double* out;        // output buffer
+  double *in;         // input buffer (retained in case I want to mix in a generated signal)
+  double *out;        // output buffer
   double rate;        // sample rate
   int mode;
   struct _tone {
@@ -90,7 +90,7 @@ typedef struct _gen {
     double pf;
     double pdutycycle;
     double ptranstime;
-    double* ctrans;
+    double *ctrans;
     int pcount;
     int pnon;
     int pntrans;
@@ -110,7 +110,7 @@ typedef struct _gen {
     double pf;
     double pdutycycle;
     double ptranstime;
-    double* ctrans;
+    double *ctrans;
     int pcount;
     int pnon;
     int pntrans;

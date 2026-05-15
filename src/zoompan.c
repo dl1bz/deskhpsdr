@@ -57,7 +57,7 @@ static gulong peak_btn_signal_id;
 static GMutex peak_mutex;
 static GMutex zoom_mutex;
 
-int zoompan_active_receiver_changed(void *data) {
+int zoompan_active_receiver_changed(void* data) {
   if (display_zoompan) {
     g_mutex_lock(&pan_zoom_mutex);
     g_signal_handler_block(G_OBJECT(zoom_scale), zoom_signal_id);
@@ -65,7 +65,7 @@ int zoompan_active_receiver_changed(void *data) {
     gtk_range_set_value(GTK_RANGE(zoom_scale), active_receiver->zoom);
     gtk_range_set_range(GTK_RANGE(pan_scale), 0.0,
                         (double)(active_receiver->zoom == 1 ? active_receiver->pixels : active_receiver->pixels - active_receiver->width));
-    gtk_range_set_value (GTK_RANGE(pan_scale), active_receiver->pan);
+    gtk_range_set_value(GTK_RANGE(pan_scale), active_receiver->pan);
 
     if (active_receiver->zoom == 1) {
       gtk_widget_set_sensitive(pan_scale, FALSE);
@@ -88,7 +88,7 @@ static void zoom_value_changed_cb(GtkWidget *widget, gpointer data) {
   g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
   gtk_range_set_range(GTK_RANGE(pan_scale), 0.0,
                       (double)(active_receiver->zoom == 1 ? active_receiver->pixels : active_receiver->pixels - active_receiver->width));
-  gtk_range_set_value (GTK_RANGE(pan_scale), active_receiver->pan);
+  gtk_range_set_value(GTK_RANGE(pan_scale), active_receiver->pan);
   g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
 
   if (active_receiver->zoom == 1) {
@@ -110,13 +110,13 @@ void set_zoom(int rx, double value) {
 
   if (ival > MAX_ZOOM) { ival = MAX_ZOOM; }
 
-  if (ival < 1       ) { ival = 1; }
+  if (ival < 1) { ival = 1; }
 
   receiver[rx]->zoom = ival;
   rx_update_zoom(receiver[rx]);
 
   if (display_zoompan && active_receiver->id == rx) {
-    gtk_range_set_value (GTK_RANGE(zoom_scale), receiver[rx]->zoom);
+    gtk_range_set_value(GTK_RANGE(zoom_scale), receiver[rx]->zoom);
   } else {
     char title[64];
     snprintf(title, 64, "Zoom RX%d", rx + 1);
@@ -139,7 +139,7 @@ void remote_set_zoom(int rx, double value) {
 }
 
 static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int *) data;
+  int *value = (int*) data;
 
   if (active_receiver) {
     rx_panadapter_peak_hold_clear(active_receiver);
@@ -151,7 +151,7 @@ static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void zoom_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int *) data;
+  int *value = (int*) data;
   g_mutex_lock(&zoom_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   g_mutex_unlock(&zoom_mutex);
@@ -202,7 +202,7 @@ void set_pan(int rx, double value) {
   receiver[rx]->pan = ival;
 
   if (display_zoompan && rx == active_receiver->id) {
-    gtk_range_set_value (GTK_RANGE(pan_scale), receiver[rx]->pan);
+    gtk_range_set_value(GTK_RANGE(pan_scale), receiver[rx]->pan);
   } else {
     char title[64];
     snprintf(title, 64, "Pan RX%d", rx + 1);
@@ -236,14 +236,14 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   int widget_height = 0;
   widget_height = height;
   // int zoombox_width = (int)floor(width / 2.95); // Breite zoom_box
-  int zoombox_width = (int)floor(width / 3); // Breite zoom_box
+  int zoombox_width = (int) floor(width / 3);  // Breite zoom_box
   // int panbox_width = width / 2.68; // Breite pan_box
   int panbox_width = width - zoombox_width; // Breite pan_box: Gesamtbreite - Breite zoom_box
   t_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __func__, zoombox_width, panbox_width,
           zoombox_width + panbox_width);
   zoompan = gtk_grid_new();
   WEAKEN(zoompan);
-  gtk_widget_set_size_request (zoompan, width, height);
+  gtk_widget_set_size_request(zoompan, width, height);
   gtk_grid_set_row_homogeneous(GTK_GRID(zoompan), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(zoompan), FALSE);
   gtk_widget_set_margin_top(zoompan, 0);     // Abstand oben
@@ -279,9 +279,9 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   WEAKEN(zoom_scale);
   gtk_widget_set_tooltip_text(zoom_scale, "Zoom into the Panadapter");
   gtk_widget_set_margin_end(zoom_scale, 0);  // rechter Rand (Ende)
-  gtk_range_set_increments (GTK_RANGE(zoom_scale), 1.0, 1.0);
+  gtk_range_set_increments(GTK_RANGE(zoom_scale), 1.0, 1.0);
   gtk_widget_set_hexpand(zoom_scale, FALSE);  // fülle Box nicht nach rechts
-  gtk_range_set_value (GTK_RANGE(zoom_scale), active_receiver->zoom);
+  gtk_range_set_value(GTK_RANGE(zoom_scale), active_receiver->zoom);
 
   for (float i = 1.0; i <= 16.0; i += 1.0) {
     gtk_scale_add_mark(GTK_SCALE(zoom_scale), i, GTK_POS_TOP, NULL);
@@ -334,12 +334,12 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
   WEAKEN(pan_scale);
   gtk_widget_set_tooltip_text(pan_scale, "Move the spectrum left or right\nif Zoom > 1");
-  gtk_widget_set_margin_end(pan_scale, 10); // rechter Rand (Ende)
+  gtk_widget_set_margin_end(pan_scale, 10);  // rechter Rand (Ende)
   gtk_widget_set_hexpand(pan_scale, TRUE);
   gtk_widget_set_halign(pan_scale, GTK_ALIGN_FILL);
-  gtk_scale_set_draw_value (GTK_SCALE(pan_scale), FALSE);
-  gtk_range_set_increments (GTK_RANGE(pan_scale), 10.0, 10.0);
-  gtk_range_set_value (GTK_RANGE(pan_scale), active_receiver->pan);
+  gtk_scale_set_draw_value(GTK_SCALE(pan_scale), FALSE);
+  gtk_range_set_increments(GTK_RANGE(pan_scale), 10.0, 10.0);
+  gtk_range_set_value(GTK_RANGE(pan_scale), active_receiver->pan);
   pan_signal_id = g_signal_connect(G_OBJECT(pan_scale), "value_changed", G_CALLBACK(pan_value_changed_cb), NULL);
 
   if (active_receiver->zoom == 1) {

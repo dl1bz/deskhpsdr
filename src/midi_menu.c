@@ -124,9 +124,9 @@ static void updateDescription(void);
 static void load_store(void);
 
 static char *Event2String(enum MIDIevent event);
-static enum MIDIevent String2Event(const char *str);
+static enum MIDIevent String2Event(const char* str);
 static char *Type2String(enum ACTIONtype type);
-static enum ACTIONtype String2Type(const char *str);
+static enum ACTIONtype String2Type(const char* str);
 
 static void cleanup(void) {
   if (dialog != NULL) {
@@ -171,18 +171,18 @@ static void update_wheelparams(gpointer user_data) {
   //       set spin buttons to current values.
   //
   if (thisType == MIDI_WHEEL) {
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfl1 ), (double) thisVfl1 );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfl2 ), (double) thisVfl2 );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fl1  ), (double) thisFl1  );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fl2  ), (double) thisFl2  );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_lft1 ), (double) thisLft1 );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_lft2 ), (double) thisLft2 );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_rgt1 ), (double) thisRgt1 );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_rgt2 ), (double) thisRgt2 );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fr1  ), (double) thisFr1  );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fr2  ), (double) thisFr2  );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfr1 ), (double) thisVfr1 );
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfr2 ), (double) thisVfr2 );
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfl1), (double) thisVfl1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfl2), (double) thisVfl2);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fl1), (double) thisFl1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fl2), (double) thisFl2);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_lft1), (double) thisLft1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_lft2), (double) thisLft2);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_rgt1), (double) thisRgt1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_rgt2), (double) thisRgt2);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fr1), (double) thisFr1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_fr2), (double) thisFr2);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfr1), (double) thisVfr1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(set_vfr2), (double) thisVfr2);
     gtk_widget_show(WheelContainer);
   } else {
     gtk_widget_hide(WheelContainer);
@@ -232,7 +232,7 @@ static void row_inserted_cb(GtkTreeModel *tree_model, GtkTreePath *path, GtkTree
   gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, NULL, FALSE);
 }
 
-static void tree_selection_changed_cb (GtkTreeSelection *selection, gpointer data) {
+static void tree_selection_changed_cb(GtkTreeSelection *selection, gpointer data) {
   char *str_event;
   char *str_channel;
   char *str_note;
@@ -241,7 +241,7 @@ static void tree_selection_changed_cb (GtkTreeSelection *selection, gpointer dat
   gtk_widget_set_sensitive(delete_b, FALSE);
   gtk_widget_set_sensitive(clear_b, FALSE);
 
-  if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
+  if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
     gtk_widget_set_sensitive(delete_b, TRUE);
     gtk_widget_set_sensitive(clear_b, TRUE);
     gtk_tree_model_get(model, &iter, EVENT_COLUMN, &str_event, -1);
@@ -421,7 +421,7 @@ static void add_store(int key, const struct desc *cmd) {
                      -1);
 
   if (scrolled_window != NULL) {
-    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
 
     //t_print("%s: adjustment=%f lower=%f upper=%f\n",__func__,gtk_adjustment_get_value(adjustment),gtk_adjustment_get_lower(adjustment),gtk_adjustment_get_upper(adjustment));
     if (gtk_adjustment_get_value(adjustment) != 0.0) {
@@ -458,7 +458,7 @@ static void updateDescription(void) {
     //
     // This is a new Note/Event combination, so we need a new entry
     //
-    current_cmd = (struct desc *) malloc(sizeof(struct desc));
+    current_cmd = (struct desc*) malloc(sizeof(struct desc));
     current_cmd->next = NULL;
     addFlag = 1;
   }
@@ -569,11 +569,11 @@ void midi_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - MIDI", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 2);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 2);
   row = 0;
   col = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
@@ -698,7 +698,7 @@ void midi_menu(GtkWidget *parent) {
   g_signal_connect(ignore_b, "toggled", G_CALLBACK(ignore_cb), NULL);
   row++;
   col = 0;
-  scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+  scrolled_window = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   height = display_height - 180 -  15 * ((n_midi_devices + 1) / 3);
 
@@ -709,7 +709,8 @@ void midi_menu(GtkWidget *parent) {
   renderer = gtk_cell_renderer_text_new();
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "Event", renderer, "text", EVENT_COLUMN, NULL);
   renderer = gtk_cell_renderer_text_new();
-  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "Channel", renderer, "text", CHANNEL_COLUMN, NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "Channel", renderer, "text", CHANNEL_COLUMN,
+      NULL);
   renderer = gtk_cell_renderer_text_new();
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "NOTE", renderer, "text", NOTE_COLUMN, NULL);
   renderer = gtk_cell_renderer_text_new();
@@ -745,7 +746,7 @@ void midi_menu(GtkWidget *parent) {
   gtk_widget_set_size_request(DummyContainer, 300, 1);
   gtk_grid_attach(GTK_GRID(grid), DummyContainer, col, row, 6, 1);
   GtkWidget *WheelGrid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(WheelGrid), 2);
+  gtk_grid_set_column_spacing(GTK_GRID(WheelGrid), 2);
   col = 0;
   row = 0;
   // the new-line in the label get some space between the text and the spin buttons
@@ -888,7 +889,7 @@ static int updatePanel(int state) {
       t_print("%s: Unknown Event in UPDATE_NEW\n", __func__);
     }
 
-    gtk_combo_box_set_active (GTK_COMBO_BOX(newType), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 0);
     gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
     snprintf(text, 32, "%d", thisVal);
     gtk_label_set_text(GTK_LABEL(newVal), text);
@@ -919,7 +920,7 @@ static int updatePanel(int state) {
     case MIDI_NOTE:
       thisType = MIDI_KEY;
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "KEY");
-      gtk_combo_box_set_active (GTK_COMBO_BOX(newType), 0);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 0);
       gtk_widget_set_sensitive(newType, FALSE);
       break;
 
@@ -928,10 +929,10 @@ static int updatePanel(int state) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "KNOB/SLIDER");
 
       if (thisType == MIDI_KNOB) {
-        gtk_combo_box_set_active (GTK_COMBO_BOX(newType), 1);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 1);
       } else {
         thisType = MIDI_WHEEL;
-        gtk_combo_box_set_active (GTK_COMBO_BOX(newType), 0);
+        gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 0);
       }
 
       gtk_widget_set_sensitive(newType, TRUE);
@@ -940,7 +941,7 @@ static int updatePanel(int state) {
     case MIDI_PITCH:
       thisType = MIDI_KNOB;
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "KNOB/SLIDER");
-      gtk_combo_box_set_active (GTK_COMBO_BOX(newType), 0);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 0);
       gtk_widget_set_sensitive(newType, FALSE);
       break;
 
@@ -988,11 +989,11 @@ typedef struct MYEVENT {
   int            val;
 } myevent;
 
-int ProcessNewMidiConfigureEvent(void * data) {
+int ProcessNewMidiConfigureEvent (void* data) {
   //
   // This is now running in the GTK idle queue
   //
-  const myevent *mydata = (myevent *) data;
+  const myevent *mydata = (myevent*) data;
   enum MIDIevent event = mydata->event;
   int  channel = mydata->channel;
   int  note = mydata->note;
@@ -1002,7 +1003,7 @@ int ProcessNewMidiConfigureEvent(void * data) {
   char *str_note;
   char *str_type;
   char *str_action;
-  g_free(data);
+  g_free (data);
 
   if (event == thisEvent && channel == thisChannel && note == thisNote) {
     thisVal = val;
@@ -1011,7 +1012,7 @@ int ProcessNewMidiConfigureEvent(void * data) {
 
     if (val > thisMax) { thisMax = val; }
 
-    updatePanel(UPDATE_CURRENT);
+    updatePanel (UPDATE_CURRENT);
   } else {
     thisEvent = event;
     thisChannel = channel;
@@ -1041,60 +1042,60 @@ int ProcessNewMidiConfigureEvent(void * data) {
     // search tree to see if there is already an event in the list
     // which is the same (matching channel/event/note).
     //
-    gboolean valid = gtk_tree_model_get_iter_first(model, &iter);
+    gboolean valid = gtk_tree_model_get_iter_first (model, &iter);
 
     while (valid) {
-      gtk_tree_model_get(model, &iter, EVENT_COLUMN, &str_event, -1);
-      gtk_tree_model_get(model, &iter, CHANNEL_COLUMN, &str_channel, -1);
-      gtk_tree_model_get(model, &iter, NOTE_COLUMN, &str_note, -1);
-      gtk_tree_model_get(model, &iter, TYPE_COLUMN, &str_type, -1);
-      gtk_tree_model_get(model, &iter, BSTR_COLUMN, &str_action, -1);
+      gtk_tree_model_get (model, &iter, EVENT_COLUMN, &str_event, -1);
+      gtk_tree_model_get (model, &iter, CHANNEL_COLUMN, &str_channel, -1);
+      gtk_tree_model_get (model, &iter, NOTE_COLUMN, &str_note, -1);
+      gtk_tree_model_get (model, &iter, TYPE_COLUMN, &str_type, -1);
+      gtk_tree_model_get (model, &iter, BSTR_COLUMN, &str_action, -1);
 
       if (str_event != NULL && str_channel != NULL && str_note != NULL && str_type != NULL && str_action != NULL) {
         enum MIDIevent tree_event;
         int tree_channel;
         int tree_note;
-        tree_event = String2Event(str_event);
-        tree_channel = atoi(str_channel);
-        tree_note = atoi(str_note);
+        tree_event = String2Event (str_event);
+        tree_channel = atoi (str_channel);
+        tree_note = atoi (str_note);
 
         if (thisEvent == tree_event && thisChannel == tree_channel && thisNote == tree_note) {
           thisVal = 0;
           thisMin = 0;
           thisMax = 0;
-          thisType = String2Type(str_type);
+          thisType = String2Type (str_type);
           thisAction = NO_ACTION;
 
           for (int i = 0; i < ACTIONS; i++) {
             if (ActionTable[i].type & TYPE_HIDE) { continue; }
 
-            if (!strcmp(ActionTable[i].button_str, str_action) && (ActionTable[i].type & thisType)) {
+            if (!strcmp (ActionTable[i].button_str, str_action) && (ActionTable[i].type & thisType)) {
               thisAction = ActionTable[i].action;
               break;
             }
           }
 
-          gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), gtk_tree_model_get_path(model, &iter), NULL, FALSE);
-          updatePanel(UPDATE_EXISTING);
-          gtk_widget_set_sensitive(delete_b, TRUE);
-          gtk_widget_set_sensitive(clear_b, TRUE);
+          gtk_tree_view_set_cursor (GTK_TREE_VIEW (view), gtk_tree_model_get_path (model, &iter), NULL, FALSE);
+          updatePanel (UPDATE_EXISTING);
+          gtk_widget_set_sensitive (delete_b, TRUE);
+          gtk_widget_set_sensitive (clear_b, TRUE);
           return 0;
         }
       }
 
-      valid = gtk_tree_model_iter_next(model, &iter);
+      valid = gtk_tree_model_iter_next (model, &iter);
     }
 
     //
     // This is a new event
     //
-    updatePanel(UPDATE_NEW);
+    updatePanel (UPDATE_NEW);
   }
 
   return 0;
 }
 
-void NewMidiConfigureEvent(enum MIDIevent event, int channel, int note, int val) {
+void NewMidiConfigureEvent (enum MIDIevent event, int channel, int note, int val) {
   if (ignore_incoming_events) {
     return;
   }
@@ -1110,27 +1111,27 @@ void NewMidiConfigureEvent(enum MIDIevent event, int channel, int note, int val)
   //
   // Put it into the idle queue so we can directly use GTK
   //
-  myevent *data = g_new(myevent, 1);
+  myevent *data = g_new (myevent, 1);
   data->event = event;
   data->channel = channel;
   data->note = note;
   data->val = val;
   //t_print("%s: Event=%d Chan=%d Note=%d Val=%d\n", __func__, event, channel, note, val);
-  g_idle_add(ProcessNewMidiConfigureEvent, data);
+  g_idle_add (ProcessNewMidiConfigureEvent, data);
 }
 
-void midiSaveState(void) {
+void midiSaveState (void) {
   char name[128];
   char value[128];
   struct desc *cmd;
   int entry;
   int i;
   entry = 0;
-  SetPropI0("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
+  SetPropI0 ("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
 
   for (i = 0; i < n_midi_devices; i++) {
     if (midi_devices[i].active) {
-      SetPropS1("mididevice[%d].name", entry, midi_devices[i].name);
+      SetPropS1 ("mididevice[%d].name", entry, midi_devices[i].name);
       entry++;
     }
   }
@@ -1144,41 +1145,41 @@ void midiSaveState(void) {
       entry++;
       int channel = cmd->channel;
       //t_print("%s:  channel=%d key=%d entry=%d event=%s type=%s action=%s\n",__func__,channel,i,entry, Event2String(cmd->event),Type2String(cmd->type),ActionTable[cmd->action].str);
-      SetPropI2("midi[%d].entry[%d].channel", i, entry,                      channel);
-      SetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel,   Event2String(cmd->event));
-      SetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    Type2String(cmd->type));
-      SetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel,  cmd->action);
+      SetPropI2 ("midi[%d].entry[%d].channel", i, entry,                      channel);
+      SetPropS3 ("midi[%d].entry[%d].channel[%d].event", i, entry, channel,   Event2String (cmd->event));
+      SetPropS3 ("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    Type2String (cmd->type));
+      SetPropA3 ("midi[%d].entry[%d].channel[%d].action", i, entry, channel,  cmd->action);
 
       //
       // For wheels, also store the additional parameters,
       //
       if (cmd->type == MIDI_WHEEL) {
-        SetPropI3("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,       cmd->vfl1);
-        SetPropI3("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,       cmd->vfl2);
-        SetPropI3("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,        cmd->fl1);
-        SetPropI3("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,        cmd->fl2);
-        SetPropI3("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,       cmd->lft1);
-        SetPropI3("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,       cmd->lft2);
-        SetPropI3("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,       cmd->rgt1);
-        SetPropI3("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,       cmd->rgt2);
-        SetPropI3("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,        cmd->fr1);
-        SetPropI3("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,        cmd->fr2);
-        SetPropI3("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,       cmd->vfr1);
-        SetPropI3("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,       cmd->vfr2);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,       cmd->vfl1);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,       cmd->vfl2);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,        cmd->fl1);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,        cmd->fl2);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,       cmd->lft1);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,       cmd->lft2);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,       cmd->rgt1);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,       cmd->rgt2);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,        cmd->fr1);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,        cmd->fr2);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,       cmd->vfr1);
+        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,       cmd->vfr2);
       }
 
       cmd = cmd->next;
     }
 
     if (entry != -1) {
-      snprintf(name, 128, "midi[%d].entries", i);
-      snprintf(value, 128, "%d", entry + 1);
-      setProperty(name, value);
+      snprintf (name, 128, "midi[%d].entries", i);
+      snprintf (value, 128, "%d", entry + 1);
+      setProperty (name, value);
     }
   }
 }
 
-void midiRestoreState(void) {
+void midiRestoreState (void) {
   char str[128];
   int channel;
   int event;
@@ -1194,7 +1195,7 @@ void midiRestoreState(void) {
   get_midi_devices();
   MidiReleaseCommands();
   //t_print("%s\n",__func__);
-  GetPropI0("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
+  GetPropI0 ("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
 
   //
   // Note this is too early to open the MIDI devices, since the
@@ -1203,13 +1204,13 @@ void midiRestoreState(void) {
   // radio.c when it is appropriate
   //
   for (i = 0; i < MAX_MIDI_DEVICES; i++) {
-    g_strlcpy(str, "NO_MIDI_DEVICE_FOUND", 128);
-    GetPropS1("mididevice[%d].name", i,  str);
+    g_strlcpy (str, "NO_MIDI_DEVICE_FOUND", 128);
+    GetPropS1 ("mididevice[%d].name", i,  str);
 
     for (j = 0; j < n_midi_devices; j++) {
-      if (strcmp(midi_devices[j].name, str) == 0) {
+      if (strcmp (midi_devices[j].name, str) == 0) {
         midi_devices[j].active = 1;
-        t_print("%s: MIDI device %s active=%d\n", __func__, str, midi_devices[j].active);
+        t_print ("%s: MIDI device %s active=%d\n", __func__, str, midi_devices[j].active);
       }
     }
   }
@@ -1217,22 +1218,22 @@ void midiRestoreState(void) {
   // the value i=128 is for the PitchBend
   for (i = 0; i < 129; i++) {
     int entries = -1;
-    GetPropI1("midi[%d].entries", i, entries);
+    GetPropI1 ("midi[%d].entries", i, entries);
 
     for (int entry = 0; entry < entries; entry++) {
       channel = -1;
-      GetPropI2("midi[%d].entry[%d].channel", i, entry,      channel);
+      GetPropI2 ("midi[%d].entry[%d].channel", i, entry,      channel);
 
       if (channel < 0) { continue; }
 
-      g_strlcpy(str, "NONE", 128);
-      GetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel, str);
-      event = String2Event(str);
-      g_strlcpy(str, "NONE", 128);
-      GetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel, str);
-      type  = String2Type(str);
+      g_strlcpy (str, "NONE", 128);
+      GetPropS3 ("midi[%d].entry[%d].channel[%d].event", i, entry, channel, str);
+      event = String2Event (str);
+      g_strlcpy (str, "NONE", 128);
+      GetPropS3 ("midi[%d].entry[%d].channel[%d].type", i, entry, channel, str);
+      type  = String2Type (str);
       action = NO_ACTION;
-      GetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
+      GetPropA3 ("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
       //
       // Look for "wheel" parameters. For those not found,
       // use default value
@@ -1251,24 +1252,24 @@ void midiRestoreState(void) {
       vfr2 = -1;
 
       if (type == MIDI_WHEEL) {
-        GetPropI3("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,  vfl1);
-        GetPropI3("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,  vfl2);
-        GetPropI3("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,   fl1);
-        GetPropI3("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,   fl2);
-        GetPropI3("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,  lft1);
-        GetPropI3("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,  lft2);
-        GetPropI3("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,  rgt1);
-        GetPropI3("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,  rgt2);
-        GetPropI3("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,   fr1);
-        GetPropI3("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,   fr2);
-        GetPropI3("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,  vfr1);
-        GetPropI3("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,  vfr2);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,  vfl1);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,  vfl2);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,   fl1);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,   fl2);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,  lft1);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,  lft2);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,  rgt1);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,  rgt2);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,   fr1);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,   fr2);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,  vfr1);
+        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,  vfr2);
       }
 
       //
       // Construct descriptor and add to the list of MIDI commands
       //
-      struct desc *desc = (struct desc *) malloc(sizeof(struct desc));
+      struct desc *desc = (struct desc*) malloc (sizeof (struct desc));
       desc->next     = NULL;
       desc->action   = action; // MIDIaction
       desc->type     = type;   // MIDItype
@@ -1286,7 +1287,7 @@ void midiRestoreState(void) {
       desc->vfr1     = vfr1;
       desc->vfr2     = vfr2;
       desc->channel  = channel;
-      MidiAddCommand(i, desc);
+      MidiAddCommand (i, desc);
     }
   }
 }
@@ -1294,7 +1295,7 @@ void midiRestoreState(void) {
 //
 // Utility functions to convert enums to human-readable strings
 //
-static char *Event2String(enum MIDIevent event) {
+static char *Event2String (enum MIDIevent event) {
   switch (event) {
   case EVENT_NONE:
   default:
@@ -1315,17 +1316,17 @@ static char *Event2String(enum MIDIevent event) {
   }
 }
 
-static enum MIDIevent String2Event(const char *str) {
-  if (!strcmp(str, "NOTE"))  { return MIDI_NOTE;  }
+static enum MIDIevent String2Event (const char* str) {
+  if (!strcmp (str, "NOTE"))  { return MIDI_NOTE;  }
 
-  if (!strcmp(str, "CTRL"))  { return MIDI_CTRL;  }
+  if (!strcmp (str, "CTRL"))  { return MIDI_CTRL;  }
 
-  if (!strcmp(str, "PITCH")) { return MIDI_PITCH; }
+  if (!strcmp (str, "PITCH")) { return MIDI_PITCH; }
 
   return EVENT_NONE;
 }
 
-static char *Type2String(enum ACTIONtype type) {
+static char *Type2String (enum ACTIONtype type) {
   switch (type) {
   case TYPE_HIDE:
   case TYPE_NONE:
@@ -1347,12 +1348,12 @@ static char *Type2String(enum ACTIONtype type) {
   }
 }
 
-static enum ACTIONtype String2Type(const char *str) {
-  if (!strcmp(str, "KEY"        )) { return MIDI_KEY;   }
+static enum ACTIONtype String2Type (const char* str) {
+  if (!strcmp (str, "KEY")) { return MIDI_KEY;   }
 
-  if (!strcmp(str, "KNOB/SLIDER")) { return MIDI_KNOB;  }
+  if (!strcmp (str, "KNOB/SLIDER")) { return MIDI_KNOB;  }
 
-  if (!strcmp(str, "WHEEL"      )) { return MIDI_WHEEL; }
+  if (!strcmp (str, "WHEEL")) { return MIDI_WHEEL; }
 
   return TYPE_NONE;
 }

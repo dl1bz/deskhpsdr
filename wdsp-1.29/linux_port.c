@@ -38,13 +38,13 @@ john.d.melton@googlemail.com
 
 #if defined(linux) || defined(__APPLE__)
 
-void QueueUserWorkItem(void *function, void *context, int flags) {
+void QueueUserWorkItem(void* function, void* context, int flags) {
   pthread_t t;
   pthread_create(&t, NULL, function, context);
   pthread_join(t, NULL);
 }
 
-static inline void init_crit_section(pthread_mutex_t *mutex) {
+static inline void init_crit_section(pthread_mutex_t* mutex) {
   pthread_mutexattr_t mAttr;
   pthread_mutexattr_init(&mAttr);
 #ifdef __APPLE__
@@ -57,23 +57,23 @@ static inline void init_crit_section(pthread_mutex_t *mutex) {
   pthread_mutexattr_destroy(&mAttr);
 }
 
-void InitializeCriticalSection(pthread_mutex_t *mutex) {
+void InitializeCriticalSection(pthread_mutex_t* mutex) {
   init_crit_section(mutex);
 }
 
-void InitializeCriticalSectionAndSpinCount(pthread_mutex_t *mutex, int count) {
+void InitializeCriticalSectionAndSpinCount(pthread_mutex_t* mutex, int count) {
   init_crit_section(mutex);
 }
 
-void EnterCriticalSection(pthread_mutex_t *mutex) {
+void EnterCriticalSection(pthread_mutex_t* mutex) {
   pthread_mutex_lock(mutex);
 }
 
-void LeaveCriticalSection(pthread_mutex_t *mutex) {
+void LeaveCriticalSection(pthread_mutex_t* mutex) {
   pthread_mutex_unlock(mutex);
 }
 
-void DeleteCriticalSection(pthread_mutex_t *mutex) {
+void DeleteCriticalSection(pthread_mutex_t* mutex) {
   pthread_mutex_destroy(mutex);
 }
 
@@ -96,7 +96,7 @@ int LinuxWaitForSingleObject(sem_t *sem, int ms) {
   return result;
 }
 
-sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char *name) {
+sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char* name) {
   sem_t *sem;
 #ifdef __APPLE__
   //
@@ -181,7 +181,7 @@ void LinuxResetEvent(sem_t* sem) {
   while (sem_trywait(sem) == 0) ;
 }
 
-HANDLE _beginthread( void( __cdecl *start_address )( void * ), unsigned stack_size, void *arglist) {
+HANDLE _beginthread(void(__cdecl *start_address)(void*), unsigned stack_size, void* arglist) {
   pthread_t threadid;
   pthread_attr_t  attr;
 
@@ -199,7 +199,7 @@ HANDLE _beginthread( void( __cdecl *start_address )( void * ), unsigned stack_si
     return (HANDLE) -1;
   }
 
-  if (pthread_create(&threadid, &attr, (void * (*)(void * ))start_address, arglist)) {
+  if (pthread_create(&threadid, &attr, (void * (*)(void *))start_address, arglist)) {
     return (HANDLE) -1;
   }
 
@@ -211,7 +211,7 @@ HANDLE _beginthread( void( __cdecl *start_address )( void * ), unsigned stack_si
   // To aid analyzing CPU times, we name each thread with its
   // function.
   //
-  void sendbuf(void *arg); // declared in analyzer.c but not in header file
+  void sendbuf(void* arg); // declared in analyzer.c but not in header file
   char tname[64];
 
   if (start_address == &wdspmain) {
@@ -394,7 +394,7 @@ void *my_malloc(size_t size) {
   return freeptr;
 }
 
-void my_free(void *ptr) {
+void my_free(void* ptr) {
   int slot;
   uint8_t *p1, *p2;
   pthread_mutex_lock(&malloc_mutex);

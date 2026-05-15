@@ -30,8 +30,8 @@ warren@wpratt.com
 typedef struct _varsamp {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int in_rate;
   int out_rate;
   double fcin;
@@ -40,9 +40,9 @@ typedef struct _varsamp {
   double gain;
   int idx_in;
   int ncoef;
-  double* h;
+  double *h;
   int rsize;
-  double* ring;
+  double *ring;
   double var;
   int varmode;
   double cvar;
@@ -50,15 +50,15 @@ typedef struct _varsamp {
   double old_inv_cvar;
   double dicvar;
   double delta;
-  double* hs;
+  double *hs;
   int R;
   double h_offset;
   double isamps;
   double nom_ratio;
 } varsamp, *VARSAMP;
 
-extern VARSAMP create_varsamp ( int run, int size, double* in, double* out,
-                                int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode);
+extern VARSAMP create_varsamp (int run, int size, double* in, double* out,
+                               int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode);
 
 extern void destroy_varsamp (VARSAMP a);
 

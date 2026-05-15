@@ -338,7 +338,7 @@ MULTI_TABLE multi_action_table[] = {
   {ZOOM,             "Zoom"}
 };
 
-static gboolean get_window_frame(GtkWindow *win, int *x, int *y, int *w, int *h) {
+static gboolean get_window_frame(GtkWindow *win, int* x, int* y, int* w, int* h) {
   GdkWindow *gdk_win = gtk_widget_get_window(GTK_WIDGET(win));
 
   if (!gdk_win) {
@@ -497,8 +497,8 @@ void schedule_action(enum ACTION action, enum ACTION_MODE mode, int val) {
   }
 }
 
-int process_action(void *data) {
-  PROCESS_ACTION *a = (PROCESS_ACTION *)data;
+int process_action(void* data) {
+  PROCESS_ACTION *a = (PROCESS_ACTION*) data;
   double value;
   int i;
 
@@ -586,32 +586,32 @@ int process_action(void *data) {
         if (!full_screen && get_window_frame(GTK_WINDOW(top_window), &twx, &twy, &tww, &twh)) {
           t_print("twx=%d twy=%d tww=%d twh=%d\n", twx, twy, tww, twh);
           dxcluster_open_window(
-            dxc_address,
-            dxc_port,
-            dxc_login,
+                  dxc_address,
+                  dxc_port,
+                  dxc_login,
 #ifdef __APPLE__
-            tww / 2,        // width
+                  tww / 2,        // width
 #else
-            tww * 2 / 3,    // width
+                  tww * 2 / 3,    // width
 #endif
-            200,            // height
-            twx,            // pos_x
+                  200,            // height
+                  twx,            // pos_x
 #ifdef __APPLE__
-            twy + twh + 30  // pos_y
+                  twy + twh + 30  // pos_y
 #else
-            twy + twh       // pos_y
+                  twy + twh       // pos_y
 #endif
           );
         } // calculated win
       } else {
         dxcluster_open_window(
-          dxc_address,
-          dxc_port,
-          dxc_login,
-          dxcwin_w,
-          dxcwin_h,
-          dxcwin_x,
-          dxcwin_y
+                dxc_address,
+                dxc_port,
+                dxc_login,
+                dxcwin_w,
+                dxcwin_h,
+                dxcwin_x,
+                dxcwin_y
         );
       }
     } // main
@@ -1143,16 +1143,16 @@ int process_action(void *data) {
     break;
 
   case CW_FREQUENCY:
-    value = KnobOrWheel(a, (double)cw_keyer_sidetone_frequency, 300.0, 1000.0, 10.0);
-    cw_keyer_sidetone_frequency = (int)value;
+    value = KnobOrWheel(a, (double) cw_keyer_sidetone_frequency, 300.0, 1000.0, 10.0);
+    cw_keyer_sidetone_frequency = (int) value;
     rx_filter_changed(active_receiver);
     // we may omit the P2 high-prio packet since this is sent out at regular intervals
     g_idle_add(ext_vfo_update, NULL);
     break;
 
   case CW_SPEED:
-    value = KnobOrWheel(a, (double)cw_keyer_speed, 1.0, 60.0, 1.0);
-    cw_keyer_speed = (int)value;
+    value = KnobOrWheel(a, (double) cw_keyer_speed, 1.0, 60.0, 1.0);
+    cw_keyer_speed = (int) value;
     keyer_update();
     g_idle_add(ext_vfo_update, NULL);
     break;
@@ -1165,27 +1165,27 @@ int process_action(void *data) {
     break;
 
   case DIV_GAIN:
-    set_diversity_gain(div_gain + (double)a->val * 0.05);
+    set_diversity_gain(div_gain + (double) a->val * 0.05);
     break;
 
   case DIV_GAIN_COARSE:
-    set_diversity_gain(div_gain + (double)a->val * 0.25);
+    set_diversity_gain(div_gain + (double) a->val * 0.25);
     break;
 
   case DIV_GAIN_FINE:
-    set_diversity_gain((double)a->val * 0.01);
+    set_diversity_gain((double) a->val * 0.01);
     break;
 
   case DIV_PHASE:
-    set_diversity_phase(div_phase + (double)a->val * 0.5);
+    set_diversity_phase(div_phase + (double) a->val * 0.5);
     break;
 
   case DIV_PHASE_COARSE:
-    set_diversity_phase(div_phase + (double)a->val * 2.5);
+    set_diversity_phase(div_phase + (double) a->val * 2.5);
     break;
 
   case DIV_PHASE_FINE:
-    set_diversity_phase(div_phase + (double)a->val * 0.1);
+    set_diversity_phase(div_phase + (double) a->val * 0.1);
     break;
 
   case DRIVE:
@@ -1289,7 +1289,7 @@ int process_action(void *data) {
   case GL_WIN:
     if (a->mode == PRESSED) {
       // open_greyline_win(window_width, window_height, locator);
-      open_greyline_win((int)display_width * 2 / 3, own_locator);
+      open_greyline_win((int) display_width * 2 / 3, own_locator);
     }
 
     break;
@@ -1493,7 +1493,7 @@ int process_action(void *data) {
       multifunction_action->mode = a->mode;
       multifunction_action->val = a->val;
       multifunction_action->action = multi_action_table[multi_action].action;
-      process_action((void*)multifunction_action);
+      process_action((void*) multifunction_action);
     }
 
     g_idle_add(ext_vfo_update, NULL);
@@ -1698,17 +1698,17 @@ int process_action(void *data) {
 
   case PANADAPTER_HIGH:
     value = KnobOrWheel(a, active_receiver->panadapter_high, -60.0, 20.0, 1.0);
-    active_receiver->panadapter_high = (int)value;
+    active_receiver->panadapter_high = (int) value;
     break;
 
   case PANADAPTER_LOW:
     value = KnobOrWheel(a, active_receiver->panadapter_low, -160.0, -60.0, 1.0);
-    active_receiver->panadapter_low = (int)value;
+    active_receiver->panadapter_low = (int) value;
     break;
 
   case PANADAPTER_STEP:
     value = KnobOrWheel(a, active_receiver->panadapter_step, 5.0, 30.0, 1.0);
-    active_receiver->panadapter_step = (int)value;
+    active_receiver->panadapter_step = (int) value;
     break;
 
   case PREAMP:
@@ -1803,7 +1803,8 @@ int process_action(void *data) {
 
   case RF_GAIN_RX1:
     if (have_rx_gain) {
-      value = KnobOrWheel(a, adc[receiver[0]->adc].gain, adc[receiver[0]->adc].min_gain, adc[receiver[0]->adc].max_gain, 1.0);
+      value = KnobOrWheel(a, adc[receiver[0]->adc].gain, adc[receiver[0]->adc].min_gain, adc[receiver[0]->adc].max_gain,
+                          1.0);
       set_rf_gain(0, value);
     }
 
@@ -1811,7 +1812,8 @@ int process_action(void *data) {
 
   case RF_GAIN_RX2:
     if (have_rx_gain && receivers == 2) {
-      value = KnobOrWheel(a, adc[receiver[1]->adc].gain, adc[receiver[1]->adc].min_gain, adc[receiver[1]->adc].max_gain, 1.0);
+      value = KnobOrWheel(a, adc[receiver[1]->adc].gain, adc[receiver[1]->adc].min_gain, adc[receiver[1]->adc].max_gain,
+                          1.0);
       set_rf_gain(1, value);
     }
 
@@ -1964,7 +1966,7 @@ int process_action(void *data) {
 
   case RSAT:
     if (a->mode == PRESSED) {
-      radio_set_satmode (sat_mode == RSAT_MODE ? SAT_NONE : RSAT_MODE);
+      radio_set_satmode(sat_mode == RSAT_MODE ? SAT_NONE : RSAT_MODE);
       g_idle_add(ext_vfo_update, NULL);
     }
 
@@ -1972,7 +1974,7 @@ int process_action(void *data) {
 
   case SAT:
     if (a->mode == PRESSED) {
-      radio_set_satmode (sat_mode == SAT_MODE ? SAT_NONE : SAT_MODE);
+      radio_set_satmode(sat_mode == SAT_MODE ? SAT_NONE : SAT_MODE);
       g_idle_add(ext_vfo_update, NULL);
     }
 
@@ -2370,12 +2372,12 @@ int process_action(void *data) {
 
   case WATERFALL_HIGH:
     value = KnobOrWheel(a, active_receiver->waterfall_high, -100.0, 0.0, 1.0);
-    active_receiver->waterfall_high = (int)value;
+    active_receiver->waterfall_high = (int) value;
     break;
 
   case WATERFALL_LOW:
     value = KnobOrWheel(a, active_receiver->waterfall_low, -150.0, -50.0, 1.0);
-    active_receiver->waterfall_low = (int)value;
+    active_receiver->waterfall_low = (int) value;
     break;
 
   case XIT:
@@ -2532,7 +2534,7 @@ int process_action(void *data) {
 // Function to convert an internal action number to a unique string
 // This is used to specify actions in the props files.
 //
-void Action2String(int id, char *str, size_t len) {
+void Action2String(int id, char* str, size_t len) {
   if (id < 0 || id >= ACTIONS) {
     g_strlcpy(str, "NONE", len);
   } else {
@@ -2544,7 +2546,7 @@ void Action2String(int id, char *str, size_t len) {
 // Function to convert a string to an action number
 // This is used to specify actions in the props files.
 //
-int String2Action(const char *str) {
+int String2Action(const char* str) {
   for (int i = 0; i < ACTIONS; i++) {
     if (ActionTable[i].type & TYPE_HIDE) {
       continue;

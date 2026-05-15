@@ -108,8 +108,8 @@ typedef struct _dp {
   int type;                       // 0 for REAL, 1 for COMPLEX
   int incr;                       // size - overlap
   int buff_size;                      // amount of data to be stored each time an input buffer is opened and closed = JanusAudio/BlockSize
-  dINREAL* I_samples[dMAX_STITCH][dMAX_NUM_FFT];      // pointers to current input position in I/Q buffers
-  dINREAL* Q_samples[dMAX_STITCH][dMAX_NUM_FFT];
+  dINREAL *I_samples[dMAX_STITCH][dMAX_NUM_FFT];      // pointers to current input position in I/Q buffers
+  dINREAL *Q_samples[dMAX_STITCH][dMAX_NUM_FFT];
   int bsize;                        // size of I_samples[][] and Q_samples[][] (number of samples they hold)
   int IQout_index[dMAX_STITCH][dMAX_NUM_FFT];       // current output index for I_samples[ss][LO] and Q_samples[ss][LO]
   int IQO_idx[dMAX_STITCH][dMAX_NUM_FFT];
@@ -159,57 +159,57 @@ typedef struct _dp {
 
 extern DP pdisp[];
 
-extern __declspec( dllexport )
-void CreateAnalyzer ( int disp,
-                      int *success,
-                      char *app_data_path);
+extern __declspec(dllexport)
+void CreateAnalyzer (int disp,
+                     int *success,
+                     char *app_data_path);
 
-extern __declspec( dllexport )
-void XCreateAnalyzer (  int disp,
-                        int *success, //writes '0' to success if all went well, <0 if mem alloc failed
-                        int m_size,   //maximum fft size to be used
-                        int m_LO,   //maximum number of LO positions per subspan
-                        int m_stitch, //maximum number of subspans to be concatenated
-                        char *app_data_path
+extern __declspec(dllexport)
+void XCreateAnalyzer (int disp,
+                      int *success, //writes '0' to success if all went well, <0 if mem alloc failed
+                      int m_size,   //maximum fft size to be used
+                      int m_LO,   //maximum number of LO positions per subspan
+                      int m_stitch, //maximum number of subspans to be concatenated
+                      char *app_data_path
                      );
 
-extern __declspec( dllexport )
+extern __declspec(dllexport)
 void DestroyAnalyzer(int disp);
 
-extern __declspec( dllexport )
-void SetCalibration ( int disp,
-                      int set_num,        //identifier for this calibration data set
-                      int n_points,       //number of calibration points in the set
-                      double (*cal)[dMAX_M + 1] //pointer to the calibration table, first
+extern __declspec(dllexport)
+void SetCalibration (int disp,
+                     int set_num,        //identifier for this calibration data set
+                     int n_points,       //number of calibration points in the set
+                     double (*cal)[dMAX_M + 1] //pointer to the calibration table, first
                     );
 
-extern __declspec( dllexport )
-void OpenBuffer(int disp, int ss, int LO, void **Ipointer, void **Qpointer);
+extern __declspec(dllexport)
+void OpenBuffer(int disp, int ss, int LO, void** Ipointer, void** Qpointer);
 
-extern __declspec( dllexport )
+extern __declspec(dllexport)
 void CloseBuffer(int disp, int ss, int LO);
 
-extern __declspec( dllexport )
+extern __declspec(dllexport)
 void Spectrum(int disp, int ss, int LO, dINREAL* pI, dINREAL* pQ);
 
-extern __declspec( dllexport )
+extern __declspec(dllexport)
 void Spectrum2(int run, int disp, int ss, int LO, dINREAL* pbuff);
 
-extern __declspec( dllexport )
+extern __declspec(dllexport)
 void Spectrum0(int run, int disp, int ss, int LO, double* pbuff);
 
-extern __declspec( dllexport )
-void SnapSpectrum(  int disp,
-                    int ss,
-                    int LO,
-                    double *snap_buff);
+extern __declspec(dllexport)
+void SnapSpectrum(int disp,
+                  int ss,
+                  int LO,
+                  double *snap_buff);
 
-extern __declspec( dllexport )
+extern __declspec(dllexport)
 void SnapSpectrumTimeout (int disp,
                           int ss,
                           int LO,
-                          double* snap_buff,
+                          double *snap_buff,
                           DWORD timeout,
-                          int* flag);
+                          int *flag);
 
 #endif

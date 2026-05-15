@@ -84,7 +84,7 @@ void about_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);
-  gtk_container_set_border_width(GTK_CONTAINER(dialog), 20); // 20px leer zwischen Fenster und Content
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 20);   // 20px leer zwischen Fenster und Content
   char title[64];
   uname(&unameData);
   snprintf(title, sizeof(title), "%s - About", PGNAME);
@@ -92,12 +92,12 @@ void about_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 4);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
   int row = 0;
   /*
   GtkWidget *close_b = gtk_button_new_with_label("Close");
@@ -189,8 +189,8 @@ void about_menu(GtkWidget *parent) {
   row++;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  gtk_widget_set_margin_top(close_b, 20); // 20px Platz nach oben
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  gtk_widget_set_margin_top(close_b, 20);  // 20px Platz nach oben
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 2, row, 1, 1);
   // gtk_widget_set_halign(close_b, GTK_ALIGN_CENTER);  // Horizontal zentrieren
   // gtk_widget_set_valign(close_b, GTK_ALIGN_CENTER);   // Vertikal oben ausrichten

@@ -84,9 +84,9 @@ int main(void) {
     int stdinfd = open(pts, O_RDWR);
     int fd1 = open("/dev/null", O_WRONLY);
     int fd2 = open("/dev/null", O_WRONLY);
-    close (0);
-    close (1);
-    close (2);
+    close(0);
+    close(1);
+    close(2);
     dup(stdinfd);      // assigned to stdin
     dup(fd1);          // assigned to stdout
     dup(fd2);          // assigned to stderr
@@ -94,7 +94,7 @@ int main(void) {
     close(fd1);        // close unused fd
     close(fd2);        // close unused fd
 #ifdef SAY
-    execl(SAY, SAY, (char *) NULL);
+    execl(SAY, SAY, (char*) NULL);
 #endif
     //
     // If we arrive here, there is probably no SAY program
@@ -102,7 +102,7 @@ int main(void) {
     // Silently fall through to ESPEAK.
     //
 #ifdef ESPEAK
-    execl(ESPEAK, ESPEAK, (char *) NULL);
+    execl(ESPEAK, ESPEAK, (char*) NULL);
 #endif
     //
     // We should not arrive at this point.
@@ -133,9 +133,9 @@ int main(void) {
   setsockopt(udpsock, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
   tv.tv_sec = 0;
   tv.tv_usec = 50000;
-  setsockopt(udpsock, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
+  setsockopt(udpsock, SOL_SOCKET, SO_RCVTIMEO, (void*) &tv, sizeof(tv));
 
-  if (bind(udpsock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (bind(udpsock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     perror("BIND:");
     exit(1);
   }
@@ -148,7 +148,7 @@ int main(void) {
     //                Add end-of-line to each packet contents
     //
     lenaddr = sizeof(from);
-    bytes = recvfrom(udpsock, msg, 128, 0, (struct sockaddr *)&from, &lenaddr);
+    bytes = recvfrom(udpsock, msg, 128, 0, (struct sockaddr*) &from, &lenaddr);
 
     if (bytes <= 0) {
       usleep(100000);
@@ -156,6 +156,6 @@ int main(void) {
     }
 
     msg[bytes++] = '\n';                                  // form EOL terminated string
-    write (ptyfd, msg, bytes);                            // send it to TTS application
+    write(ptyfd, msg, bytes);                             // send it to TTS application
   }
 }

@@ -102,7 +102,7 @@ extern uint16_t DefaultPorts[];
 
 void start_saturn_server(void);
 void shutdown_saturn_server(void);
-void* saturn_server(void *arg);
+void *saturn_server(void* arg);
 
 //
 // function to make an incoming or outgoing socket, bound to the specified port in the structure
@@ -119,7 +119,7 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid);
 // copy port numbers to port table,
 // then create listener threads for incoming packets & senders foroutgoing
 //
-int HandleGeneralPacket(uint8_t *PacketBuffer);
+int HandleGeneralPacket(uint8_t* PacketBuffer);
 // END generalpacket.h
 
 // START IncomingDDCSpecific.h
@@ -128,7 +128,7 @@ int HandleGeneralPacket(uint8_t *PacketBuffer);
 //
 // protocol 2 handler for incoming DDC specific Packet to SDR
 //
-void *IncomingDDCSpecific(void *arg);           // listener thread
+void *IncomingDDCSpecific(void* arg);           // listener thread
 // END IncomingDDCSpecific.h
 
 // START IncomingDUCSpecific.h
@@ -137,7 +137,7 @@ void *IncomingDDCSpecific(void *arg);           // listener thread
 //
 // protocol 2 handler for incoming DUC specific Packet to SDR
 //
-void *IncomingDUCSpecific(void *arg);           // listener thread
+void *IncomingDUCSpecific(void* arg);           // listener thread
 // END IncomingDUCSpecific.h
 
 // START InHighPriority.h
@@ -146,7 +146,7 @@ void *IncomingDUCSpecific(void *arg);           // listener thread
 //
 // protocol 2 handler for incoming high priority Packet to SDR
 //
-void *IncomingHighPriority(void *arg);          // listener thread
+void *IncomingHighPriority(void* arg);          // listener thread
 // END InHighPriority.h
 
 // START InDUCIQ.h
@@ -155,7 +155,7 @@ void *IncomingHighPriority(void *arg);          // listener thread
 //
 // protocol 2 handler for incoming DUC I/Q data Packet to SDR
 //
-void *IncomingDUCIQ(void *arg);                 // listener thread
+void *IncomingDUCIQ(void* arg);                 // listener thread
 
 //
 // HandlerSetEERMode (bool EEREnabled)
@@ -172,7 +172,7 @@ void HandlerSetEERMode(bool EEREnabled);
 //
 // protocol 2 handler for incoming speaker audio data Packet to SDR
 //
-void *IncomingSpkrAudio(void *arg);             // listener thread
+void *IncomingSpkrAudio(void* arg);             // listener thread
 // END InSpkrAudio.h
 
 extern bool saturn_server_en;

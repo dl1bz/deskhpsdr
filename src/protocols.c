@@ -141,31 +141,31 @@ void configure_protocols(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Protocols", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   row = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
-  g_signal_connect (close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   row++;
   GtkWidget *b_enable_protocol_1 = gtk_check_button_new_with_label("Enable Protocol 1");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_enable_protocol_1), enable_protocol_1);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_enable_protocol_1), enable_protocol_1);
   gtk_widget_show(b_enable_protocol_1);
   g_signal_connect(b_enable_protocol_1, "toggled", G_CALLBACK(protocol_1_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_enable_protocol_1, 0, row, 1, 1);
   row++;
   GtkWidget *b_enable_protocol_2 = gtk_check_button_new_with_label("Enable Protocol 2");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_enable_protocol_2), enable_protocol_2);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_enable_protocol_2), enable_protocol_2);
   gtk_widget_show(b_enable_protocol_2);
   g_signal_connect(b_enable_protocol_2, "toggled", G_CALLBACK(protocol_2_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_enable_protocol_2, 0, row, 1, 1);
   row++;
 #ifdef SATURN
   GtkWidget *b_saturn_xdma = gtk_check_button_new_with_label("Enable Saturn XDMA");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_saturn_xdma), enable_saturn_xdma);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_saturn_xdma), enable_saturn_xdma);
   gtk_widget_show(b_saturn_xdma);
   g_signal_connect(b_saturn_xdma, "toggled", G_CALLBACK(saturn_xdma_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_saturn_xdma, 0, row, 1, 1);
@@ -173,7 +173,7 @@ void configure_protocols(GtkWidget *parent) {
 #endif
 #ifdef USBOZY
   GtkWidget *b_usbozy = gtk_check_button_new_with_label("Enable USB OZY");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_usbozy), enable_usbozy);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_usbozy), enable_usbozy);
   gtk_widget_show(b_usbozy);
   g_signal_connect(b_usbozy, "toggled", G_CALLBACK(usbozy_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_usbozy, 0, row, 1, 1);
@@ -181,7 +181,7 @@ void configure_protocols(GtkWidget *parent) {
 #endif
 #ifdef SOAPYSDR
   GtkWidget *b_enable_soapy_protocol = gtk_check_button_new_with_label("Enable SoapySDR");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_enable_soapy_protocol), enable_soapy_protocol);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_enable_soapy_protocol), enable_soapy_protocol);
   gtk_widget_show(b_enable_soapy_protocol);
   g_signal_connect(b_enable_soapy_protocol, "toggled", G_CALLBACK(soapy_protocol_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_enable_soapy_protocol, 0, row, 1, 1);
@@ -189,14 +189,14 @@ void configure_protocols(GtkWidget *parent) {
 #endif
 #ifdef STEMLAB_DISCOVERY
   GtkWidget *b_enable_stemlab = gtk_check_button_new_with_label("Enable STEMlab");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_enable_stemlab), enable_stemlab);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_enable_stemlab), enable_stemlab);
   gtk_widget_show(b_enable_stemlab);
   g_signal_connect(b_enable_stemlab, "toggled", G_CALLBACK(stemlab_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_enable_stemlab, 0, row, 1, 1);
   row++;
 #endif
   GtkWidget *b_autostart = gtk_check_button_new_with_label("Auto start if only one device");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (b_autostart), autostart);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_autostart), autostart);
   gtk_widget_show(b_autostart);
   g_signal_connect(b_autostart, "toggled", G_CALLBACK(autostart_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_autostart, 0, row, 1, 1);

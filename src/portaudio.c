@@ -164,21 +164,21 @@ void audio_get_cards(void) {
 
   err = Pa_Initialize();
 
-  if ( err != paNoError ) {
+  if (err != paNoError) {
     t_print("%s: init error %s\n", __func__, Pa_GetErrorText(err));
     return;
   }
 
   numDevices = Pa_GetDeviceCount();
 
-  if ( numDevices < 0 ) { return; }
+  if (numDevices < 0) { return; }
 
   g_mutex_lock(&audio_mutex);
   n_input_devices = 0;
   n_output_devices = 0;
 
-  for (int  i = 0; i < numDevices; i++ ) {
-    const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo( i );
+  for (int  i = 0; i < numDevices; i++) {
+    const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
     inputParameters.device = i;
     inputParameters.channelCount = 1;  // Microphone samples are mono
     inputParameters.sampleFormat = paFloat32;
@@ -244,7 +244,8 @@ void audio_get_cards(void) {
 
 int pa_mic_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 int pa_out_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
-int pa_tci_monitor_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
+int pa_tci_monitor_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags,
+                      void *);
 
 int audio_open_input(void) {
   t_print("%s: PORTAUDIO call audio_open_input\n", __func__);
@@ -279,7 +280,7 @@ int audio_open_input(void) {
   }
 
   g_mutex_lock(&audio_mutex);
-  bzero(&inputParameters, sizeof(inputParameters)); //not necessary if you are filling in all the fields
+  bzero(&inputParameters, sizeof(inputParameters));    //not necessary if you are filling in all the fields
   inputParameters.channelCount = 1;   // MONO
   inputParameters.device = padev;
   inputParameters.hostApiSpecificStreamInfo = NULL;
@@ -305,7 +306,7 @@ int audio_open_input(void) {
     return -1;
   }
 
-  mic_ring_buffer = (float *) g_new(float, MY_RING_BUFFER_SIZE);
+  mic_ring_buffer = (float*) g_new(float, MY_RING_BUFFER_SIZE);
   mic_ring_outpt = mic_ring_inpt = 0;
 
   if (mic_ring_buffer == NULL) {
@@ -338,11 +339,11 @@ int audio_open_input(void) {
 //
 // PortAudio call-back function for local TCI audio monitor output
 //
-int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
+int pa_tci_monitor_cb(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
                       const PaStreamCallbackTimeInfo* timeInfo,
                       PaStreamCallbackFlags statusFlags,
                       void *userdata) {
-  float *out = (float *)outputBuffer;
+  float *out = (float*) outputBuffer;
   float buffer[TCI_MONITOR_FRAMES_PER_BUFFER * TCI_AUDIO_CHANNELS];
   guint frames;
   unsigned long requested_frames = framesPerBuffer;
@@ -356,7 +357,7 @@ int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long
     requested_frames = TCI_MONITOR_FRAMES_PER_BUFFER;
   }
 
-  frames = tci_audio_monitor_read(buffer, (guint)requested_frames);
+  frames = tci_audio_monitor_read(buffer, (guint) requested_frames);
 
   if (frames < requested_frames) {
     tci_monitor_underruns++;
@@ -386,7 +387,7 @@ int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long
   return paContinue;
 }
 
-int audio_open_tci_monitor(const char *audio_name) {
+int audio_open_tci_monitor(const char* audio_name) {
   PaError err;
   PaStreamParameters outputParameters;
   int padev = -1;
@@ -496,12 +497,12 @@ void audio_close_tci_monitor(void) {
 //
 // PortAudio call-back function for Audio output
 //
-int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
+int pa_out_cb(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
               const PaStreamCallbackTimeInfo* timeInfo,
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
-  float *out = (float *)outputBuffer;
-  RECEIVER *rx = (RECEIVER *)userdata;
+  float *out = (float*) outputBuffer;
+  RECEIVER *rx = (RECEIVER*) userdata;
 
   if (out == NULL) {
     t_print("%s: bogus audio buffer in callback\n", __func__);
@@ -581,11 +582,11 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
 //
 // PortAudio call-back function for Audio input
 //
-int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
+int pa_mic_cb(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
               const PaStreamCallbackTimeInfo* timeInfo,
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
-  const float *in = (float *)inputBuffer;
+  const float *in = (float*) inputBuffer;
 
   if (in == NULL) {
     // This should not happen, so we do not send silence etc.
@@ -701,7 +702,7 @@ int audio_open_output(RECEIVER *rx) {
   }
 
   g_mutex_lock(&rx->local_audio_mutex);
-  bzero(&outputParameters, sizeof(outputParameters)); //not necessary if you are filling in all the fields
+  bzero(&outputParameters, sizeof(outputParameters));    //not necessary if you are filling in all the fields
   outputParameters.device = padev;
   outputParameters.hostApiSpecificStreamInfo = NULL;
   outputParameters.sampleFormat = paFloat32;
@@ -731,7 +732,7 @@ int audio_open_output(RECEIVER *rx) {
     rx_set_af_binaural(rx);
   }
 
-  err = Pa_OpenStream(&(rx->playstream), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
+  err = Pa_OpenStream(& (rx->playstream), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
                       paNoFlag, pa_out_cb, rx);
   t_print("%s: opened output with %d channel(s)\n", __func__, rx->local_audio_channels);
 
@@ -865,7 +866,7 @@ void audio_close_output(RECEIVER *rx) {
 // So mutex locking/unlocking should only cost few CPU cycles in
 // normal operation.
 //
-int audio_write (RECEIVER *rx, float left, float right) {
+int audio_write(RECEIVER *rx, float left, float right) {
   int txmode = vfo_get_tx_mode();
   float *buffer = rx->local_audio_buffer;
 
@@ -1001,7 +1002,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       //
       if (avail > MY_CW_HIGH_WATER) { adjust = 2; } // full: we are above high water mark
 
-      if (avail < MY_CW_LOW_WATER ) { adjust = 1; } // low: we are below low water mark
+      if (avail < MY_CW_LOW_WATER) { adjust = 1; }  // low: we are below low water mark
     }
 
     switch (adjust) {

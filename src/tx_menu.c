@@ -137,13 +137,13 @@ static void on_errdlg_response(GtkDialog *dlg, gint response_id, gpointer user_d
   }
 }
 
-static void gui_show_error_dialog(const char *msg) {
+static void gui_show_error_dialog(const char* msg) {
   GtkWidget *dlg = gtk_message_dialog_new(
-                     NULL,
-                     GTK_DIALOG_MODAL,
-                     GTK_MESSAGE_ERROR,
-                     GTK_BUTTONS_NONE,
-                     "%s", msg);
+                           NULL,
+                           GTK_DIALOG_MODAL,
+                           GTK_MESSAGE_ERROR,
+                           GTK_BUTTONS_NONE,
+                           "%s", msg);
   gtk_window_set_title(GTK_WINDOW(dlg), "deskHPSDR - Important notice");
   // gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_CENTER);
   gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_CENTER_ALWAYS);
@@ -163,7 +163,7 @@ static int check_file(int p) {
 
   if (file) {
     t_print("%s: Access file %s successful.\n", __func__, DateiName);
-    fclose(file); // Datei wurde erfolgreich geöffnet, also existiert sie
+    fclose(file);  // Datei wurde erfolgreich geöffnet, also existiert sie
     return 1;     // Datei existiert
   } else {
     t_print("%s: Access file %s failed.\n", __func__, DateiName);
@@ -171,7 +171,7 @@ static int check_file(int p) {
   }
 }
 
-void audioSaveProfile(const char *filename) {
+void audioSaveProfile(const char* filename) {
   if (!filename || !*filename) {
     return;
   }
@@ -224,7 +224,7 @@ void audioSaveProfile(const char *filename) {
   saveProperties(filename);
 }
 
-static void audioLoadProfile(const char *filename) {
+static void audioLoadProfile(const char* filename) {
   int i = modeLSB;
   char pg_name[16];
 
@@ -325,7 +325,7 @@ static void audioLoadProfile(const char *filename) {
 // erwartet: void audioSaveProfile(const char *filename);
 // erwartet: char workdir[];  (oder kompatibel)
 
-static char *ensure_prop_extension(const char *path) {
+static char *ensure_prop_extension(const char* path) {
   if (!path) { return NULL; }
 
   // Falls schon .prop
@@ -359,11 +359,11 @@ static void save_native_response_cb(GtkNativeDialog *ndlg, gint response_id, gpo
 static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
   GtkFileChooserNative *native;
   native = gtk_file_chooser_native_new(
-             "Export deskHPSDR Audio Profile",
-             NULL,                           // bewusst ohne Parent
-             GTK_FILE_CHOOSER_ACTION_SAVE,
-             "_Save",
-             "_Cancel");
+                   "Export deskHPSDR Audio Profile",
+                   NULL,                           // bewusst ohne Parent
+                   GTK_FILE_CHOOSER_ACTION_SAVE,
+                   "_Save",
+                   "_Cancel");
 
   // Start im workdir
   if (*workdir) {
@@ -407,11 +407,11 @@ static void load_native_response_cb(GtkNativeDialog *ndlg, gint response_id, gpo
 static void audio_profile_load_cb(GtkWidget *widget, gpointer user_data) {
   GtkFileChooserNative *native;
   native = gtk_file_chooser_native_new(
-             "Import deskHPSDR Audio Profile",
-             NULL,                           // kein Parent
-             GTK_FILE_CHOOSER_ACTION_OPEN,
-             "_Open",
-             "_Cancel");
+                   "Import deskHPSDR Audio Profile",
+                   NULL,                           // kein Parent
+                   GTK_FILE_CHOOSER_ACTION_OPEN,
+                   "_Open",
+                   "_Cancel");
 
   // Start im workdir
   if (*workdir) {
@@ -502,7 +502,7 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
 
 static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
-  int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget)); // Rückgabe als Index
+  int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));    // Rückgabe als Index
 
   if (i != mic_prof.nr) {
     mic_prof.nr = i;
@@ -527,7 +527,7 @@ static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
 // Callback für den "Yes"-Button
 static void aprof_save_btn_clicked(GtkWidget *widget, gpointer data) {
   // gtk_main_quit();  // Beendet das GTK-Fenster
-  gtk_widget_destroy(GTK_WIDGET(data));  // Schließt nur das Fenster, ohne das Programm zu beenden
+  gtk_widget_destroy(GTK_WIDGET(data));    // Schließt nur das Fenster, ohne das Programm zu beenden
   // gtk_widget_destroy(aprof_dialog_win);
   char DateiName[64];
   snprintf(DateiName, sizeof(DateiName), "audio_profile_%d.prop", mic_prof.nr);
@@ -537,14 +537,14 @@ static void aprof_save_btn_clicked(GtkWidget *widget, gpointer data) {
 // Callback für den "No"-Button
 static void aprof_nosave_btn_clicked(GtkWidget *widget, gpointer data) {
   // gtk_main_quit();  // Beendet das GTK-Fenster
-  gtk_widget_destroy(GTK_WIDGET(data));  // Schließt nur das Fenster, ohne das Programm zu beenden
+  gtk_widget_destroy(GTK_WIDGET(data));    // Schließt nur das Fenster, ohne das Programm zu beenden
 }
 
 // Funktion, die auf die Enter-Taste reagiert
 gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   if (event->keyval == GDK_KEY_Return) {
     // Falls Enter gedrückt wurde, den Load-Button klicken
-    gtk_button_clicked(GTK_BUTTON(data));  // data ist hier der Load-Button
+    gtk_button_clicked(GTK_BUTTON(data));    // data ist hier der Load-Button
     return TRUE;
   }
 
@@ -568,7 +568,7 @@ void showAudioProfileSaveDialog(void) {
   gtk_window_set_title(GTK_WINDOW(aprof_dialog_win), _title);
   gtk_window_set_default_size(GTK_WINDOW(aprof_dialog_win), window_width, window_height);
   g_signal_connect(aprof_dialog_win, "destroy", G_CALLBACK(aprof_nosave_btn_clicked), aprof_dialog_win);
-  g_signal_connect(aprof_dialog_win, "delete_event", G_CALLBACK (aprof_nosave_btn_clicked), aprof_dialog_win);
+  g_signal_connect(aprof_dialog_win, "delete_event", G_CALLBACK(aprof_nosave_btn_clicked), aprof_dialog_win);
   // Entferne die Fensterdekorationen (Schließen-Button, etc.)
   gtk_window_set_decorated(GTK_WINDOW(aprof_dialog_win), FALSE);
   // Berechne die mittige Position auf dem Bildschirm
@@ -584,28 +584,28 @@ void showAudioProfileSaveDialog(void) {
   grid = gtk_grid_new();
   gtk_container_add(GTK_CONTAINER(aprof_dialog_win), grid);
   // Setze die Ränder des Fensters mit Container-Setup (falls nötig)
-  gtk_container_set_border_width(GTK_CONTAINER(aprof_dialog_win), 20);  // 20px Abstand vom Fensterrand
+  gtk_container_set_border_width(GTK_CONTAINER(aprof_dialog_win), 20);   // 20px Abstand vom Fensterrand
   // Label hinzufügen
   snprintf(_dialog, 64, "Save now your TX-EQ settings to current Mic Profile [%d] ?", mic_prof.nr);
   label = gtk_label_new(_dialog);
   // Pango-Layout für Textgröße anpassen
-  PangoFontDescription *font_desc = pango_font_description_from_string("Arial 18"); // Schriftart und Größe
+  PangoFontDescription *font_desc = pango_font_description_from_string("Arial 18");  // Schriftart und Größe
   gtk_widget_override_font(label, font_desc);  // Wendet die Schriftart auf das Label an
   // Definiere die Textfarbe
   gdk_rgba_parse(&color_for_dialog, "blue");
   // Setze die Textfarbe für das Label
   gtk_widget_override_color(label, GTK_STATE_FLAG_NORMAL, &color_for_dialog);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1); // Label in Zeile 0, Spalte 0 (über 2 Spalten)
+  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1);   // Label in Zeile 0, Spalte 0 (über 2 Spalten)
   // "Yes"-Button hinzufügen
   aprof_save_button = gtk_button_new_with_label("Yes");
   gtk_widget_override_font(aprof_save_button, font_desc);
   g_signal_connect(aprof_save_button, "clicked", G_CALLBACK(aprof_save_btn_clicked), aprof_dialog_win);
-  gtk_grid_attach(GTK_GRID(grid), aprof_save_button, 0, 1, 1, 1); // Button in Zeile 1, Spalte 0
+  gtk_grid_attach(GTK_GRID(grid), aprof_save_button, 0, 1, 1, 1);   // Button in Zeile 1, Spalte 0
   // "No"-Button hinzufügen
   aprof_nosave_button = gtk_button_new_with_label("No");
   gtk_widget_override_font(aprof_nosave_button, font_desc);
   g_signal_connect(aprof_nosave_button, "clicked", G_CALLBACK(aprof_nosave_btn_clicked), aprof_dialog_win);
-  gtk_grid_attach(GTK_GRID(grid), aprof_nosave_button, 1, 1, 1, 1); // Button in Zeile 1, Spalte 1
+  gtk_grid_attach(GTK_GRID(grid), aprof_nosave_button, 1, 1, 1, 1);   // Button in Zeile 1, Spalte 1
   // Widgets in den mittleren Bereich des Grids verschieben
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
@@ -726,7 +726,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
   BANDSETTINGS *bs = band_get_settings(b);
   int c = GPOINTER_TO_INT(data);
   double v = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  int    vi = (v >= 0.0) ? (int) (v + 0.5) : (int) (v - 0.5);
+  int    vi = (v >= 0.0) ? (int)(v + 0.5) : (int)(v - 0.5);
   int d = c & 0xFF00;   // The command class, TX/CFCFREQ/CFCLVL/CFCPOST/DEXP
   int e = c & 0x00FF;   // channel No. for CRCFREQ/CFCLVL/CFCPOST
 
@@ -1031,11 +1031,11 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       tx_set_filter(transmitter);
 
       if (v) {
-        gtk_widget_set_sensitive (tx_spin_low, FALSE);
-        gtk_widget_set_sensitive (tx_spin_high, FALSE);
+        gtk_widget_set_sensitive(tx_spin_low, FALSE);
+        gtk_widget_set_sensitive(tx_spin_high, FALSE);
       } else {
-        gtk_widget_set_sensitive (tx_spin_low, TRUE);
-        gtk_widget_set_sensitive (tx_spin_high, TRUE);
+        gtk_widget_set_sensitive(tx_spin_low, TRUE);
+        gtk_widget_set_sensitive(tx_spin_high, TRUE);
       }
 
 #if defined (__CPYMODE__)
@@ -1052,7 +1052,7 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
           transmitter->local_microphone = 1;
         } else {
           transmitter->local_microphone = 0;
-          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
+          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
         }
       } else {
         if (transmitter->local_microphone) {
@@ -1211,10 +1211,10 @@ static void tune_drive_step_changed_cb(GtkComboBox *widget, gpointer data) {
   if (tx_tune_drive_spin != NULL) {
     g_signal_handler_block(G_OBJECT(tx_tune_drive_spin), tx_tune_drive_spin_signal_id);
     gtk_spin_button_set_increments(GTK_SPIN_BUTTON(tx_tune_drive_spin),
-                                   (double)transmitter->tune_drive_step,
-                                   (double)transmitter->tune_drive_step);
+                                   (double) transmitter->tune_drive_step,
+                                   (double) transmitter->tune_drive_step);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_tune_drive_spin),
-                              (double)transmitter->tune_drive);
+                              (double) transmitter->tune_drive);
     g_signal_handler_unblock(G_OBJECT(tx_tune_drive_spin), tx_tune_drive_spin_signal_id);
   }
 
@@ -1236,19 +1236,19 @@ void tx_menu(GtkWidget *parent) {
   char _title[64];
   snprintf(_title, 64, "%s TX Menu (Mic profile:%d)", PGNAME, mic_prof.nr);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 0);
-  gtk_grid_set_column_homogeneous (GTK_GRID(grid), TRUE);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 0);
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_container_add(GTK_CONTAINER(content), grid);
   int row = 0;
   int col = 0;
   btn = gtk_button_new_with_label("Close");
   gtk_widget_set_name(btn, "close_button");
-  g_signal_connect (btn, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(btn, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   //
   // Must init the containers here since setting the buttons emits
@@ -1291,8 +1291,8 @@ void tx_menu(GtkWidget *parent) {
   //
   gtk_grid_attach(GTK_GRID(grid), tx_container, 0, 1, 5, 1);
   GtkWidget *tx_grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(tx_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(tx_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(tx_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(tx_grid), 5);
   gtk_container_add(GTK_CONTAINER(tx_container), tx_grid);
   row = 0;
 
@@ -1330,7 +1330,7 @@ void tx_menu(GtkWidget *parent) {
       gchar *label = g_strdup_printf("Mic Profile %d (%s)", i, mic_prof.desc[i]);      // Beschriftung erstellen
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(audio_profile), id, label);
       g_free(id);    // Speicher freigeben
-      g_free(label); // Speicher freigeben
+      g_free(label);  // Speicher freigeben
     }
 
     if (mic_prof.nr > 0 && mic_prof.nr < 3) {
@@ -1373,7 +1373,7 @@ void tx_menu(GtkWidget *parent) {
                                      "(if your SDR-TRX hasn't an own mic input)");
     gtk_widget_set_halign(btn, GTK_ALIGN_CENTER);
     gtk_widget_set_name(btn, "smallabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->local_microphone);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->local_microphone);
     gtk_grid_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
     g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_LOCAL_MIC));
     input = gtk_combo_box_text_new();
@@ -1431,7 +1431,7 @@ void tx_menu(GtkWidget *parent) {
     g_signal_connect(btn, "changed", G_CALLBACK(mic_in_cb), NULL);
 
     if (transmitter->local_microphone) {
-      gtk_widget_set_sensitive (btn, FALSE);
+      gtk_widget_set_sensitive(btn, FALSE);
     }
 
     col++;
@@ -1447,7 +1447,7 @@ void tx_menu(GtkWidget *parent) {
     g_signal_connect(G_OBJECT(btn), "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_LINEIN));
 
     if (transmitter->local_microphone) {
-      gtk_widget_set_sensitive (btn, FALSE);
+      gtk_widget_set_sensitive(btn, FALSE);
     }
 
     row++;
@@ -1464,25 +1464,25 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   tx_spin_low = gtk_spin_button_new_with_range(0.0, 8000.0, 50.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_spin_low), (double)tx_filter_low);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_spin_low), (double) tx_filter_low);
   gtk_grid_attach(GTK_GRID(tx_grid), tx_spin_low, col, row, 1, 1);
   g_signal_connect(tx_spin_low, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FILTER_LOW));
   col++;
   btn = gtk_check_button_new_with_label("TX uses RX Filter");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->use_rx_filter);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->use_rx_filter);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_USE_RX_FILTER));
   col++;
   btn = gtk_check_button_new_with_label("Local Mic PreAmp Gain");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->addgain_enable);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->addgain_enable);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_ADDGAIN_ENABLE));
   col++;
   btn = gtk_spin_button_new_with_range(1.0, 20.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->addgain_gain);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->addgain_gain);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_ADDGAIN_GAIN));
   row++;
@@ -1493,14 +1493,14 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   tx_spin_high = gtk_spin_button_new_with_range(0.0, 8000.0, 50.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_spin_high), (double)tx_filter_high);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_spin_high), (double) tx_filter_high);
   gtk_grid_attach(GTK_GRID(tx_grid), tx_spin_high, col, row, 1, 1);
   g_signal_connect(tx_spin_high, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FILTER_HIGH));
   col++;
 
   if (transmitter->use_rx_filter) {
-    gtk_widget_set_sensitive (tx_spin_low, FALSE);
-    gtk_widget_set_sensitive (tx_spin_high, FALSE);
+    gtk_widget_set_sensitive(tx_spin_low, FALSE);
+    gtk_widget_set_sensitive(tx_spin_high, FALSE);
   }
 
   btn = gtk_check_button_new_with_label("Tune Drive ≙ TX drive");
@@ -1508,7 +1508,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(btn,
                               "ENABLED: [TUNE_DRIVE] use [TX_DRIVE] settings.\n\n"
                               "DISABLED: [TUNE_DRIVE] use own settings.");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->tune_use_drive);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->tune_use_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_TUNE_USE_DRIVE));
   col++;
@@ -1517,10 +1517,10 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
-  btn = gtk_spin_button_new_with_range(0.0, 100.0, (double)transmitter->tune_drive_step);
+  btn = gtk_spin_button_new_with_range(0.0, 100.0, (double) transmitter->tune_drive_step);
   tx_tune_drive_spin = btn;
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(btn), 0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->tune_drive);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->tune_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   tx_tune_drive_spin_signal_id = g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb),
                                  GINT_TO_POINTER(TX_TUNE_DRIVE));
@@ -1532,7 +1532,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(btn,
                               "ENABLED: Settings for [TX_DRIVE] and [TUNE_DRIVE] will be saved and restored per band.\n\n"
                               "DISABLED: Global settings for [TX_DRIVE] and [TUNE_DRIVE] will be used for all bands.");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->drive_per_band);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->drive_per_band);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_DRIVE_PER_BAND));
   //---------------------------------------------------------------------------------------------------------------
@@ -1588,13 +1588,13 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_spin_button_new_with_range(-220.0, 100.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->panadapter_high);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->panadapter_high);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_PAN_HIGH));
   col++;
   btn = gtk_check_button_new_with_label("SWR Protection");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->swr_protection);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->swr_protection);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_SWR_PROTECTION));
   col++;
@@ -1604,7 +1604,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_spin_button_new_with_range(1.0, 10.0, 0.1);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->swr_alarm);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->swr_alarm);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_SWR_ALARM));
   row++;
@@ -1615,13 +1615,13 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_spin_button_new_with_range(-400.0, 100.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->panadapter_low);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->panadapter_low);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_PAN_LOW));
   col++;
   btn = gtk_check_button_new_with_label("CTCSS Enable");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->ctcss_enabled);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->ctcss_enabled);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_CTCSS_ENABLE));
   col++;
@@ -1648,13 +1648,13 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_spin_button_new_with_range(5.0, 25.0, 5.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->panadapter_step);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->panadapter_step);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_PAN_STEP));
   col++;
   btn = gtk_check_button_new_with_label("FM PreEmp/ALC");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), !transmitter->pre_emphasize);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), !transmitter->pre_emphasize);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_FM_EMP));
   col++;
@@ -1664,7 +1664,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_spin_button_new_with_range(0.0, 1.0, 0.1);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->am_carrier_level);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->am_carrier_level);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_AM_CARRIER));
   row++;
@@ -1675,13 +1675,13 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->fps);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->fps);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FPS));
   col++;
   btn = gtk_check_button_new_with_label("Fill Panadapter");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->display_filled);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->display_filled);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_DISPLAY_FILLED));
   col++;
@@ -1699,23 +1699,23 @@ void tx_menu(GtkWidget *parent) {
   //
   gtk_grid_attach(GTK_GRID(grid), cfc_container, 0, 1, 5, 1);
   GtkWidget *cfc_grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(cfc_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(cfc_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(cfc_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(cfc_grid), 5);
   gtk_container_add(GTK_CONTAINER(cfc_container), cfc_grid);
   row = 0;
   btn = gtk_check_button_new_with_label("Use Pre-CFC");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->cfc);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->cfc);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 0, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(CFC_ONOFF));
   btn = gtk_check_button_new_with_label("Use Post-CFC");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->cfc_eq);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->cfc_eq);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(CFC_EQ));
   btn = gtk_check_button_new_with_label("Phase Rotator");
   gtk_widget_set_name(btn, "boldlabel_blue");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->phrot_enable);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->phrot_enable);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_PHROT_ENABLE));
   btn = gtk_spin_button_new_with_range(1.0, 15.0, 1.0);
@@ -1738,11 +1738,11 @@ void tx_menu(GtkWidget *parent) {
   btn = gtk_check_button_new_with_label("Leveler");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->lev_enable);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->lev_enable);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_LEVELER_ENABLE));
   btn = gtk_spin_button_new_with_range(0.0, 15.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->lev_gain);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->lev_gain);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 4, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_LEVELER_GAIN));
   btn = gtk_spin_button_new_with_range(0.0, 500.0, 1.0);
@@ -1764,11 +1764,11 @@ void tx_menu(GtkWidget *parent) {
                                    "Requires ENABLE(>1) when using the CESSB function");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->compressor);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->compressor);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_COMP_ENABLE));
   btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->compressor_level);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->compressor_level);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 4, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_COMP));
   btn = gtk_check_button_new_with_label("Auto CESSB");
@@ -1777,7 +1777,7 @@ void tx_menu(GtkWidget *parent) {
                                    "- TX-DSP is NOT set to Low Latency");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->cessb_enable);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->cessb_enable);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 5, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_CESSB_ENABLE));
   row++;
@@ -1786,7 +1786,7 @@ void tx_menu(GtkWidget *parent) {
                                    "If ON:\nNo roll-off outside the specified passband (default is OFF).");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->eq_ctfmode);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->eq_ctfmode);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_CTFMODE));
   row++;
@@ -1871,18 +1871,18 @@ void tx_menu(GtkWidget *parent) {
   //
   gtk_grid_attach(GTK_GRID(grid), dexp_container, 0, 1, 5, 1);
   GtkWidget *dexp_grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(dexp_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(dexp_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(dexp_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(dexp_grid), 5);
   gtk_container_add(GTK_CONTAINER(dexp_container), dexp_grid);
   row = 0;
   btn = gtk_check_button_new_with_label("Use DEXP");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->dexp);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->dexp);
   gtk_grid_attach(GTK_GRID(dexp_grid), btn, 0, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(DEXP_ONOFF));
   btn = gtk_check_button_new_with_label("Use Side Channel Filter");
   gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->dexp_filter);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->dexp_filter);
   gtk_grid_attach(GTK_GRID(dexp_grid), btn, 2, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(DEXP_FILTER));
   row++;
@@ -1969,8 +1969,8 @@ void tx_menu(GtkWidget *parent) {
   //
   gtk_grid_attach(GTK_GRID(grid), peaks_container, 0, 1, 5, 1);
   GtkWidget *peaks_grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(peaks_grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(peaks_grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(peaks_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(peaks_grid), 5);
   gtk_container_add(GTK_CONTAINER(peaks_container), peaks_grid);
   col = 0;
   row = 0;
@@ -2000,7 +2000,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(peaks_grid), label, col, ++row, 1, 1);
   col++;
   GtkWidget *panadapter_num_peaks_r = gtk_spin_button_new_with_range(1.0, 10.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_num_peaks_r), (double)transmitter->panadapter_num_peaks);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_num_peaks_r), (double) transmitter->panadapter_num_peaks);
   gtk_widget_show(panadapter_num_peaks_r);
   gtk_grid_attach(GTK_GRID(peaks_grid), panadapter_num_peaks_r, col, row, 1, 1);
   g_signal_connect(panadapter_num_peaks_r, "value_changed", G_CALLBACK(tx_panadapter_num_peaks_value_changed_cb), NULL);
@@ -2013,7 +2013,7 @@ void tx_menu(GtkWidget *parent) {
   col++;
   GtkWidget *panadapter_ignore_range_divider_r = gtk_spin_button_new_with_range(1.0, 150.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_ignore_range_divider_r),
-                            (double)transmitter->panadapter_ignore_range_divider);
+                            (double) transmitter->panadapter_ignore_range_divider);
   gtk_widget_show(panadapter_ignore_range_divider_r);
   gtk_grid_attach(GTK_GRID(peaks_grid), panadapter_ignore_range_divider_r, col, row, 1, 1);
   g_signal_connect(panadapter_ignore_range_divider_r, "value_changed",
@@ -2027,7 +2027,7 @@ void tx_menu(GtkWidget *parent) {
   col++;
   GtkWidget *panadapter_ignore_noise_percentile_r = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(panadapter_ignore_noise_percentile_r),
-                            (double)transmitter->panadapter_ignore_noise_percentile);
+                            (double) transmitter->panadapter_ignore_noise_percentile);
   gtk_widget_show(panadapter_ignore_noise_percentile_r);
   gtk_grid_attach(GTK_GRID(peaks_grid), panadapter_ignore_noise_percentile_r, col, row, 1, 1);
   g_signal_connect(panadapter_ignore_noise_percentile_r, "value_changed",

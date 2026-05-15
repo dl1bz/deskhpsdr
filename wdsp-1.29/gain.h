@@ -29,10 +29,10 @@ warren@wpratt.com
 
 typedef struct _gain {
   int run;
-  int* prun;
+  int *prun;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double Igain;
   double Qgain;
   CRITICAL_SECTION cs_update;

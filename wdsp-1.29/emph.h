@@ -39,8 +39,8 @@ typedef struct _emphp {
   int size;
   int nc;
   int mp;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int ctype;
   double f_low;
   double f_high;
@@ -49,7 +49,7 @@ typedef struct _emphp {
 } emphp, *EMPHP;
 
 extern EMPHP create_emphp (int run, int position, int size, int nc, int mp,
-                           double* in, double* out, int rate, int ctype, double f_low, double f_high);
+                           double *in, double *out, int rate, int ctype, double f_low, double f_high);
 
 extern void destroy_emphp (EMPHP a);
 
@@ -84,14 +84,14 @@ typedef struct _emph {
   int run;
   int position;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int ctype;
   double f_low;
   double f_high;
-  double* infilt;
-  double* product;
-  double* mults;
+  double *infilt;
+  double *product;
+  double *mults;
   double rate;
   fftw_plan CFor;
   fftw_plan CRev;

@@ -119,22 +119,22 @@ extern CHANNEL *band_channels_60m;
 //extern CHANNEL band_channels_60m_US[US_CHANNEL_ENTRIES];
 //extern CHANNEL band_channels_60m_VFO[VFO_CHANNEL_ENTRIES];
 
-extern BAND *band_get_band(int b);
-extern BANDSETTINGS *band_get_settings(int b);
-extern int get_band_from_frequency(long long f);
+extern BAND *band_get_band (int b);
+extern BANDSETTINGS *band_get_settings (int b);
+extern int get_band_from_frequency (long long f);
 
-extern BANDSTACK *bandstack_get_bandstack(int band);
+extern BANDSTACK *bandstack_get_bandstack (int band);
 
-extern void radio_change_region(int region);
+extern void radio_change_region (int region);
 
-extern void bandSaveState(void);
-extern void bandRestoreState(void);
+extern void bandSaveState (void);
+extern void bandRestoreState (void);
 
-char* getFrequencyInfo(long long frequency, int filter_low, int filter_high);
-int TransmitAllowed(void);
+char *getFrequencyInfo (long long frequency, int filter_low, int filter_high);
+int TransmitAllowed (void);
 
-extern void band_minus(int id);
-extern void band_plus(int id);
-extern void PaCalibrationSave(void);
-extern void PaCalibrationLoad(const char *filename);
+extern void band_minus (int id);
+extern void band_plus (int id);
+extern void PaCalibrationSave (void);
+extern gboolean PaCalibrationLoad (const char* filename);
 #endif

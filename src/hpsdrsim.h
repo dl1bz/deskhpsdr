@@ -121,7 +121,7 @@ EXTERN double c1, c2, maxpwr;
 //
 // Forward declarations for new protocol stuff
 //
-void   new_protocol_general_packet(unsigned char *buffer);
+void   new_protocol_general_packet(unsigned char* buffer);
 int    new_protocol_running(void);
 
 #ifndef __APPLE__
@@ -155,8 +155,8 @@ EXTERN int speed;
 // message printing
 //
 #include <stdarg.h>
-EXTERN void t_print(const char *format, ...);
-EXTERN void t_perror(const char *string);
+EXTERN void t_print(const char* format, ...);
+EXTERN void t_perror(const char* string);
 
 //
 // define PACKETLIST to get info about every packet received

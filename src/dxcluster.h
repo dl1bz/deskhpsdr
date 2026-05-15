@@ -23,13 +23,13 @@
 extern "C" {
 #endif
 
-void dxcluster_open_window(const char *host,
-                           long int portaddress,
-                           const char *callsign,
-                           int width,
-                           int height,
-                           int pos_x,
-                           int pos_y);
+void dxcluster_open_window(const char* host,
+long int portaddress,
+const char *callsign,
+int width,
+int height,
+int pos_x,
+int pos_y);
 
 #ifdef __cplusplus
 }

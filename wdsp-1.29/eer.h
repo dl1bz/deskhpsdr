@@ -31,9 +31,9 @@ typedef struct _eer {
   int run;
   int amiq;
   int size;
-  double* in;
-  double* out;
-  double* outM;
+  double *in;
+  double *out;
+  double *outM;
   int rate;
   double mgain;
   double pgain;

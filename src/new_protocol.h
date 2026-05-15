@@ -78,27 +78,27 @@ typedef struct mybuffer_ mybuffer;
 
 #define MIC_SAMPLES 64
 
-extern void schedule_high_priority(void);
-extern void schedule_general(void);
-extern void schedule_receive_specific(void);
-extern void schedule_transmit_specific(void);
+extern void schedule_high_priority (void);
+extern void schedule_general (void);
+extern void schedule_receive_specific (void);
+extern void schedule_transmit_specific (void);
 
-extern void new_protocol_init(void);
+extern void new_protocol_init (void);
 
-extern void filter_board_changed(void);
-extern void pa_changed(void);
-extern void tuner_changed(void);
+extern void filter_board_changed (void);
+extern void pa_changed (void);
+extern void tuner_changed (void);
 
-extern void new_protocol_audio_samples(short left_audio_sample, short right_audio_sample);
-extern void new_protocol_iq_samples(int isample, int qsample);
-extern void new_protocol_flush_iq_samples(void);
-extern void new_protocol_cw_audio_samples(short l, short r);
+extern void new_protocol_audio_samples (short left_audio_sample, short right_audio_sample);
+extern void new_protocol_iq_samples (int isample, int qsample);
+extern void new_protocol_flush_iq_samples (void);
+extern void new_protocol_cw_audio_samples (short l, short r);
 
-extern void new_protocol_menu_start(void);
-extern void new_protocol_menu_stop(void);
-extern void saturn_post_iq_data(int ddc, mybuffer *buffer);
-extern void saturn_post_micaudio(int bytes, mybuffer *buffer);
-extern void saturn_post_high_priority(mybuffer *buffer);
+extern void new_protocol_menu_start (void);
+extern void new_protocol_menu_stop (void);
+extern void saturn_post_iq_data (int ddc, mybuffer *buffer);
+extern void saturn_post_micaudio (int bytes, mybuffer *buffer);
+extern void saturn_post_high_priority (mybuffer *buffer);
 
 //
 // if DUMP_TX_DATA is #defined, the first 1000000 samples

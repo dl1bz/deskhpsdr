@@ -49,8 +49,8 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
-static void smeter_select_cb (GtkToggleButton *widget, gpointer        data) {
-  int val = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+static void smeter_select_cb(GtkToggleButton *widget, gpointer        data) {
+  int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
   switch (val) {
   case 0:
@@ -63,12 +63,12 @@ static void smeter_select_cb (GtkToggleButton *widget, gpointer        data) {
   }
 }
 
-static void analog_cb (GtkToggleButton *widget, gpointer        data) {
-  analog_meter = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+static void analog_cb(GtkToggleButton *widget, gpointer        data) {
+  analog_meter = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 }
 
 static void alc_select_cb(GtkToggleButton *widget, gpointer data) {
-  int val = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
   switch (val) {
   case 0:
@@ -85,7 +85,7 @@ static void alc_select_cb(GtkToggleButton *widget, gpointer data) {
   }
 }
 
-void meter_menu (GtkWidget *parent) {
+void meter_menu(GtkWidget *parent) {
   int box_width = 300;
   int widget_heigth = 50;
   GtkWidget *w;
@@ -98,14 +98,14 @@ void meter_menu (GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Meter", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
   gtk_widget_set_margin_top(grid, 0);    // Kein Abstand oben
-  gtk_widget_set_margin_bottom(grid, 0); // Kein Abstand unten
+  gtk_widget_set_margin_bottom(grid, 0);  // Kein Abstand unten
   gtk_widget_set_margin_start(grid, 3);  // Kein Abstand am Anfang
   gtk_widget_set_margin_end(grid, 3);    // Kein Abstand am Ende
   //----------------------------------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ void meter_menu (GtkWidget *parent) {
   gtk_widget_set_margin_end(close_b, 0);    // rechter Rand (Ende)
   gtk_widget_set_halign(close_b, GTK_ALIGN_START);
   gtk_widget_set_valign(close_b, GTK_ALIGN_CENTER);
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_box_pack_start(GTK_BOX(box_Z0), close_b, FALSE, FALSE, 0);
   gtk_grid_attach(GTK_GRID(grid), box_Z0, 0, 0, 1, 1);
   //----------------------------------------------------------------------------------------------------------

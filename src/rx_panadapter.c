@@ -88,7 +88,7 @@ typedef struct {
 
 static PAN_PEAK_HOLD pan_peak_hold[PAN_PEAK_HOLD_MAX_RX];
 
-void rx_panadapter_peak_hold_clear(RECEIVER *rx) {
+void rx_panadapter_peak_hold_clear (RECEIVER *rx) {
   if (!rx) { return; }
 
   if (rx->id < 0 || rx->id >= PAN_PEAK_HOLD_MAX_RX) { return; }
@@ -105,7 +105,7 @@ void rx_panadapter_peak_hold_clear(RECEIVER *rx) {
   }
 }
 
-static void rx_panadapter_peak_hold_shift(PAN_PEAK_HOLD *ph, int width, int dp) {
+static void rx_panadapter_peak_hold_shift (PAN_PEAK_HOLD *ph, int width, int dp) {
   if (!ph || !ph->buf || !ph->age) { return; }
 
   if (dp == 0) { return; }
@@ -121,8 +121,8 @@ static void rx_panadapter_peak_hold_shift(PAN_PEAK_HOLD *ph, int width, int dp) 
 
   if (dp > 0) {
     // shift left by dp: new[x] = old[x+dp]
-    memmove(&ph->buf[0], &ph->buf[dp], (size_t)(width - dp) * sizeof(float));
-    memmove(&ph->age[0], &ph->age[dp], (size_t)(width - dp) * sizeof(uint16_t));
+    memmove (&ph->buf[0], &ph->buf[dp], (size_t) (width - dp) * sizeof (float));
+    memmove (&ph->age[0], &ph->age[dp], (size_t) (width - dp) * sizeof (uint16_t));
 
     for (int i = width - dp; i < width; i++) {
       ph->buf[i] = -200.0f;
@@ -131,8 +131,8 @@ static void rx_panadapter_peak_hold_shift(PAN_PEAK_HOLD *ph, int width, int dp) 
   } else {
     // shift right by -dp
     int sh = -dp;
-    memmove(&ph->buf[sh], &ph->buf[0], (size_t)(width - sh) * sizeof(float));
-    memmove(&ph->age[sh], &ph->age[0], (size_t)(width - sh) * sizeof(uint16_t));
+    memmove (&ph->buf[sh], &ph->buf[0], (size_t) (width - sh) * sizeof (float));
+    memmove (&ph->age[sh], &ph->age[0], (size_t) (width - sh) * sizeof (uint16_t));
 
     for (int i = 0; i < sh; i++) {
       ph->buf[i] = -200.0f;
@@ -160,7 +160,7 @@ typedef struct {
 static PAN_LABEL pan_labels[MAX_PAN_LABELS];
 static int pan_label_count = 0;
 
-void panadapter_set_max_label_rows(int r) {
+void panadapter_set_max_label_rows (int r) {
   if (r < 1) { r = 1; }
 
   if (r > 32) { r = 32; }   /* arbitrary upper limit */
@@ -172,7 +172,7 @@ void panadapter_set_max_label_rows(int r) {
  * Falls ja: expire_time aktualisieren und TRUE zurückgeben.
  * Falls nein: FALSE (neues Label muss angelegt werden).
 */
-static gboolean pan_dxspot_update_if_exists(long long freq_hz, const char *text, int lifetime_ms) {
+static gboolean pan_dxspot_update_if_exists (long long freq_hz, const char* text, int lifetime_ms) {
   gint64 now;
   int i;
 
@@ -191,13 +191,13 @@ static gboolean pan_dxspot_update_if_exists(long long freq_hz, const char *text,
       continue;
     }
 
-    if (g_strcmp0(pl->label, text) != 0) {
+    if (g_strcmp0 (pl->label, text) != 0) {
       continue;
     }
 
     if (lifetime_ms > 0) {
       now = g_get_monotonic_time();      /* us */
-      pl->expire_time = now + (gint64)lifetime_ms * 1000;
+      pl->expire_time = now + (gint64) lifetime_ms * 1000;
     } else {
       pl->expire_time = 0;
     }
@@ -212,7 +212,7 @@ static gboolean pan_dxspot_update_if_exists(long long freq_hz, const char *text,
 * - bevorzugt deaktivierte Einträge wiederverwenden
 * - wenn alle Slots belegt/aktiv sind: FIFO -> ältestes Label (Index 0) raus
 */
-static PAN_LABEL *pan_label_get_slot(void) {
+static PAN_LABEL *pan_label_get_slot (void) {
   int i;
 
   /* 1) deaktivierte Einträge wiederverwenden */
@@ -228,15 +228,15 @@ static PAN_LABEL *pan_label_get_slot(void) {
   }
 
   /* 3) FIFO: ältestes Label (Index 0) verwerfen, Rest nach vorne schieben */
-  memmove(&pan_labels[0], &pan_labels[1],
-          (MAX_PAN_LABELS - 1) * sizeof(PAN_LABEL));
+  memmove (&pan_labels[0], &pan_labels[1],
+           (MAX_PAN_LABELS - 1) * sizeof (PAN_LABEL));
   pan_label_count = MAX_PAN_LABELS - 1;
   return &pan_labels[pan_label_count++];
 }
 
-static int pan_label_cmp(const void *a, const void *b) {
-  const PAN_LABEL_POS *pa = (const PAN_LABEL_POS *)a;
-  const PAN_LABEL_POS *pb = (const PAN_LABEL_POS *)b;
+static int pan_label_cmp (const void* a, const void* b) {
+  const PAN_LABEL_POS *pa = (const PAN_LABEL_POS*) a;
+  const PAN_LABEL_POS *pb = (const PAN_LABEL_POS*) b;
 
   if (pa->x < pb->x) { return -1; }
 
@@ -249,7 +249,7 @@ static int pan_label_cmp(const void *a, const void *b) {
 // pan_add_label(7100000LL, "Beacon");
 // pan_add_label(7074000LL, "Relais");
 
-void pan_add_label(long long freq, const char *text) {
+void pan_add_label (long long freq, const char* text) {
   PAN_LABEL *pl;
 
   if (text == NULL) {
@@ -259,14 +259,14 @@ void pan_add_label(long long freq, const char *text) {
   pl = pan_label_get_slot();
   pl->freq = freq;
   pl->enabled = TRUE;
-  g_strlcpy(pl->label, text, sizeof(pl->label));
+  g_strlcpy (pl->label, text, sizeof (pl->label));
   pl->expire_time = 0;  /* 0 => kein automatisches Entfernen */
 }
 
 // Example:
 // pan_add_label_timeout(7100000LL, "Spot", 5000);  // 5 Sekunden sichtbar
 
-void pan_add_label_timeout(long long freq, const char *text, int lifetime_ms) {
+void pan_add_label_timeout (long long freq, const char* text, int lifetime_ms) {
   PAN_LABEL *pl;
 
   if (text == NULL) {
@@ -276,21 +276,21 @@ void pan_add_label_timeout(long long freq, const char *text, int lifetime_ms) {
   pl = pan_label_get_slot();
   pl->freq = freq;
   pl->enabled = TRUE;
-  g_strlcpy(pl->label, text, sizeof(pl->label));
+  g_strlcpy (pl->label, text, sizeof (pl->label));
 
   if (lifetime_ms > 0) {
     gint64 now = g_get_monotonic_time();  /* us */
-    pl->expire_time = now + (gint64)lifetime_ms * 1000;
+    pl->expire_time = now + (gint64) lifetime_ms * 1000;
   } else {
     pl->expire_time = 0;  /* 0 => kein Timeout */
   }
 }
 
-void pan_clear_labels(void) {
+void pan_clear_labels (void) {
   pan_label_count = 0;
 }
 
-void pan_add_dx_spot(double freq_khz, const char *dxcall) {
+void pan_add_dx_spot (double freq_khz, const char* dxcall) {
   long long freq_hz;
   char label[32];
 
@@ -305,17 +305,17 @@ void pan_add_dx_spot(double freq_khz, const char *dxcall) {
   }
 
   /* Cluster-Frequenz kHz → Hz, sauber gerundet */
-  freq_hz = (long long)(freq_khz * 1000.0 + 0.5);
+  freq_hz = (long long) (freq_khz * 1000.0 + 0.5);
   /* Label-Text – hier nur das Call, ggf. später erweitern */
-  g_strlcpy(label, dxcall, sizeof(label));
+  g_strlcpy (label, dxcall, sizeof (label));
 
   /* Doublet-Check: gleicher Call auf gleicher Frequenz? -> nur Timeout erneuern */
-  if (pan_dxspot_update_if_exists(freq_hz, label, lifetime_ms)) {
+  if (pan_dxspot_update_if_exists (freq_hz, label, lifetime_ms)) {
     return;
   }
 
   /* Kein bestehender Eintrag -> neues Label anlegen */
-  pan_add_label_timeout(freq_hz, label, lifetime_ms);
+  pan_add_label_timeout (freq_hz, label, lifetime_ms);
 }
 
 //------------------------------------------------------------------------------
@@ -328,43 +328,43 @@ static GdkPixbuf *worldmap_scaled = NULL;
   Wir berechnen und zeichnen also nur, wenn notwendig und nicht mehr
   synchron zur Framerate wie bisher -> senkt CPU Last !
 */
-static void init_worldmap_pixbuf(int w, int h) {
+static void init_worldmap_pixbuf (int w, int h) {
   if (worldmap_scaled &&
-      gdk_pixbuf_get_width(worldmap_scaled) == w &&
-      gdk_pixbuf_get_height(worldmap_scaled) == h) {
+      gdk_pixbuf_get_width (worldmap_scaled) == w &&
+      gdk_pixbuf_get_height (worldmap_scaled) == h) {
     return;  // schon vorhanden in richtiger Größe
   }
 
   if (worldmap_scaled) {
-    g_object_unref(worldmap_scaled);  // wichtig: alten freigeben
+    g_object_unref (worldmap_scaled); // wichtig: alten freigeben
     worldmap_scaled = NULL;
   }
 
   GError *error = NULL;
-  GInputStream *mem_stream = g_memory_input_stream_new_from_data(worldmap_png, worldmap_png_len, NULL);
-  GdkPixbuf *raw_pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
-  g_object_unref(mem_stream);
+  GInputStream *mem_stream = g_memory_input_stream_new_from_data (worldmap_png, worldmap_png_len, NULL);
+  GdkPixbuf *raw_pixbuf = gdk_pixbuf_new_from_stream (mem_stream, NULL, &error);
+  g_object_unref (mem_stream);
 
   if (!raw_pixbuf) {
-    t_print("%s: ERROR loading map pic: %s\n", __func__, error->message);
-    g_error_free(error);
+    t_print ("%s: ERROR loading map pic: %s\n", __func__, error->message);
+    g_error_free (error);
     return;
   }
 
-  worldmap_scaled = gdk_pixbuf_scale_simple(raw_pixbuf, w, h, GDK_INTERP_BILINEAR);
-  g_object_unref(raw_pixbuf);
+  worldmap_scaled = gdk_pixbuf_scale_simple (raw_pixbuf, w, h, GDK_INTERP_BILINEAR);
+  g_object_unref (raw_pixbuf);
 }
 
-static void draw_image(cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
+static void draw_image (cairo_t* cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
   // Bild auf dem Cairo-Zeichenkontext setzen
-  gdk_cairo_set_source_pixbuf(cr, pixbuf, x_offset, y_offset);
-  cairo_paint(cr);  // Bild zeichnen
+  gdk_cairo_set_source_pixbuf (cr, pixbuf, x_offset, y_offset);
+  cairo_paint (cr); // Bild zeichnen
 }
 //------------------------------------------------------------------------------
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER *)data;
+  RECEIVER *rx = (RECEIVER*) data;
   int mywidth = gtk_widget_get_allocated_width (widget);
   int myheight = gtk_widget_get_allocated_height (widget);
 
@@ -375,28 +375,28 @@ static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfig
   rx->panadapter_surface = gdk_window_create_similar_surface (gtk_widget_get_window (widget),
                            CAIRO_CONTENT_COLOR,
                            mywidth, myheight);
-  cairo_t *cr = cairo_create(rx->panadapter_surface);
+  cairo_t *cr = cairo_create (rx->panadapter_surface);
 
   if (display_wmap) {
-    cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
+    cairo_set_source_rgba (cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
   } else {
-    cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+    cairo_set_source_rgba (cr, COLOUR_PAN_BACKGND);
   }
 
-  cairo_paint(cr);
-  cairo_destroy(cr);
+  cairo_paint (cr);
+  cairo_destroy (cr);
   return TRUE;
 }
 
-static void panadapter_apply_cursor(GtkWidget *widget) {
-  GdkWindow *window = gtk_widget_get_window(widget);
+static void panadapter_apply_cursor (GtkWidget *widget) {
+  GdkWindow *window = gtk_widget_get_window (widget);
 
   if (window != NULL) {
-    GdkCursor *cursor = g_object_get_data(G_OBJECT(widget), "pan_crosshair_cursor");
+    GdkCursor *cursor = g_object_get_data (G_OBJECT (widget), "pan_crosshair_cursor");
 
     if (cursor != NULL) {
-      if (gdk_window_get_cursor(window) != cursor) {
-        gdk_window_set_cursor(window, cursor);
+      if (gdk_window_get_cursor (window) != cursor) {
+        gdk_window_set_cursor (window, cursor);
       }
     }
   }
@@ -406,21 +406,21 @@ static void panadapter_apply_cursor(GtkWidget *widget) {
  * signal receives a ready-to-be-used cairo_t that is already
  * clipped to only draw the exposed areas of the widget
  */
-static gboolean panadapter_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
-  RECEIVER *rx = (RECEIVER *)data;
+static gboolean panadapter_draw_cb (GtkWidget *widget, cairo_t* cr, gpointer data) {
+  RECEIVER *rx = (RECEIVER*) data;
 
   if (rx->panadapter_surface) {
     cairo_set_source_surface (cr, rx->panadapter_surface, 0.0, 0.0);
     cairo_paint (cr);
   }
 
-  if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "pan_mouse_inside"))) {
-    int x = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "pan_mouse_x"));
-    int y = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "pan_mouse_y"));
+  if (GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "pan_mouse_inside"))) {
+    int x = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "pan_mouse_x"));
+    int y = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "pan_mouse_y"));
     double hz_per_pixel = rx->hz_per_pixel;
     long long frequency = vfo[rx->id].frequency;
     int mode = vfo[rx->id].mode;
-    double half = (double)rx->sample_rate * 0.5;
+    double half = (double) rx->sample_rate * 0.5;
     double min_display;
     double f;
     long long f_display;
@@ -439,144 +439,144 @@ static gboolean panadapter_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data
     }
 
     /* linke Panadapterkante */
-    min_display = (double)frequency - half + ((double)rx->pan * hz_per_pixel);
+    min_display = (double) frequency - half + ((double) rx->pan * hz_per_pixel);
     /* Frequenz unter Maus */
-    f = min_display + ((double)x * hz_per_pixel);
+    f = min_display + ((double) x * hz_per_pixel);
     /* erst hier auf Hz runden */
-    f_display = (long long)llround(f);
-    snprintf(text1, sizeof(text1), "%lld.%03lld.%03lld Hz",
-             f_display / 1000000LL,
-             llabs((f_display / 1000LL) % 1000LL),
-             llabs(f_display % 1000LL));
-    snprintf(text2, sizeof(text2), "[%.0f Hz/px]", hz_per_pixel);
-    cairo_save(cr);
-    cairo_select_font_face(cr,
-                           DISPLAY_FONT_BOLD,
-                           CAIRO_FONT_SLANT_NORMAL,
-                           CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE14);
-    cairo_set_source_rgba(cr, 1, 1, 1, 1);
-    cairo_move_to(cr, x + 10, y - 7);
-    cairo_show_text(cr, text1);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-    cairo_move_to(cr, x + 10, y + 15);
-    cairo_show_text(cr, text2);
-    cairo_restore(cr);
+    f_display = (long long) llround (f);
+    snprintf (text1, sizeof (text1), "%lld.%03lld.%03lld Hz",
+              f_display / 1000000LL,
+              llabs ((f_display / 1000LL) % 1000LL),
+              llabs (f_display % 1000LL));
+    snprintf (text2, sizeof (text2), "[%.0f Hz/px]", hz_per_pixel);
+    cairo_save (cr);
+    cairo_select_font_face (cr,
+                            DISPLAY_FONT_BOLD,
+                            CAIRO_FONT_SLANT_NORMAL,
+                            CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE14);
+    cairo_set_source_rgba (cr, 1, 1, 1, 1);
+    cairo_move_to (cr, x + 10, y - 7);
+    cairo_show_text (cr, text1);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
+    cairo_move_to (cr, x + 10, y + 15);
+    cairo_show_text (cr, text2);
+    cairo_restore (cr);
   }
 
   return FALSE;
 }
 
-static double panadapter_get_cursor_rf_frequency(RECEIVER *rx, double x) {
+static double panadapter_get_cursor_rf_frequency (RECEIVER *rx, double x) {
   double hz_per_pixel = rx->hz_per_pixel;
-  double frequency = (double)vfo[rx->id].frequency;
+  double frequency = (double) vfo[rx->id].frequency;
   int mode = vfo[rx->id].mode;
-  double half = (double)rx->sample_rate * 0.5;
+  double half = (double) rx->sample_rate * 0.5;
   double min_display;
 
   if (diversity_enabled && rx->id == 1) {
-    frequency = (double)vfo[0].frequency;
+    frequency = (double) vfo[0].frequency;
     mode = vfo[0].mode;
   }
 
   if (mode == modeCWU) {
-    frequency -= (double)cw_keyer_sidetone_frequency;
+    frequency -= (double) cw_keyer_sidetone_frequency;
   } else if (mode == modeCWL) {
-    frequency += (double)cw_keyer_sidetone_frequency;
+    frequency += (double) cw_keyer_sidetone_frequency;
   }
 
-  min_display = frequency - half + ((double)rx->pan * hz_per_pixel);
+  min_display = frequency - half + ((double) rx->pan * hz_per_pixel);
   return min_display + (x * hz_per_pixel);
 }
 
-static gboolean panadapter_button_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER *)data;
+static gboolean panadapter_button_press_event_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  RECEIVER *rx = (RECEIVER*) data;
 
   if (event->button == GDK_BUTTON_SECONDARY) {
     if (event->state & GDK_SHIFT_MASK) {
       rx->mnf = 0;
       rx->mnf_cfreq = 0.0;
       update_notch();
-      gtk_widget_queue_draw(widget);
+      gtk_widget_queue_draw (widget);
       return TRUE;
     }
 
-    rx->mnf_cfreq = panadapter_get_cursor_rf_frequency(rx, event->x);
+    rx->mnf_cfreq = panadapter_get_cursor_rf_frequency (rx, event->x);
 
     if (rx->mnf) {
       update_notch();
     } else {
-      g_idle_add(ext_start_noise, NULL);
+      g_idle_add (ext_start_noise, NULL);
     }
 
-    gtk_widget_queue_draw(widget);
+    gtk_widget_queue_draw (widget);
     return TRUE;
   }
 
-  return rx_button_press_event(widget, event, data);
+  return rx_button_press_event (widget, event, data);
 }
 
-static gboolean panadapter_button_release_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  return rx_button_release_event(widget, event, data);
+static gboolean panadapter_button_release_event_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  return rx_button_release_event (widget, event, data);
 }
 
-static gboolean panadapter_motion_notify_event_cb(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
-  panadapter_apply_cursor(widget);
-  g_object_set_data(G_OBJECT(widget), "pan_mouse_x", GINT_TO_POINTER((int)event->x));
-  g_object_set_data(G_OBJECT(widget), "pan_mouse_y", GINT_TO_POINTER((int)event->y));
-  g_object_set_data(G_OBJECT(widget), "pan_mouse_inside", GINT_TO_POINTER(1));
-  gtk_widget_queue_draw(widget);
-  return rx_motion_notify_event(widget, event, data);
+static gboolean panadapter_motion_notify_event_cb (GtkWidget *widget, GdkEventMotion *event, gpointer data) {
+  panadapter_apply_cursor (widget);
+  g_object_set_data (G_OBJECT (widget), "pan_mouse_x", GINT_TO_POINTER ((int) event->x));
+  g_object_set_data (G_OBJECT (widget), "pan_mouse_y", GINT_TO_POINTER ((int) event->y));
+  g_object_set_data (G_OBJECT (widget), "pan_mouse_inside", GINT_TO_POINTER (1));
+  gtk_widget_queue_draw (widget);
+  return rx_motion_notify_event (widget, event, data);
 }
 
-static GdkCursor *create_crosshair_cursor(GdkDisplay *display) {
+static GdkCursor *create_crosshair_cursor (GdkDisplay *display) {
   int size = 24;
   int center = size / 2;
   cairo_surface_t *surface =
-    cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
-  cairo_t *cr = cairo_create(surface);
+          cairo_image_surface_create (CAIRO_FORMAT_ARGB32, size, size);
+  cairo_t *cr = cairo_create (surface);
   /* gelbes Kreuz */
   // cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 1.0);
   /* weisses Kreuz */
-  cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
-  cairo_set_line_width(cr, 2);
-  cairo_move_to(cr, center, 0);
-  cairo_line_to(cr, center, size);
-  cairo_move_to(cr, 0, center);
-  cairo_line_to(cr, size, center);
-  cairo_stroke(cr);
-  cairo_destroy(cr);
-  GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface(surface, 0, 0, size, size);
-  cairo_surface_destroy(surface);
-  GdkCursor *cursor = gdk_cursor_new_from_pixbuf(display, pixbuf, center, center);
-  g_object_unref(pixbuf);
+  cairo_set_source_rgba (cr, 1.0, 1.0, 1.0, 1.0);
+  cairo_set_line_width (cr, 2);
+  cairo_move_to (cr, center, 0);
+  cairo_line_to (cr, center, size);
+  cairo_move_to (cr, 0, center);
+  cairo_line_to (cr, size, center);
+  cairo_stroke (cr);
+  cairo_destroy (cr);
+  GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface (surface, 0, 0, size, size);
+  cairo_surface_destroy (surface);
+  GdkCursor *cursor = gdk_cursor_new_from_pixbuf (display, pixbuf, center, center);
+  g_object_unref (pixbuf);
   return cursor;
 }
 
-static gboolean panadapter_enter_notify_event_cb(GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
-  g_object_set_data(G_OBJECT(widget), "pan_mouse_x", GINT_TO_POINTER((int)event->x));
-  g_object_set_data(G_OBJECT(widget), "pan_mouse_y", GINT_TO_POINTER((int)event->y));
-  g_object_set_data(G_OBJECT(widget), "pan_mouse_inside", GINT_TO_POINTER(1));
-  panadapter_apply_cursor(widget);
-  gtk_widget_queue_draw(widget);
+static gboolean panadapter_enter_notify_event_cb (GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
+  g_object_set_data (G_OBJECT (widget), "pan_mouse_x", GINT_TO_POINTER ((int) event->x));
+  g_object_set_data (G_OBJECT (widget), "pan_mouse_y", GINT_TO_POINTER ((int) event->y));
+  g_object_set_data (G_OBJECT (widget), "pan_mouse_inside", GINT_TO_POINTER (1));
+  panadapter_apply_cursor (widget);
+  gtk_widget_queue_draw (widget);
   return FALSE;
 }
 
-static gboolean panadapter_leave_notify_event_cb(GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
-  GdkWindow *window = gtk_widget_get_window(widget);
-  g_object_set_data(G_OBJECT(widget), "pan_mouse_inside", GINT_TO_POINTER(0));
+static gboolean panadapter_leave_notify_event_cb (GtkWidget *widget, GdkEventCrossing *event, gpointer data) {
+  GdkWindow *window = gtk_widget_get_window (widget);
+  g_object_set_data (G_OBJECT (widget), "pan_mouse_inside", GINT_TO_POINTER (0));
 
   if (window != NULL) {
-    gdk_window_set_cursor(window, NULL);
+    gdk_window_set_cursor (window, NULL);
   }
 
-  gtk_widget_queue_draw(widget);
+  gtk_widget_queue_draw (widget);
   return FALSE;
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean panadapter_scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data) {
-  return rx_scroll_event(widget, event, data);
+static gboolean panadapter_scroll_event_cb (GtkWidget *widget, GdkEventScroll *event, gpointer data) {
+  return rx_scroll_event (widget, event, data);
 }
 
 //----------------------------------------------------------------------------------------------
@@ -606,12 +606,12 @@ static short int uplimitsUKW[NUM_SWERTE] = {
   -142, -136, -130, -124, -118, -112, -106, -100, -94, -89, -84, -79, -74, -69, -64, -54, -44, -34, 0
 };
 
-static const char* (dbm2smeter[NUM_SWERTE + 1]) = {
+static const char *(dbm2smeter[NUM_SWERTE + 1]) = {
   "no signal", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S9+5db", "S9+10db", "S9+15db", "S9+20db", "S9+25db", "S9+30db", "S9+40db", "S9+50db", "S9+60db", "out of range"
 };
 
 
-static unsigned char get_SWert(short int dbm) {
+static unsigned char get_SWert (short int dbm) {
   int i;
   long long freq;
   const short int *lowlimits;
@@ -642,52 +642,52 @@ static unsigned char get_SWert(short int dbm) {
 
 //----------------------------------------------------------------------------------------------
 
-static void get_local_time(char *zeitString, size_t groesse) {
+static void get_local_time (char* zeitString, size_t groesse) {
   // Aktuelle Zeit abrufen
   time_t aktuelleZeit;
-  time(&aktuelleZeit);
+  time (&aktuelleZeit);
   // Zeit in lokales Format konvertieren
   struct tm Zeit;
   // Zeit in UTC konvertieren (Thread-sicher)
-  gmtime_r(&aktuelleZeit, &Zeit); // thread-sicher
+  gmtime_r (&aktuelleZeit, &Zeit); // thread-sicher
 
   // Zeit in lokales Format konvertieren
   // localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
   // Formatierter Zeit-String erstellen
   if (region == REGION_UK) {
-    snprintf(zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
-             Zeit.tm_mday,
-             Zeit.tm_mon + 1,
-             Zeit.tm_year + 1900,
-             Zeit.tm_hour,
-             Zeit.tm_min,
-             Zeit.tm_sec);
+    snprintf (zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
+              Zeit.tm_mday,
+              Zeit.tm_mon + 1,
+              Zeit.tm_year + 1900,
+              Zeit.tm_hour,
+              Zeit.tm_min,
+              Zeit.tm_sec);
   } else if (region == REGION_US) {
-    snprintf(zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
-             Zeit.tm_mon + 1,
-             Zeit.tm_mday,
-             Zeit.tm_year + 1900,
-             Zeit.tm_hour,
-             Zeit.tm_min,
-             Zeit.tm_sec);
+    snprintf (zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
+              Zeit.tm_mon + 1,
+              Zeit.tm_mday,
+              Zeit.tm_year + 1900,
+              Zeit.tm_hour,
+              Zeit.tm_min,
+              Zeit.tm_sec);
   } else {
-    snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
-             Zeit.tm_mday,
-             Zeit.tm_mon + 1, // Monate beginnen bei 0
-             Zeit.tm_year + 1900, // Jahre ab 1900
-             Zeit.tm_hour,
-             Zeit.tm_min,
-             Zeit.tm_sec);
+    snprintf (zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
+              Zeit.tm_mday,
+              Zeit.tm_mon + 1, // Monate beginnen bei 0
+              Zeit.tm_year + 1900, // Jahre ab 1900
+              Zeit.tm_hour,
+              Zeit.tm_min,
+              Zeit.tm_sec);
   }
 }
 
-static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
-  int value = (((int)noise_value / 10) - ((int)noise_value % 10 != 0 ? 1 : 0)) * 10 + offset_db;
+static int autoscale_panadapter_with_offset (double noise_value, int offset_db) {
+  int value = (((int) noise_value / 10) - ((int) noise_value % 10 != 0 ? 1 : 0)) * 10 + offset_db;
   value = (value > -95) ? -95 : (value < -220) ? -220 : value;
   return value;
 }
 
-static long long panadapter_next_divisor(long long divisor) {
+static long long panadapter_next_divisor (long long divisor) {
   if (divisor < 1LL) {
     return 1LL;
   }
@@ -733,7 +733,7 @@ static long long panadapter_next_divisor(long long divisor) {
   return divisor * 2LL;
 }
 
-void rx_panadapter_update(RECEIVER *rx) {
+void rx_panadapter_update (RECEIVER *rx) {
   if (!rx || !rx->panadapter_surface) {
     return;
   }
@@ -753,20 +753,20 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   if (display_wmap) {
     //------------------------------------------------------------------------------
-    init_worldmap_pixbuf(mywidth, myheight);  // nur wenn nötig
+    init_worldmap_pixbuf (mywidth, myheight); // nur wenn nötig
 
     if (worldmap_scaled) {
-      draw_image(cr, worldmap_scaled, 0, 0);
+      draw_image (cr, worldmap_scaled, 0, 0);
     }
 
     //------------------------------------------------------------------------------
-    cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
+    cairo_set_source_rgba (cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
   } else {
-    cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+    cairo_set_source_rgba (cr, COLOUR_PAN_BACKGND);
   }
 
-  cairo_rectangle(cr, 0, 0, mywidth, myheight);
-  cairo_fill(cr);
+  cairo_rectangle (cr, 0, 0, mywidth, myheight);
+  cairo_fill (cr);
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
   int mode = vfo[rx->id].mode;
   long long frequency = vfo[rx->id].frequency;
@@ -777,12 +777,12 @@ void rx_panadapter_update(RECEIVER *rx) {
   // Perhaps some adjustment is necessary for those old radios which have
   // switchable preamps.
   //
-  const BAND *band = band_get_band(vfoband);
+  const BAND *band = band_get_band (vfoband);
   int calib = rx_gain_calibration - band->gain;
 #ifdef SOAPYSDR
 
-  if (device == SOAPYSDR_USB_DEVICE && strcmp(radio->name, "sdrplay") == 0) {
-    int v_Gain = (int)soapy_protocol_get_gain_element(active_receiver, "CURRENT");
+  if (device == SOAPYSDR_USB_DEVICE && strcmp (radio->name, "sdrplay") == 0) {
+    int v_Gain = (int) soapy_protocol_get_gain_element (active_receiver, "CURRENT");
     adc[rx->adc].gain = 0;
     adc[rx->adc].attenuation = 0;
     adc[rx->adc].gain = v_Gain;
@@ -790,7 +790,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
 #endif
-  soffset = (double) calib + (double)adc[rx->adc].attenuation - adc[rx->adc].gain;
+  soffset = (double) calib + (double) adc[rx->adc].attenuation - adc[rx->adc].gain;
 
   //
   // offset is used to calculate the filter edges. They move  with the RIT value
@@ -802,11 +802,11 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
   if (filter_board == ALEX && rx->adc == 0) {
-    soffset += (double)(10 * rx->alex_attenuation - 20 * rx->preamp);
+    soffset += (double) (10 * rx->alex_attenuation - 20 * rx->preamp);
   }
 
   if (filter_board == CHARLY25 && rx->adc == 0) {
-    soffset += (double)(12 * rx->alex_attenuation - 18 * rx->preamp - 18 * rx->dither);
+    soffset += (double) (12 * rx->alex_attenuation - 18 * rx->preamp - 18 * rx->dither);
   }
 
   // In diversity mode, the RX2 frequency tracks the RX1 frequency
@@ -816,8 +816,8 @@ void rx_panadapter_update(RECEIVER *rx) {
     mode = vfo[0].mode;
   }
 
-  long long half = (long long)rx->sample_rate / 2LL;
-  double vfofreq = ((double)half / HzPerPixel) - (double)rx->pan;
+  long long half = (long long) rx->sample_rate / 2LL;
+  double vfofreq = ((double) half / HzPerPixel) - (double) rx->pan;
 
   //
   //
@@ -834,18 +834,18 @@ void rx_panadapter_update(RECEIVER *rx) {
     vfofreq -= (double) cw_keyer_sidetone_frequency / HzPerPixel;
   }
 
-  double min_display = (double)frequency - (double)half + ((double)rx->pan * HzPerPixel);
-  double max_display = min_display + ((double)mywidth * HzPerPixel);
+  double min_display = (double) frequency - (double) half + ((double) rx->pan * HzPerPixel);
+  double max_display = min_display + ((double) mywidth * HzPerPixel);
 
   if (vfoband == band60 && band_channels_60m != NULL && region > 0) {
     for (i = 0; i < channel_entries; i++) {
-      long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
-      long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
-      double x1 = ((double)low_freq - min_display) / HzPerPixel;
-      double x2 = ((double)hi_freq - min_display) / HzPerPixel;
-      cairo_set_source_rgba(cr, COLOUR_PAN_60M_OPQ);
-      cairo_rectangle(cr, x1, 0.0, x2 - x1, myheight);
-      cairo_fill(cr);
+      long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long) 2);
+      long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long) 2);
+      double x1 = ((double) low_freq - min_display) / HzPerPixel;
+      double x2 = ((double) hi_freq - min_display) / HzPerPixel;
+      cairo_set_source_rgba (cr, COLOUR_PAN_60M_OPQ);
+      cairo_rectangle (cr, x1, 0.0, x2 - x1, myheight);
+      cairo_fill (cr);
     }
   }
 
@@ -853,10 +853,10 @@ void rx_panadapter_update(RECEIVER *rx) {
   // Filter edges.
   //
   cairo_set_source_rgba (cr, COLOUR_PAN_FILTER);
-  double filter_left = vfofreq + (((double)rx->filter_low + offset) / HzPerPixel);
-  double filter_right = vfofreq + (((double)rx->filter_high + offset) / HzPerPixel);
-  cairo_rectangle(cr, filter_left, 0.0, filter_right - filter_left, myheight);
-  cairo_fill(cr);
+  double filter_left = vfofreq + (((double) rx->filter_low + offset) / HzPerPixel);
+  double filter_right = vfofreq + (((double) rx->filter_high + offset) / HzPerPixel);
+  cairo_rectangle (cr, filter_left, 0.0, filter_right - filter_left, myheight);
+  cairo_fill (cr);
 
   //----------------------------------------------------------------------------------------------
   // MNF
@@ -866,30 +866,30 @@ void rx_panadapter_update(RECEIVER *rx) {
       double mnf_x = (rx->mnf_cfreq - min_display) / HzPerPixel;
       double mnf_w = rx->mnf_fbw / HzPerPixel;
       double mnf_left = mnf_x - (mnf_w * 0.5);
-      cairo_save(cr);
+      cairo_save (cr);
       /* Breitenbereich */
-      cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 0.30);
-      cairo_rectangle(cr, mnf_left, 0.0, mnf_w, myheight);
-      cairo_fill(cr);
+      cairo_set_source_rgba (cr, 1.0, 1.0, 0.0, 0.30);
+      cairo_rectangle (cr, mnf_left, 0.0, mnf_w, myheight);
+      cairo_fill (cr);
       /* Mittellinie */
       double dashes[] = {4.0, 4.0};
-      cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 0.9);
-      cairo_set_line_width(cr, 2.0);
-      cairo_set_dash(cr, dashes, 2, 0);
-      cairo_move_to(cr, mnf_x + 0.5, 0.0);
-      cairo_line_to(cr, mnf_x + 0.5, myheight);
-      cairo_stroke(cr);
-      cairo_set_dash(cr, NULL, 0, 0);
+      cairo_set_source_rgba (cr, 1.0, 1.0, 0.0, 0.9);
+      cairo_set_line_width (cr, 2.0);
+      cairo_set_dash (cr, dashes, 2, 0);
+      cairo_move_to (cr, mnf_x + 0.5, 0.0);
+      cairo_line_to (cr, mnf_x + 0.5, myheight);
+      cairo_stroke (cr);
+      cairo_set_dash (cr, NULL, 0, 0);
       /* Label */
-      cairo_set_source_rgba(cr, 1.0, 1.0, 0.0, 0.9);
-      cairo_select_font_face(cr,
-                             DISPLAY_FONT_BOLD,
-                             CAIRO_FONT_SLANT_NORMAL,
-                             CAIRO_FONT_WEIGHT_BOLD);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-      cairo_move_to(cr, mnf_x + 6, 22);
-      cairo_show_text(cr, "MNF");
-      cairo_restore(cr);
+      cairo_set_source_rgba (cr, 1.0, 1.0, 0.0, 0.9);
+      cairo_select_font_face (cr,
+                              DISPLAY_FONT_BOLD,
+                              CAIRO_FONT_SLANT_NORMAL,
+                              CAIRO_FONT_WEIGHT_BOLD);
+      cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
+      cairo_move_to (cr, mnf_x + 6, 22);
+      cairo_show_text (cr, "MNF");
+      cairo_restore (cr);
     }
   }
 
@@ -897,39 +897,39 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   // plot the levels
   if (active) {
-    cairo_set_source_rgba(cr, COLOUR_PAN_LINE);
+    cairo_set_source_rgba (cr, COLOUR_PAN_LINE);
   } else {
-    cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
+    cairo_set_source_rgba (cr, COLOUR_PAN_LINE_WEAK);
   }
 
-  double dbm_per_line = (double)myheight / ((double)rx->panadapter_high - (double)rx->panadapter_low);
-  cairo_set_line_width(cr, PAN_LINE_THIN);
-  cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+  double dbm_per_line = (double) myheight / ((double) rx->panadapter_high - (double) rx->panadapter_low);
+  cairo_set_line_width (cr, PAN_LINE_THIN);
+  cairo_select_font_face (cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
   char v[32];
 
   for (i = rx->panadapter_high; i >= rx->panadapter_low; i--) {
-    int mod = abs(i) % rx->panadapter_step;
+    int mod = abs (i) % rx->panadapter_step;
 
     if (mod == 0) {
-      double y = (double)(rx->panadapter_high - i) * dbm_per_line;
-      cairo_move_to(cr, 0.0, y);
-      cairo_line_to(cr, mywidth, y);
-      snprintf(v, 32, "%d dBm", i);
-      cairo_move_to(cr, 1, y);
-      cairo_show_text(cr, v);
+      double y = (double) (rx->panadapter_high - i) * dbm_per_line;
+      cairo_move_to (cr, 0.0, y);
+      cairo_line_to (cr, mywidth, y);
+      snprintf (v, 32, "%d dBm", i);
+      cairo_move_to (cr, 1, y);
+      cairo_show_text (cr, v);
     }
   }
 
-  cairo_set_line_width(cr, PAN_LINE_THIN);
-  cairo_stroke(cr);
+  cairo_set_line_width (cr, PAN_LINE_THIN);
+  cairo_stroke (cr);
   //
   // plot frequency markers
   // calculate a divisor such that we have about 65
   // pixels distance between frequency markers,
   // and then round upwards to the  next 1/2/5 seris
   //
-  divisor = (long long)(HzPerPixel * 65.0);
+  divisor = (long long) (HzPerPixel * 65.0);
 
   if (divisor > 500000LL) { divisor = 1000000LL; }
   else if (divisor > 200000LL) { divisor = 500000LL; }
@@ -953,11 +953,11 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   {
     const double min_marker_px = 40.0;
-    double marker_px = (double)divisor / HzPerPixel;
+    double marker_px = (double) divisor / HzPerPixel;
 
     while (marker_px < min_marker_px) {
-      divisor = panadapter_next_divisor(divisor);
-      marker_px = (double)divisor / HzPerPixel;
+      divisor = panadapter_next_divisor (divisor);
+      marker_px = (double) divisor / HzPerPixel;
     }
   }
 
@@ -966,18 +966,18 @@ void rx_panadapter_update(RECEIVER *rx) {
   // (in pixels)
   //
   int marker_distance = (mywidth * divisor) / rx->sample_rate;
-  f = ((long long)floor(min_display / (double)divisor) * divisor) + divisor;
-  cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  f = ((long long) floor (min_display / (double) divisor) * divisor) + divisor;
+  cairo_select_font_face (cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   //
   // If space is available, increase font size of freq. labels a bit
   //
   int marker_extra = (marker_distance > 100) ? 2 : 0;
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
+  cairo_set_font_size (cr, DISPLAY_FONT_SIZE2 + marker_extra);
 
   while (f < max_display) {
-    double x = ((double)f - min_display) / HzPerPixel;
-    cairo_move_to(cr, x, 0);
-    cairo_line_to(cr, x, myheight);
+    double x = ((double) f - min_display) / HzPerPixel;
+    cairo_move_to (cr, x, 0);
+    cairo_line_to (cr, x, myheight);
 
     //
     // For frequency marker lines very close to the left or right
@@ -991,22 +991,22 @@ void rx_panadapter_update(RECEIVER *rx) {
       // and three "MHz" digits
       //
       if (f > 10000000000LL && marker_distance < 80) {
-        snprintf(v, 32, "...%03lld.%03lld", (f / 1000000) % 1000, (f % 1000000) / 1000);
+        snprintf (v, 32, "...%03lld.%03lld", (f / 1000000) % 1000, (f % 1000000) / 1000);
       } else {
-        snprintf(v, 32, "%0lld.%03lld", f / 1000000, (f % 1000000) / 1000);
+        snprintf (v, 32, "%0lld.%03lld", f / 1000000, (f % 1000000) / 1000);
       }
 
       // center text at "x" position
-      cairo_text_extents(cr, v, &extents);
-      cairo_move_to(cr, x - (extents.width / 2.0), 10 + marker_extra);
-      cairo_show_text(cr, v);
+      cairo_text_extents (cr, v, &extents);
+      cairo_move_to (cr, x - (extents.width / 2.0), 10 + marker_extra);
+      cairo_show_text (cr, v);
     }
 
     f += divisor;
   }
 
-  cairo_set_line_width(cr, PAN_LINE_THIN);
-  cairo_stroke(cr);
+  cairo_set_line_width (cr, PAN_LINE_THIN);
+  cairo_stroke (cr);
 
   //--------------------------------------------------------------------------------------------
   /* Custom Labels auf exakten Frequenzen (nur Text, mit Timeout + Y-Staffelung) */
@@ -1034,7 +1034,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         continue;
       }
 
-      double x = ((double)pl->freq - min_display) / HzPerPixel;
+      double x = ((double) pl->freq - min_display) / HzPerPixel;
       pos[pos_count].index = m;
       pos[pos_count].x = x;
       pos[pos_count].row = 0;
@@ -1054,7 +1054,7 @@ void rx_panadapter_update(RECEIVER *rx) {
       }
 
       /* Links-nach-rechts sortieren */
-      qsort(pos, pos_count, sizeof(PAN_LABEL_POS), pan_label_cmp);
+      qsort (pos, pos_count, sizeof (PAN_LABEL_POS), pan_label_cmp);
 
       /* Reihen (Y-Level) zuweisen, um Überlappung zu minimieren */
       for (int i = 0; i < pos_count; i++) {
@@ -1063,7 +1063,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         gboolean placed = FALSE;
 
         for (int r = 0; r < max_pan_label_rows; r++) {
-          if (fabs(x - last_x_in_row[r]) >= PAN_LABEL_MIN_DX) {
+          if (fabs (x - last_x_in_row[r]) >= PAN_LABEL_MIN_DX) {
             assigned_row = r;
             last_x_in_row[r] = x;
             placed = TRUE;
@@ -1084,20 +1084,20 @@ void rx_panadapter_update(RECEIVER *rx) {
         PAN_LABEL *pl = &pan_labels[pos[i].index];
         double x = pos[i].x;
         int row = pos[i].row;
-        cairo_set_source_rgba(cr, COLOUR_WHITE);
-        cairo_select_font_face(cr,
-                               DISPLAY_FONT_BOLD,
-                               CAIRO_FONT_SLANT_NORMAL,
-                               CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
+        cairo_set_source_rgba (cr, COLOUR_WHITE);
+        cairo_select_font_face (cr,
+                                DISPLAY_FONT_BOLD,
+                                CAIRO_FONT_SLANT_NORMAL,
+                                CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size (cr, DISPLAY_FONT_SIZE2 + marker_extra);
         cairo_text_extents_t te;
-        cairo_text_extents(cr, pl->label, &te);
+        cairo_text_extents (cr, pl->label, &te);
         /* Basis-Y unter der Skala; Zeilen vertikal staffeln */
         double base_y = 10.0 + marker_extra + te.height + 2.0;
         double row_height = te.height + 4.0;
-        double y = base_y + (double)row * row_height;
-        cairo_move_to(cr, x - te.width / 2.0, y);
-        cairo_show_text(cr, pl->label);
+        double y = base_y + (double) row * row_height;
+        cairo_move_to (cr, x - te.width / 2.0, y);
+        cairo_show_text (cr, pl->label);
       }
     }
   }
@@ -1106,31 +1106,31 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   // band edges
   if (band->frequencyMin != 0LL) {
-    cairo_set_source_rgba(cr, COLOUR_ALARM);
-    cairo_set_line_width(cr, PAN_LINE_THICK);
+    cairo_set_source_rgba (cr, COLOUR_ALARM);
+    cairo_set_line_width (cr, PAN_LINE_THICK);
 
-    if ((min_display < (double)band->frequencyMin) && (max_display > (double)band->frequencyMin)) {
-      double x = ((double)band->frequencyMin - min_display) / HzPerPixel;
-      cairo_move_to(cr, x, 0);
-      cairo_line_to(cr, x, myheight);
-      cairo_set_line_width(cr, PAN_LINE_EXTRA);
-      cairo_stroke(cr);
+    if ((min_display < (double) band->frequencyMin) && (max_display > (double) band->frequencyMin)) {
+      double x = ((double) band->frequencyMin - min_display) / HzPerPixel;
+      cairo_move_to (cr, x, 0);
+      cairo_line_to (cr, x, myheight);
+      cairo_set_line_width (cr, PAN_LINE_EXTRA);
+      cairo_stroke (cr);
     }
 
-    if ((min_display < (double)band->frequencyMax) && (max_display > (double)band->frequencyMax)) {
-      double x = ((double)band->frequencyMax - min_display) / HzPerPixel;
-      cairo_move_to(cr, x, 0);
-      cairo_line_to(cr, x, myheight);
-      cairo_set_line_width(cr, PAN_LINE_EXTRA);
-      cairo_stroke(cr);
+    if ((min_display < (double) band->frequencyMax) && (max_display > (double) band->frequencyMax)) {
+      double x = ((double) band->frequencyMax - min_display) / HzPerPixel;
+      cairo_move_to (cr, x, 0);
+      cairo_line_to (cr, x, myheight);
+      cairo_set_line_width (cr, PAN_LINE_EXTRA);
+      cairo_stroke (cr);
     }
   }
 
   // cursor
   if (active) {
-    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    cairo_set_source_rgba (cr, COLOUR_WHITE);
   } else {
-    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    cairo_set_source_rgba (cr, COLOUR_WHITE);
   }
 
   double x_coord = vfofreq + (offset / HzPerPixel);
@@ -1139,10 +1139,10 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   if (x_coord > mywidth - 1) { x_coord = mywidth - 1; }
 
-  cairo_move_to(cr, x_coord, 0.0);
-  cairo_line_to(cr, x_coord, myheight);
-  cairo_set_line_width(cr, PAN_LINE_EXTRA);
-  cairo_stroke(cr);
+  cairo_move_to (cr, x_coord, 0.0);
+  cairo_line_to (cr, x_coord, myheight);
+  cairo_set_line_width (cr, PAN_LINE_EXTRA);
+  cairo_stroke (cr);
   // Marker oben zeichnen
   double cursor_w = 12.0;
   double cursor_h = 9.0;
@@ -1160,11 +1160,11 @@ void rx_panadapter_update(RECEIVER *rx) {
   } else { }
   */
   // Dreieck nach unten
-  cairo_move_to(cr, x_coord - (cursor_w / 2), 0.0);
-  cairo_line_to(cr, x_coord + (cursor_w / 2), 0.0);
-  cairo_line_to(cr, x_coord, 0.0 + cursor_h);
-  cairo_close_path(cr);
-  cairo_fill(cr);
+  cairo_move_to (cr, x_coord - (cursor_w / 2), 0.0);
+  cairo_line_to (cr, x_coord + (cursor_w / 2), 0.0);
+  cairo_line_to (cr, x_coord, 0.0 + cursor_h);
+  cairo_close_path (cr);
+  cairo_fill (cr);
   // signal
   double s1;
   int pan = rx->pan;
@@ -1178,13 +1178,13 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     // Auto-clear on mode change (prevents immediate decay after Peak Hold mode)
     if (pan_peak_hold_mode_last[rx->id] != pan_peak_hold_mode) {
-      rx_panadapter_peak_hold_clear(rx);
+      rx_panadapter_peak_hold_clear (rx);
       pan_peak_hold_mode_last[rx->id] = pan_peak_hold_mode;
     }
 
     if (ph->size != mywidth) {
-      float *nbuf = realloc(ph->buf, mywidth * sizeof(float));
-      uint16_t *nage = realloc(ph->age, mywidth * sizeof(uint16_t));
+      float *nbuf = realloc (ph->buf, mywidth * sizeof (float));
+      uint16_t *nage = realloc (ph->age, mywidth * sizeof (uint16_t));
 
       if (nbuf && nage) {
         ph->buf = nbuf;
@@ -1204,7 +1204,7 @@ void rx_panadapter_update(RECEIVER *rx) {
       // Shift peak buffer to follow the same frequency->pixel mapping as the spectrum.
       // min_display = vfo[rx->id].frequency - (sample_rate/2) + pan*hz_per_pixel
       {
-        long long half = (long long)rx->sample_rate / 2LL;
+        long long half = (long long) rx->sample_rate / 2LL;
         long long ph_frequency = vfo[rx->id].frequency;
         int ph_mode = vfo[rx->id].mode;
 
@@ -1220,7 +1220,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         }
 
         long long min_display = ph_frequency - half
-                                + (long long)llround((double)rx->pan * rx->hz_per_pixel);
+                                + (long long) llround ((double) rx->pan * rx->hz_per_pixel);
 
         if (!pan_peak_min_display_valid[rx->id]) {
           pan_peak_min_display_last[rx->id] = min_display;
@@ -1229,11 +1229,11 @@ void rx_panadapter_update(RECEIVER *rx) {
           long long df = min_display - pan_peak_min_display_last[rx->id];
 
           if (df != 0 && rx->hz_per_pixel > 0.0) {
-            int dp = (int)llround((double)df / rx->hz_per_pixel);
+            int dp = (int) llround ((double) df / rx->hz_per_pixel);
 
             if (dp != 0) {
               // If min_display increases, spectrum content shifts left => shift peak buffer left (dp>0).
-              rx_panadapter_peak_hold_shift(ph, mywidth, dp);
+              rx_panadapter_peak_hold_shift (ph, mywidth, dp);
               pan_peak_min_display_last[rx->id] = min_display;
             }
           }
@@ -1243,7 +1243,7 @@ void rx_panadapter_update(RECEIVER *rx) {
       if (pan_peak_hold_mode == 1) {
         // Peak Hold (Thetis): display the largest signal per bin while enabled
         for (int i = 0; i < mywidth; i++) {
-          float cur = (float)samples[i + pan];
+          float cur = (float) samples[i + pan];
           float peak = ph->buf[i];
 
           if (cur > peak) {
@@ -1256,12 +1256,12 @@ void rx_panadapter_update(RECEIVER *rx) {
       } else {
         // Default: Peak Decay (hold for pan_peak_hold_hold_sec seconds, then decay)
         const int hold_frames =
-          (int)(pan_peak_hold_hold_sec * (float)rx->fps + 0.5f);
+                (int) (pan_peak_hold_hold_sec * (float) rx->fps + 0.5f);
         const float decay_per_frame =
-          pan_peak_hold_decay_db_per_sec / (float)rx->fps;
+                pan_peak_hold_decay_db_per_sec / (float) rx->fps;
 
         for (int i = 0; i < mywidth; i++) {
-          float cur = (float)samples[i + pan];
+          float cur = (float) samples[i + pan];
           float peak = ph->buf[i];
           uint16_t age = ph->age[i];
 
@@ -1286,69 +1286,69 @@ void rx_panadapter_update(RECEIVER *rx) {
   //
   // most HPSDR only have attenuation (no gain), while HermesLite-II and SOAPY use gain (no attenuation)
   //
-  s1 = (double)samples[pan] + soffset;
-  s1 = floor((rx->panadapter_high - s1)
-             * (double) myheight
-             / (rx->panadapter_high - rx->panadapter_low));
-  cairo_move_to(cr, 0.0, s1);
+  s1 = (double) samples[pan] + soffset;
+  s1 = floor ((rx->panadapter_high - s1)
+              * (double) myheight
+              / (rx->panadapter_high - rx->panadapter_low));
+  cairo_move_to (cr, 0.0, s1);
 
   for (i = 1; i < mywidth; i++) {
     double s2;
 
     if (rx->pan_peak_preserve) {
       if (i == mywidth - 1) {
-        s2 = (double)samples[i + pan] + soffset;
+        s2 = (double) samples[i + pan] + soffset;
       } else {
-        double yv = (double)samples[i + pan - 1];
+        double yv = (double) samples[i + pan - 1];
 
-        if ((double)samples[i + pan] > yv) {
-          yv = (double)samples[i + pan];
+        if ((double) samples[i + pan] > yv) {
+          yv = (double) samples[i + pan];
         }
 
-        if ((double)samples[i + pan + 1] > yv) {
-          yv = (double)samples[i + pan + 1];
+        if ((double) samples[i + pan + 1] > yv) {
+          yv = (double) samples[i + pan + 1];
         }
 
         s2 = yv + soffset;
       }
     } else {
-      s2 = (double)samples[i + pan] + soffset;
+      s2 = (double) samples[i + pan] + soffset;
     }
 
-    s2 = floor((rx->panadapter_high - s2)
-               * (double) myheight
-               / (rx->panadapter_high - rx->panadapter_low));
-    cairo_line_to(cr, i, s2);
+    s2 = floor ((rx->panadapter_high - s2)
+                * (double) myheight
+                / (rx->panadapter_high - rx->panadapter_low));
+    cairo_line_to (cr, i, s2);
   }
 
   cairo_pattern_t *gradient;
   gradient = NULL;
 
   if (rx->display_gradient) {
-    gradient = cairo_pattern_create_linear(0.0, myheight, 0.0, 0.0);
+    gradient = cairo_pattern_create_linear (0.0, myheight, 0.0, 0.0);
     // calculate where S9 is as gradient offset (0.0 = bottom, 1.0 = top)
-    double denom = (double)rx->panadapter_high - (double)rx->panadapter_low;
+    double denom = (double) rx->panadapter_high - (double) rx->panadapter_low;
 
     if (denom <= 0.0) { denom = 1.0; } // Fallback, falls high<=low
 
-    double S9 = ( (vfo[rx->id].frequency > 30000000LL) ? -93.0 : -73.0 );
+    double S9 = ((vfo[rx->id].frequency > 30000000LL) ? -93.0 : -73.0);
     S9 += 10; // 10db nach oben schieben
-    S9 = (S9 - (double)rx->panadapter_low) / denom;
+    S9 = (S9 - (double) rx->panadapter_low) / denom;
     S9 = (S9 < 0.0) ? 0.0 : (S9 > 1.0) ? 1.0 : S9;
     // t_print("S9(off)=%.6f low=%d high=%d h=%d\n", S9, rx->panadapter_low, rx->panadapter_high, myheight);
 
     if (active) {
-      cairo_pattern_add_color_stop_rgba(gradient, 0.0,       GRAD_GREEN);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.20, GRAD_YELLOW);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.55, GRAD_ORANGE);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.80, GRAD_RED);
-      cairo_pattern_add_color_stop_rgba(gradient, S9,        GRAD_PURPLE);
+      cairo_pattern_add_color_stop_rgba (gradient, 0.0,       GRAD_GREEN);
+      cairo_pattern_add_color_stop_rgba (gradient, S9 * 0.20, GRAD_YELLOW);
+      cairo_pattern_add_color_stop_rgba (gradient, S9 * 0.55, GRAD_ORANGE);
+      cairo_pattern_add_color_stop_rgba (gradient, S9 * 0.80, GRAD_RED);
+      cairo_pattern_add_color_stop_rgba (gradient, S9,        GRAD_PURPLE);
     } else {
-      cairo_pattern_add_color_stop_rgba(gradient, 0.0,       GRAD_GREEN_WEAK);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.20, GRAD_YELLOW_WEAK);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.55, GRAD_ORANGE_WEAK);
-      cairo_pattern_add_color_stop_rgba(gradient, S9 * 0.80, GRAD_RED_WEAK);
-      cairo_pattern_add_color_stop_rgba(gradient, S9,        GRAD_PURPLE_WEAK);
+      cairo_pattern_add_color_stop_rgba (gradient, 0.0,       GRAD_GREEN_WEAK);
+      cairo_pattern_add_color_stop_rgba (gradient, S9 * 0.20, GRAD_YELLOW_WEAK);
+      cairo_pattern_add_color_stop_rgba (gradient, S9 * 0.55, GRAD_ORANGE_WEAK);
+      cairo_pattern_add_color_stop_rgba (gradient, S9 * 0.80, GRAD_RED_WEAK);
+      cairo_pattern_add_color_stop_rgba (gradient, S9,        GRAD_PURPLE_WEAK);
     }
 
     /*
@@ -1376,34 +1376,34 @@ void rx_panadapter_update(RECEIVER *rx) {
       cairo_pattern_add_color_stop_rgba(gradient, S9,               GRAD_RED_WEAK);
     }
     */
-    cairo_set_source(cr, gradient);
+    cairo_set_source (cr, gradient);
   } else {
     //
     // Different shades of white
     //
     if (active) {
       if (!rx->display_filled) {
-        cairo_set_source_rgba(cr, COLOUR_PAN_FILL3);
+        cairo_set_source_rgba (cr, COLOUR_PAN_FILL3);
       } else {
-        cairo_set_source_rgba(cr, COLOUR_PAN_FILL2);
+        cairo_set_source_rgba (cr, COLOUR_PAN_FILL2);
       }
     } else {
-      cairo_set_source_rgba(cr, COLOUR_PAN_FILL1);
+      cairo_set_source_rgba (cr, COLOUR_PAN_FILL1);
     }
   }
 
   if (rx->display_filled) {
     cairo_close_path (cr);
     cairo_fill_preserve (cr);
-    cairo_set_line_width(cr, PAN_LINE_THIN);
+    cairo_set_line_width (cr, PAN_LINE_THIN);
   } else {
     //
     // if not filling, use thicker line
     //
-    cairo_set_line_width(cr, PAN_LINE_THICK);
+    cairo_set_line_width (cr, PAN_LINE_THICK);
   }
 
-  cairo_stroke(cr);
+  cairo_stroke (cr);
 
   //---------------------------------------------------------------------------------------
   // Peak-and-Hold trace rendering
@@ -1412,94 +1412,94 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (ph->buf && ph->size == mywidth) {
       // cairo_set_source_rgba(cr, COLOUR_SHADE);
-      cairo_set_source_rgba(cr,
-                            peak_line_col.r,
-                            peak_line_col.g,
-                            peak_line_col.b,
-                            peak_line_col.a);
-      cairo_set_line_width(cr, PAN_LINE_THICK);
-      double y = (double)ph->buf[0] + soffset;
-      y = floor((rx->panadapter_high - y) * myheight /
-                (rx->panadapter_high - rx->panadapter_low));
-      cairo_move_to(cr, 0.0, y);
+      cairo_set_source_rgba (cr,
+                             peak_line_col.r,
+                             peak_line_col.g,
+                             peak_line_col.b,
+                             peak_line_col.a);
+      cairo_set_line_width (cr, PAN_LINE_THICK);
+      double y = (double) ph->buf[0] + soffset;
+      y = floor ((rx->panadapter_high - y) * myheight /
+                 (rx->panadapter_high - rx->panadapter_low));
+      cairo_move_to (cr, 0.0, y);
 
       for (int i = 1; i < mywidth; i++) {
-        y = (double)ph->buf[i] + soffset;
-        y = floor((rx->panadapter_high - y) * myheight /
-                  (rx->panadapter_high - rx->panadapter_low));
-        cairo_line_to(cr, (double)i, y);
+        y = (double) ph->buf[i] + soffset;
+        y = floor ((rx->panadapter_high - y) * myheight /
+                   (rx->panadapter_high - rx->panadapter_low));
+        cairo_line_to (cr, (double) i, y);
       }
 
-      cairo_stroke(cr);
+      cairo_stroke (cr);
     }
   }
 
   if (gradient) {
-    cairo_pattern_destroy(gradient);
+    cairo_pattern_destroy (gradient);
   }
 
   //---------------------------------------------------------------------------------------
   // move downward to show the line, otherwise the spectrum overlay this line
   // AGC line
   if (rx->agc != AGC_OFF) {
-    cairo_set_line_width(cr, PAN_LINE_THICK);
+    cairo_set_line_width (cr, PAN_LINE_THICK);
     double knee_y = rx->agc_thresh + soffset;
-    knee_y = floor((rx->panadapter_high - knee_y)
-                   * (double) myheight
-                   / (rx->panadapter_high - rx->panadapter_low));
+    knee_y = floor ((rx->panadapter_high - knee_y)
+                    * (double) myheight
+                    / (rx->panadapter_high - rx->panadapter_low));
     double hang_y = rx->agc_hang + soffset;
-    hang_y = floor((rx->panadapter_high - hang_y)
-                   * (double) myheight
-                   / (rx->panadapter_high - rx->panadapter_low));
+    hang_y = floor ((rx->panadapter_high - hang_y)
+                    * (double) myheight
+                    / (rx->panadapter_high - rx->panadapter_low));
 
     if (rx->agc != AGC_MEDIUM && rx->agc != AGC_FAST) {
       if (active) {
-        cairo_set_source_rgba(cr, GRAD_CORAL);
+        cairo_set_source_rgba (cr, GRAD_CORAL);
       } else {
-        cairo_set_source_rgba(cr, COLOUR_ATTN_WEAK);
+        cairo_set_source_rgba (cr, COLOUR_ATTN_WEAK);
       }
 
-      cairo_move_to(cr, 40.0, hang_y - 8.0);
-      cairo_rectangle(cr, 40, hang_y - 8.0, 8.0, 8.0);
-      cairo_fill(cr);
-      cairo_move_to(cr, 40.0, hang_y);
-      cairo_line_to(cr, (double)mywidth - 40.0, hang_y);
-      cairo_set_line_width(cr, PAN_LINE_THICK);
-      cairo_stroke(cr);
-      cairo_move_to(cr, 48.0, hang_y);
-      cairo_show_text(cr, "-H");
+      cairo_move_to (cr, 40.0, hang_y - 8.0);
+      cairo_rectangle (cr, 40, hang_y - 8.0, 8.0, 8.0);
+      cairo_fill (cr);
+      cairo_move_to (cr, 40.0, hang_y);
+      cairo_line_to (cr, (double) mywidth - 40.0, hang_y);
+      cairo_set_line_width (cr, PAN_LINE_THICK);
+      cairo_stroke (cr);
+      cairo_move_to (cr, 48.0, hang_y);
+      cairo_show_text (cr, "-H");
     }
 
     if (active) {
-      cairo_set_source_rgba(cr, GRAD_CORAL);
+      cairo_set_source_rgba (cr, GRAD_CORAL);
     } else {
-      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+      cairo_set_source_rgba (cr, COLOUR_OK_WEAK);
     }
 
-    cairo_move_to(cr, 40.0, knee_y - 8.0);
-    cairo_rectangle(cr, 40, knee_y - 8.0, 8.0, 8.0);
-    cairo_fill(cr);
-    cairo_move_to(cr, 40.0, knee_y);
-    cairo_line_to(cr, (double)mywidth - 40.0, knee_y);
-    cairo_set_line_width(cr, PAN_LINE_THICK);
-    cairo_stroke(cr);
-    cairo_move_to(cr, 48.0, knee_y);
+    cairo_move_to (cr, 40.0, knee_y - 8.0);
+    cairo_rectangle (cr, 40, knee_y - 8.0, 8.0, 8.0);
+    cairo_fill (cr);
+    cairo_move_to (cr, 40.0, knee_y);
+    cairo_line_to (cr, (double) mywidth - 40.0, knee_y);
+    cairo_set_line_width (cr, PAN_LINE_THICK);
+    cairo_stroke (cr);
+    cairo_move_to (cr, 48.0, knee_y);
 
     if (active) {
-      cairo_set_source_rgba(cr, GRAD_CORAL);
+      cairo_set_source_rgba (cr, GRAD_CORAL);
     } else {
-      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+      cairo_set_source_rgba (cr, COLOUR_OK_WEAK);
     }
 
     if (device == DEVICE_HERMES_LITE2) {
-      cairo_move_to(cr, 58.0, knee_y - 2.0);
-      cairo_show_text(cr, "[AGC]");
+      cairo_move_to (cr, 58.0, knee_y - 2.0);
+      cairo_show_text (cr, "[AGC]");
       char AGCgain[64];
-      snprintf(AGCgain, 64, "%+d", (int)active_receiver->agc_gain);
-      cairo_move_to(cr, 62.0, knee_y + 12.0);
-      cairo_show_text(cr, AGCgain);
+      snprintf (AGCgain, 64, "%+d", (int) active_receiver->agc_gain);
+      cairo_move_to (cr, 62.0, knee_y + 12.0);
+      cairo_show_text (cr, AGCgain);
     } else {
-      cairo_show_text(cr, "-Gain");
+      cairo_show_text (cr, "-Gain");
     }
   }
 
@@ -1507,7 +1507,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   if (rx->panadapter_autoscale_enabled) {
     double noise_floor_level = -175.0; // inital value
     double ignore_noise_percentile = 60.0; // means 80%
-    double *qsorted_samples = malloc(mywidth * sizeof(double));
+    double *qsorted_samples = malloc (mywidth * sizeof (double));
     static double noise_floor_level_sum = 0.0; // inital value
     static int anz_messungen = 0; // initial value
     static int noisefloor_first_run_flag = 1;
@@ -1515,19 +1515,19 @@ void rx_panadapter_update(RECEIVER *rx) {
     static int panadapter_scale_corr_f = 5;
     // Berechne die aktuelle Zeit
     time_t current_time;
-    time(&current_time);
+    time (&current_time);
 
     // calculate the noise level from samples
     if (qsorted_samples != NULL) {
       for (int i = 0; i < mywidth; i++) {
-        qsorted_samples[i] = (double)samples[i + rx->pan] + soffset;
+        qsorted_samples[i] = (double) samples[i + rx->pan] + soffset;
       }
 
-      qsort(qsorted_samples, mywidth, sizeof(double), compare_doubles);
-      int index = (int)((ignore_noise_percentile / 100.0) * mywidth);
+      qsort (qsorted_samples, mywidth, sizeof (double), compare_doubles);
+      int index = (int) ((ignore_noise_percentile / 100.0) * mywidth);
       noise_floor_level = qsorted_samples[index] + 3.0;
       // t_print("noise_floor = %f\n", noise_floor_level);
-      free(qsorted_samples); // Free memory after use
+      free (qsorted_samples); // Free memory after use
     }
 
     noise_floor_level_sum += noise_floor_level;
@@ -1535,7 +1535,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (anz_messungen >= rx->fps) { // number of runs = rx->fps
       noise_floor_level = noise_floor_level_sum / rx->fps;  // flatten the noise_floor_level
-      g_noise_level = (int)noise_floor_level - 3;
+      g_noise_level = (int) noise_floor_level - 3;
       /*
       rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
         if (rx->panadapter_high <= -50) {
@@ -1549,12 +1549,12 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     // Überprüfe, ob 5 Minuten vergangen sind, bevor rx->panadapter_low angepasst wird
     if (noisefloor_first_run_flag
-        || difftime(current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
-      if (abs(autoscale_panadapter_with_offset(noise_floor_level, -5) - rx->panadapter_low) > 10
-          || rx->panadapter_low < autoscale_panadapter_with_offset(noise_floor_level, -5)) {
-        t_print("%s: rx->panadapter_low: %d noise_floor: %d\n", __func__, rx->panadapter_low,
-                autoscale_panadapter_with_offset(noise_floor_level, -5));
-        rx->panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5) - panadapter_scale_corr_f;
+        || difftime (current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
+      if (abs (autoscale_panadapter_with_offset (noise_floor_level, -5) - rx->panadapter_low) > 10
+          || rx->panadapter_low < autoscale_panadapter_with_offset (noise_floor_level, -5)) {
+        t_print ("%s: rx->panadapter_low: %d noise_floor: %d\n", __func__, rx->panadapter_low,
+                 autoscale_panadapter_with_offset (noise_floor_level, -5));
+        rx->panadapter_low = autoscale_panadapter_with_offset (noise_floor_level, -5) - panadapter_scale_corr_f;
       }
 
       if (rx->panadapter_high <= -50) {
@@ -1581,9 +1581,9 @@ void rx_panadapter_update(RECEIVER *rx) {
       hide_noise = FALSE;
     }
     */
-    gboolean peaks_in_passband = SET(rx->panadapter_peaks_in_passband_filled);
-    gboolean hide_noise = SET(rx->panadapter_hide_noise_filled);
-    double noise_percentile = (double)rx->panadapter_ignore_noise_percentile;
+    gboolean peaks_in_passband = SET (rx->panadapter_peaks_in_passband_filled);
+    gboolean hide_noise = SET (rx->panadapter_hide_noise_filled);
+    double noise_percentile = (double) rx->panadapter_ignore_noise_percentile;
     int ignore_range_divider = rx->panadapter_ignore_range_divider;
     int ignore_range = (mywidth + ignore_range_divider - 1) / ignore_range_divider; // Round up
     double peaks[num_peaks];
@@ -1612,18 +1612,18 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     if (hide_noise) {
       // Dynamically allocate a copy of samples for sorting
-      double *sorted_samples = malloc(mywidth * sizeof(double));
+      double *sorted_samples = malloc (mywidth * sizeof (double));
 
       if (sorted_samples != NULL) {
         for (int i = 0; i < mywidth; i++) {
-          sorted_samples[i] = (double)samples[i + rx->pan] + soffset;
+          sorted_samples[i] = (double) samples[i + rx->pan] + soffset;
         }
 
-        qsort(sorted_samples, mywidth, sizeof(double), compare_doubles);
-        int index = (int)((noise_percentile / 100.0) * mywidth);
+        qsort (sorted_samples, mywidth, sizeof (double), compare_doubles);
+        int index = (int) ((noise_percentile / 100.0) * mywidth);
         // noise_level = sorted_samples[index];
         noise_level = sorted_samples[index] + 3.0;
-        free(sorted_samples); // Free memory after use
+        free (sorted_samples); // Free memory after use
       }
     }
 
@@ -1634,7 +1634,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     for (int i = 1; i < mywidth - 1; i++) {
       if (i >= filter_left_bound && i <= filter_right_bound) {
-        double s = (double)samples[i + rx->pan] + soffset;
+        double s = (double) samples[i + rx->pan] + soffset;
 
         // Check if the point is a peak
         if ((!hide_noise || s >= noise_level) && s > samples[i - 1 + rx->pan] && s > samples[i + 1 + rx->pan]) {
@@ -1697,9 +1697,9 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     // Draw peak values on the chart
     // #define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
-    cairo_set_source_rgba(cr, COLOUR_WHITE);
-    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_source_rgba (cr, COLOUR_WHITE);
+    cairo_select_font_face (cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
     double previous_text_positions[num_peaks][2]; // Store previous text positions (x, y)
 
     for (int j = 0; j < num_peaks; j++) {
@@ -1712,18 +1712,18 @@ void rx_panadapter_update(RECEIVER *rx) {
         char peak_label[32];
 
         if (active_receiver->panadapter_peaks_as_smeter) {
-          snprintf(peak_label, sizeof(peak_label), "%s", dbm2smeter[get_SWert((int)(peaks[j]))]);
+          snprintf (peak_label, sizeof (peak_label), "%s", dbm2smeter[get_SWert ((int) (peaks[j]))]);
         } else {
-          snprintf(peak_label, sizeof(peak_label), "%d dBm", (int)peaks[j]);
+          snprintf (peak_label, sizeof (peak_label), "%d dBm", (int) peaks[j]);
         }
 
         cairo_text_extents_t extents;
-        cairo_text_extents(cr, peak_label, &extents);
+        cairo_text_extents (cr, peak_label, &extents);
         // Calculate initial text position: slightly above the peak
         double text_x = peak_positions[j];
-        double text_y = floor((rx->panadapter_high - peaks[j])
-                              * (double)myheight
-                              / (rx->panadapter_high - rx->panadapter_low)) - 5;
+        double text_y = floor ((rx->panadapter_high - peaks[j])
+                               * (double) myheight
+                               / (rx->panadapter_high - rx->panadapter_low)) - 5;
 
         // Ensure text stays within the drawing area
         if (text_y < extents.height) {
@@ -1736,8 +1736,8 @@ void rx_panadapter_update(RECEIVER *rx) {
           double prev_y = previous_text_positions[k][1];
 
           if (prev_x >= 0 && prev_y >= 0) {
-            double distance_x = fabs(text_x - prev_x);
-            double distance_y = fabs(text_y - prev_y);
+            double distance_x = fabs (text_x - prev_x);
+            double distance_y = fabs (text_y - prev_y);
 
             if (distance_y < extents.height && distance_x < extents.width) {
               // Try moving vertically first
@@ -1758,8 +1758,8 @@ void rx_panadapter_update(RECEIVER *rx) {
         }
 
         // Draw text
-        cairo_move_to(cr, text_x - (extents.width / 2.0), text_y);
-        cairo_show_text(cr, peak_label);
+        cairo_move_to (cr, text_x - (extents.width / 2.0), text_y);
+        cairo_show_text (cr, peak_label);
         // Store current text position for overlap checks
         previous_text_positions[j][0] = text_x;
         previous_text_positions[j][1] = text_y;
@@ -1768,7 +1768,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
 
   if (rx->id == 0) {
-    display_panadapter_messages(cr, mywidth, rx->fps);
+    display_panadapter_messages (cr, mywidth, rx->fps);
   }
 
   //
@@ -1778,16 +1778,16 @@ void rx_panadapter_update(RECEIVER *rx) {
   //
   if (rx_stack_horizontal && receivers > 1) {
     if (rx->id == 0) {
-      cairo_move_to(cr, mywidth - 1, 0);
-      cairo_line_to(cr, mywidth - 1, myheight);
+      cairo_move_to (cr, mywidth - 1, 0);
+      cairo_line_to (cr, mywidth - 1, myheight);
     } else {
-      cairo_move_to(cr, 0, 0);
-      cairo_line_to(cr, 0, myheight);
+      cairo_move_to (cr, 0, 0);
+      cairo_line_to (cr, 0, myheight);
     }
 
-    cairo_set_source_rgba(cr, COLOUR_PAN_LINE);
-    cairo_set_line_width(cr, 1);
-    cairo_stroke(cr);
+    cairo_set_source_rgba (cr, COLOUR_PAN_LINE);
+    cairo_set_line_width (cr, 1);
+    cairo_stroke (cr);
   }
 
   if (display_info_bar && active_receiver->display_panadapter && !active_receiver->display_waterfall && rx->id == 0
@@ -1797,78 +1797,79 @@ void rx_panadapter_update(RECEIVER *rx) {
     // Y coordinate to the top left corner of the rectangle
     // width of the rectangle
     // height of the rectangle
-    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.70);
-    cairo_rectangle(cr, 0.0, myheight - 30, mywidth, 30.0);
-    cairo_fill(cr);
-    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 0.70);
+    cairo_rectangle (cr, 0.0, myheight - 30, mywidth, 30.0);
+    cairo_fill (cr);
+    cairo_set_source_rgba (cr, COLOUR_WHITE);
     // cairo_set_source_rgba(cr, COLOUR_ORANGE);
     // cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_select_font_face (cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-    cairo_move_to(cr, (mywidth / 2) + 100, myheight - 10);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
+    cairo_move_to (cr, (mywidth / 2) + 100, myheight - 10);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-    cairo_move_to(cr, mywidth / 2, myheight - 10);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
+    cairo_move_to (cr, mywidth / 2, myheight - 10);
 #endif
 
     if (can_transmit) {
-      cairo_show_text(cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+      cairo_show_text (cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
     } else {
-      cairo_show_text(cr, "[b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
+      cairo_show_text (cr, "[b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
     }
 
     char _text[128];
-    cairo_set_source_rgba(cr, COLOUR_ORANGE);
-    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_source_rgba (cr, COLOUR_ORANGE);
+    cairo_select_font_face (cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
 #endif
 
     if (can_transmit) {
 #if defined (__APPLE__)
-      snprintf(_text, sizeof(_text), "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
+      snprintf (_text, sizeof (_text), "[%d] %s", active_receiver->id, truncate_text_3p (transmitter->microphone_name, 36));
 #else
       int _audioindex = 0;
 
       if (n_input_devices > 0) {
         for (int i = 0; i < n_input_devices; i++) {
-          if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+          if (strcmp (transmitter->microphone_name, input_devices[i].name) == 0) {
             _audioindex = i;
           }
         }
 
-        snprintf(_text, sizeof(_text), "[%d] %s", active_receiver->id, truncate_text_3p(input_devices[_audioindex].description,
-                 28));
+        snprintf (_text, sizeof (_text), "[%d] %s", active_receiver->id,
+                  truncate_text_3p (input_devices[_audioindex].description,
+                                    28));
       } else {
-        snprintf(_text, sizeof(_text), "NO AUDIO INPUT DETECTED");
+        snprintf (_text, sizeof (_text), "NO AUDIO INPUT DETECTED");
       }
 
 #endif
-      cairo_move_to(cr, 10.0, myheight - 10);
-      cairo_show_text(cr, _text);
+      cairo_move_to (cr, 10.0, myheight - 10);
+      cairo_show_text (cr, _text);
     }
 
     if (display_solardata) {
-      check_and_run(1); // 0=no_log_output, 1=print_to_log
+      check_and_run (1); // 0=no_log_output, 1=print_to_log
       // g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
 #if defined (__APPLE__)
-      cairo_move_to(cr, (mywidth / 4) + 20, myheight - 10);
+      cairo_move_to (cr, (mywidth / 4) + 20, myheight - 10);
 #else
-      cairo_move_to(cr, (mywidth / 4) - 50, myheight - 10);
+      cairo_move_to (cr, (mywidth / 4) - 50, myheight - 10);
 #endif
 
       if (sunspots != -1) {
-        snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray,
-                 geomagfield);
+        snprintf (_text, sizeof (_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray,
+                  geomagfield);
       } else {
-        snprintf(_text, sizeof(_text), " ");
+        snprintf (_text, sizeof (_text), " ");
       }
 
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      cairo_show_text(cr, _text);
+      cairo_set_source_rgba (cr, COLOUR_ATTN);
+      cairo_show_text (cr, _text);
     }
   }
 
@@ -1876,16 +1877,16 @@ void rx_panadapter_update(RECEIVER *rx) {
   gtk_widget_queue_draw (rx->panadapter);
 }
 
-void rx_panadapter_init(RECEIVER * rx, int width, int height) {
+void rx_panadapter_init (RECEIVER * rx, int width, int height) {
   rx->panadapter_surface = NULL;
   rx->panadapter = gtk_drawing_area_new ();
   {
-    GdkDisplay *display = gtk_widget_get_display(rx->panadapter);
-    GdkCursor *cursor = create_crosshair_cursor(display);
-    g_object_set_data_full(G_OBJECT(rx->panadapter),
-                           "pan_crosshair_cursor",
-                           cursor,
-                           g_object_unref);
+    GdkDisplay *display = gtk_widget_get_display (rx->panadapter);
+    GdkCursor *cursor = create_crosshair_cursor (display);
+    g_object_set_data_full (G_OBJECT (rx->panadapter),
+                            "pan_crosshair_cursor",
+                            cursor,
+                            g_object_unref);
   }
   gtk_widget_set_size_request (rx->panadapter, width, height);
   /* Signals used to handle the backing surface */
@@ -1904,8 +1905,8 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
                     G_CALLBACK (panadapter_button_press_event_cb), rx);
   g_signal_connect (rx->panadapter, "button-release-event",
                     G_CALLBACK (panadapter_button_release_event_cb), rx);
-  g_signal_connect(rx->panadapter, "scroll_event",
-                   G_CALLBACK(panadapter_scroll_event_cb), rx);
+  g_signal_connect (rx->panadapter, "scroll_event",
+                    G_CALLBACK (panadapter_scroll_event_cb), rx);
   /* Ask to receive events the drawing area doesn't normally
    * subscribe to. In particular, we need to ask for the
    * button press and motion notify events that want to handle.
@@ -1921,7 +1922,7 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
                          | GDK_LEAVE_NOTIFY_MASK);
 }
 
-void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
+void display_panadapter_messages (cairo_t* cr, int width, unsigned int fps) {
   char text[64];
   static unsigned int msg_cycle = 0;
 
@@ -1934,15 +1935,15 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     //
     // Are shown on display for 2 seconds
     //
-    cairo_set_source_rgba(cr, COLOUR_ALARM);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
+    cairo_set_source_rgba (cr, COLOUR_ALARM);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE4);
 
     if (sequence_errors != 0) {
       static unsigned int sequence_error_count = 0;
-      cairo_move_to(cr, 100.0, 50.0);
-      cairo_set_source_rgba(cr, COLOUR_ORANGE);
-      cairo_show_text(cr, "UDP Stream Sequence Error");
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      cairo_move_to (cr, 100.0, 50.0);
+      cairo_set_source_rgba (cr, COLOUR_ORANGE);
+      cairo_show_text (cr, "UDP Stream Sequence Error");
+      cairo_set_source_rgba (cr, COLOUR_ALARM);
       sequence_error_count++;
 
       if (sequence_error_count >= 2 * fps) {
@@ -1953,8 +1954,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
     if (adc0_overload || adc1_overload) {
       static unsigned int adc_error_count = 0;
-      cairo_move_to(cr, 100.0, 70.0);
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      cairo_move_to (cr, 100.0, 70.0);
+      cairo_set_source_rgba (cr, COLOUR_ALARM);
 
       if (adc0_overload && !adc1_overload) {
         if (active_receiver->panadapter_ovf_on) {
@@ -1962,20 +1963,20 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
           if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
             if (!autogain_enabled) {
-              cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
+              cairo_show_text (cr, "ADC0 OVF » Decrease RxPGA Gain !");
             } else {
-              cairo_show_text(cr, "ADC0 OVF");
+              cairo_show_text (cr, "ADC0 OVF");
             }
           } else {
-            cairo_show_text(cr, "ADC0 overload");
+            cairo_show_text (cr, "ADC0 overload");
           }
 
 #else
 
           if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-            cairo_show_text(cr, "ADC0 OVF » Decrease RxPGA Gain !");
+            cairo_show_text (cr, "ADC0 OVF » Decrease RxPGA Gain !");
           } else {
-            cairo_show_text(cr, "ADC0 overload");
+            cairo_show_text (cr, "ADC0 overload");
           }
 
 #endif
@@ -1984,13 +1985,13 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (adc1_overload && !adc0_overload) {
         if (active_receiver->panadapter_ovf_on) {
-          cairo_show_text(cr, "ADC1 overload");
+          cairo_show_text (cr, "ADC1 overload");
         }
       }
 
       if (adc0_overload && adc1_overload) {
         if (active_receiver->panadapter_ovf_on) {
-          cairo_show_text(cr, "ADC0+1 overload");
+          cairo_show_text (cr, "ADC0+1 overload");
         }
       }
 
@@ -2032,9 +2033,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
     if (high_swr_seen) {
       static unsigned int swr_protection_count = 0;
-      cairo_move_to(cr, 100.0, 90.0);
-      snprintf(text, sizeof(text), "! High SWR");
-      cairo_show_text(cr, text);
+      cairo_move_to (cr, 100.0, 90.0);
+      snprintf (text, sizeof (text), "! High SWR");
+      cairo_show_text (cr, text);
       swr_protection_count++;
 
       if (swr_protection_count >= 3 * fps) {
@@ -2046,14 +2047,14 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     static unsigned int tx_fifo_count = 0;
 
     if (tx_fifo_underrun) {
-      cairo_move_to(cr, 100.0, 110.0);
-      cairo_show_text(cr, "TX Underrun");
+      cairo_move_to (cr, 100.0, 110.0);
+      cairo_show_text (cr, "TX Underrun");
       tx_fifo_count++;
     }
 
     if (tx_fifo_overrun) {
-      cairo_move_to(cr, 100.0, 130.0);
-      cairo_show_text(cr, "TX Overrun");
+      cairo_move_to (cr, 100.0, 130.0);
+      cairo_show_text (cr, "TX Overrun");
       tx_fifo_count++;
     }
 
@@ -2067,53 +2068,53 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   char _text[128];
 
   if (can_transmit && !display_info_bar && active_receiver->display_panadapter && !rx_stack_horizontal) {
-    cairo_set_source_rgba(cr, COLOUR_ORANGE);
-    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_source_rgba (cr, COLOUR_ORANGE);
+    cairo_select_font_face (cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
 #endif
-    cairo_move_to(cr, 375.0, 30.0);
+    cairo_move_to (cr, 375.0, 30.0);
 #if defined (__APPLE__)
-    snprintf(_text, sizeof(_text), "%s", transmitter->microphone_name);
+    snprintf (_text, sizeof (_text), "%s", transmitter->microphone_name);
 #else
     int _audioindex = 0;
 
     if (n_input_devices > 0) {
       for (int i = 0; i < n_input_devices; i++) {
-        if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+        if (strcmp (transmitter->microphone_name, input_devices[i].name) == 0) {
           _audioindex = i;
         }
       }
 
-      snprintf(_text, sizeof(_text), "%s", input_devices[_audioindex].description);
+      snprintf (_text, sizeof (_text), "%s", input_devices[_audioindex].description);
     } else {
-      snprintf(_text, sizeof(_text), "NO AUDIO INPUT DETECTED");
+      snprintf (_text, sizeof (_text), "NO AUDIO INPUT DETECTED");
     }
 
 #endif
-    cairo_show_text(cr, _text); // show onscreen if status bar switched off
+    cairo_show_text (cr, _text); // show onscreen if status bar switched off
   }
 
-  if (strcmp(own_callsign, "YOUR_CALLSIGN") != 0) {
-    cairo_move_to(cr, 60, 30);
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_set_font_size(cr, 18);
+  if (strcmp (own_callsign, "YOUR_CALLSIGN") != 0) {
+    cairo_move_to (cr, 60, 30);
+    cairo_set_source_rgba (cr, COLOUR_ATTN);
+    cairo_set_font_size (cr, 18);
 
-    if (strcmp(own_locator, "JO01AA") != 0) {
-      snprintf(_text, sizeof(_text), "%s - %s", own_callsign, own_locator);
+    if (strcmp (own_locator, "JO01AA") != 0) {
+      snprintf (_text, sizeof (_text), "%s - %s", own_callsign, own_locator);
     } else {
-      snprintf(_text, sizeof(_text), "%s", own_callsign);
+      snprintf (_text, sizeof (_text), "%s", own_callsign);
     }
 
-    cairo_show_text(cr, _text);
+    cairo_show_text (cr, _text);
   }
 
   // show RX200 data
-  cairo_select_font_face(cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-  cairo_set_source_rgba(cr, COLOUR_WHITE);
+  cairo_select_font_face (cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
+  cairo_set_source_rgba (cr, COLOUR_WHITE);
 
   if (can_transmit && display_clock) {
     if (rx200_udp_valid) {
@@ -2124,69 +2125,69 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (display_wmap) {
         if (can_transmit && radio_is_transmitting()) {
-          cairo_set_source_rgba(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80 ); // Hintergrund
+          cairo_set_source_rgba (cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80);  // Hintergrund
         } else {
-          cairo_set_source_rgba(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255, 0.80); // Hintergrund
+          cairo_set_source_rgba (cr, 9.0 / 255, 57.0 / 255, 88.0 / 255, 0.80); // Hintergrund
         }
       } else {
-        cairo_set_source_rgba(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80); // Hintergrund
+        cairo_set_source_rgba (cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80); // Hintergrund
       }
 
-      cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
-      cairo_fill(cr);
-      cairo_set_source_rgba(cr, COLOUR_WHITE);
-      snprintf(_text, sizeof(_text), "Fwd:");
-      cairo_move_to(cr, width - 300, 30.0);
-      cairo_show_text(cr, _text);
-      snprintf(_text, sizeof(_text), "Ref:");
-      cairo_move_to(cr, width - 300, 50.0);
-      cairo_show_text(cr, _text);
+      cairo_rectangle (cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h); // x, y, Breite, Höhe
+      cairo_fill (cr);
+      cairo_set_source_rgba (cr, COLOUR_WHITE);
+      snprintf (_text, sizeof (_text), "Fwd:");
+      cairo_move_to (cr, width - 300, 30.0);
+      cairo_show_text (cr, _text);
+      snprintf (_text, sizeof (_text), "Ref:");
+      cairo_move_to (cr, width - 300, 50.0);
+      cairo_show_text (cr, _text);
       cairo_text_extents_t rx200_extents;
-      snprintf(_text, sizeof(_text), "%s W", g_rx200_data[0]);
-      cairo_text_extents(cr, _text, &rx200_extents);
+      snprintf (_text, sizeof (_text), "%s W", g_rx200_data[0]);
+      cairo_text_extents (cr, _text, &rx200_extents);
       rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
-      cairo_move_to(cr, rx200_x, 30.0);
-      cairo_show_text(cr, _text);
-      snprintf(_text, sizeof(_text), "%s W", g_rx200_data[1]);
-      cairo_text_extents(cr, _text, &rx200_extents);
+      cairo_move_to (cr, rx200_x, 30.0);
+      cairo_show_text (cr, _text);
+      snprintf (_text, sizeof (_text), "%s W", g_rx200_data[1]);
+      cairo_text_extents (cr, _text, &rx200_extents);
       rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
-      cairo_move_to(cr, rx200_x, 50.0);
-      cairo_show_text(cr, _text);
-      snprintf(_text, sizeof(_text), "%s", g_rx200_data[3]);
-      cairo_move_to(cr, width - 190.0, 30.0);
-      cairo_show_text(cr, _text);
+      cairo_move_to (cr, rx200_x, 50.0);
+      cairo_show_text (cr, _text);
+      snprintf (_text, sizeof (_text), "%s", g_rx200_data[3]);
+      cairo_move_to (cr, width - 190.0, 30.0);
+      cairo_show_text (cr, _text);
 
-      if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
-        snprintf(_text, sizeof(_text), "SWR:");
+      if (! (strcmp (g_rx200_data[2], "0.0") == 0)) {
+        snprintf (_text, sizeof (_text), "SWR:");
       } else {
-        snprintf(_text, sizeof(_text), " ");
+        snprintf (_text, sizeof (_text), " ");
       }
 
-      cairo_move_to(cr, width - 190.0, 50.0);
-      cairo_show_text(cr, _text);
+      cairo_move_to (cr, width - 190.0, 50.0);
+      cairo_show_text (cr, _text);
 
-      if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
-        snprintf(_text, sizeof(_text), "%s:1", g_rx200_data[2]);
+      if (! (strcmp (g_rx200_data[2], "0.0") == 0)) {
+        snprintf (_text, sizeof (_text), "%s:1", g_rx200_data[2]);
       } else {
-        snprintf(_text, sizeof(_text), " ");
+        snprintf (_text, sizeof (_text), " ");
       }
 
-      cairo_text_extents(cr, _text, &rx200_extents);
+      cairo_text_extents (cr, _text, &rx200_extents);
       rx200_x = width - 90.0 - (rx200_extents.width + rx200_extents.x_bearing);
-      cairo_move_to(cr, rx200_x, 50.0);
-      cairo_show_text(cr, _text);
+      cairo_move_to (cr, rx200_x, 50.0);
+      cairo_show_text (cr, _text);
     } else {
-      snprintf(_text, sizeof(_text), " ");
-      cairo_move_to(cr, width - 300.0, 30.0);
-      cairo_show_text(cr, _text);
-      cairo_move_to(cr, width - 300.0, 50.0);
-      cairo_show_text(cr, _text);
-      cairo_move_to(cr, width - 190.0, 50.0);
-      cairo_show_text(cr, _text);
-      cairo_move_to(cr, width - 190.0, 30.0);
-      get_local_time(zeitString, sizeof(zeitString));
-      snprintf(_text, sizeof(_text), "%s", zeitString);
-      cairo_show_text(cr, _text);
+      snprintf (_text, sizeof (_text), " ");
+      cairo_move_to (cr, width - 300.0, 30.0);
+      cairo_show_text (cr, _text);
+      cairo_move_to (cr, width - 300.0, 50.0);
+      cairo_show_text (cr, _text);
+      cairo_move_to (cr, width - 190.0, 50.0);
+      cairo_show_text (cr, _text);
+      cairo_move_to (cr, width - 190.0, 30.0);
+      get_local_time (zeitString, sizeof (zeitString));
+      snprintf (_text, sizeof (_text), "%s", zeitString);
+      cairo_show_text (cr, _text);
     }
   }
 
@@ -2198,74 +2199,74 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     double rt_rx_h = 60.0;
 
     if (display_wmap) {
-      cairo_set_source_rgba(cr, 9.0 / 255, 57.0 / 255, 88.0 / 255, 0.80); // Hintergrund
+      cairo_set_source_rgba (cr, 9.0 / 255, 57.0 / 255, 88.0 / 255, 0.80); // Hintergrund
     } else {
-      cairo_set_source_rgba(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80); // Hintergrund
+      cairo_set_source_rgba (cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80); // Hintergrund
     }
 
-    cairo_rectangle(cr, width - rt_rx_w, rt_rx_y, rt_rx_w, rt_rx_h); // x, y, Breite, Höhe
-    cairo_fill(cr);
-    cairo_set_source_rgba(cr, COLOUR_WHITE);
-    cairo_move_to(cr, width - 250.0, 30.0);
-    get_local_time(zeitString, sizeof(zeitString));
-    snprintf(_text, sizeof(_text), "%s", zeitString);
-    cairo_show_text(cr, _text);
+    cairo_rectangle (cr, width - rt_rx_w, rt_rx_y, rt_rx_w, rt_rx_h); // x, y, Breite, Höhe
+    cairo_fill (cr);
+    cairo_set_source_rgba (cr, COLOUR_WHITE);
+    cairo_move_to (cr, width - 250.0, 30.0);
+    get_local_time (zeitString, sizeof (zeitString));
+    snprintf (_text, sizeof (_text), "%s", zeitString);
+    cairo_show_text (cr, _text);
 
-    if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
+    if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp (radio->name, "sdrplay") == 0) {
       if (msg_cycle == 0) {
-        val_agcsetpoint = soapy_protocol_get_agc_setpoint(active_receiver);
-        snprintf(txt_ifgr, sizeof(txt_ifgr), "%s", radio->info.soapy.rx_gain[index_if_gain()]);
-        snprintf(txt_rfgr, sizeof(txt_rfgr), "%s", radio->info.soapy.rx_gain[index_rf_gain()]);
-        snprintf(txt_currGain, sizeof(txt_currGain), "CURRENT");
-        val_ifgr = (int)soapy_protocol_get_gain_element(active_receiver, txt_ifgr);
-        val_rfgr = (int)soapy_protocol_get_gain_element(active_receiver, txt_rfgr);
-        val_currGain = (int)soapy_protocol_get_gain_element(active_receiver, txt_currGain);
-        val_biast = soapy_protocol_get_bias_t(active_receiver);
-        t_print("%s: current Gain = %d\n", __func__, (int)soapy_protocol_get_gain_element(active_receiver, txt_currGain));
+        val_agcsetpoint = soapy_protocol_get_agc_setpoint (active_receiver);
+        snprintf (txt_ifgr, sizeof (txt_ifgr), "%s", radio->info.soapy.rx_gain[index_if_gain()]);
+        snprintf (txt_rfgr, sizeof (txt_rfgr), "%s", radio->info.soapy.rx_gain[index_rf_gain()]);
+        snprintf (txt_currGain, sizeof (txt_currGain), "CURRENT");
+        val_ifgr = (int) soapy_protocol_get_gain_element (active_receiver, txt_ifgr);
+        val_rfgr = (int) soapy_protocol_get_gain_element (active_receiver, txt_rfgr);
+        val_currGain = (int) soapy_protocol_get_gain_element (active_receiver, txt_currGain);
+        val_biast = soapy_protocol_get_bias_t (active_receiver);
+        t_print ("%s: current Gain = %d\n", __func__, (int) soapy_protocol_get_gain_element (active_receiver, txt_currGain));
       }
 
       if (adc[active_receiver->adc].agc) {
-        snprintf(_text, sizeof(_text), "HW-AGC: ON");
-        cairo_move_to(cr, width - 250.0, 50.0);
-        cairo_set_source_rgba(cr, COLOUR_ATTN);
-        cairo_show_text(cr, _text);
+        snprintf (_text, sizeof (_text), "HW-AGC: ON");
+        cairo_move_to (cr, width - 250.0, 50.0);
+        cairo_set_source_rgba (cr, COLOUR_ATTN);
+        cairo_show_text (cr, _text);
         //---------------------------------------------------
-        snprintf(_text, sizeof(_text), "(%ddbFS)", val_agcsetpoint);
-        cairo_move_to(cr, width - 110.0, 50.0);
-        cairo_show_text(cr, _text);
+        snprintf (_text, sizeof (_text), "(%ddbFS)", val_agcsetpoint);
+        cairo_move_to (cr, width - 110.0, 50.0);
+        cairo_show_text (cr, _text);
         //---------------------------------------------------
-        cairo_set_source_rgba(cr, COLOUR_SHADE);
-        snprintf(_text, sizeof(_text), "%s:%ddb", txt_ifgr, val_ifgr);
+        cairo_set_source_rgba (cr, COLOUR_SHADE);
+        snprintf (_text, sizeof (_text), "%s:%ddb", txt_ifgr, val_ifgr);
       } else {
-        snprintf(_text, sizeof(_text), "HW-AGC: OFF");
-        cairo_move_to(cr, width - 250.0, 50.0);
-        cairo_set_source_rgba(cr, COLOUR_SHADE);
-        cairo_show_text(cr, _text);
-        cairo_set_source_rgba(cr, COLOUR_ATTN);
-        snprintf(_text, sizeof(_text), "%s:%ddb", txt_ifgr, val_ifgr);
+        snprintf (_text, sizeof (_text), "HW-AGC: OFF");
+        cairo_move_to (cr, width - 250.0, 50.0);
+        cairo_set_source_rgba (cr, COLOUR_SHADE);
+        cairo_show_text (cr, _text);
+        cairo_set_source_rgba (cr, COLOUR_ATTN);
+        snprintf (_text, sizeof (_text), "%s:%ddb", txt_ifgr, val_ifgr);
       }
 
-      cairo_move_to(cr, width - 110.0, 70.0);
-      cairo_show_text(cr, _text);
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      snprintf(_text, sizeof(_text), "%s:%d", txt_rfgr, val_rfgr);
-      cairo_move_to(cr, width - 180.0, 70.0);
-      cairo_show_text(cr, _text);
-      cairo_set_source_rgba(cr, COLOUR_WHITE);
-      snprintf(_text, sizeof(_text), "G:%ddb", val_currGain);
-      cairo_move_to(cr, width - 250.0, 70.0);
-      cairo_show_text(cr, _text);
+      cairo_move_to (cr, width - 110.0, 70.0);
+      cairo_show_text (cr, _text);
+      cairo_set_source_rgba (cr, COLOUR_ATTN);
+      snprintf (_text, sizeof (_text), "%s:%d", txt_rfgr, val_rfgr);
+      cairo_move_to (cr, width - 180.0, 70.0);
+      cairo_show_text (cr, _text);
+      cairo_set_source_rgba (cr, COLOUR_WHITE);
+      snprintf (_text, sizeof (_text), "G:%ddb", val_currGain);
+      cairo_move_to (cr, width - 250.0, 70.0);
+      cairo_show_text (cr, _text);
 
       if (val_biast) {
-        cairo_set_source_rgba(cr, COLOUR_ATTN);
-        snprintf(_text, sizeof(_text), "BIAS");
+        cairo_set_source_rgba (cr, COLOUR_ATTN);
+        snprintf (_text, sizeof (_text), "BIAS");
       } else {
-        cairo_set_source_rgba(cr, COLOUR_SHADE);
-        snprintf(_text, sizeof(_text), "BIAS");
+        cairo_set_source_rgba (cr, COLOUR_SHADE);
+        snprintf (_text, sizeof (_text), "BIAS");
       }
 
-      cairo_move_to(cr, width - 45.0, 30.0);
-      cairo_show_text(cr, _text);
+      cairo_move_to (cr, width - 45.0, 30.0);
+      cairo_show_text (cr, _text);
       //----------------------------------------------------
     }
   }
@@ -2282,14 +2283,14 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
 
     if (hl2_pico_is_present() && hl2_iob_get_lpf_status() != 0x00) {
-      cairo_set_source_rgba(cr, COLOUR_WHITE);
-      cairo_move_to(cr, width - 190.0, y_pos);
-      snprintf(_text, sizeof(_text), "LPF %s", hl2_iob_get_lpf_status_str());
-      cairo_show_text(cr, _text);
+      cairo_set_source_rgba (cr, COLOUR_WHITE);
+      cairo_move_to (cr, width - 190.0, y_pos);
+      snprintf (_text, sizeof (_text), "LPF %s", hl2_iob_get_lpf_status_str());
+      cairo_show_text (cr, _text);
     } else {
-      snprintf(_text, sizeof(_text), " ");
-      cairo_move_to(cr, width - 190.0, y_pos);
-      cairo_show_text(cr, _text);
+      snprintf (_text, sizeof (_text), " ");
+      cairo_move_to (cr, width - 190.0, y_pos);
+      cairo_show_text (cr, _text);
     }
   }
 
@@ -2297,40 +2298,40 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
   if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4 && !rx_stack_horizontal
       && active_receiver->display_panadapter) {
-    cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
-    cairo_rectangle(cr, width - 445.0, 15.0, 135.0, 20.0); // x, y, Breite, Höhe
-    cairo_fill_preserve(cr);   // füllt, Pfad bleibt erhalten
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_set_line_width(cr, 2.0);
-    cairo_stroke(cr);  // nur Rand, keine Füllung
-    cairo_move_to(cr, width - 440.0, 30.0);
-    cairo_set_font_size(cr, 14);
+    cairo_set_source_rgb (cr, 38.0 / 255, 38.0 / 255, 38.0 / 255); // Hintergrund
+    cairo_rectangle (cr, width - 445.0, 15.0, 135.0, 20.0); // x, y, Breite, Höhe
+    cairo_fill_preserve (cr);  // füllt, Pfad bleibt erhalten
+    cairo_set_source_rgba (cr, COLOUR_ATTN);
+    cairo_set_line_width (cr, 2.0);
+    cairo_stroke (cr); // nur Rand, keine Füllung
+    cairo_move_to (cr, width - 440.0, 30.0);
+    cairo_set_font_size (cr, 14);
     unsigned char ah4s = hl2_iob_get_antenna_tuner_status();
     // unsigned char ah4s = 0xEE; // for testing only
     char ah4_state[16];
 
     if (ah4s == 0x00) {
-      snprintf(ah4_state, sizeof(ah4_state), "READY");
+      snprintf (ah4_state, sizeof (ah4_state), "READY");
     } else if (ah4s == 0xEE) {
-      snprintf(ah4_state, sizeof(ah4_state), "RF needed");
+      snprintf (ah4_state, sizeof (ah4_state), "RF needed");
     } else if (ah4s >= 0xF0) {
-      cairo_set_source_rgba(cr, GRAD_CORAL);
-      snprintf(ah4_state, sizeof(ah4_state), "ERROR 0x%02X", ah4s);
+      cairo_set_source_rgba (cr, GRAD_CORAL);
+      snprintf (ah4_state, sizeof (ah4_state), "ERROR 0x%02X", ah4s);
     } else {
-      snprintf(ah4_state, sizeof(ah4_state), "STATE 0x%02X", ah4s);
+      snprintf (ah4_state, sizeof (ah4_state), "STATE 0x%02X", ah4s);
     }
 
-    snprintf(_text, sizeof(_text), "AH4: %s", ah4_state);
-    cairo_show_text(cr, _text);
+    snprintf (_text, sizeof (_text), "AH4: %s", ah4_state);
+    cairo_show_text (cr, _text);
   }
 
 #endif
 
   if (TxInhibit) {
-    cairo_set_source_rgba(cr, COLOUR_ALARM);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-    cairo_move_to(cr, 100.0, 30.0);
-    cairo_show_text(cr, "TX Inhibit");
+    cairo_set_source_rgba (cr, COLOUR_ALARM);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
+    cairo_move_to (cr, 100.0, 30.0);
+    cairo_show_text (cr, "TX Inhibit");
   }
 
   if (display_pacurr && radio_is_transmitting() && !TxInhibit) {
@@ -2343,8 +2344,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     //
     static double max1 = 0.0;
     static double max2 = 0.0;
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_source_rgba (cr, COLOUR_ATTN);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
 
     //
     // Supply voltage or PA temperature
@@ -2358,7 +2359,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max1 = v; }
 
-      snprintf(text, sizeof(text), "%0.0f°C", max1);
+      snprintf (text, sizeof (text), "%0.0f°C", max1);
       flag = 1;
       break;
 
@@ -2372,7 +2373,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max1 = v; }
 
-      snprintf(text, sizeof(text), "%0.1fV", max1);
+      snprintf (text, sizeof (text), "%0.1fV", max1);
       flag = 1;
       break;
 
@@ -2382,8 +2383,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
 
     if (flag) {
-      cairo_move_to(cr, 250.0, 30.0);
-      cairo_show_text(cr, text);
+      cairo_move_to (cr, 250.0, 30.0);
+      cairo_show_text (cr, text);
     }
 
     //
@@ -2398,7 +2399,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max2 = v; }
 
-      snprintf(text, sizeof(text), "%0.0fmA", max2);
+      snprintf (text, sizeof (text), "%0.0fmA", max2);
       flag = 1;
       break;
 
@@ -2411,7 +2412,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max2 = v; }
 
-      snprintf(text, sizeof(text), "%0.1fA", max2);
+      snprintf (text, sizeof (text), "%0.1fA", max2);
       flag = 1;
       break;
 
@@ -2423,7 +2424,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 
       if (count == 0) { max2 = v; }
 
-      snprintf(text, sizeof(text), "%0.1fA", max2);
+      snprintf (text, sizeof (text), "%0.1fA", max2);
       flag = 1;
       break;
 
@@ -2433,8 +2434,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
 
     if (flag) {
-      cairo_move_to(cr, 300.0, 30.0);
-      cairo_show_text(cr, text);
+      cairo_move_to (cr, 300.0, 30.0);
+      cairo_show_text (cr, text);
     }
 
     if (++count >= fps / 2) { count = 0; }
@@ -2445,53 +2446,53 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     static unsigned int cap_count = 0;
     double cx = (double) width - 100.0;
     double cy = 60.0;
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-    cairo_set_line_width(cr, 2.0);
-    cairo_move_to(cr, cx, cy +  5.0);
-    cairo_line_to(cr, cx + 90.0, cy +  5.0);
-    cairo_line_to(cr, cx + 90.0, cy + 20.0);
-    cairo_line_to(cr, cx, cy + 20.0);
-    cairo_line_to(cr, cx, cy +  5.0);
+    cairo_set_source_rgba (cr, COLOUR_ATTN);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
+    cairo_set_line_width (cr, 2.0);
+    cairo_move_to (cr, cx, cy +  5.0);
+    cairo_line_to (cr, cx + 90.0, cy +  5.0);
+    cairo_line_to (cr, cx + 90.0, cy + 20.0);
+    cairo_line_to (cr, cx, cy + 20.0);
+    cairo_line_to (cr, cx, cy +  5.0);
 
     if (capture_state == CAP_XMIT || capture_state == CAP_REPLAY) {
-      cairo_move_to(cr, cx + (90.0 * capture_record_pointer) / capture_max, cy +  5.0);
-      cairo_line_to(cr, cx + (90.0 * capture_record_pointer) / capture_max, cy + 20.0);
+      cairo_move_to (cr, cx + (90.0 * capture_record_pointer) / capture_max, cy +  5.0);
+      cairo_line_to (cr, cx + (90.0 * capture_record_pointer) / capture_max, cy + 20.0);
     }
 
-    cairo_stroke(cr);
-    cairo_move_to(cr, cx, cy);
+    cairo_stroke (cr);
+    cairo_move_to (cr, cx, cy);
 
     switch (capture_state) {
     case CAP_RECORDING:
-      cairo_show_text(cr, "RECORD");
-      cairo_rectangle(cr, cx, cy + 5.0, (90.0 * capture_record_pointer) / capture_max, 15.0);
-      cairo_fill(cr);
+      cairo_show_text (cr, "RECORD");
+      cairo_rectangle (cr, cx, cy + 5.0, (90.0 * capture_record_pointer) / capture_max, 15.0);
+      cairo_fill (cr);
       break;
 
     case CAP_REPLAY:
     case CAP_XMIT:
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      cairo_set_source_rgba (cr, COLOUR_ALARM);
 
       if (capture_state == CAP_REPLAY) {
-        cairo_show_text(cr, "REPLAY");
+        cairo_show_text (cr, "REPLAY");
       } else {
-        cairo_show_text(cr, "TRANSMIT");
+        cairo_show_text (cr, "TRANSMIT");
       }
 
-      cairo_rectangle(cr, cx + 1.0, cy + 6.0, (90.0 * capture_replay_pointer) / capture_max - 1.0, 13.0);
-      cairo_fill(cr);
+      cairo_rectangle (cr, cx + 1.0, cy + 6.0, (90.0 * capture_replay_pointer) / capture_max - 1.0, 13.0);
+      cairo_fill (cr);
       break;
 
     case CAP_AVAIL:
-      cairo_show_text(cr, "REC STBY");
-      cairo_rectangle(cr, cx, cy + 5.0, (90.0 * capture_record_pointer) / capture_max, 15.0);
-      cairo_fill(cr);
+      cairo_show_text (cr, "REC STBY");
+      cairo_rectangle (cr, cx, cy + 5.0, (90.0 * capture_record_pointer) / capture_max, 15.0);
+      cairo_fill (cr);
       cap_count++;
 
       if (cap_count > 30 * fps) {
         capture_state = CAP_GOTOSLEEP;
-        schedule_action(capture_trigger_action, PRESSED, 0);
+        schedule_action (capture_trigger_action, PRESSED, 0);
         cap_count = 0;
       }
 

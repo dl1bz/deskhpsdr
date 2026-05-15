@@ -49,7 +49,7 @@ https://github.com/lucianodato/libspecbleach
 
 #include "comm.h"
 
-void setSize_sbnr (SBNR a, int size) {
+void setSize_sbnr(SBNR a, int size) {
   _aligned_free(a->input);
   _aligned_free(a->output);
   a->input = malloc0(size * sizeof(float));
@@ -57,13 +57,13 @@ void setSize_sbnr (SBNR a, int size) {
   a->buffer_size = size;
 }
 
-void setBuffers_sbnr (SBNR a, double* in, double* out) {
+void setBuffers_sbnr(SBNR a, double* in, double* out) {
   a->in = in;
   a->out = out;
 }
 
-SBNR create_sbnr (int run, int position, int size, double *in, double *out, int rate) {
-  SBNR a = (SBNR) malloc0 (sizeof (sbnr));
+SBNR create_sbnr(int run, int position, int size, double* in, double* out, int rate) {
+  SBNR a = (SBNR) malloc0(sizeof(sbnr));
   a->run = run;
   a->position = position;
   a->rate = rate;
@@ -88,7 +88,7 @@ void setSamplerate_sbnr(SBNR a, int rate) {
   a->st = specbleach_adaptive_initialize(a->rate, 20); //20ms frame size, documentation recommends 20-100
 }
 
-void xsbnr (SBNR a, int pos) {
+void xsbnr(SBNR a, int pos) {
   if (a->run && pos == a->position) {
     SpectralBleachAdaptiveParameters parameters =
     (SpectralBleachAdaptiveParameters) {
@@ -101,11 +101,11 @@ void xsbnr (SBNR a, int pos) {
       .post_filter_threshold = a->post_filter_threshold
     };
     specbleach_adaptive_load_parameters(a->st, parameters);
-    double*  in = a->in;
-    double* out = a->out;
+    double  *in = a->in;
+    double *out = a->out;
     int    bs = a->buffer_size;
-    float* proc_out = a->output;
-    float*  to_proc = a->input;
+    float *proc_out = a->output;
+    float  *to_proc = a->input;
 
     for (size_t i = 0; i < bs; i++) {
       to_proc[i] = (float)in[2 * i + 0];
@@ -118,41 +118,41 @@ void xsbnr (SBNR a, int pos) {
       out[2 * i + 1] = 0.0;
     }
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->buffer_size * sizeof (complex));
+    memcpy(a->out, a->in, a->buffer_size * sizeof(complex));
   }
 }
 
-void destroy_sbnr (SBNR a) {
+void destroy_sbnr(SBNR a) {
   specbleach_adaptive_free(a->st);
-  _aligned_free (a->input);
-  _aligned_free (a->output);
-  _aligned_free (a);
+  _aligned_free(a->input);
+  _aligned_free(a->output);
+  _aligned_free(a);
 }
 
 PORT
-void SetRXASBNRRun (int channel, int run) {
+void SetRXASBNRRun(int channel, int run) {
   SBNR a = rxa[channel].sbnr.p;
 
   if (a->run != run) {
-    RXAbp1Check (channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
-                 rxa[channel].emnr.p->run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
-                 rxa[channel].rnnr.p->run, run);
-    EnterCriticalSection (&ch[channel].csDSP);
+    RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
+                rxa[channel].emnr.p->run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
+                rxa[channel].rnnr.p->run, run);
+    EnterCriticalSection(&ch[channel].csDSP);
     a->run = run;
-    RXAbp1Set (channel);
-    LeaveCriticalSection (&ch[channel].csDSP);
+    RXAbp1Set(channel);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 }
 
 /* Sets the amount of dBs that the noise will be attenuated. It goes from 0 dB
   * to 20 dB */
 PORT
-void SetRXASBNRreductionAmount (int channel, float amount) {
+void SetRXASBNRreductionAmount(int channel, float amount) {
   if (amount < 0 || amount > 20) { return; }
 
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->reduction_amount = amount;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 /* Percentage of smoothing to apply. Averages the reduction calculation frame
@@ -160,12 +160,12 @@ void SetRXASBNRreductionAmount (int channel, float amount) {
  * if too strong it can blur transient and reduce high frequencies. It goes
  * from 0 to 100 percent */
 PORT
-void SetRXASBNRsmoothingFactor (int channel, float factor) {
+void SetRXASBNRsmoothingFactor(int channel, float factor) {
   if (factor < 0 || factor > 100) { return; }
 
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->smoothing_factor = factor;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 /* Percentage of whitening that is going to be applied to the residue of the
@@ -173,12 +173,12 @@ void SetRXASBNRsmoothingFactor (int channel, float factor) {
  * can help hide musical noise when the noise is colored. It goes from 0 to
  * 100 percent */
 PORT
-void SetRXASBNRwhiteningFactor (int channel, float factor) {
+void SetRXASBNRwhiteningFactor(int channel, float factor) {
   if (factor < 0 || factor > 100) { return; }
 
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->whitening_factor = factor;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 /* Strength in which the reduction will be applied. It uses the masking
@@ -187,24 +187,24 @@ void SetRXASBNRwhiteningFactor (int channel, float factor) {
  * frequencies the reduction is going to be applied. It can be a positive dB
  * value in between 0 dB and 12 dB */
 PORT
-void SetRXASBNRnoiseRescale (int channel, float factor) {
+void SetRXASBNRnoiseRescale(int channel, float factor) {
   if (factor < 0 || factor > 12) { return; }
 
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->noise_rescale = factor;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 /* Sets the SNR threshold in dB in which the post-filter will start to blur
  * musical noise. It can be a positive or negative dB value in between -10 dB
  * and 10 dB */
 PORT
-void SetRXASBNRpostFilterThreshold (int channel, float threshold) {
+void SetRXASBNRpostFilterThreshold(int channel, float threshold) {
   if (threshold < -10 || threshold > 10) { return; }
 
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->post_filter_threshold = threshold;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 /* Type of algorithm used to scale noise in order to apply over or under

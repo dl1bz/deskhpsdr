@@ -103,8 +103,8 @@ static enum {
 
 static gboolean configure = FALSE;
 
-static void ReadMIDIdevice(const MIDIPacketList *pktlist, void *refCon, void *connRefCon) {
-  MIDIPacket *packet = (MIDIPacket *)pktlist->packet;
+static void ReadMIDIdevice(const MIDIPacketList *pktlist, void* refCon, void* connRefCon) {
+  MIDIPacket *packet = (MIDIPacket*) pktlist->packet;
   int chan = 0;
   int arg1 = 0;
   int arg2 = 0;

@@ -86,7 +86,7 @@ static pa_mainloop_api *main_loop_api;
 static pa_operation *op;
 static pa_context *pa_ctx;
 // protect 'op' against concurrent set/unref
-static pa_simple* microphone_stream;
+static pa_simple *microphone_stream;
 static int local_microphone_buffer_offset;
 static float *local_microphone_buffer = NULL;
 static GThread *mic_read_thread_id = 0;
@@ -114,7 +114,7 @@ static void audio_free_device_lists_locked(void) {
   n_output_devices = 0;
 }
 
-static void source_list_cb(pa_context *context, const pa_source_info *s, int eol, void *data) {
+static void source_list_cb(pa_context *context, const pa_source_info *s, int eol, void* data) {
   audio_init_mutexes_once();
 
   if (eol > 0) {
@@ -148,7 +148,7 @@ static void source_list_cb(pa_context *context, const pa_source_info *s, int eol
   g_mutex_unlock(&audio_mutex);
 }
 
-static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, void *data) {
+static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, void* data) {
   audio_init_mutexes_once();
 
   if (eol > 0) {
@@ -200,12 +200,12 @@ static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, vo
   g_mutex_unlock(&audio_mutex);
 }
 
-static void state_cb(pa_context *c, void *userdata) {
+static void state_cb(pa_context *c, void* userdata) {
   pa_context_state_t state;
   state = pa_context_get_state(c);
   t_print("%s: %d\n", __func__, state);
 
-  switch  (state) {
+  switch (state) {
   // There are just here for reference
   case PA_CONTEXT_UNCONNECTED:
     t_print("audio: state_cb: PA_CONTEXT_UNCONNECTED\n");
@@ -344,7 +344,7 @@ void audio_get_cards(void) {
     while (g_main_context_iteration(NULL, FALSE)) { /* drain */ }
 
     // avoid busy loop
-    g_usleep(1000); // 1ms
+    g_usleep(1000);  // 1ms
     g_mutex_lock(&enum_mutex);
 
     if (g_get_monotonic_time() >= deadline) {
@@ -568,7 +568,7 @@ int audio_open_input(void) {
 
   float *new_local_buf = g_new0(float, mic_buffer_size);
   t_print("%s: allocating ring buffer\n", __func__);
-  float *new_ring_buf = (float *) g_new(float, MICRINGLEN);
+  float *new_ring_buf = (float*) g_new(float, MICRINGLEN);
 
   if (new_local_buf == NULL || new_ring_buf == NULL) {
     if (new_local_buf) { g_free(new_local_buf); }

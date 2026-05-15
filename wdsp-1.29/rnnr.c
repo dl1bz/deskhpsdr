@@ -84,12 +84,12 @@ static float frame_rms(const float* x, int n) {
 }
 
 //used to track RNNR instances
-static RNNR* _rnnr_instances = NULL;
+static RNNR *_rnnr_instances = NULL;
 static int _rnnr_count = 0;
 static int _rnnr_capacity = 0;
 
 // the model to use when creating new RNNR instances
-static RNNModel* _rnnr_model = NULL;
+static RNNModel *_rnnr_model = NULL;
 
 //ringbuffer
 static void ring_buffer_init(rnnr_ring_buffer* rb, int capacity) {
@@ -130,7 +130,7 @@ static int ring_buffer_get_bulk(rnnr_ring_buffer* rb, float* dest, int n) {
 static void ring_buffer_resize(rnnr_ring_buffer* rb, int new_capacity) {
   if (new_capacity == rb->capacity) { return; }
 
-  float* new_buf = malloc0(new_capacity * sizeof(float));
+  float *new_buf = malloc0(new_capacity * sizeof(float));
   int cnt = rb->count;
 
   for (int i = 0; i < cnt; i++) {
@@ -146,17 +146,17 @@ static void ring_buffer_resize(rnnr_ring_buffer* rb, int new_capacity) {
 //
 
 PORT
-void SetRXARNNRRun (int channel, int run) {
+void SetRXARNNRRun(int channel, int run) {
   RNNR a = rxa[channel].rnnr.p;
 
   if (a->run != run) {
-    RXAbp1Check (channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
-                 rxa[channel].emnr.p->run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
-                 run, rxa[channel].sbnr.p->run); // NR3 + NR4 support
-    EnterCriticalSection (&ch[channel].csDSP);
+    RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
+                rxa[channel].emnr.p->run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
+                run, rxa[channel].sbnr.p->run); // NR3 + NR4 support
+    EnterCriticalSection(&ch[channel].csDSP);
     a->run = run;
-    RXAbp1Set (channel);
-    LeaveCriticalSection (&ch[channel].csDSP);
+    RXAbp1Set(channel);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 }
 
@@ -217,8 +217,8 @@ void xrnnr(RNNR a, int pos) {
   if (a->st && a->run && pos == a->position) {
     int  bs = a->buffer_size;
     int  fs = a->frame_size;
-    float* to_process = a->to_process_buffer;
-    float* process_out = a->processed_output_buffer;
+    float *to_process = a->to_process_buffer;
+    float *process_out = a->processed_output_buffer;
     EnterCriticalSection(&a->cs);
 
     for (int i = 0; i < bs; i++) {

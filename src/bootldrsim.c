@@ -56,7 +56,7 @@
 #include <net/if_dl.h>
 #include <string.h>
 
-void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, unsigned char *data, int datalen);
+void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, unsigned char* data, int datalen);
 
 // HPSDR P1 bootloader command codes
 
@@ -78,11 +78,11 @@ void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, 
 #define HAVE_MAC_ADDRESS 0x03
 #define HAVE_IP_ADDRESS  0x04
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   int i, j, k, l;
   char *dev = NULL;                     // Which ethernet adapter to use
   char errbuf[PCAP_ERRBUF_SIZE];        // error message from pcap
-  pcap_t* descr;                        // main pcap 'handle'
+  pcap_t *descr;                        // main pcap 'handle'
   const u_char *packet;                 // received ethernet packet raw data
   struct pcap_pkthdr hdr;               // received ethernet packet header
   unsigned char mymac[6];               // MAC address of radio (that is, of THIS host)
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
         sa = addr->addr;
 
         if (sa->sa_family == AF_INET) {
-          (void) inet_ntop(AF_INET, (void *) & (((struct sockaddr_in *)sa)->sin_addr), string, 256);
+          (void) inet_ntop(AF_INET, (void*) & (((struct sockaddr_in*) sa)->sin_addr), string, 256);
 
           if (sscanf(string, "%d.%d.%d.%d", &i, &j, &k, &l) == 4) {
             myip[0] = i;
@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
         }
 
         if (sa->sa_family == AF_LINK) {
-          link = (struct sockaddr_dl *)sa->sa_data;
+          link = (struct sockaddr_dl*) sa->sa_data;
           unsigned char mac[link->sdl_alen];
           memcpy(mac, LLADDR(link), link->sdl_alen);
 
@@ -303,7 +303,7 @@ int main(int argc, char **argv) {
           }
 
           if (outfd >= 0) {
-            write (outfd, packet + 20, 256);
+            write(outfd, packet + 20, 256);
             printf("Writing to file %s: %5d\r", outfile, progress++);
             fflush(stdout);
             count = 100; // timeout is 10msec so we wait for 1 sec.
@@ -341,7 +341,7 @@ int main(int argc, char **argv) {
   }
 }
 
-void sendRawCommand(pcap_t *handle, unsigned char dst[6], unsigned char command, unsigned char *data, int datalen) {
+void sendRawCommand(pcap_t* handle, unsigned char dst[6], unsigned char command, unsigned char* data, int datalen) {
   unsigned char buffer[62];
   int i;
 
@@ -385,7 +385,7 @@ void sendRawCommand(pcap_t *handle, unsigned char dst[6], unsigned char command,
   // pad with zeroes
   //
   for (i = 16 + datalen; i <= 62; i++) {
-    buffer[i + 16] = (unsigned char)0x00;
+    buffer[i + 16] = (unsigned char) 0x00;
   }
 
   //

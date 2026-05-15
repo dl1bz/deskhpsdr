@@ -32,7 +32,7 @@ warren@wpratt.com
 typedef struct _mav {
   int ringmin;
   int ringmax;    // must be a power of two
-  int* ring;
+  int *ring;
   int mask;
   int i;
   int load;
@@ -43,7 +43,7 @@ typedef struct _mav {
 typedef struct _aamav {
   int ringmin;
   int ringmax;    // must be a power of two
-  int* ring;
+  int *ring;
   int mask;
   int i;
   int load;
@@ -54,11 +54,11 @@ typedef struct _aamav {
 
 typedef struct _rmatch {
   volatile long run;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int insize;
   int outsize;
-  double* resout;
+  double *resout;
   int nom_inrate;
   int nom_outrate;
   double nom_ratio;
@@ -70,7 +70,7 @@ typedef struct _rmatch {
   int auto_ringsize;
   int ringsize;
   int rsize;
-  double* ring;
+  double *ring;
   int n_ring;
   int iin;
   int iout;
@@ -94,8 +94,8 @@ typedef struct _rmatch {
   // blend / slew
   double tslew;
   int ntslew;
-  double* cslew;
-  double* baux;
+  double *cslew;
+  double *baux;
   double dlast[2];
   int ucnt;
   // variables to check start-up time for control to become active
@@ -131,7 +131,7 @@ extern __declspec (dllexport) void setRMatchNomOutrate (void* ptr, int nom_outra
 extern __declspec (dllexport) void setRMatchRingsize (void* ptr, int ringsize);
 
 extern __declspec (dllexport) void getRMatchDiags (void* b, int* underflows, int* overflows, double* var, int* ringsize,
-    int* nring);
+    int *nring);
 
 extern __declspec (dllexport) void resetRMatchDiags (void* b);
 

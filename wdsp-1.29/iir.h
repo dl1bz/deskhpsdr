@@ -36,8 +36,8 @@ warren@wpratt.com
 typedef struct _snotch {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double f;
   double bw;
@@ -78,8 +78,8 @@ extern void SetSNCTCSSRun (SNOTCH a, int run);
 typedef struct _speak {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double f;
   double bw;
@@ -130,23 +130,23 @@ extern __declspec (dllexport) void SetRXABiQuadGain(int channel, double gain);
 typedef struct _mpeak {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int rate;
   int npeaks;
-  int* enable;
-  double* f;
-  double* bw;
-  double* gain;
+  int *enable;
+  double *f;
+  double *bw;
+  double *gain;
   int nstages;
-  SPEAK* pfil;
-  double* tmp;
-  double* mix;
+  SPEAK *pfil;
+  double *tmp;
+  double *mix;
   CRITICAL_SECTION cs_update;
 } mpeak, *MPEAK;
 
 extern MPEAK create_mpeak (int run, int size, double* in, double* out, int rate, int npeaks, int* enable, double* f,
-                           double* bw, double* gain, int nstages);
+                           double *bw, double *gain, int nstages);
 
 extern void destroy_mpeak (MPEAK a);
 
@@ -175,8 +175,8 @@ typedef struct _phrot {
   int reverse;
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int rate;
   double fc;
   int nstages;
@@ -214,15 +214,15 @@ extern void setSize_phrot (PHROT a, int size);
 typedef struct _bqlp {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double fc;
   double Q;
   double gain;
   int nstages;
   double a0, a1, a2, b1, b2;
-  double* x0, * x1, * x2, * y0, * y1, * y2;
+  double *x0, *x1, *x2, *y0, *y1, *y2;
   CRITICAL_SECTION cs_update;
 } bqlp, *BQLP;
 
@@ -281,17 +281,17 @@ extern void setSize_dbqlp(BQLP a, int size);
 typedef struct _bqbp {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double f_low;
   double f_high;
   double gain;
   int nstages;
   double a0, a1, a2, b1, b2;
-  double* x0, * x1, * x2, * y0, * y1, * y2;
+  double *x0, *x1, *x2, *y0, *y1, *y2;
   CRITICAL_SECTION cs_update;
-} bqbp, * BQBP;
+} bqbp, *BQBP;
 
 extern BQBP create_bqbp(int run, int size, double* in, double* out, double rate, double f_low, double f_high,
                         double gain, int nstages);
@@ -348,15 +348,15 @@ extern void setSize_dbqbp(BQBP a, int size);
 typedef struct _sphp {
   int run;
   int size;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   double rate;
   double fc;
   int nstages;
   double a1, b0, b1;
-  double* x0, * x1, * y0, * y1;
+  double *x0, *x1, *y0, *y1;
   CRITICAL_SECTION cs_update;
-} sphp, * SPHP;
+} sphp, *SPHP;
 
 extern SPHP create_dsphp(int run, int size, double* in, double* out, double rate, double fc, int nstages);
 

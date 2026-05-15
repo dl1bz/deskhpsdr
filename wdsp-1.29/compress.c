@@ -29,14 +29,14 @@ in the January 2010 issue of RadCom magazine.
 
 #include "comm.h"
 
-COMPRESSOR create_compressor (
-  int run,
-  int buffsize,
-  double* inbuff,
-  double* outbuff,
-  double gain ) {
+COMPRESSOR create_compressor(
+        int run,
+        int buffsize,
+        double *inbuff,
+        double *outbuff,
+        double gain) {
   COMPRESSOR a;
-  a = (COMPRESSOR) malloc0 (sizeof (compressor));
+  a = (COMPRESSOR) malloc0(sizeof(compressor));
   a->run = run;
   a->inbuff = inbuff;
   a->outbuff = outbuff;
@@ -45,14 +45,14 @@ COMPRESSOR create_compressor (
   return a;
 }
 
-void destroy_compressor (COMPRESSOR a) {
-  _aligned_free (a);
+void destroy_compressor(COMPRESSOR a) {
+  _aligned_free(a);
 }
 
-void flush_compressor (COMPRESSOR a) {
+void flush_compressor(COMPRESSOR a) {
 }
 
-void xcompressor (COMPRESSOR a) {
+void xcompressor(COMPRESSOR a) {
   int i;
   double mag;
 
@@ -68,19 +68,19 @@ void xcompressor (COMPRESSOR a) {
 
       a->outbuff[2 * i + 1] = 0.0;
     } else if (a->inbuff != a->outbuff) {
-    memcpy(a->outbuff, a->inbuff, a->buffsize * sizeof (complex));
+    memcpy(a->outbuff, a->inbuff, a->buffsize * sizeof(complex));
   }
 }
 
-void setBuffers_compressor (COMPRESSOR a, double* in, double* out) {
+void setBuffers_compressor(COMPRESSOR a, double* in, double* out) {
   a->inbuff = in;
   a->outbuff = out;
 }
 
-void setSamplerate_compressor (COMPRESSOR a, int rate) {
+void setSamplerate_compressor(COMPRESSOR a, int rate) {
 }
 
-void setSize_compressor (COMPRESSOR a, int size) {
+void setSize_compressor(COMPRESSOR a, int size) {
   a->buffsize = size;
 }
 
@@ -91,18 +91,18 @@ void setSize_compressor (COMPRESSOR a, int size) {
 ********************************************************************************************************/
 
 PORT void
-SetTXACompressorRun (int channel, int run) {
+SetTXACompressorRun(int channel, int run) {
   if (txa[channel].compressor.p->run != run) {
-    EnterCriticalSection (&ch[channel].csDSP);
+    EnterCriticalSection(&ch[channel].csDSP);
     txa[channel].compressor.p->run = run;
-    TXASetupBPFilters (channel);
-    LeaveCriticalSection (&ch[channel].csDSP);
+    TXASetupBPFilters(channel);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 }
 
 PORT void
-SetTXACompressorGain (int channel, double gain) {
-  EnterCriticalSection (&ch[channel].csDSP);
-  txa[channel].compressor.p->gain = pow (10.0, gain / 20.0);
-  LeaveCriticalSection (&ch[channel].csDSP);
+SetTXACompressorGain(int channel, double gain) {
+  EnterCriticalSection(&ch[channel].csDSP);
+  txa[channel].compressor.p->gain = pow(10.0, gain / 20.0);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

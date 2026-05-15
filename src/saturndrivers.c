@@ -117,7 +117,7 @@ unsigned int GetFirmwareMajorVersion(void) {
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAWriteToFPGA(int fd, unsigned char*SrcData, uint32_t Length, uint32_t AXIAddr) {
+int DMAWriteToFPGA(int fd, unsigned char* SrcData, uint32_t Length, uint32_t AXIAddr) {
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
@@ -151,7 +151,7 @@ int DMAWriteToFPGA(int fd, unsigned char*SrcData, uint32_t Length, uint32_t AXIA
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAReadFromFPGA(int fd, unsigned char*DestData, uint32_t Length, uint32_t AXIAddr) {
+int DMAReadFromFPGA(int fd, unsigned char* DestData, uint32_t Length, uint32_t AXIAddr) {
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
@@ -245,7 +245,7 @@ void SetupFIFOMonitorChannel(EDMAStreamSelect Channel, bool EnableInterrupt) {
   }
 
   Address = VADDRFIFOMONBASE + 4 * Channel + 0x10;      // config register address
-  Data = DMAFIFODepths[(int)Channel];             // memory depth
+  Data = DMAFIFODepths[(int) Channel];            // memory depth
 
   if (EnableInterrupt) {
     Data += 0x80000000;  // bit 31
@@ -267,13 +267,13 @@ void SetupFIFOMonitorChannel(EDMAStreamSelect Channel, bool EnableInterrupt) {
 //   Current:           number of locations occupied (in either FIFO type)
 //
 uint32_t ReadFIFOMonitorChannel(EDMAStreamSelect Channel, bool* Overflowed, bool* OverThreshold, bool* Underflowed,
-                                unsigned int* Current) {
+                                unsigned int *Current) {
   uint32_t Address;             // register address
   uint32_t Data = 0;              // register content
   bool Overflow = false;
   bool OverThresh = false;
   bool Underflow = false;
-  Address = VADDRFIFOMONBASE + 4 * (uint32_t)Channel;     // status register address
+  Address = VADDRFIFOMONBASE + 4 * (uint32_t) Channel;    // status register address
   Data = RegisterRead(Address);
 
   if (Data & 0x80000000) {                  // if top bit set, declare overflow
@@ -294,7 +294,7 @@ uint32_t ReadFIFOMonitorChannel(EDMAStreamSelect Channel, bool* Overflowed, bool
   *OverThreshold = OverThresh;                // send out over threshold result
   *Underflowed = Underflow;                 // send out underflow result
 
-  if ((Channel == eTXDUCDMA) || (Channel == eSpkCodecDMA)) { // if a write channel
+  if ((Channel == eTXDUCDMA) || (Channel == eSpkCodecDMA)) {   // if a write channel
     Data = DMAFIFODepths[Channel] - Data;  // calculate free locations
   }
 

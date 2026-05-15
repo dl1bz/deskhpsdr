@@ -30,13 +30,13 @@ warren@wpratt.com
 typedef struct _fmsq {
   int run;              // 0 if squelch system is OFF; 1 if it's ON
   int size;             // size of input/output buffers
-  double* insig;            // squelch input signal buffer
-  double* outsig;           // squelch output signal buffer
-  double* trigger;          // buffer used to trigger mute/unmute (may be same as input; matches timing of input buffer)
+  double *insig;            // squelch input signal buffer
+  double *outsig;           // squelch output signal buffer
+  double *trigger;          // buffer used to trigger mute/unmute (may be same as input; matches timing of input buffer)
   double rate;            // sample rate
-  double* noise;
+  double *noise;
   double fc;              // corner frequency for sig / noise detection
-  double* pllpole;          // pointer to pole frequency of the fm demodulator pll
+  double *pllpole;          // pointer to pole frequency of the fm demodulator pll
   double F[4];
   double G[4];
   double avtau;           // time constant for averaging noise
@@ -53,8 +53,8 @@ typedef struct _fmsq {
   double tdown;
   int ntup;
   int ntdown;
-  double* cup;
-  double* cdown;
+  double *cup;
+  double *cdown;
   double tail_thresh;
   double unmute_thresh;
   double min_tail;
@@ -69,7 +69,7 @@ typedef struct _fmsq {
 } fmsq, *FMSQ;
 
 extern FMSQ create_fmsq (int run, int size, double* insig, double* outsig, double* trigger, int rate, double fc,
-                         double* pllpole, double tdelay, double avtau, double longtau, double tup, double tdown, double tail_thresh,
+                         double *pllpole, double tdelay, double avtau, double longtau, double tup, double tdown, double tail_thresh,
                          double unmute_thresh, double min_tail, double max_tail, int nc, int mp);
 
 extern void destroy_fmsq (FMSQ a);

@@ -64,15 +64,15 @@ typedef struct _sbnr {
   int buffer_size;
   int rate;
 
-  float* input;
-  float* output;
+  float *input;
+  float *output;
 } sbnr, *SBNR;
 
 // define the public api of this module
-extern SBNR create_sbnr(int run, int position, int size, double *in, double *out, int rate);
+extern SBNR create_sbnr(int run, int position, int size, double* in, double* out, int rate);
 extern void destroy_sbnr(SBNR a);
 extern void setSize_sbnr(SBNR a, int size);
-extern void setBuffers_sbnr(SBNR a, double *in, double *out);
+extern void setBuffers_sbnr(SBNR a, double* in, double* out);
 extern void xsbnr(SBNR a, int pos);
 extern void setSamplerate_sbnr(SBNR a, int rate);
 

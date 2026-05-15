@@ -120,18 +120,18 @@ void oc_menu(GtkWidget *parent) {
   char _title[64];
   snprintf(_title, 64, "%s - Open Collector Output", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-  GtkWidget *sw = gtk_scrolled_window_new (NULL, NULL);
+  GtkWidget *sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_widget_set_size_request(sw, 600, 400);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   GtkWidget *viewport = gtk_viewport_new(NULL, NULL);
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 4, 1);
   GtkWidget *band_title = gtk_label_new("Band");
   gtk_widget_set_name(band_title, "boldlabel");
@@ -186,12 +186,12 @@ void oc_menu(GtkWidget *parent) {
       for (j = 1; j < 8; j++) {
         mask = 0x01 << (j - 1);
         GtkWidget *oc_rx_b = gtk_check_button_new();
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (oc_rx_b), (band->OCrx & mask) == mask);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(oc_rx_b), (band->OCrx & mask) == mask);
         gtk_widget_show(oc_rx_b);
         gtk_grid_attach(GTK_GRID(grid), oc_rx_b, j, row, 1, 1);
         g_signal_connect(oc_rx_b, "toggled", G_CALLBACK(oc_rx_cb), GINT_TO_POINTER(j + (i << 4)));
         GtkWidget *oc_tx_b = gtk_check_button_new();
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (oc_tx_b), (band->OCtx & mask) == mask);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(oc_tx_b), (band->OCtx & mask) == mask);
         gtk_widget_show(oc_tx_b);
         gtk_grid_attach(GTK_GRID(grid), oc_tx_b, j + 7, row, 1, 1);
         g_signal_connect(oc_tx_b, "toggled", G_CALLBACK(oc_tx_cb), GINT_TO_POINTER(j + (i << 4)));
@@ -223,7 +223,7 @@ void oc_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), oc_tune_title, 18, j + 2, 1, 1);
     mask = 0x01 << (j - 1);
     GtkWidget *oc_tune_b = gtk_check_button_new();
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (oc_tune_b), (OCtune & mask) == mask);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(oc_tune_b), (OCtune & mask) == mask);
     gtk_widget_show(oc_tune_b);
     gtk_grid_attach(GTK_GRID(grid), oc_tune_b, 19, j + 2, 1, 1);
     g_signal_connect(oc_tune_b, "toggled", G_CALLBACK(oc_tune_cb), GINT_TO_POINTER(j));
@@ -236,7 +236,7 @@ void oc_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), oc_full_tune_time_title, 18, j, 2, 1);
   j++;
   GtkWidget *oc_full_tune_time_b = gtk_spin_button_new_with_range(0.0, 9999.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(oc_full_tune_time_b), (double)OCfull_tune_time);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(oc_full_tune_time_b), (double) OCfull_tune_time);
   gtk_widget_show(oc_full_tune_time_b);
   gtk_grid_attach(GTK_GRID(grid), oc_full_tune_time_b, 18, j, 2, 2);
   g_signal_connect(oc_full_tune_time_b, "value_changed", G_CALLBACK(oc_full_tune_time_cb), NULL);
@@ -248,7 +248,7 @@ void oc_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), oc_memory_tune_time_title, 18, j, 2, 1);
   j++;
   GtkWidget *oc_memory_tune_time_b = gtk_spin_button_new_with_range(0.0, 9999.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(oc_memory_tune_time_b), (double)OCmemory_tune_time);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(oc_memory_tune_time_b), (double) OCmemory_tune_time);
   gtk_widget_show(oc_memory_tune_time_b);
   gtk_grid_attach(GTK_GRID(grid), oc_memory_tune_time_b, 18, j, 2, 2);
   g_signal_connect(oc_memory_tune_time_b, "value_changed", G_CALLBACK(oc_memory_tune_time_cb), NULL);

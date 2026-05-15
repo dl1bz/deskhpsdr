@@ -305,7 +305,7 @@ void InitialiseDACAttenROMs(void) {
   DACStepAttenROM[0] = 63;                    // max atten
 
   for (unsigned int Level = 1; Level < 256; Level++) { // input demand value
-    double DesiredAtten = 20.0 * log10(255.0 / (double)Level); // this is the atten value we want after the high speed DAC
+    double DesiredAtten = 20.0 * log10(255.0 / (double) Level);  // this is the atten value we want after the high speed DAC
     // integer step atten drive value
     unsigned int StepValue = (int)(2.0 * DesiredAtten);              // 6 bit step atten should be set to
 
@@ -314,7 +314,7 @@ void InitialiseDACAttenROMs(void) {
     }
 
     // atten to go in the current setting DAC
-    double ResidualAtten = DesiredAtten - ((double)StepValue *
+    double ResidualAtten = DesiredAtten - ((double) StepValue *
                                            0.5);        // this needs to be achieved through the current setting drive
     // int value to go to DAC ROM
     unsigned int DACDrive = (unsigned int)(255.0 / pow(10.0, (ResidualAtten / 20.0)));
@@ -514,7 +514,7 @@ void SetP2SampleRate(unsigned int DDC, bool Enabled, unsigned int SampleRate, bo
 
   RegisterValue = DDCRateReg;                     // get current register setting
   RegisterValue &= ~Mask;                         // strip current bits
-  Mask = (uint32_t)Rate;                          // new bits
+  Mask = (uint32_t) Rate;                         // new bits
   Mask = Mask << (DDC * 3);                       // get new bits to right bit position
   RegisterValue |= Mask;
   DDCRateReg = RegisterValue;                     // don't save to hardware
@@ -642,10 +642,10 @@ void SetDDCFrequency(uint32_t DDC, uint32_t Value, bool IsDeltaPhase) {
   }
 
   if (!IsDeltaPhase) {                    // ieif protocol 1
-    double fDeltaPhase = VTWOEXP32 * (double)Value / (double) VSAMPLERATE;
-    DeltaPhase = (uint32_t)fDeltaPhase;
+    double fDeltaPhase = VTWOEXP32 * (double) Value / (double) VSAMPLERATE;
+    DeltaPhase = (uint32_t) fDeltaPhase;
   } else {
-    DeltaPhase = (uint32_t)Value;
+    DeltaPhase = (uint32_t) Value;
   }
 
   if (DDCDeltaPhase[DDC] != DeltaPhase) { // write back if changed
@@ -667,10 +667,10 @@ void SetTestDDSFrequency(uint32_t Value, bool IsDeltaPhase) {
   uint32_t DeltaPhase;                    // calculated deltaphase value
 
   if (!IsDeltaPhase) {                    // ie if protocol 1
-    double fDeltaPhase = VTWOEXP32 * (double)Value / (double) VSAMPLERATE;
-    DeltaPhase = (uint32_t)fDeltaPhase;
+    double fDeltaPhase = VTWOEXP32 * (double) Value / (double) VSAMPLERATE;
+    DeltaPhase = (uint32_t) fDeltaPhase;
   } else {
-    DeltaPhase = (uint32_t)Value;
+    DeltaPhase = (uint32_t) Value;
   }
 
   if (TestSourceDeltaPhase != DeltaPhase) { // write back if changed
@@ -685,14 +685,14 @@ void SetTestDDSFrequency(uint32_t Value, bool IsDeltaPhase) {
 // Value: 32 bit phase word or frequency word (1Hz resolution)
 // IsDeltaPhase: true if a delta phase value, false if a frequency value (P1)
 //
-void SetDUCFrequency(unsigned int Value, bool IsDeltaPhase) { // only accepts DUC=0
+void SetDUCFrequency(unsigned int Value, bool IsDeltaPhase) {  // only accepts DUC=0
   uint32_t DeltaPhase;                    // calculated deltaphase value
 
   if (!IsDeltaPhase) {                    // ieif protocol 1
-    double fDeltaPhase = VTWOEXP32 * (double)Value / (double) VSAMPLERATE;
-    DeltaPhase = (uint32_t)fDeltaPhase;
+    double fDeltaPhase = VTWOEXP32 * (double) Value / (double) VSAMPLERATE;
+    DeltaPhase = (uint32_t) fDeltaPhase;
   } else {
-    DeltaPhase = (uint32_t)Value;
+    DeltaPhase = (uint32_t) Value;
   }
 
   DUCDeltaPhase = DeltaPhase;             // store this delta phase
@@ -949,7 +949,7 @@ void AlexManualRXFilters(unsigned int Bits, int RX) {
 
     if (Register != GAlexRXRegister) {                  // write back if changed
       GAlexRXRegister = Register;
-      RegisterWrite(VADDRALEXSPIREG + VOFFSETALEXRXREG, Register); // and write to it
+      RegisterWrite(VADDRALEXSPIREG + VOFFSETALEXRXREG, Register);  // and write to it
     }
   }
 }
@@ -979,7 +979,7 @@ void AlexManualTXFilters(unsigned int Bits, bool HasTXAntExplicitly) {
       RegisterWrite(VADDRALEXSPIREG + VOFFSETALEXTXANTREG, Register);  // and write to it
     } else if (!HasTXAntExplicitly && (Register != GAlexTXFiltRegister)) {
       GAlexTXFiltRegister = Register;
-      RegisterWrite(VADDRALEXSPIREG + VOFFSETALEXTXFILTREG, Register); // and write to it
+      RegisterWrite(VADDRALEXSPIREG + VOFFSETALEXTXFILTREG, Register);  // and write to it
     }
   }
 }
@@ -1300,7 +1300,7 @@ void SetDDCADC(int DDC, EADCSelect ADC) {
     ADC = eTestSource;  // override setting
   }
 
-  ADCSetting = ((uint32_t)ADC & 0x3) << (DDC * 2); // 2 bits with ADC setting
+  ADCSetting = ((uint32_t) ADC & 0x3) << (DDC * 2);  // 2 bits with ADC setting
   Mask = 0x3 << (DDC * 2);                       // 0,2,4,6,8,10,12,14,16,18 bit positions
   sem_wait(&DDCInSelMutex);                       // get protected access
   RegisterValue = DDCInSelReg;                    // get current register setting
@@ -1384,7 +1384,7 @@ void InitialiseCWKeyerRamp(bool Protocol2, uint32_t Length_us) {
       SamplePeriod = 1000.0 / 48.0;
     }
 
-    RampLength = (uint32_t)(((double)Length_us / SamplePeriod) + 1);
+    RampLength = (uint32_t)(((double) Length_us / SamplePeriod) + 1);
 
     // ========================================================================
     //
@@ -1427,7 +1427,7 @@ void InitialiseCWKeyerRamp(bool Protocol2, uint32_t Length_us) {
                           - 0.0009378783245428506  * sin(y6)
                           + 0.0008567571519403228  * sin(y8)
                           + 0.00018706912431472442 * sin(y10);
-      Sample = (uint32_t) (rampsample * 8388607.0);
+      Sample = (uint32_t)(rampsample * 8388607.0);
       RegisterWrite(VADDRCWKEYERRAM + 4 * Cntr, Sample);
     }
 
@@ -1459,7 +1459,7 @@ void InitialiseCWKeyerRamp(bool Protocol2, uint32_t Length_us) {
 // If Breakin enabled, the key input engages TX automatically
 // and generates sidetone.
 //
-void EnableCW (bool Enabled, bool Breakin) {
+void EnableCW(bool Enabled, bool Breakin) {
   //
   // set I/Q modulation source if CW selected
   //
@@ -1559,8 +1559,8 @@ void SetCWSidetoneFrequency(unsigned int Frequency) {
   uint32_t Register;
   uint32_t DeltaPhase;                            // DDS delta phase value
   double fDeltaPhase;                             // delta phase as a float
-  fDeltaPhase = 65536.0 * (double)Frequency / (double) VCODECSAMPLERATE;
-  DeltaPhase = ((uint32_t)fDeltaPhase) & 0xFFFF;
+  fDeltaPhase = 65536.0 * (double) Frequency / (double) VCODECSAMPLERATE;
+  DeltaPhase = ((uint32_t) fDeltaPhase) & 0xFFFF;
   Register = GCodecConfigReg;                     // get current settings
   Register &= 0xFFFF0000;                             // remove old bits
   Register |= DeltaPhase;                             // add back new bits
@@ -1939,7 +1939,7 @@ void CodecInitialise(void) {
 // SetTXAmplitudeScaling (unsigned int Amplitude)
 // sets the overall TX amplitude. This is normally set to a constant determined during development.
 //
-void SetTXAmplitudeScaling (unsigned int Amplitude) {
+void SetTXAmplitudeScaling(unsigned int Amplitude) {
   uint32_t Register;
   GTXAmplScaleFactor = Amplitude;                             // save value
   Register = TXConfigRegValue;                                // get current settings
@@ -1953,12 +1953,12 @@ void SetTXAmplitudeScaling (unsigned int Amplitude) {
 // SetTXProtocol (bool Protocol)
 // sets whether TX configured for P1 (48KHz) or P2 (192KHz)
 // true for P2
-void SetTXProtocol (bool Protocol) {
+void SetTXProtocol(bool Protocol) {
   uint32_t Register;
   GTXProtocolP2 = Protocol;                           // save value
   Register = TXConfigRegValue;                        // get current settings
   Register &= 0xFFFFFF7;                              // remove old bit
-  Register |= ((((unsigned int)Protocol) & 1) << VTXCONFIGPROTOCOLBIT);          // add new bit
+  Register |= ((((unsigned int) Protocol) & 1) << VTXCONFIGPROTOCOLBIT);         // add new bit
   TXConfigRegValue = Register;                    // store it back
   RegisterWrite(VADDRTXCONFIGREG, Register);  // and write to it
 }
@@ -2052,7 +2052,7 @@ void EnableDUCMux(bool Enabled) {
 // SetTXModulationTestSourceFrequency (unsigned int Freq)
 // sets the TX modulation DDS source frequency. Only used for development.
 //
-void SetTXModulationTestSourceFrequency (unsigned int Freq) {
+void SetTXModulationTestSourceFrequency(unsigned int Freq) {
   uint32_t Register;
   Register = Freq;                        // get current settings
 
@@ -2072,7 +2072,7 @@ void SetTXModulationSource(ETXModulationSource Source) {
   GTXModulationSource = Source;                       // save value
   Register = TXConfigRegValue;                        // get current settings
   Register &= 0xFFFFFFFC;                             // remove old bits
-  Register |= ((unsigned int)Source);                 // add new bits
+  Register |= ((unsigned int) Source);                // add new bits
   TXConfigRegValue = Register;                    // store it back
   RegisterWrite(VADDRTXCONFIGREG, Register);  // and write to it
 }

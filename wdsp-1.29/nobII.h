@@ -30,8 +30,8 @@ warren@wpratt.com
 typedef struct _nob {
   int run;
   int buffsize;         // size of input/output buffer
-  double* in;           // input buffer
-  double* out;          // output buffer
+  double *in;           // input buffer
+  double *out;          // output buffer
   int mode;
   int dline_size;         // length of delay line which is 'double dline[length][2]'
   double *dline;          // pointer to delay line
@@ -78,19 +78,19 @@ typedef struct _nob {
 } nob, *NOB;
 
 __declspec (dllexport) NOB create_nob (
-  int run,
-  int buffsize,
-  double* in,
-  double* out,
-  double samplerate,
-  int mode,
-  double advslewtime,
-  double advtime,
-  double hangslewtime,
-  double hangtime,
-  double max_imp_seq_time,
-  double backtau,
-  double threshold
+        int run,
+        int buffsize,
+        double *in,
+        double *out,
+        double samplerate,
+        int mode,
+        double advslewtime,
+        double advtime,
+        double hangslewtime,
+        double hangtime,
+        double max_imp_seq_time,
+        double backtau,
+        double threshold
 );
 
 __declspec (dllexport) void destroy_nob (NOB a);
@@ -100,16 +100,16 @@ __declspec (dllexport) void flush_nob (NOB a);
 __declspec (dllexport) void xnob (NOB a);
 
 extern __declspec (dllexport) void create_nobEXT  (
-  int id,
-  int run,
-  int mode,
-  int buffsize,
-  double samplerate,
-  double slewtime,
-  double hangtime,
-  double advtime,
-  double backtau,
-  double threshold
+        int id,
+        int run,
+        int mode,
+        int buffsize,
+        double samplerate,
+        double slewtime,
+        double hangtime,
+        double advtime,
+        double backtau,
+        double threshold
 );
 
 extern __declspec (dllexport) void destroy_nobEXT (int id);

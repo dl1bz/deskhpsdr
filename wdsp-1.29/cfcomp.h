@@ -31,26 +31,26 @@ typedef struct _cfcomp {
   int run;
   int position;
   int bsize;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int fsize;
   int ovrlp;
   int incr;
-  double* window;
+  double *window;
   int iasize;
-  double* inaccum;
-  double* forfftin;
-  double* forfftout;
+  double *inaccum;
+  double *forfftin;
+  double *forfftout;
   int msize;
-  double* cmask;
-  double* mask;
+  double *cmask;
+  double *mask;
   int mask_ready;
-  double* cfc_gain;
-  double* revfftin;
-  double* revfftout;
-  double** save;
+  double *cfc_gain;
+  double *revfftin;
+  double *revfftout;
+  double **save;
   int oasize;
-  double* outaccum;
+  double *outaccum;
   double rate;
   int wintype;
   double pregain;
@@ -67,16 +67,16 @@ typedef struct _cfcomp {
 
   int comp_method;
   int nfreqs;
-  double* F;
-  double* G;
-  double* E;
-  double* fp;
-  double* gp;
-  double* ep;
-  double* comp;
+  double *F;
+  double *G;
+  double *E;
+  double *fp;
+  double *gp;
+  double *ep;
+  double *comp;
   double precomp;
   double precomplin;
-  double* peq;
+  double *peq;
   int peq_run;
   double prepeq;
   double prepeqlin;
@@ -88,14 +88,14 @@ typedef struct _cfcomp {
   // display stuff
   double dtau;
   double dmult;
-  double* delta;
-  double* delta_copy;
-  double* cfc_gain_copy;
+  double *delta;
+  double *delta_copy;
+  double *cfc_gain_copy;
 } cfcomp, *CFCOMP;
 
 extern CFCOMP create_cfcomp (int run, int position, int peq_run, int size, double* in, double* out, int fsize,
                              int ovrlp,
-                             int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double* F, double* G, double* E,
+                             int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double *F, double *G, double *E,
                              double mtau, double dtau);
 
 extern void destroy_cfcomp (CFCOMP a);

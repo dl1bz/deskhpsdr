@@ -27,7 +27,7 @@ warren@pratt.one
 
 #include "comm.h"
 
-static int calc_dpole_nc (double rate, double bandwidth) {
+static int calc_dpole_nc(double rate, double bandwidth) {
   int nc = 0;
   int rate_mult = (int)ceil((int)rate / 12000);
   int bw_mult = 1;
@@ -47,30 +47,30 @@ static int calc_dpole_nc (double rate, double bandwidth) {
   return nc;
 }
 
-static void H (double scale, double fcenter, double bandwidth, double f, double Hres[]) {
+static void H(double scale, double fcenter, double bandwidth, double f, double Hres[]) {
   double a[2];
   double b[2];
   a[0] = (bandwidth / fcenter);
   a[1] = 0.0;
   b[0] = 1.0 - (f / fcenter) * (f / fcenter);
   b[1] = f * bandwidth / (fcenter * fcenter);
-  cdiv (a, b, Hres);
+  cdiv(a, b, Hres);
   return;
 }
 
-double* build_doublepole_1sided (int* nc, double rate, double fcenter, double bandwidth, double scale) {
+double *build_doublepole_1sided(int* nc, double rate, double fcenter, double bandwidth, double scale) {
   // *nc - number of impulse response values, POWER OF TWO
   // rate - sample_rate (samples/second)
   // f - center frequency (Hz)
   // bandwidth - bandwidth (Hz)
   // scale - scale factor to apply to impulse response
-  int ncc = calc_dpole_nc (rate, bandwidth);
+  int ncc = calc_dpole_nc(rate, bandwidth);
   *nc = ncc;
   double Hres[2] = { 0.0 };
   int i;
   double jd;
   double nfreqs = 3000.0;
-  double* h_i = (double*)malloc0 (ncc * sizeof(complex));
+  double *h_i = (double*)malloc0(ncc * sizeof(complex));
 
   for (i = 0; i < ncc; i++) {
     double sum[2] = { 0.0 };
@@ -94,11 +94,11 @@ double* build_doublepole_1sided (int* nc, double rate, double fcenter, double ba
   // print_impulse("pre_analytic.txt", nc, h_i, 1, 0);
   int npad = 8;
   int size = npad * ncc;
-  double* pad = (double*)malloc0 (size * sizeof(complex));
-  memcpy (pad, h_i, ncc * sizeof(complex));
-  analytic (size, pad, pad);
-  memcpy (h_i, pad, ncc * sizeof(complex));
-  _aligned_free (pad);
+  double *pad = (double*)malloc0(size * sizeof(complex));
+  memcpy(pad, h_i, ncc * sizeof(complex));
+  analytic(size, pad, pad);
+  memcpy(h_i, pad, ncc * sizeof(complex));
+  _aligned_free(pad);
   double sum = 0.0;
 
   for (i = 0; i < ncc; i++) {
@@ -113,14 +113,14 @@ double* build_doublepole_1sided (int* nc, double rate, double fcenter, double ba
   return h_i;
 }
 
-double* build_doublepole_2sided (int* nc, double rate, double fcenter, double bandwidth, double scale) {
+double *build_doublepole_2sided(int* nc, double rate, double fcenter, double bandwidth, double scale) {
   // *nc - number of impulse response values, POWER OF TWO
   // rate - sample_rate (samples/second)
   // f - center frequency (Hz)
   // bandwidth - bandwidth (Hz)
   // scale - scale factor to apply to impulse response
   double bw = bandwidth / 1.70;
-  int ncc = calc_dpole_nc (rate, bw);
+  int ncc = calc_dpole_nc(rate, bw);
   *nc = ncc;
   double Hres[2] = { 0.0 };
   int i;
@@ -128,26 +128,26 @@ double* build_doublepole_2sided (int* nc, double rate, double fcenter, double ba
   double delta = rate / (double)ncc;
   int nfreqs = 3000;
   double mult = 2.0 * scale / (double)ncc;
-  double* h_i = (double*)malloc0 (ncc * sizeof(complex));
-  double* H_i = (double*)malloc0 (ncc * sizeof(complex));
+  double *h_i = (double*)malloc0(ncc * sizeof(complex));
+  double *H_i = (double*)malloc0(ncc * sizeof(complex));
 
   for (i = 0, jd = 0.0; i < nfreqs / 2; i++, jd += delta) {
-    H (scale, fcenter, bw, jd, Hres);
+    H(scale, fcenter, bw, jd, Hres);
     H_i[2 * i + 0] = Hres[0] * mult;
     H_i[2 * i + 1] = Hres[1] * mult;
   }
 
   for (i = ncc - nfreqs / 2, jd = -(double)nfreqs * delta; i < ncc; i++, jd += delta) {
-    H (scale, fcenter, bw, jd, Hres);
+    H(scale, fcenter, bw, jd, Hres);
     H_i[2 * i + 0] = Hres[0] * mult;
     H_i[2 * i + 1] = Hres[1] * mult;
   }
 
-  fftw_plan prev = fftw_plan_dft_1d (ncc, (fftw_complex*)H_i,
-                                     (fftw_complex*)h_i, FFTW_BACKWARD, FFTW_PATIENT);
-  fftw_execute      (prev);
-  fftw_destroy_plan (prev);
-  _aligned_free     (H_i);
+  fftw_plan prev = fftw_plan_dft_1d(ncc, (fftw_complex*)H_i,
+                                    (fftw_complex*)h_i, FFTW_BACKWARD, FFTW_PATIENT);
+  fftw_execute(prev);
+  fftw_destroy_plan(prev);
+  _aligned_free(H_i);
 
   for (i = 0; i < ncc; i++) {
     h_i[2 * i + 1] = 0.0;
@@ -156,34 +156,34 @@ double* build_doublepole_2sided (int* nc, double rate, double fcenter, double ba
   return h_i;
 }
 
-double* build_doublepole_1eff(int* nc, double rate, double fcenter, double bandwidth, double scale) {
+double *build_doublepole_1eff(int* nc, double rate, double fcenter, double bandwidth, double scale) {
   // *nc - number of impulse response values, POWER OF TWO
   // rate - sample_rate (samples/second)
   // f - center frequency (Hz)
   // bandwidth - bandwidth (Hz)
   // scale - scale factor to apply to impulse response
   double bw = bandwidth / 1.7;
-  int ncc = calc_dpole_nc (rate, bw);
+  int ncc = calc_dpole_nc(rate, bw);
   *nc = ncc;
   double alpha = PI * bw / rate;
   double omega = - TWOPI * fcenter / rate;
   double impulse, arg;
-  double* c_impulse = (double*) malloc0 (ncc * sizeof(complex));
+  double *c_impulse = (double*) malloc0(ncc * sizeof(complex));
 
   for (int i = 0; i < ncc; i++) {
-    impulse = scale * alpha * exp (-alpha * (double)i);
+    impulse = scale * alpha * exp(-alpha * (double)i);
     arg = omega * (double)i;
-    c_impulse[2 * i + 0] = + impulse * cos (arg);
-    c_impulse[2 * i + 1] = - impulse * sin (arg);
+    c_impulse[2 * i + 0] = + impulse * cos(arg);
+    c_impulse[2 * i + 1] = - impulse * sin(arg);
   }
 
   return c_impulse;
 }
 
-DOUBLEPOLE create_doublepole (int run, int position, int size, double* in, double* out,
-                              double f_center, double bandwidth, int samplerate, double gain, int mode) {
-  DOUBLEPOLE a = (DOUBLEPOLE)malloc0 (sizeof(doublepole));
-  double* impulse;
+DOUBLEPOLE create_doublepole(int run, int position, int size, double* in, double* out,
+                             double f_center, double bandwidth, int samplerate, double gain, int mode) {
+  DOUBLEPOLE a = (DOUBLEPOLE)malloc0(sizeof(doublepole));
+  double *impulse;
   a->run = run;
   a->position = position;
   a->size = size;
@@ -195,22 +195,22 @@ DOUBLEPOLE create_doublepole (int run, int position, int size, double* in, doubl
   a->gain = gain;
   a->scale = a->gain / (double)(2 * a->size);
   a->mode = mode;
-  impulse = build_doublepole_1eff (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
-  a->p = create_fircore (a->size, a->in, a->out, a->nc, 0, impulse);
-  _aligned_free (impulse);
+  impulse = build_doublepole_1eff(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
+  a->p = create_fircore(a->size, a->in, a->out, a->nc, 0, impulse);
+  _aligned_free(impulse);
   return a;
 }
 
-void destroy_doublepole (DOUBLEPOLE a) {
-  destroy_fircore (a->p);
-  _aligned_free (a);
+void destroy_doublepole(DOUBLEPOLE a) {
+  destroy_fircore(a->p);
+  _aligned_free(a);
 }
 
-void flush_doublepole (DOUBLEPOLE a) {
-  flush_fircore (a->p);
+void flush_doublepole(DOUBLEPOLE a) {
+  flush_fircore(a->p);
 }
 
-void xdoublepole (DOUBLEPOLE a, int pos) {
+void xdoublepole(DOUBLEPOLE a, int pos) {
   if (a->run && a->position == pos) {
     // 'mode == 0' => CWL
     if (a->mode == 1) { // CWU
@@ -225,55 +225,55 @@ void xdoublepole (DOUBLEPOLE a, int pos) {
       }
     }
 
-    xfircore (a->p);
+    xfircore(a->p);
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->size * sizeof(complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 }
 
-void setBuffers_doublepole (DOUBLEPOLE a, double* in, double* out) {
+void setBuffers_doublepole(DOUBLEPOLE a, double* in, double* out) {
   a->in = in;
   a->out = out;
-  setBuffers_fircore (a->p, a->in, a->out);
+  setBuffers_fircore(a->p, a->in, a->out);
 }
 
-void setSamplerate_doublepole (DOUBLEPOLE a, int rate) {
-  double* impulse;
+void setSamplerate_doublepole(DOUBLEPOLE a, int rate) {
+  double *impulse;
   int nc = a->nc;
   a->samplerate = rate;
-  impulse = build_doublepole_1eff (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
+  impulse = build_doublepole_1eff(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
 
   if (nc == a->nc) {
-    setImpulse_fircore (a->p, impulse, 1);
+    setImpulse_fircore(a->p, impulse, 1);
   } else {
-    setNc_fircore (a->p, a->nc, impulse);
+    setNc_fircore(a->p, a->nc, impulse);
   }
 
-  _aligned_free (impulse);
+  _aligned_free(impulse);
 }
 
-void setSize_doublepole (DOUBLEPOLE a, int size) {
+void setSize_doublepole(DOUBLEPOLE a, int size) {
   // NOTE:  'size' must be <= 'nc'
   a->size = size;
   setSize_fircore(a->p, a->size);
   // recalc impulse because scale factor is a function of size
   a->scale = a->gain / (double)(2 * a->size);
-  double* impulse = build_doublepole_1eff (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
-  setImpulse_fircore (a->p, impulse, 1);
-  _aligned_free (impulse);
+  double *impulse = build_doublepole_1eff(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
+  setImpulse_fircore(a->p, impulse, 1);
+  _aligned_free(impulse);
 }
 
-void setGain_doublepole (DOUBLEPOLE a, double gain) {
-  double* impulse;
+void setGain_doublepole(DOUBLEPOLE a, double gain) {
+  double *impulse;
   a->gain = gain;
   a->scale = a->gain / (double)(2 * a->size);
-  impulse = build_doublepole_1eff (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
-  setImpulse_fircore (a->p, impulse, 1);
-  _aligned_free (impulse);
+  impulse = build_doublepole_1eff(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
+  setImpulse_fircore(a->p, impulse, 1);
+  _aligned_free(impulse);
 }
 
-void CalcDoublepoleFilter (DOUBLEPOLE a, double f_center, double bandwidth, double gain) {
-  double* impulse;
+void CalcDoublepoleFilter(DOUBLEPOLE a, double f_center, double bandwidth, double gain) {
+  double *impulse;
 
   if ((a->f_center != f_center) || (a->bandwidth != bandwidth) || (a->gain != gain)) {
     int nc = a->nc;
@@ -281,15 +281,15 @@ void CalcDoublepoleFilter (DOUBLEPOLE a, double f_center, double bandwidth, doub
     a->bandwidth = bandwidth;
     a->gain = gain;
     a->scale = a->gain / (double)(2 * a->size);
-    impulse = build_doublepole_1eff (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
+    impulse = build_doublepole_1eff(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
 
     if (nc == a->nc) {
-      setImpulse_fircore (a->p, impulse, 1);
+      setImpulse_fircore(a->p, impulse, 1);
     } else {
-      setNc_fircore (a->p, a->nc, impulse);
+      setNc_fircore(a->p, a->nc, impulse);
     }
 
-    _aligned_free (impulse);
+    _aligned_free(impulse);
   }
 }
 
@@ -300,25 +300,25 @@ void CalcDoublepoleFilter (DOUBLEPOLE a, double f_center, double bandwidth, doub
 ********************************************************************************************************/
 
 PORT
-void SetRXADoublepoleRun (int channel, int run) {
+void SetRXADoublepoleRun(int channel, int run) {
   DOUBLEPOLE a = rxa[channel].doublepole.p;
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   a->run = run;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXADoublepoleFreqs (int channel, double f_center, double bandwidth) {
+void SetRXADoublepoleFreqs(int channel, double f_center, double bandwidth) {
   DOUBLEPOLE a = rxa[channel].doublepole.p;
-  EnterCriticalSection (&ch[channel].csDSP);
-  CalcDoublepoleFilter (a, f_center, bandwidth, a->gain);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
+  CalcDoublepoleFilter(a, f_center, bandwidth, a->gain);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXADoublepoleGain (int channel, double gain) {
+void SetRXADoublepoleGain(int channel, double gain) {
   DOUBLEPOLE a = rxa[channel].doublepole.p;
-  EnterCriticalSection (&ch[channel].csDSP);
-  CalcDoublepoleFilter (a, a->f_center, a->bandwidth, gain);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
+  CalcDoublepoleFilter(a, a->f_center, a->bandwidth, gain);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

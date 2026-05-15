@@ -28,22 +28,22 @@ warren@wpratt.com
 
 AMD create_amd
 (
-  int run,
-  int buff_size,
-  double *in_buff,
-  double *out_buff,
-  int mode,
-  int levelfade,
-  int sbmode,
-  int sample_rate,
-  double fmin,
-  double fmax,
-  double zeta,
-  double omegaN,
-  double tauR,
-  double tauI
+        int run,
+        int buff_size,
+        double *in_buff,
+        double *out_buff,
+        int mode,
+        int levelfade,
+        int sbmode,
+        int sample_rate,
+        double fmin,
+        double fmax,
+        double zeta,
+        double omegaN,
+        double tauR,
+        double tauI
 ) {
-  AMD a = (AMD) malloc0 (sizeof(amd));
+  AMD a = (AMD) malloc0(sizeof(amd));
   a->run = run;
   a->buff_size = buff_size;
   a->in_buff = in_buff;
@@ -63,7 +63,7 @@ AMD create_amd
 }
 
 void destroy_amd(AMD a) {
-  _aligned_free (a);
+  _aligned_free(a);
 }
 
 void init_amd(AMD a) {
@@ -72,7 +72,7 @@ void init_amd(AMD a) {
   a->omega_max = TWOPI * a->fmax / a->sample_rate;
   a->g1 = 1.0 - exp(-2.0 * a->omegaN * a->zeta / a->sample_rate);
   a->g2 = -a->g1 + 2.0 * (1 - exp(-a->omegaN * a->zeta / a->sample_rate) * cos(a->omegaN / a->sample_rate * sqrt(
-                            1.0 - a->zeta * a->zeta)));
+                                  1.0 - a->zeta * a->zeta)));
   a->phs = 0.0;
   a->fil_out = 0.0;
   a->omega = 0.0;
@@ -100,12 +100,12 @@ void init_amd(AMD a) {
   a->c1[6] = -0.999282492800792;
 }
 
-void flush_amd (AMD a) {
+void flush_amd(AMD a) {
   a->dc = 0.0;
   a->dc_insert = 0.0;
 }
 
-void xamd (AMD a) {
+void xamd(AMD a) {
   int i;
   double audio;
   double vco[2];
@@ -224,21 +224,21 @@ void xamd (AMD a) {
     }
     }
   } else if (a->in_buff != a->out_buff) {
-    memcpy (a->out_buff, a->in_buff, a->buff_size * sizeof(complex));
+    memcpy(a->out_buff, a->in_buff, a->buff_size * sizeof(complex));
   }
 }
 
-void setBuffers_amd (AMD a, double* in, double* out) {
+void setBuffers_amd(AMD a, double* in, double* out) {
   a->in_buff = in;
   a->out_buff = out;
 }
 
-void setSamplerate_amd (AMD a, int rate) {
+void setSamplerate_amd(AMD a, int rate) {
   a->sample_rate = rate;
   init_amd(a);
 }
 
-void setSize_amd (AMD a, int size) {
+void setSize_amd(AMD a, int size) {
   a->buff_size = size;
 }
 
@@ -253,26 +253,26 @@ SetRXAAMDRun(int channel, int run) {
   AMD a = rxa[channel].amd.p;
 
   if (a->run != run) {
-    RXAbp1Check (channel, run, rxa[channel].snba.p->run, rxa[channel].emnr.p->run,
-                 rxa[channel].anf.p->run, rxa[channel].anr.p->run,
-                 rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
-    EnterCriticalSection (&ch[channel].csDSP);
+    RXAbp1Check(channel, run, rxa[channel].snba.p->run, rxa[channel].emnr.p->run,
+                rxa[channel].anf.p->run, rxa[channel].anr.p->run,
+                rxa[channel].rnnr.p->run, rxa[channel].sbnr.p->run);  // NR3 + NR4 support
+    EnterCriticalSection(&ch[channel].csDSP);
     a->run = run;
-    RXAbp1Set (channel);
-    LeaveCriticalSection (&ch[channel].csDSP);
+    RXAbp1Set(channel);
+    LeaveCriticalSection(&ch[channel].csDSP);
   }
 }
 
 PORT void
 SetRXAAMDSBMode(int channel, int sbmode) {
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].amd.p->sbmode = sbmode;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT void
 SetRXAAMDFadeLevel(int channel, int levelfade) {
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].amd.p->levelfade = levelfade;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }

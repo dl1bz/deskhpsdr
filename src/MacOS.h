@@ -47,16 +47,16 @@ typedef int clockid_t;
 #include <mach/mach_time.h>
 
 // here to avoid problem on linking
-static inline int clock_gettime( clockid_t clk_id, struct timespec *ts ) {
+static inline int clock_gettime(clockid_t clk_id, struct timespec *ts) {
   int ret = -1;
 
-  if ( ts ) {
-    if      ( CLOCK_REALTIME == clk_id ) {
+  if (ts) {
+    if (CLOCK_REALTIME == clk_id) {
       struct timeval tv;
       ret = gettimeofday(&tv, NULL);
       ts->tv_sec  = tv.tv_sec;
       ts->tv_nsec = tv.tv_usec * 1000;
-    } else if ( CLOCK_MONOTONIC == clk_id  || CLOCK_MONOTONIC_RAW == clk_id ) {
+    } else if (CLOCK_MONOTONIC == clk_id  || CLOCK_MONOTONIC_RAW == clk_id) {
       //
       // For the time being, accept CLOCK_MONOTONIC_RAW but treat it
       // the same way as CLOCK_MONOTONIC.

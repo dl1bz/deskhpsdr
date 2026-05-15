@@ -56,7 +56,7 @@ static GtkWidget *var1_spin_high;
 static GtkWidget *var2_spin_low;
 static GtkWidget *var2_spin_high;
 
-static void cleanup(void) {
+static void cleanup (void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
@@ -64,33 +64,33 @@ static void cleanup(void) {
     while (first != NULL) {
       CHOICE *choice = first;
       first = first->next;
-      g_free(choice);
+      g_free (choice);
     }
 
     current = NULL;
-    gtk_widget_destroy(tmp);
+    gtk_widget_destroy (tmp);
     sub_menu = NULL;
     active_menu = NO_MENU;
     radio_save_state();
   }
 }
 
-static void cw_peak_cb(GtkWidget *widget, gpointer data) {
+static void cw_peak_cb (GtkWidget *widget, gpointer data) {
   int id = active_receiver->id;
-  vfo[id].cwAudioPeakFilter = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  vfo[id].cwAudioPeakFilter = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (id == 0) {
     int mode = vfo[id].mode;
     mode_settings[mode].cwPeak = vfo[id].cwAudioPeakFilter;
-    copy_mode_settings(mode);
+    copy_mode_settings (mode);
   }
 
-  rx_filter_changed(active_receiver);
-  g_idle_add(ext_vfo_update, NULL);
+  rx_filter_changed (active_receiver);
+  g_idle_add (ext_vfo_update, NULL);
 }
 
-static void use_cw_dp_filter_cb(GtkWidget *widget, gpointer data) {
-  gboolean state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+static void use_cw_dp_filter_cb (GtkWidget *widget, gpointer data) {
+  gboolean state = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   for (int i = 0; i < RECEIVERS; i++) {
     if (receiver[i] != NULL) {
@@ -98,13 +98,13 @@ static void use_cw_dp_filter_cb(GtkWidget *widget, gpointer data) {
     }
   }
 
-  rx_filter_changed(active_receiver);
-  g_idle_add(ext_vfo_update, NULL);
+  rx_filter_changed (active_receiver);
+  g_idle_add (ext_vfo_update, NULL);
 }
 
 static gboolean default_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int mode = vfo[active_receiver->id].mode;
-  int f = GPOINTER_TO_INT(data);
+  int f = GPOINTER_TO_INT (data);
   int low, high;
   GtkWidget *spinlow, *spinhigh;
 
@@ -124,7 +124,7 @@ static gboolean default_cb (GtkWidget *widget, GdkEventButton *event, gpointer d
     break;
 
   default:
-    t_print("%s: illegal data = %p (%d)\n", __func__, data, f);
+    t_print ("%s: illegal data = %p (%d)\n", __func__, data, f);
     return FALSE;
     break;
   }
@@ -137,38 +137,38 @@ static gboolean default_cb (GtkWidget *widget, GdkEventButton *event, gpointer d
   case modeSAM:
   case modeSPEC:
   case modeDRM:
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinlow), (double)(high - low));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinhigh), 0.5 * (double)(high + low));
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (spinlow), (double) (high - low));
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (spinhigh), 0.5 * (double) (high + low));
     break;
 
   case modeLSB:
   case modeDIGL:
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinlow), (double)(-high));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinhigh), (double)(-low));
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (spinlow), (double) (-high));
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (spinhigh), (double) (-low));
     break;
 
   case modeUSB:
   case modeDIGU:
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinlow), (double)(low));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinhigh), (double)(high));
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (spinlow), (double) (low));
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (spinhigh), (double) (high));
     break;
   }
 
   return FALSE;
 }
 
-static gboolean close_cb(void) {
+static gboolean close_cb (void) {
   cleanup();
   return TRUE;
 }
 
 static gboolean filter_select_cb (GtkWidget *widget, gpointer data) {
-  CHOICE *choice = (CHOICE *) data;
+  CHOICE *choice = (CHOICE*) data;
 
   if (current) {
-    g_signal_handler_block(G_OBJECT(current->button), current->signal);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(current->button), current == choice);
-    g_signal_handler_unblock(G_OBJECT(current->button), current->signal);
+    g_signal_handler_block (G_OBJECT (current->button), current->signal);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (current->button), current == choice);
+    g_signal_handler_unblock (G_OBJECT (current->button), current->signal);
   }
 
   //
@@ -176,30 +176,30 @@ static gboolean filter_select_cb (GtkWidget *widget, gpointer data) {
   // will be restored to their default values
   //
   current = choice;
-  vfo_filter_changed(current->info);
+  vfo_filter_changed (current->info);
   return FALSE;
 }
 
 static gboolean deviation_select_cb (GtkWidget *widget, gpointer data) {
-  CHOICE *choice = (CHOICE *) data;
+  CHOICE *choice = (CHOICE*) data;
 
   if (current) {
-    g_signal_handler_block(G_OBJECT(current->button), current->signal);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(current->button), current == choice);
-    g_signal_handler_unblock(G_OBJECT(current->button), current->signal);
+    g_signal_handler_block (G_OBJECT (current->button), current->signal);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (current->button), current == choice);
+    g_signal_handler_unblock (G_OBJECT (current->button), current->signal);
   }
 
   if (current != choice) {
     int id = active_receiver->id;
     current = choice;
     vfo[id].deviation = choice->info;
-    rx_set_filter(active_receiver);
+    rx_set_filter (active_receiver);
 
     if (can_transmit) {
-      tx_set_filter(transmitter);
+      tx_set_filter (transmitter);
     }
 
-    g_idle_add(ext_vfo_update, NULL);
+    g_idle_add (ext_vfo_update, NULL);
   }
 
   return FALSE;
@@ -209,12 +209,12 @@ static gboolean deviation_select_cb (GtkWidget *widget, gpointer data) {
 // var_spin_low controls the width for modes that ajust width/shift
 //
 static void var_spin_low_cb (GtkWidget *widget, gpointer data) {
-  int f = GPOINTER_TO_UINT(data);
+  int f = GPOINTER_TO_UINT (data);
   int id = active_receiver->id;
   int m = vfo[id].mode;
   FILTER *mode_filters = filters[m];
   FILTER *filter = &mode_filters[f];
-  int val = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  int val = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (widget));
   int shift;
 
   switch (m) {
@@ -253,23 +253,23 @@ static void var_spin_low_cb (GtkWidget *widget, gpointer data) {
   //
   for (int i = 0; i < receivers; i++) {
     if (vfo[i].filter == f) {
-      rx_filter_changed(receiver[i]);
+      rx_filter_changed (receiver[i]);
     }
   }
 
-  g_idle_add(ext_vfo_update, NULL);
+  g_idle_add (ext_vfo_update, NULL);
 }
 
 //
 // var_spin_low controls the shift for modes that ajust width/shift
 //
 static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
-  int f = GPOINTER_TO_UINT(data);
+  int f = GPOINTER_TO_UINT (data);
   int id = active_receiver->id;
   FILTER *mode_filters = filters[vfo[id].mode];
   FILTER *filter = &mode_filters[f];
   int m = vfo[id].mode;
-  int val = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  int val = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (widget));
   int width;
 
   switch (m) {
@@ -317,67 +317,67 @@ static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
   //
   for (int i = 0; i < receivers; i++) {
     if (vfo[i].filter == f) {
-      rx_filter_changed(receiver[i]);
+      rx_filter_changed (receiver[i]);
     }
   }
 
-  g_idle_add(ext_vfo_update, NULL);
+  g_idle_add (ext_vfo_update, NULL);
 }
 
-static void rxtx_filter_cb(GtkToggleButton *btn, gpointer user_data) {
+static void rxtx_filter_cb (GtkToggleButton *btn, gpointer user_data) {
   if (can_transmit) {
 #if defined (__CPYMODE__)
     int mode = vfo_get_tx_mode();
 #endif
-    int v = gtk_toggle_button_get_active(btn) ? 1 : 0;
+    int v = gtk_toggle_button_get_active (btn) ? 1 : 0;
     transmitter->use_rx_filter = v;
-    tx_set_filter(transmitter);     // Filter neu setzen
+    tx_set_filter (transmitter);    // Filter neu setzen
 #if defined (__CPYMODE__)
     mode_settings[mode].use_rx_filter = v;
-    copy_mode_settings(mode);
+    copy_mode_settings (mode);
 #endif
-    g_idle_add(ext_vfo_update, NULL);
+    g_idle_add (ext_vfo_update, NULL);
   }
 }
 
-void filter_menu(GtkWidget *parent) {
+void filter_menu (GtkWidget *parent) {
   int id = active_receiver->id;
   int f = vfo[id].filter;
   int m = vfo[id].mode;
   GtkWidget *w;
   GtkWidget *rxtx_filter_btn;
   dialog = gtk_dialog_new();
-  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
-  win_set_bgcolor(dialog, &mwin_bgcolor);
+  gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (parent));
+  win_set_bgcolor (dialog, &mwin_bgcolor);
   char title[64];
-  snprintf(title, 64, "%s - Set RX Filter %s (RX%d VFO-%s)", PGNAME, mode_string[m], id + 1, id == 0 ? "A" : "B");
+  snprintf (title, 64, "%s - Set RX Filter %s (RX%d VFO-%s)", PGNAME, mode_string[m], id + 1, id == 0 ? "A" : "B");
   GtkWidget *headerbar = gtk_header_bar_new();
-  gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
-  gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
+  gtk_window_set_titlebar (GTK_WINDOW (dialog), headerbar);
+  gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (headerbar), TRUE);
+  gtk_header_bar_set_title (GTK_HEADER_BAR (headerbar), title);
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK(close_cb), NULL);
-  GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
+  GtkWidget *content = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
-  gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
-  gtk_grid_set_column_spacing (GTK_GRID(grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID(grid), 5);
+  gtk_grid_set_column_homogeneous (GTK_GRID (grid), TRUE);
+  gtk_grid_set_row_homogeneous (GTK_GRID (grid), FALSE);
+  gtk_grid_set_column_spacing (GTK_GRID (grid), 5);
+  gtk_grid_set_row_spacing (GTK_GRID (grid), 5);
   //-----------------------------------------------------------------------------------------
-  w = gtk_button_new_with_label("Close");
-  gtk_widget_set_name(w, "close_button");
-  g_signal_connect (w, "button-press-event", G_CALLBACK(close_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), w, 0, 0, 2, 1);
+  w = gtk_button_new_with_label ("Close");
+  gtk_widget_set_name (w, "close_button");
+  g_signal_connect (w, "button-press-event", G_CALLBACK (close_cb), NULL);
+  gtk_grid_attach (GTK_GRID (grid), w, 0, 0, 2, 1);
 
   //-----------------------------------------------------------------------------------------
   if (can_transmit && m != modeCWL && m != modeCWU) {
-    rxtx_filter_btn = gtk_check_button_new_with_label("Set TX = RX filter edges");
-    gtk_widget_set_name(rxtx_filter_btn, "boldlabel_blue");
-    gtk_widget_set_tooltip_text(rxtx_filter_btn,
-                                "If enabled, set TX filter edges\nto match RX filter edges.\n\nIf disabled, set the TX filter edges\nmanually in the TX menu");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rxtx_filter_btn), transmitter->use_rx_filter == 1 ? 1 : 0);
-    g_signal_connect(rxtx_filter_btn, "toggled", G_CALLBACK(rxtx_filter_cb), NULL);
-    gtk_grid_attach(GTK_GRID(grid), rxtx_filter_btn, 2, 0, 3, 1);
+    rxtx_filter_btn = gtk_check_button_new_with_label ("Set TX = RX filter edges");
+    gtk_widget_set_name (rxtx_filter_btn, "boldlabel_blue");
+    gtk_widget_set_tooltip_text (rxtx_filter_btn,
+                                 "If enabled, set TX filter edges\nto match RX filter edges.\n\nIf disabled, set the TX filter edges\nmanually in the TX menu");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rxtx_filter_btn), transmitter->use_rx_filter == 1 ? 1 : 0);
+    g_signal_connect (rxtx_filter_btn, "toggled", G_CALLBACK (rxtx_filter_cb), NULL);
+    gtk_grid_attach (GTK_GRID (grid), rxtx_filter_btn, 2, 0, 3, 1);
   }
 
   //-----------------------------------------------------------------------------------------
@@ -385,9 +385,9 @@ void filter_menu(GtkWidget *parent) {
 
   if (m == modeFMN) {
     CHOICE *choice;
-    w = gtk_toggle_button_new_with_label("11k");
-    gtk_widget_set_name(w, "small_toggle_button");
-    choice = g_new(CHOICE, 1);
+    w = gtk_toggle_button_new_with_label ("11k");
+    gtk_widget_set_name (w, "small_toggle_button");
+    choice = g_new (CHOICE, 1);
     choice->next = first;
     first = choice;
     choice->info = 2500;
@@ -395,18 +395,18 @@ void filter_menu(GtkWidget *parent) {
 
     if (active_receiver->deviation == 2500) {
       current = choice;
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), TRUE);
     }
 
-    choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(deviation_select_cb), choice);
-    gtk_grid_attach(GTK_GRID(grid), w, 0, 1, 1, 1);
-    w = gtk_label_new(" (Deviation=2.5k, use for 12.5 kHz raster)");
-    gtk_widget_set_name(w, "boldlabel");
-    gtk_widget_set_halign(w, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid), w, 1, 1, 6, 1);
-    w = gtk_toggle_button_new_with_label("16k");
-    gtk_widget_set_name(w, "small_toggle_button");
-    choice = g_new(CHOICE, 1);
+    choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (deviation_select_cb), choice);
+    gtk_grid_attach (GTK_GRID (grid), w, 0, 1, 1, 1);
+    w = gtk_label_new (" (Deviation=2.5k, use for 12.5 kHz raster)");
+    gtk_widget_set_name (w, "boldlabel");
+    gtk_widget_set_halign (w, GTK_ALIGN_START);
+    gtk_grid_attach (GTK_GRID (grid), w, 1, 1, 6, 1);
+    w = gtk_toggle_button_new_with_label ("16k");
+    gtk_widget_set_name (w, "small_toggle_button");
+    choice = g_new (CHOICE, 1);
     choice->next = first;
     first = choice;
     choice->info = 5000;
@@ -414,15 +414,15 @@ void filter_menu(GtkWidget *parent) {
 
     if (active_receiver->deviation == 5000) {
       current = choice;
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), TRUE);
     }
 
-    choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(deviation_select_cb), choice);
-    gtk_grid_attach(GTK_GRID(grid), w, 0, 2, 1, 1);
-    w = gtk_label_new(" (Deviation=5.0k, use for 25.0 kHz raster)");
-    gtk_widget_set_name(w, "boldlabel");
-    gtk_widget_set_halign(w, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid), w, 1, 2, 6, 1);
+    choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (deviation_select_cb), choice);
+    gtk_grid_attach (GTK_GRID (grid), w, 0, 2, 1, 1);
+    w = gtk_label_new (" (Deviation=5.0k, use for 25.0 kHz raster)");
+    gtk_widget_set_name (w, "boldlabel");
+    gtk_widget_set_halign (w, GTK_ALIGN_START);
+    gtk_grid_attach (GTK_GRID (grid), w, 1, 2, 6, 1);
   } else {
     int row = 0;
     int col = 10;
@@ -439,11 +439,11 @@ void filter_menu(GtkWidget *parent) {
         row++;
       }
 
-      w = gtk_toggle_button_new_with_label(band_filters[i].title);
+      w = gtk_toggle_button_new_with_label (band_filters[i].title);
       char filter_desc[64];
-      snprintf(filter_desc, sizeof(filter_desc), "Low  cutoff: %d Hz\nHigh cutoff: %d Hz", band_filters[i].low,
-               band_filters[i].high);
-      gtk_widget_set_tooltip_text(w, filter_desc);
+      snprintf (filter_desc, sizeof (filter_desc), "Low  cutoff: %d Hz\nHigh cutoff: %d Hz", band_filters[i].low,
+                band_filters[i].high);
+      gtk_widget_set_tooltip_text (w, filter_desc);
       /*
       if ((m == modeDIGL || m == modeDIGU) && g_strcmp0(band_filters[i].title, "2.0k") == 0) {
         char ext_label[32];
@@ -451,8 +451,8 @@ void filter_menu(GtkWidget *parent) {
         gtk_button_set_label(GTK_BUTTON(w), ext_label);
       }
       */
-      gtk_widget_set_name(w, "small_toggle_button");
-      choice = g_new(CHOICE, 1);
+      gtk_widget_set_name (w, "small_toggle_button");
+      choice = g_new (CHOICE, 1);
       choice->next = first;
       first = choice;
       choice->info = i;
@@ -460,31 +460,31 @@ void filter_menu(GtkWidget *parent) {
 
       if (i == f) {
         current = choice;
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), TRUE);
       }
 
-      choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(filter_select_cb), choice);
-      gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
+      choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (filter_select_cb), choice);
+      gtk_grid_attach (GTK_GRID (grid), w, col, row, 2, 1);
       col += 2;
 
       // Separator zwischen festen Filtern und Var1/Var2
       if ((m == modeLSB || m == modeUSB || m == modeDIGL || m == modeDIGU) && i == 9) {
         row++; // nächste Zeile
-        GtkWidget *sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-        gtk_widget_set_size_request(sep, -1, 3); // Dicke der Linie anpassen
-        gtk_widget_set_margin_top(sep, 6);     // Abstand davor
-        gtk_widget_set_margin_bottom(sep, 6);  // Abstand danach
-        gtk_grid_attach(GTK_GRID(grid), sep, 0, row, 10, 1);
+        GtkWidget *sep = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
+        gtk_widget_set_size_request (sep, -1, 3); // Dicke der Linie anpassen
+        gtk_widget_set_margin_top (sep, 6);    // Abstand davor
+        gtk_widget_set_margin_bottom (sep, 6); // Abstand danach
+        gtk_grid_attach (GTK_GRID (grid), sep, 0, row, 10, 1);
 
         if ((m == modeLSB || m == modeUSB)) {
           row++; // nächste Zeile
           // Beschriftung nach dem Separator
-          GtkWidget *essb_lbl = gtk_label_new("Observe legal TX bandwidth limits when using ESSB !");
-          gtk_widget_set_name(essb_lbl, "boldlabel_red");
+          GtkWidget *essb_lbl = gtk_label_new ("Observe legal TX bandwidth limits when using ESSB !");
+          gtk_widget_set_name (essb_lbl, "boldlabel_red");
           // gtk_widget_set_halign(essb_lbl, GTK_ALIGN_START);
-          gtk_widget_set_halign(essb_lbl, GTK_ALIGN_CENTER);
-          gtk_widget_set_margin_bottom(essb_lbl, 2);
-          gtk_grid_attach(GTK_GRID(grid), essb_lbl, 0, row, 10, 1);
+          gtk_widget_set_halign (essb_lbl, GTK_ALIGN_CENTER);
+          gtk_widget_set_margin_bottom (essb_lbl, 2);
+          gtk_grid_attach (GTK_GRID (grid), essb_lbl, 0, row, 10, 1);
         }
 
         row++; // nächste Zeile
@@ -496,19 +496,19 @@ void filter_menu(GtkWidget *parent) {
     //
     // Var1 and Var2 separated by a small horizontal line
     //
-    GtkWidget *line = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-    gtk_widget_set_size_request(line, -1, 3);
-    gtk_widget_set_margin_top(line, 6);     // Abstand davor
-    gtk_grid_attach(GTK_GRID(grid), line, 0, row++, 10, 1);
+    GtkWidget *line = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_size_request (line, -1, 3);
+    gtk_widget_set_margin_top (line, 6);    // Abstand davor
+    gtk_grid_attach (GTK_GRID (grid), line, 0, row++, 10, 1);
     //
     // Place Var1 and Var2 buttons in row+1, row+2
     //
     const FILTER* filter1 = &band_filters[filterVar1];
     const FILTER* filter2 = &band_filters[filterVar2];
-    w = gtk_toggle_button_new_with_label(band_filters[filterVar1].title);
-    gtk_widget_set_name(w, "small_toggle_button");
-    gtk_grid_attach(GTK_GRID(grid), w, 0, row + 1, 2, 1);
-    choice = g_new(CHOICE, 1);
+    w = gtk_toggle_button_new_with_label (band_filters[filterVar1].title);
+    gtk_widget_set_name (w, "small_toggle_button");
+    gtk_grid_attach (GTK_GRID (grid), w, 0, row + 1, 2, 1);
+    choice = g_new (CHOICE, 1);
     choice->next = first;
     first = choice;
     choice->info = filterVar1;
@@ -516,14 +516,14 @@ void filter_menu(GtkWidget *parent) {
 
     if (f == filterVar1) {
       current = choice;
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), TRUE);
     }
 
-    choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(filter_select_cb), choice);
-    w = gtk_toggle_button_new_with_label(band_filters[filterVar2].title);
-    gtk_widget_set_name(w, "small_toggle_button");
-    gtk_grid_attach(GTK_GRID(grid), w, 0, row + 2, 2, 1);
-    choice = g_new(CHOICE, 1);
+    choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (filter_select_cb), choice);
+    w = gtk_toggle_button_new_with_label (band_filters[filterVar2].title);
+    gtk_widget_set_name (w, "small_toggle_button");
+    gtk_grid_attach (GTK_GRID (grid), w, 0, row + 2, 2, 1);
+    choice = g_new (CHOICE, 1);
     choice->next = first;
     first = choice;
     choice->info = filterVar2;
@@ -531,10 +531,10 @@ void filter_menu(GtkWidget *parent) {
 
     if (f == filterVar2) {
       current = choice;
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), TRUE);
     }
 
-    choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(filter_select_cb), choice);
+    choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (filter_select_cb), choice);
 
     //
     // The spin buttons either control low/high or width/shift
@@ -547,82 +547,82 @@ void filter_menu(GtkWidget *parent) {
     case modeSAM:
     case modeSPEC:
     case modeDRM:
-      w = gtk_label_new("Filter Width:");
-      gtk_widget_set_name(w, "boldlabel");
-      gtk_widget_set_halign(w, GTK_ALIGN_START);
-      gtk_grid_attach(GTK_GRID(grid), w, 2, row, 3, 1);
-      w = gtk_label_new("Filter Shift:");
-      gtk_widget_set_name(w, "boldlabel");
-      gtk_widget_set_halign(w, GTK_ALIGN_START);
-      gtk_grid_attach(GTK_GRID(grid), w, 5, row, 3, 1);
-      var1_spin_low = gtk_spin_button_new_with_range(5.0, 20000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_low), (double)(filter1->high - filter1->low));
-      var2_spin_low = gtk_spin_button_new_with_range(5.0, 20000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_low), (double)(filter2->high - filter2->low));
-      var1_spin_high = gtk_spin_button_new_with_range(-10000.0, 10000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_high), 0.5 * (double)(filter1->high + filter1->low));
-      var2_spin_high = gtk_spin_button_new_with_range(-10000.0, 10000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_high),
-                                0.5 * (double)(filter2->high + filter2->low));
+      w = gtk_label_new ("Filter Width:");
+      gtk_widget_set_name (w, "boldlabel");
+      gtk_widget_set_halign (w, GTK_ALIGN_START);
+      gtk_grid_attach (GTK_GRID (grid), w, 2, row, 3, 1);
+      w = gtk_label_new ("Filter Shift:");
+      gtk_widget_set_name (w, "boldlabel");
+      gtk_widget_set_halign (w, GTK_ALIGN_START);
+      gtk_grid_attach (GTK_GRID (grid), w, 5, row, 3, 1);
+      var1_spin_low = gtk_spin_button_new_with_range (5.0, 20000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var1_spin_low), (double) (filter1->high - filter1->low));
+      var2_spin_low = gtk_spin_button_new_with_range (5.0, 20000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var2_spin_low), (double) (filter2->high - filter2->low));
+      var1_spin_high = gtk_spin_button_new_with_range (-10000.0, 10000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var1_spin_high), 0.5 * (double) (filter1->high + filter1->low));
+      var2_spin_high = gtk_spin_button_new_with_range (-10000.0, 10000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var2_spin_high),
+                                 0.5 * (double) (filter2->high + filter2->low));
       break;
 
     case modeLSB:
     case modeDIGL:
-      w = gtk_label_new("Filter Cut Low:");
-      gtk_widget_set_name(w, "boldlabel");
-      gtk_widget_set_halign(w, GTK_ALIGN_START);
-      gtk_grid_attach(GTK_GRID(grid), w, 2, row, 3, 1);
-      w = gtk_label_new("Filter Cut High:");
-      gtk_widget_set_name(w, "boldlabel");
-      gtk_widget_set_halign(w, GTK_ALIGN_START);
-      gtk_grid_attach(GTK_GRID(grid), w, 5, row, 3, 1);
-      var1_spin_low = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_low), (double)(-filter1->high));
-      var2_spin_low = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_low), (double)(-filter2->high));
-      var1_spin_high = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_high), (double)(-filter1->low));
-      var2_spin_high = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_high), (double)(-filter2->low));
+      w = gtk_label_new ("Filter Cut Low:");
+      gtk_widget_set_name (w, "boldlabel");
+      gtk_widget_set_halign (w, GTK_ALIGN_START);
+      gtk_grid_attach (GTK_GRID (grid), w, 2, row, 3, 1);
+      w = gtk_label_new ("Filter Cut High:");
+      gtk_widget_set_name (w, "boldlabel");
+      gtk_widget_set_halign (w, GTK_ALIGN_START);
+      gtk_grid_attach (GTK_GRID (grid), w, 5, row, 3, 1);
+      var1_spin_low = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var1_spin_low), (double) (-filter1->high));
+      var2_spin_low = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var2_spin_low), (double) (-filter2->high));
+      var1_spin_high = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var1_spin_high), (double) (-filter1->low));
+      var2_spin_high = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var2_spin_high), (double) (-filter2->low));
       break;
 
     case modeUSB:
     case modeDIGU:
-      w = gtk_label_new("Filter Cut Low:");
-      gtk_widget_set_name(w, "boldlabel");
-      gtk_widget_set_halign(w, GTK_ALIGN_START);
-      gtk_grid_attach(GTK_GRID(grid), w, 2, row, 3, 1);
-      w = gtk_label_new("Filter Cut High:");
-      gtk_widget_set_name(w, "boldlabel");
-      gtk_widget_set_halign(w, GTK_ALIGN_START);
-      gtk_grid_attach(GTK_GRID(grid), w, 5, row, 3, 1);
-      var1_spin_low = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_low), (double)(filter1->low));
-      var2_spin_low = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_low), (double)(filter2->low));
-      var1_spin_high = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var1_spin_high), (double)(filter1->high));
-      var2_spin_high = gtk_spin_button_new_with_range(0, 8000.0, 5.0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(var2_spin_high), (double)(filter2->high));
+      w = gtk_label_new ("Filter Cut Low:");
+      gtk_widget_set_name (w, "boldlabel");
+      gtk_widget_set_halign (w, GTK_ALIGN_START);
+      gtk_grid_attach (GTK_GRID (grid), w, 2, row, 3, 1);
+      w = gtk_label_new ("Filter Cut High:");
+      gtk_widget_set_name (w, "boldlabel");
+      gtk_widget_set_halign (w, GTK_ALIGN_START);
+      gtk_grid_attach (GTK_GRID (grid), w, 5, row, 3, 1);
+      var1_spin_low = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var1_spin_low), (double) (filter1->low));
+      var2_spin_low = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var2_spin_low), (double) (filter2->low));
+      var1_spin_high = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var1_spin_high), (double) (filter1->high));
+      var2_spin_high = gtk_spin_button_new_with_range (0, 8000.0, 5.0);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (var2_spin_high), (double) (filter2->high));
       break;
     }
 
-    gtk_grid_attach(GTK_GRID(grid), var1_spin_low, 2, row + 1, 3, 1);
-    gtk_grid_attach(GTK_GRID(grid), var2_spin_low, 2, row + 2, 3, 1);
-    gtk_grid_attach(GTK_GRID(grid), var1_spin_high, 5, row + 1, 3, 1);
-    gtk_grid_attach(GTK_GRID(grid), var2_spin_high, 5, row + 2, 3, 1);
-    g_signal_connect(var1_spin_low, "value-changed", G_CALLBACK(var_spin_low_cb), GINT_TO_POINTER(filterVar1));
-    g_signal_connect(var2_spin_low, "value-changed", G_CALLBACK(var_spin_low_cb), GINT_TO_POINTER(filterVar2));
-    g_signal_connect(var1_spin_high, "value-changed", G_CALLBACK(var_spin_high_cb), GINT_TO_POINTER(filterVar1));
-    g_signal_connect(var2_spin_high, "value-changed", G_CALLBACK(var_spin_high_cb), GINT_TO_POINTER(filterVar2));
-    GtkWidget *var1_default_b = gtk_button_new_with_label("Default");
-    gtk_widget_set_name(var1_default_b, "small_button");
-    g_signal_connect (var1_default_b, "button-press-event", G_CALLBACK(default_cb), GINT_TO_POINTER(filterVar1));
-    gtk_grid_attach(GTK_GRID(grid), var1_default_b, 8, row + 1, 2, 1);
-    GtkWidget *var2_default_b = gtk_button_new_with_label("Default");
-    gtk_widget_set_name(var2_default_b, "small_button");
-    g_signal_connect (var2_default_b, "button-press-event", G_CALLBACK(default_cb), GINT_TO_POINTER(filterVar2));
-    gtk_grid_attach(GTK_GRID(grid), var2_default_b, 8, row + 2, 2, 1);
+    gtk_grid_attach (GTK_GRID (grid), var1_spin_low, 2, row + 1, 3, 1);
+    gtk_grid_attach (GTK_GRID (grid), var2_spin_low, 2, row + 2, 3, 1);
+    gtk_grid_attach (GTK_GRID (grid), var1_spin_high, 5, row + 1, 3, 1);
+    gtk_grid_attach (GTK_GRID (grid), var2_spin_high, 5, row + 2, 3, 1);
+    g_signal_connect (var1_spin_low, "value-changed", G_CALLBACK (var_spin_low_cb), GINT_TO_POINTER (filterVar1));
+    g_signal_connect (var2_spin_low, "value-changed", G_CALLBACK (var_spin_low_cb), GINT_TO_POINTER (filterVar2));
+    g_signal_connect (var1_spin_high, "value-changed", G_CALLBACK (var_spin_high_cb), GINT_TO_POINTER (filterVar1));
+    g_signal_connect (var2_spin_high, "value-changed", G_CALLBACK (var_spin_high_cb), GINT_TO_POINTER (filterVar2));
+    GtkWidget *var1_default_b = gtk_button_new_with_label ("Default");
+    gtk_widget_set_name (var1_default_b, "small_button");
+    g_signal_connect (var1_default_b, "button-press-event", G_CALLBACK (default_cb), GINT_TO_POINTER (filterVar1));
+    gtk_grid_attach (GTK_GRID (grid), var1_default_b, 8, row + 1, 2, 1);
+    GtkWidget *var2_default_b = gtk_button_new_with_label ("Default");
+    gtk_widget_set_name (var2_default_b, "small_button");
+    g_signal_connect (var2_default_b, "button-press-event", G_CALLBACK (default_cb), GINT_TO_POINTER (filterVar2));
+    gtk_grid_attach (GTK_GRID (grid), var2_default_b, 8, row + 2, 2, 1);
 
     //
     // Add a checkbox for the CW audio peak filter, if the mode is CWU/CWL
@@ -633,34 +633,34 @@ void filter_menu(GtkWidget *parent) {
         int current_tx_mode = vfo_get_tx_mode();
 #endif
         transmitter->use_rx_filter = 0; // switch TX=RX filter edge off
-        tx_set_filter(transmitter);  // update TX filter settings
+        tx_set_filter (transmitter); // update TX filter settings
 #if defined (__CPYMODE__)
         mode_settings[current_tx_mode].use_rx_filter = 0;
-        copy_mode_settings(current_tx_mode);
+        copy_mode_settings (current_tx_mode);
 #endif
-        g_idle_add(ext_vfo_update, NULL); // add to VFO
+        g_idle_add (ext_vfo_update, NULL); // add to VFO
       }
 
-      GtkWidget *cw_peak_b = gtk_check_button_new_with_label("Enable CW Audio peak filter");
-      gtk_widget_set_name(cw_peak_b, "boldlabel");
-      gtk_widget_set_halign(cw_peak_b, GTK_ALIGN_START);
+      GtkWidget *cw_peak_b = gtk_check_button_new_with_label ("Enable CW Audio peak filter");
+      gtk_widget_set_name (cw_peak_b, "boldlabel");
+      gtk_widget_set_halign (cw_peak_b, GTK_ALIGN_START);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_peak_b), vfo[active_receiver->id].cwAudioPeakFilter);
-      gtk_grid_attach(GTK_GRID(grid), cw_peak_b, 2, 0, 4, 1);
-      g_signal_connect(cw_peak_b, "toggled", G_CALLBACK(cw_peak_cb), NULL);
-      GtkWidget *use_cw_dp_filter_btn = gtk_check_button_new_with_label("'double pole' CW Audio peak filter");
-      gtk_widget_set_tooltip_text(use_cw_dp_filter_btn,
-                                  "If enabled:\n"
-                                  "Use the newer 'double pole' CW Audio peak filter,\n"
-                                  "which is available since WDSP 1.29");
-      gtk_widget_set_name(use_cw_dp_filter_btn, "boldlabel");
-      gtk_widget_set_halign(use_cw_dp_filter_btn, GTK_ALIGN_START);
+      gtk_grid_attach (GTK_GRID (grid), cw_peak_b, 2, 0, 4, 1);
+      g_signal_connect (cw_peak_b, "toggled", G_CALLBACK (cw_peak_cb), NULL);
+      GtkWidget *use_cw_dp_filter_btn = gtk_check_button_new_with_label ("'double pole' CW Audio peak filter");
+      gtk_widget_set_tooltip_text (use_cw_dp_filter_btn,
+                                   "If enabled:\n"
+                                   "Use the newer 'double pole' CW Audio peak filter,\n"
+                                   "which is available since WDSP 1.29");
+      gtk_widget_set_name (use_cw_dp_filter_btn, "boldlabel");
+      gtk_widget_set_halign (use_cw_dp_filter_btn, GTK_ALIGN_START);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (use_cw_dp_filter_btn), active_receiver->use_cw_dp_filter);
-      g_signal_connect(use_cw_dp_filter_btn, "toggled", G_CALLBACK(use_cw_dp_filter_cb), NULL);
-      gtk_grid_attach(GTK_GRID(grid), use_cw_dp_filter_btn, 6, 0, 4, 1);
+      g_signal_connect (use_cw_dp_filter_btn, "toggled", G_CALLBACK (use_cw_dp_filter_cb), NULL);
+      gtk_grid_attach (GTK_GRID (grid), use_cw_dp_filter_btn, 6, 0, 4, 1);
     }
   }
 
-  gtk_container_add(GTK_CONTAINER(content), grid);
+  gtk_container_add (GTK_CONTAINER (content), grid);
   sub_menu = dialog;
-  gtk_widget_show_all(dialog);
+  gtk_widget_show_all (dialog);
 }

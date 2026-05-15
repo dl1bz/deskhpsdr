@@ -37,13 +37,13 @@ typedef struct _firmin {
   int run;        // run control
   int position;     // position at which to execute
   int size;       // input/output buffer size, power of two
-  double* in;       // input buffer
-  double* out;      // output buffer, can be same as input
+  double *in;       // input buffer
+  double *out;      // output buffer, can be same as input
   int nc;         // number of filter coefficients, power of two
   double f_low;     // low cutoff frequency
   double f_high;      // high cutoff frequency
-  double* ring;     // internal complex ring buffer
-  double* h;        // complex filter coefficients
+  double *ring;     // internal complex ring buffer
+  double *h;        // complex filter coefficients
   int rsize;        // ring size, number of complex samples, power of two
   int mask;       // mask to update indexes
   int idx;        // ring input/output index
@@ -84,8 +84,8 @@ typedef struct _firopt {
   int run;        // run control
   int position;     // position at which to execute
   int size;       // input/output buffer size, power of two
-  double* in;       // input buffer
-  double* out;      // output buffer, can be same as input
+  double *in;       // input buffer
+  double *out;      // output buffer, can be same as input
   int nc;         // number of filter coefficients, power of two, >= size
   double f_low;     // low cutoff frequency
   double f_high;      // high cutoff frequency
@@ -93,16 +93,16 @@ typedef struct _firopt {
   int wintype;      // filter window type
   double gain;      // filter gain
   int nfor;       // number of buffers in delay line
-  double* fftin;      // fft input buffer
-  double** fmask;     // frequency domain masks
-  double** fftout;    // fftout delay line
-  double* accum;      // frequency domain accumulator
+  double *fftin;      // fft input buffer
+  double **fmask;     // frequency domain masks
+  double **fftout;    // fftout delay line
+  double *accum;      // frequency domain accumulator
   int buffidx;      // fft out buffer index
   int idxmask;      // mask for index computations
-  double* maskgen;    // input for mask generation FFT
-  fftw_plan* pcfor;   // array of forward FFT plans
+  double *maskgen;    // input for mask generation FFT
+  fftw_plan *pcfor;   // array of forward FFT plans
   fftw_plan crev;     // reverse fft plan
-  fftw_plan* maskplan;  // plans for frequency domain masks
+  fftw_plan *maskplan;  // plans for frequency domain masks
 } firopt, *FIROPT;
 
 extern FIROPT create_firopt (int run, int position, int size, double* in, double* out,
@@ -135,22 +135,22 @@ extern void setFreqs_firopt (FIROPT a, double f_low, double f_high);
 
 typedef struct _fircore {
   int size;       // input/output buffer size, power of two
-  double* in;       // input buffer
-  double* out;      // output buffer, can be same as input
+  double *in;       // input buffer
+  double *out;      // output buffer, can be same as input
   int nc;         // number of filter coefficients, power of two, >= size
-  double* impulse;    // impulse response of filter
-  double* imp;
+  double *impulse;    // impulse response of filter
+  double *imp;
   int nfor;       // number of buffers in delay line
-  double* fftin;      // fft input buffer
-  double*** fmask;    // frequency domain masks
-  double** fftout;    // fftout delay line
-  double* accum;      // frequency domain accumulator
+  double *fftin;      // fft input buffer
+  double ***fmask;    // frequency domain masks
+  double **fftout;    // fftout delay line
+  double *accum;      // frequency domain accumulator
   int buffidx;      // fft out buffer index
   int idxmask;      // mask for index computations
-  double* maskgen;    // input for mask generation FFT
-  fftw_plan* pcfor;   // array of forward FFT plans
+  double *maskgen;    // input for mask generation FFT
+  fftw_plan *pcfor;   // array of forward FFT plans
   fftw_plan crev;     // reverse fft plan
-  fftw_plan** maskplan; // plans for frequency domain masks
+  fftw_plan **maskplan; // plans for frequency domain masks
   CRITICAL_SECTION update;
   int cset;
   int mp;
@@ -158,7 +158,7 @@ typedef struct _fircore {
 } fircore, *FIRCORE;
 
 extern FIRCORE create_fircore (int size, double* in, double* out,
-                               int nc, int mp, double* impulse);
+                               int nc, int mp, double *impulse);
 
 extern void xfircore (FIRCORE a);
 

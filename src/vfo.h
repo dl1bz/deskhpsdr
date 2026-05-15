@@ -184,7 +184,7 @@ extern char *step_labels[];
 //
 // Global functions declared in vfo.h start with "vfo_"
 //
-extern GtkWidget* vfo_init(int width, int height);
+extern GtkWidget *vfo_init(int width, int height);
 extern int        vfo_get_stepindex(int id);
 extern void       vfo_set_step_from_index(int id, int index);
 extern int        vfo_get_step_from_index(int index);
@@ -227,6 +227,6 @@ extern void       vfo_ctun_update(int id, int state);
 extern void       vfo_apply_mode_settings(RECEIVER *rx);
 extern void       vfo_vfos_changed(void);
 extern void       vfo_num_pad(int val, int vfo);
-extern const char* getModeName(int mode);
+extern const char *getModeName(int mode);
 
 #endif

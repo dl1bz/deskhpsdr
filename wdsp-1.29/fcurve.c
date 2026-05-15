@@ -26,8 +26,8 @@ warren@wpratt.com
 
 #include "comm.h"
 
-double* fc_impulse (int nc, double f0, double f1, double g0, double g1, int curve, double samplerate, double scale,
-                    int ctfmode, int wintype) {
+double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve, double samplerate, double scale,
+                   int ctfmode, int wintype) {
   // check for previous in the cache
   struct Params {
     int   nc;
@@ -54,15 +54,15 @@ double* fc_impulse (int nc, double f0, double f1, double g0, double g1, int curv
   params.samplerate = samplerate;
   params.scale = scale;
   HASH_T h = fnv1a_hash(&params, sizeof(params));
-  double* imp = get_impulse_cache_entry(FC_CACHE, h, nc);
+  double *imp = get_impulse_cache_entry(FC_CACHE, h, nc);
 
   if (imp) { return imp; }
 
   //
-  double* A  = (double *) malloc0 ((nc / 2 + 1) * sizeof (double));
+  double *A  = (double*) malloc0((nc / 2 + 1) * sizeof(double));
   int i;
   double fn, f;
-  double* impulse;
+  double *impulse;
   int mid = nc / 2;
   double g0_lin = pow(10.0, g0 / 20.0);
 
@@ -188,17 +188,17 @@ double* fc_impulse (int nc, double f0, double f1, double g0, double g1, int curv
   }
 
   // print_impulse ("emph.txt", size + 1, impulse, 1, 0);
-  _aligned_free (A);
+  _aligned_free(A);
   // store in cache
   add_impulse_to_cache(FC_CACHE, h, nc, impulse);
   return impulse;
 }
 
 // generate mask for Overlap-Save Filter
-double* fc_mults (int size, double f0, double f1, double g0, double g1, int curve, double samplerate, double scale,
-                  int ctfmode, int wintype) {
-  double* impulse = fc_impulse (size + 1, f0, f1, g0, g1, curve, samplerate, scale, ctfmode, wintype);
-  double* mults = fftcv_mults(2 * size, impulse);
-  _aligned_free (impulse);
+double *fc_mults(int size, double f0, double f1, double g0, double g1, int curve, double samplerate, double scale,
+                 int ctfmode, int wintype) {
+  double *impulse = fc_impulse(size + 1, f0, f1, g0, g1, curve, samplerate, scale, ctfmode, wintype);
+  double *mults = fftcv_mults(2 * size, impulse);
+  _aligned_free(impulse);
   return mults;
 }

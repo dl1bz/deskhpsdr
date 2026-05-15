@@ -38,8 +38,8 @@ typedef struct _matchedCW {
   int position;       // position in sequence in which to execute the filter
   int size;         // input/output buffer size
   int nc;           // number of impulse response coefficients
-  double* in;         // pointer to input buffer
-  double* out;        // pointer to output buffer
+  double *in;         // pointer to input buffer
+  double *out;        // pointer to output buffer
   double f_center;      // filter center frequency (Hz)
   double bandwidth;     // filter bandwidth (Hz)
   double samplerate;      // sample_rate (samples/sec)

@@ -34,19 +34,19 @@ extern char geomagfield[32];
 extern char xray[16];
 
 extern void toolset_init(void);
-extern void get_screen_size(int *width, int *height);
-extern void get_window_position(GtkWindow *window, int *x, int *y);
-extern void get_window_geometry(GtkWindow *widget, int *x, int *y, int *width, int *height);
+extern void get_screen_size(int* width, int* height);
+extern void get_window_position(GtkWindow *window, int* x, int* y);
+extern void get_window_geometry(GtkWindow *widget, int* x, int* y, int* width, int* height);
 extern int is_pi(void);
 extern int https_ok(const char* hostname, int mit_cert_check);
 extern void check_and_run(int is_dbg);
-extern const char* truncate_text(const char* text, size_t max_length);
-extern char* truncate_text_malloc(const char* text, size_t max_length);
-extern char* truncate_text_3p(const char* text, size_t max_length);
+extern const char *truncate_text(const char* text, size_t max_length);
+extern char *truncate_text_malloc(const char* text, size_t max_length);
+extern char *truncate_text_3p(const char* text, size_t max_length);
 extern gboolean check_and_run_idle_cb(gpointer data);
-extern void to_uppercase(char *str);
-extern int file_present(const char *filename);
-extern const char* extract_short_msg(const char *msg);
+extern void to_uppercase(char* str);
+extern int file_present(const char* filename);
+extern const char *extract_short_msg(const char* msg);
 extern void sort_cfc(TRANSMITTER *tx);
 extern void sort_tx_eq(TRANSMITTER *tx);
 #ifdef __APPLE__

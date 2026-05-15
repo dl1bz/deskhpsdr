@@ -96,8 +96,8 @@
 //
 // Forward declaration for the two functions that send something to the radio
 //
-void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, unsigned char *data, int datalen);
-void sendRawData(pcap_t *handle, unsigned char hw[6], unsigned char *data, off_t ptr);
+void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, unsigned char* data, int datalen);
+void sendRawData(pcap_t* handle, unsigned char hw[6], unsigned char* data, off_t ptr);
 
 // HPSDR P1 bootloader command codes (we don't need those related to JTAG)
 
@@ -124,11 +124,11 @@ void sendRawData(pcap_t *handle, unsigned char hw[6], unsigned char *data, off_t
 #define STATE_WAIT      5  // Wait for response from radio
 #define STATE_DONE      6  // All done.
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   int i;
   char *dev = NULL;
   char errbuf[PCAP_ERRBUF_SIZE];
-  pcap_t* descr;
+  pcap_t *descr;
   struct pcap_pkthdr hdr;
   const u_char *packet;
   unsigned char mymac[6];  // Mac address of host
@@ -238,7 +238,7 @@ int main(int argc, char **argv) {
 
       if (sa->sa_family == AF_INET) {
         int i1, i2, i3, i4;
-        (void) inet_ntop(AF_INET, (void *) & (((struct sockaddr_in *)sa)->sin_addr), string, 256);
+        (void) inet_ntop(AF_INET, (void*) & (((struct sockaddr_in*) sa)->sin_addr), string, 256);
 
         if (sscanf(string, "%d.%d.%d.%d", &i1, &i2, &i3, &i4) == 4) {
           myip[0] = i1;
@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
       // BSD code (e.g. MacOS), need  to include net/if_dl.h
       //
       if (sa->sa_family == AF_LINK) {
-        link = (struct sockaddr_dl *)sa->sa_data;
+        link = (struct sockaddr_dl*) sa->sa_data;
         unsigned char mac[link->sdl_alen];
         memcpy(mac, LLADDR(link), link->sdl_alen);
 
@@ -362,7 +362,7 @@ int main(int argc, char **argv) {
           rbfxfr = rbflen;
         }
 
-        printf("RBF transfer length = %ld bytes (%d blocks)\n", (long) rbfxfr, (int) (rbfxfr / 256));
+        printf("RBF transfer length = %ld bytes (%d blocks)\n", (long) rbfxfr, (int)(rbfxfr / 256));
       }
     }
   }
@@ -577,7 +577,7 @@ int main(int argc, char **argv) {
 //
 // Send a 62-byte buffer to the radio containing a "command"
 //
-void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, unsigned char *data, int datalen) {
+void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, unsigned char* data, int datalen) {
   unsigned char buffer[62];
   int i;
   /*set the frame header*/
@@ -600,7 +600,7 @@ void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, 
 
   /*fill the frame with 0x00*/
   for (i = 0; i < 46; i++) {
-    buffer[i + 16] = (unsigned char)0x00;
+    buffer[i + 16] = (unsigned char) 0x00;
   }
 
   /* possibly fill in data */
@@ -616,7 +616,7 @@ void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, 
 //
 // Send a 276-byte buffer to the radio that contains data from the rbf file
 //
-void sendRawData(pcap_t *handle, unsigned char hw[6], unsigned char *data, off_t ptr) {
+void sendRawData(pcap_t* handle, unsigned char hw[6], unsigned char* data, off_t ptr) {
   unsigned char buffer[276];
   /*set the frame header*/
   buffer[0] = 0x11; // use "bogus" MAC address of radio for destination

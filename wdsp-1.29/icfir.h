@@ -32,8 +32,8 @@ typedef struct _icfir {
   int size;
   int nc;
   int mp;
-  double* in;
-  double* out;
+  double *in;
+  double *out;
   int runrate;
   int cicrate;
   int DD;
@@ -64,7 +64,7 @@ extern void setSize_icfir (ICFIR a, int size);
 
 extern void setOutRate_icfir (ICFIR a, int rate);
 
-extern double* icfir_impulse (int N, int DD, int R, int Pairs, double runrate, double cicrate,
+extern double *icfir_impulse (int N, int DD, int R, int Pairs, double runrate, double cicrate,
                               double cutoff, int xtype, double xbw, int rtype, double scale, int wintype);
 
 #endif

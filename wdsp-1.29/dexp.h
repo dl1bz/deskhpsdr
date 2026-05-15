@@ -29,21 +29,21 @@ warren@wpratt.com
 
 typedef struct _delring {
   int rsize;              // ringsize (measured in complex samples)
-  double* ring;           // ring buffer
+  double *ring;           // ring buffer
   int inptr;              // ring input pointer (counts in complex samples)
   int outptr;             // ring output pointer (counts in complex samples)
   int rdelay;             // ring delay (measured in complex samples)
   int size;             // input/output size in complex samples
-  double* in;             // source buffer
-  double* out;            // destination buffer
+  double *in;             // source buffer
+  double *out;            // destination buffer
 } delring, *DELRING;
 
 typedef struct _dexp {
   int id;               // 'id' for this dexp
   int run_dexp;           // 0 if dexp is OFF; 1 if it's ON
   int size;             // size of input/output buffers
-  double* in;             // audio input buffer
-  double* out;            // audio output buffer; can be same as 'in'
+  double *in;             // audio input buffer
+  double *out;            // audio output buffer; can be same as 'in'
   double rate;            // sample rate
   double dettau;            // detection averaging time constant
   double avm;             // averaging multiplier
@@ -55,8 +55,8 @@ typedef struct _dexp {
   double tdecay;            // decay time
   int nattack;            // one less than total number of attack multipliers
   int ndecay;             // one less than total number of decay multipliers
-  double* cattack;          // attack curve multipliers
-  double* cdecay;           // decay curve multipliers
+  double *cattack;          // attack curve multipliers
+  double *cdecay;           // decay curve multipliers
   double attack_thresh;       // attack threshold
   double hold_thresh;         // hold & decay threshold
   double thold;           // hold time
@@ -64,8 +64,8 @@ typedef struct _dexp {
   double exp_ratio;         // expander ratio (high-gain to low-gain)
   double hysteresis_ratio;      // ratio hold_thresh/attack_thresh.  0.0 < ratio < 1.0
   double low_gain;          // gain when gate is closed
-  double* trigsig;          // buffer for trigger signal (signal after side-channel filter)
-  double* delsig;           // buffer for signal delayed to match trigger signal
+  double *trigsig;          // buffer for trigger signal (signal after side-channel filter)
+  double *delsig;           // buffer for signal delayed to match trigger signal
   double peak;            // peak signal value to return to console
   // side-channel bandpass filter & and buffer for compensating delay
   int run_filt;           // 1 = side-channel filter and compensating delay are ON, 0 = OFF
@@ -76,7 +76,7 @@ typedef struct _dexp {
   FIRCORE p;              // filter structure
   DELRING scdring;          // delay ring for side channel
   // output audio delay to cover RF_Delay + Xmtr_delay_and_upslew
-  double* audbuffer;          // buffer to serve as input to audring
+  double *audbuffer;          // buffer to serve as input to audring
   int run_audelay;          // 'run' variable for audio delay ring
   double audelay;           // audio output delay in seconds
   DELRING audring;          // audio delay ring
@@ -96,7 +96,7 @@ typedef struct _dexp {
   double antivox_mult;        // multiplier for anti-vox smoothing
   double antivox_onemmult;      // one minus antivox_mult
   double antivox_level;       // current anti-vox smoothed signal level
-  double* antivox_data;       // buffer to hold new anti-vox data
+  double *antivox_data;       // buffer to hold new anti-vox data
 } dexp, *DEXP;
 
 extern DEXP pdexp[];

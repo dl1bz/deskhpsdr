@@ -27,7 +27,7 @@ warren@pratt.one
 
 #include "comm.h"
 
-static int calc_size (int nc) {
+static int calc_size(int nc) {
   // round up to a power of two
   nc--;
   nc |= nc >> 1;
@@ -42,7 +42,7 @@ static int calc_size (int nc) {
   return nc;
 }
 
-double* build_matched(int* imp_size, double rate, double f, double fwhm, double scale, int imp_pos) {
+double *build_matched(int* imp_size, double rate, double f, double fwhm, double scale, int imp_pos) {
   // *imp_size - number of impulse response values, POWER OF TWO; Computed in this function!
   //     NOT to be confused with 'nc', the number of non-zero impulse response values needed
   // rate - sample_rate (samples/second)
@@ -52,9 +52,9 @@ double* build_matched(int* imp_size, double rate, double f, double fwhm, double 
   // position - '0' places the impulse response in the left side of the output field;
   //    '1' centers the impulse response in the output field
   double nc_d = 1.2067 * rate / fwhm;
-  int nc = (int)(round (nc_d * 0.5) * 2.0);
-  int fsize = calc_size (nc);
-  double* c_impulse = (double*)malloc0 (fsize * sizeof(complex));
+  int nc = (int)(round(nc_d * 0.5) * 2.0);
+  int fsize = calc_size(nc);
+  double *c_impulse = (double*)malloc0(fsize * sizeof(complex));
   double w_osc = -2.0 * PI * f / rate;
   double m = 0.5 * (double)(fsize - 1);
   double posi, posj;
@@ -124,10 +124,10 @@ double* build_matched(int* imp_size, double rate, double f, double fwhm, double 
 *                                                   *
 ********************************************************************************************************/
 
-MATCHED create_matched (int run, int position, int size, double* in, double* out,
-                        double f_center, double bandwidth, int samplerate, double gain, int mode) {
-  MATCHED a = (MATCHED) malloc0 (sizeof(matched));
-  double* impulse;
+MATCHED create_matched(int run, int position, int size, double* in, double* out,
+                       double f_center, double bandwidth, int samplerate, double gain, int mode) {
+  MATCHED a = (MATCHED) malloc0(sizeof(matched));
+  double *impulse;
   a->run = run;
   a->position = position;
   a->size = size;
@@ -139,22 +139,22 @@ MATCHED create_matched (int run, int position, int size, double* in, double* out
   a->gain = gain;
   a->scale = a->gain / (double)(2 * a->size);
   a->mode = mode;
-  impulse = build_matched (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
-  a->p = create_fircore (a->size, a->in, a->out, a->nc, 0, impulse);
-  _aligned_free (impulse);
+  impulse = build_matched(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
+  a->p = create_fircore(a->size, a->in, a->out, a->nc, 0, impulse);
+  _aligned_free(impulse);
   return a;
 }
 
-void destroy_matched (MATCHED a) {
-  destroy_fircore (a->p);
-  _aligned_free (a);
+void destroy_matched(MATCHED a) {
+  destroy_fircore(a->p);
+  _aligned_free(a);
 }
 
-void flush_matched (MATCHED a) {
-  flush_fircore (a->p);
+void flush_matched(MATCHED a) {
+  flush_fircore(a->p);
 }
 
-void xmatched (MATCHED a, int pos) {
+void xmatched(MATCHED a, int pos) {
   if (a->run && a->position == pos) {
     // 'mode == 0' => CWL
     if (a->mode == 1) { // CWU
@@ -169,55 +169,55 @@ void xmatched (MATCHED a, int pos) {
       }
     }
 
-    xfircore (a->p);
+    xfircore(a->p);
   } else if (a->out != a->in) {
-    memcpy (a->out, a->in, a->size * sizeof(complex));
+    memcpy(a->out, a->in, a->size * sizeof(complex));
   }
 }
 
-void setBuffers_matched (MATCHED a, double* in, double* out) {
+void setBuffers_matched(MATCHED a, double* in, double* out) {
   a->in = in;
   a->out = out;
-  setBuffers_fircore (a->p, a->in, a->out);
+  setBuffers_fircore(a->p, a->in, a->out);
 }
 
-void setSamplerate_matched (MATCHED a, int rate) {
-  double* impulse;
+void setSamplerate_matched(MATCHED a, int rate) {
+  double *impulse;
   int nc = a->nc;
   a->samplerate = rate;
-  impulse = build_matched (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
+  impulse = build_matched(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
 
   if (nc == a->nc) {
-    setImpulse_fircore (a->p, impulse, 1);
+    setImpulse_fircore(a->p, impulse, 1);
   } else {
-    setNc_fircore (a->p, a->nc, impulse);
+    setNc_fircore(a->p, a->nc, impulse);
   }
 
   _aligned_free(impulse);
 }
 
-void setSize_matched (MATCHED a, int size) {
+void setSize_matched(MATCHED a, int size) {
   // NOTE:  'size' must be <= 'nc'
   a->size = size;
-  setSize_fircore (a->p, a->size);
+  setSize_fircore(a->p, a->size);
   // recalc impulse because scale factor is a function of size
   a->scale = a->gain / (double)(2 * a->size);
-  double* impulse = build_matched (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
-  setImpulse_fircore (a->p, impulse, 1);
-  _aligned_free (impulse);
+  double *impulse = build_matched(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
+  setImpulse_fircore(a->p, impulse, 1);
+  _aligned_free(impulse);
 }
 
-void setGain_matched (MATCHED a, double gain) {
-  double* impulse;
+void setGain_matched(MATCHED a, double gain) {
+  double *impulse;
   a->gain = gain;
   a->scale = a->gain / (double)(2 * a->size);
-  impulse = build_matched (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
-  setImpulse_fircore (a->p, impulse, 1);
-  _aligned_free (impulse);
+  impulse = build_matched(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
+  setImpulse_fircore(a->p, impulse, 1);
+  _aligned_free(impulse);
 }
 
-void CalcMatchedFilter (MATCHED a, double f_center, double bandwidth, double gain) {
-  double* impulse;
+void CalcMatchedFilter(MATCHED a, double f_center, double bandwidth, double gain) {
+  double *impulse;
 
   if ((a->f_center != f_center) || (a->bandwidth != bandwidth) || (a->gain != gain)) {
     int nc = a->nc;
@@ -225,15 +225,15 @@ void CalcMatchedFilter (MATCHED a, double f_center, double bandwidth, double gai
     a->bandwidth = bandwidth;
     a->gain = gain;
     a->scale = a->gain / (double)(2 * a->size);
-    impulse = build_matched (&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
+    impulse = build_matched(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
 
     if (nc == a->nc) {
-      setImpulse_fircore (a->p, impulse, 1);
+      setImpulse_fircore(a->p, impulse, 1);
     } else {
-      setNc_fircore (a->p, a->nc, impulse);
+      setNc_fircore(a->p, a->nc, impulse);
     }
 
-    _aligned_free (impulse);
+    _aligned_free(impulse);
   }
 }
 
@@ -244,25 +244,25 @@ void CalcMatchedFilter (MATCHED a, double f_center, double bandwidth, double gai
 ********************************************************************************************************/
 
 PORT
-void SetRXAMatchedRun (int channel, int run) {
+void SetRXAMatchedRun(int channel, int run) {
   MATCHED a = rxa[channel].matched.p;
-  EnterCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
   a->run = run;
-  LeaveCriticalSection (&ch[channel].csDSP);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAMatchedFreqs (int channel, double f_center, double bandwidth) {
+void SetRXAMatchedFreqs(int channel, double f_center, double bandwidth) {
   MATCHED a = rxa[channel].matched.p;
-  EnterCriticalSection (&ch[channel].csDSP);
-  CalcMatchedFilter (a, f_center, bandwidth, a->gain);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
+  CalcMatchedFilter(a, f_center, bandwidth, a->gain);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
 
 PORT
-void SetRXAMatchedGain (int channel, double gain) {
+void SetRXAMatchedGain(int channel, double gain) {
   MATCHED a = rxa[channel].matched.p;
-  EnterCriticalSection (&ch[channel].csDSP);
-  CalcMatchedFilter (a, a->f_center, a->bandwidth, gain);
-  LeaveCriticalSection (&ch[channel].csDSP);
+  EnterCriticalSection(&ch[channel].csDSP);
+  CalcMatchedFilter(a, a->f_center, a->bandwidth, gain);
+  LeaveCriticalSection(&ch[channel].csDSP);
 }
