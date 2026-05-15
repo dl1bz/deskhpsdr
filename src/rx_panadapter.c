@@ -1375,11 +1375,12 @@ void rx_panadapter_update (RECEIVER *rx) {
       if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
           || rx->panadapter_low < adjusted_panadapter_low) {
         if (rx->panadapter_low != adjusted_panadapter_low) {
-          t_print("%s: rx->panadapter_low: %d -> %d noise_floor: %d\n",
+          t_print("%s: rx->panadapter_low: %d -> %d noise_floor: %.1f autoscale: %d\n",
                   __func__,
                   rx->panadapter_low,
                   adjusted_panadapter_low,
-                  noise_floor_level);
+                  noise_floor_level,
+                  new_panadapter_low);
           rx->panadapter_low = adjusted_panadapter_low;
         }
       }
@@ -1388,6 +1389,7 @@ void rx_panadapter_update (RECEIVER *rx) {
       }
       // update time of the last calculation
       last_noisefloor_calc_time = current_time;
+      noisefloor_first_run_flag = 0;
     }
   }
   if (rx->panadapter_peaks_on != 0) {
