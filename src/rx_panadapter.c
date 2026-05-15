@@ -1369,12 +1369,19 @@ void rx_panadapter_update (RECEIVER *rx) {
     }
     // Überprüfe, ob 5 Minuten vergangen sind, bevor rx->panadapter_low angepasst wird
     if (noisefloor_first_run_flag
-        || difftime (current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
-      if (abs (autoscale_panadapter_with_offset (noise_floor_level, -5) - rx->panadapter_low) > 10
-          || rx->panadapter_low < autoscale_panadapter_with_offset (noise_floor_level, -5)) {
-        t_print ("%s: rx->panadapter_low: %d noise_floor: %d\n", __func__, rx->panadapter_low,
-                 autoscale_panadapter_with_offset (noise_floor_level, -5));
-        rx->panadapter_low = autoscale_panadapter_with_offset (noise_floor_level, -5) - panadapter_scale_corr_f;
+        || difftime(current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
+      int new_panadapter_low = autoscale_panadapter_with_offset(noise_floor_level, -5);
+      int adjusted_panadapter_low = (int)(new_panadapter_low - panadapter_scale_corr_f);
+      if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
+          || rx->panadapter_low < adjusted_panadapter_low) {
+        if (rx->panadapter_low != adjusted_panadapter_low) {
+          t_print("%s: rx->panadapter_low: %d -> %d noise_floor: %d\n",
+                  __func__,
+                  rx->panadapter_low,
+                  adjusted_panadapter_low,
+                  noise_floor_level);
+          rx->panadapter_low = adjusted_panadapter_low;
+        }
       }
       if (rx->panadapter_high <= -50) {
         rx->panadapter_high = -50;
