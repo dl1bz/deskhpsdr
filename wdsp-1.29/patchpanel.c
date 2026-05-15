@@ -54,7 +54,6 @@ void xpanel(PANEL a) {
   double I, Q;
   double gainI = a->gain1 * a->gain2I;
   double gainQ = a->gain1 * a->gain2Q;
-
   // inselect is either 0(neither), 1(Q), 2(I), or 3(both)
   switch (a->copy) {
   case 0: // no copy
@@ -64,9 +63,7 @@ void xpanel(PANEL a) {
       a->out[2 * i + 0] = gainI * I;
       a->out[2 * i + 1] = gainQ * Q;
     }
-
     break;
-
   case 1: // copy I to Q (then Q == I)
     for (i = 0; i < a->size; i++) {
       I = a->in[2 * i + 0] * (a->inselect >> 1);
@@ -74,9 +71,7 @@ void xpanel(PANEL a) {
       a->out[2 * i + 0] = gainI * I;
       a->out[2 * i + 1] = gainQ * Q;
     }
-
     break;
-
   case 2: // copy Q to I (then I == Q)
     for (i = 0; i < a->size; i++) {
       Q = a->in[2 * i + 1] * (a->inselect &  1);
@@ -84,9 +79,7 @@ void xpanel(PANEL a) {
       a->out[2 * i + 0] = gainI * I;
       a->out[2 * i + 1] = gainQ * Q;
     }
-
     break;
-
   case 3: // reverse (I=>Q and Q=>I)
     for (i = 0; i < a->size; i++) {
       Q = a->in[2 * i + 0] * (a->inselect >> 1);
@@ -94,7 +87,6 @@ void xpanel(PANEL a) {
       a->out[2 * i + 0] = gainI * I;
       a->out[2 * i + 1] = gainQ * Q;
     }
-
     break;
   }
 }
@@ -150,7 +142,6 @@ PORT
 void SetRXAPanelPan(int channel, double pan) {
   double gain1, gain2;
   EnterCriticalSection(&ch[channel].csDSP);
-
   if (pan <= 0.5) {
     gain1 = 1.0;
     gain2 = sin(pan * PI);
@@ -158,7 +149,6 @@ void SetRXAPanelPan(int channel, double pan) {
     gain1 = sin(pan * PI);
     gain2 = 1.0;
   }
-
   rxa[channel].panel.p->gain2I = gain1;
   rxa[channel].panel.p->gain2Q = gain2;
   LeaveCriticalSection(&ch[channel].csDSP);
@@ -202,13 +192,11 @@ void SetTXAPanelGain1(int channel, double gain) {
 PORT
 void SetTXAPanelSelect(int channel, int select) {
   EnterCriticalSection(&ch[channel].csDSP);
-
   if (select == 1) {
     txa[channel].panel.p->copy = 3;
   } else {
     txa[channel].panel.p->copy = 0;
   }
-
   txa[channel].panel.p->inselect = select;
   LeaveCriticalSection(&ch[channel].csDSP);
 }

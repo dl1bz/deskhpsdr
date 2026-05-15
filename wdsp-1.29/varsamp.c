@@ -37,7 +37,6 @@ void calc_varsamp(VARSAMP a) {
   a->dicvar = 0.0;
   a->delta = fabs(1.0 / a->cvar - 1.0);
   a->fc = a->fcin;
-
   if (a->out_rate >= a->in_rate) {
     min_rate = (double)a->in_rate;
     // max_rate = (double)a->out_rate;
@@ -48,17 +47,13 @@ void calc_varsamp(VARSAMP a) {
     // norm_rate = max_rate;
     norm_rate = (double)a->in_rate;
   }
-
   if (a->fc == 0.0) { a->fc = 0.95 * 0.45 * min_rate; }
-
   fc_norm_high = a->fc / norm_rate;
-
   if (a->fc_low < 0.0) {
     fc_norm_low = - fc_norm_high;
   } else {
     fc_norm_low = a->fc_low / norm_rate;
   }
-
   a->rsize = (int)(140.0 * norm_rate / min_rate);
   a->ncoef = a->rsize + 1;
   a->ncoef += (a->R - 1) * (a->ncoef - 1);
@@ -115,7 +110,6 @@ void hshift(VARSAMP a) {
   pos = (double)a->R * a->h_offset;
   hidx = (int)(pos);
   frac = pos - (double)hidx;
-
   for (i = a->rsize - 1, j = hidx, k = hidx + 1; i >= 0; i--, j += a->R, k += a->R) {
     a->hs[i] = a->h[j] + frac * (a->h[k] - a->h[j]);
   }
@@ -129,17 +123,14 @@ int xvarsamp(VARSAMP a, double var) {
   a->old_inv_cvar = a->inv_cvar;
   a->cvar = a->var * a->nom_ratio;
   a->inv_cvar = 1.0 / a->cvar;
-
   if (a->varmode) {
     a->dicvar = (a->inv_cvar - a->old_inv_cvar) / (double)a->size;
     a->inv_cvar = a->old_inv_cvar;
   } else { a->dicvar = 0.0; }
-
   if (a->run) {
     int i, j;
     int idx_out;
     double I, Q;
-
     for (i = 0; i < a->size; i++) {
       a->ring[2 * a->idx_in + 0] = a->in[2 * i + 0];
       a->ring[2 * a->idx_in + 1] = a->in[2 * i + 1];
@@ -148,38 +139,29 @@ int xvarsamp(VARSAMP a, double var) {
       N = *picvar & 0xffffffffffff0000;
       a->inv_cvar = *((double*)&N);
       a->delta = 1.0 - a->inv_cvar;
-
       while (a->isamps < 1.0) {
         I = 0.0;
         Q = 0.0;
         hshift(a);
         a->h_offset += a->delta;
-
         while (a->h_offset >= 1.0) { a->h_offset -= 1.0; }
-
         while (a->h_offset <  0.0) { a->h_offset += 1.0; }
-
         for (j = 0; j < a->rsize; j++) {
           if ((idx_out = a->idx_in + j) >= a->rsize) { idx_out -= a->rsize; }
-
           I += a->hs[j] * a->ring[2 * idx_out + 0];
           Q += a->hs[j] * a->ring[2 * idx_out + 1];
         }
-
         a->out[2 * outsamps + 0] = I;
         a->out[2 * outsamps + 1] = Q;
         outsamps++;
         a->isamps += a->inv_cvar;
       }
-
       a->isamps -= 1.0;
-
       if (--a->idx_in < 0) { a->idx_in = a->rsize - 1; }
     }
   } else if (a->in != a->out) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   return outsamps;
 }
 

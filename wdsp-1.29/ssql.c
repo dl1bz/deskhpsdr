@@ -72,32 +72,25 @@ void xftov(FTOV a) {
       a->rcount--;                    // decrement the count
       a->ring[a->rptr] = 0;               // set the location to '0'
     }
-
     if ((a->inlast * a->in[0] < 0.0) &&           // different signs mean zero-crossing
         (fabs(a->inlast - a->in[0]) > a->eps)) {
       a->ring[a->rptr] = 1;               // set the ring location to '1'
       a->rcount++;                    // increment the count
     }
-
     if (++a->rptr == a->rsize) { a->rptr = 0; }         // increment and wrap the pointer as needed
-
     a->out[0] = min(1.0, (double)a->rcount / a->div);     // calculate the output sample
     a->inlast = a->in[a->size - 1];             // save the last input sample for next buffer
-
     for (int i = 1; i < a->size; i++) {
       if (a->ring[a->rptr] == 1) {            // if current ring location is '1' ...
         a->rcount--;                  // decrement the count
         a->ring[a->rptr] = 0;             // set the location to '0'
       }
-
       if ((a->in[i - 1] * a->in[i] < 0.0) &&        // different signs mean zero-crossing
           (fabs(a->in[i - 1] - a->in[i]) > a->eps)) {
         a->ring[a->rptr] = 1;             // set the ring location to '1'
         a->rcount++;                  // increment the count
       }
-
       if (++a->rptr == a->rsize) { a->rptr = 0; }       // increment and wrap the pointer as needed
-
       a->out[i] = min(1.0, (double)a->rcount / a->div); // calculate the output sample
     }
   }
@@ -112,15 +105,12 @@ void compute_ssql_slews(SSQL a) {
   double delta, theta;
   delta = PI / (double)a->ntup;
   theta = 0.0;
-
   for (i = 0; i <= a->ntup; i++) {
     a->cup[i] = a->muted_gain + (1.0 - a->muted_gain) * 0.5 * (1.0 - cos(theta));
     theta += delta;
   }
-
   delta = PI / (double)a->ntdown;
   theta = 0.0;
-
   for (i = 0; i <= a->ntdown; i++) {
     a->cdown[i] = a->muted_gain + (1.0 - a->muted_gain) * 0.5 * (1.0 + cos(theta));
     theta += delta;
@@ -220,41 +210,33 @@ enum _ssqlstate {
 void xssql(SSQL a) {
   if (a->run) {
     xcbl(a->dcbl);                      // dc block the input signal
-
     for (int i = 0; i < a->size; i++) {         // extract 'I' component
       a->ibuff[i] = a->b1[2 * i];
     }
-
     xftov(a->cvtr);                     // convert frequency to voltage, ignoring amplitude
     // WriteAudioWDSP(20.0, a->rate, a->size, a->ftovbuff, 4, 0.99);
     xdbqlp(a->filt);                    // low-pass filter
-
     // WriteAudioWDSP(20.0, a->rate, a->size, a->lpbuff, 4, 0.99);
     // calculate the output of the window detector for each sample
     for (int i = 0; i < a->size; i++) {
       a->wdaverage = a->wdmult * a->wdaverage + (1.0 - a->wdmult) * a->lpbuff[i];
-
       if ((a->lpbuff[i] - a->wdaverage) > a->wthresh || (a->wdaverage - a->lpbuff[i]) > a->wthresh) {
         a->wdbuff[i] = 0;  // signal unmute
       } else {
         a->wdbuff[i] = 1;  // signal mute
       }
     }
-
     // calculate the trigger signal for each sample
     for (int i = 0; i < a->size; i++) {
       if (a->wdbuff[i] == 0) {
         a->tr_voltage += (a->tr_ss_unmute - a->tr_voltage) * a->unmute_mult;
       }
-
       if (a->wdbuff[i] == 1) {
         a->tr_voltage += (a->tr_ss_mute - a->tr_voltage) * a->mute_mult;
       }
-
       if (a->tr_voltage > a->tr_thresh) { a->tr_signal[i] = 0; }  // muted
       else { a->tr_signal[i] = 1; } // unmuted
     }
-
     // execute state machine; calculate audio output
     for (int i = 0; i < a->size; i++) {
       switch (a->state) {
@@ -263,39 +245,30 @@ void xssql(SSQL a) {
           a->state = INCREASE;
           a->count = a->ntup;
         }
-
         a->out[2 * i + 0] = a->muted_gain * a->in[2 * i + 0];
         a->out[2 * i + 1] = a->muted_gain * a->in[2 * i + 1];
         break;
-
       case INCREASE:
         a->out[2 * i + 0] = a->in[2 * i + 0] * a->cup[a->ntup - a->count];
         a->out[2 * i + 1] = a->in[2 * i + 1] * a->cup[a->ntup - a->count];
-
         if (a->count-- == 0) {
           a->state = UNMUTED;
         }
-
         break;
-
       case UNMUTED:
         if (a->tr_signal[i] == 0) {
           a->state = DECREASE;
           a->count = a->ntdown;
         }
-
         a->out[2 * i + 0] = a->in[2 * i + 0];
         a->out[2 * i + 1] = a->in[2 * i + 1];
         break;
-
       case DECREASE:
         a->out[2 * i + 0] = a->in[2 * i + 0] * a->cdown[a->ntdown - a->count];
         a->out[2 * i + 1] = a->in[2 * i + 1] * a->cdown[a->ntdown - a->count];
-
         if (a->count-- == 0) {
           a->state = MUTED;
         }
-
         break;
       }
     }

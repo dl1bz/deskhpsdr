@@ -2,7 +2,6 @@
 --indent=spaces=2
 --indent-continuation=4
 --indent-preproc-block
---break-blocks
 --pad-oper
 --pad-comma
 --unpad-paren

@@ -716,34 +716,28 @@ void SetTXAMode(int channel, int mode) {
     txa[channel].ammod.p->run = 0;
     txa[channel].fmmod.p->run = 0;
     txa[channel].preemph.p->run = 0;
-
     switch (mode) {
     case TXA_AM:
     case TXA_SAM:
       txa[channel].ammod.p->run = 1;
       txa[channel].ammod.p->mode  = 0;
       break;
-
     case TXA_DSB:
       txa[channel].ammod.p->run = 1;
       txa[channel].ammod.p->mode  = 1;
       break;
-
     case TXA_AM_LSB:
     case TXA_AM_USB:
       txa[channel].ammod.p->run = 1;
       txa[channel].ammod.p->mode  = 2;
       break;
-
     case TXA_FM:
       txa[channel].fmmod.p->run = 1;
       txa[channel].preemph.p->run = 1;
       break;
-
     default:
       break;
     }
-
     TXASetupBPFilters(channel);
     LeaveCriticalSection(&ch[channel].csDSP);
   }
@@ -767,12 +761,9 @@ void SetTXABandpassFreqs(int channel, double f_low, double f_high) {
 
 void TXAResCheck(int channel) {
   RESAMPLE a = txa[channel].rsmpin.p;
-
   if (ch[channel].in_rate  != ch[channel].dsp_rate) { a->run = 1; }
   else { a->run = 0; }
-
   a = txa[channel].rsmpout.p;
-
   if (ch[channel].dsp_rate != ch[channel].out_rate) { a->run = 1; }
   else { a->run = 0; }
 }
@@ -788,7 +779,6 @@ void TXASetupBPFilters(int channel) {
   txa[channel].bp0.p->run = 1;
   txa[channel].bp1.p->run = 0;
   txa[channel].bp2.p->run = 0;
-
   switch (txa[channel].mode) {
   case TXA_LSB:
   case TXA_USB:
@@ -799,19 +789,15 @@ void TXASetupBPFilters(int channel) {
   case TXA_SPEC:
   case TXA_DRM:
     CalcBandpassFilter(txa[channel].bp0.p, txa[channel].f_low, txa[channel].f_high, 2.0);
-
     if (txa[channel].compressor.p->run) {
       CalcBandpassFilter(txa[channel].bp1.p, txa[channel].f_low, txa[channel].f_high, 2.0);
       txa[channel].bp1.p->run = 1;
-
       if (txa[channel].osctrl.p->run) {
         CalcBandpassFilter(txa[channel].bp2.p, txa[channel].f_low, txa[channel].f_high, 1.0);
         txa[channel].bp2.p->run = 1;
       }
     }
-
     break;
-
   case TXA_DSB:
   case TXA_AM:
   case TXA_SAM:
@@ -820,7 +806,6 @@ void TXASetupBPFilters(int channel) {
       CalcBandpassFilter(txa[channel].bp0.p, 0.0, txa[channel].f_high, 2.0);
       CalcBandpassFilter(txa[channel].bp1.p, 0.0, txa[channel].f_high, 2.0);
       txa[channel].bp1.p->run = 1;
-
       if (txa[channel].osctrl.p->run) {
         CalcBandpassFilter(txa[channel].bp2.p, 0.0, txa[channel].f_high, 1.0);
         txa[channel].bp2.p->run = 1;
@@ -828,37 +813,28 @@ void TXASetupBPFilters(int channel) {
     } else {
       CalcBandpassFilter(txa[channel].bp0.p, txa[channel].f_low, txa[channel].f_high, 1.0);
     }
-
     break;
-
   case TXA_AM_LSB:
     CalcBandpassFilter(txa[channel].bp0.p, -txa[channel].f_high, 0.0, 2.0);
-
     if (txa[channel].compressor.p->run) {
       CalcBandpassFilter(txa[channel].bp1.p, -txa[channel].f_high, 0.0, 2.0);
       txa[channel].bp1.p->run = 1;
-
       if (txa[channel].osctrl.p->run) {
         CalcBandpassFilter(txa[channel].bp2.p, -txa[channel].f_high, 0.0, 1.0);
         txa[channel].bp2.p->run = 1;
       }
     }
-
     break;
-
   case TXA_AM_USB:
     CalcBandpassFilter(txa[channel].bp0.p, 0.0, txa[channel].f_high, 2.0);
-
     if (txa[channel].compressor.p->run) {
       CalcBandpassFilter(txa[channel].bp1.p, 0.0, txa[channel].f_high, 2.0);
       txa[channel].bp1.p->run = 1;
-
       if (txa[channel].osctrl.p->run) {
         CalcBandpassFilter(txa[channel].bp2.p, 0.0, txa[channel].f_high, 1.0);
         txa[channel].bp2.p->run = 1;
       }
     }
-
     break;
   }
 }

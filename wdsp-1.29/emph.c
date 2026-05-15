@@ -113,7 +113,6 @@ PORT
 void SetTXAFMEmphMP(int channel, int mp) {
   EMPHP a;
   a = txa[channel].preemph.p;
-
   if (a->mp != mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);
@@ -126,7 +125,6 @@ void SetTXAFMEmphNC(int channel, int nc) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].preemph.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = fc_impulse(a->nc, a->f_low, a->f_high, -20.0 * log10(a->f_high / a->f_low), 0.0, a->ctype, a->rate,
@@ -134,7 +132,6 @@ void SetTXAFMEmphNC(int channel, int nc) {
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -144,7 +141,6 @@ void SetTXAFMPreEmphFreqs(int channel, double low, double high) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].preemph.p;
-
   if (a->f_low != low || a->f_high != high) {
     a->f_low = low;
     a->f_high = high;
@@ -153,7 +149,6 @@ void SetTXAFMPreEmphFreqs(int channel, double low, double high) {
     setImpulse_fircore(a->p, impulse, 1);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -210,18 +205,15 @@ void flush_emph(EMPH a) {
 void xemph(EMPH a, int position) {
   int i;
   double I, Q;
-
   if (a->run && a->position == position) {
     memcpy(&(a->infilt[2 * a->size]), a->in, a->size * sizeof(complex));
     fftw_execute(a->CFor);
-
     for (i = 0; i < 2 * a->size; i++) {
       I = a->product[2 * i + 0];
       Q = a->product[2 * i + 1];
       a->product[2 * i + 0] = I * a->mults[2 * i + 0] - Q * a->mults[2 * i + 1];
       a->product[2 * i + 1] = I * a->mults[2 * i + 1] + Q * a->mults[2 * i + 0];
     }
-
     fftw_execute(a->CRev);
     memcpy(a->infilt, &(a->infilt[2 * a->size]), a->size * sizeof(complex));
   } else if (a->in != a->out) {

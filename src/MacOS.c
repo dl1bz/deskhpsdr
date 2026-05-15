@@ -51,25 +51,20 @@ sem_t *apple_sem(int initial_value) {
   sem_t *sem;
   static long semcount = 0;
   char sname[20];
-
   for (;;) {
     snprintf(sname, 20, "PI_%08ld", semcount++);
     sem = sem_open(sname, O_CREAT | O_EXCL, 0700, initial_value);
-
     //
     // This can happen if a semaphore of that name is already in use,
     // for example by another SDR program running on the same machine
     //
     if (sem == SEM_FAILED && errno == EEXIST) { continue; }
-
     break;
   }
-
   if (sem == SEM_FAILED) {
     t_perror("NewProtocol:SemOpen");
     exit(-1);
   }
-
   // we can unlink the semaphore NOW. It will remain functional
   // until sem_close() has been called by all threads using that
   // semaphore.

@@ -83,23 +83,18 @@ void startup(const char* path) {
   // Get home dir
   //
   homedir = getenv("HOME");
-
   if (homedir == NULL) {
     pwd = getpwuid(getuid());
-
     if (pwd != NULL) {
       homedir = pwd->pw_dir;
     }
   }
-
   if (homedir == NULL) {
     // If $HOME cannot be determined: stay in CWD if writable, otherwise fall back to /tmp/deskhpsdr.
     if (access(".", W_OK) == 0) {
       return;
     }
-
     g_strlcpy(workdir, "/tmp/deskhpsdr", PATH_MAX);
-
     if (stat(workdir, &statbuf) < 0) {
       if (mkdir(workdir, 0755) != 0) {
         t_print("%s: Could not create %s\n", __func__, workdir);
@@ -114,7 +109,6 @@ void startup(const char* path) {
         return;
       }
     }
-
     if (chdir(workdir) != 0) {
       t_print("%s: Could not chdir to working dir %s\n", __func__, workdir);
     } else {
@@ -122,46 +116,34 @@ void startup(const char* path) {
       (void) freopen("deskhpsdr.err", "w", stderr);
       t_print("%s: working dir changed to %s\n", __func__, workdir);
     }
-
     return;
   }
-
 #ifdef __APPLE__
   snprintf(workdir, PATH_MAX, "%s/Library/Application Support/deskHPSDR", homedir);
-
   if (stat(workdir, &statbuf) < 0) {
     mkdir(workdir, 0700);
   }
-
   rc = stat(workdir, &statbuf);
-
   if (rc < 0 || !S_ISDIR(statbuf.st_mode)) {
     g_strlcpy(workdir, homedir, PATH_MAX);
   }
-
 #else
   snprintf(workdir, PATH_MAX, "%s/.config", homedir);
-
   if (stat(workdir, &statbuf) < 0) {
     mkdir(workdir, 0700);
   }
-
   snprintf(workdir, PATH_MAX, "%s/.config/deskhpsdr", homedir);
-
   if (stat(workdir, &statbuf) < 0) {
     mkdir(workdir, 0700);
   }
-
 #endif
   //
   // Check if workdir exists and is a directory, if not, take home dir
   //
   rc = stat(workdir, &statbuf);
-
   if (rc < 0 || !S_ISDIR(statbuf.st_mode)) {
     g_strlcpy(workdir, homedir, PATH_MAX);
   }
-
   //
   // At this point, the new working directory exists and the name
   // is in filename.
@@ -171,7 +153,6 @@ void startup(const char* path) {
     t_print("%s: Could not chdir to working dir %s\n", __func__, workdir);
     return;
   }
-
   //
   //  Make two local files for stdout and stderr, to allow
   //  post-mortem debugging

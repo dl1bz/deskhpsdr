@@ -79,9 +79,7 @@ static void rigctl_value_changed_cb(GtkWidget *widget, gpointer data) {
     rigctld_enabled = 0;
     shutdown_tcp_rigctl();
   }
-
   rigctl_tcp_port = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
     rigctld_enabled = 1;
@@ -95,7 +93,6 @@ static void rigctl_debug_cb(GtkWidget *widget, gpointer data) {
 
 static void tci_enable_cb(GtkWidget *widget, gpointer data) {
   tci_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (tci_enable) {
     gtk_widget_set_sensitive(tci_port_select, FALSE);
     launch_tci();
@@ -107,9 +104,7 @@ static void tci_enable_cb(GtkWidget *widget, gpointer data) {
 
 static void tci_port_changed_cb(GtkWidget *widget, gpointer data) {
   if (tci_enable) { shutdown_tci(); }
-
   tci_port = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
   if (tci_enable) { launch_tci(); }
 }
 
@@ -119,13 +114,11 @@ static void tci_txonly_changed_cb(GtkWidget *widget, gpointer data) {
 
 static void rigctl_tcp_enable_cb(GtkWidget *widget, gpointer data) {
   rigctl_tcp_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
     gtk_widget_set_sensitive(rigctld_btn, TRUE);
     gtk_widget_set_sensitive(rigctl_andromeda_btn, TRUE);
     gtk_widget_set_sensitive(rigctl_port_select, FALSE);
-
     if (use_rigctld) {
       rigctl_tcp_andromeda = 0;
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctl_andromeda_btn), rigctl_tcp_andromeda);
@@ -144,7 +137,6 @@ static void rigctl_tcp_enable_cb(GtkWidget *widget, gpointer data) {
 
 static void rigctld_btn_cb(GtkWidget *widget, gpointer data) {
   use_rigctld = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (rigctl_tcp_enable && use_rigctld) {
     rigctl_tcp_andromeda = 0;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctl_andromeda_btn), rigctl_tcp_andromeda);
@@ -164,7 +156,6 @@ static void rigctld_btn_cb(GtkWidget *widget, gpointer data) {
 static void serial_port_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   const char *cp = gtk_entry_get_text(GTK_ENTRY(widget));
-
   //
   // If the serial port is already running, do not allow changes.
   //
@@ -183,7 +174,6 @@ static void serial_port_cb(GtkWidget *widget, gpointer data) {
 
 static void tcp_andromeda_cb(GtkWidget *widget, gpointer data) {
   rigctl_tcp_andromeda = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (rigctl_tcp_enable && rigctl_tcp_andromeda) {
     rigctld_enabled = 0;
     use_rigctld = 0;
@@ -211,7 +201,6 @@ static void serial_autoreporting_cb(GtkWidget *widget, gpointer data) {
 static void andromeda_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   SerialPorts[id].andromeda = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (SerialPorts[id].andromeda) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[id]), 1);
     SerialPorts[id].baud = B9600;
@@ -231,7 +220,6 @@ static gboolean rigctl_reload_menu(gpointer data) {
 
 static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
-
   if (id < MAX_SERIAL) {
     if ((SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))) {
       if (launch_serial_rigctl(id) == 0) {
@@ -243,18 +231,14 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
     }
   } else {
     SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
     if (id == MAX_SERIAL) {
       launch_sertune();
     }
-
     if (id == MAX_SERIAL + 1) {
       launch_serptt();
     }
-
     g_idle_add(rigctl_reload_menu, NULL);  // execute in main thread
   }
-
   t_print("%s: Serial enable : ID=%d Enabled=%d\n", __func__, id, SerialPorts[id].enable);
 }
 
@@ -263,7 +247,6 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   int bd = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   int new;
-
   //
   // If ANDROMEDA is active, keep 9600
   //
@@ -271,7 +254,6 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(widget), 1);
     return;
   }
-
   //
   // Do nothing if the baud rate is already effective.
   // If a serial client is already running and the baud rate is changed, we close and re-open it
@@ -281,36 +263,28 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
   default:
     new = B4800;
     break;
-
   case 1:
     new = B9600;
     break;
-
   case 2:
     new = B19200;
     break;
-
   case 3:
     new = B38400;
     break;
   }
-
   if (new == SerialPorts[id].baud) {
     return;
   }
-
   SerialPorts[id].baud = new;
-
   if (SerialPorts[id].enable) {
     t_print("%s: closing/re-opening serial port %s\n", __func__, SerialPorts[id].port);
     disable_serial_rigctl(id);
-
     if (launch_serial_rigctl(id) == 0) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[id]), FALSE);
       SerialPorts[id].enable = 0;
     }
   }
-
   t_print("%s: Baud rate changed: Port=%s Baud=%d\n", __func__, SerialPorts[id].port, SerialPorts[id].baud);
 }
 
@@ -318,44 +292,35 @@ static int tci_txaudio_scale_to_index(double scale) {
   if (fabs(scale - 1.0) < 0.0001) {
     return 0;
   }
-
   if (fabs(scale - 0.70710678) < 0.0001) {
     return 1;
   }
-
   if (fabs(scale - 0.50118723) < 0.0001) {
     return 2;
   }
-
   if (fabs(scale - 0.25118864) < 0.0001) {
     return 3;
   }
-
   return 1;   // default = -3 dB
 }
 
 static void tci_txaudio_gain_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = (RECEIVER*) data;
-
   switch (gtk_combo_box_get_active(GTK_COMBO_BOX(widget))) {
   default:
   case 0:
     rx->tci_txaudio_scale = 1.0;
     break;
-
   case 1:
     rx->tci_txaudio_scale = 0.70710678;
     break;
-
   case 2:
     rx->tci_txaudio_scale = 0.50118723;
     break;
-
   case 3:
     rx->tci_txaudio_scale = 0.25118864;
     break;
   }
-
   t_print("%s: rx->tci_txaudio_scale = %0.4f\n", __func__, rx->tci_txaudio_scale);
 }
 
@@ -363,7 +328,6 @@ static void tci_txaudio_gain_cb(GtkWidget *widget, gpointer data) {
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int*) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (tci_audio_monitor) {
     audio_open_tci_monitor(active_receiver->audio_name);
   } else {
@@ -426,13 +390,11 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(rigctl_port_select), (double) rigctl_tcp_port);
   gtk_grid_attach(GTK_GRID(grid), rigctl_port_select, 1, row, 1, 1);
   g_signal_connect(rigctl_port_select, "value_changed", G_CALLBACK(rigctl_value_changed_cb), NULL);
-
   if (rigctl_tcp_enable) {
     gtk_widget_set_sensitive(rigctl_port_select, FALSE);
   } else {
     gtk_widget_set_sensitive(rigctl_port_select, TRUE);
   }
-
   //--------------------------------------------------------------------------------
   rigctld_btn = gtk_check_button_new_with_label(" + start rigctld at port 4533");
   gtk_widget_set_name(rigctld_btn, "boldlabel_blue");
@@ -446,13 +408,11 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctld_btn), use_rigctld);
   gtk_grid_attach(GTK_GRID(grid), rigctld_btn, 3, row, 2, 1);
   g_signal_connect(rigctld_btn, "toggled", G_CALLBACK(rigctld_btn_cb), NULL);
-
   if (rigctl_tcp_enable && !rigctl_tcp_andromeda) {
     gtk_widget_set_sensitive(rigctld_btn, TRUE);
   } else {
     gtk_widget_set_sensitive(rigctld_btn, FALSE);
   }
-
   gtk_widget_show(rigctld_btn);
   //
   w = gtk_check_button_new_with_label("Enable");
@@ -468,7 +428,6 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctl_andromeda_btn), rigctl_tcp_andromeda);
   gtk_grid_attach(GTK_GRID(grid), rigctl_andromeda_btn, 5, row, 1, 1);
   g_signal_connect(rigctl_andromeda_btn, "toggled", G_CALLBACK(tcp_andromeda_cb), NULL);
-
   if (rigctl_tcp_enable && !use_rigctld) {
     gtk_widget_set_sensitive(rigctl_andromeda_btn, TRUE);
     gtk_widget_set_tooltip_text(rigctl_andromeda_btn,
@@ -476,14 +435,12 @@ void rigctl_menu(GtkWidget *parent) {
   } else {
     gtk_widget_set_sensitive(rigctl_andromeda_btn, FALSE);
   }
-
   gtk_widget_show(rigctl_andromeda_btn);
   w = gtk_check_button_new_with_label("AutoRprt");
   gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), rigctl_tcp_autoreporting);
   gtk_grid_attach(GTK_GRID(grid), w, 6, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tcp_autoreporting_cb), NULL);
-
   /* Put the Serial Port stuff here, one port per line */
   for (int i = 0; i < MAX_SERIAL; i++) {
     char str[64];
@@ -496,7 +453,6 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_widget_set_name(w, "boldlabel");
     gtk_widget_set_halign(w, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
-
     //
     // If this serial port is used internally in a G2 simply state port name
     //
@@ -510,26 +466,21 @@ void rigctl_menu(GtkWidget *parent) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[i]), NULL, "9600 Bd");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[i]), NULL, "19200 Bd");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[i]), NULL, "38400 Bd");
-
       switch (SerialPorts[i].baud) {
       case B9600:
         gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[i]), 1);
         break;
-
       case B19200:
         gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[i]), 2);
         break;
-
       case B38400:
         gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[i]), 3);
         break;
-
       default:
         SerialPorts[i].baud = B4800;
         gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[i]), 0);
         break;
       }
-
       my_combo_attach(GTK_GRID(grid), serial_baud[i], 3, row, 1, 1);
       g_signal_connect(serial_baud[i], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(i));
       serial_enable[i] = gtk_check_button_new_with_label("Enable");
@@ -562,7 +513,6 @@ void rigctl_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), w, 1, row, 5, 1);
     }
   }
-
   //-----------------------------------------------------------------------------------------------------------------
   if (can_transmit) {
     char str[64];
@@ -584,22 +534,18 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "9600 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "19200 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "38400 Bd");
-
     switch (SerialPorts[MAX_SERIAL].baud) {
     case B19200:
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 2);
       break;
-
     case B38400:
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 3);
       break;
-
     default:
       SerialPorts[MAX_SERIAL].baud = B9600;
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 0);
       break;
     }
-
     my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL], 3, row, 1, 1);
     g_signal_connect(serial_baud[MAX_SERIAL], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_enable[MAX_SERIAL] =
@@ -615,13 +561,11 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), serial_swapRtsDtr[MAX_SERIAL], 5, row, 1, 1);
     g_signal_connect(serial_swapRtsDtr[MAX_SERIAL], "toggled", G_CALLBACK(serial_swapRtsDtr_cb),
                      GINT_TO_POINTER(MAX_SERIAL));
-
     if (SerialPorts[MAX_SERIAL].enable) {
       gtk_widget_set_sensitive(serial_swapRtsDtr[MAX_SERIAL], TRUE);
     } else {
       gtk_widget_set_sensitive(serial_swapRtsDtr[MAX_SERIAL], FALSE);
     }
-
     //-----------------------------------------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------------------------------------
     row++;
@@ -638,22 +582,18 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "9600 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "19200 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "38400 Bd");
-
     switch (SerialPorts[MAX_SERIAL + 1].baud) {
     case B19200:
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 2);
       break;
-
     case B38400:
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 3);
       break;
-
     default:
       SerialPorts[MAX_SERIAL + 1].baud = B9600;
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 0);
       break;
     }
-
     my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL + 1], 3, row, 1, 1);
     g_signal_connect(serial_baud[MAX_SERIAL + 1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
     serial_enable[MAX_SERIAL + 1] =
@@ -664,7 +604,6 @@ void rigctl_menu(GtkWidget *parent) {
     g_signal_connect(serial_enable[MAX_SERIAL + 1], "toggled", G_CALLBACK(serial_enable_cb),
                      GINT_TO_POINTER(MAX_SERIAL + 1));
   }
-
   //-----------------------------------------------------------------------------------------------------------------
   row++;
   w = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -681,13 +620,11 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tci_port_select), (double) tci_port);
   gtk_grid_attach(GTK_GRID(grid), tci_port_select, 1, row, 1, 1);
   g_signal_connect(tci_port_select, "value_changed", G_CALLBACK(tci_port_changed_cb), NULL);
-
   if (tci_enable) {
     gtk_widget_set_sensitive(tci_port_select, FALSE);
   } else {
     gtk_widget_set_sensitive(tci_port_select, TRUE);
   }
-
   w = gtk_check_button_new_with_label("Enable");
   gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_tooltip_text(w, "Enable / Disable TCI\n"
@@ -716,12 +653,10 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL, "-12 dB");
   gtk_widget_set_halign(combo, GTK_ALIGN_CENTER);
   gtk_grid_attach(GTK_GRID(grid), combo, col, row, 1, 1);
-
   if (active_receiver != NULL) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), tci_txaudio_scale_to_index(active_receiver->tci_txaudio_scale));
     g_signal_connect(combo, "changed", G_CALLBACK(tci_txaudio_gain_cb), active_receiver);
   }
-
   //------------------------------------------------------------------------------------------------------------------------
   row--;
   col++;

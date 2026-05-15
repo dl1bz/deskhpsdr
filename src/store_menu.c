@@ -60,28 +60,23 @@ static gboolean store_select_cb(GtkWidget *widget, GdkEventButton *event, gpoint
   char sm[16];
   store_memory_slot(ind);
   int mode = mem[ind].mode;
-
   if (mode == modeFMN) {
     snprintf(fw, 16, "%s", mem[ind].deviation == 2500 ? "11k" : "16k");
   } else {
     int filter = mem[ind].filter;
     snprintf(fw, 16, "%s", filters[mode][filter].title);
   }
-
   switch (mem[ind].sat_mode) {
   case SAT_MODE:
     snprintf(sm, 16, "%s", "SAT, ");
     break;
-
   case RSAT_MODE:
     snprintf(sm, 16, "%s", "RSAT, ");
     break;
-
   default:
     sm[0] = 0;
     break;
   }
-
   snprintf(label_str, 40, "M%d=%8.3f MHz (%s%s, %s)", ind,
            mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
            sm, mode_string[mode], fw);
@@ -119,7 +114,6 @@ void store_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
-
   for (int ind = 0; ind < NUM_OF_MEMORYS; ind++) {
     char label_str[50];
     char fw[16];
@@ -129,28 +123,23 @@ void store_menu(GtkWidget *parent) {
     b = gtk_button_new_with_label(label_str);
     g_signal_connect(b, "button-press-event", G_CALLBACK(store_select_cb), GINT_TO_POINTER(ind));
     gtk_grid_attach(GTK_GRID(grid), b, 0, ind + 1, 1, 1);
-
     if (mode == modeFMN) {
       snprintf(fw, 16, "%s", mem[ind].deviation == 2500 ? "11k" : "16k");
     } else {
       int filter = mem[ind].filter;
       snprintf(fw, 16, "%s", filters[mode][filter].title);
     }
-
     switch (mem[ind].sat_mode) {
     case SAT_MODE:
       snprintf(sm, 16, "%s", "SAT, ");
       break;
-
     case RSAT_MODE:
       snprintf(sm, 16, "%s", "RSAT, ");
       break;
-
     default:
       sm[0] = 0;
       break;
     }
-
     snprintf(label_str, 50, "M%d=%8.3f MHz (%s%s, %s)", ind,
              mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
              sm, mode_string[mode], fw);
@@ -159,7 +148,6 @@ void store_menu(GtkWidget *parent) {
     g_signal_connect(b, "button-press-event", G_CALLBACK(recall_select_cb), GINT_TO_POINTER(ind));
     gtk_grid_attach(GTK_GRID(grid), b, 1, ind + 1, 3, 1);
   }
-
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

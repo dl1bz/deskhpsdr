@@ -31,19 +31,12 @@ static int calc_dpole_nc(double rate, double bandwidth) {
   int nc = 0;
   int rate_mult = (int)ceil((int)rate / 12000);
   int bw_mult = 1;
-
   if (bandwidth < 80.0) { bw_mult = 2; }
-
   if (bandwidth < 40.0) { bw_mult = 4; }
-
   if (bandwidth < 20.0) { bw_mult = 8; }
-
   if (bandwidth < 10.0) { bw_mult = 16; }
-
   nc = 256 * rate_mult * bw_mult;;
-
   if (nc < 2048) { nc = 2048; }
-
   return nc;
 }
 
@@ -71,12 +64,10 @@ double *build_doublepole_1sided(int* nc, double rate, double fcenter, double ban
   double jd;
   double nfreqs = 3000.0;
   double *h_i = (double*)malloc0(ncc * sizeof(complex));
-
   for (i = 0; i < ncc; i++) {
     double sum[2] = { 0.0 };
     double eto[2] = { 0.0 };
     double inner[2] = { 0.0 };
-
     for (jd = -nfreqs / 2.0; jd <= nfreqs / 2.0; jd += 1.0) {
       double theta = 2.0 * PI * (double)i * jd / rate;
       eto[0] = cos(theta);
@@ -86,11 +77,9 @@ double *build_doublepole_1sided(int* nc, double rate, double fcenter, double ban
       sum[0] += inner[0];
       sum[1] += inner[1];
     }
-
     h_i[2 * i + 0] = sum[0] / (double)ncc;
     h_i[2 * i + 1] = 0.0;
   }
-
   // print_impulse("pre_analytic.txt", nc, h_i, 1, 0);
   int npad = 8;
   int size = npad * ncc;
@@ -100,15 +89,12 @@ double *build_doublepole_1sided(int* nc, double rate, double fcenter, double ban
   memcpy(h_i, pad, ncc * sizeof(complex));
   _aligned_free(pad);
   double sum = 0.0;
-
   for (i = 0; i < ncc; i++) {
     sum += sqrt(h_i[2 * i + 0] * h_i[2 * i + 0] + h_i[2 * i + 1] * h_i[2 * i + 1]);
   }
-
   for (i = 0; i < 2 * ncc; i++) {
     h_i[i] *= scale / sum;
   }
-
   // print_impulse("dpole.txt", ncc, h_i, 1, 0);
   return h_i;
 }
@@ -130,29 +116,24 @@ double *build_doublepole_2sided(int* nc, double rate, double fcenter, double ban
   double mult = 2.0 * scale / (double)ncc;
   double *h_i = (double*)malloc0(ncc * sizeof(complex));
   double *H_i = (double*)malloc0(ncc * sizeof(complex));
-
   for (i = 0, jd = 0.0; i < nfreqs / 2; i++, jd += delta) {
     H(scale, fcenter, bw, jd, Hres);
     H_i[2 * i + 0] = Hres[0] * mult;
     H_i[2 * i + 1] = Hres[1] * mult;
   }
-
   for (i = ncc - nfreqs / 2, jd = -(double)nfreqs * delta; i < ncc; i++, jd += delta) {
     H(scale, fcenter, bw, jd, Hres);
     H_i[2 * i + 0] = Hres[0] * mult;
     H_i[2 * i + 1] = Hres[1] * mult;
   }
-
   fftw_plan prev = fftw_plan_dft_1d(ncc, (fftw_complex*)H_i,
                                     (fftw_complex*)h_i, FFTW_BACKWARD, FFTW_PATIENT);
   fftw_execute(prev);
   fftw_destroy_plan(prev);
   _aligned_free(H_i);
-
   for (i = 0; i < ncc; i++) {
     h_i[2 * i + 1] = 0.0;
   }
-
   return h_i;
 }
 
@@ -169,14 +150,12 @@ double *build_doublepole_1eff(int* nc, double rate, double fcenter, double bandw
   double omega = - TWOPI * fcenter / rate;
   double impulse, arg;
   double *c_impulse = (double*) malloc0(ncc * sizeof(complex));
-
   for (int i = 0; i < ncc; i++) {
     impulse = scale * alpha * exp(-alpha * (double)i);
     arg = omega * (double)i;
     c_impulse[2 * i + 0] = + impulse * cos(arg);
     c_impulse[2 * i + 1] = - impulse * sin(arg);
   }
-
   return c_impulse;
 }
 
@@ -218,13 +197,11 @@ void xdoublepole(DOUBLEPOLE a, int pos) {
         a->in[2 * i + 1] *= -1.0;
       }
     }
-
     if (a->mode == 2) { // CWL + CWU
       for (int i = 0; i < a->size; i++) {
         a->in[2 * i + 1] = a->in[2 * i + 0];
       }
     }
-
     xfircore(a->p);
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
@@ -242,13 +219,11 @@ void setSamplerate_doublepole(DOUBLEPOLE a, int rate) {
   int nc = a->nc;
   a->samplerate = rate;
   impulse = build_doublepole_1eff(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
-
   if (nc == a->nc) {
     setImpulse_fircore(a->p, impulse, 1);
   } else {
     setNc_fircore(a->p, a->nc, impulse);
   }
-
   _aligned_free(impulse);
 }
 
@@ -274,7 +249,6 @@ void setGain_doublepole(DOUBLEPOLE a, double gain) {
 
 void CalcDoublepoleFilter(DOUBLEPOLE a, double f_center, double bandwidth, double gain) {
   double *impulse;
-
   if ((a->f_center != f_center) || (a->bandwidth != bandwidth) || (a->gain != gain)) {
     int nc = a->nc;
     a->f_center = f_center;
@@ -282,13 +256,11 @@ void CalcDoublepoleFilter(DOUBLEPOLE a, double f_center, double bandwidth, doubl
     a->gain = gain;
     a->scale = a->gain / (double)(2 * a->size);
     impulse = build_doublepole_1eff(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale);
-
     if (nc == a->nc) {
       setImpulse_fircore(a->p, impulse, 1);
     } else {
       setNc_fircore(a->p, a->nc, impulse);
     }
-
     _aligned_free(impulse);
   }
 }

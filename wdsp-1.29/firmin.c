@@ -72,20 +72,17 @@ void flush_firmin(FIRMIN a) {
 void xfirmin(FIRMIN a, int pos) {
   if (a->run && a->position == pos) {
     int i, j, k;
-
     for (i = 0; i < a->size; i++) {
       a->ring[2 * a->idx + 0] = a->in[2 * i + 0];
       a->ring[2 * a->idx + 1] = a->in[2 * i + 1];
       a->out[2 * i + 0] = 0.0;
       a->out[2 * i + 1] = 0.0;
       k = a->idx;
-
       for (j = 0; j < a->nc; j++) {
         a->out[2 * i + 0] += a->h[2 * j + 0] * a->ring[2 * k + 0] - a->h[2 * j + 1] * a->ring[2 * k + 1];
         a->out[2 * i + 1] += a->h[2 * j + 0] * a->ring[2 * k + 1] + a->h[2 * j + 1] * a->ring[2 * k + 0];
         k = (k + a->mask) & a->mask;
       }
-
       a->idx = (a->idx + 1) & a->mask;
     }
   } else if (a->in != a->out) {
@@ -131,7 +128,6 @@ void plan_firopt(FIROPT a) {
   a->maskgen = (double*) malloc0(2 * a->size * sizeof(complex));
   a->pcfor = (fftw_plan*) malloc0(a->nfor * sizeof(fftw_plan));
   a->maskplan = (fftw_plan*) malloc0(a->nfor * sizeof(fftw_plan));
-
   for (i = 0; i < a->nfor; i++) {
     a->fftout[i] = (double*) malloc0(2 * a->size * sizeof(complex));
     a->fmask[i] = (double*) malloc0(2 * a->size * sizeof(complex));
@@ -140,7 +136,6 @@ void plan_firopt(FIROPT a) {
     a->maskplan[i] = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->maskgen, (fftw_complex*)a->fmask[i], FFTW_FORWARD,
                                       FFTW_PATIENT);
   }
-
   a->accum = (double*) malloc0(2 * a->size * sizeof(complex));
   a->crev = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->accum, (fftw_complex*)a->out, FFTW_BACKWARD, FFTW_PATIENT);
 }
@@ -151,14 +146,12 @@ void calc_firopt(FIROPT a) {
   int i;
   double *impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain);
   a->buffidx = 0;
-
   for (i = 0; i < a->nfor; i++) {
     // I right-justified the impulse response => take output from left side of output buff, discard right side
     // Be careful about flipping an asymmetrical impulse response.
     memcpy(&(a->maskgen[2 * a->size]), &(impulse[2 * a->size * i]), a->size * sizeof(complex));
     fftw_execute(a->maskplan[i]);
   }
-
   _aligned_free(impulse);
 }
 
@@ -185,14 +178,12 @@ void deplan_firopt(FIROPT a) {
   int i;
   fftw_destroy_plan(a->crev);
   _aligned_free(a->accum);
-
   for (i = 0; i < a->nfor; i++) {
     _aligned_free(a->fftout[i]);
     _aligned_free(a->fmask[i]);
     fftw_destroy_plan(a->pcfor[i]);
     fftw_destroy_plan(a->maskplan[i]);
   }
-
   _aligned_free(a->maskplan);
   _aligned_free(a->pcfor);
   _aligned_free(a->maskgen);
@@ -209,11 +200,9 @@ void destroy_firopt(FIROPT a) {
 void flush_firopt(FIROPT a) {
   int i;
   memset(a->fftin, 0, 2 * a->size * sizeof(complex));
-
   for (i = 0; i < a->nfor; i++) {
     memset(a->fftout[i], 0, 2 * a->size * sizeof(complex));
   }
-
   a->buffidx = 0;
 }
 
@@ -224,7 +213,6 @@ void xfiropt(FIROPT a, int pos) {
     fftw_execute(a->pcfor[a->buffidx]);
     k = a->buffidx;
     memset(a->accum, 0, 2 * a->size * sizeof(complex));
-
     for (j = 0; j < a->nfor; j++) {
       for (i = 0; i < 2 * a->size; i++) {
         a->accum[2 * i + 0] += a->fftout[k][2 * i + 0] * a->fmask[j][2 * i + 0] - a->fftout[k][2 * i + 1] * a->fmask[j][2 * i +
@@ -232,10 +220,8 @@ void xfiropt(FIROPT a, int pos) {
         a->accum[2 * i + 1] += a->fftout[k][2 * i + 0] * a->fmask[j][2 * i + 1] + a->fftout[k][2 * i + 1] * a->fmask[j][2 * i +
                                0];
       }
-
       k = (k + a->idxmask) & a->idxmask;
     }
-
     a->buffidx = (a->buffidx + 1) & a->idxmask;
     fftw_execute(a->crev);
     memcpy(a->fftin, &(a->fftin[2 * a->size]), a->size * sizeof(complex));
@@ -294,7 +280,6 @@ void plan_fircore(FIRCORE a) {
   a->maskplan    = (fftw_plan**) malloc0(2 * sizeof(fftw_plan*));
   a->maskplan[0] = (fftw_plan*) malloc0(a->nfor * sizeof(fftw_plan));
   a->maskplan[1] = (fftw_plan*) malloc0(a->nfor * sizeof(fftw_plan));
-
   for (i = 0; i < a->nfor; i++) {
     a->fftout[i]   = (double*) malloc0(2 * a->size * sizeof(complex));
     a->fmask[0][i] = (double*) malloc0(2 * a->size * sizeof(complex));
@@ -306,7 +291,6 @@ void plan_fircore(FIRCORE a) {
     a->maskplan[1][i] = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->maskgen, (fftw_complex*)a->fmask[1][i],
                                          FFTW_FORWARD, FFTW_PATIENT);
   }
-
   a->accum = (double*) malloc0(2 * a->size * sizeof(complex));
   a->crev = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->accum, (fftw_complex*)a->out, FFTW_BACKWARD, FFTW_PATIENT);
   a->masks_ready = 0;
@@ -316,22 +300,18 @@ void calc_fircore(FIRCORE a, int flip) {
   // call for change in frequency, rate, wintype, gain
   // must also call after a call to plan_firopt()
   int i;
-
   if (a->mp) {
     mp_imp(a->nc, a->impulse, a->imp, 16, 0);
   } else {
     memcpy(a->imp, a->impulse, a->nc * sizeof(complex));
   }
-
   for (i = 0; i < a->nfor; i++) {
     // I right-justified the impulse response => take output from left side of output buff, discard right side
     // Be careful about flipping an asymmetrical impulse response.
     memcpy(&(a->maskgen[2 * a->size]), &(a->imp[2 * a->size * i]), a->size * sizeof(complex));
     fftw_execute(a->maskplan[1 - a->cset][i]);
   }
-
   a->masks_ready = 1;
-
   if (flip) {
     EnterCriticalSection(&a->update);
     a->cset = 1 - a->cset;
@@ -360,7 +340,6 @@ void deplan_fircore(FIRCORE a) {
   int i;
   fftw_destroy_plan(a->crev);
   _aligned_free(a->accum);
-
   for (i = 0; i < a->nfor; i++) {
     _aligned_free(a->fftout[i]);
     _aligned_free(a->fmask[0][i]);
@@ -369,7 +348,6 @@ void deplan_fircore(FIRCORE a) {
     fftw_destroy_plan(a->maskplan[0][i]);
     fftw_destroy_plan(a->maskplan[1][i]);
   }
-
   _aligned_free(a->maskplan[0]);
   _aligned_free(a->maskplan[1]);
   _aligned_free(a->maskplan);
@@ -393,11 +371,9 @@ void destroy_fircore(FIRCORE a) {
 void flush_fircore(FIRCORE a) {
   int i;
   memset(a->fftin, 0, 2 * a->size * sizeof(complex));
-
   for (i = 0; i < a->nfor; i++) {
     memset(a->fftout[i], 0, 2 * a->size * sizeof(complex));
   }
-
   a->buffidx = 0;
 }
 
@@ -415,16 +391,13 @@ void xfircore(FIRCORE a) {
   int idxmask = a->idxmask;
   int sz = a->size;
   int nfor = a->nfor;
-
   for (j = 0; j < nfor; j++) {
     for (i = 0; i < 2 * sz; i++) {
       accum[2 * i + 0] += fftout[k][2 * i + 0] * fmask[cset][j][2 * i + 0] - fftout[k][2 * i + 1] * fmask[cset][j][2 * i + 1];
       accum[2 * i + 1] += fftout[k][2 * i + 0] * fmask[cset][j][2 * i + 1] + fftout[k][2 * i + 1] * fmask[cset][j][2 * i + 0];
     }
-
     k = (k + idxmask) & idxmask;
   }
-
   LeaveCriticalSection(&a->update);
   a->buffidx = (a->buffidx + 1) & idxmask;
   fftw_execute(a->crev);

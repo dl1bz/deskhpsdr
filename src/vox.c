@@ -37,7 +37,6 @@ static int vox_timeout_cb(gpointer data) {
   if (capture_state == CAP_XMIT) {
     return TRUE;   // Callback behalten, später erneut prüfen
   }
-
   //
   // First set vox_timeout to zero (via vox_cancel())
   // indicating no "hanging" timeout
@@ -63,23 +62,18 @@ void update_vox(TRANSMITTER *tx) {
   if (capture_state == CAP_XMIT) {
     return;
   }
-
   // calculate peak microphone input
   // assumes it is interleaved left and right channel with length samples
   peak = 0.0;
-
   for (int i = 0; i < tx->buffer_size; i++) {
     double sample = tx->mic_input_buffer[i * 2];
-
     if (sample < 0.0) {
       sample = -sample;
     }
-
     if (sample > peak) {
       peak = sample;
     }
   }
-
   if (vox_enabled && !mox && !tune && !TxInhibit) {
     if (peak > vox_threshold) {
       // we use the value of vox_timeout to determine whether
@@ -97,11 +91,9 @@ void update_vox(TRANSMITTER *tx) {
         g_idle_add(ext_set_vox, GINT_TO_POINTER(1));
         g_idle_add(ext_vfo_update, NULL);
       }
-
       // re-init "vox hang" time
       vox_timeout = g_timeout_add((int) vox_hang, vox_timeout_cb, NULL);
     }
-
     // if peak is not above threshold, do nothing (this shall be done later in the timeout event
   }
 }

@@ -64,18 +64,14 @@ static void cleanup(void) {
     // Let PS thread terminate before destroying dialog
     //
     running = 0;
-
     if (info_timer > 0) {
       g_source_remove(info_timer);
       info_timer = 0;
     }
-
     usleep(200000);
-
     if (transmitter->twotone) {
       tx_set_twotone(transmitter, 0);
     }
-
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
@@ -98,13 +94,11 @@ static void setpk_cb(GtkWidget *widget, gpointer data) {
   double newpk = -1.0;
   char text[16];
   sscanf(gtk_entry_get_text(GTK_ENTRY(widget)), "%lf", &newpk);
-
   if (newpk > 0.01 && newpk < 1.01 && fabs(newpk - transmitter->ps_setpk) > 0.001) {
     transmitter->ps_setpk = newpk;
     tx_ps_setparams(transmitter);
     ps_off_on();
   }
-
   // Display new value
   snprintf(text, sizeof(text), "%6.3f", transmitter->ps_setpk);
   gtk_entry_set_text(GTK_ENTRY(set_pk), text);
@@ -124,16 +118,13 @@ static void clear_fields(void) {
     // e.g. doing a two-tone experiment and PS menu is not open
     return;
   }
-
   gtk_label_set_markup(GTK_LABEL(feedback_l), "<span color='black'>Feedback Lvl</span>");
   gtk_label_set_markup(GTK_LABEL(correcting_l), "<span color='black'>Correcting</span>");
-
   for (int i = 0; i < INFO_SIZE; i++) {
     if (entry[i] != NULL) {
       gtk_entry_set_text(GTK_ENTRY(entry[i]), "");
     }
   }
-
   gtk_entry_set_text(GTK_ENTRY(get_pk), "");
   gtk_entry_set_text(GTK_ENTRY(tx_att), "");
 }
@@ -149,13 +140,11 @@ static void clear_fields(void) {
 int ps_calibration_timer(gpointer arg) {
   guint *timer = (guint*) arg;
   static int state = -1;
-
   if (!transmitter->twotone) {
     state = -1;
     *timer = 0;
     return G_SOURCE_REMOVE;
   }
-
   if (state < 0) {
     //
     // Initialized two-tone experiment
@@ -163,13 +152,11 @@ int ps_calibration_timer(gpointer arg) {
     state = 1;          // start with PS reset
     clear_fields();     // clear all data until the next calibration has been done
   }
-
   if (transmitter->puresignal) {
     int tx_att_min;
     int tx_att_max;
     static int old5 = 0;
     int info[INFO_SIZE];
-
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       tx_att_min = -29;
       tx_att_max = 31;
@@ -177,23 +164,19 @@ int ps_calibration_timer(gpointer arg) {
       tx_att_min = 0;
       tx_att_max = 31;
     }
-
     tx_ps_getinfo(transmitter, info);
     //
     // newcal is set to 1 if we have a new calibration value
     // (info[5] is the calibration counter)
     //
     int newcal = 0;
-
     if (info[5] !=  old5) {
       old5 = info[5];
       newcal = 1;
     }
-
     if (transmitter->auto_on) {
       switch (state) {
       case 0:
-
         //
         // A value of 165 means 0.7 dB too strong
         // A value of 140 means 0.7 dB too weak
@@ -203,13 +186,11 @@ int ps_calibration_timer(gpointer arg) {
                        && transmitter->attenuation > tx_att_min))) {
           int delta_att;
           int new_att;
-
           if (info[4] > 275) {
             // If signal is very strong, increase attenuation by 15 dB
             // Note the value is limited to about 300-350 due to ADC clipping/IQ overflow,
             // so the feedback level might be much stronger than indicated here
             delta_att = 15;
-
             if (transmitter->attenuation < -15) { delta_att += 15; }
           } else if (info[4] < 25) {
             // If signal is very weak, decrease attenuation by 15 dB
@@ -218,14 +199,10 @@ int ps_calibration_timer(gpointer arg) {
             // calculate new delta, this mostly succeeds in one step
             delta_att = (int) lround(20.0 * log10((double) info[4] / 152.293));
           }
-
           new_att = transmitter->attenuation + delta_att;
-
           // keep new value of attenuation in allowed range
           if (new_att < tx_att_min) { new_att = tx_att_min; }
-
           if (new_att > tx_att_max) { new_att = tx_att_max; }
-
           // A "PS reset" is only necessary if the attenuation
           // has actually changed. This prevents firing "reset"
           // constantly if the SDR board does not have a TX attenuator
@@ -240,15 +217,12 @@ int ps_calibration_timer(gpointer arg) {
             state = 1;
           }
         }
-
         break;
-
       case 1:
         // Perform a PS reset and proceed to a PS restart
         state = 2;
         tx_ps_reset(transmitter);
         break;
-
       case 2:
         // Perform a PS restart and proceed to the calibration loop
         state = 0;
@@ -257,7 +231,6 @@ int ps_calibration_timer(gpointer arg) {
       }
     }
   }
-
   return G_SOURCE_CONTINUE;
 }
 
@@ -268,11 +241,9 @@ int ps_calibration_timer(gpointer arg) {
 //
 static int info_thread(gpointer arg) {
   int info[INFO_SIZE];
-
   if (!running) {
     return G_SOURCE_REMOVE;
   }
-
   if (transmitter->puresignal) {
     gchar label[20];
     double pk;
@@ -286,17 +257,14 @@ static int info_thread(gpointer arg) {
     //
     int newcal = 0;
     int newcorr = 0;
-
     if (info[5] !=  old5) {
       old5 = info[5];
       newcal = 1;
     }
-
     if (info[14] != old14) {
       old14 = info[14];
       newcorr = 1;
     }
-
     if (newcal) {
       if (info[4] > 181)  {
         gtk_label_set_markup(GTK_LABEL(feedback_l), "<span color='blue'>Feedback Lvl</span>");
@@ -308,7 +276,6 @@ static int info_thread(gpointer arg) {
         gtk_label_set_markup(GTK_LABEL(feedback_l), "<span color='red'>Feedback Lvl</span>");
       }
     }
-
     if (newcorr) {
       if (info[14] == 0) {
         gtk_label_set_markup(GTK_LABEL(correcting_l), "<span color='red'>Correcting</span>");
@@ -316,15 +283,12 @@ static int info_thread(gpointer arg) {
         gtk_label_set_markup(GTK_LABEL(correcting_l), "<span color='green'>Correcting</span>");
       }
     }
-
     //
     // Print PS status into the text boxes (if they exist)
     //
     for (int i = 0; i < INFO_SIZE; i++) {
       if (entry[i] == NULL) { continue; }
-
       snprintf(label, 20, "%d", info[i]);
-
       //
       // Translate PS state variable into human-readable string
       //
@@ -333,55 +297,43 @@ static int info_thread(gpointer arg) {
         case 0:
           g_strlcpy(label, "RESET", 20);
           break;
-
         case 1:
           g_strlcpy(label, "WAIT", 20);
           break;
-
         case 2:
           g_strlcpy(label, "MOXDELAY", 20);
           break;
-
         case 3:
           g_strlcpy(label, "SETUP", 20);
           break;
-
         case 4:
           g_strlcpy(label, "COLLECT", 20);
           break;
-
         case 5:
           g_strlcpy(label, "MOXCHECK", 20);
           break;
-
         case 6:
           g_strlcpy(label, "CALC", 20);
           break;
-
         case 7:
           g_strlcpy(label, "DELAY", 20);
           break;
-
         case 8:
           g_strlcpy(label, "STAYON", 20);
           break;
-
         case 9:
           g_strlcpy(label, "TURNON", 20);
           break;
         }
       }
-
       gtk_entry_set_text(GTK_ENTRY(entry[i]), label);
     }
-
     snprintf(label, 20, "%d", transmitter->attenuation);
     gtk_entry_set_text(GTK_ENTRY(tx_att), label);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);
     snprintf(label, 20, "%6.3f", pk);
     gtk_entry_set_text(GTK_ENTRY(get_pk), label);
   }
-
   return G_SOURCE_CONTINUE;
 }
 
@@ -402,21 +354,17 @@ static void ps_off_on(void) {
 //
 static void ps_ant_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
     receiver[PS_RX_FEEDBACK]->alex_antenna = 0;
     break;
-
   case 1:
     receiver[PS_RX_FEEDBACK]->alex_antenna = 6;
     break;
-
   case 2:
     receiver[PS_RX_FEEDBACK]->alex_antenna = 7;
     break;
   }
-
   schedule_high_priority();
 }
 
@@ -428,7 +376,6 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
 #endif
     clear_fields();
     tx_ps_onoff(transmitter, val);
-
     if (val) {
       if (transmitter->auto_on) {
         char label[16];
@@ -446,9 +393,7 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
       gtk_widget_show(tx_att);
       gtk_entry_set_text(GTK_ENTRY(tx_att), "");
     }
-
 #if defined (__CPYMODE__)
-
     // PS make no sense in CW and FM !
     if (can_transmit && (_mode == modeUSB || _mode == modeLSB || _mode == modeDIGL || _mode == modeDIGU || _mode == modeAM
                          || _mode == modeDSB)) {
@@ -456,7 +401,6 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
     } else {
       mode_settings[_mode].puresignal = 0;
     }
-
     copy_mode_settings(_mode);
 #endif
     update_slider_ps_btn();
@@ -483,7 +427,6 @@ static void map_cb(GtkWidget *widget, gpointer data) {
 
 static void auto_cb(GtkWidget *widget, gpointer data) {
   transmitter->auto_on = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (transmitter->puresignal) {
     if (transmitter->auto_on) {
       //
@@ -523,7 +466,6 @@ static void resume_cb(GtkWidget *widget, gpointer data) {
     if (transmitter->twotone && transmitter->auto_on) {
       transmitter->attenuation = 0;
     }
-
     tx_ps_resume(transmitter);
   }
 }
@@ -627,21 +569,17 @@ void ps_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "Internal");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "Ext1");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "ByPass");
-
   switch (receiver[PS_RX_FEEDBACK]->alex_antenna) {
   case 0:
     gtk_combo_box_set_active(GTK_COMBO_BOX(ps_ant_combo), 0);
     break;
-
   case 6:
     gtk_combo_box_set_active(GTK_COMBO_BOX(ps_ant_combo), 1);
     break;
-
   case 7:
     gtk_combo_box_set_active(GTK_COMBO_BOX(ps_ant_combo), 2);
     break;
   }
-
   my_combo_attach(GTK_GRID(grid), ps_ant_combo, col, row, 1, 1);
   g_signal_connect(ps_ant_combo, "changed", G_CALLBACK(ps_ant_cb), NULL);
   col++;
@@ -676,36 +614,28 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), correcting_l, col, row, 1, 1);
   row++;
   col = 0;
-
   for (i = 0; i < INFO_SIZE; i++) {
     int display = 1;
-
     switch (i) {
     case 4:
       g_strlcpy(text, "feedbk", 16);
       break;
-
     case 5:
       g_strlcpy(text, "cor.cnt", 16);
       break;
-
     case 6:
       g_strlcpy(text, "sln.chk", 16);
       break;
-
     case 13:
       g_strlcpy(text, "dg.cnt", 16);
       break;
-
     case 15:
       g_strlcpy(text, "status", 16);
       break;
-
     default:
       display = 0;
       break;
     }
-
     if (display) {
       GtkWidget *lbl = gtk_label_new(text);
       gtk_widget_set_name(lbl, "boldlabel");
@@ -716,7 +646,6 @@ void ps_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), entry[i], col, row, 1, 1);
       gtk_entry_set_width_chars(GTK_ENTRY(entry[i]), 10);
       col++;
-
       if (col >= 6) {
         row++;
         col = 0;
@@ -725,7 +654,6 @@ void ps_menu(GtkWidget *parent) {
       entry[i] = NULL;
     }
   }
-
   row++;
   col = 0;
   GtkWidget *lbl = gtk_label_new("GetPk");
@@ -758,13 +686,11 @@ void ps_menu(GtkWidget *parent) {
   snprintf(text, 16, "%d", transmitter->attenuation);
   gtk_entry_set_text(GTK_ENTRY(tx_att), text);
   gtk_entry_set_width_chars(GTK_ENTRY(tx_att), 10);
-
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     tx_att_spin = gtk_spin_button_new_with_range(-29.0, 31.0, 1.0);
   } else {
     tx_att_spin = gtk_spin_button_new_with_range(0.0, 31.0, 1.0);
   }
-
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);
   gtk_grid_attach(GTK_GRID(grid), tx_att_spin, col, row, 1, 1);
   g_signal_connect(tx_att_spin, "value-changed", G_CALLBACK(att_spin_cb), NULL);
@@ -773,7 +699,6 @@ void ps_menu(GtkWidget *parent) {
   running = 1;
   info_timer = g_timeout_add((guint) 250, info_thread, NULL);
   gtk_widget_show_all(dialog);
-
   //
   // If using auto-attenuattion, hide the
   // "manual attenuation" label and spin button

@@ -64,12 +64,10 @@ void xsender(SENDER a) {
     case 0: {
       int i;
       dINREAL* outf = (dINREAL*)a->out;
-
       for (i = 0; i < a->size; i++) {
         outf [2 * i + 0] = (dINREAL)a->in[2 * i + 0];
         outf [2 * i + 1] = (dINREAL)a->in[2 * i + 1];
       }
-
       Spectrum2(1, a->arg0, a->arg1, a->arg2, outf);
       break;
     }

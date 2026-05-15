@@ -123,11 +123,9 @@ void loadWcpAGC(WCPAGC a) {
   a->min_volts = a->out_target / (a->var_gain * a->max_gain);
   a->inv_out_target = 1.0 / a->out_target;
   tmp = log10(a->out_target / (a->max_input * a->var_gain * a->max_gain));
-
   if (tmp == 0.0) {
     tmp = 1e-16;
   }
-
   a->slope_constant = (a->out_target * (1.0 - 1.0 / a->var_gain)) / tmp;
   a->inv_max_input = 1.0 / a->max_input;
   tmp = pow(10.0, (a->hang_thresh - 1.0) / 0.125);
@@ -152,65 +150,52 @@ void flush_wcpagc(WCPAGC a) {
 void xwcpagc(WCPAGC a) {
   int i, j, k;
   double mult;
-
   if (a->run) {
     if (a->mode == 0) {
       for (i = 0; i < a->io_buffsize; i++) {
         a->out[2 * i + 0] = a->fixed_gain * a->in[2 * i + 0];
         a->out[2 * i + 1] = a->fixed_gain * a->in[2 * i + 1];
       }
-
       return;
     }
-
     for (i = 0; i < a->io_buffsize; i++) {
       if (++a->out_index >= a->ring_buffsize) {
         a->out_index -= a->ring_buffsize;
       }
-
       if (++a->in_index >= a->ring_buffsize) {
         a->in_index -= a->ring_buffsize;
       }
-
       a->out_sample[0] = a->ring[2 * a->out_index + 0];
       a->out_sample[1] = a->ring[2 * a->out_index + 1];
       a->abs_out_sample = a->abs_ring[a->out_index];
       a->ring[2 * a->in_index + 0] = a->in[2 * i + 0];
       a->ring[2 * a->in_index + 1] = a->in[2 * i + 1];
-
       if (a->pmode == 0) {
         a->abs_ring[a->in_index] = max(fabs(a->ring[2 * a->in_index + 0]), fabs(a->ring[2 * a->in_index + 1]));
       } else {
         a->abs_ring[a->in_index] = sqrt(a->ring[2 * a->in_index + 0] * a->ring[2 * a->in_index + 0] + a->ring[2 * a->in_index +
                                         1] * a->ring[2 * a->in_index + 1]);
       }
-
       a->fast_backaverage = a->fast_backmult * a->abs_out_sample + a->onemfast_backmult * a->fast_backaverage;
       a->hang_backaverage = a->hang_backmult * a->abs_out_sample + a->onemhang_backmult * a->hang_backaverage;
-
       if ((a->abs_out_sample >= a->ring_max) && (a->abs_out_sample > 0.0)) {
         a->ring_max = 0.0;
         k = a->out_index;
-
         for (j = 0; j < a->attack_buffsize; j++) {
           if (++k == a->ring_buffsize) {
             k = 0;
           }
-
           if (a->abs_ring[k] > a->ring_max) {
             a->ring_max = a->abs_ring[k];
           }
         }
       }
-
       if (a->abs_ring[a->in_index] > a->ring_max) {
         a->ring_max = a->abs_ring[a->in_index];
       }
-
       if (a->hang_counter > 0) {
         --a->hang_counter;
       }
-
       switch (a->state) {
       case 0: {
         if (a->ring_max >= a->volts) {
@@ -231,10 +216,8 @@ void xwcpagc(WCPAGC a) {
             }
           }
         }
-
         break;
       }
-
       case 1: {
         if (a->ring_max >= a->volts) {
           a->state = 0;
@@ -256,10 +239,8 @@ void xwcpagc(WCPAGC a) {
             }
           }
         }
-
         break;
       }
-
       case 2: {
         if (a->ring_max >= a->volts) {
           a->state = 0;
@@ -271,10 +252,8 @@ void xwcpagc(WCPAGC a) {
             a->volts += (a->ring_max - a->volts) * a->hang_decay_mult;
           }
         }
-
         break;
       }
-
       case 3: {
         if (a->ring_max >= a->volts) {
           a->state = 0;
@@ -283,10 +262,8 @@ void xwcpagc(WCPAGC a) {
         } else {
           a->volts += (a->ring_max - a->volts) * a->decay_mult;
         }
-
         break;
       }
-
       case 4: {
         if (a->ring_max >= a->volts) {
           a->state = 0;
@@ -295,19 +272,15 @@ void xwcpagc(WCPAGC a) {
         } else {
           a->volts += (a->ring_max - a->volts) * a->hang_decay_mult;
         }
-
         break;
       }
-
       default: {
         a->state = 0;
       }
       }
-
       if (a->volts < a->min_volts) {
         a->volts = a->min_volts;
       }
-
       a->gain = a->volts * a->inv_out_target;
       mult = (a->out_target - a->slope_constant * min(0.0, log10(a->inv_max_input * a->volts))) / a->volts;
       a->out[2 * i + 0] = a->out_sample[0] * mult;
@@ -344,27 +317,23 @@ void setSize_wcpagc(WCPAGC a, int size) {
 PORT void
 SetRXAAGCMode(int channel, int mode) {
   EnterCriticalSection(&ch[channel].csDSP);
-
   switch (mode) {
   case 0: //agcOFF
     rxa[channel].agc.p->mode = 0;
     loadWcpAGC(rxa[channel].agc.p);
     break;
-
   case 1: //agcLONG
     rxa[channel].agc.p->mode = 1;
     rxa[channel].agc.p->hangtime = 2.000;
     rxa[channel].agc.p->tau_decay = 2.000;
     loadWcpAGC(rxa[channel].agc.p);
     break;
-
   case 2: //agcSLOW
     rxa[channel].agc.p->mode = 2;
     rxa[channel].agc.p->hangtime = 1.000;
     rxa[channel].agc.p->tau_decay = 0.500;
     loadWcpAGC(rxa[channel].agc.p);
     break;
-
   case 3: //agcMED
     rxa[channel].agc.p->mode = 3;
     rxa[channel].agc.p->hang_thresh = 1.0;
@@ -372,7 +341,6 @@ SetRXAAGCMode(int channel, int mode) {
     rxa[channel].agc.p->tau_decay = 0.250;
     loadWcpAGC(rxa[channel].agc.p);
     break;
-
   case 4: //agcFAST
     rxa[channel].agc.p->mode = 4;
     rxa[channel].agc.p->hang_thresh = 1.0;
@@ -380,12 +348,10 @@ SetRXAAGCMode(int channel, int mode) {
     rxa[channel].agc.p->tau_decay = 0.050;
     loadWcpAGC(rxa[channel].agc.p);
     break;
-
   default:
     rxa[channel].agc.p->mode = 5;
     break;
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -428,7 +394,6 @@ SetRXAAGCHangLevel(int channel, double hangLevel)
 {
   double convert, tmp;
   EnterCriticalSection(&ch[channel].csDSP);
-
   if (rxa[channel].agc.p->max_input > rxa[channel].agc.p->min_volts) {
     convert = pow(10.0, hangLevel / 20.0);
     tmp = max(1e-8, (convert - rxa[channel].agc.p->min_volts) /
@@ -437,7 +402,6 @@ SetRXAAGCHangLevel(int channel, double hangLevel)
   } else {
     rxa[channel].agc.p->hang_thresh = 1.0;
   }
-
   loadWcpAGC(rxa[channel].agc.p);
   LeaveCriticalSection(&ch[channel].csDSP);
 }

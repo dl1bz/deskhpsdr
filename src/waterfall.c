@@ -83,7 +83,6 @@ waterfall_draw_cb(GtkWidget *widget,
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   gdk_cairo_set_source_pixbuf(cr, rx->pixbuf, 0, 0);
   cairo_paint(cr);  // vor dem Zeichnen der Box aufrufen, sinst wird der pixbuf überschrieben !
-
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (display_info_bar && active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
       || active_receiver->display_panadapter == 1) && rx->id == 0 && !rx_stack_horizontal) {
@@ -99,15 +98,12 @@ waterfall_draw_cb(GtkWidget *widget,
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
     cairo_move_to(cr, b_width / 2, b_height - 10);
 #endif
-
     if (can_transmit) {
       cairo_show_text(cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
     } else {
       cairo_show_text(cr, "[b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
     }
-
     char _text[128];
-
     if (can_transmit) {
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -120,24 +116,20 @@ waterfall_draw_cb(GtkWidget *widget,
       snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
 #else
       int _audioindex = 0;
-
       if (n_input_devices > 0) {
         for (int i = 0; i < n_input_devices; i++) {
           if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
             _audioindex = i;
           }
         }
-
         snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(input_devices[_audioindex].description, 28));
       } else {
         snprintf(_text, 128, "NO AUDIO INPUT DETECTED");
       }
-
 #endif
       cairo_move_to(cr, 10.0, b_height - 10);
       cairo_show_text(cr, _text);
     }
-
     if (display_solardata) {
       check_and_run(1);  // 0=no_log_output, 1=print_to_log
       // g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
@@ -146,18 +138,15 @@ waterfall_draw_cb(GtkWidget *widget,
 #else
       cairo_move_to(cr, (b_width / 4) - 50, b_height - 10);
 #endif
-
       if (sunspots != -1) {
         snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s", sunspots, solar_flux, a_index, k_index, xray, geomagfield);
       } else {
         snprintf(_text, 128, " ");
       }
-
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, _text);
     }
   }
-
   if (active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
       || active_receiver->display_panadapter == 1) && rx->id == 0 && active_receiver->panadapter_autoscale_enabled
       && !rx_stack_horizontal) {
@@ -176,7 +165,6 @@ waterfall_draw_cb(GtkWidget *widget,
     cairo_move_to(cr, _x, 15);
     cairo_show_text(cr, _text);
   }
-
   if (active_receiver->display_waterfall && rx->id == 0 && !rx_stack_horizontal) {
     char _text[64];
     cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -186,20 +174,17 @@ waterfall_draw_cb(GtkWidget *widget,
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
-
     if (active_receiver->sample_rate >= 1000000) {
       snprintf(_text, sizeof(_text), "SR %dM", active_receiver->sample_rate / 1000000);
     } else {
       snprintf(_text, sizeof(_text), "SR %dk", active_receiver->sample_rate / 1000);
     }
-
     cairo_text_extents_t nf_extents;
     cairo_text_extents(cr, _text, &nf_extents);
     double _x =  65 - nf_extents.width;
     cairo_move_to(cr, _x, 35);
     cairo_show_text(cr, _text);
   }
-
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   return FALSE;
 }
@@ -241,7 +226,6 @@ void waterfall_update(RECEIVER *rx) {
     int height = gdk_pixbuf_get_height(rx->pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(rx->pixbuf);
     hz_per_pixel = (double) rx->sample_rate / ((double) my_width * rx->zoom);
-
     //
     // The existing waterfall corresponds to a VFO frequency rx->waterfall_frequency, a zoom value rx->waterfall_zoom and
     // a pan value rx->waterfall_pan. If the zoom value changes, or if the waterfill needs horizontal shifting larger
@@ -261,7 +245,6 @@ void waterfall_update(RECEIVER *rx) {
         int rotfreq = (int)((double)(rx->waterfall_frequency - vfofreq) / hz_per_pixel);    // shift due to freq. change
         int rotpan  = rx->waterfall_pan - pan;                                        // shift due to pan   change
         int rotate_pixels = rotfreq + rotpan;
-
         if (rotate_pixels >= my_width || rotate_pixels <= -my_width) {
           //
           // If horizontal shift is too large, re-init waterfall
@@ -278,24 +261,20 @@ void waterfall_update(RECEIVER *rx) {
           if (rotate_pixels < 0) {
             // shift left, and clear the right-most part
             memmove(pixels, &pixels[-rotate_pixels * 3], ((my_width * my_height) + rotate_pixels) * 3);
-
             for (int i = 0; i < my_height; i++) {
               memset(&pixels[((i * my_width) + (width + rotate_pixels)) * 3], 0, -rotate_pixels * 3);
             }
           } else if (rotate_pixels > 0) {
             // shift right, and clear left-most part
             memmove(&pixels[rotate_pixels * 3], pixels, ((my_width * my_height) - rotate_pixels) * 3);
-
             for (int i = 0; i < my_height; i++) {
               memset(&pixels[(i * my_width) * 3], 0, rotate_pixels * 3);
             }
           }
-
           if (rotfreq != 0) {
             freq_changed = 1;
             rx->waterfall_frequency -= lround(rotfreq * hz_per_pixel);  // this is not necessarily vfofreq!
           }
-
           rx->waterfall_pan = pan;
         }
       }
@@ -310,7 +289,6 @@ void waterfall_update(RECEIVER *rx) {
       rx->waterfall_zoom = zoom;
       rx->waterfall_sample_rate = rx->sample_rate;
     }
-
     //
     // If we have just shifted the waterfall befause the VFO frequency has changed,
     // there are  still IQ samples in the input queue corresponding to the "old"
@@ -336,7 +314,6 @@ void waterfall_update(RECEIVER *rx) {
       // soffset contains all corrections due to attenuation, preamps, etc.
       //
 #ifdef SOAPYSDR
-
       if (device == SOAPYSDR_USB_DEVICE && strcmp(radio->name, "sdrplay") == 0) {
         int v_Gain = (int) soapy_protocol_get_gain_element(active_receiver, "CURRENT");
         adc[rx->adc].gain = 0;
@@ -344,37 +321,28 @@ void waterfall_update(RECEIVER *rx) {
         adc[rx->adc].gain = v_Gain;
         // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __func__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
       }
-
 #endif
       soffset = (float)(calib + adc[rx->adc].attenuation - adc[rx->adc].gain);
-
       if (filter_board == ALEX && rx->adc == 0) {
         soffset += (float)(10 * rx->alex_attenuation - 20 * rx->preamp);
       }
-
       if (filter_board == CHARLY25 && rx->adc == 0) {
         soffset += (float)(12 * rx->alex_attenuation - 18 * rx->preamp - 18 * rx->dither);
       }
-
       if (rx->waterfall_automatic) {
         float average = 0.0F;
-
         for (int i = 0; i < width; i++) {
           average += samples[i];
         }
-
         wf_low = (average / (float) width) + soffset - 5.0F;
         wf_high = wf_low + 55.0F;
       } else {
         wf_low  = (float) rx->waterfall_low;
         wf_high = (float) rx->waterfall_high;
       }
-
       rangei = 1.0F / (wf_high - wf_low);
-
       for (int i = 0; i < width; i++) {
         float sample = samples[i + pan] + soffset;
-
         if (sample < wf_low) {
           *p++ = colorLowR;
           *p++ = colorLowG;
@@ -385,7 +353,6 @@ void waterfall_update(RECEIVER *rx) {
           *p++ = colorHighB;
         } else {
           float percent = (sample - wf_low) * rangei;
-
           if (percent < 0.222222f) {
             float local_percent = percent * 4.5f;
             *p++ = (int)((1.0f - local_percent) * colorLowR);
@@ -425,7 +392,6 @@ void waterfall_update(RECEIVER *rx) {
         }
       }
     }
-
     gtk_widget_queue_draw(rx->waterfall);
   }
 }

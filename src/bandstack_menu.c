@@ -52,13 +52,11 @@ static void cleanup (void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
-
     while (first != NULL) {
       CHOICE *choice = first;
       first = first->next;
       g_free (choice);
     }
-
     current = NULL;
     gtk_widget_destroy (tmp);
     sub_menu = NULL;
@@ -74,13 +72,11 @@ static gboolean close_cb (void) {
 
 static gboolean bandstack_select_cb (GtkWidget *widget, gpointer data) {
   CHOICE *choice = (CHOICE*) data;
-
   if (current) {
     g_signal_handler_block (G_OBJECT (current->button), current->signal);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (current->button), current == choice);
     g_signal_handler_unblock (G_OBJECT (current->button), current->signal);
   }
-
   if (active_receiver->id == 0 && current) {
     //
     // vfo_bandstack_changed() calls vfo_save_bandstack(), so the frequency/mode
@@ -89,17 +85,14 @@ static gboolean bandstack_select_cb (GtkWidget *widget, gpointer data) {
     //
     char label[32];
     double f;
-
     if (vfo[0].ctun) {
       f = (double) vfo[0].ctun_frequency * 1E-6;
     } else {
       f = (double) vfo[0].frequency * 1E-6;
     }
-
     snprintf (label, 32, "%8.3f %s", f, mode_string[vfo[0].mode]);
     gtk_button_set_label (GTK_BUTTON (current->button), label);
   }
-
   current = choice;
   vfo_bandstack_changed (choice->info);
   return FALSE;
@@ -133,17 +126,14 @@ void bandstack_menu (GtkWidget *parent) {
   char label[32];
   int row = 1;
   int col = 0;
-
   for (i = 0; i < bandstack->entries; i++) {
     const BANDSTACK_ENTRY *entry = &bandstack->entry[i];
     double f;
-
     if (entry->ctun) {
       f = (double) entry->ctun_frequency * 1E-6;
     } else {
       f = (double) entry->frequency * 1E-6;
     }
-
     snprintf (label, 32, "%8.3f MHz %s", f, mode_string[entry->mode]);
     GtkWidget *w = gtk_toggle_button_new_with_label (label);
     gtk_widget_set_name (w, "small_toggle_button");
@@ -154,21 +144,17 @@ void bandstack_menu (GtkWidget *parent) {
     first = choice;
     choice->info = i;
     choice->button = w;
-
     if (i == vfo[active_receiver->id].bandstack) {
       current = choice;
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (current->button), TRUE);
     }
-
     choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (bandstack_select_cb), choice);
     col++;
-
     if (col >= 4) {
       col = 0;
       row++;
     }
   }
-
   gtk_container_add (GTK_CONTAINER (content), grid);
   sub_menu = dialog;
   gtk_widget_show_all (dialog);

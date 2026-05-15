@@ -63,38 +63,30 @@ double *fir_mbandpass(int N, int nbp, double* flow, double* fhigh, double rate, 
   int i, k;
   double *impulse = (double*) malloc0(N * sizeof(complex));
   double *imp;
-
   for (k = 0; k < nbp; k++) {
     imp = fir_bandpass(N, flow[k], fhigh[k], rate, wintype, 1, scale);
-
     for (i = 0; i < N; i++) {
       impulse[2 * i + 0] += imp[2 * i + 0];
       impulse[2 * i + 1] += imp[2 * i + 1];
     }
-
     _aligned_free(imp);
   }
-
   return impulse;
 }
 
 double min_notch_width(NBP a) {
   double min_width;
-
   switch (a->wintype) {
   case 0:
     min_width = 1600.0 / (a->nc / 256) * (a->rate / 48000);
     break;
-
   case 1:
     min_width = 2200.0 / (a->nc / 256) * (a->rate / 48000);
     break;
-
   default:
     min_width = 2200.0 / (a->nc / 256) * (a->rate / 48000);
     break;
   }
-
   return min_width;
 }
 
@@ -105,7 +97,6 @@ int make_nbp(int nn, int* active, double* center, double* width, double* nlow, d
   int i, j, k;
   double nl, nh;
   int *del = (int*) malloc0(1024 * sizeof(int));
-
   if (fhigh > flow) {
     bplow[0]  = flow;
     bphigh[0] = fhigh;
@@ -114,9 +105,7 @@ int make_nbp(int nn, int* active, double* center, double* width, double* nlow, d
     nbp = 0;
     return nbp;
   }
-
   *havnotch = 0;
-
   for (k = 0; k < nn; k++) {
     if (autoincr && width[k] < minwidth) {
       nl = center[k] - 0.5 * minwidth;
@@ -125,11 +114,9 @@ int make_nbp(int nn, int* active, double* center, double* width, double* nlow, d
       nl = nlow[k];
       nh = nhigh[k];
     }
-
     if (active[k] && (nh > flow && nl < fhigh)) {
       *havnotch = 1;
       adds = 0;
-
       for (i = 0; i < nbp; i++) {
         if (nh > bplow[i] && nl < bphigh[i]) {
           if (nl <= bplow[i] && nh >= bphigh[i]) {
@@ -146,27 +133,21 @@ int make_nbp(int nn, int* active, double* center, double* width, double* nlow, d
           }
         }
       }
-
       nbp += adds;
       nnbp = nbp;
-
       for (i = 0; i < nbp; i++) {
         if (del[i] == 1) {
           nnbp--;
-
           for (j = i; j < nnbp; j++) {
             bplow[j] = bplow[j + 1];
             bphigh[j] = bphigh[j + 1];
           }
-
           del[i] = 0;
         }
       }
-
       nbp = nnbp;
     }
   }
-
   _aligned_free(del);
   return nbp;
 }
@@ -177,28 +158,24 @@ void calc_nbp_lightweight(NBP a) {
   double fl, fh;
   double offset;
   NOTCHDB b = *a->ptraddr;
-
   if (a->fnfrun) {
     offset = b->tunefreq + b->shift;
     fl = a->flow  + offset;
     fh = a->fhigh + offset;
     a->numpb = make_nbp(b->nn, b->active, b->fcenter, b->fwidth, b->nlow, b->nhigh,
                         min_notch_width(a), a->autoincr, fl, fh, a->bplow, a->bphigh, &a->havnotch);
-
     // when tuning, no need to recalc filter if there were not and are not any notches in passband
     if (a->hadnotch || a->havnotch) {
       for (i = 0; i < a->numpb; i++) {
         a->bplow[i]  -= offset;
         a->bphigh[i] -= offset;
       }
-
       a->impulse = fir_mbandpass(a->nc, a->numpb, a->bplow, a->bphigh,
                                  a->rate, a->gain / (double)(2 * a->size), a->wintype);
       setImpulse_fircore(a->p, a->impulse, 1);
       // print_impulse ("nbp.txt", a->size + 1, impulse, 1, 0);
       _aligned_free(a->impulse);
     }
-
     a->hadnotch = a->havnotch;
   } else {
     a->hadnotch = 1;
@@ -211,19 +188,16 @@ void calc_nbp_impulse(NBP a) {
   double fl, fh;
   double offset;
   NOTCHDB b = *a->ptraddr;
-
   if (a->fnfrun) {
     offset = b->tunefreq + b->shift;
     fl = a->flow  + offset;
     fh = a->fhigh + offset;
     a->numpb = make_nbp(b->nn, b->active, b->fcenter, b->fwidth, b->nlow, b->nhigh,
                         min_notch_width(a), a->autoincr, fl, fh, a->bplow, a->bphigh, &a->havnotch);
-
     for (i = 0; i < a->numpb; i++) {
       a->bplow[i]  -= offset;
       a->bphigh[i] -= offset;
     }
-
     a->impulse = fir_mbandpass(a->nc, a->numpb, a->bplow, a->bphigh,
                                a->rate, a->gain / (double)(2 * a->size), a->wintype);
   } else {
@@ -327,13 +301,11 @@ void UpdateNBPFiltersLightWeight(int channel) {
 void UpdateNBPFilters(int channel) {
   NBP a = rxa[channel].nbp0.p;
   BPSNBA b = rxa[channel].bpsnba.p;
-
   if (a->fnfrun) {
     calc_nbp_impulse(a);
     setImpulse_fircore(a->p, a->impulse, 1);
     _aligned_free(a->impulse);
   }
-
   if (b->bpsnba->fnfrun) {
     recalc_bpsnba_filter(b, 1);
   }
@@ -345,10 +317,8 @@ int RXANBPAddNotch(int channel, int notch, double fcenter, double fwidth, int ac
   int i, j;
   int rval;
   b = rxa[channel].ndb.p;
-
   if (notch <= b->nn && b->nn < b->maxnotches) {
     b->nn++;
-
     for (i = b->nn - 2, j = b->nn - 1; i >= notch; i--, j--) {
       b->fcenter[j] = b->fcenter[i];
       b->fwidth[j] = b->fwidth[i];
@@ -356,7 +326,6 @@ int RXANBPAddNotch(int channel, int notch, double fcenter, double fwidth, int ac
       b->nhigh[j] = b->nhigh[i];
       b->active[j] = b->active[i];
     }
-
     b->fcenter[notch] = fcenter;
     b->fwidth[notch] = fwidth;
     b->nlow[notch] = fcenter - 0.5 * fwidth;
@@ -367,7 +336,6 @@ int RXANBPAddNotch(int channel, int notch, double fcenter, double fwidth, int ac
   } else {
     rval = -1;
   }
-
   return rval;
 }
 
@@ -377,7 +345,6 @@ int RXANBPGetNotch(int channel, int notch, double* fcenter, double* fwidth, int*
   int rval;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].ndb.p;
-
   if (notch < a->nn) {
     *fcenter = a->fcenter[notch];
     *fwidth = a->fwidth[notch];
@@ -389,7 +356,6 @@ int RXANBPGetNotch(int channel, int notch, double* fcenter, double* fwidth, int*
     *active = -1;
     rval = -1;
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
   return rval;
 }
@@ -400,10 +366,8 @@ int RXANBPDeleteNotch(int channel, int notch) {
   int rval;
   NOTCHDB a;
   a = rxa[channel].ndb.p;
-
   if (notch < a->nn) {
     a->nn--;
-
     for (i = notch, j = notch + 1; i < a->nn; i++, j++) {
       a->fcenter[i] = a->fcenter[j];
       a->fwidth[i] = a->fwidth[j];
@@ -411,13 +375,11 @@ int RXANBPDeleteNotch(int channel, int notch) {
       a->nhigh[i] = a->nhigh[j];
       a->active[i] = a->active[j];
     }
-
     UpdateNBPFilters(channel);
     rval = 0;
   } else {
     rval = -1;
   }
-
   return rval;
 }
 
@@ -426,7 +388,6 @@ int RXANBPEditNotch(int channel, int notch, double fcenter, double fwidth, int a
   NOTCHDB a;
   int rval;
   a = rxa[channel].ndb.p;
-
   if (notch < a->nn) {
     a->fcenter[notch] = fcenter;
     a->fwidth[notch] = fwidth;
@@ -438,7 +399,6 @@ int RXANBPEditNotch(int channel, int notch, double fcenter, double fwidth, int a
   } else {
     rval = -1;
   }
-
   return rval;
 }
 
@@ -455,7 +415,6 @@ PORT
 void RXANBPSetTuneFrequency(int channel, double tunefreq) {
   NOTCHDB a;
   a = rxa[channel].ndb.p;
-
   if (tunefreq != a->tunefreq) {
     a->tunefreq = tunefreq;
     UpdateNBPFiltersLightWeight(channel);
@@ -466,7 +425,6 @@ PORT
 void RXANBPSetShiftFrequency(int channel, double shift) {
   NOTCHDB a;
   a = rxa[channel].ndb.p;
-
   if (shift != a->shift) {
     a->shift = shift;
     UpdateNBPFiltersLightWeight(channel);
@@ -477,7 +435,6 @@ PORT
 void RXANBPSetNotchesRun(int channel, int run) {
   NOTCHDB a = rxa[channel].ndb.p;
   NBP b = rxa[channel].nbp0.p;
-
   if (run != a->master_run) {
     a->master_run = run;              // update variables
     b->fnfrun = a->master_run;
@@ -507,7 +464,6 @@ PORT
 void RXANBPSetFreqs(int channel, double flow, double fhigh) {
   NBP a;
   a = rxa[channel].nbp0.p;
-
   if ((flow != a->flow) || (fhigh != a->fhigh)) {
     a->flow = flow;
     a->fhigh = fhigh;
@@ -523,14 +479,12 @@ void RXANBPSetWindow(int channel, int wintype) {
   BPSNBA b;
   a = rxa[channel].nbp0.p;
   b = rxa[channel].bpsnba.p;
-
   if ((a->wintype != wintype)) {
     a->wintype = wintype;
     calc_nbp_impulse(a);
     setImpulse_fircore(a->p, a->impulse, 1);
     _aligned_free(a->impulse);
   }
-
   if ((b->wintype != wintype)) {
     b->wintype = wintype;
     recalc_bpsnba_filter(b, 1);
@@ -543,12 +497,10 @@ void RXANBPSetNC(int channel, int nc) {
   NBP a;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].nbp0.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     setNc_nbp(a);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -556,7 +508,6 @@ PORT
 void RXANBPSetMP(int channel, int mp) {
   NBP a;
   a = rxa[channel].nbp0.p;
-
   if (a->mp != mp) {
     a->mp = mp;
     setMp_nbp(a);
@@ -578,14 +529,12 @@ void RXANBPSetAutoIncrease(int channel, int autoincr) {
   BPSNBA b;
   a = rxa[channel].nbp0.p;
   b = rxa[channel].bpsnba.p;
-
   if ((a->autoincr != autoincr)) {
     a->autoincr = autoincr;
     calc_nbp_impulse(a);
     setImpulse_fircore(a->p, a->impulse, 1);
     _aligned_free(a->impulse);
   }
-
   if ((b->autoincr != autoincr)) {
     b->autoincr = autoincr;
     recalc_bpsnba_filter(b, 1);

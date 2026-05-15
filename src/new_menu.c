@@ -84,7 +84,6 @@ int menu_active_receiver_changed(void* data) {
     gtk_widget_destroy(sub_menu);
     sub_menu = NULL;
   }
-
   return FALSE;
 }
 
@@ -93,12 +92,10 @@ static void cleanup(void) {
     gtk_widget_destroy(main_menu);
     main_menu = NULL;
   }
-
   if (sub_menu != NULL) {
     gtk_widget_destroy(sub_menu);
     sub_menu = NULL;
   }
-
   active_menu = NO_MENU;
 }
 
@@ -259,7 +256,6 @@ static gboolean meter_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
 void start_band(void) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != BAND_MENU) {
     band_menu(top_window);
     active_menu = BAND_MENU;
@@ -269,7 +265,6 @@ void start_band(void) {
 void start_bandstack(void) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != BANDSTACK_MENU) {
     bandstack_menu(top_window);
     active_menu = BANDSTACK_MENU;
@@ -279,7 +274,6 @@ void start_bandstack(void) {
 void start_mode(void) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != MODE_MENU) {
     mode_menu(top_window);
     active_menu = MODE_MENU;
@@ -289,7 +283,6 @@ void start_mode(void) {
 void start_filter(void) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != FILTER_MENU) {
     filter_menu(top_window);
     active_menu = FILTER_MENU;
@@ -341,7 +334,6 @@ static gboolean store_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
 void start_noise(void) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != NOISE_MENU) {
     noise_menu(top_window);
     active_menu = NOISE_MENU;
@@ -357,7 +349,6 @@ static gboolean agc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) 
 void start_agc(void) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != AGC_MENU) {
     agc_menu(top_window);
     active_menu = AGC_MENU;
@@ -406,7 +397,6 @@ static gboolean diversity_cb(GtkWidget *widget, GdkEventButton *event, gpointer 
 void start_vfo(int vfo) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != VFO_MENU) {
     vfo_menu(top_window, vfo);
     active_menu = VFO_MENU;
@@ -416,7 +406,6 @@ void start_vfo(int vfo) {
 void start_store(void) {
   int old_menu = active_menu;
   cleanup();
-
   if (old_menu != STORE_MENU) {
     store_menu(top_window);
     active_menu = STORE_MENU;
@@ -425,7 +414,6 @@ void start_store(void) {
 
 void start_tx(void) {
   cleanup();
-
   if (can_transmit) {
     tx_menu(top_window);
   }
@@ -439,7 +427,6 @@ static gboolean tx_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
 
 void start_ps(void) {
   cleanup();
-
   if (can_transmit) {
     ps_menu(top_window);
   }
@@ -468,12 +455,10 @@ static gboolean midi_cb(GtkWidget *widget, GdkEventButton *event, gpointer data)
 void new_menu(void) {
   int col, row, maxrow;
   int _mode = vfo_get_tx_mode();
-
   if (sub_menu != NULL) {
     gtk_widget_destroy(sub_menu);
     sub_menu = NULL;
   }
-
   if (main_menu == NULL) {
     main_menu = gtk_dialog_new();
     gtk_window_set_transient_for(GTK_WINDOW(main_menu), GTK_WINDOW(top_window));
@@ -499,7 +484,6 @@ void new_menu(void) {
     gtk_widget_set_name(close_b, "close_button");
     g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
-
     if (protocol == ORIGINAL_PROTOCOL) {
       restart_b = gtk_button_new_with_label("Restart Protocol P1");
     } else if (protocol == NEW_PROTOCOL) {
@@ -507,7 +491,6 @@ void new_menu(void) {
     } else {
       restart_b = gtk_button_new_with_label("Restart Protocol");
     }
-
     g_signal_connect(restart_b, "button-press-event", G_CALLBACK(restart_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), restart_b, 2, 0, 2, 1);
     char _label[32];
@@ -548,19 +531,15 @@ void new_menu(void) {
     gtk_grid_attach(GTK_GRID(grid), xvtr_b, col, row, 1, 1);
     row++;
 #ifdef SATURN
-
     if (have_saturn_xdma) { // only display on the xdma client
       GtkWidget *saturn_b = gtk_button_new_with_label("Saturn");
       g_signal_connect(saturn_b, "button-press-event", G_CALLBACK(saturn_cb), NULL);
       gtk_grid_attach(GTK_GRID(grid), saturn_b, col, row, 1, 1);
       row++;
     }
-
 #endif
-
     // cppcheck-suppress knownConditionTrueFalse
     if (row > maxrow) { maxrow = row; }
-
     row = 2;
     col++;
     //
@@ -582,10 +561,8 @@ void new_menu(void) {
     GtkWidget *store_b = gtk_button_new_with_label("Memory");
     g_signal_connect(store_b, "button-press-event", G_CALLBACK(store_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), store_b, col, row++, 1, 1);
-
     // cppcheck-suppress knownConditionTrueFalse
     if (row > maxrow) { maxrow = row; }
-
     row = 2;
     col++;
     //
@@ -608,19 +585,15 @@ void new_menu(void) {
     g_signal_connect(agc_b, "button-press-event", G_CALLBACK(agc_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), agc_b, col, row, 1, 1);
     row++;
-
     if (RECEIVERS == 2 && n_adc > 1) {
       GtkWidget *diversity_b = gtk_button_new_with_label("Diversity");
       g_signal_connect(diversity_b, "button-press-event", G_CALLBACK(diversity_cb), NULL);
       gtk_grid_attach(GTK_GRID(grid), diversity_b, col, row, 1, 1);
       row++;
     }
-
     if (row > maxrow) { maxrow = row; }
-
     row = 2;
     col++;
-
     //
     // Fourth column:  TX-related menus
     //                 TX, PA, VOX, PS, CW
@@ -638,7 +611,6 @@ void new_menu(void) {
       g_signal_connect(vox_b, "button-press-event", G_CALLBACK(vox_cb), NULL);
       gtk_grid_attach(GTK_GRID(grid), vox_b, col, row, 1, 1);
       row++;
-
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
         GtkWidget *ps_b = gtk_button_new_with_label("PS");
         g_signal_connect(ps_b, "button-press-event", G_CALLBACK(ps_cb), NULL);
@@ -646,14 +618,11 @@ void new_menu(void) {
         row++;
       }
     }
-
     GtkWidget *cw_b = gtk_button_new_with_label("CW");
     g_signal_connect(cw_b, "button-press-event", G_CALLBACK(cw_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), cw_b, col, row, 1, 1);
     row++;
-
     if (row > maxrow) { maxrow = row; }
-
     row = 2;
     col++;
     //
@@ -665,13 +634,11 @@ void new_menu(void) {
     gtk_grid_attach(GTK_GRID(grid), dsp_b, col, row, 1, 1);
     row++;
     GtkWidget *equalizer_b = gtk_button_new_with_label("EQ RX/TX");
-
     if (_mode == modeDIGU || _mode == modeDIGL) {
       gtk_widget_set_sensitive(equalizer_b, FALSE);
     } else {
       gtk_widget_set_sensitive(equalizer_b, TRUE);
     }
-
     g_signal_connect(equalizer_b, "button-press-event", G_CALLBACK(equalizer_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), equalizer_b, col, row, 1, 1);
     row++;
@@ -679,7 +646,6 @@ void new_menu(void) {
     g_signal_connect(ant_b, "button-press-event", G_CALLBACK(ant_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), ant_b, col, row, 1, 1);
     row++;
-
     if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
       GtkWidget *oc_b = gtk_button_new_with_label("OC Output");
       gtk_widget_set_tooltip_text(oc_b,
@@ -697,14 +663,11 @@ void new_menu(void) {
       */
       row++;
     }
-
     GtkWidget *extras_b = gtk_button_new_with_label("Extras");
     g_signal_connect(extras_b, "button-press-event", G_CALLBACK(extras_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), extras_b, col, row, 1, 1);
     row++;
-
     if (row > maxrow) { maxrow = row; }
-
     row = 2;
     col++;
     //
@@ -726,14 +689,12 @@ void new_menu(void) {
     row++;
 #endif
 #ifdef GPIO
-
     if (controller != NO_CONTROLLER && controller != G2_V2) {
       GtkWidget *encoders_b = gtk_button_new_with_label("Encoders");
       g_signal_connect(encoders_b, "button-press-event", G_CALLBACK(encoder_cb), NULL);
       gtk_grid_attach(GTK_GRID(grid), encoders_b, col, row, 1, 1);
       row++;
     }
-
     //
     // Note the switches of CONTROLLER1 are assigned via the Toolbar menu
     //
@@ -743,7 +704,6 @@ void new_menu(void) {
       gtk_grid_attach(GTK_GRID(grid), switches_b, col, row, 1, 1);
       row++;
     }
-
 #endif
     // cppcheck-suppress redundantAssignment
     row = maxrow;

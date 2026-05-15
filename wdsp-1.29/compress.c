@@ -55,17 +55,14 @@ void flush_compressor(COMPRESSOR a) {
 void xcompressor(COMPRESSOR a) {
   int i;
   double mag;
-
   if (a->run)
     for (i = 0; i < a->buffsize; i++) {
       mag = sqrt(a->inbuff[2 * i + 0] * a->inbuff[2 * i + 0] + a->inbuff[2 * i + 1] * a->inbuff[2 * i + 1]);
-
       if (a->gain * mag > 1.0) {
         a->outbuff[2 * i + 0] = a->inbuff[2 * i + 0] / mag;
       } else {
         a->outbuff[2 * i + 0] = a->inbuff[2 * i + 0] * a->gain;
       }
-
       a->outbuff[2 * i + 1] = 0.0;
     } else if (a->inbuff != a->outbuff) {
     memcpy(a->outbuff, a->inbuff, a->buffsize * sizeof(complex));

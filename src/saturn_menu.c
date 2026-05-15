@@ -54,7 +54,6 @@ static gboolean close_cb(void) {
 
 static void server_enable_cb(GtkWidget *widget, gpointer data) {
   saturn_server_en = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (saturn_server_en) {
     start_saturn_server();
   } else {
@@ -62,7 +61,6 @@ static void server_enable_cb(GtkWidget *widget, gpointer data) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(client_enable_tx_b), 0);
     shutdown_saturn_server();
   }
-
   gtk_widget_set_sensitive(client_enable_tx_b, saturn_server_en);
 }
 
@@ -76,12 +74,10 @@ static void client_enable_tx_cb(GtkWidget *widget, gpointer data) {
 
 void saturn_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
-
   // paranoia is always good when programming
   if (!saturn_server_en) {
     client_enable_tx = FALSE;
   }
-
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();

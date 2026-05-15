@@ -83,7 +83,6 @@ static int apply(gpointer data) {
   vfo_layout          = my_vfo_layout;
   rx_stack_horizontal = my_rx_stack_horizontal;
   radio_reconfigure_screen();
-
   //
   // VFO layout may have been re-adjusted so update combo-box
   // (without letting it emit a signal)
@@ -94,7 +93,6 @@ static int apply(gpointer data) {
     // gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
     // g_signal_handler_unblock(G_OBJECT(vfo_b), vfo_signal_id);
   }
-
   return G_SOURCE_REMOVE;
 }
 
@@ -103,7 +101,6 @@ void schedule_apply(void) {
     g_source_remove(apply_timeout);
     apply_timeout = 0;
   }
-
   apply_timeout = g_timeout_add(500, apply, NULL);
 }
 
@@ -192,37 +189,30 @@ static void save_zoom_state_cb(GtkWidget *widget, gpointer data) {
 
 static void pan_peak_preserve_cb(GtkWidget *widget, gpointer data) {
   gboolean state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   for (int i = 0; i < RECEIVERS; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->pan_peak_preserve = state;
     }
   }
-
   g_idle_add(ext_vfo_update, NULL);
   radio_reconfigure();
 }
 
 static void pan_window_type_cb(GtkComboBox *widget, gpointer data) {
   int state = gtk_combo_box_get_active(widget);
-
   if (!active_receiver->display_panadapter) {
     return;
   }
-
   if (state < 0 || state > 6) {
     state = 5;  /* Kaiser */
   }
-
   t_print("%s: WDSP RX: select new FFT_window_type = %d\n", __func__, state);
-
   for (int i = 0; i < RECEIVERS; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->pan_window_type = state;
       rx_set_analyzer(receiver[i]);
     }
   }
-
   g_idle_add(ext_vfo_update, NULL);
   radio_reconfigure();
 }
@@ -230,44 +220,35 @@ static void pan_window_type_cb(GtkComboBox *widget, gpointer data) {
 static void pan_fft_size_cb(GtkComboBox *widget, gpointer data) {
   int state = gtk_combo_box_get_active(widget);
   int fft_size;
-
   switch (state) {
   case 0:
     fft_size = 0;
     break;
-
   case 1:
     fft_size = 16384;
     break;
-
   case 2:
     fft_size = 32768;
     break;
-
   case 3:
     fft_size = 65536;
     break;
-
   case 4:
     fft_size = 131072;
     break;
-
   case 5:
     fft_size = 262144;
     break;
-
   default:
     fft_size = 0;
     break;
   }
-
   for (int i = 0; i < RECEIVERS; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->pan_fft_size = fft_size;
       rx_set_analyzer(receiver[i]);
     }
   }
-
   g_idle_add(ext_vfo_update, NULL);
   radio_reconfigure();
 }
@@ -275,7 +256,6 @@ static void pan_fft_size_cb(GtkComboBox *widget, gpointer data) {
 static void display_levels_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->show_levels = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
     if (!transmitter->show_levels) {
       g_signal_handler_block(b_display_af_peak, b_af_peak_signal_id);
       transmitter->show_af_peak = 0;
@@ -351,19 +331,16 @@ static void win_bg_colour_set(GtkColorButton *btn, gpointer user_data) {
 static void display_extras_btn_cb(GtkWidget *widget, gpointer data) {
   int r = GPOINTER_TO_INT(data);
   display_extra_sliders = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (display_extra_sliders) {
     sliders_show_row(r);
   } else {
     sliders_hide_row(r);  // Versteckt die 4. Zeile des Grids
   }
-
   schedule_apply();
 }
 
 static void css_theme_changed_cb(GtkComboBox *combo, gpointer user_data) {
   css_dark_theme = (gtk_combo_box_get_active(combo) == 1);
-
   if (css_dark_theme) {
     radio_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
     mwin_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
@@ -371,7 +348,6 @@ static void css_theme_changed_cb(GtkComboBox *combo, gpointer user_data) {
     radio_bgcolor = (cairo_rgba_t) { 0.902, 0.902, 0.980, 1.0 };
     mwin_bgcolor = (cairo_rgba_t) { 0.965, 0.965, 0.965, 1.0 };
   }
-
   load_css();
   win_set_bgcolor(top_window, &radio_bgcolor);
   screen_menu_cleanup();
@@ -448,7 +424,6 @@ void screen_menu(GtkWidget *parent) {
                               "There is NO SUPPORT for this special option");
   gtk_widget_set_name(reload_css_btn, "boldlabel_blue");
   g_signal_connect(reload_css_btn, "clicked", G_CALLBACK(reload_css_cb), NULL);
-
   //--------------------------------------------------------------------------------------------
   if (file_present(css_filename)) {
     t_print("%s: %s exist\n", __func__, css_filename);
@@ -476,7 +451,6 @@ void screen_menu(GtkWidget *parent) {
     gtk_widget_set_valign(save_css_btn, GTK_ALIGN_CENTER);
     gtk_widget_show(save_css_btn);
   }
-
   // CSS button grid
   gtk_widget_show(css_button_grid);
   gtk_grid_insert_column(GTK_GRID(css_button_grid), 0);
@@ -570,7 +544,6 @@ void screen_menu(GtkWidget *parent) {
   //---------------------------------------------------------------------------------------------------
   // Zeile als Box ab Spalte 1
   GtkWidget *Z3_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-
   if (!css_dark_theme) {
     GtkWidget *bgcolor_label = gtk_label_new("Slider Background Color");
     gtk_label_set_justify(GTK_LABEL(bgcolor_label), GTK_JUSTIFY_CENTER);
@@ -612,7 +585,6 @@ void screen_menu(GtkWidget *parent) {
     gtk_widget_set_margin_bottom(win_bg_col_btn, 5);
     gtk_box_pack_start(GTK_BOX(Z3_box), win_bg_col_btn, FALSE, FALSE, 0);
   }
-
   //---------------------------------------------------------------------------------------------------
   // Box ins Grid
   gtk_grid_attach(GTK_GRID(grid), Z3_box, col, row, 3, 1);
@@ -636,7 +608,6 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_show(b_display_toolbar);
   gtk_grid_attach(GTK_GRID(grid), b_display_toolbar, 2, row, 1, 1);
   g_signal_connect(b_display_toolbar, "toggled", G_CALLBACK(display_toolbar_cb), NULL);
-
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   if (can_transmit) {
     display_extras_btn = gtk_check_button_new_with_label("Display Extras");
@@ -647,7 +618,6 @@ void screen_menu(GtkWidget *parent) {
     g_signal_connect(display_extras_btn, "clicked", G_CALLBACK(display_extras_btn_cb), GINT_TO_POINTER(row_to_hide));
     gtk_widget_show(display_extras_btn);
   }
-
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   row++;
   GtkWidget *b_display_warnings = gtk_check_button_new_with_label("Display Warnings");
@@ -715,72 +685,56 @@ void screen_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "Auto (default)");
   int fft_base = 16384;
   double combobox_sr = 0.0;
-
   if (active_receiver != NULL) {
     combobox_sr = (double) active_receiver->sample_rate;
   }
-
   for (int i = 0; i < 5; i++) {
     char buf[32];
-
     if (combobox_sr > 0.0) {
       snprintf(buf, sizeof(buf), "%d = %.3f Hz", fft_base, combobox_sr / (double) fft_base);
     } else {
       snprintf(buf, sizeof(buf), "%d", fft_base);
     }
-
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, buf);
     fft_base *= 2;
   }
-
   int fft_state = 0;
-
   switch (active_receiver->pan_fft_size) {
   case 0:
     fft_state = 0;
     break;
-
   case 16384:
     fft_state = 1;
     break;
-
   case 32768:
     fft_state = 2;
     break;
-
   case 65536:
     fft_state = 3;
     break;
-
   case 131072:
     fft_state = 4;
     break;
-
   case 262144:
     fft_state = 5;
     break;
-
   default:
     fft_state = 0;
     break;
   }
-
   gtk_combo_box_set_active(GTK_COMBO_BOX(fft_size_combo), fft_state);
   gtk_grid_attach(GTK_GRID(grid), fft_size_combo, 3, row, 1, 1);
   g_signal_connect(fft_size_combo, "changed", G_CALLBACK(pan_fft_size_cb), NULL);
-
   //------------------------------------------------------------------------------------------
   if (can_transmit) {
     row++;
     GtkWidget *label_levels = gtk_label_new(NULL);
     gtk_label_set_use_markup(GTK_LABEL(label_levels), TRUE);
-
     if (use_wayland) {
       gtk_label_set_markup(GTK_LABEL(label_levels), "<u>TX Audio Levels Display Settings</u> [Wayland compatibility mode]");
     } else {
       gtk_label_set_markup(GTK_LABEL(label_levels), "<u>TX Audio Levels Display Settings</u>");
     }
-
     gtk_widget_set_name(label_levels, "boldlabel_blue");
     gtk_widget_set_halign(label_levels, GTK_ALIGN_START);
     gtk_widget_set_margin_start(label_levels, 5);
@@ -811,13 +765,11 @@ void screen_menu(GtkWidget *parent) {
     gtk_widget_show(b_display_af_peak);
     gtk_grid_attach(GTK_GRID(grid), b_display_af_peak, 1, row, 1, 1);
     b_af_peak_signal_id = g_signal_connect(b_display_af_peak, "toggled", G_CALLBACK(display_levels_af_peak_cb), NULL);
-
     if (!transmitter->show_levels) {
       gtk_widget_set_sensitive(b_display_af_peak, FALSE);
     } else {
       gtk_widget_set_sensitive(b_display_af_peak, TRUE);
     }
-
     //----------------------------------------------------------------------------------------
     b_use_levels_popup = gtk_check_button_new_with_label("Use Popup");
     gtk_widget_set_name(b_use_levels_popup, "boldlabel_blue");
@@ -827,25 +779,20 @@ void screen_menu(GtkWidget *parent) {
                                                     "REQUIRED if X11 backend running with Wayland !\n\n"
                                                     "Note: If Wayland is used, this option\n"
                                                     "cannot be modified and appears unresponsive.");
-
     if (use_wayland) {
       transmitter->use_levels_popup = 1;
     }
-
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_use_levels_popup), transmitter->use_levels_popup);
     gtk_widget_show(b_use_levels_popup);
     gtk_grid_attach(GTK_GRID(grid), b_use_levels_popup, 2, row, 1, 1);
     b_use_levels_popup_signal_id = g_signal_connect(b_use_levels_popup, "toggled", G_CALLBACK(b_use_levels_popup_cb),
                                    NULL);
-
     if (!transmitter->show_levels || use_wayland) {
       gtk_widget_set_sensitive(b_use_levels_popup, FALSE);
     } else {
       gtk_widget_set_sensitive(b_use_levels_popup, TRUE);
     }
-
 #ifdef __linux__
-
     //----------------------------------------------------------------------------------------
     if (use_wayland) {
       b_inner_levels_popup = gtk_check_button_new_with_label("Show Popup inside");
@@ -855,29 +802,24 @@ void screen_menu(GtkWidget *parent) {
                                                         "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
                                                         "If Fullscreen selected, TX Audio Levels Popup is ever\n"
                                                         "inside deskHPSDR main window [right in the middle]");
-
       if (full_screen) {
         transmitter->inner_levels_popup = 1;
       }
-
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_inner_levels_popup), transmitter->inner_levels_popup);
       gtk_widget_show(b_inner_levels_popup);
       gtk_grid_attach(GTK_GRID(grid), b_inner_levels_popup, 3, row, 1, 1);
       b_inner_levels_popup_signal_id = g_signal_connect(b_inner_levels_popup, "toggled",
                                        G_CALLBACK(b_inner_levels_popup_cb),
                                        NULL);
-
       if (!transmitter->show_levels) {
         gtk_widget_set_sensitive(b_inner_levels_popup, FALSE);
       } else {
         gtk_widget_set_sensitive(b_inner_levels_popup, TRUE);
       }
     }
-
     //----------------------------------------------------------------------------------------
 #endif
   }
-
   //------------------------------------------------------------------------------------------
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;

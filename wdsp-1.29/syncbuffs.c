@@ -43,20 +43,16 @@ SYNCB create_syncbuffs(int accept, int nstreams, int max_insize, int max_outsize
   a->r1_outsize = outsize;
   a->out = out;
   a->exf = exf;
-
   if (a->max_outsize > a->max_in_size) {
     a->r1_size = a->max_outsize;
   } else {
     a->r1_size = a->max_in_size;
   }
-
   a->r1_active_buffsize = SYNCB_MULT * a->r1_size;
   a->r1_baseptr = (double**) malloc0(a->nstreams * sizeof(double*));
-
   for (i = 0; i < a->nstreams; i++) {
     a->r1_baseptr[i] = (double*) malloc0(a->r1_active_buffsize * sizeof(complex));
   }
-
   a->r1_inidx = 0;
   a->r1_outidx = 0;
   a->r1_unqueuedsamps = 0;
@@ -81,36 +77,29 @@ void destroy_syncbuffs(SYNCB a) {
   DeleteCriticalSection(&a->csOUT);
   DeleteCriticalSection(&a->csIN);
   CloseHandle(a->Sem_BuffReady);
-
   for (i = 0; i < a->nstreams; i++) {
     _aligned_free(a->r1_baseptr[i]);
   }
-
   _aligned_free(a->r1_baseptr);
   _aligned_free(a);
 }
 
 void flush_syncbuffs(SYNCB a) {
   int i;
-
   for (i = 0; i < a->nstreams; i++) {
     memset(a->r1_baseptr[i], 0, a->r1_active_buffsize * sizeof(complex));
   }
-
   a->r1_inidx = 0;
   a->r1_outidx = 0;
   a->r1_unqueuedsamps = 0;
-
   while (!WaitForSingleObject(a->Sem_BuffReady, 1)) ;
 }
 
 void Syncbound(SYNCB a, int nsamples, double** in) {
   int i, n;
   int first, second;
-
   if (_InterlockedAnd(&a->accept, 1)) {
     EnterCriticalSection(&a->csIN);
-
     if (nsamples > (a->r1_active_buffsize - a->r1_inidx)) {
       first = a->r1_active_buffsize - a->r1_inidx;
       second = nsamples - first;
@@ -118,22 +107,18 @@ void Syncbound(SYNCB a, int nsamples, double** in) {
       first = nsamples;
       second = 0;
     }
-
     for (i = 0; i < a->nstreams; i++) {
       memcpy(a->r1_baseptr[i] + 2 * a->r1_inidx, in[i],         first  * sizeof(complex));
       memcpy(a->r1_baseptr[i],         in[i] + 2 * first, second * sizeof(complex));
     }
-
     if ((a->r1_unqueuedsamps += nsamples) >= a->r1_outsize) {
       n = a->r1_unqueuedsamps / a->r1_outsize;
       ReleaseSemaphore(a->Sem_BuffReady, n, 0);
       a->r1_unqueuedsamps -= n * a->r1_outsize;
     }
-
     if ((a->r1_inidx += nsamples) >= a->r1_active_buffsize) {
       a->r1_inidx -= a->r1_active_buffsize;
     }
-
     LeaveCriticalSection(&a->csIN);
   }
 }
@@ -142,12 +127,10 @@ void syncbdata(SYNCB a) {
   int i;
   int first, second;
   EnterCriticalSection(&a->csOUT);
-
   if (!_InterlockedAnd(&a->run, 1)) {
     LeaveCriticalSection(&a->csOUT);
     _endthread();
   }
-
   if (a->r1_outsize > (a->r1_active_buffsize - a->r1_outidx)) {
     first = a->r1_active_buffsize - a->r1_outidx;
     second = a->r1_outsize - first;
@@ -155,28 +138,23 @@ void syncbdata(SYNCB a) {
     first = a->r1_outsize;
     second = 0;
   }
-
   for (i = 0; i < a->nstreams; i++) {
     memcpy(a->out[i],         a->r1_baseptr[i] + 2 * a->r1_outidx, first  * sizeof(complex));
     memcpy(a->out[i] + 2 * first, a->r1_baseptr[i],          second * sizeof(complex));
   }
-
   if ((a->r1_outidx += a->r1_outsize) >= a->r1_active_buffsize) {
     a->r1_outidx -= a->r1_active_buffsize;
   }
-
   LeaveCriticalSection(&a->csOUT);
 }
 
 void syncb_main(void* p) {
   SYNCB a = (SYNCB)p;
-
   while (_InterlockedAnd(&a->run, 1)) {
     WaitForSingleObject(a->Sem_BuffReady, INFINITE);
     syncbdata(a);
     a->exf();
   }
-
   _endthread();
 }
 
@@ -230,7 +208,6 @@ void flush_dumfilt(DUMFILT a) {
 
 void xdumfilt(DUMFILT a) {
   int first, second;
-
   if (a->run) {
     if (a->opsize > (a->rsize - a->inidx)) {
       first = a->rsize - a->inidx;
@@ -239,12 +216,9 @@ void xdumfilt(DUMFILT a) {
       first = a->opsize;
       second = 0;
     }
-
     memcpy(a->ring + 2 * a->inidx, a->in,         first  * sizeof(complex));
     memcpy(a->ring,        a->in + 2 * first, second * sizeof(complex));
-
     if ((a->inidx += a->opsize) > a->rsize) { a->inidx -= a->rsize; }
-
     if (a->opsize > a->rsize - a->outidx) {
       first = a->rsize - a->outidx;
       second = a->opsize - first;
@@ -252,10 +226,8 @@ void xdumfilt(DUMFILT a) {
       first = a->opsize;
       second = 0;
     }
-
     memcpy(a->out,       a->ring + 2 * a->outidx, first  * sizeof(complex));
     memcpy(a->out + 2 * first, a->ring,         second * sizeof(complex));
-
     if ((a->outidx += a->opsize) > a->rsize) { a->outidx -= a->rsize; }
   }
 }

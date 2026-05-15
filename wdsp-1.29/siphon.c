@@ -32,7 +32,6 @@ void build_window(SIPHON a) {
   double sum, scale;
   arg0 = 2.0 * PI / ((double)a->fftsize - 1.0);
   sum = 0.0;
-
   for (i = 0; i < a->fftsize; i++) {
     cosphi = cos(arg0 * (double)i);
     a->window[i] =  + 6.3964424114390378e-02
@@ -44,9 +43,7 @@ void build_window(SIPHON a) {
                                                   + cosphi * (+ 4.3778825791773474e-04))))));
     sum += a->window[i];
   }
-
   scale = 1.0 / sum;
-
   for (i = 0; i < a->fftsize; i++) {
     a->window[i] *= scale;
   }
@@ -101,7 +98,6 @@ void flush_siphon(SIPHON a) {
 void xsiphon(SIPHON a, int pos) {
   int first, second, i;
   EnterCriticalSection(&a->update);
-
   if (a->run && a->position == pos) {
     switch (a->mode) {
     case 0:
@@ -115,26 +111,19 @@ void xsiphon(SIPHON a, int pos) {
           first = a->insize;
           second = 0;
         }
-
         memcpy(a->sipbuff + 2 * a->idx, a->in, first * sizeof(complex));
         memcpy(a->sipbuff, a->in + 2 * first, second * sizeof(complex));
-
         if ((a->idx += a->insize) >= a->sipsize) { a->idx -= a->sipsize; }
       }
-
       break;
-
     case 1:
       Spectrum0(1, a->disp, 0, 0, a->in);
-
       for (i = 0; i < a->n_alloc_disps; i++) {
         Spectrum0(a->alloc_run[i], a->alloc_disp[i], 0, 0, a->in);
       }
-
       break;
     }
   }
-
   LeaveCriticalSection(&a->update);
 }
 
@@ -156,7 +145,6 @@ void suck(SIPHON a) {
     int mask = a->sipsize - 1;
     int j = (a->idx - a->outsize) & mask;
     int size = a->sipsize - j;
-
     if (size >= a->outsize) {
       memcpy(a->sipout, &(a->sipbuff[2 * j]), a->outsize * sizeof(complex));
     } else {
@@ -168,12 +156,10 @@ void suck(SIPHON a) {
 
 void sip_spectrum(SIPHON a) {
   int i;
-
   for (i = 0; i < a->fftsize; i++) {
     a->sipout[2 * i + 0] *= a->window[i];
     a->sipout[2 * i + 1] *= a->window[i];
   }
-
   fftw_execute(a->sipplan);
 }
 
@@ -192,7 +178,6 @@ void RXAGetaSipF(int channel, float* out, int size) {
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
-
   for (i = 0; i < size; i++) {
     out[i] = (float)a->sipout[2 * i + 0];
   }
@@ -207,7 +192,6 @@ void RXAGetaSipF1(int channel, float* out, int size) {
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
-
   for (i = 0; i < size; i++) {
     out[2 * i + 0] = (float)a->sipout[2 * i + 0];
     out[2 * i + 1] = (float)a->sipout[2 * i + 1];
@@ -253,7 +237,6 @@ void TXAGetaSipF(int channel, float* out, int size) {
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
-
   for (i = 0; i < size; i++) {
     out[i] = (float)a->sipout[2 * i + 0];
   }
@@ -268,7 +251,6 @@ void TXAGetaSipF1(int channel, float* out, int size) {
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
-
   for (i = 0; i < size; i++) {
     out[2 * i + 0] = (float)a->sipout[2 * i + 0];
     out[2 * i + 1] = (float)a->sipout[2 * i + 1];
@@ -278,7 +260,6 @@ void TXAGetaSipF1(int channel, float* out, int size) {
 PORT
 void TXASetSipSpecmode(int channel, int mode) {
   SIPHON a = txa[channel].sip1.p;
-
   if (mode == 0) {
     InterlockedBitTestAndReset(&a->specmode, 0);
   } else {
@@ -297,9 +278,7 @@ void TXAGetSpecF1(int channel, float* out) {
   LeaveCriticalSection(&a->update);
   sip_spectrum(a);
   mid = a->fftsize / 2;
-
   if (!InterlockedAnd(&a->specmode, 1))
-
     // swap the halves of the spectrum
     for (i = 0, j = mid; i < mid; i++, j++) {
       out[i] = (float)(10.0 * mlog10(a->specout[2 * j + 0] * a->specout[2 * j + 0] + a->specout[2 * j + 1] * a->specout[2 * j
@@ -307,7 +286,6 @@ void TXAGetSpecF1(int channel, float* out) {
       out[j] = (float)(10.0 * mlog10(a->specout[2 * i + 0] * a->specout[2 * i + 0] + a->specout[2 * i + 1] * a->specout[2 * i
                                      + 1] + 1.0e-60));
     } else
-
     // mirror each half of the spectrum in-place
     for (i = 0, j = mid - 1, m = mid, n = a->fftsize - 1; i < mid; i++, j--, m++, n--) {
       out[i] = (float)(10.0 * mlog10(a->specout[2 * j + 0] * a->specout[2 * j + 0] + a->specout[2 * j + 1] * a->specout[2 * j
@@ -323,12 +301,10 @@ void TXASetSipAllocDisps(int channel, int n_alloc_disps, int* alloc_run, int* al
   int i;
   EnterCriticalSection(&a->update);
   a->n_alloc_disps = n_alloc_disps;
-
   for (i = 0; i < a->n_alloc_disps; i++) {
     a->alloc_run[i]  = alloc_run[i];
     a->alloc_disp[i] = alloc_disp[i];
   }
-
   LeaveCriticalSection(&a->update);
 }
 
@@ -373,7 +349,6 @@ void GetaSipF1EXT(int id, float* out, int size) {
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
-
   for (i = 0; i < size; i++) {
     out[2 * i + 0] = (float)a->sipout[2 * i + 0];
     out[2 * i + 1] = (float)a->sipout[2 * i + 1];

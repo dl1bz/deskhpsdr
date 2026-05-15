@@ -42,10 +42,8 @@ void destroy_apfshadow(APFSHADOW a) {
 PORT
 void SetRXASPCWSelection(int channel, int selection) {
   APFSHADOW a = rxa[channel].apfshadow.p;
-
   if (a->selection != selection) {
     a->selection = selection;
-
     switch (a->selection) {
     case 0: // Double-pole
       SetRXAMatchedRun(channel, 0);
@@ -55,7 +53,6 @@ void SetRXASPCWSelection(int channel, int selection) {
       SetRXADoublepoleGain(channel, a->gain);
       SetRXADoublepoleRun(channel, a->run);
       break;
-
     case 1: // Matched
       SetRXADoublepoleRun(channel, 0);
       SetRXAGaussianRun(channel, 0);
@@ -64,7 +61,6 @@ void SetRXASPCWSelection(int channel, int selection) {
       SetRXAMatchedGain(channel, sqrt(2.0) * a->gain);
       SetRXAMatchedRun(channel, a->run);
       break;
-
     case 2: // Gaussian
       SetRXADoublepoleRun(channel, 0);
       SetRXAMatchedRun(channel, 0);
@@ -73,7 +69,6 @@ void SetRXASPCWSelection(int channel, int selection) {
       SetRXAGaussianGain(channel, sqrt(2.0) * a->gain);
       SetRXAGaussianRun(channel, a->run);
       break;
-
     case 3: // Bi-quad
       SetRXADoublepoleRun(channel, 0);
       SetRXAMatchedRun(channel, 0);
@@ -83,7 +78,6 @@ void SetRXASPCWSelection(int channel, int selection) {
       SetRXABiQuadGain(channel, a->gain);
       SetRXABiQuadRun(channel, a->run);
       break;
-
     default:
       break;
     }
@@ -94,24 +88,19 @@ PORT
 void SetRXASPCWRun(int channel, int run) {
   APFSHADOW a = rxa[channel].apfshadow.p;
   a->run = run;
-
   switch (a->selection) {
   case 0: // Double-pole
     SetRXADoublepoleRun(channel, a->run);
     break;
-
   case 1: // Matched
     SetRXAMatchedRun(channel, a->run);
     break;
-
   case 2: // Gaussian
     SetRXAGaussianRun(channel, a->run);
     break;
-
   case 3: // Bi-quad
     SetRXABiQuadRun(channel, a->run);
     break;
-
   default:
     break;
   }
@@ -121,24 +110,19 @@ PORT
 void SetRXASPCWFreq(int channel, double f_center) {
   APFSHADOW a = rxa[channel].apfshadow.p;
   a->f_center = f_center;
-
   switch (a->selection) {
   case 0: // Double-pole
     SetRXADoublepoleFreqs(channel, a->f_center, a->bandwidth);
     break;
-
   case 1: // Matched
     SetRXAMatchedFreqs(channel, a->f_center, a->bandwidth);
     break;
-
   case 2: // Gaussian
     SetRXAGaussianFreqs(channel, a->f_center, a->bandwidth);
     break;
-
   case 3: // Bi-quad
     SetRXABiQuadFreq(channel, a->f_center);
     break;
-
   default:
     break;
   }
@@ -148,24 +132,19 @@ PORT
 void SetRXASPCWBandwidth(int channel, double bandwidth) {
   APFSHADOW a = rxa[channel].apfshadow.p;
   a->bandwidth = bandwidth;
-
   switch (a->selection) {
   case 0: // Double-pole
     SetRXADoublepoleFreqs(channel, a->f_center, a->bandwidth);
     break;
-
   case 1: // Matched
     SetRXAMatchedFreqs(channel, a->f_center, a->bandwidth);
     break;
-
   case 2: // Gaussian
     SetRXAGaussianFreqs(channel, a->f_center, a->bandwidth);
     break;
-
   case 3: // Bi-quad
     SetRXABiQuadBandwidth(channel, a->bandwidth);
     break;
-
   default:
     break;
   }
@@ -175,24 +154,19 @@ PORT
 void SetRXASPCWGain(int channel, double gain) {
   APFSHADOW a = rxa[channel].apfshadow.p;
   a->gain = gain;
-
   switch (a->selection) {
   case 0: // Double-pole
     SetRXADoublepoleGain(channel, a->gain);
     break;
-
   case 1: // Matched
     SetRXAMatchedGain(channel, sqrt(2.0) * a->gain);
     break;
-
   case 2: // Gaussian
     SetRXAGaussianGain(channel, sqrt(2.0) * a->gain);
     break;
-
   case 3: // Bi-quad
     SetRXABiQuadGain(channel, a->gain);
     break;
-
   default:
     break;
   }

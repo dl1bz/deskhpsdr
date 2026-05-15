@@ -1338,11 +1338,9 @@ void StartConfigSave(void) {
 
 void StartConfigLoad(void) {
   const char *filename = "startup_config.props";
-
   if (!filename || access(filename, F_OK) != 0) {
     return;
   }
-
   loadProperties(filename);
   GetPropI0("css_dark_theme", css_dark_theme);
   clearProperties();
@@ -1354,25 +1352,20 @@ void load_css(void) {
   GError *error = NULL;
   /* alten Provider entfernen (wichtig für Theme-Switch) */
   static GtkCssProvider *current_provider = NULL;
-
   if (current_provider != NULL) {
     gtk_style_context_remove_provider_for_screen(screen,
         GTK_STYLE_PROVIDER(current_provider));
     g_object_unref(current_provider);
     current_provider = NULL;
   }
-
   GtkCssProvider *provider = gtk_css_provider_new();
-
   // 1. Laden aus Datei
   if (css_dark_theme) {
     css_filename = "deskhpsdr-dark.css";
   } else {
     css_filename = "deskhpsdr.css";
   }
-
   gtk_css_provider_load_from_path(provider, css_filename, &error);
-
   if (!error) {
     gtk_style_context_add_provider_for_screen(screen,
         GTK_STYLE_PROVIDER(provider),
@@ -1382,14 +1375,12 @@ void load_css(void) {
     t_print("%s: failed to load CSS data from file %s: %s\n",
             __func__, css_filename, extract_short_msg(error->message));
     g_clear_error(&error);
-
     // 2. Laden aus Hardcoded-String
     if (css_dark_theme) {
       gtk_css_provider_load_from_data(provider, css_dark, -1, &error);
     } else {
       gtk_css_provider_load_from_data(provider, css, -1, &error);
     }
-
     if (!error) {
       gtk_style_context_add_provider_for_screen(screen,
           GTK_STYLE_PROVIDER(provider),
@@ -1403,32 +1394,26 @@ void load_css(void) {
       provider = NULL;
     }
   }
-
   /* Provider merken für nächsten Reload */
   if (provider != NULL) {
     current_provider = provider;
   }
-
   StartConfigSave();
 }
 
 void save_css(GtkWidget *widget, gpointer data) {
   const char *file_name = css_dark_theme ? "deskhpsdr-dark.css" : "deskhpsdr.css";
   FILE *file = fopen(file_name, "w");
-
   if (file == NULL) {
     t_print("%s: Error opening %s for writing\n", __func__, file_name);
     return;
   }
-
   const char *src = css_dark_theme ? css_dark : css;
-
   if (fputs(src, file) == EOF) {
     t_print("%s: Error writing to %s\n", __func__, file_name);
   } else {
     t_print("%s: Hard-coded CSS successfully written to %s\n", __func__, file_name);
   }
-
   fclose(file);
   load_css();   /* Theme neu laden */
   screen_menu_cleanup();
@@ -1439,7 +1424,6 @@ void remove_css(GtkWidget *widget, gpointer data) {
   const char *file_name = css_dark_theme ? "deskhpsdr-dark.css" : "deskhpsdr.css";
   errno = 0;
   int rc = remove(file_name);
-
   if (rc == 0) {
     t_print("%s: %s successfully deleted\n", __func__, file_name);
   } else {
@@ -1449,7 +1433,6 @@ void remove_css(GtkWidget *widget, gpointer data) {
       t_print("%s: Error deleting %s: %s\n", __func__, file_name, strerror(errno));
     }
   }
-
   load_css();
   screen_menu_cleanup();
   screen_menu(top_window);

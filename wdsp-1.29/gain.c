@@ -54,16 +54,13 @@ PORT
 void xgain(GAIN a) {
   int srun;
   EnterCriticalSection(&a->cs_update);
-
   if (a->prun != 0) {
     srun = *(a->prun);
   } else {
     srun = 1;
   }
-
   if (a->run && srun) {
     int i;
-
     for (i = 0; i < a->size; i++) {
       a->out[2 * i + 0] = a->Igain * a->in[2 * i + 0];
       a->out[2 * i + 1] = a->Qgain * a->in[2 * i + 1];
@@ -71,7 +68,6 @@ void xgain(GAIN a) {
   } else if (a->in != a->out) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 

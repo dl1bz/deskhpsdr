@@ -49,28 +49,22 @@ void flush_ammod(AMMOD a) {
 void xammod(AMMOD a) {
   if (a->run) {
     int i;
-
     switch (a->mode) {
     case 0: // AM
       for (i = 0; i < a->size; i++) {
         a->out[2 * i + 0] = a->out[2 * i + 1] = a->mult * (a->c_level + a->a_level * a->in[2 * i + 0]);
       }
-
       break;
-
     case 1: // DSB
       for (i = 0; i < a->size; i++) {
         a->out[2 * i + 0] = a->out[2 * i + 1] = a->mult * a->in[2 * i + 0];
       }
-
       break;
-
     case 2: // SSB w/Carrier
       for (i = 0; i < a->size; i++) {
         a->out[2 * i + 0] = a->mult * a->c_level + a->a_level * a->in[2 * i + 0];
         a->out[2 * i + 1] = a->mult * a->c_level + a->a_level * a->in[2 * i + 1];
       }
-
       break;
     }
   } else if (a->in != a->out) {

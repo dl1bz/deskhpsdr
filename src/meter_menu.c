@@ -51,12 +51,10 @@ static gboolean close_cb(void) {
 
 static void smeter_select_cb(GtkToggleButton *widget, gpointer        data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
     active_receiver->smetermode = SMETER_PEAK;
     break;
-
   case 1:
     active_receiver->smetermode = SMETER_AVERAGE;
     break;
@@ -69,16 +67,13 @@ static void analog_cb(GtkToggleButton *widget, gpointer        data) {
 
 static void alc_select_cb(GtkToggleButton *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
     transmitter->alcmode = ALC_PEAK;
     break;
-
   case 1:
     transmitter->alcmode = ALC_AVERAGE;
     break;
-
   case 2:
     transmitter->alcmode = ALC_GAIN;
     break;
@@ -185,22 +180,18 @@ void meter_menu(GtkWidget *parent) {
   gtk_widget_set_valign(w, GTK_ALIGN_CENTER);
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Peak");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Average");
-
   switch (active_receiver->smetermode) {
   case SMETER_PEAK:
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     break;
-
   case SMETER_AVERAGE:
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
     break;
   }
-
   g_signal_connect(w, "changed", G_CALLBACK(smeter_select_cb), NULL);
   gtk_box_pack_start(GTK_BOX(box_Z2), w, FALSE, FALSE, 0);
   gtk_grid_attach(GTK_GRID(grid), box_Z2, 0, 2, 1, 1);
   //---------------------------------------------------------------------------
-
   if (can_transmit) {
     //----------------------------------------------------------------------------------------------------------
     GtkWidget *box_Z3 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
@@ -232,27 +223,22 @@ void meter_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Peak");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Average");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Gain");
-
     switch (transmitter->alcmode) {
     case ALC_PEAK:
       gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
       break;
-
     case ALC_AVERAGE:
       gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
       break;
-
     case ALC_GAIN:
       gtk_combo_box_set_active(GTK_COMBO_BOX(w), 2);
       break;
     }
-
     g_signal_connect(w, "changed", G_CALLBACK(alc_select_cb), NULL);
     gtk_box_pack_start(GTK_BOX(box_Z3), w, FALSE, FALSE, 0);
     gtk_grid_attach(GTK_GRID(grid), box_Z3, 0, 3, 1, 1);
     //---------------------------------------------------------------------------
   }
-
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

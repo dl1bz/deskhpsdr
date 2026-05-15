@@ -97,29 +97,23 @@ void encoder_menu(GtkWidget *parent) {
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);
   char title[64];
-
   switch (controller) {
   case NO_CONTROLLER:
     snprintf(title, 64, "%s - No Encoders", PGNAME);
     break;
-
   case CONTROLLER1:
     snprintf(title, 64, "%s - Controller 1 Encoder Actions", PGNAME);
     break;
-
   case CONTROLLER2_V1:
     snprintf(title, 64, "%s - Controller 2 V1 Encoder Actions", PGNAME);
     break;
-
   case CONTROLLER2_V2:
     snprintf(title, 64, "%s - Controller 2 V2 Encoder Actions", PGNAME);
     break;
-
   case G2_FRONTPANEL:
     snprintf(title, 64, "%s - G2 FrontPanel Encoder Actions", PGNAME);
     break;
   }
-
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -138,31 +132,25 @@ void encoder_menu(GtkWidget *parent) {
   GtkWidget *default_b = gtk_button_new_with_label("Defaults");
   gtk_widget_set_name(default_b, "close_button");  // same looks as Close button
   g_signal_connect(default_b, "button-press-event", G_CALLBACK(default_cb), NULL);
-
   switch (controller) {
   case CONTROLLER1:
     gtk_grid_attach(GTK_GRID(grid), default_b, 5, 0, 1, 1);
     break;
-
   case CONTROLLER2_V1:
   case CONTROLLER2_V2:
     gtk_grid_attach(GTK_GRID(grid), default_b, 6, 0, 2, 1);
     break;
-
   case G2_FRONTPANEL:
     gtk_grid_attach(GTK_GRID(grid), default_b, 3, 0, 2, 1);
     break;
   }
-
   switch (controller) {
   case NO_CONTROLLER:
     // should never happen
     break;
-
   case CONTROLLER1:
     // 3 vertical single encoders with switches plus VFO
     row = 1;
-
     for (int i = 0; i < 3; i++) {
       // vertical padding
       widget = gtk_label_new("  ");
@@ -188,9 +176,7 @@ void encoder_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), widget, 5, row, 1, 1);
       row++;
     }
-
     break;
-
   case CONTROLLER2_V1:
     // vertical padding
     widget = gtk_label_new("  ");
@@ -198,7 +184,6 @@ void encoder_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), widget, 0, 1, 1, 1);
     // 3 horizontal single encoders with switches
     col = 0;
-
     for (int i = 0; i < 3; i++) {
       widget = gtk_label_new("Switch");
       gtk_widget_set_name(widget, "boldlabel");
@@ -211,9 +196,7 @@ void encoder_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), widget, col, 4, 1, 1);
       col++;
     }
-
     col = 0;
-
     for (int i = 0; i < 3; i++) {
       widget = gtk_label_new("Encoder");
       gtk_widget_set_halign(widget, GTK_ALIGN_END);
@@ -226,7 +209,6 @@ void encoder_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), widget, col, 5, 1, 1);
       col++;
     }
-
     // 1 vertical single encoder with switch
     widget = gtk_label_new("Switch");
     gtk_widget_set_halign(widget, GTK_ALIGN_END);
@@ -245,7 +227,6 @@ void encoder_menu(GtkWidget *parent) {
     g_signal_connect(widget, "button-press-event", G_CALLBACK(encoder_bottom_cb), GINT_TO_POINTER(3));
     gtk_grid_attach(GTK_GRID(grid), widget, 7, 3, 1, 1);
     break;
-
   case CONTROLLER2_V2:
     // vertical padding
     widget = gtk_label_new("  ");
@@ -254,7 +235,6 @@ void encoder_menu(GtkWidget *parent) {
     // 3 horizontal double encoders with switches
     row = 6;
     col = 0;
-
     for (int i = 0; i < 3; i++) {
       widget = gtk_label_new("Switch");
       gtk_widget_set_name(widget, "boldlabel");
@@ -267,10 +247,8 @@ void encoder_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), widget, col, row, 1, 1);
       col++;
     }
-
     row++;
     col = 0;
-
     for (int i = 0; i < 3; i++) {
       widget = gtk_label_new("Top");
       gtk_widget_set_name(widget, "boldlabel");
@@ -283,10 +261,8 @@ void encoder_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), widget, col, row, 1, 1);
       col++;
     }
-
     row++;
     col = 0;
-
     for (int i = 0; i < 3; i++) {
       widget = gtk_label_new("Bottom");
       gtk_widget_set_name(widget, "boldlabel");
@@ -299,7 +275,6 @@ void encoder_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), widget, col, row, 1, 1);
       col++;
     }
-
     row = 2;
     col = 6;
     widget = gtk_label_new("Switch");
@@ -334,7 +309,6 @@ void encoder_menu(GtkWidget *parent) {
     g_signal_connect(widget, "button-press-event", G_CALLBACK(encoder_bottom_cb), GINT_TO_POINTER(3));
     gtk_grid_attach(GTK_GRID(grid), widget, col, row, 1, 1);
     break;
-
   case G2_FRONTPANEL:
     // 2 vertical double encoders with switch, both on the left and on the right side
     // variable i = 0,1 for left, right
@@ -350,7 +324,6 @@ void encoder_menu(GtkWidget *parent) {
     gtk_widget_set_halign(widget, GTK_ALIGN_END);
     gtk_widget_set_valign(widget, GTK_ALIGN_CENTER);
     gtk_grid_attach(GTK_GRID(grid), widget, 3, 1, 2, 1);
-
     for (int i = 0; i < 2; i++) {
       row = 4;
       widget = gtk_label_new("Switch");
@@ -381,7 +354,6 @@ void encoder_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), widget, 2 * i + 1, row++, 1, 1);
       // j counts the encoders, 0...3. Encoders 0,1 are left and 2,3 are right
       row = 4;
-
       for (int j = 2 * i; j < 2 * i + 2; j++) {
         widget = gtk_button_new_with_label(ActionTable[encoders[j].switch_function].str);
         gtk_widget_set_name(widget, "small_button_with_border");
@@ -395,17 +367,14 @@ void encoder_menu(GtkWidget *parent) {
         gtk_widget_set_name(widget, "small_button_with_border");
         g_signal_connect(widget, "button-press-event", G_CALLBACK(encoder_bottom_cb), GINT_TO_POINTER(j));
         gtk_grid_attach(GTK_GRID(grid), widget, 4 * i, row++, 1, 1);
-
         if (j == 2 * i) {
           widget = gtk_label_new("  ");
           gtk_grid_attach(GTK_GRID(grid), widget, 4 * i, row++, 1, 1);
         }
       }
     }
-
     break;
   }
-
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

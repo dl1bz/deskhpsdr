@@ -76,34 +76,23 @@ void flush_fmmod(FMMOD a) {
 void xfmmod(FMMOD a) {
   int i;
   double dp, magdp, peak;
-
   if (a->run) {
     peak = 0.0;
-
     for (i = 0; i < a->size; i++) {
       if (a->ctcss_run) {
         a->tphase += a->tdelta;
-
         if (a->tphase >= TWOPI) { a->tphase -= TWOPI; }
-
         a->out[2 * i + 0] = a->tscale * (a->in[2 * i + 0] + a->ctcss_level * cos(a->tphase));
       }
-
       dp = a->out[2 * i + 0] * a->sdelta;
       a->sphase += dp;
-
       if (a->sphase >= TWOPI) { a->sphase -= TWOPI; }
-
       if (a->sphase <   0.0) { a->sphase += TWOPI; }
-
       a->out[2 * i + 0] = 0.7071 * cos(a->sphase);
       a->out[2 * i + 1] = 0.7071 * sin(a->sphase);
-
       if ((magdp = dp) < 0.0) { magdp = - magdp; }
-
       if (magdp > peak) { peak = magdp; }
     }
-
     //print_deviation ("peakdev.txt", peak, a->samplerate);
     if (a->bp_run) {
       xfircore(a->p);
@@ -187,14 +176,12 @@ void SetTXAFMNC(int channel, int nc) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].fmmod.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = fir_bandpass(a->nc, -a->bp_fc, +a->bp_fc, a->samplerate, 0, 1, 1.0 / (2 * a->size));
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -202,7 +189,6 @@ PORT
 void SetTXAFMMP(int channel, int mp) {
   FMMOD a;
   a = txa[channel].fmmod.p;
-
   if (a->mp != mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);
@@ -215,7 +201,6 @@ void SetTXAFMAFFreqs(int channel, double low, double high) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].fmmod.p;
-
   if (a->f_low != low || a->f_high != high) {
     a->f_low = low;
     a->f_high = high;
@@ -224,6 +209,5 @@ void SetTXAFMAFFreqs(int channel, double low, double high) {
     setImpulse_fircore(a->p, impulse, 1);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }

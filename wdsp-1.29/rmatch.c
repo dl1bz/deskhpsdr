@@ -54,18 +54,14 @@ void xmav(MAV a, int input, double* output) {
   if (a->load >= a->ringmax) {
     a->sum -= a->ring[a->i];
   }
-
   if (a->load < a->ringmax) { a->load++; }
-
   a->ring[a->i] = input;
   a->sum += a->ring[a->i];
-
   if (a->load >= a->ringmin) {
     *output = (double)a->sum / (double)a->load;
   } else {
     *output = a->nom_value;
   }
-
   a->i = (a->i + 1) & a->mask;
 }
 
@@ -104,17 +100,13 @@ void xaamav(AAMAV a, int input, double* output) {
       a->neg += a->ring[a->i];
     }
   }
-
   if (a->load <= a->ringmax) { a->load++; }
-
   a->ring[a->i] = input;
-
   if (a->ring[a->i] >= 0) {
     a->pos += a->ring[a->i];
   } else {
     a->neg -= a->ring[a->i];
   }
-
   if (a->load >= a->ringmin) {
     *output = (double)a->neg / (double)a->pos;
   } else if (a->neg > 0 && a->pos > 0) {
@@ -123,7 +115,6 @@ void xaamav(AAMAV a, int input, double* output) {
   } else {
     *output = a->nom_ratio;
   }
-
   a->i = (a->i + 1) & a->mask;
 }
 
@@ -133,11 +124,8 @@ void calc_rmatch(RMATCH a) {
   int max_ring_insize;
   a->nom_ratio = (double)a->nom_outrate / (double)a->nom_inrate;
   max_ring_insize = (int)(1.0 + (double)a->insize * (1.05 * a->nom_ratio));
-
   if (a->ringsize < 2 * max_ring_insize) { a->ringsize = 2 * max_ring_insize; }
-
   if (a->ringsize < 2 * a->outsize) { a->ringsize = 2 * a->outsize; }
-
   a->ring = (double*) malloc0(a->ringsize * sizeof(complex));
   a->rsize = a->ringsize;
   a->n_ring = a->rsize / 2;
@@ -155,18 +143,14 @@ void calc_rmatch(RMATCH a) {
   InitializeCriticalSectionAndSpinCount(&a->cs_ring, 2500);
   InitializeCriticalSectionAndSpinCount(&a->cs_var,  2500);
   a->ntslew = (int)(a->tslew * a->nom_outrate);
-
   if (a->ntslew + 1 > a->rsize / 2) { a->ntslew = a->rsize / 2 - 1; }
-
   a->cslew = (double*) malloc0((a->ntslew + 1) * sizeof(double));
   dtheta = PI / (double)a->ntslew;
   theta = 0.0;
-
   for (m = 0; m <= a->ntslew; m++) {
     a->cslew[m] = 0.5 * (1.0 - cos(theta));
     theta += dtheta;
   }
-
   a->baux = (double*) malloc0(a->ringsize / 2 * sizeof(complex));
   a->readsamps = 0;
   a->writesamps = 0;
@@ -269,17 +253,13 @@ void control(RMATCH a, int change) {
   }
   EnterCriticalSection(&a->cs_var);
   a->var = a->feed_forward - a->pr_gain * a->av_deviation;
-
   if (a->var > 1.04) { a->var = 1.04; }
-
   if (a->var < 0.96) { a->var = 0.96; }
-
   LeaveCriticalSection(&a->cs_var);
 }
 
 void blend(RMATCH a) {
   int i, j;
-
   for (i = 0, j = a->iout; i <= a->ntslew; i++, j = (j + 1) % a->rsize) {
     a->ring[2 * j + 0] = a->cslew[i] * a->ring[2 * j + 0] + (1.0 - a->cslew[i]) * a->baux[2 * i + 0];
     a->ring[2 * j + 1] = a->cslew[i] * a->ring[2 * j + 1] + (1.0 - a->cslew[i]) * a->baux[2 * i + 1];
@@ -290,7 +270,6 @@ void upslew(RMATCH a, int newsamps) {
   int i, j;
   i = 0;
   j = a->iin;
-
   while (a->ucnt >= 0 && i < newsamps) {
     a->ring[2 * j + 0] *= a->cslew[a->ntslew - a->ucnt];
     a->ring[2 * j + 1] *= a->cslew[a->ntslew - a->ucnt];
@@ -303,29 +282,24 @@ void upslew(RMATCH a, int newsamps) {
 PORT
 void xrmatchIN(void* b, double* in) {
   RMATCH a = (RMATCH)b;
-
   if (InterlockedAnd(&a->run, 1)) {
     int newsamps, first, second, ovfl;
     double var;
     a->v->in = a->in = in;
     EnterCriticalSection(&a->cs_var);
-
     if (!a->force) {
       var = a->var;
     } else {
       var = a->fvar;
     }
-
     LeaveCriticalSection(&a->cs_var);
     newsamps = xvarsamp(a->v, var);
     EnterCriticalSection(&a->cs_ring);
     a->n_ring += newsamps;
-
     if ((ovfl = a->n_ring - a->rsize) > 0) {
       InterlockedIncrement(&a->overflows);
       // a->n_ring = a->rsize / 2;
       a->n_ring = a->rsize; //
-
       if ((a->ntslew + 1) > (a->rsize - a->iout)) {
         first = a->rsize - a->iout;
         second = (a->ntslew + 1) - first;
@@ -333,13 +307,11 @@ void xrmatchIN(void* b, double* in) {
         first = a->ntslew + 1;
         second = 0;
       }
-
       memcpy(a->baux, a->ring + 2 * a->iout, first * sizeof(complex));
       memcpy(a->baux + 2 * first, a->ring, second * sizeof(complex));
       // a->iout = (a->iout + ovfl + a->rsize / 2) % a->rsize;
       a->iout = (a->iout + ovfl) % a->rsize; //
     }
-
     if (newsamps > (a->rsize - a->iin)) {
       first = a->rsize - a->iin;
       second = newsamps - first;
@@ -347,26 +319,18 @@ void xrmatchIN(void* b, double* in) {
       first = newsamps;
       second = 0;
     }
-
     memcpy(a->ring + 2 * a->iin, a->resout, first * sizeof(complex));
     memcpy(a->ring, a->resout + 2 * first, second * sizeof(complex));
-
     if (a->ucnt >= 0) { upslew(a, newsamps); }
-
     a->iin = (a->iin + newsamps) % a->rsize;
-
     if (ovfl > 0) { blend(a); }
-
     if (!a->control_flag) {
       a->writesamps += a->insize;
-
       if ((a->readsamps >= a->read_startup) && (a->writesamps >= a->write_startup)) {
         a->control_flag = 1;
       }
     }
-
     if (a->control_flag) { control(a, a->insize); }
-
     LeaveCriticalSection(&a->cs_ring);
   }
 }
@@ -374,7 +338,6 @@ void xrmatchIN(void* b, double* in) {
 void dslew(RMATCH a) {
   int i, j, k, n;
   int zeros, first, second;
-
   if (a->n_ring > a->ntslew + 1) {
     i = (a->iout + (a->n_ring - (a->ntslew + 1))) % a->rsize;
     j = a->ntslew;
@@ -386,13 +349,11 @@ void dslew(RMATCH a) {
     k = a->n_ring;
     n = 0;
   }
-
   while (k > 0 && j >= 0) {
     if (k == 1) {
       a->dlast[0] = a->ring[2 * i + 0];
       a->dlast[1] = a->ring[2 * i + 1];
     }
-
     a->ring[2 * i + 0] *= a->cslew[j];
     a->ring[2 * i + 1] *= a->cslew[j];
     i = (i + 1) % a->rsize;
@@ -400,7 +361,6 @@ void dslew(RMATCH a) {
     k--;
     n++;
   }
-
   while (j >= 0) {
     a->ring[2 * i + 0] = a->dlast[0] * a->cslew[j];
     a->ring[2 * i + 1] = a->dlast[1] * a->cslew[j];
@@ -408,7 +368,6 @@ void dslew(RMATCH a) {
     j--;
     n++;
   }
-
   // zeros = a->outsize + a->rsize / 2 - n;
   if ((zeros = a->outsize - n) > 0) { //
     //
@@ -419,12 +378,10 @@ void dslew(RMATCH a) {
       first = zeros;
       second = 0;
     }
-
     memset(a->ring + 2 * i, 0, first  * sizeof(complex));
     memset(a->ring,     0, second * sizeof(complex));
     n += zeros; //
   } //
-
   // a->n_ring = a->outsize + a->rsize / 2;
   a->n_ring = n; //
   // a->iin = (a->iout + a->outsize + a->rsize/2) % a->rsize;
@@ -434,18 +391,15 @@ void dslew(RMATCH a) {
 PORT
 void xrmatchOUT(void* b, double* out) {
   RMATCH a = (RMATCH)b;
-
   if (InterlockedAnd(&a->run, 1)) {
     int first, second;
     a->out = out;
     EnterCriticalSection(&a->cs_ring);
-
     if (a->n_ring < a->outsize) {
       dslew(a);
       a->ucnt = a->ntslew;
       InterlockedIncrement(&a->underflows);
     }
-
     if (a->outsize > (a->rsize - a->iout)) {
       first = a->rsize - a->iout;
       second = a->outsize - first;
@@ -453,24 +407,19 @@ void xrmatchOUT(void* b, double* out) {
       first = a->outsize;
       second = 0;
     }
-
     memcpy(a->out, a->ring + 2 * a->iout, first * sizeof(complex));
     memcpy(a->out + 2 * first, a->ring, second * sizeof(complex));
     a->iout = (a->iout + a->outsize) % a->rsize;
     a->n_ring -= a->outsize;
     a->dlast[0] = a->out[2 * (a->outsize - 1) + 0];
     a->dlast[1] = a->out[2 * (a->outsize - 1) + 1];
-
     if (!a->control_flag) {
       a->readsamps += a->outsize;
-
       if ((a->readsamps >= a->read_startup) && (a->writesamps >= a->write_startup)) {
         a->control_flag = 1;
       }
     }
-
     if (a->control_flag) { control(a, -(a->outsize)); }
-
     LeaveCriticalSection(&a->cs_ring);
   }
 }
@@ -622,18 +571,14 @@ void setRMatchSlewTime1(void* b, double slew_time) {
   _aligned_free(a->cslew);
   a->tslew = slew_time;
   a->ntslew = (int)(a->tslew * a->nom_outrate);
-
   if (a->ntslew + 1 > a->rsize / 2) { a->ntslew = a->rsize / 2 - 1; }
-
   a->cslew = (double*)malloc0((a->ntslew + 1) * sizeof(double));
   dtheta = PI / (double)a->ntslew;
   theta = 0.0;
-
   for (m = 0; m <= a->ntslew; m++) {
     a->cslew[m] = 0.5 * (1.0 - cos(theta));
     theta += dtheta;
   }
-
   InterlockedBitTestAndSet(&a->run, 0);
 }
 

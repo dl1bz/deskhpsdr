@@ -71,10 +71,8 @@ void flush_snotch(SNOTCH a) {
 
 void xsnotch(SNOTCH a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i;
-
     for (i = 0; i < a->size; i++) {
       a->x0 = a->in[2 * i + 0];
       a->out[2 * i + 0] = a->a0 * a->x0 + a->a1 * a->x1 + a->a2 * a->x2 + a->b1 * a->y1 + a->b2 * a->y2;
@@ -86,7 +84,6 @@ void xsnotch(SNOTCH a) {
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -134,25 +131,21 @@ void SetSNCTCSSRun(SNOTCH a, int run) {
 void calc_speak(SPEAK a) {
   double ratio;
   double f_corr, g_corr, bw_corr, bw_parm, A, f_min;
-
   switch (a->design) {
   case 0:
     ratio = a->bw / a->f;
-
     switch (a->nstages) {
     case 4:
       bw_parm = 2.4;
       f_corr  = 1.0 - 0.160 * ratio + 1.440 * ratio * ratio;
       g_corr = 1.0 - 1.003 * ratio + 3.990 * ratio * ratio;
       break;
-
     default:
       bw_parm = 1.0;
       f_corr  = 1.0;
       g_corr = 1.0;
       break;
     }
-
     {
       double fn, qk, qr, csn;
       a->fgain = a->gain / g_corr;
@@ -166,14 +159,10 @@ void calc_speak(SPEAK a) {
       a->b1 = 2.0 * qr * csn;
       a->b2 = - qr * qr;
     }
-
     break;
-
   case 1:
     if (a->f < 200.0) { a->f = 200.0; }
-
     ratio = a->bw / a->f;
-
     switch (a->nstages) {
     case 4:
       bw_parm = 5.0;
@@ -181,7 +170,6 @@ void calc_speak(SPEAK a) {
       A = 2.5;
       f_min = 50.0;
       break;
-
     default:
       bw_parm = 1.0;
       bw_corr = 1.0;
@@ -189,12 +177,9 @@ void calc_speak(SPEAK a) {
       f_min = 50.0;
       break;
     }
-
     {
       double w0, sn, c, den;
-
       if (a->f < f_min) { a->f = f_min; }
-
       w0 = TWOPI * a->f / (double)a->rate;
       sn = sin(w0);
       a->cbw = bw_corr * a->f;
@@ -207,10 +192,8 @@ void calc_speak(SPEAK a) {
       a->b2 = - (1 - c / A) / den;
       a->fgain = a->gain / pow(A * A, (double)a->nstages);
     }
-
     break;
   }
-
   flush_speak(a);
 }
 
@@ -251,7 +234,6 @@ void destroy_speak(SPEAK a) {
 
 void flush_speak(SPEAK a) {
   int i;
-
   for (i = 0; i < a->nstages; i++) {
     a->x1[2 * i + 0] = a->x2[2 * i + 0] = a->y1[2 * i + 0] = a->y2[2 * i + 0] = 0.0;
     a->x1[2 * i + 1] = a->x2[2 * i + 1] = a->y1[2 * i + 1] = a->y2[2 * i + 1] = 0.0;
@@ -260,17 +242,13 @@ void flush_speak(SPEAK a) {
 
 void xspeak(SPEAK a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, j, n;
-
     for (i = 0; i < a->size; i++) {
       for (j = 0; j < 2; j++) {
         a->x0[j] = a->fgain * a->in[2 * i + j];
-
         for (n = 0; n < a->nstages; n++) {
           if (n > 0) { a->x0[2 * n + j] = a->y0[2 * (n - 1) + j]; }
-
           a->y0[2 * n + j]  = a->a0 * a->x0[2 * n + j]
                               + a->a1 * a->x1[2 * n + j]
                               + a->a2 * a->x2[2 * n + j]
@@ -281,14 +259,12 @@ void xspeak(SPEAK a) {
           a->x2[2 * n + j] = a->x1[2 * n + j];
           a->x1[2 * n + j] = a->x0[2 * n + j];
         }
-
         a->out[2 * i + j] = a->y0[2 * (a->nstages - 1) + j];
       }
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -358,7 +334,6 @@ void calc_mpeak(MPEAK a) {
   int i;
   a->tmp = (double*) malloc0(a->size * sizeof(complex));
   a->mix = (double*) malloc0(a->size * sizeof(complex));
-
   for (i = 0; i < a->npeaks; i++) {
     a->pfil[i] = create_speak(1,
                               a->size,
@@ -375,11 +350,9 @@ void calc_mpeak(MPEAK a) {
 
 void decalc_mpeak(MPEAK a) {
   int i;
-
   for (i = 0; i < a->npeaks; i++) {
     destroy_speak(a->pfil[i]);
   }
-
   _aligned_free(a->mix);
   _aligned_free(a->tmp);
 }
@@ -421,7 +394,6 @@ void destroy_mpeak(MPEAK a) {
 
 void flush_mpeak(MPEAK a) {
   int i;
-
   for (i = 0; i < a->npeaks; i++) {
     flush_speak(a->pfil[i]);
   }
@@ -429,26 +401,21 @@ void flush_mpeak(MPEAK a) {
 
 void xmpeak(MPEAK a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, j;
     memset(a->mix, 0, a->size * sizeof(complex));
-
     for (i = 0; i < a->npeaks; i++) {
       if (a->enable[i]) {
         xspeak(a->pfil[i]);
-
         for (j = 0; j < 2 * a->size; j++) {
           a->mix[j] += a->tmp[j];
         }
       }
     }
-
     memcpy(a->out, a->mix, a->size * sizeof(complex));
   } else if (a->in != a->out) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -587,35 +554,28 @@ void flush_phrot(PHROT a) {
 
 void xphrot(PHROT a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->reverse) {
     for (int i = 0; i < a->size; i++) {
       a->in[2 * i + 0] = -a->in[2 * i + 0];
     }
   }
-
   if (a->run) {
     int i, n;
-
     for (i = 0; i < a->size; i++) {
       a->x0[0] = a->in[2 * i + 0];
-
       for (n = 0; n < a->nstages; n++) {
         if (n > 0) { a->x0[n] = a->y0[n - 1]; }
-
         a->y0[n]  = a->b0 * a->x0[n]
                     + a->b1 * a->x1[n]
                     - a->a1 * a->y1[n];
         a->y1[n] = a->y0[n];
         a->x1[n] = a->x0[n];
       }
-
       a->out[2 * i + 0] = a->y0[a->nstages - 1];
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -646,9 +606,7 @@ void SetTXAPHROTRun(int channel, int run) {
   PHROT a = txa[channel].phrot.p;
   EnterCriticalSection(&a->cs_update);
   a->run = run;
-
   if (a->run) { flush_phrot(a); }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -736,7 +694,6 @@ void destroy_bqlp(BQLP a) {
 
 void flush_bqlp(BQLP a) {
   int i;
-
   for (i = 0; i < a->nstages; i++) {
     a->x1[2 * i + 0] = a->x2[2 * i + 0] = a->y1[2 * i + 0] = a->y2[2 * i + 0] = 0.0;
     a->x1[2 * i + 1] = a->x2[2 * i + 1] = a->y1[2 * i + 1] = a->y2[2 * i + 1] = 0.0;
@@ -745,17 +702,13 @@ void flush_bqlp(BQLP a) {
 
 void xbqlp(BQLP a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, j, n;
-
     for (i = 0; i < a->size; i++) {
       for (j = 0; j < 2; j++) {
         a->x0[j] = a->gain * a->in[2 * i + j];
-
         for (n = 0; n < a->nstages; n++) {
           if (n > 0) { a->x0[2 * n + j] = a->y0[2 * (n - 1) + j]; }
-
           a->y0[2 * n + j] = a->a0 * a->x0[2 * n + j]
                              + a->a1 * a->x1[2 * n + j]
                              + a->a2 * a->x2[2 * n + j]
@@ -766,14 +719,12 @@ void xbqlp(BQLP a) {
           a->x2[2 * n + j] = a->x1[2 * n + j];
           a->x1[2 * n + j] = a->x0[2 * n + j];
         }
-
         a->out[2 * i + j] = a->y0[2 * (a->nstages - 1) + j];
       }
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -848,7 +799,6 @@ void destroy_dbqlp(BQLP a) {
 
 void flush_dbqlp(BQLP a) {
   int i;
-
   for (i = 0; i < a->nstages; i++) {
     a->x1[i] = a->x2[i] = a->y1[i] = a->y2[i] = 0.0;
   }
@@ -856,16 +806,12 @@ void flush_dbqlp(BQLP a) {
 
 void xdbqlp(BQLP a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, n;
-
     for (i = 0; i < a->size; i++) {
       a->x0[0] = a->gain * a->in[i];
-
       for (n = 0; n < a->nstages; n++) {
         if (n > 0) { a->x0[n] = a->y0[n - 1]; }
-
         a->y0[n] = a->a0 * a->x0[n]
                    + a->a1 * a->x1[n]
                    + a->a2 * a->x2[n]
@@ -876,13 +822,11 @@ void xdbqlp(BQLP a) {
         a->x2[n] = a->x1[n];
         a->x1[n] = a->x0[n];
       }
-
       a->out[i] = a->y0[a->nstages - 1];
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(double));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -962,7 +906,6 @@ void destroy_bqbp(BQBP a) {
 
 void flush_bqbp(BQBP a) {
   int i;
-
   for (i = 0; i < a->nstages; i++) {
     a->x1[2 * i + 0] = a->x2[2 * i + 0] = a->y1[2 * i + 0] = a->y2[2 * i + 0] = 0.0;
     a->x1[2 * i + 1] = a->x2[2 * i + 1] = a->y1[2 * i + 1] = a->y2[2 * i + 1] = 0.0;
@@ -971,17 +914,13 @@ void flush_bqbp(BQBP a) {
 
 void xbqbp(BQBP a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, j, n;
-
     for (i = 0; i < a->size; i++) {
       for (j = 0; j < 2; j++) {
         a->x0[j] = a->gain * a->in[2 * i + j];
-
         for (n = 0; n < a->nstages; n++) {
           if (n > 0) { a->x0[2 * n + j] = a->y0[2 * (n - 1) + j]; }
-
           a->y0[2 * n + j] = a->a0 * a->x0[2 * n + j]
                              + a->a1 * a->x1[2 * n + j]
                              + a->a2 * a->x2[2 * n + j]
@@ -992,14 +931,12 @@ void xbqbp(BQBP a) {
           a->x2[2 * n + j] = a->x1[2 * n + j];
           a->x1[2 * n + j] = a->x0[2 * n + j];
         }
-
         a->out[2 * i + j] = a->y0[2 * (a->nstages - 1) + j];
       }
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -1078,7 +1015,6 @@ void destroy_dbqbp(BQBP a) {
 
 void flush_dbqbp(BQBP a) {
   int i;
-
   for (i = 0; i < a->nstages; i++) {
     a->x1[i] = a->x2[i] = a->y1[i] = a->y2[i] = 0.0;
   }
@@ -1086,16 +1022,12 @@ void flush_dbqbp(BQBP a) {
 
 void xdbqbp(BQBP a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, n;
-
     for (i = 0; i < a->size; i++) {
       a->x0[0] = a->gain * a->in[i];
-
       for (n = 0; n < a->nstages; n++) {
         if (n > 0) { a->x0[n] = a->y0[n - 1]; }
-
         a->y0[n] = a->a0 * a->x0[n]
                    + a->a1 * a->x1[n]
                    + a->a2 * a->x2[n]
@@ -1106,13 +1038,11 @@ void xdbqbp(BQBP a) {
         a->x2[n] = a->x1[n];
         a->x1[n] = a->x0[n];
       }
-
       a->out[i] = a->y0[a->nstages - 1];
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(double));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -1185,31 +1115,25 @@ void flush_sphp(SPHP a) {
 
 void xsphp(SPHP a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, j, n;
-
     for (i = 0; i < a->size; i++) {
       for (j = 0; j < 2; j++) {
         a->x0[j] = a->in[2 * i + j];
-
         for (n = 0; n < a->nstages; n++) {
           if (n > 0) { a->x0[2 * n + j] = a->y0[2 * (n - 1) + j]; }
-
           a->y0[2 * n + j] = a->b0 * a->x0[2 * n + j]
                              + a->b1 * a->x1[2 * n + j]
                              - a->a1 * a->y1[2 * n + j];
           a->y1[2 * n + j] = a->y0[2 * n + j];
           a->x1[2 * n + j] = a->x0[2 * n + j];
         }
-
         a->out[2 * i + j] = a->y0[2 * (a->nstages - 1) + j];
       }
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -1283,29 +1207,23 @@ void flush_dsphp(SPHP a) {
 
 void xdsphp(SPHP a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, n;
-
     for (i = 0; i < a->size; i++) {
       a->x0[0] = a->in[i];
-
       for (n = 0; n < a->nstages; n++) {
         if (n > 0) { a->x0[n] = a->y0[n - 1]; }
-
         a->y0[n] = a->b0 * a->x0[n]
                    + a->b1 * a->x1[n]
                    - a->a1 * a->y1[n];
         a->y1[n] = a->y0[n];
         a->x1[n] = a->x0[n];
       }
-
       a->out[i] = a->y0[a->nstages - 1];
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(double));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 

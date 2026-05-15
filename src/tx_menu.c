@@ -160,7 +160,6 @@ static int check_file(int p) {
   char DateiName[64];
   snprintf(DateiName, 64, "audio_profile_%d.prop", p);
   FILE *file = fopen(DateiName, "r");  // Versucht, die Datei im Lesemodus zu öffnen
-
   if (file) {
     t_print("%s: Access file %s successful.\n", __func__, DateiName);
     fclose(file);  // Datei wurde erfolgreich geöffnet, also existiert sie
@@ -175,7 +174,6 @@ void audioSaveProfile(const char* filename) {
   if (!filename || !*filename) {
     return;
   }
-
   clearProperties();
   // save only for LSB
   int i = modeLSB;
@@ -192,7 +190,6 @@ void audioSaveProfile(const char* filename) {
   SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
   SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
   SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
-
   for (int j = 0; j < 11; j++) {
     SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
     SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
@@ -202,9 +199,7 @@ void audioSaveProfile(const char* filename) {
     SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
     SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
   }
-
 #if defined (__EQ12__)
-
   for (int jj = 11; jj < 13; jj++) {
     SetPropF2("modeset.%d.txeq.%d", i, jj,         mode_settings[i].tx_eq_gain[jj]);
     SetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
@@ -214,7 +209,6 @@ void audioSaveProfile(const char* filename) {
     SetPropF2("modeset.%d.cfc_lvl.%d", i, jj,      mode_settings[i].cfc_lvl[jj]);
     SetPropF2("modeset.%d.cfc_post.%d", i, jj,     mode_settings[i].cfc_post[jj]);
   }
-
 #endif
   SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   SetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
@@ -227,23 +221,18 @@ void audioSaveProfile(const char* filename) {
 static void audioLoadProfile(const char* filename) {
   int i = modeLSB;
   char pg_name[16];
-
   // snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
-
   if (!filename || access(filename, F_OK) != 0) {
     return;
   }
-
   t_print("%s: file=%s mode=%d\n", __func__, filename, i);
   loadProperties(filename);
   GetPropS0("PGNAME",                              pg_name);
-
   if (strcmp(pg_name, PGNAME) != 0) {
     t_print("%s: Load file %s failed, not deskHPSDR format\n", __func__, filename);
     gui_show_error_dialog("ERROR: Not an deskHPSDR audio profile");
     return;
   }
-
   GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
   GetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
   GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
@@ -253,7 +242,6 @@ static void audioLoadProfile(const char* filename) {
   GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
   GetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
   GetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
-
   for (int j = 0; j < 11; j++) {
     GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
     GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
@@ -263,9 +251,7 @@ static void audioLoadProfile(const char* filename) {
     GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
     GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
   }
-
 #if defined (__EQ12__)
-
   for (int jj = 11; jj < 13; jj++) {
     GetPropF2("modeset.%d.txeq.%d", i, jj,         mode_settings[i].tx_eq_gain[jj]);
     GetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
@@ -275,7 +261,6 @@ static void audioLoadProfile(const char* filename) {
     GetPropF2("modeset.%d.cfc_lvl.%d", i, jj,      mode_settings[i].cfc_lvl[jj]);
     GetPropF2("modeset.%d.cfc_post.%d", i, jj,     mode_settings[i].cfc_post[jj]);
   }
-
 #endif
   GetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   GetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
@@ -287,7 +272,6 @@ static void audioLoadProfile(const char* filename) {
   transmitter->phrot_enable     = mode_settings[i].phrot_enable;
   transmitter->cfc              = mode_settings[i].cfc;
   transmitter->cfc_eq           = mode_settings[i].cfc_eq;
-
   for (int j = 0; j < 11; j++) {
     transmitter->eq_gain[j]     = mode_settings[i].tx_eq_gain[j];
     transmitter->eq_freq[j]     = mode_settings[i].tx_eq_freq[j];
@@ -295,9 +279,7 @@ static void audioLoadProfile(const char* filename) {
     transmitter->cfc_lvl[j]     = mode_settings[i].cfc_lvl[j];
     transmitter->cfc_post[j]    = mode_settings[i].cfc_post[j];
   }
-
 #if defined (__EQ12__)
-
   for (int jj = 11; jj < 13; jj++) {
     transmitter->eq_gain[jj]    = mode_settings[i].tx_eq_gain[jj];
     transmitter->eq_freq[jj]    = mode_settings[i].tx_eq_freq[jj];
@@ -305,7 +287,6 @@ static void audioLoadProfile(const char* filename) {
     transmitter->cfc_lvl[jj]    = mode_settings[i].cfc_lvl[jj];
     transmitter->cfc_post[jj]   = mode_settings[i].cfc_post[jj];
   }
-
 #endif
   GetPropI0("transmitter.tx_filter_high",          tx_filter_high);
   GetPropI0("transmitter.tx_filter_low",           tx_filter_low);
@@ -327,12 +308,10 @@ static void audioLoadProfile(const char* filename) {
 
 static char *ensure_prop_extension(const char* path) {
   if (!path) { return NULL; }
-
   // Falls schon .prop
   if (g_str_has_suffix(path, ".prop")) {
     return g_strdup(path);
   }
-
   // Sonst .prop anhängen
   return g_strconcat(path, ".prop", NULL);
 }
@@ -340,19 +319,15 @@ static char *ensure_prop_extension(const char* path) {
 static void save_native_response_cb(GtkNativeDialog *ndlg, gint response_id, gpointer user_data) {
   if (response_id == GTK_RESPONSE_ACCEPT) {
     char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(ndlg));
-
     if (filename && *filename) {
       char *fixed = ensure_prop_extension(filename);
-
       if (fixed) {
         audioSaveProfile(fixed);
         g_free(fixed);
       }
     }
-
     g_free(filename);
   }
-
   g_object_unref(ndlg);
 }
 
@@ -364,12 +339,10 @@ static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
                    GTK_FILE_CHOOSER_ACTION_SAVE,
                    "_Save",
                    "_Cancel");
-
   // Start im workdir
   if (*workdir) {
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(native), workdir);
   }
-
   // Default-Dateiname vorschlagen
   {
     char defname[64];
@@ -393,14 +366,11 @@ static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
 static void load_native_response_cb(GtkNativeDialog *ndlg, gint response_id, gpointer user_data) {
   if (response_id == GTK_RESPONSE_ACCEPT) {
     char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(ndlg));
-
     if (filename && *filename) {
       audioLoadProfile(filename);
     }
-
     g_free(filename);
   }
-
   g_object_unref(ndlg);
 }
 
@@ -412,12 +382,10 @@ static void audio_profile_load_cb(GtkWidget *widget, gpointer user_data) {
                    GTK_FILE_CHOOSER_ACTION_OPEN,
                    "_Open",
                    "_Cancel");
-
   // Start im workdir
   if (*workdir) {
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(native), workdir);
   }
-
   // Filter *.prop
   GtkFileFilter *filter = gtk_file_filter_new();
   gtk_file_filter_set_name(filter, "Audio Profile (*.prop)");
@@ -430,14 +398,12 @@ static void audio_profile_load_cb(GtkWidget *widget, gpointer user_data) {
 
 static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
-
   if (!check_file(mic_prof.nr)) {
     gtk_widget_set_sensitive(load_button, FALSE);
     return;
   } else {
     gtk_widget_set_sensitive(load_button, TRUE);
   }
-
   // Force the GUI to update
   gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
   // Flush the GDK event queue to force GUI updates
@@ -445,7 +411,6 @@ static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
   int _mode = vfo_get_tx_mode();
   char DateiName[64];
   snprintf(DateiName, sizeof(DateiName), "audio_profile_%d.prop", mic_prof.nr);
-
   if (_mode < 3) {
     if (!access(DateiName, F_OK)) {
       audioLoadProfile(DateiName);
@@ -465,7 +430,6 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
   int _mode = vfo_get_tx_mode();
 #if !defined (__APPLE__)
   int _audioindex = 0;
-
   if (n_input_devices > 0) {
     for (int i = 0; i < n_input_devices; i++) {
       if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
@@ -473,9 +437,7 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
       }
     }
   }
-
 #endif
-
   if (_mode < 3) {
 #if !defined (__APPLE__)
     g_strlcpy(mic_prof.desc[mic_prof.nr], input_devices[_audioindex].description, sizeof(mic_prof.desc[mic_prof.nr]));
@@ -503,18 +465,15 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
 static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));    // Rückgabe als Index
-
   if (i != mic_prof.nr) {
     mic_prof.nr = i;
   }
-
   if (!check_file(mic_prof.nr)) {
     gtk_widget_set_sensitive(load_button, FALSE);
     return;
   } else {
     gtk_widget_set_sensitive(load_button, TRUE);
   }
-
   // Force the GUI to update
   gtk_widget_queue_draw(widget);  // Request a redraw of the button (optional but can help)
   // Flush the GDK event queue to force GUI updates
@@ -547,7 +506,6 @@ gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer d
     gtk_button_clicked(GTK_BUTTON(data));    // data ist hier der Load-Button
     return TRUE;
   }
-
   return FALSE;
 }
 
@@ -638,7 +596,6 @@ static void cleanup(void) {
     active_menu  = NO_MENU;
     radio_save_state();
     int _mode = vfo_get_tx_mode();
-
     if (_mode < 3 && can_transmit) {
       //  char fn[64];
       //  snprintf(fn, sizeof(fn), "audio_profile_%d.prop", mic_prof.nr);
@@ -684,30 +641,24 @@ static void sel_cb(GtkWidget *widget, gpointer data) {
   //
   int c = GPOINTER_TO_INT(data);
   GtkWidget *my_container;
-
   switch (c) {
   case TX_CONTAINER:
     my_container = tx_container;
     break;
-
   case CFC_CONTAINER:
     my_container = cfc_container;
     break;
-
   case DEXP_CONTAINER:
     my_container = dexp_container;
     break;
-
   case PEAKS_CONTAINER:
     my_container = peaks_container;
     break;
-
   default:
     // We should never come here
     my_container = NULL;
     break;
   }
-
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     gtk_widget_show(my_container);
     which_container = c;
@@ -729,100 +680,77 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
   int    vi = (v >= 0.0) ? (int)(v + 0.5) : (int)(v - 0.5);
   int d = c & 0xFF00;   // The command class, TX/CFCFREQ/CFCLVL/CFCPOST/DEXP
   int e = c & 0x00FF;   // channel No. for CRCFREQ/CFCLVL/CFCPOST
-
   if (d == TX) {
     switch (c) {
     case TX_LINEIN:
       linein_gain = v;
       break;
-
     case TX_FPS:
       transmitter->fps = vi;
       tx_set_framerate(transmitter);
       break;
-
     case TX_COMP:
       transmitter->compressor_level = vi;
-
       if (can_transmit && display_sliders) {
         update_slider_bbcompr_scale(TRUE);
         update_slider_bbcompr_button(TRUE);
       }
-
       mode_settings[mode].compressor_level = vi;
       copy_mode_settings(mode);
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_FILTER_LOW:
       tx_filter_low = vi;
       tx_set_filter(transmitter);
       break;
-
     case TX_FILTER_HIGH:
       tx_filter_high = vi;
       tx_set_filter(transmitter);
       break;
-
     case TX_PAN_LOW:
       transmitter->panadapter_low = vi;
       break;
-
     case TX_PAN_HIGH:
       transmitter->panadapter_high = vi;
       break;
-
     case TX_PAN_STEP:
       transmitter->panadapter_step = vi;
       break;
-
     case TX_AM_CARRIER:
       transmitter->am_carrier_level = v;
       tx_set_am_carrier_level(transmitter);
       break;
-
     case TX_TUNE_DRIVE:
       transmitter->tune_drive = vi;
-
       if (bs != NULL) {
         bs->tune_drive = transmitter->tune_drive;
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
       }
-
       if (can_transmit && display_sliders) {
         if (transmitter->tune_use_drive) {
           transmitter->tune_use_drive = 0;
         }
-
         update_slider_tune_drive_scale(TRUE);
       }
-
       break;
-
     case TX_DIGI_DRIVE:
       drive_digi_max = v;
-
       if ((mode == modeDIGL || mode == modeDIGU) && transmitter->drive > v + 0.5) {
         set_drive(v);
       }
-
       break;
-
     case TX_LEVELER_GAIN:
       transmitter->lev_gain = v;
-
       if (can_transmit && display_sliders) {
         update_slider_lev_scale(TRUE);
         update_slider_lev_button(TRUE);
       }
-
       mode_settings[mode].lev_gain = v;
       copy_mode_settings(mode);
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_LEVELER_DECAY:
       transmitter->lev_decay = (int) v;
       // mode_settings[mode].lev_decay = (int) v;
@@ -830,7 +758,6 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_PHROT_STAGE:
       transmitter->phrot_stage = (int) v;
       // mode_settings[mode].phrot_stage = (int) v;
@@ -838,7 +765,6 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_PHROT_FREQ:
       transmitter->phrot_freq = v;
       // mode_settings[mode].phrot_freq = v;
@@ -846,14 +772,12 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_ADDGAIN_GAIN:
       transmitter->addgain_gain = v;
       tx_set_mic_gain(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       update_slider_preamp_button(TRUE);
       break;
-
     case TX_SWR_ALARM:
       transmitter->swr_alarm = v;
       break;
@@ -885,49 +809,41 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       mode_settings[mode].dexp_tau = 0.001 * v;
       copy_mode_settings(mode);
       break;
-
     case DEXP_ATTACK:
       transmitter->dexp_attack = 0.001 * v;
       mode_settings[mode].dexp_attack = 0.001 * v;
       copy_mode_settings(mode);
       break;
-
     case DEXP_RELEASE:
       transmitter->dexp_release = 0.001 * v;
       mode_settings[mode].dexp_release = 0.001 * v;
       copy_mode_settings(mode);
       break;
-
     case DEXP_HOLD:
       transmitter->dexp_hold = 0.001 * v;
       mode_settings[mode].dexp_hold = 0.001 * v;
       copy_mode_settings(mode);
       break;
-
     case DEXP_HYST:
       transmitter->dexp_hyst = v;
       mode_settings[mode].dexp_hyst = v;
       copy_mode_settings(mode);
       break;
-
     case DEXP_TRIGGER:
       transmitter->dexp_trigger = vi;
       mode_settings[mode].dexp_trigger = vi;
       copy_mode_settings(mode);
       break;
-
     case DEXP_FILTER_LOW:
       transmitter->dexp_filter_low = vi;
       mode_settings[mode].dexp_filter_low = vi;
       copy_mode_settings(mode);
       break;
-
     case DEXP_FILTER_HIGH:
       transmitter->dexp_filter_high = vi;
       mode_settings[mode].dexp_filter_high = vi;
       copy_mode_settings(mode);
       break;
-
     case DEXP_EXP:
       // Note this is in dB
       transmitter->dexp_exp = vi;
@@ -935,7 +851,6 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       copy_mode_settings(mode);
       break;
     }
-
     tx_set_dexp(transmitter);
   }
 }
@@ -948,14 +863,12 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
   int c = GPOINTER_TO_INT(data);
   int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   int d = c & 0xFF00;
-
   if (d == TX) {
     // TX menu check buttons
     switch (c) {
     case TX_DISPLAY_FILLED:
       transmitter->display_filled = v;
       break;
-
     case TX_COMP_ENABLE:
       transmitter->compressor = v;
       mode_settings[mode].compressor = transmitter->compressor;
@@ -963,7 +876,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_LEVELER_ENABLE:
       transmitter->lev_enable = v;
       mode_settings[mode].lev_enable = transmitter->lev_enable;
@@ -971,7 +883,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_PHROT_ENABLE:
       transmitter->phrot_enable = v;
       mode_settings[mode].phrot_enable = transmitter->phrot_enable;
@@ -979,57 +890,46 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_CESSB_ENABLE:
       transmitter->cessb_enable = v;
-
       // mode_settings[mode].cessb_enable = transmitter->cessb_enable;
       // copy_mode_settings(mode);
       if (transmitter->low_latency) {
         transmitter->low_latency = 0;
         tx_set_latency(transmitter);
       }
-
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_CTFMODE:
       transmitter->eq_ctfmode = v;
       tx_set_eq_ctfmode(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_ADDGAIN_ENABLE:
       transmitter->addgain_enable = (int) v;
       tx_set_mic_gain(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_CTCSS_ENABLE:
       transmitter->ctcss_enabled = v;
       tx_set_ctcss(transmitter);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_TUNE_USE_DRIVE:
       transmitter->tune_use_drive = v;
       update_slider_tune_drive_scale(TRUE);
       break;
-
     case TX_DRIVE_PER_BAND:
       transmitter->drive_per_band = v;
       update_slider_tune_drive_scale(TRUE);
       break;
-
     case TX_SWR_PROTECTION:
       transmitter->swr_protection = v;
       break;
-
     case TX_USE_RX_FILTER:
       transmitter->use_rx_filter = v;
       tx_set_filter(transmitter);
-
       if (v) {
         gtk_widget_set_sensitive(tx_spin_low, FALSE);
         gtk_widget_set_sensitive(tx_spin_high, FALSE);
@@ -1037,7 +937,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
         gtk_widget_set_sensitive(tx_spin_low, TRUE);
         gtk_widget_set_sensitive(tx_spin_high, TRUE);
       }
-
 #if defined (__CPYMODE__)
       mode_settings[mode].use_rx_filter = v;
       copy_mode_settings(mode);
@@ -1045,7 +944,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       // vfo_update();
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case TX_LOCAL_MIC:
       if (v) {
         if (audio_open_input() == 0) {
@@ -1060,15 +958,12 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
           audio_close_input();
         }
       }
-
 #if defined (__CPYMODE__)
-
       if (transmitter->local_microphone) {
         mode_settings[mode].local_microphone = 1;
       } else {
         mode_settings[mode].local_microphone = 0;
       }
-
       t_print("DL1BZ: mode: %d transmitter->local_microphone: %d mode_settings[%d].local_microphone %d\n",
               mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
       copy_mode_settings(mode);
@@ -1076,7 +971,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
 #endif
       update_slider_local_mic_button();
       break;
-
     case TX_FM_EMP:
       transmitter->pre_emphasize = !v;
       tx_set_pre_emphasize(transmitter);
@@ -1091,7 +985,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       copy_mode_settings(mode);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case CFC_EQ:
       transmitter->cfc_eq = v;
       mode_settings[mode].cfc_eq = v;
@@ -1099,7 +992,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       g_idle_add(ext_vfo_update, NULL);
       break;
     }
-
     tx_set_compressor(transmitter);
   } else if (d == DEXP) {
     // DEXP menu check buttons
@@ -1110,14 +1002,12 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
       copy_mode_settings(mode);
       g_idle_add(ext_vfo_update, NULL);
       break;
-
     case DEXP_FILTER:
       transmitter->dexp_filter = v;
       mode_settings[mode].dexp_filter = v;
       copy_mode_settings(mode);
       break;
     }
-
     tx_set_dexp(transmitter);
   }
 }
@@ -1127,24 +1017,20 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
 //
 static void mic_in_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (i) {
   case 0: // Mic In, but no boost
     mic_boost = 0;
     mic_linein = 0;
     break;
-
   case 1: // Mic In with boost
     mic_boost = 1;
     mic_linein = 0;
     break;
-
   case 2: // Line in
     mic_boost = 0;
     mic_linein = 1;
     break;
   }
-
   schedule_transmit_specific();
 }
 
@@ -1162,18 +1048,15 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int _mode = vfo_get_tx_mode();
 #endif
   t_print("local_input_changed_cb: %d %s\n", i, input_devices[i].name);
-
   if (transmitter->local_microphone) {
     audio_close_input();
   }
-
   g_mutex_lock(&copy_string_mutex);
   g_strlcpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
 #if defined (__CPYMODE__)
   g_strlcpy(mode_settings[_mode].microphone_name, input_devices[i].name, sizeof(mode_settings[_mode].microphone_name));
 #endif
   g_mutex_unlock(&copy_string_mutex);
-
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {
       transmitter->local_microphone = 0;
@@ -1182,18 +1065,15 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
 #endif
     }
   }
-
 #if defined (__CPYMODE__)
   t_print("%s: mode: %d, mode_settings %s size: %d\n", __func__, _mode, mode_settings[_mode].microphone_name,
           sizeof(mode_settings[_mode].microphone_name));
   copy_mode_settings(_mode);
 #endif
-
   if (n_input_devices > 0) {
     if (flag) {
       update_slider_local_mic_input(i);
     }
-
     update_slider_local_mic_button();
   }
 }
@@ -1201,13 +1081,10 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
 static void tune_drive_step_changed_cb(GtkComboBox *widget, gpointer data) {
   const gchar *id;
   id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(widget));
-
   if (id == NULL) {
     return;
   }
-
   transmitter->tune_drive_step = atoi(id);
-
   if (tx_tune_drive_spin != NULL) {
     g_signal_handler_block(G_OBJECT(tx_tune_drive_spin), tx_tune_drive_spin_signal_id);
     gtk_spin_button_set_increments(GTK_SPIN_BUTTON(tx_tune_drive_spin),
@@ -1217,7 +1094,6 @@ static void tune_drive_step_changed_cb(GtkComboBox *widget, gpointer data) {
                               (double) transmitter->tune_drive);
     g_signal_handler_unblock(G_OBJECT(tx_tune_drive_spin), tx_tune_drive_spin_signal_id);
   }
-
   update_slider_tune_drive_scale(TRUE);
 }
 
@@ -1295,7 +1171,6 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_set_row_spacing(GTK_GRID(tx_grid), 5);
   gtk_container_add(GTK_CONTAINER(tx_container), tx_grid);
   row = 0;
-
   //------------------------------------------------------------------------------------------------
   if (can_transmit) {
     row++;
@@ -1309,13 +1184,11 @@ void tx_menu(GtkWidget *parent) {
     gtk_widget_set_name(load_button, "boldlabel_blue");
     gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
     g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);
-
     if (!check_file(mic_prof.nr)) {
       gtk_widget_set_sensitive(load_button, FALSE);
     } else {
       gtk_widget_set_sensitive(load_button, TRUE);
     }
-
     col++;
     save_button = gtk_button_new_with_label("Save");
     gtk_widget_set_name(save_button, "boldlabel_blue");
@@ -1323,7 +1196,6 @@ void tx_menu(GtkWidget *parent) {
     g_signal_connect(save_button, "clicked", G_CALLBACK(save_button_clicked_cb), save_button);
     col = 0;
     audio_profile = gtk_combo_box_text_new();
-
     // gtk_grid_set_column_homogeneous (GTK_GRID(tx_grid), TRUE);
     for (int i = 0; i < 3; i++) {
       gchar *id = g_strdup_printf("audio_profile_%d.prop", i);  // Einträge-ID erstellen
@@ -1332,14 +1204,12 @@ void tx_menu(GtkWidget *parent) {
       g_free(id);    // Speicher freigeben
       g_free(label);  // Speicher freigeben
     }
-
     if (mic_prof.nr > 0 && mic_prof.nr < 3) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), mic_prof.nr);
     } else {
       mic_prof.nr = 0;
       gtk_combo_box_set_active(GTK_COMBO_BOX(audio_profile), 0);
     }
-
     my_combo_attach(GTK_GRID(tx_grid), audio_profile, col, row, 3, 1);
     gtk_widget_set_can_focus(audio_profile, TRUE);
     g_signal_connect(audio_profile, "changed", G_CALLBACK(audioprofile_changed_cb), load_button);
@@ -1358,12 +1228,10 @@ void tx_menu(GtkWidget *parent) {
     g_signal_connect(savefile_btn, "clicked", G_CALLBACK(audio_profile_save_cb),
                      dialog);
   }
-
   row++;
   GtkWidget *trennline = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_widget_set_size_request(trennline, -1, 3);
   gtk_grid_attach(GTK_GRID(tx_grid), trennline, 0, row, 5, 1);
-
   //------------------------------------------------------------------------------------------------
   if (n_input_devices > 0) {
     row++;
@@ -1379,31 +1247,25 @@ void tx_menu(GtkWidget *parent) {
     input = gtk_combo_box_text_new();
     gtk_widget_set_tooltip_text(input, "Select one of your local audio devices as mic input,\n"
                                        "which is connected to your computer.");
-
     for (int i = 0; i < n_input_devices; i++) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(input), NULL, input_devices[i].description);
-
       if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(input), i);
       }
     }
-
     // If the combo box shows no device, take the first one
     // AND set the mic.name to that device name.
     // This situation occurs if the local microphone device in the props
     // file is no longer present
-
     if (gtk_combo_box_get_active(GTK_COMBO_BOX(input))  < 0) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(input), 0);
       g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
     }
-
     my_combo_attach(GTK_GRID(tx_grid), input, col, row, 4, 1);
     gtk_widget_set_can_focus(input, TRUE);
     gboolean flag = TRUE;
     g_signal_connect(input, "changed", G_CALLBACK(local_input_changed_cb), GINT_TO_POINTER(flag));
   }
-
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
     col = 0;
@@ -1419,21 +1281,17 @@ void tx_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(btn), NULL, "Mic Boost");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(btn), NULL, "Line In");
     int pos = 0;
-
     if (mic_linein) {
       pos = 2;
     } else if (mic_boost) {
       pos = 1;
     }
-
     gtk_combo_box_set_active(GTK_COMBO_BOX(btn), pos);
     my_combo_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
     g_signal_connect(btn, "changed", G_CALLBACK(mic_in_cb), NULL);
-
     if (transmitter->local_microphone) {
       gtk_widget_set_sensitive(btn, FALSE);
     }
-
     col++;
     label = gtk_label_new("SDR LineIn (dB)");
     gtk_widget_set_name(label, "boldlabel");
@@ -1445,17 +1303,14 @@ void tx_menu(GtkWidget *parent) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), linein_gain);
     gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
     g_signal_connect(G_OBJECT(btn), "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_LINEIN));
-
     if (transmitter->local_microphone) {
       gtk_widget_set_sensitive(btn, FALSE);
     }
-
     row++;
     GtkWidget *trennline = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_widget_set_size_request(trennline, -1, 3);
     gtk_grid_attach(GTK_GRID(tx_grid), trennline, 0, row, 5, 1);
   }
-
   row++;
   col = 0;
   label = gtk_label_new("TX Filter Low");
@@ -1497,12 +1352,10 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), tx_spin_high, col, row, 1, 1);
   g_signal_connect(tx_spin_high, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FILTER_HIGH));
   col++;
-
   if (transmitter->use_rx_filter) {
     gtk_widget_set_sensitive(tx_spin_low, FALSE);
     gtk_widget_set_sensitive(tx_spin_high, FALSE);
   }
-
   btn = gtk_check_button_new_with_label("Tune Drive ≙ TX drive");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_widget_set_tooltip_text(btn,
@@ -1550,33 +1403,26 @@ void tx_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), "25", "25");
   gtk_widget_set_tooltip_text(combo,
                               "Select step size for TUNE DRIVE");
-
   switch (transmitter->tune_drive_step) {
   case 1:
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "1");
     break;
-
   case 5:
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "5");
     break;
-
   case 10:
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "10");
     break;
-
   case 20:
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "20");
     break;
-
   case 25:
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "25");
     break;
-
   default:
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(combo), "1");
     break;
   }
-
   g_signal_connect(combo, "changed", G_CALLBACK(tune_drive_step_changed_cb), NULL);
   gtk_grid_attach(GTK_GRID(tx_grid), combo, col, row, 1, 1);
   //---------------------------------------------------------------------------------------------------------------
@@ -1631,12 +1477,10 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
   btn = gtk_combo_box_text_new();
-
   for (int i = 0; i < CTCSS_FREQUENCIES; i++) {
     snprintf(temp, 32, "%0.1f", ctcss_frequencies[i]);
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(btn), NULL, temp);
   }
-
   gtk_combo_box_set_active(GTK_COMBO_BOX(btn), transmitter->ctcss);
   my_combo_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "changed", G_CALLBACK(ctcss_frequency_cb), NULL);
@@ -1820,17 +1664,14 @@ void tx_menu(GtkWidget *parent) {
   label = gtk_label_new("Post Gain");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 5, row, 1, 1);
-
   if (can_transmit) {
     sort_cfc(transmitter);
   }
-
 #if defined (__EQ12__)
   const int max_cfc_zeilen = 6;
 #else
   const int max_cfc_zeilen = 5;
 #endif
-
   for (int i = 1; i <= max_cfc_zeilen; i++) {
     row++; // neue Zeile
     //------------------------------------------------------------------------------------------------------------------
@@ -1865,7 +1706,6 @@ void tx_menu(GtkWidget *parent) {
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST + i + max_cfc_zeilen));
     //------------------------------------------------------------------------------------------------------------------
   }
-
   //
   // DEXP container and controls therein
   //
@@ -2035,7 +1875,6 @@ void tx_menu(GtkWidget *parent) {
   row++;
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
-
   //
   // Only show one of the TX, CFC, DEXP containers
   // This is the TX container upon first invocation of the TX menu,
@@ -2048,19 +1887,16 @@ void tx_menu(GtkWidget *parent) {
     gtk_widget_hide(dexp_container);
     gtk_widget_hide(peaks_container);
     break;
-
   case CFC_CONTAINER:
     gtk_widget_hide(tx_container);
     gtk_widget_hide(dexp_container);
     gtk_widget_hide(peaks_container);
     break;
-
   case DEXP_CONTAINER:
     gtk_widget_hide(tx_container);
     gtk_widget_hide(cfc_container);
     gtk_widget_hide(peaks_container);
     break;
-
   case PEAKS_CONTAINER:
     gtk_widget_hide(tx_container);
     gtk_widget_hide(cfc_container);

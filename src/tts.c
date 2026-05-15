@@ -76,7 +76,6 @@
 //
 void tts_send(const char* msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
   if (sock >= 0) {
     int optval = 1;
     struct sockaddr_in addr;
@@ -91,7 +90,6 @@ void tts_send(const char* msg) {
     sendto(sock, msg, strlen(msg), 0, (struct sockaddr*) &addr, sizeof(addr));
     close(sock);
   }
-
 #ifdef __APPLE__
   MacTTS(msg);
 #endif
@@ -107,13 +105,11 @@ void tts_freq(void) {
   int hertz;
   int v = active_receiver->id;
   char msg[128];
-
   if (vfo[v].ctun) {
     freq = vfo[v].ctun_frequency;
   } else {
     freq = vfo[v].frequency;
   }
-
   kilo = freq / 1000;
   hertz = freq - 1000 * kilo;
   snprintf(msg, sizeof(msg), "Frequency %ld.%03d kilo hertz", kilo, hertz);
@@ -127,40 +123,31 @@ void tts_freq(void) {
 void tts_mode(void) {
   int v = active_receiver->id;
   int m = vfo[v].mode;
-
   switch (m) {
   case modeLSB:
     tts_send("Mode L S B");
     break;
-
   case modeUSB:
     tts_send("Mode U S B");
     break;
-
   case modeDSB:
     tts_send("Mode D S B");
     break;
-
   case modeCWL:
     tts_send("Mode C W L");
     break;
-
   case modeCWU:
     tts_send("Mode C W U");
     break;
-
   case modeFMN:
     tts_send("Mode F M");
     break;
-
   case modeAM:
     tts_send("Mode A M");
     break;
-
   case modeDIGU:
     tts_send("Mode U S B digital");
     break;
-
   case modeDIGL:
     tts_send("Mode L S B digital");
     break;
@@ -188,30 +175,24 @@ void tts_smeter(void) {
   int plus;
   int val = (int) active_receiver->meter;
   char msg[128];
-
   if (vfo[active_receiver->id].frequency > 30000000LL) {
     val += 20;
   }
-
   plus = 0;
   s = (val + 127) / 6;
-
   if (s < 0) {
     s = 0;
   }
-
   if (s > 9) {
     s = 9;
     // for "plus" only use 10, 20, ...
     plus = 10 * ((val + 73) / 10);
   }
-
   if (plus <= 0) {
     snprintf(msg, sizeof(msg), "Meter S %d", s);
   } else {
     snprintf(msg, sizeof(msg), "Meter S %d plus %d", s, plus);
   }
-
   tts_send(msg);
 }
 
@@ -232,24 +213,20 @@ void tts_txdrive(void) {
 void tts_atten(void) {
   char msg[128];
   int level = adc[active_receiver->adc].attenuation - adc[active_receiver->adc].gain;
-
   if (filter_board == CHARLY25 && active_receiver->adc == 0) {
     level += 12 * active_receiver->alex_attenuation
              - 18 * active_receiver->preamp
              - 18 * active_receiver->dither;
   }
-
   if (filter_board == ALEX && active_receiver->adc == 0) {
     level += 10 * active_receiver->alex_attenuation;
   }
-
   // If level is < 0, this is gain
   if (level < 0) {
     snprintf(msg, sizeof(msg), "R F gain is %d", -level);
   } else {
     snprintf(msg, sizeof(msg), "R F attenuation is %d", level);
   }
-
   tts_send(msg);
 }
 #endif

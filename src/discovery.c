@@ -85,13 +85,11 @@ static gboolean close_cb(void) {
 static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   /* korrektes Gerät aus der Discover-Liste selektieren */
   selected_device = GPOINTER_TO_INT(data);
-
   /* Safety: Index validieren */
   if (selected_device < 0 || selected_device >= devices) {
     t_print("%s: invalid selected_device=%d devices=%d\n", __func__, selected_device, devices);
     return TRUE;
   }
-
   active_device_index = selected_device;
   radio = &discovered[selected_device];
   t_print("%s: selected_device=%d protocol=%d device=%d name=%s\n",
@@ -100,16 +98,13 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
     char ip[INET_ADDRSTRLEN];
     char ifname[IFNAMSIZ] = {0};
     const char *p = inet_ntop(AF_INET, &radio->info.network.address.sin_addr, ip, sizeof(ip));
-
     if (p != NULL) {
       int wired = nw_is_wired(ip);
-
       if (wired == 1) {
         nw_settings.is_wired = 1;
       } else {
         nw_settings.is_wired = 0;
       }
-
       if (nw_get_ifname_for_remote_ip(ip, ifname, sizeof(ifname)) == 0) {
         t_print("%s: SDR_radio_ip=%s if=%s wired=%d nw_settings.is_wired=%d\n",
                 __func__, ip, ifname, wired, nw_settings.is_wired);
@@ -122,12 +117,10 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
     }
   }
 #ifdef STEMLAB_DISCOVERY
-
   // We need to start the STEMlab app before destroying the dialog, since
   // we otherwise lose the information about which app has been selected.
   if (radio->protocol == STEMLAB_PROTOCOL) {
     const int device_id = radio - discovered;
-
     if (radio->software_version & BARE_REDPITAYA) {
       // Start via the simple web interface
       (void) alpine_start_app(gtk_combo_box_get_active_id(GTK_COMBO_BOX(apps_combobox[device_id])));
@@ -135,7 +128,6 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
       // Start via the STEMlab "bazaar" interface
       (void) stemlab_start_app(gtk_combo_box_get_active_id(GTK_COMBO_BOX(apps_combobox[device_id])));
     }
-
     //
     // To make this bullet-proof, we do another "discover" now
     // and proceeding this way is the only way to choose between UDP and TCP connection
@@ -148,7 +140,6 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
     g_timeout_add(2000, delayed_discovery, NULL);
     return TRUE;
   }
-
 #endif
   //
   // Starting the radio via the GTK queue ensures quick update
@@ -165,9 +156,7 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
 //   0x00..: EF FE 05 7F (0x3A<<1) 00 00 00 01 00...00
 static int hl2_send_reboot_1025(const struct sockaddr_in *dst_in) {
   int s = socket(AF_INET, SOCK_DGRAM, 0);
-
   if (s < 0) { return -1; }
-
   uint8_t msg[60];
   memset(msg, 0, sizeof msg);
   msg[0] = 0xEF;
@@ -190,7 +179,6 @@ static gboolean reboot_cb(GtkWidget *widget, GdkEventButton *event, gpointer dat
   DISCOVERED *radio = (DISCOVERED*) data;
   struct sockaddr_in dst = radio->info.network.address;
   int rc = hl2_send_reboot_1025(&dst);
-
   if (rc == 0) {
     status_text("HL2: reboot command sent\n");
     t_print("%s: HL2: reboot command sent\n", __func__);
@@ -198,7 +186,6 @@ static gboolean reboot_cb(GtkWidget *widget, GdkEventButton *event, gpointer dat
     status_text("HL2: reboot send error\n");
     t_print("%s: HL2: reboot send error\n", __func__);
   }
-
   return TRUE;
 }
 
@@ -220,12 +207,10 @@ static gboolean gpio_cb(GtkWidget *widget, GdkEventButton *event, gpointer data)
 static void gpio_changed_cb(GtkWidget *widget, gpointer data) {
   controller = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 #ifndef GPIO
-
   if (controller != G2_V2) {
     controller = NO_CONTROLLER;
     gtk_combo_box_set_active(GTK_COMBO_BOX(widget), controller);
   }
-
 #endif
   gpio_set_defaults(controller);
   gpioSaveState();
@@ -249,42 +234,34 @@ static gboolean radio_ip_cb(GtkWidget *widget, GdkEventButton *event, gpointer d
   const char *cp;
   cp = gtk_entry_get_text(GTK_ENTRY(tcpaddr));
   len = strnlen(cp, IPADDR_LEN);
-
   if (len == 0) {
     // if the text entry field is empty, delete ip.addr
     unlink("ip.addr");
     return TRUE;
   }
-
   // Accept both IP addresses and hostnames
   // Try to validate as IP first, but if it fails, accept it anyway (could be hostname)
   int is_valid_ip = (inet_pton(AF_INET, cp, & (sa.sin_addr)) == 1);
   // Additional check: hostname should contain valid characters
   int is_valid_hostname = 1;
-
   for (int i = 0; i < len; i++) {
     char c = cp[i];
-
     if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
           (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '_')) {
       is_valid_hostname = 0;
       break;
     }
   }
-
   if (!is_valid_ip && !is_valid_hostname) {
     // Neither valid IP nor valid hostname
     return TRUE;
   }
-
   g_strlcpy(ipaddr_radio, cp, IPADDR_LEN);
   FILE *fp = fopen("ip.addr", "w");
-
   if (fp) {
     fprintf(fp, "%s\n", ipaddr_radio);
     fclose(fp);
   }
-
   return FALSE;
 }
 
@@ -292,28 +269,22 @@ static gboolean radio_port_cb(GtkWidget *widget, GdkEventButton *event, gpointer
   const char *cp;
   int port;
   cp = gtk_entry_get_text(GTK_ENTRY(tcpport));
-
   if (strlen(cp) == 0) {
     // If empty, use default port
     radio_port = 1024;
     return TRUE;
   }
-
   port = atoi(cp);
-
   if (port < 1 || port > 65535) {
     // Invalid port number
     return TRUE;
   }
-
   radio_port = port;
   FILE *fp = fopen("radio.port", "w");
-
   if (fp) {
     fprintf(fp, "%d\n", radio_port);
     fclose(fp);
   }
-
   return FALSE;
 }
 
@@ -334,46 +305,35 @@ void discovery(void) {
   devices = 0;
   // Try to locate IP addr
   FILE *fp = fopen("ip.addr", "r");
-
   if (fp) {
     (void) fgets(ipaddr_radio, IPADDR_LEN, fp);
     fclose(fp);
     ipaddr_radio[IPADDR_LEN - 1] = 0;
     // remove possible trailing newline char in ipaddr_radio
     int len = strnlen(ipaddr_radio, IPADDR_LEN);
-
     while (--len >= 0) {
       if (ipaddr_radio[len] != '\n') { break; }
-
       ipaddr_radio[len] = 0;
     }
   }
-
   // Try to locate port
   fp = fopen("radio.port", "r");
-
   if (fp) {
     char port_buf[8];
-
     if (fgets(port_buf, sizeof(port_buf), fp)) {
       int port = atoi(port_buf);
-
       if (port >= 1 && port <= 65535) {
         radio_port = port;
       }
     }
-
     fclose(fp);
   }
-
 #ifdef USBOZY
-
   if (enable_usbozy && !discover_only_stemlab) {
     //
     // first: look on USB for an Ozy
     //
     status_text("Looking for USB based OZY devices");
-
     if (ozy_discover() != 0) {
       discovered[devices].protocol = ORIGINAL_PROTOCOL;
       discovered[devices].device = DEVICE_OZY;
@@ -381,11 +341,9 @@ void discovery(void) {
       g_strlcpy(discovered[devices].name, "Ozy on USB", sizeof(discovered[devices].name));
       discovered[devices].frequency_min = 0.0;
       discovered[devices].frequency_max = 61440000.0;
-
       for (int i = 0; i < 6; i++) {
         discovered[devices].info.network.mac_address[i] = 0;
       }
-
       discovered[devices].status = STATE_AVAILABLE;
       discovered[devices].info.network.address_length = 0;
       discovered[devices].info.network.interface_length = 0;
@@ -400,48 +358,37 @@ void discovery(void) {
       devices++;
     }
   }
-
 #endif
 #ifdef SATURN
 #include "saturnmain.h"
-
   if (enable_saturn_xdma && !discover_only_stemlab) {
     status_text("Looking for /dev/xdma* based saturn devices");
     saturn_discovery();
   }
-
 #endif
 #ifdef STEMLAB_DISCOVERY
-
   if (enable_stemlab && !discover_only_stemlab) {
     status_text("Looking for STEMlab WEB apps");
     stemlab_discovery();
   }
-
 #endif
-
   if (enable_protocol_1 || discover_only_stemlab) {
     if (discover_only_stemlab) {
       status_text("Stemlab ... Looking for SDR apps");
     } else {
       status_text("Protocol 1 ... Discovering Devices (Wait for up to 5 seconds)");
     }
-
     old_discovery();
   }
-
   if (enable_protocol_2 && !discover_only_stemlab) {
     status_text("Protocol 2 ... Discovering Devices (Wait for up to 5 seconds)");
     new_discovery();
   }
-
 #ifdef SOAPYSDR
-
   if (enable_soapy_protocol && !discover_only_stemlab) {
     status_text("SoapySDR ... Discovering Devices (Wait for up to 5 seconds)");
     soapy_discovery();
   }
-
 #endif
   status_text("Discovery completed.");
   // subsequent discoveries check all protocols enabled.
@@ -450,13 +397,10 @@ void discovery(void) {
   /* Wayland-sicheres Cursor-Setzen mit Cleanup */
   {
     GdkWindow  *w = gtk_widget_get_window(top_window);
-
     if (w) {
       GdkDisplay *d = gdk_window_get_display(w);
       GdkCursor  *c = gdk_cursor_new_from_name(d, "default");
-
       if (!c) { c = gdk_cursor_new(GDK_ARROW); }
-
       gdk_window_set_cursor(w, c);
       g_object_unref(c);
     }
@@ -477,7 +421,6 @@ void discovery(void) {
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
   int row = 0;
-
   if (devices == 0) {
     GtkWidget *label = gtk_label_new("No local devices found!");
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 3, 1);
@@ -486,7 +429,6 @@ void discovery(void) {
     char version[16];
     char text[512];
     char macStr[18];
-
     for (row = 0; row < devices; row++) {
       d = &discovered[row];
       t_print("Device Protocol=%d name=%s\n", d->protocol, d->name);
@@ -500,7 +442,6 @@ void discovery(void) {
                d->info.network.mac_address[3],
                d->info.network.mac_address[4],
                d->info.network.mac_address[5]);
-
       switch (d->protocol) {
       case ORIGINAL_PROTOCOL:
       case NEW_PROTOCOL:
@@ -520,21 +461,17 @@ void discovery(void) {
                    macStr,
                    d->info.network.interface_name);
         }
-
         break;
-
       case SOAPYSDR_PROTOCOL:
 #ifdef SOAPYSDR
         snprintf(text, sizeof(text), "%s (Protocol SOAPY_SDR %s) on %s", d->name, d->info.soapy.version,
                  d->info.soapy.address);
 #endif
         break;
-
       case STEMLAB_PROTOCOL:
         snprintf(text, sizeof(text), "Choose SDR App from %s: ",
                  inet_ntoa(d->info.network.address.sin_addr));
       }
-
       GtkWidget *label = gtk_label_new(text);
       gtk_widget_set_name(label, "boldlabel_blue");
       // gtk_widget_set_halign (label, GTK_ALIGN_START);
@@ -553,7 +490,6 @@ void discovery(void) {
       gtk_widget_show(start_button);
       gtk_grid_attach(GTK_GRID(grid), start_button, 3, row, 1, 1);
       g_signal_connect(start_button, "clicked", G_CALLBACK(start_clicked), GINT_TO_POINTER(d - discovered));
-
       // Reboot-Button für Hermes Lite 2
       // Voraussetzung: DEVICE_HERMES_LITE2 & NEW_DEVICE_HERMES_LITE2 ist im Projekt definiert.
       // Spalte 4 ist in Nicht-STEMlab-Pfaden frei.
@@ -567,7 +503,6 @@ void discovery(void) {
         gtk_grid_attach(GTK_GRID(grid), reboot_button, 4, row, 1, 1);
         g_signal_connect(reboot_button, "clicked", G_CALLBACK(reboot_clicked), (gpointer) d);
       }
-
       // if not available then cannot start it
       switch (d->status) {
       case STATE_AVAILABLE:
@@ -577,23 +512,18 @@ void discovery(void) {
         } else {
           gtk_button_set_label(GTK_BUTTON(start_button), "Start");
         }
-
         break;
-
       case STATE_SENDING:
         gtk_button_set_label(GTK_BUTTON(start_button), "In Use");
         gtk_widget_set_sensitive(start_button, FALSE);
         break;
-
       case STATE_INCOMPATIBLE:
         gtk_button_set_label(GTK_BUTTON(start_button), "Incompatible");
         gtk_widget_set_sensitive(start_button, FALSE);
         break;
       }
-
       if (d->device != SOAPYSDR_USB_DEVICE) {
         int can_connect = 0;
-
         //
         // We can connect if
         //  a) either the computer or the radio have a self-assigned IP 169.254.xxx.yyy address
@@ -601,33 +531,25 @@ void discovery(void) {
         //  c) radio and network address are in the same subnet
         //
         if (!strncmp(inet_ntoa(d->info.network.address.sin_addr), "169.254.", 8)) { can_connect = 1; }
-
         if (!strncmp(inet_ntoa(d->info.network.interface_address.sin_addr), "169.254.", 8)) { can_connect = 1; }
-
         if (d->use_routing) { can_connect = 1; }
-
         if ((d->info.network.interface_address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr) ==
             (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
-
         t_print("%s: d->status=%d\n", __func__, d->status);
-
         if (devices > 0 && d->status == STATE_AVAILABLE) {
           can_connect = 1;
         }
-
         if (!can_connect) {
           gtk_button_set_label(GTK_BUTTON(start_button), "Subnet!");
           gtk_widget_set_sensitive(start_button, FALSE);
         }
       }
-
       if (d->protocol == STEMLAB_PROTOCOL) {
         if (d->software_version == 0) {
           gtk_button_set_label(GTK_BUTTON(start_button), "No SDR app found!");
           gtk_widget_set_sensitive(start_button, FALSE);
         } else {
           apps_combobox[row] = gtk_combo_box_text_new();
-
           // We want the default selection priority for the STEMlab app to be
           // RP-Trx > HAMlab-Trx > Pavel-Trx > Pavel-Rx, so we add in decreasing order and
           // always set the newly added entry to be active.
@@ -637,35 +559,30 @@ void discovery(void) {
             gtk_combo_box_set_active_id(GTK_COMBO_BOX(apps_combobox[row]),
                                         "sdr_receiver_hpsdr");
           }
-
           if ((d->software_version & STEMLAB_PAVEL_TRX) != 0) {
             gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(apps_combobox[row]),
                                       "sdr_transceiver_hpsdr", "Pavel-Trx");
             gtk_combo_box_set_active_id(GTK_COMBO_BOX(apps_combobox[row]),
                                         "sdr_transceiver_hpsdr");
           }
-
           if ((d->software_version & HAMLAB_RP_TRX) != 0) {
             gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(apps_combobox[row]),
                                       "hamlab_sdr_transceiver_hpsdr", "HAMlab-Trx");
             gtk_combo_box_set_active_id(GTK_COMBO_BOX(apps_combobox[row]),
                                         "hamlab_sdr_transceiver_hpsdr");
           }
-
           if ((d->software_version & STEMLAB_RP_TRX) != 0) {
             gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(apps_combobox[row]),
                                       "stemlab_sdr_transceiver_hpsdr", "STEMlab-Trx");
             gtk_combo_box_set_active_id(GTK_COMBO_BOX(apps_combobox[row]),
                                         "stemlab_sdr_transceiver_hpsdr");
           }
-
           my_combo_attach(GTK_GRID(grid), apps_combobox[row], 4, row, 1, 1);
           gtk_widget_show(apps_combobox[row]);
         }
       }
     }
   }
-
   controller = NO_CONTROLLER;
   gpioRestoreState();
   gpio_set_defaults(controller);
@@ -734,10 +651,8 @@ void discovery(void) {
   // devices only.
   //
   t_print("%s: devices=%d autostart=%d\n", __func__, devices, autostart);
-
   if (devices == 1 && autostart) {
     d = &discovered[0];
-
     if (d->status == STATE_AVAILABLE) {
       if (start_cb(NULL, NULL, GINT_TO_POINTER(d - discovered))) {
         return;

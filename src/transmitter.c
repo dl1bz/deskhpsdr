@@ -167,18 +167,15 @@ static float sine_generator(int* phase1, int* phase2, int freq) {
   val = s + p2 * d * 0.00390625; // 1/256
   p1 += f256 / 48000;
   p2 += ((f256 % 48000) * 256) / 48000;
-
   // correct overflows in fractional and integer phase to keep
   // p1,p2 within bounds
   if (p2 > 255) {
     p2 -= 256;
     p1++;
   }
-
   if (p1 > 255) {
     p1 -= 256;
   }
-
   *phase1 = p1;
   *phase2 = p2;
   return val;
@@ -282,24 +279,20 @@ void tx_set_ramps(TRANSMITTER *tx) {
   // if the ramp width changes.
   //
   g_mutex_lock(&tx->cw_ramp_mutex);
-
   //
   // For the side tone, a RaisedCosine profile with a width of 5 msec
   // seems to be standard.
   //
   if (tx->cw_ramp_audio) { g_free(tx->cw_ramp_audio); }
-
   tx->cw_ramp_audio_ptr = 0;
   tx->cw_ramp_audio_len = 240;
   tx->cw_ramp_audio = g_new(double, tx->cw_ramp_audio_len + 1);
   init_audio_ramp(tx->cw_ramp_audio, tx->cw_ramp_audio_len);
-
   //
   // For the RF pulse envelope, use a BlackmanHarris ramp with a
   // user-specified width
   //
   if (tx->cw_ramp_rf) { g_free(tx->cw_ramp_rf); }
-
   tx->cw_ramp_rf_ptr = 0;
   tx->cw_ramp_rf_len = 48 * tx->ratio * cw_ramp_width;
   tx->cw_ramp_rf = g_new(double, tx->cw_ramp_rf_len + 1);
@@ -321,7 +314,6 @@ void tx_reconfigure(TRANSMITTER *tx, int pixels, int width, int height) {
     tx->pixel_samples = g_new(float, tx->pixels);
     tx_set_analyzer(tx);
     g_mutex_unlock(&tx->display_mutex);
-
     if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
       RECEIVER *rx = receiver[PS_RX_FEEDBACK];
       g_mutex_lock(&rx->mutex);
@@ -332,7 +324,6 @@ void tx_reconfigure(TRANSMITTER *tx, int pixels, int width, int height) {
       g_mutex_unlock(&rx->mutex);
     }
   }
-
   gtk_widget_set_size_request(tx->panadapter, width, height);
 }
 
@@ -407,7 +398,6 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   SetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
   SetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
-
   for (int i = 0; i < 11; i++) {
     SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
     SetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, i,            tx->eq_gain[i]);
@@ -415,9 +405,7 @@ void tx_save_state(const TRANSMITTER *tx) {
     SetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, i,            tx->cfc_lvl[i]);
     SetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
   }
-
 #if defined (__EQ12__)
-
   for (int ii = 11; ii < 13; ii++) {
     SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,            tx->eq_freq[ii]);
     SetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,            tx->eq_gain[ii]);
@@ -425,7 +413,6 @@ void tx_save_state(const TRANSMITTER *tx) {
     SetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, ii,            tx->cfc_lvl[ii]);
     SetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, ii,            tx->cfc_post[ii]);
   }
-
 #endif
   SetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   SetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
@@ -516,7 +503,6 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   GetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
   GetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
-
   for (int i = 0; i < 11; i++) {
     GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
     GetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, i,            tx->eq_gain[i]);
@@ -524,9 +510,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
     GetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, i,            tx->cfc_lvl[i]);
     GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
   }
-
 #if defined (__EQ12__)
-
   for (int ii = 11; ii < 13; ii++) {
     GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,           tx->eq_freq[ii]);
     GetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,           tx->eq_gain[ii]);
@@ -534,7 +518,6 @@ static void tx_restore_state(TRANSMITTER *tx) {
     GetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, ii,           tx->cfc_lvl[ii]);
     GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, ii,           tx->cfc_post[ii]);
   }
-
 #endif
   GetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   GetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
@@ -557,22 +540,18 @@ static void tx_restore_state(TRANSMITTER *tx) {
 static double compute_power(double p) {
   double interval = 0.1 * pa_power_list[pa_power];
   int i = 0;
-
   if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
                      device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2)) {
     reassign_pa_trim();
   }
-
   if (p > pa_trim[10]) {
     i = 9;
   } else {
     while (p > pa_trim[i]) {
       i++;
     }
-
     if (i > 0) { i--; }
   }
-
   double frac = (p - pa_trim[i]) / (pa_trim[i + 1] - pa_trim[i]);
   return interval * ((1.0 - frac) * (double) i + frac * (double)(i + 1));
 }
@@ -580,7 +559,6 @@ static double compute_power(double p) {
 static gboolean tx_update_display(gpointer data) {
   TRANSMITTER *tx = (TRANSMITTER*) data;
   int rc;
-
   //t_print("tx_update_display: tx id=%d\n",tx->id);
   if (tx->displaying) {
     // if "MON" button is active (tx->feedback is TRUE),
@@ -588,12 +566,10 @@ static gboolean tx_update_display(gpointer data) {
     // that is, display the (attenuated) TX signal from the "antenna"
     //
     g_mutex_lock(&tx->display_mutex);
-
     if (tx->puresignal && tx->feedback) {
       RECEIVER *rx_feedback = receiver[PS_RX_FEEDBACK];
       g_mutex_lock(&rx_feedback->display_mutex);
       rc = rx_get_pixels(rx_feedback);
-
       if (rc) {
         int full  = rx_feedback->pixels;  // number of pixels in the feedback spectrum
         int width = tx->pixels;           // number of pixels to copy from the feedback spectrum
@@ -602,7 +578,6 @@ static gboolean tx_update_display(gpointer data) {
         float *rfp = rx_feedback->pixel_samples + start;
         float offset;
         int i;
-
         //
         // The TX panadapter shows a RELATIVE signal strength. A CW or single-tone signal at
         // full drive appears at 0dBm, the two peaks of a full-drive two-tone signal appear
@@ -622,32 +597,26 @@ static gboolean tx_update_display(gpointer data) {
           // TX dac feedback peak = 0.406, on HermesLite2 0.230
           offset = (device == DEVICE_HERMES_LITE2) ? 17.0 : 12.0;
           break;
-
         case NEW_PROTOCOL:
           // TX dac feedback peak = 0.2899, on SATURN 0.6121
           offset = (device == NEW_DEVICE_SATURN) ? 8.5 : 15.0;
           break;
-
         default:
           // we probably never come here
           offset = 0.0;
           break;
         }
-
         for (i = 0; i < width; i++) {
           *tfp++ = *rfp++ + offset;
         }
       }
-
       g_mutex_unlock(&rx_feedback->display_mutex);
     } else {
       rc = tx_get_pixels(tx);
     }
-
     if (rc) {
       tx_panadapter_update(tx);
     }
-
     g_mutex_unlock(&tx->display_mutex);
     tx->alc = tx_get_alc(tx);
     double constant1;
@@ -667,7 +636,6 @@ static gboolean tx_update_display(gpointer data) {
     //
     fwd_power   = alex_forward_power;
     rev_power   = alex_reverse_power;
-
     switch (device) {
     default:
       //
@@ -682,7 +650,6 @@ static gboolean tx_update_display(gpointer data) {
       rev_power = 0;
       break;
 #ifdef USBOZY
-
     case DEVICE_OZY:
       if (filter_board == ALEX) {
         constant1 = 3.3;
@@ -701,10 +668,8 @@ static gboolean tx_update_display(gpointer data) {
         fwd_power = penny_alc;
         rev_power = 0;
       }
-
       break;
 #endif
-
     case DEVICE_METIS:
     case DEVICE_HERMES:
     case DEVICE_ANGELIA:
@@ -717,7 +682,6 @@ static gboolean tx_update_display(gpointer data) {
       rev_cal_offset = 3;
       fwd_cal_offset = 6;
       break;
-
     case DEVICE_ORION:  // Anan200D
     case NEW_DEVICE_ORION:
       constant1 = 5.0;
@@ -726,7 +690,6 @@ static gboolean tx_update_display(gpointer data) {
       rev_cal_offset = 2;
       fwd_cal_offset = 4;
       break;
-
     case DEVICE_ORION2:  // Anan7000/8000/G2
     case NEW_DEVICE_ORION2:
     case NEW_DEVICE_SATURN:
@@ -745,9 +708,7 @@ static gboolean tx_update_display(gpointer data) {
         rev_cal_offset = 16;
         fwd_cal_offset = 18;
       }
-
       break;
-
     case DEVICE_HERMES_LITE:
     case DEVICE_HERMES_LITE2:
     case NEW_DEVICE_HERMES_LITE:
@@ -763,7 +724,6 @@ static gboolean tx_update_display(gpointer data) {
       fwd_cal_offset = -34;
       break;
     }
-
     //
     // Special hook for HL2s with an incorrectly wound current
     // sense transformer: Exchange fwd and rev readings
@@ -775,14 +735,10 @@ static gboolean tx_update_display(gpointer data) {
         rev_power   = alex_forward_power;
       }
     }
-
     fwd_power = fwd_power - fwd_cal_offset;
     rev_power = rev_power - rev_cal_offset;
-
     if (fwd_power < 0) { fwd_power = 0; }
-
     if (rev_power < 0) { rev_power = 0; }
-
     v1 = ((double) fwd_power / 4095.0) * constant1;
     tx->fwd = (v1 * v1) / constant2;
     v1 = ((double) rev_power / 4095.0) * constant1;
@@ -794,7 +750,6 @@ static gboolean tx_update_display(gpointer data) {
     //
     tx->rev  = compute_power(tx->rev);
     tx->fwd = compute_power(tx->fwd);
-
     //
     // Calculate SWR and store as tx->swr.
     // tx->swr can be used in other parts of the program to
@@ -810,13 +765,11 @@ static gboolean tx_update_display(gpointer data) {
       // reflected power, so correct for that
       //
       double gamma = sqrt(tx->rev / tx->fwd);
-
       //
       // this prevents SWR going to infinity, from which the
       // moving average cannot recover
       //
       if (gamma > 0.95) { gamma = 0.95; }
-
       tx->swr = 0.7 * (1.0 + gamma) / (1.0 - gamma) + 0.3 * tx->swr;
     } else {
       //
@@ -824,7 +777,6 @@ static gboolean tx_update_display(gpointer data) {
       //
       tx->swr = 0.7 + 0.3 * tx->swr;
     }
-
     //
     //  If SWR is above threshold emit a waring.
     //  If additionally  SWR protection is enabled,
@@ -833,28 +785,22 @@ static gboolean tx_update_display(gpointer data) {
     //  it is required high SWR is seen in to subsequent calls.
     //
     static int pre_high_swr = 0;
-
     if (tx->swr >= tx->swr_alarm) {
       if (pre_high_swr) {
         if (tx->swr_protection && !radio_get_tune()) {
           set_drive(0.0);
         }
-
         high_swr_seen = 1;
       }
-
       pre_high_swr = 1;
     } else {
       pre_high_swr = 0;
     }
-
     if (!duplex) {
       meter_update(active_receiver, POWER, tx->fwd, tx->alc, tx->swr);
     }
-
     return TRUE; // keep going
   }
-
   return FALSE; // no more timer events
 }
 
@@ -868,7 +814,6 @@ void tx_create_dialog(TRANSMITTER *tx) {
   if (tx->dialog != NULL) {
     gtk_widget_destroy(tx->dialog);
   }
-
   tx->dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(tx->dialog), GTK_WINDOW(top_window));
   // Resizing für das transient Fenster deaktivieren
@@ -894,9 +839,7 @@ static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *eve
   TRANSMITTER *tx = (TRANSMITTER*) data;
   int w = gtk_widget_get_allocated_width(widget);
   int h = gtk_widget_get_allocated_height(widget);
-
   if (tx->levels_surface) { cairo_surface_destroy(tx->levels_surface); }
-
   tx->levels_surface = gdk_window_create_similar_surface(
                                gtk_widget_get_window(widget),
                                CAIRO_CONTENT_COLOR,
@@ -910,12 +853,10 @@ static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *eve
 
 static gboolean tx_levels_draw_cb(GtkWidget *widget, cairo_t* cr, gpointer data) {
   TRANSMITTER *tx = (TRANSMITTER*) data;
-
   if (tx->levels_surface) {
     cairo_set_source_surface(cr, tx->levels_surface, 0, 0);
     cairo_paint(cr);
   }
-
   return FALSE;
 }
 
@@ -931,12 +872,10 @@ static void levels_show_popover_cb(GtkWidget * anchor, gpointer popover_ptr) {
   t_print("%s: full_screen = %d transmitter->inner_levels_popup = %d\n", __func__, full_screen,
           transmitter->inner_levels_popup);
 #ifdef __linux__
-
   if (!full_screen && !transmitter->inner_levels_popup) {
     /* Popover darf außerhalb des Parentfensters erscheinen */
     gtk_popover_set_constrain_to(GTK_POPOVER(pop), GTK_POPOVER_CONSTRAINT_NONE);
   }
-
 #endif
   gtk_popover_set_pointing_to(GTK_POPOVER(pop), &rect);
   gtk_widget_show_all(pop);
@@ -948,31 +887,25 @@ void tx_create_levels_window(TRANSMITTER *tx) {
     gtk_widget_destroy(tx->levels_dialog);
     tx->levels_dialog = NULL;
   }
-
   int w, h;
   // Content einmal bauen
   tx->levels_area = gtk_drawing_area_new();
   gtk_widget_set_size_request(tx->levels_area, tx->levels_width, tx->levels_height);
   g_signal_connect(tx->levels_area, "configure-event", G_CALLBACK(tx_levels_configure_cb), tx);
   g_signal_connect(tx->levels_area, "draw",            G_CALLBACK(tx_levels_draw_cb),      tx);
-
   if (use_wayland || full_screen || transmitter->use_levels_popup) {
     /* Anchor bestimmen: Child des Hauptfensters, NICHT das Fenster selbst */
     GtkWidget *anchor = NULL;
-
     if (GTK_IS_BIN(top_window)) {
       anchor = gtk_bin_get_child(GTK_BIN(top_window));
     }
-
     if (!anchor) {
       anchor = topgrid;   /* Fallback falls vorhanden */
     }
-
     if (!anchor) {
       /* Kein gültiger Anchor → sauberer Fallback in den X11-Dialogpfad unten */
       goto X11_FALLBACK;
     }
-
     /* <<< Debug-Ausgabe HIER einfügen >>> */
     t_print("%s: WAYLAND ANCHOR mapped=%d  visible=%d  realized=%d  type=%s  parent=%s\n",
             __func__,
@@ -991,24 +924,19 @@ void tx_create_levels_window(TRANSMITTER *tx) {
     gtk_box_pack_start(GTK_BOX(levels_box), tx->levels_area, TRUE, TRUE, 0);
     tx->levels_dialog = levels_popover;
     g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(close_cb), NULL);
-
     if (gtk_widget_get_mapped(anchor)) {
       levels_show_popover_cb(anchor, tx->levels_dialog);
     } else {
       g_signal_connect(anchor, "map", G_CALLBACK(levels_show_popover_cb), tx->levels_dialog);
     }
-
     return;  /* WICHTIG: NICHT weiter in den X11-Code laufen */
   } else {
 X11_FALLBACK:
     // X11-Pfad unverändert
     // X11: klassischer Dialog mit fixer Position
     get_screen_size(&w, &h);
-
     if (tx->levels_x_pos <= 0) { tx->levels_x_pos = w - tx->levels_width - 100; }
-
     if (tx->levels_y_pos <= 0) { tx->levels_y_pos = 100; }
-
     GtkWidget *dlg = gtk_dialog_new();
     gtk_window_set_transient_for(GTK_WINDOW(dlg), GTK_WINDOW(top_window));
     gtk_window_set_resizable(GTK_WINDOW(dlg), FALSE);
@@ -1036,23 +964,18 @@ static void tx_create_visual(TRANSMITTER *tx) {
   // This creates a panadapter within the main window
   //
   t_print("%s: id=%d width=%d height=%d\n", __func__, tx->id, tx->width, tx->height);
-
   if (tx->dialog != NULL) {
     gtk_widget_destroy(tx->dialog);
     tx->dialog = NULL;
   }
-
   tx->panel = gtk_fixed_new();
   gtk_widget_set_size_request(tx->panel, tx->width, tx->height);
-
   if (tx->display_panadapter) {
     tx_panadapter_init(tx, tx->width, tx->height);
     gtk_fixed_put(GTK_FIXED(tx->panel), tx->panadapter, 0, 0);
   }
-
   gtk_widget_show_all(tx->panel);
   g_object_ref((gpointer) tx->panel);
-
   if (duplex) {
     tx_create_dialog(tx);
   }
@@ -1077,21 +1000,17 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   g_mutex_init(&tx->display_mutex);
   tx->update_timer_id = 0;
   tx->out_of_band_timer_id = 0;
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     tx->iq_output_rate = 48000;
     break;
-
   case NEW_PROTOCOL:
     tx->iq_output_rate = 192000;
     break;
-
   case SOAPYSDR_PROTOCOL:
     tx->iq_output_rate = soapy_radio_sample_rate;
     break;
   }
-
   //
   // Further cases may be added to the switch statement below, but the
   // following rule must be obeyed:
@@ -1112,37 +1031,31 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
     tx->dsp_rate = 48000;
     tx->ratio = 1;
     break;
-
   case 96000: // 48k:96k:96k
     tx->buffer_size = 1024;
     tx->dsp_rate = 96000;
     tx->ratio = 2;
     break;
-
   case 192000: // 48k:96k:192k
     tx->buffer_size = 512;
     tx->dsp_rate = 96000;
     tx->ratio = 4;
     break;
-
   case 384000: // 48k:96k:384k
     tx->buffer_size = 512;
     tx->dsp_rate = 96000;
     tx->ratio = 8;
     break;
-
   case 768000: // 48k:96k:768k
     tx->buffer_size = 256;
     tx->dsp_rate = 96000;
     tx->ratio = 16;
     break;
-
   case 1536000: // 48k:92k:1536k
     tx->buffer_size = 128;
     tx->dsp_rate = 96000;
     tx->ratio = 32;
     break;
-
   default:
     tx->buffer_size = 128;
     tx->dsp_rate = 96000;
@@ -1150,7 +1063,6 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
     g_idle_add(fatal_error, "FATAL: Radio sample rate not supported for TX");
     break;
   }
-
   tx->output_samples = tx->buffer_size * tx->ratio;
   tx->pixels = pixels;
   tx->width = width;
@@ -1342,7 +1254,6 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->display_detector_mode = DET_PEAK;
   tx->display_average_time  = 120.0;
   tx->display_average_mode  = AVG_LOGRECURSIVE;
-
   //
   // If the pk value is slightly too large, this does no harm, but
   // if it is slightly too small, very strange things can happen.
@@ -1355,41 +1266,33 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
     case NEW_DEVICE_SATURN:
       tx->ps_setpk = 0.6121;
       break;
-
     default:
       // recommended "new protocol value"
       tx->ps_setpk = 0.2899;
       break;
     }
-
     break;
-
   case ORIGINAL_PROTOCOL:
     switch (device) {
     case DEVICE_HERMES_LITE2:
       // measured value: 0.2386
       tx->ps_setpk = 0.2400;
       break;
-
     case DEVICE_STEMLAB:
       // measured value: 0.4155
       tx->ps_setpk = 0.4160;
       break;
-
     default:
       // recommended "old protocol" value
       tx->ps_setpk = 0.4067;
       break;
     }
-
     break;
-
   default:
     // NOTREACHED
     tx->ps_setpk = 1.000;
     break;
   }
-
   //
   // Modify these values from the props file
   //
@@ -1494,11 +1397,9 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx_set_detector(tx);
   tx_set_average(tx);
   tx_create_visual(tx);
-
   if (protocol == NEW_PROTOCOL || protocol == ORIGINAL_PROTOCOL) {
     tx_ps_setparams(tx);
   }
-
   return tx;
 }
 
@@ -1506,11 +1407,9 @@ float fir_apply(float input) {
   memmove(&fir_state[1], &fir_state[0], (FIR_TAPS - 1) * sizeof(float));
   fir_state[0] = input;
   float acc = 0.0f;
-
   for (size_t i = 0; i < FIR_TAPS; i++) {
     acc += fir_state[i] * fir_bandpass_300_2700[i];
   }
-
   return acc;
 }
 
@@ -1536,23 +1435,19 @@ static void tx_full_buffer(TRANSMITTER *tx) {
   // cwmode only valid in the old protocol, in the new protocol we use a different mechanism
   int txmode = vfo_get_tx_mode();
   cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     gain = 32767.0; // 16 bit
     break;
-
   case NEW_PROTOCOL:
     gain = 8388607.0; // 24 bit
     break;
-
   case SOAPYSDR_PROTOCOL:
   default:
     // gain is not used, since samples are floating point
     gain = 1.0;
     break;
   }
-
   if (cwmode) {
     //
     // clear VOX peak level in case is it non-zero.
@@ -1573,7 +1468,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     // purpose of displaying them in the TX panadapter
     //
     dp = tx->iq_output_buffer;
-
     // These are the I/Q samples that describe our CW signal
     // The only use we make of it is displaying the spectrum.
     for (j = 0; j < tx->output_samples; j++) {
@@ -1586,7 +1480,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     // and the downward expander
     //
     update_vox(tx);
-
     //
     // DL1YCF:
     // The FM pre-emphasis filter in WDSP has maximum unit
@@ -1613,7 +1506,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         tx->mic_input_buffer[i] *= 5.6234;  // 20*Log(5.6234) is 15
       }
     }
-
     //
     // Note that the DownwardExpander is used *outside* of WDSP
     // channels. We use a single DEXP and give it the id=0.
@@ -1622,12 +1514,10 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     //
     xdexp(0);
     fexchange0(tx->id, tx->mic_input_buffer, tx->iq_output_buffer, &error);
-
     if (mon_enabled && radio_is_transmitting() &&
         vfo_get_tx_mode() != modeCWU &&
         vfo_get_tx_mode() != modeCWL) {
       float gain = 1.0f;  // Optional: -6 dB
-
       for (int i = 0; i < tx->samples; i++) {
         float left  = tx->mic_input_buffer[2 * i];
         float right = tx->mic_input_buffer[2 * i + 1];
@@ -1636,7 +1526,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         audio_write(receiver[0], filtered, filtered);  // Stereo out
       }
     }
-
     /*
     // test from Siphon of the WDSP
     if (radio_is_transmitting() &&
@@ -1655,23 +1544,19 @@ static void tx_full_buffer(TRANSMITTER *tx) {
       }
     }
     */
-
     if (error != 0) {
       t_print("tx_full_buffer: id=%d fexchange0: error=%d\n", tx->id, error);
     }
   }
-
   if (tx->displaying && !(tx->puresignal && tx->feedback)) {
     g_mutex_lock(&tx->display_mutex);
     Spectrum0(1, tx->id, 0, 0, tx->iq_output_buffer);
     g_mutex_unlock(&tx->display_mutex);
   }
-
   if (radio_is_transmitting()) {
     if (tx->do_scale) {
       gain = gain * tx->drive_scale;
     }
-
     if (txflag == 0 && protocol == NEW_PROTOCOL) {
       //
       // this is the first time (after a pause) that we send TX samples
@@ -1683,9 +1568,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         new_protocol_iq_samples(0, 0);
       }
     }
-
     txflag = 1;
-
     //
     //  When doing CW, we do not need WDSP since Q(t) = cw_sig_rf(t) and I(t)=0
     //  For the old protocol where the IQ and audio samples are tied together, we can
@@ -1718,11 +1601,8 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         // Apply a minimum side tone volume for CAT CW messages.
         //
         int vol = cw_keyer_sidetone_volume;
-
         if (vol == 0 && CAT_cw_is_active) { vol = 12; }
-
         double sidevol = 64.0 * vol; // between 0.0 and 8128.0
-
         for (j = 0; j < tx->output_samples; j++) {
           double ramp = tx->cw_sig_rf[j];       // between 0.0 and 1.0
           // isample = floor(gain * ramp + 0.5);   // always non-negative, isample is just the pulse envelope
@@ -1733,9 +1613,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         }
       }
       break;
-
       case NEW_PROTOCOL:
-
         //
         // An inspection of the IQ samples produced by WDSP when TUNEing shows
         // that the amplitude of the pulse is in I (in the range 0.0 - 0.896)
@@ -1752,12 +1630,9 @@ static void tx_full_buffer(TRANSMITTER *tx) {
           isample = (long)(0.896 * gain * ramp + 0.5);     // always non-negative, isample is just the pulse envelope
           new_protocol_iq_samples(isample, 0);
         }
-
         break;
 #ifdef SOAPYSDR
-
       case SOAPYSDR_PROTOCOL:
-
         //
         // No scaling, no audio.
         // generate audio samples to be sent to the radio
@@ -1766,7 +1641,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
           double ramp = tx->cw_sig_rf[j];                   // between 0.0 and 1.0
           soapy_protocol_iq_samples(0.0F, (float) ramp);    // SOAPY: just convert double to float
         }
-
         break;
 #endif
       }
@@ -1788,17 +1662,14 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         isample = (long)(is * gain + (is >= 0.0 ? 0.5 : -0.5));
         qsample = (long)(qs * gain + (qs >= 0.0 ? 0.5 : -0.5));
 #endif
-
         switch (protocol) {
         case ORIGINAL_PROTOCOL:
           old_protocol_iq_samples(isample, qsample, 0);
           break;
-
         case NEW_PROTOCOL:
           new_protocol_iq_samples(isample, qsample);
           break;
 #ifdef SOAPYSDR
-
         case SOAPYSDR_PROTOCOL:
           // SOAPY: just convert the double IQ samples (is,qs) to float.
           soapy_protocol_iq_samples((float) is, (float) qs);
@@ -1820,7 +1691,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         new_protocol_iq_samples(0, 0);
       }
     }
-
     txflag = 0;
   }
 }
@@ -1847,11 +1717,9 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   const double tci_resampler_gain = 0.000001;
   const double tci_tx_gain = 0.707;
   mic_sample_double = (double) mic_sample;
-
   if (tci_audio_tx_is_active()) {
     guint cache_available = (tci_tx_cache_len > tci_tx_cache_pos) ? (tci_tx_cache_len - tci_tx_cache_pos) : 0;
     guint64 ring_available = tci_audio_tx_available();
-
     if (tci_tx_prebuffering) {
       if ((ring_available + cache_available) < tci_tx_prebuffer_frames) {
         mic_sample_double = 0.0;
@@ -1859,32 +1727,26 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
         tci_tx_prebuffering = 0;
       }
     }
-
     if (!tci_tx_prebuffering) {
       while (!tci_resampler_valid || tci_resampler_phase >= 1.0) {
         float tci_sample = 0.0f;
-
         if (tci_tx_cache_pos >= tci_tx_cache_len) {
           tci_tx_cache_len = tci_audio_tx_read(tci_tx_cache, (guint)(sizeof(tci_tx_cache) / sizeof(tci_tx_cache[0])));
           tci_tx_cache_pos = 0;
         }
-
         if (tci_tx_cache_pos < tci_tx_cache_len) {
           tci_resampler_s0 = tci_resampler_s1;
           tci_sample = tci_tx_cache[tci_tx_cache_pos++];
           tci_resampler_s1 = (double) tci_sample;
           tci_resampler_valid = 1;
-
           if (tci_resampler_phase >= 1.0) {
             tci_resampler_phase -= 1.0;
           }
         } else if (tci_tx_audio_active) {
           tci_tx_underruns++;
-
           if ((tci_tx_underruns % 1000) == 0) {
             t_print("TCI TX audio underruns=%lu\n", tci_tx_underruns);
           }
-
           tci_tx_prebuffering = 1;
           tci_tx_cache_len = 0;
           tci_tx_cache_pos = 0;
@@ -1899,19 +1761,16 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
           break;
         }
       }
-
       if (!tci_tx_prebuffering && tci_resampler_valid) {
         double tci_available = (double)(tci_audio_tx_available() +
                                         ((tci_tx_cache_len > tci_tx_cache_pos) ? (tci_tx_cache_len - tci_tx_cache_pos) : 0));
         double adjust = (tci_available - tci_resampler_target) * tci_resampler_gain;
         double step;
-
         if (adjust > tci_resampler_max_adjust) {
           adjust = tci_resampler_max_adjust;
         } else if (adjust < -tci_resampler_max_adjust) {
           adjust = -tci_resampler_max_adjust;
         }
-
         step = tci_resampler_base_step * (1.0 + adjust);
         mic_sample_double = (tci_resampler_s0 + ((tci_resampler_s1 - tci_resampler_s0) * tci_resampler_phase)) * tci_tx_gain;
         last_tci_sample = mic_sample_double / tci_tx_gain;
@@ -1930,7 +1789,6 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
     tci_resampler_s0 = 0.0;
     tci_resampler_s1 = 0.0;
   }
-
   //
   // If there is captured data to re-play, replace incoming
   // mic samples by captured data.
@@ -1945,7 +1803,6 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
       schedule_action(capture_trigger_action, PRESSED, 0);
     }
   }
-
   //
   // silence TX audio if tuning or when doing CW,
   // to prevent firing VOX
@@ -1954,7 +1811,6 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   if (tune || txmode == modeCWL || txmode == modeCWU) {
     mic_sample_double = 0.0;
   }
-
   //
   // shape CW pulses when doing CW and transmitting, else nullify them
   //
@@ -1984,7 +1840,6 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
     //  sample.
     //
     cw_not_ready = 0;
-
     if (cw_key_down > 0) {
       cw_key_down--;            // decrement key-up counter
       updown = 1;
@@ -1992,53 +1847,40 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
       if (cw_key_up > 0) {
         cw_key_up--;  // decrement key-down counter
       }
-
       updown = 0;
     }
-
     //
     // Shape RF pulse and side tone.
     //
     j = tx->ratio * tx->samples; // pointer into cw_rf_sig
-
     if (g_mutex_trylock(&tx->cw_ramp_mutex)) {
       double val;
-
       if (updown) {
         if (tx->cw_ramp_audio_ptr < tx->cw_ramp_audio_len) {
           tx->cw_ramp_audio_ptr++;
         }
-
         val = tx->cw_ramp_audio[tx->cw_ramp_audio_ptr];
-
         for (i = 0; i < tx->ratio; i++) {
           if (tx->cw_ramp_rf_ptr < tx->cw_ramp_rf_len) {
             tx->cw_ramp_rf_ptr++;
           }
-
           tx->cw_sig_rf[j++] = tx->cw_ramp_rf[tx->cw_ramp_rf_ptr];
         }
       } else {
         if (tx->cw_ramp_audio_ptr > 0) {
           tx->cw_ramp_audio_ptr--;
         }
-
         val = tx->cw_ramp_audio[tx->cw_ramp_audio_ptr];
-
         for (i = 0; i < tx->ratio; i++) {
           if (tx->cw_ramp_rf_ptr > 0) {
             tx->cw_ramp_rf_ptr--;
           }
-
           tx->cw_sig_rf[j++] = tx->cw_ramp_rf[tx->cw_ramp_rf_ptr];
         }
       }
-
       // Apply a minimum side tone volume for CAT CW messages.
       int vol = cw_keyer_sidetone_volume;
-
       if (vol == 0 && CAT_cw_is_active) { vol = 12; }
-
       cwsample = 0.00196 * vol * val * sine_generator(&p1local, &p2local, cw_keyer_sidetone_frequency);
       g_mutex_unlock(&tx->cw_ramp_mutex);
     } else {
@@ -2047,19 +1889,16 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
       // Simply insert a "hard zero".
       //
       cwsample = 0.0;
-
       for (i = 0; i < tx->ratio; i++) {
         tx->cw_sig_rf[j++] = 0.0;
       }
     }
-
     //
     // cw_keyer_sidetone_volume is in the range 0...127 so cwsample is 0.00 ... 0.25
     //
     if (active_receiver->local_audio) {
       cw_audio_write(active_receiver, cwsample);
     }
-
     //
     // In the new protocol, we MUST maintain a constant flow of audio samples to the radio
     // (at least for ANAN-200D and ANAN-7000 internal side tone generation)
@@ -2073,7 +1912,6 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
     //
     if (protocol == NEW_PROTOCOL) {
       int s = 0;
-
       //
       // The scaling should ensure that a deskHPSDR-generated side tone
       // has the same volume than a FGPA-generated one.
@@ -2095,7 +1933,6 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
           s = (int)(cwsample * 32768.0);
         }
       }
-
       new_protocol_cw_audio_samples(s, s);
     }
   } else {
@@ -2106,23 +1943,18 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
     //
     cw_not_ready = 1;
     cw_key_up = 0;
-
     if (cw_key_down > 0) { cw_key_down--; }  // in case it occured before the RX/TX transition
-
     tx->cw_ramp_audio_ptr = 0;
     tx->cw_ramp_rf_ptr = 0;
     // insert "silence" in CW audio and TX IQ buffers
     j = tx->ratio * tx->samples;
-
     for (i = 0; i < tx->ratio; i++) {
       tx->cw_sig_rf[j++] = 0.0;
     }
   }
-
   tx->mic_input_buffer[tx->samples * 2] = mic_sample_double;
   tx->mic_input_buffer[(tx->samples * 2) + 1] = 0.0;  //mic_sample_double;
   tx->samples++;
-
   if (tx->samples == tx->buffer_size) {
     tx_full_buffer(tx);
     tx->samples = 0;
@@ -2133,7 +1965,6 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
                           double q_sample_rx) {
   RECEIVER *tx_feedback = receiver[PS_TX_FEEDBACK];
   RECEIVER *rx_feedback = receiver[PS_RX_FEEDBACK];
-
   //t_print("add_ps_iq_samples: samples=%d i_rx=%f q_rx=%f i_tx=%f q_tx=%f\n",rx_feedback->samples, i_sample_rx,q_sample_rx,i_sample_tx,q_sample_tx);
   if (tx->do_scale) {
     tx_feedback->iq_input_buffer[tx_feedback->samples * 2] = i_sample_tx * tx->drive_iscal;
@@ -2142,17 +1973,14 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
     tx_feedback->iq_input_buffer[tx_feedback->samples * 2] = i_sample_tx;
     tx_feedback->iq_input_buffer[(tx_feedback->samples * 2) + 1] = q_sample_tx;
   }
-
   rx_feedback->iq_input_buffer[rx_feedback->samples * 2] = i_sample_rx;
   rx_feedback->iq_input_buffer[(rx_feedback->samples * 2) + 1] = q_sample_rx;
   tx_feedback->samples = tx_feedback->samples + 1;
   rx_feedback->samples = rx_feedback->samples + 1;
-
   if (rx_feedback->samples >= rx_feedback->buffer_size) {
     if (radio_is_transmitting()) {
       int txmode = vfo_get_tx_mode();
       int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
-
       if (!cwmode) {
         //
         // Since we are not using WDSP in CW transmit, it also makes little sense to
@@ -2160,14 +1988,12 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
         //
         pscc(tx->id, rx_feedback->buffer_size, tx_feedback->iq_input_buffer, rx_feedback->iq_input_buffer);
       }
-
       if (tx->displaying && tx->feedback) {
         g_mutex_lock(&rx_feedback->display_mutex);
         Spectrum0(1, rx_feedback->id, 0, 0, rx_feedback->iq_input_buffer);
         g_mutex_unlock(&rx_feedback->display_mutex);
       }
     }
-
     rx_feedback->samples = 0;
     tx_feedback->samples = 0;
   }
@@ -2178,7 +2004,6 @@ void tx_set_displaying(TRANSMITTER *tx) {
     if (tx->update_timer_id > 0) {
       g_source_remove(tx->update_timer_id);
     }
-
     tx->update_timer_id = gdk_threads_add_timeout_full(G_PRIORITY_HIGH_IDLE, 1000 / tx->fps, tx_update_display,
                           (gpointer) tx, NULL);
   } else {
@@ -2197,7 +2022,6 @@ void tx_set_filter(TRANSMITTER *tx) {
   int txvfo = vfo_get_tx_vfo();
   int rxvfo = active_receiver->id;
   tx->deviation = vfo[txvfo].deviation;
-
   if (tx->use_rx_filter) {
     //
     // Use only 'compatible' parts of RX filter settings
@@ -2207,7 +2031,6 @@ void tx_set_filter(TRANSMITTER *tx) {
     int rxmode = vfo[rxvfo].mode;
     FILTER *mode_filters = filters[rxmode];
     const FILTER *filter = &mode_filters[vfo[rxvfo].filter];
-
     switch (rxmode) {
     case modeDSB:
     case modeAM:
@@ -2216,24 +2039,20 @@ void tx_set_filter(TRANSMITTER *tx) {
     case modeFMN:
       high =  filter->high;
       break;
-
     case modeLSB:
     case modeDIGL:
       high = -filter->low;   // always positive, high audio end
       low  = -filter->high;  // always positive, low audio end
       break;
-
     case modeUSB:
     case modeDIGU:
       high = filter->high;
       low  = filter->low;
       break;
     }
-
     t_print("%s: tx->use_rx_filter: %d, set RX filter high %d, set RX filter low %d\n", __func__, tx->use_rx_filter,
             high, low);
   }
-
   switch (txmode) {
   case modeCWL:
   case modeCWU:
@@ -2242,7 +2061,6 @@ void tx_set_filter(TRANSMITTER *tx) {
     tx->filter_low  = -150;
     tx->filter_high = 150;
     break;
-
   case modeDSB:
   case modeAM:
   case modeSAM:
@@ -2252,7 +2070,6 @@ void tx_set_filter(TRANSMITTER *tx) {
     tx->filter_low = -high;
     tx->filter_high = high;
     break;
-
   case modeFMN:
     //
     // FMN: the TX bandpass is applied to the signal *before* the FM modulator.
@@ -2264,21 +2081,18 @@ void tx_set_filter(TRANSMITTER *tx) {
     tx->filter_low = -3000;
     tx->filter_high = 3000;
     break;
-
   case modeLSB:
   case modeDIGL:
     // in IQ space, the filter edges are (-high, -low)
     tx->filter_low = -high;
     tx->filter_high = -low;
     break;
-
   case modeUSB:
   case modeDIGU:
     // in IQ space, the filter edges are (low, high)
     tx->filter_low = low;
     tx->filter_high = high;
     break;
-
   case modeDRM:
     // I have no idea  what this is good for
     tx->filter_low = 7000;
@@ -2286,7 +2100,6 @@ void tx_set_filter(TRANSMITTER *tx) {
     break;
     t_print("%s: set TX filter high %d, set TX filter low %d\n", __func__, tx->filter_high, tx->filter_low);
   }
-
   tx_set_bandpass(tx);
   tx_set_deviation(tx);
 }
@@ -2317,7 +2130,6 @@ void tx_close(const TRANSMITTER *tx) {
 void tx_create_analyzer(const TRANSMITTER *tx) {
   int rc;
   XCreateAnalyzer(tx->id, &rc, 262144, 1, 1, NULL);
-
   if (rc != 0) {
     t_print("CreateAnalyzer failed for TXid=%d\n", tx->id);
   } else {
@@ -2327,22 +2139,18 @@ void tx_create_analyzer(const TRANSMITTER *tx) {
 
 double tx_get_alc(const TRANSMITTER *tx) {
   double alc;
-
   switch (tx->alcmode) {
   case ALC_PEAK:
   default:
     alc = GetTXAMeter(tx->id, TXA_ALC_PK);
     break;
-
   case ALC_AVERAGE:
     alc = GetTXAMeter(tx->id, TXA_ALC_AV);
     break;
-
   case ALC_GAIN:
     alc = GetTXAMeter(tx->id, TXA_ALC_GAIN);
     break;
   }
-
   return alc;
 }
 
@@ -2383,7 +2191,6 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   //    1024                  1536k                            65536
   //
   int afft_size = (int)(((long) tx->iq_output_rate * tx->pixels) / 24000L);
-
   if (afft_size <= 16384) {
     afft_size = 16384;       // our previous fixed value
   } else if (afft_size <= 32768) {
@@ -2391,7 +2198,6 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   } else  {
     afft_size = 65536;       //  this shall be the maximum
   }
-
   const double fscLin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
   const double fscHin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
   const int stitches = 1;
@@ -2431,28 +2237,21 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
 // --- TX Levels: Fenster steuern ---
 static inline void tx_levels_show(TRANSMITTER *tx) {
   int txmode = vfo_get_tx_mode();
-
   if (!tx || !tx->show_levels || tune) { return; }
-
   if (tx->levels_dialog) { return; }                 // schon offen
-
   if (txmode == modeCWU || txmode == modeCWL || txmode == modeDIGU || txmode == modeDIGL) { return; } // nicht bei CW
-
   tx_create_levels_window(tx);                   // erstellt Dialog+Area
   tx_panadapter_update(tx);                      // sofort erster Frame
 }
 
 static inline void tx_levels_hide(TRANSMITTER *tx) {
   if (!tx) { return; }
-
   if (tx->levels_surface) { cairo_surface_destroy(tx->levels_surface); tx->levels_surface = NULL; }
-
   if (tx->levels_dialog)  {
     gtk_window_get_position(GTK_WINDOW(tx->levels_dialog), &tx->levels_x_pos, &tx->levels_y_pos);
     gtk_widget_destroy(tx->levels_dialog);
     tx->levels_dialog  = NULL;
   }
-
   tx->levels_area = NULL;
 }
 
@@ -2520,17 +2319,14 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
     // see above. Ensure some feedback samples still flow into
     // pscc after resetting.
     tx_ps_reset(tx);
-
     if (radio_is_transmitting()) {
       usleep(100000);
     } else {
       RECEIVER *rx_feedback = receiver[PS_RX_FEEDBACK];
-
       if (rx_feedback) {
         // memset(rx_feedback->iq_input_buffer, 0, rx_feedback->buffer_size * sizeof(double));
         memset(rx_feedback->iq_input_buffer, 0,
                (size_t) 2 * rx_feedback->buffer_size * sizeof* rx_feedback->iq_input_buffer);
-
         //
         // In principle we could call pscc and GetPSINfo and repeat this until
         // info[15] becomes zero (LRESET)
@@ -2541,7 +2337,6 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
       }
     }
   }
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     // stop protocol, change PS state, restart protocol
@@ -2550,20 +2345,17 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
     tx->puresignal = SET(state);
     old_protocol_run();
     break;
-
   case NEW_PROTOCOL:
     // change PS state and tell radio about it
     tx->puresignal = SET(state);
     schedule_high_priority();
     schedule_receive_specific();
 #ifdef SOAPY_SDR
-
   case SOAPY_PROTOCOL:
     // no feedback channels in SOAPY
     break;
 #endif
   }
-
   if (state) {
     // if switching on: wait a while to get the feedback
     // streams flowing, then start PS engine
@@ -2571,7 +2363,6 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
     tx_ps_resume(tx);
     tx_ps_setparams(tx);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -2627,26 +2418,21 @@ void tx_set_average(const TRANSMITTER *tx) {
   int display_average = max(2, (int) fmin(60, (double) tx->fps * t));
   SetDisplayAvBackmult(tx->id, 0, display_avb);
   SetDisplayNumAverage(tx->id, 0, display_average);
-
   switch (tx->display_average_mode) {
   case AVG_NONE:
     wdspmode = AVERAGE_MODE_NONE;
     break;
-
   case AVG_RECURSIVE:
     wdspmode = AVERAGE_MODE_RECURSIVE;
     break;
-
   case AVG_LOGRECURSIVE:
   default:
     wdspmode = AVERAGE_MODE_LOG_RECURSIVE;
     break;
-
   case AVG_TIMEWINDOW:
     wdspmode = AVERAGE_MODE_TIME_WINDOW;
     break;
   }
-
   //
   // I observed artifacts when changing the mode from "Log Recursive"
   // to "Time Window", so I generally switch to NONE first, and then
@@ -2706,7 +2492,6 @@ void tx_set_compressor(TRANSMITTER *tx) {
   // SetTXAosctrlRun(tx->id, tx->compressor);
   SetTXACompressorGain(tx->id, tx->compressor_level);
   SetTXACompressorRun(tx->id, tx->compressor);  // PROC on/off
-
   if (tx->compressor && tx->cessb_enable && tx->compressor_level > 0 && !tx->low_latency) {
     SetTXAosctrlRun(tx->id, tx->compressor);  // CESSB on
     t_print("%s: CESSB enabled\n", __func__);
@@ -2714,10 +2499,8 @@ void tx_set_compressor(TRANSMITTER *tx) {
     SetTXAosctrlRun(tx->id, 0);  // CESSB off
     t_print("%s: CESSB disabled\n", __func__);
   }
-
   t_print("%s: Baseband-Compr state %d, level %.1f\n",
           __func__, tx->compressor, tx->compressor_level);
-
   if (can_transmit && display_sliders) {
     update_slider_lev_scale(TRUE);
     update_slider_lev_button(TRUE);
@@ -2744,26 +2527,21 @@ void tx_set_detector(const TRANSMITTER *tx) {
   // Apply display detector mode stored in tx
   //
   int wdspmode;
-
   switch (tx->display_detector_mode) {
   case DET_PEAK:
   default:
     wdspmode = DETECTOR_MODE_PEAK;
     break;
-
   case DET_AVERAGE:
     wdspmode = DETECTOR_MODE_AVERAGE;
     break;
-
   case DET_ROSENFELL:
     wdspmode = DETECTOR_MODE_ROSENFELL;
     break;
-
   case DET_SAMPLEHOLD:
     wdspmode = DETECTOR_MODE_SAMPLE;
     break;
   }
-
   SetDisplayDetectorMode(tx->id, 0, wdspmode);
 }
 
@@ -2793,7 +2571,6 @@ void tx_set_dexp(const TRANSMITTER *tx) {
 
 void tx_xmit_captured_data_start(const TRANSMITTER *tx) {
   t_print("%s is_vk=%d is_cap=%d\n", __func__, is_vk, is_cap);
-
   //
   // Turn OFF compression etc. without affecting the mode_settings
   // and without changing the TX data
@@ -2826,7 +2603,6 @@ void tx_xmit_captured_data_start(const TRANSMITTER *tx) {
 
 void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
   t_print("%s is_vk=%d is_cap=%d use_tx_audiochain=%d\n", __func__, is_vk, is_cap, use_tx_audiochain);
-
   //
   // Restore compression, mic gain etc. (without affecting the mode_settings)
   // from the TX data
@@ -2873,7 +2649,6 @@ void tx_set_latency(TRANSMITTER *tx) {
   if (tx->low_latency && tx->cessb_enable) {
     tx->cessb_enable = 0;
   }
-
   TXASetMP(tx->id, tx->low_latency);
   t_print("%s: Set TX low_latency = %d\n", __func__, tx->low_latency);
 }
@@ -2883,11 +2658,9 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
   int _mode;
   _gain = tx->mic_gain;
   _mode = vfo_get_tx_mode();
-
   if (tx->addgain_enable) {
     _gain += tx->addgain_gain;
   }
-
   if (_mode == modeDIGL || _mode == modeDIGU) {
     SetTXAPanelGain1(tx->id, 1.0);
     t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __func__);
@@ -2895,10 +2668,8 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
     SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
     t_print("%s: set input gain to %.1fdb\n", __func__, _gain);
   }
-
   t_print("TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
           vfo_get_tx_mode());
-
   if (can_transmit && display_sliders) {
     update_slider_preamp_button(TRUE);
   }
@@ -2907,25 +2678,20 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
 void tx_set_mode(TRANSMITTER* tx, int mode) {
   if (tx != NULL) {
     double _gain;
-
     if (mode == modeDIGU || mode == modeDIGL) {
       if (tx->drive > drive_digi_max + 0.5) {
         set_drive(drive_digi_max);
       }
-
       SetTXAPanelGain1(tx->id, 1.0);
       t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __func__);
     } else {
       _gain = tx->mic_gain;
-
       if (tx->addgain_enable) {
         _gain += tx->addgain_gain;
       }
-
       SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
       t_print("%s: Restore input gain: %.1fdb\n", __func__, _gain);
     }
-
     SetTXAMode(tx->id, mode);
     tx_set_filter(tx);
   }
@@ -2955,7 +2721,6 @@ void tx_set_singletone(const TRANSMITTER *tx, int state, double freq) {
     //
     //
     SetTXAPostGenRun(tx->id, 0);
-
     if (device == DEVICE_HERMES_LITE2 || device == DEVICE_HERMES_LITE ||
         device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
       usleep(100000);
@@ -2971,11 +2736,8 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
   // automatically be removed
   //
   static guint timer = 0;
-
   if (state == tx->twotone) { return; }
-
   tx->twotone = state;
-
   if (state) {
     // set frequencies and levels
     switch (vfo_get_tx_mode()) {
@@ -2984,22 +2746,18 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
     case modeDIGL:
       SetTXAPostGenTTFreq(tx->id, -700.0, -1900.0);
       break;
-
     default:
       SetTXAPostGenTTFreq(tx->id, 700.0, 1900.0);
       break;
     }
-
     SetTXAPostGenTTMag(tx->id, 0.49999, 0.49999);
     SetTXAPostGenMode(tx->id, 1);
     SetTXAPostGenRun(tx->id, 1);
-
     if (timer == 0) {
       timer = g_timeout_add((guint) 100, ps_calibration_timer, &timer);
     }
   } else {
     SetTXAPostGenRun(tx->id, 0);
-
     //
     // These radios show "tails" of the TX signal after a TX/RX transition,
     // so wait after the TwoTone signal has been removed, before
@@ -3014,7 +2772,6 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
       usleep(100000);
     }
   }
-
   g_idle_add(ext_mox_update, GINT_TO_POINTER(state));
 }
 

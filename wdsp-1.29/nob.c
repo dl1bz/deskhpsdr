@@ -33,9 +33,7 @@ warren@wpratt.com
 void initBlanker(ANB a) {
   int i;
   a->trans_count = (int)(a->tau * a->samplerate);
-
   if (a->trans_count < 2) { a->trans_count = 2; }
-
   a->hang_count = (int)(a->hangtime * a->samplerate);
   a->adv_count = (int)(a->advtime * a->samplerate);
   a->count = 0;
@@ -47,11 +45,9 @@ void initBlanker(ANB a) {
   a->power = 1.0;
   a->backmult = exp(-1.0 / (a->samplerate * a->backtau));
   a->ombackmult = 1.0 - a->backmult;
-
   for (i = 0; i <= a->trans_count; i++) {
     a->wave[i] = 0.5 * cos(i * a->coef);
   }
-
   memset(a->dline, 0, a->dline_size * sizeof(complex));
 }
 
@@ -111,75 +107,57 @@ void xanb(ANB a) {
   double scale;
   double mag;
   int i;
-
   if (a->run) {
     EnterCriticalSection(&a->cs_update);
-
     for (i = 0; i < a->buffsize; i++) {
       mag = sqrt(a->in[2 * i + 0] * a->in[2 * i + 0] + a->in[2 * i + 1] * a->in[2 * i + 1]);
       a->avg = a->backmult * a->avg + a->ombackmult * mag;
       a->dline[2 * a->in_idx + 0] = a->in[2 * i + 0];
       a->dline[2 * a->in_idx + 1] = a->in[2 * i + 1];
-
       if (mag > (a->avg * a->threshold)) {
         a->count = a->trans_count + a->adv_count;
       }
-
       switch (a->state) {
       case 0:
         a->out[2 * i + 0] = a->dline[2 * a->out_idx + 0];
         a->out[2 * i + 1] = a->dline[2 * a->out_idx + 1];
-
         if (a->count > 0) {
           a->state = 1;
           a->dtime = 0;
           a->power = 1.0;
         }
-
         break;
-
       case 1:
         scale = a->power * (0.5 + a->wave[a->dtime]);
         a->out[2 * i + 0] = a->dline[2 * a->out_idx + 0] * scale;
         a->out[2 * i + 1] = a->dline[2 * a->out_idx + 1] * scale;
-
         if (++a->dtime > a->trans_count) {
           a->state = 2;
           a->atime = 0;
         }
-
         break;
-
       case 2:
         a->out[2 * i + 0] = 0.0;
         a->out[2 * i + 1] = 0.0;
-
         if (++a->atime > a->adv_count) {
           a->state = 3;
         }
-
         break;
-
       case 3:
         if (a->count > 0) {
           a->htime = -a->count;
         }
-
         a->out[2 * i + 0] = 0.0;
         a->out[2 * i + 1] = 0.0;
-
         if (++a->htime > a->hang_count) {
           a->state = 4;
           a->itime = 0;
         }
-
         break;
-
       case 4:
         scale = 0.5 - a->wave[a->itime];
         a->out[2 * i + 0] = a->dline[2 * a->out_idx + 0] * scale;
         a->out[2 * i + 1] = a->dline[2 * a->out_idx + 1] * scale;
-
         if (a->count > 0) {
           a->state = 1;
           a->dtime = 0;
@@ -187,17 +165,12 @@ void xanb(ANB a) {
         } else if (++a->itime > a->trans_count) {
           a->state = 0;
         }
-
         break;
       }
-
       if (a->count > 0) { a->count--; }
-
       if (++a->in_idx == a->dline_size) { a->in_idx = 0; }
-
       if (++a->out_idx == a->dline_size) { a->out_idx = 0; }
     }
-
     LeaveCriticalSection(&a->cs_update);
   } else if (a->in != a->out) {
     memcpy(a->out, a->in, a->buffsize * sizeof(complex));
@@ -428,14 +401,11 @@ void xanbEXTF(int id, float* I, float* Q) {
   ANB a = panb[id];
   a->in = a->legacy;
   a->out = a->legacy;
-
   for (i = 0; i < a->buffsize; i++) {
     a->legacy[2 * i + 0] = (double)I[i];
     a->legacy[2 * i + 1] = (double)Q[i];
   }
-
   xanb(a);
-
   for (i = 0; i < a->buffsize; i++) {
     I[i] = (float)a->legacy[2 * i + 0];
     Q[i] = (float)a->legacy[2 * i + 1];

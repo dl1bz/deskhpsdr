@@ -76,9 +76,7 @@ void rnnr_agc_init(RNNR a) {
 
 static float frame_rms(const float* x, int n) {
   double s = 0.0;
-
   for (int i = 0; i < n; i++) { double v = (double)x[i]; s += v * v; }
-
   float r = (float)sqrt(s / (double)n);
   return (r < AGC_RMS_FLOOR) ? AGC_RMS_FLOOR : r;
 }
@@ -117,26 +115,21 @@ static void ring_buffer_put(rnnr_ring_buffer* rb, float v) {
 
 static int ring_buffer_get_bulk(rnnr_ring_buffer* rb, float* dest, int n) {
   int to_get = n < rb->count ? n : rb->count;
-
   for (int i = 0; i < to_get; i++) {
     dest[i] = rb->buf[rb->head];
     rb->head = (rb->head + 1) % rb->capacity;
   }
-
   rb->count -= to_get;
   return to_get;
 }
 
 static void ring_buffer_resize(rnnr_ring_buffer* rb, int new_capacity) {
   if (new_capacity == rb->capacity) { return; }
-
   float *new_buf = malloc0(new_capacity * sizeof(float));
   int cnt = rb->count;
-
   for (int i = 0; i < cnt; i++) {
     new_buf[i] = rb->buf[(rb->head + i) % rb->capacity];
   }
-
   _aligned_free(rb->buf);
   rb->buf = new_buf;
   rb->capacity = new_capacity;
@@ -148,7 +141,6 @@ static void ring_buffer_resize(rnnr_ring_buffer* rb, int new_capacity) {
 PORT
 void SetRXARNNRRun(int channel, int run) {
   RNNR a = rxa[channel].rnnr.p;
-
   if (a->run != run) {
     RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
                 rxa[channel].emnr.p->run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
@@ -196,7 +188,6 @@ RNNR create_rnnr(int run, int position, int size, double* in, double* out, int r
   a->to_process_buffer = malloc0(a->frame_size * sizeof(float));
   a->processed_output_buffer = malloc0(a->frame_size * sizeof(float));
   a->output_buffer = malloc0(a->buffer_size * sizeof(float));
-
   // used to maintain a record of RNNR's here and is used so we can update them all if/when model is changed
   if (_rnnr_count == _rnnr_capacity) {
     int new_cap = _rnnr_capacity ? _rnnr_capacity * 2 :
@@ -207,7 +198,6 @@ RNNR create_rnnr(int run, int position, int size, double* in, double* out, int r
     _rnnr_instances = tmp;
     _rnnr_capacity = new_cap;
   }
-
   _rnnr_instances[_rnnr_count++] = a;
   //
   return a;
@@ -220,10 +210,8 @@ void xrnnr(RNNR a, int pos) {
     float *to_process = a->to_process_buffer;
     float *process_out = a->processed_output_buffer;
     EnterCriticalSection(&a->cs);
-
     for (int i = 0; i < bs; i++) {
       ring_buffer_put(&a->input_ring, (float)a->in[2 * i + 0]);
-
       if (a->input_ring.count >= fs) {
         ring_buffer_get_bulk(&a->input_ring, to_process, fs);
         float rms = frame_rms(to_process, fs);
@@ -231,37 +219,25 @@ void xrnnr(RNNR a, int pos) {
         float desired_db = AGC_TARGET_DB - cur_db;
         float alpha = (desired_db > a->gain_db) ? a->agc_att_a : a->agc_rel_a;
         a->gain_db = alpha * a->gain_db + (1.0f - alpha) * desired_db;
-
         if (a->gain_db < AGC_MIN_DB) { a->gain_db = AGC_MIN_DB; }
-
         if (a->gain_db > AGC_MAX_DB) { a->gain_db = AGC_MAX_DB; }
-
         a->gain = db_to_lin(a->gain_db);
-
         for (int j = 0; j < fs; j++) {
           float v = to_process[j] * a->gain;
-
           if (v > SAFETY_CEIL) { v = SAFETY_CEIL; }
-
           if (v < -SAFETY_CEIL) { v = -SAFETY_CEIL; }
-
           to_process[j] = v;
         }
-
         rnnoise_process_frame(a->st, process_out, to_process);
         const float inv = (a->gain > 0.0f) ? (1.0f / a->gain) : 0.0f;
-
         for (int j = 0; j < fs; j++) {
           ring_buffer_put(&a->output_ring, process_out[j] * inv);
         }
       }
     }
-
     LeaveCriticalSection(&a->cs);
-
     if (a->output_ring.count >= bs) {
       ring_buffer_get_bulk(&a->output_ring, a->output_buffer, bs);
-
       for (int i = 0; i < bs; i++) {
         a->out[2 * i + 0] = (double)a->output_buffer[i];
         a->out[2 * i + 1] = 0;
@@ -282,7 +258,6 @@ void destroy_rnnr(RNNR a) {
       break;
     }
   }
-
   EnterCriticalSection(&a->cs);
   rnnoise_destroy(a->st);
   LeaveCriticalSection(&a->cs);
@@ -293,7 +268,6 @@ void destroy_rnnr(RNNR a) {
   ring_buffer_free(&a->input_ring);
   ring_buffer_free(&a->output_ring);
   _aligned_free(a);
-
   // tidy if none now in use
   if (_rnnr_count == 0) {
     _aligned_free(_rnnr_instances);
@@ -313,19 +287,15 @@ void RNNRloadModel(const char* file_path) {
     rnnoise_destroy(a->st);
     LeaveCriticalSection(&a->cs);
   }
-
   // free up any previous loaded model
   if (_rnnr_model) {
     rnnoise_model_free(_rnnr_model);
   }
-
   _rnnr_model = NULL; // default to baked in model
-
   // try to load
   if (file_path && file_path[0]) {
     _rnnr_model = rnnoise_model_from_filename(file_path);
   }
-
   // recreate any we had created previously and restart if needed
   for (int i = 0; i < _rnnr_count; i++) {
     RNNR a = _rnnr_instances[i];

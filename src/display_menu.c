@@ -88,15 +88,12 @@ static void chkbtn_peakTX_cb(GtkWidget *widget, gpointer data) {
 
 static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
   int *value = (int*) data;
-
   if (active_receiver) {
     rx_panadapter_peak_hold_clear(active_receiver);
   }
-
   g_mutex_lock(&peak_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   g_mutex_unlock(&peak_mutex);
-
   if (display_zoompan) {
     update_peak_btn();
   }
@@ -114,9 +111,7 @@ static void line_colour_set(GtkColorButton *btn, gpointer user_data) {
 
 static void cb_pan_peak_hold_mode_changed(GtkComboBox *combo, gpointer unused) {
   const gchar *id = gtk_combo_box_get_active_id(combo);
-
   if (!id) { return; }
-
   /* nur 1 oder 2 zulässig */
   pan_peak_hold_mode = (id[0] == '2') ? 2 : 1;
 }
@@ -137,7 +132,6 @@ static void sel_cb(GtkWidget *widget, gpointer data) {
   if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     return;  /* wichtig: Deaktivierung ignorieren */
   }
-
   int c = GPOINTER_TO_INT(data);
   which_container = c;
   gtk_widget_set_visible(general_container,
@@ -150,49 +144,39 @@ static void sel_cb(GtkWidget *widget, gpointer data) {
 
 static void detector_cb(GtkToggleButton *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
     active_receiver->display_detector_mode = DET_PEAK;
     break;
-
   case 1:
     active_receiver->display_detector_mode = DET_ROSENFELL;
     break;
-
   case 2:
     active_receiver->display_detector_mode = DET_AVERAGE;
     break;
-
   case 3:
     active_receiver->display_detector_mode = DET_SAMPLEHOLD;
     break;
   }
-
   rx_set_detector(active_receiver);
 }
 
 static void average_cb(GtkToggleButton *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
     active_receiver->display_average_mode = AVG_NONE;
     break;
-
   case 1:
     active_receiver->display_average_mode = AVG_RECURSIVE;
     break;
-
   case 2:
     active_receiver->display_average_mode = AVG_TIMEWINDOW;
     break;
-
   case 3:
     active_receiver->display_average_mode = AVG_LOGRECURSIVE;
     break;
   }
-
   rx_set_average(active_receiver);
 }
 
@@ -263,7 +247,6 @@ static void panadapter_autoscale_toggle_cb(GtkWidget *widget, gpointer data) {
   active_receiver->panadapter_autoscale_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_reconfigure();
   g_idle_add(ext_vfo_update, NULL);
-
   if (active_receiver->panadapter_autoscale_enabled) {
     gtk_widget_set_sensitive(panadapter_low_r, FALSE);
   } else {
@@ -303,7 +286,6 @@ static void display_panadapter_ovf_cb(GtkWidget *widget, gpointer data) {
 
 static void toggle_info_bar_cb(GtkWidget *widget, gpointer data) {
   display_info_bar = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   if (display_info_bar) {
     gtk_widget_set_sensitive(GTK_WIDGET(b_display_solardata), TRUE);
     // gtk_widget_set_visible(GTK_WIDGET(b_display_solardata), TRUE);
@@ -313,7 +295,6 @@ static void toggle_info_bar_cb(GtkWidget *widget, gpointer data) {
     // gtk_widget_set_visible(GTK_WIDGET(b_display_solardata), FALSE);
     // gtk_widget_hide(GTK_WIDGET(b_display_solardata));
   }
-
   radio_reconfigure();
 }
 
@@ -491,7 +472,6 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_show(waterfall_automatic_b);
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_automatic_b, col, row, 1, 1);
   g_signal_connect(waterfall_automatic_b, "toggled", G_CALLBACK(waterfall_automatic_cb), NULL);
-
   //--------------------------------------------------------------------------------------------------------------
   // if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
@@ -516,14 +496,12 @@ void display_menu(GtkWidget *parent) {
       g_idle_add(ext_vfo_update, NULL);
     }
   }
-
   //------------------------------------------------------------------------------------------------------------
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     row++;
   } else {
     row += 2;
   }
-
   col = 2;
   GtkWidget *ChkBtn_wmap = gtk_check_button_new_with_label("Show Worldmap");
   gtk_widget_set_name(ChkBtn_wmap, "boldlabel_blue");
@@ -544,25 +522,20 @@ void display_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(detector_combo), NULL, "Rosenfell");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(detector_combo), NULL, "Average");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(detector_combo), NULL, "Sample");
-
   switch (active_receiver->display_detector_mode) {
   case DET_PEAK:
     gtk_combo_box_set_active(GTK_COMBO_BOX(detector_combo), 0);
     break;
-
   case DET_ROSENFELL:
     gtk_combo_box_set_active(GTK_COMBO_BOX(detector_combo), 1);
     break;
-
   case DET_AVERAGE:
     gtk_combo_box_set_active(GTK_COMBO_BOX(detector_combo), 2);
     break;
-
   case DET_SAMPLEHOLD:
     gtk_combo_box_set_active(GTK_COMBO_BOX(detector_combo), 3);
     break;
   }
-
   my_combo_attach(GTK_GRID(general_grid), detector_combo, col + 1, row, 1, 1);
   g_signal_connect(detector_combo, "changed", G_CALLBACK(detector_cb), NULL);
   row++;
@@ -575,25 +548,20 @@ void display_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(average_combo), NULL, "Recursive");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(average_combo), NULL, "Time Window");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(average_combo), NULL, "Log Recursive");
-
   switch (active_receiver->display_average_mode) {
   case AVG_NONE:
     gtk_combo_box_set_active(GTK_COMBO_BOX(average_combo), 0);
     break;
-
   case AVG_RECURSIVE:
     gtk_combo_box_set_active(GTK_COMBO_BOX(average_combo), 1);
     break;
-
   case AVG_TIMEWINDOW:
     gtk_combo_box_set_active(GTK_COMBO_BOX(average_combo), 2);
     break;
-
   case AVG_LOGRECURSIVE:
     gtk_combo_box_set_active(GTK_COMBO_BOX(average_combo), 3);
     break;
   }
-
   my_combo_attach(GTK_GRID(general_grid), average_combo, col + 1, row, 1, 1);
   g_signal_connect(average_combo, "changed", G_CALLBACK(average_cb), NULL);
   row++;
@@ -645,14 +613,12 @@ void display_menu(GtkWidget *parent) {
   col++;
   GtkWidget *b_display_info_bar = gtk_check_button_new_with_label("Display Info Bar");
   gtk_widget_set_name(b_display_info_bar, "boldlabel_blue");
-
   if (!rx_stack_horizontal) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_info_bar), display_info_bar);
   } else {
     display_info_bar = 0;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_info_bar), display_info_bar);
   }
-
   gtk_grid_attach(GTK_GRID(general_grid), b_display_info_bar, col, row, 1, 1);
   g_signal_connect(b_display_info_bar, "toggled", G_CALLBACK(toggle_info_bar_cb), NULL);
   //------------------------------------------------------------------------------------------------------------
@@ -667,7 +633,6 @@ void display_menu(GtkWidget *parent) {
   GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Show ADC OVF Alarm");
   gtk_widget_set_name(b_display_panadapter_ovf, "stdlabel_blue");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_panadapter_ovf), active_receiver->panadapter_ovf_on);
-
   if (!autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
     gtk_widget_hide(b_display_panadapter_ovf);
   } else {
@@ -676,7 +641,6 @@ void display_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(general_grid), b_display_panadapter_ovf, col, row, 1, 1);
     g_signal_connect(b_display_panadapter_ovf, "toggled", G_CALLBACK(display_panadapter_ovf_cb), NULL);
   }
-
   //------------------------------------------------------------------------------------------------------------
   row++;
   GtkWidget *ChkBtn_clock = gtk_check_button_new_with_label("Show clock & UDP broadcast");
@@ -694,7 +658,6 @@ void display_menu(GtkWidget *parent) {
   g_signal_connect(ChkBtn_clock, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_clock);
   //------------------------------------------------------------------------------------------------------------
 #ifdef __AH4IOB__
-
   if (can_transmit && device == DEVICE_HERMES_LITE2) {
     row++;
     GtkWidget *ChkBtn_ah4 = gtk_check_button_new_with_label("Show AH4 state");
@@ -708,14 +671,12 @@ void display_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_ah4), display_ah4);
     gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_ah4, col, row, 1, 1);
     g_signal_connect(ChkBtn_ah4, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_ah4);
-
     if (!enable_hl2_atu_gateware) {
       gtk_widget_set_sensitive(ChkBtn_ah4, TRUE);
     } else {
       gtk_widget_set_sensitive(ChkBtn_ah4, FALSE);
     }
   }
-
 #endif
   //------------------------------------------------------------------------------------------------------------
   //
@@ -798,16 +759,13 @@ void display_menu(GtkWidget *parent) {
                    G_CALLBACK(panadapter_ignore_noise_percentile_value_changed_cb), NULL);
   row++;
   sub_menu = dialog;
-
   if (active_receiver->waterfall_automatic) {
     gtk_widget_set_sensitive(waterfall_high_r, FALSE);
     gtk_widget_set_sensitive(waterfall_low_r, FALSE);
   }
-
   if (active_receiver->panadapter_autoscale_enabled) {
     gtk_widget_set_sensitive(panadapter_low_r, FALSE);
   }
-
   //
   // Peaks & Hold container and controls therein
   //
@@ -931,7 +889,6 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(peak_hold_grid), tx_pan_fill_col_btn, col, row, 1, 1);
   //-------------------------------------------------------------------------------------------------------------------
   gtk_widget_show_all(dialog);
-
   // Only show one of the General, Peaks containers
   // This is the General container upon first invocation of the Display menu,
   // but subsequent Display menu openings will show the container that
@@ -942,17 +899,14 @@ void display_menu(GtkWidget *parent) {
     gtk_widget_hide(peaks_container);
     gtk_widget_hide(peak_hold_container);
     break;
-
   case PEAKS_CONTAINER:
     gtk_widget_hide(general_container);
     gtk_widget_hide(peak_hold_container);
     break;
-
   case PH_CONTAINER:
     gtk_widget_hide(general_container);
     gtk_widget_hide(peaks_container);
   }
-
   g_mutex_init(&peak_mutex);
 }
 

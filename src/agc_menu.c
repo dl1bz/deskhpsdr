@@ -58,7 +58,6 @@ static gboolean close_cb(void) {
 
 static void update_agc_hang_threshold_scale(void) {
   g_signal_handler_block(G_OBJECT(agc_hang_threshold_scale), threshold_scale_signal_id);
-
   if (active_receiver->agc == AGC_LONG || active_receiver->agc == AGC_SLOW) {
     gtk_widget_show(agc_hang_threshold_label);
     gtk_widget_show(agc_hang_threshold_scale);
@@ -66,7 +65,6 @@ static void update_agc_hang_threshold_scale(void) {
     gtk_widget_hide(agc_hang_threshold_label);
     gtk_widget_hide(agc_hang_threshold_scale);
   }
-
   g_signal_handler_unblock(G_OBJECT(agc_hang_threshold_scale), threshold_scale_signal_id);
 }
 
@@ -180,11 +178,9 @@ void agc_menu(GtkWidget *parent) {
   agc_hang_threshold_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
   gtk_range_set_increments(GTK_RANGE(agc_hang_threshold_scale), 1.0, 1.0);
   gtk_range_set_value(GTK_RANGE(agc_hang_threshold_scale), active_receiver->agc_hang_threshold);
-
   for (float i = 0.0; i <= 100.0; i += 50.0) {
     gtk_scale_add_mark(GTK_SCALE(agc_hang_threshold_scale), i, GTK_POS_TOP, NULL);
   }
-
   gtk_widget_set_size_request(agc_hang_threshold_scale, box_width / 2, -1);  // z.B. 100px
   gtk_widget_set_margin_top(agc_hang_threshold_scale, 0);
   gtk_widget_set_margin_bottom(agc_hang_threshold_scale, 0);

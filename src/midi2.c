@@ -56,7 +56,6 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
 #ifdef MIDIDEBUG
   t_print("%s:EVENT=%d CHAN=%d NOTE=%d VAL=%d\n", __func__, event, channel, note, val);
 #endif
-
   //
   // Sometimes a "heart beat" from a device might be useful. Therefore, we resert
   // channel=16 note=0 for this purpose and filter this out here
@@ -64,13 +63,11 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
   if (event == MIDI_NOTE && channel == 15 && note == 0) {
     return;
   }
-
   if (event == MIDI_PITCH) {
     desc = MidiCommandsTable[128];
   } else {
     desc = MidiCommandsTable[note];
   }
-
   //t_print("%s: init DESC=%p\n",__func__,desc);
   while (desc) {
     //t_print("%s: DESC=%p next=%p CHAN=%d EVENT=%d\n",__func__,desc,desc->next,desc->channel,desc->event);
@@ -81,11 +78,9 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
         // this cannot happen
         t_print("%s: Unknown Event\n", __func__);
         break;
-
       case MIDI_NOTE:
         DoTheMidi(desc->action, desc->type, val);
         break;
-
       case MIDI_CTRL:
         if (desc->type == MIDI_KNOB) {
           // CHANGED Jan 2024: report the "raw" value (0-127) upstream
@@ -93,49 +88,35 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
         } else if (desc->type == MIDI_WHEEL) {
           // translate value to direction/speed
           new = 0;
-
           if ((val >= desc->vfl1) && (val <= desc->vfl2)) { new = -16; }
-
           if ((val >= desc-> fl1) && (val <= desc-> fl2)) { new = -4; }
-
           if ((val >= desc->lft1) && (val <= desc->lft2)) { new = -1; }
-
           if ((val >= desc->rgt1) && (val <= desc->rgt2)) { new = 1; }
-
           if ((val >= desc-> fr1) && (val <= desc-> fr2)) { new = 4; }
-
           if ((val >= desc->vfr1) && (val <= desc->vfr2)) { new = 16; }
-
           //                      t_print("%s: WHEEL PARAMS: val=%d new=%d thrs=%d/%d, %d/%d, %d/%d, %d/%d, %d/%d, %d/%d\n",
           //                               __func__,
           //                               val, new, desc->vfl1, desc->vfl2, desc->fl1, desc->fl2, desc->lft1, desc->lft2,
           //                               desc->rgt1, desc->rgt2, desc->fr1, desc->fr2, desc->vfr1, desc->vfr2);
           if (new != 0) { DoTheMidi(desc->action, desc->type, new); }
         }
-
         break;
-
       case MIDI_PITCH:
         if (desc->type == MIDI_KNOB) {
           // use upper 7  bits
           DoTheMidi(desc->action, desc->type, val >> 7);
         }
-
         break;
       }
-
       break;
     } else {
       desc = desc->next;
     }
   }
-
   if (!desc) {
     // Nothing found. This is nothing to worry about, but log the key to stderr
     if (event == MIDI_PITCH) { t_print("%s: Unassigned PitchBend Value=%d\n", __func__, val); }
-
     if (event == MIDI_NOTE) { t_print("%s: Unassigned Key Note=%d Val=%d\n", __func__, note, val); }
-
     if (event == MIDI_CTRL) { t_print("%s: Unassigned Controller Ctl=%d Val=%d\n", __func__, note, val); }
   }
 }
@@ -147,16 +128,13 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
 void MidiReleaseCommands(void) {
   int i;
   struct desc *loop, *new;
-
   for (i = 0; i < 129; i++) {
     loop = MidiCommandsTable[i];
-
     while (loop != NULL) {
       new = loop->next;
       free(loop);
       loop = new;
     }
-
     MidiCommandsTable[i] = NULL;
   }
 }
@@ -167,9 +145,7 @@ void MidiReleaseCommands(void) {
 
 void MidiAddCommand(int note, struct desc *desc) {
   struct desc *loop;
-
   if (note < 0 || note > 128) { return; }
-
   //
   // Actions with channel == -1 (ANY) must go to the end of the list
   //
@@ -183,11 +159,9 @@ void MidiAddCommand(int note, struct desc *desc) {
   } else {
     // add to tail of the list
     loop = MidiCommandsTable[note];
-
     while (loop->next != NULL) {
       loop = loop->next;
     }
-
     loop->next = desc;
   }
 }
@@ -317,11 +291,9 @@ static OLD_MAPPING OLD_Mapping[] = {
 
 static int keyword2action (char* s) {
   int i = 0;
-
   for (i = 0; i < (sizeof (OLD_Mapping) / sizeof (OLD_Mapping[0])); i++) {
     if (!strcmp (s, OLD_Mapping[i].str)) { return OLD_Mapping[i].action; }
   }
-
   t_print ("MIDI: action keyword %s NOT FOUND.\n", s);
   return NO_ACTION;
 }
@@ -341,26 +313,19 @@ int ReadLegacyMidiFile (char* filename) {
   MidiReleaseCommands();
   t_print ("%s: %s\n", __func__, filename);
   fpin = fopen (filename, "r");
-
   //t_print("%s: fpin=%p\n",__func__,fpin);
   if (!fpin) {
     t_print ("%s: failed to open MIDI device\n", __func__);
     return -1;
   }
-
   for (;;) {
     if (fgets (zeile, 255, fpin) == NULL) { break; }
-
     // ignore comments
     cp = index (zeile, '#');
-
     if (cp == zeile) { continue; }   // comment line
-
     if (cp) { *cp = 0; }             // ignore trailing comment
-
     // change newline, comma, slash etc. to blanks
     cp = zeile;
-
     while ((c = *cp)) {
       switch (c) {
       case '\n':
@@ -371,10 +336,8 @@ int ReadLegacyMidiFile (char* filename) {
         *cp = ' ';
         break;
       }
-
       cp++;
     }
-
     //t_print("\n%s:INP:%s\n",__func__,zeile);
     chan = -1;                // default: any channel
     t1 = t2 = t3 = t4 = -1;   // default threshold values
@@ -387,7 +350,6 @@ int ReadLegacyMidiFile (char* filename) {
     type = TYPE_NONE;
     key = 0;
     action = NO_ACTION;
-
     //
     // The KEY=, CTRL=, and PITCH= cases are mutually exclusive
     // If more than one keyword is in the line, PITCH wins over CTRL
@@ -399,20 +361,17 @@ int ReadLegacyMidiFile (char* filename) {
       type = MIDI_KEY;
       //t_print("%s: MIDI:KEY:%d\n",__func__, key);
     }
-
     if ((cp = strstr (zeile, "CTRL="))) {
       sscanf (cp + 5, "%d", &key);
       event = MIDI_CTRL;
       type = MIDI_KNOB;
       //t_print("%s: MIDI:CTL:%d\n",__func__, key);
     }
-
     if ((cp = strstr (zeile, "PITCH "))) {
       event = MIDI_PITCH;
       type = MIDI_KNOB;
       //t_print("%s: MIDI:PITCH\n",__func__);
     }
-
     //
     // If event is still undefined, skip line
     //
@@ -420,46 +379,35 @@ int ReadLegacyMidiFile (char* filename) {
       //t_print("%s: no event found: %s\n", __func__, zeile);
       continue;
     }
-
     //
     // beware of illegal key values
     //
     if (key < 0) { key = 0; }
-
     if (key > 127) { key = 127; }
-
     if ((cp = strstr (zeile, "CHAN="))) {
       sscanf (cp + 5, "%d", &chan);
       chan--;
-
       if (chan < 0 || chan > 15) { chan = -1; }
-
       //t_print("%s:CHAN:%d\n",__func__,chan);
     }
-
     if ((cp = strstr (zeile, "WHEEL")) && (type == MIDI_KNOB)) {
       // change type from MIDI_KNOB to MIDI_WHEEL
       type = MIDI_WHEEL;
       //t_print("%s:WHEEL\n",__func__);
     }
-
     if ((cp = strstr (zeile, "THR="))) {
       sscanf (cp + 4, "%d %d %d %d %d %d %d %d %d %d %d %d",
               &t1, &t2, &t3, &t4, &t5, &t6, &t7, &t8, &t9, &t10, &t11, &t12);
       //t_print("%s: THR:%d/%d, %d/%d, %d/%d, %d/%d, %d/%d, %d/%d\n",__func__,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12);
     }
-
     if ((cp = strstr (zeile, "ACTION="))) {
       // cut zeile at the first blank character following
       cq = cp + 7;
-
       while (*cq != 0 && *cq != '\n' && *cq != ' ' && *cq != '\t') { cq++; }
-
       *cq = 0;
       action = keyword2action (cp + 7);
       //t_print("MIDI:ACTION:%s (%d)\n",cp+7, action);
     }
-
     //
     // All data for a descriptor has been read. Construct it!
     //
@@ -481,7 +429,6 @@ int ReadLegacyMidiFile (char* filename) {
     desc->vfr1  = t11;
     desc->vfr2  = t12;
     desc->channel  = chan;
-
     //
     // insert descriptor into linked list.
     // We have a linked list for each key value to speed up searches
@@ -490,13 +437,11 @@ int ReadLegacyMidiFile (char* filename) {
       //t_print("%s: Insert desc=%p in CMDS[128] table\n",__func__,desc);
       MidiAddCommand (128, desc);
     }
-
     if (event == MIDI_NOTE || event == MIDI_CTRL) {
       //t_print("%s: Insert desc=%p in CMDS[%d] table\n",__func__,desc,key);
       MidiAddCommand (key, desc);
     }
   }
-
   return 0;
 }
 

@@ -55,9 +55,7 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
   params.scale = scale;
   HASH_T h = fnv1a_hash(&params, sizeof(params));
   double *imp = get_impulse_cache_entry(FC_CACHE, h, nc);
-
   if (imp) { return imp; }
-
   //
   double *A  = (double*) malloc0((nc / 2 + 1) * sizeof(double));
   int i;
@@ -65,12 +63,10 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
   double *impulse;
   int mid = nc / 2;
   double g0_lin = pow(10.0, g0 / 20.0);
-
   if (nc & 1) {
     for (i = 0; i <= mid; i++) {
       fn = (double)i / (double)mid;
       f = fn * samplerate / 2.0;
-
       switch (curve) {
       case 0: // fm pre-emphasis
         if (f0 > 0.0) {
@@ -78,16 +74,13 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
         } else {
           A[i] = 0.0;
         }
-
         break;
-
       case 1: // fm de-emphasis
         if (f > 0.0) {
           A[i] = scale * (g0_lin * f0 / f);
         } else {
           A[i] = 0.0;
         }
-
         break;
       }
     }
@@ -95,7 +88,6 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
     for (i = 0; i < mid; i++) {
       fn = ((double)i + 0.5) / (double)mid;
       f = fn * samplerate / 2.0;
-
       switch (curve) {
       case 0: // fm pre-emphasis
         if (f0 > 0.0) {
@@ -103,25 +95,20 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
         } else {
           A[i] = 0.0;
         }
-
         break;
-
       case 1: // fm de-emphasis
         if (f > 0.0) {
           A[i] = scale * (g0_lin * f0 / f);
         } else {
           A[i] = 0.0;
         }
-
         break;
       }
     }
   }
-
   if (ctfmode == 0) {
     int k, low, high;
     double lowmag, highmag, flow4, fhigh4;
-
     if (nc & 1) {
       low  = (int)(2.0 * f0 / samplerate * mid);
       high = (int)(2.0 * f1 / samplerate * mid + 0.5);
@@ -130,24 +117,17 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
       flow4 = pow((double)low / (double)mid, 4.0);
       fhigh4 = pow((double)high / (double)mid, 4.0);
       k = low;
-
       while (--k >= 0) {
         f = (double)k / (double)mid;
         lowmag *= (f * f * f * f) / flow4;
-
         if (lowmag < 1.0e-100) { lowmag = 1.0e-100; }
-
         A[k] = lowmag;
       }
-
       k = high;
-
       while (++k <= mid) {
         f = (double)k / (double)mid;
         highmag *= fhigh4 / (f * f * f * f);
-
         if (highmag < 1.0e-100) { highmag = 1.0e-100; }
-
         A[k] = highmag;
       }
     } else {
@@ -158,35 +138,26 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
       flow4 = pow((double)low / (double)mid, 4.0);
       fhigh4 = pow((double)high / (double)mid, 4.0);
       k = low;
-
       while (--k >= 0) {
         f = (double)k / (double)mid;
         lowmag *= (f * f * f * f) / flow4;
-
         if (lowmag < 1.0e-100) { lowmag = 1.0e-100; }
-
         A[k] = lowmag;
       }
-
       k = high;
-
       while (++k < mid) {
         f = (double)k / (double)mid;
         highmag *= fhigh4 / (f * f * f * f);
-
         if (highmag < 1.0e-100) { highmag = 1.0e-100; }
-
         A[k] = highmag;
       }
     }
   }
-
   if (nc & 1) {
     impulse = fir_fsamp_odd(nc, A, 1, 1.0, wintype);
   } else {
     impulse = fir_fsamp(nc, A, 1, 1.0, wintype);
   }
-
   // print_impulse ("emph.txt", size + 1, impulse, 1, 0);
   _aligned_free(A);
   // store in cache

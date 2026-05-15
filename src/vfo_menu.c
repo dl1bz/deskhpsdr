@@ -77,27 +77,22 @@ static gboolean close_cb(void) {
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_num_pad_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int val = GPOINTER_TO_INT(data);
-
   //
   // A "double" or "triple" click will generate a GDK_BUTTON_PRESS for each click,
   // and *additionally** a GDK_2BUTTON_PRESS and possibly a GDK_3BUTTON_PRESS.
   // Only the  plain vanilla button press should be handeld, the other ignored.
   // This one has to be ignored, as well as a three-button-press.
   //
-
   if (event->type == GDK_BUTTON_PRESS) {
     char output[64];
     vfo_num_pad(btn_actions[val], myvfo);
-
     if (vfo[myvfo].entered_frequency[0]) {
       snprintf(output, 64, "<big><b>%s</b></big>", vfo[myvfo].entered_frequency);
     } else {
       snprintf(output, 64, "<big><b>0</b></big>");
     }
-
     gtk_label_set_markup(GTK_LABEL(label), output);
   }
-
   return FALSE;
 }
 
@@ -106,16 +101,13 @@ static void rit_cb(GtkComboBox *widget, gpointer data) {
   case 0:
     vfo_set_rit_step(1);
     break;
-
   case 1:
     vfo_set_rit_step(10);
     break;
-
   case 2:
     vfo_set_rit_step(100);
     break;
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -132,7 +124,6 @@ static void duplex_cb(GtkWidget *widget, gpointer data) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), duplex);
     return;
   }
-
   duplex = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   setDuplex();
 }
@@ -151,7 +142,6 @@ static void split_cb(GtkWidget *widget, gpointer data) {
 
 static void set_btn_state(void) {
   int i;
-
   for (i = 0; i < 16; i++) {
     gtk_widget_set_sensitive(btn[i], locked == 0);
   }
@@ -192,21 +182,17 @@ void vfo_menu(GtkWidget *parent, int id) {
   gtk_widget_set_size_request(label, 150, 0);
   gtk_misc_set_alignment(GTK_MISC(label), 1, .5);
   gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 3, 1);
-
   for (i = 0; i < 16; i++) {
     btn[i] = gtk_button_new_with_label(btn_labels[i]);
     gtk_widget_set_name(btn[i], "medium_button");
     gtk_widget_show(btn[i]);
-
     if (i == 15) {
       gtk_grid_attach(GTK_GRID(grid), btn[i], i % 3, 2 + (i / 3), 3, 1);
     } else {
       gtk_grid_attach(GTK_GRID(grid), btn[i], i % 3, 2 + (i / 3), 1, 1);
     }
-
     g_signal_connect(btn[i], "button-press-event", G_CALLBACK(vfo_num_pad_cb), GINT_TO_POINTER(i));
   }
-
   set_btn_state();
   GtkWidget *rit_label = gtk_label_new("RIT step: ");
   gtk_widget_set_name(rit_label, "boldlabel");
@@ -216,21 +202,17 @@ void vfo_menu(GtkWidget *parent, int id) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_b), NULL, "1 Hz");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_b), NULL, "10 Hz");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_b), NULL, "100 Hz");
-
   switch (vfo[myvfo].rit_step) {
   case 1:
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_b), 0);
     break;
-
   case 10:
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_b), 1);
     break;
-
   case 100:
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_b), 2);
     break;
   }
-
   g_signal_connect(rit_b, "changed", G_CALLBACK(rit_cb), NULL);
   my_combo_attach(GTK_GRID(grid), rit_b, 4, 2, 1, 1);
   GtkWidget *vfo_label = gtk_label_new("VFO step: ");
@@ -240,15 +222,12 @@ void vfo_menu(GtkWidget *parent, int id) {
   //------------------------------------------------------------------------------------
   GtkWidget *vfo_b = gtk_combo_box_text_new();
   int ind = vfo_get_stepindex(myvfo);
-
   for (i = 0; i < STEPS; i++) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(vfo_b), NULL, step_labels[i]);
-
     if (i == ind) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), i);
     }
   }
-
   g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
   my_combo_attach(GTK_GRID(grid), vfo_b, 4, 3, 1, 1);
   //------------------------------------------------------------------------------------
@@ -292,18 +271,14 @@ void vfo_num_pad(int action, int id) {
   struct lconv *locale = localeconv();
   char *buffer = vfo[id].entered_frequency;
   unsigned int len = strlen(buffer);
-
   switch (action) {
   default:  // digit 0...9
     if (len <= sizeof(vfo[id].entered_frequency) - 2) {
       buffer[len++] = '0' + action;
       buffer[len] = 0;
     }
-
     break;
-
   case -5:  // Decimal point
-
     //
     // If there is already a decimal point in the string,
     // do not add another one
@@ -315,31 +290,23 @@ void vfo_num_pad(int action, int id) {
       buffer[len++] = * (locale->decimal_point);
       buffer[len] = 0;
     }
-
     break;
-
   case -1:  // Clear
     *buffer = 0;
     break;
-
   case -6:  // Backspace
     if (len > 0) { buffer[len - 1] = 0; }
-
     break;
-
   case -4:  // Enter as MHz
     mult *= 1000.0;
     __attribute__((fallthrough));
-
   case -3:  // Enter as kHz
     mult *= 1000.0;
     __attribute__((fallthrough));
-
   case -2:  // Enter
     fd = atof(buffer) * mult;
     fl = (long long)(fd + 0.5);
     *buffer = 0;
-
     //
     // If the frequency is less than 10 kHz, this
     // is most likely not intended by the user,
@@ -350,9 +317,7 @@ void vfo_num_pad(int action, int id) {
     if (fl >= 10000ll) {
       vfo_set_frequency(id, fl);
     }
-
     break;
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }

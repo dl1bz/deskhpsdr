@@ -145,49 +145,37 @@ void xfmd(FMD a) {
     int i;
     double det, del_out;
     double vco[2], corr[2];
-
     for (i = 0; i < a->size; i++) {
       // pll
       vco[0]  = cos(a->phs);
       vco[1]  = sin(a->phs);
       corr[0] = + a->in[2 * i + 0] * vco[0] + a->in[2 * i + 1] * vco[1];
       corr[1] = - a->in[2 * i + 0] * vco[1] + a->in[2 * i + 1] * vco[0];
-
       if ((corr[0] == 0.0) && (corr[1] == 0.0)) { corr[0] = 1.0; }
-
       det = atan2(corr[1], corr[0]);
       del_out = a->fil_out;
       a->omega += a->g2 * det;
-
       if (a->omega < a->omega_min) { a->omega = a->omega_min; }
-
       if (a->omega > a->omega_max) { a->omega = a->omega_max; }
-
       a->fil_out = a->g1 * det + a->omega;
       a->phs += del_out;
-
       while (a->phs >= TWOPI) { a->phs -= TWOPI; }
-
       while (a->phs < 0.0) { a->phs += TWOPI; }
-
       // dc removal, gain, & demod output
       a->fmdc = a->mtau * a->fmdc + a->onem_mtau * a->fil_out;
       a->audio[2 * i + 0] = a->again * (a->fil_out - a->fmdc);
       a->audio[2 * i + 1] = a->audio[2 * i + 0];
     }
-
     // de-emphasis
     xfircore(a->pde);
     // audio filter
     xfircore(a->paud);
     // CTCSS Removal
     xsnotch(a->sntch);
-
     if (a->lim_run) {
       for (i = 0; i < 2 * a->size; i++) {
         a->out[i] *= a->lim_pre_gain;
       }
-
       xwcpagc(a->plim);
     }
   } else if (a->in != a->out) {
@@ -285,7 +273,6 @@ void SetRXAFMNCde(int channel, int nc) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].fmd.p;
-
   if (a->nc_de != nc) {
     a->nc_de = nc;
     impulse = fc_impulse(a->nc_de, a->f_low, a->f_high, +20.0 * log10(a->f_high / a->f_low), 0.0, 1, a->rate,
@@ -293,7 +280,6 @@ void SetRXAFMNCde(int channel, int nc) {
     setNc_fircore(a->pde, a->nc_de, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -301,7 +287,6 @@ PORT
 void SetRXAFMMPde(int channel, int mp) {
   FMD a;
   a = rxa[channel].fmd.p;
-
   if (a->mp_de != mp) {
     a->mp_de = mp;
     setMp_fircore(a->pde, a->mp_de);
@@ -314,14 +299,12 @@ void SetRXAFMNCaud(int channel, int nc) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].fmd.p;
-
   if (a->nc_aud != nc) {
     a->nc_aud = nc;
     impulse = fir_bandpass(a->nc_aud, 0.8 * a->f_low, 1.1 * a->f_high, a->rate, 0, 1, a->afgain / (2.0 * a->size));
     setNc_fircore(a->paud, a->nc_aud, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -329,7 +312,6 @@ PORT
 void SetRXAFMMPaud(int channel, int mp) {
   FMD a;
   a = rxa[channel].fmd.p;
-
   if (a->mp_aud != mp) {
     a->mp_aud = mp;
     setMp_fircore(a->paud, a->mp_aud);
@@ -341,11 +323,9 @@ void SetRXAFMLimRun(int channel, int run) {
   FMD a;
   a = rxa[channel].fmd.p;
   EnterCriticalSection(&ch[channel].csDSP);
-
   if (a->lim_run != run) {
     a->lim_run = run;
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -354,13 +334,11 @@ void SetRXAFMLimGain(int channel, double gaindB) {
   double gain = pow(10.0, gaindB / 20.0);
   FMD a = rxa[channel].fmd.p;
   EnterCriticalSection(&ch[channel].csDSP);
-
   if (a->lim_gain != gain) {
     decalc_fmd(a);
     a->lim_gain = gain;
     calc_fmd(a);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -369,7 +347,6 @@ void SetRXAFMAFFilter(int channel, double low, double high) {
   FMD a = rxa[channel].fmd.p;
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
-
   if (a->f_low != low || a->f_high != high) {
     a->f_low = low;
     a->f_high = high;
@@ -383,6 +360,5 @@ void SetRXAFMAFFilter(int channel, double low, double high) {
     setImpulse_fircore(a->paud, impulse, 1);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }

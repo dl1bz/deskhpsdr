@@ -73,10 +73,8 @@ int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
   // gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   // gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
   j = 0;
-
   for (i = 0; i < ACTIONS; i++) {
     if (ActionTable[i].type & TYPE_HIDE) { continue; }
-
     if ((ActionTable[i].type & filter) || (ActionTable[i].type == TYPE_NONE)) {
       GtkWidget *button = gtk_toggle_button_new_with_label (ActionTable[i].str);
       gtk_widget_set_name (button, "small_toggle_button");
@@ -85,27 +83,22 @@ int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
       gtk_label_set_yalign (GTK_LABEL (button_label), 0.5);
       gtk_label_set_justify (GTK_LABEL (button_label), GTK_JUSTIFY_CENTER);
       gtk_grid_attach (GTK_GRID (grid), button, j % GRID_WIDTH, j / GRID_WIDTH, 1, 1);
-
       if (ActionTable[i].action == currentAction) {
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
       }
-
       choice = g_new0 (CHOICE, 1);
       choice->action = i;
       choice->button = button;
       choice->signal_id = g_signal_connect (button, "toggled", G_CALLBACK (action_select_cb), choice);
       choice->previous = previous;
       previous = choice;
-
       if (ActionTable[i].action == currentAction) {
         previous_button = button;
         previous_signal_id = choice->signal_id;
       }
-
       j++;
     }
   }
-
   gtk_container_add (GTK_CONTAINER (scrolled_window), grid);
   gtk_container_add (GTK_CONTAINER (content), scrolled_window);
   gtk_widget_show_all (content);
@@ -117,13 +110,9 @@ int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
   gtk_widget_get_preferred_size (scrolled_window, &min, &nat);
   width  = nat.width;
   height = nat.height;
-
   if (width < 850) { width = 850; }
-
   if (nat.width  > display_width -  50) { width  = display_width -  50; }
-
   if (nat.height > display_height - 50) { height = display_height - 50; }
-
   gtk_widget_set_size_request (scrolled_window, width, height);
   //
   // Block the GUI  while this dialog is running, if it has completed
@@ -131,18 +120,15 @@ int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
   //
   int result = gtk_dialog_run (GTK_DIALOG (dialog));
   gtk_widget_destroy (dialog);
-
   if (result != GTK_RESPONSE_ACCEPT) {
     action = currentAction;
   }
-
   // free up choice structures
   while (previous != NULL) {
     choice = previous;
     previous = choice->previous;
     g_free (choice);
   }
-
   return action;
 }
 

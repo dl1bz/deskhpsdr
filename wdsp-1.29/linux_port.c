@@ -79,20 +79,16 @@ void DeleteCriticalSection(pthread_mutex_t* mutex) {
 
 int LinuxWaitForSingleObject(sem_t *sem, int ms) {
   int result = 0;
-
   if (ms == INFINITE) {
     // wait for the lock
     result = sem_wait(sem);
   } else {
     for (int i = 0; i < ms; i++) {
       result = sem_trywait(sem);
-
       if (result == 0) { break; }
-
       Sleep(1);
     }
   }
-
   return result;
 }
 
@@ -109,20 +105,15 @@ sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count
   //
   static long semcount = 0;
   char sname[20];
-
   for (;;) {
     sprintf(sname, "WDSP%08ld", semcount++);
     sem = sem_open(sname, O_CREAT | O_EXCL, 0700, initial_count);
-
     if (sem == SEM_FAILED && errno == EEXIST) { continue; }
-
     break;
   }
-
   if (sem == SEM_FAILED) {
     perror("WDSP:CreateSemaphore");
   }
-
   //
   // we can unlink the semaphore NOW. It will remain functional
   // until sem_close() has been called by all threads using that
@@ -134,11 +125,9 @@ sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count
   int result;
   // DL1YCF: added correct initial count
   result = sem_init(sem, 0, initial_count);
-
   if (result < 0) {
     perror("WDSP:CreateSemaphore");
   }
-
 #endif
   return sem;
 }
@@ -184,25 +173,20 @@ void LinuxResetEvent(sem_t* sem) {
 HANDLE _beginthread(void(__cdecl *start_address)(void*), unsigned stack_size, void* arglist) {
   pthread_t threadid;
   pthread_attr_t  attr;
-
   if (pthread_attr_init(&attr)) {
     return (HANDLE) -1;
   }
-
   if (stack_size != 0) {
     if (pthread_attr_setstacksize(&attr, stack_size)) {
       return (HANDLE) -1;
     }
   }
-
   if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) {
     return (HANDLE) -1;
   }
-
   if (pthread_create(&threadid, &attr, (void * (*)(void *))start_address, arglist)) {
     return (HANDLE) -1;
   }
-
   //pthread_attr_destroy(&attr);
 #ifndef __APPLE__
   //
@@ -213,7 +197,6 @@ HANDLE _beginthread(void(__cdecl *start_address)(void*), unsigned stack_size, vo
   //
   void sendbuf(void* arg); // declared in analyzer.c but not in header file
   char tname[64];
-
   if (start_address == &wdspmain) {
     snprintf(tname, sizeof(tname), "Wchan%d", (int)(uintptr_t)arglist);
   } else if (start_address == &sendbuf) {
@@ -231,7 +214,6 @@ HANDLE _beginthread(void(__cdecl *start_address)(void*), unsigned stack_size, vo
     // in case there are more worker types
     snprintf(tname, sizeof(tname), "WDSP");
   }
-
   //
   // Ignore return value since we continue anyway.
   //
@@ -274,16 +256,13 @@ void CloseHandle(HANDLE hObject) {
   if (sem_close((sem_t *)hObject) < 0) {
     perror("WDSP:CloseHandle:SemCLose");
   }
-
 #else
-
   if (sem_destroy((sem_t *)hObject) < 0) {
     perror("WDSP:CloseHandle:SemDestroy");
   } else {
     // if sem_destroy failed, do not release storage
     _aligned_free(hObject);
   }
-
 #endif
   return;
 }
@@ -348,25 +327,20 @@ void *my_malloc(size_t size) {
   // locate a free slot
   //
   slot = -1;
-
   for (int i = 0; i < MEM_LIST_SIZE; i++) {
     if (malloc_slot[i].in_use == 0) {
       slot = i;
       break;
     }
   }
-
   if (slot < 0) {
     fprintf(stderr, "my_malloc: All Slots Exhausted.\n");
     fflush(stderr);
     pthread_mutex_unlock(&malloc_mutex);
     _exit(8);
   }
-
   baseptr = malloc(size + 2048);
-
   if (baseptr == NULL) { return NULL; }
-
   freeptr = baseptr + 1024;
   malloc_slot[slot].in_use = 1;
   malloc_slot[slot].baseptr = baseptr;
@@ -377,7 +351,6 @@ void *my_malloc(size_t size) {
   //
   p1 = baseptr;
   p2 = freeptr + size;
-
   for (int i = 0; i < 256; i++) {
     *p1++ = 0xAA;
     *p1++ = 0x55;
@@ -388,7 +361,6 @@ void *my_malloc(size_t size) {
     *p2++ = 0xEF;
     *p2++ = 0xFE;
   }
-
   pthread_mutex_unlock(&malloc_mutex);
   //fprintf(stderr,"my_malloc: Allocated Block slot=%d addr=%p\n", slot, freeptr);
   return freeptr;
@@ -402,21 +374,18 @@ void my_free(void* ptr) {
   // Search for block
   //
   slot = -1;
-
   for (int i = 0; i < 4096; i++) {
     if (malloc_slot[i].in_use == 1 && malloc_slot[i].freeptr == ptr) {
       slot = i;
       break;
     }
   }
-
   if (slot < 0) {
     fprintf(stderr, "my_free: Trying to free non-allocated block at addr=%p\n", ptr);
     fflush(stderr);
     pthread_mutex_unlock(&malloc_mutex);
     _exit(8);
   }
-
   //
   // Verify integrity of fence
   //
@@ -424,38 +393,26 @@ void my_free(void* ptr) {
   int over_count = 0;
   p1 = malloc_slot[slot].baseptr;
   p2 = malloc_slot[slot].freeptr + malloc_slot[slot].size;
-
   for (int i = 0; i < 256; i++) {
     if (*p1++ != 0xAA) { under_count++; }
-
     if (*p1++ != 0x55) { under_count++; }
-
     if (*p1++ != 0xEF) { under_count++; }
-
     if (*p1++ != 0xFE) { under_count++; }
-
     if (*p2++ != 0xAA) { over_count++; }
-
     if (*p2++ != 0x55) { over_count++; }
-
     if (*p2++ != 0xEF) { over_count++; }
-
     if (*p2++ != 0xFE) { over_count++; }
   }
-
   if (under_count > 0) {
     fprintf(stderr, "WARNING: my_free: Fence underrun =%d\n", under_count);
   }
-
   if (over_count > 0) {
     fprintf(stderr, "WARNING: my_free: Fence overrun =%d\n", over_count);
   }
-
   if (over_count > 0 || under_count > 0) {
     fprintf(stderr, "WARNING: my_free: Block slot=%d size=%ld allocated addr=%p\n", slot,
             (long) malloc_slot[slot].size, malloc_slot[slot].freeptr);
   }
-
   free(malloc_slot[slot].baseptr);
   malloc_slot[slot].in_use = 0;
   pthread_mutex_unlock(&malloc_mutex);

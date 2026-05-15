@@ -41,11 +41,9 @@ void size_calcc(CALCC a) {
   a->cat = (double*)malloc0(4 * a->nsamps * sizeof(double));
   a->t  = (double*) malloc0((a->ints + 1) * sizeof(double));
   a->tmap = (double*) malloc0((a->ints + 1) * sizeof(double));
-
   for (i = 0; i < a->ints + 1; i++) {
     a->t[i] = (double)i / (double)a->ints;
   }
-
   a->cm = (double*) malloc0(a->ints * 4 * sizeof(double));
   a->cc = (double*) malloc0(a->ints * 4 * sizeof(double));
   a->cs = (double*) malloc0(a->ints * 4 * sizeof(double));
@@ -56,13 +54,11 @@ void size_calcc(CALCC a) {
   a->ctrl.cpi = (int*) malloc0(a->ints * sizeof(int));
   a->ctrl.sindex = (int*) malloc0(a->ints * sizeof(int));
   a->ctrl.sbase = (int*) malloc0(a->ints * sizeof(int));
-
   for (i = 0; i < a->ints; i++) {
     a->ctrl.cpi[i] = 0;
     a->ctrl.sindex[i] = 0;
     a->ctrl.sbase[i] = i * a->spi;
   }
-
   a->disp.x  = (double*) malloc0(a->nsamps * sizeof(double));
   a->disp.ym = (double*) malloc0(a->nsamps * sizeof(double));
   a->disp.yc = (double*) malloc0(a->nsamps * sizeof(double));
@@ -191,27 +187,19 @@ void destroy_calcc(CALCC a) {
   Sleep(10);
   InterlockedBitTestAndSet(&a->savecorr_bypass, 0);
   ReleaseSemaphore(a->Sem_SaveCorr, 1, 0);
-
   while (InterlockedAnd(&a->savecorr_bypass, 0xffffffff)) { Sleep(1); }
-
   CloseHandle(a->Sem_SaveCorr);
   InterlockedBitTestAndSet(&a->restcorr_bypass, 0);
   ReleaseSemaphore(a->Sem_RestCorr, 1, 0);
-
   while (InterlockedAnd(&a->restcorr_bypass, 0xffffffff)) { Sleep(1); }
-
   CloseHandle(a->Sem_RestCorr);
   InterlockedBitTestAndSet(&a->calccorr_bypass, 0);
   ReleaseSemaphore(a->Sem_CalcCorr, 1, 0);
-
   while (InterlockedAnd(&a->calccorr_bypass, 0xffffffff)) { Sleep(1); }
-
   CloseHandle(a->Sem_CalcCorr);
   InterlockedBitTestAndSet(&a->turnoff_bypass, 0);
   ReleaseSemaphore(a->Sem_TurnOff, 1, 0);
-
   while (InterlockedAnd(&a->turnoff_bypass, 0xffffffff)) { Sleep(1); }
-
   CloseHandle(a->Sem_TurnOff);
   _aligned_free(a->temptx);                                             // remove later
   _aligned_free(a->temprx);                                             // remove later
@@ -237,51 +225,37 @@ void scheck(CALCC a) {
   int intm1 = a->ints - 1;
   const double diff_thresh = 0.05;
   a->binfo[6] = 0x0000;
-
   for (i = 0; i < 4 * a->ints; i++) {
     if (isnan(a->cm[i])) { a->binfo[6] |= 0x0001; }
-
     if (isnan(a->cc[i])) { a->binfo[6] |= 0x0001; }
-
     if (isnan(a->cs[i])) { a->binfo[6] |= 0x0001; }
   }
-
   for (i = 0; i < a->ints; i++)
     if ((a->cm[4 * i + 0] == 0.0) && (a->cm[4 * i + 1] == 0.0) &&
         (a->cm[4 * i + 2] == 0.0) && (a->cm[4 * i + 3] == 0.0)) { a->binfo[6] |= 0x0002; }
-
   for (i = 0; i < a->ints; i++) {
     for (j = 0; j < 4; j++) {
       k = 4 * i + j;
       v = (double)k / (4.0 * (double)a->ints);
       dx = (a->t[i + 1] - a->t[i]) * (double)j / 4.0;
       out = v * (a->cm[4 * i + 0] + dx * (a->cm[4 * i + 1] + dx * (a->cm[4 * i + 2] + dx * a->cm[4 * i + 3])));
-
       if (out > 1.0) {
         a->binfo[6] |= 0x0004;
       }
-
       if (out < 0.0) { a->binfo[6] |= 0x0010; }
     }
   }
-
   dx = a->t[a->ints] - a->t[intm1];
   x = a->cm[4 * intm1 + 0] + dx * (a->cm[4 * intm1 + 1] + dx * (a->cm[4 * intm1 + 2] + dx * a->cm[4 * intm1 + 3]));
-
   if (x > 1.07) { // VALUE
     a->binfo[6] |= 0x0008;
   }
-
   if (x < 0.0) { a->binfo[6] |= 0x0020; }
-
   for (i = 4; i < a->ints; i++)
     if (fabs(a->cm[4 * i + 0] - a->cm_old[4 * i + 0]) > diff_thresh) { a->binfo[6] |= 0x0040; }
-
   xold = a->cm_old[4 * intm1 + 0] + dx * (a->cm_old[4 * intm1 + 1] + dx * (a->cm_old[4 * intm1 + 2] + dx * a->cm_old[4 *
                                           intm1 + 3]));
-
   if (fabs(x - xold) > diff_thresh) { a->binfo[6] |= 0x0040; }
-
   memcpy(a->cm_old, a->cm, a->ints * 4 * sizeof(double));
 }
 
@@ -290,67 +264,52 @@ void rxscheck(int rints, double* tvec, double* coef, int* info) {
   int rintsm1 = rints - 1;
   double v, dx, out;
   *info = 0x0000;
-
   for (i = 0; i < 4 * rints; i++)
     if (isnan(coef[i])) { *info |= 0x0001; }
-
   for (i = 0; i < rints; i++)
     if ((coef[4 * i + 0] == 0.0) && (coef[4 * i + 1] == 0.0) && (coef[4 * i + 2] == 0.0) && (coef[4 * i + 3] == 0.0)) {
       *info |= 0x0002;
     }
-
   for (i = 0; i < rints; i++) {
     for (j = 0; j < 4; j++) {
       k = 4 * i + j;
       v = (double)k / (4.0 * (double)rints);
       dx = (tvec[i + 1] - tvec[i]) * (double)j / 4.0;
       out = v * (coef[4 * i + 0] + dx * (coef[4 * i + 1] + dx * (coef[4 * i + 2] + dx * coef[4 * i + 3])));
-
       if (out > 1.0) { // potentially use hw_scale here
         *info |= 0x0004;
       }
-
       if (out < 0.0) { *info |= 0x0010; }
     }
   }
-
   dx = tvec[rints] - tvec[rints - 1];
   out = coef[4 * rintsm1 + 0] + dx * (coef[4 * rintsm1 + 1] + dx * (coef[4 * rintsm1 + 2] + dx * coef[4 * rintsm1 + 3]));
-
   if (out > 1.07) { *info |= 0x0008; }
-
   if (out < 0.00) { *info |= 0x0020; }
 }
 
 void calc(CALCC a) {
   int i;
   double norm;
-
   for (i = 0; i < a->nsamps; i++) {
     a->env_TX[i] = sqrt(a->txs[2 * i + 0] * a->txs[2 * i + 0] + a->txs[2 * i + 1] * a->txs[2 * i + 1]);
     a->env_RX[i] = sqrt(a->rxs[2 * i + 0] * a->rxs[2 * i + 0] + a->rxs[2 * i + 1] * a->rxs[2 * i + 1]);
   }
-
   {
     int rints, ix;
     double dx;
     double tvec[3];
     double txrxcoefs[4 * 2];
     double rx_scale;
-
     if (a->ints < 16) { rints = 1; }
     else { rints = 2; }
-
     ix = rints - 1;
-
     for (i = 0; i <= rints; i++) {
       tvec[i] = (double)i / (double)rints / a->hw_scale;
     }
-
     dx = tvec[rints] - tvec[rints - 1];
     xbuilder(a->ccbld, a->nsamps, a->env_TX, a->env_RX, rints, tvec, &(a->binfo[0]), txrxcoefs, a->ptol);
     rxscheck(rints, tvec, txrxcoefs, &a->binfo[7]);
-
     if ((a->binfo[0] == 0) && (a->binfo[7] == 0)) {
       rx_scale = 1.0 / (txrxcoefs[4 * ix + 0] + dx * (txrxcoefs[4 * ix + 1] + dx * (txrxcoefs[4 * ix + 2] + dx * txrxcoefs[4 *
                         ix + 3])));
@@ -358,43 +317,34 @@ void calc(CALCC a) {
       a->scOK = 0;
       goto cleanup;
     }
-
     if (a->stbl && _InterlockedAnd(&a->ctrl.running, 1)) {
       a->rx_scale = a->alpha * a->rx_scale + (1.0 - a->alpha) * rx_scale;
     } else {
       a->rx_scale = rx_scale;
     }
   }
-
   a->binfo[4] = (int)(256.0 * (a->hw_scale / a->rx_scale));
   a->binfo[5]++;
-
   if (a->pin) { // regress
     const double slope = 0.001;
     double max_rx;
-
     for (i = 0; i < a->nsamps; i++) {
       max_rx = (1.0 - slope + slope * a->hw_scale * a->env_TX[i]) / a->rx_scale;
-
       if (a->env_RX[i] > max_rx) {
         a->env_RX[i] = max_rx;
       }
     }
   }
-
   for (i = 0; i < a->nsamps; i++) {
     norm = a->env_TX[i] * a->env_RX[i];
     a->x[i]  = a->rx_scale * a->env_RX[i];
     a->ym[i] = (a->hw_scale * a->env_TX[i]) / (a->rx_scale * a->env_RX[i]);
     a->yc[i] = (+ a->txs[2 * i + 0] * a->rxs[2 * i + 0] + a->txs[2 * i + 1] * a->rxs[2 * i + 1]) / norm;
     a->ys[i] = (- a->txs[2 * i + 0] * a->rxs[2 * i + 1] + a->txs[2 * i + 1] * a->rxs[2 * i + 0]) / norm;
-
     if (a->stbl && _InterlockedAnd(&a->ctrl.running, 1) && a->scOK) {
       int k;
       double dx, ymo, yco, yso;
-
       if ((k = (int)(a->x[i] * a->ints)) > a->ints - 1) { k = a->ints - 1; }
-
       dx = a->x[i] - a->t[k];
       ymo = a->cm[4 * k + 0] + dx * (a->cm[4 * k + 1] + dx * (a->cm[4 * k + 2] + dx * a->cm[4 * k + 3]));
       yco = a->cc[4 * k + 0] + dx * (a->cc[4 * k + 1] + dx * (a->cc[4 * k + 2] + dx * a->cc[4 * k + 3]));
@@ -404,45 +354,36 @@ void calc(CALCC a) {
       a->ys[i] = a->alpha * yso + (1.0 - a->alpha) * a->ys[i];
     }
   }
-
   if (a->pin) { // pin
     const double mval = 1.0e+00 - 1.0e-10;
     double cval, sval;
-
     for (i = 0; i < a->nsamps; i++) {
       a->cat[4 * i + 0] = a->x[i];
       a->cat[4 * i + 1] = a->ym[i];
       a->cat[4 * i + 2] = a->yc[i];
       a->cat[4 * i + 3] = a->ys[i];
     }
-
     qsort(a->cat, a->nsamps, 4 * sizeof(double), fcompare);
-
     for (i = 0; i < a->nsamps; i++) {
       a->x[i]  = a->cat[4 * i + 0];
       a->ym[i] = a->cat[4 * i + 1];
       a->yc[i] = a->cat[4 * i + 2];
       a->ys[i] = a->cat[4 * i + 3];
     }
-
     cval = 0.0;
     sval = 0.0;
-
     for (i = a->nsamps - 1; i > a->nsamps - 17; i--) {
       cval += a->yc[i];
       sval += a->ys[i];
     }
-
     cval /= 16.0;
     sval /= 16.0;
-
     for (i = a->nsamps; i < a->tsamps; i++) {
       a->x[i]  = mval;
       a->ym[i] = mval;
       a->yc[i] = cval;
       a->ys[i] = sval;
     }
-
     xbuilder(a->ccbld, a->tsamps, a->x, a->ym, a->ints, a->t, &(a->binfo[1]), a->cm, a->ptol);
     xbuilder(a->ccbld, a->tsamps, a->x, a->yc, a->ints, a->t, &(a->binfo[2]), a->cc, a->ptol);
     xbuilder(a->ccbld, a->tsamps, a->x, a->ys, a->ints, a->t, &(a->binfo[3]), a->cs, a->ptol);
@@ -451,35 +392,28 @@ void calc(CALCC a) {
     xbuilder(a->ccbld, a->nsamps, a->x, a->yc, a->ints, a->t, &(a->binfo[2]), a->cc, a->ptol);
     xbuilder(a->ccbld, a->nsamps, a->x, a->ys, a->ints, a->t, &(a->binfo[3]), a->cs, a->ptol);
   }
-
   if (a->pin) { // tune
     int k = a->ints - 1;
     double dx = a->t[a->ints] - a->t[a->ints - 1];
     double sf = 1.0 / (a->cm[4 * k + 0] + dx * (a->cm[4 * k + 1] + dx * (a->cm[4 * k + 2] + dx * a->cm[4 * k + 3])));
-
     for (i = 0; i < 4 * a->ints; i++) {
       a->cm[i] *= sf;
     }
   }
-
   scheck(a);
   a->scOK = ((a->binfo[0] == 0) && (a->binfo[1] == 0) && (a->binfo[2] == 0) && (a->binfo[3] == 0) && (a->binfo[6] == 0));
-
   if (a->scOK) { // map calc
     for (i = 0; i < a->ints; i++) {
       a->tmap[i] = a->cm[4 * i] * a->t[i];
     }
-
     a->tmap[a->ints] = 1.0;
     a->convex = ((a->tmap[a->ints] - a->tmap[a->ints - 1]) > (a->t[a->ints] - a->t[a->ints - 1]));
   }
-
   EnterCriticalSection(&a->disp.cs_disp);
   memcpy(a->disp.x, a->x,  a->nsamps * sizeof(double));
   memcpy(a->disp.ym, a->ym, a->nsamps * sizeof(double));
   memcpy(a->disp.yc, a->yc, a->nsamps * sizeof(double));
   memcpy(a->disp.ys, a->ys, a->nsamps * sizeof(double));
-
   if (a->scOK) {
     memcpy(a->disp.cm, a->cm, a->ints * 4 * sizeof(double));
     memcpy(a->disp.cc, a->cc, a->ints * 4 * sizeof(double));
@@ -489,7 +423,6 @@ void calc(CALCC a) {
     memset(a->disp.cc, 0, a->ints * 4 * sizeof(double));
     memset(a->disp.cs, 0, a->ints * 4 * sizeof(double));
   }
-
   LeaveCriticalSection(&a->disp.cs_disp);
 cleanup:
   return;
@@ -497,45 +430,35 @@ cleanup:
 
 void __cdecl doPSCalcCorrection(void* arg) {
   CALCC a = (CALCC)arg;
-
   while (!InterlockedAnd(&a->calccorr_bypass, 0xffffffff)) {
     WaitForSingleObject(a->Sem_CalcCorr, INFINITE);
-
     if (!InterlockedAnd(&a->calccorr_bypass, 0xffffffff)) {
       calc(a);
-
       if (a->scOK) {
         EnterCriticalSection(&a->ctrl.cs_SafeToEnd);
-
         if (!InterlockedBitTestAndSet(&a->ctrl.running, 0)) {
           SetTXAiqcStart(a->channel, a->cm, a->cc, a->cs);
         } else {
           SetTXAiqcSwap(a->channel, a->cm, a->cc, a->cs);
         }
-
         LeaveCriticalSection(&a->ctrl.cs_SafeToEnd);
       }
-
       InterlockedBitTestAndSet(&a->ctrl.calcdone, 0);
     }
   }
-
   InterlockedBitTestAndReset(&a->calccorr_bypass, 0);
 }
 
 void __cdecl doPSTurnoff(void* arg) {
   CALCC a = (CALCC)arg;
-
   while (!InterlockedAnd(&a->turnoff_bypass, 0xffffffff)) {
     WaitForSingleObject(a->Sem_TurnOff, INFINITE);
-
     if (!InterlockedAnd(&a->turnoff_bypass, 0xffffffff)) {
       EnterCriticalSection(&a->ctrl.cs_SafeToEnd);
       SetTXAiqcEnd(a->channel);
       LeaveCriticalSection(&a->ctrl.cs_SafeToEnd);
     }
   }
-
   InterlockedBitTestAndReset(&a->turnoff_bypass, 0);
 }
 
@@ -555,72 +478,53 @@ enum _calcc_state {
 void __cdecl PSSaveCorrection(void* pargs) {
   int i, k;
   CALCC a = (CALCC)pargs;
-
   while (!InterlockedAnd(&a->savecorr_bypass, 0xffffffff)) {
     WaitForSingleObject(a->Sem_SaveCorr, INFINITE);
-
     if (!InterlockedAnd(&a->savecorr_bypass, 0xffffffff)) {
       FILE* file = fopen(a->util.savefile, "w");
-
       if (file) {
         GetTXAiqcValues(a->util.channel, a->util.pm, a->util.pc, a->util.ps);
-
         for (i = 0; i < a->util.ints; i++) {
           for (k = 0; k < 4; k++) {
             fprintf(file, "%.17e\t", a->util.pm[4 * i + k]);
           }
-
           fprintf(file, "\n");
-
           for (k = 0; k < 4; k++) {
             fprintf(file, "%.17e\t", a->util.pc[4 * i + k]);
           }
-
           fprintf(file, "\n");
-
           for (k = 0; k < 4; k++) {
             fprintf(file, "%.17e\t", a->util.ps[4 * i + k]);
           }
-
           fprintf(file, "\n\n");
         }
-
         fflush(file);
         fclose(file);
       }
     }
   }
-
   InterlockedBitTestAndReset(&a->savecorr_bypass, 0);
 }
 
 void __cdecl PSRestoreCorrection(void* pargs) {
   int i, k;
   CALCC a = (CALCC)pargs;
-
   while (!InterlockedAnd(&a->restcorr_bypass, 0xffffffff)) {
     WaitForSingleObject(a->Sem_RestCorr, INFINITE);
-
     if (!InterlockedAnd(&a->restcorr_bypass, 0xffffffff)) {
       FILE* file = fopen(a->util.restfile, "r");
-
       if (file) {
         int error = 0;
-
         for (i = 0; i < a->util.ints; i++) {
           // no additional reads after first error occurs
           for (k = 0; k < 4; k++)
             if (error == 0 && fscanf(file, "%le", &(a->util.pm[4 * i + k])) != 1) { error = 1; }
-
           for (k = 0; k < 4; k++)
             if (error == 0 && fscanf(file, "%le", &(a->util.pc[4 * i + k])) != 1) { error = 1; }
-
           for (k = 0; k < 4; k++)
             if (error == 0 && fscanf(file, "%le", &(a->util.ps[4 * i + k])) != 1) { error = 1; }
         }
-
         fclose(file);
-
         if (!error) {
           if (!InterlockedBitTestAndSet(&a->ctrl.running, 0)) {
             SetTXAiqcStart(a->channel, a->util.pm, a->util.pc, a->util.ps);
@@ -631,7 +535,6 @@ void __cdecl PSRestoreCorrection(void* pargs) {
       }
     }
   }
-
   InterlockedBitTestAndReset(&a->restcorr_bypass, 0);
 }
 
@@ -649,46 +552,36 @@ void pscc(int channel, int size, double* tx, double* rx) {
   CALCC a;
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   a = txa[channel].calcc.p;
-
   if (a->runcal) {
     a->size = size;
-
     if (InterlockedAnd(&a->mox, 1) && (a->txdelay->tdelay != 0.0 || a->rxdelay->tdelay != 0.0)) {
       SetDelayBuffs(a->rxdelay, a->size, rx, rx);
       xdelay(a->rxdelay);
       SetDelayBuffs(a->txdelay, a->size, tx, tx);
       xdelay(a->txdelay);
     }
-
     a->info[15] = a->ctrl.state;
-
     switch (a->ctrl.state) {
     case LRESET:
       InterlockedExchange(&a->ctrl.current_state, LRESET);
       a->ctrl.reset = 0;
-
       if (!a->ctrl.turnon)
         if (InterlockedBitTestAndReset(&a->ctrl.running, 0)) {
           ReleaseSemaphore(a->Sem_TurnOff, 1, 0);
         }
-
       a->info[14] = 0;
       a->ctrl.env_maxtx = 0.0;
       a->ctrl.bs_count = 0;
-
       if (a->ctrl.turnon) {
         a->ctrl.state = LTURNON;
       } else if (a->ctrl.automode || a->ctrl.mancal) {
         a->ctrl.state = LWAIT;
       }
-
       break;
-
     case LWAIT:
       InterlockedExchange(&a->ctrl.current_state, LWAIT);
       a->ctrl.mancal = 0;
       a->ctrl.moxcount = 0;
-
       if (a->ctrl.reset) {
         a->ctrl.state = LRESET;
       } else if (a->ctrl.turnon) {
@@ -697,13 +590,10 @@ void pscc(int channel, int size, double* tx, double* rx) {
         a->ctrl.state = LMOXDELAY;
         InterlockedBitTestAndSet(&a->solidmox, 0);
       }
-
       break;
-
     case LMOXDELAY:
       InterlockedExchange(&a->ctrl.current_state, LMOXDELAY);
       a->ctrl.moxcount += a->size;
-
       if (a->ctrl.reset) {
         a->ctrl.state = LRESET;
       } else if (a->ctrl.turnon) {
@@ -713,21 +603,16 @@ void pscc(int channel, int size, double* tx, double* rx) {
       } else if ((a->ctrl.moxcount - a->size) >= a->ctrl.moxsamps) {
         a->ctrl.state = LSETUP;
       }
-
       break;
-
     case LSETUP:
       InterlockedExchange(&a->ctrl.current_state, LSETUP);
       a->ctrl.count = 0;
-
       for (i = 0; i < a->ints; i++) {
         a->ctrl.cpi[i] = 0;
         a->ctrl.sindex[i] = 0;
       }
-
       a->ctrl.full_ints = 0;
       a->ctrl.waitcount = 0;
-
       if (a->ctrl.reset) {
         a->ctrl.state = LRESET;
       } else if (a->ctrl.turnon) {
@@ -738,19 +623,14 @@ void pscc(int channel, int size, double* tx, double* rx) {
       } else {
         a->ctrl.state = LWAIT;
       }
-
       break;
-
     case LCOLLECT:
       InterlockedExchange(&a->ctrl.current_state, LCOLLECT);
-
       for (i = 0; i < a->size; i++) {
         env = sqrt(tx[2 * i + 0] * tx[2 * i + 0] + tx[2 * i + 1] * tx[2 * i + 1]);
-
         if (env > a->ctrl.env_maxtx) {
           a->ctrl.env_maxtx = env;
         }
-
         if ((env *= a->hw_scale) <= 1.0) {
           if (env == 1.0) {
             n = a->ints - 1;
@@ -758,39 +638,30 @@ void pscc(int channel, int size, double* tx, double* rx) {
             int nmin = 0;
             int nmax = a->ints;
             n = (nmin + nmax) / 2;
-
             while (nmax - nmin > 1) {
               n = (nmin + nmax) / 2;
-
               if (env >= a->tmap[n]) {
                 nmin = n;
               } else {
                 nmax = n;
               }
             }
-
             if (env < a->tmap[n]) { n--; }
           } else {
             n = (int)(env * (double)a->ints);
           }
-
           m = a->ctrl.sbase[n] + a->ctrl.sindex[n];
           a->txs[2 * m + 0] = tx[2 * i + 0];
           a->txs[2 * m + 1] = tx[2 * i + 1];
           a->rxs[2 * m + 0] = rx[2 * i + 0];
           a->rxs[2 * m + 1] = rx[2 * i + 1];
-
           if (++a->ctrl.sindex[n] == a->spi) { a->ctrl.sindex[n] = 0; }
-
           if (a->ctrl.cpi[n] != a->spi)
             if (++a->ctrl.cpi[n] == a->spi) { a->ctrl.full_ints++; }
-
           ++a->ctrl.count;
         }
       }
-
       GetTXAiqcDogCount(channel, &a->info[13]);
-
       if (a->ctrl.reset) {
         a->ctrl.state = LRESET;
       } else if (a->ctrl.turnon) {
@@ -803,20 +674,15 @@ void pscc(int channel, int size, double* tx, double* rx) {
         a->ctrl.state = LRESET;
       } else if (a->ctrl.count >= 4 * a->rate) {
         a->ctrl.count = 0;
-
         for (i = 0; i < a->ints; i++) {
           a->ctrl.cpi[i] = 0;
           a->ctrl.sindex[i] = 0;
         }
-
         a->ctrl.full_ints = 0;
       }
-
       break;
-
     case MOXCHECK:
       InterlockedExchange(&a->ctrl.current_state, MOXCHECK);
-
       if (a->ctrl.reset) {
         a->ctrl.state = LRESET;
       } else if (a->ctrl.turnon) {
@@ -826,22 +692,17 @@ void pscc(int channel, int size, double* tx, double* rx) {
       } else {
         a->ctrl.state = LCALC;
       }
-
       break;
-
     case LCALC:
       InterlockedExchange(&a->ctrl.current_state, LCALC);
-
       if (!a->ctrl.calcinprogress) {
         a->ctrl.calcinprogress = 1;
         ReleaseSemaphore(a->Sem_CalcCorr, 1, 0);
       }
-
       if (InterlockedBitTestAndReset(&a->ctrl.calcdone, 0)) {
         memcpy(a->info, a->binfo, 8 * sizeof(int));
         a->info[14] = _InterlockedAnd(&a->ctrl.running, 1);
         a->ctrl.calcinprogress = 0;
-
         if (a->ctrl.reset) {
           a->ctrl.state = LRESET;
         } else if (a->ctrl.turnon) {
@@ -855,13 +716,10 @@ void pscc(int channel, int size, double* tx, double* rx) {
           a->ctrl.state = LSETUP;
         } else { a->ctrl.state = LWAIT; }
       }
-
       break;
-
     case LDELAY:
       InterlockedExchange(&a->ctrl.current_state, LDELAY);
       a->ctrl.waitcount += a->size;
-
       if (a->ctrl.reset) {
         a->ctrl.state = LRESET;
       } else if (a->ctrl.turnon) {
@@ -877,18 +735,13 @@ void pscc(int channel, int size, double* tx, double* rx) {
           a->ctrl.state = LSTAYON;
         }
       }
-
       break;
-
     case LSTAYON:
       InterlockedExchange(&a->ctrl.current_state, LSTAYON);
-
       if (a->ctrl.reset || a->ctrl.automode || a->ctrl.mancal) {
         a->ctrl.state = LRESET;
       }
-
       break;
-
     case LTURNON:
       InterlockedExchange(&a->ctrl.current_state, LTURNON);
       a->ctrl.turnon = 0;
@@ -898,7 +751,6 @@ void pscc(int channel, int size, double* tx, double* rx) {
       break;
     }
   }
-
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
 }
 
@@ -912,14 +764,12 @@ void psccF(int channel, int size, float* Itxbuff, float* Qtxbuff, float* Irxbuff
   // a->mox = mox;
   // a->solidmox = solidmox;
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
-
   for (i = 0; i < size; i++) {
     a->temptx[2 * i + 0] = (double)Itxbuff[i];
     a->temptx[2 * i + 1] = (double)Qtxbuff[i];
     a->temprx[2 * i + 0] = (double)Irxbuff[i];
     a->temprx[2 * i + 1] = (double)Qrxbuff[i];
   }
-
   pscc(channel, size, a->temptx, a->temprx);
 }
 
@@ -929,9 +779,7 @@ void PSSaveCorr(int channel, char* filename) {
   int i = 0;
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   a = txa[channel].calcc.p;
-
   while (a->util.savefile[i++] = *filename++);
-
   ReleaseSemaphore(a->Sem_SaveCorr, 1, 0);
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
 }
@@ -942,9 +790,7 @@ void PSRestoreCorr(int channel, char* filename) {
   int i = 0;
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   a = txa[channel].calcc.p;
-
   while (a->util.restfile[i++] = *filename++);
-
   a->ctrl.turnon = 1;
   ReleaseSemaphore(a->Sem_RestCorr, 1, 0);
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
@@ -968,7 +814,6 @@ void SetPSRunCal(int channel, int run) {
 PORT
 void SetPSMox(int channel, int mox) {
   CALCC a = txa[channel].calcc.p;;
-
   if (mox) {
     InterlockedBitTestAndSet(&a->mox, 0);
   } else {
@@ -1055,7 +900,6 @@ double SetPSTXDelay(int channel, double delay) {
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   a = txa[channel].calcc.p;
   a->txdel = delay;
-
   if (a->txdel >= 0.0) {
     adelay = SetDelayValue(a->txdelay, a->txdel);
     SetDelayValue(a->rxdelay, 0.0);
@@ -1063,7 +907,6 @@ double SetPSTXDelay(int channel, double delay) {
     adelay = -SetDelayValue(a->rxdelay, -a->txdel);
     SetDelayValue(a->txdelay, 0.0);
   }
-
   //adelay = SetDelayValue (a->txdelay, a->txdel);
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
   return adelay;
@@ -1179,7 +1022,6 @@ PORT
 void SetPSIntsAndSpi(int channel, int ints, int spi) {
   CALCC a = txa[channel].calcc.p;
   IQC   b = txa[channel].iqc.p1;
-
   if (b->ints != ints || b->dog.spi != spi || a->ints != ints || a->spi != spi) {
     // SHUT-DOWN
     const int timeout = 50;
@@ -1189,17 +1031,14 @@ void SetPSIntsAndSpi(int channel, int ints, int spi) {
     int turnon   = a->ctrl.turnon;
     int count = 0;
     SetPSControl(a->channel, 1, 0, 0, 0);
-
     while (count++ < timeout && (LRESET != _InterlockedAnd(&a->ctrl.current_state, 0xFFFFFFFF)
                                  || _InterlockedAnd(&a->ctrl.running, 1) || _InterlockedAnd(&b->run, 1))) {
       Sleep(1);   // wait for normal shutdown (when samples are flowing)
     }
-
     if (LRESET != _InterlockedAnd(&a->ctrl.current_state, 0xFFFFFFFF)
         || _InterlockedAnd(&a->ctrl.running, 1) || _InterlockedAnd(&b->run, 1)) {
       ForceShutDown(a, b, timeout);  // apparently no sammples flowing; force shutdown.
     }
-
     // MAKE CHANGES
     desize_iqc(b);
     desize_calcc(a);

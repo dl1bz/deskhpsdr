@@ -52,7 +52,6 @@ static void get_info(char* driver) {
   g_strlcpy(hw_version, "", 16);
   g_strlcpy(p_version, "", 16);
   SoapySDRKwargs_set(&args, "driver", driver);
-
   if (strcmp(driver, "rtlsdr") == 0) {
     char count[16];
     snprintf(count, 16, "%d", rtlsdr_count);
@@ -66,7 +65,6 @@ static void get_info(char* driver) {
     sdrplay_val = sdrplay_count;
     sdrplay_count++;
   }
-
   SoapySDRDevice *sdr = SoapySDRDevice_make(&args);
   SoapySDRKwargs_clear(&args);
   software_version = 0;
@@ -74,145 +72,105 @@ static void get_info(char* driver) {
   t_print("DriverKey=%s\n", driverkey);
   char *hardwarekey = SoapySDRDevice_getHardwareKey(sdr);
   t_print("HardwareKey=%s\n", hardwarekey);
-
   if (strcmp(driver, "sdrplay") == 0) {
     address = hardwarekey;
   }
-
   SoapySDRKwargs info = SoapySDRDevice_getHardwareInfo(sdr);
-
   for (size_t i = 0; i < info.size; i++) {
     t_print("soapy_discovery: hardware info key=%s val=%s\n", info.keys[i], info.vals[i]);
-
     if (strcmp(info.keys[i], "firmwareVersion") == 0) {
       g_strlcpy(fw_version, info.vals[i], 16);
     }
-
     if (strcmp(info.keys[i], "gatewareVersion") == 0) {
       g_strlcpy(gw_version, info.vals[i], 16);
       software_version = (int)(atof(info.vals[i]) * 100.0);
     }
-
     if (strcmp(info.keys[i], "hardwareVersion") == 0) {
       g_strlcpy(hw_version, info.vals[i], 16);
     }
-
     if (strcmp(info.keys[i], "protocolVersion") == 0) {
       g_strlcpy(p_version, info.vals[i], 16);
     }
   }
-
   size_t rx_channels = SoapySDRDevice_getNumChannels(sdr, SOAPY_SDR_RX);
   t_print("Rx channels: %ld\n", (long) rx_channels);
-
   for (size_t i = 0; i < rx_channels; i++) {
     t_print("Rx channel full duplex: channel=%d fullduplex=%d\n", i, SoapySDRDevice_getFullDuplex(sdr, SOAPY_SDR_RX, i));
   }
-
   size_t tx_channels = SoapySDRDevice_getNumChannels(sdr, SOAPY_SDR_TX);
   t_print("Tx channels: %ld\n", (long) tx_channels);
-
   for (size_t i = 0; i < tx_channels; i++) {
     t_print("Tx channel full duplex: channel=%d fullduplex=%d\n", i, SoapySDRDevice_getFullDuplex(sdr, SOAPY_SDR_TX, i));
   }
-
   int sample_rate = 768000;
   SoapySDRRange *rx_rates = SoapySDRDevice_getSampleRateRange(sdr, SOAPY_SDR_RX, 0, &rx_rates_length);
-
   for (size_t i = 0; i < rx_rates_length; i++) {
     t_print("RX sample rate available: %20.6f -> %20.6f (%10.6f)\n", rx_rates[i].minimum, rx_rates[i].maximum,
             rx_rates[i].minimum / 48000.0);
   }
-
   if (strcmp(driver, "rtlsdr") == 0) {
     sample_rate = 1536000;
   } else if (strcmp(driver, "radioberry") == 0) {
     sample_rate = 48000;
   }
-
   free(rx_rates);
   t_print("sample_rate selected %d\n", sample_rate);
-
   if (tx_channels > 0) {
     SoapySDRRange *tx_rates = SoapySDRDevice_getSampleRateRange(sdr, SOAPY_SDR_TX, 0, &tx_rates_length);
-
     for (size_t i = 0; i < tx_rates_length; i++) {
       t_print("TX sample rate available: %20.6f -> %20.6f (%10.6f)\n", tx_rates[i].minimum, tx_rates[i].maximum,
               tx_rates[i].minimum / 48000.0);
     }
-
     free(tx_rates);
   }
-
   double *bandwidths = SoapySDRDevice_listBandwidths(sdr, SOAPY_SDR_RX, 0, &rx_bandwidth_length);
-
   for (size_t i = 0; i < rx_bandwidth_length; i++) {
     t_print("RX bandwidth available: %20.6f\n", bandwidths[i]);
   }
-
   free(bandwidths);
-
   if (tx_channels > 0) {
     bandwidths = SoapySDRDevice_listBandwidths(sdr, SOAPY_SDR_TX, 0, &tx_bandwidth_length);
-
     for (size_t i = 0; i < tx_bandwidth_length; i++) {
       t_print("TX bandwidth available: %20.6f\n", bandwidths[i]);
     }
-
     free(bandwidths);
   }
-
   double bandwidth = SoapySDRDevice_getBandwidth(sdr, SOAPY_SDR_RX, 0);
   t_print("RX1: bandwidth selected: %f\n", bandwidth);
-
   if (tx_channels > 0) {
     bandwidth = SoapySDRDevice_getBandwidth(sdr, SOAPY_SDR_TX, 0);
     t_print("TX0: bandwidth selected: %f\n", bandwidth);
   }
-
   SoapySDRRange *ranges = SoapySDRDevice_getFrequencyRange(sdr, SOAPY_SDR_RX, 0, &ranges_length);
-
   for (size_t i = 0; i < ranges_length; i++) t_print("RX freq range [%f MHz -> %f MHz step=%f]\n",
       ranges[i].minimum * 1E-6, ranges[i].maximum * 1E-6, ranges[i].step);
-
   char **rx_antennas = SoapySDRDevice_listAntennas(sdr, SOAPY_SDR_RX, 0, &rx_antennas_length);
-
   for (size_t i = 0; i < rx_antennas_length; i++) { t_print("RX antenna: %s\n", rx_antennas[i]); }
-
   if (tx_channels > 0) {
     tx_antennas = SoapySDRDevice_listAntennas(sdr, SOAPY_SDR_TX, 0, &tx_antennas_length);
-
     for (size_t i = 0; i < tx_antennas_length; i++) { t_print("TX antenna: %s\n", tx_antennas[i]); }
   }
-
   char **rx_gains = SoapySDRDevice_listGains(sdr, SOAPY_SDR_RX, 0, &rx_gains_length);
   gboolean has_automatic_gain = SoapySDRDevice_hasGainMode(sdr, SOAPY_SDR_RX, 0);
   t_print("has_automaic_gain=%d\n", has_automatic_gain);
   gboolean has_automatic_dc_offset_correction = SoapySDRDevice_hasDCOffsetMode(sdr, SOAPY_SDR_RX, 0);
   t_print("has_automaic_dc_offset_correction=%d\n", has_automatic_dc_offset_correction);
-
   if (tx_channels > 0) {
     tx_gains = SoapySDRDevice_listGains(sdr, SOAPY_SDR_TX, 0, &tx_gains_length);
   }
-
   size_t formats_length;
   char **formats = SoapySDRDevice_getStreamFormats(sdr, SOAPY_SDR_RX, 0, &formats_length);
-
   for (size_t i = 0; i < formats_length; i++) { t_print("RX format available: %s\n", formats[i]); }
-
   size_t sensors;
   char **sensor = SoapySDRDevice_listSensors(sdr, &sensors);
   gboolean has_temp = FALSE;
-
   for (size_t i = 0; i < sensors; i++) {
     char *value = SoapySDRDevice_readSensor(sdr, sensor[i]);
     t_print("Sensor:   %s=%s\n", sensor[i], value);
-
     if ((strstr(sensor[i], "temp")) != NULL) {
       has_temp = TRUE;
     }
   }
-
   if (devices < MAX_DEVICES) {
     discovered[devices].device = SOAPYSDR_USB_DEVICE;
     discovered[devices].protocol = SOAPYSDR_PROTOCOL;
@@ -229,7 +187,6 @@ static void get_info(char* driver) {
     g_strlcpy(discovered[devices].info.soapy.hardware_key, hardwarekey,
               sizeof(discovered[devices].info.soapy.hardware_key));
     discovered[devices].info.soapy.sample_rate = sample_rate;
-
     if (strcmp(driver, "rtlsdr") == 0) {
       discovered[devices].info.soapy.rtlsdr_count = rtlsdr_val;
       discovered[devices].info.soapy.sdrplay_count = 0;
@@ -240,7 +197,6 @@ static void get_info(char* driver) {
       discovered[devices].info.soapy.rtlsdr_count = 0;
       discovered[devices].info.soapy.sdrplay_count = 0;
     }
-
     if (strcmp(driver, "lime") == 0) {
       snprintf(discovered[devices].info.soapy.version, sizeof(discovered[devices].info.soapy.version),
                "fw=%s gw=%s hw=%s p=%s", fw_version, gw_version, hw_version,
@@ -251,16 +207,13 @@ static void get_info(char* driver) {
     } else {
       g_strlcpy(discovered[devices].info.soapy.version, "", sizeof(discovered[devices].info.soapy.version));
     }
-
     gboolean has_fullgain = FALSE;
     discovered[devices].info.soapy.rx_full_range = SoapySDRDevice_getGainRange(sdr, SOAPY_SDR_RX, 0);
-
     if (discovered[devices].info.soapy.rx_full_range.minimum ==
         discovered[devices].info.soapy.rx_full_range.maximum) {
       t_print("%s: RX FULL gain NOT provided by driver (has_fullgain=%d)\n", __func__, has_fullgain);
     } else {
       if (strcmp(driver, "sdrplay") != 0) { has_fullgain = TRUE; }
-
       t_print("%s: RX FULL gain: %f -> %f step=%f (has_fullgain=%d)\n",
               __func__,
               discovered[devices].info.soapy.rx_full_range.minimum,
@@ -268,13 +221,11 @@ static void get_info(char* driver) {
               discovered[devices].info.soapy.rx_full_range.step,
               has_fullgain);
     }
-
     discovered[devices].info.soapy.has_fullgain = has_fullgain;
     discovered[devices].info.soapy.rx_channels = rx_channels;
     discovered[devices].info.soapy.rx_gains = rx_gains_length;
     discovered[devices].info.soapy.rx_gain = rx_gains;
     discovered[devices].info.soapy.rx_range = malloc(rx_gains_length * sizeof(SoapySDRRange));
-
     for (size_t i = 0; i < rx_gains_length; i++) {
       t_print("%s: RX rx_gains_length %d gain %s\n", __func__, (int) rx_gains_length, rx_gains[i]);
       SoapySDRRange rx_range = SoapySDRDevice_getGainElementRange(sdr, SOAPY_SDR_RX, 0, rx_gains[i]);
@@ -282,45 +233,37 @@ static void get_info(char* driver) {
               rx_range.step);
       discovered[devices].info.soapy.rx_range[i] = rx_range;
     }
-
     discovered[devices].info.soapy.rx_has_automatic_gain = has_automatic_gain;
     discovered[devices].info.soapy.rx_has_automatic_dc_offset_correction = has_automatic_dc_offset_correction;
     discovered[devices].info.soapy.rx_antennas = rx_antennas_length;
     discovered[devices].info.soapy.rx_antenna = rx_antennas;
     discovered[devices].info.soapy.tx_channels = tx_channels;
-
     if (tx_channels > 0) {
       discovered[devices].info.soapy.tx_gains = tx_gains_length;
       discovered[devices].info.soapy.tx_gain = tx_gains;
       discovered[devices].info.soapy.tx_range = malloc(tx_gains_length * sizeof(SoapySDRRange));
-
       for (size_t i = 0; i < tx_gains_length; i++) {
         t_print("%s ", tx_gains[i]);
         SoapySDRRange tx_range = SoapySDRDevice_getGainElementRange(sdr, SOAPY_SDR_TX, 0, tx_gains[i]);
         t_print("TX gain %s, %f -> %f step=%f\n", tx_gains[i], tx_range.minimum, tx_range.maximum, tx_range.step);
         discovered[devices].info.soapy.tx_range[i] = tx_range;
       }
-
       discovered[devices].info.soapy.tx_antennas = tx_antennas_length;
       discovered[devices].info.soapy.tx_antenna = tx_antennas;
     }
-
     discovered[devices].info.soapy.sensors = sensors;
     discovered[devices].info.soapy.sensor = sensor;
     discovered[devices].info.soapy.has_temp = has_temp;
-
     if (address != NULL) {
       g_strlcpy(discovered[devices].info.soapy.address, address, sizeof(discovered[devices].info.soapy.address));
     } else {
       g_strlcpy(discovered[devices].info.soapy.address, "USB", sizeof(discovered[devices].info.soapy.address));
     }
-
     t_print("soapy_discovery: name=%s min=%0.3f MHz max=%0.3f MHz\n", discovered[devices].name,
             discovered[devices].frequency_min * 1E-6,
             discovered[devices].frequency_max * 1E-6);
     devices++;
   }
-
   SoapySDRDevice_unmake(sdr);
   free(ranges);
 }
@@ -333,7 +276,6 @@ void soapy_discovery(void) {
   SoapySDRKwargs_set(&input_args, "hostname", "pluto.local");
   SoapySDRKwargs *results = SoapySDRDevice_enumerate(&input_args, &length);
   t_print("%s: length=%d\n", __func__, (int) length);
-
   for (size_t i = 0; i < length; i++) {
     for (size_t j = 0; j < results[i].size; j++) {
       if (strcmp(results[i].keys[j], "driver") == 0 && strcmp(results[i].vals[j], "audio") != 0) {
@@ -341,6 +283,5 @@ void soapy_discovery(void) {
       }
     }
   }
-
   SoapySDRKwargsList_clear(results, length);
 }

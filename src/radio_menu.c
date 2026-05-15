@@ -77,11 +77,9 @@ static gboolean close_cb(void) {
 static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
   if (device == SOAPYSDR_USB_DEVICE) {
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
     if (strcmp(radio->name, "sdrplay") != 0) {
       adc[active_receiver->adc].gain = gain;
     }
-
     soapy_protocol_set_gain_element(active_receiver, (char*) gtk_widget_get_name(widget), (int) gain);
     t_print("%s: %s gain = %d\n", __func__, (char*) gtk_widget_get_name(widget), gain);
     update_rf_gain_scale_soapy(index_rf_gain());
@@ -102,11 +100,9 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
     int agc = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     adc[active_receiver->adc].agc = agc;
     soapy_protocol_set_automatic_gain(active_receiver, agc);
-
     if (!agc && strcmp(radio->name, "sdrplay") != 0) {
       soapy_protocol_set_gain(active_receiver);
     }
-
     update_slider_hwagc_btn();
   }
 }
@@ -132,20 +128,16 @@ static void capture_time_changed_cb(GtkWidget *widget, gpointer data) {
   int t = 0;
   t = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   t = (t < 10) ? 10 : (t > 120) ? 120 : t;
-
   if (radio_is_transmitting()) {
     radio_end_playback();
   } else {
     radio_end_capture();
   }
-
   capture_max = t * 48000;
-
   if (capture_data != NULL) {
     g_free(capture_data);
     capture_data = NULL;
   }
-
   capture_data = g_new(double, capture_max);
   capture_record_pointer = 0;
   capture_replay_pointer = 0;
@@ -158,7 +150,6 @@ static void ptt_ring_cb(GtkWidget *widget, gpointer data) {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     mic_ptt_tip_bias_ring = 0;
   }
-
   schedule_transmit_specific();
 }
 
@@ -166,7 +157,6 @@ static void ptt_tip_cb(GtkWidget *widget, gpointer data) {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     mic_ptt_tip_bias_ring = 1;
   }
-
   schedule_transmit_specific();
 }
 
@@ -182,24 +172,19 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
 
 static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
   int mode = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   if (mode == hermes_mode) {
     return;
   }
-
   radio_protocol_stop();
   usleep(200000);
   hermes_mode = mode;
-
   switch (hermes_mode) {
   case HERMES_MODE_GENERIC:
     anan10E = 0;
     break;
-
   case HERMES_MODE_ANAN10E:
     anan10E = 1;
     break;
-
   case HERMES_MODE_BRICK:
     anan10E = 0;
     have_alex_att = 0;
@@ -207,13 +192,11 @@ static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
     enable_auto_tune = 0;
     new_pa_board = 0;
     break;
-
   default:
     hermes_mode = HERMES_MODE_GENERIC;
     anan10E = 0;
     break;
   }
-
   if (hermes_mode == HERMES_MODE_BRICK) {
     gtk_widget_hide(ChkBtn_txinhibit);
     gtk_widget_hide(ChkBtn_autotune);
@@ -221,7 +204,6 @@ static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
     gtk_widget_show(ChkBtn_txinhibit);
     gtk_widget_show(ChkBtn_autotune);
   }
-
   update_attenuation_label();
   radio_save_state();
   radio_protocol_run();
@@ -237,7 +219,6 @@ static void split_cb(GtkWidget *widget, gpointer data) {
 //
 void setDuplex(void) {
   if (!can_transmit) { return; }
-
   if (duplex) {
     // TX is in separate window, also in full-screen mode
     gtk_container_remove(GTK_CONTAINER(fixed), transmitter->panel);
@@ -251,7 +232,6 @@ void setDuplex(void) {
     int width = full_screen ? screen_width : display_width;
     tx_reconfigure(transmitter, width, width, rx_height);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -263,7 +243,6 @@ static void duplex_cb(GtkWidget *widget, gpointer data) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), duplex);
     return;
   }
-
   duplex = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   setDuplex();
 }
@@ -352,19 +331,15 @@ void load_filters(void) {
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     }
-
     n2adr_oc_settings_tx();
     break;
-
   case N2ADR:
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     n2adr_oc_settings();
     break;
-
   case ALEX:
   case APOLLO:
   case CHARLY25:
@@ -372,28 +347,22 @@ void load_filters(void) {
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     // This is most likely not necessary here, but can do no harm
     radio_set_alex_antennas();
     break;
-
   case NO_FILTER_BOARD:
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     break;
-
   default:
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     break;
   }
-
   //
   // This switches between StepAttenuator slider and CHARLY25 ATT/Preamp checkboxes
   // when the filter board is switched to/from CHARLY25
@@ -403,70 +372,51 @@ void load_filters(void) {
 
 static void filter_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
   default:
     filter_board = NO_FILTER_BOARD;
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     break;
-
   case 1:
     filter_board = ALEX;
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     break;
-
   case 2:
     filter_board = APOLLO;
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     break;
-
   case 3:
     filter_board = CHARLY25;
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     break;
-
   case 4:
     filter_board = N2ADR;
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
-
     break;
-
   case 5:
     filter_board = N2ADR_TX;
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     }
-
     break;
   }
-
   load_filters();
 }
 
@@ -480,31 +430,26 @@ static void n2adr_hpf_btn_cb(GtkWidget *widget, gpointer data) {
 
 static void mic_input_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
   default:
     mic_input_xlr = MIC3P55MM;
     break;
-
   case 1:
     mic_input_xlr = MICXLR;
     break;
   }
-
   schedule_transmit_specific();
 }
 
 static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
   const char *p = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
   int samplerate;
-
   //
   // There are so many different possibilities for sample rates, so
   // we just "scanf" from the combobox text entry
   //
   if (sscanf(p, "%d", &samplerate) != 1) { return; }
-
   if (protocol == NEW_PROTOCOL) {
     rx_change_sample_rate(active_receiver, samplerate);
   } else {
@@ -514,7 +459,6 @@ static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
 
 static void receivers_cb(GtkToggleButton *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget)) + 1;
-
   //
   // reconfigure_radio requires that the RX panels are active
   // (segfault otherwise), therefore ignore this while TXing
@@ -523,7 +467,6 @@ static void receivers_cb(GtkToggleButton *widget, gpointer data) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(widget), receivers - 1);
     return;
   }
-
   radio_change_receivers(val);
 }
 
@@ -533,17 +476,14 @@ static void region_cb(GtkWidget *widget, gpointer data) {
 
 static void rit_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-
   switch (val) {
   case 0:
   default:
     vfo_set_rit_step(1);
     break;
-
   case 1:
     vfo_set_rit_step(10);
     break;
-
   case 2:
     vfo_set_rit_step(100);
     break;
@@ -573,7 +513,6 @@ static void callsign_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *callsign_box = GTK_ENTRY(data);
   const gchar *text = gtk_entry_get_text(callsign_box);
   gsize len = text ? strlen(text) : 0;
-
   if (text && len >= 3 && len < sizeof(own_callsign)) {
     gchar *upper = g_ascii_strup(text, -1);  // oder g_strup(text)
     g_strlcpy(own_callsign, upper, sizeof(own_callsign));
@@ -583,7 +522,6 @@ static void callsign_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(callsign_box, own_callsign);
     g_signal_handler_unblock(callsign_box, callsign_box_signal_id);
   }
-
   gtk_widget_queue_draw(GTK_WIDGET(callsign_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
@@ -593,7 +531,6 @@ static void locator_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *locator_box = GTK_ENTRY(data);
   const gchar *text = gtk_entry_get_text(locator_box);
   gsize len = text ? strlen(text) : 0;
-
   if (text && len >= 3 && len < sizeof(own_locator)) {
     gchar *upper = g_ascii_strup(text, -1);  // oder g_strup(text)
     g_strlcpy(own_locator, upper, sizeof(own_locator));
@@ -603,7 +540,6 @@ static void locator_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(locator_box, own_locator);
     g_signal_handler_unblock(locator_box, locator_box_signal_id);
   }
-
   gtk_widget_queue_draw(GTK_WIDGET(locator_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
@@ -636,7 +572,6 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect(close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
-
   if (can_transmit) {
     //--------------------------------------------------------------------------------------------------------
     label = gtk_label_new("Audio Capture Time (sec):");
@@ -651,7 +586,6 @@ void radio_menu(GtkWidget *parent) {
     g_signal_connect(capture_time_btn, "value_changed", G_CALLBACK(capture_time_changed_cb), NULL);
     //--------------------------------------------------------------------------------------------------------
   }
-
   row = 1;
   label = gtk_label_new("Receivers:");
   gtk_widget_set_name(label, "boldlabel");
@@ -660,16 +594,13 @@ void radio_menu(GtkWidget *parent) {
   row++;
   GtkWidget *receivers_combo = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(receivers_combo), NULL, "1");
-
   if (radio->supported_receivers > 1) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(receivers_combo), NULL, "2");
   }
-
   gtk_combo_box_set_active(GTK_COMBO_BOX(receivers_combo), receivers - 1);
   my_combo_attach(GTK_GRID(grid), receivers_combo, 0, row, 1, 1);
   g_signal_connect(receivers_combo, "changed", G_CALLBACK(receivers_cb), NULL);
   row++;
-
   switch (protocol) {
   case NEW_PROTOCOL: {
     label = gtk_label_new("Sample Rate:");
@@ -682,44 +613,35 @@ void radio_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "96000");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "192000");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "384000");
-
     if (hermes_mode != HERMES_MODE_BRICK) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "768000");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "1536000");
     }
-
     switch (active_receiver->sample_rate) {
     case 48000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 0);
       break;
-
     case 96000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 1);
       break;
-
     case 192000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 2);
       break;
-
     case 384000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 3);
       break;
-
     case 768000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 4);
       break;
-
     case 1536000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 5);
       break;
     }
-
     my_combo_attach(GTK_GRID(grid), sample_rate_combo_box, 0, row, 1, 1);
     g_signal_connect(sample_rate_combo_box, "changed", G_CALLBACK(sample_rate_cb), NULL);
     row++;
   }
   break;
-
   case ORIGINAL_PROTOCOL: {
     label = gtk_label_new("Sample Rate:");
     gtk_widget_set_name(label, "boldlabel");
@@ -731,32 +653,26 @@ void radio_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "96000");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "192000");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "384000");
-
     switch (active_receiver->sample_rate) {
     case 48000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 0);
       break;
-
     case 96000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 1);
       break;
-
     case 192000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 2);
       break;
-
     case 384000:
       gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 3);
       break;
     }
-
     my_combo_attach(GTK_GRID(grid), sample_rate_combo_box, 0, row, 1, 1);
     g_signal_connect(sample_rate_combo_box, "changed", G_CALLBACK(sample_rate_cb), NULL);
     row++;
   }
   break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL: {
     label = gtk_label_new("Sample Rate:");
     gtk_widget_set_name(label, "boldlabel");
@@ -767,28 +683,22 @@ void radio_menu(GtkWidget *parent) {
     GtkWidget *sample_rate_combo_box = gtk_combo_box_text_new();
     int rate = radio->info.soapy.sample_rate;
     int pos = 0;
-
     while (rate >= 48000) {
       snprintf(rate_string, 16, "%d", rate);
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, rate_string);
-
       if (rate == active_receiver->sample_rate) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), pos);
       }
-
       rate = rate / 2;
       pos++;
     }
-
     my_combo_attach(GTK_GRID(grid), sample_rate_combo_box, 0, row, 1, 1);
     g_signal_connect(sample_rate_combo_box, "changed", G_CALLBACK(sample_rate_cb), NULL);
   }
-
   row++;
   break;
 #endif
   }
-
   max_row = row;
   row = 1;
   label = gtk_label_new("RIT/XIT step (Hz):");
@@ -800,27 +710,22 @@ void radio_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_combo), NULL, "1");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_combo), NULL, "10");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_combo), NULL, "100");
-
   switch (vfo[active_receiver->id].rit_step) {
   default:
     // we should not arrive here, but just in case ...
     vfo_set_rit_step(1);
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_combo), 0);
     break;
-
   case 1:
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_combo), 0);
     break;
-
   case 10:
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_combo), 1);
     break;
-
   case 100:
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_combo), 2);
     break;
   }
-
   my_combo_attach(GTK_GRID(grid), rit_combo, 1, row, 1, 1);
   g_signal_connect(rit_combo, "changed", G_CALLBACK(rit_cb), NULL);
   row++;
@@ -837,9 +742,7 @@ void radio_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), sat_combo, 1, row, 1, 1);
   g_signal_connect(sat_combo, "changed", G_CALLBACK(sat_cb), NULL);
   row++;
-
   if (row > max_row) { max_row = row; }
-
   row = 1;
   label = gtk_label_new("Channel Marker for 60m:");
   gtk_widget_set_name(label, "boldlabel");
@@ -863,7 +766,6 @@ void radio_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), region_combo, 2, row, 1, 1);
   g_signal_connect(region_combo, "changed", G_CALLBACK(region_cb), NULL);
   row++;
-
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     label = gtk_label_new("Filter Board:");
     gtk_widget_set_name(label, "boldlabel");
@@ -877,36 +779,28 @@ void radio_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "CHARLY25");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR (LPF RX + TX + HPF)");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(filter_combo), NULL, "N2ADR (LPF TX only)");
-
     switch (filter_board) {
     case NO_FILTER_BOARD:
       gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 0);
       break;
-
     case ALEX:
       gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 1);
       break;
-
     case APOLLO:
       gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 2);
       break;
-
     case CHARLY25:
       gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 3);
       break;
-
     case N2ADR:
       gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 4);
       break;
-
     case N2ADR_TX:
       gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo), 5);
       break;
     }
-
     my_combo_attach(GTK_GRID(grid), filter_combo, 2, row, 1, 1);
     g_signal_connect(filter_combo, "changed", G_CALLBACK(filter_cb), NULL);
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       n2adr_hpf_btn = gtk_check_button_new_with_label("+RX: N2ADR HPF 3MHz");
@@ -916,12 +810,9 @@ void radio_menu(GtkWidget *parent) {
       g_signal_connect(n2adr_hpf_btn, "toggled", G_CALLBACK(n2adr_hpf_btn_cb), NULL);
       gtk_widget_set_sensitive(n2adr_hpf_btn, filter_board == N2ADR_TX);
     }
-
     row++;
   }
-
   if (row > max_row) { max_row = row; }
-
   row = max_row;
   label = gtk_label_new("VFO Encoder Divisor:");
   gtk_widget_set_name(label, "boldlabel");
@@ -934,10 +825,8 @@ void radio_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), vfo_divisor, 2, row, 1, 1);
   g_signal_connect(vfo_divisor, "value_changed", G_CALLBACK(vfo_divisor_value_changed_cb), NULL);
   row++;
-
   // cppcheck-suppress knownConditionTrueFalse
   if (row > max_row) { max_row = row; }
-
   //
   // The HPSDR machine-specific stuff is now put in columns 3+4
   // either the ATLAS bits (METIS) or the ORION microphone settings
@@ -995,7 +884,6 @@ void radio_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), tx_combo, 4, row, 1, 1);
     g_signal_connect(tx_combo, "changed", G_CALLBACK(tx_cb), NULL);
     row++;
-
     //
     // This option is for ATLAS systems which *only* have an OZY
     // and a JANUS board (the RF front end then is either SDR-1000 or SoftRock)
@@ -1010,10 +898,8 @@ void radio_menu(GtkWidget *parent) {
       g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &atlas_janus);
       row++;
     }
-
     if (row > max_row) { max_row = row; }
   }
-
   if (device == NEW_DEVICE_ORION || device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN ||
       device == DEVICE_ORION || device == DEVICE_ORION2) {
     row = 1;
@@ -1033,7 +919,6 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ptt_tip_b, 3, row, 2, 1);
     g_signal_connect(ptt_tip_b, "toggled", G_CALLBACK(ptt_tip_cb), NULL);
     row++;
-
     if (device == NEW_DEVICE_SATURN) {
       label = gtk_label_new("Mic Input:");
       gtk_widget_set_name(label, "boldlabel");
@@ -1041,21 +926,17 @@ void radio_menu(GtkWidget *parent) {
       GtkWidget *mic_input_combo = gtk_combo_box_text_new();
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(mic_input_combo), NULL, "3.5mm");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(mic_input_combo), NULL, "XLR");
-
       switch (mic_input_xlr) {
       case MIC3P55MM:
         gtk_combo_box_set_active(GTK_COMBO_BOX(mic_input_combo), 0);
         break;
-
       case MICXLR:
         gtk_combo_box_set_active(GTK_COMBO_BOX(mic_input_combo), 1);
         break;
       }
-
       my_combo_attach(GTK_GRID(grid), mic_input_combo, 4, row + 1, 1, 1);
       g_signal_connect(mic_input_combo, "changed", G_CALLBACK(mic_input_cb), NULL);
     }
-
     ChkBtn = gtk_check_button_new_with_label("PTT Enabled");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), mic_ptt_enabled);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, 3, row, 1, 1);
@@ -1066,10 +947,8 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, 3, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mic_bias_enabled);
     row++;
-
     if (row > max_row) { max_row = row; }
   }
-
   row = max_row;
   col = 0;
   //
@@ -1079,7 +958,6 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_size_request(Separator, -1, 3);
   gtk_grid_attach(GTK_GRID(grid), Separator, col, row, 5, 1);
   row++;
-
   if (can_transmit) {
     ChkBtn = gtk_check_button_new_with_label("Split operation");
     gtk_widget_set_name(ChkBtn, "boldlabel");
@@ -1093,7 +971,6 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mute_rx_while_transmitting);
     col++;
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       ChkBtn = gtk_check_button_new_with_label("HL2 5W PA enable");
@@ -1109,7 +986,6 @@ void radio_menu(GtkWidget *parent) {
                                   "device-depend and SDR-specific\n"
                                   "TX power settings for correct output !");
     }
-
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), pa_enabled);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
@@ -1122,9 +998,7 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(duplex_cb), NULL);
   }
-
   col = 2;
-
   if (device == DEVICE_HERMES_LITE2) {
     row++;
     ChkBtn = gtk_check_button_new_with_label("HL2 Force IO Board");
@@ -1139,7 +1013,6 @@ void radio_menu(GtkWidget *parent) {
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &force_iob);
     row--;
   }
-
   switch (device) {
   case NEW_DEVICE_ORION2:
   case NEW_DEVICE_SATURN: {
@@ -1151,7 +1024,6 @@ void radio_menu(GtkWidget *parent) {
     col++;
   }
   break;
-
   case NEW_DEVICE_HERMES_LITE2:
   case DEVICE_HERMES_LITE2: {
     if (!have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
@@ -1189,7 +1061,6 @@ void radio_menu(GtkWidget *parent) {
     }
   }
   break;
-
   case DEVICE_HERMES:
   case NEW_DEVICE_HERMES:
   case NEW_DEVICE_HERMES2: {
@@ -1204,7 +1075,6 @@ void radio_menu(GtkWidget *parent) {
   }
   break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_USB_DEVICE: {
     ChkBtn = gtk_check_button_new_with_label("Swap IQ");
     gtk_widget_set_name(ChkBtn, "boldlabel");
@@ -1212,7 +1082,6 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &soapy_iqswap);
     col++;
-
     if (radio->info.soapy.rx_has_automatic_gain) {
       ChkBtn = gtk_check_button_new_with_label("Hardware AGC");
       gtk_widget_set_name(ChkBtn, "boldlabel");
@@ -1225,7 +1094,6 @@ void radio_menu(GtkWidget *parent) {
   break;
 #endif
   }
-
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
     ChkBtn_txinhibit = gtk_check_button_new_with_label("Enable TxInhibit Input");
@@ -1241,7 +1109,6 @@ void radio_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_autotune), enable_auto_tune);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn_autotune, 2, row, 2, 1);
     g_signal_connect(ChkBtn_autotune, "toggled", G_CALLBACK(toggle_cb), &enable_auto_tune);
-
     //----------------------------------------------------------------------------------------
     if (hermes_mode == HERMES_MODE_BRICK) {
       enable_tx_inhibit = 0;
@@ -1253,7 +1120,6 @@ void radio_menu(GtkWidget *parent) {
       gtk_widget_show(ChkBtn_autotune);
     }
   }
-
   row++;
   // cppcheck-suppress redundantAssignment
   col = 0;
@@ -1340,7 +1206,6 @@ void radio_menu(GtkWidget *parent) {
 #ifdef SOAPYSDR
   row++;
   col = 0;
-
   if (device == SOAPYSDR_USB_DEVICE) {
     //
     // If there is only a single RX or TX gain element, then we need not display it
@@ -1349,7 +1214,6 @@ void radio_menu(GtkWidget *parent) {
     // for SDRplay, RTLsdr, and whenever there is more than on RX or TX gain element.
     //
     int display_gains = 0;
-
     //
     // For RTL sticks, there is a single gain element named "TUNER", and this is very well
     // controlled by the main RF gain slider. This perhaps also true for sdrplay, but
@@ -1357,11 +1221,8 @@ void radio_menu(GtkWidget *parent) {
     //
     //if (strcmp(radio->name, "sdrplay") == 0 || strcmp(radio->name, "rtlsdr") == 0) { display_gains = 1; }
     if (strcmp(radio->name, "sdrplay") == 0)  { display_gains = 1; }
-
     if (radio->info.soapy.rx_gains > 1) { display_gains = 1; }
-
     if (radio->info.soapy.tx_gains > 1) { display_gains = 1; }
-
     if (display_gains) {
       //
       // Select RX gain from one out of a list of ranges (represented by spin buttons)
@@ -1370,7 +1231,6 @@ void radio_menu(GtkWidget *parent) {
       gtk_widget_set_name(label, "boldlabel");
       gtk_widget_set_halign(label, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
-
       if (can_transmit) {
         label = gtk_label_new("TX Gains:");
         gtk_widget_set_name(label, "boldlabel");
@@ -1378,10 +1238,8 @@ void radio_menu(GtkWidget *parent) {
         gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
       }
     }
-
     row++;
     max_row = row;
-
     if (display_gains) {
       //
       // Draw a spin-button for each range
@@ -1392,11 +1250,9 @@ void radio_menu(GtkWidget *parent) {
           gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
           col++;
           SoapySDRRange range = radio->info.soapy.rx_range[i];
-
           if (range.step == 0.0) {
             range.step = 1.0;
           }
-
           GtkWidget *rx_gain = gtk_spin_button_new_with_range(range.minimum, range.maximum, range.step);
           gtk_widget_set_name(rx_gain, radio->info.soapy.rx_gain[i]);
           double value = (double) soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[i]);
@@ -1408,9 +1264,7 @@ void radio_menu(GtkWidget *parent) {
         }
       }
     }
-
     row = max_row;
-
     if (can_transmit && display_gains) {
       //
       // Select TX gain out of a list of discrete ranges
@@ -1419,11 +1273,9 @@ void radio_menu(GtkWidget *parent) {
         label = gtk_label_new(radio->info.soapy.tx_gain[i]);
         gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
         SoapySDRRange range = radio->info.soapy.tx_range[i];
-
         if (range.step == 0.0) {
           range.step = 1.0;
         }
-
         GtkWidget *tx_gain = gtk_spin_button_new_with_range(range.minimum, range.maximum, range.step);
         gtk_widget_set_name(tx_gain, radio->info.soapy.tx_gain[i]);
         int value = soapy_protocol_get_tx_gain_element(transmitter, radio->info.soapy.tx_gain[i]);
@@ -1434,7 +1286,6 @@ void radio_menu(GtkWidget *parent) {
       }
     }
   }
-
 #endif
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;

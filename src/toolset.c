@@ -71,16 +71,11 @@ void toolset_init(void) {
 
 void get_screen_size(int* width, int* height) {
   if (!width || !height) { return; }
-
   *width = *height = 0;
   GdkDisplay *display = gdk_display_get_default();
-
   if (!display) { return; }
-
   GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
-
   if (!monitor) { return; }
-
   GdkRectangle geo;
   gdk_monitor_get_geometry(monitor, &geo);
   *width = geo.width;
@@ -94,7 +89,6 @@ printf("Main window at %d,%d\n", x, y);
 */
 void get_window_position(GtkWindow *window, int* x, int* y) {
   if (!window || !x || !y) { return; }
-
   *x = *y = 0;
   // funktioniert zuverlässig unter X11, unter Wayland meist (0,0)
   gtk_window_get_position(window, x, y);
@@ -102,7 +96,6 @@ void get_window_position(GtkWindow *window, int* x, int* y) {
 
 void get_window_geometry(GtkWindow *widget, int* x, int* y, int* width, int* height) {
   if (!widget || !x || !y || !width || !height) { return; }
-
   *x = *y = *width = *height = 0;
   gtk_window_get_position(widget, x, y);
   gtk_window_get_size(widget, width, height);
@@ -115,31 +108,24 @@ int is_pi(void) {
 #elif defined(__linux__)
   // Linux: prüfe Device Tree
   FILE *fp = fopen("/sys/firmware/devicetree/base/model", "r");
-
   if (fp) {
     char model[256] = {0};
     fread(model, 1, sizeof(model) - 1, fp);
     fclose(fp);
-
     if (strstr(model, "Raspberry Pi")) { return 1; }
   }
-
   // Fallback: prüfe /proc/cpuinfo
   fp = fopen("/proc/cpuinfo", "r");
-
   if (fp) {
     char line[256];
-
     while (fgets(line, sizeof(line), fp)) {
       if (strstr(line, "Raspberry Pi") || strstr(line, "BCM")) {
         fclose(fp);
         return 1;
       }
     }
-
     fclose(fp);
   }
-
 #endif
   // Anderes System oder nicht erkannt
   return 0;
@@ -149,11 +135,9 @@ int is_pi(void) {
 int get_macos_major_version(void) {
   char macos_version[64] = {0};
   size_t size = sizeof(macos_version);
-
   if (sysctlbyname("kern.osproductversion", macos_version, &size, NULL, 0) != 0) {
     return -1;
   }
-
   int major = 0;
   sscanf(macos_version, "%d", &major);
   return major;
@@ -166,12 +150,10 @@ static gboolean is_minute_marker(int interval) {
   struct tm *t = localtime(&now);
   // Intervall prüfen und anpassen
   interval = (interval < 1) ? 5 : (interval > 59) ? 45 : interval;
-
   if ((t->tm_min % interval == 0) && (t->tm_min != last_minute)) {
     last_minute = t->tm_min;
     return TRUE;
   }
-
   return FALSE;
 }
 
@@ -188,12 +170,10 @@ int https_ok(const char* hostname, int mit_cert_check) {
   SSL_load_error_strings();
   OpenSSL_add_all_algorithms();
   ctx = SSL_CTX_new(TLS_client_method());
-
   if (!ctx) {
     ERR_print_errors_fp(stderr);
     return 0;
   }
-
   // Wenn Zertifikatsprüfung gewünscht, Standard-Zertifikatsstore laden
   if (mit_cert_check) {
     if (!SSL_CTX_set_default_verify_paths(ctx)) {
@@ -201,72 +181,56 @@ int https_ok(const char* hostname, int mit_cert_check) {
       SSL_CTX_free(ctx);
       return 0;
     }
-
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
   } else {
     SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
   }
-
   // Hostname auflösen
   host = gethostbyname(hostname);
-
   if (!host) {
     SSL_CTX_free(ctx);
     return 0;
   }
-
   // TCP-Socket erstellen und verbinden
   server = socket(AF_INET, SOCK_STREAM, 0);
-
   if (server < 0) {
     SSL_CTX_free(ctx);
     return 0;
   }
-
   addr.sin_family = AF_INET;
   addr.sin_port = htons(443);
   // addr.sin_addr = *((struct in_addr*)host->h_addr);
   memcpy(&addr.sin_addr, host->h_addr, sizeof(struct in_addr));
   memset(& (addr.sin_zero), 0, 8);
-
   if (connect(server, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     close(server);
     SSL_CTX_free(ctx);
     return 0;
   }
-
   // SSL erstellen und mit Socket verbinden
   ssl = SSL_new(ctx);
   SSL_set_fd(ssl, server);
   // Hostname für SNI setzen (Server Name Indication)
   SSL_set_tlsext_host_name(ssl, hostname);
-
   // TLS-Handshake
   if (SSL_connect(ssl) != 1) {
     // Fehlerausgabe bei Debug-Zwecken aktivieren
     // ERR_print_errors_fp(stderr);
     goto cleanup;
   }
-
   // Zertifikat überprüfen, falls aktiviert
   if (mit_cert_check) {
     long verif = SSL_get_verify_result(ssl);
-
     if (verif != X509_V_OK) {
       fprintf(stderr, "Zertifikat ungültig: %s\n", X509_verify_cert_error_string(verif));
       goto cleanup;
     }
   }
-
   erfolg = 1; // Alles ok
 cleanup:
-
   if (ssl) { SSL_free(ssl); }
-
   if (server >= 0) { close(server); }
-
   if (ctx) { SSL_CTX_free(ctx); }
-
   return erfolg;
 }
 
@@ -315,7 +279,6 @@ static void *solar_thread_func(void* arg) {
   GDateTime *dt = g_date_time_new_now_local();
   g_autofree gchar *ts = g_date_time_format(dt, "%F %T");
   g_date_time_unref(dt);
-
   if (!https_ok(host, 0)) {
     g_mutex_lock(&solar_data_mutex);
     sunspots   = -1;
@@ -328,9 +291,7 @@ static void *solar_thread_func(void* arg) {
     t_print("%s failed: host %s not reachable at %s\n", __func__, host, ts);
     return NULL;
   }
-
   SolarData sd = fetch_solar_data();
-
   if (sd.sunspots != -1) {
     g_mutex_lock(&solar_data_mutex);
     sunspots   = sd.sunspots;
@@ -340,7 +301,6 @@ static void *solar_thread_func(void* arg) {
     g_strlcpy(geomagfield, sd.geomagfield, sizeof(geomagfield));
     g_strlcpy(xray,        sd.xray,        sizeof(xray));
     g_mutex_unlock(&solar_data_mutex);
-
     if (is_dbg) {
       t_print("fetch data from %s at %s\n", host, ts);
       t_print("Sunspots:%d Flux:%d A:%d K:%d X:%s GMF:%s\n",
@@ -357,7 +317,6 @@ static void *solar_thread_func(void* arg) {
     g_mutex_unlock(&solar_data_mutex);
     t_print("%s: ERROR: invalid data from %s at %s\n", __func__, host, ts);
   }
-
   return NULL;
 }
 
@@ -376,7 +335,6 @@ static void assign_solar_data_async(int is_dbg) {
 
 static void assign_solar_data_async(int is_dbg) {
   pthread_t solar_thread;
-
   if (pthread_create(&solar_thread, NULL, solar_thread_func, (void *)(intptr_t) is_dbg) == 0) {
     pthread_detach(solar_thread);  // kein join nötig
   } else {
@@ -393,10 +351,8 @@ void check_and_run(int is_dbg) {
   // Zeitdifferenz in Millisekunden berechnen
   long diff_ms = (now.tv_sec - last_check.tv_sec) * 1000 +
                  (now.tv_nsec - last_check.tv_nsec) / 1000000;
-
   if (diff_ms >= 200) {
     last_check = now;
-
     // Beim ersten Mal oder bei neuer x-Minuten-Marke
     if (first_run || is_minute_marker(aller_x_min)) {
       // assign_solar_data(is_dbg);
@@ -409,21 +365,17 @@ void check_and_run(int is_dbg) {
 // Funktion zum Kürzen des Textes
 const char *truncate_text(const char* text, size_t max_length) {
   static char truncated[128];  // Ein statisches Array für den gekürzten Text
-
   if (strlen(text) > max_length) {
     g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
   } else {
     g_strlcpy(truncated, text, sizeof(truncated));    // Sicheres Kopieren des Textes
   }
-
   return truncated;
 }
 
 char *truncate_text_malloc(const char* text, size_t max_length) {
   size_t len = strlen(text);
-
   if (len > max_length) { len = max_length; }
-
   char *truncated = g_malloc(len + 1);  // +1 für '\0'
   g_strlcpy(truncated, text, len + 1);  // sicheres Kopieren
   return truncated;  // muss mit g_free() freigegeben werden
@@ -431,18 +383,15 @@ char *truncate_text_malloc(const char* text, size_t max_length) {
 
 char *truncate_text_3p(const char* text, size_t max_length) {
   size_t len = strlen(text);
-
   if (len <= max_length) {
     // Text passt komplett – einfach kopieren
     return g_strdup(text);
   }
-
   // Für "..." brauchen wir Platz: 3 Zeichen
   if (max_length < 3) {
     // Nicht genug Platz für Text + Ellipsis – gib einfach leeren String zurück
     return g_strdup("");
   }
-
   size_t cut_len = max_length - 3;  // Platz für Text ohne die drei Punkte
   char *truncated = g_malloc(max_length + 1);  // +1 für '\0'
   g_strlcpy(truncated, text, cut_len + 1);     // +1, weil g_strlcpy inkl. Nullbyte
@@ -461,7 +410,6 @@ void to_uppercase(char* str) {
     if (*str >= 'a' && *str <= 'z') {
       *str = *str - 32;
     }
-
     str++;
   }
 }
@@ -472,15 +420,12 @@ int file_present(const char* filename) {
 
 const char *extract_short_msg(const char* msg) {
   const char *s = strrchr(msg, ':');
-
   if (s && * (s + 1)) {
     s += 1;
-
     while (*s == ' ') { s++; }
   } else {
     s = msg;
   }
-
   return s;
 }
 
@@ -503,47 +448,37 @@ static int cmp_tx_eq_idx(const void* xa, const void* xb) {
 void sort_cfc(TRANSMITTER *tx) {
   int idx[N_CFC];
   tx_ctx = tx;
-
   for (int k = 0; k < N_CFC; k++) { idx[k] = k + 1; }
-
   qsort(idx, N_CFC, sizeof(int), cmp_cfc_idx);
   float f[N_CFC + 1], l[N_CFC + 1], p[N_CFC + 1];
-
   for (int k = 1; k <= N_CFC; k++) {
     int i = idx[k - 1];
     f[k] = tx->cfc_freq[i];
     l[k] = tx->cfc_lvl[i];
     p[k] = tx->cfc_post[i];
   }
-
   for (int k = 1; k <= N_CFC; k++) {
     tx->cfc_freq[k] = f[k];
     tx->cfc_lvl[k]  = l[k];
     tx->cfc_post[k] = p[k];
   }
-
   t_print("%s: CFC_FREQ sorted\n", __func__);
 }
 
 void sort_tx_eq(TRANSMITTER *tx) {
   int idx[N_EQ];
   tx_ctx = tx;
-
   for (int k = 0; k < N_EQ; k++) { idx[k] = k + 1; }
-
   qsort(idx, N_EQ, sizeof(int), cmp_tx_eq_idx);
   float f[N_EQ + 1], g[N_EQ + 1]; // 1-basiert
-
   for (int k = 1; k <= N_EQ; k++) {
     int i = idx[k - 1];
     f[k] = tx->eq_freq[i];
     g[k] = tx->eq_gain[i];
   }
-
   for (int k = 1; k <= N_EQ; k++) {
     tx->eq_freq[k] = f[k];
     tx->eq_gain[k] = g[k];
   }
-
   t_print("%s: TX_EQ_FREQ sorted\n", __func__);
 }

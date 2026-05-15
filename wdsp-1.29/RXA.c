@@ -812,30 +812,24 @@ void SetRXAMode(int channel, int mode) {
     rxa[channel].amd.p->run  = 0;
     rxa[channel].fmd.p->run  = 0;
     rxa[channel].agc.p->run  = 1;
-
     switch (mode) {
     case RXA_AM:
       rxa[channel].amd.p->run  = 1;
       rxa[channel].amd.p->mode = 0;
       break;
-
     case RXA_SAM:
       rxa[channel].amd.p->run  = 1;
       rxa[channel].amd.p->mode = 1;
       break;
-
     case RXA_DSB:
       break;
-
     case RXA_FM:
       rxa[channel].fmd.p->run  = 1;
       rxa[channel].agc.p->run  = 0;
       break;
-
     default:
       break;
     }
-
     RXAbp1Set(channel);
     RXAbpsnbaSet(channel);              // update variables
     LeaveCriticalSection(&ch[channel].csDSP);
@@ -845,12 +839,9 @@ void SetRXAMode(int channel, int mode) {
 void RXAResCheck(int channel) {
   // turn OFF/ON resamplers depending upon whether they're needed
   RESAMPLE a = rxa[channel].rsmpin.p;
-
   if (ch[channel].in_rate  != ch[channel].dsp_rate) { a->run = 1; }
   else { a->run = 0; }
-
   a = rxa[channel].rsmpout.p;
-
   if (ch[channel].dsp_rate != ch[channel].out_rate) { a->run = 1; }
   else { a->run = 0; }
 }
@@ -860,7 +851,6 @@ void RXAbp1Check(int channel, int amd_run, int snba_run,
                  int rnnr_run, int sbnr_run) { // NR3 + NR4 support
   BANDPASS a = rxa[channel].bp1.p;
   double gain;
-
   if (amd_run  ||
       snba_run ||
       emnr_run ||
@@ -869,7 +859,6 @@ void RXAbp1Check(int channel, int amd_run, int snba_run,
       anf_run  ||
       anr_run) { gain = 2.0; }
   else { gain = 1.0; }
-
   if (a->gain != gain) {
     setGain_bandpass(a, gain, 0);
   }
@@ -878,7 +867,6 @@ void RXAbp1Check(int channel, int amd_run, int snba_run,
 void RXAbp1Set(int channel) {
   BANDPASS a = rxa[channel].bp1.p;
   int old = a->run;
-
   if ((rxa[channel].amd.p->run  == 1) ||
       (rxa[channel].snba.p->run == 1) ||
       (rxa[channel].emnr.p->run == 1) ||
@@ -887,9 +875,7 @@ void RXAbp1Set(int channel) {
       (rxa[channel].anf.p->run  == 1) ||
       (rxa[channel].anr.p->run  == 1)) { a->run = 1; }
   else { a->run = 0; }
-
   if (!old && a->run) { flush_bandpass(a); }
-
   setUpdate_fircore(a->p);
 }
 
@@ -899,7 +885,6 @@ void RXAbpsnbaCheck(int channel, int mode, int notch_run) {
   BPSNBA a = rxa[channel].bpsnba.p;
   double f_low = 0.0, f_high = 0.0;
   int run_notches = 0;
-
   switch (mode) {
   case RXA_LSB:
   case RXA_CWL:
@@ -908,7 +893,6 @@ void RXAbpsnbaCheck(int channel, int mode, int notch_run) {
     f_high = -a->abs_low_freq;
     run_notches = notch_run;
     break;
-
   case RXA_USB:
   case RXA_CWU:
   case RXA_DIGU:
@@ -916,7 +900,6 @@ void RXAbpsnbaCheck(int channel, int mode, int notch_run) {
     f_high = +a->abs_high_freq;
     run_notches = notch_run;
     break;
-
   case RXA_AM:
   case RXA_SAM:
   case RXA_DSB:
@@ -924,18 +907,15 @@ void RXAbpsnbaCheck(int channel, int mode, int notch_run) {
     f_high = +a->abs_high_freq;
     run_notches = 0;
     break;
-
   case RXA_FM:
     f_low  = +a->abs_low_freq;
     f_high = +a->abs_high_freq;
     run_notches = 0;
     break;
-
   case RXA_DRM:
   case RXA_SPEC:
     break;
   }
-
   // 'run' and 'position' are examined at run time; no filter changes required.
   // Recalculate filter if frequencies OR 'run_notches' changed.
   if ((a->f_low   != f_low) ||
@@ -953,7 +933,6 @@ void RXAbpsnbaSet(int channel) {
   // for BPSNBA: set run, position, freqs, run_notches
   // call this upon change in RXA_mode, snba_run, notch_master_run
   BPSNBA a = rxa[channel].bpsnba.p;
-
   switch (rxa[channel].mode) {
   case RXA_LSB:
   case RXA_CWL:
@@ -961,32 +940,27 @@ void RXAbpsnbaSet(int channel) {
     a->run = rxa[channel].snba.p->run;
     a->position = 0;
     break;
-
   case RXA_USB:
   case RXA_CWU:
   case RXA_DIGU:
     a->run = rxa[channel].snba.p->run;
     a->position = 0;
     break;
-
   case RXA_AM:
   case RXA_SAM:
   case RXA_DSB:
     a->run = rxa[channel].snba.p->run;
     a->position = 1;
     break;
-
   case RXA_FM:
     a->run = rxa[channel].snba.p->run;
     a->position = 1;
     break;
-
   case RXA_DRM:
   case RXA_SPEC:
     a->run = 0;
     break;
   }
-
   setUpdate_fircore(a->bpsnba->p);
 }
 

@@ -35,22 +35,17 @@
 static GtkWindow *find_active_parent_window(void) {
   GList *wins = gtk_window_list_toplevels();
   GtkWindow *first_realized = NULL;
-
   for (GList *l = wins; l; l = l->next) {
     GtkWindow *w = GTK_WINDOW(l->data);
-
     if (!GTK_IS_WINDOW(w)) { continue; }
-
     if (gtk_window_is_active(w)) {
       g_list_free(wins);
       return w;
     }
-
     if (!first_realized && gtk_widget_get_realized(GTK_WIDGET(w))) {
       first_realized = w;
     }
   }
-
   g_list_free(wins);
   return first_realized;
 }
@@ -81,7 +76,6 @@ static GdkPixbuf *load_embedded_jpg (void) {
   GError *err = NULL;
   GdkPixbuf *pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &err);
   g_object_unref (stream);
-
   if (!pixbuf) {
     if (err) {
       g_warning ("Greyline: failed to load embedded JPG: %s", err->message);
@@ -90,17 +84,13 @@ static GdkPixbuf *load_embedded_jpg (void) {
       g_warning ("Greyline: failed to load embedded JPG (unknown error)");
     }
   }
-
   return pixbuf;
 }
 
 static gboolean get_embedded_map_dims (int* mw, int* mh) {
   if (!mw || !mh) { return FALSE; }
-
   GdkPixbuf *pb = load_embedded_jpg();
-
   if (!pb) { return FALSE; }
-
   *mw = gdk_pixbuf_get_width (pb);
   *mh = gdk_pixbuf_get_height (pb);
   g_object_unref (pb);
@@ -110,21 +100,14 @@ static gboolean get_embedded_map_dims (int* mw, int* mh) {
 /* --- Maidenhead locator (4/6 chars typical) -> lat/lon (approx center) --- */
 static gboolean locator_to_latlon (const char* loc, double* lat, double* lon) {
   if (!loc || !lat || !lon) { return FALSE; }
-
   size_t n = strlen (loc);
-
   if (n < 4) { return FALSE; }
-
   char A = (char) toupper ((unsigned char) loc[0]);
   char B = (char) toupper ((unsigned char) loc[1]);
-
   if (A < 'A' || A > 'R' || B < 'A' || B > 'R') { return FALSE; }
-
   int field_lon = A - 'A';
   int field_lat = B - 'A';
-
   if (loc[2] < '0' || loc[2] > '9' || loc[3] < '0' || loc[3] > '9') { return FALSE; }
-
   int square_lon = loc[2] - '0';
   int square_lat = loc[3] - '0';
   /* Base (lower-left corner) */
@@ -133,13 +116,10 @@ static gboolean locator_to_latlon (const char* loc, double* lat, double* lon) {
   /* Subsquares (optional, letters) */
   double lon_size = 2.0;
   double lat_size = 1.0;
-
   if (n >= 6) {
     char C = (char) tolower ((unsigned char) loc[4]);
     char D = (char) tolower ((unsigned char) loc[5]);
-
     if (C < 'a' || C > 'x' || D < 'a' || D > 'x') { return FALSE; }
-
     int subs_lon = C - 'a';
     int subs_lat = D - 'a';
     lon_size = 2.0 / 24.0;
@@ -147,7 +127,6 @@ static gboolean locator_to_latlon (const char* loc, double* lat, double* lon) {
     lo += subs_lon * lon_size;
     la += subs_lat * lat_size;
   }
-
   /* Center of the grid cell */
   *lon = lo + lon_size / 2.0;
   *lat = la + lat_size / 2.0;
@@ -205,11 +184,8 @@ static void subsolar_point_utc (double* sub_lat, double* sub_lon) {
      Normalize to [-180,180]. */
   double utc_minutes = gmt.tm_hour * 60.0 + gmt.tm_min + gmt.tm_sec / 60.0;
   double lon = 180.0 - (utc_minutes + Etime) * 0.25;
-
   while (lon > 180.0) { lon -= 360.0; }
-
   while (lon < -180.0) { lon += 360.0; }
-
   *sub_lon = lon;
 }
 
@@ -223,11 +199,8 @@ static double solar_altitude_deg (double lat_deg, double lon_deg) {
   double sublon = DEG2RAD (sub_lon);
   double dlon = lon - sublon;
   double cosZ = sin (lat) * sin (dec) + cos (lat) * cos (dec) * cos (dlon);
-
   if (cosZ > 1.0) { cosZ = 1.0; }
-
   if (cosZ < -1.0) { cosZ = -1.0; }
-
   /* altitude = asin(cosZ) */
   return RAD2DEG (asin (cosZ));
 }
@@ -260,9 +233,7 @@ static void draw_band_state (cairo_t* cr, double x, double y, const char* label,
 
 static void draw_dlayer_panel (cairo_t* cr, int w, int h, const char* locator) {
   double lat, lon;
-
   if (!locator_to_latlon (locator, &lat, &lon)) { return; }
-
   double alt = solar_altitude_deg (lat, lon);
   /* Simple operational traffic-light logic */
   /* 160/80m: highly D-layer sensitive */
@@ -293,7 +264,6 @@ static void draw_dlayer_panel (cairo_t* cr, int w, int h, const char* locator) {
   draw_text_shadow (cr, x0 + 10, y0 + 18, "D-Layer Low band DX estimate");
   /* Band lines */
   double y = y0 + 38;
-
   if (lo_red) {
     draw_band_state (cr, x0 + 10, y, "160m/80m", 0.90, 0.18, 0.18);
   } else if (lo_yellow) {
@@ -301,9 +271,7 @@ static void draw_dlayer_panel (cairo_t* cr, int w, int h, const char* locator) {
   } else {
     draw_band_state (cr, x0 + 10, y, "160m/80m", 0.18, 0.85, 0.25);
   }
-
   y += 20;
-
   if (mid_red) {
     draw_band_state (cr, x0 + 10, y, "40m", 0.90, 0.18, 0.18);
   } else if (mid_yellow) {
@@ -311,15 +279,12 @@ static void draw_dlayer_panel (cairo_t* cr, int w, int h, const char* locator) {
   } else {
     draw_band_state (cr, x0 + 10, y, "40m", 0.18, 0.85, 0.25);
   }
-
   y += 20;
-
   if (hi_yellow) {
     draw_band_state (cr, x0 + 10, y, "30m", 0.90, 0.75, 0.18);
   } else {
     draw_band_state (cr, x0 + 10, y, "30m", 0.18, 0.85, 0.25);
   }
-
   /* Sun elevation line */
   char buf[64];
   g_snprintf (buf, sizeof (buf), "Sun elevation: %.1f°", alt);
@@ -333,11 +298,9 @@ static double terminator_lat_for_lon (double sub_lat, double sub_lon, double lon
   double phi = DEG2RAD (sub_lat);
   double lam = DEG2RAD (lon - sub_lon);
   double tanphi = tan (phi);
-
   if (fabs (tanphi) < 1e-6) {
     return 0.0;
   }
-
   return RAD2DEG (atan (-cos (lam) / tanphi));
 }
 
@@ -345,18 +308,13 @@ static void draw_greyline_overlay (cairo_t* cr, int w, int h) {
   double sub_lat, sub_lon;
   subsolar_point_utc (&sub_lat, &sub_lon);
   int steps = w;
-
   if (steps < 400) { steps = 400; }
-
   double step = (double) w / (double) steps;
   /* Determine which side is night by checking the antisolar point */
   double anti_lat = -sub_lat;
   double anti_lon = sub_lon + 180.0;
-
   while (anti_lon > 180.0) { anti_lon -= 360.0; }
-
   while (anti_lon < -180.0) { anti_lon += 360.0; }
-
   double t_lat_at_anti = terminator_lat_for_lon (sub_lat, sub_lon, anti_lon);
   /* If antisolar latitude is south of terminator at that longitude, night polygon closes to bottom */
   gboolean night_closes_to_bottom = (anti_lat < t_lat_at_anti);
@@ -364,17 +322,14 @@ static void draw_greyline_overlay (cairo_t* cr, int w, int h) {
   cairo_save (cr);
   cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 0.45);
   cairo_new_path (cr);
-
   for (int i = 0; i <= steps; i++) {
     double x = i * step;
     double lon = -180.0 + (x / (double) w) * 360.0;
     double lat = terminator_lat_for_lon (sub_lat, sub_lon, lon);
     double y = (90.0 - lat) / 180.0 * (double) h;
-
     if (i == 0) { cairo_move_to (cr, x, y); }
     else { cairo_line_to (cr, x, y); }
   }
-
   if (night_closes_to_bottom) {
     cairo_line_to (cr, w, h);
     cairo_line_to (cr, 0, h);
@@ -382,7 +337,6 @@ static void draw_greyline_overlay (cairo_t* cr, int w, int h) {
     cairo_line_to (cr, w, 0);
     cairo_line_to (cr, 0, 0);
   }
-
   cairo_close_path (cr);
   cairo_fill (cr);
   cairo_restore (cr);
@@ -390,26 +344,21 @@ static void draw_greyline_overlay (cairo_t* cr, int w, int h) {
   cairo_set_source_rgba (cr, 1.0, 1.0, 0.0, 0.65);
   cairo_set_line_width (cr, 1.2);
   cairo_new_path (cr);
-
   for (int i = 0; i <= steps; i++) {
     double x = i * step;
     double lon = -180.0 + (x / (double) w) * 360.0;
     double lat = terminator_lat_for_lon (sub_lat, sub_lon, lon);
     double y = (90.0 - lat) / 180.0 * (double) h;
-
     if (i == 0) { cairo_move_to (cr, x, y); }
     else { cairo_line_to (cr, x, y); }
   }
-
   cairo_stroke (cr);
 }
 
 /* --- Draw station marker --- */
 static void draw_locator_marker (cairo_t* cr, int w, int h, const char* locator) {
   double lat, lon;
-
   if (!locator_to_latlon (locator, &lat, &lon)) { return; }
-
   double x = (lon + 180.0) / 360.0 * (double) w;
   double y = (90.0 - lat) / 180.0 * (double) h;
   cairo_set_source_rgba (cr, 1.0, 0.2, 0.2, 0.9);
@@ -419,7 +368,6 @@ static void draw_locator_marker (cairo_t* cr, int w, int h, const char* locator)
   cairo_set_line_width (cr, 1.0);
   cairo_arc (cr, x, y, 6.5, 0, 2 * M_PI);
   cairo_stroke (cr);
-
   /* Locator label near marker (readable on any background) */
   if (locator && locator[0]) {
     cairo_text_extents_t ext;
@@ -430,15 +378,12 @@ static void draw_locator_marker (cairo_t* cr, int w, int h, const char* locator)
     /* Default: right of marker; if too close to right edge, place left */
     double tx = x + 10.0;
     double ty = y - 10.0;
-
     if (tx + ext.width + 6.0 > (double) w) {
       tx = x - 10.0 - ext.width;
     }
-
     if (ty - ext.height < 0.0) {
       ty = y + 16.0;
     }
-
     /* Shadow */
     cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 0.85);
     cairo_move_to (cr, tx + 1.0, ty + 1.0);
@@ -458,15 +403,12 @@ static gboolean on_draw (GtkWidget *widget, cairo_t* cr, gpointer user_data) {
   gtk_widget_get_allocation (widget, &a);
   gw->w = a.width;
   gw->h = a.height;
-
   if (!gw->map_surface) {
     if (!gw->map_pixbuf) { gw->map_pixbuf = load_embedded_jpg(); }
-
     if (gw->map_pixbuf) {
       gw->map_surface = gdk_cairo_surface_create_from_pixbuf (gw->map_pixbuf, 1, NULL);
     }
   }
-
   if (gw->map_surface) {
     cairo_save (cr);
     int mw = gdk_pixbuf_get_width (gw->map_pixbuf);
@@ -482,7 +424,6 @@ static gboolean on_draw (GtkWidget *widget, cairo_t* cr, gpointer user_data) {
     cairo_rectangle (cr, 0, 0, gw->w, gw->h);
     cairo_fill (cr);
   }
-
   draw_greyline_overlay (cr, gw->w, gw->h);
   draw_locator_marker (cr, gw->w, gw->h, gw->locator);
   draw_dlayer_panel (cr, gw->w, gw->h, gw->locator);
@@ -492,35 +433,28 @@ static gboolean on_draw (GtkWidget *widget, cairo_t* cr, gpointer user_data) {
 /* --- periodic refresh --- */
 static gboolean on_tick (gpointer user_data) {
   GreylineWin *gw = (GreylineWin*) user_data;
-
   if (!gw || !GTK_IS_WIDGET (gw->area)) { return G_SOURCE_REMOVE; }
-
   gtk_widget_queue_draw (gw->area);
   return G_SOURCE_CONTINUE;
 }
 
 static void on_window_destroy (GtkWidget *widget, gpointer user_data) {
   GreylineWin *gw = (GreylineWin*) user_data;
-
   if (g_greyline_singleton_window == widget) {
     g_greyline_singleton_window = NULL;
   }
-
   if (gw->timer_id) {
     g_source_remove (gw->timer_id);
     gw->timer_id = 0;
   }
-
   if (gw->map_surface) {
     cairo_surface_destroy (gw->map_surface);
     gw->map_surface = NULL;
   }
-
   if (gw->map_pixbuf) {
     g_object_unref (gw->map_pixbuf);
     gw->map_pixbuf = NULL;
   }
-
   g_free (gw);
 }
 
@@ -530,20 +464,16 @@ static void open_impl (GtkWindow *parent, int window_width, int window_height, c
     gtk_window_present (GTK_WINDOW (g_greyline_singleton_window));
     return;
   }
-
   GreylineWin *gw = g_malloc0 (sizeof (GreylineWin));
   double aspect_w_over_h = 2.0; /* width/height */
-
   if (locator && locator[0]) {
     strncpy (gw->locator, locator, sizeof (gw->locator) - 1);
   } else {
     strcpy (gw->locator, "UNKNOWN");
   }
-
   /* Auto height from embedded map aspect ratio */
   if (window_height <= 0) {
     int mw = 0, mh = 0;
-
     if (get_embedded_map_dims (&mw, &mh) && mw > 0 && mh > 0) {
       aspect_w_over_h = (double) mw / (double) mh;
       window_height = (int) lround (((double) window_width * (double) mh) / (double) mw);
@@ -552,7 +482,6 @@ static void open_impl (GtkWindow *parent, int window_width, int window_height, c
       window_height = window_width / 2;
     }
   }
-
   gw->aspect_w_over_h = aspect_w_over_h;
   gw->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   g_greyline_singleton_window = gw->window;
@@ -571,7 +500,6 @@ static void open_impl (GtkWindow *parent, int window_width, int window_height, c
     geo.max_aspect = gw->aspect_w_over_h;
     gtk_window_set_geometry_hints (GTK_WINDOW (gw->window), NULL, &geo, GDK_HINT_ASPECT);
   }
-
   /* Parent integration */
   if (parent) {
     gtk_window_set_transient_for (GTK_WINDOW (gw->window), parent);
@@ -581,7 +509,6 @@ static void open_impl (GtkWindow *parent, int window_width, int window_height, c
   } else {
     gtk_window_set_position (GTK_WINDOW (gw->window), GTK_WIN_POS_CENTER);
   }
-
   gw->area = gtk_drawing_area_new();
   gtk_container_add (GTK_CONTAINER (gw->window), gw->area);
   g_signal_connect (gw->area, "draw", G_CALLBACK (on_draw), gw);
@@ -601,12 +528,10 @@ typedef struct {
 static gboolean open_on_main_cb (gpointer user_data) {
   GreylineOpenArgs *a = (GreylineOpenArgs*) user_data;
   open_impl (a->parent_ref, a->window_width, a->window_height, a->locator);
-
   if (a->parent_ref) {
     g_object_unref (a->parent_ref);
     a->parent_ref = NULL;
   }
-
   g_free (a);
   return G_SOURCE_REMOVE;
 }
@@ -616,13 +541,11 @@ static void open_async (GtkWindow *parent, int window_width, int window_height, 
   a->parent_ref = parent ? GTK_WINDOW (g_object_ref (parent)) : NULL;
   a->window_width = window_width;
   a->window_height = window_height;
-
   if (locator && locator[0]) {
     strncpy (a->locator, locator, sizeof (a->locator) - 1);
   } else {
     strncpy (a->locator, "UNKNOWN", sizeof (a->locator) - 1);
   }
-
   /* Marshal to GTK main thread (default main context). */
   g_main_context_invoke (NULL, open_on_main_cb, a);
 }

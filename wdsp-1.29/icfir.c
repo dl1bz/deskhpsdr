@@ -145,45 +145,36 @@ double *icfir_impulse(int N, int DD, int R, int Pairs, double runrate, double ci
   double delta = PI / (double)x_samps;
   double L = cicrate / runrate;
   double phs = 0.0;
-
   for (i = 0; i <= x_samps; i++) {
     xistion[i] = 0.5 * (cos(phs) + 1.0);
     phs += delta;
   }
-
   if ((tmp = DD * R * sin(PI * ft / R) / sin(PI * DD * ft)) < 0.0) {   //normalize by peak gain
     tmp = -tmp;
   }
-
   local_scale = scale / pow(tmp, Pairs);
-
   if (xtype == 0) {
     for (i = 0, ri = offset; i < u_samps; i++, ri += 1.0) {
       fn = ri / (L * (double)N);
-
       if (fn <= ft) {
         if (fn == 0.0) { tmp = 1.0; }
         else if ((tmp = sin(PI * DD * fn) / (DD * R * sin(PI * fn / R))) < 0.0) {
           tmp = -tmp;
         }
-
         mag = pow(tmp, Pairs) * local_scale;
       } else {
         mag *= (ft * ft * ft * ft) / (fn * fn * fn * fn);
       }
-
       A[i] = mag;
     }
   } else if (xtype == 1) {
     for (i = 0, ri = offset; i < u_samps; i++, ri += 1.0) {
       fn = ri / (L * (double)N);
-
       if (i < c_samps) {
         if (fn == 0.0) { tmp = 1.0; }
         else if ((tmp = sin(PI * DD * fn) / (DD * R * sin(PI * fn / R))) < 0.0) {
           tmp = -tmp;
         }
-
         mag = pow(tmp, Pairs) * local_scale;
         A[i] = mag;
       } else if (i >= c_samps && i <= c_samps + x_samps) {
@@ -193,7 +184,6 @@ double *icfir_impulse(int N, int DD, int R, int Pairs, double runrate, double ci
       }
     }
   }
-
   if (N & 1)
     for (i = u_samps, j = 2; i < N; i++, j++) {
       A[i] = A[u_samps - j];
@@ -201,7 +191,6 @@ double *icfir_impulse(int N, int DD, int R, int Pairs, double runrate, double ci
     for (i = u_samps, j = 1; i < N; i++, j++) {
       A[i] = A[u_samps - j];
     }
-
   impulse = fir_fsamp(N, A, rtype, 1.0, wintype);
   // print_impulse ("icfirImpulse.txt", N, impulse, 1, 0);
   _aligned_free(A);

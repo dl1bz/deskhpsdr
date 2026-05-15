@@ -54,7 +54,6 @@ static void cleanup(void) {
     active_menu  = NO_MENU;
     radio_save_state();
     int _mode = vfo_get_tx_mode();
-
     if (_mode < 3 && can_transmit) {
       showAudioProfileSaveDialog();
       // char fn[64];
@@ -74,7 +73,6 @@ void update_eq(void) {
   if (can_transmit) {
     tx_set_equalizer(transmitter);
   }
-
   for (int id = 0; id < receivers; id++) {
     rx_set_equalizer(receiver[id]);
   }
@@ -82,22 +80,18 @@ void update_eq(void) {
 
 static void enable_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   switch (eqid) {
   case 0:
   case 1:
     if (eqid < receivers) {
       receiver[eqid]->eq_enable = val;
     }
-
     if (eqid == 0) {
       int mode = vfo[eqid].mode;
       mode_settings[mode].en_rxeq = val;
       copy_mode_settings(mode);
     }
-
     break;
-
   case 2:
     if (can_transmit) {
       int mode = vfo[vfo_get_tx_vfo()].mode;
@@ -105,10 +99,8 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
       mode_settings[mode].en_txeq = val;
       copy_mode_settings(mode);
     }
-
     break;
   }
-
   update_eq();
   g_idle_add(ext_vfo_update, NULL);
 }
@@ -117,20 +109,16 @@ static void freq_changed_cb(GtkWidget *widget, gpointer data) {
   int mode;
   int i = GPOINTER_TO_INT(data);
   double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
   switch (eqid) {
   case 0:
   case 1:
     mode = vfo[eqid].mode;
     receiver[eqid]->eq_freq[i] = val;
-
     if (eqid == 0) {
       mode_settings[mode].rx_eq_freq[i] = val;
       copy_mode_settings(mode);
     }
-
     break;
-
   case 2:
     mode = vfo[vfo_get_tx_vfo()].mode;
     transmitter->eq_freq[i] = val;
@@ -138,7 +126,6 @@ static void freq_changed_cb(GtkWidget *widget, gpointer data) {
     copy_mode_settings(mode);
     break;
   }
-
   update_eq();
   g_idle_add(ext_vfo_update, NULL);
 }
@@ -147,20 +134,16 @@ static void freq_changed_cb(GtkWidget *widget, gpointer data) {
 static void gain_changed_cb(GtkWidget *widget, gpointer data) {
   int i = GPOINTER_TO_INT(data);
   double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
   switch (eqid) {
   case 0:
   case 1:
     receiver[eqid]->eq_gain[i] = val;
-
     if (eqid == 0) {
       int mode = vfo[eqid].mode;
       mode_settings[mode].rx_eq_gain[i] = val;
       copy_mode_settings(mode);
     }
-
     break;
-
   case 2:
     if (can_transmit) {
       int mode = vfo[vfo_get_tx_vfo()].mode;
@@ -168,10 +151,8 @@ static void gain_changed_cb(GtkWidget *widget, gpointer data) {
       mode_settings[mode].tx_eq_gain[i] = val;
       copy_mode_settings(mode);
     }
-
     break;
   }
-
   update_eq();
   g_idle_add(ext_vfo_update, NULL);
 }
@@ -182,16 +163,13 @@ static void eqid_changed_cb(GtkWidget *widget, gpointer data) {
     gtk_widget_hide(rx1_container);
     gtk_widget_hide(rx2_container);
     gtk_widget_hide(tx_container);
-
     switch (eqid) {
     case 0:
       gtk_widget_show(rx1_container);
       break;
-
     case 1:
       gtk_widget_show(rx2_container);
       break;
-
     case 2:
       gtk_widget_show(tx_container);
       break;
@@ -204,7 +182,6 @@ void equalizer_menu(GtkWidget *parent) {
   GtkWidget *label;
   int row = 0;
   int col = 0;
-
   //
   // Start the menu with the "old" eqid, but if it refers to RX2 and
   // this one is no longer running, set it to RX1
@@ -212,7 +189,6 @@ void equalizer_menu(GtkWidget *parent) {
   if ((eqid == 1 && receivers == 1) || (eqid == 2 && !can_transmit)) {
     eqid = 0;
   }
-
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);
@@ -240,7 +216,6 @@ void equalizer_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rx1_sel), (eqid == 0));
   gtk_grid_attach(GTK_GRID(grid), rx1_sel, col, row, 1, 1);
   g_signal_connect(rx1_sel, "toggled", G_CALLBACK(eqid_changed_cb), GINT_TO_POINTER(0));
-
   if (receivers > 1) {
     col++;
     mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "RX2-EQ Settings");
@@ -250,7 +225,6 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
     g_signal_connect(mbtn, "toggled", G_CALLBACK(eqid_changed_cb), GINT_TO_POINTER(1));
   }
-
   if (can_transmit) {
     col++;
     mbtn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rx1_sel), "TX-EQ Settings");
@@ -260,13 +234,11 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
     g_signal_connect(mbtn, "toggled", G_CALLBACK(eqid_changed_cb), GINT_TO_POINTER(2));
   }
-
   row++;
   col = 0;
   rx1_container = gtk_fixed_new();
   rx2_container = gtk_fixed_new();
   tx_container = gtk_fixed_new();
-
   for (int myeq = 0; myeq < 3; myeq++) {
     //
     // Depending on the value of eqid, set spinbuttons, scales, etc.
@@ -277,11 +249,8 @@ void equalizer_menu(GtkWidget *parent) {
     const double *gains;
     int     en;
     int     myrow, mycol;
-
     if (myeq == 1 && receivers < 2)  { continue; }
-
     if (myeq == 2 && !can_transmit)  { continue; }
-
     switch (myeq) {
     case 0:
       freqs = receiver[0]->eq_freq;
@@ -289,25 +258,21 @@ void equalizer_menu(GtkWidget *parent) {
       en = receiver[0]->eq_enable;
       mycontainer = rx1_container;
       break;
-
     case 1:
       freqs = receiver[myeq]->eq_freq;
       gains = receiver[myeq]->eq_gain;
       en = receiver[myeq]->eq_enable;
       mycontainer = rx2_container;
       break;
-
     case 2:
       if (can_transmit) {
         sort_tx_eq(transmitter);
       }
-
       freqs = transmitter->eq_freq;
       gains = transmitter->eq_gain;
       en = transmitter->eq_enable;
       mycontainer = tx_container;
     }
-
     gtk_grid_attach(GTK_GRID(grid), mycontainer, col, row, 4, 1);
     myrow = 0;
     mycol = 0;
@@ -334,7 +299,6 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_widget_set_size_request(line, -1, 3);
     gtk_grid_attach(GTK_GRID(mygrid), line, 0, myrow, 4, 1);
     myrow++;
-
     if (myeq == 2 && can_transmit) {
       char txeq_label_txt[256];
       snprintf(txeq_label_txt, sizeof(txeq_label_txt),
@@ -344,7 +308,6 @@ void equalizer_menu(GtkWidget *parent) {
       gtk_widget_set_name(txeq_label, "smalllabel_blue_bold");
       gtk_grid_attach(GTK_GRID(mygrid), txeq_label, 0, myrow, 4, 1);
     }
-
     myrow++;
     label = gtk_label_new("Frequency");
     gtk_widget_set_name(label, "boldlabel");
@@ -363,7 +326,6 @@ void equalizer_menu(GtkWidget *parent) {
 #else
     const int max_eq_zeilen = 5; // if use 10-band EQ 5 rows
 #endif
-
     for (int i = 1; i <= max_eq_zeilen; i++) { // index 0 must be excluded
       myrow++; // neue Zeile
       //----------------------------------------------------------------------------------------------------------------
@@ -393,11 +355,9 @@ void equalizer_menu(GtkWidget *parent) {
       //----------------------------------------------------------------------------------------------------------------
     }
   }
-
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
-
   //
   // Only show one of the three containers
   // This is the TX container upon first invocation of the TX menu,
@@ -409,12 +369,10 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_widget_hide(rx2_container);
     gtk_widget_hide(tx_container);
     break;
-
   case 1:
     gtk_widget_hide(rx1_container);
     gtk_widget_hide(tx_container);
     break;
-
   case 2:
     gtk_widget_hide(rx1_container);
     gtk_widget_hide(rx2_container);

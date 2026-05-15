@@ -36,9 +36,7 @@ static int calc_size(int nc) {
   nc |= nc >> 8;
   nc |= nc >> 16;
   nc++;
-
   if (nc < 1024) { nc = 1024; }
-
   return nc;
 }
 
@@ -62,7 +60,6 @@ double *build_matched(int* imp_size, double rate, double f, double fwhm, double 
   double sum = 0.0;
   double norm;
   int i, j, k;
-
   switch (imp_pos) {
   case 0:
   default:
@@ -76,18 +73,14 @@ double *build_matched(int* imp_size, double rate, double f, double fwhm, double 
       sum += sqrt(c_impulse[2 * i + 0] * c_impulse[2 * i + 0] + c_impulse[2 * i + 1] * c_impulse[2 * i + 1]) +
              sqrt(c_impulse[2 * j + 0] * c_impulse[2 * j + 0] + c_impulse[2 * j + 1] * c_impulse[2 * j + 1]);
     }
-
     norm = scale / sum;
-
     for (i = (nc + 1) / 2, j = (nc / 2) - 1, k = 0; k < nc / 2; i++, j--, k++) {
       c_impulse[2 * i + 0] *= norm;
       c_impulse[2 * i + 1] *= norm;
       c_impulse[2 * j + 0] *= norm;
       c_impulse[2 * j + 1] *= norm;
     }
-
     break;
-
   case 1:
     for (i = (fsize + 1) / 2, j = (fsize / 2) - 1, k = 0; k < nc / 2; i++, j--, k++) {
       posi = (double)i - m;
@@ -99,19 +92,15 @@ double *build_matched(int* imp_size, double rate, double f, double fwhm, double 
       sum += sqrt(c_impulse[2 * i + 0] * c_impulse[2 * i + 0] + c_impulse[2 * i + 1] * c_impulse[2 * i + 1]) +
              sqrt(c_impulse[2 * j + 0] * c_impulse[2 * j + 0] + c_impulse[2 * j + 1] * c_impulse[2 * j + 1]);
     }
-
     norm = scale / sum;
-
     for (i = (fsize + 1) / 2, j = (fsize / 2) - 1, k = 0; k < nc / 2; i++, j--, k++) {
       c_impulse[2 * i + 0] *= norm;
       c_impulse[2 * i + 1] *= norm;
       c_impulse[2 * j + 0] *= norm;
       c_impulse[2 * j + 1] *= norm;
     }
-
     break;
   }
-
   // print_impulse("c_matched.txt", fsize, c_impulse, 1, 0);
   *imp_size = fsize;
   return c_impulse;
@@ -162,13 +151,11 @@ void xmatched(MATCHED a, int pos) {
         a->in[2 * i + 1] *= -1.0;
       }
     }
-
     if (a->mode == 2) { // CWL + CWU
       for (int i = 0; i < a->size; i++) {
         a->in[2 * i + 1] = a->in[2 * i + 0];
       }
     }
-
     xfircore(a->p);
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
@@ -186,13 +173,11 @@ void setSamplerate_matched(MATCHED a, int rate) {
   int nc = a->nc;
   a->samplerate = rate;
   impulse = build_matched(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
-
   if (nc == a->nc) {
     setImpulse_fircore(a->p, impulse, 1);
   } else {
     setNc_fircore(a->p, a->nc, impulse);
   }
-
   _aligned_free(impulse);
 }
 
@@ -218,7 +203,6 @@ void setGain_matched(MATCHED a, double gain) {
 
 void CalcMatchedFilter(MATCHED a, double f_center, double bandwidth, double gain) {
   double *impulse;
-
   if ((a->f_center != f_center) || (a->bandwidth != bandwidth) || (a->gain != gain)) {
     int nc = a->nc;
     a->f_center = f_center;
@@ -226,13 +210,11 @@ void CalcMatchedFilter(MATCHED a, double f_center, double bandwidth, double gain
     a->gain = gain;
     a->scale = a->gain / (double)(2 * a->size);
     impulse = build_matched(&a->nc, a->samplerate, a->f_center, a->bandwidth, a->scale, 0);
-
     if (nc == a->nc) {
       setImpulse_fircore(a->p, impulse, 1);
     } else {
       setNc_fircore(a->p, a->nc, impulse);
     }
-
     _aligned_free(impulse);
   }
 }

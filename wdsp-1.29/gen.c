@@ -76,15 +76,12 @@ void calc_pulse(GEN a) {
   a->pulse.pntrans = (int)(a->pulse.ptranstime * a->rate);
   a->pulse.pnon = (int)(a->pulse.pdutycycle * a->pulse.pperiod * a->rate);
   a->pulse.pnoff = (int)(a->pulse.pperiod * a->rate) - a->pulse.pnon - 2 * a->pulse.pntrans;
-
   if (a->pulse.pnoff < 0) { a->pulse.pnoff = 0; }
-
   a->pulse.pcount = a->pulse.pnoff;
   a->pulse.state = 0;
   a->pulse.ctrans = (double*) malloc0((a->pulse.pntrans + 1) * sizeof(double));
   delta = PI / (double)a->pulse.pntrans;
   theta = 0.0;
-
   for (i = 0; i <= a->pulse.pntrans; i++) {
     a->pulse.ctrans[i] = 0.5 * (1.0 - cos(theta));
     theta += delta;
@@ -106,15 +103,12 @@ void calc_ttpulse(GEN a) {
   a->ttpulse.pntrans = (int)(a->ttpulse.ptranstime * a->rate);
   a->ttpulse.pnon = (int)(a->ttpulse.pdutycycle * a->ttpulse.pperiod * a->rate);
   a->ttpulse.pnoff = (int)(a->ttpulse.pperiod * a->rate) - a->ttpulse.pnon - 2 * a->ttpulse.pntrans;
-
   if (a->ttpulse.pnoff < 0) { a->ttpulse.pnoff = 0; }
-
   a->ttpulse.pcount = a->ttpulse.pnoff;
   a->ttpulse.state = 0;
   a->ttpulse.ctrans = (double*)malloc0((a->ttpulse.pntrans + 1) * sizeof(double));
   delta = PI / (double)a->ttpulse.pntrans;
   theta = 0.0;
-
   for (i = 0; i <= a->ttpulse.pntrans; i++) {
     a->ttpulse.ctrans[i] = 0.5 * (1.0 - cos(theta));
     theta += delta;
@@ -211,7 +205,6 @@ void xgen(GEN a) {
       double t1, t2;
       double cosphase = cos(a->tone.phs);
       double sinphase = sin(a->tone.phs);
-
       for (i = 0; i < a->size; i++) {
         a->out[2 * i + 0] = + a->tone.mag * cosphase;
         a->out[2 * i + 1] = - a->tone.mag * sinphase;
@@ -220,15 +213,11 @@ void xgen(GEN a) {
         cosphase = t1 * a->tone.cosdelta - t2 * a->tone.sindelta;
         sinphase = t1 * a->tone.sindelta + t2 * a->tone.cosdelta;
         a->tone.phs += a->tone.delta;
-
         if (a->tone.phs >= TWOPI) { a->tone.phs -= TWOPI; }
-
         if (a->tone.phs < 0.0) { a->tone.phs += TWOPI; }
       }
-
       break;
     }
-
     case 1: { // two-tone
       int i;
       double tcos, tsin;
@@ -236,7 +225,6 @@ void xgen(GEN a) {
       double sinphs1 = sin(a->tt.phs1);
       double cosphs2 = cos(a->tt.phs2);
       double sinphs2 = sin(a->tt.phs2);
-
       for (i = 0; i < a->size; i++) {
         a->out[2 * i + 0] = + a->tt.mag1 * cosphs1 + a->tt.mag2 * cosphs2;
         a->out[2 * i + 1] = - a->tt.mag1 * sinphs1 - a->tt.mag2 * sinphs2;
@@ -245,114 +233,86 @@ void xgen(GEN a) {
         cosphs1 = tcos * a->tt.cosdelta1 - tsin * a->tt.sindelta1;
         sinphs1 = tcos * a->tt.sindelta1 + tsin * a->tt.cosdelta1;
         a->tt.phs1 += a->tt.delta1;
-
         if (a->tt.phs1 >= TWOPI) { a->tt.phs1 -= TWOPI; }
-
         if (a->tt.phs1 <   0.0) { a->tt.phs1 += TWOPI; }
-
         tcos = cosphs2;
         tsin = sinphs2;
         cosphs2 = tcos * a->tt.cosdelta2 - tsin * a->tt.sindelta2;
         sinphs2 = tcos * a->tt.sindelta2 + tsin * a->tt.cosdelta2;
         a->tt.phs2 += a->tt.delta2;
-
         if (a->tt.phs2 >= TWOPI) { a->tt.phs2 -= TWOPI; }
-
         if (a->tt.phs2 <   0.0) { a->tt.phs2 += TWOPI; }
       }
-
       break;
     }
-
     case 2: { // noise
       int i;
       double r1, r2, c, rad;
-
       for (i = 0; i < a->size; i++) {
         do {
           r1 = 2.0 * (double)rand() / (double)RAND_MAX - 1.0;
           r2 = 2.0 * (double)rand() / (double)RAND_MAX - 1.0;
           c = r1 * r1 + r2 * r2;
         } while (c >= 1.0);
-
         rad = sqrt(-2.0 * log(c) / c);
         a->out[2 * i + 0] = a->noise.mag * rad * r1;
         a->out[2 * i + 1] = a->noise.mag * rad * r2;
       }
-
       break;
     }
-
     case 3: { // sweep
       int i;
-
       for (i = 0; i < a->size; i++) {
         a->out[2 * i + 0] = + a->sweep.mag * cos(a->sweep.phs);
         a->out[2 * i + 1] = - a->sweep.mag * sin(a->sweep.phs);
         a->sweep.phs += a->sweep.dphs;
         a->sweep.dphs += a->sweep.d2phs;
-
         if (a->sweep.phs >= TWOPI) { a->sweep.phs -= TWOPI; }
-
         if (a->sweep.phs <   0.0) { a->sweep.phs += TWOPI; }
-
         if (a->sweep.dphs > a->sweep.dphsmax) {
           a->sweep.dphs = TWOPI * a->sweep.f1 / a->rate;
         }
       }
-
       break;
     }
-
     case 4: { // sawtooth (audio only)
       int i;
-
       for (i = 0; i < a->size; i++) {
         if (a->saw.t > a->saw.period) { a->saw.t -= a->saw.period; }
-
         a->out[2 * i + 0] = a->saw.mag * (a->saw.t * a->saw.f - 1.0);
         a->out[2 * i + 1] = 0.0;
         a->saw.t += a->saw.delta;
       }
     }
     break;
-
     case 5: { // triangle (audio only)
       int i;
-
       for (i = 0; i < a->size; i++) {
         if (a->tri.t > a->tri.period) { a->tri.t1 = a->tri.t -= a->tri.period; }
-
         if (a->tri.t > a->tri.half) { a->tri.t1 -= a->tri.delta; }
         else { a->tri.t1 += a->tri.delta; }
-
         a->out[2 * i + 0] = a->tri.mag * (4.0 * a->tri.t1 * a->tri.f - 1.0);
         a->out[2 * i + 1] = 0.0;
         a->tri.t += a->tri.delta;
       }
     }
     break;
-
     case 6: { // pulse (audio or IQ output)
       int i;
       double t1, t2;
       double cosphase = cos(a->pulse.tphs);
       double sinphase = sin(a->pulse.tphs);
-
       for (i = 0; i < a->size; i++) {
         if (a->pulse.pnoff != 0) {
           switch (a->pulse.state) {
           case OFF:
             a->out[2 * i + 0] = 0.0;
             a->out[2 * i + 1] = 0.0;
-
             if (--a->pulse.pcount == 0) {
               a->pulse.state = UP;
               a->pulse.pcount = a->pulse.pntrans;
             }
-
             break;
-
           case UP:
             if (a->pulse.IQout) {
               a->out[2 * i + 0] = +a->pulse.mag * cosphase * a->pulse.ctrans[a->pulse.pntrans - a->pulse.pcount];
@@ -361,14 +321,11 @@ void xgen(GEN a) {
               a->out[2 * i + 0] = +a->pulse.mag * cosphase * a->pulse.ctrans[a->pulse.pntrans - a->pulse.pcount];
               a->out[2 * i + 1] = 0.0;
             }
-
             if (--a->pulse.pcount == 0) {
               a->pulse.state = ON;
               a->pulse.pcount = a->pulse.pnon;
             }
-
             break;
-
           case ON:
             if (a->pulse.IQout) {
               a->out[2 * i + 0] = +a->pulse.mag * cosphase;
@@ -377,14 +334,11 @@ void xgen(GEN a) {
               a->out[2 * i + 0] = +a->pulse.mag * cosphase;
               a->out[2 * i + 1] = 0.0;
             }
-
             if (--a->pulse.pcount == 0) {
               a->pulse.state = DOWN;
               a->pulse.pcount = a->pulse.pntrans;
             }
-
             break;
-
           case DOWN:
             if (a->pulse.IQout) {
               a->out[2 * i + 0] = +a->pulse.mag * cosphase * a->pulse.ctrans[a->pulse.pcount];
@@ -393,32 +347,26 @@ void xgen(GEN a) {
               a->out[2 * i + 0] = +a->pulse.mag * cosphase * a->pulse.ctrans[a->pulse.pcount];
               a->out[2 * i + 1] = 0.0;
             }
-
             if (--a->pulse.pcount == 0) {
               a->pulse.state = OFF;
               a->pulse.pcount = a->pulse.pnoff;
             }
-
             break;
           }
         } else {
           a->out[2 * i + 0] = 0.0;
           a->out[2 * i + 1] = 0.0;
         }
-
         t1 = cosphase;
         t2 = sinphase;
         cosphase = t1 * a->pulse.tcosdelta - t2 * a->pulse.tsindelta;
         sinphase = t1 * a->pulse.tsindelta + t2 * a->pulse.tcosdelta;
         a->pulse.tphs += a->pulse.tdelta;
-
         if (a->pulse.tphs >= TWOPI) { a->pulse.tphs -= TWOPI; }
-
         if (a->pulse.tphs <   0.0) { a->pulse.tphs += TWOPI; }
       }
     }
     break;
-
     case 7: { // two-tone pulse (audio or IQ)
       int i;
       double t1a, t1b, t2a, t2b;
@@ -426,21 +374,17 @@ void xgen(GEN a) {
       double cosphase2 = cos(a->ttpulse.tphs2);
       double sinphase1 = sin(a->ttpulse.tphs1);
       double sinphase2 = sin(a->ttpulse.tphs2);
-
       for (i = 0; i < a->size; i++) {
         if (a->ttpulse.pnoff != 0) {
           switch (a->ttpulse.state) {
           case OFF:
             a->out[2 * i + 0] = 0.0;
             a->out[2 * i + 1] = 0.0;
-
             if (--a->ttpulse.pcount == 0) {
               a->ttpulse.state = UP;
               a->ttpulse.pcount = a->ttpulse.pntrans;
             }
-
             break;
-
           case UP:
             if (a->ttpulse.IQout) {
               a->out[2 * i + 0] = +(a->ttpulse.mag1 * cosphase1 + a->ttpulse.mag2 * cosphase2) * a->ttpulse.ctrans[a->ttpulse.pntrans
@@ -452,14 +396,11 @@ void xgen(GEN a) {
                                   - a->ttpulse.pcount];
               a->out[2 * i + 1] = 0.0;
             }
-
             if (--a->ttpulse.pcount == 0) {
               a->ttpulse.state = ON;
               a->ttpulse.pcount = a->ttpulse.pnon;
             }
-
             break;
-
           case ON:
             if (a->ttpulse.IQout) {
               a->out[2 * i + 0] = +(a->ttpulse.mag1 * cosphase1 + a->ttpulse.mag2 * cosphase2);
@@ -468,14 +409,11 @@ void xgen(GEN a) {
               a->out[2 * i + 0] = +(a->ttpulse.mag1 * cosphase1 + a->ttpulse.mag2 * cosphase2);
               a->out[2 * i + 1] = 0.0;
             }
-
             if (--a->ttpulse.pcount == 0) {
               a->ttpulse.state = DOWN;
               a->ttpulse.pcount = a->ttpulse.pntrans;
             }
-
             break;
-
           case DOWN:
             if (a->ttpulse.IQout) {
               a->out[2 * i + 0] = +(a->ttpulse.mag1 * cosphase1 + a->ttpulse.mag2 * cosphase2) * a->ttpulse.ctrans[a->ttpulse.pcount];
@@ -484,42 +422,33 @@ void xgen(GEN a) {
               a->out[2 * i + 0] = +(a->ttpulse.mag1 * cosphase1 + a->ttpulse.mag2 * cosphase2) * a->ttpulse.ctrans[a->ttpulse.pcount];
               a->out[2 * i + 1] = 0.0;
             }
-
             if (--a->ttpulse.pcount == 0) {
               a->ttpulse.state = OFF;
               a->ttpulse.pcount = a->ttpulse.pnoff;
             }
-
             break;
           }
         } else {
           a->out[2 * i + 0] = 0.0;
           a->out[2 * i + 1] = 0.0;
         }
-
         t1a = cosphase1;
         t1b = sinphase1;
         cosphase1 = t1a * a->ttpulse.tcosdelta1 - t1b * a->ttpulse.tsindelta1;
         sinphase1 = t1a * a->ttpulse.tsindelta1 + t1b * a->ttpulse.tcosdelta1;
         a->ttpulse.tphs1 += a->ttpulse.tdelta1;
-
         if (a->ttpulse.tphs1 >= TWOPI) { a->ttpulse.tphs1 -= TWOPI; }
-
         if (a->ttpulse.tphs1 <  0.0) { a->ttpulse.tphs1 += TWOPI; }
-
         t2a = cosphase2;
         t2b = sinphase2;
         cosphase2 = t2a * a->ttpulse.tcosdelta2 - t2b * a->ttpulse.tsindelta2;
         sinphase2 = t2a * a->ttpulse.tsindelta2 + t2b * a->ttpulse.tcosdelta2;
         a->ttpulse.tphs2 += a->ttpulse.tdelta2;
-
         if (a->ttpulse.tphs2 >= TWOPI) { a->ttpulse.tphs2 -= TWOPI; }
-
         if (a->ttpulse.tphs2 <  0.0) { a->ttpulse.tphs2 += TWOPI; }
       }
     }
     break;
-
     default: { // silence
       memset(a->out, 0, a->size * sizeof(complex));
       break;

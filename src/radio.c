@@ -450,7 +450,6 @@ void radio_stop (void) {
     t_print ("radio_stop: TX id=%d: close\n", transmitter->id);
     tx_close (transmitter);
   }
-
   for (int i = 0; i < RECEIVERS; i++) {
     t_print ("radio_stop: RX id=%d: stop display update\n", receiver[i]->id);
     receiver[i]->displaying = 0;
@@ -487,7 +486,6 @@ static void choose_vfo_layout (void) {
   METER_WIDTH = MIN_METER_WIDTH;
   VFO_WIDTH = full_screen ? screen_width : display_width;
   VFO_WIDTH -= (MENU_WIDTH + METER_WIDTH);
-
   if (vfo_layout_list[0].width < VFO_WIDTH - 50) {
     VFO_WIDTH -= 50;
     METER_WIDTH += 50;
@@ -499,25 +497,18 @@ static guint full_screen_timeout = 0;
 static void measure_decoration_height (void) __attribute__ ((unused));
 static void measure_decoration_height (void) {
 #if defined(__APPLE__)
-
   if (dock_guard_pixels != 0) { return; }  // schon bestimmt
-
   if (!gtk_widget_get_realized (top_window)) { return; }
-
   GdkWindow *gw = gtk_widget_get_window (top_window);
-
   if (!gw) { return; }
-
   GtkAllocation alloc;
   gtk_widget_get_allocation (top_window, &alloc);  // Client-Innenfläche
   GdkRectangle frame;
   gdk_window_get_frame_extents (gw, &frame);       // inkl. Titelbar/Border
   int deco = frame.height - alloc.height;
-
   if (deco > 0 && deco < 200) {   // sanity check
     dock_guard_pixels = deco;
   }
-
 #endif
 }
 
@@ -525,7 +516,6 @@ static int set_full_screen (gpointer data) {
   full_screen_timeout = 0;
   int flag = GPOINTER_TO_INT (data);
 #if defined(__APPLE__)
-
   if (flag) {
     // Einmalig Dekohöhe messen im normalen Fensterzustand
     measure_decoration_height();
@@ -535,11 +525,9 @@ static int set_full_screen (gpointer data) {
     // Zielhöhe = Workarea minus Deko-Höhe, damit der Client-Bereich
     // nicht in den Dock-Bereich hineinragt.
     int fs_height = wa.height;
-
     if (dock_guard_pixels > 0 && dock_guard_pixels < fs_height) {
       fs_height -= dock_guard_pixels;
     }
-
     gtk_window_move (GTK_WINDOW (top_window), wa.x, wa.y);
     gtk_window_resize (GTK_WINDOW (top_window), wa.width, fs_height);
     // Maximieren kannst du dir dann sparen, wenn du selbst resizest,
@@ -555,9 +543,7 @@ static int set_full_screen (gpointer data) {
                      (screen_height - display_height) / 2);
     full_screen = 0;
   }
-
 #else
-
   //
   // Put the top window in full-screen mode, if full_screen is set
   //
@@ -580,7 +566,6 @@ static int set_full_screen (gpointer data) {
                        (screen_height - display_height) / 2);
     }
   }
-
 #endif
 #if __APPLE__
   radio_reconfigure();
@@ -622,11 +607,9 @@ static int set_full_screen(gpointer data) {
 
 static gboolean destroy_cb (gpointer data) {
   GtkWidget *w = GTK_WIDGET (data);
-
   if (GTK_IS_WIDGET (w)) {
     gtk_widget_destroy (w);
   }
-
   return G_SOURCE_REMOVE;
 }
 
@@ -634,14 +617,11 @@ void destroy_widget_safe (GtkWidget** pwidget) {
   if (!pwidget) {
     return;
   }
-
   GtkWidget *w = *pwidget;
   *pwidget = NULL;  // sofort invalidieren
-
   if (!w) {
     return;
   }
-
   // Bin ich im GTK-/Main-Thread?
   if (g_main_context_is_owner (g_main_context_default())) {
     // Hier ist GTK-Zugriff erlaubt
@@ -664,14 +644,12 @@ void radio_reconfigure_screen (void) {
   GdkWindowState ws = gdk_window_get_state (GDK_WINDOW (gw));
   int last_fullscreen = SET (ws & GDK_WINDOW_STATE_FULLSCREEN);
   int my_fullscreen = SET (full_screen); // this will not change during this procedure
-
   if (last_fullscreen != my_fullscreen) {
     if (full_screen_timeout > 0) {
       g_source_remove (full_screen_timeout);
       full_screen_timeout = 0;
     }
   }
-
   //
   // Re-configure the deskHPSDR screen after dimensions have changed
   // Start with removing the toolbar, the slider area and the zoom/pan area
@@ -679,34 +657,28 @@ void radio_reconfigure_screen (void) {
   //
   int my_width  = my_fullscreen ? screen_width  : display_width;
   int my_height = my_fullscreen ? screen_height : display_height;
-
   if (toolbar) {
     // gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
     // toolbar = NULL;
     destroy_widget_safe (&toolbar);
   }
-
   if (sliders) {
     // gtk_container_remove(GTK_CONTAINER(fixed), sliders);
     // sliders = NULL;
     destroy_widget_safe (&sliders);
   }
-
   if (zoompan) {
     // gtk_container_remove(GTK_CONTAINER(fixed), zoompan);
     // zoompan = NULL;
     destroy_widget_safe (&zoompan);
   }
-
   choose_vfo_layout();
   VFO_HEIGHT = vfo_layout_list[vfo_layout].height;
   MENU_HEIGHT = VFO_HEIGHT / 2;
   METER_HEIGHT = VFO_HEIGHT;
-
   //
   // If there is enough space, increase the meter width
   //
-
   //
   // Change sizes of main window, Hide and Menu buttons, meter, and vfo
   //
@@ -721,7 +693,6 @@ void radio_reconfigure_screen (void) {
     //
     full_screen_timeout = g_timeout_add (1000, set_full_screen, GINT_TO_POINTER (0));
   }
-
   if (last_fullscreen != my_fullscreen && my_fullscreen) {
     if (!use_wayland) {
       //
@@ -732,12 +703,10 @@ void radio_reconfigure_screen (void) {
       gtk_window_move (GTK_WINDOW (top_window), 0, 0);
     }
   }
-
   /* Unter Wayland im Fullscreen kein explizites Resize erzwingen */
   if (! (use_wayland && my_fullscreen)) {
     gtk_window_resize (GTK_WINDOW (top_window), my_width, my_height);
   }
-
   //
   // Move Hide and Menu buttons, meter to new position
   //
@@ -750,7 +719,6 @@ void radio_reconfigure_screen (void) {
   gtk_widget_set_size_request (meter,  METER_WIDTH, METER_HEIGHT);
   gtk_fixed_move (GTK_FIXED (fixed), meter, VFO_WIDTH, 0);
   gtk_widget_set_size_request (vfo_panel, VFO_WIDTH, VFO_HEIGHT);
-
   // Adjust position of the TX panel.
   // This must even be done in duplex mode, if we switch back
   // to non-duplex in the future.
@@ -759,12 +727,10 @@ void radio_reconfigure_screen (void) {
     transmitter->x = 0;
     transmitter->y = VFO_HEIGHT;
   }
-
   //
   // This re-creates all the panels and the Toolbar/Slider/Zoom area
   //
   radio_reconfigure();
-
   if (last_fullscreen != my_fullscreen && my_fullscreen) {
     if (use_wayland) {
       /* Wayland: sofort Fullscreen, kein Timeout */
@@ -777,7 +743,6 @@ void radio_reconfigure_screen (void) {
       full_screen_timeout = g_timeout_add (1000, set_full_screen, GINT_TO_POINTER (1));
     }
   }
-
   g_idle_add (ext_vfo_update, NULL);
 }
 
@@ -788,7 +753,6 @@ void radio_reconfigure (void) {
   int my_height = full_screen ? screen_height : display_height;
   int my_width  = full_screen ? screen_width  : display_width;
   rx_height = my_height - VFO_HEIGHT;
-
   //
   // Many "large" displays have many pixels, but also a higher
   // pixel density. Therefore, increase the toolbar height such
@@ -803,7 +767,6 @@ void radio_reconfigure (void) {
     TOOLBAR_HEIGHT = 40;
     ZOOMPAN_HEIGHT = 55;
     SLIDERS_HEIGHT = 110;
-
     if (can_transmit) {
       SLIDERS_HEIGHT += 50;
     }
@@ -811,45 +774,35 @@ void radio_reconfigure (void) {
     TOOLBAR_HEIGHT = 50;
     ZOOMPAN_HEIGHT = 60;
     SLIDERS_HEIGHT = 120;
-
     if (can_transmit) {
       SLIDERS_HEIGHT += 50;
     }
   }
-
   if (display_zoompan) {
     rx_height -= ZOOMPAN_HEIGHT;
   }
-
   if (display_sliders) {
     rx_height -= SLIDERS_HEIGHT;
   }
-
   if (display_toolbar) {
     rx_height -= TOOLBAR_HEIGHT;
   }
-
   y = VFO_HEIGHT;
-
   // if there is only one receiver, both cases here do the same.
   if (rx_stack_horizontal) {
     int x = 0;
-
     for (i = 0; i < receivers; i++) {
       RECEIVER *rx = receiver[i];
       rx->width = my_width / receivers;
       rx_update_zoom (rx);
       rx_reconfigure (rx, rx_height);
-
       if (!radio_is_transmitting() || duplex) {
         gtk_fixed_move (GTK_FIXED (fixed), rx->panel, x, y);
       }
-
       rx->x = x;
       rx->y = y;
       x = x + my_width / receivers;
     }
-
     y += rx_height;
   } else {
     for (i = 0; i < receivers; i++) {
@@ -857,17 +810,14 @@ void radio_reconfigure (void) {
       rx->width = my_width;
       rx_update_zoom (rx);
       rx_reconfigure (rx, rx_height / receivers);
-
       if (!radio_is_transmitting() || duplex) {
         gtk_fixed_move (GTK_FIXED (fixed), rx->panel, 0, y);
       }
-
       rx->x = 0;
       rx->y = y;
       y += rx_height / receivers;
     }
   }
-
   if (display_zoompan) {
     if (zoompan == NULL) {
       zoompan = zoompan_init (my_width, ZOOMPAN_HEIGHT);
@@ -875,7 +825,6 @@ void radio_reconfigure (void) {
     } else {
       gtk_fixed_move (GTK_FIXED (fixed), zoompan, 0, y);
     }
-
     gtk_widget_show_all (zoompan);
     y += ZOOMPAN_HEIGHT;
   } else {
@@ -885,7 +834,6 @@ void radio_reconfigure (void) {
       destroy_widget_safe (&zoompan);
     }
   }
-
   if (display_sliders) {
     if (sliders == NULL) {
       sliders = sliders_init (my_width, SLIDERS_HEIGHT);
@@ -893,11 +841,9 @@ void radio_reconfigure (void) {
     } else {
       gtk_fixed_move (GTK_FIXED (fixed), sliders, 0, y);
     }
-
     gtk_widget_show_all (sliders); // ... this shows both C25 and Alex ATT/Preamp, and both Mic/Linein sliders
     att_type_changed();            // ... and this hides the „wrong“ ones.
     y += SLIDERS_HEIGHT;
-
     if (can_transmit && display_extra_sliders) {
       sliders_show_row (2);
     } else {
@@ -910,7 +856,6 @@ void radio_reconfigure (void) {
       destroy_widget_safe (&sliders);
     }
   }
-
   /*
   if (display_toolbar) {
     if (toolbar == NULL) {
@@ -929,7 +874,6 @@ void radio_reconfigure (void) {
     }
   }
   */
-
   if (display_toolbar) {
     if (toolbar == NULL) {
       // Einmalig erzeugen und in das Fixed einhängen
@@ -941,7 +885,6 @@ void radio_reconfigure (void) {
       // Bereits existente Toolbar nur verschieben
       gtk_fixed_move (GTK_FIXED (fixed), toolbar, 0, y);
     }
-
     gtk_widget_show_all (toolbar);
   } else {
     if (toolbar != NULL) {
@@ -949,7 +892,6 @@ void radio_reconfigure (void) {
       gtk_widget_hide (toolbar);
     }
   }
-
   if (can_transmit && !duplex) {
     tx_reconfigure (transmitter, my_width, my_width, rx_height);
   }
@@ -974,7 +916,6 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
   if (radio_is_transmitting()) {
     if (!duplex) { return TRUE; }
   }
-
   if (hide_status == 0) {
     //
     // Hide everything but store old status
@@ -998,7 +939,6 @@ static gboolean hideall_cb  (GtkWidget *widget, GdkEventButton *event, gpointer 
     display_toolbar = old_tool;
     radio_reconfigure();
   }
-
   return TRUE;
 }
 
@@ -1072,16 +1012,13 @@ static void open_atu_window(void) {
 #ifdef __linux__
 static void linux_dock_window_destroyed_cb (GtkWidget *widget, gpointer user_data) {
   char *id = (char*) user_data;
-
   if (linux_dock_windows) {
     g_hash_table_remove (linux_dock_windows, id);
-
     if (g_hash_table_size (linux_dock_windows) == 0) {
       g_hash_table_destroy (linux_dock_windows);
       linux_dock_windows = NULL;
     }
   }
-
   g_free (id);
 }
 
@@ -1098,17 +1035,14 @@ static void linux_open_webview_window_with_id (
     linux_dock_windows = g_hash_table_new_full (g_str_hash, g_str_equal,
                          g_free, NULL);
   }
-
   // g_setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", TRUE);
   GtkWidget *window = g_hash_table_lookup (linux_dock_windows, id);
-
   if (window) {
     // Optional: Position nachziehen
     // gtk_window_move(GTK_WINDOW(window), x, y);
     gtk_window_present (GTK_WINDOW (window));
     return;
   }
-
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size (GTK_WINDOW (window), w, h);
   gtk_window_set_title (GTK_WINDOW (window), title);
@@ -1131,11 +1065,9 @@ void open_atu_window (GtkWindow *top_window,  const char* win_title, const char*
   // 1. Monitor-Geometrie holen (primärer Monitor)
   GdkDisplay  *display = gdk_display_get_default();
   GdkMonitor  *monitor = gdk_display_get_primary_monitor (display);
-
   if (!monitor) {
     return; // defensiv
   }
-
   GdkRectangle mgeo;
   gdk_monitor_get_geometry (monitor, &mgeo);
   // mgeo.x/mgeo.y = Ursprung (oben-links) dieses Monitors
@@ -1163,16 +1095,13 @@ void open_atu_window (GtkWindow *top_window,  const char* win_title, const char*
   int screen_height = mgeo.height;
   int cocoa_x = mgeo.x + right_x_rel;
   int cocoa_y = mgeo.y + (screen_height - top_y_rel - atuwin_wv_h);
-
   // 6. Clamping, damit wir nicht außerhalb landen
   if (cocoa_x + atuwin_wv_w > mgeo.x + mgeo.width) {
     cocoa_x = mgeo.x + mgeo.width - atuwin_wv_w;
   }
-
   if (cocoa_y < mgeo.y) {
     cocoa_y = mgeo.y;
   }
-
 #ifdef __APPLE__
   macos_open_webview_window_with_id (
           win_id,
@@ -1251,19 +1180,15 @@ static void radio_create_visual (void) {
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   rx_height = my_height - VFO_HEIGHT;
-
   if (display_zoompan) {
     rx_height -= ZOOMPAN_HEIGHT;
   }
-
   if (display_sliders) {
     rx_height -= SLIDERS_HEIGHT;
   }
-
   if (display_toolbar) {
     rx_height -= TOOLBAR_HEIGHT;
   }
-
   //
   // To be on the safe side, we create ALL receiver panels here
   // If upon startup, we only should display one panel, we do the switch below
@@ -1281,7 +1206,6 @@ static void radio_create_visual (void) {
     g_object_ref ((gpointer) receiver[i]->panel);
     y += rx_height / RECEIVERS;
   }
-
   active_receiver = receiver[0];
   //
   // This is to detect illegal accesses to the PS receivers
@@ -1296,32 +1220,27 @@ static void radio_create_visual (void) {
   //  if (can_transmit) is equivalent to if (transmitter)
   //
   int radio_has_transmitter = 0;
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
   case NEW_PROTOCOL:
     radio_has_transmitter = 1;
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     radio_has_transmitter = (radio->info.soapy.tx_channels != 0);
     break;
 #endif
   }
-
   if (radio_has_transmitter) {
     if (duplex) {
       transmitter = tx_create_transmitter (CHANNEL_TX, 4 * tx_dialog_width, tx_dialog_width, tx_dialog_height);
     } else {
       transmitter = tx_create_transmitter (CHANNEL_TX, my_width, my_width, rx_height);
     }
-
     can_transmit = 1;
     transmitter->x = 0;
     transmitter->y = VFO_HEIGHT;
     radio_calc_drive_level();
-
     if (protocol == NEW_PROTOCOL || protocol == ORIGINAL_PROTOCOL) {
       tx_ps_set_sample_rate (transmitter, protocol == NEW_PROTOCOL ? 192000 : active_receiver->sample_rate);
       receiver[PS_TX_FEEDBACK] = rx_create_pure_signal_receiver (PS_TX_FEEDBACK,
@@ -1330,53 +1249,44 @@ static void radio_create_visual (void) {
                                  protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
     }
   }
-
   // init local keyer if enabled
   if (cw_keyer_internal == 0) {
     t_print ("Initialize keyer.....\n");
     keyer_update();
   }
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     old_protocol_init (receiver[0]->sample_rate);
     break;
-
   case NEW_PROTOCOL:
     new_protocol_init();
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     soapy_protocol_init (FALSE);
     break;
 #endif
   }
-
   if (display_zoompan) {
     zoompan = zoompan_init (my_width, ZOOMPAN_HEIGHT);
     gtk_fixed_put (GTK_FIXED (fixed), zoompan, 0, y);
     y += ZOOMPAN_HEIGHT;
   }
-
   if (display_sliders) {
     //t_print("create sliders\n");
     sliders = sliders_init (my_width, SLIDERS_HEIGHT);
     gtk_fixed_put (GTK_FIXED (fixed), sliders, 0, y);
     y += SLIDERS_HEIGHT;
-
     if (can_transmit && display_extra_sliders) {
       sliders_show_row (2);
     } else {
       sliders_hide_row (2);
     }
   }
-
   if (display_toolbar) {
     toolbar = toolbar_init (my_width, TOOLBAR_HEIGHT);
     gtk_fixed_put (GTK_FIXED (fixed), toolbar, 0, y);
   }
-
   //
   // Now, if there should only one receiver be displayed
   // at startup, do the change. We must momentarily fake
@@ -1384,14 +1294,12 @@ static void radio_create_visual (void) {
   // will do nothing.
   //
   t_print ("radio_create_visual: receivers=%d RECEIVERS=%d\n", receivers, RECEIVERS);
-
   if (receivers != RECEIVERS) {
     int r = receivers;
     receivers = RECEIVERS;
     t_print ("radio_create_visual: calling radio_change_receivers: receivers=%d r=%d\n", receivers, r);
     radio_change_receivers (r);
   }
-
   gtk_widget_show_all (top_window);  // ... this shows both the HPSDR and C25 preamp/att sliders
   att_type_changed();                // ... and this hides the „wrong“ ones.
 }
@@ -1399,7 +1307,6 @@ static void radio_create_visual (void) {
 int index_rf_gain (void) {
   int rxgain_index = 0;
 #ifdef SOAPYSDR
-
   if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp (radio->name, "sdrplay") == 0) {
     for (int gain_index = 0; gain_index < (int) radio->info.soapy.rx_gains; gain_index++) {
       if (strcmp (radio->info.soapy.rx_gain[gain_index], "RFGR") == 0) {
@@ -1407,7 +1314,6 @@ int index_rf_gain (void) {
       }
     }
   }
-
 #endif
   return rxgain_index;
   t_print ("%s: index = %d\n", __func__, rxgain_index);
@@ -1416,7 +1322,6 @@ int index_rf_gain (void) {
 int index_if_gain (void) {
   int ifgain_index = -1;
 #ifdef SOAPYSDR
-
   if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp (radio->name, "sdrplay") == 0) {
     for (int gain_index = 0; gain_index < (int) radio->info.soapy.rx_gains; gain_index++) {
       if (strcmp (radio->info.soapy.rx_gain[gain_index], "IFGR") == 0) {
@@ -1424,7 +1329,6 @@ int index_if_gain (void) {
       }
     }
   }
-
 #endif
   return ifgain_index;
   t_print ("%s: index = %d\n", __func__, ifgain_index);
@@ -1464,7 +1368,6 @@ void radio_start_radio (void) {
       t_print ("WARNING: Position %d Action=%d str=%s\n", i, ActionTable[i].action, ActionTable[i].button_str);
     }
   }
-
   gdk_window_set_cursor (gtk_widget_get_window (top_window), gdk_cursor_new (GDK_WATCH));
   //
   // The behaviour of pop-up menus (Combo-Boxes) can be set to
@@ -1483,7 +1386,6 @@ void radio_start_radio (void) {
   optimize_for_touchscreen = 0;
   protocol = radio->protocol;
   device = radio->device;
-
   if (device == DEVICE_HERMES_LITE2) {
     if (realpath ("/dev/radioberry", NULL) != NULL) {
       //
@@ -1498,17 +1400,13 @@ void radio_start_radio (void) {
       }
     }
   }
-
   if (device == SOAPYSDR_USB_DEVICE && !strcmp (radio->name, "lime")) {
     have_lime = 1;
   }
-
   if (device == SOAPYSDR_USB_DEVICE && !strcmp (radio->name, "sdrplay")) {
     have_sdrplay = 1;
   }
-
 #ifdef GPIO
-
   //
   // Post-pone GPIO initialization until here since
   // we must first set the RadioBerry flags
@@ -1516,13 +1414,10 @@ void radio_start_radio (void) {
   if (gpio_init() < 0) {
     t_print ("GPIO failed to initialize\n");
   }
-
 #endif
-
   if (device == NEW_DEVICE_SATURN && (strcmp (radio->info.network.interface_name, "XDMA") == 0)) {
     have_saturn_xdma = 1;
   }
-
   for (int id = 0; id <= MAX_SERIAL + 1; id++) {
     //
     // Apply some default values. The name ttyACMx is suitable for
@@ -1536,19 +1431,16 @@ void radio_start_radio (void) {
     SerialPorts[id].swapRtsDtr = 0;
     snprintf (SerialPorts[id].port, sizeof (SerialPorts[id].port), "/dev/ttyACM%d", id);
   }
-
   // On G2-Ultra systems, we need to know the serial port used for the
   // connection to the uC of the panel. This could be a uart or a
   // USB connection. We go through a list of "bona fide" device names
   // and take the first "match".
-
   //
   // Note any serial setting set by this mechanism now is read-only
   //
   if (have_saturn_xdma) {
     for (SaturnSerialPort *ChkSerial = SaturnSerialPortsList; ChkSerial->port != NULL; ChkSerial++) {
       char *cp = realpath (ChkSerial->port, NULL);
-
       if (cp != NULL) {
         SerialPorts[MAX_SERIAL - 1].enable = 1;
         SerialPorts[MAX_SERIAL - 1].andromeda = 1;
@@ -1563,7 +1455,6 @@ void radio_start_radio (void) {
       }
     }
   }
-
   if (device == DEVICE_METIS || device == DEVICE_OZY || device == NEW_DEVICE_ATLAS) {
     //
     // by default, assume there is a penelope board (no PennyLane)
@@ -1577,26 +1468,21 @@ void radio_start_radio (void) {
     atlas_clock_source_128mhz = 1;      // default: Mercury
     atlas_mic_source = 1;               // default: Mic source = Penelope
   }
-
   // set the default power output and max drive value
   drive_max = 100.0;
-
   switch (device) {
   case DEVICE_METIS:
   case DEVICE_OZY:
   case NEW_DEVICE_ATLAS:
     pa_power = PA_1W;
     break;
-
   case DEVICE_HERMES_LITE2:
   case NEW_DEVICE_HERMES_LITE2:
     pa_power = PA_5W;
     break;
-
   case DEVICE_STEMLAB:
     pa_power = PA_10W;
     break;
-
   case DEVICE_HERMES:
   case DEVICE_GRIFFIN:
   case DEVICE_ANGELIA:
@@ -1609,33 +1495,26 @@ void radio_start_radio (void) {
   case NEW_DEVICE_SATURN:  // make 100W the default for G2
     pa_power = PA_100W;
     break;
-
   case DEVICE_ORION2:
   case NEW_DEVICE_ORION2:
     pa_power = PA_200W; // So ANAN-8000 is the default, not ANAN-7000
     break;
-
   case SOAPYSDR_USB_DEVICE:
     if (strcmp (radio->name, "lime") == 0) {
       drive_max = 64.0;
     } else if (strcmp (radio->name, "plutosdr") == 0) {
       drive_max = 89.0;
     }
-
     pa_power = PA_1W;
     break;
-
   default:
     pa_power = PA_1W;
     break;
   }
-
   drive_digi_max = drive_max; // To be updated when reading props file
-
   for (int i = 0; i < 11; i++) {
     pa_trim[i] = i * pa_power_list[pa_power] * 0.1;
   }
-
   //
   // Set various capabilities, depending in the radio model
   //
@@ -1647,7 +1526,6 @@ void radio_start_radio (void) {
     have_alex_att = 1;
     have_preamp = 1;
     break;
-
   case DEVICE_HERMES:
   case DEVICE_GRIFFIN:
   case DEVICE_ANGELIA:
@@ -1659,14 +1537,12 @@ void radio_start_radio (void) {
     have_rx_att = 1;
     have_alex_att = 1;
     break;
-
   case DEVICE_ORION2:
   case NEW_DEVICE_ORION2:
   case NEW_DEVICE_SATURN:
     // ANAN7000/8000/G2 boards have no ALEX attenuator
     have_rx_att = 1;
     break;
-
   case DEVICE_HERMES_LITE:
   case DEVICE_HERMES_LITE2:
   case NEW_DEVICE_HERMES_LITE:
@@ -1681,17 +1557,14 @@ void radio_start_radio (void) {
     have_rx_gain = 1;
     rx_gain_calibration = 14;
     break;
-
   case SOAPYSDR_USB_DEVICE:
     have_dither = 0;
     have_rx_gain = 1;
     rx_gain_calibration = 10;
     break;
-
   case DEVICE_STEMLAB:
     have_dither = 0;
     break;
-
   default:
     //
     // DEFAULT: we have a step attenuator nothing else
@@ -1700,7 +1573,6 @@ void radio_start_radio (void) {
     have_rx_att = 1;
     break;
   }
-
   //
   // The GUI expects that we either have a gain or an attenuation slider,
   // but not both.
@@ -1708,13 +1580,11 @@ void radio_start_radio (void) {
   if (have_rx_gain) {
     have_rx_att = 0;
   }
-
   char p[32];
   char version[32];
   char ip[32];
   char iface[64];
   char text[2048];
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     g_strlcpy (p, "Protocol 1", 32);
@@ -1724,7 +1594,6 @@ void radio_start_radio (void) {
     snprintf (ip, 32, "%s", inet_ntoa (radio->info.network.address.sin_addr));
     snprintf (iface, 64, "%s", radio->info.network.interface_name);
     break;
-
   case NEW_PROTOCOL:
     g_strlcpy (p, "Protocol 2", 32);
     snprintf (version, 32, "v%d.%d",
@@ -1734,7 +1603,6 @@ void radio_start_radio (void) {
     snprintf (iface, 64, "%s", radio->info.network.interface_name);
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     g_strlcpy (p, "SoapySDR", 32);
     snprintf (version, 32, "%4.20s v%d.%d.%d",
@@ -1745,7 +1613,6 @@ void radio_start_radio (void) {
     break;
 #endif
   }
-
   //
   // "Starting" message in status text
   // Note for OZY devices, the name is "Ozy USB"
@@ -1755,7 +1622,6 @@ void radio_start_radio (void) {
             p,
             version);
   status_text (text);
-
   //
   // text for top bar of deskHPSDR Window
   //
@@ -1802,10 +1668,8 @@ void radio_start_radio (void) {
                 iface,
                 p);
     }
-
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     snprintf (text, 2048, "%s by DL1BZ %s[%s] WDSP Version %d.%02d SDR Device: %s (%s %s %s %s)",
               PGNAME,
@@ -1821,9 +1685,7 @@ void radio_start_radio (void) {
     break;
 #endif
   }
-
   gtk_window_set_title (GTK_WINDOW (top_window), text);
-
   //
   // determine name of the props file
   //
@@ -1831,11 +1693,9 @@ void radio_start_radio (void) {
   case DEVICE_OZY:
     snprintf (property_path, sizeof (property_path), "ozy.props");
     break;
-
   case SOAPYSDR_USB_DEVICE:
     snprintf (property_path, sizeof (property_path), "%s.props", radio->name);
     break;
-
   default:
     if (have_saturn_xdma) {
       snprintf (property_path, sizeof (property_path), "saturn.xdma.props");
@@ -1848,14 +1708,11 @@ void radio_start_radio (void) {
                 radio->info.network.mac_address[4],
                 radio->info.network.mac_address[5]);
     }
-
     break;
   }
-
   for (unsigned int i = 0; i < strlen (property_path); i++) {
     if (property_path[i] == '/') { property_path[i] = '.'; }
   }
-
   //
   // Determine number of ADCs in the device
   //
@@ -1878,23 +1735,18 @@ void radio_start_radio (void) {
     //
     n_adc = 1;
     break;
-
   case SOAPYSDR_USB_DEVICE:
     if (strcmp (radio->name, "lime") == 0) {
       n_adc = 2;
     } else {
       n_adc = 1;
     }
-
     break;
-
   default:
     n_adc = 2;
     break;
   }
-
   soapy_iqswap = 0;
-
   //
   // In most cases, ALEX is the best default choice for the filter board.
   // here we set filter_board to a different default value for some
@@ -1906,16 +1758,13 @@ void radio_start_radio (void) {
     receivers = 1;
     filter_board = NO_FILTER_BOARD;
   }
-
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)  {
     filter_board = N2ADR;
     n2adr_oc_settings(); // Apply default OC settings for N2ADR board
   }
-
   if (device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
     filter_board = CHARLY25;
   }
-
   /* Set defaults */
   adc[0].antenna = ANTENNA_1;
   adc[0].filters = AUTOMATIC;
@@ -1931,7 +1780,6 @@ void radio_start_radio (void) {
   adc[0].max_gain = 100.0;
   dac[0].antenna = 1;
   dac[0].gain = 0;
-
   if (have_rx_gain && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
     //
     // The "magic values" here are for the AD98656 chip that is used in radios
@@ -1941,10 +1789,8 @@ void radio_start_radio (void) {
     adc[0].min_gain = -12.0;
     adc[0].max_gain = +48.0;
   }
-
   adc[0].agc = FALSE;
 #ifdef SOAPYSDR
-
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
       rxgain_index_0 = index_rf_gain();
@@ -1955,7 +1801,6 @@ void radio_start_radio (void) {
                adc[0].max_gain, adc[0].gain);
     }
   }
-
 #endif
   adc[1].antenna = ANTENNA_1;
   adc[1].filters = AUTOMATIC;
@@ -1971,15 +1816,12 @@ void radio_start_radio (void) {
   adc[1].max_gain = 100.0;
   dac[1].antenna = 1;
   dac[1].gain = 0;
-
   if (have_rx_gain && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
     adc[1].min_gain = -12.0;
     adc[1].max_gain = +48.0;
   }
-
   adc[1].agc = FALSE;
 #ifdef SOAPYSDR
-
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio->info.soapy.rx_gains > 0) {
       rxgain_index_0 = index_rf_gain();
@@ -1989,20 +1831,16 @@ void radio_start_radio (void) {
       t_print ("%s: adc[1].min_gain = %f, adc[1].max_gain = %f, adc[1].gain = %f\n", __func__, adc[1].min_gain,
                adc[1].max_gain, adc[1].gain);
     }
-
     soapy_radio_sample_rate = radio->info.soapy.sample_rate;
   }
-
 #endif
 #ifdef GPIO
-
   switch (controller) {
   case NO_CONTROLLER:
     display_zoompan = 1;
     display_sliders = 1;
     display_toolbar = 1;
     break;
-
   case CONTROLLER2_V1:
   case CONTROLLER2_V2:
   case G2_FRONTPANEL:
@@ -2011,14 +1849,12 @@ void radio_start_radio (void) {
     display_toolbar = 0;
     break;
   }
-
 #else
   display_zoompan = 1;
   display_sliders = 1;
   display_toolbar = 1;
 #endif
   t_print ("%s: setup RECEIVERS protocol=%d\n", __func__, protocol);
-
   switch (protocol) {
   case SOAPYSDR_PROTOCOL:
     t_print ("%s: setup RECEIVERS SOAPYSDR\n", __func__);
@@ -2026,7 +1862,6 @@ void radio_start_radio (void) {
     PS_TX_FEEDBACK = 1;
     PS_RX_FEEDBACK = 2;
     break;
-
   default:
     t_print ("%s: setup RECEIVERS default\n", __func__);
     RECEIVERS = 2;
@@ -2034,37 +1869,29 @@ void radio_start_radio (void) {
     PS_RX_FEEDBACK = (RECEIVERS + 1);
     break;
   }
-
   // receivers = RECEIVERS;
   receivers = 1; // we start ever with only one RX
   radio_restore_state();
   radio_change_region (region);
   radio_create_visual();
   radio_reconfigure_screen();
-
   if (tci_enable) {
     launch_tci();
   }
-
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
     rigctld_enabled = 1;
-
     if (use_rigctld) {
       launch_rigctld_monitor();
     }
   }
-
   if (SerialPorts[MAX_SERIAL].enable) {
     launch_sertune();
   }
-
   if (SerialPorts[MAX_SERIAL + 1].enable) {
     launch_serptt();
   }
-
 #if defined (__AUTOG__)
-
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && autogain_enabled) {
     if (pthread_equal (pthread_self(), deskhpsdr_main_thread)) {
       launch_autogain_hl2();
@@ -2072,15 +1899,12 @@ void radio_start_radio (void) {
       g_idle_add ((GSourceFunc) launch_autogain_hl2_wrapper, NULL);
     }
   }
-
 #endif
-
   // first call to start RX200 & LPF UDP Listener if SDR can transmit
   if (can_transmit) {
     launch_rx200_monitor();
     // launch_lpf_monitor();
   }
-
   for (int id = 0; id < MAX_SERIAL; id++) {
     //
     // If serial port is enabled but no success, clear "enable" flag
@@ -2089,22 +1913,17 @@ void radio_start_radio (void) {
       SerialPorts[id].enable = launch_serial_rigctl (id);
     }
   }
-
   if (can_transmit) {
     radio_calc_drive_level();
-
     if (transmitter->puresignal) {
       tx_ps_onoff (transmitter, 1);
     }
   }
-
   schedule_high_priority();
 #ifdef SOAPYSDR
-
   if (protocol == SOAPYSDR_PROTOCOL) {
     RECEIVER *rx = receiver[0];
     soapy_protocol_create_receiver (rx);
-
     if (can_transmit) {
       soapy_protocol_create_transmitter (transmitter);
       soapy_protocol_set_tx_antenna (transmitter, dac[0].antenna);
@@ -2112,19 +1931,14 @@ void radio_start_radio (void) {
       soapy_protocol_set_tx_frequency (transmitter);
       soapy_protocol_start_transmitter (transmitter);
     }
-
     soapy_protocol_set_rx_antenna (rx, adc[0].antenna);
     soapy_protocol_set_rx_frequency (rx, VFO_A);
     soapy_protocol_set_automatic_gain (rx, adc[0].agc);
-
     if (!adc[0].agc) { soapy_protocol_set_gain (rx); }
-
     if (vfo[0].ctun) {
       rx_set_frequency (rx, vfo[0].ctun_frequency);
     }
-
     soapy_protocol_start_receiver (rx);
-
     //t_print("radio: set rf_gain=%f\n",rx->rf_gain);
     if (strcmp (radio->name, "sdrplay") != 0) {
       soapy_protocol_set_gain (rx);
@@ -2132,7 +1946,6 @@ void radio_start_radio (void) {
     } else {
       t_print ("%s: Is %s\n", __func__, radio->info.soapy.hardware_key);
     }
-
     if (strcmp (radio->name, "sdrplay") == 0 && radio->info.soapy.rx_gains > 1) {
       for (int gain_id = 0; gain_id < (int) radio->info.soapy.rx_gains; gain_id++) {
         if (strcmp (radio->info.soapy.rx_gain[gain_id], "RFGR") == 0) {
@@ -2140,30 +1953,24 @@ void radio_start_radio (void) {
         }
       }
     }
-
     if (radio->info.soapy.rx_has_automatic_gain) {
       adc[0].agc = TRUE;
       soapy_protocol_set_automatic_gain (rx, adc[0].agc);
     }
-
     if (strcmp (radio->name, "sdrplay") == 0) {
       t_print ("%s: Bias-T: %d agc_setpoint = %d\n", __func__, soapy_protocol_get_bias_t (rx),
                soapy_protocol_get_agc_setpoint (rx));
-
       if (rx->panadapter_autoscale_enabled) {
         rx->panadapter_autoscale_enabled = 0;
         radio_reconfigure();
         g_idle_add (ext_vfo_update, NULL);
       }
     }
-
     update_rf_gain_scale_soapy (index_rf_gain());
     update_slider_hwagc_btn();
-
     if (radio && strcmp (radio->name, "sdrplay") == 0) {
       soapy_protocol_get_settings_info (active_receiver);
       t_print ("%s: has correct driver: %d\n", __func__, soapy_protocol_check_sdrplay_mod (active_receiver));
-
       if (soapy_protocol_check_sdrplay_mod (active_receiver) == FALSE) {
         char msg_txt_win[2048];
         snprintf (msg_txt_win, sizeof (msg_txt_win),
@@ -2180,10 +1987,8 @@ void radio_start_radio (void) {
         show_message (GTK_WINDOW (top_window), msg_txt_win);
       }
     }
-
     soapy_protocol_get_driver (rx);
   }
-
 #endif
   g_idle_add (ext_vfo_update, NULL);
   {
@@ -2195,7 +2000,6 @@ void radio_start_radio (void) {
     g_object_unref (c);
   }
 #ifdef MIDI
-
   for (int i = 0; i < n_midi_devices; i++) {
     if (midi_devices[i].active) {
       //
@@ -2208,14 +2012,11 @@ void radio_start_radio (void) {
       register_midi_device (i);
     }
   }
-
 #endif
 #ifdef SATURN
-
   if (have_saturn_xdma && saturn_server_en) {
     start_saturn_server();
   }
-
 #endif
 }
 
@@ -2227,11 +2028,9 @@ void reassign_pa_trim (void) {
 
 void radio_change_receivers (int r) {
   t_print ("radio_change_receivers: from %d to %d\n", receivers, r);
-
   // The button in the radio menu will call this function even if the
   // number of receivers has not changed.
   if (receivers == r) { return; }  // This is always the case if RECEIVERS==1
-
   //
   // When changing the number of receivers, restart the
   // old protocol
@@ -2239,7 +2038,6 @@ void radio_change_receivers (int r) {
   if (protocol == ORIGINAL_PROTOCOL) {
     old_protocol_stop();
   }
-
   switch (r) {
   case 1:
     receiver[1]->displaying = 0;
@@ -2247,27 +2045,22 @@ void radio_change_receivers (int r) {
     gtk_container_remove (GTK_CONTAINER (fixed), receiver[1]->panel);
     receivers = 1;
     break;
-
   case 2:
     gtk_fixed_put (GTK_FIXED (fixed), receiver[1]->panel, 0, 0);
     receiver[1]->displaying = 1;
     rx_set_displaying (receiver[1]);
     receivers = 2;
-
     //
     // Make sure RX2 shares the sample rate  with RX1 when running P1.
     //
     if (protocol == ORIGINAL_PROTOCOL && receiver[1]->sample_rate != receiver[0]->sample_rate) {
       rx_change_sample_rate (receiver[1], receiver[0]->sample_rate);
     }
-
     break;
   }
-
   radio_reconfigure_screen();
   rx_set_active (receiver[0]);
   schedule_high_priority();
-
   if (protocol == ORIGINAL_PROTOCOL) {
     old_protocol_run();
   }
@@ -2275,7 +2068,6 @@ void radio_change_receivers (int r) {
 
 void radio_change_sample_rate (int rate) {
   int i;
-
   //
   // The radio menu calls this function even if the sample rate
   // has not changed. Do nothing in this case.
@@ -2284,30 +2076,24 @@ void radio_change_sample_rate (int rate) {
   case ORIGINAL_PROTOCOL:
     if (receiver[0]->sample_rate != rate) {
       radio_protocol_stop();
-
       for (i = 0; i < receivers; i++) {
         rx_change_sample_rate (receiver[i], rate);
       }
-
       rx_change_sample_rate (receiver[PS_RX_FEEDBACK], rate);
       old_protocol_set_mic_sample_rate (rate);
       radio_protocol_run();
-
       if (can_transmit) {
         tx_ps_set_sample_rate (transmitter, rate);
       }
     }
-
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     if (receiver[0]->sample_rate != rate) {
       radio_protocol_stop();
       rx_change_sample_rate (receiver[0], rate);
       radio_protocol_run();
     }
-
     break;
 #endif
   }
@@ -2315,12 +2101,10 @@ void radio_change_sample_rate (int rate) {
 
 static void rxtx (int state) {
   int i;
-
   if (!can_transmit) {
     t_print ("WARNING: rxtx called but no transmitter!");
     return;
   }
-
   //
   // Abort any running Capture, Transmit, Replay
   //
@@ -2329,29 +2113,22 @@ static void rxtx (int state) {
     capture_state = CAP_RECORD_DONE;
     schedule_action (CAPTURE, PRESSED, 0);
     break;
-
   case CAP_XMIT:
     capture_state = CAP_XMIT_DONE;
     schedule_action (capture_trigger_action, PRESSED, 0);
     break;
-
   case CAP_REPLAY:
     capture_state = CAP_REPLAY_DONE;
     schedule_action (REPLAY, PRESSED, 0);
     break;
   }
-
   pre_mox = state && !duplex;
-
   if (state) {
     // switch to tx
     RECEIVER *rx_feedback = receiver[PS_RX_FEEDBACK];
     RECEIVER *tx_feedback = receiver[PS_TX_FEEDBACK];
-
     if (rx_feedback) { rx_feedback->samples = 0; }
-
     if (tx_feedback) { tx_feedback->samples = 0; }
-
     if (!duplex) {
       for (i = 0; i < receivers; i++) {
         // Delivery of RX samples
@@ -2363,40 +2140,31 @@ static void rxtx (int state) {
         receiver[i]->displaying = 0;
         rx_set_displaying (receiver[i]);
         g_object_ref ((gpointer) receiver[i]->panel);
-
         if (receiver[i]->panadapter != NULL) {
           g_object_ref ((gpointer) receiver[i]->panadapter);
         }
-
         if (receiver[i]->waterfall != NULL) {
           g_object_ref ((gpointer) receiver[i]->waterfall);
         }
-
         gtk_container_remove (GTK_CONTAINER (fixed), receiver[i]->panel);
       }
     }
-
     if (transmitter->dialog) {
       gtk_widget_show_all (transmitter->dialog);
-
       if (transmitter->dialog_x != -1 && transmitter->dialog_y != -1) {
         gtk_window_move (GTK_WINDOW (transmitter->dialog), transmitter->dialog_x, transmitter->dialog_y);
       }
     } else {
       gtk_fixed_put (GTK_FIXED (fixed), transmitter->panel, transmitter->x, transmitter->y);
     }
-
     if (transmitter->puresignal) {
       tx_ps_mox (transmitter, 1);
     }
-
     tx_on (transmitter);
     transmitter->displaying = 1;
     tx_set_displaying (transmitter);
-
     switch (protocol) {
 #ifdef SOAPYSDR
-
     case SOAPYSDR_PROTOCOL:
       if (have_lime) {
         soapy_protocol_rxtx (transmitter);
@@ -2404,11 +2172,9 @@ static void rxtx (int state) {
         soapy_protocol_set_tx_frequency (transmitter);
         //soapy_protocol_start_transmitter(transmitter);
       }
-
       break;
 #endif
     }
-
 #ifdef DUMP_TX_DATA
     rxiq_count = 0;
 #endif
@@ -2420,45 +2186,35 @@ static void rxtx (int state) {
     char fname[32];
     snprintf (fname, 32, "TXDUMP%d.iqdata", snapshot);
     FILE *fp = fopen (fname, "w");
-
     if (fp) {
       for (int i = 0; i < rxiq_count; i++) {
         fprintf (fp, "%d  %ld  %ld\n", i, rxiqi[i], rxiqq[i]);
       }
-
       fclose (fp);
     }
-
 #endif
-
     switch (protocol) {
 #ifdef SOAPYSDR
-
     case SOAPYSDR_PROTOCOL:
       if (have_lime) {
         soapy_protocol_txrx (active_receiver);
       }
-
       //soapy_protocol_stop_transmitter(transmitter);
       break;
 #endif
     }
-
     if (transmitter->puresignal) {
       tx_ps_mox (transmitter, 0);
     }
-
     tx_off (transmitter);
     transmitter->displaying = 0;
     tx_set_displaying (transmitter);
-
     if (transmitter->dialog) {
       gtk_window_get_position (GTK_WINDOW (transmitter->dialog), &transmitter->dialog_x, &transmitter->dialog_y);
       gtk_widget_hide (transmitter->dialog);
     } else {
       gtk_container_remove (GTK_CONTAINER (fixed), transmitter->panel);
     }
-
     if (!duplex) {
       //
       // Set parameters for the "silence first RXIQ samples after TX/RX transition" feature
@@ -2468,7 +2224,6 @@ static void rxtx (int state) {
       // we also include the original HermesLite in this list (which can be enlarged if necessary).
       //
       int do_silence = 0;
-
       if (device == DEVICE_HERMES_LITE2 || device == DEVICE_HERMES_LITE ||
           device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
         //
@@ -2485,20 +2240,16 @@ static void rxtx (int state) {
         case modeCWL:
           do_silence = 0; // no "silence"
           break;
-
         case modeAM:
         case modeFMN:
           do_silence = 5; // leads to 31 ms "silence"
           break;
-
         default:
           do_silence = 6; // leads to 16 ms "silence"
           break;
         }
-
         if (tune) { do_silence = 5; } // 31 ms "silence" for TUNEing in any mode
       }
-
       for (i = 0; i < receivers; i++) {
         gtk_fixed_put (GTK_FIXED (fixed), receiver[i]->panel, receiver[i]->x, receiver[i]->y);
         rx_on (receiver[i]);
@@ -2509,18 +2260,15 @@ static void rxtx (int state) {
         // *before* going TX, delete them
         //
         receiver[i]->samples = 0;
-
         if (do_silence) {
           receiver[i]->txrxmax = receiver[i]->sample_rate >> do_silence;
         } else {
           receiver[i]->txrxmax = 0;
         }
-
         receiver[i]->txrxcount = 0;
       }
     }
   }
-
 #ifdef GPIO
   gpio_set_ptt (state);
 #endif
@@ -2528,26 +2276,21 @@ static void rxtx (int state) {
 
 void radio_mox_update (int state) {
   if (!can_transmit) { return; }
-
   if (state && !TransmitAllowed()) {
     state = 0;
     tx_set_out_of_band (transmitter);
   }
-
   radio_set_mox (state);
   g_idle_add (ext_vfo_update, NULL);
 }
 
 void radio_tune_update (int state) {
   if (!can_transmit) { return; }
-
   radio_set_mox (0); // This will also cancel VOX and TUNE
-
   if (state && !TransmitAllowed()) {
     state = 0;
     tx_set_out_of_band (transmitter);
   }
-
   radio_set_tune (state);
   g_idle_add (ext_vfo_update, NULL);
 }
@@ -2555,11 +2298,8 @@ void radio_tune_update (int state) {
 void radio_set_mox (int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   int was_tune = tune;
-
   if (!can_transmit) { return; }
-
   if (state && TxInhibit) { return; }
-
   //
   // - setting MOX (no matter in which direction) stops TUNEing
   // - setting MOX (no matter in which direction) ends a pending VOX
@@ -2569,9 +2309,7 @@ void radio_set_mox (int state) {
   if (tune) {
     radio_set_tune (0);
   }
-
   vox_cancel();  // remove time-out
-
   //
   // If MOX is activated while VOX is already pending,
   // then switch from VOX to MOX mode but no RX/TX
@@ -2580,21 +2318,17 @@ void radio_set_mox (int state) {
   if (state != radio_is_transmitting()) {
     rxtx (state);
   }
-
   mox  = state;
   tune = 0;
   vox  = 0;
-
   if (!tci_is_applying() && (!was_tune || state)) {
     tci_mox_changed (state);
   }
-
   switch (protocol) {
   case NEW_PROTOCOL:
     schedule_high_priority();
     schedule_receive_specific();
     break;
-
   default:
     break;
   }
@@ -2607,15 +2341,11 @@ int radio_get_mox (void) {
 void radio_set_vox (int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   if (!can_transmit) { return; }
-
   if (mox || tune) { return; }
-
   if (state && TxInhibit) { return; }
-
   if (vox != state) {
     rxtx (state);
   }
-
   vox = state;
   schedule_high_priority();
   schedule_receive_specific();
@@ -2623,23 +2353,17 @@ void radio_set_vox (int state) {
 
 void radio_set_tune (int state) {
   t_print ("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox, vox, tune, state);
-
   if (!can_transmit) { return; }
-
   if (state && TxInhibit) { return; }
-
   int tune_changed = (tune != state);
-
   // if state==tune, this function is a no-op
   if (tune != state) {
     vox_cancel();
-
     if (vox || mox) {
       rxtx (0);
       vox = 0;
       mox = 0;
     }
-
     if (state) {
       //
       // Ron has reported that TX underruns occur if TUNEing with
@@ -2668,14 +2392,12 @@ void radio_set_tune (int state) {
       transmitter->compressor = 0;
       // set off if TUNEing, but restore later
       tx_set_compressor (transmitter);
-
       if (can_transmit && display_sliders) {
         update_slider_bbcompr_scale (FALSE);
         update_slider_bbcompr_button (FALSE);
         update_slider_lev_scale (FALSE);
         update_slider_lev_button (FALSE);
       }
-
       //
       // Keep previous state in transmitter data, so we just need
       // call tx_set_compressor when TUNEing ends.
@@ -2685,7 +2407,6 @@ void radio_set_tune (int state) {
       transmitter->cfc = _save_cfc;
       transmitter->cfc_eq = _save_cfc_eq;
       transmitter->compressor = _save_cmpr;
-
       if (transmitter->puresignal && ! transmitter->ps_oneshot) {
         //
         // DL1YCF:
@@ -2708,7 +2429,6 @@ void radio_set_tune (int state) {
         tx_ps_reset (transmitter);
         usleep (50000);
       }
-
       if (full_tune) {
         if (OCfull_tune_time != 0) {
           struct timeval te;
@@ -2716,7 +2436,6 @@ void radio_set_tune (int state) {
           tune_timeout = (te.tv_sec * 1000LL + te.tv_usec / 1000) + (long long) OCfull_tune_time;
         }
       }
-
       if (memory_tune) {
         if (OCmemory_tune_time != 0) {
           struct timeval te;
@@ -2725,9 +2444,7 @@ void radio_set_tune (int state) {
         }
       }
     }
-
     schedule_high_priority();
-
     if (state) {
       if (!duplex) {
         for (int i = 0; i < receivers; i++) {
@@ -2742,13 +2459,11 @@ void radio_set_tune (int state) {
           schedule_high_priority();
         }
       }
-
       int txmode = vfo_get_tx_mode();
       pre_tune_mode = txmode;
       pre_tune_cw_internal = cw_keyer_internal;
       double freq = 0.0;
 #if 0
-
       // Code currently not active:
       // depending on the mode, do not necessarily tune on the dial frequency
       // if this frequency is not within the pass-band
@@ -2761,39 +2476,32 @@ void radio_set_tune (int state) {
       case modeDIGL:
         freq = -1000.0;
         break;
-
       case modeUSB:
       case modeDIGU:
         freq = 1000.0;
         break;
-
       default:
         freq = 0.0;
         break;
       }
-
 #endif
       tx_set_singletone (transmitter, 1, freq);
-
       switch (txmode) {
       case modeCWL:
         cw_keyer_internal = 0;
         tx_set_mode (transmitter, modeLSB);
         break;
-
       case modeCWU:
         cw_keyer_internal = 0;
         tx_set_mode (transmitter, modeUSB);
         break;
       }
-
       tune = state;
       radio_calc_drive_level();
       rxtx (state);
     } else {
       tx_set_singletone (transmitter, 0, 0.0);
       rxtx (state);
-
       switch (pre_tune_mode) {
       case modeCWL:
       case modeCWU:
@@ -2801,7 +2509,6 @@ void radio_set_tune (int state) {
         cw_keyer_internal = pre_tune_cw_internal;
         break;
       }
-
       if (transmitter->puresignal && !transmitter->ps_oneshot) {
         //
         // DL1YCF:
@@ -2810,12 +2517,10 @@ void radio_set_tune (int state) {
         //
         tx_ps_resume (transmitter);
       }
-
       // restore settings we switched off earlier
       tx_set_compressor (transmitter);
       int id = active_receiver->id;
       int m = vfo[id].mode;
-
       if (can_transmit && display_sliders) {
         if (m == modeDIGU || m == modeDIGL) {
           update_slider_bbcompr_scale (FALSE);
@@ -2829,25 +2534,20 @@ void radio_set_tune (int state) {
           update_slider_lev_button (TRUE);
         }
       }
-
       tune = state;
       radio_calc_drive_level();
       transmitter->is_tuned = 1;
 #if defined (__AUTOG__)
-
       if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
         autogain_is_adjusted = 0;
       }
-
 #endif
     }
   }
-
   if (tune_changed && !tci_is_applying()) {
     tci_tune_changed (state);
     tci_mox_changed (state);
   }
-
   schedule_high_priority();
   schedule_transmit_specific();
   schedule_receive_specific();
@@ -2887,34 +2587,28 @@ static int calcLevel (double d) {
   double target_volts = sqrt (pow (10, target_dbm * 0.1) * 0.05);
   double volts = min ((target_volts / 0.8), 1.0);
   double actual_volts = volts * (1.0 / 0.98);
-
   if (actual_volts < 0.0) {
     actual_volts = 0.0;
   } else if (actual_volts > 1.0) {
     actual_volts = 1.0;
   }
-
   level = (int) (actual_volts * 255.0);
   return level;
 }
 
 void radio_calc_drive_level (void) {
   int level;
-
   if (!can_transmit) { return; }
-
   if (tune && !transmitter->tune_use_drive) {
     level = calcLevel (transmitter->tune_drive);
   } else {
     level = calcLevel (transmitter->drive);
   }
-
   //
   // For most of the radios, just copy the "level" and switch off scaling
   //
   transmitter->do_scale = 0;
   transmitter->drive_level = level;
-
   //
   // For the original Penelope transmitter, the drive level has no effect. Instead, the TX IQ
   // samples must be scaled.
@@ -2931,7 +2625,6 @@ void radio_calc_drive_level (void) {
     transmitter->drive_iscal = 0.9999 / transmitter->drive_scale;
     transmitter->do_scale = 1;
   }
-
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     //
     // Calculate a combination of TX attenuation (values from -7.5 to 0 dB are encoded as 0, 16, 32, ..., 240)
@@ -2939,7 +2632,6 @@ void radio_calc_drive_level (void) {
     // level is smaller than 107 it may adopt any value between 0.0 and 1.0
     //
     double d = level;
-
     if (level > 240) {
       transmitter->drive_level = 240;                     //  0.0 dB hardware ATT
       transmitter->drive_scale = d * 0.0039215;
@@ -2989,11 +2681,9 @@ void radio_calc_drive_level (void) {
       transmitter->drive_level = 0;
       transmitter->drive_scale = d * 0.0092995;    // can be between 0.0 and 0.995
     }
-
     transmitter->drive_iscal = 0.9999 / transmitter->drive_scale;
     transmitter->do_scale = 1;
   }
-
   //if (transmitter->do_scale) {
   //  t_print("%s: Level=%d Fac=%f\n", __func__, transmitter->drive_level, transmitter->drive_scale);
   //} else {
@@ -3004,18 +2694,14 @@ void radio_calc_drive_level (void) {
 
 void radio_set_drive (double value) {
   t_print ("%s: drive=%d\n", __func__, (int) value);
-
   if (!can_transmit) { return; }
-
   transmitter->drive = (int) value;
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
   case NEW_PROTOCOL:
     radio_calc_drive_level();
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     soapy_protocol_set_tx_gain (transmitter, transmitter->drive);
     break;
@@ -3042,21 +2728,17 @@ void radio_set_alex_antennas (void) {
   // status for P2.
   //
   const BAND *band;
-
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     band = band_get_band (vfo[VFO_A].band);
     receiver[0]->alex_antenna = band->alexRxAntenna;
-
     if (filter_board != CHARLY25) {
       receiver[0]->alex_attenuation = band->alexAttenuation;
     }
-
     if (can_transmit) {
       band = band_get_band (vfo[vfo_get_tx_vfo()].band);
       transmitter->alex_antenna = band->alexTxAntenna;
     }
   }
-
   schedule_high_priority();         // possibly update RX/TX antennas
   schedule_general();               // possibly update PA disable
 }
@@ -3076,7 +2758,6 @@ void radio_tx_vfo_changed (void) {
     tx_set_mode (transmitter, vfo_get_tx_mode());
     radio_calc_drive_level();
   }
-
   schedule_high_priority();         // possibly update RX/TX antennas
   schedule_transmit_specific();     // possibly un-set "CW mode"
   schedule_general();               // possibly update PA disable
@@ -3085,16 +2766,13 @@ void radio_tx_vfo_changed (void) {
 void radio_reset_all_alex_attenuation (void) {
   for (int b = 0; b < BANDS; b++) {
     BAND *band = band_get_band (b);
-
     if (band != NULL) {
       band->alexAttenuation = 0;
     }
   }
-
   if (receiver[0] != NULL) {
     receiver[0]->alex_attenuation = 0;
   }
-
   t_print ("%s: Set alexAttenuation for ALL BANDS to zero\n", __func__);
 }
 
@@ -3108,7 +2786,6 @@ void radio_set_alex_attenuation (int v) {
     if (hermes_mode == HERMES_MODE_BRICK) {
       v = 0;
     }
-
     //
     // Store new value of the step attenuator in band data structure
     // (v can be 0,1,2,3)
@@ -3117,7 +2794,6 @@ void radio_set_alex_attenuation (int v) {
     band->alexAttenuation = v;
     receiver[0]->alex_attenuation = v;
   }
-
   schedule_high_priority();
 }
 
@@ -3135,12 +2811,10 @@ void radio_set_split (int val) {
     split = val;
     radio_tx_vfo_changed();
     radio_set_alex_antennas();
-
     if (!tci_is_applying()) {
       tci_split_changed();
       tci_tx_frequency_changed();
     }
-
     g_idle_add (ext_vfo_update, NULL);
     update_slider_split_btn();
   }
@@ -3180,7 +2854,6 @@ static void radio_restore_state (void) {
   GetPropI0 ("capture_max",                                   capture_max);
   GetPropI0 ("max_pan_label_rows",                            max_pan_label_rows);
   GetPropI0 ("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
-
   //
   // TODO: I think some further options related to the GUI
   // have to be moved up here for Client-Server operation
@@ -3190,9 +2863,7 @@ static void radio_restore_state (void) {
   // from this function in due course so have to check some things here.
   //
   if (display_width  > screen_width) { display_width  = screen_width; }
-
   if (display_height > screen_height) { display_height = screen_height; }
-
   //
   // Re-position top window to the position in the props file, provided
   // there are at least 100 pixels left. This assumes the default setting
@@ -3202,7 +2873,6 @@ static void radio_restore_state (void) {
   if (!use_wayland && (window_x_pos < screen_width - 100) && (window_y_pos < screen_height - 100)) {
     gtk_window_move (GTK_WINDOW (top_window), window_x_pos, window_y_pos);
   }
-
   GetPropC0 ("radio_bgcolor",                                 radio_bgcolor);
   GetPropC0 ("mwin_bgcolor",                                  mwin_bgcolor);
   GetPropC0 ("tx_pan_fill_col",                               tx_pan_fill_col);
@@ -3230,12 +2900,10 @@ static void radio_restore_state (void) {
   GetPropI0 ("tx_out_of_band",                                tx_out_of_band_allowed);
   GetPropI0 ("filter_board",                                  filter_board);
   GetPropI0 ("pa_enabled",                                    pa_enabled);
-
   if (device == DEVICE_HERMES_LITE2) {
     GetPropI0 ("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
     GetPropI0 ("force_iob",                                   force_iob);
   }
-
   GetPropI0 ("rx200_udp_port",                                rx200_udp_port);
   GetPropI0 ("pa_power",                                      pa_power);
   GetPropI0 ("mic_boost",                                     mic_boost);
@@ -3246,11 +2914,9 @@ static void radio_restore_state (void) {
   GetPropI0 ("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
   GetPropI0 ("mic_input_xlr",                                 mic_input_xlr);
   GetPropI0 ("mic_profile_nr",                                mic_prof.nr);
-
   for (int i = 0; i < 3; i++) {
     GetPropS1 ("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
-
   GetPropI0 ("autogain_enabled",                              autogain_enabled);
   GetPropI0 ("autogain_time_enabled",                         autogain_time_enabled);
   GetPropI0 ("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
@@ -3305,11 +2971,9 @@ static void radio_restore_state (void) {
   GetPropI0 ("client_enable_tx",                              client_enable_tx);
   GetPropI0 ("saturn_server_en",                              saturn_server_en);
 #endif
-
   for (int i = 0; i < 11; i++) {
     GetPropF1 ("pa_trim[%d]", i,                              pa_trim[i]);
   }
-
   for (int id = 0; id < MAX_SERIAL; id++) {
     //
     // Do not overwrite a "detected" port
@@ -3320,13 +2984,11 @@ static void radio_restore_state (void) {
       GetPropI1 ("rigctl_serial_andromeda[%d]", id,             SerialPorts[id].andromeda);
       GetPropI1 ("rigctl_serial_baud_rate[%i]", id,             SerialPorts[id].baud);
       GetPropI1 ("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
-
       if (SerialPorts[id].andromeda) {
         SerialPorts[id].baud = B9600;
       }
     }
   }
-
   GetPropS1 ("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   GetPropI1 ("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   GetPropI1 ("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
@@ -3351,7 +3013,6 @@ static void radio_restore_state (void) {
   GetPropS0 ("atuwin_ACTION",                               atuwin_ACTION);
   GetPropI0 ("save_zoom_state",                             save_zoom_state);
   GetPropI0 ("use_tx_audiochain",                           use_tx_audiochain);
-
   for (int i = 0; i < n_adc; i++) {
     GetPropI1 ("radio.adc[%d].filters", i,                    adc[i].filters);
     GetPropI1 ("radio.adc[%d].hpf", i,                        adc[i].hpf);
@@ -3363,34 +3024,28 @@ static void radio_restore_state (void) {
     GetPropI1 ("radio.adc[%d].attenuation", i,                adc[i].attenuation);
     GetPropI1 ("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
     GetPropF1 ("radio.adc[%d].gain", i,                       adc[i].gain);
-
     if (radio && strcmp (radio->name, "sdrplay") != 0) {
       GetPropF1 ("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
       GetPropF1 ("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
     }
-
     GetPropI1 ("radio.adc[%d].agc", i,                        adc[i].agc);
     GetPropI1 ("radio.dac[%d].antenna", i,                    dac[i].antenna);
     GetPropF1 ("radio.dac[%d].gain", i,                       dac[i].gain);
   }
-
   switch (hermes_mode) {
   case HERMES_MODE_ANAN10E:
     anan10E = 1;
     break;
-
   case HERMES_MODE_BRICK:
     anan10E = 0;
     have_alex_att = 0;
     radio_reset_all_alex_attenuation();
     break;
-
   default:
     hermes_mode = HERMES_MODE_GENERIC;
     anan10E = 0;
     break;
   }
-
   filterRestoreState();
   bandRestoreState();
   memRestoreState();
@@ -3400,13 +3055,11 @@ static void radio_restore_state (void) {
   midiRestoreState();
 #endif
   t_print ("%s: radio state (except receiver/transmitter) restored.\n", __func__);
-
   if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
                      device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2)) {
     reassign_pa_trim();
     t_print ("%s: using HL2: re-assign pa_trim[]\n", __func__);
   }
-
   //
   // Sanity check part 2:
   //
@@ -3415,38 +3068,30 @@ static void radio_restore_state (void) {
   if (RECEIVERS < 2 || n_adc < 2) {
     diversity_enabled = 0;
   }
-
   //
   // 2.) Selecting the N2ADR filter board overrides most OC settings
   //
   if (filter_board == N2ADR) {
     n2adr_oc_settings(); // Apply default OC settings for N2ADR board
   }
-
   if (filter_board == N2ADR_TX) {
     n2adr_oc_settings_tx(); // Apply default OC settings for N2ADR board (if RX the LPF is OFF)
   }
-
   if (css_dark_theme) {
     radio_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
     mwin_bgcolor = (cairo_rgba_t) { 0.00, 0.00, 0.00, 1.0 };
   }
-
   g_mutex_unlock (&property_mutex);
 }
 
 void radio_save_state (void) {
   g_mutex_lock (&property_mutex);
   clearProperties();
-
   if (radio && radio->name[0] != '\0') {
     backup_index++;
-
     if (backup_index < 1) { backup_index = 1; }
-
     if (backup_index > 9) { backup_index = 1; }
   }
-
   //
   // Save the receiver and transmitter data structures. These
   // are restored in create_receiver/create_transmitter
@@ -3455,20 +3100,16 @@ void radio_save_state (void) {
     if (receiver[i]->zoom > 8) {
       receiver[i]->zoom = 8;
     }
-
     rx_save_state (receiver[i]);
   }
-
   if (can_transmit) {
     // The only variables of interest in this receiver are
     // the alex_antenna an the adc
     if (receiver[PS_RX_FEEDBACK]) {
       rx_save_state (receiver[PS_RX_FEEDBACK]);
     }
-
     tx_save_state (transmitter);
   }
-
   //
   // Obtain window position and save in props file
   //
@@ -3539,12 +3180,10 @@ void radio_save_state (void) {
   SetPropI0 ("tx_out_of_band",                                tx_out_of_band_allowed);
   SetPropI0 ("filter_board",                                  filter_board);
   SetPropI0 ("pa_enabled",                                    pa_enabled);
-
   if (device == DEVICE_HERMES_LITE2) {
     SetPropI0 ("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
     SetPropI0 ("force_iob",                                   force_iob);
   }
-
   SetPropI0 ("rx200_udp_port",                                rx200_udp_port);
   SetPropI0 ("pa_power",                                      pa_power);
   SetPropI0 ("mic_boost",                                     mic_boost);
@@ -3555,11 +3194,9 @@ void radio_save_state (void) {
   SetPropI0 ("mic_ptt_tip_bias_ring",                         mic_ptt_tip_bias_ring);
   SetPropI0 ("mic_input_xlr",                                 mic_input_xlr);
   SetPropI0 ("mic_profile_nr",                                mic_prof.nr);
-
   for (int i = 0; i < 3; i++) {
     SetPropS1 ("mic_profile.%d.desc", i,                      mic_prof.desc[i])
   }
-
   SetPropI0 ("autogain_enabled",                              autogain_enabled);
   SetPropI0 ("autogain_time_enabled",                         autogain_time_enabled);
   SetPropI0 ("block_cat_rx_if_tune",                          block_cat_rx_if_tune);
@@ -3614,11 +3251,9 @@ void radio_save_state (void) {
   SetPropI0 ("client_enable_tx",                              client_enable_tx);
   SetPropI0 ("saturn_server_en",                              saturn_server_en);
 #endif
-
   for (int i = 0; i < 11; i++) {
     SetPropF1 ("pa_trim[%d]", i,                              pa_trim[i]);
   }
-
   for (int id = 0; id < MAX_SERIAL; id++) {
     SetPropI1 ("rigctl_serial_enable[%d]", id,                SerialPorts[id].enable);
     SetPropI1 ("rigctl_serial_andromeda[%d]", id,             SerialPorts[id].andromeda);
@@ -3626,7 +3261,6 @@ void radio_save_state (void) {
     SetPropS1 ("rigctl_serial_port[%d]", id,                  SerialPorts[id].port);
     SetPropI1 ("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
   }
-
   SetPropS1 ("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   SetPropI1 ("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   SetPropI1 ("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
@@ -3651,7 +3285,6 @@ void radio_save_state (void) {
   SetPropS0 ("atuwin_ACTION",                               atuwin_ACTION);
   SetPropI0 ("save_zoom_state",                             save_zoom_state);
   SetPropI0 ("use_tx_audiochain",                           use_tx_audiochain);
-
   for (int i = 0; i < n_adc; i++) {
     SetPropI1 ("radio.adc[%d].filters", i,                    adc[i].filters);
     SetPropI1 ("radio.adc[%d].hpf", i,                        adc[i].hpf);
@@ -3663,17 +3296,14 @@ void radio_save_state (void) {
     SetPropI1 ("radio.adc[%d].attenuation", i,                adc[i].attenuation);
     SetPropI1 ("radio.adc[%d].enable_step_attenuation", i,    adc[i].enable_step_attenuation);
     SetPropF1 ("radio.adc[%d].gain", i,                       adc[i].gain);
-
     if (radio && strcmp (radio->name, "sdrplay") != 0) {
       SetPropF1 ("radio.adc[%d].min_gain", i,                   adc[i].min_gain);
       SetPropF1 ("radio.adc[%d].max_gain", i,                   adc[i].max_gain);
     }
-
     SetPropI1 ("radio.adc[%d].agc", i,                        adc[i].agc);
     SetPropI1 ("radio.dac[%d].antenna", i,                    dac[i].antenna);
     SetPropF1 ("radio.dac[%d].gain", i,                       dac[i].gain);
   }
-
   filterSaveState();
   bandSaveState();
   memSaveState();
@@ -3684,14 +3314,12 @@ void radio_save_state (void) {
 #endif
   saveProperties (property_path);
   sync();
-
   if (radio && radio->name[0] != '\0' && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
     snprintf (property_path_bak, sizeof (property_path_bak), "bak%d_%s_%s_%s", (int) backup_index, radio->name,
               inet_ntoa (radio->info.network.address.sin_addr), property_path);
     saveProperties (property_path_bak);
     sync();
   }
-
   g_mutex_unlock (&property_mutex);
 }
 
@@ -3723,7 +3351,6 @@ static gboolean eventbox_callback (GtkWidget *widget, GdkEvent *event, gpointer 
   if (event->type == GDK_BUTTON_RELEASE) {
     gtk_combo_box_popup (GTK_COMBO_BOX (data));
   }
-
   return TRUE;
 }
 
@@ -3755,7 +3382,6 @@ void my_combo_attach (GtkGrid *grid, GtkWidget *combo, int row, int col, int spa
 
 int radio_max_band (void) {
   int max = BANDS - 1;
-
   switch (device) {
   case DEVICE_HERMES_LITE:
   case DEVICE_HERMES_LITE2:
@@ -3763,17 +3389,14 @@ int radio_max_band (void) {
   case NEW_DEVICE_HERMES_LITE2:
     max = band10;
     break;
-
   case SOAPYSDR_USB_DEVICE:
     // This function will not be called for SOAPY
     max = BANDS - 1;
     break;
-
   default:
     max = band6;
     break;
   }
-
   return max;
 }
 
@@ -3783,17 +3406,14 @@ void radio_protocol_stop (void) {
   //
   radio_mox_update (0);
   usleep (100000);
-
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     old_protocol_stop();
     break;
-
   case NEW_PROTOCOL:
     new_protocol_menu_stop();
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     soapy_protocol_stop_receiver (receiver[0]);
     break;
@@ -3806,12 +3426,10 @@ void radio_protocol_run (void) {
   case ORIGINAL_PROTOCOL:
     old_protocol_run();
     break;
-
   case NEW_PROTOCOL:
     new_protocol_menu_start();
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     soapy_protocol_start_receiver (receiver[0]);
     break;
@@ -3842,25 +3460,20 @@ static gpointer auto_tune_thread (gpointer data) {
   //
   int count = 0;
   g_idle_add (ext_tune_update, GINT_TO_POINTER (1));
-
   for (;;) {
     if (count >= 0) {
       count++;
     }
-
     usleep (50000);
-
     if (auto_tune_end) {
       g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       break;
     }
-
     if (count >= 200) {
       g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       count = -1;
     }
   }
-
   usleep (50000);      // debouncing
   auto_tune_flag = 0;
   return NULL;
@@ -3868,12 +3481,10 @@ static gpointer auto_tune_thread (gpointer data) {
 
 void radio_start_auto_tune (void) {
   static GThread *tune_thread_id = NULL;
-
   if (tune_thread_id) {
     auto_tune_end  = 1;
     g_thread_join (tune_thread_id);
   }
-
   auto_tune_flag = 1;
   auto_tune_end  = 0;
   tune_thread_id = g_thread_new ("TUNE", auto_tune_thread, NULL);
@@ -3901,7 +3512,6 @@ void radio_end_capture (void) {
   // - restore  RX equalizer on/off flags
   //
   double max = 0.0;
-
   //
   // Note: when using AGC, this normalization should not
   //       be necessary except for the weakest signals on
@@ -3909,24 +3519,19 @@ void radio_end_capture (void) {
   //
   for (int i = 0; i < capture_record_pointer; i++) {
     double t = fabs (capture_data[i]);
-
     if (t > max) { max = t; }
   }
-
   //t_print("%s: max=%f\n", __func__, max);
-
   if (max > 0.05) {
     //
     // If max. amplitude is below -25 dB, then assume this
     // is "noise only" and do not normalize
     //
     max = 1.0 / max;  // scale factor
-
     for (int i = 0; i < capture_record_pointer; i++) {
       capture_data[i] *= max;
     }
   }
-
   //
   // re-activate equalizers if they had been active before
   //
@@ -4005,10 +3610,7 @@ void radio_end_playback (void) {
 int compare_doubles (const void* a, const void* b) {
   double arg1 = * (const double*) a;
   double arg2 = * (const double*) b;
-
   if (arg1 < arg2) { return -1; }
-
   if (arg1 > arg2) { return 1; }
-
   return 0;
 }

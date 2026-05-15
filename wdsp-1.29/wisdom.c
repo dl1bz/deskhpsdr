@@ -48,7 +48,6 @@ int WDSPwisdom(char* directory) {
   const int maxsize = max(MAX_WISDOM_SIZE_DISPLAY, MAX_WISDOM_SIZE_FILTER + 1);
   strcpy(wisdom_file, directory);
   strncat(wisdom_file, "wdspWisdom00", 16);
-
   if (!fftw_import_wisdom_from_filename(wisdom_file)) {
     fftin = (double*) malloc0(maxsize * sizeof(complex));
     fftout = (double*) malloc0(maxsize * sizeof(complex));
@@ -60,7 +59,6 @@ int WDSPwisdom(char* directory) {
     fprintf(stdout, "Please do not close this window until wisdom plans are completed.\n\n");
     sprintf(status, "Optimizing FFT sizes through %d", maxsize);
     psize = 64;
-
     while (psize <= MAX_WISDOM_SIZE_FILTER) {
       fprintf(stdout, "Planning COMPLEX FORWARD  FFT size %d\n", psize);
       fflush(stdout);
@@ -82,9 +80,7 @@ int WDSPwisdom(char* directory) {
       fftw_destroy_plan(tplan);
       psize *= 2;
     }
-
     psize = 64;
-
     while (psize <= MAX_WISDOM_SIZE_DISPLAY) {
       if (psize > MAX_WISDOM_SIZE_FILTER) {
         fprintf(stdout, "Planning COMPLEX FORWARD  FFT size %d\n", psize);
@@ -94,7 +90,6 @@ int WDSPwisdom(char* directory) {
         fftw_execute(tplan);
         fftw_destroy_plan(tplan);
       }
-
       fprintf(stdout, "Planning REAL	  FORWARD  FFT size %d\n", psize);
       fflush(stdout);
       sprintf(status, "Planning REAL	  FORWARD  FFT size %d\n", psize);
@@ -103,7 +98,6 @@ int WDSPwisdom(char* directory) {
       fftw_destroy_plan(tplan);
       psize *= 2;
     }
-
     fprintf(stdout, "\nFFTW planning complete.\n");
     fflush(stdout);
     sprintf(status, "\nFFTW planning complete.\n");
@@ -115,6 +109,5 @@ int WDSPwisdom(char* directory) {
 #endif
     wisdom_return = 1;
   }
-
   return wisdom_return;
 }

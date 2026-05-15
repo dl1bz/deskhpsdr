@@ -96,34 +96,25 @@ static void audio_free_device_lists_locked(void) {
   // audio_mutex MUSS gehalten werden!
   for (int i = 0; i < n_input_devices; i++) {
     if (input_devices[i].name) { g_free(input_devices[i].name); input_devices[i].name = NULL; }
-
     if (input_devices[i].description) { g_free(input_devices[i].description); input_devices[i].description = NULL; }
-
     input_devices[i].index = 0;
   }
-
   for (int i = 0; i < n_output_devices; i++) {
     if (output_devices[i].name) { g_free(output_devices[i].name); output_devices[i].name = NULL; }
-
     if (output_devices[i].description) { g_free(output_devices[i].description); output_devices[i].description = NULL; }
-
     output_devices[i].index = 0;
   }
-
   n_input_devices = 0;
   n_output_devices = 0;
 }
 
 static void source_list_cb(pa_context *context, const pa_source_info *s, int eol, void* data) {
   audio_init_mutexes_once();
-
   if (eol > 0) {
     g_mutex_lock(&audio_mutex);
-
     for (int i = 0; i < n_input_devices; i++) {
       t_print("Input: %d: %s (%s)\n", input_devices[i].index, input_devices[i].name, input_devices[i].description);
     }
-
     g_mutex_unlock(&audio_mutex);
     g_mutex_lock(&enum_mutex);
     enum_done = 1;
@@ -132,48 +123,38 @@ static void source_list_cb(pa_context *context, const pa_source_info *s, int eol
     g_mutex_unlock(&enum_mutex);
     return;
   }
-
   // eol == 0: valid source entry
   if (!s) { return; }
-
   g_mutex_lock(&audio_mutex);
-
   if (n_input_devices < MAX_AUDIO_DEVICES) {
     input_devices[n_input_devices].name = g_strdup(s->name);
     input_devices[n_input_devices].description = g_strdup(s->description);
     input_devices[n_input_devices].index = s->index;
     n_input_devices++;
   }
-
   g_mutex_unlock(&audio_mutex);
 }
 
 static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, void* data) {
   audio_init_mutexes_once();
-
   if (eol > 0) {
     g_mutex_lock(&audio_mutex);
-
     for (int i = 0; i < n_output_devices; i++) {
       t_print("Output: %d: %s (%s)\n",
               output_devices[i].index,
               output_devices[i].name,
               output_devices[i].description);
     }
-
     g_mutex_unlock(&audio_mutex);
     // replace op safely
     pa_operation *newop = pa_context_get_source_info_list(pa_ctx, source_list_cb, NULL);
     g_mutex_lock(&op_mutex);
-
     if (op != NULL) {
       pa_operation_unref(op);
       op = NULL;
     }
-
     op = newop;
     g_mutex_unlock(&op_mutex);
-
     if (op == NULL) {
       g_mutex_lock(&enum_mutex);
       enum_done = 1;
@@ -181,22 +162,17 @@ static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, vo
       g_cond_signal(&enum_cond);
       g_mutex_unlock(&enum_mutex);
     }
-
     return;
   }
-
   // eol == 0: valid sink entry
   if (!s) { return; }
-
   g_mutex_lock(&audio_mutex);
-
   if (n_output_devices < MAX_AUDIO_DEVICES) {
     output_devices[n_output_devices].name = g_strdup(s->name);
     output_devices[n_output_devices].description = g_strdup(s->description);
     output_devices[n_output_devices].index = s->index;
     n_output_devices++;
   }
-
   g_mutex_unlock(&audio_mutex);
 }
 
@@ -204,25 +180,20 @@ static void state_cb(pa_context *c, void* userdata) {
   pa_context_state_t state;
   state = pa_context_get_state(c);
   t_print("%s: %d\n", __func__, state);
-
   switch (state) {
   // There are just here for reference
   case PA_CONTEXT_UNCONNECTED:
     t_print("audio: state_cb: PA_CONTEXT_UNCONNECTED\n");
     break;
-
   case PA_CONTEXT_CONNECTING:
     t_print("audio: state_cb: PA_CONTEXT_CONNECTING\n");
     break;
-
   case PA_CONTEXT_AUTHORIZING:
     t_print("audio: state_cb: PA_CONTEXT_AUTHORIZING\n");
     break;
-
   case PA_CONTEXT_SETTING_NAME:
     t_print("audio: state_cb: PA_CONTEXT_SETTING_NAME\n");
     break;
-
   case PA_CONTEXT_FAILED:
     t_print("audio: state_cb: PA_CONTEXT_FAILED\n");
     g_mutex_lock(&enum_mutex);
@@ -231,7 +202,6 @@ static void state_cb(pa_context *c, void* userdata) {
     g_cond_signal(&enum_cond);
     g_mutex_unlock(&enum_mutex);
     break;
-
   case PA_CONTEXT_TERMINATED:
     t_print("audio: state_cb: PA_CONTEXT_TERMINATED\n");
     g_mutex_lock(&enum_mutex);
@@ -240,7 +210,6 @@ static void state_cb(pa_context *c, void* userdata) {
     g_cond_signal(&enum_cond);
     g_mutex_unlock(&enum_mutex);
     break;
-
   case PA_CONTEXT_READY:
     t_print("audio: state_cb: PA_CONTEXT_READY\n");
     // get a list of the output devices
@@ -250,15 +219,12 @@ static void state_cb(pa_context *c, void* userdata) {
     // replace op safely
     pa_operation *newop = pa_context_get_sink_info_list(pa_ctx, sink_list_cb, NULL);
     g_mutex_lock(&op_mutex);
-
     if (op != NULL) {
       pa_operation_unref(op);
       op = NULL;
     }
-
     op = newop;
     g_mutex_unlock(&op_mutex);
-
     if (op == NULL) {
       g_mutex_lock(&enum_mutex);
       enum_done = 1;
@@ -266,9 +232,7 @@ static void state_cb(pa_context *c, void* userdata) {
       g_cond_signal(&enum_cond);
       g_mutex_unlock(&enum_mutex);
     }
-
     break;
-
   default:
     t_print("audio: state_cb: unknown state %d\n", state);
     break;
@@ -285,15 +249,12 @@ void audio_release_cards(void) {
   g_mutex_unlock(&enum_mutex);
   // Stoppe ggf. laufende Enumeration-Operation
   g_mutex_lock(&op_mutex);
-
   if (op != NULL) {
     pa_operation_cancel(op);
     pa_operation_unref(op);
     op = NULL;
   }
-
   g_mutex_unlock(&op_mutex);
-
   // Context sauber trennen und freigeben
   if (pa_ctx != NULL) {
     pa_context_set_state_callback(pa_ctx, NULL, NULL);
@@ -301,14 +262,12 @@ void audio_release_cards(void) {
     pa_context_unref(pa_ctx);
     pa_ctx = NULL;
   }
-
   // GLib-Pulse-Mainloop freigeben
   if (main_loop != NULL) {
     pa_glib_mainloop_free(main_loop);
     main_loop = NULL;
     main_loop_api = NULL;
   }
-
   // Enum-Synchronisationszustand zurücksetzen
   g_mutex_lock(&enum_mutex);
   enum_done = 0;
@@ -336,54 +295,43 @@ void audio_get_cards(void) {
   // IMPORTANT: pump GLib main context so PulseAudio callbacks can run.
   gint64 deadline = g_get_monotonic_time() + 2 * G_TIME_SPAN_SECOND;
   g_mutex_lock(&enum_mutex);
-
   while (!enum_done) {
     g_mutex_unlock(&enum_mutex);
-
     // Process pending main-context events (PulseAudio GLib mainloop callbacks)
     while (g_main_context_iteration(NULL, FALSE)) { /* drain */ }
-
     // avoid busy loop
     g_usleep(1000);  // 1ms
     g_mutex_lock(&enum_mutex);
-
     if (g_get_monotonic_time() >= deadline) {
       enum_done = 1;
       enum_ok = 0;
       break;
     }
   }
-
   int ok = enum_ok;
   g_mutex_unlock(&enum_mutex);
-
   if (!ok) {
     t_print("%s: pulseaudio device enumeration timeout/fail\n", __func__);
     // Cleanup on failure/timeout to avoid leaking contexts/mainloops or leaving
     // callbacks running in the background.
     g_mutex_lock(&op_mutex);
-
     if (op != NULL) {
       pa_operation_cancel(op);
       pa_operation_unref(op);
       op = NULL;
     }
-
     g_mutex_unlock(&op_mutex);
-
     if (pa_ctx != NULL) {
       pa_context_set_state_callback(pa_ctx, NULL, NULL);
       pa_context_disconnect(pa_ctx);
       pa_context_unref(pa_ctx);
       pa_ctx = NULL;
     }
-
     if (main_loop != NULL) {
       pa_glib_mainloop_free(main_loop);
       main_loop = NULL;
       main_loop_api = NULL;
     }
-
     // Free any partially enumerated device lists to avoid leaks on fail/timeout.
     g_mutex_lock(&audio_mutex);
     audio_free_device_lists_locked();
@@ -396,12 +344,10 @@ int audio_open_output(RECEIVER *rx) {
   pa_sample_spec sample_spec;
   pa_buffer_attr attr;
   int err;
-
   if (rx == NULL || rx->audio_name[0] == '\0') {
     t_print("%s: no output device selected\n", __func__);
     return -1;
   }
-
   g_mutex_lock(&rx->local_audio_mutex);
   sample_spec.rate = 48000;
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
@@ -424,7 +370,6 @@ int audio_open_output(RECEIVER *rx) {
                                  NULL,
                                  &attr,
                                  &err);
-
   if (rx->playstream == NULL) {
     t_print("%s: pa_simple_new stereo failed: err=%d (%s)\n", __func__, err, pa_strerror(err));
     sample_spec.channels = 1;
@@ -443,7 +388,6 @@ int audio_open_output(RECEIVER *rx) {
                                    &attr,
                                    &err);
   }
-
   if (rx->playstream != NULL) {
     rx->local_audio_buffer_offset = 0;
     rx->local_audio_buffer = g_new0(float, rx->local_audio_channels * out_buffer_size);
@@ -455,7 +399,6 @@ int audio_open_output(RECEIVER *rx) {
     result = -1;
     t_print("%s: pa_simple_new mono failed: err=%d (%s)\n", __func__, err, pa_strerror(err));
   }
-
   g_mutex_unlock(&rx->local_audio_mutex);
   return result;
 }
@@ -463,7 +406,6 @@ int audio_open_output(RECEIVER *rx) {
 static void *mic_read_thread(gpointer arg) {
   int err;
   t_print("%s: running=%d\n", __func__, g_atomic_int_get(&running));
-
   while (g_atomic_int_get(&running)) {
     //
     // It is guaranteed that local_microphone_buffer, mic_ring_buffer, and microphone_stream
@@ -473,7 +415,6 @@ static void *mic_read_thread(gpointer arg) {
                             local_microphone_buffer,
                             mic_buffer_size * sizeof(float),
                             &err);
-
     if (rc < 0) {
       g_atomic_int_set(&running, 0);
       t_print("%s: simple_read returned %d error=%d (%s)\n", __func__, rc, err, pa_strerror(err));
@@ -483,20 +424,14 @@ static void *mic_read_thread(gpointer arg) {
       if (!g_atomic_int_get(&running)) {
         break;
       }
-
       // Ringbuffer separat schützen (entkoppelt vom globalen audio_mutex)
       g_mutex_lock(&mic_ring_mutex);
-
       if (mic_ring_buffer == NULL) { g_mutex_unlock(&mic_ring_mutex); continue; }
-
       guint64 local_drops = 0;
       int had_overrun = 0;
-
       for (int i = 0; i < mic_buffer_size; i++) {
         int newpt = mic_ring_write_pt + 1;
-
         if (newpt == MICRINGLEN) { newpt = 0; }
-
         if (newpt != mic_ring_read_pt) {
           mic_ring_buffer[mic_ring_write_pt] = local_microphone_buffer[i];
           mic_ring_write_pt = newpt;
@@ -506,14 +441,11 @@ static void *mic_read_thread(gpointer arg) {
           had_overrun = 1;
         }
       }
-
       if (had_overrun) {
         mic_overrun_events++;
         mic_overrun_drops += local_drops;
       }
-
       g_mutex_unlock(&mic_ring_mutex);
-
       // Overrun-Telemetrie: nur gelegentlich loggen, damit kein Spam entsteht.
       // Trigger: jede 100. Overrun-Situation
       if (had_overrun && (mic_overrun_events % 100 == 0)) {
@@ -523,23 +455,19 @@ static void *mic_read_thread(gpointer arg) {
       }
     }
   }
-
   t_print("%s: exit\n", __func__);
   return NULL;
 }
 
 int audio_open_input(void) {
   pa_sample_spec sample_spec;
-
   if (!can_transmit) {
     return -1;
   }
-
   if (transmitter == NULL || transmitter->microphone_name[0] == '\0') {
     t_print("%s: no input device selected\n", __func__);
     return -1;
   }
-
   pa_buffer_attr attr;
   attr.maxlength = (uint32_t) -1;
   attr.tlength = (uint32_t) -1;
@@ -560,25 +488,19 @@ int audio_open_input(void) {
                                         &attr,                       // Use default buffering attributes but set fragsize
                                         &err                         // error code
                                        );
-
   if (new_stream == NULL) {
     t_print("%s: pa_simple_new (RECORD) failed err=%d (%s)\n", __func__, err, pa_strerror(err));
     return -1;
   }
-
   float *new_local_buf = g_new0(float, mic_buffer_size);
   t_print("%s: allocating ring buffer\n", __func__);
   float *new_ring_buf = (float*) g_new(float, MICRINGLEN);
-
   if (new_local_buf == NULL || new_ring_buf == NULL) {
     if (new_local_buf) { g_free(new_local_buf); }
-
     if (new_ring_buf) { g_free(new_ring_buf); }
-
     pa_simple_free(new_stream);
     return -1;
   }
-
   // Kurzer Commit-Block: nur Globals setzen
   g_mutex_lock(&audio_mutex);
   microphone_stream = new_stream;
@@ -594,52 +516,41 @@ int audio_open_input(void) {
   g_mutex_unlock(&mic_ring_mutex);
   t_print("%s: PULSEAUDIO mic_read_thread\n", __func__);
   mic_read_thread_id = g_thread_new("mic_thread", mic_read_thread, NULL);
-
   if (!mic_read_thread_id) {
     t_print("%s: g_thread_new failed on mic_read_thread\n", __func__);
     g_atomic_int_set(&running, 0);
     // Rollback sauber freigeben
     g_mutex_lock(&audio_mutex);
-
     if (microphone_stream) { pa_simple_free(microphone_stream); microphone_stream = NULL; }
-
     if (local_microphone_buffer) { g_free(local_microphone_buffer); local_microphone_buffer = NULL; }
-
     g_mutex_unlock(&audio_mutex);
     // Ringbuffer gehört zur mic_ring_mutex-Lock-Domain
     g_mutex_lock(&mic_ring_mutex);
-
     if (mic_ring_buffer) {
       g_free(mic_ring_buffer);
       mic_ring_buffer = NULL;
     }
-
     g_mutex_unlock(&mic_ring_mutex);
     return -1;
   }
-
   return 0;
 }
 
 void audio_close_output(RECEIVER *rx) {
   g_mutex_lock(&rx->local_audio_mutex);
-
   if (rx->playstream != NULL) {
     pa_simple_free(rx->playstream);
     rx->playstream = NULL;
   }
-
   if (rx->local_audio_buffer != NULL) {
     g_free(rx->local_audio_buffer);
     rx->local_audio_buffer = NULL;
   }
-
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
 void audio_close_input(void) {
   g_atomic_int_set(&running, 0);
-
   // Join WITHOUT holding audio_mutex to avoid deadlock:
   // mic_read_thread uses mic_ring_mutex while writing into the ringbuffer.
   if (mic_read_thread_id != NULL) {
@@ -647,27 +558,21 @@ void audio_close_input(void) {
     g_thread_join(mic_read_thread_id);
     mic_read_thread_id = NULL;
   }
-
   g_mutex_lock(&audio_mutex);
-
   if (microphone_stream != NULL) {
     pa_simple_free(microphone_stream);
     microphone_stream = NULL;
   }
-
   if (local_microphone_buffer != NULL) {
     g_free(local_microphone_buffer);
     local_microphone_buffer = NULL;
   }
-
   g_mutex_unlock(&audio_mutex);
   g_mutex_lock(&mic_ring_mutex);
-
   if (mic_ring_buffer != NULL) {
     g_free(mic_ring_buffer);
     mic_ring_buffer = NULL;
   }
-
   g_mutex_unlock(&mic_ring_mutex);
   return;
 }
@@ -679,21 +584,17 @@ void audio_close_input(void) {
 float audio_get_next_mic_sample(void) {
   float sample;
   g_mutex_lock(&mic_ring_mutex);
-
   if ((mic_ring_buffer == NULL) || (mic_ring_read_pt == mic_ring_write_pt)) {
     // no buffer, or nothing in buffer: insert silence
     //t_print("%s: no samples\n",__func__);
     sample = 0.0;
   } else {
     int newpt = mic_ring_read_pt + 1;
-
     if (newpt == MICRINGLEN) { newpt = 0; }
-
     sample = mic_ring_buffer[mic_ring_read_pt];
     // update of read pointer (mutex-protected)
     mic_ring_read_pt = newpt;
   }
-
   g_mutex_unlock(&mic_ring_mutex);
   return sample;
 }
@@ -702,7 +603,6 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   int result = 0;
   int err;
   g_mutex_lock(&rx->local_audio_mutex);
-
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
     //
     // Since this is mutex-protected, we know that both rx->playstream
@@ -715,23 +615,18 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     } else {
       rx->local_audio_buffer[rx->local_audio_buffer_offset] = sample;
     }
-
     rx->local_audio_buffer_offset++;
-
     if (rx->local_audio_buffer_offset >= out_buffer_size) {
       int rc = pa_simple_write(rx->playstream,
                                rx->local_audio_buffer,
                                out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
-
       if (rc != 0) {
         t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
-
       rx->local_audio_buffer_offset = 0;
     }
   }
-
   g_mutex_unlock(&rx->local_audio_mutex);
   return result;
 }
@@ -741,13 +636,10 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   int err;
   int txmode = vfo_get_tx_mode();
   float mono_sample = 0.0f;
-
   if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
     return 0;
   }
-
   g_mutex_lock(&rx->local_audio_mutex);
-
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
     //
     // Since this is mutex-protected, we know that both rx->playstream
@@ -758,41 +650,33 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
       case LEFT:
         mono_sample = left_sample;
         break;
-
       case RIGHT:
         mono_sample = right_sample;
         break;
-
       case STEREO:
       default:
         mono_sample = 0.5f * (left_sample + right_sample);
         break;
       }
     }
-
     if (rx->local_audio_channels == 2) {
       rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
       rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
     } else {
       rx->local_audio_buffer[rx->local_audio_buffer_offset] = mono_sample;
     }
-
     rx->local_audio_buffer_offset++;
-
     if (rx->local_audio_buffer_offset >= out_buffer_size) {
       int rc = pa_simple_write(rx->playstream,
                                rx->local_audio_buffer,
                                out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
-
       if (rc != 0) {
         t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
-
       rx->local_audio_buffer_offset = 0;
     }
   }
-
   g_mutex_unlock(&rx->local_audio_mutex);
   return result;
 }

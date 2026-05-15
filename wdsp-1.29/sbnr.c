@@ -106,13 +106,10 @@ void xsbnr(SBNR a, int pos) {
     int    bs = a->buffer_size;
     float *proc_out = a->output;
     float  *to_proc = a->input;
-
     for (size_t i = 0; i < bs; i++) {
       to_proc[i] = (float)in[2 * i + 0];
     }
-
     specbleach_adaptive_process(a->st, (uint32_t)bs, to_proc, proc_out);
-
     for (size_t i = 0; i < bs; i++) {
       out[2 * i + 0] = (double) proc_out[i];
       out[2 * i + 1] = 0.0;
@@ -132,7 +129,6 @@ void destroy_sbnr(SBNR a) {
 PORT
 void SetRXASBNRRun(int channel, int run) {
   SBNR a = rxa[channel].sbnr.p;
-
   if (a->run != run) {
     RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
                 rxa[channel].emnr.p->run, rxa[channel].anf.p->run, rxa[channel].anr.p->run,
@@ -149,7 +145,6 @@ void SetRXASBNRRun(int channel, int run) {
 PORT
 void SetRXASBNRreductionAmount(int channel, float amount) {
   if (amount < 0 || amount > 20) { return; }
-
   EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->reduction_amount = amount;
   LeaveCriticalSection(&ch[channel].csDSP);
@@ -162,7 +157,6 @@ void SetRXASBNRreductionAmount(int channel, float amount) {
 PORT
 void SetRXASBNRsmoothingFactor(int channel, float factor) {
   if (factor < 0 || factor > 100) { return; }
-
   EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->smoothing_factor = factor;
   LeaveCriticalSection(&ch[channel].csDSP);
@@ -175,7 +169,6 @@ void SetRXASBNRsmoothingFactor(int channel, float factor) {
 PORT
 void SetRXASBNRwhiteningFactor(int channel, float factor) {
   if (factor < 0 || factor > 100) { return; }
-
   EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->whitening_factor = factor;
   LeaveCriticalSection(&ch[channel].csDSP);
@@ -189,7 +182,6 @@ void SetRXASBNRwhiteningFactor(int channel, float factor) {
 PORT
 void SetRXASBNRnoiseRescale(int channel, float factor) {
   if (factor < 0 || factor > 12) { return; }
-
   EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->noise_rescale = factor;
   LeaveCriticalSection(&ch[channel].csDSP);
@@ -201,7 +193,6 @@ void SetRXASBNRnoiseRescale(int channel, float factor) {
 PORT
 void SetRXASBNRpostFilterThreshold(int channel, float threshold) {
   if (threshold < -10 || threshold > 10) { return; }
-
   EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->post_filter_threshold = threshold;
   LeaveCriticalSection(&ch[channel].csDSP);
@@ -215,7 +206,6 @@ void SetRXASBNRpostFilterThreshold(int channel, float threshold) {
 PORT
 void SetRXASBNRnoiseScalingType(int channel, int noise_scaling_type) {
   if (noise_scaling_type < 0 || noise_scaling_type > 2) { return; }
-
   EnterCriticalSection(&ch[channel].csDSP);
   rxa[channel].sbnr.p->noise_scaling_type = noise_scaling_type;
   LeaveCriticalSection(&ch[channel].csDSP);

@@ -82,18 +82,15 @@ void flush_bps(BPS a) {
 void xbps(BPS a, int pos) {
   int i;
   double I, Q;
-
   if (a->run && pos == a->position) {
     memcpy(&(a->infilt[2 * a->size]), a->in, a->size * sizeof(complex));
     fftw_execute(a->CFor);
-
     for (i = 0; i < 2 * a->size; i++) {
       I = a->gain * a->product[2 * i + 0];
       Q = a->gain * a->product[2 * i + 1];
       a->product[2 * i + 0] = I * a->mults[2 * i + 0] - Q * a->mults[2 * i + 1];
       a->product[2 * i + 1] = I * a->mults[2 * i + 1] + Q * a->mults[2 * i + 0];
     }
-
     fftw_execute(a->CRev);
     memcpy(a->infilt, &(a->infilt[2 * a->size]), a->size * sizeof(complex));
   } else if (a->in != a->out) {
@@ -349,7 +346,6 @@ void setGain_bandpass(BANDPASS a, double gain, int update) {
 
 void CalcBandpassFilter(BANDPASS a, double f_low, double f_high, double gain) {
   double *impulse;
-
   if ((a->f_low != f_low) || (a->f_high != f_high) || (a->gain != gain)) {
     a->f_low = f_low;
     a->f_high = f_high;
@@ -377,7 +373,6 @@ PORT
 void SetRXABandpassFreqs(int channel, double f_low, double f_high) {
   double *impulse;
   BANDPASS a = rxa[channel].bp1.p;
-
   if ((f_low != a->f_low) || (f_high != a->f_high)) {
     impulse = fir_bandpass(a->nc, f_low, f_high, a->samplerate,
                            a->wintype, 1, a->gain / (double)(2 * a->size));
@@ -395,7 +390,6 @@ PORT
 void SetRXABandpassWindow(int channel, int wintype) {
   double *impulse;
   BANDPASS a = rxa[channel].bp1.p;
-
   if ((a->wintype != wintype)) {
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate,
                            wintype, 1, a->gain / (double)(2 * a->size));
@@ -415,14 +409,12 @@ void SetRXABandpassNC(int channel, int nc) {
   BANDPASS a;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].bp1.p;
-
   if (nc != a->nc) {
     a->nc = nc;
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain / (double)(2 * a->size));
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -430,7 +422,6 @@ PORT
 void SetRXABandpassMP(int channel, int mp) {
   BANDPASS a;
   a = rxa[channel].bp1.p;
-
   if (mp != a->mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);
@@ -489,25 +480,20 @@ void SetTXABandpassWindow(int channel, int wintype) {
   double *impulse;
   BANDPASS a;
   a = txa[channel].bp0.p;
-
   if (a->wintype != wintype) {
     a->wintype = wintype;
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain / (double)(2 * a->size));
     setImpulse_fircore(a->p, impulse, 1);
     _aligned_free(impulse);
   }
-
   a = txa[channel].bp1.p;
-
   if (a->wintype != wintype) {
     a->wintype = wintype;
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain / (double)(2 * a->size));
     setImpulse_fircore(a->p, impulse, 1);
     _aligned_free(impulse);
   }
-
   a = txa[channel].bp2.p;
-
   if (a->wintype != wintype) {
     a->wintype = wintype;
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain / (double)(2 * a->size));
@@ -523,32 +509,26 @@ void SetTXABandpassNC(int channel, int nc) {
   BANDPASS a;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].bp0.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain / (double)(2 * a->size));
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   a = txa[channel].bp1.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain / (double)(2 * a->size));
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   a = txa[channel].bp2.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = fir_bandpass(a->nc, a->f_low, a->f_high, a->samplerate, a->wintype, 1, a->gain / (double)(2 * a->size));
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -556,21 +536,16 @@ PORT
 void SetTXABandpassMP(int channel, int mp) {
   BANDPASS a;
   a = txa[channel].bp0.p;
-
   if (mp != a->mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);
   }
-
   a = txa[channel].bp1.p;
-
   if (mp != a->mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);
   }
-
   a = txa[channel].bp2.p;
-
   if (mp != a->mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);

@@ -57,19 +57,16 @@ void t_print(const gchar *format, ...) {
   clock_gettime(CLOCK_MONOTONIC, &ts);
   now = ts.tv_sec + 1E-9 * ts.tv_nsec;
   g_mutex_lock(&t_print_mutex);
-
   if (first) {
     first = 0;
     starttime = now;
   }
-
   //
   // After 11 days, the time reaches 999999.999 so we simply wrap around
   //
   if (now - starttime >= 999999.995) {
     starttime += 1000000.0;
   }
-
   g_mutex_unlock(&t_print_mutex);
   //
   // Berechnung von hh:mm:ss.mmm (Millisekunden)

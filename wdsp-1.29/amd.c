@@ -115,26 +115,21 @@ void xamd(AMD a) {
   double ai, bi, aq, bq;
   double ai_ps, bi_ps, aq_ps, bq_ps;
   int j, k;
-
   if (a->run) {
     switch (a->mode) {
     case 0: { //AM Demodulator
       for (i = 0; i < a->buff_size; i++) {
         audio = sqrt(a->in_buff[2 * i + 0] * a->in_buff[2 * i + 0] + a->in_buff[2 * i + 1] * a->in_buff[2 * i + 1]);
-
         if (a->levelfade) {
           a->dc = a->mtauR * a->dc + a->onem_mtauR * audio;
           a->dc_insert = a->mtauI * a->dc_insert + a->onem_mtauI * audio;
           audio += a->dc_insert - a->dc;
         }
-
         a->out_buff[2 * i + 0] = audio;
         a->out_buff[2 * i + 1] = audio;
       }
-
       break;
     }
-
     case 1: { //Synchronous AM Demodulator with Sideband Separation
       for (i = 0; i < a->buff_size; i++) {
         vco[0] = cos(a->phs);
@@ -143,7 +138,6 @@ void xamd(AMD a) {
         bi = a->in_buff[2 * i + 0] * vco[1];
         aq = a->in_buff[2 * i + 1] * vco[0];
         bq = a->in_buff[2 * i + 1] * vco[1];
-
         if (a->sbmode != 0) {
           a->a[0] = a->dsI;
           a->b[0] = bi;
@@ -151,7 +145,6 @@ void xamd(AMD a) {
           a->d[0] = aq;
           a->dsI = ai;
           a->dsQ = bq;
-
           for (j = 0; j < STAGES; j++) {
             k = 3 * j;
             a->a[k + 3] = a->c0[j] * (a->a[k] - a->a[k + 5]) + a->a[k + 2];
@@ -159,12 +152,10 @@ void xamd(AMD a) {
             a->c[k + 3] = a->c0[j] * (a->c[k] - a->c[k + 5]) + a->c[k + 2];
             a->d[k + 3] = a->c1[j] * (a->d[k] - a->d[k + 5]) + a->d[k + 2];
           }
-
           ai_ps = a->a[OUT_IDX];
           bi_ps = a->b[OUT_IDX];
           bq_ps = a->c[OUT_IDX];
           aq_ps = a->d[OUT_IDX];
-
           for (j = OUT_IDX + 2; j > 0; j--) {
             a->a[j] = a->a[j - 1];
             a->b[j] = a->b[j - 1];
@@ -172,54 +163,40 @@ void xamd(AMD a) {
             a->d[j] = a->d[j - 1];
           }
         }
-
         corr[0] = +ai + bq;
         corr[1] = -bi + aq;
-
         switch (a->sbmode) {
         case 0: { //both sidebands
           audio = corr[0];
           break;
         }
-
         case 1: { //LSB
           audio = (ai_ps - bi_ps) + (aq_ps + bq_ps);
           break;
         }
-
         case 2: { //USB
           audio = (ai_ps + bi_ps) - (aq_ps - bq_ps);
           break;
         }
         }
-
         if (a->levelfade) {
           a->dc = a->mtauR * a->dc + a->onem_mtauR * audio;
           a->dc_insert = a->mtauI * a->dc_insert + a->onem_mtauI * corr[0];
           audio += a->dc_insert - a->dc;
         }
-
         a->out_buff[2 * i + 0] = audio;
         a->out_buff[2 * i + 1] = audio;
-
         if ((corr[0] == 0.0) && (corr[1] == 0.0)) { corr[0] = 1.0; }
-
         det = atan2(corr[1], corr[0]);
         del_out = a->fil_out;
         a->omega += a->g2 * det;
-
         if (a->omega < a->omega_min) { a->omega = a->omega_min; }
-
         if (a->omega > a->omega_max) { a->omega = a->omega_max; }
-
         a->fil_out = a->g1 * det + a->omega;
         a->phs += del_out;
-
         while (a->phs >= TWOPI) { a->phs -= TWOPI; }
-
         while (a->phs < 0.0) { a->phs += TWOPI; }
       }
-
       break;
     }
     }
@@ -251,7 +228,6 @@ void setSize_amd(AMD a, int size) {
 PORT void
 SetRXAAMDRun(int channel, int run) {
   AMD a = rxa[channel].amd.p;
-
   if (a->run != run) {
     RXAbp1Check(channel, run, rxa[channel].snba.p->run, rxa[channel].emnr.p->run,
                 rxa[channel].anf.p->run, rxa[channel].anr.p->run,

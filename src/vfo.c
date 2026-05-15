@@ -100,40 +100,28 @@ const char *getModeName(int mode) {
   switch (mode) {
   case modeLSB:
     return "LSB";
-
   case modeUSB:
     return "USB";
-
   case modeDSB:
     return "DSB";
-
   case modeCWL:
     return "CW-L";
-
   case modeCWU:
     return "CW-U";
-
   case modeFMN:
     return "FM-N";
-
   case modeAM:
     return "AM";
-
   case modeDIGU:
     return "DIG-U";
-
   case modeSPEC:
     return "SPEC";
-
   case modeDIGL:
     return "DIG-L";
-
   case modeSAM:
     return "SAM";
-
   case modeDRM:
     return "DRM";
-
   default:
     return "Mode_not_supported";  // wenn der Wert nicht gefunden wird
   }
@@ -149,7 +137,6 @@ static void vfo_save_bandstack(void) {
   entry->ctun = vfo[0].ctun;
   entry->ctun_frequency = vfo[0].ctun_frequency;
   entry->deviation = vfo[0].deviation;
-
   if (can_transmit) {
     entry->ctcss_enabled = transmitter->ctcss_enabled;
     entry->ctcss = transmitter->ctcss;
@@ -174,7 +161,6 @@ static void modesettingsSaveState(void) {
     SetPropI1("modeset.%d.nr2_gain_method", i,       mode_settings[i].nr2_gain_method);
     SetPropI1("modeset.%d.nr2_npe_method", i,        mode_settings[i].nr2_npe_method);
     SetPropI1("modeset.%d.nr2_ae", i,                mode_settings[i].nr2_ae);
-
     if ((GetWDSPVersion() % 100) > 26) {
       SetPropI1("modeset.%d.nr2_post", i,            mode_settings[i].nr2_post);
       SetPropI1("modeset.%d.nr2_post_taper", i,      mode_settings[i].nr2_post_taper);
@@ -182,7 +168,6 @@ static void modesettingsSaveState(void) {
       SetPropI1("modeset.%d.nr2_post_factor", i,     mode_settings[i].nr2_post_factor);
       SetPropI1("modeset.%d.nr2_post_rate", i,       mode_settings[i].nr2_post_rate);
     }
-
     SetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     SetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
     SetPropS1("modeset.%d.mode_description", i,      mode_settings[i].desc);
@@ -220,7 +205,6 @@ static void modesettingsSaveState(void) {
 #endif
     SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
-
     for (int j = 0; j < 11; j++) {
       SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
       SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
@@ -230,9 +214,7 @@ static void modesettingsSaveState(void) {
       SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
       SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
     }
-
 #if defined (__EQ12__)
-
     for (int jj = 11; jj < 13; jj++) {
       SetPropF2("modeset.%d.txeq.%d", i, jj,          mode_settings[i].tx_eq_gain[jj]);
       SetPropF2("modeset.%d.txeqfrq.%d", i, jj,       mode_settings[i].tx_eq_freq[jj]);
@@ -242,7 +224,6 @@ static void modesettingsSaveState(void) {
       SetPropF2("modeset.%d.cfc_lvl.%d", i, jj,       mode_settings[i].cfc_lvl[jj]);
       SetPropF2("modeset.%d.cfc_post.%d", i, jj,      mode_settings[i].cfc_post[jj]);
     }
-
 #endif
   }
 }
@@ -261,7 +242,6 @@ static void modesettingsRestoreState(void) {
       mode_settings[i].step     = 100;
       mode_settings[i].rit_step = 100;
       break;
-
     case modeDIGL:
     case modeDIGU:
       mode_settings[i].agc      = AGC_FAST;
@@ -269,7 +249,6 @@ static void modesettingsRestoreState(void) {
       mode_settings[i].step     = 50;
       mode_settings[i].rit_step = 100;
       break;
-
     case modeCWL:
     case modeCWU:
       mode_settings[i].agc      = AGC_FAST;
@@ -277,7 +256,6 @@ static void modesettingsRestoreState(void) {
       mode_settings[i].step     = 25;
       mode_settings[i].rit_step = 10;
       break;
-
     case modeAM:
     case modeSAM:
     case modeSPEC:
@@ -289,7 +267,6 @@ static void modesettingsRestoreState(void) {
       mode_settings[i].rit_step = 100;
       break;
     }
-
     //
     // set defaults that are the same  for all modes
     //
@@ -305,7 +282,6 @@ static void modesettingsRestoreState(void) {
     mode_settings[i].nr2_gain_method = 0;
     mode_settings[i].nr2_npe_method = 0;
     mode_settings[i].nr2_ae = 1;
-
     if ((GetWDSPVersion() % 100) > 26) {
       mode_settings[i].nr2_post = 0;
       mode_settings[i].nr2_post_taper = 12;
@@ -313,7 +289,6 @@ static void modesettingsRestoreState(void) {
       mode_settings[i].nr2_post_factor = 15;
       mode_settings[i].nr2_post_rate = 5;
     }
-
     mode_settings[i].nr2_trained_threshold = -0.5;
     mode_settings[i].nr2_trained_t2 = 0.2;
     mode_settings[i].nr4_reduction_amount = 10.0;
@@ -349,25 +324,20 @@ static void modesettingsRestoreState(void) {
     mode_settings[i].puresignal = 0;
     mode_settings[i].use_rx_filter = 0;
 #endif
-
     for (int j = 0; j < 11; j++) {
       mode_settings[i].tx_eq_gain[j] = 0;
       mode_settings[i].rx_eq_gain[j] = 0;
       mode_settings[i].cfc_lvl   [j] = 0;
       mode_settings[i].cfc_post  [j] = 0;
     }
-
 #if defined (__EQ12__)
-
     for (int jj = 11; jj < 13; jj++) {
       mode_settings[i].tx_eq_gain[jj] = 0;
       mode_settings[i].rx_eq_gain[jj] = 0;
       mode_settings[i].cfc_lvl   [jj] = 0;
       mode_settings[i].cfc_post  [jj] = 0;
     }
-
 #endif
-
     switch (i) {
     case modeLSB:
     case modeUSB:
@@ -405,7 +375,6 @@ static void modesettingsRestoreState(void) {
       mode_settings[i].cfc_post  [ 0] = -9.0;
       break;
     }
-
     mode_settings[i].tx_eq_freq[0]  =     0.0;
     mode_settings[i].rx_eq_freq[0]  =     0.0;
     mode_settings[i].cfc_freq  [0]  =     0.0;
@@ -462,7 +431,6 @@ static void modesettingsRestoreState(void) {
     GetPropI1("modeset.%d.nr2_gain_method", i,       mode_settings[i].nr2_gain_method);
     GetPropI1("modeset.%d.nr2_npe_method", i,        mode_settings[i].nr2_npe_method);
     GetPropI1("modeset.%d.nr2_ae", i,                mode_settings[i].nr2_ae);
-
     if ((GetWDSPVersion() % 100) > 26) {
       GetPropI1("modeset.%d.nr2_post", i,            mode_settings[i].nr2_post);
       GetPropI1("modeset.%d.nr2_post_taper", i,      mode_settings[i].nr2_post_taper);
@@ -470,7 +438,6 @@ static void modesettingsRestoreState(void) {
       GetPropI1("modeset.%d.nr2_post_factor", i,     mode_settings[i].nr2_post_factor);
       GetPropI1("modeset.%d.nr2_post_rate", i,       mode_settings[i].nr2_post_rate);
     }
-
     GetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     GetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
     GetPropF1("modeset.%d.nr4_reduction_amount", i,  mode_settings[i].nr4_reduction_amount);
@@ -507,7 +474,6 @@ static void modesettingsRestoreState(void) {
     GetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
     GetPropI1("modeset.%d.use_rx_filter", i,         mode_settings[i].use_rx_filter);
 #endif
-
     for (int j = 0; j < 11; j++) {
       GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
       GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
@@ -517,9 +483,7 @@ static void modesettingsRestoreState(void) {
       GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
       GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
     }
-
 #if defined (__EQ12__)
-
     for (int jj = 11; jj < 13; jj++) {
       GetPropF2("modeset.%d.txeq.%d", i, jj,         mode_settings[i].tx_eq_gain[jj]);
       GetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
@@ -529,7 +493,6 @@ static void modesettingsRestoreState(void) {
       GetPropF2("modeset.%d.cfc_lvl.%d", i, jj,      mode_settings[i].cfc_lvl[jj]);
       GetPropF2("modeset.%d.cfc_post.%d", i, jj,     mode_settings[i].cfc_post[jj]);
     }
-
 #endif
   }
 }
@@ -546,13 +509,11 @@ void copy_mode_settings(int mode) {
     mode_settings[modeCWU] = mode_settings[mode];
     mode_settings[modeCWL] = mode_settings[mode];
     break;
-
   case modeDIGU:
   case modeDIGL:
     mode_settings[modeDIGU] = mode_settings[mode];
     mode_settings[modeDIGL] = mode_settings[mode];
     break;
-
   case modeLSB:
   case modeUSB:
   case modeDSB:
@@ -560,7 +521,6 @@ void copy_mode_settings(int mode) {
     mode_settings[modeUSB] = mode_settings[mode];
     mode_settings[modeDSB] = mode_settings[mode];
     break;
-
   default:
     t_print("%s: Mode %s has no copy condition.\n", __func__, getModeName(mode));
   }
@@ -568,7 +528,6 @@ void copy_mode_settings(int mode) {
 
 void vfo_save_state(void) {
   vfo_save_bandstack();
-
   for (int i = 0; i < MAX_VFOS; i++) {
     SetPropI1("vfo.%d.band", i,             vfo[i].band);
     SetPropI1("vfo.%d.frequency", i,        vfo[i].frequency);
@@ -587,7 +546,6 @@ void vfo_save_state(void) {
     SetPropI1("vfo.%d.step", i,             vfo[i].step);
     SetPropI1("vfo.%d.rit_step", i,         vfo[i].rit_step);
   }
-
   modesettingsSaveState();
 }
 
@@ -610,7 +568,6 @@ void vfo_restore_state(void) {
       vfo[i].bandstack       = 0;
       vfo[i].frequency       = 14250000;
     }
-
     vfo[i].mode              = modeUSB;
     vfo[i].filter            = filterF5;
     vfo[i].cwAudioPeakFilter = 0;
@@ -640,13 +597,11 @@ void vfo_restore_state(void) {
     GetPropI1("vfo.%d.deviation", i,        vfo[i].deviation);
     GetPropI1("vfo.%d.step", i,             vfo[i].step);
     GetPropI1("vfo.%d.rit_step", i,         vfo[i].rit_step);
-
     // Sanity check: if !ctun, offset must be zero
     if (!vfo[i].ctun) {
       vfo[i].offset = 0;
     }
   }
-
   modesettingsRestoreState();
 }
 
@@ -673,14 +628,12 @@ static inline void vfo_adjust_band(int v, long long f) {
   const BAND *band;
   const BANDSTACK *bandstack;
   band = band_get_band(b);
-
   if ((f + 25000LL) >= band->frequencyMin && (f - 25000LL) <= band->frequencyMax) {
     //
     // This "quick return" will occur in >99 percent of the cases
     //
     return;
   }
-
   //
   // Either we are in bandGen or bandAir, or
   // the VFO frequency has left the band, so
@@ -695,37 +648,29 @@ static inline void vfo_adjust_band(int v, long long f) {
   //       out of a transverter band!
   //
   vfo[v].band = get_band_from_frequency(f);
-
   if (b != vfo[v].band) {
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, (int) v,
             (int) vfo[v].band, (int) b);
-
     if (can_transmit) {
       transmitter->is_tuned = 0;
       BANDSETTINGS *bs = band_get_settings(b);
-
       if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100 && transmitter->drive_per_band) {
         set_drive((double) bs->tx_drive);
         t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
       }
-
       if (bs != NULL && bs->tune_drive > 0 && bs->tune_drive <= 100 && transmitter->drive_per_band) {
         transmitter->tune_drive = bs->tune_drive;
         update_slider_tune_drive_scale(TRUE);
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
       }
     }
-
 #if defined (__AUTOG__)
-
     if (can_transmit && autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __func__, autogain_is_adjusted);
     }
-
 #endif
   }
-
   bandstack = bandstack_get_bandstack(vfo[v].band);
   vfo[v].bandstack = bandstack->current_entry;
   radio_set_alex_antennas();
@@ -742,7 +687,6 @@ void vfo_xvtr_changed(void) {
   if (vfo[0].band >= BANDS) {
     const BAND *band = band_get_band(vfo[0].band);
     vfo[0].lo = band->frequencyLO + band->errorLO;
-
     if ((vfo[0].frequency > vfo[0].lo + radio->frequency_max)  ||
         (vfo[0].frequency < vfo[0].lo + radio->frequency_min)) {
       vfo[0].frequency = vfo[0].lo + (radio->frequency_min + radio->frequency_max) / 2;
@@ -751,23 +695,19 @@ void vfo_xvtr_changed(void) {
       rx_set_frequency(receiver[0], vfo[0].frequency);
     }
   }
-
   if (vfo[1].band >= BANDS) {
     const BAND *band = band_get_band(vfo[1].band);
     vfo[1].lo = band->frequencyLO + band->errorLO;
-
     if ((vfo[1].frequency > vfo[1].lo + radio->frequency_max)  ||
         (vfo[1].frequency < vfo[1].lo + radio->frequency_min)) {
       vfo[1].ctun = 0;
       vfo[1].frequency = vfo[1].lo + (radio->frequency_min + radio->frequency_max) / 2;
       vfo_adjust_band(1, vfo[1].frequency);
-
       if (receivers == 2) {
         rx_set_frequency(receiver[1], vfo[1].frequency);
       }
     }
   }
-
   schedule_general();        // for disablePA
   schedule_high_priority();  // for Frequencies
   g_idle_add(ext_vfo_update, NULL);
@@ -779,12 +719,10 @@ static void audio_reload_input(void) {
     audio_close_input();
     t_print("%s: audio in closed\n", __func__);
   }
-
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {
       transmitter->local_microphone = 0;
     }
-
     t_print("%s: audio in re-open\n", __func__);
   }
 }
@@ -817,7 +755,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   rx->nr2_gain_method           = mode_settings[m].nr2_gain_method;
   rx->nr2_npe_method            = mode_settings[m].nr2_npe_method;
   rx->nr2_ae                    = mode_settings[m].nr2_ae;
-
   if ((GetWDSPVersion() % 100) > 26) {
     rx->nr2_post                = mode_settings[m].nr2_post;
     rx->nr2_post_taper          = mode_settings[m].nr2_post_taper;
@@ -825,7 +762,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     rx->nr2_post_factor         = mode_settings[m].nr2_post_factor;
     rx->nr2_post_rate           = mode_settings[m].nr2_post_rate;
   }
-
   rx->nr2_trained_threshold     = mode_settings[m].nr2_trained_threshold;
   rx->nr2_trained_t2            = mode_settings[m].nr2_trained_t2;
   rx->nr4_reduction_amount      = mode_settings[m].nr4_reduction_amount;
@@ -837,21 +773,16 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   rx->snb                       = mode_settings[m].snb;
   rx->agc                       = mode_settings[m].agc;
   rx->eq_enable                 = mode_settings[m].en_rxeq;
-
   for (int i = 0; i < 11; i++) {
     rx->eq_gain[i] = mode_settings[m].rx_eq_gain[i];
     rx->eq_freq[i] = mode_settings[m].rx_eq_freq[i];
   }
-
 #if defined (__EQ12__)
-
   for (int ii = 11; ii < 13; ii++) {
     rx->eq_gain[ii] = mode_settings[m].rx_eq_gain[ii];
     rx->eq_freq[ii] = mode_settings[m].rx_eq_freq[ii];
   }
-
 #endif
-
   //
   // Transmitter-specific settings: TXEQ, CMRP, DEXP, CFC
   // only changed if this VFO controls the TX
@@ -884,7 +815,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->lev_enable       = mode_settings[m].lev_enable;
     transmitter->lev_gain         = mode_settings[m].lev_gain;
     transmitter->phrot_enable     = mode_settings[m].phrot_enable;
-
     for (int i = 0; i < 11; i++) {
       transmitter->eq_gain[i]  = mode_settings[m].tx_eq_gain[i];
       transmitter->eq_freq[i]  = mode_settings[m].tx_eq_freq[i];
@@ -892,9 +822,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
       transmitter->cfc_lvl[i]  = mode_settings[m].cfc_lvl[i];
       transmitter->cfc_post[i] = mode_settings[m].cfc_post[i];
     }
-
 #if defined (__EQ12__)
-
     for (int ii = 11; ii < 13; ii++) {
       transmitter->eq_gain[ii]  = mode_settings[m].tx_eq_gain[ii];
       transmitter->eq_freq[ii]  = mode_settings[m].tx_eq_freq[ii];
@@ -902,7 +830,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
       transmitter->cfc_lvl[ii]  = mode_settings[m].cfc_lvl[ii];
       transmitter->cfc_post[ii] = mode_settings[m].cfc_post[ii];
     }
-
 #endif
 #if defined (__CPYMODE__)
     audio_reload_input();
@@ -915,7 +842,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     tx_set_dexp(transmitter);
     // tx_set_equalizer(transmitter);
   }
-
   //
   // defer update_eq() until here since it also applies TX EQ settings
   //
@@ -923,7 +849,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   update_noise();
   update_eq();
   g_idle_add(ext_vfo_update, NULL);
-
   if (can_transmit && display_sliders) {
     if (n_input_devices > 0) {
       for (int i = 0; i < n_input_devices; i++) {
@@ -931,11 +856,9 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
           update_slider_local_mic_input(i);
         }
       }
-
       update_slider_local_mic_button();
     }
   }
-
   if (display_sliders) {
     update_slider_agc_btn();
   }
@@ -945,7 +868,6 @@ void vfo_band_changed(int id, int b) {
   const BAND *band;
   BANDSTACK *bandstack;
   int   oldmode = vfo[id].mode;
-
   //
   // If the band is not equal to the current band, look at the frequency of the
   // new bandstack entry.
@@ -955,62 +877,49 @@ void vfo_band_changed(int id, int b) {
   if (b != vfo[id].band) {
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, id, b,
             (int) vfo[id].band);
-
     if (can_transmit) {
       transmitter->is_tuned = 0;
       BANDSETTINGS *bs = band_get_settings(b);
-
       if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100 && transmitter->drive_per_band) {
         set_drive((double) bs->tx_drive);
         t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
       }
-
       if (bs != NULL && bs->tune_drive > 0 && bs->tune_drive <= 100 && transmitter->drive_per_band) {
         transmitter->tune_drive = bs->tune_drive;
         update_slider_tune_drive_scale(TRUE);
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
       }
     }
-
     band = band_get_band(b);
     bandstack = bandstack_get_bandstack(b);
     long long f = bandstack->entry[bandstack->current_entry].frequency;
     f -= (band->frequencyLO + band->errorLO);
-
     if (f < radio->frequency_min || f > radio->frequency_max) {
       return;
     }
-
 #if defined (__AUTOG__)
-
     if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __func__, autogain_is_adjusted);
     }
-
 #endif
   }
-
   if (id == 0) {
     vfo_save_bandstack();
   }
-
   if (b == vfo[id].band) {
     // same band selected - step to the next band stack
     bandstack = bandstack_get_bandstack(b);
     vfo[id].bandstack++;
-
     if (vfo[id].bandstack >= bandstack->entries) {
       vfo[id].bandstack = 0;
     }
-
     if (id == 0) { bandstack->current_entry = vfo[id].bandstack; }
   } else {
     // new band - get band stack entry
     bandstack = bandstack_get_bandstack(b);
     vfo[id].bandstack = bandstack->current_entry;
   }
-
   band = band_get_band(b);
   const BANDSTACK_ENTRY *entry = &bandstack->entry[vfo[id].bandstack];
   vfo[id].band = b;
@@ -1021,7 +930,6 @@ void vfo_band_changed(int id, int b) {
   vfo[id].lo = band->frequencyLO + band->errorLO;
   vfo[id].filter = entry->filter;
   vfo[id].deviation = entry->deviation;
-
   //
   // Paranoia:
   // There should be no out-of-band frequencies in the
@@ -1032,13 +940,11 @@ void vfo_band_changed(int id, int b) {
   } else {
     vfo_adjust_band(id, vfo[id].frequency);
   }
-
   if (can_transmit) {
     transmitter->ctcss_enabled = entry->ctcss_enabled;
     transmitter->ctcss         = entry->ctcss;
     tx_set_ctcss(transmitter);
   }
-
   //
   // In the case of CTUN, the offset is re-calculated
   // during vfo_vfos_changed ==> rx_vfo_changed ==> rx_frequency_changed
@@ -1046,7 +952,6 @@ void vfo_band_changed(int id, int b) {
   if (id < receivers && oldmode != vfo[id].mode) {
     vfo_apply_mode_settings(receiver[id]);
   }
-
   vfo_vfos_changed();
 }
 
@@ -1054,12 +959,10 @@ void vfo_bandstack_changed(int b) {
   int id = active_receiver->id;
   int oldmode = vfo[id].mode;
   BANDSTACK *bandstack = bandstack_get_bandstack(vfo[id].band);
-
   if (id == 0) {
     vfo_save_bandstack();
     bandstack->current_entry = b;
   }
-
   vfo[id].bandstack = b;
   const BANDSTACK_ENTRY *entry = &bandstack->entry[b];
   vfo[id].frequency = entry->frequency;
@@ -1068,23 +971,19 @@ void vfo_bandstack_changed(int b) {
   vfo[id].mode = entry->mode;
   vfo[id].filter = entry->filter;
   vfo[id].deviation = entry->deviation;
-
   if (vfo[id].ctun) {
     vfo_adjust_band(id, vfo[id].ctun_frequency);
   } else {
     vfo_adjust_band(id, vfo[id].frequency);
   }
-
   if (can_transmit) {
     transmitter->ctcss_enabled = entry->ctcss_enabled;
     transmitter->ctcss         = entry->ctcss;
     tx_set_ctcss(transmitter);
   }
-
   if (id < receivers && oldmode != vfo[id].mode) {
     vfo_apply_mode_settings(receiver[id]);
   }
-
   vfo_vfos_changed();
 }
 
@@ -1095,16 +994,13 @@ void vfo_mode_changed(int m) {
 
 void vfo_id_mode_changed(int id, int m) {
   vfo[id].mode = m;
-
   if (id < receivers) {
     vfo_apply_mode_settings(receiver[id]);
     rx_mode_changed(receiver[id]);
     rx_filter_changed(receiver[id]);
   }
-
   if (can_transmit) {
     tx_set_mode(transmitter, vfo_get_tx_mode());
-
     if (display_sliders && (m == modeDIGU || m == modeDIGL)) {
       update_slider_bbcompr_scale(FALSE);
       update_slider_bbcompr_button(FALSE);
@@ -1121,7 +1017,6 @@ void vfo_id_mode_changed(int id, int m) {
       // update_slider_snb_button(TRUE);
     }
   }
-
   //
   // changing modes may change BFO frequency
   // and SDR need to be informed about "CW or not CW"
@@ -1129,7 +1024,6 @@ void vfo_id_mode_changed(int id, int m) {
   schedule_high_priority();       // update frequencies
   schedule_transmit_specific();   // update "CW" flag
   g_idle_add(ext_vfo_update, NULL);
-
   if (!tci_is_applying()) {
     tci_mode_changed(id);
     tci_tx_frequency_changed();
@@ -1143,11 +1037,9 @@ void vfo_deviation_changed(int dev) {
 
 void vfo_id_deviation_changed(int id, int dev) {
   vfo[id].deviation = dev;
-
   if (id < receivers) {
     rx_filter_changed(receiver[id]);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -1163,9 +1055,7 @@ void vfo_id_filter_changed(int id, int f) {
     mode_settings[mode].filter = f;
     copy_mode_settings(mode);
   }
-
   vfo[id].filter = f;
-
   //
   // If f is either Var1 or Var2, then the changed filter edges
   // should also apply to the other receiver, if it is running.
@@ -1180,7 +1070,6 @@ void vfo_id_filter_changed(int id, int f) {
       rx_filter_changed(receiver[id]);
     }
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -1190,11 +1079,9 @@ void vfo_vfos_changed(void) {
   // Apply the new data
   //
   rx_vfo_changed(receiver[0]);
-
   if (receivers == 2) {
     rx_vfo_changed(receiver[1]);
   }
-
   radio_tx_vfo_changed();
   radio_set_alex_antennas();
   //
@@ -1203,7 +1090,6 @@ void vfo_vfos_changed(void) {
   //
   schedule_transmit_specific();
   g_idle_add(ext_vfo_update, NULL);
-
   if (!tci_is_applying()) {
     tci_vfos_changed();
   }
@@ -1212,22 +1098,18 @@ void vfo_vfos_changed(void) {
 void vfo_a_to_b(void) {
   int oldmode = vfo[VFO_B].mode;
   vfo[VFO_B] = vfo[VFO_A];
-
   if (vfo[VFO_B].mode != oldmode && receivers == 2) {
     vfo_apply_mode_settings(receiver[1]);
   }
-
   vfo_vfos_changed();
 }
 
 void vfo_b_to_a(void) {
   int oldmode = vfo[VFO_A].mode;
   vfo[VFO_A] = vfo[VFO_B];
-
   if (vfo[VFO_A].mode != oldmode) {
     vfo_apply_mode_settings(receiver[0]);
   }
-
   vfo_vfos_changed();
 }
 
@@ -1235,15 +1117,12 @@ void vfo_a_swap_b(void) {
   struct  _vfo temp = vfo[VFO_A];
   vfo[VFO_A]        = vfo[VFO_B];
   vfo[VFO_B]        = temp;
-
   if (vfo[VFO_A].mode != vfo[VFO_B].mode) {
     vfo_apply_mode_settings(receiver[0]);
-
     if (receivers == 2) {
       vfo_apply_mode_settings(receiver[1]);
     }
   }
-
   vfo_vfos_changed();
 }
 
@@ -1258,9 +1137,7 @@ int vfo_get_step_from_index(int index) {
   // extended CAT commands
   //
   if (index < 0) { index = 0; }
-
   if (index >= STEPS) { index = STEPS - 1; }
-
   return steps[index];
 }
 
@@ -1270,18 +1147,15 @@ int vfo_get_stepindex(int id) {
   //
   int i;
   int step = vfo[id].step;
-
   for (i = 0; i < STEPS; i++) {
     if (steps[i] == step) { break; }
   }
-
   //
   // If step size is not found (this should not happen)
   // report some "convenient" index at the small end
   // (here: index 4 corresponding to 100 Hz)
   //
   if (i >= STEPS) { i = 4; }
-
   return i;
 }
 
@@ -1290,12 +1164,9 @@ void vfo_set_step_from_index(int id, int index) {
   // Set VFO step size to steps[index], with range checking
   //
   if (index < 0) { index = 0; }
-
   if (index >= STEPS) { index = STEPS - 1; }
-
   int step = steps[index];
   vfo[id].step = step;
-
   if (id == 0) {
     int mode = vfo[id].mode;
     mode_settings[mode].step = step;
@@ -1311,31 +1182,26 @@ void vfo_step(int steps) {
 void vfo_id_step(int id, int steps) {
   if (!locked) {
     long long delta;
-
     if (vfo[id].ctun) {
       // CTUN offset is limited by half the sample rate
       // if "id" does not refer to a running RX, take the active receiver
       const RECEIVER *myrx;
-
       if (id < receivers) {
         myrx = receiver[id];
       } else {
         myrx = active_receiver;
       }
-
       long long frequency = vfo[id].frequency;
       long long rx_low = ROUND(vfo[id].ctun_frequency, steps, vfo[id].step) + myrx->filter_low;
       long long rx_high = ROUND(vfo[id].ctun_frequency, steps, vfo[id].step) + myrx->filter_high;
       long long half = (long long) myrx->sample_rate / 2LL;
       long long min_freq = frequency - half;
       long long max_freq = frequency + half;
-
       if (rx_low <= min_freq) {
         return;
       } else if (rx_high >= max_freq) {
         return;
       }
-
       delta = vfo[id].ctun_frequency;
       vfo[id].ctun_frequency = ROUND(vfo[id].ctun_frequency, steps, vfo[id].step);
       delta = vfo[id].ctun_frequency - delta;
@@ -1346,15 +1212,11 @@ void vfo_id_step(int id, int steps) {
       delta = vfo[id].frequency - delta;
       vfo_adjust_band(id, vfo[id].frequency);
     }
-
     int sid = 1 - id;
-
     switch (sat_mode) {
     case SAT_NONE:
       break;
-
     case SAT_MODE:
-
       // A and B increment and decrement together
       if (vfo[sid].ctun) {
         vfo[sid].ctun_frequency += delta;
@@ -1363,15 +1225,11 @@ void vfo_id_step(int id, int steps) {
         vfo[sid].frequency      += delta;
         vfo_adjust_band(sid, vfo[sid].frequency);
       }
-
       if (sid < receivers) {
         rx_frequency_changed(receiver[sid]);
       }
-
       break;
-
     case RSAT_MODE:
-
       // A increments and B decrements or A decrments and B increments
       if (vfo[sid].ctun) {
         vfo[sid].ctun_frequency -= delta;
@@ -1380,27 +1238,20 @@ void vfo_id_step(int id, int steps) {
         vfo[sid].frequency      -= delta;
         vfo_adjust_band(sid, vfo[sid].frequency);
       }
-
       if (sid < receivers) {
         rx_frequency_changed(receiver[sid]);
       }
-
       break;
     }
-
     if (id < receivers) {
       rx_frequency_changed(receiver[id]);
     }
-
     g_idle_add(ext_vfo_update, NULL);
-
     if (!tci_is_applying()) {
       tci_vfo_changed(id);
-
       if (sat_mode != SAT_NONE) {
         tci_vfo_changed(sid);
       }
-
       tci_tx_frequency_changed();
     }
   }
@@ -1413,13 +1264,11 @@ void vfo_set_rit_step(int step) {
 
 void vfo_id_set_rit_step(int id, int step) {
   vfo[id].rit_step = step;
-
   if (id == 0) {
     int mode = vfo[id].mode;
     mode_settings[mode].rit_step = step;
     copy_mode_settings(mode);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -1439,62 +1288,49 @@ void vfo_id_set_rit_step(int id, int step) {
 //
 void vfo_id_move(int id, long long hz, int round) {
   long long delta;
-
   if (!locked) {
     if (vfo[id].ctun) {
       // don't let ctun go beyond end of passband
       const RECEIVER *myrx;
-
       if (id < receivers) {
         myrx = receiver[id];
       } else {
         myrx = active_receiver;
       }
-
       long long frequency = vfo[id].frequency;
       long long rx_low = vfo[id].ctun_frequency + hz + myrx->filter_low;
       long long rx_high = vfo[id].ctun_frequency + hz + myrx->filter_high;
       long long half = (long long) myrx->sample_rate / 2LL;
       long long min_freq = frequency - half;
       long long max_freq = frequency + half;
-
       if (rx_low <= min_freq) {
         return;
       } else if (rx_high >= max_freq) {
         return;
       }
-
       delta = vfo[id].ctun_frequency;
       // *Add* the shift (hz) to the ctun frequency
       vfo[id].ctun_frequency = vfo[id].ctun_frequency + hz;
-
       if (round && (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU)) {
         vfo[id].ctun_frequency = ROUND(vfo[id].ctun_frequency, 0, vfo[id].step);
       }
-
       delta = vfo[id].ctun_frequency - delta;
       vfo_adjust_band(id, vfo[id].ctun_frequency);
     } else {
       delta = vfo[id].frequency;
       // *Subtract* the shift (hz) from the VFO frequency
       vfo[id].frequency = vfo[id].frequency - hz;
-
       if (round && (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU)) {
         vfo[id].frequency = ROUND(vfo[id].frequency, 0, vfo[id].step);
       }
-
       delta = vfo[id].frequency - delta;
       vfo_adjust_band(id, vfo[id].frequency);
     }
-
     int sid = 1 - id;
-
     switch (sat_mode) {
     case SAT_NONE:
       break;
-
     case SAT_MODE:
-
       // A and B increment and decrement together
       if (vfo[sid].ctun) {
         vfo[sid].ctun_frequency += delta;
@@ -1503,15 +1339,11 @@ void vfo_id_move(int id, long long hz, int round) {
         vfo[sid].frequency      += delta;
         vfo_adjust_band(sid, vfo[sid].frequency);
       }
-
       if (sid < receivers) {
         rx_frequency_changed(receiver[sid]);
       }
-
       break;
-
     case RSAT_MODE:
-
       // A increments and B decrements or A decrments and B increments
       if (vfo[sid].ctun) {
         vfo[sid].ctun_frequency -= delta;
@@ -1520,27 +1352,20 @@ void vfo_id_move(int id, long long hz, int round) {
         vfo[sid].frequency      -= delta;
         vfo_adjust_band(sid, vfo[sid].frequency);
       }
-
       if (sid < receivers) {
         rx_frequency_changed(receiver[sid]);
       }
-
       break;
     }
-
     if (id < receivers) {
       rx_frequency_changed(receiver[id]);
     }
-
     g_idle_add(ext_vfo_update, NULL);
-
     if (!tci_is_applying()) {
       tci_vfo_changed(id);
-
       if (sat_mode != SAT_NONE) {
         tci_vfo_changed(sid);
       }
-
       tci_tx_frequency_changed();
     }
   }
@@ -1558,62 +1383,48 @@ void vfo_move_to(long long hz) {
 void vfo_id_move_to(int id, long long hz) {
   // hz is the offset from the min displayed frequency
   const RECEIVER *myrx;
-
   if (id < receivers) {
     myrx = receiver[id];
   } else {
     myrx = active_receiver;
   }
-
   // long long offset = hz;
   long long half = (long long)(myrx->sample_rate / 2);
   // long long f;
   long long f = (vfo[id].frequency - half) + hz + ((double) myrx->pan * myrx->hz_per_pixel);
-
   if (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU) {
     // offset = ROUND(hz, 0, vfo[id].step);
     f = ROUND(f, 0, vfo[id].step);
   }
-
   // f = (vfo[id].frequency - half) + offset + ((double)myrx->pan * myrx->hz_per_pixel);
-
   if (!locked) {
     long long delta;
-
     if (vfo[id].ctun) {
       delta = vfo[id].ctun_frequency;
       vfo[id].ctun_frequency = f;
-
       if (vfo[id].mode == modeCWL) {
         vfo[id].ctun_frequency += cw_keyer_sidetone_frequency;
       } else if (vfo[id].mode == modeCWU) {
         vfo[id].ctun_frequency -= cw_keyer_sidetone_frequency;
       }
-
       delta = vfo[id].ctun_frequency - delta;
       vfo_adjust_band(id, vfo[id].ctun_frequency);
     } else {
       delta = vfo[id].frequency;
       vfo[id].frequency = f;
-
       if (vfo[id].mode == modeCWL) {
         vfo[id].frequency += cw_keyer_sidetone_frequency;
       } else if (vfo[id].mode == modeCWU) {
         vfo[id].frequency -= cw_keyer_sidetone_frequency;
       }
-
       delta = vfo[id].frequency - delta;
       vfo_adjust_band(id, vfo[id].frequency);
     }
-
     int sid = 1 - id;
-
     switch (sat_mode) {
     case SAT_NONE:
       break;
-
     case SAT_MODE:
-
       // A and B increment and decrement together
       if (vfo[sid].ctun) {
         vfo[sid].ctun_frequency += delta;
@@ -1622,15 +1433,11 @@ void vfo_id_move_to(int id, long long hz) {
         vfo[sid].frequency      += delta;
         vfo_adjust_band(sid, vfo[sid].frequency);
       }
-
       if (sid < receivers) {
         rx_frequency_changed(receiver[sid]);
       }
-
       break;
-
     case RSAT_MODE:
-
       // A increments and B decrements or A decrements and B increments
       if (vfo[sid].ctun) {
         vfo[sid].ctun_frequency -= delta;
@@ -1639,27 +1446,20 @@ void vfo_id_move_to(int id, long long hz) {
         vfo[sid].frequency      -= delta;
         vfo_adjust_band(sid, vfo[sid].frequency);
       }
-
       if (sid < receivers) {
         rx_frequency_changed(receiver[sid]);
       }
-
       break;
     }
-
     if (id < receivers) {
       rx_vfo_changed(receiver[id]);
     }
-
     g_idle_add(ext_vfo_update, NULL);
-
     if (!tci_is_applying()) {
       tci_vfo_changed(id);
-
       if (sat_mode != SAT_NONE) {
         tci_vfo_changed(sid);
       }
-
       tci_tx_frequency_changed();
     }
   }
@@ -1668,12 +1468,10 @@ void vfo_id_move_to(int id, long long hz) {
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_scroll_event_cb(GtkWidget *widget, GdkEventScroll *event, gpointer data) {
   RECEIVER *rx = active_receiver;
-
   if (!rx) {
     t_print("%s: no active RX\n", __func__);
     return FALSE;
   }
-
   // return rx_scroll_event(widget, event, data);
   return rx_scroll_event(widget, event, rx);
 }
@@ -1684,7 +1482,6 @@ static gboolean vfo_configure_event_cb(GtkWidget         *widget,
   if (vfo_surface) {
     cairo_surface_destroy(vfo_surface);
   }
-
   vfo_surface = gdk_window_create_similar_surface(gtk_widget_get_window(widget),
                 CAIRO_CONTENT_COLOR,
                 gtk_widget_get_allocated_width(widget),
@@ -1715,9 +1512,7 @@ static gboolean vfo_draw_cb(GtkWidget *widget,
 //
 void vfo_update(void) {
   char wid[6];
-
   if (!vfo_surface) { return; }
-
   int id = active_receiver->id;
   int m = vfo[id].mode;
   //
@@ -1727,7 +1522,6 @@ void vfo_update(void) {
   int rxhigh = active_receiver->filter_high;
   int rxlow = active_receiver->filter_low;
   int w = rxhigh - rxlow;
-
   //
   // CW: renormalize the filter edges to zero
   //
@@ -1738,7 +1532,6 @@ void vfo_update(void) {
     rxhigh -= cw_keyer_sidetone_frequency;
     rxlow  -= cw_keyer_sidetone_frequency;
   }
-
   if (w < 995) {
     w = 10 * ((w + 5) / 10);  // between 0 and 990
     snprintf(wid, sizeof(wid), "%3d", w);
@@ -1751,7 +1544,6 @@ void vfo_update(void) {
     w = (w + 500) / 1000;
     snprintf(wid, sizeof(wid), "%2dk", w);
   }
-
   int f = vfo[id].filter;
   int txvfo = vfo_get_tx_vfo();
   const VFO_BAR_LAYOUT *vfl = &vfo_layout_list[vfo_layout];
@@ -1766,7 +1558,6 @@ void vfo_update(void) {
   cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
   cairo_paint(cr);
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-
   // -----------------------------------------------------------
   //
   // Draw a picture showing the actual and default filter edges
@@ -1775,7 +1566,6 @@ void vfo_update(void) {
   if (m != modeFMN && vfl->filter_x != 0) {
     int def_low = band_filter->low;
     int def_high = band_filter->high;
-
     // switch high/low for lower-sideband-modes such
     // that the graphic display refers to audio frequencies.
     if (m == modeLSB || m == modeDIGL || m == modeCWL) {
@@ -1787,10 +1577,8 @@ void vfo_update(void) {
       rxlow    = rxhigh;
       rxhigh   = swap;
     }
-
     // t_print("H=%d DH=%d L=%d DL=%d\n", rxhigh, def_high, rxlow, def_low);
   }
-
   // -----------------------------------------------------------
   //
   // Draw a string specifying the mode, the filter width
@@ -1808,7 +1596,6 @@ void vfo_update(void) {
       }
     }
     break;
-
     case modeCWL:
     case modeCWU:
       if (vfo[id].cwAudioPeakFilter) {
@@ -1822,9 +1609,7 @@ void vfo_update(void) {
                  cw_keyer_speed,
                  cw_keyer_sidetone_frequency);
       }
-
       break;
-
     case modeDIGL:
     case modeDIGU:
       if (can_transmit && transmitter->use_rx_filter) {
@@ -1832,20 +1617,16 @@ void vfo_update(void) {
       } else {
         snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       }
-
       break;
-
     default:
       snprintf(temp_text, 32, "%s %s", mode_string[vfo[id].mode], wid);
       break;
     }
-
     cairo_set_font_size(cr, vfl->size1 + 2);
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_move_to(cr, vfl->mode_x, vfl->mode_y);
     cairo_show_text(cr, temp_text);
   }
-
   // In what follows, we want to display the VFO frequency
   // on which we currently transmit a signal with red colour.
   // If it is out-of-band, we display "Out of band" in red.
@@ -1855,7 +1636,6 @@ void vfo_update(void) {
   long long af = vfo[0].ctun ? vfo[0].ctun_frequency : vfo[0].frequency;
   long long bf = vfo[1].ctun ? vfo[1].ctun_frequency : vfo[1].frequency;
 #if 0
-
   //
   // DL1YCF:
   // There is no consensus whether the "VFO display frequency" should move if
@@ -1874,7 +1654,6 @@ void vfo_update(void) {
   } else {
     if (vfo[0].rit_enabled) { af += vfo[0].rit; }
   }
-
   //
   // Adjust VFO_B frequency for RIT/XIT
   //
@@ -1883,15 +1662,12 @@ void vfo_update(void) {
   } else {
     if (vfo[1].rit_enabled) { bf += vfo[1].rit; }
   }
-
 #endif
   int oob = 0;
   int f_m; // MHz part
   int f_k; // kHz part
   int f_h; // Hz  part
-
   if (can_transmit) { oob = transmitter->out_of_band; }
-
   // -----------------------------------------------------------
   //
   // Draw VFO A Dial.
@@ -1899,7 +1675,6 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->vfo_a_x != 0) {
     cairo_move_to(cr, abs(vfl->vfo_a_x), vfl->vfo_a_y);
-
     if (txvfo == 0 && (radio_is_transmitting() || oob)) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
     } else if (vfo[0].entered_frequency[0]) {
@@ -1909,14 +1684,12 @@ void vfo_update(void) {
     } else {
       cairo_set_source_rgba(cr, COLOUR_OK);
     }
-
     f_m = af / 1000000LL;
     f_k = (af - 1000000LL * f_m) / 1000;
     f_h = (af - 1000000LL * f_m - 1000 * f_k);
     cairo_set_font_size(cr, vfl->size2);
     cairo_show_text(cr, "A:");
     cairo_set_font_size(cr, vfl->size3);
-
     if (txvfo == 0 && oob) {
       cairo_show_text(cr, "Out of band");
     } else if (vfo[0].entered_frequency[0]) {
@@ -1930,7 +1703,6 @@ void vfo_update(void) {
       //
       cairo_save(cr);
       cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
-
       if (f_m < 10) {
         cairo_show_text(cr, "0000");
       } else if (f_m < 100) {
@@ -1940,7 +1712,6 @@ void vfo_update(void) {
       } else if (f_m < 10000) {
         cairo_show_text(cr, "0");
       }
-
       cairo_restore(cr);
       snprintf(temp_text, 32, "%0d.%03d", f_m, f_k);
       cairo_show_text(cr, temp_text);
@@ -1949,7 +1720,6 @@ void vfo_update(void) {
       cairo_show_text(cr, temp_text);
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw VFO B Dial.
@@ -1957,7 +1727,6 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->vfo_b_x != 0) {
     cairo_move_to(cr, abs(vfl->vfo_b_x), abs(vfl->vfo_b_y));
-
     if (txvfo == 1 && (radio_is_transmitting() || oob)) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
     } else if (vfo[1].entered_frequency[0]) {
@@ -1967,14 +1736,12 @@ void vfo_update(void) {
     } else {
       cairo_set_source_rgba(cr, COLOUR_OK);
     }
-
     f_m = bf / 1000000LL;
     f_k = (bf - 1000000LL * f_m) / 1000;
     f_h = (bf - 1000000LL * f_m - 1000 * f_k);
     cairo_set_font_size(cr, vfl->size2);
     cairo_show_text(cr, "B:");
     cairo_set_font_size(cr, vfl->size3);
-
     if (txvfo == 0 && oob) {
       cairo_show_text(cr, "Out of band");
     } else if (vfo[1].entered_frequency[0]) {
@@ -1988,7 +1755,6 @@ void vfo_update(void) {
       //
       cairo_save(cr);
       cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
-
       if (f_m < 10) {
         cairo_show_text(cr, "0000");
       } else if (f_m < 100) {
@@ -1998,7 +1764,6 @@ void vfo_update(void) {
       } else if (f_m < 10000) {
         cairo_show_text(cr, "0");
       }
-
       cairo_restore(cr);
       snprintf(temp_text, 32, "%0d.%03d", f_m, f_k);
       cairo_show_text(cr, temp_text);
@@ -2007,13 +1772,11 @@ void vfo_update(void) {
       cairo_show_text(cr, temp_text);
     }
   }
-
   //
   // Everything that follows uses font size 1
   //
   // cairo_set_font_size(cr, vfl->size1);
   cairo_set_font_size(cr, 14.0);
-
   // -----------------------------------------------------------
   //
   // Draw string indicating Zoom status
@@ -2021,17 +1784,14 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->zoom_x != 0) {
     cairo_move_to(cr, vfl->zoom_x, vfl->zoom_y);
-
     if (active_receiver->zoom > 1) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     snprintf(temp_text, 32, "Zoom %d", active_receiver->zoom);
     cairo_show_text(cr, temp_text);
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating PS status
@@ -2039,16 +1799,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if ((protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) && can_transmit && vfl->ps_x != 0) {
     cairo_move_to(cr, vfl->ps_x, vfl->ps_y);
-
     if (transmitter->puresignal) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "PS");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating RIT offset
@@ -2060,12 +1817,10 @@ void vfo_update(void) {
     } else {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
-
     snprintf(temp_text, 32, "RIT %lldHz", vfo[id].rit);
     cairo_move_to(cr, vfl->rit_x, vfl->rit_y);
     cairo_show_text(cr, temp_text);
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating XIT offset
@@ -2077,12 +1832,10 @@ void vfo_update(void) {
     } else {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
-
     snprintf(temp_text, 32, "XIT %lldHz", vfo[txvfo].xit);
     cairo_move_to(cr, vfl->xit_x, vfl->xit_y);
     cairo_show_text(cr, temp_text);
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating NB status
@@ -2090,25 +1843,21 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->nb_x != 0) {
     cairo_move_to(cr, vfl->nb_x, vfl->nb_y);
-
     switch (active_receiver->nb) {
     case 1:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NB");
       break;
-
     case 2:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NB2");
       break;
-
     default:
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       cairo_show_text(cr, "NB");
       break;
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating NR status
@@ -2116,35 +1865,29 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->nr_x != 0) {
     cairo_move_to(cr, vfl->nr_x, vfl->nr_y);
-
     switch (active_receiver->nr) {
     case 1:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR");
       break;
-
     case 2:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR2");
       break;
-
     case 3:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR3");
       break;
-
     case 4:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR4");
       break;
-
     default:
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       cairo_show_text(cr, "NR");
       break;
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating ANF status
@@ -2152,16 +1895,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->anf_x != 0) {
     cairo_move_to(cr, vfl->anf_x, vfl->anf_y);
-
     if (active_receiver->anf) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "ANF");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating SNB status
@@ -2169,16 +1909,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->snb_x != 0) {
     cairo_move_to(cr, vfl->snb_x, vfl->snb_y);
-
     if (active_receiver->snb) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "SNB");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating DEXP status
@@ -2186,16 +1923,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->dexp_x != 0 && can_transmit) {
     cairo_move_to(cr, vfl->dexp_x, vfl->dexp_y);
-
     if (transmitter->dexp) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "DEXP");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating AGC status
@@ -2203,35 +1937,29 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->agc_x != 0) {
     cairo_move_to(cr, vfl->agc_x, vfl->agc_y);
-
     switch (active_receiver->agc) {
     case AGC_OFF:
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       cairo_show_text(cr, "AGC off");
       break;
-
     case AGC_LONG:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "AGC long");
       break;
-
     case AGC_SLOW:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "AGC slow");
       break;
-
     case AGC_MEDIUM:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "AGC med");
       break;
-
     case AGC_FAST:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "AGC fast");
       break;
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating compressor status
@@ -2239,30 +1967,24 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (can_transmit && vfl->cmpr_x != 0) {
     cairo_move_to(cr, vfl->cmpr_x, vfl->cmpr_y);
-
     if (transmitter->cfc && transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC %+d %+d", (int) transmitter->cfc_lvl[0], (int) transmitter->cfc_post[0]);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
-
     if (transmitter->cfc && !transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC PR %+d", (int) transmitter->cfc_lvl[0]);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
-
     if (!transmitter->cfc && transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC PO %+d", (int) transmitter->cfc_post[0]);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
-
     if (!transmitter->cfc && !transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC");
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, temp_text);
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating equalizer status
@@ -2270,7 +1992,6 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->eq_x != 0) {
     cairo_move_to(cr, vfl->eq_x + 22, vfl->eq_y);
-
     if (active_receiver->eq_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "RxEQ");
@@ -2279,7 +2000,6 @@ void vfo_update(void) {
       cairo_show_text(cr, "RxEQ");
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating DIVERSITY status
@@ -2287,22 +2007,18 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->div_x != 0) {
     cairo_move_to(cr, vfl->div_x, vfl->div_y);
-
     if (can_transmit) {
       if (transmitter->compressor) {
         snprintf(temp_text, 32, "PROC %+d", (int) transmitter->compressor_level);
         cairo_set_source_rgba(cr, COLOUR_ATTN);
       }
-
       if (!transmitter->compressor) {
         snprintf(temp_text, 32, "PROC");
         cairo_set_source_rgba(cr, COLOUR_SHADE);
       }
-
       cairo_show_text(cr, temp_text);
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating VFO step size
@@ -2310,19 +2026,15 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->step_x != 0) {
     int s;
-
     for (s = 0; s < STEPS; s++) {
       if (steps[s] == vfo[id].step) { break; }
     }
-
     if (s >= STEPS) { s = 0; }
-
     snprintf(temp_text, 32, "Step %s", step_labels[s]);
     cairo_move_to(cr, vfl->step_x, vfl->step_y);
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_show_text(cr, temp_text);
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating CTUN status
@@ -2330,16 +2042,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->ctun_x != 0) {
     cairo_move_to(cr, vfl->ctun_x + 5, vfl->ctun_y);
-
     if (vfo[id].ctun) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "CTUN");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating CAT status
@@ -2347,42 +2056,33 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->cat_x != 0) {
     cairo_move_to(cr, vfl->cat_x, vfl->cat_y);
-
     if (cat_control > 0) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "CAT");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating MUTE status
   //
   // -----------------------------------------------------------
-
   if (vfl->mute_x != 0) {
     cairo_move_to(cr, vfl->mute_x, vfl->mute_y);
-
     if (active_receiver->mute_radio) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     snprintf(temp_text, 32, "MUTE");
     cairo_show_text(cr, temp_text);
   }
-
   // TX-EQ & Leveler & Tuning state
   if (can_transmit && vfl->eq_x != 0) {
     cairo_move_to(cr, vfl->base_x + 40, vfl->base_y);
-
     if (transmitter->eq_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
-
       if (transmitter->eq_gain[0] == 0.0) {
         snprintf(temp_text, 32, "TxEQ");
       } else {
@@ -2392,10 +2092,8 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, 32, "TxEQ");
     }
-
     cairo_show_text(cr, temp_text);
     cairo_move_to(cr, vfl->base_x + 110, vfl->base_y);
-
     if (transmitter->lev_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       snprintf(temp_text, 32, "LEV %+d", (int) transmitter->lev_gain);
@@ -2403,10 +2101,8 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, 32, "LEV");
     }
-
     cairo_show_text(cr, temp_text);
     cairo_move_to(cr, vfl->base_x + 180, vfl->base_y);
-
     if (transmitter->phrot_enable) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       snprintf(temp_text, 32, "PH-ROT %+d", (int) transmitter->phrot_stage);
@@ -2414,13 +2110,10 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, 32, "PH-ROT");
     }
-
     cairo_show_text(cr, temp_text);
 #if defined (__AUTOG__)
-
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 20);
-
       if (autogain_enabled && autogain_is_adjusted) {
         cairo_set_source_rgba(cr, COLOUR_OK);
       } else if (autogain_enabled) {
@@ -2428,44 +2121,34 @@ void vfo_update(void) {
       } else {
         cairo_set_source_rgba(cr, COLOUR_SHADE);
       }
-
       if (autogain_time_enabled) {
         snprintf(temp_text, 32, "AGT");
       } else {
         snprintf(temp_text, 32, "AG");
       }
-
       cairo_show_text(cr, temp_text);
-
       if (!have_radioberry1 &&  !have_radioberry2 && !have_radioberry3) {
         cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 35);
-
         if (hl2_cl1_input) {
           cairo_set_source_rgba(cr, COLOUR_OK);
         } else {
           cairo_set_source_rgba(cr, COLOUR_SHADE);
         }
-
         snprintf(temp_text, 32, "CL1");
         cairo_show_text(cr, temp_text);
       }
     }
-
 #endif
     cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 50);
-
     if (active_receiver->panadapter_autoscale_enabled) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     snprintf(temp_text, 32, "NFA");
     cairo_show_text(cr, temp_text);
-
     if (vfl->tuned_x != 0) {
       cairo_move_to(cr, vfl->tuned_x, vfl->tuned_y);
-
       if (transmitter->is_tuned) {
         cairo_set_source_rgba(cr, COLOUR_OK);
         snprintf(temp_text, 32, "TUNED");
@@ -2473,15 +2156,12 @@ void vfo_update(void) {
         cairo_set_source_rgba(cr, COLOUR_ALARM);
         snprintf(temp_text, 32, "TUNED");
       }
-
       cairo_show_text(cr, temp_text);
     }
   }
-
   // IO device indicator
   if (vfl->iob_x != 0 && device == DEVICE_HERMES_LITE2) {
     cairo_move_to(cr, vfl->iob_x, vfl->iob_y);
-
     if (hl2_pico_is_present()) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       snprintf(temp_text, sizeof(temp_text), "IO: Pico or SoC");
@@ -2496,7 +2176,6 @@ void vfo_update(void) {
       cairo_show_text(cr, temp_text);
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating VOX status
@@ -2504,16 +2183,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (can_transmit && vfl->vox_x != 0) {
     cairo_move_to(cr, vfl->vox_x, vfl->vox_y);
-
     if (vox_enabled) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "VOX");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating LOCK status
@@ -2521,16 +2197,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->lock_x != 0) {
     cairo_move_to(cr, vfl->lock_x, vfl->lock_y);
-
     if (locked) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "Locked");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating MICGAIN status
@@ -2540,43 +2213,34 @@ void vfo_update(void) {
     cairo_move_to(cr, vfl->mgain_x, vfl->mgain_y);
     int id = active_receiver->id;
     int m = vfo[id].mode;
-
     if (m == modeDIGU || m == modeDIGL) {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     } else {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
-
     if (transmitter->addgain_enable) {
       snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int) transmitter->mic_gain + (int) transmitter->addgain_gain);
     } else {
       snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int) transmitter->mic_gain);
     }
-
     cairo_show_text(cr, temp_text);
   }
-
   if (can_transmit && device == DEVICE_HERMES_LITE2) {
     cairo_move_to(cr, vfl->split_x, 59);
-
     if (enable_hl2_atu_gateware) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "ATU");
     cairo_move_to(cr, vfl->dexp_x, 59);
-
     if (pa_enabled) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "PA");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating SPLIT status
@@ -2584,16 +2248,13 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->split_x != 0) {
     cairo_move_to(cr, vfl->split_x, vfl->split_y);
-
     if (split) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     cairo_show_text(cr, "Split");
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating SAT status
@@ -2601,20 +2262,17 @@ void vfo_update(void) {
   // -----------------------------------------------------------
   if (vfl->sat_x != 0) {
     cairo_move_to(cr, vfl->sat_x, vfl->sat_y);
-
     if (sat_mode != SAT_NONE) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     if (sat_mode == SAT_NONE || sat_mode == SAT_MODE) {
       cairo_show_text(cr, "SAT");
     } else {
       cairo_show_text(cr, "RSAT");
     }
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating DUPLEX and CESSB status
@@ -2626,43 +2284,36 @@ void vfo_update(void) {
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     snprintf(temp_text, 32, "DUP");
     cairo_move_to(cr, vfl->dup_x, vfl->dup_y);
     cairo_show_text(cr, temp_text);
   }
-
   if (can_transmit && vfl->dup_x != 0) {
     if (transmitter->compressor && transmitter->cessb_enable && transmitter->compressor_level > 0) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-
     snprintf(temp_text, 32, "CESSB");
     cairo_move_to(cr, vfl->dup_x + 38, vfl->dup_y + 15);
     cairo_show_text(cr, temp_text);
   }
-
   // -----------------------------------------------------------
   //
   // Draw string indicating multifunction encoder status
   //
   // -----------------------------------------------------------
   int multi = GetMultifunctionStatus();
-
   if (vfl->multifn_x != 0 && multi != 0) {
     if (multi == 1) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     } else {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
     }
-
     GetMultifunctionString(temp_text, 32);
     cairo_move_to(cr, vfl->multifn_x, vfl->multifn_y);
     cairo_show_text(cr, temp_text);
   }
-
   cairo_destroy(cr);
   gtk_widget_queue_draw(vfo_panel);
 }
@@ -2670,22 +2321,17 @@ void vfo_update(void) {
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_press_event_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int v;
-
   switch (event->button) {
   case GDK_BUTTON_PRIMARY:
     v = VFO_A;
-
     if (event->x >= abs(vfo_layout_list[vfo_layout].vfo_b_x)) { v = VFO_B; }
-
     g_idle_add(ext_start_vfo, GINT_TO_POINTER(v));
     break;
-
   case GDK_BUTTON_SECONDARY:
     // do not discriminate between A and B
     g_idle_add(ext_start_band, NULL);
     break;
   }
-
   return TRUE;
 }
 
@@ -2717,25 +2363,19 @@ GtkWidget *vfo_init(int width, int height) {
 
 int vfo_get_tx_vfo(void) {
   int txvfo = active_receiver->id;
-
   if (split) { txvfo = 1 - txvfo; }
-
   return txvfo;
 }
 
 int vfo_get_tx_mode(void) {
   int txvfo = active_receiver->id;
-
   if (split) { txvfo = 1 - txvfo; }
-
   return vfo[txvfo].mode;
 }
 
 long long vfo_get_tx_freq(void) {
   int txvfo = active_receiver->id;
-
   if (split) { txvfo = 1 - txvfo; }
-
   if (vfo[txvfo].ctun) {
     return  vfo[txvfo].ctun_frequency;
   } else {
@@ -2760,32 +2400,26 @@ void vfo_xit_toggle(void) {
 
 void vfo_rit_toggle(int id) {
   TOGGLE(vfo[id].rit_enabled);
-
   if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
 void vfo_rit_value(int id, long long value) {
   vfo[id].rit = value;
   vfo[id].rit_enabled = value ? 1 : 0;
-
   if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
 void vfo_rit_onoff(int id, int enable) {
   vfo[id].rit_enabled = SET(enable);
-
   if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -2799,13 +2433,11 @@ void vfo_xit_onoff(int enable) {
 void vfo_xit_incr(int incr) {
   int id = vfo_get_tx_vfo();
   long long value = vfo[id].xit + incr;
-
   if (value < -9999) {
     value = -9999;
   } else if (value > 9999) {
     value = 9999;
   }
-
   vfo[id].xit = value;
   vfo[id].xit_enabled = (value != 0);
   schedule_high_priority();
@@ -2814,20 +2446,16 @@ void vfo_xit_incr(int incr) {
 
 void vfo_rit_incr(int id, int incr) {
   long long value = vfo[id].rit + incr;
-
   if (value < -9999) {
     value = -9999;
   } else if (value > 9999) {
     value = 9999;
   }
-
   vfo[id].rit = value;
   vfo[id].rit_enabled = (value != 0);
-
   if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
-
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -2855,9 +2483,7 @@ void vfo_set_frequency(int v, long long f) {
   // bandstacks.
   //
   vfo_adjust_band(v, f);
-
   if (v == VFO_A) { rx_set_frequency(receiver[0], f); }
-
   if (v == VFO_B) {
     //
     // If there is only one receiver, there is no RX running that
@@ -2869,7 +2495,6 @@ void vfo_set_frequency(int v, long long f) {
       rx_set_frequency(receiver[1], f);
     } else {
       vfo[v].frequency = f;
-
       if (vfo[v].ctun) {
         vfo[v].ctun = 0;
         vfo[v].offset = 0;
@@ -2877,9 +2502,7 @@ void vfo_set_frequency(int v, long long f) {
       }
     }
   }
-
   g_idle_add(ext_vfo_update, NULL);
-
   if (!tci_is_applying()) {
     tci_vfo_changed(v);
     tci_tx_frequency_changed();
@@ -2896,15 +2519,12 @@ void vfo_ctun_update(int id, int state) {
   //       we should update ctun_frequency and offset
   //
   if (vfo[id].ctun == state) { return; }  // no-op if no change
-
   vfo[id].ctun = state;
-
   if (vfo[id].ctun) {
     // CTUN turned OFF->ON
     vfo[id].ctun_frequency = vfo[id].frequency;
     vfo[id].offset = 0;
     vfo_adjust_band(id, vfo[id].ctun_frequency);
-
     if (id < receivers) {
       rx_set_frequency(receiver[id], vfo[id].ctun_frequency);
     }
@@ -2913,7 +2533,6 @@ void vfo_ctun_update(int id, int state) {
     vfo[id].frequency = vfo[id].ctun_frequency;
     vfo[id].offset = 0;
     vfo_adjust_band(id, vfo[id].frequency);
-
     if (id < receivers) {
       rx_set_frequency(receiver[id], vfo[id].ctun_frequency);
     }

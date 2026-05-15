@@ -59,7 +59,6 @@ void xshift(SHIFT a) {
     double I1, Q1, t1, t2;
     double cos_phase = cos(a->phase);
     double sin_phase = sin(a->phase);
-
     for (i = 0; i < a->size; i++) {
       I1 = a->in[2 * i + 0];
       Q1 = a->in[2 * i + 1];
@@ -70,9 +69,7 @@ void xshift(SHIFT a) {
       cos_phase = t1 * a->cos_delta - t2 * a->sin_delta;
       sin_phase = t1 * a->sin_delta + t2 * a->cos_delta;
       a->phase += a->delta;
-
       if (a->phase >= TWOPI) { a->phase -= TWOPI; }
-
       if (a->phase <   0.0) { a->phase += TWOPI; }
     }
   } else if (a->in != a->out) {

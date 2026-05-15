@@ -61,7 +61,6 @@ static gboolean close_cb(void) {
 
 void update_noise(void) {
   int id = active_receiver->id;
-
   //
   // Update the mode settings
   //
@@ -72,7 +71,6 @@ void update_noise(void) {
     mode_settings[mode].anf = active_receiver->anf;
     mode_settings[mode].snb = active_receiver->snb;
     mode_settings[mode].nr2_ae = active_receiver->nr2_ae;
-
     if ((GetWDSPVersion() % 100) > 26) {
       mode_settings[mode].nr2_post = active_receiver->nr2_post;
       mode_settings[mode].nr2_post_taper = active_receiver->nr2_post_taper;
@@ -80,7 +78,6 @@ void update_noise(void) {
       mode_settings[mode].nr2_post_factor = active_receiver->nr2_post_factor;
       mode_settings[mode].nr2_post_rate = active_receiver->nr2_post_rate;
     }
-
     mode_settings[mode].nr_agc = active_receiver->nr_agc;
     mode_settings[mode].nb2_mode = active_receiver->nb2_mode;
     mode_settings[mode].nr2_gain_method = active_receiver->nr2_gain_method;
@@ -98,13 +95,10 @@ void update_noise(void) {
     mode_settings[mode].nr4_post_filter_threshold = active_receiver->nr4_post_filter_threshold;
     copy_mode_settings(mode);
   }
-
   rx_set_noise(active_receiver);
   g_idle_add(ext_vfo_update, NULL);
-
   if (display_sliders) {
     int mode = vfo[id].mode;
-
     if (mode == modeDIGL || mode == modeDIGU) {
       update_slider_nr_btn(FALSE);
       update_slider_snb_button(FALSE);
@@ -119,7 +113,6 @@ void update_notch(void) {
   if (active_receiver == NULL) {
     return;
   }
-
   rx_set_notch(active_receiver);
   g_idle_add(ext_vfo_update, NULL);
 }
@@ -484,7 +477,6 @@ void noise_menu(GtkWidget *parent) {
   gtk_box_pack_start(GTK_BOX(box_ae), b_ae, FALSE, FALSE, 5);
   gtk_widget_show_all(box_ae);
   gtk_grid_attach(GTK_GRID(nr_grid), box_ae, 2, 2, 2, 1);
-
   //
   if ((GetWDSPVersion() % 100) > 26) {
     GtkWidget *box_nr2_post = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
@@ -546,7 +538,6 @@ void noise_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_taper, 3, 4, 1, 1);
     g_signal_connect(b_nr2_post_taper, "changed", G_CALLBACK(post_taper_cb), NULL);
   }
-
   //
   GtkWidget *trained_thr_title = gtk_label_new("NR2 Trained Thresh");
   gtk_widget_set_name(trained_thr_title, "boldlabel");
@@ -705,7 +696,6 @@ void noise_menu(GtkWidget *parent) {
   gtk_widget_set_size_request(nr4_grid, width, -1);
   gtk_widget_hide(nb_container);
   gtk_widget_hide(nr4_container);
-
   // Start Anpassung das NR4 angezeigt wird, wenn aktiv
   if (active_receiver->nr == 4) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(nr4_sel), TRUE);
@@ -723,6 +713,5 @@ void noise_menu(GtkWidget *parent) {
     gtk_widget_hide(nr4_container);
     gtk_widget_hide(nb_container);
   }
-
   // Ende Anpassung das NR4 angezeigt wird, wenn aktiv
 }

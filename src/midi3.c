@@ -57,14 +57,11 @@ void DoTheMidi(int action, enum ACTIONtype type, int val) {
     //t_print("%s: action=%d val=%d\n", __func__, action, val);
     schedule_action(action, val ? PRESSED : RELEASED, 0);
     break;
-
   case MIDI_KNOB:
     //t_print("%s: action=%d val=%d\n", __func__, action, val);
     schedule_action(action, ABSOLUTE, val);
     break;
-
   case MIDI_WHEEL:
-
     //
     // There are "big wheels" at various MIDI consoles that can produce MIDI events
     // with rather high frequency, and these are usually used for VFO, VFOA, VFOB
@@ -76,44 +73,32 @@ void DoTheMidi(int action, enum ACTIONtype type, int val) {
     case VFOA:
       g_mutex_lock(&vfoa_timer.lock);
       vfoa_timer.val += val;
-
       if (vfoa_timer.timeout == 0) {
         vfoa_timer.timeout = g_timeout_add(100, vfo_timeout_cb, &vfoa_timer);
       }
-
       g_mutex_unlock(&vfoa_timer.lock);
       break;
-
     case VFOB:
       g_mutex_lock(&vfob_timer.lock);
       vfob_timer.val += val;
-
       if (vfob_timer.timeout == 0) {
         vfob_timer.timeout = g_timeout_add(100, vfo_timeout_cb, &vfob_timer);
       }
-
       g_mutex_unlock(&vfob_timer.lock);
       break;
-
     case VFO:
       g_mutex_lock(&vfo_timer.lock);
       vfo_timer.val += val;
-
       if (vfo_timer.timeout == 0) {
         vfo_timer.timeout = g_timeout_add(100, vfo_timeout_cb, &vfo_timer);
       }
-
       g_mutex_unlock(&vfo_timer.lock);
       break;
-
     default:
       if (rigctl_debug) { t_print("%s: action=%d val=%d\n", __func__, action, val); }
-
       schedule_action(action, RELATIVE, val);
     }
-
     break;
-
   default:
     // other types cannot happen for MIDI
     break;

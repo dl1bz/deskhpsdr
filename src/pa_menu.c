@@ -86,7 +86,6 @@ static void pa_value_changed_cb(GtkWidget *widget, gpointer data) {
   int txvfo = vfo_get_tx_vfo();
   int b = vfo[txvfo].band;
   const BAND *current = band_get_band(b);
-
   if (band == current) {
     radio_calc_drive_level();
   }
@@ -100,7 +99,6 @@ static void trim_changed_cb(GtkWidget *widget, gpointer data) {
   int i = GPOINTER_TO_INT(data);
   int k, flag;
   flag = 0;
-
   //
   // The 'flag' indicates that we do a single-shot calibration,
   // that is, the pa_trim[] values reflect a constant
@@ -111,16 +109,12 @@ static void trim_changed_cb(GtkWidget *widget, gpointer data) {
   //
   if (i == 10) {
     flag = 1;
-
     for (k = 1; k < 10; k++) {
       double fac = ((double) k * pa_trim[10]) / (10.0 * pa_trim[k]);
-
       if (fac < 0.99 || fac > 1.01) { flag = 0; }
     }
   }
-
   pa_trim[i] = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
   if (flag) {
     // note that we have i==10 if the flag is nonzero.
     for (k = 1; k < 10; k++) {
@@ -136,13 +130,11 @@ static void show_W(int watts, gboolean reset) {
   int units;
   char text[16];
   double increment = 0.1 * watts;
-
   if (reset) {
     for (i = 0; i < 11; i++) {
       pa_trim[i] = i * increment;
     }
   }
-
   if (watts <= 1) {
     units = 0;
   } else if (watts <= 5) {
@@ -150,29 +142,23 @@ static void show_W(int watts, gboolean reset) {
   } else {
     units = 2;
   }
-
   row = 1;
   col = 0;
-
   for (i = 1; i < 11; i++) {
     switch (units) {
     case 0:
       snprintf(text, 16, "%0.3fW", i * increment);
       break;
-
     case 1:
       snprintf(text, 16, "%0.1fW", i * increment);
       break;
-
     case 2:
       snprintf(text, 16, "%dW", (int)(i * increment));
       break;
     }
-
     GtkWidget *label = gtk_label_new(text);
     gtk_widget_set_name(label, "boldlabel");
     gtk_grid_attach(GTK_GRID(calibgrid), label, col++, row, 1, 1);
-
     //
     // We *need* a maximum value for the spinner, but a quite large
     // value does not harm. So we allow up to 5 times the nominal
@@ -182,20 +168,16 @@ static void show_W(int watts, gboolean reset) {
     case 0:
       spin[i] = gtk_spin_button_new_with_range(0.001, (double)(5 * i * increment), 0.001);
       break;
-
     case 1:
       spin[i] = gtk_spin_button_new_with_range(0.1, (double)(5 * i * increment), 0.1);
       break;
-
     case 2:
       spin[i] = gtk_spin_button_new_with_range(1.0, (double)(5 * i * increment), 1.0);
       break;
     }
-
     gtk_grid_attach(GTK_GRID(calibgrid), spin[i], col++, row, 1, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin[i]), (double) pa_trim[i]);
     g_signal_connect(spin[i], "value_changed", G_CALLBACK(trim_changed_cb), GINT_TO_POINTER(i));
-
     if (col == 4) {
       row++;
       col = 0;
@@ -205,7 +187,6 @@ static void show_W(int watts, gboolean reset) {
 
 static void clear_W(void) {
   int i;
-
   for (i = 0; i < 10; i++) {
     gtk_grid_remove_row(GTK_GRID(calibgrid), 1);
     spin[i] = NULL;
@@ -252,10 +233,8 @@ static void pa_calibration_load_native_response_cb(GtkNativeDialog *native,
     gpointer user_data) {
   gchar *filename;
   GtkWidget *msg;
-
   if (response == GTK_RESPONSE_ACCEPT) {
     filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
-
     if (filename != NULL) {
       if (PaCalibrationLoad(filename)) {
         update_pa_calibration_widgets();
@@ -272,7 +251,6 @@ static void pa_calibration_load_native_response_cb(GtkNativeDialog *native,
                                      "ERROR: PA calibration not loaded\nReason: Device_ID mismatch"
                                     );
       }
-
       gtk_window_set_transient_for(GTK_WINDOW(msg), GTK_WINDOW(dialog));
       gtk_window_set_position(GTK_WINDOW(msg), GTK_WIN_POS_CENTER_ON_PARENT);
       gtk_dialog_run(GTK_DIALOG(msg));
@@ -280,7 +258,6 @@ static void pa_calibration_load_native_response_cb(GtkNativeDialog *native,
       g_free(filename);
     }
   }
-
   g_object_unref(native);
 }
 
@@ -292,11 +269,9 @@ static void load_cb(GtkWidget *widget, gpointer user_data) {
                                        GTK_FILE_CHOOSER_ACTION_OPEN,
                                        "_Open",
                                        "_Cancel");
-
   if (*workdir) {
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(native), workdir);
   }
-
   filter = gtk_file_filter_new();
   gtk_file_filter_set_name(filter, "PA Calibration (*.props)");
   gtk_file_filter_add_pattern(filter, "*.props");
@@ -369,7 +344,6 @@ void pa_menu(GtkWidget *parent) {
   g_signal_connect(load_b, "clicked", G_CALLBACK(load_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid0), load_b, 5, 0, 1, 1);
   //-------------------------------------------------------------------------------------------
-
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
@@ -378,7 +352,6 @@ void pa_menu(GtkWidget *parent) {
     gtk_widget_set_vexpand(grid, TRUE);
     int bands = radio_max_band();
     int b = 0;
-
     if (tx_out_of_band_allowed) {
       //
       // If out-of-band TXing is allowed, we need a PA calibration value
@@ -399,7 +372,6 @@ void pa_menu(GtkWidget *parent) {
       g_signal_connect(pa_r, "value_changed", G_CALLBACK(pa_value_changed_cb), band);
       b++;
     }
-
     for (int i = 0; i <= bands; i++) {
       BAND *band = band_get_band(i);
       GtkWidget *band_label = gtk_label_new(band->title);
@@ -414,10 +386,8 @@ void pa_menu(GtkWidget *parent) {
       g_signal_connect(pa_r, "value_changed", G_CALLBACK(pa_value_changed_cb), band);
       b++;
     }
-
     for (int i = BANDS; i < BANDS + XVTRS; i++) {
       BAND *band = band_get_band(i);
-
       if (strlen(band->title) > 0) {
         GtkWidget *band_label = gtk_label_new(band->title);
         gtk_widget_set_name(band_label, "boldlabel");
@@ -432,7 +402,6 @@ void pa_menu(GtkWidget *parent) {
         b++;
       }
     }
-
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1
         && !have_radioberry2 && !have_radioberry3) {
       // Calibrate-Seite: Grid in VBox einbetten und Footer unten anhängen
@@ -460,7 +429,6 @@ void pa_menu(GtkWidget *parent) {
       gtk_notebook_append_page(GTK_NOTEBOOK(notebook), grid, gtk_label_new("Calibrate"));
     }
   }
-
   calibgrid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(calibgrid), 10);
   win_set_bgcolor(calibgrid, &mwin_bgcolor);

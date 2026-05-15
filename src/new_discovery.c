@@ -74,17 +74,13 @@ void new_discovery(void) {
   int i, is_local, rc;
   int resolved = 0;
   rc = getifaddrs(&addrs);
-
   if (rc != 0) {
     t_perror("new_discovery: getifaddrs failed");
     return;
   }
-
   ifa = addrs;
-
   while (ifa) {
     g_main_context_iteration(NULL, 0);
-
     //
     // Sometimes there are many (virtual) interfaces, and some
     // of them are very unlikely to offer a radio connection.
@@ -103,10 +99,8 @@ void new_discovery(void) {
         new_discover(ifa, 1);   // send UDP broadcast packet to interface
       }
     }
-
     ifa = ifa->ifa_next;
   }
-
   freeifaddrs(addrs);
   //
   // If an IP address has already been "discovered" via a
@@ -118,7 +112,6 @@ void new_discovery(void) {
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_DGRAM;
   rc = getaddrinfo(ipaddr_radio, NULL, &hints, &res);
-
   if (rc == 0 && res != NULL) {
     if (res->ai_family == AF_INET &&
         res->ai_addrlen >= (socklen_t) sizeof(struct sockaddr_in)) {
@@ -127,16 +120,13 @@ void new_discovery(void) {
       resolved_addr = addr.sin_addr;
       resolved = 1;
     }
-
     freeaddrinfo(res);
     res = NULL;
   }
-
   for (i = 0; i < devices; i++) {
     if (discovered[i].protocol != NEW_PROTOCOL) {
       continue;
     }
-
     if ((resolved &&
          discovered[i].info.network.address.sin_addr.s_addr == resolved_addr.s_addr) ||
         (!resolved &&
@@ -144,11 +134,8 @@ void new_discovery(void) {
       is_local = 1;
     }
   }
-
   if (!is_local) { new_discover(NULL, 2); }
-
   t_print("new_discovery found %d devices\n", devices);
-
   for (i = 0; i < devices; i++) {
     print_device(i);
   }
@@ -167,7 +154,6 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
   unsigned char buffer[60];
   struct sockaddr_in to_addr = {0};
   int i;
-
   switch (discflag) {
   case 1:
     //
@@ -177,40 +163,33 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     t_print("new_discover: looking for HPSDR devices on %s\n", interface_name);
     // send a broadcast to locate metis boards on the network
     discovery_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
     if (discovery_socket < 0) {
       t_perror("new_discover: create socket failed for discovery_socket\n");
       return;
     }
-
     if (iface->ifa_addr->sa_family == AF_INET) {
       memcpy(&interface_addr, iface->ifa_addr, sizeof(interface_addr));
       memcpy(&interface_netmask, iface->ifa_netmask, sizeof(interface_netmask));
     }
-
     // bind to this interface and the discovery port
     interface_addr.sin_family = AF_INET;
     interface_addr.sin_port = htons(0);  // system assigned port
-
     if (bind(discovery_socket, (struct sockaddr *) &interface_addr, sizeof(interface_addr)) < 0) {
       t_perror("new_discover: bind socket failed for discovery_socket\n");
       close(discovery_socket);
       return;
     }
-
     g_strlcpy(addr, inet_ntoa(sa->sin_addr), sizeof(addr));
     g_strlcpy(net_mask, inet_ntoa(mask->sin_addr), sizeof(net_mask));
     t_print("%s: bound to interface %s address %s mask %s\n", __func__, interface_name, addr, net_mask);
     // allow broadcast on the socket
     int on = 1;
     rc = setsockopt(discovery_socket, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
-
     if (rc != 0) {
       t_print("new_discover: cannot set SO_BROADCAST: rc=%d\n", rc);
       close(discovery_socket);
       return;
     }
-
     // setup to address
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(radio_port);
@@ -223,7 +202,6 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     //          | (ntohl(interface_netmask.sin_addr.s_addr) ^ 0xFFFFFFFF));
     //
 #ifdef __APPLE__
-
     //
     // MacOS fails for broadcasts to the loopback interface(s).
     // so if this is a loopback, simply use the loopback addr
@@ -236,10 +214,8 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       //
       to_addr.sin_addr = interface_addr.sin_addr;
     }
-
 #endif
     break;
-
   case 2: {
     //
     // prepare socket for sending an UDP packet to ipaddr_radio
@@ -255,7 +231,6 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     gai_rc = getaddrinfo(ipaddr_radio, NULL, &hints, &res);
-
     if (gai_rc == 0 && res != NULL) {
       if (res->ai_family == AF_INET &&
           res->ai_addrlen >= (socklen_t) sizeof(struct sockaddr_in)) {
@@ -273,39 +248,31 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       if (res != NULL) {
         freeaddrinfo(res);
       }
-
       if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
         t_print("new_discover: cannot resolve radio address %s: %s\n",
                 ipaddr_radio, gai_strerror(gai_rc));
         return;
       }
     }
-
     t_print("discover: looking for HPSDR device with IP %s\n", ipaddr_radio);
     discovery_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
     if (discovery_socket < 0) {
       t_perror("discover: create socket failed for discovery_socket:");
       return;
     }
   }
   break;
-
   default:
     return;
     break;
   }
-
   int optval = 1;
-
   if (setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0) {
     t_perror("new_discover: setsockopt SO_REUSEADDR failed");
   }
-
   if (setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) != 0) {
     t_perror("new_discover: setsockopt SO_REUSEPORT failed");
   }
-
   rc = devices;
   // start a receive thread to collect discovery response packets
   discover_thread_id = g_thread_new("new discover receive", new_discover_receive_thread, NULL);
@@ -315,14 +282,11 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
   buffer[2] = 0x00;
   buffer[3] = 0x00;
   buffer[4] = 0x02;
-
   for (i = 5; i < 60; i++) {
     buffer[i] = 0x00;
   }
-
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
   t_print("%s: execute TAHOE hotfix\n", __func__);
-
   //-- start fix for Tahoe --
   // Tahoe workaround: erstes UDP nach bind() kann gedroppt werden → dreifach senden
   for (int n = 0; n < 3; n++) {
@@ -331,32 +295,25 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       close(discovery_socket);
       return;
     }
-
     usleep(30000);  // 30 ms
   }
-
   //-- end fix for Tahoe --
 #else
-
   if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
     t_perror("new_discover: sendto socket failed for discovery_socket\n");
     close(discovery_socket);
     return;
   }
-
 #endif
   // wait for receive thread to complete
   g_thread_join(discover_thread_id);
   close(discovery_socket);
-
   switch (discflag) {
   case 1:
     t_print("new_discover: exiting discover for %s\n", iface->ifa_name);
     break;
-
   case 2:
     t_print("discover: exiting HPSDR discover for IP %s\n", ipaddr_radio);
-
     if (devices == rc + 1) {
       //
       // METIS detection UDP packet sent to fixed IP address got a valid response.
@@ -366,7 +323,6 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       g_strlcpy(discovered[rc].info.network.interface_name, "UDP", sizeof(discovered[rc].info.network.interface_name));
       discovered[rc].use_routing = 1;
     }
-
     break;
   }
 }
@@ -382,22 +338,17 @@ gpointer new_discover_receive_thread(gpointer data) {
   tv.tv_usec = 0;
   setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &tv, sizeof(struct timeval));
   len = sizeof(addr);
-
   while (1) {
     int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr*) &addr, &len);
-
     if (bytes_read < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
         break;
       }
-
       t_print("new_discover: bytes read %d\n", bytes_read);
       t_perror("new_discover: recvfrom socket failed for discover_receive_thread");
       break;
     }
-
     t_print("new_discover: received %d bytes\n", bytes_read);
-
     if (bytes_read == 1444) {
       // if (devices > 0) {
       //   break;
@@ -406,17 +357,13 @@ gpointer new_discover_receive_thread(gpointer data) {
     } else {
       if (buffer[0] == 0 && buffer[1] == 0 && buffer[2] == 0 && buffer[3] == 0) {
         int status = buffer[4] & 0xFF;
-
         if (status == 2 || status == 3) {
 #if defined (__APPLE__) && defined (__TAHOEFIX__)
           t_print("%s: execute TAHOE hotfix\n", __func__);
           // -- start fix for Tahoe: de-duplicate discovery responses by MAC --
           unsigned char mac_tmp[6];
-
           for (i = 0; i < 6; i++) { mac_tmp[i] = buffer[i + 5]; }  // Offset
-
           int duplicate = 0;
-
           for (int d = 0; d < devices; d++) {
             if (discovered[d].protocol == NEW_PROTOCOL &&
                 memcmp(discovered[d].info.network.mac_address, mac_tmp, 6) == 0) {
@@ -426,12 +373,9 @@ gpointer new_discover_receive_thread(gpointer data) {
               break;
             }
           }
-
           if (duplicate) { continue; }  // erst nach der MAC-Schleife
-
           // -- end fix for Tahoe --
 #endif
-
           if (devices < MAX_DEVICES) {
             discovered[devices].protocol = NEW_PROTOCOL;
             discovered[devices].device = buffer[11] & 0xFF;
@@ -441,50 +385,42 @@ gpointer new_discover_receive_thread(gpointer data) {
             // The NEW_DEVICE_XXXX numbers are just 1000+board_id
             //
             discovered[devices].device += 1000;
-
             switch (discovered[devices].device) {
             case NEW_DEVICE_ATLAS:
               g_strlcpy(discovered[devices].name, "Atlas", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 61440000.0;
               break;
-
             case NEW_DEVICE_HERMES:
               g_strlcpy(discovered[devices].name, "Hermes", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 61440000.0;
               break;
-
             case NEW_DEVICE_HERMES2:
               g_strlcpy(discovered[devices].name, "Hermes2", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 61440000.0;
               break;
-
             case NEW_DEVICE_ANGELIA:
               g_strlcpy(discovered[devices].name, "Angelia", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 61440000.0;
               break;
-
             case NEW_DEVICE_ORION:
               g_strlcpy(discovered[devices].name, "Orion", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 61440000.0;
               break;
-
             case NEW_DEVICE_ORION2:
               g_strlcpy(discovered[devices].name, "Orion2", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 61440000.0;
               break;
-
             case NEW_DEVICE_SATURN:
               g_strlcpy(discovered[devices].name, "Saturn/G2", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 61440000.0;
               break;
-
             case NEW_DEVICE_HERMES_LITE:
               if (discovered[devices].software_version < 40) {
                 g_strlcpy(discovered[devices].name, "Hermes Lite V1", sizeof(discovered[devices].name));
@@ -492,22 +428,18 @@ gpointer new_discover_receive_thread(gpointer data) {
                 g_strlcpy(discovered[devices].name, "Hermes Lite V2", sizeof(discovered[devices].name));
                 discovered[devices].device = NEW_DEVICE_HERMES_LITE2;
               }
-
               frequency_min = 0.0;
               frequency_max = 30720000.0;
               break;
-
             default:
               g_strlcpy(discovered[devices].name, "Unknown", sizeof(discovered[devices].name));
               frequency_min = 0.0;
               frequency_max = 30720000.0;
               break;
             }
-
             for (i = 0; i < 6; i++) {
               discovered[devices].info.network.mac_address[i] = buffer[i + 5];
             }
-
             memcpy((void*) &discovered[devices].info.network.address, (void*) &addr, sizeof(addr));
             discovered[devices].info.network.address_length = sizeof(addr);
             memcpy((void*) &discovered[devices].info.network.interface_address, (void*) &interface_addr,
@@ -557,7 +489,6 @@ gpointer new_discover_receive_thread(gpointer data) {
       }
     }
   }
-
   t_print("new_discover: exiting new_discover_receive_thread\n");
   g_thread_exit(NULL);
   return NULL;

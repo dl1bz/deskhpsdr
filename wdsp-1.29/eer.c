@@ -83,42 +83,35 @@ void flush_eer(EER a) {
 PORT
 void xeer(EER a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i;
     double I, Q, mag;
-
     for (i = 0; i < a->size; i++) {
       I = a->in[2 * i + 0];
       Q = a->in[2 * i + 1];
       a->outM[2 * i + 0] = I * a->mgain;
       a->outM[2 * i + 1] = Q * a->mgain;
-
       switch (a->amiq) {
       case 0:   // send phase info only, magnitude is constant
         mag = sqrt(I * I + Q * Q);
         a->out [2 * i + 0] = a->pgain * I / mag;
         a->out [2 * i + 1] = a->pgain * Q / mag;
         break;
-
       case 1:   // send magnitude and phase information, I and Q
         a->out [2 * i + 0] = a->pgain * I;
         a->out [2 * i + 1] = a->pgain * Q;
         break;
-
       case 2:   // send envelope
         mag = sqrt(I * I + Q * Q);
         a->out [2 * i + 0] = a->out[2 * i + 1] = a->pgain * mag;
         break;
       }
     }
-
     xdelay(a->mdel);    // delay for outM
     xdelay(a->pdel);    // delay for out
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -348,7 +341,6 @@ PORT
 void xeerEXTF(int id, float* inI, float* inQ, float* outI, float* outQ, float* outMI, float* outMQ, int mox,
               int size) {
   EER a = peer[id];
-
   if (mox && a->run) {
     int i;
     a->in = a->legacy;
@@ -357,14 +349,11 @@ void xeerEXTF(int id, float* inI, float* inQ, float* outI, float* outQ, float* o
     a->size = size;
     SetDelayBuffs(a->mdel, a->size, a->outM, a->outM);
     SetDelayBuffs(a->pdel, a->size, a->out, a->out);
-
     for (i = 0; i < a->size; i++) {
       a->legacy[2 * i + 0] = (double)inI[i];
       a->legacy[2 * i + 1] = (double)inQ[i];
     }
-
     xeer(a);
-
     for (i = 0; i < a->size; i++) {
       outI[i]  = (float)a->legacy [2 * i + 0];
       outQ[i]  = (float)a->legacy [2 * i + 1];

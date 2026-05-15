@@ -80,43 +80,34 @@ void xanr(ANR a, int position) {
   double c0, c1;
   double y, error, sigma, inv_sigp;
   double nel, nev;
-
   if (a->run && (a->position == position)) {
     for (i = 0; i < a->buff_size; i++) {
       a->d[a->in_idx] = a->in_buff[2 * i + 0];
       y = 0;
       sigma = 0;
-
       for (j = 0; j < a->n_taps; j++) {
         idx = (a->in_idx + j + a->delay) & a->mask;
         y += a->w[j] * a->d[idx];
         sigma += a->d[idx] * a->d[idx];
       }
-
       inv_sigp = 1.0 / (sigma + 1e-10);
       error = a->d[a->in_idx] - y;
       a->out_buff[2 * i + 0] = y;
       a->out_buff[2 * i + 1] = 0.0;
-
       if ((nel = error * (1.0 - a->two_mu * sigma * inv_sigp)) < 0.0) { nel = -nel; }
-
       if ((nev = a->d[a->in_idx] - (1.0 - a->two_mu * a->ngamma) * y - a->two_mu * error * sigma * inv_sigp) < 0.0) { nev = -nev; }
-
       if (nev < nel) {
         if ((a->lidx += a->lincr) > a->lidx_max) { a->lidx = a->lidx_max; }
       } else {
         if ((a->lidx -= a->ldecr) < a->lidx_min) { a->lidx = a->lidx_min; }
       }
-
       a->ngamma = a->gamma * (a->lidx * a->lidx) * (a->lidx * a->lidx) * a->den_mult;
       c0 = 1.0 - a->two_mu * a->ngamma;
       c1 = a->two_mu * error * inv_sigp;
-
       for (j = 0; j < a->n_taps; j++) {
         idx = (a->in_idx + j + a->delay) & a->mask;
         a->w[j] = c0 * a->w[j] + c1 * a->d[idx];
       }
-
       a->in_idx = (a->in_idx + a->mask) & a->mask;
     }
   } else if (a->in_buff != a->out_buff) {
@@ -153,7 +144,6 @@ void setSize_anr(ANR a, int size) {
 PORT void
 SetRXAANRRun(int channel, int run) {
   ANR a = rxa[channel].anr.p;
-
   if (a->run != run) {
     RXAbp1Check(channel, rxa[channel].amd.p->run, rxa[channel].snba.p->run,
                 rxa[channel].emnr.p->run, rxa[channel].anf.p->run, run,

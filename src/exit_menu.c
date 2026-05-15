@@ -58,23 +58,18 @@ void stop_program(void) {
   t_print("%s: radio stopped\n", __func__);
   t_print("%s: cleanup global cURL...\n", __func__);
   curl_global_cleanup();
-
   if (rigctl_tcp_enable) {
     rigctld_enabled = 0;
-
     if (use_rigctld) {
       stop_rigctld();
     }
-
     shutdown_tcp_rigctl();
   }
-
   if (have_saturn_xdma) {
 #ifdef SATURN
     saturn_exit();
 #endif
   }
-
   radio_save_state();
   t_print("%s: radio state saved\n", __func__);
 }

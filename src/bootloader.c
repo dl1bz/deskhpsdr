@@ -168,7 +168,6 @@ int main(int argc, char** argv) {
   mymac[5] = 0x14;
   rbffile = NULL;
   i = 0;
-
   if (argc < 2) {
     printf("Usage: bootloader [-i <iface>]  [-s <addr>] [-f <file>r] \n");
     printf("<iface> is ethernet adapter to use\n");
@@ -177,7 +176,6 @@ int main(int argc, char** argv) {
     printf("The -i, -s, -f options need administrator (root) privileges\n");
     printf("If no arguments are given, the adapters in the system are listed.\n\n");
   }
-
   while (++i < argc) {
     if (!strcmp(argv[i], "-i") && i + 1 < argc) {
       dev = argv[++i];
@@ -185,16 +183,13 @@ int main(int argc, char** argv) {
       do_lookup = 1;
       continue;
     }
-
     if (!strcmp(argv[i], "-f") && i + 1 < argc) {
       rbffile = argv[++i];
       continue;
     }
-
     if (!strcmp(argv[i], "-s") && i + 1 < argc) {
       int i1, i2, i3, i4;
       i++;
-
       if (sscanf(argv[i], "%d.%d.%d.%d", &i1, &i2, &i3, &i4) < 4) {
         printf("Could not determine IP addr from string %s\n", argv[i]);
       } else {
@@ -204,11 +199,9 @@ int main(int argc, char** argv) {
         hisip[3] = i4 & 0xff;
         do_burnip = 1;
       }
-
       continue;
     }
   }
-
   //
   // list devices
   //
@@ -216,42 +209,32 @@ int main(int argc, char** argv) {
     printf("Error in pcap_findalldevs_ex: %s\n", errbuf);
     exit(1);
   }
-
   ifp = devlist;
   have_addr = 0;
-
   while (ifp != NULL) {
     if (do_lookup && strcmp(ifp->name, dev)) {
       // we are looking for a specific interface, skip all others
       ifp = ifp->next;
       continue;
     }
-
     if (do_display) {
       have_addr = 0;
     }
-
     addr = ifp->addresses;
-
     while (addr != NULL) {
       sa = addr->addr;
-
       if (sa->sa_family == AF_INET) {
         int i1, i2, i3, i4;
         (void) inet_ntop(AF_INET, (void*) & (((struct sockaddr_in*) sa)->sin_addr), string, 256);
-
         if (sscanf(string, "%d.%d.%d.%d", &i1, &i2, &i3, &i4) == 4) {
           myip[0] = i1;
           myip[1] = i2;
           myip[2] = i3;
           myip[3] = i4;
-
           if (myip[0] > 127) { have_addr = 1; }
         }
       }
-
 #ifdef __APPLE__
-
       //
       // BSD code (e.g. MacOS), need  to include net/if_dl.h
       //
@@ -259,7 +242,6 @@ int main(int argc, char** argv) {
         link = (struct sockaddr_dl*) sa->sa_data;
         unsigned char mac[link->sdl_alen];
         memcpy(mac, LLADDR(link), link->sdl_alen);
-
         if (link->sdl_alen == 6) {
           mymac[0] = mac[0];
           mymac[1] = mac[1];
@@ -268,7 +250,6 @@ int main(int argc, char** argv) {
           mymac[4] = mac[4];
           mymac[5] = mac[5];
         }
-
         if (link->sdl_alen > 6) {
           //
           // This happens on MacOS
@@ -281,11 +262,9 @@ int main(int argc, char** argv) {
           mymac[5] = mac[6];
         }
       }
-
 #endif
       addr = addr->next;
     }
-
 #ifdef SIOCGIFHWADDR
     //
     // Alternate method to query the MAC address.
@@ -294,49 +273,36 @@ int main(int argc, char** argv) {
     struct ifreq ifr;
     int fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
     strcpy(ifr.ifr_name, ifp->name);
-
     if (ioctl(fd, SIOCGIFHWADDR, &ifr) == 0) {
       memcpy(mymac, ifr.ifr_addr.sa_data, 6);
     }
-
 #endif
-
     if (have_addr) {
       printf("Interface=%-10s MAC=%02x:%02x:%02x:%02x:%02x:%02x Address=%d.%d.%d.%d\n",
              ifp->name,
              mymac[0], mymac[1], mymac[2], mymac[3], mymac[4], mymac[5],
              myip[0], myip[1], myip[2], myip[3]);
     }
-
     ifp = ifp->next;
   }
-
   pcap_freealldevs(devlist);
-
   //
   // If no suitable interface has been specified
   // (or if this is a "display" run), give up.
   //
   if (dev == NULL) { return 0; }  // this was a "display" run
-
   if (!have_addr) { printf("Interface %s has no IP  address (exiting).\n", dev); }
-
   if (!have_addr) { return 8; }
-
   //
   //  Check some assumptions about RBF file
   //
   rbffd = -1;
-
   if (rbffile != NULL) {
     rbffd = open(rbffile, O_RDONLY);
-
     if (rbffd < 0) {
       perror("Open RBF file");
     }
-
     i = strlen(rbffile);
-
     if (i < 5) {
       rbffd = -1;
     } else {
@@ -345,78 +311,61 @@ int main(int argc, char** argv) {
         rbffd = -1;
       }
     }
-
     if (rbffd >= 0) {
       rbflen = lseek(rbffd, 0, SEEK_END);
-
       if (rbflen < 100000UL) {
         printf("RBF file seems unreasonably short,  ignoring.\n");
         close(rbffd);
         rbffd = -1;
       } else {
         printf("RBF file %s length = %ld bytes\n", rbffile, (long) rbflen);
-
         if (rbflen % 256 != 0) {
           rbfxfr = 256 * (rbflen / 256 + 1);
         } else {
           rbfxfr = rbflen;
         }
-
         printf("RBF transfer length = %ld bytes (%d blocks)\n", (long) rbfxfr, (int)(rbfxfr / 256));
       }
     }
   }
-
   if (do_burnip) {
     printf("Shall burn IP addr = (%d,%d,%d,%d) into radio.\n", hisip[0], hisip[1], hisip[2], hisip[3]);
   }
-
   if (do_burnip || rbffd >= 0) {
     printf("Is this OK (y/n)?\n");
     i = getchar();
-
     if (i != 'y' && i != 'Y') { return 0; }
   }
-
   //
   // Read rbf file into memory
   //
   if (rbffd >= 0) {
     rbfcontent = malloc(rbfxfr);
-
     if (rbfcontent == NULL) {
       perror("Allocation of memory for RBF file");
       return 0;
     }
-
     lseek(rbffd, 0, SEEK_SET);
-
     if (read(rbffd, rbfcontent, rbflen) != rbflen) {
       printf("RBF file read error, terminating\n");
       return 0;
     }
-
     close(rbffd);
-
     // pad with 0xFF up to the next multiple of 256
     for (i = rbflen; i < rbfxfr; i++) {
       rbfcontent[i] = 0xff;
     }
-
     rbfptr = 0;
     printf("RBF file read into memory.\n");
   }
-
   //
   // From this point on we need admin privileges
   //
   descr = pcap_open_live(dev, 1024, 1, 10, errbuf);
-
   if (descr == NULL) {
     printf("pcap_open_live(): %s\n", errbuf);
     exit(1);
   }
-
   //
   // On some systems, pcap_next() hangs when no packet arrives at all
   // To cope with these cases, set "nonblocking" mode and explicitly
@@ -425,7 +374,6 @@ int main(int argc, char** argv) {
   pcap_setnonblock(descr, 1, errbuf);
   state = STATE_QUERYMAC;
   timeout = 0;
-
   //
   // We usually use a time-out of 500 msec (that is generous)
   // except when erasing, since this may take MUCH longer
@@ -440,45 +388,36 @@ int main(int argc, char** argv) {
       timeout = 50;
       state = STATE_WAIT;
       break;
-
     case STATE_QUERYIP:
       sendRawCommand(descr, mymac, READ_METIS_IP, NULL, 0);
       timeout = 50;
       state = STATE_WAIT;
       break;
-
     case STATE_SETIP:
       sendRawCommand(descr, mymac, WRITE_METIS_IP, hisip, 4);
       printf("New IP address written to board.\n");
       // Since there will be no answer, wait 100 msecs before proceeding
       state = STATE_DONE;
-
       if (rbffd >= 0) {
         state = STATE_ERASE;
       }
-
       break;
-
     case STATE_ERASE:
       sendRawCommand(descr, mymac, ERASE_METIS_FLASH, NULL, 0);
       printf("Erasing (THIS TAKES SOME TIME!)\n");
       timeout = 18000; // up to 3 minutes
       state = STATE_WAIT;
       break;
-
     case STATE_PROGRAM:
       sendRawData(descr, mymac, rbfcontent, rbfptr);
       rbfptr += 256;
-
       if (rbfptr % 1024 == 0) {
         printf("Data sent: %6ld k-Bytes\r", (long) rbfptr / 1024);
         fflush(stdout);
       }
-
       timeout = 50;
       state = STATE_WAIT;
       break;
-
     case STATE_WAIT:
       //
       // Terminate program if timeout is reached.
@@ -486,33 +425,26 @@ int main(int argc, char** argv) {
       // packet is captured.
       //
       timeout--;
-
       if (timeout == 0) {
         printf("TIMEOUT reached - terminating bootloader.\n");
         return (0);
       }
-
       break;
-
     case STATE_DONE:
       printf("All Done.\n");
       return (0);
     }
-
     //
     // Obtain next packet. If it is already there, take it.
     // Otherwise retry after 10 milli seconds. This is why
     // all the above time outs are in units of 10 ms.
     //
     packet = pcap_next(descr, &hdr);
-
     if (packet == NULL) {
       usleep(10000);
       packet = pcap_next(descr, &hdr);
     }
-
     if (packet == NULL) { continue; } // Nothing arrived within 10 msec
-
     /*
      A packet has arrived, but this could be anything.
      So check whether
@@ -534,17 +466,12 @@ int main(int argc, char** argv) {
                packet[20], packet[21]);
         state = STATE_QUERYIP;
         break;
-
       case HAVE_IP_ADDRESS:
         printf("Board has IP addr (%d,%d,%d,%d).\n", packet[16], packet[17], packet[18], packet[19]);
         state = STATE_DONE;
-
         if (rbffd >= 0) { state = STATE_ERASE; }   // if there is something to upload
-
         if (do_burnip) { state = STATE_SETIP; } // if we want to set an IP address
-
         break;
-
       case ERASE_DONE:
         if (rbffd >= 0) {
           printf("Board erased, about to upload new RBF file.\n");
@@ -553,9 +480,7 @@ int main(int argc, char** argv) {
           // this cannot happen
           state = STATE_DONE;
         }
-
         break;
-
       case SEND_MORE:
         if (rbffd < 0 || rbfptr > rbfxfr) {
           printf("\nRBF file upload complete.\n");
@@ -563,9 +488,7 @@ int main(int argc, char** argv) {
         } else {
           state = STATE_PROGRAM;
         }
-
         break;
-
       default:
         printf("UNKNOWN REPLY=%d\n", packet[15]);
         break;
@@ -597,17 +520,14 @@ void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, 
   buffer[13] = 0xFE;
   buffer[14] = 0x03;
   buffer[15] = command;
-
   /*fill the frame with 0x00*/
   for (i = 0; i < 46; i++) {
     buffer[i + 16] = (unsigned char) 0x00;
   }
-
   /* possibly fill in data */
   for (i = 0; i < datalen; i++) {
     buffer[i + 16] = data[i];
   }
-
   if (pcap_sendpacket(handle, buffer, 62) != 0) {
     printf("Send Raw failed, command=%d\n", command);
   }
@@ -639,11 +559,9 @@ void sendRawData(pcap_t* handle, unsigned char hw[6], unsigned char* data, off_t
   buffer[17] = 0x00;
   buffer[18] = 0x00;
   buffer[19] = 0x00;
-
   for (int i = 0; i < 256; i++) {
     buffer[i + 20] = data[i + ptr];
   }
-
   if (pcap_sendpacket(handle, buffer, 276) != 0) {
     printf("Send data block failed!\n");
   }

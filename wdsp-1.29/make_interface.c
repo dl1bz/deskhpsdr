@@ -38,62 +38,45 @@ int main(int argc, char** argv) {
   char *buffer = line;
   char *needle;
   char shipout[1000];
-
   for (i = 1; i < argc; i++) {
     infile = fopen(argv[i], "r");
-
     if (infile == NULL) { continue; }
-
     first_in_file = 1;
-
     for (;;) {
       if (getline(&buffer, &linesize, infile) < 0) { break; }
-
       trimm(line, linesize);
-
       if (strncmp(line, "PORT", 4) != 0) { continue; }
-
       // found an interface
       if (first_in_file) {
         printf("\n//\n// Interfaces from %s\n//\n\n", argv[i]);
         first_in_file = 0;
       }
-
       if (strlen(line) > 4) {
         int pos = 4;
-
         if (line[4] == ' ') { pos++; }
-
         printf("extern %s ", line + pos);
       } else {
         printf("extern ");
       }
-
       first_in_decl = 1;
-
       for (;;) {
         if (getline(&buffer, &linesize, infile) < 0) {
           fprintf(stderr, "! Found a PORT but found EOF while scanning interface.\n");
           return 8;
         }
-
         trimm(line, linesize);
-
         if (line[0] == 0) { continue; }
-
         if (line[0] == '{') {
           printf(";\n");
           break;
         } else {
           needle = strstr(line, "()");
-
           if (needle) {
             *needle = 0;
             snprintf(shipout, sizeof(shipout), "%s(void)%s", line, needle + 2);
           } else {
             snprintf(shipout, sizeof(shipout), "%s", line);
           }
-
           if (first_in_decl) {
             printf("%s", shipout);
             first_in_decl = 0;
@@ -103,10 +86,8 @@ int main(int argc, char** argv) {
         }
       }
     }
-
     fclose(infile);
   }
-
   return 0;
 }
 
@@ -116,16 +97,13 @@ void trimm(char* line, size_t maxlen) {
   // Remove comments starting with '//'
   //
   len = strnlen(line, maxlen);
-
   for (int i = 0; i < len - 1; i++) {
     if (line[i] == '/' && line[i + 1] == '/') { line[i] = 0; }
   }
-
   //
   // Remove trailing white space and newlines
   //
   len = strnlen(line, maxlen);
   line[len--] = 0;
-
   while (len >= 0 && (line[len] == ' ' || line[len] == '\t' || line[len] == '\n')) { line[len--] = 0; }
 }

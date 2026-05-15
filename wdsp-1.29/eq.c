@@ -62,9 +62,7 @@ double *eq_impulse(int N, int nfreqs, double* F, double* G, double samplerate, d
   HASH_T hg = fnv1a_hash((uint8_t*)G, arr_len);
   h ^= hg + GOLDEN_RATIO + (h << 6) + (h >> 2);
   double *imp = get_impulse_cache_entry(EQ_CACHE, h, N);
-
   if (imp) { return imp; }
-
   //
   double *fp = (double*) malloc0((nfreqs + 2) * sizeof(double));
   double *gp = (double*) malloc0((nfreqs + 2) * sizeof(double));
@@ -76,58 +74,43 @@ double *eq_impulse(int N, int nfreqs, double* F, double* G, double samplerate, d
   fp[0] = 0.0;
   fp[nfreqs + 1] = 1.0;
   gpreamp = G[0];
-
   for (i = 1; i <= nfreqs; i++) {
     fp[i] = 2.0 * F[i] / samplerate;
-
     if (fp[i] < 0.0) { fp[i] = 0.0; }
-
     if (fp[i] > 1.0) { fp[i] = 1.0; }
-
     gp[i] = G[i];
   }
-
   for (i = 1, j = 0; i <= nfreqs; i++, j += 2) {
     sary[j + 0] = fp[i];
     sary[j + 1] = gp[i];
   }
-
   qsort(sary, nfreqs, 2 * sizeof(double), fEQcompare);
-
   for (i = 1, j = 0; i <= nfreqs; i++, j += 2) {
     fp[i] = sary[j + 0];
     gp[i] = sary[j + 1];
   }
-
   gp[0] = gp[1];
   gp[nfreqs + 1] = gp[nfreqs];
   mid = N / 2;
   j = 0;
-
   if (N & 1) {
     for (i = 0; i <= mid; i++) {
       f = (double)i / (double)mid;
-
       while (f > fp[j + 1]) { j++; }
-
       frac = (f - fp[j]) / (fp[j + 1] - fp[j]);
       A[i] = pow(10.0, 0.05 * (frac * gp[j + 1] + (1.0 - frac) * gp[j] + gpreamp)) * scale;
     }
   } else {
     for (i = 0; i < mid; i++) {
       f = ((double)i + 0.5) / (double)mid;
-
       while (f > fp[j + 1]) { j++; }
-
       frac = (f - fp[j]) / (fp[j + 1] - fp[j]);
       A[i] = pow(10.0, 0.05 * (frac * gp[j + 1] + (1.0 - frac) * gp[j] + gpreamp)) * scale;
     }
   }
-
   if (ctfmode == 0) {
     int k, low, high;
     double lowmag, highmag, flow4, fhigh4;
-
     if (N & 1) {
       low = (int)(fp[1] * mid);
       high = (int)(fp[nfreqs] * mid + 0.5);
@@ -136,24 +119,17 @@ double *eq_impulse(int N, int nfreqs, double* F, double* G, double samplerate, d
       flow4 = pow((double)low / (double)mid, 4.0);
       fhigh4 = pow((double)high / (double)mid, 4.0);
       k = low;
-
       while (--k >= 0) {
         f = (double)k / (double)mid;
         lowmag *= (f * f * f * f) / flow4;
-
         if (lowmag < 1.0e-100) { lowmag = 1.0e-100; }
-
         A[k] = lowmag;
       }
-
       k = high;
-
       while (++k <= mid) {
         f = (double)k / (double)mid;
         highmag *= fhigh4 / (f * f * f * f);
-
         if (highmag < 1.0e-100) { highmag = 1.0e-100; }
-
         A[k] = highmag;
       }
     } else {
@@ -164,35 +140,26 @@ double *eq_impulse(int N, int nfreqs, double* F, double* G, double samplerate, d
       flow4 = pow((double)low / (double)mid, 4.0);
       fhigh4 = pow((double)high / (double)mid, 4.0);
       k = low;
-
       while (--k >= 0) {
         f = (double)k / (double)mid;
         lowmag *= (f * f * f * f) / flow4;
-
         if (lowmag < 1.0e-100) { lowmag = 1.0e-100; }
-
         A[k] = lowmag;
       }
-
       k = high;
-
       while (++k < mid) {
         f = (double)k / (double)mid;
         highmag *= fhigh4 / (f * f * f * f);
-
         if (highmag < 1.0e-100) { highmag = 1.0e-100; }
-
         A[k] = highmag;
       }
     }
   }
-
   if (N & 1) {
     impulse = fir_fsamp_odd(N, A, 1, 1.0, wintype);
   } else {
     impulse = fir_fsamp(N, A, 1, 1.0, wintype);
   }
-
   // print_impulse("eq.txt", N, impulse, 1, 0);
   _aligned_free(sary);
   _aligned_free(A);
@@ -293,14 +260,12 @@ void SetRXAEQNC(int channel, int nc) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].eqp.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = eq_impulse(a->nc, a->nfreqs, a->F, a->G, a->samplerate, 1.0 / (2.0 * a->size), a->ctfmode, a->wintype);
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -308,7 +273,6 @@ PORT
 void SetRXAEQMP(int channel, int mp) {
   EQP a;
   a = rxa[channel].eqp.p;
-
   if (a->mp != mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);
@@ -403,11 +367,9 @@ void SetRXAGrphEQ10(int channel, int* rxeq) {
   a->F[8]  =  4000.0;
   a->F[9]  =  8000.0;
   a->F[10] = 16000.0;
-
   for (i = 0; i <= a->nfreqs; i++) {
     a->G[i] = (double)rxeq[i];
   }
-
   a->ctfmode = 0;
   impulse = eq_impulse(a->nc, a->nfreqs, a->F, a->G, a->samplerate, 1.0 / (2.0 * a->size), a->ctfmode, a->wintype);
   // print_impulse ("rxeq.txt", a->nc, impulse, 1, 0);
@@ -434,14 +396,12 @@ void SetTXAEQNC(int channel, int nc) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].eqp.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = eq_impulse(a->nc, a->nfreqs, a->F, a->G, a->samplerate, 1.0 / (2.0 * a->size), a->ctfmode, a->wintype);
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -449,7 +409,6 @@ PORT
 void SetTXAEQMP(int channel, int mp) {
   EQP a;
   a = txa[channel].eqp.p;
-
   if (a->mp != mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);
@@ -543,11 +502,9 @@ void SetTXAGrphEQ10(int channel, int* txeq) {
   a->F[8]  =  4000.0;
   a->F[9]  =  8000.0;
   a->F[10] = 16000.0;
-
   for (i = 0; i <= a->nfreqs; i++) {
     a->G[i] = (double)txeq[i];
   }
-
   a->ctfmode = 0;
   impulse = eq_impulse(a->nc, a->nfreqs, a->F, a->G, a->samplerate, 1.0 / (2.0 * a->size), a->ctfmode, a->wintype);
   setImpulse_fircore(a->p, impulse, 1);
@@ -621,18 +578,15 @@ void flush_eq(EQ a) {
 void xeq(EQ a) {
   int i;
   double I, Q;
-
   if (a->run) {
     memcpy(&(a->infilt[2 * a->size]), a->in, a->size * sizeof(complex));
     fftw_execute(a->CFor);
-
     for (i = 0; i < 2 * a->size; i++) {
       I = a->product[2 * i + 0];
       Q = a->product[2 * i + 1];
       a->product[2 * i + 0] = I * a->mults[2 * i + 0] - Q * a->mults[2 * i + 1];
       a->product[2 * i + 1] = I * a->mults[2 * i + 1] + Q * a->mults[2 * i + 0];
     }
-
     fftw_execute(a->CRev);
     memcpy(a->infilt, &(a->infilt[2 * a->size]), a->size * sizeof(complex));
   } else if (a->in != a->out) {

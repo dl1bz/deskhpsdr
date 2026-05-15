@@ -130,7 +130,6 @@ pthread_t CheckForNoActivityThread;           // thread looks for inactvity
 int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
   struct timeval ReadTimeout;                                       // read timeout
   int yes = 1;
-
   //  struct sockaddr_in addr_cmddata;
   //
   // create socket for incoming data
@@ -139,7 +138,6 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
     t_perror("socket fail");
     return EXIT_FAILURE;
   }
-
   //
   // set 1ms timeout, and re-use any recently open ports
   //
@@ -154,20 +152,15 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
   Ptr->addr_cmddata.sin_family = AF_INET;
   Ptr->addr_cmddata.sin_addr.s_addr = htonl(INADDR_ANY);
   Ptr->addr_cmddata.sin_port = htons(Ptr->Portid);
-
   if (bind(Ptr->Socketid, (struct sockaddr *) &Ptr->addr_cmddata, sizeof(struct sockaddr_in)) < 0) {
     t_perror("bind");
     return EXIT_FAILURE;
   }
-
   struct sockaddr_in checkin;
-
   socklen_t len = sizeof(checkin);
-
   if (getsockname(Ptr->Socketid, (struct sockaddr *) &checkin, &len) == -1) {
     t_perror("getsockname");
   }
-
   Ptr->DDCid = DDCid;                       // set DDC number, for outgoing ports
   return 0;
 }
@@ -181,25 +174,20 @@ void *CheckForActivity(void* arg) {
   while (1) {
     sleep(1000);                                   // wait for 1 second
     bool PreviouslyActiveState = ServerActive;     // see if active on entry
-
     if (!NewMessageReceived && HW_Timer_Enable) {  // if no messages received,
       ServerActive = false;                        // set back to inactive
       ReplyAddressSet = false;
       StartBitReceived = false;
-
       if (PreviouslyActiveState) {
         for (int i = 4; i < VNUMDDC; i++) {        // disable upper bank of DDCs
           SetP2SampleRate(i, false, 48, false);
         }
-
         WriteP2DDCRateRegister();
         t_print("Reverted to Inactive State after no activity\n");
       }
     }
-
     NewMessageReceived = false;
   }
-
   t_print("ENDING CheckForActivity thread\n");
 }
 
@@ -215,12 +203,10 @@ void shutdown_saturn_server(void) {
 
 void start_saturn_server(void) {
   ExitRequested = false;
-
   if (pthread_create(&saturn_server_thread, NULL, saturn_server, NULL) < 0) {
     t_perror("pthread_create saturn_server thread");
     return;
   }
-
   pthread_detach(saturn_server_thread);
 }
 
@@ -255,7 +241,6 @@ void *saturn_server(void* arg) {
   struct sockaddr_in addr_from;                                     // holds MAC address of source of incoming messages
   struct iovec iovecinst;                                           // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                                           // multiple incoming message header
-
   //
   // start up thread to check for no longer getting messages, to set back to inactive
   //
@@ -263,7 +248,6 @@ void *saturn_server(void* arg) {
     t_perror("pthread_create check for exit");
     return NULL;
   }
-
   pthread_detach(CheckForNoActivityThread);
   //
   // create socket for incoming data on the command port
@@ -277,58 +261,44 @@ void *saturn_server(void* arg) {
   memset(&hwaddr, 0, sizeof(hwaddr));
   strncpy(hwaddr.ifr_name, "eth0", IFNAMSIZ - 1);
   ioctl(SocketData[VPORTCOMMAND].Socketid, SIOCGIFHWADDR, &hwaddr);
-
   for (i = 0; i < 6; ++i) { DiscoveryReply[i + 5] = hwaddr.ifr_addr.sa_data[i]; }        // copy MAC to reply message
-
 #else
-
   // BSD, or MacOS have a different mechanism of getting the hardware addr.
   // Since this is intended to work on RaspPi only, just use fake addr.
   for (i = 0; i < 6; ++i) { DiscoveryReply[i + 5] = 0xAA; }
-
 #endif
   MakeSocket(SocketData + VPORTDDCSPECIFIC, 0);          // create and bind a socket
-
   if (pthread_create(&DDCSpecificThread, NULL, IncomingDDCSpecific, (void *) &SocketData[VPORTDDCSPECIFIC]) < 0) {
     t_perror("pthread_create DDC specific");
     return NULL;
   }
-
   pthread_detach(DDCSpecificThread);
   MakeSocket(SocketData + VPORTDUCSPECIFIC, 0);          // create and bind a socket
-
   if (pthread_create(&DUCSpecificThread, NULL, IncomingDUCSpecific, (void *) &SocketData[VPORTDUCSPECIFIC]) < 0) {
     t_perror("pthread_create DUC specific");
     return NULL;
   }
-
   pthread_detach(DUCSpecificThread);
   MakeSocket(SocketData + VPORTHIGHPRIORITYTOSDR, 0);          // create and bind a socket
-
   if (pthread_create(&HighPriorityToSDRThread, NULL, IncomingHighPriority,
                      (void *) &SocketData[VPORTHIGHPRIORITYTOSDR]) < 0) {
     t_perror("pthread_create High priority to SDR");
     return NULL;
   }
-
   pthread_detach(HighPriorityToSDRThread);
 #if 0
   MakeSocket(SocketData + VPORTSPKRAUDIO, 0);          // create and bind a socket
-
   if (pthread_create(&SpkrAudioThread, NULL, IncomingSpkrAudio, (void *) &SocketData[VPORTSPKRAUDIO]) < 0) {
     t_perror("pthread_create speaker audio");
     return NULL;
   }
-
   pthread_detach(SpkrAudioThread);
 #endif
   MakeSocket(SocketData + VPORTDUCIQ, 0);          // create and bind a socket
-
   if (pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void *) &SocketData[VPORTDUCIQ]) < 0) {
     t_perror("pthread_create DUC I/Q");
     return NULL;
   }
-
   pthread_detach(DUCIQThread);
   //
   // create outgoing mic data thread
@@ -339,12 +309,10 @@ void *saturn_server(void* arg) {
   memcpy(&SocketData[VPORTMICAUDIO].addr_cmddata, &SocketData[VPORTDUCSPECIFIC].addr_cmddata,
          sizeof(struct sockaddr_in));
 #if 0
-
   if (pthread_create(&MicThread, NULL, OutgoingMicSamples, (void *) &SocketData[VPORTMICAUDIO]) < 0) {
     t_perror("pthread_create Mic");
     return NULL;
   }
-
   pthread_detach(MicThread);
 #endif
   //
@@ -356,13 +324,11 @@ void *saturn_server(void* arg) {
   memcpy(&SocketData[VPORTHIGHPRIORITYFROMSDR].addr_cmddata, &SocketData[VPORTDDCSPECIFIC].addr_cmddata,
          sizeof(struct sockaddr_in));
 #if 0
-
   if (pthread_create(&HighPriorityFromSDRThread, NULL, OutgoingHighPriority,
                      (void *) &SocketData[VPORTHIGHPRIORITYFROMSDR]) < 0) {
     t_perror("pthread_create outgoing hi priority");
     return NULL;
   }
-
   pthread_detach(HighPriorityFromSDRThread);
 #endif
   //
@@ -378,7 +344,6 @@ void *saturn_server(void* arg) {
   MakeSocket(SocketData + VPORTDDCIQ7, 7);
   MakeSocket(SocketData + VPORTDDCIQ8, 8);
   MakeSocket(SocketData + VPORTDDCIQ9, 9);
-
   //
   // now main processing loop. Process received Command packets arriving at port 1024
   // these are identified by the command byte (byte 4)
@@ -398,25 +363,20 @@ void *saturn_server(void* arg) {
     datagram.msg_name = &addr_from;
     datagram.msg_namelen = sizeof(addr_from);
     size = recvmsg(SocketData[0].Socketid, &datagram, 0);         // get one message. If it times out, gets size=-1
-
     if (size < 0 && errno != EAGAIN) {
       t_perror("recvfrom, port 1024");
       return NULL;
     }
-
     if (ThreadError) {
       break;
     }
-
     //
     // only process packets of length 60 bytes on this port, to exclude protocol 1 discovery for example.
     // (that means we can't handle the programming packet but we don't use that anyway)
     //
     CmdByte = UDPInBuffer[4];
-
     if (size == VDISCOVERYSIZE) {
       NewMessageReceived = true;
-
       switch (CmdByte) {
       //
       // general packet. Get the port numbers and establish listener threads
@@ -433,51 +393,41 @@ void *saturn_server(void* arg) {
                 addr_from.sin_port;                       // (but each outgoing thread needs to set its own sin_port)
         saturn_handle_general_packet(true, UDPInBuffer);
         ReplyAddressSet = true;
-
         if (ReplyAddressSet && StartBitReceived) {
           ServerActive = true;  // only set active if we have start bit too
         }
-
         break;
-
       //
       // discovery packet
       //
       case 2:
         t_print("P2 Discovery packet\n");
-
         if (ServerActive) {
           DiscoveryReply[4] = 3;  // response 2 if not active, 3 if running
         } else {
           DiscoveryReply[4] = 2;
         }
-
         memset(&UDPInBuffer, 0, VDISCOVERYREPLYSIZE);
         memcpy(&UDPInBuffer, DiscoveryReply, VDISCOVERYREPLYSIZE);
         sendto(SocketData[0].Socketid, &UDPInBuffer, VDISCOVERYREPLYSIZE, 0, (struct sockaddr*) &addr_from,
                sizeof(addr_from));
         break;
-
       case 3:
       case 4:
       case 5:
         t_print("Unsupported packet\n");
         break;
-
       default:
         break;
       }// end switch (packet type)
     }
-
     //
     // now do any "post packet" processing
     //
   } //while(1)
-
   if (ThreadError) {
     t_print("Thread error reported - exiting\n");
   }
-
   //
   // clean exit
   //
@@ -498,7 +448,6 @@ void *IncomingHighPriority(void* arg) {                 // listener thread
   ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up high priority incoming thread with port %d\n", ThreadData->Portid);
-
   //
   // main processing loop
   //
@@ -512,13 +461,11 @@ void *IncomingHighPriority(void* arg) {                 // listener thread
     datagram.msg_name = &addr_from;
     datagram.msg_namelen = sizeof(addr_from);
     int size = recvmsg(ThreadData->Socketid, &datagram, 0);         // get one message. If it times out, ges size=-1
-
     if (size < 0 && errno != EAGAIN) {
       t_perror("recvfrom, high priority");
       t_print("error number = %d\n", errno);
       return NULL;
     }
-
     //
     // if correct packet, process it
     //
@@ -527,7 +474,6 @@ void *IncomingHighPriority(void* arg) {                 // listener thread
       saturn_handle_high_priority(true, UDPInBuffer);
     }
   }
-
   //
   // close down thread
   //
@@ -549,7 +495,6 @@ void *IncomingDDCSpecific(void* arg) {                  // listener thread
   ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up DDC specific thread with port %d\n", ThreadData->Portid);
-
   //
   // main processing loop
   //
@@ -563,18 +508,15 @@ void *IncomingDDCSpecific(void* arg) {                  // listener thread
     datagram.msg_name = &addr_from;
     datagram.msg_namelen = sizeof(addr_from);
     int size = recvmsg(ThreadData->Socketid, &datagram, 0);         // get one message. If it times out, ges size=-1
-
     if (size < 0 && errno != EAGAIN) {
       t_perror("recvfrom, DDC Specific");
       return NULL;
     }
-
     if (size == VDDCSPECIFICSIZE) {
       NewMessageReceived = true;
       saturn_handle_ddc_specific(true, UDPInBuffer);
     }
   }
-
   //
   // close down thread
   //
@@ -596,7 +538,6 @@ void *IncomingDUCSpecific(void* arg) {                  // listener thread
   ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up DUC specific thread with port %d\n", ThreadData->Portid);
-
   //
   // main processing loop
   //
@@ -610,18 +551,15 @@ void *IncomingDUCSpecific(void* arg) {                  // listener thread
     datagram.msg_name = &addr_from;
     datagram.msg_namelen = sizeof(addr_from);
     int size = recvmsg(ThreadData->Socketid, &datagram, 0);         // get one message. If it times out, ges size=-1
-
     if (size < 0 && errno != EAGAIN) {
       t_perror("recvfrom, DUC specific");
       return NULL;
     }
-
     if (size == VDUCSPECIFICSIZE) {
       NewMessageReceived = true;
       saturn_handle_duc_specific(true, UDPInBuffer);
     }
   }
-
   //
   // close down thread
   //
@@ -669,27 +607,22 @@ void *IncomingSpkrAudio(void* arg) {                    // listener thread
   // setup DMA buffer
   //
   posix_memalign((void**) &SpkWriteBuffer, VALIGNMENT, SpkBufferSize);
-
   if (SpkWriteBuffer == NULL) {
     t_print("spkr write buffer allocation failed\n");
     return NULL;
   }
-
   SpkBasePtr = SpkWriteBuffer + VBASE;
   memset(SpkWriteBuffer, 0, SpkBufferSize);
   //
   // open DMA device driver
   //
   DMAWritefile_fd = open(VSPKDMADEVICE, O_RDWR);
-
   if (DMAWritefile_fd < 0) {
     t_print("XDMA write device open failed for spk data\n");
     return NULL;
   }
-
   SetupFIFOMonitorChannel(eSpkCodecDMA, false);
   ResetDMAStreamFIFO(eSpkCodecDMA);
-
   //
   // main processing loop
   //
@@ -703,18 +636,15 @@ void *IncomingSpkrAudio(void* arg) {                    // listener thread
     datagram.msg_name = &addr_from;
     datagram.msg_namelen = sizeof(addr_from);
     int size = recvmsg(ThreadData->Socketid, &datagram, 0);     // get one message. If it times out, sets size=-1
-
     if (size < 0 && errno != EAGAIN) {
       t_perror("recvfrom fail, Speaker data");
       return NULL;
     }
-
     if (size == VSPEAKERAUDIOSIZE) {                        // we have received a packet!
       NewMessageReceived = true;
       //RegVal += 1;            //debug
       int Depth = ReadFIFOMonitorChannel(eSpkCodecDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
                                          &Current); // read the FIFO free locations
-
       //t_print("speaker packet received; depth = %d\n", Depth);
       while (Depth < VMEMWORDSPERFRAME) {     // loop till space available
         usleep(1000);                                   // 1ms wait
@@ -725,7 +655,6 @@ void *IncomingSpkrAudio(void* arg) {                    // listener thread
         //if(FIFOUnderflow)
         //  t_print("Codec Speaker FIFO Underflowed, depth now = %d\n", Current);
       }
-
       // copy data from UDP Buffer & DMA write it
       memcpy(SpkBasePtr, UDPInBuffer + 4, VDMATRANSFERSIZE);              // copy out spk samples
       //            if(RegVal == 100)
@@ -733,7 +662,6 @@ void *IncomingSpkrAudio(void* arg) {                    // listener thread
       DMAWriteToFPGA(DMAWritefile_fd, SpkBasePtr, VDMATRANSFERSIZE, VADDRSPKRSTREAMWRITE);
     }
   }
-
   //
   // close down thread
   //
@@ -765,7 +693,6 @@ void *IncomingDUCIQ(void* arg) {                        // listener thread
   ThreadData = (struct ThreadSocketData*) arg;
   ThreadData->Active = true;
   t_print("spinning up incoming DUC I/Q thread with port %d\n", ThreadData->Portid);
-
   //
   //
   // main processing loop
@@ -780,18 +707,15 @@ void *IncomingDUCIQ(void* arg) {                        // listener thread
     datagram.msg_name = &addr_from;
     datagram.msg_namelen = sizeof(addr_from);
     int size = recvmsg(ThreadData->Socketid, &datagram, 0);         // get one message. If it times out, ges size=-1
-
     if (size < 0 && errno != EAGAIN) {
       t_perror("recvfrom fail, TX I/Q data");
       return NULL;
     }
-
     if (size == VDUCIQSIZE) {
       NewMessageReceived = true;
       saturn_handle_duc_iq(true, UDPInBuffer);
     }
   }
-
   //
   // close down thread
   //

@@ -46,14 +46,12 @@ static GdkPixbuf *create_pixbuf_from_data() {
   GError *error = NULL;
   mem_stream = g_memory_input_stream_new_from_data(hpsdr_logo, hpsdr_logo_len, NULL);
   pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
-
   if (!pixbuf) {
     g_printerr("ERROR loading pic: %s\n", error->message);
     g_error_free(error);
     g_object_unref(mem_stream);
     return NULL;
   }
-
   // pic scaling
   scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, 100, 100, GDK_INTERP_BILINEAR);
   g_object_unref(pixbuf);  // free original-pixbuf
@@ -131,7 +129,6 @@ void about_menu(GtkWidget *parent) {
            unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_branch, build_commit,
            build_version,
            build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100);
-
   switch (radio->protocol) {
   case ORIGINAL_PROTOCOL:
   case NEW_PROTOCOL:
@@ -145,7 +142,6 @@ void about_menu(GtkWidget *parent) {
       char addr[64];
       g_strlcpy(addr, inet_ntoa(radio->info.network.address.sin_addr), 64);
       g_strlcpy(interface_addr, inet_ntoa(radio->info.network.interface_address.sin_addr), 64);
-
       if (have_saturn_xdma) {
         snprintf(line, sizeof(line), "Device: Saturn (via XDMA), Protocol %s, v%d.%d\n",
                  radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
@@ -166,13 +162,10 @@ void about_menu(GtkWidget *parent) {
                  radio->info.network.interface_name,
                  interface_addr);
       }
-
       g_strlcat(text, line, sizeof(text));
     }
-
     break;
 #ifdef SOAPYSDR
-
   case SOAPYSDR_PROTOCOL:
     snprintf(line, sizeof(line), "Device: %s (via SoapySDR)\n"
                                  "    %s %s",
@@ -181,7 +174,6 @@ void about_menu(GtkWidget *parent) {
     break;
 #endif
   }
-
   label = gtk_label_new(text);
   gtk_widget_set_name(label, "smalllabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);

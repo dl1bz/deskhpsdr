@@ -50,74 +50,56 @@ int nw_get_ifname_for_remote_ip(const char* remote_ip, char* ifname, size_t ifna
   struct ifaddrs *ifaddr = NULL;
   struct ifaddrs *ifa;
   int rc = -1;
-
   if (remote_ip == NULL || ifname == NULL || ifname_len == 0) {
     return -1;
   }
-
   memset(&remote, 0, sizeof(remote));
   memset(&local, 0, sizeof(local));
   ifname[0] = '\0';
   sock = socket(AF_INET, SOCK_DGRAM, 0);
-
   if (sock < 0) {
     return -1;
   }
-
   remote.sin_family = AF_INET;
   remote.sin_port = htons(1025);  // nur für Routenwahl
-
   if (inet_pton(AF_INET, remote_ip, &remote.sin_addr) != 1) {
     close(sock);
     return -1;
   }
-
   if (connect(sock, (struct sockaddr *) &remote, sizeof(remote)) < 0) {
     close(sock);
     return -1;
   }
-
   len = sizeof(local);
-
   if (getsockname(sock, (struct sockaddr *) &local, &len) < 0) {
     close(sock);
     return -1;
   }
-
   close(sock);
   sock = -1;
-
   if (getifaddrs(&ifaddr) != 0) {
     return -1;
   }
-
   for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
     struct sockaddr_in ifa_addr;
-
     if (ifa->ifa_addr == NULL) {
       continue;
     }
-
     if (ifa->ifa_addr->sa_family != AF_INET) {
       continue;
     }
-
     memcpy(&ifa_addr, ifa->ifa_addr, sizeof(ifa_addr));
-
     if (ifa_addr.sin_addr.s_addr != local.sin_addr.s_addr) {
       continue;
     }
-
     if (ifa->ifa_name == NULL || ifa->ifa_name[0] == '\0') {
       continue;
     }
-
     strncpy(ifname, ifa->ifa_name, ifname_len - 1);
     ifname[ifname_len - 1] = '\0';
     rc = 0;
     break;
   }
-
   freeifaddrs(ifaddr);
   return rc;
 }
@@ -128,39 +110,29 @@ static int nw_is_wired_macos(const char* remote_ip) {
   struct ifmediareq ifmr;
   int sock;
   int type;
-
   if (nw_get_ifname_for_remote_ip(remote_ip, ifname, sizeof(ifname)) != 0) {
     return -1;
   }
-
   sock = socket(AF_INET, SOCK_DGRAM, 0);
-
   if (sock < 0) {
     return -1;
   }
-
   memset(&ifmr, 0, sizeof(ifmr));
   strncpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name) - 1);
   ifmr.ifm_name[sizeof(ifmr.ifm_name) - 1] = '\0';
-
   if (ioctl(sock, SIOCGIFMEDIA, &ifmr) < 0) {
     close(sock);
     return -1;
   }
-
   close(sock);
   type = IFM_TYPE(ifmr.ifm_active);
-
   if (type == IFM_ETHER) {
     return 1;
   }
-
 #ifdef IFM_IEEE80211
-
   if (type == IFM_IEEE80211) {
     return 0;
   }
-
 #endif
   return 0;
 }
@@ -173,35 +145,26 @@ static int nw_is_wired_linux(const char* remote_ip) {
   FILE *fp;
   struct stat st;
   int type = -1;
-
   if (nw_get_ifname_for_remote_ip(remote_ip, ifname, sizeof(ifname)) != 0) {
     return -1;
   }
-
   snprintf(path, sizeof(path), "/sys/class/net/%s/wireless", ifname);
-
   if (stat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
     return 0;
   }
-
   snprintf(path, sizeof(path), "/sys/class/net/%s/type", ifname);
   fp = fopen(path, "r");
-
   if (fp == NULL) {
     return -1;
   }
-
   if (fscanf(fp, "%d", &type) != 1) {
     fclose(fp);
     return -1;
   }
-
   fclose(fp);
-
   if (type == 1) {   // ARPHRD_ETHER
     return 1;
   }
-
   return -1;
 }
 #endif

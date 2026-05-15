@@ -498,13 +498,11 @@ BANDSETTINGS *band_get_settings(int b) {
   if (b < 0 || b >= BANDS + XVTRS) {
     return NULL;
   }
-
   return &band_settings[b];
 }
 
 void radio_change_region(int r) {
   region = r;
-
   switch (region) {
   case REGION_UK:
     channel_entries = UK_CHANNEL_ENTRIES;
@@ -513,7 +511,6 @@ void radio_change_region(int r) {
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_UK;
     break;
-
   case REGION_US:
     channel_entries = US_CHANNEL_ENTRIES;
     band_channels_60m = &band_channels_60m_US[0];
@@ -521,7 +518,6 @@ void radio_change_region(int r) {
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_US;
     break;
-
   case REGION_VFO:
     channel_entries = VFO_CHANNEL_ENTRIES;
     band_channels_60m = &band_channels_60m_VFO[0];
@@ -529,7 +525,6 @@ void radio_change_region(int r) {
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_VFO;
     break;
-
   case REGION_WRC15:
     channel_entries = WRC15_CHANNEL_ENTRIES;
     band_channels_60m = &band_channels_60m_WRC15[0];
@@ -537,7 +532,6 @@ void radio_change_region(int r) {
     bandstack60.current_entry = 0;
     bandstack60.entry = bandstack_entries60_WRC15;
     break;
-
   case REGION_CA:
     channel_entries = CA_CHANNEL_ENTRIES;
     band_channels_60m = &band_channels_60m_CA[0];
@@ -554,20 +548,16 @@ void bandSaveState(void) {
     // Skip non-assigned transverter bands
     //
     if (strlen(bands[b].title) == 0) { continue; }
-
     if (b >= BANDS) {
       SetPropI1("band.%d.frequencyLO", b,        bands[b].frequencyLO);
       SetPropI1("band.%d.errorLO", b,            bands[b].errorLO);
       SetPropI1("band.%d.gain", b,               bands[b].gain);
     }
-
     SetPropS1("band.%d.title", b,              bands[b].title);
-
     if (b > 11) {
       SetPropI1("band.%d.frequencyMin", b,       bands[b].frequencyMin);
       SetPropI1("band.%d.frequencyMax", b,       bands[b].frequencyMax);
     }
-
     SetPropI1("band.%d.disablePA", b,          bands[b].disablePA);
     SetPropI1("band.%d.current", b,            bands[b].bandstack->current_entry);
     SetPropI1("band.%d.alexRxAntenna", b,      bands[b].alexRxAntenna);
@@ -576,14 +566,11 @@ void bandSaveState(void) {
     SetPropF1("band.%d.pa_calibration", b,     bands[b].pa_calibration);
     SetPropI1("band.%d.OCrx", b,               bands[b].OCrx);
     SetPropI1("band.%d.OCtx", b,               bands[b].OCtx);
-
     if (can_transmit) {
       if (band_settings[b].tx_drive <= 0) {
         band_settings[b].tx_drive = radio_get_drive_as_int();
       }
-
       SetPropI1("band.%d.tx_drive", b,           band_settings[b].tx_drive);
-
       if (band_settings[b].tune_drive <= 0) {
         if (transmitter->tune_use_drive) {
           band_settings[b].tune_drive = radio_get_drive_as_int();
@@ -591,10 +578,8 @@ void bandSaveState(void) {
           band_settings[b].tune_drive = transmitter->tune_drive;
         }
       }
-
       SetPropI1("band.%d.tune_drive", b,         band_settings[b].tune_drive);
     }
-
     for (int stack = 0; stack < bands[b].bandstack->entries; stack++) {
       BANDSTACK_ENTRY *entry = bands[b].bandstack->entry;
       entry += stack;
@@ -624,12 +609,10 @@ void bandRestoreState(void) {
       GetPropI1("band.%d.errorLO", b,            bands[b].errorLO);
       GetPropI1("band.%d.gain", b,               bands[b].gain);
     }
-
     if (b > 11) {
       GetPropI1("band.%d.frequencyMin", b,       bands[b].frequencyMin);
       GetPropI1("band.%d.frequencyMax", b,       bands[b].frequencyMax);
     }
-
     GetPropI1("band.%d.disablePA", b,          bands[b].disablePA);
     GetPropI1("band.%d.current", b,            bands[b].bandstack->current_entry);
     GetPropI1("band.%d.alexRxAntenna", b,      bands[b].alexRxAntenna);
@@ -640,7 +623,6 @@ void bandRestoreState(void) {
     GetPropI1("band.%d.tune_drive", b,         band_settings[b].tune_drive);
     GetPropI1("band.%d.OCrx", b,               bands[b].OCrx);
     GetPropI1("band.%d.OCtx", b,               bands[b].OCtx);
-
     for (int stack = 0; stack < bands[b].bandstack->entries; stack++) {
       BANDSTACK_ENTRY *entry = bands[b].bandstack->entry;
       entry += stack;
@@ -654,7 +636,6 @@ void bandRestoreState(void) {
       GetPropI2("band.%d.stack.%d.ctcss", b, stack,          entry->ctcss);
     }
   }
-
   for (int b = 0; b < BANDS + XVTRS; b++) {
     //
     // Some sanity checks
@@ -662,31 +643,24 @@ void bandRestoreState(void) {
     if (bands[b].bandstack->current_entry >= bands[b].bandstack->entries) {
       bands[b].bandstack->current_entry = 0;
     }
-
     if (bands[b].alexTxAntenna > 2 || bands[b].alexTxAntenna < 0) {
       bands[b].alexTxAntenna = 0;
     }
-
     if (bands[b].pa_calibration < 38.8) {
       bands[b].pa_calibration = 38.8;
     }
-
     if (bands[b].pa_calibration > 70.0) {
       bands[b].pa_calibration = 70.0;
     }
-
     if (band_settings[b].tx_drive < 0) {
       band_settings[b].tx_drive = 0;
     }
-
     if (band_settings[b].tx_drive > 100) {
       band_settings[b].tx_drive = 100;
     }
-
     if (band_settings[b].tune_drive < 0) {
       band_settings[b].tune_drive = 0;
     }
-
     if (band_settings[b].tune_drive > 100) {
       band_settings[b].tune_drive = 100;
     }
@@ -696,7 +670,6 @@ void bandRestoreState(void) {
 int get_band_from_frequency(long long f) {
   int b;
   int found = -1;
-
   //
   // do not search non-xvtr bands if frequency not supported
   // by the radio
@@ -704,7 +677,6 @@ int get_band_from_frequency(long long f) {
   if (f >= radio->frequency_min && f <= radio->frequency_max) {
     for (b = 0; b < BANDS; b++) {
       const BAND *band = band_get_band(b);
-
       if (strlen(band->title) > 0) {
         if (f >= band->frequencyMin && f <= band->frequencyMax) {
           found = b;
@@ -713,14 +685,12 @@ int get_band_from_frequency(long long f) {
       }
     }
   }
-
   //
   // start a new search on the xvtr bands such that if an xvtr
   // band produces a match, it will take precedence
   //
   for (b = BANDS; b < BANDS + XVTRS; b++) {
     const BAND *band = band_get_band(b);
-
     if (strlen(band->title) > 0) {
       if (f >= band->frequencyMin && f <= band->frequencyMax) {
         found = b;
@@ -728,7 +698,6 @@ int get_band_from_frequency(long long f) {
       }
     }
   }
-
   //
   // If no band has been found:
   //  - use bandWWV if the frequency is (close to) 2.5, 5.0, 10.0, 15.0, 20.0, or 25.0 MHz
@@ -740,20 +709,13 @@ int get_band_from_frequency(long long f) {
   //
   if (found < 0) {
     found = bandGen;
-
     if (llabs(f -  2500000LL) <= 1000) { found = bandWWV; }
-
     if (llabs(f -  5000000LL) <= 1000) { found = bandWWV; }
-
     if (llabs(f - 10000000LL) <= 1000) { found = bandWWV; }
-
     if (llabs(f - 15000000LL) <= 1000) { found = bandWWV; }
-
     if (llabs(f - 20000000LL) <= 1000) { found = bandWWV; }
-
     if (llabs(f - 25000000LL) <= 1000) { found = bandWWV; }
   }
-
   return found;
 }
 #if 0
@@ -763,17 +725,14 @@ char *getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
   long long flow = frequency + (long long) filter_low;
   long long fhigh = frequency + (long long) filter_high;
   int b;
-
   for (b = 0; b < BANDS + XVTRS; b++) {
     BAND *band = band_get_band(b);
-
     if (strlen(band->title) > 0) {
       if (flow >= band->frequencyMin && fhigh <= band->frequencyMax) {
         if (b == band60) {
           for (i = 0; i < channel_entries; i++) {
             long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long) 2);
             long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long) 2);
-
             if (flow >= low_freq && fhigh <= hi_freq) {
               result = band->title;
               break;
@@ -786,7 +745,6 @@ char *getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
       }
     }
   }
-
   t_print("getFrequencyInfo %lld is %s\n", frequency, result);
   return result;
 }
@@ -796,22 +754,17 @@ int TransmitAllowed(void) {
   long long txfreq, flow, fhigh;
   int txb, txvfo, txmode;
   const BAND *txband;
-
   //
   // If there is no transmitter, we cannot transmit
   //
   if (!can_transmit) { return 0; }
-
   //
   // quick return if out-of-band TX is enabled
   //
   if (tx_out_of_band_allowed) { return 1; }
-
   txvfo = vfo_get_tx_vfo();
   txb = vfo[txvfo].band;
-
   if (txb == bandGen || txb  == bandWWV || txb  == bandAIR) { return 0; }
-
   //
   // Determine the edges of our band
   // and the edges of our TX signal
@@ -819,22 +772,18 @@ int TransmitAllowed(void) {
   txband = band_get_band(vfo[txvfo].band);
   txfreq = vfo_get_tx_freq();
   txmode = vfo_get_tx_mode();
-
   switch (txmode) {
   case modeCWU:
     flow = fhigh = txfreq;
     break;
-
   case modeCWL:
     flow = fhigh = txfreq;
     break;
-
   default:
     flow = txfreq + transmitter->filter_low;
     fhigh = txfreq + transmitter->filter_high;
     break;
   }
-
   result = flow >= txband->frequencyMin && fhigh <= txband->frequencyMax;
   t_print("%s: CANTRANSMIT: low=%lld  high=%lld transmit=%d\n", __func__, flow, fhigh, result);
   return result;
@@ -844,15 +793,11 @@ void band_plus(int id) {
   // long long frequency_max = radio->frequency_max;
   int b = vfo[id].band;
   int found = 0;
-
   while (!found) {
     const BAND *band;
     b++;
-
     if (b >= BANDS + XVTRS) { b = 0; }
-
     band = (BAND*) band_get_band(b);
-
     if (strlen(band->title) > 0) {
       /*
             if (b < BANDS) {
@@ -864,7 +809,6 @@ void band_plus(int id) {
             }
       */
       vfo_band_changed(id, b);
-
       // found = 1;
       if (vfo[id].band == b) { found = 1; }
     }
@@ -875,15 +819,11 @@ void band_minus(int id) {
   // long long frequency_max = radio->frequency_max;
   int b = vfo[id].band;
   int found = 0;
-
   while (!found) {
     const BAND *band;
     b--;
-
     if (b < 0) { b = BANDS + XVTRS - 1; }
-
     band = (BAND*) band_get_band(b);
-
     if (strlen(band->title) > 0) {
       /*
             if (b < BANDS) {
@@ -893,7 +833,6 @@ void band_minus(int id) {
             }
       */
       vfo_band_changed(id, b);
-
       // found = 1;
       if (vfo[id].band == b) { found = 1; }
     }
@@ -907,13 +846,11 @@ static void make_pa_calibration_filename(char* buffer,
   size_t i;
   strncpy(name, radio_name, sizeof(name) - 1);
   name[sizeof(name) - 1] = '\0';
-
   for (i = 0; name[i] != '\0'; i++) {
     if (!isalnum((unsigned char) name[i])) {
       name[i] = '_';
     }
   }
-
   snprintf(buffer,
            size,
            "pa_calibration_%s.props",
@@ -926,18 +863,15 @@ void PaCalibrationSave(void) {
                                sizeof(filename),
                                radio->name);
   clearProperties();
-
   for (int b = 0; b < BANDS + XVTRS; b++) {
     if (strlen(bands[b].title) == 0) {
       continue;
     }
-
     SetPropI0("device_id", device);
     SetPropF1("band.%d.pa_calibration",
               b,
               bands[b].pa_calibration);
   }
-
   saveProperties(filename);
   t_print("%s: saved %s\n",
           __func__,
@@ -946,15 +880,12 @@ void PaCalibrationSave(void) {
 
 gboolean PaCalibrationLoad(const char* filename) {
   int device_from_import = -1;
-
   if (filename == NULL || access(filename, F_OK) != 0) {
     return FALSE;
   }
-
   clearProperties();
   loadProperties(filename);
   GetPropI0("device_id", device_from_import);
-
   if (device_from_import != device) {
     t_print("%s: cannot load %s: pa_calibration device mismatch\n",
             __func__,
@@ -970,25 +901,20 @@ gboolean PaCalibrationLoad(const char* filename) {
             __func__,
             filename);
   }
-
   for (int b = 0; b < BANDS + XVTRS; b++) {
     if (strlen(bands[b].title) == 0) {
       continue;
     }
-
     GetPropF1("band.%d.pa_calibration",
               b,
               bands[b].pa_calibration);
-
     if (bands[b].pa_calibration < 38.8) {
       bands[b].pa_calibration = 38.8;
     }
-
     if (bands[b].pa_calibration > 70.0) {
       bands[b].pa_calibration = 70.0;
     }
   }
-
   clearProperties();
   t_print("%s: loaded %s\n",
           __func__,

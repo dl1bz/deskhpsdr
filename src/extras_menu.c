@@ -59,7 +59,6 @@ static void atuwin_action_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *atuwin_action_box = GTK_ENTRY(data);
   const gchar *text = gtk_entry_get_text(atuwin_action_box);
   gsize len = text ? strlen(text) : 0;
-
   if (text && len >= 1 && len < sizeof(atuwin_ACTION)) {
     gchar *upper = g_ascii_strup(text, -1);  // oder g_strup(text)
     g_strlcpy(atuwin_ACTION, upper, sizeof(atuwin_ACTION));
@@ -69,7 +68,6 @@ static void atuwin_action_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(atuwin_action_box, atuwin_ACTION);
     g_signal_handler_unblock(atuwin_action_box, atuwin_action_box_signal_id);
   }
-
   gtk_widget_queue_draw(GTK_WIDGET(atuwin_action_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
@@ -79,7 +77,6 @@ static void atuwin_url_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *atuwin_url_box = GTK_ENTRY(data);
   const gchar *text = gtk_entry_get_text(atuwin_url_box);
   gsize len = text ? strlen(text) : 0;
-
   if (text && len >= 1 && len < sizeof(atuwin_URL)) {
     g_strlcpy(atuwin_URL, text, sizeof(atuwin_URL));
   } else {
@@ -87,7 +84,6 @@ static void atuwin_url_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(atuwin_url_box, atuwin_URL);
     g_signal_handler_unblock(atuwin_url_box, atuwin_url_box_signal_id);
   }
-
   gtk_widget_queue_draw(GTK_WIDGET(atuwin_url_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
@@ -97,7 +93,6 @@ static void atuwin_title_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *atuwin_title_box = GTK_ENTRY(data);
   const gchar *text = gtk_entry_get_text(atuwin_title_box);
   gsize len = text ? strlen(text) : 0;
-
   if (text && len >= 1 && len < sizeof(atuwin_TITLE)) {
     g_strlcpy(atuwin_TITLE, text, sizeof(atuwin_TITLE));
   } else {
@@ -105,7 +100,6 @@ static void atuwin_title_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(atuwin_title_box, atuwin_TITLE);
     g_signal_handler_unblock(atuwin_title_box, atuwin_title_box_signal_id);
   }
-
   gtk_widget_queue_draw(GTK_WIDGET(atuwin_title_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
@@ -115,7 +109,6 @@ static void dxc_address_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *dxc_address_box = GTK_ENTRY(data);
   const gchar *text = gtk_entry_get_text(dxc_address_box);
   gsize len = text ? strlen(text) : 0;
-
   if (text && len >= 1 && len < sizeof(dxc_address)) {
     g_strlcpy(dxc_address, text, sizeof(dxc_address));
   } else {
@@ -123,7 +116,6 @@ static void dxc_address_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(dxc_address_box, dxc_address);
     g_signal_handler_unblock(dxc_address_box, dxc_address_box_signal_id);
   }
-
   gtk_widget_queue_draw(GTK_WIDGET(dxc_address_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
@@ -133,7 +125,6 @@ static void dxc_login_button_clicked(GtkWidget *widget, gpointer data) {
   GtkEntry *dxc_login_box = GTK_ENTRY(data);
   const gchar *text = gtk_entry_get_text(dxc_login_box);
   gsize len = text ? strlen(text) : 0;
-
   if (text && len >= 3 && len < sizeof(dxc_login)) {
     gchar *upper = g_ascii_strup(text, -1);  // oder g_strup(text)
     g_strlcpy(dxc_login, upper, sizeof(dxc_login));
@@ -143,7 +134,6 @@ static void dxc_login_button_clicked(GtkWidget *widget, gpointer data) {
     gtk_entry_set_text(dxc_login_box, dxc_login);
     g_signal_handler_unblock(dxc_login_box, dxc_login_box_signal_id);
   }
-
   gtk_widget_queue_draw(GTK_WIDGET(dxc_login_box));
   // optional: cleanup() / close_cb() wenn Save + Close gewünscht ist
   cleanup();
@@ -151,7 +141,6 @@ static void dxc_login_button_clicked(GtkWidget *widget, gpointer data) {
 
 static void dxc_port_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data) {
   dxc_port = gtk_spin_button_get_value_as_int(spin);
-
   /* Sicherheitsnetz */
   if (dxc_port < 1) {
     dxc_port = 1;
@@ -162,7 +151,6 @@ static void dxc_port_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data
 
 static void dxspot_lifetime_spin_btn_cb(GtkSpinButton *spin, gpointer user_data) {
   pan_spot_lifetime_min = gtk_spin_button_get_value_as_int(spin);
-
   /* Sicherheitsnetz */
   if (pan_spot_lifetime_min < 1) {
     pan_spot_lifetime_min = 1;
@@ -178,7 +166,6 @@ static void dxspot_max_rows_spin_btn_cb(GtkSpinButton *spin, gpointer user_data)
 
 static void atuwin_w_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data) {
   atuwin_wv_w = gtk_spin_button_get_value_as_int(spin);
-
   /* Sicherheitsnetz */
   if (atuwin_wv_w < 400) {
     atuwin_wv_w = 400;
@@ -189,7 +176,6 @@ static void atuwin_w_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data
 
 static void atuwin_h_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data) {
   atuwin_wv_h = gtk_spin_button_get_value_as_int(spin);
-
   /* Sicherheitsnetz */
   if (atuwin_wv_h < 400) {
     atuwin_wv_h = 400;
@@ -345,7 +331,6 @@ void extras_menu(GtkWidget *parent) {
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dxspot_max_rows_spin_btn), TRUE);
   gtk_grid_attach(GTK_GRID(grid), dxspot_max_rows_spin_btn, col, row, 1, 1);
   g_signal_connect(dxspot_max_rows_spin_btn, "value-changed", G_CALLBACK(dxspot_max_rows_spin_btn_cb), NULL);
-
   if (dxcwin_open) {
     gtk_widget_set_sensitive(dxc_login_box, FALSE);
     gtk_widget_set_sensitive(dxc_login_box_btn, FALSE);
@@ -355,7 +340,6 @@ void extras_menu(GtkWidget *parent) {
     // gtk_widget_set_sensitive(dxspot_lifetime_spin_btn, FALSE);
     // gtk_widget_set_sensitive(dxspot_max_rows_spin_btn, FALSE);
   }
-
   //--------------------------------------------------------------------------------
   row++;
   col = 0;

@@ -59,14 +59,12 @@ static void oc_rx_cb(GtkWidget *widget, gpointer data) {
   int oc = (GPOINTER_TO_UINT(data)) & 0xF;
   BAND *band = band_get_band(b);
   int mask = 0x01 << (oc - 1);
-
   //t_print("oc_rx_cb: band=%d oc=%d mask=%d\n",b,oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     band->OCrx |= mask;
   } else {
     band->OCrx &= ~mask;
   }
-
   schedule_high_priority();
 }
 
@@ -75,21 +73,18 @@ static void oc_tx_cb(GtkWidget *widget, gpointer data) {
   int oc = (GPOINTER_TO_UINT(data)) & 0xF;
   BAND *band = band_get_band(b);
   int mask = 0x01 << (oc - 1);
-
   //t_print("oc_tx_cb: band=%d oc=%d mask=%d\n",b,oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     band->OCtx |= mask;
   } else {
     band->OCtx &= ~mask;
   }
-
   schedule_high_priority();
 }
 
 static void oc_tune_cb(GtkWidget *widget, gpointer data) {
   int oc = (GPOINTER_TO_UINT(data)) & 0xF;
   int mask = 0x01 << (oc - 1);
-
   //t_print("oc_tune_cb: oc=%d mask=%d\n",oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     OCtune |= mask;
@@ -149,7 +144,6 @@ void oc_menu(GtkWidget *parent) {
   gtk_widget_set_name(tune_title, "boldlabel");
   gtk_widget_show(tune_title);
   gtk_grid_attach(GTK_GRID(grid), tune_title, 18, 1, 2, 1);
-
   for (i = 1; i < 8; i++) {
     char oc_id[16];
     snprintf(oc_id, 16, "%d", i);
@@ -162,7 +156,6 @@ void oc_menu(GtkWidget *parent) {
     gtk_widget_show(oc_tx_title);
     gtk_grid_attach(GTK_GRID(grid), oc_tx_title, i + 7, 2, 1, 1);
   }
-
   int bands = radio_max_band();
   int row = 3;
   //
@@ -172,17 +165,14 @@ void oc_menu(GtkWidget *parent) {
   // and are filtered out
   //
   i = bandGen;
-
   for (;;) {
     const BAND *band = band_get_band(i);
-
     if (strlen(band->title) > 0) {
       GtkWidget *band_label = gtk_label_new(band->title);
       gtk_widget_set_name(band_label, "boldlabel");
       gtk_widget_show(band_label);
       gtk_grid_attach(GTK_GRID(grid), band_label, 0, row, 1, 1);
       int mask;
-
       for (j = 1; j < 8; j++) {
         mask = 0x01 << (j - 1);
         GtkWidget *oc_rx_b = gtk_check_button_new();
@@ -196,10 +186,8 @@ void oc_menu(GtkWidget *parent) {
         gtk_grid_attach(GTK_GRID(grid), oc_tx_b, j + 7, row, 1, 1);
         g_signal_connect(oc_tx_b, "toggled", G_CALLBACK(oc_tx_cb), GINT_TO_POINTER(j + (i << 4)));
       }
-
       row++;
     }
-
     // update "loop index"
     if (i == bandGen) {
       i = 0;
@@ -208,12 +196,9 @@ void oc_menu(GtkWidget *parent) {
     } else {
       i++;
     }
-
     if (i >= BANDS + XVTRS) { break; }
   }
-
   int mask;
-
   for (j = 1; j < 8; j++) {
     char oc_id[8];
     snprintf(oc_id, 8, "%d", j);
@@ -228,7 +213,6 @@ void oc_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), oc_tune_b, 19, j + 2, 1, 1);
     g_signal_connect(oc_tune_b, "toggled", G_CALLBACK(oc_tune_cb), GINT_TO_POINTER(j));
   }
-
   j = 10;
   GtkWidget *oc_full_tune_time_title = gtk_label_new("Full Tune(ms):");
   gtk_widget_set_name(oc_full_tune_time_title, "boldlabel");
@@ -265,11 +249,8 @@ void oc_menu(GtkWidget *parent) {
   gtk_widget_get_preferred_size(viewport, &min, &nat);
   width  = nat.width;
   height = nat.height;
-
   if (nat.width  > display_width - 150) { width  = display_width - 150; }
-
   if (nat.height > display_height - 80) { height = display_height - 80; }
-
   gtk_widget_set_size_request(viewport, width, height);
   gtk_widget_set_size_request(sw, width, height);
 }

@@ -105,26 +105,21 @@ int main(int argc, char** argv) {
   do_display = 1;
   do_lookup = 0;
   i = 1;
-
   while (i < argc) {
     if (!strcmp(argv[i], "-d")) {
       do_display = 1;
       do_lookup = 0;
     }
-
     if (!strcmp(argv[i], "-i") && i + 1 < argc) {
       dev = argv[++i];
       do_display = 0;
       do_lookup = 1;
     }
-
     if (!strcmp(argv[i], "-o") && i + 1 < argc) {
       outfile = argv[++i];
     }
-
     i++;
   }
-
   if (do_display || do_lookup) {
     //
     // loop through all Ethernet devices,
@@ -135,40 +130,31 @@ int main(int argc, char** argv) {
       printf("Error in pcap_findalldevs_ex: %s\n", errbuf);
       exit(1);
     }
-
     ifp = devlist;
-
     while (ifp != NULL) {
       if (do_lookup && strcmp(ifp->name, dev)) {
         ifp = ifp->next;
         continue;
       }
-
       have_addr = 0;
       have_mac = 0;
       addr = ifp->addresses;
-
       while (addr != NULL) {
         sa = addr->addr;
-
         if (sa->sa_family == AF_INET) {
           (void) inet_ntop(AF_INET, (void*) & (((struct sockaddr_in*) sa)->sin_addr), string, 256);
-
           if (sscanf(string, "%d.%d.%d.%d", &i, &j, &k, &l) == 4) {
             myip[0] = i;
             myip[1] = j;
             myip[2] = k;
             myip[3] = l;
-
             if (i > 127) { have_addr = 1; }
           }
         }
-
         if (sa->sa_family == AF_LINK) {
           link = (struct sockaddr_dl*) sa->sa_data;
           unsigned char mac[link->sdl_alen];
           memcpy(mac, LLADDR(link), link->sdl_alen);
-
           if (link->sdl_alen == 6) {
             mymac[0] = mac[0];
             mymac[1] = mac[1];
@@ -177,7 +163,6 @@ int main(int argc, char** argv) {
             mymac[4] = mac[4];
             mymac[5] = mac[5];
           }
-
           if (link->sdl_alen > 6) {
             //
             // This happens on MacOS
@@ -189,56 +174,44 @@ int main(int argc, char** argv) {
             mymac[4] = mac[5];
             mymac[5] = mac[6];
           }
-
           have_mac = 1;
         }
-
         addr = addr->next;
       }
-
       if (have_addr && have_mac) {
         printf("Interface=%-10s Address=(%3d,%3d,%3d,%3d) MAC=%02x:%02x:%02x:%02x:%02x:%02x\n", ifp->name, myip[0], myip[1],
                myip[2], myip[3],
                mymac[0], mymac[1], mymac[2], mymac[3], mymac[4], mymac[5]);
       }
-
       ifp = ifp->next;
     }
-
     pcap_freealldevs(devlist);
   }
-
   //
   // In this case, we are finished
   //
   if (do_display) { return 0; }
-
   //
   // From now on we need a valid ethernet interface
   //
   if (dev == NULL || !have_addr || !have_mac) { return 8; }
-
   outfd = -1;
   //
   // FROM NOW ON, we need administrator privileges
   //
   descr = pcap_open_live(dev, 1024, 1, 10, errbuf);
-
   if (descr == NULL) {
     printf("pcap_open_live(): %s\n", errbuf);
     exit(1);
   }
-
   count = 0;
   progress = 0;
-
   for (;;) {
     //
     // spin around "sniffing" the ethernet adapter
     //
     if (count > 0) {
       count--;
-
       if (count == 0) {
         close(outfd);
         outfd = -1;
@@ -246,11 +219,8 @@ int main(int argc, char** argv) {
         printf("\nOutput file %s closed.\n", outfile);
       }
     }
-
     packet = pcap_next(descr, &hdr);
-
     if (packet == NULL) { continue; } // Nothing arrived within time-out
-
     /* determine if this is a bootloader packet */
     if (hdr.len > 22 && packet[0] == 0x11 && packet[1] == 0x22 && packet[2] == 0x33
         && packet[3] == 0x44 && packet[4] == 0x55 && packet[5] == 0x66
@@ -261,7 +231,6 @@ int main(int argc, char** argv) {
       hismac[3] = packet[9];
       hismac[4] = packet[10];
       hismac[5] = packet[11];
-
       //printf("Bootloader packet, his MAC=%02x:%02x:%02x:%02x:%02x:%02x Commands=%d:%d\n", hismac[0], hismac[1], hismac[2], hismac[3], hismac[4], hismac[5],packet[14],packet[15]);
       if (packet[14] == 3) {
         switch (packet[15]) {
@@ -269,12 +238,10 @@ int main(int argc, char** argv) {
           sendRawCommand(descr,  hismac, HAVE_MAC_ADDRESS, mymac, 6);
           printf("Sent MAC address\n");
           break;
-
         case READ_METIS_IP:
           sendRawCommand(descr, hismac, HAVE_IP_ADDRESS, myip, 4);
           printf("Sent IP address\n");
           break;
-
         case WRITE_METIS_IP:
           myip[0] = packet[16];
           myip[1] = packet[17];
@@ -282,56 +249,44 @@ int main(int argc, char** argv) {
           myip[3] = packet[19];
           printf("IP address set to (%d,%d,%d,%d)\n", myip[0], myip[1], myip[2], myip[3]);
           break;
-
         case ERASE_METIS_FLASH:
           sleep(2);  // well, erase takes  some time
           sendRawCommand(descr, hismac, ERASE_DONE, NULL, 0);
           printf("Erased.\n");
           break;
-
         case PROGRAM_METIS_FLASH:
-
           // data is 276 bytes long
           if (outfd < 0 && outfile != NULL) {
             progress = 0;
             outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC);
-
             if (outfd < 0) {
               perror("OPEN outfile:");
               outfile = NULL;
             }
           }
-
           if (outfd >= 0) {
             write(outfd, packet + 20, 256);
             printf("Writing to file %s: %5d\r", outfile, progress++);
             fflush(stdout);
             count = 100; // timeout is 10msec so we wait for 1 sec.
           }
-
           sendRawCommand(descr, hismac, SEND_MORE, NULL, 0);
           break;
-
         case GET_JTAG_DEVICE_ID:
           printf("JTAG GetDeviceID received, should not happen.\n");
           break;
-
         case PROGRAM_MERCURY:
           printf("JTAG ProgramMercury received, should not happen.\n");
           break;
-
         case PROGRAM_PENELOPE:
           printf("JTAG ProgramPenelope received, should not happen.\n");
           break;
-
         case JTAG_ERASE_FLASH:
           printf("JTAG erase flash received, should not happen.\n");
           break;
-
         case PROGRAM_FLASH:
           printf("JTAG Program flash received, should not happen.\n");
           break;
-
         default:
           printf("UNKNOWN COMMAND=%d\n", packet[15]);
           break;
@@ -344,9 +299,7 @@ int main(int argc, char** argv) {
 void sendRawCommand(pcap_t* handle, unsigned char dst[6], unsigned char command, unsigned char* data, int datalen) {
   unsigned char buffer[62];
   int i;
-
   if (datalen < 0 || datalen > 46) { datalen = 0; } // should not happen
-
   //
   // Header is:
   // dest MAC address (6 bytes)
@@ -373,21 +326,18 @@ void sendRawCommand(pcap_t* handle, unsigned char dst[6], unsigned char command,
   buffer[13] = 0xFE;
   buffer[14] = 0x03;
   buffer[15] = command;
-
   //
   // Include data, if present
   //
   for (i = 0; i < datalen; i++) {
     buffer[i + 16] = data[i];
   }
-
   //
   // pad with zeroes
   //
   for (i = 16 + datalen; i <= 62; i++) {
     buffer[i + 16] = (unsigned char) 0x00;
   }
-
   //
   // ship out packet
   //

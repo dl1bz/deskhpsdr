@@ -39,19 +39,16 @@ void pre_main_build(int channel) {
   } else {
     ch[channel].dsp_insize  = ch[channel].dsp_size / (ch[channel].dsp_rate /  ch[channel].in_rate);
   }
-
   if (ch[channel].out_rate >= ch[channel].dsp_rate) {
     ch[channel].dsp_outsize = ch[channel].dsp_size * (ch[channel].out_rate / ch[channel].dsp_rate);
   } else {
     ch[channel].dsp_outsize = ch[channel].dsp_size / (ch[channel].dsp_rate / ch[channel].out_rate);
   }
-
   if (ch[channel].in_rate  >= ch[channel].out_rate) {
     ch[channel].out_size  = ch[channel].in_size  / (ch[channel].in_rate  / ch[channel].out_rate);
   } else {
     ch[channel].out_size  = ch[channel].in_size  * (ch[channel].out_rate /  ch[channel].in_rate);
   }
-
   InitializeCriticalSectionAndSpinCount(&ch[channel].csDSP, 2500);
   InitializeCriticalSectionAndSpinCount(&ch[channel].csEXCH,  2500);
   InterlockedBitTestAndReset(&ch[channel].flushflag, 0);
@@ -61,7 +58,6 @@ void pre_main_build(int channel) {
 void post_main_build(int channel) {
   InterlockedBitTestAndSet(&ch[channel].run, 0);
   start_thread(channel);
-
   if (ch[channel].state == 1) {
     InterlockedBitTestAndSet(&ch[channel].exchange, 0);
   }
@@ -90,14 +86,12 @@ void OpenChannel(int channel, int in_size, int dsp_size, int input_samplerate, i
   ch[channel].bfo = bfo;
   InterlockedBitTestAndReset(&ch[channel].exchange, 0);
   build_channel(channel);
-
   if (ch[channel].state) {
     InterlockedBitTestAndSet(&ch[channel].iob.pc->slew.upflag, 0);
     InterlockedBitTestAndSet(&ch[channel].iob.ch_upslew, 0);
     InterlockedBitTestAndReset(&ch[channel].iob.pc->exec_bypass, 0);
     InterlockedBitTestAndSet(&ch[channel].exchange, 0);
   }
-
 #if !defined(linux) && !defined(__APPLE__)
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
 #endif
@@ -128,10 +122,8 @@ void CloseChannel(int channel) {
 void flushChannel(void* p) {
   int channel = (int)(uintptr_t)p;
   IOB a = ch[channel].iob.pc;
-
   while (!InterlockedAnd(&a->flush_bypass, 0xffffffff)) {
     WaitForSingleObject(a->Sem_Flush, INFINITE);
-
     if (!InterlockedAnd(&a->flush_bypass, 0xffffffff)) {
       EnterCriticalSection(&ch[channel].csDSP);
       EnterCriticalSection(&ch[channel].csEXCH);
@@ -143,7 +135,6 @@ void flushChannel(void* p) {
       InterlockedBitTestAndReset(&ch[channel].flushflag, 0);
     }
   }
-
   InterlockedBitTestAndReset(&a->flush_bypass, 0);
 }
 
@@ -251,30 +242,24 @@ int SetChannelState(int channel, int state, int dmode) {
   int prior_state = ch[channel].state;
   int count = 0;
   const int timeout = 100;
-
   if (ch[channel].state != state) {
     ch[channel].state = state;
-
     switch (ch[channel].state) {
     case 0:
       InterlockedBitTestAndSet(&a->slew.downflag, 0);
       InterlockedBitTestAndSet(&ch[channel].flushflag, 0);
-
       if (dmode) {
         while (_InterlockedAnd(&ch[channel].flushflag, 1) && count < timeout) {
           Sleep(1);
           count++;
         }
       }
-
       if (count >= timeout) {
         InterlockedBitTestAndReset(&ch[channel].exchange, 0);
         InterlockedBitTestAndReset(&ch[channel].flushflag, 0);
         InterlockedBitTestAndReset(&a->slew.downflag, 0);
       }
-
       break;
-
     case 1:
       InterlockedBitTestAndSet(&a->slew.upflag, 0);
       InterlockedBitTestAndSet(&ch[channel].iob.ch_upslew, 0);
@@ -283,7 +268,6 @@ int SetChannelState(int channel, int state, int dmode) {
       break;
     }
   }
-
   return prior_state;
 }
 

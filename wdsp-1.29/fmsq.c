@@ -57,20 +57,16 @@ void calc_fmsq(FMSQ a) {
   a->cdown = (double*)malloc0((a->ntdown + 1) * sizeof(double));
   delta = PI / (double)a->ntup;
   theta = 0.0;
-
   for (i = 0; i <= a->ntup; i++) {
     a->cup[i] = 0.5 * (1.0 - cos(theta));
     theta += delta;
   }
-
   delta = PI / (double)a->ntdown;
   theta = 0.0;
-
   for (i = 0; i <= a->ntdown; i++) {
     a->cdown[i] = 0.5 * (1 + cos(theta));
     theta += delta;
   }
-
   // control
   a->state = 0;
   a->ready = 0;
@@ -139,71 +135,53 @@ void xfmsq(FMSQ a) {
     int i;
     double noise, lnlimit;
     xfircore(a->p);
-
     for (i = 0; i < a->size; i++) {
       noise = sqrt(a->noise[2 * i + 0] * a->noise[2 * i + 0] + a->noise[2 * i + 1] * a->noise[2 * i + 1]);
       a->avnoise = a->avm * a->avnoise + a->onem_avm * noise;
       a->longnoise = a->longavm * a->longnoise + a->onem_longavm * noise;
-
       if (!a->ready) { a->ramp += a->rstep; }
-
       if (a->ramp >= a->tdelay) { a->ready = 1; }
-
       switch (a->state) {
       case MUTED:
         if (a->avnoise < a->unmute_thresh && a->ready) {
           a->state = INCREASE;
           a->count = a->ntup;
         }
-
         a->outsig[2 * i + 0] = 0.0;
         a->outsig[2 * i + 1] = 0.0;
         break;
-
       case INCREASE:
         a->outsig[2 * i + 0] = a->insig[2 * i + 0] * a->cup[a->ntup - a->count];
         a->outsig[2 * i + 1] = a->insig[2 * i + 1] * a->cup[a->ntup - a->count];
-
         if (a->count-- == 0) {
           a->state = UNMUTED;
         }
-
         break;
-
       case UNMUTED:
         if (a->avnoise > a->tail_thresh) {
           a->state = TAIL;
-
           if ((lnlimit = a->longnoise) > 1.0) { lnlimit = 1.0; }
-
           a->count = (int)((a->min_tail + (a->max_tail - a->min_tail) * lnlimit) * a->rate);
         }
-
         a->outsig[2 * i + 0] = a->insig[2 * i + 0];
         a->outsig[2 * i + 1] = a->insig[2 * i + 1];
         break;
-
       case TAIL:
         a->outsig[2 * i + 0] = a->insig[2 * i + 0];
         a->outsig[2 * i + 1] = a->insig[2 * i + 1];
-
         if (a->avnoise < a->unmute_thresh) {
           a->state = UNMUTED;
         } else if (a->count-- == 0) {
           a->state = DECREASE;
           a->count = a->ntdown;
         }
-
         break;
-
       case DECREASE:
         a->outsig[2 * i + 0] = a->insig[2 * i + 0] * a->cdown[a->ntdown - a->count];
         a->outsig[2 * i + 1] = a->insig[2 * i + 1] * a->cdown[a->ntdown - a->count];
-
         if (a->count-- == 0) {
           a->state = MUTED;
         }
-
         break;
       }
     }
@@ -258,14 +236,12 @@ void SetRXAFMSQNC(int channel, int nc) {
   double *impulse;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].fmsq.p;
-
   if (a->nc != nc) {
     a->nc = nc;
     impulse = eq_impulse(a->nc, 3, a->F, a->G, a->rate, 1.0 / (2.0 * a->size), 0, 0);
     setNc_fircore(a->p, a->nc, impulse);
     _aligned_free(impulse);
   }
-
   LeaveCriticalSection(&ch[channel].csDSP);
 }
 
@@ -273,7 +249,6 @@ PORT
 void SetRXAFMSQMP(int channel, int mp) {
   FMSQ a;
   a = rxa[channel].fmsq.p;
-
   if (a->mp != mp) {
     a->mp = mp;
     setMp_fircore(a->p, a->mp);

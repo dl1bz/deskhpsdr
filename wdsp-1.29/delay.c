@@ -67,35 +67,27 @@ void flush_delay(DELAY a) {
 
 void xdelay(DELAY a) {
   EnterCriticalSection(&a->cs_update);
-
   if (a->run) {
     int i, j, k, idx, n;
     double Itmp, Qtmp;
-
     for (i = 0; i < a->size; i++) {
       a->ring[2 * a->idx_in + 0] = a->in[2 * i + 0];
       a->ring[2 * a->idx_in + 1] = a->in[2 * i + 1];
       Itmp = 0.0;
       Qtmp = 0.0;
-
       if ((n = a->idx_in + a->snum) >= a->rsize) { n -= a->rsize; }
-
       for (j = 0, k = a->L - 1 - a->phnum; j < a->cpp; j++, k += a->L) {
         if ((idx = n + j) >= a->rsize) { idx -= a->rsize; }
-
         Itmp += a->ring[2 * idx + 0] * a->h[k];
         Qtmp += a->ring[2 * idx + 1] * a->h[k];
       }
-
       a->out[2 * i + 0] = Itmp;
       a->out[2 * i + 1] = Qtmp;
-
       if (--a->idx_in < 0) { a->idx_in = a->rsize - 1; }
     }
   } else if (a->out != a->in) {
     memcpy(a->out, a->in, a->size * sizeof(complex));
   }
-
   LeaveCriticalSection(&a->cs_update);
 }
 

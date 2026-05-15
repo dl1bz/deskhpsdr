@@ -44,12 +44,10 @@ void calc_uslew(USLEW a) {
   a->cup = (double*) malloc0((a->ntup + 1) * sizeof(double));
   delta = PI / (double)a->ntup;
   theta = 0.0;
-
   for (i = 0; i <= a->ntup; i++) {
     a->cup[i] = 0.5 * (1.0 - cos(theta));
     theta += delta;
   }
-
   InterlockedBitTestAndReset(a->ch_upslew, 0);
 }
 
@@ -87,20 +85,16 @@ void xuslew(USLEW a) {
   if (!a->runmode && TXAUslewCheck(a->channel)) {
     a->runmode = 1;
   }
-
   if (a->runmode && _InterlockedAnd(a->ch_upslew, 1)) {
     int i;
     double I, Q;
-
     for (i = 0; i < a->size; i++) {
       I = a->in[2 * i + 0];
       Q = a->in[2 * i + 1];
-
       switch (a->state) {
       case BEGIN:
         a->out[2 * i + 0] = 0.0;
         a->out[2 * i + 1] = 0.0;
-
         if ((I != 0.0) || (Q != 0.0)) {
           if (a->ndelup > 0) {
             a->state = WAIT;
@@ -112,13 +106,10 @@ void xuslew(USLEW a) {
             a->state = ON;
           }
         }
-
         break;
-
       case WAIT:
         a->out[2 * i + 0] = 0.0;
         a->out[2 * i + 1] = 0.0;
-
         if (a->count-- == 0) {
           if (a->ntup > 0) {
             a->state = UP;
@@ -127,19 +118,14 @@ void xuslew(USLEW a) {
             a->state = ON;
           }
         }
-
         break;
-
       case UP:
         a->out[2 * i + 0] = I * a->cup[a->ntup - a->count];
         a->out[2 * i + 1] = Q * a->cup[a->ntup - a->count];
-
         if (a->count-- == 0) {
           a->state = ON;
         }
-
         break;
-
       case ON:
         a->out[2 * i + 0] = I;
         a->out[2 * i + 1] = Q;

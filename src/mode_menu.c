@@ -53,13 +53,11 @@ static void cleanup (void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
-
     while (first != NULL) {
       CHOICE *choice = first;
       first = first->next;
       g_free (choice);
     }
-
     current = NULL;
     gtk_widget_destroy (tmp);
     sub_menu = NULL;
@@ -75,18 +73,15 @@ static gboolean close_cb (void) {
 
 static gboolean mode_select_cb (GtkWidget *widget, gpointer data) {
   CHOICE *choice = (CHOICE*) data;
-
   if (current) {
     g_signal_handler_block (G_OBJECT (current->button), current->signal);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (current->button), current == choice);
     g_signal_handler_unblock (G_OBJECT (current->button), current->signal);
   }
-
   if (current != choice) {
     current = choice;
     vfo_mode_changed (choice->info);
   }
-
   return FALSE;
 }
 
@@ -115,7 +110,6 @@ void mode_menu (GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK (close_cb), NULL);
   gtk_grid_attach (GTK_GRID (grid), close_b, 0, 0, 2, 1);
   int mode = vfo[active_receiver->id].mode;
-
   for (i = 0; i < MODES; i++) {
     GtkWidget *w = gtk_toggle_button_new_with_label (mode_string[i]);
     gtk_widget_set_name (w, "small_toggle_button");
@@ -126,15 +120,12 @@ void mode_menu (GtkWidget *parent) {
     first = choice;
     choice->info = i;
     choice->button = w;
-
     if (i == mode) {
       current = choice;
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), TRUE);
     }
-
     choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (mode_select_cb), choice);
   }
-
   gtk_container_add (GTK_CONTAINER (content), grid);
   sub_menu = dialog;
   gtk_widget_show_all (dialog);

@@ -32,11 +32,8 @@ warren@wpratt.com
 
 void calc_osctrl(OSCTRL a) {
   a->pn = (int)((0.3 / a->bw) * a->rate + 0.5);
-
   if ((a->pn & 1) == 0) { a->pn += 1; }
-
   if (a->pn < 3) { a->pn = 3; }
-
   a->dl_len = a->pn >> 1;
   a->dl  = (double*) malloc0(a->pn * sizeof(complex));
   a->dlenv = (double*) malloc0(a->pn * sizeof(double));
@@ -83,31 +80,23 @@ void xosctrl(OSCTRL a) {
   if (a->run) {
     int i, j;
     double divisor;
-
     for (i = 0; i < a->size; i++) {
       a->dl[2 * a->in_idx + 0] = a->inbuff[2 * i + 0];              // put sample in delay line
       a->dl[2 * a->in_idx + 1] = a->inbuff[2 * i + 1];
       a->env_out = a->dlenv[a->in_idx];                     // take env out of delay line
       a->dlenv[a->in_idx] = sqrt(a->inbuff[2 * i + 0] * a->inbuff[2 * i + 0]    // put env in delay line
                                  + a->inbuff[2 * i + 1] * a->inbuff[2 * i + 1]);
-
       if (a->dlenv[a->in_idx]  >  a->max_env) { a->max_env = a->dlenv[a->in_idx]; }
-
       if (a->env_out >= a->max_env && a->env_out > 0.0) {           // run the buffer
         a->max_env = 0.0;
-
         for (j = 0; j < a->pn; j++)
           if (a->dlenv[j] > a->max_env) { a->max_env = a->dlenv[j]; }
       }
-
       if (a->max_env > 1.0) { divisor = 1.0 + a->osgain * (a->max_env - 1.0); }
       else { divisor = 1.0; }
-
       a->outbuff[2 * i + 0] = a->dl[2 * a->out_idx + 0] / divisor;        // output sample
       a->outbuff[2 * i + 1] = a->dl[2 * a->out_idx + 1] / divisor;
-
       if (--a->in_idx  < 0) { a->in_idx  += a->pn; }
-
       if (--a->out_idx < 0) { a->out_idx += a->pn; }
     }
   } else if (a->inbuff != a->outbuff) {

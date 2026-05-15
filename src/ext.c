@@ -75,7 +75,6 @@ int ext_vfo_update(void* data) {
   if (vfo_timeout == 0) {
     vfo_timeout = g_timeout_add(100, vfo_timeout_cb, NULL);
   }
-
   return G_SOURCE_REMOVE;
 }
 
@@ -83,7 +82,6 @@ int ext_tune_update(void* data) {
   int state = GPOINTER_TO_INT(data);
   int old_state = radio_get_tune();
   radio_tune_update(state);
-
   if (device == DEVICE_HERMES_LITE2 && hl2_pico_is_present()) {
     if (!old_state && state) {
       hl2_iob_set_antenna_tuner(1);
@@ -91,19 +89,16 @@ int ext_tune_update(void* data) {
       hl2_iob_set_antenna_tuner(0);
     }
   }
-
   update_slider_tune_drive_btn();
   return G_SOURCE_REMOVE;
 }
 
 int ext_mox_update(void* data) {
   int state = GPOINTER_TO_INT(data);
-
   /* Nur bei externer PTT ON: VK abbrechen, Mic übernimmt */
   if (state) {
     voice_keyer_stop_for_ptt_takeover();
   }
-
   radio_mox_update(state);
   return G_SOURCE_REMOVE;
 }

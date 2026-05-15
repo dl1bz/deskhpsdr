@@ -20,11 +20,9 @@ static void macos_open_webview_window_impl(NSString* idStr,
   if (!g_webview_windows) {
     g_webview_windows = [[NSMutableDictionary alloc] init];
   }
-
   NSApplication *app = [NSApplication sharedApplication];
   // 1. Prüfen, ob Fenster für diese ID bereits existiert
   NSWindow *win = [g_webview_windows objectForKey:idStr];
-
   if (win) {
     // vorhandenes Fenster repositionieren und nach vorn holen
     [win setFrameOrigin:NSMakePoint(x, y)];
@@ -32,7 +30,6 @@ static void macos_open_webview_window_impl(NSString* idStr,
     [app activateIgnoringOtherApps:YES];
     return;
   }
-
   // 2. Neues Fenster erzeugen
   NSString *title = titleStr ? : @"WebView";
   NSRect frame = NSMakeRect(x,
@@ -56,16 +53,13 @@ static void macos_open_webview_window_impl(NSString* idStr,
                    configuration:config];
   [wv setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
   [contentView addSubview:wv];
-
   if (urlStr && [urlStr length] > 0) {
     NSURL *url = [NSURL URLWithString:urlStr];
-
     if (url) {
       NSURLRequest *req = [NSURLRequest requestWithURL:url];
       [wv loadRequest:req];
     }
   }
-
   // 3. Fenster in Dictionary eintragen
   [g_webview_windows setObject:win forKey:idStr];
   // 4. Beim Schließen: Eintrag entfernen

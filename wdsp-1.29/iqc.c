@@ -29,17 +29,14 @@ warren@wpratt.com
 void size_iqc(IQC a) {
   int i;
   a->t = (double*) malloc0((a->ints + 1) * sizeof(double));
-
   for (i = 0; i <= a->ints; i++) {
     a->t[i] = (double)i / (double)a->ints;
   }
-
   for (i = 0; i < 2; i++) {
     a->cm[i] = (double*) malloc0(a->ints * 4 * sizeof(double));
     a->cc[i] = (double*) malloc0(a->ints * 4 * sizeof(double));
     a->cs[i] = (double*) malloc0(a->ints * 4 * sizeof(double));
   }
-
   a->dog.cpi = (int*) malloc0(a->ints * sizeof(int));
   a->dog.count = 0;
   a->dog.full_ints = 0;
@@ -48,13 +45,11 @@ void size_iqc(IQC a) {
 void desize_iqc(IQC a) {
   int i;
   _aligned_free(a->dog.cpi);
-
   for (i = 0; i < 2; i++) {
     _aligned_free(a->cm[i]);
     _aligned_free(a->cc[i]);
     _aligned_free(a->cs[i]);
   }
-
   _aligned_free(a->t);
 }
 
@@ -69,12 +64,10 @@ void calc_iqc(IQC a) {
   a->cup = (double*) malloc0((a->ntup + 1) * sizeof(double));
   delta = PI / (double)a->ntup;
   theta = 0.0;
-
   for (i = 0; i <= a->ntup; i++) {
     a->cup[i] = 0.5 * (1.0 - cos(theta));
     theta += delta;
   }
-
   InitializeCriticalSectionAndSpinCount(&a->dog.cs, 2500);
   size_iqc(a);
 }
@@ -119,14 +112,11 @@ void xiqc(IQC a) {
   if (_InterlockedAnd(&a->run, 1)) {
     int i, k, cset, mset;
     double I, Q, env, dx, ym, yc, ys, PRE0, PRE1;
-
     for (i = 0; i < a->size; i++) {
       I = a->in[2 * i + 0];
       Q = a->in[2 * i + 1];
       env = sqrt(I * I + Q * Q);
-
       if ((k = (int)(env * a->ints)) > a->ints - 1) { k = a->ints - 1; }
-
       dx = env - a->t[k];
       cset = a->cset;
       ym = a->cm[cset][4 * k + 0] + dx * (a->cm[cset][4 * k + 1] + dx * (a->cm[cset][4 * k + 2] + dx * a->cm[cset][4 * k +
@@ -137,14 +127,12 @@ void xiqc(IQC a) {
                                           3]));
       PRE0 = ym * (I * yc - Q * ys);
       PRE1 = ym * (I * ys + Q * yc);
-
       switch (a->state) {
       case RUN:
         if (a->dog.cpi[k] != a->dog.spi)
           if (++a->dog.cpi[k] == a->dog.spi) {
             a->dog.full_ints++;
           }
-
         if (a->dog.full_ints == a->ints) {
           EnterCriticalSection(&a->dog.cs);
           ++a->dog.count;
@@ -152,21 +140,16 @@ void xiqc(IQC a) {
           a->dog.full_ints = 0;
           memset(a->dog.cpi, 0, a->ints * sizeof(int));
         }
-
         break;
-
       case BEGIN:
         PRE0 = (1.0 - a->cup[a->count]) * I + a->cup[a->count] * PRE0;
         PRE1 = (1.0 - a->cup[a->count]) * Q + a->cup[a->count] * PRE1;
-
         if (a->count++ == a->ntup) {
           a->state = RUN;
           a->count = 0;
           InterlockedBitTestAndReset(&a->busy, 0);
         }
-
         break;
-
       case SWAP:
         mset = 1 - cset;
         ym = a->cm[mset][4 * k + 0] + dx * (a->cm[mset][4 * k + 1] + dx * (a->cm[mset][4 * k + 2] + dx * a->cm[mset][4 * k +
@@ -177,33 +160,26 @@ void xiqc(IQC a) {
                                             3]));
         PRE0 = (1.0 - a->cup[a->count]) * ym * (I * yc - Q * ys) + a->cup[a->count] * PRE0;
         PRE1 = (1.0 - a->cup[a->count]) * ym * (I * ys + Q * yc) + a->cup[a->count] * PRE1;
-
         if (a->count++ == a->ntup) {
           a->state = RUN;
           a->count = 0;
           InterlockedBitTestAndReset(&a->busy, 0);
         }
-
         break;
-
       case END:
         PRE0 = (1.0 - a->cup[a->count]) * PRE0 + a->cup[a->count] * I;
         PRE1 = (1.0 - a->cup[a->count]) * PRE1 + a->cup[a->count] * Q;
-
         if (a->count++ == a->ntup) {
           a->state = DONE;
           a->count = 0;
           InterlockedBitTestAndReset(&a->busy, 0);
         }
-
         break;
-
       case DONE:
         PRE0 = I;
         PRE1 = Q;
         break;
       }
-
       a->out[2 * i + 0] = PRE0;
       a->out[2 * i + 1] = PRE1;
       // print_iqc_values("iqc.txt", a->state, env, PRE0, PRE1, ym, yc, ys, 1.1);
@@ -270,7 +246,6 @@ void SetTXAiqcSwap(int channel, double* cm, double* cc, double* cs) {
   a->state = SWAP;
   a->count = 0;
   LeaveCriticalSection(&ch[channel].csDSP);
-
   while (_InterlockedAnd(&a->busy, 1)) { Sleep(1); }
 }
 
@@ -287,7 +262,6 @@ void SetTXAiqcStart(int channel, double* cm, double* cc, double* cs) {
   a->count = 0;
   LeaveCriticalSection(&ch[channel].csDSP);
   InterlockedBitTestAndSet(&txa[channel].iqc.p1->run, 0);
-
   while (_InterlockedAnd(&a->busy, 1)) { Sleep(1); }
 }
 
@@ -299,9 +273,7 @@ void SetTXAiqcEnd(int channel) {
   a->state = END;
   a->count = 0;
   LeaveCriticalSection(&ch[channel].csDSP);
-
   while (_InterlockedAnd(&a->busy, 1)) { Sleep(1); }
-
   InterlockedBitTestAndReset(&txa[channel].iqc.p1->run, 0);
 }
 

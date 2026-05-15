@@ -82,10 +82,8 @@ void toolbar_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 3, 1);
   int lfunction = 0;
   const int max_switches = 11;
-
   for (lfunction = 0; lfunction < MAX_FUNCTIONS; lfunction++) {
     SWITCH *sw = switches_controller1[lfunction];
-
     for (int i = 0; i < max_switches; i++) {
       if (i == max_switches - 1) {
         // Rightmost switch is hardwired to FUNCTION
@@ -103,7 +101,6 @@ void toolbar_menu(GtkWidget *parent) {
       }
     }
   }
-
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

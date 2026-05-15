@@ -54,7 +54,6 @@ static gboolean close_cb(void) {
 static void binaural_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   RECEIVER *rx = receiver[id];
-
   if (rx->local_audio_channels == 1) {
     rx->binaural = 0;
     g_signal_handlers_block_by_func(widget, G_CALLBACK(binaural_cb), data);
@@ -63,7 +62,6 @@ static void binaural_cb(GtkWidget *widget, gpointer data) {
     update_slider_binaural_btn();
     return;
   }
-
   rx->binaural = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   rx_set_af_binaural(rx);
   update_slider_binaural_btn();
@@ -72,14 +70,12 @@ static void binaural_cb(GtkWidget *widget, gpointer data) {
 static void filter_type_cb(GtkToggleButton *widget, gpointer data) {
   int type = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   int channel  = GPOINTER_TO_INT(data);
-
   switch (channel) {
   case 0:
   case 1:
     receiver[channel]->low_latency = type;
     rx_set_fft_latency(receiver[channel]);
     break;
-
   case 8:
     if (can_transmit) {
       transmitter->low_latency = type;
@@ -87,10 +83,8 @@ static void filter_type_cb(GtkToggleButton *widget, gpointer data) {
       tx_set_compressor(transmitter);
       g_idle_add(ext_vfo_update, NULL);
     }
-
     break;
   }
-
   //t_print("WDSP filter type channel=%d changed to %d\n", channel, type);
 }
 
@@ -98,26 +92,21 @@ static void filter_size_cb(GtkWidget *widget, gpointer data) {
   int channel = GPOINTER_TO_INT(data);
   const char *p = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
   int size;
-
   // Get size from string in the combobox
   if (sscanf(p, "%d", &size) != 1) { return; }
-
   switch (channel) {
   case 0:
   case 1:
     receiver[channel]->fft_size = size;
     rx_set_fft_size(receiver[channel]);
     break;
-
   case 8:
     if (can_transmit) {
       transmitter->fft_size = size;
       tx_set_fft_size(transmitter);
     }
-
     break;
   }
-
   //t_print("WDSP filter size channel=%d changed to %d\n", channel, size);
 }
 
@@ -151,15 +140,12 @@ void fft_menu(GtkWidget *parent) {
   gtk_widget_set_name(w, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), w, 0, 4, 1, 1);
   int col = 1;
-
   for (int i = 0; i <= receivers; i++) {
     // i == receivers means "TX"
     int chan;
     int j, s, dsize, fsize, ftype;
     char text[32];
-
     if ((i == receivers) && !can_transmit) { break; }
-
     if (i == 0) {
       w = gtk_label_new("RX1");
       gtk_widget_set_name(w, "boldlabel");
@@ -182,7 +168,6 @@ void fft_menu(GtkWidget *parent) {
       dsize = transmitter->dsp_size;
       ftype = transmitter->low_latency;
     }
-
     gtk_grid_attach(GTK_GRID(grid), w, col, 1, 1, 1);
     //
     // To enable CESSB overshoot correction with TX compression, we cannot
@@ -205,44 +190,33 @@ void fft_menu(GtkWidget *parent) {
     w = gtk_combo_box_text_new();
     s = 512;
     j = 0;
-
     for (;;) {
       s = 2 * s;
-
       if (s >= dsize) {
         snprintf(text, 32, "%d", s);
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, text);
-
         if (s == fsize) { gtk_combo_box_set_active(GTK_COMBO_BOX(w), j); }
-
         j++;
       }
-
       if (s >= 32768) { break; }
     }
-
     my_combo_attach(GTK_GRID(grid), w, col, 3, 1, 1);
     g_signal_connect(w, "changed", G_CALLBACK(filter_size_cb), GINT_TO_POINTER(chan));
-
     if (i < receivers) {
       w = gtk_check_button_new();
       gtk_widget_set_tooltip_text(w, "Outputs I and Q on the Left and Right audio channels.\n\n"
                                      "If Audio Output Device is Mono,\n"
                                      "Binaural option is not available");
-
       if (receiver[i]->local_audio_channels == 1) {
         receiver[i]->binaural = 0;
       }
-
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), receiver[i]->binaural);
       gtk_widget_set_sensitive(w, receiver[i]->local_audio_channels > 1);
       gtk_grid_attach(GTK_GRID(grid), w, col, 4, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(binaural_cb), GINT_TO_POINTER(chan));
     }
-
     col++;
   }
-
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

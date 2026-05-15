@@ -120,18 +120,15 @@ void recall_memory_slot(int index) {
   //
   //
   sat_mode    = mem[index].sat_mode;
-
   if (sat_mode == SAT_NONE) {
     int id      = active_receiver->id;
     int b       = mem[index].bd;
     int oldmode = vfo[id].mode;
     vfo[id].mode           = mem[index].mode;
-
     if (oldmode != vfo[id].mode) {
       vfo_apply_mode_settings(active_receiver);
       vfo[id].filter = mem[index].filter;
     }
-
     const BAND *band = band_get_band(b);
     const BANDSTACK *bandstack = bandstack_get_bandstack(b);
     vfo[id].band           = b;
@@ -146,11 +143,9 @@ void recall_memory_slot(int index) {
     int b                  = mem[index].bd;
     int oldmode            = vfo[VFO_A].mode;
     vfo[VFO_A].mode        = mem[index].mode;
-
     if (oldmode != vfo[VFO_A].mode) {
       vfo_apply_mode_settings(receiver[0]);
     }
-
     const BAND *band = band_get_band(b);
     const BANDSTACK *bandstack = bandstack_get_bandstack(b);
     vfo[VFO_A].band           = b;
@@ -164,11 +159,9 @@ void recall_memory_slot(int index) {
     b                         = mem[index].alt_bd;
     oldmode                   = vfo[VFO_B].mode;
     vfo[VFO_B].mode           = mem[index].alt_mode;
-
     if (oldmode != vfo[VFO_B].mode && receivers > 1) {
       vfo_apply_mode_settings(receiver[1]);
     }
-
     band = band_get_band(b);
     bandstack = bandstack_get_bandstack(b);
     vfo[VFO_B].band           = b;
@@ -181,19 +174,16 @@ void recall_memory_slot(int index) {
     vfo[VFO_B].lo             = band->frequencyLO + band->errorLO;
     // When recalling a SAT/RSAT memory slot, also apply the split and duplex setting
     radio_set_split(mem[index].split);
-
     if (!radio_is_transmitting()) {
       duplex = mem[index].duplex;
       g_idle_add(ext_set_duplex, NULL);
     }
   }
-
   if (can_transmit) {
     transmitter->ctcss_enabled = mem[index].ctcss_enabled;
     transmitter->ctcss         = mem[index].ctcss;
     tx_set_ctcss(transmitter);
   }
-
   vfo_vfos_changed();
 }
 
@@ -204,7 +194,6 @@ void store_memory_slot(int index) {
   mem[index].sat_mode = sat_mode;
   mem[index].split = split;
   mem[index].duplex = duplex;
-
   if (sat_mode == SAT_NONE) {
     int id = active_receiver->id;
     mem[index].frequency          = vfo[id].frequency;
@@ -230,7 +219,6 @@ void store_memory_slot(int index) {
     mem[index].alt_deviation      = vfo[VFO_B].deviation;
     mem[index].alt_bd             = vfo[VFO_B].band;
   }
-
   if (can_transmit) {
     mem[index].ctcss_enabled = transmitter->ctcss_enabled;
     mem[index].ctcss = transmitter->ctcss;

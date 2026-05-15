@@ -79,67 +79,50 @@ static void dxcluster_process_line (DxClusterCtx *ctx, const char* line) {
   const char *p;
   const char *needle_dx = "DX de ";
   (void) ctx;
-
   if (!line || !*line) {
     return;
   }
-
   p = strstr (line, needle_dx);
-
   if (!p) {
     return;  /* keine DX-Zeile */
   }
-
   p += strlen (needle_dx);
-
   /* Spotter-Call überspringen bis ':' oder Whitespace */
   while (*p && *p != ':' && !g_ascii_isspace ((guchar) * p)) {
     p++;
   }
-
   /* ':' und Whitespace überspringen */
   while (*p == ':' || g_ascii_isspace ((guchar) * p)) {
     p++;
   }
-
   if (!*p) {
     return;
   }
-
   /* Frequenz (kHz) parsen */
   char *endptr = NULL;
   double freq_khz = g_ascii_strtod (p, &endptr);
-
   if (endptr == p || freq_khz <= 0.0) {
     return;
   }
-
   /* hinter der Frequenz weiterspringen */
   p = endptr;
-
   /* Whitespace vor dem DX-Call überspringen */
   while (g_ascii_isspace ((guchar) * p)) {
     p++;
   }
-
   if (!*p) {
     return;
   }
-
   /* DX-Call bis zum nächsten Whitespace */
   char dxcall[32];
   int i = 0;
-
   while (*p && !g_ascii_isspace ((guchar) * p) && i < (int) sizeof (dxcall) - 1) {
     dxcall[i++] = *p++;
   }
-
   dxcall[i] = '\0';
-
   if (i == 0) {
     return;
   }
-
   /* DX-Spot als Label in den Panadapter pushen */
   pan_add_dx_spot (freq_khz, dxcall);
 }
@@ -149,21 +132,17 @@ static void dxcluster_feed_parser (DxClusterCtx *ctx, const char* data, size_t l
   if (!ctx || !ctx->linebuf || !data || len == 0) {
     return;
   }
-
   for (size_t i = 0; i < len; i++) {
     char c = data[i];
-
     if (c == '\r' || c == '\n') {
       if (ctx->linebuf->len > 0) {
         /* komplette Zeile liegt im Buffer */
         dxcluster_process_line (ctx, ctx->linebuf->str);
         g_string_truncate (ctx->linebuf, 0);
       }
-
       /* Mehrere \r\n hintereinander ignorieren */
       continue;
     }
-
     g_string_append_c (ctx->linebuf, c);
   }
 }
@@ -184,14 +163,12 @@ dxcluster_append_text (DxClusterCtx *ctx, const char* data, size_t len) {
   gtk_text_buffer_get_iter_at_offset (ctx->text_buffer, &range_end,   end_offset);
   char *segment = gtk_text_buffer_get_text (
                           ctx->text_buffer, &range_start, &range_end, FALSE);
-
   if (segment && *segment) {
     const char *p;
     const char *needle_dx   = "DX de ";
     const char *needle_self = ctx->callsign ? ctx->callsign : "";
     /* „DX de“ einfärben */
     p = segment;
-
     while ((p = strstr (p, needle_dx)) != NULL) {
       gint rel_start = (gint) (p - segment);
       gint rel_end   = rel_start + (gint) strlen (needle_dx);
@@ -206,11 +183,9 @@ dxcluster_append_text (DxClusterCtx *ctx, const char* data, size_t len) {
                                  &tag_start, &tag_end);
       p += strlen (needle_dx);
     }
-
     /* eigenes Rufzeichen hervorheben */
     if (needle_self[0] != '\0') {
       p = segment;
-
       while ((p = strstr (p, needle_self)) != NULL) {
         gint rel_start = (gint) (p - segment);
         gint rel_end   = rel_start + (gint) strlen (needle_self);
@@ -227,7 +202,6 @@ dxcluster_append_text (DxClusterCtx *ctx, const char* data, size_t len) {
       }
     }
   }
-
   g_free (segment);
   GtkTextIter end;
   gtk_text_buffer_get_end_iter (ctx->text_buffer, &end);
@@ -243,18 +217,15 @@ dxcluster_disconnect (DxClusterCtx *ctx) {
   if (!ctx) {
     return;
   }
-
   if (ctx->gio) {
     g_io_channel_shutdown (ctx->gio, FALSE, NULL);
     g_io_channel_unref (ctx->gio);
     ctx->gio = NULL;
   }
-
   if (ctx->sockfd >= 0) {
     close (ctx->sockfd);
     ctx->sockfd = -1;
   }
-
   if (ctx->telnet) {
     telnet_free (ctx->telnet);
     ctx->telnet = NULL;
@@ -267,7 +238,6 @@ static void
 dxcluster_telnet_event_handler (telnet_t* telnet, telnet_event_t* ev, void* user_data) {
   DxClusterCtx *ctx = (DxClusterCtx*) user_data;
   (void) telnet;
-
   switch (ev->type) {
   case TELNET_EV_DATA:
     // dxcluster_append_text(ctx, ev->data.buffer, ev->data.size);
@@ -276,25 +246,19 @@ dxcluster_telnet_event_handler (telnet_t* telnet, telnet_event_t* ev, void* user
     /* Und unverändert im Fenster anzeigen */
     dxcluster_append_text (ctx, ev->data.buffer, ev->data.size);
     break;
-
   case TELNET_EV_SEND: {
     ssize_t rs = send (ctx->sockfd, ev->data.buffer, ev->data.size, 0);
-
     if (rs < 0) {
       g_warning ("send() failed: %s", g_strerror (errno));
     }
-
     break;
   }
-
   case TELNET_EV_WARNING:
     g_warning ("libtelnet warning: %s", ev->error.msg);
     break;
-
   case TELNET_EV_ERROR:
     g_warning ("libtelnet error: %s", ev->error.msg);
     break;
-
   default:
     break;
   }
@@ -306,7 +270,6 @@ static gboolean
 dxcluster_socket_cb (GIOChannel *source, GIOCondition cond, gpointer data) {
   DxClusterCtx *ctx = (DxClusterCtx*) data;
   int fd = g_io_channel_unix_get_fd (source);
-
   if (cond & (G_IO_HUP | G_IO_ERR | G_IO_NVAL)) {
     dxcluster_append_text (ctx, "\n[Verbindung geschlossen]\n",
                            strlen ("\n[Verbindung geschlossen]\n"));
@@ -314,13 +277,10 @@ dxcluster_socket_cb (GIOChannel *source, GIOCondition cond, gpointer data) {
     ctx->io_watch_id = 0;
     return FALSE;   /* Watch entfernen */
   }
-
   if ((cond & G_IO_IN) && ctx->telnet) {
     char buf[2048];
-
     for (;;) {
       ssize_t len = recv (fd, buf, sizeof (buf), 0);
-
       if (len > 0) {
         if (ctx->telnet) {
           telnet_recv (ctx->telnet, buf, len);
@@ -336,7 +296,6 @@ dxcluster_socket_cb (GIOChannel *source, GIOCondition cond, gpointer data) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
           break;
         }
-
         g_warning ("recv() failed: %s", g_strerror (errno));
         dxcluster_disconnect (ctx);
         ctx->io_watch_id = 0;
@@ -344,7 +303,6 @@ dxcluster_socket_cb (GIOChannel *source, GIOCondition cond, gpointer data) {
       }
     }
   }
-
   return TRUE;
 }
 
@@ -359,45 +317,34 @@ dxcluster_connect_tcp (const char* host, const char* port) {
   memset (&hints, 0, sizeof (hints));
   hints.ai_family   = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-
   if (!host || !port) {
     return -1;
   }
-
   if ((ret = getaddrinfo (host, port, &hints, &res)) != 0) {
     fprintf (stderr, "getaddrinfo(%s:%s): %s\n",
              host, port, gai_strerror (ret));
     return -1;
   }
-
   for (rp = res; rp != NULL; rp = rp->ai_next) {
     sock = socket (rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-
     if (sock == -1) {
       continue;
     }
-
     if (connect (sock, rp->ai_addr, rp->ai_addrlen) == 0) {
       break;
     }
-
     close (sock);
     sock = -1;
   }
-
   freeaddrinfo (res);
-
   if (sock < 0) {
     fprintf (stderr, "Verbindung zu %s:%s fehlgeschlagen\n", host, port);
     return -1;
   }
-
   int flags = fcntl (sock, F_GETFL, 0);
-
   if (flags != -1) {
     fcntl (sock, F_SETFL, flags | O_NONBLOCK);
   }
-
   return sock;
 }
 
@@ -407,13 +354,11 @@ static void
 dxcluster_on_entry_activate (GtkEntry *entry, gpointer user_data) {
   DxClusterCtx *ctx = (DxClusterCtx*) user_data;
   const gchar *text = gtk_entry_get_text (entry);
-
   if (ctx->telnet && ctx->sockfd >= 0 && text && *text) {
     gchar *line = g_strdup_printf ("%s\r\n", text);
     telnet_send (ctx->telnet, line, strlen (line));
     g_free (line);
   }
-
   gtk_entry_set_text (entry, "");
 }
 
@@ -422,26 +367,20 @@ dxcluster_on_window_destroy (GtkWidget *widget, gpointer user_data) {
   dxcwin_open = 0;
   DxClusterCtx *ctx = (DxClusterCtx*) user_data;
   (void) widget;
-
   if (ctx->io_watch_id != 0) {
     g_source_remove (ctx->io_watch_id);
     ctx->io_watch_id = 0;
   }
-
   dxcluster_disconnect (ctx);
-
   if (ctx->callsign) {
     g_free (ctx->callsign);
   }
-
   if (ctx->linebuf) {
     g_string_free (ctx->linebuf, TRUE);
   }
-
   if (g_dxcluster_ctx == ctx) {
     g_dxcluster_ctx = NULL;
   }
-
   g_free (ctx);
 }
 
@@ -474,26 +413,20 @@ dxcluster_open_window (const char* host,
       portaddress < 1 || portaddress > 65535) {
     return;
   }
-
   char port[16];
   snprintf (port, sizeof (port), "%ld", portaddress);
-
   /* Wenn Fenster schon existiert: nur nach vorne holen / neu positionieren */
   if (g_dxcluster_ctx && GTK_IS_WINDOW (g_dxcluster_ctx->window)) {
     GtkWindow *w = GTK_WINDOW (g_dxcluster_ctx->window);
-
     if (width > 0 && height > 0) {
       gtk_window_resize (w, width, height);
     }
-
     if (pos_x >= 0 && pos_y >= 0) {
       gtk_window_move (w, pos_x, pos_y);
     }
-
     gtk_window_present (w);
     return;
   }
-
   DxClusterCtx *ctx = g_new0 (DxClusterCtx, 1);
   ctx->sockfd   = -1;
   ctx->callsign = g_strdup (callsign);
@@ -540,17 +473,12 @@ dxcluster_open_window (const char* host,
   gtk_box_pack_start (GTK_BOX (vbox), entry, FALSE, FALSE, 0);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
-
   if (width <= 0) { width  = 800; }
-
   if (height <= 0) { height = 600; }
-
   gtk_window_set_default_size (GTK_WINDOW (window), width, height);
-
   if (pos_x >= 0 && pos_y >= 0) {
     gtk_window_move (GTK_WINDOW (window), pos_x, pos_y);
   }
-
   char title[256];
   snprintf (title, sizeof (title),
             "DX-Cluster %s:%ld (%s)", host, portaddress, callsign);
@@ -567,23 +495,19 @@ dxcluster_open_window (const char* host,
   g_dxcluster_ctx = ctx;
   /* verbinden */
   ctx->sockfd = dxcluster_connect_tcp (host, port);
-
   if (ctx->sockfd < 0) {
     dxcluster_append_text (ctx,
                            "Konnte keine Verbindung zum DX-Cluster herstellen.\n",
                            strlen ("Konnte keine Verbindung zum DX-Cluster herstellen.\n"));
     return;
   }
-
   /* libtelnet */
   ctx->telnet = telnet_init (telopts, dxcluster_telnet_event_handler, 0, ctx);
-
   if (!ctx->telnet) {
     fprintf (stderr, "telnet_init fehlgeschlagen\n");
     dxcluster_disconnect (ctx);
     return;
   }
-
   /* Auto-login */
   {
     char *login = g_strdup_printf ("%s\r\n", callsign);
