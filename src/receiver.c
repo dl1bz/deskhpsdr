@@ -295,6 +295,7 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.waterfall_low", rx->id,                rx->waterfall_low);
   SetPropI1("receiver.%d.waterfall_high", rx->id,               rx->waterfall_high);
   SetPropI1("receiver.%d.waterfall_automatic", rx->id,          rx->waterfall_automatic);
+  SetPropI1("receiver.%d.panadapter_noise_margin", rx->id,      rx->panadapter_noise_margin);
   if (have_alex_att) {
     SetPropI1("receiver.%d.alex_attenuation", rx->id,           rx->alex_attenuation);
   }
@@ -416,6 +417,7 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.waterfall_low", rx->id,                rx->waterfall_low);
   GetPropI1("receiver.%d.waterfall_high", rx->id,               rx->waterfall_high);
   GetPropI1("receiver.%d.waterfall_automatic", rx->id,          rx->waterfall_automatic);
+  GetPropI1("receiver.%d.panadapter_noise_margin", rx->id,      rx->panadapter_noise_margin);
   if (have_alex_att) {
     GetPropI1("receiver.%d.alex_attenuation", rx->id,           rx->alex_attenuation);
   }
@@ -753,6 +755,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->waterfall_high = -55;
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;
+  rx->panadapter_noise_margin = -5;
   rx->display_filled = 1;
   rx->display_gradient = 1;
   rx->display_detector_mode = DET_AVERAGE;

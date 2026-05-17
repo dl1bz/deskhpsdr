@@ -1365,18 +1365,19 @@ void rx_panadapter_update (RECEIVER *rx) {
     if (noisefloor_first_run_flag
         || noisefloor_fast_start_count > 0
         || difftime(current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
-      int new_panadapter_low = autoscale_panadapter_with_offset(smoothed_noise_floor, -5);
+      int new_panadapter_low = autoscale_panadapter_with_offset(smoothed_noise_floor, rx->panadapter_noise_margin);
       int adjusted_panadapter_low = (int)(new_panadapter_low - panadapter_scale_corr_f);
       if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
           || rx->panadapter_low < adjusted_panadapter_low) {
         if (rx->panadapter_low != adjusted_panadapter_low) {
-          t_print("%s: rx->panadapter_low: %d -> %d noise_floor: %.1f ema: %.1f autoscale: %d\n",
+          t_print("%s: rx->panadapter_low: %d -> %d noise_floor: %.1f ema: %.1f autoscale: %d noise_margin: %ddb\n",
                   __func__,
                   rx->panadapter_low,
                   adjusted_panadapter_low,
                   noise_floor_level,
                   smoothed_noise_floor,
-                  new_panadapter_low);
+                  new_panadapter_low,
+                  rx->panadapter_noise_margin);
           rx->panadapter_low = adjusted_panadapter_low;
         }
       }
