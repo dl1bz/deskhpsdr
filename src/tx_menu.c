@@ -686,6 +686,12 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       linein_gain = v;
       break;
     case TX_FPS:
+      if (vi < 1) {
+        vi = 1;
+      }
+      if (vi > 60) {
+        vi = 60;
+      }
       transmitter->fps = vi;
       tx_set_framerate(transmitter);
       break;
@@ -1518,7 +1524,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
   col++;
-  btn = gtk_spin_button_new_with_range(1.0, 100.0, 1.0);
+  btn = gtk_spin_button_new_with_range(1.0, 60.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->fps);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FPS));

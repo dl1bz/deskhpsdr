@@ -35,5 +35,6 @@ void display_panadapter_messages(cairo_t* cr, int width, unsigned int fps);
 void rx_update_mnf_from_gui(RECEIVER *rx);
 void rx_update_mnf_run_from_gui(RECEIVER *rx);
 extern int g_noise_level;
+extern void rx_panadapter_force_noisefloor_update(void);
 
 #endif

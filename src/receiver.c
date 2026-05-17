@@ -729,7 +729,11 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->fft_size = 2048;
   rx->low_latency = 0;
   rx->smetermode = SMETER_AVERAGE;
+#ifdef __APPLE__
+  rx->fps = 60;
+#else
   rx->fps = 10;
+#endif
   rx->update_timer_id = 0;
   rx->width = width;
   rx->height = height;

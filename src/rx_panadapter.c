@@ -60,6 +60,8 @@
 
 char zeitString[20];
 static time_t last_noisefloor_calc_time = 0;  // Zeit der letzten Berechnung
+static int noisefloor_first_run_flag = 1;
+static int noisefloor_fast_start_count = 5;
 int g_noise_level = 0;
 int val_agcsetpoint = 0;
 int val_hwagc = 0;
@@ -155,6 +157,11 @@ void panadapter_set_max_label_rows (int r) {
   if (r < 1) { r = 1; }
   if (r > 32) { r = 32; }   /* arbitrary upper limit */
   max_pan_label_rows = r;
+}
+
+void rx_panadapter_force_noisefloor_update(void) {
+  last_noisefloor_calc_time = 0;
+  noisefloor_fast_start_count = 5;
 }
 
 /* Prüft, ob ein DX-Spot-Label mit gleicher Frequenz und gleichem Text schon existiert.
@@ -1335,8 +1342,6 @@ void rx_panadapter_update (RECEIVER *rx) {
     double *qsorted_samples = malloc (mywidth * sizeof (double));
     static double smoothed_noise_floor = -175.0; // initial value
     static int smoothed_noise_floor_valid = 0;
-    static int noisefloor_first_run_flag = 1;
-    static int noisefloor_fast_start_count = 5;
     static int noisefloor_update_interval = 5; // in sec
     static double noisefloor_ema_alpha = 0.10;
     static int panadapter_scale_corr_f = 5;

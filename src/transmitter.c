@@ -991,7 +991,11 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   //
   tx->id = id;
   tx->dac = 0;
+#ifdef __APPLE__
+  tx->fps = 60;
+#else
   tx->fps = 10;
+#endif
   tx->display_filled = 0;
   tx->dsp_size = 2048;
   tx->fft_size = 2048;
