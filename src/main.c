@@ -810,10 +810,11 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   //----------------------------------------------------------------------------------
   row++;
   snprintf(text, sizeof(text),
-           "Open Source Ham Radio SDR Transceiver Frontend Application\n"
-           "for SDR-TRX running OpenHPSDR Protocol P1 or P2 [macOS & Linux]");
+           "Ham Radio SDR Transceiver Frontend Application\n"
+           "for SDR-TRX running OpenHPSDR Protocol P1 or P2\n"
+           "Licensed under the GNU General Public License v3.0 (GPL-3.0)");
   GtkWidget *deskhpsdr_sub_label = gtk_label_new(text);
-  gtk_widget_set_name(deskhpsdr_sub_label, "med_bold_txt");
+  gtk_widget_set_name(deskhpsdr_sub_label, "small_bold_txt");
   gtk_widget_set_halign(deskhpsdr_sub_label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_sub_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------

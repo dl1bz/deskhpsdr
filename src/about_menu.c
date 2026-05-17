@@ -109,17 +109,19 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_halign(hpsdr_logo_widget, GTK_ALIGN_CENTER);  // Horizontal zentrieren
   gtk_widget_set_valign(hpsdr_logo_widget, GTK_ALIGN_START);   // Vertikal oben ausrichten
   gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
-  snprintf(text, sizeof(text), "Open Source Ham Radio SDR Transceiver Frontend Application\n"
-                               "compatible with OpenHPSDR protocol P1 and P2\n\n"
+  snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
+                               "for SDR-TRX running OpenHPSDR protocol P1 or P2\n\n"
                                "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
-                               "(contains code portions of pihpsdr by G0ORX/N6LYT and DL1YCF)\n\n"
+                               "(contains code portions of pihpsdr by G0ORX/N6LYT and DL1YCF)\n"
+                               "Licensed under the GNU General Public License v3.0 (GPL-3.0)\n\n"
                                "    Credits:\n"
                                "    Warren C. Pratt, NR0V: WDSP signal processing library development\n"
                                "    John Melton, G0ORX/N6LYT: first and initial version of pihpsdr\n"
                                "    Christoph van Wüllen, DL1YCF: Continuation & current version pihpsdr\n"
                                "    Richie, MW0LGE: Developer of main version Thetis\n"
                                "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
-                               "    Francesco Cozzi, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n\n"
+                               "    Francesco Cozzi, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
+                               "    OpenAI/ChatGPT: Code and Protocol Optimizations & Bugfixing\n\n"
                                "Build OS: %s %s @ %s\n"
                                "Build compiler: %s\n"
                                "Build date: %s (Branch: %s, Commit: %s)\n"
