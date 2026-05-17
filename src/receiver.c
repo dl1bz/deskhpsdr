@@ -1691,7 +1691,8 @@ void rx_set_cw_peak(const RECEIVER *rx, int state, double freq) {
   if (w < 25.0) { w = 25.0; }   // Do not go below 25 Hz to avoid ringing
   SetRXASPCWFreq(rx->id, freq);
   SetRXASPCWBandwidth(rx->id, w);
-  SetRXASPCWGain(rx->id, 1.50);
+  // SetRXASPCWGain(rx->id, 1.50);
+  SetRXASPCWGain(rx->id, 1.00);
   SetRXASPCWRun(rx->id, state);
   if (rx->use_cw_dp_filter) {
     // new since WDSP 1.29: a double pole CW filter

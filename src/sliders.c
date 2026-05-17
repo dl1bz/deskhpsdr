@@ -2458,7 +2458,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_top(equal_btn, 0);
     gtk_widget_set_margin_bottom(equal_btn, 0);
     gtk_widget_set_margin_start(equal_btn, 3);
-    gtk_widget_set_margin_end(equal_btn, 0);
+    gtk_widget_set_margin_end(equal_btn, 5);
     gtk_widget_set_halign(equal_btn, GTK_ALIGN_END);
     gtk_widget_set_valign(equal_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(equal_btn, FALSE);  // fülle Box nicht nach rechts
