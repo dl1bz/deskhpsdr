@@ -1592,6 +1592,7 @@ static gpointer tci_lws_server (gpointer data) {
   info.uid = -1;
   // WICHTIG: HTTP/WS korrekt aktivieren
   info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+  lws_set_log_level(LLL_ERR, NULL);
   t_print ("%s: starting TCI LWS server on port %d\n", __func__, port);
   tci_lws_context = lws_create_context (&info);
   if (tci_lws_context == NULL) {
