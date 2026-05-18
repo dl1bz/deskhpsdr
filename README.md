@@ -4,9 +4,59 @@
 
 ## The concept behind - what it's make for and what it isn't for
 
-It's a hamradio application for SDR devices using the OpenHPSDR protocol 1 (P1 aka "old protocol") or 2 (P2 aka "new protocol") and based at previous codeparts of [piHPSDR](https://github.com/dl1ycf/pihpsdr) since it was forked from piHPSDR in October 2024 without any backward dependencies to piHPSDR. My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
+The codebase was forked from DL1YCF's piHPSDR codebase in October 2024 without any backward dependencies to piHPSDR. My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
 
 **deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Some limited SoapySDR support is current available, but Soapy support is official discontinued now.**
+
+
+| Feature                        | Current deskHPSDR version 2.6                 | Notes          |
+| -------------------------------- | ----------------------------------------------- | ---------------- |
+| TCI CAT                        | supported                                     |                |
+| TCI Audio                      | supported                                     |                |
+| PTT external                   | supported via serial RTS/CTS or MIDI          |                |
+| MIDI Control                   | supported                                     |                |
+| Hamlib                         | supported with own included rigctld           |                |
+| OpenHPSDR protocol 1           | fully supported                               |                |
+| OpenHPSDR protocol 2           | fully supported                               |                |
+| GPIO                           | limited support                               | deprecated     |
+| Soapy API / Soapy protocol     | rudimentary supported                         | deprecated     |
+| Hermes Lite 2 N2ADR IO board   | supported                                     |                |
+| Use WDSP library ?             | yes, current 1.29                             |                |
+| Pure Signal / Pre-Distortion   | supported                                     |                |
+| Noise Reduction                | NR1 - NR4 available                           |                |
+| CAT over TCP                   | supported (TS2000 & PowerSDR emulation)       |                |
+| Hermes Lite 2+ expansion board | supported                                     |                |
+| Bright / Dark Theme support    | yes                                           |                |
+| Screen Resolution              | min. 1280x600 or higher                       |                |
+| Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                |
+| OS support                     | macOS 15 or higher, modern Linux              | no WIN support |
+| Audio layer support            | PORTAUDIO, PULSEAUDIO, ALSA                   |                |
+| Audio devices support          | mono,stereo (only 48kHz supported)            |                |
+| DX Cluster support             | yes, inclusive show Spots on RX Panadapter    |                |
+| SDR TX support                 | yes                                           |                |
+| Used UI framework              | GTK3                                          |                |
+| Programming language           | C, partially Objective C/Swift (macOS only)   |                |
+| Supported Compiler             | clang, gcc                                    |                |
+| App Publishing                 | **Source code only, no binaries distributed** |                |
+
+Other useful app features (availability depend from used SDR device):
+
+* Noisefloor adjustment automatic for Panadapter
+* SDR device auto-detection
+* Autogain adjustment and ADC overflow protection (Hermes Lite 2 only)
+* Keyboard shortcuts (pre-defined)
+* Open Collector support (RX, TX, Tune) via OpenHPSDR protocol
+* Antenna selection (if SDR support this)
+* Transverter Support
+* Full RX- and TX-WDSP Audio chain support (RX/TX-EQ, Leveler, CESSB, Limiter, CFC, Speech Processor, DEXP)
+* network optimizations if using WiFi for OpenHPSDR protocol P1 or P2
+* supported Receiver:2, supported Transmitter:1, VFO:2 per RX/TX
+* VFO split, swap, RIT/XIT supported
+* Save TX DRIVE and TUNE DRIVE per band, Bandstack available
+* display current solar data for propagation, show Greyline DX window
+* Panadapter refresh rate adjustment (max. 60fps)
+* some special SDR device-specific options supported
+* **NO CLIENT-SERVER mode available**
 
 The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices. SoapySDR API is supported, but is not actively developed further.
 
@@ -14,24 +64,20 @@ deskHPSDR is not made as a "measurement tool" or for other, very special purpose
 
 **deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. deskHPSDR hasn't a special Client-Server-Mode like pihpsdr (make no sense, we HAVE network-connected SDR devices yet).
 
-My main focus of deskHPSDR development, the improvements and additional functions against piHPSDR is the Hermes Lite 2 SDR Transceiver and his similar devices based on the same hardware platform (like the SquareSDR). Other SDR devices can be used too if supported, but I cannot check it. The second focus is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The third focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, less for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
+My main focus of deskHPSDR development is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The second focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, less for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
 **There are no plans to adapt deskHPSDR for running with WINDOWS ! It's made for UNIX style OS like macOS or Linux.**
-
-### deskHPSDR was forked a single time from pihpsdr and is now an independent codebase
-
-pihpsdr was [initiated and first developed](https://github.com/g0orx/pihpsdr) by [John Melton, G0ORX/N6LYT](https://github.com/g0orx) a few years ago.<br>Later Christoph, DL1YCF, had continued the development of pihpsdr. His fork [https://github.com/dl1ycf/pihpsdr](https://github.com/dl1ycf/pihpsdr) is the most up-to-date and current version of pihpsdr today and being actively developed by him up to now.<br><br>His pihpsdr codebase as of the end of October 2024 was the starting point for the development of deskHPSDR. There was, is, and will be no direct collaboration between pihpsdr and deskHPSDR, deskHPSDR go an entire own way.<br>Please also don't compare deskHPSDR with pihpsdr - they are two different apps with two different concepts.
 
 ## Requirements
 
 * modern Desktop-OS like macOS or Linux with installed developer tools like compiler, linker etc.
 * minimum screensize starts from 1280x600
 * **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
-* *macOS only*: please read the ```COMPILE.macOS``` first
-* *Linux only*: please read the ```COMPILE.linux``` first
-* a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices. Per default Soapy-API is disabled, if needed you must activate Soapy-API support in the ```make.config.deskhpsdr``` as an user-defined option. Please note, development support for Soapy has been discontinued now.
+* *macOS only*: please read the``COMPILE.macOS`` first
+* *Linux only*: please read the``COMPILE.linux`` first
+* a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices. Per default Soapy-API is disabled, if needed you must activate Soapy-API support in the``make.config.deskhpsdr`` as an user-defined option. Please note, development support for Soapy has been discontinued now.
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
-* for Hermes Lite 2 specific notes look into the ```Notes_if_using_HERMES-Lite-2.md```
+* for Hermes Lite 2 specific notes look into the``Notes_if_using_HERMES-Lite-2.md``
 * if want using a Raspberry Pi: Revision 5 (aka "Pi5") with >= 8GB RAM is strongly recommended, but deskHPSDR is not optimized for such SoC
 
 ## I want use now deskHPSDR. What I need to do ?
@@ -55,23 +101,25 @@ deskHPSDR is primarily developed for and under macOS. But made as an cross-platf
 On March 4, 2025 the **first final version 2.6 of deskHPSDR** was published.<br>
 Further development will start later from version 2.7.x by the end of 2026.<br>
 
-Most of the new functions need to be activated in the ```make.config.deskhpsdr``` as compiling option. Please look in the beginning of the  ```Makefile``` and set the needed options only in ```make.config.deskhpsdr```, but don't modify the ```Makefile``` itself !
+Most of the new functions need to be activated in the ``make.config.deskhpsdr`` as compiling option. Please look in the beginning of the  ``Makefile`` and set the needed options only in ``make.config.deskhpsdr``, but don't modify the ``Makefile`` itself !
 
 ## Issues and Discussion tab at Github for this project - read carefully !
 
-- the **Issues tab is only for reporting issues, bugs or malfunctions of this app** !
+- the**Issues tab is only for reporting issues, bugs or malfunctions of this app** !
 - for all other things please use necessarily the [discussions tab](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr)
 
 ## Known problems if using Git for update the code base at your local computer
 
-In the ```Makefile``` I add a comment "don't edit this Makefile". That's I mean so. I'm now add the editable, additional file for this called ```make.config.deskhpsdr```.<br>
+In the ``Makefile`` I add a comment "don't edit this Makefile". That's I mean so. I'm now add the editable, additional file for this called ``make.config.deskhpsdr``.<br>
 
-If ```git pull``` failed, you can try this:<br>
+If ``git pull`` failed, you can try this:<br>
+
 ```
 $ git pull --all
 $ git reset --hard origin/master
 $ git pull --all
 ```
+
 This overwrite ALL local changes you are made, which are different from my current repo at Github.com and set the status equal between local and remote.
 
 **If this not help, please delete the complete codebase of deskHPSDR and clone it again, then you have a fresh current copy.**<br>
@@ -79,6 +127,7 @@ This overwrite ALL local changes you are made, which are different from my curre
 ## Successful and confirmed Tests I had done up to now
 
 So far, deskHPSDR has been successfully tested on the following systems:<br>
+
 * iMac 21" i5 running macOS 15 aka Sequoia
 * Macbook Air M1 running macOS 26 aka Tahoe
 * Mac mini M4 2024 running macOS 26 aka Tahoe
@@ -94,6 +143,7 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 
 Big thanks and huge respect to all involved developers for their previous and current work on pihpsdr until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
 Special thanks to:<br>
+
 - my wife for her great patience and understanding
 - John Melton G0ORX & Christoph van Wüllen DL1YCF for their earlier and current pihpsdr development
 - Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
