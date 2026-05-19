@@ -68,7 +68,6 @@ extern SWITCH *switches;
 
 extern int *sw_action;
 
-extern long settle_time;
 
 extern void gpio_default_encoder_actions (int ctrlr);
 extern void gpio_default_switch_actions (int ctrlr);
