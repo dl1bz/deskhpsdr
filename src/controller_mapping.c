@@ -545,7 +545,7 @@ void gpio_set_defaults(int ctrlr) {
 }
 
 void gpioRestoreState(void) {
-  if (file_exists("controller_mapping.props")) {
+  if (access("controller_mapping.props", F_OK) == 0) {
     loadProperties("controller_mapping.props");
   } else {
     loadProperties("gpio.props");
