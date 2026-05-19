@@ -1,5 +1,4 @@
 # CC     = clang
-GPIO     = OFF
 MIDI     = ON
 SATURN   = OFF
 USBOZY   = OFF

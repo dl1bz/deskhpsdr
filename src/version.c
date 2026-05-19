@@ -25,9 +25,6 @@ char build_commit[] = GIT_COMMIT;
 char build_branch[] = GIT_BRANCH;
 
 char build_options[] =
-#ifdef GPIO
-  "GPIO "
-#endif
 #ifdef MIDI
   "MIDI "
 #endif

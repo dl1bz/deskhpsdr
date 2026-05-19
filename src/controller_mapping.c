@@ -636,14 +636,12 @@ void gpio_set_defaults(int ctrlr) {
 void gpioRestoreState(void) {
   loadProperties("gpio.props");
   GetPropI0("controller",                                         controller);
-#ifndef GPIO
   //
   // If not compiled for GPIO, we can only have the G2Mk2 or  none
   //
   if (controller != G2_V2) {
     controller = NO_CONTROLLER;
   }
-#endif
   gpio_set_defaults(controller);
   for (int i = 0; i < MAX_ENCODERS; i++) {
     GetPropI1("encoders[%d].bottom_encoder_enabled", i,           encoders[i].bottom_encoder_enabled);
