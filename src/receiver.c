@@ -65,6 +65,18 @@ static gboolean has_moved = FALSE;
 static gboolean pressed = FALSE;
 static gboolean making_active = FALSE;
 
+#define AM_DC_OFFSET_HZ 500LL
+
+long long rx_get_mode_dc_offset(int id) {
+  switch (vfo[id].mode) {
+  case modeAM:
+  case modeSAM:
+    return AM_DC_OFFSET_HZ;
+  default:
+    return 0LL;
+  }
+}
+
 //
 // PART 1. Functions releated to the receiver display
 //
@@ -1034,7 +1046,7 @@ void rx_frequency_changed(RECEIVER *rx) {
   // To make this bullet-proof, report the (possibly new) offset to WDSP
   // and send the (possibly changed) frequency to the radio in any case.
   //
-  rx_set_offset(rx, vfo[id].offset);
+  rx_set_offset(rx, vfo[id].offset - rx_get_mode_dc_offset(id));
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     // P1 does this automatically
@@ -1760,13 +1772,14 @@ void rx_set_fft_size(const RECEIVER *rx) {
   RXASetNC(rx->id, rx->fft_size);
 }
 
-void rx_set_mode(const RECEIVER *rx) {
+void rx_set_mode(RECEIVER *rx) {
   //
   // Change the  mode of a running receiver according to what it stored
   // in its controlling VFO.
   //
   SetRXAMode(rx->id, vfo[rx->id].mode);
   rx_set_squelch(rx);
+  rx_frequency_changed(rx);
 }
 
 void rx_set_noise(const RECEIVER *rx) {

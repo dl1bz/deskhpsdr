@@ -1443,7 +1443,7 @@ static long long channel_freq(int chan) {
     //
     // freq = vfo[vfonum].frequency - vfo[vfonum].lo;
     // if (vfo[vfonum].rit_enabled) { freq += vfo[vfonum].rit; }
-    freq = vfo[vfonum].frequency;
+    freq = vfo[vfonum].frequency + rx_get_mode_dc_offset(vfonum);
     if (vfo[vfonum].mode == modeCWU) {
       freq -= (long long) cw_keyer_sidetone_frequency;
     } else if (vfo[vfonum].mode == modeCWL) {

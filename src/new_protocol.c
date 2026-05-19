@@ -825,7 +825,7 @@ static void new_protocol_high_priority(void) {
     // if (vfo[id].rit_enabled) {
     //  DDCfrequency[id] += vfo[id].rit;
     // }
-    DDCfrequency[id] = vfo[id].frequency;
+    DDCfrequency[id] = vfo[id].frequency + rx_get_mode_dc_offset(id);
     if (vfo[id].mode == modeCWU) {
       DDCfrequency[id] -= (long long) cw_keyer_sidetone_frequency;
     } else if (vfo[id].mode == modeCWL) {

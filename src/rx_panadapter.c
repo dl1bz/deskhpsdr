@@ -700,9 +700,11 @@ void rx_panadapter_update (RECEIVER *rx) {
   cairo_fill (cr);
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
   int mode = vfo[rx->id].mode;
+  int vfo_id = rx->id;
   long long frequency = vfo[rx->id].frequency;
   int vfoband = vfo[rx->id].band;
   long long offset;
+  double pan_display_shift = 0.0;
   //
   // soffset contains all corrections for attenuation and preamps
   // Perhaps some adjustment is necessary for those old radios which have
@@ -736,6 +738,7 @@ void rx_panadapter_update (RECEIVER *rx) {
   }
   // In diversity mode, the RX2 frequency tracks the RX1 frequency
   if (diversity_enabled && rx->id == 1) {
+    vfo_id = 0;
     frequency = vfo[0].frequency;
     vfoband = vfo[0].band;
     mode = vfo[0].mode;
@@ -756,6 +759,7 @@ void rx_panadapter_update (RECEIVER *rx) {
     frequency += cw_keyer_sidetone_frequency;
     vfofreq -= (double) cw_keyer_sidetone_frequency / HzPerPixel;
   }
+  pan_display_shift = (double) rx_get_mode_dc_offset(vfo_id) / HzPerPixel;
   double min_display = (double) frequency - (double) half + ((double) rx->pan * HzPerPixel);
   double max_display = min_display + ((double) mywidth * HzPerPixel);
   if (vfoband == band60 && band_channels_60m != NULL && region > 0) {
@@ -1149,6 +1153,8 @@ void rx_panadapter_update (RECEIVER *rx) {
   s1 = floor ((rx->panadapter_high - s1)
               * (double) myheight
               / (rx->panadapter_high - rx->panadapter_low));
+  cairo_save (cr);
+  cairo_translate (cr, pan_display_shift, 0.0);
   cairo_move_to (cr, 0.0, s1);
   for (i = 1; i < mywidth; i++) {
     double s2;
@@ -1249,6 +1255,7 @@ void rx_panadapter_update (RECEIVER *rx) {
     cairo_set_line_width (cr, PAN_LINE_THICK);
   }
   cairo_stroke (cr);
+  cairo_restore (cr);
   //---------------------------------------------------------------------------------------
   // Peak-and-Hold trace rendering
   if (pan_peak_hold_enabled && rx->id >= 0 && rx->id < PAN_PEAK_HOLD_MAX_RX) {
@@ -1264,6 +1271,8 @@ void rx_panadapter_update (RECEIVER *rx) {
       double y = (double) ph->buf[0] + soffset;
       y = floor ((rx->panadapter_high - y) * myheight /
                  (rx->panadapter_high - rx->panadapter_low));
+      cairo_save (cr);
+      cairo_translate (cr, pan_display_shift, 0.0);
       cairo_move_to (cr, 0.0, y);
       for (int i = 1; i < mywidth; i++) {
         y = (double) ph->buf[i] + soffset;
@@ -1272,6 +1281,7 @@ void rx_panadapter_update (RECEIVER *rx) {
         cairo_line_to (cr, (double) i, y);
       }
       cairo_stroke (cr);
+      cairo_restore (cr);
     }
   }
   if (gradient) {
@@ -1533,7 +1543,7 @@ void rx_panadapter_update (RECEIVER *rx) {
         cairo_text_extents_t extents;
         cairo_text_extents (cr, peak_label, &extents);
         // Calculate initial text position: slightly above the peak
-        double text_x = peak_positions[j];
+        double text_x = (double) peak_positions[j] + pan_display_shift;
         double text_y = floor ((rx->panadapter_high - peaks[j])
                                * (double) myheight
                                / (rx->panadapter_high - rx->panadapter_low)) - 5;
