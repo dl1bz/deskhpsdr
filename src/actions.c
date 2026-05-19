@@ -1064,9 +1064,6 @@ int process_action(void* data) {
       }
       toolbar_switches = switches_controller1[function];
       update_toolbar_labels();
-      if (controller == CONTROLLER1) {
-        switches = switches_controller1[function];
-      }
     }
     break;
   case FUNCTIONREV:
@@ -1077,9 +1074,6 @@ int process_action(void* data) {
       }
       toolbar_switches = switches_controller1[function];
       update_toolbar_labels();
-      if (controller == CONTROLLER1) {
-        switches = switches_controller1[function];
-      }
     }
     break;
   case GL_WIN:

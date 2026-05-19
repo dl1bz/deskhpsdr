@@ -209,7 +209,6 @@ void gpio_default_switch_actions(int ctrlr) {
 void gpio_set_defaults(int ctrlr) {
   t_print("%s: %d\n", __func__, ctrlr);
   switch (ctrlr) {
-  case G2_V2:
   case NO_CONTROLLER:
   default:
     memcpy(my_encoders, encoders_no_controller, sizeof(my_encoders));
@@ -229,9 +228,9 @@ void gpioRestoreState(void) {
   GetPropI0("controller",                                         controller);
   //
   // Direct GPIO controller profiles have been removed.
-  // Only G2_V2 and NO_CONTROLLER remain valid controller selections here.
+  // Only NO_CONTROLLER remains valid here.
   //
-  if (controller != G2_V2) {
+  if (controller != NO_CONTROLLER) {
     controller = NO_CONTROLLER;
   }
   gpio_set_defaults(controller);
@@ -265,10 +264,8 @@ void gpioRestoreActions(void) {
     GetPropA1("encoders[%d].top_encoder_function", i,            encoders[i].top_encoder_function);
     GetPropA1("encoders[%d].switch_function", i,                 encoders[i].switch_function);
   }
-  if (controller != CONTROLLER1) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      GetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
-    }
+  for (int i = 0; i < MAX_SWITCHES; i++) {
+    GetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
   }
 }
 
@@ -294,10 +291,8 @@ void gpioSaveActions(void) {
     SetPropA1("encoders[%d].top_encoder_function", i,            encoders[i].top_encoder_function);
     SetPropA1("encoders[%d].switch_function", i,                 encoders[i].switch_function);
   }
-  if (controller != CONTROLLER1) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      SetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
-    }
+  for (int i = 0; i < MAX_SWITCHES; i++) {
+    SetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
   }
   snprintf(value, sizeof(value), "%d", function);
   setProperty("switches.function", value);

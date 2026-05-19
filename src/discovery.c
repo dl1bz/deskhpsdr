@@ -190,16 +190,6 @@ static gboolean protocols_cb(GtkWidget *widget, GdkEventButton *event, gpointer 
   return TRUE;
 }
 
-static void controller_changed_cb(GtkWidget *widget, gpointer data) {
-  const gchar *active_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(widget));
-  controller = active_id ? atoi(active_id) : NO_CONTROLLER;
-  if (controller != G2_V2) {
-    controller = NO_CONTROLLER;
-  }
-  gpio_set_defaults(controller);
-  gpioSaveState();
-}
-
 static gboolean discover_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   gtk_widget_destroy(discovery_dialog);
   g_timeout_add(100, delayed_discovery, NULL);
@@ -569,18 +559,10 @@ void discovery(void) {
   }
   controller = NO_CONTROLLER;
   gpioRestoreState();
-  if (controller != G2_V2) {
+  if (controller != NO_CONTROLLER) {
     controller = NO_CONTROLLER;
   }
   gpio_set_defaults(controller);
-  GtkWidget *controller_combo = gtk_combo_box_text_new();
-  char controller_id[16];
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(controller_combo), "0", "No Controller");
-  snprintf(controller_id, sizeof(controller_id), "%d", G2_V2);
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(controller_combo), controller_id, "G2 Mk2 Panel");
-  my_combo_attach(GTK_GRID(grid), controller_combo, 0, row, 1, 1);
-  gtk_combo_box_set_active_id(GTK_COMBO_BOX(controller_combo), controller == G2_V2 ? controller_id : "0");
-  g_signal_connect(controller_combo, "changed", G_CALLBACK(controller_changed_cb), NULL);
   GtkWidget *discover_b = gtk_button_new_with_label("Discover");
   g_signal_connect(discover_b, "clicked", G_CALLBACK(discover_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), discover_b, 1, row, 1, 1);
