@@ -634,7 +634,11 @@ void gpio_set_defaults(int ctrlr) {
 }
 
 void gpioRestoreState(void) {
-  loadProperties("gpio.props");
+  if (file_exists("controller_mapping.props")) {
+    loadProperties("controller_mapping.props");
+  } else {
+    loadProperties("gpio.props");
+  }
   GetPropI0("controller",                                         controller);
   //
   // If not compiled for GPIO, we can only have the G2Mk2 or  none
@@ -702,7 +706,7 @@ void gpioSaveState(void) {
       SetPropI1("switches[%d].switch_address", i,                 switches[i].switch_address);
     }
   }
-  saveProperties("gpio.props");
+  saveProperties("controller_mapping.props");
 }
 
 void gpioRestoreActions(void) {
