@@ -19,9 +19,6 @@
 *
 */
 
-// Rewrite to use gpiod rather than wiringPi
-// Note that all pin numbers are now the Broadcom GPIO
-
 #include <gtk/gtk.h>
 
 #include <stdio.h>
@@ -81,13 +78,6 @@
 // by some GPIO-connected audio output "hats"
 //
 //
-
-static int CWL_LINE = -1;
-static int CWR_LINE = -1;
-static int CWKEY_LINE = -1;
-static int PTTIN_LINE = -1;
-static int PTTOUT_LINE = -1;
-static int CWOUT_LINE = -1;
 
 enum {
   TOP_ENCODER,
@@ -521,110 +511,31 @@ void gpio_set_defaults(int ctrlr) {
   t_print("%s: %d\n", __func__, ctrlr);
   switch (ctrlr) {
   case CONTROLLER1:
-    //
-    // GPIO lines not used by controller: 9, 10, 11, 14, 15
-    //
-    CWL_LINE = 9;
-    CWR_LINE = 11;
-    CWKEY_LINE = 10;
-    PTTIN_LINE = 14;
-    PTTOUT_LINE = 15;
-    CWOUT_LINE = -1;
     memcpy(my_encoders, encoders_controller1, sizeof(my_encoders));
     encoders = my_encoders;
     switches = switches_controller1[0];
     break;
   case CONTROLLER2_V1:
-    //
-    // GPIO lines not used by controller: 5, 6, 7, 9, 10, 11, 12, 13, 14
-    //
-    CWL_LINE = 9;
-    CWR_LINE = 11;
-    CWKEY_LINE = 10;
-    PTTIN_LINE = 14;
-    PTTOUT_LINE = 13;
-    CWOUT_LINE = 12;
     memcpy(my_encoders, encoders_controller2_v1, sizeof(my_encoders));
     memcpy(my_switches, switches_controller2_v1, sizeof(my_switches));
     encoders = my_encoders;
     switches = my_switches;
     break;
   case CONTROLLER2_V2:
-    //
-    // GPIO lines not used by controller: 14. Assigned to PTTIN by default
-    //
-    CWL_LINE = -1;
-    CWR_LINE = -1;
-    PTTIN_LINE = 14;
-    CWKEY_LINE = -1;
-    PTTOUT_LINE = -1;
     memcpy(my_encoders, encoders_controller2_v2, sizeof(my_encoders));
     memcpy(my_switches, switches_controller2_v2, sizeof(my_switches));
     encoders = my_encoders;
     switches = my_switches;
     break;
   case G2_FRONTPANEL:
-    //
-    // Regard all GPIO lines as "used"
-    //
-    CWL_LINE = -1;
-    CWR_LINE = -1;
-    PTTIN_LINE = -1;
-    CWKEY_LINE = -1;
-    PTTOUT_LINE = -1;
     memcpy(my_encoders, encoders_g2_frontpanel, sizeof(my_encoders));
     memcpy(my_switches, switches_g2_frontpanel, sizeof(my_switches));
     encoders = my_encoders;
     switches = my_switches;
     break;
   case G2_V2:
-    //
-    // There are no GPIO lines that the user can use
-    //
-    memcpy(my_encoders, encoders_no_controller, sizeof(my_encoders));
-    memcpy(my_switches, switches_no_controller, sizeof(my_switches));
-    encoders = my_encoders;
-    switches = my_switches;
-    break;
   case NO_CONTROLLER:
   default:
-    //
-    // GPIO lines that are not used elsewhere: 5,  6, 12, 16,
-    //                                        22, 23, 24, 25, 27
-    //
-    CWL_LINE = 5;
-    CWR_LINE = 6;
-    CWKEY_LINE = 12;
-    PTTIN_LINE = 16;
-    PTTOUT_LINE = 22;
-    CWOUT_LINE = 23;
-    if (have_radioberry1) {
-      CWL_LINE = 14;
-      CWR_LINE = 15;
-      CWKEY_LINE = -1;
-      PTTIN_LINE = -1;
-      PTTOUT_LINE = -1;
-      CWOUT_LINE = -1;
-      t_print("Forced RadioBerry1 GPIO settings\n");
-    }
-    if (have_radioberry2) {
-      CWL_LINE = 17;
-      CWR_LINE = 21;
-      CWKEY_LINE = -1;
-      PTTIN_LINE = -1;
-      PTTOUT_LINE = -1;
-      CWOUT_LINE = -1;
-      t_print("Forced RadioBerry2 GPIO settings\n");
-    }
-    if (have_radioberry3) {
-      CWL_LINE = 17;
-      CWR_LINE = 13;
-      CWKEY_LINE = -1;
-      PTTIN_LINE = -1;
-      PTTOUT_LINE = -1;
-      CWOUT_LINE = -1;
-      t_print("Forced RadioBerry3 GPIO settings\n");
-    }
     memcpy(my_encoders, encoders_no_controller, sizeof(my_encoders));
     memcpy(my_switches, switches_no_controller, sizeof(my_switches));
     encoders = my_encoders;
@@ -641,7 +552,7 @@ void gpioRestoreState(void) {
   }
   GetPropI0("controller",                                         controller);
   //
-  // If not compiled for GPIO, we can only have the G2Mk2 or  none
+  // No GPIO support: we can only have the G2Mk2 or  none
   //
   if (controller != G2_V2) {
     controller = NO_CONTROLLER;
