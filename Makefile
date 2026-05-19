@@ -718,7 +718,6 @@ src/discovery.c \
 src/display_menu.c \
 src/diversity_menu.c \
 src/dxcluster.c \
-src/encoder_menu.c \
 src/equalizer_menu.c \
 src/exit_menu.c \
 src/ext.c \
@@ -808,7 +807,6 @@ src/discovery.h \
 src/display_menu.h \
 src/diversity_menu.h \
 src/dxcluster.h \
-src/encoder_menu.h \
 src/equalizer_menu.h \
 src/exit_menu.h \
 src/ext.h \
@@ -892,7 +890,6 @@ src/discovery.o \
 src/display_menu.o \
 src/diversity_menu.o \
 src/dxcluster.o \
-src/encoder_menu.o \
 src/equalizer_menu.o \
 src/exit_menu.o \
 src/ext.o \

@@ -51,7 +51,6 @@
 #include "diversity_menu.h"
 #include "tx_menu.h"
 #include "ps_menu.h"
-#include "encoder_menu.h"
 #include "switch_menu.h"
 #include "toolbar_menu.h"
 #include "vfo_menu.h"

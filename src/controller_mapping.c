@@ -39,7 +39,6 @@
 #include "property.h"
 #include "vfo.h"
 #include "new_menu.h"
-#include "encoder_menu.h"
 #include "diversity_menu.h"
 #include "actions.h"
 #include "controller_mapping.h"
