@@ -42,11 +42,7 @@
 #include "bandstack.h"
 #include "main.h"
 #include "discovered.h"
-#include "configure.h"
 #include "actions.h"
-#ifdef GPIO
-  #include "gpio.h"
-#endif
 #include "new_menu.h"
 #include "radio.h"
 #include "version.h"

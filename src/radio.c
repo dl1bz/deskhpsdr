@@ -63,7 +63,7 @@
   #include "soapy_protocol.h"
 #endif
 #include "actions.h"
-#include "gpio.h"
+#include "controller_mapping.h"
 #include "vfo.h"
 #include "vox.h"
 #include "meter.h"
@@ -1406,15 +1406,6 @@ void radio_start_radio (void) {
   if (device == SOAPYSDR_USB_DEVICE && !strcmp (radio->name, "sdrplay")) {
     have_sdrplay = 1;
   }
-#ifdef GPIO
-  //
-  // Post-pone GPIO initialization until here since
-  // we must first set the RadioBerry flags
-  //
-  if (gpio_init() < 0) {
-    t_print ("GPIO failed to initialize\n");
-  }
-#endif
   if (device == NEW_DEVICE_SATURN && (strcmp (radio->info.network.interface_name, "XDMA") == 0)) {
     have_saturn_xdma = 1;
   }
@@ -1834,26 +1825,9 @@ void radio_start_radio (void) {
     soapy_radio_sample_rate = radio->info.soapy.sample_rate;
   }
 #endif
-#ifdef GPIO
-  switch (controller) {
-  case NO_CONTROLLER:
-    display_zoompan = 1;
-    display_sliders = 1;
-    display_toolbar = 1;
-    break;
-  case CONTROLLER2_V1:
-  case CONTROLLER2_V2:
-  case G2_FRONTPANEL:
-    display_zoompan = 1;
-    display_sliders = 0;
-    display_toolbar = 0;
-    break;
-  }
-#else
   display_zoompan = 1;
   display_sliders = 1;
   display_toolbar = 1;
-#endif
   t_print ("%s: setup RECEIVERS protocol=%d\n", __func__, protocol);
   switch (protocol) {
   case SOAPYSDR_PROTOCOL:
@@ -2269,9 +2243,6 @@ static void rxtx (int state) {
       }
     }
   }
-#ifdef GPIO
-  gpio_set_ptt (state);
-#endif
 }
 
 void radio_mox_update (int state) {

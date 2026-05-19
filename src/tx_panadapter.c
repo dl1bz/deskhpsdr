@@ -39,9 +39,6 @@
 #include "vfo.h"
 #include "mode.h"
 #include "actions.h"
-#ifdef GPIO
-  #include "gpio.h"
-#endif
 #include "ext.h"
 #include "new_menu.h"
 #include "message.h"

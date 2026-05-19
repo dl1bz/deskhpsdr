@@ -45,7 +45,7 @@
 #include "ext.h"
 #include "zoompan.h"
 #include "actions.h"
-#include "gpio.h"
+#include "controller_mapping.h"
 #include "toolbar.h"
 #include "iambic.h"
 #include "store.h"
@@ -447,16 +447,10 @@ void schedule_action(enum ACTION action, enum ACTION_MODE mode, int val) {
     // which take care of PTT themselves.
     //
     if (mode == PRESSED && (!cw_keyer_internal || MIDI_cw_is_active)) {
-#ifdef GPIO
-      gpio_set_cw(1);
-#endif
       cw_key_down = 960000; // max. 20 sec to protect hardware
       cw_key_up = 0;
       cw_key_hit = 1;
     } else {
-#ifdef GPIO
-      gpio_set_cw(0);
-#endif
       cw_key_down = 0;
       cw_key_up = 0;
     }

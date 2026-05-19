@@ -37,9 +37,6 @@
   #include "soapy_protocol.h"
 #endif
 #include "actions.h"
-#ifdef GPIO
-  #include "gpio.h"
-#endif
 #include "message.h"
 #ifdef SATURN
   #include "saturnmain.h"
@@ -48,10 +45,6 @@
 static GtkWidget *dialog = NULL;
 
 void stop_program(void) {
-#ifdef GPIO
-  gpio_close();
-  t_print("%s: GPIO closed\n", __func__);
-#endif
   radio_protocol_stop();
   t_print("%s: protocol stopped\n", __func__);
   radio_stop();

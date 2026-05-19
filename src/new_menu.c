@@ -59,7 +59,7 @@
 #include "main.h"
 #include "actions.h"
 #include "extras_menu.h"
-#include "gpio.h"
+#include "controller_mapping.h"
 #include "old_protocol.h"
 #include "new_protocol.h"
 #include "mode.h"
@@ -184,21 +184,6 @@ static gboolean rigctl_cb(GtkWidget *widget, GdkEventButton *event, gpointer dat
   rigctl_menu(top_window);
   return TRUE;
 }
-
-#ifdef GPIO
-static gboolean encoder_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  cleanup();
-  encoder_menu(top_window);
-  return TRUE;
-}
-
-static gboolean switch_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  cleanup();
-  switch_menu(top_window);
-  return TRUE;
-}
-
-#endif
 
 static gboolean toolbar_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   cleanup();
@@ -687,23 +672,6 @@ void new_menu(void) {
     g_signal_connect(midi_b, "button-press-event", G_CALLBACK(midi_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), midi_b, col, row, 1, 1);
     row++;
-#endif
-#ifdef GPIO
-    if (controller != NO_CONTROLLER && controller != G2_V2) {
-      GtkWidget *encoders_b = gtk_button_new_with_label("Encoders");
-      g_signal_connect(encoders_b, "button-press-event", G_CALLBACK(encoder_cb), NULL);
-      gtk_grid_attach(GTK_GRID(grid), encoders_b, col, row, 1, 1);
-      row++;
-    }
-    //
-    // Note the switches of CONTROLLER1 are assigned via the Toolbar menu
-    //
-    if (controller != NO_CONTROLLER && controller != CONTROLLER1 && controller != G2_V2) {
-      GtkWidget *switches_b = gtk_button_new_with_label("Switches");
-      g_signal_connect(switches_b, "button-press-event", G_CALLBACK(switch_cb), NULL);
-      gtk_grid_attach(GTK_GRID(grid), switches_b, col, row, 1, 1);
-      row++;
-    }
 #endif
     // cppcheck-suppress redundantAssignment
     row = maxrow;

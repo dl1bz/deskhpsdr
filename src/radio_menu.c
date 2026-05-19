@@ -43,9 +43,6 @@
   #include "soapy_protocol.h"
 #endif
 #include "actions.h"
-#ifdef GPIO
-  #include "gpio.h"
-#endif
 #include "vfo.h"
 #include "ext.h"
 #include "message.h"

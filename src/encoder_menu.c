@@ -35,8 +35,7 @@
 #include "vfo.h"
 #include "actions.h"
 #include "action_dialog.h"
-#include "gpio.h"
-#include "i2c.h"
+#include "controller_mapping.h"
 
 void encoder_menu(GtkWidget *parent);
 

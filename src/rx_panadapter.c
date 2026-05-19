@@ -46,9 +46,6 @@
 #include "old_protocol.h"
 #include "ext.h"
 #include "noise_menu.h"
-#ifdef GPIO
-  #include "gpio.h"
-#endif
 #ifdef USBOZY
   #include "ozyio.h"
 #endif

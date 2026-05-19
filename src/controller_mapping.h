@@ -19,8 +19,8 @@
 *
 */
 
-#ifndef _GPIO_H
-#define _GPIO_H
+#ifndef _CONTROLLER_MAPPING_H
+#define _CONTROLLER_MAPPING_H
 
 #define MAX_ENCODERS 5
 #define MAX_SWITCHES 16
@@ -77,9 +77,5 @@ extern void gpioRestoreActions (void);
 extern void gpioRestoreState (void);
 extern void gpioSaveState (void);
 extern void gpioSaveActions (void);
-extern int gpio_init (void);
-extern void gpio_close (void);
-extern void gpio_set_ptt (int state);
-extern void gpio_set_cw (int state);
 
 #endif

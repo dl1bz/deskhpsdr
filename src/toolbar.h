@@ -22,7 +22,7 @@
 #ifndef _TOOLBAR_H
 #define _TOOLBAR_H
 
-#include "gpio.h"
+#include "controller_mapping.h"
 
 extern int function;
 

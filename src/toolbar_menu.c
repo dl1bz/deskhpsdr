@@ -27,7 +27,7 @@
 #include "new_menu.h"
 #include "actions.h"
 #include "action_dialog.h"
-#include "gpio.h"
+#include "controller_mapping.h"
 #include "toolbar.h"
 
 static GtkWidget *dialog = NULL;

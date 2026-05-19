@@ -47,11 +47,7 @@
   #include "stemlab_discovery.h"
 #endif
 #include "ext.h"
-#include "gpio.h"
-#ifdef GPIO
-  #include "actions.h"
-  #include "configure.h"
-#endif
+#include "controller_mapping.h"
 #include "protocols.h"
 #include "property.h"
 #include "message.h"
@@ -193,16 +189,6 @@ static gboolean protocols_cb(GtkWidget *widget, GdkEventButton *event, gpointer 
   configure_protocols(discovery_dialog);
   return TRUE;
 }
-
-#ifdef GPIO
-#ifdef GPIO_CONFIGURE_LINES
-static gboolean gpio_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  configure_gpio(discovery_dialog);
-  return TRUE;
-}
-
-#endif
-#endif
 
 static void gpio_changed_cb(GtkWidget *widget, gpointer data) {
   controller = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));

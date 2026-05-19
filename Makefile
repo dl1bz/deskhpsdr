@@ -15,7 +15,6 @@
 #
 #######################################################################################
 
-GPIO     ?= OFF
 MIDI     ?= ON
 SATURN   ?= OFF
 USBOZY   ?= OFF
@@ -35,7 +34,6 @@ TAHOEFIX ?= ON
 #
 #  Explanation of compile time options
 #
-#  GPIO         | If ON, compile with GPIO support (RaspPi only, needs libgpiod)
 #  MIDI         | If ON, compile with MIDI support
 #  TTS          | If ON, compile with TTS support and activate TTS
 #  SATURN       | If ON, compile with native SATURN/G2 XDMA support
@@ -53,10 +51,9 @@ TAHOEFIX ?= ON
 #
 #  If you want to use a non-default compile time option, write them
 #  into a file "make.config.deskhpsdr". So, for example, if you want to
-#  disable GPIO and have AUDIO=ALSA, create a file make.config.deskhpsdr in
-#  the deskhpsdr directory with two lines that read
+#  have AUDIO=ALSA, create a file make.config.deskhpsdr in
+#  the deskhpsdr directory with line that read
 #
-#  GPIO=OFF
 #  AUDIO=ALSA
 #
 #################################################################################################################
@@ -246,33 +243,13 @@ CPP_INCLUDE +=$(TELNET_INCLUDE)
 
 ##############################################################################
 #
-# disable GPIO and SATURN for MacOS, simply because it is not there
+# disable SATURN for MacOS, simply because it is not there
 #
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
-override GPIO    := OFF
 override SATURN  := OFF
 override WAYLAND := OFF
-endif
-
-ifeq ($(UNAME_S), Linux)
-GPIOD_VERSION := $(shell pkg-config --modversion libgpiod 2>/dev/null)
-GPIOD_MAJOR := $(word 1,$(subst ., ,$(GPIOD_VERSION)))
-
-ifeq ($(GPIOD_MAJOR),2)
-override GPIO := OFF
-$(info libgpiod V2 detected. This is not supported, disable GPIO support...)
-endif
-
-ifeq ($(GPIO),ON)
-ifeq ($(GPIOD_MAJOR),1)
-$(info libgpiod V1 detected. Compile with GPIO support)
-else
-override GPIO := OFF
-endif
-endif
-
 endif
 
 ##############################################################################
@@ -413,20 +390,6 @@ CPP_INCLUDE +=`$(PKG_CONFIG) --cflags soapysdr`
 else
 CPP_INCLUDE += -I/usr/local/include
 endif
-##############################################################################
-#
-# Add libraries for GPIO support, if requested
-#
-##############################################################################
-
-ifeq ($(GPIO),ON)
-GPIO_OPTIONS=-DGPIO
-ifeq ($(GPIOD_VERSION),1.2)
-GPIO_OPTIONS += -DOLD_GPIOD
-endif
-GPIO_LIBS=-lgpiod -li2c
-endif
-CPP_DEFINES += -DGPIO
 
 ##############################################################################
 #
@@ -672,7 +635,7 @@ endif
 ##############################################################################
 
 OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
-	$(GPIO_OPTIONS) $(SOAPYSDR_OPTIONS) \
+	$(SOAPYSDR_OPTIONS) \
 	$(ANDROMEDA_OPTIONS) \
 	$(SATURN_OPTIONS) \
 	$(STEMLAB_OPTIONS) \
@@ -719,7 +682,7 @@ endif
 #
 ##############################################################################
 
-LIBS=	$(AUDIO_LIBS) $(USBOZY_LIBS) $(GTK_LIBS) $(GPIO_LIBS) $(SOAPYSDR_LIBS) $(STEMLAB_LIBS) \
+LIBS=	$(AUDIO_LIBS) $(USBOZY_LIBS) $(GTK_LIBS) $(SOAPYSDR_LIBS) $(STEMLAB_LIBS) \
 	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lm $(SYS_LIBS)
 
 ##############################################################################
@@ -747,8 +710,8 @@ src/appearance.c \
 src/band.c \
 src/band_menu.c \
 src/bandstack_menu.c \
+src/controller_mapping.c \
 src/css.c \
-src/configure.c \
 src/cw_menu.c \
 src/discovered.c \
 src/discovery.c \
@@ -763,9 +726,7 @@ src/extras_menu.c \
 src/fft_menu.c \
 src/filter.c \
 src/filter_menu.c \
-src/gpio.c \
 src/greyline.c \
-src/i2c.c \
 src/iambic.c \
 src/led.c \
 src/main.c \
@@ -838,7 +799,7 @@ src/band_menu.h \
 src/bandstack_menu.h \
 src/bandstack.h \
 src/channel.h \
-src/configure.h \
+src/controller_mapping.h \
 src/css.h \
 src/cw_menu.h \
 src/dac.h \
@@ -855,10 +816,8 @@ src/extras_menu.h \
 src/fft_menu.h \
 src/filter.h \
 src/filter_menu.h \
-src/gpio.h \
 src/greyline.h \
 src/iambic.h \
-src/i2c.h \
 src/led.h \
 src/main.h \
 src/message.h \
@@ -925,7 +884,7 @@ src/appearance.o \
 src/band.o \
 src/band_menu.o \
 src/bandstack_menu.o \
-src/configure.o \
+src/controller_mapping.o \
 src/css.o \
 src/cw_menu.o \
 src/discovered.o \
@@ -941,10 +900,8 @@ src/extras_menu.o \
 src/fft_menu.o \
 src/filter.o \
 src/filter_menu.o \
-src/gpio.o \
 src/greyline.o \
 src/iambic.o \
-src/i2c.o \
 src/led.o \
 src/main.o \
 src/message.o \
@@ -1154,7 +1111,7 @@ bootloader:	src/bootloader.c
 DEPEND:
 	rm -f DEPEND
 	touch DEPEND
-	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR -DGPIO \
+	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR \
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \

@@ -27,7 +27,7 @@
 #include <string.h>
 #include <math.h>
 #include "actions.h"
-#include "gpio.h"
+#include "controller_mapping.h"
 #include "toolbar.h"
 #include "mode.h"
 #include "filter.h"
