@@ -2,9 +2,14 @@
 
 <img src="https://github.com/dl1bz/deskhpsdr/blob/master/release/deskhpsdr/screenshot.png" width="1024px" />
 
+## deskHPSDR ≠ pihpsdr: new app, new concept, new name
+
+Correct is, the very first codebase of deskHPSDR was forked ONCE from DL1YCF's pihpsdr codebase in October 2024 without any backward dependencies to piHPSDR.
+But there was, is and will be never an active collaboration between pihpsdr and deskHPSDR. They are two different apps without any relationship to each other.
+
 ## The concept behind - what it's make for and what it isn't for
 
-The codebase was forked from DL1YCF's piHPSDR codebase in October 2024 without any backward dependencies to piHPSDR. My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
+My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
 
 **deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Some limited SoapySDR support is current available, but Soapy support is official discontinued now.**
 
@@ -18,13 +23,14 @@ The codebase was forked from DL1YCF's piHPSDR codebase in October 2024 without a
 | Hamlib                         | supported with own included rigctld           |                |
 | OpenHPSDR protocol 1           | fully supported                               |                |
 | OpenHPSDR protocol 2           | fully supported                               |                |
-| GPIO                           | limited support                               | deprecated     |
+| GPIO                           | ~~limited support~~ removed                   | deprecated     |
 | Soapy API / Soapy protocol     | rudimentary supported                         | deprecated     |
 | Hermes Lite 2 N2ADR IO board   | supported                                     |                |
 | Use WDSP library ?             | yes, current 1.29                             |                |
 | Pure Signal / Pre-Distortion   | supported                                     |                |
 | Noise Reduction                | NR1 - NR4 available                           |                |
 | CAT over TCP                   | supported (TS2000 & PowerSDR emulation)       |                |
+| Client-Server Mode             | None, not supported                           |                |
 | Hermes Lite 2+ expansion board | supported                                     |                |
 | Bright / Dark Theme support    | yes                                           |                |
 | Screen Resolution              | min. 1280x600 or higher                       |                |
@@ -56,7 +62,6 @@ Other useful app features (availability depend from used SDR device):
 * display current solar data for propagation, show Greyline DX window
 * Panadapter refresh rate adjustment (max. 60fps)
 * some special SDR device-specific options supported
-* **NO CLIENT-SERVER mode available (like in pihpsdr)**
 
 The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the WDSP RX and TX audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices. SoapySDR API is only partially supported, but will not actively developed further, the Soapy API and device support considered state "discontinued / deprecated".
 
