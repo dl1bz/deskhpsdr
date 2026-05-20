@@ -110,8 +110,6 @@ sudo apt-get --yes install libasound2-dev
 sudo apt-get --yes install libssl-dev
 sudo apt-get --yes install libcurl4-openssl-dev
 sudo apt-get --yes install libusb-1.0-0-dev
-sudo apt-get --yes install libi2c-dev
-sudo apt-get --yes install libgpiod-dev
 sudo apt-get --yes install libpulse-dev
 sudo apt-get --yes install pulseaudio
 sudo apt-get --yes install libpcap-dev
@@ -130,30 +128,12 @@ sudo apt-get install --yes libiio-dev
 sudo apt-get install --yes bison
 sudo apt-get install --yes flex
 sudo apt-get install --yes libxml2-dev
-# sudo apt-get install --yes librtlsdr-dev
 
 ################################################################
 #
 # download and install SoapySDR core is now "deprecated"
 #
 ################################################################
-
-# echo "=============================================================="
-# echo
-# echo "... installing SoapySDR core"
-# echo
-# echo "=============================================================="
-
-cd $THISDIR
-# yes | rm -r SoapySDR
-# git clone https://github.com/pothosware/SoapySDR.git
-
-# cd $THISDIR/SoapySDR
-# mkdir build
-# cd build
-# cmake -DCMAKE_INSTALL_PREFIX=/usr/local ..
-# make -j$(nproc)
-# sudo make install
 sudo ldconfig
 
 elif  [ "$(grep -Ei 'fedora' /etc/*release)" ]; then

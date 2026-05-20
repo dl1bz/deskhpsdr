@@ -54,7 +54,6 @@ THISDIR="$(cd "$(dirname "$0")" && pwd -P)"
 #
 # updated install URL, show https://brew.sh/
 #
-# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 if ! command -v brew >/dev/null 2>&1; then
     echo "Homebrew is not installed."
@@ -180,33 +179,5 @@ $BREW install automake
 $BREW install autoconf
 $BREW install meson
 $BREW install ninja
-################################################################
-#
-# This is for the SoapySDR universe
-# There are even more radios supported for which you need
-# additional modules, for a list, goto the web page
-# https://formulae.brew.sh
-# and insert the search string "pothosware". In the long
-# list produced, search for the same string using the
-# "search" facility of your internet browser
-#
 $BREW install cmake
 $BREW install python-setuptools
-#
-# If an older version of SoapySDR exist, a forced
-# re-install may be necessary (note parts of this
-# is always compiled from the sources).
-#
-# $BREW tap pothosware/pothos
-# $BREW reinstall soapysdr
-#
-# We don't install specific Soapy device support anymore, that's users own task !
-#
-# $BREW reinstall pothosware/pothos/soapyplutosdr
-# $BREW reinstall pothosware/pothos/limesuite
-# $BREW reinstall pothosware/pothos/soapyrtlsdr
-# $BREW reinstall pothosware/pothos/soapyairspy
-# $BREW reinstall pothosware/pothos/soapyairspyhf
-# $BREW reinstall pothosware/pothos/soapyhackrf
-# $BREW reinstall pothosware/pothos/soapyredpitaya
-# $BREW reinstall pothosware/pothos/soapyrtlsdr
