@@ -558,11 +558,9 @@ void discovery(void) {
     }
   }
   controller = NO_CONTROLLER;
-  gpioRestoreState();
   if (controller != NO_CONTROLLER) {
     controller = NO_CONTROLLER;
   }
-  gpio_set_defaults(controller);
   GtkWidget *discover_b = gtk_button_new_with_label("Discover");
   g_signal_connect(discover_b, "clicked", G_CALLBACK(discover_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), discover_b, 1, row, 1, 1);

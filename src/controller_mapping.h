@@ -22,37 +22,8 @@
 #ifndef _CONTROLLER_MAPPING_H
 #define _CONTROLLER_MAPPING_H
 
-#define MAX_ENCODERS 5
 #define MAX_SWITCHES 16
 #define MAX_FUNCTIONS 6
-
-typedef struct _encoder {
-  gboolean bottom_encoder_enabled;
-  gboolean bottom_encoder_pullup;
-  int bottom_encoder_address_a;
-  int bottom_encoder_a_value;
-  int bottom_encoder_address_b;
-  int bottom_encoder_b_value;
-  int bottom_encoder_pos;
-  int bottom_encoder_function;
-  guchar bottom_encoder_state;
-  int top_encoder_enabled;
-  gboolean top_encoder_pullup;
-  int top_encoder_address_a;
-  int top_encoder_a_value;
-  int top_encoder_address_b;
-  int top_encoder_b_value;
-  int top_encoder_pos;
-  int top_encoder_function;
-  guchar top_encoder_state;
-  gboolean switch_enabled;
-  gboolean switch_pullup;
-  int switch_address;
-  int switch_function;
-  gulong switch_debounce;
-} ENCODER;
-
-extern ENCODER *encoders;
 
 typedef struct _switch {
   gboolean switch_enabled;
@@ -62,19 +33,11 @@ typedef struct _switch {
   gulong switch_debounce;
 } SWITCH;
 
-extern SWITCH switches_controller1[MAX_FUNCTIONS][MAX_SWITCHES];
+extern SWITCH switches_toolbar[MAX_FUNCTIONS][MAX_SWITCHES];
 
 extern SWITCH *switches;
 
-extern int *sw_action;
-
-
-extern void gpio_default_encoder_actions (int ctrlr);
-extern void gpio_default_switch_actions (int ctrlr);
-extern void gpio_set_defaults (int ctrlr);
-extern void gpioRestoreActions (void);
-extern void gpioRestoreState (void);
-extern void gpioSaveState (void);
-extern void gpioSaveActions (void);
+extern void RestoreActions (void);
+extern void SaveActions (void);
 
 #endif

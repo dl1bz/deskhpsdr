@@ -60,7 +60,7 @@ static GtkWidget *sim_s[TOOLBAR_BTN_COUNT] = { NULL };
 
 static GtkWidget *sim_sfunc;
 
-SWITCH *toolbar_switches = switches_controller1[0];
+SWITCH *toolbar_switches = switches_toolbar[0];
 
 void update_toolbar_labels(void) {
   if (sim_s[0]) {
@@ -132,7 +132,7 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
     button_css = "large_button";
   }
   t_print("toolbar_init: button_css=%s\n", button_css);
-  toolbar_switches = switches_controller1[function];
+  toolbar_switches = switches_toolbar[function];
   // Sim-State immer beim Neuaufbau zurücksetzen
   for (int i = 0; i < TOOLBAR_BTN_COUNT; ++i) {
     sim_s[i] = NULL;

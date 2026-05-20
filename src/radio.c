@@ -3021,7 +3021,7 @@ static void radio_restore_state (void) {
   bandRestoreState();
   memRestoreState();
   vfo_restore_state();
-  gpioRestoreActions();
+  RestoreActions();
 #ifdef MIDI
   midiRestoreState();
 #endif
@@ -3279,7 +3279,7 @@ void radio_save_state (void) {
   bandSaveState();
   memSaveState();
   vfo_save_state();
-  gpioSaveActions();
+  SaveActions();
 #ifdef MIDI
   midiSaveState();
 #endif

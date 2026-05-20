@@ -56,37 +56,11 @@
 #define R_START 0x00
 
 //
-// Default assignment for "no controller" and toolbar switch actions.
+// Default assignment for toolbar switch actions.
 // Legacy GPIO-connected controller profiles have been removed.
 //
-static const ENCODER encoders_no_controller[MAX_ENCODERS] = {
-  {FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0L},
-  {FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0L},
-  {FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0L},
-  {FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0L},
-  {FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0, 0, 0, 0, R_START, FALSE, TRUE, 0, 0, 0L},
-};
 
-static const SWITCH switches_no_controller[MAX_SWITCHES] = {
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L},
-  {FALSE, FALSE, 0, NO_ACTION, 0L}
-};
-
-SWITCH switches_controller1[MAX_FUNCTIONS][MAX_SWITCHES] = {
+SWITCH switches_toolbar[MAX_FUNCTIONS][MAX_SWITCHES] = {
   { {TRUE,  TRUE, 27, MOX,            0L},
     {TRUE,  TRUE, 13, MENU_BAND,      0L},
     {TRUE,  TRUE, 12, MENU_BANDSTACK, 0L},
@@ -192,115 +166,26 @@ SWITCH switches_controller1[MAX_FUNCTIONS][MAX_SWITCHES] = {
 
 };
 
-ENCODER my_encoders[MAX_ENCODERS];
-SWITCH  my_switches[MAX_SWITCHES];
-
-ENCODER *encoders = NULL;
-SWITCH *switches = NULL;
-
-void gpio_default_encoder_actions(int ctrlr) {
-  (void)ctrlr;
-}
-
-void gpio_default_switch_actions(int ctrlr) {
-  (void)ctrlr;
-}
-
-void gpio_set_defaults(int ctrlr) {
-  t_print("%s: %d\n", __func__, ctrlr);
-  switch (ctrlr) {
-  case NO_CONTROLLER:
-  default:
-    memcpy(my_encoders, encoders_no_controller, sizeof(my_encoders));
-    memcpy(my_switches, switches_no_controller, sizeof(my_switches));
-    encoders = my_encoders;
-    switches = my_switches;
-    break;
-  }
-}
-
-void gpioRestoreState(void) {
-  if (access("controller_mapping.props", F_OK) == 0) {
-    loadProperties("controller_mapping.props");
-  } else {
-    loadProperties("gpio.props");
-  }
-  GetPropI0("controller",                                         controller);
-  //
-  // Direct GPIO controller profiles have been removed.
-  // Only NO_CONTROLLER remains valid here.
-  //
-  if (controller != NO_CONTROLLER) {
-    controller = NO_CONTROLLER;
-  }
-  gpio_set_defaults(controller);
-}
-
-void gpioSaveState(void) {
-  clearProperties();
-  SetPropI0("controller",                                         controller);
-  saveProperties("controller_mapping.props");
-}
-
-void gpioRestoreActions(void) {
-  int props_controller = NO_CONTROLLER;
-  gpio_set_defaults(controller);
+void RestoreActions(void) {
   //
   //  "toolbar" functions
   //
   GetPropI0("switches.function",                                 function);
   for (int f = 0; f < MAX_FUNCTIONS; f++) {
     for (int i = 0; i < MAX_SWITCHES; i++) {
-      GetPropA2("switches[%d,%d].switch_function", f, i,         switches_controller1[f][i].switch_function);
+      GetPropA2("switches[%d,%d].switch_function", f, i,         switches_toolbar[f][i].switch_function);
     }
-  }
-  GetPropI0("controller",                                        props_controller);
-  //
-  // If the props file refers to another controller, skip props data
-  //
-  if (controller != props_controller) { return; }
-  for (int i = 0; i < MAX_ENCODERS; i++) {
-    GetPropA1("encoders[%d].bottom_encoder_function", i,         encoders[i].bottom_encoder_function);
-    GetPropA1("encoders[%d].top_encoder_function", i,            encoders[i].top_encoder_function);
-    GetPropA1("encoders[%d].switch_function", i,                 encoders[i].switch_function);
-  }
-  for (int i = 0; i < MAX_SWITCHES; i++) {
-    GetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
   }
 }
 
-void gpioSaveActions(void) {
-  char name[128];
-  char value[128];
+void SaveActions(void) {
   //
   //  "toolbar" functions
   //
   SetPropI0("switches.function",                                 function);
   for (int f = 0; f < MAX_FUNCTIONS; f++) {
     for (int i = 0; i < MAX_SWITCHES; i++) {
-      SetPropA2("switches[%d,%d].switch_function", f, i,         switches_controller1[f][i].switch_function);
-    }
-  }
-  SetPropI0("controller",                                        controller);
-  //
-  // If there is no controller, there is nothing to store
-  //
-  if (controller == NO_CONTROLLER) { return; }
-  for (int i = 0; i < MAX_ENCODERS; i++) {
-    SetPropA1("encoders[%d].bottom_encoder_function", i,         encoders[i].bottom_encoder_function);
-    SetPropA1("encoders[%d].top_encoder_function", i,            encoders[i].top_encoder_function);
-    SetPropA1("encoders[%d].switch_function", i,                 encoders[i].switch_function);
-  }
-  for (int i = 0; i < MAX_SWITCHES; i++) {
-    SetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
-  }
-  snprintf(value, sizeof(value), "%d", function);
-  setProperty("switches.function", value);
-  for (int f = 0; f < MAX_FUNCTIONS; f++) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      snprintf(name, sizeof(name), "switches[%d,%d].switch_function", f, i);
-      Action2String(switches_controller1[f][i].switch_function, value, sizeof(value));
-      setProperty(name, value);
+      SetPropA2("switches[%d,%d].switch_function", f, i,         switches_toolbar[f][i].switch_function);
     }
   }
 }

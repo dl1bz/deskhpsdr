@@ -50,7 +50,7 @@ static gboolean close_cb(void) {
 
 static gboolean switch_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
   SWITCH *sw = (SWITCH*) data;
-  int action = action_dialog(dialog, CONTROLLER_SWITCH, sw->switch_function);
+  int action = action_dialog(dialog, MIDI_KEY, sw->switch_function);
   gtk_button_set_label(GTK_BUTTON(widget), ActionTable[action].button_str);
   sw->switch_function = action;
   update_toolbar_labels();
@@ -83,7 +83,7 @@ void toolbar_menu(GtkWidget *parent) {
   int lfunction = 0;
   const int max_switches = 11;
   for (lfunction = 0; lfunction < MAX_FUNCTIONS; lfunction++) {
-    SWITCH *sw = switches_controller1[lfunction];
+    SWITCH *sw = switches_toolbar[lfunction];
     for (int i = 0; i < max_switches; i++) {
       if (i == max_switches - 1) {
         // Rightmost switch is hardwired to FUNCTION

@@ -246,8 +246,6 @@ enum ACTIONtype {
   MIDI_KEY = 1,             // MIDI Button (press event)
   MIDI_KNOB = 2,            // MIDI Knob   (value between 0 and 100)
   MIDI_WHEEL = 4,           // MIDI Wheel  (direction and speed)
-  CONTROLLER_SWITCH = 8,    // Controller Button
-  CONTROLLER_ENCODER = 16,  // Controller Encoder
   TYPE_HIDE = 32
 };
 

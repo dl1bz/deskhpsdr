@@ -54,7 +54,6 @@ static void cleanup(void) {
 }
 
 static gboolean default_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
-  gpio_default_switch_actions(controller);
   cleanup();
   switch_menu(top_window);
   return TRUE;
