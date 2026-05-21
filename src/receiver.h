@@ -39,6 +39,11 @@ enum _audio_channel_enum {
   RIGHT
 };
 
+#define RX_CW_ZERO_BEAT_MIN_HZ 300
+#define RX_CW_ZERO_BEAT_MAX_HZ 1000
+#define RX_CW_ZERO_BEAT_STEP_HZ 5
+#define RX_CW_ZERO_BEAT_BINS (((RX_CW_ZERO_BEAT_MAX_HZ - RX_CW_ZERO_BEAT_MIN_HZ) / RX_CW_ZERO_BEAT_STEP_HZ) + 1)
+
 typedef struct _receiver {
   int id;
   GMutex mutex;
@@ -172,6 +177,14 @@ typedef struct _receiver {
   int filter_low;
   int filter_high;
   int use_cw_dp_filter;
+
+  double rx_cw_zero_beat_calibration_hz;
+  int cw_zero_beat_active;
+  int cw_zero_beat_count;
+  int cw_zero_beat_target_count;
+  double cw_zero_beat_coeff[RX_CW_ZERO_BEAT_BINS];
+  double cw_zero_beat_q1[RX_CW_ZERO_BEAT_BINS];
+  double cw_zero_beat_q2[RX_CW_ZERO_BEAT_BINS];
 
   int width;
   int height;
@@ -334,6 +347,7 @@ extern void   rx_set_analyzer (const RECEIVER *rx);
 extern void   rx_set_average (const RECEIVER *rx);
 extern void   rx_set_bandpass (const RECEIVER *rx);
 extern void   rx_set_cw_peak (const RECEIVER *rx, int state, double freq);
+extern void   rx_cw_zero_beat_start (RECEIVER *rx);
 extern void   rx_set_detector (const RECEIVER *rx);
 extern void   rx_set_deviation (const RECEIVER *rx);
 extern void   rx_set_displaying (RECEIVER *rx);

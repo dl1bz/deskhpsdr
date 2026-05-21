@@ -123,6 +123,7 @@ ACTION_TABLE ActionTable[] = {
   {CW_KEYER_KEYDOWN,    "CW Key\n(Keyer)",      "CWKy",         MIDI_KEY},
   {CW_KEYER_PTT,        "PTT\n(CW Keyer)",      "CWKyPTT",      MIDI_KEY},
   {CW_KEYER_SPEED,      "Speed\n(Keyer)",       "CWKySpd",      MIDI_KNOB},
+  {CW_ZERO_BEAT,        "CW Zero Beat",         "CW-ZERO",      MIDI_KEY},
   {DIV,                 "DIV On/Off",           "DIVT",         MIDI_KEY},
   {DIV_GAIN,            "DIV Gain",             "DIVG",         MIDI_WHEEL},
   {DIV_GAIN_COARSE,     "DIV Gain\nCoarse",     "DIVGC",        MIDI_WHEEL},
@@ -988,6 +989,11 @@ int process_action(void* data) {
     cw_keyer_speed = (int) value;
     keyer_update();
     g_idle_add(ext_vfo_update, NULL);
+    break;
+  case CW_ZERO_BEAT:
+    if (a->mode == PRESSED) {
+      rx_cw_zero_beat_start(active_receiver);
+    }
     break;
   case DIV:
     if (a->mode == PRESSED && n_adc > 1) {

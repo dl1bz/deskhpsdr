@@ -66,6 +66,17 @@ static gboolean pressed = FALSE;
 static gboolean making_active = FALSE;
 
 #define AM_DC_OFFSET_HZ 500LL
+#define RX_CW_ZERO_BEAT_OUTPUT_RATE 48000.0
+#define RX_CW_ZERO_BEAT_MS 200
+#define RX_CW_ZERO_BEAT_MIN_RATIO 6.0
+#define RX_CW_ZERO_BEAT_MAX_CORRECTION_HZ 1500LL
+
+#ifndef M_PI
+  #define M_PI 3.14159265358979323846
+#endif
+
+static void rx_cw_zero_beat_reset(RECEIVER *rx);
+static void rx_cw_zero_beat_sample(RECEIVER *rx, double sample);
 
 long long rx_get_mode_dc_offset(int id) {
   switch (vfo[id].mode) {
@@ -281,6 +292,7 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.filter_low", rx->id,                   rx->filter_low);
   SetPropI1("receiver.%d.filter_high", rx->id,                  rx->filter_high);
   SetPropI1("receiver.%d.use_cw_dp_filter", rx->id,             rx->use_cw_dp_filter);
+  SetPropF1("receiver.%d.rx_cw_zero_beat_calibration_hz", rx->id, rx->rx_cw_zero_beat_calibration_hz);
   SetPropI1("receiver.%d.fps", rx->id,                          rx->fps);
   SetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
   SetPropI1("receiver.%d.panadapter_high", rx->id,              rx->panadapter_high);
@@ -403,6 +415,7 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.filter_low", rx->id,                   rx->filter_low);
   GetPropI1("receiver.%d.filter_high", rx->id,                  rx->filter_high);
   GetPropI1("receiver.%d.use_cw_dp_filter", rx->id,             rx->use_cw_dp_filter);
+  GetPropF1("receiver.%d.rx_cw_zero_beat_calibration_hz", rx->id, rx->rx_cw_zero_beat_calibration_hz);
   GetPropI1("receiver.%d.fps", rx->id,                          rx->fps);
   GetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
   GetPropI1("receiver.%d.panadapter_high", rx->id,              rx->panadapter_high);
@@ -848,6 +861,8 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->filter_high = 525;
   rx->filter_low = 275;
   rx->use_cw_dp_filter = 1;
+  rx->rx_cw_zero_beat_calibration_hz = 15.0;
+  rx_cw_zero_beat_reset(rx);
   rx->deviation = 2500;
   rx->mute_radio = 0;
 #ifdef __APPLE__
@@ -1088,6 +1103,151 @@ void rx_vfo_changed(RECEIVER *rx) {
   rx_mode_changed(rx);
 }
 
+
+static long long rx_get_effective_frequency(const RECEIVER *rx) {
+  int id = rx->id;
+  return vfo[id].ctun ? vfo[id].ctun_frequency : vfo[id].frequency;
+}
+
+static void rx_cw_zero_beat_reset(RECEIVER *rx) {
+  rx->cw_zero_beat_active = 0;
+  rx->cw_zero_beat_count = 0;
+  rx->cw_zero_beat_target_count = 0;
+  for (int i = 0; i < RX_CW_ZERO_BEAT_BINS; i++) {
+    rx->cw_zero_beat_coeff[i] = 0.0;
+    rx->cw_zero_beat_q1[i] = 0.0;
+    rx->cw_zero_beat_q2[i] = 0.0;
+  }
+}
+
+static void rx_cw_zero_beat_finish(RECEIVER *rx) {
+  int mode = vfo[rx->id].mode;
+  double max_power = 0.0;
+  double power_sum = 0.0;
+  int max_bin = -1;
+  for (int i = 0; i < RX_CW_ZERO_BEAT_BINS; i++) {
+    double power = (rx->cw_zero_beat_q1[i] * rx->cw_zero_beat_q1[i])
+                   + (rx->cw_zero_beat_q2[i] * rx->cw_zero_beat_q2[i])
+                   - (rx->cw_zero_beat_coeff[i] * rx->cw_zero_beat_q1[i] * rx->cw_zero_beat_q2[i]);
+    power_sum += power;
+    if (power > max_power) {
+      max_power = power;
+      max_bin = i;
+    }
+  }
+  double avg_power = power_sum / (double) RX_CW_ZERO_BEAT_BINS;
+  if (max_bin < 0 || max_power <= 1.0e-12 || max_power < (avg_power * RX_CW_ZERO_BEAT_MIN_RATIO)) {
+    t_print("%s: RX%d no stable CW peak detected max=%.9g avg=%.9g\n",
+            __func__,
+            rx->id,
+            max_power,
+            avg_power);
+    rx_cw_zero_beat_reset(rx);
+    return;
+  }
+  double detected = (double)(RX_CW_ZERO_BEAT_MIN_HZ + (max_bin * RX_CW_ZERO_BEAT_STEP_HZ));
+  double target = (double) cw_keyer_sidetone_frequency + rx->rx_cw_zero_beat_calibration_hz;
+  double delta = detected - target;
+  long long correction = (long long) lrint(delta);
+  if (correction > RX_CW_ZERO_BEAT_MAX_CORRECTION_HZ || correction < -RX_CW_ZERO_BEAT_MAX_CORRECTION_HZ) {
+    t_print("%s: RX%d correction out of range detected=%.1f target=%.1f delta=%.1f\n",
+            __func__,
+            rx->id,
+            detected,
+            target,
+            delta);
+    rx_cw_zero_beat_reset(rx);
+    return;
+  }
+  if (correction == 0) {
+    t_print("%s: RX%d already zero beat detected=%.1f target=%.1f\n",
+            __func__,
+            rx->id,
+            detected,
+            target);
+    rx_cw_zero_beat_reset(rx);
+    return;
+  }
+  long long old_frequency = rx_get_effective_frequency(rx);
+  long long new_frequency = old_frequency;
+  if (mode == modeCWU) {
+    new_frequency += correction;
+  } else if (mode == modeCWL) {
+    new_frequency -= correction;
+  } else {
+    rx_cw_zero_beat_reset(rx);
+    return;
+  }
+  t_print("%s: RX%d mode=%d detected=%.1f target=%.1f delta=%.1f correction=%lld old=%lld new=%lld\n",
+          __func__,
+          rx->id,
+          mode,
+          detected,
+          target,
+          delta,
+          correction,
+          old_frequency,
+          new_frequency);
+  rx_set_frequency(rx, new_frequency);
+  g_idle_add(ext_vfo_update, NULL);
+  rx_cw_zero_beat_reset(rx);
+}
+
+static void rx_cw_zero_beat_sample(RECEIVER *rx, double sample) {
+  if (!rx->cw_zero_beat_active) {
+    return;
+  }
+  if (rx != active_receiver || radio_is_transmitting()) {
+    rx_cw_zero_beat_reset(rx);
+    return;
+  }
+  int mode = vfo[rx->id].mode;
+  if (mode != modeCWU && mode != modeCWL) {
+    rx_cw_zero_beat_reset(rx);
+    return;
+  }
+  for (int i = 0; i < RX_CW_ZERO_BEAT_BINS; i++) {
+    double q0 = sample + (rx->cw_zero_beat_coeff[i] * rx->cw_zero_beat_q1[i]) - rx->cw_zero_beat_q2[i];
+    rx->cw_zero_beat_q2[i] = rx->cw_zero_beat_q1[i];
+    rx->cw_zero_beat_q1[i] = q0;
+  }
+  rx->cw_zero_beat_count++;
+  if (rx->cw_zero_beat_count >= rx->cw_zero_beat_target_count) {
+    rx_cw_zero_beat_finish(rx);
+  }
+}
+
+void rx_cw_zero_beat_start(RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+  int mode = vfo[rx->id].mode;
+  if (rx != active_receiver || (mode != modeCWU && mode != modeCWL) || radio_is_transmitting()) {
+    t_print("%s: RX%d rejected active=%d mode=%d xmit=%d\n",
+            __func__,
+            rx->id,
+            rx == active_receiver,
+            mode,
+            radio_is_transmitting());
+    return;
+  }
+  rx_cw_zero_beat_reset(rx);
+  rx->cw_zero_beat_target_count = (int)((RX_CW_ZERO_BEAT_OUTPUT_RATE * RX_CW_ZERO_BEAT_MS) / 1000.0);
+  for (int i = 0; i < RX_CW_ZERO_BEAT_BINS; i++) {
+    double freq = (double)(RX_CW_ZERO_BEAT_MIN_HZ + (i * RX_CW_ZERO_BEAT_STEP_HZ));
+    rx->cw_zero_beat_coeff[i] = 2.0 * cos((2.0 * M_PI * freq) / RX_CW_ZERO_BEAT_OUTPUT_RATE);
+  }
+  rx->cw_zero_beat_active = 1;
+  t_print("%s: RX%d started target=%dHz range=%d..%dHz step=%dHz samples=%d\n",
+          __func__,
+          rx->id,
+          cw_keyer_sidetone_frequency,
+          RX_CW_ZERO_BEAT_MIN_HZ,
+          RX_CW_ZERO_BEAT_MAX_HZ,
+          RX_CW_ZERO_BEAT_STEP_HZ,
+          rx->cw_zero_beat_target_count);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //
 // rx_add_iq_samples (rx_add_div_iq_samples),  rx_full_buffer, and rx_process_buffer
@@ -1103,6 +1263,7 @@ static void rx_process_buffer(RECEIVER *rx) {
   for (int i = 0; i < rx->output_samples; i++) {
     double left_sample = rx->audio_output_buffer[i * 2];
     double right_sample = rx->audio_output_buffer[(i * 2) + 1];
+    rx_cw_zero_beat_sample(rx, 0.5 * (left_sample + right_sample));
     if (rx == active_receiver) {
       //
       // If re-playing captured data locally, replace incoming

@@ -121,6 +121,15 @@ static void cw_keyer_sidetone_frequency_value_changed_cb(GtkWidget *widget, gpoi
   schedule_high_priority();
 }
 
+static void cw_zero_beat_corr_cb(GtkWidget *widget, gpointer data) {
+  double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  active_receiver->rx_cw_zero_beat_calibration_hz = val;
+  cw_changed();
+  rx_filter_changed(active_receiver);
+  // changing the side tone frequency affects BFO frequency offsets
+  schedule_high_priority();
+}
+
 #if 0
 static void cw_ramp_width_changed_cb(GtkWidget *widget, gpointer data) {
   cw_ramp_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
@@ -207,6 +216,20 @@ void cw_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_sidetone_frequency_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_sidetone_frequency_b, "value_changed",
                    G_CALLBACK(cw_keyer_sidetone_frequency_value_changed_cb), NULL);
+  col++;
+  GtkWidget *cw_zero_beat_corr_label = gtk_label_new("CW Zero Beat Freq. Corr:");
+  gtk_widget_set_name(cw_zero_beat_corr_label, "boldlabel");
+  gtk_widget_set_halign(cw_zero_beat_corr_label, GTK_ALIGN_END);
+  gtk_widget_show(cw_zero_beat_corr_label);
+  gtk_grid_attach(GTK_GRID(grid), cw_zero_beat_corr_label, 0, col, 1, 1);
+  GtkWidget *cw_zero_beat_corr_b = gtk_spin_button_new_with_range(-50.0, 50.0, 1.0);
+  gtk_widget_set_tooltip_text(cw_zero_beat_corr_b,
+                              "Finetuning CW Zero Beat Calibration (in Hz)");
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_zero_beat_corr_b),
+                            (double) active_receiver->rx_cw_zero_beat_calibration_hz);
+  gtk_widget_show(cw_zero_beat_corr_b);
+  gtk_grid_attach(GTK_GRID(grid), cw_zero_beat_corr_b, 1, col, 1, 1);
+  g_signal_connect(cw_zero_beat_corr_b, "value_changed", G_CALLBACK(cw_zero_beat_corr_cb), NULL);
   col++;
   GtkWidget *cw_keyer_weight_label = gtk_label_new("Weight:");
   gtk_widget_set_name(cw_keyer_weight_label, "boldlabel");

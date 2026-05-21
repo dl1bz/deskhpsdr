@@ -774,8 +774,17 @@ void rx_panadapter_update (RECEIVER *rx) {
   // Filter edges.
   //
   cairo_set_source_rgba (cr, COLOUR_PAN_FILTER);
-  double filter_left = vfofreq + (((double) rx->filter_low + offset) / HzPerPixel);
-  double filter_right = vfofreq + (((double) rx->filter_high + offset) / HzPerPixel);
+  double filter_low = (double) rx->filter_low;
+  double filter_high = (double) rx->filter_high;
+  if (mode == modeCWU) {
+    filter_low -= (double) cw_keyer_sidetone_frequency;
+    filter_high -= (double) cw_keyer_sidetone_frequency;
+  } else if (mode == modeCWL) {
+    filter_low += (double) cw_keyer_sidetone_frequency;
+    filter_high += (double) cw_keyer_sidetone_frequency;
+  }
+  double filter_left = vfofreq + ((filter_low + offset) / HzPerPixel);
+  double filter_right = vfofreq + ((filter_high + offset) / HzPerPixel);
   cairo_rectangle (cr, filter_left, 0.0, filter_right - filter_left, myheight);
   cairo_fill (cr);
   //----------------------------------------------------------------------------------------------
