@@ -35,9 +35,6 @@
 #include "discovered.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 #include "vfo.h"
 #include "agc.h"
 #include "channel.h"
@@ -134,18 +131,6 @@ static gulong ps_btn_signal_id;
 static GtkWidget *nr_btn;
 static GtkWidget *nr_label;
 static gulong nr_btn_signal_id;
-#ifdef SOAPYSDR
-  static GtkWidget *hwagc_btn;
-  static GtkWidget *hwagc_label;
-  static gulong hwagc_btn_signal_id;
-  static GtkWidget *hwagc_scale;
-  static gulong hwagc_scale_signal_id;
-  static GtkWidget *ifgr_scale;
-  static gulong ifgr_scale_signal_id;
-  static GtkWidget *soapy_rfgain_btn;
-  static GtkWidget *soapy_rfgain_label;
-  static gulong soapy_rfgain_btn_signal_id;
-#endif
 static GtkStyleContext *nr_context;
 static GtkStyleContext *agc_context;
 
@@ -482,16 +467,6 @@ void set_af_gain(int rx, double value) {
 static void rf_gain_value_changed_cb(GtkWidget *widget, gpointer data) {
   adc[active_receiver->adc].gain = gtk_range_get_value(GTK_RANGE(rf_gain_scale));
   switch (protocol) {
-#ifdef SOAPYSDR
-  case SOAPYSDR_PROTOCOL:
-    if (strcmp(radio->name, "sdrplay") == 0) {
-      soapy_protocol_set_gain_element(active_receiver, radio->info.soapy.rx_gain[index_rf_gain()],
-                                      (int) adc[active_receiver->adc].gain);
-    } else {
-      soapy_protocol_set_gain(active_receiver);
-    }
-    break;
-#endif
   default:
     break;
   }
@@ -511,11 +486,6 @@ void set_rf_gain(int rx, double value) {
   int rxadc = receiver[rx]->adc;
   //t_print("%s rx=%d adc=%d val=%f\n",__func__, rx, rxadc, value);
   adc[rxadc].gain = value;
-#ifdef SOAPYSDR
-  if (protocol == SOAPYSDR_PROTOCOL && radio && strcmp(radio->name, "sdrplay") != 0) {
-    soapy_protocol_set_gain(receiver[rx]);
-  }
-#endif
   if (display_sliders && active_receiver->id == rx) {
     if (pthread_equal(pthread_self(), deskhpsdr_main_thread)) {
       gtk_range_set_value(GTK_RANGE(rf_gain_scale), adc[rxadc].gain);
@@ -1172,84 +1142,6 @@ static void split_btn_toggle_cb(GtkWidget *widget, gpointer data) {
   update_slider_split_btn();
 }
 
-#ifdef SOAPYSDR
-
-static void hwagc_scale_value_changed_cb(GtkWidget *widget, gpointer data) {
-  double spin_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  soapy_protocol_set_agc_setpoint(active_receiver, (int) spin_value);
-}
-
-static void ifgr_scale_value_changed_cb(GtkWidget *widget, gpointer data) {
-  double spin_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  if (index_if_gain() > -1 && !adc[active_receiver->adc].agc) {
-    soapy_protocol_set_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()], (int) spin_value);
-  }
-  if (index_if_gain() > -1) { update_ifgr_scale_soapy(index_if_gain()); }
-}
-
-
-void update_slider_hwagc_btn(void) {
-  if (display_sliders && device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_has_automatic_gain) {
-    if (strcmp(radio->name, "sdrplay") == 0) {
-      g_signal_handler_block(GTK_TOGGLE_BUTTON(hwagc_btn), hwagc_btn_signal_id);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hwagc_btn), adc[active_receiver->adc].agc);
-      g_signal_handler_unblock(GTK_TOGGLE_BUTTON(hwagc_btn), hwagc_btn_signal_id);
-      if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(hwagc_btn))) {
-        gtk_label_set_text(GTK_LABEL(hwagc_label), "HW-AGC");
-        gtk_widget_set_sensitive(hwagc_scale, TRUE);
-        if (index_if_gain() > -1) { gtk_widget_set_sensitive(ifgr_scale, FALSE); }
-      } else {
-        gtk_label_set_text(GTK_LABEL(hwagc_label), "IFGR");
-        gtk_widget_set_sensitive(hwagc_scale, FALSE);
-        if (index_if_gain() > -1) { gtk_widget_set_sensitive(ifgr_scale, TRUE); }
-      }
-      gtk_widget_queue_draw(hwagc_btn);
-      gtk_widget_queue_draw(hwagc_scale);
-    }
-  }
-}
-
-static void hwagc_btn_toggle_cb(GtkWidget *widget, gpointer data) {
-  if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_has_automatic_gain) {
-    int hwagc = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-    adc[active_receiver->adc].agc = hwagc;
-    soapy_protocol_set_automatic_gain(active_receiver, hwagc);
-    // if (!agc) { soapy_protocol_set_gain(active_receiver); }
-    update_slider_hwagc_btn();
-  }
-}
-
-void update_rf_gain_scale_soapy(int idx) {
-  if (display_sliders && device == SOAPYSDR_USB_DEVICE) {
-    if (radio->info.soapy.rx_gains > 0) {
-      g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_gain_scale_signal_id);
-      gtk_range_set_value(GTK_RANGE(rf_gain_scale), (double) soapy_protocol_get_gain_element(active_receiver,
-                          radio->info.soapy.rx_gain[idx]));
-      g_signal_handler_unblock(G_OBJECT(rf_gain_scale), rf_gain_scale_signal_id);
-      gtk_widget_queue_draw(rf_gain_scale);
-      t_print("%s: idx = %d rf_gain_scale value = %f\n", __func__, idx,
-              (double) soapy_protocol_get_gain_element(active_receiver,
-                  radio->info.soapy.rx_gain[idx]));
-    }
-  }
-}
-
-void update_ifgr_scale_soapy(int idx) {
-  if (display_sliders && device == SOAPYSDR_USB_DEVICE) {
-    if (radio->info.soapy.rx_gains > 0 && strcmp(radio->name, "sdrplay") == 0) {
-      g_signal_handler_block(G_OBJECT(ifgr_scale), ifgr_scale_signal_id);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(ifgr_scale), (double) soapy_protocol_get_gain_element(active_receiver,
-                                radio->info.soapy.rx_gain[idx]));
-      g_signal_handler_unblock(G_OBJECT(ifgr_scale), ifgr_scale_signal_id);
-      gtk_widget_queue_draw(ifgr_scale);
-      t_print("%s: idx = %d ifgr_scale value = %f\n", __func__, idx,
-              (double) soapy_protocol_get_gain_element(active_receiver,
-                  radio->info.soapy.rx_gain[idx]));
-    }
-  }
-}
-#endif
-
 static void swap_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   vfo_a_swap_b();
 }
@@ -1340,23 +1232,6 @@ void update_slider_ps_btn(void) {
     gtk_widget_queue_draw(ps_btn);
   }
 }
-
-#ifdef SOAPYSDR
-static void soapy_rfgain_cycle_cb(GtkButton *btn, gpointer user_data) {
-  (void) user_data; // bewusst ungenutzt
-  size_t n = radio->info.soapy.rx_gains;
-  if (n == 0) { return; }
-  int idx = GPOINTER_TO_INT(
-                    g_object_get_data(G_OBJECT(btn), "rx-gain-idx")
-            );
-  idx = (idx + 1) % (int) n;
-  g_object_set_data(G_OBJECT(btn), "rx-gain-idx", GINT_TO_POINTER(idx));
-  GtkWidget *lbl = gtk_bin_get_child(GTK_BIN(btn));
-  const char *txt = radio->info.soapy.rx_gain[idx];
-  if (!txt) { txt = ""; }
-  gtk_label_set_text(GTK_LABEL(lbl), txt);
-}
-#endif
 
 static void ps_toggle_cb(GtkWidget *widget, gpointer data) {
 #if defined (__CPYMODE__)
@@ -1617,15 +1492,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         autogain_time_enabled = 0;
       }
       autogain_btn = NULL;
-#ifdef SOAPYSDR
-      if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
-        rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rf_gain()]);
-      } else {
-        rf_gain_label = gtk_label_new("RF Gain");
-      }
-#else
       rf_gain_label = gtk_label_new("RF Gain");
-#endif
       WEAKEN(rf_gain_label);
       gtk_widget_set_name(rf_gain_label, "boldlabel_border_blue");
       // Label breiter erzwingen
@@ -1642,10 +1509,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
 #else
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       rf_gain_label = gtk_label_new("RxPGA");
-#ifdef SOAPYSDR
-    } else if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0) {
-      rf_gain_label = gtk_label_new(radio->info.soapy.rx_gain[index_rf_gain()]);
-#endif
     } else {
       rf_gain_label = gtk_label_new("RF Gain");
     }
@@ -1663,22 +1526,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_right), rf_gain_label, FALSE, FALSE, 0);
 #endif
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifdef SOAPYSDR
-    if (device == SOAPYSDR_USB_DEVICE) {
-      if (radio->info.soapy.rx_gains > 0) {
-        rxgain_index_0 = index_rf_gain();
-        if (adc[0].min_gain != radio->info.soapy.rx_range[rxgain_index_0].minimum) {
-          adc[0].min_gain = radio->info.soapy.rx_range[rxgain_index_0].minimum;
-        }
-        if (adc[0].max_gain != radio->info.soapy.rx_range[rxgain_index_0].maximum) {
-          adc[0].max_gain = radio->info.soapy.rx_range[rxgain_index_0].maximum;
-        }
-        if (adc[0].gain < adc[0].min_gain || adc[0].gain > adc[0].max_gain) {
-          adc[0].gain = adc[0].min_gain;
-        }
-      }
-    }
-#endif
     t_print("%s: adc[0].min_gain = %f adc[0].max_gain = %f\n", __func__, adc[0].min_gain, adc[0].max_gain);
     rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, adc[0].min_gain, adc[0].max_gain, 1.0);
     WEAKEN(rf_gain_scale);
@@ -1731,36 +1578,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // g_signal_connect(agc_btn, "released", G_CALLBACK(agc_btn_pressed_cb), NULL);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
-    //-------------------------------------------------------------------------------------------
-#ifdef SOAPYSDR
-    if (display_sliders && device == SOAPYSDR_USB_DEVICE && have_sdrplay) {
-      soapy_rfgain_btn = gtk_button_new_with_label("RF Gain");
-      WEAKEN(soapy_rfgain_btn);
-      gtk_widget_set_name(soapy_rfgain_btn, "medium_toggle_button");
-      soapy_rfgain_label = gtk_bin_get_child(GTK_BIN(soapy_rfgain_btn));
-      gtk_label_set_justify(GTK_LABEL(soapy_rfgain_label), GTK_JUSTIFY_CENTER);
-      gtk_widget_set_size_request(soapy_rfgain_btn, box_right_width / 6, -1);  // z.B. 100px
-      gtk_widget_set_margin_top(soapy_rfgain_btn, 0);
-      gtk_widget_set_margin_bottom(soapy_rfgain_btn, 0);
-      gtk_widget_set_margin_end(soapy_rfgain_btn, 0);    // rechter Rand (Ende)
-      gtk_widget_set_margin_start(soapy_rfgain_btn, 0);    // linker Rand (Anfang)
-      gtk_widget_set_halign(soapy_rfgain_btn, GTK_ALIGN_START);
-      gtk_widget_set_valign(soapy_rfgain_btn, GTK_ALIGN_CENTER);
-      /* initiales Label aus der Liste setzen (wenn vorhanden) */
-      if (radio->info.soapy.rx_gains > 0 && radio->info.soapy.rx_gain[0]) {
-        gtk_label_set_text(GTK_LABEL(soapy_rfgain_label), radio->info.soapy.rx_gain[0]);
-      }
-      /* Index am Button speichern */
-      g_object_set_data(G_OBJECT(soapy_rfgain_btn), "rx-gain-idx", GINT_TO_POINTER(0));
-      /* WICHTIG: clicked statt toggled, und radio als user_data */
-      soapy_rfgain_btn_signal_id = g_signal_connect(soapy_rfgain_btn, "clicked", G_CALLBACK(soapy_rfgain_cycle_cb), NULL);
-      // Widgets in Box packen
-      gtk_box_pack_start(GTK_BOX(box_Z1_right), soapy_rfgain_btn, FALSE, FALSE, 0);
-    } else {
-      soapy_rfgain_btn = NULL;
-      soapy_rfgain_label = NULL;
-    }
-#endif
     //-------------------------------------------------------------------------------------------
     if (can_transmit && display_sliders && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
       ps_btn = gtk_toggle_button_new_with_label("PS");
@@ -2133,126 +1950,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     drive_label = NULL;
     drive_scale = NULL;
   }
-#ifdef SOAPYSDR
-  if (!can_transmit && display_sliders && device == SOAPYSDR_USB_DEVICE) {
-    if ((strcmp(radio->name, "sdrplay") == 0)) {
-      //-----------------------------------------------------------------------------------------------------------
-      // Hauptcontainer: horizontale Box für TX Pwr
-      GtkWidget *box_Z2_middle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
-      gtk_widget_set_size_request(box_Z2_middle, box_middle_width, widget_height);
-      gtk_box_set_spacing(GTK_BOX(box_Z2_middle), 5);
-      //-----------------------------------------------------------------------------------------------------------
-      if (radio->info.soapy.rx_has_automatic_gain) {
-        //---------------------------------------------------------------------------------------------------------
-        hwagc_btn = gtk_toggle_button_new_with_label("HW-AGC");
-        WEAKEN(hwagc_btn);
-        gtk_widget_set_name(hwagc_btn, "medium_toggle_button");
-        char hwagc_tip[1024];
-        snprintf(hwagc_tip, sizeof(hwagc_tip), "%s %s Hardware-AGC ON/OFF\n\n"
-                                               "If Hardware AGC is ON:\n"
-                                               "[IFGR] setting will be ignored and overwritten by the Hardware AGC.\n"
-                                               "[RFGR] setting works as an attenuator at the RF frontend.\n\n"
-                                               "If Hardware AGC is OFF:\n"
-                                               "[IFGR] and [RFGR] settings are active.",
-                 radio->info.soapy.driver_key, radio->info.soapy.hardware_key);
-        gtk_widget_set_tooltip_text(hwagc_btn, hwagc_tip);
-        gtk_widget_set_size_request(hwagc_btn, 90, -1);  // z.B. 100px
-        gtk_widget_set_margin_top(hwagc_btn, 0);
-        gtk_widget_set_margin_bottom(hwagc_btn, 0);
-        gtk_widget_set_margin_end(hwagc_btn, 0);    // rechter Rand (Ende)
-        gtk_widget_set_margin_start(hwagc_btn, 0);    // linker Rand (Anfang)
-        gtk_widget_set_halign(hwagc_btn, GTK_ALIGN_START);
-        gtk_widget_set_valign(hwagc_btn, GTK_ALIGN_CENTER);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hwagc_btn), adc[active_receiver->adc].agc);
-        // begin label definition inside button
-        hwagc_label = gtk_bin_get_child(GTK_BIN(hwagc_btn));
-        // end label definition
-        if (adc[active_receiver->adc].agc) {
-          gtk_label_set_text(GTK_LABEL(hwagc_label), "HW-AGC");
-        } else {
-          gtk_label_set_text(GTK_LABEL(hwagc_label), "IFGR");
-        }
-        hwagc_btn_signal_id = g_signal_connect(hwagc_btn, "toggled", G_CALLBACK(hwagc_btn_toggle_cb), NULL);
-        // Widgets in Box packen
-        gtk_box_pack_start(GTK_BOX(box_Z2_middle), hwagc_btn, FALSE, FALSE, 0);
-        //---------------------------------------------------------------------------------------------------------
-        hwagc_scale = gtk_spin_button_new_with_range(-60, 0, 1);
-        WEAKEN(hwagc_scale);
-        gtk_widget_set_name(hwagc_scale, "front_spin_button");
-        gtk_widget_set_tooltip_text(hwagc_scale, "AGC_Setpoint defines the target level (dbFS)\n"
-                                                 "to which the SDRplay hardware AGC regulates.\n\n"
-                                                 "Unit: dBFS (dB Full Scale)\n"
-                                                 "Valid range: -60 bis 0 dBFS\n"
-                                                 "Default: -30 dBFS");
-        gtk_widget_set_size_request(hwagc_scale, box_middle_width / 6, -1);  // z.B. 100px
-        gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(hwagc_scale), TRUE);
-        gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(hwagc_scale), TRUE);
-        gtk_widget_set_margin_top(hwagc_scale, 5);
-        gtk_widget_set_margin_bottom(hwagc_scale, 5);
-        gtk_widget_set_margin_start(hwagc_scale, 0);
-        gtk_widget_set_margin_end(hwagc_scale, 0);  // rechter Rand (Ende)
-        gtk_widget_set_halign(hwagc_scale, GTK_ALIGN_START);
-        gtk_widget_set_valign(hwagc_scale, GTK_ALIGN_CENTER);
-        gtk_widget_set_hexpand(hwagc_scale, FALSE);  // fülle Box nicht nach rechts
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(hwagc_scale), soapy_protocol_get_agc_setpoint(active_receiver));
-        hwagc_scale_signal_id = g_signal_connect(G_OBJECT(hwagc_scale), "value_changed",
-                                G_CALLBACK(hwagc_scale_value_changed_cb), NULL);
-        gtk_box_pack_start(GTK_BOX(box_Z2_middle), hwagc_scale, FALSE, FALSE, 0);
-        //---------------------------------------------------------------------------------------------------------
-        // hole Daten...
-        int check_ifgr_index = index_if_gain();
-        if (check_ifgr_index >= 0) {
-          SoapySDRRange ifgr_range = radio->info.soapy.rx_range[index_if_gain()];
-          if (ifgr_range.step == 0.0) { ifgr_range.step = 1.0; }
-          ifgr_scale = gtk_spin_button_new_with_range((int) ifgr_range.minimum, (int) ifgr_range.maximum,
-                       (int) ifgr_range.step);
-          WEAKEN(ifgr_scale);
-          char ifgr_tip[1024];
-          snprintf(ifgr_tip, sizeof(ifgr_tip), "[IFGR] IF Gain Reduction\n"
-                                               "Controls the gain after the LNA (RF stage) in the IF section.\n"
-                                               "Operates in dB and reduces the gain in discrete steps.\n"
-                                               "Unit: db\n"
-                                               "Valid range: %d - %d\n\n"
-                                               "Cannot be used when hardware AGC is enabled.",
-                   (int) ifgr_range.minimum, (int) ifgr_range.maximum);
-          gtk_widget_set_tooltip_text(ifgr_scale, ifgr_tip);
-          gtk_widget_set_name(ifgr_scale, "front_spin_button");
-          gtk_widget_set_size_request(ifgr_scale, box_middle_width / 6, -1);  // z.B. 100px
-          gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ifgr_scale), TRUE);
-          gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ifgr_scale), TRUE);
-          gtk_widget_set_margin_top(ifgr_scale, 5);
-          gtk_widget_set_margin_bottom(ifgr_scale, 5);
-          gtk_widget_set_margin_start(ifgr_scale, 0);
-          gtk_widget_set_margin_end(ifgr_scale, 0);  // rechter Rand (Ende)
-          gtk_widget_set_halign(ifgr_scale, GTK_ALIGN_START);
-          gtk_widget_set_valign(ifgr_scale, GTK_ALIGN_CENTER);
-          gtk_widget_set_hexpand(ifgr_scale, FALSE);  // fülle Box nicht nach rechts
-          int ifgr_value = soapy_protocol_get_gain_element(active_receiver, radio->info.soapy.rx_gain[index_if_gain()]);
-          gtk_spin_button_set_value(GTK_SPIN_BUTTON(ifgr_scale), ifgr_value);
-          ifgr_scale_signal_id = g_signal_connect(G_OBJECT(ifgr_scale), "value_changed",
-                                                  G_CALLBACK(ifgr_scale_value_changed_cb), NULL);
-          gtk_box_pack_start(GTK_BOX(box_Z2_middle), ifgr_scale, FALSE, FALSE, 0);
-          //---------------------------------------------------------------------------------------------------------
-          if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(hwagc_btn))) {
-            gtk_widget_set_sensitive(hwagc_scale, TRUE);
-            gtk_widget_set_sensitive(ifgr_scale, FALSE);
-          } else {
-            gtk_widget_set_sensitive(hwagc_scale, FALSE);
-            gtk_widget_set_sensitive(ifgr_scale, TRUE);
-          }
-        }
-      } else {
-        hwagc_btn = NULL;
-        hwagc_label = NULL;
-        hwagc_scale = NULL;
-        ifgr_scale = NULL;
-      }
-      //-----------------------------------------------------------------------------------------------------------
-      // ins Grid
-      gtk_grid_attach(GTK_GRID(sliders), box_Z2_middle, 1, 1, 1, 1);   // Spalte 0 Zeile 1
-    }
-  }
-#endif
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für SQL
   GtkWidget *box_Z2_right = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider

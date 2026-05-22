@@ -37,9 +37,6 @@ char build_options[] =
 #ifdef USBOZY
   "USBOZY "
 #endif
-#ifdef SOAPYSDR
-  "SOAPYSDR "
-#endif
 #ifdef STEMLAB_DISCOVERY
   "STEMLAB "
 #endif

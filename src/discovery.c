@@ -35,9 +35,6 @@
 #include "discovered.h"
 #include "old_discovery.h"
 #include "new_discovery.h"
-#ifdef SOAPYSDR
-  #include "soapy_discovery.h"
-#endif
 #include "main.h"
 #include "radio.h"
 #ifdef USBOZY
@@ -358,12 +355,6 @@ void discovery(void) {
     status_text("Protocol 2 ... Discovering Devices (Wait for up to 5 seconds)");
     new_discovery();
   }
-#ifdef SOAPYSDR
-  if (enable_soapy_protocol && !discover_only_stemlab) {
-    status_text("SoapySDR ... Discovering Devices (Wait for up to 5 seconds)");
-    soapy_discovery();
-  }
-#endif
   status_text("Discovery completed.");
   // subsequent discoveries check all protocols enabled.
   discover_only_stemlab = 0;
@@ -436,12 +427,6 @@ void discovery(void) {
                    d->info.network.interface_name);
         }
         break;
-      case SOAPYSDR_PROTOCOL:
-#ifdef SOAPYSDR
-        snprintf(text, sizeof(text), "%s (Protocol SOAPY_SDR %s) on %s", d->name, d->info.soapy.version,
-                 d->info.soapy.address);
-#endif
-        break;
       case STEMLAB_PROTOCOL:
         snprintf(text, sizeof(text), "Choose SDR App from %s: ",
                  inet_ntoa(d->info.network.address.sin_addr));
@@ -496,27 +481,25 @@ void discovery(void) {
         gtk_widget_set_sensitive(start_button, FALSE);
         break;
       }
-      if (d->device != SOAPYSDR_USB_DEVICE) {
-        int can_connect = 0;
-        //
-        // We can connect if
-        //  a) either the computer or the radio have a self-assigned IP 169.254.xxx.yyy address
-        //  b) we have a "routed" (TCP or UDP) connection to the radio
-        //  c) radio and network address are in the same subnet
-        //
-        if (!strncmp(inet_ntoa(d->info.network.address.sin_addr), "169.254.", 8)) { can_connect = 1; }
-        if (!strncmp(inet_ntoa(d->info.network.interface_address.sin_addr), "169.254.", 8)) { can_connect = 1; }
-        if (d->use_routing) { can_connect = 1; }
-        if ((d->info.network.interface_address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr) ==
-            (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
-        t_print("%s: d->status=%d\n", __func__, d->status);
-        if (devices > 0 && d->status == STATE_AVAILABLE) {
-          can_connect = 1;
-        }
-        if (!can_connect) {
-          gtk_button_set_label(GTK_BUTTON(start_button), "Subnet!");
-          gtk_widget_set_sensitive(start_button, FALSE);
-        }
+      int can_connect = 0;
+      //
+      // We can connect if
+      //  a) either the computer or the radio have a self-assigned IP 169.254.xxx.yyy address
+      //  b) we have a "routed" (TCP or UDP) connection to the radio
+      //  c) radio and network address are in the same subnet
+      //
+      if (!strncmp(inet_ntoa(d->info.network.address.sin_addr), "169.254.", 8)) { can_connect = 1; }
+      if (!strncmp(inet_ntoa(d->info.network.interface_address.sin_addr), "169.254.", 8)) { can_connect = 1; }
+      if (d->use_routing) { can_connect = 1; }
+      if ((d->info.network.interface_address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr) ==
+          (d->info.network.address.sin_addr.s_addr & d->info.network.interface_netmask.sin_addr.s_addr)) { can_connect = 1; }
+      t_print("%s: d->status=%d\n", __func__, d->status);
+      if (devices > 0 && d->status == STATE_AVAILABLE) {
+        can_connect = 1;
+      }
+      if (!can_connect) {
+        gtk_button_set_label(GTK_BUTTON(start_button), "Subnet!");
+        gtk_widget_set_sensitive(start_button, FALSE);
       }
       if (d->protocol == STEMLAB_PROTOCOL) {
         if (d->software_version == 0) {

@@ -607,9 +607,6 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
       int row = 0;
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-        //
-        // Power values not available for SoapySDR
-        //
         snprintf(text, 64, "FWD %0.1f W", transmitter->fwd);
         row += 20;
         cairo_move_to(cr, _xpos, row);

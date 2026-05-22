@@ -18,7 +18,6 @@
 MIDI     ?= ON
 SATURN   ?= OFF
 USBOZY   ?= OFF
-SOAPYSDR ?= OFF
 STEMLAB  ?= OFF
 TTS      ?= OFF
 AUDIO    ?= PULSE
@@ -38,7 +37,6 @@ TAHOEFIX ?= ON
 #  TTS          | If ON, compile with TTS support and activate TTS
 #  SATURN       | If ON, compile with native SATURN/G2 XDMA support
 #  USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs  libusb-1.0)
-#  SOAPYSDR     | If ON, deskHPSDR can talk to radios supported via SoapySDR-API library
 #  STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
 #  AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux (use PulseAudio recommend)
 #  COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
@@ -358,38 +356,7 @@ CPP_DEFINES += -DUSBOZY
 CPP_SOURCES += src/ozyio.c
 CPP_INCLUDE += `$(PKG_CONFIG) --cflags libusb-1.0`
 
-##############################################################################
-#
-# Add libraries for SoapySDR support, if requested
-#
-##############################################################################
-
-ifeq ($(SOAPYSDR),ON)
-SOAPYSDR_OPTIONS=-DSOAPYSDR
-ifeq ($(UNAME_S), Darwin)
-SOAPYSDR_LIBS=`$(PKG_CONFIG) --libs soapysdr`
-SOAPYSDR_INCLUDE=`$(PKG_CONFIG) --cflags soapysdr`
-else
-SOAPYSDR_INCLUDE= -I/usr/local/include
-SOAPYSDR_LIBS= -L/usr/local/lib -lSoapySDR
-endif
-SOAPYSDR_SOURCES= \
-src/soapy_discovery.c \
-src/soapy_protocol.c
-SOAPYSDR_HEADERS= \
-src/soapy_discovery.h \
-src/soapy_protocol.h
-SOAPYSDR_OBJS= \
-src/soapy_discovery.o \
-src/soapy_protocol.o
-endif
-CPP_DEFINES += -DSOAPYSDR
-CPP_SOURCES += src/soapy_discovery.c src/soapy_protocol.c
-ifeq ($(UNAME_S), Darwin)
-CPP_INCLUDE +=`$(PKG_CONFIG) --cflags soapysdr`
-else
 CPP_INCLUDE += -I/usr/local/include
-endif
 
 ##############################################################################
 #
@@ -635,7 +602,6 @@ endif
 ##############################################################################
 
 OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
-	$(SOAPYSDR_OPTIONS) \
 	$(ANDROMEDA_OPTIONS) \
 	$(SATURN_OPTIONS) \
 	$(STEMLAB_OPTIONS) \
@@ -682,7 +648,7 @@ endif
 #
 ##############################################################################
 
-LIBS=	$(AUDIO_LIBS) $(USBOZY_LIBS) $(GTK_LIBS) $(SOAPYSDR_LIBS) $(STEMLAB_LIBS) \
+LIBS=	$(AUDIO_LIBS) $(USBOZY_LIBS) $(GTK_LIBS) $(STEMLAB_LIBS) \
 	$(MIDI_LIBS) $(TTS_LIBS) $(TCI_LIBS) $(JSON_LIBS) $(WDSP_LIBS) $(SOLAR_LIBS) $(TELNET_LIBS) -lm $(SYS_LIBS)
 
 ##############################################################################
@@ -958,7 +924,7 @@ endif
 #
 ##############################################################################
 
-$(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) $(TCI_OBJS) \
+$(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
 ifneq (z$(WDSP_INCLUDE), z)
@@ -972,10 +938,10 @@ ifneq (z$(TELNET_INCLUDE), z)
 endif
 ifeq ($(UNAME_S),Darwin)
 	$(LINK) -headerpad_max_install_names -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS)  \
-		$(SOAPYSDR_OBJS) $(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
+		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
 		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 else
-	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(SOAPYSDR_OBJS) \
+	$(LINK) -o $(PROGRAM) $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS) \
 		$(TCI_OBJS) $(LIBS) $(LDFLAGS)
 endif
@@ -1108,7 +1074,7 @@ bootloader:	src/bootloader.c
 DEPEND:
 	rm -f DEPEND
 	touch DEPEND
-	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY -DSOAPYSDR \
+	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY \
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \

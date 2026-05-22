@@ -34,9 +34,6 @@
 #include "waterfall.h"
 #include "rx_panadapter.h"
 #include "message.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 
 static int colorLowR = 0; // black
 static int colorLowG = 0;
@@ -313,15 +310,6 @@ void waterfall_update(RECEIVER *rx) {
       //
       // soffset contains all corrections due to attenuation, preamps, etc.
       //
-#ifdef SOAPYSDR
-      if (device == SOAPYSDR_USB_DEVICE && strcmp(radio->name, "sdrplay") == 0) {
-        int v_Gain = (int) soapy_protocol_get_gain_element(active_receiver, "CURRENT");
-        adc[rx->adc].gain = 0;
-        adc[rx->adc].attenuation = 0;
-        adc[rx->adc].gain = v_Gain;
-        // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __func__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
-      }
-#endif
       soffset = (float)(calib + adc[rx->adc].attenuation - adc[rx->adc].gain);
       if (filter_board == ALEX && rx->adc == 0) {
         soffset += (float)(10 * rx->alex_attenuation - 20 * rx->preamp);

@@ -32,11 +32,6 @@ heiko@AfuPi5:~/src/deskhpsdr $
 
 heiko@AfuPi5:~/src/deskhpsdr $ ./LINUX/prep_linux.sh
 
-Per default only the base Soapy-API will be installed. If you want or need to use
-Soapy API support in deskHPSDR, edit the make.config.deskhpsdr and set SOAPYSDR=ON.
-The installation for Soapy modules does not become part of this guidance, that's your very
-own task. I personally don't need the Soapy API-support, because I use a Hermes-Lite 2.
-
 4. Compile the deskHPSDR
 
 4.1 First edit make.config.deskhpsdr, but NOT the Makefile

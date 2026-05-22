@@ -11,7 +11,7 @@ But there was, is and will be never an active collaboration between pihpsdr and 
 
 My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
 
-**deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Some limited SoapySDR support is current available, but Soapy support is official discontinued now.**
+**deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Soapy SDR support is official REMOVED now.**
 
 
 | Feature                        | Current deskHPSDR version 2.6                 | Notes          |
@@ -24,7 +24,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | OpenHPSDR protocol 1           | fully supported                               |                |
 | OpenHPSDR protocol 2           | fully supported                               |                |
 | GPIO                           | ~~limited support~~ removed                   | deprecated     |
-| Soapy API / Soapy protocol     | rudimentary supported                         | deprecated     |
+| Soapy API / Soapy protocol     | ~~rudimentary supported~~ removed             | deprecated     |
 | Hermes Lite 2 N2ADR IO board   | supported                                     |                |
 | Use WDSP library ?             | yes, current 1.29                             |                |
 | Pure Signal / Pre-Distortion   | supported                                     |                |
@@ -63,7 +63,7 @@ Other useful app features (availability depend from used SDR device):
 * Panadapter refresh rate adjustment (max. 60fps)
 * some special SDR device-specific options supported
 
-The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the WDSP RX and TX audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices. SoapySDR API is only partially supported, but will not actively developed further, the Soapy API and device support considered state "discontinued / deprecated".
+The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the WDSP RX and TX audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices.
 
 deskHPSDR **is not made** as a "measurement tool" or for other, very special purposes where SDR devices are used (e.g. SDR Lab, IF-tap, IF-/Panadapter-Mode). There are other, more specialized apps for such cases - use these for your special purposes. It's - not more, not less - a SDR transceiver GUI frontend for use in hamradio which will be actively and continuously developed. All things outside the hamradio universe are generally not supported by this app. The support for commercial SDR products is limited, because they are mostly not Open Source hardware like the Hermes Lite 2. deskHPSDR is Open Source and a full non-commercial hobby software project by DL1BZ, which can be used completely free without any kind of payments, but respect all copyrights.
 
@@ -80,7 +80,7 @@ My main focus of deskHPSDR development is macOS, which is my primary development
 * **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the``COMPILE.macOS`` first
 * *Linux only*: please read the``COMPILE.linux`` first
-* a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices. Per default Soapy-API is disabled, if needed you must activate Soapy-API support in the``make.config.deskhpsdr`` as an user-defined option. Please note, development support for Soapy has been discontinued now.
+* a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices.
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the``Notes_if_using_HERMES-Lite-2.md``
 * if want using a Raspberry Pi: Revision 5 (aka "Pi5") with >= 8GB RAM is strongly recommended, but deskHPSDR is not optimized for such SoC

@@ -33,9 +33,6 @@
 #include "rigctl.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 #include "actions.h"
 #include "message.h"
 #ifdef SATURN

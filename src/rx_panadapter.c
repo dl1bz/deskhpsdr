@@ -51,9 +51,6 @@
 #endif
 #include "audio.h"
 #include "map_d.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 
 char zeitString[20];
 static time_t last_noisefloor_calc_time = 0;  // Zeit der letzten Berechnung
@@ -709,15 +706,6 @@ void rx_panadapter_update (RECEIVER *rx) {
   //
   const BAND *band = band_get_band (vfoband);
   int calib = rx_gain_calibration - band->gain;
-#ifdef SOAPYSDR
-  if (device == SOAPYSDR_USB_DEVICE && strcmp (radio->name, "sdrplay") == 0) {
-    int v_Gain = (int) soapy_protocol_get_gain_element (active_receiver, "CURRENT");
-    adc[rx->adc].gain = 0;
-    adc[rx->adc].attenuation = 0;
-    adc[rx->adc].gain = v_Gain;
-    // t_print("%s: adc[rx->adc].gain = %f adc[rx->adc].attenuation = %f calib = %f\n", __func__, adc[rx->adc].gain,adc[rx->adc].attenuation, calib);
-  }
-#endif
   soffset = (double) calib + (double) adc[rx->adc].attenuation - adc[rx->adc].gain;
   //
   // offset is used to calculate the filter edges. They move  with the RIT value
@@ -1153,7 +1141,7 @@ void rx_panadapter_update (RECEIVER *rx) {
     }
   }
   //
-  // most HPSDR only have attenuation (no gain), while HermesLite-II and SOAPY use gain (no attenuation)
+  // most HPSDR only have attenuation (no gain), while HermesLite-II use gain (no attenuation)
   //
   s1 = (double) samples[pan] + soffset;
   s1 = floor ((rx->panadapter_high - s1)
@@ -1962,78 +1950,6 @@ void display_panadapter_messages (cairo_t* cr, int width, unsigned int fps) {
       cairo_show_text (cr, _text);
     }
   }
-#ifdef SOAPYSDR
-  if (!can_transmit && display_clock) {
-    double rt_rx_y = 15.0;
-    double rt_rx_w = 255.0;
-    double rt_rx_h = 60.0;
-    if (display_wmap) {
-      cairo_set_source_rgba (cr, 9.0 / 255, 57.0 / 255, 88.0 / 255, 0.80); // Hintergrund
-    } else {
-      cairo_set_source_rgba (cr, 38.0 / 255, 38.0 / 255, 38.0 / 255, 0.80); // Hintergrund
-    }
-    cairo_rectangle (cr, width - rt_rx_w, rt_rx_y, rt_rx_w, rt_rx_h); // x, y, Breite, Höhe
-    cairo_fill (cr);
-    cairo_set_source_rgba (cr, COLOUR_WHITE);
-    cairo_move_to (cr, width - 250.0, 30.0);
-    get_local_time (zeitString, sizeof (zeitString));
-    snprintf (_text, sizeof (_text), "%s", zeitString);
-    cairo_show_text (cr, _text);
-    if (device == SOAPYSDR_USB_DEVICE && radio->info.soapy.rx_gains > 0 && strcmp (radio->name, "sdrplay") == 0) {
-      if (msg_cycle == 0) {
-        val_agcsetpoint = soapy_protocol_get_agc_setpoint (active_receiver);
-        snprintf (txt_ifgr, sizeof (txt_ifgr), "%s", radio->info.soapy.rx_gain[index_if_gain()]);
-        snprintf (txt_rfgr, sizeof (txt_rfgr), "%s", radio->info.soapy.rx_gain[index_rf_gain()]);
-        snprintf (txt_currGain, sizeof (txt_currGain), "CURRENT");
-        val_ifgr = (int) soapy_protocol_get_gain_element (active_receiver, txt_ifgr);
-        val_rfgr = (int) soapy_protocol_get_gain_element (active_receiver, txt_rfgr);
-        val_currGain = (int) soapy_protocol_get_gain_element (active_receiver, txt_currGain);
-        val_biast = soapy_protocol_get_bias_t (active_receiver);
-        t_print ("%s: current Gain = %d\n", __func__, (int) soapy_protocol_get_gain_element (active_receiver, txt_currGain));
-      }
-      if (adc[active_receiver->adc].agc) {
-        snprintf (_text, sizeof (_text), "HW-AGC: ON");
-        cairo_move_to (cr, width - 250.0, 50.0);
-        cairo_set_source_rgba (cr, COLOUR_ATTN);
-        cairo_show_text (cr, _text);
-        //---------------------------------------------------
-        snprintf (_text, sizeof (_text), "(%ddbFS)", val_agcsetpoint);
-        cairo_move_to (cr, width - 110.0, 50.0);
-        cairo_show_text (cr, _text);
-        //---------------------------------------------------
-        cairo_set_source_rgba (cr, COLOUR_SHADE);
-        snprintf (_text, sizeof (_text), "%s:%ddb", txt_ifgr, val_ifgr);
-      } else {
-        snprintf (_text, sizeof (_text), "HW-AGC: OFF");
-        cairo_move_to (cr, width - 250.0, 50.0);
-        cairo_set_source_rgba (cr, COLOUR_SHADE);
-        cairo_show_text (cr, _text);
-        cairo_set_source_rgba (cr, COLOUR_ATTN);
-        snprintf (_text, sizeof (_text), "%s:%ddb", txt_ifgr, val_ifgr);
-      }
-      cairo_move_to (cr, width - 110.0, 70.0);
-      cairo_show_text (cr, _text);
-      cairo_set_source_rgba (cr, COLOUR_ATTN);
-      snprintf (_text, sizeof (_text), "%s:%d", txt_rfgr, val_rfgr);
-      cairo_move_to (cr, width - 180.0, 70.0);
-      cairo_show_text (cr, _text);
-      cairo_set_source_rgba (cr, COLOUR_WHITE);
-      snprintf (_text, sizeof (_text), "G:%ddb", val_currGain);
-      cairo_move_to (cr, width - 250.0, 70.0);
-      cairo_show_text (cr, _text);
-      if (val_biast) {
-        cairo_set_source_rgba (cr, COLOUR_ATTN);
-        snprintf (_text, sizeof (_text), "BIAS");
-      } else {
-        cairo_set_source_rgba (cr, COLOUR_SHADE);
-        snprintf (_text, sizeof (_text), "BIAS");
-      }
-      cairo_move_to (cr, width - 45.0, 30.0);
-      cairo_show_text (cr, _text);
-      //----------------------------------------------------
-    }
-  }
-#endif
   if (can_transmit && display_clock) {
     double y_pos;
     if (rx200_udp_valid) {

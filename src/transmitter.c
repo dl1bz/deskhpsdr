@@ -48,9 +48,6 @@
 #include "new_protocol.h"
 #include "old_protocol.h"
 #include "ps_menu.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 #include "audio.h"
 #include "tci_audio.h"
 #include "ext.h"
@@ -1011,9 +1008,6 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   case NEW_PROTOCOL:
     tx->iq_output_rate = 192000;
     break;
-  case SOAPYSDR_PROTOCOL:
-    tx->iq_output_rate = soapy_radio_sample_rate;
-    break;
   }
   //
   // Further cases may be added to the switch statement below, but the
@@ -1446,7 +1440,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
   case NEW_PROTOCOL:
     gain = 8388607.0; // 24 bit
     break;
-  case SOAPYSDR_PROTOCOL:
   default:
     // gain is not used, since samples are floating point
     gain = 1.0;
@@ -1592,7 +1585,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
       // "Side tone to radio" treatment:
       // old protocol: done HERE
       // new protocol: already done in tx_add_mic_sample
-      // soapy       : no audio to radio
       //
       switch (protocol) {
       case ORIGINAL_PROTOCOL: {
@@ -1635,18 +1627,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
           new_protocol_iq_samples(isample, 0);
         }
         break;
-#ifdef SOAPYSDR
-      case SOAPYSDR_PROTOCOL:
-        //
-        // No scaling, no audio.
-        // generate audio samples to be sent to the radio
-        //
-        for (j = 0; j < tx->output_samples; j++) {
-          double ramp = tx->cw_sig_rf[j];                   // between 0.0 and 1.0
-          soapy_protocol_iq_samples(0.0F, (float) ramp);    // SOAPY: just convert double to float
-        }
-        break;
-#endif
       }
     } else {
       //
@@ -1673,12 +1653,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         case NEW_PROTOCOL:
           new_protocol_iq_samples(isample, qsample);
           break;
-#ifdef SOAPYSDR
-        case SOAPYSDR_PROTOCOL:
-          // SOAPY: just convert the double IQ samples (is,qs) to float.
-          soapy_protocol_iq_samples((float) is, (float) qs);
-          break;
-#endif
         }
       }
     }
@@ -2354,11 +2328,6 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
     tx->puresignal = SET(state);
     schedule_high_priority();
     schedule_receive_specific();
-#ifdef SOAPY_SDR
-  case SOAPY_PROTOCOL:
-    // no feedback channels in SOAPY
-    break;
-#endif
   }
   if (state) {
     // if switching on: wait a while to get the feedback

@@ -22,7 +22,6 @@
 extern gboolean enable_protocol_1;
 extern gboolean enable_protocol_2;
 extern gboolean enable_saturn_xdma;
-extern gboolean enable_soapy_protocol;
 extern gboolean enable_stemlab;
 extern gboolean enable_usbozy;
 extern gboolean autostart;

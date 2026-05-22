@@ -167,14 +167,6 @@ void about_menu(GtkWidget *parent) {
       g_strlcat(text, line, sizeof(text));
     }
     break;
-#ifdef SOAPYSDR
-  case SOAPYSDR_PROTOCOL:
-    snprintf(line, sizeof(line), "Device: %s (via SoapySDR)\n"
-                                 "    %s %s",
-             radio->name, radio->info.soapy.driver_key, radio->info.soapy.hardware_key);
-    g_strlcat(text, line, sizeof(text));
-    break;
-#endif
   }
   label = gtk_label_new(text);
   gtk_widget_set_name(label, "smalllabel");

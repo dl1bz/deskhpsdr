@@ -27,15 +27,11 @@ I will permanently update the codebase with bugfixes, so be sure you will be usi
 A correct, minimum file ```make.config.deskhpsdr``` look like this as example:
 ```
 TCI=ON
-GPIO=OFF
 MIDI=ON
 SATURN=OFF
 USBOZY=OFF
-SOAPYSDR=ON
 STEMLAB=OFF
-EXTENDED_NR=
 AUDIO=PULSE
-ATU=OFF
 COPYMODE=OFF
 AUTOGAIN=ON
 REGION1=ON
@@ -72,7 +68,7 @@ Note: I cannot support old OS - only actual version of the OS. At Linux I can on
 
 ### 4. Your SDR device
 
-I personally only own a Hermes Lite 2 as SDR transceiver, connected via Ethernet and a SDRPlay RSP2Pro as RX-only SDR, connected via USB. The Hermes Lite 2 use the older HPSDR protocol 1 via network, the SDRPlay uses the Soapy-API via USB. **These are my both available SDR devices for testing deskHPSDR here**. Other SDR can work with deskHPSDR, but I cannot check all available SDR devices, that is impossible. I was informed from other users, Pluto SDR and Lime SDR works too. The ANAN should be run too, they are HPSDR protocol based SDR.
+I personally only own a Hermes Lite 2 and a Brick2 as SDR transceiver, connected via Ethernet. The Hermes Lite 2 use the older HPSDR protocol 1 via network and the Brick2 uses protocol 2 via network. **These are my both available SDR devices for testing deskHPSDR here**. Other SDR can work with deskHPSDR, but I cannot check all available SDR devices, that is impossible. The ANAN should be run too, they are HPSDR protocol based SDR.
 
 ### 5. deskHPSDR and piHPSDR
 

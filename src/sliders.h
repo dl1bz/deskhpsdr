@@ -45,11 +45,6 @@ extern void update_slider_ps_btn(void);
 extern void update_slider_nr_btn(gboolean show_widget);
 extern void update_attenuation_label(void);
 extern void update_drive_scale(void);
-#ifdef SOAPYSDR
-  extern void update_slider_hwagc_btn(void);
-  extern void update_rf_gain_scale_soapy(int idx);
-  extern void update_ifgr_scale_soapy(int idx);
-#endif
 extern void update_slider_bbcompr_scale(gboolean show_widget);
 extern void update_slider_bbcompr_button(gboolean show_widget);
 extern void update_slider_lev_button(gboolean show_widget);

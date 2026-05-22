@@ -26,9 +26,6 @@ wdsp-libs/*
 hamlib-static/
 MacOS/rigctld_deskhpsdr
 LINUX/rigctld_deskhpsdr
-LINUX/SoapySDR
-LINUX/SoapyPlutoSDR
-LINUX/SoapyRTLSDR
 wdsp-1.27/libwdsp.a
 wdsp-1.27/*.o
 wdsp-1.28/libwdsp.a

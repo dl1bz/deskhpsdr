@@ -46,9 +46,6 @@
 #include "transmitter.h"
 #include "old_protocol.h"
 #include "new_protocol.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 #include "vfo.h"
 #include "channel.h"
 #include "toolbar.h"

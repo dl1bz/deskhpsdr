@@ -38,7 +38,6 @@ static GtkWidget *dialog;
 
 gboolean enable_protocol_1;
 gboolean enable_protocol_2;
-gboolean enable_soapy_protocol;
 gboolean enable_stemlab;
 gboolean enable_usbozy;
 gboolean enable_saturn_xdma;
@@ -48,7 +47,6 @@ static void protocolsSaveState(void) {
   clearProperties();
   SetPropI0("enable_protocol_1",     enable_protocol_1);
   SetPropI0("enable_protocol_2",     enable_protocol_2);
-  SetPropI0("enable_soapy_protocol", enable_soapy_protocol);
   SetPropI0("enable_stemlab",        enable_stemlab);
   SetPropI0("enable_usbozy",         enable_usbozy);
   SetPropI0("enable_saturn_xdma",    enable_saturn_xdma);
@@ -65,12 +63,10 @@ void protocolsRestoreState(void) {
   enable_protocol_2 = TRUE;
   enable_stemlab = TRUE;
   enable_usbozy = TRUE;
-  enable_soapy_protocol = TRUE;
   enable_saturn_xdma = TRUE;
   autostart = FALSE;
   GetPropI0("enable_protocol_1",     enable_protocol_1);
   GetPropI0("enable_protocol_2",     enable_protocol_2);
-  GetPropI0("enable_soapy_protocol", enable_soapy_protocol);
   GetPropI0("enable_stemlab",        enable_stemlab);
   GetPropI0("enable_usbozy",         enable_usbozy);
   GetPropI0("enable_saturn_xdma",    enable_saturn_xdma);
@@ -98,13 +94,6 @@ static void protocol_1_cb(GtkToggleButton *widget, gpointer data) {
 static void protocol_2_cb(GtkToggleButton *widget, gpointer data) {
   enable_protocol_2 = gtk_toggle_button_get_active(widget);
 }
-
-#ifdef SOAPYSDR
-static void soapy_protocol_cb(GtkToggleButton *widget, gpointer data) {
-  enable_soapy_protocol = gtk_toggle_button_get_active(widget);
-}
-
-#endif
 
 #ifdef STEMLAB_DISCOVERY
 static void stemlab_cb(GtkToggleButton *widget, gpointer data) {
@@ -177,14 +166,6 @@ void configure_protocols(GtkWidget *parent) {
   gtk_widget_show(b_usbozy);
   g_signal_connect(b_usbozy, "toggled", G_CALLBACK(usbozy_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_usbozy, 0, row, 1, 1);
-  row++;
-#endif
-#ifdef SOAPYSDR
-  GtkWidget *b_enable_soapy_protocol = gtk_check_button_new_with_label("Enable SoapySDR");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_enable_soapy_protocol), enable_soapy_protocol);
-  gtk_widget_show(b_enable_soapy_protocol);
-  g_signal_connect(b_enable_soapy_protocol, "toggled", G_CALLBACK(soapy_protocol_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), b_enable_soapy_protocol, 0, row, 1, 1);
   row++;
 #endif
 #ifdef STEMLAB_DISCOVERY

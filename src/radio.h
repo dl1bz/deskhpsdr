@@ -157,9 +157,6 @@ extern int rxgain_index_1;
 
 extern int sat_mode;
 
-extern int soapy_radio_sample_rate;
-extern gboolean soapy_iqswap;
-
 extern int atlas_penelope;
 extern int atlas_clock_source_10mhz;
 extern int atlas_clock_source_128mhz;

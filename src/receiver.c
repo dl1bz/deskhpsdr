@@ -48,9 +48,6 @@
 #include "waterfall.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 #include "ext.h"
 #include "new_menu.h"
 #include "message.h"
@@ -736,14 +733,6 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   }
   //t_print("%s: RXid=%d default adc=%d\n",__func__,rx->id, rx->adc);
   rx->sample_rate = 48000;
-  if (device == SOAPYSDR_USB_DEVICE) {
-#ifdef SOAPYSDR
-    rx->sample_rate = radio->info.soapy.sample_rate;
-    t_print("%s: RXid=%d sample_rate=%d\n", __func__, rx->id, rx->sample_rate);
-#endif
-    rx->resampler = NULL;
-    rx->resample_buffer = NULL;
-  }
   //
   // For larger sample rates we could use a larger buffer_size, since then
   // the number of audio samples per batch is rather small. However, the buffer
@@ -1069,11 +1058,6 @@ void rx_frequency_changed(RECEIVER *rx) {
   case NEW_PROTOCOL:
     schedule_high_priority(); // send new frequency
     break;
-#if SOAPYSDR
-  case SOAPYSDR_PROTOCOL:
-    soapy_protocol_set_rx_frequency(rx, id);
-    break;
-#endif
   }
 }
 
@@ -1343,8 +1327,6 @@ static void rx_process_buffer(RECEIVER *rx) {
       case NEW_PROTOCOL:
         new_protocol_audio_samples(left_audio_sample, right_audio_sample);
         break;
-      case SOAPYSDR_PROTOCOL:
-        break;
       }
     }
   }
@@ -1562,12 +1544,6 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   SetInputSamplerate(rx->id, sample_rate);
   SetEXTANBSamplerate(rx->id, sample_rate);
   SetEXTNOBSamplerate(rx->id, sample_rate);
-#ifdef SOAPYSDR
-  if (protocol == SOAPYSDR_PROTOCOL) {
-    soapy_protocol_change_sample_rate(rx);
-    soapy_protocol_set_mic_sample_rate(rx->sample_rate);
-  }
-#endif
   rx_on(rx);
   //
   // for a non-PS receiver, adjust pixels and hz_per_pixel depending on the zoom value

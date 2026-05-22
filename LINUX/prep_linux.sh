@@ -22,15 +22,6 @@
 #
 ################################################################
 #
-#  If you need more Soapy-specfic things or modules, you need
-#  to compile and install the needed modules manually.
-#
-#  This script ONLY install the Soapy core, NOT the modules !
-#  Look at https://github.com/pothosware for additional infos
-#  and modules you can install if you need.
-#
-#  Don't forget to activate Soapy-Support in the file
-#  make.config.deskhpsdr with SOAPYSDR=ON
 #  DON'T EDIT THE Makefile itself !
 #
 ################################################################
@@ -131,7 +122,7 @@ sudo apt-get install --yes libxml2-dev
 
 ################################################################
 #
-# download and install SoapySDR core is now "deprecated"
+# SoapySDR support is now REMOVED !
 #
 ################################################################
 sudo ldconfig

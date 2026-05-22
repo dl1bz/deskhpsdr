@@ -31,19 +31,12 @@
 #include "band.h"
 #include "radio.h"
 #include "new_protocol.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 #include "message.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *grid = NULL;
 static GtkWidget *hf_container = NULL;
 static GtkWidget *xvtr_container = NULL;
-#ifdef SOAPYSDR
-  static GtkWidget *adc0_antenna_combo_box;
-  static GtkWidget *dac0_antenna_combo_box;
-#endif
 
 static void cleanup(void) {
   if (dialog != NULL) {
@@ -82,27 +75,6 @@ static void tx_ant_cb(GtkToggleButton *widget, gpointer data) {
   band->alexTxAntenna = ant;
   radio_set_alex_antennas();
 }
-
-#ifdef SOAPYSDR
-static void adc0_antenna_cb(GtkComboBox *widget, gpointer data) {
-  ADC *myadc = (ADC*) data;
-  myadc->antenna = gtk_combo_box_get_active(widget);
-  schedule_high_priority();
-  if (device == SOAPYSDR_USB_DEVICE) {
-    soapy_protocol_set_rx_antenna(receiver[0], adc[0].antenna);
-  }
-}
-
-static void dac0_antenna_cb(GtkComboBox *widget, gpointer data) {
-  DAC *mydac = (DAC*) data;
-  mydac->antenna = gtk_combo_box_get_active(widget);
-  schedule_high_priority();
-  if (device == SOAPYSDR_USB_DEVICE && can_transmit) {
-    soapy_protocol_set_tx_antenna(transmitter, mydac->antenna);
-  }
-}
-
-#endif
 
 static void show_hf(void) {
   GtkWidget *label;
@@ -305,22 +277,20 @@ void ant_menu(GtkWidget *parent) {
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
-  if (device != SOAPYSDR_USB_DEVICE) {
-    GtkWidget *hf_rb = gtk_radio_button_new_with_label(NULL, "HF");
-    gtk_widget_set_name(hf_rb, "boldlabel");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hf_rb), TRUE);
-    g_signal_connect(hf_rb, "toggled", G_CALLBACK(hf_rb_cb), NULL);
-    gtk_grid_attach(GTK_GRID(grid), hf_rb, 1, 0, 1, 1);
-    GtkWidget *xvtr_rb = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(hf_rb), "XVTR");
-    gtk_widget_set_no_show_all(xvtr_rb, hermes_mode == HERMES_MODE_BRICK);
-    gtk_widget_set_name(xvtr_rb, "boldlabel");
-    g_signal_connect(xvtr_rb, "toggled", G_CALLBACK(xvtr_rb_cb), NULL);
-    gtk_grid_attach(GTK_GRID(grid), xvtr_rb, 2, 0, 1, 1);
-    if (hermes_mode == HERMES_MODE_BRICK) {
-      gtk_widget_hide(xvtr_rb);
-    } else {
-      gtk_widget_show(xvtr_rb);
-    }
+  GtkWidget *hf_rb = gtk_radio_button_new_with_label(NULL, "HF");
+  gtk_widget_set_name(hf_rb, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hf_rb), TRUE);
+  g_signal_connect(hf_rb, "toggled", G_CALLBACK(hf_rb_cb), NULL);
+  gtk_grid_attach(GTK_GRID(grid), hf_rb, 1, 0, 1, 1);
+  GtkWidget *xvtr_rb = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(hf_rb), "XVTR");
+  gtk_widget_set_no_show_all(xvtr_rb, hermes_mode == HERMES_MODE_BRICK);
+  gtk_widget_set_name(xvtr_rb, "boldlabel");
+  g_signal_connect(xvtr_rb, "toggled", G_CALLBACK(xvtr_rb_cb), NULL);
+  gtk_grid_attach(GTK_GRID(grid), xvtr_rb, 2, 0, 1, 1);
+  if (hermes_mode == HERMES_MODE_BRICK) {
+    gtk_widget_hide(xvtr_rb);
+  } else {
+    gtk_widget_show(xvtr_rb);
   }
   if (device == NEW_DEVICE_HERMES && hermes_mode == HERMES_MODE_BRICK) {
     GtkWidget *label = gtk_label_new("Brick SDR: has fixed ANT input,\nPS input is dedicated feedback.");
@@ -352,38 +322,6 @@ void ant_menu(GtkWidget *parent) {
       show_xvtr();
     }
   }
-#ifdef SOAPYSDR
-  if (device == SOAPYSDR_USB_DEVICE) {
-    t_print("rx_antennas=%ld\n", radio->info.soapy.rx_antennas);
-    if (radio->info.soapy.rx_antennas > 0) {
-      GtkWidget *antenna_label = gtk_label_new("RX Antenna:");
-      gtk_widget_set_name(antenna_label, "boldlabel");
-      gtk_grid_attach(GTK_GRID(grid), antenna_label, 0, 1, 1, 1);
-      adc0_antenna_combo_box = gtk_combo_box_text_new();
-      for (size_t i = 0; i < radio->info.soapy.rx_antennas; i++) {
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(adc0_antenna_combo_box), NULL, radio->info.soapy.rx_antenna[i]);
-      }
-      gtk_combo_box_set_active(GTK_COMBO_BOX(adc0_antenna_combo_box), adc[0].antenna);
-      g_signal_connect(adc0_antenna_combo_box, "changed", G_CALLBACK(adc0_antenna_cb), &adc[0]);
-      my_combo_attach(GTK_GRID(grid), adc0_antenna_combo_box, 1, 1, 1, 1);
-    }
-    if (can_transmit) {
-      t_print("tx_antennas=%ld\n", radio->info.soapy.tx_antennas);
-      if (radio->info.soapy.tx_antennas > 0) {
-        GtkWidget *antenna_label = gtk_label_new("TX Antenna:");
-        gtk_widget_set_name(antenna_label, "boldlabel");
-        gtk_grid_attach(GTK_GRID(grid), antenna_label, 0, 2, 1, 1);
-        dac0_antenna_combo_box = gtk_combo_box_text_new();
-        for (size_t i = 0; i < radio->info.soapy.tx_antennas; i++) {
-          gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(dac0_antenna_combo_box), NULL, radio->info.soapy.tx_antenna[i]);
-        }
-        gtk_combo_box_set_active(GTK_COMBO_BOX(dac0_antenna_combo_box), dac[0].antenna);
-        g_signal_connect(dac0_antenna_combo_box, "changed", G_CALLBACK(dac0_antenna_cb), &dac[0]);
-        my_combo_attach(GTK_GRID(grid), dac0_antenna_combo_box, 1, 2, 1, 1);
-      }
-    }
-  }
-#endif
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

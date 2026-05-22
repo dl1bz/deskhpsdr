@@ -49,9 +49,6 @@
 #include "discovery.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 #ifdef SATURN
   #include "saturnmain.h"
 #endif
@@ -815,14 +812,12 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_sub_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------
   row++;
-  // snprintf(text, sizeof(text),
-  //         "& partially Soapy API (only with limited device support)\n");
   snprintf(text, sizeof(text),
            "\n");
-  GtkWidget *deskhpsdr_soapy_sub_label = gtk_label_new(text);
-  gtk_widget_set_name(deskhpsdr_soapy_sub_label, "small_bold_txt_blue");
-  gtk_widget_set_halign(deskhpsdr_soapy_sub_label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_soapy_sub_label, col, row, 3, 1);
+  GtkWidget *deskhpsdr_other_sub_label = gtk_label_new(text);
+  gtk_widget_set_name(deskhpsdr_other_sub_label, "small_bold_txt_blue");
+  gtk_widget_set_halign(deskhpsdr_other_sub_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_other_sub_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------
   row += 2;
   t_print("create build label\n");

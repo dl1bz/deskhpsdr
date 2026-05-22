@@ -862,9 +862,6 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-        //
-        // Power/Alc/SWR not available for SOAPY.
-        //
         switch (pa_power) {
         case PA_1W:
           snprintf(sf, 32, "FWD %dmW", (int)(1000.0 * max_pwr + 0.5));
