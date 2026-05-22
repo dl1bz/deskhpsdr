@@ -1930,8 +1930,6 @@ static void rxtx (int state) {
     tx_on (transmitter);
     transmitter->displaying = 1;
     tx_set_displaying (transmitter);
-    switch (protocol) {
-    }
 #ifdef DUMP_TX_DATA
     rxiq_count = 0;
 #endif
@@ -1950,8 +1948,6 @@ static void rxtx (int state) {
       fclose (fp);
     }
 #endif
-    switch (protocol) {
-    }
     if (transmitter->puresignal) {
       tx_ps_mox (transmitter, 0);
     }

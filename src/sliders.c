@@ -466,10 +466,6 @@ void set_af_gain(int rx, double value) {
 
 static void rf_gain_value_changed_cb(GtkWidget *widget, gpointer data) {
   adc[active_receiver->adc].gain = gtk_range_get_value(GTK_RANGE(rf_gain_scale));
-  switch (protocol) {
-  default:
-    break;
-  }
 }
 
 // Callback, um rf_gain_slider-Wert im Mainthread zu setzen
