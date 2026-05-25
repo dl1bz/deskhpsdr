@@ -157,7 +157,7 @@ ACTION_TABLE ActionTable[] = {
   {MENU_MEMORY,         "Memory\nMenu",         "MEM",          MIDI_KEY},
   {MIC_GAIN,            "Mic Gain",             "MICGAIN",      MIDI_KNOB  | MIDI_WHEEL},
   {MNF,                 "MNF\nOn/Off",          "MNF",          MIDI_KEY},
-  {MNF_CENTER,          "MNF\nCenter",          "MNFC",         MIDI_WHEEL},
+  {MNF_CENTER,          "MNF\nCenter",          "MNFC",         MIDI_KNOB  | MIDI_WHEEL},
   {MNF_BW,              "MNF\nBW",              "MNFBW",        MIDI_KNOB  | MIDI_WHEEL},
   {MODE_MINUS,          "Mode -",               "MD-",          MIDI_KEY},
   {MODE_PLUS,           "Mode +",               "MD+",          MIDI_KEY},
