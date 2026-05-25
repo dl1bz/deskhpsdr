@@ -156,6 +156,9 @@ ACTION_TABLE ActionTable[] = {
   {MENU_MAIN,           "Main\nMenu",           "MAIN-M",       MIDI_KEY},
   {MENU_MEMORY,         "Memory\nMenu",         "MEM",          MIDI_KEY},
   {MIC_GAIN,            "Mic Gain",             "MICGAIN",      MIDI_KNOB  | MIDI_WHEEL},
+  {MNF,                 "MNF\nOn/Off",          "MNF",          MIDI_KEY},
+  {MNF_CENTER,          "MNF\nCenter",          "MNFC",         MIDI_WHEEL},
+  {MNF_BW,              "MNF\nBW",              "MNFBW",        MIDI_KNOB  | MIDI_WHEEL},
   {MODE_MINUS,          "Mode -",               "MD-",          MIDI_KEY},
   {MODE_PLUS,           "Mode +",               "MD+",          MIDI_KEY},
   {MENU_MODE,           "Mode\nMenu",           "MODE",         MIDI_KEY},
@@ -300,7 +303,7 @@ static PROCESS_ACTION repeat_action;
 static gboolean multi_select_active;
 static gboolean multi_first = TRUE;
 static unsigned int multi_action = 0;
-#define VMAXMULTIACTION 28
+#define VMAXMULTIACTION 30
 
 int is_cap = 0;
 
@@ -323,6 +326,8 @@ MULTI_TABLE multi_action_table[] = {
   {IF_WIDTH,         "IFwid"},
   {LINEIN_GAIN,      "LineIn"},
   {MIC_GAIN,         "Mic"},
+  {MNF_CENTER,       "MNFc"},
+  {MNF_BW,           "MNFbw"},
   {PAN,              "Pan"},
   {PANADAPTER_HIGH,  "PanH"},
   {PANADAPTER_LOW,   "PanL"},
@@ -1191,6 +1196,68 @@ int process_action(void* data) {
     if (can_transmit) {
       value = KnobOrWheel(a, transmitter->mic_gain, -12.0, 50.0, 1.0);
       set_mic_gain(value);
+    }
+    break;
+  case MNF:
+    if (a->mode == PRESSED) {
+      int id = active_receiver->id;
+      double vfo_freq = (double) vfo[id].frequency;
+      double half_span = (double) active_receiver->sample_rate / 2.0;
+      if (!active_receiver->mnf && (!isfinite(active_receiver->mnf_cfreq)
+                                    || active_receiver->mnf_cfreq <= 0.0
+                                    || active_receiver->mnf_cfreq < vfo_freq - half_span
+                                    || active_receiver->mnf_cfreq > vfo_freq + half_span)) {
+        active_receiver->mnf_cfreq = vfo_freq + 1000.0;
+        if (active_receiver->mnf_cfreq > vfo_freq + half_span) {
+          active_receiver->mnf_cfreq = vfo_freq;
+        }
+      }
+      TOGGLE(active_receiver->mnf);
+      g_idle_add(ext_update_notch, NULL);
+      g_idle_add(ext_update_noise, NULL);
+    }
+    break;
+  case MNF_CENTER:
+    if (a->mode == RELATIVE) {
+      int id = active_receiver->id;
+      int dir = (a->val < 0) ? -1 : 1;
+      int mag = abs((int) a->val);
+      double step = 10.0;
+      if (mag >= 16) {
+        step = 1000.0;
+      } else if (mag >= 4) {
+        step = 100.0;
+      }
+      if (!isfinite(active_receiver->mnf_cfreq) || active_receiver->mnf_cfreq <= 0.0) {
+        active_receiver->mnf_cfreq = (double) vfo[id].frequency;
+      }
+      active_receiver->mnf_cfreq += step * (double) dir;
+      if (active_receiver->mnf_cfreq < 1.0) {
+        active_receiver->mnf_cfreq = 1.0;
+      }
+      g_idle_add(ext_update_notch, NULL);
+      g_idle_add(ext_update_noise, NULL);
+    }
+    break;
+  case MNF_BW:
+    if (a->mode == RELATIVE) {
+      int dir = (a->val < 0) ? -1 : 1;
+      int mag = abs((int) a->val);
+      double step = 10.0;
+      if (mag >= 16) {
+        step = 1000.0;
+      } else if (mag >= 4) {
+        step = 100.0;
+      }
+      active_receiver->mnf_fbw += step * (double) dir;
+      active_receiver->mnf_fbw = CLAMP(active_receiver->mnf_fbw, 10.0, 15000.0);
+      g_idle_add(ext_update_notch, NULL);
+      g_idle_add(ext_update_noise, NULL);
+    } else {
+      value = KnobOrWheel(a, active_receiver->mnf_fbw, 10.0, 15000.0, 10.0);
+      active_receiver->mnf_fbw = value;
+      g_idle_add(ext_update_notch, NULL);
+      g_idle_add(ext_update_noise, NULL);
     }
     break;
   case MODE_MINUS:

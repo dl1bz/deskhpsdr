@@ -29,6 +29,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "appearance.h"
 #include "agc.h"
@@ -806,6 +807,15 @@ void rx_panadapter_update (RECEIVER *rx) {
       cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
       cairo_move_to (cr, mnf_x + 6, 22);
       cairo_show_text (cr, "MNF");
+      char mnf_freq_text[32];
+      snprintf (mnf_freq_text, sizeof(mnf_freq_text), "%.5f",
+                rx->mnf_cfreq / 1000000.0);
+      cairo_move_to (cr, mnf_x + 6, 37);
+      cairo_show_text (cr, mnf_freq_text);
+      char mnf_bw_text[32];
+      snprintf (mnf_bw_text, sizeof(mnf_bw_text), "BW %.0f Hz", rx->mnf_fbw);
+      cairo_move_to (cr, mnf_x + 6, 52);
+      cairo_show_text (cr, mnf_bw_text);
       cairo_restore (cr);
     }
   }
