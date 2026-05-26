@@ -1214,7 +1214,7 @@ int process_action(void* data) {
       }
       TOGGLE(active_receiver->mnf);
       g_idle_add(ext_update_notch, NULL);
-      g_idle_add(ext_update_noise, NULL);
+      // g_idle_add(ext_update_noise, NULL);
     }
     break;
   case MNF_CENTER:
@@ -1236,7 +1236,7 @@ int process_action(void* data) {
         active_receiver->mnf_cfreq = 1.0;
       }
       g_idle_add(ext_update_notch, NULL);
-      g_idle_add(ext_update_noise, NULL);
+      // g_idle_add(ext_update_noise, NULL);
     }
     break;
   case MNF_BW:
@@ -1252,12 +1252,12 @@ int process_action(void* data) {
       active_receiver->mnf_fbw += step * (double) dir;
       active_receiver->mnf_fbw = CLAMP(active_receiver->mnf_fbw, 10.0, 15000.0);
       g_idle_add(ext_update_notch, NULL);
-      g_idle_add(ext_update_noise, NULL);
+      // g_idle_add(ext_update_noise, NULL);
     } else {
       value = KnobOrWheel(a, active_receiver->mnf_fbw, 10.0, 15000.0, 10.0);
       active_receiver->mnf_fbw = value;
       g_idle_add(ext_update_notch, NULL);
-      g_idle_add(ext_update_noise, NULL);
+      // g_idle_add(ext_update_noise, NULL);
     }
     break;
   case MODE_MINUS:
