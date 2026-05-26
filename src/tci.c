@@ -46,6 +46,7 @@
 #include "main.h"
 #include "discovery.h"
 #include "tci_audio.h"
+#include "cw_engine.h"
 #include "audio.h"
 #include "band.h"
 #include "sliders.h"
@@ -85,6 +86,15 @@ static int tci_lws_seq = 0;
 static int tci_lws_pending_writable = 0;
 static int tci_apply_in_progress = 0;
 static int tci_tune_transition = 0;
+static char tci_cw_msg_pending_callsign[MAXMSGSIZE];
+static char tci_cw_msg_active_callsign[MAXMSGSIZE];
+static char tci_cw_msg_active_suffix[MAXMSGSIZE];
+static int tci_cw_msg_active = 0;
+static int tci_cw_msg_call_pos = 0;
+static int tci_cw_msg_call_repeat = 1;
+static int tci_cw_msg_call_repeat_index = 0;
+static int tci_cw_msg_suffix_pending = 0;
+static int tci_cw_macros_delay_ms = 10;
 
 typedef struct _client {
   int seq;                      // Seq. number of the client
@@ -158,6 +168,9 @@ static void tci_handle_text (CLIENT *client, char* msg);
 static const TCI_DISPATCH tci_dispatch[];
 
 static void tci_send_smeter (CLIENT *client, int v);
+static void tci_send_text (CLIENT *client, const char* msg);
+static GList *tci_clients_snapshot (void);
+static void tci_cw_macros_empty (void);
 
 static void tci_begin_apply (void) {
   tci_apply_in_progress = 1;
@@ -203,6 +216,8 @@ static gboolean tci_tx_chrono_timer_cb (gpointer data) {
 void launch_tci (void) {
   t_print ("---- LAUNCHING TCI LWS SERVER ----\n");
   tci_audio_set_wakeup_callback (tci_audio_wakeup);
+  cw_engine_set_start_delay(tci_cw_macros_delay_ms);
+  cw_engine_set_empty_callback(tci_cw_macros_empty);
   tci_running = 1;
   if (tci_tx_chrono_timer_id == 0) {
     tci_tx_chrono_timer_id = g_timeout_add (1, tci_tx_chrono_timer_cb, NULL);
@@ -223,6 +238,7 @@ void shutdown_tci (void) {
   }
   tci_audio_set_active (0);
   tci_audio_set_wakeup_callback (NULL);
+  cw_engine_set_empty_callback(NULL);
   if (tci_lws_context != NULL) {
     lws_cancel_service (tci_lws_context);
   }
@@ -315,6 +331,80 @@ static GList *tci_clients_snapshot (void) {
   clients = g_list_copy (tci_clients);
   g_mutex_unlock (&tci_mutex);
   return clients;
+}
+
+static void tci_cw_msg_reset_state(void) {
+  tci_cw_msg_pending_callsign[0] = 0;
+  tci_cw_msg_active_callsign[0] = 0;
+  tci_cw_msg_active_suffix[0] = 0;
+  tci_cw_msg_active = 0;
+  tci_cw_msg_call_pos = 0;
+  tci_cw_msg_call_repeat = 1;
+  tci_cw_msg_call_repeat_index = 0;
+  tci_cw_msg_suffix_pending = 0;
+}
+
+static void tci_cw_send_to_all(const char *msg) {
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_text(client, msg);
+    }
+  }
+  g_list_free(clients);
+}
+
+static int tci_cw_msg_queue_next(void) {
+  int call_len;
+  if (!tci_cw_msg_active) {
+    return 0;
+  }
+  call_len = (int) strlen(tci_cw_msg_active_callsign);
+  if (call_len > 0 && tci_cw_msg_call_repeat_index < tci_cw_msg_call_repeat) {
+    if (tci_cw_msg_call_pos < call_len) {
+      if (!cw_engine_queue_char(tci_cw_msg_active_callsign[tci_cw_msg_call_pos])) {
+        return 0;
+      }
+      tci_cw_msg_call_pos++;
+      return 1;
+    }
+    tci_cw_msg_call_repeat_index++;
+    if (tci_cw_msg_call_repeat_index < tci_cw_msg_call_repeat) {
+      tci_cw_msg_call_pos = 0;
+      if (!cw_engine_queue_char(' ')) {
+        return 0;
+      }
+      return 1;
+    }
+  }
+  if (tci_cw_msg_pending_callsign[0] != 0) {
+    char callsign_msg[MAXMSGSIZE];
+    snprintf(callsign_msg, sizeof(callsign_msg), "callsign_send:%s;", tci_cw_msg_pending_callsign);
+    tci_cw_send_to_all(callsign_msg);
+    tci_cw_msg_pending_callsign[0] = 0;
+  }
+  if (tci_cw_msg_suffix_pending) {
+    tci_cw_msg_suffix_pending = 0;
+    if (tci_cw_msg_active_suffix[0] != 0) {
+      int queued;
+      char suffix_text[MAXMSGSIZE];
+      snprintf(suffix_text, sizeof(suffix_text), " %s", tci_cw_msg_active_suffix);
+      queued = cw_engine_queue_text(suffix_text);
+      if (queued > 0) {
+        return 1;
+      }
+    }
+  }
+  tci_cw_msg_reset_state();
+  return 0;
+}
+
+static void tci_cw_macros_empty (void) {
+  if (tci_cw_msg_queue_next()) {
+    return;
+  }
+  tci_cw_send_to_all("cw_macros_empty;");
 }
 
 static void tci_update_rx_audio_global (void) {
@@ -856,6 +946,12 @@ static void tci_send_keyer_cwspeed (CLIENT *client) {
   tci_send_text (client, msg);
 }
 
+static void tci_send_cw_macros_delay(CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  snprintf(msg, MAXMSGSIZE, "cw_macros_delay:%d;", tci_cw_macros_delay_ms);
+  tci_send_text(client, msg);
+}
+
 
 static int tci_parse_text (char* s, TCI_CMD *c) {
   int argc = 0;
@@ -883,6 +979,12 @@ static int tci_bool (const char* s) {
 
 static int tci_int (const char* s, int def) {
   return s != NULL ? atoi (s) : def;
+}
+
+static int tci_clamp_int(int value, int min, int max) {
+  if (value < min) { return min; }
+  if (value > max) { return max; }
+  return value;
 }
 
 static long long tci_ll (const char* s, long long def) {
@@ -1073,19 +1175,272 @@ static void tci_cmd_drive (CLIENT *client, const TCI_CMD *cmd) {
   tci_send_drive (client, trx);
 }
 
+
+static char *tci_cw_decode_text(const char *text) {
+  GString *out;
+  int speed_open = 0;
+  if (text == NULL) {
+    return NULL;
+  }
+  out = g_string_new(NULL);
+  for (const char *p = text; *p != '\0'; p++) {
+    switch (*p) {
+    case '^':
+      g_string_append_c(out, ':');
+      break;
+    case '~':
+      g_string_append_c(out, ',');
+      break;
+    case '*':
+      g_string_append_c(out, ';');
+      break;
+    case '|': {
+      const char *end = strchr(p + 1, '|');
+      if (end != NULL) {
+        if (speed_open) {
+          g_string_append_c(out, ']');
+          speed_open = 0;
+        }
+        g_string_append(out, "[.");
+        for (const char *q = p + 1; q < end; q++) {
+          switch (*q) {
+          case '^':
+            g_string_append_c(out, ':');
+            break;
+          case '~':
+            g_string_append_c(out, ',');
+            break;
+          case '*':
+            g_string_append_c(out, ';');
+            break;
+          default:
+            g_string_append_c(out, *q);
+            break;
+          }
+        }
+        g_string_append_c(out, ']');
+        p = end;
+      } else {
+        g_string_append_c(out, *p);
+      }
+      break;
+    }
+    case '>':
+      if (speed_open) {
+        g_string_append_c(out, ']');
+      }
+      g_string_append(out, "[+");
+      speed_open = 1;
+      break;
+    case '<':
+      if (speed_open) {
+        g_string_append_c(out, ']');
+      }
+      g_string_append(out, "[-");
+      speed_open = 1;
+      break;
+    default:
+      g_string_append_c(out, *p);
+      break;
+    }
+  }
+  if (speed_open) {
+    g_string_append_c(out, ']');
+  }
+  return g_string_free(out, FALSE);
+}
+
+static void tci_cw_msg_append_part(GString *out, const char *part) {
+  if (part == NULL || part[0] == 0 || strcmp(part, "_") == 0) {
+    return;
+  }
+  if (out->len > 0) {
+    g_string_append_c(out, ' ');
+  }
+  g_string_append(out, part);
+}
+
+static char *tci_cw_msg_extract_callsign(const char *src, int *repeat) {
+  char *call;
+  char *dollar;
+  int r = 1;
+  if (src == NULL) {
+    if (repeat != NULL) { *repeat = 1; }
+    return g_strdup("");
+  }
+  call = g_strdup(src);
+  dollar = strrchr(call, '$');
+  if (dollar != NULL) {
+    r = atoi(dollar + 1);
+    if (r < 1) { r = 1; }
+    *dollar = 0;
+  }
+  if (repeat != NULL) { *repeat = r; }
+  return call;
+}
+
+static void tci_cmd_cw_msg(CLIENT *client, const TCI_CMD *cmd) {
+  char *prefix = NULL;
+  char *callsign_arg = NULL;
+  char *callsign = NULL;
+  char *suffix = NULL;
+  GString *prefix_text;
+  int repeat = 1;
+  int queued = 0;
+  if (cmd->argc == 1 && cmd->argv[0] != NULL) {
+    if (!tci_cw_msg_active || tci_cw_msg_pending_callsign[0] == 0) {
+      t_print("TCI%d cw_msg callsign correction ignored: no active cw_msg\n", client->seq);
+      return;
+    }
+    callsign_arg = tci_cw_decode_text(cmd->argv[0]);
+    if (callsign_arg == NULL) {
+      return;
+    }
+    callsign = tci_cw_msg_extract_callsign(callsign_arg, NULL);
+    if (callsign != NULL && callsign[0] != 0 && strcmp(callsign, "_") != 0) {
+      int new_len = (int) strlen(callsign);
+      g_strlcpy(tci_cw_msg_active_callsign, callsign, sizeof(tci_cw_msg_active_callsign));
+      g_strlcpy(tci_cw_msg_pending_callsign, callsign, sizeof(tci_cw_msg_pending_callsign));
+      if (tci_cw_msg_call_pos > new_len) {
+        tci_cw_msg_call_pos = new_len;
+      }
+      t_print("TCI%d cw_msg callsign correction accepted callsign=%s pos=%d repeat=%d/%d\n", client->seq,
+              tci_cw_msg_active_callsign, tci_cw_msg_call_pos, tci_cw_msg_call_repeat_index + 1,
+              tci_cw_msg_call_repeat);
+    }
+    g_free(callsign_arg);
+    g_free(callsign);
+    return;
+  }
+  if (cmd->argc < 4 || cmd->argv[1] == NULL || cmd->argv[2] == NULL || cmd->argv[3] == NULL) {
+    return;
+  }
+  prefix = tci_cw_decode_text(cmd->argv[1]);
+  callsign_arg = tci_cw_decode_text(cmd->argv[2]);
+  suffix = tci_cw_decode_text(cmd->argv[3]);
+  if (prefix == NULL || callsign_arg == NULL || suffix == NULL) {
+    g_free(prefix);
+    g_free(callsign_arg);
+    g_free(suffix);
+    return;
+  }
+  callsign = tci_cw_msg_extract_callsign(callsign_arg, &repeat);
+  tci_cw_msg_reset_state();
+  g_strlcpy(tci_cw_msg_active_callsign, callsign, sizeof(tci_cw_msg_active_callsign));
+  g_strlcpy(tci_cw_msg_pending_callsign, callsign, sizeof(tci_cw_msg_pending_callsign));
+  if (suffix[0] != 0 && strcmp(suffix, "_") != 0) {
+    g_strlcpy(tci_cw_msg_active_suffix, suffix, sizeof(tci_cw_msg_active_suffix));
+    tci_cw_msg_suffix_pending = 1;
+  }
+  tci_cw_msg_call_repeat = repeat;
+  tci_cw_msg_call_repeat_index = 0;
+  tci_cw_msg_call_pos = 0;
+  tci_cw_msg_active = 1;
+  prefix_text = g_string_new(NULL);
+  tci_cw_msg_append_part(prefix_text, prefix);
+  if (prefix_text->len > 0) {
+    g_string_append_c(prefix_text, ' ');
+    queued = cw_engine_queue_text(prefix_text->str);
+  } else {
+    queued = tci_cw_msg_queue_next();
+  }
+  t_print("TCI%d cw_msg queued=%d prefix=%s callsign=%s repeat=%d suffix=%s\n", client->seq, queued,
+          prefix_text->str, callsign, repeat, tci_cw_msg_active_suffix[0] ? tci_cw_msg_active_suffix : "_");
+  g_string_free(prefix_text, TRUE);
+  g_free(prefix);
+  g_free(callsign_arg);
+  g_free(callsign);
+  g_free(suffix);
+}
+
 static void tci_cmd_cw_macros_speed (CLIENT *client, const TCI_CMD *cmd) {
-  (void) cmd;
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    cw_keyer_speed = tci_clamp_int(tci_int(cmd->argv[0], cw_keyer_speed), 1, 100);
+  }
   tci_send_macros_cwspeed (client);
 }
 
 static void tci_cmd_cw_keyer_speed (CLIENT *client, const TCI_CMD *cmd) {
-  (void) cmd;
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    cw_keyer_speed = tci_clamp_int(tci_int(cmd->argv[0], cw_keyer_speed), 1, 100);
+  }
   tci_send_keyer_cwspeed (client);
 }
 
 static void tci_cmd_cw_macros_delay (CLIENT *client, const TCI_CMD *cmd) {
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    tci_cw_macros_delay_ms = tci_clamp_int(tci_int(cmd->argv[0], tci_cw_macros_delay_ms), 0, 5000);
+    cw_engine_set_start_delay(tci_cw_macros_delay_ms);
+  }
+  tci_send_cw_macros_delay(client);
+}
+
+static void tci_cmd_cw_macros_speed_up(CLIENT *client, const TCI_CMD *cmd) {
+  int step = 1;
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    step = tci_int(cmd->argv[0], 1);
+  }
+  if (step < 0) { step = -step; }
+  cw_keyer_speed = tci_clamp_int(cw_keyer_speed + step, 1, 100);
+  tci_send_macros_cwspeed(client);
+}
+
+static void tci_cmd_cw_macros_speed_down(CLIENT *client, const TCI_CMD *cmd) {
+  int step = 1;
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    step = tci_int(cmd->argv[0], 1);
+  }
+  if (step < 0) { step = -step; }
+  cw_keyer_speed = tci_clamp_int(cw_keyer_speed - step, 1, 100);
+  tci_send_macros_cwspeed(client);
+}
+
+
+static void tci_cmd_cw_macros (CLIENT *client, const TCI_CMD *cmd) {
+  GString *raw;
+  char *decoded;
+  int queued;
+  if (cmd->argc < 2 || cmd->argv[1] == NULL) {
+    return;
+  }
+  raw = g_string_new(cmd->argv[1]);
+  for (int i = 2; i < cmd->argc; i++) {
+    g_string_append_c(raw, ',');
+    if (cmd->argv[i] != NULL) {
+      g_string_append(raw, cmd->argv[i]);
+    }
+  }
+  decoded = tci_cw_decode_text(raw->str);
+  g_string_free(raw, TRUE);
+  if (decoded == NULL) {
+    return;
+  }
+  queued = cw_engine_queue_text(decoded);
+  t_print("TCI%d cw_macros queued=%d text=%s\n", client->seq, queued, decoded);
+  g_free(decoded);
+}
+
+static void tci_cmd_cw_macros_stop (CLIENT *client, const TCI_CMD *cmd) {
   (void) cmd;
-  tci_send_text (client, "cw_macros_delay:10;");
+  cw_engine_set_terminal(0);
+  cw_engine_clear();
+  tci_cw_msg_reset_state();
+  t_print("TCI%d cw_macros_stop\n", client->seq);
+}
+
+static void tci_cmd_cw_terminal (CLIENT *client, const TCI_CMD *cmd) {
+  int enabled;
+  if (cmd->argc < 1 || cmd->argv[0] == NULL) {
+    return;
+  }
+  enabled = g_ascii_strcasecmp(cmd->argv[0], "true") == 0 || strcmp(cmd->argv[0], "1") == 0;
+  cw_engine_set_terminal(enabled);
+  if (enabled) {
+    tci_send_text(client, "cw_terminal:true;");
+  } else {
+    tci_send_text(client, "cw_terminal:false;");
+  }
+  t_print("TCI%d cw_terminal=%d\n", client->seq, enabled);
 }
 
 static void tci_cmd_stop (CLIENT *client, const TCI_CMD *cmd) {
@@ -1114,9 +1469,15 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "vfo",               2,  3, tci_cmd_vfo },
   { "rx_smeter",         1,  3, tci_cmd_rx_smeter },
   { "drive",             1,  2, tci_cmd_drive },
-  { "cw_macros_speed",   0,  0, tci_cmd_cw_macros_speed },
-  { "cw_keyer_speed",    0,  0, tci_cmd_cw_keyer_speed },
-  { "cw_macros_delay",   0,  0, tci_cmd_cw_macros_delay },
+  { "cw_macros",         2, -1, tci_cmd_cw_macros },
+  { "cw_macros_stop",    0,  0, tci_cmd_cw_macros_stop },
+  { "cw_msg",             1,  4, tci_cmd_cw_msg },
+  { "cw_terminal",        1,  1, tci_cmd_cw_terminal },
+  { "cw_macros_speed",   0,  1, tci_cmd_cw_macros_speed },
+  { "cw_keyer_speed",    0,  1, tci_cmd_cw_keyer_speed },
+  { "cw_macros_delay",   0,  1, tci_cmd_cw_macros_delay },
+  { "cw_macros_speed_up",   1,  1, tci_cmd_cw_macros_speed_up },
+  { "cw_macros_speed_down", 1,  1, tci_cmd_cw_macros_speed_down },
   { "stop",              0,  0, tci_cmd_stop },
   { NULL,                0,  0, NULL }
 };
@@ -1387,7 +1748,7 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_tune (client);
   tci_send_text (client, "mute:false;");
   tci_send_macros_cwspeed (client);
-  tci_send_text (client, "cw_macros_delay:10;");
+  tci_send_cw_macros_delay(client);
   tci_send_keyer_cwspeed (client);
   tci_send_text (client, "start;");
   tci_send_text (client, "ready;");

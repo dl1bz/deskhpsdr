@@ -13,6 +13,7 @@
 #include <gtk/gtk.h>
 #include <glib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "cw_engine.h"
 #include "ext.h"
@@ -99,6 +100,19 @@ static void send_space(int len) {
 static int join_cw_characters = 0;
 static int cw_engine_buffered_speed = 0;
 static int cw_engine_bracket_command = 0;
+static int cw_engine_terminal = 0;
+static int cw_engine_empty_notified = 0;
+static int cw_engine_start_delay_ms = 0;
+static int cw_engine_start_delay_done = 0;
+static void (*cw_engine_empty_callback)(void) = NULL;
+
+static void cw_engine_notify_empty(void) {
+  if (cw_engine_empty_notified) { return; }
+  cw_engine_empty_notified = 1;
+  if (cw_engine_empty_callback != NULL) {
+    cw_engine_empty_callback();
+  }
+}
 
 static void cw_engine_send_cw_char(char cw_char) {
   char pattern[9], *ptr;
@@ -343,6 +357,9 @@ static gpointer cw_engine_thread(gpointer data) {
     i = cw_buf_out + 1;
     if (i >= CW_ENGINE_BUF_SIZE) { i = 0; }
     cw_buf_out = i;
+    if (cw_buf_in == cw_buf_out) {
+      cw_engine_notify_empty();
+    }
     //
     // Special character sequences or characters:
     //
@@ -387,6 +404,7 @@ static gpointer cw_engine_thread(gpointer data) {
       dotsamples = 57600 / cw_keyer_speed;
       dashsamples = (3456 * cw_keyer_weight) / cw_keyer_speed;
     }
+    int start_new_tx = !CAT_cw_is_active;
     CAT_cw_is_active = 1;
     schedule_transmit_specific();
     if (!mox) {
@@ -405,6 +423,10 @@ static gpointer cw_engine_thread(gpointer data) {
         continue;
       }
     }
+    if (start_new_tx && !cw_engine_start_delay_done && cw_engine_start_delay_ms > 0 && !cw_key_hit && !cw_not_ready) {
+      usleep((useconds_t) cw_engine_start_delay_ms * 1000U);
+      cw_engine_start_delay_done = 1;
+    }
     // At this point, mox == 1 and CAT_cw_active == 1
     if (cw_key_hit || cw_not_ready) {
       //
@@ -412,6 +434,7 @@ static gpointer cw_engine_thread(gpointer data) {
       // removing MOX, changing the mode to non-CW, or because a CW key has been hit.
       // Do not remove PTT in the latter case
       cw_engine_buffered_speed = 0;
+      cw_engine_start_delay_done = 0;
       CAT_cw_is_active = 0;
       schedule_transmit_specific();
       // If a CW key has been hit, we continue in TX mode.
@@ -436,6 +459,7 @@ static gpointer cw_engine_thread(gpointer data) {
         cw_engine_buffered_speed = 0;
         join_cw_characters = 0;
         cw_engine_clear();
+        cw_engine_start_delay_done = 0;
         CAT_cw_is_active = 0;
         schedule_transmit_specific();
         if (!cw_key_hit && mox && !radio_ptt) {
@@ -454,7 +478,11 @@ static gpointer cw_engine_thread(gpointer data) {
         usleep(50000);
       }
       if (cw_buf_in != cw_buf_out) { continue; }
+      if (cw_engine_terminal) {
+        continue;
+      }
       CAT_cw_is_active = 0;
+      cw_engine_start_delay_done = 0;
       schedule_transmit_specific();
       if (!cw_key_hit && !radio_ptt) {
         g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
@@ -473,6 +501,7 @@ static gpointer cw_engine_thread(gpointer data) {
   // of a transmission
   if (CAT_cw_is_active) {
     CAT_cw_is_active = 0;
+    cw_engine_start_delay_done = 0;
     schedule_transmit_specific();
     g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
   }
@@ -493,12 +522,117 @@ void cw_engine_clear(void) {
   cw_engine_buffered_speed = 0;
   cw_engine_bracket_command = 0;
   join_cw_characters = 0;
+  cw_engine_empty_notified = 0;
+  cw_engine_start_delay_done = 0;
+}
+
+void cw_engine_set_terminal(int enabled) {
+  cw_engine_terminal = enabled ? 1 : 0;
+  if (!cw_engine_terminal && cw_buf_in == cw_buf_out && CAT_cw_is_active) {
+    CAT_cw_is_active = 0;
+    cw_engine_start_delay_done = 0;
+    schedule_transmit_specific();
+    if (!cw_key_hit && mox && !radio_ptt) {
+      g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
+    }
+  }
+}
+
+int cw_engine_get_terminal(void) {
+  return cw_engine_terminal;
+}
+
+void cw_engine_set_start_delay(int delay_ms) {
+  if (delay_ms < 0) {
+    delay_ms = 0;
+  }
+  cw_engine_start_delay_ms = delay_ms;
+}
+
+int cw_engine_get_start_delay(void) {
+  return cw_engine_start_delay_ms;
+}
+
+void cw_engine_set_empty_callback(void (*callback)(void)) {
+  cw_engine_empty_callback = callback;
 }
 
 int cw_engine_buffer_used(void) {
   int used = cw_buf_in - cw_buf_out;
   if (used < 0) { used += CW_ENGINE_BUF_SIZE; }
   return used;
+}
+
+static int cw_engine_pos_advance(int pos, int count) {
+  pos += count;
+  while (pos >= CW_ENGINE_BUF_SIZE) {
+    pos -= CW_ENGINE_BUF_SIZE;
+  }
+  while (pos < 0) {
+    pos += CW_ENGINE_BUF_SIZE;
+  }
+  return pos;
+}
+
+static int cw_engine_pos_distance(int from, int to) {
+  int distance = to - from;
+  if (distance < 0) { distance += CW_ENGINE_BUF_SIZE; }
+  return distance;
+}
+
+int cw_engine_queue_position(void) {
+  return cw_buf_in;
+}
+
+int cw_engine_replace_queued_range(int start_pos, int end_pos, const char *replacement, int *new_end_pos) {
+  char linear[CW_ENGINE_BUF_SIZE];
+  char rebuilt[CW_ENGINE_BUF_SIZE];
+  int used;
+  int before;
+  int old_len;
+  int repl_len;
+  int tail_len;
+  int new_used;
+  int i;
+  if (replacement == NULL) {
+    return 0;
+  }
+  if (start_pos < 0 || start_pos >= CW_ENGINE_BUF_SIZE || end_pos < 0 || end_pos >= CW_ENGINE_BUF_SIZE) {
+    return 0;
+  }
+  used = cw_engine_buffer_used();
+  before = cw_engine_pos_distance(cw_buf_out, start_pos);
+  old_len = cw_engine_pos_distance(start_pos, end_pos);
+  if (before > used || before + old_len > used) {
+    return 0;
+  }
+  repl_len = (int) strlen(replacement);
+  new_used = used - old_len + repl_len;
+  if (new_used >= CW_ENGINE_BUF_SIZE) {
+    return 0;
+  }
+  tail_len = used - before - old_len;
+  for (i = 0; i < used; i++) {
+    linear[i] = cw_buf[cw_engine_pos_advance(cw_buf_out, i)];
+  }
+  if (before > 0) {
+    memcpy(rebuilt, linear, (size_t) before);
+  }
+  if (repl_len > 0) {
+    memcpy(rebuilt + before, replacement, (size_t) repl_len);
+  }
+  if (tail_len > 0) {
+    memcpy(rebuilt + before + repl_len, linear + before + old_len, (size_t) tail_len);
+  }
+  for (i = 0; i < new_used; i++) {
+    cw_buf[cw_engine_pos_advance(cw_buf_out, i)] = rebuilt[i];
+  }
+  cw_buf_in = cw_engine_pos_advance(cw_buf_out, new_used);
+  cw_engine_empty_notified = 0;
+  if (new_end_pos != NULL) {
+    *new_end_pos = cw_engine_pos_advance(start_pos, repl_len);
+  }
+  return repl_len;
 }
 
 int cw_engine_queue_char(char c) {
@@ -509,6 +643,7 @@ int cw_engine_queue_char(char c) {
   }
   cw_buf[cw_buf_in] = c;
   cw_buf_in = new;
+  cw_engine_empty_notified = 0;
   return 1;
 }
 

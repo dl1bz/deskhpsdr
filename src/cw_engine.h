@@ -16,7 +16,14 @@
 
 extern void cw_engine_start_thread(void);
 extern void cw_engine_clear(void);
+extern void cw_engine_set_terminal(int enabled);
+extern int cw_engine_get_terminal(void);
+extern void cw_engine_set_start_delay(int delay_ms);
+extern int cw_engine_get_start_delay(void);
+extern void cw_engine_set_empty_callback(void (*callback)(void));
 extern int cw_engine_buffer_used(void);
+extern int cw_engine_queue_position(void);
+extern int cw_engine_replace_queued_range(int start_pos, int end_pos, const char *replacement, int *new_end_pos);
 extern int cw_engine_queue_char(char c);
 extern int cw_engine_queue_text(const char *text);
 
