@@ -48,6 +48,7 @@
 #include "band_menu.h"
 #include "sliders.h"
 #include "rigctl.h"
+#include "cw_engine.h"
 #include "radio.h"
 #include "channel.h"
 #include "filter.h"
@@ -111,7 +112,6 @@ static GMutex mutex_numcat;   // only needed to make in/de-crements of "cat_cont
 #define MAX_ANDROMEDA_LEDS 16
 
 static GThread *rigctl_server_thread_id = NULL;
-static GThread *rigctl_cw_thread_id = NULL;
 static GThread *serptt_thread_id = NULL;
 static GThread *sertune_thread_id = NULL;
 static GMutex sertune_mutex;
@@ -872,454 +872,6 @@ void shutdown_tcp_rigctl (void) {
   //       non-blocking (use select())
 }
 
-//
-//  CW ring buffer
-//
-
-#define CW_BUF_SIZE 512
-static char cw_buf[CW_BUF_SIZE];
-static int  cw_buf_in = 0, cw_buf_out = 0;
-
-static int dotsamples;
-static int dashsamples;
-
-//
-// send_dash()         send a "key-down" of a dashlen, followed by a "key-up" of a dotlen
-// send_dot()          send a "key-down" of a dotlen,  followed by a "key-up" of a dotlen
-// send_space(int len) send a "key_down" of zero,      followed by a "key-up" of len*dotlen
-//
-// The "trick" to get proper timing is, that we really specify  the number of samples
-// for the next element (dash/dot/nothing) and the following pause. 30 wpm is no
-// problem, and without too much "busy waiting". We just take a nap until 10 msec
-// before we have to act, and then wait several times for 1 msec until we can shoot.
-//
-static void send_dash (void) {
-  for (;;) {
-    int TimeToGo = cw_key_up + cw_key_down;
-    // TimeToGo is invalid if local CW keying has set in
-    if (cw_key_hit || cw_not_ready) { return; }
-    if (TimeToGo == 0) { break; }
-    // sleep until 10 msec before ignition
-    if (TimeToGo > 500) { usleep ((long) (TimeToGo - 500) * 20L); }
-    // sleep 1 msec
-    usleep (1000L);
-  }
-  // If local CW keying has set in, do not interfere
-  if (cw_key_hit || cw_not_ready) { return; }
-  cw_key_down = dashsamples;
-  cw_key_up   = dotsamples;
-}
-
-static void send_dot (void) {
-  for (;;) {
-    int TimeToGo = cw_key_up + cw_key_down;
-    // TimeToGo is invalid if local CW keying has set in
-    if (cw_key_hit || cw_not_ready) { return; }
-    if (TimeToGo == 0) { break; }
-    // sleep until 10 msec before ignition
-    if (TimeToGo > 500) { usleep ((long) (TimeToGo - 500) * 20L); }
-    // sleep 1 msec
-    usleep (1000L);
-  }
-  // If local CW keying has set in, do not interfere
-  if (cw_key_hit || cw_not_ready) { return; }
-  cw_key_down = dotsamples;
-  cw_key_up   = dotsamples;
-}
-
-static void send_space (int len) {
-  for (;;) {
-    int TimeToGo = cw_key_up + cw_key_down;
-    // TimeToGo is invalid if local CW keying has set in
-    if (cw_key_hit || cw_not_ready) { return; }
-    if (TimeToGo == 0) { break; }
-    // sleep until 10 msec before ignition
-    if (TimeToGo > 500) { usleep ((long) (TimeToGo - 500) * 20L); }
-    // sleep 1 msec
-    usleep (1000L);
-  }
-  // If local CW keying has set in, do not interfere
-  if (cw_key_hit || cw_not_ready) { return; }
-  cw_key_up = len * dotsamples;
-}
-
-//
-// This stores the "buffered join character" status
-//
-static int join_cw_characters = 0;
-
-static void rigctl_send_cw_char (char cw_char) {
-  char pattern[9], *ptr;
-  ptr = &pattern[0];
-  switch (cw_char) {
-  case 'a':
-  case 'A':
-    g_strlcpy (pattern, ".-", 9);
-    break;
-  case 'b':
-  case 'B':
-    g_strlcpy (pattern, "-...", 9);
-    break;
-  case 'c':
-  case 'C':
-    g_strlcpy (pattern, "-.-.", 9);
-    break;
-  case 'd':
-  case 'D':
-    g_strlcpy (pattern, "-..", 9);
-    break;
-  case 'e':
-  case 'E':
-    g_strlcpy (pattern, ".", 9);
-    break;
-  case 'f':
-  case 'F':
-    g_strlcpy (pattern, "..-.", 9);
-    break;
-  case 'g':
-  case 'G':
-    g_strlcpy (pattern, "--.", 9);
-    break;
-  case 'h':
-  case 'H':
-    g_strlcpy (pattern, "....", 9);
-    break;
-  case 'i':
-  case 'I':
-    g_strlcpy (pattern, "..", 9);
-    break;
-  case 'j':
-  case 'J':
-    g_strlcpy (pattern, ".---", 9);
-    break;
-  case 'k':
-  case 'K':
-    g_strlcpy (pattern, "-.-", 9);
-    break;
-  case 'l':
-  case 'L':
-    g_strlcpy (pattern, ".-..", 9);
-    break;
-  case 'm':
-  case 'M':
-    g_strlcpy (pattern, "--", 9);
-    break;
-  case 'n':
-  case 'N':
-    g_strlcpy (pattern, "-.", 9);
-    break;
-  case 'o':
-  case 'O':
-    g_strlcpy (pattern, "---", 9);
-    break;
-  case 'p':
-  case 'P':
-    g_strlcpy (pattern, ".--.", 9);
-    break;
-  case 'q':
-  case 'Q':
-    g_strlcpy (pattern, "--.-", 9);
-    break;
-  case 'r':
-  case 'R':
-    g_strlcpy (pattern, ".-.", 9);
-    break;
-  case 's':
-  case 'S':
-    g_strlcpy (pattern, "...", 9);
-    break;
-  case 't':
-  case 'T':
-    g_strlcpy (pattern, "-", 9);
-    break;
-  case 'u':
-  case 'U':
-    g_strlcpy (pattern, "..-", 9);
-    break;
-  case 'v':
-  case 'V':
-    g_strlcpy (pattern, "...-", 9);
-    break;
-  case 'w':
-  case 'W':
-    g_strlcpy (pattern, ".--", 9);
-    break;
-  case 'x':
-  case 'X':
-    g_strlcpy (pattern, "-..-", 9);
-    break;
-  case 'y':
-  case 'Y':
-    g_strlcpy (pattern, "-.--", 9);
-    break;
-  case 'z':
-  case 'Z':
-    g_strlcpy (pattern, "--..", 9);
-    break;
-  case '0':
-    g_strlcpy (pattern, "-----", 9);
-    break;
-  case '1':
-    g_strlcpy (pattern, ".----", 9);
-    break;
-  case '2':
-    g_strlcpy (pattern, "..---", 9);
-    break;
-  case '3':
-    g_strlcpy (pattern, "...--", 9);
-    break;
-  case '4':
-    g_strlcpy (pattern, "....-", 9);
-    break;
-  case '5':
-    g_strlcpy (pattern, ".....", 9);
-    break;
-  case '6':
-    g_strlcpy (pattern, "-....", 9);
-    break;
-  case '7':
-    g_strlcpy (pattern, "--...", 9);
-    break;
-  case '8':
-    g_strlcpy (pattern, "---..", 9);
-    break;
-  case '9':
-    g_strlcpy (pattern, "----.", 9);
-    break;
-  //
-  //     DL1YCF:
-  //     added some signs from ITU Recommendation M.1677-1 (2009)
-  //     in the order given there.
-  //
-  case '.':
-    g_strlcpy (pattern, ".-.-.-", 9);
-    break;
-  case ',':
-    g_strlcpy (pattern, "--..--", 9);
-    break;
-  case ':':
-    g_strlcpy (pattern, "---..", 9);
-    break;
-  case '?':
-    g_strlcpy (pattern, "..--..", 9);
-    break;
-  case '\'':
-    g_strlcpy (pattern, ".----.", 9);
-    break;
-  case '-':
-    g_strlcpy (pattern, "-....-", 9);
-    break;
-  case '/':
-    g_strlcpy (pattern, "-..-.", 9);
-    break;
-  case '(':
-    g_strlcpy (pattern, "-.--.", 9);
-    break;
-  case ')':
-    g_strlcpy (pattern, "-.--.-", 9);
-    break;
-  case '"':
-    g_strlcpy (pattern, ".-..-.", 9);
-    break;
-  case '=':
-    g_strlcpy (pattern, "-...-", 9);
-    break;
-  case '+':
-    g_strlcpy (pattern, ".-.-.", 9);
-    break;
-  case '@':
-    g_strlcpy (pattern, ".--.-.", 9);
-    break;
-  //
-  //     Often used, but not ITU: Ampersand for "wait"
-  //
-  case '&':
-    g_strlcpy (pattern, ".-...", 9);
-    break;
-  default:
-    g_strlcpy (pattern, "", 9);
-  }
-  while (*ptr != '\0') {
-    if (*ptr == '-') {
-      send_dash();
-    }
-    if (*ptr == '.') {
-      send_dot();
-    }
-    ptr++;
-  }
-  // The last element (dash or dot) sent already has one dotlen space appended.
-  // If the current character is another "printable" sign, we need an additional
-  // pause of 2 dotlens to form the inter-character spacing of 3 dotlens.
-  // However if the current character is a "space" we must produce an inter-word
-  // spacing (7 dotlens) and therefore need 6 additional dotlens
-  // We need no longer take care of a sequence of spaces since adjacent spaces
-  // are now filtered out while filling the CW character (ring-) buffer.
-  if (cw_char == ' ') {
-    send_space (6); // produce inter-word space of 7 dotlens
-  } else {
-    if (!join_cw_characters) { send_space (2); } // produce inter-character space of 3 dotlens
-  }
-}
-
-//
-// rigctl_cw_thread is started once and runs forever,
-// checking for data in the CW ring buffer and sending it.
-//
-static gpointer rigctl_cw_thread (gpointer data) {
-  int i;
-  char cwchar;
-  int  buffered_speed = 0;
-  int  bracket_command = 0;
-  for (;;) {
-    // wait for CW data (periodically look every 100 msec)
-    if (cw_buf_in == cw_buf_out) {
-      cw_key_hit = 0;
-      usleep (100000L);
-      continue;
-    }
-    //
-    // if TX mode is not CW, drain ring buffer
-    //
-    int txmode = vfo_get_tx_mode();
-    if (txmode != modeCWU && txmode != modeCWL) {
-      cw_buf_out = cw_buf_in;
-      continue;
-    }
-    //
-    // Take one character from the ring buffer
-    //
-    cwchar = cw_buf[cw_buf_out];
-    i = cw_buf_out + 1;
-    if (i >= CW_BUF_SIZE) { i = 0; }
-    cw_buf_out = i;
-    //
-    // Special character sequences or characters:
-    //
-    //  [+         Increase speed by 25 %
-    //  [-         Decrease speed by 25 %
-    //  [          Join Characters
-    //  ]          End speed change or joining
-    //
-    if (bracket_command)  {
-      switch (cwchar) {
-      case '+':
-        buffered_speed = (5 * cw_keyer_speed) / 4;
-        cwchar = 0;
-        break;
-      case '-':
-        buffered_speed = (3 * cw_keyer_speed) / 4;
-        cwchar = 0;
-        break;
-      case '.':
-        join_cw_characters = 1;
-        cwchar = 0;
-        break;
-      }
-      bracket_command = 0;
-    }
-    if (cwchar == '[') {
-      bracket_command = 1;
-      cwchar = 0;
-    }
-    if (cwchar == ']') {
-      buffered_speed = 0;
-      join_cw_characters = 0;
-      cwchar = 0;
-    }
-    // The dot and dash length may have changed, so recompute them here
-    // This means that we can change the speed (KS command) while
-    // the buffer is being sent
-    if (buffered_speed > 0) {
-      dotsamples = 57600 / buffered_speed;
-      dashsamples = (3456 * cw_keyer_weight) / buffered_speed;
-    } else {
-      dotsamples = 57600 / cw_keyer_speed;
-      dashsamples = (3456 * cw_keyer_weight) / cw_keyer_speed;
-    }
-    CAT_cw_is_active = 1;
-    schedule_transmit_specific();
-    if (!mox) {
-      // activate PTT
-      g_idle_add (ext_mox_update, GINT_TO_POINTER (1));
-      // have to wait until it is really there
-      // Note that if out-of-band, we would wait
-      // forever here, so allow at most 200 msec
-      // We also have to wait for cw_not_ready becoming zero
-      i = 200;
-      while ((!mox || cw_not_ready) && i-- > 0) { usleep (1000L); }
-      // still no MOX? --> silently discard CW character and give up
-      if (!mox) {
-        CAT_cw_is_active = 0;
-        schedule_transmit_specific();
-        continue;
-      }
-    }
-    // At this point, mox == 1 and CAT_cw_active == 1
-    if (cw_key_hit || cw_not_ready) {
-      //
-      // CW transmission has been aborted, either due to manually
-      // removing MOX, changing the mode to non-CW, or because a CW key has been hit.
-      // Do not remove PTT in the latter case
-      buffered_speed = 0;
-      CAT_cw_is_active = 0;
-      schedule_transmit_specific();
-      // If a CW key has been hit, we continue in TX mode.
-      // This also applies if we have an active foot-switch
-      // Otherwise, switch PTT off.
-      if (!cw_key_hit && mox && !radio_ptt) {
-        g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
-      }
-      //
-      // keep draining ring buffer until it stays empty for 0.5 seconds
-      // This is necessary: after aborting a very long CW
-      // text such as a CQ call by hitting a Morse key,
-      // CW characters may flow in for quite a while.
-      //
-      do {
-        cw_buf_out = cw_buf_in;
-        usleep (500000L);
-      } while (cw_buf_out != cw_buf_in);
-    } else {
-      if (cwchar) { rigctl_send_cw_char (cwchar); }
-      //
-      // Character has been sent, so continue.
-      // Since the second character possibly comes 250 msec after
-      // the first one, we have to wait if the buffer stays
-      // empty. Only then, stop CAT CW.
-      //
-      for (i = 0; i < 5; i++) {
-        if (cw_buf_in != cw_buf_out) { break; }
-        usleep (50000);
-      }
-      if (cw_buf_in != cw_buf_out) { continue; }
-      CAT_cw_is_active = 0;
-      schedule_transmit_specific();
-      if (!cw_key_hit && !radio_ptt) {
-        g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
-        // wait up to 500 msec for MOX having gone
-        // otherwise there might be a race condition when sending
-        // the next character really soon
-        i = 10;
-        while (mox && (i--) > 0) { usleep (50000L); }
-        buffered_speed = 0;
-      }
-    }
-  }
-  // NOTREACHED (now this thread is started once-and-for-all)
-  // We arrive here if the rigctl server shuts down.
-  // This very rarely happens. But we should shut down the
-  // local CW system gracefully, in case we were in the mid
-  // of a transmission
-  if (CAT_cw_is_active) {
-    CAT_cw_is_active = 0;
-    schedule_transmit_specific();
-    g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
-  }
-  rigctl_cw_thread_id = NULL;
-  return NULL;
-}
-
 static void send_resp (int fd, char* msg) {
   //
   // send_resp is ONLY called from within the GTK event queue
@@ -1633,9 +1185,8 @@ static gpointer rigctl_server (gpointer data) {
     return NULL;
   }
   // must start the thread here in order NOT to inherit a lock
-  cw_buf_in = 0;
-  cw_buf_out = 0;
-  if (!rigctl_cw_thread_id) { rigctl_cw_thread_id = g_thread_new ("RIGCTL cw", rigctl_cw_thread, NULL); }
+  cw_engine_clear();
+  cw_engine_start_thread();
   while (tcp_running) {
     int spare;
     //
@@ -4705,34 +4256,39 @@ int parse_cmd (void* data) {
     case 'Y': //KY
       //CATDEF    KY
       //DESCR     Send Morse/query Morse buffer
-      //SET       KYxyyy...yyy;
+      //SET       KY0;          stop current keying
+      //SET       KY2yyy...yyy; variable length keying string
+      //SET       KY yyy...yyy; legacy keying string
       //READ      KY;
       //RESP      KYx;
-      //NOTE      When setting (sending), x must be a space.
-      //CONT      When reading, x=1 indicates buffer space is available, x=0  buffer full
+      //NOTE      When reading, x=0 indicates character buffer space is available, x=1 no space.
       //NOTE      y: string of up to 24 characters NOT containing ';'.
       //CONT      Trailing blanks are ignored in y, but if it is completely blank it causes an inter-word space.
       //ENDDEF
       if (command[2] == ';') {
         //
-        // reply "buffer full" condition if the buffer contains
-        // more than (CW_BUF_SIZE-24) characters.
+        // TS-890 style buffer state:
+        // KY0; character buffer space available
+        // KY1; no character buffer space
         //
-        int avail = cw_buf_in - cw_buf_out;
-        if (avail < 0) { avail += CW_BUF_SIZE; }
-        if (avail < CW_BUF_SIZE - 24) {
+        int used = cw_engine_buffer_used();
+        if (used < CW_ENGINE_BUF_SIZE - 24) {
           snprintf (reply, 256, "KY0;");
         } else {
           snprintf (reply, 256, "KY1;");
         }
         send_resp (client->fd, reply);
-      } else {
+      } else if (command[2] == '0' && command[3] == ';') {
+        cw_engine_clear();
+        radio_mox_update (0);
+        update_slider_tune_drive_btn();
+      } else if (command[2] == '2' || command[2] == ' ') {
         //
-        // Recent versions of Hamlib send CW messages on character at a time.
+        // TS-890 variable length mode uses KY2text;.
+        // The legacy mode uses KY text;.  In both cases the text starts at command[3].
+        // Recent versions of Hamlib send CW messages one character at a time.
         // So all trailing blanks have to be removed, and an entirely blank
-        // message is interpreted as a inter-word distance.
-        // Note we allow variable lengths of incoming messages here, although
-        // the standard says they are exactly 24 characters long.
+        // message is interpreted as an inter-word distance.
         //
         int j = 3;
         for (unsigned int i = 3; i < strlen (command); i++) {
@@ -4741,14 +4297,13 @@ int parse_cmd (void* data) {
         }
         // j points to the last non-blank character, or to the first blank
         // in an empty string
-        for (int i = 3; i <= j; i++) {
-          int new = cw_buf_in + 1;
-          if (new >= CW_BUF_SIZE) { new = 0; }
-          if (new != cw_buf_out) {
-            cw_buf[cw_buf_in] = command[i];
-            cw_buf_in = new;
-          }
+        char ky_text[256];
+        int len = 0;
+        for (int i = 3; i <= j && len < (int)sizeof (ky_text) - 1; i++) {
+          ky_text[len++] = command[i];
         }
+        ky_text[len] = '\0';
+        cw_engine_queue_text (ky_text);
       }
       break;
     default:
@@ -5198,6 +4753,7 @@ int parse_cmd (void* data) {
         if (state && block_cat_rx_if_tune) {
           t_print ("%s: TUNE state = %d -> switch to RX via CAT blocked during TUNE\n", __func__, state);
         } else {
+          cw_engine_clear();
           radio_mox_update (0);
           update_slider_tune_drive_btn();
         }
@@ -6024,9 +5580,7 @@ void launch_tcp_rigctl (void) {
   //
   // Start CW thread and auto reporter, if not yet done
   //
-  if (!rigctl_cw_thread_id) {
-    rigctl_cw_thread_id = g_thread_new ("RIGCTL cw", rigctl_cw_thread, NULL);
-  }
+  cw_engine_start_thread();
   //
   // Start TCP thread
   //

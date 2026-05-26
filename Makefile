@@ -678,6 +678,7 @@ src/band_menu.c \
 src/bandstack_menu.c \
 src/controller_mapping.c \
 src/css.c \
+src/cw_engine.c \
 src/cw_menu.c \
 src/discovered.c \
 src/discovery.c \
@@ -766,6 +767,7 @@ src/bandstack.h \
 src/channel.h \
 src/controller_mapping.h \
 src/css.h \
+src/cw_engine.h \
 src/cw_menu.h \
 src/dac.h \
 src/discovered.h \
@@ -850,6 +852,7 @@ src/band_menu.o \
 src/bandstack_menu.o \
 src/controller_mapping.o \
 src/css.o \
+src/cw_engine.o \
 src/cw_menu.o \
 src/discovered.o \
 src/discovery.o \
