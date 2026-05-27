@@ -26,6 +26,7 @@
 #include <gtk/gtk.h>
 #include "main.h"
 #include "discovery.h"
+#include "filter.h"
 #include "receiver.h"
 #include "sliders.h"
 #include "toolbar.h"
@@ -105,6 +106,102 @@ int ext_mox_update(void* data) {
 
 int ext_set_vox(void* data) {
   radio_set_vox(GPOINTER_TO_INT(data));
+  return G_SOURCE_REMOVE;
+}
+
+
+int ext_normalize_rx_filter_band(int mode, int *low, int *high) {
+  int a;
+  int b;
+  int min_abs;
+  int max_abs;
+  int width;
+  int half_width;
+  if (low == NULL || high == NULL) {
+    return 0;
+  }
+  switch (mode) {
+  case modeLSB:
+  case modeDIGL:
+    a = abs(*low);
+    b = abs(*high);
+    min_abs = a < b ? a : b;
+    max_abs = a > b ? a : b;
+    *low = -max_abs;
+    *high = -min_abs;
+    break;
+  case modeCWL:
+    width = abs(*high - *low);
+    half_width = width / 2;
+    *low = -cw_keyer_sidetone_frequency - half_width;
+    *high = -cw_keyer_sidetone_frequency + half_width;
+    break;
+  case modeUSB:
+  case modeDIGU:
+    a = abs(*low);
+    b = abs(*high);
+    *low = a < b ? a : b;
+    *high = a > b ? a : b;
+    break;
+  case modeCWU:
+    width = abs(*high - *low);
+    half_width = width / 2;
+    *low = cw_keyer_sidetone_frequency - half_width;
+    *high = cw_keyer_sidetone_frequency + half_width;
+    break;
+  default:
+    if (*low > *high) {
+      int tmp = *low;
+      *low = *high;
+      *high = tmp;
+    }
+    break;
+  }
+  return *low < *high;
+}
+
+int ext_rx_filter_update(void* data) {
+  EXT_RX_FILTER_UPDATE *fu = (EXT_RX_FILTER_UPDATE*) data;
+  int receiver_id;
+  int mode;
+  int filter_id;
+  int low;
+  int high;
+  FILTER *filter;
+  if (fu == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  receiver_id = fu->receiver_id;
+  low = fu->low;
+  high = fu->high;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) {
+    g_free(fu);
+    return G_SOURCE_REMOVE;
+  }
+  mode = vfo[receiver_id].mode;
+  filter_id = vfo[receiver_id].filter;
+  if (mode < 0 || mode >= MODES) {
+    g_free(fu);
+    return G_SOURCE_REMOVE;
+  }
+  if (filter_id < 0 || filter_id >= FILTERS) {
+    g_free(fu);
+    return G_SOURCE_REMOVE;
+  }
+  if (!ext_normalize_rx_filter_band(mode, &low, &high)) {
+    g_free(fu);
+    return G_SOURCE_REMOVE;
+  }
+  filter = &filters[mode][filter_id];
+  filter->low = low;
+  filter->high = high;
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL && vfo[i].mode == mode && vfo[i].filter == filter_id) {
+      rx_filter_changed(receiver[i]);
+    }
+  }
+  g_idle_add(ext_vfo_update, NULL);
+  g_free(fu);
   return G_SOURCE_REMOVE;
 }
 

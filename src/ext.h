@@ -22,6 +22,13 @@
 //
 // The following calls functions can be called usig g_idle_add
 //
+
+typedef struct _ext_rx_filter_update {
+  int receiver_id;
+  int low;
+  int high;
+} EXT_RX_FILTER_UPDATE;
+
 extern int ext_start_radio(void* data);
 extern int ext_vfo_update(void* data);
 extern int ext_tune_update(void* data);
@@ -35,6 +42,8 @@ extern int ext_update_noise(void* data);
 extern int ext_update_notch(void* data);
 extern int ext_update_eq(void* data);
 extern int ext_set_vox(void* data);
+extern int ext_rx_filter_update(void* data);
+extern int ext_normalize_rx_filter_band(int mode, int *low, int *high);
 extern int ext_set_duplex(void* data);      // is this necessary?
 
 ///////////////////////////////////////////////////////////

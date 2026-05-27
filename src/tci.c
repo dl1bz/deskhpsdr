@@ -49,6 +49,7 @@
 #include "cw_engine.h"
 #include "audio.h"
 #include "band.h"
+#include "filter.h"
 #include "sliders.h"
 
 #define MAXDATASIZE     1024
@@ -168,6 +169,7 @@ static void tci_handle_text (CLIENT *client, char* msg);
 static const TCI_DISPATCH tci_dispatch[];
 
 static void tci_send_smeter (CLIENT *client, int v);
+static void tci_send_rx_filter_band (CLIENT *client, int v);
 static void tci_send_text (CLIENT *client, const char* msg);
 static GList *tci_clients_snapshot (void);
 static void tci_cw_macros_empty (void);
@@ -662,6 +664,7 @@ static void tci_send_vfo (CLIENT *client, int v, int c) {
   long long f;
   char msg[MAXMSGSIZE];
   if (v < 0 || v > 1) { return; }
+  if (v >= receivers) { return; }
   if (c < 0 || c > 1) { return; }
   if (v  == VFO_A && c == 0) {
     f = vfo[VFO_A].ctun ? vfo[VFO_A].ctun_frequency : vfo[VFO_A].frequency;
@@ -687,9 +690,10 @@ static void tci_broadcast_vfo (int v, int c) {
 
 static void tci_set_vfo (CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
   if (VfoNr < 0 || VfoNr > 1) { return; }
+  if (VfoNr >= receivers) { return; }
   if (Ch < 0 || Ch > 1) { return; }
   tci_begin_apply();
-  if (VfoNr  == VFO_A) {
+  if (VfoNr == VFO_A && Ch == 0) {
     vfo_set_frequency (VFO_A, SetFreq);
     client->last_fa = SetFreq;
     g_idle_add (ext_vfo_update, NULL);
@@ -721,6 +725,22 @@ static void tci_send_drive (CLIENT *client, int v) {
   tx_drive = radio_get_drive_as_int();
   if (v < 0 || v > 1) { return; }
   snprintf (msg, MAXMSGSIZE, "drive:%d,%d;", v, tx_drive);
+  tci_send_text (client, msg);
+}
+
+
+static void tci_send_rx_filter_band (CLIENT *client, int v) {
+  char msg[MAXMSGSIZE];
+  int mode;
+  int filter_id;
+  FILTER *filter;
+  if (v < 0 || v >= receivers || receiver[v] == NULL) { return; }
+  mode = vfo[v].mode;
+  filter_id = vfo[v].filter;
+  if (mode < 0 || mode >= MODES) { return; }
+  if (filter_id < 0 || filter_id >= FILTERS) { return; }
+  filter = &filters[mode][filter_id];
+  snprintf (msg, MAXMSGSIZE, "rx_filter_band:%d,%d,%d;", v, filter->low, filter->high);
   tci_send_text (client, msg);
 }
 
@@ -821,6 +841,7 @@ static void tci_send_mode_value (CLIENT *client, int v, int m) {
   char msg[MAXMSGSIZE];
   if (client == NULL) { return; }
   if (v < 0 || v > 1) { return; }
+  if (v >= receivers || receiver[v] == NULL) { return; }
   snprintf (msg, MAXMSGSIZE, "modulation:%d,%s;", v, tci_mode_name (m));
   tci_send_text (client, msg);
   if (v == 0) {
@@ -841,6 +862,7 @@ static void tci_broadcast_mode_value (int v, int m) {
     CLIENT *client = (CLIENT*) l->data;
     if (client != NULL && client->running) {
       tci_send_mode_value (client, v, m);
+      tci_send_rx_filter_band (client, v);
     }
   }
   g_list_free (clients);
@@ -852,8 +874,10 @@ void tci_vfo_changed (int id) {
     tci_broadcast_vfo (VFO_A, 0);
   } else if (id == VFO_B) {
     tci_broadcast_vfo (VFO_A, 1);
-    tci_broadcast_vfo (VFO_B, 0);
-    tci_broadcast_vfo (VFO_B, 1);
+    if (receivers > 1) {
+      tci_broadcast_vfo (VFO_B, 0);
+      tci_broadcast_vfo (VFO_B, 1);
+    }
   }
 }
 
@@ -861,10 +885,12 @@ void tci_vfos_changed (void) {
   if (!tci_running) { return; }
   tci_broadcast_vfo (VFO_A, 0);
   tci_broadcast_vfo (VFO_A, 1);
-  tci_broadcast_vfo (VFO_B, 0);
-  tci_broadcast_vfo (VFO_B, 1);
   tci_broadcast_mode_value (VFO_A, vfo[VFO_A].mode);
-  tci_broadcast_mode_value (VFO_B, vfo[VFO_B].mode);
+  if (receivers > 1) {
+    tci_broadcast_vfo (VFO_B, 0);
+    tci_broadcast_vfo (VFO_B, 1);
+    tci_broadcast_mode_value (VFO_B, vfo[VFO_B].mode);
+  }
   tci_broadcast_txfreq();
   tci_broadcast_split();
 }
@@ -909,12 +935,14 @@ static int tci_mode_change_cb (void* data) {
   tci_begin_apply();
   vfo_id_mode_changed (mc->vfo_id, mc->mode);
   tci_end_apply();
+  tci_broadcast_mode_value (mc->vfo_id, mc->mode);
   g_free (mc);
   return G_SOURCE_REMOVE;
 }
 
 static void tci_set_mode (CLIENT *client, int VfoNr, const char* mode_str) {
   if (VfoNr < 0 || VfoNr > 1) { return; }
+  if (VfoNr >= receivers || receiver[VfoNr] == NULL) { return; }
   int m = tci_parse_mode (mode_str);
   if (m < 0) {
     t_print ("TCI%d unknown mode: %s\n", client->seq, mode_str);
@@ -925,7 +953,6 @@ static void tci_set_mode (CLIENT *client, int VfoNr, const char* mode_str) {
   mc->vfo_id = VfoNr;
   mc->mode = m;
   g_idle_add (tci_mode_change_cb, mc);
-  tci_broadcast_mode_value (VfoNr, m);
 }
 
 static void tci_send_trx_count (CLIENT *client) {
@@ -1068,7 +1095,7 @@ static void tci_cmd_tx_sensors_enable (CLIENT *client, const TCI_CMD *cmd) {
 static void tci_cmd_audio_start (CLIENT *client, const TCI_CMD *cmd) {
   int receiver_id = tci_int (cmd->argv[0], 0);
   char msg[MAXMSGSIZE];
-  if (receiver_id < 0 || receiver_id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   g_mutex_lock (&tci_mutex);
   client->rx_audio_enabled[receiver_id] = 1;
   client->rx_audio_read_count[receiver_id] = tci_audio_get_write_count (receiver_id);
@@ -1119,7 +1146,7 @@ static void tci_cmd_audio_stream_samples (CLIENT *client, const TCI_CMD *cmd) {
 static void tci_cmd_audio_stop (CLIENT *client, const TCI_CMD *cmd) {
   int receiver_id = tci_int (cmd->argv[0], 0);
   char msg[MAXMSGSIZE];
-  if (receiver_id < 0 || receiver_id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   g_mutex_lock (&tci_mutex);
   client->rx_audio_enabled[receiver_id] = 0;
   g_mutex_unlock (&tci_mutex);
@@ -1173,6 +1200,32 @@ static void tci_cmd_drive (CLIENT *client, const TCI_CMD *cmd) {
     }
   }
   tci_send_drive (client, trx);
+}
+
+
+static void tci_cmd_rx_filter_band (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int (cmd->argv[0], 0);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 3) {
+    EXT_RX_FILTER_UPDATE *fu;
+    char msg[MAXMSGSIZE];
+    int low = tci_int (cmd->argv[1], 0);
+    int high = tci_int (cmd->argv[2], 0);
+    if (!ext_normalize_rx_filter_band(vfo[receiver_id].mode, &low, &high)) {
+      return;
+    }
+    fu = g_new (EXT_RX_FILTER_UPDATE, 1);
+    fu->receiver_id = receiver_id;
+    fu->low = low;
+    fu->high = high;
+    g_idle_add (ext_rx_filter_update, fu);
+    snprintf (msg, MAXMSGSIZE, "rx_filter_band:%d,%d,%d;", receiver_id, low, high);
+    tci_send_text (client, msg);
+  } else {
+    tci_send_rx_filter_band (client, receiver_id);
+  }
 }
 
 
@@ -1469,6 +1522,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "vfo",               2,  3, tci_cmd_vfo },
   { "rx_smeter",         1,  3, tci_cmd_rx_smeter },
   { "drive",             1,  2, tci_cmd_drive },
+  { "rx_filter_band",    1,  3, tci_cmd_rx_filter_band },
   { "cw_macros",         2, -1, tci_cmd_cw_macros },
   { "cw_macros_stop",    0,  0, tci_cmd_cw_macros_stop },
   { "cw_msg",             1,  4, tci_cmd_cw_msg },
@@ -1526,7 +1580,7 @@ static void tci_send_smeter (CLIENT *client, int v) {
   char msg[MAXMSGSIZE];
   int lvl;
   if (v < 0 || v > 1) { return; }
-  if (v == 1 && receivers == 1) { return; }
+  if (v >= receivers || receiver[v] == NULL) { return; }
   lvl = (int) (receiver[v]->meter - 0.5);
   // snprintf(msg, MAXMSGSIZE, "rx_smeter:%d,0,%d.0;",v,lvl);
   // tci_send_text(client, msg);
@@ -1546,7 +1600,7 @@ static void tci_send_rx (CLIENT *client, int v) {
   char msg[MAXMSGSIZE];
   int lvl;
   if (v < 0 || v > 1) { return; }
-  if (v == 1 && receivers == 1) { return; }
+  if (v >= receivers || receiver[v] == NULL) { return; }
   lvl = (int) (receiver[v]->meter - 0.5);
   snprintf (msg, MAXMSGSIZE, "rx_channel_sensors:%d,0,%d.0;", v, lvl);
   tci_send_text (client, msg);
@@ -1631,14 +1685,22 @@ static gboolean tci_reporter (gpointer data) {
     }
     if (fb != client->last_fb) {
       tci_send_vfo (client, 0, 1);
-      tci_send_vfo (client, 1, 0);
-      tci_send_vfo (client, 1, 1);
+      if (receivers > 1) {
+        tci_send_vfo (client, 1, 0);
+        tci_send_vfo (client, 1, 1);
+      }
     }
     if (ma  != client->last_ma) {
       tci_send_mode (client, 0);
+      tci_send_rx_filter_band (client, 0);
     }
     if (mb  != client->last_mb) {
-      tci_send_mode (client, 1);
+      if (receivers > 1) {
+        tci_send_mode (client, 1);
+        tci_send_rx_filter_band (client, 1);
+      } else {
+        client->last_mb = mb;
+      }
     }
   }
   return TRUE;
@@ -1730,6 +1792,7 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_vfo (client, VFO_A, 0);
   tci_send_vfo (client, VFO_A, 1);
   tci_send_mode (client, VFO_A);
+  tci_send_rx_filter_band (client, VFO_A);
   if (receivers > 1) {
     tci_send_dds (client, VFO_B);
     tci_send_text (client, "if:1,0,0;");
@@ -1737,6 +1800,7 @@ static void tci_send_initial_state (CLIENT *client) {
     tci_send_vfo (client, VFO_B, 0);
     tci_send_vfo (client, VFO_B, 1);
     tci_send_mode (client, VFO_B);
+    tci_send_rx_filter_band (client, VFO_B);
   }
   tci_send_text (client, "rx_enable:0,true;");
   if (receivers > 1) {

@@ -20,6 +20,8 @@
 #define RX_TIMEOUT_SEC 2
 
 static int verbose = 0;
+static int set_ip_requested = 0;
+static struct in_addr set_ip_addr;
 
 static const char *device_name(int id, int software_version) {
   switch (id) {
@@ -52,6 +54,25 @@ static void hexdump(const unsigned char *buf, ssize_t len) {
     printf("%02x ", buf[i]);
   }
   printf("\n");
+}
+
+static int send_set_ip_packet(int sock, const unsigned char *mac) {
+  unsigned char packet[DISCOVERY_LEN];
+  struct sockaddr_in dst;
+  memset(packet, 0, sizeof(packet));
+  packet[4] = 0x03;
+  memcpy(&packet[5], mac, 6);
+  memcpy(&packet[11], &set_ip_addr.s_addr, 4);
+  memset(&dst, 0, sizeof(dst));
+  dst.sin_family = AF_INET;
+  dst.sin_port = htons(DISCOVERY_PORT);
+  dst.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+  if (sendto(sock, packet, sizeof(packet), 0,
+             (struct sockaddr *)&dst, sizeof(dst)) < 0) {
+    perror("sendto(set-ip)");
+    return -1;
+  }
+  return 0;
 }
 
 static void discover_on_interface(struct ifaddrs *ifa) {
@@ -157,6 +178,18 @@ static void discover_on_interface(struct ifaddrs *ifa) {
     if (verbose) {
       hexdump(buf, n);
     }
+    if (set_ip_requested) {
+      char new_ip[INET_ADDRSTRLEN];
+      if (!inet_ntop(AF_INET, &set_ip_addr, new_ip, sizeof(new_ip))) {
+        strcpy(new_ip, "?");
+      }
+      if (send_set_ip_packet(sock, &buf[5]) == 0) {
+        printf("set-ip sent to %02x:%02x:%02x:%02x:%02x:%02x new_ip=%s if=%s\n",
+               buf[5], buf[6], buf[7], buf[8], buf[9], buf[10],
+               new_ip, ifa->ifa_name);
+      }
+      break;
+    }
   }
   close(sock);
 }
@@ -166,10 +199,16 @@ int main(int argc, char **argv) {
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-v") == 0) {
       verbose = 1;
+    } else if (strcmp(argv[i], "-s") == 0) {
+      if (++i >= argc || inet_pton(AF_INET, argv[i], &set_ip_addr) != 1) {
+        fprintf(stderr, "Usage: %s [-v] [-s ip-address] [interface]\n", argv[0]);
+        return 1;
+      }
+      set_ip_requested = 1;
     } else if (!wanted_if) {
       wanted_if = argv[i];
     } else {
-      fprintf(stderr, "Usage: %s [-v] [interface]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-v] [-s ip-address] [interface]\n", argv[0]);
       return 1;
     }
   }
