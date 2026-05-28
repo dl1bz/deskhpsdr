@@ -23,8 +23,8 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Hamlib                         | supported with own included rigctld           |                |
 | OpenHPSDR protocol 1           | fully supported                               |                |
 | OpenHPSDR protocol 2           | fully supported                               |                |
-| GPIO                           | ~~limited support~~ removed                   | deprecated     |
-| Soapy API / Soapy protocol     | ~~rudimentary supported~~ removed             | deprecated     |
+| GPIO                           | ~~limited support~~ removed since V2.7        | deprecated     |
+| Soapy API / Soapy protocol     | ~~rudimentary supported~~ removed since V2.7  | deprecated     |
 | Hermes Lite 2 N2ADR IO board   | supported                                     |                |
 | Use WDSP library ?             | yes, current 1.29                             |                |
 | Pure Signal / Pre-Distortion   | supported                                     |                |
@@ -92,25 +92,25 @@ I will never publish any ready-compiled binaries, neither for macOS nor for Linu
 
 ## The further development of deskHPSDR
 
-deskHPSDR is under active development, because software projects never finished. My focus with deskHPSDR is Fonie/SSB and Digimodes, less CW. Primary OS platform is macOS, but not Linux.<br>
+deskHPSDR is under active development, because software projects never finished. My focus with deskHPSDR is Fonie/SSB and Digimodes, less CW.<br>
 My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.<br>
 
-deskHPSDR is primarily developed for and under macOS. But made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority.
+deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority.
 
 ## Latest Changes
 
 **CHANGES are located in the [Discussions tab, category CHANGELOG deskhpsdr](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr).**
 
-### Version 2.6.x (current version)
+### Version 2.7.x (current version)
 
 On March 4, 2025 the **first final version 2.6 of deskHPSDR** was published.<br>
-Further development will start later from version 2.7.x by the end of 2026.<br>
+Current development start from version 2.7 in May 2026.<br>
 
 Most of the new functions need to be activated in the ``make.config.deskhpsdr`` as compiling option. Please look in the beginning of the  ``Makefile`` and set the needed options only in ``make.config.deskhpsdr``, but don't modify the ``Makefile`` itself !
 
 ## Issues and Discussion tab at Github for this project - read carefully !
 
-- the**Issues tab is only for reporting issues, bugs or malfunctions of this app** !
+- the **Issues tab is only for reporting issues, bugs or malfunctions of this app** !
 - for all other things please use necessarily the [discussions tab](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr)
 
 ## Known problems if using Git for update the code base at your local computer
@@ -133,14 +133,12 @@ This overwrite ALL local changes you are made, which are different from my curre
 
 So far, deskHPSDR has been successfully tested on the following systems:<br>
 
-* iMac 21" i5 running macOS 15 aka Sequoia
 * Macbook Air M1 running macOS 26 aka Tahoe
 * Mac mini M4 2024 running macOS 26 aka Tahoe
-* old Macbook Pro i7 & old Macbook Air i5 running Linux Mint "Faye" Debian-Edition
-* Raspberry Pi5 with NVMe-HAT running 64bit PiOS (based at Debian "Bookworm") and X11 environment
+* old Macbook Pro i7 running Linux Mint "Faye" Debian-Edition
 * Raspberry CM5 module based with NVMe SSD running 64bit PiOS (based at Debian "Trixie") and X11 environment
 
-**All radio tests are made with my Hermes Lite 2 SDR-Transceiver using HPSDR protocol V1 under macOS 15 and macOS 26**
+**All radio tests are made with my Hermes Lite 2 SDR-Transceiver using OpenHPSDR protocol P1 under macOS 26.**
 **There are no issues with the Hermes Lite 2 and deskHPSDR yet, but it is not possible to check ALL other exist SDR devices.**
 **Additional tests with my new Brick2 14bit SDR transceiver are also carried out with P2 OpenHPSDR protocol.**
 
@@ -152,7 +150,7 @@ Special thanks to:<br>
 - my wife for her great patience and understanding
 - John Melton G0ORX & Christoph van Wüllen DL1YCF for their earlier and current pihpsdr development
 - Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
-- all of the active users and contributors for support deskHPSDR
+- all of the active users and contributors for support deskHPSDR, Open Source Soft- and Hardware
 
 ## Exclusion of any Guarantee and any Warrenty and limited Support
 
