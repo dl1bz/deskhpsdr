@@ -43,6 +43,9 @@
 #include "property.h"
 #include "main.h"
 #include "ext.h"
+#include "tci.h"
+
+extern void tci_mute_changed(int receiver_id);
 #include "rigctl.h"
 #include "actions.h"
 #include "message.h"
@@ -104,6 +107,7 @@ static GtkWidget *lev_scale;
 static GtkWidget *lev_btn;
 static gulong lev_btn_signal_id;
 static gulong lev_scale_signal_id;
+static gulong af_gain_scale_signal_id;
 static GtkWidget *preamp_label;
 static GtkWidget *preamp_btn;
 static gulong preamp_btn_signal_id;
@@ -449,6 +453,7 @@ void set_agc_gain(int rx, double value) {
 static void afgain_value_changed_cb(GtkWidget *widget, gpointer data) {
   active_receiver->volume = gtk_range_get_value(GTK_RANGE(af_gain_scale));
   rx_set_af_gain(active_receiver);
+  tci_volume_changed(active_receiver->id);
 }
 
 void set_af_gain(int rx, double value) {
@@ -659,6 +664,7 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
     gtk_widget_set_tooltip_text(widget, NULL);
     gtk_widget_set_tooltip_text(widget, txpwr_ttip_txt);
   }
+  tci_drive_changed();
 }
 
 void show_filter_high(int rx, int var) {
@@ -1016,6 +1022,15 @@ void update_slider_lev_scale(gboolean show_widget) {
   }
 }
 
+void update_slider_af_gain_scale(void) {
+  if (display_sliders && active_receiver != NULL) {
+    g_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    gtk_range_set_value(GTK_RANGE(af_gain_scale), (double)active_receiver->volume);
+    g_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    gtk_widget_queue_draw(af_gain_scale);
+  }
+}
+
 void update_slider_autogain_btn(void) {
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON(autogain_btn), autogain_btn_signal_id);
@@ -1118,6 +1133,7 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
   active_receiver->mute_radio = !active_receiver->mute_radio;
   g_idle_add(ext_vfo_update, NULL);
   update_slider_af_gain_btn();
+  tci_mute_changed(active_receiver->id);
 }
 
 void update_slider_split_btn(void) {
@@ -1376,7 +1392,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   for (float i = -40.0; i <= 0.0; i += 5.0) {
     gtk_scale_add_mark(GTK_SCALE(af_gain_scale), i, GTK_POS_TOP, NULL);
   }
-  g_signal_connect(G_OBJECT(af_gain_scale), "value_changed", G_CALLBACK(afgain_value_changed_cb), NULL);
+  af_gain_scale_signal_id = g_signal_connect(G_OBJECT(af_gain_scale), "value_changed",
+                            G_CALLBACK(afgain_value_changed_cb), NULL);
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_scale, TRUE, TRUE, 0);
   //-----------------------------------------------------------------------------------------------------------

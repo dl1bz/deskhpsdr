@@ -28,6 +28,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <stdbool.h>
 
@@ -156,6 +157,11 @@ typedef struct {
   char *argv[TCI_MAX_ARGS];
 } TCI_CMD;
 
+typedef struct {
+  int receiver_id;
+  int state;
+} TCI_RX_MUTE_UPDATE;
+
 typedef void (*TCI_HANDLER) (CLIENT *client, const TCI_CMD *cmd);
 
 typedef struct {
@@ -227,13 +233,20 @@ void launch_tci (void) {
   tci_server_thread_id = g_thread_new ("tci lws server", tci_lws_server, GINT_TO_POINTER (tci_port));
 }
 
+static int tci_has_clients(void) {
+  int have_clients;
+  GList *clients = tci_clients_snapshot();
+  have_clients = (clients != NULL);
+  g_list_free(clients);
+  return have_clients;
+}
+
 //
 // Shut down TCI system. Called from CAT/TCI menu
 // if TCI is disabled there.
 //
 void shutdown_tci (void) {
   t_print ("%s\n", __func__);
-  tci_running = 0;
   if (tci_tx_chrono_timer_id != 0) {
     g_source_remove (tci_tx_chrono_timer_id);
     tci_tx_chrono_timer_id = 0;
@@ -241,6 +254,23 @@ void shutdown_tci (void) {
   tci_audio_set_active (0);
   tci_audio_set_wakeup_callback (NULL);
   cw_engine_set_empty_callback(NULL);
+  if (tci_lws_context != NULL) {
+    GList *clients = tci_clients_snapshot();
+    for (GList *l = clients; l != NULL; l = l->next) {
+      CLIENT *client = (CLIENT *) l->data;
+      if (client != NULL && client->wsi != NULL) {
+        client->running = 0;
+        lws_set_timeout(client->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+      }
+    }
+    g_list_free(clients);
+    lws_cancel_service (tci_lws_context);
+    for (int i = 0; i < 50 && tci_has_clients(); i++) {
+      lws_cancel_service (tci_lws_context);
+      g_usleep(10000);
+    }
+  }
+  tci_running = 0;
   if (tci_lws_context != NULL) {
     lws_cancel_service (tci_lws_context);
   }
@@ -719,12 +749,11 @@ static void tci_send_limits (CLIENT *client) {
   tci_send_text (client, msg);
 }
 
-static void tci_send_drive (CLIENT *client, int v) {
+static void tci_send_drive (CLIENT *client) {
   char msg[MAXMSGSIZE];
   int tx_drive;
   tx_drive = radio_get_drive_as_int();
-  if (v < 0 || v > 1) { return; }
-  snprintf (msg, MAXMSGSIZE, "drive:%d,%d;", v, tx_drive);
+  snprintf (msg, MAXMSGSIZE, "drive:0,%d;", tx_drive);
   tci_send_text (client, msg);
 }
 
@@ -742,6 +771,33 @@ static void tci_send_rx_filter_band (CLIENT *client, int v) {
   filter = &filters[mode][filter_id];
   snprintf (msg, MAXMSGSIZE, "rx_filter_band:%d,%d,%d;", v, filter->low, filter->high);
   tci_send_text (client, msg);
+}
+
+static void tci_broadcast_rx_filter_band_value (int receiver_id, int low, int high) {
+  char msg[MAXMSGSIZE];
+  GList *clients = tci_clients_snapshot();
+  snprintf (msg, MAXMSGSIZE, "rx_filter_band:%d,%d,%d;", receiver_id, low, high);
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_text (client, msg);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_rx_filter_band_changed (int receiver_id) {
+  GList *clients;
+  if (!tci_running) { return; }
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_filter_band (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
 }
 
 static void tci_send_split (CLIENT *client) {
@@ -772,6 +828,149 @@ static void tci_send_tune (CLIENT *client) {
   }
 }
 
+static void tci_send_mute (CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  int state = 0;
+  if (active_receiver != NULL) {
+    state = active_receiver->mute_radio ? 1 : 0;
+  }
+  snprintf (msg, MAXMSGSIZE, "mute:%s;", state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_mute_state (CLIENT *client, int state) {
+  char msg[MAXMSGSIZE];
+  snprintf (msg, MAXMSGSIZE, "mute:%s;", state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_mute_state (int state) {
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_mute_state (client, state);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_send_rx_mute (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_mute:%d,%s;", receiver_id, receiver[receiver_id]->mute_radio ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_rx_mute_state (CLIENT *client, int receiver_id, int state) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_mute:%d,%s;", receiver_id, state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_rx_mute_state (int receiver_id, int state) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_mute_state (client, receiver_id, state);
+    }
+  }
+  g_list_free (clients);
+}
+
+
+void tci_mute_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  if (active_receiver != NULL) {
+    tci_broadcast_mute_state(active_receiver->mute_radio ? 1 : 0);
+  }
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
+  tci_broadcast_rx_mute_state(receiver_id, receiver[receiver_id]->mute_radio ? 1 : 0);
+}
+
+void tci_rx_mute_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
+  tci_broadcast_rx_mute_state(receiver_id, receiver[receiver_id]->mute_radio ? 1 : 0);
+}
+
+static double tci_clamp_volume(double value) {
+  if (value < -40.0) { return -40.0; }
+  if (value > 0.0) { return 0.0; }
+  return value;
+}
+
+static void tci_send_volume (CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  double value = 0.0;
+  if (active_receiver != NULL) {
+    value = tci_clamp_volume(active_receiver->volume);
+  }
+  snprintf (msg, MAXMSGSIZE, "volume:%0.0f;", value);
+  tci_send_text (client, msg);
+}
+
+static void tci_send_volume_value (CLIENT *client, double value) {
+  char msg[MAXMSGSIZE];
+  value = tci_clamp_volume(value);
+  snprintf (msg, MAXMSGSIZE, "volume:%0.0f;", value);
+  tci_send_text (client, msg);
+}
+
+static void tci_send_rx_volume (CLIENT *client, int receiver_id, int channel) {
+  char msg[MAXMSGSIZE];
+  double value;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  if (channel < 0 || channel > 1) { return; }
+  value = tci_clamp_volume(receiver[receiver_id]->volume);
+  snprintf (msg, MAXMSGSIZE, "rx_volume:%d,%d,%0.0f;", receiver_id, channel, value);
+  tci_send_text (client, msg);
+}
+
+static void tci_send_rx_volume_value (CLIENT *client, int receiver_id, int channel, double value) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  if (channel < 0 || channel > 1) { return; }
+  value = tci_clamp_volume(value);
+  snprintf (msg, MAXMSGSIZE, "rx_volume:%d,%d,%0.0f;", receiver_id, channel, value);
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_volume (void) {
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_volume (client);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_rx_volume (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_volume (client, receiver_id, 0);
+      tci_send_rx_volume (client, receiver_id, 1);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_volume_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_volume();
+  tci_broadcast_rx_volume(receiver_id);
+}
+
 static void tci_send_txfreq (CLIENT *client) {
   char msg[MAXMSGSIZE];
   long long f = vfo_get_tx_freq();
@@ -786,6 +985,17 @@ static void tci_broadcast_txfreq (void) {
     CLIENT *client = (CLIENT*) l->data;
     if (client != NULL && client->running) {
       tci_send_txfreq (client);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_drive (void) {
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_drive (client);
     }
   }
   g_list_free (clients);
@@ -892,6 +1102,7 @@ void tci_vfos_changed (void) {
     tci_broadcast_mode_value (VFO_B, vfo[VFO_B].mode);
   }
   tci_broadcast_txfreq();
+  tci_broadcast_drive();
   tci_broadcast_split();
 }
 
@@ -904,6 +1115,11 @@ void tci_mode_changed (int id) {
 void tci_tx_frequency_changed (void) {
   if (!tci_running) { return; }
   tci_broadcast_txfreq();
+}
+
+void tci_drive_changed (void) {
+  if (!tci_running) { return; }
+  tci_broadcast_drive();
 }
 
 static int tci_parse_mode (const char* mode_str) {
@@ -957,7 +1173,7 @@ static void tci_set_mode (CLIENT *client, int VfoNr, const char* mode_str) {
 
 static void tci_send_trx_count (CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf (msg, MAXMSGSIZE, "trx_count:%d;", receivers);
+  snprintf (msg, MAXMSGSIZE, "trx_count:1;");
   tci_send_text (client, msg);
 }
 
@@ -1008,10 +1224,42 @@ static int tci_int (const char* s, int def) {
   return s != NULL ? atoi (s) : def;
 }
 
+static double tci_double (const char* s, double def) {
+  return s != NULL ? atof (s) : def;
+}
+
 static int tci_clamp_int(int value, int min, int max) {
   if (value < min) { return min; }
   if (value > max) { return max; }
   return value;
+}
+
+static int tci_apply_mute_update (void *data) {
+  int state = GPOINTER_TO_INT (data) ? 1 : 0;
+  if (active_receiver != NULL) {
+    active_receiver->mute_radio = state;
+    g_idle_add (ext_vfo_update, NULL);
+    update_slider_af_gain_btn();
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static int tci_apply_rx_mute_update (void *data) {
+  TCI_RX_MUTE_UPDATE *mu = (TCI_RX_MUTE_UPDATE*) data;
+  int receiver_id;
+  int state;
+  if (mu == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  receiver_id = mu->receiver_id;
+  state = mu->state ? 1 : 0;
+  if (receiver_id >= 0 && receiver_id < receivers && receiver[receiver_id] != NULL) {
+    receiver[receiver_id]->mute_radio = state;
+    g_idle_add (ext_vfo_update, NULL);
+    update_slider_af_gain_btn();
+  }
+  g_free (mu);
+  return G_SOURCE_REMOVE;
 }
 
 static long long tci_ll (const char* s, long long def) {
@@ -1024,7 +1272,15 @@ static void tci_cmd_trx_count (CLIENT *client, const TCI_CMD *cmd) {
 }
 
 static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
-  int source_tci = (cmd->argc >= 3 && cmd->argv[2] != NULL && !g_ascii_strcasecmp (cmd->argv[2], "tci"));
+  int trx = 0;
+  int source_tci;
+  if (cmd->argc >= 1) {
+    trx = tci_int (cmd->argv[0], -1);
+    if (trx != 0) {
+      return;
+    }
+  }
+  source_tci = (cmd->argc >= 3 && cmd->argv[2] != NULL && !g_ascii_strcasecmp (cmd->argv[2], "tci"));
   if (cmd->argc >= 2) {
     if (tci_bool (cmd->argv[1])) {
       if (source_tci) {
@@ -1071,12 +1327,82 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
 }
 
 static void tci_cmd_tune (CLIENT *client, const TCI_CMD *cmd) {
+  int trx = 0;
+  if (cmd->argc >= 1) {
+    trx = tci_int (cmd->argv[0], -1);
+    if (trx != 0) {
+      return;
+    }
+  }
   if (cmd->argc >= 2) {
     int state = tci_bool (cmd->argv[1]);
     g_idle_add (ext_tune_update, GINT_TO_POINTER (state));
     t_print ("TCI%d TUNE request=%d\n", client->seq, state);
   } else {
     tci_send_tune (client);
+  }
+}
+
+static void tci_cmd_mute (CLIENT *client, const TCI_CMD *cmd) {
+  if (cmd->argc >= 1) {
+    int state = tci_bool (cmd->argv[0]) ? 1 : 0;
+    g_idle_add (tci_apply_mute_update, GINT_TO_POINTER (state));
+    tci_broadcast_mute_state (state);
+  } else {
+    tci_send_mute (client);
+  }
+}
+
+static void tci_cmd_rx_mute (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int (cmd->argv[0], 0);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    int state = tci_bool (cmd->argv[1]) ? 1 : 0;
+    TCI_RX_MUTE_UPDATE *mu = g_new (TCI_RX_MUTE_UPDATE, 1);
+    mu->receiver_id = receiver_id;
+    mu->state = state;
+    g_idle_add (tci_apply_rx_mute_update, mu);
+    tci_broadcast_rx_mute_state (receiver_id, state);
+  } else {
+    tci_send_rx_mute (client, receiver_id);
+  }
+}
+
+static void tci_cmd_volume (CLIENT *client, const TCI_CMD *cmd) {
+  if (cmd->argc >= 1) {
+    double value = tci_clamp_volume(tci_double(cmd->argv[0], 0.0));
+    if (active_receiver != NULL && active_receiver->id >= 0 && active_receiver->id < receivers && active_receiver->id < 2) {
+      EXT_AF_GAIN_UPDATE *ag = g_new (EXT_AF_GAIN_UPDATE, 1);
+      ag->receiver_id = active_receiver->id;
+      ag->value = value;
+      g_idle_add (ext_set_af_gain, ag);
+      tci_send_volume_value (client, value);
+    }
+  } else {
+    tci_send_volume (client);
+  }
+}
+
+static void tci_cmd_rx_volume (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int (cmd->argv[0], 0);
+  int channel = tci_int (cmd->argv[1], 0);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (channel < 0 || channel > 1) {
+    return;
+  }
+  if (cmd->argc >= 3) {
+    double value = tci_clamp_volume(tci_double(cmd->argv[2], 0.0));
+    EXT_AF_GAIN_UPDATE *ag = g_new (EXT_AF_GAIN_UPDATE, 1);
+    ag->receiver_id = receiver_id;
+    ag->value = value;
+    g_idle_add (ext_set_af_gain, ag);
+    tci_send_rx_volume_value (client, receiver_id, channel, value);
+  } else {
+    tci_send_rx_volume (client, receiver_id, channel);
   }
 }
 
@@ -1182,10 +1508,22 @@ static void tci_cmd_rx_smeter (CLIENT *client, const TCI_CMD *cmd) {
 }
 
 static void tci_cmd_drive (CLIENT *client, const TCI_CMD *cmd) {
-  int trx = tci_int (cmd->argv[0], 0);
-  if (cmd->argc >= 2) {
-    int value = tci_int (cmd->argv[1], 0);
-    if (value > 0 && value <= 100) {
+  int trx;
+  int value;
+  int changed = 0;
+  if (cmd->argc >= 1) {
+    trx = tci_int (cmd->argv[0], -1);
+    if (trx != 0) {
+      return;
+    }
+    if (cmd->argc >= 2) {
+      value = tci_int (cmd->argv[1], 0);
+      if (value < 0) {
+        value = 0;
+      }
+      if (value > 100) {
+        value = 100;
+      }
       radio_set_drive (value);
       if (can_transmit) {
         int v = vfo_get_tx_vfo();
@@ -1197,9 +1535,14 @@ static void tci_cmd_drive (CLIENT *client, const TCI_CMD *cmd) {
         }
       }
       update_drive_scale();
+      changed = 1;
     }
   }
-  tci_send_drive (client, trx);
+  if (changed) {
+    tci_broadcast_drive();
+  } else {
+    tci_send_drive (client);
+  }
 }
 
 
@@ -1210,7 +1553,6 @@ static void tci_cmd_rx_filter_band (CLIENT *client, const TCI_CMD *cmd) {
   }
   if (cmd->argc >= 3) {
     EXT_RX_FILTER_UPDATE *fu;
-    char msg[MAXMSGSIZE];
     int low = tci_int (cmd->argv[1], 0);
     int high = tci_int (cmd->argv[2], 0);
     if (!ext_normalize_rx_filter_band(vfo[receiver_id].mode, &low, &high)) {
@@ -1221,8 +1563,7 @@ static void tci_cmd_rx_filter_band (CLIENT *client, const TCI_CMD *cmd) {
     fu->low = low;
     fu->high = high;
     g_idle_add (ext_rx_filter_update, fu);
-    snprintf (msg, MAXMSGSIZE, "rx_filter_band:%d,%d,%d;", receiver_id, low, high);
-    tci_send_text (client, msg);
+    tci_broadcast_rx_filter_band_value (receiver_id, low, high);
   } else {
     tci_send_rx_filter_band (client, receiver_id);
   }
@@ -1510,6 +1851,10 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "trx_count",         0,  0, tci_cmd_trx_count },
   { "trx",               0, -1, tci_cmd_trx },
   { "tune",              0, -1, tci_cmd_tune },
+  { "mute",              0,  1, tci_cmd_mute },
+  { "rx_mute",           1,  2, tci_cmd_rx_mute },
+  { "volume",            0,  1, tci_cmd_volume },
+  { "rx_volume",         2,  3, tci_cmd_rx_volume },
   { "audio_samplerate",            0, -1, tci_cmd_audio_samplerate },
   { "audio_stream_sample_type",    0, -1, tci_cmd_audio_stream_sample_type },
   { "audio_stream_channels",       0, -1, tci_cmd_audio_stream_channels },
@@ -1521,7 +1866,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "modulation",        1,  2, tci_cmd_modulation },
   { "vfo",               2,  3, tci_cmd_vfo },
   { "rx_smeter",         1,  3, tci_cmd_rx_smeter },
-  { "drive",             1,  2, tci_cmd_drive },
+  { "drive",             0,  2, tci_cmd_drive },
   { "rx_filter_band",    1,  3, tci_cmd_rx_filter_band },
   { "cw_macros",         2, -1, tci_cmd_cw_macros },
   { "cw_macros_stop",    0,  0, tci_cmd_cw_macros_stop },
@@ -1663,7 +2008,7 @@ static gboolean tci_reporter (gpointer data) {
       tci_send_rx (client, 1);
     }
     if (client->txsensor && (client->count & 1)) {
-      tci_send_drive (client, 0);
+      tci_send_drive (client);
     }
     if (receivers > 0 && client->rxsensor && (client->count & 1)) {
       if (receivers == 1) {
@@ -1810,7 +2155,16 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_split (client);
   tci_send_mox (client);
   tci_send_tune (client);
-  tci_send_text (client, "mute:false;");
+  tci_send_mute (client);
+  tci_send_rx_mute (client, VFO_A);
+  tci_send_volume (client);
+  tci_send_rx_volume (client, VFO_A, 0);
+  tci_send_rx_volume (client, VFO_A, 1);
+  if (receivers > 1) {
+    tci_send_rx_mute (client, VFO_B);
+    tci_send_rx_volume (client, VFO_B, 0);
+    tci_send_rx_volume (client, VFO_B, 1);
+  }
   tci_send_macros_cwspeed (client);
   tci_send_cw_macros_delay(client);
   tci_send_keyer_cwspeed (client);
@@ -1955,7 +2309,8 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
     }
     break;
   case LWS_CALLBACK_SERVER_WRITEABLE:
-    if (client == NULL || !client->running || client->wsi == NULL) { return 0; }
+    if (client == NULL || client->wsi == NULL) { return 0; }
+    if (!client->running) { return -1; }
     // if (rigctl_debug && client->lws_tx_queue != NULL && !g_queue_is_empty(client->lws_tx_queue)) {
     //  t_print("LWS WRITEABLE queued=%u\n", g_queue_get_length(client->lws_tx_queue));
     // }

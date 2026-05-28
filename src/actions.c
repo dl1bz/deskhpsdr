@@ -52,6 +52,7 @@
 #include "equalizer_menu.h"
 #include "exit_menu.h"
 #include "message.h"
+#include "tci.h"
 #include "dxcluster.h"
 #include "greyline.h"
 #include "rx_panadapter.h"
@@ -493,15 +494,18 @@ int process_action(void* data) {
   case AF_GAIN:
     value = KnobOrWheel(a, active_receiver->volume, -40.0, 0.0, 1.0);
     set_af_gain(active_receiver->id, value);
+    tci_volume_changed(active_receiver->id);
     break;
   case AF_GAIN_RX1:
     value = KnobOrWheel(a, receiver[0]->volume, -40.0, 0.0, 1.0);
     set_af_gain(0, value);
+    tci_volume_changed(0);
     break;
   case AF_GAIN_RX2:
     if (receivers == 2) {
       value = KnobOrWheel(a, receiver[1]->volume, -40.0, 0.0, 1.0);
       set_af_gain(1, value);
+      tci_volume_changed(1);
     }
     break;
   case AGC:
@@ -1026,6 +1030,7 @@ int process_action(void* data) {
   case DRIVE:
     value = KnobOrWheel(a, radio_get_drive(), 0.0, drive_max, 1.0);
     set_drive(value);
+    tci_drive_changed();
     break;
   case DUPLEX:
     //
@@ -1043,6 +1048,7 @@ int process_action(void* data) {
       int f = vfo[active_receiver->id].filter + 1;
       if (f >= FILTERS) { f = 0; }
       vfo_filter_changed(f);
+      tci_rx_filter_band_changed(active_receiver->id);
     }
     break;
   case FILTER_PLUS:
@@ -1052,19 +1058,23 @@ int process_action(void* data) {
       int f = vfo[active_receiver->id].filter - 1;
       if (f < 0) { f = FILTERS - 1; }
       vfo_filter_changed(f);
+      tci_rx_filter_band_changed(active_receiver->id);
     }
     break;
   case FILTER_CUT_HIGH: {
     filter_high_changed(active_receiver->id, a->val);
+    tci_rx_filter_band_changed(active_receiver->id);
   }
   break;
   case FILTER_CUT_LOW: {
     filter_low_changed(active_receiver->id, a->val);
+    tci_rx_filter_band_changed(active_receiver->id);
   }
   break;
   case FILTER_CUT_DEFAULT:
     if (a->mode == PRESSED) {
       filter_cut_default(active_receiver->id);
+      tci_rx_filter_band_changed(active_receiver->id);
     }
     break;
   case FUNCTION:
@@ -1314,6 +1324,7 @@ int process_action(void* data) {
   case MUTE:
     if (a->mode == PRESSED) {
       active_receiver->mute_radio = !active_receiver->mute_radio;
+      tci_mute_changed(active_receiver->id);
       g_idle_add(ext_vfo_update, NULL);
       update_slider_af_gain_btn();
     }
@@ -1321,12 +1332,14 @@ int process_action(void* data) {
   case MUTE_RX1:
     if (a->mode == PRESSED) {
       receiver[0]->mute_radio = !receiver[0]->mute_radio;
+      tci_rx_mute_changed(0);
       g_idle_add(ext_vfo_update, NULL);
     }
     break;
   case MUTE_RX2:
     if (a->mode == PRESSED && receivers > 1) {
       receiver[1]->mute_radio = !receiver[1]->mute_radio;
+      tci_rx_mute_changed(1);
       g_idle_add(ext_vfo_update, NULL);
     }
     break;

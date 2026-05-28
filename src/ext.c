@@ -109,14 +109,38 @@ int ext_set_vox(void* data) {
   return G_SOURCE_REMOVE;
 }
 
+int ext_set_af_gain(void* data) {
+  EXT_AF_GAIN_UPDATE *ag = (EXT_AF_GAIN_UPDATE*) data;
+  int receiver_id;
+  double value;
+  if (ag == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  receiver_id = ag->receiver_id;
+  value = ag->value;
+  if (value < -40.0) {
+    value = -40.0;
+  }
+  if (value > 0.0) {
+    value = 0.0;
+  }
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    receiver[receiver_id]->volume = value;
+    rx_set_af_gain(receiver[receiver_id]);
+    if (display_sliders && active_receiver != NULL && receiver_id == active_receiver->id) {
+      update_slider_af_gain_scale();
+    }
+  }
+  g_free(ag);
+  return G_SOURCE_REMOVE;
+}
+
 
 int ext_normalize_rx_filter_band(int mode, int *low, int *high) {
   int a;
   int b;
   int min_abs;
   int max_abs;
-  int width;
-  int half_width;
   if (low == NULL || high == NULL) {
     return 0;
   }
@@ -130,24 +154,12 @@ int ext_normalize_rx_filter_band(int mode, int *low, int *high) {
     *low = -max_abs;
     *high = -min_abs;
     break;
-  case modeCWL:
-    width = abs(*high - *low);
-    half_width = width / 2;
-    *low = -cw_keyer_sidetone_frequency - half_width;
-    *high = -cw_keyer_sidetone_frequency + half_width;
-    break;
   case modeUSB:
   case modeDIGU:
     a = abs(*low);
     b = abs(*high);
     *low = a < b ? a : b;
     *high = a > b ? a : b;
-    break;
-  case modeCWU:
-    width = abs(*high - *low);
-    half_width = width / 2;
-    *low = cw_keyer_sidetone_frequency - half_width;
-    *high = cw_keyer_sidetone_frequency + half_width;
     break;
   default:
     if (*low > *high) {
@@ -164,10 +176,9 @@ int ext_rx_filter_update(void* data) {
   EXT_RX_FILTER_UPDATE *fu = (EXT_RX_FILTER_UPDATE*) data;
   int receiver_id;
   int mode;
-  int filter_id;
   int low;
   int high;
-  FILTER *filter;
+  int matched_filter = -1;
   if (fu == NULL) {
     return G_SOURCE_REMOVE;
   }
@@ -179,12 +190,7 @@ int ext_rx_filter_update(void* data) {
     return G_SOURCE_REMOVE;
   }
   mode = vfo[receiver_id].mode;
-  filter_id = vfo[receiver_id].filter;
   if (mode < 0 || mode >= MODES) {
-    g_free(fu);
-    return G_SOURCE_REMOVE;
-  }
-  if (filter_id < 0 || filter_id >= FILTERS) {
     g_free(fu);
     return G_SOURCE_REMOVE;
   }
@@ -192,14 +198,20 @@ int ext_rx_filter_update(void* data) {
     g_free(fu);
     return G_SOURCE_REMOVE;
   }
-  filter = &filters[mode][filter_id];
-  filter->low = low;
-  filter->high = high;
-  for (int i = 0; i < receivers; i++) {
-    if (receiver[i] != NULL && vfo[i].mode == mode && vfo[i].filter == filter_id) {
-      rx_filter_changed(receiver[i]);
+  for (int i = 0; i < FILTERS; i++) {
+    if (filters[mode][i].low == low && filters[mode][i].high == high) {
+      matched_filter = i;
+      break;
     }
   }
+  if (matched_filter >= 0) {
+    vfo[receiver_id].filter = matched_filter;
+  } else {
+    filters[mode][filterVar1].low = low;
+    filters[mode][filterVar1].high = high;
+    vfo[receiver_id].filter = filterVar1;
+  }
+  rx_filter_changed(receiver[receiver_id]);
   g_idle_add(ext_vfo_update, NULL);
   g_free(fu);
   return G_SOURCE_REMOVE;

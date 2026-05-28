@@ -35,6 +35,7 @@
 #include "receiver.h"
 #include "vfo.h"
 #include "ext.h"
+#include "tci.h"
 #include "message.h"
 
 static GtkWidget *dialog = NULL;
@@ -162,6 +163,7 @@ static gboolean filter_select_cb (GtkWidget *widget, gpointer data) {
   //
   current = choice;
   vfo_filter_changed (current->info);
+  tci_rx_filter_band_changed (active_receiver->id);
   return FALSE;
 }
 
@@ -228,8 +230,9 @@ static void var_spin_low_cb (GtkWidget *widget, gpointer data) {
   // Change all receivers that use *this* variable filter
   //
   for (int i = 0; i < receivers; i++) {
-    if (vfo[i].filter == f) {
+    if (receiver[i] != NULL && vfo[i].mode == m && vfo[i].filter == f) {
       rx_filter_changed (receiver[i]);
+      tci_rx_filter_band_changed (i);
     }
   }
   g_idle_add (ext_vfo_update, NULL);
@@ -286,8 +289,9 @@ static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
   // Change all receivers that use *this* variable filter
   //
   for (int i = 0; i < receivers; i++) {
-    if (vfo[i].filter == f) {
+    if (receiver[i] != NULL && vfo[i].mode == m && vfo[i].filter == f) {
       rx_filter_changed (receiver[i]);
+      tci_rx_filter_band_changed (i);
     }
   }
   g_idle_add (ext_vfo_update, NULL);
