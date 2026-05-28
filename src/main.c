@@ -33,6 +33,8 @@
 #include <arpa/inet.h>
 #include <curl/curl.h>
 #include <pthread.h>
+#include <fcntl.h>
+#include <sys/file.h>
 
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
@@ -92,6 +94,21 @@ GtkWidget *topgrid;
 static GtkWidget *status_label;
 
 pthread_t deskhpsdr_main_thread;  // global
+
+static int instance_lock_fd = -1;
+
+static int acquire_instance_lock(void) {
+  instance_lock_fd = open("/tmp/deskhpsdr.lock", O_RDWR | O_CREAT, 0600);
+  if (instance_lock_fd < 0) {
+    return 0;
+  }
+  if (flock(instance_lock_fd, LOCK_EX | LOCK_NB) < 0) {
+    close(instance_lock_fd);
+    instance_lock_fd = -1;
+    return 0;
+  }
+  return 1;
+}
 
 #if !defined(__WAYLAND__)
 static gboolean block_delete(GtkWidget *w, GdkEvent *e, gpointer data) {
@@ -863,6 +880,10 @@ int main(int argc, char** argv) {
     fprintf(stderr, "SATURN min:max major FPGA : %d:%d\n", saturn_major_version_min(), saturn_major_version_max());
 #endif
     exit(0);
+  }
+  if (!acquire_instance_lock()) {
+    fprintf(stderr, "deskHPSDR is already running\n");
+    exit(1);
   }
   //
   // The following call will most likely fail (until this program
