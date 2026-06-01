@@ -1023,11 +1023,20 @@ void update_slider_lev_scale(gboolean show_widget) {
 }
 
 void update_slider_af_gain_scale(void) {
-  if (display_sliders && active_receiver != NULL) {
+  if (display_sliders && af_gain_scale != NULL && active_receiver != NULL) {
     g_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
-    gtk_range_set_value(GTK_RANGE(af_gain_scale), (double)active_receiver->volume);
+    gtk_range_set_value(GTK_RANGE(af_gain_scale), (double) active_receiver->volume);
     g_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
     gtk_widget_queue_draw(af_gain_scale);
+  }
+}
+
+void update_slider_agc_gain_scale(void) {
+  if (display_sliders && agc_gain_scale != NULL && active_receiver != NULL) {
+    g_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
+    gtk_range_set_value(GTK_RANGE(agc_gain_scale), (double) active_receiver->agc_gain);
+    g_signal_handler_unblock(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
+    gtk_widget_queue_draw(agc_gain_scale);
   }
 }
 
