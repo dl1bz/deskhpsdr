@@ -185,6 +185,24 @@ int ext_set_agc_mode(void* data) {
   return G_SOURCE_REMOVE;
 }
 
+int ext_set_iq_samplerate(void* data) {
+  int samplerate = GPOINTER_TO_INT(data);
+  if (protocol != ORIGINAL_PROTOCOL && protocol != NEW_PROTOCOL) {
+    return G_SOURCE_REMOVE;
+  }
+  if (samplerate != 48000 && samplerate != 96000 && samplerate != 192000 && samplerate != 384000) {
+    return G_SOURCE_REMOVE;
+  }
+  if (protocol == NEW_PROTOCOL) {
+    if (active_receiver != NULL) {
+      rx_change_sample_rate(active_receiver, samplerate);
+    }
+  } else {
+    radio_change_sample_rate(samplerate);
+  }
+  return G_SOURCE_REMOVE;
+}
+
 int ext_normalize_rx_filter_band(int mode, int *low, int *high) {
   int a;
   int b;

@@ -1395,6 +1395,39 @@ static long long tci_ll (const char* s, long long def) {
   return s != NULL ? atoll (s) : def;
 }
 
+
+static int tci_apply_split_update (void *data) {
+  int state = GPOINTER_TO_INT (data) ? 1 : 0;
+  tci_begin_apply();
+  radio_set_split (state);
+  if (state) {
+    vfo_a_to_b();
+  }
+  update_slider_split_btn();
+  tci_end_apply();
+  tci_broadcast_split();
+  tci_broadcast_txfreq();
+  return G_SOURCE_REMOVE;
+}
+
+static void tci_cmd_split_enable (CLIENT *client, const TCI_CMD *cmd) {
+  int trx;
+  if (cmd->argc < 1) {
+    tci_send_split (client);
+    return;
+  }
+  trx = tci_int (cmd->argv[0], -1);
+  if (trx != 0) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    int state = tci_bool (cmd->argv[1]) ? 1 : 0;
+    g_idle_add (tci_apply_split_update, GINT_TO_POINTER (state));
+  } else {
+    tci_send_split (client);
+  }
+}
+
 static void tci_cmd_trx_count (CLIENT *client, const TCI_CMD *cmd) {
   (void) cmd;
   tci_send_trx_count (client);
@@ -1622,6 +1655,37 @@ static void tci_send_audio_stream_samples (CLIENT *client) {
 
 static void tci_cmd_audio_samplerate (CLIENT *client, const TCI_CMD *cmd) {
   tci_send_audio_samplerate (client);
+}
+
+static void tci_cmd_iq_samplerate(CLIENT *client, const TCI_CMD *cmd) {
+  int samplerate;
+  char msg[MAXMSGSIZE];
+  if (client == NULL || cmd->argc != 1 || cmd->argv[0] == NULL) {
+    return;
+  }
+  samplerate = tci_int(cmd->argv[0], 0);
+  if (samplerate != 48000 && samplerate != 96000 && samplerate != 192000 && samplerate != 384000) {
+    return;
+  }
+  g_idle_add(ext_set_iq_samplerate, GINT_TO_POINTER(samplerate));
+  snprintf(msg, MAXMSGSIZE, "IQ_SAMPLERATE:%d;", samplerate);
+  tci_send_text(client, msg);
+}
+
+static void tci_cmd_mon_volume(CLIENT *client, const TCI_CMD *cmd) {
+  (void) cmd;
+  if (client == NULL) {
+    return;
+  }
+  tci_send_text(client, "MON_VOLUME:-60;");
+}
+
+static void tci_cmd_mon_enable(CLIENT *client, const TCI_CMD *cmd) {
+  (void) cmd;
+  if (client == NULL) {
+    return;
+  }
+  tci_send_text(client, "MON_ENABLE:false;");
 }
 
 static void tci_cmd_audio_stream_sample_type (CLIENT *client, const TCI_CMD *cmd) {
@@ -2018,12 +2082,16 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "trx_count",         0,  0, tci_cmd_trx_count },
   { "trx",               0, -1, tci_cmd_trx },
   { "tune",              0, -1, tci_cmd_tune },
+  { "split_enable",      1,  2, tci_cmd_split_enable },
   { "mute",              0,  1, tci_cmd_mute },
   { "rx_mute",           1,  2, tci_cmd_rx_mute },
   { "volume",            0,  1, tci_cmd_volume },
   { "rx_volume",         2,  3, tci_cmd_rx_volume },
   { "agc_gain",          1,  2, tci_cmd_agc_gain },
   { "agc_mode",          1,  2, tci_cmd_agc_mode },
+  { "iq_samplerate",     1,  1, tci_cmd_iq_samplerate },
+  { "mon_volume",        0,  1, tci_cmd_mon_volume },
+  { "mon_enable",        0,  1, tci_cmd_mon_enable },
   { "audio_samplerate",            0, -1, tci_cmd_audio_samplerate },
   { "audio_stream_sample_type",    0, -1, tci_cmd_audio_stream_sample_type },
   { "audio_stream_channels",       0, -1, tci_cmd_audio_stream_channels },

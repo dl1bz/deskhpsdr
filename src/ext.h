@@ -61,6 +61,7 @@ extern int ext_rx_filter_update(void* data);
 extern int ext_set_af_gain(void* data);
 extern int ext_set_agc_gain(void* data);
 extern int ext_set_agc_mode(void* data);
+extern int ext_set_iq_samplerate(void* data);
 extern int ext_normalize_rx_filter_band(int mode, int *low, int *high);
 extern int ext_set_duplex(void* data);      // is this necessary?
 
