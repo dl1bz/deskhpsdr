@@ -35,6 +35,7 @@ void tci_tx_frequency_changed(void);
 void tci_drive_changed(void);
 void tci_volume_changed(int receiver_id);
 void tci_agc_gain_changed(int receiver_id);
+void tci_agc_mode_changed(int receiver_id);
 void tci_mute_changed(int receiver_id);
 void tci_rx_mute_changed(int receiver_id);
 int tci_is_applying(void);

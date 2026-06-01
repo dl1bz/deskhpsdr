@@ -51,6 +51,7 @@
 #include "audio.h"
 #include "band.h"
 #include "filter.h"
+#include "agc.h"
 #include "sliders.h"
 
 #define MAXDATASIZE     1024
@@ -1027,6 +1028,78 @@ void tci_agc_gain_changed (int receiver_id) {
   tci_broadcast_agc_gain(receiver_id);
 }
 
+static const char *tci_agc_mode_name(int agc) {
+  switch (agc) {
+  case AGC_OFF:
+    return "off";
+  case AGC_FAST:
+    return "fast";
+  default:
+    return "normal";
+  }
+}
+
+static int tci_parse_agc_mode(const char *mode) {
+  if (mode == NULL) {
+    return AGC_MEDIUM;
+  }
+  if (!g_ascii_strcasecmp(mode, "off")) {
+    return AGC_OFF;
+  }
+  if (!g_ascii_strcasecmp(mode, "fast")) {
+    return AGC_FAST;
+  }
+  if (!g_ascii_strcasecmp(mode, "normal")) {
+    return AGC_MEDIUM;
+  }
+  return -1;
+}
+
+static void tci_send_agc_mode(CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf(msg, MAXMSGSIZE, "agc_mode:%d,%s;", receiver_id, tci_agc_mode_name(receiver[receiver_id]->agc));
+  tci_send_text(client, msg);
+}
+
+static void tci_send_agc_mode_value(CLIENT *client, int receiver_id, int agc) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf(msg, MAXMSGSIZE, "agc_mode:%d,%s;", receiver_id, tci_agc_mode_name(agc));
+  tci_send_text(client, msg);
+}
+
+static void tci_broadcast_agc_mode(int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_agc_mode(client, receiver_id);
+    }
+  }
+  g_list_free(clients);
+}
+
+static void tci_broadcast_agc_mode_value(int receiver_id, int agc) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_agc_mode_value(client, receiver_id, agc);
+    }
+  }
+  g_list_free(clients);
+}
+
+void tci_agc_mode_changed(int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_agc_mode(receiver_id);
+}
+
 static void tci_send_txfreq (CLIENT *client) {
   char msg[MAXMSGSIZE];
   long long f = vfo_get_tx_freq();
@@ -1480,6 +1553,26 @@ static void tci_cmd_agc_gain (CLIENT *client, const TCI_CMD *cmd) {
   }
 }
 
+static void tci_cmd_agc_mode (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int(cmd->argv[0], 0);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    int agc = tci_parse_agc_mode(cmd->argv[1]);
+    if (agc < 0 || agc >= AGC_LAST) {
+      return;
+    }
+    EXT_AGC_MODE_UPDATE *am = g_new(EXT_AGC_MODE_UPDATE, 1);
+    am->receiver_id = receiver_id;
+    am->agc = agc;
+    g_idle_add(ext_set_agc_mode, am);
+    tci_broadcast_agc_mode_value(receiver_id, agc);
+  } else {
+    tci_send_agc_mode(client, receiver_id);
+  }
+}
+
 static void tci_cmd_rx_sensors_enable (CLIENT *client, const TCI_CMD *cmd) {
   g_mutex_lock (&tci_mutex);
   client->rxsensor = tci_bool (cmd->argv[0]);
@@ -1930,6 +2023,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "volume",            0,  1, tci_cmd_volume },
   { "rx_volume",         2,  3, tci_cmd_rx_volume },
   { "agc_gain",          1,  2, tci_cmd_agc_gain },
+  { "agc_mode",          1,  2, tci_cmd_agc_mode },
   { "audio_samplerate",            0, -1, tci_cmd_audio_samplerate },
   { "audio_stream_sample_type",    0, -1, tci_cmd_audio_stream_sample_type },
   { "audio_stream_channels",       0, -1, tci_cmd_audio_stream_channels },
@@ -2236,11 +2330,13 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_rx_volume (client, VFO_A, 0);
   tci_send_rx_volume (client, VFO_A, 1);
   tci_send_agc_gain (client, VFO_A);
+  tci_send_agc_mode (client, VFO_A);
   if (receivers > 1) {
     tci_send_rx_mute (client, VFO_B);
     tci_send_rx_volume (client, VFO_B, 0);
     tci_send_rx_volume (client, VFO_B, 1);
     tci_send_agc_gain (client, VFO_B);
+    tci_send_agc_mode (client, VFO_B);
   }
   tci_send_macros_cwspeed (client);
   tci_send_cw_macros_delay(client);

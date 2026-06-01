@@ -515,6 +515,7 @@ int process_action(void* data) {
         active_receiver->agc = 0;
       }
       rx_set_agc(active_receiver);
+      tci_agc_mode_changed(active_receiver->id);
       g_idle_add(ext_vfo_update, NULL);
       update_slider_agc_btn();
     }

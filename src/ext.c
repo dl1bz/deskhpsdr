@@ -40,6 +40,7 @@
 #include "equalizer_menu.h"
 #include "voice_keyer.h"
 #include "old_protocol.h"
+#include "agc.h"
 
 //
 // The following calls functions can be called usig g_idle_add
@@ -159,6 +160,28 @@ int ext_set_agc_gain(void* data) {
     }
   }
   g_free(ag);
+  return G_SOURCE_REMOVE;
+}
+
+int ext_set_agc_mode(void* data) {
+  EXT_AGC_MODE_UPDATE *am = (EXT_AGC_MODE_UPDATE*) data;
+  int receiver_id;
+  int agc;
+  if (am == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  receiver_id = am->receiver_id;
+  agc = am->agc;
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL
+      && agc >= 0 && agc < AGC_LAST) {
+    receiver[receiver_id]->agc = agc;
+    rx_set_agc(receiver[receiver_id]);
+    if (display_sliders && active_receiver != NULL && receiver_id == active_receiver->id) {
+      update_slider_agc_btn();
+    }
+    g_idle_add(ext_vfo_update, NULL);
+  }
+  g_free(am);
   return G_SOURCE_REMOVE;
 }
 

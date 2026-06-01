@@ -1237,6 +1237,7 @@ static void agc_btn_pressed_cb(GtkWidget *widget, gpointer data) {
     active_receiver->agc = 0;
   }
   rx_set_agc(active_receiver);
+  tci_agc_mode_changed(active_receiver->id);
   gtk_button_set_label(GTK_BUTTON(agc_btn), agc_labels[active_receiver->agc]);
   g_idle_add(ext_vfo_update, NULL);
   if (active_receiver->agc > 0) {
