@@ -5,13 +5,13 @@
 ## deskHPSDR ≠ pihpsdr: new app, new concept, new name
 
 Correct is, the very first codebase of deskHPSDR was forked ONCE from DL1YCF's pihpsdr codebase in October 2024 without any backward dependencies to piHPSDR.
-But there was, is and will be never an active collaboration between pihpsdr and deskHPSDR. They are two different apps without any relationship to each other.
+But there wasn't, isn't and won't be an interactive and thereby direct collaboration between pihpsdr and deskHPSDR. They are two different apps without any relationship or dependencies to each other.
 
 ## The concept behind - what it's make for and what it isn't for
 
 My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
 
-**deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Soapy SDR support is official REMOVED now.**
+**deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Soapy SDR and GPIO code and support is official REMOVED now.**
 
 
 | Feature                        | Current deskHPSDR version 2.6                 | Notes          |
@@ -65,7 +65,7 @@ Other useful app features (availability depend from used SDR device):
 
 The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the WDSP RX and TX audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices.
 
-deskHPSDR **is not made** as a "measurement tool" or for other, very special purposes where SDR devices are used (e.g. SDR Lab, IF-tap, IF-/Panadapter-Mode). There are other, more specialized apps for such cases - use these for your special purposes. It's - not more, not less - a SDR transceiver GUI frontend for use in hamradio which will be actively and continuously developed. All things outside the hamradio universe are generally not supported by this app. The support for commercial SDR products is limited, because they are mostly not Open Source hardware like the Hermes Lite 2. deskHPSDR is Open Source and a full non-commercial hobby software project by DL1BZ, which can be used completely free without any kind of payments, but respect all copyrights.
+deskHPSDR **is not made** as a "measurement tool" or for other, very special purposes where SDR devices are used (e.g. SDR Lab, IF-tap, IF-/Panadapter-Mode). There are other, more specialized apps for such cases - use these for your special purposes. It's - not more, not less - a SDR transceiver GUI frontend for use in hamradio which will be actively and continuously developed. All things outside the hamradio universe are generally not supported by this app. The support for commercial SDR products is limited, because they are mostly not Open Source hardware like the Hermes Lite 2. deskHPSDR is Open Source and a full non-commercial hobby software project by DL1BZ, which can be used completely free without any kind of payments, but with full respect of all copyrights around the app deskHPSDR.
 
 **deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. deskHPSDR hasn't a special Client-Server-Mode like pihpsdr (make no sense, we HAVE network-connected SDR devices yet).
 
