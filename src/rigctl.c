@@ -62,6 +62,7 @@
 #include "agc.h"
 #include "store.h"
 #include "ext.h"
+#include "tci.h"
 #include "rigctl_menu.h"
 #include "noise_menu.h"
 #include "new_protocol.h"
@@ -1425,6 +1426,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
           receiver[0]->volume = 20.0 * log10 (0.01 * (double) gain);
         }
         set_af_gain (0, receiver[0]->volume);
+        tci_volume_changed (0);
       }
       break;
     case 'I': //ZZAI
@@ -1465,6 +1467,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
       } else {
         int threshold = atoi (&command[4]);
         set_agc_gain (VFO_A, (double) threshold);
+        tci_agc_gain_changed (VFO_A);
       }
       break;
     case 'S': //ZZAS
@@ -1483,6 +1486,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
         } else {
           int threshold = atoi (&command[4]);
           set_agc_gain (VFO_B, (double) threshold);
+          tci_agc_gain_changed (VFO_B);
         }
       } else {
         implemented = FALSE;
@@ -1985,6 +1989,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
         FILTER *filter = &mode_filters[filterVar1];
         filter->high = fh;
         vfo_id_filter_changed (VFO_A, filterVar1);
+        tci_rx_filter_band_changed (VFO_A);
         g_idle_add (ext_vfo_update, NULL);
       }
       break;
@@ -1996,6 +2001,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
       } else if (command[6] == ';') {
         int filter = atoi (&command[4]);
         vfo_id_filter_changed (VFO_A, filter);
+        tci_rx_filter_band_changed (VFO_A);
       }
       break;
     case 'J': //ZZFJ
@@ -2006,6 +2012,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
       } else if (command[6] == ';') {
         int filter = atoi (&command[4]);
         vfo_id_filter_changed (VFO_B, filter);
+        tci_rx_filter_band_changed (VFO_B);
       }
       break;
     case 'L': //ZZFL
@@ -2033,6 +2040,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
         FILTER *filter = &mode_filters[filterVar1];
         filter->low = fl;
         vfo_id_filter_changed (VFO_A, filterVar1);
+        tci_rx_filter_band_changed (VFO_A);
         g_idle_add (ext_vfo_update, NULL);
       }
       break;
@@ -2059,6 +2067,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
         // update RX1 AGC
         receiver[0]->agc = agc;
         rx_set_agc (receiver[0]);
+        tci_agc_mode_changed (0);
         g_idle_add (ext_vfo_update, NULL);
         if (display_sliders) {
           update_slider_agc_btn();
@@ -2083,6 +2092,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
         RXCHECK (1,
                  receiver[1]->agc = agc;
                  rx_set_agc (receiver[1]);
+                 tci_agc_mode_changed (1);
                  g_idle_add (ext_vfo_update, NULL);
                 )
       }
@@ -2145,6 +2155,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
           receiver[1]->volume = 20.0 * log10 (0.01 * (double) gain);
         }
         set_af_gain (1, receiver[1]->volume);
+        tci_volume_changed (1);
       }
               )
       break;
@@ -2190,6 +2201,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
       } else {
         int mute = atoi (&command[4]);
         receiver[0]->mute_radio = mute;
+        tci_rx_mute_changed (0);
       }
       break;
     case 'B': //ZZMB
@@ -2208,6 +2220,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
       } else {
         int mute = atoi (&command[4]);
         receiver[1]->mute_radio = mute;
+        tci_rx_mute_changed (1);
       }
               )
       break;
@@ -3251,10 +3264,16 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
             } else if (!locked) switch (p) {
               static int shift = 0;
             case 1: // Rx1 AF Mute
-              if (v == 0) { receiver[0]->mute_radio ^= 1; }
+              if (v == 0) {
+                receiver[0]->mute_radio ^= 1;
+                tci_rx_mute_changed (0);
+              }
               break;
             case 3: // Rx2 AF Mute
-              if (v == 0) { receiver[1]->mute_radio ^= 1; }
+              if (v == 0 && receivers > 1 && receiver[1] != NULL) {
+                receiver[1]->mute_radio ^= 1;
+                tci_rx_mute_changed (1);
+              }
               break;
             case 5: // Filter Cut Defaults
               schedule_action (FILTER_CUT_DEFAULT, (v == 0) ? PRESSED : RELEASED, 0);
@@ -3761,7 +3780,7 @@ int parse_cmd (void* data) {
         int id = SET (command[2] == '1');
         int gain = atoi (&command[3]);
         double vol = (gain < 3) ? -40.0 : 20.0 * log10 ((double) gain / 255.0);
-        RXCHECK (id, receiver[id]->volume = vol; set_af_gain (0, receiver[id]->volume));
+        RXCHECK (id, receiver[id]->volume = vol; set_af_gain (0, receiver[id]->volume); tci_volume_changed (id));
       }
       break;
     case 'I': //AI
@@ -4143,6 +4162,7 @@ int parse_cmd (void* data) {
       } else if (command[5] == ';') {
         receiver[0]->agc = atoi (&command[2]) / 5;
         rx_set_agc (receiver[0]);
+        tci_agc_mode_changed (0);
         g_idle_add (ext_vfo_update, NULL);
         if (display_sliders) {
           update_slider_agc_btn();
@@ -4536,6 +4556,7 @@ int parse_cmd (void* data) {
           send_resp (client->fd, reply);
         } else if (command[5] == ';') {
           set_drive ((double) atoi (&command[2]));
+          tci_drive_changed ();
         }
       }
       break;
