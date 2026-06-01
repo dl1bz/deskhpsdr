@@ -307,7 +307,7 @@ union telnet_event_t {
   struct ttype_t {
     enum telnet_event_type_t _type; /*!< alias for type */
     unsigned char cmd;              /*!< TELNET_TTYPE_IS or TELNET_TTYPE_SEND */
-    const char* name;               /*!< terminal type name (IS only) */
+    const char *name;               /*!< terminal type name (IS only) */
   } ttype; /*!< TTYPE */
 
   /*!
@@ -381,7 +381,7 @@ struct telnet_t;
  * \param user_data Optional data pointer that will be passsed to eh.
  * \return Telnet state tracker object.
  */
-extern telnet_t* telnet_init(const telnet_telopt_t *telopts,
+extern telnet_t *telnet_init(const telnet_telopt_t *telopts,
                              telnet_event_handler_t eh, unsigned char flags, void *user_data);
 
 /*!

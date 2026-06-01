@@ -34,9 +34,7 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
   size_t total = size * nmemb;
   struct MemoryStruct *mem = (struct MemoryStruct *)userp;
   char *ptr = realloc(mem->memory, mem->size + total + 1);
-
   if (!ptr) { return 0; }
-
   mem->memory = ptr;
   memcpy(&(mem->memory[mem->size]), contents, total);
   mem->size += total;
@@ -48,58 +46,44 @@ SolarData fetch_solar_data(void) {
   SolarData data = {0};
   data.sunspots = -1; // Errorindicator
   struct MemoryStruct chunk = {malloc(1), 0};
-
   if (!chunk.memory) {
     fprintf(stderr, "Memory Error\n");
     return data;
   }
-
   CURL *curl = curl_easy_init();
-
   if (!curl) {
     fprintf(stderr, "curl Init Error\n");
     free(chunk.memory);
     return data;
   }
-
   // curl_global_init(CURL_GLOBAL_ALL);  // call only one time per program run -> moved to main.c
   curl_easy_setopt(curl, CURLOPT_URL, URL);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L); // Timeout-Schutz
   CURLcode res = curl_easy_perform(curl);
-
   if (res != CURLE_OK) {
     fprintf(stderr, "curl Error: %s\n", curl_easy_strerror(res));
     goto cleanup;
   }
-
   long response_code;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-
   if (response_code != 200) {
     fprintf(stderr, "HTTP Error: Code %ld\n", response_code);
     goto cleanup;
   }
-
   xmlDoc *doc = xmlReadMemory(chunk.memory, chunk.size, NULL, NULL, 0);
-
   if (!doc) {
     fprintf(stderr, "Error XML Parsing\n");
     goto cleanup;
   }
-
   xmlNode *root = xmlDocGetRootElement(doc);
-
   for (xmlNode *n = root->children; n; n = n->next) {
     if (n->type == XML_ELEMENT_NODE && strcmp((char *)n->name, "solardata") == 0) {
       for (xmlNode *c = n->children; c; c = c->next) {
         if (c->type != XML_ELEMENT_NODE) { continue; }
-
         xmlChar *val = xmlNodeGetContent(c);
-
         if (!val) { continue; }
-
         if (strcmp((char *)c->name, "sunspots") == 0) {
           data.sunspots = atoi((char *)val);
         } else if (strcmp((char *)c->name, "solarflux") == 0) {
@@ -115,12 +99,10 @@ SolarData fetch_solar_data(void) {
         } else if (strcmp((char *)c->name, "geomagfield") == 0) {
           strncpy(data.geomagfield, (char *)val, sizeof(data.geomagfield) - 1);
         }
-
         xmlFree(val);
       }
     }
   }
-
   xmlFreeDoc(doc);
 cleanup:
   curl_easy_cleanup(curl);
