@@ -522,15 +522,18 @@ int process_action(void* data) {
   case AGC_GAIN:
     value = KnobOrWheel(a, active_receiver->agc_gain, -20.0, 120.0, 1.0);
     set_agc_gain(active_receiver->id, value);
+    tci_agc_gain_changed(active_receiver->id);
     break;
   case AGC_GAIN_RX1:
     value = KnobOrWheel(a, receiver[0]->agc_gain, -20.0, 120.0, 1.0);
     set_agc_gain(0, value);
+    tci_agc_gain_changed(0);
     break;
   case AGC_GAIN_RX2:
     if (receivers == 2) {
       value = KnobOrWheel(a, receiver[1]->agc_gain, -20.0, 120.0, 1.0);
       set_agc_gain(1, value);
+      tci_agc_gain_changed(1);
     }
     break;
   case ATU_WIN:

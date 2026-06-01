@@ -136,6 +136,32 @@ int ext_set_af_gain(void* data) {
 }
 
 
+int ext_set_agc_gain(void* data) {
+  EXT_AGC_GAIN_UPDATE *ag = (EXT_AGC_GAIN_UPDATE*) data;
+  int receiver_id;
+  double value;
+  if (ag == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  receiver_id = ag->receiver_id;
+  value = ag->value;
+  if (value < -20.0) {
+    value = -20.0;
+  }
+  if (value > 120.0) {
+    value = 120.0;
+  }
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    receiver[receiver_id]->agc_gain = value;
+    rx_set_agc(receiver[receiver_id]);
+    if (display_sliders && active_receiver != NULL && receiver_id == active_receiver->id) {
+      update_slider_agc_gain_scale();
+    }
+  }
+  g_free(ag);
+  return G_SOURCE_REMOVE;
+}
+
 int ext_normalize_rx_filter_band(int mode, int *low, int *high) {
   int a;
   int b;

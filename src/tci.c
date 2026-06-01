@@ -971,6 +971,62 @@ void tci_volume_changed (int receiver_id) {
   tci_broadcast_rx_volume(receiver_id);
 }
 
+
+static double tci_clamp_agc_gain(double value) {
+  if (value < -20.0) { return -20.0; }
+  if (value > 120.0) { return 120.0; }
+  return value;
+}
+
+static void tci_send_agc_gain (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  double value;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  value = tci_clamp_agc_gain(receiver[receiver_id]->agc_gain);
+  snprintf (msg, MAXMSGSIZE, "agc_gain:%d,%0.0f;", receiver_id, value);
+  tci_send_text (client, msg);
+}
+
+static void tci_send_agc_gain_value (CLIENT *client, int receiver_id, double value) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  value = tci_clamp_agc_gain(value);
+  snprintf (msg, MAXMSGSIZE, "agc_gain:%d,%0.0f;", receiver_id, value);
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_agc_gain (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_agc_gain (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_agc_gain_value (int receiver_id, double value) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  value = tci_clamp_agc_gain(value);
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_agc_gain_value(client, receiver_id, value);
+    }
+  }
+  g_list_free(clients);
+}
+
+void tci_agc_gain_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_agc_gain(receiver_id);
+}
+
 static void tci_send_txfreq (CLIENT *client) {
   char msg[MAXMSGSIZE];
   long long f = vfo_get_tx_freq();
@@ -1403,6 +1459,24 @@ static void tci_cmd_rx_volume (CLIENT *client, const TCI_CMD *cmd) {
     tci_send_rx_volume_value (client, receiver_id, channel, value);
   } else {
     tci_send_rx_volume (client, receiver_id, channel);
+  }
+}
+
+
+static void tci_cmd_agc_gain (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int (cmd->argv[0], 0);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    double value = tci_clamp_agc_gain(tci_double(cmd->argv[1], receiver[receiver_id]->agc_gain));
+    EXT_AGC_GAIN_UPDATE *ag = g_new (EXT_AGC_GAIN_UPDATE, 1);
+    ag->receiver_id = receiver_id;
+    ag->value = value;
+    g_idle_add (ext_set_agc_gain, ag);
+    tci_broadcast_agc_gain_value (receiver_id, value);
+  } else {
+    tci_send_agc_gain (client, receiver_id);
   }
 }
 
@@ -1855,6 +1929,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "rx_mute",           1,  2, tci_cmd_rx_mute },
   { "volume",            0,  1, tci_cmd_volume },
   { "rx_volume",         2,  3, tci_cmd_rx_volume },
+  { "agc_gain",          1,  2, tci_cmd_agc_gain },
   { "audio_samplerate",            0, -1, tci_cmd_audio_samplerate },
   { "audio_stream_sample_type",    0, -1, tci_cmd_audio_stream_sample_type },
   { "audio_stream_channels",       0, -1, tci_cmd_audio_stream_channels },
@@ -2160,10 +2235,12 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_volume (client);
   tci_send_rx_volume (client, VFO_A, 0);
   tci_send_rx_volume (client, VFO_A, 1);
+  tci_send_agc_gain (client, VFO_A);
   if (receivers > 1) {
     tci_send_rx_mute (client, VFO_B);
     tci_send_rx_volume (client, VFO_B, 0);
     tci_send_rx_volume (client, VFO_B, 1);
+    tci_send_agc_gain (client, VFO_B);
   }
   tci_send_macros_cwspeed (client);
   tci_send_cw_macros_delay(client);

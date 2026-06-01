@@ -428,6 +428,7 @@ static void agcgain_value_changed_cb(GtkWidget *widget, gpointer data) {
     active_receiver->agc_gain = gtk_range_get_value(GTK_RANGE(widget));
   }
   rx_set_agc(active_receiver);
+  tci_agc_gain_changed(active_receiver->id);
 }
 
 void set_agc_gain(int rx, double value) {
