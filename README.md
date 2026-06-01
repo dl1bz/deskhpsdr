@@ -4,8 +4,8 @@
 
 ## deskHPSDR ≠ pihpsdr: new app, new concept, new name
 
-Correct is, the very first codebase of deskHPSDR was forked ONCE from DL1YCF's pihpsdr codebase in October 2024 without any backward dependencies to piHPSDR.
-But there wasn't, isn't and won't be an interactive and thereby direct collaboration between pihpsdr and deskHPSDR. They are two different apps without any relationship or dependencies to each other.
+Correct is, the very first codebase of deskHPSDR was forked ONCE from [DL1YCF's pihpsdr codebase](https://github.com/dl1ycf/pihpsdr) in October 2024 without any backward dependencies to piHPSDR.
+But there wasn't, isn't and won't be an interactive and thereby direct collaboration between pihpsdr and deskHPSDR. They are two different apps without any relationship or dependencies to each other. Nevertheless, we are in frequent exchange of ideas to further advance both versions.
 
 ## The concept behind - what it's make for and what it isn't for
 
