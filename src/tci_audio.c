@@ -142,7 +142,6 @@ int tci_audio_tx_enabled (void) {
 }
 
 double tci_get_next_mic_sample (void) {
-  static unsigned long underruns = 0;
   static double last_sample = 0.0;
   static int tx_audio_active = 0;
   static int prebuffering = 1;
@@ -154,14 +153,6 @@ double tci_get_next_mic_sample (void) {
   static double resampler_s0 = 0.0;
   static double resampler_s1 = 0.0;
   static guint chrono_sample_count = 0;
-  static guint64 diag_samples = 0;
-  static guint64 diag_prebuffer_returns = 0;
-  static guint64 diag_underruns = 0;
-  static guint64 diag_cache_refills = 0;
-  static guint64 diag_cache_empty = 0;
-  static guint64 diag_chrono = 0;
-  static guint64 diag_min_available = (guint64) -1;
-  static guint64 diag_max_available = 0;
   const guint prebuffer_frames = 4096;
   const double base_step = (double) TCI_AUDIO_SAMPLE_RATE / 48000.0;
   const double target = 4096.0;
@@ -180,37 +171,19 @@ double tci_get_next_mic_sample (void) {
     resampler_s0 = 0.0;
     resampler_s1 = 0.0;
     chrono_sample_count = 0;
-    diag_samples = 0;
-    diag_prebuffer_returns = 0;
-    diag_underruns = 0;
-    diag_cache_refills = 0;
-    diag_cache_empty = 0;
-    diag_chrono = 0;
-    diag_min_available = (guint64) -1;
-    diag_max_available = 0;
     return 0.0;
   }
-  diag_samples++;
   chrono_sample_count++;
   if (chrono_sample_count >= TCI_TX_AUDIO_FRAME_FRAMES) {
     chrono_sample_count -= TCI_TX_AUDIO_FRAME_FRAMES;
-    diag_chrono++;
     if (tci_audio_tx_chrono_callback != NULL) {
       tci_audio_tx_chrono_callback();
     }
   }
   guint cache_available = (cache_len > cache_pos) ? (cache_len - cache_pos) : 0;
   guint64 ring_available = tci_audio_tx_available();
-  guint64 total_available = ring_available + cache_available;
-  if (total_available < diag_min_available) {
-    diag_min_available = total_available;
-  }
-  if (total_available > diag_max_available) {
-    diag_max_available = total_available;
-  }
   if (prebuffering) {
-    if (total_available < prebuffer_frames) {
-      diag_prebuffer_returns++;
+    if ((ring_available + cache_available) < prebuffer_frames) {
       return 0.0;
     }
     prebuffering = 0;
@@ -220,11 +193,6 @@ double tci_get_next_mic_sample (void) {
     if (cache_pos >= cache_len) {
       cache_len = tci_audio_tx_read (cache, (guint) (sizeof (cache) / sizeof (cache[0])));
       cache_pos = 0;
-      if (cache_len > 0) {
-        diag_cache_refills++;
-      } else {
-        diag_cache_empty++;
-      }
     }
     if (cache_pos < cache_len) {
       resampler_s0 = resampler_s1;
@@ -235,19 +203,6 @@ double tci_get_next_mic_sample (void) {
         resampler_phase -= 1.0;
       }
     } else if (tx_audio_active) {
-      underruns++;
-      diag_underruns++;
-      if ((underruns % 1000) == 0) {
-        t_print ("TCI TX audio underruns=%lu diag_underruns=%llu prebuffer_returns=%llu cache_empty=%llu cache_refills=%llu available_min=%llu available_max=%llu chrono=%llu\n",
-                 underruns,
-                 (unsigned long long) diag_underruns,
-                 (unsigned long long) diag_prebuffer_returns,
-                 (unsigned long long) diag_cache_empty,
-                 (unsigned long long) diag_cache_refills,
-                 (unsigned long long) diag_min_available,
-                 (unsigned long long) diag_max_available,
-                 (unsigned long long) diag_chrono);
-      }
       prebuffering = 1;
       cache_len = 0;
       cache_pos = 0;
@@ -262,29 +217,9 @@ double tci_get_next_mic_sample (void) {
     }
   }
   if (resampler_valid) {
-    guint64 current_available = tci_audio_tx_available() +
-                                ((cache_len > cache_pos) ? (cache_len - cache_pos) : 0);
-    double available = (double) current_available;
+    double available = (double) (tci_audio_tx_available() +
+                                 ((cache_len > cache_pos) ? (cache_len - cache_pos) : 0));
     double adjust = (available - target) * gain;
-    if (current_available < diag_min_available) {
-      diag_min_available = current_available;
-    }
-    if (current_available > diag_max_available) {
-      diag_max_available = current_available;
-    }
-    if ((diag_samples % 240000) == 0) {
-      t_print ("TCI TX diag samples=%llu underruns=%llu prebuffer_returns=%llu cache_empty=%llu cache_refills=%llu available_min=%llu available_max=%llu chrono=%llu\n",
-               (unsigned long long) diag_samples,
-               (unsigned long long) diag_underruns,
-               (unsigned long long) diag_prebuffer_returns,
-               (unsigned long long) diag_cache_empty,
-               (unsigned long long) diag_cache_refills,
-               (unsigned long long) diag_min_available,
-               (unsigned long long) diag_max_available,
-               (unsigned long long) diag_chrono);
-      diag_min_available = (guint64) -1;
-      diag_max_available = 0;
-    }
     double step;
     if (adjust > max_adjust) {
       adjust = max_adjust;

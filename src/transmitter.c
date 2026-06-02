@@ -1674,67 +1674,12 @@ static void tx_full_buffer(TRANSMITTER *tx) {
 }
 
 void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
-  static guint64 tci_tx_hf_diag_samples = 0;
-  static guint64 tci_tx_hf_diag_zero_samples = 0;
-  static guint64 tci_tx_hf_diag_zero_run = 0;
-  static guint64 tci_tx_hf_diag_max_zero_run = 0;
-  static double tci_tx_hf_diag_peak = 0.0;
-  static double tci_tx_hf_diag_min = 0.0;
-  static double tci_tx_hf_diag_max = 0.0;
   int txmode = vfo_get_tx_mode();
   double mic_sample_double;
   int i, j;
   mic_sample_double = (double) mic_sample;
   if (tci_audio_tx_enabled()) {
-    double abs_sample;
     mic_sample_double = tci_get_next_mic_sample();
-    abs_sample = mic_sample_double < 0.0 ? -mic_sample_double : mic_sample_double;
-    if (tci_tx_hf_diag_samples == 0) {
-      tci_tx_hf_diag_min = mic_sample_double;
-      tci_tx_hf_diag_max = mic_sample_double;
-    } else {
-      if (mic_sample_double < tci_tx_hf_diag_min) {
-        tci_tx_hf_diag_min = mic_sample_double;
-      }
-      if (mic_sample_double > tci_tx_hf_diag_max) {
-        tci_tx_hf_diag_max = mic_sample_double;
-      }
-    }
-    if (abs_sample > tci_tx_hf_diag_peak) {
-      tci_tx_hf_diag_peak = abs_sample;
-    }
-    if (abs_sample < 1.0e-12) {
-      tci_tx_hf_diag_zero_samples++;
-      tci_tx_hf_diag_zero_run++;
-      if (tci_tx_hf_diag_zero_run > tci_tx_hf_diag_max_zero_run) {
-        tci_tx_hf_diag_max_zero_run = tci_tx_hf_diag_zero_run;
-      }
-    } else {
-      tci_tx_hf_diag_zero_run = 0;
-    }
-    tci_tx_hf_diag_samples++;
-    if ((tci_tx_hf_diag_samples % 240000) == 0) {
-      t_print("TCI TX HF diag samples=%llu peak=%e min=%e max=%e zero_samples=%llu max_zero_run=%llu\n",
-              (unsigned long long) tci_tx_hf_diag_samples,
-              tci_tx_hf_diag_peak,
-              tci_tx_hf_diag_min,
-              tci_tx_hf_diag_max,
-              (unsigned long long) tci_tx_hf_diag_zero_samples,
-              (unsigned long long) tci_tx_hf_diag_max_zero_run);
-      tci_tx_hf_diag_peak = 0.0;
-      tci_tx_hf_diag_min = mic_sample_double;
-      tci_tx_hf_diag_max = mic_sample_double;
-      tci_tx_hf_diag_zero_samples = 0;
-      tci_tx_hf_diag_max_zero_run = tci_tx_hf_diag_zero_run;
-    }
-  } else if (tci_tx_hf_diag_samples != 0) {
-    tci_tx_hf_diag_samples = 0;
-    tci_tx_hf_diag_zero_samples = 0;
-    tci_tx_hf_diag_zero_run = 0;
-    tci_tx_hf_diag_max_zero_run = 0;
-    tci_tx_hf_diag_peak = 0.0;
-    tci_tx_hf_diag_min = 0.0;
-    tci_tx_hf_diag_max = 0.0;
   }
   //
   // If there is captured data to re-play, replace incoming
