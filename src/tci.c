@@ -82,8 +82,6 @@ enum OpCode {
 
 static GThread *tci_server_thread_id = NULL;
 static int tci_running = 0;
-static guint tci_tx_chrono_timer_id = 0;
-
 static struct lws_context *tci_lws_context = NULL;
 static int tci_lws_seq = 0;
 static int tci_lws_pending_writable = 0;
@@ -146,7 +144,7 @@ static gpointer tci_lws_server (gpointer data);
 static void tci_lws_free_queue (CLIENT *client);
 static void tci_update_rx_audio_global (void);
 static void tci_audio_wakeup (void);
-static gboolean tci_tx_chrono_timer_cb (gpointer data);
+static void tci_audio_tx_chrono_wakeup (void);
 static void tci_service_tx_chrono (void);
 static void tci_lws_binary_reset (CLIENT *client);
 static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, size_t len, struct lws *wsi);
@@ -206,16 +204,6 @@ int tci_is_tune_transition (void) {
 }
 
 
-static gboolean tci_tx_chrono_timer_cb (gpointer data) {
-  (void) data;
-  if (!tci_running) {
-    tci_tx_chrono_timer_id = 0;
-    return G_SOURCE_REMOVE;
-  }
-  tci_service_tx_chrono();
-  return G_SOURCE_CONTINUE;
-}
-
 
 //
 // Launch TCI system. Called upon program start if TCI is
@@ -225,12 +213,10 @@ static gboolean tci_tx_chrono_timer_cb (gpointer data) {
 void launch_tci (void) {
   t_print ("---- LAUNCHING TCI LWS SERVER ----\n");
   tci_audio_set_wakeup_callback (tci_audio_wakeup);
+  tci_audio_set_tx_chrono_callback (tci_audio_tx_chrono_wakeup);
   cw_engine_set_start_delay(tci_cw_macros_delay_ms);
   cw_engine_set_empty_callback(tci_cw_macros_empty);
   tci_running = 1;
-  if (tci_tx_chrono_timer_id == 0) {
-    tci_tx_chrono_timer_id = g_timeout_add (1, tci_tx_chrono_timer_cb, NULL);
-  }
   tci_server_thread_id = g_thread_new ("tci lws server", tci_lws_server, GINT_TO_POINTER (tci_port));
 }
 
@@ -248,12 +234,9 @@ static int tci_has_clients(void) {
 //
 void shutdown_tci (void) {
   t_print ("%s\n", __func__);
-  if (tci_tx_chrono_timer_id != 0) {
-    g_source_remove (tci_tx_chrono_timer_id);
-    tci_tx_chrono_timer_id = 0;
-  }
   tci_audio_set_active (0);
   tci_audio_set_wakeup_callback (NULL);
+  tci_audio_set_tx_chrono_callback (NULL);
   cw_engine_set_empty_callback(NULL);
   if (tci_lws_context != NULL) {
     GList *clients = tci_clients_snapshot();
@@ -465,6 +448,14 @@ static void tci_audio_wakeup (void) {
   }
 }
 
+static void tci_audio_tx_chrono_wakeup (void) {
+  tci_service_tx_chrono();
+  tci_lws_pending_writable = 1;
+  if (tci_lws_context != NULL) {
+    lws_cancel_service (tci_lws_context);
+  }
+}
+
 static void tci_queue_rx_audio_frame (CLIENT *client, int receiver_id) {
   unsigned char frame[TCI_AUDIO_RX_FRAME_MAX_BYTES];
   size_t frame_len;
@@ -502,24 +493,14 @@ static int tci_queue_tx_chrono_frame (CLIENT *client) {
 
 static void tci_service_tx_chrono (void) {
   GList *clients;
-  gint64 now_us;
-  const gint64 frame_us = ((gint64) TCI_TX_AUDIO_FRAME_FRAMES * G_USEC_PER_SEC) / TCI_AUDIO_SAMPLE_RATE;
   clients = tci_clients_snapshot();
-  now_us = g_get_monotonic_time();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT*) l->data;
     int send_chrono = 0;
     if (client == NULL || !client->running) { continue; }
     g_mutex_lock (&tci_mutex);
     if (client->tx_audio_enabled) {
-      if (client->tx_chrono_next_us == 0 || now_us >= client->tx_chrono_next_us) {
-        send_chrono = 1;
-        if (client->tx_chrono_next_us == 0 || now_us > (client->tx_chrono_next_us + frame_us)) {
-          client->tx_chrono_next_us = now_us + frame_us;
-        } else {
-          client->tx_chrono_next_us += frame_us;
-        }
-      }
+      send_chrono = 1;
     } else {
       client->tx_chrono_next_us = 0;
     }
@@ -2559,7 +2540,6 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
       tci_send_initial_state (client);
       client->initial_sent = 1;
     }
-    tci_service_tx_chrono();
     return tci_lws_write_queued (client);
   case LWS_CALLBACK_CLOSED:
     if (rigctl_debug) {
@@ -2623,7 +2603,6 @@ static gpointer tci_lws_server (gpointer data) {
   while (tci_running) {
     int do_writable = 0;
     tci_service_rx_audio();
-    tci_service_tx_chrono();
     g_mutex_lock (&tci_mutex);
     if (tci_lws_pending_writable) {
       tci_lws_pending_writable = 0;

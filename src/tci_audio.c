@@ -60,6 +60,7 @@ static guint64 tci_tx_audio_frames = 0;
 static gint64 tci_tx_audio_last_frame_us = 0;
 static int tci_tx_audio_enabled = 0;
 static TCI_AUDIO_WAKEUP_CALLBACK tci_audio_wakeup_callback = NULL;
+static TCI_AUDIO_TX_CHRONO_CALLBACK tci_audio_tx_chrono_callback = NULL;
 
 void tci_audio_monitor_set_active (int active) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
@@ -103,6 +104,10 @@ void tci_audio_tx_reset (void) {
   g_mutex_unlock (&ring->mutex);
 }
 
+void tci_audio_set_tx_chrono_callback (TCI_AUDIO_TX_CHRONO_CALLBACK callback) {
+  tci_audio_tx_chrono_callback = callback;
+}
+
 void tci_audio_tx_set_active (int active) {
   TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
   g_mutex_lock (&ring->mutex);
@@ -127,10 +132,178 @@ int tci_audio_tx_is_active (void) {
   return (g_get_monotonic_time() - last_frame_us) < 250000;
 }
 
+int tci_audio_tx_enabled (void) {
+  TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
+  int enabled;
+  g_mutex_lock (&ring->mutex);
+  enabled = tci_tx_audio_enabled;
+  g_mutex_unlock (&ring->mutex);
+  return enabled;
+}
+
+double tci_get_next_mic_sample (void) {
+  static unsigned long underruns = 0;
+  static double last_sample = 0.0;
+  static int tx_audio_active = 0;
+  static int prebuffering = 1;
+  static float cache[TCI_TX_AUDIO_FRAME_FRAMES];
+  static guint cache_len = 0;
+  static guint cache_pos = 0;
+  static int resampler_valid = 0;
+  static double resampler_phase = 0.0;
+  static double resampler_s0 = 0.0;
+  static double resampler_s1 = 0.0;
+  static guint chrono_sample_count = 0;
+  static guint64 diag_samples = 0;
+  static guint64 diag_prebuffer_returns = 0;
+  static guint64 diag_underruns = 0;
+  static guint64 diag_cache_refills = 0;
+  static guint64 diag_cache_empty = 0;
+  static guint64 diag_chrono = 0;
+  static guint64 diag_min_available = (guint64) -1;
+  static guint64 diag_max_available = 0;
+  const guint prebuffer_frames = 4096;
+  const double base_step = (double) TCI_AUDIO_SAMPLE_RATE / 48000.0;
+  const double target = 4096.0;
+  const double max_adjust = 0.005;
+  const double gain = 0.000001;
+  const double tx_gain = 0.707;
+  double sample = 0.0;
+  if (!tci_audio_tx_enabled()) {
+    tx_audio_active = 0;
+    prebuffering = 1;
+    last_sample = 0.0;
+    cache_len = 0;
+    cache_pos = 0;
+    resampler_valid = 0;
+    resampler_phase = 0.0;
+    resampler_s0 = 0.0;
+    resampler_s1 = 0.0;
+    chrono_sample_count = 0;
+    diag_samples = 0;
+    diag_prebuffer_returns = 0;
+    diag_underruns = 0;
+    diag_cache_refills = 0;
+    diag_cache_empty = 0;
+    diag_chrono = 0;
+    diag_min_available = (guint64) -1;
+    diag_max_available = 0;
+    return 0.0;
+  }
+  diag_samples++;
+  chrono_sample_count++;
+  if (chrono_sample_count >= TCI_TX_AUDIO_FRAME_FRAMES) {
+    chrono_sample_count -= TCI_TX_AUDIO_FRAME_FRAMES;
+    diag_chrono++;
+    if (tci_audio_tx_chrono_callback != NULL) {
+      tci_audio_tx_chrono_callback();
+    }
+  }
+  guint cache_available = (cache_len > cache_pos) ? (cache_len - cache_pos) : 0;
+  guint64 ring_available = tci_audio_tx_available();
+  guint64 total_available = ring_available + cache_available;
+  if (total_available < diag_min_available) {
+    diag_min_available = total_available;
+  }
+  if (total_available > diag_max_available) {
+    diag_max_available = total_available;
+  }
+  if (prebuffering) {
+    if (total_available < prebuffer_frames) {
+      diag_prebuffer_returns++;
+      return 0.0;
+    }
+    prebuffering = 0;
+  }
+  while (!resampler_valid || resampler_phase >= 1.0) {
+    float tci_sample = 0.0f;
+    if (cache_pos >= cache_len) {
+      cache_len = tci_audio_tx_read (cache, (guint) (sizeof (cache) / sizeof (cache[0])));
+      cache_pos = 0;
+      if (cache_len > 0) {
+        diag_cache_refills++;
+      } else {
+        diag_cache_empty++;
+      }
+    }
+    if (cache_pos < cache_len) {
+      resampler_s0 = resampler_s1;
+      tci_sample = cache[cache_pos++];
+      resampler_s1 = (double) tci_sample;
+      resampler_valid = 1;
+      if (resampler_phase >= 1.0) {
+        resampler_phase -= 1.0;
+      }
+    } else if (tx_audio_active) {
+      underruns++;
+      diag_underruns++;
+      if ((underruns % 1000) == 0) {
+        t_print ("TCI TX audio underruns=%lu diag_underruns=%llu prebuffer_returns=%llu cache_empty=%llu cache_refills=%llu available_min=%llu available_max=%llu chrono=%llu\n",
+                 underruns,
+                 (unsigned long long) diag_underruns,
+                 (unsigned long long) diag_prebuffer_returns,
+                 (unsigned long long) diag_cache_empty,
+                 (unsigned long long) diag_cache_refills,
+                 (unsigned long long) diag_min_available,
+                 (unsigned long long) diag_max_available,
+                 (unsigned long long) diag_chrono);
+      }
+      prebuffering = 1;
+      cache_len = 0;
+      cache_pos = 0;
+      resampler_valid = 0;
+      resampler_phase = 0.0;
+      resampler_s0 = 0.0;
+      resampler_s1 = 0.0;
+      last_sample *= 0.98;
+      return last_sample * tx_gain;
+    } else {
+      return 0.0;
+    }
+  }
+  if (resampler_valid) {
+    guint64 current_available = tci_audio_tx_available() +
+                                ((cache_len > cache_pos) ? (cache_len - cache_pos) : 0);
+    double available = (double) current_available;
+    double adjust = (available - target) * gain;
+    if (current_available < diag_min_available) {
+      diag_min_available = current_available;
+    }
+    if (current_available > diag_max_available) {
+      diag_max_available = current_available;
+    }
+    if ((diag_samples % 240000) == 0) {
+      t_print ("TCI TX diag samples=%llu underruns=%llu prebuffer_returns=%llu cache_empty=%llu cache_refills=%llu available_min=%llu available_max=%llu chrono=%llu\n",
+               (unsigned long long) diag_samples,
+               (unsigned long long) diag_underruns,
+               (unsigned long long) diag_prebuffer_returns,
+               (unsigned long long) diag_cache_empty,
+               (unsigned long long) diag_cache_refills,
+               (unsigned long long) diag_min_available,
+               (unsigned long long) diag_max_available,
+               (unsigned long long) diag_chrono);
+      diag_min_available = (guint64) -1;
+      diag_max_available = 0;
+    }
+    double step;
+    if (adjust > max_adjust) {
+      adjust = max_adjust;
+    } else if (adjust < -max_adjust) {
+      adjust = -max_adjust;
+    }
+    step = base_step * (1.0 + adjust);
+    sample = (resampler_s0 + ((resampler_s1 - resampler_s0) * resampler_phase)) * tx_gain;
+    last_sample = sample / tx_gain;
+    tx_audio_active = 1;
+    resampler_phase += step;
+  }
+  return sample;
+}
+
 static void tci_audio_tx_push_block (const float* samples, guint frames) {
   TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
   if (samples == NULL || frames == 0) { return; }
-  if (!g_mutex_trylock (&ring->mutex)) { return; }
+  g_mutex_lock (&ring->mutex);
   if (!tci_tx_audio_enabled) {
     g_mutex_unlock (&ring->mutex);
     return;

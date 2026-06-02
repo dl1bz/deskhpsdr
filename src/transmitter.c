@@ -1674,98 +1674,67 @@ static void tx_full_buffer(TRANSMITTER *tx) {
 }
 
 void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
+  static guint64 tci_tx_hf_diag_samples = 0;
+  static guint64 tci_tx_hf_diag_zero_samples = 0;
+  static guint64 tci_tx_hf_diag_zero_run = 0;
+  static guint64 tci_tx_hf_diag_max_zero_run = 0;
+  static double tci_tx_hf_diag_peak = 0.0;
+  static double tci_tx_hf_diag_min = 0.0;
+  static double tci_tx_hf_diag_max = 0.0;
   int txmode = vfo_get_tx_mode();
   double mic_sample_double;
   int i, j;
-  static unsigned long tci_tx_underruns = 0;
-  static double last_tci_sample = 0.0;
-  static int tci_tx_audio_active = 0;
-  static int tci_tx_prebuffering = 1;
-  static float tci_tx_cache[512];
-  static guint tci_tx_cache_len = 0;
-  static guint tci_tx_cache_pos = 0;
-  static int tci_resampler_valid = 0;
-  static double tci_resampler_phase = 0.0;
-  static double tci_resampler_s0 = 0.0;
-  static double tci_resampler_s1 = 0.0;
-  const guint tci_tx_prebuffer_frames = 4096;
-  const double tci_resampler_base_step = (double) TCI_AUDIO_SAMPLE_RATE / 48000.0;
-  const double tci_resampler_target = 4096.0;
-  const double tci_resampler_max_adjust = 0.005;
-  const double tci_resampler_gain = 0.000001;
-  const double tci_tx_gain = 0.707;
   mic_sample_double = (double) mic_sample;
-  if (tci_audio_tx_is_active()) {
-    guint cache_available = (tci_tx_cache_len > tci_tx_cache_pos) ? (tci_tx_cache_len - tci_tx_cache_pos) : 0;
-    guint64 ring_available = tci_audio_tx_available();
-    if (tci_tx_prebuffering) {
-      if ((ring_available + cache_available) < tci_tx_prebuffer_frames) {
-        mic_sample_double = 0.0;
-      } else {
-        tci_tx_prebuffering = 0;
+  if (tci_audio_tx_enabled()) {
+    double abs_sample;
+    mic_sample_double = tci_get_next_mic_sample();
+    abs_sample = mic_sample_double < 0.0 ? -mic_sample_double : mic_sample_double;
+    if (tci_tx_hf_diag_samples == 0) {
+      tci_tx_hf_diag_min = mic_sample_double;
+      tci_tx_hf_diag_max = mic_sample_double;
+    } else {
+      if (mic_sample_double < tci_tx_hf_diag_min) {
+        tci_tx_hf_diag_min = mic_sample_double;
+      }
+      if (mic_sample_double > tci_tx_hf_diag_max) {
+        tci_tx_hf_diag_max = mic_sample_double;
       }
     }
-    if (!tci_tx_prebuffering) {
-      while (!tci_resampler_valid || tci_resampler_phase >= 1.0) {
-        float tci_sample = 0.0f;
-        if (tci_tx_cache_pos >= tci_tx_cache_len) {
-          tci_tx_cache_len = tci_audio_tx_read(tci_tx_cache, (guint)(sizeof(tci_tx_cache) / sizeof(tci_tx_cache[0])));
-          tci_tx_cache_pos = 0;
-        }
-        if (tci_tx_cache_pos < tci_tx_cache_len) {
-          tci_resampler_s0 = tci_resampler_s1;
-          tci_sample = tci_tx_cache[tci_tx_cache_pos++];
-          tci_resampler_s1 = (double) tci_sample;
-          tci_resampler_valid = 1;
-          if (tci_resampler_phase >= 1.0) {
-            tci_resampler_phase -= 1.0;
-          }
-        } else if (tci_tx_audio_active) {
-          tci_tx_underruns++;
-          if ((tci_tx_underruns % 1000) == 0) {
-            t_print("TCI TX audio underruns=%lu\n", tci_tx_underruns);
-          }
-          tci_tx_prebuffering = 1;
-          tci_tx_cache_len = 0;
-          tci_tx_cache_pos = 0;
-          tci_resampler_valid = 0;
-          tci_resampler_phase = 0.0;
-          tci_resampler_s0 = 0.0;
-          tci_resampler_s1 = 0.0;
-          mic_sample_double = last_tci_sample * 0.98;
-          last_tci_sample = mic_sample_double;
-          break;
-        } else {
-          break;
-        }
-      }
-      if (!tci_tx_prebuffering && tci_resampler_valid) {
-        double tci_available = (double)(tci_audio_tx_available() +
-                                        ((tci_tx_cache_len > tci_tx_cache_pos) ? (tci_tx_cache_len - tci_tx_cache_pos) : 0));
-        double adjust = (tci_available - tci_resampler_target) * tci_resampler_gain;
-        double step;
-        if (adjust > tci_resampler_max_adjust) {
-          adjust = tci_resampler_max_adjust;
-        } else if (adjust < -tci_resampler_max_adjust) {
-          adjust = -tci_resampler_max_adjust;
-        }
-        step = tci_resampler_base_step * (1.0 + adjust);
-        mic_sample_double = (tci_resampler_s0 + ((tci_resampler_s1 - tci_resampler_s0) * tci_resampler_phase)) * tci_tx_gain;
-        last_tci_sample = mic_sample_double / tci_tx_gain;
-        tci_tx_audio_active = 1;
-        tci_resampler_phase += step;
-      }
+    if (abs_sample > tci_tx_hf_diag_peak) {
+      tci_tx_hf_diag_peak = abs_sample;
     }
-  } else if (tci_tx_audio_active) {
-    tci_tx_audio_active = 0;
-    tci_tx_prebuffering = 1;
-    last_tci_sample = 0.0;
-    tci_tx_cache_len = 0;
-    tci_tx_cache_pos = 0;
-    tci_resampler_valid = 0;
-    tci_resampler_phase = 0.0;
-    tci_resampler_s0 = 0.0;
-    tci_resampler_s1 = 0.0;
+    if (abs_sample < 1.0e-12) {
+      tci_tx_hf_diag_zero_samples++;
+      tci_tx_hf_diag_zero_run++;
+      if (tci_tx_hf_diag_zero_run > tci_tx_hf_diag_max_zero_run) {
+        tci_tx_hf_diag_max_zero_run = tci_tx_hf_diag_zero_run;
+      }
+    } else {
+      tci_tx_hf_diag_zero_run = 0;
+    }
+    tci_tx_hf_diag_samples++;
+    if ((tci_tx_hf_diag_samples % 240000) == 0) {
+      t_print("TCI TX HF diag samples=%llu peak=%e min=%e max=%e zero_samples=%llu max_zero_run=%llu\n",
+              (unsigned long long) tci_tx_hf_diag_samples,
+              tci_tx_hf_diag_peak,
+              tci_tx_hf_diag_min,
+              tci_tx_hf_diag_max,
+              (unsigned long long) tci_tx_hf_diag_zero_samples,
+              (unsigned long long) tci_tx_hf_diag_max_zero_run);
+      tci_tx_hf_diag_peak = 0.0;
+      tci_tx_hf_diag_min = mic_sample_double;
+      tci_tx_hf_diag_max = mic_sample_double;
+      tci_tx_hf_diag_zero_samples = 0;
+      tci_tx_hf_diag_max_zero_run = tci_tx_hf_diag_zero_run;
+    }
+  } else if (tci_tx_hf_diag_samples != 0) {
+    tci_tx_hf_diag_samples = 0;
+    tci_tx_hf_diag_zero_samples = 0;
+    tci_tx_hf_diag_zero_run = 0;
+    tci_tx_hf_diag_max_zero_run = 0;
+    tci_tx_hf_diag_peak = 0.0;
+    tci_tx_hf_diag_min = 0.0;
+    tci_tx_hf_diag_max = 0.0;
   }
   //
   // If there is captured data to re-play, replace incoming

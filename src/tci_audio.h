@@ -28,6 +28,7 @@
 typedef struct _receiver RECEIVER;
 
 typedef void (*TCI_AUDIO_WAKEUP_CALLBACK) (void);
+typedef void (*TCI_AUDIO_TX_CHRONO_CALLBACK) (void);
 
 #define TCI_RX_AUDIO_MAX_RECEIVERS 2
 #define TCI_RX_AUDIO_RING_FRAMES 48000
@@ -46,6 +47,7 @@ typedef void (*TCI_AUDIO_WAKEUP_CALLBACK) (void);
 void tci_audio_set_active (int active);
 int tci_audio_is_active (void);
 void tci_audio_set_wakeup_callback (TCI_AUDIO_WAKEUP_CALLBACK callback);
+void tci_audio_set_tx_chrono_callback (TCI_AUDIO_TX_CHRONO_CALLBACK callback);
 
 typedef struct _tci_stream_header {
   uint32_t receiver;
@@ -71,6 +73,8 @@ void tci_audio_handle_tx_frame (const unsigned char* data, size_t len);
 void tci_audio_tx_reset (void);
 void tci_audio_tx_set_active (int active);
 int tci_audio_tx_is_active (void);
+int tci_audio_tx_enabled (void);
+double tci_get_next_mic_sample (void);
 guint tci_audio_tx_read (float* out, guint frames);
 guint64 tci_audio_tx_available (void);
 
