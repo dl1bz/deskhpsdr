@@ -261,13 +261,20 @@ int audio_open_input(void) {
   inputParameters.device = padev;
   inputParameters.hostApiSpecificStreamInfo = NULL;
   inputParameters.sampleFormat = paFloat32;
-  inputParameters.suggestedLatency = Pa_GetDeviceInfo(padev)->defaultLowInputLatency ;
+  const PaDeviceInfo *info = Pa_GetDeviceInfo(padev);
+  if (info == NULL) {
+    g_mutex_unlock(&audio_mutex);
+    return -1;
+  }
+  inputParameters.suggestedLatency = info->defaultLowInputLatency;
+  t_print("%s: input device=%s channels=%d sampleFormat=paFloat32 latency=%f samplerate=48000\n",
+          __func__, info->name, inputParameters.channelCount, inputParameters.suggestedLatency);
 #ifdef __APPLE__
   static PaMacCoreStreamInfo macCoreInfo;
   macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
   macCoreInfo.hostApiType = paCoreAudio;
   macCoreInfo.version = 0x01;
-  macCoreInfo.flags = paMacCoreChangeDeviceParameters | paMacCoreFailIfConversionRequired;
+  macCoreInfo.flags = paMacCoreChangeDeviceParameters;
   inputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
 #else
   inputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
@@ -376,12 +383,14 @@ int audio_open_tci_monitor(const char* audio_name) {
   outputParameters.hostApiSpecificStreamInfo = NULL;
   outputParameters.sampleFormat = paFloat32;
   outputParameters.suggestedLatency = info->defaultHighOutputLatency;
+  t_print("%s: output device=%s sampleFormat=paFloat32 latency=%f samplerate=%d\n",
+          __func__, info->name, outputParameters.suggestedLatency, TCI_AUDIO_SAMPLE_RATE);
 #ifdef __APPLE__
   static PaMacCoreStreamInfo macCoreInfo;
   macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
   macCoreInfo.hostApiType = paCoreAudio;
   macCoreInfo.version = 0x01;
-  macCoreInfo.flags = paMacCoreChangeDeviceParameters | paMacCoreFailIfConversionRequired;
+  macCoreInfo.flags = paMacCoreChangeDeviceParameters;
   outputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
 #else
   outputParameters.hostApiSpecificStreamInfo = NULL;
@@ -619,15 +628,21 @@ int audio_open_output(RECEIVER *rx) {
   bzero(&outputParameters, sizeof(outputParameters));    //not necessary if you are filling in all the fields
   outputParameters.device = padev;
   outputParameters.hostApiSpecificStreamInfo = NULL;
+  const PaDeviceInfo *info = Pa_GetDeviceInfo(padev);
+  if (info == NULL) {
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return -1;
+  }
   outputParameters.sampleFormat = paFloat32;
-  // use a zero for the latency to get the minimum value
-  outputParameters.suggestedLatency = 0.0; //Pa_GetDeviceInfo(padev)->defaultLowOutputLatency ;
+  outputParameters.suggestedLatency = info->defaultLowOutputLatency;
+  t_print("%s: output device=%s sampleFormat=paFloat32 latency=%f samplerate=48000\n",
+          __func__, info->name, outputParameters.suggestedLatency);
 #ifdef __APPLE__
   static PaMacCoreStreamInfo macCoreInfo;
   macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
   macCoreInfo.hostApiType = paCoreAudio;
   macCoreInfo.version = 0x01;
-  macCoreInfo.flags = paMacCoreChangeDeviceParameters | paMacCoreFailIfConversionRequired;
+  macCoreInfo.flags = paMacCoreChangeDeviceParameters;
   outputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
 #else
   outputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
