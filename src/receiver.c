@@ -1242,6 +1242,9 @@ void rx_cw_zero_beat_start(RECEIVER *rx) {
 static void rx_process_buffer(RECEIVER *rx) {
   double scale = 0.6 * pow(10.0, -0.05 * rx->volume);
   double unscale = 1.0 / scale;
+  int tci_rx_export = tci_audio_is_active();
+  guint tci_rx_frames = 0;
+  float tci_rx_samples[rx->output_samples * TCI_AUDIO_CHANNELS];
   // Without DUPLEX; xmit will always be false.
   int xmit = radio_is_transmitting();
   for (int i = 0; i < rx->output_samples; i++) {
@@ -1312,10 +1315,6 @@ static void rx_process_buffer(RECEIVER *rx) {
     if (right_sample >  1.0f) { right_sample =  1.0f; }
     if (right_sample < -1.0f) { right_sample = -1.0f; }
     short right_audio_sample = (short)(right_sample * 32767.0f);
-    // tci_audio_rx_sample(rx, (float)left_sample, (float)right_sample);
-    tci_audio_rx_sample(rx,
-                        (float)(left_sample * rx->tci_txaudio_scale),
-                        (float)(right_sample * rx->tci_txaudio_scale));
     if (rx->local_audio) {
       audio_write(rx, (float) left_sample, (float) right_sample);
     }
@@ -1329,6 +1328,14 @@ static void rx_process_buffer(RECEIVER *rx) {
         break;
       }
     }
+    if (tci_rx_export) {
+      tci_rx_samples[(tci_rx_frames * TCI_AUDIO_CHANNELS)] = (float)(left_sample * rx->tci_txaudio_scale);
+      tci_rx_samples[(tci_rx_frames * TCI_AUDIO_CHANNELS) + 1] = (float)(right_sample * rx->tci_txaudio_scale);
+      tci_rx_frames++;
+    }
+  }
+  if (tci_rx_export && tci_rx_frames > 0) {
+    tci_audio_rx_block(rx, tci_rx_samples, tci_rx_frames);
   }
 }
 

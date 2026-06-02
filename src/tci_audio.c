@@ -56,11 +56,31 @@ static TCI_AUDIO_MONITOR_RING tci_audio_monitor_ring;
 static int tci_audio_monitor_enabled = 0;
 static int tci_rx_audio_enabled = 0;
 static guint tci_rx_audio_wakeup_count = 0;
-static guint64 tci_tx_audio_frames = 0;
 static gint64 tci_tx_audio_last_frame_us = 0;
 static int tci_tx_audio_enabled = 0;
 static TCI_AUDIO_WAKEUP_CALLBACK tci_audio_wakeup_callback = NULL;
+static gint tci_rx_audio_wakeup_pending = 0;
 static TCI_AUDIO_TX_CHRONO_CALLBACK tci_audio_tx_chrono_callback = NULL;
+
+static gboolean tci_audio_rx_wakeup_idle (gpointer data) {
+  TCI_AUDIO_WAKEUP_CALLBACK callback;
+  (void) data;
+  callback = tci_audio_wakeup_callback;
+  g_atomic_int_set (&tci_rx_audio_wakeup_pending, 0);
+  if (callback != NULL) {
+    callback();
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static void tci_audio_queue_rx_wakeup (void) {
+  if (tci_audio_wakeup_callback == NULL) {
+    return;
+  }
+  if (g_atomic_int_compare_and_exchange (&tci_rx_audio_wakeup_pending, 0, 1)) {
+    g_idle_add (tci_audio_rx_wakeup_idle, NULL);
+  }
+}
 
 void tci_audio_monitor_set_active (int active) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
@@ -90,6 +110,24 @@ static void tci_audio_monitor_push (float left, float right) {
   ring->samples[ (index * TCI_AUDIO_CHANNELS)] = left;
   ring->samples[ (index * TCI_AUDIO_CHANNELS) + 1] = right;
   ring->write_count++;
+  g_mutex_unlock (&ring->mutex);
+}
+
+static void tci_audio_monitor_push_block (const float *samples, guint frames) {
+  TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
+  if (!tci_audio_monitor_enabled || samples == NULL || frames == 0) { return; }
+  if (!g_mutex_trylock (&ring->mutex)) { return; }
+  for (guint i = 0; i < frames; i++) {
+    guint index;
+    if (ring->write_count >= ring->read_count + TCI_AUDIO_MONITOR_RING_FRAMES) {
+      ring->read_count = ring->write_count - TCI_AUDIO_MONITOR_RING_FRAMES + 1;
+      ring->dropped++;
+    }
+    index = (guint) (ring->write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
+    ring->samples[(index * TCI_AUDIO_CHANNELS)] = samples[(i * TCI_AUDIO_CHANNELS)] * 0.9f;
+    ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = samples[(i * TCI_AUDIO_CHANNELS) + 1] * 0.9f;
+    ring->write_count++;
+  }
   g_mutex_unlock (&ring->mutex);
 }
 
@@ -309,30 +347,49 @@ int tci_audio_is_active (void) {
 
 void tci_audio_set_wakeup_callback (TCI_AUDIO_WAKEUP_CALLBACK callback) {
   tci_audio_wakeup_callback = callback;
+  if (callback == NULL) {
+    g_atomic_int_set (&tci_rx_audio_wakeup_pending, 0);
+  }
 }
 
 void tci_audio_rx_sample (RECEIVER *rx, float left, float right) {
+  float samples[TCI_AUDIO_CHANNELS];
+  samples[0] = left;
+  samples[1] = right;
+  tci_audio_rx_block(rx, samples, 1);
+}
+
+void tci_audio_rx_block (RECEIVER *rx, const float *samples, guint frames) {
   TCI_RX_AUDIO_RING *ring;
-  guint index;
   int do_wakeup = 0;
+  int do_monitor = 0;
   int id;
-  if (!tci_rx_audio_enabled || rx == NULL) { return; }
+  if (!tci_rx_audio_enabled || rx == NULL || samples == NULL || frames == 0) { return; }
   id = rx->id;
   if (id < 0 || id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
   ring = &tci_rx_audio_ring[id];
-  if (!g_mutex_trylock (&ring->mutex)) { return; }
-  index = (guint) (ring->write_count % TCI_RX_AUDIO_RING_FRAMES);
-  ring->samples[ (index * TCI_AUDIO_CHANNELS)] = left;
-  ring->samples[ (index * TCI_AUDIO_CHANNELS) + 1] = right;
-  ring->write_count++;
-  // tci_audio_monitor_push(left, right);
-  tci_audio_monitor_push (left * 0.9f, right * 0.9f);
-  if ((++tci_rx_audio_wakeup_count % TCI_RX_AUDIO_FRAME_FRAMES) == 0) {
-    do_wakeup = 1;
+  g_mutex_lock (&ring->mutex);
+  for (guint i = 0; i < frames; i++) {
+    guint index = (guint) (ring->write_count % TCI_RX_AUDIO_RING_FRAMES);
+    ring->samples[(index * TCI_AUDIO_CHANNELS)] = samples[(i * TCI_AUDIO_CHANNELS)];
+    ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = samples[(i * TCI_AUDIO_CHANNELS) + 1];
+    ring->write_count++;
+  }
+  do_monitor = 1;
+  {
+    guint old_count = tci_rx_audio_wakeup_count;
+    tci_rx_audio_wakeup_count += frames;
+    if ((frames >= TCI_RX_AUDIO_FRAME_FRAMES) ||
+        ((old_count % TCI_RX_AUDIO_FRAME_FRAMES) + frames >= TCI_RX_AUDIO_FRAME_FRAMES)) {
+      do_wakeup = 1;
+    }
   }
   g_mutex_unlock (&ring->mutex);
-  if (do_wakeup && tci_audio_wakeup_callback != NULL) {
-    tci_audio_wakeup_callback();
+  if (do_monitor) {
+    tci_audio_monitor_push_block(samples, frames);
+  }
+  if (do_wakeup) {
+    tci_audio_queue_rx_wakeup();
   }
 }
 
@@ -402,8 +459,6 @@ void tci_audio_handle_tx_frame (const unsigned char* data, size_t len) {
   TCI_STREAM_HEADER header;
   size_t payload_bytes;
   size_t sample_count;
-  int channels;
-  float peak = 0.0f;
   if (data == NULL || len < 64) { return; }
   memcpy (&header, data, sizeof (header));
   if (header.type != TCI_STREAM_TX_AUDIO) { return; }
@@ -413,7 +468,6 @@ void tci_audio_handle_tx_frame (const unsigned char* data, size_t len) {
     return;
   }
   sample_count = (size_t) header.length;
-  channels = 2;
   if (sample_count < 2) { return; }
   float samples[TCI_TX_AUDIO_FRAME_FRAMES];
   guint frames = (guint) (sample_count / 2);
@@ -423,31 +477,12 @@ void tci_audio_handle_tx_frame (const unsigned char* data, size_t len) {
   for (guint i = 0; i < frames; i++) {
     float left;
     float right;
-    float vleft;
-    float vright;
     memcpy (&left, data + 64 + (((size_t) i * 2) * sizeof (float)), sizeof (left));
     memcpy (&right, data + 64 + ((((size_t) i * 2) + 1) * sizeof (float)), sizeof (right));
     samples[i] = left;
-    vleft = fabsf (left);
-    vright = fabsf (right);
-    if (vleft > peak) {
-      peak = vleft;
-    }
-    if (vright > peak) {
-      peak = vright;
-    }
     if (tci_audio_monitor_is_active()) {
       tci_audio_monitor_push (left * 0.01f, right * 0.01f);
     }
   }
   tci_audio_tx_push_block (samples, frames);
-  tci_tx_audio_frames++;
-  if ((tci_tx_audio_frames % 100) == 0) {
-    t_print ("TCI TX audio frames=%llu channels=%d samples=%zu frames=%u peak=%e\n",
-             (unsigned long long) tci_tx_audio_frames,
-             channels,
-             sample_count,
-             frames,
-             peak);
-  }
 }
