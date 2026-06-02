@@ -269,6 +269,7 @@ ACTION_TABLE ActionTable[] = {
   {TWO_TONE,            "Two-Tone",             "2TONE",        MIDI_KEY},
   {MENU_TX,             "TX\nMenu",             "TX-M",         MIDI_KEY},
   {VFO,                 "VFO",                  "VFO",          MIDI_WHEEL},
+  {VFO_FIX,             "VFO Fix",              "VFO-FIX",      MIDI_WHEEL},
   {MENU_FREQUENCY,      "VFO\nMenu",            "FREQ",         MIDI_KEY},
   {VFO_STEP_MINUS,      "VFO Step -",           "STEP-",        MIDI_KEY},
   {VFO_STEP_PLUS,       "VFO Step +",           "STEP+",        MIDI_KEY},
@@ -1952,6 +1953,25 @@ int process_action(void* data) {
         vfo_step(new);
         acc -= new*vfo_encoder_divisor;
       }
+    }
+    break;
+  case VFO_FIX:
+    if (a->mode == RELATIVE && !locked) {
+      int dir = ((int)a->val < 0) ? -1 : 1;
+      int mag = abs((int)a->val);
+      long long delta;
+      if (mag >= 16) {
+        delta = 10000;
+      } else if (mag >= 4) {
+        delta = 1000;
+      } else {
+        if (vfo[active_receiver->id].mode == modeCWU || vfo[active_receiver->id].mode == modeCWL) {
+          delta = 10;
+        } else {
+          delta = 100;
+        }
+      }
+      vfo_move(-dir * delta, 0);
     }
     break;
   case VFO_STEP_MINUS:
