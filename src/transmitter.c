@@ -1678,9 +1678,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   double mic_sample_double;
   int i, j;
   mic_sample_double = (double) mic_sample;
-  if (tci_audio_tx_enabled()) {
-    mic_sample_double = tci_get_next_mic_sample();
-  }
+  tci_get_next_mic_sample(&mic_sample_double);
   //
   // If there is captured data to re-play, replace incoming
   // mic samples by captured data.

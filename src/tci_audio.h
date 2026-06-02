@@ -75,7 +75,7 @@ void tci_audio_tx_reset (void);
 void tci_audio_tx_set_active (int active);
 int tci_audio_tx_is_active (void);
 int tci_audio_tx_enabled (void);
-double tci_get_next_mic_sample (void);
+void tci_get_next_mic_sample (double *micsample);
 guint tci_audio_tx_read (float* out, guint frames);
 guint64 tci_audio_tx_available (void);
 
