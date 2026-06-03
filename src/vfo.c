@@ -2382,10 +2382,13 @@ long long vfo_get_tx_freq(void) {
 
 void vfo_xit_value(long long value) {
   int id = vfo_get_tx_vfo();
+  long long old_value = vfo[id].xit;
   vfo[id].xit = value;
-  vfo[id].xit_enabled = value ? 1 : 0;
   schedule_high_priority();
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying() && old_value != vfo[id].xit) {
+    tci_xit_offset_changed();
+  }
 }
 
 void vfo_xit_toggle(void) {
@@ -2393,6 +2396,9 @@ void vfo_xit_toggle(void) {
   TOGGLE(vfo[id].xit_enabled);
   schedule_high_priority();
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying()) {
+    tci_xit_enable_changed();
+  }
 }
 
 void vfo_rit_toggle(int id) {
@@ -2401,34 +2407,50 @@ void vfo_rit_toggle(int id) {
     rx_frequency_changed(receiver[id]);
   }
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying()) {
+    tci_rit_enable_changed(id);
+  }
 }
 
 void vfo_rit_value(int id, long long value) {
+  long long old_value = vfo[id].rit;
   vfo[id].rit = value;
-  vfo[id].rit_enabled = value ? 1 : 0;
   if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying() && old_value != vfo[id].rit) {
+    tci_rit_offset_changed(id);
+  }
 }
 
 void vfo_rit_onoff(int id, int enable) {
+  int old_enabled = vfo[id].rit_enabled;
   vfo[id].rit_enabled = SET(enable);
   if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying() && old_enabled != vfo[id].rit_enabled) {
+    tci_rit_enable_changed(id);
+  }
 }
 
 void vfo_xit_onoff(int enable) {
   int id = vfo_get_tx_vfo();
+  int old_enabled = vfo[id].xit_enabled;
   vfo[id].xit_enabled = SET(enable);
   schedule_high_priority();
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying() && old_enabled != vfo[id].xit_enabled) {
+    tci_xit_enable_changed();
+  }
 }
 
 void vfo_xit_incr(int incr) {
   int id = vfo_get_tx_vfo();
+  int old_enabled = vfo[id].xit_enabled;
+  long long old_value = vfo[id].xit;
   long long value = vfo[id].xit + incr;
   if (value < -9999) {
     value = -9999;
@@ -2436,12 +2458,21 @@ void vfo_xit_incr(int incr) {
     value = 9999;
   }
   vfo[id].xit = value;
-  vfo[id].xit_enabled = (value != 0);
+  // vfo[id].xit_enabled = (value != 0);
   schedule_high_priority();
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying()) {
+    if (old_enabled != vfo[id].xit_enabled) {
+      tci_xit_enable_changed();
+    } else if (old_value != vfo[id].xit) {
+      tci_xit_offset_changed();
+    }
+  }
 }
 
 void vfo_rit_incr(int id, int incr) {
+  int old_enabled = vfo[id].rit_enabled;
+  long long old_value = vfo[id].rit;
   long long value = vfo[id].rit + incr;
   if (value < -9999) {
     value = -9999;
@@ -2449,11 +2480,18 @@ void vfo_rit_incr(int id, int incr) {
     value = 9999;
   }
   vfo[id].rit = value;
-  vfo[id].rit_enabled = (value != 0);
+  // vfo[id].rit_enabled = (value != 0);
   if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
   g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying()) {
+    if (old_enabled != vfo[id].rit_enabled) {
+      tci_rit_enable_changed(id);
+    } else if (old_value != vfo[id].rit) {
+      tci_rit_offset_changed(id);
+    }
+  }
 }
 
 //
