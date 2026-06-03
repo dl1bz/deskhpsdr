@@ -696,6 +696,43 @@ void tci_tune_changed (int state) {
   tci_broadcast_tune_state (state);
 }
 
+static void tci_send_lock (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  if (client == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "lock:%d,%s;", receiver_id, locked ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_vfo_lock (CLIENT *client, int receiver_id, int channel_id) {
+  char msg[MAXMSGSIZE];
+  if (client == NULL) { return; }
+  if (channel_id < 0 || channel_id > 1) { return; }
+  snprintf (msg, MAXMSGSIZE, "vfo_lock:%d,%d,%s;", receiver_id, channel_id, locked ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_vfo_locks (CLIENT *client, int receiver_id) {
+  tci_send_vfo_lock (client, receiver_id, 0);
+  tci_send_vfo_lock (client, receiver_id, 1);
+}
+
+static void tci_broadcast_lock (void) {
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_lock (client, VFO_A);
+      tci_send_vfo_locks (client, VFO_A);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_lock_changed (void) {
+  if (!tci_running) { return; }
+  tci_broadcast_lock();
+}
+
 //
 // There are four (!) frequencies to report, namely for RX0/1 channel0/1.
 // RX=0 channel=0: reports VFO-A frequency, all other combination report VFO-B
@@ -1737,6 +1774,76 @@ static void tci_cmd_digu_offset (CLIENT *client, const TCI_CMD *cmd) {
   tci_send_text (client, "digu_offset:0;");
 }
 
+static int tci_is_bool_arg (const char *s) {
+  return s != NULL && (!g_ascii_strcasecmp (s, "true") ||
+                       !g_ascii_strcasecmp (s, "false"));
+}
+
+static void tci_set_lock_state (CLIENT *client, int receiver_id, int state, int vfo_lock, int channel_id) {
+  int changed;
+  tci_begin_apply();
+  changed = set_locked(state ? 1 : 0);
+  tci_end_apply();
+  if (changed) {
+    tci_broadcast_lock();
+  } else if (vfo_lock) {
+    if (channel_id >= 0) {
+      tci_send_vfo_lock (client, receiver_id, channel_id);
+    } else {
+      tci_send_vfo_locks (client, receiver_id);
+    }
+  } else {
+    tci_send_lock (client, receiver_id);
+  }
+}
+
+static void tci_cmd_lock_common (CLIENT *client, const TCI_CMD *cmd, int vfo_lock) {
+  int receiver_id;
+  int channel_id;
+  if (cmd->argc < 1) {
+    if (vfo_lock) {
+      tci_send_vfo_locks (client, VFO_A);
+    } else {
+      tci_send_lock (client, VFO_A);
+    }
+    return;
+  }
+  receiver_id = tci_int (cmd->argv[0], -1);
+  if (receiver_id < 0 || receiver_id > 1) { return; }
+  if (receiver_id >= receivers) { return; }
+  if (!vfo_lock) {
+    if (cmd->argc >= 2) {
+      tci_set_lock_state (client, receiver_id, tci_bool (cmd->argv[1]), 0, -1);
+    } else {
+      tci_send_lock (client, receiver_id);
+    }
+    return;
+  }
+  if (cmd->argc >= 3) {
+    channel_id = tci_int (cmd->argv[1], -1);
+    if (channel_id < 0 || channel_id > 1) { return; }
+    tci_set_lock_state (client, receiver_id, tci_bool (cmd->argv[2]), 1, channel_id);
+  } else if (cmd->argc == 2) {
+    if (tci_is_bool_arg (cmd->argv[1])) {
+      tci_set_lock_state (client, receiver_id, tci_bool (cmd->argv[1]), 1, -1);
+    } else {
+      channel_id = tci_int (cmd->argv[1], -1);
+      if (channel_id < 0 || channel_id > 1) { return; }
+      tci_send_vfo_lock (client, receiver_id, channel_id);
+    }
+  } else {
+    tci_send_vfo_locks (client, receiver_id);
+  }
+}
+
+static void tci_cmd_lock (CLIENT *client, const TCI_CMD *cmd) {
+  tci_cmd_lock_common (client, cmd, 0);
+}
+
+static void tci_cmd_vfo_lock (CLIENT *client, const TCI_CMD *cmd) {
+  tci_cmd_lock_common (client, cmd, 1);
+}
+
 static void tci_cmd_split_enable (CLIENT *client, const TCI_CMD *cmd) {
   int trx;
   if (cmd->argc < 1) {
@@ -2454,6 +2561,8 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "trx",               0, -1, tci_cmd_trx },
   { "tune",              0, -1, tci_cmd_tune },
   { "split_enable",      1,  2, tci_cmd_split_enable },
+  { "lock",              1,  2, tci_cmd_lock },
+  { "vfo_lock",          1,  3, tci_cmd_vfo_lock },
   { "rit_enable",        1,  2, tci_cmd_rit_enable },
   { "xit_enable",        1,  2, tci_cmd_xit_enable },
   { "rit_offset",        1,  2, tci_cmd_rit_offset },
@@ -2768,6 +2877,8 @@ static void tci_send_initial_state (CLIENT *client) {
   }
   tci_send_tx_enable (client);
   tci_send_split (client);
+  tci_send_lock (client, VFO_A);
+  tci_send_vfo_locks (client, VFO_A);
   tci_send_rit_enable (client, VFO_A);
   tci_send_rit_offset (client, VFO_A);
   tci_send_xit_enable (client);

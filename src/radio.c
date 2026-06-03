@@ -273,6 +273,19 @@ DAC dac[2];                            // only first entry used
 
 int locked = 0;
 
+int set_locked(int state) {
+  state = state ? 1 : 0;
+  if (locked == state) {
+    return 0;
+  }
+  locked = state;
+  g_idle_add(ext_vfo_update, NULL);
+  if (!tci_is_applying()) {
+    tci_lock_changed();
+  }
+  return 1;
+}
+
 int cw_keys_reversed = 0;              // 0=disabled 1=enabled
 int cw_keyer_speed = 16;               // 1-60 WPM
 int cw_keyer_mode = KEYER_MODE_A;      // Modes A/B and STRAIGHT

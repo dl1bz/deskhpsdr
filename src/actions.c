@@ -1138,8 +1138,7 @@ int process_action(void* data) {
     break;
   case LOCK:
     if (a->mode == PRESSED) {
-      TOGGLE(locked);
-      g_idle_add(ext_vfo_update, NULL);
+      set_locked(!locked);
     }
     break;
   case MENU_AGC:

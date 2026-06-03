@@ -2766,8 +2766,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
     switch (command[3]) {
     case 'L': //ZZVL
       //DO NOT DOCUMENT, THIS WILL BE REMOVED
-      locked = command[4] == '1';
-      g_idle_add (ext_vfo_update, NULL);
+      set_locked(command[4] == '1');
       break;
     case 'S': { //ZZVS
       //CATDEF    ZZVS
@@ -3254,13 +3253,13 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
             case 41: {
               schedule_action (NUMPAD_ENTER, PRESSED, 0);
               numpad_active = 0;
-              locked = 0;
+              set_locked(0);
             }
             break;
             case 45: {
               schedule_action (NUMPAD_MHZ, PRESSED, 0);
               numpad_active = 0;
-              locked = 0;
+              set_locked(0);
             }
             } else if (!locked) switch (p) {
               static int shift = 0;
@@ -3348,7 +3347,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
               } else if (p == 41) {
                 if (v == 0 || v == 2) {
                   numpad_active = 1;
-                  locked = 1;
+                  set_locked(1);
                   g_idle_add (ext_vfo_update, NULL);
                   schedule_action (NUMPAD_CL, PRESSED, 0);              // U3 start Freq entry
                 }
@@ -3453,10 +3452,9 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
               if (numpad_active) {
                 schedule_action (NUMPAD_KHZ, PRESSED, 0);
                 numpad_active = 0;
-                locked = 0;
+                set_locked(0);
               } else {
-                locked ^= 1;
-                g_idle_add (ext_vfo_update, NULL);
+                set_locked(!locked);
                 snprintf (reply, 256, "ZZZI11%d;", locked);
                 send_resp (client->fd, reply);
               }
@@ -4347,8 +4345,7 @@ int parse_cmd (void* data) {
         snprintf (reply, 256, "LK%d%d;", locked, locked);
         send_resp (client->fd, reply);
       } else if (command[4] == ';') {
-        locked = atoi (&command[2]);
-        g_idle_add (ext_vfo_update, NULL);
+        set_locked(atoi (&command[2]));
       }
       break;
     case 'M': //LM

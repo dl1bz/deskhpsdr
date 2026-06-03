@@ -243,6 +243,7 @@ extern ADC adc[2];
 extern DAC dac[2];
 
 extern int locked;
+int set_locked(int state);
 
 extern gboolean duplex;
 extern gboolean mute_rx_while_transmitting;
