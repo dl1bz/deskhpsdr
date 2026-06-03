@@ -37,6 +37,7 @@
 #endif
 
 #include <libwebsockets.h>
+#include <wdsp.h>
 
 #include "radio.h"
 #include "vfo.h"
@@ -113,7 +114,11 @@ typedef struct _client {
   int last_mox;                 // last mox   state reported
   int count;                    // ping counter
   int rxsensor;                 // enable transmit of S meter data
-  int txsensor;                 // enable transmit of drive data
+  int txsensor;                 // enable transmit of TX sensor data
+  int rxsensor_interval_ms;     // RX sensor send interval in ms
+  int txsensor_interval_ms;     // TX sensor send interval in ms
+  gint64 rxsensor_last_us;      // last RX sensor send timestamp
+  gint64 txsensor_last_us;      // last TX sensor send timestamp
   int idle_queued;              // counter
   struct lws *wsi;              // libwebsockets connection
   GQueue *lws_tx_queue;         // queued RESPONSE objects for LWS writable callback
@@ -825,6 +830,51 @@ static void tci_send_drive (CLIENT *client) {
   int tx_drive;
   tx_drive = radio_get_drive_as_int();
   snprintf (msg, MAXMSGSIZE, "drive:0,%d;", tx_drive);
+  tci_send_text (client, msg);
+}
+
+static void tci_format_tenth (char *dst, size_t len, double value) {
+  int tenths;
+  int sign;
+  if (dst == NULL || len == 0) {
+    return;
+  }
+  tenths = (int) ((value * 10.0) + (value >= 0.0 ? 0.5 : -0.5));
+  sign = tenths < 0;
+  if (sign) {
+    tenths = -tenths;
+  }
+  snprintf (dst, len, "%s%d.%d", sign ? "-" : "", tenths / 10, tenths % 10);
+}
+
+static void tci_send_tx_sensors (CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  char mic_s[32];
+  char rms_s[32];
+  char peak_s[32];
+  char swr_s[32];
+  double mic;
+  double rms;
+  double peak;
+  double swr;
+  if (client == NULL || transmitter == NULL || !can_transmit) {
+    return;
+  }
+  if (!radio_is_transmitting() || transmitter->fwd <= 0.01) {
+    return;
+  }
+  mic = GetTXAMeter (transmitter->id, TXA_MIC_PK);
+  rms = transmitter->fwd;
+  peak = transmitter->fwd;
+  swr = transmitter->swr;
+  if (mic < -300.0) {
+    mic = 0.0;
+  }
+  tci_format_tenth (mic_s, sizeof (mic_s), mic);
+  tci_format_tenth (rms_s, sizeof (rms_s), rms);
+  tci_format_tenth (peak_s, sizeof (peak_s), peak);
+  tci_format_tenth (swr_s, sizeof (swr_s), swr);
+  snprintf (msg, MAXMSGSIZE, "tx_sensors:0,%s,%s,%s,%s;", mic_s, rms_s, peak_s, swr_s);
   tci_send_text (client, msg);
 }
 
@@ -2422,15 +2472,32 @@ static void tci_cmd_sql_level (CLIENT *client, const TCI_CMD *cmd) {
   }
 }
 
+static int tci_sensor_interval_ms (const TCI_CMD *cmd) {
+  int interval = 1000;
+  if (cmd != NULL && cmd->argc >= 2) {
+    interval = tci_int(cmd->argv[1], 1000);
+  }
+  if (interval < 30) {
+    interval = 30;
+  } else if (interval > 1000) {
+    interval = 1000;
+  }
+  return interval;
+}
+
 static void tci_cmd_rx_sensors_enable (CLIENT *client, const TCI_CMD *cmd) {
   g_mutex_lock (&tci_mutex);
   client->rxsensor = tci_bool (cmd->argv[0]);
+  client->rxsensor_interval_ms = tci_sensor_interval_ms(cmd);
+  client->rxsensor_last_us = 0;
   g_mutex_unlock (&tci_mutex);
 }
 
 static void tci_cmd_tx_sensors_enable (CLIENT *client, const TCI_CMD *cmd) {
   g_mutex_lock (&tci_mutex);
   client->txsensor = tci_bool (cmd->argv[0]);
+  client->txsensor_interval_ms = tci_sensor_interval_ms(cmd);
+  client->txsensor_last_us = 0;
   g_mutex_unlock (&tci_mutex);
 }
 
@@ -3045,7 +3112,7 @@ static void tci_send_smeter (CLIENT *client, int v) {
   tci_send_text (client, msg);
 }
 
-static void tci_send_rx (CLIENT *client, int v) {
+__attribute__ ((unused)) static void tci_send_rx (CLIENT *client, int v) {
   //
   // Send S-meter reading.
   // ATTENTION: in some countries, %f sends a comma instead of a decimal
@@ -3113,20 +3180,23 @@ static gboolean tci_reporter (gpointer data) {
     //
     // If S-meter reading is requested, send info each time
     //
-    if (client->rxsensor && (client->count & 1)) {
-      tci_send_rx (client, 0);
-      tci_send_rx (client, 1);
-    }
-    if (client->txsensor && (client->count & 1)) {
-      tci_send_drive (client);
-    }
-    if (receivers > 0 && client->rxsensor && (client->count & 1)) {
+    gint64 now_us = g_get_monotonic_time();
+    if (client->rxsensor && (!mx || duplex) &&
+        (client->rxsensor_last_us == 0 ||
+         (now_us - client->rxsensor_last_us) >= ((gint64) client->rxsensor_interval_ms * 1000))) {
+      client->rxsensor_last_us = now_us;
       if (receivers == 1) {
         tci_send_smeter (client, 0);
       } else {
         tci_send_smeter (client, 0);
         tci_send_smeter (client, 1);
       }
+    }
+    if (client->txsensor && mx && transmitter != NULL && can_transmit && transmitter->fwd > 0.01 &&
+        (client->txsensor_last_us == 0 ||
+         (now_us - client->txsensor_last_us) >= ((gint64) client->txsensor_interval_ms * 1000))) {
+      client->txsensor_last_us = now_us;
+      tci_send_tx_sensors (client);
     }
     //
     // Determine VFO-A/B frequency/mode, report if changed
@@ -3179,6 +3249,10 @@ static void tci_init_client (CLIENT *client, int fd, int seq) {
   client->count           =  0;
   client->rxsensor        =  0;
   client->txsensor        =  0;
+  client->rxsensor_interval_ms = 1000;
+  client->txsensor_interval_ms = 1000;
+  client->rxsensor_last_us = 0;
+  client->txsensor_last_us = 0;
   client->idle_queued     =  0;
   client->tci_timer       =  0;
   client->wsi             = NULL;
