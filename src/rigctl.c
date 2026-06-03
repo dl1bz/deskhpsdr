@@ -217,6 +217,7 @@ static gboolean update_serptt_cts (gpointer user_data) {
   // Wenn sich der Zustand von `serptt_cts` geändert hat
   if (current_state_serptt != serptt_cts) {
     serptt_cts = current_state_serptt;
+    tci_tx_footswitch_changed (serptt_cts);
     // Wenn PTT (Push To Talk) an ist
     if (serptt_cts) {
       t_print ("%s: serial PTT ON\n", __func__);

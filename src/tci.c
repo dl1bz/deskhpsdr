@@ -655,6 +655,26 @@ void tci_mox_changed (int state) {
   tci_broadcast_mox_state (state);
 }
 
+static void tci_broadcast_tx_footswitch_state (int state) {
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      if (state) {
+        tci_send_text (client, "tx_footswitch:0,true;");
+      } else {
+        tci_send_text (client, "tx_footswitch:0,false;");
+      }
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_tx_footswitch_changed (int state) {
+  if (!tci_running) { return; }
+  tci_broadcast_tx_footswitch_state (state);
+}
+
 static void tci_broadcast_tune_state (int state) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
@@ -1664,6 +1684,17 @@ static void tci_cmd_xit_offset (CLIENT *client, const TCI_CMD *cmd) {
   }
 }
 
+
+static void tci_cmd_digl_offset (CLIENT *client, const TCI_CMD *cmd) {
+  (void) cmd;
+  tci_send_text (client, "digl_offset:0;");
+}
+
+static void tci_cmd_digu_offset (CLIENT *client, const TCI_CMD *cmd) {
+  (void) cmd;
+  tci_send_text (client, "digu_offset:0;");
+}
+
 static void tci_cmd_split_enable (CLIENT *client, const TCI_CMD *cmd) {
   int trx;
   if (cmd->argc < 1) {
@@ -2341,6 +2372,8 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "xit_enable",        1,  2, tci_cmd_xit_enable },
   { "rit_offset",        1,  2, tci_cmd_rit_offset },
   { "xit_offset",        1,  2, tci_cmd_xit_offset },
+  { "digl_offset",      0,  1, tci_cmd_digl_offset },
+  { "digu_offset",      0,  1, tci_cmd_digu_offset },
   { "mute",              0,  1, tci_cmd_mute },
   { "rx_mute",           1,  2, tci_cmd_rx_mute },
   { "volume",            0,  1, tci_cmd_volume },
