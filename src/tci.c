@@ -49,6 +49,7 @@
 #include "tci_audio.h"
 #include "cw_engine.h"
 #include "audio.h"
+#include "transmitter.h"
 #include "band.h"
 #include "filter.h"
 #include "agc.h"
@@ -769,6 +770,27 @@ static void tci_send_drive (CLIENT *client) {
   tci_send_text (client, msg);
 }
 
+static int tci_get_tune_drive_as_int (void) {
+  int value;
+  if (transmitter == NULL) {
+    return 0;
+  }
+  value = transmitter->tune_use_drive ? radio_get_drive_as_int() : transmitter->tune_drive;
+  if (value < 0) {
+    value = 0;
+  }
+  if (value > 100) {
+    value = 100;
+  }
+  return value;
+}
+
+static void tci_send_tune_drive (CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  snprintf (msg, MAXMSGSIZE, "tune_drive:0,%d;", tci_get_tune_drive_as_int());
+  tci_send_text (client, msg);
+}
+
 
 static void tci_send_rx_filter_band (CLIENT *client, int v) {
   char msg[MAXMSGSIZE];
@@ -1288,6 +1310,17 @@ static void tci_broadcast_drive (void) {
   g_list_free (clients);
 }
 
+static void tci_broadcast_tune_drive (void) {
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_tune_drive (client);
+    }
+  }
+  g_list_free (clients);
+}
+
 static void tci_broadcast_split (void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
@@ -1390,6 +1423,7 @@ void tci_vfos_changed (void) {
   }
   tci_broadcast_txfreq();
   tci_broadcast_drive();
+  tci_broadcast_tune_drive();
   tci_broadcast_split();
 }
 
@@ -1407,6 +1441,14 @@ void tci_tx_frequency_changed (void) {
 void tci_drive_changed (void) {
   if (!tci_running) { return; }
   tci_broadcast_drive();
+  if (transmitter != NULL && transmitter->tune_use_drive) {
+    tci_broadcast_tune_drive();
+  }
+}
+
+void tci_tune_drive_changed (void) {
+  if (!tci_running) { return; }
+  tci_broadcast_tune_drive();
 }
 
 static int tci_parse_mode (const char* mode_str) {
@@ -2062,6 +2104,50 @@ static void tci_cmd_drive (CLIENT *client, const TCI_CMD *cmd) {
 }
 
 
+static void tci_cmd_tune_drive (CLIENT *client, const TCI_CMD *cmd) {
+  int trx;
+  int value;
+  int changed = 0;
+  if (cmd->argc >= 1) {
+    trx = tci_int (cmd->argv[0], -1);
+    if (trx != 0) {
+      return;
+    }
+    if (cmd->argc >= 2) {
+      value = tci_int (cmd->argv[1], 0);
+      if (value < 0) {
+        value = 0;
+      }
+      if (value > 100) {
+        value = 100;
+      }
+      if (transmitter != NULL) {
+        int v = vfo_get_tx_vfo();
+        int b = vfo[v].band;
+        BANDSETTINGS *bs = band_get_settings (b);
+        transmitter->tune_drive = value;
+        if (bs != NULL) {
+          bs->tune_drive = transmitter->tune_drive;
+          t_print ("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
+        }
+        if (can_transmit && transmitter->tune_use_drive) {
+          transmitter->tune_use_drive = 0;
+        }
+        if (display_extra_sliders) {
+          update_slider_tune_drive_scale (TRUE);
+        }
+        changed = 1;
+      }
+    }
+  }
+  if (changed) {
+    tci_broadcast_tune_drive();
+  } else {
+    tci_send_tune_drive (client);
+  }
+}
+
+
 static void tci_cmd_rx_filter_band (CLIENT *client, const TCI_CMD *cmd) {
   int receiver_id = tci_int (cmd->argv[0], 0);
   if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) {
@@ -2395,6 +2481,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "vfo",               2,  3, tci_cmd_vfo },
   { "rx_smeter",         1,  3, tci_cmd_rx_smeter },
   { "drive",             0,  2, tci_cmd_drive },
+  { "tune_drive",        1,  2, tci_cmd_tune_drive },
   { "rx_filter_band",    1,  3, tci_cmd_rx_filter_band },
   { "cw_macros",         2, -1, tci_cmd_cw_macros },
   { "cw_macros_stop",    0,  0, tci_cmd_cw_macros_stop },
@@ -2687,6 +2774,7 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_xit_offset (client);
   tci_send_mox (client);
   tci_send_tune (client);
+  tci_send_tune_drive (client);
   tci_send_mute (client);
   tci_send_rx_mute (client, VFO_A);
   tci_send_volume (client);

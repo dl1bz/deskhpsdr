@@ -39,6 +39,7 @@
 #include "equalizer_menu.h"
 #include "toolset.h"
 #include "startup.h"
+#include "tci.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *input;
@@ -729,6 +730,7 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
       break;
     case TX_TUNE_DRIVE:
       transmitter->tune_drive = vi;
+      tci_tune_drive_changed();
       if (bs != NULL) {
         bs->tune_drive = transmitter->tune_drive;
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);

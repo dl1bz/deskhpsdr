@@ -807,6 +807,7 @@ static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
   if (value < 0) { value = 0; }
   if (value > 100) { value = 100; }
   transmitter->tune_drive = value;
+  tci_tune_drive_changed();
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), transmitter->tune_drive);
   if (bs != NULL) {
     bs->tune_drive = transmitter->tune_drive;
