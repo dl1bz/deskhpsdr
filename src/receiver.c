@@ -1926,6 +1926,23 @@ void rx_set_mode(RECEIVER *rx) {
   rx_frequency_changed(rx);
 }
 
+int rx_anf_allowed(const RECEIVER *rx) {
+  int mode;
+  if (rx == NULL) {
+    return 0;
+  }
+  mode = vfo[rx->id].mode;
+  return (mode != modeCWU && mode != modeCWL && mode != modeDIGU && mode != modeDIGL);
+}
+
+void rx_set_anf(const RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+  SetRXAANFRun(rx->id, rx_anf_allowed(rx) ? rx->anf : 0);
+  SetRXAANFPosition(rx->id, rx->nr_agc);
+}
+
 void rx_set_noise(const RECEIVER *rx) {
   //
   // Set/Update all parameters stored  in rx
@@ -1975,8 +1992,7 @@ void rx_set_noise(const RECEIVER *rx) {
   //
   // e) ANF
   //
-  SetRXAANFRun(rx->id, rx->anf);
-  SetRXAANFPosition(rx->id, rx->nr_agc);
+  rx_set_anf(rx);
   //
   // f) SNB
   //

@@ -594,13 +594,11 @@ int process_action(void* data) {
     if (a->mode == PRESSED) {
       int id = active_receiver->id;
       TOGGLE(active_receiver->anf);
-      if (id == 0) {
-        int mode = vfo[id].mode;
-        mode_settings[mode].anf = active_receiver->anf;
-        copy_mode_settings(mode);
+      if (active_receiver->anf && !rx_anf_allowed(active_receiver)) {
+        active_receiver->anf = 0;
       }
-      update_noise();
-      g_idle_add(ext_vfo_update, NULL);
+      update_anf();
+      tci_rx_anf_enable_changed(id);
     }
     break;
   case ATTENUATION:

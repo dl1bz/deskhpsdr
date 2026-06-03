@@ -36,6 +36,7 @@
 #include "message.h"
 #include "wdsp.h"
 #include "sliders.h"
+#include "tci.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -117,6 +118,22 @@ void update_notch(void) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+void update_anf(void) {
+  if (active_receiver == NULL) {
+    return;
+  }
+  if (!rx_anf_allowed(active_receiver)) {
+    active_receiver->anf = 0;
+  }
+  if (active_receiver->id == 0 && rx_anf_allowed(active_receiver)) {
+    int mode = vfo[active_receiver->id].mode;
+    mode_settings[mode].anf = active_receiver->anf;
+    copy_mode_settings(mode);
+  }
+  rx_set_anf(active_receiver);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 static void nb_cb(GtkToggleButton *widget, gpointer data) {
   active_receiver->nb = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   update_noise();
@@ -129,7 +146,13 @@ static void nr_cb(GtkToggleButton *widget, gpointer data) {
 
 static void anf_cb(GtkWidget *widget, gpointer data) {
   active_receiver->anf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  update_noise();
+  if (active_receiver->anf && !rx_anf_allowed(active_receiver)) {
+    active_receiver->anf = 0;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
+    return;
+  }
+  update_anf();
+  tci_rx_anf_enable_changed(active_receiver->id);
 }
 
 static void snb_cb(GtkWidget *widget, gpointer data) {
