@@ -40,6 +40,8 @@ void tci_agc_gain_changed(int receiver_id);
 void tci_agc_mode_changed(int receiver_id);
 void tci_mute_changed(int receiver_id);
 void tci_rx_mute_changed(int receiver_id);
+void tci_sql_enable_changed(int receiver_id);
+void tci_sql_level_changed(int receiver_id);
 int tci_is_applying(void);
 void tci_tune_changed(int state);
 void tci_split_changed(void);

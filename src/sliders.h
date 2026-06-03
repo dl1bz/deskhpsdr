@@ -69,6 +69,7 @@ extern void set_attenuation_value(double attenuation);
 extern GtkWidget *sliders_init(int my_width, int my_height);
 
 extern void set_squelch(RECEIVER *rx);
+extern void update_slider_squelch(RECEIVER *rx);
 
 extern void show_diversity_gain(void);
 extern void show_diversity_phase(void);

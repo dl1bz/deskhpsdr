@@ -84,6 +84,7 @@ static gulong    drive_scale_signal_id;
 static GtkWidget *squelch_label;
 static GtkWidget *squelch_scale;
 static gulong     squelch_signal_id;
+static gulong     squelch_enable_signal_id;
 static GtkWidget *squelch_enable;
 static GtkWidget *tune_drive_label;
 static GtkWidget *tune_drive_btn;
@@ -714,15 +715,25 @@ void show_filter_low(int rx, int var) {
 }
 
 static void squelch_value_changed_cb(GtkWidget *widget, gpointer data) {
+  int old_enable = active_receiver->squelch_enable;
+  int new_enable;
   active_receiver->squelch = gtk_range_get_value(GTK_RANGE(widget));
-  active_receiver->squelch_enable = (active_receiver->squelch > 0.5);
+  new_enable = (active_receiver->squelch > 0.5);
+  active_receiver->squelch_enable = new_enable;
+  g_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
+  g_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
   rx_set_squelch(active_receiver);
+  tci_sql_level_changed(active_receiver->id);
+  if (old_enable != new_enable) {
+    tci_sql_enable_changed(active_receiver->id);
+  }
 }
 
 static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   active_receiver->squelch_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   rx_set_squelch(active_receiver);
+  tci_sql_enable_changed(active_receiver->id);
 }
 
 static void binaural_toggle_cb(GtkWidget *widget, gpointer data) {
@@ -1288,7 +1299,20 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
 }
 #endif
 
+void update_slider_squelch(RECEIVER *rx) {
+  if (display_sliders && rx != NULL && rx->id == active_receiver->id) {
+    g_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
+    gtk_range_set_value(GTK_RANGE(squelch_scale), rx->squelch);
+    g_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
+    g_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), rx->squelch_enable);
+    g_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
+  }
+}
+
 void set_squelch(RECEIVER *rx) {
+  int old_enable = rx->squelch_enable;
+  int new_enable;
   //t_print("%s\n",__func__);
   //
   // automatically enable/disable squelch if squelch value changed
@@ -1296,11 +1320,15 @@ void set_squelch(RECEIVER *rx) {
   // as soon the slider is moved squelch is enabled/disabled
   // depending on the "new" squelch value
   //
-  rx->squelch_enable = (rx->squelch > 0.5);
+  new_enable = (rx->squelch > 0.5);
+  rx->squelch_enable = new_enable;
   rx_set_squelch(rx);
+  tci_sql_level_changed(rx->id);
+  if (old_enable != new_enable) {
+    tci_sql_enable_changed(rx->id);
+  }
   if (display_sliders && rx->id == active_receiver->id) {
-    gtk_range_set_value(GTK_RANGE(squelch_scale), rx->squelch);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), rx->squelch_enable);
+    update_slider_squelch(rx);
   } else {
     char title[64];
     snprintf(title, 64, "Squelch RX%d (Hz)", rx->id + 1);
@@ -1996,7 +2024,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // begin label definition inside button
   squelch_label = gtk_bin_get_child(GTK_BIN(squelch_enable));
   // end label definition
-  g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
+  squelch_enable_signal_id = g_signal_connect(squelch_enable, "toggled", G_CALLBACK(squelch_enable_cb), NULL);
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_enable, FALSE, FALSE, 0);
   //-------------------------------------------------------------------------------------------

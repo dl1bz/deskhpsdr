@@ -172,6 +172,16 @@ typedef struct {
   long long value;
 } TCI_RIT_OFFSET_UPDATE;
 
+typedef struct {
+  int receiver_id;
+  int state;
+} TCI_SQL_ENABLE_UPDATE;
+
+typedef struct {
+  int receiver_id;
+  double level_db;
+} TCI_SQL_LEVEL_UPDATE;
+
 typedef void (*TCI_HANDLER) (CLIENT *client, const TCI_CMD *cmd);
 
 typedef struct {
@@ -1116,6 +1126,119 @@ void tci_rx_mute_changed (int receiver_id) {
   tci_broadcast_rx_mute_state(receiver_id, receiver[receiver_id]->mute_radio ? 1 : 0);
 }
 
+static double tci_sql_db_from_slider(double value) {
+  if (value < 0.0) { value = 0.0; }
+  if (value > 100.0) { value = 100.0; }
+  return ((value / 100.0) * 140.0) - 140.0;
+}
+
+static double tci_sql_slider_from_db(double value) {
+  if (value < -140.0) { value = -140.0; }
+  if (value > 0.0) { value = 0.0; }
+  return ((value + 140.0) / 140.0) * 100.0;
+}
+
+static double tci_clamp_sql_level(double value) {
+  if (value < -140.0) { return -140.0; }
+  if (value > 0.0) { return 0.0; }
+  return value;
+}
+
+static void tci_send_sql_enable (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "sql_enable:%d,%s;", receiver_id,
+            receiver[receiver_id]->squelch_enable ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_sql_enable_value (CLIENT *client, int receiver_id, int state) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "sql_enable:%d,%s;", receiver_id, state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_sql_level (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  double value;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  value = tci_sql_db_from_slider(receiver[receiver_id]->squelch);
+  snprintf (msg, MAXMSGSIZE, "sql_level:%d,%0.0f;", receiver_id, value);
+  tci_send_text (client, msg);
+}
+
+static void tci_send_sql_level_value (CLIENT *client, int receiver_id, double value) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  value = tci_clamp_sql_level(value);
+  snprintf (msg, MAXMSGSIZE, "sql_level:%d,%0.0f;", receiver_id, value);
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_sql_enable (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_sql_enable (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_sql_enable_value (int receiver_id, int state) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_sql_enable_value (client, receiver_id, state);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_sql_level (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_sql_level (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_sql_level_value (int receiver_id, double value) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  value = tci_clamp_sql_level(value);
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_sql_level_value (client, receiver_id, value);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_sql_enable_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_sql_enable(receiver_id);
+}
+
+void tci_sql_level_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_sql_level(receiver_id);
+}
+
 static double tci_clamp_volume(double value) {
   if (value < -40.0) { return -40.0; }
   if (value > 0.0) { return 0.0; }
@@ -1600,6 +1723,40 @@ static int tci_clamp_int(int value, int min, int max) {
   return value;
 }
 
+static int tci_apply_sql_enable_update (void *data) {
+  TCI_SQL_ENABLE_UPDATE *su = (TCI_SQL_ENABLE_UPDATE*) data;
+  int receiver_id;
+  int state;
+  if (su == NULL) { return G_SOURCE_REMOVE; }
+  receiver_id = su->receiver_id;
+  state = su->state ? 1 : 0;
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    receiver[receiver_id]->squelch_enable = state;
+    rx_set_squelch(receiver[receiver_id]);
+    update_slider_squelch(receiver[receiver_id]);
+    tci_broadcast_sql_enable_value(receiver_id, state);
+  }
+  g_free(su);
+  return G_SOURCE_REMOVE;
+}
+
+static int tci_apply_sql_level_update (void *data) {
+  TCI_SQL_LEVEL_UPDATE *su = (TCI_SQL_LEVEL_UPDATE*) data;
+  int receiver_id;
+  double level_db;
+  if (su == NULL) { return G_SOURCE_REMOVE; }
+  receiver_id = su->receiver_id;
+  level_db = tci_clamp_sql_level(su->level_db);
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    receiver[receiver_id]->squelch = tci_sql_slider_from_db(level_db);
+    rx_set_squelch(receiver[receiver_id]);
+    update_slider_squelch(receiver[receiver_id]);
+    tci_broadcast_sql_level_value(receiver_id, level_db);
+  }
+  g_free(su);
+  return G_SOURCE_REMOVE;
+}
+
 static int tci_apply_mute_update (void *data) {
   int state = GPOINTER_TO_INT (data) ? 1 : 0;
   if (active_receiver != NULL) {
@@ -2037,6 +2194,38 @@ static void tci_cmd_agc_mode (CLIENT *client, const TCI_CMD *cmd) {
     tci_broadcast_agc_mode_value(receiver_id, agc);
   } else {
     tci_send_agc_mode(client, receiver_id);
+  }
+}
+
+static void tci_cmd_sql_enable (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int(cmd->argv[0], -1);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    TCI_SQL_ENABLE_UPDATE *su = g_new(TCI_SQL_ENABLE_UPDATE, 1);
+    su->receiver_id = receiver_id;
+    su->state = tci_bool(cmd->argv[1]) ? 1 : 0;
+    tci_send_sql_enable_value(client, receiver_id, su->state);
+    g_idle_add(tci_apply_sql_enable_update, su);
+  } else {
+    tci_send_sql_enable(client, receiver_id);
+  }
+}
+
+static void tci_cmd_sql_level (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int(cmd->argv[0], -1);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    TCI_SQL_LEVEL_UPDATE *su = g_new(TCI_SQL_LEVEL_UPDATE, 1);
+    su->receiver_id = receiver_id;
+    su->level_db = tci_clamp_sql_level(tci_double(cmd->argv[1], tci_sql_db_from_slider(receiver[receiver_id]->squelch)));
+    tci_send_sql_level_value(client, receiver_id, su->level_db);
+    g_idle_add(tci_apply_sql_level_update, su);
+  } else {
+    tci_send_sql_level(client, receiver_id);
   }
 }
 
@@ -2563,6 +2752,8 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "split_enable",      1,  2, tci_cmd_split_enable },
   { "lock",              1,  2, tci_cmd_lock },
   { "vfo_lock",          1,  3, tci_cmd_vfo_lock },
+  { "sql_enable",        1,  2, tci_cmd_sql_enable },
+  { "sql_level",         1,  2, tci_cmd_sql_level },
   { "rit_enable",        1,  2, tci_cmd_rit_enable },
   { "xit_enable",        1,  2, tci_cmd_xit_enable },
   { "rit_offset",        1,  2, tci_cmd_rit_offset },
@@ -2879,6 +3070,8 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_split (client);
   tci_send_lock (client, VFO_A);
   tci_send_vfo_locks (client, VFO_A);
+  tci_send_sql_enable (client, VFO_A);
+  tci_send_sql_level (client, VFO_A);
   tci_send_rit_enable (client, VFO_A);
   tci_send_rit_offset (client, VFO_A);
   tci_send_xit_enable (client);
@@ -2894,6 +3087,8 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_agc_gain (client, VFO_A);
   tci_send_agc_mode (client, VFO_A);
   if (receivers > 1) {
+    tci_send_sql_enable (client, VFO_B);
+    tci_send_sql_level (client, VFO_B);
     tci_send_rit_enable (client, VFO_B);
     tci_send_rit_offset (client, VFO_B);
     tci_send_rx_mute (client, VFO_B);
