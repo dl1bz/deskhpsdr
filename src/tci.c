@@ -185,6 +185,11 @@ typedef struct {
 
 typedef struct {
   int receiver_id;
+  int state;
+} TCI_RX_NF_ENABLE_UPDATE;
+
+typedef struct {
+  int receiver_id;
   double level_db;
 } TCI_SQL_LEVEL_UPDATE;
 
@@ -1293,6 +1298,52 @@ void tci_rx_anf_enable_changed (int receiver_id) {
   tci_broadcast_rx_anf_enable(receiver_id);
 }
 
+static void tci_send_rx_nf_enable (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_nf_enable:%d,%s;", receiver_id,
+            receiver[receiver_id]->mnf ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_rx_nf_enable_value (CLIENT *client, int receiver_id, int state) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_nf_enable:%d,%s;", receiver_id, state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_rx_nf_enable (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_nf_enable (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_rx_nf_enable_value (int receiver_id, int state) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_nf_enable_value (client, receiver_id, state);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_rx_nf_enable_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_rx_nf_enable(receiver_id);
+}
+
 static double tci_clamp_volume(double value) {
   if (value < -40.0) { return -40.0; }
   if (value > 0.0) { return 0.0; }
@@ -1839,6 +1890,31 @@ static int tci_apply_rx_anf_enable_update (void *data) {
   return G_SOURCE_REMOVE;
 }
 
+static int tci_apply_rx_nf_enable_update (void *data) {
+  TCI_RX_NF_ENABLE_UPDATE *nu = (TCI_RX_NF_ENABLE_UPDATE*) data;
+  int receiver_id;
+  int state;
+  if (nu == NULL) { return G_SOURCE_REMOVE; }
+  receiver_id = nu->receiver_id;
+  state = nu->state ? 1 : 0;
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    if (receiver[receiver_id]->mnf != state) {
+      tci_begin_apply();
+      receiver[receiver_id]->mnf = state;
+      if (receiver[receiver_id] == active_receiver) {
+        update_notch();
+      } else {
+        rx_set_notch(receiver[receiver_id]);
+        g_idle_add(ext_vfo_update, NULL);
+      }
+      tci_end_apply();
+      tci_broadcast_rx_nf_enable_value(receiver_id, state);
+    }
+  }
+  g_free(nu);
+  return G_SOURCE_REMOVE;
+}
+
 static int tci_apply_mute_update (void *data) {
   int state = GPOINTER_TO_INT (data) ? 1 : 0;
   if (active_receiver != NULL) {
@@ -2221,6 +2297,22 @@ static void tci_cmd_rx_anf_enable (CLIENT *client, const TCI_CMD *cmd) {
     g_idle_add(tci_apply_rx_anf_enable_update, au);
   } else {
     tci_send_rx_anf_enable(client, receiver_id);
+  }
+}
+
+static void tci_cmd_rx_nf_enable (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int(cmd->argv[0], -1);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    TCI_RX_NF_ENABLE_UPDATE *nu = g_new(TCI_RX_NF_ENABLE_UPDATE, 1);
+    nu->receiver_id = receiver_id;
+    nu->state = tci_bool(cmd->argv[1]) ? 1 : 0;
+    tci_send_rx_nf_enable_value(client, receiver_id, nu->state);
+    g_idle_add(tci_apply_rx_nf_enable_update, nu);
+  } else {
+    tci_send_rx_nf_enable(client, receiver_id);
   }
 }
 
@@ -2856,6 +2948,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "sql_enable",        1,  2, tci_cmd_sql_enable },
   { "sql_level",         1,  2, tci_cmd_sql_level },
   { "rx_anf_enable",     1,  2, tci_cmd_rx_anf_enable },
+  { "rx_nf_enable",      1,  2, tci_cmd_rx_nf_enable },
   { "rit_enable",        1,  2, tci_cmd_rit_enable },
   { "xit_enable",        1,  2, tci_cmd_xit_enable },
   { "rit_offset",        1,  2, tci_cmd_rit_offset },
@@ -3175,6 +3268,7 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_sql_enable (client, VFO_A);
   tci_send_sql_level (client, VFO_A);
   tci_send_rx_anf_enable (client, VFO_A);
+  tci_send_rx_nf_enable (client, VFO_A);
   tci_send_rit_enable (client, VFO_A);
   tci_send_rit_offset (client, VFO_A);
   tci_send_xit_enable (client);
@@ -3193,6 +3287,7 @@ static void tci_send_initial_state (CLIENT *client) {
     tci_send_sql_enable (client, VFO_B);
     tci_send_sql_level (client, VFO_B);
     tci_send_rx_anf_enable (client, VFO_B);
+    tci_send_rx_nf_enable (client, VFO_B);
     tci_send_rit_enable (client, VFO_B);
     tci_send_rit_offset (client, VFO_B);
     tci_send_rx_mute (client, VFO_B);

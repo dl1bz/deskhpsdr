@@ -1226,6 +1226,7 @@ int process_action(void* data) {
       }
       TOGGLE(active_receiver->mnf);
       g_idle_add(ext_update_notch, NULL);
+      tci_rx_nf_enable_changed(active_receiver->id);
       // g_idle_add(ext_update_noise, NULL);
     }
     break;

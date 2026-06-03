@@ -163,6 +163,7 @@ static void snb_cb(GtkWidget *widget, gpointer data) {
 static void mnf_cb(GtkWidget *widget, gpointer data) {
   active_receiver->mnf = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   update_notch();
+  tci_rx_nf_enable_changed(active_receiver->id);
 }
 
 static void mnf_fbw_cb(GtkWidget *widget, gpointer data) {
