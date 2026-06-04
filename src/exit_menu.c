@@ -35,6 +35,7 @@
 #include "old_protocol.h"
 #include "actions.h"
 #include "message.h"
+#include "tci.h"
 #ifdef SATURN
   #include "saturnmain.h"
 #endif
@@ -42,6 +43,7 @@
 static GtkWidget *dialog = NULL;
 
 void stop_program(void) {
+  tci_send_stop_and_flush();
   radio_protocol_stop();
   t_print("%s: protocol stopped\n", __func__);
   radio_stop();

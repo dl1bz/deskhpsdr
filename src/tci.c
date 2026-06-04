@@ -229,6 +229,7 @@ static const TCI_DISPATCH tci_dispatch[];
 static void tci_send_smeter (CLIENT *client, int v);
 static void tci_send_rx_filter_band (CLIENT *client, int v);
 static void tci_send_text (CLIENT *client, const char* msg);
+static int tci_queue_frame (CLIENT *client, int type, const char* msg, int check_running);
 static GList *tci_clients_snapshot (void);
 static void tci_cw_macros_empty (void);
 
@@ -281,6 +282,27 @@ static int tci_has_clients(void) {
   return have_clients;
 }
 
+void tci_send_stop_and_flush(void) {
+  if (!tci_running || tci_lws_context == NULL) {
+    return;
+  }
+  GList *clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *) l->data;
+    if (client != NULL && client->wsi != NULL) {
+      client->rxsensor = 0;
+      client->txsensor = 0;
+      (void) tci_queue_frame(client, opTEXT, "stop;", 0);
+    }
+  }
+  g_list_free(clients);
+  lws_cancel_service(tci_lws_context);
+  for (int i = 0; i < 20 && tci_has_clients(); i++) {
+    lws_cancel_service(tci_lws_context);
+    g_usleep(10000);
+  }
+}
+
 //
 // Shut down TCI system. Called from CAT/TCI menu
 // if TCI is disabled there.
@@ -296,6 +318,9 @@ void shutdown_tci (void) {
     for (GList *l = clients; l != NULL; l = l->next) {
       CLIENT *client = (CLIENT *) l->data;
       if (client != NULL && client->wsi != NULL) {
+        client->rxsensor = 0;
+        client->txsensor = 0;
+        (void) tci_queue_frame(client, opTEXT, "stop;", 0);
         client->running = 0;
         lws_set_timeout(client->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
       }
@@ -3727,8 +3752,8 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_macros_cwspeed (client);
   tci_send_cw_macros_delay(client);
   tci_send_keyer_cwspeed (client);
-  tci_send_text (client, "start;");
   tci_send_text (client, "ready;");
+  tci_send_text (client, "start;");
 }
 
 static void tci_lws_free_queue (CLIENT *client) {
