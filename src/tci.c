@@ -212,6 +212,11 @@ typedef struct {
 
 typedef struct {
   int receiver_id;
+  int state;
+} TCI_RX_APF_ENABLE_UPDATE;
+
+typedef struct {
+  int receiver_id;
   double level_db;
 } TCI_SQL_LEVEL_UPDATE;
 
@@ -1546,6 +1551,68 @@ void tci_rx_bin_enable_changed (int receiver_id) {
   tci_broadcast_rx_bin_enable(receiver_id);
 }
 
+static int tci_rx_apf_allowed (int receiver_id) {
+  int mode;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return 0;
+  }
+  mode = vfo[receiver_id].mode;
+  return mode == modeCWU || mode == modeCWL;
+}
+
+static int tci_rx_apf_effective_state (int receiver_id) {
+  if (!tci_rx_apf_allowed(receiver_id)) {
+    return 0;
+  }
+  return (vfo[receiver_id].cwAudioPeakFilter && receiver[receiver_id]->use_cw_dp_filter) ? 1 : 0;
+}
+
+static void tci_send_rx_apf_enable (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_apf_enable:%d,%s;", receiver_id,
+            tci_rx_apf_effective_state(receiver_id) ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_rx_apf_enable_value (CLIENT *client, int receiver_id, int state) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_apf_enable:%d,%s;", receiver_id, state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_rx_apf_enable (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_apf_enable (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_rx_apf_enable_value (int receiver_id, int state) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_apf_enable_value (client, receiver_id, state);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_rx_apf_enable_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_rx_apf_enable(receiver_id);
+}
+
 static int tci_rx_nr_default_for_mode (int mode) {
   switch (mode) {
   case modeUSB:
@@ -2139,6 +2206,43 @@ static int tci_apply_sql_level_update (void *data) {
   return G_SOURCE_REMOVE;
 }
 
+static int tci_apply_rx_apf_enable_update (void *data) {
+  TCI_RX_APF_ENABLE_UPDATE *au = (TCI_RX_APF_ENABLE_UPDATE*) data;
+  int receiver_id;
+  int state;
+  int mode;
+  if (au == NULL) { return G_SOURCE_REMOVE; }
+  receiver_id = au->receiver_id;
+  state = au->state ? 1 : 0;
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    if (state && !tci_rx_apf_allowed(receiver_id)) {
+      state = 0;
+    }
+    mode = vfo[receiver_id].mode;
+    if (vfo[receiver_id].cwAudioPeakFilter != state || (state && !receiver[receiver_id]->use_cw_dp_filter)) {
+      tci_begin_apply();
+      vfo[receiver_id].cwAudioPeakFilter = state;
+      if (receiver_id == 0) {
+        mode_settings[mode].cwPeak = state;
+        copy_mode_settings(mode);
+      }
+      if (state) {
+        for (int i = 0; i < RECEIVERS; i++) {
+          if (receiver[i] != NULL) {
+            receiver[i]->use_cw_dp_filter = 1;
+          }
+        }
+      }
+      rx_filter_changed(receiver[receiver_id]);
+      g_idle_add(ext_vfo_update, NULL);
+      tci_end_apply();
+    }
+    tci_broadcast_rx_apf_enable_value(receiver_id, state);
+  }
+  g_free(au);
+  return G_SOURCE_REMOVE;
+}
+
 static int tci_apply_rx_nb_enable_update (void *data) {
   TCI_RX_NB_ENABLE_UPDATE *nu = (TCI_RX_NB_ENABLE_UPDATE*) data;
   int receiver_id;
@@ -2644,6 +2748,24 @@ static void tci_cmd_rx_mute (CLIENT *client, const TCI_CMD *cmd) {
     tci_broadcast_rx_mute_state (receiver_id, state);
   } else {
     tci_send_rx_mute (client, receiver_id);
+  }
+}
+
+static void tci_cmd_rx_apf_enable (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int(cmd->argv[0], -1);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    TCI_RX_APF_ENABLE_UPDATE *au = g_new(TCI_RX_APF_ENABLE_UPDATE, 1);
+    au->receiver_id = receiver_id;
+    au->state = tci_bool(cmd->argv[1]) ? 1 : 0;
+    if (au->state && !tci_rx_apf_allowed(receiver_id)) {
+      au->state = 0;
+    }
+    g_idle_add(tci_apply_rx_apf_enable_update, au);
+  } else {
+    tci_send_rx_apf_enable(client, receiver_id);
   }
 }
 
@@ -3419,6 +3541,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "sql_enable",        1,  2, tci_cmd_sql_enable },
   { "sql_level",         1,  2, tci_cmd_sql_level },
   { "rx_anf_enable",     1,  2, tci_cmd_rx_anf_enable },
+  { "rx_apf_enable",     1,  2, tci_cmd_rx_apf_enable },
   { "rx_nb_enable",      1,  2, tci_cmd_rx_nb_enable },
   { "rx_nf_enable",      1,  2, tci_cmd_rx_nf_enable },
   { "rx_bin_enable",     1,  2, tci_cmd_rx_bin_enable },
@@ -3752,6 +3875,7 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_sql_enable (client, VFO_A);
   tci_send_sql_level (client, VFO_A);
   tci_send_rx_anf_enable (client, VFO_A);
+  tci_send_rx_apf_enable (client, VFO_A);
   tci_send_rx_nb_enable (client, VFO_A);
   tci_send_rx_nf_enable (client, VFO_A);
   tci_send_rx_bin_enable (client, VFO_A);
@@ -3774,6 +3898,7 @@ static void tci_send_initial_state (CLIENT *client) {
     tci_send_sql_enable (client, VFO_B);
     tci_send_sql_level (client, VFO_B);
     tci_send_rx_anf_enable (client, VFO_B);
+    tci_send_rx_apf_enable (client, VFO_B);
     tci_send_rx_nb_enable (client, VFO_B);
     tci_send_rx_nf_enable (client, VFO_B);
     tci_send_rx_bin_enable (client, VFO_B);

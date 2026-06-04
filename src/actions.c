@@ -995,6 +995,7 @@ int process_action(void* data) {
       TOGGLE(vfo[active_receiver->id].cwAudioPeakFilter);
       rx_filter_changed(active_receiver);
       g_idle_add(ext_vfo_update, NULL);
+      tci_rx_apf_enable_changed(active_receiver->id);
     }
     break;
   case CW_FREQUENCY:

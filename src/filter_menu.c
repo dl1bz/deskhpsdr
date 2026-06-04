@@ -77,6 +77,13 @@ static void cleanup (void) {
 static void cw_peak_cb (GtkWidget *widget, gpointer data) {
   int id = active_receiver->id;
   vfo[id].cwAudioPeakFilter = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  if (vfo[id].cwAudioPeakFilter) {
+    for (int i = 0; i < RECEIVERS; i++) {
+      if (receiver[i] != NULL) {
+        receiver[i]->use_cw_dp_filter = 1;
+      }
+    }
+  }
   if (id == 0) {
     int mode = vfo[id].mode;
     mode_settings[mode].cwPeak = vfo[id].cwAudioPeakFilter;
@@ -84,6 +91,7 @@ static void cw_peak_cb (GtkWidget *widget, gpointer data) {
   }
   rx_filter_changed (active_receiver);
   g_idle_add (ext_vfo_update, NULL);
+  tci_rx_apf_enable_changed (id);
 }
 
 static void use_cw_dp_filter_cb (GtkWidget *widget, gpointer data) {
@@ -95,6 +103,7 @@ static void use_cw_dp_filter_cb (GtkWidget *widget, gpointer data) {
   }
   rx_filter_changed (active_receiver);
   g_idle_add (ext_vfo_update, NULL);
+  tci_rx_apf_enable_changed (active_receiver->id);
 }
 
 static gboolean default_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
