@@ -262,6 +262,25 @@ void pan_clear_labels (void) {
   pan_label_count = 0;
 }
 
+void pan_delete_dx_spot (const char* dxcall) {
+  int i;
+  if (dxcall == NULL || dxcall[0] == '\0') {
+    return;
+  }
+  for (i = 0; i < pan_label_count;) {
+    PAN_LABEL *pl = &pan_labels[i];
+    if (pl->enabled && g_strcmp0(pl->label, dxcall) == 0) {
+      if (i < pan_label_count - 1) {
+        memmove(&pan_labels[i], &pan_labels[i + 1],
+                (size_t)(pan_label_count - i - 1) * sizeof(PAN_LABEL));
+      }
+      pan_label_count--;
+      continue;
+    }
+    i++;
+  }
+}
+
 void pan_add_dx_spot (double freq_khz, const char* dxcall) {
   long long freq_hz;
   char label[32];

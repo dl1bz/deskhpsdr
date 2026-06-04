@@ -57,6 +57,7 @@
 #include "sliders.h"
 #include "noise_menu.h"
 #include "receiver.h"
+#include "rx_panadapter.h"
 
 #define MAXDATASIZE     1024
 #define MAXMSGSIZE      512
@@ -2871,6 +2872,39 @@ static void tci_cmd_tx_sensors_enable (CLIENT *client, const TCI_CMD *cmd) {
   g_mutex_unlock (&tci_mutex);
 }
 
+static void tci_cmd_spot (CLIENT *client, const TCI_CMD *cmd) {
+  const char *dxcall;
+  char *endptr = NULL;
+  long long freq_hz;
+  (void) client;
+  if (cmd->argc < 3 || cmd->argv[0] == NULL || cmd->argv[2] == NULL) {
+    return;
+  }
+  dxcall = cmd->argv[0];
+  if (dxcall[0] == '\0') {
+    return;
+  }
+  freq_hz = g_ascii_strtoll(cmd->argv[2], &endptr, 10);
+  if (endptr == cmd->argv[2] || freq_hz <= 0) {
+    return;
+  }
+  pan_add_dx_spot((double) freq_hz / 1000.0, dxcall);
+}
+
+static void tci_cmd_spot_delete (CLIENT *client, const TCI_CMD *cmd) {
+  (void) client;
+  if (cmd->argc < 1 || cmd->argv[0] == NULL || cmd->argv[0][0] == '\0') {
+    return;
+  }
+  pan_delete_dx_spot(cmd->argv[0]);
+}
+
+static void tci_cmd_spot_clear (CLIENT *client, const TCI_CMD *cmd) {
+  (void) client;
+  (void) cmd;
+  pan_clear_labels();
+}
+
 static void tci_cmd_audio_start (CLIENT *client, const TCI_CMD *cmd) {
   int receiver_id = tci_int (cmd->argv[0], 0);
   char msg[MAXMSGSIZE];
@@ -3410,6 +3444,9 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "audio_stream_samples",        0, -1, tci_cmd_audio_stream_samples },
   { "rx_sensors_enable", 1,  2, tci_cmd_rx_sensors_enable },
   { "tx_sensors_enable", 1,  2, tci_cmd_tx_sensors_enable },
+  { "spot",              3,  5, tci_cmd_spot },
+  { "spot_delete",       1,  1, tci_cmd_spot_delete },
+  { "spot_clear",        0,  0, tci_cmd_spot_clear },
   { "audio_start",       1,  1, tci_cmd_audio_start },
   { "audio_stop",        1,  1, tci_cmd_audio_stop },
   { "modulation",        1,  2, tci_cmd_modulation },
