@@ -1709,22 +1709,18 @@ int process_action(void* data) {
   case SNB:
     if (a->mode == PRESSED) {
       int id = active_receiver->id;
-      if (active_receiver->snb == 0) {
-        active_receiver->snb = 1;
-        if (id == 0) {
-          int mode = vfo[id].mode;
-          mode_settings[mode].snb = 1;
-          copy_mode_settings(mode);
-        }
-      } else {
+      int mode = vfo[id].mode;
+      if (mode == modeDIGL || mode == modeDIGU) {
         active_receiver->snb = 0;
-        if (id == 0) {
-          int mode = vfo[id].mode;
-          mode_settings[mode].snb = 0;
-          copy_mode_settings(mode);
-        }
+      } else {
+        active_receiver->snb = active_receiver->snb ? 0 : 1;
+      }
+      if (id == 0) {
+        mode_settings[mode].snb = active_receiver->snb;
+        copy_mode_settings(mode);
       }
       update_noise();
+      tci_rx_nb_enable_changed(id);
     }
     break;
   case SPLIT:

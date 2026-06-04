@@ -43,6 +43,7 @@ void tci_rx_mute_changed(int receiver_id);
 void tci_sql_enable_changed(int receiver_id);
 void tci_sql_level_changed(int receiver_id);
 void tci_rx_anf_enable_changed(int receiver_id);
+void tci_rx_nb_enable_changed(int receiver_id);
 void tci_rx_nf_enable_changed(int receiver_id);
 void tci_rx_bin_enable_changed(int receiver_id);
 void tci_rx_nr_enable_changed(int receiver_id);

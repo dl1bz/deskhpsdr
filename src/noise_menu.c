@@ -166,8 +166,17 @@ static void anf_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void snb_cb(GtkWidget *widget, gpointer data) {
+  int mode = vfo[active_receiver->id].mode;
   active_receiver->snb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if ((mode == modeDIGL || mode == modeDIGU) && active_receiver->snb) {
+    active_receiver->snb = 0;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
+    return;
+  }
   update_noise();
+  if (!tci_is_applying()) {
+    tci_rx_nb_enable_changed(active_receiver->id);
+  }
 }
 
 static void mnf_cb(GtkWidget *widget, gpointer data) {
