@@ -1370,14 +1370,19 @@ int process_action(void* data) {
   case NR:
     if (a->mode == PRESSED) {
       int id = active_receiver->id;
-      active_receiver->nr++;
-      if (active_receiver->nr > 4) { active_receiver->nr = 0; }
+      int mode = vfo[id].mode;
+      if (mode == modeDIGL || mode == modeDIGU) {
+        active_receiver->nr = 0;
+      } else {
+        active_receiver->nr++;
+        if (active_receiver->nr > 4) { active_receiver->nr = 0; }
+      }
       if (id == 0) {
-        int mode = vfo[id].mode;
         mode_settings[mode].nr = active_receiver->nr;
         copy_mode_settings(mode);
       }
       update_noise();
+      tci_rx_nr_enable_changed(id);
     }
     break;
   case NUMPAD_0:

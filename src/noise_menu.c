@@ -62,11 +62,14 @@ static gboolean close_cb(void) {
 
 void update_noise(void) {
   int id = active_receiver->id;
+  int mode = vfo[id].mode;
+  if (mode == modeDIGL || mode == modeDIGU) {
+    active_receiver->nr = 0;
+  }
   //
   // Update the mode settings
   //
   if (id == 0) {
-    int mode = vfo[id].mode;
     mode_settings[mode].nr = active_receiver->nr;
     mode_settings[mode].nb = active_receiver->nb;
     mode_settings[mode].anf = active_receiver->anf;
@@ -99,7 +102,6 @@ void update_noise(void) {
   rx_set_noise(active_receiver);
   g_idle_add(ext_vfo_update, NULL);
   if (display_sliders) {
-    int mode = vfo[id].mode;
     if (mode == modeDIGL || mode == modeDIGU) {
       update_slider_nr_btn(FALSE);
       update_slider_snb_button(FALSE);
@@ -140,8 +142,16 @@ static void nb_cb(GtkToggleButton *widget, gpointer data) {
 }
 
 static void nr_cb(GtkToggleButton *widget, gpointer data) {
+  int mode = vfo[active_receiver->id].mode;
   active_receiver->nr = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+  if ((mode == modeDIGL || mode == modeDIGU) && active_receiver->nr != 0) {
+    active_receiver->nr = 0;
+    g_signal_handlers_block_by_func(widget, G_CALLBACK(nr_cb), data);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(widget), 0);
+    g_signal_handlers_unblock_by_func(widget, G_CALLBACK(nr_cb), data);
+  }
   update_noise();
+  tci_rx_nr_enable_changed(active_receiver->id);
 }
 
 static void anf_cb(GtkWidget *widget, gpointer data) {

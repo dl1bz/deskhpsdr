@@ -1233,6 +1233,7 @@ static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
     copy_mode_settings(mode);
   }
   update_noise();
+  tci_rx_nr_enable_changed(active_receiver->id);
   gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
   if (active_receiver->nr > 0) {
     gtk_style_context_add_class(nr_context, "active");

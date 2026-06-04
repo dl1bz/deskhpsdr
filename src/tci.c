@@ -201,6 +201,11 @@ typedef struct {
 
 typedef struct {
   int receiver_id;
+  int state;
+} TCI_RX_NR_ENABLE_UPDATE;
+
+typedef struct {
+  int receiver_id;
   double level_db;
 } TCI_SQL_LEVEL_UPDATE;
 
@@ -1448,6 +1453,81 @@ void tci_rx_bin_enable_changed (int receiver_id) {
   tci_broadcast_rx_bin_enable(receiver_id);
 }
 
+static int tci_rx_nr_default_for_mode (int mode) {
+  switch (mode) {
+  case modeUSB:
+  case modeLSB:
+  case modeCWU:
+  case modeCWL:
+    return 4;
+  case modeAM:
+  case modeSAM:
+    return 3;
+  default:
+    return 0;
+  }
+}
+
+static int tci_rx_nr_allowed (int receiver_id) {
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return 0;
+  }
+  return tci_rx_nr_default_for_mode(vfo[receiver_id].mode) != 0;
+}
+
+static int tci_rx_nr_effective_state (int receiver_id) {
+  if (!tci_rx_nr_allowed(receiver_id)) {
+    return 0;
+  }
+  return receiver[receiver_id]->nr != 0;
+}
+
+static void tci_send_rx_nr_enable (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_nr_enable:%d,%s;", receiver_id,
+            tci_rx_nr_effective_state(receiver_id) ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_rx_nr_enable_value (CLIENT *client, int receiver_id, int state) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_nr_enable:%d,%s;", receiver_id, state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_rx_nr_enable (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_nr_enable (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_rx_nr_enable_value (int receiver_id, int state) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_nr_enable_value (client, receiver_id, state);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_rx_nr_enable_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_rx_nr_enable(receiver_id);
+}
+
 static double tci_clamp_volume(double value) {
   if (value < -40.0) { return -40.0; }
   if (value > 0.0) { return 0.0; }
@@ -2019,6 +2099,36 @@ static int tci_apply_rx_nf_enable_update (void *data) {
   return G_SOURCE_REMOVE;
 }
 
+static int tci_apply_rx_nr_enable_update (void *data) {
+  TCI_RX_NR_ENABLE_UPDATE *nu = (TCI_RX_NR_ENABLE_UPDATE*) data;
+  int receiver_id;
+  int state;
+  int new_nr;
+  if (nu == NULL) { return G_SOURCE_REMOVE; }
+  receiver_id = nu->receiver_id;
+  state = nu->state ? 1 : 0;
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    new_nr = state ? tci_rx_nr_default_for_mode(vfo[receiver_id].mode) : 0;
+    if (new_nr == 0) {
+      state = 0;
+    }
+    if (receiver[receiver_id]->nr != new_nr) {
+      tci_begin_apply();
+      receiver[receiver_id]->nr = new_nr;
+      if (receiver[receiver_id] == active_receiver) {
+        update_noise();
+      } else {
+        rx_set_noise(receiver[receiver_id]);
+        g_idle_add(ext_vfo_update, NULL);
+      }
+      tci_end_apply();
+    }
+    tci_broadcast_rx_nr_enable_value(receiver_id, state);
+  }
+  g_free(nu);
+  return G_SOURCE_REMOVE;
+}
+
 static int tci_apply_mute_update (void *data) {
   int state = GPOINTER_TO_INT (data) ? 1 : 0;
   if (active_receiver != NULL) {
@@ -2462,6 +2572,24 @@ static void tci_cmd_rx_bin_enable (CLIENT *client, const TCI_CMD *cmd) {
     g_idle_add(tci_apply_rx_bin_enable_update, bu);
   } else {
     tci_send_rx_bin_enable(client, receiver_id);
+  }
+}
+
+static void tci_cmd_rx_nr_enable (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int(cmd->argv[0], -1);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    TCI_RX_NR_ENABLE_UPDATE *nu = g_new(TCI_RX_NR_ENABLE_UPDATE, 1);
+    nu->receiver_id = receiver_id;
+    nu->state = tci_bool(cmd->argv[1]) ? 1 : 0;
+    if (nu->state && !tci_rx_nr_allowed(receiver_id)) {
+      nu->state = 0;
+    }
+    g_idle_add(tci_apply_rx_nr_enable_update, nu);
+  } else {
+    tci_send_rx_nr_enable(client, receiver_id);
   }
 }
 
@@ -3116,6 +3244,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "rx_anf_enable",     1,  2, tci_cmd_rx_anf_enable },
   { "rx_nf_enable",      1,  2, tci_cmd_rx_nf_enable },
   { "rx_bin_enable",     1,  2, tci_cmd_rx_bin_enable },
+  { "rx_nr_enable",      1,  2, tci_cmd_rx_nr_enable },
   { "rit_enable",        1,  2, tci_cmd_rit_enable },
   { "xit_enable",        1,  2, tci_cmd_xit_enable },
   { "rit_offset",        1,  2, tci_cmd_rit_offset },
@@ -3444,6 +3573,7 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_rx_anf_enable (client, VFO_A);
   tci_send_rx_nf_enable (client, VFO_A);
   tci_send_rx_bin_enable (client, VFO_A);
+  tci_send_rx_nr_enable (client, VFO_A);
   tci_send_rit_enable (client, VFO_A);
   tci_send_rit_offset (client, VFO_A);
   tci_send_xit_enable (client);
@@ -3464,6 +3594,7 @@ static void tci_send_initial_state (CLIENT *client) {
     tci_send_rx_anf_enable (client, VFO_B);
     tci_send_rx_nf_enable (client, VFO_B);
     tci_send_rx_bin_enable (client, VFO_B);
+    tci_send_rx_nr_enable (client, VFO_B);
     tci_send_rit_enable (client, VFO_B);
     tci_send_rit_offset (client, VFO_B);
     tci_send_rx_mute (client, VFO_B);
