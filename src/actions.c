@@ -757,12 +757,20 @@ int process_action(void* data) {
     break;
   case BI_NAURAL:
     if (!radio_is_transmitting() && a->mode == PRESSED) {
-      if (active_receiver->local_audio_channels == 1) {
-        t_print("%s: binaural not allowed on mono output\n", __func__);
+      if (!rx_binaural_allowed(active_receiver)) {
+        t_print("%s: binaural not allowed in current RX configuration\n", __func__);
+        if (active_receiver != NULL) {
+          active_receiver->binaural = 0;
+          rx_set_af_binaural(active_receiver);
+          update_slider_binaural_btn();
+          tci_rx_bin_enable_changed(active_receiver->id);
+        }
         break;
       }
       TOGGLE(active_receiver->binaural);
       rx_set_af_binaural(active_receiver);
+      update_slider_binaural_btn();
+      tci_rx_bin_enable_changed(active_receiver->id);
     }
     break;
   case VOICE_KEYER:

@@ -1717,14 +1717,34 @@ void rx_on(const RECEIVER *rx) {
   SetChannelState(rx->id, 1, 0);
 }
 
+int rx_binaural_allowed(const RECEIVER *rx) {
+  int mode;
+  if (rx == NULL) {
+    return 0;
+  }
+  if (rx->id < 0 || rx->id >= receivers) {
+    return 0;
+  }
+  if (rx->local_audio_channels <= 1) {
+    return 0;
+  }
+  mode = vfo[rx->id].mode;
+  return (mode != modeDIGU && mode != modeDIGL);
+}
+
 void rx_set_af_binaural(const RECEIVER *rx) {
+  int state;
   if (rx == NULL) {
     return;
   }
   if (rx->id < 0 || rx->id >= receivers) {
     return;
   }
-  SetRXAPanelBinaural(rx->id, rx->binaural);
+  state = rx_binaural_allowed(rx) ? rx->binaural : 0;
+  if (!state && rx->binaural) {
+    ((RECEIVER*) rx)->binaural = 0;
+  }
+  SetRXAPanelBinaural(rx->id, state);
 }
 
 void rx_set_af_gain(const RECEIVER *rx) {

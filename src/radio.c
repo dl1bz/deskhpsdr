@@ -903,6 +903,18 @@ void radio_reconfigure (void) {
   if (can_transmit && !duplex) {
     tx_reconfigure (transmitter, my_width, my_width, rx_height);
   }
+  if (display_sliders) {
+    int id = active_receiver->id;
+    int mode = vfo[id].mode;
+    if (mode == modeDIGL || mode == modeDIGU) {
+      update_slider_nr_btn(FALSE);
+      update_slider_snb_button(FALSE);
+    } else {
+      update_slider_nr_btn(TRUE);
+      update_slider_snb_button(TRUE);
+    }
+    update_slider_binaural_btn();
+  }
 }
 
 //

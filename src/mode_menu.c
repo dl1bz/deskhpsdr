@@ -34,6 +34,7 @@
 #include "radio.h"
 #include "receiver.h"
 #include "vfo.h"
+#include "sliders.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -81,6 +82,18 @@ static gboolean mode_select_cb (GtkWidget *widget, gpointer data) {
   if (current != choice) {
     current = choice;
     vfo_mode_changed (choice->info);
+  }
+  if (display_sliders) {
+    int id = active_receiver->id;
+    int mode = vfo[id].mode;
+    if (mode == modeDIGL || mode == modeDIGU) {
+      update_slider_nr_btn(FALSE);
+      update_slider_snb_button(FALSE);
+    } else {
+      update_slider_nr_btn(TRUE);
+      update_slider_snb_button(TRUE);
+    }
+    update_slider_binaural_btn();
   }
   return FALSE;
 }

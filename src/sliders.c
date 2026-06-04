@@ -737,8 +737,19 @@ static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void binaural_toggle_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->binaural = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if (active_receiver == NULL) {
+    return;
+  }
+  if (rx_binaural_allowed(active_receiver)) {
+    active_receiver->binaural = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  } else {
+    active_receiver->binaural = 0;
+  }
   rx_set_af_binaural(active_receiver);
+  update_slider_binaural_btn();
+  if (!tci_is_applying()) {
+    tci_rx_bin_enable_changed(active_receiver->id);
+  }
 }
 
 static void snb_toggle_cb(GtkWidget *widget, gpointer data) {
@@ -1077,13 +1088,14 @@ void update_slider_snb_button(gboolean show_widget) {
 }
 
 void update_slider_binaural_btn(void) {
-  if (display_sliders) {
-    if (active_receiver->local_audio_channels == 1) {
+  if (display_sliders && active_receiver != NULL) {
+    if (!rx_binaural_allowed(active_receiver)) {
       active_receiver->binaural = 0;
+      rx_set_af_binaural(active_receiver);
     }
     g_signal_handler_block(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(binaural_btn), active_receiver->binaural);
-    gtk_widget_set_sensitive(binaural_btn, active_receiver->local_audio_channels > 1);
+    gtk_widget_set_sensitive(binaural_btn, rx_binaural_allowed(active_receiver));
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
     gtk_widget_queue_draw(binaural_btn);
   }

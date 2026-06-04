@@ -56,6 +56,7 @@
 #include "agc.h"
 #include "sliders.h"
 #include "noise_menu.h"
+#include "receiver.h"
 
 #define MAXDATASIZE     1024
 #define MAXMSGSIZE      512
@@ -192,6 +193,11 @@ typedef struct {
   int receiver_id;
   int state;
 } TCI_RX_NF_ENABLE_UPDATE;
+
+typedef struct {
+  int receiver_id;
+  int state;
+} TCI_RX_BIN_ENABLE_UPDATE;
 
 typedef struct {
   int receiver_id;
@@ -1394,6 +1400,54 @@ void tci_rx_nf_enable_changed (int receiver_id) {
   tci_broadcast_rx_nf_enable(receiver_id);
 }
 
+static void tci_send_rx_bin_enable (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  int state;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  state = rx_binaural_allowed(receiver[receiver_id]) ? receiver[receiver_id]->binaural : 0;
+  snprintf (msg, MAXMSGSIZE, "rx_bin_enable:%d,%s;", receiver_id,
+            state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_send_rx_bin_enable_value (CLIENT *client, int receiver_id, int state) {
+  char msg[MAXMSGSIZE];
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  snprintf (msg, MAXMSGSIZE, "rx_bin_enable:%d,%s;", receiver_id, state ? "true" : "false");
+  tci_send_text (client, msg);
+}
+
+static void tci_broadcast_rx_bin_enable (int receiver_id) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_bin_enable (client, receiver_id);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_rx_bin_enable_value (int receiver_id, int state) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_rx_bin_enable_value (client, receiver_id, state);
+    }
+  }
+  g_list_free (clients);
+}
+
+void tci_rx_bin_enable_changed (int receiver_id) {
+  if (!tci_running) { return; }
+  tci_broadcast_rx_bin_enable(receiver_id);
+}
+
 static double tci_clamp_volume(double value) {
   if (value < -40.0) { return -40.0; }
   if (value > 0.0) { return 0.0; }
@@ -1975,6 +2029,32 @@ static int tci_apply_mute_update (void *data) {
   return G_SOURCE_REMOVE;
 }
 
+static int tci_apply_rx_bin_enable_update (void *data) {
+  TCI_RX_BIN_ENABLE_UPDATE *bu = (TCI_RX_BIN_ENABLE_UPDATE*) data;
+  int receiver_id;
+  int state;
+  if (bu == NULL) { return G_SOURCE_REMOVE; }
+  receiver_id = bu->receiver_id;
+  state = bu->state ? 1 : 0;
+  if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    if (state && !rx_binaural_allowed(receiver[receiver_id])) {
+      state = 0;
+    }
+    if (receiver[receiver_id]->binaural != state) {
+      tci_begin_apply();
+      receiver[receiver_id]->binaural = state;
+      rx_set_af_binaural(receiver[receiver_id]);
+      if (receiver[receiver_id] == active_receiver) {
+        update_slider_binaural_btn();
+      }
+      tci_end_apply();
+      tci_broadcast_rx_bin_enable_value(receiver_id, state);
+    }
+  }
+  g_free(bu);
+  return G_SOURCE_REMOVE;
+}
+
 static int tci_apply_rx_mute_update (void *data) {
   TCI_RX_MUTE_UPDATE *mu = (TCI_RX_MUTE_UPDATE*) data;
   int receiver_id;
@@ -2363,6 +2443,25 @@ static void tci_cmd_rx_nf_enable (CLIENT *client, const TCI_CMD *cmd) {
     g_idle_add(tci_apply_rx_nf_enable_update, nu);
   } else {
     tci_send_rx_nf_enable(client, receiver_id);
+  }
+}
+
+static void tci_cmd_rx_bin_enable (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = tci_int(cmd->argv[0], -1);
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) {
+    return;
+  }
+  if (cmd->argc >= 2) {
+    TCI_RX_BIN_ENABLE_UPDATE *bu = g_new(TCI_RX_BIN_ENABLE_UPDATE, 1);
+    bu->receiver_id = receiver_id;
+    bu->state = tci_bool(cmd->argv[1]) ? 1 : 0;
+    if (bu->state && !rx_binaural_allowed(receiver[receiver_id])) {
+      bu->state = 0;
+    }
+    tci_send_rx_bin_enable_value(client, receiver_id, bu->state);
+    g_idle_add(tci_apply_rx_bin_enable_update, bu);
+  } else {
+    tci_send_rx_bin_enable(client, receiver_id);
   }
 }
 
@@ -3016,6 +3115,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "sql_level",         1,  2, tci_cmd_sql_level },
   { "rx_anf_enable",     1,  2, tci_cmd_rx_anf_enable },
   { "rx_nf_enable",      1,  2, tci_cmd_rx_nf_enable },
+  { "rx_bin_enable",     1,  2, tci_cmd_rx_bin_enable },
   { "rit_enable",        1,  2, tci_cmd_rit_enable },
   { "xit_enable",        1,  2, tci_cmd_xit_enable },
   { "rit_offset",        1,  2, tci_cmd_rit_offset },
@@ -3343,6 +3443,7 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_sql_level (client, VFO_A);
   tci_send_rx_anf_enable (client, VFO_A);
   tci_send_rx_nf_enable (client, VFO_A);
+  tci_send_rx_bin_enable (client, VFO_A);
   tci_send_rit_enable (client, VFO_A);
   tci_send_rit_offset (client, VFO_A);
   tci_send_xit_enable (client);
@@ -3362,6 +3463,7 @@ static void tci_send_initial_state (CLIENT *client) {
     tci_send_sql_level (client, VFO_B);
     tci_send_rx_anf_enable (client, VFO_B);
     tci_send_rx_nf_enable (client, VFO_B);
+    tci_send_rx_bin_enable (client, VFO_B);
     tci_send_rit_enable (client, VFO_B);
     tci_send_rit_offset (client, VFO_B);
     tci_send_rx_mute (client, VFO_B);

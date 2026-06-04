@@ -32,6 +32,8 @@
 #include "message.h"
 #include "ext.h"
 #include "sliders.h"
+#include "receiver.h"
+#include "tci.h"
 
 static GtkWidget *dialog = NULL;
 
@@ -54,17 +56,20 @@ static gboolean close_cb(void) {
 static void binaural_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   RECEIVER *rx = receiver[id];
-  if (rx->local_audio_channels == 1) {
+  if (!rx_binaural_allowed(rx)) {
     rx->binaural = 0;
     g_signal_handlers_block_by_func(widget, G_CALLBACK(binaural_cb), data);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
     g_signal_handlers_unblock_by_func(widget, G_CALLBACK(binaural_cb), data);
+    rx_set_af_binaural(rx);
     update_slider_binaural_btn();
+    tci_rx_bin_enable_changed(id);
     return;
   }
   rx->binaural = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   rx_set_af_binaural(rx);
   update_slider_binaural_btn();
+  tci_rx_bin_enable_changed(id);
 }
 
 static void filter_type_cb(GtkToggleButton *widget, gpointer data) {
