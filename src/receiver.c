@@ -1361,6 +1361,7 @@ void rx_full_buffer(RECEIVER *rx) {
       // do nothing
       break;
     }
+    tci_rx_iq_block(rx, rx->iq_input_buffer, rx->buffer_size);
     fexchange0(rx->id, rx->iq_input_buffer, rx->audio_output_buffer, &error);
     if (error != 0) {
       t_print("%s: id=%d fexchange0: error=%d\n", __func__, rx->id, error);

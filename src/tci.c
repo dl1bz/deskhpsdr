@@ -101,6 +101,8 @@ static int tci_cw_msg_call_repeat = 1;
 static int tci_cw_msg_call_repeat_index = 0;
 static int tci_cw_msg_suffix_pending = 0;
 static int tci_cw_macros_delay_ms = 10;
+int tci_iq_swap = 0;
+static gint tci_iq_stream_clients = 0;
 
 typedef struct _client {
   int seq;                      // Seq. number of the client
@@ -121,6 +123,7 @@ typedef struct _client {
   int txsensor_interval_ms;     // TX sensor send interval in ms
   gint64 rxsensor_last_us;      // last RX sensor send timestamp
   gint64 txsensor_last_us;      // last TX sensor send timestamp
+  int iq_stream_enabled[TCI_RX_AUDIO_MAX_RECEIVERS];
   int idle_queued;              // counter
   struct lws *wsi;              // libwebsockets connection
   GQueue *lws_tx_queue;         // queued RESPONSE objects for LWS writable callback
@@ -235,6 +238,9 @@ static const TCI_DISPATCH tci_dispatch[];
 static void tci_send_smeter (CLIENT *client, int v);
 static void tci_send_rx_filter_band (CLIENT *client, int v);
 static void tci_send_text (CLIENT *client, const char* msg);
+static void tci_update_iq_stream_global (void);
+static void tci_send_iq_stream_start (CLIENT *client, int receiver_id);
+static void tci_send_iq_stream_stop (CLIENT *client, int receiver_id);
 static int tci_queue_frame (CLIENT *client, int type, const char* msg, int check_running);
 static GList *tci_clients_snapshot (void);
 static void tci_cw_macros_empty (void);
@@ -298,6 +304,9 @@ void tci_send_stop_and_flush(void) {
     if (client != NULL && client->wsi != NULL) {
       client->rxsensor = 0;
       client->txsensor = 0;
+      for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
+        client->iq_stream_enabled[i] = 0;
+      }
       (void) tci_queue_frame(client, opTEXT, "stop;", 0);
     }
   }
@@ -326,6 +335,9 @@ void shutdown_tci (void) {
       if (client != NULL && client->wsi != NULL) {
         client->rxsensor = 0;
         client->txsensor = 0;
+        for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
+          client->iq_stream_enabled[i] = 0;
+        }
         (void) tci_queue_frame(client, opTEXT, "stop;", 0);
         client->running = 0;
         lws_set_timeout(client->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
@@ -423,6 +435,74 @@ static int tci_queue_binary_frame (CLIENT *client, const unsigned char* data, si
 static void tci_send_text (CLIENT *client, const char* msg) {
   if (rigctl_debug && client != NULL) { t_print ("TCI%d response: %s\n", client->seq, msg ? msg : "(null)"); }
   (void) tci_queue_frame (client, opTEXT, msg, 1);
+}
+
+static void tci_update_iq_stream_global (void) {
+  int enabled = 0;
+  g_mutex_lock (&tci_mutex);
+  for (GList *l = tci_clients; l != NULL && !enabled; l = l->next) {
+    CLIENT *client = (CLIENT *) l->data;
+    if (client == NULL || !client->running) {
+      continue;
+    }
+    for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
+      if (client->iq_stream_enabled[i]) {
+        enabled = 1;
+        break;
+      }
+    }
+  }
+  g_mutex_unlock (&tci_mutex);
+  g_atomic_int_set (&tci_iq_stream_clients, enabled);
+}
+
+void tci_rx_iq_block (RECEIVER *rx, const double *iq, guint frames) {
+  unsigned char frame[sizeof(TCI_STREAM_HEADER) + (2048 * TCI_AUDIO_CHANNELS * sizeof(float))];
+  TCI_STREAM_HEADER header;
+  guint out_frames;
+  size_t data_bytes;
+  size_t frame_len;
+  GList *clients;
+  if (!g_atomic_int_get (&tci_iq_stream_clients)) { return; }
+  if (rx == NULL || iq == NULL || frames == 0) { return; }
+  if (rx->id < 0 || rx->id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
+  out_frames = frames;
+  if (out_frames > 2048) {
+    out_frames = 2048;
+  }
+  memset (&header, 0, sizeof (header));
+  header.receiver = (uint32_t) rx->id;
+  header.sample_rate = (uint32_t) rx->sample_rate;
+  header.format = TCI_AUDIO_FORMAT_FLOAT32;
+  header.length = (uint32_t) (out_frames * TCI_AUDIO_CHANNELS);
+  header.type = 0; // IQ_STREAM
+  header.channels = TCI_AUDIO_CHANNELS;
+  memcpy (frame, &header, sizeof (header));
+  for (guint i = 0; i < out_frames; i++) {
+    float fs0;
+    float fs1;
+    double is = iq[(i * 2)];
+    double qs = iq[(i * 2) + 1];
+    if (tci_iq_swap) {
+      fs0 = (float) qs;
+      fs1 = (float) is;
+    } else {
+      fs0 = (float) is;
+      fs1 = (float) qs;
+    }
+    memcpy (frame + sizeof (header) + ((i * 2) * sizeof (float)), &fs0, sizeof (float));
+    memcpy (frame + sizeof (header) + (((i * 2) + 1) * sizeof (float)), &fs1, sizeof (float));
+  }
+  data_bytes = (size_t) out_frames * TCI_AUDIO_CHANNELS * sizeof(float);
+  frame_len = sizeof (header) + data_bytes;
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *) l->data;
+    if (client != NULL && client->running && client->iq_stream_enabled[rx->id]) {
+      (void) tci_queue_binary_frame (client, frame, frame_len);
+    }
+  }
+  g_list_free (clients);
 }
 
 static GList *tci_clients_snapshot (void) {
@@ -3027,6 +3107,47 @@ static void tci_cmd_spot_clear (CLIENT *client, const TCI_CMD *cmd) {
   pan_clear_labels();
 }
 
+static void tci_send_iq_stream_start (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  snprintf (msg, MAXMSGSIZE, "iq_start:%d;", receiver_id);
+  tci_send_text (client, msg);
+}
+
+static void tci_send_iq_stream_stop (CLIENT *client, int receiver_id) {
+  char msg[MAXMSGSIZE];
+  snprintf (msg, MAXMSGSIZE, "iq_stop:%d;", receiver_id);
+  tci_send_text (client, msg);
+}
+
+static void tci_cmd_iq_start (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = 0;
+  if (client == NULL) { return; }
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    receiver_id = tci_int (cmd->argv[0], 0);
+  }
+  if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
+  if (receiver_id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
+  g_mutex_lock (&tci_mutex);
+  client->iq_stream_enabled[receiver_id] = 1;
+  g_mutex_unlock (&tci_mutex);
+  tci_update_iq_stream_global();
+  tci_send_iq_stream_start (client, receiver_id);
+}
+
+static void tci_cmd_iq_stop (CLIENT *client, const TCI_CMD *cmd) {
+  int receiver_id = 0;
+  if (client == NULL) { return; }
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    receiver_id = tci_int (cmd->argv[0], 0);
+  }
+  if (receiver_id < 0 || receiver_id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
+  g_mutex_lock (&tci_mutex);
+  client->iq_stream_enabled[receiver_id] = 0;
+  g_mutex_unlock (&tci_mutex);
+  tci_update_iq_stream_global();
+  tci_send_iq_stream_stop (client, receiver_id);
+}
+
 static void tci_cmd_audio_start (CLIENT *client, const TCI_CMD *cmd) {
   int receiver_id = tci_int (cmd->argv[0], 0);
   char msg[MAXMSGSIZE];
@@ -3076,8 +3197,10 @@ static void tci_cmd_iq_samplerate(CLIENT *client, const TCI_CMD *cmd) {
   if (samplerate != 48000 && samplerate != 96000 && samplerate != 192000 && samplerate != 384000) {
     return;
   }
-  g_idle_add(ext_set_iq_samplerate, GINT_TO_POINTER(samplerate));
-  snprintf(msg, MAXMSGSIZE, "IQ_SAMPLERATE:%d;", samplerate);
+  if (active_receiver == NULL || active_receiver->sample_rate != samplerate) {
+    g_idle_add(ext_set_iq_samplerate, GINT_TO_POINTER(samplerate));
+  }
+  snprintf(msg, MAXMSGSIZE, "iq_samplerate:%d;", samplerate);
   tci_send_text(client, msg);
 }
 
@@ -3086,7 +3209,7 @@ static void tci_cmd_mon_volume(CLIENT *client, const TCI_CMD *cmd) {
   if (client == NULL) {
     return;
   }
-  tci_send_text(client, "MON_VOLUME:-60;");
+  tci_send_text(client, "mon_volume:-60;");
 }
 
 static void tci_cmd_mon_enable(CLIENT *client, const TCI_CMD *cmd) {
@@ -3094,7 +3217,7 @@ static void tci_cmd_mon_enable(CLIENT *client, const TCI_CMD *cmd) {
   if (client == NULL) {
     return;
   }
-  tci_send_text(client, "MON_ENABLE:false;");
+  tci_send_text(client, "mon_enable:false;");
 }
 
 static void tci_cmd_audio_stream_sample_type (CLIENT *client, const TCI_CMD *cmd) {
@@ -3558,6 +3681,8 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "rx_volume",         2,  3, tci_cmd_rx_volume },
   { "agc_gain",          1,  2, tci_cmd_agc_gain },
   { "agc_mode",          1,  2, tci_cmd_agc_mode },
+  { "iq_start",          0,  1, tci_cmd_iq_start },
+  { "iq_stop",           0,  1, tci_cmd_iq_stop },
   { "iq_samplerate",     1,  1, tci_cmd_iq_samplerate },
   { "mon_volume",        0,  1, tci_cmd_mon_volume },
   { "mon_enable",        0,  1, tci_cmd_mon_enable },
@@ -3796,6 +3921,7 @@ static void tci_init_client (CLIENT *client, int fd, int seq) {
   for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
     client->rx_audio_enabled[i] = 0;
     client->rx_audio_read_count[i] = 0;
+    client->iq_stream_enabled[i] = 0;
   }
 }
 
@@ -4078,6 +4204,7 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
     tci_clients = g_list_remove (tci_clients, client);
     g_mutex_unlock (&tci_mutex);
     tci_update_rx_audio_global();
+    tci_update_iq_stream_global();
     if (client->tci_timer != 0) {
       g_source_remove (client->tci_timer);
       client->tci_timer = 0;
