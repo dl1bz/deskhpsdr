@@ -256,9 +256,6 @@ static int ozy_load_firmware(char* fnamep) {
       my_cksum = (unsigned char)(length + (addr & 0xff) + ((addr >> 8) + type));
       for (i = 0; i < length; i++) {
         this_val = hexitsToUInt(readbuf + 9 + (i * 2), 2);
-#if 0
-        t_print("i: %d val: 0x%02x\n", i, this_val);
-#endif
         if (this_val < 0) {
           t_print("ozy_upload_firmware: bad record data\n");
           return 0;
@@ -272,11 +269,6 @@ static int ozy_load_firmware(char* fnamep) {
         return 0;
       }
       cksum = (unsigned char) this_val;
-#if 0
-      t_print("\n%s", readbuf);
-      t_print("len: %d (0x%02x) addr: 0x%04x mychk: 0x%02x chk: 0x%02x",
-              length, length, addr, my_cksum, cksum);
-#endif
       if (((cksum + my_cksum) & 0xff) != 0) {
         t_print("ozy_upload_firmware: bad checksum\n");
         return 0;

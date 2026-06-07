@@ -167,7 +167,8 @@ ACTION_TABLE ActionTable[] = {
   {MULTI_ENC,           "Multi",                "MULTI",        MIDI_WHEEL},
   {MULTI_SELECT,        "Multi Action\nSelect", "MULTISEL",     MIDI_WHEEL},
   {MULTI_BUTTON,        "Multi Toggle",         "MULTIBTN",     MIDI_KEY},
-  {MUTE,                "Mute",                 "MUTE",         MIDI_KEY},
+  {MUTE_AUDIO,          "Mute Audio",           "MUTEAUDIO",    MIDI_KEY},
+  {MUTE_RX,             "Mute RX",              "MUTERX",       MIDI_KEY},
   {MUTE_RX1,            "Mute RX1",             "MUTE1",        MIDI_KEY},
   {MUTE_RX2,            "Mute RX2",             "MUTE2",        MIDI_KEY},
   {NB,                  "NB",                   "NB",           MIDI_KEY},
@@ -1333,12 +1334,18 @@ int process_action(void* data) {
     multi_action = KnobOrWheel(a, multi_action, 0, VMAXMULTIACTION - 1, 1);
     g_idle_add(ext_vfo_update, NULL);
     break;
-  case MUTE:
+  case MUTE_AUDIO:
+    if (a->mode == PRESSED) {
+      active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
+      update_slider_af_gain_btn();
+    }
+    break;
+  case MUTE_RX:
     if (a->mode == PRESSED) {
       active_receiver->mute_radio = !active_receiver->mute_radio;
       tci_mute_changed(active_receiver->id);
       g_idle_add(ext_vfo_update, NULL);
-      update_slider_af_gain_btn();
+      // update_slider_af_gain_btn();
     }
     break;
   case MUTE_RX1:

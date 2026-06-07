@@ -829,6 +829,10 @@ int audio_write(RECEIVER *rx, float left, float right) {
     //
     // put sample into ring buffer
     //
+    if (rx->local_audio_mute) {
+      left = 0.0f;
+      right = 0.0f;
+    }
     int oldpt = rx->local_audio_buffer_inpt;
     int newpt = oldpt + 1;
     if (newpt == MY_RING_BUFFER_SIZE) { newpt = 0; }

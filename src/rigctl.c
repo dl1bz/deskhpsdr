@@ -3477,7 +3477,7 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
           //
           switch (p) {
           case 1:  // left edge lower encoder push-button, silk print: "RX AF/AGC", default: MUTE
-            if (tr01) { schedule_action (MUTE, PRESSED, 0); }
+            if (tr01) { schedule_action (MUTE_RX, PRESSED, 0); }
             break;
           case 5:  // right edge upper encoder push-button, silk print: "Multi 1", default: FILTER_CUT_DEFAULT
             if (tr01) { schedule_action (FILTER_CUT_DEFAULT, PRESSED, 0); }

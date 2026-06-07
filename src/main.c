@@ -294,11 +294,12 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
   case GDK_KEY_m:
     // toggle anf
-    if (active_receiver->mute_radio > 0) {
-      active_receiver->mute_radio = 0;
+    if (active_receiver->local_audio_mute > 0) {
+      active_receiver->local_audio_mute = 0;
     } else {
-      active_receiver->mute_radio = 1;
+      active_receiver->local_audio_mute = 1;
     }
+    update_slider_af_gain_btn();
     break;
   case GDK_KEY_v:
     start_vfo(active_receiver->id);

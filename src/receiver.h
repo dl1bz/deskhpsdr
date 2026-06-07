@@ -219,6 +219,7 @@ typedef struct _receiver {
   int local_audio;
   int mute_when_not_active;
   int audio_device;
+  int local_audio_mute;
   gchar audio_name[512];
 
 #if defined(PORTAUDIO) && defined(PULSEAUDIO) && defined(ALSA)

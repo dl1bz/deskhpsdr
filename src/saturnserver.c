@@ -286,14 +286,6 @@ void *saturn_server(void* arg) {
     return NULL;
   }
   pthread_detach(HighPriorityToSDRThread);
-#if 0
-  MakeSocket(SocketData + VPORTSPKRAUDIO, 0);          // create and bind a socket
-  if (pthread_create(&SpkrAudioThread, NULL, IncomingSpkrAudio, (void *) &SocketData[VPORTSPKRAUDIO]) < 0) {
-    t_perror("pthread_create speaker audio");
-    return NULL;
-  }
-  pthread_detach(SpkrAudioThread);
-#endif
   MakeSocket(SocketData + VPORTDUCIQ, 0);          // create and bind a socket
   if (pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void *) &SocketData[VPORTDUCIQ]) < 0) {
     t_perror("pthread_create DUC I/Q");
@@ -308,13 +300,6 @@ void *saturn_server(void* arg) {
   SocketData[VPORTMICAUDIO].Socketid = SocketData[VPORTDUCSPECIFIC].Socketid;
   memcpy(&SocketData[VPORTMICAUDIO].addr_cmddata, &SocketData[VPORTDUCSPECIFIC].addr_cmddata,
          sizeof(struct sockaddr_in));
-#if 0
-  if (pthread_create(&MicThread, NULL, OutgoingMicSamples, (void *) &SocketData[VPORTMICAUDIO]) < 0) {
-    t_perror("pthread_create Mic");
-    return NULL;
-  }
-  pthread_detach(MicThread);
-#endif
   //
   // create outgoing high priority data thread
   // note this shares a port with incoming DDC specific, so don't create a new port
@@ -323,14 +308,6 @@ void *saturn_server(void* arg) {
   SocketData[VPORTHIGHPRIORITYFROMSDR].Socketid = SocketData[VPORTDDCSPECIFIC].Socketid;
   memcpy(&SocketData[VPORTHIGHPRIORITYFROMSDR].addr_cmddata, &SocketData[VPORTDDCSPECIFIC].addr_cmddata,
          sizeof(struct sockaddr_in));
-#if 0
-  if (pthread_create(&HighPriorityFromSDRThread, NULL, OutgoingHighPriority,
-                     (void *) &SocketData[VPORTHIGHPRIORITYFROMSDR]) < 0) {
-    t_perror("pthread_create outgoing hi priority");
-    return NULL;
-  }
-  pthread_detach(HighPriorityFromSDRThread);
-#endif
   //
   // create all the DDC sockets
   //
@@ -583,96 +560,6 @@ void *IncomingDUCSpecific(void* arg) {                  // listener thread
 // if sufficient FIFO data available: DMA that data and transfer it out.
 // if it turns out to be too inefficient, we'll have to try larger DMA.
 //
-#if 0
-void *IncomingSpkrAudio(void* arg) {                    // listener thread
-  struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
-  struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
-  uint8_t UDPInBuffer[VSPEAKERAUDIOSIZE];               // incoming buffer
-  struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
-  struct msghdr datagram;                               // multiple incoming message header
-  //
-  // variables for DMA buffer
-  //
-  uint8_t *SpkWriteBuffer = NULL;             // data for DMA to write to spkr
-  uint32_t SpkBufferSize = VDMABUFFERSIZE;
-  unsigned char *SpkBasePtr;                // ptr to DMA location in spk memory
-  int DMAWritefile_fd = -1;               // DMA read file device
-  bool FIFOOverflow, FIFOUnderflow, FIFOOverThreshold;
-  unsigned int Current;
-  //uint32_t RegVal = 0;                    // debug
-  ThreadData = (struct ThreadSocketData*) arg;
-  ThreadData->Active = true;
-  t_print("spinning up speaker audio thread with port %d\n", ThreadData->Portid);
-  //
-  // setup DMA buffer
-  //
-  posix_memalign((void**) &SpkWriteBuffer, VALIGNMENT, SpkBufferSize);
-  if (SpkWriteBuffer == NULL) {
-    t_print("spkr write buffer allocation failed\n");
-    return NULL;
-  }
-  SpkBasePtr = SpkWriteBuffer + VBASE;
-  memset(SpkWriteBuffer, 0, SpkBufferSize);
-  //
-  // open DMA device driver
-  //
-  DMAWritefile_fd = open(VSPKDMADEVICE, O_RDWR);
-  if (DMAWritefile_fd < 0) {
-    t_print("XDMA write device open failed for spk data\n");
-    return NULL;
-  }
-  SetupFIFOMonitorChannel(eSpkCodecDMA, false);
-  ResetDMAStreamFIFO(eSpkCodecDMA);
-  //
-  // main processing loop
-  //
-  while (!ExitRequested) {
-    memset(&iovecinst, 0, sizeof(struct iovec));            // clear buffers
-    memset(&datagram, 0, sizeof(datagram));
-    iovecinst.iov_base = &UDPInBuffer;                      // set buffer for incoming message number i
-    iovecinst.iov_len = VSPEAKERAUDIOSIZE;
-    datagram.msg_iov = &iovecinst;
-    datagram.msg_iovlen = 1;
-    datagram.msg_name = &addr_from;
-    datagram.msg_namelen = sizeof(addr_from);
-    int size = recvmsg(ThreadData->Socketid, &datagram, 0);     // get one message. If it times out, sets size=-1
-    if (size < 0 && errno != EAGAIN) {
-      t_perror("recvfrom fail, Speaker data");
-      return NULL;
-    }
-    if (size == VSPEAKERAUDIOSIZE) {                        // we have received a packet!
-      NewMessageReceived = true;
-      //RegVal += 1;            //debug
-      int Depth = ReadFIFOMonitorChannel(eSpkCodecDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
-                                         &Current); // read the FIFO free locations
-      //t_print("speaker packet received; depth = %d\n", Depth);
-      while (Depth < VMEMWORDSPERFRAME) {     // loop till space available
-        usleep(1000);                                   // 1ms wait
-        Depth = ReadFIFOMonitorChannel(eSpkCodecDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
-                                       &Current); // read the FIFO free locations
-        //if(FIFOOverThreshold)
-        //  t_print("Codec speaker FIFO Overthreshold, depth now = %d\n", Current);
-        //if(FIFOUnderflow)
-        //  t_print("Codec Speaker FIFO Underflowed, depth now = %d\n", Current);
-      }
-      // copy data from UDP Buffer & DMA write it
-      memcpy(SpkBasePtr, UDPInBuffer + 4, VDMATRANSFERSIZE);              // copy out spk samples
-      //            if(RegVal == 100)
-      //                DumpMemoryBuffer(SpkBasePtr, VDMATRANSFERSIZE);
-      DMAWriteToFPGA(DMAWritefile_fd, SpkBasePtr, VDMATRANSFERSIZE, VADDRSPKRSTREAMWRITE);
-    }
-  }
-  //
-  // close down thread
-  //
-  close(ThreadData->Socketid);                  // close incoming data socket
-  ThreadData->Socketid = 0;
-  ThreadData->Active = false;                   // indicate it is closed
-  return NULL;
-}
-
-#endif
-
 #define VIQSAMPLESPERFRAME 240                      // samples per UDP frame
 #define VMEMDUCWORDSPERFRAME 180                       // memory writes per UDP frame
 #define VBYTESPERSAMPLE 6             // 24 bit + 24 bit samples

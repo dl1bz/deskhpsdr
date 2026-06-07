@@ -130,15 +130,6 @@ static void cw_zero_beat_corr_cb(GtkWidget *widget, gpointer data) {
   schedule_high_priority();
 }
 
-#if 0
-static void cw_ramp_width_changed_cb(GtkWidget *widget, gpointer data) {
-  cw_ramp_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
-  tx_set_ramps(transmitter);
-  schedule_transmit_specific();
-}
-
-#endif
-
 void cw_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   int col;
@@ -241,19 +232,6 @@ void cw_menu(GtkWidget *parent) {
   gtk_widget_show(cw_keyer_weight_b);
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_weight_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_weight_b, "value_changed", G_CALLBACK(cw_keyer_weight_value_changed_cb), NULL);
-#if 0
-  col++;
-  GtkWidget *cw_ramp_width_label = gtk_label_new("CW ramp width (ms):");
-  gtk_widget_set_name(cw_ramp_width_label, "boldlabel");
-  gtk_widget_set_halign(cw_ramp_width_label, GTK_ALIGN_END);
-  gtk_widget_show(cw_ramp_width_label);
-  gtk_grid_attach(GTK_GRID(grid), cw_ramp_width_label, 0, col, 1, 1);
-  GtkWidget *cw_ramp_width_b = gtk_spin_button_new_with_range(5.0, 16.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(cw_ramp_width_b), cw_ramp_width);
-  gtk_widget_show(cw_ramp_width_b);
-  gtk_grid_attach(GTK_GRID(grid), cw_ramp_width_b, 1, col, 1, 1);
-  g_signal_connect(cw_ramp_width_b, "value_changed", G_CALLBACK(cw_ramp_width_changed_cb), NULL);
-#endif
   col++;
   GtkWidget *paddle_label = gtk_label_new("Paddle Mode:");
   gtk_widget_set_name(paddle_label, "boldlabel");

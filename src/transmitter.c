@@ -248,27 +248,6 @@ static void init_dl1ycf_ramp(double* ramp, int width) {
   }
 }
 
-#if 0
-static void init_ve3nea_ramp(double* ramp, int width) {
-  //
-  // Calculate a "VE3NEA" ramp (integrated Blackman-Harris-Window)
-  // Output: ramp[0] ... ramp[width] contain numbers
-  // that smoothly grow from zero to one.
-  // (yes, the length of the ramp is width+1)
-  //
-  for (int i = 0; i <= width; i++) {
-    double y = (double) i / ((double) width);           // between 0 and 1
-    double y2 = y * 6.2831853071795864769252867665590;  // 2 Pi y
-    double y4 = y2 + y2;                                // 4 Pi y
-    double y6 = y4 + y2;                                // 6 Pi y
-    ramp[i] = y - 0.216623741219070588160524746528683032300505367020509  * sin(y2)
-              + 0.0313385510244222620730702412393990649034542979097027 * sin(y4)
-              - 0.0017272285577824274302258419105142557477932531124260 * sin(y6);
-  }
-}
-
-#endif
-
 void tx_set_ramps(TRANSMITTER *tx) {
   //t_print("%s: new width=%d\n", __func__, cw_ramp_width);
   //

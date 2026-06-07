@@ -1158,13 +1158,13 @@ void update_slider_af_gain_btn(void) {
   if (display_sliders) {
     g_signal_handler_block(GTK_TOGGLE_BUTTON(af_gain_btn), af_gain_btn_signal_id);
     // invert button, red = MUTE, green = Playback
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->mute_radio);
-    if (active_receiver->mute_radio) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);
+    if (active_receiver->local_audio_mute) {
       gtk_label_set_text(GTK_LABEL(af_gain_label), "MUTE");
-      gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY Audio");
+      gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY local Audio");
     } else {
       gtk_label_set_text(GTK_LABEL(af_gain_label), "Volume");
-      gtk_widget_set_tooltip_text(af_gain_btn, "Press button for MUTE Audio");
+      gtk_widget_set_tooltip_text(af_gain_btn, "Press button for MUTE local Audio");
     }
     g_signal_handler_unblock(GTK_TOGGLE_BUTTON(af_gain_btn), af_gain_btn_signal_id);
     gtk_widget_queue_draw(af_gain_btn);
@@ -1172,11 +1172,10 @@ void update_slider_af_gain_btn(void) {
 }
 
 static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
-  // int state = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
-  active_receiver->mute_radio = !active_receiver->mute_radio;
-  g_idle_add(ext_vfo_update, NULL);
+  // int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
   update_slider_af_gain_btn();
-  tci_mute_changed(active_receiver->id);
+  t_print("%s: active_receiver->local_audio_mute = %d\n", __func__, active_receiver->local_audio_mute);
 }
 
 void update_slider_split_btn(void) {
@@ -1421,16 +1420,17 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   WEAKEN(af_gain_btn);
   // gtk_widget_set_name(af_gain_btn, "medium_toggle_button");
   gtk_widget_set_name(af_gain_btn, "front_toggle_button");
-  if (!active_receiver->mute_radio) {
-    gtk_widget_set_tooltip_text(af_gain_btn, "Press button for MUTE Audio");
-  } else if (active_receiver->mute_radio) {
-    gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY Audio");
+  if (!active_receiver->local_audio_mute) {
+    gtk_widget_set_tooltip_text(af_gain_btn, "Press button for MUTE local Audio");
+  } else if (active_receiver->local_audio_mute) {
+    gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY local Audio");
   }
   // invert button, red = MUTE, green = Playback
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->mute_radio);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);
   // begin label definition inside button
   af_gain_label = gtk_bin_get_child(GTK_BIN(af_gain_btn));
   gtk_label_set_justify(GTK_LABEL(af_gain_label), GTK_JUSTIFY_CENTER);
+  update_slider_af_gain_btn();
   // end label definition
   // Label breiter erzwingen
   gtk_widget_set_size_request(af_gain_btn, 105, -1);  // z.B. 100px

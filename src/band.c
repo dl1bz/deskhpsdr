@@ -718,37 +718,7 @@ int get_band_from_frequency(long long f) {
   }
   return found;
 }
-#if 0
-char *getFrequencyInfo(long long frequency, int filter_low, int filter_high) {
-  char *result = outOfBand;
-  int i;
-  long long flow = frequency + (long long) filter_low;
-  long long fhigh = frequency + (long long) filter_high;
-  int b;
-  for (b = 0; b < BANDS + XVTRS; b++) {
-    BAND *band = band_get_band(b);
-    if (strlen(band->title) > 0) {
-      if (flow >= band->frequencyMin && fhigh <= band->frequencyMax) {
-        if (b == band60) {
-          for (i = 0; i < channel_entries; i++) {
-            long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long) 2);
-            long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long) 2);
-            if (flow >= low_freq && fhigh <= hi_freq) {
-              result = band->title;
-              break;
-            }
-          }
-        } else {
-          result = band->title;
-          break;
-        }
-      }
-    }
-  }
-  t_print("getFrequencyInfo %lld is %s\n", frequency, result);
-  return result;
-}
-#endif
+
 int TransmitAllowed(void) {
   int result;
   long long txfreq, flow, fhigh;

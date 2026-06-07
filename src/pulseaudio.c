@@ -639,6 +639,10 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
     return 0;
   }
+  if (rx->local_audio_mute) {
+    left_sample = 0.0f;
+    right_sample = 0.0f;
+  }
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
     //

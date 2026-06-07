@@ -2230,28 +2230,6 @@ void radio_set_tune (int state) {
       pre_tune_mode = txmode;
       pre_tune_cw_internal = cw_keyer_internal;
       double freq = 0.0;
-#if 0
-      // Code currently not active:
-      // depending on the mode, do not necessarily tune on the dial frequency
-      // if this frequency is not within the pass-band
-      //
-      // in USB/DIGU      tune 1000 Hz above dial freq
-      // in LSB/DIGL,     tune 1000 Hz below dial freq
-      //
-      switch (txmode) {
-      case modeLSB:
-      case modeDIGL:
-        freq = -1000.0;
-        break;
-      case modeUSB:
-      case modeDIGU:
-        freq = 1000.0;
-        break;
-      default:
-        freq = 0.0;
-        break;
-      }
-#endif
       tx_set_singletone (transmitter, 1, freq);
       switch (txmode) {
       case modeCWL:

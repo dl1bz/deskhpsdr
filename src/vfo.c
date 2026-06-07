@@ -1632,34 +1632,6 @@ void vfo_update(void) {
   // Frequencies of VFO A and B
   long long af = vfo[0].ctun ? vfo[0].ctun_frequency : vfo[0].frequency;
   long long bf = vfo[1].ctun ? vfo[1].ctun_frequency : vfo[1].frequency;
-#if 0
-  //
-  // DL1YCF:
-  // There is no consensus whether the "VFO display frequency" should move if
-  // RIT/XIT values are changed. My Kenwood TS590 does so, but some popular
-  // other SDR software does not (which in my personal view is a bug, not a feature).
-  //
-  // The strongest argument to prefer the "TS590" behaviour is that during TX,
-  // the frequency actually used for transmit should be displayed.
-  // Then, to preserve symmetry, during RX the effective RX frequency
-  // is also displayed.
-  //
-  // Adjust VFO_A frequency for RIT/XIT
-  //
-  if (radio_is_transmitting() && txvfo == 0) {
-    if (vfo[0].xit_enabled) { af += vfo[0].xit; }
-  } else {
-    if (vfo[0].rit_enabled) { af += vfo[0].rit; }
-  }
-  //
-  // Adjust VFO_B frequency for RIT/XIT
-  //
-  if (radio_is_transmitting() && txvfo == 1) {
-    if (vfo[1].xit_enabled) { af += vfo[1].xit; }
-  } else {
-    if (vfo[1].rit_enabled) { bf += vfo[1].rit; }
-  }
-#endif
   int oob = 0;
   int f_m; // MHz part
   int f_k; // kHz part
@@ -1723,7 +1695,7 @@ void vfo_update(void) {
   //
   // -----------------------------------------------------------
   if (vfl->vfo_b_x != 0) {
-    cairo_move_to(cr, abs(vfl->vfo_b_x), abs(vfl->vfo_b_y));
+    cairo_move_to(cr, abs(vfl->vfo_b_x - 10), abs(vfl->vfo_b_y));
     if (txvfo == 1 && (radio_is_transmitting() || oob)) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
     } else if (vfo[1].entered_frequency[0]) {
@@ -2069,10 +2041,14 @@ void vfo_update(void) {
     cairo_move_to(cr, vfl->mute_x, vfl->mute_y);
     if (active_receiver->mute_radio) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
+      snprintf(temp_text, sizeof(temp_text), "MUTE-R");
+    } else if (!active_receiver->mute_radio && active_receiver->local_audio_mute) {
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      snprintf(temp_text, sizeof(temp_text), "MUTE-L");
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
+      snprintf(temp_text, sizeof(temp_text), "MUTE");
     }
-    snprintf(temp_text, 32, "MUTE");
     cairo_show_text(cr, temp_text);
   }
   // TX-EQ & Leveler & Tuning state

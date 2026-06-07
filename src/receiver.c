@@ -275,6 +275,7 @@ void rx_save_state(const RECEIVER *rx) {
   if (rx->id == PS_RX_FEEDBACK) { return; }
   SetPropI1("receiver.%d.audio_channel", rx->id,                rx->audio_channel);
   SetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
+  SetPropI1("receiver.%d.local_audio_mute", rx->id,             rx->local_audio_mute);
   SetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
   SetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   SetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
@@ -392,6 +393,7 @@ void rx_restore_state(RECEIVER *rx) {
   if (rx->id == PS_RX_FEEDBACK) { return; }
   GetPropI1("receiver.%d.audio_channel", rx->id,                rx->audio_channel);
   GetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
+  GetPropI1("receiver.%d.local_audio_mute", rx->id,             rx->local_audio_mute);
   GetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
   GetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   GetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
@@ -845,6 +847,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->audio_channel = STEREO;
   rx->audio_device = -1;
   rx->squelch_enable = 0;
+  rx->local_audio_mute = 0;
   rx->squelch = 0;
   rx->binaural = 0;
   rx->filter_high = 525;
