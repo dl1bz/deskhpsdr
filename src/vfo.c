@@ -2044,7 +2044,7 @@ void vfo_update(void) {
       snprintf(temp_text, sizeof(temp_text), "MUTE-R");
     } else if (!active_receiver->mute_radio && active_receiver->local_audio_mute) {
       cairo_set_source_rgba(cr, COLOUR_ALARM);
-      snprintf(temp_text, sizeof(temp_text), "MUTE-L");
+      snprintf(temp_text, sizeof(temp_text), "MUTE-A");
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       snprintf(temp_text, sizeof(temp_text), "MUTE");
