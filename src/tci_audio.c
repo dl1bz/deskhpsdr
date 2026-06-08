@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "message.h"
+#include <wdsp.h>
 
 #include "receiver.h"
 #include "tci_audio.h"
@@ -61,6 +62,45 @@ static int tci_tx_audio_enabled = 0;
 static TCI_AUDIO_WAKEUP_CALLBACK tci_audio_wakeup_callback = NULL;
 static gint tci_rx_audio_wakeup_pending = 0;
 static TCI_AUDIO_TX_CHRONO_CALLBACK tci_audio_tx_chrono_callback = NULL;
+static int tci_audio_sample_rate = TCI_AUDIO_SAMPLE_RATE;
+static void *tci_tx_resampler_24_to_48 = NULL;
+
+int tci_audio_get_sample_rate (void) {
+  return g_atomic_int_get (&tci_audio_sample_rate);
+}
+
+void tci_audio_set_sample_rate (int sample_rate) {
+  int normalized = (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) ? TCI_AUDIO_SAMPLE_RATE_24K : TCI_AUDIO_SAMPLE_RATE;
+  int old_rate = g_atomic_int_get (&tci_audio_sample_rate);
+  if (old_rate == normalized) {
+    return;
+  }
+  g_atomic_int_set (&tci_audio_sample_rate, normalized);
+  if (tci_tx_resampler_24_to_48 != NULL) {
+    destroy_resampleFV (tci_tx_resampler_24_to_48);
+    tci_tx_resampler_24_to_48 = NULL;
+  }
+}
+
+guint tci_audio_get_stream_frames (void) {
+  return TCI_TX_AUDIO_FRAME_FRAMES;
+}
+
+static guint tci_audio_get_tx_chrono_frames (void) {
+  return (tci_audio_get_sample_rate() == TCI_AUDIO_SAMPLE_RATE_24K) ?
+         TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES : TCI_TX_AUDIO_FRAME_FRAMES;
+}
+
+void tci_audio_destroy_rx_resamplers (void **resampler_l, void **resampler_r) {
+  if (resampler_l != NULL && *resampler_l != NULL) {
+    destroy_resampleFV (*resampler_l);
+    *resampler_l = NULL;
+  }
+  if (resampler_r != NULL && *resampler_r != NULL) {
+    destroy_resampleFV (*resampler_r);
+    *resampler_r = NULL;
+  }
+}
 
 static gboolean tci_audio_rx_wakeup_idle (gpointer data) {
   TCI_AUDIO_WAKEUP_CALLBACK callback;
@@ -126,6 +166,26 @@ static void tci_audio_monitor_push_block (const float *samples, guint frames) {
     index = (guint) (ring->write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
     ring->samples[(index * TCI_AUDIO_CHANNELS)] = samples[(i * TCI_AUDIO_CHANNELS)] * 0.9f;
     ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = samples[(i * TCI_AUDIO_CHANNELS) + 1] * 0.9f;
+    ring->write_count++;
+  }
+  g_mutex_unlock (&ring->mutex);
+}
+
+static void tci_audio_monitor_push_mono_block (const float *samples, guint frames, float gain) {
+  TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
+  if (!tci_audio_monitor_enabled || samples == NULL || frames == 0) { return; }
+  if (!g_mutex_trylock (&ring->mutex)) { return; }
+  for (guint i = 0; i < frames; i++) {
+    guint index;
+    float sample;
+    if (ring->write_count >= ring->read_count + TCI_AUDIO_MONITOR_RING_FRAMES) {
+      ring->read_count = ring->write_count - TCI_AUDIO_MONITOR_RING_FRAMES + 1;
+      ring->dropped++;
+    }
+    sample = samples[i] * gain;
+    index = (guint) (ring->write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
+    ring->samples[(index * TCI_AUDIO_CHANNELS)] = sample;
+    ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = sample;
     ring->write_count++;
   }
   g_mutex_unlock (&ring->mutex);
@@ -200,8 +260,9 @@ void tci_get_next_mic_sample (double *micsample) {
     return;
   }
   chrono_sample_count++;
-  if (chrono_sample_count >= TCI_TX_AUDIO_FRAME_FRAMES) {
-    chrono_sample_count -= TCI_TX_AUDIO_FRAME_FRAMES;
+  guint chrono_frames = tci_audio_get_tx_chrono_frames();
+  if (chrono_sample_count >= chrono_frames) {
+    chrono_sample_count -= chrono_frames;
     if (tci_audio_tx_chrono_callback != NULL) {
       tci_audio_tx_chrono_callback();
     }
@@ -384,10 +445,18 @@ static guint tci_audio_copy (int receiver_id, guint64 *read_count, float* out, g
 
 
 guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char* frame, size_t frame_size,
-                           size_t *frame_len) {
+                           size_t *frame_len, void **resampler_l, void **resampler_r) {
   float audio[TCI_RX_AUDIO_FRAME_FRAMES * TCI_AUDIO_CHANNELS];
+  float audio_l[TCI_RX_AUDIO_FRAME_FRAMES];
+  float audio_r[TCI_RX_AUDIO_FRAME_FRAMES];
+  float resampled_l[TCI_RX_AUDIO_FRAME_FRAMES];
+  float resampled_r[TCI_RX_AUDIO_FRAME_FRAMES];
   TCI_STREAM_HEADER header;
   guint frames;
+  guint out_frames;
+  int sample_rate;
+  int out_l;
+  int out_r;
   size_t data_bytes;
   if (frame_len != NULL) {
     *frame_len = 0;
@@ -396,18 +465,48 @@ guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char* 
   if (frame_size < TCI_AUDIO_RX_FRAME_MAX_BYTES) { return 0; }
   frames = tci_audio_copy (receiver_id, read_count, audio, TCI_RX_AUDIO_FRAME_FRAMES);
   if (frames == 0) { return 0; }
+  sample_rate = tci_audio_get_sample_rate();
+  out_frames = frames;
+  if (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
+    if (resampler_l == NULL || resampler_r == NULL) { return 0; }
+    if (*resampler_l == NULL) {
+      *resampler_l = create_resampleFV (TCI_AUDIO_SAMPLE_RATE, TCI_AUDIO_SAMPLE_RATE_24K);
+    }
+    if (*resampler_r == NULL) {
+      *resampler_r = create_resampleFV (TCI_AUDIO_SAMPLE_RATE, TCI_AUDIO_SAMPLE_RATE_24K);
+    }
+    if (*resampler_l == NULL || *resampler_r == NULL) { return 0; }
+    for (guint i = 0; i < frames; i++) {
+      audio_l[i] = audio[(i * TCI_AUDIO_CHANNELS)];
+      audio_r[i] = audio[(i * TCI_AUDIO_CHANNELS) + 1];
+    }
+    out_l = 0;
+    out_r = 0;
+    xresampleFV (audio_l, resampled_l, (int) frames, &out_l, *resampler_l);
+    xresampleFV (audio_r, resampled_r, (int) frames, &out_r, *resampler_r);
+    out_frames = (out_l < out_r) ? (guint) out_l : (guint) out_r;
+    if (out_frames > TCI_RX_AUDIO_FRAME_FRAMES) {
+      out_frames = TCI_RX_AUDIO_FRAME_FRAMES;
+    }
+    for (guint i = 0; i < out_frames; i++) {
+      audio[(i * TCI_AUDIO_CHANNELS)] = resampled_l[i];
+      audio[(i * TCI_AUDIO_CHANNELS) + 1] = resampled_r[i];
+    }
+  } else {
+    tci_audio_destroy_rx_resamplers (resampler_l, resampler_r);
+  }
   memset (&header, 0, sizeof (header));
   header.receiver = (uint32_t) receiver_id;
-  header.sample_rate = TCI_AUDIO_SAMPLE_RATE;
+  header.sample_rate = (uint32_t) sample_rate;
   header.format = TCI_AUDIO_FORMAT_FLOAT32;
-  header.length = (uint32_t) (frames * TCI_AUDIO_CHANNELS);
+  header.length = (uint32_t) (out_frames * TCI_AUDIO_CHANNELS);
   header.type = TCI_STREAM_RX_AUDIO;
   header.channels = TCI_AUDIO_CHANNELS;
-  data_bytes = (size_t) frames * TCI_AUDIO_CHANNELS * sizeof (float);
+  data_bytes = (size_t) out_frames * TCI_AUDIO_CHANNELS * sizeof (float);
   memcpy (frame, &header, sizeof (header));
   memcpy (frame + sizeof (header), audio, data_bytes);
   *frame_len = sizeof (header) + data_bytes;
-  return frames;
+  return out_frames;
 }
 
 void tci_audio_handle_tx_frame (const unsigned char* data, size_t len) {
@@ -424,9 +523,17 @@ void tci_audio_handle_tx_frame (const unsigned char* data, size_t len) {
   }
   sample_count = (size_t) header.length;
   if (sample_count < 2) { return; }
-  float samples[TCI_TX_AUDIO_FRAME_FRAMES];
+  float samples[TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES];
+  float input[TCI_TX_AUDIO_24K_FRAME_FRAMES];
+  float output[TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES];
   guint frames = (guint) (sample_count / 2);
-  if (frames > TCI_TX_AUDIO_FRAME_FRAMES) {
+  guint push_frames;
+  int sample_rate = (header.sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) ? TCI_AUDIO_SAMPLE_RATE_24K : TCI_AUDIO_SAMPLE_RATE;
+  if (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
+    if (frames > TCI_TX_AUDIO_24K_FRAME_FRAMES) {
+      frames = TCI_TX_AUDIO_24K_FRAME_FRAMES;
+    }
+  } else if (frames > TCI_TX_AUDIO_FRAME_FRAMES) {
     frames = TCI_TX_AUDIO_FRAME_FRAMES;
   }
   for (guint i = 0; i < frames; i++) {
@@ -435,9 +542,30 @@ void tci_audio_handle_tx_frame (const unsigned char* data, size_t len) {
     memcpy (&left, data + 64 + (((size_t) i * 2) * sizeof (float)), sizeof (left));
     memcpy (&right, data + 64 + ((((size_t) i * 2) + 1) * sizeof (float)), sizeof (right));
     samples[i] = left;
-    if (tci_audio_monitor_is_active()) {
-      tci_audio_monitor_push (left * 0.01f, right * 0.01f);
+    if (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
+      input[i] = left;
     }
   }
-  tci_audio_tx_push_block (samples, frames);
+  push_frames = frames;
+  if (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
+    int out_frames = 0;
+    if (tci_tx_resampler_24_to_48 == NULL) {
+      tci_tx_resampler_24_to_48 = create_resampleFV (TCI_AUDIO_SAMPLE_RATE_24K, TCI_AUDIO_SAMPLE_RATE);
+    }
+    if (tci_tx_resampler_24_to_48 == NULL) { return; }
+    xresampleFV (input, output, (int) frames, &out_frames, tci_tx_resampler_24_to_48);
+    if (out_frames <= 0) { return; }
+    push_frames = (guint) out_frames;
+    if (push_frames > TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES) {
+      push_frames = TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES;
+    }
+    memcpy (samples, output, push_frames * sizeof (float));
+  } else if (tci_tx_resampler_24_to_48 != NULL) {
+    destroy_resampleFV (tci_tx_resampler_24_to_48);
+    tci_tx_resampler_24_to_48 = NULL;
+  }
+  if (tci_audio_monitor_is_active()) {
+    tci_audio_monitor_push_mono_block (samples, push_frames, 0.01f);
+  }
+  tci_audio_tx_push_block (samples, push_frames);
 }

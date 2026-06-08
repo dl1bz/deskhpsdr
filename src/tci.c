@@ -132,6 +132,8 @@ typedef struct _client {
   int device_index;             // discovery index bound to this TCI client
   int rx_audio_enabled[TCI_RX_AUDIO_MAX_RECEIVERS];
   guint64 rx_audio_read_count[TCI_RX_AUDIO_MAX_RECEIVERS];
+  void *rx_audio_resampler_l[TCI_RX_AUDIO_MAX_RECEIVERS];
+  void *rx_audio_resampler_r[TCI_RX_AUDIO_MAX_RECEIVERS];
   int tx_audio_enabled;
   gint64 tx_chrono_next_us;
   guint64 tx_chrono_queue_count;
@@ -161,6 +163,8 @@ static void tci_service_tx_chrono (void);
 static void tci_lws_binary_reset (CLIENT *client);
 static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, size_t len, struct lws *wsi);
 static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t len);
+static void tci_send_audio_samplerate (CLIENT *client);
+static void tci_send_audio_stream_samples (CLIENT *client);
 
 typedef struct {
   char *cmd;
@@ -625,7 +629,9 @@ static void tci_queue_rx_audio_frame (CLIENT *client, int receiver_id) {
   size_t frame_len;
   if (client == NULL || !client->running || !client->rx_audio_enabled[receiver_id]) { return; }
   if (tci_audio_get_frame (receiver_id, &client->rx_audio_read_count[receiver_id], frame, sizeof (frame),
-                           &frame_len) == 0) {
+                           &frame_len,
+                           &client->rx_audio_resampler_l[receiver_id],
+                           &client->rx_audio_resampler_r[receiver_id]) == 0) {
     return;
   }
   (void) tci_queue_binary_frame (client, frame, frame_len);
@@ -638,9 +644,9 @@ static int tci_queue_tx_chrono_frame (CLIENT *client) {
   if (client == NULL || !client->running || !client->tx_audio_enabled) { return 0; }
   memset (&header, 0, sizeof (header));
   header.receiver = 0;
-  header.sample_rate = TCI_AUDIO_SAMPLE_RATE;
+  header.sample_rate = (uint32_t) tci_audio_get_sample_rate();
   header.format = TCI_AUDIO_FORMAT_FLOAT32;
-  header.length = TCI_TX_AUDIO_CHRONO_LENGTH;
+  header.length = (uint32_t) (tci_audio_get_stream_frames() * TCI_AUDIO_CHANNELS);
   header.type = TCI_STREAM_TX_CHRONO;
   header.channels = TCI_AUDIO_CHANNELS;
   queued = tci_queue_binary_frame (client, (const unsigned char*) &header, sizeof (header));
@@ -2760,10 +2766,10 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
           audio_open_tci_monitor (active_receiver->audio_name);
         }
 #endif
-        tci_send_text (client, "audio_samplerate:48000;");
+        tci_send_audio_samplerate (client);
         tci_send_text (client, "audio_stream_sample_type:float32;");
         tci_send_text (client, "audio_stream_channels:1;");
-        tci_send_text (client, "audio_stream_samples:512;");
+        tci_send_audio_stream_samples (client);
         tci_send_text (client, "tx_stream_audio_buffering:0;");
         tci_send_text (client, "audio_start:0;");
         t_print ("TCI%d TX request (tci audio)\n", client->seq);
@@ -3168,7 +3174,9 @@ static void tci_cmd_audio_start (CLIENT *client, const TCI_CMD *cmd) {
 }
 
 static void tci_send_audio_samplerate (CLIENT *client) {
-  tci_send_text (client, "audio_samplerate:48000;");
+  char msg[MAXMSGSIZE];
+  snprintf (msg, MAXMSGSIZE, "audio_samplerate:%d;", tci_audio_get_sample_rate());
+  tci_send_text (client, msg);
 }
 
 static void tci_send_audio_stream_sample_type (CLIENT *client) {
@@ -3180,11 +3188,24 @@ static void tci_send_audio_stream_channels (CLIENT *client) {
 }
 
 static void tci_send_audio_stream_samples (CLIENT *client) {
-  tci_send_text (client, "audio_stream_samples:512;");
+  char msg[MAXMSGSIZE];
+  snprintf (msg, MAXMSGSIZE, "audio_stream_samples:%u;", tci_audio_get_stream_frames());
+  tci_send_text (client, msg);
 }
 
 static void tci_cmd_audio_samplerate (CLIENT *client, const TCI_CMD *cmd) {
+  int sample_rate;
+  if (client == NULL) { return; }
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    sample_rate = tci_int (cmd->argv[0], TCI_AUDIO_SAMPLE_RATE);
+    tci_audio_set_sample_rate (sample_rate);
+    for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
+      tci_audio_destroy_rx_resamplers (&client->rx_audio_resampler_l[i],
+                                       &client->rx_audio_resampler_r[i]);
+    }
+  }
   tci_send_audio_samplerate (client);
+  tci_send_audio_stream_samples (client);
 }
 
 static void tci_cmd_iq_samplerate(CLIENT *client, const TCI_CMD *cmd) {
@@ -3921,6 +3942,8 @@ static void tci_init_client (CLIENT *client, int fd, int seq) {
   for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
     client->rx_audio_enabled[i] = 0;
     client->rx_audio_read_count[i] = 0;
+    client->rx_audio_resampler_l[i] = NULL;
+    client->rx_audio_resampler_r[i] = NULL;
     client->iq_stream_enabled[i] = 0;
   }
 }
@@ -4210,6 +4233,10 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
       client->tci_timer = 0;
     }
     tci_lws_free_queue (client);
+    for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
+      tci_audio_destroy_rx_resamplers (&client->rx_audio_resampler_l[i],
+                                       &client->rx_audio_resampler_r[i]);
+    }
     g_free (client->binary_rx_buf);
     client->binary_rx_buf = NULL;
     client->binary_rx_len = 0;
