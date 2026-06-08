@@ -51,10 +51,10 @@ void tci_audio_set_active (int active);
 int tci_audio_is_active (void);
 void tci_audio_set_wakeup_callback (TCI_AUDIO_WAKEUP_CALLBACK callback);
 void tci_audio_set_tx_chrono_callback (TCI_AUDIO_TX_CHRONO_CALLBACK callback);
-int tci_audio_get_sample_rate (void);
-void tci_audio_set_sample_rate (int sample_rate);
+int tci_audio_normalize_sample_rate (int sample_rate);
 guint tci_audio_get_stream_frames (void);
 void tci_audio_destroy_rx_resamplers (void **resampler_l, void **resampler_r);
+void tci_audio_destroy_tx_resampler (void **resampler);
 
 typedef struct _tci_stream_header {
   uint32_t receiver;
@@ -75,8 +75,9 @@ void tci_audio_rx_sample (RECEIVER *rx, float left, float right);
 void tci_audio_rx_block (RECEIVER *rx, const float *samples, guint frames);
 guint64 tci_audio_get_write_count (int receiver_id);
 guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char* frame, size_t frame_size,
-                           size_t *frame_len, void **resampler_l, void **resampler_r);
-void tci_audio_handle_tx_frame (const unsigned char* data, size_t len);
+                           size_t *frame_len, int sample_rate, void **resampler_l, void **resampler_r);
+void tci_audio_handle_tx_frame (const unsigned char* data, size_t len, int client_sample_rate,
+                                void **resampler_24_to_48);
 
 void tci_audio_tx_reset (void);
 void tci_audio_tx_set_active (int active);
