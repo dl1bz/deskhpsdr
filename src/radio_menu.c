@@ -149,6 +149,9 @@ static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
     enable_tx_inhibit = 0;
     enable_auto_tune = 0;
     new_pa_board = 0;
+    mic_ptt_enabled = 1;
+    mic_bias_enabled = 0;
+    mic_ptt_tip_bias_ring = 0;
     break;
   default:
     hermes_mode = HERMES_MODE_GENERIC;
@@ -832,6 +835,7 @@ void radio_menu(GtkWidget *parent) {
     }
     if (row > max_row) { max_row = row; }
   }
+  //-----------------------------------------------------------------------------------------------------------
   if (device == NEW_DEVICE_ORION || device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN ||
       device == DEVICE_ORION || device == DEVICE_ORION2) {
     row = 1;
@@ -881,6 +885,40 @@ void radio_menu(GtkWidget *parent) {
     row++;
     if (row > max_row) { max_row = row; }
   }
+#if 0
+  //-----------------------------------------------------------------------------------------------------------
+  if (protocol == NEW_PROTOCOL && device == NEW_DEVICE_HERMES) {
+    row = 1;
+    label = gtk_label_new("BRICK Mic jack:");
+    gtk_widget_set_name(label, "boldlabel");
+    gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+    gtk_grid_attach(GTK_GRID(grid), label, 3, row, 2, 1);
+    row++;
+    GtkWidget *ptt_ring_b = gtk_radio_button_new_with_label(NULL, "PTT On Ring, Mic and Bias on Tip");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ptt_ring_b), mic_ptt_tip_bias_ring == 0);
+    gtk_grid_attach(GTK_GRID(grid), ptt_ring_b, 3, row, 2, 1);
+    g_signal_connect(ptt_ring_b, "toggled", G_CALLBACK(ptt_ring_cb), NULL);
+    row++;
+    GtkWidget *ptt_tip_b = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(ptt_ring_b),
+                           "PTT On Tip, Mic and Bias on Ring");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ptt_tip_b), mic_ptt_tip_bias_ring == 1);
+    gtk_grid_attach(GTK_GRID(grid), ptt_tip_b, 3, row, 2, 1);
+    g_signal_connect(ptt_tip_b, "toggled", G_CALLBACK(ptt_tip_cb), NULL);
+    row++;
+    ChkBtn = gtk_check_button_new_with_label("PTT Enabled");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), mic_ptt_enabled);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn, 3, row, 1, 1);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mic_ptt_enabled);
+    row++;
+    ChkBtn = gtk_check_button_new_with_label("BIAS Enabled");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), mic_bias_enabled);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn, 3, row, 1, 1);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mic_bias_enabled);
+    row++;
+    if (row > max_row) { max_row = row; }
+  }
+  //-----------------------------------------------------------------------------------------------------------
+#endif
   row = max_row;
   col = 0;
   //

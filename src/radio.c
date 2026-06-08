@@ -2773,6 +2773,9 @@ static void radio_restore_state (void) {
   case HERMES_MODE_BRICK:
     anan10E = 0;
     have_alex_att = 0;
+    mic_ptt_enabled = 1;
+    mic_bias_enabled = 0;
+    mic_ptt_tip_bias_ring = 0;
     radio_reset_all_alex_attenuation();
     break;
   default:
