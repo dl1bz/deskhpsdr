@@ -328,9 +328,7 @@ static void tci_txaudio_gain_cb(GtkWidget *widget, gpointer data) {
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int*) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  if (tci_audio_monitor) {
-    audio_open_tci_monitor(active_receiver->audio_name);
-  } else {
+  if (!tci_audio_monitor) {
     audio_close_tci_monitor();
   }
 }

@@ -363,7 +363,6 @@ void tci_audio_rx_sample (RECEIVER *rx, float left, float right) {
 void tci_audio_rx_block (RECEIVER *rx, const float *samples, guint frames) {
   TCI_RX_AUDIO_RING *ring;
   int do_wakeup = 0;
-  int do_monitor = 0;
   int id;
   if (!tci_rx_audio_enabled || rx == NULL || samples == NULL || frames == 0) { return; }
   id = rx->id;
@@ -376,7 +375,6 @@ void tci_audio_rx_block (RECEIVER *rx, const float *samples, guint frames) {
     ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = samples[(i * TCI_AUDIO_CHANNELS) + 1];
     ring->write_count++;
   }
-  do_monitor = 1;
   {
     guint old_count = tci_rx_audio_wakeup_count;
     tci_rx_audio_wakeup_count += frames;
@@ -386,9 +384,6 @@ void tci_audio_rx_block (RECEIVER *rx, const float *samples, guint frames) {
     }
   }
   g_mutex_unlock (&ring->mutex);
-  if (do_monitor) {
-    tci_audio_monitor_push_block(samples, frames);
-  }
   if (do_wakeup) {
     tci_audio_queue_rx_wakeup();
   }
