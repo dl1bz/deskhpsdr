@@ -137,7 +137,7 @@ int tci_audio_monitor_is_active (void) {
   return tci_audio_monitor_enabled;
 }
 
-static void tci_audio_monitor_push (float left, float right) {
+__attribute__ ((unused)) static void tci_audio_monitor_push (float left, float right) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
   guint index;
   if (!tci_audio_monitor_enabled) { return; }
