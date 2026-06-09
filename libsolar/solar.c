@@ -60,10 +60,13 @@ SolarData fetch_solar_data(void) {
   curl_easy_setopt(curl, CURLOPT_URL, URL);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "deskHPSDR");
+  curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L); // Timeout-Schutz
   CURLcode res = curl_easy_perform(curl);
   if (res != CURLE_OK) {
-    fprintf(stderr, "curl Error: %s\n", curl_easy_strerror(res));
+    fprintf(stderr, "fetch_solar_data: curl error %d: %s\n", (int)res, curl_easy_strerror(res));
     goto cleanup;
   }
   long response_code;
