@@ -170,6 +170,7 @@ static void tci_service_tx_chrono (void);
 static void tci_lws_binary_reset (CLIENT *client);
 static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, size_t len, struct lws *wsi);
 static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t len);
+static void tci_send_iq_samplerate (CLIENT *client);
 static void tci_send_audio_samplerate (CLIENT *client);
 static void tci_send_audio_stream_samples (CLIENT *client);
 
@@ -3284,6 +3285,15 @@ static void tci_cmd_audio_start (CLIENT *client, const TCI_CMD *cmd) {
   tci_send_text (client, msg);
 }
 
+static void tci_send_iq_samplerate (CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  int samplerate;
+  if (client == NULL) { return; }
+  samplerate = tci_iq_effective_sample_rate (client, client->iq_sample_rate);
+  snprintf (msg, MAXMSGSIZE, "iq_samplerate:%d;", samplerate);
+  tci_send_text (client, msg);
+}
+
 static void tci_send_audio_samplerate (CLIENT *client) {
   char msg[MAXMSGSIZE];
   snprintf (msg, MAXMSGSIZE, "audio_samplerate:%d;", client->audio_sample_rate);
@@ -4120,6 +4130,10 @@ static void tci_send_initial_state (CLIENT *client) {
   // tci_send_text(client, "vfo_limits:0,450000000;");
   // tci_send_text(client, "if_limits:-96000,96000;");
   tci_send_limits (client);
+  tci_send_iq_samplerate (client);
+  tci_send_audio_samplerate (client);
+  tci_send_text (client, "audio_stream_sample_type:float32;");
+  tci_send_text (client, "audio_stream_channels:1;");
   tci_send_text (client, "modulations_list:LSB,USB,DSB,CW,FMN,AM,DIGU,SPEC,DIGL,SAM,DRM;");
   tci_send_dds (client, VFO_A);
   tci_send_text (client, "if:0,0,0;");
@@ -4159,6 +4173,9 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_xit_offset (client);
   tci_send_mox (client);
   tci_send_tune (client);
+  for (int i = 0; i < receivers && i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
+    tci_send_iq_stream_stop (client, i);
+  }
   tci_send_tune_drive (client);
   tci_send_mute (client);
   tci_send_rx_mute (client, VFO_A);
