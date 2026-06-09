@@ -4445,6 +4445,7 @@ static const struct lws_protocols tci_lws_protocols[] = {
 };
 
 static gpointer tci_lws_server (gpointer data) {
+  static int first = 1;
   struct lws_context_creation_info info;
   int port = GPOINTER_TO_INT (data);
   lws_set_log_level(LLL_ERR, NULL);
@@ -4454,8 +4455,10 @@ static gpointer tci_lws_server (gpointer data) {
   info.protocols = tci_lws_protocols;
   info.gid = -1;
   info.uid = -1;
-  // WICHTIG: HTTP/WS korrekt aktivieren
-  info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+  if (first) {
+    info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+    first = 0;
+  }
   t_print ("%s: starting TCI LWS server on port %d\n", __func__, port);
   tci_lws_context = lws_create_context (&info);
   if (tci_lws_context == NULL) {

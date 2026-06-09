@@ -139,7 +139,7 @@ __attribute__ ((unused)) static void tci_audio_monitor_push (float left, float r
   g_mutex_unlock (&ring->mutex);
 }
 
-static void tci_audio_monitor_push_block (const float *samples, guint frames) {
+__attribute__ ((unused)) static void tci_audio_monitor_push_block (const float *samples, guint frames) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
   if (!tci_audio_monitor_enabled || samples == NULL || frames == 0) { return; }
   if (!g_mutex_trylock (&ring->mutex)) { return; }
