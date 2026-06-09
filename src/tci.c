@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <math.h>
 
 #ifdef __APPLE__
   #include <time.h>
@@ -125,6 +126,7 @@ typedef struct _client {
   gint64 rxsensor_last_us;      // last RX sensor send timestamp
   gint64 txsensor_last_us;      // last TX sensor send timestamp
   int iq_stream_enabled[TCI_RX_AUDIO_MAX_RECEIVERS];
+  double iq_cw_phase[TCI_RX_AUDIO_MAX_RECEIVERS];
   int iq_sample_rate;
   int idle_queued;              // counter
   struct lws *wsi;              // libwebsockets connection
@@ -318,6 +320,7 @@ void tci_send_stop_and_flush(void) {
       client->txsensor = 0;
       for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
         client->iq_stream_enabled[i] = 0;
+        client->iq_cw_phase[i] = 0.0;
       }
       (void) tci_queue_frame(client, opTEXT, "stop;", 0);
     }
@@ -527,12 +530,18 @@ void tci_rx_iq_block (RECEIVER *rx, const double *iq, guint frames) {
   size_t data_bytes;
   size_t frame_len;
   GList *clients;
+  double cw_shift = 0.0;
   if (!g_atomic_int_get (&tci_iq_stream_clients)) { return; }
   if (rx == NULL || iq == NULL || frames == 0) { return; }
   if (rx->id < 0 || rx->id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
   out_frames = frames;
   if (out_frames > 2048) {
     out_frames = 2048;
+  }
+  if (vfo[rx->id].mode == modeCWU) {
+    cw_shift = (double) cw_keyer_sidetone_frequency;
+  } else if (vfo[rx->id].mode == modeCWL) {
+    cw_shift = - (double) cw_keyer_sidetone_frequency;
   }
   memset (&header, 0, sizeof (header));
   header.receiver = (uint32_t) rx->id;
@@ -541,28 +550,50 @@ void tci_rx_iq_block (RECEIVER *rx, const double *iq, guint frames) {
   header.length = (uint32_t) (out_frames * TCI_AUDIO_CHANNELS);
   header.type = 0; // IQ_STREAM
   header.channels = TCI_AUDIO_CHANNELS;
-  memcpy (frame, &header, sizeof (header));
-  for (guint i = 0; i < out_frames; i++) {
-    float fs0;
-    float fs1;
-    double is = iq[(i * 2)];
-    double qs = iq[(i * 2) + 1];
-    if (tci_iq_swap) {
-      fs0 = (float) qs;
-      fs1 = (float) is;
-    } else {
-      fs0 = (float) is;
-      fs1 = (float) qs;
-    }
-    memcpy (frame + sizeof (header) + ((i * 2) * sizeof (float)), &fs0, sizeof (float));
-    memcpy (frame + sizeof (header) + (((i * 2) + 1) * sizeof (float)), &fs1, sizeof (float));
-  }
   data_bytes = (size_t) out_frames * TCI_AUDIO_CHANNELS * sizeof(float);
   frame_len = sizeof (header) + data_bytes;
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
     if (client != NULL && client->running && client->iq_stream_enabled[rx->id]) {
+      double phase = client->iq_cw_phase[rx->id];
+      double phase_inc = 0.0;
+      memcpy (frame, &header, sizeof (header));
+      if (cw_shift != 0.0 && rx->sample_rate > 0) {
+        phase_inc = (2.0 * G_PI * cw_shift) / (double) rx->sample_rate;
+      }
+      for (guint i = 0; i < out_frames; i++) {
+        float fs0;
+        float fs1;
+        double is = iq[(i * 2)];
+        double qs = iq[(i * 2) + 1];
+        if (phase_inc != 0.0) {
+          double c = cos(phase);
+          double s = sin(phase);
+          double ri = (is * c) - (qs * s);
+          double rq = (is * s) + (qs * c);
+          is = ri;
+          qs = rq;
+          phase += phase_inc;
+          if (phase >= G_PI) {
+            phase -= 2.0 * G_PI;
+          } else if (phase < -G_PI) {
+            phase += 2.0 * G_PI;
+          }
+        } else {
+          phase = 0.0;
+        }
+        if (tci_iq_swap) {
+          fs0 = (float) qs;
+          fs1 = (float) is;
+        } else {
+          fs0 = (float) is;
+          fs1 = (float) qs;
+        }
+        memcpy (frame + sizeof (header) + ((i * 2) * sizeof (float)), &fs0, sizeof (float));
+        memcpy (frame + sizeof (header) + (((i * 2) + 1) * sizeof (float)), &fs1, sizeof (float));
+      }
+      client->iq_cw_phase[rx->id] = phase;
       (void) tci_queue_binary_frame (client, frame, frame_len);
     }
   }
@@ -4079,6 +4110,7 @@ static void tci_init_client (CLIENT *client, int fd, int seq) {
     client->rx_audio_resampler_l[i] = NULL;
     client->rx_audio_resampler_r[i] = NULL;
     client->iq_stream_enabled[i] = 0;
+    client->iq_cw_phase[i] = 0.0;
   }
 }
 
