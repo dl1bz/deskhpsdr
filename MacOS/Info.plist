@@ -17,9 +17,9 @@
 	<key>CFBundleSignature</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.6</string>
+	<string>2.7</string>
 	<key>CFBundleVersion</key>
-	<string>20705</string>
+	<string>20706</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -40,6 +40,6 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>14.0</string>
+	<string>15.0</string>
 </dict>
 </plist>
