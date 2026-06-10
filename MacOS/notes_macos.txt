@@ -1,0 +1,9 @@
+sudo  chown root:wheel  /Library/LaunchDaemons/org.dl1bz.deskhpsdr.sysctl.plist
+sudo launchctl load /Library/LaunchDaemons/org.dl1bz.deskhpsdr.sysctl.plist
+	or
+sudo launchctl bootstrap system /Library/LaunchDaemons/org.dl1bz.deskhpsdr.sysctl.plist
+
+Test
+----
+sysctl net.inet.udp.recvspace
+net.inet.udp.recvspace: 8388608
