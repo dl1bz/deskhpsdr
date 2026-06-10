@@ -304,7 +304,6 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.panadapter_peaks_as_smeter", rx->id,   rx->panadapter_peaks_as_smeter);
   SetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   SetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
-  SetPropI1("receiver.%d.image_measure", rx->id,                rx->image_measure);
   SetPropF1("receiver.%d.image_measure_hz", rx->id,             rx->image_measure_hz);
   SetPropF1("receiver.%d.rx_iq_gain", rx->id,                   rx->rx_iq_gain);
   SetPropF1("receiver.%d.rx_iq_phase", rx->id,                  rx->rx_iq_phase);
@@ -432,7 +431,6 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.panadapter_peaks_as_smeter", rx->id,   rx->panadapter_peaks_as_smeter);
   GetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   GetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
-  GetPropI1("receiver.%d.image_measure", rx->id,                rx->image_measure);
   GetPropF1("receiver.%d.image_measure_hz", rx->id,             rx->image_measure_hz);
   GetPropF1("receiver.%d.rx_iq_gain", rx->id,                   rx->rx_iq_gain);
   GetPropF1("receiver.%d.rx_iq_phase", rx->id,                  rx->rx_iq_phase);
