@@ -534,7 +534,9 @@ void *IncomingDUCSpecific(void* arg) {                  // listener thread
     }
     if (size == VDUCSPECIFICSIZE) {
       NewMessageReceived = true;
-      saturn_handle_duc_specific(true, UDPInBuffer);
+      if (addr_from.sin_addr.s_addr == reply_addr.sin_addr.s_addr) {
+        saturn_handle_duc_specific(true, UDPInBuffer);
+      }
     }
   }
   //
