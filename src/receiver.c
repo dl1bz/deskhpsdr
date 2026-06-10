@@ -304,6 +304,10 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.panadapter_peaks_as_smeter", rx->id,   rx->panadapter_peaks_as_smeter);
   SetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   SetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
+  SetPropI1("receiver.%d.image_measure", rx->id,                rx->image_measure);
+  SetPropF1("receiver.%d.image_measure_hz", rx->id,             rx->image_measure_hz);
+  SetPropF1("receiver.%d.rx_iq_gain", rx->id,                   rx->rx_iq_gain);
+  SetPropF1("receiver.%d.rx_iq_phase", rx->id,                  rx->rx_iq_phase);
   SetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
   SetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
   SetPropI1("receiver.%d.pan_fft_size", rx->id,                 rx->pan_fft_size);
@@ -428,6 +432,10 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.panadapter_peaks_as_smeter", rx->id,   rx->panadapter_peaks_as_smeter);
   GetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   GetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
+  GetPropI1("receiver.%d.image_measure", rx->id,                rx->image_measure);
+  GetPropF1("receiver.%d.image_measure_hz", rx->id,             rx->image_measure_hz);
+  GetPropF1("receiver.%d.rx_iq_gain", rx->id,                   rx->rx_iq_gain);
+  GetPropF1("receiver.%d.rx_iq_phase", rx->id,                  rx->rx_iq_phase);
   GetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
   GetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
   GetPropI1("receiver.%d.pan_fft_size", rx->id,                 rx->pan_fft_size);
@@ -769,6 +777,15 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_peaks_as_smeter = 0;
   rx->panadapter_ovf_on  = 1;
   rx->panadapter_autoscale_enabled = 0;
+  rx->image_measure = 0;
+  rx->image_measure_hz = 1000.0;
+  rx->image_measure_valid = 0;
+  rx->image_signal_db = -200.0;
+  rx->image_mirror_db = -200.0;
+  rx->image_rejection_db = 0.0;
+  rx->rx_iq_gain = 0.0;
+  rx->rx_iq_phase = 0.0;
+  strcpy(rx->rx_iq_status, "Idle");
   rx->pan_peak_preserve = 0;
   rx->pan_window_type = 5;
   rx->pan_fft_size = 0;   /* Auto */
@@ -1379,6 +1396,32 @@ void rx_full_buffer(RECEIVER *rx) {
   }
 }
 
+static void rx_apply_iq_correction(const RECEIVER *rx, double *i_sample, double *q_sample) {
+  double gain;
+  double phase;
+  double c;
+  double s;
+  double i;
+  double q;
+  if (rx == NULL || i_sample == NULL || q_sample == NULL) {
+    return;
+  }
+  if (rx->rx_iq_gain == 0.0 && rx->rx_iq_phase == 0.0) {
+    return;
+  }
+  gain = pow(10.0, rx->rx_iq_gain / 20.0);
+  phase = rx->rx_iq_phase * M_PI / 180.0;
+  c = cos(phase);
+  if (fabs(c) < 1.0e-12) {
+    return;
+  }
+  s = sin(phase);
+  i = *i_sample;
+  q = *q_sample;
+  *i_sample = i;
+  *q_sample = ((q * gain) + (i * s)) / c;
+}
+
 void rx_add_iq_samples(RECEIVER *rx, double i_sample, double q_sample) {
   //
   // At the end of a TX/RX transition, txrxcount is set to zero,
@@ -1395,6 +1438,8 @@ void rx_add_iq_samples(RECEIVER *rx, double i_sample, double q_sample) {
     i_sample = 0.0;
     q_sample = 0.0;
     rx->txrxcount++;
+  } else {
+    rx_apply_iq_correction(rx, &i_sample, &q_sample);
   }
   rx->iq_input_buffer[rx->samples * 2] = i_sample;
   rx->iq_input_buffer[(rx->samples * 2) + 1] = q_sample;

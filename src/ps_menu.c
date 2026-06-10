@@ -527,8 +527,9 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), twotone_b, col, row, 1, 1);
   g_signal_connect(twotone_b, "toggled", G_CALLBACK(twotone_cb), NULL);
   col++;
-  GtkWidget *auto_b = gtk_check_button_new_with_label("Auto Attenuate");
+  GtkWidget *auto_b = gtk_check_button_new_with_label("Auto Attenuate (2-Tone)");
   gtk_widget_set_name(auto_b, "boldlabel");
+  gtk_widget_set_tooltip_text(auto_b, "Automatically adjusts TX attenuation during Two Tone calibration.");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_b), transmitter->auto_on);
   gtk_grid_attach(GTK_GRID(grid), auto_b, col, row, 1, 1);
   g_signal_connect(auto_b, "toggled", G_CALLBACK(auto_cb), NULL);

@@ -84,6 +84,16 @@ typedef struct _receiver {
 
   double hz_per_pixel;
 
+  int image_measure;
+  double image_measure_hz;
+  int image_measure_valid;
+  double image_signal_db;
+  double image_mirror_db;
+  double image_rejection_db;
+  double rx_iq_gain;
+  double rx_iq_phase;
+  char rx_iq_status[64];
+
   int dither;
   int random;
   int preamp;

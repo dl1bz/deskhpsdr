@@ -639,6 +639,100 @@ static int autoscale_panadapter_with_offset (double noise_value, int offset_db) 
   return value;
 }
 
+static void rx_panadapter_update_image_measure (RECEIVER *rx, int mywidth) {
+  static int image_measure_counter = 0;
+  float *samples;
+  int center;
+  int signal_x;
+  int mirror_x;
+  int signal_idx;
+  int mirror_idx;
+  int offset_px;
+  double measure_hz;
+  float signal_db;
+  float mirror_db;
+  if (rx == NULL || !rx->image_measure) {
+    return;
+  }
+  rx->image_measure_valid = 0;
+  samples = rx->pixel_samples;
+  if (samples == NULL || mywidth <= 6 || rx->pixels <= 0 || rx->hz_per_pixel <= 0.0) {
+    return;
+  }
+  measure_hz = fabs (rx->image_measure_hz);
+  if (measure_hz <= 0.0) {
+    return;
+  }
+  center = mywidth / 2;
+  offset_px = (int) llround (measure_hz / rx->hz_per_pixel);
+  if (offset_px <= 2 || offset_px >= center - 2) {
+    return;
+  }
+  signal_x = center + offset_px;
+  mirror_x = center - offset_px;
+  if (signal_x <= 2 || signal_x >= mywidth - 3 || mirror_x <= 2 || mirror_x >= mywidth - 3) {
+    return;
+  }
+  signal_idx = rx->pan + signal_x;
+  mirror_idx = rx->pan + mirror_x;
+  if (signal_idx - 2 < 0 || signal_idx + 2 >= rx->pixels || mirror_idx - 2 < 0 || mirror_idx + 2 >= rx->pixels) {
+    return;
+  }
+  signal_db = samples[signal_idx];
+  mirror_db = samples[mirror_idx];
+  for (int k = -2; k <= 2; k++) {
+    if (samples[signal_idx + k] > signal_db) {
+      signal_db = samples[signal_idx + k];
+    }
+    if (samples[mirror_idx + k] > mirror_db) {
+      mirror_db = samples[mirror_idx + k];
+    }
+  }
+  rx->image_signal_db = (double) signal_db;
+  rx->image_mirror_db = (double) mirror_db;
+  rx->image_rejection_db = rx->image_signal_db - rx->image_mirror_db;
+  rx->image_measure_valid = 1;
+  if ((image_measure_counter++ % 100) == 0) {
+    t_print ("RX%d image rejection: signal=%5.1f dB image=%5.1f dB reject=%5.1f dB offset=%.0f Hz\n",
+             rx->id,
+             rx->image_signal_db,
+             rx->image_mirror_db,
+             rx->image_rejection_db,
+             measure_hz);
+  }
+}
+
+static void rx_panadapter_draw_image_measure (cairo_t *cr, const RECEIVER *rx, int mywidth, int myheight) {
+  char text[96];
+  double x;
+  double y;
+  if (cr == NULL || rx == NULL || !rx->image_measure || !rx->image_measure_valid) {
+    return;
+  }
+  x = 60.0;
+  y = (double) myheight * 0.95;
+  cairo_save (cr);
+  cairo_text_extents_t extents;
+  snprintf (text, sizeof (text), "IRR %.1f dB",
+            fabs (rx->image_rejection_db));
+  cairo_select_font_face (cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
+  cairo_text_extents (cr, text, &extents);
+  cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 0.85);
+  cairo_rectangle (cr,
+                   x - 6.0,
+                   y - extents.height - 4.0,
+                   extents.width + 12.0,
+                   extents.height + 8.0);
+  cairo_fill (cr);
+  cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+  cairo_select_font_face (cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
+  cairo_move_to (cr, x, y);
+  cairo_show_text (cr, text);
+  cairo_restore (cr);
+}
+
 static long long panadapter_next_divisor (long long divisor) {
   if (divisor < 1LL) {
     return 1LL;
@@ -697,6 +791,7 @@ void rx_panadapter_update (RECEIVER *rx) {
   int mywidth = gtk_widget_get_allocated_width (rx->panadapter);
   int myheight = gtk_widget_get_allocated_height (rx->panadapter);
   samples = rx->pixel_samples;
+  rx_panadapter_update_image_measure (rx, mywidth);
   cairo_t *cr;
   cr = cairo_create (rx->panadapter_surface);
   if (display_wmap) {
@@ -1310,6 +1405,7 @@ void rx_panadapter_update (RECEIVER *rx) {
   if (gradient) {
     cairo_pattern_destroy (gradient);
   }
+  rx_panadapter_draw_image_measure (cr, rx, mywidth, myheight);
   //---------------------------------------------------------------------------------------
   // move downward to show the line, otherwise the spectrum overlay this line
   // AGC line
