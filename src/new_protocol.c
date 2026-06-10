@@ -571,9 +571,9 @@ void new_protocol_init(void) {
     // then getsockopt() returns: RCVBUF: 0x40000, SNDBUF: 0x10000
     //
     if (nw_settings.is_wired) {
-      optval = 0x40000;
-    } else {
       optval = 0x80000;
+    } else {
+      optval = 0x100000;
     }
     if (setsockopt(data_socket, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
       t_perror("data_socket: set SO_RCVBUF");
