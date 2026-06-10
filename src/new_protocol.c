@@ -138,14 +138,12 @@ static unsigned long highprio_rcvd_sequence = 0;
 static unsigned long micsamples_sequence = 0;
 
 #ifdef __APPLE__
-  static sem_t *high_priority_sem_ready;
   static sem_t *high_priority_sem_buffer;
   static sem_t *mic_line_sem;
   static sem_t *iq_sem[MAX_DDC];
   static sem_t *txiq_sem;
   static sem_t *rxaudio_sem;
 #else
-  static sem_t high_priority_sem_ready;
   static sem_t high_priority_sem_buffer;
   static sem_t mic_line_sem;
   static sem_t iq_sem[MAX_DDC];
@@ -223,12 +221,15 @@ static pthread_mutex_t send_rxaudio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 ////////////////////////////////////////////////////////////////////////////
 
 //
-// number of buffers allocated (for statistics)
+// number of allocated receive buffers
 //
 static int num_buf = 0;
 
+#define P2_INITIAL_BUFFERS 1024
+#define P2_REFILL_BUFFERS 64
+
 //
-// head of buffer list
+/* head of buffer list */
 //
 static mybuffer *buflist = NULL;
 
@@ -242,6 +243,11 @@ static volatile int iq_outptr[MAX_DDC] = { 0 };
 static volatile int iq_count[MAX_DDC] = { 0 };
 
 static mybuffer *high_priority_buffer;
+
+#define HPRIORINGBUFLEN 64
+static volatile mybuffer *high_priority_ring[HPRIORINGBUFLEN];
+static volatile int high_priority_inptr = 0;
+static volatile int high_priority_outptr = 0;
 
 #define MICRINGBUFLEN 64
 static volatile mybuffer *mic_line_buffer[MICRINGBUFLEN];
@@ -291,12 +297,37 @@ static void  process_high_priority(void);
 static void  process_mic_data(const unsigned char* buffer);
 
 //
+// Allocate additional receive buffers and add them to the free list.
+//
+static void allocate_my_buffers(int count) {
+  int i;
+  mybuffer *bp;
+  for (i = 0; i < count; i++) {
+    bp = malloc(sizeof(mybuffer));
+    if (bp == NULL) {
+      t_print("NewProtocol: malloc failed while allocating receive buffers\n");
+      return;
+    }
+    bp->free = 1;
+    bp->next = buflist;
+    buflist = bp;
+    num_buf++;
+  }
+}
+
+static void ensure_my_buffers(int count) {
+  if (num_buf < count) {
+    allocate_my_buffers(count - num_buf);
+    t_print("NewProtocol: receive buffers preallocated to %d\n", num_buf);
+  }
+}
+
+//
 // Obtain a free buffer. If no one is available allocate
-// 5 new ones. The buffers are *never* released to the
+// additional buffers. The buffers are *never* released to the
 // operating system, but marked free upon a protocol restart.
 //
 static mybuffer *get_my_buffer(void) {
-  int i;
   mybuffer *bp = buflist;
   while (bp) {
     if (bp->free) {
@@ -310,13 +341,7 @@ static mybuffer *get_my_buffer(void) {
   // no free buffer found, allocate some extra ones
   // and add to the head of the list
   //
-  for (i = 0; i < 25; i++) {
-    bp = malloc(sizeof(mybuffer));
-    bp->free = 1;
-    bp->next = buflist;
-    buflist = bp;
-    num_buf++;
-  }
+  allocate_my_buffers(P2_REFILL_BUFFERS);
   t_print("NewProtocol: number of buffers increased to %d\n", num_buf);
   // Mark the first buffer in list as used and return that one.
   buflist->free = 0;
@@ -512,14 +537,12 @@ void new_protocol_init(void) {
   // (HighPrio, Mic, rxIQ) and spawn these threads.
   //
 #ifdef __APPLE__
-  high_priority_sem_ready = apple_sem(0);
   high_priority_sem_buffer = apple_sem(0);
   mic_line_sem = apple_sem(0);
   for (i = 0; i < MAX_DDC; i++) {
     iq_sem[i] = apple_sem(0);
   }
 #else
-  (void) sem_init(&high_priority_sem_ready, 0, 0);  // check return value!
   (void) sem_init(&high_priority_sem_buffer, 0, 0);  // check return value!
   (void) sem_init(&mic_line_sem, 0, 0);  // check return value!
   for (i = 0; i < MAX_DDC; i++) {
@@ -1739,6 +1762,7 @@ void new_protocol_menu_start(void) {
       mybuf->free = 1;
       mybuf = mybuf->next;
     }
+    ensure_my_buffers(P2_INITIAL_BUFFERS);
   }
   P2running = 1;
   t_print("%s: P2running set\n", __func__);
@@ -2030,15 +2054,22 @@ static gpointer new_protocol_thread(gpointer data) {
 }
 
 static gpointer high_priority_thread(gpointer data) {
+  int nptr;
+  int optr;
   t_print("high_priority_thread\n");
   while (1) {
 #ifdef __APPLE__
-    sem_post(high_priority_sem_ready);
     sem_wait(high_priority_sem_buffer);
 #else
-    sem_post(&high_priority_sem_ready);
     sem_wait(&high_priority_sem_buffer);
 #endif
+    optr = high_priority_outptr;
+    nptr = optr + 1;
+    if (nptr >= HPRIORINGBUFLEN) { nptr = 0; }
+    high_priority_buffer = (mybuffer *) high_priority_ring[optr];
+    MEMORY_BARRIER;
+    high_priority_outptr = nptr;
+    if (high_priority_buffer->free) { continue; }
     process_high_priority();
     high_priority_buffer->free = 1;
   }
@@ -2080,17 +2111,28 @@ static gpointer mic_line_thread(gpointer data) {
 // interface.
 //
 void saturn_post_high_priority(mybuffer *buffer) {
+  int iptr;
+  int nptr;
+  if (!P2running) {
+    buffer->free = 1;
+    return;
+  }
+  iptr = high_priority_inptr;
+  nptr = iptr + 1;
+  if (nptr >= HPRIORINGBUFLEN) { nptr = 0; }
+  if (nptr != high_priority_outptr) {
+    high_priority_ring[iptr] = buffer;
+    MEMORY_BARRIER;
+    high_priority_inptr = nptr;
 #ifdef __APPLE__
-  sem_wait(high_priority_sem_ready);
+    sem_post(high_priority_sem_buffer);
 #else
-  sem_wait(&high_priority_sem_ready);
+    sem_post(&high_priority_sem_buffer);
 #endif
-  high_priority_buffer = buffer;
-#ifdef __APPLE__
-  sem_post(high_priority_sem_buffer);
-#else
-  sem_post(&high_priority_sem_buffer);
-#endif
+  } else {
+    t_print("%s: buffer overflow.\n", __func__);
+    buffer->free = 1;
+  }
 }
 
 void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
