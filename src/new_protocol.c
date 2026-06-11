@@ -225,8 +225,12 @@ static pthread_mutex_t send_rxaudio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 //
 static int num_buf = 0;
 
-#define P2_INITIAL_BUFFERS 1024
-#define P2_REFILL_BUFFERS 64
+// #define P2_INITIAL_BUFFERS 1024
+// #define P2_REFILL_BUFFERS 64
+
+// we use now DL1YCFs recommendation
+#define P2_INITIAL_BUFFERS 128
+#define P2_REFILL_BUFFERS 32
 
 //
 /* head of buffer list */
