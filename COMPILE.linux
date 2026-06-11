@@ -28,17 +28,30 @@ heiko@AfuPi5:~/src $ git clone https://github.com/dl1bz/deskhpsdr.git
 heiko@AfuPi5:~/src $ cd deskhpsdr
 heiko@AfuPi5:~/src/deskhpsdr $
 
-3. Prepare the Linux environment for compiling with the included shell script:
+####################### !!! MOST IMPORTANT STEP BEFORE VERY FIRST BUILD DESKHPSDR !!! ##############
+
+3. Prepare ONCE the Linux environment for compiling with the included shell script:
 
 heiko@AfuPi5:~/src/deskhpsdr $ ./LINUX/prep_linux.sh
+
+Note: This script is made for Debian-based distributions like Debian, Ubuntu, Mint or PiOS,
+which are using .deb packages.
+For aLl other distributions you need look into prep_linux.sh and adopt it to your
+used distribution by yourself. No support from me outside Debian-based distributions !
+
+#####################################################################################################
 
 4. Compile the deskHPSDR
 
 4.1 First edit make.config.deskhpsdr, but NOT the Makefile
 
-Edit the make.config.deskhpsdr (not the Makefile !!!) and set the options you want.
+In the source-dir you found a template file called make.config.deskhpsdr.template.
+Please take this file and make a copy:
+
+heiko@AfuPi5:~/src/deskhpsdr $ cp make.config.deskhpsdr.template make.config.deskhpsdr
+
+Edit THIS make.config.deskhpsdr (NOT the Makefile !!!) and set the options you want.
 Never change this settings:
-ATU=OFF
 COPYMODE=OFF
 
 The other options you can set how you want or need.
@@ -47,13 +60,13 @@ The other options you can set how you want or need.
 
 We can now compile deskHPSDR:
 
-heiko@AfuPi5:~/src/deskhpsdr $ make
+heiko@AfuPi5:~/src/deskhpsdr $ make clean && make
 
 5. A little help from me to install deskHPSDR in X11 environment easier
 
 After step 4, hopeful successful, you can do this:
 
-heiko@AfuPi5:~/src/deskhpsdr $ make install
+heiko@AfuPi5:~/src/deskhpsdr $ sudo make install
 
 This will copy the deskhpsdr binary to /usr/local/bin and prepare your X11 environment for easy start deskHPSDR.
 In your X11 menu you should find in one of the sub-menus deskhpsdr as menu entry. Where exact depends strongly
@@ -72,7 +85,7 @@ heiko@AfuPi5:~/src $ cd deskhpsdr
 heiko@AfuPi5:~/src/deskhpsdr $ make clean
 heiko@AfuPi5:~/src/deskhpsdr $ make update
 heiko@AfuPi5:~/src/deskhpsdr $ make
-heiko@AfuPi5:~/src/deskhpsdr $ make install
+heiko@AfuPi5:~/src/deskhpsdr $ sudo make install
 
 Have fun with the updated version !
 
@@ -92,8 +105,8 @@ heiko@AfuPi5:~/src $ cd deskhpsdr
 Edit the make.config.deskhpsdr file with the options you need. DO NOT EDIT the Makefile, only make changes in make.config.deskhpsdr !
 After this, continue:
 
-heiko@AfuPi5:~/src/deskhpsdr $ make
-heiko@AfuPi5:~/src/deskhpsdr $ make install
+heiko@AfuPi5:~/src/deskhpsdr $ make clean && make
+heiko@AfuPi5:~/src/deskhpsdr $ sudo make install
 
 Another problem can be a wrong property-file. In this case, exit deskHPSDR and remove in $HOME/.config/deskhpsdr all *.props files:
 heiko@AfuPi5:~ $ cd
@@ -102,6 +115,9 @@ heiko@AfuPi5:~ $ cd deskhpsdr
 heiko@AfuPi5:~ $ rm -fr *.props
 
 and start deskHPSDR again. You need now to do a full setup for your SDR again.
+
+There are known issues if using Wayland as X11 base. deskHPSDR cannot compensate these issues.
+I recommend strongly to use the classical X11 environment aka X11org instead. No support from me if using Wayland !
 
 8. Remarks
 
