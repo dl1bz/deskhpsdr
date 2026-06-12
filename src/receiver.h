@@ -94,6 +94,9 @@ typedef struct _receiver {
   double rx_iq_phase;
   char rx_iq_status[64];
 
+  int digi_offset_u;
+  int digi_offset_l;
+
   int dither;
   int random;
   int preamp;
@@ -342,6 +345,7 @@ extern void   rx_filter_changed (RECEIVER *rx);
 extern int    rx_get_pixels (RECEIVER *rx);
 extern double rx_get_smeter (const RECEIVER *rx);
 extern long long rx_get_mode_dc_offset (int id);
+extern long long rx_get_digi_monitor_offset (int id);
 extern void   rx_frequency_changed (RECEIVER *rx);
 extern void   rx_mode_changed (RECEIVER *rx);
 extern void   rx_off (const RECEIVER *rx);

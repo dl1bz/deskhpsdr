@@ -85,6 +85,21 @@ long long rx_get_mode_dc_offset(int id) {
   }
 }
 
+long long rx_get_digi_monitor_offset(int id) {
+  const RECEIVER *rx = receiver[id];
+  if (rx == NULL) {
+    return 0LL;
+  }
+  switch (vfo[id].mode) {
+  case modeDIGU:
+    return - (long long) rx->digi_offset_u;
+  case modeDIGL:
+    return (long long) rx->digi_offset_l;
+  default:
+    return 0LL;
+  }
+}
+
 //
 // PART 1. Functions releated to the receiver display
 //
@@ -307,6 +322,8 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropF1("receiver.%d.image_measure_hz", rx->id,             rx->image_measure_hz);
   SetPropF1("receiver.%d.rx_iq_gain", rx->id,                   rx->rx_iq_gain);
   SetPropF1("receiver.%d.rx_iq_phase", rx->id,                  rx->rx_iq_phase);
+  SetPropI1("receiver.%d.digi_offset_u", rx->id,                 rx->digi_offset_u);
+  SetPropI1("receiver.%d.digi_offset_l", rx->id,                 rx->digi_offset_l);
   SetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
   SetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
   SetPropI1("receiver.%d.pan_fft_size", rx->id,                 rx->pan_fft_size);
@@ -434,6 +451,8 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropF1("receiver.%d.image_measure_hz", rx->id,             rx->image_measure_hz);
   GetPropF1("receiver.%d.rx_iq_gain", rx->id,                   rx->rx_iq_gain);
   GetPropF1("receiver.%d.rx_iq_phase", rx->id,                  rx->rx_iq_phase);
+  GetPropI1("receiver.%d.digi_offset_u", rx->id,                 rx->digi_offset_u);
+  GetPropI1("receiver.%d.digi_offset_l", rx->id,                 rx->digi_offset_l);
   GetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
   GetPropI1("receiver.%d.pan_window_type", rx->id,              rx->pan_window_type);
   GetPropI1("receiver.%d.pan_fft_size", rx->id,                 rx->pan_fft_size);
@@ -783,6 +802,8 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->image_rejection_db = 0.0;
   rx->rx_iq_gain = 0.0;
   rx->rx_iq_phase = 0.0;
+  rx->digi_offset_u = 0;
+  rx->digi_offset_l = 0;
   strcpy(rx->rx_iq_status, "Idle");
   rx->pan_peak_preserve = 0;
   rx->pan_window_type = 5;
@@ -1068,7 +1089,7 @@ void rx_frequency_changed(RECEIVER *rx) {
   // To make this bullet-proof, report the (possibly new) offset to WDSP
   // and send the (possibly changed) frequency to the radio in any case.
   //
-  rx_set_offset(rx, vfo[id].offset - rx_get_mode_dc_offset(id));
+  rx_set_offset(rx, vfo[id].offset - rx_get_mode_dc_offset(id) + rx_get_digi_monitor_offset(id));
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     // P1 does this automatically

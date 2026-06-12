@@ -1221,7 +1221,7 @@ static void radio_create_visual (void) {
     // Upon startup, if RIT or CTUN is active, tell WDSP.
     receiver[i]->displaying = 1;
     rx_set_displaying (receiver[i]);
-    rx_set_offset (receiver[i], vfo[i].offset);
+    rx_frequency_changed (receiver[i]);
     gtk_fixed_put (GTK_FIXED (fixed), receiver[i]->panel, 0, y);
     g_object_ref ((gpointer) receiver[i]->panel);
     y += rx_height / RECEIVERS;

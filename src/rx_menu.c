@@ -201,6 +201,40 @@ static void audio_channel_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
+static void digi_offset_u_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->digi_offset_u = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  rx_frequency_changed(active_receiver);
+}
+
+static void digi_offset_l_cb(GtkWidget *widget, gpointer data) {
+  active_receiver->digi_offset_l = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  rx_frequency_changed(active_receiver);
+}
+
+static void digi_offset_rtty_cb(GtkWidget *widget, gpointer data) {
+  GtkWidget *digu = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "digu-offset"));
+  GtkWidget *digl = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "digl-offset"));
+  (void)data;
+  if (digu != NULL) {
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(digu), 1500.0);
+  }
+  if (digl != NULL) {
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(digl), 2210.0);
+  }
+}
+
+static void digi_offset_off_cb(GtkWidget *widget, gpointer data) {
+  GtkWidget *digu = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "digu-offset"));
+  GtkWidget *digl = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "digl-offset"));
+  (void)data;
+  if (digu != NULL) {
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(digu), 0.0);
+  }
+  if (digl != NULL) {
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(digl), 0.0);
+  }
+}
+
 void rx_menu(GtkWidget *parent) {
   int i;
   dialog = gtk_dialog_new();
@@ -404,6 +438,43 @@ void rx_menu(GtkWidget *parent) {
       g_signal_connect(adc1_filter_bypass_b, "toggled", G_CALLBACK(adc1_filter_bypass_cb), NULL);
     }
   }
+  if (filter_board == ALEX) { row++; }
+  GtkWidget *digi_offset_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_widget_set_halign(digi_offset_box, GTK_ALIGN_CENTER);
+  GtkWidget *digi_offset_u_label = gtk_label_new("DIGU Offset");
+  gtk_widget_set_name(digi_offset_u_label, "boldlabel");
+  GtkWidget *digi_offset_u = gtk_spin_button_new_with_range(0.0, 3000.0, 10.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(digi_offset_u), active_receiver->digi_offset_u);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(digi_offset_u), TRUE);
+  gtk_widget_set_tooltip_text(digi_offset_u, "DIGU audio offset in Hz");
+  g_signal_connect(digi_offset_u, "value-changed", G_CALLBACK(digi_offset_u_cb), NULL);
+  GtkWidget *digi_offset_l_label = gtk_label_new("DIGL Offset");
+  gtk_widget_set_name(digi_offset_l_label, "boldlabel");
+  GtkWidget *digi_offset_l = gtk_spin_button_new_with_range(0.0, 3000.0, 10.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(digi_offset_l), active_receiver->digi_offset_l);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(digi_offset_l), TRUE);
+  gtk_widget_set_tooltip_text(digi_offset_l, "DIGL audio offset in Hz");
+  g_signal_connect(digi_offset_l, "value-changed", G_CALLBACK(digi_offset_l_cb), NULL);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_u_label, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_u, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), gtk_label_new("Hz"), FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_l_label, FALSE, FALSE, 8);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_l, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), gtk_label_new("Hz"), FALSE, FALSE, 0);
+  GtkWidget *digi_offset_rtty_b = gtk_button_new_with_label("Offset RTTY");
+  gtk_widget_set_tooltip_text(digi_offset_rtty_b, "Set DIGU/DIGL offsets for RTTY");
+  g_object_set_data(G_OBJECT(digi_offset_rtty_b), "digu-offset", digi_offset_u);
+  g_object_set_data(G_OBJECT(digi_offset_rtty_b), "digl-offset", digi_offset_l);
+  g_signal_connect(digi_offset_rtty_b, "clicked", G_CALLBACK(digi_offset_rtty_cb), NULL);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_rtty_b, FALSE, FALSE, 8);
+  GtkWidget *digi_offset_off_b = gtk_button_new_with_label("Offset OFF");
+  gtk_widget_set_tooltip_text(digi_offset_off_b, "Disable DIGU/DIGL offsets");
+  g_object_set_data(G_OBJECT(digi_offset_off_b), "digu-offset", digi_offset_u);
+  g_object_set_data(G_OBJECT(digi_offset_off_b), "digl-offset", digi_offset_l);
+  g_signal_connect(digi_offset_off_b, "clicked", G_CALLBACK(digi_offset_off_cb), NULL);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_off_b, FALSE, FALSE, 0);
+  gtk_grid_attach(GTK_GRID(grid), digi_offset_box, 0, row, 3, 1);
+  row++;
   if (n_output_devices > 0) {
     local_audio_b = gtk_check_button_new_with_label("Use Local Audio Output:");
     gtk_widget_set_name(local_audio_b, "boldlabel");
