@@ -471,7 +471,8 @@ void rx_menu(GtkWidget *parent) {
   g_signal_connect(digi_offset_rtty_b, "clicked", G_CALLBACK(digi_offset_rtty_cb), NULL);
   gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_rtty_b, FALSE, FALSE, 8);
   GtkWidget *digi_offset_off_b = gtk_button_new_with_label("Offset OFF");
-  gtk_widget_set_tooltip_text(digi_offset_off_b, "Disable DIGU/DIGL offsets");
+  gtk_widget_set_tooltip_text(digi_offset_off_b, "Disable DIGU/DIGL offsets\n"
+                                                 "Recommended for all FT mode");
   g_object_set_data(G_OBJECT(digi_offset_off_b), "digu-offset", digi_offset_u);
   g_object_set_data(G_OBJECT(digi_offset_off_b), "digl-offset", digi_offset_l);
   g_signal_connect(digi_offset_off_b, "clicked", G_CALLBACK(digi_offset_off_cb), NULL);

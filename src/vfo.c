@@ -1623,6 +1623,34 @@ void vfo_update(void) {
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_move_to(cr, vfl->mode_x, vfl->mode_y);
     cairo_show_text(cr, temp_text);
+    switch (vfo[id].mode) {
+    case modeDIGL:
+      if (active_receiver->digi_offset_l > 0) {
+        snprintf(temp_text, sizeof(temp_text), "RX OFFSET");
+        cairo_set_font_size(cr, vfl->size1 - 5);
+        cairo_set_source_rgba(cr, COLOUR_ORANGE);
+        cairo_move_to(cr, vfl->mode_x + 182, vfl->mode_y - 8);
+        cairo_show_text(cr, temp_text);
+        snprintf(temp_text, sizeof(temp_text), "%d Hz", active_receiver->digi_offset_l);
+        cairo_move_to(cr, vfl->mode_x + 187, vfl->mode_y + 3);
+        cairo_show_text(cr, temp_text);
+      }
+      break;
+    case modeDIGU:
+      if (active_receiver->digi_offset_u > 0) {
+        snprintf(temp_text, sizeof(temp_text), "RX OFFSET");
+        cairo_set_font_size(cr, vfl->size1 - 5);
+        cairo_set_source_rgba(cr, COLOUR_ORANGE);
+        cairo_move_to(cr, vfl->mode_x + 182, vfl->mode_y - 8);
+        cairo_show_text(cr, temp_text);
+        snprintf(temp_text, sizeof(temp_text), "%d Hz", active_receiver->digi_offset_u);
+        cairo_move_to(cr, vfl->mode_x + 187, vfl->mode_y + 3);
+        cairo_show_text(cr, temp_text);
+      }
+      break;
+    default:
+      break;
+    }
   }
   // In what follows, we want to display the VFO frequency
   // on which we currently transmit a signal with red colour.

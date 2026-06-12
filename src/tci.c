@@ -161,6 +161,7 @@ typedef struct _response {
 static GMutex tci_mutex;
 static GList *tci_clients = NULL;
 static CLIENT *tci_iq_stream_owner = NULL;
+static CLIENT *tci_digi_offset_owner = NULL;
 
 static gpointer tci_lws_server (gpointer data);
 static void tci_lws_free_queue (CLIENT *client);
@@ -334,6 +335,7 @@ void tci_send_stop_and_flush(void) {
   g_mutex_lock (&tci_mutex);
   tci_iq_stream_sample_rate = 0;
   tci_iq_stream_owner = NULL;
+  tci_digi_offset_owner = NULL;
   g_mutex_unlock (&tci_mutex);
   g_atomic_int_set (&tci_iq_stream_clients, 0);
   lws_cancel_service(tci_lws_context);
@@ -372,6 +374,7 @@ void shutdown_tci (void) {
     g_mutex_lock (&tci_mutex);
     tci_iq_stream_sample_rate = 0;
     tci_iq_stream_owner = NULL;
+    tci_digi_offset_owner = NULL;
     g_mutex_unlock (&tci_mutex);
     g_atomic_int_set (&tci_iq_stream_clients, 0);
     lws_cancel_service (tci_lws_context);
@@ -1406,6 +1409,18 @@ static void tci_send_digl_offset(CLIENT *client) {
   tci_send_digl_offset_value(client, tci_get_active_digl_offset());
 }
 
+static int tci_digi_offset_claim(CLIENT *client) {
+  int allowed;
+  if (client == NULL) { return 0; }
+  g_mutex_lock(&tci_mutex);
+  if (tci_digi_offset_owner == NULL) {
+    tci_digi_offset_owner = client;
+  }
+  allowed = (tci_digi_offset_owner == client);
+  g_mutex_unlock(&tci_mutex);
+  return allowed;
+}
+
 static void tci_broadcast_digu_offset(void) {
   GList *clients = tci_clients_snapshot();
   int value = tci_get_active_digu_offset();
@@ -2286,6 +2301,11 @@ static void tci_broadcast_mode_value (int v, int m) {
     if (client != NULL && client->running) {
       tci_send_mode_value (client, v, m);
       tci_send_rx_filter_band (client, v);
+      if (m == modeDIGU) {
+        tci_send_digu_offset (client);
+      } else if (m == modeDIGL) {
+        tci_send_digl_offset (client);
+      }
     }
   }
   g_list_free (clients);
@@ -2866,6 +2886,10 @@ static void tci_cmd_digl_offset (CLIENT *client, const TCI_CMD *cmd) {
     if (value < 0 || value > 4000) {
       return;
     }
+    if (!tci_digi_offset_claim(client)) {
+      tci_send_digl_offset(client);
+      return;
+    }
     TCI_DIGI_OFFSET_UPDATE *du = g_new(TCI_DIGI_OFFSET_UPDATE, 1);
     du->is_digu = 0;
     du->value = value;
@@ -2880,6 +2904,10 @@ static void tci_cmd_digu_offset (CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1) {
     int value = tci_int(cmd->argv[0], -1);
     if (value < 0 || value > 4000) {
+      return;
+    }
+    if (!tci_digi_offset_claim(client)) {
+      tci_send_digu_offset(client);
       return;
     }
     TCI_DIGI_OFFSET_UPDATE *du = g_new(TCI_DIGI_OFFSET_UPDATE, 1);
@@ -4533,6 +4561,9 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
     if (client == tci_iq_stream_owner) {
       tci_iq_stream_owner = NULL;
       tci_iq_stream_sample_rate = 0;
+    }
+    if (client == tci_digi_offset_owner) {
+      tci_digi_offset_owner = NULL;
     }
     tci_clients = g_list_remove (tci_clients, client);
     g_mutex_unlock (&tci_mutex);
