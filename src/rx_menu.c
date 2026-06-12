@@ -38,6 +38,7 @@
 #include "message.h"
 #include "rigctl.h"
 #include "ext.h"
+#include "tci.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *local_audio_b = NULL;
@@ -204,11 +205,13 @@ static void audio_channel_cb(GtkWidget *widget, gpointer data) {
 static void digi_offset_u_cb(GtkWidget *widget, gpointer data) {
   active_receiver->digi_offset_u = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   rx_frequency_changed(active_receiver);
+  tci_digu_offset_changed();
 }
 
 static void digi_offset_l_cb(GtkWidget *widget, gpointer data) {
   active_receiver->digi_offset_l = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   rx_frequency_changed(active_receiver);
+  tci_digl_offset_changed();
 }
 
 static void digi_offset_rtty_cb(GtkWidget *widget, gpointer data) {
@@ -443,14 +446,14 @@ void rx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(digi_offset_box, GTK_ALIGN_CENTER);
   GtkWidget *digi_offset_u_label = gtk_label_new("DIGU Offset");
   gtk_widget_set_name(digi_offset_u_label, "boldlabel");
-  GtkWidget *digi_offset_u = gtk_spin_button_new_with_range(0.0, 3000.0, 10.0);
+  GtkWidget *digi_offset_u = gtk_spin_button_new_with_range(0.0, 4000.0, 10.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(digi_offset_u), active_receiver->digi_offset_u);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(digi_offset_u), TRUE);
   gtk_widget_set_tooltip_text(digi_offset_u, "DIGU audio offset in Hz");
   g_signal_connect(digi_offset_u, "value-changed", G_CALLBACK(digi_offset_u_cb), NULL);
   GtkWidget *digi_offset_l_label = gtk_label_new("DIGL Offset");
   gtk_widget_set_name(digi_offset_l_label, "boldlabel");
-  GtkWidget *digi_offset_l = gtk_spin_button_new_with_range(0.0, 3000.0, 10.0);
+  GtkWidget *digi_offset_l = gtk_spin_button_new_with_range(0.0, 4000.0, 10.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(digi_offset_l), active_receiver->digi_offset_l);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(digi_offset_l), TRUE);
   gtk_widget_set_tooltip_text(digi_offset_l, "DIGL audio offset in Hz");

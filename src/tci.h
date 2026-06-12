@@ -58,6 +58,8 @@ void tci_rit_enable_changed(int receiver_id);
 void tci_xit_enable_changed(void);
 void tci_rit_offset_changed(int receiver_id);
 void tci_xit_offset_changed(void);
+void tci_digu_offset_changed(void);
+void tci_digl_offset_changed(void);
 void tci_begin_tune_transition(void);
 void tci_end_tune_transition(void);
 int tci_is_tune_transition(void);

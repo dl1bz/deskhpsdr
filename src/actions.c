@@ -134,6 +134,8 @@ ACTION_TABLE ActionTable[] = {
   {DIV_PHASE_FINE,      "DIV Phase\nFine",      "DIVPF",        MIDI_WHEEL},
   {MENU_DIVERSITY,      "DIV\nMenu",            "DIV-M",        MIDI_KEY},
   {DUPLEX,              "Duplex",               "DUP",          MIDI_KEY},
+  {DIGU_OFFSET,         "DIGU Offset",          "DIGUOFF",      MIDI_KNOB  | MIDI_WHEEL},
+  {DIGL_OFFSET,         "DIGL Offset",          "DIGLOFF",      MIDI_KNOB  | MIDI_WHEEL},
   {DXC_WIN,             "DXC\nWindow",          "DXC-WIN",      TYPE_NONE},
   {DXC_TEST,            "DXC\nTest",            "DXC-TEST",     TYPE_NONE},
   {FILTER_MINUS,        "Filter -",             "FL-",          MIDI_KEY},
@@ -1052,6 +1054,24 @@ int process_action(void* data) {
     if (can_transmit && !radio_is_transmitting() && a->mode == PRESSED) {
       TOGGLE(duplex);
       g_idle_add(ext_set_duplex, NULL);  // can just use setDuplex ?
+    }
+    break;
+  case DIGU_OFFSET:
+    if (active_receiver != NULL) {
+      value = KnobOrWheel(a, active_receiver->digi_offset_u, 0.0, 4000.0, 10.0);
+      active_receiver->digi_offset_u = (int) value;
+      rx_frequency_changed(active_receiver);
+      g_idle_add(ext_vfo_update, NULL);
+      tci_digu_offset_changed();
+    }
+    break;
+  case DIGL_OFFSET:
+    if (active_receiver != NULL) {
+      value = KnobOrWheel(a, active_receiver->digi_offset_l, 0.0, 4000.0, 10.0);
+      active_receiver->digi_offset_l = (int) value;
+      rx_frequency_changed(active_receiver);
+      g_idle_add(ext_vfo_update, NULL);
+      tci_digl_offset_changed();
     }
     break;
   case FILTER_MINUS:

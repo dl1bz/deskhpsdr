@@ -198,6 +198,11 @@ typedef struct {
 } TCI_RIT_OFFSET_UPDATE;
 
 typedef struct {
+  int is_digu;
+  int value;
+} TCI_DIGI_OFFSET_UPDATE;
+
+typedef struct {
   int receiver_id;
   int state;
 } TCI_SQL_ENABLE_UPDATE;
@@ -1357,6 +1362,82 @@ void tci_xit_offset_changed (void) {
   if (txvfo < VFO_A || txvfo > VFO_B) { return; }
   if (!vfo[txvfo].xit_enabled) { return; }
   tci_broadcast_xit_offset();
+}
+
+static int tci_get_active_digu_offset(void) {
+  if (active_receiver != NULL) {
+    return active_receiver->digi_offset_u;
+  }
+  if (receivers > 0 && receiver[0] != NULL) {
+    return receiver[0]->digi_offset_u;
+  }
+  return 0;
+}
+
+static int tci_get_active_digl_offset(void) {
+  if (active_receiver != NULL) {
+    return active_receiver->digi_offset_l;
+  }
+  if (receivers > 0 && receiver[0] != NULL) {
+    return receiver[0]->digi_offset_l;
+  }
+  return 0;
+}
+
+static void tci_send_digu_offset_value(CLIENT *client, int value) {
+  char msg[MAXMSGSIZE];
+  if (client == NULL) { return; }
+  snprintf(msg, MAXMSGSIZE, "digu_offset:%d;", value);
+  tci_send_text(client, msg);
+}
+
+static void tci_send_digl_offset_value(CLIENT *client, int value) {
+  char msg[MAXMSGSIZE];
+  if (client == NULL) { return; }
+  snprintf(msg, MAXMSGSIZE, "digl_offset:%d;", value);
+  tci_send_text(client, msg);
+}
+
+static void tci_send_digu_offset(CLIENT *client) {
+  tci_send_digu_offset_value(client, tci_get_active_digu_offset());
+}
+
+static void tci_send_digl_offset(CLIENT *client) {
+  tci_send_digl_offset_value(client, tci_get_active_digl_offset());
+}
+
+static void tci_broadcast_digu_offset(void) {
+  GList *clients = tci_clients_snapshot();
+  int value = tci_get_active_digu_offset();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_digu_offset_value(client, value);
+    }
+  }
+  g_list_free(clients);
+}
+
+static void tci_broadcast_digl_offset(void) {
+  GList *clients = tci_clients_snapshot();
+  int value = tci_get_active_digl_offset();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT*) l->data;
+    if (client != NULL && client->running) {
+      tci_send_digl_offset_value(client, value);
+    }
+  }
+  g_list_free(clients);
+}
+
+void tci_digu_offset_changed(void) {
+  if (!tci_running) { return; }
+  tci_broadcast_digu_offset();
+}
+
+void tci_digl_offset_changed(void) {
+  if (!tci_running) { return; }
+  tci_broadcast_digl_offset();
 }
 
 static void tci_send_tune (CLIENT *client) {
@@ -2721,6 +2802,33 @@ static int tci_apply_xit_offset_update (void *data) {
   return G_SOURCE_REMOVE;
 }
 
+static int tci_apply_digi_offset_update(void *data) {
+  TCI_DIGI_OFFSET_UPDATE *du = (TCI_DIGI_OFFSET_UPDATE*) data;
+  if (du == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  tci_begin_apply();
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL) {
+      if (du->is_digu) {
+        receiver[i]->digi_offset_u = du->value;
+      } else {
+        receiver[i]->digi_offset_l = du->value;
+      }
+      rx_frequency_changed(receiver[i]);
+    }
+  }
+  tci_end_apply();
+  g_idle_add(ext_vfo_update, NULL);
+  if (du->is_digu) {
+    tci_broadcast_digu_offset();
+  } else {
+    tci_broadcast_digl_offset();
+  }
+  g_free(du);
+  return G_SOURCE_REMOVE;
+}
+
 static void tci_cmd_rit_offset (CLIENT *client, const TCI_CMD *cmd) {
   int receiver_id;
   if (cmd->argc < 1) { return; }
@@ -2753,13 +2861,35 @@ static void tci_cmd_xit_offset (CLIENT *client, const TCI_CMD *cmd) {
 
 
 static void tci_cmd_digl_offset (CLIENT *client, const TCI_CMD *cmd) {
-  (void) cmd;
-  tci_send_text (client, "digl_offset:0;");
+  if (cmd->argc >= 1) {
+    int value = tci_int(cmd->argv[0], -1);
+    if (value < 0 || value > 4000) {
+      return;
+    }
+    TCI_DIGI_OFFSET_UPDATE *du = g_new(TCI_DIGI_OFFSET_UPDATE, 1);
+    du->is_digu = 0;
+    du->value = value;
+    tci_send_digl_offset_value(client, value);
+    g_idle_add(tci_apply_digi_offset_update, du);
+  } else {
+    tci_send_digl_offset(client);
+  }
 }
 
 static void tci_cmd_digu_offset (CLIENT *client, const TCI_CMD *cmd) {
-  (void) cmd;
-  tci_send_text (client, "digu_offset:0;");
+  if (cmd->argc >= 1) {
+    int value = tci_int(cmd->argv[0], -1);
+    if (value < 0 || value > 4000) {
+      return;
+    }
+    TCI_DIGI_OFFSET_UPDATE *du = g_new(TCI_DIGI_OFFSET_UPDATE, 1);
+    du->is_digu = 1;
+    du->value = value;
+    tci_send_digu_offset_value(client, value);
+    g_idle_add(tci_apply_digi_offset_update, du);
+  } else {
+    tci_send_digu_offset(client);
+  }
 }
 
 static int tci_is_bool_arg (const char *s) {
@@ -4203,6 +4333,8 @@ static void tci_send_initial_state (CLIENT *client) {
   tci_send_rit_offset (client, VFO_A);
   tci_send_xit_enable (client);
   tci_send_xit_offset (client);
+  tci_send_digu_offset (client);
+  tci_send_digl_offset (client);
   tci_send_mox (client);
   tci_send_tune (client);
   for (int i = 0; i < receivers && i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
