@@ -81,7 +81,7 @@ ARCH := $(shell uname -m)
 # Desktop directory (Linux may be localized, e.g. "Schreibtisch")
 DESKTOP_DIR ?= $(HOME)/Desktop
 ifeq ($(UNAME_S),Linux)
-DESKTOP_DIR := $(shell command -v xdg-user-dir >/dev/null 2>&1 && xdg-user-dir DESKTOP || echo "$(HOME)/Desktop")
+DESKTOP_DIR := $(shell d="$$(command -v xdg-user-dir >/dev/null 2>&1 && xdg-user-dir DESKTOP)"; if [ -n "$$d" ]; then echo "$$d"; else echo "$(HOME)/Desktop"; fi)
 endif
 
 PKG_CONFIG ?= pkg-config
@@ -996,7 +996,7 @@ clean:
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)
-	@-rm -rf $(PROGRAM).app
+	-@rm -rf $(PROGRAM).app
 endif
 	@echo "DONE."
 
@@ -1011,16 +1011,16 @@ uninstall:
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 	@echo "Remove installed deskHPSDR binary..."
 ifeq ($(UNAME_S), Darwin)
-	@-rm -rf $(PROGRAM).app
-	@-rm -fr ${HOME}/Desktop/deskhpsdr.app
+	-@rm -rf $(PROGRAM).app
+	-@rm -fr ${HOME}/Desktop/deskhpsdr.app
 else
-	@-sudo rm -f /usr/local/bin/$(PROGRAM)
-	@-sudo killall rigctld_deskhpsdr || true
-	@-sudo rm -f /usr/local/bin/rigctld_deskhpsdr
-	@-rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
-	@-rm -f "$(DESKTOP_DIR)"/deskHPSDR.desktop
+	-@sudo rm -f /usr/local/bin/$(PROGRAM)
+	-@sudo killall rigctld_deskhpsdr || true
+	-@sudo rm -f /usr/local/bin/rigctld_deskhpsdr
+	-@rm -f ${HOME}/.local/share/applications/deskHPSDR.desktop
+	-@rm -f "$(DESKTOP_DIR)"/deskHPSDR.desktop
 	@echo "Update Desktop database..."
-	@command -v update-database-desktop >/dev/null 2>&1 && update-database-desktop || :
+	-@command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database ~/.local/share/applications >/dev/null 2>&1 || :
 endif
 	@echo "DONE."
 
@@ -1097,7 +1097,6 @@ all: prepare $(PROGRAM)
 
 install-Darwin: all
 	@echo "Install deskHPSDR for macOS..."
-	@make
 	@echo "Remove further compiled deskHPSDR..."
 	@rm -rf deskHPSDR.app
 	@echo "Remove old deskHPSDR.app container from \"$(DESKTOP_DIR)\" ..."
@@ -1121,7 +1120,7 @@ install-Darwin: all
 	@cp -R fonts/otf/GNU "${HOME}/Library/Fonts"
 	@sleep 1
 	@echo "Rebuild font cache..."
-	@-fc-cache -f
+	-@fc-cache -f
 	@sleep 1
 	@if [ -x /usr/bin/codesign ]; then \
 		echo "Strip extended attributes before codesigning..."; \
@@ -1135,16 +1134,15 @@ install-Darwin: all
 	@echo "Copy deskHPSDR to your Desktop..."
 	@mv deskHPSDR.app "$(DESKTOP_DIR)"
 	@echo "Starting deskHPSDR..."
-	@open -a "$(DESKTOP_DIR)/deskHPSDR.app"
+	@open "$(DESKTOP_DIR)/deskHPSDR.app"
 
 install-Linux: all
 	@echo "Install deskHPSDR for Linux..."
-	@make
 	@sleep 1
 	@sudo ldconfig
 	@sleep 1
 	@echo "Remove previous deskHPSDR binary..."
-	@sudo rm -f "/usr/local/bin/$(PROGRAM)"
+	-@sudo rm -f "/usr/local/bin/$(PROGRAM)"
 	@echo "Copy just compiled deskHPSDR binary to /usr/local/bin"
 	@sudo install -m 0755 -t /usr/local/bin "$(PROGRAM)"
 	@if [ -f "${CURRDIR}/LINUX/rigctld_deskhpsdr" ]; then \
@@ -1180,20 +1178,19 @@ install-Linux: all
 	fi
 	@sleep 1
 	@echo "Rebuild font cache..."
-	@-sudo fc-cache -f
+	-@sudo fc-cache -f
 	@echo "Install X11 deskHPSDR desktop file..."
-	@-rm -f "${HOME}/.local/share/applications/deskHPSDR.desktop"
+	-@rm -f "${HOME}/.local/share/applications/deskHPSDR.desktop"
 	@cp LINUX/deskHPSDR.desktop "${HOME}/.local/share/applications"
 	@echo "Create a link for deskHPSDR at the Desktop..."
-	@-rm -f "$(DESKTOP_DIR)"/deskHPSDR.desktop
+	-@rm -f "$(DESKTOP_DIR)"/deskHPSDR.desktop
 	@cp LINUX/deskHPSDR.desklnk "${CURRDIR}/deskHPSDR.desktop"
 	@echo "URL=${HOME}/.local/share/applications/deskHPSDR.desktop" >> "${CURRDIR}/deskHPSDR.desktop"
 	@install -m 0755 -t "$(DESKTOP_DIR)" "${CURRDIR}/deskHPSDR.desktop"
-	@-rm -f "${CURRDIR}/deskHPSDR.desktop"
+	-@rm -f "${CURRDIR}/deskHPSDR.desktop"
 	@sudo sync
 	@echo "Update Desktop database..."
-#	@command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database || :
-	@update-desktop-database ~/.local/share/applications >/dev/null 2>&1 || :
+	-@update-desktop-database ~/.local/share/applications >/dev/null 2>&1 || :
 	@sleep 1
 
 .PHONY: update
