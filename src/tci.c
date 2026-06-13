@@ -70,7 +70,7 @@
 #endif
 
 int tci_enable = 0;
-int tci_port   = 50001;
+int tci_port   = 40001;
 int tci_txonly = 0;
 long tci_timer = 0;
 
