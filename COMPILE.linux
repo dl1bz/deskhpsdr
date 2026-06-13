@@ -62,7 +62,7 @@ heiko@AfuPi5:~/src/deskhpsdr $ make clean && make
 
 After step 4, hopeful successful, you can do this:
 
-heiko@AfuPi5:~/src/deskhpsdr $ sudo make install
+heiko@AfuPi5:~/src/deskhpsdr $ make install
 
 This will copy the deskhpsdr binary to /usr/local/bin and prepare your X11 environment for easy start deskHPSDR.
 In your X11 menu you should find in one of the sub-menus deskhpsdr as menu entry. Where exact depends strongly
@@ -81,7 +81,7 @@ heiko@AfuPi5:~/src $ cd deskhpsdr
 heiko@AfuPi5:~/src/deskhpsdr $ make clean
 heiko@AfuPi5:~/src/deskhpsdr $ make update
 heiko@AfuPi5:~/src/deskhpsdr $ make
-heiko@AfuPi5:~/src/deskhpsdr $ sudo make install
+heiko@AfuPi5:~/src/deskhpsdr $ make install
 
 Have fun with the updated version !
 
@@ -102,7 +102,7 @@ Edit the make.config.deskhpsdr file with the options you need. DO NOT EDIT the M
 After this, continue:
 
 heiko@AfuPi5:~/src/deskhpsdr $ make clean && make
-heiko@AfuPi5:~/src/deskhpsdr $ sudo make install
+heiko@AfuPi5:~/src/deskhpsdr $ make install
 
 Another problem can be a wrong property-file. In this case, exit deskHPSDR and remove in $HOME/.config/deskhpsdr all *.props files:
 heiko@AfuPi5:~ $ cd
