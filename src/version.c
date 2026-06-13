@@ -40,9 +40,6 @@ char build_options[] =
 #ifdef STEMLAB_DISCOVERY
   "STEMLAB "
 #endif
-#ifdef __CPYMODE__
-  "COPYMODE "
-#endif
 #ifdef __AUTOG__
   "AUTOGAIN-HL2 "
 #endif

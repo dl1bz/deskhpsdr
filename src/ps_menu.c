@@ -371,9 +371,6 @@ static void ps_ant_cb(GtkWidget *widget, gpointer data) {
 static void enable_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-#if defined (__CPYMODE__)
-    int _mode = vfo_get_tx_mode();
-#endif
     clear_fields();
     tx_ps_onoff(transmitter, val);
     if (val) {
@@ -393,16 +390,6 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
       gtk_widget_show(tx_att);
       gtk_entry_set_text(GTK_ENTRY(tx_att), "");
     }
-#if defined (__CPYMODE__)
-    // PS make no sense in CW and FM !
-    if (can_transmit && (_mode == modeUSB || _mode == modeLSB || _mode == modeDIGL || _mode == modeDIGU || _mode == modeAM
-                         || _mode == modeDSB)) {
-      mode_settings[_mode].puresignal = val;
-    } else {
-      mode_settings[_mode].puresignal = 0;
-    }
-    copy_mode_settings(_mode);
-#endif
     update_slider_ps_btn();
   }
 }

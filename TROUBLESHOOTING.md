@@ -26,18 +26,15 @@ I will permanently update the codebase with bugfixes, so be sure you will be usi
 
 A correct, minimum file ```make.config.deskhpsdr``` look like this as example:
 ```
-TCI=ON
 MIDI=ON
 SATURN=OFF
 USBOZY=OFF
 STEMLAB=OFF
 AUDIO=PULSE
-COPYMODE=OFF
 AUTOGAIN=ON
 REGION1=ON
 ```
 Please use ```AUTOGAIN=ON``` only if your SDR is a Hermes Lite 2, otherwise set ```AUTOGAIN=OFF```.<br>
-```GPIO``` will only work with Raspberry Pi. Let ```ATU=OFF``` and ```COPYMODE=OFF```, these are special functions they work only with **my own** SDR system.<br>
 ```REGION1=ON``` set the band borders in the RX panadpter to IARU Region 1 (if OFF all is US based).<br>
 deskHPSDR is made for desktop systems, they all have enough CPU power. But my tests were shown, with a Raspberry Pi5 the worldmap works too without any issues.<br>
 **Not defined or non existent options are ever interpreted like ```OFF```**.

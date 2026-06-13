@@ -83,10 +83,8 @@ $HOME/Library/Application Support/deskHPSDR if using macOS - if you want you can
 at the same machine.
 
 Please don't change three options in the make.config.deskhpsdr at the moment:
-ATU=OFF
-COPYMODE=OFF
 DEVEL=OFF
-Leave this three options as they are (OFF) and don't change this please.
+Leave this option as is (OFF) and don't change this please.
 
 Thats all, folks :)
 73 Heiko, DL1BZ

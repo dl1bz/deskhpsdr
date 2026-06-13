@@ -21,7 +21,6 @@ USBOZY   ?= OFF
 STEMLAB  ?= OFF
 TTS      ?= OFF
 AUDIO    ?= PULSE
-COPYMODE ?= OFF
 AUTOGAIN ?= OFF
 REGION1  ?= OFF
 EQ12     ?= OFF
@@ -39,7 +38,6 @@ TAHOEFIX ?= ON
 #  USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs  libusb-1.0)
 #  STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
 #  AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux (use PulseAudio recommend)
-#  COPYMODE     | If ON, add some additional copy and restore of settings depend from selected mode
 #  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
 #  REGION1      | If ON, the band borders are set to IARU Region 1, if OFF US frequency borders active
 #  EQ12         | If ON, use 12-band EQ instead of 10-band EQ
@@ -386,11 +384,6 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 #
 ##############################################################################
 
-ifeq ($(COPYMODE), ON)
-COPYMODE_OPTIONS=-D__CPYMODE__
-endif
-CPP_DEFINES += -D__CPYMODE__
-
 ifeq ($(AUTOGAIN), ON)
 AUTOGAIN_OPTIONS=-D__AUTOG__
 endif
@@ -607,7 +600,6 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(STEMLAB_OPTIONS) \
 	$(TTS_OPTIONS) \
 	$(DESKTOP_OPTIONS) \
-	$(COPYMODE_OPTIONS) \
 	$(AH4IOB_OPTIONS) \
 	$(AUTOGAIN_OPTIONS) \
 	$(DEVEL_OPTIONS) \
@@ -1080,7 +1072,7 @@ DEPEND:
 	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY \
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
-		-D__CPYMODE__ -D__AUTOG__ -D__DVL__ -D__REG1__ \
+		-D__AUTOG__ -D__DVL__ -D__REG1__ \
 		-D__EQ12__ -D__WAYLAND__ -D__TAHOEFIX__ -D__AH4IOB__\
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND

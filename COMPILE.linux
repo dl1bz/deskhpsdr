@@ -51,10 +51,6 @@ Please take this file and make a copy:
 heiko@AfuPi5:~/src/deskhpsdr $ cp make.config.deskhpsdr.template make.config.deskhpsdr
 
 Edit THIS make.config.deskhpsdr (NOT the Makefile !!!) and set the options you want.
-Never change this settings:
-COPYMODE=OFF
-
-The other options you can set how you want or need.
 
 4.2 Compiling
 

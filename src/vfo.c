@@ -194,12 +194,6 @@ static void modesettingsSaveState(void) {
     SetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     SetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-#if defined (__CPYMODE__)
-    SetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
-    SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
-    SetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
-    SetPropI1("modeset.%d.use_rx_filter", i,         mode_settings[i].use_rx_filter);
-#endif
     SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
     for (int j = 0; j < 11; j++) {
@@ -315,12 +309,6 @@ static void modesettingsRestoreState(void) {
     mode_settings[i].lev_gain = 0.0;
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
-#if defined (__CPYMODE__)
-    mode_settings[i].local_microphone = 0;
-    g_strlcpy(mode_settings[i].microphone_name, "NOMIC", sizeof(mode_settings[i].microphone_name));
-    mode_settings[i].puresignal = 0;
-    mode_settings[i].use_rx_filter = 0;
-#endif
     for (int j = 0; j < 11; j++) {
       mode_settings[i].tx_eq_gain[j] = 0;
       mode_settings[i].rx_eq_gain[j] = 0;
@@ -465,12 +453,6 @@ static void modesettingsRestoreState(void) {
     GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     GetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
-#if defined (__CPYMODE__)
-    GetPropI1("modeset.%d.local_microphone", i,      mode_settings[i].local_microphone);
-    GetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
-    GetPropI1("modeset.%d.puresignal", i,            mode_settings[i].puresignal);
-    GetPropI1("modeset.%d.use_rx_filter", i,         mode_settings[i].use_rx_filter);
-#endif
     for (int j = 0; j < 11; j++) {
       GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
       GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
@@ -710,22 +692,6 @@ void vfo_xvtr_changed(void) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-#if defined (__CPYMODE__)
-static void audio_reload_input(void) {
-  if (transmitter->local_microphone) {
-    audio_close_input();
-    t_print("%s: audio in closed\n", __func__);
-  }
-  if (transmitter->local_microphone) {
-    if (audio_open_input() < 0) {
-      transmitter->local_microphone = 0;
-    }
-    t_print("%s: audio in re-open\n", __func__);
-  }
-}
-
-#endif
-
 void vfo_apply_mode_settings(RECEIVER *rx) {
   int id, m;
   id = rx->id;
@@ -801,14 +767,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->dexp_filter_high = mode_settings[m].dexp_filter_high;
     transmitter->cfc              = mode_settings[m].cfc;
     transmitter->cfc_eq           = mode_settings[m].cfc_eq;
-#if defined (__CPYMODE__)
-    g_mutex_lock(&copy_string_mutex);
-    transmitter->local_microphone = mode_settings[m].local_microphone;
-    g_strlcpy(transmitter->microphone_name, mode_settings[m].microphone_name, sizeof(transmitter->microphone_name));
-    transmitter->puresignal       = mode_settings[m].puresignal;
-    transmitter->use_rx_filter    = mode_settings[m].use_rx_filter;
-    g_mutex_unlock(&copy_string_mutex);
-#endif
     transmitter->lev_enable       = mode_settings[m].lev_enable;
     transmitter->lev_gain         = mode_settings[m].lev_gain;
     transmitter->phrot_enable     = mode_settings[m].phrot_enable;
@@ -827,13 +785,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
       transmitter->cfc_lvl[ii]  = mode_settings[m].cfc_lvl[ii];
       transmitter->cfc_post[ii] = mode_settings[m].cfc_post[ii];
     }
-#endif
-#if defined (__CPYMODE__)
-    audio_reload_input();
-    tx_ps_onoff(transmitter, transmitter->puresignal);
-    t_print("%s: state Pure Signal %d\n", __func__, transmitter->puresignal);
-    tx_set_filter(transmitter);
-    t_print("%s: state transmitter->use_rx_filter: %d\n", __func__, transmitter->use_rx_filter);
 #endif
     tx_set_compressor(transmitter);
     tx_set_dexp(transmitter);

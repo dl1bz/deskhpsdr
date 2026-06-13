@@ -766,41 +766,6 @@ static void snb_toggle_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-/*
-static void local_mic_toggle_cb(GtkWidget *widget, gpointer data) {
-  int v = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-  if (v) {
-    if (audio_open_input() == 0) {
-      transmitter->local_microphone = 1;
-    } else {
-      transmitter->local_microphone = 0;
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), FALSE);
-    }
-  } else {
-    if (transmitter->local_microphone) {
-      transmitter->local_microphone = 0;
-      audio_close_input();
-    }
-  }
-
-#if defined (__CPYMODE__)
-  int mode = vfo_get_tx_mode();
-
-  if (transmitter->local_microphone) {
-    mode_settings[mode].local_microphone = 1;
-  } else {
-    mode_settings[mode].local_microphone = 0;
-  }
-
-  t_print("%s: mode: %d transmitter->local_microphone: %d mode_settings[%d].local_microphone %d\n",
-          __func__, mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
-  copy_mode_settings(mode);
-  g_idle_add(ext_vfo_update, NULL);
-#endif
-}
-*/
-
 static void local_mic_toggle_cb(GtkToggleButton *btn, gpointer data) {
   TRANSMITTER *tx = (TRANSMITTER*) data;
   gboolean v = gtk_toggle_button_get_active(btn);
@@ -822,12 +787,6 @@ static void local_mic_toggle_cb(GtkToggleButton *btn, gpointer data) {
       audio_close_input();
     }
   }
-#if defined (__CPYMODE__)
-  int mode = vfo_get_tx_mode();
-  mode_settings[mode].local_microphone = tx->local_microphone ? 1 : 0;
-  copy_mode_settings(mode);
-  g_idle_add(ext_vfo_update, NULL);
-#endif
 }
 
 static void tune_drive_changed_cb(GtkWidget *widget, gpointer data) {
@@ -1173,7 +1132,8 @@ void update_slider_af_gain_btn(void) {
 
 static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
   // int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
+  // active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
+  active_receiver->local_audio_mute = !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   update_slider_af_gain_btn();
   t_print("%s: active_receiver->local_audio_mute = %d\n", __func__, active_receiver->local_audio_mute);
 }
@@ -1290,25 +1250,9 @@ void update_slider_ps_btn(void) {
 }
 
 static void ps_toggle_cb(GtkWidget *widget, gpointer data) {
-#if defined (__CPYMODE__)
-  int _mode = vfo[active_receiver->id].mode;
-  if (can_transmit) {
-    // PS make no sense in CW and FM !
-    if (_mode == modeUSB || _mode == modeLSB || _mode == modeDIGL || _mode == modeDIGU || _mode == modeAM
-        || _mode == modeDSB) {
-      tx_ps_onoff(transmitter, transmitter->puresignal ? 0 : 1);
-      mode_settings[_mode].puresignal = transmitter->puresignal;
-      copy_mode_settings(_mode);
-    } else {
-      mode_settings[_mode].puresignal = 0;
-      copy_mode_settings(_mode);
-    }
-  }
-#else
   if (can_transmit) {
     tx_ps_onoff(transmitter, transmitter->puresignal ? 0 : 1);
   }
-#endif
   update_slider_ps_btn();
 }
 

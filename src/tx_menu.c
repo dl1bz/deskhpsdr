@@ -179,9 +179,6 @@ void audioSaveProfile(const char* filename) {
   // save only for LSB
   int i = modeLSB;
   SetPropS0("PGNAME",                              PGNAME);
-#if defined (__CPYMODE__)
-  SetPropS1("modeset.%d.microphone_name", i,       mode_settings[i].microphone_name);
-#endif
   SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
   SetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
   SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
@@ -945,10 +942,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
         gtk_widget_set_sensitive(tx_spin_low, TRUE);
         gtk_widget_set_sensitive(tx_spin_high, TRUE);
       }
-#if defined (__CPYMODE__)
-      mode_settings[mode].use_rx_filter = v;
-      copy_mode_settings(mode);
-#endif
       // vfo_update();
       g_idle_add(ext_vfo_update, NULL);
       break;
@@ -966,17 +959,6 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
           audio_close_input();
         }
       }
-#if defined (__CPYMODE__)
-      if (transmitter->local_microphone) {
-        mode_settings[mode].local_microphone = 1;
-      } else {
-        mode_settings[mode].local_microphone = 0;
-      }
-      t_print("DL1BZ: mode: %d transmitter->local_microphone: %d mode_settings[%d].local_microphone %d\n",
-              mode, transmitter->local_microphone, mode, mode_settings[mode].local_microphone);
-      copy_mode_settings(mode);
-      g_idle_add(ext_vfo_update, NULL);
-#endif
       update_slider_local_mic_button();
       break;
     case TX_FM_EMP:
@@ -1052,32 +1034,18 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   gboolean flag = GPOINTER_TO_INT(data);
   t_print("%s: Flag: %d\n", __func__, flag);
-#if defined (__CPYMODE__)
-  int _mode = vfo_get_tx_mode();
-#endif
   t_print("local_input_changed_cb: %d %s\n", i, input_devices[i].name);
   if (transmitter->local_microphone) {
     audio_close_input();
   }
   g_mutex_lock(&copy_string_mutex);
   g_strlcpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
-#if defined (__CPYMODE__)
-  g_strlcpy(mode_settings[_mode].microphone_name, input_devices[i].name, sizeof(mode_settings[_mode].microphone_name));
-#endif
   g_mutex_unlock(&copy_string_mutex);
   if (transmitter->local_microphone) {
     if (audio_open_input() < 0) {
       transmitter->local_microphone = 0;
-#if defined (__CPYMODE__)
-      mode_settings[_mode].local_microphone = 0;
-#endif
     }
   }
-#if defined (__CPYMODE__)
-  t_print("%s: mode: %d, mode_settings %s size: %d\n", __func__, _mode, mode_settings[_mode].microphone_name,
-          sizeof(mode_settings[_mode].microphone_name));
-  copy_mode_settings(_mode);
-#endif
   if (n_input_devices > 0) {
     if (flag) {
       update_slider_local_mic_input(i);

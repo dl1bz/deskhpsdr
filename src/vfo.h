@@ -166,12 +166,6 @@ struct _mode_settings {
   double cfc_lvl[11];               // CFC compression at corner frequency
   double cfc_post[11];              // CFC post-EQ gain at corner frequency
 #endif
-#if defined (__CPYMODE__)
-  int local_microphone;
-  gchar microphone_name[512];
-  int puresignal;
-  int use_rx_filter;
-#endif
 };
 
 extern struct _mode_settings mode_settings[];

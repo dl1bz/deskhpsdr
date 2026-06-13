@@ -308,16 +308,9 @@ static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
 
 static void rxtx_filter_cb (GtkToggleButton *btn, gpointer user_data) {
   if (can_transmit) {
-#if defined (__CPYMODE__)
-    int mode = vfo_get_tx_mode();
-#endif
     int v = gtk_toggle_button_get_active (btn) ? 1 : 0;
     transmitter->use_rx_filter = v;
     tx_set_filter (transmitter);    // Filter neu setzen
-#if defined (__CPYMODE__)
-    mode_settings[mode].use_rx_filter = v;
-    copy_mode_settings (mode);
-#endif
     g_idle_add (ext_vfo_update, NULL);
   }
 }
@@ -586,15 +579,8 @@ void filter_menu (GtkWidget *parent) {
     //
     if (m == modeCWU || m == modeCWL) {
       if (can_transmit && transmitter->use_rx_filter) { // sanity check, RX = TX filter edges make no sense in mode CW
-#if defined (__CPYMODE__)
-        int current_tx_mode = vfo_get_tx_mode();
-#endif
         transmitter->use_rx_filter = 0; // switch TX=RX filter edge off
         tx_set_filter (transmitter); // update TX filter settings
-#if defined (__CPYMODE__)
-        mode_settings[current_tx_mode].use_rx_filter = 0;
-        copy_mode_settings (current_tx_mode);
-#endif
         g_idle_add (ext_vfo_update, NULL); // add to VFO
       }
       GtkWidget *cw_peak_b = gtk_check_button_new_with_label ("Enable CW Audio peak filter");
