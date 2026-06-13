@@ -18,6 +18,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | -------------------------------- | ----------------------------------------------- | ---------------- |
 | TCI CAT                        | supported                                     |                |
 | TCI Audio                      | supported                                     |                |
+| TCI I/Q                        | supported                                     |                |
 | PTT external                   | supported via serial RTS/CTS or MIDI          |                |
 | MIDI Control                   | supported                                     |                |
 | Hamlib                         | supported with own included rigctld           |                |
@@ -25,7 +26,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | OpenHPSDR protocol 2           | fully supported                               |                |
 | GPIO                           | ~~limited support~~ removed since V2.7        | deprecated     |
 | Soapy API / Soapy protocol     | ~~rudimentary supported~~ removed since V2.7  | deprecated     |
-| Hermes Lite 2 N2ADR IO board   | supported                                     |                |
+| Hermes Lite 2 N2ADR IO board   | supported in P1                               |                |
 | Use WDSP library ?             | yes, current 1.29                             |                |
 | Pure Signal / Pre-Distortion   | supported                                     |                |
 | Noise Reduction                | NR1 - NR4 available                           |                |
