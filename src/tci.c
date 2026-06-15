@@ -162,6 +162,7 @@ static GMutex tci_mutex;
 static GList *tci_clients = NULL;
 static CLIENT *tci_iq_stream_owner = NULL;
 static CLIENT *tci_digi_offset_owner = NULL;
+static CLIENT *tci_tx_owner = NULL;
 
 static gpointer tci_lws_server (gpointer data);
 static void tci_lws_free_queue (CLIENT *client);
@@ -336,6 +337,7 @@ void tci_send_stop_and_flush(void) {
   tci_iq_stream_sample_rate = 0;
   tci_iq_stream_owner = NULL;
   tci_digi_offset_owner = NULL;
+  tci_tx_owner = NULL;
   g_mutex_unlock (&tci_mutex);
   g_atomic_int_set (&tci_iq_stream_clients, 0);
   lws_cancel_service(tci_lws_context);
@@ -375,6 +377,7 @@ void shutdown_tci (void) {
     tci_iq_stream_sample_rate = 0;
     tci_iq_stream_owner = NULL;
     tci_digi_offset_owner = NULL;
+    tci_tx_owner = NULL;
     g_mutex_unlock (&tci_mutex);
     g_atomic_int_set (&tci_iq_stream_clients, 0);
     lws_cancel_service (tci_lws_context);
@@ -3016,6 +3019,10 @@ static void tci_cmd_trx_count (CLIENT *client, const TCI_CMD *cmd) {
 static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
   int trx = 0;
   int source_tci;
+  int state;
+  int allow;
+  int owner_seq;
+  int tx_active;
   if (cmd->argc >= 1) {
     trx = tci_int (cmd->argv[0], -1);
     if (trx != 0) {
@@ -3024,7 +3031,46 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
   }
   source_tci = (cmd->argc >= 3 && cmd->argv[2] != NULL && !g_ascii_strcasecmp (cmd->argv[2], "tci"));
   if (cmd->argc >= 2) {
-    if (tci_bool (cmd->argv[1])) {
+    state = tci_bool (cmd->argv[1]) ? 1 : 0;
+    allow = 0;
+    owner_seq = -1;
+    tx_active = radio_is_transmitting();
+    g_mutex_lock (&tci_mutex);
+    if (state) {
+      if (tci_tx_owner == client) {
+        allow = 1;
+      } else if (tci_tx_owner == NULL && !tx_active) {
+        tci_tx_owner = client;
+        allow = 1;
+      } else if (tci_tx_owner != NULL) {
+        owner_seq = tci_tx_owner->seq;
+      }
+    } else {
+      if (tci_tx_owner == client) {
+        tci_tx_owner = NULL;
+        allow = 1;
+      } else if (tci_tx_owner == NULL && !tx_active) {
+        allow = 1;
+      } else if (tci_tx_owner != NULL) {
+        owner_seq = tci_tx_owner->seq;
+      }
+    }
+    g_mutex_unlock (&tci_mutex);
+    if (!allow) {
+      if (owner_seq >= 0) {
+        t_print ("TCI%d %s request ignored, TX owned by TCI%d\n",
+                 client->seq,
+                 state ? "TX" : "RX",
+                 owner_seq);
+      } else {
+        t_print ("TCI%d %s request ignored, TX controlled locally\n",
+                 client->seq,
+                 state ? "TX" : "RX");
+      }
+      tci_send_mox (client);
+      return;
+    }
+    if (state) {
       if (source_tci) {
         tci_audio_tx_reset();
         tci_audio_tx_set_active (1);
@@ -4564,6 +4610,11 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
     }
     if (client == tci_digi_offset_owner) {
       tci_digi_offset_owner = NULL;
+    }
+    if (client == tci_tx_owner) {
+      tci_tx_owner = NULL;
+      g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
+      t_print ("TCI%d TX owner disconnected, forcing RX\n", client->seq);
     }
     tci_clients = g_list_remove (tci_clients, client);
     g_mutex_unlock (&tci_mutex);
