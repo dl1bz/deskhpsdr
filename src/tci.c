@@ -3124,6 +3124,11 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
 
 static void tci_cmd_tune (CLIENT *client, const TCI_CMD *cmd) {
   int trx = 0;
+  int state;
+  int allow;
+  int owner_seq;
+  int tx_active;
+  int tune_active;
   if (cmd->argc >= 1) {
     trx = tci_int (cmd->argv[0], -1);
     if (trx != 0) {
@@ -3131,7 +3136,47 @@ static void tci_cmd_tune (CLIENT *client, const TCI_CMD *cmd) {
     }
   }
   if (cmd->argc >= 2) {
-    int state = tci_bool (cmd->argv[1]);
+    state = tci_bool (cmd->argv[1]) ? 1 : 0;
+    allow = 0;
+    owner_seq = -1;
+    tx_active = radio_is_transmitting();
+    tune_active = tune ? 1 : 0;
+    g_mutex_lock (&tci_mutex);
+    if (state) {
+      if (tci_tx_owner == client) {
+        allow = 1;
+      } else if (tci_tx_owner == NULL && !tx_active && !tune_active) {
+        tci_tx_owner = client;
+        allow = 1;
+      } else if (tci_tx_owner != NULL) {
+        owner_seq = tci_tx_owner->seq;
+      }
+    } else {
+      if (tci_tx_owner == client) {
+        tci_tx_owner = NULL;
+        allow = 1;
+      } else if (tci_tx_owner == NULL && !tx_active && !tune_active) {
+        allow = 1;
+      } else if (tci_tx_owner != NULL) {
+        owner_seq = tci_tx_owner->seq;
+      }
+    }
+    g_mutex_unlock (&tci_mutex);
+    if (!allow) {
+      if (owner_seq >= 0) {
+        t_print ("TCI%d TUNE request=%d ignored, TX owned by TCI%d\n",
+                 client->seq,
+                 state,
+                 owner_seq);
+      } else {
+        t_print ("TCI%d TUNE request=%d ignored, TX controlled locally\n",
+                 client->seq,
+                 state);
+      }
+      tci_send_tune (client);
+      tci_send_mox (client);
+      return;
+    }
     g_idle_add (ext_tune_update, GINT_TO_POINTER (state));
     t_print ("TCI%d TUNE request=%d\n", client->seq, state);
   } else {
@@ -4613,6 +4658,7 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
     }
     if (client == tci_tx_owner) {
       tci_tx_owner = NULL;
+      g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
       t_print ("TCI%d TX owner disconnected, forcing RX\n", client->seq);
     }
