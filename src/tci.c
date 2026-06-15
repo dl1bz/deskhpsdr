@@ -164,6 +164,33 @@ static CLIENT *tci_iq_stream_owner = NULL;
 static CLIENT *tci_digi_offset_owner = NULL;
 static CLIENT *tci_tx_owner = NULL;
 
+typedef enum {
+  TCI_SET_LOCK_RIT,
+  TCI_SET_LOCK_XIT,
+  TCI_SET_LOCK_LOCK,
+  TCI_SET_LOCK_SPLIT,
+  TCI_SET_LOCK_MUTE,
+  TCI_SET_LOCK_RX_MUTE,
+  TCI_SET_LOCK_RX_DSP,
+  TCI_SET_LOCK_VOLUME,
+  TCI_SET_LOCK_AGC,
+  TCI_SET_LOCK_SQL,
+  TCI_SET_LOCK_MODE,
+  TCI_SET_LOCK_VFO,
+  TCI_SET_LOCK_DRIVE,
+  TCI_SET_LOCK_FILTER,
+  TCI_SET_LOCK_CW_SPEED,
+  TCI_SET_LOCK_IQ_RATE,
+  TCI_SET_LOCK_COUNT
+} TCI_SET_LOCK_ID;
+
+typedef struct {
+  CLIENT *owner;
+  gint64 until_us;
+} TCI_SET_LOCK;
+
+static TCI_SET_LOCK tci_set_locks[TCI_SET_LOCK_COUNT];
+
 static gpointer tci_lws_server (gpointer data);
 static void tci_lws_free_queue (CLIENT *client);
 static int tci_has_audio_monitor_source (void);
@@ -177,6 +204,9 @@ static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t
 static void tci_send_iq_samplerate (CLIENT *client);
 static void tci_send_audio_samplerate (CLIENT *client);
 static void tci_send_audio_stream_samples (CLIENT *client);
+static int tci_set_lock_allowed(CLIENT *client, TCI_SET_LOCK_ID lock_id);
+static void tci_set_locks_clear_client(CLIENT *client);
+static void tci_set_locks_clear_all(void);
 
 typedef struct {
   char *cmd;
@@ -338,6 +368,7 @@ void tci_send_stop_and_flush(void) {
   tci_iq_stream_owner = NULL;
   tci_digi_offset_owner = NULL;
   tci_tx_owner = NULL;
+  tci_set_locks_clear_all();
   g_mutex_unlock (&tci_mutex);
   g_atomic_int_set (&tci_iq_stream_clients, 0);
   lws_cancel_service(tci_lws_context);
@@ -378,6 +409,7 @@ void shutdown_tci (void) {
     tci_iq_stream_owner = NULL;
     tci_digi_offset_owner = NULL;
     tci_tx_owner = NULL;
+    tci_set_locks_clear_all();
     g_mutex_unlock (&tci_mutex);
     g_atomic_int_set (&tci_iq_stream_clients, 0);
     lws_cancel_service (tci_lws_context);
@@ -1422,6 +1454,48 @@ static int tci_digi_offset_claim(CLIENT *client) {
   allowed = (tci_digi_offset_owner == client);
   g_mutex_unlock(&tci_mutex);
   return allowed;
+}
+
+static int tci_set_lock_allowed(CLIENT *client, TCI_SET_LOCK_ID lock_id) {
+  gint64 now;
+  int allowed = 0;
+  if (client == NULL || lock_id < 0 || lock_id >= TCI_SET_LOCK_COUNT) {
+    return 0;
+  }
+  now = g_get_monotonic_time();
+  g_mutex_lock(&tci_mutex);
+  if (tci_set_locks[lock_id].owner == NULL || now >= tci_set_locks[lock_id].until_us) {
+    tci_set_locks[lock_id].owner = client;
+    tci_set_locks[lock_id].until_us = now + 200000;
+    allowed = 1;
+  } else if (tci_set_locks[lock_id].owner == client) {
+    tci_set_locks[lock_id].until_us = now + 200000;
+    allowed = 1;
+  }
+  g_mutex_unlock(&tci_mutex);
+  if (!allowed) {
+    t_print("TCI%d set command locked for 200 ms by another client\n", client->seq);
+  }
+  return allowed;
+}
+
+static void tci_set_locks_clear_client(CLIENT *client) {
+  if (client == NULL) {
+    return;
+  }
+  for (int i = 0; i < TCI_SET_LOCK_COUNT; i++) {
+    if (tci_set_locks[i].owner == client) {
+      tci_set_locks[i].owner = NULL;
+      tci_set_locks[i].until_us = 0;
+    }
+  }
+}
+
+static void tci_set_locks_clear_all(void) {
+  for (int i = 0; i < TCI_SET_LOCK_COUNT; i++) {
+    tci_set_locks[i].owner = NULL;
+    tci_set_locks[i].until_us = 0;
+  }
 }
 
 static void tci_broadcast_digu_offset(void) {
@@ -2771,6 +2845,10 @@ static void tci_cmd_rit_enable (CLIENT *client, const TCI_CMD *cmd) {
   receiver_id = tci_int (cmd->argv[0], -1);
   if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RIT)) {
+      tci_send_rit_enable(client, receiver_id);
+      return;
+    }
     TCI_RIT_ENABLE_UPDATE *ru = g_new (TCI_RIT_ENABLE_UPDATE, 1);
     ru->receiver_id = receiver_id;
     ru->state = tci_bool (cmd->argv[1]) ? 1 : 0;
@@ -2786,6 +2864,10 @@ static void tci_cmd_xit_enable (CLIENT *client, const TCI_CMD *cmd) {
   trx = tci_int (cmd->argv[0], -1);
   if (trx != 0) { return; }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_XIT)) {
+      tci_send_xit_enable(client);
+      return;
+    }
     int state = tci_bool (cmd->argv[1]) ? 1 : 0;
     g_idle_add (tci_apply_xit_enable_update, GINT_TO_POINTER (state));
   } else {
@@ -2858,6 +2940,10 @@ static void tci_cmd_rit_offset (CLIENT *client, const TCI_CMD *cmd) {
   receiver_id = tci_int (cmd->argv[0], -1);
   if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RIT)) {
+      tci_send_rit_offset(client, receiver_id);
+      return;
+    }
     TCI_RIT_OFFSET_UPDATE *ru = g_new (TCI_RIT_OFFSET_UPDATE, 1);
     ru->receiver_id = receiver_id;
     ru->value = tci_ll (cmd->argv[1], 0);
@@ -2874,6 +2960,10 @@ static void tci_cmd_xit_offset (CLIENT *client, const TCI_CMD *cmd) {
   trx = tci_int (cmd->argv[0], -1);
   if (trx != 0) { return; }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_XIT)) {
+      tci_send_xit_offset(client);
+      return;
+    }
     long long value = tci_ll (cmd->argv[1], 0);
     tci_send_xit_offset_value (client, value);
     g_idle_add (tci_apply_xit_offset_update, GINT_TO_POINTER ((int) value));
@@ -2962,6 +3052,10 @@ static void tci_cmd_lock_common (CLIENT *client, const TCI_CMD *cmd, int vfo_loc
   if (receiver_id >= receivers) { return; }
   if (!vfo_lock) {
     if (cmd->argc >= 2) {
+      if (!tci_set_lock_allowed(client, TCI_SET_LOCK_LOCK)) {
+        tci_send_lock(client, receiver_id);
+        return;
+      }
       tci_set_lock_state (client, receiver_id, tci_bool (cmd->argv[1]), 0, -1);
     } else {
       tci_send_lock (client, receiver_id);
@@ -2969,11 +3063,19 @@ static void tci_cmd_lock_common (CLIENT *client, const TCI_CMD *cmd, int vfo_loc
     return;
   }
   if (cmd->argc >= 3) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_LOCK)) {
+      tci_send_vfo_locks(client, receiver_id);
+      return;
+    }
     channel_id = tci_int (cmd->argv[1], -1);
     if (channel_id < 0 || channel_id > 1) { return; }
     tci_set_lock_state (client, receiver_id, tci_bool (cmd->argv[2]), 1, channel_id);
   } else if (cmd->argc == 2) {
     if (tci_is_bool_arg (cmd->argv[1])) {
+      if (!tci_set_lock_allowed(client, TCI_SET_LOCK_LOCK)) {
+        tci_send_vfo_locks(client, receiver_id);
+        return;
+      }
       tci_set_lock_state (client, receiver_id, tci_bool (cmd->argv[1]), 1, -1);
     } else {
       channel_id = tci_int (cmd->argv[1], -1);
@@ -3004,6 +3106,10 @@ static void tci_cmd_split_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_SPLIT)) {
+      tci_send_split(client);
+      return;
+    }
     int state = tci_bool (cmd->argv[1]) ? 1 : 0;
     g_idle_add (tci_apply_split_update, GINT_TO_POINTER (state));
   } else {
@@ -3186,6 +3292,10 @@ static void tci_cmd_tune (CLIENT *client, const TCI_CMD *cmd) {
 
 static void tci_cmd_mute (CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_MUTE)) {
+      tci_send_mute(client);
+      return;
+    }
     int state = tci_bool (cmd->argv[0]) ? 1 : 0;
     g_idle_add (tci_apply_mute_update, GINT_TO_POINTER (state));
     tci_broadcast_mute_state (state);
@@ -3200,6 +3310,10 @@ static void tci_cmd_rx_mute (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RX_MUTE)) {
+      tci_send_rx_mute(client, receiver_id);
+      return;
+    }
     int state = tci_bool (cmd->argv[1]) ? 1 : 0;
     TCI_RX_MUTE_UPDATE *mu = g_new (TCI_RX_MUTE_UPDATE, 1);
     mu->receiver_id = receiver_id;
@@ -3217,6 +3331,10 @@ static void tci_cmd_rx_apf_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RX_DSP)) {
+      tci_send_rx_apf_enable(client, receiver_id);
+      return;
+    }
     TCI_RX_APF_ENABLE_UPDATE *au = g_new(TCI_RX_APF_ENABLE_UPDATE, 1);
     au->receiver_id = receiver_id;
     au->state = tci_bool(cmd->argv[1]) ? 1 : 0;
@@ -3235,6 +3353,10 @@ static void tci_cmd_rx_nb_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RX_DSP)) {
+      tci_send_rx_nb_enable(client, receiver_id);
+      return;
+    }
     TCI_RX_NB_ENABLE_UPDATE *nu = g_new(TCI_RX_NB_ENABLE_UPDATE, 1);
     nu->receiver_id = receiver_id;
     nu->state = tci_bool(cmd->argv[1]) ? 1 : 0;
@@ -3253,6 +3375,10 @@ static void tci_cmd_rx_anf_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RX_DSP)) {
+      tci_send_rx_anf_enable(client, receiver_id);
+      return;
+    }
     TCI_RX_ANF_ENABLE_UPDATE *au = g_new(TCI_RX_ANF_ENABLE_UPDATE, 1);
     au->receiver_id = receiver_id;
     au->state = tci_bool(cmd->argv[1]) ? 1 : 0;
@@ -3272,6 +3398,10 @@ static void tci_cmd_rx_nf_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RX_DSP)) {
+      tci_send_rx_nf_enable(client, receiver_id);
+      return;
+    }
     TCI_RX_NF_ENABLE_UPDATE *nu = g_new(TCI_RX_NF_ENABLE_UPDATE, 1);
     nu->receiver_id = receiver_id;
     nu->state = tci_bool(cmd->argv[1]) ? 1 : 0;
@@ -3288,6 +3418,10 @@ static void tci_cmd_rx_bin_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RX_DSP)) {
+      tci_send_rx_bin_enable(client, receiver_id);
+      return;
+    }
     TCI_RX_BIN_ENABLE_UPDATE *bu = g_new(TCI_RX_BIN_ENABLE_UPDATE, 1);
     bu->receiver_id = receiver_id;
     bu->state = tci_bool(cmd->argv[1]) ? 1 : 0;
@@ -3307,6 +3441,10 @@ static void tci_cmd_rx_nr_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_RX_DSP)) {
+      tci_send_rx_nr_enable(client, receiver_id);
+      return;
+    }
     TCI_RX_NR_ENABLE_UPDATE *nu = g_new(TCI_RX_NR_ENABLE_UPDATE, 1);
     nu->receiver_id = receiver_id;
     nu->state = tci_bool(cmd->argv[1]) ? 1 : 0;
@@ -3321,6 +3459,10 @@ static void tci_cmd_rx_nr_enable (CLIENT *client, const TCI_CMD *cmd) {
 
 static void tci_cmd_volume (CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_VOLUME)) {
+      tci_send_volume(client);
+      return;
+    }
     double value = tci_clamp_volume(tci_double(cmd->argv[0], 0.0));
     if (active_receiver != NULL && active_receiver->id >= 0 && active_receiver->id < receivers && active_receiver->id < 2) {
       EXT_AF_GAIN_UPDATE *ag = g_new (EXT_AF_GAIN_UPDATE, 1);
@@ -3344,6 +3486,10 @@ static void tci_cmd_rx_volume (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 3) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_VOLUME)) {
+      tci_send_rx_volume(client, receiver_id, channel);
+      return;
+    }
     double value = tci_clamp_volume(tci_double(cmd->argv[2], 0.0));
     EXT_AF_GAIN_UPDATE *ag = g_new (EXT_AF_GAIN_UPDATE, 1);
     ag->receiver_id = receiver_id;
@@ -3362,6 +3508,10 @@ static void tci_cmd_agc_gain (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_AGC)) {
+      tci_send_agc_gain(client, receiver_id);
+      return;
+    }
     double value = tci_clamp_agc_gain(tci_double(cmd->argv[1], receiver[receiver_id]->agc_gain));
     EXT_AGC_GAIN_UPDATE *ag = g_new (EXT_AGC_GAIN_UPDATE, 1);
     ag->receiver_id = receiver_id;
@@ -3379,6 +3529,10 @@ static void tci_cmd_agc_mode (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_AGC)) {
+      tci_send_agc_mode(client, receiver_id);
+      return;
+    }
     int agc = tci_parse_agc_mode(cmd->argv[1]);
     if (agc < 0 || agc >= AGC_LAST) {
       return;
@@ -3399,6 +3553,10 @@ static void tci_cmd_sql_enable (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_SQL)) {
+      tci_send_sql_enable(client, receiver_id);
+      return;
+    }
     TCI_SQL_ENABLE_UPDATE *su = g_new(TCI_SQL_ENABLE_UPDATE, 1);
     su->receiver_id = receiver_id;
     su->state = tci_bool(cmd->argv[1]) ? 1 : 0;
@@ -3415,6 +3573,10 @@ static void tci_cmd_sql_level (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_SQL)) {
+      tci_send_sql_level(client, receiver_id);
+      return;
+    }
     TCI_SQL_LEVEL_UPDATE *su = g_new(TCI_SQL_LEVEL_UPDATE, 1);
     su->receiver_id = receiver_id;
     su->level_db = tci_clamp_sql_level(tci_double(cmd->argv[1], tci_sql_db_from_slider(receiver[receiver_id]->squelch)));
@@ -3624,6 +3786,10 @@ static void tci_cmd_iq_samplerate(CLIENT *client, const TCI_CMD *cmd) {
   if (!tci_iq_sample_rate_valid (requested)) {
     return;
   }
+  if (!tci_set_lock_allowed(client, TCI_SET_LOCK_IQ_RATE)) {
+    tci_send_iq_samplerate(client);
+    return;
+  }
   samplerate = tci_iq_effective_sample_rate (client, requested);
   if (g_atomic_int_get (&tci_iq_stream_clients) == 0 &&
       (active_receiver == NULL || active_receiver->sample_rate != samplerate)) {
@@ -3681,6 +3847,10 @@ static void tci_cmd_audio_stop (CLIENT *client, const TCI_CMD *cmd) {
 static void tci_cmd_modulation (CLIENT *client, const TCI_CMD *cmd) {
   int VfoNr = tci_int (cmd->argv[0], 0);
   if (cmd->argc >= 2) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_MODE)) {
+      tci_send_mode(client, VfoNr);
+      return;
+    }
     tci_set_mode (client, VfoNr, cmd->argv[1]);
   } else {
     tci_send_mode (client, VfoNr);
@@ -3691,6 +3861,10 @@ static void tci_cmd_vfo (CLIENT *client, const TCI_CMD *cmd) {
   int VfoNr = tci_int (cmd->argv[0], 0);
   int Ch = tci_int (cmd->argv[1], 0);
   if (cmd->argc >= 3) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_VFO)) {
+      tci_send_vfo(client, VfoNr, Ch);
+      return;
+    }
     tci_set_vfo (client, VfoNr, Ch, tci_ll (cmd->argv[2], 0));
   } else {
     tci_send_vfo (client, VfoNr, Ch);
@@ -3711,6 +3885,10 @@ static void tci_cmd_drive (CLIENT *client, const TCI_CMD *cmd) {
       return;
     }
     if (cmd->argc >= 2) {
+      if (!tci_set_lock_allowed(client, TCI_SET_LOCK_DRIVE)) {
+        tci_send_drive(client);
+        return;
+      }
       value = tci_int (cmd->argv[1], 0);
       if (value < 0) {
         value = 0;
@@ -3750,6 +3928,10 @@ static void tci_cmd_tune_drive (CLIENT *client, const TCI_CMD *cmd) {
       return;
     }
     if (cmd->argc >= 2) {
+      if (!tci_set_lock_allowed(client, TCI_SET_LOCK_DRIVE)) {
+        tci_send_tune_drive(client);
+        return;
+      }
       value = tci_int (cmd->argv[1], 0);
       if (value < 0) {
         value = 0;
@@ -3790,6 +3972,10 @@ static void tci_cmd_rx_filter_band (CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   if (cmd->argc >= 3) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_FILTER)) {
+      tci_send_rx_filter_band(client, receiver_id);
+      return;
+    }
     EXT_RX_FILTER_UPDATE *fu;
     int low = tci_int (cmd->argv[1], 0);
     int high = tci_int (cmd->argv[2], 0);
@@ -3987,6 +4173,10 @@ static void tci_cmd_cw_msg(CLIENT *client, const TCI_CMD *cmd) {
 
 static void tci_cmd_cw_macros_speed (CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_CW_SPEED)) {
+      tci_send_macros_cwspeed(client);
+      return;
+    }
     cw_keyer_speed = tci_clamp_int(tci_int(cmd->argv[0], cw_keyer_speed), 1, 100);
   }
   tci_send_macros_cwspeed (client);
@@ -3994,6 +4184,10 @@ static void tci_cmd_cw_macros_speed (CLIENT *client, const TCI_CMD *cmd) {
 
 static void tci_cmd_cw_keyer_speed (CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_CW_SPEED)) {
+      tci_send_keyer_cwspeed(client);
+      return;
+    }
     cw_keyer_speed = tci_clamp_int(tci_int(cmd->argv[0], cw_keyer_speed), 1, 100);
   }
   tci_send_keyer_cwspeed (client);
@@ -4001,6 +4195,10 @@ static void tci_cmd_cw_keyer_speed (CLIENT *client, const TCI_CMD *cmd) {
 
 static void tci_cmd_cw_macros_delay (CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1 && cmd->argv[0] != NULL) {
+    if (!tci_set_lock_allowed(client, TCI_SET_LOCK_CW_SPEED)) {
+      tci_send_cw_macros_delay(client);
+      return;
+    }
     tci_cw_macros_delay_ms = tci_clamp_int(tci_int(cmd->argv[0], tci_cw_macros_delay_ms), 0, 5000);
     cw_engine_set_start_delay(tci_cw_macros_delay_ms);
   }
@@ -4013,6 +4211,10 @@ static void tci_cmd_cw_macros_speed_up(CLIENT *client, const TCI_CMD *cmd) {
     step = tci_int(cmd->argv[0], 1);
   }
   if (step < 0) { step = -step; }
+  if (!tci_set_lock_allowed(client, TCI_SET_LOCK_CW_SPEED)) {
+    tci_send_macros_cwspeed(client);
+    return;
+  }
   cw_keyer_speed = tci_clamp_int(cw_keyer_speed + step, 1, 100);
   tci_send_macros_cwspeed(client);
 }
@@ -4023,6 +4225,10 @@ static void tci_cmd_cw_macros_speed_down(CLIENT *client, const TCI_CMD *cmd) {
     step = tci_int(cmd->argv[0], 1);
   }
   if (step < 0) { step = -step; }
+  if (!tci_set_lock_allowed(client, TCI_SET_LOCK_CW_SPEED)) {
+    tci_send_macros_cwspeed(client);
+    return;
+  }
   cw_keyer_speed = tci_clamp_int(cw_keyer_speed - step, 1, 100);
   tci_send_macros_cwspeed(client);
 }
@@ -4662,6 +4868,7 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
       g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
       t_print ("TCI%d TX owner disconnected, forcing RX\n", client->seq);
     }
+    tci_set_locks_clear_client(client);
     tci_clients = g_list_remove (tci_clients, client);
     g_mutex_unlock (&tci_mutex);
     tci_update_rx_audio_global();
