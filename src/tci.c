@@ -163,6 +163,10 @@ static GList *tci_clients = NULL;
 static CLIENT *tci_iq_stream_owner = NULL;
 static CLIENT *tci_digi_offset_owner = NULL;
 static CLIENT *tci_tx_owner = NULL;
+static CLIENT *tci_set_owner = NULL;
+static gint64 tci_set_owner_until_us = 0;
+
+#define TCI_SET_COMMAND_LOCK_US 200000
 
 static gpointer tci_lws_server (gpointer data);
 static void tci_lws_free_queue (CLIENT *client);
@@ -338,6 +342,8 @@ void tci_send_stop_and_flush(void) {
   tci_iq_stream_owner = NULL;
   tci_digi_offset_owner = NULL;
   tci_tx_owner = NULL;
+  tci_set_owner = NULL;
+  tci_set_owner_until_us = 0;
   g_mutex_unlock (&tci_mutex);
   g_atomic_int_set (&tci_iq_stream_clients, 0);
   lws_cancel_service(tci_lws_context);
@@ -378,6 +384,8 @@ void shutdown_tci (void) {
     tci_iq_stream_owner = NULL;
     tci_digi_offset_owner = NULL;
     tci_tx_owner = NULL;
+    tci_set_owner = NULL;
+    tci_set_owner_until_us = 0;
     g_mutex_unlock (&tci_mutex);
     g_atomic_int_set (&tci_iq_stream_clients, 0);
     lws_cancel_service (tci_lws_context);
@@ -4147,6 +4155,61 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { NULL,                0,  0, NULL }
 };
 
+
+static int tci_set_command_locked (const TCI_CMD *cmd) {
+  if (cmd == NULL || cmd->cmd == NULL) { return 0; }
+  if (!strcmp (cmd->cmd, "split_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "lock")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "vfo_lock")) {
+    return cmd->argc >= 3 || (cmd->argc == 2 && tci_is_bool_arg (cmd->argv[1]));
+  }
+  if (!strcmp (cmd->cmd, "sql_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "sql_level")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rx_anf_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rx_apf_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rx_nb_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rx_nf_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rx_bin_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rx_nr_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rit_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "xit_enable")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rit_offset")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "xit_offset")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "digl_offset")) { return cmd->argc >= 1; }
+  if (!strcmp (cmd->cmd, "digu_offset")) { return cmd->argc >= 1; }
+  if (!strcmp (cmd->cmd, "mute")) { return cmd->argc >= 1; }
+  if (!strcmp (cmd->cmd, "rx_mute")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "volume")) { return cmd->argc >= 1; }
+  if (!strcmp (cmd->cmd, "rx_volume")) { return cmd->argc >= 3; }
+  if (!strcmp (cmd->cmd, "agc_gain")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "agc_mode")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "modulation")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "vfo")) { return cmd->argc >= 3; }
+  if (!strcmp (cmd->cmd, "drive")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "tune_drive")) { return cmd->argc >= 2; }
+  if (!strcmp (cmd->cmd, "rx_filter_band")) { return cmd->argc >= 3; }
+  if (!strcmp (cmd->cmd, "iq_samplerate")) { return cmd->argc >= 1; }
+  return 0;
+}
+
+static int tci_set_command_allowed (CLIENT *client) {
+  gint64 now;
+  int allowed = 0;
+  if (client == NULL) { return 0; }
+  now = g_get_monotonic_time();
+  g_mutex_lock (&tci_mutex);
+  if (tci_set_owner == NULL || now >= tci_set_owner_until_us) {
+    tci_set_owner = client;
+    tci_set_owner_until_us = now + TCI_SET_COMMAND_LOCK_US;
+    allowed = 1;
+  } else if (tci_set_owner == client) {
+    tci_set_owner_until_us = now + TCI_SET_COMMAND_LOCK_US;
+    allowed = 1;
+  }
+  g_mutex_unlock (&tci_mutex);
+  return allowed;
+}
+
 static void tci_handle_text (CLIENT *client, char* msg) {
   TCI_CMD cmd;
   if (tci_parse_text (msg, &cmd) < 0 || cmd.cmd == NULL) { return; }
@@ -4170,6 +4233,12 @@ static void tci_handle_text (CLIENT *client, char* msg) {
     }
     if (d->max_args >= 0 && cmd.argc > d->max_args) {
       t_print ("TCI%d %s: too many args (%d > %d)\n", client->seq, d->name, cmd.argc, d->max_args);
+      return;
+    }
+    if (tci_set_command_locked (&cmd) && !tci_set_command_allowed (client)) {
+      if (rigctl_debug) {
+        t_print ("TCI%d %s: set command locked by another client\n", client->seq, d->name);
+      }
       return;
     }
     d->handler (client, &cmd);
@@ -4661,6 +4730,10 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
       g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
       t_print ("TCI%d TX owner disconnected, forcing RX\n", client->seq);
+    }
+    if (client == tci_set_owner) {
+      tci_set_owner = NULL;
+      tci_set_owner_until_us = 0;
     }
     tci_clients = g_list_remove (tci_clients, client);
     g_mutex_unlock (&tci_mutex);
