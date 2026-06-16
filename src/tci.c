@@ -165,6 +165,14 @@ static CLIENT *tci_digi_offset_owner = NULL;
 static CLIENT *tci_tx_owner = NULL;
 
 typedef enum {
+  TCI_TX_OWNER_NONE = 0,
+  TCI_TX_OWNER_MOX,
+  TCI_TX_OWNER_TUNE
+} TCI_TX_OWNER_MODE;
+
+static TCI_TX_OWNER_MODE tci_tx_owner_mode = TCI_TX_OWNER_NONE;
+
+typedef enum {
   TCI_SET_LOCK_RIT,
   TCI_SET_LOCK_XIT,
   TCI_SET_LOCK_LOCK,
@@ -207,6 +215,8 @@ static void tci_send_audio_stream_samples (CLIENT *client);
 static int tci_set_lock_allowed(CLIENT *client, TCI_SET_LOCK_ID lock_id);
 static void tci_set_locks_clear_client(CLIENT *client);
 static void tci_set_locks_clear_all(void);
+static void tci_tx_client_cleanup_tx_audio(CLIENT *client);
+static void tci_tx_owner_sync_local_state(void);
 
 typedef struct {
   char *cmd;
@@ -368,6 +378,7 @@ void tci_send_stop_and_flush(void) {
   tci_iq_stream_owner = NULL;
   tci_digi_offset_owner = NULL;
   tci_tx_owner = NULL;
+  tci_tx_owner_mode = TCI_TX_OWNER_NONE;
   tci_set_locks_clear_all();
   g_mutex_unlock (&tci_mutex);
   g_atomic_int_set (&tci_iq_stream_clients, 0);
@@ -409,6 +420,7 @@ void shutdown_tci (void) {
     tci_iq_stream_owner = NULL;
     tci_digi_offset_owner = NULL;
     tci_tx_owner = NULL;
+    tci_tx_owner_mode = TCI_TX_OWNER_NONE;
     tci_set_locks_clear_all();
     g_mutex_unlock (&tci_mutex);
     g_atomic_int_set (&tci_iq_stream_clients, 0);
@@ -1479,6 +1491,28 @@ static int tci_set_lock_allowed(CLIENT *client, TCI_SET_LOCK_ID lock_id) {
   return allowed;
 }
 
+static void tci_tx_client_cleanup_tx_audio(CLIENT *client) {
+  if (client == NULL) {
+    return;
+  }
+  g_mutex_lock(&tci_mutex);
+  client->tx_audio_enabled = 0;
+  client->tx_chrono_next_us = 0;
+  client->tx_chrono_tick = 0;
+  client->tx_chrono_queue_count = 0;
+  client->tx_audio_rx_count = 0;
+  g_mutex_unlock(&tci_mutex);
+  tci_audio_tx_set_active(0);
+  tci_audio_tx_reset();
+  tci_audio_destroy_tx_resampler(&client->tx_audio_resampler_24_to_48);
+#ifdef PORTAUDIO
+  if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
+    audio_close_tci_monitor();
+  }
+#endif
+  tci_lws_binary_reset(client);
+}
+
 static void tci_set_locks_clear_client(CLIENT *client) {
   if (client == NULL) {
     return;
@@ -1495,6 +1529,35 @@ static void tci_set_locks_clear_all(void) {
   for (int i = 0; i < TCI_SET_LOCK_COUNT; i++) {
     tci_set_locks[i].owner = NULL;
     tci_set_locks[i].until_us = 0;
+  }
+}
+
+static void tci_tx_owner_sync_local_state(void) {
+  CLIENT *owner = NULL;
+  TCI_TX_OWNER_MODE owner_mode = TCI_TX_OWNER_NONE;
+  int clear_owner = 0;
+  g_mutex_lock(&tci_mutex);
+  if (tci_tx_owner != NULL) {
+    if (tci_tx_owner_mode == TCI_TX_OWNER_MOX && !radio_is_transmitting()) {
+      clear_owner = 1;
+    } else if (tci_tx_owner_mode == TCI_TX_OWNER_TUNE && !tune) {
+      clear_owner = 1;
+    }
+    if (clear_owner) {
+      owner = tci_tx_owner;
+      owner_mode = tci_tx_owner_mode;
+      tci_tx_owner = NULL;
+      tci_tx_owner_mode = TCI_TX_OWNER_NONE;
+    }
+  }
+  g_mutex_unlock(&tci_mutex);
+  if (clear_owner && owner != NULL) {
+    if (owner_mode == TCI_TX_OWNER_MOX) {
+      tci_tx_client_cleanup_tx_audio(owner);
+    }
+    t_print("TCI%d %s owner released by local control\n",
+            owner->seq,
+            owner_mode == TCI_TX_OWNER_TUNE ? "TUNE" : "TX");
   }
 }
 
@@ -3129,6 +3192,7 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
   int allow;
   int owner_seq;
   int tx_active;
+  int tune_active;
   if (cmd->argc >= 1) {
     trx = tci_int (cmd->argv[0], -1);
     if (trx != 0) {
@@ -3136,24 +3200,28 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
     }
   }
   source_tci = (cmd->argc >= 3 && cmd->argv[2] != NULL && !g_ascii_strcasecmp (cmd->argv[2], "tci"));
+  tci_tx_owner_sync_local_state();
   if (cmd->argc >= 2) {
     state = tci_bool (cmd->argv[1]) ? 1 : 0;
     allow = 0;
     owner_seq = -1;
     tx_active = radio_is_transmitting();
+    tune_active = tune ? 1 : 0;
     g_mutex_lock (&tci_mutex);
     if (state) {
-      if (tci_tx_owner == client) {
+      if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_MOX) {
         allow = 1;
-      } else if (tci_tx_owner == NULL && !tx_active) {
+      } else if (tci_tx_owner == NULL && !tx_active && !tune_active) {
         tci_tx_owner = client;
+        tci_tx_owner_mode = TCI_TX_OWNER_MOX;
         allow = 1;
       } else if (tci_tx_owner != NULL) {
         owner_seq = tci_tx_owner->seq;
       }
     } else {
-      if (tci_tx_owner == client) {
+      if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_MOX) {
         tci_tx_owner = NULL;
+        tci_tx_owner_mode = TCI_TX_OWNER_NONE;
         allow = 1;
       } else if (tci_tx_owner == NULL && !tx_active) {
         allow = 1;
@@ -3206,20 +3274,7 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
       }
       g_idle_add (ext_mox_update, GINT_TO_POINTER (1));
     } else {
-      g_mutex_lock (&tci_mutex);
-      client->tx_audio_enabled = 0;
-      client->tx_chrono_next_us = 0;
-      client->tx_chrono_tick = 0;
-      g_mutex_unlock (&tci_mutex);
-      tci_audio_tx_set_active (0);
-      tci_audio_tx_reset();
-      tci_audio_destroy_tx_resampler (&client->tx_audio_resampler_24_to_48);
-#ifdef PORTAUDIO
-      if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
-        audio_close_tci_monitor();
-      }
-#endif
-      tci_lws_binary_reset (client);
+      tci_tx_client_cleanup_tx_audio(client);
       g_timeout_add (50, ext_mox_update, GINT_TO_POINTER (0));
       t_print ("TCI%d RX request\n", client->seq);
     }
@@ -3241,6 +3296,7 @@ static void tci_cmd_tune (CLIENT *client, const TCI_CMD *cmd) {
       return;
     }
   }
+  tci_tx_owner_sync_local_state();
   if (cmd->argc >= 2) {
     state = tci_bool (cmd->argv[1]) ? 1 : 0;
     allow = 0;
@@ -3249,17 +3305,19 @@ static void tci_cmd_tune (CLIENT *client, const TCI_CMD *cmd) {
     tune_active = tune ? 1 : 0;
     g_mutex_lock (&tci_mutex);
     if (state) {
-      if (tci_tx_owner == client) {
+      if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_TUNE) {
         allow = 1;
       } else if (tci_tx_owner == NULL && !tx_active && !tune_active) {
         tci_tx_owner = client;
+        tci_tx_owner_mode = TCI_TX_OWNER_TUNE;
         allow = 1;
       } else if (tci_tx_owner != NULL) {
         owner_seq = tci_tx_owner->seq;
       }
     } else {
-      if (tci_tx_owner == client) {
+      if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_TUNE) {
         tci_tx_owner = NULL;
+        tci_tx_owner_mode = TCI_TX_OWNER_NONE;
         allow = 1;
       } else if (tci_tx_owner == NULL && !tx_active && !tune_active) {
         allow = 1;
@@ -4282,13 +4340,27 @@ static void tci_cmd_cw_terminal (CLIENT *client, const TCI_CMD *cmd) {
 }
 
 static void tci_cmd_stop (CLIENT *client, const TCI_CMD *cmd) {
+  TCI_TX_OWNER_MODE owner_mode = TCI_TX_OWNER_NONE;
   (void) cmd;
   client->rxsensor = 0;
   client->txsensor = 0;
   tci_send_text (client, "stop;");
   g_mutex_lock (&tci_mutex);
+  if (client == tci_tx_owner) {
+    owner_mode = tci_tx_owner_mode;
+    tci_tx_owner = NULL;
+    tci_tx_owner_mode = TCI_TX_OWNER_NONE;
+  }
   client->running = 0;
   g_mutex_unlock (&tci_mutex);
+  if (owner_mode == TCI_TX_OWNER_TUNE) {
+    g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
+    t_print ("TCI%d TUNE owner stopped, forcing TUNE off\n", client->seq);
+  } else if (owner_mode == TCI_TX_OWNER_MOX) {
+    tci_tx_client_cleanup_tx_audio(client);
+    g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
+    t_print ("TCI%d TX owner stopped, forcing RX\n", client->seq);
+  }
 }
 
 static const TCI_DISPATCH tci_dispatch[] = {
@@ -4849,7 +4921,10 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
       t_print ("LWS CLOSED client=%d\n", client ? client->seq : -1);
     }
     if (client == NULL) { break; }
+    TCI_TX_OWNER_MODE owner_mode = TCI_TX_OWNER_NONE;
+    int cleanup_tx_audio = 0;
     g_mutex_lock (&tci_mutex);
+    cleanup_tx_audio = client->tx_audio_enabled;
     client->tx_audio_enabled = 0;
     client->tx_chrono_next_us = 0;
     client->tx_chrono_tick = 0;
@@ -4863,21 +4938,25 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
       tci_digi_offset_owner = NULL;
     }
     if (client == tci_tx_owner) {
+      owner_mode = tci_tx_owner_mode;
       tci_tx_owner = NULL;
-      g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
-      g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
-      t_print ("TCI%d TX owner disconnected, forcing RX\n", client->seq);
+      tci_tx_owner_mode = TCI_TX_OWNER_NONE;
     }
     tci_set_locks_clear_client(client);
     tci_clients = g_list_remove (tci_clients, client);
     g_mutex_unlock (&tci_mutex);
+    if (owner_mode == TCI_TX_OWNER_TUNE) {
+      g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
+      t_print ("TCI%d TUNE owner disconnected, forcing TUNE off\n", client->seq);
+    } else if (owner_mode == TCI_TX_OWNER_MOX) {
+      g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
+      t_print ("TCI%d TX owner disconnected, forcing RX\n", client->seq);
+    }
+    if (cleanup_tx_audio || owner_mode == TCI_TX_OWNER_MOX) {
+      tci_tx_client_cleanup_tx_audio(client);
+    }
     tci_update_rx_audio_global();
     tci_update_iq_stream_global();
-#ifdef PORTAUDIO
-    if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
-      audio_close_tci_monitor();
-    }
-#endif
     if (client->tci_timer != 0) {
       g_source_remove (client->tci_timer);
       client->tci_timer = 0;
