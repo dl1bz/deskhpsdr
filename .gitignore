@@ -48,3 +48,4 @@ HL2-Tools/hl2_eeprom_discovery
 HL2-Tools/hl2_ip_tool
 Brick-Tools/*.o
 Brick-Tools/p2_discover
+*.zip
