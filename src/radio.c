@@ -2785,6 +2785,7 @@ static void radio_restore_state (void) {
   }
   filterRestoreState();
   bandRestoreState();
+  band_apply_iaru_region();
   memRestoreState();
   vfo_restore_state();
   RestoreActions();

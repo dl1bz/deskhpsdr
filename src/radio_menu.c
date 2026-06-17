@@ -444,6 +444,7 @@ static void iaru_region_cb(GtkWidget *widget, gpointer data) {
   }
   iaru_region = active + 1;
   StartConfigSave();
+  band_apply_iaru_region();
 }
 
 static void rit_cb(GtkWidget *widget, gpointer data) {
@@ -701,7 +702,7 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
   //--------------------------------------------------------------------------------------------------------
-  label = gtk_label_new("IARU Reg:");
+  label = gtk_label_new("IARU Region:");
   gtk_widget_set_name(label, "boldlabel_blue");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 3, row, 1, 1);

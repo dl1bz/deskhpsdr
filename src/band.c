@@ -32,6 +32,7 @@
 #include "radio.h"
 #include "vfo.h"
 #include "message.h"
+#include "main.h"
 
 int xvtr_band = BANDS;
 
@@ -67,18 +68,11 @@ static BANDSTACK_ENTRY bandstack_entries160[] = {
   {1845000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
-#if defined (__REG1__)
-static BANDSTACK_ENTRY bandstack_entries80[] = {
-  {3501000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
-  {3751000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
-};
-#else
 static BANDSTACK_ENTRY bandstack_entries80[] = {
   {3501000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
   {3751000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0},
   {3850000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
 };
-#endif
 
 static BANDSTACK_ENTRY bandstack_entries60_VFO[] = {
   {5352750LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
@@ -126,18 +120,11 @@ static BANDSTACK_ENTRY bandstack_entries60_CA[] = {
   {5405000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
-#if defined (__REG1__)
-static BANDSTACK_ENTRY bandstack_entries40[] = {
-  {7001000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
-  {7152000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
-};
-#else
 static BANDSTACK_ENTRY bandstack_entries40[] = {
   {7001000LL, 0, 0LL, modeCWL, filterF6, 2500, 0, 0},
   {7152000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0},
   {7255000LL, 0, 0LL, modeLSB, filterF5, 2500, 0, 0}
 };
-#endif
 
 static BANDSTACK_ENTRY bandstack_entries30[] = {
   {10120000LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
@@ -258,17 +245,9 @@ static BANDSTACK_ENTRY bandstack_entriesWWV[] = {
 };
 
 static BANDSTACK bandstack160  = {3, 1, bandstack_entries160};
-#if defined (__REG1__)
-static BANDSTACK bandstack80   = {2, 1, bandstack_entries80};
-#else
 static BANDSTACK bandstack80   = {3, 1, bandstack_entries80};
-#endif
 static BANDSTACK bandstack60   = {5, 1, bandstack_entries60_VFO};
-#if defined (__REG1__)
-static BANDSTACK bandstack40   = {2, 1, bandstack_entries40};
-#else
 static BANDSTACK bandstack40   = {3, 1, bandstack_entries40};
-#endif
 static BANDSTACK bandstack30   = {3, 1, bandstack_entries30};
 static BANDSTACK bandstack20   = {4, 1, bandstack_entries20};
 static BANDSTACK bandstack17   = {3, 1, bandstack_entries17};
@@ -359,45 +338,6 @@ static BANDSTACK bandstack_xvtr_8 = {3, 0, bandstack_entries_xvtr_8};
 static BANDSTACK bandstack_xvtr_9 = {3, 0, bandstack_entries_xvtr_9};
 
 // *INDENT-OFF*
-#if defined (__REG1__)
-static BAND bands[BANDS + XVTRS] = {
-  {"136kHz", &bandstack136,     0, 0, 0, 0, 0, 0, 38.8,     135700LL,     137800LL, 0LL, 0LL, 0},
-  {"472kHz", &bandstack472,     0, 0, 0, 0, 0, 0, 38.8,     472000LL,     479000LL, 0LL, 0LL, 0},
-  {"160",    &bandstack160,     0, 0, 0, 0, 0, 0, 38.8,    1810000LL,    2000000LL, 0LL, 0LL, 0},
-  {"80",     &bandstack80,      0, 0, 0, 0, 0, 0, 38.8,    3500000LL,    3800000LL, 0LL, 0LL, 0},
-  {"60",     &bandstack60,      0, 0, 0, 0, 0, 0, 38.8,    5250000LL,    5450000LL, 0LL, 0LL, 0},
-  {"40",     &bandstack40,      0, 0, 0, 0, 0, 0, 38.8,    7000000LL,    7200000LL, 0LL, 0LL, 0},
-  {"30",     &bandstack30,      0, 0, 0, 0, 0, 0, 38.8,   10100000LL,   10150000LL, 0LL, 0LL, 0},
-  {"20",     &bandstack20,      0, 0, 0, 0, 0, 0, 38.8,   14000000LL,   14350000LL, 0LL, 0LL, 0},
-  {"17",     &bandstack17,      0, 0, 0, 0, 0, 0, 38.8,   18068000LL,   18168000LL, 0LL, 0LL, 0},
-  {"15",     &bandstack15,      0, 0, 0, 0, 0, 0, 38.8,   21000000LL,   21450000LL, 0LL, 0LL, 0},
-  {"12",     &bandstack12,      0, 0, 0, 0, 0, 0, 38.8,   24890000LL,   24990000LL, 0LL, 0LL, 0},
-  {"10",     &bandstack10,      0, 0, 0, 0, 0, 0, 38.8,   28000000LL,   29700000LL, 0LL, 0LL, 0},
-  {"6",      &bandstack6,       0, 0, 0, 0, 0, 0, 53.0,   50000000LL,   54000000LL, 0LL, 0LL, 0},
-  {"4",      &bandstack70,      0, 0, 0, 0, 0, 0, 53.0,   70000000LL,   70500000LL, 0LL, 0LL, 0},
-  {"144",    &bandstack144,     0, 0, 0, 0, 0, 0, 53.0,  144000000LL,  146000000LL, 0LL, 0LL, 0},
-  {"220",    &bandstack220,     0, 0, 0, 0, 0, 0, 53.0,  220000000LL,  224980000LL, 0LL, 0LL, 0},
-  {"430",    &bandstack430,     0, 0, 0, 0, 0, 0, 53.0,  430000000LL,  440000000LL, 0LL, 0LL, 0},
-  {"902",    &bandstack902,     0, 0, 0, 0, 0, 0, 53.0,  902000000LL,  928000000LL, 0LL, 0LL, 0},
-  {"1240",   &bandstack1240,    0, 0, 0, 0, 0, 0, 53.0, 1240000000LL, 1300000000LL, 0LL, 0LL, 0},
-  {"2300",   &bandstack2300,    0, 0, 0, 0, 0, 0, 53.0, 2300000000LL, 2450000000LL, 0LL, 0LL, 0},
-  {"3400",   &bandstack3400,    0, 0, 0, 0, 0, 0, 53.0, 3400000000LL, 3410000000LL, 0LL, 0LL, 0},
-  {"AIR",    &bandstackAIR,     0, 0, 0, 0, 0, 0, 53.0,  108000000LL,  137000000LL, 0LL, 0LL, 0},
-  {"WWV",    &bandstackWWV,     0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 0},
-  {"GEN",    &bandstackGEN,     0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 0},
-  // XVTRS
-  {"",       &bandstack_xvtr_0, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_1, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_2, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_3, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_4, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_5, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_6, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_7, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_8, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
-  {"",       &bandstack_xvtr_9, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1}
-};
-#else
 static BAND bands[BANDS + XVTRS] = {
   {"136kHz", &bandstack136,     0, 0, 0, 0, 0, 0, 38.8,     135700LL,     137800LL, 0LL, 0LL, 0},
   {"472kHz", &bandstack472,     0, 0, 0, 0, 0, 0, 38.8,     472000LL,     479000LL, 0LL, 0LL, 0},
@@ -435,7 +375,6 @@ static BAND bands[BANDS + XVTRS] = {
   {"",       &bandstack_xvtr_8, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1},
   {"",       &bandstack_xvtr_9, 0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 1}
 };
-#endif
 // *INDENT-ON*
 
 static CHANNEL band_channels_60m_UK[UK_CHANNEL_ENTRIES] = {
@@ -499,6 +438,68 @@ BANDSETTINGS *band_get_settings(int b) {
     return NULL;
   }
   return &band_settings[b];
+}
+
+static void bandstack_clamp_current(BANDSTACK *bandstack) {
+  if (bandstack == NULL || bandstack->entries <= 0) {
+    return;
+  }
+  if (bandstack->current_entry < 0 || bandstack->current_entry >= bandstack->entries) {
+    bandstack->current_entry = 0;
+  }
+}
+
+void band_apply_iaru_region(void) {
+  switch (iaru_region) {
+  case 1:
+    // IARU Region 1 / Europe
+    bands[band160].frequencyMin = 1810000LL;
+    bands[band160].frequencyMax = 2000000LL;
+    bands[band80].frequencyMin = 3500000LL;
+    bands[band80].frequencyMax = 3800000LL;
+    bands[band40].frequencyMin = 7000000LL;
+    bands[band40].frequencyMax = 7200000LL;
+    bands[band144].frequencyMin = 144000000LL;
+    bands[band144].frequencyMax = 146000000LL;
+    bands[band430].frequencyMin = 430000000LL;
+    bands[band430].frequencyMax = 440000000LL;
+    bandstack80.entries = 2;
+    bandstack40.entries = 2;
+    break;
+  case 2:
+  default:
+    // IARU Region 2 / Americas
+    bands[band160].frequencyMin = 1800000LL;
+    bands[band160].frequencyMax = 2000000LL;
+    bands[band80].frequencyMin = 3500000LL;
+    bands[band80].frequencyMax = 4000000LL;
+    bands[band40].frequencyMin = 7000000LL;
+    bands[band40].frequencyMax = 7300000LL;
+    bands[band144].frequencyMin = 144000000LL;
+    bands[band144].frequencyMax = 148000000LL;
+    bands[band430].frequencyMin = 420000000LL;
+    bands[band430].frequencyMax = 450000000LL;
+    bandstack80.entries = 3;
+    bandstack40.entries = 3;
+    break;
+  case 3:
+    // IARU Region 3 / Asia-Pacific
+    bands[band160].frequencyMin = 1800000LL;
+    bands[band160].frequencyMax = 2000000LL;
+    bands[band80].frequencyMin = 3500000LL;
+    bands[band80].frequencyMax = 3900000LL;
+    bands[band40].frequencyMin = 7000000LL;
+    bands[band40].frequencyMax = 7200000LL;
+    bands[band144].frequencyMin = 144000000LL;
+    bands[band144].frequencyMax = 148000000LL;
+    bands[band430].frequencyMin = 430000000LL;
+    bands[band430].frequencyMax = 440000000LL;
+    bandstack80.entries = 3;
+    bandstack40.entries = 2;
+    break;
+  }
+  bandstack_clamp_current(&bandstack80);
+  bandstack_clamp_current(&bandstack40);
 }
 
 void radio_change_region(int r) {
@@ -665,6 +666,7 @@ void bandRestoreState(void) {
       band_settings[b].tune_drive = 100;
     }
   }
+  band_apply_iaru_region();
 }
 
 int get_band_from_frequency(long long f) {

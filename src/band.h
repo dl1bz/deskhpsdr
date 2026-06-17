@@ -129,6 +129,7 @@ extern void radio_change_region (int region);
 
 extern void bandSaveState (void);
 extern void bandRestoreState (void);
+extern void band_apply_iaru_region (void);
 
 char *getFrequencyInfo (long long frequency, int filter_low, int filter_high);
 int TransmitAllowed (void);
