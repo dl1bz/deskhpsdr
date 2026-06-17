@@ -989,6 +989,7 @@ clean:
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)
 	-@rm -rf $(PROGRAM).app
+	-@rm *.zip
 endif
 	@echo "DONE."
 
