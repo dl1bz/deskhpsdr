@@ -1333,6 +1333,7 @@ void StartConfigSave(void) {
   clearProperties();
   const char *filename = "startup_config.props";
   SetPropI0("css_dark_theme", css_dark_theme);
+  SetPropI0("iaru_region", iaru_region);
   saveProperties(filename);
 }
 
@@ -1343,6 +1344,10 @@ void StartConfigLoad(void) {
   }
   loadProperties(filename);
   GetPropI0("css_dark_theme", css_dark_theme);
+  GetPropI0("iaru_region", iaru_region);
+  if (iaru_region < 1 || iaru_region > 3) {
+    iaru_region = 2;
+  }
   clearProperties();
 }
 

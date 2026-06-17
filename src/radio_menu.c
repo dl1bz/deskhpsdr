@@ -43,6 +43,7 @@
 #include "vfo.h"
 #include "ext.h"
 #include "message.h"
+#include "css.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *n2adr_hpf_btn = NULL;
@@ -435,6 +436,16 @@ static void region_cb(GtkWidget *widget, gpointer data) {
   radio_change_region(gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
 }
 
+static void iaru_region_cb(GtkWidget *widget, gpointer data) {
+  int active = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+  (void)data;
+  if (active < 0 || active > 2) {
+    return;
+  }
+  iaru_region = active + 1;
+  StartConfigSave();
+}
+
 static void rit_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   switch (val) {
@@ -529,24 +540,29 @@ void radio_menu(GtkWidget *parent) {
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
   int row;
   int max_row;
+  col = 0;
+  row = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect(close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   if (can_transmit) {
     //--------------------------------------------------------------------------------------------------------
+    col++;
     label = gtk_label_new("Audio Capture Time (sec):");
     gtk_widget_set_name(label, "boldlabel_blue");
-    gtk_grid_attach(GTK_GRID(grid), label, 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
     //--------------------------------------------------------------------------------------------------------
+    col++;
     GtkWidget *capture_time_btn = gtk_spin_button_new_with_range(10, 120, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(capture_time_btn), (int) capture_max / 48000);
     gtk_widget_set_hexpand(capture_time_btn, FALSE);
     gtk_widget_set_halign(capture_time_btn, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid), capture_time_btn, 2, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), capture_time_btn, col, row, 1, 1);
     g_signal_connect(capture_time_btn, "value_changed", G_CALLBACK(capture_time_changed_cb), NULL);
     //--------------------------------------------------------------------------------------------------------
   }
+  //--------------------------------------------------------------------------------------------------------
   row = 1;
   label = gtk_label_new("Receivers:");
   gtk_widget_set_name(label, "boldlabel");
@@ -679,10 +695,17 @@ void radio_menu(GtkWidget *parent) {
   row++;
   if (row > max_row) { max_row = row; }
   row = 1;
+  //--------------------------------------------------------------------------------------------------------
   label = gtk_label_new("Channel Marker for 60m:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
+  //--------------------------------------------------------------------------------------------------------
+  label = gtk_label_new("IARU Reg:");
+  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), label, 3, row, 1, 1);
+  //--------------------------------------------------------------------------------------------------------
   row++;
   GtkWidget *region_combo = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "NONE (VFO)");
@@ -700,6 +723,24 @@ void radio_menu(GtkWidget *parent) {
                               "NONE - No channel markers");
   my_combo_attach(GTK_GRID(grid), region_combo, 2, row, 1, 1);
   g_signal_connect(region_combo, "changed", G_CALLBACK(region_cb), NULL);
+  //--------------------------------------------------------------------------------------------------------
+  GtkWidget *iaru_region_combo_box = gtk_combo_box_text_new();
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(iaru_region_combo_box), NULL, "1");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(iaru_region_combo_box), NULL, "2");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(iaru_region_combo_box), NULL, "3");
+  if (iaru_region < 1 || iaru_region > 3) {
+    iaru_region = 2;
+  }
+  gtk_combo_box_set_active(GTK_COMBO_BOX(iaru_region_combo_box), iaru_region - 1);
+  gtk_widget_set_tooltip_text(iaru_region_combo_box,
+                              "Select the IARU region for general band limits.\n\n"
+                              "1 - Region 1 / Europe, Africa, Middle East\n"
+                              "2 - Region 2 / Americas\n"
+                              "3 - Region 3 / Asia-Pacific\n\n"
+                              "This does not affect the separate 60m channel marker setting.");
+  my_combo_attach(GTK_GRID(grid), iaru_region_combo_box, 3, row, 1, 1);
+  g_signal_connect(iaru_region_combo_box, "changed", G_CALLBACK(iaru_region_cb), NULL);
+  //--------------------------------------------------------------------------------------------------------
   row++;
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     label = gtk_label_new("Filter Board:");

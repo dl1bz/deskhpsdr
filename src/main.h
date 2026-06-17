@@ -41,6 +41,8 @@ extern int this_monitor;
 extern int use_wayland;
 extern int css_dark_theme;
 
+extern int iaru_region;
+
 extern int full_screen;
 extern GtkWidget *top_window;
 extern GtkWidget *topgrid;

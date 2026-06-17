@@ -85,6 +85,8 @@ int this_monitor;
 int use_wayland;
 int css_dark_theme;
 
+int iaru_region = 2;
+
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;
 
