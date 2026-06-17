@@ -1115,7 +1115,9 @@ static gboolean tune_drive_button_press_cb(GtkWidget *widget, GdkEventButton *ev
 
 void update_slider_af_gain_btn(void) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(af_gain_btn), af_gain_btn_signal_id);
+    if (af_gain_btn_signal_id > 0 && g_signal_handler_is_connected(G_OBJECT(af_gain_btn), af_gain_btn_signal_id)) {
+      g_signal_handler_block(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
+    }
     // invert button, red = MUTE, green = Playback
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);
     if (active_receiver->local_audio_mute) {
@@ -1126,7 +1128,9 @@ void update_slider_af_gain_btn(void) {
       gtk_widget_set_tooltip_text(af_gain_btn,
                                   "Press button for MUTE local Audio.\nTCI audio remains unaffected and continues running.");
     }
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(af_gain_btn), af_gain_btn_signal_id);
+    if (af_gain_btn_signal_id > 0 && g_signal_handler_is_connected(G_OBJECT(af_gain_btn), af_gain_btn_signal_id)) {
+      g_signal_handler_unblock(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
+    }
     gtk_widget_queue_draw(af_gain_btn);
   }
 }
