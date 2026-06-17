@@ -45,6 +45,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                |
 | Supported Compiler             | clang, gcc                                    |                |
 | App Publishing                 | **Source code only, no binaries distributed** |                |
+|                                | **excepted macOS (only without notarization)**|                |
 
 Other useful app features (availability depend from used SDR device):
 
