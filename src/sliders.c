@@ -136,6 +136,20 @@ static gulong ps_btn_signal_id;
 static GtkWidget *nr_btn;
 static GtkWidget *nr_label;
 static gulong nr_btn_signal_id;
+
+static void sliders_signal_handler_block(gpointer instance, gulong handler_id) {
+  if (instance != NULL && handler_id > 0 && G_IS_OBJECT(instance) &&
+      g_signal_handler_is_connected(instance, handler_id)) {
+    g_signal_handler_block(instance, handler_id);
+  }
+}
+
+static void sliders_signal_handler_unblock(gpointer instance, gulong handler_id) {
+  if (instance != NULL && handler_id > 0 && G_IS_OBJECT(instance) &&
+      g_signal_handler_is_connected(instance, handler_id)) {
+    g_signal_handler_unblock(instance, handler_id);
+  }
+}
 static GtkStyleContext *nr_context;
 static GtkStyleContext *agc_context;
 
@@ -276,9 +290,9 @@ int sliders_active_receiver_changed(void* data) {
     // need block/unblock so setting the value of the receivers does not
     // enable/disable squelch
     //
-    g_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
+    sliders_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
     gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
-    g_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
     if (filter_board == CHARLY25) {
       update_c25_att();
@@ -438,13 +452,13 @@ void set_agc_gain(int rx, double value) {
   receiver[rx]->agc_gain = value;
   rx_set_agc(receiver[rx]);
   if (display_sliders && active_receiver->id == rx) {
-    g_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
     if (GTK_IS_SPIN_BUTTON(agc_gain_scale)) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_gain_scale), (double) receiver[rx]->agc_gain);
     } else if (GTK_IS_RANGE(agc_gain_scale)) {
       gtk_range_set_value(GTK_RANGE(agc_gain_scale), (double) receiver[rx]->agc_gain);
     }
-    g_signal_handler_unblock(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
   } else {
     char title[64];
     snprintf(title, 64, "AGC Gain RX%d", rx + 1);
@@ -563,13 +577,13 @@ void set_mic_gain(double value) {
     transmitter->mic_gain = value;
     tx_set_mic_gain(transmitter);
     if (display_sliders) {
-      g_signal_handler_block(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
+      sliders_signal_handler_block(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
       if (optimize_for_touchscreen) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), value);
       } else {
         gtk_range_set_value(GTK_RANGE(mic_gain_scale), value);
       }
-      g_signal_handler_unblock(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
+      sliders_signal_handler_unblock(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
     } else {
       show_popup_slider(MIC_GAIN, 0, -12.0, 50.0, 1.0, value, "Mic Gain");
     }
@@ -585,13 +599,13 @@ void update_drive_scale(void) {
     if (value > drive_digi_max) { value = drive_digi_max; }
   }
   if (display_sliders) {
-    g_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
     if (optimize_for_touchscreen) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), value);
     } else {
       gtk_range_set_value(GTK_RANGE(drive_scale), value);
     }
-    g_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
   } else {
     show_popup_slider(DRIVE, 0, 0.0, drive_max, 1.0, value, "TX Drive");
   }
@@ -608,7 +622,7 @@ void set_drive(double value) {
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       value /= 20;
     }
-    g_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
     if (optimize_for_touchscreen) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), value);
     } else {
@@ -620,7 +634,7 @@ void set_drive(double value) {
       gtk_widget_set_tooltip_text(drive_scale, NULL);
       gtk_widget_set_tooltip_text(drive_scale, txpwr_ttip_txt);
     }
-    g_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(drive_scale), drive_scale_signal_id);
   } else {
     show_popup_slider(DRIVE, 0, 0.0, drive_max, 1.0, value, "TX Drive");
   }
@@ -720,9 +734,9 @@ static void squelch_value_changed_cb(GtkWidget *widget, gpointer data) {
   active_receiver->squelch = gtk_range_get_value(GTK_RANGE(widget));
   new_enable = (active_receiver->squelch > 0.5);
   active_receiver->squelch_enable = new_enable;
-  g_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
+  sliders_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
-  g_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
+  sliders_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
   rx_set_squelch(active_receiver);
   tci_sql_level_changed(active_receiver->id);
   if (old_enable != new_enable) {
@@ -878,7 +892,7 @@ void update_slider_local_mic_input(int src) {
   if (display_sliders) {
     // t_print("%s: local_mic_input = %d src = %d\n", __func__, gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input)), src);
     if (src != gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input))) {
-      g_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
+      sliders_signal_handler_block(G_OBJECT(local_mic_input), local_mic_input_signal_id);
       if (strcmp(transmitter->microphone_name, input_devices[src].name) == 0) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), src);
       }
@@ -890,7 +904,7 @@ void update_slider_local_mic_input(int src) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), 0);
         g_strlcpy(transmitter->microphone_name, input_devices[0].name, sizeof(transmitter->microphone_name));
       }
-      g_signal_handler_unblock(G_OBJECT(local_mic_input), local_mic_input_signal_id);
+      sliders_signal_handler_unblock(G_OBJECT(local_mic_input), local_mic_input_signal_id);
       gtk_widget_queue_draw(local_mic_input);
     }
   }
@@ -898,35 +912,35 @@ void update_slider_local_mic_input(int src) {
 
 void update_slider_bbcompr_button(gboolean show_widget) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(bbcompr_btn), bbcompr_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(bbcompr_btn), bbcompr_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bbcompr_btn), transmitter->compressor);
     if (show_widget) {
       gtk_widget_set_sensitive(bbcompr_btn, TRUE);
     } else {
       gtk_widget_set_sensitive(bbcompr_btn, FALSE);
     }
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(bbcompr_btn), bbcompr_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(bbcompr_btn), bbcompr_btn_signal_id);
     gtk_widget_queue_draw(bbcompr_btn);
   }
 }
 
 void update_slider_lev_button(gboolean show_widget) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(lev_btn), lev_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(lev_btn), lev_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(lev_btn), transmitter->lev_enable);
     if (show_widget) {
       gtk_widget_set_sensitive(lev_btn, TRUE);
     } else {
       gtk_widget_set_sensitive(lev_btn, FALSE);
     }
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(lev_btn), lev_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(lev_btn), lev_btn_signal_id);
     gtk_widget_queue_draw(lev_btn);
   }
 }
 
 void update_slider_preamp_button(gboolean show_widget) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(preamp_btn), preamp_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(preamp_btn), preamp_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(preamp_btn), transmitter->addgain_enable);
     char preamp_tip[256];
     if (transmitter->addgain_enable) {
@@ -951,23 +965,23 @@ void update_slider_preamp_button(gboolean show_widget) {
     } else {
       gtk_widget_set_sensitive(preamp_btn, FALSE);
     }
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(preamp_btn), preamp_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(preamp_btn), preamp_btn_signal_id);
     gtk_widget_queue_draw(preamp_btn);
   }
 }
 
 void update_slider_local_mic_button(void) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(local_mic_button), local_mic_toggle_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(local_mic_button), local_mic_toggle_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_mic_button), transmitter->local_microphone);
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(local_mic_button), local_mic_toggle_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(local_mic_button), local_mic_toggle_signal_id);
     gtk_widget_queue_draw(local_mic_button);
   }
 }
 
 void update_slider_tune_drive_scale(gboolean show_widget) {
   if (display_sliders) {
-    g_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_spin_button_set_increments(GTK_SPIN_BUTTON(tune_drive_scale),
                                    transmitter->tune_drive_step,
                                    transmitter->tune_drive_step);
@@ -981,76 +995,76 @@ void update_slider_tune_drive_scale(gboolean show_widget) {
       gtk_widget_hide(tune_drive_scale);
       gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE Drive = TX PWR");
     }
-    g_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(tune_drive_scale), tune_drive_scale_signal_id);
     gtk_widget_queue_draw(tune_drive_scale);
   }
 }
 
 void update_slider_bbcompr_scale(gboolean show_widget) {
   if (display_sliders) {
-    g_signal_handler_block(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(bbcompr_scale), transmitter->compressor_level);
     if (show_widget && transmitter->compressor) {
       gtk_widget_set_sensitive(bbcompr_scale, TRUE);
     } else {
       gtk_widget_set_sensitive(bbcompr_scale, FALSE);
     }
-    g_signal_handler_unblock(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(bbcompr_scale), bbcompr_scale_signal_id);
     gtk_widget_queue_draw(bbcompr_scale);
   }
 }
 
 void update_slider_lev_scale(gboolean show_widget) {
   if (display_sliders) {
-    g_signal_handler_block(G_OBJECT(lev_scale), lev_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(lev_scale), lev_scale_signal_id);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(lev_scale), transmitter->lev_gain);
     if (show_widget && transmitter->lev_enable) {
       gtk_widget_set_sensitive(lev_scale, TRUE);
     } else {
       gtk_widget_set_sensitive(lev_scale, FALSE);
     }
-    g_signal_handler_unblock(G_OBJECT(lev_scale), lev_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(lev_scale), lev_scale_signal_id);
     gtk_widget_queue_draw(lev_scale);
   }
 }
 
 void update_slider_af_gain_scale(void) {
   if (display_sliders && af_gain_scale != NULL && active_receiver != NULL) {
-    g_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
     gtk_range_set_value(GTK_RANGE(af_gain_scale), (double) active_receiver->volume);
-    g_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
     gtk_widget_queue_draw(af_gain_scale);
   }
 }
 
 void update_slider_agc_gain_scale(void) {
   if (display_sliders && agc_gain_scale != NULL && active_receiver != NULL) {
-    g_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
+    sliders_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
     gtk_range_set_value(GTK_RANGE(agc_gain_scale), (double) active_receiver->agc_gain);
-    g_signal_handler_unblock(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
     gtk_widget_queue_draw(agc_gain_scale);
   }
 }
 
 void update_slider_autogain_btn(void) {
   if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(autogain_btn), autogain_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(autogain_btn), autogain_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(autogain_btn), autogain_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(autogain_btn), autogain_btn_signal_id);
     gtk_widget_queue_draw(autogain_btn);
   }
 }
 
 void update_slider_snb_button(gboolean show_widget) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(snb_btn), snb_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(snb_btn), snb_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(snb_btn), active_receiver->snb);
     if (show_widget) {
       gtk_widget_set_sensitive(snb_btn, TRUE);
     } else {
       gtk_widget_set_sensitive(snb_btn, FALSE);
     }
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(snb_btn), snb_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(snb_btn), snb_btn_signal_id);
     gtk_widget_queue_draw(snb_btn);
   }
 }
@@ -1061,10 +1075,10 @@ void update_slider_binaural_btn(void) {
       active_receiver->binaural = 0;
       rx_set_af_binaural(active_receiver);
     }
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(binaural_btn), active_receiver->binaural);
     gtk_widget_set_sensitive(binaural_btn, rx_binaural_allowed(active_receiver));
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(binaural_btn), binaural_btn_signal_id);
     gtk_widget_queue_draw(binaural_btn);
   }
 }
@@ -1072,14 +1086,14 @@ void update_slider_binaural_btn(void) {
 static gboolean update_slider_tune_drive_btn_main(gpointer data) {
   gboolean current_tune_state = GPOINTER_TO_INT(data);
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(tune_drive_btn), tune_drive_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(tune_drive_btn), tune_drive_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tune_drive_btn), !current_tune_state);
     if (current_tune_state) {
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNING");
     } else {
       gtk_label_set_text(GTK_LABEL(tune_drive_label), "TUNE");
     }
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(tune_drive_btn), tune_drive_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(tune_drive_btn), tune_drive_btn_signal_id);
     gtk_widget_queue_draw(tune_drive_btn);
   }
   return G_SOURCE_REMOVE;
@@ -1115,9 +1129,7 @@ static gboolean tune_drive_button_press_cb(GtkWidget *widget, GdkEventButton *ev
 
 void update_slider_af_gain_btn(void) {
   if (display_sliders) {
-    if (af_gain_btn_signal_id > 0 && g_signal_handler_is_connected(G_OBJECT(af_gain_btn), af_gain_btn_signal_id)) {
-      g_signal_handler_block(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
-    }
+    sliders_signal_handler_block(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
     // invert button, red = MUTE, green = Playback
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);
     if (active_receiver->local_audio_mute) {
@@ -1128,9 +1140,7 @@ void update_slider_af_gain_btn(void) {
       gtk_widget_set_tooltip_text(af_gain_btn,
                                   "Press button for MUTE local Audio.\nTCI audio remains unaffected and continues running.");
     }
-    if (af_gain_btn_signal_id > 0 && g_signal_handler_is_connected(G_OBJECT(af_gain_btn), af_gain_btn_signal_id)) {
-      g_signal_handler_unblock(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
-    }
+    sliders_signal_handler_unblock(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
     gtk_widget_queue_draw(af_gain_btn);
   }
 }
@@ -1160,9 +1170,9 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_split_btn(void) {
   if (display_sliders) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(split_btn), split_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(split_btn), split_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(split_btn), split);
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(split_btn), split_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(split_btn), split_btn_signal_id);
     gtk_widget_queue_draw(split_btn);
   }
 }
@@ -1194,7 +1204,7 @@ static void equal_btn_released_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_nr_btn(gboolean show_widget) {
   if (display_sliders && (have_rx_gain || have_rx_att)) {
-    g_signal_handler_block(G_OBJECT(nr_btn), nr_btn_signal_id);
+    sliders_signal_handler_block(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
     if (active_receiver->nr > 0) {
       gtk_style_context_add_class(nr_context, "active");
@@ -1206,7 +1216,7 @@ void update_slider_nr_btn(gboolean show_widget) {
     } else {
       gtk_widget_set_sensitive(nr_btn, FALSE);
     }
-    g_signal_handler_unblock(G_OBJECT(nr_btn), nr_btn_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(nr_btn), nr_btn_signal_id);
     gtk_widget_queue_draw(nr_btn);
   }
 }
@@ -1232,9 +1242,9 @@ static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_agc_btn(void) {
   if (display_sliders) {
-    g_signal_handler_block(G_OBJECT(agc_btn), agc_btn_signal_id);
+    sliders_signal_handler_block(G_OBJECT(agc_btn), agc_btn_signal_id);
     gtk_button_set_label(GTK_BUTTON(agc_btn), agc_labels[active_receiver->agc]);
-    g_signal_handler_unblock(G_OBJECT(agc_btn), agc_btn_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(agc_btn), agc_btn_signal_id);
     gtk_widget_queue_draw(agc_btn);
     if (active_receiver->agc > 0) {
       gtk_style_context_add_class(agc_context, "active");
@@ -1262,9 +1272,9 @@ static void agc_btn_pressed_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_ps_btn(void) {
   if (can_transmit && display_sliders && (have_rx_gain || have_rx_att)) {
-    g_signal_handler_block(GTK_TOGGLE_BUTTON(ps_btn), ps_btn_signal_id);
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(ps_btn), ps_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ps_btn), transmitter->puresignal);
-    g_signal_handler_unblock(GTK_TOGGLE_BUTTON(ps_btn), ps_btn_signal_id);
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(ps_btn), ps_btn_signal_id);
     gtk_widget_queue_draw(ps_btn);
   }
 }
@@ -1286,12 +1296,12 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
 
 void update_slider_squelch(RECEIVER *rx) {
   if (display_sliders && rx != NULL && rx->id == active_receiver->id) {
-    g_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
+    sliders_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
     gtk_range_set_value(GTK_RANGE(squelch_scale), rx->squelch);
-    g_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
-    g_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
+    sliders_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), rx->squelch_enable);
-    g_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
+    sliders_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
   }
 }
 
