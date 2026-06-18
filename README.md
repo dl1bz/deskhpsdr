@@ -14,24 +14,25 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 **deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Soapy SDR and GPIO code and support is official REMOVED now.**
 
 
-| Feature                        | Current deskHPSDR version 2.6                 | Notes          |
+| Feature                        | Current deskHPSDR version 2.7                 | Notes          |
 | -------------------------------- | ----------------------------------------------- | ---------------- |
-| TCI CAT                        | supported                                     |                |
-| TCI Audio                      | supported                                     |                |
-| TCI I/Q                        | supported                                     |                |
-| PTT external                   | supported via serial RTS/CTS or MIDI          |                |
+| TCI CAT                        | supported                                     | TCI 2.0        |
+| TCI Audio                      | supported (only 48k and 24k)                  | TCI 2.0        |
+| TCI I/Q                        | supported (48k/96k/192k/384k)                 | TCI 2.0        |
+| PTT external                   | supported (via serial RTS/CTS or MIDI)        |                |
 | MIDI Control                   | supported                                     |                |
-| Hamlib                         | supported with own included rigctld           |                |
-| OpenHPSDR protocol 1           | fully supported                               |                |
-| OpenHPSDR protocol 2           | fully supported                               |                |
-| GPIO                           | ~~limited support~~ removed since V2.7        | deprecated     |
-| Soapy API / Soapy protocol     | ~~rudimentary supported~~ removed since V2.7  | deprecated     |
-| Hermes Lite 2 N2ADR IO board   | supported in P1                               |                |
+| Hamlib                         | supported (with own included rigctld)         |                |
+| OpenHPSDR protocol 1           | supported                                     |                |
+| OpenHPSDR protocol 2           | supported                                     |                |
+| GPIO                           | ~~supported~~ all code removed since V2.7     | deprecated     |
+| Soapy API / Soapy protocol     | ~~supported~~ all code removed since V2.7     | deprecated     |
+| Hermes Lite 2 N2ADR IO board   | supported                                     |                |
 | Use WDSP library ?             | yes, current 1.29                             |                |
-| Pure Signal / Pre-Distortion   | supported                                     |                |
+| Pure Signal / Pre-Distortion   | supported up to 192k samplingrate             |                |
 | Noise Reduction                | NR1 - NR4 available                           |                |
 | CAT over TCP                   | supported (TS2000 & PowerSDR emulation)       |                |
-| Client-Server Mode             | None, not supported                           |                |
+| integrated Client-Server Mode  | not supported                                 |                |
+| IF Mode / Panadapter mode      | not supported                                 |                |
 | Hermes Lite 2+ expansion board | supported                                     |                |
 | Bright / Dark Theme support    | yes                                           |                |
 | Screen Resolution              | min. 1280x600 or higher                       |                |
@@ -40,7 +41,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Audio layer support            | PORTAUDIO, PULSEAUDIO, ALSA                   |                |
 | Audio devices support          | mono,stereo (only 48kHz supported)            |                |
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter    |                |
-| SDR TX support                 | yes                                           |                |
+| SDR TX support                 | yes, fully supported                          |                |
 | Used UI framework              | GTK3                                          |                |
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                |
 | Supported Compiler             | clang, gcc                                    |                |
@@ -110,10 +111,12 @@ Current development start from version 2.7 in May 2026.<br>
 
 Most of the new functions need to be activated in the ``make.config.deskhpsdr`` as compiling option. Please look in the beginning of the  ``Makefile`` and set the needed options only in ``make.config.deskhpsdr``, but don't modify the ``Makefile`` itself !
 
-## Issues and Discussion tab at Github for this project - read carefully !
+## Support: Issues and Discussion tab at Github for this project - read carefully !
 
 - the **Issues tab is only for reporting issues, bugs or malfunctions of this app** !
 - for all other things please use necessarily the [discussions tab](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr)
+
+Please note: My development focus is only macOS. Linux is of no interest to me. Yes, this app can run with Linux too, that's a result of how this app is programmed based on C program language. However, that does not mean I provide any kind of support for Linux. From time to time, I test whether the app can be built on Linux and whether it runs. If it does that successfully, the topic Linux is closed for me at this point. Read carefully my instructions for build with Linux in document ``COMPILE.linux``.
 
 ## Known problems if using Git for update the code base at your local computer
 
@@ -146,12 +149,13 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 
 ## Credits
 
-Big thanks and huge respect to all involved developers for their previous and current work on pihpsdr until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
+Big thanks and huge respect to all involved developers for their work on pihpsdr until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
 Special thanks to:<br>
 
-- my wife for her great patience and understanding
-- John Melton G0ORX & Christoph van Wüllen DL1YCF for their earlier and current pihpsdr development
+- my lovely wife any my family for her great patience and understanding
+- John Melton G0ORX & Christoph van Wüllen DL1YCF for their pihpsdr development
 - Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
+- OpenAI/ChatGPT for many code optimizations and saving a lot of time in development
 - all of the active users and contributors for support deskHPSDR, Open Source Soft- and Hardware
 
 ## Exclusion of any Guarantee and any Warrenty and limited Support
