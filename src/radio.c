@@ -2697,6 +2697,7 @@ static void radio_restore_state (void) {
   GetPropI0 ("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
   GetPropI0 ("rigctl_port_base",                              rigctl_tcp_port);
   GetPropI0 ("rigctl_debug",                                  rigctl_debug);
+  GetPropI0 ("tci_debug",                                     tci_debug);
   GetPropI0 ("use_rigctld",                                   use_rigctld);
   GetPropI0 ("mute_spkr_amp",                                 mute_spkr_amp);
   GetPropI0 ("adc0_filter_bypass",                            adc0_filter_bypass);
@@ -2979,6 +2980,7 @@ void radio_save_state (void) {
   SetPropI0 ("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
   SetPropI0 ("rigctl_port_base",                              rigctl_tcp_port);
   SetPropI0 ("rigctl_debug",                                  rigctl_debug);
+  SetPropI0 ("tci_debug",                                     tci_debug);
   SetPropI0 ("use_rigctld",                                   use_rigctld);
   SetPropI0 ("mute_spkr_amp",                                 mute_spkr_amp);
   SetPropI0 ("adc0_filter_bypass",                            adc0_filter_bypass);

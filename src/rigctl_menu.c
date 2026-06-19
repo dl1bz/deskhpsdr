@@ -88,7 +88,10 @@ static void rigctl_value_changed_cb(GtkWidget *widget, gpointer data) {
 
 static void rigctl_debug_cb(GtkWidget *widget, gpointer data) {
   rigctl_debug = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  // t_print("---------- RIGCTL DEBUG %s ----------\n", rigctl_debug ? "ON" : "OFF");
+}
+
+static void tci_debug_cb(GtkWidget *widget, gpointer data) {
+  tci_debug = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 static void tci_enable_cb(GtkWidget *widget, gpointer data) {
@@ -356,15 +359,23 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_name(w, "close_button");
   g_signal_connect(w, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 2, 1);
-  w = gtk_check_button_new_with_label("Enable CAT/TCI Debug Logging");
+  //-------------------------------------------------------------------------------------
+  w = gtk_check_button_new_with_label("Enable CAT Debug");
   gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_tooltip_text(w,
                               "Enable more debug output for CAT communications\n"
                               "Use it carefully - log level and logfile will be\n"
                               "drastically increased !");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), rigctl_debug);
-  gtk_grid_attach(GTK_GRID(grid), w, 2, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(rigctl_debug_cb), NULL);
+  //-------------------------------------------------------------------------------------
+  w = gtk_check_button_new_with_label("Enable TCI Debug");
+  gtk_widget_set_name(w, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_debug);
+  gtk_grid_attach(GTK_GRID(grid), w, 3, row, 1, 1);
+  g_signal_connect(w, "toggled", G_CALLBACK(tci_debug_cb), NULL);
+  //-------------------------------------------------------------------------------------
   GtkWidget *block_cat_rx_if_tune_btn = gtk_check_button_new_with_label("Block [RX] CAT command during TUNE");
   gtk_widget_set_tooltip_text(block_cat_rx_if_tune_btn,
                               "When enabled, this option rejects the [RX] CAT command during an active TUNE.\n\n"
@@ -373,7 +384,7 @@ void rigctl_menu(GtkWidget *parent) {
                               "In this case, any active TUNE process is stopped immediately.\n");
   gtk_widget_set_name(block_cat_rx_if_tune_btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(block_cat_rx_if_tune_btn), block_cat_rx_if_tune);
-  gtk_grid_attach(GTK_GRID(grid), block_cat_rx_if_tune_btn, 4, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), block_cat_rx_if_tune_btn, 4, row, 1, 1);
   g_signal_connect(block_cat_rx_if_tune_btn, "toggled", G_CALLBACK(block_cat_rx_if_tune_cb), NULL);
   row++;
   w = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);

@@ -102,6 +102,7 @@ int autogain_is_adjusted = 1;
 #define MAXDATASIZE 2000
 
 gboolean rigctl_debug = FALSE;
+gboolean tci_debug = FALSE;
 
 int parse_cmd(void* data);
 

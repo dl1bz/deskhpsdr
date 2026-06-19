@@ -73,6 +73,7 @@ int tci_enable = 0;
 int tci_port   = 40001;
 int tci_txonly = 0;
 long tci_timer = 0;
+extern gboolean tci_debug;
 
 //
 // OpCodes for WebSocket frames
@@ -802,8 +803,8 @@ static void tci_queue_rx_audio_frame (CLIENT *client, int receiver_id) {
                                 &client->rx_audio_resampler_r[receiver_id]);
   if (frames == 0) {
     client->rx_audio_empty_count[receiver_id]++;
-    if (rigctl_debug && (client->rx_audio_empty_count[receiver_id] <= 10 ||
-                         (client->rx_audio_empty_count[receiver_id] % 100) == 0)) {
+    if (tci_debug && (client->rx_audio_empty_count[receiver_id] <= 10 ||
+                      (client->rx_audio_empty_count[receiver_id] % 100) == 0)) {
       t_print ("TCI%d RX_AUDIO no frame rx=%d empty_count=%llu read=%llu write=%llu enabled=%d global_active=%d sample_rate=%d\n",
                client->seq,
                receiver_id,
@@ -818,8 +819,8 @@ static void tci_queue_rx_audio_frame (CLIENT *client, int receiver_id) {
   }
   queued = tci_queue_binary_frame (client, frame, frame_len);
   client->rx_audio_queue_count[receiver_id]++;
-  if (rigctl_debug && (client->rx_audio_queue_count[receiver_id] <= 10 ||
-                       (client->rx_audio_queue_count[receiver_id] % 100) == 0)) {
+  if (tci_debug && (client->rx_audio_queue_count[receiver_id] <= 10 ||
+                    (client->rx_audio_queue_count[receiver_id] % 100) == 0)) {
     TCI_STREAM_HEADER header;
     size_t payload_bytes = (frame_len >= sizeof (header)) ? frame_len - sizeof (header) : 0;
     memset (&header, 0, sizeof (header));
@@ -862,7 +863,7 @@ static int tci_queue_tx_chrono_frame (CLIENT *client) {
   queued = tci_queue_binary_frame (client, (const unsigned char*) &header, sizeof (header));
   if (queued) {
     client->tx_chrono_queue_count++;
-    if (rigctl_debug && (client->tx_chrono_queue_count <= 10 || (client->tx_chrono_queue_count % 100) == 0)) {
+    if (tci_debug && (client->tx_chrono_queue_count <= 10 || (client->tx_chrono_queue_count % 100) == 0)) {
       t_print ("TCI%d TX_CHRONO queued count=%llu ws_len=%zu receiver=%u sample_rate=%u format=%u type=%u length=%u channels=%u requested_payload_bytes=%zu stream_frames=%u tx_audio_enabled=%d\n",
                client->seq,
                (unsigned long long) client->tx_chrono_queue_count,
@@ -877,7 +878,7 @@ static int tci_queue_tx_chrono_frame (CLIENT *client) {
                tci_audio_get_stream_frames(),
                client->tx_audio_enabled);
     }
-  } else if (rigctl_debug) {
+  } else if (tci_debug) {
     t_print ("TCI%d TX chrono queue FAILED enabled=%d running=%d\n",
              client->seq,
              client->tx_audio_enabled,
@@ -935,7 +936,7 @@ static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t
       guint ring_dropped = 0;
       int ring_enabled = 0;
       client->tx_audio_rx_count++;
-      if (rigctl_debug && (client->tx_audio_rx_count <= 10 || (client->tx_audio_rx_count % 100) == 0)) {
+      if (tci_debug && (client->tx_audio_rx_count <= 10 || (client->tx_audio_rx_count % 100) == 0)) {
         size_t payload_bytes = (len >= sizeof (TCI_STREAM_HEADER)) ? (len - sizeof (TCI_STREAM_HEADER)) : 0;
         size_t expected_bytes = sizeof (TCI_STREAM_HEADER) + ((size_t) header.length * sizeof (float));
         guint frames_by_header_channels = (header.channels > 0) ? (guint) (header.length / header.channels) : 0;
@@ -959,7 +960,7 @@ static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t
       }
       tci_audio_handle_tx_frame (data, len, client->audio_sample_rate,
                                  &client->tx_audio_resampler_24_to_48);
-      if (rigctl_debug && (client->tx_audio_rx_count <= 10 || (client->tx_audio_rx_count % 100) == 0)) {
+      if (tci_debug && (client->tx_audio_rx_count <= 10 || (client->tx_audio_rx_count % 100) == 0)) {
         tci_audio_tx_debug_snapshot (&ring_write, &ring_read, &ring_dropped, &ring_available, &ring_enabled);
         t_print ("TCI%d TX audio ring after push count=%llu enabled=%d write=%llu read=%llu available=%llu dropped=%u\n",
                  client->seq,
@@ -970,7 +971,7 @@ static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t
                  (unsigned long long) ring_available,
                  ring_dropped);
       }
-    } else if (rigctl_debug) {
+    } else if (tci_debug) {
       t_print ("TCI%d TX audio ignored: tx_audio_enabled=0 len=%zu receiver=%u sample_rate=%u format=%u type=%u length=%u channels=%u\n",
                client->seq,
                len,

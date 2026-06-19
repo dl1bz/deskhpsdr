@@ -41,6 +41,7 @@ typedef struct _SERIALPORT SERIALPORT;
 #define MAX_SERIAL 3
 extern SERIALPORT SerialPorts[MAX_SERIAL + 2];
 extern gboolean rigctl_debug;
+extern gboolean tci_debug;
 
 extern void launch_tcp_rigctl (void);
 extern int launch_serial_rigctl (int id);
