@@ -305,6 +305,22 @@ guint64 tci_audio_tx_available (void) {
   return available;
 }
 
+void tci_audio_tx_debug_snapshot (guint64 *write_count, guint64 *read_count,
+                                  guint *dropped, guint64 *available, int *enabled) {
+  TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
+  guint64 local_write;
+  guint64 local_read;
+  g_mutex_lock (&ring->mutex);
+  local_write = ring->write_count;
+  local_read = ring->read_count;
+  if (write_count != NULL) { *write_count = local_write; }
+  if (read_count != NULL) { *read_count = local_read; }
+  if (dropped != NULL) { *dropped = ring->dropped; }
+  if (available != NULL) { *available = local_write - local_read; }
+  if (enabled != NULL) { *enabled = tci_tx_audio_enabled; }
+  g_mutex_unlock (&ring->mutex);
+}
+
 guint tci_audio_tx_read (float* out, guint frames) {
   TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
   guint copied = 0;
@@ -412,7 +428,11 @@ static guint tci_audio_copy (int receiver_id, guint64 *read_count, float* out, g
     ring->dropped++;
   }
   available = ring->write_count - *read_count;
-  frames = (available < max_frames) ? (guint) available : max_frames;
+  if (available < max_frames) {
+    g_mutex_unlock (&ring->mutex);
+    return 0;
+  }
+  frames = max_frames;
   for (guint i = 0; i < frames; i++) {
     guint index = (guint) ((*read_count + i) % TCI_RX_AUDIO_RING_FRAMES);
     out[ (i * TCI_AUDIO_CHANNELS)] = ring->samples[ (index * TCI_AUDIO_CHANNELS)];
