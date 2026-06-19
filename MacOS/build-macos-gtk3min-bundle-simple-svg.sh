@@ -7,7 +7,7 @@ GTK_PREFIX="/opt/deskhpsdr-gtk3min"
 BREW_PREFIX="/opt/homebrew"
 APP="deskHPSDR.app"
 EXE="deskhpsdr"
-ZIP="deskHPSDR-macos-ARM64.zip"
+ZIP="deskHPSDR-macos-arm64.zip"
 
 export PKG_CONFIG_PATH="$GTK_PREFIX/lib/pkgconfig:$GTK_PREFIX/share/pkgconfig:$BREW_PREFIX/lib/pkgconfig:$BREW_PREFIX/share/pkgconfig"
 export PATH="$GTK_PREFIX/bin:$BREW_PREFIX/bin:$PATH"
