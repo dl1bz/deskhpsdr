@@ -1232,7 +1232,7 @@ static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   }
   update_noise();
   tci_rx_nr_enable_changed(active_receiver->id);
-  gtk_button_set_label(GTK_BUTTON(nr_btn), nr_labels[active_receiver->nr]);
+  gtk_button_set_label(GTK_BUTTON(widget), nr_labels[active_receiver->nr]);
   if (active_receiver->nr > 0) {
     gtk_style_context_add_class(nr_context, "active");
   } else {
@@ -1768,10 +1768,15 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   } else {
     attenuation_label = NULL;
     attenuation_scale = NULL;
-    nr_btn = NULL;
-    nr_btn_signal_id = 0;
-    ps_btn = NULL;
-    ps_btn_signal_id = 0;
+    if (!have_rx_gain) {
+      nr_btn = NULL;
+      nr_label = NULL;
+      nr_context = NULL;
+      nr_btn_signal_id = 0;
+      ps_btn = NULL;
+      ps_label = NULL;
+      ps_btn_signal_id = 0;
+    }
   }
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // C25: eine Box (Label kompakt, Combo flexibel) in Z0/S2
