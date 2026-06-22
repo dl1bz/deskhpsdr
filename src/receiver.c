@@ -342,7 +342,7 @@ void rx_save_state(const RECEIVER *rx) {
     SetPropI1("receiver.%d.alex_attenuation", rx->id,           rx->alex_attenuation);
   }
   SetPropF1("receiver.%d.volume", rx->id,                       rx->volume);
-  SetPropF1("receiver.%d.tci_txaudio_scale", rx->id,            rx->tci_txaudio_scale);
+  SetPropF1("receiver.%d.tci_rxaudio_scale", rx->id,            rx->tci_rxaudio_scale);
   SetPropI1("receiver.%d.agc", rx->id,                          rx->agc);
   SetPropF1("receiver.%d.agc_gain", rx->id,                     rx->agc_gain);
   SetPropF1("receiver.%d.agc_slope", rx->id,                    rx->agc_slope);
@@ -471,7 +471,7 @@ void rx_restore_state(RECEIVER *rx) {
     GetPropI1("receiver.%d.alex_attenuation", rx->id,           rx->alex_attenuation);
   }
   GetPropF1("receiver.%d.volume", rx->id,                       rx->volume);
-  GetPropF1("receiver.%d.tci_txaudio_scale", rx->id,            rx->tci_txaudio_scale);
+  GetPropF1("receiver.%d.tci_rxaudio_scale", rx->id,            rx->tci_rxaudio_scale);
   GetPropI1("receiver.%d.agc", rx->id,                          rx->agc);
   GetPropF1("receiver.%d.agc_gain", rx->id,                     rx->agc_gain);
   GetPropF1("receiver.%d.agc_slope", rx->id,                    rx->agc_slope);
@@ -818,7 +818,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->display_average_mode = AVG_LOGRECURSIVE;
   rx->display_average_time = 250.0;
   rx->volume = -20.0;
-  rx->tci_txaudio_scale = 1.0;
+  rx->tci_rxaudio_scale = 1.0;
   rx->dither = 0;
   rx->random = 0;
   rx->preamp = 0;
@@ -1368,8 +1368,8 @@ static void rx_process_buffer(RECEIVER *rx) {
       }
     }
     if (tci_rx_export) {
-      tci_rx_samples[(tci_rx_frames * TCI_AUDIO_CHANNELS)] = (float)(left_sample * rx->tci_txaudio_scale);
-      tci_rx_samples[(tci_rx_frames * TCI_AUDIO_CHANNELS) + 1] = (float)(right_sample * rx->tci_txaudio_scale);
+      tci_rx_samples[(tci_rx_frames * TCI_AUDIO_CHANNELS)] = (float)(left_sample * rx->tci_rxaudio_scale);
+      tci_rx_samples[(tci_rx_frames * TCI_AUDIO_CHANNELS) + 1] = (float)(right_sample * rx->tci_rxaudio_scale);
       tci_rx_frames++;
     }
   }

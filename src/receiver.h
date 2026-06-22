@@ -52,7 +52,7 @@ typedef struct _receiver {
   int adc;
 
   double volume;  // in dB
-  double tci_txaudio_scale;
+  double tci_rxaudio_scale;
 
   int dsp_size;
   int buffer_size;

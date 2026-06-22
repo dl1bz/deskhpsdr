@@ -291,7 +291,7 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
   t_print("%s: Baud rate changed: Port=%s Baud=%d\n", __func__, SerialPorts[id].port, SerialPorts[id].baud);
 }
 
-static int tci_txaudio_scale_to_index(double scale) {
+static int tci_rxaudio_scale_to_index(double scale) {
   if (fabs(scale - 1.0) < 0.0001) {
     return 0;
   }
@@ -307,24 +307,41 @@ static int tci_txaudio_scale_to_index(double scale) {
   return 1;   // default = -3 dB
 }
 
-static void tci_txaudio_gain_cb(GtkWidget *widget, gpointer data) {
+static void tci_rxaudio_gain_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = (RECEIVER*) data;
   switch (gtk_combo_box_get_active(GTK_COMBO_BOX(widget))) {
   default:
   case 0:
-    rx->tci_txaudio_scale = 1.0;
+    rx->tci_rxaudio_scale = 1.0;
     break;
   case 1:
-    rx->tci_txaudio_scale = 0.70710678;
+    rx->tci_rxaudio_scale = 0.70710678;
     break;
   case 2:
-    rx->tci_txaudio_scale = 0.50118723;
+    rx->tci_rxaudio_scale = 0.50118723;
     break;
   case 3:
-    rx->tci_txaudio_scale = 0.25118864;
+    rx->tci_rxaudio_scale = 0.25118864;
     break;
   }
-  t_print("%s: rx->tci_txaudio_scale = %0.4f\n", __func__, rx->tci_txaudio_scale);
+  t_print("%s: rx->tci_rxaudio_scale = %0.4f\n", __func__, rx->tci_rxaudio_scale);
+}
+
+static int tci_txaudio_gain_db_to_index(int gain_db) {
+  return (gain_db == 0) ? 0 : 1;   // default = -3 dB
+}
+
+static int tci_txaudio_index_to_gain_db(int index) {
+  return (index == 0) ? 0 : -3;
+}
+
+static void tci_txaudio_gain_changed_cb(GtkComboBox *combo, gpointer data) {
+  (void)data;
+  if (transmitter == NULL) {
+    return;
+  }
+  int index = gtk_combo_box_get_active(combo);
+  transmitter->tci_tx_audio_gain_db = tci_txaudio_index_to_gain_db(index);
 }
 
 #ifdef PORTAUDIO
@@ -646,25 +663,47 @@ void rigctl_menu(GtkWidget *parent) {
   //------------------------------------------------------------------------------------------------------------------------
   int col = 1;
   row++;
-  w = gtk_label_new("TCI Audio ATT");
+  w = gtk_label_new("TCI RX Audio ATT");
   gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_halign(w, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
   row++;
-  GtkWidget *combo = gtk_combo_box_text_new();
-  gtk_widget_set_tooltip_text(combo,
+  GtkWidget *rx_combo = gtk_combo_box_text_new();
+  gtk_widget_set_tooltip_text(rx_combo,
                               "Attenuate the sampling amplitude for outgoing TCI audio.\n"
                               "WSJT-X or JTDX should show an input level\n"
                               "around -65db on their RX level scale.");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL,  "0 dB");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL, "-3 dB");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL, "-6 dB");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL, "-12 dB");
-  gtk_widget_set_halign(combo, GTK_ALIGN_CENTER);
-  gtk_grid_attach(GTK_GRID(grid), combo, col, row, 1, 1);
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rx_combo), NULL,  "0 dB");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rx_combo), NULL, "-3 dB");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rx_combo), NULL, "-6 dB");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rx_combo), NULL, "-12 dB");
+  gtk_widget_set_halign(rx_combo, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(grid), rx_combo, col, row, 1, 1);
   if (active_receiver != NULL) {
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), tci_txaudio_scale_to_index(active_receiver->tci_txaudio_scale));
-    g_signal_connect(combo, "changed", G_CALLBACK(tci_txaudio_gain_cb), active_receiver);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(rx_combo), tci_rxaudio_scale_to_index(active_receiver->tci_rxaudio_scale));
+    g_signal_connect(rx_combo, "changed", G_CALLBACK(tci_rxaudio_gain_cb), active_receiver);
+  }
+  if (can_transmit) {
+    col++;
+    row--;
+    w = gtk_label_new("TCI TX Audio ATT");
+    gtk_widget_set_name(w, "boldlabel");
+    gtk_widget_set_halign(w, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
+    row++;
+    GtkWidget *tx_combo = gtk_combo_box_text_new();
+    gtk_widget_set_tooltip_text(tx_combo,
+                                "Attenuate the sampling amplitude for incoming TCI audio\n"
+                                "sent by an App like WSJT-X or JTDX.\n"
+                                "Decrease max. TX POWER !");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(tx_combo), NULL,  "0 dB");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(tx_combo), NULL, "-3 dB");
+    gtk_widget_set_halign(tx_combo, GTK_ALIGN_CENTER);
+    gtk_grid_attach(GTK_GRID(grid), tx_combo, col, row, 1, 1);
+    if (transmitter != NULL) {
+      gtk_combo_box_set_active(GTK_COMBO_BOX(tx_combo), tci_txaudio_gain_db_to_index(transmitter->tci_tx_audio_gain_db));
+      g_signal_connect(tx_combo, "changed", G_CALLBACK(tci_txaudio_gain_changed_cb), NULL);
+    }
   }
   //------------------------------------------------------------------------------------------------------------------------
   row--;

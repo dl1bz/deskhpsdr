@@ -26,6 +26,7 @@
 #include <wdsp.h>
 
 #include "receiver.h"
+#include "radio.h"
 #include "tci_audio.h"
 
 typedef struct _tci_audio_monitor_ring {
@@ -233,7 +234,8 @@ void tci_get_next_mic_sample (double *micsample) {
   static guint cache_pos = 0;
   static guint chrono_sample_count = 0;
   const guint prebuffer_frames = 4096;
-  const double tx_gain = 0.707;
+  // const double tx_gain = 0.707;
+  const double tx_gain = (transmitter->tci_tx_audio_gain_db == -3) ? 0.7071067811865476 : 1.0;
   if (micsample == NULL) {
     return;
   }

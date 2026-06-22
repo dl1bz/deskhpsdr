@@ -90,6 +90,8 @@ typedef struct _transmitter {
   int feedback;
   int auto_on;
 
+  int tci_tx_audio_gain_db;
+
   double ps_setpk;
   // PS 2.0 parameters
   double ps_ampdelay;

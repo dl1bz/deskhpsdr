@@ -324,6 +324,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropS1("transmitter.%d.microphone_name",   tx->id,               tx->microphone_name);
   SetPropI1("transmitter.%d.puresignal",        tx->id,               tx->puresignal);
   SetPropI1("transmitter.%d.auto_on",           tx->id,               tx->auto_on);
+  SetPropI1("transmitter.%d.tci_tx_audio_gain_db", tx->id,            tx->tci_tx_audio_gain_db);
   SetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   SetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
   SetPropI1("transmitter.%d.ps_oneshot",        tx->id,               tx->ps_oneshot);
@@ -429,6 +430,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropS1("transmitter.%d.microphone_name",   tx->id,               tx->microphone_name);
   GetPropI1("transmitter.%d.puresignal",        tx->id,               tx->puresignal);
   GetPropI1("transmitter.%d.auto_on",           tx->id,               tx->auto_on);
+  GetPropI1("transmitter.%d.tci_tx_audio_gain_db", tx->id,            tx->tci_tx_audio_gain_db);
   GetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   GetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
   GetPropI1("transmitter.%d.ps_oneshot",        tx->id,               tx->ps_oneshot);
@@ -1082,6 +1084,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->ps_loopdelay = 0.0;     // "CAL Wait" 0.0 sec
   tx->feedback = 0;
   tx->auto_on = 0;
+  tx->tci_tx_audio_gain_db = -3;  // default: -3db, property may override
   tx->attenuation = 0;
   tx->ctcss = 11;
   tx->ctcss_enabled = FALSE;
