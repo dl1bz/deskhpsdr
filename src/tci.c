@@ -104,6 +104,7 @@ static int tci_cw_msg_call_repeat_index = 0;
 static int tci_cw_msg_suffix_pending = 0;
 static int tci_cw_macros_delay_ms = 10;
 int tci_iq_swap = 0;
+int tci_iq_conjugate = 1;
 static gint tci_iq_stream_clients = 0;
 static int tci_iq_stream_sample_rate = 0;
 
@@ -647,6 +648,14 @@ void tci_rx_iq_block (RECEIVER *rx, const double *iq, guint frames) {
         } else {
           fs0 = (float) is;
           fs1 = (float) qs;
+        }
+        /*
+         * This only affects the outgoing TCI IQ stream. Some TCI clients expect the
+         * opposite complex spectral orientation. Conjugating here mirrors the exported
+         * spectrum without changing the internal receiver, panadapter, audio or TX paths.
+         */
+        if (tci_iq_conjugate) {
+          fs1 = -fs1;
         }
         memcpy (frame + sizeof (header) + ((i * 2) * sizeof (float)), &fs0, sizeof (float));
         memcpy (frame + sizeof (header) + (((i * 2) + 1) * sizeof (float)), &fs1, sizeof (float));
