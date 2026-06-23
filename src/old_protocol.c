@@ -51,6 +51,7 @@
 #include "radio.h"
 #include "receiver.h"
 #include "transmitter.h"
+#include "tci_audio.h"
 #include "vfo.h"
 #include "ext.h"
 #include "iambic.h"
@@ -1390,6 +1391,20 @@ static int tx_feedback_channel(void) {
   return ret;
 }
 
+static long long old_protocol_tci_afsk_tx_offset(int txmode) {
+  if (!tci_audio_tx_enabled() || active_receiver == NULL) {
+    return 0LL;
+  }
+  switch (txmode) {
+  case modeDIGL:
+    return (long long) active_receiver->digi_offset_l;
+  case modeDIGU:
+    return - (long long) active_receiver->digi_offset_u;
+  default:
+    return 0LL;
+  }
+}
+
 static long long channel_freq(int chan) {
   //
   // Return the DDC frequency associated with the current HPSDR
@@ -1433,6 +1448,7 @@ static long long channel_freq(int chan) {
     if (vfo[vfonum].xit_enabled) {
       freq += vfo[vfonum].xit;
     }
+    freq += old_protocol_tci_afsk_tx_offset(vfo[vfonum].mode);
     // if (vfo[vfonum].xit_enabled) { freq += vfo[vfonum].xit; }
     // freq += frequency_calibration - vfo[vfonum].lo;
     freq = apply_ppm_ll(freq - vfo[vfonum].lo);

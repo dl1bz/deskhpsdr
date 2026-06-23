@@ -61,6 +61,7 @@
 #include "rigctl.h"
 #include "message.h"
 #include "nw_toolset.h"
+#include "tci_audio.h"
 
 #ifdef SATURN
   #include "saturnmain.h"
@@ -790,11 +791,27 @@ static void new_protocol_general(void) {
   pthread_mutex_unlock(&general_mutex);
 }
 
+
+static long long new_protocol_tci_afsk_tx_offset(int xmit, int txmode) {
+  if (!xmit || !tci_audio_tx_enabled() || active_receiver == NULL) {
+    return 0LL;
+  }
+  switch (txmode) {
+  case modeDIGL:
+    return (long long) active_receiver->digi_offset_l;
+  case modeDIGU:
+    return - (long long) active_receiver->digi_offset_u;
+  default:
+    return 0LL;
+  }
+}
+
 static void new_protocol_high_priority(void) {
   int rxant, txant;
   long long DDCfrequency[2];  // DDC frequencies of the radio
   long long DUCfrequency;     // DUC frequency of the radio
   long long txfreq;           // frequency used for out-of-band detection
+  long long duc_txfreq;       // frequency used for the TX carrier/DUC
   long long HPFfreq;          // frequency determining the HPF filters
   long long LPFfreq;          // frequency determining the LPF filters
   long long BPFfreq;          // frequency determining the BPF filters
@@ -908,8 +925,9 @@ static void new_protocol_high_priority(void) {
   if (vfo[txvfo].xit_enabled) {
     txfreq += vfo[txvfo].xit;
   }
-  // DUCfrequency = txfreq - vfo[txvfo].lo + frequency_calibration;
-  DUCfrequency = apply_ppm_ll(txfreq - vfo[txvfo].lo);
+  duc_txfreq = txfreq + new_protocol_tci_afsk_tx_offset(xmit, txmode);
+  // DUCfrequency = duc_txfreq - vfo[txvfo].lo + frequency_calibration;
+  DUCfrequency = apply_ppm_ll(duc_txfreq - vfo[txvfo].lo);
   phase = (unsigned long)(((double) DUCfrequency) * 34.952533333333333333333333333333);
   if (xmit && transmitter->puresignal) {
     //
