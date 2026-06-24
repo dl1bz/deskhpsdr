@@ -183,4 +183,5 @@ fi
 rm -f "$ZIP"
 ditto -c -k --keepParent "$APP" "$ZIP"
 ls -lh "$ZIP"
+mv "$ZIP" "$HOME/Desktop"
 echo "OK"
