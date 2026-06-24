@@ -24,8 +24,6 @@
 extern int tci_enable;
 extern int tci_port;   // usually 40001
 extern int tci_txonly; // only report TX frequency
-extern int tci_iq_swap;
-extern int tci_iq_conjugate;
 
 void launch_tci(void);
 void shutdown_tci(void);

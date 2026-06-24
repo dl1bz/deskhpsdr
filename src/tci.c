@@ -103,8 +103,6 @@ static int tci_cw_msg_call_repeat = 1;
 static int tci_cw_msg_call_repeat_index = 0;
 static int tci_cw_msg_suffix_pending = 0;
 static int tci_cw_macros_delay_ms = 10;
-int tci_iq_swap = 0;
-int tci_iq_conjugate = 1;
 static gint tci_iq_stream_clients = 0;
 static int tci_iq_stream_sample_rate = 0;
 

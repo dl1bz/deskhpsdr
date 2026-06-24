@@ -344,6 +344,11 @@ static void tci_txaudio_gain_changed_cb(GtkComboBox *combo, gpointer data) {
   transmitter->tci_tx_audio_gain_db = tci_txaudio_index_to_gain_db(index);
 }
 
+static void btn_toggle_cb(GtkWidget *widget, gpointer data) {
+  int *value = (int*) data;
+  *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
 #ifdef PORTAUDIO
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int*) data;
@@ -712,11 +717,34 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_txonly);
   gtk_widget_show(w);
-  gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_txonly_changed_cb), NULL);
   //------------------------------------------------------------------------------------------------------------------------
-#ifdef PORTAUDIO
+  col++;
+  w = gtk_check_button_new_with_label("TCI I/Q swap");
+  gtk_widget_set_tooltip_text(w,
+                              "Swap I and Q sample order in the outgoing TCI IQ stream for client compatibility.\n\n"
+                              "Default: OFF (Change it only if required)");
+  gtk_widget_set_name(w, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_iq_swap);
+  gtk_widget_show(w);
+  gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
+  g_signal_connect(w, "toggled", G_CALLBACK(btn_toggle_cb), &tci_iq_swap);
+  //------------------------------------------------------------------------------------------------------------------------
   row++;
+  w = gtk_check_button_new_with_label("TCI I/Q conjugate");
+  gtk_widget_set_tooltip_text(w,
+                              "Invert Q in the outgoing TCI IQ stream to match clients\n"
+                              "that expect the opposite spectral orientation, e.g. SDC DIGI/CW decoding.\n\n"
+                              "Default: ON (Change it only if required)");
+  gtk_widget_set_name(w, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_iq_conjugate);
+  gtk_widget_show(w);
+  gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
+  g_signal_connect(w, "toggled", G_CALLBACK(btn_toggle_cb), &tci_iq_conjugate);
+  col--;
+  //------------------------------------------------------------------------------------------------------------------------
+#ifdef PORTAUDIO
   w = gtk_check_button_new_with_label("TCI Audio Monitor");
   gtk_widget_set_tooltip_text(w,
                               "Switch on an audio monitor for incoming TCI Audio\n"
@@ -727,6 +755,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(chkbtn_toggle_cb), &tci_audio_monitor);
 #endif
+  //------------------------------------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------------------------------------
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
