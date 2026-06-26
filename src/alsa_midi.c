@@ -65,19 +65,6 @@ static snd_rawmidi_t *midi_input[MAX_MIDI_DEVICES];
 
 static void *midi_thread(void*);
 
-static enum {
-  STATE_SKIP,             // skip bytes
-  STATE_ARG1,             // one arg byte to come
-  STATE_ARG2,             // two arg bytes to come
-} state = STATE_SKIP;
-
-static enum {
-  CMD_NOTEON,
-  CMD_NOTEOFF,
-  CMD_CTRL,
-  CMD_PITCH,
-} command;
-
 static gboolean configure = FALSE;
 
 void configure_midi_device(gboolean state) {
@@ -95,13 +82,32 @@ static void *midi_thread(void* arg) {
   unsigned short revents;
   int i;
   int chan = 0, arg1 = 0, arg2;
+  enum {
+    STATE_SKIP,             // skip bytes
+    STATE_ARG1,             // one arg byte to come
+    STATE_ARG2,             // two arg bytes to come
+  } state = STATE_SKIP;
+  enum {
+    CMD_NOTEON,
+    CMD_NOTEOFF,
+    CMD_CTRL,
+    CMD_PITCH,
+  } command = CMD_NOTEON;
   npfds = snd_rawmidi_poll_descriptors_count(input);
+  if (npfds <= 0) {
+    t_print("%s: invalid poll descriptor count for port \"%s\": %d\n", __func__, port, npfds);
+    return NULL;
+  }
   // replaced alloca by variable-length array
   struct pollfd pfds[npfds];
   //pfds = alloca(npfds * sizeof(struct pollfd));
-  snd_rawmidi_poll_descriptors(input, pfds, npfds);
+  int ret = snd_rawmidi_poll_descriptors(input, pfds, npfds);
+  if (ret < 0) {
+    t_print("%s: cannot get poll descriptors for port \"%s\": %s\n", __func__, port, snd_strerror(ret));
+    return NULL;
+  }
   for (;;) {
-    int ret = poll(pfds, npfds, 250);
+    ret = poll(pfds, npfds, 250);
     if (!midi_devices[index].active) { break; }
     if (ret < 0) {
       t_print("%s: poll failed: %s\n", __func__, strerror(errno));
@@ -109,8 +115,9 @@ static void *midi_thread(void* arg) {
       usleep(250000);
     }
     if (ret <= 0) { continue; }  // nothing arrived, do next poll()
-    if (snd_rawmidi_poll_descriptors_revents(input, pfds, npfds, &revents) < 0) {
-      t_print("%s: cannot get poll events: %s\n", __func__, snd_strerror(errno));
+    ret = snd_rawmidi_poll_descriptors_revents(input, pfds, npfds, &revents);
+    if (ret < 0) {
+      t_print("%s: cannot get poll events: %s\n", __func__, snd_strerror(ret));
       continue;
     }
     if (revents & (POLLERR | POLLHUP)) { continue; }
@@ -225,15 +232,18 @@ void register_midi_device(int index) {
     return;
   }
   snd_rawmidi_read(midi_input[index], NULL, 0);  /* trigger reading */
+  midi_devices[index].active = 1;
   ret = pthread_create(&midi_thread_id[index], NULL, midi_thread, (void*)(uintptr_t) index);
-  if (ret < 0) {
-    t_print("%s: Failed to create MIDI read thread\n", __func__);
-    if ((ret = snd_rawmidi_close(midi_input[index])) < 0) {
+  if (ret != 0) {
+    t_print("%s: Failed to create MIDI read thread: %s\n", __func__, strerror(ret));
+    midi_devices[index].active = 0;
+    ret = snd_rawmidi_close(midi_input[index]);
+    if (ret < 0) {
       t_print("%s: cannot close port: %s\n", __func__, snd_strerror(ret));
     }
+    midi_input[index] = NULL;
     return;
   }
-  midi_devices[index].active = 1;
   return;
 }
 
@@ -261,6 +271,7 @@ void close_midi_device(int index) {
   if ((ret = snd_rawmidi_close(midi_input[index])) < 0) {
     t_print("%s: cannot close port: %s\n", __func__, snd_strerror(ret));
   }
+  midi_input[index] = NULL;
 }
 
 void get_midi_devices(void) {
@@ -305,7 +316,7 @@ void get_midi_devices(void) {
         subs = 0;
       }
       //t_print("%s: Number of MIDI input devices: %d\n", __func__, subs);
-      if (!subs) { break; }
+      if (!subs) { continue; }
       // subs: number of sub-devices to device on card
       for (sub = 0; sub < subs; ++sub) {
         if (n_midi_devices >= MAX_MIDI_DEVICES) {
@@ -376,6 +387,19 @@ void get_midi_devices(void) {
     if ((ret = snd_card_next(&card)) < 0) {
       t_print("%s: cannot determine card number: %s\n", __func__, snd_strerror(ret));
       break;
+    }
+  }
+  for (int i = n_midi_devices; i < MAX_MIDI_DEVICES; i++) {
+    if (midi_devices[i].active) {
+      close_midi_device(i);
+    }
+    if (midi_devices[i].name != NULL) {
+      g_free(midi_devices[i].name);
+      midi_devices[i].name = NULL;
+    }
+    if (midi_port[i] != NULL) {
+      g_free(midi_port[i]);
+      midi_port[i] = NULL;
     }
   }
   for (int i = 0; i < n_midi_devices; i++) {

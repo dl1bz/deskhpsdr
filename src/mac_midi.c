@@ -222,7 +222,15 @@ void close_midi_device(int index) {
   //
   // This should release the resources associated with the pending connection
   //
-  MIDIPortDisconnectSource(myMIDIports[index], MIDIGetSource(index));
+  if (myMIDIports[index] != 0) {
+    MIDIPortDisconnectSource(myMIDIports[index], MIDIGetSource(index));
+    MIDIPortDispose(myMIDIports[index]);
+    myMIDIports[index] = 0;
+  }
+  if (myClients[index] != 0) {
+    MIDIClientDispose(myClients[index]);
+    myClients[index] = 0;
+  }
   midi_devices[index].active = 0;
 }
 
@@ -233,6 +241,7 @@ void register_midi_device(int index) {
   //  Register a callback routine for the device
   //
   if (index < 0 || index >= n_midi_devices) { return; }
+  if (midi_devices[index].active) { return; }
   myClients[index] = 0;
   myMIDIports[index] = 0;
   //Create client and port, and connect
@@ -244,11 +253,17 @@ void register_midi_device(int index) {
   osret = MIDIInputPortCreate(myClients[index], CFSTR("FromMIDI"), ReadMIDIdevice, NULL, &myMIDIports[index]);
   if (osret != 0) {
     t_print("%s: MIDIInputPortCreate failed with ret=%d\n", __func__, (int) osret);
+    MIDIClientDispose(myClients[index]);
+    myClients[index] = 0;
     return;
   }
   osret = MIDIPortConnectSource(myMIDIports[index], MIDIGetSource(index), NULL);
   if (osret != 0) {
     t_print("%s: MIDIPortConnectSource failed with ret=%d\n", __func__, (int) osret);
+    MIDIPortDispose(myMIDIports[index]);
+    myMIDIports[index] = 0;
+    MIDIClientDispose(myClients[index]);
+    myClients[index] = 0;
     return;
   }
   //
@@ -293,8 +308,10 @@ void get_midi_devices(void) {
     MIDIEndpointRef dev = MIDIGetSource(i);
     if (dev != 0) {
       osret = MIDIObjectGetStringProperty(dev, kMIDIPropertyName, &pname);
-      if (osret != 0) { break; } // in this case pname is invalid
-      CFStringGetCString(pname, name, sizeof(name), 0);
+      if (osret != 0) { continue; } // in this case pname is invalid
+      if (!CFStringGetCString(pname, name, sizeof(name), kCFStringEncodingUTF8)) {
+        snprintf(name, sizeof(name), "NoPort%d", n_midi_devices);
+      }
       CFRelease(pname);
       //
       // Some users have reported that MacOS reports a string of length zero

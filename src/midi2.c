@@ -66,6 +66,10 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
   if (event == MIDI_PITCH) {
     desc = MidiCommandsTable[128];
   } else {
+    if (note < 0 || note > 127) {
+      t_print("%s: invalid MIDI note/controller index=%d\n", __func__, note);
+      return;
+    }
     desc = MidiCommandsTable[note];
   }
   //t_print("%s: init DESC=%p\n",__func__,desc);
@@ -145,7 +149,8 @@ void MidiReleaseCommands(void) {
 
 void MidiAddCommand(int note, struct desc *desc) {
   struct desc *loop;
-  if (note < 0 || note > 128) { return; }
+  if (note < 0 || note > 128 || desc == NULL) { return; }
+  desc->next = NULL;
   //
   // Actions with channel == -1 (ANY) must go to the end of the list
   //
