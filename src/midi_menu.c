@@ -226,11 +226,11 @@ static void row_inserted_cb(GtkTreeModel *tree_model, GtkTreePath *path, GtkTree
 }
 
 static void tree_selection_changed_cb(GtkTreeSelection *selection, gpointer data) {
-  char *str_event;
-  char *str_channel;
-  char *str_note;
-  char *str_type;
-  char *str_action;
+  char *str_event = NULL;
+  char *str_channel = NULL;
+  char *str_note = NULL;
+  char *str_type = NULL;
+  char *str_action = NULL;
   gtk_widget_set_sensitive(delete_b, FALSE);
   gtk_widget_set_sensitive(clear_b, FALSE);
   if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
@@ -259,11 +259,20 @@ static void tree_selection_changed_cb(GtkTreeSelection *selection, gpointer data
       }
       updatePanel(UPDATE_EXISTING);
     }
+    g_free(str_event);
+    g_free(str_channel);
+    g_free(str_note);
+    g_free(str_type);
+    g_free(str_action);
   }
 }
 
 static void find_current_cmd(void) {
   struct desc *cmd;
+  if (thisNote < 0 || thisNote > 128) {
+    current_cmd = NULL;
+    return;
+  }
   cmd = MidiCommandsTable[thisNote];
   //
   // Find the first command in the MIDI table which has the same channel
@@ -409,6 +418,10 @@ static void updateDescription(void) {
     // This is a new Note/Event combination, so we need a new entry
     //
     current_cmd = (struct desc*) malloc(sizeof(struct desc));
+    if (current_cmd == NULL) {
+      t_print("%s: failed to allocate MIDI command descriptor\n", __func__);
+      return;
+    }
     current_cmd->next = NULL;
     addFlag = 1;
   }
@@ -463,6 +476,10 @@ static void delete_cb(GtkButton *widget, GdkEventButton *event, gpointer user_da
   //t_print("%s: thisNote=%d current_cmd=%p\n", __func__, thisNote, current_cmd);
   if (current_cmd == NULL) {
     t_print("%s: current_cmd is NULL!\n", __func__);
+    return;
+  }
+  if (thisNote < 0 || thisNote > 128) {
+    t_print("%s: invalid MIDI note/controller index=%d\n", __func__, thisNote);
     return;
   }
   // remove from MidiCommandsTable
@@ -909,12 +926,15 @@ int ProcessNewMidiConfigureEvent (void* data) {
   int  channel = mydata->channel;
   int  note = mydata->note;
   int  val = mydata->val;
-  char *str_event;
-  char *str_channel;
-  char *str_note;
-  char *str_type;
-  char *str_action;
+  char *str_event = NULL;
+  char *str_channel = NULL;
+  char *str_note = NULL;
+  char *str_type = NULL;
+  char *str_action = NULL;
   g_free (data);
+  if (dialog == NULL) {
+    return 0;
+  }
   if (event == thisEvent && channel == thisChannel && note == thisNote) {
     thisVal = val;
     if (val < thisMin) { thisMin = val; }
@@ -976,13 +996,30 @@ int ProcessNewMidiConfigureEvent (void* data) {
               break;
             }
           }
-          gtk_tree_view_set_cursor (GTK_TREE_VIEW (view), gtk_tree_model_get_path (model, &iter), NULL, FALSE);
+          GtkTreePath *path = gtk_tree_model_get_path (model, &iter);
+          gtk_tree_view_set_cursor (GTK_TREE_VIEW (view), path, NULL, FALSE);
+          gtk_tree_path_free (path);
           updatePanel (UPDATE_EXISTING);
           gtk_widget_set_sensitive (delete_b, TRUE);
           gtk_widget_set_sensitive (clear_b, TRUE);
+          g_free (str_event);
+          g_free (str_channel);
+          g_free (str_note);
+          g_free (str_type);
+          g_free (str_action);
           return 0;
         }
       }
+      g_free (str_event);
+      g_free (str_channel);
+      g_free (str_note);
+      g_free (str_type);
+      g_free (str_action);
+      str_event = NULL;
+      str_channel = NULL;
+      str_note = NULL;
+      str_type = NULL;
+      str_action = NULL;
       valid = gtk_tree_model_iter_next (model, &iter);
     }
     //
@@ -995,6 +1032,12 @@ int ProcessNewMidiConfigureEvent (void* data) {
 
 void NewMidiConfigureEvent (enum MIDIevent event, int channel, int note, int val) {
   if (ignore_incoming_events) {
+    return;
+  }
+  if (event == MIDI_PITCH) {
+    note = 128;
+  } else if (note < 0 || note > 127) {
+    t_print("%s: invalid MIDI note/controller index=%d\n", __func__, note);
     return;
   }
   //
@@ -1152,6 +1195,10 @@ void midiRestoreState (void) {
       // Construct descriptor and add to the list of MIDI commands
       //
       struct desc *desc = (struct desc*) malloc (sizeof (struct desc));
+      if (desc == NULL) {
+        t_print ("%s: failed to allocate MIDI command descriptor\n", __func__);
+        return;
+      }
       desc->next     = NULL;
       desc->action   = action; // MIDIaction
       desc->type     = type;   // MIDItype

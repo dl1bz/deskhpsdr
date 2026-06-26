@@ -226,9 +226,12 @@ static void *midi_thread(void* arg) {
 void register_midi_device(int index) {
   int ret = 0;
   if (index < 0 || index >= n_midi_devices) { return; }
+  if (midi_input[index] != NULL) { return; }
   t_print("%s: open MIDI device %d\n", __func__, index);
   if ((ret = snd_rawmidi_open(&midi_input[index], NULL, midi_port[index], SND_RAWMIDI_NONBLOCK)) < 0) {
     t_print("%s: cannot open port \"%s\": %s\n", __func__, midi_port[index], snd_strerror(ret));
+    midi_devices[index].active = 0;
+    midi_input[index] = NULL;
     return;
   }
   snd_rawmidi_read(midi_input[index], NULL, 0);  /* trigger reading */
@@ -251,7 +254,7 @@ void close_midi_device(int index) {
   int ret;
   t_print("%s: index=%d\n", __func__, index);
   if (index < 0 || index >= MAX_MIDI_DEVICES) { return; }
-  if (midi_devices[index].active == 0) { return; }
+  if (midi_devices[index].active == 0 && midi_input[index] == NULL) { return; }
   //
   // Note that if this is called from get_midi_devices(),
   // the port and device names do exist but may be wrong.
@@ -262,16 +265,18 @@ void close_midi_device(int index) {
   //
   // wait for thread to complete
   //
-  ret = pthread_join(midi_thread_id[index], NULL);
-  if (ret  != 0)  {
-    t_print("%s: cannot join: %s\n", __func__, strerror(ret));
+  if (midi_input[index] != NULL) {
+    ret = pthread_join(midi_thread_id[index], NULL);
+    if (ret  != 0)  {
+      t_print("%s: cannot join: %s\n", __func__, strerror(ret));
+    }
+    //
+    // Close MIDI device
+    if ((ret = snd_rawmidi_close(midi_input[index])) < 0) {
+      t_print("%s: cannot close port: %s\n", __func__, snd_strerror(ret));
+    }
+    midi_input[index] = NULL;
   }
-  //
-  // Close MIDI device
-  if ((ret = snd_rawmidi_close(midi_input[index])) < 0) {
-    t_print("%s: cannot close port: %s\n", __func__, snd_strerror(ret));
-  }
-  midi_input[index] = NULL;
 }
 
 void get_midi_devices(void) {
@@ -291,7 +296,11 @@ void get_midi_devices(void) {
     snprintf(portname, 64, "hw:%d", card);
     if ((ret = snd_ctl_open(&ctl, portname, 0)) < 0) {
       t_print("%s: cannot open control for card %d: %s\n", __func__, card, snd_strerror(ret));
-      return;
+      if ((ret = snd_card_next(&card)) < 0) {
+        t_print("%s: cannot determine card number: %s\n", __func__, snd_strerror(ret));
+        break;
+      }
+      continue;
     }
     device = -1;
     // loop through devices of the card

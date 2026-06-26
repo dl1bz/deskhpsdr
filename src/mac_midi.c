@@ -241,7 +241,7 @@ void register_midi_device(int index) {
   //  Register a callback routine for the device
   //
   if (index < 0 || index >= n_midi_devices) { return; }
-  if (midi_devices[index].active) { return; }
+  if (myClients[index] != 0 || myMIDIports[index] != 0) { return; }
   myClients[index] = 0;
   myMIDIports[index] = 0;
   //Create client and port, and connect
