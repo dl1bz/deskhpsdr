@@ -88,49 +88,54 @@ int running;
 // That is, we look at each MIDI byte separately
 //
 
-static enum {
+typedef enum {
   STATE_SKIP,             // skip bytes until command bit is set
   STATE_ARG1,             // one arg byte to come
   STATE_ARG2,             // two arg bytes to come
-} state = STATE_SKIP;
+} MIDI_PARSE_STATE;
 
-static enum {
+typedef enum {
   CMD_NOTEON,
   CMD_NOTEOFF,
   CMD_CTRL,
   CMD_PITCH,
-} command;
+} MIDI_PARSE_COMMAND;
+
+static MIDI_PARSE_STATE parse_state[MAX_MIDI_DEVICES];
+static MIDI_PARSE_COMMAND parse_command[MAX_MIDI_DEVICES];
+static int parse_chan[MAX_MIDI_DEVICES];
+static int parse_arg1[MAX_MIDI_DEVICES];
 
 static gboolean configure = FALSE;
 
 static void ReadMIDIdevice(const MIDIPacketList *pktlist, void* refCon, void* connRefCon) {
+  int index = GPOINTER_TO_INT(connRefCon);
+  if (index < 0 || index >= MAX_MIDI_DEVICES) { return; }
   MIDIPacket *packet = (MIDIPacket*) pktlist->packet;
-  int chan = 0;
-  int arg1 = 0;
   int arg2 = 0;
   // loop through all packets in the current list
   for (unsigned int j = 0; j < pktlist->numPackets; ++j) {
     for (int i = 0; i < packet->length; i++) {
       int byte = packet->data[i];
-      switch (state) {
+      switch (parse_state[index]) {
       case STATE_SKIP:
-        chan = byte & 0x0F;
+        parse_chan[index] = byte & 0x0F;
         switch (byte & 0xF0) {
         case 0x80:      // Note-OFF command
-          command = CMD_NOTEOFF;
-          state = STATE_ARG2;
+          parse_command[index] = CMD_NOTEOFF;
+          parse_state[index] = STATE_ARG2;
           break;
         case 0x90:      // Note-ON command
-          command = CMD_NOTEON;
-          state = STATE_ARG2;
+          parse_command[index] = CMD_NOTEON;
+          parse_state[index] = STATE_ARG2;
           break;
         case 0xB0:      // Controller Change
-          command = CMD_CTRL;
-          state = STATE_ARG2;
+          parse_command[index] = CMD_CTRL;
+          parse_state[index] = STATE_ARG2;
           break;
         case 0xE0:      // Pitch Bend
-          command = CMD_PITCH;
-          state = STATE_ARG2;
+          parse_command[index] = CMD_PITCH;
+          parse_state[index] = STATE_ARG2;
           break;
         case 0xA0:      // Polyphonic Pressure: skip args
         case 0xC0:      // Program change: skip args
@@ -141,13 +146,13 @@ static void ReadMIDIdevice(const MIDIPacketList *pktlist, void* refCon, void* co
         }
         break;
       case STATE_ARG2:        // store byte as first argument
-        arg1 = byte;
-        state = STATE_ARG1;
+        parse_arg1[index] = byte;
+        parse_state[index] = STATE_ARG1;
         break;
       case STATE_ARG1:        // store byte as second argument, process command
         arg2 = byte;
         // We have a command!
-        switch (command) {
+        switch (parse_command[index]) {
         case CMD_NOTEON:
           // Some controllers generate NoteOn
           // messages with velocity == 0 when releasing
@@ -155,23 +160,23 @@ static void ReadMIDIdevice(const MIDIPacketList *pktlist, void* refCon, void* co
           // a note-off event
           if (arg2 == 0) {
             if (configure) {
-              NewMidiConfigureEvent(MIDI_NOTE, chan, arg1, 0);
+              NewMidiConfigureEvent(MIDI_NOTE, parse_chan[index], parse_arg1[index], 0);
             } else {
-              NewMidiEvent(MIDI_NOTE, chan, arg1, 0);
+              NewMidiEvent(MIDI_NOTE, parse_chan[index], parse_arg1[index], 0);
             }
           } else {
             if (configure) {
-              NewMidiConfigureEvent(MIDI_NOTE, chan, arg1, 1);
+              NewMidiConfigureEvent(MIDI_NOTE, parse_chan[index], parse_arg1[index], 1);
             } else {
-              NewMidiEvent(MIDI_NOTE, chan, arg1, 1);
+              NewMidiEvent(MIDI_NOTE, parse_chan[index], parse_arg1[index], 1);
             }
           }
           break;
         case CMD_NOTEOFF:
           if (configure) {
-            NewMidiConfigureEvent(MIDI_NOTE, chan, arg1, 0);
+            NewMidiConfigureEvent(MIDI_NOTE, parse_chan[index], parse_arg1[index], 0);
           } else {
-            NewMidiEvent(MIDI_NOTE, chan, arg1, 0);
+            NewMidiEvent(MIDI_NOTE, parse_chan[index], parse_arg1[index], 0);
           }
           break;
         case CMD_CTRL:
@@ -181,24 +186,24 @@ static void ReadMIDIdevice(const MIDIPacketList *pktlist, void* refCon, void* co
           // the least significant bits of a 14-bit argument.
           // Here we only use the most signifcant 7 bits.
           //
-          if (!midiIgnoreCtrlPairs || arg1 < 32 || arg1 >= 64) {
+          if (!midiIgnoreCtrlPairs || parse_arg1[index] < 32 || parse_arg1[index] >= 64) {
             if (configure) {
-              NewMidiConfigureEvent(MIDI_CTRL, chan, arg1, arg2);
+              NewMidiConfigureEvent(MIDI_CTRL, parse_chan[index], parse_arg1[index], arg2);
             } else {
-              NewMidiEvent(MIDI_CTRL, chan, arg1, arg2);
+              NewMidiEvent(MIDI_CTRL, parse_chan[index], parse_arg1[index], arg2);
             }
           }
           break;
         case CMD_PITCH:
           // PitchBend event with a 14-bit value
           if (configure) {
-            NewMidiConfigureEvent(MIDI_PITCH, chan, 0, arg1 + 128 * arg2);
+            NewMidiConfigureEvent(MIDI_PITCH, parse_chan[index], 0, parse_arg1[index] + 128 * arg2);
           } else {
-            NewMidiEvent(MIDI_PITCH, chan, 0, arg1 + 128 * arg2);
+            NewMidiEvent(MIDI_PITCH, parse_chan[index], 0, parse_arg1[index] + 128 * arg2);
           }
           break;
         }
-        state = STATE_SKIP;
+        parse_state[index] = STATE_SKIP;
         break;
       }
     } // i-loop through the packet
@@ -214,24 +219,32 @@ static void ReadMIDIdevice(const MIDIPacketList *pktlist, void* refCon, void* co
 //
 static MIDIPortRef myMIDIports[MAX_MIDI_DEVICES];
 static MIDIClientRef myClients[MAX_MIDI_DEVICES];
+static MIDIEndpointRef mySources[MAX_MIDI_DEVICES];
 
 void close_midi_device(int index) {
   t_print("%s index=%d\n", __func__, index);
   if (index < 0 || index >= MAX_MIDI_DEVICES) { return; }
-  if (midi_devices[index].active == 0) { return; }
+  if (midi_devices[index].active == 0 && myMIDIports[index] == 0 && myClients[index] == 0) { return; }
   //
   // This should release the resources associated with the pending connection
   //
   if (myMIDIports[index] != 0) {
-    MIDIPortDisconnectSource(myMIDIports[index], MIDIGetSource(index));
+    if (mySources[index] != 0) {
+      MIDIPortDisconnectSource(myMIDIports[index], mySources[index]);
+    }
     MIDIPortDispose(myMIDIports[index]);
     myMIDIports[index] = 0;
+    mySources[index] = 0;
   }
   if (myClients[index] != 0) {
     MIDIClientDispose(myClients[index]);
     myClients[index] = 0;
   }
   midi_devices[index].active = 0;
+  parse_state[index] = STATE_SKIP;
+  parse_command[index] = CMD_NOTEON;
+  parse_chan[index] = 0;
+  parse_arg1[index] = 0;
 }
 
 void register_midi_device(int index) {
@@ -244,10 +257,18 @@ void register_midi_device(int index) {
   if (myClients[index] != 0 || myMIDIports[index] != 0) { return; }
   myClients[index] = 0;
   myMIDIports[index] = 0;
+  mySources[index] = 0;
+  MIDIEndpointRef source = MIDIGetSource(index);
+  if (source == 0) {
+    t_print("%s: MIDIGetSource failed for index=%d\n", __func__, index);
+    midi_devices[index].active = 0;
+    return;
+  }
   //Create client and port, and connect
   osret = MIDIClientCreate(CFSTR("deskHPSDR"), NULL, NULL, &myClients[index]);
   if (osret != 0) {
     t_print("%s: MIDIClientCreate failed with ret=%d\n", __func__, (int) osret);
+    midi_devices[index].active = 0;
     return;
   }
   osret = MIDIInputPortCreate(myClients[index], CFSTR("FromMIDI"), ReadMIDIdevice, NULL, &myMIDIports[index]);
@@ -255,20 +276,23 @@ void register_midi_device(int index) {
     t_print("%s: MIDIInputPortCreate failed with ret=%d\n", __func__, (int) osret);
     MIDIClientDispose(myClients[index]);
     myClients[index] = 0;
+    midi_devices[index].active = 0;
     return;
   }
-  osret = MIDIPortConnectSource(myMIDIports[index], MIDIGetSource(index), NULL);
+  osret = MIDIPortConnectSource(myMIDIports[index], source, GINT_TO_POINTER(index));
   if (osret != 0) {
     t_print("%s: MIDIPortConnectSource failed with ret=%d\n", __func__, (int) osret);
     MIDIPortDispose(myMIDIports[index]);
     myMIDIports[index] = 0;
     MIDIClientDispose(myClients[index]);
     myClients[index] = 0;
+    midi_devices[index].active = 0;
     return;
   }
   //
   // Now we have successfully opened the device.
   //
+  mySources[index] = source;
   midi_devices[index].active = 1;
   return;
 }
@@ -289,6 +313,10 @@ void get_midi_devices(void) {
     for (i = 0; i < MAX_MIDI_DEVICES; i++) {
       midi_devices[i].name = NULL;
       midi_devices[i].active = 0;
+      parse_state[i] = STATE_SKIP;
+      parse_command[i] = CMD_NOTEON;
+      parse_chan[i] = 0;
+      parse_arg1[i] = 0;
     }
   }
   //
@@ -326,7 +354,7 @@ void get_midi_devices(void) {
           // This slot was occupied and the names do not match:
           // Close device (if active), insert new name
           //
-          if (midi_devices[n_midi_devices].active) {
+          if (midi_devices[n_midi_devices].active || myMIDIports[n_midi_devices] != 0 || myClients[n_midi_devices] != 0) {
             close_midi_device(n_midi_devices);
           }
           g_free(midi_devices[n_midi_devices].name);
@@ -359,7 +387,7 @@ void get_midi_devices(void) {
   // (this happens in the case of hot-unplugging)
   //
   for (i = n_midi_devices; i < MAX_MIDI_DEVICES; i++) {
-    if (midi_devices[i].active) {
+    if (midi_devices[i].active || myMIDIports[i] != 0 || myClients[i] != 0) {
       close_midi_device(i);
     }
     if (midi_devices[i].name != NULL) {

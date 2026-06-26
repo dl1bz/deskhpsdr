@@ -96,6 +96,7 @@ static void *midi_thread(void* arg) {
   npfds = snd_rawmidi_poll_descriptors_count(input);
   if (npfds <= 0) {
     t_print("%s: invalid poll descriptor count for port \"%s\": %d\n", __func__, port, npfds);
+    midi_devices[index].active = 0;
     return NULL;
   }
   // replaced alloca by variable-length array
@@ -104,6 +105,7 @@ static void *midi_thread(void* arg) {
   int ret = snd_rawmidi_poll_descriptors(input, pfds, npfds);
   if (ret < 0) {
     t_print("%s: cannot get poll descriptors for port \"%s\": %s\n", __func__, port, snd_strerror(ret));
+    midi_devices[index].active = 0;
     return NULL;
   }
   for (;;) {
@@ -118,9 +120,14 @@ static void *midi_thread(void* arg) {
     ret = snd_rawmidi_poll_descriptors_revents(input, pfds, npfds, &revents);
     if (ret < 0) {
       t_print("%s: cannot get poll events: %s\n", __func__, snd_strerror(ret));
-      continue;
+      midi_devices[index].active = 0;
+      break;
     }
-    if (revents & (POLLERR | POLLHUP)) { continue; }
+    if (revents & (POLLERR | POLLHUP)) {
+      t_print("%s: port \"%s\" reported poll error/hangup\n", __func__, port);
+      midi_devices[index].active = 0;
+      break;
+    }
     if (!(revents & POLLIN)) { continue; }
     // something has arrived
     ret = snd_rawmidi_read(input, buf, sizeof(buf));
@@ -351,39 +358,32 @@ void get_midi_devices(void) {
           devnam = subnam;
         }
         //
-        // If the name was already present at the same position, just keep
-        // it and do nothing.
-        // If the names do not match and the slot is occupied by a opened device,
-        // close it first
+        // If the name/port is unchanged at the same position, keep the
+        // existing strings and the running thread. If either changes, close
+        // the old device before replacing midi_port[], because the MIDI
+        // thread keeps a local pointer to that string for diagnostics.
         //
         int match = 1;
-        if (midi_devices[n_midi_devices].name == NULL) {
-          midi_devices[n_midi_devices].name = g_strdup(devnam);
+        if (midi_devices[n_midi_devices].name == NULL ||
+            strcmp(devnam, midi_devices[n_midi_devices].name) != 0) {
           match = 0;
-        } else {
-          if (strcmp(devnam, midi_devices[n_midi_devices].name)) {
-            g_free(midi_devices[n_midi_devices].name);
-            midi_devices[n_midi_devices].name = g_strdup(devnam);
-            match = 0;
-          }
         }
-        if (midi_port[n_midi_devices] == NULL) {
-          midi_port[n_midi_devices] = g_strdup(portname);
+        if (midi_port[n_midi_devices] == NULL ||
+            strcmp(midi_port[n_midi_devices], portname) != 0) {
           match = 0;
-        } else {
-          if (strcmp(midi_port[n_midi_devices], portname)) {
-            g_free(midi_port[n_midi_devices]);
-            midi_port[n_midi_devices] = g_strdup(portname);
-            match = 0;
-          }
         }
-        //
-        // Close MIDI device if it was open, except if the device is
-        // the same as before. In this case, just let the thread
-        // proceed
-        //
-        if (match == 0 && midi_devices[n_midi_devices].active) {
+        if (match == 0 && (midi_devices[n_midi_devices].active || midi_input[n_midi_devices] != NULL)) {
           close_midi_device(n_midi_devices);
+        }
+        if (midi_devices[n_midi_devices].name == NULL ||
+            strcmp(devnam, midi_devices[n_midi_devices].name) != 0) {
+          g_free(midi_devices[n_midi_devices].name);
+          midi_devices[n_midi_devices].name = g_strdup(devnam);
+        }
+        if (midi_port[n_midi_devices] == NULL ||
+            strcmp(midi_port[n_midi_devices], portname) != 0) {
+          g_free(midi_port[n_midi_devices]);
+          midi_port[n_midi_devices] = g_strdup(portname);
         }
         n_midi_devices++;
       }
@@ -399,7 +399,7 @@ void get_midi_devices(void) {
     }
   }
   for (int i = n_midi_devices; i < MAX_MIDI_DEVICES; i++) {
-    if (midi_devices[i].active) {
+    if (midi_devices[i].active || midi_input[i] != NULL) {
       close_midi_device(i);
     }
     if (midi_devices[i].name != NULL) {

@@ -189,7 +189,7 @@ static void update_wheelparams(gpointer user_data) {
 
 static void type_changed_cb(GtkWidget *widget, gpointer data) {
   // update actions available for the type
-  const gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
+  gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
   if (type == NULL) {
     //
     // This happens if the combo-box is cleared in updatePanel()
@@ -206,6 +206,7 @@ static void type_changed_cb(GtkWidget *widget, gpointer data) {
   }
   gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
   update_wheelparams(NULL);
+  g_free(type);
 }
 
 static gboolean action_cb(GtkWidget *widget, gpointer data) {
@@ -358,6 +359,12 @@ static void wheelparam_cb(GtkWidget *widget, gpointer user_data) {
 static void clear_cb(GtkWidget *widget, gpointer user_data) {
   gtk_list_store_clear(store);
   MidiReleaseCommands();
+  current_cmd = NULL;
+  thisEvent = EVENT_NONE;
+  thisType = TYPE_NONE;
+  thisAction = NO_ACTION;
+  gtk_widget_set_sensitive(delete_b, FALSE);
+  gtk_widget_set_sensitive(clear_b, FALSE);
 }
 
 static void add_store(int key, const struct desc *cmd) {
@@ -395,7 +402,7 @@ static void add_store(int key, const struct desc *cmd) {
 static void load_store(void) {
   struct desc *cmd;
   gtk_list_store_clear(store);
-  for (int i = 127; i >= 0; i--) {
+  for (int i = 128; i >= 0; i--) {
     cmd = MidiCommandsTable[i];
     while (cmd != NULL) {
       add_store(i, cmd);
@@ -408,6 +415,14 @@ static void updateDescription(void) {
   char str_channel[64];
   char str_note[64];
   int  addFlag = 0;
+  if (thisNote < 0 || thisNote > 128) {
+    t_print("%s: invalid MIDI note/controller index=%d\n", __func__, thisNote);
+    return;
+  }
+  if (thisAction < 0 || thisAction >= ACTIONS) {
+    t_print("%s: invalid MIDI action index=%d\n", __func__, thisAction);
+    return;
+  }
   //
   // Add or update a command, both in the MIDI data base and in the
   // sub-window
@@ -489,6 +504,10 @@ static void delete_cb(GtkButton *widget, GdkEventButton *event, gpointer user_da
     current_cmd = NULL;
   } else {
     previous_cmd = MidiCommandsTable[thisNote];
+    if (previous_cmd == NULL) {
+      current_cmd = NULL;
+      return;
+    }
     while (previous_cmd->next != NULL) {
       next_cmd = previous_cmd->next;
       if (next_cmd == current_cmd) {
@@ -1067,6 +1086,9 @@ void midiSaveState (void) {
   int i;
   entry = 0;
   SetPropI0 ("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
+  for (i = 0; i < MAX_MIDI_DEVICES; i++) {
+    SetPropS1 ("mididevice[%d].name", i, "NO_MIDI_DEVICE_FOUND");
+  }
   for (i = 0; i < n_midi_devices; i++) {
     if (midi_devices[i].active) {
       SetPropS1 ("mididevice[%d].name", entry, midi_devices[i].name);
@@ -1104,11 +1126,9 @@ void midiSaveState (void) {
       }
       cmd = cmd->next;
     }
-    if (entry != -1) {
-      snprintf (name, 128, "midi[%d].entries", i);
-      snprintf (value, 128, "%d", entry + 1);
-      setProperty (name, value);
-    }
+    snprintf (name, 128, "midi[%d].entries", i);
+    snprintf (value, 128, "%d", entry + 1);
+    setProperty (name, value);
   }
 }
 
@@ -1161,6 +1181,9 @@ void midiRestoreState (void) {
       type  = String2Type (str);
       action = NO_ACTION;
       GetPropA3 ("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
+      if (event == EVENT_NONE || type == TYPE_NONE || action < 0 || action >= ACTIONS) {
+        continue;
+      }
       //
       // Look for "wheel" parameters. For those not found,
       // use default value
