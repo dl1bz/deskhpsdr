@@ -116,7 +116,7 @@ static void *midi_thread(void* arg) {
     if (revents & (POLLERR | POLLHUP)) { continue; }
     if (!(revents & POLLIN)) { continue; }
     // something has arrived
-    ret = snd_rawmidi_read(input, buf, 64);
+    ret = snd_rawmidi_read(input, buf, sizeof(buf));
     if (ret == 0) { continue; }
     if (ret < 0) {
       t_print("%s: cannot read from port \"%s\": %s\n", __func__, port, snd_strerror(ret));
@@ -285,6 +285,9 @@ void get_midi_devices(void) {
     device = -1;
     // loop through devices of the card
     for (;;) {
+      if (n_midi_devices >= MAX_MIDI_DEVICES) {
+        break;
+      }
       if ((ret = snd_ctl_rawmidi_next_device(ctl, &device)) < 0) {
         t_print("%s: cannot determine device number: %s\n", __func__, snd_strerror(ret));
         break;
@@ -305,6 +308,9 @@ void get_midi_devices(void) {
       if (!subs) { break; }
       // subs: number of sub-devices to device on card
       for (sub = 0; sub < subs; ++sub) {
+        if (n_midi_devices >= MAX_MIDI_DEVICES) {
+          break;
+        }
         snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
         snd_rawmidi_info_set_subdevice(info, sub);
         ret = snd_ctl_rawmidi_info(ctl, info);
@@ -363,6 +369,9 @@ void get_midi_devices(void) {
       }
     }
     snd_ctl_close(ctl);
+    if (n_midi_devices >= MAX_MIDI_DEVICES) {
+      break;
+    }
     // next card
     if ((ret = snd_card_next(&card)) < 0) {
       t_print("%s: cannot determine card number: %s\n", __func__, snd_strerror(ret));
