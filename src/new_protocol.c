@@ -1767,6 +1767,13 @@ void new_protocol_menu_start(void) {
   micsamples_sequence = 0;
   audio_sequence = 0;
   tx_iq_sequence = 0;
+  pthread_mutex_lock(&send_rxaudio_mutex);
+  rxaudio_inptr = 0;
+  rxaudio_outptr = 0;
+  rxaudio_count = 0;
+  rxaudio_drain = 0;
+  rxaudio_flag = 0;
+  pthread_mutex_unlock(&send_rxaudio_mutex);
   memset(rxcase, 0, sizeof(rxcase));
   memset(rxid, 0, sizeof(rxid));
   memset(ddc_sequence, 0, sizeof(ddc_sequence));
@@ -1915,6 +1922,12 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
         t_print("sendto socket failed for %ld bytes of audio: %d\n", (long) sizeof(audiobuffer), rc);
       }
     }
+  }
+  if (rxaudio_inptr != rxaudio_outptr || rxaudio_count != 0 || rxaudio_drain) {
+    t_print("%s: discarding queued RX audio on exit\n", __func__);
+    rxaudio_outptr = rxaudio_inptr;
+    rxaudio_count = 0;
+    rxaudio_drain = 0;
   }
   return NULL;
 }
@@ -2667,8 +2680,12 @@ void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sa
       // to minimize CW side tone latency (17 msec measured on my ANAN-7000).
       //
       rxaudio_drain = 1;
-      while (rxaudio_inptr != rxaudio_outptr) { usleep(1000); }
+      while (P2running && rxaudio_inptr != rxaudio_outptr) { usleep(1000); }
       rxaudio_drain = 0;
+      if (!P2running) {
+        pthread_mutex_unlock(&send_rxaudio_mutex);
+        return;
+      }
       rxaudio_flag = 1;
     }
     int iptr = rxaudio_inptr + 4 * rxaudio_count;
