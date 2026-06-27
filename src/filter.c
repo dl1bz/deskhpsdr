@@ -140,9 +140,9 @@ static FILTER filterDIGL[FILTERS] = {
   {-1750, -1250, "500"},
   {-1625, -1375, "250"},
   {-2300, -700, "FreeDV/RADEV1"},
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, ""},  // placeholder, will be ignored
+  {-2500, -1900, "RTTY-W"},
+  {-2420, -2000, "RTTY-N"},
+  {-2370, -2050, "RTTY-S"},
   {0, 0, ""},  // placeholder, will be ignored
   {DIGL_VAR1_DEFAULT_LOW, DIGL_VAR1_DEFAULT_HIGH, "Var1"},
   {DIGL_VAR2_DEFAULT_LOW, DIGL_VAR2_DEFAULT_HIGH, "Var2"}
@@ -160,9 +160,9 @@ static FILTER filterDIGU[FILTERS] = {
   {1250, 1750, "500"},
   {1375, 1625, "250"},
   { 700, 2300, "FreeDV/RADEV1"},
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, ""},  // placeholder, will be ignored
-  {0, 0, ""},  // placeholder, will be ignored
+  {1200, 1850, "RTTY-W"},
+  {1300, 1800, "RTTY-N"},
+  {1400, 1750, "RTTY-S"},
   {0, 0, ""},  // placeholder, will be ignored
   {DIGU_VAR1_DEFAULT_LOW, DIGU_VAR1_DEFAULT_HIGH, "Var1"},
   {DIGU_VAR2_DEFAULT_LOW, DIGU_VAR2_DEFAULT_HIGH, "Var2"}

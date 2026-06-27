@@ -885,9 +885,22 @@ void rx_panadapter_update (RECEIVER *rx) {
   } else if (mode == modeCWL) {
     filter_low += (double) cw_keyer_sidetone_frequency;
     filter_high += (double) cw_keyer_sidetone_frequency;
+  } else if (mode == modeDIGU) {
+    filter_low -= (double) rx->digi_offset_u;
+    filter_high -= (double) rx->digi_offset_u;
+  } else if (mode == modeDIGL) {
+    filter_low = - (filter_low + (double) rx->digi_offset_l);
+    filter_high = - (filter_high + (double) rx->digi_offset_l);
   }
   double filter_left = vfofreq + ((filter_low + offset) / HzPerPixel);
   double filter_right = vfofreq + ((filter_high + offset) / HzPerPixel);
+
+  if (filter_right < filter_left) {
+    double tmp = filter_left;
+    filter_left = filter_right;
+    filter_right = tmp;
+  }
+
   cairo_rectangle (cr, filter_left, 0.0, filter_right - filter_left, myheight);
   cairo_fill (cr);
   //----------------------------------------------------------------------------------------------
