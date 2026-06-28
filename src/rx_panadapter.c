@@ -894,13 +894,11 @@ void rx_panadapter_update (RECEIVER *rx) {
   }
   double filter_left = vfofreq + ((filter_low + offset) / HzPerPixel);
   double filter_right = vfofreq + ((filter_high + offset) / HzPerPixel);
-
   if (filter_right < filter_left) {
     double tmp = filter_left;
     filter_left = filter_right;
     filter_right = tmp;
   }
-
   cairo_rectangle (cr, filter_left, 0.0, filter_right - filter_left, myheight);
   cairo_fill (cr);
   //----------------------------------------------------------------------------------------------

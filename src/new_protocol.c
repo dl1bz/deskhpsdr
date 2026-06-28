@@ -1913,13 +1913,32 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
       }
       FIFO += 64.0;  // number of samples in THIS packet
-      int rc = sendto(data_socket, audiobuffer, sizeof(audiobuffer), 0, (struct sockaddr*) &audio_addr, audio_addr_length);
+      ssize_t rc = p2_sendto_route_retry(data_socket,
+                                         audiobuffer,
+                                         sizeof(audiobuffer),
+                                         0,
+                                         (struct sockaddr*) &audio_addr,
+                                         audio_addr_length,
+                                         "new_protocol_rxaudio_thread");
       if (rc < 0) {
+        int err = errno;
+        t_print("%s: sendto socket failed for %ld bytes of audio: errno=%d (%s)\n",
+                __func__,
+                (long) sizeof(audiobuffer),
+                err,
+                strerror(err));
         g_idle_add(fatal_error, "Audio send failed (Network down?)");
         P2running = 0;
+        break;
       }
-      if (rc != sizeof(audiobuffer)) {
-        t_print("sendto socket failed for %ld bytes of audio: %d\n", (long) sizeof(audiobuffer), rc);
+      if (rc != (ssize_t) sizeof(audiobuffer)) {
+        t_print("%s: short audio send: requested=%ld sent=%zd\n",
+                __func__,
+                (long) sizeof(audiobuffer),
+                rc);
+        g_idle_add(fatal_error, "Audio send failed (short UDP packet)");
+        P2running = 0;
+        break;
       }
     }
   }
