@@ -78,7 +78,9 @@ My main focus of deskHPSDR development is macOS, which is my primary development
 
 ## Requirements
 
-* modern Desktop-OS like macOS or Linux with installed developer tools like compiler, linker etc.
+I recommend using deskHPSDR on macOS, it's also being focused and developed on this OS platform. It can be build and run under Linux too, but my recommendation remains unequivocally macOS for for stable and stress-free operation with deskHPSDR. macOS will also remain the only platform, where I provide ready-made app bundles without build them first.
+
+* modern Desktop-OS like macOS (15 or newer) or Linux with installed developer tools like compiler, linker etc.
 * minimum screensize starts from 1280x600
 * **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the``COMPILE.macOS`` first
@@ -90,8 +92,8 @@ My main focus of deskHPSDR development is macOS, which is my primary development
 
 ## I want use now deskHPSDR. What I need to do ?
 
-deskHPSDR is published exclusively as source code only. You need to clone this Github repository and compile the app before you can use it. Please read all included instructions carefully to avoid installation errors by yourself. Additional notes you can find too under the discussion tab of this project. Please have a look there too from time to time.<br>
-I will never publish any ready-compiled binaries, neither for macOS nor for Linux. The task of compiling it yourself remains.
+deskHPSDR is published exclusively as source code only (except macOS, meanwhile are ready-made app bundles available). You need to clone this Github repository and compile the app before you can use it. Please read all included instructions carefully to avoid installation errors by yourself. Additional notes you can find too under the discussion tab of this project. Please have a look there too from time to time.<br>
+I will never publish any ready-compiled binaries or appimages for Linux. The task of compiling it yourself remains.
 
 ## The further development of deskHPSDR
 
