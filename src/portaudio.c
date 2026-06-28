@@ -77,16 +77,15 @@ GMutex audio_mutex;
 // the first time with a non-zero sidetone volume,
 // the ring buffer is cleared and only few (stereo) samples of silence
 // are put into it. This is probably the minimum amount necessary to avoid
-// audio underruns which manifest themselves as ugly cracks in the side ton.
-// During the TX phase, the buffer filling is kept between two rather low
-// water marks to ensure the small CW sidetone latency is kept.
+// audio underruns which manifest themselves as ugly cracks in the side tone.
+// During the TX phase, the buffer filling is kept close to an explicit
+// low-latency target to reduce underrun risk and avoid larger latency swings.
 // If we then go to RX again a "low water mark" condition is detected in the
 // first call to audio_write() and half a buffer length of silence is inserted
 // again.
 // Of course, a small portaudio audio buffer size (128 sample) helps
-// keeping the latency small. With the CW low/high water marks of 128/256
-// I have achieved a latency of slightly less than 15 msec on my
-// old 2013 iMac.
+// keeping the latency small. The CW buffer is kept around CW_LAT_TARGET
+// with a narrow correction window to reduce occasional underruns/clicks.
 //
 // Experiments indicate that we can indeed keep the ring buffer about half filling
 // during RX and quite empty during CW-TX.
@@ -99,8 +98,9 @@ GMutex audio_mutex;
 #define MY_RING_BUFFER_SIZE  9600
 #define MY_RING_LOW_WATER     512
 #define MY_RING_HIGH_WATER   9000
-#define MY_CW_LOW_WATER       128
-#define MY_CW_HIGH_WATER      256
+#define CW_LAT_LOW            224
+#define CW_LAT_TARGET         256
+#define CW_LAT_HIGH           288
 
 //
 // Ring buffer for "local microphone" samples stored locally here.
@@ -872,14 +872,14 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       //
       // First time producing CW audio after RX/TX transition:
       // discard audio buffer and insert *a little bit of* silence
-      // (currently, 128 samples = 2.6 msec)
+      // (currently, CW_LAT_TARGET samples = 5.3 msec at 48 kHz)
       //
-      bzero(rx->local_audio_buffer, 2 * MY_CW_LOW_WATER * sizeof(float));
+      bzero(rx->local_audio_buffer, 2 * CW_LAT_TARGET * sizeof(float));
       MEMORY_BARRIER;
-      rx->local_audio_buffer_inpt = MY_CW_LOW_WATER;
+      rx->local_audio_buffer_inpt = CW_LAT_TARGET;
       MEMORY_BARRIER;
       rx->local_audio_buffer_outpt = 0;
-      avail = MY_CW_LOW_WATER;
+      avail = CW_LAT_TARGET;
       count = 0;
       cwmode = 1;
     }
@@ -889,8 +889,8 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       //
       // We arrive here if we have seen 16 zero samples in a row.
       //
-      if (avail > MY_CW_HIGH_WATER) { adjust = 2; } // full: we are above high water mark
-      if (avail < MY_CW_LOW_WATER) { adjust = 1; }  // low: we are below low water mark
+      if (avail > CW_LAT_HIGH) { adjust = 2; } // full: we are above high water mark
+      if (avail < CW_LAT_LOW) { adjust = 1; }  // low: we are below low water mark
     }
     switch (adjust) {
     case 0:
