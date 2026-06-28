@@ -177,6 +177,7 @@ int audio_open_output(RECEIVER *rx) {
     return err;
   }
   rx->local_audio_buffer_offset = 0;
+  rx->local_audio_cw_active = 0;
   switch (rx->local_audio_format) {
   case SND_PCM_FORMAT_S16_LE:
     t_print("%s: local_audio_buffer: size=%d sample=%ld\n", __func__, out_buffer_size, sizeof(int16_t));
@@ -317,6 +318,8 @@ void audio_close_output(RECEIVER *rx) {
     g_free(rx->local_audio_buffer);
     rx->local_audio_buffer = NULL;
   }
+  rx->local_audio_buffer_offset = 0;
+  rx->local_audio_cw_active = 0;
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
@@ -365,6 +368,12 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
     static int count = 0;
+    if (!rx->local_audio_cw_active) {
+      // Drop a partially filled RX block so the first CW block cannot contain stale RX audio.
+      rx->local_audio_buffer_offset = 0;
+      rx->local_audio_cw_active = 1;
+      count = 0;
+    }
     if (snd_pcm_delay(rx->playback_handle, &delay) == 0) {
       if (delay > out_cw_border) {
         //
@@ -524,6 +533,11 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   // lock AFTER checking the "quick return" condition but BEFORE checking the pointers
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
+    if (rx->local_audio_cw_active) {
+      // Drop a partially filled CW block so RX audio restarts on a clean block boundary.
+      rx->local_audio_buffer_offset = 0;
+      rx->local_audio_cw_active = 0;
+    }
     if (rx->local_audio_channels == 1) {
       switch (rx->audio_channel) {
       case LEFT:

@@ -242,6 +242,7 @@ typedef struct _receiver {
   int local_audio_buffer_inpt;
   int local_audio_buffer_outpt;
   int local_audio_buffer_offset;
+  int local_audio_cw_active;
   int local_audio_channels;
   void *local_audio_buffer;
   snd_pcm_t *playback_handle;
@@ -259,6 +260,7 @@ typedef struct _receiver {
   snd_pcm_format_t local_audio_format;
   void *local_audio_buffer;        // different formats possible, so void*
   int local_audio_buffer_offset;
+  int local_audio_cw_active;
   int local_audio_channels;
 #endif
 #if !defined(PORTAUDIO) && defined(PULSEAUDIO) && !defined(ALSA)
