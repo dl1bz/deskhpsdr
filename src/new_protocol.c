@@ -474,7 +474,13 @@ static void p2_prime_route(void) {
   memset(&a, 0, sizeof(a));
   a.sin_family = AF_INET;
   a.sin_addr = radio->info.network.address.sin_addr;
-  a.sin_port = htons(GENERAL_REGISTERS_FROM_HOST_PORT);
+  // a.sin_port = htons(GENERAL_REGISTERS_FROM_HOST_PORT);
+  /*
+   * Prime the macOS route/ARP path without sending a malformed packet to
+   * any P2 control port. Some firmware may not tolerate short packets on
+   * the General registers port.
+   */
+  a.sin_port = htons(9);
   (void) sendto(s, &dummy, sizeof(dummy), 0, (struct sockaddr*) &a, sizeof(a));
   close(s);
 #endif
