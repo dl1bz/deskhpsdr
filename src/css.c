@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <string.h>
 #include "css.h"
+#include "ddc_menu.h"
 #include "message.h"
 #include "screen_menu.h"
 #include "main.h"
@@ -1335,6 +1336,11 @@ void StartConfigSave(void) {
   SetPropI0("css_dark_theme", css_dark_theme);
   SetPropI0("iaru_region", iaru_region);
   SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
+  for (int i = 0; i < P2_MAX_DDCS; i++) {
+    char name[32];
+    snprintf(name, sizeof(name), "p2_ddc%d_adc", i);
+    SetPropI0(name, p2_ddc_adc_map[i]);
+  }
   saveProperties(filename);
 }
 
@@ -1347,6 +1353,13 @@ void StartConfigLoad(void) {
   GetPropI0("css_dark_theme", css_dark_theme);
   GetPropI0("iaru_region", iaru_region);
   GetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
+  p2_angelia_ddc0_map = p2_angelia_ddc0_map ? 1 : 0;
+  for (int i = 0; i < P2_MAX_DDCS; i++) {
+    char name[32];
+    snprintf(name, sizeof(name), "p2_ddc%d_adc", i);
+    GetPropI0(name, p2_ddc_adc_map[i]);
+    p2_ddc_adc_map[i] = p2_ddc_adc_map[i] ? 1 : 0;
+  }
   if (iaru_region < 1 || iaru_region > 3) {
     iaru_region = 2;
   }

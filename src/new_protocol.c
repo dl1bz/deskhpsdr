@@ -62,6 +62,7 @@
 #include "message.h"
 #include "nw_toolset.h"
 #include "tci_audio.h"
+#include "ddc_menu.h"
 
 #ifdef SATURN
   #include "saturnmain.h"
@@ -922,11 +923,12 @@ static void new_protocol_high_priority(void) {
       high_priority_buffer_to_radio[15 + (ddc * 4)] = (phase >>  8) & 0xFF;
       high_priority_buffer_to_radio[16 + (ddc * 4)] = (phase) & 0xFF;
     }
-    if (p2_angelia_ddc0_map && device == NEW_DEVICE_ANGELIA) {
+    if (p2_angelia_ddc0_map && device == NEW_DEVICE_ANGELIA && !xmit && !diversity_enabled) {
       /*
        * Brick3 / ANAN-100D compatibility:
-       * keep the existing Angelia DDC2/DDC3 mapping, but mirror the
-       * RX frequency words into DDC0/DDC1 like Thetis/PowerSDR mRX.
+       * in normal RX, keep the existing Angelia DDC2/DDC3 mapping, but
+       * mirror the RX frequency words into DDC0/DDC1 for STM32 band tracking.
+       * Do not override the Diversity DDC0/DDC1 case or the PureSignal TX case.
        */
       phase = (unsigned long)(((double) DDCfrequency[0]) * 34.952533333333333333333333333333);
       high_priority_buffer_to_radio[ 9] = (phase >> 24) & 0xFF;
@@ -1610,6 +1612,24 @@ static void new_protocol_transmit_specific(void) {
   pthread_mutex_unlock(&tx_spec_mutex);
 }
 
+
+static int p2_ddc_adc_assignment(int ddc, int fallback_adc) {
+  int adc = fallback_adc;
+  if (ddc >= 0 && ddc < P2_MAX_DDCS) {
+    adc = p2_ddc_adc_map[ddc];
+  }
+  if (n_adc <= 1) {
+    return 0;
+  }
+  if (adc < 0 || adc >= n_adc) {
+    adc = fallback_adc;
+  }
+  if (adc < 0 || adc >= n_adc) {
+    adc = 0;
+  }
+  return adc;
+}
+
 static void new_protocol_receive_specific(void) {
   int i;
   int xmit;
@@ -1631,8 +1651,9 @@ static void new_protocol_receive_specific(void) {
     // If there is at least one RX which has the dither or random bit set,
     // this bit is set for the corresponding ADC
     //
-    receive_specific_buffer[5] |= receiver[i]->dither << receiver[i]->adc; // dither enable
-    receive_specific_buffer[6] |= receiver[i]->random << receiver[i]->adc; // random enable
+    int adc = p2_ddc_adc_assignment(ddc, receiver[i]->adc);
+    receive_specific_buffer[5] |= receiver[i]->dither << adc; // dither enable
+    receive_specific_buffer[6] |= receiver[i]->random << adc; // random enable
     if (!xmit && !diversity_enabled) {
       // normal RX without diversity
       receive_specific_buffer[7] |= (1 << ddc); // DDC enable
@@ -1641,7 +1662,7 @@ static void new_protocol_receive_specific(void) {
       // transmitting with duplex
       receive_specific_buffer[7] |= (1 << ddc); // DDC enable
     }
-    receive_specific_buffer[17 + (ddc * 6)] = receiver[i]->adc;
+    receive_specific_buffer[17 + (ddc * 6)] = adc;
     receive_specific_buffer[18 + (ddc * 6)] = ((receiver[i]->sample_rate / 1000) >> 8) & 0xFF;
     receive_specific_buffer[19 + (ddc * 6)] = ((receiver[i]->sample_rate / 1000)) & 0xFF;
     receive_specific_buffer[22 + (ddc * 6)] = 24;
@@ -1673,15 +1694,17 @@ static void new_protocol_receive_specific(void) {
     //    The sample rate of both DDCs is that of receiver[0].
     //    Boths ADCs take the dither/random setting from receiver[0]
     //
-    receive_specific_buffer[5] |= receiver[0]->dither;                             // dither DDC0: take value from RX1
-    receive_specific_buffer[5] |= (receiver[0]->dither) << 1;                      // dither DDC1: take value from RX1
-    receive_specific_buffer[6] |= receiver[0]->random;                             // random DDC0: take value from RX1
-    receive_specific_buffer[6] |= (receiver[0]->random) << 1;                      // random DDC1: take value from RX1
-    receive_specific_buffer[17] = 0;                                               // ADC0 associated with DDC0
+    int adc0 = p2_ddc_adc_assignment(0, 0);
+    int adc1 = p2_ddc_adc_assignment(1, 1);
+    receive_specific_buffer[5] |= receiver[0]->dither << adc0;                     // dither DDC0: take value from RX1
+    receive_specific_buffer[5] |= receiver[0]->dither << adc1;                     // dither DDC1: take value from RX1
+    receive_specific_buffer[6] |= receiver[0]->random << adc0;                     // random DDC0: take value from RX1
+    receive_specific_buffer[6] |= receiver[0]->random << adc1;                     // random DDC1: take value from RX1
+    receive_specific_buffer[17] = adc0;                                            // ADC associated with DDC0
     receive_specific_buffer[18] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF;  // sample rate MSB
     receive_specific_buffer[19] = ((receiver[0]->sample_rate / 1000)) & 0xFF;       // sample rate LSB
     receive_specific_buffer[22] = 24;                                              // bits per sample
-    receive_specific_buffer[23] = 1;                                               // ADC1 associated with DDC1
+    receive_specific_buffer[23] = adc1;                                            // ADC associated with DDC1
     receive_specific_buffer[24] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF;  // sample rate MSB
     receive_specific_buffer[25] = ((receiver[0]->sample_rate / 1000)) & 0xFF;       // sample rate LSB
     receive_specific_buffer[26] = 24;                                              // bits per sample

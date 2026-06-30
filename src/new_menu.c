@@ -58,6 +58,7 @@
 #include "main.h"
 #include "actions.h"
 #include "extras_menu.h"
+#include "ddc_menu.h"
 #include "controller_mapping.h"
 #include "old_protocol.h"
 #include "new_protocol.h"
@@ -205,6 +206,12 @@ static gboolean oc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
 static gboolean extras_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   cleanup();
   extras_menu(top_window);
+  return TRUE;
+}
+
+static gboolean ddc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  cleanup();
+  ddc_menu(top_window);
   return TRUE;
 }
 
@@ -629,6 +636,13 @@ void new_menu(void) {
     GtkWidget *ant_b = gtk_button_new_with_label("Ant");
     g_signal_connect(ant_b, "button-press-event", G_CALLBACK(ant_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), ant_b, col, row, 1, 1);
+    if (protocol == NEW_PROTOCOL) {
+      row++;
+      GtkWidget *ddc_b = gtk_button_new_with_label("P2 ADC/DDC");
+      gtk_widget_set_tooltip_text(ddc_b, "Protocol 2 ADC/DDC assignment");
+      g_signal_connect(ddc_b, "clicked", G_CALLBACK(ddc_cb), NULL);
+      gtk_grid_attach(GTK_GRID(grid), ddc_b, col, row, 1, 1);
+    }
     row++;
     if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
       GtkWidget *oc_b = gtk_button_new_with_label("OC Output");

@@ -664,6 +664,7 @@ src/controller_mapping.c \
 src/css.c \
 src/cw_engine.c \
 src/cw_menu.c \
+src/ddc_menu.c \
 src/discovered.c \
 src/discovery.c \
 src/display_menu.c \
@@ -754,6 +755,7 @@ src/css.h \
 src/cw_engine.h \
 src/cw_menu.h \
 src/dac.h \
+src/ddc_menu.h \
 src/discovered.h \
 src/discovery.h \
 src/display_menu.h \
@@ -838,6 +840,7 @@ src/controller_mapping.o \
 src/css.o \
 src/cw_engine.o \
 src/cw_menu.o \
+src/ddc_menu.o \
 src/discovered.o \
 src/discovery.o \
 src/display_menu.o \
