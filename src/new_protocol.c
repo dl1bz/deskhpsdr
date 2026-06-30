@@ -1694,8 +1694,8 @@ static void new_protocol_receive_specific(void) {
     //    The sample rate of both DDCs is that of receiver[0].
     //    Boths ADCs take the dither/random setting from receiver[0]
     //
-    int adc0 = p2_ddc_adc_assignment(0, 0);
-    int adc1 = p2_ddc_adc_assignment(1, 1);
+    int adc0 = 0;
+    int adc1 = (n_adc > 1) ? 1 : 0;
     receive_specific_buffer[5] |= receiver[0]->dither << adc0;                     // dither DDC0: take value from RX1
     receive_specific_buffer[5] |= receiver[0]->dither << adc1;                     // dither DDC1: take value from RX1
     receive_specific_buffer[6] |= receiver[0]->random << adc0;                     // random DDC0: take value from RX1

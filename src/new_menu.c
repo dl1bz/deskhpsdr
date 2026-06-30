@@ -639,7 +639,7 @@ void new_menu(void) {
     if (protocol == NEW_PROTOCOL) {
       row++;
       GtkWidget *ddc_b = gtk_button_new_with_label("P2 ADC/DDC");
-      gtk_widget_set_tooltip_text(ddc_b, "Protocol 2 ADC/DDC assignment");
+      gtk_widget_set_tooltip_text(ddc_b, "Advanced Protocol 2 ADC/DDC assignment");
       g_signal_connect(ddc_b, "clicked", G_CALLBACK(ddc_cb), NULL);
       gtk_grid_attach(GTK_GRID(grid), ddc_b, col, row, 1, 1);
     }
