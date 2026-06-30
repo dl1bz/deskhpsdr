@@ -52,6 +52,7 @@
 #include "new_menu.h"
 #include "nw_toolset.h"
 #include "css.h"
+#include "ddc_menu.h"
 
 static GtkWidget *discovery_dialog;
 static DISCOVERED *d;
@@ -88,6 +89,13 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
   radio = &discovered[selected_device];
   t_print("%s: selected_device=%d protocol=%d device=%d name=%s\n",
           __func__, selected_device, radio->protocol, radio->device, radio->name);
+  if (radio->protocol == NEW_PROTOCOL && radio->device == NEW_DEVICE_HERMES) {
+    /*
+     * Hermes has only one ADC receive path. Do not carry over a previously
+     * selected ADC1 mapping from another Protocol 2 device.
+     */
+    ddc_menu_set_defaults_hermes();
+  }
   {
     char ip[INET_ADDRSTRLEN];
     char ifname[IFNAMSIZ] = {0};

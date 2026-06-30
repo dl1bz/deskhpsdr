@@ -28,5 +28,6 @@
 extern int p2_ddc_adc_map[P2_MAX_DDCS];
 
 extern void ddc_menu(GtkWidget *parent);
+extern void ddc_menu_set_defaults_hermes(void);
 
 #endif

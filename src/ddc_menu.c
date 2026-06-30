@@ -33,7 +33,7 @@ static GtkWidget *adc0_buttons[P2_MAX_DDCS];
 static GtkWidget *adc1_buttons[P2_MAX_DDCS];
 static int ddc_menu_updating = 0;
 
-static void ddc_menu_set_defaults_hermes(void) {
+void ddc_menu_set_defaults_hermes(void) {
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     p2_ddc_adc_map[i] = 0;
   }
