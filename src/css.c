@@ -1334,6 +1334,7 @@ void StartConfigSave(void) {
   const char *filename = "startup_config.props";
   SetPropI0("css_dark_theme", css_dark_theme);
   SetPropI0("iaru_region", iaru_region);
+  SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   saveProperties(filename);
 }
 
@@ -1345,6 +1346,7 @@ void StartConfigLoad(void) {
   loadProperties(filename);
   GetPropI0("css_dark_theme", css_dark_theme);
   GetPropI0("iaru_region", iaru_region);
+  SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   if (iaru_region < 1 || iaru_region > 3) {
     iaru_region = 2;
   }
