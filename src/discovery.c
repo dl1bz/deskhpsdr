@@ -77,6 +77,52 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+static int network_type_for_device(const DISCOVERED *dev) {
+  if (dev->protocol != ORIGINAL_PROTOCOL && dev->protocol != NEW_PROTOCOL) {
+    return -1;
+  }
+  if (dev->info.network.interface_name[0] == '\0' ||
+      strcmp(dev->info.network.interface_name, "UDP") == 0 ||
+      strcmp(dev->info.network.interface_name, "TCP") == 0 ||
+      strcmp(dev->info.network.interface_name, "USB") == 0 ||
+      strcmp(dev->info.network.interface_name, "XDMA") == 0) {
+    return -1;
+  }
+  return nw_is_wired_interface(dev->info.network.interface_name);
+}
+
+static GtkWidget *create_network_type_label(const DISCOVERED *dev) {
+  GtkWidget *label;
+  const char *text;
+  const char *tooltip;
+  int wired = network_type_for_device(dev);
+  if (wired == 1) {
+    text = "[LAN]";
+    tooltip = "Ethernet interface";
+  } else if (wired == 0) {
+    text = "[Wi-Fi]";
+    tooltip = "Wi-Fi interface";
+  } else {
+    return NULL;
+  }
+  label = gtk_label_new(text);
+  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_widget_set_tooltip_text(label, tooltip);
+  gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+  gtk_widget_set_margin_top(label, 10);
+  gtk_widget_set_margin_start(label, 2);
+  return label;
+}
+
+static void set_device_label_scale(GtkWidget *label) {
+  PangoAttrList *attrs = pango_attr_list_new();
+  PangoAttribute *scale = pango_attr_scale_new(0.92);
+  pango_attr_list_insert(attrs, scale);
+  gtk_label_set_attributes(GTK_LABEL(label), attrs);
+  pango_attr_list_unref(attrs);
+}
+
 static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   /* korrektes Gerät aus der Discover-Liste selektieren */
   selected_device = GPOINTER_TO_INT(data);
@@ -408,9 +454,11 @@ void discovery(void) {
   } else {
     char version[16];
     char text[512];
+    char tooltip[512];
     char macStr[18];
     for (row = 0; row < devices; row++) {
       d = &discovered[row];
+      tooltip[0] = '\0';
       t_print("Device Protocol=%d name=%s\n", d->protocol, d->name);
       snprintf(version, sizeof(version), "v%d.%d",
                d->software_version / 10,
@@ -433,10 +481,15 @@ void discovery(void) {
                    d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2", d->software_version,
                    d->fpga_version, macStr);
         } else {
-          snprintf(text, sizeof(text), "%s %s (%s) %s (%s) on %s: ",
+          const char *protocol_name = d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2";
+          snprintf(text, sizeof(text), "%s %s (P%d) %s on %s:",
                    d->name,
                    version,
-                   d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2",
+                   d->protocol == ORIGINAL_PROTOCOL ? 1 : 2,
+                   inet_ntoa(d->info.network.address.sin_addr),
+                   d->info.network.interface_name);
+          snprintf(tooltip, sizeof(tooltip), "%s\nAddress: %s\nMAC: %s\nInterface: %s",
+                   protocol_name,
                    inet_ntoa(d->info.network.address.sin_addr),
                    macStr,
                    d->info.network.interface_name);
@@ -448,12 +501,30 @@ void discovery(void) {
       }
       GtkWidget *label = gtk_label_new(text);
       gtk_widget_set_name(label, "boldlabel_blue");
+      if (tooltip[0] != '\0') {
+        gtk_widget_set_tooltip_text(label, tooltip);
+      }
+      if (d->protocol == ORIGINAL_PROTOCOL || d->protocol == NEW_PROTOCOL) {
+        set_device_label_scale(label);
+      }
       // gtk_widget_set_halign (label, GTK_ALIGN_START);
       gtk_widget_set_margin_top(label, 10);
       gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
       gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
       gtk_widget_show(label);
-      gtk_grid_attach(GTK_GRID(grid), label, 0, row, 3, 1);
+      GtkWidget *network_type_label = create_network_type_label(d);
+      if (network_type_label != NULL) {
+        GtkWidget *label_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+        gtk_widget_set_halign(label_box, GTK_ALIGN_CENTER);
+        gtk_widget_set_valign(label_box, GTK_ALIGN_CENTER);
+        gtk_box_pack_start(GTK_BOX(label_box), label, FALSE, FALSE, 0);
+        gtk_widget_show(network_type_label);
+        gtk_box_pack_start(GTK_BOX(label_box), network_type_label, FALSE, FALSE, 0);
+        gtk_widget_show(label_box);
+        gtk_grid_attach(GTK_GRID(grid), label_box, 0, row, 3, 1);
+      } else {
+        gtk_grid_attach(GTK_GRID(grid), label, 0, row, 3, 1);
+      }
       GtkWidget *start_button = gtk_button_new();
       gtk_widget_set_name(start_button, "discovery_btn");
       gtk_widget_set_margin_top(start_button, 10);

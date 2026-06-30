@@ -105,12 +105,11 @@ int nw_get_ifname_for_remote_ip(const char* remote_ip, char* ifname, size_t ifna
 }
 
 #ifdef __APPLE__
-static int nw_is_wired_macos(const char* remote_ip) {
-  char ifname[IFNAMSIZ];
+static int nw_is_wired_interface_macos(const char* ifname) {
   struct ifmediareq ifmr;
   int sock;
   int type;
-  if (nw_get_ifname_for_remote_ip(remote_ip, ifname, sizeof(ifname)) != 0) {
+  if (ifname == NULL || ifname[0] == '\0') {
     return -1;
   }
   sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -139,13 +138,12 @@ static int nw_is_wired_macos(const char* remote_ip) {
 #endif
 
 #ifdef __linux__
-static int nw_is_wired_linux(const char* remote_ip) {
-  char ifname[IFNAMSIZ];
+static int nw_is_wired_interface_linux(const char* ifname) {
   char path[256];
   FILE *fp;
   struct stat st;
   int type = -1;
-  if (nw_get_ifname_for_remote_ip(remote_ip, ifname, sizeof(ifname)) != 0) {
+  if (ifname == NULL || ifname[0] == '\0') {
     return -1;
   }
   snprintf(path, sizeof(path), "/sys/class/net/%s/wireless", ifname);
@@ -169,15 +167,21 @@ static int nw_is_wired_linux(const char* remote_ip) {
 }
 #endif
 
-int nw_is_wired(const char* remote_ip) {
+int nw_is_wired_interface(const char* ifname) {
 #ifdef __APPLE__
-  return nw_is_wired_macos(remote_ip);
+  return nw_is_wired_interface_macos(ifname);
 #elif defined(__linux__)
-  // (void)remote_ip;
-  // return 1;
-  return nw_is_wired_linux(remote_ip);
+  return nw_is_wired_interface_linux(ifname);
 #else
-  (void) remote_ip;
+  (void) ifname;
   return -1;
 #endif
+}
+
+int nw_is_wired(const char* remote_ip) {
+  char ifname[IFNAMSIZ];
+  if (nw_get_ifname_for_remote_ip(remote_ip, ifname, sizeof(ifname)) != 0) {
+    return -1;
+  }
+  return nw_is_wired_interface(ifname);
 }
