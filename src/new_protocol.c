@@ -1826,15 +1826,15 @@ void new_protocol_menu_start(void) {
 #endif
   t_print("%s: send general\n", __func__);
   new_protocol_general();
-  t_print("%s: send high_priority\n", __func__);
   usleep(100000);                    // let FPGA digest the port numbers
-  new_protocol_high_priority();
-  t_print("%s: send tx_specific\n", __func__);
-  usleep(100000);                    // let FPGA digest the "run" command
-  new_protocol_transmit_specific();
   t_print("%s: send rx_specific\n", __func__);
-  usleep(50000);
   new_protocol_receive_specific();
+  usleep(50000);
+  t_print("%s: send tx_specific\n", __func__);
+  new_protocol_transmit_specific();
+  usleep(50000);
+  t_print("%s: send high_priority\n", __func__);
+  new_protocol_high_priority();
   new_protocol_timer_thread_id = g_thread_new("P2 task", new_protocol_timer_thread, NULL);
 }
 
