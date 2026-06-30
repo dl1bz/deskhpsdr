@@ -51,6 +51,7 @@
 #include "version.h"
 #include "new_menu.h"
 #include "nw_toolset.h"
+#include "css.h"
 
 static GtkWidget *discovery_dialog;
 static DISCOVERED *d;
@@ -257,6 +258,12 @@ static gboolean radio_port_cb(GtkWidget *widget, GdkEventButton *event, gpointer
     fclose(fp);
   }
   return FALSE;
+}
+
+static void p2_angelia_ddc0_map_toggled(GtkToggleButton *button, gpointer data) {
+  (void) data;
+  p2_angelia_ddc0_map = gtk_toggle_button_get_active(button) ? 1 : 0;
+  StartConfigSave();
 }
 
 /* -- Wrapper für Wayland-sichere Button-Signale ("clicked") -- */
@@ -581,6 +588,13 @@ void discovery(void) {
                                        "(default Port 1024)");
   gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
   g_signal_connect(tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
+  row++;
+  GtkWidget *p2_angelia_ddc0_map_cb = gtk_check_button_new_with_label("Brick3 / ANAN-100D compatibility");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(p2_angelia_ddc0_map_cb), p2_angelia_ddc0_map != 0);
+  gtk_widget_set_tooltip_text(p2_angelia_ddc0_map_cb,
+                              "Enable Brick3 / ANAN-100D compatibility mode for Angelia-based Protocol 2 hardware.");
+  g_signal_connect(p2_angelia_ddc0_map_cb, "toggled", G_CALLBACK(p2_angelia_ddc0_map_toggled), NULL);
+  gtk_grid_attach(GTK_GRID(grid), p2_angelia_ddc0_map_cb, 1, row, 2, 1);
   gtk_container_add(GTK_CONTAINER(content), grid);
   gtk_widget_show_all(discovery_dialog);
   t_print("showing device dialog\n");

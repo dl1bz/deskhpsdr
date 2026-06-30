@@ -922,6 +922,24 @@ static void new_protocol_high_priority(void) {
       high_priority_buffer_to_radio[15 + (ddc * 4)] = (phase >>  8) & 0xFF;
       high_priority_buffer_to_radio[16 + (ddc * 4)] = (phase) & 0xFF;
     }
+    if (p2_angelia_ddc0_map && device == NEW_DEVICE_ANGELIA) {
+      /*
+       * Brick3 / ANAN-100D compatibility:
+       * keep the existing Angelia DDC2/DDC3 mapping, but mirror the
+       * RX frequency words into DDC0/DDC1 like Thetis/PowerSDR mRX.
+       */
+      phase = (unsigned long)(((double) DDCfrequency[0]) * 34.952533333333333333333333333333);
+      high_priority_buffer_to_radio[ 9] = (phase >> 24) & 0xFF;
+      high_priority_buffer_to_radio[10] = (phase >> 16) & 0xFF;
+      high_priority_buffer_to_radio[11] = (phase >>  8) & 0xFF;
+      high_priority_buffer_to_radio[12] = (phase) & 0xFF;
+      phase = (unsigned long)(((double)(receivers > 1 ? DDCfrequency[1] : DDCfrequency[0]))
+                              * 34.952533333333333333333333333333);
+      high_priority_buffer_to_radio[13] = (phase >> 24) & 0xFF;
+      high_priority_buffer_to_radio[14] = (phase >> 16) & 0xFF;
+      high_priority_buffer_to_radio[15] = (phase >>  8) & 0xFF;
+      high_priority_buffer_to_radio[16] = (phase) & 0xFF;
+    }
   }
   //
   //  Set DUC frequency.
