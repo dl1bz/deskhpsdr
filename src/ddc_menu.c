@@ -146,7 +146,7 @@ void ddc_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), title, 0, 1, P2_MAX_DDCS + 1, 1);
   if (!is_hermes) {
     note = gtk_label_new("Advanced Protocol 2 setting:\nSelect which ADC feeds each DDC. "
-                                  "Diversity and PureSignal use fixed protocol assignments.");
+                         "Diversity and PureSignal use fixed protocol assignments.");
   } else {
     note = gtk_label_new("Advanced Protocol 2 setting:\nIf HERMES no selection, has only one ADC.");
   }
