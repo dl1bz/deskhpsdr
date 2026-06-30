@@ -35,4 +35,6 @@ extern void remote_set_zoom(int rx, double value);
 
 extern void update_peak_btn(void);
 extern void update_zoom_btn(void);
+extern void update_zoompan_ant_labels(void);
+extern int update_zoompan_ant_labels_idle(void *data);
 #endif

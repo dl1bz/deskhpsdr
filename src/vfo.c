@@ -61,6 +61,7 @@ extern int tci_is_applying(void);
 #include "message.h"
 #include "sliders.h"
 #include "audio.h"
+#include "zoompan.h"
 #include "wdsp.h"
 
 
@@ -653,6 +654,7 @@ static inline void vfo_adjust_band(int v, long long f) {
   bandstack = bandstack_get_bandstack(vfo[v].band);
   vfo[v].bandstack = bandstack->current_entry;
   radio_set_alex_antennas();
+  update_zoompan_ant_labels();
 }
 
 void vfo_xvtr_changed(void) {
@@ -689,6 +691,7 @@ void vfo_xvtr_changed(void) {
   }
   schedule_general();        // for disablePA
   schedule_high_priority();  // for Frequencies
+  update_zoompan_ant_labels();
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -901,6 +904,7 @@ void vfo_band_changed(int id, int b) {
     vfo_apply_mode_settings(receiver[id]);
   }
   vfo_vfos_changed();
+  g_idle_add((GSourceFunc)update_zoompan_ant_labels_idle, NULL);
 }
 
 void vfo_bandstack_changed(int b) {

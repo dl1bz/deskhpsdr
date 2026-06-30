@@ -20,6 +20,7 @@
 */
 
 #include <gtk/gtk.h>
+#include <glib.h>
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +31,7 @@
 #include "receiver.h"
 #include "radio.h"
 #include "vfo.h"
+#include "band.h"
 #include "sliders.h"
 #include "zoompan.h"
 #include "actions.h"
@@ -50,12 +52,132 @@ static gulong zoom_signal_id;
 static GtkWidget *pan_label;
 static GtkWidget *pan_scale;
 static gulong pan_signal_id;
+static GtkWidget *rx_ant_combo;
+static GtkWidget *tx_ant_combo;
+static gulong rx_ant_combo_signal_id;
+static gulong tx_ant_combo_signal_id;
 static GMutex pan_zoom_mutex;
 static GtkWidget *peak_btn;
 static GtkWidget *peak_label;
 static gulong peak_btn_signal_id;
 static GMutex peak_mutex;
 static GMutex zoom_mutex;
+
+
+
+
+static void zoompan_set_combo_active(GtkWidget *combo, int value, int max_value) {
+  gulong signal_id = 0;
+  if (combo == NULL) {
+    return;
+  }
+  if (value < 0 || value > max_value) {
+    value = 0;
+  }
+  if (combo == rx_ant_combo) {
+    signal_id = rx_ant_combo_signal_id;
+  } else if (combo == tx_ant_combo) {
+    signal_id = tx_ant_combo_signal_id;
+  }
+  if (signal_id != 0) {
+    g_signal_handler_block(G_OBJECT(combo), signal_id);
+  }
+  gtk_combo_box_set_active(GTK_COMBO_BOX(combo), value);
+  if (signal_id != 0) {
+    g_signal_handler_unblock(G_OBJECT(combo), signal_id);
+  }
+}
+
+static BAND *zoompan_get_active_band(void) {
+  if (active_receiver == NULL) {
+    return NULL;
+  }
+  int b = vfo[active_receiver->id].band;
+  if (b < 0 || b >= BANDS + XVTRS) {
+    return NULL;
+  }
+  return band_get_band(b);
+}
+
+static void rx_ant_changed_cb(GtkComboBox *combo, gpointer data) {
+  (void)data;
+  if (protocol != NEW_PROTOCOL || hermes_mode == HERMES_MODE_BRICK) {
+    zoompan_set_combo_active(rx_ant_combo, 0, 0);
+    return;
+  }
+  BAND *band = zoompan_get_active_band();
+  if (band == NULL) {
+    zoompan_set_combo_active(rx_ant_combo, 0, 5);
+    return;
+  }
+  int ant = gtk_combo_box_get_active(combo);
+  if (ant < 0 || ant > 5) {
+    ant = 0;
+  }
+  if (band->alexRxAntenna != ant) {
+    band->alexRxAntenna = ant;
+    radio_set_alex_antennas();
+  }
+  update_zoompan_ant_labels();
+}
+
+static void tx_ant_changed_cb(GtkComboBox *combo, gpointer data) {
+  (void)data;
+  if (protocol != NEW_PROTOCOL || hermes_mode == HERMES_MODE_BRICK) {
+    zoompan_set_combo_active(tx_ant_combo, 0, 0);
+    return;
+  }
+  BAND *band = zoompan_get_active_band();
+  if (band == NULL) {
+    zoompan_set_combo_active(tx_ant_combo, 0, 2);
+    return;
+  }
+  int ant = gtk_combo_box_get_active(combo);
+  if (ant < 0 || ant > 2) {
+    ant = 0;
+  }
+  if (band->alexTxAntenna != ant) {
+    band->alexTxAntenna = ant;
+    radio_set_alex_antennas();
+  }
+  update_zoompan_ant_labels();
+}
+
+void update_zoompan_ant_labels(void) {
+  if (protocol != NEW_PROTOCOL || !display_zoompan || active_receiver == NULL || rx_ant_combo == NULL ||
+      tx_ant_combo == NULL) {
+    return;
+  }
+  int rx_max = (hermes_mode == HERMES_MODE_BRICK) ? 0 : 5;
+  int tx_max = (hermes_mode == HERMES_MODE_BRICK) ? 0 : 2;
+  BAND *band = zoompan_get_active_band();
+  if (band == NULL) {
+    zoompan_set_combo_active(rx_ant_combo, 0, rx_max);
+    zoompan_set_combo_active(tx_ant_combo, 0, tx_max);
+    return;
+  }
+  int rx_ant = band->alexRxAntenna;
+  int tx_ant = band->alexTxAntenna;
+  if (hermes_mode == HERMES_MODE_BRICK) {
+    rx_ant = 0;
+    tx_ant = 0;
+  } else {
+    if (rx_ant < 0 || rx_ant > rx_max) {
+      rx_ant = 0;
+    }
+    if (tx_ant < 0 || tx_ant > tx_max) {
+      tx_ant = 0;
+    }
+  }
+  zoompan_set_combo_active(rx_ant_combo, rx_ant, rx_max);
+  zoompan_set_combo_active(tx_ant_combo, tx_ant, tx_max);
+}
+
+int update_zoompan_ant_labels_idle(void *data) {
+  (void)data;
+  update_zoompan_ant_labels();
+  return 0; // G_SOURCE_REMOVE
+}
 
 int zoompan_active_receiver_changed(void* data) {
   if (display_zoompan) {
@@ -71,6 +193,7 @@ int zoompan_active_receiver_changed(void* data) {
     }
     g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
     g_signal_handler_unblock(G_OBJECT(zoom_scale), zoom_signal_id);
+    update_zoompan_ant_labels();
     g_mutex_unlock(&pan_zoom_mutex);
   }
   return FALSE;
@@ -297,7 +420,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   WEAKEN(pan_label);
   gtk_widget_set_name(pan_label, "boldlabel_border_blue");
   // Label breiter erzwingen
-  gtk_widget_set_size_request(pan_label, 90, -1);
+  gtk_widget_set_size_request(pan_label, 60, -1);
   gtk_widget_set_margin_top(pan_label, 5);
   gtk_widget_set_margin_bottom(pan_label, 5);
   gtk_widget_set_margin_start(pan_label, 5);    // linker Rand (Anfang)
@@ -309,7 +432,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
   WEAKEN(pan_scale);
   gtk_widget_set_tooltip_text(pan_scale, "Move the spectrum left or right\nif Zoom > 1");
-  gtk_widget_set_margin_end(pan_scale, 10);  // rechter Rand (Ende)
+  gtk_widget_set_margin_end(pan_scale, 5);  // rechter Rand (Ende)
   gtk_widget_set_hexpand(pan_scale, TRUE);
   gtk_widget_set_halign(pan_scale, GTK_ALIGN_FILL);
   gtk_scale_set_draw_value(GTK_SCALE(pan_scale), FALSE);
@@ -319,10 +442,50 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   if (active_receiver->zoom == 1) {
     gtk_widget_set_sensitive(pan_scale, FALSE);
   }
+  //-----------------------------------------------------------------------------------------------------------
+  if (protocol == NEW_PROTOCOL) {
+    rx_ant_combo = gtk_combo_box_text_new();
+    WEAKEN(rx_ant_combo);
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rx_ant_combo), "RX Ant1");
+    if (hermes_mode != HERMES_MODE_BRICK) {
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rx_ant_combo), "RX Ant2");
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rx_ant_combo), "RX Ant3");
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rx_ant_combo), "RX Ext1");
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rx_ant_combo), "RX Ext2");
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rx_ant_combo), "RX Xvtr");
+    }
+    gtk_widget_set_tooltip_text(rx_ant_combo, "RX antenna for the current band");
+    gtk_widget_set_size_request(rx_ant_combo, 82, -1);
+    gtk_widget_set_margin_top(rx_ant_combo, 5);
+    gtk_widget_set_margin_bottom(rx_ant_combo, 5);
+    gtk_widget_set_halign(rx_ant_combo, GTK_ALIGN_START);
+    gtk_widget_set_valign(rx_ant_combo, GTK_ALIGN_CENTER);
+    rx_ant_combo_signal_id = g_signal_connect(G_OBJECT(rx_ant_combo), "changed", G_CALLBACK(rx_ant_changed_cb), NULL);
+    //-----------------------------------------------------------------------------------------------------------
+    tx_ant_combo = gtk_combo_box_text_new();
+    WEAKEN(tx_ant_combo);
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tx_ant_combo), "TX Ant1");
+    if (hermes_mode != HERMES_MODE_BRICK) {
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tx_ant_combo), "TX Ant2");
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tx_ant_combo), "TX Ant3");
+    }
+    gtk_widget_set_tooltip_text(tx_ant_combo, "TX antenna for the current band");
+    gtk_widget_set_size_request(tx_ant_combo, 82, -1);
+    gtk_widget_set_margin_top(tx_ant_combo, 5);
+    gtk_widget_set_margin_bottom(tx_ant_combo, 5);
+    gtk_widget_set_halign(tx_ant_combo, GTK_ALIGN_START);
+    gtk_widget_set_valign(tx_ant_combo, GTK_ALIGN_CENTER);
+    tx_ant_combo_signal_id = g_signal_connect(G_OBJECT(tx_ant_combo), "changed", G_CALLBACK(tx_ant_changed_cb), NULL);
+    update_zoompan_ant_labels();
+  }
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(pan_box), peak_btn, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(pan_box), pan_label, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(pan_box), pan_scale, TRUE, TRUE, 0);
+  if (protocol == NEW_PROTOCOL) {
+    gtk_box_pack_start(GTK_BOX(pan_box), rx_ant_combo, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(pan_box), tx_ant_combo, FALSE, FALSE, 0);
+  }
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(zoompan), pan_box, /* column */ 1, /* row */ 0, /* width */ 1, /* height */ 1);
   gtk_widget_show_all(pan_box);
