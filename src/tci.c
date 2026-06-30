@@ -720,7 +720,7 @@ static int tci_cw_msg_queue_next(void) {
   }
   if (tci_cw_msg_pending_callsign[0] != 0) {
     char callsign_msg[MAXMSGSIZE];
-    snprintf(callsign_msg, sizeof(callsign_msg), "callsign_send:%s;", tci_cw_msg_pending_callsign);
+    snprintf(callsign_msg, sizeof(callsign_msg), "CALLSIGN_SEND:%s;", tci_cw_msg_pending_callsign);
     tci_cw_send_to_all(callsign_msg);
     tci_cw_msg_pending_callsign[0] = 0;
   }
@@ -744,7 +744,7 @@ static void tci_cw_macros_empty (void) {
   if (tci_cw_msg_queue_next()) {
     return;
   }
-  tci_cw_send_to_all("cw_macros_empty;");
+  tci_cw_send_to_all("CW_MACROS_EMPTY;");
 }
 
 static int tci_has_audio_monitor_source (void) {
@@ -2688,19 +2688,19 @@ static void tci_send_trx_count (CLIENT *client) {
 
 static void tci_send_macros_cwspeed (CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf (msg, MAXMSGSIZE, "cw_macros_speed:%d;", cw_keyer_speed);
+  snprintf (msg, MAXMSGSIZE, "CW_MACROS_SPEED:%d;", cw_keyer_speed);
   tci_send_text (client, msg);
 }
 
 static void tci_send_keyer_cwspeed (CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf (msg, MAXMSGSIZE, "cw_keyer_speed:%d;", cw_keyer_speed);
+  snprintf (msg, MAXMSGSIZE, "CW_KEYER_SPEED:%d;", cw_keyer_speed);
   tci_send_text (client, msg);
 }
 
 static void tci_send_cw_macros_delay(CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf(msg, MAXMSGSIZE, "cw_macros_delay:%d;", tci_cw_macros_delay_ms);
+  snprintf(msg, MAXMSGSIZE, "CW_MACROS_DELAY:%d;", tci_cw_macros_delay_ms);
   tci_send_text(client, msg);
 }
 
@@ -4518,9 +4518,9 @@ static void tci_cmd_cw_terminal (CLIENT *client, const TCI_CMD *cmd) {
   enabled = g_ascii_strcasecmp(cmd->argv[0], "true") == 0 || strcmp(cmd->argv[0], "1") == 0;
   cw_engine_set_terminal(enabled);
   if (enabled) {
-    tci_send_text(client, "cw_terminal:true;");
+    tci_send_text(client, "CW_TERMINAL:true;");
   } else {
-    tci_send_text(client, "cw_terminal:false;");
+    tci_send_text(client, "CW_TERMINAL:false;");
   }
   t_print("TCI%d cw_terminal=%d\n", client->seq, enabled);
 }
