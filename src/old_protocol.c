@@ -3337,24 +3337,7 @@ static void metis_start_stop(int command) {
     for (i = 4; i < 64; i++) {
       buffer[i] = 0x00;
     }
-#if defined (__APPLE__) && defined (__TAHOEFIX__)
-    int major_version = get_macos_major_version();
-    if (major_version > 15) {
-      //-- start fix for Tahoe --
-      // Send Start/Stop packet 3x to mitigate macOS first-UDP-drop
-      t_print("%s: macOS major version: %d => activate Tahoe UDP hotfix\n", __func__, major_version);
-      for (int n = 0; n < 3; n++) {
-        metis_send_buffer(buffer, 64);
-        usleep(30000);  // 30 ms
-      }
-    } else {
-      t_print("%s: macOS major version: %d\n", __func__, major_version);
-      metis_send_buffer(buffer, 64);
-    }
-    //-- end fix for Tahoe --
-#else
     metis_send_buffer(buffer, 64);
-#endif
   } else {
     // use TCP -- send a long packet
     //

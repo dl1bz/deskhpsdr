@@ -49,9 +49,6 @@ char build_options[] =
 #ifdef __AH4IOB__
   "AH4IOB "
 #endif
-#ifdef __TAHOEFIX__
-  "TAHOEFIX "
-#endif
 #ifdef __DVL__
   "DEV "
 #endif

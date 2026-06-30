@@ -25,7 +25,6 @@ AUTOGAIN ?= OFF
 EQ12     ?= OFF
 AH4IOB   ?= OFF
 DEVEL    ?= OFF
-TAHOEFIX ?= ON
 
 #################################################################################################################
 #
@@ -41,7 +40,6 @@ TAHOEFIX ?= ON
 #  EQ12         | If ON, use 12-band EQ instead of 10-band EQ
 #  AH4IOB       | If ON, enable support for AH-4 compatible ATU using the Hermes Lite 2 IO board
 #  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
-#  TAHOEFIX     | If ON, a fix for macOS 26 Tahoe will be activated (macOS only)
 #
 #  If you want to use a non-default compile time option, write them
 #  into a file "make.config.deskhpsdr". So, for example, if you want to
@@ -407,12 +405,6 @@ ifeq ($(UNAME_S), Linux)
 override TAHOEFIX := OFF
 endif
 
-# only if using macOS 26 Tahoe, fix a SDR detection issue
-ifeq ($(TAHOEFIX), ON)
-TAHOEFIX_OPTIONS=-D__TAHOEFIX__
-endif
-CPP_DEFINES += -D__TAHOEFIX__
-
 ifeq ($(WAYLAND), ON)
 WAYLAND_OPTIONS=-D__WAYLAND__
 endif
@@ -598,7 +590,6 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(EQ12_OPTIONS) \
 	$(WAYLAND_OPTIONS) \
-	$(TAHOEFIX_OPTIONS) \
 	$(AUDIO_OPTIONS) \
 	-DGIT_DATE='"$(GIT_DATE)"' -DGIT_VERSION='"$(GIT_VERSION)"' -DGIT_COMMIT='"$(GIT_COMMIT)"' -DGIT_BRANCH='"$(GIT_BRANCH)"'
 
@@ -1069,7 +1060,7 @@ DEPEND:
 		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
 		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
 		-D__AUTOG__ -D__DVL__ \
-		-D__EQ12__ -D__WAYLAND__ -D__TAHOEFIX__ -D__AH4IOB__\
+		-D__EQ12__ -D__WAYLAND__ -D__AH4IOB__\
 		-f DEPEND -I./src src/*.c src/*.h
 	echo "src/MacTTS.o: src/message.h" >> DEPEND
 

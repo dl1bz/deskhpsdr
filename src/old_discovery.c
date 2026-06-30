@@ -277,26 +277,11 @@ static void discover(struct ifaddrs* iface, int discflag) {
   for (i = 3; i < len; i++) {
     buffer[i] = 0x00;
   }
-#if defined (__APPLE__) && defined (__TAHOEFIX__)
-  t_print("%s: execute TAHOE hotfix\n", __func__);
-  //-- start fix for Tahoe --
-  // Send discovery packet 3x to mitigate macOS first-UDP-drop
-  for (int n = 0; n < 3; n++) {
-    if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
-      t_perror("discover: sendto socket failed for discovery_socket:");
-      close(discovery_socket);
-      return;
-    }
-    usleep(30000);  // 30 ms
-  }
-  //-- end fix for Tahoe --
-#else
   if (sendto(discovery_socket, buffer, len, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
     t_perror("discover: sendto socket failed for discovery_socket:");
     close(discovery_socket);
     return;
   }
-#endif
   // wait for receive thread to complete
   g_thread_join(discover_thread_id);
   close(discovery_socket);
@@ -357,25 +342,6 @@ static gpointer discover_receive_thread(gpointer data) {
     if ((buffer[0] & 0xFF) == 0xEF && (buffer[1] & 0xFF) == 0xFE) {
       int status = buffer[2] & 0xFF;
       if (status == 2 || status == 3) {
-#if defined (__APPLE__) && defined (__TAHOEFIX__)
-        t_print("%s: execute TAHOE hotfix\n", __func__);
-        // -- start fix for Tahoe: de-duplicate discovery responses by MAC --
-        unsigned char mac_tmp[6];
-        for (i = 0; i < 6; i++) { mac_tmp[i] = buffer[i + 3]; }
-        int duplicate = 0;
-        for (int d = 0; d < devices; d++) {
-          if (discovered[d].protocol == ORIGINAL_PROTOCOL &&
-              memcmp(discovered[d].info.network.mac_address, mac_tmp, 6) == 0) {
-            // update last-seen address and skip creating a duplicate
-            memcpy(&discovered[d].info.network.address, &addr, sizeof(addr));
-            discovered[d].info.network.address_length = sizeof(addr);
-            duplicate = 1;
-            break;
-          }
-        }
-        if (duplicate) { continue; } // skip adding a second time
-        // -- end fix for Tahoe --
-#endif
         if (devices < MAX_DEVICES) {
           discovered[devices].protocol = ORIGINAL_PROTOCOL;
           discovered[devices].device = buffer[10] & 0xFF;
