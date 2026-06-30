@@ -1630,6 +1630,22 @@ static int p2_ddc_adc_assignment(int ddc, int fallback_adc) {
   return adc;
 }
 
+static int p2_receiver_adc_assignment(int ddc, int fallback_adc) {
+  /*
+   * Keep the user configurable ADC/DDC matrix limited to the devices it was
+   * introduced for.  Orion/Orion2/Saturn/G2 already expose receiver ADC
+   * selection through receiver[i]->adc; silently overriding that with the
+   * global DDC matrix would change existing multi-ADC setups.
+   */
+  switch (device) {
+  case NEW_DEVICE_HERMES:
+  case NEW_DEVICE_ANGELIA:
+    return p2_ddc_adc_assignment(ddc, fallback_adc);
+  default:
+    return p2_ddc_adc_assignment(-1, fallback_adc);
+  }
+}
+
 static void new_protocol_receive_specific(void) {
   int i;
   int xmit;
@@ -1651,7 +1667,7 @@ static void new_protocol_receive_specific(void) {
     // If there is at least one RX which has the dither or random bit set,
     // this bit is set for the corresponding ADC
     //
-    int adc = p2_ddc_adc_assignment(ddc, receiver[i]->adc);
+    int adc = p2_receiver_adc_assignment(ddc, receiver[i]->adc);
     receive_specific_buffer[5] |= receiver[i]->dither << adc; // dither enable
     receive_specific_buffer[6] |= receiver[i]->random << adc; // random enable
     if (!xmit && !diversity_enabled) {
