@@ -2862,19 +2862,19 @@ void *new_protocol_timer_thread(void* arg) {
     case 3:
     case 5:
     case 7:
-      new_protocol_high_priority();           // every 100 msec
       new_protocol_transmit_specific();       // every 200 msec
+      new_protocol_high_priority();           // every 100 msec
       break;
     case 2:
     case 4:
     case 6:
-      new_protocol_high_priority();           // every 100 msec
       new_protocol_receive_specific();        // every 200 msec
+      new_protocol_high_priority();           // every 100 msec
       break;
     case 8:
-      new_protocol_high_priority();           // every 100 msec
-      new_protocol_receive_specific();        // every 200 msec
       new_protocol_general();                 // every 800 msec
+      new_protocol_receive_specific();        // every 200 msec
+      new_protocol_high_priority();           // every 100 msec
       cycling = 0;
       break;
     }
