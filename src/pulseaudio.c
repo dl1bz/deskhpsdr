@@ -390,6 +390,7 @@ int audio_open_output(RECEIVER *rx) {
   }
   if (rx->playstream != NULL) {
     rx->local_audio_buffer_offset = 0;
+    rx->local_audio_cw_active = 0;
     rx->local_audio_buffer = g_new0(float, rx->local_audio_channels * out_buffer_size);
     t_print("%s: allocated local_audio_buffer %p size %ld bytes channels=%d\n", __func__,
             rx->local_audio_buffer,
@@ -546,6 +547,8 @@ void audio_close_output(RECEIVER *rx) {
     g_free(rx->local_audio_buffer);
     rx->local_audio_buffer = NULL;
   }
+  rx->local_audio_buffer_offset = 0;
+  rx->local_audio_cw_active = 0;
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
@@ -606,9 +609,23 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
     //
     // Since this is mutex-protected, we know that both rx->playstream
-    // and rx->local_audio_buffer will not be destroyes until we
+    // and rx->local_audio_buffer will not be destroyed until we
     // are finished here.
     //
+    if (!rx->local_audio_cw_active) {
+      //
+      // CW sidetone takes over local audio. Drop a partially filled RX block
+      // and flush queued PulseAudio playback so the first dit is not hidden
+      // behind stale RX audio.
+      //
+      rx->local_audio_buffer_offset = 0;
+      rx->local_audio_cw_active = 1;
+      int flush_err = 0;
+      if (pa_simple_flush(rx->playstream, &flush_err) < 0) {
+        t_print("%s: pa_simple_flush failed err=%d (%s)\n",
+                __func__, flush_err, pa_strerror(flush_err));
+      }
+    }
     if (rx->local_audio_channels == 2) {
       rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = sample;
       rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
@@ -647,8 +664,16 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
     //
     // Since this is mutex-protected, we know that both rx->playstream
-    // and rx->local_audio_buffer will not be destroyes until we
+    // and rx->local_audio_buffer will not be destroyed until we
     // are finished here.
+    if (rx->local_audio_cw_active) {
+      //
+      // RX audio resumes after CW. Drop a partially filled CW block so RX
+      // restarts on a clean PulseAudio block boundary.
+      //
+      rx->local_audio_buffer_offset = 0;
+      rx->local_audio_cw_active = 0;
+    }
     if (rx->local_audio_channels == 1) {
       switch (rx->audio_channel) {
       case LEFT:
