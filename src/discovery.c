@@ -89,6 +89,9 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
   radio = &discovered[selected_device];
   t_print("%s: selected_device=%d protocol=%d device=%d name=%s\n",
           __func__, selected_device, radio->protocol, radio->device, radio->name);
+  if (!(radio->protocol == NEW_PROTOCOL && radio->device == NEW_DEVICE_ANGELIA)) {
+    p2_angelia_ddc0_map = 0;
+  }
   if (radio->protocol == NEW_PROTOCOL && radio->device == NEW_DEVICE_HERMES) {
     /*
      * Hermes has only one ADC receive path. Do not carry over a previously
@@ -596,16 +599,18 @@ void discovery(void) {
                                        "(default Port 1024)");
   gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
   g_signal_connect(tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
-  row++;
-  GtkWidget *p2_angelia_ddc0_map_cb = gtk_check_button_new_with_label("Brick3 / ANAN-100D compatibility");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(p2_angelia_ddc0_map_cb), p2_angelia_ddc0_map != 0);
-  gtk_widget_set_tooltip_text(p2_angelia_ddc0_map_cb,
-                              "Enable Brick3 / ANAN-100D compatibility mode for ANGELIA-based Protocol 2 hardware:\n"
-                              "Mirror the primary RX frequency context into DDC0/DDC1 for\n"
-                              "Brick3 / ANAN-100D compatible Angelia hardware.\n"
-                              "Use only if band detection fails or changes unexpectedly.");
-  g_signal_connect(p2_angelia_ddc0_map_cb, "toggled", G_CALLBACK(p2_angelia_ddc0_map_toggled), NULL);
-  gtk_grid_attach(GTK_GRID(grid), p2_angelia_ddc0_map_cb, 1, row, 2, 1);
+  if (d->protocol == NEW_PROTOCOL && d->device == NEW_DEVICE_ANGELIA) {
+    row++;
+    GtkWidget *p2_angelia_ddc0_map_cb = gtk_check_button_new_with_label("Brick3 / ANAN-100D compatibility");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(p2_angelia_ddc0_map_cb), p2_angelia_ddc0_map != 0);
+    gtk_widget_set_tooltip_text(p2_angelia_ddc0_map_cb,
+                                "Enable Brick3 / ANAN-100D compatibility mode for ANGELIA-based Protocol 2 hardware:\n"
+                                "Mirror the primary RX frequency context into DDC0/DDC1 for\n"
+                                "Brick3 / ANAN-100D compatible Angelia hardware.\n"
+                                "Use only if band detection fails or changes unexpectedly.");
+    g_signal_connect(p2_angelia_ddc0_map_cb, "toggled", G_CALLBACK(p2_angelia_ddc0_map_toggled), NULL);
+    gtk_grid_attach(GTK_GRID(grid), p2_angelia_ddc0_map_cb, 1, row, 2, 1);
+  }
   gtk_container_add(GTK_CONTAINER(content), grid);
   gtk_widget_show_all(discovery_dialog);
   t_print("showing device dialog\n");
