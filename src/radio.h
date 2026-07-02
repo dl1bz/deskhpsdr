@@ -364,6 +364,7 @@ extern int hermes_mode;
 extern int tci_audio_monitor;
 extern int tci_iq_swap;
 extern int tci_iq_conjugate;
+extern int tci_cmd_uppercase; // send outgoing TCI command names in uppercase
 
 extern int adc0_filter_bypass;   // Bypass ADC0 filters on receive
 extern int adc1_filter_bypass;   // Bypass ADC1 filters on receiver  (ANAN-7000/8000/G2)

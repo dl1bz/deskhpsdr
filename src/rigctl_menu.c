@@ -665,7 +665,19 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_enable_cb), NULL);
-  //------------------------------------------------------------------------------------------------------------------------
+  //-----------------------------------------------------------------------------------------------------------------
+#ifdef __APPLE__
+  w = gtk_check_button_new_with_label("RumLogNG compatibility");
+  gtk_widget_set_name(w, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_cmd_uppercase);
+  gtk_widget_set_tooltip_text(w,
+                              "Send all CW specific TCI commands UPPERCASE\n"
+                              "since RumLogNG has a problem if send all lowercase.");
+  gtk_widget_show(w);
+  gtk_grid_attach(GTK_GRID(grid), w, 3, row, 1, 1);
+  g_signal_connect(w, "toggled", G_CALLBACK(btn_toggle_cb), &tci_cmd_uppercase);
+#endif
+  //-----------------------------------------------------------------------------------------------------------------
   int col = 1;
   row++;
   w = gtk_label_new("TCI RX Audio ATT");

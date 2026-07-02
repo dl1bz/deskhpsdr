@@ -190,6 +190,11 @@ int hermes_mode = HERMES_MODE_GENERIC;
 int tci_audio_monitor = 0;
 int tci_iq_swap = 0;
 int tci_iq_conjugate = 1;
+#ifdef __APPLE__
+  int tci_cmd_uppercase = 1;
+#else
+  int tci_cmd_uppercase = 0;
+#endif
 
 int adc0_filter_bypass = 0; // Bypass ADC0 filters on receive
 int adc1_filter_bypass = 0; // Bypass ADC1 filters on receiver  (ANAN-7000/8000/G2)
@@ -2636,6 +2641,9 @@ static void radio_restore_state (void) {
   GetPropI0 ("tci_audio_monitor",                             tci_audio_monitor);
   GetPropI0 ("tci_iq_swap",                                   tci_iq_swap);
   GetPropI0 ("tci_iq_conjugate",                              tci_iq_conjugate);
+#ifdef __APPLE__
+  GetPropI0 ("tci_cmd_uppercase",                             tci_cmd_uppercase);
+#endif
   GetPropI0 ("tx_out_of_band",                                tx_out_of_band_allowed);
   GetPropI0 ("filter_board",                                  filter_board);
   GetPropI0 ("pa_enabled",                                    pa_enabled);
@@ -2921,6 +2929,9 @@ void radio_save_state (void) {
   SetPropI0 ("tci_audio_monitor",                             tci_audio_monitor);
   SetPropI0 ("tci_iq_swap",                                   tci_iq_swap);
   SetPropI0 ("tci_iq_conjugate",                              tci_iq_conjugate);
+#ifdef __APPLE__
+  SetPropI0 ("tci_cmd_uppercase",                             tci_cmd_uppercase);
+#endif
   SetPropI0 ("tx_out_of_band",                                tx_out_of_band_allowed);
   SetPropI0 ("filter_board",                                  filter_board);
   SetPropI0 ("pa_enabled",                                    pa_enabled);

@@ -684,6 +684,11 @@ static void tci_cw_msg_reset_state(void) {
   tci_cw_msg_suffix_pending = 0;
 }
 
+
+static const char *tci_cmd_name(const char *lowercase, const char *uppercase) {
+  return tci_cmd_uppercase ? uppercase : lowercase;
+}
+
 static void tci_cw_send_to_all(const char *msg) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
@@ -720,7 +725,8 @@ static int tci_cw_msg_queue_next(void) {
   }
   if (tci_cw_msg_pending_callsign[0] != 0) {
     char callsign_msg[MAXMSGSIZE];
-    snprintf(callsign_msg, sizeof(callsign_msg), "CALLSIGN_SEND:%s;", tci_cw_msg_pending_callsign);
+    snprintf(callsign_msg, sizeof(callsign_msg), "%s:%s;",
+             tci_cmd_name("callsign_send", "CALLSIGN_SEND"), tci_cw_msg_pending_callsign);
     tci_cw_send_to_all(callsign_msg);
     tci_cw_msg_pending_callsign[0] = 0;
   }
@@ -744,7 +750,9 @@ static void tci_cw_macros_empty (void) {
   if (tci_cw_msg_queue_next()) {
     return;
   }
-  tci_cw_send_to_all("CW_MACROS_EMPTY;");
+  char msg[MAXMSGSIZE];
+  snprintf(msg, sizeof(msg), "%s;", tci_cmd_name("cw_macros_empty", "CW_MACROS_EMPTY"));
+  tci_cw_send_to_all(msg);
 }
 
 static int tci_has_audio_monitor_source (void) {
@@ -2688,19 +2696,20 @@ static void tci_send_trx_count (CLIENT *client) {
 
 static void tci_send_macros_cwspeed (CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf (msg, MAXMSGSIZE, "CW_MACROS_SPEED:%d;", cw_keyer_speed);
+  snprintf (msg, MAXMSGSIZE, "%s:%d;", tci_cmd_name("cw_macros_speed", "CW_MACROS_SPEED"), cw_keyer_speed);
   tci_send_text (client, msg);
 }
 
 static void tci_send_keyer_cwspeed (CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf (msg, MAXMSGSIZE, "CW_KEYER_SPEED:%d;", cw_keyer_speed);
+  snprintf (msg, MAXMSGSIZE, "%s:%d;", tci_cmd_name("cw_keyer_speed", "CW_KEYER_SPEED"), cw_keyer_speed);
   tci_send_text (client, msg);
 }
 
 static void tci_send_cw_macros_delay(CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf(msg, MAXMSGSIZE, "CW_MACROS_DELAY:%d;", tci_cw_macros_delay_ms);
+  snprintf(msg, MAXMSGSIZE, "%s:%d;", tci_cmd_name("cw_macros_delay", "CW_MACROS_DELAY"),
+           tci_cw_macros_delay_ms);
   tci_send_text(client, msg);
 }
 
@@ -4517,11 +4526,9 @@ static void tci_cmd_cw_terminal (CLIENT *client, const TCI_CMD *cmd) {
   }
   enabled = g_ascii_strcasecmp(cmd->argv[0], "true") == 0 || strcmp(cmd->argv[0], "1") == 0;
   cw_engine_set_terminal(enabled);
-  if (enabled) {
-    tci_send_text(client, "CW_TERMINAL:true;");
-  } else {
-    tci_send_text(client, "CW_TERMINAL:false;");
-  }
+  char msg[MAXMSGSIZE];
+  snprintf(msg, sizeof(msg), "%s:%s;", tci_cmd_name("cw_terminal", "CW_TERMINAL"), enabled ? "true" : "false");
+  tci_send_text(client, msg);
   t_print("TCI%d cw_terminal=%d\n", client->seq, enabled);
 }
 

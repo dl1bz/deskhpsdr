@@ -1107,7 +1107,7 @@ install-Darwin: all
 	@cp -R fonts/otf/GNU "${HOME}/Library/Fonts"
 	@sleep 1
 	@echo "Rebuild font cache..."
-	-@fc-cache -f
+	-@command -v fc-cache >/dev/null 2>&1 && fc-cache -f "${HOME}/Library/Fonts" >/dev/null 2>&1 || true
 	@sleep 1
 	@if [ -x /usr/bin/codesign ]; then \
 		echo "Strip extended attributes before codesigning..."; \
