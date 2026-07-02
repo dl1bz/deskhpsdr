@@ -261,7 +261,8 @@ int main(int argc, char *argv[]) {
   uint32_t code;
   int16_t sample;
   struct sockaddr_in addr_udp;
-  uint8_t buffer[1032];
+  uint32_t buffer_words[1032 / sizeof(uint32_t)];
+  uint8_t *buffer = (uint8_t *)buffer_words;
   struct timeval tv;
   int yes = 1;
   uint8_t *bp;
@@ -273,7 +274,7 @@ int main(int argc, char *argv[]) {
   uint32_t last_seqnum = 0xffffffff, seqnum;  // sequence number of received packet
   int udp_retries = 0;
   int bytes_read, bytes_left;
-  uint32_t code0;  // packet code of first buffer word
+  uint32_t *code0 = buffer_words;  // fast access to code of first buffer
   double run, off, off2, inc;
   struct timeval tvzero = {0, 0};
   fd_set fds;
@@ -659,20 +660,19 @@ int main(int argc, char *argv[]) {
         // 1032 bytes have successfully been read by TCP.
         // Let the downstream code know that there is a single packet, and its size
         bytes_read = 1032;
-        memcpy(&code0, buffer, sizeof(code0));
         // In the case of a METIS-discovery packet, change the size to 63
-        if (code0 == 0x0002feef) {
+        if (*code0 == 0x0002feef) {
           bytes_read = 63;
         }
         // In principle, we should check on (*code0 & 0x00ffffff) == 0x0004feef,
         // then we cover all kinds of start and stop packets.
         // In the case of a METIS-stop packet, change the size to 64
-        if (code0 == 0x0004feef) {
+        if (*code0 == 0x0004feef) {
           bytes_read = 64;
         }
         // In the case of a METIS-start TCP packet, change the size to 64
         // The special start code 0x11 has no function any longer, but we shall still support it.
-        if (code0 == 0x1104feef || code0 == 0x0104feef) {
+        if (*code0 == 0x1104feef || *code0 == 0x0104feef) {
           bytes_read = 64;
         }
       }
@@ -717,11 +717,10 @@ int main(int argc, char *argv[]) {
       continue;
     }
     count = 0;
-    if (bytes_read < (int)sizeof(code0)) {
+    if (bytes_read < (int)sizeof(*code0)) {
       continue;
     }
-    memcpy(&code0, buffer, sizeof(code0));
-    code = code0;
+    code = *code0;
     switch (code) {
     // PC to SDR transmission via process_ep2
     case 0x0201feef:

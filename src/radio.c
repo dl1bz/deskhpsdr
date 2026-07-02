@@ -151,6 +151,24 @@ static char property_path_bak[256];
 int backup_index = 0;
 static GMutex property_mutex;
 
+static void radio_format_mac_address(char *text, size_t size) {
+  if (text == NULL || size == 0) {
+    return;
+  }
+  if (radio == NULL) {
+    snprintf(text, size, "00-00-00-00-00-00");
+    return;
+  }
+  snprintf(text, size, "%02X-%02X-%02X-%02X-%02X-%02X",
+           radio->info.network.mac_address[0],
+           radio->info.network.mac_address[1],
+           radio->info.network.mac_address[2],
+           radio->info.network.mac_address[3],
+           radio->info.network.mac_address[4],
+           radio->info.network.mac_address[5]);
+}
+
+
 RECEIVER *receiver[8];
 RECEIVER *active_receiver;
 TRANSMITTER *transmitter;
@@ -2566,7 +2584,27 @@ void radio_set_split (int val) {
 static void radio_restore_state (void) {
   t_print ("%s: path=%s\n", __func__, property_path);
   g_mutex_lock (&property_mutex);
+  /*
+   * TODO props identity phase 2:
+   *   int check_protocol_id = protocol;
+   *   GetPropI0 ("protocol_id", check_protocol_id);
+   *   reject properties if check_protocol_id != protocol
+   *
+   * Do not enable this yet: older props do not contain protocol_id.
+   */
   loadProperties (property_path);
+  int check_device_id = device;
+  // int check_protocol_id = protocol;
+  GetPropI0 ("device_id", check_device_id);
+  // GetPropI0 ("protocol_id", check_protocol_id);
+  // if (check_device_id != device || check_protocol_id != protocol) {
+  if (check_device_id != device) {
+    // t_print ("%s: property identity mismatch for %s: stored device_id=%d protocol_id=%d, current device=%d protocol=%d -- ignoring properties\n",
+    //         __func__, property_path, check_device_id, check_protocol_id, device, protocol);
+    t_print ("%s: property identity mismatch for %s: stored device_id=%d, current device=%d -- ignoring properties\n",
+             __func__, property_path, check_device_id, device);
+    clearProperties ();
+  }
   //
   // For consistency, all variables should get default values HERE,
   // but this is too much for the moment.
@@ -2866,6 +2904,10 @@ void radio_save_state (void) {
   //
   gtk_window_get_position (GTK_WINDOW (top_window), &window_x_pos, &window_y_pos);
   SetPropI0 ("backup_index",                                  backup_index);
+  char radio_mac[18];
+  radio_format_mac_address(radio_mac, sizeof(radio_mac));
+  SetPropS0 ("radio_mac",                                     radio_mac);
+  SetPropI0 ("protocol_id",                                   protocol);
   SetPropI0 ("device_id",                                     device);
   SetPropF0 ("percent_pan_wf",                                percent_pan_wf);
   SetPropI0 ("WindowPositionX",                               window_x_pos);
