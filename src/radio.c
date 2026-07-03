@@ -2660,7 +2660,7 @@ static void radio_restore_state (void) {
   GetPropC0 ("peak_line_col",                                 peak_line_col);
   GetPropI0 ("enable_auto_tune",                              enable_auto_tune);
   GetPropI0 ("enable_tx_inhibit",                             enable_tx_inhibit);
-  GetPropI0 ("diversity_enabled",                             diversity_enabled);
+  // GetPropI0 ("diversity_enabled",                             diversity_enabled);
   GetPropF0 ("diversity_gain",                                div_gain);
   GetPropF0 ("diversity_phase",                               div_phase);
   GetPropF0 ("diversity_cos",                                 div_cos);
@@ -2952,7 +2952,7 @@ void radio_save_state (void) {
   //
   SetPropI0 ("enable_auto_tune",                              enable_auto_tune);
   SetPropI0 ("enable_tx_inhibit",                             enable_tx_inhibit);
-  SetPropI0 ("diversity_enabled",                             diversity_enabled);
+  // SetPropI0 ("diversity_enabled",                             diversity_enabled);
   SetPropF0 ("diversity_gain",                                div_gain);
   SetPropF0 ("diversity_phase",                               div_phase);
   SetPropF0 ("diversity_cos",                                 div_cos);
