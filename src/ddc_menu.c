@@ -42,7 +42,13 @@ void ddc_menu_set_defaults_hermes(void) {
   }
 }
 
-static void ddc_menu_set_defaults_anan100d(void) {
+static void ddc_menu_set_defaults_anan100d_1ant(void) {
+  for (int i = 0; i < P2_MAX_DDCS; i++) {
+    p2_ddc_adc_map[i] = 0;
+  }
+}
+
+static void ddc_menu_set_defaults_anan100d_2ant(void) {
   static const int defaults[P2_MAX_DDCS] = { 0, 1, 0, 1, 0, 0, 0 };
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     p2_ddc_adc_map[i] = defaults[i];
@@ -100,11 +106,21 @@ static gboolean reset_hermes_cb(GtkWidget *widget, GdkEventButton *event, gpoint
   return TRUE;
 }
 
-static gboolean reset_anan100d_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+static gboolean reset_anan100d_1ant_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   (void)widget;
   (void)event;
   (void)data;
-  ddc_menu_set_defaults_anan100d();
+  ddc_menu_set_defaults_anan100d_1ant();
+  ddc_menu_update_buttons();
+  StartConfigSave();
+  return TRUE;
+}
+
+static gboolean reset_anan100d_2ant_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
+  ddc_menu_set_defaults_anan100d_2ant();
   ddc_menu_update_buttons();
   StartConfigSave();
   return TRUE;
@@ -212,9 +228,16 @@ void ddc_menu(GtkWidget *parent) {
     g_signal_connect(reset_hermes_b, "button-press-event", G_CALLBACK(reset_hermes_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), reset_hermes_b, 0, 7, 2, 1);
   } else if (!is_hermes && device == NEW_DEVICE_ANGELIA) {
-    GtkWidget *reset_anan100d_b = gtk_button_new_with_label("Reset ANAN-100D");
-    g_signal_connect(reset_anan100d_b, "button-press-event", G_CALLBACK(reset_anan100d_cb), NULL);
-    gtk_grid_attach(GTK_GRID(grid), reset_anan100d_b, 2, 7, 3, 1);
+    GtkWidget *reset_anan100d_1ant_b = gtk_button_new_with_label("Reset ANAN-100D 1 Ant");
+    gtk_widget_set_tooltip_text(reset_anan100d_1ant_b,
+                                "Route all DDCs to ADC0 for operation with one main antenna.");
+    g_signal_connect(reset_anan100d_1ant_b, "button-press-event", G_CALLBACK(reset_anan100d_1ant_cb), NULL);
+    gtk_grid_attach(GTK_GRID(grid), reset_anan100d_1ant_b, 1, 7, 3, 1);
+    GtkWidget *reset_anan100d_2ant_b = gtk_button_new_with_label("Reset ANAN-100D 2 Ant");
+    gtk_widget_set_tooltip_text(reset_anan100d_2ant_b,
+                                "Route RX1 to ADC0 and RX2 to ADC1 for a separate RX2 antenna/input.");
+    g_signal_connect(reset_anan100d_2ant_b, "button-press-event", G_CALLBACK(reset_anan100d_2ant_cb), NULL);
+    gtk_grid_attach(GTK_GRID(grid), reset_anan100d_2ant_b, 4, 7, 3, 1);
   }
   ddc_menu_update_buttons();
   gtk_container_add(GTK_CONTAINER(content), grid);

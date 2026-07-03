@@ -337,7 +337,10 @@ void rx_menu(GtkWidget *parent) {
     // If there is more than one ADC, let the user associate an ADC
     // with the current receiver.
     //
-    if (n_adc > 1) {
+    gboolean adc_controlled_by_matrix = (protocol == NEW_PROTOCOL &&
+                                         (device == NEW_DEVICE_HERMES ||
+                                          device == NEW_DEVICE_ANGELIA));
+    if (n_adc > 1 && !adc_controlled_by_matrix) {
       GtkWidget *adc_label = gtk_label_new("Select ADC");
       gtk_widget_set_name(adc_label, "boldlabel");
       gtk_widget_set_halign(adc_label, GTK_ALIGN_END);
@@ -351,6 +354,16 @@ void rx_menu(GtkWidget *parent) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(adc_combo_box), active_receiver->adc);
       my_combo_attach(GTK_GRID(grid), adc_combo_box, 1, row, 1, 1);
       g_signal_connect(adc_combo_box, "changed", G_CALLBACK(adc_cb), NULL);
+      row++;
+    } else if (n_adc > 1 && adc_controlled_by_matrix) {
+      GtkWidget *adc_label = gtk_label_new("RX ADC");
+      gtk_widget_set_name(adc_label, "boldlabel");
+      gtk_widget_set_halign(adc_label, GTK_ALIGN_END);
+      gtk_grid_attach(GTK_GRID(grid), adc_label, 0, row, 1, 1);
+      GtkWidget *adc_info = gtk_label_new("assignment in ADC/DDC Menu");
+      gtk_widget_set_name(adc_info, "boldlabel");
+      gtk_widget_set_halign(adc_info, GTK_ALIGN_START);
+      gtk_grid_attach(GTK_GRID(grid), adc_info, 1, row, 1, 1);
       row++;
     }
     if (have_dither) {
