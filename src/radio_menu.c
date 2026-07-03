@@ -404,21 +404,6 @@ static void mic_input_cb(GtkWidget *widget, gpointer data) {
   schedule_transmit_specific();
 }
 
-static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
-  const char *p = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
-  int samplerate;
-  //
-  // There are so many different possibilities for sample rates, so
-  // we just "scanf" from the combobox text entry
-  //
-  if (sscanf(p, "%d", &samplerate) != 1) { return; }
-  if (protocol == NEW_PROTOCOL) {
-    rx_change_sample_rate(active_receiver, samplerate);
-  } else {
-    radio_change_sample_rate(samplerate);
-  }
-}
-
 static void receivers_cb(GtkToggleButton *widget, gpointer data) {
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget)) + 1;
   //
@@ -579,78 +564,6 @@ void radio_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), receivers_combo, 0, row, 1, 1);
   g_signal_connect(receivers_combo, "changed", G_CALLBACK(receivers_cb), NULL);
   row++;
-  switch (protocol) {
-  case NEW_PROTOCOL: {
-    label = gtk_label_new("Sample Rate:");
-    gtk_widget_set_name(label, "boldlabel");
-    gtk_widget_set_halign(label, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
-    row++;
-    GtkWidget *sample_rate_combo_box = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "48000");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "96000");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "192000");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "384000");
-    if (hermes_mode != HERMES_MODE_BRICK) {
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "768000");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "1536000");
-    }
-    switch (active_receiver->sample_rate) {
-    case 48000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 0);
-      break;
-    case 96000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 1);
-      break;
-    case 192000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 2);
-      break;
-    case 384000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 3);
-      break;
-    case 768000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 4);
-      break;
-    case 1536000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 5);
-      break;
-    }
-    my_combo_attach(GTK_GRID(grid), sample_rate_combo_box, 0, row, 1, 1);
-    g_signal_connect(sample_rate_combo_box, "changed", G_CALLBACK(sample_rate_cb), NULL);
-    row++;
-  }
-  break;
-  case ORIGINAL_PROTOCOL: {
-    label = gtk_label_new("Sample Rate:");
-    gtk_widget_set_name(label, "boldlabel");
-    gtk_widget_set_halign(label, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
-    row++;
-    GtkWidget *sample_rate_combo_box = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "48000");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "96000");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "192000");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sample_rate_combo_box), NULL, "384000");
-    switch (active_receiver->sample_rate) {
-    case 48000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 0);
-      break;
-    case 96000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 1);
-      break;
-    case 192000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 2);
-      break;
-    case 384000:
-      gtk_combo_box_set_active(GTK_COMBO_BOX(sample_rate_combo_box), 3);
-      break;
-    }
-    my_combo_attach(GTK_GRID(grid), sample_rate_combo_box, 0, row, 1, 1);
-    g_signal_connect(sample_rate_combo_box, "changed", G_CALLBACK(sample_rate_cb), NULL);
-    row++;
-  }
-  break;
-  }
   max_row = row;
   row = 1;
   label = gtk_label_new("RIT/XIT step (Hz):");

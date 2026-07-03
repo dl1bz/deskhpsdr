@@ -388,6 +388,13 @@ void discovery(void) {
       g_object_unref(c);
     }
   }
+  int have_angelia_p2 = 0;
+  for (int i = 0; i < devices; i++) {
+    if (discovered[i].protocol == NEW_PROTOCOL && discovered[i].device == NEW_DEVICE_ANGELIA) {
+      have_angelia_p2 = 1;
+      break;
+    }
+  }
   discovery_dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(discovery_dialog), GTK_WINDOW(top_window));
   GtkWidget *headerbar = gtk_header_bar_new();
@@ -599,17 +606,16 @@ void discovery(void) {
                                        "(default Port 1024)");
   gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
   g_signal_connect(tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
-  if (d->protocol == NEW_PROTOCOL && d->device == NEW_DEVICE_ANGELIA) {
+  if (have_angelia_p2) {
     row++;
-    GtkWidget *p2_angelia_ddc0_map_cb = gtk_check_button_new_with_label("Brick3 / ANAN-100D compatibility");
+    GtkWidget *p2_angelia_ddc0_map_cb = gtk_check_button_new_with_label("Angelia compatibility mode");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(p2_angelia_ddc0_map_cb), p2_angelia_ddc0_map != 0);
     gtk_widget_set_tooltip_text(p2_angelia_ddc0_map_cb,
-                                "Enable Brick3 / ANAN-100D compatibility mode for ANGELIA-based Protocol 2 hardware:\n"
-                                "Mirror the primary RX frequency context into DDC0/DDC1 for\n"
-                                "Brick3 / ANAN-100D compatible Angelia hardware.\n"
-                                "Use only if band detection fails or changes unexpectedly.");
+                                "Enable compatibility handling for Angelia-based ANAN-100D / Brick3 radios.\n"
+                                "Use only if required by the radio firmware.");
+    gtk_widget_set_halign(p2_angelia_ddc0_map_cb, GTK_ALIGN_CENTER);
     g_signal_connect(p2_angelia_ddc0_map_cb, "toggled", G_CALLBACK(p2_angelia_ddc0_map_toggled), NULL);
-    gtk_grid_attach(GTK_GRID(grid), p2_angelia_ddc0_map_cb, 1, row, 2, 1);
+    gtk_grid_attach(GTK_GRID(grid), p2_angelia_ddc0_map_cb, 1, row, 3, 1);
   }
   gtk_container_add(GTK_CONTAINER(content), grid);
   gtk_widget_show_all(discovery_dialog);
