@@ -22,6 +22,7 @@
 #define _RECEIVER_H
 
 #include <gtk/gtk.h>
+#include <time.h>
 #ifdef PORTAUDIO
   #include <portaudio.h>
 #endif
@@ -227,6 +228,14 @@ typedef struct _receiver {
   int waterfall_high;
   int waterfall_automatic;
   int panadapter_noise_margin;
+
+  int panadapter_noise_level;
+  double panadapter_smoothed_noise_floor;
+  int panadapter_smoothed_noise_floor_valid;
+  time_t panadapter_last_noisefloor_calc_time;
+  int panadapter_noisefloor_first_run;
+  int panadapter_noisefloor_fast_start_count;
+
   cairo_surface_t *panadapter_surface;
   GdkPixbuf *pixbuf;
   int local_audio;

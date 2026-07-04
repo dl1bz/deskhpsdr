@@ -48,6 +48,19 @@ static double hz_per_pixel;
 static int my_width;
 static int my_height;
 
+static gboolean
+waterfall_is_last_visible(const RECEIVER *rx) {
+  if (rx == NULL || !rx->display_waterfall) {
+    return FALSE;
+  }
+  for (int i = rx->id + 1; i < receivers; i++) {
+    if (receiver[i] != NULL && receiver[i]->display_waterfall) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
 waterfall_configure_event_cb(GtkWidget         *widget,
@@ -81,8 +94,8 @@ waterfall_draw_cb(GtkWidget *widget,
   gdk_cairo_set_source_pixbuf(cr, rx->pixbuf, 0, 0);
   cairo_paint(cr);  // vor dem Zeichnen der Box aufrufen, sinst wird der pixbuf überschrieben !
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  if (display_info_bar && active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
-      || active_receiver->display_panadapter == 1) && rx->id == 0 && !rx_stack_horizontal) {
+  if (display_info_bar && waterfall_is_last_visible(rx) && (rx->display_panadapter == 0
+      || rx->display_panadapter == 1) && !rx_stack_horizontal) {
     cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.70);
     cairo_rectangle(cr, 0.0, b_height - box_height, b_width, box_height);
     cairo_fill(cr);
@@ -144,9 +157,15 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_show_text(cr, _text);
     }
   }
-  if (active_receiver->display_waterfall && (active_receiver->display_panadapter == 0
-      || active_receiver->display_panadapter == 1) && rx->id == 0 && active_receiver->panadapter_autoscale_enabled
-      && !rx_stack_horizontal) {
+  if (rx->display_waterfall && !rx_stack_horizontal) {
+    /*
+     * RX-local waterfall status.  Noise floor and sample rate belong to the
+     * individual receiver, so draw them in every visible waterfall.  When the
+     * global info bar is drawn in the last waterfall, keep the RX-local lines
+     * above that bar instead of letting them overlap the microphone/status text.
+     */
+    gboolean show_global_info = display_info_bar && waterfall_is_last_visible(rx)
+                                && (rx->display_panadapter == 0 || rx->display_panadapter == 1);
     char _text[64];
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -155,31 +174,47 @@ waterfall_draw_cb(GtkWidget *widget,
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
-    snprintf(_text, sizeof(_text), "%d db", g_noise_level);
-    cairo_text_extents_t nf_extents;
-    cairo_text_extents(cr, _text, &nf_extents);
-    double _x =  65 - nf_extents.width;
-    cairo_move_to(cr, _x, 15);
-    cairo_show_text(cr, _text);
-  }
-  if (active_receiver->display_waterfall && rx->id == 0 && !rx_stack_horizontal) {
-    char _text[64];
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-#if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-#else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-#endif
-    if (active_receiver->sample_rate >= 1000000) {
-      snprintf(_text, sizeof(_text), "SR %dM", active_receiver->sample_rate / 1000000);
-    } else {
-      snprintf(_text, sizeof(_text), "SR %dk", active_receiver->sample_rate / 1000);
+    cairo_font_extents_t font_extents;
+    cairo_font_extents(cr, &font_extents);
+    int line_height = (int)ceil(font_extents.height);
+    if (line_height < 18) {
+      line_height = 18;
     }
-    cairo_text_extents_t nf_extents;
-    cairo_text_extents(cr, _text, &nf_extents);
-    double _x =  65 - nf_extents.width;
-    cairo_move_to(cr, _x, 35);
+    int noise_y;
+    int sr_y;
+    int local_bottom = b_height - 5;
+    if (show_global_info) {
+      /*
+       * The last visible waterfall also owns the global info bar at the
+       * bottom.  Keep RX-local noise floor/SR immediately above that bar,
+       * so all waterfalls use the same visual convention while avoiding
+       * overlap with the global microphone/status line.
+       */
+      local_bottom = b_height - box_height - 5;
+    }
+    sr_y = local_bottom;
+    noise_y = sr_y - line_height;
+    if (noise_y < line_height) {
+      noise_y = line_height;
+      sr_y = noise_y + line_height;
+    }
+    if (rx->display_panadapter == 0 || rx->display_panadapter == 1) {
+      snprintf(_text, sizeof(_text), "%d db", rx->panadapter_noise_level);
+      cairo_text_extents_t nf_extents;
+      cairo_text_extents(cr, _text, &nf_extents);
+      double _x = 65 - nf_extents.width;
+      cairo_move_to(cr, _x, noise_y);
+      cairo_show_text(cr, _text);
+    }
+    if (rx->sample_rate >= 1000000) {
+      snprintf(_text, sizeof(_text), "SR %dM", rx->sample_rate / 1000000);
+    } else {
+      snprintf(_text, sizeof(_text), "SR %dk", rx->sample_rate / 1000);
+    }
+    cairo_text_extents_t sr_extents;
+    cairo_text_extents(cr, _text, &sr_extents);
+    double _x = 65 - sr_extents.width;
+    cairo_move_to(cr, _x, sr_y);
     cairo_show_text(cr, _text);
   }
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

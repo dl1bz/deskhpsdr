@@ -54,10 +54,6 @@
 #include "map_d.h"
 
 char zeitString[20];
-static time_t last_noisefloor_calc_time = 0;  // Zeit der letzten Berechnung
-static int noisefloor_first_run_flag = 1;
-static int noisefloor_fast_start_count = 5;
-int g_noise_level = 0;
 int val_agcsetpoint = 0;
 int val_hwagc = 0;
 int val_rfgr = 0;
@@ -154,9 +150,22 @@ void panadapter_set_max_label_rows (int r) {
   max_pan_label_rows = r;
 }
 
+static void rx_panadapter_reset_noisefloor(RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+  rx->panadapter_noise_level = -175;
+  rx->panadapter_smoothed_noise_floor = -175.0;
+  rx->panadapter_smoothed_noise_floor_valid = 0;
+  rx->panadapter_last_noisefloor_calc_time = 0;
+  rx->panadapter_noisefloor_first_run = 1;
+  rx->panadapter_noisefloor_fast_start_count = 5;
+}
+
 void rx_panadapter_force_noisefloor_update(void) {
-  last_noisefloor_calc_time = 0;
-  noisefloor_fast_start_count = 5;
+  for (int i = 0; i < receivers; i++) {
+    rx_panadapter_reset_noisefloor(receiver[i]);
+  }
 }
 
 /* Prüft, ob ein DX-Spot-Label mit gleicher Frequenz und gleichem Text schon existiert.
@@ -1476,65 +1485,69 @@ void rx_panadapter_update (RECEIVER *rx) {
     }
   }
   //---------------------------------------------------------------------------------------
-  if (rx->panadapter_autoscale_enabled) {
-    double noise_floor_level = -175.0; // inital value
-    double ignore_noise_percentile = 60.0; // means 80%
-    double *qsorted_samples = malloc (mywidth * sizeof (double));
-    static double smoothed_noise_floor = -175.0; // initial value
-    static int smoothed_noise_floor_valid = 0;
-    static int noisefloor_update_interval = 5; // in sec
-    static double noisefloor_ema_alpha = 0.10;
-    static int panadapter_scale_corr_f = 5;
-    // Berechne die aktuelle Zeit
-    time_t current_time;
-    time (&current_time);
-    // calculate the noise level from samples
-    if (qsorted_samples != NULL) {
-      for (int i = 0; i < mywidth; i++) {
-        qsorted_samples[i] = (double) samples[i + rx->pan] + soffset;
-      }
-      qsort (qsorted_samples, mywidth, sizeof (double), compare_doubles);
-      int index = (int) ((ignore_noise_percentile / 100.0) * mywidth);
-      noise_floor_level = qsorted_samples[index] + 3.0;
-      // t_print("noise_floor = %f\n", noise_floor_level);
-      free (qsorted_samples); // Free memory after use
+  /*
+   * Keep the measured noise floor RX-local and update it for every receiver,
+   * independent of panadapter autoscale.  The waterfall status line displays
+   * this value per RX; autoscale only decides whether the measured value is
+   * also allowed to move rx->panadapter_low.
+   */
+  double noise_floor_level = -175.0; // inital value
+  double ignore_noise_percentile = 60.0; // means 80%
+  double *qsorted_samples = malloc (mywidth * sizeof (double));
+  const int noisefloor_update_interval = 5; // in sec
+  const double noisefloor_ema_alpha = 0.10;
+  const int panadapter_scale_corr_f = 5;
+  // Berechne die aktuelle Zeit
+  time_t current_time;
+  time (&current_time);
+  // calculate the noise level from samples
+  if (qsorted_samples != NULL) {
+    for (int i = 0; i < mywidth; i++) {
+      qsorted_samples[i] = (double) samples[i + rx->pan] + soffset;
     }
-    if (!smoothed_noise_floor_valid) {
-      smoothed_noise_floor = noise_floor_level;
-      smoothed_noise_floor_valid = 1;
-    } else {
-      smoothed_noise_floor += (noise_floor_level - smoothed_noise_floor) * noisefloor_ema_alpha;
+    qsort (qsorted_samples, mywidth, sizeof (double), compare_doubles);
+    int index = (int) ((ignore_noise_percentile / 100.0) * mywidth);
+    noise_floor_level = qsorted_samples[index] + 3.0;
+    // t_print("noise_floor = %f\n", noise_floor_level);
+    free (qsorted_samples); // Free memory after use
+  }
+  if (!rx->panadapter_smoothed_noise_floor_valid) {
+    rx->panadapter_smoothed_noise_floor = noise_floor_level;
+    rx->panadapter_smoothed_noise_floor_valid = 1;
+  } else {
+    rx->panadapter_smoothed_noise_floor += (noise_floor_level - rx->panadapter_smoothed_noise_floor) * noisefloor_ema_alpha;
+  }
+  rx->panadapter_noise_level = (int) rx->panadapter_smoothed_noise_floor - 3;
+  // Update rx->panadapter_low from EMA-smoothed noise floor when autoscale is active.
+  if (rx->panadapter_autoscale_enabled
+      && (rx->panadapter_noisefloor_first_run
+          || rx->panadapter_noisefloor_fast_start_count > 0
+          || difftime(current_time, rx->panadapter_last_noisefloor_calc_time) >= noisefloor_update_interval)) {
+    int new_panadapter_low = autoscale_panadapter_with_offset(rx->panadapter_smoothed_noise_floor,
+                             rx->panadapter_noise_margin);
+    int adjusted_panadapter_low = (int)(new_panadapter_low - panadapter_scale_corr_f);
+    if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
+        || rx->panadapter_low < adjusted_panadapter_low) {
+      if (rx->panadapter_low != adjusted_panadapter_low) {
+        t_print("%s: rx->panadapter_low: %d -> %d noise_floor: %.1f ema: %.1f autoscale: %d noise_margin: %ddb\n",
+                __func__,
+                rx->panadapter_low,
+                adjusted_panadapter_low,
+                noise_floor_level,
+                rx->panadapter_smoothed_noise_floor,
+                new_panadapter_low,
+                rx->panadapter_noise_margin);
+        rx->panadapter_low = adjusted_panadapter_low;
+      }
     }
-    g_noise_level = (int) smoothed_noise_floor - 3;
-    // Update rx->panadapter_low from EMA-smoothed noise floor
-    if (noisefloor_first_run_flag
-        || noisefloor_fast_start_count > 0
-        || difftime(current_time, last_noisefloor_calc_time) >= noisefloor_update_interval) {
-      int new_panadapter_low = autoscale_panadapter_with_offset(smoothed_noise_floor, rx->panadapter_noise_margin);
-      int adjusted_panadapter_low = (int)(new_panadapter_low - panadapter_scale_corr_f);
-      if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
-          || rx->panadapter_low < adjusted_panadapter_low) {
-        if (rx->panadapter_low != adjusted_panadapter_low) {
-          t_print("%s: rx->panadapter_low: %d -> %d noise_floor: %.1f ema: %.1f autoscale: %d noise_margin: %ddb\n",
-                  __func__,
-                  rx->panadapter_low,
-                  adjusted_panadapter_low,
-                  noise_floor_level,
-                  smoothed_noise_floor,
-                  new_panadapter_low,
-                  rx->panadapter_noise_margin);
-          rx->panadapter_low = adjusted_panadapter_low;
-        }
-      }
-      if (rx->panadapter_high <= -50) {
-        rx->panadapter_high = -50;
-      }
-      // update time of the last calculation
-      last_noisefloor_calc_time = current_time;
-      noisefloor_first_run_flag = 0;
-      if (noisefloor_fast_start_count > 0) {
-        noisefloor_fast_start_count--;
-      }
+    if (rx->panadapter_high <= -50) {
+      rx->panadapter_high = -50;
+    }
+    // update time of the last calculation
+    rx->panadapter_last_noisefloor_calc_time = current_time;
+    rx->panadapter_noisefloor_first_run = 0;
+    if (rx->panadapter_noisefloor_fast_start_count > 0) {
+      rx->panadapter_noisefloor_fast_start_count--;
     }
   }
   if (rx->panadapter_peaks_on != 0) {

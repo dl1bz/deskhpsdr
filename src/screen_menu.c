@@ -66,6 +66,15 @@ static int my_full_screen;
 static int my_vfo_layout;
 static int my_rx_stack_horizontal;
 
+static RECEIVER *screen_menu_reference_receiver(void) {
+  for (int i = 0; i < RECEIVERS; i++) {
+    if (receiver[i] != NULL) {
+      return receiver[i];
+    }
+  }
+  return NULL;
+}
+
 void screen_menu(GtkWidget *parent);
 
 //
@@ -183,10 +192,6 @@ static void save_zoom_state_cb(GtkWidget *widget, gpointer data) {
   update_zoom_btn();
 }
 
-// static void pan_peak_preserve_cb(GtkWidget *widget, gpointer data) {
-//   active_receiver->pan_peak_preserve = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-// }
-
 static void pan_peak_preserve_cb(GtkWidget *widget, gpointer data) {
   gboolean state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   for (int i = 0; i < RECEIVERS; i++) {
@@ -200,9 +205,6 @@ static void pan_peak_preserve_cb(GtkWidget *widget, gpointer data) {
 
 static void pan_window_type_cb(GtkComboBox *widget, gpointer data) {
   int state = gtk_combo_box_get_active(widget);
-  if (!active_receiver->display_panadapter) {
-    return;
-  }
   if (state < 0 || state > 6) {
     state = 5;  /* Kaiser */
   }
@@ -356,6 +358,7 @@ static void css_theme_changed_cb(GtkComboBox *combo, gpointer user_data) {
 
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
+  RECEIVER *rx_ref = screen_menu_reference_receiver();
   my_display_width       = display_width;
   my_display_height      = display_height;
   my_full_screen         = full_screen;
@@ -650,7 +653,8 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(b_pan_peak_preserve,
                               "Uses a local peak detector to preserve narrow signals in the panadapter display.\n"
                               "Improves visibility at high zoom levels but slightly modifies exact amplitudes.");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_peak_preserve), active_receiver->pan_peak_preserve);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_pan_peak_preserve),
+                               rx_ref != NULL ? rx_ref->pan_peak_preserve : 0);
   gtk_widget_show(b_pan_peak_preserve);
   gtk_grid_attach(GTK_GRID(grid), b_pan_peak_preserve, 1, row, 1, 1);
   g_signal_connect(b_pan_peak_preserve, "toggled", G_CALLBACK(pan_peak_preserve_cb), NULL);
@@ -671,7 +675,8 @@ void screen_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Kaiser (default)");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "7-term Blackman-Harris");
   /* aktuellen Wert setzen */
-  gtk_combo_box_set_active(GTK_COMBO_BOX(fft_window_combo), active_receiver->pan_window_type);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(fft_window_combo),
+                           rx_ref != NULL ? rx_ref->pan_window_type : 5);
   gtk_grid_attach(GTK_GRID(grid), fft_window_combo, 2, row, 1, 1);
   /* Callback */
   g_signal_connect(fft_window_combo, "changed", G_CALLBACK(pan_window_type_cb), NULL);
@@ -685,8 +690,8 @@ void screen_menu(GtkWidget *parent) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "Auto (default)");
   int fft_base = 16384;
   double combobox_sr = 0.0;
-  if (active_receiver != NULL) {
-    combobox_sr = (double) active_receiver->sample_rate;
+  if (rx_ref != NULL) {
+    combobox_sr = (double) rx_ref->sample_rate;
   }
   for (int i = 0; i < 5; i++) {
     char buf[32];
@@ -699,7 +704,7 @@ void screen_menu(GtkWidget *parent) {
     fft_base *= 2;
   }
   int fft_state = 0;
-  switch (active_receiver->pan_fft_size) {
+  switch (rx_ref != NULL ? rx_ref->pan_fft_size : 0) {
   case 0:
     fft_state = 0;
     break;

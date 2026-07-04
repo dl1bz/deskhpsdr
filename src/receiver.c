@@ -812,6 +812,12 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->waterfall_low = -140;
   rx->waterfall_automatic = 1;
   rx->panadapter_noise_margin = -5;
+  rx->panadapter_noise_level = -175;
+  rx->panadapter_smoothed_noise_floor = -175.0;
+  rx->panadapter_smoothed_noise_floor_valid = 0;
+  rx->panadapter_last_noisefloor_calc_time = 0;
+  rx->panadapter_noisefloor_first_run = 1;
+  rx->panadapter_noisefloor_fast_start_count = 5;
   rx->display_filled = 1;
   rx->display_gradient = 1;
   rx->display_detector_mode = DET_AVERAGE;
