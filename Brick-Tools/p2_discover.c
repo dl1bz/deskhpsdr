@@ -23,23 +23,36 @@ static int verbose = 0;
 static int set_ip_requested = 0;
 static struct in_addr set_ip_addr;
 
+#define NEW_DEVICE_ATLAS        1000
+#define NEW_DEVICE_HERMES       1001
+#define NEW_DEVICE_HERMES2      1002
+#define NEW_DEVICE_ANGELIA      1003
+#define NEW_DEVICE_ORION        1004
+#define NEW_DEVICE_ORION2       1005
+#define NEW_DEVICE_HERMES_LITE  1006
+#define NEW_DEVICE_SATURN       1010
+
+static int new_protocol_device_id(int raw_id) {
+  return 1000 + raw_id;
+}
+
 static const char *device_name(int id, int software_version) {
   switch (id) {
-  case 0:
+  case NEW_DEVICE_ATLAS:
     return "Atlas";
-  case 1:
+  case NEW_DEVICE_HERMES:
     return "Hermes";
-  case 2:
+  case NEW_DEVICE_HERMES2:
     return "Hermes2";
-  case 4:
+  case NEW_DEVICE_ANGELIA:
     return "Angelia";
-  case 5:
+  case NEW_DEVICE_ORION:
     return "Orion";
-  case 6:
+  case NEW_DEVICE_ORION2:
     return "Orion2";
-  case 10:
+  case NEW_DEVICE_SATURN:
     return "Saturn/G2";
-  case 7:
+  case NEW_DEVICE_HERMES_LITE:
     return software_version < 40 ? "Hermes Lite V1" : "Hermes Lite V2";
   default:
     return "Unknown";
@@ -148,7 +161,8 @@ static void discover_on_interface(struct ifaddrs *ifa) {
     if (status != 2 && status != 3) {
       continue;
     }
-    int device_id = buf[11] & 0xff;
+    int raw_device_id = buf[11] & 0xff;
+    int device_id = new_protocol_device_id(raw_device_id);
     int p2_version = buf[12] & 0xff;
     int software_version = buf[13] & 0xff;
     int rx_count = buf[20] & 0xff;
@@ -161,9 +175,10 @@ static void discover_on_interface(struct ifaddrs *ifa) {
            ip,
            buf[5], buf[6], buf[7],
            buf[8], buf[9], buf[10]);
-    printf(" device=%s id=%d p2=%d.%d sw=%d.%d beta=%d rx=%d status=%d",
+    printf(" device=%s id=%d raw=%d p2=%d.%d sw=%d.%d beta=%d rx=%d status=%d",
            device_name(device_id, software_version),
            device_id,
+           raw_device_id,
            p2_version / 10,
            p2_version % 10,
            software_version / 10,

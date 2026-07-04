@@ -9,6 +9,8 @@ GNUmakefile
 *.bak
 *.patch
 *.a
+*.tgz
+*.tar.gz
 deskhpsdr
 !release/
 !release/deskhpsdr
@@ -49,3 +51,5 @@ HL2-Tools/hl2_ip_tool
 Brick-Tools/*.o
 Brick-Tools/p2_discover
 *.zip
+MacOS/build-macos-gtk3min-bundle-sign.sh
+
