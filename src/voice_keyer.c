@@ -1,4 +1,4 @@
-/* Copyright (C)
+/*  Copyright (C)
 *   2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
 *   This program is free software: you can redistribute it and/or modify

@@ -1,7 +1,8 @@
-/* Copyright (C)
-* 2024,2025, 2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
+/*  Copyright (C)
+*   2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
-*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
+*.  TCI server based on libwebsockets is a complete rebuild for deskHPSDR
+*.  exclusivly by Heiko Amft, DL1BZ
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by

@@ -1,5 +1,5 @@
-/* Copyright (C)
-* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
+/*  Copyright (C)
+*   2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
