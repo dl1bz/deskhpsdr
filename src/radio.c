@@ -818,7 +818,7 @@ void radio_reconfigure (void) {
     rx_height -= SLIDERS_HEIGHT;
   }
   if (display_toolbar) {
-    rx_height -= TOOLBAR_HEIGHT;
+    rx_height -= toolbar_get_height(my_width, my_height, TOOLBAR_HEIGHT);
   }
   y = VFO_HEIGHT;
   // if there is only one receiver, both cases here do the same.
@@ -908,13 +908,17 @@ void radio_reconfigure (void) {
   }
   */
   if (display_toolbar) {
+    int toolbar_height = toolbar_get_height(my_width, my_height, TOOLBAR_HEIGHT);
+    if (toolbar != NULL && toolbar_needs_rebuild(my_width, toolbar_height, my_height)) {
+      destroy_widget_safe (&toolbar);
+    }
     if (toolbar == NULL) {
       // Einmalig erzeugen und in das Fixed einhängen
-      toolbar = toolbar_init (my_width, TOOLBAR_HEIGHT);
+      toolbar = toolbar_init (my_width, toolbar_height, my_height);
       gtk_fixed_put (GTK_FIXED (fixed), toolbar, 0, y);
     } else {
       // Bestehende Toolbar nur verschieben und ggf. Größe anpassen
-      gtk_widget_set_size_request (toolbar, my_width, TOOLBAR_HEIGHT);
+      gtk_widget_set_size_request (toolbar, my_width, toolbar_height);
       // Bereits existente Toolbar nur verschieben
       gtk_fixed_move (GTK_FIXED (fixed), toolbar, 0, y);
     }
@@ -1232,7 +1236,7 @@ static void radio_create_visual (void) {
     rx_height -= SLIDERS_HEIGHT;
   }
   if (display_toolbar) {
-    rx_height -= TOOLBAR_HEIGHT;
+    rx_height -= toolbar_get_height(my_width, my_height, TOOLBAR_HEIGHT);
   }
   //
   // To be on the safe side, we create ALL receiver panels here
@@ -1319,7 +1323,8 @@ static void radio_create_visual (void) {
     }
   }
   if (display_toolbar) {
-    toolbar = toolbar_init (my_width, TOOLBAR_HEIGHT);
+    int toolbar_height = toolbar_get_height(my_width, my_height, TOOLBAR_HEIGHT);
+    toolbar = toolbar_init (my_width, toolbar_height, my_height);
     gtk_fixed_put (GTK_FIXED (fixed), toolbar, 0, y);
   }
   //

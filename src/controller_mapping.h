@@ -22,7 +22,7 @@
 #ifndef _CONTROLLER_MAPPING_H
 #define _CONTROLLER_MAPPING_H
 
-#define MAX_SWITCHES 16
+#define MAX_SWITCHES 22
 #define MAX_FUNCTIONS 6
 
 typedef struct _switch {

@@ -30,6 +30,12 @@ extern SWITCH *toolbar_switches;
 
 void update_toolbar_labels(void);
 
-GtkWidget *toolbar_init(int my_width, int my_height);
+int toolbar_get_visible_rows(int my_width, int my_height);
+
+int toolbar_get_height(int my_width, int my_height, int row_height);
+
+gboolean toolbar_needs_rebuild(int my_width, int my_height, int window_height);
+
+GtkWidget *toolbar_init(int my_width, int my_height, int window_height);
 
 #endif
