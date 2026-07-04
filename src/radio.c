@@ -61,6 +61,7 @@
 #include "store.h"
 #include "actions.h"
 #include "controller_mapping.h"
+#include "cw_engine.h"
 #include "vfo.h"
 #include "vox.h"
 #include "meter.h"
@@ -1776,6 +1777,13 @@ void radio_start_radio (void) {
   radio_change_region (region);
   radio_create_visual();
   radio_reconfigure_screen();
+  /*
+   * The CW engine is used by CAT/TCI CW text paths and must not depend on
+   * rigctl being enabled.  Start it once during radio initialization;
+   * cw_engine_start_thread() is idempotent, so existing rigctl start calls
+   * remain harmless.
+   */
+  cw_engine_start_thread();
   if (tci_enable) {
     launch_tci();
   }
