@@ -46,7 +46,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                |
 | Supported Compiler             | clang, gcc                                    |                |
 | App Publishing                 | **Source code only, no binaries distributed** |                |
-|                                | **excepted macOS (only without notarization)**|                |
+|                                | **except macOS (digitally signed & notarized)**|                |
 
 Other useful app features (availability depend from used SDR device):
 
@@ -98,7 +98,9 @@ I will never publish any ready-compiled binaries or appimages for Linux. The tas
 ## The further development of deskHPSDR
 
 deskHPSDR is under active development, because software projects never finished. My focus with deskHPSDR is Fonie/SSB and Digimodes, less CW.<br>
-My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.<br>
+My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.
+
+## macOS is first choice
 
 deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority.
 
