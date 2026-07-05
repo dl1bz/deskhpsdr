@@ -29,10 +29,13 @@
 #include "new_menu.h"
 #include "diversity_menu.h"
 #include "radio.h"
+#include "receiver.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
 #include "sliders.h"
 #include "ext.h"
+#include "message.h"
+#include "main.h"
 
 #include <math.h>
 
@@ -41,9 +44,34 @@ static GtkWidget *gain_coarse_scale = NULL;
 static GtkWidget *gain_fine_scale = NULL;
 static GtkWidget *phase_fine_scale = NULL;
 static GtkWidget *phase_coarse_scale = NULL;
+static GtkWidget *diversity_enable_button = NULL;
 
 static double gain_coarse, gain_fine;
+
+static gboolean diversity_is_angelia_p2(void) {
+  return protocol == NEW_PROTOCOL && device == NEW_DEVICE_ANGELIA;
+}
+
+static const char *diversity_unavailable_reason(void) {
+  if (receiver[0] == NULL || n_adc < 2) {
+    return "Diversity requires at least two ADCs.";
+  }
+  return NULL;
+}
+
+static gboolean diversity_available(void) {
+  return diversity_unavailable_reason() == NULL;
+}
 static double phase_coarse, phase_fine;
+
+static void diversity_set_tooltip(GtkWidget *label, GtkWidget *widget, const char *text) {
+  if (label != NULL) {
+    gtk_widget_set_tooltip_text(label, text);
+  }
+  if (widget != NULL) {
+    gtk_widget_set_tooltip_text(widget, text);
+  }
+}
 
 static void cleanup(void) {
   if (dialog != NULL) {
@@ -53,6 +81,7 @@ static void cleanup(void) {
     gain_fine_scale = NULL;
     phase_coarse_scale = NULL;
     phase_fine_scale = NULL;
+    diversity_enable_button = NULL;
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
@@ -65,9 +94,37 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+
+static void diversity_update_enable_button(void) {
+  if (diversity_enable_button == NULL) {
+    return;
+  }
+  const char *reason = diversity_unavailable_reason();
+  gtk_widget_set_sensitive(diversity_enable_button, reason == NULL);
+  if (reason != NULL) {
+    gtk_widget_set_tooltip_text(diversity_enable_button, reason);
+  } else {
+    gtk_widget_set_tooltip_text(diversity_enable_button,
+                                "Enable receive diversity. RX1 becomes the combined ADC0/ADC1 diversity signal; RX2 is used only as the ADC1 monitor path. Requires at least two ADCs.");
+  }
+}
+
+static void brick3_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
+  diversity_brick3_mode = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)) ? 1 : 0;
+  if (diversity_enabled) {
+    schedule_high_priority();
+    schedule_receive_specific();
+  }
+  diversity_update_enable_button();
+}
+
 static void diversity_cb(GtkWidget *widget, gpointer data) {
   int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   set_diversity(state);
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)) != diversity_enabled) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), diversity_enabled);
+  }
 }
 
 //
@@ -148,16 +205,32 @@ void set_diversity_phase(double value) {
 }
 
 void set_diversity(int state) {
+  state = state ? 1 : 0;
+  if (state && !diversity_available()) {
+    const char *reason = diversity_unavailable_reason();
+    t_print("%s: %s\n", __func__, reason != NULL ? reason : "diversity is not available");
+    state = 0;
+  }
+  if (state && receivers > 1 && receiver[0] != NULL && receiver[1] != NULL &&
+      receiver[1]->sample_rate != receiver[0]->sample_rate) {
+    t_print("%s: syncing RX2 sample rate from %d to %d for diversity\n",
+            __func__, receiver[1]->sample_rate, receiver[0]->sample_rate);
+    rx_change_sample_rate(receiver[1], receiver[0]->sample_rate);
+  }
   //
   // If we have only one receiver, then changing diversity
   // changes the number of HPSR receivers so we restart the
   // original protocol
   //
-  if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
+  int restart_old_protocol = protocol == ORIGINAL_PROTOCOL && receivers == 1 && diversity_enabled != state;
+  if (restart_old_protocol) {
     old_protocol_stop();
   }
   diversity_enabled = state;
-  if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
+  if (receivers > 1 && receiver[1] != NULL) {
+    rx_vfo_changed(receiver[1]);
+  }
+  if (restart_old_protocol) {
     old_protocol_run();
   }
   schedule_high_priority();
@@ -199,58 +272,77 @@ void diversity_menu(GtkWidget *parent) {
   g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
   GtkWidget *diversity_b = gtk_check_button_new_with_label("Diversity Enable");
+  diversity_enable_button = diversity_b;
   gtk_widget_set_name(diversity_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(diversity_b), diversity_enabled);
+  diversity_update_enable_button();
   gtk_widget_show(diversity_b);
   gtk_grid_attach(GTK_GRID(grid), diversity_b, 1, 0, 1, 1);
   g_signal_connect(diversity_b, "toggled", G_CALLBACK(diversity_cb), NULL);
+  GtkWidget *brick3_b = gtk_check_button_new_with_label("Brick3");
+  gtk_widget_set_name(brick3_b, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(brick3_b), diversity_brick3_mode != 0);
+  gtk_widget_set_sensitive(brick3_b, diversity_is_angelia_p2());
+  gtk_widget_set_tooltip_text(brick3_b,
+                              "Enable the Brick3/ANAN-100D diversity routing workaround. This does not enable or disable generic Angelia Diversity; it only keeps the normal RX2/DDC context valid for the Brick3 STM32 while DDC0/DDC1 are used for Diversity.");
+  gtk_widget_show(brick3_b);
+  gtk_grid_attach(GTK_GRID(grid), brick3_b, 1, 1, 1, 1);
+  g_signal_connect(brick3_b, "toggled", G_CALLBACK(brick3_cb), NULL);
   GtkWidget *gain_coarse_label = gtk_label_new("Gain (dB, coarse):");
   gtk_widget_set_name(gain_coarse_label, "boldlabel");
   gtk_widget_set_halign(gain_coarse_label, GTK_ALIGN_END);
   gtk_misc_set_alignment(GTK_MISC(gain_coarse_label), 0, 0);
   gtk_widget_show(gain_coarse_label);
-  gtk_grid_attach(GTK_GRID(grid), gain_coarse_label, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), gain_coarse_label, 0, 2, 1, 1);
   gain_coarse_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -25.0, +25.0, 0.5);
   gtk_widget_set_size_request(gain_coarse_scale, 300, 25);
   gtk_range_set_value(GTK_RANGE(gain_coarse_scale), gain_coarse);
+  diversity_set_tooltip(gain_coarse_label, gain_coarse_scale,
+                        "Coarse gain correction for the ADC1 diversity path before it is combined with ADC0. Use this for large amplitude differences between the two antennas/receivers.");
   gtk_widget_show(gain_coarse_scale);
-  gtk_grid_attach(GTK_GRID(grid), gain_coarse_scale, 1, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), gain_coarse_scale, 1, 2, 1, 1);
   g_signal_connect(G_OBJECT(gain_coarse_scale), "value_changed", G_CALLBACK(gain_coarse_changed_cb), NULL);
   GtkWidget *gain_fine_label = gtk_label_new("Gain (dB, fine):");
   gtk_widget_set_name(gain_fine_label, "boldlabel");
   gtk_widget_set_halign(gain_fine_label, GTK_ALIGN_END);
   gtk_misc_set_alignment(GTK_MISC(gain_fine_label), 0, 0);
   gtk_widget_show(gain_fine_label);
-  gtk_grid_attach(GTK_GRID(grid), gain_fine_label, 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), gain_fine_label, 0, 3, 1, 1);
   gain_fine_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -2.0, +2.0, 0.05);
   gtk_widget_set_size_request(gain_fine_scale, 300, 25);
   gtk_range_set_value(GTK_RANGE(gain_fine_scale), gain_fine);
+  diversity_set_tooltip(gain_fine_label, gain_fine_scale,
+                        "Fine gain correction for the ADC1 diversity path. Use this after the coarse gain is close, to maximize cancellation or combining depth.");
   gtk_widget_show(gain_fine_scale);
-  gtk_grid_attach(GTK_GRID(grid), gain_fine_scale, 1, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), gain_fine_scale, 1, 3, 1, 1);
   g_signal_connect(G_OBJECT(gain_fine_scale), "value_changed", G_CALLBACK(gain_fine_changed_cb), NULL);
   GtkWidget *phase_coarse_label = gtk_label_new("Phase (coarse):");
   gtk_widget_set_name(phase_coarse_label, "boldlabel");
   gtk_widget_set_halign(phase_coarse_label, GTK_ALIGN_END);
   gtk_misc_set_alignment(GTK_MISC(phase_coarse_label), 0, 0);
   gtk_widget_show(phase_coarse_label);
-  gtk_grid_attach(GTK_GRID(grid), phase_coarse_label, 0, 3, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), phase_coarse_label, 0, 4, 1, 1);
   phase_coarse_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -180.0, 180.0, 2.0);
   gtk_widget_set_size_request(phase_coarse_scale, 300, 25);
   gtk_range_set_value(GTK_RANGE(phase_coarse_scale), phase_coarse);
+  diversity_set_tooltip(phase_coarse_label, phase_coarse_scale,
+                        "Coarse phase rotation for the ADC1 diversity path before it is combined with ADC0. Use this for large phase alignment changes between the two antennas/receivers.");
   gtk_widget_show(phase_coarse_scale);
-  gtk_grid_attach(GTK_GRID(grid), phase_coarse_scale, 1, 3, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), phase_coarse_scale, 1, 4, 1, 1);
   g_signal_connect(G_OBJECT(phase_coarse_scale), "value_changed", G_CALLBACK(phase_coarse_changed_cb), NULL);
   GtkWidget *phase_fine_label = gtk_label_new("Phase (fine):");
   gtk_widget_set_name(phase_fine_label, "boldlabel");
   gtk_widget_set_halign(phase_fine_label, GTK_ALIGN_END);
   gtk_misc_set_alignment(GTK_MISC(phase_fine_label), 0, 0);
   gtk_widget_show(phase_fine_label);
-  gtk_grid_attach(GTK_GRID(grid), phase_fine_label, 0, 4, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), phase_fine_label, 0, 5, 1, 1);
   phase_fine_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -5.0, 5.0, 0.1);
   gtk_widget_set_size_request(phase_fine_scale, 300, 25);
   gtk_range_set_value(GTK_RANGE(phase_fine_scale), phase_fine);
+  diversity_set_tooltip(phase_fine_label, phase_fine_scale,
+                        "Fine phase rotation for the ADC1 diversity path. Use this for precise nulling or peak combining after coarse phase is close.");
   gtk_widget_show(phase_fine_scale);
-  gtk_grid_attach(GTK_GRID(grid), phase_fine_scale, 1, 4, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), phase_fine_scale, 1, 5, 1, 1);
   g_signal_connect(G_OBJECT(phase_fine_scale), "value_changed", G_CALLBACK(phase_fine_changed_cb), NULL);
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;

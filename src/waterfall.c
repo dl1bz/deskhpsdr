@@ -206,14 +206,37 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_move_to(cr, _x, noise_y);
       cairo_show_text(cr, _text);
     }
+    const char *diversity_role = "";
+    gboolean show_diversity_role = diversity_enabled &&
+                                   !radio_is_transmitting() &&
+                                   !radio_ptt;
+    if (show_diversity_role) {
+      if (rx->id == 0) {
+        diversity_role = " DIV";
+      } else if (rx->id == 1) {
+        diversity_role = " ADC1";
+      }
+    }
     if (rx->sample_rate >= 1000000) {
-      snprintf(_text, sizeof(_text), "SR %dM", rx->sample_rate / 1000000);
+      if (diversity_role[0] != '\0') {
+        snprintf(_text, sizeof(_text), "%dM%s", rx->sample_rate / 1000000, diversity_role);
+      } else {
+        snprintf(_text, sizeof(_text), "SR %dM", rx->sample_rate / 1000000);
+      }
     } else {
-      snprintf(_text, sizeof(_text), "SR %dk", rx->sample_rate / 1000);
+      if (diversity_role[0] != '\0') {
+        snprintf(_text, sizeof(_text), "%dk%s", rx->sample_rate / 1000, diversity_role);
+      } else {
+        snprintf(_text, sizeof(_text), "SR %dk", rx->sample_rate / 1000);
+      }
     }
     cairo_text_extents_t sr_extents;
     cairo_text_extents(cr, _text, &sr_extents);
-    double _x = 65 - sr_extents.width;
+    double sr_right_edge = diversity_role[0] != '\0' ? 95.0 : 65.0;
+    double _x = sr_right_edge - sr_extents.width;
+    if (_x < 2.0) {
+      _x = 2.0;
+    }
     cairo_move_to(cr, _x, sr_y);
     cairo_show_text(cr, _text);
   }

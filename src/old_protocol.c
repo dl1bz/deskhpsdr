@@ -1391,6 +1391,11 @@ static int tx_feedback_channel(void) {
   return ret;
 }
 
+
+static gboolean old_protocol_diversity_rx_active(void) {
+  return diversity_enabled && !radio_is_transmitting() && !radio_ptt;
+}
+
 static long long old_protocol_tci_afsk_tx_offset(int txmode) {
   if (!tci_audio_tx_enabled() || active_receiver == NULL) {
     return 0LL;
@@ -1420,7 +1425,7 @@ static long long channel_freq(int chan) {
     vfonum = receiver[0]->id;
     break;
   case 1:
-    if (diversity_enabled) {
+    if (old_protocol_diversity_rx_active()) {
       vfonum = receiver[0]->id;
     } else {
       vfonum = receiver[1]->id;
@@ -1478,7 +1483,7 @@ static int how_many_receivers(void) {
   // When PureSignal is active, we need to include the TX DAC channel.
   //
   int ret = receivers;          // 1 or 2
-  if (diversity_enabled) { ret = 2; } // need both RX channels, even if there is only one RX
+  if (old_protocol_diversity_rx_active()) { ret = 2; } // need both RX channels, even if there is only one RX
   //
   // Always return 2 so the number of HPSDR-RX is NEVER changed.
   // With 2 RX you can do 1RX or 2RX modes, and it is
@@ -1865,7 +1870,7 @@ static void process_ozy_byte(int b) {
                              right_sample_double_rx);
       }
     }
-    if (!radio_is_transmitting() && diversity_enabled) {
+    if (old_protocol_diversity_rx_active()) {
       //
       // receiving with DIVERSITY. Get sample pairs and feed to diversity mixer.
       // If the second RX is running, feed aux samples to that receiver.
@@ -1881,7 +1886,7 @@ static void process_ozy_byte(int b) {
         if (receivers > 1) { rx_add_iq_samples(receiver[1], left_sample_double_aux, right_sample_double_aux); }
       }
     }
-    if ((!radio_is_transmitting() || duplex) && !diversity_enabled) {
+    if ((!radio_is_transmitting() || duplex) && !old_protocol_diversity_rx_active()) {
       //
       // RX without DIVERSITY. Feed samples to RX1 and RX2
       //
@@ -2223,6 +2228,14 @@ void ozy_send_buffer(void) {
   int txvfo = vfo_get_tx_vfo();
   int rxvfo = active_receiver->id;
   int i;
+  /*
+   * Diversity receive mode is tied to RX1.  RX2 may be the auxiliary ADC
+   * monitor path, but band-dependent RX outputs must follow RX1 while the
+   * ADC0/ADC1 Diversity pair is active.
+   */
+  if (old_protocol_diversity_rx_active()) {
+    rxvfo = 0;
+  }
   int rxb = vfo[rxvfo].band;
   int txb = vfo[txvfo].band;
   const BAND *rxband = band_get_band(rxb);
@@ -2425,7 +2438,7 @@ void ozy_send_buffer(void) {
     // This is used to phase-synchronize RX1 and RX2 on some boards
     // and enforces that the RX1 and RX2 frequencies are the same.
     //
-    if (diversity_enabled) { output_buffer[C4] |= 0x80; }
+    if (old_protocol_diversity_rx_active()) { output_buffer[C4] |= 0x80; }
     // 0 ... 7 maps on 1 ... 8 receivers
     output_buffer[C4] |= ((num_hpsdr_receivers - 1) & 0x07) << 3;
     //
@@ -2684,7 +2697,7 @@ void ozy_send_buffer(void) {
         // If diversity is enabled, use RX1 att value for RX2
         // Note bit5 must *always be set, otherwise the attenuation is zero.
         //
-        if (diversity_enabled) {
+        if (old_protocol_diversity_rx_active()) {
           output_buffer[C1] = 0x20 | (adc[0].attenuation & 0x1F);
         } else {
           output_buffer[C1] = 0x20 | (adc[1].attenuation & 0x1F);
@@ -2708,7 +2721,7 @@ void ozy_send_buffer(void) {
       // need to add tx attenuation and rx ADC selection
       output_buffer[C0] = 0x1C;
       // set adc of the two RX associated with the two deskHPSDR receivers
-      if (diversity_enabled) {
+      if (old_protocol_diversity_rx_active()) {
         // use ADC0 for RX1 and ADC1 for RX2 (fixed setting)
         output_buffer[C1] |= 0x04;
       } else {

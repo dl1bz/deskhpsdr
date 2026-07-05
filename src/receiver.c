@@ -74,6 +74,8 @@ static gboolean making_active = FALSE;
 
 static void rx_cw_zero_beat_reset(RECEIVER *rx);
 static void rx_cw_zero_beat_sample(RECEIVER *rx, double sample);
+static gboolean rx_diversity_rx_active(void);
+static int rx_diversity_effective_vfo_id(const RECEIVER *rx);
 
 long long rx_get_mode_dc_offset(int id) {
   switch (vfo[id].mode) {
@@ -1026,20 +1028,33 @@ void rx_change_adc(const RECEIVER *rx) {
 }
 
 void rx_set_frequency(RECEIVER *rx, long long f) {
-  int id = rx->id;
+  if (rx == NULL) {
+    return;
+  }
+  int id = rx_diversity_effective_vfo_id(rx);
+  RECEIVER *changed_rx = rx;
+  if (id != rx->id && id >= 0 && id < receivers && receiver[id] != NULL) {
+    changed_rx = receiver[id];
+  }
   //
-  // update VFO frequency, and let rx_frequency_changed do the rest
+  // update the effective VFO frequency, and let rx_frequency_changed do the rest.
+  // In Diversity RX mode RX2 is an ADC1 monitor/slave path, so RX2 frequency
+  // operations are redirected to RX1/VFO-A instead of modifying VFO-B.
   //
   if (vfo[id].ctun) {
     vfo[id].ctun_frequency = f;
   } else {
     vfo[id].frequency = f;
   }
-  rx_frequency_changed(rx);
+  rx_frequency_changed(changed_rx);
 }
 
 void rx_frequency_changed(RECEIVER *rx) {
-  int id = rx->id;
+  if (rx == NULL) {
+    return;
+  }
+  int rx_id = rx->id;
+  int id = rx_diversity_effective_vfo_id(rx);
   if (vfo[id].ctun) {
     long long frequency = vfo[id].frequency;
     long long half = (long long) rx->sample_rate / 2LL;
@@ -1068,11 +1083,11 @@ void rx_frequency_changed(RECEIVER *rx) {
       if (rx_low <= min_display) {
         rx->pan = rx->pan - (rx->width / 2);
         if (rx->pan < 0) { rx->pan = 0; }
-        set_pan(id, rx->pan);
+        set_pan(rx_id, rx->pan);
       } else if (rx_high >= max_display) {
         rx->pan = rx->pan + (rx->width / 2);
         if (rx->pan > (rx->pixels - rx->width)) { rx->pan = rx->pixels - rx->width; }
-        set_pan(id, rx->pan);
+        set_pan(rx_id, rx->pan);
       }
     }
     //
@@ -1104,10 +1119,16 @@ void rx_frequency_changed(RECEIVER *rx) {
     schedule_high_priority(); // send new frequency
     break;
   }
+  if (rx_diversity_rx_active() && rx_id == 0 && receivers > 1 && receiver[1] != NULL) {
+    rx_frequency_changed(receiver[1]);
+  }
 }
 
 void rx_filter_changed(RECEIVER *rx) {
   rx_set_filter(rx);
+  if (rx_diversity_rx_active() && rx != NULL && rx->id == 0 && receivers > 1 && receiver[1] != NULL) {
+    rx_set_filter(receiver[1]);
+  }
   if (can_transmit) {
     if ((transmitter->use_rx_filter && rx == active_receiver) || vfo_get_tx_mode() == modeFMN) {
       tx_set_filter(transmitter);
@@ -1120,6 +1141,9 @@ void rx_filter_changed(RECEIVER *rx) {
 
 void rx_mode_changed(RECEIVER *rx) {
   rx_set_mode(rx);
+  if (rx_diversity_rx_active() && rx != NULL && rx->id == 0 && receivers > 1 && receiver[1] != NULL) {
+    rx_set_mode(receiver[1]);
+  }
   rx_filter_changed(rx);
 }
 
@@ -1133,9 +1157,38 @@ void rx_vfo_changed(RECEIVER *rx) {
 }
 
 
+static gboolean rx_diversity_rx_active(void) {
+  return diversity_enabled && !radio_is_transmitting() && !radio_ptt;
+}
+
+static int rx_diversity_effective_vfo_id(const RECEIVER *rx) {
+  if (rx != NULL && rx_diversity_rx_active() && rx->id == 1) {
+    return 0;
+  }
+  return rx != NULL ? rx->id : 0;
+}
+
 static long long rx_get_effective_frequency(const RECEIVER *rx) {
-  int id = rx->id;
+  int id = rx_diversity_effective_vfo_id(rx);
   return vfo[id].ctun ? vfo[id].ctun_frequency : vfo[id].frequency;
+}
+
+static int rx_diversity_effective_sample_rate(const RECEIVER *rx, int sample_rate) {
+  if (rx != NULL && rx_diversity_rx_active() && rx->id == 1 && receiver[0] != NULL) {
+    return receiver[0]->sample_rate;
+  }
+  return sample_rate;
+}
+
+static void rx_diversity_sync_aux_receiver_sample_rate(const RECEIVER *rx) {
+  if (rx == NULL || !rx_diversity_rx_active() || rx->id != 0 || receivers <= 1 || receiver[1] == NULL) {
+    return;
+  }
+  if (receiver[1]->sample_rate != rx->sample_rate) {
+    t_print("%s: syncing RX2 sample rate from %d to %d for diversity\n",
+            __func__, receiver[1]->sample_rate, rx->sample_rate);
+    rx_change_sample_rate(receiver[1], rx->sample_rate);
+  }
 }
 
 static void rx_cw_zero_beat_reset(RECEIVER *rx) {
@@ -1150,7 +1203,8 @@ static void rx_cw_zero_beat_reset(RECEIVER *rx) {
 }
 
 static void rx_cw_zero_beat_finish(RECEIVER *rx) {
-  int mode = vfo[rx->id].mode;
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  int mode = vfo[vfo_id].mode;
   double max_power = 0.0;
   double power_sum = 0.0;
   int max_bin = -1;
@@ -1230,7 +1284,8 @@ static void rx_cw_zero_beat_sample(RECEIVER *rx, double sample) {
     rx_cw_zero_beat_reset(rx);
     return;
   }
-  int mode = vfo[rx->id].mode;
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  int mode = vfo[vfo_id].mode;
   if (mode != modeCWU && mode != modeCWL) {
     rx_cw_zero_beat_reset(rx);
     return;
@@ -1250,7 +1305,8 @@ void rx_cw_zero_beat_start(RECEIVER *rx) {
   if (rx == NULL) {
     return;
   }
-  int mode = vfo[rx->id].mode;
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  int mode = vfo[vfo_id].mode;
   if (rx != active_receiver || (mode != modeCWU && mode != modeCWL) || radio_is_transmitting()) {
     t_print("%s: RX%d rejected active=%d mode=%d xmit=%d\n",
             __func__,
@@ -1495,9 +1551,10 @@ void rx_update_zoom(RECEIVER *rx) {
   if (rx->zoom == 1) {
     rx->pan = 0;
   } else {
-    if (vfo[rx->id].ctun) {
-      long long min_frequency = vfo[rx->id].frequency - (long long)(rx->sample_rate / 2);
-      rx->pan = ((vfo[rx->id].ctun_frequency - min_frequency) / rx->hz_per_pixel) - (rx->width / 2);
+    int vfo_id = rx_diversity_effective_vfo_id(rx);
+    if (vfo[vfo_id].ctun) {
+      long long min_frequency = vfo[vfo_id].frequency - (long long)(rx->sample_rate / 2);
+      rx->pan = ((vfo[vfo_id].ctun_frequency - min_frequency) / rx->hz_per_pixel) - (rx->width / 2);
       if (rx->pan < 0) { rx->pan = 0; }
       if (rx->pan > (rx->pixels - rx->width)) { rx->pan = rx->pixels - rx->width; }
     } else {
@@ -1517,7 +1574,7 @@ void rx_set_filter(RECEIVER *rx) {
   // - determine on the use of the CW peak filter
   // - re-caloc AGC since this depends on the filter width
   //
-  int id = rx->id;
+  int id = rx_diversity_effective_vfo_id(rx);
   int m = vfo[id].mode;
   FILTER *mode_filters = filters[m];
   const FILTER *filter = &mode_filters[vfo[id].filter]; // ignored in FMN
@@ -1584,6 +1641,11 @@ void rx_set_framerate(RECEIVER *rx) {
 void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   // ToDo: move this outside of the WDSP wrappers and encapsulate WDSP calls
   //       in this function
+  sample_rate = rx_diversity_effective_sample_rate(rx, sample_rate);
+  if (rx != NULL && rx->sample_rate == sample_rate) {
+    rx_diversity_sync_aux_receiver_sample_rate(rx);
+    return;
+  }
   g_mutex_lock(&rx->mutex);
   rx->sample_rate = sample_rate;
   schedule_receive_specific();
@@ -1634,6 +1696,7 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
   g_mutex_unlock(&rx->mutex);
   t_print("%s: RXid=%d rate=%d buffer_size=%d output_samples=%d\n", __func__, rx->id, rx->sample_rate,
           rx->buffer_size, rx->output_samples);
+  rx_diversity_sync_aux_receiver_sample_rate(rx);
 }
 
 void rx_close(const RECEIVER *rx) {
@@ -1802,7 +1865,8 @@ int rx_binaural_allowed(const RECEIVER *rx) {
   if (rx->local_audio_channels <= 1) {
     return 0;
   }
-  mode = vfo[rx->id].mode;
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  mode = vfo[vfo_id].mode;
   return (mode != modeDIGU && mode != modeDIGL);
 }
 
@@ -2015,8 +2079,16 @@ void rx_set_mode(RECEIVER *rx) {
   // Change the  mode of a running receiver according to what it stored
   // in its controlling VFO.
   //
-  SetRXAMode(rx->id, vfo[rx->id].mode);
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  SetRXAMode(rx->id, vfo[vfo_id].mode);
   rx_set_squelch(rx);
+  if (rx_diversity_rx_active() && rx->id == 1) {
+    rx_set_offset(rx, vfo[vfo_id].offset - rx_get_mode_dc_offset(vfo_id) + rx_get_digi_monitor_offset(vfo_id));
+    if (protocol == NEW_PROTOCOL) {
+      schedule_high_priority();
+    }
+    return;
+  }
   rx_frequency_changed(rx);
 }
 
@@ -2025,7 +2097,8 @@ int rx_anf_allowed(const RECEIVER *rx) {
   if (rx == NULL) {
     return 0;
   }
-  mode = vfo[rx->id].mode;
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  mode = vfo[vfo_id].mode;
   return (mode != modeCWU && mode != modeCWL && mode != modeDIGU && mode != modeDIGL);
 }
 
@@ -2132,13 +2205,10 @@ void rx_set_notch(const RECEIVER *rx) {
   if (rx == NULL) {
     return;
   }
-  tunefreq = vfo[rx->id].frequency;
-  mode = vfo[rx->id].mode;
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  tunefreq = vfo[vfo_id].frequency;
+  mode = vfo[vfo_id].mode;
   width = rx->mnf_fbw;
-  if (diversity_enabled && rx->id == 1) {
-    tunefreq = vfo[0].frequency;
-    mode = vfo[0].mode;
-  }
   if (mode == modeCWU) {
     shift = - (double) cw_keyer_sidetone_frequency;
   } else if (mode == modeCWL) {
@@ -2207,7 +2277,8 @@ void rx_set_squelch(const RECEIVER *rx) {
   // FM    squelch:      1.0 ... 0.01      expon. interpolation
   // Voice squelch:      0.0 ... 0.75      linear interpolation
   //
-  switch (vfo[rx->id].mode) {
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  switch (vfo[vfo_id].mode) {
   case modeAM:
   case modeSAM:
   // My personal experience is that "Voice squelch" is of very

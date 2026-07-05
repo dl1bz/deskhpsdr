@@ -266,6 +266,124 @@ static unsigned char high_priority_buffer_to_radio[1444];
 static unsigned char transmit_specific_buffer[60];
 static unsigned char receive_specific_buffer[1444];
 
+static void new_protocol_trace_diversity_high_priority(int xmit,
+    int rxvfo,
+    int txvfo,
+    int rxant,
+    int txant,
+    unsigned int alex0,
+    unsigned int alex1,
+    long long ddc0,
+    long long ddc1) {
+  static int last_valid = 0;
+  static int last_diversity = -1;
+  static int last_xmit = -1;
+  static int last_rxvfo = -1;
+  static int last_txvfo = -1;
+  static int last_rxant = -1;
+  static int last_txant = -1;
+  static int last_hp4 = -1;
+  static int last_oc = -1;
+  static int last_att0 = -1;
+  static int last_att1 = -1;
+  static unsigned int last_alex0 = 0;
+  static unsigned int last_alex1 = 0;
+  static long long last_ddc0 = 0;
+  static long long last_ddc1 = 0;
+  int active_id = active_receiver != NULL ? active_receiver->id : -1;
+  int hp4 = high_priority_buffer_to_radio[4];
+  int oc = high_priority_buffer_to_radio[1401];
+  int att1 = high_priority_buffer_to_radio[1442];
+  int att0 = high_priority_buffer_to_radio[1443];
+  int should_log = !last_valid ||
+                   diversity_enabled != last_diversity ||
+                   xmit != last_xmit ||
+                   rxvfo != last_rxvfo ||
+                   txvfo != last_txvfo ||
+                   rxant != last_rxant ||
+                   txant != last_txant ||
+                   hp4 != last_hp4 ||
+                   oc != last_oc ||
+                   att0 != last_att0 ||
+                   att1 != last_att1 ||
+                   alex0 != last_alex0 ||
+                   alex1 != last_alex1 ||
+                   ddc0 != last_ddc0 ||
+                   ddc1 != last_ddc1;
+  /*
+   * Keep the trace bounded during normal operation, but keep logging while
+   * Diversity is active or while the previous state still was Diversity.  If
+   * the hardware relay matrix chatters, this shows which P2 high-priority
+   * fields are alternating.
+   */
+  if (should_log && (diversity_enabled || last_diversity == 1)) {
+    t_print("P2 DIVTRACE HP: div=%d xmit=%d ptt=%d active=%d rxvfo=%d txvfo=%d "
+            "rxant=%d txant=%d dev=%d n_adc=%d rx=%d ddc0=%lld ddc1=%lld "
+            "hp4=%02X oc=%02X alex0=%08X alex1=%08X att0=%d att1=%d\n",
+            diversity_enabled, xmit, radio_ptt, active_id, rxvfo, txvfo,
+            rxant, txant, device, n_adc, receivers, ddc0, ddc1, hp4, oc,
+            alex0, alex1, att0, att1);
+  }
+  last_valid = 1;
+  last_diversity = diversity_enabled;
+  last_xmit = xmit;
+  last_rxvfo = rxvfo;
+  last_txvfo = txvfo;
+  last_rxant = rxant;
+  last_txant = txant;
+  last_hp4 = hp4;
+  last_oc = oc;
+  last_att0 = att0;
+  last_att1 = att1;
+  last_alex0 = alex0;
+  last_alex1 = alex1;
+  last_ddc0 = ddc0;
+  last_ddc1 = ddc1;
+}
+
+static void new_protocol_trace_diversity_receive_specific(int xmit) {
+  static int last_valid = 0;
+  static int last_diversity = -1;
+  static int last_xmit = -1;
+  static unsigned char last_enable = 0;
+  static unsigned char last_dither = 0;
+  static unsigned char last_random = 0;
+  static unsigned char last_sync = 0;
+  static unsigned char last_ddc[10];
+  unsigned char current_ddc[10];
+  memcpy(current_ddc, &receive_specific_buffer[17], sizeof(current_ddc));
+  int should_log = !last_valid ||
+                   diversity_enabled != last_diversity ||
+                   xmit != last_xmit ||
+                   receive_specific_buffer[7] != last_enable ||
+                   receive_specific_buffer[5] != last_dither ||
+                   receive_specific_buffer[6] != last_random ||
+                   receive_specific_buffer[1363] != last_sync ||
+                   memcmp(current_ddc, last_ddc, sizeof(current_ddc)) != 0;
+  if (should_log && (diversity_enabled || last_diversity == 1)) {
+    t_print("P2 DIVTRACE RS: div=%d xmit=%d ptt=%d dev=%d n_adc=%d rx=%d "
+            "enable=%02X dither=%02X random=%02X sync=%02X "
+            "ddc0[adc=%u sr=%u bits=%u] ddc1[adc=%u sr=%u bits=%u]\n",
+            diversity_enabled, xmit, radio_ptt, device, n_adc, receivers,
+            receive_specific_buffer[7], receive_specific_buffer[5],
+            receive_specific_buffer[6], receive_specific_buffer[1363],
+            receive_specific_buffer[17],
+            ((unsigned int) receive_specific_buffer[18] << 8) | receive_specific_buffer[19],
+            receive_specific_buffer[22],
+            receive_specific_buffer[23],
+            ((unsigned int) receive_specific_buffer[24] << 8) | receive_specific_buffer[25],
+            receive_specific_buffer[26]);
+  }
+  last_valid = 1;
+  last_diversity = diversity_enabled;
+  last_xmit = xmit;
+  last_enable = receive_specific_buffer[7];
+  last_dither = receive_specific_buffer[5];
+  last_random = receive_specific_buffer[6];
+  last_sync = receive_specific_buffer[1363];
+  memcpy(last_ddc, current_ddc, sizeof(last_ddc));
+}
+
 static unsigned char last_oc_state = 0xFF;
 static int last_oc_xmit = -1, last_oc_tune = -1;
 
@@ -384,7 +502,7 @@ void update_action_table(void) {
   // determine the actions to be taken when a DDC packet arrives
   //
   int flag = 0;
-  int xmit = radio_is_transmitting(); // store such that it cannot change while building the flag
+  int xmit = radio_is_transmitting() | radio_ptt; // store such that it cannot change while building the flag
   int newdev = (device == NEW_DEVICE_ANGELIA  || device == NEW_DEVICE_ORION ||
                 device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN);
   if (duplex && xmit) { flag += 10000; }
@@ -457,6 +575,28 @@ void update_action_table(void) {
     t_print("ACTION TABLE: case not handled: %d\n", flag);
     break;
   }
+}
+
+static gboolean p2_diversity_brick3_mode_active(int xmit) {
+  return diversity_enabled && !xmit &&
+         diversity_brick3_mode &&
+         protocol == NEW_PROTOCOL &&
+         device == NEW_DEVICE_ANGELIA;
+}
+
+static void p2_write_ddc_frequency_word(unsigned char *buffer, int ddc, long long frequency) {
+  unsigned long phase = (unsigned long)(((double) frequency) * 34.952533333333333333333333333333);
+  buffer[ 9 + (ddc * 4)] = (phase >> 24) & 0xFF;
+  buffer[10 + (ddc * 4)] = (phase >> 16) & 0xFF;
+  buffer[11 + (ddc * 4)] = (phase >>  8) & 0xFF;
+  buffer[12 + (ddc * 4)] = (phase) & 0xFF;
+}
+
+static void p2_write_ddc_receive_specific(unsigned char *buffer, int ddc, int adc, int sample_rate) {
+  buffer[17 + (ddc * 6)] = adc;
+  buffer[18 + (ddc * 6)] = ((sample_rate / 1000) >> 8) & 0xFF;
+  buffer[19 + (ddc * 6)] = ((sample_rate / 1000)) & 0xFF;
+  buffer[22 + (ddc * 6)] = 24;
 }
 
 static void p2_prime_route(void) {
@@ -838,6 +978,16 @@ static void new_protocol_high_priority(void) {
   int rxvfo    = active_receiver->id; // id of the active receiver
   int othervfo = 1 - rxvfo;           // id of the "other" receiver (only valid if receivers > 1)
   int txmode   = vfo_get_tx_mode();
+  /*
+   * In Diversity receive mode the RF/display context is RX1.  RX2 is only
+   * the auxiliary ADC monitor path.  Do not let an active RX2 focus select
+   * RX2 band-dependent outputs or filter decisions while the radio is tuned
+   * as a synchronized ADC0/ADC1 Diversity pair on RX1.
+   */
+  if (diversity_enabled && !xmit) {
+    rxvfo = 0;
+    othervfo = 1;
+  }
   const BAND *txband = band_get_band(vfo[txvfo].band);
   const BAND *rxband = band_get_band(vfo[rxvfo].band);
   high_priority_buffer_to_radio[0] = (high_priority_sequence >> 24) & 0xFF;
@@ -885,23 +1035,35 @@ static void new_protocol_high_priority(void) {
     // DDCfrequency[id] += frequency_calibration -  vfo[id].lo;
     DDCfrequency[id] = apply_ppm_ll(DDCfrequency[id] - vfo[id].lo);
   }
+  if (diversity_enabled && !xmit) {
+    /*
+     * All RX-side RF/filter decisions must see the same tuned frequency in
+     * Diversity.  The actual DDC0/DDC1 frequency words are also written as
+     * RX1 below, but keeping DDCfrequency[1] in sync prevents later filter
+     * code from accidentally using VFO-B while Diversity is active.
+     */
+    DDCfrequency[1] = DDCfrequency[0];
+  }
   // CW mode from the Host; disabled since deskhpsdr does not use this CW option.
   high_priority_buffer_to_radio[5] = 0x00;
   if (diversity_enabled && !xmit) {
     //
-    // Use frequency of first receiver for both DDC0 and DDC1
-    // This is overridden later if we do PureSignal TX
-    // The "obscure" constant 34.952533333333333333333333333333 is 4294967296/122880000
+    // Use frequency of first receiver for both Diversity DDCs.
+    // This is overridden later if we do PureSignal TX.
     //
-    phase = (unsigned long)(((double) DDCfrequency[0]) * 34.952533333333333333333333333333);
-    high_priority_buffer_to_radio[ 9] = (phase >> 24) & 0xFF;
-    high_priority_buffer_to_radio[10] = (phase >> 16) & 0xFF;
-    high_priority_buffer_to_radio[11] = (phase >>  8) & 0xFF;
-    high_priority_buffer_to_radio[12] = (phase) & 0xFF;
-    high_priority_buffer_to_radio[13] = (phase >> 24) & 0xFF;
-    high_priority_buffer_to_radio[14] = (phase >> 16) & 0xFF;
-    high_priority_buffer_to_radio[15] = (phase >>  8) & 0xFF;
-    high_priority_buffer_to_radio[16] = (phase) & 0xFF;
+    p2_write_ddc_frequency_word(high_priority_buffer_to_radio, 0, DDCfrequency[0]);
+    p2_write_ddc_frequency_word(high_priority_buffer_to_radio, 1, DDCfrequency[0]);
+    if (p2_diversity_brick3_mode_active(xmit)) {
+      /*
+       * Brick3 / Angelia compatibility:
+       * Diversity uses DDC0/DDC1, but the Brick3 STM32 also receives the
+       * RX2-frequency context from the FPGA.  Keep the normal Angelia
+       * DDC2/DDC3 frequency slots valid and mirrored to RX1 while Diversity
+       * is active, so the STM32 does not lose its RX2/DDC context.
+       */
+      p2_write_ddc_frequency_word(high_priority_buffer_to_radio, 2, DDCfrequency[0]);
+      p2_write_ddc_frequency_word(high_priority_buffer_to_radio, 3, DDCfrequency[0]);
+    }
   } else {
     //
     // Set frequencies for all receivers
@@ -1138,7 +1300,7 @@ static void new_protocol_high_priority(void) {
     if (receiver[rxvfo]->adc == 0) {
       BPFfreq = DDCfrequency[rxvfo];       // Take (overwrite with) frequency of active receiver
     }
-    if (diversity_enabled) {
+    if (diversity_enabled && !xmit) {
       BPFfreq = DDCfrequency[0];
     }
     if (adc0_filter_bypass) {
@@ -1171,7 +1333,7 @@ static void new_protocol_high_priority(void) {
     if (receiver[rxvfo]->adc == 1) {
       BPFfreq = DDCfrequency[rxvfo];       // Take (overwrite with) frequency of active receiver
     }
-    if (diversity_enabled) {
+    if (diversity_enabled && !xmit) {
       BPFfreq = DDCfrequency[0];
     }
     if (adc1_filter_bypass) {
@@ -1419,8 +1581,8 @@ static void new_protocol_high_priority(void) {
   // ADC step attenuator of ADC0 and ADC1
   //
   high_priority_buffer_to_radio[1443] = adc[0].attenuation;
-  if (diversity_enabled) {
-    high_priority_buffer_to_radio[1442] = adc[0].attenuation; // DIVERSITY: ADC0 att value for ADC1 as well
+  if (diversity_enabled && !xmit) {
+    high_priority_buffer_to_radio[1442] = adc[0].attenuation; // DIVERSITY RX: ADC0 att value for ADC1 as well
   } else {
     high_priority_buffer_to_radio[1442] = adc[1].attenuation;
   }
@@ -1440,6 +1602,8 @@ static void new_protocol_high_priority(void) {
   if (xmit && transmitter->puresignal) {
     high_priority_buffer_to_radio[1442] = transmitter->attenuation;
   }
+  new_protocol_trace_diversity_high_priority(xmit, rxvfo, txvfo, rxant, txant, alex0, alex1,
+      DDCfrequency[0], DDCfrequency[1]);
   //
   // Send the HighPrio buffer to the radio
   //
@@ -1570,7 +1734,7 @@ static void new_protocol_transmit_specific(void) {
   // Setting of the ADC0/ADC1 step attenuators while transmitting
   //
   transmit_specific_buffer[59] = adc[0].attenuation;
-  transmit_specific_buffer[58] = diversity_enabled ? adc[0].attenuation : adc[1].attenuation;
+  transmit_specific_buffer[58] = adc[1].attenuation;
   if (local_pa_enable) {
     transmit_specific_buffer[58] = 31;   // ADC1
     transmit_specific_buffer[59] = 31;   // ADC0
@@ -1651,7 +1815,7 @@ static void new_protocol_receive_specific(void) {
   int xmit;
   pthread_mutex_lock(&rx_spec_mutex);
   memset(receive_specific_buffer, 0, sizeof(receive_specific_buffer));
-  xmit = radio_is_transmitting();
+  xmit = radio_is_transmitting() | radio_ptt;
   receive_specific_buffer[0] = (rx_specific_sequence >> 24) & 0xFF;
   receive_specific_buffer[1] = (rx_specific_sequence >> 16) & 0xFF;
   receive_specific_buffer[2] = (rx_specific_sequence >>  8) & 0xFF;
@@ -1668,8 +1832,10 @@ static void new_protocol_receive_specific(void) {
     // this bit is set for the corresponding ADC
     //
     int adc = p2_receiver_adc_assignment(ddc, receiver[i]->adc);
-    receive_specific_buffer[5] |= receiver[i]->dither << adc; // dither enable
-    receive_specific_buffer[6] |= receiver[i]->random << adc; // random enable
+    if (!diversity_enabled || xmit) {
+      receive_specific_buffer[5] |= receiver[i]->dither << adc; // dither enable
+      receive_specific_buffer[6] |= receiver[i]->random << adc; // random enable
+    }
     if (!xmit && !diversity_enabled) {
       // normal RX without diversity
       receive_specific_buffer[7] |= (1 << ddc); // DDC enable
@@ -1712,21 +1878,33 @@ static void new_protocol_receive_specific(void) {
     //
     int adc0 = 0;
     int adc1 = (n_adc > 1) ? 1 : 0;
+    receive_specific_buffer[5] &= (uint8_t) ~((1 << adc0) | (1 <<
+                                  adc1));          // clear ADC0/ADC1 dither bits from normal RX loop
+    receive_specific_buffer[6] &= (uint8_t) ~((1 << adc0) | (1 <<
+                                  adc1));          // clear ADC0/ADC1 random bits from normal RX loop
     receive_specific_buffer[5] |= receiver[0]->dither << adc0;                     // dither DDC0: take value from RX1
     receive_specific_buffer[5] |= receiver[0]->dither << adc1;                     // dither DDC1: take value from RX1
     receive_specific_buffer[6] |= receiver[0]->random << adc0;                     // random DDC0: take value from RX1
     receive_specific_buffer[6] |= receiver[0]->random << adc1;                     // random DDC1: take value from RX1
-    receive_specific_buffer[17] = adc0;                                            // ADC associated with DDC0
-    receive_specific_buffer[18] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF;  // sample rate MSB
-    receive_specific_buffer[19] = ((receiver[0]->sample_rate / 1000)) & 0xFF;       // sample rate LSB
-    receive_specific_buffer[22] = 24;                                              // bits per sample
-    receive_specific_buffer[23] = adc1;                                            // ADC associated with DDC1
-    receive_specific_buffer[24] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF;  // sample rate MSB
-    receive_specific_buffer[25] = ((receiver[0]->sample_rate / 1000)) & 0xFF;       // sample rate LSB
-    receive_specific_buffer[26] = 24;                                              // bits per sample
+    p2_write_ddc_receive_specific(receive_specific_buffer, 0, adc0, receiver[0]->sample_rate);
+    p2_write_ddc_receive_specific(receive_specific_buffer, 1, adc1, receiver[0]->sample_rate);
     receive_specific_buffer[1363] = 0x02;                                          // sync DDC1 to DDC0
-    receive_specific_buffer[7] = 1;                                                // enable  DDC0 but disable all others
+    if (p2_diversity_brick3_mode_active(xmit)) {
+      /*
+       * Keep DDC2/DDC3 enabled in addition to DDC0/DDC1 on Brick3/Angelia.
+       * Do not rely on the normal receiver loop having populated both slots:
+       * deskHPSDR may run with only one GUI receiver, but the Brick3 STM32
+       * still needs a valid RX2/DDC3 context while Diversity uses DDC0/DDC1.
+       */
+      p2_write_ddc_receive_specific(receive_specific_buffer, 2, adc0, receiver[0]->sample_rate);
+      p2_write_ddc_receive_specific(receive_specific_buffer, 3, adc1, receiver[0]->sample_rate);
+      receive_specific_buffer[7] = 0x0F;
+    } else {
+      receive_specific_buffer[7] =
+              1;                                              // enable DDC0 only; DDC1 is synchronized to DDC0
+    }
   }
+  new_protocol_trace_diversity_receive_specific(xmit);
   //t_print("new_protocol_receive_specific: %s:%d enable=%02X\n",inet_ntoa(receiver_addr.sin_addr),ntohs(receiver_addr.sin_port),receive_specific_buffer[7]);
   if (have_saturn_xdma) {
 #ifdef SATURN
@@ -2395,6 +2573,19 @@ static gpointer iq_thread(gpointer data) {
   return NULL;
 }
 
+static double p2_iq_sample_gain(const RECEIVER *rx) {
+  if (protocol == NEW_PROTOCOL && rx != NULL && rx->sample_rate == 48000) {
+    switch (device) {
+    case NEW_DEVICE_HERMES:
+      // Brick2 P2: 48 kHz delivers higher IQ amplitude (~+29 dB vs >=96 kHz).
+      return 0.0354813389;  // -29 dB
+    default:
+      break;
+    }
+  }
+  return 1.0;
+}
+
 static void process_iq_data(const unsigned char* buffer, RECEIVER *rx) {
   int b;
   int leftsample;
@@ -2433,20 +2624,9 @@ static void process_iq_data(const unsigned char* buffer, RECEIVER *rx) {
     // The "obscure" constant 1.1920928955078125E-7 is 1/(2^23)
     leftsampledouble = (double) leftsample * 1.1920928955078125E-7;
     rightsampledouble = (double) rightsample * 1.1920928955078125E-7;
-    if (protocol == NEW_PROTOCOL && rx->sample_rate == 48000) {
-      switch (device) {
-      case NEW_DEVICE_HERMES: {
-        // Brick2 P2: 48 kHz delivers higher IQ amplitude (~+29 dB vs >=96 kHz)
-        // Normalize here so S-meter and spectrum stay consistent across sample rates
-        const double p2_48k_gain = 0.0354813389;  // -29 dB
-        leftsampledouble *= p2_48k_gain;
-        rightsampledouble *= p2_48k_gain;
-        break;
-      }
-      default:
-        break;
-      }
-    }
+    double iq_gain = p2_iq_sample_gain(rx);
+    leftsampledouble *= iq_gain;
+    rightsampledouble *= iq_gain;
     rx_add_iq_samples(rx, leftsampledouble, rightsampledouble);
   }
 }
@@ -2498,6 +2678,11 @@ static void process_div_iq_data(const unsigned char* buffer) {
     rightsample1 |= (int)((unsigned char) buffer[b++] & 0xFF);
     leftsampledouble1 = (double) leftsample1 * 1.1920928955078125E-7;
     rightsampledouble1 = (double) rightsample1 * 1.1920928955078125E-7;
+    double iq_gain = p2_iq_sample_gain(receiver[0]);
+    leftsampledouble0 *= iq_gain;
+    rightsampledouble0 *= iq_gain;
+    leftsampledouble1 *= iq_gain;
+    rightsampledouble1 *= iq_gain;
     rx_add_div_iq_samples(receiver[0], leftsampledouble0, rightsampledouble0, leftsampledouble1, rightsampledouble1);
     //
     // if both receivers share the sample rate, we can feed data to RX2

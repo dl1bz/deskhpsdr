@@ -150,6 +150,14 @@ void panadapter_set_max_label_rows (int r) {
   max_pan_label_rows = r;
 }
 
+static gboolean rx_panadapter_diversity_rx_active(const RECEIVER *rx) {
+  return rx != NULL && diversity_enabled && !radio_is_transmitting() && !radio_ptt && rx->id == 1;
+}
+
+static int rx_panadapter_effective_vfo_id(const RECEIVER *rx) {
+  return rx_panadapter_diversity_rx_active(rx) ? 0 : (rx != NULL ? rx->id : 0);
+}
+
 static void rx_panadapter_reset_noisefloor(RECEIVER *rx) {
   if (rx == NULL) {
     return;
@@ -407,7 +415,7 @@ static gboolean panadapter_draw_cb (GtkWidget *widget, cairo_t* cr, gpointer dat
     long long f_display;
     char text1[64];
     char text2[64];
-    if (diversity_enabled && rx->id == 1) {
+    if (rx_panadapter_diversity_rx_active(rx)) {
       frequency = vfo[0].frequency;
       mode = vfo[0].mode;
     }
@@ -450,7 +458,7 @@ static double panadapter_get_cursor_rf_frequency (RECEIVER *rx, double x) {
   int mode = vfo[rx->id].mode;
   double half = (double) rx->sample_rate * 0.5;
   double min_display;
-  if (diversity_enabled && rx->id == 1) {
+  if (rx_panadapter_diversity_rx_active(rx)) {
     frequency = (double) vfo[0].frequency;
     mode = vfo[0].mode;
   }
@@ -578,15 +586,10 @@ static const char *(dbm2smeter[NUM_SWERTE + 1]) = {
 };
 
 
-static unsigned char get_SWert (short int dbm) {
+static unsigned char get_SWert (long long freq, short int dbm) {
   int i;
-  long long freq;
   const short int *lowlimits;
   const short int *uplimits;
-  if (active_receiver == NULL) {
-    return NUM_SWERTE;
-  }
-  freq = vfo[active_receiver->id].frequency;
   if (freq > 30000000LL) {
     lowlimits = lowlimitsUKW;
     uplimits = uplimitsUKW;
@@ -817,10 +820,10 @@ void rx_panadapter_update (RECEIVER *rx) {
   cairo_rectangle (cr, 0, 0, mywidth, myheight);
   cairo_fill (cr);
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
-  int mode = vfo[rx->id].mode;
-  int vfo_id = rx->id;
-  long long frequency = vfo[rx->id].frequency;
-  int vfoband = vfo[rx->id].band;
+  int vfo_id = rx_panadapter_effective_vfo_id(rx);
+  int mode = vfo[vfo_id].mode;
+  long long frequency = vfo[vfo_id].frequency;
+  int vfoband = vfo[vfo_id].band;
   long long offset;
   double pan_display_shift = 0.0;
   //
@@ -834,23 +837,16 @@ void rx_panadapter_update (RECEIVER *rx) {
   //
   // offset is used to calculate the filter edges. They move  with the RIT value
   //
-  if (vfo[rx->id].ctun) {
-    offset = vfo[rx->id].offset;
+  if (vfo[vfo_id].ctun) {
+    offset = vfo[vfo_id].offset;
   } else {
-    offset = vfo[rx->id].rit_enabled ? vfo[rx->id].rit : 0;
+    offset = vfo[vfo_id].rit_enabled ? vfo[vfo_id].rit : 0;
   }
   if (filter_board == ALEX && rx->adc == 0) {
     soffset += (double) (10 * rx->alex_attenuation - 20 * rx->preamp);
   }
   if (filter_board == CHARLY25 && rx->adc == 0) {
     soffset += (double) (12 * rx->alex_attenuation - 18 * rx->preamp - 18 * rx->dither);
-  }
-  // In diversity mode, the RX2 frequency tracks the RX1 frequency
-  if (diversity_enabled && rx->id == 1) {
-    vfo_id = 0;
-    frequency = vfo[0].frequency;
-    vfoband = vfo[0].band;
-    mode = vfo[0].mode;
   }
   long long half = (long long) rx->sample_rate / 2LL;
   double vfofreq = ((double) half / HzPerPixel) - (double) rx->pan;
@@ -1222,7 +1218,7 @@ void rx_panadapter_update (RECEIVER *rx) {
         long long half = (long long) rx->sample_rate / 2LL;
         long long ph_frequency = vfo[rx->id].frequency;
         int ph_mode = vfo[rx->id].mode;
-        if (diversity_enabled && rx->id == 1) {
+        if (rx_panadapter_diversity_rx_active(rx)) {
           ph_frequency = vfo[0].frequency;
           ph_mode = vfo[0].mode;
         }
@@ -1324,7 +1320,7 @@ void rx_panadapter_update (RECEIVER *rx) {
     // calculate where S9 is as gradient offset (0.0 = bottom, 1.0 = top)
     double denom = (double) rx->panadapter_high - (double) rx->panadapter_low;
     if (denom <= 0.0) { denom = 1.0; } // Fallback, falls high<=low
-    double S9 = ((vfo[rx->id].frequency > 30000000LL) ? -93.0 : -73.0);
+    double S9 = ((vfo[vfo_id].frequency > 30000000LL) ? -93.0 : -73.0);
     S9 += 10; // 10db nach oben schieben
     S9 = (S9 - (double) rx->panadapter_low) / denom;
     S9 = (S9 < 0.0) ? 0.0 : (S9 > 1.0) ? 1.0 : S9;
@@ -1678,8 +1674,8 @@ void rx_panadapter_update (RECEIVER *rx) {
     for (int j = 0; j < num_peaks; j++) {
       if (peak_positions[j] > 0) {
         char peak_label[32];
-        if (active_receiver->panadapter_peaks_as_smeter) {
-          snprintf (peak_label, sizeof (peak_label), "%s", dbm2smeter[get_SWert ((int) (peaks[j]))]);
+        if (rx->panadapter_peaks_as_smeter) {
+          snprintf (peak_label, sizeof (peak_label), "%s", dbm2smeter[get_SWert (vfo[vfo_id].frequency, (int) (peaks[j]))]);
         } else {
           snprintf (peak_label, sizeof (peak_label), "%d dBm", (int) peaks[j]);
         }

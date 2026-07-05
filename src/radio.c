@@ -417,6 +417,7 @@ int cw_key_hit = 0;
 int n_adc = 1;
 
 int diversity_enabled = 0;
+int diversity_brick3_mode = 0;
 double div_cos = 1.0;      // I factor for diversity
 double div_sin = 1.0;      // Q factor for diversity
 double div_gain = 0.0;     // gain for diversity (in dB)
@@ -2674,6 +2675,8 @@ static void radio_restore_state (void) {
   GetPropI0 ("enable_auto_tune",                              enable_auto_tune);
   GetPropI0 ("enable_tx_inhibit",                             enable_tx_inhibit);
   GetPropI0 ("diversity_enabled",                             diversity_enabled);
+  GetPropI0 ("diversity_brick3_mode",                         diversity_brick3_mode);
+  diversity_brick3_mode = diversity_brick3_mode ? 1 : 0;
   GetPropF0 ("diversity_gain",                                div_gain);
   GetPropF0 ("diversity_phase",                               div_phase);
   GetPropF0 ("diversity_cos",                                 div_cos);
@@ -2966,6 +2969,7 @@ void radio_save_state (void) {
   SetPropI0 ("enable_auto_tune",                              enable_auto_tune);
   SetPropI0 ("enable_tx_inhibit",                             enable_tx_inhibit);
   SetPropI0 ("diversity_enabled",                             diversity_enabled);
+  SetPropI0 ("diversity_brick3_mode",                         diversity_brick3_mode);
   SetPropF0 ("diversity_gain",                                div_gain);
   SetPropF0 ("diversity_phase",                               div_phase);
   SetPropF0 ("diversity_cos",                                 div_cos);

@@ -436,6 +436,11 @@ static void add_sample_rate_control(GtkWidget *grid, RECEIVER *rx, int *row) {
     break;
   }
   my_combo_attach(GTK_GRID(grid), sample_rate_combo_box, 1, *row, 1, 1);
+  if (diversity_enabled && rx->id == 1) {
+    gtk_widget_set_sensitive(sample_rate_combo_box, FALSE);
+    gtk_widget_set_tooltip_text(sample_rate_combo_box,
+                                "RX2 sample rate follows RX1 while diversity is enabled.");
+  }
   g_signal_connect(sample_rate_combo_box, "changed", G_CALLBACK(sample_rate_cb), rx);
   (*row)++;
 }

@@ -326,6 +326,7 @@ extern int cw_key_hit;
 extern int n_adc;
 
 extern int diversity_enabled;
+extern int diversity_brick3_mode;
 extern double div_cos, div_sin;
 extern double div_gain, div_phase;
 
