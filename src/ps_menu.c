@@ -604,6 +604,10 @@ void ps_menu(GtkWidget *parent) {
   gtk_widget_set_name(correcting_l, "boldlabel");
   gtk_widget_show(correcting_l);
   gtk_grid_attach(GTK_GRID(grid), correcting_l, col, row, 1, 1);
+  col++;
+  GtkWidget *fb_note = gtk_label_new("[Optimal feedback level between 140..165]");
+  gtk_widget_show(fb_note);
+  gtk_grid_attach(GTK_GRID(grid), fb_note, col, row, 2, 1);
   row++;
   col = 0;
   for (i = 0; i < INFO_SIZE; i++) {
