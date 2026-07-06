@@ -611,8 +611,8 @@ void discovery(void) {
     GtkWidget *p2_angelia_ddc0_map_cb = gtk_check_button_new_with_label("Angelia compatibility mode");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(p2_angelia_ddc0_map_cb), p2_angelia_ddc0_map != 0);
     gtk_widget_set_tooltip_text(p2_angelia_ddc0_map_cb,
-                                "Enable compatibility handling for Angelia-based ANAN-100D / Brick3 radios.\n"
-                                "Use only if required by the radio firmware.");
+                                "Enable compatibility handling for Angelia-based ANAN-100D radios.\n"
+                                "Use only if required by the radio firmware, otherwise let it OFF !");
     gtk_widget_set_halign(p2_angelia_ddc0_map_cb, GTK_ALIGN_CENTER);
     g_signal_connect(p2_angelia_ddc0_map_cb, "toggled", G_CALLBACK(p2_angelia_ddc0_map_toggled), NULL);
     gtk_grid_attach(GTK_GRID(grid), p2_angelia_ddc0_map_cb, 1, row, 3, 1);

@@ -279,15 +279,19 @@ void diversity_menu(GtkWidget *parent) {
   gtk_widget_show(diversity_b);
   gtk_grid_attach(GTK_GRID(grid), diversity_b, 1, 0, 1, 1);
   g_signal_connect(diversity_b, "toggled", G_CALLBACK(diversity_cb), NULL);
-  GtkWidget *brick3_b = gtk_check_button_new_with_label("Brick3");
+  //--------------------------------------------------------------------------------------------------
+  GtkWidget *brick3_b = gtk_check_button_new_with_label("Brick3 [Previous/Older Firmware]");
   gtk_widget_set_name(brick3_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(brick3_b), diversity_brick3_mode != 0);
   gtk_widget_set_sensitive(brick3_b, diversity_is_angelia_p2());
   gtk_widget_set_tooltip_text(brick3_b,
-                              "Enable the Brick3/ANAN-100D diversity routing workaround. This does not enable or disable generic Angelia Diversity; it only keeps the normal RX2/DDC context valid for the Brick3 STM32 while DDC0/DDC1 are used for Diversity.");
+                              "Enable some diversity workarounds for the Brick3, if using older,\n"
+                              "previous Firm- and/or Gateware.\n\n"
+                              "Activate this only for a valid reason, otherwise let it OFF !");
   gtk_widget_show(brick3_b);
-  gtk_grid_attach(GTK_GRID(grid), brick3_b, 1, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), brick3_b, 1, 1, 2, 1);
   g_signal_connect(brick3_b, "toggled", G_CALLBACK(brick3_cb), NULL);
+  //--------------------------------------------------------------------------------------------------
   GtkWidget *gain_coarse_label = gtk_label_new("Gain (dB, coarse):");
   gtk_widget_set_name(gain_coarse_label, "boldlabel");
   gtk_widget_set_halign(gain_coarse_label, GTK_ALIGN_END);
