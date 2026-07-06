@@ -1077,7 +1077,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->ps_ints = 16;
   tx->ps_spi = 256;           // ints=16/spi=256 corresponds to "TINT=0.5 dB"
   tx->ps_stbl = 1;            // "Stbl" un-checked
-  tx->ps_map = 1;             // "Map" checked
+  tx->ps_map = 0;             // "Map" checked
   tx->ps_pin = 1;             // "Pin" checked
   tx->ps_ptol = 0;            // "Relax Tolerance" un-checked
   tx->ps_moxdelay = 0.2;      // "MOX Wait" 0.2 sec

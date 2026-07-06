@@ -573,12 +573,16 @@ void ps_menu(GtkWidget *parent) {
   col++;
   GtkWidget *map_b = gtk_check_button_new_with_label("PS MAP");
   gtk_widget_set_name(map_b, "boldlabel");
+  gtk_widget_set_tooltip_text(map_b, "Enable adaptive PureSignal sample mapping for heavily compressed amplifiers.\n"
+                                     "May be less stable during setup.");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(map_b), transmitter->ps_map);
   gtk_grid_attach(GTK_GRID(grid), map_b, col, row, 1, 1);
   g_signal_connect(map_b, "toggled", G_CALLBACK(map_cb), NULL);
   col++;
   GtkWidget *tol_b = gtk_check_button_new_with_label("PS Relax Tolerance");
   gtk_widget_set_name(tol_b, "boldlabel");
+  gtk_widget_set_tooltip_text(tol_b, "Relax PureSignal calibration tolerance for difficult amplifiers.\n"
+                                     "May help when calibration is rejected or unstable.");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tol_b), transmitter->ps_ptol);
   gtk_grid_attach(GTK_GRID(grid), tol_b, col, row, 2, 1);
   g_signal_connect(tol_b, "toggled", G_CALLBACK(tol_cb), NULL);
