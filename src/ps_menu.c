@@ -503,6 +503,7 @@ void ps_menu(GtkWidget *parent) {
   col = 0;
   GtkWidget *enable_b = gtk_check_button_new_with_label("Enable PS");
   gtk_widget_set_name(enable_b, "boldlabel");
+  gtk_widget_set_tooltip_text(enable_b, "Enable PureSignal [ADP = Adaptive Predistortion]");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_b), transmitter->puresignal);
   gtk_grid_attach(GTK_GRID(grid), enable_b, col, row, 1, 1);
   g_signal_connect(enable_b, "toggled", G_CALLBACK(enable_cb), NULL);
@@ -532,6 +533,9 @@ void ps_menu(GtkWidget *parent) {
   col++;
   GtkWidget *feedback_b = gtk_toggle_button_new_with_label("MON");
   gtk_widget_set_name(feedback_b, "small_toggle_button");
+  gtk_widget_set_tooltip_text(feedback_b, "Show the received PureSignal feedback signal on the TX panadapter\n"
+                                          "instead of the transmitted signal.\n"
+                                          "This only changes the display and does not affect correction.");
   gtk_widget_show(feedback_b);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(feedback_b), transmitter->feedback);
   gtk_grid_attach(GTK_GRID(grid), feedback_b, col, row, 1, 1);
@@ -554,6 +558,9 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), ps_ant_label, col, row, 1, 1);
   col++;
   GtkWidget *ps_ant_combo = gtk_combo_box_text_new();
+  gtk_widget_set_tooltip_text(ps_ant_combo, "Select Ant input for feedback PS-RX.\n"
+                                            "Available ant paths depend on the radio and filter board,\n"
+                                            "choose the path that matches the actual feedback RX wiring.");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "Internal");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "Ext1");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "ByPass");
@@ -574,7 +581,7 @@ void ps_menu(GtkWidget *parent) {
   GtkWidget *map_b = gtk_check_button_new_with_label("PS MAP");
   gtk_widget_set_name(map_b, "boldlabel");
   gtk_widget_set_tooltip_text(map_b, "Enable adaptive PureSignal sample mapping for heavily compressed amplifiers.\n"
-                                     "May be less stable during setup.");
+                                     "Correction may be less stable if active. First try with OFF.");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(map_b), transmitter->ps_map);
   gtk_grid_attach(GTK_GRID(grid), map_b, col, row, 1, 1);
   g_signal_connect(map_b, "toggled", G_CALLBACK(map_cb), NULL);
@@ -606,6 +613,7 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), correcting_l, col, row, 1, 1);
   col++;
   GtkWidget *fb_note = gtk_label_new("[Optimal feedback level between 140..165]");
+  gtk_widget_set_halign(fb_note, GTK_ALIGN_START);
   gtk_widget_show(fb_note);
   gtk_grid_attach(GTK_GRID(grid), fb_note, col, row, 2, 1);
   row++;
