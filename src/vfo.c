@@ -2228,7 +2228,7 @@ void vfo_update(void) {
     cairo_show_text(cr, temp_text);
 #if defined (__AUTOG__)
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-      cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 20);
+      cairo_move_to(cr, vfl->base_x + 265, vfl->base_y + 20);
       if (autogain_enabled && autogain_is_adjusted) {
         cairo_set_source_rgba(cr, COLOUR_OK);
       } else if (autogain_enabled) {
