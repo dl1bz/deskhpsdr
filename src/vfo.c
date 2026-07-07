@@ -78,6 +78,146 @@ char *step_labels[] = {"1Hz", "10Hz", "25Hz", "50Hz", "100Hz", "250Hz", "500Hz",
                        "5kHz", "6.25k", "9kHz", "10kHz", "12.5k", "100kHz", "250kHz", "500kHz", "1MHz"
                       };
 
+
+static void vfo_lcd_rounded_rectangle(cairo_t *cr, double x, double y, double w, double h, double r) {
+  double x2 = x + w;
+  double y2 = y + h;
+  cairo_new_sub_path(cr);
+  cairo_arc(cr, x2 - r, y + r,  r, -M_PI / 2.0, 0.0);
+  cairo_arc(cr, x2 - r, y2 - r, r, 0.0, M_PI / 2.0);
+  cairo_arc(cr, x + r,  y2 - r, r, M_PI / 2.0, M_PI);
+  cairo_arc(cr, x + r,  y + r,  r, M_PI, 3.0 * M_PI / 2.0);
+  cairo_close_path(cr);
+}
+
+static void vfo_lcd_draw_background(cairo_t *cr, double x, double y, double w, double h, int active, int tx) {
+  cairo_save(cr);
+  vfo_lcd_rounded_rectangle(cr, x, y, w, h, 7.0);
+  cairo_pattern_t *pat = cairo_pattern_create_linear(0.0, y, 0.0, y + h);
+  if (tx) {
+    cairo_pattern_add_color_stop_rgb(pat, 0.0, 1.00, 0.52, 0.48);
+    cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.95, 0.28, 0.34);
+    cairo_pattern_add_color_stop_rgb(pat, 1.0, 0.72, 0.08, 0.18);
+  } else if (active) {
+    cairo_pattern_add_color_stop_rgb(pat, 0.0, 1.00, 0.70, 0.24);
+    cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.95, 0.52, 0.10);
+    cairo_pattern_add_color_stop_rgb(pat, 1.0, 0.84, 0.41, 0.06);
+  } else {
+    cairo_pattern_add_color_stop_rgb(pat, 0.0, 0.72, 0.42, 0.10);
+    cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.62, 0.32, 0.06);
+    cairo_pattern_add_color_stop_rgb(pat, 1.0, 0.46, 0.20, 0.03);
+  }
+  cairo_set_source(cr, pat);
+  cairo_fill_preserve(cr);
+  cairo_pattern_destroy(pat);
+  if (tx) {
+    cairo_set_source_rgba(cr, 0.55, 0.04, 0.10, 0.95);
+  } else {
+    cairo_set_source_rgba(cr, 0.24, 0.10, 0.00, active ? 0.95 : 0.75);
+  }
+  cairo_set_line_width(cr, 1.0);
+  cairo_stroke(cr);
+  cairo_restore(cr);
+}
+
+static void vfo_lcd_set_text_colour(cairo_t *cr, int alarm, int active) {
+  if (alarm) {
+    /* Dark maroon keeps TX/out-of-band readable on the amber LCD background. */
+    cairo_set_source_rgba(cr, 0.48, 0.00, 0.00, 1.0);
+  } else if (active) {
+    /* Dark amber-brown gives the digits a softer LCD-segment look than pure black. */
+    cairo_set_source_rgba(cr, 0.22, 0.11, 0.015, 1.0);
+  } else {
+    /* Dimmed amber-brown for inactive VFOs. */
+    cairo_set_source_rgba(cr, 0.32, 0.17, 0.035, 1.0);
+  }
+}
+
+static void vfo_lcd_hidden_zeros(int mhz, char *text, size_t len) {
+  if (mhz < 10) {
+    snprintf(text, len, "0000");
+  } else if (mhz < 100) {
+    snprintf(text, len, "000");
+  } else if (mhz < 1000) {
+    snprintf(text, len, "00");
+  } else if (mhz < 10000) {
+    snprintf(text, len, "0");
+  } else {
+    text[0] = '\0';
+  }
+}
+
+static void vfo_lcd_update_bounds(cairo_text_extents_t *ext, double cursor,
+                                  double *left, double *top,
+                                  double *right, double *bottom,
+                                  int *have_ink) {
+  double ink_left = cursor + ext->x_bearing;
+  double ink_top = ext->y_bearing;
+  double ink_right = ink_left + ext->width;
+  double ink_bottom = ink_top + ext->height;
+  if (!*have_ink || ink_left < *left) {
+    *left = ink_left;
+  }
+  if (!*have_ink || ink_top < *top) {
+    *top = ink_top;
+  }
+  if (!*have_ink || ink_right > *right) {
+    *right = ink_right;
+  }
+  if (!*have_ink || ink_bottom > *bottom) {
+    *bottom = ink_bottom;
+  }
+  *have_ink = 1;
+}
+
+static double vfo_lcd_font_scale(int active) {
+  return active ? 1.0 : 0.85;
+}
+
+static int vfo_lcd_text_ink_bounds(cairo_t *cr, const VFO_BAR_LAYOUT *vfl,
+                                   double font_scale,
+                                   const char *label, const char *hidden,
+                                   const char *main_text, const char *hz_text,
+                                   double *x, double *y, double *w, double *h) {
+  cairo_text_extents_t ext;
+  double cursor = 0.0;
+  double left = 0.0;
+  double top = 0.0;
+  double right = 0.0;
+  double bottom = 0.0;
+  int have_ink = 0;
+  cairo_set_font_size(cr, vfl->size2 * font_scale);
+  cairo_text_extents(cr, label, &ext);
+  vfo_lcd_update_bounds(&ext, cursor, &left, &top, &right, &bottom, &have_ink);
+  cursor += ext.x_advance;
+  cairo_set_font_size(cr, vfl->size3 * font_scale);
+  /* Hidden leading zeros are only used to keep the visible digits aligned.
+   * They must advance the Cairo text cursor, but they should not enlarge the
+   * amber LCD background because no glyph is actually visible there.
+   */
+  if (hidden && hidden[0]) {
+    cairo_text_extents(cr, hidden, &ext);
+    cursor += ext.x_advance;
+  }
+  if (main_text && main_text[0]) {
+    cairo_text_extents(cr, main_text, &ext);
+    vfo_lcd_update_bounds(&ext, cursor, &left, &top, &right, &bottom, &have_ink);
+    cursor += ext.x_advance;
+  }
+  cairo_set_font_size(cr, vfl->size2 * font_scale);
+  if (hz_text && hz_text[0]) {
+    cairo_text_extents(cr, hz_text, &ext);
+    vfo_lcd_update_bounds(&ext, cursor, &left, &top, &right, &bottom, &have_ink);
+  }
+  if (have_ink) {
+    *x = left;
+    *y = top;
+    *w = right - left;
+    *h = bottom - top;
+  }
+  return have_ink;
+}
+
 static inline long long ROUND(long long freq, int nsteps, int step) {
   //
   // Move frequency f by n steps, adjust to multiple of step size
@@ -1626,50 +1766,59 @@ void vfo_update(void) {
   //
   // -----------------------------------------------------------
   if (vfl->vfo_a_x != 0) {
-    cairo_move_to(cr, abs(vfl->vfo_a_x), vfl->vfo_a_y);
-    if (txvfo == 0 && (radio_is_transmitting() || oob)) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-    } else if (vfo[0].entered_frequency[0]) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-    } else if (id != 0) {
-      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
-    } else {
-      cairo_set_source_rgba(cr, COLOUR_OK);
-    }
+    int tx_lcd = txvfo == 0 && radio_is_transmitting();
+    int alarm = txvfo == 0 && oob;
+    int lcd_active = (active_receiver->id == VFO_A) || (split && txvfo == VFO_A) || tx_lcd || alarm;
+    double font_scale = vfo_lcd_font_scale(lcd_active);
+    double text_x = abs(vfl->vfo_a_x);
+    double text_y = vfl->vfo_a_y;
+    double lcd_rel_x;
+    double lcd_rel_y;
+    double lcd_w;
+    double lcd_h;
+    char hidden_text[8];
+    char main_text[32];
+    char hz_text[8];
     f_m = af / 1000000LL;
     f_k = (af - 1000000LL * f_m) / 1000;
     f_h = (af - 1000000LL * f_m - 1000 * f_k);
-    cairo_set_font_size(cr, vfl->size2);
-    cairo_show_text(cr, "A:");
-    cairo_set_font_size(cr, vfl->size3);
+    hidden_text[0] = '\0';
+    hz_text[0] = '\0';
     if (txvfo == 0 && oob) {
-      cairo_show_text(cr, "Out of band");
+      snprintf(main_text, sizeof(main_text), "Out of band");
     } else if (vfo[0].entered_frequency[0]) {
-      snprintf(temp_text, sizeof(temp_text), "%s", vfo[0].entered_frequency);
-      cairo_show_text(cr, temp_text);
+      snprintf(main_text, sizeof(main_text), "%s", vfo[0].entered_frequency);
     } else {
-      //
-      // poor man's right alignment:
-      // If the frequency is small, print some zeroes
-      // with the background colour
-      //
+      vfo_lcd_hidden_zeros(f_m, hidden_text, sizeof(hidden_text));
+      snprintf(main_text, sizeof(main_text), "%0d.%03d", f_m, f_k);
+      snprintf(hz_text, sizeof(hz_text), "%03d", f_h);
+    }
+    if (vfo_lcd_text_ink_bounds(cr, vfl, font_scale, "A:", hidden_text, main_text, hz_text,
+                                &lcd_rel_x, &lcd_rel_y, &lcd_w, &lcd_h)) {
+      vfo_lcd_draw_background(cr,
+                              text_x + lcd_rel_x - 6.0,
+                              text_y + lcd_rel_y - 3.0,
+                              lcd_w + 12.0,
+                              lcd_h + 6.0,
+                              lcd_active,
+                              tx_lcd);
+    }
+    cairo_move_to(cr, text_x, text_y);
+    vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    cairo_set_font_size(cr, vfl->size2 * font_scale);
+    cairo_show_text(cr, "A:");
+    cairo_set_font_size(cr, vfl->size3 * font_scale);
+    if (hidden_text[0]) {
       cairo_save(cr);
-      cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
-      if (f_m < 10) {
-        cairo_show_text(cr, "0000");
-      } else if (f_m < 100) {
-        cairo_show_text(cr, "000");
-      } else if (f_m < 1000) {
-        cairo_show_text(cr, "00");
-      } else if (f_m < 10000) {
-        cairo_show_text(cr, "0");
-      }
+      cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.0);
+      cairo_show_text(cr, hidden_text);
       cairo_restore(cr);
-      snprintf(temp_text, 32, "%0d.%03d", f_m, f_k);
-      cairo_show_text(cr, temp_text);
-      cairo_set_font_size(cr, vfl->size2);
-      snprintf(temp_text, 32, "%03d", f_h);
-      cairo_show_text(cr, temp_text);
+    }
+    vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    cairo_show_text(cr, main_text);
+    if (hz_text[0]) {
+      cairo_set_font_size(cr, vfl->size2 * font_scale);
+      cairo_show_text(cr, hz_text);
     }
   }
   // -----------------------------------------------------------
@@ -1678,50 +1827,60 @@ void vfo_update(void) {
   //
   // -----------------------------------------------------------
   if (vfl->vfo_b_x != 0) {
-    cairo_move_to(cr, abs(vfl->vfo_b_x - 10), abs(vfl->vfo_b_y));
-    if (txvfo == 1 && (radio_is_transmitting() || oob)) {
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-    } else if (vfo[1].entered_frequency[0]) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-    } else if (id != 1) {
-      cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
-    } else {
-      cairo_set_source_rgba(cr, COLOUR_OK);
-    }
+    int tx_lcd = txvfo == 1 && radio_is_transmitting();
+    int alarm = txvfo == 1 && oob;
+    int lcd_active = (active_receiver->id == VFO_B) || (split && txvfo == VFO_B) || tx_lcd || alarm;
+    double font_scale = vfo_lcd_font_scale(lcd_active);
+    double vfo_b_x = abs(vfl->vfo_b_x - 10);
+    double text_x = vfo_b_x;
+    double text_y = abs(vfl->vfo_b_y);
+    double lcd_rel_x;
+    double lcd_rel_y;
+    double lcd_w;
+    double lcd_h;
+    char hidden_text[8];
+    char main_text[32];
+    char hz_text[8];
     f_m = bf / 1000000LL;
     f_k = (bf - 1000000LL * f_m) / 1000;
     f_h = (bf - 1000000LL * f_m - 1000 * f_k);
-    cairo_set_font_size(cr, vfl->size2);
-    cairo_show_text(cr, "B:");
-    cairo_set_font_size(cr, vfl->size3);
+    hidden_text[0] = '\0';
+    hz_text[0] = '\0';
     if (txvfo == 0 && oob) {
-      cairo_show_text(cr, "Out of band");
+      snprintf(main_text, sizeof(main_text), "Out of band");
     } else if (vfo[1].entered_frequency[0]) {
-      snprintf(temp_text, sizeof(temp_text), "%s", vfo[1].entered_frequency);
-      cairo_show_text(cr, temp_text);
+      snprintf(main_text, sizeof(main_text), "%s", vfo[1].entered_frequency);
     } else {
-      //
-      // poor man's right alignment:
-      // If the frequency is small, print some zeroes
-      // with the background colour
-      //
+      vfo_lcd_hidden_zeros(f_m, hidden_text, sizeof(hidden_text));
+      snprintf(main_text, sizeof(main_text), "%0d.%03d", f_m, f_k);
+      snprintf(hz_text, sizeof(hz_text), "%03d", f_h);
+    }
+    if (vfo_lcd_text_ink_bounds(cr, vfl, font_scale, "B:", hidden_text, main_text, hz_text,
+                                &lcd_rel_x, &lcd_rel_y, &lcd_w, &lcd_h)) {
+      vfo_lcd_draw_background(cr,
+                              text_x + lcd_rel_x - 6.0,
+                              text_y + lcd_rel_y - 3.0,
+                              lcd_w + 12.0,
+                              lcd_h + 6.0,
+                              lcd_active,
+                              tx_lcd);
+    }
+    cairo_move_to(cr, text_x, text_y);
+    vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    cairo_set_font_size(cr, vfl->size2 * font_scale);
+    cairo_show_text(cr, "B:");
+    cairo_set_font_size(cr, vfl->size3 * font_scale);
+    if (hidden_text[0]) {
       cairo_save(cr);
-      cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
-      if (f_m < 10) {
-        cairo_show_text(cr, "0000");
-      } else if (f_m < 100) {
-        cairo_show_text(cr, "000");
-      } else if (f_m < 1000) {
-        cairo_show_text(cr, "00");
-      } else if (f_m < 10000) {
-        cairo_show_text(cr, "0");
-      }
+      cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.0);
+      cairo_show_text(cr, hidden_text);
       cairo_restore(cr);
-      snprintf(temp_text, 32, "%0d.%03d", f_m, f_k);
-      cairo_show_text(cr, temp_text);
-      cairo_set_font_size(cr, vfl->size2);
-      snprintf(temp_text, 32, "%03d", f_h);
-      cairo_show_text(cr, temp_text);
+    }
+    vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    cairo_show_text(cr, main_text);
+    if (hz_text[0]) {
+      cairo_set_font_size(cr, vfl->size2 * font_scale);
+      cairo_show_text(cr, hz_text);
     }
   }
   //
@@ -2095,7 +2254,7 @@ void vfo_update(void) {
       }
     }
 #endif
-    cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 50);
+    cairo_move_to(cr, vfl->base_x + 265, vfl->base_y + 50);
     if (active_receiver->panadapter_autoscale_enabled) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {

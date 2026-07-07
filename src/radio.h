@@ -202,6 +202,7 @@ extern cairo_rgba_t mwin_bgcolor;
 
 extern int max_pan_label_rows;
 extern int pan_spot_lifetime_min;
+extern int dx_spots_active_rx_only;
 
 extern int mic_linein;
 extern double linein_gain;

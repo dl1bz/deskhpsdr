@@ -264,6 +264,7 @@ cairo_rgba_t mwin_bgcolor = { 0.965, 0.965, 0.965, 1.0 }; // #F6F6F6 default
 
 int max_pan_label_rows = 6;
 int pan_spot_lifetime_min = 15;
+int dx_spots_active_rx_only = 1;
 
 int mic_linein = 0;        // Use microphone rather than linein in radio's audio codec
 double linein_gain = 0.0;  // -34.0 ... +12.5 in steps of 1.5 dB
@@ -2660,6 +2661,7 @@ static void radio_restore_state (void) {
   GetPropI0 ("capture_max",                                   capture_max);
   GetPropI0 ("max_pan_label_rows",                            max_pan_label_rows);
   GetPropI0 ("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
+  GetPropI0 ("dx_spots_active_rx_only",                       dx_spots_active_rx_only);
   //
   // TODO: I think some further options related to the GUI
   // have to be moved up here for Client-Server operation
@@ -2975,6 +2977,7 @@ void radio_save_state (void) {
   SetPropI0 ("capture_max",                                   capture_max);
   SetPropI0 ("max_pan_label_rows",                            max_pan_label_rows);
   SetPropI0 ("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
+  SetPropI0 ("dx_spots_active_rx_only",                       dx_spots_active_rx_only);
   SetPropC0 ("radio_bgcolor",                                 radio_bgcolor);
   SetPropC0 ("mwin_bgcolor",                                  mwin_bgcolor);
   SetPropC0 ("tx_pan_fill_col",                               tx_pan_fill_col);

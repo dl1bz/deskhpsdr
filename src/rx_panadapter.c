@@ -1155,8 +1155,13 @@ void rx_panadapter_update (RECEIVER *rx) {
   cairo_set_line_width (cr, PAN_LINE_THIN);
   cairo_stroke (cr);
   //--------------------------------------------------------------------------------------------
-  /* Custom Labels auf exakten Frequenzen (nur Text, mit Timeout + Y-Staffelung) */
-  if (pan_label_count > 0) {
+  /* Custom Labels auf exakten Frequenzen (nur Text, mit Timeout + Y-Staffelung)
+   *
+   * DX/TCI/RBN spots are stored globally and do not carry a receiver id.
+   * The user can either keep the overlay on the active RX only, or show spots
+   * on all RX panadapters where the spot frequency is in the visible range.
+   */
+  if ((!dx_spots_active_rx_only || active) && pan_label_count > 0) {
     PAN_LABEL_POS pos[MAX_PAN_LABELS];
     int pos_count = 0;
     gint64 now = g_get_monotonic_time();  /* us */

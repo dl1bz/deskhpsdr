@@ -206,6 +206,10 @@ static void dxspot_max_rows_spin_btn_cb(GtkSpinButton *spin, gpointer user_data)
   panadapter_set_max_label_rows(val);
 }
 
+static void dxspot_active_rx_only_cb(GtkToggleButton *button, gpointer user_data) {
+  dx_spots_active_rx_only = gtk_toggle_button_get_active(button);
+}
+
 static void atuwin_w_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data) {
   atuwin_wv_w = gtk_spin_button_get_value_as_int(spin);
   /* Sicherheitsnetz */
@@ -373,6 +377,17 @@ void extras_menu(GtkWidget *parent) {
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dxspot_max_rows_spin_btn), TRUE);
   gtk_grid_attach(GTK_GRID(grid), dxspot_max_rows_spin_btn, col, row, 1, 1);
   g_signal_connect(dxspot_max_rows_spin_btn, "value-changed", G_CALLBACK(dxspot_max_rows_spin_btn_cb), NULL);
+  //--------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  GtkWidget *dxspot_active_rx_only_btn = gtk_check_button_new_with_label("Show spots only on active RX");
+  gtk_widget_set_name(dxspot_active_rx_only_btn, "boldlabel_blue");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dxspot_active_rx_only_btn), dx_spots_active_rx_only);
+  gtk_widget_set_tooltip_text(dxspot_active_rx_only_btn,
+                              "Show DX/TCI/RBN spot labels only on the active RX panadapter.\n\n"
+                              "Disable this to show spots on all RX panadapters whose visible frequency range contains the spot.");
+  gtk_grid_attach(GTK_GRID(grid), dxspot_active_rx_only_btn, col, row, 4, 1);
+  g_signal_connect(dxspot_active_rx_only_btn, "toggled", G_CALLBACK(dxspot_active_rx_only_cb), NULL);
   //--------------------------------------------------------------------------------
   row++;
   col = 0;
