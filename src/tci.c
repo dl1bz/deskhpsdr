@@ -3857,7 +3857,7 @@ static void tci_cmd_spot (CLIENT *client, const TCI_CMD *cmd) {
   if (endptr == cmd->argv[2] || freq_hz <= 0) {
     return;
   }
-  pan_add_dx_spot((double) freq_hz / 1000.0, dxcall);
+  pan_add_dx_spot_source((double) freq_hz / 1000.0, dxcall, PAN_SPOT_SOURCE_TCI);
 }
 
 static void tci_cmd_spot_delete (CLIENT *client, const TCI_CMD *cmd) {

@@ -129,7 +129,9 @@ typedef struct {
   long long freq;      // absolute RF-Frequenz in Hz
   gboolean enabled;
   char label[32];
-  gint64 expire_time;  // 0 = nie automatisch entfernen, sonst Monotonic-Time (us)
+  gint64 expire_time;       // 0 = nie automatisch entfernen, sonst Monotonic-Time (us)
+  gint64 last_update_time;  // Monotonic-Time (us), used for RBN refresh throttling
+  PAN_SPOT_SOURCE source;
 } PAN_LABEL;
 
 typedef struct {
@@ -140,6 +142,9 @@ typedef struct {
 
 #define PAN_LABEL_MIN_DX 40.0   // Mindestabstand in Pixeln in einer Zeile
 #define MAX_PAN_LABELS 64 // max. saved DX spots
+#define PAN_DXSPOT_DUPE_WINDOW_HZ 500LL
+#define PAN_RBN_MAX_LIFETIME_MS 60000
+#define PAN_RBN_REFRESH_GUARD_US (30LL * 1000000LL)
 
 static PAN_LABEL pan_labels[MAX_PAN_LABELS];
 static int pan_label_count = 0;
@@ -176,29 +181,106 @@ void rx_panadapter_force_noisefloor_update(void) {
   }
 }
 
-/* Prüft, ob ein DX-Spot-Label mit gleicher Frequenz und gleichem Text schon existiert.
- * Falls ja: expire_time aktualisieren und TRUE zurückgeben.
- * Falls nein: FALSE (neues Label muss angelegt werden).
-*/
-static gboolean pan_dxspot_update_if_exists (long long freq_hz, const char* text, int lifetime_ms) {
+static int pan_spot_source_priority(PAN_SPOT_SOURCE source) {
+  switch (source) {
+  case PAN_SPOT_SOURCE_TCI:
+    return 3;
+  case PAN_SPOT_SOURCE_CLUSTER:
+    return 2;
+  case PAN_SPOT_SOURCE_RBN:
+    return 1;
+  case PAN_SPOT_SOURCE_CUSTOM:
+  default:
+    return 0;
+  }
+}
+
+static void pan_label_set_source_color(cairo_t *cr, PAN_SPOT_SOURCE source) {
+  switch (source) {
+  case PAN_SPOT_SOURCE_RBN:
+    cairo_set_source_rgba(cr, 1.00, 0.90, 0.00, 1.00); /* yellow */
+    break;
+  case PAN_SPOT_SOURCE_TCI:
+    cairo_set_source_rgba(cr, 1.00, 0.20, 1.00, 1.00); /* magenta */
+    break;
+  case PAN_SPOT_SOURCE_CLUSTER:
+  case PAN_SPOT_SOURCE_CUSTOM:
+  default:
+    cairo_set_source_rgba(cr, COLOUR_WHITE);
+    break;
+  }
+}
+
+static void pan_label_draw_with_halo(cairo_t *cr, double x, double y, const PAN_LABEL *pl) {
+  static const double offset[][2] = {
+    { -1.0,  0.0 },
+    {  1.0,  0.0 },
+    {  0.0, -1.0 },
+    {  0.0,  1.0 },
+    { -1.0, -1.0 },
+    {  1.0, -1.0 },
+    { -1.0,  1.0 },
+    {  1.0,  1.0 }
+  };
+  cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.95);
+  for (size_t i = 0; i < sizeof(offset) / sizeof(offset[0]); i++) {
+    cairo_move_to(cr, x + offset[i][0], y + offset[i][1]);
+    cairo_show_text(cr, pl->label);
+  }
+  pan_label_set_source_color(cr, pl->source);
+  cairo_move_to(cr, x, y);
+  cairo_show_text(cr, pl->label);
+}
+
+/* Check whether a DX spot with the same call already exists close to the
+ * requested frequency. RBN and cluster spots often differ by a few hundred Hz,
+ * so an exact frequency match is not sufficient. If a duplicate is found,
+ * refresh its timeout and move it to the latest reported frequency.
+ */
+static gboolean pan_dxspot_update_if_exists (long long freq_hz, const char* text, int lifetime_ms,
+    PAN_SPOT_SOURCE source) {
   gint64 now;
+  int new_priority;
   int i;
-  if (text == NULL) {
+  if (text == NULL || text[0] == '\0') {
     return FALSE;
   }
+  now = g_get_monotonic_time();      /* us */
+  new_priority = pan_spot_source_priority(source);
   for (i = 0; i < pan_label_count; i++) {
     PAN_LABEL *pl = &pan_labels[i];
+    int old_priority;
     if (!pl->enabled) {
       continue;
     }
-    if (pl->freq != freq_hz) {
+    if (g_ascii_strcasecmp (pl->label, text) != 0) {
       continue;
     }
-    if (g_strcmp0 (pl->label, text) != 0) {
+    if (llabs (pl->freq - freq_hz) > PAN_DXSPOT_DUPE_WINDOW_HZ) {
       continue;
     }
+    old_priority = pan_spot_source_priority(pl->source);
+    /* RBN is a high-rate skimmer source.  Do not let repeated RBN decodes
+     * continuously refresh existing labels, otherwise the normal spot lifetime
+     * never gets a chance to expire them.  Also do not let lower-priority RBN
+     * duplicates keep manually added cluster/TCI spots alive.
+     */
+    if (source == PAN_SPOT_SOURCE_RBN) {
+      if (old_priority > new_priority) {
+        return TRUE;
+      }
+      if (pl->source == PAN_SPOT_SOURCE_RBN &&
+          pl->last_update_time != 0 &&
+          now - pl->last_update_time < PAN_RBN_REFRESH_GUARD_US) {
+        return TRUE;
+      }
+    }
+    pl->freq = freq_hz;
+    if (new_priority > old_priority) {
+      pl->source = source;
+    }
+    pl->last_update_time = now;
     if (lifetime_ms > 0) {
-      now = g_get_monotonic_time();      /* us */
       pl->expire_time = now + (gint64) lifetime_ms * 1000;
     } else {
       pl->expire_time = 0;
@@ -251,6 +333,8 @@ void pan_add_label (long long freq, const char* text) {
   pl = pan_label_get_slot();
   pl->freq = freq;
   pl->enabled = TRUE;
+  pl->source = PAN_SPOT_SOURCE_CUSTOM;
+  pl->last_update_time = g_get_monotonic_time();
   g_strlcpy (pl->label, text, sizeof (pl->label));
   pl->expire_time = 0;  /* 0 => kein automatisches Entfernen */
 }
@@ -266,6 +350,8 @@ void pan_add_label_timeout (long long freq, const char* text, int lifetime_ms) {
   pl = pan_label_get_slot();
   pl->freq = freq;
   pl->enabled = TRUE;
+  pl->source = PAN_SPOT_SOURCE_CUSTOM;
+  pl->last_update_time = g_get_monotonic_time();
   g_strlcpy (pl->label, text, sizeof (pl->label));
   if (lifetime_ms > 0) {
     gint64 now = g_get_monotonic_time();  /* us */
@@ -299,11 +385,19 @@ void pan_delete_dx_spot (const char* dxcall) {
 }
 
 void pan_add_dx_spot (double freq_khz, const char* dxcall) {
+  pan_add_dx_spot_source(freq_khz, dxcall, PAN_SPOT_SOURCE_CLUSTER);
+}
+
+void pan_add_dx_spot_source (double freq_khz, const char* dxcall, PAN_SPOT_SOURCE source) {
   long long freq_hz;
+  PAN_LABEL *pl;
   char label[32];
   if (pan_spot_lifetime_min < 1) { pan_spot_lifetime_min = 1; } // 1min minimum
   if (pan_spot_lifetime_min > 720) { pan_spot_lifetime_min = 720; } // 720min = 12h = maximum
   int lifetime_ms = pan_spot_lifetime_min * 60000;
+  if (source == PAN_SPOT_SOURCE_RBN && lifetime_ms > PAN_RBN_MAX_LIFETIME_MS) {
+    lifetime_ms = PAN_RBN_MAX_LIFETIME_MS;
+  }
   if (dxcall == NULL || freq_khz <= 0.0) {
     return;
   }
@@ -312,11 +406,22 @@ void pan_add_dx_spot (double freq_khz, const char* dxcall) {
   /* Label-Text – hier nur das Call, ggf. später erweitern */
   g_strlcpy (label, dxcall, sizeof (label));
   /* Doublet-Check: gleicher Call auf gleicher Frequenz? -> nur Timeout erneuern */
-  if (pan_dxspot_update_if_exists (freq_hz, label, lifetime_ms)) {
+  if (pan_dxspot_update_if_exists (freq_hz, label, lifetime_ms, source)) {
     return;
   }
   /* Kein bestehender Eintrag -> neues Label anlegen */
-  pan_add_label_timeout (freq_hz, label, lifetime_ms);
+  pl = pan_label_get_slot();
+  pl->freq = freq_hz;
+  pl->enabled = TRUE;
+  pl->source = source;
+  pl->last_update_time = g_get_monotonic_time();
+  g_strlcpy(pl->label, label, sizeof(pl->label));
+  if (lifetime_ms > 0) {
+    gint64 now = pl->last_update_time;
+    pl->expire_time = now + (gint64) lifetime_ms * 1000;
+  } else {
+    pl->expire_time = 0;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1111,7 +1216,6 @@ void rx_panadapter_update (RECEIVER *rx) {
         PAN_LABEL *pl = &pan_labels[pos[i].index];
         double x = pos[i].x;
         int row = pos[i].row;
-        cairo_set_source_rgba (cr, COLOUR_WHITE);
         cairo_select_font_face (cr,
                                 DISPLAY_FONT_BOLD,
                                 CAIRO_FONT_SLANT_NORMAL,
@@ -1123,8 +1227,7 @@ void rx_panadapter_update (RECEIVER *rx) {
         double base_y = 10.0 + marker_extra + te.height + 2.0;
         double row_height = te.height + 4.0;
         double y = base_y + (double) row * row_height;
-        cairo_move_to (cr, x - te.width / 2.0, y);
-        cairo_show_text (cr, pl->label);
+        pan_label_draw_with_halo(cr, x - te.width / 2.0, y, pl);
       }
     }
   }

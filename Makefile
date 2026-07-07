@@ -691,6 +691,7 @@ src/protocols.c \
 src/ps_menu.c \
 src/radio.c \
 src/radio_menu.c \
+src/rbn.c \
 src/receiver.c \
 src/rigctl.c \
 src/rigctl_menu.c \
@@ -782,6 +783,7 @@ src/protocols.h \
 src/ps_menu.h \
 src/radio.h \
 src/radio_menu.h \
+src/rbn.h \
 src/receiver.h \
 src/rigctl.h \
 src/rigctl_menu.h \
@@ -867,6 +869,7 @@ src/protocols.o \
 src/ps_menu.o \
 src/radio.o \
 src/radio_menu.o \
+src/rbn.o \
 src/receiver.o \
 src/rigctl.o \
 src/rigctl_menu.o \

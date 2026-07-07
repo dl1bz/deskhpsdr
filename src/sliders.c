@@ -1134,7 +1134,6 @@ void update_slider_af_gain_btn(void) {
   if (display_sliders && af_gain_btn != NULL && af_gain_label != NULL && active_receiver != NULL) {
     char label[16];
     const int rx_num = active_receiver->id + 1;
-
     sliders_signal_handler_block(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
     // invert button, red = MUTE, green = Playback
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);

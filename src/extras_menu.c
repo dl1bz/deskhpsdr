@@ -28,10 +28,12 @@
 #include "radio.h"
 #include "message.h"
 #include "rx_panadapter.h"
+#include "rbn.h"
 
 static GtkWidget *dialog = NULL;
 static gulong dxc_login_box_signal_id;
 static gulong dxc_address_box_signal_id;
+static gulong rbn_address_box_signal_id;
 static gulong atuwin_title_box_signal_id;
 static gulong atuwin_url_box_signal_id;
 static gulong atuwin_action_box_signal_id;
@@ -144,6 +146,49 @@ static void dxc_port_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data
   } else if (dxc_port > 65535) {
     dxc_port = 65535;
   }
+}
+
+static void rbn_enable_toggle_cb(GtkToggleButton *toggle, gpointer user_data) {
+  rbn_enabled = gtk_toggle_button_get_active(toggle) ? 1 : 0;
+  rbn_update_from_settings();
+}
+
+static void rbn_cw_toggle_cb(GtkToggleButton *toggle, gpointer user_data) {
+  rbn_filter_cw = gtk_toggle_button_get_active(toggle) ? 1 : 0;
+}
+
+static void rbn_rtty_toggle_cb(GtkToggleButton *toggle, gpointer user_data) {
+  rbn_filter_rtty = gtk_toggle_button_get_active(toggle) ? 1 : 0;
+}
+
+static void rbn_cq_toggle_cb(GtkToggleButton *toggle, gpointer user_data) {
+  rbn_filter_cq = gtk_toggle_button_get_active(toggle) ? 1 : 0;
+}
+
+static void rbn_address_button_clicked(GtkWidget *widget, gpointer data) {
+  GtkEntry *rbn_address_box = GTK_ENTRY(data);
+  const gchar *text = gtk_entry_get_text(rbn_address_box);
+  gsize len = text ? strlen(text) : 0;
+  if (text && len >= 1 && len < sizeof(rbn_address)) {
+    g_strlcpy(rbn_address, text, sizeof(rbn_address));
+  } else {
+    g_signal_handler_block(rbn_address_box, rbn_address_box_signal_id);
+    gtk_entry_set_text(rbn_address_box, rbn_address);
+    g_signal_handler_unblock(rbn_address_box, rbn_address_box_signal_id);
+  }
+  gtk_widget_queue_draw(GTK_WIDGET(rbn_address_box));
+  rbn_update_from_settings();
+  cleanup();
+}
+
+static void rbn_port_spin_btn_changed_cb(GtkSpinButton *spin, gpointer user_data) {
+  rbn_port = gtk_spin_button_get_value_as_int(spin);
+  if (rbn_port < 1) {
+    rbn_port = 1;
+  } else if (rbn_port > 65535) {
+    rbn_port = 65535;
+  }
+  rbn_update_from_settings();
 }
 
 static void dxspot_lifetime_spin_btn_cb(GtkSpinButton *spin, gpointer user_data) {
@@ -328,6 +373,86 @@ void extras_menu(GtkWidget *parent) {
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(dxspot_max_rows_spin_btn), TRUE);
   gtk_grid_attach(GTK_GRID(grid), dxspot_max_rows_spin_btn, col, row, 1, 1);
   g_signal_connect(dxspot_max_rows_spin_btn, "value-changed", G_CALLBACK(dxspot_max_rows_spin_btn_cb), NULL);
+  //--------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  t_label = gtk_label_new(NULL);
+  gtk_label_set_use_markup(GTK_LABEL(t_label), TRUE);
+  gtk_label_set_markup(GTK_LABEL(t_label), "<u>Reverse Beacon Network Setup</u>");
+  gtk_widget_set_name(t_label, "boldlabel_blue");
+  gtk_widget_set_margin_top(t_label, 10);
+  gtk_widget_set_margin_bottom(t_label, 10);
+  gtk_widget_set_halign(t_label, GTK_ALIGN_START);
+  gtk_widget_set_margin_start(t_label, 5);
+  gtk_grid_attach(GTK_GRID(grid), t_label, col, row, 3, 1);
+  //--------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  GtkWidget *rbn_enable_btn = gtk_check_button_new_with_label("Enable RBN spots");
+  gtk_widget_set_name(rbn_enable_btn, "boldlabel_blue");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rbn_enable_btn), rbn_enabled);
+  gtk_widget_set_tooltip_text(rbn_enable_btn,
+                              "Enable Reverse Beacon Network spots as an additional spot source.\n"
+                              "Only frequency and callsign are forwarded to the RX panadapter.");
+  gtk_grid_attach(GTK_GRID(grid), rbn_enable_btn, col, row, 2, 1);
+  g_signal_connect(rbn_enable_btn, "toggled", G_CALLBACK(rbn_enable_toggle_cb), NULL);
+  col += 2;
+  GtkWidget *rbn_cw_btn = gtk_check_button_new_with_label("CW");
+  gtk_widget_set_name(rbn_cw_btn, "boldlabel_blue");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rbn_cw_btn), rbn_filter_cw);
+  gtk_widget_set_tooltip_text(rbn_cw_btn, "Accept CW spots from RBN.");
+  gtk_grid_attach(GTK_GRID(grid), rbn_cw_btn, col, row, 1, 1);
+  g_signal_connect(rbn_cw_btn, "toggled", G_CALLBACK(rbn_cw_toggle_cb), NULL);
+  col++;
+  GtkWidget *rbn_rtty_btn = gtk_check_button_new_with_label("RTTY");
+  gtk_widget_set_name(rbn_rtty_btn, "boldlabel_blue");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rbn_rtty_btn), rbn_filter_rtty);
+  gtk_widget_set_tooltip_text(rbn_rtty_btn, "Accept RTTY spots from RBN.");
+  gtk_grid_attach(GTK_GRID(grid), rbn_rtty_btn, col, row, 1, 1);
+  g_signal_connect(rbn_rtty_btn, "toggled", G_CALLBACK(rbn_rtty_toggle_cb), NULL);
+  col++;
+  GtkWidget *rbn_cq_btn = gtk_check_button_new_with_label("CQ spots only");
+  gtk_widget_set_name(rbn_cq_btn, "boldlabel_blue");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rbn_cq_btn), rbn_filter_cq);
+  gtk_widget_set_tooltip_text(rbn_cq_btn, "Accept only RBN spots where the decoded text contains CQ.");
+  gtk_grid_attach(GTK_GRID(grid), rbn_cq_btn, col, row, 2, 1);
+  g_signal_connect(rbn_cq_btn, "toggled", G_CALLBACK(rbn_cq_toggle_cb), NULL);
+  //--------------------------------------------------------------------------------
+  row++;
+  col = 0;
+  label = gtk_label_new("RBN address:");
+  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+  GtkWidget *rbn_address_box = gtk_entry_new();
+  col++;
+  gtk_entry_set_max_length(GTK_ENTRY(rbn_address_box), sizeof(rbn_address) - 1);
+  gtk_entry_set_text(GTK_ENTRY(rbn_address_box), rbn_address);
+  gtk_grid_attach(GTK_GRID(grid), rbn_address_box, col, row, 2, 1);
+  rbn_address_box_signal_id = g_signal_connect(rbn_address_box, "activate", G_CALLBACK(rbn_address_button_clicked),
+                              rbn_address_box);
+  col += 2;
+  GtkWidget *rbn_address_box_btn = gtk_button_new_with_label("Set");
+  gtk_widget_set_halign(rbn_address_box_btn, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), rbn_address_box_btn, col, row, 1, 1);
+  g_signal_connect(rbn_address_box_btn, "clicked", G_CALLBACK(rbn_address_button_clicked), rbn_address_box);
+  gtk_widget_show(rbn_address_box_btn);
+  col++;
+  label = gtk_label_new("RBN Port:");
+  gtk_widget_set_name(label, "boldlabel_blue");
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+  col++;
+  GtkAdjustment *rbn_port_adj = gtk_adjustment_new(
+                                        rbn_port,
+                                        1,
+                                        65535,
+                                        1,
+                                        10,
+                                        0
+                                );
+  GtkWidget *rbn_port_spin_btn = gtk_spin_button_new(rbn_port_adj, 1.0, 0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(rbn_port_spin_btn), TRUE);
+  gtk_grid_attach(GTK_GRID(grid), rbn_port_spin_btn, col, row, 1, 1);
+  g_signal_connect(rbn_port_spin_btn, "value-changed", G_CALLBACK(rbn_port_spin_btn_changed_cb), NULL);
   if (dxcwin_open) {
     gtk_widget_set_sensitive(dxc_login_box, FALSE);
     gtk_widget_set_sensitive(dxc_login_box_btn, FALSE);

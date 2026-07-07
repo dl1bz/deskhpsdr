@@ -72,6 +72,7 @@
 #include "sliders.h"
 #include "toolbar.h"
 #include "rigctl.h"
+#include "rbn.h"
 #include "tci.h"
 #include "ext.h"
 #include "radio_menu.h"
@@ -281,6 +282,12 @@ char own_locator[15] = "JO01AA";
 char dxc_login[16] = "YOUR_CALLSIGN";
 char dxc_address[32] = "db0erf.de";
 long int dxc_port = 41113;
+int rbn_enabled = 0;
+int rbn_filter_cw = 1;
+int rbn_filter_rtty = 1;
+int rbn_filter_cq = 1;
+char rbn_address[64] = "telnet.reversebeacon.net";
+long int rbn_port = 7000;
 int dxcwin_x = -1;
 int dxcwin_y = -1;
 int dxcwin_w = -1;
@@ -478,6 +485,7 @@ static gboolean launch_autogain_hl2_wrapper (gpointer data) {
 static void radio_restore_state (void);
 
 void radio_stop (void) {
+  rbn_stop();
   if (can_transmit) {
     t_print ("radio_stop: TX: stop display update\n");
     transmitter->displaying = 0;
@@ -1788,6 +1796,9 @@ void radio_start_radio (void) {
   if (tci_enable) {
     launch_tci();
   }
+  if (rbn_enabled) {
+    rbn_start();
+  }
   if (rigctl_tcp_enable) {
     launch_tcp_rigctl();
     rigctld_enabled = 1;
@@ -2803,6 +2814,12 @@ static void radio_restore_state (void) {
   GetPropS0 ("dxc_login",                                   dxc_login);
   GetPropS0 ("dxc_address",                                 dxc_address);
   GetPropI0 ("dxc_port",                                    dxc_port);
+  GetPropI0 ("rbn_enabled",                                 rbn_enabled);
+  GetPropI0 ("rbn_filter_cw",                               rbn_filter_cw);
+  GetPropI0 ("rbn_filter_rtty",                             rbn_filter_rtty);
+  GetPropI0 ("rbn_filter_cq",                               rbn_filter_cq);
+  GetPropS0 ("rbn_address",                                 rbn_address);
+  GetPropI0 ("rbn_port",                                    rbn_port);
   GetPropI0 ("dxcwin_x",                                    dxcwin_x);
   GetPropI0 ("dxcwin_y",                                    dxcwin_y);
   GetPropI0 ("dxcwin_w",                                    dxcwin_w);
@@ -3088,6 +3105,12 @@ void radio_save_state (void) {
   SetPropS0 ("dxc_login",                                   dxc_login);
   SetPropS0 ("dxc_address",                                 dxc_address);
   SetPropI0 ("dxc_port",                                    dxc_port);
+  SetPropI0 ("rbn_enabled",                                 rbn_enabled);
+  SetPropI0 ("rbn_filter_cw",                               rbn_filter_cw);
+  SetPropI0 ("rbn_filter_rtty",                             rbn_filter_rtty);
+  SetPropI0 ("rbn_filter_cq",                               rbn_filter_cq);
+  SetPropS0 ("rbn_address",                                 rbn_address);
+  SetPropI0 ("rbn_port",                                    rbn_port);
   SetPropI0 ("dxcwin_x",                                    dxcwin_x);
   SetPropI0 ("dxcwin_y",                                    dxcwin_y);
   SetPropI0 ("dxcwin_w",                                    dxcwin_w);

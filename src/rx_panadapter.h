@@ -27,8 +27,16 @@ void panadapter_set_max_label_rows(int r);
 void pan_add_label(long long freq, const char* text);
 void pan_add_label_timeout(long long freq, const char* text, int lifetime_ms);
 void pan_clear_labels(void);
+typedef enum {
+  PAN_SPOT_SOURCE_CUSTOM = 0,
+  PAN_SPOT_SOURCE_CLUSTER,
+  PAN_SPOT_SOURCE_TCI,
+  PAN_SPOT_SOURCE_RBN
+} PAN_SPOT_SOURCE;
+
 void pan_delete_dx_spot(const char* dxcall);
 void pan_add_dx_spot(double freq_khz, const char* dxcall);
+void pan_add_dx_spot_source(double freq_khz, const char* dxcall, PAN_SPOT_SOURCE source);
 void rx_panadapter_peak_hold_clear(RECEIVER *rx);
 void rx_panadapter_update(RECEIVER* rx);
 void rx_panadapter_init(RECEIVER *rx, int width, int height);
