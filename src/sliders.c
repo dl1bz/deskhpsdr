@@ -280,7 +280,10 @@ int sliders_active_receiver_changed(void* data) {
     // Change sliders and check-boxes to reflect the state of the
     // new active receiver
     //
+    sliders_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
     gtk_range_set_value(GTK_RANGE(af_gain_scale), active_receiver->volume);
+    sliders_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    update_slider_af_gain_btn();
     if (GTK_IS_SPIN_BUTTON(agc_gain_scale)) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_gain_scale), (double) active_receiver->agc_gain);
     } else if (GTK_IS_RANGE(agc_gain_scale)) {
@@ -1128,15 +1131,20 @@ static gboolean tune_drive_button_press_cb(GtkWidget *widget, GdkEventButton *ev
 }
 
 void update_slider_af_gain_btn(void) {
-  if (display_sliders) {
+  if (display_sliders && af_gain_btn != NULL && af_gain_label != NULL && active_receiver != NULL) {
+    char label[16];
+    const int rx_num = active_receiver->id + 1;
+
     sliders_signal_handler_block(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
     // invert button, red = MUTE, green = Playback
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);
     if (active_receiver->local_audio_mute) {
-      gtk_label_set_text(GTK_LABEL(af_gain_label), "MUTE Audio");
+      snprintf(label, sizeof(label), "MUTE RX%d", rx_num);
+      gtk_label_set_text(GTK_LABEL(af_gain_label), label);
       gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY local Audio");
     } else {
-      gtk_label_set_text(GTK_LABEL(af_gain_label), "Volume");
+      snprintf(label, sizeof(label), "VOL RX%d", rx_num);
+      gtk_label_set_text(GTK_LABEL(af_gain_label), label);
       gtk_widget_set_tooltip_text(af_gain_btn,
                                   "Press button for MUTE local Audio.\nTCI audio remains unaffected and continues running.");
     }
