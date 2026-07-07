@@ -594,6 +594,12 @@ void radio_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), rit_combo, 1, row, 1, 1);
   g_signal_connect(rit_combo, "changed", G_CALLBACK(rit_cb), NULL);
   row++;
+  GtkWidget *sr_note = gtk_label_new(NULL);
+  gtk_label_set_markup(GTK_LABEL(sr_note), "<b>Samplerate settings were\nmoved to the RX Menu</b>");
+  gtk_label_set_justify(GTK_LABEL(sr_note), GTK_JUSTIFY_CENTER);
+  gtk_label_set_xalign(GTK_LABEL(sr_note), 0.5);
+  gtk_widget_set_halign(sr_note, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(grid), sr_note, 0, row + 1, 1, 1);
   label = gtk_label_new("SAT mode:");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_widget_set_name(label, "boldlabel");
