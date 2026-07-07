@@ -1114,6 +1114,34 @@ void tci_mox_changed (int state) {
   tci_broadcast_mox_state (state);
 }
 
+#define TCI_TRX_TX_REPORT_DELAY_MS 40
+#define TCI_TRX_RX_REPORT_DELAY_MS 80
+
+static gboolean tci_broadcast_mox_true_cb (gpointer data) {
+  (void) data;
+  if (tci_running) {
+    tci_broadcast_mox_state (1);
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean tci_broadcast_mox_false_cb (gpointer data) {
+  (void) data;
+  if (tci_running) {
+    tci_broadcast_mox_state (0);
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static void tci_schedule_fast_mox_report (int state) {
+  if (!tci_running) { return; }
+  if (state) {
+    g_timeout_add (TCI_TRX_TX_REPORT_DELAY_MS, tci_broadcast_mox_true_cb, NULL);
+  } else {
+    g_timeout_add (TCI_TRX_RX_REPORT_DELAY_MS, tci_broadcast_mox_false_cb, NULL);
+  }
+}
+
 static void tci_broadcast_tx_footswitch_state (int state) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
@@ -3410,9 +3438,11 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
         t_print ("TCI%d TX request\n", client->seq);
       }
       g_idle_add (ext_mox_update, GINT_TO_POINTER (1));
+      tci_schedule_fast_mox_report (1);
     } else {
       tci_tx_client_cleanup_tx_audio(client);
       g_timeout_add (50, ext_mox_update, GINT_TO_POINTER (0));
+      tci_schedule_fast_mox_report (0);
       t_print ("TCI%d RX request\n", client->seq);
     }
   } else {
@@ -4553,6 +4583,7 @@ static void tci_cmd_stop (CLIENT *client, const TCI_CMD *cmd) {
   } else if (owner_mode == TCI_TX_OWNER_MOX) {
     tci_tx_client_cleanup_tx_audio(client);
     g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
+    tci_schedule_fast_mox_report (0);
     t_print ("TCI%d TX owner stopped, forcing RX\n", client->seq);
   }
 }
