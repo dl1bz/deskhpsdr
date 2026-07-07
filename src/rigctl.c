@@ -155,7 +155,8 @@ typedef struct _client {
   int auto_reporting;               // auto-reporting (AI, ZZAI) 0...3
   int andromeda_type;               // 1:Andromeda, 4:G2Mk1 with CM5 upgrade, 5:G2 ultra
   int last_v;                       // Last push-button state received
-  int last_fa, last_fb, last_md;    // last VFO-A/B frequency and VFO-A mode reported
+  long long last_fa, last_fb;       // last VFO-A/B frequency
+  int last_md;                      // VFO-A mode reported
   int last_led[MAX_ANDROMEDA_LEDS]; // last status of ANDROMEDA LEDs
 } CLIENT;
 
