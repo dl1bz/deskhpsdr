@@ -112,6 +112,7 @@ typedef struct _client {
   int fd;                       // socket
   int running;                  // set this to zero to close client connection
   guint tci_timer;              // GTK id  of the periodic task
+  guint tx_clear_timer;          // delayed TX audio drain/MOX clear task
   long long last_fa;            // last VFO-A  freq reported
   long long last_fb;            // last VFO-B  freq reported
   long long last_fx;            // last TX     freq reported
@@ -219,6 +220,7 @@ static int tci_set_lock_allowed(CLIENT *client, TCI_SET_LOCK_ID lock_id);
 static void tci_set_locks_clear_client(CLIENT *client);
 static void tci_set_locks_clear_all(void);
 static void tci_tx_client_cleanup_tx_audio(CLIENT *client);
+static void tci_tx_client_schedule_clear_mox(CLIENT *client);
 static void tci_tx_owner_sync_local_state(void);
 
 typedef struct {
@@ -1675,6 +1677,40 @@ static void tci_tx_client_cleanup_tx_audio(CLIENT *client) {
   }
 #endif
   tci_lws_binary_reset(client);
+}
+
+static gboolean tci_tx_client_clear_mox_cb(gpointer data) {
+  CLIENT *client = (CLIENT*) data;
+  if (client == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  client->tx_clear_timer = 0;
+  if (!client->running) {
+    return G_SOURCE_REMOVE;
+  }
+  tci_tx_client_cleanup_tx_audio(client);
+  ext_mox_update(GINT_TO_POINTER(0));
+  tci_send_mox(client);
+  t_print("TCI%d RX request completed after TX audio drain\n", client->seq);
+  return G_SOURCE_REMOVE;
+}
+
+static void tci_tx_client_cancel_clear_mox(CLIENT *client) {
+  if (client == NULL) {
+    return;
+  }
+  if (client->tx_clear_timer != 0) {
+    g_source_remove(client->tx_clear_timer);
+    client->tx_clear_timer = 0;
+  }
+}
+
+static void tci_tx_client_schedule_clear_mox(CLIENT *client) {
+  if (client == NULL) {
+    return;
+  }
+  tci_tx_client_cancel_clear_mox(client);
+  client->tx_clear_timer = g_timeout_add(50, tci_tx_client_clear_mox_cb, client);
 }
 
 static void tci_set_locks_clear_client(CLIENT *client) {
@@ -3410,6 +3446,7 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
       return;
     }
     if (state) {
+      tci_tx_client_cancel_clear_mox(client);
       if (source_tci) {
         tci_audio_tx_reset();
         tci_audio_tx_set_active (1);
@@ -3440,10 +3477,8 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
       g_idle_add (ext_mox_update, GINT_TO_POINTER (1));
       tci_schedule_fast_mox_report (1);
     } else {
-      tci_tx_client_cleanup_tx_audio(client);
-      g_timeout_add (50, ext_mox_update, GINT_TO_POINTER (0));
-      tci_schedule_fast_mox_report (0);
-      t_print ("TCI%d RX request\n", client->seq);
+      tci_tx_client_schedule_clear_mox(client);
+      t_print ("TCI%d RX request, draining TX audio for 50 ms\n", client->seq);
     }
   } else {
     tci_send_mox (client);
@@ -4581,6 +4616,7 @@ static void tci_cmd_stop (CLIENT *client, const TCI_CMD *cmd) {
     g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
     t_print ("TCI%d TUNE owner stopped, forcing TUNE off\n", client->seq);
   } else if (owner_mode == TCI_TX_OWNER_MOX) {
+    tci_tx_client_cancel_clear_mox(client);
     tci_tx_client_cleanup_tx_audio(client);
     g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
     tci_schedule_fast_mox_report (0);
@@ -4851,6 +4887,7 @@ static void tci_init_client (CLIENT *client, int fd, int seq) {
   client->tx_chrono_tick  =  0;
   client->idle_queued     =  0;
   client->tci_timer       =  0;
+  client->tx_clear_timer  =  0;
   client->wsi             = NULL;
   client->lws_tx_queue    = NULL;
   client->initial_sent    =  0;
@@ -5176,6 +5213,7 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
     tci_set_locks_clear_client(client);
     tci_clients = g_list_remove (tci_clients, client);
     g_mutex_unlock (&tci_mutex);
+    tci_tx_client_cancel_clear_mox(client);
     if (owner_mode == TCI_TX_OWNER_TUNE) {
       g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       t_print ("TCI%d TUNE owner disconnected, forcing TUNE off\n", client->seq);
