@@ -289,6 +289,7 @@ int sliders_active_receiver_changed(void* data) {
     } else if (GTK_IS_RANGE(agc_gain_scale)) {
       gtk_range_set_value(GTK_RANGE(agc_gain_scale), (double) active_receiver->agc_gain);
     }
+    update_slider_agc_btn();
     //
     // need block/unblock so setting the value of the receivers does not
     // enable/disable squelch

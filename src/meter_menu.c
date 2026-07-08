@@ -49,14 +49,18 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
-static void smeter_select_cb(GtkToggleButton *widget, gpointer        data) {
+static void smeter_select_cb(GtkToggleButton *widget, gpointer data) {
+  RECEIVER *rx = (RECEIVER *) data;
+  if (rx == NULL) {
+    return;
+  }
   int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   switch (val) {
   case 0:
-    active_receiver->smetermode = SMETER_PEAK;
+    rx->smetermode = SMETER_PEAK;
     break;
   case 1:
-    active_receiver->smetermode = SMETER_AVERAGE;
+    rx->smetermode = SMETER_AVERAGE;
     break;
   }
 }
@@ -153,44 +157,54 @@ void meter_menu(GtkWidget *parent) {
   gtk_box_pack_start(GTK_BOX(box_Z1), w, FALSE, FALSE, 0);
   gtk_grid_attach(GTK_GRID(grid), box_Z1, 0, 1, 1, 1);
   //----------------------------------------------------------------------------------------------------------
-  GtkWidget *box_Z2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
-  gtk_widget_set_size_request(box_Z2, box_width, widget_heigth);
-  gtk_box_set_spacing(GTK_BOX(box_Z2), 5);
-  //----------------------------------------------------------------------------------------------------------
-  w = gtk_label_new("S-Meter Reading");
-  gtk_widget_set_name(w, "boldlabel_border_black");
-  gtk_widget_set_size_request(w, box_width * 2 / 3, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(w, 0);
-  gtk_widget_set_margin_bottom(w, 0);
-  gtk_widget_set_margin_end(w, 0);
-  gtk_widget_set_margin_end(w, 0);    // rechter Rand (Ende)
-  gtk_widget_set_halign(w, GTK_ALIGN_START);
-  gtk_widget_set_valign(w, GTK_ALIGN_CENTER);
-  gtk_box_pack_start(GTK_BOX(box_Z2), w, FALSE, FALSE, 0);
-  // gtk_grid_attach(GTK_GRID(grid), w, 0, 2, 1, 1);
-  //---------------------------------------------------------------------------
-  w = gtk_combo_box_text_new();
-  // my_combo_attach(GTK_GRID(grid), w, 1, 2, 1, 1);
-  gtk_widget_set_size_request(w, box_width / 3, -1);  // z.B. 100px
-  gtk_widget_set_margin_top(w, 0);
-  gtk_widget_set_margin_bottom(w, 0);
-  gtk_widget_set_margin_end(w, 0);
-  gtk_widget_set_margin_end(w, 0);    // rechter Rand (Ende)
-  gtk_widget_set_halign(w, GTK_ALIGN_START);
-  gtk_widget_set_valign(w, GTK_ALIGN_CENTER);
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Peak");
-  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Average");
-  switch (active_receiver->smetermode) {
-  case SMETER_PEAK:
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
-    break;
-  case SMETER_AVERAGE:
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
-    break;
+  for (int i = 0; i < receivers; i++) {
+    RECEIVER *rx = receiver[i];
+    if (rx == NULL) {
+      continue;
+    }
+    GtkWidget *box_Z2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);   // 3px Abstand zwischen Label & Slider
+    gtk_widget_set_size_request(box_Z2, box_width, widget_heigth);
+    gtk_box_set_spacing(GTK_BOX(box_Z2), 5);
+    //----------------------------------------------------------------------------------------------------------
+    char label[32];
+    if (receivers > 1) {
+      snprintf(label, sizeof(label), "S-Meter Reading RX%d", rx->id + 1);
+    } else {
+      snprintf(label, sizeof(label), "S-Meter Reading");
+    }
+    w = gtk_label_new(label);
+    gtk_widget_set_name(w, "boldlabel_border_black");
+    gtk_widget_set_size_request(w, box_width * 2 / 3, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(w, 0);
+    gtk_widget_set_margin_bottom(w, 0);
+    gtk_widget_set_margin_end(w, 0);
+    gtk_widget_set_margin_end(w, 0);    // rechter Rand (Ende)
+    gtk_widget_set_halign(w, GTK_ALIGN_START);
+    gtk_widget_set_valign(w, GTK_ALIGN_CENTER);
+    gtk_box_pack_start(GTK_BOX(box_Z2), w, FALSE, FALSE, 0);
+    //---------------------------------------------------------------------------
+    w = gtk_combo_box_text_new();
+    gtk_widget_set_size_request(w, box_width / 3, -1);  // z.B. 100px
+    gtk_widget_set_margin_top(w, 0);
+    gtk_widget_set_margin_bottom(w, 0);
+    gtk_widget_set_margin_end(w, 0);
+    gtk_widget_set_margin_end(w, 0);    // rechter Rand (Ende)
+    gtk_widget_set_halign(w, GTK_ALIGN_START);
+    gtk_widget_set_valign(w, GTK_ALIGN_CENTER);
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Peak");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Average");
+    switch (rx->smetermode) {
+    case SMETER_PEAK:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+      break;
+    case SMETER_AVERAGE:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
+      break;
+    }
+    g_signal_connect(w, "changed", G_CALLBACK(smeter_select_cb), rx);
+    gtk_box_pack_start(GTK_BOX(box_Z2), w, FALSE, FALSE, 0);
+    gtk_grid_attach(GTK_GRID(grid), box_Z2, 0, 2 + i, 1, 1);
   }
-  g_signal_connect(w, "changed", G_CALLBACK(smeter_select_cb), NULL);
-  gtk_box_pack_start(GTK_BOX(box_Z2), w, FALSE, FALSE, 0);
-  gtk_grid_attach(GTK_GRID(grid), box_Z2, 0, 2, 1, 1);
   //---------------------------------------------------------------------------
   if (can_transmit) {
     //----------------------------------------------------------------------------------------------------------
@@ -236,7 +250,7 @@ void meter_menu(GtkWidget *parent) {
     }
     g_signal_connect(w, "changed", G_CALLBACK(alc_select_cb), NULL);
     gtk_box_pack_start(GTK_BOX(box_Z3), w, FALSE, FALSE, 0);
-    gtk_grid_attach(GTK_GRID(grid), box_Z3, 0, 3, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), box_Z3, 0, 2 + receivers, 1, 1);
     //---------------------------------------------------------------------------
   }
   gtk_container_add(GTK_CONTAINER(content), grid);

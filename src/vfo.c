@@ -952,6 +952,9 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   }
   if (display_sliders) {
     update_slider_agc_btn();
+    if (active_receiver == rx) {
+      update_slider_binaural_btn();
+    }
   }
 }
 
