@@ -510,6 +510,31 @@ static void add_dither_random_controls(GtkWidget *grid, RECEIVER *rx, int *row) 
   (*row)++;
 }
 
+#if defined (__AUTOG__)
+static void add_hl2_autogain_controls(GtkWidget *grid, int *row) {
+  if (device != DEVICE_HERMES_LITE2 && device != NEW_DEVICE_HERMES_LITE2) {
+    return;
+  }
+  autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
+  gtk_widget_set_name(autogain_b, "boldlabel_blue");
+  gtk_widget_set_tooltip_text(autogain_b,
+                              "Activate RF Gain Automatic:\nControl and set the ADC to max. 75% level\nfor protect ADC against overflows");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_b), autogain_enabled);
+  gtk_grid_attach(GTK_GRID(grid), autogain_b, 0, *row, 1, 1);
+  g_signal_connect(autogain_b, "toggled", G_CALLBACK(autogain_cb), NULL);
+  (*row)++;
+  autogain_time_b = gtk_check_button_new_with_label("HL2 Auto Gain time-regulated");
+  gtk_widget_set_name(autogain_time_b, "boldlabel_blue");
+  gtk_widget_set_tooltip_text(autogain_time_b,
+                              "Re-adjust RF Gain Automatic every 30s\nIf OFF, RF Gain Automatic adjust only one-time\nif band was changed");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_time_b), autogain_time_enabled);
+  gtk_widget_set_sensitive(autogain_time_b, autogain_enabled ? TRUE : FALSE);
+  gtk_grid_attach(GTK_GRID(grid), autogain_time_b, 0, *row, 1, 1);
+  g_signal_connect(autogain_time_b, "toggled", G_CALLBACK(autogain_time_cb), NULL);
+  (*row)++;
+}
+#endif
+
 static void add_preamp_control(GtkWidget *grid, RECEIVER *rx, int *row) {
   if (have_preamp) {
     GtkWidget *preamp_b = gtk_check_button_new_with_label("Preamp");
@@ -522,7 +547,6 @@ static void add_preamp_control(GtkWidget *grid, RECEIVER *rx, int *row) {
 }
 
 static void add_mute_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
-  if (*row < 4) { *row = 4;}
   GtkWidget *mute_audio_b = gtk_check_button_new_with_label("Mute when not active");
   gtk_widget_set_name(mute_audio_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mute_audio_b), rx->mute_when_not_active);
@@ -580,7 +604,8 @@ static void add_digi_offset_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
   (*row)++;
 }
 
-static void add_local_audio_controls(GtkWidget *grid, RECEIVER *rx) {
+static void add_local_audio_controls_at(GtkWidget *grid, RECEIVER *rx, int *row,
+                                        int label_row, int output_row, int channel_row) {
   int i;
   if (n_output_devices <= 0) {
     return;
@@ -590,7 +615,7 @@ static void add_local_audio_controls(GtkWidget *grid, RECEIVER *rx) {
   gtk_widget_set_halign(local_audio_b, GTK_ALIGN_START);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_audio_b), rx->local_audio);
   gtk_widget_show(local_audio_b);
-  gtk_grid_attach(GTK_GRID(grid), local_audio_b, 2, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), local_audio_b, 2, label_row, 1, 1);
   g_signal_connect(local_audio_b, "toggled", G_CALLBACK(local_audio_cb), rx);
   if (rx->audio_device == -1) { rx->audio_device = 0; }
   GtkWidget *output = gtk_combo_box_text_new();
@@ -606,7 +631,7 @@ static void add_local_audio_controls(GtkWidget *grid, RECEIVER *rx) {
     g_strlcpy(rx->audio_name, output_devices[0].name, sizeof(rx->audio_name));
   }
   g_object_set_data(G_OBJECT(output), "local-audio-button", local_audio_b);
-  my_combo_attach(GTK_GRID(grid), output, 2, 2, 1, 1);
+  my_combo_attach(GTK_GRID(grid), output, 2, output_row, 1, 1);
   g_signal_connect(output, "changed", G_CALLBACK(local_output_changed_cb), rx);
   GtkWidget *channel = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Stereo / Mono Downmix (L+R)");
@@ -623,9 +648,18 @@ static void add_local_audio_controls(GtkWidget *grid, RECEIVER *rx) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(channel), 2);
     break;
   }
-  my_combo_attach(GTK_GRID(grid), channel, 2, 3, 1, 1);
+  my_combo_attach(GTK_GRID(grid), channel, 2, channel_row, 1, 1);
   g_signal_connect(channel, "changed", G_CALLBACK(audio_channel_cb), rx);
+  if (*row <= label_row) { *row = label_row + 1; }
+  if (*row <= output_row) { *row = output_row + 1; }
+  if (*row <= channel_row) { *row = channel_row + 1; }
 }
+
+static void add_local_audio_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
+  int audio_row = *row;
+  add_local_audio_controls_at(grid, rx, row, audio_row, audio_row + 1, audio_row + 2);
+}
+
 
 static GtkWidget *build_general_page(void) {
   GtkWidget *page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
@@ -672,6 +706,12 @@ static GtkWidget *build_general_page(void) {
     row++;
     have_hardware_controls = TRUE;
   }
+#if defined (__AUTOG__)
+  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    add_hl2_autogain_controls(hardware_grid, &row);
+    have_hardware_controls = TRUE;
+  }
+#endif
   if (!have_hardware_controls) {
     GtkWidget *label = gtk_label_new("No global hardware controls available");
     gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -692,30 +732,6 @@ static GtkWidget *build_general_page(void) {
   g_signal_connect(wheel_present_btn, "toggled", G_CALLBACK(wheel_present_options_cb), NULL);
   gtk_box_pack_start(GTK_BOX(page), operation_frame, FALSE, FALSE, 0);
 #endif
-#if defined (__AUTOG__)
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-    GtkWidget *autogain_grid = NULL;
-    GtkWidget *autogain_frame = rx_menu_section_new("Hermes Lite 2 Auto Gain", &autogain_grid);
-    row = 0;
-    autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
-    gtk_widget_set_name(autogain_b, "boldlabel_blue");
-    gtk_widget_set_tooltip_text(autogain_b,
-                                "Activate RF Gain Automatic:\nControl and set the ADC to max. 75% level\nfor protect ADC against overflows");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_b), autogain_enabled);
-    gtk_grid_attach(GTK_GRID(autogain_grid), autogain_b, 0, row, 1, 1);
-    g_signal_connect(autogain_b, "toggled", G_CALLBACK(autogain_cb), NULL);
-    row++;
-    autogain_time_b = gtk_check_button_new_with_label("HL2 Auto Gain time-regulated");
-    gtk_widget_set_name(autogain_time_b, "boldlabel_blue");
-    gtk_widget_set_tooltip_text(autogain_time_b,
-                                "Re-adjust RF Gain Automatic every 30s\nIf OFF, RF Gain Automatic adjust only one-time\nif band was changed");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_time_b), autogain_time_enabled);
-    gtk_widget_set_sensitive(autogain_time_b, autogain_enabled ? TRUE : FALSE);
-    gtk_grid_attach(GTK_GRID(autogain_grid), autogain_time_b, 0, row, 1, 1);
-    g_signal_connect(autogain_time_b, "toggled", G_CALLBACK(autogain_time_cb), NULL);
-    gtk_box_pack_start(GTK_BOX(page), autogain_frame, FALSE, FALSE, 0);
-  }
-#endif
   return page;
 }
 
@@ -730,8 +746,8 @@ static GtkWidget *build_rx_page(RECEIVER *rx) {
   }
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     switch (protocol) {
+    case ORIGINAL_PROTOCOL:
     case NEW_PROTOCOL:
-      // Sample rate in RX menu only for P2
       add_sample_rate_control(grid, rx, &row);
       break;
     }
@@ -740,8 +756,13 @@ static GtkWidget *build_rx_page(RECEIVER *rx) {
     add_preamp_control(grid, rx, &row);
   }
   add_mute_controls(grid, rx, &row);
+  int digi_row = row;
   add_digi_offset_controls(grid, rx, &row);
-  add_local_audio_controls(grid, rx);
+  if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+    add_local_audio_controls_at(grid, rx, &row, 0, 1, digi_row);
+  } else {
+    add_local_audio_controls(grid, rx, &row);
+  }
   return grid;
 }
 
