@@ -2115,6 +2115,9 @@ void rx_set_noise(const RECEIVER *rx) {
   // Set/Update all parameters stored  in rx
   // that areassociated with the "QRM fighters"
   //
+  int mode = vfo[rx->id].mode;
+  int nr_allowed = (mode != modeDIGL && mode != modeDIGU);
+  //
   // a) NB
   //
   SetEXTANBTau(rx->id, rx->nb_tau);
@@ -2136,7 +2139,7 @@ void rx_set_noise(const RECEIVER *rx) {
   //
   SetRXAANRVals(rx->id, 64, 16, 16e-4, 10e-7);
   SetRXAANRPosition(rx->id, rx->nr_agc);
-  SetRXAANRRun(rx->id, (rx->nr == 1));
+  SetRXAANRRun(rx->id, nr_allowed && (rx->nr == 1));
   //
   // d) NR2
   //
@@ -2155,7 +2158,7 @@ void rx_set_noise(const RECEIVER *rx) {
   }
 #endif
   SetRXAEMNRaeRun(rx->id, rx->nr2_ae);  // ArtifactElminiation ON
-  SetRXAEMNRRun(rx->id, (rx->nr == 2));
+  SetRXAEMNRRun(rx->id, nr_allowed && (rx->nr == 2));
   //
   // e) ANF
   //
@@ -2163,13 +2166,13 @@ void rx_set_noise(const RECEIVER *rx) {
   //
   // f) SNB
   //
-  SetRXASNBARun(rx->id, rx->snb);
+  SetRXASNBARun(rx->id, nr_allowed && rx->snb);
   //
   // These WDSP functions only exist in a special, non-official version
   //
   // g) NR3
   //
-  SetRXARNNRRun(rx->id, (rx->nr == 3));
+  SetRXARNNRRun(rx->id, nr_allowed && (rx->nr == 3));
   //
   // NR4
   //
@@ -2178,7 +2181,7 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXASBNRwhiteningFactor(rx->id,     rx->nr4_whitening_factor);
   SetRXASBNRnoiseRescale(rx->id,        rx->nr4_noise_rescale);
   SetRXASBNRpostFilterThreshold(rx->id, rx->nr4_post_filter_threshold);
-  SetRXASBNRRun(rx->id, (rx->nr == 4));
+  SetRXASBNRRun(rx->id, nr_allowed && (rx->nr == 4));
 }
 
 void rx_set_offset(const RECEIVER *rx, long long offset) {

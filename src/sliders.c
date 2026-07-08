@@ -274,6 +274,14 @@ void show_popup_slider(enum ACTION action, int rx, double min, double max, doubl
   }
 }
 
+static gboolean active_receiver_noise_allowed(void) {
+  if (active_receiver == NULL) {
+    return FALSE;
+  }
+  int mode = vfo[active_receiver->id].mode;
+  return (mode != modeDIGL && mode != modeDIGU);
+}
+
 int sliders_active_receiver_changed(void* data) {
   if (display_sliders) {
     //
@@ -290,6 +298,15 @@ int sliders_active_receiver_changed(void* data) {
       gtk_range_set_value(GTK_RANGE(agc_gain_scale), (double) active_receiver->agc_gain);
     }
     update_slider_agc_btn();
+    if (!active_receiver_noise_allowed() && (active_receiver->nr != 0 || active_receiver->snb != 0)) {
+      active_receiver->nr = 0;
+      active_receiver->snb = 0;
+      update_noise();
+    } else {
+      update_slider_nr_btn(active_receiver_noise_allowed());
+      update_slider_snb_button(active_receiver_noise_allowed());
+      update_noise_menu();
+    }
     //
     // need block/unblock so setting the value of the receivers does not
     // enable/disable squelch
@@ -771,12 +788,10 @@ static void binaural_toggle_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void snb_toggle_cb(GtkWidget *widget, gpointer data) {
-  int mode = vfo[active_receiver->id].mode;
   active_receiver->snb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  if ((mode == modeDIGL || mode == modeDIGU) && active_receiver->snb) {
+  if (!active_receiver_noise_allowed() && active_receiver->snb) {
     active_receiver->snb = 0;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
-    return;
   }
   update_noise();
   if (!tci_is_applying()) {
@@ -1230,6 +1245,12 @@ void update_slider_nr_btn(gboolean show_widget) {
 }
 
 static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
+  if (!active_receiver_noise_allowed()) {
+    active_receiver->nr = 0;
+    update_noise();
+    tci_rx_nr_enable_changed(active_receiver->id);
+    return;
+  }
   int id = active_receiver->id;
   active_receiver->nr++;
   if (active_receiver->nr > 4) { active_receiver->nr = 0; }
