@@ -2243,7 +2243,7 @@ void vfo_update(void) {
       }
       cairo_show_text(cr, temp_text);
       if (!have_radioberry1 &&  !have_radioberry2 && !have_radioberry3) {
-        cairo_move_to(cr, vfl->base_x + 260, vfl->base_y + 35);
+        cairo_move_to(cr, vfl->base_x + 265, vfl->base_y + 35);
         if (hl2_cl1_input) {
           cairo_set_source_rgba(cr, COLOUR_OK);
         } else {

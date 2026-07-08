@@ -99,9 +99,18 @@ static BAND *zoompan_get_active_band(void) {
   return band_get_band(b);
 }
 
+static gboolean zoompan_has_ant_controls(void) {
+  /*
+   * The quick antenna selectors mirror the band antenna settings. These are
+   * not limited to protocol 2: Hermes-Lite 2 can use selectable antenna inputs
+   * with the original protocol as well.
+   */
+  return protocol == NEW_PROTOCOL || (protocol == ORIGINAL_PROTOCOL && device == DEVICE_HERMES_LITE2);
+}
+
 static void rx_ant_changed_cb(GtkComboBox *combo, gpointer data) {
   (void)data;
-  if (protocol != NEW_PROTOCOL || hermes_mode == HERMES_MODE_BRICK) {
+  if (!zoompan_has_ant_controls() || hermes_mode == HERMES_MODE_BRICK) {
     zoompan_set_combo_active(rx_ant_combo, 0, 0);
     return;
   }
@@ -123,7 +132,7 @@ static void rx_ant_changed_cb(GtkComboBox *combo, gpointer data) {
 
 static void tx_ant_changed_cb(GtkComboBox *combo, gpointer data) {
   (void)data;
-  if (protocol != NEW_PROTOCOL || hermes_mode == HERMES_MODE_BRICK) {
+  if (!zoompan_has_ant_controls() || hermes_mode == HERMES_MODE_BRICK) {
     zoompan_set_combo_active(tx_ant_combo, 0, 0);
     return;
   }
@@ -144,7 +153,7 @@ static void tx_ant_changed_cb(GtkComboBox *combo, gpointer data) {
 }
 
 void update_zoompan_ant_labels(void) {
-  if (protocol != NEW_PROTOCOL || !display_zoompan || active_receiver == NULL || rx_ant_combo == NULL ||
+  if (!zoompan_has_ant_controls() || !display_zoompan || active_receiver == NULL || rx_ant_combo == NULL ||
       tx_ant_combo == NULL) {
     return;
   }
@@ -443,7 +452,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
     gtk_widget_set_sensitive(pan_scale, FALSE);
   }
   //-----------------------------------------------------------------------------------------------------------
-  if (protocol == NEW_PROTOCOL) {
+  if (zoompan_has_ant_controls()) {
     rx_ant_combo = gtk_combo_box_text_new();
     WEAKEN(rx_ant_combo);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rx_ant_combo), "RX Ant1");
@@ -482,7 +491,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(pan_box), peak_btn, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(pan_box), pan_label, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(pan_box), pan_scale, TRUE, TRUE, 0);
-  if (protocol == NEW_PROTOCOL) {
+  if (zoompan_has_ant_controls()) {
     gtk_box_pack_start(GTK_BOX(pan_box), rx_ant_combo, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(pan_box), tx_ant_combo, FALSE, FALSE, 0);
   }
