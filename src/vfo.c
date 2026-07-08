@@ -2348,8 +2348,11 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
     cairo_show_text(cr, "ATU");
+  }
+  if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     cairo_move_to(cr, vfl->dexp_x, 59);
-    if (pa_enabled) {
+    const BAND *txband = band_get_band(vfo[txvfo].band);
+    if (pa_enabled && txband != NULL && !txband->disablePA) {
       cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
