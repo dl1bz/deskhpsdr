@@ -2,7 +2,7 @@
 
 <img src="https://github.com/dl1bz/deskhpsdr/blob/master/release/deskhpsdr/screenshot.png" width="1024px" />
 
-## deskHPSDR ≠ pihpsdr: new app, new concept, new name
+## deskHPSDR ≠ pihpsdr: new app, revised concept, new name
 
 Correct is, the very first codebase of deskHPSDR was forked ONCE from [DL1YCF's pihpsdr codebase](https://github.com/dl1ycf/pihpsdr) in October 2024 without any backward dependencies to piHPSDR.
 But there wasn't, isn't and won't be an interactive and thereby direct collaboration between pihpsdr and deskHPSDR. They are two different apps without any relationship or dependencies to each other. Nevertheless, we are in frequent exchange of ideas to further advance both versions.
@@ -24,8 +24,8 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Hamlib                         | supported (with own included rigctld)         |                |
 | OpenHPSDR protocol 1           | supported                                     |                |
 | OpenHPSDR protocol 2           | supported                                     |                |
-| GPIO                           | ~~supported~~ all code removed since V2.7     | deprecated     |
-| Soapy API / Soapy protocol     | ~~supported~~ all code removed since V2.7     | deprecated     |
+| GPIO                           | not supported (since V2.7)                    |                |
+| Soapy API / Soapy protocol     | not supported (since V2.7)                    |                |
 | Hermes Lite 2 N2ADR IO board   | supported                                     |                |
 | Use WDSP library ?             | yes, current 1.29                             |                |
 | Pure Signal / Pre-Distortion   | supported up to 192k samplingrate             |                |
@@ -59,7 +59,7 @@ Other useful app features (availability depend from used SDR device):
 * Transverter Support
 * Full RX- and TX-WDSP Audio chain support (RX/TX-EQ, Leveler, CESSB, Limiter, CFC, Speech Processor, DEXP)
 * network optimizations if using WiFi for OpenHPSDR protocol P1 or P2
-* supported Receiver:2, supported Transmitter:1, VFO:2 per RX/TX
+* 2 VFO, up to 2 Receiver and 1 Transmitter
 * VFO split, swap, RIT/XIT supported
 * Save TX DRIVE and TUNE DRIVE per band, Bandstack available
 * display current solar data for propagation, show Greyline DX window
