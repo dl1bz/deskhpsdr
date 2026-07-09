@@ -210,7 +210,6 @@ static void tci_update_rx_audio_global (void);
 static void tci_audio_wakeup (void);
 static void tci_audio_tx_chrono_wakeup (void);
 static void tci_service_tx_chrono (void);
-static void tci_lws_binary_reset (CLIENT *client);
 static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, size_t len, struct lws *wsi);
 static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t len);
 static void tci_send_iq_samplerate (CLIENT *client);
@@ -936,11 +935,6 @@ static void tci_service_tx_chrono (void) {
   g_list_free (clients);
 }
 
-static void tci_lws_binary_reset (CLIENT *client) {
-  if (client == NULL) { return; }
-  client->binary_rx_len = 0;
-}
-
 static void tci_handle_binary (CLIENT *client, const unsigned char* data, size_t len) {
   TCI_STREAM_HEADER header;
   if (client == NULL || data == NULL || len < sizeof (TCI_STREAM_HEADER)) { return; }
@@ -1014,12 +1008,20 @@ static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, si
   int final;
   size_t needed;
   if (client == NULL || data == NULL || wsi == NULL || len == 0) { return; }
+
+  /*
+   * Keep the LWS binary reassembly state local to this function.  TX/RX
+   * transitions may happen while libwebsockets still delivers fragments from
+   * the previous TX audio message.  Resetting binary_rx_len asynchronously from
+   * another path can make a continuation fragment look like a fresh TCI stream
+   * header and produce bogus packet types.
+   */
+  if (lws_is_first_fragment (wsi)) {
+    client->binary_rx_len = 0;
+  }
+
   remaining = lws_remaining_packet_payload (wsi);
   final = lws_is_final_fragment (wsi);
-  if (client->binary_rx_len == 0 && remaining == 0 && final) {
-    tci_handle_binary (client, data, len);
-    return;
-  }
   needed = client->binary_rx_len + len;
   if (needed > TCI_BINARY_REASSEMBLY_MAX) {
     if (rigctl_debug) {
@@ -1029,7 +1031,7 @@ static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, si
                len,
                (size_t) TCI_BINARY_REASSEMBLY_MAX);
     }
-    tci_lws_binary_reset (client);
+    client->binary_rx_len = 0;
     return;
   }
   if (needed > client->binary_rx_size) {
@@ -1046,7 +1048,7 @@ static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, si
     return;
   }
   tci_handle_binary (client, client->binary_rx_buf, client->binary_rx_len);
-  tci_lws_binary_reset (client);
+  client->binary_rx_len = 0;
 }
 
 static void tci_service_rx_audio (void) {
@@ -1676,7 +1678,6 @@ static void tci_tx_client_cleanup_tx_audio(CLIENT *client) {
     audio_close_tci_monitor();
   }
 #endif
-  tci_lws_binary_reset(client);
 }
 
 static gboolean tci_tx_client_clear_mox_cb(gpointer data) {
@@ -3457,7 +3458,6 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
         client->tx_chrono_queue_count = 0;
         client->tx_audio_rx_count = 0;
         g_mutex_unlock (&tci_mutex);
-        tci_lws_binary_reset (client);
 #ifdef PORTAUDIO
         if (tci_audio_monitor) {
           // audio_open_tci_monitor("Externe Kopfhörer");

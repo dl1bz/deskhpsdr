@@ -201,6 +201,69 @@ static RECEIVER *rx_from_data(gpointer data) {
   return rx != NULL ? rx : active_receiver;
 }
 
+static gboolean rx_menu_original_protocol_global_dither_random(void) {
+  return protocol == ORIGINAL_PROTOCOL;
+}
+
+static void rx_menu_sync_original_protocol_dither_random_from_effective(void) {
+  int dither = 0;
+  int random = 0;
+
+  if (!rx_menu_original_protocol_global_dither_random() || receiver[0] == NULL) {
+    return;
+  }
+
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL) {
+      dither |= receiver[i]->dither;
+      random |= receiver[i]->random;
+    }
+  }
+
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->dither = dither;
+      receiver[i]->random = random;
+    }
+  }
+}
+
+static void rx_menu_set_original_protocol_dither_all(int enabled) {
+  if (!rx_menu_original_protocol_global_dither_random()) {
+    return;
+  }
+
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->dither = enabled;
+    }
+  }
+}
+
+static void rx_menu_set_original_protocol_random_all(int enabled) {
+  if (!rx_menu_original_protocol_global_dither_random()) {
+    return;
+  }
+
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->random = enabled;
+    }
+  }
+}
+
+static void rx_menu_sync_shared_sample_rate(RECEIVER *rx, int sample_rate) {
+  if (rx == NULL || protocol != ORIGINAL_PROTOCOL || n_adc > 1 || receivers <= 1) {
+    return;
+  }
+
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL && receiver[i] != rx && receiver[i]->sample_rate != sample_rate) {
+      rx_change_sample_rate(receiver[i], sample_rate);
+    }
+  }
+}
+
 #if defined (__AUTOG__)
 static void autogain_cb(GtkWidget *widget, gpointer data) {
   autogain_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -225,13 +288,23 @@ static void autogain_time_cb(GtkWidget *widget, gpointer data) {
 
 static void dither_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = rx_from_data(data);
-  rx->dither = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  int enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  rx->dither = enabled;
+  if (rx_menu_original_protocol_global_dither_random()) {
+    rx_menu_set_original_protocol_dither_all(enabled);
+  }
   schedule_receive_specific();
 }
 
 static void random_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = rx_from_data(data);
-  rx->random = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  int enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  rx->random = enabled;
+  if (rx_menu_original_protocol_global_dither_random()) {
+    rx_menu_set_original_protocol_random_all(enabled);
+  }
   schedule_receive_specific();
 }
 
@@ -257,6 +330,7 @@ static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
   //
   if (p == NULL || sscanf(p, "%d", &samplerate) != 1) { return; }
   rx_change_sample_rate(rx, samplerate);
+  rx_menu_sync_shared_sample_rate(rx, samplerate);
 }
 
 static void adc_cb(GtkToggleButton *widget, gpointer data) {
@@ -466,45 +540,65 @@ static void add_adc_control(GtkWidget *grid, RECEIVER *rx, int *row) {
     g_signal_connect(adc_combo_box, "changed", G_CALLBACK(adc_cb), rx);
     (*row)++;
   } else if (n_adc > 1 && adc_controlled_by_matrix) {
-    GtkWidget *adc_label = gtk_label_new("RX ADC");
-    gtk_widget_set_name(adc_label, "boldlabel");
-    gtk_widget_set_halign(adc_label, GTK_ALIGN_END);
-    gtk_grid_attach(GTK_GRID(grid), adc_label, 0, *row, 1, 1);
-    GtkWidget *adc_info = gtk_label_new("assignment in ADC/DDC Menu");
-    gtk_widget_set_name(adc_info, "boldlabel");
-    gtk_widget_set_halign(adc_info, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid), adc_info, 1, *row, 1, 1);
+    GtkWidget *adc_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(adc_label), "<b>RX ADC assignment in ADC/DDC Menu</b>");
+    gtk_label_set_justify(GTK_LABEL(adc_label), GTK_JUSTIFY_CENTER);
+    gtk_label_set_xalign(GTK_LABEL(adc_label), 0.5);
+    // gtk_widget_set_name(adc_label, "boldlabel");
+    gtk_widget_set_halign(adc_label, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(grid), adc_label, 0, *row, 2, 1);
     (*row)++;
   }
 }
 
 static void add_dither_random_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
+  gboolean original_protocol_rx2_global = rx_menu_original_protocol_global_dither_random() && rx->id > 0;
+
   if (!have_dither) {
     return;
   }
+
+  rx_menu_sync_original_protocol_dither_random_from_effective();
+
   // We assume Dither/Random are either both available or both not available
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     GtkWidget *dither_b = gtk_check_button_new_with_label("HL2 Band Volts / Dither Bit");
     gtk_widget_set_name(dither_b, "boldlabel");
     gtk_widget_set_tooltip_text(dither_b, "activate Band Voltage output at the Hermes Lite 2");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dither_b), rx->dither);
+    gtk_widget_set_sensitive(dither_b, !original_protocol_rx2_global);
     gtk_grid_attach(GTK_GRID(grid), dither_b, 0, *row, 1, 1);
+    if (original_protocol_rx2_global) {
+      gtk_widget_set_tooltip_text(dither_b, "P1 dither is global and is controlled from RX1.");
+    }
     g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), rx);
     GtkWidget *random_b = gtk_check_button_new_with_label("Random Bit");
     gtk_widget_set_name(random_b, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(random_b), rx->random);
+    gtk_widget_set_sensitive(random_b, !original_protocol_rx2_global);
     gtk_grid_attach(GTK_GRID(grid), random_b, 1, *row, 1, 1);
+    if (original_protocol_rx2_global) {
+      gtk_widget_set_tooltip_text(random_b, "P1 random is global and is controlled from RX1.");
+    }
     g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), rx);
   } else {
     GtkWidget *dither_b = gtk_check_button_new_with_label("Dither Bit");
     gtk_widget_set_name(dither_b, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dither_b), rx->dither);
+    gtk_widget_set_sensitive(dither_b, !original_protocol_rx2_global);
     gtk_grid_attach(GTK_GRID(grid), dither_b, 0, *row, 1, 1);
+    if (original_protocol_rx2_global) {
+      gtk_widget_set_tooltip_text(dither_b, "P1 dither is global and is controlled from RX1.");
+    }
     g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), rx);
     GtkWidget *random_b = gtk_check_button_new_with_label("Random Bit");
     gtk_widget_set_name(random_b, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(random_b), rx->random);
+    gtk_widget_set_sensitive(random_b, !original_protocol_rx2_global);
     gtk_grid_attach(GTK_GRID(grid), random_b, 1, *row, 1, 1);
+    if (original_protocol_rx2_global) {
+      gtk_widget_set_tooltip_text(random_b, "P1 random is global and is controlled from RX1.");
+    }
     g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), rx);
   }
   (*row)++;
@@ -546,6 +640,17 @@ static void add_preamp_control(GtkWidget *grid, RECEIVER *rx, int *row) {
   }
 }
 
+static void add_mute_radio_control_at(GtkWidget *grid, RECEIVER *rx, int row) {
+  if (protocol == ORIGINAL_PROTOCOL || protocol  == NEW_PROTOCOL) {
+    GtkWidget *mute_radio_b = gtk_check_button_new_with_label("Mute Audio to Radio");
+    gtk_widget_set_name(mute_radio_b, "boldlabel");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mute_radio_b), rx->mute_radio);
+    gtk_widget_show(mute_radio_b);
+    gtk_grid_attach(GTK_GRID(grid), mute_radio_b, 2, row, 1, 1);
+    g_signal_connect(mute_radio_b, "toggled", G_CALLBACK(mute_radio_cb), rx);
+  }
+}
+
 static void add_mute_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
   GtkWidget *mute_audio_b = gtk_check_button_new_with_label("Mute when not active");
   gtk_widget_set_name(mute_audio_b, "boldlabel");
@@ -553,14 +658,6 @@ static void add_mute_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
   gtk_widget_show(mute_audio_b);
   gtk_grid_attach(GTK_GRID(grid), mute_audio_b, 0, *row, 2, 1);
   g_signal_connect(mute_audio_b, "toggled", G_CALLBACK(mute_audio_cb), rx);
-  if (protocol == ORIGINAL_PROTOCOL || protocol  == NEW_PROTOCOL) {
-    GtkWidget *mute_radio_b = gtk_check_button_new_with_label("Mute Audio to Radio");
-    gtk_widget_set_name(mute_radio_b, "boldlabel");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mute_radio_b), rx->mute_radio);
-    gtk_widget_show(mute_radio_b);
-    gtk_grid_attach(GTK_GRID(grid), mute_radio_b, 2, *row, 1, 1);
-    g_signal_connect(mute_radio_b, "toggled", G_CALLBACK(mute_radio_cb), rx);
-  }
   (*row)++;
 }
 
@@ -584,23 +681,27 @@ static void add_digi_offset_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
   gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_u_label, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_u, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(digi_offset_box), gtk_label_new("Hz"), FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_l_label, FALSE, FALSE, 8);
+  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_l_label, FALSE, FALSE, 16);
   gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_l, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(digi_offset_box), gtk_label_new("Hz"), FALSE, FALSE, 0);
+  gtk_grid_attach(GTK_GRID(grid), digi_offset_box, 0, *row, 3, 1);
+  (*row)++;
+  GtkWidget *digi_offset_button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+  gtk_widget_set_halign(digi_offset_button_box, GTK_ALIGN_CENTER);
   GtkWidget *digi_offset_rtty_b = gtk_button_new_with_label("Offset RTTY");
   gtk_widget_set_tooltip_text(digi_offset_rtty_b, "Set DIGU/DIGL offsets for RTTY");
   g_object_set_data(G_OBJECT(digi_offset_rtty_b), "digu-offset", digi_offset_u);
   g_object_set_data(G_OBJECT(digi_offset_rtty_b), "digl-offset", digi_offset_l);
   g_signal_connect(digi_offset_rtty_b, "clicked", G_CALLBACK(digi_offset_rtty_cb), NULL);
-  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_rtty_b, FALSE, FALSE, 8);
+  gtk_box_pack_start(GTK_BOX(digi_offset_button_box), digi_offset_rtty_b, FALSE, FALSE, 0);
   GtkWidget *digi_offset_off_b = gtk_button_new_with_label("Offset OFF");
   gtk_widget_set_tooltip_text(digi_offset_off_b, "Disable DIGU/DIGL offsets\n"
                                                  "Recommended for all FT mode");
   g_object_set_data(G_OBJECT(digi_offset_off_b), "digu-offset", digi_offset_u);
   g_object_set_data(G_OBJECT(digi_offset_off_b), "digl-offset", digi_offset_l);
   g_signal_connect(digi_offset_off_b, "clicked", G_CALLBACK(digi_offset_off_cb), NULL);
-  gtk_box_pack_start(GTK_BOX(digi_offset_box), digi_offset_off_b, FALSE, FALSE, 0);
-  gtk_grid_attach(GTK_GRID(grid), digi_offset_box, 0, *row, 3, 1);
+  gtk_box_pack_start(GTK_BOX(digi_offset_button_box), digi_offset_off_b, FALSE, FALSE, 0);
+  gtk_grid_attach(GTK_GRID(grid), digi_offset_button_box, 0, *row, 3, 1);
   (*row)++;
 }
 
@@ -756,13 +857,24 @@ static GtkWidget *build_rx_page(RECEIVER *rx) {
     add_preamp_control(grid, rx, &row);
   }
   add_mute_controls(grid, rx, &row);
-  int digi_row = row;
-  add_digi_offset_controls(grid, rx, &row);
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-    add_local_audio_controls_at(grid, rx, &row, 0, 1, digi_row);
+    /*
+     * Keep the local-audio block in a fixed order independent of
+     * device-specific controls on the left side:
+     *   row 0: output device
+     *   row 1: channel/downmix
+     *   row 2: local audio enable
+     *   row 3: mute audio to radio
+     */
+    add_local_audio_controls_at(grid, rx, &row, 2, 0, 1);
+    add_mute_radio_control_at(grid, rx, 3);
+    if (row < 4) {
+      row = 4;
+    }
   } else {
     add_local_audio_controls(grid, rx, &row);
   }
+  add_digi_offset_controls(grid, rx, &row);
   return grid;
 }
 
