@@ -208,18 +208,15 @@ static gboolean rx_menu_original_protocol_global_dither_random(void) {
 static void rx_menu_sync_original_protocol_dither_random_from_effective(void) {
   int dither = 0;
   int random = 0;
-
   if (!rx_menu_original_protocol_global_dither_random() || receiver[0] == NULL) {
     return;
   }
-
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL) {
       dither |= receiver[i]->dither;
       random |= receiver[i]->random;
     }
   }
-
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->dither = dither;
@@ -232,7 +229,6 @@ static void rx_menu_set_original_protocol_dither_all(int enabled) {
   if (!rx_menu_original_protocol_global_dither_random()) {
     return;
   }
-
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->dither = enabled;
@@ -244,7 +240,6 @@ static void rx_menu_set_original_protocol_random_all(int enabled) {
   if (!rx_menu_original_protocol_global_dither_random()) {
     return;
   }
-
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->random = enabled;
@@ -256,7 +251,6 @@ static void rx_menu_sync_shared_sample_rate(RECEIVER *rx, int sample_rate) {
   if (rx == NULL || protocol != ORIGINAL_PROTOCOL || n_adc > 1 || receivers <= 1) {
     return;
   }
-
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL && receiver[i] != rx && receiver[i]->sample_rate != sample_rate) {
       rx_change_sample_rate(receiver[i], sample_rate);
@@ -289,7 +283,6 @@ static void autogain_time_cb(GtkWidget *widget, gpointer data) {
 static void dither_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = rx_from_data(data);
   int enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   rx->dither = enabled;
   if (rx_menu_original_protocol_global_dither_random()) {
     rx_menu_set_original_protocol_dither_all(enabled);
@@ -300,7 +293,6 @@ static void dither_cb(GtkWidget *widget, gpointer data) {
 static void random_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = rx_from_data(data);
   int enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
   rx->random = enabled;
   if (rx_menu_original_protocol_global_dither_random()) {
     rx_menu_set_original_protocol_random_all(enabled);
@@ -553,13 +545,10 @@ static void add_adc_control(GtkWidget *grid, RECEIVER *rx, int *row) {
 
 static void add_dither_random_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
   gboolean original_protocol_rx2_global = rx_menu_original_protocol_global_dither_random() && rx->id > 0;
-
   if (!have_dither) {
     return;
   }
-
   rx_menu_sync_original_protocol_dither_random_from_effective();
-
   // We assume Dither/Random are either both available or both not available
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
     GtkWidget *dither_b = gtk_check_button_new_with_label("HL2 Band Volts / Dither Bit");

@@ -1008,7 +1008,6 @@ static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, si
   int final;
   size_t needed;
   if (client == NULL || data == NULL || wsi == NULL || len == 0) { return; }
-
   /*
    * Keep the LWS binary reassembly state local to this function.  TX/RX
    * transitions may happen while libwebsockets still delivers fragments from
@@ -1019,7 +1018,6 @@ static void tci_handle_binary_lws (CLIENT *client, const unsigned char* data, si
   if (lws_is_first_fragment (wsi)) {
     client->binary_rx_len = 0;
   }
-
   remaining = lws_remaining_packet_payload (wsi);
   final = lws_is_final_fragment (wsi);
   needed = client->binary_rx_len + len;
