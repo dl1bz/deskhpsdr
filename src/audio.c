@@ -98,7 +98,7 @@ static snd_pcm_format_t formats[3] = {
   SND_PCM_FORMAT_S16_LE
 };
 
-static void *mic_read_thread(void* arg);
+static void *mic_read_thread(void *arg);
 
 int n_input_devices;
 AUDIO_DEVICE input_devices[MAX_AUDIO_DEVICES];
@@ -283,7 +283,7 @@ int audio_open_input(void) {
     break;
   }
   t_print("%s: allocating ring buffer\n", __func__);
-  mic_ring_buffer = (float*) g_new(float, MICRINGLEN);
+  mic_ring_buffer = (float *) g_new(float, MICRINGLEN);
   mic_ring_read_pt = mic_ring_write_pt = 0;
   if (mic_ring_buffer == NULL) {
     g_mutex_unlock(&audio_mutex);
@@ -389,7 +389,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     //
     switch (rx->local_audio_format) {
     case SND_PCM_FORMAT_S16_LE: {
-      int16_t *short_buffer = (int16_t*) rx->local_audio_buffer;
+      int16_t *short_buffer = (int16_t *) rx->local_audio_buffer;
       if (rx->local_audio_channels == 2) {
         short_buffer[rx->local_audio_buffer_offset * 2] = (int16_t)(sample * 32767.0F);
         short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int16_t)(sample * 32767.0F);
@@ -399,7 +399,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     }
     break;
     case SND_PCM_FORMAT_S32_LE: {
-      int32_t *long_buffer = (int32_t*) rx->local_audio_buffer;
+      int32_t *long_buffer = (int32_t *) rx->local_audio_buffer;
       if (rx->local_audio_channels == 2) {
         long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(sample * 2147483647.0F);
         long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(sample * 2147483647.0F);
@@ -409,7 +409,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     }
     break;
     case SND_PCM_FORMAT_FLOAT_LE: {
-      float *float_buffer = (float*) rx->local_audio_buffer;
+      float *float_buffer = (float *) rx->local_audio_buffer;
       if (rx->local_audio_channels == 2) {
         float_buffer[rx->local_audio_buffer_offset * 2] = sample;
         float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
@@ -441,7 +441,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
           // insert another zero sample
           switch (rx->local_audio_format) {
           case SND_PCM_FORMAT_S16_LE: {
-            int16_t *short_buffer = (int16_t*) rx->local_audio_buffer;
+            int16_t *short_buffer = (int16_t *) rx->local_audio_buffer;
             if (rx->local_audio_channels == 2) {
               short_buffer[rx->local_audio_buffer_offset * 2] = 0;
               short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0;
@@ -451,7 +451,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
           }
           break;
           case SND_PCM_FORMAT_S32_LE: {
-            int32_t *long_buffer = (int32_t*) rx->local_audio_buffer;
+            int32_t *long_buffer = (int32_t *) rx->local_audio_buffer;
             if (rx->local_audio_channels == 2) {
               long_buffer[rx->local_audio_buffer_offset * 2] = 0;
               long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0;
@@ -461,7 +461,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
           }
           break;
           case SND_PCM_FORMAT_FLOAT_LE: {
-            float *float_buffer = (float*) rx->local_audio_buffer;
+            float *float_buffer = (float *) rx->local_audio_buffer;
             if (rx->local_audio_channels == 2) {
               float_buffer[rx->local_audio_buffer_offset * 2] = 0.0;
               float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = 0.0;
@@ -554,7 +554,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
     }
     switch (rx->local_audio_format) {
     case SND_PCM_FORMAT_S16_LE: {
-      int16_t *short_buffer = (int16_t*) rx->local_audio_buffer;
+      int16_t *short_buffer = (int16_t *) rx->local_audio_buffer;
       if (rx->local_audio_channels == 2) {
         short_buffer[rx->local_audio_buffer_offset * 2] = (int16_t)(left_sample * 32767.0F);
         short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int16_t)(right_sample * 32767.0F);
@@ -564,7 +564,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
     }
     break;
     case SND_PCM_FORMAT_S32_LE: {
-      int32_t *long_buffer = (int32_t*) rx->local_audio_buffer;
+      int32_t *long_buffer = (int32_t *) rx->local_audio_buffer;
       if (rx->local_audio_channels == 2) {
         long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(left_sample * 2147483647.0F);
         long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(right_sample * 2147483647.0F);
@@ -574,7 +574,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
     }
     break;
     case SND_PCM_FORMAT_FLOAT_LE: {
-      float *float_buffer = (float*) rx->local_audio_buffer;
+      float *float_buffer = (float *) rx->local_audio_buffer;
       if (rx->local_audio_channels == 2) {
         float_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
         float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
@@ -696,15 +696,15 @@ static void *mic_read_thread(gpointer arg) {
         for (i = 0; i < mic_buffer_size; i++) {
           switch (record_audio_format) {
           case SND_PCM_FORMAT_S16_LE:
-            short_buffer = (int16_t*) mic_buffer;
+            short_buffer = (int16_t *) mic_buffer;
             sample = (float) short_buffer[i] / 32767.0f;
             break;
           case SND_PCM_FORMAT_S32_LE:
-            long_buffer = (int32_t*) mic_buffer;
+            long_buffer = (int32_t *) mic_buffer;
             sample = (float) long_buffer[i] / 2147483647.0F;
             break;
           case SND_PCM_FORMAT_FLOAT_LE:
-            float_buffer = (float*) mic_buffer;
+            float_buffer = (float *) mic_buffer;
             sample = float_buffer[i];
             break;
           default:

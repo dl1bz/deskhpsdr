@@ -115,7 +115,7 @@ unsigned int GetFirmwareMajorVersion(void) {
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAWriteToFPGA(int fd, unsigned char* SrcData, uint32_t Length, uint32_t AXIAddr) {
+int DMAWriteToFPGA(int fd, unsigned char *SrcData, uint32_t Length, uint32_t AXIAddr) {
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
@@ -147,7 +147,7 @@ int DMAWriteToFPGA(int fd, unsigned char* SrcData, uint32_t Length, uint32_t AXI
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAReadFromFPGA(int fd, unsigned char* DestData, uint32_t Length, uint32_t AXIAddr) {
+int DMAReadFromFPGA(int fd, unsigned char *DestData, uint32_t Length, uint32_t AXIAddr) {
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
@@ -359,7 +359,7 @@ const uint32_t DDCSampleCounts[] = {
 // the array of ints is populated with the number of samples to read for each DDC
 // returns the number of words per frame, which helps set the DMA transfer size
 //
-uint32_t AnalyseDDCHeader(uint32_t Header, uint32_t* DDCCounts) {
+uint32_t AnalyseDDCHeader(uint32_t Header, uint32_t *DDCCounts) {
   uint32_t DDC;               // DDC counter
   uint32_t Count;
   uint32_t Total = 0;

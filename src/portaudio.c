@@ -224,9 +224,9 @@ void audio_get_cards(void) {
 // The PA callback function then sends the data to the transmitter
 //
 
-int pa_mic_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
-int pa_out_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
-int pa_tci_monitor_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags,
+int pa_mic_cb(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags, void *);
+int pa_out_cb(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags, void *);
+int pa_tci_monitor_cb(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags,
                       void *);
 
 int audio_open_input(void) {
@@ -287,7 +287,7 @@ int audio_open_input(void) {
     g_mutex_unlock(&audio_mutex);
     return -1;
   }
-  mic_ring_buffer = (float*) g_new(float, MY_RING_BUFFER_SIZE);
+  mic_ring_buffer = (float *) g_new(float, MY_RING_BUFFER_SIZE);
   mic_ring_outpt = mic_ring_inpt = 0;
   if (mic_ring_buffer == NULL) {
     Pa_CloseStream(record_handle);
@@ -316,11 +316,11 @@ int audio_open_input(void) {
 //
 // PortAudio call-back function for local TCI audio monitor output
 //
-int pa_tci_monitor_cb(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
+int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
                       const PaStreamCallbackTimeInfo* timeInfo,
                       PaStreamCallbackFlags statusFlags,
                       void *userdata) {
-  float *out = (float*) outputBuffer;
+  float *out = (float *) outputBuffer;
   float buffer[TCI_MONITOR_FRAMES_PER_BUFFER * TCI_AUDIO_CHANNELS];
   guint frames;
   unsigned long requested_frames = framesPerBuffer;
@@ -355,7 +355,7 @@ int pa_tci_monitor_cb(const void* inputBuffer, void* outputBuffer, unsigned long
   return paContinue;
 }
 
-int audio_open_tci_monitor(const char* audio_name) {
+int audio_open_tci_monitor(const char *audio_name) {
   PaError err;
   PaStreamParameters outputParameters;
   int padev = -1;
@@ -448,12 +448,12 @@ void audio_close_tci_monitor(void) {
 //
 // PortAudio call-back function for Audio output
 //
-int pa_out_cb(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
+int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
               const PaStreamCallbackTimeInfo* timeInfo,
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
-  float *out = (float*) outputBuffer;
-  RECEIVER *rx = (RECEIVER*) userdata;
+  float *out = (float *) outputBuffer;
+  RECEIVER *rx = (RECEIVER *) userdata;
   if (out == NULL) {
     t_print("%s: bogus audio buffer in callback\n", __func__);
     return paContinue;
@@ -520,11 +520,11 @@ int pa_out_cb(const void* inputBuffer, void* outputBuffer, unsigned long framesP
 //
 // PortAudio call-back function for Audio input
 //
-int pa_mic_cb(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
+int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
               const PaStreamCallbackTimeInfo* timeInfo,
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
-  const float *in = (float*) inputBuffer;
+  const float *in = (float *) inputBuffer;
   if (in == NULL) {
     // This should not happen, so we do not send silence etc.
     t_print("%s: bogus audio buffer in callback\n", __func__);

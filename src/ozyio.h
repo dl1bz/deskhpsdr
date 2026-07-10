@@ -61,8 +61,8 @@ extern unsigned char ozy_firmware_version[9]; // OZY firmware version
 // Functions to be called from "outside"
 //
 
-extern int ozy_write(int ep, unsigned char* buffer, int buffer_size);
-extern int ozy_read(int ep, unsigned char* buffer, int buffer_size);
+extern int ozy_write(int ep, unsigned char *buffer, int buffer_size);
+extern int ozy_read(int ep, unsigned char *buffer, int buffer_size);
 
 extern void writepenny(int reset, int mode);   // Init TLV320 on Penelope board
 extern int ozy_initialise(void);

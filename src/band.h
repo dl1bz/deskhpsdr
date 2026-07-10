@@ -137,5 +137,5 @@ int TransmitAllowed (void);
 extern void band_minus (int id);
 extern void band_plus (int id);
 extern void PaCalibrationSave (void);
-extern gboolean PaCalibrationLoad (const char* filename);
+extern gboolean PaCalibrationLoad (const char *filename);
 #endif

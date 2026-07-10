@@ -349,7 +349,7 @@ MULTI_TABLE multi_action_table[] = {
   {ZOOM,             "Zoom"}
 };
 
-static gboolean get_window_frame(GtkWindow *win, int* x, int* y, int* w, int* h) {
+static gboolean get_window_frame(GtkWindow *win, int *x, int *y, int *w, int *h) {
   GdkWindow *gdk_win = gtk_widget_get_window(GTK_WIDGET(win));
   if (!gdk_win) {
     return FALSE;  /* Fenster noch nicht realisiert */
@@ -479,8 +479,8 @@ void schedule_action(enum ACTION action, enum ACTION_MODE mode, int val) {
   }
 }
 
-int process_action(void* data) {
-  PROCESS_ACTION *a = (PROCESS_ACTION*) data;
+int process_action(void *data) {
+  PROCESS_ACTION *a = (PROCESS_ACTION *) data;
   double value;
   int i;
   //t_print("%s: a=%p action=%d mode=%d value=%d\n",__func__,a,a->action,a->mode,a->val);
@@ -1345,7 +1345,7 @@ int process_action(void* data) {
       multifunction_action->mode = a->mode;
       multifunction_action->val = a->val;
       multifunction_action->action = multi_action_table[multi_action].action;
-      process_action((void*) multifunction_action);
+      process_action((void *) multifunction_action);
     }
     g_idle_add(ext_vfo_update, NULL);
     break;
@@ -2170,7 +2170,7 @@ int process_action(void* data) {
 // Function to convert an internal action number to a unique string
 // This is used to specify actions in the props files.
 //
-void Action2String(int id, char* str, size_t len) {
+void Action2String(int id, char *str, size_t len) {
   if (id < 0 || id >= ACTIONS) {
     g_strlcpy(str, "NONE", len);
   } else {
@@ -2182,7 +2182,7 @@ void Action2String(int id, char* str, size_t len) {
 // Function to convert a string to an action number
 // This is used to specify actions in the props files.
 //
-int String2Action(const char* str) {
+int String2Action(const char *str) {
   for (int i = 0; i < ACTIONS; i++) {
     if (ActionTable[i].type & TYPE_HIDE) {
       continue;
@@ -2210,7 +2210,7 @@ int GetMultifunctionStatus(void) {
 //
 // function to get string for multifunction encoder
 //
-void GetMultifunctionString(char* str, size_t len) {
+void GetMultifunctionString(char *str, size_t len) {
   g_strlcpy(str, "M=", len);
   g_strlcat(str, multi_action_table[multi_action].descr, len);
 }

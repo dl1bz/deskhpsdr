@@ -71,7 +71,7 @@ static gboolean close_cb (void) {
 }
 
 gboolean band_select_cb (GtkWidget *widget, gpointer data) {
-  CHOICE *choice = (CHOICE*) data;
+  CHOICE *choice = (CHOICE *) data;
   int id = active_receiver->id;
   int newband;
   //
@@ -143,7 +143,7 @@ void band_menu (GtkWidget *parent) {
   j = 0;
   for (i = 0; i < BANDS + XVTRS; i++) {
     const BAND *band;
-    band = (BAND*) band_get_band (i);
+    band = (BAND *) band_get_band (i);
     if (strlen (band->title) > 0) {
       if (i < BANDS) {
         if (! (band->frequencyMin == 0.0 && band->frequencyMax == 0.0)) {

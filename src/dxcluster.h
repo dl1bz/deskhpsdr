@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-void dxcluster_open_window(const char* host,
+void dxcluster_open_window(const char *host,
 long int portaddress,
 const char *callsign,
 int width,

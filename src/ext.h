@@ -44,26 +44,26 @@ typedef struct _ext_agc_mode_update {
   int agc;
 } EXT_AGC_MODE_UPDATE;
 
-extern int ext_start_radio(void* data);
-extern int ext_vfo_update(void* data);
-extern int ext_tune_update(void* data);
-extern int ext_mox_update(void* data);
-extern int ext_start_tx(void* data);        // is this necessary?
-extern int ext_start_rx(void* data);
-extern int ext_start_noise(void* data);
-extern int ext_start_vfo(void* data);
-extern int ext_start_band(void* data);
-extern int ext_update_noise(void* data);
-extern int ext_update_notch(void* data);
-extern int ext_update_eq(void* data);
-extern int ext_set_vox(void* data);
-extern int ext_rx_filter_update(void* data);
-extern int ext_set_af_gain(void* data);
-extern int ext_set_agc_gain(void* data);
-extern int ext_set_agc_mode(void* data);
-extern int ext_set_iq_samplerate(void* data);
+extern int ext_start_radio(void *data);
+extern int ext_vfo_update(void *data);
+extern int ext_tune_update(void *data);
+extern int ext_mox_update(void *data);
+extern int ext_start_tx(void *data);        // is this necessary?
+extern int ext_start_rx(void *data);
+extern int ext_start_noise(void *data);
+extern int ext_start_vfo(void *data);
+extern int ext_start_band(void *data);
+extern int ext_update_noise(void *data);
+extern int ext_update_notch(void *data);
+extern int ext_update_eq(void *data);
+extern int ext_set_vox(void *data);
+extern int ext_rx_filter_update(void *data);
+extern int ext_set_af_gain(void *data);
+extern int ext_set_agc_gain(void *data);
+extern int ext_set_agc_mode(void *data);
+extern int ext_set_iq_samplerate(void *data);
 extern int ext_normalize_rx_filter_band(int mode, int *low, int *high);
-extern int ext_set_duplex(void* data);      // is this necessary?
+extern int ext_set_duplex(void *data);      // is this necessary?
 
 ///////////////////////////////////////////////////////////
 //

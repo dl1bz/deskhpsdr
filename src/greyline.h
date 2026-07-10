@@ -29,13 +29,13 @@ extern "C" {
  * Pass only the desired window width. The height is computed automatically from the
  * embedded map image aspect ratio (day_jpg.h).
  */
-void open_greyline_win(int window_width, const char* locator);
+void open_greyline_win(int window_width, const char *locator);
 
 /* Same as open_greyline_win(), but forces a specific parent window. */
-void open_greyline_win_for_parent(GtkWindow *parent, int window_width, const char* locator);
+void open_greyline_win_for_parent(GtkWindow *parent, int window_width, const char *locator);
 
 /* Backward-compatible APIs (explicit width/height). */
-void open_greyline_win_wh(int window_width, int window_height, const char* locator);
+void open_greyline_win_wh(int window_width, int window_height, const char *locator);
 
 void open_greyline_win_for_parent_wh(GtkWindow *parent,
 int window_width,

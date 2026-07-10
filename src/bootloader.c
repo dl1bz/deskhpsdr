@@ -96,8 +96,8 @@
 //
 // Forward declaration for the two functions that send something to the radio
 //
-void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, unsigned char* data, int datalen);
-void sendRawData(pcap_t* handle, unsigned char hw[6], unsigned char* data, off_t ptr);
+void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, unsigned char *data, int datalen);
+void sendRawData(pcap_t *handle, unsigned char hw[6], unsigned char *data, off_t ptr);
 
 // HPSDR P1 bootloader command codes (we don't need those related to JTAG)
 
@@ -124,7 +124,7 @@ void sendRawData(pcap_t* handle, unsigned char hw[6], unsigned char* data, off_t
 #define STATE_WAIT      5  // Wait for response from radio
 #define STATE_DONE      6  // All done.
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   int i;
   char *dev = NULL;
   char errbuf[PCAP_ERRBUF_SIZE];
@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
       sa = addr->addr;
       if (sa->sa_family == AF_INET) {
         int i1, i2, i3, i4;
-        (void) inet_ntop(AF_INET, (void*) & (((struct sockaddr_in*) sa)->sin_addr), string, 256);
+        (void) inet_ntop(AF_INET, (void *) & (((struct sockaddr_in *) sa)->sin_addr), string, 256);
         if (sscanf(string, "%d.%d.%d.%d", &i1, &i2, &i3, &i4) == 4) {
           myip[0] = i1;
           myip[1] = i2;
@@ -239,7 +239,7 @@ int main(int argc, char** argv) {
       // BSD code (e.g. MacOS), need  to include net/if_dl.h
       //
       if (sa->sa_family == AF_LINK) {
-        link = (struct sockaddr_dl*) sa->sa_data;
+        link = (struct sockaddr_dl *) sa->sa_data;
         unsigned char mac[link->sdl_alen];
         memcpy(mac, LLADDR(link), link->sdl_alen);
         if (link->sdl_alen == 6) {
@@ -500,7 +500,7 @@ int main(int argc, char** argv) {
 //
 // Send a 62-byte buffer to the radio containing a "command"
 //
-void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, unsigned char* data, int datalen) {
+void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, unsigned char *data, int datalen) {
   unsigned char buffer[62];
   int i;
   /*set the frame header*/
@@ -536,7 +536,7 @@ void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, 
 //
 // Send a 276-byte buffer to the radio that contains data from the rbf file
 //
-void sendRawData(pcap_t* handle, unsigned char hw[6], unsigned char* data, off_t ptr) {
+void sendRawData(pcap_t *handle, unsigned char hw[6], unsigned char *data, off_t ptr) {
   unsigned char buffer[276];
   /*set the frame header*/
   buffer[0] = 0x11; // use "bogus" MAC address of radio for destination

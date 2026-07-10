@@ -274,7 +274,7 @@ void extras_menu(GtkWidget *parent) {
   gtk_entry_set_text(GTK_ENTRY(dxc_login_box), dxc_login);
   gtk_grid_attach(GTK_GRID(grid), dxc_login_box, col, row, 2, 1);
   dxc_login_box_signal_id = g_signal_connect(dxc_login_box, "activate", G_CALLBACK(dxc_login_button_clicked),
-                            dxc_login_box);
+    dxc_login_box);
   col += 2;
   GtkWidget *dxc_login_box_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(dxc_login_box_btn, GTK_ALIGN_START);
@@ -292,7 +292,7 @@ void extras_menu(GtkWidget *parent) {
   gtk_entry_set_text(GTK_ENTRY(dxc_address_box), dxc_address);
   gtk_grid_attach(GTK_GRID(grid), dxc_address_box, col, row, 2, 1);
   dxc_address_box_signal_id = g_signal_connect(dxc_address_box, "activate", G_CALLBACK(dxc_address_button_clicked),
-                              dxc_address_box);
+    dxc_address_box);
   col += 2;
   GtkWidget *dxc_address_box_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(dxc_address_box_btn, GTK_ALIGN_START);
@@ -444,7 +444,7 @@ void extras_menu(GtkWidget *parent) {
   gtk_entry_set_text(GTK_ENTRY(rbn_address_box), rbn_address);
   gtk_grid_attach(GTK_GRID(grid), rbn_address_box, col, row, 2, 1);
   rbn_address_box_signal_id = g_signal_connect(rbn_address_box, "activate", G_CALLBACK(rbn_address_button_clicked),
-                              rbn_address_box);
+    rbn_address_box);
   col += 2;
   GtkWidget *rbn_address_box_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(rbn_address_box_btn, GTK_ALIGN_START);
@@ -509,7 +509,7 @@ void extras_menu(GtkWidget *parent) {
   gtk_entry_set_text(GTK_ENTRY(atuwin_title_box), atuwin_TITLE);
   gtk_grid_attach(GTK_GRID(grid), atuwin_title_box, col, row, 2, 1);
   atuwin_title_box_signal_id = g_signal_connect(atuwin_title_box, "activate", G_CALLBACK(atuwin_title_button_clicked),
-                               atuwin_title_box);
+    atuwin_title_box);
   col += 2;
   GtkWidget *atuwin_title_box_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(atuwin_title_box_btn, GTK_ALIGN_START);
@@ -527,7 +527,7 @@ void extras_menu(GtkWidget *parent) {
   gtk_entry_set_text(GTK_ENTRY(atuwin_url_box), atuwin_URL);
   gtk_grid_attach(GTK_GRID(grid), atuwin_url_box, col, row, 3, 1);
   atuwin_url_box_signal_id = g_signal_connect(atuwin_url_box, "activate", G_CALLBACK(atuwin_url_button_clicked),
-                             atuwin_url_box);
+    atuwin_url_box);
   col += 3;
   GtkWidget *atuwin_url_box_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(atuwin_url_box_btn, GTK_ALIGN_START);
@@ -588,8 +588,8 @@ void extras_menu(GtkWidget *parent) {
   gtk_widget_set_margin_top(atuwin_action_box, 10);
   gtk_grid_attach(GTK_GRID(grid), atuwin_action_box, col, row, 1, 1);
   atuwin_action_box_signal_id = g_signal_connect(atuwin_action_box, "activate",
-                                G_CALLBACK(atuwin_action_button_clicked),
-                                atuwin_action_box);
+    G_CALLBACK(atuwin_action_button_clicked),
+    atuwin_action_box);
   col += 1;
   GtkWidget *atuwin_action_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(atuwin_action_btn, GTK_ALIGN_START);

@@ -108,7 +108,7 @@ static void audio_free_device_lists_locked(void) {
   n_output_devices = 0;
 }
 
-static void source_list_cb(pa_context *context, const pa_source_info *s, int eol, void* data) {
+static void source_list_cb(pa_context *context, const pa_source_info *s, int eol, void *data) {
   audio_init_mutexes_once();
   if (eol > 0) {
     g_mutex_lock(&audio_mutex);
@@ -135,7 +135,7 @@ static void source_list_cb(pa_context *context, const pa_source_info *s, int eol
   g_mutex_unlock(&audio_mutex);
 }
 
-static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, void* data) {
+static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, void *data) {
   audio_init_mutexes_once();
   if (eol > 0) {
     g_mutex_lock(&audio_mutex);
@@ -176,7 +176,7 @@ static void sink_list_cb(pa_context *context, const pa_sink_info *s, int eol, vo
   g_mutex_unlock(&audio_mutex);
 }
 
-static void state_cb(pa_context *c, void* userdata) {
+static void state_cb(pa_context *c, void *userdata) {
   pa_context_state_t state;
   state = pa_context_get_state(c);
   t_print("%s: %d\n", __func__, state);
@@ -495,7 +495,7 @@ int audio_open_input(void) {
   }
   float *new_local_buf = g_new0(float, mic_buffer_size);
   t_print("%s: allocating ring buffer\n", __func__);
-  float *new_ring_buf = (float*) g_new(float, MICRINGLEN);
+  float *new_ring_buf = (float *) g_new(float, MICRINGLEN);
   if (new_local_buf == NULL || new_ring_buf == NULL) {
     if (new_local_buf) { g_free(new_local_buf); }
     if (new_ring_buf) { g_free(new_ring_buf); }

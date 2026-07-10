@@ -657,7 +657,7 @@ static gboolean destroy_cb (gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-void destroy_widget_safe (GtkWidget** pwidget) {
+void destroy_widget_safe (GtkWidget **pwidget) {
   if (!pwidget) {
     return;
   }
@@ -1016,7 +1016,7 @@ static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
 }
 
 gboolean win_set_bgcolor (GtkWidget *widget, gpointer data) {
-  const GdkRGBA *bgcolor = (const GdkRGBA*) data;
+  const GdkRGBA *bgcolor = (const GdkRGBA *) data;
   gtk_widget_override_background_color (widget,
                                         GTK_STATE_FLAG_NORMAL,
                                         bgcolor);
@@ -1071,7 +1071,7 @@ static void open_atu_window(void) {
 
 #ifdef __linux__
 static void linux_dock_window_destroyed_cb (GtkWidget *widget, gpointer user_data) {
-  char *id = (char*) user_data;
+  char *id = (char *) user_data;
   if (linux_dock_windows) {
     g_hash_table_remove (linux_dock_windows, id);
     if (g_hash_table_size (linux_dock_windows) == 0) {
@@ -1093,7 +1093,7 @@ static void linux_open_webview_window_with_id (
 ) {
   if (!linux_dock_windows) {
     linux_dock_windows = g_hash_table_new_full (g_str_hash, g_str_equal,
-                         g_free, NULL);
+      g_free, NULL);
   }
   // g_setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", TRUE);
   GtkWidget *window = g_hash_table_lookup (linux_dock_windows, id);
@@ -1121,7 +1121,7 @@ static void linux_open_webview_window_with_id (
 #endif
 
 // bezogen auf top_window
-void open_atu_window (GtkWindow *top_window,  const char* win_title, const char* win_url) {
+void open_atu_window (GtkWindow *top_window,  const char *win_title, const char *win_url) {
   // 1. Monitor-Geometrie holen (primärer Monitor)
   GdkDisplay  *display = gdk_display_get_default();
   GdkMonitor  *monitor = gdk_display_get_primary_monitor (display);
@@ -1299,9 +1299,9 @@ static void radio_create_visual (void) {
     if (protocol == NEW_PROTOCOL || protocol == ORIGINAL_PROTOCOL) {
       tx_ps_set_sample_rate (transmitter, protocol == NEW_PROTOCOL ? 192000 : active_receiver->sample_rate);
       receiver[PS_TX_FEEDBACK] = rx_create_pure_signal_receiver (PS_TX_FEEDBACK,
-                                 protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
+        protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
       receiver[PS_RX_FEEDBACK] = rx_create_pure_signal_receiver (PS_RX_FEEDBACK,
-                                 protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
+        protocol == ORIGINAL_PROTOCOL ? active_receiver->sample_rate : 192000, my_width, transmitter->fps);
     }
   }
   // init local keyer if enabled
@@ -1372,13 +1372,13 @@ static void on_response (GtkDialog *dialog, gint response_id, gpointer user_data
   gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
-static void show_message (GtkWindow *parent, const char* text) __attribute__ ((unused));
-static void show_message (GtkWindow *parent, const char* text) {
+static void show_message (GtkWindow *parent, const char *text) __attribute__ ((unused));
+static void show_message (GtkWindow *parent, const char *text) {
   GtkWidget *dialog = gtk_message_dialog_new (parent,
-                      GTK_DIALOG_MODAL,
-                      GTK_MESSAGE_INFO,
-                      GTK_BUTTONS_OK,
-                      NULL);
+    GTK_DIALOG_MODAL,
+    GTK_MESSAGE_INFO,
+    GTK_BUTTONS_OK,
+    NULL);
   gtk_message_dialog_set_markup (GTK_MESSAGE_DIALOG (dialog), text);
   gtk_window_set_title (GTK_WINDOW (dialog), "deskHPSDR Error Message");
   gtk_window_set_deletable (GTK_WINDOW (dialog), FALSE);
@@ -3433,9 +3433,9 @@ void radio_end_playback (void) {
 //
 // utility function needed e.g. for qsort
 //
-int compare_doubles (const void* a, const void* b) {
-  double arg1 = * (const double*) a;
-  double arg2 = * (const double*) b;
+int compare_doubles (const void *a, const void *b) {
+  double arg1 = * (const double *) a;
+  double arg2 = * (const double *) b;
   if (arg1 < arg2) { return -1; }
   if (arg1 > arg2) { return 1; }
   return 0;

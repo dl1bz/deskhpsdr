@@ -146,7 +146,7 @@ static void meter_draw_analog_face(cairo_t *cr) {
   cairo_fill(cr);
   cairo_pattern_destroy(pat);
   cairo_pattern_t *glow = cairo_pattern_create_radial(METER_WIDTH * 0.50, METER_HEIGHT * 0.05, 1.0,
-                          METER_WIDTH * 0.50, METER_HEIGHT * 0.05, METER_WIDTH * 0.75);
+    METER_WIDTH * 0.50, METER_HEIGHT * 0.05, METER_WIDTH * 0.75);
   cairo_pattern_add_color_stop_rgba(glow, 0.00, 1.0, 0.97, 0.88, 0.55);
   cairo_pattern_add_color_stop_rgba(glow, 0.55, 1.0, 0.95, 0.82, 0.14);
   cairo_pattern_add_color_stop_rgba(glow, 1.00, 1.0, 0.95, 0.82, 0.00);
@@ -169,7 +169,7 @@ meter_configure_event_cb(GtkWidget         *widget,
     cairo_surface_destroy(meter_surface);
   }
   meter_surface = gdk_window_create_similar_surface(gtk_widget_get_window(widget),
-                  CAIRO_CONTENT_COLOR, METER_WIDTH, METER_HEIGHT);
+    CAIRO_CONTENT_COLOR, METER_WIDTH, METER_HEIGHT);
   /* Initialize the surface to black */
   cairo_t *cr;
   cr = cairo_create(meter_surface);
@@ -184,7 +184,7 @@ meter_configure_event_cb(GtkWidget         *widget,
  * clipped to only draw the exposed areas of the widget
  */
 static gboolean
-meter_draw_cb(GtkWidget *widget, cairo_t*   cr, gpointer   data) {
+meter_draw_cb(GtkWidget *widget, cairo_t   *cr, gpointer   data) {
   cairo_set_source_surface(cr, meter_surface, 0.0, 0.0);
   cairo_paint(cr);
   return FALSE;

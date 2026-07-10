@@ -180,7 +180,7 @@ GtkWidget *toolbar_init(int my_width, int my_height, int window_height) {
       char lbl[LABEL_LEN];
       toolbar_button_label(lbl, sizeof(lbl), i);
       sim_s[i] = gtk_button_new_with_label(lbl);
-      g_object_add_weak_pointer(G_OBJECT(sim_s[i]), (gpointer*) &sim_s[i]);
+      g_object_add_weak_pointer(G_OBJECT(sim_s[i]), (gpointer *) &sim_s[i]);
       gtk_widget_set_name(sim_s[i], button_css);
       gtk_widget_set_size_request(sim_s[i], button_width, row_height);
       g_signal_connect(G_OBJECT(sim_s[i]), "button-press-event", G_CALLBACK(toolbar_button_press_cb),

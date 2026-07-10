@@ -140,7 +140,7 @@ static void reload_css_cb(GtkWidget *widget, gpointer data) {
 
 
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   schedule_general();
   schedule_transmit_specific();
@@ -309,7 +309,7 @@ static void b_inner_levels_popup_cb(GtkWidget *widget, gpointer data) {
 #endif
 
 static void bg_colour_set(GtkColorButton *btn, gpointer user_data) {
-  cairo_rgba_t *c = (cairo_rgba_t*) user_data;
+  cairo_rgba_t *c = (cairo_rgba_t *) user_data;
   GdkRGBA g;
   gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
   c->r = g.red;
@@ -320,7 +320,7 @@ static void bg_colour_set(GtkColorButton *btn, gpointer user_data) {
 }
 
 static void win_bg_colour_set(GtkColorButton *btn, gpointer user_data) {
-  cairo_rgba_t *c = (cairo_rgba_t*) user_data;
+  cairo_rgba_t *c = (cairo_rgba_t *) user_data;
   GdkRGBA g;
   gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
   c->r = g.red;
@@ -791,7 +791,7 @@ void screen_menu(GtkWidget *parent) {
     gtk_widget_show(b_use_levels_popup);
     gtk_grid_attach(GTK_GRID(grid), b_use_levels_popup, 2, row, 1, 1);
     b_use_levels_popup_signal_id = g_signal_connect(b_use_levels_popup, "toggled", G_CALLBACK(b_use_levels_popup_cb),
-                                   NULL);
+      NULL);
     if (!transmitter->show_levels || use_wayland) {
       gtk_widget_set_sensitive(b_use_levels_popup, FALSE);
     } else {
@@ -814,8 +814,8 @@ void screen_menu(GtkWidget *parent) {
       gtk_widget_show(b_inner_levels_popup);
       gtk_grid_attach(GTK_GRID(grid), b_inner_levels_popup, 3, row, 1, 1);
       b_inner_levels_popup_signal_id = g_signal_connect(b_inner_levels_popup, "toggled",
-                                       G_CALLBACK(b_inner_levels_popup_cb),
-                                       NULL);
+        G_CALLBACK(b_inner_levels_popup_cb),
+        NULL);
       if (!transmitter->show_levels) {
         gtk_widget_set_sensitive(b_inner_levels_popup, FALSE);
       } else {

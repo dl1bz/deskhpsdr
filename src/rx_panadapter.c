@@ -237,7 +237,7 @@ static void pan_label_draw_with_halo(cairo_t *cr, double x, double y, const PAN_
  * so an exact frequency match is not sufficient. If a duplicate is found,
  * refresh its timeout and move it to the latest reported frequency.
  */
-static gboolean pan_dxspot_update_if_exists (long long freq_hz, const char* text, int lifetime_ms,
+static gboolean pan_dxspot_update_if_exists (long long freq_hz, const char *text, int lifetime_ms,
     PAN_SPOT_SOURCE source) {
   gint64 now;
   int new_priority;
@@ -313,9 +313,9 @@ static PAN_LABEL *pan_label_get_slot (void) {
   return &pan_labels[pan_label_count++];
 }
 
-static int pan_label_cmp (const void* a, const void* b) {
-  const PAN_LABEL_POS *pa = (const PAN_LABEL_POS*) a;
-  const PAN_LABEL_POS *pb = (const PAN_LABEL_POS*) b;
+static int pan_label_cmp (const void *a, const void *b) {
+  const PAN_LABEL_POS *pa = (const PAN_LABEL_POS *) a;
+  const PAN_LABEL_POS *pb = (const PAN_LABEL_POS *) b;
   if (pa->x < pb->x) { return -1; }
   if (pa->x > pb->x) { return 1; }
   return 0;
@@ -325,7 +325,7 @@ static int pan_label_cmp (const void* a, const void* b) {
 // pan_add_label(7100000LL, "Beacon");
 // pan_add_label(7074000LL, "Relais");
 
-void pan_add_label (long long freq, const char* text) {
+void pan_add_label (long long freq, const char *text) {
   PAN_LABEL *pl;
   if (text == NULL) {
     return;
@@ -342,7 +342,7 @@ void pan_add_label (long long freq, const char* text) {
 // Example:
 // pan_add_label_timeout(7100000LL, "Spot", 5000);  // 5 Sekunden sichtbar
 
-void pan_add_label_timeout (long long freq, const char* text, int lifetime_ms) {
+void pan_add_label_timeout (long long freq, const char *text, int lifetime_ms) {
   PAN_LABEL *pl;
   if (text == NULL) {
     return;
@@ -365,7 +365,7 @@ void pan_clear_labels (void) {
   pan_label_count = 0;
 }
 
-void pan_delete_dx_spot (const char* dxcall) {
+void pan_delete_dx_spot (const char *dxcall) {
   int i;
   if (dxcall == NULL || dxcall[0] == '\0') {
     return;
@@ -384,11 +384,11 @@ void pan_delete_dx_spot (const char* dxcall) {
   }
 }
 
-void pan_add_dx_spot (double freq_khz, const char* dxcall) {
+void pan_add_dx_spot (double freq_khz, const char *dxcall) {
   pan_add_dx_spot_source(freq_khz, dxcall, PAN_SPOT_SOURCE_CLUSTER);
 }
 
-void pan_add_dx_spot_source (double freq_khz, const char* dxcall, PAN_SPOT_SOURCE source) {
+void pan_add_dx_spot_source (double freq_khz, const char *dxcall, PAN_SPOT_SOURCE source) {
   long long freq_hz;
   PAN_LABEL *pl;
   char label[32];
@@ -457,7 +457,7 @@ static void init_worldmap_pixbuf (int w, int h) {
   g_object_unref (raw_pixbuf);
 }
 
-static void draw_image (cairo_t* cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
+static void draw_image (cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
   // Bild auf dem Cairo-Zeichenkontext setzen
   gdk_cairo_set_source_pixbuf (cr, pixbuf, x_offset, y_offset);
   cairo_paint (cr); // Bild zeichnen
@@ -466,15 +466,15 @@ static void draw_image (cairo_t* cr, GdkPixbuf *pixbuf, int x_offset, int y_offs
 
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   int mywidth = gtk_widget_get_allocated_width (widget);
   int myheight = gtk_widget_get_allocated_height (widget);
   if (rx->panadapter_surface) {
     cairo_surface_destroy (rx->panadapter_surface);
   }
   rx->panadapter_surface = gdk_window_create_similar_surface (gtk_widget_get_window (widget),
-                           CAIRO_CONTENT_COLOR,
-                           mywidth, myheight);
+    CAIRO_CONTENT_COLOR,
+    mywidth, myheight);
   cairo_t *cr = cairo_create (rx->panadapter_surface);
   if (display_wmap) {
     cairo_set_source_rgba (cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
@@ -502,8 +502,8 @@ static void panadapter_apply_cursor (GtkWidget *widget) {
  * signal receives a ready-to-be-used cairo_t that is already
  * clipped to only draw the exposed areas of the widget
  */
-static gboolean panadapter_draw_cb (GtkWidget *widget, cairo_t* cr, gpointer data) {
-  RECEIVER *rx = (RECEIVER*) data;
+static gboolean panadapter_draw_cb (GtkWidget *widget, cairo_t *cr, gpointer data) {
+  RECEIVER *rx = (RECEIVER *) data;
   if (rx->panadapter_surface) {
     cairo_set_source_surface (cr, rx->panadapter_surface, 0.0, 0.0);
     cairo_paint (cr);
@@ -577,7 +577,7 @@ static double panadapter_get_cursor_rf_frequency (RECEIVER *rx, double x) {
 }
 
 static gboolean panadapter_button_press_event_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   if (event->button == GDK_BUTTON_SECONDARY) {
     if (event->state & GDK_SHIFT_MASK) {
       rx->mnf = 0;
@@ -712,7 +712,7 @@ static unsigned char get_SWert (long long freq, short int dbm) {
 
 //----------------------------------------------------------------------------------------------
 
-static void get_local_time (char* zeitString, size_t groesse) {
+static void get_local_time (char *zeitString, size_t groesse) {
   // Aktuelle Zeit abrufen
   time_t aktuelleZeit;
   time (&aktuelleZeit);
@@ -1628,7 +1628,7 @@ void rx_panadapter_update (RECEIVER *rx) {
           || rx->panadapter_noisefloor_fast_start_count > 0
           || difftime(current_time, rx->panadapter_last_noisefloor_calc_time) >= noisefloor_update_interval)) {
     int new_panadapter_low = autoscale_panadapter_with_offset(rx->panadapter_smoothed_noise_floor,
-                             rx->panadapter_noise_margin);
+      rx->panadapter_noise_margin);
     int adjusted_panadapter_low = (int)(new_panadapter_low - panadapter_scale_corr_f);
     if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
         || rx->panadapter_low < adjusted_panadapter_low) {
@@ -1973,7 +1973,7 @@ void rx_panadapter_init (RECEIVER * rx, int width, int height) {
                          | GDK_LEAVE_NOTIFY_MASK);
 }
 
-void display_panadapter_messages (cairo_t* cr, int width, unsigned int fps) {
+void display_panadapter_messages (cairo_t *cr, int width, unsigned int fps) {
   char text[64];
   static unsigned int msg_cycle = 0;
   if (display_warnings) {

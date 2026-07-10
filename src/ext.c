@@ -49,7 +49,7 @@
 //
 
 // cppcheck-suppress constParameterPointer
-int ext_start_radio(void* data) {
+int ext_start_radio(void *data) {
   radio_start_radio();
   return G_SOURCE_REMOVE;
 }
@@ -63,13 +63,13 @@ int ext_start_radio(void* data) {
 static guint vfo_timeout = 0;
 
 // cppcheck-suppress constParameterCallback
-static int vfo_timeout_cb(void* data) {
+static int vfo_timeout_cb(void *data) {
   vfo_timeout = 0;
   vfo_update();
   return G_SOURCE_REMOVE;
 }
 
-int ext_vfo_update(void* data) {
+int ext_vfo_update(void *data) {
   //
   // If no timeout is pending, then a vfo_update() is to
   // be scheduled soon.
@@ -80,7 +80,7 @@ int ext_vfo_update(void* data) {
   return G_SOURCE_REMOVE;
 }
 
-int ext_tune_update(void* data) {
+int ext_tune_update(void *data) {
   int state = GPOINTER_TO_INT(data);
   int old_state = radio_get_tune();
   radio_tune_update(state);
@@ -95,7 +95,7 @@ int ext_tune_update(void* data) {
   return G_SOURCE_REMOVE;
 }
 
-int ext_mox_update(void* data) {
+int ext_mox_update(void *data) {
   int state = GPOINTER_TO_INT(data);
   /* Nur bei externer PTT ON: VK abbrechen, Mic übernimmt */
   if (state) {
@@ -105,13 +105,13 @@ int ext_mox_update(void* data) {
   return G_SOURCE_REMOVE;
 }
 
-int ext_set_vox(void* data) {
+int ext_set_vox(void *data) {
   radio_set_vox(GPOINTER_TO_INT(data));
   return G_SOURCE_REMOVE;
 }
 
-int ext_set_af_gain(void* data) {
-  EXT_AF_GAIN_UPDATE *ag = (EXT_AF_GAIN_UPDATE*) data;
+int ext_set_af_gain(void *data) {
+  EXT_AF_GAIN_UPDATE *ag = (EXT_AF_GAIN_UPDATE *) data;
   int receiver_id;
   double value;
   if (ag == NULL) {
@@ -137,8 +137,8 @@ int ext_set_af_gain(void* data) {
 }
 
 
-int ext_set_agc_gain(void* data) {
-  EXT_AGC_GAIN_UPDATE *ag = (EXT_AGC_GAIN_UPDATE*) data;
+int ext_set_agc_gain(void *data) {
+  EXT_AGC_GAIN_UPDATE *ag = (EXT_AGC_GAIN_UPDATE *) data;
   int receiver_id;
   double value;
   if (ag == NULL) {
@@ -163,8 +163,8 @@ int ext_set_agc_gain(void* data) {
   return G_SOURCE_REMOVE;
 }
 
-int ext_set_agc_mode(void* data) {
-  EXT_AGC_MODE_UPDATE *am = (EXT_AGC_MODE_UPDATE*) data;
+int ext_set_agc_mode(void *data) {
+  EXT_AGC_MODE_UPDATE *am = (EXT_AGC_MODE_UPDATE *) data;
   int receiver_id;
   int agc;
   if (am == NULL) {
@@ -185,7 +185,7 @@ int ext_set_agc_mode(void* data) {
   return G_SOURCE_REMOVE;
 }
 
-int ext_set_iq_samplerate(void* data) {
+int ext_set_iq_samplerate(void *data) {
   int samplerate = GPOINTER_TO_INT(data);
   if (protocol != ORIGINAL_PROTOCOL && protocol != NEW_PROTOCOL) {
     return G_SOURCE_REMOVE;
@@ -239,8 +239,8 @@ int ext_normalize_rx_filter_band(int mode, int *low, int *high) {
   return *low < *high;
 }
 
-int ext_rx_filter_update(void* data) {
-  EXT_RX_FILTER_UPDATE *fu = (EXT_RX_FILTER_UPDATE*) data;
+int ext_rx_filter_update(void *data) {
+  EXT_RX_FILTER_UPDATE *fu = (EXT_RX_FILTER_UPDATE *) data;
   int receiver_id;
   int mode;
   int low;
@@ -285,53 +285,53 @@ int ext_rx_filter_update(void* data) {
 }
 
 // cppcheck-suppress constParameterPointer
-int ext_start_band(void* data) {
+int ext_start_band(void *data) {
   start_band();
   return G_SOURCE_REMOVE;
 }
 
-int ext_start_vfo(void* data) {
+int ext_start_vfo(void *data) {
   int val = GPOINTER_TO_INT(data);
   start_vfo(val);
   return G_SOURCE_REMOVE;
 }
 
 // cppcheck-suppress constParameterPointer
-int ext_start_rx(void* data) {
+int ext_start_rx(void *data) {
   start_rx();
   return G_SOURCE_REMOVE;
 }
 
-int ext_start_noise(void* data) {
+int ext_start_noise(void *data) {
   start_noise();
   return G_SOURCE_REMOVE;
 }
 
 // cppcheck-suppress constParameterPointer
-int ext_start_tx(void* data) {
+int ext_start_tx(void *data) {
   start_tx();
   return G_SOURCE_REMOVE;
 }
 
 // cppcheck-suppress constParameterPointer
-int ext_update_noise(void* data) {
+int ext_update_noise(void *data) {
   update_noise();
   return G_SOURCE_REMOVE;
 }
 
-int ext_update_notch(void* data) {
+int ext_update_notch(void *data) {
   update_notch();
   return G_SOURCE_REMOVE;
 }
 
 // cppcheck-suppress constParameterPointer
-int ext_update_eq(void* data) {
+int ext_update_eq(void *data) {
   update_eq();
   return G_SOURCE_REMOVE;
 }
 
 // cppcheck-suppress constParameterPointer
-int ext_set_duplex(void* data) {
+int ext_set_duplex(void *data) {
   setDuplex();
   return G_SOURCE_REMOVE;
 }

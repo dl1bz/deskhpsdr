@@ -86,7 +86,7 @@ static GdkPixbuf *load_embedded_jpg (void) {
   return pixbuf;
 }
 
-static gboolean get_embedded_map_dims (int* mw, int* mh) {
+static gboolean get_embedded_map_dims (int *mw, int *mh) {
   if (!mw || !mh) { return FALSE; }
   GdkPixbuf *pb = load_embedded_jpg();
   if (!pb) { return FALSE; }
@@ -97,7 +97,7 @@ static gboolean get_embedded_map_dims (int* mw, int* mh) {
 }
 
 /* --- Maidenhead locator (4/6 chars typical) -> lat/lon (approx center) --- */
-static gboolean locator_to_latlon (const char* loc, double* lat, double* lon) {
+static gboolean locator_to_latlon (const char *loc, double *lat, double *lon) {
   if (!loc || !lat || !lon) { return FALSE; }
   size_t n = strlen (loc);
   if (n < 4) { return FALSE; }
@@ -133,7 +133,7 @@ static gboolean locator_to_latlon (const char* loc, double* lat, double* lon) {
 }
 
 /* --- Solar position: subsolar point (lat, lon) for current UTC --- */
-static void subsolar_point_utc (double* sub_lat, double* sub_lon) {
+static void subsolar_point_utc (double *sub_lat, double *sub_lon) {
   /* This is a practical approximation suitable for greyline visualization.
      For higher precision, swap in a proper NOAA/SPA implementation. */
   time_t t = time (NULL);
@@ -204,7 +204,7 @@ static double solar_altitude_deg (double lat_deg, double lon_deg) {
   return RAD2DEG (asin (cosZ));
 }
 
-static void draw_text_shadow (cairo_t* cr, double x, double y, const char* s) {
+static void draw_text_shadow (cairo_t *cr, double x, double y, const char *s) {
   cairo_save (cr);
   cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 0.85);
   cairo_move_to (cr, x + 1, y + 1);
@@ -214,7 +214,7 @@ static void draw_text_shadow (cairo_t* cr, double x, double y, const char* s) {
   cairo_show_text (cr, s);
 }
 
-static void draw_band_state (cairo_t* cr, double x, double y, const char* label,
+static void draw_band_state (cairo_t *cr, double x, double y, const char *label,
                              double r, double g, double b) {
   /* color dot */
   cairo_save (cr);
@@ -230,7 +230,7 @@ static void draw_band_state (cairo_t* cr, double x, double y, const char* label,
   draw_text_shadow (cr, x + 16, y, label);
 }
 
-static void draw_dlayer_panel (cairo_t* cr, int w, int h, const char* locator) {
+static void draw_dlayer_panel (cairo_t *cr, int w, int h, const char *locator) {
   double lat, lon;
   if (!locator_to_latlon (locator, &lat, &lon)) { return; }
   double alt = solar_altitude_deg (lat, lon);
@@ -303,7 +303,7 @@ static double terminator_lat_for_lon (double sub_lat, double sub_lon, double lon
   return RAD2DEG (atan (-cos (lam) / tanphi));
 }
 
-static void draw_greyline_overlay (cairo_t* cr, int w, int h) {
+static void draw_greyline_overlay (cairo_t *cr, int w, int h) {
   double sub_lat, sub_lon;
   subsolar_point_utc (&sub_lat, &sub_lon);
   int steps = w;
@@ -355,7 +355,7 @@ static void draw_greyline_overlay (cairo_t* cr, int w, int h) {
 }
 
 /* --- Draw station marker --- */
-static void draw_locator_marker (cairo_t* cr, int w, int h, const char* locator) {
+static void draw_locator_marker (cairo_t *cr, int w, int h, const char *locator) {
   double lat, lon;
   if (!locator_to_latlon (locator, &lat, &lon)) { return; }
   double x = (lon + 180.0) / 360.0 * (double) w;
@@ -396,8 +396,8 @@ static void draw_locator_marker (cairo_t* cr, int w, int h, const char* locator)
 }
 
 /* --- GTK draw callback --- */
-static gboolean on_draw (GtkWidget *widget, cairo_t* cr, gpointer user_data) {
-  GreylineWin *gw = (GreylineWin*) user_data;
+static gboolean on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
+  GreylineWin *gw = (GreylineWin *) user_data;
   GtkAllocation a;
   gtk_widget_get_allocation (widget, &a);
   gw->w = a.width;
@@ -431,14 +431,14 @@ static gboolean on_draw (GtkWidget *widget, cairo_t* cr, gpointer user_data) {
 
 /* --- periodic refresh --- */
 static gboolean on_tick (gpointer user_data) {
-  GreylineWin *gw = (GreylineWin*) user_data;
+  GreylineWin *gw = (GreylineWin *) user_data;
   if (!gw || !GTK_IS_WIDGET (gw->area)) { return G_SOURCE_REMOVE; }
   gtk_widget_queue_draw (gw->area);
   return G_SOURCE_CONTINUE;
 }
 
 static void on_window_destroy (GtkWidget *widget, gpointer user_data) {
-  GreylineWin *gw = (GreylineWin*) user_data;
+  GreylineWin *gw = (GreylineWin *) user_data;
   if (g_greyline_singleton_window == widget) {
     g_greyline_singleton_window = NULL;
   }
@@ -457,7 +457,7 @@ static void on_window_destroy (GtkWidget *widget, gpointer user_data) {
   g_free (gw);
 }
 
-static void open_impl (GtkWindow *parent, int window_width, int window_height, const char* locator) {
+static void open_impl (GtkWindow *parent, int window_width, int window_height, const char *locator) {
   /* Single-instance: if already open, raise the existing window and return. */
   if (g_greyline_singleton_window && GTK_IS_WINDOW (g_greyline_singleton_window)) {
     gtk_window_present (GTK_WINDOW (g_greyline_singleton_window));
@@ -484,7 +484,7 @@ static void open_impl (GtkWindow *parent, int window_width, int window_height, c
   gw->aspect_w_over_h = aspect_w_over_h;
   gw->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   g_greyline_singleton_window = gw->window;
-  g_object_add_weak_pointer (G_OBJECT (gw->window), (gpointer*) &g_greyline_singleton_window);
+  g_object_add_weak_pointer (G_OBJECT (gw->window), (gpointer *) &g_greyline_singleton_window);
   {
     char *title = g_strdup_printf ("Greyline - %s", gw->locator);
     gtk_window_set_title (GTK_WINDOW (gw->window), title);
@@ -525,7 +525,7 @@ typedef struct {
 } GreylineOpenArgs;
 
 static gboolean open_on_main_cb (gpointer user_data) {
-  GreylineOpenArgs *a = (GreylineOpenArgs*) user_data;
+  GreylineOpenArgs *a = (GreylineOpenArgs *) user_data;
   open_impl (a->parent_ref, a->window_width, a->window_height, a->locator);
   if (a->parent_ref) {
     g_object_unref (a->parent_ref);
@@ -535,7 +535,7 @@ static gboolean open_on_main_cb (gpointer user_data) {
   return G_SOURCE_REMOVE;
 }
 
-static void open_async (GtkWindow *parent, int window_width, int window_height, const char* locator) {
+static void open_async (GtkWindow *parent, int window_width, int window_height, const char *locator) {
   GreylineOpenArgs *a = g_malloc0 (sizeof (*a));
   a->parent_ref = parent ? GTK_WINDOW (g_object_ref (parent)) : NULL;
   a->window_width = window_width;
@@ -552,17 +552,17 @@ static void open_async (GtkWindow *parent, int window_width, int window_height, 
 /* --- Public API --- */
 
 /* New API: only width is required; height is derived from embedded map aspect ratio. */
-void open_greyline_win (int window_width, const char* locator) {
+void open_greyline_win (int window_width, const char *locator) {
   GtkWindow *parent = find_active_parent_window();
   open_async (parent, window_width, 0, locator);
 }
 
-void open_greyline_win_for_parent (GtkWindow *parent, int window_width, const char* locator) {
+void open_greyline_win_for_parent (GtkWindow *parent, int window_width, const char *locator) {
   open_async (parent, window_width, 0, locator);
 }
 
 /* Backward-compatible helpers: explicit width/height. */
-void open_greyline_win_wh (int window_width, int window_height, const char* locator) {
+void open_greyline_win_wh (int window_width, int window_height, const char *locator) {
   GtkWindow *parent = find_active_parent_window();
   open_async (parent, window_width, window_height, locator);
 }

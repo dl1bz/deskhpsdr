@@ -769,7 +769,7 @@ void band_plus(int id) {
     const BAND *band;
     b++;
     if (b >= BANDS + XVTRS) { b = 0; }
-    band = (BAND*) band_get_band(b);
+    band = (BAND *) band_get_band(b);
     if (strlen(band->title) > 0) {
       /*
             if (b < BANDS) {
@@ -795,7 +795,7 @@ void band_minus(int id) {
     const BAND *band;
     b--;
     if (b < 0) { b = BANDS + XVTRS - 1; }
-    band = (BAND*) band_get_band(b);
+    band = (BAND *) band_get_band(b);
     if (strlen(band->title) > 0) {
       /*
             if (b < BANDS) {
@@ -811,7 +811,7 @@ void band_minus(int id) {
   }
 }
 
-static void make_pa_calibration_filename(char* buffer,
+static void make_pa_calibration_filename(char *buffer,
     size_t size,
     const char *radio_name) {
   char name[64];
@@ -850,7 +850,7 @@ void PaCalibrationSave(void) {
           filename);
 }
 
-gboolean PaCalibrationLoad(const char* filename) {
+gboolean PaCalibrationLoad(const char *filename) {
   int device_from_import = -1;
   if (filename == NULL || access(filename, F_OK) != 0) {
     return FALSE;

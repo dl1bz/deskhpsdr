@@ -119,8 +119,8 @@ static gboolean block_delete(GtkWidget *w, GdkEvent *e, gpointer data) {
   return TRUE; // verhindert Schließen über Fenstermanager
 }
 
-static void show_error_dialog(const char* msg) __attribute__((unused));
-static void show_error_dialog(const char* msg) {
+static void show_error_dialog(const char *msg) __attribute__((unused));
+static void show_error_dialog(const char *msg) {
   GtkWidget *dlg = gtk_message_dialog_new(
                            NULL,
                            GTK_DIALOG_MODAL,
@@ -175,7 +175,7 @@ static void enforce_x11_backend_policy(void) {
 }
 #endif
 
-void status_text(const char* text) {
+void status_text(const char *text) {
   gtk_label_set_text(GTK_LABEL(status_label), text);
   usleep(100000);
   while (gtk_events_pending()) {
@@ -186,7 +186,7 @@ void status_text(const char* text) {
 static pthread_t wisdom_thread_id;
 static int wisdom_running = 0;
 
-static void *wisdom_thread(void* arg) {
+static void *wisdom_thread(void *arg) {
   int wdsp_subversion = GetWDSPVersion() % 100;
   t_print("%s: WDSP Subversion: %d\n", __func__, wdsp_subversion);
   if (WDSPwisdom((char *) arg)) {
@@ -602,7 +602,7 @@ static GdkPixbuf *create_pixbuf_from_data(void) {
   return scaled_pixbuf;
 }
 
-static int init(void* data) {
+static int init(void *data) {
   char wisdom_directory[1025];
   char text[1024];
   t_print("%s\n", __func__);
@@ -864,7 +864,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   g_idle_add(init, NULL);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 #if !defined(__WAYLAND__)
   enforce_x11_backend_policy();
 #endif
@@ -922,7 +922,7 @@ int main(int argc, char** argv) {
   return rc;
 }
 
-int fatal_error(void* data) {
+int fatal_error(void *data) {
   //
   // This replaces the calls to exit. It now emits
   // a GTK modal dialog waiting for user response.
@@ -934,7 +934,7 @@ int fatal_error(void* data) {
   // Note this must only be called from the "main thread", that is,
   // you can only invoke this function via g_idle_add()
   //
-  const gchar *msg = (gchar*) data;
+  const gchar *msg = (gchar *) data;
   static int quit = 0;
   if (quit) {
     return 0;
@@ -943,12 +943,12 @@ int fatal_error(void* data) {
   if (top_window) {
     GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
     GtkWidget *dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(top_window),
-                        flags,
-                        GTK_MESSAGE_ERROR,
-                        GTK_BUTTONS_CLOSE,
-                        "<span color='red' size='x-large' weight='bold'>deskHPSDR termination due to fatal error:</span>"
-                        "\n\n<span size='x-large'>   %s</span>\n\n",
-                        msg);
+      flags,
+      GTK_MESSAGE_ERROR,
+      GTK_BUTTONS_CLOSE,
+      "<span color='red' size='x-large' weight='bold'>deskHPSDR termination due to fatal error:</span>"
+      "\n\n<span size='x-large'>   %s</span>\n\n",
+      msg);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }

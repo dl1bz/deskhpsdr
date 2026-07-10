@@ -168,7 +168,7 @@ static int command = 1;
 static gpointer receive_thread(gpointer arg);
 static gpointer process_ozy_input_buffer_thread(gpointer arg);
 
-static void queue_two_ozy_input_buffers(unsigned const char* buf1,
+static void queue_two_ozy_input_buffers(unsigned const char *buf1,
                                         unsigned const char *buf2);
 void ozy_send_buffer(void);
 
@@ -176,9 +176,9 @@ static unsigned char metis_buffer[1032];
 static uint32_t send_sequence = 0;
 static int metis_offset = 8;
 
-static int metis_write(unsigned char ep, unsigned const char* buffer, int length);
+static int metis_write(unsigned char ep, unsigned const char *buffer, int length);
 static void metis_start_stop(int command);
-static void metis_send_buffer(const unsigned char* buffer, int length);
+static void metis_send_buffer(const unsigned char *buffer, int length);
 static void metis_restart(void);
 
 static void open_tcp_socket(void);
@@ -218,7 +218,7 @@ int hl2_pico_present = 0;
   static gpointer ozy_ep6_rx_thread(gpointer arg);
   static gpointer ozy_i2c_thread(gpointer arg);
   static void start_usb_receive_threads(void);
-  static void ozyusb_write(unsigned char* buffer, int length);
+  static void ozyusb_write(unsigned char *buffer, int length);
   #define EP6_IN_ID   0x86                        // end point = 6, direction toward PC
   #define EP2_OUT_ID  0x02                        // end point = 2, direction from PC
   #define EP6_BUFFER_SIZE 2048
@@ -257,7 +257,7 @@ static unsigned char hl2_iob_lpf_status = 0;
 // Purpose: Update IO-board state immediately in RX thread, independent of RX ringbuffer backlog.
 // Frame layout: [0..2]=0x7F SYNC, [3]=C0, [4]=C1, [5]=C2, [6]=C3, [7]=C4
 //
-static inline void hl2_iob_fastpath_sniff_512(const unsigned char* buf) {
+static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
   if (device != DEVICE_HERMES_LITE2) {
     return;
   }
@@ -699,7 +699,7 @@ void old_protocol_init(int rate) {
   rxring_sem = apple_sem(0);
   if (!txring_sem || !rxring_sem) {
     t_print("%s: apple_sem() failed (txring_sem=%p rxring_sem=%p)\n",
-            __func__, (void*) txring_sem, (void*) rxring_sem);
+            __func__, (void *) txring_sem, (void *) rxring_sem);
     return;
   }
 #else
@@ -1125,7 +1125,7 @@ static gpointer receive_thread(gpointer arg) {
             bytes_read = ret;                        // error case: discard whole packet
           }
         } else if (data_socket >= 0) {
-          bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr*) &addr, &length);
+          bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &addr, &length);
           if (bytes_read < 0 && errno != EAGAIN) { t_perror("old_protocol recvfrom UDP:"); }
           //t_print("%s: bytes_read=%d\n",__func__,bytes_read);
         } else {
@@ -1247,7 +1247,7 @@ static gpointer receive_thread(gpointer arg) {
           FD_SET(data_socket, &readfds);
           ret = select(data_socket + 1, &readfds, NULL, NULL, &timeout);
           if (ret > 0 && FD_ISSET(data_socket, &readfds)) {
-            bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr*) &addr, &length);
+            bytes_read = recvfrom(data_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &addr, &length);
             if (bytes_read < 0 && errno != EAGAIN) {
               t_perror("UDP recvfrom failed:");
               continue;
@@ -1939,7 +1939,7 @@ static void process_ozy_byte(int b) {
   }
 }
 
-static void queue_two_ozy_input_buffers(unsigned const char* buf1,
+static void queue_two_ozy_input_buffers(unsigned const char *buf1,
                                         unsigned const char *buf2) {
   //
   // To achieve minimum overhead in the RX thread, the data is
@@ -1968,15 +1968,15 @@ static void queue_two_ozy_input_buffers(unsigned const char* buf1,
     out = (out + 1024) % RXRINGBUFLEN;
     atomic_store_explicit(&rxring_outptr, out, memory_order_release);
   }
-  memcpy((void*)(&RXRINGBUF[in]),       buf1, 512);
-  memcpy((void*)(&RXRINGBUF[in + 512]), buf2, 512);
+  memcpy((void *)(&RXRINGBUF[in]),       buf1, 512);
+  memcpy((void *)(&RXRINGBUF[in + 512]), buf2, 512);
   MEMORY_BARRIER;
   atomic_store_explicit(&rxring_inptr, nptr, memory_order_release);
   sem_post(rxring_sem);
 #else
   if (nptr != out) {
-    memcpy((void*)(&RXRINGBUF[in]),       buf1, 512);
-    memcpy((void*)(&RXRINGBUF[in + 512]), buf2, 512);
+    memcpy((void *)(&RXRINGBUF[in]),       buf1, 512);
+    memcpy((void *)(&RXRINGBUF[in + 512]), buf2, 512);
     MEMORY_BARRIER;
     atomic_store_explicit(&rxring_inptr, nptr, memory_order_release);
     sem_post(&rxring_sem);
@@ -3175,7 +3175,7 @@ if (device == DEVICE_OZY) {
 }
 
 #ifdef USBOZY
-static void ozyusb_write(unsigned char* buffer, int length) {
+static void ozyusb_write(unsigned char *buffer, int length) {
   int i;
   //static unsigned char usb_output_buffer[EP6_BUFFER_SIZE];
   //static unsigned char usb_buffer_block = 0;
@@ -3244,7 +3244,7 @@ static void ozyusb_write(unsigned char* buffer, int length) {
 
 #endif
 
-static int metis_write(unsigned char ep, unsigned const char* buffer, int length) {
+static int metis_write(unsigned char ep, unsigned const char *buffer, int length) {
   int i;
   // copy the buffer over
   for (i = 0; i < 512; i++) {
@@ -3379,7 +3379,7 @@ static void metis_start_stop(int command) {
   }
 }
 
-static void metis_send_buffer(const unsigned char* buffer, int length) {
+static void metis_send_buffer(const unsigned char *buffer, int length) {
   //
   // Send using either the UDP or TCP socket. Do not use TCP for
   // packets that are not 1032 bytes long
@@ -3396,7 +3396,7 @@ static void metis_send_buffer(const unsigned char* buffer, int length) {
   } else if (data_socket >= 0) {
     int bytes_sent;
     //t_print("%s: sendto %d for %s:%d length=%d\n",__func__,data_socket,inet_ntoa(data_addr.sin_addr),ntohs(data_addr.sin_port),length);
-    bytes_sent = sendto(data_socket, buffer, length, 0, (struct sockaddr*) &data_addr, sizeof(data_addr));
+    bytes_sent = sendto(data_socket, buffer, length, 0, (struct sockaddr *) &data_addr, sizeof(data_addr));
     if (bytes_sent != length) {
       t_print("%s: UDP sendto failed: %d: %s\n", __func__, errno, strerror(errno));
     }

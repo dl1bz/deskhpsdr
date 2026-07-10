@@ -81,7 +81,7 @@ static void update_pa_calibration_widgets(void) {
 }
 
 static void pa_value_changed_cb(GtkWidget *widget, gpointer data) {
-  BAND *band = (BAND*) data;
+  BAND *band = (BAND *) data;
   band->pa_calibration = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   int txvfo = vfo_get_tx_vfo();
   int b = vfo[txvfo].band;

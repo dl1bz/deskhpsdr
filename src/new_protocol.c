@@ -414,11 +414,11 @@ static gpointer new_protocol_timer_thread(gpointer data);
 static gpointer high_priority_thread(gpointer data);
 static gpointer mic_line_thread(gpointer data);
 static gpointer iq_thread(gpointer data);
-static void  process_iq_data(const unsigned char* buffer, RECEIVER *rx);
-static void  process_ps_iq_data(const unsigned char* buffer);
-static void process_div_iq_data(const unsigned char* buffer);
+static void  process_iq_data(const unsigned char *buffer, RECEIVER *rx);
+static void  process_ps_iq_data(const unsigned char *buffer);
+static void process_div_iq_data(const unsigned char *buffer);
 static void  process_high_priority(void);
-static void  process_mic_data(const unsigned char* buffer);
+static void  process_mic_data(const unsigned char *buffer);
 
 //
 // Allocate additional receive buffers and add them to the free list.
@@ -622,7 +622,7 @@ static void p2_prime_route(void) {
    * the General registers port.
    */
   a.sin_port = htons(9);
-  (void) sendto(s, &dummy, sizeof(dummy), 0, (struct sockaddr*) &a, sizeof(a));
+  (void) sendto(s, &dummy, sizeof(dummy), 0, (struct sockaddr *) &a, sizeof(a));
   close(s);
 #endif
 }
@@ -631,7 +631,7 @@ static int p2_route_retry_errno(int err) {
   return err == EHOSTDOWN || err == EHOSTUNREACH || err == ENETDOWN || err == ENETUNREACH;
 }
 
-static ssize_t p2_sendto_route_retry(int fd, const void* buf, size_t len, int flags,
+static ssize_t p2_sendto_route_retry(int fd, const void *buf, size_t len, int flags,
                                      const struct sockaddr *addr, socklen_t addrlen,
                                      const char *tag) {
   ssize_t rc = sendto(fd, buf, len, flags, addr, addrlen);
@@ -1879,9 +1879,9 @@ static void new_protocol_receive_specific(void) {
     int adc0 = 0;
     int adc1 = (n_adc > 1) ? 1 : 0;
     receive_specific_buffer[5] &= (uint8_t) ~((1 << adc0) | (1 <<
-                                  adc1));          // clear ADC0/ADC1 dither bits from normal RX loop
+      adc1));          // clear ADC0/ADC1 dither bits from normal RX loop
     receive_specific_buffer[6] &= (uint8_t) ~((1 << adc0) | (1 <<
-                                  adc1));          // clear ADC0/ADC1 random bits from normal RX loop
+      adc1));          // clear ADC0/ADC1 random bits from normal RX loop
     receive_specific_buffer[5] |= receiver[0]->dither << adc0;                     // dither DDC0: take value from RX1
     receive_specific_buffer[5] |= receiver[0]->dither << adc1;                     // dither DDC1: take value from RX1
     receive_specific_buffer[6] |= receiver[0]->random << adc0;                     // random DDC0: take value from RX1
@@ -1987,7 +1987,7 @@ void new_protocol_menu_stop(void) {
         if (select(data_socket + 1, &fds, NULL, NULL, &tv) <= 0) {
           break;
         }
-        recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*) &addr, &length);
+        recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr *) &addr, &length);
       }
       free(buffer);
     }
@@ -2158,7 +2158,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
                                          audiobuffer,
                                          sizeof(audiobuffer),
                                          0,
-                                         (struct sockaddr*) &audio_addr,
+                                         (struct sockaddr *) &audio_addr,
                                          audio_addr_length,
                                          "new_protocol_rxaudio_thread");
       if (rc < 0) {
@@ -2285,7 +2285,7 @@ static gpointer new_protocol_thread(gpointer data) {
     unsigned char *buffer;
     mybuf = get_my_buffer();
     buffer = mybuf->buffer;
-    bytesread = recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr*) &addr, &length);
+    bytesread = recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr *) &addr, &length);
     if (!P2running) {
       //
       // When leaving deskHPSDR, it may happen that the protocol has been stopped while
@@ -2387,7 +2387,7 @@ static gpointer mic_line_thread(gpointer data) {
 #endif
     nptr = mic_outptr + 1;
     if (nptr >= MICRINGBUFLEN) { nptr = 0; }
-    mybuf = (mybuffer*) mic_line_buffer[mic_outptr];
+    mybuf = (mybuffer *) mic_line_buffer[mic_outptr];
     MEMORY_BARRIER;
     mic_outptr = nptr;
     // This can happen when restarting the protocol
@@ -2539,7 +2539,7 @@ static gpointer iq_thread(gpointer data) {
     iq_outptr[ddc] = nptr;
     // This can happen when restarting the protocol
     if (mybuf->free) { continue; }
-    buffer = (unsigned char*) mybuf->buffer;
+    buffer = (unsigned char *) mybuf->buffer;
     //
     //  TEMP: perform additional sequence check
     //
@@ -2586,7 +2586,7 @@ static double p2_iq_sample_gain(const RECEIVER *rx) {
   return 1.0;
 }
 
-static void process_iq_data(const unsigned char* buffer, RECEIVER *rx) {
+static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
   int b;
   int leftsample;
   int rightsample;
@@ -2635,7 +2635,7 @@ static void process_iq_data(const unsigned char* buffer, RECEIVER *rx) {
 // This is the same as process_ps_iq_data except that add_div_iq_samples is called
 // at the end
 //
-static void process_div_iq_data(const unsigned char* buffer) {
+static void process_div_iq_data(const unsigned char *buffer) {
   int b;
   int leftsample0;
   int rightsample0;
@@ -2693,7 +2693,7 @@ static void process_div_iq_data(const unsigned char* buffer) {
   }
 }
 
-static void process_ps_iq_data(const unsigned char* buffer) {
+static void process_ps_iq_data(const unsigned char *buffer) {
   int samplesperframe;
   int b;
   int leftsample0;
@@ -2897,7 +2897,7 @@ static void process_high_priority(void) {
   }
 }
 
-static void process_mic_data(const unsigned char* buffer) {
+static void process_mic_data(const unsigned char *buffer) {
   unsigned long sequence;
   int b;
   int i;
@@ -3069,7 +3069,7 @@ void new_protocol_iq_samples(int isample, int qsample) {
 }
 
 // cppcheck-suppress constParameterCallback
-void *new_protocol_timer_thread(void* arg) {
+void *new_protocol_timer_thread(void *arg) {
   //
   // Periodically send HighPriority as well as General packets.
   // A general packet is, for example,

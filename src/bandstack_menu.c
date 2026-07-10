@@ -71,7 +71,7 @@ static gboolean close_cb (void) {
 }
 
 static gboolean bandstack_select_cb (GtkWidget *widget, gpointer data) {
-  CHOICE *choice = (CHOICE*) data;
+  CHOICE *choice = (CHOICE *) data;
   if (current) {
     g_signal_handler_block (G_OBJECT (current->button), current->signal);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (current->button), current == choice);

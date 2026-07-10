@@ -30,7 +30,7 @@
 extern void att_type_changed(void);
 extern void update_c25_att(void);
 
-extern int sliders_active_receiver_changed(void* data);
+extern int sliders_active_receiver_changed(void *data);
 extern void update_slider_local_mic_input(int src);
 extern void update_slider_local_mic_button(void);
 extern void update_slider_tune_drive_scale(gboolean show_widget);

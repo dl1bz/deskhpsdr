@@ -308,7 +308,7 @@ static int tci_rxaudio_scale_to_index(double scale) {
 }
 
 static void tci_rxaudio_gain_cb(GtkWidget *widget, gpointer data) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   switch (gtk_combo_box_get_active(GTK_COMBO_BOX(widget))) {
   default:
   case 0:
@@ -345,13 +345,13 @@ static void tci_txaudio_gain_changed_cb(GtkComboBox *combo, gpointer data) {
 }
 
 static void btn_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 #ifdef PORTAUDIO
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   if (!tci_audio_monitor) {
     audio_close_tci_monitor();

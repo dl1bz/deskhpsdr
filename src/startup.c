@@ -62,7 +62,7 @@
 
 char workdir[PATH_MAX];
 
-void startup(const char* path) {
+void startup(const char *path) {
   struct stat statbuf;
   int rc;
   const char *homedir;

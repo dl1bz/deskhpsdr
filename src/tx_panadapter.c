@@ -65,7 +65,7 @@ static gboolean
 tx_panadapter_configure_event_cb(GtkWidget         *widget,
                                  GdkEventConfigure *event,
                                  gpointer           data) {
-  TRANSMITTER *tx = (TRANSMITTER*) data;
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   int mywidth = gtk_widget_get_allocated_width(tx->panadapter);
   int myheight = gtk_widget_get_allocated_height(tx->panadapter);
   if (mywidth <= 1 || myheight <= 1) {
@@ -75,9 +75,9 @@ tx_panadapter_configure_event_cb(GtkWidget         *widget,
     cairo_surface_destroy(tx->panadapter_surface);
   }
   tx->panadapter_surface = gdk_window_create_similar_surface(gtk_widget_get_window(widget),
-                           CAIRO_CONTENT_COLOR,
-                           mywidth,
-                           myheight);
+    CAIRO_CONTENT_COLOR,
+    mywidth,
+    myheight);
   cairo_t *cr = cairo_create(tx->panadapter_surface);
   cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
   cairo_paint(cr);
@@ -93,7 +93,7 @@ static gboolean
 tx_panadapter_draw_cb(GtkWidget *widget,
                       cairo_t   *cr,
                       gpointer   data) {
-  TRANSMITTER *tx = (TRANSMITTER*) data;
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   if (tx->panadapter_surface) {
     cairo_set_source_surface(cr, tx->panadapter_surface, 0.0, 0.0);
     cairo_paint(cr);

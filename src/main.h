@@ -51,8 +51,8 @@ extern GtkWidget *topgrid;
 
 extern pthread_t deskhpsdr_main_thread;
 
-extern void status_text(const char* text);
+extern void status_text(const char *text);
 
 extern gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data);
-extern int fatal_error(void* data);
+extern int fatal_error(void *data);
 #endif

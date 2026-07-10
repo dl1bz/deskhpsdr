@@ -34,7 +34,7 @@
 //
 // tts_send: send broadcast UDP packet containing a string
 //
-void tts_send(char* msg) {
+void tts_send(char *msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   int optval = 1;
   struct sockaddr_in addr;
@@ -46,7 +46,7 @@ void tts_send(char* msg) {
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
   addr.sin_port = htons(19080);
-  sendto(sock, msg, strlen(msg), 0, (struct sockaddr*) &addr, sizeof(addr));
+  sendto(sock, msg, strlen(msg), 0, (struct sockaddr *) &addr, sizeof(addr));
   close(sock);
 }
 

@@ -45,14 +45,14 @@
 // As we only run in the GTK+ main event loop, which is single-threaded and
 // non-preemptive, we shouldn't need any additional synchronisation mechanisms.
 static gboolean curl_initialised = FALSE;
-extern void status_text(const char*);
+extern void status_text(const char *);
 
 #define ERROR_PREFIX "stemlab_discovery: "
 
-static size_t app_list_cb(void* buffer, size_t size, size_t nmemb, void* data);
+static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data);
 
 // cppcheck-suppress constParameterCallback
-static size_t get_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
+static size_t get_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
   //
   // Scan output of original HEAD request, which is the HTML code of the
   // starting page. "barbone" RedPitayas running Alpine Linux will show
@@ -61,7 +61,7 @@ static size_t get_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
   // request.
   //
   //t_print("WEB-DEBUG:HEAD: %s\n", buffer);
-  int *software_version = (int*) data;
+  int *software_version = (int *) data;
   const gchar *pavel_rx = "\"sdr_receiver_hpsdr\"";
   if (g_strstr_len(buffer, size * nmemb, pavel_rx) != NULL) {
     *software_version |= STEMLAB_PAVEL_RX | BARE_REDPITAYA;
@@ -76,7 +76,7 @@ static size_t get_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
 }
 
 // cppcheck-suppress constParameterCallback
-static size_t app_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
+static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
   //
   // Analyze the JSON output of the "bazaar?app=" request and figure out
   // which applications are present. This is done the "pedestrian" way such
@@ -85,7 +85,7 @@ static size_t app_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
   // This is for STEMlab web servers.
   //
   //t_print("WEB-DEBUG:APPLIST: %s\n", buffer);
-  int *software_version = (int*) data;
+  int *software_version = (int *) data;
   const gchar *pavel_rx_json = "\"sdr_receiver_hpsdr\":";
   if (g_strstr_len(buffer, size * nmemb, pavel_rx_json) != NULL) {
     *software_version |= STEMLAB_PAVEL_RX;
@@ -112,7 +112,7 @@ static size_t app_list_cb(void* buffer, size_t size, size_t nmemb, void* data) {
 // the RedPitaya web server when starting the SDR application.
 //
 // cppcheck-suppress constParameterCallback
-static size_t alpine_start_callback(void* buffer, size_t size, size_t nmemb, void* data) {
+static size_t alpine_start_callback(void *buffer, size_t size, size_t nmemb, void *data) {
   //t_print("WEB-DEBUG:ALPINE-START: %s\n", buffer);
   return size * nmemb;
 }
@@ -122,7 +122,7 @@ static size_t alpine_start_callback(void* buffer, size_t size, size_t nmemb, voi
 // It should show a status:OK message in the JSON output.
 //
 // cppcheck-suppress constParameterCallback
-static size_t app_start_callback(void* buffer, size_t size, size_t nmemb, void* data) {
+static size_t app_start_callback(void *buffer, size_t size, size_t nmemb, void *data) {
   //t_print("WEB-DEBUG:STEMLAB-START: %s\n", buffer);
   if (strncmp(buffer, "{\"status\":\"OK\"}", size * nmemb) != 0) {
     t_print("stemlab_start: Receiver error from STEMlab\n");
@@ -137,7 +137,7 @@ static size_t app_start_callback(void* buffer, size_t size, size_t nmemb, void* 
 // the WRITEFUNCTION, but this way we can activate debut output in
 // alpine_start_cb.
 //
-int alpine_start_app(const char* const app_id) {
+int alpine_start_app(const char *const app_id) {
   // Dummy string, using the longest possible app id
   char app_start_url[] = "http://123.123.123.123/stemlab_sdr_transceiver_hpsdr_with_some_headroom";
   // The scripts on the "alpine" machine all contain code that
@@ -178,7 +178,7 @@ int alpine_start_app(const char* const app_id) {
 //
 // Starting the app on the STEMlab web server goes via the "bazaar"
 //
-int stemlab_start_app(const char* const app_id) {
+int stemlab_start_app(const char *const app_id) {
   // Dummy string, using the longest possible app id
   char app_start_url[] = "http://123.123.123.123/bazaar?start=stemlab_sdr_transceiver_hpsdr_headroom_max";
   //

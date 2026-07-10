@@ -79,7 +79,7 @@ static GtkWidget *restart_b = NULL;
 
 int active_menu = NO_MENU;
 
-int menu_active_receiver_changed(void* data) {
+int menu_active_receiver_changed(void *data) {
   if (sub_menu != NULL) {
     gtk_widget_destroy(sub_menu);
     sub_menu = NULL;

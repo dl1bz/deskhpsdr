@@ -75,19 +75,19 @@ static gboolean close_cb(void) {
 }
 
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 static void chkbtn_peakTX_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   g_mutex_lock(&peak_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   g_mutex_unlock(&peak_mutex);
 }
 
 static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL) {
       rx_panadapter_peak_hold_clear(receiver[i]);
@@ -102,7 +102,7 @@ static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void line_colour_set(GtkColorButton *btn, gpointer user_data) {
-  cairo_rgba_t *c = (cairo_rgba_t*) user_data;
+  cairo_rgba_t *c = (cairo_rgba_t *) user_data;
   GdkRGBA g;
   gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &g);
   c->r = g.red;

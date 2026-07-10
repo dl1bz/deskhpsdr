@@ -158,10 +158,10 @@ static pthread_t send_highprio_thread_id;
 
 static unsigned int watchdog_count = 0;
 
-void   *ddc_specific_thread(void*);
-void   *duc_specific_thread(void*);
-void   *highprio_thread(void*);
-void   *send_highprio_thread(void*);
+void   *ddc_specific_thread(void *);
+void   *duc_specific_thread(void *);
+void   *highprio_thread(void *);
+void   *send_highprio_thread(void *);
 void   *rx_thread(void *);
 void   *tx_thread(void *);
 void   *mic_thread(void *);
@@ -1173,7 +1173,7 @@ void *rx_thread(void *data) {
 //
 // This thread receives data (TX samples) from the PC
 //
-void *tx_thread(void * data) {
+void *tx_thread(void *data) {
   int sock;
   struct sockaddr_in addr;
   socklen_t lenaddr = sizeof(addr);

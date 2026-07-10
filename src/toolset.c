@@ -69,7 +69,7 @@ void toolset_init(void) {
   g_mutex_init(&solar_data_mutex);
 }
 
-void get_screen_size(int* width, int* height) {
+void get_screen_size(int *width, int *height) {
   if (!width || !height) { return; }
   *width = *height = 0;
   GdkDisplay *display = gdk_display_get_default();
@@ -87,14 +87,14 @@ int x, y;
 get_main_window_position(GTK_WINDOW(top_window), &x, &y);
 printf("Main window at %d,%d\n", x, y);
 */
-void get_window_position(GtkWindow *window, int* x, int* y) {
+void get_window_position(GtkWindow *window, int *x, int *y) {
   if (!window || !x || !y) { return; }
   *x = *y = 0;
   // funktioniert zuverlässig unter X11, unter Wayland meist (0,0)
   gtk_window_get_position(window, x, y);
 }
 
-void get_window_geometry(GtkWindow *widget, int* x, int* y, int* width, int* height) {
+void get_window_geometry(GtkWindow *widget, int *x, int *y, int *width, int *height) {
   if (!widget || !x || !y || !width || !height) { return; }
   *x = *y = *width = *height = 0;
   gtk_window_get_position(widget, x, y);
@@ -158,7 +158,7 @@ static gboolean is_minute_marker(int interval) {
 }
 
 // HTTPS-Verfügbarkeit prüfen mit optionalem Zertifikats-Check
-int https_ok(const char* hostname, int mit_cert_check) {
+int https_ok(const char *hostname, int mit_cert_check) {
   SSL_CTX* ctx = NULL;
   SSL* ssl = NULL;
   int server = -1;
@@ -271,7 +271,7 @@ static void *solar_thread_func(void *arg) {
 }
 */
 
-static void *solar_thread_func(void* arg) {
+static void *solar_thread_func(void *arg) {
   int is_dbg = (int)(intptr_t) arg;
   // int is_dbg = GPOINTER_TO_INT(arg);
   const char *host = "www.hamqsl.com";
@@ -363,7 +363,7 @@ void check_and_run(int is_dbg) {
 }
 
 // Funktion zum Kürzen des Textes
-const char *truncate_text(const char* text, size_t max_length) {
+const char *truncate_text(const char *text, size_t max_length) {
   static char truncated[128];  // Ein statisches Array für den gekürzten Text
   if (strlen(text) > max_length) {
     g_strlcpy(truncated, text, max_length + 1);  // Sicheres Kopieren des Textes
@@ -373,7 +373,7 @@ const char *truncate_text(const char* text, size_t max_length) {
   return truncated;
 }
 
-char *truncate_text_malloc(const char* text, size_t max_length) {
+char *truncate_text_malloc(const char *text, size_t max_length) {
   size_t len = strlen(text);
   if (len > max_length) { len = max_length; }
   char *truncated = g_malloc(len + 1);  // +1 für '\0'
@@ -381,7 +381,7 @@ char *truncate_text_malloc(const char* text, size_t max_length) {
   return truncated;  // muss mit g_free() freigegeben werden
 }
 
-char *truncate_text_3p(const char* text, size_t max_length) {
+char *truncate_text_3p(const char *text, size_t max_length) {
   size_t len = strlen(text);
   if (len <= max_length) {
     // Text passt komplett – einfach kopieren
@@ -405,7 +405,7 @@ gboolean check_and_run_idle_cb(gpointer data) {
   return FALSE; // Nur einmal ausführen
 }
 
-void to_uppercase(char* str) {
+void to_uppercase(char *str) {
   while (*str) {
     if (*str >= 'a' && *str <= 'z') {
       *str = *str - 32;
@@ -414,11 +414,11 @@ void to_uppercase(char* str) {
   }
 }
 
-int file_present(const char* filename) {
+int file_present(const char *filename) {
   return (access(filename, F_OK) == 0) ? 1 : 0;
 }
 
-const char *extract_short_msg(const char* msg) {
+const char *extract_short_msg(const char *msg) {
   const char *s = strrchr(msg, ':');
   if (s && * (s + 1)) {
     s += 1;
@@ -431,16 +431,16 @@ const char *extract_short_msg(const char* msg) {
 
 static const TRANSMITTER *tx_ctx;
 
-static int cmp_cfc_idx(const void* xa, const void* xb) {
-  int i = * (const int*) xa;
-  int j = * (const int*) xb;
+static int cmp_cfc_idx(const void *xa, const void *xb) {
+  int i = * (const int *) xa;
+  int j = * (const int *) xb;
   return (tx_ctx->cfc_freq[i] > tx_ctx->cfc_freq[j]) -
          (tx_ctx->cfc_freq[i] < tx_ctx->cfc_freq[j]);
 }
 
-static int cmp_tx_eq_idx(const void* xa, const void* xb) {
-  int i = * (const int*) xa;
-  int j = * (const int*) xb;
+static int cmp_tx_eq_idx(const void *xa, const void *xb) {
+  int i = * (const int *) xa;
+  int j = * (const int *) xb;
   return (tx_ctx->eq_freq[i] > tx_ctx->eq_freq[j]) -
          (tx_ctx->eq_freq[i] < tx_ctx->eq_freq[j]);
 }

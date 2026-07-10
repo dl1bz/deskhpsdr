@@ -108,10 +108,10 @@ static int parse_arg1[MAX_MIDI_DEVICES];
 
 static gboolean configure = FALSE;
 
-static void ReadMIDIdevice(const MIDIPacketList *pktlist, void* refCon, void* connRefCon) {
+static void ReadMIDIdevice(const MIDIPacketList *pktlist, void *refCon, void *connRefCon) {
   int index = GPOINTER_TO_INT(connRefCon);
   if (index < 0 || index >= MAX_MIDI_DEVICES) { return; }
-  MIDIPacket *packet = (MIDIPacket*) pktlist->packet;
+  MIDIPacket *packet = (MIDIPacket *) pktlist->packet;
   int arg2 = 0;
   // loop through all packets in the current list
   for (unsigned int j = 0; j < pktlist->numPackets; ++j) {

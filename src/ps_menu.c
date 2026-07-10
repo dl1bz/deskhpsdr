@@ -138,7 +138,7 @@ static void clear_fields(void) {
 // this is essentially a no-op.
 //
 int ps_calibration_timer(gpointer arg) {
-  guint *timer = (guint*) arg;
+  guint *timer = (guint *) arg;
   static int state = -1;
   if (!transmitter->twotone) {
     state = -1;
@@ -183,7 +183,7 @@ int ps_calibration_timer(gpointer arg) {
         // So everything between 140 and 165 is accepted without changing the attenuation
         //
         if (newcal && ((info[4] > 165 && transmitter->attenuation < tx_att_max) || (info[4] < 140
-                       && transmitter->attenuation > tx_att_min))) {
+            && transmitter->attenuation > tx_att_min))) {
           int delta_att;
           int new_att;
           if (info[4] > 275) {

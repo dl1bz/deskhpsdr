@@ -66,7 +66,7 @@ static gboolean
 waterfall_configure_event_cb(GtkWidget         *widget,
                              GdkEventConfigure *event,
                              gpointer           data) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   my_width = gtk_widget_get_allocated_width(widget);
   my_height = gtk_widget_get_allocated_height(widget);
   rx->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, my_width, my_height);
@@ -83,7 +83,7 @@ static gboolean
 waterfall_draw_cb(GtkWidget *widget,
                   cairo_t   *cr,
                   gpointer   data) {
-  const RECEIVER *rx = (RECEIVER*) data;
+  const RECEIVER *rx = (RECEIVER *) data;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   GtkAllocation allocation;
   gtk_widget_get_allocation(rx->waterfall, &allocation);

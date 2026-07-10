@@ -282,7 +282,7 @@ void tci_get_next_mic_sample (double *micsample) {
   }
 }
 
-static void tci_audio_tx_push_block (const float* samples, guint frames) {
+static void tci_audio_tx_push_block (const float *samples, guint frames) {
   TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
   if (samples == NULL || frames == 0) { return; }
   g_mutex_lock (&ring->mutex);
@@ -329,7 +329,7 @@ void tci_audio_tx_debug_snapshot (guint64 *write_count, guint64 *read_count,
   g_mutex_unlock (&ring->mutex);
 }
 
-guint tci_audio_tx_read (float* out, guint frames) {
+guint tci_audio_tx_read (float *out, guint frames) {
   TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
   guint copied = 0;
   if (out == NULL || frames == 0) { return 0; }
@@ -344,7 +344,7 @@ guint tci_audio_tx_read (float* out, guint frames) {
   return copied;
 }
 
-guint tci_audio_monitor_read (float* out, guint frames) {
+guint tci_audio_monitor_read (float *out, guint frames) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
   guint copied = 0;
   if (out == NULL || frames == 0) { return 0; }
@@ -424,7 +424,7 @@ guint64 tci_audio_get_write_count (int receiver_id) {
   return write_count;
 }
 
-static guint tci_audio_copy (int receiver_id, guint64 *read_count, float* out, guint max_frames) {
+static guint tci_audio_copy (int receiver_id, guint64 *read_count, float *out, guint max_frames) {
   TCI_RX_AUDIO_RING *ring;
   guint64 available;
   guint frames;
@@ -452,7 +452,7 @@ static guint tci_audio_copy (int receiver_id, guint64 *read_count, float* out, g
 }
 
 
-guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char* frame, size_t frame_size,
+guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char *frame, size_t frame_size,
                            size_t *frame_len, int sample_rate, void **resampler_l, void **resampler_r) {
   float audio[TCI_RX_AUDIO_FRAME_FRAMES * TCI_AUDIO_CHANNELS];
   float audio_l[TCI_RX_AUDIO_FRAME_FRAMES];
@@ -516,7 +516,7 @@ guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char* 
   return out_frames;
 }
 
-void tci_audio_handle_tx_frame (const unsigned char* data, size_t len, int client_sample_rate,
+void tci_audio_handle_tx_frame (const unsigned char *data, size_t len, int client_sample_rate,
                                 void **resampler_24_to_48) {
   TCI_STREAM_HEADER header;
   size_t payload_bytes;

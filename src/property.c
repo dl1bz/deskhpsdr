@@ -47,7 +47,7 @@ void clearProperties(void) {
 *
 * @param filename
 */
-void loadProperties(const char* filename) {
+void loadProperties(const char *filename) {
   FILE* f = fopen(filename, "r");
   PROPERTY* property;
   // t_print("loadProperties: %s\n", filename);
@@ -116,7 +116,7 @@ void loadProperties(const char* filename) {
 *
 * @param filename
 */
-void saveProperties(const char* filename) {
+void saveProperties(const char *filename) {
   PROPERTY* property;
   FILE* f = fopen(filename, "w+");
   char line[512];
@@ -143,7 +143,7 @@ void saveProperties(const char* filename) {
 *
 * @return
 */
-char *getProperty(const char* name) {
+char *getProperty(const char *name) {
   char *value = NULL;
   PROPERTY* property = properties;
   while (property) {
@@ -163,7 +163,7 @@ char *getProperty(const char* name) {
 * @param name
 * @param value
 */
-void setProperty(const char* name, const char* value) {
+void setProperty(const char *name, const char *value) {
   PROPERTY* property = properties;
   while (property) {
     if (strcmp(name, property->name) == 0) {
@@ -193,13 +193,13 @@ void setProperty(const char* name, const char* value) {
 // To handle (at least) this case, all commas in the input string are replaced by
 // decimal points and then this is fed to atof()
 //
-double myatof(const char* string) {
+double myatof(const char *string) {
   if (!string || !*string) {
     return 0.0;
   }
   char *lstr = g_strdup(string);
   double ret;
-  for (char * cp = lstr; *cp; cp++) {
+  for (char *cp = lstr; *cp; cp++) {
     if (*cp == ',') {
       *cp = '.';
     }

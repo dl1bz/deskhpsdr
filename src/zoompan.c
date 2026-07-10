@@ -188,7 +188,7 @@ int update_zoompan_ant_labels_idle(void *data) {
   return 0; // G_SOURCE_REMOVE
 }
 
-int zoompan_active_receiver_changed(void* data) {
+int zoompan_active_receiver_changed(void *data) {
   if (display_zoompan) {
     g_mutex_lock(&pan_zoom_mutex);
     g_signal_handler_block(G_OBJECT(zoom_scale), zoom_signal_id);
@@ -260,7 +260,7 @@ void remote_set_zoom(int rx, double value) {
 }
 
 static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   if (active_receiver) {
     rx_panadapter_peak_hold_clear(active_receiver);
   }
@@ -270,7 +270,7 @@ static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void zoom_toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   g_mutex_lock(&zoom_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   g_mutex_unlock(&zoom_mutex);

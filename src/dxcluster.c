@@ -75,7 +75,7 @@ static const telnet_telopt_t telopts[] = {
  *   - DX-Call
  * und reichen das an den Panadapter weiter.
  */
-static void dxcluster_process_line (DxClusterCtx *ctx, const char* line) {
+static void dxcluster_process_line (DxClusterCtx *ctx, const char *line) {
   const char *p;
   const char *needle_dx = "DX de ";
   (void) ctx;
@@ -128,7 +128,7 @@ static void dxcluster_process_line (DxClusterCtx *ctx, const char* line) {
 }
 
 /* Telnet-Datenstrom in Zeilen zerlegen und je Zeile dxcluster_process_line() rufen */
-static void dxcluster_feed_parser (DxClusterCtx *ctx, const char* data, size_t len) {
+static void dxcluster_feed_parser (DxClusterCtx *ctx, const char *data, size_t len) {
   if (!ctx || !ctx->linebuf || !data || len == 0) {
     return;
   }
@@ -150,7 +150,7 @@ static void dxcluster_feed_parser (DxClusterCtx *ctx, const char* data, size_t l
 /* -------------------------------------------------------------------------- */
 
 static void
-dxcluster_append_text (DxClusterCtx *ctx, const char* data, size_t len) {
+dxcluster_append_text (DxClusterCtx *ctx, const char *data, size_t len) {
   GtkTextIter start_before, end_after;
   GtkTextMark *mark;
   gtk_text_buffer_get_end_iter (ctx->text_buffer, &start_before);
@@ -235,8 +235,8 @@ dxcluster_disconnect (DxClusterCtx *ctx) {
 /* -------------------------------------------------------------------------- */
 
 static void
-dxcluster_telnet_event_handler (telnet_t* telnet, telnet_event_t* ev, void* user_data) {
-  DxClusterCtx *ctx = (DxClusterCtx*) user_data;
+dxcluster_telnet_event_handler (telnet_t *telnet, telnet_event_t *ev, void *user_data) {
+  DxClusterCtx *ctx = (DxClusterCtx *) user_data;
   (void) telnet;
   switch (ev->type) {
   case TELNET_EV_DATA:
@@ -268,7 +268,7 @@ dxcluster_telnet_event_handler (telnet_t* telnet, telnet_event_t* ev, void* user
 
 static gboolean
 dxcluster_socket_cb (GIOChannel *source, GIOCondition cond, gpointer data) {
-  DxClusterCtx *ctx = (DxClusterCtx*) data;
+  DxClusterCtx *ctx = (DxClusterCtx *) data;
   int fd = g_io_channel_unix_get_fd (source);
   if (cond & (G_IO_HUP | G_IO_ERR | G_IO_NVAL)) {
     dxcluster_append_text (ctx, "\n[Verbindung geschlossen]\n",
@@ -309,7 +309,7 @@ dxcluster_socket_cb (GIOChannel *source, GIOCondition cond, gpointer data) {
 /* -------------------------------------------------------------------------- */
 
 static int
-dxcluster_connect_tcp (const char* host, const char* port) {
+dxcluster_connect_tcp (const char *host, const char *port) {
   struct addrinfo hints;
   struct addrinfo *res = NULL, *rp;
   int sock = -1;
@@ -352,7 +352,7 @@ dxcluster_connect_tcp (const char* host, const char* port) {
 
 static void
 dxcluster_on_entry_activate (GtkEntry *entry, gpointer user_data) {
-  DxClusterCtx *ctx = (DxClusterCtx*) user_data;
+  DxClusterCtx *ctx = (DxClusterCtx *) user_data;
   const gchar *text = gtk_entry_get_text (entry);
   if (ctx->telnet && ctx->sockfd >= 0 && text && *text) {
     gchar *line = g_strdup_printf ("%s\r\n", text);
@@ -365,7 +365,7 @@ dxcluster_on_entry_activate (GtkEntry *entry, gpointer user_data) {
 static void
 dxcluster_on_window_destroy (GtkWidget *widget, gpointer user_data) {
   dxcwin_open = 0;
-  DxClusterCtx *ctx = (DxClusterCtx*) user_data;
+  DxClusterCtx *ctx = (DxClusterCtx *) user_data;
   (void) widget;
   if (ctx->io_watch_id != 0) {
     g_source_remove (ctx->io_watch_id);
@@ -400,7 +400,7 @@ dxcluster_on_window_configure (GtkWidget *widget,
 /* -------------------------------------------------------------------------- */
 
 void
-dxcluster_open_window (const char* host,
+dxcluster_open_window (const char *host,
                        long int portaddress,
                        const char *callsign,
                        int width,

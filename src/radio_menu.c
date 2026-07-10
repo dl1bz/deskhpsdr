@@ -120,7 +120,7 @@ static void ptt_tip_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void toggle_cb(GtkWidget *widget, gpointer data) {
-  int *value = (int*) data;
+  int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   schedule_general();
   schedule_transmit_specific();
@@ -811,7 +811,7 @@ void radio_menu(GtkWidget *parent) {
     g_signal_connect(ptt_ring_b, "toggled", G_CALLBACK(ptt_ring_cb), NULL);
     row++;
     GtkWidget *ptt_tip_b = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(ptt_ring_b),
-                           "PTT On Tip, Mic and Bias on Ring");
+      "PTT On Tip, Mic and Bias on Ring");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ptt_tip_b), mic_ptt_tip_bias_ring == 1);
     gtk_grid_attach(GTK_GRID(grid), ptt_tip_b, 3, row, 2, 1);
     g_signal_connect(ptt_tip_b, "toggled", G_CALLBACK(ptt_tip_cb), NULL);
@@ -861,7 +861,7 @@ void radio_menu(GtkWidget *parent) {
     g_signal_connect(ptt_ring_b, "toggled", G_CALLBACK(ptt_ring_cb), NULL);
     row++;
     GtkWidget *ptt_tip_b = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(ptt_ring_b),
-                           "PTT On Tip, Mic and Bias on Ring");
+      "PTT On Tip, Mic and Bias on Ring");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ptt_tip_b), mic_ptt_tip_bias_ring == 1);
     gtk_grid_attach(GTK_GRID(grid), ptt_tip_b, 3, row, 2, 1);
     g_signal_connect(ptt_tip_b, "toggled", G_CALLBACK(ptt_tip_cb), NULL);
@@ -1093,7 +1093,7 @@ void radio_menu(GtkWidget *parent) {
   gtk_entry_set_text(GTK_ENTRY(callsign_box), own_callsign);
   gtk_box_pack_start(GTK_BOX(Data_box), callsign_box, FALSE, FALSE, 0);
   callsign_box_signal_id = g_signal_connect(callsign_box, "activate", G_CALLBACK(callsign_button_clicked),
-                           callsign_box);
+    callsign_box);
   GtkWidget *callsign_box_btn = gtk_button_new_with_label("Set");
   gtk_widget_set_halign(callsign_box_btn, GTK_ALIGN_START);
   gtk_box_pack_start(GTK_BOX(Data_box), callsign_box_btn, FALSE, FALSE, 0);

@@ -124,9 +124,9 @@ static void updateDescription(void);
 static void load_store(void);
 
 static char *Event2String(enum MIDIevent event);
-static enum MIDIevent String2Event(const char* str);
+static enum MIDIevent String2Event(const char *str);
 static char *Type2String(enum ACTIONtype type);
-static enum ACTIONtype String2Type(const char* str);
+static enum ACTIONtype String2Type(const char *str);
 
 static void cleanup(void) {
   if (dialog != NULL) {
@@ -432,7 +432,7 @@ static void updateDescription(void) {
     //
     // This is a new Note/Event combination, so we need a new entry
     //
-    current_cmd = (struct desc*) malloc(sizeof(struct desc));
+    current_cmd = (struct desc *) malloc(sizeof(struct desc));
     if (current_cmd == NULL) {
       t_print("%s: failed to allocate MIDI command descriptor\n", __func__);
       return;
@@ -936,11 +936,11 @@ typedef struct MYEVENT {
   int            val;
 } myevent;
 
-int ProcessNewMidiConfigureEvent (void* data) {
+int ProcessNewMidiConfigureEvent (void *data) {
   //
   // This is now running in the GTK idle queue
   //
-  const myevent *mydata = (myevent*) data;
+  const myevent *mydata = (myevent *) data;
   enum MIDIevent event = mydata->event;
   int  channel = mydata->channel;
   int  note = mydata->note;
@@ -1217,7 +1217,7 @@ void midiRestoreState (void) {
       //
       // Construct descriptor and add to the list of MIDI commands
       //
-      struct desc *desc = (struct desc*) malloc (sizeof (struct desc));
+      struct desc *desc = (struct desc *) malloc (sizeof (struct desc));
       if (desc == NULL) {
         t_print ("%s: failed to allocate MIDI command descriptor\n", __func__);
         return;
@@ -1265,7 +1265,7 @@ static char *Event2String (enum MIDIevent event) {
   }
 }
 
-static enum MIDIevent String2Event (const char* str) {
+static enum MIDIevent String2Event (const char *str) {
   if (!strcmp (str, "NOTE"))  { return MIDI_NOTE;  }
   if (!strcmp (str, "CTRL"))  { return MIDI_CTRL;  }
   if (!strcmp (str, "PITCH")) { return MIDI_PITCH; }
@@ -1291,7 +1291,7 @@ static char *Type2String (enum ACTIONtype type) {
   }
 }
 
-static enum ACTIONtype String2Type (const char* str) {
+static enum ACTIONtype String2Type (const char *str) {
   if (!strcmp (str, "KEY")) { return MIDI_KEY;   }
   if (!strcmp (str, "KNOB/SLIDER")) { return MIDI_KNOB;  }
   if (!strcmp (str, "WHEEL")) { return MIDI_WHEEL; }

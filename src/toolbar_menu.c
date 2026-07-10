@@ -128,7 +128,7 @@ static GtkWidget *toolbar_menu_fnc_button_new(int lfunction) {
 }
 
 static gboolean switch_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
-  SWITCH *sw = (SWITCH*) data;
+  SWITCH *sw = (SWITCH *) data;
   int action = action_dialog(dialog, MIDI_KEY, sw->switch_function);
   gtk_button_set_label(GTK_BUTTON(widget), ActionTable[action].button_str);
   sw->switch_function = action;

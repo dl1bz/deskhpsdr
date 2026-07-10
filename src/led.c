@@ -23,8 +23,8 @@
 
 #include "message.h"
 
-static gboolean draw_led_cb(GtkWidget *widget, cairo_t* cr, gpointer data) {
-  const GdkRGBA *color = (GdkRGBA*) data;
+static gboolean draw_led_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
+  const GdkRGBA *color = (GdkRGBA *) data;
   //t_print("%s: %p color=%p r=%f g=%f b=%f\n",__func__,widget,color,color->red,color->green,color->blue);
   cairo_set_source_rgb(cr, color->red, color->green, color->blue);
   cairo_paint(cr);

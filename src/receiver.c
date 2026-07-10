@@ -107,13 +107,13 @@ long long rx_get_digi_monitor_offset(int id) {
 //
 
 void rx_weak_notify(gpointer data, GObject  *obj) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   t_print("%s: id=%d obj=%p\n", __func__, rx->id, obj);
 }
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  const RECEIVER *rx = (RECEIVER*) data;
+  const RECEIVER *rx = (RECEIVER *) data;
   if (rx == active_receiver) {
     if (event->button == GDK_BUTTON_PRIMARY) {
       last_x = (int) event->x;
@@ -154,7 +154,7 @@ void rx_set_active(RECEIVER *rx) {
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   if (making_active) {
     making_active = FALSE;
     rx_set_active(rx);
@@ -187,7 +187,7 @@ gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpoin
 gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
   int x, y;
   GdkModifierType state;
-  const RECEIVER *rx = (RECEIVER*) data;
+  const RECEIVER *rx = (RECEIVER *) data;
   //
   // This solves a problem observed since with GTK about mid-2023:
   // when re-focusing a (sub-)menu window after it has lost focus,
@@ -240,7 +240,7 @@ gboolean rx_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
 // cppcheck-suppress constParameterPointer
 gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointer data) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   if (!rx) {
     // Falls kein gültiger Zeiger übergeben wurde, mache nichts und verhindere Absturz
     t_print("%s: ERROR: called with NULL RECEIVER pointer!\n", __func__);
@@ -601,7 +601,7 @@ void rx_reconfigure(RECEIVER *rx, int height) {
 }
 
 static int rx_update_display(gpointer data) {
-  RECEIVER *rx = (RECEIVER*) data;
+  RECEIVER *rx = (RECEIVER *) data;
   if (rx->displaying) {
     if (rx->pixels > 0) {
       int rc;
@@ -1880,7 +1880,7 @@ void rx_set_af_binaural(const RECEIVER *rx) {
   }
   state = rx_binaural_allowed(rx) ? rx->binaural : 0;
   if (!state && rx->binaural) {
-    ((RECEIVER*) rx)->binaural = 0;
+    ((RECEIVER *) rx)->binaural = 0;
   }
   SetRXAPanelBinaural(rx->id, state);
 }

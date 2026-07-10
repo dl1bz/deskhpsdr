@@ -33,11 +33,11 @@ struct _PROPERTY {
 };
 
 extern void clearProperties (void);
-extern void loadProperties (const char* filename);
-extern char *getProperty (const char* name);
-extern void setProperty (const char* name, const char* value);
-extern void saveProperties (const char* filename);
-extern double myatof (const char* string);
+extern void loadProperties (const char *filename);
+extern char *getProperty (const char *name);
+extern void setProperty (const char *name, const char *value);
+extern void saveProperties (const char *filename);
+extern double myatof (const char *string);
 
 //
 // Some macros to get/set properties.

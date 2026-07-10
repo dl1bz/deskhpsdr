@@ -180,8 +180,8 @@ static void add_agc_rx_controls(GtkWidget *grid, int row, RECEIVER *rx, int show
   gtk_widget_set_valign(agc_hang_threshold_scale[id], GTK_ALIGN_CENTER);
   gtk_widget_show(agc_hang_threshold_scale[id]);
   threshold_scale_signal_id[id] = g_signal_connect(G_OBJECT(agc_hang_threshold_scale[id]), "value_changed",
-                                  G_CALLBACK(agc_hang_threshold_value_changed_cb),
-                                  rx);
+    G_CALLBACK(agc_hang_threshold_value_changed_cb),
+    rx);
   gtk_box_pack_start(GTK_BOX(box_threshold), agc_hang_threshold_scale[id], FALSE, FALSE, 0);
   gtk_grid_attach(GTK_GRID(grid), box_threshold, 0, row + 1, 1, 1);
 }

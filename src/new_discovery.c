@@ -147,8 +147,8 @@ void new_discovery(void) {
 //
 static void new_discover(struct ifaddrs* iface, int discflag) {
   int rc;
-  struct sockaddr_in *sa = (struct sockaddr_in*) &interface_addr;
-  struct sockaddr_in *mask = (struct sockaddr_in*) &interface_netmask;
+  struct sockaddr_in *sa = (struct sockaddr_in *) &interface_addr;
+  struct sockaddr_in *mask = (struct sockaddr_in *) &interface_netmask;
   char addr[16];
   char net_mask[16];
   unsigned char buffer[60];
@@ -303,7 +303,7 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       //
       // METIS detection UDP packet sent to fixed IP address got a valid response.
       //
-      memcpy((void*) &discovered[rc].info.network.address, (void*) &to_addr, sizeof(to_addr));
+      memcpy((void *) &discovered[rc].info.network.address, (void *) &to_addr, sizeof(to_addr));
       discovered[rc].info.network.address_length = sizeof(to_addr);
       g_strlcpy(discovered[rc].info.network.interface_name, "UDP", sizeof(discovered[rc].info.network.interface_name));
       discovered[rc].use_routing = 1;
@@ -321,10 +321,10 @@ gpointer new_discover_receive_thread(gpointer data) {
   double frequency_min, frequency_max;
   tv.tv_sec = 2;
   tv.tv_usec = 0;
-  setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char*) &tv, sizeof(struct timeval));
+  setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
   len = sizeof(addr);
   while (1) {
-    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr*) &addr, &len);
+    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &addr, &len);
     if (bytes_read < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
         break;
@@ -407,11 +407,11 @@ gpointer new_discover_receive_thread(gpointer data) {
             for (i = 0; i < 6; i++) {
               discovered[devices].info.network.mac_address[i] = buffer[i + 5];
             }
-            memcpy((void*) &discovered[devices].info.network.address, (void*) &addr, sizeof(addr));
+            memcpy((void *) &discovered[devices].info.network.address, (void *) &addr, sizeof(addr));
             discovered[devices].info.network.address_length = sizeof(addr);
-            memcpy((void*) &discovered[devices].info.network.interface_address, (void*) &interface_addr,
+            memcpy((void *) &discovered[devices].info.network.interface_address, (void *) &interface_addr,
                    sizeof(interface_addr));
-            memcpy((void*) &discovered[devices].info.network.interface_netmask, (void*) &interface_netmask,
+            memcpy((void *) &discovered[devices].info.network.interface_netmask, (void *) &interface_netmask,
                    sizeof(interface_netmask));
             discovered[devices].info.network.interface_length = sizeof(interface_addr);
             g_strlcpy(discovered[devices].info.network.interface_name, interface_name,

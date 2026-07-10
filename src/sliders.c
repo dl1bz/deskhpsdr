@@ -282,7 +282,7 @@ static gboolean active_receiver_noise_allowed(void) {
   return (mode != modeDIGL && mode != modeDIGU);
 }
 
-int sliders_active_receiver_changed(void* data) {
+int sliders_active_receiver_changed(void *data) {
   if (display_sliders) {
     //
     // Change sliders and check-boxes to reflect the state of the
@@ -512,7 +512,7 @@ static void rf_gain_value_changed_cb(GtkWidget *widget, gpointer data) {
 
 // Callback, um rf_gain_slider-Wert im Mainthread zu setzen
 gboolean update_rf_gain_slider_value(gpointer data) {
-  double value = * (double*) data;
+  double value = * (double *) data;
   gtk_range_set_value(GTK_RANGE(rf_gain_scale), value);
   g_free(data);
   return FALSE;
@@ -800,7 +800,7 @@ static void snb_toggle_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void local_mic_toggle_cb(GtkToggleButton *btn, gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER*) data;
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   gboolean v = gtk_toggle_button_get_active(btn);
   if (v) {
     int rc = audio_open_input();
@@ -1444,7 +1444,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_halign(af_gain_btn, GTK_ALIGN_START);
   gtk_widget_set_valign(af_gain_btn, GTK_ALIGN_CENTER);
   af_gain_btn_signal_id = g_signal_connect(G_OBJECT(af_gain_btn), "toggled", G_CALLBACK(af_gain_toggle_cb),
-                          NULL);
+    NULL);
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_btn, FALSE, FALSE, 0);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1459,7 +1459,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_scale_add_mark(GTK_SCALE(af_gain_scale), i, GTK_POS_TOP, NULL);
   }
   af_gain_scale_signal_id = g_signal_connect(G_OBJECT(af_gain_scale), "value_changed",
-                            G_CALLBACK(afgain_value_changed_cb), NULL);
+    G_CALLBACK(afgain_value_changed_cb), NULL);
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_scale, TRUE, TRUE, 0);
   //-----------------------------------------------------------------------------------------------------------
@@ -1532,8 +1532,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z1_middle), agc_gain_scale, TRUE, TRUE, 0);
   }
   agc_gain_scale_signal_id = g_signal_connect(G_OBJECT(agc_gain_scale), "value_changed",
-                             G_CALLBACK(agcgain_value_changed_cb),
-                             NULL);
+    G_CALLBACK(agcgain_value_changed_cb),
+    NULL);
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(sliders), box_Z1_middle, 1, 0, 1, 1);   // Zeile 0 Spalte 1
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1617,7 +1617,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_scale_add_mark(GTK_SCALE(rf_gain_scale), i, GTK_POS_TOP, NULL);
     }
     rf_gain_scale_signal_id = g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed",
-                              G_CALLBACK(rf_gain_value_changed_cb), NULL);
+      G_CALLBACK(rf_gain_value_changed_cb), NULL);
     gtk_widget_set_margin_start(rf_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_margin_end(rf_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(rf_gain_scale, FALSE);  // fülle Box nicht nach rechts
@@ -1893,7 +1893,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     gtk_widget_set_tooltip_text(mic_gain_scale, "Set Mic Gain in db");
     mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
-                               G_CALLBACK(micgain_value_changed_cb), NULL);
+      G_CALLBACK(micgain_value_changed_cb), NULL);
     //-----------------------------------------------------------------------------------------------------------
     preamp_btn = gtk_toggle_button_new_with_label("Mic PreA");
     gtk_widget_set_name(preamp_btn, "medium_toggle_button");
@@ -2026,7 +2026,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       }
     }
     drive_scale_signal_id = g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb),
-                            NULL);
+      NULL);
     gtk_grid_attach(GTK_GRID(sliders), box_Z2_middle, 1, 1, 1, 1);   // Spalte 0 Zeile 1
   } else {
     mic_gain_label = NULL;
@@ -2157,9 +2157,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_valign(tune_drive_btn, GTK_ALIGN_CENTER);
     gtk_widget_add_events(tune_drive_btn, GDK_BUTTON_PRESS_MASK);
     tune_drive_btn_signal_id = g_signal_connect(G_OBJECT(tune_drive_btn),
-                               "button-press-event",
-                               G_CALLBACK(tune_drive_button_press_cb),
-                               NULL);
+      "button-press-event",
+      G_CALLBACK(tune_drive_button_press_cb),
+      NULL);
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_btn, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------
     // tune_drive_scale
@@ -2176,7 +2176,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_end(tune_drive_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(tune_drive_scale, FALSE);  // fülle Box nicht nach rechts
     tune_drive_scale_signal_id = g_signal_connect(G_OBJECT(tune_drive_scale), "value_changed",
-                                 G_CALLBACK(tune_drive_changed_cb), NULL);
+      G_CALLBACK(tune_drive_changed_cb), NULL);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z3_left), tune_drive_scale, FALSE, FALSE, 0);
     //-----------------------------------------------------------------------------------------------------------
@@ -2279,7 +2279,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       // end label definition
       // local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb), NULL);
       local_mic_toggle_signal_id = g_signal_connect(local_mic_button, "toggled", G_CALLBACK(local_mic_toggle_cb),
-                                   transmitter);
+        transmitter);
       //-------------------------------------------------------------------------------------------
       local_mic_input = gtk_combo_box_text_new();
       WEAKEN(local_mic_input);
@@ -2293,10 +2293,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       for (int i = 0; i < n_input_devices; i++) {
 #ifdef __APPLE__
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, truncate_text_3p(input_devices[i].description,
-                                  32));
+          32));
 #else
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(local_mic_input), NULL, truncate_text_3p(input_devices[i].description,
-                                  28));
+          28));
 #endif
         if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
           gtk_combo_box_set_active(GTK_COMBO_BOX(local_mic_input), i);
@@ -2313,7 +2313,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_can_focus(local_mic_input, TRUE);
       gboolean flag = FALSE;
       local_mic_input_signal_id = g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb),
-                                  GINT_TO_POINTER(flag));
+        GINT_TO_POINTER(flag));
       // Widgets in Box packen
       gtk_box_pack_start(GTK_BOX(box_Z3_middle), local_mic_button, FALSE, FALSE, 0);
       gtk_box_pack_start(GTK_BOX(box_Z3_middle), local_mic_input, FALSE, FALSE, 0);
@@ -2355,7 +2355,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_end(bbcompr_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(bbcompr_scale, FALSE);  // fülle Box nicht nach rechts
     bbcompr_scale_signal_id = g_signal_connect(G_OBJECT(bbcompr_scale), "value_changed",
-                              G_CALLBACK(bbcompr_scale_changed_cb), NULL);
+      G_CALLBACK(bbcompr_scale_changed_cb), NULL);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z3_right), bbcompr_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_Z3_right), bbcompr_scale, FALSE, FALSE, 0);

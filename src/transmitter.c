@@ -122,7 +122,7 @@ static int clear_out_of_band_warning(gpointer data) {
   // One-shot timer for clearing the "Out of band" message
   // in the VFO bar
   //
-  TRANSMITTER *tx = (TRANSMITTER*) data;
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   tx->out_of_band = 0;
   g_idle_add(ext_vfo_update, NULL);
   return G_SOURCE_REMOVE;
@@ -154,7 +154,7 @@ static int clear_out_of_band_warning(gpointer data) {
 // - the phase is always continuous, even if there are frequency jumps
 ///////////////////////////////////////////////////////////////////////////
 
-static float sine_generator(int* phase1, int* phase2, int freq) {
+static float sine_generator(int *phase1, int *phase2, int freq) {
   register float val, s, d;
   register int p1 = *phase1;
   register int p2 = *phase2;
@@ -186,10 +186,10 @@ void tx_set_out_of_band(TRANSMITTER *tx) {
   tx->out_of_band = 1;
   g_idle_add(ext_vfo_update, NULL);
   tx->out_of_band_timer_id = gdk_threads_add_timeout_full(G_PRIORITY_HIGH_IDLE, 1000,
-                             clear_out_of_band_warning, tx, NULL);
+    clear_out_of_band_warning, tx, NULL);
 }
 
-static void init_audio_ramp(double* ramp, int width) {
+static void init_audio_ramp(double *ramp, int width) {
   //
   // This is for the sidetone, we use a raised cosine ramp
   //
@@ -199,7 +199,7 @@ static void init_audio_ramp(double* ramp, int width) {
   }
 }
 
-static void init_dl1ycf_ramp(double* ramp, int width) {
+static void init_dl1ycf_ramp(double *ramp, int width) {
   //
   // ========================================================================
   //
@@ -535,7 +535,7 @@ static double compute_power(double p) {
 }
 
 static gboolean tx_update_display(gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER*) data;
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   int rc;
   //t_print("tx_update_display: tx id=%d\n",tx->id);
   if (tx->displaying) {
@@ -814,7 +814,7 @@ void tx_create_dialog(TRANSMITTER *tx) {
 // TX LEVELS WINDOW
 // -----------------------------------------------------------
 static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *event, gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER*) data;
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   int w = gtk_widget_get_allocated_width(widget);
   int h = gtk_widget_get_allocated_height(widget);
   if (tx->levels_surface) { cairo_surface_destroy(tx->levels_surface); }
@@ -829,8 +829,8 @@ static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *eve
   return TRUE;
 }
 
-static gboolean tx_levels_draw_cb(GtkWidget *widget, cairo_t* cr, gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER*) data;
+static gboolean tx_levels_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   if (tx->levels_surface) {
     cairo_set_source_surface(cr, tx->levels_surface, 0, 0);
     cairo_paint(cr);
@@ -1877,7 +1877,7 @@ void tx_set_displaying(TRANSMITTER *tx) {
       g_source_remove(tx->update_timer_id);
     }
     tx->update_timer_id = gdk_threads_add_timeout_full(G_PRIORITY_HIGH_IDLE, 1000 / tx->fps, tx_update_display,
-                          (gpointer) tx, NULL);
+      (gpointer) tx, NULL);
   } else {
     if (tx->update_timer_id > 0) {
       g_source_remove(tx->update_timer_id);
@@ -2130,16 +2130,16 @@ static inline void tx_levels_hide(TRANSMITTER *tx) {
 void tx_off(const TRANSMITTER *tx) {
   // switch TX OFF, wait until slew-down completed
   SetChannelState(tx->id, 0, 1);
-  tx_levels_hide((TRANSMITTER*) tx);
+  tx_levels_hide((TRANSMITTER *) tx);
 }
 
 void tx_on(const TRANSMITTER *tx) {
   // switch TX ON
   SetChannelState(tx->id, 1, 0);
-  tx_levels_show((TRANSMITTER*) tx);
+  tx_levels_show((TRANSMITTER *) tx);
 }
 
-void tx_ps_getinfo(const TRANSMITTER *tx, int* info) {
+void tx_ps_getinfo(const TRANSMITTER *tx, int *info) {
   GetPSInfo(tx->id, info);
 }
 
@@ -2198,7 +2198,7 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
       if (rx_feedback) {
         // memset(rx_feedback->iq_input_buffer, 0, rx_feedback->buffer_size * sizeof(double));
         memset(rx_feedback->iq_input_buffer, 0,
-               (size_t) 2 * rx_feedback->buffer_size * sizeof* rx_feedback->iq_input_buffer);
+               (size_t) 2 * rx_feedback->buffer_size * sizeof *rx_feedback->iq_input_buffer);
         //
         // In principle we could call pscc and GetPSINfo and repeat this until
         // info[15] becomes zero (LRESET)

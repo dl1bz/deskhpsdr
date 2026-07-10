@@ -104,7 +104,7 @@ int autogain_is_adjusted = 1;
 gboolean rigctl_debug = FALSE;
 gboolean tci_debug = FALSE;
 
-int parse_cmd(void* data);
+int parse_cmd(void *data);
 
 int cat_control = 0;
 
@@ -235,7 +235,7 @@ static gboolean update_serptt_cts (gpointer user_data) {
 
 static gpointer monitor_serptt_cts_thread (gpointer user_data) {
   gboolean last_state_serptt = FALSE;  // Umstellung von bool auf gboolean
-  int fd = * (int*) user_data;
+  int fd = * (int *) user_data;
   if (fd < 0) {
     if (SerialPorts[MAX_SERIAL + 1].enable) {
       SerialPorts[MAX_SERIAL + 1].enable = 0;
@@ -254,7 +254,7 @@ static gpointer monitor_serptt_cts_thread (gpointer user_data) {
 }
 
 static gpointer monitor_sertune_thread (gpointer user_data) {
-  int fd = * (int*) user_data;
+  int fd = * (int *) user_data;
   int status;
   if (fd < 0) {
     if (SerialPorts[MAX_SERIAL].enable) {
@@ -344,7 +344,7 @@ void launch_sertune (void) {
 }
 
 #if defined (__AUTOG__)
-static void *autogain_thread_function (void* arg) {
+static void *autogain_thread_function (void *arg) {
   static struct timespec start_time, current_time, last_autogain_increase;
   static time_t elapsed_time;
   static int re_adjustment_time = 30; // in sec
@@ -498,7 +498,7 @@ void restart_autogain_hl2 (void) {
 #endif
 
 // Callback-Funktion für empfangene RX200 UDP Daten
-static void rx200_process_data (const char* rx200_data[7]) {
+static void rx200_process_data (const char *rx200_data[7]) {
   // Daten von rx200_data in g_rx200_data thread-safe kopieren
   pthread_mutex_lock (&rx200_array_mutex); // Mutex sperren
   for (int i = 0; i < 4; i++) {
@@ -514,7 +514,7 @@ static void rx200_process_data (const char* rx200_data[7]) {
 }
 
 // Callback-Funktion für empfangene LPF UDP Daten
-static void lpf_process_data (const char* lpf_data[6]) {
+static void lpf_process_data (const char *lpf_data[6]) {
   // Daten von lpf_data in g_lpf_data thread-safe kopieren
   pthread_mutex_lock (&lpf_array_mutex); // Mutex sperren
   for (int i = 0; i < 6; i++) {
@@ -530,8 +530,8 @@ static void lpf_process_data (const char* lpf_data[6]) {
 }
 
 // RX200 UDP Listener-Funktion
-static void *rx200_udp_listener (void* arg) {
-  int port = * ((int*) arg);
+static void *rx200_udp_listener (void *arg) {
+  int port = * ((int *) arg);
   int sockfd;
   struct sockaddr_in server_addr;
   char buffer[1024];
@@ -595,8 +595,8 @@ static void *rx200_udp_listener (void* arg) {
 }
 
 // LPF UDP Listener-Funktion
-static void *lpf_udp_listener (void* arg) {
-  int port = * ((int*) arg);
+static void *lpf_udp_listener (void *arg) {
+  int port = * ((int *) arg);
   int sockfd;
   struct sockaddr_in server_addr;
   char buffer[1024];
@@ -657,7 +657,7 @@ static void *lpf_udp_listener (void* arg) {
   pthread_exit (NULL);
 }
 
-static pid_t get_pid_by_name (const char* process_name) {
+static pid_t get_pid_by_name (const char *process_name) {
   char command[256];
   // -n = neueste (letzte gestartete) Instanz
   // snprintf(command, sizeof(command), "pgrep -n %s", process_name);
@@ -671,7 +671,7 @@ static pid_t get_pid_by_name (const char* process_name) {
   return pid;
 }
 
-static char *find_in_path (const char* binary_name) {
+static char *find_in_path (const char *binary_name) {
   const char *paths[] = {
     "/usr/local/bin",
     "/usr/bin",
@@ -781,7 +781,7 @@ void stop_rigctld (void) {
   rigctld_pid = 0;
 }
 
-static void *rigctld_control_thread (void* arg) {
+static void *rigctld_control_thread (void *arg) {
   while (1) {
     pthread_mutex_lock (&rigctld_mutex);
     int enabled = rigctld_enabled;
@@ -876,7 +876,7 @@ void shutdown_tcp_rigctl (void) {
   //       non-blocking (use select())
 }
 
-static void send_resp (int fd, char* msg) {
+static void send_resp (int fd, char *msg) {
   //
   // send_resp is ONLY called from within the GTK event queue
   // ==> no multi-thread problems can occur.
@@ -981,7 +981,7 @@ static int ts2000_mode (int wdspmode) {
 }
 
 static gboolean autoreport_handler (gpointer data) {
-  CLIENT *client = (CLIENT*) data;
+  CLIENT *client = (CLIENT *) data;
   //
   // This function is repeatedly called as long as the CAT
   // connection is active. It reports VFOA and VFOB frequency changes
@@ -1031,7 +1031,7 @@ static gboolean andromeda_handler (gpointer data) {
   // This function is repeatedly called as long as the client runs
   //
   //
-  CLIENT *client = (CLIENT*) data;
+  CLIENT *client = (CLIENT *) data;
   char reply[256];
   if (!client->running || client->andromeda_type == 4) {
     //
@@ -1213,7 +1213,7 @@ static gpointer rigctl_server (gpointer data) {
     // (this initializes fd, address, address_length)
     //
     t_print ("%s: slot= %d waiting for connection\n", __func__, spare);
-    tcp_client[spare].fd = accept (server_socket, (struct sockaddr*) &tcp_client[spare].address,
+    tcp_client[spare].fd = accept (server_socket, (struct sockaddr *) &tcp_client[spare].address,
                                    &tcp_client[spare].address_length);
     if (tcp_client[spare].fd < 0) {
       t_perror ("rigctl_server: client accept failed");
@@ -1270,7 +1270,7 @@ static gpointer rigctl_server (gpointer data) {
 }
 
 static gpointer rigctl_client (gpointer data) {
-  CLIENT *client = (CLIENT*) data;
+  CLIENT *client = (CLIENT *) data;
   t_print ("%s: starting rigctl_client: socket=%d\n", __func__, client->fd);
   g_mutex_lock (&mutex_numcat);
   cat_control++;
@@ -1341,7 +1341,7 @@ static gpointer rigctl_client (gpointer data) {
   return NULL;
 }
 
-gboolean parse_extended_cmd (const char* command, CLIENT *client) {
+gboolean parse_extended_cmd (const char *command, CLIENT *client) {
   gboolean implemented = TRUE;
   char reply[256];
   reply[0] = '\0';
@@ -3737,8 +3737,8 @@ gboolean parse_extended_cmd (const char* command, CLIENT *client) {
 }
 
 // called with g_idle_add so that the processing is running on the main thread
-int parse_cmd (void* data) {
-  COMMAND *info = (COMMAND*) data;
+int parse_cmd (void *data) {
+  COMMAND *info = (COMMAND *) data;
   CLIENT *client = info->client;
   char *command = info->command;
   char reply[256];
@@ -5398,7 +5398,7 @@ void set_blocking (int fd, int should_block) {
 static gpointer serial_server (gpointer data) {
   // We're going to Read the Serial port and
   // when we get data we'll send it to parse_cmd
-  CLIENT *client = (CLIENT*) data;
+  CLIENT *client = (CLIENT *) data;
   char cmd_input[MAXDATASIZE];
   char *command = g_new (char, MAXDATASIZE);
   int command_index = 0;

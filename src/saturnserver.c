@@ -141,10 +141,10 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
   //
   // set 1ms timeout, and re-use any recently open ports
   //
-  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_REUSEADDR, (void*) &yes, sizeof(yes));
+  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_REUSEADDR, (void *) &yes, sizeof(yes));
   ReadTimeout.tv_sec = 0;
   ReadTimeout.tv_usec = 1000;
-  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_RCVTIMEO, (void*) &ReadTimeout, sizeof(ReadTimeout));
+  setsockopt(Ptr->Socketid, SOL_SOCKET, SO_RCVTIMEO, (void *) &ReadTimeout, sizeof(ReadTimeout));
   //
   // bind application to the specified port
   //
@@ -170,7 +170,7 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
 // if no messages in a second, goes back to "inactive" state.
 //
 // cppcheck-suppress constParameterCallback
-void *CheckForActivity(void* arg) {
+void *CheckForActivity(void *arg) {
   while (1) {
     sleep(1000);                                   // wait for 1 second
     bool PreviouslyActiveState = ServerActive;     // see if active on entry
@@ -215,7 +215,7 @@ void start_saturn_server(void) {
 // has a loop that reads & processes incoming command packets
 // see protocol documentation
 //
-void *saturn_server(void* arg) {
+void *saturn_server(void *arg) {
   int i, size;
   uint8_t UDPInBuffer[VDISCOVERYSIZE];
   //
@@ -386,7 +386,7 @@ void *saturn_server(void* arg) {
         }
         memset(&UDPInBuffer, 0, VDISCOVERYREPLYSIZE);
         memcpy(&UDPInBuffer, DiscoveryReply, VDISCOVERYREPLYSIZE);
-        sendto(SocketData[0].Socketid, &UDPInBuffer, VDISCOVERYREPLYSIZE, 0, (struct sockaddr*) &addr_from,
+        sendto(SocketData[0].Socketid, &UDPInBuffer, VDISCOVERYREPLYSIZE, 0, (struct sockaddr *) &addr_from,
                sizeof(addr_from));
         break;
       case 3:
@@ -416,13 +416,13 @@ void *saturn_server(void* arg) {
 //
 // listener thread for incoming high priority packets
 //
-void *IncomingHighPriority(void* arg) {                 // listener thread
+void *IncomingHighPriority(void *arg) {                 // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VHIGHPRIOTIYTOSDRSIZE];           // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData*) arg;
+  ThreadData = (struct ThreadSocketData *) arg;
   ThreadData->Active = true;
   t_print("spinning up high priority incoming thread with port %d\n", ThreadData->Portid);
   //
@@ -463,13 +463,13 @@ void *IncomingHighPriority(void* arg) {                 // listener thread
 //
 // listener thread for incoming DDC specific packets
 //
-void *IncomingDDCSpecific(void* arg) {                  // listener thread
+void *IncomingDDCSpecific(void *arg) {                  // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VDDCSPECIFICSIZE];                // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData*) arg;
+  ThreadData = (struct ThreadSocketData *) arg;
   ThreadData->Active = true;
   t_print("spinning up DDC specific thread with port %d\n", ThreadData->Portid);
   //
@@ -506,13 +506,13 @@ void *IncomingDDCSpecific(void* arg) {                  // listener thread
 //
 // listener thread for incoming DUC specific packets
 //
-void *IncomingDUCSpecific(void* arg) {                  // listener thread
+void *IncomingDUCSpecific(void *arg) {                  // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VDUCSPECIFICSIZE];                // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData*) arg;
+  ThreadData = (struct ThreadSocketData *) arg;
   ThreadData->Active = true;
   t_print("spinning up DUC specific thread with port %d\n", ThreadData->Portid);
   //
@@ -571,13 +571,13 @@ void *IncomingDUCSpecific(void* arg) {                  // listener thread
 // if sufficient FIFO data available: DMA that data and transfer it out.
 // if it turns out to be too inefficient, we'll have to try larger DMA.
 //
-void *IncomingDUCIQ(void* arg) {                        // listener thread
+void *IncomingDUCIQ(void *arg) {                        // listener thread
   struct ThreadSocketData *ThreadData;                  // socket etc data for this thread
   struct sockaddr_in addr_from;                         // holds MAC address of source of incoming messages
   uint8_t UDPInBuffer[VDUCIQSIZE];                      // incoming buffer
   struct iovec iovecinst;                               // iovcnt buffer - 1 for each outgoing buffer
   struct msghdr datagram;                               // multiple incoming message header
-  ThreadData = (struct ThreadSocketData*) arg;
+  ThreadData = (struct ThreadSocketData *) arg;
   ThreadData->Active = true;
   t_print("spinning up incoming DUC I/Q thread with port %d\n", ThreadData->Portid);
   //

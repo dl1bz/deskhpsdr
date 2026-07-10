@@ -175,13 +175,13 @@ static int hl2_send_reboot_1025(const struct sockaddr_in *dst_in) {
   msg[8] = 0x01;
   struct sockaddr_in to = *dst_in;
   to.sin_port = htons(1025);
-  ssize_t n = sendto(s, msg, sizeof msg, 0, (struct sockaddr*) &to, sizeof to);
+  ssize_t n = sendto(s, msg, sizeof msg, 0, (struct sockaddr *) &to, sizeof to);
   close(s);
   return (n == (ssize_t) sizeof msg) ? 0 : -1;
 }
 
 static gboolean reboot_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  DISCOVERED *radio = (DISCOVERED*) data;
+  DISCOVERED *radio = (DISCOVERED *) data;
   struct sockaddr_in dst = radio->info.network.address;
   int rc = hl2_send_reboot_1025(&dst);
   if (rc == 0) {

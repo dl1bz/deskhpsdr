@@ -127,7 +127,7 @@ static int ozy_close(void) {
   return 0;
 }
 
-static int ozy_get_firmware_string(unsigned char* buffer, int buffer_size) {
+static int ozy_get_firmware_string(unsigned char *buffer, int buffer_size) {
   int rc;
   rc = libusb_control_transfer(ozy_handle, VRT_VENDOR_IN, VRQ_SDR1K_CTL, SDR1KCTRL_READ_VERSION, 0, buffer, buffer_size,
                                OZY_IO_TIMEOUT);
@@ -139,7 +139,7 @@ static int ozy_get_firmware_string(unsigned char* buffer, int buffer_size) {
   return 0;
 }
 
-int ozy_write(int ep, unsigned char* buffer, int buffer_size) {
+int ozy_write(int ep, unsigned char *buffer, int buffer_size) {
   int rc;
   int bytes;
   bytes = 0;
@@ -152,7 +152,7 @@ int ozy_write(int ep, unsigned char* buffer, int buffer_size) {
   return buffer_size;
 }
 
-int ozy_read(int ep, unsigned char* buffer, int buffer_size) {
+int ozy_read(int ep, unsigned char *buffer, int buffer_size) {
   int rc;
   int bytes;
   rc = libusb_bulk_transfer(ozy_handle, (unsigned char) ep, buffer, buffer_size, &bytes, OZY_IO_TIMEOUT);
@@ -162,7 +162,7 @@ int ozy_read(int ep, unsigned char* buffer, int buffer_size) {
   return rc;
 }
 
-static int ozy_write_ram(int fx2_start_addr, unsigned char* bufp, int count) {
+static int ozy_write_ram(int fx2_start_addr, unsigned char *bufp, int count) {
   int pkt_size = MAX_EPO_PACKET_SIZE;
   int len = count;
   int bytes_written = 0;
@@ -205,7 +205,7 @@ static int ishexit(unsigned char c) {
   return 0;
 }
 
-static int hexitsToUInt(char* p, int count) {
+static int hexitsToUInt(char *p, int count) {
   unsigned int result = 0;
   for (int  i = 0; i < count; i++) {
     char c = *p;
@@ -220,7 +220,7 @@ static int hexitsToUInt(char* p, int count) {
   return result;
 }
 
-static int ozy_load_firmware(char* fnamep) {
+static int ozy_load_firmware(char *fnamep) {
   FILE *ifile;
   int linecount = 0;
   int length;
@@ -305,7 +305,7 @@ static int ozy_set_led(int which, int on) {
   return 1;
 }
 
-static int ozy_load_fpga(char* rbf_fnamep) {
+static int ozy_load_fpga(char *rbf_fnamep) {
   FILE *rbffile;
   unsigned char buf[MAX_EPO_PACKET_SIZE];
   int bytes_read;
@@ -348,7 +348,7 @@ static int ozy_load_fpga(char* rbf_fnamep) {
   return 1;
 }
 
-static int ozy_i2c_write(unsigned char* buffer, int buffer_size, unsigned char cmd) {
+static int ozy_i2c_write(unsigned char *buffer, int buffer_size, unsigned char cmd) {
   int rc;
   rc = libusb_control_transfer(ozy_handle, VRT_VENDOR_OUT, VRQ_I2C_WRITE, cmd, 0, buffer, buffer_size, OZY_IO_TIMEOUT);
   if (rc < 0) {
@@ -358,7 +358,7 @@ static int ozy_i2c_write(unsigned char* buffer, int buffer_size, unsigned char c
   return rc;
 }
 
-static int ozy_i2c_read(unsigned char* buffer, int buffer_size, unsigned char cmd) {
+static int ozy_i2c_read(unsigned char *buffer, int buffer_size, unsigned char cmd) {
   int rc;
   rc = libusb_control_transfer(ozy_handle, VRT_VENDOR_IN, VRQ_I2C_READ, cmd, 0, buffer, buffer_size, OZY_IO_TIMEOUT);
   return rc;
@@ -515,7 +515,7 @@ void ozy_i2c_readvars(void) {
   t_print("penny TLV320 initialized\n");
 }
 
-static int file_exists(const char* fileName) {
+static int file_exists(const char *fileName) {
   struct stat buf;
   int i = stat(fileName, &buf);
   return (i == 0) ? 1 : 0 ;
@@ -537,7 +537,7 @@ static int file_exists(const char* fileName) {
 // - /usr/share/deskhpsdr
 // - /usr/local/share/deskhpsdr
 //
-static void filePath(char* sOut, const char* sIn, size_t len) {
+static void filePath(char *sOut, const char *sIn, size_t len) {
   int rc;
   // a) cwd/sIn
   snprintf(sOut, len, "%s", sIn);

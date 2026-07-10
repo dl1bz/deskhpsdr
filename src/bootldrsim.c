@@ -56,7 +56,7 @@
 #include <net/if_dl.h>
 #include <string.h>
 
-void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, unsigned char* data, int datalen);
+void sendRawCommand(pcap_t *handle, unsigned char hw[6], unsigned char command, unsigned char *data, int datalen);
 
 // HPSDR P1 bootloader command codes
 
@@ -78,7 +78,7 @@ void sendRawCommand(pcap_t* handle, unsigned char hw[6], unsigned char command, 
 #define HAVE_MAC_ADDRESS 0x03
 #define HAVE_IP_ADDRESS  0x04
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   int i, j, k, l;
   char *dev = NULL;                     // Which ethernet adapter to use
   char errbuf[PCAP_ERRBUF_SIZE];        // error message from pcap
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
       while (addr != NULL) {
         sa = addr->addr;
         if (sa->sa_family == AF_INET) {
-          (void) inet_ntop(AF_INET, (void*) & (((struct sockaddr_in*) sa)->sin_addr), string, 256);
+          (void) inet_ntop(AF_INET, (void *) & (((struct sockaddr_in *) sa)->sin_addr), string, 256);
           if (sscanf(string, "%d.%d.%d.%d", &i, &j, &k, &l) == 4) {
             myip[0] = i;
             myip[1] = j;
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
           }
         }
         if (sa->sa_family == AF_LINK) {
-          link = (struct sockaddr_dl*) sa->sa_data;
+          link = (struct sockaddr_dl *) sa->sa_data;
           unsigned char mac[link->sdl_alen];
           memcpy(mac, LLADDR(link), link->sdl_alen);
           if (link->sdl_alen == 6) {
@@ -296,7 +296,7 @@ int main(int argc, char** argv) {
   }
 }
 
-void sendRawCommand(pcap_t* handle, unsigned char dst[6], unsigned char command, unsigned char* data, int datalen) {
+void sendRawCommand(pcap_t *handle, unsigned char dst[6], unsigned char command, unsigned char *data, int datalen) {
   unsigned char buffer[62];
   int i;
   if (datalen < 0 || datalen > 46) { datalen = 0; } // should not happen

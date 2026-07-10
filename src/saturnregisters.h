@@ -47,7 +47,7 @@
 //
 // protocol 2 handler for outgoing DDC I/Q data Packet from SDR
 //
-void *OutgoingDDCIQ(void* arg);
+void *OutgoingDDCIQ(void *arg);
 
 //
 // interface calls to get commands from PC settings
@@ -84,7 +84,7 @@ int CloseXDMADriver(void);
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAWriteToFPGA(int fd, unsigned char* SrcData, uint32_t Length, uint32_t AXIAddr);
+int DMAWriteToFPGA(int fd, unsigned char *SrcData, uint32_t Length, uint32_t AXIAddr);
 
 //
 // initiate a DMA from the FPGA with specified parameters
@@ -94,7 +94,7 @@ int DMAWriteToFPGA(int fd, unsigned char* SrcData, uint32_t Length, uint32_t AXI
 // Length: number of bytes to copy
 // AXIAddr: offset address in the FPGA window
 //
-int DMAReadFromFPGA(int fd, unsigned char* DestData, uint32_t Length, uint32_t AXIAddr);
+int DMAReadFromFPGA(int fd, unsigned char *DestData, uint32_t Length, uint32_t AXIAddr);
 
 //
 // single 32 bit register read, from AXI-Lite bus

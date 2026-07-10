@@ -138,7 +138,7 @@ static void on_errdlg_response(GtkDialog *dlg, gint response_id, gpointer user_d
   }
 }
 
-static void gui_show_error_dialog(const char* msg) {
+static void gui_show_error_dialog(const char *msg) {
   GtkWidget *dlg = gtk_message_dialog_new(
                            NULL,
                            GTK_DIALOG_MODAL,
@@ -171,7 +171,7 @@ static int check_file(int p) {
   }
 }
 
-void audioSaveProfile(const char* filename) {
+void audioSaveProfile(const char *filename) {
   if (!filename || !*filename) {
     return;
   }
@@ -216,7 +216,7 @@ void audioSaveProfile(const char* filename) {
   saveProperties(filename);
 }
 
-static void audioLoadProfile(const char* filename) {
+static void audioLoadProfile(const char *filename) {
   int i = modeLSB;
   char pg_name[16];
   // snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
@@ -304,7 +304,7 @@ static void audioLoadProfile(const char* filename) {
 // erwartet: void audioSaveProfile(const char *filename);
 // erwartet: char workdir[];  (oder kompatibel)
 
-static char *ensure_prop_extension(const char* path) {
+static char *ensure_prop_extension(const char *path) {
   if (!path) { return NULL; }
   // Falls schon .prop
   if (g_str_has_suffix(path, ".prop")) {
@@ -1352,7 +1352,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->tune_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   tx_tune_drive_spin_signal_id = g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb),
-                                 GINT_TO_POINTER(TX_TUNE_DRIVE));
+    GINT_TO_POINTER(TX_TUNE_DRIVE));
   //---------------------------------------------------------------------------------------------------------------
   row++;
   col = 2;
