@@ -1884,8 +1884,8 @@ void rx_panadapter_update (RECEIVER *rx) {
     cairo_set_line_width (cr, 1);
     cairo_stroke (cr);
   }
-  if (display_info_bar && active_receiver->display_panadapter && !active_receiver->display_waterfall && rx->id == 0
-      && !rx_stack_horizontal) {
+  if (display_info_bar && active_receiver->display_panadapter && !active_receiver->display_waterfall
+      && rx->id == receivers - 1 && !rx_stack_horizontal) {
     // cairo_rectangle(cr, x, y, width, height) -> all as double()
     // X coordinate of the top left corner of the rectangle
     // Y coordinate to the top left corner of the rectangle
@@ -1899,8 +1899,8 @@ void rx_panadapter_update (RECEIVER *rx) {
     // cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     cairo_select_font_face (cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size (cr, DISPLAY_FONT_SIZE3);
-    cairo_move_to (cr, (mywidth / 2) + 100, myheight - 10);
+    cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
+    cairo_move_to (cr, mywidth - 390, myheight - 10);
 #else
     cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
     cairo_move_to (cr, mywidth / 2, myheight - 10);
@@ -1943,7 +1943,7 @@ void rx_panadapter_update (RECEIVER *rx) {
       check_and_run (1); // 0=no_log_output, 1=print_to_log
       // g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
 #if defined (__APPLE__)
-      cairo_move_to (cr, (mywidth / 4) - 60, myheight - 10);
+      cairo_move_to (cr, mywidth / 4, myheight - 10);
 #else
       cairo_move_to (cr, (mywidth / 4) - 130, myheight - 10);
 #endif

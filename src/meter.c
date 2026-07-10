@@ -417,7 +417,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         // cairo_move_to(cr, cx - 40, cx - radius + 34);
         cairo_move_to(cr, cx + 10, cx - radius + 64);
       }
-      if (current_rxlvl > -73) {
+      if (current_rxlvl > -69) {
         cairo_save(cr);
         cairo_set_source_rgba(cr, COLOUR_ALARM);
         cairo_show_text(cr, sf);
@@ -434,7 +434,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       // cairo_set_font_size(cr, 16);
       snprintf(sf, 32, "%s", dbm2smeter[get_SWert(current_rxlvl)]);
       cairo_move_to(cr, cx - 90, cx - radius + 64);
-      if (current_rxlvl > -73) {
+      if (current_rxlvl > -69) {
         cairo_save(cr);
         cairo_set_source_rgba(cr, COLOUR_ALARM);
         cairo_show_text(cr, sf);
