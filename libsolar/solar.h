@@ -26,6 +26,7 @@ typedef struct {
   char updated[64];
   char xray[16];
   char geomagfield[32];
+  float muf;
 } SolarData;
 
 SolarData fetch_solar_data(void);

@@ -30,6 +30,7 @@ extern int sunspots;
 extern int a_index;
 extern int k_index;
 extern int solar_flux;
+extern float muf;
 extern char geomagfield[32];
 extern char xray[16];
 

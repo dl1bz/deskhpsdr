@@ -577,7 +577,7 @@ extern void telnet_begin_newenviron(telnet_t *telnet, unsigned char type);
  *               TELNET_ENVIRON_VALUE.
  * \param string Variable name or value.
  */
-extern void telnet_newenviron_value(telnet_t* telnet, unsigned char type,
+extern void telnet_newenviron_value(telnet_t *telnet, unsigned char type,
                                     const char *string);
 
 /*!
@@ -629,7 +629,7 @@ extern void telnet_ttype_send(telnet_t *telnet);
  * \param telnet Telnet state tracker object.
  * \param ttype  Name of the terminal-type being sent.
  */
-extern void telnet_ttype_is(telnet_t *telnet, const char* ttype);
+extern void telnet_ttype_is(telnet_t *telnet, const char *ttype);
 
 /*!
  * \brief Send a ZMP command.

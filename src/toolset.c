@@ -56,6 +56,7 @@ int sunspots = -1;
 int a_index = -1;
 int k_index = -1;
 int solar_flux = -1;
+float muf = -1.0f;
 char geomagfield[32];
 char xray[16];
 
@@ -285,6 +286,7 @@ static void *solar_thread_func(void *arg) {
     solar_flux = -1;
     a_index    = -1;
     k_index    = -1;
+    muf        = -1.0f;
     geomagfield[0] = '\0';
     xray[0]       = '\0';
     g_mutex_unlock(&solar_data_mutex);
@@ -298,13 +300,14 @@ static void *solar_thread_func(void *arg) {
     solar_flux = (int) sd.solarflux;
     a_index    = sd.aindex;
     k_index    = sd.kindex;
+    muf        = sd.muf;
     g_strlcpy(geomagfield, sd.geomagfield, sizeof(geomagfield));
     g_strlcpy(xray,        sd.xray,        sizeof(xray));
     g_mutex_unlock(&solar_data_mutex);
     if (is_dbg) {
       t_print("fetch data from %s at %s\n", host, ts);
-      t_print("Sunspots:%d Flux:%d A:%d K:%d X:%s GMF:%s\n",
-              sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+      t_print("Sunspots:%d Flux:%d A:%d K:%d X:%s GMF:%s MUF3k:%.1f MHz\n",
+              sunspots, solar_flux, a_index, k_index, xray, geomagfield, muf);
     }
   } else {
     g_mutex_lock(&solar_data_mutex);
@@ -312,6 +315,7 @@ static void *solar_thread_func(void *arg) {
     solar_flux = -1;
     a_index    = -1;
     k_index    = -1;
+    muf        = -1.0f;
     geomagfield[0] = '\0';
     xray[0]       = '\0';
     g_mutex_unlock(&solar_data_mutex);

@@ -551,7 +551,7 @@ static int _environ_telnet(telnet_t *telnet, unsigned char type,
   }
   /* allocate argument array, bail on error */
   if ((values = (struct telnet_environ_t *)calloc(count,
-                sizeof(struct telnet_environ_t))) == 0) {
+    sizeof(struct telnet_environ_t))) == 0) {
     _error(telnet, __LINE__, __func__, TELNET_ENOMEM, 0,
            "calloc() failed: %s", strerror(errno));
     return 0;
@@ -616,7 +616,7 @@ static int _environ_telnet(telnet_t *telnet, unsigned char type,
 }
 
 /* process an MSSP subnegotiation buffer */
-static int _mssp_telnet(telnet_t *telnet, char* buffer, size_t size) {
+static int _mssp_telnet(telnet_t *telnet, char *buffer, size_t size) {
   telnet_event_t ev;
   struct telnet_environ_t *values;
   char *var = 0;
@@ -641,7 +641,7 @@ static int _mssp_telnet(telnet_t *telnet, char* buffer, size_t size) {
   }
   /* allocate argument array, bail on error */
   if ((values = (struct telnet_environ_t *)calloc(count,
-                sizeof(struct telnet_environ_t))) == 0) {
+    sizeof(struct telnet_environ_t))) == 0) {
     _error(telnet, __LINE__, __func__, TELNET_ENOMEM, 0,
            "calloc() failed: %s", strerror(errno));
     return 0;
@@ -684,7 +684,7 @@ static int _mssp_telnet(telnet_t *telnet, char* buffer, size_t size) {
 }
 
 /* parse ZMP command subnegotiation buffers */
-static int _zmp_telnet(telnet_t *telnet, const char* buffer, size_t size) {
+static int _zmp_telnet(telnet_t *telnet, const char *buffer, size_t size) {
   telnet_event_t ev;
   char **argv;
   const char *c;
@@ -712,7 +712,7 @@ static int _zmp_telnet(telnet_t *telnet, const char* buffer, size_t size) {
   }
   /* invoke event with our arguments */
   ev.type = TELNET_EV_ZMP;
-  ev.zmp.argv = (const char**)argv;
+  ev.zmp.argv = (const char **)argv;
   ev.zmp.argc = argc;
   telnet->eh(telnet, &ev, telnet->ud);
   /* clean up */
@@ -721,7 +721,7 @@ static int _zmp_telnet(telnet_t *telnet, const char* buffer, size_t size) {
 }
 
 /* parse TERMINAL-TYPE command subnegotiation buffers */
-static int _ttype_telnet(telnet_t *telnet, const char* buffer, size_t size) {
+static int _ttype_telnet(telnet_t *telnet, const char *buffer, size_t size) {
   telnet_event_t ev;
   /* make sure request is not empty */
   if (size == 0) {
@@ -808,7 +808,7 @@ static int _subnegotiate(telnet_t *telnet) {
 telnet_t *telnet_init(const telnet_telopt_t *telopts,
                       telnet_event_handler_t eh, unsigned char flags, void *user_data) {
   /* allocate structure */
-  struct telnet_t *telnet = (telnet_t*)calloc(1, sizeof(telnet_t));
+  struct telnet_t *telnet = (telnet_t *)calloc(1, sizeof(telnet_t));
   if (telnet == 0) {
     return 0;
   }
@@ -922,7 +922,7 @@ static void _process(telnet_t *telnet, const char *buffer, size_t size) {
       if (byte != '\n') {
         byte = '\r';
         ev.type = TELNET_EV_DATA;
-        ev.data.buffer = (char*)&byte;
+        ev.data.buffer = (char *)&byte;
         ev.data.size = 1;
         telnet->eh(telnet, &ev, telnet->ud);
         byte = buffer[i];
@@ -960,7 +960,7 @@ static void _process(telnet_t *telnet, const char *buffer, size_t size) {
       case TELNET_IAC:
         /* event */
         ev.type = TELNET_EV_DATA;
-        ev.data.buffer = (char*)&byte;
+        ev.data.buffer = (char *)&byte;
         ev.data.size = 1;
         telnet->eh(telnet, &ev, telnet->ud);
         /* state update */
@@ -1091,7 +1091,7 @@ void telnet_recv(telnet_t *telnet, const char *buffer,
     char inflate_buffer[1024];
     int rs;
     /* initialize zlib state */
-    telnet->z->next_in = (unsigned char*)buffer;
+    telnet->z->next_in = (unsigned char *)buffer;
     telnet->z->avail_in = (unsigned int)size;
     telnet->z->next_out = (unsigned char *)inflate_buffer;
     telnet->z->avail_out = sizeof(inflate_buffer);
@@ -1333,7 +1333,7 @@ void telnet_begin_compress2(telnet_t *telnet) {
    * the compress marker itself being compressed.
    */
   ev.type = TELNET_EV_SEND;
-  ev.data.buffer = (const char*)compress2;
+  ev.data.buffer = (const char *)compress2;
   ev.data.size = sizeof(compress2);
   telnet->eh(telnet, &ev, telnet->ud);
   /* notify app that compression was successfully enabled */
@@ -1356,7 +1356,7 @@ int telnet_vprintf(telnet_t *telnet, const char *fmt, va_list va) {
   rs = vsnprintf(buffer, sizeof(buffer), fmt, va_temp);
   va_end(va_temp);
   if (rs >= sizeof(buffer)) {
-    output = (char*)malloc(rs + 1);
+    output = (char *)malloc(rs + 1);
     if (output == 0) {
       _error(telnet, __LINE__, __func__, TELNET_ENOMEM, 0,
              "malloc() failed: %s", strerror(errno));
@@ -1422,7 +1422,7 @@ int telnet_raw_vprintf(telnet_t *telnet, const char *fmt, va_list va) {
   rs = vsnprintf(buffer, sizeof(buffer), fmt, va_temp);
   va_end(va_temp);
   if (rs >= sizeof(buffer)) {
-    output = (char*)malloc(rs + 1);
+    output = (char *)malloc(rs + 1);
     if (output == 0) {
       _error(telnet, __LINE__, __func__, TELNET_ENOMEM, 0,
              "malloc() failed: %s", strerror(errno));
@@ -1460,7 +1460,7 @@ void telnet_begin_newenviron(telnet_t *telnet, unsigned char cmd) {
 /* send a NEW-ENVIRON value */
 void telnet_newenviron_value(telnet_t *telnet, unsigned char type,
                              const char *string) {
-  telnet_send(telnet, (const char*)&type, 1);
+  telnet_send(telnet, (const char *)&type, 1);
   if (string != 0) {
     telnet_send(telnet, string, strlen(string));
   }
@@ -1475,7 +1475,7 @@ void telnet_ttype_send(telnet_t *telnet) {
 }
 
 /* send TERMINAL-TYPE IS command */
-void telnet_ttype_is(telnet_t *telnet, const char* ttype) {
+void telnet_ttype_is(telnet_t *telnet, const char *ttype) {
   static const unsigned char IS[] = { TELNET_IAC, TELNET_SB,
                                       TELNET_TELOPT_TTYPE, TELNET_TTYPE_IS
                                     };
@@ -1528,6 +1528,6 @@ void telnet_begin_zmp(telnet_t *telnet, const char *cmd) {
 }
 
 /* send a ZMP argument */
-void telnet_zmp_arg(telnet_t *telnet, const char* arg) {
+void telnet_zmp_arg(telnet_t *telnet, const char *arg) {
   telnet_send(telnet, arg, strlen(arg) + 1);
 }

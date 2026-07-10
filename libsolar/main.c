@@ -30,5 +30,6 @@ int main() {
   printf("  A-Index:    %d\n", sd.aindex);
   printf("  K-Index:    %d\n", sd.kindex);
   printf("  Updated:    %s\n", sd.updated);
+  printf("  MUF(3000):  %.1f MHz\n", sd.muf);
   return 0;
 }

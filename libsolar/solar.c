@@ -20,10 +20,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
+#include <libxml/HTMLparser.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-#define URL "https://www.hamqsl.com/solarxml.php"
+#define SOLAR_URL "https://www.hamqsl.com/solarxml.php"
+#define MUF_URL "https://www.ionosonde.iap-kborn.de/ionogram.htm"
 
 struct MemoryStruct {
   char *memory;
@@ -42,9 +44,74 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
   return total;
 }
 
+
+static float parse_muf3000(const char *html, size_t size) {
+  htmlDocPtr doc = htmlReadMemory(html, (int)size, MUF_URL, NULL,
+                                  HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_NONET);
+  if (!doc) { return -1.0f; }
+  xmlNode *root = xmlDocGetRootElement(doc);
+  xmlChar *content = root ? xmlNodeGetContent(root) : NULL;
+  float muf = -1.0f;
+  if (content) {
+    const char *marker = strstr((const char *)content, "MUF(3000)F2");
+    if (marker) {
+      marker = strstr(marker, "[MHz]");
+      if (marker) {
+        marker += strlen("[MHz]");
+        while (*marker == ' ' || *marker == '\t' || *marker == '\r' || *marker == '\n') { marker++; }
+        char *end = NULL;
+        float value = strtof(marker, &end);
+        if (end != marker && value > 0.0f && value < 100.0f) { muf = value; }
+      }
+    }
+    xmlFree(content);
+  }
+  xmlFreeDoc(doc);
+  return muf;
+}
+
+static float fetch_muf_data(void) {
+  float muf = -1.0f;
+  struct MemoryStruct chunk = {malloc(1), 0};
+  if (!chunk.memory) {
+    fprintf(stderr, "fetch_muf_data: memory error\n");
+    return muf;
+  }
+  CURL *curl = curl_easy_init();
+  if (!curl) {
+    fprintf(stderr, "fetch_muf_data: curl init error\n");
+    free(chunk.memory);
+    return muf;
+  }
+  curl_easy_setopt(curl, CURLOPT_URL, MUF_URL);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "deskHPSDR");
+  curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+  curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+  CURLcode res = curl_easy_perform(curl);
+  if (res != CURLE_OK) {
+    fprintf(stderr, "fetch_muf_data: curl error %d: %s\n", (int)res, curl_easy_strerror(res));
+    goto cleanup;
+  }
+  long response_code;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+  if (response_code != 200) {
+    fprintf(stderr, "fetch_muf_data: HTTP error %ld\n", response_code);
+    goto cleanup;
+  }
+  muf = parse_muf3000(chunk.memory, chunk.size);
+cleanup:
+  curl_easy_cleanup(curl);
+  free(chunk.memory);
+  return muf;
+}
+
 SolarData fetch_solar_data(void) {
   SolarData data = {0};
   data.sunspots = -1; // Errorindicator
+  data.muf = -1.0f;
   struct MemoryStruct chunk = {malloc(1), 0};
   if (!chunk.memory) {
     fprintf(stderr, "Memory Error\n");
@@ -57,7 +124,7 @@ SolarData fetch_solar_data(void) {
     return data;
   }
   // curl_global_init(CURL_GLOBAL_ALL);  // call only one time per program run -> moved to main.c
-  curl_easy_setopt(curl, CURLOPT_URL, URL);
+  curl_easy_setopt(curl, CURLOPT_URL, SOLAR_URL);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -110,6 +177,7 @@ SolarData fetch_solar_data(void) {
 cleanup:
   curl_easy_cleanup(curl);
   free(chunk.memory);
+  data.muf = fetch_muf_data();
   // curl_global_cleanup();  call only one time per program run -> moved to exit_menu.c
   return data;
 }
