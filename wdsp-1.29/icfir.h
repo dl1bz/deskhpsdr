@@ -47,7 +47,7 @@ typedef struct _icfir {
   FIRCORE p;
 } icfir, *ICFIR;
 
-extern ICFIR create_icfir (int run, int size, int nc, int mp, double* in, double* out, int runrate, int cicrate,
+extern ICFIR create_icfir (int run, int size, int nc, int mp, double *in, double *out, int runrate, int cicrate,
                            int DD, int R, int Pairs, double cutoff, int xtype, double xbw, int wintype);
 
 extern void destroy_icfir (ICFIR a);
@@ -56,7 +56,7 @@ extern void flush_icfir (ICFIR a);
 
 extern void xicfir (ICFIR a);
 
-extern void setBuffers_icfir (ICFIR a, double* in, double* out);
+extern void setBuffers_icfir (ICFIR a, double *in, double *out);
 
 extern void setSamplerate_icfir (ICFIR a, int rate);
 

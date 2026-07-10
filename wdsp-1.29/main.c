@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-void wdspmain(void* pargs) {
+void wdspmain(void *pargs) {
 #if defined(_WIN32)
   DWORD taskIndex = 0;
   HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);

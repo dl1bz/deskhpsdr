@@ -79,7 +79,7 @@ void calc_pulse(GEN a) {
   if (a->pulse.pnoff < 0) { a->pulse.pnoff = 0; }
   a->pulse.pcount = a->pulse.pnoff;
   a->pulse.state = 0;
-  a->pulse.ctrans = (double*) malloc0((a->pulse.pntrans + 1) * sizeof(double));
+  a->pulse.ctrans = (double *) malloc0((a->pulse.pntrans + 1) * sizeof(double));
   delta = PI / (double)a->pulse.pntrans;
   theta = 0.0;
   for (i = 0; i <= a->pulse.pntrans; i++) {
@@ -106,7 +106,7 @@ void calc_ttpulse(GEN a) {
   if (a->ttpulse.pnoff < 0) { a->ttpulse.pnoff = 0; }
   a->ttpulse.pcount = a->ttpulse.pnoff;
   a->ttpulse.state = 0;
-  a->ttpulse.ctrans = (double*)malloc0((a->ttpulse.pntrans + 1) * sizeof(double));
+  a->ttpulse.ctrans = (double *)malloc0((a->ttpulse.pntrans + 1) * sizeof(double));
   delta = PI / (double)a->ttpulse.pntrans;
   theta = 0.0;
   for (i = 0; i <= a->ttpulse.pntrans; i++) {
@@ -130,7 +130,7 @@ void decalc_gen(GEN a) {
   _aligned_free(a->pulse.ctrans);
 }
 
-GEN create_gen(int run, int size, double* in, double* out, int rate, int mode) {
+GEN create_gen(int run, int size, double *in, double *out, int rate, int mode) {
   GEN a = (GEN) malloc0(sizeof(gen));
   a->run = run;
   a->size = size;
@@ -388,12 +388,12 @@ void xgen(GEN a) {
           case UP:
             if (a->ttpulse.IQout) {
               a->out[2 * i + 0] = +(a->ttpulse.mag1 * cosphase1 + a->ttpulse.mag2 * cosphase2) * a->ttpulse.ctrans[a->ttpulse.pntrans
-                                  - a->ttpulse.pcount];
+                - a->ttpulse.pcount];
               a->out[2 * i + 1] = -(a->ttpulse.mag1 * sinphase1 + a->ttpulse.mag2 * sinphase2) * a->ttpulse.ctrans[a->ttpulse.pntrans
-                                  - a->ttpulse.pcount];
+                - a->ttpulse.pcount];
             } else {
               a->out[2 * i + 0] = +(a->ttpulse.mag1 * cosphase1 + a->ttpulse.mag2 * cosphase2) * a->ttpulse.ctrans[a->ttpulse.pntrans
-                                  - a->ttpulse.pcount];
+                - a->ttpulse.pcount];
               a->out[2 * i + 1] = 0.0;
             }
             if (--a->ttpulse.pcount == 0) {
@@ -459,7 +459,7 @@ void xgen(GEN a) {
   }
 }
 
-void setBuffers_gen(GEN a, double* in, double* out) {
+void setBuffers_gen(GEN a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

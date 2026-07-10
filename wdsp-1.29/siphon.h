@@ -53,7 +53,7 @@ typedef struct _siphon {
   int *alloc_disp;      // vector of 'disp' identifiers for the additional allocated disps
 } siphon, *SIPHON;
 
-extern SIPHON create_siphon (int run, int position, int mode, int disp, int insize, double* in, int sipsize,
+extern SIPHON create_siphon (int run, int position, int mode, int disp, int insize, double *in, int sipsize,
                              int fftsize, int specmode);
 
 extern void destroy_siphon (SIPHON a);
@@ -62,28 +62,28 @@ extern void flush_siphon (SIPHON a);
 
 extern void xsiphon (SIPHON a, int pos);
 
-extern void setBuffers_siphon (SIPHON a, double* in);
+extern void setBuffers_siphon (SIPHON a, double *in);
 
 extern void setSamplerate_siphon (SIPHON a, int rate);
 
 extern void setSize_siphon (SIPHON a, int size);
 
-extern __declspec (dllexport) void TXASetSipAllocDisps (int channel, int n_alloc_disps, int* alloc_run,
+extern __declspec (dllexport) void TXASetSipAllocDisps (int channel, int n_alloc_disps, int *alloc_run,
     int *alloc_disp);
 
 // RXA Properties
 
-extern __declspec (dllexport) void RXAGetaSipF  (int channel, float* out, int size);
+extern __declspec (dllexport) void RXAGetaSipF  (int channel, float *out, int size);
 
-extern __declspec (dllexport) void RXAGetaSipF1 (int channel, float* out, int size);
+extern __declspec (dllexport) void RXAGetaSipF1 (int channel, float *out, int size);
 
 // TXA Properties
 
-extern __declspec (dllexport) void TXAGetaSipF  (int channel, float* out, int size);
+extern __declspec (dllexport) void TXAGetaSipF  (int channel, float *out, int size);
 
-extern __declspec (dllexport) void TXAGetaSipF1 (int channel, float* out, int size);
+extern __declspec (dllexport) void TXAGetaSipF1 (int channel, float *out, int size);
 
-extern __declspec (dllexport) void TXAGetSpecF1 (int channel, float* out);
+extern __declspec (dllexport) void TXAGetSpecF1 (int channel, float *out);
 
 // Calls for External Use
 
@@ -92,7 +92,7 @@ extern __declspec (dllexport) void create_siphonEXT (int id, int run, int insize
 
 extern __declspec (dllexport) void destroy_siphonEXT (int id);
 
-extern __declspec (dllexport) void xsiphonEXT (int id, double* buff);
+extern __declspec (dllexport) void xsiphonEXT (int id, double *buff);
 
 extern __declspec (dllexport) void SetSiphonInsize (int id, int size);
 

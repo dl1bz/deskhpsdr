@@ -32,12 +32,12 @@ void calc_fmd(FMD a) {
   a->omega_max = TWOPI * a->fmax / a->rate;
   a->g1 = 1.0 - exp(-2.0 * a->omegaN * a->zeta / a->rate);
   a->g2 = -a->g1 + 2.0 * (1 - exp(-a->omegaN * a->zeta / a->rate) * cos(a->omegaN / a->rate * sqrt(
-                                  1.0 - a->zeta * a->zeta)));
+            1.0 - a->zeta * a->zeta)));
   a->phs = 0.0;
   a->fil_out = 0.0;
   a->omega = 0.0;
   a->pllpole = a->omegaN * sqrt(2.0 * a->zeta * a->zeta + 1.0 + sqrt((2.0 * a->zeta * a->zeta + 1.0) *
-                                (2.0 * a->zeta * a->zeta + 1.0) + 1)) / TWOPI;
+    (2.0 * a->zeta * a->zeta + 1.0) + 1)) / TWOPI;
   // dc removal
   a->mtau = exp(-1.0 / (a->rate * a->tau));
   a->onem_mtau = 1.0 - a->mtau;
@@ -78,7 +78,7 @@ void decalc_fmd(FMD a) {
   destroy_snotch(a->sntch);
 }
 
-FMD create_fmd(int run, int size, double* in, double* out, int rate, double deviation, double f_low, double f_high,
+FMD create_fmd(int run, int size, double *in, double *out, int rate, double deviation, double f_low, double f_high,
                double fmin, double fmax, double zeta, double omegaN, double tau, double afgain, int sntch_run, double ctcss_freq,
                int nc_de, int mp_de, int nc_aud, int mp_aud) {
   FMD a = (FMD) malloc0(sizeof(fmd));
@@ -108,7 +108,7 @@ FMD create_fmd(int run, int size, double* in, double* out, int rate, double devi
   a->lim_gain = 2.5;
   calc_fmd(a);
   // de-emphasis filter
-  a->audio = (double*) malloc0(a->size * sizeof(complex));
+  a->audio = (double *) malloc0(a->size * sizeof(complex));
   impulse = fc_impulse(a->nc_de, a->f_low, a->f_high, +20.0 * log10(a->f_high / a->f_low), 0.0, 1, a->rate,
                        1.0 / (2.0 * a->size), 0, 0);
   a->pde = create_fircore(a->size, a->audio, a->out, a->nc_de, a->mp_de, impulse);
@@ -183,7 +183,7 @@ void xfmd(FMD a) {
   }
 }
 
-void setBuffers_fmd(FMD a, double* in, double* out) {
+void setBuffers_fmd(FMD a, double *in, double *out) {
   decalc_fmd(a);
   a->in = in;
   a->out = out;
@@ -216,7 +216,7 @@ void setSize_fmd(FMD a, int size) {
   _aligned_free(a->audio);
   a->size = size;
   calc_fmd(a);
-  a->audio = (double*) malloc0(a->size * sizeof(complex));
+  a->audio = (double *) malloc0(a->size * sizeof(complex));
   // de-emphasis filter
   destroy_fircore(a->pde);
   impulse = fc_impulse(a->nc_de, a->f_low, a->f_high, +20.0 * log10(a->f_high / a->f_low), 0.0, 1, a->rate,

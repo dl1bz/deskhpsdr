@@ -51,18 +51,18 @@ typedef struct _syncb {
   CRITICAL_SECTION csIN;            // used to block input while parameters are updated or buffers flushed
 } syncb, *SYNCB;
 
-extern SYNCB create_syncbuffs (int accept, int nstreams, int max_insize, int max_outsize, int outsize, double** out,
+extern SYNCB create_syncbuffs (int accept, int nstreams, int max_insize, int max_outsize, int outsize, double **out,
                                void (*exf)(void));
 
 extern void destroy_syncbuffs (SYNCB a);
 
 extern void flush_syncbuffs (SYNCB a);
 
-extern void Syncbound (SYNCB a, int nsamples, double** in);
+extern void Syncbound (SYNCB a, int nsamples, double **in);
 
 extern void syncbdata (SYNCB a);
 
-extern void syncb_main (void* p);
+extern void syncb_main (void *p);
 
 extern void SetSYNCBRingOutsize (SYNCB a, int size);
 
@@ -89,7 +89,7 @@ typedef struct _dumfilt {
   double *ring;               // pointer to ring buffer
 } dumfilt, *DUMFILT;
 
-extern DUMFILT create_dumfilt (int run, int delay, int opsize, double* in, double* out);
+extern DUMFILT create_dumfilt (int run, int delay, int opsize, double *in, double *out);
 
 extern void destroy_dumfilt (DUMFILT a);
 

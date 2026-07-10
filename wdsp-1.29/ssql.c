@@ -32,7 +32,7 @@ warren@pratt.one
 *                                                   *
 ********************************************************************************************************/
 
-FTOV create_ftov(int run, int size, int rate, int rsize, double fmax, double* in, double* out) {
+FTOV create_ftov(int run, int size, int rate, int rsize, double fmax, double *in, double *out) {
   FTOV a = (FTOV) malloc0(sizeof(ftov));
   a->run = run;
   a->size = size;
@@ -42,7 +42,7 @@ FTOV create_ftov(int run, int size, int rate, int rsize, double fmax, double* in
   a->in = in;
   a->out = out;
   a->eps = 0.01;
-  a->ring = (int*) malloc0(a->rsize * sizeof(int));
+  a->ring = (int *) malloc0(a->rsize * sizeof(int));
   a->rptr = 0;
   a->inlast = 0.0;
   a->rcount = 0;
@@ -118,15 +118,15 @@ void compute_ssql_slews(SSQL a) {
 }
 
 void calc_ssql(SSQL a) {
-  a->b1 = (double*) malloc0(a->size * sizeof(complex));
+  a->b1 = (double *) malloc0(a->size * sizeof(complex));
   a->dcbl = create_cbl(1, a->size, a->in, a->b1, 0, a->rate, 0.02);
-  a->ibuff = (double*) malloc0(a->size * sizeof(double));
-  a->ftovbuff = (double*) malloc0(a->size * sizeof(double));
+  a->ibuff = (double *) malloc0(a->size * sizeof(double));
+  a->ftovbuff = (double *) malloc0(a->size * sizeof(double));
   a->cvtr = create_ftov(1, a->size, a->rate, a->ftov_rsize, a->ftov_fmax, a->ibuff, a->ftovbuff);
-  a->lpbuff = (double*) malloc0(a->size * sizeof(double));
+  a->lpbuff = (double *) malloc0(a->size * sizeof(double));
   a->filt = create_dbqlp(1, a->size, a->ftovbuff, a->lpbuff, a->rate, 11.3, 1.0, 1.0, 1);
-  a->wdbuff = (int*) malloc0(a->size * sizeof(int));
-  a->tr_signal = (int*) malloc0(a->size * sizeof(int));
+  a->wdbuff = (int *) malloc0(a->size * sizeof(int));
+  a->tr_signal = (int *) malloc0(a->size * sizeof(int));
   // window detector
   a->wdmult = exp(-1.0 / (a->rate * a->wdtau));
   a->wdaverage = 0.0;
@@ -137,8 +137,8 @@ void calc_ssql(SSQL a) {
   // level change
   a->ntup = (int)(a->tup * a->rate);
   a->ntdown = (int)(a->tdown * a->rate);
-  a->cup = (double*) malloc0((a->ntup + 1) * sizeof(double));
-  a->cdown = (double*) malloc0((a->ntdown + 1) * sizeof(double));
+  a->cup = (double *) malloc0((a->ntup + 1) * sizeof(double));
+  a->cdown = (double *) malloc0((a->ntdown + 1) * sizeof(double));
   compute_ssql_slews(a);
   // control
   a->state = 0;
@@ -159,7 +159,7 @@ void decalc_ssql(SSQL a) {
   _aligned_free(a->cup);
 }
 
-SSQL create_ssql(int run, int size, double* in, double* out, int rate, double tup, double tdown,
+SSQL create_ssql(int run, int size, double *in, double *out, int rate, double tup, double tdown,
                  double muted_gain, double tau_mute, double tau_unmute, double wthresh, double tr_thresh, int rsize, double fmax) {
   SSQL a = (SSQL) malloc0(sizeof(ssql));
   a->run = run;
@@ -277,7 +277,7 @@ void xssql(SSQL a) {
   }
 }
 
-void setBuffers_ssql(SSQL a, double* in, double* out) {
+void setBuffers_ssql(SSQL a, double *in, double *out) {
   decalc_ssql(a);
   a->in = in;
   a->out = out;

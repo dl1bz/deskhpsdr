@@ -57,7 +57,7 @@ typedef struct _resample {
 } resample, *RESAMPLE;
 
 __declspec (dllexport)
-RESAMPLE create_resample (int run, int size, double* in, double* out, int in_rate, int out_rate, double fc, int ncoef,
+RESAMPLE create_resample (int run, int size, double *in, double *out, int in_rate, int out_rate, double fc, int ncoef,
                           double gain);
 
 __declspec (dllexport)
@@ -69,7 +69,7 @@ void flush_resample (RESAMPLE a);
 __declspec (dllexport)
 int xresample (RESAMPLE a);
 
-extern void setBuffers_resample (RESAMPLE a, double* in, double* out);
+extern void setBuffers_resample (RESAMPLE a, double *in, double *out);
 
 extern void setSize_resample(RESAMPLE a, int size);
 
@@ -108,7 +108,7 @@ typedef struct _resampleF {
   int phnum;      // phase number
 } resampleF, *RESAMPLEF;
 
-extern RESAMPLEF create_resampleF (int run, int size, float* in, float* out, int in_rate, int out_rate);
+extern RESAMPLEF create_resampleF (int run, int size, float *in, float *out, int in_rate, int out_rate);
 
 extern void destroy_resampleF (RESAMPLEF a);
 

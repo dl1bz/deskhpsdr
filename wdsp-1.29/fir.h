@@ -24,21 +24,21 @@ warren@pratt.one
 
 */
 
-extern double *fftcv_mults(int NM, double* c_impulse);
+extern double *fftcv_mults(int NM, double *c_impulse);
 
-extern double *fir_fsamp_odd(int N, double* A, int rtype, double scale, int wintype);
+extern double *fir_fsamp_odd(int N, double *A, int rtype, double scale, int wintype);
 
-extern double *fir_fsamp(int N, double* A, int rtype, double scale, int wintype);
+extern double *fir_fsamp(int N, double *A, int rtype, double scale, int wintype);
 
 extern double *fir_bandpass(int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
                             double scale);
 
 extern double *get_fsamp_window(int N, int wintype);
 
-extern double *fir_read(int N, const char* filename, int rtype, double scale);
+extern double *fir_read(int N, const char *filename, int rtype, double scale);
 
-extern void analytic(int N, double* in, double* out);
+extern void analytic(int N, double *in, double *out);
 
-extern void mp_imp(int N, double* fir, double* mpfir, int pfactor, int polarity);
+extern void mp_imp(int N, double *fir, double *mpfir, int pfactor, int polarity);
 
 extern double *zff_impulse(int nc, double scale);

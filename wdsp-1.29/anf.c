@@ -121,7 +121,7 @@ void flush_anf(ANF a) {
   a->in_idx = 0;
 }
 
-void setBuffers_anf(ANF a, double* in, double* out) {
+void setBuffers_anf(ANF a, double *in, double *out) {
   a->in_buff = in;
   a->out_buff = out;
 }

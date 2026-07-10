@@ -78,7 +78,7 @@ typedef struct _fmd {
   double lim_pre_gain;
 } fmd, *FMD;
 
-extern FMD create_fmd (int run, int size, double* in, double* out, int rate, double deviation,
+extern FMD create_fmd (int run, int size, double *in, double *out, int rate, double deviation,
                        double f_low, double f_high, double fmin, double fmax, double zeta, double omegaN, double tau,
                        double afgain, int sntch_run, double ctcss_freq, int nc_de, int mp_de, int nc_aud, int mp_aud);
 
@@ -88,7 +88,7 @@ extern void flush_fmd (FMD a);
 
 extern void xfmd (FMD a);
 
-extern void setBuffers_fmd (FMD a, double* in, double* out);
+extern void setBuffers_fmd (FMD a, double *in, double *out);
 
 extern void setSamplerate_fmd (FMD a, int rate);
 

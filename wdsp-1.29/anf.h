@@ -81,7 +81,7 @@ extern void flush_anf (ANF a);
 
 extern void xanf (ANF a, int position);
 
-extern void setBuffers_anf (ANF a, double* in, double* out);
+extern void setBuffers_anf (ANF a, double *in, double *out);
 
 extern void setSamplerate_anf (ANF a, int rate);
 

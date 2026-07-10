@@ -32,43 +32,43 @@ void size_calcc(CALCC a) {
   int i;
   a->nsamps = a->ints * a->spi;
   a->tsamps = a->nsamps + a->npsamps;
-  a->env_TX = (double*)malloc0(a->nsamps * sizeof(double));
-  a->env_RX = (double*)malloc0(a->nsamps * sizeof(double));
-  a->x = (double*)malloc0(a->tsamps * sizeof(double));
-  a->ym = (double*)malloc0(a->tsamps * sizeof(double));
-  a->yc = (double*)malloc0(a->tsamps * sizeof(double));
-  a->ys = (double*)malloc0(a->tsamps * sizeof(double));
-  a->cat = (double*)malloc0(4 * a->nsamps * sizeof(double));
-  a->t  = (double*) malloc0((a->ints + 1) * sizeof(double));
-  a->tmap = (double*) malloc0((a->ints + 1) * sizeof(double));
+  a->env_TX = (double *)malloc0(a->nsamps * sizeof(double));
+  a->env_RX = (double *)malloc0(a->nsamps * sizeof(double));
+  a->x = (double *)malloc0(a->tsamps * sizeof(double));
+  a->ym = (double *)malloc0(a->tsamps * sizeof(double));
+  a->yc = (double *)malloc0(a->tsamps * sizeof(double));
+  a->ys = (double *)malloc0(a->tsamps * sizeof(double));
+  a->cat = (double *)malloc0(4 * a->nsamps * sizeof(double));
+  a->t  = (double *) malloc0((a->ints + 1) * sizeof(double));
+  a->tmap = (double *) malloc0((a->ints + 1) * sizeof(double));
   for (i = 0; i < a->ints + 1; i++) {
     a->t[i] = (double)i / (double)a->ints;
   }
-  a->cm = (double*) malloc0(a->ints * 4 * sizeof(double));
-  a->cc = (double*) malloc0(a->ints * 4 * sizeof(double));
-  a->cs = (double*) malloc0(a->ints * 4 * sizeof(double));
-  a->cm_old = (double*) malloc0(a->ints * 4 * sizeof(double));
-  a->rxs = (double*) malloc0(a->nsamps * sizeof(complex));
-  a->txs = (double*) malloc0(a->nsamps * sizeof(complex));
+  a->cm = (double *) malloc0(a->ints * 4 * sizeof(double));
+  a->cc = (double *) malloc0(a->ints * 4 * sizeof(double));
+  a->cs = (double *) malloc0(a->ints * 4 * sizeof(double));
+  a->cm_old = (double *) malloc0(a->ints * 4 * sizeof(double));
+  a->rxs = (double *) malloc0(a->nsamps * sizeof(complex));
+  a->txs = (double *) malloc0(a->nsamps * sizeof(complex));
   a->ccbld = create_builder(a->nsamps + a->npsamps, a->ints);
-  a->ctrl.cpi = (int*) malloc0(a->ints * sizeof(int));
-  a->ctrl.sindex = (int*) malloc0(a->ints * sizeof(int));
-  a->ctrl.sbase = (int*) malloc0(a->ints * sizeof(int));
+  a->ctrl.cpi = (int *) malloc0(a->ints * sizeof(int));
+  a->ctrl.sindex = (int *) malloc0(a->ints * sizeof(int));
+  a->ctrl.sbase = (int *) malloc0(a->ints * sizeof(int));
   for (i = 0; i < a->ints; i++) {
     a->ctrl.cpi[i] = 0;
     a->ctrl.sindex[i] = 0;
     a->ctrl.sbase[i] = i * a->spi;
   }
-  a->disp.x  = (double*) malloc0(a->nsamps * sizeof(double));
-  a->disp.ym = (double*) malloc0(a->nsamps * sizeof(double));
-  a->disp.yc = (double*) malloc0(a->nsamps * sizeof(double));
-  a->disp.ys = (double*) malloc0(a->nsamps * sizeof(double));
-  a->disp.cm = (double*) malloc0(a->ints * 4 * sizeof(double));
-  a->disp.cc = (double*) malloc0(a->ints * 4 * sizeof(double));
-  a->disp.cs = (double*) malloc0(a->ints * 4 * sizeof(double));
-  a->util.pm = (double*) malloc0(4 * a->util.ints * sizeof(double));
-  a->util.pc = (double*) malloc0(4 * a->util.ints * sizeof(double));
-  a->util.ps = (double*) malloc0(4 * a->util.ints * sizeof(double));
+  a->disp.x  = (double *) malloc0(a->nsamps * sizeof(double));
+  a->disp.ym = (double *) malloc0(a->nsamps * sizeof(double));
+  a->disp.yc = (double *) malloc0(a->nsamps * sizeof(double));
+  a->disp.ys = (double *) malloc0(a->nsamps * sizeof(double));
+  a->disp.cm = (double *) malloc0(a->ints * 4 * sizeof(double));
+  a->disp.cc = (double *) malloc0(a->ints * 4 * sizeof(double));
+  a->disp.cs = (double *) malloc0(a->ints * 4 * sizeof(double));
+  a->util.pm = (double *) malloc0(4 * a->util.ints * sizeof(double));
+  a->util.pc = (double *) malloc0(4 * a->util.ints * sizeof(double));
+  a->util.ps = (double *) malloc0(4 * a->util.ints * sizeof(double));
 }
 
 void desize_calcc(CALCC a) {
@@ -124,8 +124,8 @@ CALCC create_calcc(int channel, int runcal, int size, int rate, int ints, int sp
   a->stbl = stbl;
   a->npsamps = npsamps;
   a->alpha = alpha;
-  a->info  = (int*) malloc0(16 * sizeof(int));
-  a->binfo = (int*) malloc0(16 * sizeof(int));
+  a->info  = (int *) malloc0(16 * sizeof(int));
+  a->binfo = (int *) malloc0(16 * sizeof(int));
   a->ctrl.state = 0;
   a->ctrl.reset = 0;
   a->ctrl.automode = 0;
@@ -163,21 +163,21 @@ CALCC create_calcc(int channel, int runcal, int size, int rate, int ints, int sp
   a->util.ints = a->ints;
   a->util.channel = a->channel;
   size_calcc(a);
-  a->temprx = (double*)malloc0(2048 * sizeof(complex));                           // remove later
-  a->temptx = (double*)malloc0(2048 * sizeof(complex));                           // remove later
+  a->temprx = (double *)malloc0(2048 * sizeof(complex));                          // remove later
+  a->temptx = (double *)malloc0(2048 * sizeof(complex));                          // remove later
   // correction save and restore threads
   InterlockedBitTestAndReset(&a->savecorr_bypass, 0);
   a->Sem_SaveCorr = CreateSemaphore(0, 0, 1, 0);
-  _beginthread(PSSaveCorrection, 0, (void*)a);
+  _beginthread(PSSaveCorrection, 0, (void *)a);
   InterlockedBitTestAndReset(&a->restcorr_bypass, 0);
   a->Sem_RestCorr = CreateSemaphore(0, 0, 1, 0);
-  _beginthread(PSRestoreCorrection, 0, (void*)a);
+  _beginthread(PSRestoreCorrection, 0, (void *)a);
   InterlockedBitTestAndReset(&a->calccorr_bypass, 0);
   a->Sem_CalcCorr = CreateSemaphore(0, 0, 1, 0);
-  _beginthread(doPSCalcCorrection, 0, (void*)a);
+  _beginthread(doPSCalcCorrection, 0, (void *)a);
   InterlockedBitTestAndReset(&a->turnoff_bypass, 0);
   a->Sem_TurnOff = CreateSemaphore(0, 0, 1, 0);
-  _beginthread(doPSTurnoff, 0, (void*)a);
+  _beginthread(doPSTurnoff, 0, (void *)a);
   return a;
 }
 
@@ -254,12 +254,12 @@ void scheck(CALCC a) {
   for (i = 4; i < a->ints; i++)
     if (fabs(a->cm[4 * i + 0] - a->cm_old[4 * i + 0]) > diff_thresh) { a->binfo[6] |= 0x0040; }
   xold = a->cm_old[4 * intm1 + 0] + dx * (a->cm_old[4 * intm1 + 1] + dx * (a->cm_old[4 * intm1 + 2] + dx * a->cm_old[4 *
-                                          intm1 + 3]));
+    intm1 + 3]));
   if (fabs(x - xold) > diff_thresh) { a->binfo[6] |= 0x0040; }
   memcpy(a->cm_old, a->cm, a->ints * 4 * sizeof(double));
 }
 
-void rxscheck(int rints, double* tvec, double* coef, int* info) {
+void rxscheck(int rints, double *tvec, double *coef, int *info) {
   int i, j, k;
   int rintsm1 = rints - 1;
   double v, dx, out;
@@ -312,7 +312,7 @@ void calc(CALCC a) {
     rxscheck(rints, tvec, txrxcoefs, &a->binfo[7]);
     if ((a->binfo[0] == 0) && (a->binfo[7] == 0)) {
       rx_scale = 1.0 / (txrxcoefs[4 * ix + 0] + dx * (txrxcoefs[4 * ix + 1] + dx * (txrxcoefs[4 * ix + 2] + dx * txrxcoefs[4 *
-                        ix + 3])));
+        ix + 3])));
     } else {
       a->scOK = 0;
       goto cleanup;
@@ -428,7 +428,7 @@ cleanup:
   return;
 }
 
-void __cdecl doPSCalcCorrection(void* arg) {
+void __cdecl doPSCalcCorrection(void *arg) {
   CALCC a = (CALCC)arg;
   while (!InterlockedAnd(&a->calccorr_bypass, 0xffffffff)) {
     WaitForSingleObject(a->Sem_CalcCorr, INFINITE);
@@ -449,7 +449,7 @@ void __cdecl doPSCalcCorrection(void* arg) {
   InterlockedBitTestAndReset(&a->calccorr_bypass, 0);
 }
 
-void __cdecl doPSTurnoff(void* arg) {
+void __cdecl doPSTurnoff(void *arg) {
   CALCC a = (CALCC)arg;
   while (!InterlockedAnd(&a->turnoff_bypass, 0xffffffff)) {
     WaitForSingleObject(a->Sem_TurnOff, INFINITE);
@@ -475,7 +475,7 @@ enum _calcc_state {
   LTURNON
 };
 
-void __cdecl PSSaveCorrection(void* pargs) {
+void __cdecl PSSaveCorrection(void *pargs) {
   int i, k;
   CALCC a = (CALCC)pargs;
   while (!InterlockedAnd(&a->savecorr_bypass, 0xffffffff)) {
@@ -506,7 +506,7 @@ void __cdecl PSSaveCorrection(void* pargs) {
   InterlockedBitTestAndReset(&a->savecorr_bypass, 0);
 }
 
-void __cdecl PSRestoreCorrection(void* pargs) {
+void __cdecl PSRestoreCorrection(void *pargs) {
   int i, k;
   CALCC a = (CALCC)pargs;
   while (!InterlockedAnd(&a->restcorr_bypass, 0xffffffff)) {
@@ -546,7 +546,7 @@ void __cdecl PSRestoreCorrection(void* pargs) {
 ********************************************************************************************************/
 
 PORT
-void pscc(int channel, int size, double* tx, double* rx) {
+void pscc(int channel, int size, double *tx, double *rx) {
   int i, n, m;
   double env;
   CALCC a;
@@ -755,7 +755,7 @@ void pscc(int channel, int size, double* tx, double* rx) {
 }
 
 PORT
-void psccF(int channel, int size, float* Itxbuff, float* Qtxbuff, float* Irxbuff, float* Qrxbuff, int mox,
+void psccF(int channel, int size, float *Itxbuff, float *Qtxbuff, float *Irxbuff, float *Qrxbuff, int mox,
            int solidmox) {
   int i;
   CALCC a;
@@ -774,7 +774,7 @@ void psccF(int channel, int size, float* Itxbuff, float* Qtxbuff, float* Irxbuff
 }
 
 PORT
-void PSSaveCorr(int channel, char* filename) {
+void PSSaveCorr(int channel, char *filename) {
   CALCC a;
   int i = 0;
   EnterCriticalSection(&txa[channel].calcc.cs_update);
@@ -785,7 +785,7 @@ void PSSaveCorr(int channel, char* filename) {
 }
 
 PORT
-void PSRestoreCorr(int channel, char* filename) {
+void PSRestoreCorr(int channel, char *filename) {
   CALCC a;
   int i = 0;
   EnterCriticalSection(&txa[channel].calcc.cs_update);
@@ -823,7 +823,7 @@ void SetPSMox(int channel, int mox) {
 }
 
 PORT
-void GetPSInfo(int channel, int* info) {
+void GetPSInfo(int channel, int *info) {
   CALCC a;
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   a = txa[channel].calcc.p;
@@ -922,14 +922,14 @@ void SetPSHWPeak(int channel, double peak) {
 }
 
 PORT
-void GetPSHWPeak(int channel, double* peak) {
+void GetPSHWPeak(int channel, double *peak) {
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   *peak = 1.0 / txa[channel].calcc.p->hw_scale;
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
 }
 
 PORT
-void GetPSMaxTX(int channel, double* maxtx) {
+void GetPSMaxTX(int channel, double *maxtx) {
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   *maxtx = txa[channel].calcc.p->ctrl.env_maxtx;
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
@@ -943,7 +943,7 @@ void SetPSPtol(int channel, double ptol) {
 }
 
 PORT
-void GetPSDisp(int channel, double* x, double* ym, double* yc, double* ys, double* cm, double* cc, double* cs) {
+void GetPSDisp(int channel, double *x, double *ym, double *yc, double *ys, double *cm, double *cc, double *cs) {
   CALCC a = txa[channel].calcc.p;
   EnterCriticalSection(&a->disp.cs_disp);
   memcpy(x,  a->disp.x,  a->nsamps * sizeof(double));

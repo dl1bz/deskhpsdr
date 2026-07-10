@@ -36,13 +36,13 @@ double bessi0(double x) {
   if ((ax = fabs(x)) < 3.75) {
     y = x / 3.75,  y = y * y;
     ans = 1.0 + y * (3.5156229 + y * (3.0899424 +  y * (1.2067492
-                                      + y * (0.2659732 + y * (0.360768e-1 + y * 0.45813e-2)))));
+      + y * (0.2659732 + y * (0.360768e-1 + y * 0.45813e-2)))));
   } else {
     y = 3.75 / ax;
     ans = (exp(ax) / sqrt(ax)) * (0.39894228 + y * (0.1328592e-1
-                                  + y * (0.225319e-2 + y * (-0.157565e-2 + y * (0.916281e-2
-                                         + y * (-0.2057706e-1 + y * (0.2635537e-1 + y * (-0.1647633e-1
-                                           + y * 0.392377e-2))))))));
+      + y * (0.225319e-2 + y * (-0.157565e-2 + y * (0.916281e-2
+        + y * (-0.2057706e-1 + y * (0.2635537e-1 + y * (-0.1647633e-1
+          + y * 0.392377e-2))))))));
   }
   return ans;
 }
@@ -533,7 +533,7 @@ void stitch(int disp) {
   }
 }
 
-DWORD WINAPI spectra(void* pargs) {
+DWORD WINAPI spectra(void *pargs) {
   int i, j;
   int disp = ((int)(uintptr_t)pargs) >> 12;
   int ss = (((int)(uintptr_t)pargs) >> 4) & 255;
@@ -736,7 +736,7 @@ double GetDetectMaxBin(int disp) {
 *                                                   *
 ********************************************************************************************************/
 
-DWORD WINAPI Cspectra(void* pargs) {
+DWORD WINAPI Cspectra(void *pargs) {
   int i, j;
   int disp = ((int)(uintptr_t)pargs) >> 12;
   int ss = (((int)(uintptr_t)pargs) >> 4) & 255;
@@ -769,8 +769,8 @@ DWORD WINAPI Cspectra(void* pargs) {
     return 0;
   }
   if (InterlockedBitTestAndReset(&(a->snap[ss][LO]), 0)) {
-    memcpy((char*)(a->snap_buff[ss][LO]), (char*)(a->fft_out[ss][LO]) + trans_size, trans_size);
-    memcpy((char*)(a->snap_buff[ss][LO]) + trans_size, (char*)(a->fft_out[ss][LO]), trans_size);
+    memcpy((char *)(a->snap_buff[ss][LO]), (char *)(a->fft_out[ss][LO]) + trans_size, trans_size);
+    memcpy((char *)(a->snap_buff[ss][LO]) + trans_size, (char *)(a->fft_out[ss][LO]), trans_size);
     SetEvent(a->hSnapEvent[ss][LO]);
   }
   EnterCriticalSection(&(a->EliminateSection[ss]));
@@ -845,7 +845,7 @@ void interpolate(int disp, int set, double fmin, double fmax, int num_pixels) {
   return;
 }
 
-int build_interpolants(int disp, int set, int n, int m, double* x, double (*y)[dMAX_M]) {
+int build_interpolants(int disp, int set, int n, int m, double *x, double (*y)[dMAX_M]) {
   DP a = pdisp[disp];
   double dx[dMAX_N];
   double idx[dMAX_N];
@@ -916,7 +916,7 @@ int build_interpolants(int disp, int set, int n, int m, double* x, double (*y)[d
   return 0;
 }
 
-void __cdecl sendbuf(void* arg) {
+void __cdecl sendbuf(void *arg) {
   DP a = pdisp[(int)(uintptr_t)arg];
   while (!a->end_dispatcher) {
     for (a->ss = 0; a->ss < a->num_stitch; a->ss++)
@@ -926,9 +926,9 @@ void __cdecl sendbuf(void* arg) {
           a->IQO_idx[a->ss][a->LO] = a->IQout_index[a->ss][a->LO];
           InterlockedIncrement(a->pnum_threads);
           if (a->type == 0) {
-            QueueUserWorkItem(spectra, (void*)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0);
+            QueueUserWorkItem(spectra, (void *)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0);
           } else {
-            QueueUserWorkItem(Cspectra, (void*)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0);
+            QueueUserWorkItem(Cspectra, (void *)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0);
           }
           if ((a->IQout_index[a->ss][a->LO] += a->incr) >= a->bsize) {
             a->IQout_index[a->ss][a->LO] -= a->bsize;
@@ -985,7 +985,7 @@ void ResetPixelBuffers(int disp) {
       }
       break;
     default:
-      memset((void*)a->av_sum[i], 0, sizeof(double) * dMAX_PIXELS);
+      memset((void *)a->av_sum[i], 0, sizeof(double) * dMAX_PIXELS);
       break;
     }
     a->avail_frames[i] = 0;
@@ -1000,7 +1000,7 @@ void ResetPixelBuffers(int disp) {
     }
     LeaveCriticalSection(&a->PB_ControlsSection[i]);
   }
-  memset((void*)a->pre_av_out, 0, sizeof(double) * a->max_size * a->max_stitch);
+  memset((void *)a->pre_av_out, 0, sizeof(double) * a->max_size * a->max_stitch);
   LeaveCriticalSection(&a->ResampleSection);
   EnterCriticalSection(&a->StitchSection);
   for (i = 0; i < dMAX_STITCH; i++)
@@ -1126,10 +1126,10 @@ void SetAnalyzer(int disp,        // display identifier
     a->end_ss--;
   }
   a->pix_per_bin = (double)a->num_pixels / ((double)(a->num_stitch * (a->out_size - 1 - 2 * a->clip)) - a->fsclipL -
-                   a->fsclipH - 1.0);
+    a->fsclipH - 1.0);
   a->det_offset = -a->pix_per_bin * (a->fsclipL - floor(a->fsclipL));
   a->bin_per_pix = ((double)(a->num_stitch * (a->out_size - 1 - 2 * a->clip)) - 1.0 - a->fsclipL - a->fsclipH) / ((
-                           double)a->num_pixels - 1.0);
+            double)a->num_pixels - 1.0);
   for (i = 0; i < dMAX_STITCH; i++)
     for (j = 0; j < dMAX_NUM_FFT; j++) {
       a->input_busy[i][j] = 0;
@@ -1174,7 +1174,7 @@ void XCreateAnalyzer(int disp,
   a->max_size = m_size;
   a->max_num_fft = m_num_fft;
   a->max_stitch = m_stitch;
-  a->pnum_threads = (LONG*) malloc0(sizeof(LONG));
+  a->pnum_threads = (LONG *) malloc0(sizeof(LONG));
   for (i = 0; i < a->max_stitch; i++)
     for (j = 0; j < a->max_num_fft; j++) {
       a->hSnapEvent[i][j] = CreateEvent(NULL, FALSE, FALSE, TEXT("snap"));
@@ -1192,42 +1192,42 @@ void XCreateAnalyzer(int disp,
       InitializeCriticalSectionAndSpinCount(&(a->BufferControlSection[i][j]), 0);
     }
   }
-  a->window = (double*) malloc0(sizeof(double) * a->max_size);
+  a->window = (double *) malloc0(sizeof(double) * a->max_size);
   for (i = 0; i < a->max_stitch; i++) {
-    a->result[i] = (double*) malloc0(sizeof(double) * a->max_size);
+    a->result[i] = (double *) malloc0(sizeof(double) * a->max_size);
   }
   for (i = 0; i < a->max_stitch; i++)
     for (j = 0; j < a->max_num_fft; j++) {
       a->plan[i][j] = 0;
       a->Cplan[i][j] = 0;
-      a->fft_in[i][j]   = (double*) malloc0(sizeof(double) * a->max_size);
-      a->Cfft_in[i][j]  = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * a->max_size);
-      a->fft_out[i][j]  = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * a->max_size);
+      a->fft_in[i][j]   = (double *) malloc0(sizeof(double) * a->max_size);
+      a->Cfft_in[i][j]  = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * a->max_size);
+      a->fft_out[i][j]  = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * a->max_size);
     }
-  a->pre_av_out = (double*) malloc0(sizeof(double) * a->max_size * a->max_stitch);
+  a->pre_av_out = (double *) malloc0(sizeof(double) * a->max_size * a->max_stitch);
   for (i = 0; i < dMAX_PIXOUTS; i++) {
     a->det_type[i] = 0;
     a->av_mode[i] = 0;
-    a->av_sum[i] = (double*) malloc0(sizeof(double) * dMAX_PIXELS);
+    a->av_sum[i] = (double *) malloc0(sizeof(double) * dMAX_PIXELS);
     for (j = 0; j < dMAX_AVERAGE; j++) {
-      a->av_buff[i][j] = (double*) malloc0(sizeof(double) * dMAX_PIXELS);
+      a->av_buff[i][j] = (double *) malloc0(sizeof(double) * dMAX_PIXELS);
     }
-    a->t_pixels[i] = (double*) malloc0(sizeof(double) * dMAX_PIXELS);
+    a->t_pixels[i] = (double *) malloc0(sizeof(double) * dMAX_PIXELS);
     for (j = 0; j < dNUM_PIXEL_BUFFS; j++) {
-      a->pixels[i][j] = (dOUTREAL*) malloc0(sizeof(dOUTREAL) * dMAX_PIXELS);
+      a->pixels[i][j] = (dOUTREAL *) malloc0(sizeof(dOUTREAL) * dMAX_PIXELS);
     }
   }
-  a->cd = (double*) malloc0(sizeof(double) * dMAX_PIXELS);
+  a->cd = (double *) malloc0(sizeof(double) * dMAX_PIXELS);
   for (j = 0; j < dMAX_PIXELS; j++) {
     a->cd[j] = 1.0;
   }
   for (i = 0; i < dMAX_CAL_SETS; i++) {
-    a->freqs[i] = (double*) malloc0(sizeof(double) * dMAX_N);
+    a->freqs[i] = (double *) malloc0(sizeof(double) * dMAX_N);
     for (j = 0; j < dMAX_M; j++) {
-      a->ac3[i][j] = (double*) malloc0(sizeof(double) * dMAX_N);
-      a->ac2[i][j] = (double*) malloc0(sizeof(double) * dMAX_N);
-      a->ac1[i][j] = (double*) malloc0(sizeof(double) * dMAX_N);
-      a->ac0[i][j] = (double*) malloc0(sizeof(double) * dMAX_N);
+      a->ac3[i][j] = (double *) malloc0(sizeof(double) * dMAX_N);
+      a->ac2[i][j] = (double *) malloc0(sizeof(double) * dMAX_N);
+      a->ac1[i][j] = (double *) malloc0(sizeof(double) * dMAX_N);
+      a->ac0[i][j] = (double *) malloc0(sizeof(double) * dMAX_N);
     }
   }
   a->size = -1;
@@ -1239,8 +1239,8 @@ void XCreateAnalyzer(int disp,
   a->bsize = a->max_size * dSAMP_BUFF_MULT;
   for (i = 0; i < a->max_stitch; i++)
     for (j = 0; j < a->max_num_fft; j++) {
-      a->I_samples[i][j] = (dINREAL*) malloc0(sizeof(dINREAL) * a->bsize);
-      a->Q_samples[i][j] = (dINREAL*) malloc0(sizeof(dINREAL) * a->bsize);
+      a->I_samples[i][j] = (dINREAL *) malloc0(sizeof(dINREAL) * a->bsize);
+      a->Q_samples[i][j] = (dINREAL *) malloc0(sizeof(dINREAL) * a->bsize);
     }
   // Initialize DetectMaxBin functionality
   Init_DetectMaxBin(disp);
@@ -1312,7 +1312,7 @@ void DestroyAnalyzer(int disp) {
     for (j = 0; j < a->max_num_fft; j++) {
       CloseHandle(a->hSnapEvent[i][j]);
     }
-  _aligned_free((void*) a->pnum_threads);
+  _aligned_free((void *) a->pnum_threads);
   // Destroy DetectMaxBin functionality.
   Destroy_DetectMaxBin(disp);
   //
@@ -1368,7 +1368,7 @@ void SnapSpectrumTimeout(int disp,
   }
 }
 
-int calcompare(const void* a, const void* b) {
+int calcompare(const void *a, const void *b) {
   if (*(double *)a < * (double *)b) {
     return -1;
   } else if (*(double *)a == *(double *)b) {
@@ -1406,7 +1406,7 @@ void SetCalibration(int disp,
 }
 
 PORT
-void OpenBuffer(int disp, int ss, int LO, void** Ipointer, void** Qpointer) {
+void OpenBuffer(int disp, int ss, int LO, void **Ipointer, void **Qpointer) {
   DP a = pdisp[disp];
   EnterCriticalSection(&a->SetAnalyzerSection);
   *Ipointer = &((a->I_samples[ss][LO])[a->IQin_index[ss][LO]]);
@@ -1437,7 +1437,7 @@ void CloseBuffer(int disp, int ss, int LO) {
   if (!InterlockedAnd(&a->dispatcher, 1)) {
     InterlockedBitTestAndSet(&a->dispatcher, 0);
     LeaveCriticalSection(&a->SetAnalyzerSection);
-    _beginthread(sendbuf, 0, (void*)(uintptr_t)disp);
+    _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
   } else {
     LeaveCriticalSection(&a->SetAnalyzerSection);
   }
@@ -1474,7 +1474,7 @@ void Spectrum(int disp, int ss, int LO, dINREAL* pI, dINREAL* pQ) {
   if (!InterlockedAnd(&a->dispatcher, 1)) {
     InterlockedBitTestAndSet(&a->dispatcher, 0);
     LeaveCriticalSection(&a->SetAnalyzerSection);
-    _beginthread(sendbuf, 0, (void*)(uintptr_t)disp);
+    _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
   } else {
     LeaveCriticalSection(&a->SetAnalyzerSection);
   }
@@ -1515,7 +1515,7 @@ void Spectrum2(int run, int disp, int ss, int LO, dINREAL* pbuff) {
     if (!InterlockedAnd(&a->dispatcher, 1)) {
       InterlockedBitTestAndSet(&a->dispatcher, 0);
       LeaveCriticalSection(&a->SetAnalyzerSection);
-      _beginthread(sendbuf, 0, (void*)(uintptr_t)disp);
+      _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
     } else {
       LeaveCriticalSection(&a->SetAnalyzerSection);
     }
@@ -1523,7 +1523,7 @@ void Spectrum2(int run, int disp, int ss, int LO, dINREAL* pbuff) {
 }
 
 PORT
-void Spectrum0(int run, int disp, int ss, int LO, double* pbuff) {
+void Spectrum0(int run, int disp, int ss, int LO, double *pbuff) {
   if (run) {
     int i;
     dINREAL *Ipointer;
@@ -1557,7 +1557,7 @@ void Spectrum0(int run, int disp, int ss, int LO, double* pbuff) {
     if (!InterlockedAnd(&a->dispatcher, 1)) {
       InterlockedBitTestAndSet(&a->dispatcher, 0);
       LeaveCriticalSection(&a->SetAnalyzerSection);
-      _beginthread(sendbuf, 0, (void*)(uintptr_t)disp);
+      _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
     } else {
       LeaveCriticalSection(&a->SetAnalyzerSection);
     }
@@ -1598,7 +1598,7 @@ void SetDisplayAverageMode(int disp, int pixout, int mode) {
       }
       break;
     default:
-      memset((void*)a->av_sum[pixout], 0, sizeof(double) * dMAX_PIXELS);
+      memset((void *)a->av_sum[pixout], 0, sizeof(double) * dMAX_PIXELS);
       break;
     }
     LeaveCriticalSection(&a->ResampleSection);

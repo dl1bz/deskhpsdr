@@ -74,7 +74,7 @@ void rnnr_agc_init(RNNR a) {
   a->gain = db_to_lin(a->gain_db);
 }
 
-static float frame_rms(const float* x, int n) {
+static float frame_rms(const float *x, int n) {
   double s = 0.0;
   for (int i = 0; i < n; i++) { double v = (double)x[i]; s += v * v; }
   float r = (float)sqrt(s / (double)n);
@@ -113,7 +113,7 @@ static void ring_buffer_put(rnnr_ring_buffer* rb, float v) {
   }
 }
 
-static int ring_buffer_get_bulk(rnnr_ring_buffer* rb, float* dest, int n) {
+static int ring_buffer_get_bulk(rnnr_ring_buffer* rb, float *dest, int n) {
   int to_get = n < rb->count ? n : rb->count;
   for (int i = 0; i < to_get; i++) {
     dest[i] = rb->buf[rb->head];
@@ -161,7 +161,7 @@ void setSize_rnnr(RNNR a, int size) {
   ring_buffer_resize(&a->output_ring, new_cap);
 }
 
-void setBuffers_rnnr(RNNR a, double* in, double* out) {
+void setBuffers_rnnr(RNNR a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -171,7 +171,7 @@ void setSamplerate_rnnr(RNNR a, int rate) {
   rnnr_agc_init(a);
 }
 
-RNNR create_rnnr(int run, int position, int size, double* in, double* out, int rate) {
+RNNR create_rnnr(int run, int position, int size, double *in, double *out, int rate) {
   RNNR a = malloc0(sizeof(rnnr));
   InitializeCriticalSection(&a->cs);
   a->run = run;
@@ -277,7 +277,7 @@ void destroy_rnnr(RNNR a) {
 }
 
 PORT
-void RNNRloadModel(const char* file_path) {
+void RNNRloadModel(const char *file_path) {
   // destroy any in use
   for (int i = 0; i < _rnnr_count; i++) {
     RNNR a = _rnnr_instances[i];

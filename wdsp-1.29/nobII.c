@@ -93,14 +93,14 @@ NOB create_nob(
                                           MAX_HANG_SLEW_TIME +
                                           MAX_HANG_TIME +
                                           MAX_SEQ_TIME) + 2);
-  a->dline = (double*)malloc0(a->dline_size * sizeof(complex));
-  a->imp = (int*)malloc0(a->dline_size * sizeof(int));
-  a->awave = (double*)malloc0((int)(MAX_ADV_SLEW_TIME  * MAX_SAMPLERATE + 1) * sizeof(double));
-  a->hwave = (double*)malloc0((int)(MAX_HANG_SLEW_TIME * MAX_SAMPLERATE + 1) * sizeof(double));
+  a->dline = (double *)malloc0(a->dline_size * sizeof(complex));
+  a->imp = (int *)malloc0(a->dline_size * sizeof(int));
+  a->awave = (double *)malloc0((int)(MAX_ADV_SLEW_TIME  * MAX_SAMPLERATE + 1) * sizeof(double));
+  a->hwave = (double *)malloc0((int)(MAX_HANG_SLEW_TIME * MAX_SAMPLERATE + 1) * sizeof(double));
   a->filterlen = 10;
-  a->bfbuff = (double*)malloc0(a->filterlen * sizeof(complex));
-  a->ffbuff = (double*)malloc0(a->filterlen * sizeof(complex));
-  a->fcoefs = (double*)malloc0(a->filterlen * sizeof(double));
+  a->bfbuff = (double *)malloc0(a->filterlen * sizeof(complex));
+  a->ffbuff = (double *)malloc0(a->filterlen * sizeof(complex));
+  a->fcoefs = (double *)malloc0(a->filterlen * sizeof(double));
   a->fcoefs[0] = 0.308720593;
   a->fcoefs[1] = 0.216104415;
   a->fcoefs[2] = 0.151273090;
@@ -113,8 +113,8 @@ NOB create_nob(
   a->fcoefs[9] = 0.012457989;
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   init_nob(a);
-  a->legacy = (double*) malloc0(2048 * sizeof(
-                                        complex));                           /////////////// legacy interface - remove
+  a->legacy = (double *) malloc0(2048 * sizeof(
+                                         complex));                           /////////////// legacy interface - remove
   return a;
 }
 
@@ -167,7 +167,7 @@ void xnob(NOB a) {
       a->dline[2 * a->in_idx + 0] = a->in[2 * i + 0];
       a->dline[2 * a->in_idx + 1] = a->in[2 * i + 1];
       mag = sqrt(a->dline[2 * a->in_idx + 0] * a->dline[2 * a->in_idx + 0] + a->dline[2 * a->in_idx + 1] * a->dline[2 *
-                 a->in_idx + 1]);
+        a->in_idx + 1]);
       a->avg = a->backmult * a->avg + a->ombackmult * mag;
       if (mag > (a->avg * a->threshold)) {
         a->imp[a->in_idx] = 1;
@@ -437,7 +437,7 @@ void xnob(NOB a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_nob(NOB a, double* in, double* out) {
+void setBuffers_nob(NOB a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -567,7 +567,7 @@ void flush_nobEXT(int id) {
 }
 
 PORT
-void xnobEXT(int id, double* in, double* out) {
+void xnobEXT(int id, double *in, double *out) {
   NOB a = pnob[id];
   a->in = in;
   a->out = out;
@@ -659,7 +659,7 @@ void SetEXTNOBThreshold(int id, double thresh) {
 ********************************************************************************************************/
 
 PORT
-void xnobEXTF(int id, float* I, float* Q) {
+void xnobEXTF(int id, float *I, float *Q) {
   int i;
   NOB a = pnob[id];
   a->in = a->legacy;

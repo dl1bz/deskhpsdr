@@ -46,7 +46,7 @@ void calc_snotch(SNOTCH a) {
   flush_snotch(a);
 }
 
-SNOTCH create_snotch(int run, int size, double* in, double* out, int rate, double f, double bw) {
+SNOTCH create_snotch(int run, int size, double *in, double *out, int rate, double f, double bw) {
   SNOTCH a = (SNOTCH) malloc0(sizeof(snotch));
   a->run = run;
   a->size = size;
@@ -87,7 +87,7 @@ void xsnotch(SNOTCH a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_snotch(SNOTCH a, double* in, double* out) {
+void setBuffers_snotch(SNOTCH a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -197,7 +197,7 @@ void calc_speak(SPEAK a) {
   flush_speak(a);
 }
 
-SPEAK create_speak(int run, int size, double* in, double* out, int rate, double f, double bw, double gain, int nstages,
+SPEAK create_speak(int run, int size, double *in, double *out, int rate, double f, double bw, double gain, int nstages,
                    int design) {
   SPEAK a = (SPEAK) malloc0(sizeof(speak));
   a->run = run;
@@ -210,12 +210,12 @@ SPEAK create_speak(int run, int size, double* in, double* out, int rate, double 
   a->gain = gain;
   a->nstages = nstages;
   a->design = design;
-  a->x0 = (double*) malloc0(a->nstages * sizeof(complex));
-  a->x1 = (double*) malloc0(a->nstages * sizeof(complex));
-  a->x2 = (double*) malloc0(a->nstages * sizeof(complex));
-  a->y0 = (double*) malloc0(a->nstages * sizeof(complex));
-  a->y1 = (double*) malloc0(a->nstages * sizeof(complex));
-  a->y2 = (double*) malloc0(a->nstages * sizeof(complex));
+  a->x0 = (double *) malloc0(a->nstages * sizeof(complex));
+  a->x1 = (double *) malloc0(a->nstages * sizeof(complex));
+  a->x2 = (double *) malloc0(a->nstages * sizeof(complex));
+  a->y0 = (double *) malloc0(a->nstages * sizeof(complex));
+  a->y1 = (double *) malloc0(a->nstages * sizeof(complex));
+  a->y2 = (double *) malloc0(a->nstages * sizeof(complex));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   calc_speak(a);
   return a;
@@ -268,7 +268,7 @@ void xspeak(SPEAK a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_speak(SPEAK a, double* in, double* out) {
+void setBuffers_speak(SPEAK a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -332,8 +332,8 @@ void SetRXABiQuadGain(int channel, double gain) {
 
 void calc_mpeak(MPEAK a) {
   int i;
-  a->tmp = (double*) malloc0(a->size * sizeof(complex));
-  a->mix = (double*) malloc0(a->size * sizeof(complex));
+  a->tmp = (double *) malloc0(a->size * sizeof(complex));
+  a->mix = (double *) malloc0(a->size * sizeof(complex));
   for (i = 0; i < a->npeaks; i++) {
     a->pfil[i] = create_speak(1,
                               a->size,
@@ -357,7 +357,7 @@ void decalc_mpeak(MPEAK a) {
   _aligned_free(a->tmp);
 }
 
-MPEAK create_mpeak(int run, int size, double* in, double* out, int rate, int npeaks, int* enable, double* f,
+MPEAK create_mpeak(int run, int size, double *in, double *out, int rate, int npeaks, int *enable, double *f,
                    double *bw, double *gain, int nstages) {
   MPEAK a = (MPEAK) malloc0(sizeof(mpeak));
   a->run = run;
@@ -367,15 +367,15 @@ MPEAK create_mpeak(int run, int size, double* in, double* out, int rate, int npe
   a->rate = rate;
   a->npeaks = npeaks;
   a->nstages = nstages;
-  a->enable  = (int*) malloc0(a->npeaks * sizeof(int));
-  a->f  = (double*) malloc0(a->npeaks * sizeof(double));
-  a->bw = (double*) malloc0(a->npeaks * sizeof(double));
-  a->gain = (double*) malloc0(a->npeaks * sizeof(double));
+  a->enable  = (int *) malloc0(a->npeaks * sizeof(int));
+  a->f  = (double *) malloc0(a->npeaks * sizeof(double));
+  a->bw = (double *) malloc0(a->npeaks * sizeof(double));
+  a->gain = (double *) malloc0(a->npeaks * sizeof(double));
   memcpy(a->enable, enable, a->npeaks * sizeof(int));
   memcpy(a->f, f, a->npeaks * sizeof(double));
   memcpy(a->bw, bw, a->npeaks * sizeof(double));
   memcpy(a->gain, gain, a->npeaks * sizeof(double));
-  a->pfil = (SPEAK*) malloc0(a->npeaks * sizeof(SPEAK));
+  a->pfil = (SPEAK *) malloc0(a->npeaks * sizeof(SPEAK));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   calc_mpeak(a);
   return a;
@@ -419,7 +419,7 @@ void xmpeak(MPEAK a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_mpeak(MPEAK a, double* in, double* out) {
+void setBuffers_mpeak(MPEAK a, double *in, double *out) {
   decalc_mpeak(a);
   a->in = in;
   a->out = out;
@@ -507,17 +507,17 @@ void SetRXAmpeakFilGain(int channel, int fil, double gain) {
 
 void calc_phrot(PHROT a) {
   double g;
-  a->x0 = (double*) malloc0(a->nstages * sizeof(double));
-  a->x1 = (double*) malloc0(a->nstages * sizeof(double));
-  a->y0 = (double*) malloc0(a->nstages * sizeof(double));
-  a->y1 = (double*) malloc0(a->nstages * sizeof(double));
+  a->x0 = (double *) malloc0(a->nstages * sizeof(double));
+  a->x1 = (double *) malloc0(a->nstages * sizeof(double));
+  a->y0 = (double *) malloc0(a->nstages * sizeof(double));
+  a->y1 = (double *) malloc0(a->nstages * sizeof(double));
   g = tan(PI * a->fc / (double)a->rate);
   a->b0 = (g - 1.0) / (g + 1.0);
   a->b1 = 1.0;
   a->a1 = a->b0;
 }
 
-PHROT create_phrot(int run, int size, double* in, double* out, int rate, double fc, int nstages) {
+PHROT create_phrot(int run, int size, double *in, double *out, int rate, double fc, int nstages) {
   PHROT a = (PHROT) malloc0(sizeof(phrot));
   a->reverse = 0;
   a->run = run;
@@ -579,7 +579,7 @@ void xphrot(PHROT a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_phrot(PHROT a, double* in, double* out) {
+void setBuffers_phrot(PHROT a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -658,7 +658,7 @@ void calc_bqlp(BQLP a) {
   flush_bqlp(a);
 }
 
-BQLP create_bqlp(int run, int size, double* in, double* out, double rate, double fc, double Q, double gain,
+BQLP create_bqlp(int run, int size, double *in, double *out, double rate, double fc, double Q, double gain,
                  int nstages) {
   BQLP a = (BQLP)malloc0(sizeof(bqlp));
   a->run = run;
@@ -670,12 +670,12 @@ BQLP create_bqlp(int run, int size, double* in, double* out, double rate, double
   a->Q = Q;
   a->gain = gain;
   a->nstages = nstages;
-  a->x0 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->x1 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->x2 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y0 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y1 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y2 = (double*)malloc0(a->nstages * sizeof(complex));
+  a->x0 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->x1 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->x2 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y0 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y1 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y2 = (double *)malloc0(a->nstages * sizeof(complex));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   calc_bqlp(a);
   return a;
@@ -728,7 +728,7 @@ void xbqlp(BQLP a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_bqlp(BQLP a, double* in, double* out) {
+void setBuffers_bqlp(BQLP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -763,7 +763,7 @@ void calc_dbqlp(BQLP a) {
   flush_dbqlp(a);
 }
 
-BQLP create_dbqlp(int run, int size, double* in, double* out, double rate, double fc, double Q, double gain,
+BQLP create_dbqlp(int run, int size, double *in, double *out, double rate, double fc, double Q, double gain,
                   int nstages) {
   BQLP a = (BQLP)malloc0(sizeof(bqlp));
   a->run = run;
@@ -775,12 +775,12 @@ BQLP create_dbqlp(int run, int size, double* in, double* out, double rate, doubl
   a->Q = Q;
   a->gain = gain;
   a->nstages = nstages;
-  a->x0 = (double*)malloc0(a->nstages * sizeof(double));
-  a->x1 = (double*)malloc0(a->nstages * sizeof(double));
-  a->x2 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y0 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y1 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y2 = (double*)malloc0(a->nstages * sizeof(double));
+  a->x0 = (double *)malloc0(a->nstages * sizeof(double));
+  a->x1 = (double *)malloc0(a->nstages * sizeof(double));
+  a->x2 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y0 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y1 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y2 = (double *)malloc0(a->nstages * sizeof(double));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   calc_dbqlp(a);
   return a;
@@ -830,7 +830,7 @@ void xdbqlp(BQLP a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_dbqlp(BQLP a, double* in, double* out) {
+void setBuffers_dbqlp(BQLP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -870,7 +870,7 @@ void calc_bqbp(BQBP a) {
   flush_bqbp(a);
 }
 
-BQBP create_bqbp(int run, int size, double* in, double* out, double rate, double f_low, double f_high, double gain,
+BQBP create_bqbp(int run, int size, double *in, double *out, double rate, double f_low, double f_high, double gain,
                  int nstages) {
   BQBP a = (BQBP)malloc0(sizeof(bqbp));
   a->run = run;
@@ -882,12 +882,12 @@ BQBP create_bqbp(int run, int size, double* in, double* out, double rate, double
   a->f_high = f_high;
   a->gain = gain;
   a->nstages = nstages;
-  a->x0 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->x1 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->x2 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y0 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y1 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y2 = (double*)malloc0(a->nstages * sizeof(complex));
+  a->x0 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->x1 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->x2 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y0 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y1 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y2 = (double *)malloc0(a->nstages * sizeof(complex));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   calc_bqbp(a);
   return a;
@@ -940,7 +940,7 @@ void xbqbp(BQBP a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_bqbp(BQBP a, double* in, double* out) {
+void setBuffers_bqbp(BQBP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -979,7 +979,7 @@ void calc_dbqbp(BQBP a) {
   flush_dbqbp(a);
 }
 
-BQBP create_dbqbp(int run, int size, double* in, double* out, double rate, double f_low, double f_high, double gain,
+BQBP create_dbqbp(int run, int size, double *in, double *out, double rate, double f_low, double f_high, double gain,
                   int nstages) {
   BQBP a = (BQBP)malloc0(sizeof(bqbp));
   a->run = run;
@@ -991,12 +991,12 @@ BQBP create_dbqbp(int run, int size, double* in, double* out, double rate, doubl
   a->f_high = f_high;
   a->gain = gain;
   a->nstages = nstages;
-  a->x0 = (double*)malloc0(a->nstages * sizeof(double));
-  a->x1 = (double*)malloc0(a->nstages * sizeof(double));
-  a->x2 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y0 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y1 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y2 = (double*)malloc0(a->nstages * sizeof(double));
+  a->x0 = (double *)malloc0(a->nstages * sizeof(double));
+  a->x1 = (double *)malloc0(a->nstages * sizeof(double));
+  a->x2 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y0 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y1 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y2 = (double *)malloc0(a->nstages * sizeof(double));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   calc_dbqbp(a);
   return a;
@@ -1046,7 +1046,7 @@ void xdbqbp(BQBP a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_dbqbp(BQBP a, double* in, double* out) {
+void setBuffers_dbqbp(BQBP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -1069,17 +1069,17 @@ void setSize_dbqbp(BQBP a, int size) {
 
 void calc_sphp(SPHP a) {
   double g;
-  a->x0 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->x1 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y0 = (double*)malloc0(a->nstages * sizeof(complex));
-  a->y1 = (double*)malloc0(a->nstages * sizeof(complex));
+  a->x0 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->x1 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y0 = (double *)malloc0(a->nstages * sizeof(complex));
+  a->y1 = (double *)malloc0(a->nstages * sizeof(complex));
   g = exp(-TWOPI * a->fc / a->rate);
   a->b0 = +0.5 * (1.0 + g);
   a->b1 = -0.5 * (1.0 + g);
   a->a1 = -g;
 }
 
-SPHP create_sphp(int run, int size, double* in, double* out, double rate, double fc, int nstages) {
+SPHP create_sphp(int run, int size, double *in, double *out, double rate, double fc, int nstages) {
   SPHP a = (SPHP)malloc0(sizeof(sphp));
   a->run = run;
   a->size = size;
@@ -1137,7 +1137,7 @@ void xsphp(SPHP a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_sphp(SPHP a, double* in, double* out) {
+void setBuffers_sphp(SPHP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -1161,17 +1161,17 @@ void setSize_sphp(SPHP a, int size) {
 
 void calc_dsphp(SPHP a) {
   double g;
-  a->x0 = (double*)malloc0(a->nstages * sizeof(double));
-  a->x1 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y0 = (double*)malloc0(a->nstages * sizeof(double));
-  a->y1 = (double*)malloc0(a->nstages * sizeof(double));
+  a->x0 = (double *)malloc0(a->nstages * sizeof(double));
+  a->x1 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y0 = (double *)malloc0(a->nstages * sizeof(double));
+  a->y1 = (double *)malloc0(a->nstages * sizeof(double));
   g = exp(-TWOPI * a->fc / a->rate);
   a->b0 = +0.5 * (1.0 + g);
   a->b1 = -0.5 * (1.0 + g);
   a->a1 = -g;
 }
 
-SPHP create_dsphp(int run, int size, double* in, double* out, double rate, double fc, int nstages) {
+SPHP create_dsphp(int run, int size, double *in, double *out, double rate, double fc, int nstages) {
   SPHP a = (SPHP)malloc0(sizeof(sphp));
   a->run = run;
   a->size = size;
@@ -1227,7 +1227,7 @@ void xdsphp(SPHP a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_dsphp(SPHP a, double* in, double* out) {
+void setBuffers_dsphp(SPHP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

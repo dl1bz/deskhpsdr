@@ -61,18 +61,18 @@ SIPHON create_siphon(int run, int position, int mode, int disp, int insize,
   a->sipsize = sipsize; // NOTE:  sipsize MUST BE A POWER OF TWO!!
   a->fftsize = fftsize;
   a->specmode = specmode;
-  a->sipbuff = (double*) malloc0(a->sipsize * sizeof(complex));
+  a->sipbuff = (double *) malloc0(a->sipsize * sizeof(complex));
   a->idx = 0;
-  a->sipout  = (double*) malloc0(a->sipsize * sizeof(complex));
-  a->specout = (double*) malloc0(a->fftsize * sizeof(complex));
-  a->sipplan = fftw_plan_dft_1d(a->fftsize, (fftw_complex*)a->sipout, (fftw_complex*)a->specout, FFTW_FORWARD,
+  a->sipout  = (double *) malloc0(a->sipsize * sizeof(complex));
+  a->specout = (double *) malloc0(a->fftsize * sizeof(complex));
+  a->sipplan = fftw_plan_dft_1d(a->fftsize, (fftw_complex *)a->sipout, (fftw_complex *)a->specout, FFTW_FORWARD,
                                 FFTW_PATIENT);
-  a->window  = (double*) malloc0(a->fftsize * sizeof(complex));
+  a->window  = (double *) malloc0(a->fftsize * sizeof(complex));
   InitializeCriticalSectionAndSpinCount(&a->update, 2500);
   build_window(a);
   a->n_alloc_disps = 0;
-  a->alloc_run  = (int*) malloc0(dMAX_DISPLAYS * sizeof(int));
-  a->alloc_disp = (int*) malloc0(dMAX_DISPLAYS * sizeof(int));
+  a->alloc_run  = (int *) malloc0(dMAX_DISPLAYS * sizeof(int));
+  a->alloc_disp = (int *) malloc0(dMAX_DISPLAYS * sizeof(int));
   return a;
 }
 
@@ -127,7 +127,7 @@ void xsiphon(SIPHON a, int pos) {
   LeaveCriticalSection(&a->update);
 }
 
-void setBuffers_siphon(SIPHON a, double* in) {
+void setBuffers_siphon(SIPHON a, double *in) {
   a->in = in;
 }
 
@@ -170,7 +170,7 @@ void sip_spectrum(SIPHON a) {
 ********************************************************************************************************/
 
 PORT
-void RXAGetaSipF(int channel, float* out, int size) {
+void RXAGetaSipF(int channel, float *out, int size) {
   // return raw samples as floats
   SIPHON a = rxa[channel].sip1.p;
   int i;
@@ -184,7 +184,7 @@ void RXAGetaSipF(int channel, float* out, int size) {
 }
 
 PORT
-void RXAGetaSipF1(int channel, float* out, int size) {
+void RXAGetaSipF1(int channel, float *out, int size) {
   // return raw samples as floats
   SIPHON a = rxa[channel].sip1.p;
   int i;
@@ -229,7 +229,7 @@ void TXASetSipDisplay(int channel, int disp) {
 }
 
 PORT
-void TXAGetaSipF(int channel, float* out, int size) {
+void TXAGetaSipF(int channel, float *out, int size) {
   // return raw samples as floats
   SIPHON a = txa[channel].sip1.p;
   int i;
@@ -243,7 +243,7 @@ void TXAGetaSipF(int channel, float* out, int size) {
 }
 
 PORT
-void TXAGetaSipF1(int channel, float* out, int size) {
+void TXAGetaSipF1(int channel, float *out, int size) {
   // return raw samples as floats
   SIPHON a = txa[channel].sip1.p;
   int i;
@@ -268,7 +268,7 @@ void TXASetSipSpecmode(int channel, int mode) {
 }
 
 PORT
-void TXAGetSpecF1(int channel, float* out) {
+void TXAGetSpecF1(int channel, float *out) {
   // return spectrum magnitudes in dB
   SIPHON a = txa[channel].sip1.p;
   int i, j, mid, m, n;
@@ -282,21 +282,21 @@ void TXAGetSpecF1(int channel, float* out) {
     // swap the halves of the spectrum
     for (i = 0, j = mid; i < mid; i++, j++) {
       out[i] = (float)(10.0 * mlog10(a->specout[2 * j + 0] * a->specout[2 * j + 0] + a->specout[2 * j + 1] * a->specout[2 * j
-                                     + 1] + 1.0e-60));
+        + 1] + 1.0e-60));
       out[j] = (float)(10.0 * mlog10(a->specout[2 * i + 0] * a->specout[2 * i + 0] + a->specout[2 * i + 1] * a->specout[2 * i
-                                     + 1] + 1.0e-60));
+        + 1] + 1.0e-60));
     } else
     // mirror each half of the spectrum in-place
     for (i = 0, j = mid - 1, m = mid, n = a->fftsize - 1; i < mid; i++, j--, m++, n--) {
       out[i] = (float)(10.0 * mlog10(a->specout[2 * j + 0] * a->specout[2 * j + 0] + a->specout[2 * j + 1] * a->specout[2 * j
-                                     + 1] + 1.0e-60));
+        + 1] + 1.0e-60));
       out[m] = (float)(10.0 * mlog10(a->specout[2 * n + 0] * a->specout[2 * n + 0] + a->specout[2 * n + 1] * a->specout[2 * n
-                                     + 1] + 1.0e-60));
+        + 1] + 1.0e-60));
     }
 }
 
 PORT
-void TXASetSipAllocDisps(int channel, int n_alloc_disps, int* alloc_run, int* alloc_disp) {
+void TXASetSipAllocDisps(int channel, int n_alloc_disps, int *alloc_run, int *alloc_disp) {
   SIPHON a = txa[channel].sip1.p;
   int i;
   EnterCriticalSection(&a->update);
@@ -334,14 +334,14 @@ void flush_siphonEXT(int id) {
 }
 
 PORT
-void xsiphonEXT(int id, double* buff) {
+void xsiphonEXT(int id, double *buff) {
   SIPHON a = psiphon[id];
   a->in = buff;
   xsiphon(a, 0);
 }
 
 PORT
-void GetaSipF1EXT(int id, float* out, int size) {
+void GetaSipF1EXT(int id, float *out, int size) {
   // return raw samples as floats
   SIPHON a = psiphon[id];
   int i;

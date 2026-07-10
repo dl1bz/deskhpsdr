@@ -29,7 +29,7 @@ warren@wpratt.com
 struct _ch ch[MAX_CHANNELS];
 
 void start_thread(int channel) {
-  HANDLE handle = (HANDLE) _beginthread(wdspmain, 0, (void*)(uintptr_t)channel);
+  HANDLE handle = (HANDLE) _beginthread(wdspmain, 0, (void *)(uintptr_t)channel);
   //SetThreadPriority(handle, THREAD_PRIORITY_HIGHEST);
 }
 
@@ -119,7 +119,7 @@ void CloseChannel(int channel) {
   post_main_destroy(channel);
 }
 
-void flushChannel(void* p) {
+void flushChannel(void *p) {
   int channel = (int)(uintptr_t)p;
   IOB a = ch[channel].iob.pc;
   while (!InterlockedAnd(&a->flush_bypass, 0xffffffff)) {

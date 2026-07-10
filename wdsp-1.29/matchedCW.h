@@ -49,7 +49,7 @@ typedef struct _matchedCW {
   FIRCORE p;
 } matched, *MATCHED;
 
-extern MATCHED create_matched (int run, int position, int size, double* in, double* out,
+extern MATCHED create_matched (int run, int position, int size, double *in, double *out,
                                double f_center, double bandwidth, int samplerate, double gain, int mode);
 
 extern void destroy_matched (MATCHED a);
@@ -58,7 +58,7 @@ extern void flush_matched (MATCHED a);
 
 extern void xmatched (MATCHED a, int pos);
 
-extern void setBuffers_matched (MATCHED a, double* in, double* out);
+extern void setBuffers_matched (MATCHED a, double *in, double *out);
 
 extern void setSamplerate_matched (MATCHED a, int rate);
 

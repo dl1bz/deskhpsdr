@@ -28,16 +28,16 @@ warren@wpratt.com
 
 void size_iqc(IQC a) {
   int i;
-  a->t = (double*) malloc0((a->ints + 1) * sizeof(double));
+  a->t = (double *) malloc0((a->ints + 1) * sizeof(double));
   for (i = 0; i <= a->ints; i++) {
     a->t[i] = (double)i / (double)a->ints;
   }
   for (i = 0; i < 2; i++) {
-    a->cm[i] = (double*) malloc0(a->ints * 4 * sizeof(double));
-    a->cc[i] = (double*) malloc0(a->ints * 4 * sizeof(double));
-    a->cs[i] = (double*) malloc0(a->ints * 4 * sizeof(double));
+    a->cm[i] = (double *) malloc0(a->ints * 4 * sizeof(double));
+    a->cc[i] = (double *) malloc0(a->ints * 4 * sizeof(double));
+    a->cs[i] = (double *) malloc0(a->ints * 4 * sizeof(double));
   }
-  a->dog.cpi = (int*) malloc0(a->ints * sizeof(int));
+  a->dog.cpi = (int *) malloc0(a->ints * sizeof(int));
   a->dog.count = 0;
   a->dog.full_ints = 0;
 }
@@ -61,7 +61,7 @@ void calc_iqc(IQC a) {
   a->state = 0;
   a->busy = 0;
   a->ntup = (int)(a->tup * a->rate);
-  a->cup = (double*) malloc0((a->ntup + 1) * sizeof(double));
+  a->cup = (double *) malloc0((a->ntup + 1) * sizeof(double));
   delta = PI / (double)a->ntup;
   theta = 0.0;
   for (i = 0; i <= a->ntup; i++) {
@@ -78,7 +78,7 @@ void decalc_iqc(IQC a) {
   _aligned_free(a->cup);
 }
 
-IQC create_iqc(int run, int size, double* in, double* out, double rate, int ints, double tup, int spi) {
+IQC create_iqc(int run, int size, double *in, double *out, double rate, int ints, double tup, int spi) {
   IQC a = (IQC) malloc0(sizeof(iqc));
   a->run = run;
   a->size = size;
@@ -120,11 +120,11 @@ void xiqc(IQC a) {
       dx = env - a->t[k];
       cset = a->cset;
       ym = a->cm[cset][4 * k + 0] + dx * (a->cm[cset][4 * k + 1] + dx * (a->cm[cset][4 * k + 2] + dx * a->cm[cset][4 * k +
-                                          3]));
+        3]));
       yc = a->cc[cset][4 * k + 0] + dx * (a->cc[cset][4 * k + 1] + dx * (a->cc[cset][4 * k + 2] + dx * a->cc[cset][4 * k +
-                                          3]));
+        3]));
       ys = a->cs[cset][4 * k + 0] + dx * (a->cs[cset][4 * k + 1] + dx * (a->cs[cset][4 * k + 2] + dx * a->cs[cset][4 * k +
-                                          3]));
+        3]));
       PRE0 = ym * (I * yc - Q * ys);
       PRE1 = ym * (I * ys + Q * yc);
       switch (a->state) {
@@ -153,11 +153,11 @@ void xiqc(IQC a) {
       case SWAP:
         mset = 1 - cset;
         ym = a->cm[mset][4 * k + 0] + dx * (a->cm[mset][4 * k + 1] + dx * (a->cm[mset][4 * k + 2] + dx * a->cm[mset][4 * k +
-                                            3]));
+          3]));
         yc = a->cc[mset][4 * k + 0] + dx * (a->cc[mset][4 * k + 1] + dx * (a->cc[mset][4 * k + 2] + dx * a->cc[mset][4 * k +
-                                            3]));
+          3]));
         ys = a->cs[mset][4 * k + 0] + dx * (a->cs[mset][4 * k + 1] + dx * (a->cs[mset][4 * k + 2] + dx * a->cs[mset][4 * k +
-                                            3]));
+          3]));
         PRE0 = (1.0 - a->cup[a->count]) * ym * (I * yc - Q * ys) + a->cup[a->count] * PRE0;
         PRE1 = (1.0 - a->cup[a->count]) * ym * (I * ys + Q * yc) + a->cup[a->count] * PRE1;
         if (a->count++ == a->ntup) {
@@ -189,7 +189,7 @@ void xiqc(IQC a) {
   }
 }
 
-void setBuffers_iqc(IQC a, double* in, double* out) {
+void setBuffers_iqc(IQC a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -211,7 +211,7 @@ void setSize_iqc(IQC a, int size) {
 ********************************************************************************************************/
 
 PORT
-void GetTXAiqcValues(int channel, double* cm, double* cc, double* cs) {
+void GetTXAiqcValues(int channel, double *cm, double *cc, double *cs) {
   IQC a;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].iqc.p0;
@@ -222,7 +222,7 @@ void GetTXAiqcValues(int channel, double* cm, double* cc, double* cs) {
 }
 
 PORT
-void SetTXAiqcValues(int channel, double* cm, double* cc, double* cs) {
+void SetTXAiqcValues(int channel, double *cm, double *cc, double *cs) {
   IQC a;
   EnterCriticalSection(&ch[channel].csDSP);
   a = txa[channel].iqc.p0;
@@ -235,7 +235,7 @@ void SetTXAiqcValues(int channel, double* cm, double* cc, double* cs) {
 }
 
 PORT
-void SetTXAiqcSwap(int channel, double* cm, double* cc, double* cs) {
+void SetTXAiqcSwap(int channel, double *cm, double *cc, double *cs) {
   IQC a = txa[channel].iqc.p1;
   EnterCriticalSection(&ch[channel].csDSP);
   a->cset = 1 - a->cset;
@@ -250,7 +250,7 @@ void SetTXAiqcSwap(int channel, double* cm, double* cc, double* cs) {
 }
 
 PORT
-void SetTXAiqcStart(int channel, double* cm, double* cc, double* cs) {
+void SetTXAiqcStart(int channel, double *cm, double *cc, double *cs) {
   IQC a = txa[channel].iqc.p1;
   EnterCriticalSection(&ch[channel].csDSP);
   a->cset = 0;
@@ -277,7 +277,7 @@ void SetTXAiqcEnd(int channel) {
   InterlockedBitTestAndReset(&txa[channel].iqc.p1->run, 0);
 }
 
-void GetTXAiqcDogCount(int channel, int* count) {
+void GetTXAiqcDogCount(int channel, int *count) {
   IQC a = txa[channel].iqc.p1;
   EnterCriticalSection(&a->dog.cs);
   *count = a->dog.count;

@@ -51,7 +51,7 @@ typedef struct _gaussian {
   FIRCORE p;          // pointer to partititioned overlap-save filter
 } gaussian, *GAUSSIAN;
 
-extern GAUSSIAN create_gaussian(int run, int position, int size, int nc, double* in, double* out,
+extern GAUSSIAN create_gaussian(int run, int position, int size, int nc, double *in, double *out,
                                 double f_center, double bandwidth, int samplerate, double gain, double nsigma, int mode);
 
 extern void destroy_gaussian(GAUSSIAN a);
@@ -60,7 +60,7 @@ extern void flush_gaussian(GAUSSIAN a);
 
 extern void xgaussian(GAUSSIAN a, int pos);
 
-extern void setBuffers_gaussian(GAUSSIAN a, double* in, double* out);
+extern void setBuffers_gaussian(GAUSSIAN a, double *in, double *out);
 
 extern void setSamplerate_gaussian(GAUSSIAN a, int rate);
 

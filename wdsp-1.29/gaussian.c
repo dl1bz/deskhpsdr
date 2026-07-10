@@ -52,7 +52,7 @@ double *build_gaussian(int nc, double rate, double f, double fwhm, double scale,
   // nsigma - number of sigma to extend on each side of center
   double fsigma = fwhm / 2.35482;
   double sigma = 1.0 / (2.0 * PI * fsigma);
-  double *impulse = (double*)malloc0(nc * sizeof(double));
+  double *impulse = (double *)malloc0(nc * sizeof(double));
   double delta = 1.0 / rate;
   int i, j;
   double x, y;
@@ -68,7 +68,7 @@ double *build_gaussian(int nc, double rate, double f, double fwhm, double scale,
     impulse[i] *= (scale / sum);
   }
   // print_impulse("gaussian.txt", nc, impulse, 0, 0);
-  double *c_impulse = (double*)malloc0(nc * sizeof(complex));
+  double *c_impulse = (double *)malloc0(nc * sizeof(complex));
   double w_osc = -2.0 * PI * f / rate;
   double m = 0.5 * (double)(nc - 1);
   double posi, posj;
@@ -94,7 +94,7 @@ double *build_gaussian(int nc, double rate, double f, double fwhm, double scale,
 *                                                   *
 ********************************************************************************************************/
 
-GAUSSIAN create_gaussian(int run, int position, int size, int nc, double* in, double* out,
+GAUSSIAN create_gaussian(int run, int position, int size, int nc, double *in, double *out,
                          double f_center, double bandwidth, int samplerate, double gain, double nsigma, int mode) {
   GAUSSIAN a = (GAUSSIAN)malloc0(sizeof(gaussian));
   double *impulse;
@@ -148,7 +148,7 @@ void xgaussian(GAUSSIAN a, int pos) {
   }
 }
 
-void setBuffers_gaussian(GAUSSIAN a, double* in, double* out) {
+void setBuffers_gaussian(GAUSSIAN a, double *in, double *out) {
   a->in = in;
   a->out = out;
   setBuffers_fircore(a->p, a->in, a->out);

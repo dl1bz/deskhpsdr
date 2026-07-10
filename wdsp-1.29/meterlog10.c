@@ -546,7 +546,7 @@ __declspec(align(16)) static const double mtable[2048] = {
 
 
 inline double mlog10(double val) {
-  uint64_t *pin = (uint64_t*)(&val);
+  uint64_t *pin = (uint64_t *)(&val);
   uint64_t  N = *pin;
   int e = (int)(((N >> 52) & 2047) - 1023);
   int m = (int)((N >> (52 - mbits)) & mmask);

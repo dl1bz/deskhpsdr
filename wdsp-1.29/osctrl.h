@@ -63,7 +63,7 @@ extern void destroy_osctrl (OSCTRL a);
 
 extern void flush_osctrl (OSCTRL a);
 
-extern void setBuffers_osctrl (OSCTRL a, double* in, double* out);
+extern void setBuffers_osctrl (OSCTRL a, double *in, double *out);
 
 extern void setSamplerate_osctrl (OSCTRL a, int rate);
 

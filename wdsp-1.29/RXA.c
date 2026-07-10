@@ -30,9 +30,9 @@ struct _rxa rxa[MAX_CHANNELS];
 
 void create_rxa(int channel) {
   rxa[channel].mode = RXA_LSB;
-  rxa[channel].inbuff  = (double*) malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
-  rxa[channel].outbuff = (double*) malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
-  rxa[channel].midbuff = (double*) malloc0(2 * ch[channel].dsp_size    * sizeof(complex));
+  rxa[channel].inbuff  = (double *) malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
+  rxa[channel].outbuff = (double *) malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
+  rxa[channel].midbuff = (double *) malloc0(2 * ch[channel].dsp_size    * sizeof(complex));
   // shift to select a slice of spectrum
   rxa[channel].shift.p = create_shift(
                                  1,                        // run
@@ -643,7 +643,7 @@ void xrxa(int channel) {
 void setInputSamplerate_rxa(int channel) {
   // buffers
   _aligned_free(rxa[channel].inbuff);
-  rxa[channel].inbuff = (double*)malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
+  rxa[channel].inbuff = (double *)malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
   // shift
   setBuffers_shift(rxa[channel].shift.p, rxa[channel].inbuff, rxa[channel].inbuff);
   setSize_shift(rxa[channel].shift.p, ch[channel].dsp_insize);
@@ -658,7 +658,7 @@ void setInputSamplerate_rxa(int channel) {
 void setOutputSamplerate_rxa(int channel) {
   // buffers
   _aligned_free(rxa[channel].outbuff);
-  rxa[channel].outbuff = (double*)malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
+  rxa[channel].outbuff = (double *)malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
   // output resampler
   setBuffers_resample(rxa[channel].rsmpout.p, rxa[channel].midbuff, rxa[channel].outbuff);
   setOutRate_resample(rxa[channel].rsmpout.p, ch[channel].out_rate);
@@ -668,9 +668,9 @@ void setOutputSamplerate_rxa(int channel) {
 void setDSPSamplerate_rxa(int channel) {
   // buffers
   _aligned_free(rxa[channel].inbuff);
-  rxa[channel].inbuff = (double*)malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
+  rxa[channel].inbuff = (double *)malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
   _aligned_free(rxa[channel].outbuff);
-  rxa[channel].outbuff = (double*)malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
+  rxa[channel].outbuff = (double *)malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
   // shift
   setBuffers_shift(rxa[channel].shift.p, rxa[channel].inbuff, rxa[channel].inbuff);
   setSize_shift(rxa[channel].shift.p, ch[channel].dsp_insize);
@@ -718,11 +718,11 @@ void setDSPSamplerate_rxa(int channel) {
 void setDSPBuffsize_rxa(int channel) {
   // buffers
   _aligned_free(rxa[channel].inbuff);
-  rxa[channel].inbuff = (double*)malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
+  rxa[channel].inbuff = (double *)malloc0(1 * ch[channel].dsp_insize  * sizeof(complex));
   _aligned_free(rxa[channel].midbuff);
-  rxa[channel].midbuff = (double*)malloc0(2 * ch[channel].dsp_size * sizeof(complex));
+  rxa[channel].midbuff = (double *)malloc0(2 * ch[channel].dsp_size * sizeof(complex));
   _aligned_free(rxa[channel].outbuff);
-  rxa[channel].outbuff = (double*)malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
+  rxa[channel].outbuff = (double *)malloc0(1 * ch[channel].dsp_outsize * sizeof(complex));
   // shift
   setBuffers_shift(rxa[channel].shift.p, rxa[channel].inbuff, rxa[channel].inbuff);
   setSize_shift(rxa[channel].shift.p, ch[channel].dsp_insize);

@@ -38,7 +38,7 @@ void calc_fmmod(FMMOD a) {
   a->bp_fc = a->deviation + a->f_high;
 }
 
-FMMOD create_fmmod(int run, int size, double* in, double* out, int rate, double dev, double f_low, double f_high,
+FMMOD create_fmmod(int run, int size, double *in, double *out, int rate, double dev, double f_low, double f_high,
                    int ctcss_run, double ctcss_level, double ctcss_freq, int bp_run, int nc, int mp) {
   FMMOD a = (FMMOD) malloc0(sizeof(fmmod));
   double *impulse;
@@ -102,7 +102,7 @@ void xfmmod(FMMOD a) {
   }
 }
 
-void setBuffers_fmmod(FMMOD a, double* in, double* out) {
+void setBuffers_fmmod(FMMOD a, double *in, double *out) {
   a->in = in;
   a->out = out;
   calc_fmmod(a);

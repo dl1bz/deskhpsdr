@@ -59,7 +59,7 @@ extern void flush_cbl (CBL a);
 
 extern void xcbl (CBL a);
 
-extern void setBuffers_cbl (CBL a, double* in, double* out);
+extern void setBuffers_cbl (CBL a, double *in, double *out);
 
 extern void setSamplerate_cbl (CBL a, int rate);
 

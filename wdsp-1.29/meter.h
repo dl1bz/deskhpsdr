@@ -47,7 +47,7 @@ typedef struct _meter {
   CRITICAL_SECTION mtupdate;
 } meter, *METER;
 
-extern METER create_meter (int run, int* prun, int size, double* buff, int rate, double tau_av, double tau_decay,
+extern METER create_meter (int run, int *prun, int size, double *buff, int rate, double tau_av, double tau_decay,
                            double *result, CRITICAL_SECTION **pmtupdate, int enum_av, int enum_pk, int enum_gain, double *pgain);
 
 extern void destroy_meter (METER a);
@@ -56,7 +56,7 @@ extern void flush_meter (METER a);
 
 extern void xmeter (METER a);
 
-extern void setBuffers_meter (METER a, double* in);
+extern void setBuffers_meter (METER a, double *in);
 
 extern void setSamplerate_meter (METER a, int rate);
 

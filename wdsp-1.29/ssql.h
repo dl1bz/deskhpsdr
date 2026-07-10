@@ -86,7 +86,7 @@ typedef struct _ssql {        // Syllabic Squelch
   int *tr_signal;           // trigger signal, 0 or 1
 } ssql, *SSQL;
 
-extern SSQL create_ssql (int run, int size, double* in, double* out, int rate, double tup, double tdown,
+extern SSQL create_ssql (int run, int size, double *in, double *out, int rate, double tup, double tdown,
                          double muted_gain, double tau_mute, double tau_unmute, double wthresh, double tr_thresh, int rsize, double fmax);
 
 extern void destroy_ssql (SSQL a);
@@ -95,7 +95,7 @@ extern void flush_ssql (SSQL a);
 
 extern void xssql (SSQL a);
 
-extern void setBuffers_ssql (SSQL a, double* in, double* out);
+extern void setBuffers_ssql (SSQL a, double *in, double *out);
 
 extern void setSamplerate_ssql (SSQL a, int rate);
 

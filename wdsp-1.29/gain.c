@@ -27,7 +27,7 @@ warren@wpratt.com
 #include "comm.h"
 
 PORT
-GAIN create_gain(int run, int* prun, int size, double* in, double* out, double Igain, double Qgain) {
+GAIN create_gain(int run, int *prun, int size, double *in, double *out, double Igain, double Qgain) {
   GAIN a = (GAIN) malloc0(sizeof(gain));
   a->run = run;
   a->prun = prun;
@@ -71,7 +71,7 @@ void xgain(GAIN a) {
   LeaveCriticalSection(&a->cs_update);
 }
 
-void setBuffers_gain(GAIN a, double* in, double* out) {
+void setBuffers_gain(GAIN a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

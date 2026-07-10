@@ -62,7 +62,7 @@ double *build_doublepole_1sided(int nc, double rate, double fcenter, double band
   int i;
   double jd;
   double nfreqs = 3000.0;
-  double *h_i = (double*)malloc0(nc * sizeof(complex));
+  double *h_i = (double *)malloc0(nc * sizeof(complex));
   for (i = 0; i < nc; i++) {
     double sum[2] = { 0.0 };
     double eto[2] = { 0.0 };
@@ -82,7 +82,7 @@ double *build_doublepole_1sided(int nc, double rate, double fcenter, double band
   // print_impulse("pre_analytic.txt", nc, h_i, 1, 0);
   int npad = 8;
   int size = npad * nc;
-  double *pad = (double*)malloc0(size * sizeof(complex));
+  double *pad = (double *)malloc0(size * sizeof(complex));
   memcpy(pad, h_i, nc * sizeof(complex));
   analytic(size, pad, pad);
   memcpy(h_i, pad, nc * sizeof(complex));
@@ -111,8 +111,8 @@ double *build_doublepole_2sided(int nc, double rate, double fcenter, double band
   double delta = rate / (double)nc;
   int nfreqs = 3000;
   double mult = 2.0 * scale / (double)nc;
-  double *h_i = (double*)malloc0(nc * sizeof(complex));
-  double *H_i = (double*)malloc0(nc * sizeof(complex));
+  double *h_i = (double *)malloc0(nc * sizeof(complex));
+  double *H_i = (double *)malloc0(nc * sizeof(complex));
   for (i = 0, jd = 0.0; i < nfreqs / 2; i++, jd += delta) {
     H(scale, fcenter, bw, jd, Hres);
     H_i[2 * i + 0] = Hres[0] * mult;
@@ -123,8 +123,8 @@ double *build_doublepole_2sided(int nc, double rate, double fcenter, double band
     H_i[2 * i + 0] = Hres[0] * mult;
     H_i[2 * i + 1] = Hres[1] * mult;
   }
-  fftw_plan prev = fftw_plan_dft_1d(nc, (fftw_complex*)H_i,
-                                    (fftw_complex*)h_i, FFTW_BACKWARD, FFTW_PATIENT);
+  fftw_plan prev = fftw_plan_dft_1d(nc, (fftw_complex *)H_i,
+                                    (fftw_complex *)h_i, FFTW_BACKWARD, FFTW_PATIENT);
   fftw_execute(prev);
   fftw_destroy_plan(prev);
   _aligned_free(H_i);
@@ -144,7 +144,7 @@ double *build_doublepole_1eff(int nc, double rate, double fcenter, double bandwi
   double alpha = PI * bw / rate;
   double omega = - TWOPI * fcenter / rate;
   double impulse, arg;
-  double *c_impulse = (double*) malloc0(nc * sizeof(complex));
+  double *c_impulse = (double *) malloc0(nc * sizeof(complex));
   for (int i = 0; i < nc; i++) {
     impulse = scale * alpha * exp(-alpha * (double)i);
     arg = omega * (double)i;
@@ -154,7 +154,7 @@ double *build_doublepole_1eff(int nc, double rate, double fcenter, double bandwi
   return c_impulse;
 }
 
-DOUBLEPOLE create_doublepole(int run, int position, int size, double* in, double* out,
+DOUBLEPOLE create_doublepole(int run, int position, int size, double *in, double *out,
                              double f_center, double bandwidth, int samplerate, double gain, int mode) {
   DOUBLEPOLE a = (DOUBLEPOLE)malloc0(sizeof(doublepole));
   a->run = run;
@@ -204,7 +204,7 @@ void xdoublepole(DOUBLEPOLE a, int pos) {
   }
 }
 
-void setBuffers_doublepole(DOUBLEPOLE a, double* in, double* out) {
+void setBuffers_doublepole(DOUBLEPOLE a, double *in, double *out) {
   a->in = in;
   a->out = out;
   setBuffers_fircore(a->p, a->in, a->out);

@@ -71,7 +71,7 @@ void calc_cfcwindow(CFCOMP a) {
   }
 }
 
-int fCOMPcompare(const void* a, const void* b) {
+int fCOMPcompare(const void *a, const void *b) {
   if (*(double *)a < * (double *)b) {
     return -1;
   } else if (*(double *)a == *(double *)b) {
@@ -93,7 +93,7 @@ void calc_comp(CFCOMP a) {
     a->F[i] = min(a->F[i], fmax);
     a->G[i] = max(a->G[i], 0.0);
   }
-  sary = (double*)malloc0(3 * a->nfreqs * sizeof(double));
+  sary = (double *)malloc0(3 * a->nfreqs * sizeof(double));
   for (i = 0; i < a->nfreqs; i++) {
     sary[3 * i + 0] = a->F[i];
     sary[3 * i + 1] = a->G[i];
@@ -152,39 +152,39 @@ void calc_cfcomp(CFCOMP a) {
   a->init_oainidx = a->oainidx;
   a->oaoutidx = 0;
   a->msize = a->fsize / 2 + 1;
-  a->window  = (double*)malloc0(a->fsize  * sizeof(double));
-  a->inaccum   = (double*)malloc0(a->iasize * sizeof(double));
-  a->forfftin  = (double*)malloc0(a->fsize  * sizeof(double));
-  a->forfftout = (double*)malloc0(a->msize  * sizeof(complex));
-  a->cmask   = (double*)malloc0(a->msize  * sizeof(double));
-  a->mask    = (double*)malloc0(a->msize  * sizeof(double));
-  a->cfc_gain  = (double*)malloc0(a->msize  * sizeof(double));
-  a->revfftin  = (double*)malloc0(a->msize  * sizeof(complex));
-  a->revfftout = (double*)malloc0(a->fsize  * sizeof(double));
-  a->save    = (double**)malloc0(a->ovrlp  * sizeof(double*));
+  a->window  = (double *)malloc0(a->fsize  * sizeof(double));
+  a->inaccum   = (double *)malloc0(a->iasize * sizeof(double));
+  a->forfftin  = (double *)malloc0(a->fsize  * sizeof(double));
+  a->forfftout = (double *)malloc0(a->msize  * sizeof(complex));
+  a->cmask   = (double *)malloc0(a->msize  * sizeof(double));
+  a->mask    = (double *)malloc0(a->msize  * sizeof(double));
+  a->cfc_gain  = (double *)malloc0(a->msize  * sizeof(double));
+  a->revfftin  = (double *)malloc0(a->msize  * sizeof(complex));
+  a->revfftout = (double *)malloc0(a->fsize  * sizeof(double));
+  a->save    = (double **)malloc0(a->ovrlp  * sizeof(double *));
   for (i = 0; i < a->ovrlp; i++) {
-    a->save[i] = (double*)malloc0(a->fsize * sizeof(double));
+    a->save[i] = (double *)malloc0(a->fsize * sizeof(double));
   }
-  a->outaccum = (double*)malloc0(a->oasize * sizeof(double));
+  a->outaccum = (double *)malloc0(a->oasize * sizeof(double));
   a->nsamps = 0;
   a->saveidx = 0;
-  a->Rfor = fftw_plan_dft_r2c_1d(a->fsize, a->forfftin, (fftw_complex*)a->forfftout, FFTW_ESTIMATE);
-  a->Rrev = fftw_plan_dft_c2r_1d(a->fsize, (fftw_complex*)a->revfftin, a->revfftout, FFTW_ESTIMATE);
+  a->Rfor = fftw_plan_dft_r2c_1d(a->fsize, a->forfftin, (fftw_complex *)a->forfftout, FFTW_ESTIMATE);
+  a->Rrev = fftw_plan_dft_c2r_1d(a->fsize, (fftw_complex *)a->revfftin, a->revfftout, FFTW_ESTIMATE);
   calc_cfcwindow(a);
   a->pregain  = (2.0 * a->winfudge) / (double)a->fsize;
   a->postgain = 0.5 / ((double)a->ovrlp * a->winfudge);
-  a->fp = (double*) malloc0((a->nfreqs + 2) * sizeof(double));
-  a->gp = (double*) malloc0((a->nfreqs + 2) * sizeof(double));
-  a->ep = (double*) malloc0((a->nfreqs + 2) * sizeof(double));
-  a->comp = (double*) malloc0(a->msize * sizeof(double));
-  a->peq  = (double*) malloc0(a->msize * sizeof(double));
+  a->fp = (double *) malloc0((a->nfreqs + 2) * sizeof(double));
+  a->gp = (double *) malloc0((a->nfreqs + 2) * sizeof(double));
+  a->ep = (double *) malloc0((a->nfreqs + 2) * sizeof(double));
+  a->comp = (double *) malloc0(a->msize * sizeof(double));
+  a->peq  = (double *) malloc0(a->msize * sizeof(double));
   calc_comp(a);
   a->gain = 0.0;
   a->mmult = exp(-1.0 / (a->rate * a->ovrlp * a->mtau));
   a->dmult = exp(-(double)a->fsize / (a->rate * a->ovrlp * a->dtau));
-  a->delta     = (double*)malloc0(a->msize * sizeof(double));
-  a->delta_copy  = (double*)malloc0(a->msize * sizeof(double));
-  a->cfc_gain_copy = (double*)malloc0(a->msize * sizeof(double));
+  a->delta     = (double *)malloc0(a->msize * sizeof(double));
+  a->delta_copy  = (double *)malloc0(a->msize * sizeof(double));
+  a->cfc_gain_copy = (double *)malloc0(a->msize * sizeof(double));
 }
 
 void decalc_cfcomp(CFCOMP a) {
@@ -215,7 +215,7 @@ void decalc_cfcomp(CFCOMP a) {
   _aligned_free(a->window);
 }
 
-CFCOMP create_cfcomp(int run, int position, int peq_run, int size, double* in, double* out, int fsize, int ovrlp,
+CFCOMP create_cfcomp(int run, int position, int peq_run, int size, double *in, double *out, int fsize, int ovrlp,
                      int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double *F, double *G, double *E,
                      double mtau, double dtau) {
   CFCOMP a = (CFCOMP) malloc0(sizeof(cfcomp));
@@ -235,9 +235,9 @@ CFCOMP create_cfcomp(int run, int position, int peq_run, int size, double* in, d
   a->prepeq = prepeq;
   a->mtau = mtau;         // compression metering time constant
   a->dtau = dtau;         // compression display time constant
-  a->F = (double*)malloc0(a->nfreqs * sizeof(double));
-  a->G = (double*)malloc0(a->nfreqs * sizeof(double));
-  a->E = (double*)malloc0(a->nfreqs * sizeof(double));
+  a->F = (double *)malloc0(a->nfreqs * sizeof(double));
+  a->G = (double *)malloc0(a->nfreqs * sizeof(double));
+  a->E = (double *)malloc0(a->nfreqs * sizeof(double));
   memcpy(a->F, F, a->nfreqs * sizeof(double));
   memcpy(a->G, G, a->nfreqs * sizeof(double));
   memcpy(a->E, E, a->nfreqs * sizeof(double));
@@ -356,7 +356,7 @@ void xcfcomp(CFCOMP a, int pos) {
   }
 }
 
-void setBuffers_cfcomp(CFCOMP a, double* in, double* out) {
+void setBuffers_cfcomp(CFCOMP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -400,25 +400,25 @@ void SetTXACFCOMPPosition(int channel, int pos) {
 }
 
 PORT
-void SetTXACFCOMPprofile(int channel, int nfreqs, double* F, double* G, double* E) {
+void SetTXACFCOMPprofile(int channel, int nfreqs, double *F, double *G, double *E) {
   CFCOMP a = txa[channel].cfcomp.p;
   EnterCriticalSection(&ch[channel].csDSP);
   a->nfreqs = nfreqs;
   _aligned_free(a->E);
   _aligned_free(a->F);
   _aligned_free(a->G);
-  a->F = (double*)malloc0(a->nfreqs * sizeof(double));
-  a->G = (double*)malloc0(a->nfreqs * sizeof(double));
-  a->E = (double*)malloc0(a->nfreqs * sizeof(double));
+  a->F = (double *)malloc0(a->nfreqs * sizeof(double));
+  a->G = (double *)malloc0(a->nfreqs * sizeof(double));
+  a->E = (double *)malloc0(a->nfreqs * sizeof(double));
   memcpy(a->F, F, a->nfreqs * sizeof(double));
   memcpy(a->G, G, a->nfreqs * sizeof(double));
   memcpy(a->E, E, a->nfreqs * sizeof(double));
   _aligned_free(a->ep);
   _aligned_free(a->gp);
   _aligned_free(a->fp);
-  a->fp = (double*) malloc0((a->nfreqs + 2) * sizeof(double));
-  a->gp = (double*) malloc0((a->nfreqs + 2) * sizeof(double));
-  a->ep = (double*) malloc0((a->nfreqs + 2) * sizeof(double));
+  a->fp = (double *) malloc0((a->nfreqs + 2) * sizeof(double));
+  a->gp = (double *) malloc0((a->nfreqs + 2) * sizeof(double));
+  a->ep = (double *) malloc0((a->nfreqs + 2) * sizeof(double));
   calc_comp(a);
   LeaveCriticalSection(&ch[channel].csDSP);
 }
@@ -457,7 +457,7 @@ void SetTXACFCOMPPrePeq(int channel, double prepeq) {
 }
 
 PORT
-void GetTXACFCOMPDisplayCompression(int channel, double* comp_values, int* ready) {
+void GetTXACFCOMPDisplayCompression(int channel, double *comp_values, int *ready) {
   int i;
   CFCOMP a = txa[channel].cfcomp.p;
   EnterCriticalSection(&ch[channel].csDSP);

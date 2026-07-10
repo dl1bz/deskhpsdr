@@ -68,7 +68,7 @@ typedef struct _fmsq {
   FIRCORE p;
 } fmsq, *FMSQ;
 
-extern FMSQ create_fmsq (int run, int size, double* insig, double* outsig, double* trigger, int rate, double fc,
+extern FMSQ create_fmsq (int run, int size, double *insig, double *outsig, double *trigger, int rate, double fc,
                          double *pllpole, double tdelay, double avtau, double longtau, double tup, double tdown, double tail_thresh,
                          double unmute_thresh, double min_tail, double max_tail, int nc, int mp);
 
@@ -78,7 +78,7 @@ extern void flush_fmsq (FMSQ a);
 
 extern void xfmsq (FMSQ a);
 
-extern void setBuffers_fmsq (FMSQ a, double* in, double* out, double* trig);
+extern void setBuffers_fmsq (FMSQ a, double *in, double *out, double *trig);
 
 extern void setSamplerate_fmsq (FMSQ a, int rate);
 

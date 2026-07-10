@@ -45,8 +45,8 @@ void calc_wcpagc(WCPAGC a) {
   a->hang_counter = 0;
   a->decay_type = 0;
   a->state = 0;
-  a->ring = (double*)malloc0(RB_SIZE * sizeof(complex));
-  a->abs_ring = (double*)malloc0(RB_SIZE * sizeof(double));
+  a->ring = (double *)malloc0(RB_SIZE * sizeof(complex));
+  a->abs_ring = (double *)malloc0(RB_SIZE * sizeof(double));
   loadWcpAGC(a);
 }
 
@@ -142,9 +142,9 @@ void destroy_wcpagc(WCPAGC a) {
 }
 
 void flush_wcpagc(WCPAGC a) {
-  memset((void*)a->ring, 0, sizeof(double) * RB_SIZE * 2);
+  memset((void *)a->ring, 0, sizeof(double) * RB_SIZE * 2);
   a->ring_max = 0.0;
-  memset((void*)a->abs_ring, 0, sizeof(double)* RB_SIZE);
+  memset((void *)a->abs_ring, 0, sizeof(double)* RB_SIZE);
 }
 
 void xwcpagc(WCPAGC a) {
@@ -174,7 +174,7 @@ void xwcpagc(WCPAGC a) {
         a->abs_ring[a->in_index] = max(fabs(a->ring[2 * a->in_index + 0]), fabs(a->ring[2 * a->in_index + 1]));
       } else {
         a->abs_ring[a->in_index] = sqrt(a->ring[2 * a->in_index + 0] * a->ring[2 * a->in_index + 0] + a->ring[2 * a->in_index +
-                                        1] * a->ring[2 * a->in_index + 1]);
+          1] * a->ring[2 * a->in_index + 1]);
       }
       a->fast_backaverage = a->fast_backmult * a->abs_out_sample + a->onemfast_backmult * a->fast_backaverage;
       a->hang_backaverage = a->hang_backmult * a->abs_out_sample + a->onemhang_backmult * a->hang_backaverage;
@@ -291,7 +291,7 @@ void xwcpagc(WCPAGC a) {
   }
 }
 
-void setBuffers_wcpagc(WCPAGC a, double* in, double* out) {
+void setBuffers_wcpagc(WCPAGC a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -380,7 +380,7 @@ SetRXAAGCHang(int channel, int hang) {
 }
 
 PORT void
-GetRXAAGCHangLevel(int channel, double* hangLevel)
+GetRXAAGCHangLevel(int channel, double *hangLevel)
 //for line on bandscope
 {
   EnterCriticalSection(&ch[channel].csDSP);
@@ -407,7 +407,7 @@ SetRXAAGCHangLevel(int channel, double hangLevel)
 }
 
 PORT void
-GetRXAAGCHangThreshold(int channel, int* hangthreshold)
+GetRXAAGCHangThreshold(int channel, int *hangthreshold)
 //for slider in setup
 {
   EnterCriticalSection(&ch[channel].csDSP);
@@ -426,7 +426,7 @@ SetRXAAGCHangThreshold(int channel, int hangthreshold)
 }
 
 PORT void
-GetRXAAGCThresh(int channel, double* thresh, double size, double rate)
+GetRXAAGCThresh(int channel, double *thresh, double size, double rate)
 //for line on bandscope.
 {
   double noise_offset;
@@ -452,7 +452,7 @@ SetRXAAGCThresh(int channel, double thresh, double size, double rate)
 }
 
 PORT void
-GetRXAAGCTop(int channel, double* max_agc)
+GetRXAAGCTop(int channel, double *max_agc)
 //for AGC Max Gain in setup
 {
   EnterCriticalSection(&ch[channel].csDSP);

@@ -52,8 +52,8 @@ mw0lge@grange-lane.co.uk
 static const uint64_t FNV_OFFSET_BASIS_64 = 14695981039346656037ULL;  // 0xcbf29ce484222325
 static const uint64_t FNV_PRIME_64 = 1099511628211ULL;          // 0x100000001b3
 
-uint64_t fnv1a_hash64(const void* data, size_t len) {
-  const uint8_t *bytes = (const uint8_t*)data;
+uint64_t fnv1a_hash64(const void *data, size_t len) {
+  const uint8_t *bytes = (const uint8_t *)data;
   uint64_t hash = FNV_OFFSET_BASIS_64;
   for (size_t i = 0; i < len; ++i) {
     hash ^= bytes[i];
@@ -65,8 +65,8 @@ uint64_t fnv1a_hash64(const void* data, size_t len) {
 static const uint32_t FNV_OFFSET_BASIS_32 = 2166136261U;    // 0x811C9DC5
 static const uint32_t FNV_PRIME_32 = 16777619U;         // 0x01000193
 
-uint32_t fnv1a_hash32(const void* data, size_t len) {
-  const uint8_t *bytes = (const uint8_t*)data;
+uint32_t fnv1a_hash32(const void *data, size_t len) {
+  const uint8_t *bytes = (const uint8_t *)data;
   uint32_t hash = FNV_OFFSET_BASIS_32;
   for (size_t i = 0; i < len; i++) {
     hash ^= bytes[i];
@@ -135,7 +135,7 @@ double *get_impulse_cache_entry(size_t bucket, HASH_T hash, int N) {
         e->next = _cache_heads[bucket];
         _cache_heads[bucket] = e;
       }
-      double *imp = (double*) malloc0(e->N * sizeof(complex));
+      double *imp = (double *) malloc0(e->N * sizeof(complex));
       memcpy(imp, e->impulse, e->N * sizeof(complex));
       return imp;
     }
@@ -145,7 +145,7 @@ double *get_impulse_cache_entry(size_t bucket, HASH_T hash, int N) {
   return NULL;
 }
 
-void add_impulse_to_cache(size_t bucket, HASH_T hash, int N, double* impulse) {
+void add_impulse_to_cache(size_t bucket, HASH_T hash, int N, double *impulse) {
   if (!_run) { return; }
   int use;
   EnterCriticalSection(&_cs_use_cache);
@@ -156,7 +156,7 @@ void add_impulse_to_cache(size_t bucket, HASH_T hash, int N, double* impulse) {
   cache_entry* e = malloc0(sizeof(cache_entry));
   e->hash = hash;
   e->N = N;
-  e->impulse = (double*) malloc0(N * sizeof(complex));
+  e->impulse = (double *) malloc0(N * sizeof(complex));
   memcpy(e->impulse, impulse, N * sizeof(complex));
   e->next = _cache_heads[bucket];
   _cache_heads[bucket] = e;
@@ -164,7 +164,7 @@ void add_impulse_to_cache(size_t bucket, HASH_T hash, int N, double* impulse) {
 }
 
 PORT
-int save_impulse_cache(const char* path) {
+int save_impulse_cache(const char *path) {
   if (!_run) { return 0; }
   int use;
   EnterCriticalSection(&_cs_use_cache);
@@ -190,7 +190,7 @@ int save_impulse_cache(const char* path) {
 }
 
 PORT
-int read_impulse_cache(const char* path) {
+int read_impulse_cache(const char *path) {
   if (!_run) { return 0; }
   free_impulse_cache();
   int use;
@@ -212,9 +212,9 @@ int read_impulse_cache(const char* path) {
       int    N;
       if (fread(&hash, sizeof(HASH_T), 1, fp) != 1) { fclose(fp); return -1; }
       if (fread(&N, sizeof(N), 1, fp) != 1) { fclose(fp); return -1; }
-      double *data = (double*)malloc0(N * sizeof(complex));
+      double *data = (double *)malloc0(N * sizeof(complex));
       if (fread(data, sizeof(complex), N, fp) != (size_t)N) { _aligned_free(data); fclose(fp); return -1; }
-      cache_entry* e = (cache_entry*)malloc0(sizeof(cache_entry));
+      cache_entry* e = (cache_entry *)malloc0(sizeof(cache_entry));
       e->hash = hash;
       e->N = N;
       e->impulse = data;

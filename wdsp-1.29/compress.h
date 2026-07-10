@@ -48,7 +48,7 @@ extern void destroy_compressor (COMPRESSOR a);
 
 extern void flush_compressor (COMPRESSOR a);
 
-extern void setBuffers_compressor (COMPRESSOR a, double* in, double* out);
+extern void setBuffers_compressor (COMPRESSOR a, double *in, double *out);
 
 extern void setSamplerate_compressor (COMPRESSOR a, int rate);
 

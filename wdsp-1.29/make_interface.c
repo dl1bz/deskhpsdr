@@ -26,9 +26,9 @@
 #include <stdio.h>
 #include <string.h>
 
-void trimm(char* line, size_t maxlen);
+void trimm(char *line, size_t maxlen);
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   FILE *infile;
   int i, rc, len;
   int first_in_file;
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-void trimm(char* line, size_t maxlen) {
+void trimm(char *line, size_t maxlen) {
   int len;
   //
   // Remove comments starting with '//'

@@ -57,12 +57,12 @@ void setSize_sbnr(SBNR a, int size) {
   a->buffer_size = size;
 }
 
-void setBuffers_sbnr(SBNR a, double* in, double* out) {
+void setBuffers_sbnr(SBNR a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
 
-SBNR create_sbnr(int run, int position, int size, double* in, double* out, int rate) {
+SBNR create_sbnr(int run, int position, int size, double *in, double *out, int rate) {
   SBNR a = (SBNR) malloc0(sizeof(sbnr));
   a->run = run;
   a->position = position;

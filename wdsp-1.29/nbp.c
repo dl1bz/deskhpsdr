@@ -37,11 +37,11 @@ NOTCHDB create_notchdb(int master_run, int maxnotches) {
   a->master_run = master_run;
   a->maxnotches = maxnotches;
   a->nn = 0;
-  a->fcenter = (double*) malloc0(a->maxnotches * sizeof(double));
-  a->fwidth  = (double*) malloc0(a->maxnotches * sizeof(double));
-  a->nlow    = (double*) malloc0(a->maxnotches * sizeof(double));
-  a->nhigh   = (double*) malloc0(a->maxnotches * sizeof(double));
-  a->active  = (int*) malloc0(a->maxnotches * sizeof(int));
+  a->fcenter = (double *) malloc0(a->maxnotches * sizeof(double));
+  a->fwidth  = (double *) malloc0(a->maxnotches * sizeof(double));
+  a->nlow    = (double *) malloc0(a->maxnotches * sizeof(double));
+  a->nhigh   = (double *) malloc0(a->maxnotches * sizeof(double));
+  a->active  = (int *) malloc0(a->maxnotches * sizeof(int));
   return a;
 }
 
@@ -59,9 +59,9 @@ void destroy_notchdb(NOTCHDB b) {
 *                                                   *
 ********************************************************************************************************/
 
-double *fir_mbandpass(int N, int nbp, double* flow, double* fhigh, double rate, double scale, int wintype) {
+double *fir_mbandpass(int N, int nbp, double *flow, double *fhigh, double rate, double scale, int wintype) {
   int i, k;
-  double *impulse = (double*) malloc0(N * sizeof(complex));
+  double *impulse = (double *) malloc0(N * sizeof(complex));
   double *imp;
   for (k = 0; k < nbp; k++) {
     imp = fir_bandpass(N, flow[k], fhigh[k], rate, wintype, 1, scale);
@@ -90,13 +90,13 @@ double min_notch_width(NBP a) {
   return min_width;
 }
 
-int make_nbp(int nn, int* active, double* center, double* width, double* nlow, double* nhigh,
+int make_nbp(int nn, int *active, double *center, double *width, double *nlow, double *nhigh,
              double minwidth, int autoincr, double flow, double fhigh, double *bplow, double *bphigh, int *havnotch) {
   int nbp;
   int nnbp, adds;
   int i, j, k;
   double nl, nh;
-  int *del = (int*) malloc0(1024 * sizeof(int));
+  int *del = (int *) malloc0(1024 * sizeof(int));
   if (fhigh > flow) {
     bplow[0]  = flow;
     bphigh[0] = fhigh;
@@ -205,7 +205,7 @@ void calc_nbp_impulse(NBP a) {
   }
 }
 
-NBP create_nbp(int run, int fnfrun, int position, int size, int nc, int mp, double* in, double* out,
+NBP create_nbp(int run, int fnfrun, int position, int size, int nc, int mp, double *in, double *out,
                double flow, double fhigh, int rate, int wintype, double gain, int autoincr, int maxpb, NOTCHDB* ptraddr) {
   NBP a = (NBP) malloc0(sizeof(nbp));
   a->run = run;
@@ -224,8 +224,8 @@ NBP create_nbp(int run, int fnfrun, int position, int size, int nc, int mp, doub
   a->fhigh = fhigh;
   a->maxpb = maxpb;
   a->ptraddr = ptraddr;
-  a->bplow   = (double*) malloc0(a->maxpb * sizeof(double));
-  a->bphigh  = (double*) malloc0(a->maxpb * sizeof(double));
+  a->bplow   = (double *) malloc0(a->maxpb * sizeof(double));
+  a->bphigh  = (double *) malloc0(a->maxpb * sizeof(double));
   calc_nbp_impulse(a);
   a->p = create_fircore(a->size, a->in, a->out, a->nc, a->mp, a->impulse);
   // print_impulse ("nbp.txt", a->size + 1, impulse, 1, 0);
@@ -252,7 +252,7 @@ void xnbp(NBP a, int pos) {
   }
 }
 
-void setBuffers_nbp(NBP a, double* in, double* out) {
+void setBuffers_nbp(NBP a, double *in, double *out) {
   a->in = in;
   a->out = out;
   setBuffers_fircore(a->p, a->in, a->out);
@@ -340,7 +340,7 @@ int RXANBPAddNotch(int channel, int notch, double fcenter, double fwidth, int ac
 }
 
 PORT
-int RXANBPGetNotch(int channel, int notch, double* fcenter, double* fwidth, int* active) {
+int RXANBPGetNotch(int channel, int notch, double *fcenter, double *fwidth, int *active) {
   NOTCHDB a;
   int rval;
   EnterCriticalSection(&ch[channel].csDSP);
@@ -403,7 +403,7 @@ int RXANBPEditNotch(int channel, int notch, double fcenter, double fwidth, int a
 }
 
 PORT
-void RXANBPGetNumNotches(int channel, int* nnotches) {
+void RXANBPGetNumNotches(int channel, int *nnotches) {
   NOTCHDB a;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].ndb.p;
@@ -515,7 +515,7 @@ void RXANBPSetMP(int channel, int mp) {
 }
 
 PORT
-void RXANBPGetMinNotchWidth(int channel, double* minwidth) {
+void RXANBPGetMinNotchWidth(int channel, double *minwidth) {
   NBP a;
   EnterCriticalSection(&ch[channel].csDSP);
   a = rxa[channel].nbp0.p;

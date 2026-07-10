@@ -26,18 +26,18 @@ warren@pratt.one
 #ifndef _cmath_h
 #define _cmath_h
 
-extern double mag(double* value);
+extern double mag(double *value);
 
-extern void cadd(double* a, double* b, double* sum);
+extern void cadd(double *a, double *b, double *sum);
 
-extern void csub(double* a, double* b, double* diff);
+extern void csub(double *a, double *b, double *diff);
 
-extern void cmult(double* a, double* b, double* product);
+extern void cmult(double *a, double *b, double *product);
 
-extern void cdiv(double* a, double* b, double* quotient);
+extern void cdiv(double *a, double *b, double *quotient);
 
-extern void cpar(double* Z1, double* Z2, double* Zpar);
+extern void cpar(double *Z1, double *Z2, double *Zpar);
 
-extern void cser_to_par(double* Z1, double* ZR, double* ZX);
+extern void cser_to_par(double *Z1, double *ZR, double *ZX);
 
 #endif

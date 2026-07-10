@@ -27,14 +27,14 @@ warren@wpratt.com
 #include "comm.h"
 
 void calc_sender(SENDER a) {
-  a->out = (double*) malloc0(a->size * sizeof(complex));
+  a->out = (double *) malloc0(a->size * sizeof(complex));
 }
 
 void decalc_sender(SENDER a) {
   _aligned_free(a->out);
 }
 
-SENDER create_sender(int run, int flag, int mode, int size, double* in, int arg0, int arg1, int arg2, int arg3) {
+SENDER create_sender(int run, int flag, int mode, int size, double *in, int arg0, int arg1, int arg2, int arg3) {
   SENDER a = (SENDER) malloc0(sizeof(sender));
   a->run = run;
   a->flag = flag;
@@ -63,7 +63,7 @@ void xsender(SENDER a) {
     switch (a->mode) {
     case 0: {
       int i;
-      dINREAL* outf = (dINREAL*)a->out;
+      dINREAL* outf = (dINREAL *)a->out;
       for (i = 0; i < a->size; i++) {
         outf [2 * i + 0] = (dINREAL)a->in[2 * i + 0];
         outf [2 * i + 1] = (dINREAL)a->in[2 * i + 1];
@@ -75,7 +75,7 @@ void xsender(SENDER a) {
   }
 }
 
-void setBuffers_sender(SENDER a, double* in) {
+void setBuffers_sender(SENDER a, double *in) {
   a->in = in;
 }
 

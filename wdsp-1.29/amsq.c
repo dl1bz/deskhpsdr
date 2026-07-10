@@ -45,15 +45,15 @@ void compute_slews(AMSQ a) {
 
 void calc_amsq(AMSQ a) {
   // signal averaging
-  a->trigsig = (double*)malloc0(a->size * sizeof(complex));
+  a->trigsig = (double *)malloc0(a->size * sizeof(complex));
   a->avm = exp(-1.0 / (a->rate * a->avtau));
   a->onem_avm = 1.0 - a->avm;
   a->avsig = 0.0;
   // level change
   a->ntup = (int)(a->tup * a->rate);
   a->ntdown = (int)(a->tdown * a->rate);
-  a->cup = (double*)malloc0((a->ntup + 1) * sizeof(double));
-  a->cdown = (double*)malloc0((a->ntdown + 1) * sizeof(double));
+  a->cup = (double *)malloc0((a->ntup + 1) * sizeof(double));
+  a->cdown = (double *)malloc0((a->ntdown + 1) * sizeof(double));
   compute_slews(a);
   // control
   a->state = 0;
@@ -65,7 +65,7 @@ void decalc_amsq(AMSQ a) {
   _aligned_free(a->trigsig);
 }
 
-AMSQ create_amsq(int run, int size, double* in, double* out, double* trigger, int rate, double avtau,
+AMSQ create_amsq(int run, int size, double *in, double *out, double *trigger, int rate, double avtau,
                  double tup, double tdown, double tail_thresh, double unmute_thresh, double min_tail, double max_tail,
                  double muted_gain) {
   AMSQ a = (AMSQ) malloc0(sizeof(amsq));
@@ -166,7 +166,7 @@ void xamsqcap(AMSQ a) {
   memcpy(a->trigsig, a->trigger, a->size * sizeof(complex));
 }
 
-void setBuffers_amsq(AMSQ a, double* in, double* out, double* trigger) {
+void setBuffers_amsq(AMSQ a, double *in, double *out, double *trigger) {
   a->in = in;
   a->out = out;
   a->trigger = trigger;

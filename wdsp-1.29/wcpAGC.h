@@ -132,7 +132,7 @@ extern void destroy_wcpagc (WCPAGC a);
 
 extern void flush_wcpagc (WCPAGC a);
 
-extern void setBuffers_wcpagc (WCPAGC a, double* in, double* out);
+extern void setBuffers_wcpagc (WCPAGC a, double *in, double *out);
 
 extern void setSamplerate_wcpagc (WCPAGC a, int rate);
 
@@ -150,15 +150,15 @@ extern AGCPORT void SetRXAAGCDecay (int channel, int decay);
 
 extern AGCPORT void SetRXAAGCHang (int channel, int hang);
 
-extern AGCPORT void GetRXAAGCHangLevel(int channel, double* hangLevel);
+extern AGCPORT void GetRXAAGCHangLevel(int channel, double *hangLevel);
 
 extern AGCPORT void SetRXAAGCHangLevel(int channel, double hangLevel);
 
-extern AGCPORT void GetRXAAGCHangThreshold(int channel, int* hangthreshold);
+extern AGCPORT void GetRXAAGCHangThreshold(int channel, int *hangthreshold);
 
 extern AGCPORT void SetRXAAGCHangThreshold (int channel, int hangthreshold);
 
-extern AGCPORT void GetRXAAGCTop(int channel, double* max_agc);
+extern AGCPORT void GetRXAAGCTop(int channel, double *max_agc);
 
 extern AGCPORT void SetRXAAGCTop (int channel, double max_agc);
 
@@ -166,7 +166,7 @@ extern AGCPORT void SetRXAAGCSlope (int channel, int slope);
 
 extern AGCPORT void SetRXAAGCThresh(int channel, double thresh, double size, double rate);
 
-extern AGCPORT void GetRXAAGCThresh(int channel, double* thresh, double size, double rate);
+extern AGCPORT void GetRXAAGCThresh(int channel, double *thresh, double size, double rate);
 
 // TXA Properties
 

@@ -31,7 +31,7 @@ MAV create_mav(int ringmin, int ringmax, double nom_value) {
   a->ringmin = ringmin;
   a->ringmax = ringmax;
   a->nom_value = nom_value;
-  a->ring = (int*) malloc0(a->ringmax * sizeof(int));
+  a->ring = (int *) malloc0(a->ringmax * sizeof(int));
   a->mask = a->ringmax - 1;
   a->i = 0;
   a->load = 0;
@@ -50,7 +50,7 @@ void flush_mav(MAV a) {
   a->load = 0;
   a->sum = 0;
 }
-void xmav(MAV a, int input, double* output) {
+void xmav(MAV a, int input, double *output) {
   if (a->load >= a->ringmax) {
     a->sum -= a->ring[a->i];
   }
@@ -70,7 +70,7 @@ AAMAV create_aamav(int ringmin, int ringmax, double nom_ratio) {
   a->ringmin = ringmin;
   a->ringmax = ringmax;
   a->nom_ratio = nom_ratio;
-  a->ring = (int*) malloc0(a->ringmax * sizeof(int));
+  a->ring = (int *) malloc0(a->ringmax * sizeof(int));
   a->mask = a->ringmax - 1;
   a->i = 0;
   a->load = 0;
@@ -92,7 +92,7 @@ void flush_aamav(AAMAV a) {
   a->neg = 0;
 }
 
-void xaamav(AAMAV a, int input, double* output) {
+void xaamav(AAMAV a, int input, double *output) {
   if (a->load >= a->ringmax) {
     if (a->ring[a->i] >= 0) {
       a->pos -= a->ring[a->i];
@@ -126,12 +126,12 @@ void calc_rmatch(RMATCH a) {
   max_ring_insize = (int)(1.0 + (double)a->insize * (1.05 * a->nom_ratio));
   if (a->ringsize < 2 * max_ring_insize) { a->ringsize = 2 * max_ring_insize; }
   if (a->ringsize < 2 * a->outsize) { a->ringsize = 2 * a->outsize; }
-  a->ring = (double*) malloc0(a->ringsize * sizeof(complex));
+  a->ring = (double *) malloc0(a->ringsize * sizeof(complex));
   a->rsize = a->ringsize;
   a->n_ring = a->rsize / 2;
   a->iin = a->rsize / 2;
   a->iout = 0;
-  a->resout = (double*) malloc0(max_ring_insize * sizeof(complex));
+  a->resout = (double *) malloc0(max_ring_insize * sizeof(complex));
   a->v = create_varsamp(1, a->insize, a->in, a->resout, a->nom_inrate, a->nom_outrate,
                         a->fc_high, a->fc_low, a->R, a->gain, a->var, a->varmode);
   a->ffmav = create_aamav(a->ff_ringmin, a->ff_ringmax, a->nom_ratio);
@@ -144,14 +144,14 @@ void calc_rmatch(RMATCH a) {
   InitializeCriticalSectionAndSpinCount(&a->cs_var,  2500);
   a->ntslew = (int)(a->tslew * a->nom_outrate);
   if (a->ntslew + 1 > a->rsize / 2) { a->ntslew = a->rsize / 2 - 1; }
-  a->cslew = (double*) malloc0((a->ntslew + 1) * sizeof(double));
+  a->cslew = (double *) malloc0((a->ntslew + 1) * sizeof(double));
   dtheta = PI / (double)a->ntslew;
   theta = 0.0;
   for (m = 0; m <= a->ntslew; m++) {
     a->cslew[m] = 0.5 * (1.0 - cos(theta));
     theta += dtheta;
   }
-  a->baux = (double*) malloc0(a->ringsize / 2 * sizeof(complex));
+  a->baux = (double *) malloc0(a->ringsize / 2 * sizeof(complex));
   a->readsamps = 0;
   a->writesamps = 0;
   a->read_startup = (unsigned int)((double)a->nom_outrate * a->startup_delay);
@@ -280,7 +280,7 @@ void upslew(RMATCH a, int newsamps) {
 }
 
 PORT
-void xrmatchIN(void* b, double* in) {
+void xrmatchIN(void *b, double *in) {
   RMATCH a = (RMATCH)b;
   if (InterlockedAnd(&a->run, 1)) {
     int newsamps, first, second, ovfl;
@@ -389,7 +389,7 @@ void dslew(RMATCH a) {
 }
 
 PORT
-void xrmatchOUT(void* b, double* out) {
+void xrmatchOUT(void *b, double *out) {
   RMATCH a = (RMATCH)b;
   if (InterlockedAnd(&a->run, 1)) {
     int first, second;
@@ -425,7 +425,7 @@ void xrmatchOUT(void* b, double* out) {
 }
 
 PORT
-void getRMatchDiags(void* b, int* underflows, int* overflows, double* var, int* ringsize, int* nring) {
+void getRMatchDiags(void *b, int *underflows, int *overflows, double *var, int *ringsize, int *nring) {
   RMATCH a = (RMATCH)b;
   *underflows = InterlockedAnd(&a->underflows, 0xFFFFFFFF);
   *overflows  = InterlockedAnd(&a->overflows,  0xFFFFFFFF);
@@ -437,14 +437,14 @@ void getRMatchDiags(void* b, int* underflows, int* overflows, double* var, int* 
 }
 
 PORT
-void resetRMatchDiags(void* b) {
+void resetRMatchDiags(void *b) {
   RMATCH a = (RMATCH)b;
   InterlockedExchange(&a->underflows, 0);
   InterlockedExchange(&a->overflows,  0);
 }
 
 PORT
-void forceRMatchVar(void* b, int force, double fvar) {
+void forceRMatchVar(void *b, int force, double fvar) {
   RMATCH a = (RMATCH)b;
   EnterCriticalSection(&a->cs_var);
   a->force = force;
@@ -454,7 +454,7 @@ void forceRMatchVar(void* b, int force, double fvar) {
 
 PORT
 void *create_rmatchV(int in_size, int out_size, int nom_inrate, int nom_outrate, int ringsize, double var) {
-  return (void*)create_rmatch(
+  return (void *)create_rmatch(
                  1,            // run
                  0,            // input buffer, stuffed in other calls
                  0,            // output buffer, stuffed in other calls
@@ -481,13 +481,13 @@ void *create_rmatchV(int in_size, int out_size, int nom_inrate, int nom_outrate,
 }
 
 PORT
-void destroy_rmatchV(void* ptr) {
+void destroy_rmatchV(void *ptr) {
   RMATCH a = (RMATCH)ptr;
   destroy_rmatch(a);
 }
 
 PORT
-void setRMatchInsize(void* ptr, int insize) {
+void setRMatchInsize(void *ptr, int insize) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -498,7 +498,7 @@ void setRMatchInsize(void* ptr, int insize) {
 }
 
 PORT
-void setRMatchOutsize(void* ptr, int outsize) {
+void setRMatchOutsize(void *ptr, int outsize) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -509,7 +509,7 @@ void setRMatchOutsize(void* ptr, int outsize) {
 }
 
 PORT
-void setRMatchNomInrate(void* ptr, int nom_inrate) {
+void setRMatchNomInrate(void *ptr, int nom_inrate) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -520,7 +520,7 @@ void setRMatchNomInrate(void* ptr, int nom_inrate) {
 }
 
 PORT
-void setRMatchNomOutrate(void* ptr, int nom_outrate) {
+void setRMatchNomOutrate(void *ptr, int nom_outrate) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -531,7 +531,7 @@ void setRMatchNomOutrate(void* ptr, int nom_outrate) {
 }
 
 PORT
-void setRMatchRingsize(void* ptr, int ringsize) {
+void setRMatchRingsize(void *ptr, int ringsize) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -542,7 +542,7 @@ void setRMatchRingsize(void* ptr, int ringsize) {
 }
 
 PORT
-void setRMatchFeedbackGain(void* b, double feedback_gain) {
+void setRMatchFeedbackGain(void *b, double feedback_gain) {
   RMATCH a = (RMATCH)b;
   EnterCriticalSection(&a->cs_var);
   a->prop_gain = feedback_gain;
@@ -551,7 +551,7 @@ void setRMatchFeedbackGain(void* b, double feedback_gain) {
 }
 
 PORT
-void setRMatchSlewTime(void* b, double slew_time) {
+void setRMatchSlewTime(void *b, double slew_time) {
   RMATCH a = (RMATCH)b;
   InterlockedBitTestAndReset(&a->run, 0);   // turn OFF new data coming into the rmatch
   Sleep(10);                  // wait for processing to cease
@@ -562,7 +562,7 @@ void setRMatchSlewTime(void* b, double slew_time) {
 }
 
 PORT
-void setRMatchSlewTime1(void* b, double slew_time) {
+void setRMatchSlewTime1(void *b, double slew_time) {
   RMATCH a = (RMATCH)b;
   double theta, dtheta;
   int m;
@@ -572,7 +572,7 @@ void setRMatchSlewTime1(void* b, double slew_time) {
   a->tslew = slew_time;
   a->ntslew = (int)(a->tslew * a->nom_outrate);
   if (a->ntslew + 1 > a->rsize / 2) { a->ntslew = a->rsize / 2 - 1; }
-  a->cslew = (double*)malloc0((a->ntslew + 1) * sizeof(double));
+  a->cslew = (double *)malloc0((a->ntslew + 1) * sizeof(double));
   dtheta = PI / (double)a->ntslew;
   theta = 0.0;
   for (m = 0; m <= a->ntslew; m++) {
@@ -583,7 +583,7 @@ void setRMatchSlewTime1(void* b, double slew_time) {
 }
 
 PORT
-void setRMatchPropRingMin(void* ptr, int prop_min) {
+void setRMatchPropRingMin(void *ptr, int prop_min) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -594,7 +594,7 @@ void setRMatchPropRingMin(void* ptr, int prop_min) {
 }
 
 PORT
-void setRMatchPropRingMax(void* ptr, int prop_max) {
+void setRMatchPropRingMax(void *ptr, int prop_max) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -605,7 +605,7 @@ void setRMatchPropRingMax(void* ptr, int prop_max) {
 }
 
 PORT
-void setRMatchFFRingMin(void* ptr, int ff_ringmin) {
+void setRMatchFFRingMin(void *ptr, int ff_ringmin) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -616,7 +616,7 @@ void setRMatchFFRingMin(void* ptr, int ff_ringmin) {
 }
 
 PORT
-void setRMatchFFRingMax(void* ptr, int ff_ringmax) {
+void setRMatchFFRingMax(void *ptr, int ff_ringmax) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -627,7 +627,7 @@ void setRMatchFFRingMax(void* ptr, int ff_ringmax) {
 }
 
 PORT
-void setRMatchFFAlpha(void* ptr, double ff_alpha) {
+void setRMatchFFAlpha(void *ptr, double ff_alpha) {
   RMATCH a = (RMATCH)ptr;
   InterlockedBitTestAndReset(&a->run, 0);
   Sleep(10);
@@ -636,7 +636,7 @@ void setRMatchFFAlpha(void* ptr, double ff_alpha) {
 }
 
 PORT
-void getControlFlag(void* ptr, int* control_flag) {
+void getControlFlag(void *ptr, int *control_flag) {
   RMATCH a = (RMATCH)ptr;
   EnterCriticalSection(&a->cs_ring);
   *control_flag = a->control_flag;
@@ -647,7 +647,7 @@ void getControlFlag(void* ptr, int* control_flag) {
 // it is intended for Legacy PowerSDR use only
 PORT
 void *create_rmatchLegacyV(int in_size, int out_size, int nom_inrate, int nom_outrate, int ringsize) {
-  return (void*)create_rmatch(
+  return (void *)create_rmatch(
                  1,            // run
                  0,            // input buffer, stuffed in other calls
                  0,            // output buffer, stuffed in other calls

@@ -196,7 +196,7 @@ typedef struct _emnr {
   } post2;
 } emnr, *EMNR;
 
-extern EMNR create_emnr (int run, int position, int size, double* in, double* out, int fsize, int ovrlp,
+extern EMNR create_emnr (int run, int position, int size, double *in, double *out, int fsize, int ovrlp,
                          int rate, int wintype, double gain, int gain_method, int npe_method, int ae_run);
 
 extern void destroy_emnr (EMNR a);
@@ -205,7 +205,7 @@ extern void flush_emnr (EMNR a);
 
 extern void xemnr (EMNR a, int pos);
 
-extern void setBuffers_emnr (EMNR a, double* in, double* out);
+extern void setBuffers_emnr (EMNR a, double *in, double *out);
 
 extern void setSamplerate_emnr (EMNR a, int rate);
 

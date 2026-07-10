@@ -50,7 +50,7 @@ typedef struct _doublepole {
   FIRCORE p;
 } doublepole, *DOUBLEPOLE;
 
-extern DOUBLEPOLE create_doublepole (int run, int position, int size, double* in, double* out,
+extern DOUBLEPOLE create_doublepole (int run, int position, int size, double *in, double *out,
                                      double f_center, double bandwidth, int samplerate, double gain, int mode);
 
 extern void destroy_doublepole (DOUBLEPOLE a);
@@ -59,7 +59,7 @@ extern void flush_doublepole (DOUBLEPOLE a);
 
 extern void xdoublepole (DOUBLEPOLE a, int pos);
 
-extern void setBuffers_doublepole (DOUBLEPOLE a, double* in, double* out);
+extern void setBuffers_doublepole (DOUBLEPOLE a, double *in, double *out);
 
 extern void setSamplerate_doublepole (DOUBLEPOLE a, int rate);
 

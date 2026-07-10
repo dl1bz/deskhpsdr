@@ -52,7 +52,7 @@ double *build_matched(int nc, double rate, double f, double fwhm, double scale, 
   //    '1' centers the impulse response in the output field
   double nc_d = 1.2067 * rate / fwhm;
   int ncoef = (int)(round(nc_d * 0.5) * 2.0);
-  double *c_impulse = (double*)malloc0(nc * sizeof(complex));
+  double *c_impulse = (double *)malloc0(nc * sizeof(complex));
   double w_osc = -2.0 * PI * f / rate;
   double posi, posj, m;
   double coef = 1.0;
@@ -113,7 +113,7 @@ double *build_matched(int nc, double rate, double f, double fwhm, double scale, 
 *                                                   *
 ********************************************************************************************************/
 
-MATCHED create_matched(int run, int position, int size, double* in, double* out,
+MATCHED create_matched(int run, int position, int size, double *in, double *out,
                        double f_center, double bandwidth, int samplerate, double gain, int mode) {
   MATCHED a = (MATCHED) malloc0(sizeof(matched));
   double *impulse;
@@ -164,7 +164,7 @@ void xmatched(MATCHED a, int pos) {
   }
 }
 
-void setBuffers_matched(MATCHED a, double* in, double* out) {
+void setBuffers_matched(MATCHED a, double *in, double *out) {
   a->in = in;
   a->out = out;
   setBuffers_fircore(a->p, a->in, a->out);

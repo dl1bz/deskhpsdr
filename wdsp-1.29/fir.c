@@ -26,11 +26,11 @@ warren@pratt.one
 #define _CRT_SECURE_NO_WARNINGS
 #include "comm.h"
 
-double *fftcv_mults(int NM, double* c_impulse) {
-  double *mults    = (double*) malloc0(NM * sizeof(complex));
-  double *cfft_impulse = (double*) malloc0(NM * sizeof(complex));
-  fftw_plan ptmp = fftw_plan_dft_1d(NM, (fftw_complex*) cfft_impulse,
-                                    (fftw_complex*) mults, FFTW_FORWARD, FFTW_PATIENT);
+double *fftcv_mults(int NM, double *c_impulse) {
+  double *mults    = (double *) malloc0(NM * sizeof(complex));
+  double *cfft_impulse = (double *) malloc0(NM * sizeof(complex));
+  fftw_plan ptmp = fftw_plan_dft_1d(NM, (fftw_complex *) cfft_impulse,
+                                    (fftw_complex *) mults, FFTW_FORWARD, FFTW_PATIENT);
   memset(cfft_impulse, 0, NM * sizeof(complex));
   // store complex coefs right-justified in the buffer
   memcpy(&(cfft_impulse[NM - 2]), c_impulse, (NM / 2 + 1) * sizeof(complex));
@@ -43,7 +43,7 @@ double *fftcv_mults(int NM, double* c_impulse) {
 double *get_fsamp_window(int N, int wintype) {
   int i;
   double arg0, arg1;
-  double *window = (double*) malloc0(N * sizeof(double));
+  double *window = (double *) malloc0(N * sizeof(double));
   switch (wintype) {
   case 0:
     arg0 = 2.0 * PI / ((double)N - 1.0);
@@ -76,14 +76,14 @@ double *get_fsamp_window(int N, int wintype) {
   return window;
 }
 
-double *fir_fsamp_odd(int N, double* A, int rtype, double scale, int wintype) {
+double *fir_fsamp_odd(int N, double *A, int rtype, double scale, int wintype) {
   int i, j;
   int mid = (N - 1) / 2;
   double mag, phs;
   double *window;
-  double *fcoef   = (double*) malloc0(N * sizeof(complex));
-  double *c_impulse = (double*) malloc0(N * sizeof(complex));
-  fftw_plan ptmp = fftw_plan_dft_1d(N, (fftw_complex*)fcoef, (fftw_complex*)c_impulse, FFTW_BACKWARD, FFTW_PATIENT);
+  double *fcoef   = (double *) malloc0(N * sizeof(complex));
+  double *c_impulse = (double *) malloc0(N * sizeof(complex));
+  fftw_plan ptmp = fftw_plan_dft_1d(N, (fftw_complex *)fcoef, (fftw_complex *)c_impulse, FFTW_BACKWARD, FFTW_PATIENT);
   double local_scale = 1.0 / (double)N;
   for (i = 0; i <= mid; i++) {
     mag = A[i] * local_scale;
@@ -116,11 +116,11 @@ double *fir_fsamp_odd(int N, double* A, int rtype, double scale, int wintype) {
   return c_impulse;
 }
 
-double *fir_fsamp(int N, double* A, int rtype, double scale, int wintype) {
+double *fir_fsamp(int N, double *A, int rtype, double scale, int wintype) {
   int n, i, j, k;
   double sum;
   double *window;
-  double *c_impulse = (double*) malloc0(N * sizeof(complex));
+  double *c_impulse = (double *) malloc0(N * sizeof(complex));
   if (N & 1) {
     int M = (N - 1) / 2;
     for (n = 0; n < M + 1; n++) {
@@ -192,7 +192,7 @@ double *fir_bandpass(int N, double f_low, double f_high, double samplerate, int 
   double *imp = get_impulse_cache_entry(FIR_CACHE, h, N);
   if (imp) { return imp; }
   //
-  double *c_impulse = (double*) malloc0(N * sizeof(complex));
+  double *c_impulse = (double *) malloc0(N * sizeof(complex));
   double ft = (f_high - f_low) / (2.0 * samplerate);
   double ft_rad = TWOPI * ft;
   double w_osc = PI * (f_high + f_low) / samplerate;
@@ -256,7 +256,7 @@ double *fir_bandpass(int N, double f_low, double f_high, double samplerate, int 
   return c_impulse;
 }
 
-double *fir_read(int N, const char* filename, int rtype, double scale)
+double *fir_read(int N, const char *filename, int rtype, double scale)
 // N = number of real or complex coefficients (see rtype)
 // *filename = filename
 // rtype = 0:  real coefficients
@@ -268,7 +268,7 @@ double *fir_read(int N, const char* filename, int rtype, double scale)
   FILE *file;
   int i;
   double I, Q;
-  double *c_impulse = (double*) malloc0(N * sizeof(complex));
+  double *c_impulse = (double *) malloc0(N * sizeof(complex));
   if (file = fopen(filename, "r")) {
     int error = 0;
     for (i = 0; i < N; i++) {
@@ -295,15 +295,15 @@ double *fir_read(int N, const char* filename, int rtype, double scale)
   return c_impulse;
 }
 
-void analytic(int N, double* in, double* out) {
+void analytic(int N, double *in, double *out) {
   int i;
   double inv_N = 1.0 / (double)N;
   double two_inv_N = 2.0 * inv_N;
-  double *x = (double*) malloc0(N * sizeof(complex));
-  fftw_plan pfor = fftw_plan_dft_1d(N, (fftw_complex*) in,
-                                    (fftw_complex*) x, FFTW_FORWARD, FFTW_PATIENT);
-  fftw_plan prev = fftw_plan_dft_1d(N, (fftw_complex*) x,
-                                    (fftw_complex*) out, FFTW_BACKWARD, FFTW_PATIENT);
+  double *x = (double *) malloc0(N * sizeof(complex));
+  fftw_plan pfor = fftw_plan_dft_1d(N, (fftw_complex *) in,
+                                    (fftw_complex *) x, FFTW_FORWARD, FFTW_PATIENT);
+  fftw_plan prev = fftw_plan_dft_1d(N, (fftw_complex *) x,
+                                    (fftw_complex *) out, FFTW_BACKWARD, FFTW_PATIENT);
   fftw_execute(pfor);
   x[0] *= inv_N;
   x[1] *= inv_N;
@@ -320,7 +320,7 @@ void analytic(int N, double* in, double* out) {
   _aligned_free(x);
 }
 
-void mp_imp(int N, double* fir, double* mpfir, int pfactor, int polarity) {
+void mp_imp(int N, double *fir, double *mpfir, int pfactor, int polarity) {
   // check for previous in the cache
   struct Params {
     int N;
@@ -334,7 +334,7 @@ void mp_imp(int N, double* fir, double* mpfir, int pfactor, int polarity) {
   params.polarity = polarity;
   HASH_T h = fnv1a_hash(&params, sizeof(params));
   size_t arr_len = N * sizeof(complex);
-  HASH_T hf = fnv1a_hash((uint8_t*)fir, arr_len);
+  HASH_T hf = fnv1a_hash((uint8_t *)fir, arr_len);
   h ^= hf + GOLDEN_RATIO + (h << 6) + (h >> 2);
   double *imp = get_impulse_cache_entry(MP_CACHE, h, N);
   if (imp) {
@@ -346,17 +346,17 @@ void mp_imp(int N, double* fir, double* mpfir, int pfactor, int polarity) {
   int i;
   int size = N * pfactor;
   double inv_PN = 1.0 / (double)size;
-  double *firpad  = (double*) malloc0(size * sizeof(complex));
-  double *firfreq = (double*) malloc0(size * sizeof(complex));
-  double *mag   = (double*) malloc0(size * sizeof(double));
-  double *ana   = (double*) malloc0(size * sizeof(complex));
-  double *impulse = (double*) malloc0(size * sizeof(complex));
-  double *newfreq = (double*) malloc0(size * sizeof(complex));
+  double *firpad  = (double *) malloc0(size * sizeof(complex));
+  double *firfreq = (double *) malloc0(size * sizeof(complex));
+  double *mag   = (double *) malloc0(size * sizeof(double));
+  double *ana   = (double *) malloc0(size * sizeof(complex));
+  double *impulse = (double *) malloc0(size * sizeof(complex));
+  double *newfreq = (double *) malloc0(size * sizeof(complex));
   memcpy(firpad, fir, N * sizeof(complex));
-  fftw_plan pfor = fftw_plan_dft_1d(size, (fftw_complex*) firpad,
-                                    (fftw_complex*) firfreq, FFTW_FORWARD, FFTW_PATIENT);
-  fftw_plan prev = fftw_plan_dft_1d(size, (fftw_complex*) newfreq,
-                                    (fftw_complex*) impulse, FFTW_BACKWARD, FFTW_PATIENT);
+  fftw_plan pfor = fftw_plan_dft_1d(size, (fftw_complex *) firpad,
+                                    (fftw_complex *) firfreq, FFTW_FORWARD, FFTW_PATIENT);
+  fftw_plan prev = fftw_plan_dft_1d(size, (fftw_complex *) newfreq,
+                                    (fftw_complex *) impulse, FFTW_BACKWARD, FFTW_PATIENT);
   // print_impulse("orig_imp.txt", N, fir, 1, 0);
   fftw_execute(pfor);
   for (i = 0; i < size; i++) {
@@ -402,16 +402,16 @@ double *zff_impulse(int nc, double scale) {
   int n_resdet = nc / 2 - 1;      // size of single zero-frequency resonator with detrender
   int n_dresdet = 2 * n_resdet - 1; // size of two cascaded units; when we convolve these we get 2 * n - 1 length
   // allocate the single and make the values
-  double *resdet = (double*)malloc0(n_resdet * sizeof(double));
+  double *resdet = (double *)malloc0(n_resdet * sizeof(double));
   for (int i = 1, j = 0, k = n_resdet - 1; i < nc / 4; i++, j++, k--) {
     resdet[j] = resdet[k] = (double)(i * (i + 1) / 2);
   }
   resdet[nc / 4 - 1] = (double)(nc / 4 * (nc / 4 + 1) / 2);
   // print_impulse ("resdet", n_resdet, resdet, 0, 0);
   // allocate the double and complex versions and make the values
-  double *dresdet = (double*)malloc0(n_dresdet * sizeof(double));
+  double *dresdet = (double *)malloc0(n_dresdet * sizeof(double));
   double div = (double)((nc / 2 + 1) * (nc / 2 + 1));         // calculate divisor
-  double *c_dresdet = (double*)malloc0(nc * sizeof(complex));
+  double *c_dresdet = (double *)malloc0(nc * sizeof(complex));
   for (int n = 0; n < n_dresdet; n++) { // convolve to make the cascade
     for (int k = 0; k < n_resdet; k++)
       if ((n - k) >= 0 && (n - k) < n_resdet) {

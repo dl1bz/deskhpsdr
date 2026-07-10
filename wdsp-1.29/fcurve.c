@@ -57,7 +57,7 @@ double *fc_impulse(int nc, double f0, double f1, double g0, double g1, int curve
   double *imp = get_impulse_cache_entry(FC_CACHE, h, nc);
   if (imp) { return imp; }
   //
-  double *A  = (double*) malloc0((nc / 2 + 1) * sizeof(double));
+  double *A  = (double *) malloc0((nc / 2 + 1) * sizeof(double));
   int i;
   double fn, f;
   double *impulse;

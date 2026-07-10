@@ -51,7 +51,7 @@ typedef struct _bps {
   fftw_plan CRev;
 } bps, *BPS;
 
-extern BPS create_bps (int run, int position, int size, double* in, double* out,
+extern BPS create_bps (int run, int position, int size, double *in, double *out,
                        double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void destroy_bps (BPS a);
@@ -60,7 +60,7 @@ extern void flush_bps (BPS a);
 
 extern void xbps (BPS a, int pos);
 
-extern void setBuffers_bps (BPS a, double* in, double* out);
+extern void setBuffers_bps (BPS a, double *in, double *out);
 
 extern void setSamplerate_bps (BPS a, int rate);
 
@@ -109,7 +109,7 @@ typedef struct _bandpass {
   FIRCORE p;
 } bandpass, *BANDPASS;
 
-extern BANDPASS create_bandpass (int run, int position, int size, int nc, int mp, double* in, double* out,
+extern BANDPASS create_bandpass (int run, int position, int size, int nc, int mp, double *in, double *out,
                                  double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void destroy_bandpass (BANDPASS a);
@@ -118,7 +118,7 @@ extern void flush_bandpass (BANDPASS a);
 
 extern void xbandpass (BANDPASS a, int pos);
 
-extern void setBuffers_bandpass (BANDPASS a, double* in, double* out);
+extern void setBuffers_bandpass (BANDPASS a, double *in, double *out);
 
 extern void setSamplerate_bandpass (BANDPASS a, int rate);
 

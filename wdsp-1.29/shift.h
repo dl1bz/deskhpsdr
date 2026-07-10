@@ -40,7 +40,7 @@ typedef struct _shift {
   double sin_delta;
 } shift, *SHIFT;
 
-extern SHIFT create_shift (int run, int size, double* in, double* out, int rate, double fshift);
+extern SHIFT create_shift (int run, int size, double *in, double *out, int rate, double fshift);
 
 extern void destroy_shift (SHIFT a);
 
@@ -48,7 +48,7 @@ extern void flush_shift (SHIFT a);
 
 extern void xshift (SHIFT a);
 
-extern void setBuffers_shift (SHIFT a, double* in, double* out);
+extern void setBuffers_shift (SHIFT a, double *in, double *out);
 
 extern void setSamplerate_shift (SHIFT a, int rate);
 

@@ -47,7 +47,7 @@ typedef struct _cfir {
   FIRCORE p;
 } cfir, *CFIR;
 
-extern CFIR create_cfir (int run, int size, int nc, int mp, double* in, double* out, int runrate, int cicrate,
+extern CFIR create_cfir (int run, int size, int nc, int mp, double *in, double *out, int runrate, int cicrate,
                          int DD, int R, int Pairs, double cutoff, int xtype, double xbw, int wintype);
 
 extern void destroy_cfir (CFIR a);
@@ -56,7 +56,7 @@ extern void flush_cfir (CFIR a);
 
 extern void xcfir (CFIR a);
 
-extern void setBuffers_cfir (CFIR a, double* in, double* out);
+extern void setBuffers_cfir (CFIR a, double *in, double *out);
 
 extern void setSamplerate_cfir (CFIR a, int rate);
 

@@ -35,7 +35,7 @@ char *wisdom_get_status() {
 }
 
 PORT
-int WDSPwisdom(char* directory) {
+int WDSPwisdom(char *directory) {
   int wisdom_return = 0; // 0 from existing, 1 rebuilt
   fftw_plan tplan;
   int psize;
@@ -49,8 +49,8 @@ int WDSPwisdom(char* directory) {
   strcpy(wisdom_file, directory);
   strncat(wisdom_file, "wdspWisdom00", 16);
   if (!fftw_import_wisdom_from_filename(wisdom_file)) {
-    fftin = (double*) malloc0(maxsize * sizeof(complex));
-    fftout = (double*) malloc0(maxsize * sizeof(complex));
+    fftin = (double *) malloc0(maxsize * sizeof(complex));
+    fftout = (double *) malloc0(maxsize * sizeof(complex));
 #ifdef _WIN32
     AllocConsole();               // create console
     freopen_s(&stream, "conout$", "w", stdout); // redirect output to console
@@ -63,19 +63,19 @@ int WDSPwisdom(char* directory) {
       fprintf(stdout, "Planning COMPLEX FORWARD  FFT size %d\n", psize);
       fflush(stdout);
       sprintf(status, "Planning COMPLEX FORWARD  FFT size %d\n", psize);
-      tplan = fftw_plan_dft_1d(psize, (fftw_complex*)fftin, (fftw_complex*)fftout, FFTW_FORWARD, FFTW_PATIENT);
+      tplan = fftw_plan_dft_1d(psize, (fftw_complex *)fftin, (fftw_complex *)fftout, FFTW_FORWARD, FFTW_PATIENT);
       fftw_execute(tplan);
       fftw_destroy_plan(tplan);
       fprintf(stdout, "Planning COMPLEX BACKWARD FFT size %d\n", psize);
       fflush(stdout);
       sprintf(status, "Planning COMPLEX BACKWARD FFT size %d\n", psize);
-      tplan = fftw_plan_dft_1d(psize, (fftw_complex*)fftin, (fftw_complex*)fftout, FFTW_BACKWARD, FFTW_PATIENT);
+      tplan = fftw_plan_dft_1d(psize, (fftw_complex *)fftin, (fftw_complex *)fftout, FFTW_BACKWARD, FFTW_PATIENT);
       fftw_execute(tplan);
       fftw_destroy_plan(tplan);
       fprintf(stdout, "Planning COMPLEX BACKWARD FFT size %d\n", psize + 1);
       fflush(stdout);
       sprintf(status, "Planning COMPLEX BACKWARD FFT size %d\n", psize + 1);
-      tplan = fftw_plan_dft_1d(psize + 1, (fftw_complex*)fftin, (fftw_complex*)fftout, FFTW_BACKWARD, FFTW_PATIENT);
+      tplan = fftw_plan_dft_1d(psize + 1, (fftw_complex *)fftin, (fftw_complex *)fftout, FFTW_BACKWARD, FFTW_PATIENT);
       fftw_execute(tplan);
       fftw_destroy_plan(tplan);
       psize *= 2;
@@ -86,14 +86,14 @@ int WDSPwisdom(char* directory) {
         fprintf(stdout, "Planning COMPLEX FORWARD  FFT size %d\n", psize);
         fflush(stdout);
         sprintf(status, "Planning COMPLEX FORWARD  FFT size %d\n", psize);
-        tplan = fftw_plan_dft_1d(psize, (fftw_complex*)fftin, (fftw_complex*)fftout, FFTW_FORWARD, FFTW_PATIENT);
+        tplan = fftw_plan_dft_1d(psize, (fftw_complex *)fftin, (fftw_complex *)fftout, FFTW_FORWARD, FFTW_PATIENT);
         fftw_execute(tplan);
         fftw_destroy_plan(tplan);
       }
       fprintf(stdout, "Planning REAL	  FORWARD  FFT size %d\n", psize);
       fflush(stdout);
       sprintf(status, "Planning REAL	  FORWARD  FFT size %d\n", psize);
-      tplan = fftw_plan_dft_r2c_1d(psize, fftin, (fftw_complex*)fftout, FFTW_PATIENT);
+      tplan = fftw_plan_dft_r2c_1d(psize, fftin, (fftw_complex *)fftout, FFTW_PATIENT);
       fftw_execute(tplan);
       fftw_destroy_plan(tplan);
       psize *= 2;

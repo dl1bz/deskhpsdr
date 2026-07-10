@@ -88,9 +88,9 @@ typedef struct _rnnr {
 
 } rnnr, *RNNR;
 
-extern RNNR create_rnnr (int run, int position, int size, double* in, double* out, int rate);
+extern RNNR create_rnnr (int run, int position, int size, double *in, double *out, int rate);
 extern void setSize_rnnr(RNNR a, int size);
-extern void setBuffers_rnnr (RNNR a, double* in, double* out);
+extern void setBuffers_rnnr (RNNR a, double *in, double *out);
 extern void destroy_rnnr (RNNR a);
 extern void xrnnr (RNNR a, int pos);
 extern void setSamplerate_rnnr(RNNR a, int rate);

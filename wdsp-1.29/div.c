@@ -28,21 +28,21 @@ warren@wpratt.com
 
 #define MAX_NR  (8)   // maximum number of receivers to mix
 
-MDIV create_div(int run, int nr, int size, double** in, double* out) {
+MDIV create_div(int run, int nr, int size, double **in, double *out) {
   int i;
   MDIV a = (MDIV) malloc0(sizeof(mdiv));
   a->run = run;
   a->nr = nr;
   a->size = size;
   a->out = out;
-  a->in = (double**) malloc0(MAX_NR * sizeof(double*));
+  a->in = (double **) malloc0(MAX_NR * sizeof(double *));
   if (in != 0)
     for (i = 0; i < nr; i++) { a->in[i] = in[i]; }
-  a->Irotate = (double*) malloc0(MAX_NR * sizeof(double));
-  a->Qrotate = (double*) malloc0(MAX_NR * sizeof(double));
+  a->Irotate = (double *) malloc0(MAX_NR * sizeof(double));
+  a->Qrotate = (double *) malloc0(MAX_NR * sizeof(double));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   for (i = 0; i < 4; i++) {                                       ///////////// legacy interface - remove
-    a->legacy[i] = (double*) malloc0(2048 * sizeof(complex));     ///////////// legacy interface - remove
+    a->legacy[i] = (double *) malloc0(2048 * sizeof(complex));    ///////////// legacy interface - remove
   }
   return a;
 }
@@ -113,7 +113,7 @@ void flush_divEXT(int id) {
 }
 
 PORT
-void xdivEXT(int id, int nsamples, double** in, double* out) {
+void xdivEXT(int id, int nsamples, double **in, double *out) {
   int i;
   MDIV a = pdiv[id];
   a->size = nsamples;
@@ -162,7 +162,7 @@ void SetEXTDIVOutput(int id, int output) {
 // I and Q "rotate" multipliers for each receiver
 //  can be set to 1.0 and 0.0 for "reference receiver"
 PORT
-void SetEXTDIVRotate(int id, int nr, double* Irotate, double* Qrotate) {
+void SetEXTDIVRotate(int id, int nr, double *Irotate, double *Qrotate) {
   MDIV a = pdiv[id];
   EnterCriticalSection(&a->cs_update);
   memcpy(a->Irotate, Irotate, nr * sizeof(double));
@@ -176,7 +176,7 @@ void SetEXTDIVRotate(int id, int nr, double* Irotate, double* Qrotate) {
 *                                                   *
 ********************************************************************************************************/
 PORT
-void xdivEXTF(int id, int size, float** input, float* Iout, float* Qout) {
+void xdivEXTF(int id, int size, float **input, float *Iout, float *Qout) {
   int i, j;
   MDIV a = pdiv[id];
   if (a->run) {

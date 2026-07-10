@@ -68,7 +68,7 @@ john.d.melton@googlemail.com
   //#define _aligned_free(x) my_free(x);
 
   void *my_malloc(size_t size);
-  void my_free(void* p);
+  void my_free(void *p);
 
   #define freopen_s freopen
   #define min(x,y) (x<y?x:y)
@@ -85,31 +85,31 @@ john.d.melton@googlemail.com
 
   #define INFINITE -1
 
-  void QueueUserWorkItem(void* function, void* context, int flags);
+  void QueueUserWorkItem(void *function, void *context, int flags);
 
   // these two functions are the same on LINUX
-  void InitializeCriticalSection(pthread_mutex_t* mutex);
-  void InitializeCriticalSectionAndSpinCount(pthread_mutex_t* mutex, int count);
+  void InitializeCriticalSection(pthread_mutex_t *mutex);
+  void InitializeCriticalSectionAndSpinCount(pthread_mutex_t *mutex, int count);
 
-  void EnterCriticalSection(pthread_mutex_t* mutex);
+  void EnterCriticalSection(pthread_mutex_t *mutex);
 
-  void LeaveCriticalSection(pthread_mutex_t* mutex);
+  void LeaveCriticalSection(pthread_mutex_t *mutex);
 
-  void DeleteCriticalSection(pthread_mutex_t* mutex);
+  void DeleteCriticalSection(pthread_mutex_t *mutex);
 
 
-  sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char* name);
+  sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char *name);
 
   int LinuxWaitForSingleObject(sem_t *sem, int x);
 
-  void LinuxReleaseSemaphore(sem_t *sem, int release_count, int* previous_count);
+  void LinuxReleaseSemaphore(sem_t *sem, int release_count, int *previous_count);
 
-  sem_t *CreateEvent(void* security_attributes, int bManualReset, int bInitialState, char* name);
+  sem_t *CreateEvent(void *security_attributes, int bManualReset, int bInitialState, char *name);
 
   void LinuxSetEvent(sem_t* sem);
   void LinuxResetEvent(sem_t* sem);
 
-  HANDLE _beginthread(void(__cdecl *start_address)(void*), unsigned stack_size, void* arglist);
+  HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, void *arglist);
 
   void _endthread();
 

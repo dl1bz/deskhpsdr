@@ -81,7 +81,7 @@ extern void flush_anr (ANR a);
 
 extern void xanr (ANR a, int position);
 
-extern void setBuffers_anr (ANR a, double* in, double* out);
+extern void setBuffers_anr (ANR a, double *in, double *out);
 
 extern void setSamplerate_anr (ANR a, int rate);
 

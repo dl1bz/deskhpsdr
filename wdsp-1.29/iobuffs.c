@@ -54,8 +54,8 @@ void create_slews(IOB a) {
   a->slew.ndeldown = (int)(ch[a->channel].tdelaydown * ch[a->channel].out_rate);
   a->slew.ntup = (int)(ch[a->channel].tslewup * ch[a->channel].in_rate);
   a->slew.ntdown = (int)(ch[a->channel].tslewdown * ch[a->channel].out_rate);
-  a->slew.cup   = (double*) malloc0((a->slew.ntup + 1) * sizeof(double));
-  a->slew.cdown = (double*) malloc0((a->slew.ntdown + 1) * sizeof(double));
+  a->slew.cup   = (double *) malloc0((a->slew.ntup + 1) * sizeof(double));
+  a->slew.cdown = (double *) malloc0((a->slew.ntdown + 1) * sizeof(double));
   delta = PI / (double)a->slew.ntup;
   theta = 0.0;
   for (i = 0; i <= a->slew.ntup; i++) {
@@ -86,7 +86,7 @@ void flush_slews(IOB a) {
   InterlockedBitTestAndReset(&a->slew.downflag, 0);
 }
 
-void upslew0(IOB a, double* pin) {
+void upslew0(IOB a, double *pin) {
   int i;
   double *pout;
   double I, Q;
@@ -196,7 +196,7 @@ void upslew2(IOB a, INREAL* pIin, INREAL* pQin) {
   }
 }
 
-void downslew0(IOB a, double* pout) {
+void downslew0(IOB a, double *pout) {
   int i;
   double *pin;
   double I, Q;
@@ -349,8 +349,8 @@ void create_iobuffs(int channel) {
   }
   a->r1_active_buffsize = DSP_MULT * a->r1_size;
   a->r2_active_buffsize = DSP_MULT * a->r2_size;
-  a->r1_baseptr = (double*) malloc0(a->r1_active_buffsize * sizeof(complex));
-  a->r2_baseptr = (double*) malloc0(a->r2_active_buffsize * sizeof(complex));
+  a->r1_baseptr = (double *) malloc0(a->r1_active_buffsize * sizeof(complex));
+  a->r2_baseptr = (double *) malloc0(a->r2_active_buffsize * sizeof(complex));
   a->r1_inidx = 0;
   a->r1_outidx = 0;
   a->r1_unqueuedsamps = 0;
@@ -366,7 +366,7 @@ void create_iobuffs(int channel) {
   create_slews(a);
   InterlockedBitTestAndReset(&a->flush_bypass, 0);
   a->Sem_Flush = CreateSemaphore(0, 0, 1, 0);
-  _beginthread(flushChannel, 0, (void*)(uintptr_t)a->channel);
+  _beginthread(flushChannel, 0, (void *)(uintptr_t)a->channel);
 }
 
 void destroy_iobuffs(int channel) {
@@ -405,7 +405,7 @@ void flush_iobuffs(int channel) {
 
 
 PORT  //double, interleaved I/Q
-void fexchange0(int channel, double* in, double* out, int* error) {
+void fexchange0(int channel, double *in, double *out, int *error) {
   int n;
   int doit = 0;
   IOB a;
@@ -455,7 +455,7 @@ void fexchange0(int channel, double* in, double* out, int* error) {
 }
 
 PORT  //separate I/Q buffers
-void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Qout, int* error) {
+void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Qout, int *error) {
   int i, n;
   int doit = 0;
   IOB a;
@@ -510,7 +510,7 @@ void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Q
   }
 }
 
-void dexchange(int channel, double* in, double* out) {
+void dexchange(int channel, double *in, double *out) {
   int n;
   IOB a = ch[channel].iob.pd;
   if (!_InterlockedAnd(&ch[channel].run, 1)) { _endthread(); }

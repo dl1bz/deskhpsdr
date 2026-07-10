@@ -136,15 +136,15 @@ extern void destroy_calcc (CALCC a);
 
 extern void flush_calcc (CALCC a);
 
-extern __declspec(dllexport) void pscc (int channel, int size, double* tx, double* rx);
+extern __declspec(dllexport) void pscc (int channel, int size, double *tx, double *rx);
 
-extern void __cdecl PSSaveCorrection(void* pargs);
+extern void __cdecl PSSaveCorrection(void *pargs);
 
-extern void __cdecl PSRestoreCorrection(void* pargs);
+extern void __cdecl PSRestoreCorrection(void *pargs);
 
-extern void __cdecl doPSCalcCorrection(void* arg);
+extern void __cdecl doPSCalcCorrection(void *arg);
 
-extern void __cdecl doPSTurnoff(void* arg);
+extern void __cdecl doPSTurnoff(void *arg);
 
 #endif
 

@@ -59,10 +59,10 @@ void calc_varsamp(VARSAMP a) {
   a->ncoef += (a->R - 1) * (a->ncoef - 1);
   a->h = fir_bandpass(a->ncoef, fc_norm_low, fc_norm_high, (double)a->R, 1, 0, (double)a->R * a->gain);
   // print_impulse ("imp.txt", a->ncoef, a->h, 0, 0);
-  a->ring = (double*)malloc0(a->rsize * sizeof(complex));
+  a->ring = (double *)malloc0(a->rsize * sizeof(complex));
   a->idx_in = a->rsize - 1;
   a->h_offset = 0.0;
-  a->hs = (double*)malloc0(a->rsize * sizeof(double));
+  a->hs = (double *)malloc0(a->rsize * sizeof(double));
   a->isamps = 0.0;
 }
 
@@ -72,7 +72,7 @@ void decalc_varsamp(VARSAMP a) {
   _aligned_free(a->h);
 }
 
-VARSAMP create_varsamp(int run, int size, double* in, double* out,
+VARSAMP create_varsamp(int run, int size, double *in, double *out,
                        int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode) {
   VARSAMP a = (VARSAMP) malloc0(sizeof(varsamp));
   a->run = run;
@@ -135,9 +135,9 @@ int xvarsamp(VARSAMP a, double var) {
       a->ring[2 * a->idx_in + 0] = a->in[2 * i + 0];
       a->ring[2 * a->idx_in + 1] = a->in[2 * i + 1];
       a->inv_cvar += a->dicvar;
-      picvar = (uint64_t*)(&a->inv_cvar);
+      picvar = (uint64_t *)(&a->inv_cvar);
       N = *picvar & 0xffffffffffff0000;
-      a->inv_cvar = *((double*)&N);
+      a->inv_cvar = *((double *)&N);
       a->delta = 1.0 - a->inv_cvar;
       while (a->isamps < 1.0) {
         I = 0.0;
@@ -165,7 +165,7 @@ int xvarsamp(VARSAMP a, double var) {
   return outsamps;
 }
 
-void setBuffers_varsamp(VARSAMP a, double* in, double* out) {
+void setBuffers_varsamp(VARSAMP a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -208,11 +208,11 @@ void setBandwidth_varsamp(VARSAMP a, double fc_low, double fc_high) {
 
 PORT
 void *create_varsampV(int in_rate, int out_rate, int R) {
-  return (void*)create_varsamp(1, 0, 0, 0, in_rate, out_rate, 0.0, -1.0, R, 1.0, 1.0, 1);
+  return (void *)create_varsamp(1, 0, 0, 0, in_rate, out_rate, 0.0, -1.0, R, 1.0, 1.0, 1);
 }
 
 PORT
-void xvarsampV(double* input, double* output, int numsamps, double var, int* outsamps, void* ptr) {
+void xvarsampV(double *input, double *output, int numsamps, double var, int *outsamps, void *ptr) {
   VARSAMP a = (VARSAMP)ptr;
   a->in = input;
   a->out = output;
@@ -221,6 +221,6 @@ void xvarsampV(double* input, double* output, int numsamps, double var, int* out
 }
 
 PORT
-void destroy_varsampV(void* ptr) {
+void destroy_varsampV(void *ptr) {
   destroy_varsamp((VARSAMP)ptr);
 }

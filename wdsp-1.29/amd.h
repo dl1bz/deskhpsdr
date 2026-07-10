@@ -100,7 +100,7 @@ extern void flush_amd (AMD a);
 
 extern void xamd (AMD a);
 
-extern void setBuffers_amd (AMD a, double* in, double* out);
+extern void setBuffers_amd (AMD a, double *in, double *out);
 
 extern void setSamplerate_amd (AMD a, int rate);
 

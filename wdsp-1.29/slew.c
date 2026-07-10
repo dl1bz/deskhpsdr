@@ -41,7 +41,7 @@ void calc_uslew(USLEW a) {
   a->count = 0;
   a->ndelup = (int)(a->tdelay * a->rate);
   a->ntup = (int)(a->tupslew * a->rate);
-  a->cup = (double*) malloc0((a->ntup + 1) * sizeof(double));
+  a->cup = (double *) malloc0((a->ntup + 1) * sizeof(double));
   delta = PI / (double)a->ntup;
   theta = 0.0;
   for (i = 0; i <= a->ntup; i++) {
@@ -55,7 +55,7 @@ void decalc_uslew(USLEW a) {
   _aligned_free(a->cup);
 }
 
-USLEW create_uslew(int channel, volatile long* ch_upslew, int size, double* in, double* out, double rate,
+USLEW create_uslew(int channel, volatile long *ch_upslew, int size, double *in, double *out, double rate,
                    double tdelay, double tupslew) {
   USLEW a = (USLEW)malloc0(sizeof(uslew));
   a->channel = channel;
@@ -139,7 +139,7 @@ void xuslew(USLEW a) {
   }
 }
 
-void setBuffers_uslew(USLEW a, double* in, double* out) {
+void setBuffers_uslew(USLEW a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

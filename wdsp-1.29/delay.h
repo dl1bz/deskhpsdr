@@ -57,7 +57,7 @@ typedef struct _delay {
 
 } delay, *DELAY;
 
-extern DELAY create_delay (int run, int size, double* in, double* out, int rate, double tdelta, double tdelay);
+extern DELAY create_delay (int run, int size, double *in, double *out, int rate, double tdelta, double tdelay);
 
 extern void destroy_delay (DELAY a);
 
@@ -71,6 +71,6 @@ extern void SetDelayRun (DELAY a, int run);
 
 extern double SetDelayValue (DELAY a, double delay);    // returns actual delay in seconds
 
-extern void SetDelayBuffs (DELAY a, int size, double* in, double* out);
+extern void SetDelayBuffs (DELAY a, int size, double *in, double *out);
 
 #endif

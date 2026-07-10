@@ -86,7 +86,7 @@ void xcbl(CBL a) {
   }
 }
 
-void setBuffers_cbl(CBL a, double* in, double* out) {
+void setBuffers_cbl(CBL a, double *in, double *out) {
   a->in_buff = in;
   a->out_buff = out;
 }

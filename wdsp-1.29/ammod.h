@@ -38,7 +38,7 @@ typedef struct _ammod {
   double mult;
 } ammod, *AMMOD;
 
-extern AMMOD create_ammod (int run, int mode, int size, double* in, double* out, double c_level);
+extern AMMOD create_ammod (int run, int mode, int size, double *in, double *out, double c_level);
 
 extern void destroy_ammod (AMMOD a);
 
@@ -46,7 +46,7 @@ extern void flush_ammod (AMMOD a);
 
 extern void xammod (AMMOD a);
 
-extern void setBuffers_ammod (AMMOD a, double* in, double* out);
+extern void setBuffers_ammod (AMMOD a, double *in, double *out);
 
 extern void setSamplerate_ammod (AMMOD a, int rate);
 

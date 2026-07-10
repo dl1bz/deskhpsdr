@@ -35,8 +35,8 @@ void calc_osctrl(OSCTRL a) {
   if ((a->pn & 1) == 0) { a->pn += 1; }
   if (a->pn < 3) { a->pn = 3; }
   a->dl_len = a->pn >> 1;
-  a->dl  = (double*) malloc0(a->pn * sizeof(complex));
-  a->dlenv = (double*) malloc0(a->pn * sizeof(double));
+  a->dl  = (double *) malloc0(a->pn * sizeof(complex));
+  a->dlenv = (double *) malloc0(a->pn * sizeof(double));
   a->in_idx = 0;
   a->out_idx = a->in_idx + a->dl_len;
   a->max_env = 0.0;
@@ -104,7 +104,7 @@ void xosctrl(OSCTRL a) {
   }
 }
 
-void setBuffers_osctrl(OSCTRL a, double* in, double* out) {
+void setBuffers_osctrl(OSCTRL a, double *in, double *out) {
   a->inbuff = in;
   a->outbuff = out;
 }

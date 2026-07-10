@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-DELAY create_delay(int run, int size, double* in, double* out, int rate, double tdelta, double tdelay) {
+DELAY create_delay(int run, int size, double *in, double *out, int rate, double tdelta, double tdelay) {
   DELAY a = (DELAY) malloc0(sizeof(delay));
   a->run = run;
   a->size = size;
@@ -48,7 +48,7 @@ DELAY create_delay(int run, int size, double* in, double* out, int rate, double 
   a->adelay = a->adelta * (a->snum * a->L + a->phnum);
   a->h = fir_bandpass(a->ncoef, -a->ft, +a->ft, 1.0, 1, 0, (double)a->L);
   a->rsize = a->cpp + (WSDEL - 1);
-  a->ring = (double*) malloc0(a->rsize * sizeof(complex));
+  a->ring = (double *) malloc0(a->rsize * sizeof(complex));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   return a;
 }
@@ -116,7 +116,7 @@ double SetDelayValue(DELAY a, double tdelay) {
   return adelay;
 }
 
-void SetDelayBuffs(DELAY a, int size, double* in, double* out) {
+void SetDelayBuffs(DELAY a, int size, double *in, double *out) {
   EnterCriticalSection(&a->cs_update);
   a->size = size;
   a->in = in;

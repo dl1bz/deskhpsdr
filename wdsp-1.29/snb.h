@@ -99,7 +99,7 @@ typedef struct _snba {
   double out_high_cut;
 } snba, *SNBA;
 
-extern SNBA create_snba (int run, double* in, double* out, int inrate, int internalrate, int bsize, int ovrlp,
+extern SNBA create_snba (int run, double *in, double *out, int inrate, int internalrate, int bsize, int ovrlp,
                          int xsize,
                          int asize, int npasses, double k1, double k2, int b, int pre, int post, double pmultmin, double out_low_cut,
                          double out_high_cut);
@@ -110,7 +110,7 @@ extern void flush_snba (SNBA d);
 
 extern void xsnba (SNBA d);
 
-extern void setBuffers_snba (SNBA a, double* in, double* out);
+extern void setBuffers_snba (SNBA a, double *in, double *out);
 
 extern void setSamplerate_snba (SNBA a, int rate);
 
@@ -145,7 +145,7 @@ extern void calc_bpsnba (BPSNBA a);
 
 extern void decalc_bpsnba (BPSNBA a);
 
-extern BPSNBA create_bpsnba (int run, int run_notches, int position, int size, int nc, int mp, double* in, double* out,
+extern BPSNBA create_bpsnba (int run, int run_notches, int position, int size, int nc, int mp, double *in, double *out,
                              int rate,
                              double abs_low_freq, double abs_high_freq, double f_low, double f_high, int wintype, double gain, int autoincr,
                              int maxpb, NOTCHDB* ptraddr);
@@ -154,7 +154,7 @@ extern void destroy_bpsnba (BPSNBA a);
 
 extern void flush_bpsnba (BPSNBA a);
 
-extern void setBuffers_bpsnba (BPSNBA a, double* in, double* out);
+extern void setBuffers_bpsnba (BPSNBA a, double *in, double *out);
 
 extern void setSamplerate_bpsnba (BPSNBA a, int rate);
 

@@ -28,14 +28,14 @@ warren@wpratt.com
 
 DEXP pdexp[4];
 
-DELRING calc_delring(int rsize, int size, int delay, double* in, double* out) {
+DELRING calc_delring(int rsize, int size, int delay, double *in, double *out) {
   DELRING a = (DELRING) malloc0(sizeof(delring));
   a->rsize = rsize;
   a->size = size;
   a->rdelay = delay;
   a->in = in;
   a->out = out;
-  a->ring = (double*) malloc0(a->rsize * sizeof(complex));
+  a->ring = (double *) malloc0(a->rsize * sizeof(complex));
   a->inptr = a->rdelay;
   a->outptr = 0;
   return a;
@@ -96,9 +96,9 @@ void calc_slews(DEXP a) {
 }
 
 void calc_buffs(DEXP a) {
-  a->trigsig   = (double*)malloc0(2 * a->size * sizeof(complex));   // allow for double-sized output of filter
-  a->delsig  = (double*)malloc0(a->size * sizeof(complex));
-  a->audbuffer = (double*)malloc0(a->size * sizeof(complex));
+  a->trigsig   = (double *)malloc0(2 * a->size * sizeof(complex));  // allow for double-sized output of filter
+  a->delsig  = (double *)malloc0(a->size * sizeof(complex));
+  a->audbuffer = (double *)malloc0(a->size * sizeof(complex));
 }
 
 void decalc_buffs(DEXP a) {
@@ -115,8 +115,8 @@ void calc_dexp(DEXP a) {
   // level change
   a->nattack = (int)(a->tattack * a->rate);
   a->ndecay = (int)(a->tdecay * a->rate);
-  a->cattack = (double*)malloc0((a->nattack + 1) * sizeof(double));
-  a->cdecay = (double*)malloc0((a->ndecay + 1) * sizeof(double));
+  a->cattack = (double *)malloc0((a->nattack + 1) * sizeof(double));
+  a->cdecay = (double *)malloc0((a->ndecay + 1) * sizeof(double));
   a->low_gain = 1.0 / a->exp_ratio;
   calc_slews(a);
   // control
@@ -155,7 +155,7 @@ void decalc_filter(DEXP a) {
 void calc_antivox(DEXP a) {
   a->antivox_mult = exp(-1.0 / (a->antivox_rate * a->antivox_tau));
   a->antivox_onemmult = 1.0 - a->antivox_mult;
-  a->antivox_data = (double*) malloc0(a->antivox_size * sizeof(complex));
+  a->antivox_data = (double *) malloc0(a->antivox_size * sizeof(complex));
 }
 
 void decalc_antivox(DEXP a) {
@@ -163,7 +163,7 @@ void decalc_antivox(DEXP a) {
 }
 
 PORT
-void create_dexp(int id, int run_dexp, int size, double* in, double* out, int rate, double dettau, double tattack,
+void create_dexp(int id, int run_dexp, int size, double *in, double *out, int rate, double dettau, double tattack,
                  double tdecay,
                  double thold, double exp_ratio, double hyst_ratio, double attack_thresh, int nc, int wtype, double lowcut,
                  double highcut,
@@ -260,7 +260,7 @@ void xdexp(int id) {
     // if VOX is currently NOT triggered, and, if we have new antivox data to process
     for (i = 0; i < a->antivox_size; i++) {
       sig = sqrt(a->antivox_data[2 * i + 0] * a->antivox_data[2 * i + 0] + a->antivox_data[2 * i + 1] * a->antivox_data[2 * i
-                 + 1]);
+        + 1]);
       a->antivox_level = a->antivox_mult * a->antivox_level + a->antivox_onemmult * sig;
     }
     // set the new_data flag to zero
@@ -397,7 +397,7 @@ void SetDEXPSize(int id, int size) {
 }
 
 PORT
-void SetDEXPIOBuffers(int id, double* in, double* out) {
+void SetDEXPIOBuffers(int id, double *in, double *out) {
   // Sets the input/output buffers.  They can be the same.
   DEXP a = pdexp[id];
   EnterCriticalSection(&a->cs_update);
@@ -592,7 +592,7 @@ void SetDEXPAudioDelay(int id, double delay) {
 }
 
 PORT
-void GetDEXPPeakSignal(int id, double* peak) {
+void GetDEXPPeakSignal(int id, double *peak) {
   DEXP a = pdexp[id];
   EnterCriticalSection(&a->cs_update);
   *peak = a->peak;
@@ -646,7 +646,7 @@ void SetAntiVOXDetectorTau(int id, double tau) {
 }
 
 PORT
-void SendAntiVOXData(int id, int nsamples, double* data) {
+void SendAntiVOXData(int id, int nsamples, double *data) {
   // note:  'nsamples' is not used as it has been previously specified
   DEXP a = pdexp[id];
   EnterCriticalSection(&a->cs_update);

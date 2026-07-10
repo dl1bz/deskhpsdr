@@ -76,13 +76,13 @@ ANB create_anb(
   a->advtime = advtime;
   a->backtau = backtau;
   a->threshold = threshold;
-  a->wave = (double*) malloc0(((int)(MAX_SAMPLERATE * MAX_TAU) + 1) * sizeof(double));
+  a->wave = (double *) malloc0(((int)(MAX_SAMPLERATE * MAX_TAU) + 1) * sizeof(double));
   a->dline_size = (int)((MAX_TAU + MAX_ADVTIME) * MAX_SAMPLERATE) + 1;
-  a->dline = (double*) malloc0(a->dline_size * sizeof(complex));
+  a->dline = (double *) malloc0(a->dline_size * sizeof(complex));
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   initBlanker(a);
-  a->legacy = (double*) malloc0(2048 * sizeof(
-                                        complex));                           /////////////// legacy interface - remove
+  a->legacy = (double *) malloc0(2048 * sizeof(
+                                         complex));                           /////////////// legacy interface - remove
   return a;
 }
 
@@ -177,7 +177,7 @@ void xanb(ANB a) {
   }
 }
 
-void setBuffers_anb(ANB a, double* in, double* out) {
+void setBuffers_anb(ANB a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }
@@ -313,7 +313,7 @@ void flush_anbEXT(int id) {
 }
 
 PORT
-void xanbEXT(int id, double* in, double* out) {
+void xanbEXT(int id, double *in, double *out) {
   ANB a = panb[id];
   a->in = in;
   a->out = out;
@@ -396,7 +396,7 @@ void SetEXTANBThreshold(int id, double thresh) {
 ********************************************************************************************************/
 
 PORT
-void xanbEXTF(int id, float* I, float* Q) {
+void xanbEXTF(int id, float *I, float *Q) {
   int i;
   ANB a = panb[id];
   a->in = a->legacy;

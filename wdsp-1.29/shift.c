@@ -32,7 +32,7 @@ void calc_shift(SHIFT a) {
   a->sin_delta = sin(a->delta);
 }
 
-SHIFT create_shift(int run, int size, double* in, double* out, int rate, double fshift) {
+SHIFT create_shift(int run, int size, double *in, double *out, int rate, double fshift) {
   SHIFT a = (SHIFT) malloc0(sizeof(shift));
   a->run = run;
   a->size = size;
@@ -77,7 +77,7 @@ void xshift(SHIFT a) {
   }
 }
 
-void setBuffers_shift(SHIFT a, double* in, double* out) {
+void setBuffers_shift(SHIFT a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

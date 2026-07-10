@@ -54,7 +54,7 @@ typedef struct _fmmod {
   FIRCORE p;
 } fmmod, *FMMOD;
 
-extern FMMOD create_fmmod (int run, int size, double* in, double* out, int rate, double dev, double f_low,
+extern FMMOD create_fmmod (int run, int size, double *in, double *out, int rate, double dev, double f_low,
                            double f_high,
                            int ctcss_run, double ctcss_level, double ctcss_freq, int bp_run, int nc, int mp);
 
@@ -64,7 +64,7 @@ extern void flush_fmmod (FMMOD a);
 
 extern void xfmmod (FMMOD a);
 
-extern void setBuffers_fmmod (FMMOD a, double* in, double* out);
+extern void setBuffers_fmmod (FMMOD a, double *in, double *out);
 
 extern void setSamplerate_fmmod (FMMOD a, int rate);
 

@@ -121,7 +121,7 @@ void flush_anr(ANR a) {
   a->in_idx = 0;
 }
 
-void setBuffers_anr(ANR a, double* in, double* out) {
+void setBuffers_anr(ANR a, double *in, double *out) {
   a->in_buff = in;
   a->out_buff = out;
 }

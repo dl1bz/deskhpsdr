@@ -47,7 +47,7 @@ typedef struct _eer {
   double *legacyM;                                                  ////////////  legacy interface - remove
 } eer, *EER;
 
-__declspec (dllexport) EER create_eer (int run, int size, double* in, double* out, double* outM, int rate, double mgain,
+__declspec (dllexport) EER create_eer (int run, int size, double *in, double *out, double *outM, int rate, double mgain,
                                        double pgain, int rundelays, double mdelay, double pdelay, int amiq);
 
 __declspec (dllexport) void destroy_eer (EER a);

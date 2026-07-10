@@ -96,9 +96,9 @@ extern __declspec (dllexport) void destroy_anbEXT (int id);
 
 extern __declspec (dllexport) void flush_anbEXT (int id);
 
-extern __declspec (dllexport) void xanbEXT (int id, double* in, double* out);
+extern __declspec (dllexport) void xanbEXT (int id, double *in, double *out);
 
-extern void setBuffers_anb (ANB a, double* in, double* out);
+extern void setBuffers_anb (ANB a, double *in, double *out);
 
 extern void setSamplerate_anb (ANB a, int rate);
 

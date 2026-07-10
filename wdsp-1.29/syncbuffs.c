@@ -27,11 +27,11 @@ warren@pratt.one
 #include "comm.h"
 
 void start_syncbthread(SYNCB a) {
-  HANDLE handle = (HANDLE) _beginthread(syncb_main, 0, (void*)a);
+  HANDLE handle = (HANDLE) _beginthread(syncb_main, 0, (void *)a);
   SetThreadPriority(handle, THREAD_PRIORITY_HIGHEST);
 }
 
-SYNCB create_syncbuffs(int accept, int nstreams, int max_insize, int max_outsize, int outsize, double** out,
+SYNCB create_syncbuffs(int accept, int nstreams, int max_insize, int max_outsize, int outsize, double **out,
                        void (*exf)(void)) {
   SYNCB a = (SYNCB) malloc0(sizeof(syncb));
   int i;
@@ -49,9 +49,9 @@ SYNCB create_syncbuffs(int accept, int nstreams, int max_insize, int max_outsize
     a->r1_size = a->max_in_size;
   }
   a->r1_active_buffsize = SYNCB_MULT * a->r1_size;
-  a->r1_baseptr = (double**) malloc0(a->nstreams * sizeof(double*));
+  a->r1_baseptr = (double **) malloc0(a->nstreams * sizeof(double *));
   for (i = 0; i < a->nstreams; i++) {
-    a->r1_baseptr[i] = (double*) malloc0(a->r1_active_buffsize * sizeof(complex));
+    a->r1_baseptr[i] = (double *) malloc0(a->r1_active_buffsize * sizeof(complex));
   }
   a->r1_inidx = 0;
   a->r1_outidx = 0;
@@ -95,7 +95,7 @@ void flush_syncbuffs(SYNCB a) {
   while (!WaitForSingleObject(a->Sem_BuffReady, 1)) ;
 }
 
-void Syncbound(SYNCB a, int nsamples, double** in) {
+void Syncbound(SYNCB a, int nsamples, double **in) {
   int i, n;
   int first, second;
   if (_InterlockedAnd(&a->accept, 1)) {
@@ -148,7 +148,7 @@ void syncbdata(SYNCB a) {
   LeaveCriticalSection(&a->csOUT);
 }
 
-void syncb_main(void* p) {
+void syncb_main(void *p) {
   SYNCB a = (SYNCB)p;
   while (_InterlockedAnd(&a->run, 1)) {
     WaitForSingleObject(a->Sem_BuffReady, INFINITE);
@@ -181,7 +181,7 @@ void SetSYNCBRingOutsize(SYNCB a, int size) {
 *                                                   *
 ********************************************************************************************************/
 
-DUMFILT create_dumfilt(int run, int delay, int opsize, double* in, double* out) {
+DUMFILT create_dumfilt(int run, int delay, int opsize, double *in, double *out) {
   DUMFILT a = (DUMFILT) malloc0(sizeof(dumfilt));
   a->run = run;
   a->delay = delay;
@@ -189,7 +189,7 @@ DUMFILT create_dumfilt(int run, int delay, int opsize, double* in, double* out) 
   a->rsize = a->opsize + a->delay;
   a->in = in;
   a->out = out;
-  a->ring = (double*) malloc0(a->rsize * sizeof(complex));
+  a->ring = (double *) malloc0(a->rsize * sizeof(complex));
   a->outidx = 0;
   a->inidx = a->delay;
   return a;

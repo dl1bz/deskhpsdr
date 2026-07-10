@@ -57,7 +57,7 @@ typedef struct _varsamp {
   double nom_ratio;
 } varsamp, *VARSAMP;
 
-extern VARSAMP create_varsamp (int run, int size, double* in, double* out,
+extern VARSAMP create_varsamp (int run, int size, double *in, double *out,
                                int in_rate, int out_rate, double fc, double fc_low, int R, double gain, double var, int varmode);
 
 extern void destroy_varsamp (VARSAMP a);
@@ -66,7 +66,7 @@ extern void flush_varsamp (VARSAMP a);
 
 extern int xvarsamp (VARSAMP a, double var);
 
-extern void setBuffers_varsamp (VARSAMP a, double* in, double* out);
+extern void setBuffers_varsamp (VARSAMP a, double *in, double *out);
 
 extern void setSize_varsamp (VARSAMP a, int size);
 

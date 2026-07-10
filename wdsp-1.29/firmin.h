@@ -52,7 +52,7 @@ typedef struct _firmin {
   double gain;      // filter gain
 } firmin, *FIRMIN;
 
-extern FIRMIN create_firmin (int run, int position, int size, double* in, double* out,
+extern FIRMIN create_firmin (int run, int position, int size, double *in, double *out,
                              int nc, double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void destroy_firmin (FIRMIN a);
@@ -61,7 +61,7 @@ extern void flush_firmin (FIRMIN a);
 
 extern void xfirmin (FIRMIN a, int pos);
 
-extern void setBuffers_firmin (FIRMIN a, double* in, double* out);
+extern void setBuffers_firmin (FIRMIN a, double *in, double *out);
 
 extern void setSamplerate_firmin (FIRMIN a, int rate);
 
@@ -105,7 +105,7 @@ typedef struct _firopt {
   fftw_plan *maskplan;  // plans for frequency domain masks
 } firopt, *FIROPT;
 
-extern FIROPT create_firopt (int run, int position, int size, double* in, double* out,
+extern FIROPT create_firopt (int run, int position, int size, double *in, double *out,
                              int nc, double f_low, double f_high, int samplerate, int wintype, double gain);
 
 extern void xfiropt (FIROPT a, int pos);
@@ -114,7 +114,7 @@ extern void destroy_firopt (FIROPT a);
 
 extern void flush_firopt (FIROPT a);
 
-extern void setBuffers_firopt (FIROPT a, double* in, double* out);
+extern void setBuffers_firopt (FIROPT a, double *in, double *out);
 
 extern void setSamplerate_firopt (FIROPT a, int rate);
 
@@ -157,7 +157,7 @@ typedef struct _fircore {
   int masks_ready;
 } fircore, *FIRCORE;
 
-extern FIRCORE create_fircore (int size, double* in, double* out,
+extern FIRCORE create_fircore (int size, double *in, double *out,
                                int nc, int mp, double *impulse);
 
 extern void xfircore (FIRCORE a);
@@ -166,13 +166,13 @@ extern void destroy_fircore (FIRCORE a);
 
 extern void flush_fircore (FIRCORE a);
 
-extern void setBuffers_fircore (FIRCORE a, double* in, double* out);
+extern void setBuffers_fircore (FIRCORE a, double *in, double *out);
 
 extern void setSize_fircore (FIRCORE a, int size);
 
-extern void setImpulse_fircore (FIRCORE a, double* impulse, int update);
+extern void setImpulse_fircore (FIRCORE a, double *impulse, int update);
 
-extern void setNc_fircore (FIRCORE a, int nc, double* impulse);
+extern void setNc_fircore (FIRCORE a, int nc, double *impulse);
 
 extern void setMp_fircore (FIRCORE a, int mp);
 

@@ -93,7 +93,7 @@ typedef struct _cfcomp {
   double *cfc_gain_copy;
 } cfcomp, *CFCOMP;
 
-extern CFCOMP create_cfcomp (int run, int position, int peq_run, int size, double* in, double* out, int fsize,
+extern CFCOMP create_cfcomp (int run, int position, int peq_run, int size, double *in, double *out, int fsize,
                              int ovrlp,
                              int rate, int wintype, int comp_method, int nfreqs, double precomp, double prepeq, double *F, double *G, double *E,
                              double mtau, double dtau);
@@ -104,7 +104,7 @@ extern void flush_cfcomp (CFCOMP a);
 
 extern void xcfcomp (CFCOMP a, int pos);
 
-extern void setBuffers_cfcomp (CFCOMP a, double* in, double* out);
+extern void setBuffers_cfcomp (CFCOMP a, double *in, double *out);
 
 extern void setSamplerate_cfcomp (CFCOMP a, int rate);
 

@@ -53,7 +53,7 @@ typedef struct _amsq {
   double muted_gain;
 } amsq, *AMSQ;
 
-extern AMSQ create_amsq (int run, int size, double* in, double* out, double* trigger, int rate, double avtau,
+extern AMSQ create_amsq (int run, int size, double *in, double *out, double *trigger, int rate, double avtau,
                          double tup, double tdown, double tail_thresh, double unmute_thresh, double min_tail, double max_tail,
                          double muted_gain);
 
@@ -65,7 +65,7 @@ extern void xamsq (AMSQ a);
 
 extern void xamsqcap (AMSQ a);
 
-extern void setBuffers_amsq (AMSQ a, double* in, double* out, double* trigger);
+extern void setBuffers_amsq (AMSQ a, double *in, double *out, double *trigger);
 
 extern void setSamplerate_amsq (AMSQ a, int rate);
 

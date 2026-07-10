@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-AMMOD create_ammod(int run, int mode, int size, double* in, double* out, double c_level) {
+AMMOD create_ammod(int run, int mode, int size, double *in, double *out, double c_level) {
   AMMOD a = (AMMOD) malloc0(sizeof(ammod));
   a->run = run;
   a->mode = mode;
@@ -72,7 +72,7 @@ void xammod(AMMOD a) {
   }
 }
 
-void setBuffers_ammod(AMMOD a, double* in, double* out) {
+void setBuffers_ammod(AMMOD a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

@@ -184,7 +184,7 @@ void SetCalibration (int disp,
                     );
 
 extern __declspec(dllexport)
-void OpenBuffer(int disp, int ss, int LO, void** Ipointer, void** Qpointer);
+void OpenBuffer(int disp, int ss, int LO, void **Ipointer, void **Qpointer);
 
 extern __declspec(dllexport)
 void CloseBuffer(int disp, int ss, int LO);
@@ -196,7 +196,7 @@ extern __declspec(dllexport)
 void Spectrum2(int run, int disp, int ss, int LO, dINREAL* pbuff);
 
 extern __declspec(dllexport)
-void Spectrum0(int run, int disp, int ss, int LO, double* pbuff);
+void Spectrum0(int run, int disp, int ss, int LO, double *pbuff);
 
 extern __declspec(dllexport)
 void SnapSpectrum(int disp,

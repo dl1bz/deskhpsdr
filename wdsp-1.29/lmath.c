@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-void dR(int n, double* r, double* y, double* z) {
+void dR(int n, double *r, double *y, double *z) {
   int i, j, k;
   double alpha, beta, gamma;
   memset(z, 0, (n - 1) * sizeof(double));   // work space
@@ -92,7 +92,7 @@ void trI(
     }
 }
 
-void asolve(int xsize, int asize, double* x, double* a, double* r, double* z) {
+void asolve(int xsize, int asize, double *x, double *a, double *r, double *z) {
   int i, j, k;
   double beta, alpha, t;
   memset(r, 0, (asize + 1) * sizeof(double));   // work space
@@ -123,7 +123,7 @@ void asolve(int xsize, int asize, double* x, double* a, double* r, double* z) {
   }
 }
 
-void median(int n, double* a, double* med) {
+void median(int n, double *a, double *med) {
   int S0, S1, i, j, m, k;
   double x, t;
   S0 = 0;
@@ -182,39 +182,39 @@ void median(int n, double* a, double* med) {
 BLDR create_builder(int points, int ints) {
   // for the create function, 'points' and 'ints' are the MAXIMUM values that will be encountered
   BLDR a = (BLDR)malloc0(sizeof(bldr));
-  a->catxy = (double*)malloc0(2 * points * sizeof(double));
-  a->sx  = (double*)malloc0(points * sizeof(double));
-  a->sy  = (double*)malloc0(points * sizeof(double));
-  a->h   = (double*)malloc0(ints   * sizeof(double));
-  a->p   = (int*) malloc0(ints   * sizeof(int));
-  a->np  = (int*) malloc0(ints   * sizeof(int));
-  a->taa   = (double*)malloc0(ints   * sizeof(double));
-  a->tab   = (double*)malloc0(ints   * sizeof(double));
-  a->tag   = (double*)malloc0(ints   * sizeof(double));
-  a->tad   = (double*)malloc0(ints   * sizeof(double));
-  a->tbb   = (double*)malloc0(ints   * sizeof(double));
-  a->tbg   = (double*)malloc0(ints   * sizeof(double));
-  a->tbd   = (double*)malloc0(ints   * sizeof(double));
-  a->tgg   = (double*)malloc0(ints   * sizeof(double));
-  a->tgd   = (double*)malloc0(ints   * sizeof(double));
-  a->tdd   = (double*)malloc0(ints   * sizeof(double));
+  a->catxy = (double *)malloc0(2 * points * sizeof(double));
+  a->sx  = (double *)malloc0(points * sizeof(double));
+  a->sy  = (double *)malloc0(points * sizeof(double));
+  a->h   = (double *)malloc0(ints   * sizeof(double));
+  a->p   = (int *) malloc0(ints   * sizeof(int));
+  a->np  = (int *) malloc0(ints   * sizeof(int));
+  a->taa   = (double *)malloc0(ints   * sizeof(double));
+  a->tab   = (double *)malloc0(ints   * sizeof(double));
+  a->tag   = (double *)malloc0(ints   * sizeof(double));
+  a->tad   = (double *)malloc0(ints   * sizeof(double));
+  a->tbb   = (double *)malloc0(ints   * sizeof(double));
+  a->tbg   = (double *)malloc0(ints   * sizeof(double));
+  a->tbd   = (double *)malloc0(ints   * sizeof(double));
+  a->tgg   = (double *)malloc0(ints   * sizeof(double));
+  a->tgd   = (double *)malloc0(ints   * sizeof(double));
+  a->tdd   = (double *)malloc0(ints   * sizeof(double));
   int nsize = 3 * ints + 1;
   int intp1 = ints + 1;
   int intm1 = ints - 1;
-  a->A   = (double*)malloc0(intp1 * intp1 * sizeof(double));
-  a->B   = (double*)malloc0(intp1 * intp1 * sizeof(double));
-  a->C   = (double*)malloc0(intm1 * intp1 * sizeof(double));
-  a->D   = (double*)malloc0(intp1     * sizeof(double));
-  a->E   = (double*)malloc0(intp1 * intp1 * sizeof(double));
-  a->F   = (double*)malloc0(intm1 * intp1 * sizeof(double));
-  a->G   = (double*)malloc0(intp1     * sizeof(double));
-  a->MAT   = (double*)malloc0(nsize * nsize * sizeof(double));
-  a->RHS   = (double*)malloc0(nsize     * sizeof(double));
-  a->SLN   = (double*)malloc0(nsize     * sizeof(double));
-  a->z   = (double*)malloc0(intp1     * sizeof(double));
-  a->zp  = (double*)malloc0(intp1     * sizeof(double));
-  a->wrk   = (double*)malloc0(nsize     * sizeof(double));
-  a->ipiv  = (int*) malloc0(nsize     * sizeof(int));
+  a->A   = (double *)malloc0(intp1 * intp1 * sizeof(double));
+  a->B   = (double *)malloc0(intp1 * intp1 * sizeof(double));
+  a->C   = (double *)malloc0(intm1 * intp1 * sizeof(double));
+  a->D   = (double *)malloc0(intp1     * sizeof(double));
+  a->E   = (double *)malloc0(intp1 * intp1 * sizeof(double));
+  a->F   = (double *)malloc0(intm1 * intp1 * sizeof(double));
+  a->G   = (double *)malloc0(intp1     * sizeof(double));
+  a->MAT   = (double *)malloc0(nsize * nsize * sizeof(double));
+  a->RHS   = (double *)malloc0(nsize     * sizeof(double));
+  a->SLN   = (double *)malloc0(nsize     * sizeof(double));
+  a->z   = (double *)malloc0(intp1     * sizeof(double));
+  a->zp  = (double *)malloc0(intp1     * sizeof(double));
+  a->wrk   = (double *)malloc0(nsize     * sizeof(double));
+  a->ipiv  = (int *) malloc0(nsize     * sizeof(int));
   return a;
 }
 
@@ -288,7 +288,7 @@ void flush_builder(BLDR a, int points, int ints) {
   memset(a->ipiv,  0, nsize * sizeof(int));
 }
 
-int fcompare(const void* a, const void* b) {
+int fcompare(const void *a, const void *b) {
   if (*(double *)a < * (double *)b) {
     return -1;
   } else if (*(double *)a == *(double *)b) {
@@ -298,7 +298,7 @@ int fcompare(const void* a, const void* b) {
   }
 }
 
-void decomp(int n, double* a, int* piv, int* info, double* wrk) {
+void decomp(int n, double *a, int *piv, int *info, double *wrk) {
   int i, j, k;
   int t_piv;
   double m_row, mt_row, m_col, mt_col;
@@ -350,7 +350,7 @@ cleanup:
   return;
 }
 
-void dsolve(int n, double* a, int* piv, double* b, double* x) {
+void dsolve(int n, double *a, int *piv, double *b, double *x) {
   int j, k;
   double sum;
   for (k = 0; k < n; k++) {
@@ -369,7 +369,7 @@ void dsolve(int n, double* a, int* piv, double* b, double* x) {
   }
 }
 
-void cull(int* n, int ints, double* x, double* t, double ptol) {
+void cull(int *n, int ints, double *x, double *t, double ptol) {
   int k = 0;
   int i = *n;
   int ntopint;
@@ -386,7 +386,7 @@ void cull(int* n, int ints, double* x, double* t, double ptol) {
   *n -= k;
 }
 
-void xbuilder(BLDR a, int points, double* x, double* y, int ints, double* t, int* info, double* c, double ptol) {
+void xbuilder(BLDR a, int points, double *x, double *y, int ints, double *t, int *info, double *c, double ptol) {
   double u, v, alpha, beta, gamma, delta;
   int nsize = 3 * ints + 1;
   int intp1 = ints + 1;

@@ -31,7 +31,7 @@ void calc_fmsq(FMSQ a) {
   double *impulse;
   int i;
   // noise filter
-  a->noise = (double*)malloc0(2 * a->size * sizeof(complex));
+  a->noise = (double *)malloc0(2 * a->size * sizeof(complex));
   a->F[0] = 0.0;
   a->F[1] = a->fc;
   a->F[2] = *a->pllpole;
@@ -53,8 +53,8 @@ void calc_fmsq(FMSQ a) {
   // level change
   a->ntup   = (int)(a->tup   * a->rate);
   a->ntdown = (int)(a->tdown * a->rate);
-  a->cup   = (double*)malloc0((a->ntup   + 1) * sizeof(double));
-  a->cdown = (double*)malloc0((a->ntdown + 1) * sizeof(double));
+  a->cup   = (double *)malloc0((a->ntup   + 1) * sizeof(double));
+  a->cdown = (double *)malloc0((a->ntdown + 1) * sizeof(double));
   delta = PI / (double)a->ntup;
   theta = 0.0;
   for (i = 0; i <= a->ntup; i++) {
@@ -81,7 +81,7 @@ void decalc_fmsq(FMSQ a) {
   _aligned_free(a->noise);
 }
 
-FMSQ create_fmsq(int run, int size, double* insig, double* outsig, double* trigger, int rate, double fc,
+FMSQ create_fmsq(int run, int size, double *insig, double *outsig, double *trigger, int rate, double fc,
                  double *pllpole, double tdelay, double avtau, double longtau, double tup, double tdown, double tail_thresh,
                  double unmute_thresh, double min_tail, double max_tail, int nc, int mp) {
   FMSQ a = (FMSQ) malloc0(sizeof(fmsq));
@@ -190,7 +190,7 @@ void xfmsq(FMSQ a) {
   }
 }
 
-void setBuffers_fmsq(FMSQ a, double* in, double* out, double* trig) {
+void setBuffers_fmsq(FMSQ a, double *in, double *out, double *trig) {
   a->insig = in;
   a->outsig = out;
   a->trigger = trig;

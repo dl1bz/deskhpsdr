@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-int fEQcompare(const void* a, const void* b) {
+int fEQcompare(const void *a, const void *b) {
   if (*(double *)a < * (double *)b) {
     return -1;
   } else if (*(double *)a == *(double *)b) {
@@ -36,7 +36,7 @@ int fEQcompare(const void* a, const void* b) {
   }
 }
 
-double *eq_impulse(int N, int nfreqs, double* F, double* G, double samplerate, double scale, int ctfmode,
+double *eq_impulse(int N, int nfreqs, double *F, double *G, double samplerate, double scale, int ctfmode,
                    int wintype) {
   // check for previous in the cache
   struct Params {
@@ -57,17 +57,17 @@ double *eq_impulse(int N, int nfreqs, double* F, double* G, double samplerate, d
   params.scale = scale;
   HASH_T h = fnv1a_hash(&params, sizeof(params));
   size_t arr_len = (nfreqs + 1) * sizeof(double);
-  HASH_T hf = fnv1a_hash((uint8_t*)F, arr_len);
+  HASH_T hf = fnv1a_hash((uint8_t *)F, arr_len);
   h ^= hf + GOLDEN_RATIO + (h << 6) + (h >> 2);
-  HASH_T hg = fnv1a_hash((uint8_t*)G, arr_len);
+  HASH_T hg = fnv1a_hash((uint8_t *)G, arr_len);
   h ^= hg + GOLDEN_RATIO + (h << 6) + (h >> 2);
   double *imp = get_impulse_cache_entry(EQ_CACHE, h, N);
   if (imp) { return imp; }
   //
-  double *fp = (double*) malloc0((nfreqs + 2) * sizeof(double));
-  double *gp = (double*) malloc0((nfreqs + 2) * sizeof(double));
-  double *A  = (double*) malloc0((N / 2 + 1) * sizeof(double));
-  double *sary = (double*) malloc0(2 * nfreqs * sizeof(double));
+  double *fp = (double *) malloc0((nfreqs + 2) * sizeof(double));
+  double *gp = (double *) malloc0((nfreqs + 2) * sizeof(double));
+  double *A  = (double *) malloc0((N / 2 + 1) * sizeof(double));
+  double *sary = (double *) malloc0(2 * nfreqs * sizeof(double));
   double gpreamp, f, frac;
   double *impulse;
   int i, j, mid;
@@ -176,7 +176,7 @@ double *eq_impulse(int N, int nfreqs, double* F, double* G, double samplerate, d
 *                                                   *
 ********************************************************************************************************/
 
-EQP create_eqp(int run, int size, int nc, int mp, double* in, double* out, int nfreqs, double* F, double* G,
+EQP create_eqp(int run, int size, int nc, int mp, double *in, double *out, int nfreqs, double *F, double *G,
                int ctfmode, int wintype, int samplerate) {
   // NOTE:  'nc' must be >= 'size'
   EQP a = (EQP) malloc0(sizeof(eqp));
@@ -188,8 +188,8 @@ EQP create_eqp(int run, int size, int nc, int mp, double* in, double* out, int n
   a->in = in;
   a->out = out;
   a->nfreqs = nfreqs;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   memcpy(a->F, F, (nfreqs + 1) * sizeof(double));
   memcpy(a->G, G, (nfreqs + 1) * sizeof(double));
   a->ctfmode = ctfmode;
@@ -218,7 +218,7 @@ void xeqp(EQP a) {
   }
 }
 
-void setBuffers_eqp(EQP a, double* in, double* out) {
+void setBuffers_eqp(EQP a, double *in, double *out) {
   a->in = in;
   a->out = out;
   setBuffers_fircore(a->p, a->in, a->out);
@@ -280,15 +280,15 @@ void SetRXAEQMP(int channel, int mp) {
 }
 
 PORT
-void SetRXAEQProfile(int channel, int nfreqs, double* F, double* G) {
+void SetRXAEQProfile(int channel, int nfreqs, double *F, double *G) {
   EQP a;
   double *impulse;
   a = rxa[channel].eqp.p;
   _aligned_free(a->G);
   _aligned_free(a->F);
   a->nfreqs = nfreqs;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   memcpy(a->F, F, (nfreqs + 1) * sizeof(double));
   memcpy(a->G, G, (nfreqs + 1) * sizeof(double));
   impulse = eq_impulse(a->nc, a->nfreqs, a->F, a->G,
@@ -320,7 +320,7 @@ void SetRXAEQWintype(int channel, int wintype) {
 }
 
 PORT
-void SetRXAGrphEQ(int channel, int* rxeq) {
+void SetRXAGrphEQ(int channel, int *rxeq) {
   // three band equalizer (legacy compatibility)
   EQP a;
   double *impulse;
@@ -328,8 +328,8 @@ void SetRXAGrphEQ(int channel, int* rxeq) {
   _aligned_free(a->G);
   _aligned_free(a->F);
   a->nfreqs = 4;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   a->F[1] =  150.0;
   a->F[2] =  400.0;
   a->F[3] = 1500.0;
@@ -346,7 +346,7 @@ void SetRXAGrphEQ(int channel, int* rxeq) {
 }
 
 PORT
-void SetRXAGrphEQ10(int channel, int* rxeq) {
+void SetRXAGrphEQ10(int channel, int *rxeq) {
   // ten band equalizer (legacy compatibility)
   EQP a;
   double *impulse;
@@ -355,8 +355,8 @@ void SetRXAGrphEQ10(int channel, int* rxeq) {
   _aligned_free(a->G);
   _aligned_free(a->F);
   a->nfreqs = 10;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   a->F[1]  =    32.0;
   a->F[2]  =    63.0;
   a->F[3]  =   125.0;
@@ -416,15 +416,15 @@ void SetTXAEQMP(int channel, int mp) {
 }
 
 PORT
-void SetTXAEQProfile(int channel, int nfreqs, double* F, double* G) {
+void SetTXAEQProfile(int channel, int nfreqs, double *F, double *G) {
   EQP a;
   double *impulse;
   a = txa[channel].eqp.p;
   _aligned_free(a->G);
   _aligned_free(a->F);
   a->nfreqs = nfreqs;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   memcpy(a->F, F, (nfreqs + 1) * sizeof(double));
   memcpy(a->G, G, (nfreqs + 1) * sizeof(double));
   impulse = eq_impulse(a->nc, a->nfreqs, a->F, a->G, a->samplerate, 1.0 / (2.0 * a->size), a->ctfmode, a->wintype);
@@ -455,7 +455,7 @@ void SetTXAEQWintype(int channel, int wintype) {
 }
 
 PORT
-void SetTXAGrphEQ(int channel, int* txeq) {
+void SetTXAGrphEQ(int channel, int *txeq) {
   // three band equalizer (legacy compatibility)
   EQP a;
   double *impulse;
@@ -463,8 +463,8 @@ void SetTXAGrphEQ(int channel, int* txeq) {
   _aligned_free(a->G);
   _aligned_free(a->F);
   a->nfreqs = 4;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   a->F[1] =  150.0;
   a->F[2] =  400.0;
   a->F[3] = 1500.0;
@@ -481,7 +481,7 @@ void SetTXAGrphEQ(int channel, int* txeq) {
 }
 
 PORT
-void SetTXAGrphEQ10(int channel, int* txeq) {
+void SetTXAGrphEQ10(int channel, int *txeq) {
   // ten band equalizer (legacy compatibility)
   EQP a;
   double *impulse;
@@ -490,8 +490,8 @@ void SetTXAGrphEQ10(int channel, int* txeq) {
   _aligned_free(a->G);
   _aligned_free(a->F);
   a->nfreqs = 10;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   a->F[1]  =    32.0;
   a->F[2]  =    63.0;
   a->F[3]  =   125.0;
@@ -518,7 +518,7 @@ void SetTXAGrphEQ10(int channel, int* txeq) {
 ********************************************************************************************************/
 
 
-double *eq_mults(int size, int nfreqs, double* F, double* G, double samplerate, double scale, int ctfmode,
+double *eq_mults(int size, int nfreqs, double *F, double *G, double samplerate, double scale, int ctfmode,
                  int wintype) {
   double *impulse = eq_impulse(size + 1, nfreqs, F, G, samplerate, scale, ctfmode, wintype);
   double *mults = fftcv_mults(2 * size, impulse);
@@ -528,11 +528,11 @@ double *eq_mults(int size, int nfreqs, double* F, double* G, double samplerate, 
 
 void calc_eq(EQ a) {
   a->scale = 1.0 / (double)(2 * a->size);
-  a->infilt = (double*)malloc0(2 * a->size * sizeof(complex));
-  a->product = (double*)malloc0(2 * a->size * sizeof(complex));
-  a->CFor = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->infilt, (fftw_complex*)a->product, FFTW_FORWARD,
+  a->infilt = (double *)malloc0(2 * a->size * sizeof(complex));
+  a->product = (double *)malloc0(2 * a->size * sizeof(complex));
+  a->CFor = fftw_plan_dft_1d(2 * a->size, (fftw_complex *)a->infilt, (fftw_complex *)a->product, FFTW_FORWARD,
                              FFTW_PATIENT);
-  a->CRev = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->product, (fftw_complex*)a->out, FFTW_BACKWARD,
+  a->CRev = fftw_plan_dft_1d(2 * a->size, (fftw_complex *)a->product, (fftw_complex *)a->out, FFTW_BACKWARD,
                              FFTW_PATIENT);
   a->mults = eq_mults(a->size, a->nfreqs, a->F, a->G, a->samplerate, a->scale, a->ctfmode, a->wintype);
 }
@@ -545,7 +545,7 @@ void decalc_eq(EQ a) {
   _aligned_free(a->infilt);
 }
 
-EQ create_eq(int run, int size, double* in, double* out, int nfreqs, double* F, double* G, int ctfmode, int wintype,
+EQ create_eq(int run, int size, double *in, double *out, int nfreqs, double *F, double *G, int ctfmode, int wintype,
              int samplerate) {
   EQ a = (EQ) malloc0(sizeof(eq));
   a->run = run;
@@ -553,8 +553,8 @@ EQ create_eq(int run, int size, double* in, double* out, int nfreqs, double* F, 
   a->in = in;
   a->out = out;
   a->nfreqs = nfreqs;
-  a->F = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
-  a->G = (double*) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->F = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
+  a->G = (double *) malloc0((a->nfreqs + 1) * sizeof(double));
   memcpy(a->F, F, (nfreqs + 1) * sizeof(double));
   memcpy(a->G, G, (nfreqs + 1) * sizeof(double));
   a->ctfmode = ctfmode;
@@ -594,7 +594,7 @@ void xeq(EQ a) {
   }
 }
 
-void setBuffers_eq(EQ a, double* in, double* out) {
+void setBuffers_eq(EQ a, double *in, double *out) {
   decalc_eq(a);
   a->in = in;
   a->out = out;

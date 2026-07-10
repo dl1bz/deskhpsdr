@@ -34,8 +34,8 @@ void calc_snba(SNBA d) {
   } else {
     d->isize = d->bsize * (d->internalrate / d->inrate);
   }
-  d->inbuff  = (double*) malloc0(d->isize * sizeof(complex));
-  d->outbuff = (double*) malloc0(d->isize * sizeof(complex));
+  d->inbuff  = (double *) malloc0(d->isize * sizeof(complex));
+  d->outbuff = (double *) malloc0(d->isize * sizeof(complex));
   if (d->inrate != d->internalrate) { d->resamprun = 1; }
   else { d->resamprun = 0; }
   d->inresamp  = create_resample(d->resamprun, d->bsize, d->in,    d->inbuff, d->inrate,   d->internalrate, 0.0, 0, 2.0);
@@ -48,7 +48,7 @@ void calc_snba(SNBA d) {
   else { d->iasize = d->isize; }
   d->iainidx = 0;
   d->iaoutidx = 0;
-  d->inaccum = (double*) malloc0(d->iasize * sizeof(double));
+  d->inaccum = (double *) malloc0(d->iasize * sizeof(double));
   d->nsamps = 0;
   if (d->incr > d->isize) {
     d->oasize = d->incr;
@@ -60,10 +60,10 @@ void calc_snba(SNBA d) {
     d->oaoutidx = 0;
   }
   d->init_oaoutidx = d->oaoutidx;
-  d->outaccum = (double*) malloc0(d->oasize * sizeof(double));
+  d->outaccum = (double *) malloc0(d->oasize * sizeof(double));
 }
 
-SNBA create_snba(int run, double* in, double* out, int inrate, int internalrate, int bsize, int ovrlp, int xsize,
+SNBA create_snba(int run, double *in, double *out, int inrate, int internalrate, int bsize, int ovrlp, int xsize,
                  int asize, int npasses, double k1, double k2, int b, int pre, int post, double pmultmin, double out_low_cut,
                  double out_high_cut) {
   SNBA d = (SNBA) malloc0(sizeof(snba));
@@ -86,29 +86,29 @@ SNBA create_snba(int run, double* in, double* out, int inrate, int internalrate,
   d->out_low_cut = out_low_cut;
   d->out_high_cut = out_high_cut;
   calc_snba(d);
-  d->xbase  = (double*) malloc0(2 * d->xsize * sizeof(double));
+  d->xbase  = (double *) malloc0(2 * d->xsize * sizeof(double));
   d->xaux   = d->xbase + d->xsize;
-  d->exec.a   = (double*) malloc0(d->xsize * sizeof(double));
-  d->exec.v   = (double*) malloc0(d->xsize * sizeof(double));
-  d->exec.detout  = (int*) malloc0(d->xsize * sizeof(int));
-  d->exec.savex = (double*) malloc0(d->xsize * sizeof(double));
-  d->exec.xHout = (double*) malloc0(d->xsize * sizeof(double));
-  d->exec.unfixed = (int*) malloc0(d->xsize * sizeof(int));
-  d->sdet.vp    = (double*) malloc0(d->xsize * sizeof(double));
-  d->sdet.vpwr  = (double*) malloc0(d->xsize * sizeof(double));
+  d->exec.a   = (double *) malloc0(d->xsize * sizeof(double));
+  d->exec.v   = (double *) malloc0(d->xsize * sizeof(double));
+  d->exec.detout  = (int *) malloc0(d->xsize * sizeof(int));
+  d->exec.savex = (double *) malloc0(d->xsize * sizeof(double));
+  d->exec.xHout = (double *) malloc0(d->xsize * sizeof(double));
+  d->exec.unfixed = (int *) malloc0(d->xsize * sizeof(int));
+  d->sdet.vp    = (double *) malloc0(d->xsize * sizeof(double));
+  d->sdet.vpwr  = (double *) malloc0(d->xsize * sizeof(double));
   d->wrk.xHat_a1rows_max = d->xsize + d->exec.asize;
   d->wrk.xHat_a2cols_max = d->xsize + 2 * d->exec.asize;
-  d->wrk.xHat_r      = (double*) malloc0(d->xsize * sizeof(double));
-  d->wrk.xHat_ATAI     = (double*) malloc0(d->xsize * d->xsize * sizeof(double));
-  d->wrk.xHat_A1       = (double*) malloc0(d->wrk.xHat_a1rows_max * d->xsize * sizeof(double));
-  d->wrk.xHat_A2       = (double*) malloc0(d->wrk.xHat_a1rows_max * d->wrk.xHat_a2cols_max * sizeof(double));
-  d->wrk.xHat_P1       = (double*) malloc0(d->xsize * d->wrk.xHat_a2cols_max * sizeof(double));
-  d->wrk.xHat_P2       = (double*) malloc0(d->xsize * sizeof(double));
-  d->wrk.trI_y       = (double*) malloc0((d->xsize - 1) * sizeof(double));
-  d->wrk.trI_v       = (double*) malloc0((d->xsize - 1) * sizeof(double));
-  d->wrk.dR_z        = (double*) malloc0((d->xsize - 2) * sizeof(double));
-  d->wrk.asolve_r      = (double*) malloc0((d->exec.asize + 1) * sizeof(double));
-  d->wrk.asolve_z      = (double*) malloc0((d->exec.asize + 1) * sizeof(double));
+  d->wrk.xHat_r      = (double *) malloc0(d->xsize * sizeof(double));
+  d->wrk.xHat_ATAI     = (double *) malloc0(d->xsize * d->xsize * sizeof(double));
+  d->wrk.xHat_A1       = (double *) malloc0(d->wrk.xHat_a1rows_max * d->xsize * sizeof(double));
+  d->wrk.xHat_A2       = (double *) malloc0(d->wrk.xHat_a1rows_max * d->wrk.xHat_a2cols_max * sizeof(double));
+  d->wrk.xHat_P1       = (double *) malloc0(d->xsize * d->wrk.xHat_a2cols_max * sizeof(double));
+  d->wrk.xHat_P2       = (double *) malloc0(d->xsize * sizeof(double));
+  d->wrk.trI_y       = (double *) malloc0((d->xsize - 1) * sizeof(double));
+  d->wrk.trI_v       = (double *) malloc0((d->xsize - 1) * sizeof(double));
+  d->wrk.dR_z        = (double *) malloc0((d->xsize - 2) * sizeof(double));
+  d->wrk.asolve_r      = (double *) malloc0((d->exec.asize + 1) * sizeof(double));
+  d->wrk.asolve_z      = (double *) malloc0((d->exec.asize + 1) * sizeof(double));
   return d;
 }
 
@@ -169,7 +169,7 @@ void flush_snba(SNBA d) {
   flush_resample(d->outresamp);
 }
 
-void setBuffers_snba(SNBA a, double* in, double* out) {
+void setBuffers_snba(SNBA a, double *in, double *out) {
   decalc_snba(a);
   a->in = in;
   a->out = out;
@@ -188,7 +188,7 @@ void setSize_snba(SNBA a, int size) {
   calc_snba(a);
 }
 
-void ATAc0(int n, int nr, double* A, double* r) {
+void ATAc0(int n, int nr, double *A, double *r) {
   int i, j;
   memset(r, 0, n * sizeof(double));
   for (i = 0; i < n; i++)
@@ -197,7 +197,7 @@ void ATAc0(int n, int nr, double* A, double* r) {
     }
 }
 
-void multA1TA2(double* a1, double* a2, int m, int n, int q, double* c) {
+void multA1TA2(double *a1, double *a2, int m, int n, int q, double *c) {
   int i, j, k;
   int p = q - m;
   memset(c, 0, m * n * sizeof(double));
@@ -217,7 +217,7 @@ void multA1TA2(double* a1, double* a2, int m, int n, int q, double* c) {
   }
 }
 
-void multXKE(double* a, double* xk, int m, int q, int p, double* vout) {
+void multXKE(double *a, double *xk, int m, int q, int p, double *vout) {
   int i, k;
   memset(vout, 0, m * sizeof(double));
   for (i = 0; i < m; i++) {
@@ -230,7 +230,7 @@ void multXKE(double* a, double* xk, int m, int q, int p, double* vout) {
   }
 }
 
-void multAv(double* a, double* v, int m, int q, double* vout) {
+void multAv(double *a, double *v, int m, int q, double *vout) {
   int i, k;
   memset(vout, 0, m * sizeof(double));
   for (i = 0; i < m; i++) {
@@ -240,7 +240,7 @@ void multAv(double* a, double* v, int m, int q, double* vout) {
   }
 }
 
-void xHat(int xusize, int asize, double* xk, double* a, double* xout,
+void xHat(int xusize, int asize, double *xk, double *a, double *xout,
           double *r, double *ATAI, double *A1, double *A2, double *P1, double *P2,
           double *trI_y, double *trI_v, double *dR_z) {
   int i, j, k;
@@ -277,7 +277,7 @@ void xHat(int xusize, int asize, double* xk, double* a, double* xout,
   multAv(ATAI, P2, xusize, xusize, xout);
 }
 
-void invf(int xsize, int asize, double* a, double* x, double* v) {
+void invf(int xsize, int asize, double *a, double *x, double *v) {
   int i, j;
   memset(v, 0, xsize * sizeof(double));
   for (i = asize; i < xsize - asize; i++) {
@@ -294,7 +294,7 @@ void invf(int xsize, int asize, double* a, double* x, double* v) {
   }
 }
 
-void det(SNBA d, int asize, double* v, int* detout) {
+void det(SNBA d, int asize, double *v, int *detout) {
   int i, j;
   double medpwr, t1, t2;
   int bstate, bcount, bsamp;
@@ -365,7 +365,7 @@ void det(SNBA d, int asize, double* v, int* detout) {
   }
 }
 
-int scanFrame(int xsize, int pval, double pmultmin, int* det, int* bimp, int* limp,
+int scanFrame(int xsize, int pval, double pmultmin, int *det, int *bimp, int *limp,
               int *befimp, int *aftimp, int *p_opt, int *next) {
   int inflag = 0;
   int i = 0, j = 0, k = 0;
@@ -441,7 +441,7 @@ int scanFrame(int xsize, int pval, double pmultmin, int* det, int* bimp, int* li
   return nimp;
 }
 
-void execFrame(SNBA d, double* x) {
+void execFrame(SNBA d, double *x) {
   int i, k;
   int pass;
   int nimp;
@@ -630,7 +630,7 @@ PORT void SetRXASNBAOutputBandwidth(int channel, double flow, double fhigh) {
 // include a buffer, 'buff'.  Its input and output are done via functions xbpshbain() and xbpshbaout().
 
 void calc_bpsnba(BPSNBA a) {
-  a->buff = (double*) malloc0(a->size * sizeof(complex));
+  a->buff = (double *) malloc0(a->size * sizeof(complex));
   a->bpsnba = create_nbp(
                       1,              // run, always runs (use bpsnba 'run')
                       a->run_notches,       // run the notches
@@ -650,7 +650,7 @@ void calc_bpsnba(BPSNBA a) {
                       a->ptraddr);        // addr of database pointer
 }
 
-BPSNBA create_bpsnba(int run, int run_notches, int position, int size, int nc, int mp, double* in, double* out,
+BPSNBA create_bpsnba(int run, int run_notches, int position, int size, int nc, int mp, double *in, double *out,
                      int rate,
                      double abs_low_freq, double abs_high_freq, double f_low, double f_high, int wintype, double gain, int autoincr,
                      int maxpb, NOTCHDB* ptraddr) {
@@ -692,7 +692,7 @@ void flush_bpsnba(BPSNBA a) {
   flush_nbp(a->bpsnba);
 }
 
-void setBuffers_bpsnba(BPSNBA a, double* in, double* out) {
+void setBuffers_bpsnba(BPSNBA a, double *in, double *out) {
   decalc_bpsnba(a);
   a->in = in;
   a->out = out;

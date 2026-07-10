@@ -34,13 +34,13 @@ warren@wpratt.com
 
 void calc_bps(BPS a) {
   double *impulse;
-  a->infilt = (double*)malloc0(2 * a->size * sizeof(complex));
-  a->product = (double*)malloc0(2 * a->size * sizeof(complex));
+  a->infilt = (double *)malloc0(2 * a->size * sizeof(complex));
+  a->product = (double *)malloc0(2 * a->size * sizeof(complex));
   impulse = fir_bandpass(a->size + 1, a->f_low, a->f_high, a->samplerate, a->wintype, 1, 1.0 / (double)(2 * a->size));
   a->mults = fftcv_mults(2 * a->size, impulse);
-  a->CFor = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->infilt, (fftw_complex*)a->product, FFTW_FORWARD,
+  a->CFor = fftw_plan_dft_1d(2 * a->size, (fftw_complex *)a->infilt, (fftw_complex *)a->product, FFTW_FORWARD,
                              FFTW_PATIENT);
-  a->CRev = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->product, (fftw_complex*)a->out, FFTW_BACKWARD,
+  a->CRev = fftw_plan_dft_1d(2 * a->size, (fftw_complex *)a->product, (fftw_complex *)a->out, FFTW_BACKWARD,
                              FFTW_PATIENT);
   _aligned_free(impulse);
 }
@@ -53,7 +53,7 @@ void decalc_bps(BPS a) {
   _aligned_free(a->infilt);
 }
 
-BPS create_bps(int run, int position, int size, double* in, double* out,
+BPS create_bps(int run, int position, int size, double *in, double *out,
                double f_low, double f_high, int samplerate, int wintype, double gain) {
   BPS a = (BPS) malloc0(sizeof(bps));
   a->run = run;
@@ -98,7 +98,7 @@ void xbps(BPS a, int pos) {
   }
 }
 
-void setBuffers_bps(BPS a, double* in, double* out) {
+void setBuffers_bps(BPS a, double *in, double *out) {
   decalc_bps(a);
   a->in = in;
   a->out = out;
@@ -271,7 +271,7 @@ void SetTXABPSWindow (int channel, int wintype)
 *                                                   *
 ********************************************************************************************************/
 
-BANDPASS create_bandpass(int run, int position, int size, int nc, int mp, double* in, double* out,
+BANDPASS create_bandpass(int run, int position, int size, int nc, int mp, double *in, double *out,
                          double f_low, double f_high, int samplerate, int wintype, double gain) {
   // NOTE:  'nc' must be >= 'size'
   BANDPASS a = (BANDPASS) malloc0(sizeof(bandpass));
@@ -311,7 +311,7 @@ void xbandpass(BANDPASS a, int pos) {
   }
 }
 
-void setBuffers_bandpass(BANDPASS a, double* in, double* out) {
+void setBuffers_bandpass(BANDPASS a, double *in, double *out) {
   a->in = in;
   a->out = out;
   setBuffers_fircore(a->p, a->in, a->out);

@@ -40,13 +40,13 @@ typedef struct _div {
   double *legacy[4];                                  ///////////// legacy interface - remove
 } mdiv, *MDIV;
 
-extern MDIV create_div (int run, int nr, int size, double** in, double* out);
+extern MDIV create_div (int run, int nr, int size, double **in, double *out);
 
 extern void destroy_div (MDIV pdiv);
 
 extern void xdiv (MDIV pdiv);
 
-extern __declspec(dllexport) void xdivEXT (int id, int nsamples, double** in, double* out);
+extern __declspec(dllexport) void xdivEXT (int id, int nsamples, double **in, double *out);
 
 extern __declspec(dllexport) void create_divEXT (int id, int run, int nr, int size);
 

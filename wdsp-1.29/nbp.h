@@ -70,7 +70,7 @@ typedef struct _nbp {
   int hadnotch;
 } nbp, *NBP;
 
-extern NBP create_nbp(int run, int fnfrun, int position, int size, int nc, int mp, double* in, double* out,
+extern NBP create_nbp(int run, int fnfrun, int position, int size, int nc, int mp, double *in, double *out,
                       double flow, double fhigh, int rate, int wintype, double gain, int autoincr, int maxpb, NOTCHDB* ptraddr);
 
 extern void destroy_nbp (NBP a);
@@ -79,7 +79,7 @@ extern void flush_nbp (NBP a);
 
 extern void xnbp (NBP a, int pos);
 
-extern void setBuffers_nbp (NBP a, double* in, double* out);
+extern void setBuffers_nbp (NBP a, double *in, double *out);
 
 extern void setSamplerate_nbp (NBP a, int rate);
 

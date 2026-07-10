@@ -46,7 +46,7 @@ typedef struct _sender {
   // a pointer to *out is passed to the external function that is called
 } sender, *SENDER;
 
-extern SENDER create_sender (int run, int flag, int mode, int size, double* in, int arg0, int arg1, int arg2, int arg3);
+extern SENDER create_sender (int run, int flag, int mode, int size, double *in, int arg0, int arg1, int arg2, int arg3);
 
 extern void destroy_sender (SENDER a);
 
@@ -54,7 +54,7 @@ extern void flush_sender (SENDER a);
 
 extern void xsender (SENDER a);
 
-extern void setBuffers_sender (SENDER a, double* in);
+extern void setBuffers_sender (SENDER a, double *in);
 
 extern void setSamplerate_sender (SENDER a, int rate);
 

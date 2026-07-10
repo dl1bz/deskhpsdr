@@ -131,7 +131,7 @@ typedef struct _gen {
   } ttpulse;
 } gen, *GEN;
 
-extern GEN create_gen (int run, int size, double* in, double* out, int rate, int mode);
+extern GEN create_gen (int run, int size, double *in, double *out, int rate, int mode);
 
 extern void destroy_gen (GEN a);
 
@@ -139,7 +139,7 @@ extern void flush_gen (GEN a);
 
 extern void xgen (GEN a);
 
-extern void setBuffers_gen (GEN a, double* in, double* out);
+extern void setBuffers_gen (GEN a, double *in, double *out);
 
 extern void setSamplerate_gen (GEN a, int rate);
 

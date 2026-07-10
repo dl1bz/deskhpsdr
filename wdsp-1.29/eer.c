@@ -27,7 +27,7 @@ warren@wpratt.com
 #include "comm.h"
 
 PORT
-EER create_eer(int run, int size, double* in, double* out, double* outM, int rate, double mgain, double pgain,
+EER create_eer(int run, int size, double *in, double *out, double *outM, int rate, double mgain, double pgain,
                int rundelays, double mdelay, double pdelay, int amiq) {
   EER a = (EER) malloc0(sizeof(eer));
   a->run = run;
@@ -59,10 +59,10 @@ EER create_eer(int run, int size, double* in, double* out, double* outM, int rat
                     20.0e-09,                 // delta (delay stepsize)
                     a->pdelay);                 // delay
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
-  a->legacy  = (double*) malloc0(2048 * sizeof(
-                                         complex));                            /////////////// legacy interface - remove
-  a->legacyM = (double*) malloc0(2048 * sizeof(
-                                         complex));                            /////////////// legacy interface - remove
+  a->legacy  = (double *) malloc0(2048 * sizeof(
+                                          complex));                            /////////////// legacy interface - remove
+  a->legacyM = (double *) malloc0(2048 * sizeof(
+                                          complex));                            /////////////// legacy interface - remove
   return a;
 }
 
@@ -338,7 +338,7 @@ void pSetEERSamplerate(EER a, int rate) {
 ********************************************************************************************************/
 
 PORT
-void xeerEXTF(int id, float* inI, float* inQ, float* outI, float* outQ, float* outMI, float* outMQ, int mox,
+void xeerEXTF(int id, float *inI, float *inQ, float *outI, float *outQ, float *outMI, float *outMQ, int mox,
               int size) {
   EER a = peer[id];
   if (mox && a->run) {

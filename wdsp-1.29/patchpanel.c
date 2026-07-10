@@ -26,7 +26,7 @@ warren@wpratt.com
 
 #include "comm.h"
 
-PANEL create_panel(int channel, int run, int size, double* in, double* out, double gain1, double gain2I, double gain2Q,
+PANEL create_panel(int channel, int run, int size, double *in, double *out, double gain1, double gain2I, double gain2Q,
                    int inselect, int copy) {
   PANEL a = (PANEL) malloc0(sizeof(panel));
   a->channel = channel;
@@ -91,7 +91,7 @@ void xpanel(PANEL a) {
   }
 }
 
-void setBuffers_panel(PANEL a, double* in, double* out) {
+void setBuffers_panel(PANEL a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

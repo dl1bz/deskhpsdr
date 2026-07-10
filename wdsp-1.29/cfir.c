@@ -39,7 +39,7 @@ void decalc_cfir(CFIR a) {
   destroy_fircore(a->p);
 }
 
-CFIR create_cfir(int run, int size, int nc, int mp, double* in, double* out, int runrate, int cicrate,
+CFIR create_cfir(int run, int size, int nc, int mp, double *in, double *out, int runrate, int cicrate,
                  int DD, int R, int Pairs, double cutoff, int xtype, double xbw, int wintype)
 //  run:  0 - no action; 1 - operate
 //  size:  number of complex samples in an input buffer to the CFIR filter
@@ -92,7 +92,7 @@ void xcfir(CFIR a) {
   }
 }
 
-void setBuffers_cfir(CFIR a, double* in, double* out) {
+void setBuffers_cfir(CFIR a, double *in, double *out) {
   decalc_cfir(a);
   a->in = in;
   a->out = out;
@@ -133,7 +133,7 @@ double *cfir_impulse(int N, int DD, int R, int Pairs, double runrate, double cic
   int i, j;
   double tmp, local_scale, ri, fn, mag = 1.0;
   double *impulse;
-  double *A = (double*) malloc0(N * sizeof(double));
+  double *A = (double *) malloc0(N * sizeof(double));
   double ft = cutoff / cicrate;                   // normalized cutoff frequency
   int u_samps = (N + 1) / 2;                      // number of unique samples,  OK for odd or even N
   int c_samps = (int)(cutoff / runrate * N) + (N + 1) / 2 - N /
@@ -141,7 +141,7 @@ double *cfir_impulse(int N, int DD, int R, int Pairs, double runrate, double cic
   int x_samps = (int)(xbw / runrate *
                       N);               // number of unique samples in transition region, OK for odd or even N
   double offset = 0.5 - 0.5 * (double)((N + 1) / 2 - N / 2);      // sample offset from center, OK for odd or even N
-  double *xistion = (double*) malloc0((x_samps + 1) * sizeof(double));
+  double *xistion = (double *) malloc0((x_samps + 1) * sizeof(double));
   double delta = PI / (double)x_samps;
   double L = cicrate / runrate;
   double phs = 0.0;

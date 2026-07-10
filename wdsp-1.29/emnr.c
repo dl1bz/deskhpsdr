@@ -168,7 +168,7 @@ void calc_window(EMNR a) {
   }
 }
 
-void interpM(double* res, double x, int nvals, double* xvals, double* yvals) {
+void interpM(double *res, double x, int nvals, double *xvals, double *yvals) {
   if (x <= xvals[0]) {
     *res = yvals[0];
   } else if (x >= xvals[nvals - 1]) {
@@ -184,7 +184,7 @@ void interpM(double* res, double x, int nvals, double* xvals, double* yvals) {
   }
 }
 
-int readZetaHat(const char* zeta_file, int* rows, int* cols,
+int readZetaHat(const char *zeta_file, int *rows, int *cols,
                 double *gmin, double *gmax, double *ximin, double *ximax, double *zetaHat, int *zetaValid) {
   char zetaBinary[256];
   char bin[50] = ".bin";
@@ -221,7 +221,7 @@ int readZetaHat(const char* zeta_file, int* rows, int* cols,
   return 0;
 }
 
-void CwriteZetaHat(const char* cfile, int zetaHat_rows, int zetaHat_cols,
+void CwriteZetaHat(const char *cfile, int zetaHat_rows, int zetaHat_cols,
                    double zetaHat_gmin, double zetaHat_gmax, double zetaHat_ximin, double zetaHat_ximax, double *zetaHat, int *zetaValid) {
   int n, i, j;
   char cfilename[256];
@@ -299,32 +299,32 @@ void calc_emnr(EMNR a) {
   a->init_oainidx = a->oainidx;
   a->oaoutidx = 0;
   a->msize = a->fsize / 2 + 1;
-  a->window = (double*)malloc0(a->fsize * sizeof(double));
-  a->inaccum = (double*)malloc0(a->iasize * sizeof(double));
-  a->forfftin = (double*)malloc0(a->fsize * sizeof(double));
-  a->forfftout = (double*)malloc0(a->msize * sizeof(complex));
-  a->mask = (double*)malloc0(a->msize * sizeof(double));
-  a->revfftin = (double*)malloc0(a->msize * sizeof(complex));
-  a->revfftout = (double*)malloc0(a->fsize * sizeof(double));
-  a->save = (double**)malloc0(a->ovrlp * sizeof(double*));
+  a->window = (double *)malloc0(a->fsize * sizeof(double));
+  a->inaccum = (double *)malloc0(a->iasize * sizeof(double));
+  a->forfftin = (double *)malloc0(a->fsize * sizeof(double));
+  a->forfftout = (double *)malloc0(a->msize * sizeof(complex));
+  a->mask = (double *)malloc0(a->msize * sizeof(double));
+  a->revfftin = (double *)malloc0(a->msize * sizeof(complex));
+  a->revfftout = (double *)malloc0(a->fsize * sizeof(double));
+  a->save = (double **)malloc0(a->ovrlp * sizeof(double *));
   for (i = 0; i < a->ovrlp; i++) {
-    a->save[i] = (double*)malloc0(a->fsize * sizeof(double));
+    a->save[i] = (double *)malloc0(a->fsize * sizeof(double));
   }
-  a->outaccum = (double*)malloc0(a->oasize * sizeof(double));
+  a->outaccum = (double *)malloc0(a->oasize * sizeof(double));
   a->nsamps = 0;
   a->saveidx = 0;
-  a->Rfor = fftw_plan_dft_r2c_1d(a->fsize, a->forfftin, (fftw_complex*)a->forfftout, FFTW_ESTIMATE);
-  a->Rrev = fftw_plan_dft_c2r_1d(a->fsize, (fftw_complex*)a->revfftin, a->revfftout, FFTW_ESTIMATE);
+  a->Rfor = fftw_plan_dft_r2c_1d(a->fsize, a->forfftin, (fftw_complex *)a->forfftout, FFTW_ESTIMATE);
+  a->Rrev = fftw_plan_dft_c2r_1d(a->fsize, (fftw_complex *)a->revfftin, a->revfftout, FFTW_ESTIMATE);
   calc_window(a);
   //
   // g
   a->g.msize = a->msize;
   a->g.mask = a->mask;
   a->g.y = a->forfftout;
-  a->g.lambda_y  = (double*)malloc0(a->msize * sizeof(double));
-  a->g.lambda_d  = (double*)malloc0(a->msize * sizeof(double));
-  a->g.prev_gamma  = (double*)malloc0(a->msize * sizeof(double));
-  a->g.prev_mask   = (double*)malloc0(a->msize * sizeof(double));
+  a->g.lambda_y  = (double *)malloc0(a->msize * sizeof(double));
+  a->g.lambda_d  = (double *)malloc0(a->msize * sizeof(double));
+  a->g.prev_gamma  = (double *)malloc0(a->msize * sizeof(double));
+  a->g.prev_mask   = (double *)malloc0(a->msize * sizeof(double));
   a->g.gf1p5 = sqrt(PI) / 2.0;
   {
     double tau = -128.0 / 8000.0 / log(0.985);
@@ -340,8 +340,8 @@ void calc_emnr(EMNR a) {
   }
   a->g.gmax = 10000.0;
   //
-  a->g.GG = (double*)malloc0(241 * 241 * sizeof(double));
-  a->g.GGS = (double*)malloc0(241 * 241 * sizeof(double));
+  a->g.GG = (double *)malloc0(241 * 241 * sizeof(double));
+  a->g.GGS = (double *)malloc0(241 * 241 * sizeof(double));
   if (a->g.fileb = fopen("calculus", "rb")) {
     fread(a->g.GG, sizeof(double), 241 * 241, a->g.fileb);
     fread(a->g.GGS, sizeof(double), 241 * 241, a->g.fileb);
@@ -352,8 +352,8 @@ void calc_emnr(EMNR a) {
   }
   //
   a->g.dim_zeta = 60;
-  a->g.zeta_hat = (double*)malloc0(a->g.dim_zeta * a->g.dim_zeta * sizeof(double));
-  a->g.zeta_true = (int*)  malloc0(a->g.dim_zeta * a->g.dim_zeta * sizeof(int));
+  a->g.zeta_hat = (double *)malloc0(a->g.dim_zeta * a->g.dim_zeta * sizeof(double));
+  a->g.zeta_true = (int *)  malloc0(a->g.dim_zeta * a->g.dim_zeta * sizeof(int));
   a->g.zeta_thresh = -2.0;
   int rows, cols;
   readZetaHat("zetaHat", &rows, &cols, &a->g.z_gamma_min, &a->g.z_gamma_max, &a->g.z_xihat_min, &a->g.z_xihat_max,
@@ -411,23 +411,23 @@ void calc_emnr(EMNR a) {
     db = 10.0 * log10(1.2) / (12.0 * 128 / 8000);
     a->np.nsmax[3] = pow(10.0, db / 10.0 * a->np.V * a->np.incr / a->np.rate);
   }
-  a->np.p = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.alphaOptHat = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.alphaHat = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.sigma2N = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.pbar = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.p2bar = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.Qeq = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.bmin = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.bmin_sub = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.k_mod = (int*)malloc0(a->np.msize * sizeof(int));
-  a->np.actmin = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.actmin_sub = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.lmin_flag = (int*)malloc0(a->np.msize * sizeof(int));
-  a->np.pmin_u = (double*)malloc0(a->np.msize * sizeof(double));
-  a->np.actminbuff = (double**)malloc0(a->np.U   * sizeof(double*));
+  a->np.p = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.alphaOptHat = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.alphaHat = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.sigma2N = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.pbar = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.p2bar = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.Qeq = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.bmin = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.bmin_sub = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.k_mod = (int *)malloc0(a->np.msize * sizeof(int));
+  a->np.actmin = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.actmin_sub = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.lmin_flag = (int *)malloc0(a->np.msize * sizeof(int));
+  a->np.pmin_u = (double *)malloc0(a->np.msize * sizeof(double));
+  a->np.actminbuff = (double **)malloc0(a->np.U   * sizeof(double *));
   for (i = 0; i < a->np.U; i++) {
-    a->np.actminbuff[i] = (double*)malloc0(a->np.msize * sizeof(double));
+    a->np.actminbuff[i] = (double *)malloc0(a->np.msize * sizeof(double));
   }
   {
     int k, ku;
@@ -466,10 +466,10 @@ void calc_emnr(EMNR a) {
   }
   a->nps.epsH1 = pow(10.0, 15.0 / 10.0);
   a->nps.epsH1r = a->nps.epsH1 / (1.0 + a->nps.epsH1);
-  a->nps.sigma2N = (double*)malloc0(a->nps.msize * sizeof(double));
-  a->nps.PH1y = (double*)malloc0(a->nps.msize * sizeof(double));
-  a->nps.Pbar = (double*)malloc0(a->nps.msize * sizeof(double));
-  a->nps.EN2y = (double*)malloc0(a->nps.msize * sizeof(double));
+  a->nps.sigma2N = (double *)malloc0(a->nps.msize * sizeof(double));
+  a->nps.PH1y = (double *)malloc0(a->nps.msize * sizeof(double));
+  a->nps.Pbar = (double *)malloc0(a->nps.msize * sizeof(double));
+  a->nps.EN2y = (double *)malloc0(a->nps.msize * sizeof(double));
   for (i = 0; i < a->nps.msize; i++) {
     a->nps.sigma2N[i] = 0.5;
     a->nps.Pbar[i] = 0.5;
@@ -480,10 +480,10 @@ void calc_emnr(EMNR a) {
   a->npl.msize = a->msize;
   a->npl.incr = a->incr;
   a->npl.Ysq = a->g.lambda_y;
-  a->npl.P  = (double*)malloc0(a->npl.msize * sizeof(double));
-  a->npl.Pmin = (double*)malloc0(a->npl.msize * sizeof(double));
-  a->npl.p  = (double*)malloc0(a->npl.msize * sizeof(double));
-  a->npl.D  = (double*)malloc0(a->npl.msize * sizeof(double));
+  a->npl.P  = (double *)malloc0(a->npl.msize * sizeof(double));
+  a->npl.Pmin = (double *)malloc0(a->npl.msize * sizeof(double));
+  a->npl.p  = (double *)malloc0(a->npl.msize * sizeof(double));
+  a->npl.D  = (double *)malloc0(a->npl.msize * sizeof(double));
   a->npl.lambda_d = a->g.lambda_d;
   {
     double tau = -256.0 / (20100.0 * log(0.7));
@@ -517,7 +517,7 @@ void calc_emnr(EMNR a) {
   a->ae.zetaThresh = 0.75;
   a->ae.psi    = 20.0;
   a->ae.t2 = 0.20;
-  a->ae.nmask = (double*)malloc0(a->ae.msize * sizeof(double));
+  a->ae.nmask = (double *)malloc0(a->ae.msize * sizeof(double));
   //
   // post2
   a->post2.run = 0;
@@ -526,10 +526,10 @@ void calc_emnr(EMNR a) {
   a->post2.tc_decay = 5.0;
   a->post2.rate_decay = exp(-a->fsize / (a->post2.tc_decay * a->rate * a->ovrlp));
   a->post2.taper = 0.12;
-  a->post2.w = (double*)malloc0(a->msize * sizeof(double));
+  a->post2.w = (double *)malloc0(a->msize * sizeof(double));
   a->post2.noise_frames = FDnoise_frames;
   a->post2.noise_frame_index = 0;
-  a->post2.noise_frame = (double*)malloc0(2 * a->msize * sizeof(double));
+  a->post2.noise_frame = (double *)malloc0(2 * a->msize * sizeof(double));
   a->post2.olddmag = 0.0;
   post2_calc_w(a);
 }
@@ -596,7 +596,7 @@ void decalc_emnr(EMNR a) {
   _aligned_free(a->window);
 }
 
-EMNR create_emnr(int run, int position, int size, double* in, double* out, int fsize, int ovrlp,
+EMNR create_emnr(int run, int position, int size, double *in, double *out, int fsize, int ovrlp,
                  int rate, int wintype, double gain, int gain_method, int npe_method, int ae_run) {
   EMNR a = (EMNR) malloc0(sizeof(emnr));
   a->run = run;
@@ -932,7 +932,7 @@ void SetRXAEMNRpost2Rate(int channel, double tc) {
 *               End Post-Processing Functions                     *
 ********************************************************************************************************/
 
-double getKey(double* type, double gamma, double xi) {
+double getKey(double *type, double gamma, double xi) {
   int ngamma1, ngamma2, nxi1, nxi2;
   double tg, tx, dg, dx;
   const double dmin = 0.001;
@@ -967,7 +967,7 @@ double getKey(double* type, double gamma, double xi) {
          +     dg   *    dx  * type[241 * nxi2 + ngamma2];
 }
 
-int getZeta(EMNR a, double gamma, double eps, double* zeta) {
+int getZeta(EMNR a, double gamma, double eps, double *zeta) {
   int index, i_gamma, i_xi;
   double gamma_dB, xi_dB, gamma_per_cell, xi_per_cell;
   gamma_dB = 10.0 * mlog10(gamma);
@@ -1157,7 +1157,7 @@ void xemnr(EMNR a, int pos) {
   }
 }
 
-void setBuffers_emnr(EMNR a, double* in, double* out) {
+void setBuffers_emnr(EMNR a, double *in, double *out) {
   a->in = in;
   a->out = out;
 }

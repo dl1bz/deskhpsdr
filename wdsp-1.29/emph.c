@@ -32,7 +32,7 @@ warren@wpratt.com
 *                                                   *
 ********************************************************************************************************/
 
-EMPHP create_emphp(int run, int position, int size, int nc, int mp, double* in, double* out, int rate, int ctype,
+EMPHP create_emphp(int run, int position, int size, int nc, int mp, double *in, double *out, int rate, int ctype,
                    double f_low, double f_high) {
   EMPHP a = (EMPHP) malloc0(sizeof(emphp));
   double *impulse;
@@ -71,7 +71,7 @@ void xemphp(EMPHP a, int position) {
   }
 }
 
-void setBuffers_emphp(EMPHP a, double* in, double* out) {
+void setBuffers_emphp(EMPHP a, double *in, double *out) {
   a->in = in;
   a->out = out;
   setBuffers_fircore(a->p, a->in, a->out);
@@ -159,13 +159,13 @@ void SetTXAFMPreEmphFreqs(int channel, double low, double high) {
 ********************************************************************************************************/
 
 void calc_emph(EMPH a) {
-  a->infilt = (double*)malloc0(2 * a->size * sizeof(complex));
-  a->product = (double*)malloc0(2 * a->size * sizeof(complex));
+  a->infilt = (double *)malloc0(2 * a->size * sizeof(complex));
+  a->product = (double *)malloc0(2 * a->size * sizeof(complex));
   a->mults = fc_mults(a->size, a->f_low, a->f_high, -20.0 * log10(a->f_high / a->f_low), 0.0, a->ctype, a->rate,
                       1.0 / (2.0 * a->size), 0, 0);
-  a->CFor = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->infilt, (fftw_complex*)a->product, FFTW_FORWARD,
+  a->CFor = fftw_plan_dft_1d(2 * a->size, (fftw_complex *)a->infilt, (fftw_complex *)a->product, FFTW_FORWARD,
                              FFTW_PATIENT);
-  a->CRev = fftw_plan_dft_1d(2 * a->size, (fftw_complex*)a->product, (fftw_complex*)a->out, FFTW_BACKWARD,
+  a->CRev = fftw_plan_dft_1d(2 * a->size, (fftw_complex *)a->product, (fftw_complex *)a->out, FFTW_BACKWARD,
                              FFTW_PATIENT);
 }
 
@@ -177,7 +177,7 @@ void decalc_emph(EMPH a) {
   _aligned_free(a->infilt);
 }
 
-EMPH create_emph(int run, int position, int size, double* in, double* out, int rate, int ctype, double f_low,
+EMPH create_emph(int run, int position, int size, double *in, double *out, int rate, int ctype, double f_low,
                  double f_high) {
   EMPH a = (EMPH) malloc0(sizeof(emph));
   a->run = run;
@@ -221,7 +221,7 @@ void xemph(EMPH a, int position) {
   }
 }
 
-void setBuffers_emph(EMPH a, double* in, double* out) {
+void setBuffers_emph(EMPH a, double *in, double *out) {
   decalc_emph(a);
   a->in = in;
   a->out = out;

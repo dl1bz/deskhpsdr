@@ -44,7 +44,7 @@ typedef struct _uslew {
   double *cup;
 } uslew, *USLEW;
 
-extern USLEW create_uslew (int channel, volatile long* ch_upslew, int size, double* in, double* out, double rate,
+extern USLEW create_uslew (int channel, volatile long *ch_upslew, int size, double *in, double *out, double rate,
                            double tdelay, double tupslew);
 
 extern void destroy_uslew (USLEW a);
@@ -53,7 +53,7 @@ extern void flush_uslew (USLEW a);
 
 extern void xuslew (USLEW a);
 
-extern void setBuffers_uslew (USLEW a, double* in, double* out);
+extern void setBuffers_uslew (USLEW a, double *in, double *out);
 
 extern void setSamplerate_uslew (USLEW a, int rate);
 

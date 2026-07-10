@@ -187,11 +187,11 @@ extern void SetCalibration(int disp,
                            int n_points,
                            double (*cal)[dMAX_M + 1]
                           );
-extern void OpenBuffer(int disp, int ss, int LO, void** Ipointer, void** Qpointer);
+extern void OpenBuffer(int disp, int ss, int LO, void **Ipointer, void **Qpointer);
 extern void CloseBuffer(int disp, int ss, int LO);
 extern void Spectrum(int disp, int ss, int LO, dINREAL* pI, dINREAL* pQ);
 extern void Spectrum2(int run, int disp, int ss, int LO, dINREAL* pbuff);
-extern void Spectrum0(int run, int disp, int ss, int LO, double* pbuff);
+extern void Spectrum0(int run, int disp, int ss, int LO, double *pbuff);
 extern void SetDisplayDetectorMode(int disp, int pixout, int mode);
 extern void SetDisplayAverageMode(int disp, int pixout, int mode);
 extern void SetDisplayNumAverage(int disp, int pixout, int num);
@@ -258,14 +258,14 @@ extern void SetTXABandpassMP(int channel, int mp);
 // Interfaces from calcc.c
 //
 
-extern void pscc(int channel, int size, double* tx, double* rx);
-extern void psccF(int channel, int size, float* Itxbuff, float* Qtxbuff, float* Irxbuff, float* Qrxbuff, int mox,
+extern void pscc(int channel, int size, double *tx, double *rx);
+extern void psccF(int channel, int size, float *Itxbuff, float *Qtxbuff, float *Irxbuff, float *Qrxbuff, int mox,
                   int solidmox);
-extern void PSSaveCorr(int channel, char* filename);
-extern void PSRestoreCorr(int channel, char* filename);
+extern void PSSaveCorr(int channel, char *filename);
+extern void PSRestoreCorr(int channel, char *filename);
 extern void SetPSRunCal(int channel, int run);
 extern void SetPSMox(int channel, int mox);
-extern void GetPSInfo(int channel, int* info);
+extern void GetPSInfo(int channel, int *info);
 extern void SetPSReset(int channel, int reset);
 extern void SetPSMancal(int channel, int mancal);
 extern void SetPSAutomode(int channel, int automode);
@@ -275,10 +275,10 @@ extern void SetPSLoopDelay(int channel, double delay);
 extern void SetPSMoxDelay(int channel, double delay);
 extern double SetPSTXDelay(int channel, double delay);
 extern void SetPSHWPeak(int channel, double peak);
-extern void GetPSHWPeak(int channel, double* peak);
-extern void GetPSMaxTX(int channel, double* maxtx);
+extern void GetPSHWPeak(int channel, double *peak);
+extern void GetPSMaxTX(int channel, double *maxtx);
 extern void SetPSPtol(int channel, double ptol);
-extern void GetPSDisp(int channel, double* x, double* ym, double* yc, double* ys, double* cm, double* cc, double* cs);
+extern void GetPSDisp(int channel, double *x, double *ym, double *yc, double *ys, double *cm, double *cc, double *cs);
 extern void SetPSFeedbackRate(int channel, int rate);
 extern void SetPSPinMode(int channel, int pin);
 extern void SetPSMapMode(int channel, int map);
@@ -297,11 +297,11 @@ extern void SetRXACBLRun(int channel, int setit);
 
 extern void SetTXACFCOMPRun(int channel, int run);
 extern void SetTXACFCOMPPosition(int channel, int pos);
-extern void SetTXACFCOMPprofile(int channel, int nfreqs, double* F, double* G, double* E);
+extern void SetTXACFCOMPprofile(int channel, int nfreqs, double *F, double *G, double *E);
 extern void SetTXACFCOMPPrecomp(int channel, double precomp);
 extern void SetTXACFCOMPPeqRun(int channel, int run);
 extern void SetTXACFCOMPPrePeq(int channel, double prepeq);
-extern void GetTXACFCOMPDisplayCompression(int channel, double* comp_values, int* ready);
+extern void GetTXACFCOMPDisplayCompression(int channel, double *comp_values, int *ready);
 
 //
 // Interfaces from cfir.c
@@ -342,7 +342,7 @@ extern void SetTXACompressorGain(int channel, double gain);
 // Interfaces from dexp.c
 //
 
-extern void create_dexp(int id, int run_dexp, int size, double* in, double* out, int rate, double dettau,
+extern void create_dexp(int id, int run_dexp, int size, double *in, double *out, int rate, double dettau,
                         double tattack, double tdecay,
                         double thold, double exp_ratio, double hyst_ratio, double attack_thresh, int nc, int wtype, double lowcut,
                         double highcut,
@@ -354,7 +354,7 @@ extern void xdexp(int id);
 extern void SendCBPushDexpVox(int id, void (__stdcall *pushvox)(int id, int active));
 extern void SetDEXPRun(int id, int run);
 extern void SetDEXPSize(int id, int size);
-extern void SetDEXPIOBuffers(int id, double* in, double* out);
+extern void SetDEXPIOBuffers(int id, double *in, double *out);
 extern void SetDEXPRate(int id, double rate);
 extern void SetDEXPDetectorTau(int id, double tau);
 extern void SetDEXPAttackTime(int id, double time);
@@ -371,13 +371,13 @@ extern void SetDEXPRunSideChannelFilter(int id, int run);
 extern void SetDEXPRunVox(int id, int run);
 extern void SetDEXPRunAudioDelay(int id, int run);
 extern void SetDEXPAudioDelay(int id, double delay);
-extern void GetDEXPPeakSignal(int id, double* peak);
+extern void GetDEXPPeakSignal(int id, double *peak);
 extern void SetAntiVOXRun(int id, int run);
 extern void SetAntiVOXSize(int id, int size);
 extern void SetAntiVOXRate(int id, double rate);
 extern void SetAntiVOXGain(int id, double gain);
 extern void SetAntiVOXDetectorTau(int id, double tau);
-extern void SendAntiVOXData(int id, int nsamples, double* data);
+extern void SendAntiVOXData(int id, int nsamples, double *data);
 
 //
 // Interfaces from div.c
@@ -386,13 +386,13 @@ extern void SendAntiVOXData(int id, int nsamples, double* data);
 extern void create_divEXT(int id, int run, int nr, int size);
 extern void destroy_divEXT(int id);
 extern void flush_divEXT(int id);
-extern void xdivEXT(int id, int nsamples, double** in, double* out);
+extern void xdivEXT(int id, int nsamples, double **in, double *out);
 extern void SetEXTDIVRun(int id, int run);
 extern void SetEXTDIVBuffsize(int id, int size);
 extern void SetEXTDIVNr(int id, int nr);
 extern void SetEXTDIVOutput(int id, int output);
-extern void SetEXTDIVRotate(int id, int nr, double* Irotate, double* Qrotate);
-extern void xdivEXTF(int id, int size, float** input, float* Iout, float* Qout);
+extern void SetEXTDIVRotate(int id, int nr, double *Irotate, double *Qrotate);
+extern void xdivEXTF(int id, int size, float **input, float *Iout, float *Qout);
 
 //
 // Interfaces from doublepole.c
@@ -406,7 +406,7 @@ extern void SetRXADoublepoleGain(int channel, double gain);
 // Interfaces from eer.c
 //
 
-extern EER create_eer(int run, int size, double* in, double* out, double* outM, int rate, double mgain, double pgain,
+extern EER create_eer(int run, int size, double *in, double *out, double *outM, int rate, double mgain, double pgain,
                       int rundelays, double mdelay, double pdelay, int amiq);
 extern void destroy_eer(EER a);
 extern void flush_eer(EER a);
@@ -433,7 +433,7 @@ extern void pSetEERMdelay(EER a, double delay);
 extern void pSetEERPdelay(EER a, double delay);
 extern void pSetEERSize(EER a, int size);
 extern void pSetEERSamplerate(EER a, int rate);
-extern void xeerEXTF(int id, float* inI, float* inQ, float* outI, float* outQ, float* outMI, float* outMQ, int mox,
+extern void xeerEXTF(int id, float *inI, float *inQ, float *outI, float *outQ, float *outMI, float *outMQ, int mox,
                      int size);
 
 //
@@ -472,31 +472,31 @@ extern void SetTXAFMEmphPosition(int channel, int position);
 extern void SetRXAEQRun(int channel, int run);
 extern void SetRXAEQNC(int channel, int nc);
 extern void SetRXAEQMP(int channel, int mp);
-extern void SetRXAEQProfile(int channel, int nfreqs, double* F, double* G);
+extern void SetRXAEQProfile(int channel, int nfreqs, double *F, double *G);
 extern void SetRXAEQCtfmode(int channel, int mode);
 extern void SetRXAEQWintype(int channel, int wintype);
-extern void SetRXAGrphEQ(int channel, int* rxeq);
-extern void SetRXAGrphEQ10(int channel, int* rxeq);
+extern void SetRXAGrphEQ(int channel, int *rxeq);
+extern void SetRXAGrphEQ10(int channel, int *rxeq);
 extern void SetTXAEQRun(int channel, int run);
 extern void SetTXAEQNC(int channel, int nc);
 extern void SetTXAEQMP(int channel, int mp);
-extern void SetTXAEQProfile(int channel, int nfreqs, double* F, double* G);
+extern void SetTXAEQProfile(int channel, int nfreqs, double *F, double *G);
 extern void SetTXAEQCtfmode(int channel, int mode);
 extern void SetTXAEQWintype(int channel, int wintype);
-extern void SetTXAGrphEQ(int channel, int* txeq);
-extern void SetTXAGrphEQ10(int channel, int* txeq);
+extern void SetTXAGrphEQ(int channel, int *txeq);
+extern void SetTXAGrphEQ10(int channel, int *txeq);
 extern void SetRXAEQRun(int channel, int run);
-extern void SetRXAEQProfile(int channel, int nfreqs, double* F, double* G);
+extern void SetRXAEQProfile(int channel, int nfreqs, double *F, double *G);
 extern void SetRXAEQCtfmode(int channel, int mode);
 extern void SetRXAEQWintype(int channel, int wintype);
-extern void SetRXAGrphEQ(int channel, int* rxeq);
-extern void SetRXAGrphEQ10(int channel, int* rxeq);
+extern void SetRXAGrphEQ(int channel, int *rxeq);
+extern void SetRXAGrphEQ10(int channel, int *rxeq);
 extern void SetTXAEQRun(int channel, int run);
-extern void SetTXAEQProfile(int channel, int nfreqs, double* F, double* G);
+extern void SetTXAEQProfile(int channel, int nfreqs, double *F, double *G);
 extern void SetTXAEQCtfmode(int channel, int mode);
 extern void SetTXAEQMethod(int channel, int wintype);
-extern void SetTXAGrphEQ(int channel, int* txeq);
-extern void SetTXAGrphEQ10(int channel, int* txeq);
+extern void SetTXAGrphEQ(int channel, int *txeq);
+extern void SetTXAGrphEQ10(int channel, int *txeq);
 
 //
 // Interfaces from fmd.c
@@ -537,7 +537,7 @@ extern void SetRXAFMSQMP(int channel, int mp);
 // Interfaces from gain.c
 //
 
-extern GAIN create_gain(int run, int* prun, int size, double* in, double* out, double Igain, double Qgain);
+extern GAIN create_gain(int run, int *prun, int size, double *in, double *out, double Igain, double Qgain);
 extern void destroy_gain(GAIN a);
 extern void flush_gain(GAIN a);
 extern void xgain(GAIN a);
@@ -628,8 +628,8 @@ extern void SetTXAPHROTReverse(int channel, int reverse);
 // Interfaces from impulse_cache.c
 //
 
-extern int save_impulse_cache(const char* path);
-extern int read_impulse_cache(const char* path);
+extern int save_impulse_cache(const char *path);
+extern int read_impulse_cache(const char *path);
 extern void use_impulse_cache(int use);
 extern void init_impulse_cache(int use);
 extern void destroy_impulse_cache(void);
@@ -638,17 +638,17 @@ extern void destroy_impulse_cache(void);
 // Interfaces from iobuffs.c
 //
 
-extern void fexchange0(int channel, double* in, double* out, int* error);
-extern void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Qout, int* error);
+extern void fexchange0(int channel, double *in, double *out, int *error);
+extern void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Qout, int *error);
 
 //
 // Interfaces from iqc.c
 //
 
-extern void GetTXAiqcValues(int channel, double* cm, double* cc, double* cs);
-extern void SetTXAiqcValues(int channel, double* cm, double* cc, double* cs);
-extern void SetTXAiqcSwap(int channel, double* cm, double* cc, double* cs);
-extern void SetTXAiqcStart(int channel, double* cm, double* cc, double* cs);
+extern void GetTXAiqcValues(int channel, double *cm, double *cc, double *cs);
+extern void SetTXAiqcValues(int channel, double *cm, double *cc, double *cs);
+extern void SetTXAiqcSwap(int channel, double *cm, double *cc, double *cs);
+extern void SetTXAiqcStart(int channel, double *cm, double *cc, double *cs);
 extern void SetTXAiqcEnd(int channel);
 
 //
@@ -671,10 +671,10 @@ extern double GetTXAMeter(int channel, int mt);
 //
 
 extern int RXANBPAddNotch(int channel, int notch, double fcenter, double fwidth, int active);
-extern int RXANBPGetNotch(int channel, int notch, double* fcenter, double* fwidth, int* active);
+extern int RXANBPGetNotch(int channel, int notch, double *fcenter, double *fwidth, int *active);
 extern int RXANBPDeleteNotch(int channel, int notch);
 extern int RXANBPEditNotch(int channel, int notch, double fcenter, double fwidth, int active);
-extern void RXANBPGetNumNotches(int channel, int* nnotches);
+extern void RXANBPGetNumNotches(int channel, int *nnotches);
 extern void RXANBPSetTuneFrequency(int channel, double tunefreq);
 extern void RXANBPSetShiftFrequency(int channel, double shift);
 extern void RXANBPSetNotchesRun(int channel, int run);
@@ -683,7 +683,7 @@ extern void RXANBPSetFreqs(int channel, double flow, double fhigh);
 extern void RXANBPSetWindow(int channel, int wintype);
 extern void RXANBPSetNC(int channel, int nc);
 extern void RXANBPSetMP(int channel, int mp);
-extern void RXANBPGetMinNotchWidth(int channel, double* minwidth);
+extern void RXANBPGetMinNotchWidth(int channel, double *minwidth);
 extern void RXANBPSetAutoIncrease(int channel, int autoincr);
 
 //
@@ -726,7 +726,7 @@ extern void create_anbEXT(
 );
 extern void destroy_anbEXT(int id);
 extern void flush_anbEXT(int id);
-extern void xanbEXT(int id, double* in, double* out);
+extern void xanbEXT(int id, double *in, double *out);
 extern void SetEXTANBRun(int id, int run);
 extern void SetEXTANBBuffsize(int id, int size);
 extern void SetEXTANBSamplerate(int id, int rate);
@@ -735,7 +735,7 @@ extern void SetEXTANBHangtime(int id, double time);
 extern void SetEXTANBAdvtime(int id, double time);
 extern void SetEXTANBBacktau(int id, double tau);
 extern void SetEXTANBThreshold(int id, double thresh);
-extern void xanbEXTF(int id, float* I, float* Q);
+extern void xanbEXTF(int id, float *I, float *Q);
 
 //
 // Interfaces from nobII.c
@@ -782,7 +782,7 @@ extern void create_nobEXT(
 );
 extern void destroy_nobEXT(int id);
 extern void flush_nobEXT(int id);
-extern void xnobEXT(int id, double* in, double* out);
+extern void xnobEXT(int id, double *in, double *out);
 extern void SetEXTNOBRun(int id, int run);
 extern void SetEXTNOBMode(int id, int mode);
 extern void SetEXTNOBBuffsize(int id, int size);
@@ -792,7 +792,7 @@ extern void SetEXTNOBHangtime(int id, double time);
 extern void SetEXTNOBAdvtime(int id, double time);
 extern void SetEXTNOBBacktau(int id, double tau);
 extern void SetEXTNOBThreshold(int id, double thresh);
-extern void xnobEXTF(int id, float* I, float* Q);
+extern void xnobEXTF(int id, float *I, float *Q);
 
 //
 // Interfaces from osctrl.c
@@ -819,43 +819,43 @@ extern void SetTXAPanelSelect(int channel, int select);
 // Interfaces from resample.c
 //
 
-extern RESAMPLE create_resample(int run, int size, double* in, double* out, int in_rate, int out_rate, double fc,
+extern RESAMPLE create_resample(int run, int size, double *in, double *out, int in_rate, int out_rate, double fc,
                                 int ncoef, double gain);
 extern void destroy_resample(RESAMPLE a);
 extern void flush_resample(RESAMPLE a);
 extern int xresample(RESAMPLE a);
 extern void *create_resampleV(int in_rate, int out_rate);
-extern void xresampleV(double* input, double* output, int numsamps, int* outsamps, void* ptr);
-extern void destroy_resampleV(void* ptr);
+extern void xresampleV(double *input, double *output, int numsamps, int *outsamps, void *ptr);
+extern void destroy_resampleV(void *ptr);
 extern void *create_resampleFV(int in_rate, int out_rate);
-extern void xresampleFV(float* input, float* output, int numsamps, int* outsamps, void* ptr);
-extern void destroy_resampleFV(void* ptr);
+extern void xresampleFV(float *input, float *output, int numsamps, int *outsamps, void *ptr);
+extern void destroy_resampleFV(void *ptr);
 
 //
 // Interfaces from rmatch.c
 //
 
-extern void xrmatchIN(void* b, double* in);
-extern void xrmatchOUT(void* b, double* out);
-extern void getRMatchDiags(void* b, int* underflows, int* overflows, double* var, int* ringsize, int* nring);
-extern void resetRMatchDiags(void* b);
-extern void forceRMatchVar(void* b, int force, double fvar);
+extern void xrmatchIN(void *b, double *in);
+extern void xrmatchOUT(void *b, double *out);
+extern void getRMatchDiags(void *b, int *underflows, int *overflows, double *var, int *ringsize, int *nring);
+extern void resetRMatchDiags(void *b);
+extern void forceRMatchVar(void *b, int force, double fvar);
 extern void *create_rmatchV(int in_size, int out_size, int nom_inrate, int nom_outrate, int ringsize, double var);
-extern void destroy_rmatchV(void* ptr);
-extern void setRMatchInsize(void* ptr, int insize);
-extern void setRMatchOutsize(void* ptr, int outsize);
-extern void setRMatchNomInrate(void* ptr, int nom_inrate);
-extern void setRMatchNomOutrate(void* ptr, int nom_outrate);
-extern void setRMatchRingsize(void* ptr, int ringsize);
-extern void setRMatchFeedbackGain(void* b, double feedback_gain);
-extern void setRMatchSlewTime(void* b, double slew_time);
-extern void setRMatchSlewTime1(void* b, double slew_time);
-extern void setRMatchPropRingMin(void* ptr, int prop_min);
-extern void setRMatchPropRingMax(void* ptr, int prop_max);
-extern void setRMatchFFRingMin(void* ptr, int ff_ringmin);
-extern void setRMatchFFRingMax(void* ptr, int ff_ringmax);
-extern void setRMatchFFAlpha(void* ptr, double ff_alpha);
-extern void getControlFlag(void* ptr, int* control_flag);
+extern void destroy_rmatchV(void *ptr);
+extern void setRMatchInsize(void *ptr, int insize);
+extern void setRMatchOutsize(void *ptr, int outsize);
+extern void setRMatchNomInrate(void *ptr, int nom_inrate);
+extern void setRMatchNomOutrate(void *ptr, int nom_outrate);
+extern void setRMatchRingsize(void *ptr, int ringsize);
+extern void setRMatchFeedbackGain(void *b, double feedback_gain);
+extern void setRMatchSlewTime(void *b, double slew_time);
+extern void setRMatchSlewTime1(void *b, double slew_time);
+extern void setRMatchPropRingMin(void *ptr, int prop_min);
+extern void setRMatchPropRingMax(void *ptr, int prop_max);
+extern void setRMatchFFRingMin(void *ptr, int ff_ringmin);
+extern void setRMatchFFRingMax(void *ptr, int ff_ringmax);
+extern void setRMatchFFAlpha(void *ptr, double ff_alpha);
+extern void getControlFlag(void *ptr, int *control_flag);
 extern void *create_rmatchLegacyV(int in_size, int out_size, int nom_inrate, int nom_outrate, int ringsize);
 
 //
@@ -863,7 +863,7 @@ extern void *create_rmatchLegacyV(int in_size, int out_size, int nom_inrate, int
 //
 
 extern void SetRXARNNRRun(int channel, int run);
-extern void RNNRloadModel(const char* file_path);
+extern void RNNRloadModel(const char *file_path);
 extern void SetRXARNNRPosition(int channel, int position);
 
 //
@@ -896,21 +896,21 @@ extern void SetRXAShiftFreq(int channel, double fshift);
 // Interfaces from siphon.c
 //
 
-extern void RXAGetaSipF(int channel, float* out, int size);
-extern void RXAGetaSipF1(int channel, float* out, int size);
+extern void RXAGetaSipF(int channel, float *out, int size);
+extern void RXAGetaSipF1(int channel, float *out, int size);
 extern void TXASetSipPosition(int channel, int pos);
 extern void TXASetSipMode(int channel, int mode);
 extern void TXASetSipDisplay(int channel, int disp);
-extern void TXAGetaSipF(int channel, float* out, int size);
-extern void TXAGetaSipF1(int channel, float* out, int size);
+extern void TXAGetaSipF(int channel, float *out, int size);
+extern void TXAGetaSipF1(int channel, float *out, int size);
 extern void TXASetSipSpecmode(int channel, int mode);
-extern void TXAGetSpecF1(int channel, float* out);
-extern void TXASetSipAllocDisps(int channel, int n_alloc_disps, int* alloc_run, int* alloc_disp);
+extern void TXAGetSpecF1(int channel, float *out);
+extern void TXASetSipAllocDisps(int channel, int n_alloc_disps, int *alloc_run, int *alloc_disp);
 extern void create_siphonEXT(int id, int run, int insize, int sipsize, int fftsize, int specmode);
 extern void destroy_siphonEXT(int id);
 extern void flush_siphonEXT(int id);
-extern void xsiphonEXT(int id, double* buff);
-extern void GetaSipF1EXT(int id, float* out, int size);
+extern void xsiphonEXT(int id, double *buff);
+extern void GetaSipF1EXT(int id, float *out, int size);
 extern void SetSiphonInsize(int id, int size);
 
 //
@@ -955,19 +955,19 @@ extern void *NewCriticalSection(void);
 extern void DestroyCriticalSection(LPCRITICAL_SECTION cs_ptr);
 extern void analyze_bandpass_filter(int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
                                     double scale);
-extern void print_buffer_parameters(const char* filename, int channel);
+extern void print_buffer_parameters(const char *filename, int channel);
 extern int create_bfcu(int id, int min_size, int max_size, double rate, double corner, int points);
 extern void destroy_bfcu(int id);
-extern void getFilterCorners(int id, int* lower_index, int* upper_index);
-extern void getFilterCurve(int id, int size, int w_type, int index_low, int index_high, double* segment);
+extern void getFilterCorners(int id, int *lower_index, int *upper_index);
+extern void getFilterCurve(int id, int size, int w_type, int index_low, int index_high, double *segment);
 
 //
 // Interfaces from varsamp.c
 //
 
 extern void *create_varsampV(int in_rate, int out_rate, int R);
-extern void xvarsampV(double* input, double* output, int numsamps, double var, int* outsamps, void* ptr);
-extern void destroy_varsampV(void* ptr);
+extern void xvarsampV(double *input, double *output, int numsamps, double var, int *outsamps, void *ptr);
+extern void destroy_varsampV(void *ptr);
 
 //
 // Interfaces from version.c
@@ -983,13 +983,13 @@ extern void SetRXAAGCMode(int channel, int mode);
 extern void SetRXAAGCAttack(int channel, int attack);
 extern void SetRXAAGCDecay(int channel, int decay);
 extern void SetRXAAGCHang(int channel, int hang);
-extern void GetRXAAGCHangLevel(int channel, double* hangLevel);
+extern void GetRXAAGCHangLevel(int channel, double *hangLevel);
 extern void SetRXAAGCHangLevel(int channel, double hangLevel);
-extern void GetRXAAGCHangThreshold(int channel, int* hangthreshold);
+extern void GetRXAAGCHangThreshold(int channel, int *hangthreshold);
 extern void SetRXAAGCHangThreshold(int channel, int hangthreshold);
-extern void GetRXAAGCThresh(int channel, double* thresh, double size, double rate);
+extern void GetRXAAGCThresh(int channel, double *thresh, double size, double rate);
 extern void SetRXAAGCThresh(int channel, double thresh, double size, double rate);
-extern void GetRXAAGCTop(int channel, double* max_agc);
+extern void GetRXAAGCTop(int channel, double *max_agc);
 extern void SetRXAAGCTop(int channel, double max_agc);
 extern void SetRXAAGCSlope(int channel, int slope);
 extern void SetRXAAGCFixed(int channel, double fixed_agc);
@@ -1010,4 +1010,4 @@ extern void SetTXALevelerTop(int channel, double maxgain);
 //
 
 extern char *wisdom_get_status(void);
-extern int WDSPwisdom(char* directory);
+extern int WDSPwisdom(char *directory);

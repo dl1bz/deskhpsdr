@@ -49,13 +49,13 @@ PORT void
   // used by VAC
   LPCRITICAL_SECTION cs_ptr;
   cs_ptr = (LPCRITICAL_SECTION)calloc(1, sizeof(CRITICAL_SECTION));
-  return (void*)cs_ptr;
+  return (void *)cs_ptr;
 }
 
 PORT void
 DestroyCriticalSection(LPCRITICAL_SECTION cs_ptr) {
   // used by VAC
-  free((char*)cs_ptr);
+  free((char *)cs_ptr);
 }
 
 #endif
@@ -66,7 +66,7 @@ DestroyCriticalSection(LPCRITICAL_SECTION cs_ptr) {
 *                                                   *
 ********************************************************************************************************/
 
-void print_impulse(const char* filename, int N, double* impulse, int rtype, int pr_mode) {
+void print_impulse(const char *filename, int N, double *impulse, int rtype, int pr_mode) {
   int i;
   FILE* file;
   if (pr_mode == 0) {
@@ -92,7 +92,7 @@ PORT
 void analyze_bandpass_filter(int N, double f_low, double f_high, double samplerate, int wintype, int rtype,
                              double scale) {
   double *linphase_imp;
-  double *minphase_imp = (double*) malloc0(N * sizeof(complex));
+  double *minphase_imp = (double *) malloc0(N * sizeof(complex));
   linphase_imp = fir_bandpass(N, f_low, f_high, samplerate, wintype, rtype, scale);
   mp_imp(N, linphase_imp, minphase_imp, 16, 0);
   print_impulse("linear_phase_impulse.txt",  N, linphase_imp, 1, 0);
@@ -101,7 +101,7 @@ void analyze_bandpass_filter(int N, double f_low, double f_high, double samplera
   _aligned_free(linphase_imp);
 }
 
-void print_peak_val(const char* filename, int N, double* buff, double thresh) {
+void print_peak_val(const char *filename, int N, double *buff, double thresh) {
   int i;
   static unsigned int seqnum;
   double peak = 0.0;
@@ -118,7 +118,7 @@ void print_peak_val(const char* filename, int N, double* buff, double thresh) {
   seqnum++;
 }
 
-void print_peak_env(const char* filename, int N, double* buff, double thresh) {
+void print_peak_env(const char *filename, int N, double *buff, double thresh) {
   int i;
   static unsigned int seqnum;
   double peak = 0.0;
@@ -138,7 +138,7 @@ void print_peak_env(const char* filename, int N, double* buff, double thresh) {
   seqnum++;
 }
 
-void print_peak_env_f2(const char* filename, int N, float* Ibuff, float* Qbuff) {
+void print_peak_env_f2(const char *filename, int N, float *Ibuff, float *Qbuff) {
   int i;
   double peak = 0.0;
   double new_peak;
@@ -154,7 +154,7 @@ void print_peak_env_f2(const char* filename, int N, float* Ibuff, float* Qbuff) 
   }
 }
 
-void print_iqc_values(const char* filename, int state, double env_in, double I, double Q, double ym, double yc,
+void print_iqc_values(const char *filename, int state, double env_in, double I, double Q, double ym, double yc,
                       double ys, double thresh) {
   static unsigned int seqnum;
   double env_out;
@@ -174,7 +174,7 @@ void print_iqc_values(const char* filename, int state, double env_in, double I, 
 }
 
 PORT
-void print_buffer_parameters(const char* filename, int channel) {
+void print_buffer_parameters(const char *filename, int channel) {
   IOB a = ch[channel].iob.pc;
   FILE* file;
   if (file = fopen(filename, "a")) {
@@ -202,7 +202,7 @@ void print_buffer_parameters(const char* filename, int channel) {
   }
 }
 
-void print_meter(const char* filename, double* meter, int enum_av, int enum_pk, int enum_gain) {
+void print_meter(const char *filename, double *meter, int enum_av, int enum_pk, int enum_gain) {
   FILE* file;
   if (file = fopen(filename, "a")) {
     if (enum_gain >= 0) {
@@ -215,7 +215,7 @@ void print_meter(const char* filename, double* meter, int enum_av, int enum_pk, 
   }
 }
 
-void print_message(const char* filename, const char* message, int p0, int p1, int p2) {
+void print_message(const char *filename, const char *message, int p0, int p1, int p2) {
   FILE* file;
   if (file = fopen(filename, "a")) {
     const char *msg = message;
@@ -225,7 +225,7 @@ void print_message(const char* filename, const char* message, int p0, int p1, in
   }
 }
 
-void print_window_gain(const char* filename, int wintype, double inv_coherent_gain, double inherent_power_gain) {
+void print_window_gain(const char *filename, int wintype, double inv_coherent_gain, double inherent_power_gain) {
   FILE* file;
   if (file = fopen(filename, "a")) {
     double enb = inherent_power_gain * inv_coherent_gain * inv_coherent_gain;
@@ -260,7 +260,7 @@ void print_window_gain(const char* filename, int wintype, double inv_coherent_ga
   }
 }
 
-void print_deviation(const char* filename, double dpmax, double rate) {
+void print_deviation(const char *filename, double dpmax, double rate) {
   FILE* file;
   if (file = fopen(filename, "a")) {
     double peak = dpmax * rate / TWOPI;
@@ -270,7 +270,7 @@ void print_deviation(const char* filename, double dpmax, double rate) {
   }
 }
 
-void __cdecl CalccPrintSamples(void* pargs) {
+void __cdecl CalccPrintSamples(void *pargs) {
   int i;
   double env_tx, env_rx;
   int channel = (int)(uintptr_t)pargs;
@@ -293,10 +293,10 @@ void __cdecl CalccPrintSamples(void* pargs) {
 
 void doCalccPrintSamples(int channel) {
   // no sample buffering - use in single cal mode
-  _beginthread(CalccPrintSamples, 0, (void*)(uintptr_t)channel);
+  _beginthread(CalccPrintSamples, 0, (void *)(uintptr_t)channel);
 }
 
-void print_anb_parms(const char* filename, ANB a) {
+void print_anb_parms(const char *filename, ANB a) {
   FILE* file;
   if (file = fopen(filename, "a")) {
     fprintf(file, "Run		   = %d\n", a->run);
@@ -319,8 +319,8 @@ int *data = 0;
 int ready = 0;
 int done = 0;
 
-void WriteAudioFile(void* arg) {
-  byte* dat = (byte*)arg;
+void WriteAudioFile(void *arg) {
+  byte* dat = (byte *)arg;
   FILE* file;
   // reverse bits of each byte (possibly needed on some platforms)
   // int i;
@@ -334,7 +334,7 @@ void WriteAudioFile(void* arg) {
   //  dat[i] = b;
   // }
   if (file = fopen("AudioFile", "wb")) {
-    fwrite((int*)dat, sizeof(int), audiocount, file);
+    fwrite((int *)dat, sizeof(int), audiocount, file);
     fflush(file);
     fclose(file);
   }
@@ -343,7 +343,7 @@ void WriteAudioFile(void* arg) {
   _endthread();
 }
 
-void WriteAudioWDSP(double seconds, int rate, int size, double* indata, int mode, double gain) {
+void WriteAudioWDSP(double seconds, int rate, int size, double *indata, int mode, double gain) {
   // seconds - number of seconds of audio to record
   // rate - sample rate
   // size - number of complex samples
@@ -359,7 +359,7 @@ void WriteAudioWDSP(double seconds, int rate, int size, double* indata, int mode
     }
     ready = 1;
   }
-  if (!data) { data = (int*)malloc0(n * sizeof(int)); }
+  if (!data) { data = (int *)malloc0(n * sizeof(int)); }
   for (i = 0; i < size; i++) {
     if (audiocount < n) {
       switch (mode) {
@@ -387,11 +387,11 @@ void WriteAudioWDSP(double seconds, int rate, int size, double* indata, int mode
   }
   if ((audiocount == n) && !done) {
     done = 1;
-    _beginthread(WriteAudioFile, 0, (void*)data);
+    _beginthread(WriteAudioFile, 0, (void *)data);
   }
 }
 
-void WriteScaledAudioFile(void* arg) {
+void WriteScaledAudioFile(void *arg) {
   typedef struct {
     int n;
     double *ddata;
@@ -402,7 +402,7 @@ void WriteScaledAudioFile(void* arg) {
   double max = 0.0;
   double abs_val;
   const double conv = 2147483647.0;
-  int *idata = (int*) malloc0 (dstruct->n * sizeof (int));
+  int *idata = (int *) malloc0 (dstruct->n * sizeof (int));
   for (i = 0; i < dstruct->n; i++) {
     abs_val = fabs (dstruct->ddata[i]);
     if (abs_val > max) {
@@ -440,7 +440,7 @@ void WriteScaledAudio (
   if (!ready) {
     dstruct = (DSTR) malloc0 (sizeof (dstr));
     dstruct->n = 2 * (int)(seconds * rate);
-    dstruct->ddata = (double*) malloc0 (dstruct->n * sizeof (double));
+    dstruct->ddata = (double *) malloc0 (dstruct->n * sizeof (double));
     ready = 1;
   }
   for (i = 0; i < size; i++) {
@@ -451,7 +451,7 @@ void WriteScaledAudio (
   }
   if ((count >= dstruct->n) && !complete) {
     complete = 1;
-    _beginthread (WriteScaledAudioFile, 0, (void*)dstruct);
+    _beginthread (WriteScaledAudioFile, 0, (void *)dstruct);
   }
 }
 #endif
@@ -464,13 +464,13 @@ void WriteScaledAudio (
 
 double *model_bandpass(int nc, double f_low, double f_high, double rate, int wtype, int points) {
   double *h = fir_bandpass(nc, f_low, f_high, rate, wtype, 1, 1.0 / (double)nc);
-  double *in = (double*)malloc0(points * sizeof(complex));
-  double *out = (double*)malloc0(points * sizeof(complex));
+  double *in = (double *)malloc0(points * sizeof(complex));
+  double *out = (double *)malloc0(points * sizeof(complex));
   memcpy(in, h, nc * sizeof(complex));
-  fftw_plan p = fftw_plan_dft_1d(points, (fftw_complex*)in, (fftw_complex*)out, FFTW_FORWARD, FFTW_PATIENT);
+  fftw_plan p = fftw_plan_dft_1d(points, (fftw_complex *)in, (fftw_complex *)out, FFTW_FORWARD, FFTW_PATIENT);
   fftw_execute(p);
   fftw_destroy_plan(p);
-  double *mag = (double*)malloc0(points * sizeof(double));
+  double *mag = (double *)malloc0(points * sizeof(double));
   double mult = 1.0 / sqrt(out[0] * out[0] + out[1] * out[1]);
   for (int i = 0; i < points; i++) {
     mag[i] = mult * sqrt(out[2 * i + 0] * out[2 * i + 0] + out[2 * i + 1] * out[2 * i + 1]);
@@ -481,7 +481,7 @@ double *model_bandpass(int nc, double f_low, double f_high, double rate, int wty
     }
   }
   // reverse normal-order
-  double *magrev = (double*)malloc0(points * sizeof(double));
+  double *magrev = (double *)malloc0(points * sizeof(double));
   memcpy(magrev, &mag[points / 2], points / 2 * sizeof(double));
   memcpy(&magrev[points / 2], mag, points / 2 * sizeof(double));
   _aligned_free(mag);
@@ -491,7 +491,7 @@ double *model_bandpass(int nc, double f_low, double f_high, double rate, int wty
   return magrev;
 }
 
-void print_bandpass_response (const char* filename, int points, double* response) {
+void print_bandpass_response (const char *filename, int points, double *response) {
   int i;
   FILE* file;
   if (file = fopen(filename, "w")) {
@@ -553,7 +553,7 @@ void destroy_bfcu(int id) {
 }
 
 PORT
-void getFilterCorners(int id, int* lower_index, int* upper_index) {
+void getFilterCorners(int id, int *lower_index, int *upper_index) {
   // stores the index of the lower corner and the index of the upper corner at the pointers given.
   BFCU a = pbfcu[id];
   *lower_index = a->i_lower_corner;
@@ -561,7 +561,7 @@ void getFilterCorners(int id, int* lower_index, int* upper_index) {
 }
 
 PORT
-void getFilterCurve(int id, int size, int w_type, int index_low, int index_high, double* segment) {
+void getFilterCurve(int id, int size, int w_type, int index_low, int index_high, double *segment) {
   // size = filter_size
   // w_type = window_type (0 -> bh4; 1->bh7)
   // index_low = lower index of the segment you want (range is 0 through points-1)
@@ -576,7 +576,7 @@ void test_bfcu() {
   create_bfcu(0, 1024, 16384, 48000.0, 1000.0, 16384);
   int lower_corner, upper_corner;
   getFilterCorners(0, &lower_corner, &upper_corner);
-  double *segment = (double*)malloc0(1025 * sizeof(double));
+  double *segment = (double *)malloc0(1025 * sizeof(double));
   getFilterCurve(0, 4096, 1, upper_corner - 512, upper_corner + 512, segment);
   print_bandpass_response("response", 1025, segment);
   _aligned_free(segment);

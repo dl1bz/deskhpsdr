@@ -40,7 +40,7 @@ typedef struct _patchpanel {
   int copy;
 } panel, *PANEL;
 
-extern PANEL create_panel (int channel, int run, int size, double* in, double* out, double gain1, double gain2I,
+extern PANEL create_panel (int channel, int run, int size, double *in, double *out, double gain1, double gain2I,
                            double gain2Q, int inselect, int copy);
 
 extern void destroy_panel (PANEL a);
@@ -49,7 +49,7 @@ extern void flush_panel (PANEL a);
 
 extern void xpanel (PANEL a);
 
-extern void setBuffers_panel (PANEL a, double* in, double* out);
+extern void setBuffers_panel (PANEL a, double *in, double *out);
 
 extern void setSamplerate_panel (PANEL a, int rate);
 

@@ -32,7 +32,7 @@ void calc_meter(METER a) {
   flush_meter(a);
 }
 
-METER create_meter(int run, int* prun, int size, double* buff, int rate, double tau_av, double tau_decay,
+METER create_meter(int run, int *prun, int size, double *buff, int rate, double tau_av, double tau_decay,
                    double *result, CRITICAL_SECTION **pmtupdate, int enum_av, int enum_pk, int enum_gain, double *pgain) {
   METER a = (METER) malloc0(sizeof(meter));
   a->run = run;
@@ -102,7 +102,7 @@ void xmeter(METER a) {
   LeaveCriticalSection(&a->mtupdate);
 }
 
-void setBuffers_meter(METER a, double* in) {
+void setBuffers_meter(METER a, double *in) {
   a->buff = in;
 }
 

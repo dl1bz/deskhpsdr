@@ -57,7 +57,7 @@ extern void flush_emphp (EMPHP a);
 
 extern void xemphp (EMPHP a, int position);
 
-extern void setBuffers_emphp (EMPHP a, double* in, double* out);
+extern void setBuffers_emphp (EMPHP a, double *in, double *out);
 
 extern void setSamplerate_emphp (EMPHP a, int rate);
 
@@ -97,7 +97,7 @@ typedef struct _emph {
   fftw_plan CRev;
 } emph, *EMPH;
 
-extern EMPH create_emph (int run, int position, int size, double* in, double* out, int rate, int ctype, double f_low,
+extern EMPH create_emph (int run, int position, int size, double *in, double *out, int rate, int ctype, double f_low,
                          double f_high);
 
 extern void destroy_emph (EMPH a);
@@ -106,7 +106,7 @@ extern void flush_emph (EMPH a);
 
 extern void xemph (EMPH a, int position);
 
-extern void setBuffers_emph (EMPH a, double* in, double* out);
+extern void setBuffers_emph (EMPH a, double *in, double *out);
 
 extern void setSamplerate_emph (EMPH a, int rate);
 

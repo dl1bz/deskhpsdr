@@ -63,7 +63,7 @@ PORT void OpenChannel(int channel, int in_size, int dsp_size, int input_samplera
 
 PORT void CloseChannel(int channel);
 
-extern void flushChannel(void* p);
+extern void flushChannel(void *p);
 
 PORT void SetType(int channel, int type);
 
