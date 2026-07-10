@@ -36,6 +36,7 @@
 #include "band.h"
 #include "discovered.h"
 #include "radio.h"
+#include "main.h"
 #include "receiver.h"
 #include "transmitter.h"
 #include "rx_panadapter.h"
@@ -545,13 +546,22 @@ static gboolean panadapter_draw_cb (GtkWidget *widget, cairo_t *cr, gpointer dat
                             DISPLAY_FONT_BOLD,
                             CAIRO_FONT_SLANT_NORMAL,
                             CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_set_line_width (cr, 2.5);
     cairo_set_font_size (cr, DISPLAY_FONT_SIZE14);
-    cairo_set_source_rgba (cr, 1, 1, 1, 1);
     cairo_move_to (cr, x + 10, y - 7);
-    cairo_show_text (cr, text1);
+    cairo_text_path (cr, text1);
+    cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+    cairo_stroke_preserve (cr);
+    cairo_set_source_rgba (cr, 1, 1, 1, 1);
+    cairo_fill (cr);
     cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
     cairo_move_to (cr, x + 10, y + 15);
-    cairo_show_text (cr, text2);
+    cairo_text_path (cr, text2);
+    cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+    cairo_stroke_preserve (cr);
+    cairo_set_source_rgba (cr, 1, 1, 1, 1);
+    cairo_fill (cr);
     cairo_restore (cr);
   }
   return FALSE;
@@ -1072,9 +1082,17 @@ void rx_panadapter_update (RECEIVER *rx) {
       double y = (double) (rx->panadapter_high - i) * dbm_per_line;
       cairo_move_to (cr, 0.0, y);
       cairo_line_to (cr, mywidth, y);
+      cairo_stroke (cr);
       snprintf (v, 32, "%d dBm", i);
       cairo_move_to (cr, 1, y);
-      cairo_show_text (cr, v);
+      cairo_text_path (cr, v);
+      cairo_save (cr);
+      cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+      cairo_set_line_width (cr, 2.0);
+      cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
+      cairo_stroke_preserve (cr);
+      cairo_restore (cr);
+      cairo_fill (cr);
     }
   }
   cairo_set_line_width (cr, PAN_LINE_THIN);
@@ -1147,8 +1165,23 @@ void rx_panadapter_update (RECEIVER *rx) {
       }
       // center text at "x" position
       cairo_text_extents (cr, v, &extents);
+      /*
+       * Keep the accumulated frequency-marker line path separate from the
+       * outlined label path. cairo_save() does not preserve the current path.
+       */
+      cairo_path_t *marker_path = cairo_copy_path (cr);
+      cairo_new_path (cr);
       cairo_move_to (cr, x - (extents.width / 2.0), 10 + marker_extra);
-      cairo_show_text (cr, v);
+      cairo_text_path (cr, v);
+      cairo_save (cr);
+      cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+      cairo_set_line_width (cr, 2.0);
+      cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
+      cairo_stroke_preserve (cr);
+      cairo_restore (cr);
+      cairo_fill (cr);
+      cairo_append_path (cr, marker_path);
+      cairo_path_destroy (marker_path);
     }
     f += divisor;
   }
@@ -1915,9 +1948,14 @@ void rx_panadapter_update (RECEIVER *rx) {
       cairo_move_to (cr, (mywidth / 4) - 130, myheight - 10);
 #endif
       if (sunspots != -1) {
-        snprintf (_text, sizeof (_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", sunspots, solar_flux, a_index,
-                  k_index, xray,
-                  geomagfield, muf);
+        if (iaru_region == 1) {
+          snprintf (_text, sizeof (_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f Es6:%s", sunspots, solar_flux,
+                    a_index, k_index, xray, geomagfield, muf,
+                    es6_status > 0 ? "ON" : es6_status == 0 ? "---" : "N/A");
+        } else {
+          snprintf (_text, sizeof (_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", sunspots, solar_flux,
+                    a_index, k_index, xray, geomagfield, muf);
+        }
       } else {
         snprintf (_text, sizeof (_text), " ");
       }
@@ -2121,16 +2159,25 @@ void display_panadapter_messages (cairo_t *cr, int width, unsigned int fps) {
 #endif
     cairo_show_text (cr, _text); // show onscreen if status bar switched off
   }
-  if (strcmp (own_callsign, "YOUR_CALLSIGN") != 0) {
-    cairo_move_to (cr, 60, 30);
-    cairo_set_source_rgba (cr, COLOUR_ATTN);
-    cairo_set_font_size (cr, 18);
-    if (strcmp (own_locator, "JO01AA") != 0) {
-      snprintf (_text, sizeof (_text), "%s - %s", own_callsign, own_locator);
+  if (strcmp(own_callsign, "YOUR_CALLSIGN") != 0) {
+    if (strcmp(own_locator, "JO01AA") != 0) {
+      snprintf(_text, sizeof(_text), "%s - %s", own_callsign, own_locator);
     } else {
-      snprintf (_text, sizeof (_text), "%s", own_callsign);
+      snprintf(_text, sizeof(_text), "%s", own_callsign);
     }
-    cairo_show_text (cr, _text);
+    cairo_save(cr);
+    cairo_set_font_size(cr, 18.0);
+    cairo_move_to(cr, 60.0, 30.0);
+    cairo_text_path(cr, _text);
+    /* Black outline */
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_line_width(cr, 3.0);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_stroke_preserve(cr);
+    /* Text fill */
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    cairo_fill(cr);
+    cairo_restore(cr);
   }
   // show RX200 data
   cairo_select_font_face (cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);

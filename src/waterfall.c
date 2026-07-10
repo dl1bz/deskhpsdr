@@ -26,6 +26,7 @@
 #include <semaphore.h>
 #include <string.h>
 #include "radio.h"
+#include "main.h"
 #include "vfo.h"
 #include "band.h"
 #include "appearance.h"
@@ -102,8 +103,8 @@ waterfall_draw_cb(GtkWidget *widget,
     cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
-    cairo_move_to(cr, (b_width / 2) + 100, b_height - 10);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_move_to(cr, b_width - 390, b_height - 13);
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
     cairo_move_to(cr, b_width / 2, b_height - 10);
@@ -123,7 +124,7 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
 #endif
 #if defined (__APPLE__)
-      snprintf(_text, 128, "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
+      snprintf(_text, sizeof(_text), "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
 #else
       int _audioindex = 0;
       if (n_input_devices > 0) {
@@ -149,8 +150,13 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_move_to(cr, (b_width / 4) - 130, b_height - 10);
 #endif
       if (sunspots != -1) {
-        snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", sunspots, solar_flux, a_index, k_index, xray,
-                 geomagfield, muf);
+        if (iaru_region == 1) {
+          snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f Es6:%s", sunspots, solar_flux, a_index,
+                   k_index, xray, geomagfield, muf, es6_status > 0 ? "ON" : es6_status == 0 ? "---" : "N/A");
+        } else {
+          snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", sunspots, solar_flux, a_index, k_index, xray,
+                   geomagfield, muf);
+        }
       } else {
         snprintf(_text, 128, " ");
       }

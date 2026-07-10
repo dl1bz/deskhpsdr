@@ -52,6 +52,7 @@
 #define DISPLAY_FONT_UDP          "JetBrains Mono"
 #define DISPLAY_FONT_UDP_B        "JetBrains Mono ExtraBold"
 
+#define DISPLAY_FONT_SIZE11 11
 #define DISPLAY_FONT_SIZE1  10                       // no longer used, this is too small for elder hams
 #define DISPLAY_FONT_SIZE2  12                       // used for SWR, FWD in Tx meter, S-meter ticks, and panadapter labels
 #define DISPLAY_FONT_SIZE14 14

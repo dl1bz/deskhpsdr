@@ -18,6 +18,8 @@
 #ifndef SOLAR_H
 #define SOLAR_H
 
+#include <stddef.h>
+
 typedef struct {
   int sunspots;
   float solarflux;
@@ -30,5 +32,6 @@ typedef struct {
 } SolarData;
 
 SolarData fetch_solar_data(void);
+int fetch_es6_status(int *spots, int *unique, char *marker, size_t marker_size, int *age_minutes);
 
 #endif // SOLAR_H

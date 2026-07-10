@@ -36,6 +36,7 @@
 #include "toolset.h"
 #include "solar.h"
 #include "message.h"
+#include "main.h"
 
 #if defined (__APPLE__)
   #include <TargetConditionals.h>
@@ -51,12 +52,14 @@
 #endif
 
 static GMutex solar_data_mutex;
+static gint solar_update_running = 0;
 
 int sunspots = -1;
 int a_index = -1;
 int k_index = -1;
 int solar_flux = -1;
 float muf = -1.0f;
+int es6_status = -1;
 char geomagfield[32];
 char xray[16];
 
@@ -280,20 +283,14 @@ static void *solar_thread_func(void *arg) {
   GDateTime *dt = g_date_time_new_now_local();
   g_autofree gchar *ts = g_date_time_format(dt, "%F %T");
   g_date_time_unref(dt);
-  if (!https_ok(host, 0)) {
-    g_mutex_lock(&solar_data_mutex);
-    sunspots   = -1;
-    solar_flux = -1;
-    a_index    = -1;
-    k_index    = -1;
-    muf        = -1.0f;
-    geomagfield[0] = '\0';
-    xray[0]       = '\0';
-    g_mutex_unlock(&solar_data_mutex);
-    t_print("%s failed: host %s not reachable at %s\n", __func__, host, ts);
-    return NULL;
-  }
   SolarData sd = fetch_solar_data();
+  int es6_spots = 0;
+  int es6_unique = 0;
+  int es6_age_minutes = -1;
+  char es6_marker[16] = "";
+  int new_es6_status = iaru_region == 1 ?
+                       fetch_es6_status(&es6_spots, &es6_unique, es6_marker,
+                                        sizeof(es6_marker), &es6_age_minutes) : -1;
   if (sd.sunspots != -1) {
     g_mutex_lock(&solar_data_mutex);
     sunspots   = sd.sunspots;
@@ -301,13 +298,27 @@ static void *solar_thread_func(void *arg) {
     a_index    = sd.aindex;
     k_index    = sd.kindex;
     muf        = sd.muf;
+    es6_status = new_es6_status;
     g_strlcpy(geomagfield, sd.geomagfield, sizeof(geomagfield));
     g_strlcpy(xray,        sd.xray,        sizeof(xray));
     g_mutex_unlock(&solar_data_mutex);
     if (is_dbg) {
-      t_print("fetch data from %s at %s\n", host, ts);
-      t_print("Sunspots:%d Flux:%d A:%d K:%d X:%s GMF:%s MUF3k:%.1f MHz\n",
-              sunspots, solar_flux, a_index, k_index, xray, geomagfield, muf);
+      t_print("Solar data updated from %s at %s: SN:%d SFI:%d A:%d K:%d X:%s GmF:%s\n",
+              host, ts, sunspots, solar_flux, a_index, k_index, xray, geomagfield);
+      if (muf > 0.0f) {
+        t_print("MUF3k updated: %.1f MHz\n", muf);
+      }
+      if (iaru_region == 1 && es6_status >= 0) {
+        if (es6_age_minutes >= 0) {
+          t_print("Es6 updated: %s (marker=%s, age=%dm, spots=%d, unique=%d)\n",
+                  es6_status > 0 ? "ON" : "---", es6_marker, es6_age_minutes,
+                  es6_spots, es6_unique);
+        } else {
+          t_print("Es6 updated: %s (marker=%s, spots=%d, unique=%d)\n",
+                  es6_status > 0 ? "ON" : "---", es6_marker,
+                  es6_spots, es6_unique);
+        }
+      }
     }
   } else {
     g_mutex_lock(&solar_data_mutex);
@@ -316,11 +327,13 @@ static void *solar_thread_func(void *arg) {
     a_index    = -1;
     k_index    = -1;
     muf        = -1.0f;
+    es6_status = -1;
     geomagfield[0] = '\0';
     xray[0]       = '\0';
     g_mutex_unlock(&solar_data_mutex);
     t_print("%s: ERROR: invalid data from %s at %s\n", __func__, host, ts);
   }
+  g_atomic_int_set(&solar_update_running, 0);
   return NULL;
 }
 
@@ -339,9 +352,13 @@ static void assign_solar_data_async(int is_dbg) {
 
 static void assign_solar_data_async(int is_dbg) {
   pthread_t solar_thread;
+  if (!g_atomic_int_compare_and_exchange(&solar_update_running, 0, 1)) {
+    return;
+  }
   if (pthread_create(&solar_thread, NULL, solar_thread_func, (void *)(intptr_t) is_dbg) == 0) {
     pthread_detach(solar_thread);  // kein join nötig
   } else {
+    g_atomic_int_set(&solar_update_running, 0);
     t_print("%s: ERROR: solar_data_fetch thread not started...\n", __func__);
   }
 }
