@@ -571,7 +571,7 @@ void display_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(general_grid), label, col, row, 1, 1);
   col++;
-  GtkWidget *frames_per_second_r = gtk_spin_button_new_with_range(1.0, 60.0, 1.0);
+  GtkWidget *frames_per_second_r = gtk_spin_button_new_with_range(5.0, 60.0, 5.0);
   gtk_widget_set_tooltip_text(frames_per_second_r, "Refresh rate in frames per second for panadapter and waterfall");
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(frames_per_second_r), (double) display_rx->fps);
   gtk_widget_set_margin_top(frames_per_second_r, 5);

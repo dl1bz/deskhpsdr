@@ -700,7 +700,7 @@ static void add_local_audio_controls_at(GtkWidget *grid, RECEIVER *rx, int *row,
   if (n_output_devices <= 0) {
     return;
   }
-  GtkWidget *local_audio_b = gtk_check_button_new_with_label("Use Local Audio Output:");
+  GtkWidget *local_audio_b = gtk_check_button_new_with_label("Use Computer Audio Output");
   gtk_widget_set_name(local_audio_b, "boldlabel");
   gtk_widget_set_halign(local_audio_b, GTK_ALIGN_START);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_audio_b), rx->local_audio);

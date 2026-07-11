@@ -773,7 +773,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->low_latency = 0;
   rx->smetermode = SMETER_AVERAGE;
 #ifdef __APPLE__
-  rx->fps = 60;
+  rx->fps = 30;
 #else
   rx->fps = 10;
 #endif

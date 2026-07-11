@@ -970,7 +970,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->id = id;
   tx->dac = 0;
 #ifdef __APPLE__
-  tx->fps = 60;
+  tx->fps = 30;
 #else
   tx->fps = 10;
 #endif
