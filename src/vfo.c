@@ -1096,6 +1096,7 @@ void vfo_id_mode_changed(int id, int m) {
   }
   if (can_transmit) {
     tx_set_mode(transmitter, vfo_get_tx_mode());
+    tx_set_analyzer(transmitter);
     if (display_sliders && (m == modeDIGU || m == modeDIGL)) {
       update_slider_bbcompr_scale(FALSE);
       update_slider_bbcompr_button(FALSE);

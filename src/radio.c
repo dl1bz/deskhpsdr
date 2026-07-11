@@ -2543,6 +2543,7 @@ void radio_tx_vfo_changed (void) {
   //
   if (can_transmit) {
     tx_set_mode (transmitter, vfo_get_tx_mode());
+    tx_set_analyzer(transmitter);
     radio_calc_drive_level();
   }
   schedule_high_priority();         // possibly update RX/TX antennas

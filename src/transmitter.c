@@ -1942,6 +1942,7 @@ void tx_set_displaying(TRANSMITTER *tx) {
 }
 
 void tx_set_filter(TRANSMITTER *tx) {
+  double old_display_span = tx_display_span_hz(tx);
   int txmode = vfo_get_tx_mode();
   // load default values (0 < low < high), defaults: low=150, high=2850
   int low  = tx_filter_low;
@@ -2029,6 +2030,10 @@ void tx_set_filter(TRANSMITTER *tx) {
   }
   tx_set_bandpass(tx);
   tx_set_deviation(tx);
+  /* Reconfigure only when the filter change crosses a display-span tier. */
+  if (tx_display_span_hz(tx) != old_display_span) {
+    tx_set_analyzer(tx);
+  }
 }
 
 void tx_set_framerate(TRANSMITTER *tx) {
@@ -2087,6 +2092,28 @@ int tx_get_pixels(TRANSMITTER *tx) {
   return rc;
 }
 
+double tx_display_span_hz(const TRANSMITTER *tx) {
+  int mode = vfo_get_tx_mode();
+  /*
+   * Adapt the normal TX panadapter span to the actual sideband filter
+   * width. This keeps standard SSB easy to assess while retaining enough
+   * room for ESSB. The duplex/dialog display keeps its existing 24 kHz
+   * analyzer span; it already displays only the centre quarter through
+   * its 4x pixel count.
+   */
+  if (tx != NULL && tx->dialog == NULL &&
+      (mode == modeLSB || mode == modeUSB || mode == modeDIGL || mode == modeDIGU)) {
+    int filter_width = abs(tx->filter_high - tx->filter_low);
+    if (filter_width < 3000) {
+      return 6000.0;
+    }
+    if (filter_width <= 4500) {
+      return 12000.0;
+    }
+  }
+  return 24000.0;
+}
+
 void tx_set_analyzer(const TRANSMITTER *tx) {
   int flp[] = {0};
   const double keep_time = 0.1;
@@ -2097,12 +2124,12 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   // const double fscLin = 0;
   // const double fscHin = 0;
   //
-  // The TX spectrum is always 24k wide, which is a fraction of the TX IQ output rate
-  // This fraction determines how much to "clip" from both sides. The number of bins
-  // equals the analyzer FFT size.
+  // The normal TX spectrum uses a filter-dependent span in sideband modes
+  // and 24 kHz otherwise. The duplex/dialog analyzer remains 24 kHz wide. This fraction
+  // determines how much to clip from both sides.
   //
-  // The display resolution is (24k / pixels), so the minimum afft size such that the
-  // FFT resolution reaches this value is sample_rate * pixels / 24k
+  // The display resolution is (span / pixels), so the minimum afft size such
+  // that the FFT resolution reaches this value is sample_rate * pixels / span.
   // Some examples for the needed FFT size (rounded up to the next power of two
   // and no lower than 16386):
   //
@@ -2117,7 +2144,9 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   //    1536                   768k                  49152 --> 65536
   //    1024                  1536k                            65536
   //
-  int afft_size = (int)(((long) tx->iq_output_rate * tx->pixels) / 24000L);
+  const double display_span = tx_display_span_hz(tx);
+  const double display_half_span = 0.5 * display_span;
+  int afft_size = (int)(((double) tx->iq_output_rate * (double) tx->pixels) / display_span);
   if (afft_size <= 16384) {
     afft_size = 16384;       // our previous fixed value
   } else if (afft_size <= 32768) {
@@ -2125,8 +2154,8 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   } else  {
     afft_size = 65536;       //  this shall be the maximum
   }
-  const double fscLin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
-  const double fscHin = afft_size * (0.5 - 12000.0 / tx->iq_output_rate);
+  const double fscLin = afft_size * (0.5 - display_half_span / tx->iq_output_rate);
+  const double fscHin = afft_size * (0.5 - display_half_span / tx->iq_output_rate);
   const int stitches = 1;
   const int calibration_data_set = 0;
   const double span_min_freq = 0.0;

@@ -264,6 +264,7 @@ extern void   tx_save_state (const TRANSMITTER *tx);
 
 extern void   tx_set_am_carrier_level (const TRANSMITTER *tx);
 extern void   tx_set_analyzer (const TRANSMITTER *tx);
+extern double tx_display_span_hz(const TRANSMITTER *tx);
 extern void   tx_set_average (const TRANSMITTER *tx);
 extern void   tx_set_bandpass (const TRANSMITTER *tx);
 extern void   tx_set_compressor (TRANSMITTER *tx);

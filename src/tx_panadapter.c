@@ -267,8 +267,8 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     int txmode = vfo_get_tx_mode();
     double filter_left, filter_right;
     float *samples = tx->pixel_samples;
-    // double hz_per_pixel = (double)tx->iq_output_rate / (double)tx->pixels;
-    double hz_per_pixel = 24000.0 / (double) tx->pixels;
+    double display_span = tx_display_span_hz(tx);
+    double hz_per_pixel = display_span / (double) tx->pixels;
     cairo_t *cr;
     cr = cairo_create(tx->panadapter_surface);
     cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
@@ -326,7 +326,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       }
     }
     // plot frequency markers
-    long long half = tx->dialog ? 3000LL : 12000LL; //(long long)(tx->output_rate/2);
+    long long half = tx->dialog ? 3000LL : (long long)(0.5 * display_span);
     long long frequency;
     if (vfo[txvfo].ctun) {
       frequency = vfo[txvfo].ctun_frequency;
@@ -338,7 +338,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     long long max_display = frequency + half;
     if (tx->dialog == NULL) {
       long long f;
-      const long long divisor = 5000;
+      const long long divisor = display_span <= 16000.0 ? 2000LL : 5000LL;
       //
       // in DUPLEX, space in the TX window is so limited
       // that we cannot print the frequencies
