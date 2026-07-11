@@ -426,43 +426,54 @@ void pan_add_dx_spot_source (double freq_khz, const char *dxcall, PAN_SPOT_SOURC
 }
 
 //------------------------------------------------------------------------------
-static GdkPixbuf *worldmap_scaled = NULL;
+static cairo_surface_t *worldmap_surface = NULL;
+static int worldmap_surface_width = 0;
+static int worldmap_surface_height = 0;
 
 /*
-  1. Wir laden einmal das Map-Bild und berechnen es
-  2. Nur wenn sich die Auflösung ändert, wird komplett neu gerendert
-
-  Wir berechnen und zeichnen also nur, wenn notwendig und nicht mehr
-  synchron zur Framerate wie bisher -> senkt CPU Last !
-*/
-static void init_worldmap_pixbuf (int w, int h) {
-  if (worldmap_scaled &&
-      gdk_pixbuf_get_width (worldmap_scaled) == w &&
-      gdk_pixbuf_get_height (worldmap_scaled) == h) {
-    return;  // schon vorhanden in richtiger Größe
+ * Decode and scale the embedded map only when the panadapter size changes.
+ * Convert the scaled pixbuf to a Cairo surface once so the frame path only
+ * has to paint the cached surface.
+ */
+static void init_worldmap_surface (int w, int h) {
+  if (worldmap_surface && worldmap_surface_width == w && worldmap_surface_height == h) {
+    return;
   }
-  if (worldmap_scaled) {
-    g_object_unref (worldmap_scaled); // wichtig: alten freigeben
-    worldmap_scaled = NULL;
+  if (worldmap_surface) {
+    cairo_surface_destroy (worldmap_surface);
+    worldmap_surface = NULL;
   }
+  worldmap_surface_width = 0;
+  worldmap_surface_height = 0;
   GError *error = NULL;
   GInputStream *mem_stream = g_memory_input_stream_new_from_data (worldmap_png, worldmap_png_len, NULL);
   GdkPixbuf *raw_pixbuf = gdk_pixbuf_new_from_stream (mem_stream, NULL, &error);
   g_object_unref (mem_stream);
   if (!raw_pixbuf) {
-    t_print ("%s: ERROR loading map pic: %s\n", __func__, error->message);
-    g_error_free (error);
+    t_print ("%s: ERROR loading map pic: %s\n", __func__, error ? error->message : "unknown error");
+    g_clear_error (&error);
     return;
   }
-  worldmap_scaled = gdk_pixbuf_scale_simple (raw_pixbuf, w, h, GDK_INTERP_BILINEAR);
+  GdkPixbuf *scaled_pixbuf = gdk_pixbuf_scale_simple (raw_pixbuf, w, h, GDK_INTERP_BILINEAR);
   g_object_unref (raw_pixbuf);
+  if (!scaled_pixbuf) {
+    t_print ("%s: ERROR scaling map pic to %dx%d\n", __func__, w, h);
+    return;
+  }
+  worldmap_surface = gdk_cairo_surface_create_from_pixbuf (scaled_pixbuf, 1, NULL);
+  g_object_unref (scaled_pixbuf);
+  if (worldmap_surface && cairo_surface_status (worldmap_surface) == CAIRO_STATUS_SUCCESS) {
+    worldmap_surface_width = w;
+    worldmap_surface_height = h;
+  } else {
+    t_print ("%s: ERROR creating Cairo map surface\n", __func__);
+    if (worldmap_surface) {
+      cairo_surface_destroy (worldmap_surface);
+      worldmap_surface = NULL;
+    }
+  }
 }
 
-static void draw_image (cairo_t *cr, GdkPixbuf *pixbuf, int x_offset, int y_offset) {
-  // Bild auf dem Cairo-Zeichenkontext setzen
-  gdk_cairo_set_source_pixbuf (cr, pixbuf, x_offset, y_offset);
-  cairo_paint (cr); // Bild zeichnen
-}
 //------------------------------------------------------------------------------
 
 /* Create a new surface of the appropriate size to store our scribbles */
@@ -923,9 +934,10 @@ void rx_panadapter_update (RECEIVER *rx) {
   cr = cairo_create (rx->panadapter_surface);
   if (display_wmap) {
     //------------------------------------------------------------------------------
-    init_worldmap_pixbuf (mywidth, myheight); // nur wenn nötig
-    if (worldmap_scaled) {
-      draw_image (cr, worldmap_scaled, 0, 0);
+    init_worldmap_surface (mywidth, myheight);
+    if (worldmap_surface) {
+      cairo_set_source_surface (cr, worldmap_surface, 0, 0);
+      cairo_paint (cr);
     }
     //------------------------------------------------------------------------------
     cairo_set_source_rgba (cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend

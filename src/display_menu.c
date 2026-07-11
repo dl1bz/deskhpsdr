@@ -298,11 +298,20 @@ static void frames_per_second_value_changed_cb(GtkWidget *widget, gpointer data)
   if (value > 60) {
     value = 60;
   }
-  for (int i = 0; i < receivers; i++) {
+  /*
+   * Keep RX1 and RX2 synchronized even when RX2 is currently not displayed.
+   * RECEIVERS covers only the normal receivers and excludes the PureSignal
+   * feedback receiver.
+   */
+  for (int i = 0; i < RECEIVERS; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->fps = value;
       rx_set_framerate(receiver[i]);
     }
+  }
+  if (transmitter != NULL) {
+    transmitter->fps = value;
+    tx_set_framerate(transmitter);
   }
 }
 

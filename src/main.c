@@ -89,6 +89,8 @@ int iaru_region = 2;
 
 int p2_angelia_ddc0_map = 0;
 
+int display_debug = 0;
+
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;
 

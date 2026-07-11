@@ -534,8 +534,52 @@ static double compute_power(double p) {
   return interval * ((1.0 - frac) * (double) i + frac * (double)(i + 1));
 }
 
+typedef struct {
+  gint64 window_start_us;
+  guint calls;
+  guint rendered;
+  gint64 total_us;
+  gint64 max_us;
+  guint late;
+} TX_DISPLAY_DEBUG_STATS;
+
+static TX_DISPLAY_DEBUG_STATS tx_display_debug_stats;
+
+static void tx_display_debug_update(TRANSMITTER *tx, gint64 elapsed_us, int rendered) {
+  TX_DISPLAY_DEBUG_STATS *stats = &tx_display_debug_stats;
+  gint64 now_us = g_get_monotonic_time();
+  if (stats->window_start_us == 0) {
+    stats->window_start_us = now_us;
+  }
+  stats->calls++;
+  stats->rendered += rendered != 0;
+  stats->total_us += elapsed_us;
+  if (elapsed_us > stats->max_us) {
+    stats->max_us = elapsed_us;
+  }
+  gint64 frame_budget_us = tx->fps > 0 ? 1000000LL / tx->fps : 0;
+  if (frame_budget_us > 0 && elapsed_us > frame_budget_us) {
+    stats->late++;
+  }
+  gint64 window_us = now_us - stats->window_start_us;
+  if (window_us >= 5000000LL) {
+    double seconds = (double) window_us / 1000000.0;
+    double actual_fps = stats->calls / seconds;
+    double rendered_fps = stats->rendered / seconds;
+    double avg_ms = stats->calls > 0 ? (double) stats->total_us / (1000.0 * stats->calls) : 0.0;
+    double max_ms = (double) stats->max_us / 1000.0;
+    double load = frame_budget_us > 0 ? 100.0 * ((double) stats->total_us / stats->calls) / frame_budget_us : 0.0;
+    double peak = frame_budget_us > 0 ? 100.0 * stats->max_us / frame_budget_us : 0.0;
+    t_print("DISPLAY TX cfg=%d fps actual=%.1f rendered=%.1f avg=%.2f ms max=%.2f ms load=%.1f%% peak=%.1f%% late=%u/%u\n",
+            tx->fps, actual_fps, rendered_fps, avg_ms, max_ms, load, peak, stats->late, stats->calls);
+    *stats = (TX_DISPLAY_DEBUG_STATS) {0};
+    stats->window_start_us = now_us;
+  }
+}
+
 static gboolean tx_update_display(gpointer data) {
   TRANSMITTER *tx = (TRANSMITTER *) data;
+  gint64 debug_start_us = display_debug ? g_get_monotonic_time() : 0;
   int rc;
   //t_print("tx_update_display: tx id=%d\n",tx->id);
   if (tx->displaying) {
@@ -776,6 +820,9 @@ static gboolean tx_update_display(gpointer data) {
     }
     if (!duplex) {
       meter_update(active_receiver, POWER, tx->fwd, tx->alc, tx->swr);
+    }
+    if (display_debug) {
+      tx_display_debug_update(tx, g_get_monotonic_time() - debug_start_us, rc);
     }
     return TRUE; // keep going
   }
@@ -1277,6 +1324,14 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   // Modify these values from the props file
   //
   tx_restore_state(tx);
+  //
+  // RX is the single source of truth for the display frame rate.
+  // Keep the separate TX field because the TX analyzer and timer use it,
+  // but always initialize it from the active receiver.
+  //
+  if (active_receiver != NULL) {
+    tx->fps = active_receiver->fps;
+  }
   //
   // allocate buffers
   //

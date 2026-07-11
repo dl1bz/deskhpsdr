@@ -76,8 +76,7 @@ static int which_container = TX_CONTAINER;
 #define CFCPOST 1280
 
 enum _tx_choices {
-  TX_FPS = TX,
-  TX_LINEIN,
+  TX_LINEIN = TX,
   TX_COMP,
   TX_FILTER_LOW,
   TX_FILTER_HIGH,
@@ -682,16 +681,6 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
     switch (c) {
     case TX_LINEIN:
       linein_gain = v;
-      break;
-    case TX_FPS:
-      if (vi < 1) {
-        vi = 1;
-      }
-      if (vi > 60) {
-        vi = 60;
-      }
-      transmitter->fps = vi;
-      tx_set_framerate(transmitter);
       break;
     case TX_COMP:
       transmitter->compressor_level = vi;
@@ -1489,16 +1478,6 @@ void tx_menu(GtkWidget *parent) {
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_AM_CARRIER));
   row++;
   col = 0;
-  label = gtk_label_new("Frames Per Second");
-  gtk_widget_set_name(label, "boldlabel");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
-  col++;
-  btn = gtk_spin_button_new_with_range(1.0, 60.0, 1.0);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double) transmitter->fps);
-  gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
-  g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_FPS));
-  col++;
   btn = gtk_check_button_new_with_label("Fill Panadapter");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->display_filled);

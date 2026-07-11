@@ -43,6 +43,8 @@ extern int css_dark_theme;
 
 extern int iaru_region;
 
+extern int display_debug;
+
 extern int p2_angelia_ddc0_map;
 
 extern int full_screen;

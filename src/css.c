@@ -1335,6 +1335,7 @@ void StartConfigSave(void) {
   const char *filename = "startup_config.props";
   SetPropI0("css_dark_theme", css_dark_theme);
   SetPropI0("iaru_region", iaru_region);
+  SetPropI0("display_debug", display_debug);
   SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     char name[32];
@@ -1352,6 +1353,7 @@ void StartConfigLoad(void) {
   loadProperties(filename);
   GetPropI0("css_dark_theme", css_dark_theme);
   GetPropI0("iaru_region", iaru_region);
+  GetPropI0("display_debug", display_debug);
   GetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   p2_angelia_ddc0_map = p2_angelia_ddc0_map ? 1 : 0;
   for (int i = 0; i < P2_MAX_DDCS; i++) {
@@ -1362,6 +1364,9 @@ void StartConfigLoad(void) {
   }
   if (iaru_region < 1 || iaru_region > 3) {
     iaru_region = 2;
+  }
+  if (display_debug < 0 || display_debug > 1) {
+    display_debug = 0;
   }
   clearProperties();
 }

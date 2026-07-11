@@ -600,8 +600,56 @@ void rx_reconfigure(RECEIVER *rx, int height) {
   g_mutex_unlock(&rx->display_mutex);
 }
 
+typedef struct {
+  gint64 window_start_us;
+  guint calls;
+  guint rendered;
+  gint64 total_us;
+  gint64 max_us;
+  guint late;
+} RX_DISPLAY_DEBUG_STATS;
+
+/* RX1 and RX2 only; PureSignal feedback receivers are intentionally excluded. */
+static RX_DISPLAY_DEBUG_STATS rx_display_debug_stats[2];
+
+static void rx_display_debug_update(RECEIVER *rx, gint64 elapsed_us, int rendered) {
+  if (rx->id < 0 || (guint) rx->id >= G_N_ELEMENTS(rx_display_debug_stats)) {
+    return;
+  }
+  RX_DISPLAY_DEBUG_STATS *stats = &rx_display_debug_stats[rx->id];
+  gint64 now_us = g_get_monotonic_time();
+  if (stats->window_start_us == 0) {
+    stats->window_start_us = now_us;
+  }
+  stats->calls++;
+  stats->rendered += rendered != 0;
+  stats->total_us += elapsed_us;
+  if (elapsed_us > stats->max_us) {
+    stats->max_us = elapsed_us;
+  }
+  gint64 frame_budget_us = rx->fps > 0 ? 1000000LL / rx->fps : 0;
+  if (frame_budget_us > 0 && elapsed_us > frame_budget_us) {
+    stats->late++;
+  }
+  gint64 window_us = now_us - stats->window_start_us;
+  if (window_us >= 5000000LL) {
+    double seconds = (double) window_us / 1000000.0;
+    double actual_fps = stats->calls / seconds;
+    double rendered_fps = stats->rendered / seconds;
+    double avg_ms = stats->calls > 0 ? (double) stats->total_us / (1000.0 * stats->calls) : 0.0;
+    double max_ms = (double) stats->max_us / 1000.0;
+    double load = frame_budget_us > 0 ? 100.0 * ((double) stats->total_us / stats->calls) / frame_budget_us : 0.0;
+    double peak = frame_budget_us > 0 ? 100.0 * stats->max_us / frame_budget_us : 0.0;
+    t_print("DISPLAY RX%d cfg=%d fps actual=%.1f rendered=%.1f avg=%.2f ms max=%.2f ms load=%.1f%% peak=%.1f%% late=%u/%u\n",
+            rx->id + 1, rx->fps, actual_fps, rendered_fps, avg_ms, max_ms, load, peak, stats->late, stats->calls);
+    *stats = (RX_DISPLAY_DEBUG_STATS) {0};
+    stats->window_start_us = now_us;
+  }
+}
+
 static int rx_update_display(gpointer data) {
   RECEIVER *rx = (RECEIVER *) data;
+  gint64 debug_start_us = display_debug ? g_get_monotonic_time() : 0;
   if (rx->displaying) {
     if (rx->pixels > 0) {
       int rc;
@@ -636,6 +684,9 @@ static int rx_update_display(gpointer data) {
         }
         rx->meter = level;
         meter_update(rx, SMETER, rx->meter, 0.0, 0.0);
+      }
+      if (display_debug) {
+        rx_display_debug_update(rx, g_get_monotonic_time() - debug_start_us, rc);
       }
       return TRUE;
     }
