@@ -60,6 +60,17 @@ static void tx_pan_decay_reset(TRANSMITTER *tx) {
   tx_pan_decay_sz[tx->id] = 0;
 }
 
+static void tx_show_outlined_text(cairo_t *cr, const char *text) {
+  cairo_save(cr);
+  cairo_text_path(cr, text);
+  cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+  cairo_set_line_width(cr, 2.0);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+  cairo_stroke_preserve(cr);
+  cairo_restore(cr);
+  cairo_fill(cr);
+}
+
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
 tx_panadapter_configure_event_cb(GtkWidget         *widget,
@@ -554,7 +565,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
       cairo_move_to(cr, mywidth / 2 + 10, myheight - 10);
-      cairo_show_text(cr, "PureSignal");
+      tx_show_outlined_text(cr, "PureSignal");
       int info[16];
       tx_ps_getinfo(tx, info);
       if (info[14] == 0) {
@@ -567,7 +578,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       } else {
         cairo_move_to(cr, (mywidth / 2) + 110, myheight - 10);
       }
-      cairo_show_text(cr, "Correcting");
+      tx_show_outlined_text(cr, "Correcting");
       if (info[4] > 181) {
         cairo_set_source_rgb(cr, 0.0, 0.0, 1.0);  // blau
       } else if (info[4] > 128) {
@@ -580,6 +591,12 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       if (tx->dialog) {
         cairo_move_to(cr, (mywidth / 2) + 10, myheight - 50);
       } else {
+        cairo_save(cr);
+        cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+        cairo_rectangle(cr, (mywidth / 2) + 195, myheight - 25, 130, 22);
+        cairo_set_line_width(cr, 3.5);
+        cairo_stroke(cr);
+        cairo_restore(cr);
         cairo_rectangle(cr, (mywidth / 2) + 195, myheight - 25, 130, 22);
         cairo_set_line_width(cr, 1.5);
         cairo_stroke(cr);
@@ -591,7 +608,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       } else {
         snprintf(feedback_text, sizeof(feedback_text), "Feedback Level %d", info[4]);
       }
-      cairo_show_text(cr, feedback_text);
+      tx_show_outlined_text(cr, feedback_text);
     }
     if (tx->dialog) {
       char text[64];
