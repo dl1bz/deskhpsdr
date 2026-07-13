@@ -205,8 +205,8 @@ FFTW_CFLAGS := $(shell pkg-config --cflags fftw3 fftw3f)
 FFTW_LIBS := $(shell pkg-config --libs fftw3 fftw3f)
 endif
 
-WDSP_INCLUDE=-I./wdsp-1.29 $(FFTW_CFLAGS)
-WDSP_LIBS=wdsp-1.29/libwdsp.a \
+WDSP_INCLUDE=-I./wdsp-2.00 $(FFTW_CFLAGS)
+WDSP_LIBS=wdsp-2.00/libwdsp.a \
           wdsp-libs/lib/librnnoise.a \
 		  wdsp-libs/lib/libspecbleach.a \
 		  $(FFTW_LIBS)
@@ -912,7 +912,7 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
 ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-1.29
+	@+make -C wdsp-2.00
 endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
@@ -982,6 +982,7 @@ clean:
 	rm -f src/*.orig
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
+	@if [ -d wdsp-2.00 ]; then $(MAKE) -C wdsp-2.00 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)
@@ -997,6 +998,7 @@ uninstall:
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
+	@if [ -d wdsp-2.00 ]; then $(MAKE) -C wdsp-2.00 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 	@echo "Remove installed deskHPSDR binary..."

@@ -26,6 +26,7 @@ john.d.melton@googlemail.com
 */
 
 #include <errno.h>
+#include <semaphore.h>
 
 #include "linux_port.h"
 #include "comm.h"
@@ -77,7 +78,8 @@ void DeleteCriticalSection(pthread_mutex_t *mutex) {
   pthread_mutex_destroy(mutex);
 }
 
-int LinuxWaitForMultipleObjects(int num, sem_t **sem, int waitall, int ms) {
+int LinuxWaitForMultipleObjects(int num, HANDLE *handles, int waitall, int ms) {
+  sem_t **sem = (sem_t **)handles;
   if (!waitall && ms == INFINITE) {
     //
     // As far as I can see, this is the only case we need in WDSP
@@ -97,7 +99,8 @@ int LinuxWaitForMultipleObjects(int num, sem_t **sem, int waitall, int ms) {
   }
 }
 
-int LinuxWaitForSingleObject(sem_t *sem, int ms) {
+int LinuxWaitForSingleObject(HANDLE handle, int ms) {
+  sem_t *sem = (sem_t *)handle;
   int result = 0;
   if (ms == INFINITE) {
     // wait for the lock
@@ -117,7 +120,7 @@ int LinuxWaitForSingleObject(sem_t *sem, int ms) {
   return result;
 }
 
-sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char *name) {
+HANDLE LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char *name) {
   sem_t *sem;
 #ifdef __APPLE__
   //
@@ -157,7 +160,8 @@ sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count
   return sem;
 }
 
-void LinuxReleaseSemaphore(sem_t* sem, int release_count, int *previous_count) {
+void LinuxReleaseSemaphore(HANDLE handle, int release_count, int *previous_count) {
+  sem_t *sem = (sem_t *)handle;
   //
   // Note WDSP always calls this with previous_count==NULL
   // so we do not bother about obtaining the previous value and
@@ -169,7 +173,7 @@ void LinuxReleaseSemaphore(sem_t* sem, int release_count, int *previous_count) {
   }
 }
 
-sem_t *CreateEvent(void *security_attributes, int bManualReset, int bInitialState, char *name) {
+HANDLE CreateEvent(void *security_attributes, int bManualReset, int bInitialState, char *name) {
   //
   // This is always called with bManualReset = bInitialState = FALSE
   //
@@ -178,7 +182,8 @@ sem_t *CreateEvent(void *security_attributes, int bManualReset, int bInitialStat
   return sem;
 }
 
-void LinuxSetEvent(sem_t* sem) {
+void LinuxSetEvent(HANDLE handle) {
+  sem_t *sem = (sem_t *)handle;
   //
   // WDSP uses this to set the semaphore (event) to
   // a "releasing" state.
@@ -186,7 +191,8 @@ void LinuxSetEvent(sem_t* sem) {
   sem_post(sem);
 }
 
-void LinuxResetEvent(sem_t* sem) {
+void LinuxResetEvent(HANDLE handle) {
+  sem_t *sem = (sem_t *)handle;
   //
   // WDSP uses this to set the semaphore (event) to
   // a blocking state.

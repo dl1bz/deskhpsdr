@@ -29,7 +29,6 @@ john.d.melton@googlemail.com
 
 
   #include <pthread.h>
-  #include <semaphore.h>
   #include <stdint.h>
   #include <stdio.h>
   #include <unistd.h>
@@ -102,17 +101,17 @@ john.d.melton@googlemail.com
   void DeleteCriticalSection(pthread_mutex_t *mutex);
 
 
-  sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char *name);
+  HANDLE LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char *name);
 
-  int LinuxWaitForSingleObject(sem_t *sem, int ms);
-  int LinuxWaitForMultipleObjects(int num, sem_t **sem, int waitall, int ms);
+  int LinuxWaitForSingleObject(HANDLE handle, int ms);
+  int LinuxWaitForMultipleObjects(int num, HANDLE *handles, int waitall, int ms);
 
-  void LinuxReleaseSemaphore(sem_t *sem, int release_count, int *previous_count);
+  void LinuxReleaseSemaphore(HANDLE handle, int release_count, int *previous_count);
 
-  sem_t *CreateEvent(void *security_attributes, int bManualReset, int bInitialState, char *name);
+  HANDLE CreateEvent(void *security_attributes, int bManualReset, int bInitialState, char *name);
 
-  void LinuxSetEvent(sem_t* sem);
-  void LinuxResetEvent(sem_t* sem);
+  void LinuxSetEvent(HANDLE handle);
+  void LinuxResetEvent(HANDLE handle);
 
   HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, void *arglist);
 

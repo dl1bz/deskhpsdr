@@ -328,12 +328,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   SetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
   SetPropI1("transmitter.%d.ps_oneshot",        tx->id,               tx->ps_oneshot);
-  SetPropI1("transmitter.%d.ps_ints",           tx->id,               tx->ps_ints);
-  SetPropI1("transmitter.%d.ps_spi",            tx->id,               tx->ps_spi);
-  SetPropI1("transmitter.%d.ps_stbl",           tx->id,               tx->ps_stbl);
-  SetPropI1("transmitter.%d.ps_map",            tx->id,               tx->ps_map);
-  SetPropI1("transmitter.%d.ps_pin",            tx->id,               tx->ps_pin);
-  SetPropI1("transmitter.%d.ps_ptol",           tx->id,               tx->ps_ptol);
+  SetPropI1("transmitter.%d.ps_tolerance_mode", tx->id,                 tx->ps_tolerance_mode);
   SetPropF1("transmitter.%d.ps_moxdelay",       tx->id,               tx->ps_moxdelay);
   SetPropF1("transmitter.%d.ps_loopdelay",      tx->id,               tx->ps_loopdelay);
   SetPropF1("transmitter.%d.ps_setpk",          tx->id,               tx->ps_setpk);
@@ -410,6 +405,7 @@ void tx_save_state(const TRANSMITTER *tx) {
 }
 
 static void tx_restore_state(TRANSMITTER *tx) {
+  int legacy_ps_relax_tolerance = -1;
   GetPropI1("transmitter.%d.alcmode",           tx->id,               tx->alcmode);
   GetPropI1("transmitter.%d.low_latency",       tx->id,               tx->low_latency);
   GetPropI1("transmitter.%d.fft_size",          tx->id,               tx->fft_size);
@@ -434,12 +430,14 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   GetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
   GetPropI1("transmitter.%d.ps_oneshot",        tx->id,               tx->ps_oneshot);
-  GetPropI1("transmitter.%d.ps_ints",           tx->id,               tx->ps_ints);
-  GetPropI1("transmitter.%d.ps_spi",            tx->id,               tx->ps_spi);
-  GetPropI1("transmitter.%d.ps_stbl",           tx->id,               tx->ps_stbl);
-  GetPropI1("transmitter.%d.ps_map",            tx->id,               tx->ps_map);
-  GetPropI1("transmitter.%d.ps_pin",            tx->id,               tx->ps_pin);
-  GetPropI1("transmitter.%d.ps_ptol",           tx->id,               tx->ps_ptol);
+  GetPropI1("transmitter.%d.ps_relax_tolerance", tx->id,              legacy_ps_relax_tolerance);
+  if (legacy_ps_relax_tolerance >= 0) {
+    tx->ps_tolerance_mode = legacy_ps_relax_tolerance ? 2 : 0;
+  }
+  GetPropI1("transmitter.%d.ps_tolerance_mode", tx->id,                 tx->ps_tolerance_mode);
+  if (tx->ps_tolerance_mode < 0 || tx->ps_tolerance_mode > 2) {
+    tx->ps_tolerance_mode = 2;
+  }
   GetPropF1("transmitter.%d.ps_moxdelay",       tx->id,               tx->ps_moxdelay);
   GetPropF1("transmitter.%d.ps_loopdelay",      tx->id,               tx->ps_loopdelay);
   GetPropF1("transmitter.%d.ps_setpk",          tx->id,               tx->ps_setpk);
@@ -1121,12 +1119,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   //
   tx->ps_ampdelay = 150;      // ATTENTION: this value is in nano-seconds
   tx->ps_oneshot = 0;
-  tx->ps_ints = 16;
-  tx->ps_spi = 256;           // ints=16/spi=256 corresponds to "TINT=0.5 dB"
-  tx->ps_stbl = 1;            // "Stbl" un-checked
-  tx->ps_map = 0;             // "Map" checked
-  tx->ps_pin = 1;             // "Pin" checked
-  tx->ps_ptol = 0;            // "Relax Tolerance" un-checked
+  tx->ps_tolerance_mode = 2; // relaxed PS3 compression check (0.02)
   tx->ps_moxdelay = 0.2;      // "MOX Wait" 0.2 sec
   tx->ps_loopdelay = 0.0;     // "CAL Wait" 0.0 sec
   tx->feedback = 0;
@@ -2240,6 +2233,7 @@ double tx_ps_getpk(const TRANSMITTER *tx) {
 }
 
 void tx_ps_mox(const TRANSMITTER *tx, int state) {
+  t_print("PS3 CTRL: SetPSMox tx=%d state=%d\n", tx->id, state);
   SetPSMox(tx->id, state);
 }
 
@@ -2318,30 +2312,35 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
 }
 
 void tx_ps_reset(const TRANSMITTER *tx) {
+  t_print("PS3 CTRL: SetPSControl tx=%d reset=1 mancal=0 automode=0 turnon=0\n", tx->id);
   SetPSControl(tx->id, 1, 0, 0, 0);
 }
 
 void tx_ps_resume(const TRANSMITTER *tx) {
   if (tx->ps_oneshot) {
+    t_print("PS3 CTRL: SetPSControl tx=%d reset=0 mancal=1 automode=0 turnon=0\n", tx->id);
     SetPSControl(tx->id, 0, 1, 0, 0);
   } else {
+    t_print("PS3 CTRL: SetPSControl tx=%d reset=0 mancal=0 automode=1 turnon=0\n", tx->id);
     SetPSControl(tx->id, 0, 0, 1, 0);
   }
 }
 
 void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
+  t_print("PS3 CTRL: SetPSFeedbackRate tx=%d rate=%d\n", tx->id, rate);
   SetPSFeedbackRate(tx->id, rate);
 }
 
 void tx_ps_setparams(const TRANSMITTER *tx) {
   SetPSHWPeak(tx->id, tx->ps_setpk);
   t_print("%s: TX id=%d PS tx->ps_setpk=%g\n", __func__, tx->id, tx->ps_setpk);
-  SetPSMapMode(tx->id, tx->ps_map);
-  SetPSPtol(tx->id, tx->ps_ptol ? 0.4 : 0.8);
-  SetPSIntsAndSpi(tx->id, tx->ps_ints, tx->ps_spi);
-  SetPSStabilize(tx->id, tx->ps_stbl);
-  SetPSPinMode(tx->id, tx->ps_pin);
   SetPSMoxDelay(tx->id, tx->ps_moxdelay);
+  static const double ps_deadlock_min_frac[] = {0.06, 0.04, 0.02};
+  int tolerance_mode = tx->ps_tolerance_mode;
+  if (tolerance_mode < 0 || tolerance_mode > 2) {
+    tolerance_mode = 2;
+  }
+  SetPSDeadlockMinFrac(tx->id, ps_deadlock_min_frac[tolerance_mode]);
   // Note that the TXDelay is internally stored in NanoSeconds
   SetPSTXDelay(tx->id, 1E-9 * tx->ps_ampdelay);
   SetPSLoopDelay(tx->id, tx->ps_loopdelay);

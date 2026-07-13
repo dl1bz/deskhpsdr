@@ -31,6 +31,7 @@ warren@pratt.one
 #include "nurbs_fit.h"
 
 #define SCHECK_PTS         40
+#define DEFAULT_DEADLOCK_MIN_FRAC 0.06
 
 static void init_collection(psCollection* collect) {
   collect->bbtm [0] = 0.0050;
@@ -299,6 +300,7 @@ CALCC create_calcc(int channel, int runcal, int size, int rate, double hw_scale,
   a->size = size;
   a->rate = rate;
   a->hw_scale = hw_scale;
+  a->deadlock_min_frac = DEFAULT_DEADLOCK_MIN_FRAC;
   a->ctrl.moxdelay = moxdelay;
   a->ctrl.loopdelay = loopdelay;
   a->mox = mox;
@@ -1199,7 +1201,6 @@ enum _calcc_state {
 };
 
 #define TOP_BUCKET_PTS       100
-#define DEADLOCK_MIN_FRAC    0.06
 
 static double top_bucket_useful_frac(const CurveEMA* m, double bottom) {
   double dummy = 0.0;
@@ -1336,7 +1337,7 @@ void pscc(int channel, int size, double *tx, double *rx) {
       } else if (full) {
         a->ctrl.state = MOXCHECK;
       } else if (top_bucket_useful_frac(&a->m_calavg,
-                                        a->PS_Colct.bbtm[NBUCKS - 1]) < DEADLOCK_MIN_FRAC) {
+                                        a->PS_Colct.bbtm[NBUCKS - 1]) < a->deadlock_min_frac) {
         a->ctrl.state = LRESET;
         a->info[6] |= 2;
       } else if (a->ctrl.count >= 5 * a->rate) {
@@ -1372,7 +1373,7 @@ void pscc(int channel, int size, double *tx, double *rx) {
           a->ctrl.state = LTURNON;
         } else if (a->scOK) {
           if (top_bucket_useful_frac(&a->m_calavg,
-                                     a->PS_Colct.bbtm[NBUCKS - 1]) < DEADLOCK_MIN_FRAC) {
+                                     a->PS_Colct.bbtm[NBUCKS - 1]) < a->deadlock_min_frac) {
             a->ctrl.state = LRESET;
             a->info[6] |= 2;
           } else {
@@ -1552,6 +1553,17 @@ double SetPSTXDelay(int channel, double delay) {
   }
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
   return adelay;
+}
+
+PORT
+void SetPSDeadlockMinFrac(int channel, double frac) {
+  CALCC a;
+  if (frac < 0.0) { frac = 0.0; }
+  if (frac > 1.0) { frac = 1.0; }
+  EnterCriticalSection(&txa[channel].calcc.cs_update);
+  a = txa[channel].calcc.p;
+  a->deadlock_min_frac = frac;
+  LeaveCriticalSection(&txa[channel].calcc.cs_update);
 }
 
 PORT

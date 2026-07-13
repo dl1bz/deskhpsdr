@@ -67,6 +67,7 @@ typedef struct _calcc {
   volatile int scOK;
   double hw_scale;
   double rx_scale;
+  double deadlock_min_frac;
 
   psCollection PS_Colct;
 

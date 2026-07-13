@@ -43,10 +43,6 @@ static GtkWidget *set_pk;
 static GtkWidget *tx_att;
 static GtkWidget *tx_att_spin;
 
-//
-// Todo: create buttons to change PS 2.0 values
-//
-
 static int running = 0;
 static guint info_timer = 0;
 
@@ -86,7 +82,15 @@ static gboolean close_cb(void) {
 }
 
 static void att_spin_cb(GtkWidget *widget, gpointer data) {
+  if (transmitter->auto_on) {
+    //
+    // The automatic calibration loop updates the spin button to reflect
+    // the new attenuation. The required P2 packets are scheduled there.
+    //
+    return;
+  }
   transmitter->attenuation = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  schedule_transmit_specific();
   schedule_high_priority();
 }
 
@@ -174,61 +178,56 @@ int ps_calibration_timer(gpointer arg) {
       old5 = info[5];
       newcal = 1;
     }
-    if (transmitter->auto_on) {
-      switch (state) {
-      case 0:
-        //
-        // A value of 165 means 0.7 dB too strong
-        // A value of 140 means 0.7 dB too weak
-        // So everything between 140 and 165 is accepted without changing the attenuation
-        //
-        if (newcal && ((info[4] > 165 && transmitter->attenuation < tx_att_max) || (info[4] < 140
-            && transmitter->attenuation > tx_att_min))) {
-          int delta_att;
-          int new_att;
-          if (info[4] > 275) {
-            // If signal is very strong, increase attenuation by 15 dB
-            // Note the value is limited to about 300-350 due to ADC clipping/IQ overflow,
-            // so the feedback level might be much stronger than indicated here
-            delta_att = 15;
-            if (transmitter->attenuation < -15) { delta_att += 15; }
-          } else if (info[4] < 25) {
-            // If signal is very weak, decrease attenuation by 15 dB
-            delta_att = -15;
-          } else {
-            // calculate new delta, this mostly succeeds in one step
-            delta_att = (int) lround(20.0 * log10((double) info[4] / 152.293));
-          }
-          new_att = transmitter->attenuation + delta_att;
-          // keep new value of attenuation in allowed range
-          if (new_att < tx_att_min) { new_att = tx_att_min; }
-          if (new_att > tx_att_max) { new_att = tx_att_max; }
-          // A "PS reset" is only necessary if the attenuation
-          // has actually changed. This prevents firing "reset"
-          // constantly if the SDR board does not have a TX attenuator
-          // (in this case, att will fast reach tx_att_max and stay there if the
-          // feedback level is too high).
-          // Actually, we first adjust the attenuation (state=0),
-          // then do a PS reset (state=1), and then restart PS (state=2).
-          if (transmitter->attenuation != new_att) {
-            tx_ps_reset(transmitter);
-            transmitter->attenuation = new_att;
-            schedule_transmit_specific();
-            state = 1;
-          }
+    switch (state) {
+    case 0:
+      //
+      // PureSignal calibration must run independently of Auto Attenuate.
+      // Auto Attenuate only changes the hardware attenuation after a new
+      // calibration result; it must not gate the PS reset/resume sequence.
+      //
+      if (transmitter->auto_on && newcal
+          && ((info[4] > 165 && transmitter->attenuation < tx_att_max)
+              || (info[4] < 140 && transmitter->attenuation > tx_att_min))) {
+        int delta_att;
+        int new_att;
+        if (info[4] > 275) {
+          // If signal is very strong, increase attenuation by 15 dB
+          // Note the value is limited to about 300-350 due to ADC clipping/IQ overflow,
+          // so the feedback level might be much stronger than indicated here
+          delta_att = 15;
+          if (transmitter->attenuation < -15) { delta_att += 15; }
+        } else if (info[4] < 25) {
+          // If signal is very weak, decrease attenuation by 15 dB
+          delta_att = -15;
+        } else {
+          // calculate new delta, this mostly succeeds in one step
+          delta_att = (int) lround(20.0 * log10((double) info[4] / 152.293));
         }
-        break;
-      case 1:
-        // Perform a PS reset and proceed to a PS restart
-        state = 2;
-        tx_ps_reset(transmitter);
-        break;
-      case 2:
-        // Perform a PS restart and proceed to the calibration loop
-        state = 0;
-        tx_ps_resume(transmitter);
-        break;
+        new_att = transmitter->attenuation + delta_att;
+        // keep new value of attenuation in allowed range
+        if (new_att < tx_att_min) { new_att = tx_att_min; }
+        if (new_att > tx_att_max) { new_att = tx_att_max; }
+        // A PS reset is only necessary if the attenuation has actually changed.
+        // First update the hardware attenuation, then reset and resume PS in the
+        // following timer steps.
+        if (transmitter->attenuation != new_att) {
+          transmitter->attenuation = new_att;
+          schedule_high_priority();
+          schedule_transmit_specific();
+          state = 1;
+        }
       }
+      break;
+    case 1:
+      // Perform a PS reset and proceed to a PS restart.
+      state = 2;
+      tx_ps_reset(transmitter);
+      break;
+    case 2:
+      // Perform a PS restart and proceed to the calibration loop.
+      state = 0;
+      tx_ps_resume(transmitter);
+      break;
     }
   }
   return G_SOURCE_CONTINUE;
@@ -394,11 +393,6 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-static void tol_cb(GtkWidget *widget, gpointer data) {
-  transmitter->ps_ptol = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  tx_ps_setparams(transmitter);
-  ps_off_on();
-}
 
 static void oneshot_cb(GtkWidget *widget, gpointer data) {
   transmitter->ps_oneshot = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -406,11 +400,16 @@ static void oneshot_cb(GtkWidget *widget, gpointer data) {
   ps_off_on();
 }
 
-static void map_cb(GtkWidget *widget, gpointer data) {
-  transmitter->ps_map = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+static void tolerance_mode_cb(GtkComboBox *combo, gpointer data) {
+  int mode = gtk_combo_box_get_active(combo);
+  if (mode < 0 || mode > 2 || mode == transmitter->ps_tolerance_mode) {
+    return;
+  }
+  transmitter->ps_tolerance_mode = mode;
   tx_ps_setparams(transmitter);
   ps_off_on();
 }
+
 
 static void auto_cb(GtkWidget *widget, gpointer data) {
   transmitter->auto_on = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -452,6 +451,9 @@ static void resume_cb(GtkWidget *widget, gpointer data) {
   if (transmitter->puresignal) {
     if (transmitter->twotone && transmitter->auto_on) {
       transmitter->attenuation = 0;
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);
+      schedule_high_priority();
+      schedule_transmit_specific();
     }
     tx_ps_resume(transmitter);
   }
@@ -578,28 +580,29 @@ void ps_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), ps_ant_combo, col, row, 1, 1);
   g_signal_connect(ps_ant_combo, "changed", G_CALLBACK(ps_ant_cb), NULL);
   col++;
-  GtkWidget *map_b = gtk_check_button_new_with_label("PS MAP");
-  gtk_widget_set_name(map_b, "boldlabel");
-  gtk_widget_set_tooltip_text(map_b, "Enable adaptive PureSignal sample mapping for heavily compressed amplifiers.\n"
-                                     "Correction may be less stable if active. First try with OFF.");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(map_b), transmitter->ps_map);
-  gtk_grid_attach(GTK_GRID(grid), map_b, col, row, 1, 1);
-  g_signal_connect(map_b, "toggled", G_CALLBACK(map_cb), NULL);
-  col++;
-  GtkWidget *tol_b = gtk_check_button_new_with_label("PS Relax Tolerance");
-  gtk_widget_set_name(tol_b, "boldlabel");
-  gtk_widget_set_tooltip_text(tol_b, "Relax PureSignal calibration tolerance for difficult amplifiers.\n"
-                                     "May help when calibration is rejected or unstable.");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tol_b), transmitter->ps_ptol);
-  gtk_grid_attach(GTK_GRID(grid), tol_b, col, row, 2, 1);
-  g_signal_connect(tol_b, "toggled", G_CALLBACK(tol_cb), NULL);
-  col++;
-  col++;
   GtkWidget *oneshot_b = gtk_check_button_new_with_label("OneShot");
   gtk_widget_set_name(oneshot_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(oneshot_b), transmitter->ps_oneshot);
   gtk_grid_attach(GTK_GRID(grid), oneshot_b, col, row, 1, 1);
   g_signal_connect(oneshot_b, "toggled", G_CALLBACK(oneshot_cb), NULL);
+  col++;
+  GtkWidget *tolerance_label = gtk_label_new("PS Stability:");
+  gtk_widget_set_name(tolerance_label, "boldlabel");
+  gtk_widget_set_halign(tolerance_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(grid), tolerance_label, col, row, 1, 1);
+  col++;
+  GtkWidget *tolerance_combo = gtk_combo_box_text_new();
+  gtk_widget_set_tooltip_text(tolerance_combo,
+                              "PureSignal 3 compression/deadlock check threshold.\n"
+                              "Strict : 0.06 (Highest solution validation, WDSP 2.00 default)\n"
+                              "Medium : 0.04 (Balanced stability and output power)\n"
+                              "Relaxed: 0.02 (More tolerant of highly compressed power amplifiers)");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tolerance_combo), "Strict");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tolerance_combo), "Medium");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tolerance_combo), "Relaxed");
+  gtk_combo_box_set_active(GTK_COMBO_BOX(tolerance_combo), transmitter->ps_tolerance_mode);
+  my_combo_attach(GTK_GRID(grid), tolerance_combo, col, row, 1, 1);
+  g_signal_connect(tolerance_combo, "changed", G_CALLBACK(tolerance_mode_cb), NULL);
   row++;
   col = 0;
   feedback_l = gtk_label_new("Feedback Lvl");

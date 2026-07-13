@@ -93,17 +93,12 @@ typedef struct _transmitter {
   int tci_tx_audio_gain_db;
 
   double ps_setpk;
-  // PS 2.0 parameters
+  // PureSignal parameters
   double ps_ampdelay;
-  int    ps_ints;
-  int    ps_spi;
-  int    ps_stbl;
-  int    ps_map;
-  int    ps_pin;
-  int    ps_ptol;
   double ps_moxdelay;
   double ps_loopdelay;
   int    ps_oneshot;
+  int    ps_tolerance_mode;
 
   int ctcss_enabled;
   int ctcss;

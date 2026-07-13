@@ -4,7 +4,7 @@
 #
 
 CFLAGS?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses -Wcast-align
-CFLAGS += -I../rnnoise/include -I../libspecbleach/include
+CFLAGS += -I../wdsp-libs/include
 
 FFTWINCLUDE=`pkg-config --cflags fftw3`
 

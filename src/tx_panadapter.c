@@ -568,6 +568,28 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       tx_show_outlined_text(cr, "PureSignal");
       int info[16];
       tx_ps_getinfo(tx, info);
+      {
+        static int initialized[TX_PAN_DECAY_MAX_TX];
+        static int old_check[TX_PAN_DECAY_MAX_TX];
+        static int old_cal_count[TX_PAN_DECAY_MAX_TX];
+        static int old_attempts[TX_PAN_DECAY_MAX_TX];
+        static int old_correcting[TX_PAN_DECAY_MAX_TX];
+        static int old_state[TX_PAN_DECAY_MAX_TX];
+        int id = tx->id;
+        if (id >= 0 && id < TX_PAN_DECAY_MAX_TX &&
+            (!initialized[id] || old_check[id] != info[6] ||
+             old_cal_count[id] != info[5] || old_attempts[id] != info[7] ||
+             old_correcting[id] != info[14] || old_state[id] != info[15])) {
+          t_print("PS3 STATUS: tx=%d level=%d cal=%d check=%d attempts=%d correcting=%d state=%d att=%d\n",
+                  id, info[4], info[5], info[6], info[7], info[14], info[15], tx->attenuation);
+          initialized[id] = 1;
+          old_check[id] = info[6];
+          old_cal_count[id] = info[5];
+          old_attempts[id] = info[7];
+          old_correcting[id] = info[14];
+          old_state[id] = info[15];
+        }
+      }
       if (info[14] == 0) {
         cairo_set_source_rgba(cr, COLOUR_ALARM);
       } else {
