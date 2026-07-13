@@ -1066,16 +1066,27 @@ static void tci_service_rx_audio (void) {
 }
 
 //
-// To keep things  simple, tci_send_dds does not report
-// the center frequency but the "real" RX frequency
+// DDS reports the center frequency of the IQ stream.  CTUN changes the
+// receive frequency inside that stream, but does not move its center.
 //
 static void tci_send_dds (CLIENT *client, int v) {
-  long long f;
   char msg[MAXMSGSIZE];
   if (v < 0 || v > 1) { return; }
-  f = vfo[v].ctun ? vfo[v].ctun_frequency : vfo[v].frequency;
-  snprintf (msg, MAXMSGSIZE, "dds:%d,%lld;", v, f);
+  snprintf (msg, MAXMSGSIZE, "dds:%d,%lld;", v, vfo[v].frequency);
   tci_send_text (client, msg);
+}
+
+static void tci_broadcast_dds (int v) {
+  GList *clients;
+  if (v < 0 || v > 1 || v >= receivers) { return; }
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *) l->data;
+    if (client != NULL && client->running) {
+      tci_send_dds (client, v);
+    }
+  }
+  g_list_free (clients);
 }
 
 static void tci_send_mox (CLIENT *client) {
@@ -1257,11 +1268,13 @@ static void tci_broadcast_vfo (int v, int c) {
 }
 
 static void tci_set_vfo (CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
+  int changed_vfo;
   if (VfoNr < 0 || VfoNr > 1) { return; }
   if (VfoNr >= receivers) { return; }
   if (Ch < 0 || Ch > 1) { return; }
+  changed_vfo = (VfoNr == VFO_A && Ch == 0) ? VFO_A : VFO_B;
   tci_begin_apply();
-  if (VfoNr == VFO_A && Ch == 0) {
+  if (changed_vfo == VFO_A) {
     vfo_set_frequency (VFO_A, SetFreq);
     client->last_fa = SetFreq;
     g_idle_add (ext_vfo_update, NULL);
@@ -1271,6 +1284,9 @@ static void tci_set_vfo (CLIENT *client, int VfoNr, int Ch, long long SetFreq) {
     g_idle_add (ext_vfo_update, NULL);
   }
   tci_end_apply();
+  if (changed_vfo < receivers) {
+    tci_broadcast_dds (changed_vfo);
+  }
   tci_broadcast_vfo (VfoNr, Ch);
 }
 
@@ -2653,10 +2669,12 @@ static void tci_broadcast_mode_value (int v, int m) {
 void tci_vfo_changed (int id) {
   if (!tci_running) { return; }
   if (id == VFO_A) {
+    tci_broadcast_dds (VFO_A);
     tci_broadcast_vfo (VFO_A, 0);
   } else if (id == VFO_B) {
     tci_broadcast_vfo (VFO_A, 1);
     if (receivers > 1) {
+      tci_broadcast_dds (VFO_B);
       tci_broadcast_vfo (VFO_B, 0);
       tci_broadcast_vfo (VFO_B, 1);
     }
@@ -2665,10 +2683,12 @@ void tci_vfo_changed (int id) {
 
 void tci_vfos_changed (void) {
   if (!tci_running) { return; }
+  tci_broadcast_dds (VFO_A);
   tci_broadcast_vfo (VFO_A, 0);
   tci_broadcast_vfo (VFO_A, 1);
   tci_broadcast_mode_value (VFO_A, vfo[VFO_A].mode);
   if (receivers > 1) {
+    tci_broadcast_dds (VFO_B);
     tci_broadcast_vfo (VFO_B, 0);
     tci_broadcast_vfo (VFO_B, 1);
     tci_broadcast_mode_value (VFO_B, vfo[VFO_B].mode);
