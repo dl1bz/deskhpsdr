@@ -580,8 +580,8 @@ void tx_panadapter_update(TRANSMITTER *tx) {
             (!initialized[id] || old_check[id] != info[6] ||
              old_cal_count[id] != info[5] || old_attempts[id] != info[7] ||
              old_correcting[id] != info[14] || old_state[id] != info[15])) {
-          t_print("PS3 STATUS: tx=%d level=%d cal=%d check=%d attempts=%d correcting=%d state=%d att=%d\n",
-                  id, info[4], info[5], info[6], info[7], info[14], info[15], tx->attenuation);
+          // t_print("PS3 STATUS: tx=%d level=%d cal=%d check=%d attempts=%d correcting=%d state=%d att=%d\n",
+          //        id, info[4], info[5], info[6], info[7], info[14], info[15], tx->attenuation);
           initialized[id] = 1;
           old_check[id] = info[6];
           old_cal_count[id] = info[5];
