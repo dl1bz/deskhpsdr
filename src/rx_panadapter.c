@@ -2042,7 +2042,7 @@ void display_panadapter_messages (cairo_t *cr, int width, unsigned int fps) {
       static unsigned int sequence_error_count = 0;
       cairo_move_to (cr, 100.0, 50.0);
       cairo_set_source_rgba (cr, COLOUR_ORANGE);
-      cairo_show_text (cr, "UDP Stream Sequence Error");
+      cairo_show_text (cr, "UDP Packet Loss");
       cairo_set_source_rgba (cr, COLOUR_ALARM);
       sequence_error_count++;
       if (sequence_error_count >= 2 * fps) {
