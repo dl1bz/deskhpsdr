@@ -2597,6 +2597,7 @@ void radio_set_split (int val) {
   //
   if (can_transmit) {
     split = val;
+    vfo_apply_ps_tx_att();
     radio_tx_vfo_changed();
     radio_set_alex_antennas();
     if (!tci_is_applying()) {

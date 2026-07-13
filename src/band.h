@@ -86,9 +86,12 @@ struct _BAND {
 
 typedef struct _BAND BAND;
 
+#define PS_TX_ATT_UNSET 999
+
 struct _BANDSETTINGS {
   int tx_drive;
   int tune_drive;
+  int ps_tx_att;
 };
 
 typedef struct _BANDSETTINGS BANDSETTINGS;

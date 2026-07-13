@@ -580,6 +580,10 @@ void bandSaveState(void) {
         }
       }
       SetPropI1("band.%d.tune_drive", b,         band_settings[b].tune_drive);
+      if (band_settings[b].ps_tx_att == PS_TX_ATT_UNSET) {
+        band_settings[b].ps_tx_att = transmitter->attenuation;
+      }
+      SetPropI1("band.%d.ps_tx_att", b,           band_settings[b].ps_tx_att);
     }
     for (int stack = 0; stack < bands[b].bandstack->entries; stack++) {
       BANDSTACK_ENTRY *entry = bands[b].bandstack->entry;
@@ -622,6 +626,8 @@ void bandRestoreState(void) {
     GetPropF1("band.%d.pa_calibration", b,     bands[b].pa_calibration);
     GetPropI1("band.%d.tx_drive", b,           band_settings[b].tx_drive);
     GetPropI1("band.%d.tune_drive", b,         band_settings[b].tune_drive);
+    band_settings[b].ps_tx_att = PS_TX_ATT_UNSET;
+    GetPropI1("band.%d.ps_tx_att", b,           band_settings[b].ps_tx_att);
     GetPropI1("band.%d.OCrx", b,               bands[b].OCrx);
     GetPropI1("band.%d.OCtx", b,               bands[b].OCtx);
     for (int stack = 0; stack < bands[b].bandstack->entries; stack++) {
@@ -664,6 +670,14 @@ void bandRestoreState(void) {
     }
     if (band_settings[b].tune_drive > 100) {
       band_settings[b].tune_drive = 100;
+    }
+    if (band_settings[b].ps_tx_att != PS_TX_ATT_UNSET) {
+      if (band_settings[b].ps_tx_att < -29) {
+        band_settings[b].ps_tx_att = -29;
+      }
+      if (band_settings[b].ps_tx_att > 31) {
+        band_settings[b].ps_tx_att = 31;
+      }
     }
   }
   band_apply_iaru_region();

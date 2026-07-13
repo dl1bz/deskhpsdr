@@ -442,6 +442,19 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropF1("transmitter.%d.ps_loopdelay",      tx->id,               tx->ps_loopdelay);
   GetPropF1("transmitter.%d.ps_setpk",          tx->id,               tx->ps_setpk);
   GetPropI1("transmitter.%d.attenuation",       tx->id,               tx->attenuation);
+  // Migrate the former global PS TX attenuation to bands which do not yet
+  // have a per-band value, then activate the value for the current TX band.
+  for (int b = 0; b < BANDS + XVTRS; b++) {
+    BANDSETTINGS *bs = band_get_settings(b);
+    if (bs != NULL && bs->ps_tx_att == PS_TX_ATT_UNSET) {
+      bs->ps_tx_att = tx->attenuation;
+    }
+  }
+  int tx_vfo = vfo_get_tx_vfo();
+  BANDSETTINGS *tx_bs = band_get_settings(vfo[tx_vfo].band);
+  if (tx_bs != NULL) {
+    tx->attenuation = tx_bs->ps_tx_att;
+  }
   GetPropI1("transmitter.%d.ctcss_enabled",     tx->id,               tx->ctcss_enabled);
   GetPropI1("transmitter.%d.ctcss",             tx->id,               tx->ctcss);
   GetPropI1("transmitter.%d.deviation",         tx->id,               tx->deviation);

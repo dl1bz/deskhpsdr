@@ -205,6 +205,7 @@ extern void       vfo_a_to_b(void);
 extern void       vfo_b_to_a(void);
 extern void       vfo_a_swap_b(void);
 extern int        vfo_get_tx_vfo(void);
+extern void       vfo_apply_ps_tx_att(void);
 extern int        vfo_get_tx_mode(void);
 extern long long  vfo_get_tx_freq(void);
 extern void       vfo_xvtr_changed(void);

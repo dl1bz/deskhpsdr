@@ -31,6 +31,7 @@
 #include "transmitter.h"
 #include "new_protocol.h"
 #include "vfo.h"
+#include "band.h"
 #include "ext.h"
 #include "message.h"
 #include "sliders.h"
@@ -47,6 +48,14 @@ static int running = 0;
 static guint info_timer = 0;
 
 #define INFO_SIZE 16
+
+static void store_tx_att_for_current_band(void) {
+  int tx_vfo = vfo_get_tx_vfo();
+  BANDSETTINGS *bs = band_get_settings(vfo[tx_vfo].band);
+  if (bs != NULL) {
+    bs->ps_tx_att = transmitter->attenuation;
+  }
+}
 
 static GtkWidget *entry[INFO_SIZE];
 
@@ -90,6 +99,7 @@ static void att_spin_cb(GtkWidget *widget, gpointer data) {
     return;
   }
   transmitter->attenuation = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  store_tx_att_for_current_band();
   schedule_transmit_specific();
   schedule_high_priority();
 }
@@ -212,6 +222,7 @@ int ps_calibration_timer(gpointer arg) {
         // following timer steps.
         if (transmitter->attenuation != new_att) {
           transmitter->attenuation = new_att;
+          store_tx_att_for_current_band();
           schedule_high_priority();
           schedule_transmit_specific();
           state = 1;
@@ -451,6 +462,7 @@ static void resume_cb(GtkWidget *widget, gpointer data) {
   if (transmitter->puresignal) {
     if (transmitter->twotone && transmitter->auto_on) {
       transmitter->attenuation = 0;
+      store_tx_att_for_current_band();
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);
       schedule_high_priority();
       schedule_transmit_specific();

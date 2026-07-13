@@ -58,6 +58,16 @@ extern int tci_is_applying(void);
 #include "actions.h"
 #include "noise_menu.h"
 #include "equalizer_menu.h"
+
+void vfo_apply_ps_tx_att(void) {
+  if (!can_transmit || transmitter == NULL) { return; }
+  int tx_vfo = vfo_get_tx_vfo();
+  BANDSETTINGS *bs = band_get_settings(vfo[tx_vfo].band);
+  if (bs == NULL || bs->ps_tx_att == PS_TX_ATT_UNSET || transmitter->attenuation == bs->ps_tx_att) { return; }
+  transmitter->attenuation = bs->ps_tx_att;
+  schedule_high_priority();
+  schedule_transmit_specific();
+}
 #include "message.h"
 #include "sliders.h"
 #include "audio.h"
@@ -783,6 +793,7 @@ static inline void vfo_adjust_band(int v, long long f) {
         update_slider_tune_drive_scale(TRUE);
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
       }
+      if (v == vfo_get_tx_vfo()) { vfo_apply_ps_tx_att(); }
     }
 #if defined (__AUTOG__)
     if (can_transmit && autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
@@ -1024,6 +1035,12 @@ void vfo_band_changed(int id, int b) {
   vfo[id].lo = band->frequencyLO + band->errorLO;
   vfo[id].filter = entry->filter;
   vfo[id].deviation = entry->deviation;
+  if (can_transmit && id == vfo_get_tx_vfo()) {
+    // Apply the attenuation of the newly selected TX band only after the
+    // VFO band has been updated. Calling this earlier still selects the
+    // attenuation stored for the previous band.
+    vfo_apply_ps_tx_att();
+  }
   //
   // Paranoia:
   // There should be no out-of-band frequencies in the
