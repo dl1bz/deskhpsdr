@@ -1147,12 +1147,12 @@ install-Linux: all
 	fi
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/$(PROGRAM)"
 	@sudo mkdir -p "/usr/local/share/$(PROGRAM)"
-	@sudo cp release/"$(PROGRAM)"/hpsdr*.png "/usr/local/share/$(PROGRAM)"
-	@sudo cp release/"$(PROGRAM)"/trx_icon.png "/usr/local/share/$(PROGRAM)"
+	@sudo cp stuff/"$(PROGRAM)"/hpsdr*.png "/usr/local/share/$(PROGRAM)"
+	@sudo cp stuff/"$(PROGRAM)"/trx_icon.png "/usr/local/share/$(PROGRAM)"
 	@echo "Copy icon files for deskHPSDR to /usr/local/share/icons"
 	@sudo mkdir -p "/usr/local/share/icons"
-	@sudo cp release/"$(PROGRAM)"/radio_icon.png "/usr/local/share/icons"
-	@sudo cp release/"$(PROGRAM)"/trx_icon.png "/usr/local/share/icons"
+	@sudo cp stuff/"$(PROGRAM)"/radio_icon.png "/usr/local/share/icons"
+	@sudo cp stuff/"$(PROGRAM)"/trx_icon.png "/usr/local/share/icons"
 	@echo "Copy additional needed Fonts..."
 	@if [ -d /usr/share/fonts/truetype ]; then \
 		sudo cp -R fonts/ttf/Roboto /usr/share/fonts/truetype; \

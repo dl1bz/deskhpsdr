@@ -1,6 +1,6 @@
 # deskHPSDR by DL1BZ for OpenHPSDR protocol 1 & 2
 
-<img src="https://github.com/dl1bz/deskhpsdr/blob/master/release/deskhpsdr/screenshot.png" width="1024px" />
+<img src="https://github.com/dl1bz/deskhpsdr/blob/master/stuff/deskhpsdr/screenshot.png" width="1024px" />
 
 ## deskHPSDR ≠ pihpsdr: new app, revised concept, new name
 
