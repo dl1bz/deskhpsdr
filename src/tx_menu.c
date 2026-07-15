@@ -1477,7 +1477,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_AM_CARRIER));
   row++;
-  col = 0;
+  col = 2;
   btn = gtk_check_button_new_with_label("Fill Panadapter");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->display_filled);
