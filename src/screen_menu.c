@@ -465,7 +465,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_name(ChkBtn_tscreen, "boldlabel");
   gtk_widget_set_margin_start(ChkBtn_tscreen, 20);    // linker Rand (Anfang)
   gtk_widget_set_tooltip_text(ChkBtn_tscreen,
-                              "Change the design of some buttons and\nsliders for easier use with a touch screen");
+                              "Change sliders to spin buttons for easier use with a touchscreen");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_tscreen), optimize_for_touchscreen);
   gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 1, 1);
   g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &optimize_for_touchscreen);

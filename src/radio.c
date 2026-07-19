@@ -2139,6 +2139,7 @@ void radio_set_mox (int state) {
   mox  = state;
   tune = 0;
   vox  = 0;
+  update_slider_mic_gain_btn();
   if (!tci_is_applying() && (!was_tune || state)) {
     tci_mox_changed (state);
   }

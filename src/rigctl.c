@@ -2134,6 +2134,7 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           receiver[0]->volume = 20.0 * log10 (0.01 * (double) gain);
         }
         set_af_gain (0, receiver[0]->volume);
+        tci_volume_changed (0);
       }
       break;
     case 'C': //ZZLC
@@ -3781,7 +3782,7 @@ int parse_cmd (void *data) {
         int id = SET (command[2] == '1');
         int gain = atoi (&command[3]);
         double vol = (gain < 3) ? -40.0 : 20.0 * log10 ((double) gain / 255.0);
-        RXCHECK (id, receiver[id]->volume = vol; set_af_gain (0, receiver[id]->volume); tci_volume_changed (id));
+        RXCHECK (id, receiver[id]->volume = vol; set_af_gain (id, receiver[id]->volume); tci_volume_changed (id));
       }
       break;
     case 'I': //AI

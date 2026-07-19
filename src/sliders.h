@@ -38,6 +38,7 @@ extern void update_slider_autogain_btn(void);
 extern void update_slider_snb_button(gboolean show_widget);
 extern void update_slider_binaural_btn(void);
 extern void update_slider_tune_drive_btn(void);
+extern void update_slider_mic_gain_btn(void);
 extern void update_slider_af_gain_btn(void);
 extern void update_slider_split_btn(void);
 extern void update_slider_agc_btn(void);

@@ -53,6 +53,7 @@ extern void tci_mute_changed(int receiver_id);
 #include "tx_menu.h"
 #include "toolset.h"
 #include "noise_menu.h"
+#include "new_menu.h"
 
 static int width;
 static int height;
@@ -72,11 +73,14 @@ static GtkWidget *rf_gain_scale = NULL;
 static gulong rf_gain_scale_signal_id;
 static GtkWidget *attenuation_label = NULL;
 static GtkWidget *attenuation_scale = NULL;
+static gulong attenuation_scale_signal_id;
 static GtkWidget *c25_box = NULL;
 static GtkWidget *c25_att_combobox = NULL;
 static GtkWidget *c25_att_label = NULL;
 static GtkWidget *mic_gain_label;
+static GtkWidget *mic_gain_btn;
 static GtkWidget *mic_gain_scale;
+static gulong    mic_gain_btn_signal_id;
 static gulong    mic_gain_scale_signal_id;
 static GtkWidget *drive_label;
 static GtkWidget *drive_scale;
@@ -136,6 +140,26 @@ static gulong ps_btn_signal_id;
 static GtkWidget *nr_btn;
 static GtkWidget *nr_label;
 static gulong nr_btn_signal_id;
+static GtkWidget *vfo_up_btn;
+static GtkWidget *vfo_up_label;
+static GtkWidget *vfo_dwn_btn;
+static GtkWidget *vfo_dwn_label;
+static GtkWidget *vfo_fup_btn;
+static GtkWidget *vfo_fup_label;
+static GtkWidget *vfo_fdwn_btn;
+static GtkWidget *vfo_fdwn_label;
+static GtkWidget *vfo_step_up_btn;
+static GtkWidget *vfo_step_up_label;
+static GtkWidget *vfo_step_dwn_btn;
+static GtkWidget *vfo_step_dwn_label;
+static GtkWidget *mode_menu_btn;
+static GtkWidget *mode_menu_label;
+static GtkWidget *band_menu_btn;
+static GtkWidget *band_menu_label;
+static GtkWidget *rx_filter_menu_btn;
+static GtkWidget *rx_filter_menu_label;
+static GtkWidget *nr_menu_btn;
+static GtkWidget *nr_menu_label;
 
 static void sliders_signal_handler_block(gpointer instance, gulong handler_id) {
   if (instance != NULL && handler_id > 0 && G_IS_OBJECT(instance) &&
@@ -289,14 +313,20 @@ int sliders_active_receiver_changed(void *data) {
     // new active receiver
     //
     sliders_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
-    gtk_range_set_value(GTK_RANGE(af_gain_scale), active_receiver->volume);
+    if (GTK_IS_SPIN_BUTTON(af_gain_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale), active_receiver->volume);
+    } else if (GTK_IS_RANGE(af_gain_scale)) {
+      gtk_range_set_value(GTK_RANGE(af_gain_scale), active_receiver->volume);
+    }
     sliders_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
     update_slider_af_gain_btn();
+    sliders_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
     if (GTK_IS_SPIN_BUTTON(agc_gain_scale)) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_gain_scale), (double) active_receiver->agc_gain);
     } else if (GTK_IS_RANGE(agc_gain_scale)) {
       gtk_range_set_value(GTK_RANGE(agc_gain_scale), (double) active_receiver->agc_gain);
     }
+    sliders_signal_handler_unblock(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
     update_slider_agc_btn();
     if (!active_receiver_noise_allowed() && (active_receiver->nr != 0 || active_receiver->snb != 0)) {
       active_receiver->nr = 0;
@@ -312,13 +342,29 @@ int sliders_active_receiver_changed(void *data) {
     // enable/disable squelch
     //
     sliders_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
-    gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
+    if (GTK_IS_SPIN_BUTTON(squelch_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(squelch_scale), active_receiver->squelch);
+    } else if (GTK_IS_RANGE(squelch_scale)) {
+      gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
+    }
     sliders_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
+    sliders_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
+    sliders_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
     if (filter_board == CHARLY25) {
       update_c25_att();
     } else {
-      if (attenuation_scale != NULL) { gtk_range_set_value(GTK_RANGE(attenuation_scale), (double) adc[active_receiver->adc].attenuation); }
+      if (attenuation_scale != NULL) {
+        sliders_signal_handler_block(G_OBJECT(attenuation_scale), attenuation_scale_signal_id);
+        if (GTK_IS_SPIN_BUTTON(attenuation_scale)) {
+          gtk_spin_button_set_value(GTK_SPIN_BUTTON(attenuation_scale),
+                                    (double) adc[active_receiver->adc].attenuation);
+        } else if (GTK_IS_RANGE(attenuation_scale)) {
+          gtk_range_set_value(GTK_RANGE(attenuation_scale),
+                              (double) adc[active_receiver->adc].attenuation);
+        }
+        sliders_signal_handler_unblock(G_OBJECT(attenuation_scale), attenuation_scale_signal_id);
+      }
       if (rf_gain_scale != NULL) { gtk_range_set_value(GTK_RANGE(rf_gain_scale), adc[active_receiver->adc].gain); }
     }
   }
@@ -331,7 +377,15 @@ void set_attenuation_value(double value) {
   adc[active_receiver->adc].attenuation = (int) value;
   schedule_high_priority();
   if (display_sliders) {
-    gtk_range_set_value(GTK_RANGE(attenuation_scale), (double) adc[active_receiver->adc].attenuation);
+    sliders_signal_handler_block(G_OBJECT(attenuation_scale), attenuation_scale_signal_id);
+    if (GTK_IS_SPIN_BUTTON(attenuation_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(attenuation_scale),
+                                (double) adc[active_receiver->adc].attenuation);
+    } else if (GTK_IS_RANGE(attenuation_scale)) {
+      gtk_range_set_value(GTK_RANGE(attenuation_scale),
+                          (double) adc[active_receiver->adc].attenuation);
+    }
+    sliders_signal_handler_unblock(G_OBJECT(attenuation_scale), attenuation_scale_signal_id);
   } else {
     char title[64];
     snprintf(title, 64, "Attenuation - ADC-%d (dB)", active_receiver->adc);
@@ -341,8 +395,19 @@ void set_attenuation_value(double value) {
 }
 
 static void attenuation_value_changed_cb(GtkWidget *widget, gpointer data) {
-  if (!have_rx_att) { return; }
-  adc[active_receiver->adc].attenuation = gtk_range_get_value(GTK_RANGE(attenuation_scale));
+  (void)data;
+  if (!have_rx_att) {
+    return;
+  }
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    adc[active_receiver->adc].attenuation =
+            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  } else if (GTK_IS_RANGE(widget)) {
+    adc[active_receiver->adc].attenuation =
+            (int) gtk_range_get_value(GTK_RANGE(widget));
+  } else {
+    return;
+  }
   schedule_high_priority();
 }
 
@@ -458,10 +523,13 @@ void update_c25_att(void) {
 }
 
 static void agcgain_value_changed_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
   if (GTK_IS_SPIN_BUTTON(widget)) {
     active_receiver->agc_gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   } else if (GTK_IS_RANGE(widget)) {
     active_receiver->agc_gain = gtk_range_get_value(GTK_RANGE(widget));
+  } else {
+    return;
   }
   rx_set_agc(active_receiver);
   tci_agc_gain_changed(active_receiver->id);
@@ -488,7 +556,14 @@ void set_agc_gain(int rx, double value) {
 }
 
 static void afgain_value_changed_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->volume = gtk_range_get_value(GTK_RANGE(af_gain_scale));
+  (void)data;
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    active_receiver->volume = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  } else if (GTK_IS_RANGE(widget)) {
+    active_receiver->volume = gtk_range_get_value(GTK_RANGE(widget));
+  } else {
+    return;
+  }
   rx_set_af_gain(active_receiver);
   tci_volume_changed(active_receiver->id);
 }
@@ -498,7 +573,13 @@ void set_af_gain(int rx, double value) {
   receiver[rx]->volume = value;
   rx_set_af_gain(receiver[rx]);
   if (display_sliders && rx == active_receiver->id) {
-    gtk_range_set_value(GTK_RANGE(af_gain_scale), value);
+    sliders_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    if (GTK_IS_SPIN_BUTTON(af_gain_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale), value);
+    } else if (GTK_IS_RANGE(af_gain_scale)) {
+      gtk_range_set_value(GTK_RANGE(af_gain_scale), value);
+    }
+    sliders_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
   } else {
     char title[64];
     snprintf(title, 64, "AF Gain RX%d", rx + 1);
@@ -750,10 +831,17 @@ void show_filter_low(int rx, int var) {
 }
 
 static void squelch_value_changed_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
   int old_enable = active_receiver->squelch_enable;
   int new_enable;
-  active_receiver->squelch = gtk_range_get_value(GTK_RANGE(widget));
-  new_enable = (active_receiver->squelch > 0.5);
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    active_receiver->squelch = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  } else if (GTK_IS_RANGE(widget)) {
+    active_receiver->squelch = gtk_range_get_value(GTK_RANGE(widget));
+  } else {
+    return;
+  }
+  new_enable = (active_receiver->squelch > 0.0);
   active_receiver->squelch_enable = new_enable;
   sliders_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), active_receiver->squelch_enable);
@@ -766,7 +854,18 @@ static void squelch_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
-  active_receiver->squelch_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  (void)data;
+  int new_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if (new_enable && active_receiver->squelch <= 0.0) {
+    sliders_signal_handler_block(G_OBJECT(widget), squelch_enable_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
+    sliders_signal_handler_unblock(G_OBJECT(widget), squelch_enable_signal_id);
+    return;
+  }
+  if (active_receiver->squelch_enable == new_enable) {
+    return;
+  }
+  active_receiver->squelch_enable = new_enable;
   rx_set_squelch(active_receiver);
   tci_sql_enable_changed(active_receiver->id);
 }
@@ -1050,7 +1149,13 @@ void update_slider_lev_scale(gboolean show_widget) {
 void update_slider_af_gain_scale(void) {
   if (display_sliders && af_gain_scale != NULL && active_receiver != NULL) {
     sliders_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
-    gtk_range_set_value(GTK_RANGE(af_gain_scale), (double) active_receiver->volume);
+    if (GTK_IS_SPIN_BUTTON(af_gain_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale),
+                                (double) active_receiver->volume);
+    } else if (GTK_IS_RANGE(af_gain_scale)) {
+      gtk_range_set_value(GTK_RANGE(af_gain_scale),
+                          (double) active_receiver->volume);
+    }
     sliders_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
     gtk_widget_queue_draw(af_gain_scale);
   }
@@ -1059,7 +1164,13 @@ void update_slider_af_gain_scale(void) {
 void update_slider_agc_gain_scale(void) {
   if (display_sliders && agc_gain_scale != NULL && active_receiver != NULL) {
     sliders_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
-    gtk_range_set_value(GTK_RANGE(agc_gain_scale), (double) active_receiver->agc_gain);
+    if (GTK_IS_SPIN_BUTTON(agc_gain_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_gain_scale),
+                                (double) active_receiver->agc_gain);
+    } else if (GTK_IS_RANGE(agc_gain_scale)) {
+      gtk_range_set_value(GTK_RANGE(agc_gain_scale),
+                          (double) active_receiver->agc_gain);
+    }
     sliders_signal_handler_unblock(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
     gtk_widget_queue_draw(agc_gain_scale);
   }
@@ -1121,6 +1232,37 @@ static gboolean update_slider_tune_drive_btn_main(gpointer data) {
 void update_slider_tune_drive_btn(void) {
   gboolean current_tune_state = radio_get_tune();
   g_main_context_invoke(NULL, update_slider_tune_drive_btn_main, GINT_TO_POINTER(current_tune_state));
+}
+
+static gboolean update_slider_mic_gain_btn_main(gpointer data) {
+  gboolean current_mox_state = GPOINTER_TO_INT(data);
+  if (display_sliders && mic_gain_btn != NULL && mic_gain_label != NULL) {
+    sliders_signal_handler_block(GTK_TOGGLE_BUTTON(mic_gain_btn), mic_gain_btn_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mic_gain_btn), !current_mox_state);
+    if (current_mox_state) {
+      gtk_label_set_text(GTK_LABEL(mic_gain_label), "MOX");
+    } else {
+      gtk_label_set_text(GTK_LABEL(mic_gain_label), "MIC");
+    }
+    sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(mic_gain_btn), mic_gain_btn_signal_id);
+    gtk_widget_queue_draw(mic_gain_btn);
+  }
+  return G_SOURCE_REMOVE;
+}
+
+void update_slider_mic_gain_btn(void) {
+  gboolean current_mox_state = radio_get_mox();
+  g_main_context_invoke(NULL, update_slider_mic_gain_btn_main, GINT_TO_POINTER(current_mox_state));
+}
+
+static gboolean mic_gain_button_press_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data) {
+  (void)widget;
+  (void)user_data;
+  if (event->type != GDK_BUTTON_PRESS || event->button != 1) {
+    return FALSE;
+  }
+  radio_mox_update(!radio_get_mox());
+  return TRUE;
 }
 
 static gboolean tune_drive_button_press_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data) {
@@ -1326,7 +1468,11 @@ static void autogain_enable_cb(GtkWidget *widget, gpointer data) {
 void update_slider_squelch(RECEIVER *rx) {
   if (display_sliders && rx != NULL && rx->id == active_receiver->id) {
     sliders_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
-    gtk_range_set_value(GTK_RANGE(squelch_scale), rx->squelch);
+    if (GTK_IS_SPIN_BUTTON(squelch_scale)) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(squelch_scale), rx->squelch);
+    } else if (GTK_IS_RANGE(squelch_scale)) {
+      gtk_range_set_value(GTK_RANGE(squelch_scale), rx->squelch);
+    }
     sliders_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
     sliders_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), rx->squelch_enable);
@@ -1344,7 +1490,7 @@ void set_squelch(RECEIVER *rx) {
   // as soon the slider is moved squelch is enabled/disabled
   // depending on the "new" squelch value
   //
-  new_enable = (rx->squelch > 0.5);
+  new_enable = (rx->squelch > 0.0);
   rx->squelch_enable = new_enable;
   rx_set_squelch(rx);
   tci_sql_level_changed(rx->id);
@@ -1355,7 +1501,7 @@ void set_squelch(RECEIVER *rx) {
     update_slider_squelch(rx);
   } else {
     char title[64];
-    snprintf(title, 64, "Squelch RX%d (Hz)", rx->id + 1);
+    snprintf(title, 64, "Squelch RX%d", rx->id + 1);
     show_popup_slider(SQUELCH, rx->id, 0.0, 100.0, 1.0, rx->squelch, title);
   }
 }
@@ -1366,6 +1512,92 @@ void show_diversity_gain(void) {
 
 void show_diversity_phase(void) {
   show_popup_slider(DIV_PHASE, 0, -180.0, 180.0, 0.1, div_phase, "Diversity Phase");
+}
+
+static void vfo_step_btn_cb(GtkButton *button, gpointer data) {
+  int rx_id;
+  int steps;
+  (void)button;
+  if (active_receiver == NULL || receivers <= 0) {
+    return;
+  }
+  rx_id = CLAMP(active_receiver->id, 0, receivers - 1);
+  /*
+   * Bei einer ungültigen ursprünglichen ID nicht stillschweigend
+   * RX0 oder den letzten RX abstimmen.
+   */
+  if (rx_id != active_receiver->id ||
+      receiver[rx_id] != active_receiver) {
+    return;
+  }
+  steps = GPOINTER_TO_INT(data);
+  vfo_id_step(rx_id, steps);
+}
+
+static void vfo_step_size_btn_cb(GtkButton *button, gpointer data) {
+  int rx_id;
+  int step_index;
+  int direction;
+  (void)button;
+  if (active_receiver == NULL || receivers <= 0) {
+    return;
+  }
+  rx_id = active_receiver->id;
+  if (rx_id < 0 ||
+      rx_id >= receivers ||
+      receiver[rx_id] != active_receiver) {
+    return;
+  }
+  direction = GPOINTER_TO_INT(data);
+  step_index = vfo_get_stepindex(rx_id);
+  vfo_set_step_from_index(rx_id, step_index + direction);
+  g_idle_add(ext_vfo_update, NULL);
+}
+
+/*
+static void band_step_btn_cb(GtkButton *button, gpointer data) {
+  int rx_id;
+  int direction;
+  (void)button;
+  if (active_receiver == NULL || receivers <= 0) {
+    return;
+  }
+  rx_id = active_receiver->id;
+  if (rx_id < 0 ||
+      rx_id >= receivers ||
+      receiver[rx_id] != active_receiver) {
+    return;
+  }
+  direction = GPOINTER_TO_INT(data);
+  if (direction > 0) {
+    band_plus(rx_id);
+  } else if (direction < 0) {
+    band_minus(rx_id);
+  }
+}
+*/
+static void band_menu_btn_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  start_band();
+}
+
+static void mode_menu_btn_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  start_mode();
+}
+
+static void rx_filter_menu_btn_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  start_filter();
+}
+
+static void nr_menu_btn_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  start_noise();
 }
 
 // will ce called from radio.c and initializing the slider surface depend from the selected screen size
@@ -1448,20 +1680,82 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_btn, FALSE, FALSE, 0);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.0);
-  WEAKEN(af_gain_scale);
-  gtk_widget_set_tooltip_text(af_gain_scale, "Set AF Volume");
-  gtk_widget_set_margin_end(af_gain_scale, 0);  // rechter Rand (Ende)
-  gtk_widget_set_hexpand(af_gain_scale, FALSE);  // fülle Box nicht nach rechts
-  gtk_range_set_increments(GTK_RANGE(af_gain_scale), 1.0, 1.0);
-  gtk_range_set_value(GTK_RANGE(af_gain_scale), active_receiver->volume);
-  for (float i = -40.0; i <= 0.0; i += 5.0) {
-    gtk_scale_add_mark(GTK_SCALE(af_gain_scale), i, GTK_POS_TOP, NULL);
+  if (optimize_for_touchscreen) {
+    af_gain_scale = gtk_spin_button_new_with_range(-40.0, 0.0, 1.0);
+    WEAKEN(af_gain_scale);
+    gtk_widget_set_name(af_gain_scale, "front_spin_button");
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(af_gain_scale), TRUE);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(af_gain_scale), TRUE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale), active_receiver->volume);
+    gtk_widget_set_margin_top(af_gain_scale, 5);
+    gtk_widget_set_margin_bottom(af_gain_scale, 5);
+    gtk_widget_set_margin_start(af_gain_scale, 0);
+    gtk_widget_set_margin_end(af_gain_scale, 0);  // rechter Rand (Ende)
+    gtk_widget_set_hexpand(af_gain_scale, FALSE);  // fülle Box nicht nach rechts
+    gtk_widget_set_halign(af_gain_scale, GTK_ALIGN_START);
+    // gtk_widget_set_valign(af_gain_scale, GTK_ALIGN_CENTER);
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_scale, FALSE, FALSE, 0);
+  } else {
+    af_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -40.0, 0.0, 1.0);
+    WEAKEN(af_gain_scale);
+    gtk_widget_set_margin_end(af_gain_scale, 0);  // rechter Rand (Ende)
+    gtk_widget_set_hexpand(af_gain_scale, FALSE);  // fülle Box nicht nach rechts
+    gtk_range_set_increments(GTK_RANGE(af_gain_scale), 1.0, 1.0);
+    gtk_range_set_value(GTK_RANGE(af_gain_scale), active_receiver->volume);
+    for (float i = -40.0; i <= 0.0; i += 5.0) {
+      gtk_scale_add_mark(GTK_SCALE(af_gain_scale), i, GTK_POS_TOP, NULL);
+    }
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_scale, TRUE, TRUE, 0);
   }
+  gtk_widget_set_tooltip_text(af_gain_scale, "Set AF Volume");
   af_gain_scale_signal_id = g_signal_connect(G_OBJECT(af_gain_scale), "value_changed",
     G_CALLBACK(afgain_value_changed_cb), NULL);
-  // Widgets in Box packen
-  gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_scale, TRUE, TRUE, 0);
+  if (optimize_for_touchscreen) {
+    nr_menu_btn = gtk_button_new_with_label("NR Menu");
+    WEAKEN(nr_menu_btn);
+    gtk_widget_set_name(nr_menu_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(nr_menu_btn, "Noise reduction menu active VFO");
+    nr_menu_label = gtk_bin_get_child(GTK_BIN(nr_menu_btn));
+    gtk_label_set_justify(GTK_LABEL(nr_menu_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_margin_start(nr_menu_label, 3);
+    gtk_widget_set_margin_end(nr_menu_label, 3);
+    gtk_widget_set_size_request(nr_menu_btn, 55, -1);
+    gtk_widget_set_margin_top(nr_menu_btn, 0);
+    gtk_widget_set_margin_bottom(nr_menu_btn, 0);
+    gtk_widget_set_margin_start(nr_menu_btn, 3);
+    gtk_widget_set_margin_end(nr_menu_btn, 0);
+    gtk_widget_set_halign(nr_menu_btn, GTK_ALIGN_END);
+    gtk_widget_set_valign(nr_menu_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(nr_menu_btn, FALSE);
+    gtk_box_pack_start(GTK_BOX(box_Z1_left), nr_menu_btn, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(nr_menu_btn), "clicked", G_CALLBACK(nr_menu_btn_cb), NULL);
+    //+++++
+    rx_filter_menu_btn = gtk_button_new_with_label("RX Filter");
+    WEAKEN(rx_filter_menu_btn);
+    gtk_widget_set_name(rx_filter_menu_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(rx_filter_menu_btn, "RX Filter selection active VFO");
+    rx_filter_menu_label = gtk_bin_get_child(GTK_BIN(rx_filter_menu_btn));
+    gtk_label_set_justify(GTK_LABEL(rx_filter_menu_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_margin_start(rx_filter_menu_label, 3);
+    gtk_widget_set_margin_end(rx_filter_menu_label, 3);
+    gtk_widget_set_size_request(rx_filter_menu_btn, 55, -1);
+    gtk_widget_set_margin_top(rx_filter_menu_btn, 0);
+    gtk_widget_set_margin_bottom(rx_filter_menu_btn, 0);
+    gtk_widget_set_margin_start(rx_filter_menu_btn, 3);
+    gtk_widget_set_margin_end(rx_filter_menu_btn, 5);
+    gtk_widget_set_halign(rx_filter_menu_btn, GTK_ALIGN_END);
+    gtk_widget_set_valign(rx_filter_menu_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(rx_filter_menu_btn, FALSE);
+    gtk_box_pack_start(GTK_BOX(box_Z1_left), rx_filter_menu_btn, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(rx_filter_menu_btn), "clicked", G_CALLBACK(rx_filter_menu_btn_cb), NULL);
+  } else {
+    rx_filter_menu_btn = NULL;
+    rx_filter_menu_label = NULL;
+    nr_menu_btn = NULL;
+    nr_menu_label = NULL;
+  }
   //-----------------------------------------------------------------------------------------------------------
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(sliders), box_Z1_left, 0, 0, 1, 1);   // Zeile 0 Spalte 0
@@ -1512,6 +1806,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_start(agc_gain_scale, 0);
     gtk_widget_set_margin_end(agc_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(agc_gain_scale, FALSE);  // fülle Box nicht nach rechts
+    // gtk_widget_set_halign(agc_gain_scale, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(agc_gain_scale, GTK_ALIGN_START);
+    // gtk_widget_set_valign(agc_gain_scale, GTK_ALIGN_CENTER);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_middle), agc_gain_scale, FALSE, FALSE, 0);
   } else {
@@ -1522,18 +1819,107 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     for (double agc_mark = -20.0; agc_mark <= 120.0; agc_mark += 20.0) {
       gtk_scale_add_mark(GTK_SCALE(agc_gain_scale), agc_mark, GTK_POS_TOP, NULL);
     }
-    gtk_widget_set_tooltip_text(agc_gain_scale,
-                                "AGC of the currently active receiver.\n"
-                                "Adjust coral colored horizontal line\n"
-                                "slightly above the noise floor.");
     gtk_widget_set_margin_end(agc_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(agc_gain_scale, FALSE);  // fülle Box nicht nach rechts
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_middle), agc_gain_scale, TRUE, TRUE, 0);
   }
+  gtk_widget_set_tooltip_text(agc_gain_scale,
+                              "AGC of the currently active receiver.\n"
+                              "Adjust coral colored horizontal line\n"
+                              "slightly above the noise floor.");
   agc_gain_scale_signal_id = g_signal_connect(G_OBJECT(agc_gain_scale), "value_changed",
     G_CALLBACK(agcgain_value_changed_cb),
     NULL);
+  //------------------------------------------------------------------------------------------------------
+  if (optimize_for_touchscreen) {
+    vfo_fdwn_btn = gtk_button_new_with_label("<<");
+    WEAKEN(vfo_fdwn_btn);
+    gtk_widget_set_name(vfo_fdwn_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(vfo_fdwn_btn, "Tune active VFO down by 10 steps");
+    vfo_fdwn_label = gtk_bin_get_child(GTK_BIN(vfo_fdwn_btn));
+    gtk_label_set_justify(GTK_LABEL(vfo_fdwn_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_size_request(vfo_fdwn_btn, 35, -1);
+    gtk_widget_set_margin_top(vfo_fdwn_btn, 0);
+    gtk_widget_set_margin_bottom(vfo_fdwn_btn, 0);
+    gtk_widget_set_margin_start(vfo_fdwn_btn, 3);
+    gtk_widget_set_margin_end(vfo_fdwn_btn, 0);
+    gtk_widget_set_halign(vfo_fdwn_btn, GTK_ALIGN_END);
+    // gtk_widget_set_valign(vfo_fdwn_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(vfo_fdwn_btn, FALSE);
+    gtk_box_pack_start(GTK_BOX(box_Z1_middle), vfo_fdwn_btn, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(vfo_fdwn_btn),
+                     "clicked",
+                     G_CALLBACK(vfo_step_btn_cb),
+                     GINT_TO_POINTER(-10));
+    vfo_dwn_btn = gtk_button_new_with_label("<");
+    WEAKEN(vfo_dwn_btn);
+    gtk_widget_set_name(vfo_dwn_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(vfo_dwn_btn, "Tune active VFO down by 1 steps");
+    vfo_dwn_label = gtk_bin_get_child(GTK_BIN(vfo_dwn_btn));
+    gtk_label_set_justify(GTK_LABEL(vfo_dwn_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_size_request(vfo_dwn_btn, 35, -1);
+    gtk_widget_set_margin_top(vfo_dwn_btn, 0);
+    gtk_widget_set_margin_bottom(vfo_dwn_btn, 0);
+    gtk_widget_set_margin_start(vfo_dwn_btn, 3);
+    gtk_widget_set_margin_end(vfo_dwn_btn, 0);
+    gtk_widget_set_halign(vfo_dwn_btn, GTK_ALIGN_END);
+    // gtk_widget_set_valign(vfo_dwn_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(vfo_dwn_btn, FALSE);
+    gtk_box_pack_start(GTK_BOX(box_Z1_middle), vfo_dwn_btn, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(vfo_dwn_btn),
+                     "clicked",
+                     G_CALLBACK(vfo_step_btn_cb),
+                     GINT_TO_POINTER(-1));
+    vfo_up_btn = gtk_button_new_with_label(">");
+    WEAKEN(vfo_up_btn);
+    gtk_widget_set_name(vfo_up_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(vfo_up_btn, "Tune active VFO up by 1 steps");
+    vfo_up_label = gtk_bin_get_child(GTK_BIN(vfo_up_btn));
+    gtk_label_set_justify(GTK_LABEL(vfo_up_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_size_request(vfo_up_btn, 35, -1);
+    gtk_widget_set_margin_top(vfo_up_btn, 0);
+    gtk_widget_set_margin_bottom(vfo_up_btn, 0);
+    gtk_widget_set_margin_start(vfo_up_btn, 3);
+    gtk_widget_set_margin_end(vfo_up_btn, 0);
+    gtk_widget_set_halign(vfo_up_btn, GTK_ALIGN_START);
+    // gtk_widget_set_valign(vfo_up_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(vfo_up_btn, FALSE);
+    gtk_box_pack_start(GTK_BOX(box_Z1_middle), vfo_up_btn, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(vfo_up_btn),
+                     "clicked",
+                     G_CALLBACK(vfo_step_btn_cb),
+                     GINT_TO_POINTER(1));
+    vfo_fup_btn = gtk_button_new_with_label(">>");
+    WEAKEN(vfo_fup_btn);
+    gtk_widget_set_name(vfo_fup_btn, "medium_toggle_button");
+    gtk_widget_set_tooltip_text(vfo_fup_btn, "Tune active VFO up by 10 steps");
+    vfo_fup_label = gtk_bin_get_child(GTK_BIN(vfo_fup_btn));
+    gtk_label_set_justify(GTK_LABEL(vfo_fup_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_size_request(vfo_fup_btn, 35, -1);
+    gtk_widget_set_margin_top(vfo_fup_btn, 0);
+    gtk_widget_set_margin_bottom(vfo_fup_btn, 0);
+    gtk_widget_set_margin_start(vfo_fup_btn, 3);
+    gtk_widget_set_margin_end(vfo_fup_btn, 0);
+    gtk_widget_set_halign(vfo_fup_btn, GTK_ALIGN_START);
+    // gtk_widget_set_valign(vfo_fup_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(vfo_fup_btn, FALSE);
+    gtk_box_pack_start(GTK_BOX(box_Z1_middle), vfo_fup_btn, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(vfo_fup_btn),
+                     "clicked",
+                     G_CALLBACK(vfo_step_btn_cb),
+                     GINT_TO_POINTER(10));
+  } else {
+    vfo_fdwn_btn = NULL;
+    vfo_fdwn_label = NULL;
+    vfo_dwn_btn = NULL;
+    vfo_dwn_label = NULL;
+    vfo_up_btn = NULL;
+    vfo_up_label = NULL;
+    vfo_fup_btn = NULL;
+    vfo_fup_label = NULL;
+  }
+  //------------------------------------------------------------------------------------------------------
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(sliders), box_Z1_middle, 1, 0, 1, 1);   // Zeile 0 Spalte 1
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1721,21 +2107,40 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_label, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
-    WEAKEN(attenuation_scale);
+    if (optimize_for_touchscreen) {
+      attenuation_scale = gtk_spin_button_new_with_range(0.0, 31.0, 1.0);
+      WEAKEN(attenuation_scale);
+      gtk_widget_set_name(attenuation_scale, "front_spin_button");
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(attenuation_scale), TRUE);
+      gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(attenuation_scale), TRUE);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(attenuation_scale), adc[active_receiver->adc].attenuation);
+      gtk_widget_set_margin_top(attenuation_scale, 5);
+      gtk_widget_set_margin_bottom(attenuation_scale, 5);
+      gtk_widget_set_margin_start(attenuation_scale, 0);
+      gtk_widget_set_margin_end(attenuation_scale, 0);  // rechter Rand (Ende)
+      gtk_widget_set_hexpand(attenuation_scale, FALSE);  // fülle Box nicht nach rechts
+      gtk_widget_set_halign(attenuation_scale, GTK_ALIGN_CENTER);
+      // gtk_widget_set_valign(attenuation_scale, GTK_ALIGN_CENTER);
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_scale, TRUE, FALSE, 0);
+    } else {
+      attenuation_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 31.0, 1.0);
+      WEAKEN(attenuation_scale);
+      gtk_range_set_value(GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
+      gtk_range_set_increments(GTK_RANGE(attenuation_scale), 1.0, 1.0);
+      for (double i = 0.0; i <= 31.0; i += 5.0) {
+        gtk_scale_add_mark(GTK_SCALE(attenuation_scale), i, GTK_POS_TOP, NULL);
+      }
+      gtk_widget_set_margin_end(attenuation_scale, 0);  // rechter Rand (Ende)
+      gtk_widget_set_hexpand(attenuation_scale, FALSE);  // fülle Box nicht nach rechts
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_scale, TRUE, TRUE, 0);
+    }
     gtk_widget_set_tooltip_text(attenuation_scale,
                                 "RX Step Attenuator for adjustment RF Gain:\n"
                                 "Range 0db - 31db");
-    gtk_range_set_value(GTK_RANGE(attenuation_scale), adc[active_receiver->adc].attenuation);
-    gtk_range_set_increments(GTK_RANGE(attenuation_scale), 1.0, 1.0);
-    for (double i = 0.0; i <= 31.0; i += 5.0) {
-      gtk_scale_add_mark(GTK_SCALE(attenuation_scale), i, GTK_POS_TOP, NULL);
-    }
-    g_signal_connect(G_OBJECT(attenuation_scale), "value_changed", G_CALLBACK(attenuation_value_changed_cb), NULL);
-    gtk_widget_set_margin_end(attenuation_scale, 0);  // rechter Rand (Ende)
-    gtk_widget_set_hexpand(attenuation_scale, FALSE);  // fülle Box nicht nach rechts
-    // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_scale, TRUE, TRUE, 0);
+    attenuation_scale_signal_id = g_signal_connect(G_OBJECT(attenuation_scale), "value_changed",
+      G_CALLBACK(attenuation_value_changed_cb), NULL);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     nr_btn = gtk_button_new_with_label(nr_labels[active_receiver->nr]);
     WEAKEN(nr_btn);
@@ -1853,18 +2258,24 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(box_Z2_left, box_left_width, widget_height);
     gtk_box_set_spacing(GTK_BOX(box_Z2_left), 5);
     //-----------------------------------------------------------------------------------------------------------
-    char _label[32];
-    snprintf(_label, 32, "Mic Gain");
-    mic_gain_label = gtk_label_new(_label);
-    gtk_widget_set_name(mic_gain_label, "boldlabel_border_blue");
-    // Label breiter erzwingen
-    gtk_widget_set_size_request(mic_gain_label, 105, -1);  // z.B. 100px
-    gtk_widget_set_margin_top(mic_gain_label, 0);
-    gtk_widget_set_margin_bottom(mic_gain_label, 0);
-    gtk_widget_set_halign(mic_gain_label, GTK_ALIGN_START);
-    gtk_widget_set_valign(mic_gain_label, GTK_ALIGN_CENTER);
-    // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_label, FALSE, FALSE, 0);
+    mic_gain_btn = gtk_toggle_button_new_with_label(radio_get_mox() ? "MOX" : "MIC");
+    WEAKEN(mic_gain_btn);
+    gtk_widget_set_name(mic_gain_btn, "front_toggle_button");
+    gtk_widget_set_tooltip_text(mic_gain_btn, "Toggle MOX for manual transmit");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mic_gain_btn), !radio_get_mox());
+    mic_gain_label = gtk_bin_get_child(GTK_BIN(mic_gain_btn));
+    gtk_label_set_justify(GTK_LABEL(mic_gain_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_size_request(mic_gain_btn, 105, -1);
+    gtk_widget_set_margin_top(mic_gain_btn, 0);
+    gtk_widget_set_margin_bottom(mic_gain_btn, 0);
+    gtk_widget_set_halign(mic_gain_btn, GTK_ALIGN_START);
+    gtk_widget_set_valign(mic_gain_btn, GTK_ALIGN_CENTER);
+    gtk_widget_add_events(mic_gain_btn, GDK_BUTTON_PRESS_MASK);
+    mic_gain_btn_signal_id = g_signal_connect(G_OBJECT(mic_gain_btn),
+      "button-press-event",
+      G_CALLBACK(mic_gain_button_press_cb),
+      NULL);
+    gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_btn, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if (optimize_for_touchscreen) {
       mic_gain_scale = gtk_spin_button_new_with_range(-12.0, 50.0, 1.0);
@@ -1874,10 +2285,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double) transmitter->mic_gain);
       gtk_widget_set_margin_top(mic_gain_scale, 5);
       gtk_widget_set_margin_bottom(mic_gain_scale, 5);
-      gtk_widget_set_margin_start(mic_gain_scale, 0);
+      gtk_widget_set_margin_start(mic_gain_scale, 3);
       gtk_widget_set_margin_end(mic_gain_scale, 0);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(mic_gain_scale, FALSE);  // fülle Box nicht nach rechts
       gtk_widget_set_halign(mic_gain_scale, GTK_ALIGN_START);
+      // gtk_widget_set_halign(mic_gain_scale, GTK_ALIGN_CENTER);
       gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_scale, FALSE, FALSE, 0);
     } else {
       mic_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, -12.0, 50.0, 1.0);
@@ -1925,11 +2337,17 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_bottom(preamp_btn, 0);
     gtk_widget_set_margin_start(preamp_btn, 0);
     gtk_widget_set_margin_end(preamp_btn, 5);
-    gtk_widget_set_halign(preamp_btn, GTK_ALIGN_START);
     gtk_widget_set_valign(preamp_btn, GTK_ALIGN_CENTER);
+    if (optimize_for_touchscreen) {
+      gtk_widget_set_halign(preamp_btn, GTK_ALIGN_END);
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z2_left), preamp_btn, TRUE, TRUE, 0);
+    } else {
+      gtk_widget_set_halign(preamp_btn, GTK_ALIGN_START);
+      // Widgets in Box packen
+      gtk_box_pack_start(GTK_BOX(box_Z2_left), preamp_btn, FALSE, FALSE, 0);
+    }
     preamp_btn_signal_id = g_signal_connect(preamp_btn, "toggled", G_CALLBACK(preamp_btn_toggle_cb), NULL);
-    // Widgets in Box packen
-    gtk_box_pack_start(GTK_BOX(box_Z2_left), preamp_btn, FALSE, FALSE, 0);
     //-----------------------------------------------------------------------------------------------------------
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     gtk_grid_attach(GTK_GRID(sliders), box_Z2_left, 0, 1, 1, 1);   // Spalte 0 Zeile 1
@@ -1970,6 +2388,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_margin_start(drive_scale, 0);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
+        gtk_widget_set_halign(drive_scale, GTK_ALIGN_START);
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
       } else {
         drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 5.0, 0.1);
@@ -1992,6 +2411,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_margin_start(drive_scale, 0);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
+        gtk_widget_set_halign(drive_scale, GTK_ALIGN_START);
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, FALSE, FALSE, 0);
       } else {
         drive_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, drive_max, 1.00);
@@ -2027,12 +2447,98 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     drive_scale_signal_id = g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb),
       NULL);
+    if (optimize_for_touchscreen) {
+      band_menu_btn = gtk_button_new_with_label("Band");
+      WEAKEN(band_menu_btn);
+      gtk_widget_set_name(band_menu_btn, "medium_toggle_button");
+      gtk_widget_set_tooltip_text(band_menu_btn, "Band selection active VFO");
+      band_menu_label = gtk_bin_get_child(GTK_BIN(band_menu_btn));
+      gtk_label_set_justify(GTK_LABEL(band_menu_label), GTK_JUSTIFY_CENTER);
+      gtk_widget_set_size_request(band_menu_btn, 35, -1);
+      gtk_widget_set_margin_top(band_menu_btn, 0);
+      gtk_widget_set_margin_bottom(band_menu_btn, 0);
+      gtk_widget_set_margin_start(band_menu_btn, 3);
+      gtk_widget_set_margin_end(band_menu_btn, 0);
+      gtk_widget_set_halign(band_menu_btn, GTK_ALIGN_END);
+      gtk_widget_set_valign(band_menu_btn, GTK_ALIGN_CENTER);
+      gtk_widget_set_hexpand(band_menu_btn, FALSE);
+      gtk_box_pack_start(GTK_BOX(box_Z2_middle), band_menu_btn, TRUE, TRUE, 0);
+      // g_signal_connect(G_OBJECT(band_menu_btn), "clicked", G_CALLBACK(band_step_btn_cb), GINT_TO_POINTER(-1));
+      g_signal_connect(G_OBJECT(band_menu_btn), "clicked", G_CALLBACK(band_menu_btn_cb), NULL);
+      //+++
+      vfo_step_dwn_btn = gtk_button_new_with_label("▼");
+      WEAKEN(vfo_step_dwn_btn);
+      gtk_widget_set_name(vfo_step_dwn_btn, "medium_toggle_button");
+      gtk_widget_set_tooltip_text(vfo_step_dwn_btn, "Step down active VFO");
+      vfo_step_dwn_label = gtk_bin_get_child(GTK_BIN(vfo_step_dwn_btn));
+      gtk_label_set_justify(GTK_LABEL(vfo_step_dwn_label), GTK_JUSTIFY_CENTER);
+      gtk_widget_set_size_request(vfo_step_dwn_btn, 35, -1);
+      gtk_widget_set_margin_top(vfo_step_dwn_btn, 0);
+      gtk_widget_set_margin_bottom(vfo_step_dwn_btn, 0);
+      gtk_widget_set_margin_start(vfo_step_dwn_btn, 3);
+      gtk_widget_set_margin_end(vfo_step_dwn_btn, 0);
+      gtk_widget_set_halign(vfo_step_dwn_btn, GTK_ALIGN_END);
+      gtk_widget_set_valign(vfo_step_dwn_btn, GTK_ALIGN_CENTER);
+      gtk_widget_set_hexpand(vfo_step_dwn_btn, FALSE);
+      gtk_box_pack_start(GTK_BOX(box_Z2_middle), vfo_step_dwn_btn, TRUE, TRUE, 0);
+      g_signal_connect(G_OBJECT(vfo_step_dwn_btn),
+                       "clicked",
+                       G_CALLBACK(vfo_step_size_btn_cb),
+                       GINT_TO_POINTER(-1));
+      //+++
+      vfo_step_up_btn = gtk_button_new_with_label("▲");
+      WEAKEN(vfo_step_up_btn);
+      gtk_widget_set_name(vfo_step_up_btn, "medium_toggle_button");
+      gtk_widget_set_tooltip_text(vfo_step_up_btn, "Step up active VFO");
+      vfo_step_up_label = gtk_bin_get_child(GTK_BIN(vfo_step_up_btn));
+      gtk_label_set_justify(GTK_LABEL(vfo_step_up_label), GTK_JUSTIFY_CENTER);
+      gtk_widget_set_size_request(vfo_step_up_btn, 35, -1);
+      gtk_widget_set_margin_top(vfo_step_up_btn, 0);
+      gtk_widget_set_margin_bottom(vfo_step_up_btn, 0);
+      gtk_widget_set_margin_start(vfo_step_up_btn, 3);
+      gtk_widget_set_margin_end(vfo_step_up_btn, 0);
+      gtk_widget_set_halign(vfo_step_up_btn, GTK_ALIGN_START);
+      gtk_widget_set_valign(vfo_step_up_btn, GTK_ALIGN_CENTER);
+      gtk_widget_set_hexpand(vfo_step_up_btn, FALSE);
+      gtk_box_pack_start(GTK_BOX(box_Z2_middle), vfo_step_up_btn, TRUE, TRUE, 0);
+      g_signal_connect(G_OBJECT(vfo_step_up_btn),
+                       "clicked",
+                       G_CALLBACK(vfo_step_size_btn_cb),
+                       GINT_TO_POINTER(1));
+      //+++
+      mode_menu_btn = gtk_button_new_with_label("Mode");
+      WEAKEN(mode_menu_btn);
+      gtk_widget_set_name(mode_menu_btn, "medium_toggle_button");
+      gtk_widget_set_tooltip_text(mode_menu_btn, "Mode selection active VFO");
+      mode_menu_label = gtk_bin_get_child(GTK_BIN(mode_menu_btn));
+      gtk_label_set_justify(GTK_LABEL(mode_menu_label), GTK_JUSTIFY_CENTER);
+      gtk_widget_set_size_request(mode_menu_btn, 35, -1);
+      gtk_widget_set_margin_top(mode_menu_btn, 0);
+      gtk_widget_set_margin_bottom(mode_menu_btn, 0);
+      gtk_widget_set_margin_start(mode_menu_btn, 3);
+      gtk_widget_set_margin_end(mode_menu_btn, 0);
+      gtk_widget_set_halign(mode_menu_btn, GTK_ALIGN_START);
+      gtk_widget_set_valign(mode_menu_btn, GTK_ALIGN_CENTER);
+      gtk_widget_set_hexpand(mode_menu_btn, FALSE);
+      gtk_box_pack_start(GTK_BOX(box_Z2_middle), mode_menu_btn, TRUE, TRUE, 0);
+      // g_signal_connect(G_OBJECT(mode_menu_btn), "clicked", G_CALLBACK(band_step_btn_cb), GINT_TO_POINTER(1));
+      g_signal_connect(G_OBJECT(mode_menu_btn), "clicked", G_CALLBACK(mode_menu_btn_cb), NULL);
+    }
     gtk_grid_attach(GTK_GRID(sliders), box_Z2_middle, 1, 1, 1, 1);   // Spalte 0 Zeile 1
   } else {
+    mic_gain_btn = NULL;
     mic_gain_label = NULL;
     mic_gain_scale = NULL;
     drive_label = NULL;
     drive_scale = NULL;
+    vfo_step_up_btn = NULL;
+    vfo_step_up_label = NULL;
+    vfo_step_dwn_btn = NULL;
+    vfo_step_dwn_label = NULL;
+    band_menu_btn = NULL;
+    band_menu_label = NULL;
+    mode_menu_btn = NULL;
+    mode_menu_label = NULL;
   }
   //-----------------------------------------------------------------------------------------------------------
   // Hauptcontainer: horizontale Box für SQL
@@ -2059,21 +2565,38 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_enable, FALSE, FALSE, 0);
   //-------------------------------------------------------------------------------------------
-  squelch_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
-  WEAKEN(squelch_scale);
-  gtk_widget_set_margin_end(squelch_scale, 0);  // rechter Rand (Ende)
-  gtk_widget_set_size_request(squelch_scale, box_right_width * 2 / 6, -1);  // z.B. 100px
-  gtk_widget_set_hexpand(squelch_scale, FALSE);  // fülle Box nicht nach rechts
-  gtk_range_set_increments(GTK_RANGE(squelch_scale), 1.0, 1.0);
-  gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
-  gtk_widget_set_tooltip_text(squelch_scale, "Set Squelch Threshold");
-  for (int i = 0; i <= 100; i += 25) {
-    gtk_scale_add_mark(GTK_SCALE(squelch_scale), i, GTK_POS_TOP, NULL);
+  if (optimize_for_touchscreen) {
+    squelch_scale = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
+    WEAKEN(squelch_scale);
+    gtk_widget_set_name(squelch_scale, "front_spin_button");
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(squelch_scale), TRUE);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(squelch_scale), TRUE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(squelch_scale), active_receiver->squelch);
+    gtk_widget_set_margin_top(squelch_scale, 5);
+    gtk_widget_set_margin_bottom(squelch_scale, 5);
+    gtk_widget_set_margin_start(squelch_scale, 0);
+    gtk_widget_set_margin_end(squelch_scale, 0);
+    gtk_widget_set_hexpand(squelch_scale, FALSE);
+    gtk_widget_set_halign(squelch_scale, GTK_ALIGN_CENTER);
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_scale, TRUE, FALSE, 0);
+  } else {
+    squelch_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
+    WEAKEN(squelch_scale);
+    gtk_widget_set_margin_end(squelch_scale, 0);  // rechter Rand (Ende)
+    gtk_widget_set_size_request(squelch_scale, box_right_width * 2 / 6, -1);  // z.B. 100px
+    gtk_widget_set_hexpand(squelch_scale, FALSE);  // fülle Box nicht nach rechts
+    gtk_range_set_increments(GTK_RANGE(squelch_scale), 1.0, 1.0);
+    gtk_range_set_value(GTK_RANGE(squelch_scale), active_receiver->squelch);
+    for (int i = 0; i <= 100; i += 25) {
+      gtk_scale_add_mark(GTK_SCALE(squelch_scale), i, GTK_POS_TOP, NULL);
+    }
+    // Widgets in Box packen
+    gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_scale, TRUE, TRUE, 0);
   }
+  gtk_widget_set_tooltip_text(squelch_scale, "Set Squelch Threshold");
   squelch_signal_id = g_signal_connect(G_OBJECT(squelch_scale), "value_changed", G_CALLBACK(squelch_value_changed_cb),
                                        NULL);
-  // Widgets in Box packen
-  gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_scale, TRUE, TRUE, 0);
   //-------------------------------------------------------------------------------------------
   binaural_btn = gtk_toggle_button_new_with_label("BIN");
   WEAKEN(binaural_btn);

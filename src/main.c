@@ -66,6 +66,7 @@
 #include "sliders.h"
 #include "noise_menu.h"
 #include "rigctl.h"
+#include "tci.h"
 #ifdef MIDI
   #include "midi_layer.h"
 #endif
@@ -404,6 +405,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       _vol = -40.0;
     }
     set_af_gain(active_receiver->id, _vol);
+    tci_volume_changed(active_receiver->id);
   }
   break;
   case GDK_KEY_Page_Up: {
@@ -413,6 +415,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       _vol = 0;
     }
     set_af_gain(active_receiver->id, _vol);
+    tci_volume_changed(active_receiver->id);
   }
   break;
   case  GDK_KEY_d:

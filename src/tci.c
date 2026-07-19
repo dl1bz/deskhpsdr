@@ -2395,6 +2395,18 @@ static void tci_broadcast_volume (void) {
   g_list_free (clients);
 }
 
+static void tci_broadcast_volume_value (double value) {
+  GList *clients = tci_clients_snapshot();
+  value = tci_clamp_volume(value);
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *) l->data;
+    if (client != NULL && client->running) {
+      tci_send_volume_value (client, value);
+    }
+  }
+  g_list_free (clients);
+}
+
 static void tci_broadcast_rx_volume (int receiver_id) {
   GList *clients;
   if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
@@ -2404,6 +2416,22 @@ static void tci_broadcast_rx_volume (int receiver_id) {
     if (client != NULL && client->running) {
       tci_send_rx_volume (client, receiver_id, 0);
       tci_send_rx_volume (client, receiver_id, 1);
+    }
+  }
+  g_list_free (clients);
+}
+
+static void tci_broadcast_rx_volume_value (int receiver_id, double value) {
+  GList *clients;
+  if (receiver_id < 0 || receiver_id >= receivers || receiver_id >= 2 || receiver[receiver_id] == NULL) { return; }
+  value = tci_clamp_volume(value);
+  clients = tci_clients_snapshot();
+  for (GList *l = clients; l != NULL; l = l->next) {
+    CLIENT *client = (CLIENT *) l->data;
+    if (client != NULL && client->running) {
+      /* deskHPSDR has one AF gain per receiver, mirrored to both TCI channels. */
+      tci_send_rx_volume_value (client, receiver_id, 0, value);
+      tci_send_rx_volume_value (client, receiver_id, 1, value);
     }
   }
   g_list_free (clients);
@@ -2844,6 +2872,9 @@ static int tci_apply_sql_enable_update (void *data) {
   receiver_id = su->receiver_id;
   state = su->state ? 1 : 0;
   if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    if (state && receiver[receiver_id]->squelch <= 0.0) {
+      state = 0;
+    }
     receiver[receiver_id]->squelch_enable = state;
     rx_set_squelch(receiver[receiver_id]);
     update_slider_squelch(receiver[receiver_id]);
@@ -2856,15 +2887,23 @@ static int tci_apply_sql_enable_update (void *data) {
 static int tci_apply_sql_level_update (void *data) {
   TCI_SQL_LEVEL_UPDATE *su = (TCI_SQL_LEVEL_UPDATE *) data;
   int receiver_id;
+  int old_enable;
   double level_db;
   if (su == NULL) { return G_SOURCE_REMOVE; }
   receiver_id = su->receiver_id;
   level_db = tci_clamp_sql_level(su->level_db);
   if (receiver_id >= 0 && receiver_id < receivers && receiver_id < 2 && receiver[receiver_id] != NULL) {
+    old_enable = receiver[receiver_id]->squelch_enable;
     receiver[receiver_id]->squelch = tci_sql_slider_from_db(level_db);
+    if (receiver[receiver_id]->squelch <= 0.0) {
+      receiver[receiver_id]->squelch_enable = 0;
+    }
     rx_set_squelch(receiver[receiver_id]);
     update_slider_squelch(receiver[receiver_id]);
     tci_broadcast_sql_level_value(receiver_id, level_db);
+    if (old_enable != receiver[receiver_id]->squelch_enable) {
+      tci_broadcast_sql_enable_value(receiver_id, receiver[receiver_id]->squelch_enable);
+    }
   }
   g_free(su);
   return G_SOURCE_REMOVE;
@@ -3737,17 +3776,20 @@ static void tci_cmd_rx_nr_enable (CLIENT *client, const TCI_CMD *cmd) {
 
 static void tci_cmd_volume (CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1) {
+    int receiver_id;
     if (!tci_set_lock_allowed(client, TCI_SET_LOCK_VOLUME)) {
       tci_send_volume(client);
       return;
     }
     double value = tci_clamp_volume(tci_double(cmd->argv[0], 0.0));
     if (active_receiver != NULL && active_receiver->id >= 0 && active_receiver->id < receivers && active_receiver->id < 2) {
+      receiver_id = active_receiver->id;
       EXT_AF_GAIN_UPDATE *ag = g_new (EXT_AF_GAIN_UPDATE, 1);
-      ag->receiver_id = active_receiver->id;
+      ag->receiver_id = receiver_id;
       ag->value = value;
       g_idle_add (ext_set_af_gain, ag);
-      tci_send_volume_value (client, value);
+      tci_broadcast_volume_value (value);
+      tci_broadcast_rx_volume_value (receiver_id, value);
     }
   } else {
     tci_send_volume (client);
@@ -3773,7 +3815,10 @@ static void tci_cmd_rx_volume (CLIENT *client, const TCI_CMD *cmd) {
     ag->receiver_id = receiver_id;
     ag->value = value;
     g_idle_add (ext_set_af_gain, ag);
-    tci_send_rx_volume_value (client, receiver_id, channel, value);
+    if (active_receiver != NULL && active_receiver->id == receiver_id) {
+      tci_broadcast_volume_value (value);
+    }
+    tci_broadcast_rx_volume_value (receiver_id, value);
   } else {
     tci_send_rx_volume (client, receiver_id, channel);
   }
@@ -3838,6 +3883,9 @@ static void tci_cmd_sql_enable (CLIENT *client, const TCI_CMD *cmd) {
     TCI_SQL_ENABLE_UPDATE *su = g_new(TCI_SQL_ENABLE_UPDATE, 1);
     su->receiver_id = receiver_id;
     su->state = tci_bool(cmd->argv[1]) ? 1 : 0;
+    if (su->state && receiver[receiver_id]->squelch <= 0.0) {
+      su->state = 0;
+    }
     tci_send_sql_enable_value(client, receiver_id, su->state);
     g_idle_add(tci_apply_sql_enable_update, su);
   } else {
