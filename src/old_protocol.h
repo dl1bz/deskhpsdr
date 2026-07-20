@@ -22,6 +22,8 @@
 #ifndef _OLD_PROTOCOL_H
 #define _OLD_PROTOCOL_H
 
+#include <stdint.h>
+
 // extern int hl2_iob_present;
 extern int hl2_pico_present;
 int hl2_iob_is_present(void);
@@ -44,6 +46,8 @@ extern void old_protocol_set_mic_sample_rate(int rate);
 
 extern void old_protocol_audio_samples(short left_audio_sample, short right_audio_sample);
 extern void old_protocol_iq_samples(int isample, int qsample, int side);
+extern uint64_t old_protocol_tx_fence_begin(void);
+extern int old_protocol_tx_fence_complete(uint64_t fence);
 #ifdef __APPLE__
   extern void old_protocol_update_timing(void);
 #endif

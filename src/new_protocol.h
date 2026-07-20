@@ -22,6 +22,8 @@
 #ifndef _NEW_PROTOCOL_H
 #define _NEW_PROTOCOL_H
 
+#include <stdint.h>
+
 #include "MacOS.h"   // for semaphores
 #include "receiver.h"
 
@@ -91,6 +93,8 @@ extern void tuner_changed (void);
 
 extern void new_protocol_audio_samples (short left_audio_sample, short right_audio_sample);
 extern void new_protocol_iq_samples (int isample, int qsample);
+extern uint64_t new_protocol_tx_fence_begin (void);
+extern int new_protocol_tx_fence_complete (uint64_t fence);
 extern void new_protocol_flush_iq_samples (void);
 extern void new_protocol_cw_audio_samples (short l, short r);
 

@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "appearance.h"
 #include "led.h"
@@ -126,8 +127,8 @@ static void vox_value_changed_cb(GtkWidget *widget, gpointer data) {
   vox_threshold = gtk_range_get_value(GTK_RANGE(widget)) / 1000.0;
 }
 
-static void vox_hang_value_changed_cb(GtkWidget *widget, gpointer data) {
-  vox_hang = gtk_range_get_value(GTK_RANGE(widget));
+static void vox_hang_value_changed_cb(GtkSpinButton *spin, gpointer data) {
+  vox_hang = gtk_spin_button_get_value_as_int(spin);
 }
 
 void vox_menu(GtkWidget *parent) {
@@ -185,13 +186,22 @@ void vox_menu(GtkWidget *parent) {
   gtk_widget_set_halign(hang_label, GTK_ALIGN_END);
   gtk_widget_show(hang_label);
   gtk_grid_attach(GTK_GRID(grid), hang_label, 0, 4, 1, 1);
-  GtkWidget *vox_hang_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 1000.0, 1.0);
-  gtk_widget_set_valign(vox_hang_scale, GTK_ALIGN_CENTER);
-  gtk_range_set_increments(GTK_RANGE(vox_hang_scale), 1.0, 1.0);
-  gtk_range_set_value(GTK_RANGE(vox_hang_scale), vox_hang);
-  gtk_widget_show(vox_hang_scale);
-  gtk_grid_attach(GTK_GRID(grid), vox_hang_scale, 1, 4, 3, 1);
-  g_signal_connect(G_OBJECT(vox_hang_scale), "value_changed", G_CALLBACK(vox_hang_value_changed_cb), NULL);
+  // Normalize values saved by older versions before displaying them.
+  // The SpinButton and the stored value both use an exact 50 ms grid.
+  double normalized_hang = vox_hang;
+  if (normalized_hang < 0.0) { normalized_hang = 0.0; }
+  if (normalized_hang > 1000.0) { normalized_hang = 1000.0; }
+  normalized_hang = 50.0 * (int)((normalized_hang + 25.0) / 50.0);
+  vox_hang = normalized_hang;
+  GtkWidget *vox_hang_spin = gtk_spin_button_new_with_range(0.0, 1000.0, 50.0);
+  gtk_widget_set_valign(vox_hang_spin, GTK_ALIGN_CENTER);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(vox_hang_spin), 0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(vox_hang_spin), TRUE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(vox_hang_spin), TRUE);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(vox_hang_spin), vox_hang);
+  gtk_widget_show(vox_hang_spin);
+  gtk_grid_attach(GTK_GRID(grid), vox_hang_spin, 1, 4, 1, 1);
+  g_signal_connect(vox_hang_spin, "value_changed", G_CALLBACK(vox_hang_value_changed_cb), NULL);
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

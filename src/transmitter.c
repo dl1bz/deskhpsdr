@@ -23,6 +23,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <wdsp.h>
 
@@ -1520,6 +1521,13 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     // and the downward expander
     //
     update_vox(tx);
+    // Once the requested VOX hang interval has expired, feed explicit
+    // zero microphone blocks through WDSP. This lets all delayed TX
+    // audio emerge before a protocol fence is placed.
+    if (vox_tx_draining()) {
+      memset(tx->mic_input_buffer, 0,
+             (size_t) 2 * tx->buffer_size * sizeof *tx->mic_input_buffer);
+    }
     //
     // DL1YCF:
     // The FM pre-emphasis filter in WDSP has maximum unit
@@ -1594,6 +1602,9 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     g_mutex_unlock(&tx->display_mutex);
   }
   if (radio_is_transmitting()) {
+    if (!vox_tx_output_enabled()) {
+      goto vox_tx_output_done;
+    }
     if (tx->do_scale) {
       gain = gain * tx->drive_scale;
     }
@@ -1699,6 +1710,10 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         }
       }
     }
+vox_tx_output_done:
+    // This is the last producer-visible point at which the WDSP tail
+    // can be inspected and a P1/P2 sequence fence placed.
+    vox_tx_output_block(tx);
   } else {   // radio_is_transmitting()
     if (txflag == 1 && protocol == NEW_PROTOCOL) {
       //

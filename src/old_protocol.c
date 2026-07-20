@@ -446,6 +446,8 @@ static atomic_int txring_outptr;  // pointer updated when reading from the ring 
 static atomic_int txring_flag;    // 0: RX, 1: TX
 static atomic_int txring_count;   // a sample counter
 static atomic_int txring_drain;   // a flag for draining the output buffer
+static atomic_uint_fast64_t txring_blocks_queued;
+static atomic_uint_fast64_t txring_blocks_completed;
 
 #ifdef __APPLE__
   static atomic_int sr;
@@ -497,11 +499,15 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
     // Falls TX gestoppt ist oder Drain-Modus aktiv → skip
     if (!P1running || atomic_load_explicit(&txring_drain, memory_order_acquire)) {
       atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+      (void) atomic_fetch_add_explicit(&txring_blocks_completed, 1, memory_order_release);
       continue;
     }
-    // Versuche exklusiven Zugriff auf TX-Sende-Buffer
+    // Do not drop a TX block merely because stop/start currently owns
+    // the send mutex. Put the semaphore token back and retry later.
     if (pthread_mutex_trylock(&send_ozy_mutex)) {
-      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+      struct timespec retry = { .tv_sec = 0, .tv_nsec = 1000000 };
+      sem_post(txring_sem);
+      nanosleep(&retry, NULL);
       continue;
     }
     // Keine Samples vorhanden → skip
@@ -518,6 +524,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
     ozy_send_buffer();
     MEMORY_BARRIER;
     atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+    (void) atomic_fetch_add_explicit(&txring_blocks_completed, 1, memory_order_release);
     pthread_mutex_unlock(&send_ozy_mutex);
     // 🕒 Dynamisch berechneter Abstand je nach aktueller Sample-Rate
     int sr_local = atomic_load_explicit(&sr, memory_order_relaxed);
@@ -563,6 +570,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
     if (nptr >= TXRINGBUFLEN) { nptr = 0; }
     if (!P1running || atomic_load_explicit(&txring_drain, memory_order_acquire)) {
       atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+      (void) atomic_fetch_add_explicit(&txring_blocks_completed, 1, memory_order_release);
       continue;
     }
     //
@@ -615,22 +623,25 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
       }
       clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
     }
-    FIFO += 126.0;  // number of samples in THIS packet
     //
     // Try to take exclusive access to TX send buffer only for the actual send.
-    // If GUI holds the mutex (stop/start), skip this TX packet cleanly.
+    // If stop/start holds the mutex, keep the ring position and retry.
     //
     if (pthread_mutex_trylock(&send_ozy_mutex)) {
-      atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+      struct timespec retry = { .tv_sec = 0, .tv_nsec = 1000000 };
+      sem_post(&txring_sem);
+      nanosleep(&retry, NULL);
       continue;
     }
     memcpy(output_buffer + 8, &TXRINGBUF[out], 504);
     ozy_send_buffer();
     memcpy(output_buffer + 8, &TXRINGBUF[out + 504], 504);
     ozy_send_buffer();
+    FIFO += 126.0;  // number of samples in THIS packet
     pthread_mutex_unlock(&send_ozy_mutex);
     MEMORY_BARRIER;
     atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
+    (void) atomic_fetch_add_explicit(&txring_blocks_completed, 1, memory_order_release);
   }
   return NULL;
 }
@@ -691,6 +702,8 @@ void old_protocol_init(int rate) {
   atomic_store_explicit(&txring_flag,   0, memory_order_relaxed);
   atomic_store_explicit(&txring_count,  0, memory_order_relaxed);
   atomic_store_explicit(&txring_drain,  0, memory_order_relaxed);
+  atomic_store_explicit(&txring_blocks_queued, 0, memory_order_relaxed);
+  atomic_store_explicit(&txring_blocks_completed, 0, memory_order_relaxed);
   atomic_store_explicit(&rxring_inptr,  0, memory_order_relaxed);
   atomic_store_explicit(&rxring_outptr, 0, memory_order_relaxed);
   atomic_store_explicit(&rxring_count,  0, memory_order_relaxed);
@@ -2083,13 +2096,14 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
       int nptr = in + TXRING_AUDIO_SAMPLE_BYTES * TXRING_AUDIO_FRAMES_PER_BLOCK;
       if (nptr >= TXRINGBUFLEN) { nptr = 0; }
       if (nptr != out) {
+        atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
+        atomic_store_explicit(&txring_count, 0, memory_order_relaxed);
+        (void) atomic_fetch_add_explicit(&txring_blocks_queued, 1, memory_order_release);
 #ifdef __APPLE__
         sem_post(txring_sem);
 #else
         sem_post(&txring_sem);
 #endif
-        atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
-        atomic_store_explicit(&txring_count, 0,   memory_order_relaxed);
       } else {
         t_print("%s: output buffer overflow.\n", __func__);
         atomic_store_explicit(&txring_count, -TXRING_AUDIO_FRAMES_PER_BLOCK * 10, memory_order_relaxed);
@@ -2183,13 +2197,14 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
       int nptr = in + 1008;
       if (nptr >= TXRINGBUFLEN) { nptr = 0; }
       if (nptr != out) {
+        atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
+        atomic_store_explicit(&txring_count, 0, memory_order_relaxed);
+        (void) atomic_fetch_add_explicit(&txring_blocks_queued, 1, memory_order_release);
 #ifdef __APPLE__
         sem_post(txring_sem);
 #else
         sem_post(&txring_sem);
 #endif
-        atomic_store_explicit(&txring_inptr, nptr, memory_order_release);
-        atomic_store_explicit(&txring_count, 0,   memory_order_relaxed);
       } else {
         t_print("%s: output buffer overflow.\n", __func__);
         atomic_store_explicit(&txring_count, -1260, memory_order_relaxed);
@@ -2197,6 +2212,40 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
     }
     pthread_mutex_unlock(&send_audio_mutex);
   }
+}
+
+
+uint64_t old_protocol_tx_fence_begin(void) {
+  if (!P1running || !radio_is_transmitting()) {
+    return 0;
+  }
+  int count = atomic_load_explicit(&txring_count, memory_order_acquire);
+  if (count < 0) {
+    return 0;
+  }
+  // Close a partial 126-sample block and append one complete zero
+  // block. The fence then identifies a block after all TX speech and
+  // leaves no partial host-side packet behind.
+  int zeros = count == 0 ? 0 :
+              TXRING_AUDIO_FRAMES_PER_BLOCK - count;
+  zeros += TXRING_AUDIO_FRAMES_PER_BLOCK;
+  for (int i = 0; i < zeros; i++) {
+    old_protocol_iq_samples(0, 0, 0);
+    if (atomic_load_explicit(&txring_count, memory_order_acquire) < 0) {
+      return 0;
+    }
+  }
+  if (atomic_load_explicit(&txring_count, memory_order_acquire) != 0) {
+    return 0;
+  }
+  return atomic_load_explicit(&txring_blocks_queued, memory_order_acquire);
+}
+
+int old_protocol_tx_fence_complete(uint64_t fence) {
+  if (fence == 0) {
+    return 0;
+  }
+  return atomic_load_explicit(&txring_blocks_completed, memory_order_acquire) >= fence;
 }
 
 static inline unsigned char hl2_tx_latency_ms(int txvfo) {

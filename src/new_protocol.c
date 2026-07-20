@@ -41,6 +41,8 @@
 #include <math.h>
 #include <sys/select.h>
 #include <signal.h>
+#include <stdatomic.h>
+#include <stdint.h>
 
 #include "main.h"
 #include "alex.h"
@@ -195,6 +197,8 @@ static unsigned char *TXIQRINGBUF = NULL;
 static volatile int txiq_inptr        = 0;  // pointer updated when writing into the ring buffer
 static volatile int txiq_outptr       = 0;  // pointer updated when reading from the ring buffer
 static volatile int txiq_count        = 0;  // number of samples queued since last sem_post
+static atomic_uint_fast64_t txiq_blocks_queued;
+static atomic_uint_fast64_t txiq_blocks_sent;
 
 static volatile int rxaudio_inptr     = 0;  // pointer updated when writing into the ring buffer
 static volatile int rxaudio_outptr    = 0;  // pointer updated when reading from the ring buffer
@@ -2008,6 +2012,11 @@ void new_protocol_menu_start(void) {
   micsamples_sequence = 0;
   audio_sequence = 0;
   tx_iq_sequence = 0;
+  txiq_inptr = 0;
+  txiq_outptr = 0;
+  txiq_count = 0;
+  atomic_store_explicit(&txiq_blocks_queued, 0, memory_order_relaxed);
+  atomic_store_explicit(&txiq_blocks_sent, 0, memory_order_relaxed);
   pthread_mutex_lock(&send_rxaudio_mutex);
   rxaudio_inptr = 0;
   rxaudio_outptr = 0;
@@ -2224,6 +2233,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
 #ifdef SATURN
       saturn_handle_duc_iq(false, iqbuffer);
 #endif
+      (void) atomic_fetch_add_explicit(&txiq_blocks_sent, 1, memory_order_release);
     } else {
       //
       // The idea is to monitor how fast we actually send
@@ -2262,6 +2272,8 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
       if (sendto(data_socket, iqbuffer, sizeof(iqbuffer), 0, (struct sockaddr *) &iq_addr, iq_addr_length) < 0) {
         g_idle_add(fatal_error, "TX IQ send failed (Network down?)");
         P2running = 0;
+      } else {
+        (void) atomic_fetch_add_explicit(&txiq_blocks_sent, 1, memory_order_release);
       }
     }
   }
@@ -3055,6 +3067,7 @@ void new_protocol_iq_samples(int isample, int qsample) {
     if (nptr != txiq_outptr) {
       txiq_inptr = nptr;
       txiq_count = 0;
+      (void) atomic_fetch_add_explicit(&txiq_blocks_queued, 1, memory_order_release);
 #ifdef __APPLE__
       sem_post(txiq_sem);
 #else
@@ -3066,6 +3079,34 @@ void new_protocol_iq_samples(int isample, int qsample) {
       txiq_count = -4800;
     }
   }
+}
+
+uint64_t new_protocol_tx_fence_begin(void) {
+  if (!P2running || !radio_is_transmitting() || txiq_count < 0) {
+    return 0;
+  }
+  // First close a partially filled packet, then append one complete
+  // zero packet. The returned fence therefore follows every speech
+  // sample and leaves no partial packet behind in the host ring.
+  int zeros = txiq_count == 0 ? 0 : 240 - txiq_count;
+  zeros += 240;
+  for (int i = 0; i < zeros; i++) {
+    new_protocol_iq_samples(0, 0);
+    if (txiq_count < 0) {
+      return 0;
+    }
+  }
+  if (txiq_count != 0) {
+    return 0;
+  }
+  return atomic_load_explicit(&txiq_blocks_queued, memory_order_acquire);
+}
+
+int new_protocol_tx_fence_complete(uint64_t fence) {
+  if (fence == 0) {
+    return 0;
+  }
+  return atomic_load_explicit(&txiq_blocks_sent, memory_order_acquire) >= fence;
 }
 
 // cppcheck-suppress constParameterCallback
