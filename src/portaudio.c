@@ -653,11 +653,6 @@ int audio_open_output(RECEIVER *rx) {
     outputParameters.channelCount = 1;
     rx->local_audio_channels = 1;
   }
-  if (rx->local_audio_channels == 1 && rx->binaural) {
-    t_print("%s: disabling binaural for mono output device %s\n", __func__, rx->audio_name);
-    rx->binaural = 0;
-    rx_set_af_binaural(rx);
-  }
   err = Pa_OpenStream(& (rx->playstream), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
                       paNoFlag, pa_out_cb, rx);
   t_print("%s: opened output with %d channel(s)\n", __func__, rx->local_audio_channels);

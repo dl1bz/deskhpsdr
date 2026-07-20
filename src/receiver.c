@@ -1064,6 +1064,8 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   if (rx->local_audio) {
     if (audio_open_output(rx) < 0) {
       rx->local_audio = 0;
+    } else {
+      rx_audio_output_opened(rx);
     }
   }
   // defer set_agc until here, otherwise the AGC threshold is not computed correctly
@@ -1934,6 +1936,22 @@ void rx_set_af_binaural(const RECEIVER *rx) {
     ((RECEIVER *) rx)->binaural = 0;
   }
   SetRXAPanelBinaural(rx->id, state);
+}
+
+void rx_audio_output_opened(RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+  int old_binaural = rx->binaural;
+  rx_set_af_binaural(rx);
+  if (old_binaural != rx->binaural) {
+    t_print("%s: RX%d disabling binaural for %d-channel output device %s\n",
+            __func__, rx->id, rx->local_audio_channels, rx->audio_name);
+    tci_rx_bin_enable_changed(rx->id);
+  }
+  if (rx == active_receiver) {
+    update_slider_binaural_btn();
+  }
 }
 
 void rx_set_af_gain(const RECEIVER *rx) {

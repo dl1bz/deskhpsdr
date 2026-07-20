@@ -337,6 +337,7 @@ static void local_audio_cb(GtkWidget *widget, gpointer data) {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     if (audio_open_output(rx) == 0) {
       rx->local_audio = 1;
+      rx_audio_output_opened(rx);
     } else {
       t_print("local_audio_cb: audio_open_output failed\n");
       rx->local_audio = 0;
@@ -405,8 +406,9 @@ static void local_output_changed_cb(GtkWidget *widget, gpointer data) {
       if (local_audio_b != NULL) {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(local_audio_b), FALSE);
       }
+    } else {
+      rx_audio_output_opened(rx);
     }
-    update_slider_binaural_btn();
   }
   t_print("local_output_changed rx=%d local_audio=%d\n", rx->id, rx->local_audio);
 }

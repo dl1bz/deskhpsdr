@@ -369,6 +369,7 @@ extern void   rx_save_state (const RECEIVER *rx);
 extern void   rx_set_active (RECEIVER *rx);
 extern int    rx_binaural_allowed (const RECEIVER *rx);
 extern void   rx_set_af_binaural (const RECEIVER *rx);
+extern void   rx_audio_output_opened (RECEIVER *rx);
 extern void   rx_set_af_gain (const RECEIVER *rx);
 extern void   rx_set_agc (RECEIVER *rx);
 extern void   rx_set_analyzer (const RECEIVER *rx);
