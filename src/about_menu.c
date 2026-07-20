@@ -85,7 +85,7 @@ void about_menu(GtkWidget *parent) {
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 20);   // 20px leer zwischen Fenster und Content
   char title[64];
   uname(&unameData);
-  snprintf(title, sizeof(title), "%s - About", PGNAME);
+  snprintf(title, sizeof(title), "%s - About & Credits", PGNAME);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -112,16 +112,17 @@ void about_menu(GtkWidget *parent) {
   snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
                                "for SDR-TRX running OpenHPSDR protocol P1 or P2\n\n"
                                "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
-                               "(contains code portions of pihpsdr by G0ORX/N6LYT and DL1YCF)\n"
+                               "(contains code portions of pihpsdr until October 2024)\n"
                                "Licensed under the GNU General Public License v3.0 (GPL-3.0)\n\n"
                                "    Credits:\n"
-                               "    Warren C. Pratt, NR0V: WDSP signal processing library development\n"
-                               "    John Melton, G0ORX/N6LYT: first and initial version of pihpsdr\n"
-                               "    Christoph van Wüllen, DL1YCF: Continuation & current version pihpsdr\n"
+                               "    Warren, NR0V: WDSP signal processing library development\n"
+                               "    John, G0ORX/N6LYT: first and initial version of pihpsdr\n"
+                               "    Steve, KA6S & Jae, K5JAE: Older CAT emulations in pihpsdr (except TCI)\n"
+                               "    Christoph, DL1YCF: Continuation & current version pihpsdr\n"
                                "    Richie, MW0LGE: Developer of main version Thetis\n"
                                "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
-                               "    Francesco Cozzi, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
-                               "    OpenAI/ChatGPT: Code and Protocol Optimizations & Bugfixing\n\n"
+                               "    Francesco, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
+                               "    OpenAI/ChatGPT: Code and Protocol Optimizations & Bugfixing, TCI\n\n"
                                "Build OS: %s %s @ %s\n"
                                "Build compiler: %s\n"
                                "Build date: %s (Branch: %s, Commit: %s)\n"
