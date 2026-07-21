@@ -54,6 +54,7 @@ enum tx_off_state {
 };
 
 static GMutex tx_off_mutex;
+static GCond tx_off_cond;
 static guint tx_off_timeout = 0;
 static enum tx_off_state tx_off_state = TX_OFF_STATE_IDLE;
 static TX_OFF_TARGET tx_off_target = TX_OFF_TARGET_NONE;
@@ -197,6 +198,7 @@ static gboolean tx_off_timeout_cb(gpointer data) {
   if (tx_off_state == TX_OFF_STATE_COMPLETING &&
       tx_off_target == completed_target) {
     tx_off_reset_locked();
+    g_cond_broadcast(&tx_off_cond);
   }
   g_mutex_unlock(&tx_off_mutex);
   return G_SOURCE_REMOVE;
@@ -234,6 +236,15 @@ int tx_off_request(TX_OFF_TARGET target, TX_OFF_COMPLETE_FUNC complete) {
 
 void tx_off_cancel_target(TX_OFF_TARGET target) {
   g_mutex_lock(&tx_off_mutex);
+  /*
+   * Once the completion callback has started, let it finish before the new
+   * owner continues. Otherwise the caller could observe the old logical TX
+   * state and miss the required re-key after the callback removes TX.
+   */
+  while (tx_off_state == TX_OFF_STATE_COMPLETING &&
+         tx_off_target == target) {
+    g_cond_wait(&tx_off_cond, &tx_off_mutex);
+  }
   if (tx_off_state != TX_OFF_STATE_IDLE && tx_off_target == target) {
     if (tx_off_timeout != 0) {
       /*
@@ -252,6 +263,9 @@ void tx_off_cancel_target(TX_OFF_TARGET target) {
 
 void tx_off_cancel(void) {
   g_mutex_lock(&tx_off_mutex);
+  while (tx_off_state == TX_OFF_STATE_COMPLETING) {
+    g_cond_wait(&tx_off_cond, &tx_off_mutex);
+  }
   if (tx_off_state != TX_OFF_STATE_IDLE) {
     if (tx_off_timeout != 0) {
       g_source_remove(tx_off_timeout);

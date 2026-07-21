@@ -2177,8 +2177,10 @@ static void radio_graceful_mox_off_complete(void) {
    * Hardware PTT is sampled in the protocol thread before its main-loop
    * update runs. If the footswitch was pressed again at the very end of the
    * guard interval, keep TX active instead of producing a short RX pulse.
+   * The serial CTS footswitch is sampled independently and must provide the
+   * same protection.
    */
-  radio_set_mox_now (radio_ptt ? 1 : 0);
+  radio_set_mox_now ((radio_ptt || serptt_cts) ? 1 : 0);
   g_idle_add (ext_vfo_update, NULL);
 }
 

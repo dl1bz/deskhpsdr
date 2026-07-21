@@ -70,6 +70,7 @@
 #include "iambic.h"
 #include "actions.h"
 #include "new_menu.h"
+#include "tx_off.h"
 #include "zoompan.h"
 #include "message.h"
 #include "startup.h"
@@ -116,6 +117,7 @@ static GMutex mutex_numcat;   // only needed to make in/de-crements of "cat_cont
 static GThread *rigctl_server_thread_id = NULL;
 static GThread *serptt_thread_id = NULL;
 static GThread *sertune_thread_id = NULL;
+static guint serptt_off_timeout = 0;
 static GMutex sertune_mutex;
 #if defined (__AUTOG__)
   pthread_t autogain_thread;
@@ -213,6 +215,19 @@ static gboolean get_serptt_cts (int fd) {
   return (status & TIOCM_CTS) != 0 ? TRUE : FALSE;
 }
 
+static gboolean serptt_off_timeout_cb (gpointer user_data) {
+  (void) user_data;
+  serptt_off_timeout = 0;
+  /*
+   * CTS may have become active again while the delayed OFF was pending.
+   * Never let a stale timer release MOX after a new footswitch press.
+   */
+  if (!serptt_cts) {
+    ext_mox_update (GINT_TO_POINTER (0));
+  }
+  return G_SOURCE_REMOVE;
+}
+
 // Funktion zur Aktualisierung des CTS-Status der seriellen PTT
 static gboolean update_serptt_cts (gpointer user_data) {
   gboolean current_state_serptt = GPOINTER_TO_INT (user_data); // Umwandlung von gpointer zu gboolean
@@ -223,11 +238,21 @@ static gboolean update_serptt_cts (gpointer user_data) {
     // Wenn PTT (Push To Talk) an ist
     if (serptt_cts) {
       t_print ("%s: serial PTT ON\n", __func__);
-      g_idle_add (ext_mox_update, GINT_TO_POINTER (1));
+      if (serptt_off_timeout != 0) {
+        g_source_remove (serptt_off_timeout);
+        serptt_off_timeout = 0;
+      }
+      /* Cancel a drain before asserting MOX again. */
+      tx_off_cancel_target (TX_OFF_TARGET_MOX);
+      ext_mox_update (GINT_TO_POINTER (1));
     } else {
       t_print ("%s: serial PTT OFF\n", __func__);
-      // Wenn PTT aus ist, wird eine Funktion mit Timeout hinzugefügt
-      g_timeout_add (50, ext_mox_update, GINT_TO_POINTER (0));
+      if (serptt_off_timeout != 0) {
+        g_source_remove (serptt_off_timeout);
+      }
+      serptt_off_timeout = g_timeout_add (50,
+                                          serptt_off_timeout_cb,
+                                          NULL);
     }
   }
   return G_SOURCE_REMOVE;  // Einmalige Ausführung der Funktion

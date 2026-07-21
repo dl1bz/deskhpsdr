@@ -30,15 +30,18 @@
 #include "vox.h"
 
 #define VOX_TIMER_INTERVAL_MS 5
+#define VOX_PTT_DELAY_MS      50
 
 enum vox_state {
   VOX_STATE_IDLE = 0,
   VOX_STATE_HANG,
+  VOX_STATE_PTT_DELAY,
   VOX_STATE_OFF_REQUESTING
 };
 
 static GMutex vox_mutex;
 static guint vox_timeout = 0;
+static guint trx_scheduled = 0;
 static enum vox_state vox_state = VOX_STATE_IDLE;
 static gint64 vox_deadline_us = 0;
 
@@ -49,38 +52,20 @@ static void vox_graceful_off_complete(void) {
   ext_vfo_update(NULL);
 }
 
-static gboolean vox_timeout_cb(gpointer data) {
+static gboolean vox_trx_scheduled_cb(gpointer data) {
   (void) data;
-  gint64 now = g_get_monotonic_time();
   int start_tx_off = 0;
   g_mutex_lock(&vox_mutex);
-  if (vox_state == VOX_STATE_IDLE) {
-    vox_timeout = 0;
-    g_mutex_unlock(&vox_mutex);
-    return G_SOURCE_REMOVE;
-  }
-  /*
-   * Voice Keyer replay owns TX. Start a complete VOX hang interval after
-   * replay has finished instead of dropping TX in the old timer cycle.
-   */
-  if (capture_state == CAP_XMIT) {
-    vox_deadline_us = now + (gint64) vox_hang * 1000;
-    g_mutex_unlock(&vox_mutex);
-    return G_SOURCE_CONTINUE;
-  }
-  if (now >= vox_deadline_us) {
+  trx_scheduled = 0;
+  if (vox_state == VOX_STATE_PTT_DELAY) {
     vox_state = VOX_STATE_OFF_REQUESTING;
-    vox_timeout = 0;
     start_tx_off = 1;
   }
   g_mutex_unlock(&vox_mutex);
   if (!start_tx_off) {
-    return G_SOURCE_CONTINUE;
+    return G_SOURCE_REMOVE;
   }
   /*
-   * VOX contributes only the hang timer. The actual WDSP drain, protocol
-   * fence and hardware FIFO guard are shared with every graceful TX OFF.
-   *
    * A microphone block can arrive between releasing vox_mutex and creating
    * the TX OFF request. VOX_STATE_OFF_REQUESTING detects that race: renewed
    * speech changes the state back to HANG and the just-created drain is then
@@ -105,6 +90,41 @@ static gboolean vox_timeout_cb(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
+static gboolean vox_timeout_cb(gpointer data) {
+  (void) data;
+  gint64 now = g_get_monotonic_time();
+  g_mutex_lock(&vox_mutex);
+  if (vox_state != VOX_STATE_HANG) {
+    vox_timeout = 0;
+    g_mutex_unlock(&vox_mutex);
+    return G_SOURCE_REMOVE;
+  }
+  /*
+   * Voice Keyer replay owns TX. Start a complete VOX hang interval after
+   * replay has finished instead of dropping TX in the old timer cycle.
+   */
+  if (capture_state == CAP_XMIT) {
+    vox_deadline_us = now + (gint64) vox_hang * 1000;
+    g_mutex_unlock(&vox_mutex);
+    return G_SOURCE_CONTINUE;
+  }
+  if (now < vox_deadline_us) {
+    g_mutex_unlock(&vox_mutex);
+    return G_SOURCE_CONTINUE;
+  }
+  /*
+   * vox_hang and the final PTT delay are separate, independently cancellable
+   * phases. Renewed speech during either phase keeps the transmitter keyed.
+   */
+  vox_timeout = 0;
+  vox_state = VOX_STATE_PTT_DELAY;
+  trx_scheduled = g_timeout_add(VOX_PTT_DELAY_MS,
+                                vox_trx_scheduled_cb,
+                                NULL);
+  g_mutex_unlock(&vox_mutex);
+  return G_SOURCE_REMOVE;
+}
+
 double vox_get_peak(void) {
   return peak;
 }
@@ -113,33 +133,31 @@ void clear_vox(void) {
   peak = 0.0;
 }
 
-void update_vox(TRANSMITTER *tx) {
+void update_vox(double level) {
+  /*
+   * DEXP supplies only the detector level. VOX deliberately keeps its own
+   * threshold and timing, so DEXP attack/hold/release do not become hidden
+   * additional VOX controls.
+   */
+  peak = level;
   /* Voice Keyer Replay is handled by the periodic timer above. */
   if (capture_state == CAP_XMIT) {
     return;
-  }
-  /*
-   * Calculate peak microphone input before the TX OFF layer replaces a
-   * VOX-drain block with zeroes. This permits renewed speech to cancel the
-   * pending OFF without losing the first resumed word.
-   */
-  peak = 0.0;
-  for (int i = 0; i < tx->buffer_size; i++) {
-    double sample = fabs(tx->mic_input_buffer[i * 2]);
-    if (sample > peak) {
-      peak = sample;
-    }
   }
   if (vox_enabled && !mox && !tune && !TxInhibit && peak > vox_threshold) {
     gint64 now = g_get_monotonic_time();
     int start_vox;
     /*
-     * A new speech block cancels an in-progress WDSP/protocol drain. The
-     * current unmodified microphone block then enters WDSP normally and TX
-     * continues without a TX/RX transition.
+     * A new speech block cancels every pending VOX-off phase: hang timer,
+     * PTT-delay timer and an already started WDSP/protocol drain. The current
+     * DEXP-processed block then reaches WDSP without a TX/RX transition.
      */
     tx_off_cancel_target(TX_OFF_TARGET_VOX);
     g_mutex_lock(&vox_mutex);
+    if (trx_scheduled != 0) {
+      g_source_remove(trx_scheduled);
+      trx_scheduled = 0;
+    }
     start_vox = vox_state == VOX_STATE_IDLE && !vox;
     vox_state = VOX_STATE_HANG;
     vox_deadline_us = now + (gint64) vox_hang * 1000;
@@ -162,6 +180,10 @@ void update_vox(TRANSMITTER *tx) {
 void vox_cancel(void) {
   tx_off_cancel_target(TX_OFF_TARGET_VOX);
   g_mutex_lock(&vox_mutex);
+  if (trx_scheduled != 0) {
+    g_source_remove(trx_scheduled);
+    trx_scheduled = 0;
+  }
   if (vox_timeout != 0) {
     /*
      * Remove the old source before releasing the lock. Otherwise a new VOX

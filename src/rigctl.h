@@ -51,6 +51,7 @@ extern void  shutdown_tcp_rigctl (void);
 extern void launch_serptt (void);
 extern void launch_sertune (void);
 extern int serptt_fd;
+extern volatile gboolean serptt_cts;
 extern int sertune_fd;
 #if defined (__AUTOG__)
   extern void launch_autogain_hl2 (void);

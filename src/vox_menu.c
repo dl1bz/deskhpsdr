@@ -131,6 +131,33 @@ static void vox_hang_value_changed_cb(GtkSpinButton *spin, gpointer data) {
   vox_hang = gtk_spin_button_get_value_as_int(spin);
 }
 
+static void vox_filter_enable_cb(GtkToggleButton *button, gpointer data) {
+  int mode = vfo_get_tx_mode();
+  int enabled = gtk_toggle_button_get_active(button);
+  transmitter->dexp_filter = enabled;
+  mode_settings[mode].dexp_filter = enabled;
+  copy_mode_settings(mode);
+  tx_set_dexp(transmitter);
+}
+
+static void vox_filter_low_changed_cb(GtkSpinButton *spin, gpointer data) {
+  int mode = vfo_get_tx_mode();
+  int value = gtk_spin_button_get_value_as_int(spin);
+  transmitter->dexp_filter_low = value;
+  mode_settings[mode].dexp_filter_low = value;
+  copy_mode_settings(mode);
+  tx_set_dexp(transmitter);
+}
+
+static void vox_filter_high_changed_cb(GtkSpinButton *spin, gpointer data) {
+  int mode = vfo_get_tx_mode();
+  int value = gtk_spin_button_get_value_as_int(spin);
+  transmitter->dexp_filter_high = value;
+  mode_settings[mode].dexp_filter_high = value;
+  copy_mode_settings(mode);
+  tx_set_dexp(transmitter);
+}
+
 void vox_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
@@ -202,6 +229,27 @@ void vox_menu(GtkWidget *parent) {
   gtk_widget_show(vox_hang_spin);
   gtk_grid_attach(GTK_GRID(grid), vox_hang_spin, 1, 4, 1, 1);
   g_signal_connect(vox_hang_spin, "value_changed", G_CALLBACK(vox_hang_value_changed_cb), NULL);
+  GtkWidget *filter_enable = gtk_check_button_new_with_label("Use Side Channel Filter");
+  gtk_widget_set_name(filter_enable, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_enable), transmitter->dexp_filter);
+  gtk_grid_attach(GTK_GRID(grid), filter_enable, 0, 6, 2, 1);
+  g_signal_connect(filter_enable, "toggled", G_CALLBACK(vox_filter_enable_cb), NULL);
+  GtkWidget *filter_low_label = gtk_label_new("Filter Low-Cut (Hz):");
+  gtk_widget_set_name(filter_low_label, "boldlabel");
+  gtk_widget_set_halign(filter_low_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(grid), filter_low_label, 0, 7, 1, 1);
+  GtkWidget *filter_low_spin = gtk_spin_button_new_with_range(0.0, 1200.0, 25.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(filter_low_spin), transmitter->dexp_filter_low);
+  gtk_grid_attach(GTK_GRID(grid), filter_low_spin, 1, 7, 1, 1);
+  g_signal_connect(filter_low_spin, "value_changed", G_CALLBACK(vox_filter_low_changed_cb), NULL);
+  GtkWidget *filter_high_label = gtk_label_new("Filter High-Cut (Hz):");
+  gtk_widget_set_name(filter_high_label, "boldlabel");
+  gtk_widget_set_halign(filter_high_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(grid), filter_high_label, 2, 7, 1, 1);
+  GtkWidget *filter_high_spin = gtk_spin_button_new_with_range(500.0, 10000.0, 25.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(filter_high_spin), transmitter->dexp_filter_high);
+  gtk_grid_attach(GTK_GRID(grid), filter_high_spin, 3, 7, 1, 1);
+  g_signal_connect(filter_high_spin, "value_changed", G_CALLBACK(vox_filter_high_changed_cb), NULL);
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

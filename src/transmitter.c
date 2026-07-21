@@ -1518,17 +1518,8 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     }
   } else {
     //
-    // Old VOX code, to be applied BEFORE FM preemphasis
-    // and the downward expander
-    //
-    update_vox(tx);
-    // VOX must inspect the original microphone block before a pending
-    // VOX-owned TX OFF replaces it with zeroes. Renewed speech can then
-    // cancel the drain and the complete first resumed block reaches WDSP.
-    if (tx_off_zero_input_block()) {
-      memset(tx->mic_input_buffer, 0,
-             (size_t) 2 * tx->buffer_size * sizeof *tx->mic_input_buffer);
-    }
+    // DEXP supplies the frequency-selective detector level used by VOX.
+    // VOX itself retains its own threshold, hang time and PTT delay.
     //
     // DL1YCF:
     // The FM pre-emphasis filter in WDSP has maximum unit
@@ -1548,20 +1539,27 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     // compensated by ALC, so it is important to have FM pre-emphasis
     // before ALC (checkbox in tx_menu checked, that is, pre_emphasis==0).
     //
-    // Note that mic sample amplification has to be done after update_vox()
-    //
     if (txmode == modeFMN && !tune) {
       for (int i = 0; i < 2 * tx->samples; i += 2) {
         tx->mic_input_buffer[i] *= 5.6234;  // 20*Log(5.6234) is 15
       }
     }
     //
-    // Note that the DownwardExpander is used *outside* of WDSP
-    // channels. We use a single DEXP and give it the id=0.
-    // For triggering VOX, we still use the old code, although
-    // the downward expander also offers VOX capabilities.
+    // The DownwardExpander is used *outside* WDSP channels. We use a single
+    // DEXP with id=0. GetDEXPPeakSignal() returns its detector envelope; it
+    // does not use the DEXP attack/hold/release state as the VOX decision.
     //
     xdexp(0);
+    double dexp_peak = 0.0;
+    GetDEXPPeakSignal(0, &dexp_peak);
+    update_vox(dexp_peak);
+    // VOX must inspect the DEXP detector before a pending VOX-owned TX OFF
+    // replaces this block with zeroes. Renewed speech can therefore cancel
+    // the drain and the complete first resumed block reaches WDSP.
+    if (tx_off_zero_input_block()) {
+      memset(tx->mic_input_buffer, 0,
+             (size_t) 2 * tx->buffer_size * sizeof *tx->mic_input_buffer);
+    }
     fexchange0(tx->id, tx->mic_input_buffer, tx->iq_output_buffer, &error);
     if (mon_enabled && radio_is_transmitting() &&
         vfo_get_tx_mode() != modeCWU &&
@@ -1737,6 +1735,19 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   double mic_sample_double;
   int i, j;
   mic_sample_double = (double) mic_sample;
+  //
+  // Mic PreA belongs to the physical microphone sources.  At this point
+  // mic_sample contains the radio microphone, the local computer microphone,
+  // or their sum.  Apply the extra gain before DEXP/VOX so their detector sees
+  // the same microphone level that enters the TX audio chain.
+  //
+  // TCI TX audio and captured/voice-keyer replay replace this value below and
+  // therefore deliberately do not inherit Mic PreA.  Digital modes retain
+  // their fixed 0 dB input path.
+  //
+  if (tx->addgain_enable && txmode != modeDIGL && txmode != modeDIGU) {
+    mic_sample_double *= pow(10.0, tx->addgain_gain * 0.05);
+  }
   tci_get_next_mic_sample(&mic_sample_double);
   //
   // If there is captured data to re-play, replace incoming
@@ -2540,6 +2551,13 @@ void tx_set_dexp(const TRANSMITTER *tx) {
   // we cannot use tx->id!
   // Note the ExpansionRatio and the Trigger level are in dB
   //
+  // DEXP and its side-channel detector are speech processing.  They must
+  // never be active in DIGL/DIGU, where the TX audio can occupy the complete
+  // configured digital passband.  Keep the stored per-mode settings intact;
+  // they become effective again when returning to a speech mode.
+  //
+  const int mode = vfo_get_tx_mode();
+  const int digi = mode == modeDIGL || mode == modeDIGU;
   SetDEXPDetectorTau(0, tx->dexp_tau);
   SetDEXPAttackTime(0, tx->dexp_attack);
   SetDEXPReleaseTime(0, tx->dexp_release);
@@ -2549,8 +2567,8 @@ void tx_set_dexp(const TRANSMITTER *tx) {
   SetDEXPAttackThreshold(0, pow(10.0, 0.05 * tx->dexp_trigger));
   SetDEXPLowCut(0, (double) tx->dexp_filter_low);
   SetDEXPHighCut(0, (double) tx->dexp_filter_high);
-  SetDEXPRunSideChannelFilter(0, tx->dexp_filter);
-  SetDEXPRun(0, tx->dexp);
+  SetDEXPRunSideChannelFilter(0, digi ? 0 : tx->dexp_filter);
+  SetDEXPRun(0, digi ? 0 : tx->dexp);
 }
 
 void tx_xmit_captured_data_start(const TRANSMITTER *tx) {
@@ -2642,18 +2660,16 @@ void tx_set_mic_gain(const TRANSMITTER *tx) {
   int _mode;
   _gain = tx->mic_gain;
   _mode = vfo_get_tx_mode();
-  if (tx->addgain_enable) {
-    _gain += tx->addgain_gain;
-  }
   if (_mode == modeDIGL || _mode == modeDIGU) {
     SetTXAPanelGain1(tx->id, 1.0);
     t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __func__);
   } else {
     SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
-    t_print("%s: set input gain to %.1fdb\n", __func__, _gain);
+    t_print("%s: set WDSP Mic Gain to %.1fdb\n", __func__, _gain);
   }
-  t_print("TX id=%d MicGain(dB)=%g, calc TXAPanel: %g Mode: %d\n", tx->id, _gain, pow(10.0, _gain * 0.05),
-          vfo_get_tx_mode());
+  t_print("TX id=%d MicGain(dB)=%g, MicPreA(dB)=%g/%s, calc TXAPanel: %g Mode: %d\n",
+          tx->id, _gain, tx->addgain_gain, tx->addgain_enable ? "on" : "off",
+          pow(10.0, _gain * 0.05), vfo_get_tx_mode());
   if (can_transmit && display_sliders) {
     update_slider_preamp_button(TRUE);
   }
@@ -2670,11 +2686,8 @@ void tx_set_mode(TRANSMITTER* tx, int mode) {
       t_print("%s: DIGIMODE -> set input gain fix to 0db\n", __func__);
     } else {
       _gain = tx->mic_gain;
-      if (tx->addgain_enable) {
-        _gain += tx->addgain_gain;
-      }
       SetTXAPanelGain1(tx->id, pow(10.0, _gain * 0.05));
-      t_print("%s: Restore input gain: %.1fdb\n", __func__, _gain);
+      t_print("%s: Restore WDSP Mic Gain: %.1fdb\n", __func__, _gain);
     }
     SetTXAMode(tx->id, mode);
     tx_set_filter(tx);

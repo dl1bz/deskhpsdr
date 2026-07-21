@@ -162,8 +162,8 @@ typedef struct _transmitter {
   int    phrot_stage;       // Phase Rotator stages
   double phrot_freq;        // Phase Rotator corner frequency
   int    cessb_enable;      // enable CESSB
-  int    addgain_enable;    // enable additional Gain for local Mic input
-  double addgain_gain;      // value for additional Gain for local Mic input
+  int    addgain_enable;    // enable extra gain for physical microphone sources
+  double addgain_gain;      // extra gain for radio/local microphone input
 
   double fwd;
   double rev;

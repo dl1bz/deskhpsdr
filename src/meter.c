@@ -72,6 +72,33 @@ static const char *(dbm2smeter[NUM_SWERTE + 1]) = {
   "no signal", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S9+5db", "S9+10db", "S9+15db", "S9+20db", "S9+25db", "S9+30db", "S9+40db", "S9+50db", "S9+60db", "out of range"
 };
 
+static double vox_level_db(double level) {
+  if (level <= 1.0e-12) {
+    return -240.0;
+  }
+  return 20.0 * log10(level);
+}
+
+static double analog_vox_meter_value(double level) {
+  double value = vox_level_db(level);
+  if (value < -30.0) { value = -30.0; }
+  if (value > 5.0) { value = 5.0; }
+  value = 0.0571 * value * value + 3.7143 * value + 60.0;
+  if (value < 0.0) { value = 0.0; }
+  if (value > 80.0) { value = 80.0; }
+  return value;
+}
+
+static double digital_vox_meter_value(double level) {
+  double value = vox_level_db(level);
+  if (value < -40.0) { value = -40.0; }
+  if (value > 5.0) { value = 5.0; }
+  value = 0.0436 * value * value + 3.7818 * value + 80.0;
+  if (value < 0.0) { value = 0.0; }
+  if (value > 100.0) { value = 100.0; }
+  return value;
+}
+
 
 static unsigned char get_SWert(short int dbm) {
   int i;
@@ -611,12 +638,17 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
         cairo_rectangle(cr, x_offset, y_offset + 20.0, 21.0, 20.0);
         cairo_fill(cr);
-        double peak = GetTXAMeter(transmitter->id, TXA_MIC_AV);
-        if (peak < -30.0) { peak = -30.0; }
-        if (peak > 5.0) { peak = 5.0; }
-        peak = 0.0571 * peak * peak + 3.7143 * peak + 60;
-        if (peak < 0.0) { peak = 0.0; }
-        if (peak > 80.0) { peak = 80.0; }
+        double peak;
+        if (vox_enabled) {
+          peak = analog_vox_meter_value(vox_get_peak());
+        } else {
+          peak = GetTXAMeter(transmitter->id, TXA_MIC_AV);
+          if (peak < -30.0) { peak = -30.0; }
+          if (peak > 5.0) { peak = 5.0; }
+          peak = 0.0571 * peak * peak + 3.7143 * peak + 60.0;
+          if (peak < 0.0) { peak = 0.0; }
+          if (peak > 80.0) { peak = 80.0; }
+        }
         meter_set_analog_scale_colour(cr);
         cairo_rectangle(cr, x_offset + 4.0, (y_offset + 80) - peak, 4.0, peak);
         cairo_fill(cr);
@@ -644,13 +676,14 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
         meter_set_analog_scale_colour(cr);
         cairo_move_to(cr, x_offset + 25.0, y_offset + 10.0);
-        cairo_show_text(cr, "Mic | ALC");
+        cairo_show_text(cr, vox_enabled ? "VOX | ALC" : "Mic | ALC");
         double current_line_width = cairo_get_line_width(cr);
         if (vox_enabled) {
+          double threshold = analog_vox_meter_value(vox_threshold);
           cairo_set_source_rgba(cr, COLOUR_ATTN);
           cairo_set_line_width(cr, current_line_width + 1.5);
-          cairo_move_to(cr, x_offset, y_offset + 80.0 * (1 - vox_threshold));
-          cairo_line_to(cr, x_offset + 10.0, y_offset + 80.0 * (1 - vox_threshold));
+          cairo_move_to(cr, x_offset, y_offset + 80.0 - threshold);
+          cairo_line_to(cr, x_offset + 10.0, y_offset + 80.0 - threshold);
           cairo_stroke(cr);
           cairo_set_line_width(cr, current_line_width);
         }
@@ -731,13 +764,18 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_rectangle(cr, 5.0 + 80.0, Y1 - 15, 19, 15);
         cairo_fill(cr);
         cairo_set_source_rgba(cr, COLOUR_METER);
-        double peak = GetTXAMeter(transmitter->id, TXA_MIC_AV);
-        if (peak > 5.0) { peak = 5.0; }
-        if (peak < -40.0) { peak = -40.0; }
-        // peak = 1.6 * peak + 80; // 0-100 meter: 0 is -50db, 100 is +5db, from 0-5db is red
-        peak = 0.0436 * peak * peak + 3.7818 * peak + 80;
-        if (peak < 0.0) { peak = 0.00; }
-        if (peak > 100.0) { peak = 100.0; }
+        double peak;
+        if (vox_enabled) {
+          peak = digital_vox_meter_value(vox_get_peak());
+        } else {
+          peak = GetTXAMeter(transmitter->id, TXA_MIC_AV);
+          if (peak > 5.0) { peak = 5.0; }
+          if (peak < -40.0) { peak = -40.0; }
+          // peak = 1.6 * peak + 80; // 0-100 meter: 0 is -50db, 100 is +5db, from 0-5db is red
+          peak = 0.0436 * peak * peak + 3.7818 * peak + 80.0;
+          if (peak < 0.0) { peak = 0.0; }
+          if (peak > 100.0) { peak = 100.0; }
+        }
         // 64 is -10db, 72 is -5db, 80 is 0db and 100 is +5db
         cairo_set_source_rgba(cr, COLOUR_METER);
         cairo_rectangle(cr, 5.0, Y1 - 12, peak, 3);
@@ -766,10 +804,11 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_fill(cr);
         double current_line_width = cairo_get_line_width(cr);
         if (vox_enabled) {
+          double threshold = digital_vox_meter_value(vox_threshold);
           cairo_set_source_rgba(cr, COLOUR_ATTN);
           cairo_set_line_width(cr, current_line_width + 1.5);
-          cairo_move_to(cr, 5.0 + (vox_threshold * 100.0), Y1 - 15);
-          cairo_line_to(cr, 5.0 + (vox_threshold * 100.0), Y1 - 6);
+          cairo_move_to(cr, 5.0 + threshold, Y1 - 15);
+          cairo_line_to(cr, 5.0 + threshold, Y1 - 6);
           cairo_stroke(cr);
           cairo_set_line_width(cr, current_line_width);
         }
@@ -806,7 +845,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
         cairo_move_to(cr, 110.0, Y1 - 8);
         cairo_set_source_rgba(cr, COLOUR_METER);
-        cairo_show_text(cr, "Mic Lvl");
+        cairo_show_text(cr, vox_enabled ? "VOX Lvl" : "Mic Lvl");
         cairo_move_to(cr, 110.0, Y1 + 4);
         cairo_show_text(cr, "ALC");
       } else {
