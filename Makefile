@@ -1104,7 +1104,7 @@ install-Darwin: all
 	@cp MacOS/PkgInfo deskHPSDR.app/Contents
 	@cp MacOS/Info.plist deskHPSDR.app/Contents
 	@cp MacOS/hpsdr.icns deskHPSDR.app/Contents/Resources
-	@cp MacOS/radio.icns deskHPSDR.app/Contents/Resources
+	@cp MacOS/deskhpsdr.icns deskHPSDR.app/Contents/Resources
 	@if [ -f "${CURRDIR}/MacOS/rigctld_deskhpsdr" ]; then \
 		cp "${CURRDIR}/MacOS/rigctld_deskhpsdr" deskHPSDR.app/Contents/Resources; \
 	fi
