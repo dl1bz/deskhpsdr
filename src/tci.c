@@ -60,6 +60,7 @@
 #include "noise_menu.h"
 #include "receiver.h"
 #include "rx_panadapter.h"
+#include "tx_off.h"
 
 #define MAXDATASIZE     1024
 #define MAXMSGSIZE      512
@@ -107,12 +108,21 @@ static int tci_cw_macros_delay_ms = 10;
 static gint tci_iq_stream_clients = 0;
 static int tci_iq_stream_sample_rate = 0;
 
+typedef enum {
+  TCI_TX_CLEAR_NONE = 0,
+  TCI_TX_CLEAR_AUDIO,
+  TCI_TX_CLEAR_MOX
+} TCI_TX_CLEAR_STAGE;
+
 typedef struct _client {
   int seq;                      // Seq. number of the client
   int fd;                       // socket
   int running;                  // set this to zero to close client connection
   guint tci_timer;              // GTK id  of the periodic task
-  guint tx_clear_timer;          // delayed TX audio drain/MOX clear task
+  guint tx_clear_timer;          // TX audio/MOX drain poll task
+  guint tx_clear_generation;
+  TCI_TX_CLEAR_STAGE tx_clear_stage;
+  gint64 tx_clear_started_us;
   long long last_fa;            // last VFO-A  freq reported
   long long last_fb;            // last VFO-B  freq reported
   long long last_fx;            // last TX     freq reported
@@ -144,6 +154,7 @@ typedef struct _client {
   void *rx_audio_resampler_r[TCI_RX_AUDIO_MAX_RECEIVERS];
   int audio_sample_rate;
   void *tx_audio_resampler_24_to_48;
+  int tx_audio_session;
   int tx_audio_enabled;
   gint64 tx_chrono_next_us;
   guint tx_chrono_tick;
@@ -153,6 +164,11 @@ typedef struct _client {
   size_t binary_rx_len;
   size_t binary_rx_size;
 } CLIENT;
+
+typedef struct _tci_tx_clear_context {
+  CLIENT *client;
+  guint generation;
+} TCI_TX_CLEAR_CONTEXT;
 
 typedef struct _response {
   CLIENT *client;
@@ -940,22 +956,45 @@ static void tci_handle_binary (CLIENT *client, const unsigned char *data, size_t
   if (client == NULL || data == NULL || len < sizeof (TCI_STREAM_HEADER)) { return; }
   memcpy (&header, data, sizeof (header));
   switch (header.type) {
-  case TCI_STREAM_TX_AUDIO:
-    if (client->tx_audio_enabled) {
-      guint64 ring_write = 0;
-      guint64 ring_read = 0;
-      guint64 ring_available = 0;
-      guint ring_dropped = 0;
-      int ring_enabled = 0;
+  case TCI_STREAM_TX_AUDIO: {
+    guint64 tx_audio_rx_count = 0;
+    int audio_sample_rate = TCI_AUDIO_SAMPLE_RATE;
+    int tx_audio_enabled;
+    int log_frame = 0;
+    /*
+     * The GTK drain callback may disable the session and destroy its 24 kHz
+     * resampler while the libwebsockets thread is receiving binary audio.
+     * Keep the client state and resampler protected by the same mutex.
+     */
+    g_mutex_lock (&tci_mutex);
+    tx_audio_enabled = client->tx_audio_enabled;
+    if (tx_audio_enabled) {
       client->tx_audio_rx_count++;
-      if (tci_debug && (client->tx_audio_rx_count <= 10 || (client->tx_audio_rx_count % 100) == 0)) {
-        size_t payload_bytes = (len >= sizeof (TCI_STREAM_HEADER)) ? (len - sizeof (TCI_STREAM_HEADER)) : 0;
-        size_t expected_bytes = sizeof (TCI_STREAM_HEADER) + ((size_t) header.length * sizeof (float));
-        guint frames_by_header_channels = (header.channels > 0) ? (guint) (header.length / header.channels) : 0;
+      tx_audio_rx_count = client->tx_audio_rx_count;
+      audio_sample_rate = client->audio_sample_rate;
+      log_frame = tci_debug &&
+                  (tx_audio_rx_count <= 10 || (tx_audio_rx_count % 100) == 0);
+      tci_audio_handle_tx_frame (data, len, audio_sample_rate,
+                                 &client->tx_audio_resampler_24_to_48);
+    }
+    g_mutex_unlock (&tci_mutex);
+    if (tx_audio_enabled) {
+      if (log_frame) {
+        guint64 ring_write = 0;
+        guint64 ring_read = 0;
+        guint64 ring_available = 0;
+        guint ring_dropped = 0;
+        int ring_enabled = 0;
+        size_t payload_bytes = (len >= sizeof (TCI_STREAM_HEADER)) ?
+                               (len - sizeof (TCI_STREAM_HEADER)) : 0;
+        size_t expected_bytes = sizeof (TCI_STREAM_HEADER) +
+                                ((size_t) header.length * sizeof (float));
+        guint frames_by_header_channels = (header.channels > 0) ?
+                                          (guint) (header.length / header.channels) : 0;
         guint frames_as_stereo = (guint) (header.length / TCI_AUDIO_CHANNELS);
-        t_print ("TCI%d RX TX_AUDIO count=%llu ws_len=%zu payload=%zu expected=%zu receiver=%u sample_rate=%u format=%u type=%u length=%u channels=%u frames_by_channels=%u frames_as_stereo=%u client_audio_rate=%d tx_audio_enabled=%d\n",
+        t_print ("TCI%d RX TX_AUDIO count=%llu ws_len=%zu payload=%zu expected=%zu receiver=%u sample_rate=%u format=%u type=%u length=%u channels=%u frames_by_channels=%u frames_as_stereo=%u client_audio_rate=%d tx_audio_enabled=1\n",
                  client->seq,
-                 (unsigned long long) client->tx_audio_rx_count,
+                 (unsigned long long) tx_audio_rx_count,
                  len,
                  payload_bytes,
                  expected_bytes,
@@ -967,16 +1006,12 @@ static void tci_handle_binary (CLIENT *client, const unsigned char *data, size_t
                  header.channels,
                  frames_by_header_channels,
                  frames_as_stereo,
-                 client->audio_sample_rate,
-                 client->tx_audio_enabled);
-      }
-      tci_audio_handle_tx_frame (data, len, client->audio_sample_rate,
-                                 &client->tx_audio_resampler_24_to_48);
-      if (tci_debug && (client->tx_audio_rx_count <= 10 || (client->tx_audio_rx_count % 100) == 0)) {
-        tci_audio_tx_debug_snapshot (&ring_write, &ring_read, &ring_dropped, &ring_available, &ring_enabled);
+                 audio_sample_rate);
+        tci_audio_tx_debug_snapshot (&ring_write, &ring_read, &ring_dropped,
+                                     &ring_available, &ring_enabled);
         t_print ("TCI%d TX audio ring after push count=%llu enabled=%d write=%llu read=%llu available=%llu dropped=%u\n",
                  client->seq,
-                 (unsigned long long) client->tx_audio_rx_count,
+                 (unsigned long long) tx_audio_rx_count,
                  ring_enabled,
                  (unsigned long long) ring_write,
                  (unsigned long long) ring_read,
@@ -995,6 +1030,7 @@ static void tci_handle_binary (CLIENT *client, const unsigned char *data, size_t
                header.channels);
     }
     break;
+  }
   default:
     if (rigctl_debug) {
       t_print ("TCI%d binary ignored: type=%u len=%zu\n", client->seq, header.type, len);
@@ -1673,20 +1709,23 @@ static int tci_set_lock_allowed(CLIENT *client, TCI_SET_LOCK_ID lock_id) {
   return allowed;
 }
 
-static void tci_tx_client_cleanup_tx_audio(CLIENT *client) {
-  if (client == NULL) {
-    return;
-  }
-  g_mutex_lock(&tci_mutex);
+#define TCI_TX_CLEAR_POLL_MS             5
+#define TCI_TX_AUDIO_DRAIN_TIMEOUT_US    5000000
+#define TCI_TX_MOX_DRAIN_TIMEOUT_US      6500000
+
+static void tci_tx_client_cleanup_tx_audio_locked(CLIENT *client) {
+  client->tx_audio_session = 0;
   client->tx_audio_enabled = 0;
   client->tx_chrono_next_us = 0;
   client->tx_chrono_tick = 0;
   client->tx_chrono_queue_count = 0;
   client->tx_audio_rx_count = 0;
-  g_mutex_unlock(&tci_mutex);
   tci_audio_tx_set_active(0);
   tci_audio_tx_reset();
   tci_audio_destroy_tx_resampler(&client->tx_audio_resampler_24_to_48);
+}
+
+static void tci_tx_client_close_monitor_if_unused(void) {
 #ifdef PORTAUDIO
   if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
     audio_close_tci_monitor();
@@ -1694,38 +1733,242 @@ static void tci_tx_client_cleanup_tx_audio(CLIENT *client) {
 #endif
 }
 
-static gboolean tci_tx_client_clear_mox_cb(gpointer data) {
-  CLIENT *client = (CLIENT *) data;
-  if (client == NULL) {
-    return G_SOURCE_REMOVE;
-  }
-  client->tx_clear_timer = 0;
-  if (!client->running) {
-    return G_SOURCE_REMOVE;
-  }
-  tci_tx_client_cleanup_tx_audio(client);
-  ext_mox_update(GINT_TO_POINTER(0));
-  tci_send_mox(client);
-  t_print("TCI%d RX request completed after TX audio drain\n", client->seq);
-  return G_SOURCE_REMOVE;
-}
-
-static void tci_tx_client_cancel_clear_mox(CLIENT *client) {
+static void tci_tx_client_cleanup_tx_audio(CLIENT *client) {
   if (client == NULL) {
     return;
   }
-  if (client->tx_clear_timer != 0) {
-    g_source_remove(client->tx_clear_timer);
-    client->tx_clear_timer = 0;
+  g_mutex_lock(&tci_mutex);
+  tci_tx_client_cleanup_tx_audio_locked(client);
+  g_mutex_unlock(&tci_mutex);
+  tci_tx_client_close_monitor_if_unused();
+}
+
+static void tci_tx_client_start_tx_audio(CLIENT *client, int preserve) {
+  if (client == NULL) {
+    return;
   }
+  g_mutex_lock(&tci_mutex);
+  if (!preserve) {
+    tci_audio_tx_set_active(0);
+    tci_audio_tx_reset();
+    tci_audio_destroy_tx_resampler(&client->tx_audio_resampler_24_to_48);
+  }
+  tci_audio_tx_cancel_drain();
+  tci_audio_tx_set_active(1);
+  client->tx_audio_session = 1;
+  client->tx_audio_enabled = 1;
+  client->tx_chrono_next_us = 0;
+  client->tx_chrono_tick = 0;
+  if (!preserve) {
+    client->tx_chrono_queue_count = 0;
+    client->tx_audio_rx_count = 0;
+  }
+  g_mutex_unlock(&tci_mutex);
+}
+
+static TCI_TX_CLEAR_STAGE tci_tx_client_cancel_clear_mox(CLIENT *client) {
+  guint timer = 0;
+  TCI_TX_CLEAR_STAGE stage = TCI_TX_CLEAR_NONE;
+  if (client == NULL) {
+    return TCI_TX_CLEAR_NONE;
+  }
+  g_mutex_lock(&tci_mutex);
+  timer = client->tx_clear_timer;
+  stage = client->tx_clear_stage;
+  client->tx_clear_timer = 0;
+  client->tx_clear_generation++;
+  client->tx_clear_stage = TCI_TX_CLEAR_NONE;
+  client->tx_clear_started_us = 0;
+  g_mutex_unlock(&tci_mutex);
+  if (timer != 0) {
+    g_source_remove(timer);
+  }
+  if (stage != TCI_TX_CLEAR_NONE) {
+    tci_audio_tx_cancel_drain();
+  }
+  return stage;
+}
+
+static gboolean tci_tx_client_finish_clear_mox(CLIENT *client,
+    guint generation,
+    int takeover) {
+  int release_owner = 0;
+  int running = 0;
+  if (client == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  g_mutex_lock(&tci_mutex);
+  if (client->tx_clear_generation != generation ||
+      client->tx_clear_stage != TCI_TX_CLEAR_MOX) {
+    g_mutex_unlock(&tci_mutex);
+    return G_SOURCE_REMOVE;
+  }
+  tci_tx_client_cleanup_tx_audio_locked(client);
+  client->tx_clear_timer = 0;
+  client->tx_clear_stage = TCI_TX_CLEAR_NONE;
+  client->tx_clear_started_us = 0;
+  running = client->running;
+  if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_MOX) {
+    tci_tx_owner = NULL;
+    tci_tx_owner_mode = TCI_TX_OWNER_NONE;
+    release_owner = 1;
+  }
+  g_mutex_unlock(&tci_mutex);
+  tci_tx_client_close_monitor_if_unused();
+  if (running && !takeover) {
+    tci_send_mox(client);
+  }
+  if (takeover) {
+    t_print("TCI%d RX request completed; TX was taken over by another PTT source\n",
+            client->seq);
+  } else {
+    t_print("TCI%d RX request completed after TX audio and protocol drain%s\n",
+            client->seq,
+            release_owner ? "" : " (owner already released)");
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean tci_tx_client_clear_mox_cb(gpointer data) {
+  TCI_TX_CLEAR_CONTEXT *context = (TCI_TX_CLEAR_CONTEXT *) data;
+  CLIENT *client;
+  guint generation;
+  TCI_TX_CLEAR_STAGE stage;
+  gint64 started_us;
+  gint64 now;
+  int running;
+  if (context == NULL || context->client == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  client = context->client;
+  generation = context->generation;
+  g_mutex_lock(&tci_mutex);
+  if (client->tx_clear_generation != generation) {
+    g_mutex_unlock(&tci_mutex);
+    return G_SOURCE_REMOVE;
+  }
+  stage = client->tx_clear_stage;
+  started_us = client->tx_clear_started_us;
+  running = client->running;
+  if (!running || stage == TCI_TX_CLEAR_NONE) {
+    client->tx_clear_timer = 0;
+    g_mutex_unlock(&tci_mutex);
+    return G_SOURCE_REMOVE;
+  }
+  g_mutex_unlock(&tci_mutex);
+  now = g_get_monotonic_time();
+  if (stage == TCI_TX_CLEAR_AUDIO) {
+    int drained = tci_audio_tx_is_drained();
+    int timed_out = now - started_us >= TCI_TX_AUDIO_DRAIN_TIMEOUT_US;
+    guint64 pending = tci_audio_tx_pending();
+    if (!drained && !timed_out) {
+      return G_SOURCE_CONTINUE;
+    }
+    g_mutex_lock(&tci_mutex);
+    if (client->tx_clear_generation != generation ||
+        client->tx_clear_stage != TCI_TX_CLEAR_AUDIO) {
+      g_mutex_unlock(&tci_mutex);
+      return G_SOURCE_CONTINUE;
+    }
+    client->tx_clear_stage = TCI_TX_CLEAR_MOX;
+    client->tx_clear_started_us = now;
+    if (timed_out) {
+      tci_tx_client_cleanup_tx_audio_locked(client);
+    }
+    g_mutex_unlock(&tci_mutex);
+    if (timed_out) {
+      t_print("TCI%d TX audio drain timeout, pending=%llu; forcing pipeline cleanup\n",
+              client->seq,
+              (unsigned long long) pending);
+      tci_tx_client_close_monitor_if_unused();
+    } else {
+      t_print("TCI%d TX audio ring drained; starting graceful MOX OFF\n",
+              client->seq);
+    }
+    ext_mox_update(GINT_TO_POINTER(0));
+    g_mutex_lock(&tci_mutex);
+    int still_current = client->tx_clear_generation == generation &&
+                        client->tx_clear_stage == TCI_TX_CLEAR_MOX;
+    g_mutex_unlock(&tci_mutex);
+    if (!still_current) {
+      tx_off_cancel_target(TX_OFF_TARGET_MOX);
+    }
+    return G_SOURCE_CONTINUE;
+  }
+  if (stage == TCI_TX_CLEAR_MOX) {
+    if (!radio_is_transmitting()) {
+      return tci_tx_client_finish_clear_mox(client, generation, 0);
+    }
+    if (!tx_off_pending_target(TX_OFF_TARGET_MOX)) {
+      /*
+       * The requested OFF was cancelled by hardware PTT, CAT/MOX or a
+       * different local source. Release only the TCI ownership and audio;
+       * never force that new TX source back to RX.
+       */
+      return tci_tx_client_finish_clear_mox(client, generation, 1);
+    }
+    if (now - started_us >= TCI_TX_MOX_DRAIN_TIMEOUT_US) {
+      t_print("TCI%d graceful MOX OFF timeout; forcing immediate RX\n",
+              client->seq);
+      g_mutex_lock(&tci_mutex);
+      if (client->tx_clear_generation == generation &&
+          client->tx_clear_stage == TCI_TX_CLEAR_MOX) {
+        client->tx_clear_started_us = now;
+      }
+      g_mutex_unlock(&tci_mutex);
+      ext_mox_update_immediate(GINT_TO_POINTER(0));
+    }
+  }
+  return G_SOURCE_CONTINUE;
 }
 
 static void tci_tx_client_schedule_clear_mox(CLIENT *client) {
+  int has_tx_audio;
+  guint timer;
+  guint generation;
+  TCI_TX_CLEAR_CONTEXT *context;
   if (client == NULL) {
     return;
   }
   tci_tx_client_cancel_clear_mox(client);
-  client->tx_clear_timer = g_timeout_add(50, tci_tx_client_clear_mox_cb, client);
+  g_mutex_lock(&tci_mutex);
+  has_tx_audio = client->tx_audio_session;
+  client->tx_audio_enabled = 0;
+  client->tx_chrono_next_us = 0;
+  client->tx_chrono_tick = 0;
+  client->tx_clear_generation++;
+  generation = client->tx_clear_generation;
+  client->tx_clear_stage = has_tx_audio ? TCI_TX_CLEAR_AUDIO : TCI_TX_CLEAR_MOX;
+  client->tx_clear_started_us = g_get_monotonic_time();
+  g_mutex_unlock(&tci_mutex);
+  if (has_tx_audio) {
+    tci_audio_tx_begin_drain();
+    t_print("TCI%d RX request, draining %llu queued TCI TX audio frames\n",
+            client->seq,
+            (unsigned long long) tci_audio_tx_pending());
+  } else {
+    ext_mox_update(GINT_TO_POINTER(0));
+    t_print("TCI%d RX request, starting graceful MOX OFF\n", client->seq);
+  }
+  context = g_new0(TCI_TX_CLEAR_CONTEXT, 1);
+  context->client = client;
+  context->generation = generation;
+  timer = g_timeout_add_full(G_PRIORITY_DEFAULT,
+                             TCI_TX_CLEAR_POLL_MS,
+                             tci_tx_client_clear_mox_cb,
+                             context,
+                             g_free);
+  g_mutex_lock(&tci_mutex);
+  if (client->tx_clear_generation == generation &&
+      client->tx_clear_stage != TCI_TX_CLEAR_NONE &&
+      client->tx_clear_timer == 0) {
+    client->tx_clear_timer = timer;
+    timer = 0;
+  }
+  g_mutex_unlock(&tci_mutex);
+  if (timer != 0) {
+    g_source_remove(timer);
+  }
 }
 
 static void tci_set_locks_clear_client(CLIENT *client) {
@@ -1768,6 +2011,7 @@ static void tci_tx_owner_sync_local_state(void) {
   g_mutex_unlock(&tci_mutex);
   if (clear_owner && owner != NULL) {
     if (owner_mode == TCI_TX_OWNER_MOX) {
+      tci_tx_client_cancel_clear_mox(owner);
       tci_tx_client_cleanup_tx_audio(owner);
     }
     t_print("TCI%d %s owner released by local control\n",
@@ -3449,6 +3693,8 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
   int source_tci;
   int state;
   int allow;
+  int owner_request;
+  int fresh_owner;
   int owner_seq;
   int tx_active;
   int tune_active;
@@ -3458,11 +3704,14 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
       return;
     }
   }
-  source_tci = (cmd->argc >= 3 && cmd->argv[2] != NULL && !g_ascii_strcasecmp (cmd->argv[2], "tci"));
+  source_tci = (cmd->argc >= 3 && cmd->argv[2] != NULL &&
+                !g_ascii_strcasecmp (cmd->argv[2], "tci"));
   tci_tx_owner_sync_local_state();
   if (cmd->argc >= 2) {
     state = tci_bool (cmd->argv[1]) ? 1 : 0;
     allow = 0;
+    owner_request = 0;
+    fresh_owner = 0;
     owner_seq = -1;
     tx_active = radio_is_transmitting();
     tune_active = tune ? 1 : 0;
@@ -3470,18 +3719,21 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
     if (state) {
       if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_MOX) {
         allow = 1;
+        owner_request = 1;
       } else if (tci_tx_owner == NULL && !tx_active && !tune_active) {
         tci_tx_owner = client;
         tci_tx_owner_mode = TCI_TX_OWNER_MOX;
         allow = 1;
+        owner_request = 1;
+        fresh_owner = 1;
       } else if (tci_tx_owner != NULL) {
         owner_seq = tci_tx_owner->seq;
       }
     } else {
       if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_MOX) {
-        tci_tx_owner = NULL;
-        tci_tx_owner_mode = TCI_TX_OWNER_NONE;
+        /* Keep ownership until the audio, WDSP and protocol drains finish. */
         allow = 1;
+        owner_request = 1;
       } else if (tci_tx_owner == NULL && !tx_active) {
         allow = 1;
       } else if (tci_tx_owner != NULL) {
@@ -3504,19 +3756,28 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
       return;
     }
     if (state) {
-      tci_tx_client_cancel_clear_mox(client);
+      TCI_TX_CLEAR_STAGE cancelled_stage;
+      int had_tx_audio;
+      int accepting_tx_audio;
+      int preserve_tx_audio;
+      cancelled_stage = tci_tx_client_cancel_clear_mox(client);
+      /*
+       * TCI commands arrive on the libwebsockets thread. Cancel the
+       * central OFF state here, before the main-loop MOX-ON callback, so
+       * a reasserted TCI PTT cannot lose the race against the final guard.
+       */
+      tx_off_cancel_target(TX_OFF_TARGET_MOX);
+      g_mutex_lock (&tci_mutex);
+      had_tx_audio = client->tx_audio_session;
+      accepting_tx_audio = client->tx_audio_enabled;
+      g_mutex_unlock (&tci_mutex);
+      preserve_tx_audio = !fresh_owner && tx_active && had_tx_audio &&
+                          (cancelled_stage != TCI_TX_CLEAR_NONE ||
+                           accepting_tx_audio);
       if (source_tci) {
-        tci_audio_tx_reset();
-        tci_audio_tx_set_active (1);
-        g_mutex_lock (&tci_mutex);
-        client->tx_audio_enabled = 1;
-        client->tx_chrono_next_us = 0;
-        client->tx_chrono_tick = 0;
-        client->tx_chrono_queue_count = 0;
-        client->tx_audio_rx_count = 0;
-        g_mutex_unlock (&tci_mutex);
+        tci_tx_client_start_tx_audio(client, preserve_tx_audio);
 #ifdef PORTAUDIO
-        if (tci_audio_monitor) {
+        if (tci_audio_monitor && !preserve_tx_audio) {
           // audio_open_tci_monitor("Externe Kopfhörer");
           audio_open_tci_monitor (active_receiver->audio_name);
         }
@@ -3527,15 +3788,37 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
         tci_send_audio_stream_samples (client);
         tci_send_text (client, "tx_stream_audio_buffering:50;");
         tci_send_text (client, "audio_start:0;");
-        t_print ("TCI%d TX request (tci audio)\n", client->seq);
+        if (preserve_tx_audio) {
+          t_print ("TCI%d TX request resumed during pending OFF; TCI audio preserved\n",
+                   client->seq);
+        } else {
+          t_print ("TCI%d TX request (tci audio)\n", client->seq);
+        }
       } else {
-        t_print ("TCI%d TX request\n", client->seq);
+        if (had_tx_audio) {
+          tci_tx_client_cleanup_tx_audio(client);
+        }
+        if (cancelled_stage != TCI_TX_CLEAR_NONE) {
+          t_print ("TCI%d TX request resumed during pending OFF; local microphone selected\n",
+                   client->seq);
+        } else {
+          t_print ("TCI%d TX request\n", client->seq);
+        }
       }
       g_idle_add (ext_mox_update, GINT_TO_POINTER (1));
       tci_schedule_fast_mox_report (1);
+    } else if (owner_request) {
+      int already_pending;
+      g_mutex_lock (&tci_mutex);
+      already_pending = client->tx_clear_stage != TCI_TX_CLEAR_NONE;
+      g_mutex_unlock (&tci_mutex);
+      if (already_pending) {
+        t_print ("TCI%d RX request already pending\n", client->seq);
+      } else {
+        tci_tx_client_schedule_clear_mox(client);
+      }
     } else {
-      tci_tx_client_schedule_clear_mox(client);
-      t_print ("TCI%d RX request, draining TX audio for 50 ms\n", client->seq);
+      tci_send_mox (client);
     }
   } else {
     tci_send_mox (client);
@@ -4684,7 +4967,7 @@ static void tci_cmd_stop (CLIENT *client, const TCI_CMD *cmd) {
   } else if (owner_mode == TCI_TX_OWNER_MOX) {
     tci_tx_client_cancel_clear_mox(client);
     tci_tx_client_cleanup_tx_audio(client);
-    g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
+    g_idle_add (ext_mox_update_immediate, GINT_TO_POINTER (0));
     tci_schedule_fast_mox_report (0);
     t_print ("TCI%d TX owner stopped, forcing RX\n", client->seq);
   }
@@ -4954,6 +5237,9 @@ static void tci_init_client (CLIENT *client, int fd, int seq) {
   client->idle_queued     =  0;
   client->tci_timer       =  0;
   client->tx_clear_timer  =  0;
+  client->tx_clear_generation = 0;
+  client->tx_clear_stage  =  TCI_TX_CLEAR_NONE;
+  client->tx_clear_started_us = 0;
   client->wsi             = NULL;
   client->lws_tx_queue    = NULL;
   client->initial_sent    =  0;
@@ -4962,6 +5248,8 @@ static void tci_init_client (CLIENT *client, int fd, int seq) {
   client->audio_sample_rate = TCI_AUDIO_SAMPLE_RATE;
   client->iq_sample_rate = 0;
   client->tx_audio_resampler_24_to_48 = NULL;
+  client->tx_audio_session = 0;
+  client->tx_audio_enabled = 0;
   for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
     client->rx_audio_enabled[i] = 0;
     client->rx_audio_read_count[i] = 0;
@@ -5258,7 +5546,7 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
     TCI_TX_OWNER_MODE owner_mode = TCI_TX_OWNER_NONE;
     int cleanup_tx_audio = 0;
     g_mutex_lock (&tci_mutex);
-    cleanup_tx_audio = client->tx_audio_enabled;
+    cleanup_tx_audio = client->tx_audio_session || client->tx_audio_enabled;
     client->tx_audio_enabled = 0;
     client->tx_chrono_next_us = 0;
     client->tx_chrono_tick = 0;
@@ -5284,7 +5572,7 @@ static int tci_lws_callback (struct lws *wsi, enum lws_callback_reasons reason,
       g_idle_add (ext_tune_update, GINT_TO_POINTER (0));
       t_print ("TCI%d TUNE owner disconnected, forcing TUNE off\n", client->seq);
     } else if (owner_mode == TCI_TX_OWNER_MOX) {
-      g_idle_add (ext_mox_update, GINT_TO_POINTER (0));
+      g_idle_add (ext_mox_update_immediate, GINT_TO_POINTER (0));
       t_print ("TCI%d TX owner disconnected, forcing RX\n", client->seq);
     }
     if (cleanup_tx_audio || owner_mode == TCI_TX_OWNER_MOX) {

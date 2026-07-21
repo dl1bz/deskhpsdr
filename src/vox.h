@@ -20,9 +20,6 @@
 */
 
 extern void update_vox(TRANSMITTER *tx);
-extern int vox_tx_draining(void);
-extern int vox_tx_output_enabled(void);
-extern void vox_tx_output_block(const TRANSMITTER *tx);
 extern void vox_cancel(void);
 extern void clear_vox(void);
 extern double vox_get_peak(void);

@@ -66,6 +66,9 @@ static int tci_rx_audio_enabled = 0;
 static guint tci_rx_audio_wakeup_count = 0;
 static gint64 tci_tx_audio_last_frame_us = 0;
 static int tci_tx_audio_enabled = 0;
+static volatile gint tci_tx_audio_draining = 0;
+static volatile gint tci_tx_audio_pending_frames = 0;
+static volatile gint tci_tx_audio_generation = 1;
 static TCI_AUDIO_WAKEUP_CALLBACK tci_audio_wakeup_callback = NULL;
 static gint tci_rx_audio_wakeup_pending = 0;
 static TCI_AUDIO_TX_CHRONO_CALLBACK tci_audio_tx_chrono_callback = NULL;
@@ -192,6 +195,9 @@ void tci_audio_tx_reset (void) {
   ring->dropped = 0;
   memset (ring->samples, 0, sizeof (ring->samples));
   tci_tx_audio_last_frame_us = 0;
+  g_atomic_int_set (&tci_tx_audio_pending_frames, 0);
+  g_atomic_int_set (&tci_tx_audio_draining, 0);
+  g_atomic_int_inc (&tci_tx_audio_generation);
   g_mutex_unlock (&ring->mutex);
 }
 
@@ -205,6 +211,9 @@ void tci_audio_tx_set_active (int active) {
   tci_tx_audio_enabled = active ? 1 : 0;
   if (!tci_tx_audio_enabled) {
     tci_tx_audio_last_frame_us = 0;
+    g_atomic_int_set (&tci_tx_audio_pending_frames, 0);
+    g_atomic_int_set (&tci_tx_audio_draining, 0);
+    g_atomic_int_inc (&tci_tx_audio_generation);
   }
   g_mutex_unlock (&ring->mutex);
 }
@@ -232,6 +241,50 @@ int tci_audio_tx_enabled (void) {
   return enabled;
 }
 
+void tci_audio_tx_begin_drain (void) {
+  TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
+  g_mutex_lock (&ring->mutex);
+  /*
+   * Reject every TX_AUDIO frame that reaches the ring after the RX
+   * request. Samples already queued, including the local cache in
+   * tci_get_next_mic_sample(), remain part of pending_frames and are
+   * consumed before MOX is released.
+   */
+  g_atomic_int_set (&tci_tx_audio_draining, 1);
+  g_mutex_unlock (&ring->mutex);
+}
+
+void tci_audio_tx_cancel_drain (void) {
+  g_atomic_int_set (&tci_tx_audio_draining, 0);
+}
+
+int tci_audio_tx_is_draining (void) {
+  return g_atomic_int_get (&tci_tx_audio_draining) != 0;
+}
+
+guint64 tci_audio_tx_pending (void) {
+  gint pending = g_atomic_int_get (&tci_tx_audio_pending_frames);
+  return pending > 0 ? (guint64) pending : 0;
+}
+
+int tci_audio_tx_is_drained (void) {
+  return tci_audio_tx_is_draining() && tci_audio_tx_pending() == 0;
+}
+
+static int tci_audio_tx_consume_pending (gint generation) {
+  TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
+  int consume = 0;
+  g_mutex_lock (&ring->mutex);
+  if (tci_tx_audio_enabled &&
+      generation == g_atomic_int_get (&tci_tx_audio_generation) &&
+      g_atomic_int_get (&tci_tx_audio_pending_frames) > 0) {
+    g_atomic_int_add (&tci_tx_audio_pending_frames, -1);
+    consume = 1;
+  }
+  g_mutex_unlock (&ring->mutex);
+  return consume;
+}
+
 void tci_get_next_mic_sample (double *micsample) {
   static int tx_audio_active = 0;
   static int prebuffering = 1;
@@ -239,11 +292,21 @@ void tci_get_next_mic_sample (double *micsample) {
   static guint cache_len = 0;
   static guint cache_pos = 0;
   static guint chrono_sample_count = 0;
+  static gint generation = 0;
   const guint prebuffer_frames = 4096;
   // const double tx_gain = 0.707;
   const double tx_gain = (transmitter->tci_tx_audio_gain_db == -3) ? 0.7071067811865476 : 1.0;
   if (micsample == NULL) {
     return;
+  }
+  gint current_generation = g_atomic_int_get (&tci_tx_audio_generation);
+  if (generation != current_generation) {
+    generation = current_generation;
+    tx_audio_active = 0;
+    prebuffering = 1;
+    cache_len = 0;
+    cache_pos = 0;
+    chrono_sample_count = 0;
   }
   if (!tci_audio_tx_enabled()) {
     tx_audio_active = 0;
@@ -262,10 +325,14 @@ void tci_get_next_mic_sample (double *micsample) {
   }
   guint cache_available = (cache_len > cache_pos) ? (cache_len - cache_pos) : 0;
   guint64 ring_available = tci_audio_tx_available();
-  if (prebuffering) {
+  int draining = tci_audio_tx_is_draining();
+  if (prebuffering && !draining) {
     if ((ring_available + cache_available) < prebuffer_frames) {
       return;
     }
+    prebuffering = 0;
+  } else if (draining) {
+    /* A final partial TCI block must not remain stranded below 4096 frames. */
     prebuffering = 0;
   }
   if (cache_pos >= cache_len) {
@@ -273,10 +340,18 @@ void tci_get_next_mic_sample (double *micsample) {
     cache_pos = 0;
   }
   if (cache_pos < cache_len) {
-    *micsample = (double) cache[cache_pos++] * tx_gain;
-    tx_audio_active = 1;
+    float sample = cache[cache_pos++];
+    if (tci_audio_tx_consume_pending(generation)) {
+      *micsample = (double) sample * tx_gain;
+      tx_audio_active = 1;
+    } else {
+      tx_audio_active = 0;
+      prebuffering = 1;
+      cache_len = 0;
+      cache_pos = 0;
+    }
   } else if (tx_audio_active) {
-    prebuffering = 1;
+    prebuffering = draining ? 0 : 1;
     cache_len = 0;
     cache_pos = 0;
   }
@@ -286,7 +361,7 @@ static void tci_audio_tx_push_block (const float *samples, guint frames) {
   TCI_TX_AUDIO_RING *ring = &tci_tx_audio_ring;
   if (samples == NULL || frames == 0) { return; }
   g_mutex_lock (&ring->mutex);
-  if (!tci_tx_audio_enabled) {
+  if (!tci_tx_audio_enabled || g_atomic_int_get (&tci_tx_audio_draining)) {
     g_mutex_unlock (&ring->mutex);
     return;
   }
@@ -296,10 +371,14 @@ static void tci_audio_tx_push_block (const float *samples, guint frames) {
     if (ring->write_count >= ring->read_count + TCI_TX_AUDIO_RING_FRAMES) {
       ring->read_count = ring->write_count - TCI_TX_AUDIO_RING_FRAMES + 1;
       ring->dropped++;
+      if (g_atomic_int_get (&tci_tx_audio_pending_frames) > 0) {
+        g_atomic_int_add (&tci_tx_audio_pending_frames, -1);
+      }
     }
     index = (guint) (ring->write_count % TCI_TX_AUDIO_RING_FRAMES);
     ring->samples[index] = samples[i];
     ring->write_count++;
+    g_atomic_int_inc (&tci_tx_audio_pending_frames);
   }
   g_mutex_unlock (&ring->mutex);
 }

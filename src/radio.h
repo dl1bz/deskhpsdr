@@ -406,6 +406,7 @@ extern int use_tx_audiochain;
 //
 extern void   radio_tune_update (int state);
 extern void   radio_mox_update (int state);
+extern void   radio_mox_update_immediate (int state);
 extern void   radio_save_state (void);
 extern void   radio_stop (void);
 extern void   radio_reconfigure (void);
@@ -418,6 +419,7 @@ extern void   radio_tx_vfo_changed (void);
 extern void   radio_split_toggle (void);
 extern void   radio_set_split (int v);
 extern void   radio_set_mox (int state);
+extern void   radio_set_mox_immediate (int state);
 extern int    radio_get_mox (void);
 extern void   radio_set_tune (int state);
 extern int    radio_get_tune (void);

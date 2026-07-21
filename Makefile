@@ -709,6 +709,7 @@ src/toolbar_menu.c \
 src/toolset.c \
 src/transmitter.c \
 src/tx_menu.c \
+src/tx_off.c \
 src/tx_panadapter.c \
 src/version.c \
 src/vfo.c \
@@ -801,6 +802,7 @@ src/toolbar_menu.h \
 src/toolset.h \
 src/transmitter.h \
 src/tx_menu.h \
+src/tx_off.h \
 src/tx_panadapter.h \
 src/version.h \
 src/vfo.h \
@@ -887,6 +889,7 @@ src/toolbar_menu.o \
 src/toolset.o \
 src/transmitter.o \
 src/tx_menu.o \
+src/tx_off.o \
 src/tx_panadapter.o \
 src/version.o \
 src/vfo.o \

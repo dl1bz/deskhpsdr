@@ -369,8 +369,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_T:
     // Tune - Uppercase to avoid unwanted tuning by hitting the t key
     if (can_transmit) {
-      if (radio_get_mox() == 1) {
-        radio_set_mox(0);
+      if (radio_get_tune() == 0 && radio_is_transmitting()) {
+        radio_set_mox_immediate(0);
       }
       if (radio_get_tune() == 0) {
         radio_set_tune(1);
@@ -388,8 +388,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       if (radio_get_tune() == 1) {
         radio_set_tune(0);
       } else {
-        if (radio_get_mox() == 1) {
-          radio_set_mox(0);
+        if (radio_is_transmitting()) {
+          radio_set_mox_immediate(0);
         } else if (TransmitAllowed()) {
           radio_set_mox(1);
         } else {

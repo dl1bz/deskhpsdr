@@ -51,6 +51,7 @@
 #include "radio.h"
 #include "receiver.h"
 #include "transmitter.h"
+#include "tx_off.h"
 #include "tci_audio.h"
 #include "vfo.h"
 #include "ext.h"
@@ -1577,6 +1578,11 @@ static void process_control_bytes(void) {
   previous_ptt = radio_ptt;
   radio_ptt  = (control_in[0]) & 0x01;
   if (previous_ptt != radio_ptt) {
+    if (radio_ptt) {
+      // Reasserted hardware PTT must stop a pending graceful OFF before
+      // the next microphone samples enter the TX audio pipeline.
+      tx_off_cancel();
+    }
     g_idle_add(ext_mox_update, GINT_TO_POINTER(radio_ptt));
   }
   if ((device == DEVICE_HERMES_LITE2) && (control_in[0] & 0x80)) {
@@ -1684,7 +1690,7 @@ static void process_control_bytes(void) {
       }
       if (!TxInhibit && data == 0) {
         TxInhibit = 1;
-        g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
+        g_idle_add(ext_mox_update_immediate, GINT_TO_POINTER(0));
       }
       if (data == 1) { TxInhibit = 0; }
     } else {

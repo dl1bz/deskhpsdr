@@ -41,6 +41,7 @@
 #include "vox.h"
 #include "meter.h"
 #include "toolbar.h"
+#include "tx_off.h"
 #include "tx_panadapter.h"
 #include "appearance.h"
 #include "waterfall.h"
@@ -1521,10 +1522,10 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     // and the downward expander
     //
     update_vox(tx);
-    // Once the requested VOX hang interval has expired, feed explicit
-    // zero microphone blocks through WDSP. This lets all delayed TX
-    // audio emerge before a protocol fence is placed.
-    if (vox_tx_draining()) {
+    // VOX must inspect the original microphone block before a pending
+    // VOX-owned TX OFF replaces it with zeroes. Renewed speech can then
+    // cancel the drain and the complete first resumed block reaches WDSP.
+    if (tx_off_zero_input_block()) {
       memset(tx->mic_input_buffer, 0,
              (size_t) 2 * tx->buffer_size * sizeof *tx->mic_input_buffer);
     }
@@ -1602,8 +1603,8 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     g_mutex_unlock(&tx->display_mutex);
   }
   if (radio_is_transmitting()) {
-    if (!vox_tx_output_enabled()) {
-      goto vox_tx_output_done;
+    if (!tx_off_output_enabled()) {
+      goto tx_off_output_done;
     }
     if (tx->do_scale) {
       gain = gain * tx->drive_scale;
@@ -1710,10 +1711,10 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         }
       }
     }
-vox_tx_output_done:
+tx_off_output_done:
     // This is the last producer-visible point at which the WDSP tail
     // can be inspected and a P1/P2 sequence fence placed.
-    vox_tx_output_block(tx);
+    tx_off_output_block(tx);
   } else {   // radio_is_transmitting()
     if (txflag == 1 && protocol == NEW_PROTOCOL) {
       //
@@ -1757,6 +1758,11 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
   // (perhaps not really necessary, but can do no harm)
   //
   if (tune || txmode == modeCWL || txmode == modeCWU) {
+    mic_sample_double = 0.0;
+  }
+  // A normal MOX/PTT OFF keeps the already collected part of the current
+  // WDSP block, but rejects every new sample arriving after PTT release.
+  if (tx_off_zero_input_samples()) {
     mic_sample_double = 0.0;
   }
   //

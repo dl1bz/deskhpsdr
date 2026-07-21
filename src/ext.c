@@ -105,6 +105,15 @@ int ext_mox_update(void *data) {
   return G_SOURCE_REMOVE;
 }
 
+int ext_mox_update_immediate(void *data) {
+  int state = GPOINTER_TO_INT(data);
+  if (state) {
+    voice_keyer_stop_for_ptt_takeover();
+  }
+  radio_mox_update_immediate(state);
+  return G_SOURCE_REMOVE;
+}
+
 int ext_set_vox(void *data) {
   radio_set_vox(GPOINTER_TO_INT(data));
   return G_SOURCE_REMOVE;

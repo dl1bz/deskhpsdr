@@ -55,6 +55,7 @@
 #include "radio.h"
 #include "receiver.h"
 #include "transmitter.h"
+#include "tx_off.h"
 #include "vfo.h"
 #include "toolbar.h"
 #include "vox.h"
@@ -2816,6 +2817,9 @@ static void process_high_priority(void) {
   // have an updated firmware.
   //
   if (previous_ptt == 0 && radio_ptt == 1) {
+    // Reasserted hardware PTT must stop a pending graceful OFF before
+    // the next microphone samples enter the TX audio pipeline.
+    tx_off_cancel();
     new_protocol_high_priority();
   }
   tx_fifo_overrun |= (buffer[4] & 0x40) >> 6;
@@ -2892,7 +2896,7 @@ static void process_high_priority(void) {
     }
     if (!TxInhibit && data == 0) {
       TxInhibit = 1;
-      g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
+      g_idle_add(ext_mox_update_immediate, GINT_TO_POINTER(0));
     }
     if (data == 1) { TxInhibit = 0; }
   } else {

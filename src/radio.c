@@ -71,6 +71,7 @@
 #include "zoompan.h"
 #include "sliders.h"
 #include "toolbar.h"
+#include "tx_off.h"
 #include "rigctl.h"
 #include "rbn.h"
 #include "tci.h"
@@ -486,6 +487,7 @@ static gboolean launch_autogain_hl2_wrapper (gpointer data) {
 static void radio_restore_state (void);
 
 void radio_stop (void) {
+  tx_off_cancel();
   rbn_stop();
   if (can_transmit) {
     t_print ("radio_stop: TX: stop display update\n");
@@ -2102,9 +2104,20 @@ void radio_mox_update (int state) {
   g_idle_add (ext_vfo_update, NULL);
 }
 
+void radio_mox_update_immediate (int state) {
+  if (!can_transmit) { return; }
+  if (state && !TransmitAllowed()) {
+    state = 0;
+    tx_set_out_of_band (transmitter);
+  }
+  radio_set_mox_immediate (state);
+  g_idle_add (ext_vfo_update, NULL);
+}
+
 void radio_tune_update (int state) {
   if (!can_transmit) { return; }
-  radio_set_mox (0); // This will also cancel VOX and TUNE
+  // Switching to TUNE is a mode transition, not a speech-tail operation.
+  radio_set_mox_immediate (0); // This will also cancel VOX and TUNE
   if (state && !TransmitAllowed()) {
     state = 0;
     tx_set_out_of_band (transmitter);
@@ -2113,7 +2126,13 @@ void radio_tune_update (int state) {
   g_idle_add (ext_vfo_update, NULL);
 }
 
-void radio_set_mox (int state) {
+static int radio_mox_uses_speech_audio(void) {
+  int txmode = vfo_get_tx_mode();
+  return txmode != modeCWL && txmode != modeCWU && !tune &&
+         !transmitter->twotone;
+}
+
+static void radio_set_mox_now (int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   int was_tune = tune;
   if (!can_transmit) { return; }
@@ -2127,7 +2146,7 @@ void radio_set_mox (int state) {
   if (tune) {
     radio_set_tune (0);
   }
-  vox_cancel();  // remove time-out
+  vox_cancel();  // remove VOX hang/drain
   //
   // If MOX is activated while VOX is already pending,
   // then switch from VOX to MOX mode but no RX/TX
@@ -2153,8 +2172,48 @@ void radio_set_mox (int state) {
   }
 }
 
+static void radio_graceful_mox_off_complete(void) {
+  /*
+   * Hardware PTT is sampled in the protocol thread before its main-loop
+   * update runs. If the footswitch was pressed again at the very end of the
+   * guard interval, keep TX active instead of producing a short RX pulse.
+   */
+  radio_set_mox_now (radio_ptt ? 1 : 0);
+  g_idle_add (ext_vfo_update, NULL);
+}
+
+void radio_set_mox (int state) {
+  if (!can_transmit) { return; }
+  if (state && TxInhibit) { return; }
+  if (state) {
+    // PTT/MOX ON while an OFF operation is pending aborts that operation.
+    // Since mox is still physically ON, radio_set_mox_now() performs no
+    // RX/TX transition and transmission continues without an RX pulse.
+    tx_off_cancel_target(TX_OFF_TARGET_MOX);
+    radio_set_mox_now (1);
+    return;
+  }
+  if (mox && radio_mox_uses_speech_audio()) {
+    vox_cancel();
+    if (tx_off_request(TX_OFF_TARGET_MOX,
+                       radio_graceful_mox_off_complete)) {
+      // radio_get_mox() now reports the requested logical OFF state, while
+      // radio_is_transmitting() remains true until the fence/guard completes.
+      update_slider_mic_gain_btn();
+      return;
+    }
+  }
+  // CW, TUNE, inactive MOX and unsupported/conflicting states stop directly.
+  radio_set_mox_now (0);
+}
+
+void radio_set_mox_immediate (int state) {
+  tx_off_cancel();
+  radio_set_mox_now (state);
+}
+
 int radio_get_mox (void) {
-  return mox;
+  return mox && !tx_off_pending_target(TX_OFF_TARGET_MOX);
 }
 
 void radio_set_vox (int state) {
@@ -2162,6 +2221,9 @@ void radio_set_vox (int state) {
   if (!can_transmit) { return; }
   if (mox || tune) { return; }
   if (state && TxInhibit) { return; }
+  if (state) {
+    tx_off_cancel_target(TX_OFF_TARGET_VOX);
+  }
   if (vox != state) {
     rxtx (state);
   }
@@ -2177,6 +2239,7 @@ void radio_set_tune (int state) {
   int tune_changed = (tune != state);
   // if state==tune, this function is a no-op
   if (tune != state) {
+    tx_off_cancel();
     vox_cancel();
     if (vox || mox) {
       rxtx (0);
@@ -3243,7 +3306,7 @@ void radio_protocol_stop (void) {
   //
   // paranoia ...
   //
-  radio_mox_update (0);
+  radio_mox_update_immediate (0);
   usleep (100000);
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
