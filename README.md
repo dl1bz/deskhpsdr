@@ -24,8 +24,8 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Hamlib                         | supported (with own included rigctld)         |                |
 | OpenHPSDR protocol 1           | supported                                     |                |
 | OpenHPSDR protocol 2           | supported                                     |                |
-| GPIO                           | not supported (since V2.7)                    |                |
-| Soapy API / Soapy protocol     | not supported (since V2.7)                    |                |
+| GPIO                           | not supported (since V2.7)                    | code removed   |
+| Soapy API / Soapy protocol     | not supported (since V2.7)                    | code removed   |
 | Hermes Lite 2 N2ADR IO board   | supported                                     |                |
 | Use WDSP library ?             | yes, current 1.29                             |                |
 | Pure Signal / Pre-Distortion   | supported up to 192k samplingrate             |                |
@@ -41,10 +41,11 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Audio layer support            | PORTAUDIO, PULSEAUDIO, ALSA                   |                |
 | Audio devices support          | mono,stereo (only 48kHz supported)            |                |
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter    |                |
+| RBN support                    | yes, inclusive show Spots on RX Panadapter    |                |
 | SDR TX support                 | yes, fully supported                          |                |
 | Used UI framework              | GTK3                                          |                |
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                |
-| Supported Compiler             | clang, gcc                                    |                |
+| Supported Compiler             | clang (recommended), gcc                      |                |
 | App Publishing                 | **Source code only, no binaries distributed** |                |
 |                                | **except macOS (digitally signed & notarized)**|                |
 
@@ -108,9 +109,13 @@ deskHPSDR is primarily developed for and under macOS. Made as an cross-platform 
 
 **CHANGES are located in the [Discussions tab, category CHANGELOG deskhpsdr](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr).**
 
-### Version 2.7.x (current version)
+### Version 2.6.x (previous version, EOL May 2026)
 
 On March 4, 2025 the **first final version 2.6 of deskHPSDR** was published.<br>
+With publishing of new version 2.7 in May 2026 all support for 2.6 is finished inclusive older versions with SoapySDR and GPIO support.
+
+### Version 2.7.x (current version)
+
 Current development start from version 2.7 in May 2026.<br>
 
 Most of the new functions need to be activated in the ``make.config.deskhpsdr`` as compiling option. Please look in the beginning of the  ``Makefile`` and set the needed options only in ``make.config.deskhpsdr``, but don't modify the ``Makefile`` itself !
@@ -123,6 +128,13 @@ Most of the new functions need to be activated in the ``make.config.deskhpsdr`` 
 Please note: My development focus is only macOS. Linux is of no interest to me. Yes, this app can run with Linux too, that's a result of how this app is programmed based on C program language. However, that does not mean I provide any kind of support for Linux. From time to time, I test whether the app can be built on Linux and whether it runs. If it does that successfully, the topic Linux is closed for me at this point. Read carefully my instructions for build with Linux in document ``COMPILE.linux``.
 
 ## Known problems if using Git for update the code base at your local computer
+
+From time to time I need rebase the deskHPSDR repository. This can break using ``git pull`` for update deskHPSDR.<br>
+Please make sure you set:<br>
+
+```
+$ git config pull.rebase true
+```
 
 In the ``Makefile`` I add a comment "don't edit this Makefile". That's I mean so. I'm now add the editable, additional file for this called ``make.config.deskhpsdr``.<br>
 
@@ -157,7 +169,8 @@ Big thanks and huge respect to all involved developers for their work on pihpsdr
 Special thanks to:<br>
 
 - my lovely wife any my family for her great patience and understanding
-- John Melton G0ORX & Christoph van Wüllen DL1YCF for their pihpsdr development
+- John/G0ORX, Steve/KA6S & Jae/K5JAE for initial pihpsdr development
+- Christoph/DL1YCF for continue development and current pihpsdr
 - Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
 - OpenAI/ChatGPT for many code optimizations and saving a lot of time in development
 - all of the active users and contributors for support deskHPSDR, Open Source Soft- and Hardware
