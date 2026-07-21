@@ -673,9 +673,9 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_rectangle(cr, x_offset + 13.0, (y_offset + 80) - alc_val, 4.0, alc_val);
         cairo_fill(cr);
         cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE1);
         meter_set_analog_scale_colour(cr);
-        cairo_move_to(cr, x_offset + 25.0, y_offset + 10.0);
+        cairo_move_to(cr, x_offset + 25.0, y_offset + 5.0);
         cairo_show_text(cr, vox_enabled ? "VOX | ALC" : "Mic | ALC");
         double current_line_width = cairo_get_line_width(cr);
         if (vox_enabled) {

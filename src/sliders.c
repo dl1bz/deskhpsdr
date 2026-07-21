@@ -160,6 +160,8 @@ static GtkWidget *rx_filter_menu_btn;
 static GtkWidget *rx_filter_menu_label;
 static GtkWidget *nr_menu_btn;
 static GtkWidget *nr_menu_label;
+static GtkWidget *vox_menu_btn;
+static GtkWidget *vox_menu_label;
 
 static void sliders_signal_handler_block(gpointer instance, gulong handler_id) {
   if (instance != NULL && handler_id > 0 && G_IS_OBJECT(instance) &&
@@ -1386,16 +1388,28 @@ void update_slider_nr_btn(gboolean show_widget) {
   }
 }
 
-static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
+static gboolean nr_btn_pressed_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  if (event->type != GDK_BUTTON_PRESS) {
+    return FALSE;
+  }
+  if (event->button == GDK_BUTTON_SECONDARY) {
+    start_noise();
+    return TRUE;
+  }
+  if (event->button != GDK_BUTTON_PRIMARY) {
+    return FALSE;
+  }
   if (!active_receiver_noise_allowed()) {
     active_receiver->nr = 0;
     update_noise();
     tci_rx_nr_enable_changed(active_receiver->id);
-    return;
+    return TRUE;
   }
   int id = active_receiver->id;
   active_receiver->nr++;
-  if (active_receiver->nr > 4) { active_receiver->nr = 0; }
+  if (active_receiver->nr > 4) {
+    active_receiver->nr = 0;
+  }
   if (id == 0) {
     int mode = vfo[id].mode;
     mode_settings[mode].nr = active_receiver->nr;
@@ -1403,12 +1417,14 @@ static void nr_btn_pressed_cb(GtkWidget *widget, gpointer data) {
   }
   update_noise();
   tci_rx_nr_enable_changed(active_receiver->id);
-  gtk_button_set_label(GTK_BUTTON(widget), nr_labels[active_receiver->nr]);
+  gtk_button_set_label(GTK_BUTTON(widget),
+                       nr_labels[active_receiver->nr]);
   if (active_receiver->nr > 0) {
     gtk_style_context_add_class(nr_context, "active");
   } else {
     gtk_style_context_remove_class(nr_context, "active");
   }
+  return TRUE;
 }
 
 void update_slider_agc_btn(void) {
@@ -1455,6 +1471,14 @@ static void ps_toggle_cb(GtkWidget *widget, gpointer data) {
     tx_ps_onoff(transmitter, transmitter->puresignal ? 0 : 1);
   }
   update_slider_ps_btn();
+}
+
+static gboolean ps_btn_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_SECONDARY) {
+    start_ps();
+    return TRUE;
+  }
+  return FALSE;
 }
 
 #if defined (__AUTOG__)
@@ -1598,6 +1622,26 @@ static void nr_menu_btn_cb(GtkButton *button, gpointer data) {
   (void)button;
   (void)data;
   start_noise();
+}
+
+static gboolean vox_menu_btn_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  if (event->type == GDK_BUTTON_PRESS) {
+    switch (event->button) {
+    case GDK_BUTTON_PRIMARY:   // linke Maustaste
+      start_vox();
+      break;
+    case GDK_BUTTON_SECONDARY: // rechte Maustaste
+      vox_enabled = !vox_enabled;
+      g_idle_add(ext_vfo_update, NULL);
+      /* falls notwendig Einstellungen speichern */
+      // radio_save_state();
+      return TRUE;   /* Rechtsklick verbraucht */
+      break;
+    case GDK_BUTTON_MIDDLE:
+      break;
+    }
+  }
+  return FALSE;   // Event weiterreichen -> "clicked" funktioniert weiterhin
 }
 
 // will ce called from radio.c and initializing the slider surface depend from the selected screen size
@@ -2026,7 +2070,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4");
+                                        "OFF → NR → NR2 → NR3 → NR4\n\n"
+                                        "Right click: Open NR Menu");
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
     gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);
@@ -2039,8 +2084,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_halign(nr_btn, GTK_ALIGN_START);
     gtk_widget_set_valign(nr_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(nr_btn, FALSE);  // fülle Box nicht nach rechts
-    nr_btn_signal_id = g_signal_connect(nr_btn, "pressed", G_CALLBACK(nr_btn_pressed_cb), NULL);
-    // g_signal_connect(agc_btn, "released", G_CALLBACK(agc_btn_pressed_cb), NULL);
+    gtk_widget_add_events(nr_btn, GDK_BUTTON_PRESS_MASK);
+    nr_btn_signal_id = g_signal_connect(nr_btn, "button-press-event", G_CALLBACK(nr_btn_pressed_cb), NULL);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
     //-------------------------------------------------------------------------------------------
@@ -2054,7 +2099,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                                           "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
                                           "Please check first PS Menu for correct settings.\n"
                                           "When using an external PA, an RF sampler is required\n"
-                                          "to provide RF signal feedback to the SDR.");
+                                          "to provide RF signal feedback to the SDR.\n\n"
+                                          "Right click: open PS Menu");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ps_btn), transmitter->puresignal);
       // begin label definition inside button
       ps_label = gtk_bin_get_child(GTK_BIN(ps_btn));
@@ -2068,6 +2114,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_halign(ps_btn, GTK_ALIGN_START);
       gtk_widget_set_valign(ps_btn, GTK_ALIGN_CENTER);
       ps_btn_signal_id = g_signal_connect(G_OBJECT(ps_btn), "toggled", G_CALLBACK(ps_toggle_cb), NULL);
+      gtk_widget_add_events(ps_btn, GDK_BUTTON_PRESS_MASK);
+      g_signal_connect(G_OBJECT(ps_btn), "button-press-event", G_CALLBACK(ps_btn_cb), NULL);
       // Widgets in Box packen
       gtk_box_pack_start(GTK_BOX(box_Z1_right), ps_btn, FALSE, FALSE, 0);
     } else {
@@ -2152,7 +2200,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4");
+                                        "OFF → NR → NR2 → NR3 → NR4\n\n"
+                                        "Right click: Open NR Menu");
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
     gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);
@@ -2165,8 +2214,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_halign(nr_btn, GTK_ALIGN_START);
     gtk_widget_set_valign(nr_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(nr_btn, FALSE);  // fülle Box nicht nach rechts
-    nr_btn_signal_id = g_signal_connect(nr_btn, "pressed", G_CALLBACK(nr_btn_pressed_cb), NULL);
-    // g_signal_connect(agc_btn, "released", G_CALLBACK(agc_btn_pressed_cb), NULL);
+    gtk_widget_add_events(nr_btn, GDK_BUTTON_PRESS_MASK);
+    nr_btn_signal_id = g_signal_connect(nr_btn, "button-press-event", G_CALLBACK(nr_btn_pressed_cb), NULL);
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), nr_btn, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2180,7 +2229,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                                           "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
                                           "Please check first PS Menu for correct settings.\n"
                                           "When using an external PA, an RF sampler is required\n"
-                                          "to provide RF signal feedback to the SDR.");
+                                          "to provide RF signal feedback to the SDR.\n\n"
+                                          "Right click: open PS Menu");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ps_btn), transmitter->puresignal);
       // begin label definition inside button
       ps_label = gtk_bin_get_child(GTK_BIN(ps_btn));
@@ -2194,6 +2244,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_widget_set_halign(ps_btn, GTK_ALIGN_START);
       gtk_widget_set_valign(ps_btn, GTK_ALIGN_CENTER);
       ps_btn_signal_id = g_signal_connect(G_OBJECT(ps_btn), "toggled", G_CALLBACK(ps_toggle_cb), NULL);
+      gtk_widget_add_events(ps_btn, GDK_BUTTON_PRESS_MASK);
+      g_signal_connect(G_OBJECT(ps_btn), "button-press-event", G_CALLBACK(ps_btn_cb), NULL);
       // Widgets in Box packen
       gtk_box_pack_start(GTK_BOX(box_Z1_right), ps_btn, FALSE, FALSE, 0);
     }
@@ -2307,6 +2359,32 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
       G_CALLBACK(micgain_value_changed_cb), NULL);
     //-----------------------------------------------------------------------------------------------------------
+    if (can_transmit && optimize_for_touchscreen) {
+      vox_menu_btn = gtk_button_new_with_label("VOX Menu");
+      WEAKEN(vox_menu_btn);
+      gtk_widget_set_name(vox_menu_btn, "medium_toggle_button");
+      gtk_widget_set_tooltip_text(vox_menu_btn, "Left click  : VOX menu\n"
+                                                "Right click : VOX ON/OFF");
+      vox_menu_label = gtk_bin_get_child(GTK_BIN(vox_menu_btn));
+      gtk_label_set_justify(GTK_LABEL(vox_menu_label), GTK_JUSTIFY_CENTER);
+      gtk_widget_set_margin_start(vox_menu_label, 3);
+      gtk_widget_set_margin_end(vox_menu_label, 3);
+      gtk_widget_set_size_request(vox_menu_btn, 55, -1);
+      gtk_widget_set_margin_top(vox_menu_btn, 0);
+      gtk_widget_set_margin_bottom(vox_menu_btn, 0);
+      gtk_widget_set_margin_start(vox_menu_btn, 3);
+      gtk_widget_set_margin_end(vox_menu_btn, 0);
+      gtk_widget_set_halign(vox_menu_btn, GTK_ALIGN_END);
+      gtk_widget_set_valign(vox_menu_btn, GTK_ALIGN_CENTER);
+      gtk_widget_set_hexpand(vox_menu_btn, FALSE);
+      gtk_box_pack_start(GTK_BOX(box_Z2_left), vox_menu_btn, TRUE, TRUE, 0);
+      gtk_widget_add_events(vox_menu_btn, GDK_BUTTON_PRESS_MASK);
+      g_signal_connect(G_OBJECT(vox_menu_btn), "button-press-event", G_CALLBACK(vox_menu_btn_cb), NULL);
+    } else {
+      vox_menu_btn = NULL;
+      vox_menu_label = NULL;
+    }
+    //----------------
     preamp_btn = gtk_toggle_button_new_with_label("Mic PreA");
     gtk_widget_set_name(preamp_btn, "medium_toggle_button");
     char preamp_tip[256];
