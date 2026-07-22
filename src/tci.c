@@ -3369,9 +3369,6 @@ static int tci_apply_split_update (void *data) {
   int state = GPOINTER_TO_INT (data) ? 1 : 0;
   tci_begin_apply();
   radio_set_split (state);
-  if (state) {
-    vfo_a_to_b();
-  }
   update_slider_split_btn();
   tci_end_apply();
   tci_broadcast_split();

@@ -736,6 +736,36 @@ void vfo_restore_state(void) {
   modesettingsRestoreState();
 }
 
+static guint split_band_sync_source = 0;
+
+static gboolean sync_vfos_after_split_band_change(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+
+  split_band_sync_source = 0;
+  if (!disable_split_on_band_change || split) {
+    return G_SOURCE_REMOVE;
+  }
+
+  if (id == VFO_A) {
+    vfo_a_to_b();
+  } else {
+    vfo_b_to_a();
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static void disable_split_for_band_change(int id) {
+  if (!disable_split_on_band_change || !split || id != active_receiver->id) {
+    return;
+  }
+
+  radio_set_split(0);
+  if (split_band_sync_source != 0) {
+    g_source_remove(split_band_sync_source);
+  }
+  split_band_sync_source = g_idle_add(sync_vfos_after_split_band_change, GINT_TO_POINTER(id));
+}
+
 static inline void vfo_adjust_band(int v, long long f) {
   //
   // The purpose of this function is be very quick
@@ -777,9 +807,7 @@ static inline void vfo_adjust_band(int v, long long f) {
   //
   vfo[v].band = get_band_from_frequency(f);
   if (b != vfo[v].band) {
-    if (disable_split_on_band_change && split && v == active_receiver->id) {
-      radio_set_split(0);
-    }
+    disable_split_for_band_change(v);
     band = band_get_band(vfo[v].band);
     vfo[v].lo = band->frequencyLO + band->errorLO;
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, (int) v,
@@ -1006,9 +1034,7 @@ void vfo_band_changed(int id, int b) {
     if (f < radio->frequency_min || f > radio->frequency_max) {
       return;
     }
-    if (disable_split_on_band_change && split && id == active_receiver->id) {
-      radio_set_split(0);
-    }
+    disable_split_for_band_change(id);
 #if defined (__AUTOG__)
     if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
       autogain_is_adjusted = 0;

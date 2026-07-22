@@ -928,14 +928,6 @@ void radio_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), duplex);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(duplex_cb), NULL);
-    col = 2;
-    ChkBtn = gtk_check_button_new_with_label("Disable Split on Band Change");
-    gtk_widget_set_name(ChkBtn, "boldlabel");
-    gtk_widget_set_tooltip_text(ChkBtn, "Disable split automatically when the active receiver changes bands.\n"
-                                        "Default setting: OFF");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), disable_split_on_band_change);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &disable_split_on_band_change);
   }
   col = 2;
   if (device == DEVICE_HERMES_LITE2) {
@@ -1016,18 +1008,20 @@ void radio_menu(GtkWidget *parent) {
   }
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
+    col = 0;
     ChkBtn_txinhibit = gtk_check_button_new_with_label("Enable TxInhibit Input");
     gtk_widget_set_no_show_all(ChkBtn_txinhibit, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(ChkBtn_txinhibit, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_txinhibit), enable_tx_inhibit);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn_txinhibit, 0, row, 2, 1);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn_txinhibit, col, row, 2, 1);
     g_signal_connect(ChkBtn_txinhibit, "toggled", G_CALLBACK(toggle_cb), &enable_tx_inhibit);
     //----------------------------------------------------------------------------------------
+    col += 2;
     ChkBtn_autotune = gtk_check_button_new_with_label("Enable AutoTune Input");
     gtk_widget_set_no_show_all(ChkBtn_autotune, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(ChkBtn_autotune, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_autotune), enable_auto_tune);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn_autotune, 2, row, 2, 1);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn_autotune, col, row, 1, 1);
     g_signal_connect(ChkBtn_autotune, "toggled", G_CALLBACK(toggle_cb), &enable_auto_tune);
     //----------------------------------------------------------------------------------------
     if (hermes_mode == HERMES_MODE_BRICK) {
@@ -1039,6 +1033,14 @@ void radio_menu(GtkWidget *parent) {
       gtk_widget_show(ChkBtn_txinhibit);
       gtk_widget_show(ChkBtn_autotune);
     }
+    col++;
+    ChkBtn = gtk_check_button_new_with_label("Disable Split on Band Change");
+    gtk_widget_set_name(ChkBtn, "boldlabel");
+    gtk_widget_set_tooltip_text(ChkBtn, "Disable split automatically when the active receiver changes bands.\n"
+                                        "Default setting: OFF");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), disable_split_on_band_change);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &disable_split_on_band_change);
   }
   row++;
   // cppcheck-suppress redundantAssignment

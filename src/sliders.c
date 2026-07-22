@@ -1347,9 +1347,6 @@ void update_slider_split_btn(void) {
 static void split_btn_toggle_cb(GtkWidget *widget, gpointer data) {
   int new = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   radio_set_split(new);
-  if (new == 1) {
-    vfo_a_to_b();
-  }
   update_slider_split_btn();
 }
 
