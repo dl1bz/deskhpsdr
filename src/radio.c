@@ -397,6 +397,7 @@ int have_radioberry3 = 0;
 int rx_gain_calibration = 0;
 
 int split = 0;
+int disable_split_on_band_change = 0;
 
 int n2adr_hpf_enable = 1;
 unsigned char OCtune = 0;
@@ -2831,6 +2832,7 @@ static void radio_restore_state (void) {
   GetPropI0 ("rx_gain_calibration",                           rx_gain_calibration);
   GetPropF0 ("drive_digi_max",                                drive_digi_max);
   GetPropI0 ("split",                                         split);
+  GetPropI0 ("disable_split_on_band_change",                  disable_split_on_band_change);
   GetPropI0 ("duplex",                                        duplex);
   GetPropI0 ("sat_mode",                                      sat_mode);
   GetPropI0 ("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
@@ -3131,6 +3133,7 @@ void radio_save_state (void) {
   SetPropI0 ("rx_gain_calibration",                           rx_gain_calibration);
   SetPropF0 ("drive_digi_max",                                drive_digi_max);
   SetPropI0 ("split",                                         split);
+  SetPropI0 ("disable_split_on_band_change",                  disable_split_on_band_change);
   SetPropI0 ("duplex",                                        duplex);
   SetPropI0 ("sat_mode",                                      sat_mode);
   SetPropI0 ("mute_rx_while_transmitting",                    mute_rx_while_transmitting);

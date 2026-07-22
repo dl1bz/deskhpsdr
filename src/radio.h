@@ -305,6 +305,7 @@ extern unsigned int ADC1;
 extern unsigned int ADC0;
 
 extern int split;
+extern int disable_split_on_band_change;
 
 extern int n2adr_hpf_enable;
 extern unsigned char OCtune;

@@ -928,6 +928,14 @@ void radio_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), duplex);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(duplex_cb), NULL);
+    col = 2;
+    ChkBtn = gtk_check_button_new_with_label("Disable Split on Band Change");
+    gtk_widget_set_name(ChkBtn, "boldlabel");
+    gtk_widget_set_tooltip_text(ChkBtn, "Disable split automatically when the active receiver changes bands.\n"
+                                        "Default setting: OFF");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), disable_split_on_band_change);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &disable_split_on_band_change);
   }
   col = 2;
   if (device == DEVICE_HERMES_LITE2) {

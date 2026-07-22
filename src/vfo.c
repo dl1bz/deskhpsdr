@@ -777,6 +777,9 @@ static inline void vfo_adjust_band(int v, long long f) {
   //
   vfo[v].band = get_band_from_frequency(f);
   if (b != vfo[v].band) {
+    if (disable_split_on_band_change && split && v == active_receiver->id) {
+      radio_set_split(0);
+    }
     band = band_get_band(vfo[v].band);
     vfo[v].lo = band->frequencyLO + band->errorLO;
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, (int) v,
@@ -1002,6 +1005,9 @@ void vfo_band_changed(int id, int b) {
     f -= (band->frequencyLO + band->errorLO);
     if (f < radio->frequency_min || f > radio->frequency_max) {
       return;
+    }
+    if (disable_split_on_band_change && split && id == active_receiver->id) {
+      radio_set_split(0);
     }
 #if defined (__AUTOG__)
     if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
