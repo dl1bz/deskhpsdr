@@ -16,33 +16,34 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 
 | Feature                        | Current deskHPSDR version 2.7                 | Notes          |
 | -------------------------------- | ----------------------------------------------- | ---------------- |
-| TCI CAT                        | supported                                     | TCI 2.0        |
-| TCI Audio                      | supported (only 48k and 24k)                  | TCI 2.0        |
-| TCI I/Q                        | supported (48k/96k/192k/384k)                 | TCI 2.0        |
-| PTT external                   | supported (via serial RTS/CTS or MIDI)        |                |
-| MIDI Control                   | supported                                     |                |
-| Hamlib                         | supported (with own included rigctld)         |                |
-| OpenHPSDR protocol 1           | supported                                     |                |
-| OpenHPSDR protocol 2           | supported                                     |                |
-| GPIO                           | not supported (since V2.7)                    | code removed   |
-| Soapy API / Soapy protocol     | not supported (since V2.7)                    | code removed   |
-| Hermes Lite 2 N2ADR IO board   | supported                                     |                |
-| Use WDSP library ?             | yes, current 1.29                             |                |
-| Pure Signal / Pre-Distortion   | supported up to 192k samplingrate             |                |
-| Noise Reduction                | NR1 - NR4 available                           |                |
-| CAT over TCP                   | supported (TS2000 & PowerSDR emulation)       |                |
-| integrated Client-Server Mode  | not supported                                 |                |
-| IF Mode / Panadapter mode      | not supported                                 |                |
-| Hermes Lite 2+ expansion board | supported                                     |                |
-| Bright / Dark Theme support    | yes                                           |                |
+| TCI CAT                        | supported ✅                                  | TCI 2.0        |
+| TCI Audio                      | supported (only 48k and 24k) ✅               | TCI 2.0        |
+| TCI I/Q                        | supported (48k/96k/192k/384k) ✅              | TCI 2.0        |
+| PTT external                   | supported (via serial RTS/CTS or MIDI) ✅     |                |
+| MIDI Control                   | supported ✅                                  |                |
+| Hamlib                         | supported (with own included rigctld) ✅      |                |
+| OpenHPSDR protocol 1           | supported ✅                                  |                |
+| OpenHPSDR protocol 2           | supported ✅                                  |                |
+| GPIO                           | not supported (since V2.7) ❌                 | code removed   |
+| Soapy API / Soapy protocol     | not supported (since V2.7) ❌                 | code removed   |
+| Hermes Lite 2 N2ADR IO board   | supported ✅                                  |                |
+| Use WDSP library ?             | yes, current 2.00 ✅                          |                |
+| Pure Signal / Pre-Distortion   | supported up to 192k samplingrate ✅          |                |
+| Noise Reduction                | NR1 - NR4 available ✅                        |                |
+| CAT over TCP                   | supported (TS2000 & PowerSDR emulation) ✅    |                |
+| integrated Client-Server Mode  | not supported ❌                              | will never come|
+| IF Mode / Panadapter mode      | not supported ❌                              | will never come|
+| Hermes Lite 2+ expansion board | supported ✅                                  |                |
+| Bright / Dark Theme support    | yes ✅                                        |                |
 | Screen Resolution              | min. 1280x600 or higher                       |                |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                |
 | OS support                     | macOS 15 or higher, modern Linux              | no WIN support |
 | Audio layer support            | PORTAUDIO, PULSEAUDIO, ALSA                   |                |
 | Audio devices support          | mono,stereo (only 48kHz supported)            |                |
-| DX Cluster support             | yes, inclusive show Spots on RX Panadapter    |                |
-| RBN support                    | yes, inclusive show Spots on RX Panadapter    |                |
-| SDR TX support                 | yes, fully supported                          |                |
+| TX Audio Monitor               | not supported ❌                              | will never come|
+| DX Cluster support             | yes, inclusive show Spots on RX Panadapter ✅ |                |
+| RBN support                    | yes, inclusive show Spots on RX Panadapter ✅ |                |
+| SDR TX support                 | yes, fully supported ✅                       |                |
 | Used UI framework              | GTK3                                          |                |
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                |
 | Supported Compiler             | clang (recommended), gcc                      |                |
