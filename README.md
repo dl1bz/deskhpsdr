@@ -102,6 +102,13 @@ I will never publish any ready-compiled binaries or appimages for Linux. The tas
 deskHPSDR is under active development, because software projects never finished. My focus with deskHPSDR is Fonie/SSB and Digimodes, less CW.<br>
 My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.
 
+## Management of user requests
+
+I only accept user requests, if they
+a) fit the concept and
+b) are useful to everyone.
+I decline requests for "only one user" functions.
+
 ## macOS is first choice
 
 deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority.
