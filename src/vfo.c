@@ -740,12 +740,10 @@ static guint split_band_sync_source = 0;
 
 static gboolean sync_vfos_after_split_band_change(gpointer data) {
   int id = GPOINTER_TO_INT(data);
-
   split_band_sync_source = 0;
   if (!disable_split_on_band_change || split) {
     return G_SOURCE_REMOVE;
   }
-
   if (id == VFO_A) {
     vfo_a_to_b();
   } else {
@@ -758,7 +756,6 @@ static void disable_split_for_band_change(int id) {
   if (!disable_split_on_band_change || !split || id != active_receiver->id) {
     return;
   }
-
   radio_set_split(0);
   if (split_band_sync_source != 0) {
     g_source_remove(split_band_sync_source);
