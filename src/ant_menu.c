@@ -32,6 +32,7 @@
 #include "radio.h"
 #include "new_protocol.h"
 #include "message.h"
+#include "zoompan.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *grid = NULL;
@@ -63,6 +64,7 @@ static void rx_ant_cb(GtkToggleButton *widget, gpointer data) {
   }
   band->alexRxAntenna = ant;
   radio_set_alex_antennas();
+  update_zoompan_ant_labels();
 }
 
 static void tx_ant_cb(GtkToggleButton *widget, gpointer data) {
@@ -74,6 +76,7 @@ static void tx_ant_cb(GtkToggleButton *widget, gpointer data) {
   }
   band->alexTxAntenna = ant;
   radio_set_alex_antennas();
+  update_zoompan_ant_labels();
 }
 
 static void show_hf(void) {

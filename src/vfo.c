@@ -40,6 +40,7 @@
 #include "filter.h"
 #include "bandstack.h"
 #include "band.h"
+#include "band_menu.h"
 #include "property.h"
 #include "radio.h"
 #include "receiver.h"
@@ -774,16 +775,15 @@ static inline void vfo_adjust_band(int v, long long f) {
   // bandGen is changed to another band if we enter
   // the frequency range of the latter.
   //
-  // NOTE: you loose the LO offset when moving > 25kHz
-  //       out of a transverter band!
-  //
   vfo[v].band = get_band_from_frequency(f);
   if (b != vfo[v].band) {
+    band = band_get_band(vfo[v].band);
+    vfo[v].lo = band->frequencyLO + band->errorLO;
     t_print("%s: Band changed ! VFO id: %d, current band: %d, previous band: %d\n", __func__, (int) v,
             (int) vfo[v].band, (int) b);
     if (can_transmit) {
       transmitter->is_tuned = 0;
-      BANDSETTINGS *bs = band_get_settings(b);
+      BANDSETTINGS *bs = band_get_settings(vfo[v].band);
       if (bs != NULL && bs->tx_drive > 0 && bs->tx_drive <= 100 && transmitter->drive_per_band) {
         set_drive((double) bs->tx_drive);
         t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
@@ -806,6 +806,7 @@ static inline void vfo_adjust_band(int v, long long f) {
   vfo[v].bandstack = bandstack->current_entry;
   radio_set_alex_antennas();
   update_zoompan_ant_labels();
+  g_idle_add(band_menu_update, NULL);
 }
 
 void vfo_xvtr_changed(void) {

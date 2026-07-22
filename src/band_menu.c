@@ -113,6 +113,27 @@ gboolean band_select_cb (GtkWidget *widget, gpointer data) {
   return FALSE;
 }
 
+gboolean band_menu_update(gpointer data) {
+  (void)data;
+  if (dialog == NULL || active_receiver == NULL) {
+    return G_SOURCE_REMOVE;
+  }
+  int band = vfo[active_receiver->id].band;
+  CHOICE *choice = first;
+  current = NULL;
+  while (choice != NULL) {
+    g_signal_handler_block(G_OBJECT(choice->button), choice->signal);
+    gboolean active = choice->info == band;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(choice->button), active);
+    g_signal_handler_unblock(G_OBJECT(choice->button), choice->signal);
+    if (active) {
+      current = choice;
+    }
+    choice = choice->next;
+  }
+  return G_SOURCE_REMOVE;
+}
+
 void band_menu (GtkWidget *parent) {
   int i, j;
   dialog = gtk_dialog_new();
