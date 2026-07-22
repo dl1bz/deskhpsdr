@@ -26,6 +26,8 @@ warren@wpratt.com
 
 #include "comm.h"
 
+#define TXA_CFC_MIN_FFT_SIZE 4096   // reduced from 16384 to lower CFC latency
+
 struct _txa txa[MAX_CHANNELS];
 
 void create_txa(int channel) {
@@ -193,7 +195,7 @@ void create_txa(int channel) {
                                     ch[channel].dsp_size,           // size
                                     txa[channel].midbuff,           // input buffer
                                     txa[channel].midbuff,           // output buffer
-                                    max(16384, ch[channel].dsp_size),     // fft size
+                                    max(TXA_CFC_MIN_FFT_SIZE, ch[channel].dsp_size),     // fft size
                                     4,                      // overlap
                                     ch[channel].dsp_rate,           // samplerate
                                     1,                      // window type
