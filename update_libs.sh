@@ -16,6 +16,10 @@ NR4_DIR="${PWD}/wdsp-libs"
 TARGET_DIR=$NR4_DIR
 CHECK_FILE=".WDSP_libs_updated_V3"
 
+FFTW_DOUBLE_PREFIX="$SRC_DIR/fftw-3.3.11/build"
+FFTW_FLOAT_PREFIX="$SRC_DIR/fftw-3.3.11/build-float"
+FFTW_PKG_CONFIG_PATH=""
+
 REINSTALL=0
 
 for arg in "$@"; do
@@ -159,6 +163,21 @@ echo "=== Environment OK ==="
 echo
 fi
 
+if [ -f "$FFTW_DOUBLE_PREFIX/include/fftw3.h" ] &&
+   [ -f "$FFTW_DOUBLE_PREFIX/lib/libfftw3.a" ] &&
+   [ -f "$FFTW_FLOAT_PREFIX/lib/libfftw3f.a" ] &&
+   [ -f "$FFTW_DOUBLE_PREFIX/lib/pkgconfig/fftw3.pc" ] &&
+   [ -f "$FFTW_FLOAT_PREFIX/lib/pkgconfig/fftw3f.pc" ]; then
+    FFTW_PKG_CONFIG_PATH="$FFTW_FLOAT_PREFIX/lib/pkgconfig:$FFTW_DOUBLE_PREFIX/lib/pkgconfig"
+    echo "Local FFTW 3.3.11 build found."
+    echo "libspecbleach will use the local FFTW headers and pkg-config files."
+else
+    echo "Local FFTW 3.3.11 build not complete."
+    echo "libspecbleach will use the installed system FFTW fallback."
+fi
+
+echo ""
+
 [ -n "$NR4_DIR" ] && [ "$NR4_DIR" != "/" ] || exit 1
 rm -rf -- "$NR4_DIR"
 mkdir -p -- "$NR4_DIR"
@@ -193,20 +212,23 @@ if [ ! -d "$NR4_DIR/libspecbleach" ]; then
 else
     echo "Installing libspecbleach..."
     cd "$NR4_DIR/libspecbleach" || exit 1
-    meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=static || exit 1
+    if [ -n "$FFTW_PKG_CONFIG_PATH" ]; then
+        PKG_CONFIG_PATH="$FFTW_PKG_CONFIG_PATH${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}" \
+          meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=static || exit 1
+    else
+        meson setup build --buildtype=release --prefix="$TARGET_DIR" --libdir=lib -Ddefault_library=static || exit 1
+    fi
     meson compile -C build -v || exit 1
     meson install -C build || exit 1
 fi
 
 echo ""
-if [ -f "$SRC_DIR/fftw-3.3.11/build/include/fftw3.h" ] &&
-   [ -f "$SRC_DIR/fftw-3.3.11/build/lib/libfftw3.a" ] &&
-   [ -f "$SRC_DIR/fftw-3.3.11/build-float/lib/libfftw3f.a" ]; then
-    echo "Local FFTW 3.3.11 build found."
+if [ -n "$FFTW_PKG_CONFIG_PATH" ]; then
+    echo "Local FFTW 3.3.11 build was used for libspecbleach."
     echo "deskHPSDR and WDSP will use the local FFTW headers and static libraries."
 else
-    echo "Local FFTW 3.3.11 build not complete."
-    echo "deskHPSDR and WDSP will use the installed system FFTW fallback."
+    echo "The installed system FFTW fallback was used for libspecbleach."
+    echo "deskHPSDR and WDSP will also use their configured FFTW fallback."
 fi
 echo ""
 
