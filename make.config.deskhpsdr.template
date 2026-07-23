@@ -7,5 +7,6 @@ TTS      = OFF
 AUDIO    = PULSE
 AUTOGAIN = OFF
 EQ12     = OFF
+WDSP1    = OFF
 AH4IOB   = OFF
 DEVEL    = OFF

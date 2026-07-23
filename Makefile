@@ -23,6 +23,7 @@ TTS      ?= OFF
 AUDIO    ?= PULSE
 AUTOGAIN ?= OFF
 EQ12     ?= OFF
+WDSP1    ?= OFF
 AH4IOB   ?= OFF
 DEVEL    ?= OFF
 
@@ -130,6 +131,13 @@ else
 	CFLAGS?= -O3
 endif
 
+ifeq ($(WDSP1),ON)
+WDSP_DIR := wdsp-1.29
+override CFLAGS += -DWDSP1
+else
+WDSP_DIR := wdsp-2.00
+endif
+
 # clang detection (macOS: CC may be "cc" but still clang)
 IS_CLANG := $(shell $(CC) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0)
 
@@ -205,8 +213,8 @@ FFTW_CFLAGS := $(shell pkg-config --cflags fftw3 fftw3f)
 FFTW_LIBS := $(shell pkg-config --libs fftw3 fftw3f)
 endif
 
-WDSP_INCLUDE=-I./wdsp-2.00 $(FFTW_CFLAGS)
-WDSP_LIBS=wdsp-2.00/libwdsp.a \
+WDSP_INCLUDE=-I./$(WDSP_DIR) $(FFTW_CFLAGS)
+WDSP_LIBS=$(WDSP_DIR)/libwdsp.a \
           wdsp-libs/lib/librnnoise.a \
 		  wdsp-libs/lib/libspecbleach.a \
 		  $(FFTW_LIBS)
@@ -915,7 +923,7 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(TCI_OBJS) \
 		$(MIDI_OBJS) $(STEMLAB_OBJS) $(SATURN_OBJS) $(TTS_OBJS)
 	$(COMPILE) -c -o src/version.o src/version.c
 ifneq (z$(WDSP_INCLUDE), z)
-	@+make -C wdsp-2.00
+	@+make -C $(WDSP_DIR)
 endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
