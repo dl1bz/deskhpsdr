@@ -41,7 +41,6 @@ john.d.melton@googlemail.com
 
 void *wdsp_aligned_malloc(size_t size, size_t alignment) {
   void *ptr = NULL;
-
   if (alignment < sizeof(void *)) {
     alignment = sizeof(void *);
   }
@@ -60,7 +59,6 @@ void *wdsp_aligned_malloc(size_t size, size_t alignment) {
 void wdsp_sleep(unsigned int ms) {
   struct timespec requested;
   struct timespec remaining;
-
   requested.tv_sec = ms / 1000;
   requested.tv_nsec = (long)(ms % 1000) * 1000000L;
   while (nanosleep(&requested, &remaining) < 0 && errno == EINTR) {
@@ -75,9 +73,8 @@ struct wdsp_work_item {
 
 static void *wdsp_work_item_main(void *arg) {
   struct wdsp_work_item *item = arg;
-  DWORD (WINAPI *function)(void *) = item->function;
+  DWORD (WINAPI * function)(void *) = item->function;
   void *context = item->context;
-
   free(item);
   (void)function(context);
   return NULL;
@@ -87,7 +84,6 @@ void QueueUserWorkItem(DWORD (WINAPI *function)(void *), void *context, int flag
   pthread_t thread;
   pthread_attr_t attr;
   struct wdsp_work_item *item;
-
   (void)flags;
   item = malloc(sizeof(*item));
   if (item == NULL) {
@@ -96,7 +92,6 @@ void QueueUserWorkItem(DWORD (WINAPI *function)(void *), void *context, int flag
   }
   item->function = function;
   item->context = context;
-
   if (pthread_attr_init(&attr) != 0) {
     free(item);
     (void)function(context);
@@ -147,18 +142,15 @@ void DeleteCriticalSection(pthread_mutex_t *mutex) {
 
 int LinuxWaitForSingleObject(sem_t *sem, int ms) {
   int result;
-
   if (ms == INFINITE) {
     do {
       result = sem_wait(sem);
     } while (result < 0 && errno == EINTR);
     return result;
   }
-
   if (ms <= 0) {
     return sem_trywait(sem);
   }
-
   struct timespec deadline;
   if (clock_gettime(CLOCK_REALTIME, &deadline) < 0) {
     return -1;
@@ -169,7 +161,6 @@ int LinuxWaitForSingleObject(sem_t *sem, int ms) {
     deadline.tv_sec++;
     deadline.tv_nsec -= 1000000000L;
   }
-
   do {
     result = sem_timedwait(sem, &deadline);
   } while (result < 0 && errno == EINTR);

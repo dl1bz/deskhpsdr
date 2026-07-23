@@ -43,7 +43,6 @@ john.d.melton@googlemail.com
 
 void *wdsp_aligned_malloc(size_t size, size_t alignment) {
   void *ptr = NULL;
-
   if (alignment < sizeof(void *)) {
     alignment = sizeof(void *);
   }
@@ -66,7 +65,6 @@ void wdsp_sleep_ms(unsigned int milliseconds) {
     .tv_sec = milliseconds / 1000U,
     .tv_nsec = (long)(milliseconds % 1000U) * 1000000L
   };
-
   while (nanosleep(&request, &request) < 0 && errno == EINTR) {
   }
 }
