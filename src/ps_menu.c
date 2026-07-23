@@ -785,6 +785,16 @@ void ps_menu(GtkWidget *parent) {
   g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   gtk_widget_set_name(close_b, "close_button");
+  col += 5;
+  GtkWidget *ampview_b = gtk_button_new_with_label("AmpView");
+  gtk_widget_set_name(ampview_b, "small_button");
+  gtk_widget_set_tooltip_text(ampview_b,
+                              "Show the PureSignal amplifier AM/AM and AM/PM characteristics.");
+  gtk_widget_set_size_request(ampview_b, 80, -1);
+  // gtk_widget_set_margin_start(ampview_b, 0);
+  // gtk_widget_set_margin_end(ampview_b, 0);
+  gtk_grid_attach(GTK_GRID(grid), ampview_b, col, row, 1, 1);
+  g_signal_connect(ampview_b, "clicked", G_CALLBACK(ampview_cb), dialog);
   row++;
   col = 0;
   GtkWidget *enable_b = gtk_check_button_new_with_label("Enable PS");
@@ -826,13 +836,6 @@ void ps_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(feedback_b), transmitter->feedback);
   gtk_grid_attach(GTK_GRID(grid), feedback_b, col, row, 1, 1);
   g_signal_connect(feedback_b, "toggled", G_CALLBACK(feedback_cb), NULL);
-  col++;
-  GtkWidget *ampview_b = gtk_button_new_with_label("AmpView");
-  gtk_widget_set_name(ampview_b, "small_button");
-  gtk_widget_set_tooltip_text(ampview_b,
-                              "Show the PureSignal amplifier AM/AM and AM/PM characteristics.");
-  gtk_grid_attach(GTK_GRID(grid), ampview_b, col, row, 1, 1);
-  g_signal_connect(ampview_b, "clicked", G_CALLBACK(ampview_cb), dialog);
   row++;
   col = 0;
   //
