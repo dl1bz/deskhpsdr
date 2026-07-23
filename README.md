@@ -35,7 +35,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | IF Mode / Panadapter mode      | not supported ❌                              | will never come|
 | Hermes Lite 2+ expansion board | supported ✅                                  |                |
 | Bright / Dark Theme support    | yes ✅                                        |                |
-| Screen Resolution              | min. 1280x600 or higher                       |                |
+| Screen Resolution              | min. 1280x600 or higher 🚨                    |                |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                |
 | OS support                     | macOS 15 or higher, modern Linux              | no WIN support |
 | Audio layer support            | PORTAUDIO, PULSEAUDIO, ALSA                   |                |
@@ -52,21 +52,21 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 
 Other useful app features (availability depend from used SDR device):
 
-* Noisefloor adjustment automatic for Panadapter
-* SDR device auto-detection
-* Autogain adjustment and ADC overflow protection (Hermes Lite 2 only)
-* Keyboard shortcuts (pre-defined)
-* Open Collector support (RX, TX, Tune) via OpenHPSDR protocol
-* Antenna selection (if SDR support this)
-* Transverter Support
-* Full RX- and TX-WDSP Audio chain support (RX/TX-EQ, Leveler, CESSB, Limiter, CFC, Speech Processor, DEXP)
-* network optimizations if using WiFi for OpenHPSDR protocol P1 or P2
+* Noisefloor adjustment automatic for Panadapter ✅
+* SDR device auto-detection ✅
+* Autogain adjustment and ADC overflow protection (Hermes Lite 2 only) ✅
+* Keyboard shortcuts (pre-defined) ✅
+* Open Collector support (RX, TX, Tune) via OpenHPSDR protocol ✅
+* Antenna selection (if SDR support this) ✅
+* Transverter Support ✅
+* Full RX- and TX-WDSP Audio chain support (RX/TX-EQ, Leveler, CESSB, Limiter, CFC, Speech Processor, DEXP) ✅
+* network optimizations if using WiFi for OpenHPSDR protocol P1 or P2 ✅
 * 2 VFO, up to 2 Receiver and 1 Transmitter
-* VFO split, swap, RIT/XIT supported
+* VFO split, swap, RIT/XIT supported ✅
 * Save TX DRIVE and TUNE DRIVE per band, Bandstack available
-* display current solar data for propagation, show Greyline DX window
-* Panadapter refresh rate adjustment (max. 60fps)
-* some special SDR device-specific options supported
+* display current solar data for propagation, show Greyline DX window ✅
+* Panadapter refresh rate adjustment (max. 60fps, prevent very high CPU consumption❗)
+* some special SDR device-specific options supported 🔥
 
 The focus is clear fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the WDSP RX and TX audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices.
 
