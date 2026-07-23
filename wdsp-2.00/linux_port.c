@@ -26,7 +26,9 @@ john.d.melton@googlemail.com
 */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <semaphore.h>
+#include <time.h>
 
 #include "linux_port.h"
 #include "comm.h"
@@ -38,6 +40,36 @@ john.d.melton@googlemail.com
 ********************************************************************************************************/
 
 #if defined(linux) || defined(__APPLE__)
+
+void *wdsp_aligned_malloc(size_t size, size_t alignment) {
+  void *ptr = NULL;
+
+  if (alignment < sizeof(void *)) {
+    alignment = sizeof(void *);
+  }
+  if ((alignment & (alignment - 1U)) != 0U) {
+    errno = EINVAL;
+    return NULL;
+  }
+  if (posix_memalign(&ptr, alignment, size) != 0) {
+    return NULL;
+  }
+  return ptr;
+}
+
+void wdsp_aligned_free(void *ptr) {
+  free(ptr);
+}
+
+void wdsp_sleep_ms(unsigned int milliseconds) {
+  struct timespec request = {
+    .tv_sec = milliseconds / 1000U,
+    .tv_nsec = (long)(milliseconds % 1000U) * 1000000L
+  };
+
+  while (nanosleep(&request, &request) < 0 && errno == EINTR) {
+  }
+}
 
 void QueueUserWorkItem(void *function, void *context, int flags) {
   pthread_t t;
@@ -103,19 +135,34 @@ int LinuxWaitForSingleObject(HANDLE handle, int ms) {
   sem_t *sem = (sem_t *)handle;
   int result = 0;
   if (ms == INFINITE) {
-    // wait for the lock
-    result = sem_wait(sem);
+    // wait for the lock; retry if a signal interrupted sem_wait()
+    do {
+      result = sem_wait(sem);
+    } while (result < 0 && errno == EINTR);
   } else if (ms == 0) {
     // return immediately but report whether semaphore is ready
     result = sem_trywait(sem);
   } else {
-    // "busy waiting", THIS COULD BE IMPROVED
-    for (int i = 0; i < ms; i++) {
+    // Poll at 1 ms intervals. Retry interrupted calls without consuming
+    // timeout time and distinguish a real semaphore error from timeout.
+    for (int i = 0; i < ms;) {
       result = sem_trywait(sem);
-      if (result == 0) { break; }
-      // If not ready, sleep 1 ms and continue
-      Sleep(1);
+      if (result == 0) {
+        return WAIT_OBJECT_0;
+      }
+      if (errno == EINTR) {
+        continue;
+      }
+      if (errno != EAGAIN) {
+        return -1;
+      }
+      i++;
+      if (i < ms) {
+        Sleep(1);
+      }
     }
+    errno = ETIMEDOUT;
+    return -1;
   }
   return result;
 }
@@ -131,10 +178,11 @@ HANDLE LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count
   // need to check whether the name is possibly already in use, e.g. by
   // another SDR program running on the same machine.
   //
-  static long semcount = 0;
-  char sname[20];
+  static volatile LONG semcount = 0;
+  char sname[64];
   for (;;) {
-    sprintf(sname, "WDSP%08ld", semcount++);
+    LONG sequence = InterlockedIncrement(&semcount);
+    snprintf(sname, sizeof(sname), "/WDSP-%ld-%" PRId32, (long)getpid(), sequence);
     sem = sem_open(sname, O_CREAT | O_EXCL, 0700, initial_count);
     if (sem == SEM_FAILED && errno == EEXIST) { continue; }
     break;
@@ -209,16 +257,19 @@ HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, v
   }
   if (stack_size != 0) {
     if (pthread_attr_setstacksize(&attr, stack_size)) {
+      pthread_attr_destroy(&attr);
       return (HANDLE) -1;
     }
   }
   if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) {
+    pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
   if (pthread_create(&threadid, &attr, (void * (*)(void *))start_address, arglist)) {
+    pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
-  //pthread_attr_destroy(&attr);
+  pthread_attr_destroy(&attr);
 #if !defined(__APPLE__) && !defined(NO_PTHREAD_SETNAME_NP)
   //
   // pthread_setname_np does not exist (or exists with
@@ -252,7 +303,7 @@ HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, v
   return (HANDLE)threadid;
 }
 
-void _endthread() {
+void _endthread(void) {
   pthread_exit(NULL);
 }
 

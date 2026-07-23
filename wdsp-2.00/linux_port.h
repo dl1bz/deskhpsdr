@@ -25,32 +25,39 @@ john.d.melton@googlemail.com
 
 */
 
+#ifndef WDSP_LINUX_PORT_H
+#define WDSP_LINUX_PORT_H
+
 #if defined(linux) || defined(__APPLE__)
 
 
   #include <pthread.h>
   #include <stdint.h>
   #include <stdio.h>
+  #include <stdlib.h>
   #include <unistd.h>
 
   #define CRITICAL_SECTION pthread_mutex_t
   #define byte unsigned char
   #define String char *
-  #define LONG long
-  #define DWORD long
+  typedef int32_t LONG;
+  #ifndef WDSP_DWORD_DEFINED
+    typedef uint32_t DWORD;
+    #define WDSP_DWORD_DEFINED 1
+  #endif
   #define HANDLE void *
   #define WINAPI
   #define FALSE 0
   #define TRUE 1
   #define TEXT(x) x
-  #define InterlockedIncrement(base) __sync_add_and_fetch(base,1L)
-  #define InterlockedDecrement(base) __sync_sub_and_fetch(base,1L)
+  #define InterlockedIncrement(base) __sync_add_and_fetch(base, 1)
+  #define InterlockedDecrement(base) __sync_sub_and_fetch(base, 1)
 
   //#define InterlockedBitTestAndSet(base,bit) __sync_or_and_fetch(base,1L<<bit)
   //#define InterlockedBitTestAndReset(base,bit) __sync_and_and_fetch(base,~(1L<<bit))
 
-  #define InterlockedBitTestAndSet(base,bit) __sync_fetch_and_or(base,1L<<bit)
-  #define InterlockedBitTestAndReset(base,bit) __sync_fetch_and_and(base,~(1L<<bit))
+  #define InterlockedBitTestAndSet(base,bit) __sync_fetch_and_or(base, (LONG)1U << (bit))
+  #define InterlockedBitTestAndReset(base,bit) __sync_fetch_and_and(base, ~((LONG)1U << (bit)))
 
   #define InterlockedExchange(target,value) __sync_lock_test_and_set(target,value)
   #define InterlockedAnd(base,mask) __sync_fetch_and_and(base,mask)
@@ -60,8 +67,12 @@ john.d.melton@googlemail.com
   #define __stdcall
   #define __forceinline
 
-  #define _aligned_malloc(x,y) malloc(x)
-  #define _aligned_free(x)   free(x)
+  void *wdsp_aligned_malloc(size_t size, size_t alignment);
+  void wdsp_aligned_free(void *ptr);
+  void wdsp_sleep_ms(unsigned int milliseconds);
+
+  #define _aligned_malloc(size, alignment) wdsp_aligned_malloc((size), (alignment))
+  #define _aligned_free(ptr) wdsp_aligned_free(ptr)
   // Activate these for malloc debug
   //#define _aligned_malloc(x,y) my_malloc(x);
   //#define _aligned_free(x) my_free(x);
@@ -74,7 +85,7 @@ john.d.melton@googlemail.com
   #define max(x,y) (x<y?y:x)
   #define THREAD_PRIORITY_HIGHEST 0
 
-  #define Sleep(ms) usleep((ms)*1000)
+  #define Sleep(ms) wdsp_sleep_ms((unsigned int)(ms))
 
   #define CreateSemaphore(a,b,c,d) LinuxCreateSemaphore(a,b,c,d)
   #define CreateSemaphoreW(a,b,c,d) LinuxCreateSemaphore(a,b,c,d)
@@ -86,7 +97,9 @@ john.d.melton@googlemail.com
 
   #define INFINITE -1
   #define WAIT_OBJECT_0 0
-  #define INT_MAX 2147483647
+  #ifndef INT_MAX
+    #define INT_MAX 2147483647
+  #endif
 
   void QueueUserWorkItem(void *function, void *context, int flags);
 
@@ -115,7 +128,7 @@ john.d.melton@googlemail.com
 
   HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, void *arglist);
 
-  void _endthread();
+  void _endthread(void);
 
   void SetThreadPriority(HANDLE thread, int priority);
 
@@ -123,3 +136,4 @@ john.d.melton@googlemail.com
 
 #endif
 
+#endif

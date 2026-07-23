@@ -8,7 +8,11 @@ extern "C" {
 #define OUTREAL   float
 #define dINREAL   float
 #define dOUTREAL  float
-#define DWORD   unsigned long
+#include <stdint.h>
+#ifndef WDSP_DWORD_DEFINED
+typedef uint32_t DWORD;
+#define WDSP_DWORD_DEFINED 1
+#endif
 
 // analyzer
 #define DETECTOR_MODE_PEAK       0
