@@ -1817,13 +1817,17 @@ void rx_set_analyzer(const RECEIVER *rx) {
   const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
   //
   // RX FEEDBACK receiver:
-  // Here we use a hard-wired zoom factor. We display exactly 24 kHz of the
-  // spectrum thus have to clip off
+  // Match the analyzer span to the normal TX panadapter. The TX display uses
+  // a filter-dependent span in sideband modes; keeping the feedback analyzer
+  // fixed at 24 kHz compresses the PureSignal monitor trace when the display
+  // changes to a 6 or 12 kHz span.
   //
   if (rx->id == PS_RX_FEEDBACK) {
+    double display_span = transmitter != NULL ? tx_display_span_hz(transmitter) : 24000.0;
+    double display_half_span = 0.5 * display_span;
     afft_size = 16384;
-    fscLin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
-    fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
+    fscLin = afft_size * (0.5 - display_half_span / rx->sample_rate);
+    fscHin = afft_size * (0.5 - display_half_span / rx->sample_rate);
   } else {
     if (rx->pan_fft_size > 0) {
       afft_size = rx->pan_fft_size;
