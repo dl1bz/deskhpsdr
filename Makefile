@@ -205,12 +205,28 @@ CPP_DEFINES=
 CPP_SOURCES=
 CPP_INCLUDE=
 
+FFTW_LOCAL_DIR := fftw-3.3.11
+FFTW_LOCAL_DOUBLE := $(FFTW_LOCAL_DIR)/build
+FFTW_LOCAL_FLOAT := $(FFTW_LOCAL_DIR)/build-float
+FFTW_LOCAL_DOUBLE_LIB := $(FFTW_LOCAL_DOUBLE)/lib/libfftw3.a
+FFTW_LOCAL_FLOAT_LIB := $(FFTW_LOCAL_FLOAT)/lib/libfftw3f.a
+
+FFTW_LOCAL_COMPLETE := $(and $(wildcard $(FFTW_LOCAL_DOUBLE)/include/fftw3.h),$(wildcard $(FFTW_LOCAL_DOUBLE_LIB)),$(wildcard $(FFTW_LOCAL_FLOAT_LIB)))
+
+ifneq ($(FFTW_LOCAL_COMPLETE),)
+$(info Local FFTW 3.3.11 found, using static libraries.)
+FFTW_CFLAGS := -I./$(FFTW_LOCAL_DOUBLE)/include
+FFTW_LIBS := ./$(FFTW_LOCAL_DOUBLE_LIB) ./$(FFTW_LOCAL_FLOAT_LIB)
+else
 ifeq ($(UNAME_S),Darwin)
+$(info Local FFTW 3.3.11 not found, using Homebrew FFTW.)
 FFTW_CFLAGS := -I$(BREW_INCDIR)
 FFTW_LIBS := $(BREW_LIBDIR)/libfftw3.a $(BREW_LIBDIR)/libfftw3f.a
 else
+$(info Local FFTW 3.3.11 not found, using system FFTW via pkg-config.)
 FFTW_CFLAGS := $(shell pkg-config --cflags fftw3 fftw3f)
 FFTW_LIBS := $(shell pkg-config --libs fftw3 fftw3f)
+endif
 endif
 
 WDSP_INCLUDE=-I./$(WDSP_DIR) $(FFTW_CFLAGS)

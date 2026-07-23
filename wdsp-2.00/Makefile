@@ -1,14 +1,22 @@
 #
 # Makefile for WDSP library
-# This one creates libwdsp.a intended for statis linking
+# This one creates libwdsp.a intended for static linking
 #
 
-CFLAGS?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses -Wcast-align
+CFLAGS ?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses -Wcast-align
 CFLAGS += -I../wdsp-libs/include
 
-FFTWINCLUDE=`pkg-config --cflags fftw3`
+FFTW_LOCAL_PREFIX ?= ../fftw-3.3.11/build
 
-COMPILE=$(CC) $(CFLAGS) $(FFTWINCLUDE)
+ifneq ($(wildcard $(FFTW_LOCAL_PREFIX)/include/fftw3.h),)
+$(info Local FFTW 3.3.11 found, using project header.)
+FFTWINCLUDE := -I$(FFTW_LOCAL_PREFIX)/include
+else
+$(info Local FFTW 3.3.11 not found, using system FFTW via pkg-config.)
+FFTWINCLUDE := $(shell pkg-config --cflags fftw3)
+endif
+
+COMPILE = $(CC) $(CFLAGS) $(FFTWINCLUDE)
 
 OBJS=linux_port.o \
 amd.o \

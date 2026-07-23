@@ -198,6 +198,18 @@ else
     meson install -C build || exit 1
 fi
 
+echo ""
+if [ -f "$SRC_DIR/fftw-3.3.11/build/include/fftw3.h" ] &&
+   [ -f "$SRC_DIR/fftw-3.3.11/build/lib/libfftw3.a" ] &&
+   [ -f "$SRC_DIR/fftw-3.3.11/build-float/lib/libfftw3f.a" ]; then
+    echo "Local FFTW 3.3.11 build found."
+    echo "deskHPSDR and WDSP will use the local FFTW headers and static libraries."
+else
+    echo "Local FFTW 3.3.11 build not complete."
+    echo "deskHPSDR and WDSP will use the installed system FFTW fallback."
+fi
+echo ""
+
 cd "$SRC_DIR" || exit 1
 
 if [ -f "$TARGET_DIR/lib/libspecbleach.a" ] && [ -f "$TARGET_DIR/lib/librnnoise.a" ]; then

@@ -9,14 +9,23 @@
 # Makefile for static WDSP library
 #
 
-CFLAGS?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses
+CFLAGS ?= -pthread -O3 -D_GNU_SOURCE -Wno-parentheses
 
 # CFLAGS += -I/usr/local/include
 
-EXTRA_INCLUDE := $(shell PKG_CONFIG_PATH=../wdsp-libs/lib/pkgconfig:$(PKG_CONFIG_PATH) \
-                         pkg-config --cflags fftw3 fftw3f rnnoise libspecbleach)
+FFTW_LOCAL_PREFIX ?= ../fftw-3.3.11/build
 
-COMPILE=$(CC) $(CFLAGS) $(EXTRA_INCLUDE)
+ifneq ($(wildcard $(FFTW_LOCAL_PREFIX)/include/fftw3.h),)
+$(info Local FFTW 3.3.11 found, using project header.)
+FFTWINCLUDE := -I$(FFTW_LOCAL_PREFIX)/include
+else
+$(info Local FFTW 3.3.11 not found, using system FFTW via pkg-config.)
+FFTWINCLUDE := $(shell pkg-config --cflags fftw3 fftw3f)
+endif
+
+EXTRA_INCLUDE := $(shell PKG_CONFIG_PATH=../wdsp-libs/lib/pkgconfig:$(PKG_CONFIG_PATH) pkg-config --cflags rnnoise libspecbleach)
+
+COMPILE = $(CC) $(CFLAGS) $(FFTWINCLUDE) $(EXTRA_INCLUDE)
 
 SOURCES= amd.c \
 ammod.c \
