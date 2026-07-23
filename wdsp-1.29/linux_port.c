@@ -161,10 +161,36 @@ int LinuxWaitForSingleObject(sem_t *sem, int ms) {
     deadline.tv_sec++;
     deadline.tv_nsec -= 1000000000L;
   }
+#ifdef __APPLE__
+  for (;;) {
+    result = sem_trywait(sem);
+    if (result == 0) {
+      return 0;
+    }
+    if (errno != EAGAIN && errno != EINTR) {
+      return -1;
+    }
+
+    struct timespec now;
+    if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+      return -1;
+    }
+    if (now.tv_sec > deadline.tv_sec ||
+        (now.tv_sec == deadline.tv_sec && now.tv_nsec >= deadline.tv_nsec)) {
+      errno = ETIMEDOUT;
+      return -1;
+    }
+
+    struct timespec pause = {0, 1000000L};
+    while (nanosleep(&pause, &pause) < 0 && errno == EINTR) {
+    }
+  }
+#else
   do {
     result = sem_timedwait(sem, &deadline);
   } while (result < 0 && errno == EINTR);
   return result;
+#endif
 }
 
 sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count, char *name) {

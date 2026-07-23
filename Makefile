@@ -133,7 +133,7 @@ endif
 
 ifeq ($(WDSP1),ON)
 WDSP_DIR := wdsp-1.29
-override CFLAGS += -DWDSP1
+CFLAGS += -DWDSP1
 else
 WDSP_DIR := wdsp-2.00
 endif

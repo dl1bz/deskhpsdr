@@ -46,6 +46,9 @@ char build_options[] =
 #ifdef __EQ12__
   "EQ12 "
 #endif
+#ifdef WDSP1
+  "FORCE_WDSP-1.X "
+#endif
 #ifdef __AH4IOB__
   "AH4IOB "
 #endif
