@@ -256,6 +256,9 @@ extern void   tx_xmit_captured_data_end (const TRANSMITTER *tx);
 extern void   tx_ps_getinfo (const TRANSMITTER *tx, int *info);
 extern double tx_ps_getmx (const TRANSMITTER *tx);
 extern double tx_ps_getpk (const TRANSMITTER *tx);
+extern void   tx_ps_getdisp (const TRANSMITTER *tx, double *x, double *ym, double *yc, double *ys,
+                             double *xm_cor, double *ym_cor, double *xa_cor, double *ya_cor,
+                             int *nsamps, int *cpts, double *phs_ref_deg);
 extern void   tx_ps_mox (const TRANSMITTER *tx, int state);
 extern void   tx_ps_onoff (TRANSMITTER *tx, int state);
 extern void   tx_ps_reset (const TRANSMITTER *tx);

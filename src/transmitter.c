@@ -2309,6 +2309,66 @@ double tx_ps_getpk(const TRANSMITTER *tx) {
   return pk;
 }
 
+void tx_ps_getdisp(const TRANSMITTER *tx, double *x, double *ym, double *yc, double *ys,
+                   double *xm_cor, double *ym_cor, double *xa_cor, double *ya_cor,
+                   int *nsamps, int *cpts, double *phs_ref_deg) {
+#ifdef WDSP1
+  enum { correction_points = 512 };
+  const int ints = tx->ps_ints;
+  const int samples = ints * tx->ps_spi;
+  double cm[4 * ints];
+  double cc[4 * ints];
+  double cs[4 * ints];
+  /*
+   * WDSP 1.29 returns raw amplifier samples and cubic spline
+   * coefficients.  Convert them to the common WDSP 2.00-style data
+   * consumed by AmpView.  yc/ys are intentionally swapped so that the
+   * common plot expression atan2(ys, yc) matches the 1.29/Thetis
+   * expression atan2(yc, ys).
+   */
+  GetPSDisp(tx->id, x, ym, ys, yc, cm, cc, cs);
+  *nsamps = samples;
+  *cpts = correction_points;
+  *phs_ref_deg = atan2(ys[samples - 1], yc[samples - 1]) * 180.0 / M_PI;
+  double dx = 1.0 / (double)ints;
+  double qyc = cc[4 * (ints - 1) + 0]
+               + dx * (cc[4 * (ints - 1) + 1]
+                       + dx * (cc[4 * (ints - 1) + 2]
+                               + dx * cc[4 * (ints - 1) + 3]));
+  double qys = cs[4 * (ints - 1) + 0]
+               + dx * (cs[4 * (ints - 1) + 1]
+                       + dx * (cs[4 * (ints - 1) + 2]
+                               + dx * cs[4 * (ints - 1) + 3]));
+  const double correction_phase_ref = atan2(qys, qyc) * 180.0 / M_PI;
+  for (int i = 0; i < correction_points; i++) {
+    const double qx = (double)(i + 1) / (double)correction_points;
+    int k = (int)(qx * ints);
+    if (k >= ints) { k = ints - 1; }
+    const double interval_start = (double)k / (double)ints;
+    const double local_x = qx - interval_start;
+    const double qym = cm[4 * k + 0]
+                       + local_x * (cm[4 * k + 1]
+                                    + local_x * (cm[4 * k + 2]
+                                      + local_x * cm[4 * k + 3]));
+    qyc = cc[4 * k + 0]
+          + local_x * (cc[4 * k + 1]
+                       + local_x * (cc[4 * k + 2]
+                                    + local_x * cc[4 * k + 3]));
+    qys = cs[4 * k + 0]
+          + local_x * (cs[4 * k + 1]
+                       + local_x * (cs[4 * k + 2]
+                                    + local_x * cs[4 * k + 3]));
+    xm_cor[i] = qx;
+    ym_cor[i] = qym;
+    xa_cor[i] = qx;
+    ya_cor[i] = atan2(qys, qyc) * 180.0 / M_PI - correction_phase_ref;
+  }
+#else
+  GetPSDisp(tx->id, x, ym, yc, ys, xm_cor, ym_cor, xa_cor, ya_cor,
+            nsamps, cpts, phs_ref_deg);
+#endif
+}
+
 void tx_ps_mox(const TRANSMITTER *tx, int state) {
   t_print("PS CTRL: SetPSMox tx=%d state=%d\n", tx->id, state);
   SetPSMox(tx->id, state);

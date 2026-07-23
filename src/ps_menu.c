@@ -47,6 +47,24 @@ static GtkWidget *tx_att_spin;
 static int running = 0;
 static guint info_timer = 0;
 
+#define AMPVIEW_MAX_SAMPLES 4096
+#define AMPVIEW_CORRECTION_POINTS 512
+
+static GtkWidget *ampview_dialog = NULL;
+static GtkWidget *ampview_area = NULL;
+static guint ampview_timer = 0;
+static double ampview_x[AMPVIEW_MAX_SAMPLES];
+static double ampview_ym[AMPVIEW_MAX_SAMPLES];
+static double ampview_yc[AMPVIEW_MAX_SAMPLES];
+static double ampview_ys[AMPVIEW_MAX_SAMPLES];
+static double ampview_xm_cor[AMPVIEW_CORRECTION_POINTS];
+static double ampview_ym_cor[AMPVIEW_CORRECTION_POINTS];
+static double ampview_xa_cor[AMPVIEW_CORRECTION_POINTS];
+static double ampview_ya_cor[AMPVIEW_CORRECTION_POINTS];
+static int ampview_nsamps = 0;
+static int ampview_cpts = 0;
+static double ampview_phs_ref_deg = 0.0;
+
 #define INFO_SIZE 16
 
 static void store_tx_att_for_current_band(void) {
@@ -61,6 +79,241 @@ static GtkWidget *entry[INFO_SIZE];
 
 static void ps_off_on(void);
 
+static void ampview_close(void) {
+  if (ampview_timer > 0) {
+    g_source_remove(ampview_timer);
+    ampview_timer = 0;
+  }
+  if (ampview_dialog != NULL) {
+    GtkWidget *tmp = ampview_dialog;
+    ampview_dialog = NULL;
+    ampview_area = NULL;
+    gtk_widget_destroy(tmp);
+  }
+}
+
+static gboolean ampview_delete_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
+  ampview_close();
+  return TRUE;
+}
+
+static void ampview_destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  if (ampview_timer > 0) {
+    g_source_remove(ampview_timer);
+    ampview_timer = 0;
+  }
+  ampview_dialog = NULL;
+  ampview_area = NULL;
+}
+
+static void ampview_draw_text(cairo_t *cr, double x, double y, const char *text,
+                              double size, double r, double g, double b) {
+  cairo_set_source_rgb(cr, r, g, b);
+  cairo_set_font_size(cr, size);
+  cairo_move_to(cr, x, y);
+  cairo_show_text(cr, text);
+}
+
+static double ampview_map_x(double value, double left, double width) {
+  return left + width * fmin(fmax(value, 0.0), 1.0);
+}
+
+static double ampview_map_magnitude(double value, double top, double height) {
+  return top + height * (1.0 - fmin(fmax(value, 0.0), 1.0));
+}
+
+static double ampview_map_phase(double value, double top, double height) {
+  return top + height * (0.5 - fmin(fmax(value, -180.0), 180.0) / 360.0);
+}
+
+static void ampview_draw_grid(cairo_t *cr, double left, double top, double width, double height) {
+  cairo_set_source_rgb(cr, 0.02, 0.02, 0.02);
+  cairo_rectangle(cr, left, top, width, height);
+  cairo_fill(cr);
+  cairo_set_line_width(cr, 1.0);
+  cairo_set_source_rgb(cr, 0.38, 0.38, 0.38);
+  for (int i = 0; i <= 5; i++) {
+    double x = left + width * (double)i / 5.0;
+    double y = top + height * (double)i / 5.0;
+    cairo_move_to(cr, x, top);
+    cairo_line_to(cr, x, top + height);
+    cairo_move_to(cr, left, y);
+    cairo_line_to(cr, left + width, y);
+  }
+  cairo_stroke(cr);
+  cairo_set_source_rgb(cr, 0.75, 0.75, 0.75);
+  cairo_rectangle(cr, left, top, width, height);
+  cairo_stroke(cr);
+}
+
+static gboolean ampview_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
+  (void)data;
+  int width = gtk_widget_get_allocated_width(widget);
+  int height = gtk_widget_get_allocated_height(widget);
+  const double left = 92.0;
+  const double right = 88.0;
+  const double top = 42.0;
+  const double bottom = 62.0;
+  double graph_width = width - left - right;
+  double graph_height = height - top - bottom;
+  cairo_set_source_rgb(cr, 0.02, 0.02, 0.02);
+  cairo_paint(cr);
+  if (graph_width < 180.0 || graph_height < 140.0) {
+    return FALSE;
+  }
+  ampview_draw_grid(cr, left, top, graph_width, graph_height);
+  /* Axis labels and values: magnitude on the left, phase on the right. */
+  ampview_draw_text(cr, left + graph_width * 0.5 - 42.0, height - 18.0,
+                    "Input Magnitude", 11.0, 0.95, 0.70, 0.65);
+  ampview_draw_text(cr, 18.0, top + graph_height * 0.5,
+                    "Magnitude", 11.0, 0.95, 0.70, 0.65);
+  ampview_draw_text(cr, width - 48.0, top + graph_height * 0.5,
+                    "Phase", 11.0, 0.95, 0.70, 0.65);
+  for (int i = 0; i <= 5; i++) {
+    char label[24];
+    double frac = (double)i / 5.0;
+    double x = left + graph_width * frac;
+    double y = top + graph_height * (1.0 - frac);
+    snprintf(label, sizeof(label), "%.1f", frac);
+    ampview_draw_text(cr, x - 8.0, top + graph_height + 18.0,
+                      label, 10.0, 0.95, 0.70, 0.65);
+    ampview_draw_text(cr, left - 34.0, y + 4.0,
+                      label, 10.0, 0.95, 0.70, 0.65);
+    snprintf(label, sizeof(label), "%d", -180 + i * 72);
+    ampview_draw_text(cr, left + graph_width + 10.0, top + graph_height * (1.0 - frac) + 4.0,
+                      label, 10.0, 0.95, 0.70, 0.65);
+  }
+  /* Reference lines used by Thetis AmpView: unity magnitude and zero phase. */
+  cairo_set_line_width(cr, 1.0);
+  cairo_set_source_rgb(cr, 0.65, 0.65, 0.65);
+  cairo_move_to(cr, left, top + graph_height);
+  cairo_line_to(cr, left + graph_width, top);
+  cairo_stroke(cr);
+  cairo_set_source_rgb(cr, 0.45, 0.45, 0.45);
+  cairo_set_dash(cr, (double[]) {4.0, 4.0}, 2, 0.0);
+  cairo_move_to(cr, left, top + graph_height * 0.5);
+  cairo_line_to(cr, left + graph_width, top + graph_height * 0.5);
+  cairo_stroke(cr);
+  cairo_set_dash(cr, NULL, 0, 0.0);
+  if (ampview_nsamps > 0) {
+    /* Amplifier magnitude: input magnitude versus measured output magnitude. */
+    cairo_set_source_rgb(cr, 0.20, 0.65, 1.00);
+    for (int i = 0; i < ampview_nsamps; i++) {
+      double output = ampview_ym[i] * ampview_x[i];
+      double px = ampview_map_x(output, left, graph_width);
+      double py = ampview_map_magnitude(ampview_x[i], top, graph_height);
+      cairo_rectangle(cr, px, py, 1.4, 1.4);
+    }
+    cairo_fill(cr);
+    /* Amplifier phase, derived from the measured cosine/sine components. */
+    cairo_set_source_rgb(cr, 1.00, 0.80, 0.15);
+    for (int i = 0; i < ampview_nsamps; i++) {
+      double phase = atan2(ampview_ys[i], ampview_yc[i]) * 180.0 / M_PI - ampview_phs_ref_deg;
+      while (phase > 180.0) { phase -= 360.0; }
+      while (phase < -180.0) { phase += 360.0; }
+      double px = ampview_map_x(ampview_x[i], left, graph_width);
+      double py = ampview_map_phase(phase, top, graph_height);
+      cairo_rectangle(cr, px, py, 1.4, 1.4);
+    }
+    cairo_fill(cr);
+  }
+  if (ampview_cpts > 1) {
+    /* Magnitude correction. ym_cor is correction gain, not output magnitude. */
+    cairo_set_source_rgb(cr, 0.95, 0.20, 0.35);
+    cairo_set_line_width(cr, 1.4);
+    for (int i = 0; i < ampview_cpts; i++) {
+      double magnitude = ampview_ym_cor[i] * ampview_xm_cor[i];
+      double px = ampview_map_x(ampview_xm_cor[i], left, graph_width);
+      double py = ampview_map_magnitude(magnitude, top, graph_height);
+      if (i == 0) { cairo_move_to(cr, px, py); }
+      else { cairo_line_to(cr, px, py); }
+    }
+    cairo_stroke(cr);
+    /* WDSP 2.x already supplies an unwrapped and zero-referenced phase correction. */
+    cairo_set_source_rgb(cr, 0.20, 0.85, 0.30);
+    for (int i = 0; i < ampview_cpts; i++) {
+      double px = ampview_map_x(ampview_xa_cor[i], left, graph_width);
+      double py = ampview_map_phase(ampview_ya_cor[i], top, graph_height);
+      if (i == 0) { cairo_move_to(cr, px, py); }
+      else { cairo_line_to(cr, px, py); }
+    }
+    cairo_stroke(cr);
+  }
+  /* Compact legend matching Thetis terminology. */
+  double legend_x = left + graph_width - 205.0;
+  double legend_y = top + graph_height - 72.0;
+  cairo_set_line_width(cr, 2.0);
+  cairo_set_source_rgb(cr, 0.20, 0.65, 1.00);
+  cairo_move_to(cr, legend_x, legend_y);
+  cairo_line_to(cr, legend_x + 22.0, legend_y);
+  cairo_stroke(cr);
+  ampview_draw_text(cr, legend_x + 28.0, legend_y + 4.0, "Mag Amp", 10.0, 0.85, 0.85, 0.85);
+  cairo_set_source_rgb(cr, 0.95, 0.20, 0.35);
+  cairo_move_to(cr, legend_x + 102.0, legend_y);
+  cairo_line_to(cr, legend_x + 124.0, legend_y);
+  cairo_stroke(cr);
+  ampview_draw_text(cr, legend_x + 130.0, legend_y + 4.0, "Mag Corr", 10.0, 0.85, 0.85, 0.85);
+  cairo_set_source_rgb(cr, 1.00, 0.80, 0.15);
+  cairo_move_to(cr, legend_x, legend_y + 28.0);
+  cairo_line_to(cr, legend_x + 22.0, legend_y + 28.0);
+  cairo_stroke(cr);
+  ampview_draw_text(cr, legend_x + 28.0, legend_y + 32.0, "Phs Amp", 10.0, 0.85, 0.85, 0.85);
+  cairo_set_source_rgb(cr, 0.20, 0.85, 0.30);
+  cairo_move_to(cr, legend_x + 102.0, legend_y + 28.0);
+  cairo_line_to(cr, legend_x + 124.0, legend_y + 28.0);
+  cairo_stroke(cr);
+  ampview_draw_text(cr, legend_x + 130.0, legend_y + 32.0, "Phs Corr", 10.0, 0.85, 0.85, 0.85);
+  char status[128];
+  snprintf(status, sizeof(status), "Samples: %d   Correction points: %d   Phase reference: %.1f deg",
+           ampview_nsamps, ampview_cpts, ampview_phs_ref_deg);
+  ampview_draw_text(cr, left, height - 4.0, status, 10.0, 0.78, 0.78, 0.78);
+  return FALSE;
+}
+
+static gboolean ampview_update_cb(gpointer data) {
+  (void)data;
+  if (ampview_dialog == NULL || ampview_area == NULL) {
+    ampview_timer = 0;
+    return G_SOURCE_REMOVE;
+  }
+  tx_ps_getdisp(transmitter, ampview_x, ampview_ym, ampview_yc, ampview_ys,
+                ampview_xm_cor, ampview_ym_cor, ampview_xa_cor, ampview_ya_cor,
+                &ampview_nsamps, &ampview_cpts, &ampview_phs_ref_deg);
+  if (ampview_nsamps < 0 || ampview_nsamps > AMPVIEW_MAX_SAMPLES) { ampview_nsamps = 0; }
+  if (ampview_cpts < 0 || ampview_cpts > AMPVIEW_CORRECTION_POINTS) { ampview_cpts = 0; }
+  gtk_widget_queue_draw(ampview_area);
+  return G_SOURCE_CONTINUE;
+}
+
+static void ampview_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  GtkWindow *parent = GTK_WINDOW(data);
+  if (ampview_dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(ampview_dialog));
+    return;
+  }
+  ampview_dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(ampview_dialog), "PureSignal AmpView");
+  gtk_window_set_default_size(GTK_WINDOW(ampview_dialog), 1000, 650);
+  gtk_window_set_transient_for(GTK_WINDOW(ampview_dialog), parent);
+  gtk_window_set_destroy_with_parent(GTK_WINDOW(ampview_dialog), TRUE);
+  win_set_bgcolor(ampview_dialog, &mwin_bgcolor);
+  g_signal_connect(ampview_dialog, "delete-event", G_CALLBACK(ampview_delete_cb), NULL);
+  g_signal_connect(ampview_dialog, "destroy", G_CALLBACK(ampview_destroy_cb), NULL);
+  ampview_area = gtk_drawing_area_new();
+  gtk_widget_set_size_request(ampview_area, 700, 520);
+  g_signal_connect(ampview_area, "draw", G_CALLBACK(ampview_draw_cb), NULL);
+  gtk_container_add(GTK_CONTAINER(ampview_dialog), ampview_area);
+  gtk_widget_show_all(ampview_dialog);
+  ampview_update_cb(NULL);
+  ampview_timer = g_timeout_add(100, ampview_update_cb, NULL);
+}
+
 static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
@@ -73,6 +326,7 @@ static void cleanup(void) {
       g_source_remove(info_timer);
       info_timer = 0;
     }
+    ampview_close();
     usleep(200000);
     if (transmitter->twotone) {
       tx_set_twotone(transmitter, 0);
@@ -572,6 +826,13 @@ void ps_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(feedback_b), transmitter->feedback);
   gtk_grid_attach(GTK_GRID(grid), feedback_b, col, row, 1, 1);
   g_signal_connect(feedback_b, "toggled", G_CALLBACK(feedback_cb), NULL);
+  col++;
+  GtkWidget *ampview_b = gtk_button_new_with_label("AmpView");
+  gtk_widget_set_name(ampview_b, "small_button");
+  gtk_widget_set_tooltip_text(ampview_b,
+                              "Show the PureSignal amplifier AM/AM and AM/PM characteristics.");
+  gtk_grid_attach(GTK_GRID(grid), ampview_b, col, row, 1, 1);
+  g_signal_connect(ampview_b, "clicked", G_CALLBACK(ampview_cb), dialog);
   row++;
   col = 0;
   //
