@@ -32,13 +32,14 @@ john.d.melton@googlemail.com
   #include <semaphore.h>
   #include <stdint.h>
   #include <stdio.h>
+  #include <stdlib.h>
   #include <unistd.h>
 
   #define CRITICAL_SECTION pthread_mutex_t
   #define byte unsigned char
   #define String char *
-  #define LONG long
-  #define DWORD long
+  typedef int32_t LONG;
+  typedef uint32_t DWORD;
   #define HANDLE void *
   #define WINAPI
   #define FALSE 0
@@ -61,11 +62,14 @@ john.d.melton@googlemail.com
   #define __stdcall
   #define __forceinline
 
-  #define _aligned_malloc(x,y) malloc(x)
-  #define _aligned_free(x)   free(x)
+  #define _aligned_malloc(x,y) wdsp_aligned_malloc((x), (y))
+  #define _aligned_free(x) free(x)
   // Activate these for malloc debug
   //#define _aligned_malloc(x,y) my_malloc(x);
   //#define _aligned_free(x) my_free(x);
+
+  void *wdsp_aligned_malloc(size_t size, size_t alignment);
+  void wdsp_sleep(unsigned int ms);
 
   void *my_malloc(size_t size);
   void my_free(void *p);
@@ -75,7 +79,7 @@ john.d.melton@googlemail.com
   #define max(x,y) (x<y?y:x)
   #define THREAD_PRIORITY_HIGHEST 0
 
-  #define Sleep(ms) usleep((ms)*1000)
+  #define Sleep(ms) wdsp_sleep(ms)
 
   #define CreateSemaphore(a,b,c,d) LinuxCreateSemaphore(a,b,c,d)
   #define WaitForSingleObject(x, y) LinuxWaitForSingleObject(x, y)
@@ -85,7 +89,7 @@ john.d.melton@googlemail.com
 
   #define INFINITE -1
 
-  void QueueUserWorkItem(void *function, void *context, int flags);
+  void QueueUserWorkItem(DWORD (WINAPI *function)(void *), void *context, int flags);
 
   // these two functions are the same on LINUX
   void InitializeCriticalSection(pthread_mutex_t *mutex);

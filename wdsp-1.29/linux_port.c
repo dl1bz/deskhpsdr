@@ -26,6 +26,7 @@ john.d.melton@googlemail.com
 */
 
 #include <errno.h>
+#include <time.h>
 
 #include "linux_port.h"
 #include "comm.h"
@@ -38,10 +39,77 @@ john.d.melton@googlemail.com
 
 #if defined(linux) || defined(__APPLE__)
 
-void QueueUserWorkItem(void *function, void *context, int flags) {
-  pthread_t t;
-  pthread_create(&t, NULL, function, context);
-  pthread_join(t, NULL);
+void *wdsp_aligned_malloc(size_t size, size_t alignment) {
+  void *ptr = NULL;
+
+  if (alignment < sizeof(void *)) {
+    alignment = sizeof(void *);
+  }
+  if ((alignment & (alignment - 1)) != 0) {
+    errno = EINVAL;
+    return NULL;
+  }
+  int result = posix_memalign(&ptr, alignment, size);
+  if (result != 0) {
+    errno = result;
+    return NULL;
+  }
+  return ptr;
+}
+
+void wdsp_sleep(unsigned int ms) {
+  struct timespec requested;
+  struct timespec remaining;
+
+  requested.tv_sec = ms / 1000;
+  requested.tv_nsec = (long)(ms % 1000) * 1000000L;
+  while (nanosleep(&requested, &remaining) < 0 && errno == EINTR) {
+    requested = remaining;
+  }
+}
+
+struct wdsp_work_item {
+  DWORD (WINAPI *function)(void *);
+  void *context;
+};
+
+static void *wdsp_work_item_main(void *arg) {
+  struct wdsp_work_item *item = arg;
+  DWORD (WINAPI *function)(void *) = item->function;
+  void *context = item->context;
+
+  free(item);
+  (void)function(context);
+  return NULL;
+}
+
+void QueueUserWorkItem(DWORD (WINAPI *function)(void *), void *context, int flags) {
+  pthread_t thread;
+  pthread_attr_t attr;
+  struct wdsp_work_item *item;
+
+  (void)flags;
+  item = malloc(sizeof(*item));
+  if (item == NULL) {
+    (void)function(context);
+    return;
+  }
+  item->function = function;
+  item->context = context;
+
+  if (pthread_attr_init(&attr) != 0) {
+    free(item);
+    (void)function(context);
+    return;
+  }
+  if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0 ||
+      pthread_create(&thread, &attr, wdsp_work_item_main, item) != 0) {
+    pthread_attr_destroy(&attr);
+    free(item);
+    (void)function(context);
+    return;
+  }
+  pthread_attr_destroy(&attr);
 }
 
 static inline void init_crit_section(pthread_mutex_t *mutex) {
@@ -78,17 +146,33 @@ void DeleteCriticalSection(pthread_mutex_t *mutex) {
 }
 
 int LinuxWaitForSingleObject(sem_t *sem, int ms) {
-  int result = 0;
+  int result;
+
   if (ms == INFINITE) {
-    // wait for the lock
-    result = sem_wait(sem);
-  } else {
-    for (int i = 0; i < ms; i++) {
-      result = sem_trywait(sem);
-      if (result == 0) { break; }
-      Sleep(1);
-    }
+    do {
+      result = sem_wait(sem);
+    } while (result < 0 && errno == EINTR);
+    return result;
   }
+
+  if (ms <= 0) {
+    return sem_trywait(sem);
+  }
+
+  struct timespec deadline;
+  if (clock_gettime(CLOCK_REALTIME, &deadline) < 0) {
+    return -1;
+  }
+  deadline.tv_sec += ms / 1000;
+  deadline.tv_nsec += (long)(ms % 1000) * 1000000L;
+  if (deadline.tv_nsec >= 1000000000L) {
+    deadline.tv_sec++;
+    deadline.tv_nsec -= 1000000000L;
+  }
+
+  do {
+    result = sem_timedwait(sem, &deadline);
+  } while (result < 0 && errno == EINTR);
   return result;
 }
 
@@ -106,7 +190,7 @@ sem_t *LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count
   static long semcount = 0;
   char sname[20];
   for (;;) {
-    sprintf(sname, "WDSP%08ld", semcount++);
+    snprintf(sname, sizeof(sname), "/WDSP%08ld", semcount++);
     sem = sem_open(sname, O_CREAT | O_EXCL, 0700, initial_count);
     if (sem == SEM_FAILED && errno == EEXIST) { continue; }
     break;
@@ -178,16 +262,19 @@ HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, v
   }
   if (stack_size != 0) {
     if (pthread_attr_setstacksize(&attr, stack_size)) {
+      pthread_attr_destroy(&attr);
       return (HANDLE) -1;
     }
   }
   if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) {
+    pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
   if (pthread_create(&threadid, &attr, (void * (*)(void *))start_address, arglist)) {
+    pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
-  //pthread_attr_destroy(&attr);
+  pthread_attr_destroy(&attr);
 #ifndef __APPLE__
   //
   // pthread_setname_np does not exist, or exists with

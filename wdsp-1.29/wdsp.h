@@ -8,7 +8,8 @@ extern "C" {
 #define OUTREAL   float
 #define dINREAL   float
 #define dOUTREAL  float
-#define DWORD   unsigned long
+#include <stdint.h>
+#define DWORD   uint32_t
 
 // analyzer
 #define DETECTOR_MODE_PEAK       0
