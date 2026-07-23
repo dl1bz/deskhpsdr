@@ -342,7 +342,6 @@ void audio_get_cards(void) {
 int audio_open_output(RECEIVER *rx) {
   int result = 0;
   pa_sample_spec sample_spec;
-  pa_buffer_attr attr;
   int err;
   if (rx == NULL || rx->audio_name[0] == '\0') {
     t_print("%s: no output device selected\n", __func__);
@@ -351,16 +350,10 @@ int audio_open_output(RECEIVER *rx) {
   g_mutex_lock(&rx->local_audio_mutex);
   sample_spec.rate = 48000;
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
-  attr.maxlength = (uint32_t) -1;
-  attr.fragsize = (uint32_t) -1;         // bei Playback irrelevant
   char stream_id[16];
   snprintf(stream_id, 16, "RX-%d", rx->id);
   sample_spec.channels = 2;
   rx->local_audio_channels = 2;
-  uint32_t one_block_bytes = (uint32_t)(out_buffer_size * sample_spec.channels * sizeof(float));
-  attr.tlength = one_block_bytes * 4;   // Zielpuffer: 4 Blöcke
-  attr.minreq  = one_block_bytes;       // Nachschub in 1-Block-Schritten
-  attr.prebuf  = one_block_bytes;       // Prebuffer: 1 Block
   rx->playstream = pa_simple_new(NULL,
                                  "deskHPSDR",
                                  PA_STREAM_PLAYBACK,
@@ -368,16 +361,12 @@ int audio_open_output(RECEIVER *rx) {
                                  stream_id,
                                  &sample_spec,
                                  NULL,
-                                 &attr,
+                                 NULL,
                                  &err);
   if (rx->playstream == NULL) {
     t_print("%s: pa_simple_new stereo failed: err=%d (%s)\n", __func__, err, pa_strerror(err));
     sample_spec.channels = 1;
     rx->local_audio_channels = 1;
-    one_block_bytes = (uint32_t)(out_buffer_size * sample_spec.channels * sizeof(float));
-    attr.tlength = one_block_bytes * 4;
-    attr.minreq  = one_block_bytes;
-    attr.prebuf  = one_block_bytes;
     rx->playstream = pa_simple_new(NULL,
                                    "deskHPSDR",
                                    PA_STREAM_PLAYBACK,
@@ -385,7 +374,7 @@ int audio_open_output(RECEIVER *rx) {
                                    stream_id,
                                    &sample_spec,
                                    NULL,
-                                   &attr,
+                                   NULL,
                                    &err);
   }
   if (rx->playstream != NULL) {
