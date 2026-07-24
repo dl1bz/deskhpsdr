@@ -244,7 +244,7 @@ typedef struct _receiver {
   int local_audio_mute;
   gchar audio_name[512];
 #ifdef PULSEAUDIO
-  int pulseaudio_buffer_size;  /* 0 = AUTO, otherwise frames per buffer */
+  int pulseaudio_buffer_size;  /* 0 = AUTO, otherwise requested quantum in frames */
 #endif
 
 #if defined(PORTAUDIO) && defined(PULSEAUDIO) && defined(ALSA)

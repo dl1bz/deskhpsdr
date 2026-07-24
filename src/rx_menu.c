@@ -866,9 +866,9 @@ static void pulseaudio_buffer_cb(GtkComboBox *widget, gpointer data) {
   }
   rx->pulseaudio_buffer_size = value;
   if (value == 0) {
-    t_print("%s: RX-%d buffer=AUTO\n", __func__, rx->id);
+    t_print("%s: RX-%d quantum=AUTO\n", __func__, rx->id);
   } else {
-    t_print("%s: RX-%d buffer=%d frames\n", __func__, rx->id, value);
+    t_print("%s: RX-%d quantum=%d frames\n", __func__, rx->id, value);
   }
   if (rx->local_audio) {
     audio_close_output(rx);
@@ -882,7 +882,7 @@ static void pulseaudio_buffer_cb(GtkComboBox *widget, gpointer data) {
 
 static void add_pulseaudio_buffer_control(GtkWidget *grid, RECEIVER *rx, int row) {
   char label_text[32];
-  snprintf(label_text, sizeof(label_text), "RX%d Playback Buffer", rx->id + 1);
+  snprintf(label_text, sizeof(label_text), "RX%d Playback Quantum", rx->id + 1);
   GtkWidget *label = gtk_label_new(label_text);
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -896,7 +896,7 @@ static void add_pulseaudio_buffer_control(GtkWidget *grid, RECEIVER *rx, int row
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "2048");
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "4096");
   gtk_combo_box_set_active(GTK_COMBO_BOX(combo), pulseaudio_buffer_index(rx->pulseaudio_buffer_size));
-  gtk_widget_set_tooltip_text(combo, "PulseAudio playback buffer in frames. AUTO uses the server default.");
+  gtk_widget_set_tooltip_text(combo, "Requested playback quantum in frames. AUTO uses the server default.");
   gtk_grid_attach(GTK_GRID(grid), combo, 1, row, 1, 1);
   g_signal_connect(combo, "changed", G_CALLBACK(pulseaudio_buffer_cb), rx);
 }

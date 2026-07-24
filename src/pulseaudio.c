@@ -358,7 +358,11 @@ int audio_open_output(RECEIVER *rx) {
   rx->local_audio_channels = 2;
   if (rx->pulseaudio_buffer_size > 0) {
     attr.maxlength = (uint32_t) -1;
-    attr.tlength = (uint32_t)rx->pulseaudio_buffer_size * sample_spec.channels * sizeof(float);
+    /* PulseAudio/PipeWire uses four periods for the requested target length.
+     * Convert the user-visible quantum in frames to the corresponding
+     * PulseAudio tlength in bytes. */
+    attr.tlength = (uint32_t)rx->pulseaudio_buffer_size *
+                   pa_frame_size(&sample_spec) * 4;
     attr.prebuf = (uint32_t) -1;
     attr.minreq = (uint32_t) -1;
     attr.fragsize = (uint32_t) -1;
@@ -379,7 +383,8 @@ int audio_open_output(RECEIVER *rx) {
     sample_spec.channels = 1;
     rx->local_audio_channels = 1;
     if (rx->pulseaudio_buffer_size > 0) {
-      attr.tlength = (uint32_t)rx->pulseaudio_buffer_size * sample_spec.channels * sizeof(float);
+      attr.tlength = (uint32_t)rx->pulseaudio_buffer_size *
+                     pa_frame_size(&sample_spec) * 4;
     }
     rx->playstream = pa_simple_new(NULL,
                                    "deskHPSDR",
@@ -396,10 +401,10 @@ int audio_open_output(RECEIVER *rx) {
     rx->local_audio_cw_active = 0;
     rx->local_audio_buffer = g_new0(float, rx->local_audio_channels * out_buffer_size);
     if (rx->pulseaudio_buffer_size == 0) {
-      t_print("%s: RX-%d PulseAudio buffer=AUTO channels=%d\n",
+      t_print("%s: RX-%d PulseAudio quantum=AUTO channels=%d\n",
               __func__, rx->id, rx->local_audio_channels);
     } else {
-      t_print("%s: RX-%d PulseAudio buffer=%d frames channels=%d\n",
+      t_print("%s: RX-%d PulseAudio quantum=%d frames channels=%d\n",
               __func__, rx->id, rx->pulseaudio_buffer_size, rx->local_audio_channels);
     }
     t_print("%s: allocated local_audio_buffer %p size %ld bytes channels=%d\n", __func__,
