@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <wdsp.h>
+
 #include "new_menu.h"
 #include "radio.h"
 #include "toolbar.h"
@@ -35,6 +37,7 @@
 #include "ext.h"
 #include "message.h"
 #include "sliders.h"
+#include "version.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *feedback_l;
@@ -64,6 +67,10 @@ static double ampview_ya_cor[AMPVIEW_CORRECTION_POINTS];
 static int ampview_nsamps = 0;
 static int ampview_cpts = 0;
 static double ampview_phs_ref_deg = 0.0;
+static int ampview_feedback_level = 0;
+static int ampview_feedback_valid = 0;
+static double ampview_getpk = 0.0;
+static int ampview_correcting = 0;
 
 #define INFO_SIZE 16
 
@@ -131,6 +138,26 @@ static double ampview_map_phase(double value, double top, double height) {
   return top + height * (0.5 - fmin(fmax(value, -180.0), 180.0) / 360.0);
 }
 
+static void ampview_feedback_colour(int level, double *r, double *g, double *b) {
+  if (level > 181) {
+    *r = 0.0;
+    *g = 0.35;
+    *b = 1.0;
+  } else if (level > 128) {
+    *r = 0.20;
+    *g = 0.85;
+    *b = 0.30;
+  } else if (level > 90) {
+    *r = 1.0;
+    *g = 0.85;
+    *b = 0.0;
+  } else {
+    *r = 1.0;
+    *g = 0.15;
+    *b = 0.15;
+  }
+}
+
 static void ampview_draw_grid(cairo_t *cr, double left, double top, double width, double height) {
   cairo_set_source_rgb(cr, 0.02, 0.02, 0.02);
   cairo_rectangle(cr, left, top, width, height);
@@ -167,6 +194,31 @@ static gboolean ampview_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
     return FALSE;
   }
   ampview_draw_grid(cr, left, top, graph_width, graph_height);
+  char wdsp_text[32];
+  int wdsp_version = GetWDSPVersion();
+  snprintf(wdsp_text, sizeof(wdsp_text), "WDSP Version: %d.%02d", wdsp_version / 100, wdsp_version % 100);
+  ampview_draw_text(cr, left, 29.0, wdsp_text, 12.0, 0.90, 0.90, 0.90);
+  if (ampview_feedback_valid) {
+    double r;
+    double g;
+    double b;
+    char feedback_text[48];
+    ampview_feedback_colour(ampview_feedback_level, &r, &g, &b);
+    snprintf(feedback_text, sizeof(feedback_text), "Feedback Level: %d", ampview_feedback_level);
+    cairo_set_source_rgb(cr, r, g, b);
+    cairo_set_line_width(cr, 1.5);
+    cairo_rectangle(cr, left + graph_width - 168.0, 12.0, 168.0, 24.0);
+    cairo_stroke(cr);
+    ampview_draw_text(cr, left + graph_width - 158.0, 29.0, feedback_text, 12.0, r, g, b);
+    char getpk_text[32];
+    snprintf(getpk_text, sizeof(getpk_text), "GetPk: %.3f", ampview_getpk);
+    ampview_draw_text(cr, left + graph_width - 278.0, 29.0, getpk_text, 12.0, 0.90, 0.90, 0.90);
+    if (ampview_correcting) {
+      ampview_draw_text(cr, left + graph_width - 382.0, 29.0, "Correcting", 12.0, 0.20, 0.85, 0.30);
+    } else {
+      ampview_draw_text(cr, left + graph_width - 382.0, 29.0, "Correcting", 12.0, 1.00, 0.15, 0.15);
+    }
+  }
   /* Axis labels and values: magnitude on the left, phase on the right. */
   ampview_draw_text(cr, left + graph_width * 0.5 - 42.0, height - 18.0,
                     "Input Magnitude", 11.0, 0.95, 0.70, 0.65);
@@ -284,6 +336,16 @@ static gboolean ampview_update_cb(gpointer data) {
   tx_ps_getdisp(transmitter, ampview_x, ampview_ym, ampview_yc, ampview_ys,
                 ampview_xm_cor, ampview_ym_cor, ampview_xa_cor, ampview_ya_cor,
                 &ampview_nsamps, &ampview_cpts, &ampview_phs_ref_deg);
+  if (transmitter->puresignal) {
+    int info[INFO_SIZE];
+    tx_ps_getinfo(transmitter, info);
+    ampview_feedback_level = info[4];
+    ampview_getpk = tx_ps_getpk(transmitter);
+    ampview_correcting = info[14];
+    ampview_feedback_valid = 1;
+  } else {
+    ampview_feedback_valid = 0;
+  }
   if (ampview_nsamps < 0 || ampview_nsamps > AMPVIEW_MAX_SAMPLES) { ampview_nsamps = 0; }
   if (ampview_cpts < 0 || ampview_cpts > AMPVIEW_CORRECTION_POINTS) { ampview_cpts = 0; }
   gtk_widget_queue_draw(ampview_area);
@@ -297,8 +359,10 @@ static void ampview_cb(GtkWidget *widget, gpointer data) {
     gtk_window_present(GTK_WINDOW(ampview_dialog));
     return;
   }
+  char _wtitle[64];
+  snprintf(_wtitle, sizeof(_wtitle), "%s by DL1BZ %s - Pure Signal AmpView", PGNAME, build_version);
   ampview_dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title(GTK_WINDOW(ampview_dialog), "PureSignal AmpView");
+  gtk_window_set_title(GTK_WINDOW(ampview_dialog), _wtitle);
   gtk_window_set_default_size(GTK_WINDOW(ampview_dialog), 1000, 650);
   gtk_window_set_transient_for(GTK_WINDOW(ampview_dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW(ampview_dialog), TRUE);
@@ -770,7 +834,7 @@ void ps_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   char _title[32];
-  snprintf(_title, 32, "%s - Pure Signal", PGNAME);
+  snprintf(_title, sizeof(_title), "%s - Pure Signal", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
