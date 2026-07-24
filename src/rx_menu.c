@@ -45,14 +45,21 @@ static GtkWidget *autogain_b;
 static GtkWidget *autogain_time_b;
 static GtkWidget *rx_menu_headerbar = NULL;
 static GtkWidget *rx_menu_stack = NULL;
-static GtkWidget *rx_menu_tab_buttons[3] = { NULL, NULL, NULL };
+#ifdef PULSEAUDIO
+  #define RX_MENU_TAB_COUNT 4
+#else
+  #define RX_MENU_TAB_COUNT 3
+#endif
+static GtkWidget *rx_menu_tab_buttons[RX_MENU_TAB_COUNT] = { NULL };
 static gboolean rx_menu_updating_tabs = FALSE;
 
 enum {
   RX_MENU_TAB_RX1 = 0,
   RX_MENU_TAB_RX2 = 1,
   RX_MENU_TAB_OPTIONS = 2,
-  RX_MENU_TAB_COUNT = 3
+#ifdef PULSEAUDIO
+  RX_MENU_TAB_PULSEAUDIO = 3
+#endif
 };
 
 static void cleanup(void) {
@@ -91,6 +98,10 @@ static const char *rx_menu_tab_name(gint page_num) {
     return "RX2";
   case RX_MENU_TAB_OPTIONS:
     return "Options";
+#ifdef PULSEAUDIO
+  case RX_MENU_TAB_PULSEAUDIO:
+    return "PulseAudio";
+#endif
   default:
     return "";
   }
@@ -124,6 +135,10 @@ static const char *rx_menu_stack_name(gint page_num) {
     return "rx2";
   case RX_MENU_TAB_OPTIONS:
     return "options";
+#ifdef PULSEAUDIO
+  case RX_MENU_TAB_PULSEAUDIO:
+    return "pulseaudio";
+#endif
   default:
     return "rx1";
   }
@@ -827,6 +842,87 @@ static GtkWidget *build_general_page(void) {
   return page;
 }
 
+#ifdef PULSEAUDIO
+static const int pulseaudio_buffer_sizes[] = { 0, 128, 256, 512, 1024, 2048, 4096 };
+
+static int pulseaudio_buffer_index(int value) {
+  for (int i = 0; i < (int)(sizeof(pulseaudio_buffer_sizes) / sizeof(pulseaudio_buffer_sizes[0])); i++) {
+    if (pulseaudio_buffer_sizes[i] == value) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+static void pulseaudio_buffer_cb(GtkComboBox *widget, gpointer data) {
+  RECEIVER *rx = rx_from_data(data);
+  int index = gtk_combo_box_get_active(widget);
+  if (rx == NULL || index < 0 || index >= (int)(sizeof(pulseaudio_buffer_sizes) / sizeof(pulseaudio_buffer_sizes[0]))) {
+    return;
+  }
+  int value = pulseaudio_buffer_sizes[index];
+  if (rx->pulseaudio_buffer_size == value) {
+    return;
+  }
+  rx->pulseaudio_buffer_size = value;
+  if (value == 0) {
+    t_print("%s: RX-%d buffer=AUTO\n", __func__, rx->id);
+  } else {
+    t_print("%s: RX-%d buffer=%d frames\n", __func__, rx->id, value);
+  }
+  if (rx->local_audio) {
+    audio_close_output(rx);
+    if (audio_open_output(rx) < 0) {
+      rx->local_audio = 0;
+    } else {
+      rx_audio_output_opened(rx);
+    }
+  }
+}
+
+static void add_pulseaudio_buffer_control(GtkWidget *grid, RECEIVER *rx, int row) {
+  char label_text[32];
+  snprintf(label_text, sizeof(label_text), "RX%d Playback Buffer", rx->id + 1);
+  GtkWidget *label = gtk_label_new(label_text);
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+  GtkWidget *combo = gtk_combo_box_text_new();
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "AUTO");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "128");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "256");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "512");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "1024");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "2048");
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "4096");
+  gtk_combo_box_set_active(GTK_COMBO_BOX(combo), pulseaudio_buffer_index(rx->pulseaudio_buffer_size));
+  gtk_widget_set_tooltip_text(combo, "PulseAudio playback buffer in frames. AUTO uses the server default.");
+  gtk_grid_attach(GTK_GRID(grid), combo, 1, row, 1, 1);
+  g_signal_connect(combo, "changed", G_CALLBACK(pulseaudio_buffer_cb), rx);
+}
+
+static GtkWidget *build_pulseaudio_page(void) {
+  GtkWidget *page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
+  gtk_container_set_border_width(GTK_CONTAINER(page), 12);
+  gtk_widget_set_hexpand(page, TRUE);
+  gtk_widget_set_vexpand(page, TRUE);
+  GtkWidget *grid = rx_menu_grid_new();
+  int row = 0;
+  if (receiver[0] != NULL) {
+    add_pulseaudio_buffer_control(grid, receiver[0], row++);
+  }
+  if (receivers > 1 && receiver[1] != NULL) {
+    add_pulseaudio_buffer_control(grid, receiver[1], row++);
+  }
+  GtkWidget *note = gtk_label_new("Changes take effect immediately by reopening the selected RX audio stream.");
+  gtk_label_set_xalign(GTK_LABEL(note), 0.0);
+  gtk_widget_set_margin_top(note, 8);
+  gtk_grid_attach(GTK_GRID(grid), note, 0, row, 2, 1);
+  gtk_box_pack_start(GTK_BOX(page), grid, FALSE, FALSE, 0);
+  return page;
+}
+#endif
+
 static GtkWidget *build_rx_page(RECEIVER *rx) {
   GtkWidget *grid = rx_menu_grid_new();
   int row = 0;
@@ -900,6 +996,10 @@ void rx_menu(GtkWidget *parent) {
   }
   rx_menu_tab_buttons[RX_MENU_TAB_OPTIONS] = rx_menu_tab_button_new("Options", RX_MENU_TAB_OPTIONS);
   gtk_box_pack_start(GTK_BOX(tabbar), rx_menu_tab_buttons[RX_MENU_TAB_OPTIONS], FALSE, FALSE, 0);
+#ifdef PULSEAUDIO
+  rx_menu_tab_buttons[RX_MENU_TAB_PULSEAUDIO] = rx_menu_tab_button_new("PulseAudio", RX_MENU_TAB_PULSEAUDIO);
+  gtk_box_pack_start(GTK_BOX(tabbar), rx_menu_tab_buttons[RX_MENU_TAB_PULSEAUDIO], FALSE, FALSE, 0);
+#endif
   gtk_box_pack_start(GTK_BOX(outer), tabbar, FALSE, FALSE, 0);
   rx_menu_stack = gtk_stack_new();
   gtk_stack_set_transition_type(GTK_STACK(rx_menu_stack), GTK_STACK_TRANSITION_TYPE_NONE);
@@ -910,6 +1010,9 @@ void rx_menu(GtkWidget *parent) {
     gtk_stack_add_named(GTK_STACK(rx_menu_stack), build_rx_page(receiver[1]), "rx2");
   }
   gtk_stack_add_named(GTK_STACK(rx_menu_stack), build_general_page(), "options");
+#ifdef PULSEAUDIO
+  gtk_stack_add_named(GTK_STACK(rx_menu_stack), build_pulseaudio_page(), "pulseaudio");
+#endif
   gtk_box_pack_start(GTK_BOX(outer), rx_menu_stack, TRUE, TRUE, 0);
   GtkWidget *close_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_widget_set_halign(close_box, GTK_ALIGN_CENTER);
