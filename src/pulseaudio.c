@@ -339,6 +339,75 @@ void audio_get_cards(void) {
   }
 }
 
+#ifdef __DVL__
+int audio_open_output(RECEIVER *rx) {
+  int result = 0;
+  pa_sample_spec sample_spec;
+  pa_buffer_attr attr;
+  int err;
+  if (rx == NULL || rx->audio_name[0] == '\0') {
+    t_print("%s: no output device selected\n", __func__);
+    return -1;
+  }
+  g_mutex_lock(&rx->local_audio_mutex);
+  sample_spec.rate = 48000;
+  sample_spec.format = PA_SAMPLE_FLOAT32NE;
+  char stream_id[16];
+  snprintf(stream_id, sizeof(stream_id), "RX-%d", rx->id);
+  sample_spec.channels = 2;
+  rx->local_audio_channels = 2;
+  attr.maxlength = (uint32_t) -1;
+  attr.tlength = 128 * sample_spec.channels * sizeof(float);
+  attr.prebuf = (uint32_t) -1;
+  attr.minreq = (uint32_t) -1;
+  attr.fragsize = (uint32_t) -1;
+  rx->playstream = pa_simple_new(NULL,
+                                 "deskHPSDR",
+                                 PA_STREAM_PLAYBACK,
+                                 rx->audio_name,
+                                 stream_id,
+                                 &sample_spec,
+                                 NULL,
+                                 &attr,
+                                 &err);
+  if (rx->playstream == NULL) {
+    t_print("%s: pa_simple_new stereo failed: err=%d (%s)\n",
+            __func__, err, pa_strerror(err));
+    sample_spec.channels = 1;
+    rx->local_audio_channels = 1;
+    attr.tlength = 128 * sample_spec.channels * sizeof(float);
+    rx->playstream = pa_simple_new(NULL,
+                                   "deskHPSDR",
+                                   PA_STREAM_PLAYBACK,
+                                   rx->audio_name,
+                                   stream_id,
+                                   &sample_spec,
+                                   NULL,
+                                   &attr,
+                                   &err);
+  }
+  if (rx->playstream != NULL) {
+    rx->local_audio_buffer_offset = 0;
+    rx->local_audio_cw_active = 0;
+    rx->local_audio_buffer =
+            g_new0(float, rx->local_audio_channels * out_buffer_size);
+    t_print("%s: allocated local_audio_buffer %p size %ld bytes channels=%d\n",
+            __func__,
+            rx->local_audio_buffer,
+            (long)(rx->local_audio_channels *
+                   out_buffer_size *
+                   sizeof(float)),
+            rx->local_audio_channels);
+  } else {
+    result = -1;
+    t_print("%s: pa_simple_new mono failed: err=%d (%s)\n",
+            __func__, err, pa_strerror(err));
+  }
+  g_mutex_unlock(&rx->local_audio_mutex);
+  return result;
+}
+
+#else
 int audio_open_output(RECEIVER *rx) {
   int result = 0;
   pa_sample_spec sample_spec;
@@ -392,6 +461,7 @@ int audio_open_output(RECEIVER *rx) {
   g_mutex_unlock(&rx->local_audio_mutex);
   return result;
 }
+#endif
 
 static void *mic_read_thread(gpointer arg) {
   int err;
