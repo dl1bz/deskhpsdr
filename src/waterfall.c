@@ -107,7 +107,7 @@ waterfall_draw_cb(GtkWidget *widget,
     cairo_move_to(cr, b_width - 390, b_height - 13);
 #else
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
-    cairo_move_to(cr, b_width / 2, b_height - 10);
+    cairo_move_to(cr, b_width - 510, b_height - 10);
 #endif
     if (can_transmit) {
       cairo_show_text(cr, "[T]une  [b]and  [M]ode  [v]fo  [f]ilter  [n]oise  [a]nf  n[r]  [w]binaural  [e]SNB");
@@ -147,7 +147,7 @@ waterfall_draw_cb(GtkWidget *widget,
 #if defined (__APPLE__)
       cairo_move_to(cr, b_width / 4, b_height - 10);
 #else
-      cairo_move_to(cr, (b_width / 4) - 130, b_height - 10);
+      cairo_move_to(cr, (b_width / 4) - 10, b_height - 10);
 #endif
       if (sunspots != -1) {
         if (iaru_region == 1) {
