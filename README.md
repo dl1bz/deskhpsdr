@@ -37,9 +37,9 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Bright / Dark Theme support    | yes ✅                                        |                |
 | Screen Resolution              | min. 1280x600 or higher 🚨                    |                |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                |
-| OS support                     | macOS 15 or higher, modern Linux              | no WIN support |
-| Audio layer support            | PORTAUDIO, PULSEAUDIO, ALSA                   |                |
-| Audio devices support          | mono,stereo (only 48kHz supported)            |                |
+| OS support                     | macOS ✅ (15 or higher), Linux ✅, WINDOWS ❌ |                |
+| Audio layer support            | PORTAUDIO (macOS), PulseAudio or ALSA (Linux) |                |
+| Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling  |
 | TX Audio Monitor               | not supported ❌                              | will never come|
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter ✅ |                |
 | RBN support                    | yes, inclusive show Spots on RX Panadapter ✅ |                |
@@ -76,7 +76,7 @@ deskHPSDR **is not made** as a "measurement tool" or for other, very special pur
 
 My main focus of deskHPSDR development is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The second focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, less for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
-**There are no plans to adapt deskHPSDR for running with WINDOWS ! It's made for UNIX style OS like macOS or Linux.**
+**There are no plans whatsoever to ever port deskHPSDR to WINDOWS! It's made for UNIX style OS only like macOS or Linux.**
 
 ## Requirements
 
@@ -102,12 +102,20 @@ I will never publish any ready-compiled binaries or appimages for Linux. The tas
 deskHPSDR is under active development, because software projects never finished. My focus with deskHPSDR is Fonie/SSB and Digimodes, less CW.<br>
 My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.
 
-## Management of user requests
+## Management of user requests - read first before make a user request
 
 I only accept user requests, if they
 a) fit the concept and
 b) are useful to everyone.
-I decline requests for "only one user" functions.
+I decline requests for "only one user" functions and regarding the following questions:
+- porting deskHPSDR to WINDOWS -> NO
+- provide ready-to-run binaries for Linux (regardless of the form) -> NO
+- supporting SDR devices, which don't work with OpenHPSDR protcols P1 or P2 -> NO
+- add any kind of additonal build-in or special client-server-support like pihpsdr -> NO
+- add any kind of TX Audio Monitor -> NO
+- help for solving OS problems, if these in my assessment do not directly concern deskHPSDR
+
+Especially Linux environments are highly fragmented and differ from distribution to distribution, so I cannot guarantee that deskHPSDR will run on just any Linux distribution. I test only and exclusively Debian-based environments - but I’m not interested in anything else.
 
 ## macOS is first choice
 
