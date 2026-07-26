@@ -1050,7 +1050,7 @@ void display_menu(GtkWidget *parent) {
   //--------------------------------------------------------------------------------------------
   row++;
   col = 0;
-  GtkWidget *pan_peak_hold_timer_label = gtk_label_new("Peaks Hold time (s):");
+  GtkWidget *pan_peak_hold_timer_label = gtk_label_new("Decay hold time (s):");
   gtk_widget_set_name(pan_peak_hold_timer_label, "boldlabel");
   gtk_widget_set_halign(pan_peak_hold_timer_label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), pan_peak_hold_timer_label, col, row, 2, 1);
