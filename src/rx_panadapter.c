@@ -82,6 +82,25 @@ typedef struct {
 
 static PAN_PEAK_HOLD pan_peak_hold[PAN_PEAK_HOLD_MAX_RX];
 
+// Cached static dBm/frequency grids. These are expensive mainly because of
+// outlined Cairo text, but only change when display geometry or scale changes.
+typedef struct {
+  cairo_surface_t *surface;
+  int width;
+  int height;
+  int panadapter_high;
+  int panadapter_low;
+  int panadapter_step;
+  int sample_rate;
+  gboolean active;
+  double min_display;
+  double max_display;
+  double hz_per_pixel;
+  int marker_extra;
+} PAN_GRID_CACHE;
+
+static PAN_GRID_CACHE pan_grid_cache[PAN_PEAK_HOLD_MAX_RX];
+
 #define PAN_PEAK_NOISE_INTERVAL_US 1000000LL
 static double pan_peak_noise_level[PAN_PEAK_HOLD_MAX_RX] = { 0.0 };
 static double pan_peak_noise_percentile[PAN_PEAK_HOLD_MAX_RX] = { 0.0 };
@@ -935,15 +954,166 @@ static long long panadapter_next_divisor (long long divisor) {
   return divisor * 2LL;
 }
 
+
+static void rx_panadapter_grid_cache_paint(RECEIVER *rx,
+    cairo_t *target,
+    int width,
+    int height,
+    gboolean active,
+    double min_display,
+    double max_display,
+    double hz_per_pixel,
+    int *marker_extra_out) {
+  if (rx == NULL || target == NULL || rx->id < 0 || rx->id >= PAN_PEAK_HOLD_MAX_RX) {
+    if (marker_extra_out) { *marker_extra_out = 0; }
+    return;
+  }
+  PAN_GRID_CACHE *gc = &pan_grid_cache[rx->id];
+  gboolean rebuild = gc->surface == NULL ||
+                     gc->width != width ||
+                     gc->height != height ||
+                     gc->panadapter_high != rx->panadapter_high ||
+                     gc->panadapter_low != rx->panadapter_low ||
+                     gc->panadapter_step != rx->panadapter_step ||
+                     gc->sample_rate != rx->sample_rate ||
+                     gc->active != active ||
+                     gc->min_display != min_display ||
+                     gc->max_display != max_display ||
+                     gc->hz_per_pixel != hz_per_pixel;
+  if (rebuild) {
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+    if (cairo_surface_status(surface) == CAIRO_STATUS_SUCCESS) {
+      cairo_t *cr = cairo_create(surface);
+      cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
+      cairo_paint(cr);
+      cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+      if (active) {
+        cairo_set_source_rgba(cr, COLOUR_PAN_LINE);
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_PAN_LINE_WEAK);
+      }
+      double dbm_per_line = (double) height /
+                            ((double) rx->panadapter_high - (double) rx->panadapter_low);
+      cairo_set_line_width(cr, PAN_LINE_THIN);
+      cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      char v[32];
+      for (int i = rx->panadapter_high; i >= rx->panadapter_low; i--) {
+        if ((abs(i) % rx->panadapter_step) == 0) {
+          double y = (double) (rx->panadapter_high - i) * dbm_per_line;
+          cairo_move_to(cr, 0.0, y);
+          cairo_line_to(cr, width, y);
+          cairo_stroke(cr);
+          snprintf(v, sizeof(v), "%d dBm", i);
+          cairo_move_to(cr, 1, y);
+          cairo_text_path(cr, v);
+          cairo_save(cr);
+          cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+          cairo_set_line_width(cr, 2.0);
+          cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+          cairo_stroke_preserve(cr);
+          cairo_restore(cr);
+          cairo_fill(cr);
+        }
+      }
+      cairo_set_line_width(cr, PAN_LINE_THIN);
+      cairo_stroke(cr);
+      long long divisor = (long long) (hz_per_pixel * 65.0);
+      if (divisor > 500000LL) { divisor = 1000000LL; }
+      else if (divisor > 200000LL) { divisor = 500000LL; }
+      else if (divisor > 100000LL) { divisor = 200000LL; }
+      else if (divisor >  50000LL) { divisor = 100000LL; }
+      else if (divisor >  20000LL) { divisor =  50000LL; }
+      else if (divisor >  10000LL) { divisor =  20000LL; }
+      else if (divisor >   5000LL) { divisor =  10000LL; }
+      else if (divisor >   2000LL) { divisor =   5000LL; }
+      else if (divisor >   1000LL) { divisor =   2000LL; }
+      else if (divisor >    500LL) { divisor =   1000LL; }
+      else if (divisor >    200LL) { divisor =    500LL; }
+      else if (divisor >    100LL) { divisor =    200LL; }
+      else if (divisor >     50LL) { divisor =    100LL; }
+      else if (divisor >     20LL) { divisor =     50LL; }
+      else if (divisor >     10LL) { divisor =     20LL; }
+      else if (divisor >      5LL) { divisor =     10LL; }
+      else if (divisor >      2LL) { divisor =      5LL; }
+      else if (divisor >      1LL) { divisor =      2LL; }
+      else { divisor = 1LL; }
+      const double min_marker_px = 40.0;
+      double marker_px = (double) divisor / hz_per_pixel;
+      while (marker_px < min_marker_px) {
+        divisor = panadapter_next_divisor(divisor);
+        marker_px = (double) divisor / hz_per_pixel;
+      }
+      int marker_distance = (width * divisor) / rx->sample_rate;
+      long long f = ((long long) floor(min_display / (double) divisor) * divisor) + divisor;
+      cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+      int marker_extra = (marker_distance > 100) ? 2 : 0;
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
+      while (f < max_display) {
+        double x = ((double) f - min_display) / hz_per_pixel;
+        cairo_move_to(cr, x, 0);
+        cairo_line_to(cr, x, height);
+        if ((f >= min_display + divisor / 2) && (f <= max_display - divisor / 2)) {
+          if (f > 10000000000LL && marker_distance < 80) {
+            snprintf(v, sizeof(v), "...%03lld.%03lld", (f / 1000000) % 1000, (f % 1000000) / 1000);
+          } else {
+            snprintf(v, sizeof(v), "%0lld.%03lld", f / 1000000, (f % 1000000) / 1000);
+          }
+          cairo_text_extents_t extents;
+          cairo_text_extents(cr, v, &extents);
+          cairo_path_t *marker_path = cairo_copy_path(cr);
+          cairo_new_path(cr);
+          cairo_move_to(cr, x - (extents.width / 2.0), 10 + marker_extra);
+          cairo_text_path(cr, v);
+          cairo_save(cr);
+          cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+          cairo_set_line_width(cr, 2.0);
+          cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+          cairo_stroke_preserve(cr);
+          cairo_restore(cr);
+          cairo_fill(cr);
+          cairo_append_path(cr, marker_path);
+          cairo_path_destroy(marker_path);
+        }
+        f += divisor;
+      }
+      cairo_set_line_width(cr, PAN_LINE_THIN);
+      cairo_stroke(cr);
+      cairo_destroy(cr);
+      if (gc->surface != NULL) {
+        cairo_surface_destroy(gc->surface);
+      }
+      gc->surface = surface;
+      gc->width = width;
+      gc->height = height;
+      gc->panadapter_high = rx->panadapter_high;
+      gc->panadapter_low = rx->panadapter_low;
+      gc->panadapter_step = rx->panadapter_step;
+      gc->sample_rate = rx->sample_rate;
+      gc->active = active;
+      gc->min_display = min_display;
+      gc->max_display = max_display;
+      gc->hz_per_pixel = hz_per_pixel;
+      gc->marker_extra = marker_extra;
+    } else {
+      cairo_surface_destroy(surface);
+    }
+  }
+  if (gc->surface != NULL) {
+    cairo_set_source_surface(target, gc->surface, 0.0, 0.0);
+    cairo_paint(target);
+  }
+  if (marker_extra_out) {
+    *marker_extra_out = gc->marker_extra;
+  }
+}
+
 void rx_panadapter_update (RECEIVER *rx) {
   if (!rx || !rx->panadapter_surface) {
     return;
   }
   int i;
   float *samples;
-  cairo_text_extents_t extents;
-  long long f;
-  long long divisor;
   double soffset;
   gboolean active = active_receiver == rx;
   int mywidth = gtk_widget_get_allocated_width (rx->panadapter);
@@ -1097,128 +1267,12 @@ void rx_panadapter_update (RECEIVER *rx) {
     }
   }
   //----------------------------------------------------------------------------------------------
-  // plot the levels
-  if (active) {
-    cairo_set_source_rgba (cr, COLOUR_PAN_LINE);
-  } else {
-    cairo_set_source_rgba (cr, COLOUR_PAN_LINE_WEAK);
-  }
-  double dbm_per_line = (double) myheight / ((double) rx->panadapter_high - (double) rx->panadapter_low);
-  cairo_set_line_width (cr, PAN_LINE_THIN);
-  cairo_select_font_face (cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size (cr, DISPLAY_FONT_SIZE2);
-  char v[32];
-  for (i = rx->panadapter_high; i >= rx->panadapter_low; i--) {
-    int mod = abs (i) % rx->panadapter_step;
-    if (mod == 0) {
-      double y = (double) (rx->panadapter_high - i) * dbm_per_line;
-      cairo_move_to (cr, 0.0, y);
-      cairo_line_to (cr, mywidth, y);
-      cairo_stroke (cr);
-      snprintf (v, 32, "%d dBm", i);
-      cairo_move_to (cr, 1, y);
-      cairo_text_path (cr, v);
-      cairo_save (cr);
-      cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-      cairo_set_line_width (cr, 2.0);
-      cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
-      cairo_stroke_preserve (cr);
-      cairo_restore (cr);
-      cairo_fill (cr);
-    }
-  }
-  cairo_set_line_width (cr, PAN_LINE_THIN);
-  cairo_stroke (cr);
-  //
-  // plot frequency markers
-  // calculate a divisor such that we have about 65
-  // pixels distance between frequency markers,
-  // and then round upwards to the  next 1/2/5 seris
-  //
-  divisor = (long long) (HzPerPixel * 65.0);
-  if (divisor > 500000LL) { divisor = 1000000LL; }
-  else if (divisor > 200000LL) { divisor = 500000LL; }
-  else if (divisor > 100000LL) { divisor = 200000LL; }
-  else if (divisor >  50000LL) { divisor = 100000LL; }
-  else if (divisor >  20000LL) { divisor =  50000LL; }
-  else if (divisor >  10000LL) { divisor =  20000LL; }
-  else if (divisor >   5000LL) { divisor =  10000LL; }
-  else if (divisor >   2000LL) { divisor =   5000LL; }
-  else if (divisor >   1000LL) { divisor =   2000LL; }
-  else if (divisor >    500LL) { divisor =   1000LL; }
-  else if (divisor >    200LL) { divisor =    500LL; }
-  else if (divisor >    100LL) { divisor =    200LL; }
-  else if (divisor >     50LL) { divisor =    100LL; }
-  else if (divisor >     20LL) { divisor =     50LL; }
-  else if (divisor >     10LL) { divisor =     20LL; }
-  else if (divisor >      5LL) { divisor =     10LL; }
-  else if (divisor >      2LL) { divisor =      5LL; }
-  else if (divisor >      1LL) { divisor =      2LL; }
-  else { divisor = 1LL; }
-  {
-    const double min_marker_px = 40.0;
-    double marker_px = (double) divisor / HzPerPixel;
-    while (marker_px < min_marker_px) {
-      divisor = panadapter_next_divisor (divisor);
-      marker_px = (double) divisor / HzPerPixel;
-    }
-  }
-  //
-  // Calculate the actual distance of frequency markers
-  // (in pixels)
-  //
-  int marker_distance = (mywidth * divisor) / rx->sample_rate;
-  f = ((long long) floor (min_display / (double) divisor) * divisor) + divisor;
-  cairo_select_font_face (cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  //
-  // If space is available, increase font size of freq. labels a bit
-  //
-  int marker_extra = (marker_distance > 100) ? 2 : 0;
-  cairo_set_font_size (cr, DISPLAY_FONT_SIZE2 + marker_extra);
-  while (f < max_display) {
-    double x = ((double) f - min_display) / HzPerPixel;
-    cairo_move_to (cr, x, 0);
-    cairo_line_to (cr, x, myheight);
-    //
-    // For frequency marker lines very close to the left or right
-    // edge, do not print a frequency since this probably won't fit
-    // on the screen
-    //
-    if ((f >= min_display + divisor / 2) && (f <= max_display - divisor / 2)) {
-      //
-      // For frequencies larger than 10 GHz, we cannot
-      // display all digits here so we give three dots
-      // and three "MHz" digits
-      //
-      if (f > 10000000000LL && marker_distance < 80) {
-        snprintf (v, 32, "...%03lld.%03lld", (f / 1000000) % 1000, (f % 1000000) / 1000);
-      } else {
-        snprintf (v, 32, "%0lld.%03lld", f / 1000000, (f % 1000000) / 1000);
-      }
-      // center text at "x" position
-      cairo_text_extents (cr, v, &extents);
-      /*
-       * Keep the accumulated frequency-marker line path separate from the
-       * outlined label path. cairo_save() does not preserve the current path.
-       */
-      cairo_path_t *marker_path = cairo_copy_path (cr);
-      cairo_new_path (cr);
-      cairo_move_to (cr, x - (extents.width / 2.0), 10 + marker_extra);
-      cairo_text_path (cr, v);
-      cairo_save (cr);
-      cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-      cairo_set_line_width (cr, 2.0);
-      cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
-      cairo_stroke_preserve (cr);
-      cairo_restore (cr);
-      cairo_fill (cr);
-      cairo_append_path (cr, marker_path);
-      cairo_path_destroy (marker_path);
-    }
-    f += divisor;
-  }
-  cairo_set_line_width (cr, PAN_LINE_THIN);
-  cairo_stroke (cr);
+  // Draw cached dBm and frequency grids. The cache is rebuilt only when the
+  // visible frequency range, scale, size or active-RX colour changes.
+  int marker_extra = 0;
+  rx_panadapter_grid_cache_paint(rx, cr, mywidth, myheight, active,
+                                 min_display, max_display, HzPerPixel,
+                                 &marker_extra);
   //--------------------------------------------------------------------------------------------
   /* Custom Labels auf exakten Frequenzen (nur Text, mit Timeout + Y-Staffelung)
    *
