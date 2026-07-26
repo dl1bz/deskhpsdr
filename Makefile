@@ -1220,6 +1220,8 @@ update:
 	@git checkout master
 	@sleep 1
 	@echo "Update deskHPSDR..."
+	@git config pull.rebase true
+	@sleep 1
 	@git pull
 	@sleep 1
 	@echo "Update done."
