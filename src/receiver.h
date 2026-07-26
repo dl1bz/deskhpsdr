@@ -233,6 +233,7 @@ typedef struct _receiver {
   double panadapter_smoothed_noise_floor;
   int panadapter_smoothed_noise_floor_valid;
   time_t panadapter_last_noisefloor_calc_time;
+  gint64 panadapter_last_noisefloor_measure_us;
   int panadapter_noisefloor_first_run;
   int panadapter_noisefloor_fast_start_count;
 

@@ -46,6 +46,8 @@ static GtkWidget *get_pk;
 static GtkWidget *set_pk;
 static GtkWidget *tx_att;
 static GtkWidget *tx_att_spin;
+static GtkWidget *twotone_b = NULL;
+static GtkWidget *noise_b = NULL;
 
 static int running = 0;
 static guint info_timer = 0;
@@ -85,6 +87,8 @@ static void store_tx_att_for_current_band(void) {
 static GtkWidget *entry[INFO_SIZE];
 
 static void ps_off_on(void);
+static void twotone_cb(GtkWidget *widget, gpointer data);
+static void noise_cb(GtkWidget *widget, gpointer data);
 
 static void ampview_close(void) {
   if (ampview_timer > 0) {
@@ -395,6 +399,11 @@ static void cleanup(void) {
     if (transmitter->twotone) {
       tx_set_twotone(transmitter, 0);
     }
+    if (transmitter->noise) {
+      tx_set_noise(transmitter, 0);
+    }
+    twotone_b = NULL;
+    noise_b = NULL;
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
@@ -819,8 +828,32 @@ static void reset_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void twotone_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
   int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if (state && noise_b != NULL &&
+      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(noise_b))) {
+    g_signal_handlers_block_by_func(noise_b, G_CALLBACK(noise_cb), NULL);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(noise_b), FALSE);
+    g_signal_handlers_unblock_by_func(noise_b, G_CALLBACK(noise_cb), NULL);
+  }
   tx_set_twotone(transmitter, state);
+}
+
+static void noise_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
+  int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if (state && twotone_b != NULL &&
+      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(twotone_b))) {
+    g_signal_handlers_block_by_func(twotone_b, G_CALLBACK(twotone_cb), NULL);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(twotone_b), FALSE);
+    g_signal_handlers_unblock_by_func(twotone_b, G_CALLBACK(twotone_cb), NULL);
+  }
+  tx_set_noise(transmitter, state);
+}
+
+static void noise_level_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
+  tx_set_noise_level(transmitter, gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget)));
 }
 
 void ps_menu(GtkWidget *parent) {
@@ -849,7 +882,32 @@ void ps_menu(GtkWidget *parent) {
   g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   gtk_widget_set_name(close_b, "close_button");
-  col += 5;
+  col++;
+  noise_b = gtk_toggle_button_new_with_label("Noise");
+  gtk_widget_set_name(noise_b, "small_toggle_button");
+  gtk_widget_set_tooltip_text(noise_b,
+                              "Transmit band-limited Gaussian noise at the selected generator level.\n"
+                              "Use short test periods because the average PA power is high.");
+  gtk_widget_show(noise_b);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(noise_b), transmitter->noise);
+  gtk_grid_attach(GTK_GRID(grid), noise_b, col, row, 1, 1);
+  g_signal_connect(noise_b, "toggled", G_CALLBACK(noise_cb), NULL);
+  col++;
+  GtkWidget *noise_level = gtk_spin_button_new_with_range(-12.0, 3.0, 1.0);
+  gtk_widget_set_name(noise_level, "small_button");
+  gtk_entry_set_width_chars(GTK_ENTRY(noise_level), 3);
+  gtk_entry_set_max_width_chars(GTK_ENTRY(noise_level), 3);
+  gtk_widget_set_hexpand(noise_level, FALSE);
+  gtk_widget_set_halign(noise_level, GTK_ALIGN_START);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(noise_level), 0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(noise_level), (double) transmitter->noise_level_db);
+  gtk_widget_set_tooltip_text(noise_level,
+                              "Gaussian noise generator level in dB (-12 to +3 dB).\n"
+                              "Changes take effect immediately while Noise is active.");
+  // gtk_widget_set_size_request(noise_level, 40, -1);
+  gtk_grid_attach(GTK_GRID(grid), noise_level, col, row, 1, 1);
+  g_signal_connect(noise_level, "value-changed", G_CALLBACK(noise_level_cb), NULL);
+  col += 3;
   GtkWidget *ampview_b = gtk_button_new_with_label("AmpView");
   gtk_widget_set_name(ampview_b, "small_button");
   gtk_widget_set_tooltip_text(ampview_b,
@@ -868,7 +926,7 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), enable_b, col, row, 1, 1);
   g_signal_connect(enable_b, "toggled", G_CALLBACK(enable_cb), NULL);
   col++;
-  GtkWidget *twotone_b = gtk_toggle_button_new_with_label("Two Tone");
+  twotone_b = gtk_toggle_button_new_with_label("Two Tone");
   gtk_widget_set_name(twotone_b, "small_toggle_button");
   gtk_widget_show(twotone_b);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(twotone_b), transmitter->twotone);

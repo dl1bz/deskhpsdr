@@ -172,6 +172,7 @@ static void rx_panadapter_reset_noisefloor(RECEIVER *rx) {
   rx->panadapter_smoothed_noise_floor = -175.0;
   rx->panadapter_smoothed_noise_floor_valid = 0;
   rx->panadapter_last_noisefloor_calc_time = 0;
+  rx->panadapter_last_noisefloor_measure_us = 0;
   rx->panadapter_noisefloor_first_run = 1;
   rx->panadapter_noisefloor_fast_start_count = 5;
 }
@@ -484,9 +485,22 @@ static gboolean panadapter_configure_event_cb (GtkWidget *widget, GdkEventConfig
   if (rx->panadapter_surface) {
     cairo_surface_destroy (rx->panadapter_surface);
   }
-  rx->panadapter_surface = gdk_window_create_similar_surface (gtk_widget_get_window (widget),
-    CAIRO_CONTENT_COLOR,
+  /*
+   * Keep the complete panadapter frame in client memory.  Drawing spectrum
+   * paths directly into a GDK/XRender-backed surface can synchronously block
+   * the GTK main thread in XRenderCompositeTrapezoids.  The draw callback then
+   * transfers the finished image to the window with a single cairo_paint().
+   */
+  rx->panadapter_surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24,
     mywidth, myheight);
+  if (cairo_surface_status (rx->panadapter_surface) != CAIRO_STATUS_SUCCESS) {
+    t_print ("%s: cannot create %dx%d panadapter image surface: %s\n",
+             __func__, mywidth, myheight,
+             cairo_status_to_string (cairo_surface_status (rx->panadapter_surface)));
+    cairo_surface_destroy (rx->panadapter_surface);
+    rx->panadapter_surface = NULL;
+    return TRUE;
+  }
   cairo_t *cr = cairo_create (rx->panadapter_surface);
   if (display_wmap) {
     cairo_set_source_rgba (cr, COLOUR_PAN_BG_MAP, 0.15); // 0.00..1.00 Transparenz abnehmend
@@ -1640,35 +1654,49 @@ void rx_panadapter_update (RECEIVER *rx) {
    * this value per RX; autoscale only decides whether the measured value is
    * also allowed to move rx->panadapter_low.
    */
-  double noise_floor_level = -175.0; // inital value
-  double ignore_noise_percentile = 60.0; // means 80%
-  double *qsorted_samples = malloc (mywidth * sizeof (double));
+  double noise_floor_level = rx->panadapter_smoothed_noise_floor;
+  const double ignore_noise_percentile = 60.0;
+  const gint64 noisefloor_measure_interval_us = 1000000; // 1 Hz is sufficient for display/autoscale
   const int noisefloor_update_interval = 5; // in sec
-  const double noisefloor_ema_alpha = 0.10;
+  const double noisefloor_ema_alpha = 0.25;
   const int panadapter_scale_corr_f = 5;
-  // Berechne die aktuelle Zeit
+  const gint64 now_us = g_get_monotonic_time();
   time_t current_time;
+  gboolean noise_floor_measured = FALSE;
   time (&current_time);
-  // calculate the noise level from samples
-  if (qsorted_samples != NULL) {
-    for (int i = 0; i < mywidth; i++) {
-      qsorted_samples[i] = (double) samples[i + rx->pan] + soffset;
+  /*
+   * A full copy and qsort of the visible spectrum on every display frame
+   * creates an FPS-proportional CPU spike.  This can starve audio on
+   * lower-power systems.  The noise floor changes slowly, so measure it
+   * at most once per second (immediately after a reset).
+   */
+  if (!rx->panadapter_smoothed_noise_floor_valid
+      || rx->panadapter_last_noisefloor_measure_us == 0
+      || now_us - rx->panadapter_last_noisefloor_measure_us >= noisefloor_measure_interval_us) {
+    double *qsorted_samples = malloc (mywidth * sizeof (double));
+    if (qsorted_samples != NULL) {
+      for (int i = 0; i < mywidth; i++) {
+        qsorted_samples[i] = (double) samples[i + rx->pan] + soffset;
+      }
+      qsort (qsorted_samples, mywidth, sizeof (double), compare_doubles);
+      int index = (int) ((ignore_noise_percentile / 100.0) * mywidth);
+      noise_floor_level = qsorted_samples[index] + 3.0;
+      free (qsorted_samples);
+      if (!rx->panadapter_smoothed_noise_floor_valid) {
+        rx->panadapter_smoothed_noise_floor = noise_floor_level;
+        rx->panadapter_smoothed_noise_floor_valid = 1;
+      } else {
+        rx->panadapter_smoothed_noise_floor +=
+                (noise_floor_level - rx->panadapter_smoothed_noise_floor) * noisefloor_ema_alpha;
+      }
+      rx->panadapter_noise_level = (int) rx->panadapter_smoothed_noise_floor - 3;
+      rx->panadapter_last_noisefloor_measure_us = now_us;
+      noise_floor_measured = TRUE;
     }
-    qsort (qsorted_samples, mywidth, sizeof (double), compare_doubles);
-    int index = (int) ((ignore_noise_percentile / 100.0) * mywidth);
-    noise_floor_level = qsorted_samples[index] + 3.0;
-    // t_print("noise_floor = %f\n", noise_floor_level);
-    free (qsorted_samples); // Free memory after use
   }
-  if (!rx->panadapter_smoothed_noise_floor_valid) {
-    rx->panadapter_smoothed_noise_floor = noise_floor_level;
-    rx->panadapter_smoothed_noise_floor_valid = 1;
-  } else {
-    rx->panadapter_smoothed_noise_floor += (noise_floor_level - rx->panadapter_smoothed_noise_floor) * noisefloor_ema_alpha;
-  }
-  rx->panadapter_noise_level = (int) rx->panadapter_smoothed_noise_floor - 3;
   // Update rx->panadapter_low from EMA-smoothed noise floor when autoscale is active.
   if (rx->panadapter_autoscale_enabled
+      && noise_floor_measured
       && (rx->panadapter_noisefloor_first_run
           || rx->panadapter_noisefloor_fast_start_count > 0
           || difftime(current_time, rx->panadapter_last_noisefloor_calc_time) >= noisefloor_update_interval)) {

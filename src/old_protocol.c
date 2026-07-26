@@ -2815,6 +2815,7 @@ void ozy_send_buffer(void) {
       output_buffer[C0] = 0x1E;
       if ((txmode == modeCWU || txmode == modeCWL) && !tune
           && !transmitter->twotone
+          && !transmitter->noise
           && cw_keyer_internal
           && !MIDI_cw_is_active
           && !CAT_cw_is_active) {
@@ -3207,6 +3208,7 @@ if (radio_is_transmitting()) {
         || MIDI_cw_is_active
         || !cw_keyer_internal
         || transmitter->twotone
+        || transmitter->noise
         || radio_ptt) {
       output_buffer[C0] |= 0x01;
     }

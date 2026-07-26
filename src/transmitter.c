@@ -326,6 +326,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropS1("transmitter.%d.microphone_name",   tx->id,               tx->microphone_name);
   SetPropI1("transmitter.%d.puresignal",        tx->id,               tx->puresignal);
   SetPropI1("transmitter.%d.auto_on",           tx->id,               tx->auto_on);
+  SetPropI1("transmitter.%d.noise_level_db",    tx->id,               tx->noise_level_db);
   SetPropI1("transmitter.%d.tci_tx_audio_gain_db", tx->id,            tx->tci_tx_audio_gain_db);
   SetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   SetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
@@ -439,6 +440,10 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropS1("transmitter.%d.microphone_name",   tx->id,               tx->microphone_name);
   GetPropI1("transmitter.%d.puresignal",        tx->id,               tx->puresignal);
   GetPropI1("transmitter.%d.auto_on",           tx->id,               tx->auto_on);
+  GetPropI1("transmitter.%d.noise_level_db",    tx->id,               tx->noise_level_db);
+  if (tx->noise_level_db < -12 || tx->noise_level_db > 3) {
+    tx->noise_level_db = 0;
+  }
   GetPropI1("transmitter.%d.tci_tx_audio_gain_db", tx->id,            tx->tci_tx_audio_gain_db);
   GetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   GetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
@@ -1148,6 +1153,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->use_rx_filter = FALSE;
   tx->out_of_band = 0;
   tx->twotone = 0;
+  tx->noise = 0;
+  tx->noise_level_db = 0;
   tx->puresignal = 0;
   //
   // PS 2.0 default parameters
@@ -1506,7 +1513,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
   // the two "if (cwmode)" clauses give the same result.
   // cwmode only valid in the old protocol, in the new protocol we use a different mechanism
   int txmode = vfo_get_tx_mode();
-  cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
+  cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone && !tx->noise;
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     gain = 32767.0; // 16 bit
@@ -1974,7 +1981,7 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
   if (rx_feedback->samples >= rx_feedback->buffer_size) {
     if (radio_is_transmitting()) {
       int txmode = vfo_get_tx_mode();
-      int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
+      int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone && !tx->noise;
       if (!cwmode) {
         //
         // Since we are not using WDSP in CW transmit, it also makes little sense to
@@ -2831,10 +2838,15 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
   // During a two-tone experiment, call a function periodically
   // (every 100 msec) that calibrates the TX attenuation value
   // if PureSignal is running with AutoCalibration. The timer will
-  // automatically be removed
+  // automatically be removed.
   //
   static guint timer = 0;
+  int was_active = tx->twotone || tx->noise;
   if (state == tx->twotone) { return; }
+  if (state && tx->noise) {
+    SetTXAPreGenRun(tx->id, 0);
+    tx->noise = 0;
+  }
   tx->twotone = state;
   if (state) {
     // set frequencies and levels
@@ -2860,16 +2872,53 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
     // These radios show "tails" of the TX signal after a TX/RX transition,
     // so wait after the TwoTone signal has been removed, before
     // removing MOX.
-    // The wait time required is rather long, since we must fill the TX IQ
-    // FIFO completely with zeroes. 100 msec was measured on a HermesLite-2
-    // to be OK.
     //
-    //
-    if (device == DEVICE_HERMES_LITE2 || device == DEVICE_HERMES_LITE ||
-        device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20) {
+    if (!tx->noise &&
+        (device == DEVICE_HERMES_LITE2 || device == DEVICE_HERMES_LITE ||
+         device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20)) {
       usleep(100000);
     }
   }
-  g_idle_add(ext_mox_update, GINT_TO_POINTER(state));
+  if (was_active != (tx->twotone || tx->noise)) {
+    g_idle_add(ext_mox_update, GINT_TO_POINTER(state));
+  }
+}
+
+void tx_set_noise_level(TRANSMITTER *tx, int level_db) {
+  if (level_db < -12) { level_db = -12; }
+  if (level_db > 3) { level_db = 3; }
+  tx->noise_level_db = level_db;
+  if (tx->noise) {
+    SetTXAPreGenNoiseMag(tx->id, pow(10.0, 0.05 * (double) level_db));
+  }
+}
+
+void tx_set_noise(TRANSMITTER *tx, int state) {
+  //
+  // Generate Gaussian noise before the TX processing chain. The normal TX
+  // band-pass therefore limits the noise to the selected transmit passband.
+  //
+  int was_active = tx->twotone || tx->noise;
+  if (state == tx->noise) { return; }
+  if (state && tx->twotone) {
+    SetTXAPostGenRun(tx->id, 0);
+    tx->twotone = 0;
+  }
+  tx->noise = state;
+  if (state) {
+    SetTXAPreGenNoiseMag(tx->id, pow(10.0, 0.05 * (double) tx->noise_level_db));
+    SetTXAPreGenMode(tx->id, 2);
+    SetTXAPreGenRun(tx->id, 1);
+  } else {
+    SetTXAPreGenRun(tx->id, 0);
+    if (!tx->twotone &&
+        (device == DEVICE_HERMES_LITE2 || device == DEVICE_HERMES_LITE ||
+         device == DEVICE_HERMES || device == DEVICE_STEMLAB || device == DEVICE_STEMLAB_Z20)) {
+      usleep(100000);
+    }
+  }
+  if (was_active != (tx->twotone || tx->noise)) {
+    g_idle_add(ext_mox_update, GINT_TO_POINTER(state));
+  }
 }
 

@@ -888,6 +888,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_smoothed_noise_floor = -175.0;
   rx->panadapter_smoothed_noise_floor_valid = 0;
   rx->panadapter_last_noisefloor_calc_time = 0;
+  rx->panadapter_last_noisefloor_measure_us = 0;
   rx->panadapter_noisefloor_first_run = 1;
   rx->panadapter_noisefloor_fast_start_count = 5;
   rx->display_filled = 1;

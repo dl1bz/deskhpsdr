@@ -514,7 +514,6 @@ void flush_txa(int channel) {
 //void xsnoop(channel);
 void xtxa(int channel) {
   xresample(txa[channel].rsmpin.p);         // input resampler
-  xgen(txa[channel].gen0.p);            // input signal generator
   xpanel(txa[channel].panel.p);           // includes MIC gain
   xphrot(txa[channel].phrot.p);           // phase rotator
   xmeter(txa[channel].micmeter.p);        // MIC meter
@@ -527,6 +526,11 @@ void xtxa(int channel) {
   xmeter(txa[channel].lvlrmeter.p);         // Leveler Meter
   xcfcomp(txa[channel].cfcomp.p, 0);        // Continuous Frequency Compressor with post-EQ
   xmeter(txa[channel].cfcmeter.p);        // CFC+PostEQ Meter
+  // Place the TX pre-generator immediately before the primary band-pass.
+  // When enabled it therefore bypasses MIC gain and all mode-specific input
+  // processing, while its noise output is still limited to the selected TX
+  // passband.
+  xgen(txa[channel].gen0.p);            // band-limited TX test generator
   xbandpass(txa[channel].bp0.p, 0);         // primary bandpass filter
   xcompressor(txa[channel].compressor.p);     // COMP compressor
   xbandpass(txa[channel].bp1.p, 0);         // aux bandpass (runs if COMP)

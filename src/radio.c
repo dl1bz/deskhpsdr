@@ -2130,7 +2130,7 @@ void radio_tune_update (int state) {
 static int radio_mox_uses_speech_audio(void) {
   int txmode = vfo_get_tx_mode();
   return txmode != modeCWL && txmode != modeCWU && !tune &&
-         !transmitter->twotone;
+         !transmitter->twotone && !transmitter->noise;
 }
 
 static void radio_set_mox_now (int state) {

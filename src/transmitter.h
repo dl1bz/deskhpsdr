@@ -86,6 +86,8 @@ typedef struct _transmitter {
   guint out_of_band_timer_id;
 
   int twotone;
+  int noise;
+  int noise_level_db;
   int puresignal;
   int feedback;
   int auto_on;
@@ -292,6 +294,8 @@ extern void   tx_set_pre_emphasize (const TRANSMITTER *tx);
 extern void   tx_set_ramps (TRANSMITTER *tx);
 extern void   tx_set_singletone (const TRANSMITTER *tx, int state, double freq);
 extern void   tx_set_twotone (TRANSMITTER *tx, int state);
+extern void   tx_set_noise (TRANSMITTER *tx, int state);
+extern void   tx_set_noise_level(TRANSMITTER *tx, int level_db);
 extern void   tx_set_eq_ctfmode (const TRANSMITTER *tx);
 
 #endif
