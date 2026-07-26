@@ -82,6 +82,12 @@ typedef struct {
 
 static PAN_PEAK_HOLD pan_peak_hold[PAN_PEAK_HOLD_MAX_RX];
 
+#define PAN_PEAK_NOISE_INTERVAL_US 1000000LL
+static double pan_peak_noise_level[PAN_PEAK_HOLD_MAX_RX] = { 0.0 };
+static double pan_peak_noise_percentile[PAN_PEAK_HOLD_MAX_RX] = { 0.0 };
+static gint64 pan_peak_noise_last_measure_us[PAN_PEAK_HOLD_MAX_RX] = { 0 };
+static int pan_peak_noise_valid[PAN_PEAK_HOLD_MAX_RX] = { 0 };
+
 void rx_panadapter_peak_hold_clear (RECEIVER *rx) {
   if (!rx) { return; }
   if (rx->id < 0 || rx->id >= PAN_PEAK_HOLD_MAX_RX) { return; }
@@ -1365,9 +1371,11 @@ void rx_panadapter_update (RECEIVER *rx) {
       pan_peak_hold_mode_last[rx->id] = pan_peak_hold_mode;
     }
     if (ph->size != mywidth) {
-      float *nbuf = realloc (ph->buf, mywidth * sizeof (float));
-      uint16_t *nage = realloc (ph->age, mywidth * sizeof (uint16_t));
-      if (nbuf && nage) {
+      float *nbuf = malloc ((size_t) mywidth * sizeof (float));
+      uint16_t *nage = malloc ((size_t) mywidth * sizeof (uint16_t));
+      if (nbuf != NULL && nage != NULL) {
+        free (ph->buf);
+        free (ph->age);
         ph->buf = nbuf;
         ph->age = nage;
         ph->size = mywidth;
@@ -1376,9 +1384,12 @@ void rx_panadapter_update (RECEIVER *rx) {
           ph->age[i] = UINT16_MAX;
         }
         pan_peak_min_display_valid[rx->id] = 0;
+      } else {
+        free (nbuf);
+        free (nage);
       }
     }
-    if (ph->buf && ph->age && rx->fps > 0) {
+    if (ph->buf && ph->age && ph->size == mywidth && rx->fps > 0) {
       // Shift peak buffer to follow the same frequency->pixel mapping as the spectrum.
       // min_display = vfo[rx->id].frequency - (sample_rate/2) + pan*hz_per_pixel
       {
@@ -1766,21 +1777,40 @@ void rx_panadapter_update (RECEIVER *rx) {
       sorted_samples[i] = (double)samples[i + rx->pan] + soffset;
     }
     */
-    // Calculate the noise level if needed
+    // Calculate the peak-display noise threshold at most once per second.
+    // Sorting the complete visible spectrum on every frame is unnecessary and
+    // makes the cost scale directly with the configured panadapter FPS.
     double noise_level = 0.0;
-    if (hide_noise) {
-      // Dynamically allocate a copy of samples for sorting
-      double *sorted_samples = malloc (mywidth * sizeof (double));
-      if (sorted_samples != NULL) {
-        for (int i = 0; i < mywidth; i++) {
-          sorted_samples[i] = (double) samples[i + rx->pan] + soffset;
+    if (hide_noise && rx->id >= 0 && rx->id < PAN_PEAK_HOLD_MAX_RX) {
+      gboolean percentile_changed =
+              !pan_peak_noise_valid[rx->id]
+              || pan_peak_noise_percentile[rx->id] != noise_percentile;
+      if (percentile_changed
+          || pan_peak_noise_last_measure_us[rx->id] == 0
+          || now_us - pan_peak_noise_last_measure_us[rx->id] >= PAN_PEAK_NOISE_INTERVAL_US) {
+        double *sorted_samples = malloc ((size_t) mywidth * sizeof (double));
+        if (sorted_samples != NULL) {
+          for (int i = 0; i < mywidth; i++) {
+            sorted_samples[i] = (double) samples[i + rx->pan] + soffset;
+          }
+          qsort (sorted_samples, mywidth, sizeof (double), compare_doubles);
+          int index = (int) ((noise_percentile / 100.0) * mywidth);
+          if (index < 0) { index = 0; }
+          if (index >= mywidth) { index = mywidth - 1; }
+          pan_peak_noise_level[rx->id] = sorted_samples[index] + 3.0;
+          pan_peak_noise_percentile[rx->id] = noise_percentile;
+          pan_peak_noise_last_measure_us[rx->id] = now_us;
+          pan_peak_noise_valid[rx->id] = 1;
+          free (sorted_samples);
         }
-        qsort (sorted_samples, mywidth, sizeof (double), compare_doubles);
-        int index = (int) ((noise_percentile / 100.0) * mywidth);
-        // noise_level = sorted_samples[index];
-        noise_level = sorted_samples[index] + 3.0;
-        free (sorted_samples); // Free memory after use
       }
+      if (pan_peak_noise_valid[rx->id]) {
+        noise_level = pan_peak_noise_level[rx->id];
+      } else {
+        hide_noise = FALSE;
+      }
+    } else if (hide_noise) {
+      hide_noise = FALSE;
     }
     // free(sorted_samples); // Free memory after use
     // Detect peaks
