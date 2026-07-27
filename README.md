@@ -183,15 +183,16 @@ So far, deskHPSDR has been successfully tested on the following systems:<br>
 
 ## Credits
 
-Big thanks and huge respect to all involved developers for their work on pihpsdr until now and make this application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
+Big thanks and huge respect to all involved developers for their work on pihpsdr and make the application accessible as Open Source under the GPL. Many thanks also to the users who gave me feedback and reported issues which I hadn't noticed by myself.<br>
 Special thanks to:<br>
 
 - my lovely wife any my family for her great patience and understanding
-- John/G0ORX, Steve/KA6S & Jae/K5JAE for initial pihpsdr development
+- John/G0ORX, Steve/KA6S & Jae/K5JAE and all those involved for initial pihpsdr development
 - Christoph/DL1YCF for continue development and current pihpsdr
 - Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
-- OpenAI/ChatGPT for many code optimizations and saving a lot of time in development
-- all of the active users and contributors for support deskHPSDR, Open Source Soft- and Hardware
+- Anton (developer of Brick SDR series) for share his technical documentations with me for add Brick SDR support
+- OpenAI/ChatGPT for brainstorming, code optimizations and save me a lot of time in development
+- all of the active users and contributors for support deskHPSDR
 
 ## Exclusion of any Guarantee and any Warrenty and limited Support
 
