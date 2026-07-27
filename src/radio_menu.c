@@ -1010,6 +1010,8 @@ void radio_menu(GtkWidget *parent) {
     row++;
     col = 0;
     ChkBtn_txinhibit = gtk_check_button_new_with_label("Enable TxInhibit Input");
+    gtk_widget_set_tooltip_text(ChkBtn_txinhibit, "Default setting: OFF\n"
+                                                  "(look into SDR device manual before using)");
     gtk_widget_set_no_show_all(ChkBtn_txinhibit, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(ChkBtn_txinhibit, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_txinhibit), enable_tx_inhibit);
@@ -1017,7 +1019,11 @@ void radio_menu(GtkWidget *parent) {
     g_signal_connect(ChkBtn_txinhibit, "toggled", G_CALLBACK(toggle_cb), &enable_tx_inhibit);
     //----------------------------------------------------------------------------------------
     col += 2;
-    ChkBtn_autotune = gtk_check_button_new_with_label("Enable AutoTune Input");
+    ChkBtn_autotune = gtk_check_button_new_with_label("Enable external\nAutoTune Input");
+    gtk_widget_set_tooltip_text(ChkBtn_autotune, "Start TUNE while the external active-low AutoTune input is asserted.\n"
+                                                 "Protocol 1 uses IO3; Protocol 2 uses IO6.\n"
+                                                 "Default setting: OFF\n"
+                                                 "(look into SDR device manual before using)");
     gtk_widget_set_no_show_all(ChkBtn_autotune, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(ChkBtn_autotune, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_autotune), enable_auto_tune);
@@ -1034,7 +1040,7 @@ void radio_menu(GtkWidget *parent) {
       gtk_widget_show(ChkBtn_autotune);
     }
     col++;
-    ChkBtn = gtk_check_button_new_with_label("Disable Split on Band Change");
+    ChkBtn = gtk_check_button_new_with_label("Disable Split\non Band Change");
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_widget_set_tooltip_text(ChkBtn, "Disable split automatically when the active receiver changes bands.\n"
                                         "Default setting: OFF");
