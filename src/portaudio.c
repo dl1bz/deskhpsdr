@@ -61,6 +61,14 @@ int n_output_devices;
 AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 
 GMutex audio_mutex;
+static volatile gint audio_xrun_count = 0;
+static volatile gint output_ring_primed[8] = { 0 };
+static volatile gint output_ring_starved[8] = { 0 };
+
+guint64 audio_get_xrun_count(void) {
+  return (guint64) g_atomic_int_get(&audio_xrun_count);
+}
+
 
 //
 // We now use callback functions to provide the "headphone" audio data,
@@ -323,6 +331,9 @@ int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long
   float *out = (float *) outputBuffer;
   float buffer[TCI_MONITOR_FRAMES_PER_BUFFER * TCI_AUDIO_CHANNELS];
   guint frames;
+  if (statusFlags & paOutputUnderflow) {
+    g_atomic_int_inc(&audio_xrun_count);
+  }
   unsigned long requested_frames = framesPerBuffer;
   if (out == NULL) {
     t_print("%s: bogus audio buffer in callback\n", __func__);
@@ -454,6 +465,13 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
               void *userdata) {
   float *out = (float *) outputBuffer;
   RECEIVER *rx = (RECEIVER *) userdata;
+  gboolean ring_underrun = FALSE;
+  gboolean ring_had_audio = FALSE;
+  gboolean valid_rx_id = rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]));
+  gboolean ring_was_primed = valid_rx_id && g_atomic_int_get(&output_ring_primed[rx->id]);
+  if ((statusFlags & paOutputUnderflow) && ring_was_primed) {
+    g_atomic_int_inc(&audio_xrun_count);
+  }
   if (out == NULL) {
     t_print("%s: bogus audio buffer in callback\n", __func__);
     return paContinue;
@@ -467,6 +485,7 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
     int newpt = rx->local_audio_buffer_outpt;
     for (unsigned int i = 0; i < framesPerBuffer; i++) {
       if (rx->local_audio_buffer_inpt == newpt) {
+        ring_underrun = TRUE;
         // Ring buffer empty, send zero sample
         if (rx->local_audio_channels == 2) {
           *out++ = 0.0f;
@@ -475,6 +494,7 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
           *out++ = 0.0f;
         }
       } else {
+        ring_had_audio = TRUE;
         float left = rx->local_audio_buffer[2 * newpt];
         float right = rx->local_audio_buffer[2 * newpt + 1];
         if (rx->local_audio_channels == 2) {
@@ -514,6 +534,17 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
     }
   }
   g_mutex_unlock(&rx->local_audio_mutex);
+  if (valid_rx_id) {
+    if (ring_underrun && ring_was_primed && !g_atomic_int_get(&output_ring_starved[rx->id])) {
+      g_atomic_int_inc(&audio_xrun_count);
+    }
+    if (ring_had_audio) {
+      g_atomic_int_set(&output_ring_primed[rx->id], 1);
+    }
+    g_atomic_int_set(&output_ring_starved[rx->id], ring_underrun);
+  } else if (ring_underrun) {
+    g_atomic_int_inc(&audio_xrun_count);
+  }
   return paContinue;
 }
 
@@ -525,6 +556,9 @@ int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
   const float *in = (float *) inputBuffer;
+  if (statusFlags & paInputOverflow) {
+    g_atomic_int_inc(&audio_xrun_count);
+  }
   if (in == NULL) {
     // This should not happen, so we do not send silence etc.
     t_print("%s: bogus audio buffer in callback\n", __func__);
@@ -668,6 +702,10 @@ int audio_open_output(RECEIVER *rx) {
   rx->local_audio_buffer = g_new(float, 2 * MY_RING_BUFFER_SIZE);
   rx->local_audio_buffer_inpt = 0;
   rx->local_audio_buffer_outpt = 0;
+  if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
+    g_atomic_int_set(&output_ring_primed[rx->id], 0);
+    g_atomic_int_set(&output_ring_starved[rx->id], 0);
+  }
   if (rx->local_audio_buffer == NULL) {
     t_print("%s: allocate buffer failed\n", __func__);
     Pa_CloseStream(rx->playstream);
@@ -746,6 +784,10 @@ void audio_close_output(RECEIVER *rx) {
     }
   }
   g_mutex_lock(&rx->local_audio_mutex);
+  if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
+    g_atomic_int_set(&output_ring_primed[rx->id], 0);
+    g_atomic_int_set(&output_ring_starved[rx->id], 0);
+  }
   if (rx->local_audio_buffer != NULL) {
     g_free(rx->local_audio_buffer);
     rx->local_audio_buffer = NULL;

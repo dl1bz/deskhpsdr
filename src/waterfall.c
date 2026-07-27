@@ -25,6 +25,13 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <string.h>
+#include <stdio.h>
+#include <sys/resource.h>
+#ifdef __APPLE__
+  #include <mach/mach.h>
+  #include <mach/host_info.h>
+  #include <mach/mach_host.h>
+#endif
 #include "radio.h"
 #include "main.h"
 #include "vfo.h"
@@ -48,6 +55,99 @@ static double hz_per_pixel;
 
 static int my_width;
 static int my_height;
+
+static double process_cpu_load = 0.0;
+static double system_cpu_load = 0.0;
+static guint performance_timer_id = 0;
+
+typedef struct {
+  guint64 busy;
+  guint64 total;
+} CPU_TICKS;
+
+static gboolean read_system_cpu_ticks(CPU_TICKS *ticks) {
+#ifdef __APPLE__
+  host_cpu_load_info_data_t info;
+  mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+  if (host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO,
+                      (host_info_t)&info, &count) != KERN_SUCCESS) {
+    return FALSE;
+  }
+  guint64 user = info.cpu_ticks[CPU_STATE_USER];
+  guint64 nice = info.cpu_ticks[CPU_STATE_NICE];
+  guint64 system = info.cpu_ticks[CPU_STATE_SYSTEM];
+  guint64 idle = info.cpu_ticks[CPU_STATE_IDLE];
+  ticks->busy = user + nice + system;
+  ticks->total = ticks->busy + idle;
+  return TRUE;
+#else
+  FILE *fp = fopen("/proc/stat", "r");
+  if (fp == NULL) {
+    return FALSE;
+  }
+  guint64 user = 0, nice = 0, system = 0, idle = 0;
+  guint64 iowait = 0, irq = 0, softirq = 0, steal = 0;
+  int fields = fscanf(fp, "cpu %" G_GUINT64_FORMAT " %" G_GUINT64_FORMAT
+                      " %" G_GUINT64_FORMAT " %" G_GUINT64_FORMAT
+                      " %" G_GUINT64_FORMAT " %" G_GUINT64_FORMAT
+                      " %" G_GUINT64_FORMAT " %" G_GUINT64_FORMAT,
+                      &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal);
+  fclose(fp);
+  if (fields < 4) {
+    return FALSE;
+  }
+  ticks->busy = user + nice + system + irq + softirq + steal;
+  ticks->total = ticks->busy + idle + iowait;
+  return TRUE;
+#endif
+}
+
+static double process_cpu_seconds(void) {
+  struct rusage usage;
+  if (getrusage(RUSAGE_SELF, &usage) != 0) {
+    return 0.0;
+  }
+  return (double)usage.ru_utime.tv_sec + (double)usage.ru_utime.tv_usec / 1000000.0
+         + (double)usage.ru_stime.tv_sec + (double)usage.ru_stime.tv_usec / 1000000.0;
+}
+
+static gboolean waterfall_performance_update(gpointer data) {
+  (void)data;
+  static gboolean initialized = FALSE;
+  static CPU_TICKS previous_ticks;
+  static double previous_process_seconds = 0.0;
+  static gint64 previous_time_us = 0;
+  CPU_TICKS current_ticks;
+  double current_process_seconds = process_cpu_seconds();
+  gint64 current_time_us = g_get_monotonic_time();
+  if (read_system_cpu_ticks(&current_ticks)) {
+    if (initialized && current_ticks.total > previous_ticks.total) {
+      guint64 total_delta = current_ticks.total - previous_ticks.total;
+      guint64 busy_delta = current_ticks.busy - previous_ticks.busy;
+      system_cpu_load = 100.0 * (double)busy_delta / (double)total_delta;
+    }
+    previous_ticks = current_ticks;
+  }
+  if (initialized && current_time_us > previous_time_us) {
+    double elapsed = (double)(current_time_us - previous_time_us) / 1000000.0;
+    double cpu_delta = current_process_seconds - previous_process_seconds;
+    process_cpu_load = 100.0 * cpu_delta / elapsed;
+    if (process_cpu_load < 0.0) {
+      process_cpu_load = 0.0;
+    }
+    system_cpu_load = CLAMP(system_cpu_load, 0.0, 100.0);
+  }
+  previous_process_seconds = current_process_seconds;
+  previous_time_us = current_time_us;
+  initialized = TRUE;
+  for (int i = receivers - 1; i >= 0; i--) {
+    if (receiver[i] != NULL && receiver[i]->display_waterfall && receiver[i]->waterfall != NULL) {
+      gtk_widget_queue_draw(receiver[i]->waterfall);
+      break;
+    }
+  }
+  return G_SOURCE_CONTINUE;
+}
 
 static gboolean
 waterfall_is_last_visible(const RECEIVER *rx) {
@@ -246,6 +346,43 @@ waterfall_draw_cb(GtkWidget *widget,
     }
     cairo_move_to(cr, _x, sr_y);
     cairo_show_text(cr, _text);
+    if (display_sysinfo && waterfall_is_last_visible(rx)) {
+      char perf_text[64];
+      cairo_text_extents_t perf_extents;
+      cairo_font_extents_t perf_font_extents;
+      cairo_save(cr);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_font_extents(cr, &perf_font_extents);
+      double perf_line_height = ceil(perf_font_extents.height);
+      double perf_y = sr_y - (2.0 * perf_line_height);
+      cairo_set_line_width(cr, 2.0);
+      cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+      snprintf(perf_text, sizeof(perf_text), "APP %.0f%%", process_cpu_load);
+      cairo_text_extents(cr, perf_text, &perf_extents);
+      cairo_move_to(cr, b_width - perf_extents.width - 5.0, perf_y);
+      cairo_text_path(cr, perf_text);
+      cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+      cairo_stroke_preserve(cr);
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_fill(cr);
+      snprintf(perf_text, sizeof(perf_text), "SYS %.0f%%", system_cpu_load);
+      cairo_text_extents(cr, perf_text, &perf_extents);
+      cairo_move_to(cr, b_width - perf_extents.width - 5.0, perf_y + perf_line_height);
+      cairo_text_path(cr, perf_text);
+      cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+      cairo_stroke_preserve(cr);
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_fill(cr);
+      snprintf(perf_text, sizeof(perf_text), "XRUN %" G_GUINT64_FORMAT, audio_get_xrun_count());
+      cairo_text_extents(cr, perf_text, &perf_extents);
+      cairo_move_to(cr, b_width - perf_extents.width - 5.0, perf_y + (2.0 * perf_line_height));
+      cairo_text_path(cr, perf_text);
+      cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+      cairo_stroke_preserve(cr);
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_fill(cr);
+      cairo_restore(cr);
+    }
   }
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   return FALSE;
@@ -450,6 +587,9 @@ void waterfall_update(RECEIVER *rx) {
 }
 
 void waterfall_init(RECEIVER *rx, int width, int height) {
+  if (performance_timer_id == 0) {
+    performance_timer_id = g_timeout_add_seconds(1, waterfall_performance_update, NULL);
+  }
   my_width = width;
   my_height = height;
   rx->pixbuf = NULL;

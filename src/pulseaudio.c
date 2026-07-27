@@ -47,6 +47,12 @@ int n_output_devices;
 AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 
 GMutex audio_mutex;
+static volatile gint audio_xrun_count = 0;
+
+guint64 audio_get_xrun_count(void) {
+  return (guint64) g_atomic_int_get(&audio_xrun_count);
+}
+
 GMutex mic_ring_mutex;
 static GMutex enum_mutex;
 static GCond  enum_cond;
@@ -654,6 +660,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
                                out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
       if (rc != 0) {
+        g_atomic_int_inc(&audio_xrun_count);
         t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
       rx->local_audio_buffer_offset = 0;
@@ -716,6 +723,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
                                out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
       if (rc != 0) {
+        g_atomic_int_inc(&audio_xrun_count);
         t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
       rx->local_audio_buffer_offset = 0;

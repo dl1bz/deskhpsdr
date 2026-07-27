@@ -65,6 +65,12 @@ static const int cw_high_water = 1152;                // high water mark for CW
 
 int audio = 0;
 GMutex audio_mutex;
+static volatile gint audio_xrun_count = 0;
+
+guint64 audio_get_xrun_count(void) {
+  return (guint64) g_atomic_int_get(&audio_xrun_count);
+}
+
 
 // audio_mutex is used from multiple call paths; ensure it is initialized
 // regardless of whether audio_get_cards() has been called.
@@ -484,6 +490,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
         if (rc < 0) {
           switch (rc) {
           case -EPIPE:
+            g_atomic_int_inc(&audio_xrun_count);
             if ((rc = snd_pcm_prepare(rx->playback_handle)) < 0) {
               t_print("%s: cannot prepare audio interface for use %ld (%s)\n", __func__, rc, snd_strerror(rc));
               rx->local_audio_buffer_offset = 0;
@@ -634,6 +641,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
         if (rc < 0) {
           switch (rc) {
           case -EPIPE:
+            g_atomic_int_inc(&audio_xrun_count);
             if ((rc = snd_pcm_prepare(rx->playback_handle)) < 0) {
               t_print("%s: cannot prepare audio interface for use %ld (%s)\n", __func__, rc, snd_strerror(rc));
               rx->local_audio_buffer_offset = 0;
@@ -675,6 +683,9 @@ static void *mic_read_thread(gpointer arg) {
     if ((rc = snd_pcm_readi(record_handle, mic_buffer, mic_buffer_size)) != mic_buffer_size) {
       if (g_atomic_int_get(&running)) {
         if (rc < 0) {
+          if (rc == -EPIPE) {
+            g_atomic_int_inc(&audio_xrun_count);
+          }
           t_print("%s: read from audio interface failed (%s)\n",
                   __func__,
                   snd_strerror(rc));
