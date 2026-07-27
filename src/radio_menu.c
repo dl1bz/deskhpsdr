@@ -1009,7 +1009,7 @@ void radio_menu(GtkWidget *parent) {
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
     col = 0;
-    ChkBtn_txinhibit = gtk_check_button_new_with_label("Enable TxInhibit Input");
+    ChkBtn_txinhibit = gtk_check_button_new_with_label("Enable external\nTxInhibit Input");
     gtk_widget_set_tooltip_text(ChkBtn_txinhibit, "Default setting: OFF\n"
                                                   "(look into SDR device manual before using)");
     gtk_widget_set_no_show_all(ChkBtn_txinhibit, hermes_mode == HERMES_MODE_BRICK);
