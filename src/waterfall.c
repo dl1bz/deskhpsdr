@@ -162,6 +162,15 @@ waterfall_is_last_visible(const RECEIVER *rx) {
   return TRUE;
 }
 
+static gboolean waterfall_local_audio_active(void) {
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL && receiver[i]->local_audio) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
 /* Create a new surface of the appropriate size to store our scribbles */
 static gboolean
 waterfall_configure_event_cb(GtkWidget         *widget,
@@ -373,7 +382,11 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_stroke_preserve(cr);
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_fill(cr);
-      snprintf(perf_text, sizeof(perf_text), "XRUN %" G_GUINT64_FORMAT, audio_get_xrun_count());
+      if (waterfall_local_audio_active()) {
+        snprintf(perf_text, sizeof(perf_text), "XRUN %" G_GUINT64_FORMAT, audio_get_xrun_count());
+      } else {
+        g_strlcpy(perf_text, "XRUN -", sizeof(perf_text));
+      }
       cairo_text_extents(cr, perf_text, &perf_extents);
       cairo_move_to(cr, b_width - perf_extents.width - 5.0, perf_y + (2.0 * perf_line_height));
       cairo_text_path(cr, perf_text);

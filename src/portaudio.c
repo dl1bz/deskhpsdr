@@ -331,9 +331,6 @@ int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long
   float *out = (float *) outputBuffer;
   float buffer[TCI_MONITOR_FRAMES_PER_BUFFER * TCI_AUDIO_CHANNELS];
   guint frames;
-  if (statusFlags & paOutputUnderflow) {
-    g_atomic_int_inc(&audio_xrun_count);
-  }
   unsigned long requested_frames = framesPerBuffer;
   if (out == NULL) {
     t_print("%s: bogus audio buffer in callback\n", __func__);
@@ -469,7 +466,7 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
   gboolean ring_had_audio = FALSE;
   gboolean valid_rx_id = rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]));
   gboolean ring_was_primed = valid_rx_id && g_atomic_int_get(&output_ring_primed[rx->id]);
-  if ((statusFlags & paOutputUnderflow) && ring_was_primed) {
+  if ((statusFlags & paOutputUnderflow) && ring_was_primed && rx->local_audio) {
     g_atomic_int_inc(&audio_xrun_count);
   }
   if (out == NULL) {
@@ -535,14 +532,15 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
   }
   g_mutex_unlock(&rx->local_audio_mutex);
   if (valid_rx_id) {
-    if (ring_underrun && ring_was_primed && !g_atomic_int_get(&output_ring_starved[rx->id])) {
+    if (ring_underrun && ring_was_primed && rx->local_audio
+        && !g_atomic_int_get(&output_ring_starved[rx->id])) {
       g_atomic_int_inc(&audio_xrun_count);
     }
     if (ring_had_audio) {
       g_atomic_int_set(&output_ring_primed[rx->id], 1);
     }
     g_atomic_int_set(&output_ring_starved[rx->id], ring_underrun);
-  } else if (ring_underrun) {
+  } else if (ring_underrun && rx->local_audio) {
     g_atomic_int_inc(&audio_xrun_count);
   }
   return paContinue;
@@ -556,9 +554,6 @@ int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
   const float *in = (float *) inputBuffer;
-  if (statusFlags & paInputOverflow) {
-    g_atomic_int_inc(&audio_xrun_count);
-  }
   if (in == NULL) {
     // This should not happen, so we do not send silence etc.
     t_print("%s: bogus audio buffer in callback\n", __func__);

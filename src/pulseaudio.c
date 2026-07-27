@@ -660,7 +660,9 @@ int cw_audio_write(RECEIVER *rx, float sample) {
                                out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
       if (rc != 0) {
-        g_atomic_int_inc(&audio_xrun_count);
+        if (rx->local_audio) {
+          g_atomic_int_inc(&audio_xrun_count);
+        }
         t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
       rx->local_audio_buffer_offset = 0;
@@ -723,7 +725,9 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
                                out_buffer_size * sizeof(float) * rx->local_audio_channels,
                                &err);
       if (rc != 0) {
-        g_atomic_int_inc(&audio_xrun_count);
+        if (rx->local_audio) {
+          g_atomic_int_inc(&audio_xrun_count);
+        }
         t_print("%s: simple_write failed err=%d\n", __func__, err);
       }
       rx->local_audio_buffer_offset = 0;
