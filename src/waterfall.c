@@ -364,6 +364,11 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_font_extents(cr, &perf_font_extents);
       double perf_line_height = ceil(perf_font_extents.height);
       double perf_y = sr_y - (2.0 * perf_line_height);
+#ifdef __APPLE__
+      perf_y += 2.0;
+#else
+      perf_y += 5.0;
+#endif
       cairo_set_line_width(cr, 2.0);
       cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
       snprintf(perf_text, sizeof(perf_text), "APP %.0f%%", process_cpu_load);
