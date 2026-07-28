@@ -487,6 +487,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       stop_program();
       exit(EXIT_SUCCESS);
     }
+    ret = FALSE;
     break;
   // add an idea from DH0DM: press key [s] decrease the VFO step, press key [S] increase the VFO step
   case GDK_KEY_s: {
@@ -578,6 +579,13 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   }
   g_idle_add(ext_vfo_update, NULL);
   return ret;
+}
+
+static void quit_action_cb(GSimpleAction *action, GVariant *parameter, gpointer data) {
+  if (radio != NULL) {
+    stop_program();
+  }
+  exit(EXIT_SUCCESS);
 }
 
 // cppcheck-suppress constParameterCallback
@@ -917,6 +925,12 @@ int main(int argc, char **argv) {
   gtk_disable_setlocale();  // keep having a decimal point as a decimal point
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
+  static const GActionEntry app_actions[] = {
+    { "quit", quit_action_cb, NULL, NULL, NULL }
+  };
+  const gchar *quit_accels[] = { "<Primary>q", NULL };
+  g_action_map_add_action_entries(G_ACTION_MAP(deskhpsdr), app_actions, G_N_ELEMENTS(app_actions), NULL);
+  gtk_application_set_accels_for_action(deskhpsdr, "app.quit", quit_accels);
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
   t_print("exiting ...\n");
   g_object_unref(deskhpsdr);
