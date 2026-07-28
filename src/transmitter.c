@@ -382,22 +382,13 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   SetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
   SetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
-  for (int i = 0; i < 11; i++) {
+  for (int i = 0; i < 13; i++) {
     SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
     SetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, i,            tx->eq_gain[i]);
     SetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, i,            tx->cfc_freq[i]);
     SetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, i,            tx->cfc_lvl[i]);
     SetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
   }
-#if defined (__EQ12__)
-  for (int ii = 11; ii < 13; ii++) {
-    SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,            tx->eq_freq[ii]);
-    SetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,            tx->eq_gain[ii]);
-    SetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, ii,            tx->cfc_freq[ii]);
-    SetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, ii,            tx->cfc_lvl[ii]);
-    SetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, ii,            tx->cfc_post[ii]);
-  }
-#endif
   SetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   SetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
   SetPropF1("transmitter.%d.lev_gain",          tx->id,               tx->lev_gain);
@@ -519,22 +510,13 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   GetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
   GetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
-  for (int i = 0; i < 11; i++) {
+  for (int i = 0; i < 13; i++) {
     GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
     GetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, i,            tx->eq_gain[i]);
     GetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, i,            tx->cfc_freq[i]);
     GetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, i,            tx->cfc_lvl[i]);
     GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
   }
-#if defined (__EQ12__)
-  for (int ii = 11; ii < 13; ii++) {
-    GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, ii,           tx->eq_freq[ii]);
-    GetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, ii,           tx->eq_gain[ii]);
-    GetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, ii,           tx->cfc_freq[ii]);
-    GetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, ii,           tx->cfc_lvl[ii]);
-    GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, ii,           tx->cfc_post[ii]);
-  }
-#endif
   GetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   GetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
   GetPropF1("transmitter.%d.lev_gain",          tx->id,               tx->lev_gain);
@@ -1208,10 +1190,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->cfc_freq[ 8]     =  2300.0;
   tx->cfc_freq[ 9]     =  2800.0;
   tx->cfc_freq[10]     =  3100.0;
-#if defined (__EQ12__)
   tx->cfc_freq[11]     =  6000.0;
   tx->cfc_freq[12]     =  8000.0;
-#endif
   tx->cfc_lvl [ 0]     =     3.0;    // freq independent part
   tx->cfc_lvl [ 1]     =     0.0;
   tx->cfc_lvl [ 2]     =     0.0;
@@ -1223,10 +1203,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->cfc_lvl [ 8]     =     6.0;
   tx->cfc_lvl [ 9]     =     9.0;
   tx->cfc_lvl [10]     =     9.0;
-#if defined (__EQ12__)
   tx->cfc_lvl [11]     =     0.0;
   tx->cfc_lvl [12]     =     0.0;
-#endif
   tx->cfc_post[ 0]     =    -9.0;    // freq independent part
   tx->cfc_post[ 1]     =     0.0;
   tx->cfc_post[ 2]     =     0.0;
@@ -1238,10 +1216,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->cfc_post[ 8]     =     0.0;
   tx->cfc_post[ 9]     =     0.0;
   tx->cfc_post[10]     =     0.0;
-#if defined (__EQ12__)
   tx->cfc_post[11]     =     0.0;
   tx->cfc_post[12]     =     0.0;
-#endif
   tx->dexp             =       0;
   tx->dexp_tau         =    0.01;
   tx->dexp_attack      =   0.025;
@@ -1285,10 +1261,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->eq_freq[8]  =  2500.0;
   tx->eq_freq[9]  =  3000.0;
   tx->eq_freq[10] =  3500.0;
-#if defined (__EQ12__)
   tx->eq_freq[11] =  6000.0;
   tx->eq_freq[12] =  8000.0;
-#endif
   tx->eq_gain[0]  = 0.0;
   tx->eq_gain[1]  = -9.0;
   tx->eq_gain[2]  = -6.0;
@@ -1300,10 +1274,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->eq_gain[8]  = 3.0;
   tx->eq_gain[9]  = 3.0;
   tx->eq_gain[10] = 3.0;
-#if defined (__EQ12__)
   tx->eq_gain[11] = 0.0;
   tx->eq_gain[12] = 0.0;
-#endif
   // --- Defaults für TX-Level-Fenster ---
   tx->levels_dialog  = NULL;
   tx->levels_area    = NULL;
@@ -2579,11 +2551,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   SetTXAPHROTRun(tx->id, tx->phrot_enable);    // Phase Rotator on/off
   t_print("%s: PH-ROT state %d, stages %d, freq %.1fHz\n",
           __func__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
-#if defined (__EQ12__)
   SetTXACFCOMPprofile(tx->id, 12, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
-#else
-  SetTXACFCOMPprofile(tx->id, 10, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
-#endif
   SetTXACFCOMPPrecomp(tx->id, tx->cfc_lvl[0]);
   SetTXACFCOMPRun(tx->id, tx->cfc);  // Pre CFC on/off
   SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
@@ -2741,11 +2709,7 @@ void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
 }
 
 void tx_set_equalizer(TRANSMITTER *tx) {
-#if defined (__EQ12__)
   SetTXAEQProfile(tx->id, 12, tx->eq_freq, tx->eq_gain);
-#else
-  SetTXAEQProfile(tx->id, 10, tx->eq_freq, tx->eq_gain);
-#endif
   SetTXAEQRun(tx->id, tx->eq_enable);
   t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __func__, tx->eq_enable, tx->eq_gain[0]);
 }

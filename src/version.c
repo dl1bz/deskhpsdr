@@ -43,9 +43,6 @@ char build_options[] =
 #ifdef __AUTOG__
   "AUTOGAIN-HL2 "
 #endif
-#ifdef __EQ12__
-  "EQ12 "
-#endif
 #ifdef WDSP1
   "FORCE_WDSP-1.X "
 #endif

@@ -22,7 +22,6 @@ STEMLAB  ?= OFF
 TTS      ?= OFF
 AUDIO    ?= PULSE
 AUTOGAIN ?= OFF
-EQ12     ?= OFF
 WDSP1    ?= OFF
 AH4IOB   ?= OFF
 DEVEL    ?= OFF
@@ -38,7 +37,6 @@ DEVEL    ?= OFF
 #  STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
 #  AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux (use PulseAudio recommend)
 #  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
-#  EQ12         | If ON, use 12-band EQ instead of 10-band EQ
 #  AH4IOB       | If ON, enable support for AH-4 compatible ATU using the Hermes Lite 2 IO board
 #  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
 #
@@ -414,11 +412,6 @@ DEVEL_OPTIONS=-D__DVL__
 endif
 CPP_DEFINES += -D__DVL__
 
-ifeq ($(EQ12), ON)
-EQ12_OPTIONS=-D__EQ12__
-endif
-CPP_DEFINES += -D__EQ12__
-
 ifeq ($(AH4IOB), ON)
 AH4IOB_OPTIONS=-D__AH4IOB__
 endif
@@ -612,7 +605,6 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(AH4IOB_OPTIONS) \
 	$(AUTOGAIN_OPTIONS) \
 	$(DEVEL_OPTIONS) \
-	$(EQ12_OPTIONS) \
 	$(WAYLAND_OPTIONS) \
 	$(AUDIO_OPTIONS) \
 	-DGIT_DATE='"$(GIT_DATE)"' -DGIT_VERSION='"$(GIT_VERSION)"' -DGIT_COMMIT='"$(GIT_COMMIT)"' -DGIT_BRANCH='"$(GIT_BRANCH)"'

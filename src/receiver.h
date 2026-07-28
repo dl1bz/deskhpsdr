@@ -332,14 +332,8 @@ typedef struct _receiver {
   // Equalizer data
   //
   int  eq_enable;
-#if defined (__EQ12__)
   double eq_freq[13];
   double eq_gain[13];
-#else
-  double eq_freq[11];
-  double eq_gain[11];
-#endif
-
 } RECEIVER;
 
 extern RECEIVER *rx_create_pure_signal_receiver (int id, int sample_rate, int pixels, int fps);

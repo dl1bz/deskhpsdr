@@ -321,11 +321,7 @@ void equalizer_menu(GtkWidget *parent) {
     label = gtk_label_new("Gain");
     gtk_widget_set_name(label, "boldlabel");
     gtk_grid_attach(GTK_GRID(mygrid), label, 3, myrow, 1, 1);
-#if defined (__EQ12__)
-    const int max_eq_zeilen = 6; // if use 12-band EQ 6 rows
-#else
-    const int max_eq_zeilen = 5; // if use 10-band EQ 5 rows
-#endif
+    const int max_eq_zeilen = 6; // use 12-band EQ 6 rows
     for (int i = 1; i <= max_eq_zeilen; i++) { // index 0 must be excluded
       myrow++; // neue Zeile
       //----------------------------------------------------------------------------------------------------------------

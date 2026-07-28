@@ -143,15 +143,9 @@ typedef struct _transmitter {
   // cfc_lvl [0] contains the added frequency-independent compression
   // cfc_post[0] contains the added frequency-independent gain
   //
-#if defined (__EQ12__)
   double cfc_freq[13];      // CFC corner frequencies
   double cfc_lvl[13];       // compression level for corner frequencies
   double cfc_post[13];      // EQ gain for corner frequencies
-#else
-  double cfc_freq[11];      // CFC corner frequencies
-  double cfc_lvl[11];       // compression level for corner frequencies
-  double cfc_post[11];      // EQ gain for corner frequencies
-#endif
 
   int dexp;                 // use downward expander (DEXP)
   int    dexp_trigger;      // threshold for the "noise gate" in dB (!)
@@ -206,13 +200,8 @@ typedef struct _transmitter {
   // Equalizer data
   //
   int    eq_enable;
-#if defined (__EQ12__)
   double eq_freq[13];  // frequency in Hz
   double eq_gain[13];  // gain in dB
-#else
-  double eq_freq[11];  // frequency in Hz
-  double eq_gain[11];  // gain in dB
-#endif
   int eq_ctfmode;
 
   // --- Zusatzfenster: TX Levelanzeigen ---

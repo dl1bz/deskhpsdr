@@ -121,24 +121,14 @@ struct _mode_settings {
   int snb;                          // Spectral noise blanker
   int agc;                          // AGC characteristics (slow/medium/fast etc.)
   int en_rxeq;                      // RX equalizer on/off
-#if defined (__EQ12__)
   double rx_eq_freq[13];            // RX equalizer settings
   double rx_eq_gain[13];
-#else
-  double rx_eq_freq[11];            // RX equalizer settings
-  double rx_eq_gain[11];
-#endif
   //
   // TX (EQ, CMPR, DEXP, CRC) settings
   //
   int en_txeq;                      // TX equalizer on/off
-#if defined (__EQ12__)
   double tx_eq_freq[13];            // TX equalizer settings
   double tx_eq_gain[13];
-#else
-  double tx_eq_freq[11];            // TX equalizer settings
-  double tx_eq_gain[11];
-#endif
   int compressor;                   // TX compressor on/off
   double compressor_level;          // TX compressor level
   int dexp;                         // Downward Expander (DEXP) on/off
@@ -157,15 +147,9 @@ struct _mode_settings {
   double lev_gain;                  // Leveler Gain
   int    lev_enable;                // Leveler on/off
   int    phrot_enable;              // Phase Rotator on/off
-#if defined (__EQ12__)
   double cfc_freq[13];              // CFC corner frequencies
   double cfc_lvl[13];               // CFC compression at corner frequency
   double cfc_post[13];              // CFC post-EQ gain at corner frequency
-#else
-  double cfc_freq[11];              // CFC corner frequencies
-  double cfc_lvl[11];               // CFC compression at corner frequency
-  double cfc_post[11];              // CFC post-EQ gain at corner frequency
-#endif
 };
 
 extern struct _mode_settings mode_settings[];

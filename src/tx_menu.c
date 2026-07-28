@@ -187,7 +187,7 @@ void audioSaveProfile(const char *filename) {
   SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
   SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
   SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
-  for (int j = 0; j < 11; j++) {
+  for (int j = 0; j < 13; j++) {
     SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
     SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
     SetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
@@ -196,17 +196,6 @@ void audioSaveProfile(const char *filename) {
     SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
     SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
   }
-#if defined (__EQ12__)
-  for (int jj = 11; jj < 13; jj++) {
-    SetPropF2("modeset.%d.txeq.%d", i, jj,         mode_settings[i].tx_eq_gain[jj]);
-    SetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
-    SetPropF2("modeset.%d.rxeq.%d", i, jj,         mode_settings[i].rx_eq_gain[jj]);
-    SetPropF2("modeset.%d.rxeqfrq.%d", i, jj,      mode_settings[i].rx_eq_freq[jj]);
-    SetPropF2("modeset.%d.cfc_frq.%d", i, jj,      mode_settings[i].cfc_freq[jj]);
-    SetPropF2("modeset.%d.cfc_lvl.%d", i, jj,      mode_settings[i].cfc_lvl[jj]);
-    SetPropF2("modeset.%d.cfc_post.%d", i, jj,     mode_settings[i].cfc_post[jj]);
-  }
-#endif
   SetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   SetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
   SetPropI0("transmitter.tx_filter_high",          tx_filter_high);
@@ -239,7 +228,7 @@ static void audioLoadProfile(const char *filename) {
   GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
   GetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
   GetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
-  for (int j = 0; j < 11; j++) {
+  for (int j = 0; j < 13; j++) {
     GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
     GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
     GetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
@@ -248,17 +237,6 @@ static void audioLoadProfile(const char *filename) {
     GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
     GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
   }
-#if defined (__EQ12__)
-  for (int jj = 11; jj < 13; jj++) {
-    GetPropF2("modeset.%d.txeq.%d", i, jj,         mode_settings[i].tx_eq_gain[jj]);
-    GetPropF2("modeset.%d.txeqfrq.%d", i, jj,      mode_settings[i].tx_eq_freq[jj]);
-    GetPropF2("modeset.%d.rxeq.%d", i, jj,         mode_settings[i].rx_eq_gain[jj]);
-    GetPropF2("modeset.%d.rxeqfrq.%d", i, jj,      mode_settings[i].rx_eq_freq[jj]);
-    GetPropF2("modeset.%d.cfc_frq.%d", i, jj,      mode_settings[i].cfc_freq[jj]);
-    GetPropF2("modeset.%d.cfc_lvl.%d", i, jj,      mode_settings[i].cfc_lvl[jj]);
-    GetPropF2("modeset.%d.cfc_post.%d", i, jj,     mode_settings[i].cfc_post[jj]);
-  }
-#endif
   GetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   GetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
   transmitter->eq_enable        = mode_settings[i].en_txeq;
@@ -269,22 +247,13 @@ static void audioLoadProfile(const char *filename) {
   transmitter->phrot_enable     = mode_settings[i].phrot_enable;
   transmitter->cfc              = mode_settings[i].cfc;
   transmitter->cfc_eq           = mode_settings[i].cfc_eq;
-  for (int j = 0; j < 11; j++) {
+  for (int j = 0; j < 13; j++) {
     transmitter->eq_gain[j]     = mode_settings[i].tx_eq_gain[j];
     transmitter->eq_freq[j]     = mode_settings[i].tx_eq_freq[j];
     transmitter->cfc_freq[j]    = mode_settings[i].cfc_freq[j];
     transmitter->cfc_lvl[j]     = mode_settings[i].cfc_lvl[j];
     transmitter->cfc_post[j]    = mode_settings[i].cfc_post[j];
   }
-#if defined (__EQ12__)
-  for (int jj = 11; jj < 13; jj++) {
-    transmitter->eq_gain[jj]    = mode_settings[i].tx_eq_gain[jj];
-    transmitter->eq_freq[jj]    = mode_settings[i].tx_eq_freq[jj];
-    transmitter->cfc_freq[jj]   = mode_settings[i].cfc_freq[jj];
-    transmitter->cfc_lvl[jj]    = mode_settings[i].cfc_lvl[jj];
-    transmitter->cfc_post[jj]   = mode_settings[i].cfc_post[jj];
-  }
-#endif
   GetPropI0("transmitter.tx_filter_high",          tx_filter_high);
   GetPropI0("transmitter.tx_filter_low",           tx_filter_low);
   GetPropI0("transmitter.eq_ctfmode",              transmitter->eq_ctfmode);
@@ -1622,11 +1591,7 @@ void tx_menu(GtkWidget *parent) {
   if (can_transmit) {
     sort_cfc(transmitter);
   }
-#if defined (__EQ12__)
   const int max_cfc_zeilen = 6;
-#else
-  const int max_cfc_zeilen = 5;
-#endif
   for (int i = 1; i <= max_cfc_zeilen; i++) {
     row++; // neue Zeile
     //------------------------------------------------------------------------------------------------------------------

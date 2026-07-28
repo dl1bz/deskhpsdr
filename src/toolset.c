@@ -43,13 +43,8 @@
   #include <sys/sysctl.h>
 #endif
 
-#if defined (__EQ12__)
-  #define N_CFC 12
-  #define N_EQ 12
-#else
-  #define N_CFC 10
-  #define N_EQ 10
-#endif
+#define N_CFC 12
+#define N_EQ 12
 
 static GMutex solar_data_mutex;
 static gint solar_update_running = 0;
