@@ -581,7 +581,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 }
 
 // cppcheck-suppress constParameterCallback
-gboolean main_delete(GtkWidget *widget) {
+gboolean main_delete(GtkWidget *widget, GdkEvent *event, gpointer data) {
   if (radio != NULL) {
     stop_program();
   }
@@ -754,7 +754,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   //
   gtk_window_set_position(GTK_WINDOW(top_window), GTK_WIN_POS_CENTER);
   gtk_window_set_resizable(GTK_WINDOW(top_window), FALSE);
-  gtk_window_set_deletable(GTK_WINDOW(top_window), FALSE);   // remove close button in main window
+  gtk_window_set_deletable(GTK_WINDOW(top_window), TRUE);
   //
   // Get the position of the top window, and then determine
   // to which monitor this position belongs.

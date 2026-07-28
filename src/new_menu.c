@@ -171,13 +171,6 @@ static gboolean about_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
   return TRUE;
 }
 
-static gboolean exit_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  cleanup();
-  stop_program();
-  exit(EXIT_SUCCESS);
-  return TRUE;
-}
-
 static gboolean radio_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   submenu_from_main_begin();
   cleanup();
@@ -571,11 +564,9 @@ void new_menu(void) {
     }
     g_signal_connect(restart_b, "button-press-event", G_CALLBACK(restart_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), restart_b, 2, 0, 2, 1);
-    char _label[32];
-    snprintf(_label, 32, "Exit %s", PGNAME);
-    GtkWidget *exit_b = gtk_button_new_with_label(_label);
-    g_signal_connect(exit_b, "button-press-event", G_CALLBACK(exit_cb), NULL);
-    gtk_grid_attach(GTK_GRID(grid), exit_b, 4, 0, 2, 1);
+    GtkWidget *minimize_b = gtk_button_new_with_label("Iconify");
+    g_signal_connect(minimize_b, "button-press-event", G_CALLBACK(minimize_cb), NULL);
+    gtk_grid_attach(GTK_GRID(grid), minimize_b, 4, 0, 2, 1);
     //
     // Insert small separation between top column the the "many buttons"
     //
@@ -787,10 +778,7 @@ void new_menu(void) {
     //
     GtkWidget *about_b = gtk_button_new_with_label("About");
     g_signal_connect(about_b, "button-press-event", G_CALLBACK(about_cb), NULL);
-    gtk_grid_attach(GTK_GRID(grid), about_b, 0, row, 2, 1);
-    GtkWidget *minimize_b = gtk_button_new_with_label("Iconify");
-    g_signal_connect(minimize_b, "button-press-event", G_CALLBACK(minimize_cb), NULL);
-    gtk_grid_attach(GTK_GRID(grid), minimize_b, 4, row, 2, 1);
+    gtk_grid_attach(GTK_GRID(grid), about_b, 2, row, 2, 1);
     gtk_container_add(GTK_CONTAINER(content), grid);
     gtk_widget_show_all(main_menu);
   } else {

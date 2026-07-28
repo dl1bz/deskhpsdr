@@ -48,9 +48,17 @@
 // once.
 //
 
+static gboolean present_main_window_cb(gpointer data) {
+  if (top_window != NULL) {
+    gtk_window_present(GTK_WINDOW(top_window));
+  }
+  return G_SOURCE_REMOVE;
+}
+
 // cppcheck-suppress constParameterPointer
 int ext_start_radio(void *data) {
   radio_start_radio();
+  g_idle_add(present_main_window_cb, NULL);
   return G_SOURCE_REMOVE;
 }
 
