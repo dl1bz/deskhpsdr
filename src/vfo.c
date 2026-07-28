@@ -310,13 +310,11 @@ static void modesettingsSaveState(void) {
     SetPropI1("modeset.%d.nr2_gain_method", i,       mode_settings[i].nr2_gain_method);
     SetPropI1("modeset.%d.nr2_npe_method", i,        mode_settings[i].nr2_npe_method);
     SetPropI1("modeset.%d.nr2_ae", i,                mode_settings[i].nr2_ae);
-    if ((GetWDSPVersion() % 100) > 26) {
-      SetPropI1("modeset.%d.nr2_post", i,            mode_settings[i].nr2_post);
-      SetPropI1("modeset.%d.nr2_post_taper", i,      mode_settings[i].nr2_post_taper);
-      SetPropI1("modeset.%d.nr2_post_nlevel", i,     mode_settings[i].nr2_post_nlevel);
-      SetPropI1("modeset.%d.nr2_post_factor", i,     mode_settings[i].nr2_post_factor);
-      SetPropI1("modeset.%d.nr2_post_rate", i,       mode_settings[i].nr2_post_rate);
-    }
+    SetPropI1("modeset.%d.nr2_post", i,            mode_settings[i].nr2_post);
+    SetPropI1("modeset.%d.nr2_post_taper", i,      mode_settings[i].nr2_post_taper);
+    SetPropI1("modeset.%d.nr2_post_nlevel", i,     mode_settings[i].nr2_post_nlevel);
+    SetPropI1("modeset.%d.nr2_post_factor", i,     mode_settings[i].nr2_post_factor);
+    SetPropI1("modeset.%d.nr2_post_rate", i,       mode_settings[i].nr2_post_rate);
     SetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     SetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
     SetPropS1("modeset.%d.mode_description", i,      mode_settings[i].desc);
@@ -414,13 +412,11 @@ static void modesettingsRestoreState(void) {
     mode_settings[i].nr2_gain_method = 0;
     mode_settings[i].nr2_npe_method = 0;
     mode_settings[i].nr2_ae = 1;
-    if ((GetWDSPVersion() % 100) > 26) {
-      mode_settings[i].nr2_post = 0;
-      mode_settings[i].nr2_post_taper = 12;
-      mode_settings[i].nr2_post_nlevel = 15;
-      mode_settings[i].nr2_post_factor = 15;
-      mode_settings[i].nr2_post_rate = 5;
-    }
+    mode_settings[i].nr2_post = 0;
+    mode_settings[i].nr2_post_taper = 12;
+    mode_settings[i].nr2_post_nlevel = 15;
+    mode_settings[i].nr2_post_factor = 15;
+    mode_settings[i].nr2_post_rate = 5;
     mode_settings[i].nr2_trained_threshold = -0.5;
     mode_settings[i].nr2_trained_t2 = 0.2;
     mode_settings[i].nr4_reduction_amount = 10.0;
@@ -543,13 +539,11 @@ static void modesettingsRestoreState(void) {
     GetPropI1("modeset.%d.nr2_gain_method", i,       mode_settings[i].nr2_gain_method);
     GetPropI1("modeset.%d.nr2_npe_method", i,        mode_settings[i].nr2_npe_method);
     GetPropI1("modeset.%d.nr2_ae", i,                mode_settings[i].nr2_ae);
-    if ((GetWDSPVersion() % 100) > 26) {
-      GetPropI1("modeset.%d.nr2_post", i,            mode_settings[i].nr2_post);
-      GetPropI1("modeset.%d.nr2_post_taper", i,      mode_settings[i].nr2_post_taper);
-      GetPropI1("modeset.%d.nr2_post_nlevel", i,     mode_settings[i].nr2_post_nlevel);
-      GetPropI1("modeset.%d.nr2_post_factor", i,     mode_settings[i].nr2_post_factor);
-      GetPropI1("modeset.%d.nr2_post_rate", i,       mode_settings[i].nr2_post_rate);
-    }
+    GetPropI1("modeset.%d.nr2_post", i,            mode_settings[i].nr2_post);
+    GetPropI1("modeset.%d.nr2_post_taper", i,      mode_settings[i].nr2_post_taper);
+    GetPropI1("modeset.%d.nr2_post_nlevel", i,     mode_settings[i].nr2_post_nlevel);
+    GetPropI1("modeset.%d.nr2_post_factor", i,     mode_settings[i].nr2_post_factor);
+    GetPropI1("modeset.%d.nr2_post_rate", i,       mode_settings[i].nr2_post_rate);
     GetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
     GetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
     GetPropF1("modeset.%d.nr4_reduction_amount", i,  mode_settings[i].nr4_reduction_amount);
@@ -865,13 +859,11 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   rx->nr2_gain_method           = mode_settings[m].nr2_gain_method;
   rx->nr2_npe_method            = mode_settings[m].nr2_npe_method;
   rx->nr2_ae                    = mode_settings[m].nr2_ae;
-  if ((GetWDSPVersion() % 100) > 26) {
-    rx->nr2_post                = mode_settings[m].nr2_post;
-    rx->nr2_post_taper          = mode_settings[m].nr2_post_taper;
-    rx->nr2_post_nlevel         = mode_settings[m].nr2_post_nlevel;
-    rx->nr2_post_factor         = mode_settings[m].nr2_post_factor;
-    rx->nr2_post_rate           = mode_settings[m].nr2_post_rate;
-  }
+  rx->nr2_post                = mode_settings[m].nr2_post;
+  rx->nr2_post_taper          = mode_settings[m].nr2_post_taper;
+  rx->nr2_post_nlevel         = mode_settings[m].nr2_post_nlevel;
+  rx->nr2_post_factor         = mode_settings[m].nr2_post_factor;
+  rx->nr2_post_rate           = mode_settings[m].nr2_post_rate;
   rx->nr2_trained_threshold     = mode_settings[m].nr2_trained_threshold;
   rx->nr2_trained_t2            = mode_settings[m].nr2_trained_t2;
   rx->nr4_reduction_amount      = mode_settings[m].nr4_reduction_amount;

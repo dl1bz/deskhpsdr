@@ -177,13 +177,11 @@ static void update_noise_for_rx(RECEIVER *rx) {
     mode_settings[mode].anf = rx->anf;
     mode_settings[mode].snb = rx->snb;
     mode_settings[mode].nr2_ae = rx->nr2_ae;
-    if ((GetWDSPVersion() % 100) > 26) {
-      mode_settings[mode].nr2_post = rx->nr2_post;
-      mode_settings[mode].nr2_post_taper = rx->nr2_post_taper;
-      mode_settings[mode].nr2_post_nlevel = rx->nr2_post_nlevel;
-      mode_settings[mode].nr2_post_factor = rx->nr2_post_factor;
-      mode_settings[mode].nr2_post_rate = rx->nr2_post_rate;
-    }
+    mode_settings[mode].nr2_post = rx->nr2_post;
+    mode_settings[mode].nr2_post_taper = rx->nr2_post_taper;
+    mode_settings[mode].nr2_post_nlevel = rx->nr2_post_nlevel;
+    mode_settings[mode].nr2_post_factor = rx->nr2_post_factor;
+    mode_settings[mode].nr2_post_rate = rx->nr2_post_rate;
     mode_settings[mode].nr_agc = rx->nr_agc;
     mode_settings[mode].nb2_mode = rx->nb2_mode;
     mode_settings[mode].nr2_gain_method = rx->nr2_gain_method;
@@ -818,66 +816,64 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_widget_show_all(box_ae);
   gtk_grid_attach(GTK_GRID(nr_grid), box_ae, 2, 2, 2, 1);
   //
-  if ((GetWDSPVersion() % 100) > 26) {
-    GtkWidget *box_nr2_post = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-    GtkWidget *l_nr2_post = gtk_label_new("NR2 Post-Processing");
-    gtk_widget_set_name(l_nr2_post, "boldlabel");
-    GtkWidget *b_nr2_post = gtk_check_button_new();
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_nr2_post), rx->nr2_post);
-    g_signal_connect(b_nr2_post, "toggled", G_CALLBACK(post_cb), rx);
-    gtk_box_pack_start(GTK_BOX(box_nr2_post), l_nr2_post, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(box_nr2_post), b_nr2_post, FALSE, FALSE, 5);
-    gtk_widget_show_all(box_nr2_post);
-    gtk_grid_attach(GTK_GRID(nr_grid), box_nr2_post, 0, 2, 2, 1);
-    //
-    GtkWidget *l_nr2_post_nlevel = gtk_label_new("NR2 Post Level");
-    gtk_widget_set_name(l_nr2_post_nlevel, "boldlabel");
-    gtk_widget_set_halign(l_nr2_post_nlevel, GTK_ALIGN_END);
-    gtk_widget_show(l_nr2_post_nlevel);
-    gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_nlevel, 0, 3, 1, 1);
-    GtkWidget *b_nr2_post_nlevel = gtk_spin_button_new_with_range(0, 100.0, 1.0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_nlevel), rx->nr2_post_nlevel);
-    gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_nlevel), FALSE);
-    gtk_widget_set_halign(b_nr2_post_nlevel, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_nlevel, 1, 3, 1, 1);
-    g_signal_connect(b_nr2_post_nlevel, "changed", G_CALLBACK(post_nlevel_cb), rx);
-    //
-    GtkWidget *l_nr2_post_rate = gtk_label_new("NR2 Post Rate");
-    gtk_widget_set_name(l_nr2_post_rate, "boldlabel");
-    gtk_widget_set_halign(l_nr2_post_rate, GTK_ALIGN_END);
-    gtk_widget_show(l_nr2_post_rate);
-    gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_rate, 0, 4, 1, 1);
-    GtkWidget *b_nr2_post_rate = gtk_spin_button_new_with_range(0, 100.0, 1.0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_rate), rx->nr2_post_rate);
-    gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_rate), FALSE);
-    gtk_widget_set_halign(b_nr2_post_rate, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_rate, 1, 4, 1, 1);
-    g_signal_connect(b_nr2_post_rate, "changed", G_CALLBACK(post_rate_cb), rx);
-    //
-    GtkWidget *l_nr2_post_factor = gtk_label_new("NR2 Post Factor");
-    gtk_widget_set_name(l_nr2_post_factor, "boldlabel");
-    gtk_widget_set_halign(l_nr2_post_factor, GTK_ALIGN_END);
-    gtk_widget_show(l_nr2_post_factor);
-    gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_factor, 2, 3, 1, 1);
-    GtkWidget *b_nr2_post_factor = gtk_spin_button_new_with_range(0, 100.0, 1.0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_factor), rx->nr2_post_factor);
-    gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_factor), FALSE);
-    gtk_widget_set_halign(b_nr2_post_factor, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_factor, 3, 3, 1, 1);
-    g_signal_connect(b_nr2_post_factor, "changed", G_CALLBACK(post_factor_cb), rx);
-    //
-    GtkWidget *l_nr2_post_taper = gtk_label_new("NR2 Post Taper");
-    gtk_widget_set_name(l_nr2_post_taper, "boldlabel");
-    gtk_widget_set_halign(l_nr2_post_taper, GTK_ALIGN_END);
-    gtk_widget_show(l_nr2_post_taper);
-    gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_taper, 2, 4, 1, 1);
-    GtkWidget *b_nr2_post_taper = gtk_spin_button_new_with_range(0, 100.0, 1.0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_taper), rx->nr2_post_taper);
-    gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_taper), FALSE);
-    gtk_widget_set_halign(b_nr2_post_taper, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_taper, 3, 4, 1, 1);
-    g_signal_connect(b_nr2_post_taper, "changed", G_CALLBACK(post_taper_cb), rx);
-  }
+  GtkWidget *box_nr2_post = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+  GtkWidget *l_nr2_post = gtk_label_new("NR2 Post-Processing");
+  gtk_widget_set_name(l_nr2_post, "boldlabel");
+  GtkWidget *b_nr2_post = gtk_check_button_new();
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_nr2_post), rx->nr2_post);
+  g_signal_connect(b_nr2_post, "toggled", G_CALLBACK(post_cb), rx);
+  gtk_box_pack_start(GTK_BOX(box_nr2_post), l_nr2_post, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(box_nr2_post), b_nr2_post, FALSE, FALSE, 5);
+  gtk_widget_show_all(box_nr2_post);
+  gtk_grid_attach(GTK_GRID(nr_grid), box_nr2_post, 0, 2, 2, 1);
+  //
+  GtkWidget *l_nr2_post_nlevel = gtk_label_new("NR2 Post Level");
+  gtk_widget_set_name(l_nr2_post_nlevel, "boldlabel");
+  gtk_widget_set_halign(l_nr2_post_nlevel, GTK_ALIGN_END);
+  gtk_widget_show(l_nr2_post_nlevel);
+  gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_nlevel, 0, 3, 1, 1);
+  GtkWidget *b_nr2_post_nlevel = gtk_spin_button_new_with_range(0, 100.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_nlevel), rx->nr2_post_nlevel);
+  gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_nlevel), FALSE);
+  gtk_widget_set_halign(b_nr2_post_nlevel, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_nlevel, 1, 3, 1, 1);
+  g_signal_connect(b_nr2_post_nlevel, "changed", G_CALLBACK(post_nlevel_cb), rx);
+  //
+  GtkWidget *l_nr2_post_rate = gtk_label_new("NR2 Post Rate");
+  gtk_widget_set_name(l_nr2_post_rate, "boldlabel");
+  gtk_widget_set_halign(l_nr2_post_rate, GTK_ALIGN_END);
+  gtk_widget_show(l_nr2_post_rate);
+  gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_rate, 0, 4, 1, 1);
+  GtkWidget *b_nr2_post_rate = gtk_spin_button_new_with_range(0, 100.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_rate), rx->nr2_post_rate);
+  gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_rate), FALSE);
+  gtk_widget_set_halign(b_nr2_post_rate, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_rate, 1, 4, 1, 1);
+  g_signal_connect(b_nr2_post_rate, "changed", G_CALLBACK(post_rate_cb), rx);
+  //
+  GtkWidget *l_nr2_post_factor = gtk_label_new("NR2 Post Factor");
+  gtk_widget_set_name(l_nr2_post_factor, "boldlabel");
+  gtk_widget_set_halign(l_nr2_post_factor, GTK_ALIGN_END);
+  gtk_widget_show(l_nr2_post_factor);
+  gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_factor, 2, 3, 1, 1);
+  GtkWidget *b_nr2_post_factor = gtk_spin_button_new_with_range(0, 100.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_factor), rx->nr2_post_factor);
+  gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_factor), FALSE);
+  gtk_widget_set_halign(b_nr2_post_factor, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_factor, 3, 3, 1, 1);
+  g_signal_connect(b_nr2_post_factor, "changed", G_CALLBACK(post_factor_cb), rx);
+  //
+  GtkWidget *l_nr2_post_taper = gtk_label_new("NR2 Post Taper");
+  gtk_widget_set_name(l_nr2_post_taper, "boldlabel");
+  gtk_widget_set_halign(l_nr2_post_taper, GTK_ALIGN_END);
+  gtk_widget_show(l_nr2_post_taper);
+  gtk_grid_attach(GTK_GRID(nr_grid), l_nr2_post_taper, 2, 4, 1, 1);
+  GtkWidget *b_nr2_post_taper = gtk_spin_button_new_with_range(0, 100.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(b_nr2_post_taper), rx->nr2_post_taper);
+  gtk_widget_set_hexpand(GTK_WIDGET(b_nr2_post_taper), FALSE);
+  gtk_widget_set_halign(b_nr2_post_taper, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(nr_grid), b_nr2_post_taper, 3, 4, 1, 1);
+  g_signal_connect(b_nr2_post_taper, "changed", G_CALLBACK(post_taper_cb), rx);
   //
   GtkWidget *trained_thr_title = gtk_label_new("NR2 Trained Thresh");
   gtk_widget_set_name(trained_thr_title, "boldlabel");

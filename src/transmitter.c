@@ -2473,9 +2473,6 @@ void tx_ps_setparams(const TRANSMITTER *tx) {
 
 void tx_ps_setpk(const TRANSMITTER *tx, double peak) {
   SetPSHWPeak(tx->id, peak);
-#ifdef WDSPTXDEBUG
-  t_print("%s: TX id=%d PS HWpeak=%g\n", __func__, tx->id, peak);
-#endif
 }
 
 void tx_set_am_carrier_level(const TRANSMITTER *tx) {
@@ -2885,4 +2882,3 @@ void tx_set_noise(TRANSMITTER *tx, int state) {
     g_idle_add(ext_mox_update, GINT_TO_POINTER(state));
   }
 }
-
