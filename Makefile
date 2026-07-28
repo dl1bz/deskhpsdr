@@ -1075,29 +1075,6 @@ hpsdrsim:       src/hpsdrsim.o src/newhpsdrsim.o
 bootloader:	src/bootloader.c
 	$(CC) -o bootloader src/bootloader.c -lpcap
 
-#############################################################################
-#
-# Create a file named DEPEND containing dependencies, to be added to
-# the Makefile. This is done here because we need lots of #defines
-# to make it right.
-# Since src/MacTTS.c is Objective-C, create the final line manually
-#
-#############################################################################
-
-.PHONY: DEPEND
-DEPEND:
-	rm -f DEPEND
-	touch DEPEND
-	export LC_ALL=C && makedepend -DMIDI -DSATURN -DUSBOZY \
-		-DSTEMLAB_DISCOVERY -DPULSEAUDIO \
-		-DPORTAUDIO -DALSA -DTTS -D__APPLE__ -D__linux__ \
-		-D__AUTOG__ -D__DVL__ \
-		-D__EQ12__ -D__WAYLAND__ -D__AH4IOB__\
-		-f DEPEND -I./src src/*.c src/*.h
-	echo "src/MacTTS.o: src/message.h" >> DEPEND
-
-#########################################################################################################
-
 #########################################################################################################
 
 .PHONY: prepare
