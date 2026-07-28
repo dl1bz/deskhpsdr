@@ -76,6 +76,7 @@
 GtkWidget *main_menu = NULL;
 GtkWidget *sub_menu = NULL;
 static GtkWidget *restart_b = NULL;
+static gboolean opening_submenu_from_main = FALSE;
 
 int active_menu = NO_MENU;
 
@@ -88,7 +89,7 @@ int menu_active_receiver_changed(void *data) {
 }
 
 static void cleanup(void) {
-  if (main_menu != NULL) {
+  if (main_menu != NULL && !opening_submenu_from_main) {
     gtk_widget_destroy(main_menu);
     main_menu = NULL;
   }
@@ -97,6 +98,30 @@ static void cleanup(void) {
     sub_menu = NULL;
   }
   active_menu = NO_MENU;
+}
+
+static void return_to_main_menu_cb(GtkWidget *widget, gpointer data) {
+  if (main_menu != NULL) {
+    gtk_widget_show(main_menu);
+    gtk_window_present(GTK_WINDOW(main_menu));
+  }
+}
+
+static void submenu_from_main_begin(void) {
+  opening_submenu_from_main = TRUE;
+  if (main_menu != NULL) {
+    gtk_widget_hide(main_menu);
+  }
+}
+
+static void submenu_from_main_end(void) {
+  opening_submenu_from_main = FALSE;
+  if (sub_menu != NULL) {
+    g_signal_connect_after(sub_menu, "destroy", G_CALLBACK(return_to_main_menu_cb), NULL);
+  } else if (main_menu != NULL) {
+    gtk_widget_show(main_menu);
+    gtk_window_present(GTK_WINDOW(main_menu));
+  }
 }
 
 static gboolean close_cb(void) {
@@ -129,16 +154,20 @@ static gboolean minimize_cb(GtkWidget *widget, GdkEventButton *event, gpointer d
 #ifdef SATURN
 // cppcheck-suppress constParameterCallback
 static gboolean saturn_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   saturn_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 #endif
 
 static gboolean about_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   about_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -150,81 +179,107 @@ static gboolean exit_cb(GtkWidget *widget, GdkEventButton *event, gpointer data)
 }
 
 static gboolean radio_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   radio_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean rx_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_rx();
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean ant_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   ant_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean display_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   display_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean pa_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   pa_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean rigctl_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   rigctl_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean toolbar_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   toolbar_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean cw_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   cw_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean oc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   oc_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean extras_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   extras_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean ddc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   ddc_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 
 static gboolean xvtr_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   xvtr_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 static gboolean equalizer_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   equalizer_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -240,7 +295,9 @@ void start_meter(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean meter_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_meter();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -282,43 +339,57 @@ void start_filter(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean mode_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_mode();
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean filter_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_filter();
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean noise_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_noise();
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_vfo(active_receiver->id);
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean band_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_band();
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean bstk_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_bandstack();
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean store_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_store();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -333,7 +404,9 @@ void start_noise(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean agc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_agc();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -353,7 +426,9 @@ void start_vox(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean vox_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_vox();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -364,7 +439,9 @@ void start_dsp(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean dsp_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_dsp();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -374,14 +451,18 @@ void start_diversity(void) {
 }
 
 static gboolean screen_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   cleanup();
   screen_menu(top_window);
+  submenu_from_main_end();
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean diversity_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_diversity();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -412,7 +493,9 @@ void start_tx(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean tx_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_tx();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -425,7 +508,9 @@ void start_ps(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean ps_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_ps();
+  submenu_from_main_end();
   return TRUE;
 }
 
@@ -437,7 +522,9 @@ void start_midi(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean midi_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  submenu_from_main_begin();
   start_midi();
+  submenu_from_main_end();
   return TRUE;
 }
 
