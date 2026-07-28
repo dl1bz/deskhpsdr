@@ -89,9 +89,26 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
+}
+
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  dialog = NULL;
+  sub_menu = NULL;
+  active_menu = NO_MENU;
+}
+
+static void close_button_clicked_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
 }
 
 static gboolean reset_hermes_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
@@ -139,8 +156,8 @@ void ddc_menu(GtkWidget *parent) {
   char _title[64];
   snprintf(_title, sizeof(_title), "%s - OpenHPSDR P2 ADC/DDC Menu", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete-event", G_CALLBACK(delete_event_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
@@ -148,7 +165,7 @@ void ddc_menu(GtkWidget *parent) {
   gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "clicked", G_CALLBACK(close_button_clicked_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
   GtkWidget *title = gtk_label_new(NULL);
   gtk_label_set_use_markup(GTK_LABEL(title), TRUE);
@@ -239,5 +256,6 @@ void ddc_menu(GtkWidget *parent) {
   }
   ddc_menu_update_buttons();
   gtk_container_add(GTK_CONTAINER(content), grid);
+  sub_menu = dialog;
   gtk_widget_show_all(dialog);
 }
