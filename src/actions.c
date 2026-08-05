@@ -124,6 +124,7 @@ ACTION_TABLE ActionTable[] = {
   {CW_KEYER_KEYDOWN,    "CW Key\n(Keyer)",      "CWKy",         MIDI_KEY},
   {CW_KEYER_PTT,        "PTT\n(CW Keyer)",      "CWKyPTT",      MIDI_KEY},
   {CW_KEYER_SPEED,      "Speed\n(Keyer)",       "CWKySpd",      MIDI_KNOB},
+  {CW_STRAIGHT_KEY,     "CW Straight\nKey",     "CWSTR",        MIDI_KEY | TYPE_HIDE_TOOLBAR},
   {CW_ZERO_BEAT,        "CW Zero Beat",         "CW-ZERO",      MIDI_KEY},
   {DIV,                 "DIV On/Off",           "DIVT",         MIDI_KEY},
   {DIV_GAIN,            "DIV Gain",             "DIVG",         MIDI_WHEEL},
@@ -450,6 +451,10 @@ void schedule_action(enum ACTION action, enum ACTION_MODE mode, int val) {
   case CW_RIGHT:
     cw_key_hit = 1;
     keyer_event(action == CW_LEFT, mode == PRESSED);
+    break;
+  case CW_STRAIGHT_KEY:
+    cw_key_hit = 1;
+    keyer_straight_event(mode == PRESSED);
     break;
   case CW_KEYER_KEYDOWN:
     //

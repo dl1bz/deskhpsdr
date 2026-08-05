@@ -48,7 +48,7 @@ static void action_select_cb (GtkWidget *widget, gpointer data) {
   action = choice->action;
 }
 
-int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
+int action_dialog_with_hide (GtkWidget *parent, int filter, int hide_flags, enum ACTION currentAction) {
   int i, j;
   GtkRequisition min;
   GtkRequisition nat;
@@ -75,6 +75,7 @@ int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
   j = 0;
   for (i = 0; i < ACTIONS; i++) {
     if (ActionTable[i].type & TYPE_HIDE) { continue; }
+    if (ActionTable[i].type & hide_flags) { continue; }
     if ((ActionTable[i].type & filter) || (ActionTable[i].type == TYPE_NONE)) {
       GtkWidget *button = gtk_toggle_button_new_with_label (ActionTable[i].str);
       gtk_widget_set_name (button, "small_toggle_button");
@@ -132,3 +133,6 @@ int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
   return action;
 }
 
+int action_dialog (GtkWidget *parent, int filter, enum ACTION currentAction) {
+  return action_dialog_with_hide(parent, filter, 0, currentAction);
+}

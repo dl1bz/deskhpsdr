@@ -25,6 +25,7 @@
 enum {
   CHECK = 0,
   STRAIGHT,
+  STRAIGHT_EXTERNAL,
   PREDOT,
   SENDDOT,
   PREDASH,
@@ -36,6 +37,7 @@ enum {
 };
 
 void keyer_event(int left, int state);
+void keyer_straight_event(int state);
 void keyer_update(void);
 void keyer_close(void);
 int  keyer_init(void);

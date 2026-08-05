@@ -215,6 +215,7 @@ static int dot_samples = 0;
 static int dash_samples = 0;
 static int kcwl = 0;
 static int kcwr = 0;
+static int external_straight_key = 0;
 int *kdot;
 int *kdash;
 int *kmemr;
@@ -308,6 +309,19 @@ void keyer_event(int left, int state) {
   }
 }
 
+void keyer_straight_event(int state) {
+  if (!running) { return; }
+  if (state && CAT_cw_is_active) { enforce_cw_vox = 1; }
+  external_straight_key = state;
+  if (state) {
+#ifdef __APPLE__
+    sem_post(cw_event);
+#else
+    sem_post(&cw_event);
+#endif
+  }
+}
+
 static void *keyer_thread(void *arg) {
   struct timespec loop_delay;
   int interval = 1000000; // 1 ms
@@ -325,7 +339,7 @@ static void *keyer_thread(void *arg) {
     sem_wait(&cw_event);
 #endif
     // swallow any cw_events posted during the last "cw hang" time.
-    if (!kcwl && !kcwr) { continue; }
+    if (!kcwl && !kcwr && !external_straight_key) { continue; }
     //
     // Normally the keyer will be used in "break-in" mode, that is, we switch to TX
     // automatically here, and after a certain "hang" time we will switch back to RX
@@ -396,7 +410,11 @@ static void *keyer_thread(void *arg) {
         // Do not decrement cwvox until zero here, otherwise
         // we won't enter the code 10 lines above that de-activates MOX.
         if (cwvox > 1) { cwvox--; }
-        if (cw_keyer_mode == KEYER_STRAIGHT) {       // Straight/External key or bug
+        if (external_straight_key) {
+          cw_key_down = 960000; // max. 20 sec to protect hardware
+          cw_key_up = 0;
+          key_state = STRAIGHT_EXTERNAL;
+        } else if (cw_keyer_mode == KEYER_STRAIGHT) { // Straight/External key or bug
           if (*kdot) {
             // "bug" mode: dot key activates automatic dots
             key_state = PREDOT;
@@ -422,6 +440,16 @@ static void *keyer_thread(void *arg) {
         // Wait for dash paddle being released in "straight key" mode.
         //
         if (! *kdash) {
+          cw_key_down = 0;
+          cw_key_up = 0;
+          key_state = CHECK;
+        }
+        break;
+      case STRAIGHT_EXTERNAL:
+        //
+        // Independent straight-key input, unaffected by paddle mode/reversal.
+        //
+        if (!external_straight_key) {
           cw_key_down = 0;
           cw_key_up = 0;
           key_state = CHECK;
@@ -549,6 +577,7 @@ static void *keyer_thread(void *arg) {
 
 void keyer_close(void) {
   t_print(".... closing keyer thread.\n");
+  external_straight_key = 0;
   running = 0;
   // keyer thread may be sleeping, so wake it up
 #ifdef __APPLE__
@@ -567,6 +596,7 @@ void keyer_close(void) {
 int keyer_init(void) {
   int rc;
   t_print(".... starting keyer thread.\n");
+  external_straight_key = 0;
 #ifdef __APPLE__
   cw_event = apple_sem(0);
 #else

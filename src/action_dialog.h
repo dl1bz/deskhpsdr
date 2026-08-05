@@ -20,3 +20,4 @@
 */
 
 extern int action_dialog(GtkWidget *parent, int filter, enum ACTION current);
+extern int action_dialog_with_hide(GtkWidget *parent, int filter, int hide_flags, enum ACTION current);

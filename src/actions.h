@@ -80,6 +80,7 @@ enum ACTION {
   CW_KEYER_KEYDOWN,
   CW_KEYER_PTT,
   CW_KEYER_SPEED,
+  CW_STRAIGHT_KEY,
   CW_ZERO_BEAT,
   DIV,
   DIV_GAIN,
@@ -254,7 +255,8 @@ enum ACTIONtype {
   MIDI_KEY = 1,             // MIDI Button (press event)
   MIDI_KNOB = 2,            // MIDI Knob   (value between 0 and 100)
   MIDI_WHEEL = 4,           // MIDI Wheel  (direction and speed)
-  TYPE_HIDE = 32
+  TYPE_HIDE = 32,
+  TYPE_HIDE_TOOLBAR = 64
 };
 
 typedef struct _action_table {
