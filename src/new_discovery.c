@@ -69,72 +69,35 @@ void print_device(int i) {
 
 void new_discovery(void) {
   struct ifaddrs *addrs, *ifa;
-  struct in_addr resolved_addr;
-  struct addrinfo hints, *res = NULL;
-  int i, is_local, rc;
-  int resolved = 0;
-  rc = getifaddrs(&addrs);
-  if (rc != 0) {
-    t_perror("new_discovery: getifaddrs failed");
-    return;
-  }
-  ifa = addrs;
-  while (ifa) {
-    g_main_context_iteration(NULL, 0);
-    //
-    // Sometimes there are many (virtual) interfaces, and some
-    // of them are very unlikely to offer a radio connection.
-    // These are skipped.
-    //
-    if (ifa->ifa_addr) {
-      if (
-              ifa->ifa_addr->sa_family == AF_INET
-              && (ifa->ifa_flags & IFF_UP) == IFF_UP
-              && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
-              && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
-              && strncmp("veth", ifa->ifa_name, 4)
-              && strncmp("dock", ifa->ifa_name, 4)
-              && strncmp("hass", ifa->ifa_name, 4)
-      ) {
-        new_discover(ifa, 1);   // send UDP broadcast packet to interface
+  int i;
+  int targeted = ipaddr_radio[0] != '\0';
+  if (targeted) {
+    new_discover(NULL, 2);
+  } else {
+    if (getifaddrs(&addrs) != 0) {
+      t_perror("new_discovery: getifaddrs failed");
+      return;
+    }
+    ifa = addrs;
+    while (ifa) {
+      g_main_context_iteration(NULL, 0);
+      if (ifa->ifa_addr) {
+        if (
+                ifa->ifa_addr->sa_family == AF_INET
+                && (ifa->ifa_flags & IFF_UP) == IFF_UP
+                && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
+                && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
+                && strncmp("veth", ifa->ifa_name, 4)
+                && strncmp("dock", ifa->ifa_name, 4)
+                && strncmp("hass", ifa->ifa_name, 4)
+        ) {
+          new_discover(ifa, 1);
+        }
       }
+      ifa = ifa->ifa_next;
     }
-    ifa = ifa->ifa_next;
+    freeifaddrs(addrs);
   }
-  freeifaddrs(addrs);
-  //
-  // If an IP address has already been "discovered" via a
-  // METIS broadcast package, it makes no sense to re-discover
-  // it via a routed UDP packet.
-  //
-  is_local = 0;
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_DGRAM;
-  rc = getaddrinfo(ipaddr_radio, NULL, &hints, &res);
-  if (rc == 0 && res != NULL) {
-    if (res->ai_family == AF_INET &&
-        res->ai_addrlen >= (socklen_t) sizeof(struct sockaddr_in)) {
-      struct sockaddr_in addr;
-      memcpy(&addr, res->ai_addr, sizeof(addr));
-      resolved_addr = addr.sin_addr;
-      resolved = 1;
-    }
-    freeaddrinfo(res);
-    res = NULL;
-  }
-  for (i = 0; i < devices; i++) {
-    if (discovered[i].protocol != NEW_PROTOCOL) {
-      continue;
-    }
-    if ((resolved &&
-         discovered[i].info.network.address.sin_addr.s_addr == resolved_addr.s_addr) ||
-        (!resolved &&
-         strcmp(inet_ntoa(discovered[i].info.network.address.sin_addr), ipaddr_radio) == 0)) {
-      is_local = 1;
-    }
-  }
-  if (!is_local) { new_discover(NULL, 2); }
   t_print("new_discovery found %d devices\n", devices);
   for (i = 0; i < devices; i++) {
     print_device(i);
@@ -217,47 +180,29 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
 #endif
     break;
   case 2: {
+    int is_direct;
     //
-    // prepare socket for sending an UDP packet to ipaddr_radio
+    // Send the Protocol 2 discovery packet to the configured radio address.
+    // Resolve the target and determine the actual local interface first, so
+    // the normal radio start path receives complete network information.
     //
-    struct addrinfo hints, *res = NULL;
-    int gai_rc;
-    interface_addr.sin_family = AF_INET;
-    interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    memset(&to_addr, 0, sizeof(to_addr));
-    to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(radio_port);
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-    gai_rc = getaddrinfo(ipaddr_radio, NULL, &hints, &res);
-    if (gai_rc == 0 && res != NULL) {
-      if (res->ai_family == AF_INET &&
-          res->ai_addrlen >= (socklen_t) sizeof(struct sockaddr_in)) {
-        struct sockaddr_in addr;
-        memcpy(&addr, res->ai_addr, sizeof(addr));
-        to_addr.sin_addr = addr.sin_addr;
-        freeaddrinfo(res);
-      } else {
-        freeaddrinfo(res);
-        t_print("new_discover: resolved address for %s is not valid AF_INET\n",
-                ipaddr_radio);
-        return;
-      }
-    } else {
-      if (res != NULL) {
-        freeaddrinfo(res);
-      }
-      if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
-        t_print("new_discover: cannot resolve radio address %s: %s\n",
-                ipaddr_radio, gai_strerror(gai_rc));
-        return;
-      }
+    if (discovery_resolve_target(ipaddr_radio, &to_addr, &interface_addr,
+                                 &interface_netmask, interface_name,
+                                 sizeof(interface_name), &is_direct) != 0) {
+      return;
     }
-    t_print("discover: looking for HPSDR device with IP %s\n", ipaddr_radio);
+    to_addr.sin_port = htons(radio_port);
+    t_print("new_discover: looking for HPSDR device at %s via %s address %s (%s)\n",
+            ipaddr_radio, interface_name, inet_ntoa(interface_addr.sin_addr),
+            is_direct ? "direct" : "routed");
     discovery_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (discovery_socket < 0) {
-      t_perror("discover: create socket failed for discovery_socket:");
+      t_perror("new_discover: create socket failed for discovery_socket:");
+      return;
+    }
+    if (bind(discovery_socket, (struct sockaddr *) &interface_addr, sizeof(interface_addr)) < 0) {
+      t_perror("new_discover: bind targeted discovery socket failed");
+      close(discovery_socket);
       return;
     }
   }
@@ -305,8 +250,9 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
       //
       memcpy((void *) &discovered[rc].info.network.address, (void *) &to_addr, sizeof(to_addr));
       discovered[rc].info.network.address_length = sizeof(to_addr);
-      g_strlcpy(discovered[rc].info.network.interface_name, "UDP", sizeof(discovered[rc].info.network.interface_name));
-      discovered[rc].use_routing = 1;
+      discovered[rc].use_routing =
+              ((to_addr.sin_addr.s_addr & interface_netmask.sin_addr.s_addr) !=
+               (interface_addr.sin_addr.s_addr & interface_netmask.sin_addr.s_addr));
     }
     break;
   }

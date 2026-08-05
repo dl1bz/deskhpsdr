@@ -31,6 +31,9 @@
 #include <arpa/inet.h>
 #include <sys/stat.h>
 #include <net/if.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <errno.h>
 
 #include "discovered.h"
 #include "old_discovery.h"
@@ -71,6 +74,109 @@ int active_device_index;
 int discover_only_stemlab = 0;
 
 int delayed_discovery(gpointer data);
+
+int discovery_resolve_target(const char *host,
+                             struct sockaddr_in *target,
+                             struct sockaddr_in *local_addr,
+                             struct sockaddr_in *netmask,
+                             char *ifname,
+                             size_t ifname_len,
+                             int *is_direct) {
+  struct addrinfo hints = {0};
+  struct addrinfo *result = NULL;
+  struct ifaddrs *addrs = NULL;
+  struct ifaddrs *ifa;
+  struct sockaddr_in route_target;
+  struct sockaddr_in route_local;
+  socklen_t route_local_len = sizeof(route_local);
+  int route_socket = -1;
+  int rc = -1;
+  if (host == NULL || host[0] == '\0' || target == NULL || local_addr == NULL ||
+      netmask == NULL || ifname == NULL || ifname_len == 0 || is_direct == NULL) {
+    errno = EINVAL;
+    return -1;
+  }
+  memset(target, 0, sizeof(*target));
+  memset(local_addr, 0, sizeof(*local_addr));
+  memset(netmask, 0, sizeof(*netmask));
+  memset(&route_target, 0, sizeof(route_target));
+  memset(&route_local, 0, sizeof(route_local));
+  ifname[0] = '\0';
+  *is_direct = 0;
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_DGRAM;
+  if (getaddrinfo(host, NULL, &hints, &result) != 0 || result == NULL) {
+    t_print("%s: cannot resolve target %s\n", __func__, host);
+    goto cleanup;
+  }
+  if (result->ai_addrlen < (socklen_t) sizeof(struct sockaddr_in)) {
+    t_print("%s: invalid AF_INET address for target %s\n", __func__, host);
+    goto cleanup;
+  }
+  memcpy(target, result->ai_addr, sizeof(*target));
+  target->sin_family = AF_INET;
+  route_target = *target;
+  route_target.sin_port = htons(radio_port);
+  route_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (route_socket < 0) {
+    t_perror("discovery_resolve_target: create route socket failed");
+    goto cleanup;
+  }
+  if (connect(route_socket, (struct sockaddr *) &route_target, sizeof(route_target)) < 0) {
+    t_perror("discovery_resolve_target: connect route socket failed");
+    goto cleanup;
+  }
+  if (getsockname(route_socket, (struct sockaddr *) &route_local, &route_local_len) < 0) {
+    t_perror("discovery_resolve_target: getsockname failed");
+    goto cleanup;
+  }
+  if (getifaddrs(&addrs) != 0) {
+    t_perror("discovery_resolve_target: getifaddrs failed");
+    goto cleanup;
+  }
+  for (ifa = addrs; ifa != NULL; ifa = ifa->ifa_next) {
+    struct sockaddr_in addr;
+    struct sockaddr_in mask;
+    if (ifa->ifa_addr == NULL || ifa->ifa_netmask == NULL ||
+        ifa->ifa_addr->sa_family != AF_INET ||
+        ifa->ifa_netmask->sa_family != AF_INET) {
+      continue;
+    }
+    /*
+     * sockaddr is permitted to have byte alignment. Copying avoids an
+     * alignment-increasing cast on platforms where sockaddr_in requires
+     * stricter alignment.
+     */
+    memcpy(&addr, ifa->ifa_addr, sizeof(addr));
+    memcpy(&mask, ifa->ifa_netmask, sizeof(mask));
+    if (addr.sin_addr.s_addr != route_local.sin_addr.s_addr) {
+      continue;
+    }
+    *local_addr = addr;
+    local_addr->sin_port = htons(0);
+    *netmask = mask;
+    g_strlcpy(ifname, ifa->ifa_name, ifname_len);
+    *is_direct = ((target->sin_addr.s_addr & mask.sin_addr.s_addr) ==
+                  (addr.sin_addr.s_addr & mask.sin_addr.s_addr));
+    rc = 0;
+    break;
+  }
+  if (rc != 0) {
+    t_print("%s: no interface found for local address %s\n",
+            __func__, inet_ntoa(route_local.sin_addr));
+  }
+cleanup:
+  if (addrs != NULL) {
+    freeifaddrs(addrs);
+  }
+  if (route_socket >= 0) {
+    close(route_socket);
+  }
+  if (result != NULL) {
+    freeaddrinfo(result);
+  }
+  return rc;
+}
 
 static gboolean close_cb(void) {
   // There is nothing to clean up

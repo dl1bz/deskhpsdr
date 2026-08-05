@@ -19,6 +19,9 @@
 *
 */
 
+#include <stddef.h>
+#include <netinet/in.h>
+
 extern int  discover_only_stemlab;
 
 extern int delayed_discovery(gpointer data);
@@ -26,3 +29,11 @@ extern void discovery(void);
 extern char *ipaddr_radio;
 extern int radio_port;
 extern int active_device_index;
+
+int discovery_resolve_target(const char *host,
+                             struct sockaddr_in *target,
+                             struct sockaddr_in *local_addr,
+                             struct sockaddr_in *netmask,
+                             char *ifname,
+                             size_t ifname_len,
+                             int *is_direct);

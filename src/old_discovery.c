@@ -141,42 +141,34 @@ static void discover(struct ifaddrs* iface, int discflag) {
     }
 #endif
     break;
-  case 2:
+  case 2: {
+    int is_direct;
     //
-    // Send METIS detection packet via UDP to ipaddr_radio
-    // To be able to connect later, we have to specify INADDR_ANY
-    // Support both IP addresses and hostnames via getaddrinfo()
+    // Send METIS detection packet via UDP to the configured radio address.
+    // Resolve the target and determine the actual local interface first, so
+    // the normal radio start path receives complete network information.
     //
-    interface_addr.sin_family = AF_INET;
-    interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    memset(&to_addr, 0, sizeof(to_addr));
-    to_addr.sin_family = AF_INET;
-    to_addr.sin_port = htons(radio_port);
-    // Try to resolve hostname or IP address
-    struct addrinfo hints, *result = NULL;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-    if (getaddrinfo(ipaddr_radio, NULL, &hints, &result) == 0 && result != NULL) {
-      // Successfully resolved
-      memcpy(&to_addr, result->ai_addr, sizeof(struct sockaddr_in));
-      to_addr.sin_port = htons(radio_port);
-      freeaddrinfo(result);
-      t_print("discover: resolved %s to %s\n", ipaddr_radio, inet_ntoa(to_addr.sin_addr));
-    } else {
-      // Fallback to inet_aton for backward compatibility
-      if (inet_aton(ipaddr_radio, &to_addr.sin_addr) == 0) {
-        t_print("discover: failed to resolve %s\n", ipaddr_radio);
-        return;
-      }
+    if (discovery_resolve_target(ipaddr_radio, &to_addr, &interface_addr,
+                                 &interface_netmask, interface_name,
+                                 sizeof(interface_name), &is_direct) != 0) {
+      return;
     }
-    t_print("discover: looking for HPSDR device at %s\n", ipaddr_radio);
+    to_addr.sin_port = htons(radio_port);
+    t_print("discover: looking for HPSDR device at %s via %s address %s (%s)\n",
+            ipaddr_radio, interface_name, inet_ntoa(interface_addr.sin_addr),
+            is_direct ? "direct" : "routed");
     discovery_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (discovery_socket < 0) {
       t_perror("discover: create socket failed for discovery_socket:");
       return;
     }
+    if (bind(discovery_socket, (struct sockaddr *) &interface_addr, sizeof(interface_addr)) < 0) {
+      t_perror("discover: bind targeted discovery socket failed:");
+      close(discovery_socket);
+      return;
+    }
     break;
+  }
   case 3:
     //
     // Send METIS detection packet via TCP to ipaddr_radio
@@ -297,8 +289,9 @@ static void discover(struct ifaddrs* iface, int discflag) {
       //
       memcpy((void *) &discovered[rc].info.network.address, (void *) &to_addr, sizeof(to_addr));
       discovered[rc].info.network.address_length = sizeof(to_addr);
-      g_strlcpy(discovered[rc].info.network.interface_name, "UDP", sizeof(discovered[rc].info.network.interface_name));
-      discovered[rc].use_routing = 1;
+      discovered[rc].use_routing =
+              ((to_addr.sin_addr.s_addr & interface_netmask.sin_addr.s_addr) !=
+               (interface_addr.sin_addr.s_addr & interface_netmask.sin_addr.s_addr));
     }
     break;
   case 3:
@@ -517,7 +510,8 @@ static int is_macos(void) {
 
 void old_discovery(void) {
   struct ifaddrs *addrs, *ifa;
-  int i, is_local;
+  int i, is_local = 0;
+  int targeted = ipaddr_radio[0] != '\0';
   int ist_macos, ist_raspi;
   t_print("old_discovery\n");
   //
@@ -525,7 +519,7 @@ void old_discovery(void) {
   // we know that it can be reached by a specific IP address
   // and need no discovery any more
   //
-  if (!discover_only_stemlab) {
+  if (!discover_only_stemlab && !targeted) {
     getifaddrs(&addrs);
     ifa = addrs;
     while (ifa) {
@@ -560,18 +554,13 @@ void old_discovery(void) {
     freeifaddrs(addrs);
   }
   //
-  // If an IP address has already been "discovered" via a
-  // METIS broadcast package, it makes no sense to re-discover
-  // it via a routed UDP packet.
+  // A configured radio address selects targeted discovery. In this mode no
+  // broadcast is sent; both protocol discovery implementations probe exactly
+  // the configured host.
   //
-  is_local = 0;
-  for (i = 0; i < devices; i++) {
-    if (!strncmp(inet_ntoa(discovered[i].info.network.address.sin_addr), ipaddr_radio, 20)
-        && discovered[i].protocol == ORIGINAL_PROTOCOL) {
-      is_local = 1;
-    }
+  if (targeted) {
+    discover(NULL, 2);
   }
-  if (!is_local) { discover(NULL, 2); }
   // TCP discovery disabled for remote connections - uncomment if needed
   // discover(NULL, 3);
   t_print("discovery found %d devices\n", devices);
