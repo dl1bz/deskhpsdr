@@ -926,7 +926,10 @@ int main(int argc, char **argv) {
   deskhpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(deskhpsdr, "activate", G_CALLBACK(activate_deskhpsdr), NULL);
   static const GActionEntry app_actions[] = {
-    { "quit", quit_action_cb, NULL, NULL, NULL }
+    {
+      .name = "quit",
+      .activate = quit_action_cb
+    }
   };
   const gchar *quit_accels[] = { "<Primary>q", NULL };
   g_action_map_add_action_entries(G_ACTION_MAP(deskhpsdr), app_actions, G_N_ELEMENTS(app_actions), NULL);
