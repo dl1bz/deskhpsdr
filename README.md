@@ -11,7 +11,8 @@ But there wasn't, isn't and won't be an interactive and thereby direct collabora
 
 ## The concept behind - what it's make for and what it isn't for
 
-My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600. SoC like the Raspberry Pi or similar devices are not within the scope in development of this application. In the case mini-display < 1280x600 resolution you need change to piHPSDR, deskHPSDR don't support this.
+My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600.<br>
+Single-board computers such as the Raspberry Pi and similar platforms are no longer within the scope of deskHPSDR development. Hardware-specific features such as GPIO are not available on standard desktop systems. Therefore, I don't want to add functionality that is only usable by a small subset of users. My goal is to keep the application focused on features that are available and useful across all supported desktop platforms. That means there will be no exceptions.
 
 **deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Soapy SDR and GPIO code and support is official REMOVED now.**
 
@@ -26,8 +27,8 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Hamlib                         | supported (with own included rigctld) ✅      |                |
 | OpenHPSDR protocol 1           | supported ✅                                  |                |
 | OpenHPSDR protocol 2           | supported ✅                                  |                |
-| GPIO                           | not supported (since V2.7) ❌                 | code removed   |
-| Soapy API / Soapy protocol     | not supported (since V2.7) ❌                 | code removed   |
+| GPIO                           | GPIO code removed since V2.7 ❌               |                |
+| Soapy API / Soapy protocol     | Soapy code removed since V2.7 ❌              |                |
 | Hermes Lite 2 N2ADR IO board   | supported ✅                                  |                |
 | Use WDSP library ?             | yes, current 2.00 ✅                          |                |
 | Pure Signal / Pre-Distortion   | supported up to 192k samplingrate ✅          |                |
