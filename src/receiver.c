@@ -2205,11 +2205,18 @@ void rx_set_noise(const RECEIVER *rx) {
   SetEXTNOBThreshold(rx->id, rx->nb_thresh);
   SetEXTNOBRun(rx->id, (rx->nb == 2));
   //
+  // Disable all noise-reduction engines before updating their parameters.
+  // This avoids transient overlap when switching between NR types.
+  //
+  SetRXAANRRun(rx->id, 0);
+  SetRXAEMNRRun(rx->id, 0);
+  SetRXARNNRRun(rx->id, 0);
+  SetRXASBNRRun(rx->id, 0);
+  //
   // c) NR
   //
   SetRXAANRVals(rx->id, 64, 16, 16e-4, 10e-7);
   SetRXAANRPosition(rx->id, rx->nr_agc);
-  SetRXAANRRun(rx->id, nr_allowed && (rx->nr == 1));
   //
   // d) NR2
   //
@@ -2224,7 +2231,6 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRpost2Rate(rx->id, (double) rx->nr2_post_rate);
   SetRXAEMNRpost2Run(rx->id, rx->nr2_post);
   SetRXAEMNRaeRun(rx->id, rx->nr2_ae);  // ArtifactElminiation ON
-  SetRXAEMNRRun(rx->id, nr_allowed && (rx->nr == 2));
   //
   // e) ANF
   //
@@ -2238,16 +2244,36 @@ void rx_set_noise(const RECEIVER *rx) {
   //
   // g) NR3
   //
-  SetRXARNNRRun(rx->id, nr_allowed && (rx->nr == 3));
+  // NR3 has no additional parameters here.
   //
-  // NR4
+  // h) NR4
   //
   SetRXASBNRreductionAmount(rx->id,     rx->nr4_reduction_amount);
   SetRXASBNRsmoothingFactor(rx->id,     rx->nr4_smoothing_factor);
   SetRXASBNRwhiteningFactor(rx->id,     rx->nr4_whitening_factor);
   SetRXASBNRnoiseRescale(rx->id,        rx->nr4_noise_rescale);
   SetRXASBNRpostFilterThreshold(rx->id, rx->nr4_post_filter_threshold);
-  SetRXASBNRRun(rx->id, nr_allowed && (rx->nr == 4));
+  //
+  // Enable exactly the selected noise-reduction engine.
+  //
+  if (nr_allowed) {
+    switch (rx->nr) {
+    case 1:
+      SetRXAANRRun(rx->id, 1);
+      break;
+    case 2:
+      SetRXAEMNRRun(rx->id, 1);
+      break;
+    case 3:
+      SetRXARNNRRun(rx->id, 1);
+      break;
+    case 4:
+      SetRXASBNRRun(rx->id, 1);
+      break;
+    default:
+      break;
+    }
+  }
 }
 
 void rx_set_offset(const RECEIVER *rx, long long offset) {
