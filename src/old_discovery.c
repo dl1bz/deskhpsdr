@@ -249,6 +249,25 @@ static void discover(struct ifaddrs* iface, int discflag) {
   optval = 1;
   setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
   setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+  //
+  // A Protocol 1 radio may still be streaming if a previous client
+  // terminated without sending the METIS STOP command. Stop an existing
+  // UDP stream before starting discovery so stream packets cannot keep the
+  // discovery receive loop busy indefinitely. Do not do this for TCP
+  // discovery because METIS STOP closes the TCP connection.
+  //
+  if (discflag == 1 || discflag == 2) {
+    memset(buffer, 0, 64);
+    buffer[0] = 0xEF;
+    buffer[1] = 0xFE;
+    buffer[2] = 0x04;
+    buffer[3] = 0x00;
+    t_print("discover: sending METIS STOP before P1 UDP discovery\n");
+    if (sendto(discovery_socket, buffer, 64, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
+      t_perror("discover: sendto socket failed for pre-discovery METIS STOP:");
+    }
+    g_usleep(20000);
+  }
   rc = devices;
   // start a receive thread to collect discovery response packets
   discover_thread_id = g_thread_new("old discover receive", discover_receive_thread, NULL);
