@@ -861,7 +861,7 @@ void audio_get_cards(void) {
     }
     snd_ctl_close(handle);
   }
-  // look for dmix and dsnoop
+  // look for selected virtual ALSA devices (dmix, bluealsa and optionally dsnoop)
   void **hints, **n;
   char *name, *descr, *io;
   hints = NULL;
@@ -879,21 +879,28 @@ void audio_get_cards(void) {
       n++;
       continue;
     }
+    const char *output_prefix = NULL;
     if (strncmp("dmix:", name, 5) == 0) {
+      output_prefix = "DM:";
+    } else if (strncmp("bluealsa", name, 8) == 0
+               && (io == NULL || strcmp(io, "Input") != 0)) {
+      // BlueALSA may expose input-only hints as well. Honor IOID when present.
+      output_prefix = "BT:";
+    }
+    if (output_prefix != NULL) {
       if (n_output_devices < MAX_AUDIO_DEVICES) {
+        const char *source_descr = descr ? descr : name;
+        char *newline;
         output_devices[n_output_devices].name = g_strdup(name);
-        output_devices[n_output_devices].description = g_strdup(descr ? descr : name);
-        if (descr != NULL) {
-          for (i = 0; i < (int) strlen(output_devices[n_output_devices].description); i++) {
-            if (output_devices[n_output_devices].description[i] == '\n') {
-              output_devices[n_output_devices].description[i] = '\0';
-              break;
-            }
-          }
+        output_devices[n_output_devices].description =
+                g_strdup_printf("%s%s", output_prefix, source_descr);
+        newline = strchr(output_devices[n_output_devices].description, '\n');
+        if (newline != NULL) {
+          *newline = '\0';
         }
         output_devices[n_output_devices].index = 0; // not used
         n_output_devices++;
-        t_print("output_device: name=%s descr=%s\n", name, descr ? descr : "(null)");
+        t_print("output_device: name=%s descr=%s\n", name, source_descr);
       }
 #ifdef INCLUDE_SNOOP
     } else if (strncmp("dsnoop:", name, 6) == 0) {
