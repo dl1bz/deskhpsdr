@@ -7,7 +7,7 @@ For compiling under macOS we need the following prerequisites:
 
 1.0 macOS version
 
-The required macOS version for deskHPSDR is >= 13.0, older versions are not supported.
+The required macOS version for deskHPSDR is >= 15.0, older versions are not supported.
 
 1.1 X Window manager for macOS
 
