@@ -1340,6 +1340,7 @@ void StartConfigSave(void) {
   SetPropI0("iaru_region", iaru_region);
   SetPropI0("display_debug", display_debug);
   SetPropI0("display_sysinfo", display_sysinfo);
+  SetPropI0("log_debug", log_debug);
   SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     char name[32];
@@ -1359,6 +1360,7 @@ void StartConfigLoad(void) {
   GetPropI0("iaru_region", iaru_region);
   GetPropI0("display_debug", display_debug);
   GetPropI0("display_sysinfo", display_sysinfo);
+  GetPropI0("log_debug", log_debug);
   GetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   p2_angelia_ddc0_map = p2_angelia_ddc0_map ? 1 : 0;
   for (int i = 0; i < P2_MAX_DDCS; i++) {
@@ -1375,6 +1377,9 @@ void StartConfigLoad(void) {
   }
   if (display_sysinfo < 0 || display_sysinfo > 1) {
     display_sysinfo = 0;
+  }
+  if (log_debug < 0 || log_debug > 1) {
+    log_debug = 0;
   }
   clearProperties();
 }

@@ -45,9 +45,9 @@
 
 static GMutex t_print_mutex;  // globaler Mutex
 
-void t_print(const gchar *format, ...) {
-  va_list args;
-  va_start(args, format);
+extern int log_debug;
+
+static void v_t_print(const gchar *format, va_list args) {
   struct timespec ts;
   double now;
   static double starttime;
@@ -84,6 +84,23 @@ void t_print(const gchar *format, ...) {
   //
   vsnprintf(line, sizeof(line), format, args);
   g_print("%s %s", time_str, line);
+}
+
+void t_print(const gchar *format, ...) {
+  va_list args;
+  va_start(args, format);
+  v_t_print(format, args);
+  va_end(args);
+}
+
+void d_print(const gchar *format, ...) {
+  if (!log_debug) {
+    return;
+  }
+
+  va_list args;
+  va_start(args, format);
+  v_t_print(format, args);
   va_end(args);
 }
 

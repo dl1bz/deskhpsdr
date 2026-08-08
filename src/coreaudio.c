@@ -20,6 +20,9 @@
 #include "tci_audio.h"
 
 #define COREAUDIO_SAMPLE_RATE 48000.0
+#define COREAUDIO_OUTPUT_BUFFER_TARGET 128
+#define COREAUDIO_INPUT_BUFFER_TARGET 256
+#define COREAUDIO_TCI_MONITOR_BUFFER_TARGET 128
 
 typedef struct {
   AudioComponentInstance unit;
@@ -159,6 +162,104 @@ int coreaudio_get_cards(void) {
 }
 
 
+
+static UInt32 coreaudio_tune_buffer_frames(AudioDeviceID device,
+                                           UInt32 target,
+                                           const char *role,
+                                           const char *device_name) {
+  AudioObjectPropertyAddress size_address = {
+    kAudioDevicePropertyBufferFrameSize,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  AudioObjectPropertyAddress range_address = {
+    kAudioDevicePropertyBufferFrameSizeRange,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  UInt32 current = 0;
+  UInt32 actual = 0;
+  UInt32 requested = target;
+  UInt32 size = sizeof(current);
+  AudioValueRange range = {0.0, 0.0};
+  UInt32 range_size = sizeof(range);
+  OSStatus status_current;
+  OSStatus status_range;
+  OSStatus status_set = noErr;
+  OSStatus status_actual;
+
+  status_current = AudioObjectGetPropertyData(device, &size_address, 0, NULL,
+                                              &size, &current);
+
+  status_range = AudioObjectGetPropertyData(device, &range_address, 0, NULL,
+                                            &range_size, &range);
+  if (status_range == noErr) {
+    UInt32 min_frames = (UInt32) range.mMinimum;
+    UInt32 max_frames = (UInt32) range.mMaximum;
+
+    if (requested < min_frames) {
+      requested = min_frames;
+    }
+    if (requested > max_frames) {
+      requested = max_frames;
+    }
+  }
+
+  Boolean settable = false;
+  OSStatus status_settable =
+    AudioObjectIsPropertySettable(device, &size_address, &settable);
+
+  if (status_settable == noErr && settable) {
+    status_set = AudioObjectSetPropertyData(device, &size_address, 0, NULL,
+                                            sizeof(requested), &requested);
+  } else {
+    status_set = status_settable != noErr ? status_settable : kAudioHardwareUnsupportedOperationError;
+  }
+
+  size = sizeof(actual);
+  status_actual = AudioObjectGetPropertyData(device, &size_address, 0, NULL,
+                                             &size, &actual);
+  if (status_actual != noErr) {
+    actual = status_current == noErr ? current : 0;
+  }
+
+  if (status_range == noErr) {
+    if (status_set == noErr) {
+      t_print("%s: CoreAudio %s buffer frames device=%s id=%u "
+              "range=%.0f..%.0f current=%u target=%u requested=%u actual=%u\n",
+              __func__, role, device_name, (unsigned int) device,
+              range.mMinimum, range.mMaximum,
+              status_current == noErr ? current : 0,
+              target, requested, actual);
+    } else {
+      t_print("%s: CoreAudio %s buffer frames device=%s id=%u "
+              "range=%.0f..%.0f current=%u target=%u requested=%u actual=%u "
+              "set_status=%d (keeping device value)\n",
+              __func__, role, device_name, (unsigned int) device,
+              range.mMinimum, range.mMaximum,
+              status_current == noErr ? current : 0,
+              target, requested, actual, (int) status_set);
+    }
+  } else {
+    if (status_set == noErr) {
+      t_print("%s: CoreAudio %s buffer frames device=%s id=%u "
+              "range=unknown current=%u target=%u requested=%u actual=%u\n",
+              __func__, role, device_name, (unsigned int) device,
+              status_current == noErr ? current : 0,
+              target, requested, actual);
+    } else {
+      t_print("%s: CoreAudio %s buffer frames device=%s id=%u "
+              "range=unknown current=%u target=%u requested=%u actual=%u "
+              "set_status=%d (keeping device value)\n",
+              __func__, role, device_name, (unsigned int) device,
+              status_current == noErr ? current : 0,
+              target, requested, actual, (int) status_set);
+    }
+  }
+
+  return actual;
+}
+
 static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
   AudioObjectPropertyAddress address = {
     kAudioHardwarePropertyDevices,
@@ -282,6 +383,10 @@ void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels
     t_print("%s: CurrentDevice failed status=%d\n", __func__, (int) status);
     goto fail;
   }
+  coreaudio_tune_buffer_frames(device,
+                               COREAUDIO_OUTPUT_BUFFER_TARGET,
+                               "output",
+                               device_name);
   AudioStreamBasicDescription format;
   memset(&format, 0, sizeof(format));
   format.mSampleRate = COREAUDIO_SAMPLE_RATE;
@@ -449,6 +554,10 @@ void *coreaudio_tci_monitor_open(const char *device_name, int *channels) {
   status = AudioUnitSetProperty(monitor->unit, kAudioOutputUnitProperty_CurrentDevice,
                                 kAudioUnitScope_Global, 0, &device, sizeof(device));
   if (status != noErr) { goto fail; }
+  coreaudio_tune_buffer_frames(device,
+                               COREAUDIO_TCI_MONITOR_BUFFER_TARGET,
+                               "TCI monitor",
+                               device_name);
   AudioStreamBasicDescription format;
   memset(&format, 0, sizeof(format));
   format.mSampleRate = TCI_AUDIO_SAMPLE_RATE;
@@ -629,6 +738,10 @@ void *coreaudio_input_open(const char *device_name) {
     t_print("%s: CurrentDevice failed status=%d\n", __func__, (int) status);
     goto fail;
   }
+  coreaudio_tune_buffer_frames(device,
+                               COREAUDIO_INPUT_BUFFER_TARGET,
+                               "input",
+                               device_name);
   AudioStreamBasicDescription format;
   memset(&format, 0, sizeof(format));
   format.mSampleRate = COREAUDIO_SAMPLE_RATE;

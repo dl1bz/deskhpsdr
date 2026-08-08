@@ -45,6 +45,7 @@ extern int iaru_region;
 
 extern int display_debug;
 extern int display_sysinfo;
+extern int log_debug;
 
 extern int p2_angelia_ddc0_map;
 

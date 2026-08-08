@@ -102,8 +102,13 @@ guint64 audio_get_xrun_count(void) {
 static float *mic_ring_buffer = NULL;
 static atomic_int mic_ring_outpt;
 static atomic_int mic_ring_inpt;
+static atomic_int mic_ring_reset_pending;
 static atomic_int mic_ring_reset_frames;
 static atomic_int mic_ring_silence_frames;
+static atomic_uint mic_ring_diag_generation;
+static atomic_uint mic_ring_underruns;
+static atomic_uint mic_ring_overruns;
+static atomic_uint cw_ring_diag_underruns;
 
 //
 // Request a ring reset without modifying the consumer-owned output pointer.
@@ -118,7 +123,8 @@ static void local_mic_ring_request_reset(int silence_frames) {
   if (silence_frames >= MY_RING_BUFFER_SIZE) {
     silence_frames = MY_RING_BUFFER_SIZE - 1;
   }
-  atomic_store_explicit(&mic_ring_reset_frames, silence_frames, memory_order_release);
+  atomic_store_explicit(&mic_ring_reset_frames, silence_frames, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_reset_pending, 1, memory_order_release);
 }
 
 static inline void local_mic_ring_push(float sample) {
@@ -129,6 +135,7 @@ static inline void local_mic_ring_push(float sample) {
     newpt = 0;
   }
   if (newpt == outpt) {
+    atomic_fetch_add_explicit(&mic_ring_overruns, 1U, memory_order_relaxed);
     return;
   }
   mic_ring_buffer[inpt] = sample;
@@ -148,11 +155,12 @@ static inline float local_mic_ring_pop(void) {
   // Flush everything queued before the reset request and provide the desired
   // silence locally, while the producer can already refill the ring.
   //
-  int reset_frames = atomic_exchange_explicit(&mic_ring_reset_frames, 0, memory_order_acq_rel);
-  if (reset_frames > 0) {
+  if (atomic_exchange_explicit(&mic_ring_reset_pending, 0, memory_order_acq_rel)) {
+    int reset_frames = atomic_load_explicit(&mic_ring_reset_frames, memory_order_relaxed);
     inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
     atomic_store_explicit(&mic_ring_outpt, inpt, memory_order_release);
     atomic_store_explicit(&mic_ring_silence_frames, reset_frames, memory_order_relaxed);
+    atomic_fetch_add_explicit(&mic_ring_diag_generation, 1U, memory_order_release);
   }
   int silence_frames = atomic_load_explicit(&mic_ring_silence_frames, memory_order_relaxed);
   if (silence_frames > 0) {
@@ -162,6 +170,7 @@ static inline float local_mic_ring_pop(void) {
   outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_relaxed);
   inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
   if (outpt == inpt) {
+    atomic_fetch_add_explicit(&mic_ring_underruns, 1U, memory_order_relaxed);
     return 0.0f;
   }
   sample = mic_ring_buffer[outpt];
@@ -241,8 +250,11 @@ int audio_open_input(void) {
   }
   atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_reset_pending, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_reset_frames, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
   void *handle = coreaudio_input_open(transmitter->microphone_name);
   if (handle == NULL) {
@@ -347,6 +359,9 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
         atomic_store_explicit(&rx->local_audio_buffer_outpt, rx_out, memory_order_release);
       } else if (st_in == st_out) {
         ring_underrun = TRUE;
+        if (rx->local_audio_cw_active) {
+          atomic_fetch_add_explicit(&cw_ring_diag_underruns, 1U, memory_order_relaxed);
+        }
       }
       if (st_in != st_out) {
         ring_had_audio = TRUE;
@@ -420,6 +435,14 @@ void audio_process_local_mic_input(const float *samples, unsigned int frames) {
       local_mic_ring_request_reset(960);
     }
   } else {
+    if (!last_was_tx) {
+      //
+      // RX -> TX: discard microphone samples accumulated while receiving.
+      // Do not add silence here; TX should start with the freshest available
+      // CoreAudio input samples.
+      //
+      local_mic_ring_request_reset(384);
+    }
     last_was_tx = 1;
   }
   for (unsigned int i = 0; i < frames; i++) {
@@ -432,7 +455,64 @@ void audio_process_local_mic_input(const float *samples, unsigned int frames) {
 // from ring buffer
 //
 float audio_get_next_mic_sample(void) {
-  return local_mic_ring_pop();
+  static gint64 next_log_us = 0;
+  static int min_queued = MY_RING_BUFFER_SIZE;
+  static int max_queued = 0;
+  static unsigned int diag_generation_seen = 0;
+  float sample = local_mic_ring_pop();
+
+  if (!radio_is_transmitting()) {
+    next_log_us = 0;
+    min_queued = MY_RING_BUFFER_SIZE;
+    max_queued = 0;
+    diag_generation_seen =
+      atomic_load_explicit(&mic_ring_diag_generation, memory_order_acquire);
+    atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
+    return sample;
+  }
+
+  unsigned int diag_generation =
+    atomic_load_explicit(&mic_ring_diag_generation, memory_order_acquire);
+  if (diag_generation != diag_generation_seen) {
+    diag_generation_seen = diag_generation;
+    next_log_us = 0;
+    min_queued = MY_RING_BUFFER_SIZE;
+    max_queued = 0;
+    atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
+  }
+
+  int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);
+  int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
+  int queued = inpt - outpt;
+  if (queued < 0) {
+    queued += MY_RING_BUFFER_SIZE;
+  }
+  if (queued < min_queued) {
+    min_queued = queued;
+  }
+  if (queued > max_queued) {
+    max_queued = queued;
+  }
+
+  gint64 now_us = g_get_monotonic_time();
+  if (next_log_us == 0) {
+    next_log_us = now_us + G_USEC_PER_SEC;
+  } else if (now_us >= next_log_us) {
+    unsigned int underruns = atomic_exchange_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
+    unsigned int overruns = atomic_exchange_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
+    d_print("CoreAudio MIC ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u overruns=%u\n",
+            queued, (double) queued * 1000.0 / 48000.0,
+            min_queued, (double) min_queued * 1000.0 / 48000.0,
+            max_queued, (double) max_queued * 1000.0 / 48000.0,
+            underruns, overruns);
+    min_queued = MY_RING_BUFFER_SIZE;
+    max_queued = 0;
+    next_log_us = now_us + G_USEC_PER_SEC;
+  }
+
+  return sample;
 }
 
 //
@@ -518,8 +598,11 @@ void audio_close_input(void) {
   }
   atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_reset_pending, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_reset_frames, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
 }
 
@@ -632,6 +715,12 @@ int audio_write(RECEIVER *rx, float left, float right) {
 // Thus we have an active latency management.
 //
 int cw_audio_write(RECEIVER *rx, float sample) {
+  static gint64 diag_next_log_us = 0;
+  static int diag_min_avail = MY_RING_BUFFER_SIZE;
+  static int diag_max_avail = 0;
+  static unsigned int diag_low_corrections = 0;
+  static unsigned int diag_high_corrections = 0;
+
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->coreaudio_output_handle != NULL && rx->sidetone_buffer != NULL) {
     static int count = 0;
@@ -651,13 +740,25 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       outpt = 0;
       avail = CW_LAT_TARGET;
       count = 0;
+      diag_next_log_us = 0;
+      diag_min_avail = MY_RING_BUFFER_SIZE;
+      diag_max_avail = 0;
+      diag_low_corrections = 0;
+      diag_high_corrections = 0;
+      atomic_store_explicit(&cw_ring_diag_underruns, 0U, memory_order_relaxed);
       rx->local_audio_cw_active = 1;
     }
     if (sample != 0.0f) { count = 0; }
     if (++count >= 16) {
       count = 0;
-      if (avail > CW_LAT_HIGH) { adjust = 2; }
-      if (avail < CW_LAT_LOW) { adjust = 1; }
+      if (avail > CW_LAT_HIGH) {
+        adjust = 2;
+        diag_high_corrections++;
+      }
+      if (avail < CW_LAT_LOW) {
+        adjust = 1;
+        diag_low_corrections++;
+      }
     }
     if (adjust != 2) {
       int oldpt = inpt;
@@ -678,6 +779,31 @@ int cw_audio_write(RECEIVER *rx, float sample) {
           }
         }
       }
+    }
+
+    inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_relaxed);
+    outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
+    avail = inpt - outpt;
+    if (avail < 0) { avail += MY_RING_BUFFER_SIZE; }
+    if (avail < diag_min_avail) { diag_min_avail = avail; }
+    if (avail > diag_max_avail) { diag_max_avail = avail; }
+
+    gint64 diag_now_us = g_get_monotonic_time();
+    if (diag_next_log_us == 0) {
+      diag_next_log_us = diag_now_us + G_USEC_PER_SEC;
+    } else if (diag_now_us >= diag_next_log_us) {
+      unsigned int diag_underruns =
+        atomic_exchange_explicit(&cw_ring_diag_underruns, 0U, memory_order_relaxed);
+      d_print("CoreAudio CW ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u low_corr=%u high_corr=%u\n",
+              avail, (double) avail * 1000.0 / 48000.0,
+              diag_min_avail, (double) diag_min_avail * 1000.0 / 48000.0,
+              diag_max_avail, (double) diag_max_avail * 1000.0 / 48000.0,
+              diag_underruns, diag_low_corrections, diag_high_corrections);
+      diag_min_avail = MY_RING_BUFFER_SIZE;
+      diag_max_avail = 0;
+      diag_low_corrections = 0;
+      diag_high_corrections = 0;
+      diag_next_log_us = diag_now_us + G_USEC_PER_SEC;
     }
   }
   g_mutex_unlock(&rx->local_audio_mutex);

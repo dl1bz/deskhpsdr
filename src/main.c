@@ -92,6 +92,7 @@ int p2_angelia_ddc0_map = 0;
 
 int display_debug = 0;
 int display_sysinfo = 0;
+int log_debug = 0;
 
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;
