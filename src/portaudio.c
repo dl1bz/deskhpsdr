@@ -57,6 +57,9 @@
 #include "tci_audio.h"
 
 static PaStream *record_handle = NULL;
+#ifdef NATIVE_COREAUDIO_INPUT
+static void *coreaudio_input_handle = NULL;
+#endif
 
 int n_input_devices;
 AUDIO_DEVICE input_devices[MAX_AUDIO_DEVICES];
@@ -296,6 +299,51 @@ int pa_tci_monitor_cb(const void *, void *, unsigned long, const PaStreamCallbac
                       void *);
 
 int audio_open_input(void) {
+#ifdef NATIVE_COREAUDIO_INPUT
+  t_print("%s: native CoreAudio call audio_open_input\n", __func__);
+
+  if (!can_transmit) {
+    return -1;
+  }
+  if (transmitter == NULL || transmitter->microphone_name[0] == '\0') {
+    return -1;
+  }
+
+  g_mutex_lock(&audio_mutex);
+  if (coreaudio_input_handle != NULL || mic_ring_buffer != NULL) {
+    g_mutex_unlock(&audio_mutex);
+    return 0;
+  }
+
+  mic_ring_buffer = (float *) g_new(float, MY_RING_BUFFER_SIZE);
+  if (mic_ring_buffer == NULL) {
+    g_mutex_unlock(&audio_mutex);
+    t_print("%s: alloc buffer failed.\n", __func__);
+    return -1;
+  }
+  atomic_init(&mic_ring_outpt, 0);
+  atomic_init(&mic_ring_inpt, 0);
+  g_mutex_unlock(&audio_mutex);
+
+  void *handle = coreaudio_input_open(transmitter->microphone_name);
+  if (handle == NULL) {
+    g_mutex_lock(&audio_mutex);
+    g_free(mic_ring_buffer);
+    mic_ring_buffer = NULL;
+    atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
+    g_mutex_unlock(&audio_mutex);
+    return -1;
+  }
+
+  g_mutex_lock(&audio_mutex);
+  coreaudio_input_handle = handle;
+  g_mutex_unlock(&audio_mutex);
+
+  t_print("%s: native CoreAudio input name=%s\n", __func__, transmitter->microphone_name);
+  return 0;
+#else
+
   t_print("%s: PORTAUDIO call audio_open_input\n", __func__);
   PaError err;
   PaStreamParameters inputParameters;
@@ -378,7 +426,9 @@ int audio_open_input(void) {
   //
   g_mutex_unlock(&audio_mutex);
   return 0;
+#endif
 }
+
 
 //
 // PortAudio call-back function for local TCI audio monitor output
@@ -649,46 +699,49 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
 //
 // PortAudio call-back function for Audio input
 //
+void audio_process_local_mic_input(const float *samples, unsigned int frames) {
+  static int last_was_tx = 0;
+
+  if (samples == NULL || mic_ring_buffer == NULL) {
+    return;
+  }
+
+  //
+  // Normally there is a slight mis-match between the 48kHz sample
+  // rate of the microphone device and the 48kHz rate of the HPSDR
+  // device. Keep the existing TX/RX transition reset behaviour.
+  //
+  if (!radio_is_transmitting()) {
+    if (last_was_tx) {
+      last_was_tx = 0;
+      local_mic_ring_reset(960);
+    }
+  } else {
+    last_was_tx = 1;
+  }
+
+  for (unsigned int i = 0; i < frames; i++) {
+    local_mic_ring_push(samples[i]);
+  }
+}
+
 int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
               const PaStreamCallbackTimeInfo* timeInfo,
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
-  const float *in = (float *) inputBuffer;
+  const float *in = (const float *) inputBuffer;
+  (void) outputBuffer;
+  (void) timeInfo;
+  (void) statusFlags;
+  (void) userdata;
+
   if (in == NULL) {
     // This should not happen, so we do not send silence etc.
     t_print("%s: bogus audio buffer in callback\n", __func__);
     return paContinue;
   }
-  if (mic_ring_buffer != NULL) {
-    static int last_was_tx = 0;
-    //
-    // Normally there is a slight mis-match between the 48kHz sample
-    // rate of the "microphone device" and the 48kHz rate of the
-    // HPSDR device. Thus, the mic buffer tends to either slowly
-    // drain or slowly become full (which leads to large TX delays).
-    //
-    // The TX/RX transition seems to be the best moment to "reset"
-    // the mic input buffer, and fill it with a little bit (20 msec)
-    // of silence and the current batch of mic samples. During normal
-    // RX operation, one cannot fiddle around with the mic samples since
-    // VOX might be active.
-    //
-    // The (static) variable last_was_tx is used to "detect" the
-    // TX/RX transition.
-    //
-    //
-    if (!radio_is_transmitting()) {
-      if (last_was_tx) {
-        last_was_tx = 0;
-        local_mic_ring_reset(960);
-      }
-    } else {
-      last_was_tx = 1;
-    }
-    for (unsigned int i = 0; i < framesPerBuffer; i++) {
-      local_mic_ring_push(in[i]);
-    }
-  }
+
+  audio_process_local_mic_input(in, (unsigned int) framesPerBuffer);
   return paContinue;
 }
 
@@ -875,6 +928,33 @@ int audio_open_output(RECEIVER *rx) {
 // close a TX microphone stream
 //
 void audio_close_input(void) {
+#ifdef NATIVE_COREAUDIO_INPUT
+  t_print("%s: native CoreAudio call audio_close_input\n", __func__);
+  if (transmitter != NULL) {
+    t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
+  }
+
+  void *handle = NULL;
+  g_mutex_lock(&audio_mutex);
+  handle = coreaudio_input_handle;
+  coreaudio_input_handle = NULL;
+  g_mutex_unlock(&audio_mutex);
+
+  //
+  // Stop and dispose AUHAL before freeing the lock-free mic ring.
+  //
+  coreaudio_input_close(handle);
+
+  g_mutex_lock(&audio_mutex);
+  if (mic_ring_buffer != NULL) {
+    g_free(mic_ring_buffer);
+    mic_ring_buffer = NULL;
+  }
+  atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
+  g_mutex_unlock(&audio_mutex);
+#else
+
   t_print("%s: PORTAUDIO call audio_close_input\n", __func__);
   t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
   PaStream *s = NULL;
@@ -900,7 +980,9 @@ void audio_close_input(void) {
   atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
+#endif
 }
+
 
 //
 // AUDIO_CLOSE_OUTPUT

@@ -7,7 +7,7 @@
 * on PortAudio at this stage.
 */
 
-#ifdef NATIVE_COREAUDIO_OUTPUT
+#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_INPUT)
 
 #include <AudioUnit/AudioUnit.h>
 #include <CoreAudio/CoreAudio.h>
@@ -22,17 +22,28 @@
 
 #define COREAUDIO_SAMPLE_RATE 48000.0
 
+#ifdef NATIVE_COREAUDIO_OUTPUT
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
   RECEIVER *rx;
   int channels;
 } COREAUDIO_OUTPUT;
+#endif
 
-static int coreaudio_output_channels(AudioDeviceID device) {
+#ifdef NATIVE_COREAUDIO_INPUT
+typedef struct {
+  AudioComponentInstance unit;
+  AudioDeviceID device;
+  float *buffer;
+  UInt32 max_frames;
+} COREAUDIO_INPUT;
+#endif
+
+static int coreaudio_device_channels(AudioDeviceID device, AudioObjectPropertyScope scope) {
   AudioObjectPropertyAddress address = {
     kAudioDevicePropertyStreamConfiguration,
-    kAudioDevicePropertyScopeOutput,
+    scope,
     kAudioObjectPropertyElementMain
   };
   UInt32 size = 0;
@@ -75,6 +86,7 @@ static int coreaudio_device_name(AudioDeviceID device, char *name, size_t name_s
   return ok ? 1 : 0;
 }
 
+#ifdef NATIVE_COREAUDIO_OUTPUT
 static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
   AudioObjectPropertyAddress address = {
     kAudioHardwarePropertyDevices,
@@ -102,7 +114,7 @@ static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
 
   AudioDeviceID found = kAudioObjectUnknown;
   for (UInt32 i = 0; i < count; i++) {
-    if (coreaudio_output_channels(devices[i]) <= 0) {
+    if (coreaudio_device_channels(devices[i], kAudioDevicePropertyScopeOutput) <= 0) {
       continue;
     }
     char name[512];
@@ -161,7 +173,7 @@ void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels
     return NULL;
   }
 
-  int device_channels = coreaudio_output_channels(device);
+  int device_channels = coreaudio_device_channels(device, kAudioDevicePropertyScopeOutput);
   int client_channels = device_channels >= 2 ? 2 : 1;
   if (client_channels < 1) {
     t_print("%s: CoreAudio device has no output channels: %s\n", __func__, device_name);
@@ -293,5 +305,260 @@ void coreaudio_output_close(void *handle) {
   }
   free(output);
 }
+
+#endif /* NATIVE_COREAUDIO_OUTPUT */
+
+#ifdef NATIVE_COREAUDIO_INPUT
+
+static AudioDeviceID coreaudio_find_input_device(const char *device_name) {
+  AudioObjectPropertyAddress address = {
+    kAudioHardwarePropertyDevices,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  UInt32 size = 0;
+
+  if (device_name == NULL || device_name[0] == '\0') {
+    return kAudioObjectUnknown;
+  }
+  if (AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &address, 0, NULL, &size) != noErr || size == 0) {
+    return kAudioObjectUnknown;
+  }
+
+  UInt32 count = size / sizeof(AudioDeviceID);
+  AudioDeviceID *devices = malloc(size);
+  if (devices == NULL) {
+    return kAudioObjectUnknown;
+  }
+  if (AudioObjectGetPropertyData(kAudioObjectSystemObject, &address, 0, NULL, &size, devices) != noErr) {
+    free(devices);
+    return kAudioObjectUnknown;
+  }
+
+  AudioDeviceID found = kAudioObjectUnknown;
+  for (UInt32 i = 0; i < count; i++) {
+    if (coreaudio_device_channels(devices[i], kAudioDevicePropertyScopeInput) <= 0) {
+      continue;
+    }
+
+    char name[512];
+    if (coreaudio_device_name(devices[i], name, sizeof(name)) && strcmp(name, device_name) == 0) {
+      found = devices[i];
+      break;
+    }
+  }
+
+  free(devices);
+  return found;
+}
+
+static OSStatus coreaudio_input_cb(void *refcon,
+                                   AudioUnitRenderActionFlags *flags,
+                                   const AudioTimeStamp *timestamp,
+                                   UInt32 bus,
+                                   UInt32 frames,
+                                   AudioBufferList *unused_data) {
+  (void) bus;
+  (void) unused_data;
+
+  COREAUDIO_INPUT *input = (COREAUDIO_INPUT *) refcon;
+  if (input == NULL || input->unit == NULL || input->buffer == NULL ||
+      frames == 0 || frames > input->max_frames) {
+    return noErr;
+  }
+
+  AudioBufferList list;
+  memset(&list, 0, sizeof(list));
+  list.mNumberBuffers = 1;
+  list.mBuffers[0].mNumberChannels = 1;
+  list.mBuffers[0].mDataByteSize = frames * sizeof(float);
+  list.mBuffers[0].mData = input->buffer;
+
+  OSStatus status = AudioUnitRender(input->unit, flags, timestamp, 1, frames, &list);
+  if (status == noErr) {
+    audio_process_local_mic_input(input->buffer, frames);
+  }
+  return noErr;
+}
+
+void *coreaudio_input_open(const char *device_name) {
+  if (device_name == NULL || device_name[0] == '\0') {
+    return NULL;
+  }
+
+  AudioDeviceID device = coreaudio_find_input_device(device_name);
+  if (device == kAudioObjectUnknown) {
+    t_print("%s: CoreAudio input device not found: %s\n", __func__, device_name);
+    return NULL;
+  }
+
+  COREAUDIO_INPUT *input = calloc(1, sizeof(*input));
+  if (input == NULL) {
+    return NULL;
+  }
+
+  AudioComponentDescription desc = {
+    .componentType = kAudioUnitType_Output,
+    .componentSubType = kAudioUnitSubType_HALOutput,
+    .componentManufacturer = kAudioUnitManufacturer_Apple,
+    .componentFlags = 0,
+    .componentFlagsMask = 0
+  };
+
+  AudioComponent component = AudioComponentFindNext(NULL, &desc);
+  if (component == NULL ||
+      AudioComponentInstanceNew(component, &input->unit) != noErr ||
+      input->unit == NULL) {
+    t_print("%s: cannot create AUHAL input unit\n", __func__);
+    free(input);
+    return NULL;
+  }
+
+  UInt32 enable = 1;
+  UInt32 disable = 0;
+  OSStatus status;
+
+  status = AudioUnitSetProperty(input->unit,
+                                kAudioOutputUnitProperty_EnableIO,
+                                kAudioUnitScope_Input,
+                                1,
+                                &enable,
+                                sizeof(enable));
+  if (status != noErr) {
+    t_print("%s: EnableIO(input) failed status=%d\n", __func__, (int) status);
+    goto fail;
+  }
+
+  status = AudioUnitSetProperty(input->unit,
+                                kAudioOutputUnitProperty_EnableIO,
+                                kAudioUnitScope_Output,
+                                0,
+                                &disable,
+                                sizeof(disable));
+  if (status != noErr) {
+    t_print("%s: DisableIO(output) failed status=%d\n", __func__, (int) status);
+    goto fail;
+  }
+
+  status = AudioUnitSetProperty(input->unit,
+                                kAudioOutputUnitProperty_CurrentDevice,
+                                kAudioUnitScope_Global,
+                                0,
+                                &device,
+                                sizeof(device));
+  if (status != noErr) {
+    t_print("%s: CurrentDevice failed status=%d\n", __func__, (int) status);
+    goto fail;
+  }
+
+  AudioStreamBasicDescription format;
+  memset(&format, 0, sizeof(format));
+  format.mSampleRate = COREAUDIO_SAMPLE_RATE;
+  format.mFormatID = kAudioFormatLinearPCM;
+  format.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
+  format.mBytesPerPacket = sizeof(float);
+  format.mFramesPerPacket = 1;
+  format.mBytesPerFrame = sizeof(float);
+  format.mChannelsPerFrame = 1;
+  format.mBitsPerChannel = 8 * sizeof(float);
+
+  /*
+   * For AUHAL input, the client-side format is set on the OUTPUT scope
+   * of input element 1. AudioUnitRender() then delivers mono float32/48 kHz.
+   */
+  status = AudioUnitSetProperty(input->unit,
+                                kAudioUnitProperty_StreamFormat,
+                                kAudioUnitScope_Output,
+                                1,
+                                &format,
+                                sizeof(format));
+  if (status != noErr) {
+    t_print("%s: input StreamFormat failed status=%d device=%s\n",
+            __func__, (int) status, device_name);
+    goto fail;
+  }
+
+  UInt32 size = sizeof(input->max_frames);
+  status = AudioUnitGetProperty(input->unit,
+                                kAudioUnitProperty_MaximumFramesPerSlice,
+                                kAudioUnitScope_Global,
+                                0,
+                                &input->max_frames,
+                                &size);
+  if (status != noErr || input->max_frames == 0) {
+    input->max_frames = 4096;
+  }
+  if (input->max_frames < 4096) {
+    input->max_frames = 4096;
+  }
+
+  input->buffer = calloc(input->max_frames, sizeof(float));
+  if (input->buffer == NULL) {
+    goto fail;
+  }
+
+  input->device = device;
+
+  AURenderCallbackStruct callback = {
+    .inputProc = coreaudio_input_cb,
+    .inputProcRefCon = input
+  };
+  status = AudioUnitSetProperty(input->unit,
+                                kAudioOutputUnitProperty_SetInputCallback,
+                                kAudioUnitScope_Global,
+                                0,
+                                &callback,
+                                sizeof(callback));
+  if (status != noErr) {
+    t_print("%s: SetInputCallback failed status=%d\n", __func__, (int) status);
+    goto fail;
+  }
+
+  status = AudioUnitInitialize(input->unit);
+  if (status != noErr) {
+    t_print("%s: AudioUnitInitialize(input) failed status=%d\n", __func__, (int) status);
+    goto fail;
+  }
+
+  status = AudioOutputUnitStart(input->unit);
+  if (status != noErr) {
+    t_print("%s: AudioOutputUnitStart(input) failed status=%d\n", __func__, (int) status);
+    AudioUnitUninitialize(input->unit);
+    goto fail;
+  }
+
+  t_print("%s: opened native CoreAudio input device=%s id=%u channels=1 samplerate=48000 maxframes=%u\n",
+          __func__, device_name, (unsigned int) device, (unsigned int) input->max_frames);
+  return input;
+
+fail:
+  if (input->unit != NULL) {
+    AudioComponentInstanceDispose(input->unit);
+  }
+  free(input->buffer);
+  free(input);
+  return NULL;
+}
+
+void coreaudio_input_close(void *handle) {
+  COREAUDIO_INPUT *input = (COREAUDIO_INPUT *) handle;
+  if (input == NULL) {
+    return;
+  }
+
+  /*
+   * Stop the AUHAL callback before releasing the callback scratch buffer.
+   */
+  if (input->unit != NULL) {
+    AudioOutputUnitStop(input->unit);
+    AudioUnitUninitialize(input->unit);
+    AudioComponentInstanceDispose(input->unit);
+  }
+
+  free(input->buffer);
+  free(input);
+}
+
+#endif /* NATIVE_COREAUDIO_INPUT */
 
 #endif

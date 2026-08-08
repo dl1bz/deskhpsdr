@@ -14,4 +14,9 @@ extern void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *c
 extern void coreaudio_output_close(void *handle);
 #endif
 
+#ifdef NATIVE_COREAUDIO_INPUT
+extern void *coreaudio_input_open(const char *device_name);
+extern void coreaudio_input_close(void *handle);
+#endif
+
 #endif
