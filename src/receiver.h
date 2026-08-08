@@ -264,6 +264,9 @@ typedef struct _receiver {
 #endif
 #if defined(PORTAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
   PaStream *playstream;
+#ifdef NATIVE_COREAUDIO_OUTPUT
+  void *coreaudio_output_handle;
+#endif
   atomic_int local_audio_buffer_inpt;      // producer pointer in RX audio ring-buffer
   atomic_int local_audio_buffer_outpt;     // consumer pointer in RX audio ring-buffer
   atomic_int sidetone_buffer_inpt;         // producer pointer in sidetone ring-buffer

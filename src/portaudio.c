@@ -44,6 +44,9 @@
 #ifdef __APPLE__
   #include <pa_mac_core.h>
 #endif
+#ifdef NATIVE_COREAUDIO_OUTPUT
+  #include "coreaudio.h"
+#endif
 
 #include "radio.h"
 #include "receiver.h"
@@ -516,12 +519,14 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
               const PaStreamCallbackTimeInfo* timeInfo,
               PaStreamCallbackFlags statusFlags,
               void *userdata) {
+  (void) inputBuffer;
+  (void) timeInfo;
+
   float *out = (float *) outputBuffer;
   RECEIVER *rx = (RECEIVER *) userdata;
-  gboolean ring_underrun = FALSE;
-  gboolean ring_had_audio = FALSE;
   gboolean valid_rx_id = rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]));
   gboolean ring_was_primed = valid_rx_id && g_atomic_int_get(&output_ring_primed[rx->id]);
+
   if ((statusFlags & paOutputUnderflow) && ring_was_primed && rx->local_audio) {
     g_atomic_int_inc(&audio_xrun_count);
   }
@@ -529,11 +534,43 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
     t_print("%s: bogus audio buffer in callback\n", __func__);
     return paContinue;
   }
+
+  /*
+   * Keep the existing PortAudio synchronization unchanged. The shared
+   * renderer itself is lock-free so CoreAudio can call it from its RT thread.
+   */
   g_mutex_lock(&rx->local_audio_mutex);
-  if (rx->local_audio_buffer != NULL && rx->sidetone_buffer != NULL) {
+  audio_render_local_output(rx, out, (unsigned int) framesPerBuffer, rx->local_audio_channels);
+  g_mutex_unlock(&rx->local_audio_mutex);
+
+  return paContinue;
+}
+
+void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels) {
+  gboolean ring_underrun = FALSE;
+  gboolean ring_had_audio = FALSE;
+
+  if (rx == NULL || out == NULL || (channels != 1 && channels != 2)) {
+    return;
+  }
+
+  gboolean valid_rx_id = rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]));
+  gboolean ring_was_primed = valid_rx_id && g_atomic_int_get(&output_ring_primed[rx->id]);
+
+  /*
+   * This function deliberately takes no mutex. Ring ownership is SPSC:
+   * receiver/CW code advances producer indices, the audio callback advances
+   * consumer indices. Buffer lifetime is protected by stopping the backend
+   * callback before audio_close_output() frees the rings.
+   */
+  float *rx_buffer = rx->local_audio_buffer;
+  float *st_buffer = rx->sidetone_buffer;
+
+  if (rx_buffer != NULL && st_buffer != NULL) {
     int rx_out = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_relaxed);
     int st_out = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_relaxed);
-    for (unsigned int i = 0; i < framesPerBuffer; i++) {
+
+    for (unsigned int i = 0; i < frames; i++) {
       float left = 0.0f;
       float right = 0.0f;
       float sidetone = 0.0f;
@@ -542,10 +579,12 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
 
       if (rx_in != rx_out) {
         ring_had_audio = TRUE;
-        left = rx->local_audio_buffer[2 * rx_out];
-        right = rx->local_audio_buffer[2 * rx_out + 1];
+        left = rx_buffer[2 * rx_out];
+        right = rx_buffer[2 * rx_out + 1];
         rx_out++;
-        if (rx_out >= MY_RING_BUFFER_SIZE) { rx_out = 0; }
+        if (rx_out >= MY_RING_BUFFER_SIZE) {
+          rx_out = 0;
+        }
         atomic_store_explicit(&rx->local_audio_buffer_outpt, rx_out, memory_order_release);
       } else if (st_in == st_out) {
         ring_underrun = TRUE;
@@ -553,9 +592,11 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
 
       if (st_in != st_out) {
         ring_had_audio = TRUE;
-        sidetone = rx->sidetone_buffer[st_out];
+        sidetone = st_buffer[st_out];
         st_out++;
-        if (st_out >= MY_RING_BUFFER_SIZE) { st_out = 0; }
+        if (st_out >= MY_RING_BUFFER_SIZE) {
+          st_out = 0;
+        }
         atomic_store_explicit(&rx->sidetone_buffer_outpt, st_out, memory_order_release);
       }
 
@@ -566,7 +607,7 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
       if (right > 1.0f) { right = 1.0f; }
       if (right < -1.0f) { right = -1.0f; }
 
-      if (rx->local_audio_channels == 2) {
+      if (channels == 2) {
         *out++ = left;
         *out++ = right;
       } else {
@@ -587,16 +628,9 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
       }
     }
   } else {
-    for (unsigned int i = 0; i < framesPerBuffer; i++) {
-      if (rx->local_audio_channels == 2) {
-        *out++ = 0.0f;
-        *out++ = 0.0f;
-      } else {
-        *out++ = 0.0f;
-      }
-    }
+    memset(out, 0, (size_t) frames * (size_t) channels * sizeof(float));
   }
-  g_mutex_unlock(&rx->local_audio_mutex);
+
   if (valid_rx_id) {
     if (ring_underrun && ring_was_primed && rx->local_audio
         && !g_atomic_int_get(&output_ring_starved[rx->id])) {
@@ -609,8 +643,8 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
   } else if (ring_underrun && rx->local_audio) {
     g_atomic_int_inc(&audio_xrun_count);
   }
-  return paContinue;
 }
+
 
 //
 // PortAudio call-back function for Audio input
@@ -672,6 +706,64 @@ float audio_get_next_mic_sample(void) {
 // open a PA stream for data from one of the RX
 //
 int audio_open_output(RECEIVER *rx) {
+#ifdef NATIVE_COREAUDIO_OUTPUT
+  if (rx == NULL) {
+    return -1;
+  }
+
+  /*
+   * Allocate and initialize rings before the CoreAudio unit is started.
+   * Publish the backend handle only after AudioOutputUnitStart() succeeds.
+   */
+  g_mutex_lock(&rx->local_audio_mutex);
+  rx->playstream = NULL;
+  rx->coreaudio_output_handle = NULL;
+  rx->local_audio_buffer = g_new(float, 2 * MY_RING_BUFFER_SIZE);
+  rx->sidetone_buffer = g_new0(float, MY_RING_BUFFER_SIZE);
+  atomic_store_explicit(&rx->local_audio_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->local_audio_buffer_outpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
+  rx->local_audio_cw_active = 0;
+
+  if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
+    g_atomic_int_set(&output_ring_primed[rx->id], 0);
+    g_atomic_int_set(&output_ring_starved[rx->id], 0);
+  }
+
+  if (rx->local_audio_buffer == NULL || rx->sidetone_buffer == NULL) {
+    g_free(rx->local_audio_buffer);
+    g_free(rx->sidetone_buffer);
+    rx->local_audio_buffer = NULL;
+    rx->sidetone_buffer = NULL;
+    g_mutex_unlock(&rx->local_audio_mutex);
+    t_print("%s: allocate buffer failed\n", __func__);
+    return -1;
+  }
+  g_mutex_unlock(&rx->local_audio_mutex);
+
+  int channels = 0;
+  void *handle = coreaudio_output_open(rx, rx->audio_name, &channels);
+  if (handle == NULL) {
+    g_mutex_lock(&rx->local_audio_mutex);
+    g_free(rx->local_audio_buffer);
+    g_free(rx->sidetone_buffer);
+    rx->local_audio_buffer = NULL;
+    rx->sidetone_buffer = NULL;
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return -1;
+  }
+
+  g_mutex_lock(&rx->local_audio_mutex);
+  rx->local_audio_channels = channels;
+  rx->coreaudio_output_handle = handle;
+  g_mutex_unlock(&rx->local_audio_mutex);
+
+  t_print("%s: native CoreAudio output name=%s channels=%d\n",
+          __func__, rx->audio_name, rx->local_audio_channels);
+  return 0;
+#else
+
   PaError err;
   PaStreamParameters outputParameters;
   int padev;
@@ -773,7 +865,9 @@ int audio_open_output(RECEIVER *rx) {
   //
   g_mutex_unlock(&rx->local_audio_mutex);
   return 0;
+#endif
 }
+
 
 //
 // AUDIO_CLOSE_INPUT
@@ -814,6 +908,39 @@ void audio_close_input(void) {
 // shut down the stream connected with audio from one of the RX
 //
 void audio_close_output(RECEIVER *rx) {
+#ifdef NATIVE_COREAUDIO_OUTPUT
+  t_print("%s: device=%s\n", __func__, rx->audio_name);
+
+  /*
+   * First prevent producers from entering audio_write()/cw_audio_write().
+   * Then stop CoreAudio and wait for its callback to leave. Only after that
+   * may the lock-free callback-visible rings be released.
+   */
+  void *handle;
+  g_mutex_lock(&rx->local_audio_mutex);
+  handle = rx->coreaudio_output_handle;
+  rx->coreaudio_output_handle = NULL;
+  g_mutex_unlock(&rx->local_audio_mutex);
+
+  coreaudio_output_close(handle);
+
+  g_mutex_lock(&rx->local_audio_mutex);
+  if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
+    g_atomic_int_set(&output_ring_primed[rx->id], 0);
+    g_atomic_int_set(&output_ring_starved[rx->id], 0);
+  }
+  g_free(rx->local_audio_buffer);
+  g_free(rx->sidetone_buffer);
+  rx->local_audio_buffer = NULL;
+  rx->sidetone_buffer = NULL;
+  atomic_store_explicit(&rx->local_audio_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->local_audio_buffer_outpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
+  rx->local_audio_cw_active = 0;
+  g_mutex_unlock(&rx->local_audio_mutex);
+#else
+
   t_print("%s: device=%s\n", __func__, rx->audio_name);
   PaStream *s = NULL;
   g_mutex_lock(&rx->local_audio_mutex);
@@ -849,7 +976,9 @@ void audio_close_output(RECEIVER *rx) {
   atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
   rx->local_audio_cw_active = 0;
   g_mutex_unlock(&rx->local_audio_mutex);
+#endif
 }
+
 
 //
 // AUDIO_WRITE
@@ -874,7 +1003,11 @@ int audio_write(RECEIVER *rx, float left, float right) {
   }
   g_mutex_lock(&rx->local_audio_mutex);
   rx->local_audio_cw_active = 0;
+#ifdef NATIVE_COREAUDIO_OUTPUT
+  if (rx->coreaudio_output_handle != NULL && buffer != NULL) {
+#else
   if (rx->playstream != NULL && buffer != NULL) {
+#endif
     int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_relaxed);
     int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
     int avail = inpt - outpt;
@@ -926,7 +1059,11 @@ int audio_write(RECEIVER *rx, float left, float right) {
 //
 int cw_audio_write(RECEIVER *rx, float sample) {
   g_mutex_lock(&rx->local_audio_mutex);
+#ifdef NATIVE_COREAUDIO_OUTPUT
+  if (rx->coreaudio_output_handle != NULL && rx->sidetone_buffer != NULL) {
+#else
   if (rx->playstream != NULL && rx->sidetone_buffer != NULL) {
+#endif
     static int count = 0;
     int inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_relaxed);
     int outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);

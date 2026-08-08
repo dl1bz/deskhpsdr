@@ -1,0 +1,17 @@
+/* Copyright (C)
+* 2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
+*
+* Native CoreAudio output backend.
+*/
+
+#ifndef _COREAUDIO_H
+#define _COREAUDIO_H
+
+#include "receiver.h"
+
+#ifdef NATIVE_COREAUDIO_OUTPUT
+extern void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels);
+extern void coreaudio_output_close(void *handle);
+#endif
+
+#endif

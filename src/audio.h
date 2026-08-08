@@ -48,6 +48,9 @@ extern void audio_release_cards (void);
 extern void audio_get_cards (void);
 extern guint64 audio_get_xrun_count (void);
 #ifdef PORTAUDIO
+extern void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels);
+#endif
+#ifdef PORTAUDIO
   extern int audio_open_tci_monitor (const char *audio_name);
   extern void audio_close_tci_monitor (void);
 #endif

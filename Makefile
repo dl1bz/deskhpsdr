@@ -489,6 +489,9 @@ CPP_SOURCES += src/audio.c
 
 ifeq ($(AUDIO), PORTAUDIO)
 AUDIO_OPTIONS=-DPORTAUDIO -DPA_USE_COREAUDIO
+ifeq ($(UNAME_S), Darwin)
+AUDIO_OPTIONS += -DNATIVE_COREAUDIO_OUTPUT
+endif
 AUDIO_INCLUDE=`$(PKG_CONFIG) --cflags portaudio-2.0`
 # AUDIO_LIBS=`$(PKG_CONFIG) --libs portaudio-2.0`
 AUDIO_LIBS=$(BREW_LIBDIR)/libportaudio.a \
@@ -500,6 +503,10 @@ AUDIO_LIBS=$(BREW_LIBDIR)/libportaudio.a \
 	-framework CoreMIDI
 AUDIO_SOURCES=src/portaudio.c
 AUDIO_OBJS=src/portaudio.o
+ifeq ($(UNAME_S), Darwin)
+AUDIO_SOURCES += src/coreaudio.c
+AUDIO_OBJS += src/coreaudio.o
+endif
 endif
 CPP_DEFINES += -DPORTAUDIO
 CPP_SOURCES += src/portaudio.c
