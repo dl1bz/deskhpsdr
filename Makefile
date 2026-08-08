@@ -446,22 +446,18 @@ endif
 
 ##############################################################################
 #
-# Add libraries for using PulseAudio, if requested
+# PulseAudio backend (Linux only)
 #
 ##############################################################################
 
 ifeq ($(AUDIO), PULSE)
 AUDIO_OPTIONS=-DPULSEAUDIO
 AUDIO_INCLUDE=
-ifeq ($(UNAME_S), Linux)
-  AUDIO_LIBS=-lpulse-simple -lpulse -lpulse-mainloop-glib
-endif
-ifeq ($(UNAME_S), Darwin)
-  AUDIO_LIBS=-lpulse-simple -lpulse
-endif
+AUDIO_LIBS=-lpulse-simple -lpulse -lpulse-mainloop-glib
 AUDIO_SOURCES=src/pulseaudio.c
 AUDIO_OBJS=src/pulseaudio.o
 endif
+# Include the PulseAudio implementation in the cppcheck source set.
 CPP_DEFINES += -DPULSEAUDIO
 CPP_SOURCES += src/pulseaudio.c
 
