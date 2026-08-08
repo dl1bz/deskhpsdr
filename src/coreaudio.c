@@ -7,7 +7,7 @@
 * on PortAudio at this stage.
 */
 
-#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_INPUT)
+#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_INPUT) || defined(NATIVE_COREAUDIO_TCI_MONITOR)
 
 #include <AudioUnit/AudioUnit.h>
 #include <CoreAudio/CoreAudio.h>
@@ -19,6 +19,9 @@
 #include "audio.h"
 #include "coreaudio.h"
 #include "message.h"
+#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+#include "tci_audio.h"
+#endif
 
 #define COREAUDIO_SAMPLE_RATE 48000.0
 
@@ -29,6 +32,14 @@ typedef struct {
   RECEIVER *rx;
   int channels;
 } COREAUDIO_OUTPUT;
+#endif
+
+#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+typedef struct {
+  AudioComponentInstance unit;
+  AudioDeviceID device;
+  int channels;
+} COREAUDIO_TCI_MONITOR;
 #endif
 
 #ifdef NATIVE_COREAUDIO_INPUT
@@ -86,7 +97,7 @@ static int coreaudio_device_name(AudioDeviceID device, char *name, size_t name_s
   return ok ? 1 : 0;
 }
 
-#ifdef NATIVE_COREAUDIO_OUTPUT
+#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_TCI_MONITOR)
 static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
   AudioObjectPropertyAddress address = {
     kAudioHardwarePropertyDevices,
@@ -127,7 +138,9 @@ static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
   free(devices);
   return found;
 }
+#endif
 
+#ifdef NATIVE_COREAUDIO_OUTPUT
 static OSStatus coreaudio_render_cb(void *refcon,
                                     AudioUnitRenderActionFlags *flags,
                                     const AudioTimeStamp *timestamp,
@@ -307,6 +320,181 @@ void coreaudio_output_close(void *handle) {
 }
 
 #endif /* NATIVE_COREAUDIO_OUTPUT */
+
+#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+
+#define COREAUDIO_TCI_MONITOR_CHUNK 1024
+
+static OSStatus coreaudio_tci_monitor_cb(void *refcon,
+                                         AudioUnitRenderActionFlags *flags,
+                                         const AudioTimeStamp *timestamp,
+                                         UInt32 bus,
+                                         UInt32 frames,
+                                         AudioBufferList *io_data) {
+  (void) flags;
+  (void) timestamp;
+  (void) bus;
+
+  COREAUDIO_TCI_MONITOR *monitor = (COREAUDIO_TCI_MONITOR *) refcon;
+  if (monitor == NULL || io_data == NULL ||
+      io_data->mNumberBuffers != 1 || io_data->mBuffers[0].mData == NULL) {
+    if (io_data != NULL) {
+      for (UInt32 i = 0; i < io_data->mNumberBuffers; i++) {
+        if (io_data->mBuffers[i].mData != NULL) {
+          memset(io_data->mBuffers[i].mData, 0, io_data->mBuffers[i].mDataByteSize);
+        }
+      }
+    }
+    return noErr;
+  }
+
+  float *out = (float *) io_data->mBuffers[0].mData;
+  UInt32 remaining = frames;
+
+  /*
+   * Real-time callback: no mutex, allocation or logging.
+   * tci_audio_monitor_read() is a lock-free SPSC consumer.
+   */
+  while (remaining > 0) {
+    UInt32 chunk_frames = remaining > COREAUDIO_TCI_MONITOR_CHUNK ?
+                          COREAUDIO_TCI_MONITOR_CHUNK : remaining;
+    float samples[COREAUDIO_TCI_MONITOR_CHUNK * TCI_AUDIO_CHANNELS];
+    guint got = tci_audio_monitor_read(samples, (guint) chunk_frames);
+
+    for (UInt32 i = 0; i < chunk_frames; i++) {
+      float left = i < got ? samples[i * TCI_AUDIO_CHANNELS] : 0.0f;
+      float right = i < got ? samples[i * TCI_AUDIO_CHANNELS + 1] : 0.0f;
+      if (monitor->channels == 2) {
+        *out++ = left;
+        *out++ = right;
+      } else {
+        *out++ = 0.5f * (left + right);
+      }
+    }
+    remaining -= chunk_frames;
+  }
+
+  io_data->mBuffers[0].mDataByteSize = frames * (UInt32) monitor->channels * sizeof(float);
+  return noErr;
+}
+
+void *coreaudio_tci_monitor_open(const char *device_name, int *channels) {
+  if (device_name == NULL || channels == NULL) {
+    return NULL;
+  }
+
+  AudioDeviceID device = coreaudio_find_output_device(device_name);
+  if (device == kAudioObjectUnknown) {
+    t_print("%s: CoreAudio TCI monitor device not found: %s\n", __func__, device_name);
+    return NULL;
+  }
+
+  int device_channels = coreaudio_device_channels(device, kAudioDevicePropertyScopeOutput);
+  int client_channels = device_channels >= 2 ? 2 : 1;
+  if (client_channels < 1) {
+    return NULL;
+  }
+
+  COREAUDIO_TCI_MONITOR *monitor = calloc(1, sizeof(*monitor));
+  if (monitor == NULL) {
+    return NULL;
+  }
+
+  AudioComponentDescription desc = {
+    .componentType = kAudioUnitType_Output,
+    .componentSubType = kAudioUnitSubType_HALOutput,
+    .componentManufacturer = kAudioUnitManufacturer_Apple,
+    .componentFlags = 0,
+    .componentFlagsMask = 0
+  };
+
+  AudioComponent component = AudioComponentFindNext(NULL, &desc);
+  if (component == NULL ||
+      AudioComponentInstanceNew(component, &monitor->unit) != noErr ||
+      monitor->unit == NULL) {
+    free(monitor);
+    return NULL;
+  }
+
+  UInt32 enable = 1;
+  UInt32 disable = 0;
+  OSStatus status;
+
+  status = AudioUnitSetProperty(monitor->unit, kAudioOutputUnitProperty_EnableIO,
+                                kAudioUnitScope_Output, 0, &enable, sizeof(enable));
+  if (status != noErr) { goto fail; }
+
+  status = AudioUnitSetProperty(monitor->unit, kAudioOutputUnitProperty_EnableIO,
+                                kAudioUnitScope_Input, 1, &disable, sizeof(disable));
+  if (status != noErr) { goto fail; }
+
+  status = AudioUnitSetProperty(monitor->unit, kAudioOutputUnitProperty_CurrentDevice,
+                                kAudioUnitScope_Global, 0, &device, sizeof(device));
+  if (status != noErr) { goto fail; }
+
+  AudioStreamBasicDescription format;
+  memset(&format, 0, sizeof(format));
+  format.mSampleRate = TCI_AUDIO_SAMPLE_RATE;
+  format.mFormatID = kAudioFormatLinearPCM;
+  format.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
+  format.mBytesPerPacket = (UInt32) client_channels * sizeof(float);
+  format.mFramesPerPacket = 1;
+  format.mBytesPerFrame = (UInt32) client_channels * sizeof(float);
+  format.mChannelsPerFrame = (UInt32) client_channels;
+  format.mBitsPerChannel = 8 * sizeof(float);
+
+  status = AudioUnitSetProperty(monitor->unit, kAudioUnitProperty_StreamFormat,
+                                kAudioUnitScope_Input, 0, &format, sizeof(format));
+  if (status != noErr) { goto fail; }
+
+  monitor->device = device;
+  monitor->channels = client_channels;
+
+  AURenderCallbackStruct callback = {
+    .inputProc = coreaudio_tci_monitor_cb,
+    .inputProcRefCon = monitor
+  };
+  status = AudioUnitSetProperty(monitor->unit, kAudioUnitProperty_SetRenderCallback,
+                                kAudioUnitScope_Input, 0, &callback, sizeof(callback));
+  if (status != noErr) { goto fail; }
+
+  status = AudioUnitInitialize(monitor->unit);
+  if (status != noErr) { goto fail; }
+
+  status = AudioOutputUnitStart(monitor->unit);
+  if (status != noErr) {
+    AudioUnitUninitialize(monitor->unit);
+    goto fail;
+  }
+
+  *channels = client_channels;
+  t_print("%s: opened native CoreAudio TCI monitor device=%s id=%u channels=%d samplerate=%d\n",
+          __func__, device_name, (unsigned int) device, client_channels, TCI_AUDIO_SAMPLE_RATE);
+  return monitor;
+
+fail:
+  if (monitor->unit != NULL) {
+    AudioComponentInstanceDispose(monitor->unit);
+  }
+  free(monitor);
+  return NULL;
+}
+
+void coreaudio_tci_monitor_close(void *handle) {
+  COREAUDIO_TCI_MONITOR *monitor = (COREAUDIO_TCI_MONITOR *) handle;
+  if (monitor == NULL) {
+    return;
+  }
+
+  if (monitor->unit != NULL) {
+    AudioOutputUnitStop(monitor->unit);
+    AudioUnitUninitialize(monitor->unit);
+    AudioComponentInstanceDispose(monitor->unit);
+  }
+  free(monitor);
+}
+
+#endif /* NATIVE_COREAUDIO_TCI_MONITOR */
 
 #ifdef NATIVE_COREAUDIO_INPUT
 

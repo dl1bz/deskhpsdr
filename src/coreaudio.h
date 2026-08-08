@@ -19,4 +19,9 @@ extern void *coreaudio_input_open(const char *device_name);
 extern void coreaudio_input_close(void *handle);
 #endif
 
+#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+extern void *coreaudio_tci_monitor_open(const char *device_name, int *channels);
+extern void coreaudio_tci_monitor_close(void *handle);
+#endif
+
 #endif

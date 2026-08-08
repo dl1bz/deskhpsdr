@@ -26,6 +26,7 @@
 
 #include <glib.h>
 #include <math.h>
+#include <stdatomic.h>
 #include <string.h>
 
 #include "message.h"
@@ -36,11 +37,10 @@
 #include "tci_audio.h"
 
 typedef struct _tci_audio_monitor_ring {
-  GMutex mutex;
   float samples[TCI_AUDIO_MONITOR_RING_FRAMES * TCI_AUDIO_CHANNELS];
-  guint64 write_count;
-  guint64 read_count;
-  guint dropped;
+  atomic_uint_fast64_t write_count;
+  atomic_uint_fast64_t read_count;
+  atomic_uint dropped;
 } TCI_AUDIO_MONITOR_RING;
 
 typedef struct _tci_rx_audio_ring {
@@ -61,7 +61,7 @@ typedef struct _tci_tx_audio_ring {
 static TCI_RX_AUDIO_RING tci_rx_audio_ring[TCI_RX_AUDIO_MAX_RECEIVERS];
 static TCI_TX_AUDIO_RING tci_tx_audio_ring;
 static TCI_AUDIO_MONITOR_RING tci_audio_monitor_ring;
-static int tci_audio_monitor_enabled = 0;
+static atomic_int tci_audio_monitor_enabled = 0;
 static int tci_rx_audio_enabled = 0;
 static guint tci_rx_audio_wakeup_count = 0;
 static gint64 tci_tx_audio_last_frame_us = 0;
@@ -120,71 +120,77 @@ static void tci_audio_queue_rx_wakeup (void) {
 
 void tci_audio_monitor_set_active (int active) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
-  g_mutex_lock (&ring->mutex);
-  tci_audio_monitor_enabled = active ? 1 : 0;
-  ring->write_count = 0;
-  ring->read_count = 0;
-  ring->dropped = 0;
+
+  /*
+   * The monitor ring has one producer (TCI TX-audio handling) and one
+   * consumer (local audio backend callback). Keep it lock-free so a native
+   * CoreAudio render callback never has to take a GLib mutex.
+   */
+  atomic_store_explicit (&tci_audio_monitor_enabled, 0, memory_order_release);
+  atomic_store_explicit (&ring->write_count, 0, memory_order_relaxed);
+  atomic_store_explicit (&ring->read_count, 0, memory_order_relaxed);
+  atomic_store_explicit (&ring->dropped, 0, memory_order_relaxed);
   memset (ring->samples, 0, sizeof (ring->samples));
-  g_mutex_unlock (&ring->mutex);
+  atomic_store_explicit (&tci_audio_monitor_enabled, active ? 1 : 0, memory_order_release);
 }
 
 int tci_audio_monitor_is_active (void) {
-  return tci_audio_monitor_enabled;
+  return atomic_load_explicit (&tci_audio_monitor_enabled, memory_order_acquire);
+}
+
+static inline int tci_audio_monitor_push_frame (TCI_AUDIO_MONITOR_RING *ring, float left, float right) {
+  uint_fast64_t write_count = atomic_load_explicit (&ring->write_count, memory_order_relaxed);
+  uint_fast64_t read_count = atomic_load_explicit (&ring->read_count, memory_order_acquire);
+
+  /*
+   * Do not let the producer modify the consumer pointer. If the monitor falls
+   * behind, drop the newest frame. With a four-second ring this should only
+   * occur if the local monitor backend has really stopped consuming.
+   */
+  if (write_count - read_count >= TCI_AUDIO_MONITOR_RING_FRAMES) {
+    atomic_fetch_add_explicit (&ring->dropped, 1, memory_order_relaxed);
+    return 0;
+  }
+
+  guint index = (guint) (write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
+  ring->samples[(index * TCI_AUDIO_CHANNELS)] = left;
+  ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = right;
+  atomic_store_explicit (&ring->write_count, write_count + 1, memory_order_release);
+  return 1;
 }
 
 __attribute__ ((unused)) static void tci_audio_monitor_push (float left, float right) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
-  guint index;
-  if (!tci_audio_monitor_enabled) { return; }
-  if (!g_mutex_trylock (&ring->mutex)) { return; }
-  if (ring->write_count >= ring->read_count + TCI_AUDIO_MONITOR_RING_FRAMES) {
-    ring->read_count = ring->write_count - TCI_AUDIO_MONITOR_RING_FRAMES + 1;
-    ring->dropped++;
-  }
-  index = (guint) (ring->write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
-  ring->samples[ (index * TCI_AUDIO_CHANNELS)] = left;
-  ring->samples[ (index * TCI_AUDIO_CHANNELS) + 1] = right;
-  ring->write_count++;
-  g_mutex_unlock (&ring->mutex);
+  if (!atomic_load_explicit (&tci_audio_monitor_enabled, memory_order_acquire)) { return; }
+  (void) tci_audio_monitor_push_frame (ring, left, right);
 }
 
 __attribute__ ((unused)) static void tci_audio_monitor_push_block (const float *samples, guint frames) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
-  if (!tci_audio_monitor_enabled || samples == NULL || frames == 0) { return; }
-  if (!g_mutex_trylock (&ring->mutex)) { return; }
-  for (guint i = 0; i < frames; i++) {
-    guint index;
-    if (ring->write_count >= ring->read_count + TCI_AUDIO_MONITOR_RING_FRAMES) {
-      ring->read_count = ring->write_count - TCI_AUDIO_MONITOR_RING_FRAMES + 1;
-      ring->dropped++;
-    }
-    index = (guint) (ring->write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
-    ring->samples[(index * TCI_AUDIO_CHANNELS)] = samples[(i * TCI_AUDIO_CHANNELS)] * 0.9f;
-    ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = samples[(i * TCI_AUDIO_CHANNELS) + 1] * 0.9f;
-    ring->write_count++;
+  if (!atomic_load_explicit (&tci_audio_monitor_enabled, memory_order_acquire) ||
+      samples == NULL || frames == 0) {
+    return;
   }
-  g_mutex_unlock (&ring->mutex);
+
+  for (guint i = 0; i < frames; i++) {
+    (void) tci_audio_monitor_push_frame (
+      ring,
+      samples[(i * TCI_AUDIO_CHANNELS)] * 0.9f,
+      samples[(i * TCI_AUDIO_CHANNELS) + 1] * 0.9f);
+  }
 }
 
 static void tci_audio_monitor_push_mono_block (const float *samples, guint frames, float gain) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
-  if (!tci_audio_monitor_enabled || samples == NULL || frames == 0) { return; }
-  if (!g_mutex_trylock (&ring->mutex)) { return; }
-  for (guint i = 0; i < frames; i++) {
-    guint index;
-    float sample;
-    if (ring->write_count >= ring->read_count + TCI_AUDIO_MONITOR_RING_FRAMES) {
-      ring->read_count = ring->write_count - TCI_AUDIO_MONITOR_RING_FRAMES + 1;
-      ring->dropped++;
-    }
-    sample = samples[i] * gain;
-    index = (guint) (ring->write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
-    ring->samples[(index * TCI_AUDIO_CHANNELS)] = sample;
-    ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = sample;
-    ring->write_count++;
+  if (!atomic_load_explicit (&tci_audio_monitor_enabled, memory_order_acquire) ||
+      samples == NULL || frames == 0) {
+    return;
   }
-  g_mutex_unlock (&ring->mutex);
+
+  for (guint i = 0; i < frames; i++) {
+    float sample = samples[i] * gain;
+    (void) tci_audio_monitor_push_frame (ring, sample, sample);
+  }
 }
 
 void tci_audio_tx_reset (void) {
@@ -426,18 +432,23 @@ guint tci_audio_tx_read (float *out, guint frames) {
 guint tci_audio_monitor_read (float *out, guint frames) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
   guint copied = 0;
+
   if (out == NULL || frames == 0) { return 0; }
   memset (out, 0, frames * TCI_AUDIO_CHANNELS * sizeof (float));
-  if (!tci_audio_monitor_enabled) { return 0; }
-  g_mutex_lock (&ring->mutex);
-  while (copied < frames && ring->read_count < ring->write_count) {
-    guint index = (guint) (ring->read_count % TCI_AUDIO_MONITOR_RING_FRAMES);
-    out[ (copied * TCI_AUDIO_CHANNELS)] = ring->samples[ (index * TCI_AUDIO_CHANNELS)];
-    out[ (copied * TCI_AUDIO_CHANNELS) + 1] = ring->samples[ (index * TCI_AUDIO_CHANNELS) + 1];
-    ring->read_count++;
+  if (!atomic_load_explicit (&tci_audio_monitor_enabled, memory_order_acquire)) { return 0; }
+
+  uint_fast64_t read_count = atomic_load_explicit (&ring->read_count, memory_order_relaxed);
+  uint_fast64_t write_count = atomic_load_explicit (&ring->write_count, memory_order_acquire);
+
+  while (copied < frames && read_count < write_count) {
+    guint index = (guint) (read_count % TCI_AUDIO_MONITOR_RING_FRAMES);
+    out[(copied * TCI_AUDIO_CHANNELS)] = ring->samples[(index * TCI_AUDIO_CHANNELS)];
+    out[(copied * TCI_AUDIO_CHANNELS) + 1] = ring->samples[(index * TCI_AUDIO_CHANNELS) + 1];
+    read_count++;
     copied++;
   }
-  g_mutex_unlock (&ring->mutex);
+
+  atomic_store_explicit (&ring->read_count, read_count, memory_order_release);
   return copied;
 }
 

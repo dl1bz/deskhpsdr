@@ -182,6 +182,9 @@ static inline float local_mic_ring_pop(void) {
 }
 
 static PaStream *tci_monitor_handle = NULL;
+#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+static void *coreaudio_tci_monitor_handle = NULL;
+#endif
 static GMutex tci_monitor_mutex;
 static int tci_monitor_channels = 2;
 static unsigned int tci_monitor_underruns = 0;
@@ -473,6 +476,41 @@ int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long
 }
 
 int audio_open_tci_monitor(const char *audio_name) {
+#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+  if (audio_name == NULL || audio_name[0] == '\0') {
+    return -1;
+  }
+
+  g_mutex_lock(&tci_monitor_mutex);
+  if (coreaudio_tci_monitor_handle != NULL) {
+    g_mutex_unlock(&tci_monitor_mutex);
+    return 0;
+  }
+  g_mutex_unlock(&tci_monitor_mutex);
+
+  //
+  // Enable/reset the producer before CoreAudio starts consuming.
+  //
+  tci_audio_monitor_set_active(1);
+
+  int channels = 0;
+  void *handle = coreaudio_tci_monitor_open(audio_name, &channels);
+  if (handle == NULL) {
+    tci_audio_monitor_set_active(0);
+    return -1;
+  }
+
+  g_mutex_lock(&tci_monitor_mutex);
+  coreaudio_tci_monitor_handle = handle;
+  tci_monitor_channels = channels;
+  tci_monitor_underruns = 0;
+  g_mutex_unlock(&tci_monitor_mutex);
+
+  t_print("%s: opened native CoreAudio TCI monitor name=%s channels=%d\n",
+          __func__, audio_name, channels);
+  return 0;
+#else
+
   PaError err;
   PaStreamParameters outputParameters;
   int padev = -1;
@@ -541,9 +579,26 @@ int audio_open_tci_monitor(const char *audio_name) {
           TCI_MONITOR_FRAMES_PER_BUFFER);
   g_mutex_unlock(&tci_monitor_mutex);
   return 0;
+#endif
 }
 
+
 void audio_close_tci_monitor(void) {
+#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+  void *handle = NULL;
+
+  g_mutex_lock(&tci_monitor_mutex);
+  handle = coreaudio_tci_monitor_handle;
+  coreaudio_tci_monitor_handle = NULL;
+  g_mutex_unlock(&tci_monitor_mutex);
+
+  //
+  // Stop the RT consumer first, then disable/reset the producer ring.
+  //
+  coreaudio_tci_monitor_close(handle);
+  tci_audio_monitor_set_active(0);
+#else
+
   PaStream *s = NULL;
   g_mutex_lock(&tci_monitor_mutex);
   s = tci_monitor_handle;
@@ -560,7 +615,9 @@ void audio_close_tci_monitor(void) {
       t_print("%s: close stream error %s\n", __func__, Pa_GetErrorText(err));
     }
   }
+#endif
 }
+
 
 //
 // PortAudio call-back function for Audio output
