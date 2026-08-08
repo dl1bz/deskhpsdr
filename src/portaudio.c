@@ -110,9 +110,70 @@ guint64 audio_get_xrun_count(void) {
 // NOTE: lead large buffer for some "loopback" devices which produce
 //       samples in large chunks if fed from digimode programs.
 //
-static          float  *mic_ring_buffer = NULL;
-static volatile int     mic_ring_outpt = 0;
-static volatile int     mic_ring_inpt = 0;
+static float *mic_ring_buffer = NULL;
+static atomic_int mic_ring_outpt;
+static atomic_int mic_ring_inpt;
+
+static void local_mic_ring_reset(int silence_frames) {
+  if (mic_ring_buffer == NULL) {
+    return;
+  }
+
+  if (silence_frames < 0) {
+    silence_frames = 0;
+  }
+  if (silence_frames >= MY_RING_BUFFER_SIZE) {
+    silence_frames = MY_RING_BUFFER_SIZE - 1;
+  }
+
+  if (silence_frames > 0) {
+    bzero(mic_ring_buffer, (size_t)silence_frames * sizeof(float));
+  }
+
+  atomic_store_explicit(&mic_ring_outpt, 0, memory_order_release);
+  atomic_store_explicit(&mic_ring_inpt, silence_frames, memory_order_release);
+}
+
+static inline void local_mic_ring_push(float sample) {
+  int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_relaxed);
+  int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);
+  int newpt = inpt + 1;
+
+  if (newpt == MY_RING_BUFFER_SIZE) {
+    newpt = 0;
+  }
+  if (newpt == outpt) {
+    return;
+  }
+
+  mic_ring_buffer[inpt] = sample;
+  atomic_store_explicit(&mic_ring_inpt, newpt, memory_order_release);
+}
+
+static inline float local_mic_ring_pop(void) {
+  int outpt;
+  int inpt;
+  int newpt;
+  float sample;
+
+  if (mic_ring_buffer == NULL) {
+    return 0.0f;
+  }
+
+  outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_relaxed);
+  inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
+  if (outpt == inpt) {
+    return 0.0f;
+  }
+
+  sample = mic_ring_buffer[outpt];
+  newpt = outpt + 1;
+  if (newpt == MY_RING_BUFFER_SIZE) {
+    newpt = 0;
+  }
+  atomic_store_explicit(&mic_ring_outpt, newpt, memory_order_release);
+  return sample;
+}
 
 static PaStream *tci_monitor_handle = NULL;
 static GMutex tci_monitor_mutex;
@@ -290,7 +351,8 @@ int audio_open_input(void) {
     return -1;
   }
   mic_ring_buffer = (float *) g_new(float, MY_RING_BUFFER_SIZE);
-  mic_ring_outpt = mic_ring_inpt = 0;
+  atomic_init(&mic_ring_outpt, 0);
+  atomic_init(&mic_ring_inpt, 0);
   if (mic_ring_buffer == NULL) {
     Pa_CloseStream(record_handle);
     record_handle = NULL;
@@ -584,27 +646,13 @@ int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
     if (!radio_is_transmitting()) {
       if (last_was_tx) {
         last_was_tx = 0;
-        mic_ring_outpt = 0;
-        mic_ring_inpt  = 960;
-        bzero(mic_ring_buffer, 960 * sizeof(float));
+        local_mic_ring_reset(960);
       }
     } else {
       last_was_tx = 1;
     }
     for (unsigned int i = 0; i < framesPerBuffer; i++) {
-      //
-      // put sample into ring buffer
-      //
-      int newpt = mic_ring_inpt + 1;
-      if (newpt == MY_RING_BUFFER_SIZE) { newpt = 0; }
-      if (newpt != mic_ring_outpt) {
-        MEMORY_BARRIER;
-        // buffer space available, do the write
-        mic_ring_buffer[mic_ring_inpt] = in[i];
-        MEMORY_BARRIER;
-        // atomic update of mic_ring_inpt
-        mic_ring_inpt = newpt;
-      }
+      local_mic_ring_push(in[i]);
     }
   }
   return paContinue;
@@ -615,19 +663,7 @@ int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
 // from ring buffer
 //
 float audio_get_next_mic_sample(void) {
-  float sample;
-  if ((mic_ring_buffer == NULL) || (mic_ring_outpt == mic_ring_inpt)) {
-    // no buffer, or nothing in buffer: insert silence
-    sample = 0.0;
-  } else {
-    int newpt = mic_ring_outpt + 1;
-    if (newpt == MY_RING_BUFFER_SIZE) { newpt = 0; }
-    MEMORY_BARRIER;
-    sample = mic_ring_buffer[mic_ring_outpt];
-    MEMORY_BARRIER;
-    mic_ring_outpt = newpt;
-  }
-  return sample;
+  return local_mic_ring_pop();
 }
 
 //
@@ -767,6 +803,8 @@ void audio_close_input(void) {
     g_free(mic_ring_buffer);
     mic_ring_buffer = NULL;
   }
+  atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
 }
 
