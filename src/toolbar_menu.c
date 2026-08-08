@@ -26,6 +26,7 @@
 #include "radio.h"
 #include "new_menu.h"
 #include "actions.h"
+#include "band.h"
 #include "action_dialog.h"
 #include "controller_mapping.h"
 #include "toolbar.h"
@@ -127,10 +128,24 @@ static GtkWidget *toolbar_menu_fnc_button_new(int lfunction) {
   return button;
 }
 
+static void toolbar_menu_action_label(char *label, size_t label_size, int action) {
+  if (action >= XVTR_1 && action <= XVTR_10) {
+    int slot = action - XVTR_1;
+    const BAND *xvtr = band_get_band(BANDS + slot);
+    if (xvtr->title[0] != '\0') {
+      snprintf(label, label_size, "X%d(%.6s)", slot + 1, xvtr->title);
+      return;
+    }
+  }
+  snprintf(label, label_size, "%s", ActionTable[action].button_str);
+}
+
 static gboolean switch_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
   SWITCH *sw = (SWITCH *) data;
   int action = action_dialog_with_hide(dialog, MIDI_KEY, TYPE_HIDE_TOOLBAR, sw->switch_function);
-  gtk_button_set_label(GTK_BUTTON(widget), ActionTable[action].button_str);
+  char label[16];
+  toolbar_menu_action_label(label, sizeof(label), action);
+  gtk_button_set_label(GTK_BUTTON(widget), label);
   sw->switch_function = action;
   update_toolbar_labels();
   return TRUE;
@@ -153,7 +168,9 @@ static GtkWidget *toolbar_page_new(int lfunction, int visible_rows) {
     gtk_grid_attach(GTK_GRID(grid), label, TOOLBAR_MENU_LABEL_COL, toolbar_row, 1, 1);
     for (int i = 0; i < config_buttons; i++) {
       int switch_index = (toolbar_row * TOOLBAR_MENU_BUTTONS_PER_ROW) + i;
-      GtkWidget *widget = gtk_button_new_with_label(ActionTable[sw[switch_index].switch_function].button_str);
+      char action_label[16];
+      toolbar_menu_action_label(action_label, sizeof(action_label), sw[switch_index].switch_function);
+      GtkWidget *widget = gtk_button_new_with_label(action_label);
       gtk_widget_set_name(widget, "small_button");
       gtk_grid_attach(GTK_GRID(grid), widget, TOOLBAR_MENU_FIRST_BUTTON_COL + i, toolbar_row, 1, 1);
       g_signal_connect(widget, "button-press-event", G_CALLBACK(switch_cb), (gpointer) &sw[switch_index]);

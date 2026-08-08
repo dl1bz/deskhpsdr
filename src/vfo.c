@@ -1004,6 +1004,14 @@ void vfo_band_changed(int id, int b) {
   vfo[id].ctun_frequency = entry->ctun_frequency;
   vfo[id].mode = entry->mode;
   vfo[id].lo = band->frequencyLO + band->errorLO;
+  if (b >= BANDS) {
+    long long radio_frequency = vfo[id].frequency - vfo[id].lo;
+    t_print("%s: XVTR %s VFO%d QRG=%.6f MHz radio=%.6f MHz LO=%.6f MHz\n",
+            __func__, band->title, id,
+            (double) vfo[id].frequency / 1000000.0,
+            (double) radio_frequency / 1000000.0,
+            (double) vfo[id].lo / 1000000.0);
+  }
   vfo[id].filter = entry->filter;
   vfo[id].deviation = entry->deviation;
   if (can_transmit && id == vfo_get_tx_vfo()) {

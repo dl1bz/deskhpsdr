@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 #include "main.h"
 #include "actions.h"
+#include "band.h"
 #include "radio.h"
 
 #define GRID_WIDTH 6
@@ -77,7 +78,18 @@ int action_dialog_with_hide (GtkWidget *parent, int filter, int hide_flags, enum
     if (ActionTable[i].type & TYPE_HIDE) { continue; }
     if (ActionTable[i].type & hide_flags) { continue; }
     if ((ActionTable[i].type & filter) || (ActionTable[i].type == TYPE_NONE)) {
-      GtkWidget *button = gtk_toggle_button_new_with_label (ActionTable[i].str);
+      const char *action_label = ActionTable[i].str;
+      char xvtr_label[16];
+      if ((hide_flags & TYPE_HIDE_TOOLBAR) &&
+          ActionTable[i].action >= XVTR_1 && ActionTable[i].action <= XVTR_10) {
+        int slot = ActionTable[i].action - XVTR_1;
+        const BAND *xvtr = band_get_band(BANDS + slot);
+        if (xvtr->title[0] != '\0') {
+          snprintf(xvtr_label, sizeof(xvtr_label), "X%d(%.6s)", slot + 1, xvtr->title);
+          action_label = xvtr_label;
+        }
+      }
+      GtkWidget *button = gtk_toggle_button_new_with_label (action_label);
       gtk_widget_set_name (button, "small_toggle_button");
       GtkWidget *button_label = gtk_bin_get_child (GTK_BIN (button));
       gtk_label_set_xalign (GTK_LABEL (button_label), 0.5);

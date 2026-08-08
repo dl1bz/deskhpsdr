@@ -291,6 +291,16 @@ ACTION_TABLE ActionTable[] = {
   {ZOOM,                "Zoom",                 "ZOOM",         MIDI_KNOB  | MIDI_WHEEL},
   {ZOOM_MINUS,          "Zoom -",               "ZOOM-",        MIDI_KEY},
   {ZOOM_PLUS,           "Zoom +",               "ZOOM+",        MIDI_KEY},
+  {XVTR_1,              "XVTR 1",                "XVTR1",        MIDI_KEY},
+  {XVTR_2,              "XVTR 2",                "XVTR2",        MIDI_KEY},
+  {XVTR_3,              "XVTR 3",                "XVTR3",        MIDI_KEY},
+  {XVTR_4,              "XVTR 4",                "XVTR4",        MIDI_KEY},
+  {XVTR_5,              "XVTR 5",                "XVTR5",        MIDI_KEY},
+  {XVTR_6,              "XVTR 6",                "XVTR6",        MIDI_KEY},
+  {XVTR_7,              "XVTR 7",                "XVTR7",        MIDI_KEY},
+  {XVTR_8,              "XVTR 8",                "XVTR8",        MIDI_KEY},
+  {XVTR_9,              "XVTR 9",                "XVTR9",        MIDI_KEY},
+  {XVTR_10,             "XVTR 10",               "XVTR10",       MIDI_KEY},
   {ACTIONS,             "None",                 "NONE",         TYPE_NONE}
 };
 
@@ -743,6 +753,25 @@ int process_action(void *data) {
   case BAND_WWV:
     if (a->mode == PRESSED) {
       vfo_band_changed(active_receiver->id, bandWWV);
+    }
+    break;
+  case XVTR_1:
+  case XVTR_2:
+  case XVTR_3:
+  case XVTR_4:
+  case XVTR_5:
+  case XVTR_6:
+  case XVTR_7:
+  case XVTR_8:
+  case XVTR_9:
+  case XVTR_10:
+    if (a->mode == PRESSED) {
+      int b = BANDS + (a->action - XVTR_1);
+      const BAND *band = band_get_band(b);
+      // Only configured transverter slots can be selected.
+      if (band->title[0] != '\0') {
+        vfo_band_changed(active_receiver->id, b);
+      }
     }
     break;
   case BANDSTACK_MINUS:

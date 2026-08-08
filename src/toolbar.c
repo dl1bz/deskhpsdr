@@ -93,7 +93,16 @@ static void toolbar_button_label(char *label, size_t label_size, int switch_inde
   if (toolbar_is_function_slot(switch_index)) {
     snprintf(label, label_size, "FNC(%d)", function);
   } else {
-    snprintf(label, label_size, "%s", ActionTable[toolbar_switches[switch_index].switch_function].button_str);
+    int action = toolbar_switches[switch_index].switch_function;
+    if (action >= XVTR_1 && action <= XVTR_10) {
+      int slot = action - XVTR_1;
+      const BAND *xvtr = band_get_band(BANDS + slot);
+      if (xvtr->title[0] != '\0') {
+        snprintf(label, label_size, "X%d(%.6s)", slot + 1, xvtr->title);
+        return;
+      }
+    }
+    snprintf(label, label_size, "%s", ActionTable[action].button_str);
   }
 }
 

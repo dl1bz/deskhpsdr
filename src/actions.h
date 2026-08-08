@@ -247,6 +247,16 @@ enum ACTION {
   ZOOM,
   ZOOM_MINUS,
   ZOOM_PLUS,
+  XVTR_1,
+  XVTR_2,
+  XVTR_3,
+  XVTR_4,
+  XVTR_5,
+  XVTR_6,
+  XVTR_7,
+  XVTR_8,
+  XVTR_9,
+  XVTR_10,
   ACTIONS
 };
 

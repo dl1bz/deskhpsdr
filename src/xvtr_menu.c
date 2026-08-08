@@ -33,6 +33,7 @@
 #include "radio.h"
 #include "vfo.h"
 #include "message.h"
+#include "toolbar.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *title[BANDS + XVTRS];
@@ -121,6 +122,7 @@ static void save_xvtr(void) {
     }
   }
   vfo_xvtr_changed();
+  update_toolbar_labels();
 }
 
 void pa_disable_cb(GtkWidget *widget, gpointer data) {
@@ -147,6 +149,51 @@ static gboolean close_cb(void) {
 }
 
 static gboolean update_cb(void) {
+  save_xvtr();
+  return TRUE;
+}
+
+static gboolean reset_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  int i = GPOINTER_TO_INT(data);
+  BAND *xvtr = band_get_band(i);
+  BANDSTACK *bandstack = xvtr->bandstack;
+  //
+  // If this XVTR is currently active, leave it before clearing the slot.
+  // This avoids leaving a VFO on an empty transverter definition.
+  //
+  for (int v = 0; v < MAX_VFOS; v++) {
+    if (vfo[v].band == i) {
+      vfo_band_changed(v, bandGen);
+    }
+  }
+  //
+  // Reset the editable XVTR parameters.
+  //
+  gtk_entry_set_text(GTK_ENTRY(title[i]), "");
+  gtk_entry_set_text(GTK_ENTRY(min_frequency[i]), "0.000");
+  gtk_entry_set_text(GTK_ENTRY(max_frequency[i]), "0.000");
+  gtk_entry_set_text(GTK_ENTRY(lo_frequency[i]), "0.000");
+  gtk_entry_set_text(GTK_ENTRY(lo_error[i]), "0");
+  gtk_entry_set_text(GTK_ENTRY(gain[i]), "0");
+  if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(disable_pa[i]), TRUE);
+  }
+  //
+  // Reset the XVTR bandstack as well, so a later reconfiguration of this
+  // slot starts from the same state as a previously unused XVTR slot.
+  //
+  bandstack->current_entry = 0;
+  for (int b = 0; b < bandstack->entries; b++) {
+    BANDSTACK_ENTRY *entry = &bandstack->entry[b];
+    entry->frequency = 0;
+    entry->ctun = 0;
+    entry->ctun_frequency = 0;
+    entry->mode = modeUSB;
+    entry->filter = filterF6;
+    entry->deviation = 2500;
+    entry->ctcss_enabled = 0;
+    entry->ctcss = 0;
+  }
   save_xvtr();
   return TRUE;
 }
@@ -200,6 +247,9 @@ void xvtr_menu(GtkWidget *parent) {
     gtk_widget_set_name(label, "boldlabel");
     gtk_grid_attach(GTK_GRID(grid), label, 6, 1, 1, 1);
   }
+  label = gtk_label_new("Reset");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_grid_attach(GTK_GRID(grid), label, 7, 1, 1, 1);
   //
   // Note  no signal connect for the text fields:
   // this will lead to intermediate frequency values that are unreasonable.
@@ -209,7 +259,8 @@ void xvtr_menu(GtkWidget *parent) {
   for (i = BANDS; i < BANDS + XVTRS; i++) {
     const BAND *xvtr = band_get_band(i);
     title[i] = gtk_entry_new();
-    gtk_entry_set_width_chars(GTK_ENTRY(title[i]), 7);
+    gtk_entry_set_width_chars(GTK_ENTRY(title[i]), 6);
+    gtk_entry_set_max_length(GTK_ENTRY(title[i]), 6);
     gtk_entry_set_text(GTK_ENTRY(title[i]), xvtr->title);
     gtk_grid_attach(GTK_GRID(grid), title[i], 0, i + 2, 1, 1);
     min_frequency[i] = gtk_entry_new();
@@ -244,6 +295,9 @@ void xvtr_menu(GtkWidget *parent) {
       gtk_widget_set_halign(disable_pa[i], GTK_ALIGN_CENTER);
       g_signal_connect(disable_pa[i], "toggled", G_CALLBACK(pa_disable_cb), GINT_TO_POINTER(i));
     }
+    GtkWidget *reset_b = gtk_button_new_with_label("Reset");
+    g_signal_connect(reset_b, "button-press-event", G_CALLBACK(reset_cb), GINT_TO_POINTER(i));
+    gtk_grid_attach(GTK_GRID(grid), reset_b, 7, i + 2, 1, 1);
   }
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
