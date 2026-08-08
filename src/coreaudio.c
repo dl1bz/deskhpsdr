@@ -1,9 +1,8 @@
 /* Copyright (C)
 * 2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
-* Native CoreAudio output backend.
-*
-* Native CoreAudio/AUHAL device, input, output and TCI-monitor backend.
+* Native CoreAudio/AUHAL device enumeration, input, output and
+* TCI-monitor backend.
 */
 
 #ifdef COREAUDIO
@@ -18,37 +17,29 @@
 #include "audio.h"
 #include "coreaudio.h"
 #include "message.h"
-#ifdef COREAUDIO
 #include "tci_audio.h"
-#endif
 
 #define COREAUDIO_SAMPLE_RATE 48000.0
 
-#ifdef COREAUDIO
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
   RECEIVER *rx;
   int channels;
 } COREAUDIO_OUTPUT;
-#endif
 
-#ifdef COREAUDIO
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
   int channels;
 } COREAUDIO_TCI_MONITOR;
-#endif
 
-#ifdef COREAUDIO
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
   float *buffer;
   UInt32 max_frames;
 } COREAUDIO_INPUT;
-#endif
 
 static int coreaudio_device_channels(AudioDeviceID device, AudioObjectPropertyScope scope) {
   AudioObjectPropertyAddress address = {
@@ -96,7 +87,6 @@ static int coreaudio_device_name(AudioDeviceID device, char *name, size_t name_s
   return ok ? 1 : 0;
 }
 
-#ifdef COREAUDIO
 
 static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
   for (int i = 0; i < count; i++) {
@@ -185,9 +175,7 @@ int coreaudio_get_cards(void) {
   return 0;
 }
 
-#endif /* COREAUDIO */
 
-#ifdef COREAUDIO
 static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
   AudioObjectPropertyAddress address = {
     kAudioHardwarePropertyDevices,
@@ -228,9 +216,7 @@ static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
   free(devices);
   return found;
 }
-#endif
 
-#ifdef COREAUDIO
 static OSStatus coreaudio_render_cb(void *refcon,
                                     AudioUnitRenderActionFlags *flags,
                                     const AudioTimeStamp *timestamp,
@@ -409,9 +395,7 @@ void coreaudio_output_close(void *handle) {
   free(output);
 }
 
-#endif /* COREAUDIO */
 
-#ifdef COREAUDIO
 
 #define COREAUDIO_TCI_MONITOR_CHUNK 1024
 
@@ -584,9 +568,7 @@ void coreaudio_tci_monitor_close(void *handle) {
   free(monitor);
 }
 
-#endif /* COREAUDIO */
 
-#ifdef COREAUDIO
 
 static AudioDeviceID coreaudio_find_input_device(const char *device_name) {
   AudioObjectPropertyAddress address = {
@@ -837,6 +819,5 @@ void coreaudio_input_close(void *handle) {
   free(input);
 }
 
-#endif /* COREAUDIO */
 
-#endif
+#endif /* COREAUDIO */

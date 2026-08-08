@@ -53,6 +53,5 @@ extern void audio_process_local_mic_input(const float *samples, unsigned int fra
 extern int audio_open_tci_monitor (const char *audio_name);
 extern void audio_close_tci_monitor (void);
 #endif
-char *audio_get_error_string (int err);
 float  audio_get_next_mic_sample (void);
 #endif

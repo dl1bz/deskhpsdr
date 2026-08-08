@@ -102,12 +102,16 @@ guint64 audio_get_xrun_count(void) {
 static float *mic_ring_buffer = NULL;
 static atomic_int mic_ring_outpt;
 static atomic_int mic_ring_inpt;
+static atomic_int mic_ring_reset_frames;
+static atomic_int mic_ring_silence_frames;
 
-static void local_mic_ring_reset(int silence_frames) {
-  if (mic_ring_buffer == NULL) {
-    return;
-  }
-
+//
+// Request a ring reset without modifying the consumer-owned output pointer.
+// The CoreAudio callback is the producer; the protocol mic path is the
+// consumer. The consumer performs the actual flush on its next read and then
+// returns the requested amount of silence before consuming new mic samples.
+//
+static void local_mic_ring_request_reset(int silence_frames) {
   if (silence_frames < 0) {
     silence_frames = 0;
   }
@@ -115,12 +119,7 @@ static void local_mic_ring_reset(int silence_frames) {
     silence_frames = MY_RING_BUFFER_SIZE - 1;
   }
 
-  if (silence_frames > 0) {
-    bzero(mic_ring_buffer, (size_t)silence_frames * sizeof(float));
-  }
-
-  atomic_store_explicit(&mic_ring_outpt, 0, memory_order_release);
-  atomic_store_explicit(&mic_ring_inpt, silence_frames, memory_order_release);
+  atomic_store_explicit(&mic_ring_reset_frames, silence_frames, memory_order_release);
 }
 
 static inline void local_mic_ring_push(float sample) {
@@ -146,6 +145,24 @@ static inline float local_mic_ring_pop(void) {
   float sample;
 
   if (mic_ring_buffer == NULL) {
+    return 0.0f;
+  }
+
+  //
+  // Producer-to-consumer reset handshake. Only the consumer advances outpt.
+  // Flush everything queued before the reset request and provide the desired
+  // silence locally, while the producer can already refill the ring.
+  //
+  int reset_frames = atomic_exchange_explicit(&mic_ring_reset_frames, 0, memory_order_acq_rel);
+  if (reset_frames > 0) {
+    inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
+    atomic_store_explicit(&mic_ring_outpt, inpt, memory_order_release);
+    atomic_store_explicit(&mic_ring_silence_frames, reset_frames, memory_order_relaxed);
+  }
+
+  int silence_frames = atomic_load_explicit(&mic_ring_silence_frames, memory_order_relaxed);
+  if (silence_frames > 0) {
+    atomic_store_explicit(&mic_ring_silence_frames, silence_frames - 1, memory_order_relaxed);
     return 0.0f;
   }
 
@@ -234,8 +251,10 @@ int audio_open_input(void) {
     t_print("%s: alloc buffer failed.\n", __func__);
     return -1;
   }
-  atomic_init(&mic_ring_outpt, 0);
-  atomic_init(&mic_ring_inpt, 0);
+  atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_reset_frames, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
 
   void *handle = coreaudio_input_open(transmitter->microphone_name);
@@ -245,6 +264,8 @@ int audio_open_input(void) {
     mic_ring_buffer = NULL;
     atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
     atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_reset_frames, 0, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
     g_mutex_unlock(&audio_mutex);
     return -1;
   }
@@ -430,7 +451,7 @@ void audio_process_local_mic_input(const float *samples, unsigned int frames) {
   if (!radio_is_transmitting()) {
     if (last_was_tx) {
       last_was_tx = 0;
-      local_mic_ring_reset(960);
+      local_mic_ring_request_reset(960);
     }
   } else {
     last_was_tx = 1;
@@ -541,6 +562,8 @@ void audio_close_input(void) {
   }
   atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_reset_frames, 0, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
 }
 
