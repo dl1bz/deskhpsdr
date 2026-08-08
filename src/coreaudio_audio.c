@@ -19,13 +19,8 @@
 *
 */
 
-#ifdef PORTAUDIO
 //
-// Alternate "audio" module using PORTAUDIO instead of ALSA
-// (e.g. on MacOS)
-//
-// If PortAudio is NOT used, this file is empty, and audio.c
-// is used instead.
+// Native macOS audio engine using CoreAudio/AUHAL.
 //
 
 #include <gtk/gtk.h>
@@ -39,14 +34,8 @@
 #include <pthread.h>
 #include <sched.h>
 #include <semaphore.h>
-#include <portaudio.h>
 
-#ifdef __APPLE__
-  #include <pa_mac_core.h>
-#endif
-#ifdef NATIVE_COREAUDIO_OUTPUT
-  #include "coreaudio.h"
-#endif
+#include "coreaudio.h"
 
 #include "radio.h"
 #include "receiver.h"
@@ -56,10 +45,7 @@
 #include "vfo.h"
 #include "tci_audio.h"
 
-static PaStream *record_handle = NULL;
-#ifdef NATIVE_COREAUDIO_INPUT
 static void *coreaudio_input_handle = NULL;
-#endif
 
 int n_input_devices;
 AUDIO_DEVICE input_devices[MAX_AUDIO_DEVICES];
@@ -80,7 +66,7 @@ guint64 audio_get_xrun_count(void) {
 // We now use callback functions to provide the "headphone" audio data,
 // and therefore can control the latency.
 // RX audio samples are put into a ring buffer and "fetched" therefreom
-// by the portaudio "headphone" callback.
+// by the CoreAudio "headphone" callback.
 //
 // We choose a ring buffer of 9600 (stereo) samples that is kept about half-full
 // during RX (latency: 0.1 sec) which should be more than enough.
@@ -92,7 +78,7 @@ guint64 audio_get_xrun_count(void) {
 // naturally while the sidetone starts from its own low-latency ring.
 // The sidetone filling is kept close to an explicit low-latency target to
 // reduce underrun risk and avoid larger latency swings.
-// Of course, a small portaudio audio buffer size (128 sample) helps
+// Of course, a small CoreAudio audio buffer size (128 sample) helps
 // keeping the latency small. The CW buffer is kept around CW_LAT_TARGET
 // with a narrow correction window to reduce occasional underruns/clicks.
 //
@@ -101,9 +87,6 @@ guint64 audio_get_xrun_count(void) {
 //
 //
 
-#define MY_AUDIO_BUFFER_SIZE  128
-#define TCI_MONITOR_FRAMES_PER_BUFFER 1024
-#define TCI_MONITOR_UNDERRUN_LOG_INTERVAL 100
 #define MY_RING_BUFFER_SIZE  9600
 #define MY_RING_LOW_WATER     512
 #define MY_RING_HIGH_WATER   9000
@@ -181,13 +164,8 @@ static inline float local_mic_ring_pop(void) {
   return sample;
 }
 
-static PaStream *tci_monitor_handle = NULL;
-#ifdef NATIVE_COREAUDIO_TCI_MONITOR
 static void *coreaudio_tci_monitor_handle = NULL;
-#endif
 static GMutex tci_monitor_mutex;
-static int tci_monitor_channels = 2;
-static unsigned int tci_monitor_underruns = 0;
 
 void audio_release_cards(void) {
   audio_close_tci_monitor();
@@ -205,18 +183,12 @@ void audio_release_cards(void) {
   memset(input_devices, 0, sizeof(input_devices));
   memset(output_devices, 0, sizeof(output_devices));
   g_mutex_unlock(&audio_mutex);
-#ifndef NATIVE_COREAUDIO_ENUMERATION
-  /*
-   * PortAudio owns device enumeration on non-macOS builds.
-   */
-  Pa_Terminate();
-#endif
 }
 
 //
 // AUDIO_GET_CARDS
 //
-// This inits PortAudio and looks for suitable input and output channels
+// Enumerate suitable native CoreAudio input and output devices.
 //
 void audio_get_cards(void) {
   static gsize mutex_inited = 0;
@@ -226,92 +198,21 @@ void audio_get_cards(void) {
     g_once_init_leave(&mutex_inited, 1);
   }
 
-#ifdef NATIVE_COREAUDIO_ENUMERATION
   t_print("%s: native CoreAudio call audio_get_cards\n", __func__);
   if (coreaudio_get_cards() != 0) {
     t_print("%s: native CoreAudio device enumeration failed\n", __func__);
   }
-#else
-  t_print("%s: PORTAUDIO call audio_get_cards\n", __func__);
-  int numDevices;
-  PaStreamParameters inputParameters, outputParameters;
-  PaError err;
-  err = Pa_Initialize();
-  if (err != paNoError) {
-    t_print("%s: init error %s\n", __func__, Pa_GetErrorText(err));
-    return;
-  }
-  numDevices = Pa_GetDeviceCount();
-  if (numDevices < 0) { return; }
-  g_mutex_lock(&audio_mutex);
-  n_input_devices = 0;
-  n_output_devices = 0;
-  for (int  i = 0; i < numDevices; i++) {
-    const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
-    inputParameters.device = i;
-    inputParameters.channelCount = 1;  // Microphone samples are mono
-    inputParameters.sampleFormat = paFloat32;
-    inputParameters.suggestedLatency = 0; /* ignored by Pa_IsFormatSupported() */
-    inputParameters.hostApiSpecificStreamInfo = NULL;
-    if (Pa_IsFormatSupported(&inputParameters, NULL, 48000.0) == paFormatIsSupported) {
-      if (n_input_devices < MAX_AUDIO_DEVICES) {
-        //
-        // probably not necessary with portaudio, but to be on the safe side,
-        // we copy the device name to local storage. This is referenced both
-        // by the name and description element.
-        //
-        input_devices[n_input_devices].name = g_strdup(deviceInfo->name);
-        input_devices[n_input_devices].description = g_strdup(deviceInfo->name);
-        input_devices[n_input_devices].index = i;
-        n_input_devices++;
-      }
-      t_print("%s: INPUT DEVICE, No=%d, Name=%s\n", __func__, i, deviceInfo->name);
-    }
-    outputParameters.device = i;
-    outputParameters.sampleFormat = paFloat32;
-    outputParameters.suggestedLatency = 0; /* ignored by Pa_IsFormatSupported() */
-    outputParameters.hostApiSpecificStreamInfo = NULL;
-    outputParameters.channelCount = 2;  // prefer stereo
-    if (Pa_IsFormatSupported(NULL, &outputParameters, 48000.0) == paFormatIsSupported) {
-      if (n_output_devices < MAX_AUDIO_DEVICES) {
-        output_devices[n_output_devices].name = g_strdup(deviceInfo->name);
-        output_devices[n_output_devices].description = g_strdup(deviceInfo->name);
-        output_devices[n_output_devices].index = i;
-        n_output_devices++;
-      }
-      t_print("%s: OUTPUT DEVICE, No=%d, Name=%s (stereo)\n", __func__, i, deviceInfo->name);
-    } else {
-      outputParameters.channelCount = 1;  // mono fallback
-      if (Pa_IsFormatSupported(NULL, &outputParameters, 48000.0) == paFormatIsSupported) {
-        if (n_output_devices < MAX_AUDIO_DEVICES) {
-          output_devices[n_output_devices].name = g_strdup(deviceInfo->name);
-          output_devices[n_output_devices].description = g_strdup(deviceInfo->name);
-          output_devices[n_output_devices].index = i;
-          n_output_devices++;
-        }
-        t_print("%s: OUTPUT DEVICE, No=%d, Name=%s (mono)\n", __func__, i, deviceInfo->name);
-      }
-    }
-  }
-  g_mutex_unlock(&audio_mutex);
-#endif
 }
 
 
 //
 // AUDIO_OPEN_INPUT
 //
-// open a PA stream that connects to the TX microphone
-// The PA callback function then sends the data to the transmitter
+// Open native CoreAudio input connected to the TX microphone.
 //
 
-int pa_mic_cb(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags, void *);
-int pa_out_cb(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags, void *);
-int pa_tci_monitor_cb(const void *, void *, unsigned long, const PaStreamCallbackTimeInfo *, PaStreamCallbackFlags,
-                      void *);
 
 int audio_open_input(void) {
-#ifdef NATIVE_COREAUDIO_INPUT
   t_print("%s: native CoreAudio call audio_open_input\n", __func__);
 
   if (!can_transmit) {
@@ -354,138 +255,12 @@ int audio_open_input(void) {
 
   t_print("%s: native CoreAudio input name=%s\n", __func__, transmitter->microphone_name);
   return 0;
-#else
-
-  t_print("%s: PORTAUDIO call audio_open_input\n", __func__);
-  PaError err;
-  PaStreamParameters inputParameters;
-  int i;
-  int padev;
-  if (!can_transmit) {
-    return -1;
-  }
-  //
-  // Look up device name and determine device ID
-  //
-  padev = -1;
-  for (i = 0; i < n_input_devices; i++) {
-    if (!strcmp(transmitter->microphone_name, input_devices[i].name)) {
-      padev = input_devices[i].index;
-      break;
-    }
-  }
-  t_print("%s: name=%s PADEV=%d\n", __func__, transmitter->microphone_name, padev);
-  //
-  // Device name possibly came from props file and device is no longer there
-  //
-  if (padev < 0) {
-    return -1;
-  }
-  g_mutex_lock(&audio_mutex);
-  bzero(&inputParameters, sizeof(inputParameters));    //not necessary if you are filling in all the fields
-  inputParameters.channelCount = 1;   // MONO
-  inputParameters.device = padev;
-  inputParameters.hostApiSpecificStreamInfo = NULL;
-  inputParameters.sampleFormat = paFloat32;
-  const PaDeviceInfo *info = Pa_GetDeviceInfo(padev);
-  if (info == NULL) {
-    g_mutex_unlock(&audio_mutex);
-    return -1;
-  }
-  inputParameters.suggestedLatency = info->defaultLowInputLatency;
-  t_print("%s: input device=%s channels=%d sampleFormat=paFloat32 latency=%f samplerate=48000\n",
-          __func__, info->name, inputParameters.channelCount, inputParameters.suggestedLatency);
-#ifdef __APPLE__
-  static PaMacCoreStreamInfo macCoreInfo;
-  macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
-  macCoreInfo.hostApiType = paCoreAudio;
-  macCoreInfo.version = 0x01;
-  macCoreInfo.flags = paMacCoreChangeDeviceParameters;
-  inputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
-#else
-  inputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
-#endif
-  err = Pa_OpenStream(&record_handle, &inputParameters, NULL, 48000.0, MY_AUDIO_BUFFER_SIZE,
-                      paNoFlag, pa_mic_cb, NULL);
-  if (err != paNoError) {
-    t_print("%s: open stream error %s\n", __func__, Pa_GetErrorText(err));
-    record_handle = NULL;
-    g_mutex_unlock(&audio_mutex);
-    return -1;
-  }
-  mic_ring_buffer = (float *) g_new(float, MY_RING_BUFFER_SIZE);
-  atomic_init(&mic_ring_outpt, 0);
-  atomic_init(&mic_ring_inpt, 0);
-  if (mic_ring_buffer == NULL) {
-    Pa_CloseStream(record_handle);
-    record_handle = NULL;
-    t_print("%s: alloc buffer failed.\n", __func__);
-    g_mutex_unlock(&audio_mutex);
-    return -1;
-  }
-  err = Pa_StartStream(record_handle);
-  if (err != paNoError) {
-    t_print("%s: start stream error %s\n", __func__, Pa_GetErrorText(err));
-    Pa_CloseStream(record_handle);
-    record_handle = NULL;
-    g_free(mic_ring_buffer);
-    mic_ring_buffer = NULL;
-    g_mutex_unlock(&audio_mutex);
-    return -1;
-  }
-  //
-  // Finished!
-  //
-  g_mutex_unlock(&audio_mutex);
-  return 0;
-#endif
 }
 
 
 //
-// PortAudio call-back function for local TCI audio monitor output
 //
-int pa_tci_monitor_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
-                      const PaStreamCallbackTimeInfo* timeInfo,
-                      PaStreamCallbackFlags statusFlags,
-                      void *userdata) {
-  float *out = (float *) outputBuffer;
-  float buffer[TCI_MONITOR_FRAMES_PER_BUFFER * TCI_AUDIO_CHANNELS];
-  guint frames;
-  unsigned long requested_frames = framesPerBuffer;
-  if (out == NULL) {
-    t_print("%s: bogus audio buffer in callback\n", __func__);
-    return paContinue;
-  }
-  if (requested_frames > TCI_MONITOR_FRAMES_PER_BUFFER) {
-    requested_frames = TCI_MONITOR_FRAMES_PER_BUFFER;
-  }
-  frames = tci_audio_monitor_read(buffer, (guint) requested_frames);
-  if (frames < requested_frames) {
-    tci_monitor_underruns++;
-    if ((tci_monitor_underruns % TCI_MONITOR_UNDERRUN_LOG_INTERVAL) == 1) {
-      t_print("%s: underrun frames=%u requested=%lu count=%u\n", __func__, frames, requested_frames, tci_monitor_underruns);
-    }
-  }
-  for (unsigned int i = 0; i < framesPerBuffer; i++) {
-    float left = 0.0f;
-    float right = 0.0f;
-    if (i < frames) {
-      left = buffer[(i * TCI_AUDIO_CHANNELS)];
-      right = buffer[(i * TCI_AUDIO_CHANNELS) + 1];
-    }
-    if (tci_monitor_channels == 2) {
-      *out++ = left;
-      *out++ = right;
-    } else {
-      *out++ = 0.5f * (left + right);
-    }
-  }
-  return paContinue;
-}
-
 int audio_open_tci_monitor(const char *audio_name) {
-#ifdef NATIVE_COREAUDIO_TCI_MONITOR
   if (audio_name == NULL || audio_name[0] == '\0') {
     return -1;
   }
@@ -511,89 +286,15 @@ int audio_open_tci_monitor(const char *audio_name) {
 
   g_mutex_lock(&tci_monitor_mutex);
   coreaudio_tci_monitor_handle = handle;
-  tci_monitor_channels = channels;
-  tci_monitor_underruns = 0;
   g_mutex_unlock(&tci_monitor_mutex);
 
   t_print("%s: opened native CoreAudio TCI monitor name=%s channels=%d\n",
           __func__, audio_name, channels);
   return 0;
-#else
-
-  PaError err;
-  PaStreamParameters outputParameters;
-  int padev = -1;
-  if (audio_name == NULL) { return -1; }
-  for (int i = 0; i < n_output_devices; i++) {
-    if (!strcmp(audio_name, output_devices[i].name)) {
-      padev = output_devices[i].index;
-      break;
-    }
-  }
-  t_print("%s: name=%s PADEV=%d\n", __func__, audio_name, padev);
-  if (padev < 0) { return -1; }
-  g_mutex_lock(&tci_monitor_mutex);
-  if (tci_monitor_handle != NULL) {
-    g_mutex_unlock(&tci_monitor_mutex);
-    return 0;
-  }
-  bzero(&outputParameters, sizeof(outputParameters));
-  const PaDeviceInfo *info = Pa_GetDeviceInfo(padev);
-  if (info == NULL) {
-    g_mutex_unlock(&tci_monitor_mutex);
-    return -1;
-  }
-  outputParameters.device = padev;
-  outputParameters.hostApiSpecificStreamInfo = NULL;
-  outputParameters.sampleFormat = paFloat32;
-  outputParameters.suggestedLatency = info->defaultHighOutputLatency;
-  t_print("%s: output device=%s sampleFormat=paFloat32 latency=%f samplerate=%d\n",
-          __func__, info->name, outputParameters.suggestedLatency, TCI_AUDIO_SAMPLE_RATE);
-#ifdef __APPLE__
-  static PaMacCoreStreamInfo macCoreInfo;
-  macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
-  macCoreInfo.hostApiType = paCoreAudio;
-  macCoreInfo.version = 0x01;
-  macCoreInfo.flags = paMacCoreChangeDeviceParameters;
-  outputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
-#else
-  outputParameters.hostApiSpecificStreamInfo = NULL;
-#endif
-  outputParameters.channelCount = 2;
-  tci_monitor_channels = 2;
-  if (Pa_IsFormatSupported(NULL, &outputParameters, TCI_AUDIO_SAMPLE_RATE) != paFormatIsSupported) {
-    outputParameters.channelCount = 1;
-    tci_monitor_channels = 1;
-  }
-  tci_monitor_underruns = 0;
-  err = Pa_OpenStream(&tci_monitor_handle, NULL, &outputParameters, TCI_AUDIO_SAMPLE_RATE, TCI_MONITOR_FRAMES_PER_BUFFER,
-                      paNoFlag, pa_tci_monitor_cb, NULL);
-  if (err != paNoError) {
-    t_print("%s: open stream error %s\n", __func__, Pa_GetErrorText(err));
-    tci_monitor_handle = NULL;
-    g_mutex_unlock(&tci_monitor_mutex);
-    return -1;
-  }
-  tci_audio_monitor_set_active(1);
-  err = Pa_StartStream(tci_monitor_handle);
-  if (err != paNoError) {
-    t_print("%s: start stream error %s\n", __func__, Pa_GetErrorText(err));
-    Pa_CloseStream(tci_monitor_handle);
-    tci_monitor_handle = NULL;
-    tci_audio_monitor_set_active(0);
-    g_mutex_unlock(&tci_monitor_mutex);
-    return -1;
-  }
-  t_print("%s: opened TCI monitor with %d channel(s), fpb=%d\n", __func__, tci_monitor_channels,
-          TCI_MONITOR_FRAMES_PER_BUFFER);
-  g_mutex_unlock(&tci_monitor_mutex);
-  return 0;
-#endif
 }
 
 
 void audio_close_tci_monitor(void) {
-#ifdef NATIVE_COREAUDIO_TCI_MONITOR
   void *handle = NULL;
 
   g_mutex_lock(&tci_monitor_mutex);
@@ -606,62 +307,11 @@ void audio_close_tci_monitor(void) {
   //
   coreaudio_tci_monitor_close(handle);
   tci_audio_monitor_set_active(0);
-#else
-
-  PaStream *s = NULL;
-  g_mutex_lock(&tci_monitor_mutex);
-  s = tci_monitor_handle;
-  tci_monitor_handle = NULL;
-  tci_audio_monitor_set_active(0);
-  g_mutex_unlock(&tci_monitor_mutex);
-  if (s != NULL) {
-    PaError err = Pa_StopStream(s);
-    if (err != paNoError) {
-      t_print("%s: stop stream error %s\n", __func__, Pa_GetErrorText(err));
-    }
-    err = Pa_CloseStream(s);
-    if (err != paNoError) {
-      t_print("%s: close stream error %s\n", __func__, Pa_GetErrorText(err));
-    }
-  }
-#endif
 }
 
 
 //
-// PortAudio call-back function for Audio output
 //
-int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
-              const PaStreamCallbackTimeInfo* timeInfo,
-              PaStreamCallbackFlags statusFlags,
-              void *userdata) {
-  (void) inputBuffer;
-  (void) timeInfo;
-
-  float *out = (float *) outputBuffer;
-  RECEIVER *rx = (RECEIVER *) userdata;
-  gboolean valid_rx_id = rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]));
-  gboolean ring_was_primed = valid_rx_id && g_atomic_int_get(&output_ring_primed[rx->id]);
-
-  if ((statusFlags & paOutputUnderflow) && ring_was_primed && rx->local_audio) {
-    g_atomic_int_inc(&audio_xrun_count);
-  }
-  if (out == NULL) {
-    t_print("%s: bogus audio buffer in callback\n", __func__);
-    return paContinue;
-  }
-
-  /*
-   * Keep the existing PortAudio synchronization unchanged. The shared
-   * renderer itself is lock-free so CoreAudio can call it from its RT thread.
-   */
-  g_mutex_lock(&rx->local_audio_mutex);
-  audio_render_local_output(rx, out, (unsigned int) framesPerBuffer, rx->local_audio_channels);
-  g_mutex_unlock(&rx->local_audio_mutex);
-
-  return paContinue;
-}
-
 void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels) {
   gboolean ring_underrun = FALSE;
   gboolean ring_had_audio = FALSE;
@@ -763,7 +413,7 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
 
 
 //
-// PortAudio call-back function for Audio input
+// Feed native CoreAudio microphone samples into the shared mic ring.
 //
 void audio_process_local_mic_input(const float *samples, unsigned int frames) {
   static int last_was_tx = 0;
@@ -791,26 +441,6 @@ void audio_process_local_mic_input(const float *samples, unsigned int frames) {
   }
 }
 
-int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
-              const PaStreamCallbackTimeInfo* timeInfo,
-              PaStreamCallbackFlags statusFlags,
-              void *userdata) {
-  const float *in = (const float *) inputBuffer;
-  (void) outputBuffer;
-  (void) timeInfo;
-  (void) statusFlags;
-  (void) userdata;
-
-  if (in == NULL) {
-    // This should not happen, so we do not send silence etc.
-    t_print("%s: bogus audio buffer in callback\n", __func__);
-    return paContinue;
-  }
-
-  audio_process_local_mic_input(in, (unsigned int) framesPerBuffer);
-  return paContinue;
-}
-
 //
 // Utility function for retrieving mic samples
 // from ring buffer
@@ -822,10 +452,9 @@ float audio_get_next_mic_sample(void) {
 //
 // AUDIO_OPEN_OUTPUT
 //
-// open a PA stream for data from one of the RX
+// Open native CoreAudio output for data from one of the RX.
 //
 int audio_open_output(RECEIVER *rx) {
-#ifdef NATIVE_COREAUDIO_OUTPUT
   if (rx == NULL) {
     return -1;
   }
@@ -835,7 +464,6 @@ int audio_open_output(RECEIVER *rx) {
    * Publish the backend handle only after AudioOutputUnitStart() succeeds.
    */
   g_mutex_lock(&rx->local_audio_mutex);
-  rx->playstream = NULL;
   rx->coreaudio_output_handle = NULL;
   rx->local_audio_buffer = g_new(float, 2 * MY_RING_BUFFER_SIZE);
   rx->sidetone_buffer = g_new0(float, MY_RING_BUFFER_SIZE);
@@ -881,110 +509,6 @@ int audio_open_output(RECEIVER *rx) {
   t_print("%s: native CoreAudio output name=%s channels=%d\n",
           __func__, rx->audio_name, rx->local_audio_channels);
   return 0;
-#else
-
-  PaError err;
-  PaStreamParameters outputParameters;
-  int padev;
-  int i;
-  //
-  // Look up device name and determine device ID
-  //
-  padev = -1;
-  for (i = 0; i < n_output_devices; i++) {
-    if (!strcmp(rx->audio_name, output_devices[i].name)) {
-      padev = output_devices[i].index;
-      break;
-    }
-  }
-  t_print("%s: name=%s PADEV=%d\n", __func__, rx->audio_name, padev);
-  //
-  // Device name possibly came from props file and device is no longer there
-  //
-  if (padev < 0) {
-    return -1;
-  }
-  g_mutex_lock(&rx->local_audio_mutex);
-  bzero(&outputParameters, sizeof(outputParameters));    //not necessary if you are filling in all the fields
-  outputParameters.device = padev;
-  outputParameters.hostApiSpecificStreamInfo = NULL;
-  const PaDeviceInfo *info = Pa_GetDeviceInfo(padev);
-  if (info == NULL) {
-    g_mutex_unlock(&rx->local_audio_mutex);
-    return -1;
-  }
-  outputParameters.sampleFormat = paFloat32;
-  outputParameters.suggestedLatency = info->defaultLowOutputLatency;
-  t_print("%s: output device=%s sampleFormat=paFloat32 latency=%f samplerate=48000\n",
-          __func__, info->name, outputParameters.suggestedLatency);
-#ifdef __APPLE__
-  static PaMacCoreStreamInfo macCoreInfo;
-  macCoreInfo.size = sizeof(PaMacCoreStreamInfo);
-  macCoreInfo.hostApiType = paCoreAudio;
-  macCoreInfo.version = 0x01;
-  macCoreInfo.flags = paMacCoreChangeDeviceParameters;
-  outputParameters.hostApiSpecificStreamInfo = &macCoreInfo;
-#else
-  outputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
-#endif
-  outputParameters.channelCount = 2;   // prefer stereo
-  rx->local_audio_channels = 2;
-  if (Pa_IsFormatSupported(NULL, &outputParameters, 48000.0) != paFormatIsSupported) {
-    outputParameters.channelCount = 1;
-    rx->local_audio_channels = 1;
-  }
-  err = Pa_OpenStream(& (rx->playstream), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
-                      paNoFlag, pa_out_cb, rx);
-  t_print("%s: opened output with %d channel(s)\n", __func__, rx->local_audio_channels);
-  if (err != paNoError) {
-    t_print("%s: open stream error %s\n", __func__, Pa_GetErrorText(err));
-    rx->playstream = NULL;
-    g_mutex_unlock(&rx->local_audio_mutex);
-    return -1;
-  }
-  //
-  // This is now a ring buffer much larger than a single audio buffer
-  //
-  rx->local_audio_buffer = g_new(float, 2 * MY_RING_BUFFER_SIZE);
-  rx->sidetone_buffer = g_new0(float, MY_RING_BUFFER_SIZE);
-  atomic_store_explicit(&rx->local_audio_buffer_inpt, 0, memory_order_relaxed);
-  atomic_store_explicit(&rx->local_audio_buffer_outpt, 0, memory_order_relaxed);
-  atomic_store_explicit(&rx->sidetone_buffer_inpt, 0, memory_order_relaxed);
-  atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
-  rx->local_audio_cw_active = 0;
-  if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
-    g_atomic_int_set(&output_ring_primed[rx->id], 0);
-    g_atomic_int_set(&output_ring_starved[rx->id], 0);
-  }
-  if (rx->local_audio_buffer == NULL || rx->sidetone_buffer == NULL) {
-    t_print("%s: allocate buffer failed\n", __func__);
-    Pa_CloseStream(rx->playstream);
-    rx->playstream = NULL;
-    g_free(rx->local_audio_buffer);
-    g_free(rx->sidetone_buffer);
-    rx->local_audio_buffer = NULL;
-    rx->sidetone_buffer = NULL;
-    g_mutex_unlock(&rx->local_audio_mutex);
-    return -1;
-  }
-  err = Pa_StartStream(rx->playstream);
-  if (err != paNoError) {
-    t_print("%s: error starting stream:%s\n", __func__, Pa_GetErrorText(err));
-    Pa_CloseStream(rx->playstream);
-    rx->playstream = NULL;
-    g_free(rx->local_audio_buffer);
-    g_free(rx->sidetone_buffer);
-    rx->local_audio_buffer = NULL;
-    rx->sidetone_buffer = NULL;
-    g_mutex_unlock(&rx->local_audio_mutex);
-    return -1;
-  }
-  //
-  // Finished!
-  //
-  g_mutex_unlock(&rx->local_audio_mutex);
-  return 0;
-#endif
 }
 
 
@@ -994,7 +518,6 @@ int audio_open_output(RECEIVER *rx) {
 // close a TX microphone stream
 //
 void audio_close_input(void) {
-#ifdef NATIVE_COREAUDIO_INPUT
   t_print("%s: native CoreAudio call audio_close_input\n", __func__);
   if (transmitter != NULL) {
     t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
@@ -1019,34 +542,6 @@ void audio_close_input(void) {
   atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
-#else
-
-  t_print("%s: PORTAUDIO call audio_close_input\n", __func__);
-  t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
-  PaStream *s = NULL;
-  g_mutex_lock(&audio_mutex);
-  s = record_handle;
-  record_handle = NULL;
-  g_mutex_unlock(&audio_mutex);
-  if (s != NULL) {
-    PaError err = Pa_StopStream(s);
-    if (err != paNoError) {
-      t_print("%s: error stopping stream: %s\n", __func__, Pa_GetErrorText(err));
-    }
-    err = Pa_CloseStream(s);
-    if (err != paNoError) {
-      t_print("%s: %s\n", __func__, Pa_GetErrorText(err));
-    }
-  }
-  g_mutex_lock(&audio_mutex);
-  if (mic_ring_buffer != NULL) {
-    g_free(mic_ring_buffer);
-    mic_ring_buffer = NULL;
-  }
-  atomic_store_explicit(&mic_ring_outpt, 0, memory_order_relaxed);
-  atomic_store_explicit(&mic_ring_inpt, 0, memory_order_relaxed);
-  g_mutex_unlock(&audio_mutex);
-#endif
 }
 
 
@@ -1056,7 +551,6 @@ void audio_close_input(void) {
 // shut down the stream connected with audio from one of the RX
 //
 void audio_close_output(RECEIVER *rx) {
-#ifdef NATIVE_COREAUDIO_OUTPUT
   t_print("%s: device=%s\n", __func__, rx->audio_name);
 
   /*
@@ -1087,53 +581,13 @@ void audio_close_output(RECEIVER *rx) {
   atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
   rx->local_audio_cw_active = 0;
   g_mutex_unlock(&rx->local_audio_mutex);
-#else
-
-  t_print("%s: device=%s\n", __func__, rx->audio_name);
-  PaStream *s = NULL;
-  g_mutex_lock(&rx->local_audio_mutex);
-  s = rx->playstream;
-  rx->playstream = NULL;
-  g_mutex_unlock(&rx->local_audio_mutex);
-  if (s != NULL) {
-    PaError err = Pa_StopStream(s);
-    if (err != paNoError) {
-      t_print("%s: stop stream error %s\n", __func__, Pa_GetErrorText(err));
-    }
-    err = Pa_CloseStream(s);
-    if (err != paNoError) {
-      t_print("%s: close stream error %s\n", __func__, Pa_GetErrorText(err));
-    }
-  }
-  g_mutex_lock(&rx->local_audio_mutex);
-  if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
-    g_atomic_int_set(&output_ring_primed[rx->id], 0);
-    g_atomic_int_set(&output_ring_starved[rx->id], 0);
-  }
-  if (rx->local_audio_buffer != NULL) {
-    g_free(rx->local_audio_buffer);
-    rx->local_audio_buffer = NULL;
-  }
-  if (rx->sidetone_buffer != NULL) {
-    g_free(rx->sidetone_buffer);
-    rx->sidetone_buffer = NULL;
-  }
-  atomic_store_explicit(&rx->local_audio_buffer_inpt, 0, memory_order_relaxed);
-  atomic_store_explicit(&rx->local_audio_buffer_outpt, 0, memory_order_relaxed);
-  atomic_store_explicit(&rx->sidetone_buffer_inpt, 0, memory_order_relaxed);
-  atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
-  rx->local_audio_cw_active = 0;
-  g_mutex_unlock(&rx->local_audio_mutex);
-#endif
 }
 
 
 //
 // AUDIO_WRITE
 //
-// send RX audio data to a PA output stream
-// we have to store the data such that the PA callback function
-// can access it.
+// Store RX audio in the ring consumed by the native CoreAudio callback.
 //
 // Note that the check on radio_is_transmitting() takes care that "blocking"
 // by the mutex can only occur in the moment of a RX/TX transition if
@@ -1151,11 +605,7 @@ int audio_write(RECEIVER *rx, float left, float right) {
   }
   g_mutex_lock(&rx->local_audio_mutex);
   rx->local_audio_cw_active = 0;
-#ifdef NATIVE_COREAUDIO_OUTPUT
   if (rx->coreaudio_output_handle != NULL && buffer != NULL) {
-#else
-  if (rx->playstream != NULL && buffer != NULL) {
-#endif
     int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_relaxed);
     int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
     int avail = inpt - outpt;
@@ -1200,18 +650,14 @@ int audio_write(RECEIVER *rx, float left, float right) {
 // During CW, between the elements the side tone contains "true" silence.
 // We detect a sequence of 16 subsequent zero samples, and insert or delete
 // a zero sample depending on the buffer water mark:
-// If there are more than two portaudio buffers available, delete one sample,
-// if it drops down to less than one portaudio buffer, insert one sample
+// If there are more than two CoreAudio buffers available, delete one sample,
+// if it drops down to less than one CoreAudio buffer, insert one sample
 //
 // Thus we have an active latency management.
 //
 int cw_audio_write(RECEIVER *rx, float sample) {
   g_mutex_lock(&rx->local_audio_mutex);
-#ifdef NATIVE_COREAUDIO_OUTPUT
   if (rx->coreaudio_output_handle != NULL && rx->sidetone_buffer != NULL) {
-#else
-  if (rx->playstream != NULL && rx->sidetone_buffer != NULL) {
-#endif
     static int count = 0;
     int inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_relaxed);
     int outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
@@ -1261,5 +707,3 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   g_mutex_unlock(&rx->local_audio_mutex);
   return 0;
 }
-
-#endif

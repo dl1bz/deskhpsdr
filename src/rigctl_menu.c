@@ -349,7 +349,7 @@ static void btn_toggle_cb(GtkWidget *widget, gpointer data) {
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
-#ifdef PORTAUDIO
+#ifdef COREAUDIO
 static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -756,7 +756,7 @@ void rigctl_menu(GtkWidget *parent) {
   g_signal_connect(w, "toggled", G_CALLBACK(btn_toggle_cb), &tci_iq_conjugate);
   col--;
   //------------------------------------------------------------------------------------------------------------------------
-#ifdef PORTAUDIO
+#ifdef COREAUDIO
   w = gtk_check_button_new_with_label("TCI Audio Monitor");
   gtk_widget_set_tooltip_text(w,
                               "Switch on an audio monitor for incoming TCI Audio\n"

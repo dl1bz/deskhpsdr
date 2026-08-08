@@ -938,7 +938,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->local_audio = 0;
   g_mutex_init(&rx->local_audio_mutex);
   rx->local_audio_buffer = NULL;
-#if defined(PORTAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
+#if defined(COREAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
   rx->sidetone_buffer = NULL;
   atomic_init(&rx->local_audio_buffer_inpt, 0);
   atomic_init(&rx->local_audio_buffer_outpt, 0);

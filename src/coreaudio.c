@@ -3,11 +3,10 @@
 *
 * Native CoreAudio output backend.
 *
-* Only local RX/CW playback is handled here. The microphone input remains
-* on PortAudio at this stage.
+* Native CoreAudio/AUHAL device, input, output and TCI-monitor backend.
 */
 
-#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_INPUT) || defined(NATIVE_COREAUDIO_TCI_MONITOR) || defined(NATIVE_COREAUDIO_ENUMERATION)
+#ifdef COREAUDIO
 
 #include <AudioUnit/AudioUnit.h>
 #include <CoreAudio/CoreAudio.h>
@@ -19,13 +18,13 @@
 #include "audio.h"
 #include "coreaudio.h"
 #include "message.h"
-#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+#ifdef COREAUDIO
 #include "tci_audio.h"
 #endif
 
 #define COREAUDIO_SAMPLE_RATE 48000.0
 
-#ifdef NATIVE_COREAUDIO_OUTPUT
+#ifdef COREAUDIO
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
@@ -34,7 +33,7 @@ typedef struct {
 } COREAUDIO_OUTPUT;
 #endif
 
-#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+#ifdef COREAUDIO
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
@@ -42,7 +41,7 @@ typedef struct {
 } COREAUDIO_TCI_MONITOR;
 #endif
 
-#ifdef NATIVE_COREAUDIO_INPUT
+#ifdef COREAUDIO
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
@@ -97,7 +96,7 @@ static int coreaudio_device_name(AudioDeviceID device, char *name, size_t name_s
   return ok ? 1 : 0;
 }
 
-#ifdef NATIVE_COREAUDIO_ENUMERATION
+#ifdef COREAUDIO
 
 static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
   for (int i = 0; i < count; i++) {
@@ -139,7 +138,7 @@ int coreaudio_get_cards(void) {
   /*
    * Replace the current list atomically under audio_mutex. The native
    * CoreAudio open paths use the device name and do not depend on the
-   * PortAudio device index. We nevertheless store AudioDeviceID in index
+   * legacy backend index. We store AudioDeviceID in index
    * for diagnostics and future native-only use.
    */
   g_mutex_lock(&audio_mutex);
@@ -186,9 +185,9 @@ int coreaudio_get_cards(void) {
   return 0;
 }
 
-#endif /* NATIVE_COREAUDIO_ENUMERATION */
+#endif /* COREAUDIO */
 
-#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_TCI_MONITOR)
+#ifdef COREAUDIO
 static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
   AudioObjectPropertyAddress address = {
     kAudioHardwarePropertyDevices,
@@ -231,7 +230,7 @@ static AudioDeviceID coreaudio_find_output_device(const char *device_name) {
 }
 #endif
 
-#ifdef NATIVE_COREAUDIO_OUTPUT
+#ifdef COREAUDIO
 static OSStatus coreaudio_render_cb(void *refcon,
                                     AudioUnitRenderActionFlags *flags,
                                     const AudioTimeStamp *timestamp,
@@ -410,9 +409,9 @@ void coreaudio_output_close(void *handle) {
   free(output);
 }
 
-#endif /* NATIVE_COREAUDIO_OUTPUT */
+#endif /* COREAUDIO */
 
-#ifdef NATIVE_COREAUDIO_TCI_MONITOR
+#ifdef COREAUDIO
 
 #define COREAUDIO_TCI_MONITOR_CHUNK 1024
 
@@ -585,9 +584,9 @@ void coreaudio_tci_monitor_close(void *handle) {
   free(monitor);
 }
 
-#endif /* NATIVE_COREAUDIO_TCI_MONITOR */
+#endif /* COREAUDIO */
 
-#ifdef NATIVE_COREAUDIO_INPUT
+#ifdef COREAUDIO
 
 static AudioDeviceID coreaudio_find_input_device(const char *device_name) {
   AudioObjectPropertyAddress address = {
@@ -838,6 +837,6 @@ void coreaudio_input_close(void *handle) {
   free(input);
 }
 
-#endif /* NATIVE_COREAUDIO_INPUT */
+#endif /* COREAUDIO */
 
 #endif

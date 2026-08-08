@@ -61,9 +61,9 @@ char build_audio[] =
 #ifdef PULSEAUDIO
   "PulseAudio";
 #endif
-#ifdef PORTAUDIO
-  "PortAudio";
+#ifdef COREAUDIO
+  "CoreAudio";
 #endif
-#if !defined(ALSA) && !defined(PORTAUDIO) && !defined(PULSEAUDIO)
+#if !defined(ALSA) && !defined(COREAUDIO) && !defined(PULSEAUDIO)
   "(unkown)";
 #endif

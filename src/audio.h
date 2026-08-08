@@ -47,15 +47,11 @@ extern int cw_audio_write (RECEIVER *rx, float sample);
 extern void audio_release_cards (void);
 extern void audio_get_cards (void);
 extern guint64 audio_get_xrun_count (void);
-#ifdef PORTAUDIO
+#ifdef COREAUDIO
 extern void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels);
-#ifdef NATIVE_COREAUDIO_INPUT
 extern void audio_process_local_mic_input(const float *samples, unsigned int frames);
-#endif
-#endif
-#ifdef PORTAUDIO
-  extern int audio_open_tci_monitor (const char *audio_name);
-  extern void audio_close_tci_monitor (void);
+extern int audio_open_tci_monitor (const char *audio_name);
+extern void audio_close_tci_monitor (void);
 #endif
 char *audio_get_error_string (int err);
 float  audio_get_next_mic_sample (void);

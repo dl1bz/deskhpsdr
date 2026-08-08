@@ -430,13 +430,13 @@ CPP_DEFINES += -D__WAYLAND__
 ##############################################################################
 #
 # Options for audio module
-#  - MacOS: only PORTAUDIO
+#  - macOS: native CoreAudio
 #  - Linux: either PULSEAUDIO (default) or ALSA (upon request)
 #
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
-override AUDIO := PORTAUDIO
+override AUDIO := COREAUDIO
 endif
 ifeq ($(UNAME_S), Linux)
   ifneq ($(AUDIO) , ALSA)
@@ -483,37 +483,24 @@ CPP_SOURCES += src/audio.c
 
 ##############################################################################
 #
-# Add libraries for using PortAudio, if requested
+# Native CoreAudio backend (macOS)
 #
 ##############################################################################
 
-ifeq ($(AUDIO), PORTAUDIO)
-AUDIO_OPTIONS=-DPORTAUDIO -DPA_USE_COREAUDIO
-ifeq ($(UNAME_S), Darwin)
-AUDIO_OPTIONS += -DNATIVE_COREAUDIO_OUTPUT -DNATIVE_COREAUDIO_INPUT -DNATIVE_COREAUDIO_TCI_MONITOR -DNATIVE_COREAUDIO_ENUMERATION
-endif
-AUDIO_INCLUDE=`$(PKG_CONFIG) --cflags portaudio-2.0`
-# AUDIO_LIBS=`$(PKG_CONFIG) --libs portaudio-2.0`
-AUDIO_LIBS=$(BREW_LIBDIR)/libportaudio.a \
-	-framework CoreAudio \
+ifeq ($(AUDIO), COREAUDIO)
+AUDIO_OPTIONS=-DCOREAUDIO
+AUDIO_INCLUDE=
+AUDIO_LIBS=-framework CoreAudio \
 	-framework AudioToolbox \
 	-framework AudioUnit \
 	-framework CoreFoundation \
 	-framework CoreServices \
 	-framework CoreMIDI
-AUDIO_SOURCES=src/portaudio.c
-AUDIO_OBJS=src/portaudio.o
-ifeq ($(UNAME_S), Darwin)
-AUDIO_SOURCES += src/coreaudio.c
-AUDIO_OBJS += src/coreaudio.o
+AUDIO_SOURCES=src/coreaudio_audio.c src/coreaudio.c
+AUDIO_OBJS=src/coreaudio_audio.o src/coreaudio.o
 endif
-endif
-CPP_DEFINES += -DPORTAUDIO
-CPP_SOURCES += src/portaudio.c
-ifeq ($(UNAME_S), Darwin)
-# does not exist on RaspPi
-CPP_INCLUDE += `$(PKG_CONFIG) --cflags portaudio-2.0`
-endif
+CPP_DEFINES += -DCOREAUDIO
+CPP_SOURCES += src/coreaudio_audio.c src/coreaudio.c
 
 ##############################################################################
 #

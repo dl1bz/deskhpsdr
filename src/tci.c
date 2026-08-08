@@ -1726,7 +1726,7 @@ static void tci_tx_client_cleanup_tx_audio_locked(CLIENT *client) {
 }
 
 static void tci_tx_client_close_monitor_if_unused(void) {
-#ifdef PORTAUDIO
+#ifdef COREAUDIO
   if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
     audio_close_tci_monitor();
   }
@@ -3773,7 +3773,7 @@ static void tci_cmd_trx (CLIENT *client, const TCI_CMD *cmd) {
                            accepting_tx_audio);
       if (source_tci) {
         tci_tx_client_start_tx_audio(client, preserve_tx_audio);
-#ifdef PORTAUDIO
+#ifdef COREAUDIO
         if (tci_audio_monitor && !preserve_tx_audio) {
           // audio_open_tci_monitor("Externe Kopfhörer");
           audio_open_tci_monitor (active_receiver->audio_name);
@@ -4500,7 +4500,7 @@ static void tci_cmd_audio_stop (CLIENT *client, const TCI_CMD *cmd) {
              (unsigned long long) tci_audio_get_write_count (receiver_id),
              client->audio_sample_rate);
   }
-#ifdef PORTAUDIO
+#ifdef COREAUDIO
   if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
     audio_close_tci_monitor();
   }

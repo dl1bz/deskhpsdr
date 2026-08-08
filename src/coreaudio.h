@@ -9,23 +9,15 @@
 
 #include "receiver.h"
 
-#ifdef NATIVE_COREAUDIO_OUTPUT
 extern void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels);
 extern void coreaudio_output_close(void *handle);
-#endif
 
-#ifdef NATIVE_COREAUDIO_INPUT
 extern void *coreaudio_input_open(const char *device_name);
 extern void coreaudio_input_close(void *handle);
-#endif
 
-#ifdef NATIVE_COREAUDIO_TCI_MONITOR
 extern void *coreaudio_tci_monitor_open(const char *device_name, int *channels);
 extern void coreaudio_tci_monitor_close(void *handle);
-#endif
 
-#ifdef NATIVE_COREAUDIO_ENUMERATION
 extern int coreaudio_get_cards(void);
-#endif
 
 #endif
