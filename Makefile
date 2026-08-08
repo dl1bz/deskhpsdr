@@ -496,11 +496,11 @@ AUDIO_LIBS=-framework CoreAudio \
 	-framework CoreFoundation \
 	-framework CoreServices \
 	-framework CoreMIDI
-AUDIO_SOURCES=src/coreaudio_audio.c src/coreaudio.c
-AUDIO_OBJS=src/coreaudio_audio.o src/coreaudio.o
+AUDIO_SOURCES=src/macos_audio.c src/coreaudio.c
+AUDIO_OBJS=src/macos_audio.o src/coreaudio.o
 endif
 CPP_DEFINES += -DCOREAUDIO
-CPP_SOURCES += src/coreaudio_audio.c src/coreaudio.c
+CPP_SOURCES += src/macos_audio.c src/coreaudio.c
 
 ##############################################################################
 #
