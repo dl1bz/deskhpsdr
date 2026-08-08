@@ -7,7 +7,7 @@
 * on PortAudio at this stage.
 */
 
-#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_INPUT) || defined(NATIVE_COREAUDIO_TCI_MONITOR)
+#if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_INPUT) || defined(NATIVE_COREAUDIO_TCI_MONITOR) || defined(NATIVE_COREAUDIO_ENUMERATION)
 
 #include <AudioUnit/AudioUnit.h>
 #include <CoreAudio/CoreAudio.h>
@@ -96,6 +96,97 @@ static int coreaudio_device_name(AudioDeviceID device, char *name, size_t name_s
   CFRelease(cfname);
   return ok ? 1 : 0;
 }
+
+#ifdef NATIVE_COREAUDIO_ENUMERATION
+
+static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
+  for (int i = 0; i < count; i++) {
+    g_free(devices[i].name);
+    g_free(devices[i].description);
+    devices[i].name = NULL;
+    devices[i].description = NULL;
+    devices[i].index = -1;
+  }
+}
+
+int coreaudio_get_cards(void) {
+  AudioObjectPropertyAddress address = {
+    kAudioHardwarePropertyDevices,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  UInt32 size = 0;
+
+  if (AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &address, 0, NULL, &size) != noErr ||
+      size == 0) {
+    t_print("%s: cannot enumerate CoreAudio devices\n", __func__);
+    return -1;
+  }
+
+  AudioDeviceID *devices = malloc(size);
+  if (devices == NULL) {
+    return -1;
+  }
+
+  if (AudioObjectGetPropertyData(kAudioObjectSystemObject, &address, 0, NULL, &size, devices) != noErr) {
+    free(devices);
+    t_print("%s: cannot read CoreAudio device list\n", __func__);
+    return -1;
+  }
+
+  UInt32 count = size / sizeof(AudioDeviceID);
+
+  /*
+   * Replace the current list atomically under audio_mutex. The native
+   * CoreAudio open paths use the device name and do not depend on the
+   * PortAudio device index. We nevertheless store AudioDeviceID in index
+   * for diagnostics and future native-only use.
+   */
+  g_mutex_lock(&audio_mutex);
+  coreaudio_free_device_list(input_devices, n_input_devices);
+  coreaudio_free_device_list(output_devices, n_output_devices);
+  n_input_devices = 0;
+  n_output_devices = 0;
+  memset(input_devices, 0, sizeof(input_devices));
+  memset(output_devices, 0, sizeof(output_devices));
+
+  for (UInt32 i = 0; i < count; i++) {
+    char name[512];
+    if (!coreaudio_device_name(devices[i], name, sizeof(name))) {
+      continue;
+    }
+
+    int input_channels = coreaudio_device_channels(devices[i], kAudioDevicePropertyScopeInput);
+    int output_channels = coreaudio_device_channels(devices[i], kAudioDevicePropertyScopeOutput);
+
+    if (input_channels > 0 && n_input_devices < MAX_AUDIO_DEVICES) {
+      input_devices[n_input_devices].name = g_strdup(name);
+      input_devices[n_input_devices].description = g_strdup(name);
+      input_devices[n_input_devices].index = (int) devices[i];
+      t_print("%s: INPUT DEVICE, ID=%u, Name=%s, channels=%d\n",
+              __func__, (unsigned int) devices[i], name, input_channels);
+      n_input_devices++;
+    }
+
+    if (output_channels > 0 && n_output_devices < MAX_AUDIO_DEVICES) {
+      output_devices[n_output_devices].name = g_strdup(name);
+      output_devices[n_output_devices].description = g_strdup(name);
+      output_devices[n_output_devices].index = (int) devices[i];
+      t_print("%s: OUTPUT DEVICE, ID=%u, Name=%s, channels=%d\n",
+              __func__, (unsigned int) devices[i], name, output_channels);
+      n_output_devices++;
+    }
+  }
+
+  g_mutex_unlock(&audio_mutex);
+  free(devices);
+
+  t_print("%s: native CoreAudio devices: inputs=%d outputs=%d\n",
+          __func__, n_input_devices, n_output_devices);
+  return 0;
+}
+
+#endif /* NATIVE_COREAUDIO_ENUMERATION */
 
 #if defined(NATIVE_COREAUDIO_OUTPUT) || defined(NATIVE_COREAUDIO_TCI_MONITOR)
 static AudioDeviceID coreaudio_find_output_device(const char *device_name) {

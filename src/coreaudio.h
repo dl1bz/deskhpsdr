@@ -24,4 +24,8 @@ extern void *coreaudio_tci_monitor_open(const char *device_name, int *channels);
 extern void coreaudio_tci_monitor_close(void *handle);
 #endif
 
+#ifdef NATIVE_COREAUDIO_ENUMERATION
+extern int coreaudio_get_cards(void);
+#endif
+
 #endif

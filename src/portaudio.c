@@ -205,12 +205,12 @@ void audio_release_cards(void) {
   memset(input_devices, 0, sizeof(input_devices));
   memset(output_devices, 0, sizeof(output_devices));
   g_mutex_unlock(&audio_mutex);
+#ifndef NATIVE_COREAUDIO_ENUMERATION
   /*
-   * Optional, aber sauber:
-   * Nur terminieren, wenn du später auch wieder Pa_Initialize() aufrufst
-   * (was bei dir der Fall ist).
+   * PortAudio owns device enumeration on non-macOS builds.
    */
   Pa_Terminate();
+#endif
 }
 
 //
@@ -219,16 +219,23 @@ void audio_release_cards(void) {
 // This inits PortAudio and looks for suitable input and output channels
 //
 void audio_get_cards(void) {
-  t_print("%s: PORTAUDIO call audio_get_cards\n", __func__);
-  int numDevices;
-  PaStreamParameters inputParameters, outputParameters;
-  PaError err;
   static gsize mutex_inited = 0;
   if (g_once_init_enter(&mutex_inited)) {
     g_mutex_init(&audio_mutex);
     g_mutex_init(&tci_monitor_mutex);
     g_once_init_leave(&mutex_inited, 1);
   }
+
+#ifdef NATIVE_COREAUDIO_ENUMERATION
+  t_print("%s: native CoreAudio call audio_get_cards\n", __func__);
+  if (coreaudio_get_cards() != 0) {
+    t_print("%s: native CoreAudio device enumeration failed\n", __func__);
+  }
+#else
+  t_print("%s: PORTAUDIO call audio_get_cards\n", __func__);
+  int numDevices;
+  PaStreamParameters inputParameters, outputParameters;
+  PaError err;
   err = Pa_Initialize();
   if (err != paNoError) {
     t_print("%s: init error %s\n", __func__, Pa_GetErrorText(err));
@@ -287,7 +294,9 @@ void audio_get_cards(void) {
     }
   }
   g_mutex_unlock(&audio_mutex);
+#endif
 }
+
 
 //
 // AUDIO_OPEN_INPUT
