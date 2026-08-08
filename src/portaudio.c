@@ -81,16 +81,11 @@ guint64 audio_get_xrun_count(void) {
 // If the buffer falls below 1800, half a buffer length of silence is
 // inserted. This usually only happens after TX/RX transitions
 //
-// If we go TX in CW mode, cw_audio_write() is called. If it is called for
-// the first time with a non-zero sidetone volume,
-// the ring buffer is cleared and only few (stereo) samples of silence
-// are put into it. This is probably the minimum amount necessary to avoid
-// audio underruns which manifest themselves as ugly cracks in the side tone.
-// During the TX phase, the buffer filling is kept close to an explicit
-// low-latency target to reduce underrun risk and avoid larger latency swings.
-// If we then go to RX again a "low water mark" condition is detected in the
-// first call to audio_write() and half a buffer length of silence is inserted
-// again.
+// RX audio and CW sidetone use separate ring buffers. On an RX/TX transition
+// the RX ring is no longer discarded: its WDSP-slewed tail is allowed to drain
+// naturally while the sidetone starts from its own low-latency ring.
+// The sidetone filling is kept close to an explicit low-latency target to
+// reduce underrun risk and avoid larger latency swings.
 // Of course, a small portaudio audio buffer size (128 sample) helps
 // keeping the latency small. The CW buffer is kept around CW_LAT_TARGET
 // with a narrow correction window to reduce occasional underruns/clicks.
@@ -119,7 +114,6 @@ static          float  *mic_ring_buffer = NULL;
 static volatile int     mic_ring_outpt = 0;
 static volatile int     mic_ring_inpt = 0;
 
-static int cwmode = 0;  // used to detect TRX transitions in CW
 static PaStream *tci_monitor_handle = NULL;
 static GMutex tci_monitor_mutex;
 static int tci_monitor_channels = 2;
@@ -474,53 +468,63 @@ int pa_out_cb(const void *inputBuffer, void *outputBuffer, unsigned long framesP
     return paContinue;
   }
   g_mutex_lock(&rx->local_audio_mutex);
-  if (rx->local_audio_buffer != NULL) {
-    //
-    // Mutex protection: if the buffer is non-NULL it cannot vanish
-    // util callback is completed
-    //
-    int newpt = rx->local_audio_buffer_outpt;
+  if (rx->local_audio_buffer != NULL && rx->sidetone_buffer != NULL) {
+    int rx_out = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_relaxed);
+    int st_out = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_relaxed);
     for (unsigned int i = 0; i < framesPerBuffer; i++) {
-      if (rx->local_audio_buffer_inpt == newpt) {
-        ring_underrun = TRUE;
-        // Ring buffer empty, send zero sample
-        if (rx->local_audio_channels == 2) {
-          *out++ = 0.0f;
-          *out++ = 0.0f;
-        } else {
-          *out++ = 0.0f;
-        }
-      } else {
+      float left = 0.0f;
+      float right = 0.0f;
+      float sidetone = 0.0f;
+      int rx_in = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_acquire);
+      int st_in = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_acquire);
+
+      if (rx_in != rx_out) {
         ring_had_audio = TRUE;
-        float left = rx->local_audio_buffer[2 * newpt];
-        float right = rx->local_audio_buffer[2 * newpt + 1];
-        if (rx->local_audio_channels == 2) {
-          *out++ = left;
-          *out++ = right;
-        } else {
-          float mono;
-          switch (rx->audio_channel) {
-          case LEFT:
-            mono = left;
-            break;
-          case RIGHT:
-            mono = right;
-            break;
-          case STEREO:
-          default:
-            mono = 0.5f * (left + right);
-            break;
-          }
-          *out++ = mono;
+        left = rx->local_audio_buffer[2 * rx_out];
+        right = rx->local_audio_buffer[2 * rx_out + 1];
+        rx_out++;
+        if (rx_out >= MY_RING_BUFFER_SIZE) { rx_out = 0; }
+        atomic_store_explicit(&rx->local_audio_buffer_outpt, rx_out, memory_order_release);
+      } else if (st_in == st_out) {
+        ring_underrun = TRUE;
+      }
+
+      if (st_in != st_out) {
+        ring_had_audio = TRUE;
+        sidetone = rx->sidetone_buffer[st_out];
+        st_out++;
+        if (st_out >= MY_RING_BUFFER_SIZE) { st_out = 0; }
+        atomic_store_explicit(&rx->sidetone_buffer_outpt, st_out, memory_order_release);
+      }
+
+      left += sidetone;
+      right += sidetone;
+      if (left > 1.0f) { left = 1.0f; }
+      if (left < -1.0f) { left = -1.0f; }
+      if (right > 1.0f) { right = 1.0f; }
+      if (right < -1.0f) { right = -1.0f; }
+
+      if (rx->local_audio_channels == 2) {
+        *out++ = left;
+        *out++ = right;
+      } else {
+        float mono;
+        switch (rx->audio_channel) {
+        case LEFT:
+          mono = left;
+          break;
+        case RIGHT:
+          mono = right;
+          break;
+        case STEREO:
+        default:
+          mono = 0.5f * (left + right);
+          break;
         }
-        newpt++;
-        if (newpt >= MY_RING_BUFFER_SIZE) { newpt = 0; }
-        MEMORY_BARRIER;
-        rx->local_audio_buffer_outpt = newpt;
+        *out++ = mono;
       }
     }
   } else {
-    // local_audio_buffer is NULL: output must still be defined -> silence
     for (unsigned int i = 0; i < framesPerBuffer; i++) {
       if (rx->local_audio_channels == 2) {
         *out++ = 0.0f;
@@ -695,16 +699,24 @@ int audio_open_output(RECEIVER *rx) {
   // This is now a ring buffer much larger than a single audio buffer
   //
   rx->local_audio_buffer = g_new(float, 2 * MY_RING_BUFFER_SIZE);
-  rx->local_audio_buffer_inpt = 0;
-  rx->local_audio_buffer_outpt = 0;
+  rx->sidetone_buffer = g_new0(float, MY_RING_BUFFER_SIZE);
+  atomic_store_explicit(&rx->local_audio_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->local_audio_buffer_outpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
+  rx->local_audio_cw_active = 0;
   if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
     g_atomic_int_set(&output_ring_primed[rx->id], 0);
     g_atomic_int_set(&output_ring_starved[rx->id], 0);
   }
-  if (rx->local_audio_buffer == NULL) {
+  if (rx->local_audio_buffer == NULL || rx->sidetone_buffer == NULL) {
     t_print("%s: allocate buffer failed\n", __func__);
     Pa_CloseStream(rx->playstream);
     rx->playstream = NULL;
+    g_free(rx->local_audio_buffer);
+    g_free(rx->sidetone_buffer);
+    rx->local_audio_buffer = NULL;
+    rx->sidetone_buffer = NULL;
     g_mutex_unlock(&rx->local_audio_mutex);
     return -1;
   }
@@ -714,7 +726,9 @@ int audio_open_output(RECEIVER *rx) {
     Pa_CloseStream(rx->playstream);
     rx->playstream = NULL;
     g_free(rx->local_audio_buffer);
+    g_free(rx->sidetone_buffer);
     rx->local_audio_buffer = NULL;
+    rx->sidetone_buffer = NULL;
     g_mutex_unlock(&rx->local_audio_mutex);
     return -1;
   }
@@ -787,6 +801,15 @@ void audio_close_output(RECEIVER *rx) {
     g_free(rx->local_audio_buffer);
     rx->local_audio_buffer = NULL;
   }
+  if (rx->sidetone_buffer != NULL) {
+    g_free(rx->sidetone_buffer);
+    rx->sidetone_buffer = NULL;
+  }
+  atomic_store_explicit(&rx->local_audio_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->local_audio_buffer_outpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_inpt, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
+  rx->local_audio_cw_active = 0;
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
@@ -808,75 +831,46 @@ int audio_write(RECEIVER *rx, float left, float right) {
   int txmode = vfo_get_tx_mode();
   float *buffer = rx->local_audio_buffer;
   if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
-    //
-    // If a CW side tone may occur, quickly return
-    //
+    // Stop producing new RX audio during CW TX. The existing RX tail drains naturally.
     return 0;
   }
   g_mutex_lock(&rx->local_audio_mutex);
-  cwmode = 0;
+  rx->local_audio_cw_active = 0;
   if (rx->playstream != NULL && buffer != NULL) {
-    int avail = rx->local_audio_buffer_inpt - rx->local_audio_buffer_outpt;
+    int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_relaxed);
+    int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
+    int avail = inpt - outpt;
     if (avail < 0) { avail += MY_RING_BUFFER_SIZE; }
-    if (avail <  MY_RING_LOW_WATER) {
-      //
-      // Running the RX-audio for a very long time
-      // and with audio hardware whose "48000 Hz" are a little faster than the "48000 Hz" of
-      // the SDR will very slowly drain the buffer. We recover from this by brutally
-      // inserting half a buffer's length of silence.
-      //
-      // This is not always an "error" to be reported and necessarily happens in three cases:
-      //  a) we come here for the first time
-      //  b) we come from a TX/RX transition in non-CW mode, and no duplex
-      //  c) we come from a TX/RX transition in CW mode
-      //
-      // In case a) and b) the buffer will be empty, in c) the buffer will contain "few" samples
-      // because of the "CW audio low latency" strategy.
-      //
-      int oldpt = rx->local_audio_buffer_inpt;
+    if (avail < MY_RING_LOW_WATER) {
+      int oldpt = inpt;
       for (int i = 0; i < MY_RING_BUFFER_SIZE / 2 - avail; i++) {
-        buffer[2 * oldpt] = 0.0;
-        buffer[2 * oldpt + 1] = 0.0;
+        buffer[2 * oldpt] = 0.0f;
+        buffer[2 * oldpt + 1] = 0.0f;
         oldpt++;
         if (oldpt >= MY_RING_BUFFER_SIZE) { oldpt = 0; }
       }
-      MEMORY_BARRIER;
-      rx->local_audio_buffer_inpt = oldpt;
-      //t_print("%s: buffer was nearly empty, inserted silence.\n", __func__);
+      atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
+      inpt = oldpt;
     }
     if (avail > MY_RING_HIGH_WATER) {
-      //
-      // Running the RX-audio for a very long time
-      // and with audio hardware whose "48000 Hz" are a little slower than the "48000 Hz" of
-      // the SDR will very slowly fill the buffer. This should be the only situation where
-      // this "buffer overrun" condition should occur. We recover from this by brutally
-      // deleting half a buffer size of audio, such that the next overrun is in the distant
-      // future.
-      //
-      int oldpt = rx->local_audio_buffer_inpt - avail + MY_RING_BUFFER_SIZE / 2;
+      int oldpt = inpt - avail + MY_RING_BUFFER_SIZE / 2;
       if (oldpt < 0) { oldpt += MY_RING_BUFFER_SIZE; }
-      rx->local_audio_buffer_inpt = oldpt;
+      atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
+      inpt = oldpt;
       t_print("%s: buffer was nearly full, deleted audio\n", __func__);
     }
-    //
-    // put sample into ring buffer
-    //
     if (rx->local_audio_mute) {
       left = 0.0f;
       right = 0.0f;
     }
-    int oldpt = rx->local_audio_buffer_inpt;
+    int oldpt = inpt;
     int newpt = oldpt + 1;
     if (newpt == MY_RING_BUFFER_SIZE) { newpt = 0; }
-    if (newpt != rx->local_audio_buffer_outpt) {
-      //
-      // buffer space available
-      //
-      MEMORY_BARRIER;
+    outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
+    if (newpt != outpt) {
       buffer[2 * oldpt] = left;
       buffer[2 * oldpt + 1] = right;
-      MEMORY_BARRIER;
-      rx->local_audio_buffer_inpt = newpt;
+      atomic_store_explicit(&rx->local_audio_buffer_inpt, newpt, memory_order_release);
     }
   }
   g_mutex_unlock(&rx->local_audio_mutex);
@@ -894,82 +888,51 @@ int audio_write(RECEIVER *rx, float left, float right) {
 //
 int cw_audio_write(RECEIVER *rx, float sample) {
   g_mutex_lock(&rx->local_audio_mutex);
-  if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
+  if (rx->playstream != NULL && rx->sidetone_buffer != NULL) {
     static int count = 0;
-    int oldpt, newpt;
-    int avail = rx->local_audio_buffer_inpt - rx->local_audio_buffer_outpt;
+    int inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_relaxed);
+    int outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
+    int avail = inpt - outpt;
     int adjust = 0;
     if (avail < 0) { avail += MY_RING_BUFFER_SIZE; }
-    if (cwmode == 0) {
-      //
-      // First time producing CW audio after RX/TX transition:
-      // discard audio buffer and insert *a little bit of* silence
-      // (currently, CW_LAT_TARGET samples = 5.3 msec at 48 kHz)
-      //
-      bzero(rx->local_audio_buffer, 2 * CW_LAT_TARGET * sizeof(float));
-      MEMORY_BARRIER;
-      rx->local_audio_buffer_inpt = CW_LAT_TARGET;
-      MEMORY_BARRIER;
-      rx->local_audio_buffer_outpt = 0;
+    if (!rx->local_audio_cw_active) {
+      // Prime only the sidetone ring; keep the RX fade-out tail intact.
+      for (int i = 0; i < CW_LAT_TARGET; i++) {
+        rx->sidetone_buffer[i] = 0.0f;
+      }
+      atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
+      atomic_store_explicit(&rx->sidetone_buffer_inpt, CW_LAT_TARGET, memory_order_release);
+      inpt = CW_LAT_TARGET;
+      outpt = 0;
       avail = CW_LAT_TARGET;
       count = 0;
-      cwmode = 1;
+      rx->local_audio_cw_active = 1;
     }
-    if (sample != 0.0) { count = 0; }
+    if (sample != 0.0f) { count = 0; }
     if (++count >= 16) {
       count = 0;
-      //
-      // We arrive here if we have seen 16 zero samples in a row.
-      //
-      if (avail > CW_LAT_HIGH) { adjust = 2; } // full: we are above high water mark
-      if (avail < CW_LAT_LOW) { adjust = 1; }  // low: we are below low water mark
+      if (avail > CW_LAT_HIGH) { adjust = 2; }
+      if (avail < CW_LAT_LOW) { adjust = 1; }
     }
-    switch (adjust) {
-    case 0:
-      //
-      // default case:
-      //               put sample into ring buffer.
-      //               since the side tone is mono put it into
-      //               both the left and right channel with the
-      //               same phase.
-      //
-      oldpt = rx->local_audio_buffer_inpt;
-      newpt = oldpt + 1;
+    if (adjust != 2) {
+      int oldpt = inpt;
+      int newpt = oldpt + 1;
       if (newpt == MY_RING_BUFFER_SIZE) { newpt = 0; }
-      if (newpt != rx->local_audio_buffer_outpt) {
-        //
-        // buffer space available
-        //
-        MEMORY_BARRIER;
-        rx->local_audio_buffer[2 * oldpt] = sample;
-        rx->local_audio_buffer[2 * oldpt + 1] = sample;
-        MEMORY_BARRIER;
-        rx->local_audio_buffer_inpt = newpt;
+      outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
+      if (newpt != outpt) {
+        rx->sidetone_buffer[oldpt] = (adjust == 1) ? 0.0f : sample;
+        atomic_store_explicit(&rx->sidetone_buffer_inpt, newpt, memory_order_release);
+        if (adjust == 1) {
+          oldpt = newpt;
+          newpt = oldpt + 1;
+          if (newpt == MY_RING_BUFFER_SIZE) { newpt = 0; }
+          outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
+          if (newpt != outpt) {
+            rx->sidetone_buffer[oldpt] = 0.0f;
+            atomic_store_explicit(&rx->sidetone_buffer_inpt, newpt, memory_order_release);
+          }
+        }
       }
-      break;
-    case 1:
-      //
-      // we just saw 16 samples of silence and buffer filling is low:
-      // insert one extra silence sample
-      //
-      oldpt = rx->local_audio_buffer_inpt;
-      rx->local_audio_buffer[2 * oldpt] = 0.0;
-      rx->local_audio_buffer[2 * oldpt + 1] = 0.0;
-      oldpt++;
-      if (oldpt == MY_RING_BUFFER_SIZE) { oldpt = 0; }
-      rx->local_audio_buffer[2 * oldpt] = 0.0;
-      rx->local_audio_buffer[2 * oldpt + 1] = 0.0;
-      oldpt++;
-      if (oldpt == MY_RING_BUFFER_SIZE) { oldpt = 0; }
-      MEMORY_BARRIER;
-      rx->local_audio_buffer_inpt = oldpt;
-      break;
-    case 2:
-      //
-      // we just saw 16 samples of silence and buffer filling is high:
-      // just skip the current "silent" sample, that is, do nothing.
-      //
-      break;
     }
   }
   g_mutex_unlock(&rx->local_audio_mutex);

@@ -23,6 +23,7 @@
 
 #include <gtk/gtk.h>
 #include <time.h>
+#include <stdatomic.h>
 #ifdef PORTAUDIO
   #include <portaudio.h>
 #endif
@@ -263,10 +264,14 @@ typedef struct _receiver {
 #endif
 #if defined(PORTAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
   PaStream *playstream;
-  volatile int local_audio_buffer_inpt;    // pointer in audio ring-buffer
-  volatile int local_audio_buffer_outpt;   // pointer in audio ring-buffer
+  atomic_int local_audio_buffer_inpt;      // producer pointer in RX audio ring-buffer
+  atomic_int local_audio_buffer_outpt;     // consumer pointer in RX audio ring-buffer
+  atomic_int sidetone_buffer_inpt;         // producer pointer in sidetone ring-buffer
+  atomic_int sidetone_buffer_outpt;        // consumer pointer in sidetone ring-buffer
   int local_audio_channels;
+  int local_audio_cw_active;
   float *local_audio_buffer;
+  float *sidetone_buffer;
 #endif
 #if !defined(PORTAUDIO) && !defined(PULSEAUDIO) && defined(ALSA)
   snd_pcm_t *playback_handle;
