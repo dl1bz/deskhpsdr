@@ -448,6 +448,7 @@ static void digi_offset_u_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = rx_from_data(data);
   rx->digi_offset_u = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   rx_frequency_changed(rx);
+  g_idle_add(ext_vfo_update, NULL);
   tci_digu_offset_changed();
 }
 
@@ -455,6 +456,7 @@ static void digi_offset_l_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = rx_from_data(data);
   rx->digi_offset_l = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   rx_frequency_changed(rx);
+  g_idle_add(ext_vfo_update, NULL);
   tci_digl_offset_changed();
 }
 
