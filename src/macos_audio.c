@@ -118,7 +118,6 @@ static void local_mic_ring_request_reset(int silence_frames) {
   if (silence_frames >= MY_RING_BUFFER_SIZE) {
     silence_frames = MY_RING_BUFFER_SIZE - 1;
   }
-
   atomic_store_explicit(&mic_ring_reset_frames, silence_frames, memory_order_release);
 }
 
@@ -126,14 +125,12 @@ static inline void local_mic_ring_push(float sample) {
   int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_relaxed);
   int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);
   int newpt = inpt + 1;
-
   if (newpt == MY_RING_BUFFER_SIZE) {
     newpt = 0;
   }
   if (newpt == outpt) {
     return;
   }
-
   mic_ring_buffer[inpt] = sample;
   atomic_store_explicit(&mic_ring_inpt, newpt, memory_order_release);
 }
@@ -143,11 +140,9 @@ static inline float local_mic_ring_pop(void) {
   int inpt;
   int newpt;
   float sample;
-
   if (mic_ring_buffer == NULL) {
     return 0.0f;
   }
-
   //
   // Producer-to-consumer reset handshake. Only the consumer advances outpt.
   // Flush everything queued before the reset request and provide the desired
@@ -159,19 +154,16 @@ static inline float local_mic_ring_pop(void) {
     atomic_store_explicit(&mic_ring_outpt, inpt, memory_order_release);
     atomic_store_explicit(&mic_ring_silence_frames, reset_frames, memory_order_relaxed);
   }
-
   int silence_frames = atomic_load_explicit(&mic_ring_silence_frames, memory_order_relaxed);
   if (silence_frames > 0) {
     atomic_store_explicit(&mic_ring_silence_frames, silence_frames - 1, memory_order_relaxed);
     return 0.0f;
   }
-
   outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_relaxed);
   inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
   if (outpt == inpt) {
     return 0.0f;
   }
-
   sample = mic_ring_buffer[outpt];
   newpt = outpt + 1;
   if (newpt == MY_RING_BUFFER_SIZE) {
@@ -214,7 +206,6 @@ void audio_get_cards(void) {
     g_mutex_init(&tci_monitor_mutex);
     g_once_init_leave(&mutex_inited, 1);
   }
-
   t_print("%s: native CoreAudio call audio_get_cards\n", __func__);
   if (coreaudio_get_cards() != 0) {
     t_print("%s: native CoreAudio device enumeration failed\n", __func__);
@@ -231,20 +222,17 @@ void audio_get_cards(void) {
 
 int audio_open_input(void) {
   t_print("%s: native CoreAudio call audio_open_input\n", __func__);
-
   if (!can_transmit) {
     return -1;
   }
   if (transmitter == NULL || transmitter->microphone_name[0] == '\0') {
     return -1;
   }
-
   g_mutex_lock(&audio_mutex);
   if (coreaudio_input_handle != NULL || mic_ring_buffer != NULL) {
     g_mutex_unlock(&audio_mutex);
     return 0;
   }
-
   mic_ring_buffer = (float *) g_new(float, MY_RING_BUFFER_SIZE);
   if (mic_ring_buffer == NULL) {
     g_mutex_unlock(&audio_mutex);
@@ -256,7 +244,6 @@ int audio_open_input(void) {
   atomic_store_explicit(&mic_ring_reset_frames, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
   g_mutex_unlock(&audio_mutex);
-
   void *handle = coreaudio_input_open(transmitter->microphone_name);
   if (handle == NULL) {
     g_mutex_lock(&audio_mutex);
@@ -269,11 +256,9 @@ int audio_open_input(void) {
     g_mutex_unlock(&audio_mutex);
     return -1;
   }
-
   g_mutex_lock(&audio_mutex);
   coreaudio_input_handle = handle;
   g_mutex_unlock(&audio_mutex);
-
   t_print("%s: native CoreAudio input name=%s\n", __func__, transmitter->microphone_name);
   return 0;
 }
@@ -285,30 +270,25 @@ int audio_open_tci_monitor(const char *audio_name) {
   if (audio_name == NULL || audio_name[0] == '\0') {
     return -1;
   }
-
   g_mutex_lock(&tci_monitor_mutex);
   if (coreaudio_tci_monitor_handle != NULL) {
     g_mutex_unlock(&tci_monitor_mutex);
     return 0;
   }
   g_mutex_unlock(&tci_monitor_mutex);
-
   //
   // Enable/reset the producer before CoreAudio starts consuming.
   //
   tci_audio_monitor_set_active(1);
-
   int channels = 0;
   void *handle = coreaudio_tci_monitor_open(audio_name, &channels);
   if (handle == NULL) {
     tci_audio_monitor_set_active(0);
     return -1;
   }
-
   g_mutex_lock(&tci_monitor_mutex);
   coreaudio_tci_monitor_handle = handle;
   g_mutex_unlock(&tci_monitor_mutex);
-
   t_print("%s: opened native CoreAudio TCI monitor name=%s channels=%d\n",
           __func__, audio_name, channels);
   return 0;
@@ -317,12 +297,10 @@ int audio_open_tci_monitor(const char *audio_name) {
 
 void audio_close_tci_monitor(void) {
   void *handle = NULL;
-
   g_mutex_lock(&tci_monitor_mutex);
   handle = coreaudio_tci_monitor_handle;
   coreaudio_tci_monitor_handle = NULL;
   g_mutex_unlock(&tci_monitor_mutex);
-
   //
   // Stop the RT consumer first, then disable/reset the producer ring.
   //
@@ -336,14 +314,11 @@ void audio_close_tci_monitor(void) {
 void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels) {
   gboolean ring_underrun = FALSE;
   gboolean ring_had_audio = FALSE;
-
   if (rx == NULL || out == NULL || (channels != 1 && channels != 2)) {
     return;
   }
-
   gboolean valid_rx_id = rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]));
   gboolean ring_was_primed = valid_rx_id && g_atomic_int_get(&output_ring_primed[rx->id]);
-
   /*
    * This function deliberately takes no mutex. Ring ownership is SPSC:
    * receiver/CW code advances producer indices, the audio callback advances
@@ -352,18 +327,15 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
    */
   float *rx_buffer = rx->local_audio_buffer;
   float *st_buffer = rx->sidetone_buffer;
-
   if (rx_buffer != NULL && st_buffer != NULL) {
     int rx_out = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_relaxed);
     int st_out = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_relaxed);
-
     for (unsigned int i = 0; i < frames; i++) {
       float left = 0.0f;
       float right = 0.0f;
       float sidetone = 0.0f;
       int rx_in = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_acquire);
       int st_in = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_acquire);
-
       if (rx_in != rx_out) {
         ring_had_audio = TRUE;
         left = rx_buffer[2 * rx_out];
@@ -376,7 +348,6 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
       } else if (st_in == st_out) {
         ring_underrun = TRUE;
       }
-
       if (st_in != st_out) {
         ring_had_audio = TRUE;
         sidetone = st_buffer[st_out];
@@ -386,14 +357,12 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
         }
         atomic_store_explicit(&rx->sidetone_buffer_outpt, st_out, memory_order_release);
       }
-
       left += sidetone;
       right += sidetone;
       if (left > 1.0f) { left = 1.0f; }
       if (left < -1.0f) { left = -1.0f; }
       if (right > 1.0f) { right = 1.0f; }
       if (right < -1.0f) { right = -1.0f; }
-
       if (channels == 2) {
         *out++ = left;
         *out++ = right;
@@ -417,7 +386,6 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
   } else {
     memset(out, 0, (size_t) frames * (size_t) channels * sizeof(float));
   }
-
   if (valid_rx_id) {
     if (ring_underrun && ring_was_primed && rx->local_audio
         && !g_atomic_int_get(&output_ring_starved[rx->id])) {
@@ -438,11 +406,9 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
 //
 void audio_process_local_mic_input(const float *samples, unsigned int frames) {
   static int last_was_tx = 0;
-
   if (samples == NULL || mic_ring_buffer == NULL) {
     return;
   }
-
   //
   // Normally there is a slight mis-match between the 48kHz sample
   // rate of the microphone device and the 48kHz rate of the HPSDR
@@ -456,7 +422,6 @@ void audio_process_local_mic_input(const float *samples, unsigned int frames) {
   } else {
     last_was_tx = 1;
   }
-
   for (unsigned int i = 0; i < frames; i++) {
     local_mic_ring_push(samples[i]);
   }
@@ -479,7 +444,6 @@ int audio_open_output(RECEIVER *rx) {
   if (rx == NULL) {
     return -1;
   }
-
   /*
    * Allocate and initialize rings before the CoreAudio unit is started.
    * Publish the backend handle only after AudioOutputUnitStart() succeeds.
@@ -493,12 +457,10 @@ int audio_open_output(RECEIVER *rx) {
   atomic_store_explicit(&rx->sidetone_buffer_inpt, 0, memory_order_relaxed);
   atomic_store_explicit(&rx->sidetone_buffer_outpt, 0, memory_order_relaxed);
   rx->local_audio_cw_active = 0;
-
   if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
     g_atomic_int_set(&output_ring_primed[rx->id], 0);
     g_atomic_int_set(&output_ring_starved[rx->id], 0);
   }
-
   if (rx->local_audio_buffer == NULL || rx->sidetone_buffer == NULL) {
     g_free(rx->local_audio_buffer);
     g_free(rx->sidetone_buffer);
@@ -509,7 +471,6 @@ int audio_open_output(RECEIVER *rx) {
     return -1;
   }
   g_mutex_unlock(&rx->local_audio_mutex);
-
   int channels = 0;
   void *handle = coreaudio_output_open(rx, rx->audio_name, &channels);
   if (handle == NULL) {
@@ -521,12 +482,10 @@ int audio_open_output(RECEIVER *rx) {
     g_mutex_unlock(&rx->local_audio_mutex);
     return -1;
   }
-
   g_mutex_lock(&rx->local_audio_mutex);
   rx->local_audio_channels = channels;
   rx->coreaudio_output_handle = handle;
   g_mutex_unlock(&rx->local_audio_mutex);
-
   t_print("%s: native CoreAudio output name=%s channels=%d\n",
           __func__, rx->audio_name, rx->local_audio_channels);
   return 0;
@@ -543,18 +502,15 @@ void audio_close_input(void) {
   if (transmitter != NULL) {
     t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
   }
-
   void *handle = NULL;
   g_mutex_lock(&audio_mutex);
   handle = coreaudio_input_handle;
   coreaudio_input_handle = NULL;
   g_mutex_unlock(&audio_mutex);
-
   //
   // Stop and dispose AUHAL before freeing the lock-free mic ring.
   //
   coreaudio_input_close(handle);
-
   g_mutex_lock(&audio_mutex);
   if (mic_ring_buffer != NULL) {
     g_free(mic_ring_buffer);
@@ -575,7 +531,6 @@ void audio_close_input(void) {
 //
 void audio_close_output(RECEIVER *rx) {
   t_print("%s: device=%s\n", __func__, rx->audio_name);
-
   /*
    * First prevent producers from entering audio_write()/cw_audio_write().
    * Then stop CoreAudio and wait for its callback to leave. Only after that
@@ -586,9 +541,7 @@ void audio_close_output(RECEIVER *rx) {
   handle = rx->coreaudio_output_handle;
   rx->coreaudio_output_handle = NULL;
   g_mutex_unlock(&rx->local_audio_mutex);
-
   coreaudio_output_close(handle);
-
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
     g_atomic_int_set(&output_ring_primed[rx->id], 0);

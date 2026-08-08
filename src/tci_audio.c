@@ -120,7 +120,6 @@ static void tci_audio_queue_rx_wakeup (void) {
 
 void tci_audio_monitor_set_active (int active) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
-
   /*
    * The monitor ring has one producer (TCI TX-audio handling) and one
    * consumer (local audio backend callback). Keep it lock-free so a native
@@ -141,7 +140,6 @@ int tci_audio_monitor_is_active (void) {
 static inline int tci_audio_monitor_push_frame (TCI_AUDIO_MONITOR_RING *ring, float left, float right) {
   uint_fast64_t write_count = atomic_load_explicit (&ring->write_count, memory_order_relaxed);
   uint_fast64_t read_count = atomic_load_explicit (&ring->read_count, memory_order_acquire);
-
   /*
    * Do not let the producer modify the consumer pointer. If the monitor falls
    * behind, drop the newest frame. With a four-second ring this should only
@@ -151,7 +149,6 @@ static inline int tci_audio_monitor_push_frame (TCI_AUDIO_MONITOR_RING *ring, fl
     atomic_fetch_add_explicit (&ring->dropped, 1, memory_order_relaxed);
     return 0;
   }
-
   guint index = (guint) (write_count % TCI_AUDIO_MONITOR_RING_FRAMES);
   ring->samples[(index * TCI_AUDIO_CHANNELS)] = left;
   ring->samples[(index * TCI_AUDIO_CHANNELS) + 1] = right;
@@ -171,12 +168,11 @@ __attribute__ ((unused)) static void tci_audio_monitor_push_block (const float *
       samples == NULL || frames == 0) {
     return;
   }
-
   for (guint i = 0; i < frames; i++) {
     (void) tci_audio_monitor_push_frame (
-      ring,
-      samples[(i * TCI_AUDIO_CHANNELS)] * 0.9f,
-      samples[(i * TCI_AUDIO_CHANNELS) + 1] * 0.9f);
+            ring,
+            samples[(i * TCI_AUDIO_CHANNELS)] * 0.9f,
+            samples[(i * TCI_AUDIO_CHANNELS) + 1] * 0.9f);
   }
 }
 
@@ -186,7 +182,6 @@ static void tci_audio_monitor_push_mono_block (const float *samples, guint frame
       samples == NULL || frames == 0) {
     return;
   }
-
   for (guint i = 0; i < frames; i++) {
     float sample = samples[i] * gain;
     (void) tci_audio_monitor_push_frame (ring, sample, sample);
@@ -432,14 +427,11 @@ guint tci_audio_tx_read (float *out, guint frames) {
 guint tci_audio_monitor_read (float *out, guint frames) {
   TCI_AUDIO_MONITOR_RING *ring = &tci_audio_monitor_ring;
   guint copied = 0;
-
   if (out == NULL || frames == 0) { return 0; }
   memset (out, 0, frames * TCI_AUDIO_CHANNELS * sizeof (float));
   if (!atomic_load_explicit (&tci_audio_monitor_enabled, memory_order_acquire)) { return 0; }
-
   uint_fast64_t read_count = atomic_load_explicit (&ring->read_count, memory_order_relaxed);
   uint_fast64_t write_count = atomic_load_explicit (&ring->write_count, memory_order_acquire);
-
   while (copied < frames && read_count < write_count) {
     guint index = (guint) (read_count % TCI_AUDIO_MONITOR_RING_FRAMES);
     out[(copied * TCI_AUDIO_CHANNELS)] = ring->samples[(index * TCI_AUDIO_CHANNELS)];
@@ -447,7 +439,6 @@ guint tci_audio_monitor_read (float *out, guint frames) {
     read_count++;
     copied++;
   }
-
   atomic_store_explicit (&ring->read_count, read_count, memory_order_release);
   return copied;
 }

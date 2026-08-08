@@ -994,7 +994,6 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   int was_local_microphone = transmitter->local_microphone;
   t_print("%s: Flag: %d\n", __func__, flag);
   t_print("local_input_changed_cb: %d %s\n", i, input_devices[i].name);
-
   //
   // Stop selecting the local mic ring before closing the CoreAudio input.
   // Protocol mic consumers will therefore no longer enter
@@ -1004,15 +1003,12 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
     transmitter->local_microphone = 0;
     audio_close_input();
   }
-
   g_mutex_lock(&copy_string_mutex);
   g_strlcpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
   g_mutex_unlock(&copy_string_mutex);
-
   if (was_local_microphone && audio_open_input() == 0) {
     transmitter->local_microphone = 1;
   }
-
   if (n_input_devices > 0) {
     if (flag) {
       update_slider_local_mic_input(i);
