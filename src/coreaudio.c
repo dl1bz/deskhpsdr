@@ -164,9 +164,9 @@ int coreaudio_get_cards(void) {
 
 
 static UInt32 coreaudio_tune_buffer_frames(AudioDeviceID device,
-                                           UInt32 target,
-                                           const char *role,
-                                           const char *device_name) {
+    UInt32 target,
+    const char *role,
+    const char *device_name) {
   AudioObjectPropertyAddress size_address = {
     kAudioDevicePropertyBufferFrameSize,
     kAudioObjectPropertyScopeGlobal,
@@ -187,16 +187,13 @@ static UInt32 coreaudio_tune_buffer_frames(AudioDeviceID device,
   OSStatus status_range;
   OSStatus status_set = noErr;
   OSStatus status_actual;
-
   status_current = AudioObjectGetPropertyData(device, &size_address, 0, NULL,
-                                              &size, &current);
-
+    &size, &current);
   status_range = AudioObjectGetPropertyData(device, &range_address, 0, NULL,
-                                            &range_size, &range);
+    &range_size, &range);
   if (status_range == noErr) {
     UInt32 min_frames = (UInt32) range.mMinimum;
     UInt32 max_frames = (UInt32) range.mMaximum;
-
     if (requested < min_frames) {
       requested = min_frames;
     }
@@ -204,25 +201,21 @@ static UInt32 coreaudio_tune_buffer_frames(AudioDeviceID device,
       requested = max_frames;
     }
   }
-
   Boolean settable = false;
   OSStatus status_settable =
-    AudioObjectIsPropertySettable(device, &size_address, &settable);
-
+          AudioObjectIsPropertySettable(device, &size_address, &settable);
   if (status_settable == noErr && settable) {
     status_set = AudioObjectSetPropertyData(device, &size_address, 0, NULL,
                                             sizeof(requested), &requested);
   } else {
     status_set = status_settable != noErr ? status_settable : kAudioHardwareUnsupportedOperationError;
   }
-
   size = sizeof(actual);
   status_actual = AudioObjectGetPropertyData(device, &size_address, 0, NULL,
-                                             &size, &actual);
+    &size, &actual);
   if (status_actual != noErr) {
     actual = status_current == noErr ? current : 0;
   }
-
   if (status_range == noErr) {
     if (status_set == noErr) {
       t_print("%s: CoreAudio %s buffer frames device=%s id=%u "
@@ -256,7 +249,6 @@ static UInt32 coreaudio_tune_buffer_frames(AudioDeviceID device,
               target, requested, actual, (int) status_set);
     }
   }
-
   return actual;
 }
 

@@ -97,7 +97,6 @@ void d_print(const gchar *format, ...) {
   if (!log_debug) {
     return;
   }
-
   va_list args;
   va_start(args, format);
   v_t_print(format, args);

@@ -460,20 +460,18 @@ float audio_get_next_mic_sample(void) {
   static int max_queued = 0;
   static unsigned int diag_generation_seen = 0;
   float sample = local_mic_ring_pop();
-
   if (!radio_is_transmitting()) {
     next_log_us = 0;
     min_queued = MY_RING_BUFFER_SIZE;
     max_queued = 0;
     diag_generation_seen =
-      atomic_load_explicit(&mic_ring_diag_generation, memory_order_acquire);
+            atomic_load_explicit(&mic_ring_diag_generation, memory_order_acquire);
     atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
     atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
     return sample;
   }
-
   unsigned int diag_generation =
-    atomic_load_explicit(&mic_ring_diag_generation, memory_order_acquire);
+          atomic_load_explicit(&mic_ring_diag_generation, memory_order_acquire);
   if (diag_generation != diag_generation_seen) {
     diag_generation_seen = diag_generation;
     next_log_us = 0;
@@ -482,7 +480,6 @@ float audio_get_next_mic_sample(void) {
     atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
     atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
   }
-
   int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);
   int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
   int queued = inpt - outpt;
@@ -495,7 +492,6 @@ float audio_get_next_mic_sample(void) {
   if (queued > max_queued) {
     max_queued = queued;
   }
-
   gint64 now_us = g_get_monotonic_time();
   if (next_log_us == 0) {
     next_log_us = now_us + G_USEC_PER_SEC;
@@ -511,7 +507,6 @@ float audio_get_next_mic_sample(void) {
     max_queued = 0;
     next_log_us = now_us + G_USEC_PER_SEC;
   }
-
   return sample;
 }
 
@@ -720,7 +715,6 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   static int diag_max_avail = 0;
   static unsigned int diag_low_corrections = 0;
   static unsigned int diag_high_corrections = 0;
-
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->coreaudio_output_handle != NULL && rx->sidetone_buffer != NULL) {
     static int count = 0;
@@ -780,20 +774,18 @@ int cw_audio_write(RECEIVER *rx, float sample) {
         }
       }
     }
-
     inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_relaxed);
     outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
     avail = inpt - outpt;
     if (avail < 0) { avail += MY_RING_BUFFER_SIZE; }
     if (avail < diag_min_avail) { diag_min_avail = avail; }
     if (avail > diag_max_avail) { diag_max_avail = avail; }
-
     gint64 diag_now_us = g_get_monotonic_time();
     if (diag_next_log_us == 0) {
       diag_next_log_us = diag_now_us + G_USEC_PER_SEC;
     } else if (diag_now_us >= diag_next_log_us) {
       unsigned int diag_underruns =
-        atomic_exchange_explicit(&cw_ring_diag_underruns, 0U, memory_order_relaxed);
+              atomic_exchange_explicit(&cw_ring_diag_underruns, 0U, memory_order_relaxed);
       d_print("CoreAudio CW ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u low_corr=%u high_corr=%u\n",
               avail, (double) avail * 1000.0 / 48000.0,
               diag_min_avail, (double) diag_min_avail * 1000.0 / 48000.0,
