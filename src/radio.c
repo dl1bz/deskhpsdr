@@ -2762,6 +2762,11 @@ static void radio_restore_state (void) {
   GetPropI0 ("diversity_enabled",                             diversity_enabled);
   GetPropI0 ("diversity_brick3_mode",                         diversity_brick3_mode);
   diversity_brick3_mode = diversity_brick3_mode ? 1 : 0;
+  GetPropI0 ("p2_jitter_buffer_enabled",                       p2_jitter_buffer_enabled);
+  GetPropI0 ("p2_jitter_buffer_depth_ms",                      p2_jitter_buffer_depth_ms);
+  p2_jitter_buffer_enabled = p2_jitter_buffer_enabled ? 1 : 0;
+  if (p2_jitter_buffer_depth_ms < 5) { p2_jitter_buffer_depth_ms = 5; }
+  if (p2_jitter_buffer_depth_ms > 500) { p2_jitter_buffer_depth_ms = 500; }
   GetPropF0 ("diversity_gain",                                div_gain);
   GetPropF0 ("diversity_phase",                               div_phase);
   GetPropF0 ("diversity_cos",                                 div_cos);
@@ -3063,6 +3068,8 @@ void radio_save_state (void) {
   SetPropI0 ("enable_tx_inhibit",                             enable_tx_inhibit);
   SetPropI0 ("diversity_enabled",                             diversity_enabled);
   SetPropI0 ("diversity_brick3_mode",                         diversity_brick3_mode);
+  SetPropI0 ("p2_jitter_buffer_enabled",                       p2_jitter_buffer_enabled);
+  SetPropI0 ("p2_jitter_buffer_depth_ms",                      p2_jitter_buffer_depth_ms);
   SetPropF0 ("diversity_gain",                                div_gain);
   SetPropF0 ("diversity_phase",                               div_phase);
   SetPropF0 ("diversity_cos",                                 div_cos);

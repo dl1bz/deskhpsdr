@@ -100,6 +100,10 @@ extern void new_protocol_cw_audio_samples (short l, short r);
 
 extern void new_protocol_menu_start (void);
 extern void new_protocol_menu_stop (void);
+
+extern int p2_jitter_buffer_enabled;
+extern int p2_jitter_buffer_depth_ms;
+extern void new_protocol_set_jitter_buffer (int enabled, int depth_ms);
 extern void saturn_post_iq_data (int ddc, mybuffer *buffer);
 extern void saturn_post_micaudio (int bytes, mybuffer *buffer);
 extern void saturn_post_high_priority (mybuffer *buffer);

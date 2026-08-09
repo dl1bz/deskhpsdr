@@ -101,6 +101,35 @@
 static int rxcase[MAX_DDC];
 static int rxid[MAX_DDC];
 
+int p2_jitter_buffer_enabled = 0;
+int p2_jitter_buffer_depth_ms = 20;
+
+#define P2_JITTER_SLOT_COUNT 4096
+#define P2_JITTER_SLOT_MASK  (P2_JITTER_SLOT_COUNT - 1)
+
+typedef struct {
+  mybuffer *packet;
+  uint32_t sequence;
+} P2_JITTER_SLOT;
+
+typedef struct {
+  GMutex mutex;
+  GCond cond;
+  P2_JITTER_SLOT slots[P2_JITTER_SLOT_COUNT];
+  uint32_t expected_sequence;
+  gint64 first_arrival_us;
+  gint64 next_release_us;
+  gint64 packet_period_us;
+  unsigned int queued;
+  uint32_t last_arrival_sequence;
+  int have_last_arrival;
+  int started;
+  int primed;
+} P2_JITTER_STATE;
+
+static P2_JITTER_STATE p2_jitter[MAX_DDC];
+static int p2_jitter_initialized = 0;
+
 int data_socket = -1;
 
 static volatile int P2running;
@@ -501,7 +530,277 @@ void schedule_transmit_specific(void) {
   }
 }
 
+
+static int p2_jitter_seq_before(uint32_t a, uint32_t b) {
+  return (int32_t)(a - b) < 0;
+}
+
+static uint32_t p2_jitter_packet_sequence(const mybuffer *mybuf) {
+  const unsigned char *buffer = mybuf->buffer;
+  return ((uint32_t)buffer[0] << 24)
+         | ((uint32_t)buffer[1] << 16)
+         | ((uint32_t)buffer[2] << 8)
+         | (uint32_t)buffer[3];
+}
+
+static gint64 p2_jitter_packet_period_us(int ddc, const mybuffer *mybuf) {
+  const unsigned char *buffer = mybuf->buffer;
+  int samplesperframe = ((buffer[14] & 0xFF) << 8) | (buffer[15] & 0xFF);
+  if (ddc < 0 || ddc >= MAX_DDC || samplesperframe <= 0) {
+    return 0;
+  }
+  /*
+   * Use the DDC rate actually programmed into Receive Specific.
+   * This is authoritative for the incoming P2 stream.  The RECEIVER
+   * sample-rate state can temporarily differ from the rate already
+   * active in the FPGA, which would make the jitter pacer run at the
+   * wrong speed.
+   */
+  int rate_khz = ((receive_specific_buffer[18 + (ddc * 6)] & 0xFF) << 8)
+                 | (receive_specific_buffer[19 + (ddc * 6)] & 0xFF);
+  int sample_rate = rate_khz * 1000;
+  if (sample_rate <= 0) {
+    return 0;
+  }
+  gint64 period_us = ((gint64)samplesperframe * G_USEC_PER_SEC + (sample_rate / 2)) / sample_rate;
+  return period_us > 0 ? period_us : 1;
+}
+
+static int p2_jitter_should_buffer(int ddc) {
+  if (!p2_jitter_buffer_enabled || ddc < 0 || ddc >= MAX_DDC) {
+    return 0;
+  }
+  return rxcase[ddc] == RXACTION_NORMAL || rxcase[ddc] == RXACTION_DIV;
+}
+
+static void p2_jitter_reset_locked(P2_JITTER_STATE *state) {
+  for (int i = 0; i < P2_JITTER_SLOT_COUNT; i++) {
+    if (state->slots[i].packet != NULL) {
+      state->slots[i].packet->free = 1;
+      state->slots[i].packet = NULL;
+    }
+    state->slots[i].sequence = 0;
+  }
+  state->expected_sequence = 0;
+  state->first_arrival_us = 0;
+  state->next_release_us = 0;
+  state->packet_period_us = 0;
+  state->queued = 0;
+  state->last_arrival_sequence = 0;
+  state->have_last_arrival = 0;
+  state->started = 0;
+  state->primed = 0;
+}
+
+static void p2_jitter_reset_all(void) {
+  if (!p2_jitter_initialized) {
+    return;
+  }
+  for (int ddc = 0; ddc < MAX_DDC; ddc++) {
+    P2_JITTER_STATE *state = &p2_jitter[ddc];
+    g_mutex_lock(&state->mutex);
+    p2_jitter_reset_locked(state);
+    g_cond_broadcast(&state->cond);
+    g_mutex_unlock(&state->mutex);
+  }
+}
+
+void new_protocol_set_jitter_buffer(int enabled, int depth_ms) {
+  enabled = enabled ? 1 : 0;
+  if (depth_ms < 5) {
+    depth_ms = 5;
+  } else if (depth_ms > 500) {
+    depth_ms = 500;
+  }
+  if (p2_jitter_buffer_enabled == enabled && p2_jitter_buffer_depth_ms == depth_ms) {
+    return;
+  }
+  p2_jitter_buffer_enabled = enabled;
+  p2_jitter_buffer_depth_ms = depth_ms;
+  p2_jitter_reset_all();
+  d_print("P2 jitter buffer: %s depth=%d ms\n",
+          p2_jitter_buffer_enabled ? "ON" : "OFF",
+          p2_jitter_buffer_depth_ms);
+}
+
+static int p2_jitter_enqueue(int ddc, mybuffer *mybuf) {
+  if (!p2_jitter_should_buffer(ddc)) {
+    return 0;
+  }
+  gint64 period_us = p2_jitter_packet_period_us(ddc, mybuf);
+  if (period_us <= 0) {
+    return 0;
+  }
+  P2_JITTER_STATE *state = &p2_jitter[ddc];
+  uint32_t sequence = p2_jitter_packet_sequence(mybuf);
+  gint64 now_us = g_get_monotonic_time();
+  g_mutex_lock(&state->mutex);
+  if (!p2_jitter_buffer_enabled || !p2_jitter_should_buffer(ddc)) {
+    g_mutex_unlock(&state->mutex);
+    return 0;
+  }
+  if (state->packet_period_us != 0 && state->packet_period_us != period_us) {
+    p2_jitter_reset_locked(state);
+  }
+  state->packet_period_us = period_us;
+  if (!state->have_last_arrival || !p2_jitter_seq_before(sequence, state->last_arrival_sequence)) {
+    state->last_arrival_sequence = sequence;
+    state->have_last_arrival = 1;
+  }
+  if (!state->started) {
+    state->started = 1;
+    state->expected_sequence = sequence;
+    state->first_arrival_us = now_us;
+    state->next_release_us = 0;
+  } else if (!state->primed && p2_jitter_seq_before(sequence, state->expected_sequence)) {
+    state->expected_sequence = sequence;
+  } else if (state->primed && p2_jitter_seq_before(sequence, state->expected_sequence)) {
+    mybuf->free = 1;
+    g_mutex_unlock(&state->mutex);
+    return 1;
+  }
+  unsigned int slot_index = sequence & P2_JITTER_SLOT_MASK;
+  P2_JITTER_SLOT *slot = &state->slots[slot_index];
+  if (slot->packet != NULL) {
+    if (slot->sequence == sequence) {
+      // Duplicate packet.
+      mybuf->free = 1;
+      g_mutex_unlock(&state->mutex);
+      return 1;
+    }
+    // The configured queue should never span a full slot table. If it does,
+    // discard the stale occupant rather than corrupting sequence order.
+    slot->packet->free = 1;
+    slot->packet = NULL;
+    if (state->queued > 0) {
+      state->queued--;
+    }
+  }
+  slot->packet = mybuf;
+  slot->sequence = sequence;
+  state->queued++;
+  g_cond_signal(&state->cond);
+  g_mutex_unlock(&state->mutex);
+  return 1;
+}
+
+static gpointer p2_jitter_thread(gpointer data) {
+  int ddc = GPOINTER_TO_INT(data);
+  P2_JITTER_STATE *state = &p2_jitter[ddc];
+  while (1) {
+    mybuffer *release_packet = NULL;
+    g_mutex_lock(&state->mutex);
+    while (!state->started || !p2_jitter_buffer_enabled || !P2running) {
+      g_cond_wait(&state->cond, &state->mutex);
+    }
+    gint64 now_us = g_get_monotonic_time();
+    if (!state->primed) {
+      gint64 prime_deadline = state->first_arrival_us + ((gint64)p2_jitter_buffer_depth_ms * 1000);
+      if (now_us < prime_deadline) {
+        g_cond_wait_until(&state->cond, &state->mutex, prime_deadline);
+        g_mutex_unlock(&state->mutex);
+        continue;
+      }
+      state->primed = 1;
+      state->next_release_us = prime_deadline;
+    }
+    if (state->packet_period_us <= 0) {
+      p2_jitter_reset_locked(state);
+      g_mutex_unlock(&state->mutex);
+      continue;
+    }
+    now_us = g_get_monotonic_time();
+    if (now_us < state->next_release_us) {
+      g_cond_wait_until(&state->cond, &state->mutex, state->next_release_us);
+      g_mutex_unlock(&state->mutex);
+      continue;
+    }
+    /*
+     * A completely drained jitter queue means the configured network
+     * reserve has been exhausted.  Do not keep advancing expected_sequence
+     * into the future while no packets are available.  Stop the pacer and
+     * let p2_jitter_enqueue() establish a fresh sequence/time origin from
+     * the first packets that arrive after the outage.  The normal priming
+     * path above will then rebuild the configured depth before output
+     * resumes.
+     *
+     * Keep the diagnostic counters intact so the next report still shows
+     * what happened before the underflow.  No packet slots need clearing
+     * here because queued == 0.
+     */
+    if (state->queued == 0) {
+      d_print("P2 jitter underflow: ddc=%d reserve exhausted, pausing for resync\n", ddc);
+      state->started = 0;
+      state->primed = 0;
+      state->expected_sequence = 0;
+      state->first_arrival_us = 0;
+      state->next_release_us = 0;
+      state->packet_period_us = 0;
+      state->last_arrival_sequence = 0;
+      state->have_last_arrival = 0;
+      g_mutex_unlock(&state->mutex);
+      continue;
+    }
+    unsigned int slot_index = state->expected_sequence & P2_JITTER_SLOT_MASK;
+    P2_JITTER_SLOT *slot = &state->slots[slot_index];
+    if (slot->packet != NULL && slot->sequence == state->expected_sequence) {
+      release_packet = slot->packet;
+      slot->packet = NULL;
+      if (state->queued > 0) {
+        state->queued--;
+      }
+    } else {
+    }
+    state->expected_sequence++;
+    /*
+     * Keep output pacing strictly at the nominal DDC rate.  If a network
+     * catch-up burst accumulates substantially more latency than configured,
+     * trim the oldest queued IQ packets in one controlled step instead of
+     * feeding WDSP faster than real time.
+     *
+     * Trigger above 150% of the configured depth and trim back to 110%.
+     * This deliberately trades one RX discontinuity for bounded latency and
+     * prevents excess network backlog from being shifted into the audio ring.
+     */
+    double target_packets = ((double)p2_jitter_buffer_depth_ms * 1000.0)
+                            / (double)state->packet_period_us;
+    unsigned int trim_trigger = (unsigned int)(target_packets * 1.50);
+    unsigned int trim_target = (unsigned int)(target_packets * 1.10);
+    if (trim_trigger < 1) {
+      trim_trigger = 1;
+    }
+    if (trim_target < 1) {
+      trim_target = 1;
+    }
+    if (state->queued > trim_trigger) {
+      unsigned int before = state->queued;
+      unsigned int dropped = 0;
+      while (state->queued > trim_target) {
+        unsigned int trim_index = state->expected_sequence & P2_JITTER_SLOT_MASK;
+        P2_JITTER_SLOT *trim_slot = &state->slots[trim_index];
+        if (trim_slot->packet != NULL && trim_slot->sequence == state->expected_sequence) {
+          trim_slot->packet->free = 1;
+          trim_slot->packet = NULL;
+          state->queued--;
+          dropped++;
+        }
+        state->expected_sequence++;
+      }
+      d_print("P2 jitter latency trim: ddc=%d queued=%u->%u dropped=%u target=%.1f\n",
+              ddc, before, state->queued, dropped, target_packets);
+    }
+    state->next_release_us += state->packet_period_us;
+    g_mutex_unlock(&state->mutex);
+    if (release_packet != NULL) {
+      saturn_post_iq_data(ddc, release_packet);
+    }
+  }
+  return NULL;
+}
+
 void update_action_table(void) {
+  int old_rxcase[MAX_DDC];
+  memcpy(old_rxcase, rxcase, sizeof(old_rxcase));
   //
   // Depending on the values of mox, puresignal, and diversity,
   // determine the actions to be taken when a DDC packet arrives
@@ -579,6 +878,17 @@ void update_action_table(void) {
   default:
     t_print("ACTION TABLE: case not handled: %d\n", flag);
     break;
+  }
+  if (p2_jitter_initialized) {
+    for (int ddc = 0; ddc < MAX_DDC; ddc++) {
+      if (old_rxcase[ddc] != rxcase[ddc]) {
+        P2_JITTER_STATE *state = &p2_jitter[ddc];
+        g_mutex_lock(&state->mutex);
+        p2_jitter_reset_locked(state);
+        g_cond_broadcast(&state->cond);
+        g_mutex_unlock(&state->mutex);
+      }
+    }
   }
 }
 
@@ -712,7 +1022,13 @@ void new_protocol_init(void) {
     char text[16];
     snprintf(text, 16, "P2 DDC%d", i);
     iq_thread_id[i] = g_thread_new(text, iq_thread, GINT_TO_POINTER(i));
+    g_mutex_init(&p2_jitter[i].mutex);
+    g_cond_init(&p2_jitter[i].cond);
+    p2_jitter_reset_locked(&p2_jitter[i]);
+    snprintf(text, 16, "P2 JIT%d", i);
+    g_thread_new(text, p2_jitter_thread, GINT_TO_POINTER(i));
   }
+  p2_jitter_initialized = 1;
   //
   // Setup communication (this is also done *once*)
   // In XDMA mode, just call saturn_init(), in network mode, establish
@@ -1953,6 +2269,11 @@ void new_protocol_menu_stop(void) {
   struct timeval tv;
   char *buffer;
   P2running = 0;
+  for (int ddc = 0; ddc < MAX_DDC; ddc++) {
+    g_mutex_lock(&p2_jitter[ddc].mutex);
+    g_cond_broadcast(&p2_jitter[ddc].cond);
+    g_mutex_unlock(&p2_jitter[ddc].mutex);
+  }
   //
   // Wait 100 msec so we know that the TX IQ and RX audio
   // threads block on the semaphore. Then, post the semaphores
@@ -2030,6 +2351,7 @@ void new_protocol_menu_start(void) {
   memset(rxid, 0, sizeof(rxid));
   memset(ddc_sequence, 0, sizeof(ddc_sequence));
   update_action_table();
+  p2_jitter_reset_all();
   //
   // Mark all buffers free.
   //
@@ -2046,6 +2368,11 @@ void new_protocol_menu_start(void) {
     ensure_my_buffers(P2_INITIAL_BUFFERS);
   }
   P2running = 1;
+  for (int ddc = 0; ddc < MAX_DDC; ddc++) {
+    g_mutex_lock(&p2_jitter[ddc].mutex);
+    g_cond_broadcast(&p2_jitter[ddc].cond);
+    g_mutex_unlock(&p2_jitter[ddc].mutex);
+  }
   t_print("%s: P2running set\n", __func__);
 #ifdef __APPLE__
   txiq_sem = apple_sem(0);
@@ -2336,7 +2663,9 @@ static gpointer new_protocol_thread(gpointer data) {
     case RX_IQ_TO_HOST_PORT_6:
     case RX_IQ_TO_HOST_PORT_7:
       ddc = sourceport - RX_IQ_TO_HOST_PORT_0;
-      saturn_post_iq_data(ddc, mybuf);
+      if (!p2_jitter_enqueue(ddc, mybuf)) {
+        saturn_post_iq_data(ddc, mybuf);
+      }
       break;
     case COMMAND_RESPONSE_TO_HOST_PORT:
       //

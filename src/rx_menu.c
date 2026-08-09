@@ -43,6 +43,7 @@
 static GtkWidget *dialog = NULL;
 static GtkWidget *autogain_b;
 static GtkWidget *autogain_time_b;
+static GtkWidget *p2_jitter_depth_b = NULL;
 static GtkWidget *rx_menu_headerbar = NULL;
 static GtkWidget *rx_menu_stack = NULL;
 #ifdef PULSEAUDIO
@@ -69,6 +70,7 @@ static void cleanup(void) {
     gtk_widget_destroy(tmp);
     rx_menu_headerbar = NULL;
     rx_menu_stack = NULL;
+    p2_jitter_depth_b = NULL;
     for (int i = 0; i < RX_MENU_TAB_COUNT; i++) {
       rx_menu_tab_buttons[i] = NULL;
     }
@@ -770,6 +772,22 @@ static void add_local_audio_controls(GtkWidget *grid, RECEIVER *rx, int *row) {
 }
 
 
+
+static void p2_jitter_toggle_cb(GtkToggleButton *button, gpointer data) {
+  (void)data;
+  int enabled = gtk_toggle_button_get_active(button) ? 1 : 0;
+  new_protocol_set_jitter_buffer(enabled, p2_jitter_buffer_depth_ms);
+  if (p2_jitter_depth_b != NULL) {
+    gtk_widget_set_sensitive(p2_jitter_depth_b, enabled);
+  }
+}
+
+static void p2_jitter_depth_cb(GtkSpinButton *spin, gpointer data) {
+  (void)data;
+  int depth_ms = gtk_spin_button_get_value_as_int(spin);
+  new_protocol_set_jitter_buffer(p2_jitter_buffer_enabled, depth_ms);
+}
+
 static GtkWidget *build_general_page(void) {
   GtkWidget *page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
   gtk_container_set_border_width(GTK_CONTAINER(page), 12);
@@ -827,6 +845,38 @@ static GtkWidget *build_general_page(void) {
     gtk_grid_attach(GTK_GRID(hardware_grid), label, 0, row, 1, 1);
   }
   gtk_box_pack_start(GTK_BOX(page), hardware_frame, FALSE, FALSE, 0);
+  if (protocol == NEW_PROTOCOL) {
+    GtkWidget *network_grid = NULL;
+    GtkWidget *network_frame = rx_menu_section_new("Protocol 2 Network", &network_grid);
+    int network_row = 0;
+    GtkWidget *jitter_b = gtk_check_button_new_with_label("P2 Network Jitter Buffer");
+    gtk_widget_set_name(jitter_b, "boldlabel");
+    gtk_widget_set_tooltip_text(jitter_b,
+                                "Reorder and pace received Protocol 2 DDC IQ packets.\n"
+                                "Useful on Wi-Fi or routed links with bursty UDP delivery.\n"
+                                "OFF keeps the direct low-latency receive path.");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jitter_b), p2_jitter_buffer_enabled);
+    gtk_grid_attach(GTK_GRID(network_grid), jitter_b, 0, network_row, 2, 1);
+    g_signal_connect(jitter_b, "toggled", G_CALLBACK(p2_jitter_toggle_cb), NULL);
+    network_row++;
+    GtkWidget *depth_label = gtk_label_new("Buffer depth");
+    gtk_widget_set_name(depth_label, "boldlabel");
+    gtk_widget_set_halign(depth_label, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(network_grid), depth_label, 0, network_row, 1, 1);
+    p2_jitter_depth_b = gtk_spin_button_new_with_range(5.0, 500.0, 5.0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(p2_jitter_depth_b), TRUE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(p2_jitter_depth_b), p2_jitter_buffer_depth_ms);
+    gtk_widget_set_sensitive(p2_jitter_depth_b, p2_jitter_buffer_enabled);
+    gtk_widget_set_tooltip_text(p2_jitter_depth_b,
+                                "Network jitter buffer depth in milliseconds.\n"
+                                "Higher values tolerate longer UDP gaps but add RX latency.");
+    gtk_grid_attach(GTK_GRID(network_grid), p2_jitter_depth_b, 1, network_row, 1, 1);
+    g_signal_connect(p2_jitter_depth_b, "value-changed", G_CALLBACK(p2_jitter_depth_cb), NULL);
+    GtkWidget *depth_unit = gtk_label_new("ms");
+    gtk_widget_set_halign(depth_unit, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(network_grid), depth_unit, 2, network_row, 1, 1);
+    gtk_box_pack_start(GTK_BOX(page), network_frame, FALSE, FALSE, 0);
+  }
 #ifdef __APPLE__
   GtkWidget *operation_grid = NULL;
   GtkWidget *operation_frame = rx_menu_section_new("Operation", &operation_grid);
