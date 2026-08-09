@@ -104,7 +104,7 @@ static int rxid[MAX_DDC];
 int p2_jitter_buffer_enabled = 0;
 int p2_jitter_buffer_depth_ms = 20;
 
-#define P2_JITTER_SLOT_COUNT 4096
+#define P2_JITTER_SLOT_COUNT 8192
 #define P2_JITTER_SLOT_MASK  (P2_JITTER_SLOT_COUNT - 1)
 
 typedef struct {
@@ -121,14 +121,13 @@ typedef struct {
   gint64 next_release_us;
   gint64 packet_period_us;
   unsigned int queued;
-  uint32_t last_arrival_sequence;
-  int have_last_arrival;
   int started;
   int primed;
 } P2_JITTER_STATE;
 
 static P2_JITTER_STATE p2_jitter[MAX_DDC];
 static int p2_jitter_initialized = 0;
+static gint p2_ddc_sample_rate[MAX_DDC];
 
 int data_socket = -1;
 
@@ -550,15 +549,11 @@ static gint64 p2_jitter_packet_period_us(int ddc, const mybuffer *mybuf) {
     return 0;
   }
   /*
-   * Use the DDC rate actually programmed into Receive Specific.
-   * This is authoritative for the incoming P2 stream.  The RECEIVER
-   * sample-rate state can temporarily differ from the rate already
-   * active in the FPGA, which would make the jitter pacer run at the
-   * wrong speed.
+   * Use the DDC rate snapshot taken when Receive Specific is built.
+   * The snapshot is atomic so the IQ receive thread never reads the
+   * concurrently updated receive_specific_buffer.
    */
-  int rate_khz = ((receive_specific_buffer[18 + (ddc * 6)] & 0xFF) << 8)
-                 | (receive_specific_buffer[19 + (ddc * 6)] & 0xFF);
-  int sample_rate = rate_khz * 1000;
+  int sample_rate = g_atomic_int_get(&p2_ddc_sample_rate[ddc]);
   if (sample_rate <= 0) {
     return 0;
   }
@@ -567,7 +562,7 @@ static gint64 p2_jitter_packet_period_us(int ddc, const mybuffer *mybuf) {
 }
 
 static int p2_jitter_should_buffer(int ddc) {
-  if (!p2_jitter_buffer_enabled || ddc < 0 || ddc >= MAX_DDC) {
+  if (!g_atomic_int_get(&p2_jitter_buffer_enabled) || ddc < 0 || ddc >= MAX_DDC) {
     return 0;
   }
   return rxcase[ddc] == RXACTION_NORMAL || rxcase[ddc] == RXACTION_DIV;
@@ -586,8 +581,6 @@ static void p2_jitter_reset_locked(P2_JITTER_STATE *state) {
   state->next_release_us = 0;
   state->packet_period_us = 0;
   state->queued = 0;
-  state->last_arrival_sequence = 0;
-  state->have_last_arrival = 0;
   state->started = 0;
   state->primed = 0;
 }
@@ -612,15 +605,16 @@ void new_protocol_set_jitter_buffer(int enabled, int depth_ms) {
   } else if (depth_ms > 500) {
     depth_ms = 500;
   }
-  if (p2_jitter_buffer_enabled == enabled && p2_jitter_buffer_depth_ms == depth_ms) {
+  if (g_atomic_int_get(&p2_jitter_buffer_enabled) == enabled &&
+      g_atomic_int_get(&p2_jitter_buffer_depth_ms) == depth_ms) {
     return;
   }
-  p2_jitter_buffer_enabled = enabled;
-  p2_jitter_buffer_depth_ms = depth_ms;
+  g_atomic_int_set(&p2_jitter_buffer_enabled, enabled);
+  g_atomic_int_set(&p2_jitter_buffer_depth_ms, depth_ms);
   p2_jitter_reset_all();
   d_print("P2 jitter buffer: %s depth=%d ms\n",
-          p2_jitter_buffer_enabled ? "ON" : "OFF",
-          p2_jitter_buffer_depth_ms);
+          enabled ? "ON" : "OFF",
+          depth_ms);
 }
 
 static int p2_jitter_enqueue(int ddc, mybuffer *mybuf) {
@@ -635,7 +629,7 @@ static int p2_jitter_enqueue(int ddc, mybuffer *mybuf) {
   uint32_t sequence = p2_jitter_packet_sequence(mybuf);
   gint64 now_us = g_get_monotonic_time();
   g_mutex_lock(&state->mutex);
-  if (!p2_jitter_buffer_enabled || !p2_jitter_should_buffer(ddc)) {
+  if (!g_atomic_int_get(&p2_jitter_buffer_enabled) || !p2_jitter_should_buffer(ddc)) {
     g_mutex_unlock(&state->mutex);
     return 0;
   }
@@ -643,10 +637,6 @@ static int p2_jitter_enqueue(int ddc, mybuffer *mybuf) {
     p2_jitter_reset_locked(state);
   }
   state->packet_period_us = period_us;
-  if (!state->have_last_arrival || !p2_jitter_seq_before(sequence, state->last_arrival_sequence)) {
-    state->last_arrival_sequence = sequence;
-    state->have_last_arrival = 1;
-  }
   if (!state->started) {
     state->started = 1;
     state->expected_sequence = sequence;
@@ -690,12 +680,13 @@ static gpointer p2_jitter_thread(gpointer data) {
   while (1) {
     mybuffer *release_packet = NULL;
     g_mutex_lock(&state->mutex);
-    while (!state->started || !p2_jitter_buffer_enabled || !P2running) {
+    while (!state->started || !g_atomic_int_get(&p2_jitter_buffer_enabled) || !P2running) {
       g_cond_wait(&state->cond, &state->mutex);
     }
     gint64 now_us = g_get_monotonic_time();
     if (!state->primed) {
-      gint64 prime_deadline = state->first_arrival_us + ((gint64)p2_jitter_buffer_depth_ms * 1000);
+      int depth_ms = g_atomic_int_get(&p2_jitter_buffer_depth_ms);
+      gint64 prime_deadline = state->first_arrival_us + ((gint64)depth_ms * 1000);
       if (now_us < prime_deadline) {
         g_cond_wait_until(&state->cond, &state->mutex, prime_deadline);
         g_mutex_unlock(&state->mutex);
@@ -723,10 +714,7 @@ static gpointer p2_jitter_thread(gpointer data) {
      * the first packets that arrive after the outage.  The normal priming
      * path above will then rebuild the configured depth before output
      * resumes.
-     *
-     * Keep the diagnostic counters intact so the next report still shows
-     * what happened before the underflow.  No packet slots need clearing
-     * here because queued == 0.
+     * No packet slots need clearing here because queued == 0.
      */
     if (state->queued == 0) {
       d_print("P2 jitter underflow: ddc=%d reserve exhausted, pausing for resync\n", ddc);
@@ -736,8 +724,6 @@ static gpointer p2_jitter_thread(gpointer data) {
       state->first_arrival_us = 0;
       state->next_release_us = 0;
       state->packet_period_us = 0;
-      state->last_arrival_sequence = 0;
-      state->have_last_arrival = 0;
       g_mutex_unlock(&state->mutex);
       continue;
     }
@@ -749,7 +735,6 @@ static gpointer p2_jitter_thread(gpointer data) {
       if (state->queued > 0) {
         state->queued--;
       }
-    } else {
     }
     state->expected_sequence++;
     /*
@@ -762,7 +747,8 @@ static gpointer p2_jitter_thread(gpointer data) {
      * This deliberately trades one RX discontinuity for bounded latency and
      * prevents excess network backlog from being shifted into the audio ring.
      */
-    double target_packets = ((double)p2_jitter_buffer_depth_ms * 1000.0)
+    int depth_ms = g_atomic_int_get(&p2_jitter_buffer_depth_ms);
+    double target_packets = ((double)depth_ms * 1000.0)
                             / (double)state->packet_period_us;
     unsigned int trim_trigger = (unsigned int)(target_packets * 1.50);
     unsigned int trim_target = (unsigned int)(target_packets * 1.10);
@@ -912,6 +898,9 @@ static void p2_write_ddc_receive_specific(unsigned char *buffer, int ddc, int ad
   buffer[18 + (ddc * 6)] = ((sample_rate / 1000) >> 8) & 0xFF;
   buffer[19 + (ddc * 6)] = ((sample_rate / 1000)) & 0xFF;
   buffer[22 + (ddc * 6)] = 24;
+  if (ddc >= 0 && ddc < MAX_DDC) {
+    g_atomic_int_set(&p2_ddc_sample_rate[ddc], sample_rate);
+  }
 }
 
 static void p2_prime_route(void) {
