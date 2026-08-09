@@ -41,8 +41,8 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Bright / Dark Theme support    | yes ✅                                        |                |
 | Screen Resolution              | min. 1280x600 or higher 🚨                    |                |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                |
-| OS support                     | macOS ✅ (15 or higher), Linux ✅, WINDOWS ❌ |                |
-| Audio layer support            | PORTAUDIO (macOS), PulseAudio or ALSA (Linux) |                |
+| OS support                     | macOS (15 or higher) ✅, Linux ✅, WINDOWS ❌ |                |
+| Audio layer support            | CoreAudio (macOS), PulseAudio or ALSA (Linux) |                |
 | Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling  |
 | TX Audio Monitor               | not supported ❌                              | will never come|
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter ✅ |                |
