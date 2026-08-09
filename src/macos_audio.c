@@ -84,11 +84,12 @@ guint64 audio_get_xrun_count(void) {
 
 #define RX_LAT_LOW            768
 #define RX_LAT_TARGET        1536
-#define RX_LAT_HIGH          2304
+#define RX_LAT_HIGH_BASE     2304
+#define RX_LAT_GUARD          128
 
-#define CW_LAT_LOW            224
+#define CW_LAT_LOW            128
 #define CW_LAT_TARGET         256
-#define CW_LAT_HIGH           288
+#define CW_LAT_HIGH           384
 
 //
 // Ring buffer for "local microphone" samples stored locally here.
@@ -722,7 +723,11 @@ int audio_write(RECEIVER *rx, float left, float right) {
       inpt = oldpt;
       avail = RX_LAT_TARGET;
     }
-    if (avail > RX_LAT_HIGH) {
+    int rx_lat_high = RX_LAT_TARGET + (2 * rx->output_samples) + RX_LAT_GUARD;
+    if (rx_lat_high < RX_LAT_HIGH_BASE) {
+      rx_lat_high = RX_LAT_HIGH_BASE;
+    }
+    if (avail > rx_lat_high) {
       if (rx->id >= 0 && rx->id < 8) {
         diag_high_corrections[rx->id]++;
       }

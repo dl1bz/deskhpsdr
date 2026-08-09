@@ -58,4 +58,5 @@ Brick-Tools/p2_discover
 *.zip
 MacOS/build-macos-gtk3min-bundle-sign.sh
 MacOS/build-macos-gtk3min-bundle-sign-v2.sh
+MacOS/build-macos-gtk3min-bundle-sign-v3.sh
 
