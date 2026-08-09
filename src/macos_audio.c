@@ -66,11 +66,6 @@ guint64 audio_get_xrun_count(void) {
 // RX audio samples are put into a ring buffer and "fetched" therefreom
 // by the CoreAudio "headphone" callback.
 //
-// We choose a ring buffer of 9600 (stereo) samples that is kept about half-full
-// during RX (latency: 0.1 sec) which should be more than enough.
-// If the buffer falls below 1800, half a buffer length of silence is
-// inserted. This usually only happens after TX/RX transitions
-//
 // RX audio and CW sidetone use separate ring buffers. On an RX/TX transition
 // the RX ring is no longer discarded: its WDSP-slewed tail is allowed to drain
 // naturally while the sidetone starts from its own low-latency ring.
@@ -86,8 +81,6 @@ guint64 audio_get_xrun_count(void) {
 //
 
 #define MY_RING_BUFFER_SIZE  9600
-#define MY_RING_LOW_WATER     512
-#define MY_RING_HIGH_WATER   9000
 
 #define RX_LAT_LOW            768
 #define RX_LAT_TARGET        1536
