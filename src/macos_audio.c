@@ -56,6 +56,7 @@ GMutex audio_mutex;
 static volatile gint audio_xrun_count = 0;
 static volatile gint output_ring_primed[8] = { 0 };
 static volatile gint output_ring_starved[8] = { 0 };
+static atomic_uint rx_ring_diag_underruns[8];
 
 guint64 audio_get_xrun_count(void) {
   return (guint64) g_atomic_int_get(&audio_xrun_count);
@@ -90,6 +91,11 @@ guint64 audio_get_xrun_count(void) {
 #define MY_RING_BUFFER_SIZE  9600
 #define MY_RING_LOW_WATER     512
 #define MY_RING_HIGH_WATER   9000
+
+#define RX_LAT_LOW            768
+#define RX_LAT_TARGET        1536
+#define RX_LAT_HIGH          2304
+
 #define CW_LAT_LOW            224
 #define CW_LAT_TARGET         256
 #define CW_LAT_HIGH           288
@@ -405,6 +411,7 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
     if (ring_underrun && ring_was_primed && rx->local_audio
         && !g_atomic_int_get(&output_ring_starved[rx->id])) {
       g_atomic_int_inc(&audio_xrun_count);
+      atomic_fetch_add_explicit(&rx_ring_diag_underruns[rx->id], 1U, memory_order_relaxed);
     }
     if (ring_had_audio) {
       g_atomic_int_set(&output_ring_primed[rx->id], 1);
@@ -535,6 +542,7 @@ int audio_open_output(RECEIVER *rx) {
   if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
     g_atomic_int_set(&output_ring_primed[rx->id], 0);
     g_atomic_int_set(&output_ring_starved[rx->id], 0);
+    atomic_store_explicit(&rx_ring_diag_underruns[rx->id], 0U, memory_order_relaxed);
   }
   if (rx->local_audio_buffer == NULL || rx->sidetone_buffer == NULL) {
     g_free(rx->local_audio_buffer);
@@ -639,6 +647,46 @@ void audio_close_output(RECEIVER *rx) {
 
 
 //
+// AUDIO_REPRIME_OUTPUT
+//
+// Re-prime the normal RX ring before RX is restarted after a TX/TUNE phase.
+// rxtx() calls this while the receiver producer is still stopped, so this
+// remains a single-producer operation with respect to the CoreAudio consumer.
+// Existing queued audio is preserved; only missing samples up to RX_LAT_TARGET
+// are added as silence.
+//
+void audio_reprime_output(RECEIVER *rx) {
+  if (rx == NULL || rx->local_audio_buffer == NULL || rx->coreaudio_output_handle == NULL) {
+    return;
+  }
+  int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_relaxed);
+  int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
+  int avail = inpt - outpt;
+  if (avail < 0) {
+    avail += MY_RING_BUFFER_SIZE;
+  }
+  if (avail < RX_LAT_TARGET) {
+    int oldpt = inpt;
+    int missing = RX_LAT_TARGET - avail;
+    for (int i = 0; i < missing; i++) {
+      rx->local_audio_buffer[2 * oldpt] = 0.0f;
+      rx->local_audio_buffer[2 * oldpt + 1] = 0.0f;
+      oldpt++;
+      if (oldpt >= MY_RING_BUFFER_SIZE) {
+        oldpt = 0;
+      }
+    }
+    atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
+    if (rx->id >= 0 && rx->id < 8) {
+      g_atomic_int_set(&output_ring_starved[rx->id], 0);
+      atomic_store_explicit(&rx_ring_diag_underruns[rx->id], 0U, memory_order_relaxed);
+    }
+    d_print("%s: RX%d reprime %d -> %d samples (added %d silence)\n",
+            __func__, rx->id, avail, RX_LAT_TARGET, missing);
+  }
+}
+
+//
 // AUDIO_WRITE
 //
 // Store RX audio in the ring consumed by the native CoreAudio callback.
@@ -651,6 +699,11 @@ void audio_close_output(RECEIVER *rx) {
 // normal operation.
 //
 int audio_write(RECEIVER *rx, float left, float right) {
+  static gint64 diag_next_log_us[8] = { 0 };
+  static int diag_min_queued[8] = { 0 };
+  static int diag_max_queued[8] = { 0 };
+  static unsigned int diag_low_corrections[8] = { 0 };
+  static unsigned int diag_high_corrections[8] = { 0 };
   int txmode = vfo_get_tx_mode();
   float *buffer = rx->local_audio_buffer;
   if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
@@ -664,9 +717,12 @@ int audio_write(RECEIVER *rx, float left, float right) {
     int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
     int avail = inpt - outpt;
     if (avail < 0) { avail += MY_RING_BUFFER_SIZE; }
-    if (avail < MY_RING_LOW_WATER) {
+    if (avail < RX_LAT_LOW) {
+      if (rx->id >= 0 && rx->id < 8) {
+        diag_low_corrections[rx->id]++;
+      }
       int oldpt = inpt;
-      for (int i = 0; i < MY_RING_BUFFER_SIZE / 2 - avail; i++) {
+      for (int i = 0; i < RX_LAT_TARGET - avail; i++) {
         buffer[2 * oldpt] = 0.0f;
         buffer[2 * oldpt + 1] = 0.0f;
         oldpt++;
@@ -674,13 +730,20 @@ int audio_write(RECEIVER *rx, float left, float right) {
       }
       atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
       inpt = oldpt;
+      avail = RX_LAT_TARGET;
     }
-    if (avail > MY_RING_HIGH_WATER) {
-      int oldpt = inpt - avail + MY_RING_BUFFER_SIZE / 2;
-      if (oldpt < 0) { oldpt += MY_RING_BUFFER_SIZE; }
+    if (avail > RX_LAT_HIGH) {
+      if (rx->id >= 0 && rx->id < 8) {
+        diag_high_corrections[rx->id]++;
+      }
+      int oldpt = inpt - avail + RX_LAT_TARGET;
+      while (oldpt < 0) { oldpt += MY_RING_BUFFER_SIZE; }
+      while (oldpt >= MY_RING_BUFFER_SIZE) { oldpt -= MY_RING_BUFFER_SIZE; }
       atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
       inpt = oldpt;
-      t_print("%s: buffer was nearly full, deleted audio\n", __func__);
+      avail = RX_LAT_TARGET;
+      d_print("%s: RX ring high-water correction, reduced to %d samples\n",
+              __func__, RX_LAT_TARGET);
     }
     if (rx->local_audio_mute) {
       left = 0.0f;
@@ -694,6 +757,48 @@ int audio_write(RECEIVER *rx, float left, float right) {
       buffer[2 * oldpt] = left;
       buffer[2 * oldpt + 1] = right;
       atomic_store_explicit(&rx->local_audio_buffer_inpt, newpt, memory_order_release);
+      inpt = newpt;
+    }
+    if (rx->id >= 0 && rx->id < 8) {
+      int queued = inpt - outpt;
+      if (queued < 0) {
+        queued += MY_RING_BUFFER_SIZE;
+      }
+      if (diag_next_log_us[rx->id] == 0) {
+        diag_min_queued[rx->id] = queued;
+        diag_max_queued[rx->id] = queued;
+        diag_next_log_us[rx->id] = g_get_monotonic_time() + G_USEC_PER_SEC;
+      } else {
+        if (queued < diag_min_queued[rx->id]) {
+          diag_min_queued[rx->id] = queued;
+        }
+        if (queued > diag_max_queued[rx->id]) {
+          diag_max_queued[rx->id] = queued;
+        }
+        gint64 now_us = g_get_monotonic_time();
+        if (now_us >= diag_next_log_us[rx->id]) {
+          unsigned int underruns =
+                  atomic_exchange_explicit(&rx_ring_diag_underruns[rx->id],
+                                           0U, memory_order_relaxed);
+          d_print("CoreAudio RX ring: rx=%d queued=%d (%.2f ms) "
+                  "min=%d (%.2f ms) max=%d (%.2f ms) "
+                  "underruns=%u low_corr=%u high_corr=%u\n",
+                  rx->id,
+                  queued, (double) queued * 1000.0 / 48000.0,
+                  diag_min_queued[rx->id],
+                  (double) diag_min_queued[rx->id] * 1000.0 / 48000.0,
+                  diag_max_queued[rx->id],
+                  (double) diag_max_queued[rx->id] * 1000.0 / 48000.0,
+                  underruns,
+                  diag_low_corrections[rx->id],
+                  diag_high_corrections[rx->id]);
+          diag_min_queued[rx->id] = queued;
+          diag_max_queued[rx->id] = queued;
+          diag_low_corrections[rx->id] = 0;
+          diag_high_corrections[rx->id] = 0;
+          diag_next_log_us[rx->id] = now_us + G_USEC_PER_SEC;
+        }
+      }
     }
   }
   g_mutex_unlock(&rx->local_audio_mutex);

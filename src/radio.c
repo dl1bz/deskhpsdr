@@ -2076,6 +2076,9 @@ static void rxtx (int state) {
       }
       for (i = 0; i < receivers; i++) {
         gtk_fixed_put (GTK_FIXED (fixed), receiver[i]->panel, receiver[i]->x, receiver[i]->y);
+#ifdef COREAUDIO
+        audio_reprime_output(receiver[i]);
+#endif
         rx_on (receiver[i]);
         receiver[i]->displaying = 1;
         rx_set_displaying (receiver[i]);
