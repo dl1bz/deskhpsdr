@@ -127,7 +127,6 @@ typedef struct {
 
 static P2_JITTER_STATE p2_jitter[MAX_DDC];
 static int p2_jitter_initialized = 0;
-static gint p2_ddc_sample_rate[MAX_DDC];
 
 int data_socket = -1;
 
@@ -549,11 +548,15 @@ static gint64 p2_jitter_packet_period_us(int ddc, const mybuffer *mybuf) {
     return 0;
   }
   /*
-   * Use the DDC rate snapshot taken when Receive Specific is built.
-   * The snapshot is atomic so the IQ receive thread never reads the
-   * concurrently updated receive_specific_buffer.
+   * Use the DDC rate actually programmed into Receive Specific.
+   * This is authoritative for the incoming P2 stream.  The RECEIVER
+   * sample-rate state can temporarily differ from the rate already
+   * active in the FPGA, which would make the jitter pacer run at the
+   * wrong speed.
    */
-  int sample_rate = g_atomic_int_get(&p2_ddc_sample_rate[ddc]);
+  int rate_khz = ((receive_specific_buffer[18 + (ddc * 6)] & 0xFF) << 8)
+                 | (receive_specific_buffer[19 + (ddc * 6)] & 0xFF);
+  int sample_rate = rate_khz * 1000;
   if (sample_rate <= 0) {
     return 0;
   }
@@ -898,9 +901,6 @@ static void p2_write_ddc_receive_specific(unsigned char *buffer, int ddc, int ad
   buffer[18 + (ddc * 6)] = ((sample_rate / 1000) >> 8) & 0xFF;
   buffer[19 + (ddc * 6)] = ((sample_rate / 1000)) & 0xFF;
   buffer[22 + (ddc * 6)] = 24;
-  if (ddc >= 0 && ddc < MAX_DDC) {
-    g_atomic_int_set(&p2_ddc_sample_rate[ddc], sample_rate);
-  }
 }
 
 static void p2_prime_route(void) {
