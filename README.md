@@ -95,14 +95,14 @@ I recommend using deskHPSDR on macOS, it's also being focused and developed on t
 * **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the``COMPILE.macOS`` first
 * *Linux only*: please read the``COMPILE.linux`` first
-* a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices.
+* a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices like Brick2/Brick3 series.
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the``Notes_if_using_HERMES-Lite-2.md``
 * if want using a Raspberry Pi: Revision 5 (aka "Pi5") with >= 8GB RAM is strongly recommended, but deskHPSDR is not optimized for such SoC
 
 ## I want use now deskHPSDR. What I need to do ?
 
-deskHPSDR is published exclusively as source code only (except macOS, meanwhile are ready-made app bundles available). You need to clone this Github repository and compile the app before you can use it. Please read all included instructions carefully to avoid installation errors by yourself. Additional notes you can find too under the discussion tab of this project. Please have a look there too from time to time.<br>
+deskHPSDR is published exclusively as source code only (except macOS, meanwhile are ready-made app bundles available, look into [releases](https://github.com/dl1bz/deskhpsdr/releases) ). You need to clone this Github repository and compile the app before you can use it. Please read all included instructions carefully to avoid installation errors by yourself. Additional notes you can find too under the discussion tab of this project. Please have a look there too from time to time.<br>
 I will never publish any ready-compiled binaries or appimages for Linux. The task of compiling it yourself remains.
 
 ## My development of deskHPSDR
