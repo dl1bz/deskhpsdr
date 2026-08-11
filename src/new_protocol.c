@@ -2976,7 +2976,7 @@ static gpointer iq_thread(gpointer data) {
   int nptr, optr;
   long sequence;
   long expected_sequence = 0;
-  volatile mybuffer *mybuf;
+  mybuffer *mybuf;
   const unsigned char *buffer;
   t_print("iq_thread: ddc=%d\n", ddc);
   //
@@ -2995,7 +2995,7 @@ static gpointer iq_thread(gpointer data) {
     optr = iq_outptr[ddc];
     nptr = optr + 1;
     if (nptr >= RXIQRINGBUFLEN) { nptr = 0; }
-    mybuf = iq_buffer[ddc][optr];
+    mybuf = (mybuffer *) iq_buffer[ddc][optr];
     MEMORY_BARRIER;
     iq_outptr[ddc] = nptr;
     // This can happen when restarting the protocol
