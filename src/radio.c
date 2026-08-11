@@ -245,6 +245,11 @@ int force_iob = 0;
 
 int display_zoompan = 0;
 int display_sliders = 0;
+
+#ifdef __APPLE__
+  int rx_audio_network_reserve_enabled = 0;
+  int rx_audio_network_reserve_ms = 150;
+#endif
 int display_extra_sliders = 1;
 int display_toolbar = 0;
 double percent_pan_wf = 70.0;
@@ -2764,6 +2769,13 @@ static void radio_restore_state (void) {
   diversity_brick3_mode = diversity_brick3_mode ? 1 : 0;
   GetPropI0 ("p2_jitter_buffer_enabled",                       p2_jitter_buffer_enabled);
   GetPropI0 ("p2_jitter_buffer_depth_ms",                      p2_jitter_buffer_depth_ms);
+#ifdef __APPLE__
+  GetPropI0 ("rx_audio_network_reserve_enabled",                rx_audio_network_reserve_enabled);
+  GetPropI0 ("rx_audio_network_reserve_ms",                     rx_audio_network_reserve_ms);
+  rx_audio_network_reserve_enabled = rx_audio_network_reserve_enabled ? 1 : 0;
+  if (rx_audio_network_reserve_ms < 5) { rx_audio_network_reserve_ms = 5; }
+  if (rx_audio_network_reserve_ms > 500) { rx_audio_network_reserve_ms = 500; }
+#endif
   p2_jitter_buffer_enabled = p2_jitter_buffer_enabled ? 1 : 0;
   if (p2_jitter_buffer_depth_ms < 5) { p2_jitter_buffer_depth_ms = 5; }
   if (p2_jitter_buffer_depth_ms > 500) { p2_jitter_buffer_depth_ms = 500; }
@@ -3070,6 +3082,10 @@ void radio_save_state (void) {
   SetPropI0 ("diversity_brick3_mode",                         diversity_brick3_mode);
   SetPropI0 ("p2_jitter_buffer_enabled",                       p2_jitter_buffer_enabled);
   SetPropI0 ("p2_jitter_buffer_depth_ms",                      p2_jitter_buffer_depth_ms);
+#ifdef __APPLE__
+  SetPropI0 ("rx_audio_network_reserve_enabled",                rx_audio_network_reserve_enabled);
+  SetPropI0 ("rx_audio_network_reserve_ms",                     rx_audio_network_reserve_ms);
+#endif
   SetPropF0 ("diversity_gain",                                div_gain);
   SetPropF0 ("diversity_phase",                               div_phase);
   SetPropF0 ("diversity_cos",                                 div_cos);

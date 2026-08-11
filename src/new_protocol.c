@@ -267,9 +267,20 @@ static int num_buf = 0;
 // #define P2_REFILL_BUFFERS 32
 
 //
-/* head of buffer list */
+/* head of buffer ownership list */
 //
 static mybuffer *buflist = NULL;
+
+/*
+ * O(1) free-buffer queue for new_protocol_thread().
+ *
+ * buflist remains the ownership list so all buffers can be marked free
+ * on a protocol restart.  The receive thread obtains buffers from this
+ * queue and therefore never scans the complete buffer list before
+ * recvfrom().
+ */
+static GAsyncQueue *buffer_free_queue = NULL;
+static GMutex buffer_alloc_mutex;
 
 //
 // The buffers used by new_protocol_thread
@@ -453,11 +464,14 @@ static void  process_high_priority(void);
 static void  process_mic_data(const unsigned char *buffer);
 
 //
-// Allocate additional receive buffers and add them to the free list.
+// Allocate additional receive buffers and add them to the O(1) free queue.
 //
 static void allocate_my_buffers(int count) {
   int i;
   mybuffer *bp;
+  if (buffer_free_queue == NULL) {
+    buffer_free_queue = g_async_queue_new();
+  }
   for (i = 0; i < count; i++) {
     bp = malloc(sizeof(mybuffer));
     if (bp == NULL) {
@@ -468,6 +482,7 @@ static void allocate_my_buffers(int count) {
     bp->next = buflist;
     buflist = bp;
     num_buf++;
+    g_async_queue_push(buffer_free_queue, bp);
   }
 }
 
@@ -478,30 +493,63 @@ static void ensure_my_buffers(int count) {
   }
 }
 
-//
-// Obtain a free buffer. If no one is available allocate
-// additional buffers. The buffers are *never* released to the
-// operating system, but marked free upon a protocol restart.
-//
-static mybuffer *get_my_buffer(void) {
-  mybuffer *bp = buflist;
-  while (bp) {
-    if (bp->free) {
-      // found free buffer. Mark as used and return that one.
-      bp->free = 0;
-      return bp;
-    }
-    bp = bp->next;
+/*
+ * Return a receive buffer to the freelist exactly once.  The consumer
+ * threads may finish packets concurrently with new_protocol_thread(),
+ * therefore the free flag is updated atomically before queueing it.
+ */
+static void release_my_buffer(mybuffer *bp) {
+  if (bp == NULL || buffer_free_queue == NULL) {
+    return;
   }
-  //
-  // no free buffer found, allocate some extra ones
-  // and add to the head of the list
-  //
-  allocate_my_buffers(P2_REFILL_BUFFERS);
-  t_print("NewProtocol: number of buffers increased to %d\n", num_buf);
-  // Mark the first buffer in list as used and return that one.
-  buflist->free = 0;
-  return buflist;
+  if (g_atomic_int_compare_and_exchange(&bp->free, 0, 1)) {
+    g_async_queue_push(buffer_free_queue, bp);
+  }
+}
+
+/*
+ * Rebuild the freelist on a protocol restart.  This replaces the old
+ * "mark every buffer free" loop and guarantees one queue entry per
+ * owned receive buffer.
+ */
+static void rebuild_my_buffer_freelist(void) {
+  if (buffer_free_queue == NULL) {
+    buffer_free_queue = g_async_queue_new();
+  }
+  while (g_async_queue_try_pop(buffer_free_queue) != NULL) {
+    /* drain stale freelist entries */
+  }
+  for (mybuffer *bp = buflist; bp != NULL; bp = bp->next) {
+    g_atomic_int_set(&bp->free, 1);
+    g_async_queue_push(buffer_free_queue, bp);
+  }
+}
+
+/*
+ * Obtain a free receive buffer in O(1).  Allocation is only a fallback
+ * when the preallocated pool is genuinely exhausted; there is no
+ * linked-list scan in front of recvfrom().
+ */
+static mybuffer *get_my_buffer(void) {
+  mybuffer *bp;
+  if (buffer_free_queue == NULL) {
+    buffer_free_queue = g_async_queue_new();
+  }
+  bp = g_async_queue_try_pop(buffer_free_queue);
+  if (bp == NULL) {
+    g_mutex_lock(&buffer_alloc_mutex);
+    bp = g_async_queue_try_pop(buffer_free_queue);
+    if (bp == NULL) {
+      allocate_my_buffers(P2_REFILL_BUFFERS);
+      t_print("NewProtocol: number of buffers increased to %d\n", num_buf);
+      bp = g_async_queue_try_pop(buffer_free_queue);
+    }
+    g_mutex_unlock(&buffer_alloc_mutex);
+  }
+  if (bp != NULL) {
+    g_atomic_int_set(&bp->free, 0);
+  }
+  return bp;
 }
 
 void schedule_high_priority(void) {
@@ -560,7 +608,11 @@ static gint64 p2_jitter_packet_period_us(int ddc, const mybuffer *mybuf) {
   if (sample_rate <= 0) {
     return 0;
   }
-  gint64 period_us = ((gint64)samplesperframe * G_USEC_PER_SEC + (sample_rate / 2)) / sample_rate;
+  int paced_samples = samplesperframe;
+  if (rxcase[ddc] == RXACTION_DIV) {
+    paced_samples /= 2;
+  }
+  gint64 period_us = ((gint64)paced_samples * G_USEC_PER_SEC + (sample_rate / 2)) / sample_rate;
   return period_us > 0 ? period_us : 1;
 }
 
@@ -574,7 +626,7 @@ static int p2_jitter_should_buffer(int ddc) {
 static void p2_jitter_reset_locked(P2_JITTER_STATE *state) {
   for (int i = 0; i < P2_JITTER_SLOT_COUNT; i++) {
     if (state->slots[i].packet != NULL) {
-      state->slots[i].packet->free = 1;
+      release_my_buffer(state->slots[i].packet);
       state->slots[i].packet = NULL;
     }
     state->slots[i].sequence = 0;
@@ -648,7 +700,7 @@ static int p2_jitter_enqueue(int ddc, mybuffer *mybuf) {
   } else if (!state->primed && p2_jitter_seq_before(sequence, state->expected_sequence)) {
     state->expected_sequence = sequence;
   } else if (state->primed && p2_jitter_seq_before(sequence, state->expected_sequence)) {
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     g_mutex_unlock(&state->mutex);
     return 1;
   }
@@ -657,13 +709,13 @@ static int p2_jitter_enqueue(int ddc, mybuffer *mybuf) {
   if (slot->packet != NULL) {
     if (slot->sequence == sequence) {
       // Duplicate packet.
-      mybuf->free = 1;
+      release_my_buffer(mybuf);
       g_mutex_unlock(&state->mutex);
       return 1;
     }
     // The configured queue should never span a full slot table. If it does,
     // discard the stale occupant rather than corrupting sequence order.
-    slot->packet->free = 1;
+    release_my_buffer(slot->packet);
     slot->packet = NULL;
     if (state->queued > 0) {
       state->queued--;
@@ -768,7 +820,7 @@ static gpointer p2_jitter_thread(gpointer data) {
         unsigned int trim_index = state->expected_sequence & P2_JITTER_SLOT_MASK;
         P2_JITTER_SLOT *trim_slot = &state->slots[trim_index];
         if (trim_slot->packet != NULL && trim_slot->sequence == state->expected_sequence) {
-          trim_slot->packet->free = 1;
+          release_my_buffer(trim_slot->packet);
           trim_slot->packet = NULL;
           state->queued--;
           dropped++;
@@ -1055,11 +1107,13 @@ void new_protocol_init(void) {
     //            we set them to: RCVBUF: 0x40000, SNDBUF: 0x10000
     // then getsockopt() returns: RCVBUF: 0x40000, SNDBUF: 0x10000
     //
+    int requested_rcvbuf;
     if (nw_settings.is_wired) {
-      optval = 0x80000;
+      requested_rcvbuf = 0x80000;
     } else {
-      optval = 0x100000;
+      requested_rcvbuf = 0x400000;
     }
+    optval = requested_rcvbuf;
     if (setsockopt(data_socket, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
       t_perror("data_socket: set SO_RCVBUF");
     }
@@ -1075,7 +1129,10 @@ void new_protocol_init(void) {
     if (getsockopt(data_socket, SOL_SOCKET, SO_RCVBUF, &optval, &optlen) < 0) {
       t_perror("data_socket: get SO_RCVBUF");
     } else {
-      if (optlen == sizeof(optval)) { t_print("UDP Socket RCV buf size=%d\n", optval); }
+      if (optlen == sizeof(optval)) {
+        t_print("UDP Socket RCV buf requested=%d actual=%d\n",
+                requested_rcvbuf, optval);
+      }
     }
     optlen = sizeof(optval);
     if (getsockopt(data_socket, SOL_SOCKET, SO_SNDBUF, &optval, &optlen) < 0) {
@@ -2349,12 +2406,8 @@ void new_protocol_menu_start(void) {
     saturn_free_buffers();
 #endif
   } else {
-    mybuffer *mybuf = buflist;
-    while (mybuf) {
-      mybuf->free = 1;
-      mybuf = mybuf->next;
-    }
     ensure_my_buffers(P2_INITIAL_BUFFERS);
+    rebuild_my_buffer_freelist();
   }
   P2running = 1;
   for (int ddc = 0; ddc < MAX_DDC; ddc++) {
@@ -2600,6 +2653,21 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
 
 static gpointer new_protocol_thread(gpointer data) {
   t_print("new_protocol_thread\n");
+  /*
+   * RX ingress diagnostics.  Sequence numbers are checked immediately after
+   * recvfrom(), before the P2 jitter buffer and the protocol ring buffers.
+   * This lets us distinguish packets already missing/reordered at the socket
+   * boundary from discontinuities introduced farther downstream.
+   * Streams 0..7 are DDC IQ, 8 is high priority, 9 is mic/line audio.
+   */
+  uint32_t ingress_expected[10] = { 0 };
+  unsigned char ingress_valid[10] = { 0 };
+  guint64 ingress_packets[10] = { 0 };
+  guint64 ingress_missing[10] = { 0 };
+  guint64 ingress_reordered[10] = { 0 };
+  gint64 ingress_last_us[10] = { 0 };
+  gint64 ingress_max_gap_us[10] = { 0 };
+  gint64 ingress_report_us = g_get_monotonic_time();
   //
   // This thread should do as little work as possible and avoid any blocking.
   // Ideally, all data is just copied into ring buffers, and other threads
@@ -2614,6 +2682,11 @@ static gpointer new_protocol_thread(gpointer data) {
     mybuffer *mybuf;
     unsigned char *buffer;
     mybuf = get_my_buffer();
+    if (mybuf == NULL) {
+      t_print("new_protocol_thread: no receive buffer available\n");
+      g_usleep(1000);
+      continue;
+    }
     buffer = mybuf->buffer;
     bytesread = recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr *) &addr, &length);
     if (!P2running) {
@@ -2622,12 +2695,12 @@ static gpointer new_protocol_thread(gpointer data) {
       // we were doing "recvfrom". In this case, we want to let the main
       // thread terminate gracefully, including writing the props files.
       //
-      mybuf->free = 1;
+      release_my_buffer(mybuf);
       break;
     }
     if (bytesread < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        mybuf->free = 1;
+        release_my_buffer(mybuf);
         continue;
       }
       t_perror("recvfrom socket failed for new_protocol_thread:");
@@ -2636,6 +2709,62 @@ static gpointer new_protocol_thread(gpointer data) {
       break;
     }
     sourceport = ntohs(addr.sin_port);
+    int ingress_stream = -1;
+    if (sourceport >= RX_IQ_TO_HOST_PORT_0 && sourceport <= RX_IQ_TO_HOST_PORT_7) {
+      ingress_stream = sourceport - RX_IQ_TO_HOST_PORT_0;
+    } else if (sourceport == HIGH_PRIORITY_TO_HOST_PORT) {
+      ingress_stream = 8;
+    } else if (sourceport == MIC_LINE_TO_HOST_PORT) {
+      ingress_stream = 9;
+    }
+    if (ingress_stream >= 0 && bytesread >= 4) {
+      gint64 ingress_now_us = g_get_monotonic_time();
+      uint32_t ingress_sequence = ((uint32_t)buffer[0] << 24)
+                                  | ((uint32_t)buffer[1] << 16)
+                                  | ((uint32_t)buffer[2] << 8)
+                                  | (uint32_t)buffer[3];
+      ingress_packets[ingress_stream]++;
+      if (ingress_last_us[ingress_stream] != 0) {
+        gint64 gap_us = ingress_now_us - ingress_last_us[ingress_stream];
+        if (gap_us > ingress_max_gap_us[ingress_stream]) {
+          ingress_max_gap_us[ingress_stream] = gap_us;
+        }
+      }
+      ingress_last_us[ingress_stream] = ingress_now_us;
+      if (!ingress_valid[ingress_stream]) {
+        ingress_expected[ingress_stream] = ingress_sequence + 1;
+        ingress_valid[ingress_stream] = 1;
+      } else {
+        int32_t delta = (int32_t)(ingress_sequence - ingress_expected[ingress_stream]);
+        if (delta > 0) {
+          ingress_missing[ingress_stream] += (guint64)delta;
+        } else if (delta < 0) {
+          ingress_reordered[ingress_stream]++;
+        }
+        ingress_expected[ingress_stream] = ingress_sequence + 1;
+      }
+      if (ingress_now_us - ingress_report_us >= G_USEC_PER_SEC) {
+        d_print("P2 ingress: IQ0 pkt=%" G_GUINT64_FORMAT " miss=%" G_GUINT64_FORMAT
+                " reorder=%" G_GUINT64_FORMAT " gap=%.3fms"
+                " MIC pkt=%" G_GUINT64_FORMAT " miss=%" G_GUINT64_FORMAT
+                " reorder=%" G_GUINT64_FORMAT " gap=%.3fms"
+                " HP pkt=%" G_GUINT64_FORMAT " miss=%" G_GUINT64_FORMAT
+                " reorder=%" G_GUINT64_FORMAT " gap=%.3fms\n",
+                ingress_packets[0], ingress_missing[0], ingress_reordered[0],
+                ingress_max_gap_us[0] / 1000.0,
+                ingress_packets[9], ingress_missing[9], ingress_reordered[9],
+                ingress_max_gap_us[9] / 1000.0,
+                ingress_packets[8], ingress_missing[8], ingress_reordered[8],
+                ingress_max_gap_us[8] / 1000.0);
+        for (int i = 0; i < 10; i++) {
+          ingress_packets[i] = 0;
+          ingress_missing[i] = 0;
+          ingress_reordered[i] = 0;
+          ingress_max_gap_us[i] = 0;
+        }
+        ingress_report_us = ingress_now_us;
+      }
+    }
     //t_print("new_protocol_thread: recvd %d bytes on port %d\n",bytesread,sourceport);
 #ifdef __DVL__
     if (sourceport == RX_IQ_TO_HOST_PORT_0 || sourceport == HIGH_PRIORITY_TO_HOST_PORT) {
@@ -2663,7 +2792,7 @@ static gpointer new_protocol_thread(gpointer data) {
       // programmer. But this should be done in a separate
       // program.
       //
-      mybuf->free = 1;
+      release_my_buffer(mybuf);
       break;
     case HIGH_PRIORITY_TO_HOST_PORT:
       saturn_post_high_priority(mybuf);
@@ -2673,7 +2802,7 @@ static gpointer new_protocol_thread(gpointer data) {
       break;
     default:
       t_print("new_protocol_thread: Unknown port %d\n", sourceport);
-      mybuf->free = 1;
+      release_my_buffer(mybuf);
       break;
     }
   }
@@ -2698,7 +2827,7 @@ static gpointer high_priority_thread(gpointer data) {
     high_priority_outptr = nptr;
     if (high_priority_buffer->free) { continue; }
     process_high_priority();
-    high_priority_buffer->free = 1;
+    release_my_buffer(high_priority_buffer);
   }
   return NULL;
 }
@@ -2725,7 +2854,7 @@ static gpointer mic_line_thread(gpointer data) {
     // This can happen when restarting the protocol
     if (mybuf->free) { continue; }
     process_mic_data(mybuf->buffer);
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
   }
   return NULL;
 }
@@ -2741,7 +2870,7 @@ void saturn_post_high_priority(mybuffer *buffer) {
   int iptr;
   int nptr;
   if (!P2running) {
-    buffer->free = 1;
+    release_my_buffer(buffer);
     return;
   }
   iptr = high_priority_inptr;
@@ -2758,18 +2887,18 @@ void saturn_post_high_priority(mybuffer *buffer) {
 #endif
   } else {
     t_print("%s: buffer overflow.\n", __func__);
-    buffer->free = 1;
+    release_my_buffer(buffer);
   }
 }
 
 void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
   if (!P2running) {
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     return;
   }
   if (mic_count < 0) {
     mic_count++;
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     return;
   }
   int nptr = mic_inptr + 1;
@@ -2785,7 +2914,7 @@ void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
     mic_inptr = nptr;
   } else {
     t_print("%s: buffer overflow.\n", __func__);
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     // skip 16 mic buffers (21 msec)
     mic_count = -16;
   }
@@ -2794,16 +2923,16 @@ void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
 void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
   if (ddc < 0 || ddc >= MAX_DDC) {
     t_print("%s: invalid DDC(%d) seen!\n", __func__, ddc);
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     return;
   }
   if (!P2running) {
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     return;
   }
   if (iq_count[ddc] < 0) {
     iq_count[ddc]++;
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     return;
   }
   //
@@ -2833,7 +2962,7 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
 #endif
   } else {
     t_print("%s: DDC(%d) buffer overflow.\n", __func__, ddc);
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
     // skip 128 incoming buffers
     iq_count[ddc] = -128;
   }
@@ -2900,7 +3029,7 @@ static gpointer iq_thread(gpointer data) {
       process_div_iq_data(buffer);
       break;
     }
-    mybuf->free = 1;
+    release_my_buffer(mybuf);
   }
   return NULL;
 }

@@ -80,12 +80,44 @@ guint64 audio_get_xrun_count(void) {
 //
 //
 
-#define MY_RING_BUFFER_SIZE  9600
+#define MY_RING_BUFFER_SIZE 48000
 
 #define RX_LAT_LOW            768
 #define RX_LAT_TARGET        1536
 #define RX_LAT_HIGH_BASE     2304
 #define RX_LAT_GUARD          128
+
+static inline void rx_audio_latency_limits(int *low, int *target, int *high_base) {
+  *low = RX_LAT_LOW;
+  *target = RX_LAT_TARGET;
+  *high_base = RX_LAT_HIGH_BASE;
+  if (protocol != NEW_PROTOCOL ||
+      !g_atomic_int_get(&rx_audio_network_reserve_enabled)) {
+    return;
+  }
+  int reserve_ms = g_atomic_int_get(&rx_audio_network_reserve_ms);
+  if (reserve_ms < 5) {
+    reserve_ms = 5;
+  } else if (reserve_ms > 500) {
+    reserve_ms = 500;
+  }
+  /*
+   * Local RX audio is delivered to CoreAudio at 48 kHz.  Above the
+   * normal low-latency operating point, use 2/3 of the requested
+   * reserve as low-water and 5/3 as base high-water.
+   * Example: 150 ms -> LOW 100 ms, TARGET 150 ms, HIGH 250 ms.
+   */
+  int reserve_target = reserve_ms * 48;
+  if (reserve_target <= RX_LAT_TARGET) {
+    return;
+  }
+  *target = reserve_target;
+  *low = (reserve_target * 2) / 3;
+  *high_base = (reserve_target * 5) / 3;
+  if (*high_base >= MY_RING_BUFFER_SIZE) {
+    *high_base = MY_RING_BUFFER_SIZE - RX_LAT_GUARD - 1;
+  }
+}
 
 #define CW_LAT_LOW            128
 #define CW_LAT_TARGET         256
@@ -656,9 +688,15 @@ void audio_reprime_output(RECEIVER *rx) {
   if (avail < 0) {
     avail += MY_RING_BUFFER_SIZE;
   }
-  if (avail < RX_LAT_TARGET) {
+  int rx_lat_low;
+  int rx_lat_target;
+  int rx_lat_high_base;
+  rx_audio_latency_limits(&rx_lat_low, &rx_lat_target, &rx_lat_high_base);
+  (void)rx_lat_low;
+  (void)rx_lat_high_base;
+  if (avail < rx_lat_target) {
     int oldpt = inpt;
-    int missing = RX_LAT_TARGET - avail;
+    int missing = rx_lat_target - avail;
     for (int i = 0; i < missing; i++) {
       rx->local_audio_buffer[2 * oldpt] = 0.0f;
       rx->local_audio_buffer[2 * oldpt + 1] = 0.0f;
@@ -673,7 +711,7 @@ void audio_reprime_output(RECEIVER *rx) {
       atomic_store_explicit(&rx_ring_diag_underruns[rx->id], 0U, memory_order_relaxed);
     }
     d_print("%s: RX%d reprime %d -> %d samples (added %d silence)\n",
-            __func__, rx->id, avail, RX_LAT_TARGET, missing);
+            __func__, rx->id, avail, rx_lat_target, missing);
   }
 }
 
@@ -708,12 +746,16 @@ int audio_write(RECEIVER *rx, float left, float right) {
     int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
     int avail = inpt - outpt;
     if (avail < 0) { avail += MY_RING_BUFFER_SIZE; }
-    if (avail < RX_LAT_LOW) {
+    int rx_lat_low;
+    int rx_lat_target;
+    int rx_lat_high_base;
+    rx_audio_latency_limits(&rx_lat_low, &rx_lat_target, &rx_lat_high_base);
+    if (avail < rx_lat_low) {
       if (rx->id >= 0 && rx->id < 8) {
         diag_low_corrections[rx->id]++;
       }
       int oldpt = inpt;
-      for (int i = 0; i < RX_LAT_TARGET - avail; i++) {
+      for (int i = 0; i < rx_lat_target - avail; i++) {
         buffer[2 * oldpt] = 0.0f;
         buffer[2 * oldpt + 1] = 0.0f;
         oldpt++;
@@ -721,24 +763,24 @@ int audio_write(RECEIVER *rx, float left, float right) {
       }
       atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
       inpt = oldpt;
-      avail = RX_LAT_TARGET;
+      avail = rx_lat_target;
     }
-    int rx_lat_high = RX_LAT_TARGET + (2 * rx->output_samples) + RX_LAT_GUARD;
-    if (rx_lat_high < RX_LAT_HIGH_BASE) {
-      rx_lat_high = RX_LAT_HIGH_BASE;
+    int rx_lat_high = rx_lat_target + (2 * rx->output_samples) + RX_LAT_GUARD;
+    if (rx_lat_high < rx_lat_high_base) {
+      rx_lat_high = rx_lat_high_base;
     }
     if (avail > rx_lat_high) {
       if (rx->id >= 0 && rx->id < 8) {
         diag_high_corrections[rx->id]++;
       }
-      int oldpt = inpt - avail + RX_LAT_TARGET;
+      int oldpt = inpt - avail + rx_lat_target;
       while (oldpt < 0) { oldpt += MY_RING_BUFFER_SIZE; }
       while (oldpt >= MY_RING_BUFFER_SIZE) { oldpt -= MY_RING_BUFFER_SIZE; }
       atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
       inpt = oldpt;
-      avail = RX_LAT_TARGET;
+      avail = rx_lat_target;
       d_print("%s: RX ring high-water correction, reduced to %d samples\n",
-              __func__, RX_LAT_TARGET);
+              __func__, rx_lat_target);
     }
     if (rx->local_audio_mute) {
       left = 0.0f;

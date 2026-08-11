@@ -177,6 +177,11 @@ extern const int pa_power_list[];
 
 extern int display_zoompan;
 extern int display_sliders;
+
+#ifdef __APPLE__
+  extern int rx_audio_network_reserve_enabled;
+  extern int rx_audio_network_reserve_ms;
+#endif
 extern int display_extra_sliders;
 extern int display_toolbar;
 extern double percent_pan_wf;

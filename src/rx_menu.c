@@ -44,6 +44,9 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *autogain_b;
 static GtkWidget *autogain_time_b;
 static GtkWidget *p2_jitter_depth_b = NULL;
+#ifdef __APPLE__
+  static GtkWidget *rx_audio_reserve_depth_b = NULL;
+#endif
 static GtkWidget *rx_menu_headerbar = NULL;
 static GtkWidget *rx_menu_stack = NULL;
 #ifdef PULSEAUDIO
@@ -71,6 +74,9 @@ static void cleanup(void) {
     rx_menu_headerbar = NULL;
     rx_menu_stack = NULL;
     p2_jitter_depth_b = NULL;
+#ifdef __APPLE__
+    rx_audio_reserve_depth_b = NULL;
+#endif
     for (int i = 0; i < RX_MENU_TAB_COUNT; i++) {
       rx_menu_tab_buttons[i] = NULL;
     }
@@ -788,6 +794,30 @@ static void p2_jitter_depth_cb(GtkSpinButton *spin, gpointer data) {
   new_protocol_set_jitter_buffer(p2_jitter_buffer_enabled, depth_ms);
 }
 
+#ifdef __APPLE__
+static void rx_audio_reserve_toggle_cb(GtkToggleButton *button, gpointer data) {
+  (void)data;
+  g_atomic_int_set(&rx_audio_network_reserve_enabled,
+                   gtk_toggle_button_get_active(button) ? 1 : 0);
+  if (rx_audio_reserve_depth_b != NULL) {
+    gtk_widget_set_sensitive(
+            rx_audio_reserve_depth_b,
+            g_atomic_int_get(&rx_audio_network_reserve_enabled));
+  }
+}
+
+static void rx_audio_reserve_depth_cb(GtkSpinButton *spin, gpointer data) {
+  (void)data;
+  int reserve_ms = gtk_spin_button_get_value_as_int(spin);
+  if (reserve_ms < 5) {
+    reserve_ms = 5;
+  } else if (reserve_ms > 500) {
+    reserve_ms = 500;
+  }
+  g_atomic_int_set(&rx_audio_network_reserve_ms, reserve_ms);
+}
+#endif
+
 static GtkWidget *build_general_page(void) {
   GtkWidget *page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
   gtk_container_set_border_width(GTK_CONTAINER(page), 12);
@@ -875,6 +905,50 @@ static GtkWidget *build_general_page(void) {
     GtkWidget *depth_unit = gtk_label_new("ms");
     gtk_widget_set_halign(depth_unit, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(network_grid), depth_unit, 2, network_row, 1, 1);
+#ifdef __APPLE__
+    network_row++;
+    GtkWidget *audio_reserve_b =
+            gtk_check_button_new_with_label("RX Audio Network Reserve");
+    gtk_widget_set_name(audio_reserve_b, "boldlabel");
+    gtk_widget_set_tooltip_text(
+            audio_reserve_b,
+            "Add post-WDSP CoreAudio buffering for bursty network delivery.\n"
+            "This does not pace or delay Protocol 2 IQ processing.");
+    gtk_toggle_button_set_active(
+            GTK_TOGGLE_BUTTON(audio_reserve_b),
+            g_atomic_int_get(&rx_audio_network_reserve_enabled));
+    gtk_grid_attach(GTK_GRID(network_grid), audio_reserve_b,
+                    0, network_row, 2, 1);
+    g_signal_connect(audio_reserve_b, "toggled",
+                     G_CALLBACK(rx_audio_reserve_toggle_cb), NULL);
+    network_row++;
+    GtkWidget *audio_reserve_label = gtk_label_new("Audio reserve");
+    gtk_widget_set_name(audio_reserve_label, "boldlabel");
+    gtk_widget_set_halign(audio_reserve_label, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(network_grid), audio_reserve_label,
+                    0, network_row, 1, 1);
+    rx_audio_reserve_depth_b =
+            gtk_spin_button_new_with_range(5.0, 500.0, 5.0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(rx_audio_reserve_depth_b), TRUE);
+    gtk_spin_button_set_value(
+            GTK_SPIN_BUTTON(rx_audio_reserve_depth_b),
+            g_atomic_int_get(&rx_audio_network_reserve_ms));
+    gtk_widget_set_sensitive(
+            rx_audio_reserve_depth_b,
+            g_atomic_int_get(&rx_audio_network_reserve_enabled));
+    gtk_widget_set_tooltip_text(
+            rx_audio_reserve_depth_b,
+            "Target post-WDSP CoreAudio reserve in milliseconds.\n"
+            "150 ms uses approximately 100/150/250 ms LOW/TARGET/HIGH levels.");
+    gtk_grid_attach(GTK_GRID(network_grid), rx_audio_reserve_depth_b,
+                    1, network_row, 1, 1);
+    g_signal_connect(rx_audio_reserve_depth_b, "value-changed",
+                     G_CALLBACK(rx_audio_reserve_depth_cb), NULL);
+    GtkWidget *audio_reserve_unit = gtk_label_new("ms");
+    gtk_widget_set_halign(audio_reserve_unit, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(network_grid), audio_reserve_unit,
+                    2, network_row, 1, 1);
+#endif
     gtk_box_pack_start(GTK_BOX(page), network_frame, FALSE, FALSE, 0);
   }
 #ifdef __APPLE__
