@@ -285,7 +285,7 @@ static GMutex buffer_alloc_mutex;
 //
 // The buffers used by new_protocol_thread
 //
-#define RXIQRINGBUFLEN 512
+#define RXIQRINGBUFLEN 8192
 static volatile mybuffer *iq_buffer[MAX_DDC][RXIQRINGBUFLEN];
 static volatile int iq_inptr[MAX_DDC] = { 0 };
 static volatile int iq_outptr[MAX_DDC] = { 0 };
