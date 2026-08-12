@@ -883,8 +883,11 @@ static GtkWidget *build_general_page(void) {
     gtk_widget_set_name(jitter_b, "boldlabel");
     gtk_widget_set_tooltip_text(jitter_b,
                                 "Reorder and pace received Protocol 2 DDC IQ packets.\n"
-                                "Useful on Wi-Fi or routed links with bursty UDP delivery.\n"
-                                "OFF keeps the direct low-latency receive path.");
+                                "Can be useful on Wi-Fi or routed links with bursty UDP delivery.\n"
+                                "OFF (default) keeps the direct low-latency receive path.\n\n"
+                                "----------------------------------------------\n"
+                                " DO NOT ENABLE UNTIL YOU KNOW EXACTLY WHY !!!\n"
+                                "----------------------------------------------");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jitter_b), p2_jitter_buffer_enabled);
     gtk_grid_attach(GTK_GRID(network_grid), jitter_b, 0, network_row, 2, 1);
     g_signal_connect(jitter_b, "toggled", G_CALLBACK(p2_jitter_toggle_cb), NULL);
