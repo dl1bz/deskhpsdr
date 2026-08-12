@@ -185,6 +185,7 @@ typedef struct _transmitter {
   int dialog_y;
 
   int display_filled;
+  int analyzer_created;  // XCreateAnalyzer() completed successfully
 
   double *cw_sig_rf;      // contains the CW RF envelope
 

@@ -32,6 +32,9 @@ extern void coreaudio_input_close(void *handle);
 
 extern void *coreaudio_tci_monitor_open(const char *device_name, int *channels);
 extern void coreaudio_tci_monitor_close(void *handle);
+extern int coreaudio_output_is_alive(void *handle);
+extern int coreaudio_input_is_alive(void *handle);
+extern int coreaudio_tci_monitor_is_alive(void *handle);
 
 extern int coreaudio_get_cards(void);
 

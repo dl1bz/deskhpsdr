@@ -39,6 +39,7 @@
 #include "mode.h"
 #include "audio.h"
 #include "message.h"
+#include "sliders.h"
 #include "vfo.h"
 #include "tci_audio.h"
 
@@ -212,7 +213,71 @@ static inline float local_mic_ring_pop(void) {
 }
 
 static void *coreaudio_tci_monitor_handle = NULL;
+
+
 static GMutex tci_monitor_mutex;
+
+static gboolean coreaudio_device_watch_cb(gpointer data) {
+  (void) data;
+  /*
+   * DeviceIsAlive is updated by CoreAudio property listeners. All state
+   * changes and close/dispose operations are deliberately done here on the
+   * GLib main loop, never from a CoreAudio callback.
+   */
+  for (int i = 0; i < receivers; i++) {
+    RECEIVER *rx = receiver[i];
+    if (rx == NULL) {
+      continue;
+    }
+    int device_lost;
+    g_mutex_lock(&rx->local_audio_mutex);
+    device_lost = rx->coreaudio_output_handle != NULL &&
+                  !coreaudio_output_is_alive(rx->coreaudio_output_handle);
+    g_mutex_unlock(&rx->local_audio_mutex);
+    if (device_lost) {
+      t_print("%s: CoreAudio output device lost rx=%d name=%s -> Local Audio OFF\n",
+              __func__, rx->id, rx->audio_name);
+      rx->local_audio = 0;
+      audio_close_output(rx);
+    }
+  }
+  int input_lost;
+  g_mutex_lock(&audio_mutex);
+  input_lost = coreaudio_input_handle != NULL &&
+               !coreaudio_input_is_alive(coreaudio_input_handle);
+  g_mutex_unlock(&audio_mutex);
+  if (input_lost) {
+    t_print("%s: CoreAudio input device lost name=%s -> Local Microphone OFF\n",
+            __func__,
+            transmitter != NULL ? transmitter->microphone_name : "(unknown)");
+    if (transmitter != NULL) {
+      transmitter->local_microphone = 0;
+    }
+    audio_close_input();
+    update_slider_local_mic_button();
+  }
+  int monitor_lost;
+  g_mutex_lock(&tci_monitor_mutex);
+  monitor_lost = coreaudio_tci_monitor_handle != NULL &&
+                 !coreaudio_tci_monitor_is_alive(coreaudio_tci_monitor_handle);
+  g_mutex_unlock(&tci_monitor_mutex);
+  if (monitor_lost) {
+    t_print("%s: CoreAudio TCI monitor device lost -> TCI Audio Monitor OFF\n",
+            __func__);
+    tci_audio_monitor = 0;
+    audio_close_tci_monitor();
+  }
+  return G_SOURCE_CONTINUE;
+}
+
+static void coreaudio_start_device_watch(void) {
+  static gsize started = 0;
+  if (g_once_init_enter(&started)) {
+    g_timeout_add(250, coreaudio_device_watch_cb, NULL);
+    g_once_init_leave(&started, 1);
+  }
+}
+
 
 void audio_release_cards(void) {
   audio_close_tci_monitor();
@@ -244,6 +309,7 @@ void audio_get_cards(void) {
     g_mutex_init(&tci_monitor_mutex);
     g_once_init_leave(&mutex_inited, 1);
   }
+  coreaudio_start_device_watch();
   t_print("%s: native CoreAudio call audio_get_cards\n", __func__);
   if (coreaudio_get_cards() != 0) {
     t_print("%s: native CoreAudio device enumeration failed\n", __func__);

@@ -20,6 +20,7 @@
 */
 
 #include <gtk/gtk.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -384,8 +385,8 @@ unsigned int ADC0 = 0;
 int pre_mox = 0;
 
 int ptt = 0;
-int mox = 0;
-int tune = 0;
+_Atomic int mox = 0;
+_Atomic int tune = 0;
 int memory_tune = 0;
 int full_tune = 0;
 int have_rx_gain = 0;
@@ -424,7 +425,7 @@ static int pre_tune_cw_internal;
 int vox_enabled = 0;
 double vox_threshold = 0.001;
 double vox_hang = 250.0;
-int vox = 0;
+_Atomic int vox = 0;
 int CAT_cw_is_active = 0;
 int MIDI_cw_is_active = 0;
 int radio_ptt = 0;

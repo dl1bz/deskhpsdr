@@ -26,6 +26,7 @@
 #include <CoreAudio/CoreAudio.h>
 #include <CoreFoundation/CoreFoundation.h>
 
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -44,12 +45,16 @@ typedef struct {
   AudioDeviceID device;
   RECEIVER *rx;
   int channels;
+  _Atomic int alive;
+  int alive_listener_registered;
 } COREAUDIO_OUTPUT;
 
 typedef struct {
   AudioComponentInstance unit;
   AudioDeviceID device;
   int channels;
+  _Atomic int alive;
+  int alive_listener_registered;
 } COREAUDIO_TCI_MONITOR;
 
 typedef struct {
@@ -57,7 +62,64 @@ typedef struct {
   AudioDeviceID device;
   float *buffer;
   UInt32 max_frames;
+  _Atomic int alive;
+  int alive_listener_registered;
 } COREAUDIO_INPUT;
+
+
+static const AudioObjectPropertyAddress coreaudio_alive_address = {
+  kAudioDevicePropertyDeviceIsAlive,
+  kAudioObjectPropertyScopeGlobal,
+  kAudioObjectPropertyElementMain
+};
+
+static int coreaudio_query_device_alive(AudioDeviceID device) {
+  UInt32 alive = 0;
+  UInt32 size = sizeof(alive);
+  OSStatus status = AudioObjectGetPropertyData(device, &coreaudio_alive_address,
+    0, NULL, &size, &alive);
+  return status == noErr && alive != 0;
+}
+
+static OSStatus coreaudio_device_alive_listener(AudioObjectID object,
+    UInt32 number_addresses,
+    const AudioObjectPropertyAddress addresses[],
+    void *client_data) {
+  (void) number_addresses;
+  (void) addresses;
+  _Atomic int *alive = (_Atomic int *) client_data;
+  atomic_store_explicit(alive,
+                        coreaudio_query_device_alive((AudioDeviceID) object),
+                        memory_order_release);
+  return noErr;
+}
+
+static int coreaudio_add_alive_listener(AudioDeviceID device, _Atomic int *alive) {
+  atomic_store_explicit(alive, coreaudio_query_device_alive(device),
+                        memory_order_relaxed);
+  OSStatus status = AudioObjectAddPropertyListener(device,
+    &coreaudio_alive_address,
+    coreaudio_device_alive_listener,
+    alive);
+  if (status != noErr) {
+    t_print("%s: DeviceIsAlive listener failed device=%u status=%d\n",
+            __func__, (unsigned int) device, (int) status);
+    return 0;
+  }
+  return 1;
+}
+
+static void coreaudio_remove_alive_listener(AudioDeviceID device,
+    _Atomic int *alive,
+    int registered) {
+  if (!registered) {
+    return;
+  }
+  AudioObjectRemovePropertyListener(device,
+                                    &coreaudio_alive_address,
+                                    coreaudio_device_alive_listener,
+                                    alive);
+}
 
 static int coreaudio_device_channels(AudioDeviceID device, AudioObjectPropertyScope scope) {
   AudioObjectPropertyAddress address = {
@@ -329,6 +391,10 @@ static OSStatus coreaudio_render_cb(void *refcon,
     }
     return noErr;
   }
+  if (!atomic_load_explicit(&output->alive, memory_order_acquire)) {
+    memset(io_data->mBuffers[0].mData, 0, io_data->mBuffers[0].mDataByteSize);
+    return noErr;
+  }
   float *buffer = (float *) io_data->mBuffers[0].mData;
   audio_render_local_output(output->rx, buffer, frames, output->channels);
   io_data->mBuffers[0].mDataByteSize = frames * (UInt32) output->channels * sizeof(float);
@@ -412,6 +478,8 @@ void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels
     goto fail;
   }
   output->device = device;
+  output->alive_listener_registered =
+          coreaudio_add_alive_listener(device, &output->alive);
   output->rx = rx;
   output->channels = client_channels;
   AURenderCallbackStruct callback = {
@@ -440,6 +508,8 @@ void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels
           __func__, device_name, (unsigned int) device, client_channels);
   return output;
 fail:
+  coreaudio_remove_alive_listener(output->device, &output->alive,
+                                  output->alive_listener_registered);
   if (output->unit != NULL) {
     AudioComponentInstanceDispose(output->unit);
   }
@@ -452,6 +522,9 @@ void coreaudio_output_close(void *handle) {
   if (output == NULL) {
     return;
   }
+  coreaudio_remove_alive_listener(output->device, &output->alive,
+                                  output->alive_listener_registered);
+  output->alive_listener_registered = 0;
   /*
    * AudioOutputUnitStop() is completed before the receiver buffers are freed
    * by audio_close_output(), so the lock-free render callback cannot access
@@ -488,6 +561,10 @@ static OSStatus coreaudio_tci_monitor_cb(void *refcon,
         }
       }
     }
+    return noErr;
+  }
+  if (!atomic_load_explicit(&monitor->alive, memory_order_acquire)) {
+    memset(io_data->mBuffers[0].mData, 0, io_data->mBuffers[0].mDataByteSize);
     return noErr;
   }
   float *out = (float *) io_data->mBuffers[0].mData;
@@ -579,6 +656,8 @@ void *coreaudio_tci_monitor_open(const char *device_name, int *channels) {
                                 kAudioUnitScope_Input, 0, &format, sizeof(format));
   if (status != noErr) { goto fail; }
   monitor->device = device;
+  monitor->alive_listener_registered =
+          coreaudio_add_alive_listener(device, &monitor->alive);
   monitor->channels = client_channels;
   AURenderCallbackStruct callback = {
     .inputProc = coreaudio_tci_monitor_cb,
@@ -599,6 +678,8 @@ void *coreaudio_tci_monitor_open(const char *device_name, int *channels) {
           __func__, device_name, (unsigned int) device, client_channels, TCI_AUDIO_SAMPLE_RATE);
   return monitor;
 fail:
+  coreaudio_remove_alive_listener(monitor->device, &monitor->alive,
+                                  monitor->alive_listener_registered);
   if (monitor->unit != NULL) {
     AudioComponentInstanceDispose(monitor->unit);
   }
@@ -611,6 +692,9 @@ void coreaudio_tci_monitor_close(void *handle) {
   if (monitor == NULL) {
     return;
   }
+  coreaudio_remove_alive_listener(monitor->device, &monitor->alive,
+                                  monitor->alive_listener_registered);
+  monitor->alive_listener_registered = 0;
   if (monitor->unit != NULL) {
     AudioOutputUnitStop(monitor->unit);
     AudioUnitUninitialize(monitor->unit);
@@ -669,6 +753,9 @@ static OSStatus coreaudio_input_cb(void *refcon,
   COREAUDIO_INPUT *input = (COREAUDIO_INPUT *) refcon;
   if (input == NULL || input->unit == NULL || input->buffer == NULL ||
       frames == 0 || frames > input->max_frames) {
+    return noErr;
+  }
+  if (!atomic_load_explicit(&input->alive, memory_order_acquire)) {
     return noErr;
   }
   AudioBufferList list;
@@ -792,6 +879,8 @@ void *coreaudio_input_open(const char *device_name) {
     goto fail;
   }
   input->device = device;
+  input->alive_listener_registered =
+          coreaudio_add_alive_listener(device, &input->alive);
   AURenderCallbackStruct callback = {
     .inputProc = coreaudio_input_cb,
     .inputProcRefCon = input
@@ -821,6 +910,8 @@ void *coreaudio_input_open(const char *device_name) {
           __func__, device_name, (unsigned int) device, (unsigned int) input->max_frames);
   return input;
 fail:
+  coreaudio_remove_alive_listener(input->device, &input->alive,
+                                  input->alive_listener_registered);
   if (input->unit != NULL) {
     AudioComponentInstanceDispose(input->unit);
   }
@@ -834,6 +925,9 @@ void coreaudio_input_close(void *handle) {
   if (input == NULL) {
     return;
   }
+  coreaudio_remove_alive_listener(input->device, &input->alive,
+                                  input->alive_listener_registered);
+  input->alive_listener_registered = 0;
   /*
    * Stop the AUHAL callback before releasing the callback scratch buffer.
    */
@@ -844,6 +938,26 @@ void coreaudio_input_close(void *handle) {
   }
   free(input->buffer);
   free(input);
+}
+
+
+
+int coreaudio_output_is_alive(void *handle) {
+  COREAUDIO_OUTPUT *output = (COREAUDIO_OUTPUT *) handle;
+  return output != NULL &&
+         atomic_load_explicit(&output->alive, memory_order_acquire);
+}
+
+int coreaudio_input_is_alive(void *handle) {
+  COREAUDIO_INPUT *input = (COREAUDIO_INPUT *) handle;
+  return input != NULL &&
+         atomic_load_explicit(&input->alive, memory_order_acquire);
+}
+
+int coreaudio_tci_monitor_is_alive(void *handle) {
+  COREAUDIO_TCI_MONITOR *monitor = (COREAUDIO_TCI_MONITOR *) handle;
+  return monitor != NULL &&
+         atomic_load_explicit(&monitor->alive, memory_order_acquire);
 }
 
 

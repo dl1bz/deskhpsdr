@@ -2111,6 +2111,7 @@ void tx_create_analyzer(const TRANSMITTER *tx) {
   if (rc != 0) {
     t_print("CreateAnalyzer failed for TXid=%d\n", tx->id);
   } else {
+    ((TRANSMITTER *)tx)->analyzer_created = 1;
     tx_set_analyzer(tx);
   }
 }
@@ -2192,13 +2193,26 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
   //
   const double display_span = tx_display_span_hz(tx);
   const double display_half_span = 0.5 * display_span;
-  int afft_size = (int)(((double) tx->iq_output_rate * (double) tx->pixels) / display_span);
-  if (afft_size <= 16384) {
-    afft_size = 16384;       // our previous fixed value
-  } else if (afft_size <= 32768) {
-    afft_size = 32768;       //  next step
-  } else  {
-    afft_size = 65536;       //  this shall be the maximum
+  int mode = vfo_get_tx_mode();
+  int afft_size;
+  /*
+   * CW is a single keyed carrier. A large display FFT makes the TX
+   * panadapter rise visibly long after RF is already present, especially
+   * with Protocol 2 at 192 kHz (65536 samples are about 341 ms).
+   * Keep CW at the existing 16384 minimum; other modes retain the
+   * span/pixel-derived FFT sizing.
+   */
+  if (mode == modeCWL || mode == modeCWU) {
+    afft_size = 16384;
+  } else {
+    afft_size = (int)(((double) tx->iq_output_rate * (double) tx->pixels) / display_span);
+    if (afft_size <= 16384) {
+      afft_size = 16384;       // our previous fixed value
+    } else if (afft_size <= 32768) {
+      afft_size = 32768;       // next step
+    } else {
+      afft_size = 65536;       // this shall be the maximum
+    }
   }
   const double fscLin = afft_size * (0.5 - display_half_span / tx->iq_output_rate);
   const double fscHin = afft_size * (0.5 - display_half_span / tx->iq_output_rate);
@@ -2490,20 +2504,31 @@ void tx_set_average(const TRANSMITTER *tx) {
   int display_average = max(2, (int) fmin(60, (double) tx->fps * t));
   SetDisplayAvBackmult(tx->id, 0, display_avb);
   SetDisplayNumAverage(tx->id, 0, display_average);
-  switch (tx->display_average_mode) {
-  case AVG_NONE:
+  int mode = vfo_get_tx_mode();
+  /*
+   * CW is a keyed single-carrier signal. Display averaging makes the TX
+   * panadapter rise and decay visibly later than the actual RF envelope.
+   * Disable averaging only for CW; all other modes keep the operator's
+   * configured averaging mode and time unchanged.
+   */
+  if (mode == modeCWL || mode == modeCWU) {
     wdspmode = AVERAGE_MODE_NONE;
-    break;
-  case AVG_RECURSIVE:
-    wdspmode = AVERAGE_MODE_RECURSIVE;
-    break;
-  case AVG_LOGRECURSIVE:
-  default:
-    wdspmode = AVERAGE_MODE_LOG_RECURSIVE;
-    break;
-  case AVG_TIMEWINDOW:
-    wdspmode = AVERAGE_MODE_TIME_WINDOW;
-    break;
+  } else {
+    switch (tx->display_average_mode) {
+    case AVG_NONE:
+      wdspmode = AVERAGE_MODE_NONE;
+      break;
+    case AVG_RECURSIVE:
+      wdspmode = AVERAGE_MODE_RECURSIVE;
+      break;
+    case AVG_LOGRECURSIVE:
+    default:
+      wdspmode = AVERAGE_MODE_LOG_RECURSIVE;
+      break;
+    case AVG_TIMEWINDOW:
+      wdspmode = AVERAGE_MODE_TIME_WINDOW;
+      break;
+    }
   }
   //
   // I observed artifacts when changing the mode from "Log Recursive"
@@ -2760,6 +2785,16 @@ void tx_set_mode(TRANSMITTER* tx, int mode) {
     }
     SetTXAMode(tx->id, mode);
     tx_set_filter(tx);
+    /*
+     * tx_set_mode() is also called while tx_create_transmitter() is still
+     * initializing, before XCreateAnalyzer(). Reconfigure only after the
+     * analyzer exists; later mode changes then switch CW/non-CW FFT sizing
+     * safely.
+     */
+    if (tx->analyzer_created) {
+      tx_set_analyzer(tx);
+      tx_set_average(tx);
+    }
   }
 }
 

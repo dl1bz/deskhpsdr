@@ -22,6 +22,7 @@
 #ifndef _RADIO_H
 #define _RADIO_H
 
+#include <stdatomic.h>
 #include <math.h>
 #include "adc.h"
 #include "dac.h"
@@ -290,9 +291,9 @@ extern int ozy_software_version;
 extern int mercury_software_version[2];
 extern int penelope_software_version;
 extern int ptt;
-extern int mox;
+extern _Atomic int mox;
 extern int pre_mox;
-extern int tune;
+extern _Atomic int tune;
 extern int memory_tune;
 extern int full_tune;
 
@@ -331,7 +332,7 @@ extern int ctun;
 extern int vox_enabled;
 extern double vox_threshold;
 extern double vox_hang;
-extern int vox;
+extern _Atomic int vox;
 extern int CAT_cw_is_active;
 extern int MIDI_cw_is_active;
 extern int radio_ptt;
