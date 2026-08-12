@@ -2,7 +2,7 @@
 # Copyright (C) 2025,2026
 # Heiko Amft, DL1BZ (Project deskHPSDR)
 #
-# All code published unter the GPLv3
+# All deskHPSDR source code is published under GPLv3
 #
 #######################################################################################
 #
