@@ -77,21 +77,6 @@ int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   return diag->available;
 }
 
-int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
-  if (diag == NULL) { return 0; }
-  memset(diag, 0, sizeof(*diag));
-  g_mutex_lock(&mic_ring_mutex);
-  if (mic_ring_buffer != NULL) {
-    int queued = mic_ring_write_pt - mic_ring_read_pt;
-    if (queued < 0) { queued += MICRINGLEN; }
-    diag->available = 1;
-    diag->queued = queued;
-    diag->capacity = MICRINGLEN - 1;
-  }
-  g_mutex_unlock(&mic_ring_mutex);
-  return diag->available;
-}
-
 int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   if (diag == NULL) { return 0; }
   memset(diag, 0, sizeof(*diag));
@@ -141,6 +126,22 @@ static int     mic_ring_read_pt = 0;
 static int     mic_ring_write_pt = 0;
 static guint64  mic_overrun_drops = 0;   // Anzahl verworfener Samples wegen vollem Ring
 static guint64  mic_overrun_events = 0;  // Anzahl Overrun-Situationen (mind. 1 Drop)
+
+int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
+  if (diag == NULL) { return 0; }
+  memset(diag, 0, sizeof(*diag));
+  g_mutex_lock(&mic_ring_mutex);
+  if (mic_ring_buffer != NULL) {
+    int queued = mic_ring_write_pt - mic_ring_read_pt;
+    if (queued < 0) { queued += MICRINGLEN; }
+    diag->available = 1;
+    diag->queued = queued;
+    diag->capacity = MICRINGLEN - 1;
+  }
+  g_mutex_unlock(&mic_ring_mutex);
+  return diag->available;
+}
+
 
 // Device enumeration sync (avoid blocking audio_mutex forever)
 static int    enum_done = 0;
