@@ -82,18 +82,6 @@ endif
 PKG_CONFIG ?= pkg-config
 .DEFAULT_GOAL := all
 
-LWS := $(shell $(PKG_CONFIG) --exists libwebsockets && echo yes || echo no)
-
-ifeq ($(LWS),yes)
-$(info libwebsockets exists, continue build process...)
-else
-$(info libwebsockets not found: libwebsockets NOT installed, but required now.)
-$(info Please install libwebsockets first!)
-$(info Linux package: libwebsockets-dev)
-$(info macOS Homebrew package: libwebsockets)
-$(error Stopping build: install libwebsockets (e.g. via apt if Linux or brew install if macOS) and retry.)
-endif
-
 ifeq ($(UNAME_S), Linux)
 WK41 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.1 && echo yes)
 WK40 := $(shell $(PKG_CONFIG) --exists webkit2gtk-4.0 && echo yes)
@@ -503,15 +491,37 @@ CPP_SOURCES += src/macos_audio.c src/coreaudio.c
 # TCI support
 #
 ##############################################################################
-TCI_INCLUDE=`$(PKG_CONFIG) --cflags openssl` `$(PKG_CONFIG) --cflags libwebsockets`
-ifeq ($(UNAME_S), Darwin)
-TCI_LIBS=$(BREW_LIBDIR)/libwebsockets.a $(BREW_LIBDIR)/libssl.a $(BREW_LIBDIR)/libcrypto.a
+LWS_LOCAL_DIR := libwebsockets-5
+LWS_LOCAL_BUILD := $(LWS_LOCAL_DIR)/build
+LWS_LOCAL_LIB := $(LWS_LOCAL_BUILD)/lib/libwebsockets.a
+LWS_LOCAL_COMPLETE := $(and $(wildcard $(LWS_LOCAL_BUILD)/include/libwebsockets.h),$(wildcard $(LWS_LOCAL_LIB)))
+
+ifneq ($(LWS_LOCAL_COMPLETE),)
+$(info Local libwebsockets found, using static library.)
+LWS_CFLAGS := -I./$(LWS_LOCAL_BUILD)/include
+LWS_LIBS := ./$(LWS_LOCAL_LIB)
 else
-TCI_LIBS=`$(PKG_CONFIG) --libs openssl` `$(PKG_CONFIG) --libs libwebsockets`
+ifeq ($(UNAME_S), Darwin)
+$(info Local libwebsockets not found, using Homebrew libwebsockets.)
+LWS_CFLAGS := `$(PKG_CONFIG) --cflags libwebsockets`
+LWS_LIBS := $(BREW_LIBDIR)/libwebsockets.a
+else
+$(info Local libwebsockets not found, using system libwebsockets via pkg-config.)
+LWS_CFLAGS := `$(PKG_CONFIG) --cflags libwebsockets`
+LWS_LIBS := `$(PKG_CONFIG) --libs libwebsockets`
 endif
+endif
+
+TCI_INCLUDE=`$(PKG_CONFIG) --cflags openssl` $(LWS_CFLAGS)
+ifeq ($(UNAME_S), Darwin)
+TCI_LIBS=$(LWS_LIBS) $(BREW_LIBDIR)/libssl.a $(BREW_LIBDIR)/libcrypto.a
+else
+TCI_LIBS=$(LWS_LIBS) `$(PKG_CONFIG) --libs openssl` `$(PKG_CONFIG) --libs libcap`
+endif
+
 TCI_SOURCES=src/tci.c src/tci_audio.c
 TCI_OBJS=src/tci.o src/tci_audio.o
-CPP_INCLUDE += `$(PKG_CONFIG) --cflags openssl` `$(PKG_CONFIG) --cflags libwebsockets`
+CPP_INCLUDE += `$(PKG_CONFIG) --cflags openssl` $(LWS_CFLAGS)
 CPP_SOURCES += src/tci.c src/tci_audio.c
 
 ##############################################################################
