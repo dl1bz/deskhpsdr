@@ -73,15 +73,14 @@ guint64 audio_get_xrun_count(void) {
 
 
 int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
-  if (diag == NULL) return 0;
+  if (diag == NULL) { return 0; }
   memset(diag, 0, sizeof(*diag));
-  if (rx == NULL) return 0;
-
+  if (rx == NULL) { return 0; }
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->playback_handle != NULL) {
     snd_pcm_sframes_t delay = 0;
     if (snd_pcm_delay(rx->playback_handle, &delay) == 0) {
-      if (delay < 0) delay = 0;
+      if (delay < 0) { delay = 0; }
       diag->available = 1;
       diag->queued = (int)delay + rx->local_audio_buffer_offset;
       diag->capacity = out_buflen + out_buffer_size;
@@ -94,15 +93,13 @@ int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
 }
 
 int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
-  if (diag == NULL) return 0;
+  if (diag == NULL) { return 0; }
   memset(diag, 0, sizeof(*diag));
-  if (mic_ring_buffer == NULL) return 0;
-
+  if (mic_ring_buffer == NULL) { return 0; }
   int read_pt = mic_ring_read_pt;
   int write_pt = mic_ring_write_pt;
   int queued = write_pt - read_pt;
-  if (queued < 0) queued += MICRINGLEN;
-
+  if (queued < 0) { queued += MICRINGLEN; }
   diag->available = 1;
   diag->queued = queued;
   diag->capacity = MICRINGLEN - 1;
@@ -110,15 +107,14 @@ int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
 }
 
 int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
-  if (diag == NULL) return 0;
+  if (diag == NULL) { return 0; }
   memset(diag, 0, sizeof(*diag));
-  if (rx == NULL) return 0;
-
+  if (rx == NULL) { return 0; }
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->playback_handle != NULL && rx->local_audio_cw_active) {
     snd_pcm_sframes_t delay = 0;
     if (snd_pcm_delay(rx->playback_handle, &delay) == 0) {
-      if (delay < 0) delay = 0;
+      if (delay < 0) { delay = 0; }
       diag->available = 1;
       diag->queued = (int)delay + rx->local_audio_buffer_offset;
       diag->capacity = out_buflen + out_buffer_size;

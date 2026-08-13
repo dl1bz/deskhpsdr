@@ -48,7 +48,6 @@ static void row_update(int index,
   if (index < 0 || index >= BUFFER_MONITOR_MAX_ROWS) {
     return;
   }
-
   BUFFER_MONITOR_ROW *row = &rows[index];
   if (g_strcmp0(row->name, name) != 0) {
     memset(row, 0, sizeof(*row));
@@ -62,7 +61,6 @@ static void row_update(int index,
   } else if (row->fraction > 1.0) {
     row->fraction = 1.0;
   }
-
   if (valid) {
     row->current = current;
     if (!row->have_history) {
@@ -84,14 +82,12 @@ static void buffer_monitor_collect(void) {
   int n = 0;
   rx_buffered_latency_ms = 0.0;
   have_rx_buffered_latency = 0;
-
   if (protocol == NEW_PROTOCOL) {
     for (int ddc = 0; ddc < MAX_DDC && n < BUFFER_MONITOR_MAX_ROWS; ddc++) {
       P2_BUFFER_DIAG diag;
       if (!new_protocol_get_buffer_diag(ddc, &diag) || !diag.active) {
         continue;
       }
-
       if (diag.jitter_enabled && n < BUFFER_MONITOR_MAX_ROWS) {
         char name[32];
         char value[64];
@@ -114,7 +110,6 @@ static void buffer_monitor_collect(void) {
                      (double)diag.jitter_queued / (double)diag.jitter_capacity, 1);
         }
       }
-
       if (n < BUFFER_MONITOR_MAX_ROWS) {
         char name[32];
         char value[64];
@@ -126,7 +121,6 @@ static void buffer_monitor_collect(void) {
       }
     }
   }
-
   for (int rx = 0; rx < receivers && n < BUFFER_MONITOR_MAX_ROWS; rx++) {
     if (receiver[rx] == NULL) {
       continue;
@@ -138,7 +132,7 @@ static void buffer_monitor_collect(void) {
       double ms = (double)diag.queued * 1000.0 / 48000.0;
       double target_ms = (double)diag.target * 1000.0 / 48000.0;
       double scale_samples = diag.high > 0 ? (double)diag.high : (double)diag.capacity;
-      #ifdef COREAUDIO
+#ifdef COREAUDIO
       g_snprintf(name, sizeof(name), "RX%d CoreAudio", rx + 1);
 #elif defined(PULSEAUDIO)
       g_snprintf(name, sizeof(name), "RX%d PulseAudio", rx + 1);
@@ -158,14 +152,13 @@ static void buffer_monitor_collect(void) {
       }
     }
   }
-
   if (n < BUFFER_MONITOR_MAX_ROWS) {
     AUDIO_BUFFER_DIAG diag;
     if (audio_get_mic_buffer_diag(&diag) && diag.available) {
       char value[64];
       double ms = (double)diag.queued * 1000.0 / 48000.0;
       g_snprintf(value, sizeof(value), "%.1f ms", ms);
-      #ifdef COREAUDIO
+#ifdef COREAUDIO
       const char *mic_name = "Mic CoreAudio";
 #elif defined(PULSEAUDIO)
       const char *mic_name = "Mic PulseAudio";
@@ -176,7 +169,6 @@ static void buffer_monitor_collect(void) {
                  (double)diag.queued / (double)diag.capacity, 1);
     }
   }
-
   if (active_receiver != NULL && n < BUFFER_MONITOR_MAX_ROWS) {
     AUDIO_BUFFER_DIAG diag;
     if (audio_get_cw_buffer_diag(active_receiver, &diag) && diag.available) {
@@ -189,34 +181,26 @@ static void buffer_monitor_collect(void) {
                  (double)diag.queued / scale, 1);
     }
   }
-
-
   if (radio_is_transmitting()) {
     have_rx_buffered_latency = 0;
   }
-
   row_count = n;
 }
 
 static gboolean buffer_monitor_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
   GtkAllocation allocation;
   gtk_widget_get_allocation(widget, &allocation);
-
   GtkStyleContext *style = gtk_widget_get_style_context(widget);
   gtk_render_background(style, cr, 0, 0, allocation.width, allocation.height);
-
   GdkRGBA fg;
   gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &fg);
   cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, fg.alpha);
-
   cairo_select_font_face(cr, "monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size(cr, 16.0);
   cairo_move_to(cr, BUFFER_MONITOR_MARGIN, 20);
   cairo_show_text(cr, "Buffer Monitor");
-
   cairo_select_font_face(cr, "monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size(cr, 15.0);
-
   for (int i = 0; i < row_count; i++) {
     BUFFER_MONITOR_ROW *row = &rows[i];
     int y = 31 + (i * BUFFER_MONITOR_ROW_H);
@@ -224,24 +208,19 @@ static gboolean buffer_monitor_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer 
     int bar_x = BUFFER_MONITOR_MARGIN;
     int bar_w = allocation.width - (2 * BUFFER_MONITOR_MARGIN);
     int bar_h = 11;
-
     cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, fg.alpha);
     cairo_move_to(cr, bar_x, y + 12);
     cairo_show_text(cr, row->name);
-
     cairo_text_extents_t ext;
     cairo_text_extents(cr, row->value, &ext);
     cairo_move_to(cr, allocation.width - BUFFER_MONITOR_MARGIN - ext.width, y + 12);
     cairo_show_text(cr, row->value);
-
     cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, 0.18);
     cairo_rectangle(cr, bar_x, bar_y, bar_w, bar_h);
     cairo_fill(cr);
-
     cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, 0.72);
     cairo_rectangle(cr, bar_x, bar_y, bar_w * row->fraction, bar_h);
     cairo_fill(cr);
-
     if (row->have_history) {
       char history[64];
       g_snprintf(history, sizeof(history), "min %.1f   max %.1f",
@@ -253,23 +232,18 @@ static gboolean buffer_monitor_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer 
       cairo_set_font_size(cr, 13.0);
     }
   }
-
   if (row_count == 0) {
     cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, 0.7);
     cairo_move_to(cr, BUFFER_MONITOR_MARGIN, 50);
     cairo_show_text(cr, "No active monitored buffers");
   }
-
   if (have_rx_buffered_latency) {
     char value[64];
     int y = 42 + (row_count > 0 ? row_count : 1) * BUFFER_MONITOR_ROW_H;
-
     cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, fg.alpha);
     cairo_set_font_size(cr, 15.0);
-
     cairo_move_to(cr, BUFFER_MONITOR_MARGIN, y + 12);
     cairo_show_text(cr, "LATENCY");
-
     y += 22;
     g_snprintf(value, sizeof(value), "%.1f ms", rx_buffered_latency_ms);
     cairo_move_to(cr, BUFFER_MONITOR_MARGIN, y + 12);
@@ -278,14 +252,12 @@ static gboolean buffer_monitor_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer 
     cairo_text_extents(cr, value, &ext);
     cairo_move_to(cr, allocation.width - BUFFER_MONITOR_MARGIN - ext.width, y + 12);
     cairo_show_text(cr, value);
-
     y += 22;
     cairo_move_to(cr, BUFFER_MONITOR_MARGIN, y + 12);
     cairo_show_text(cr, "DSP processing");
     cairo_text_extents(cr, "additional", &ext);
     cairo_move_to(cr, allocation.width - BUFFER_MONITOR_MARGIN - ext.width, y + 12);
     cairo_show_text(cr, "additional");
-
     y += 22;
     g_snprintf(value, sizeof(value), "> %.1f ms", rx_buffered_latency_ms);
     cairo_select_font_face(cr, "monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -294,11 +266,9 @@ static gboolean buffer_monitor_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer 
     cairo_text_extents(cr, value, &ext);
     cairo_move_to(cr, allocation.width - BUFFER_MONITOR_MARGIN - ext.width, y + 12);
     cairo_show_text(cr, value);
-
     cairo_select_font_face(cr, "monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(cr, 13.0);
   }
-
   return FALSE;
 }
 
@@ -309,13 +279,11 @@ static void buffer_monitor_position(void) {
   if (top_window == NULL || !gtk_widget_get_realized(top_window)) {
     return;
   }
-
   int main_x, main_y, main_w, main_h;
   int monitor_w, monitor_h;
   gtk_window_get_position(GTK_WINDOW(top_window), &main_x, &main_y);
   gtk_window_get_size(GTK_WINDOW(top_window), &main_w, &main_h);
   gtk_window_get_size(GTK_WINDOW(buffer_monitor_window), &monitor_w, &monitor_h);
-
   if (monitor_w <= 1) {
     monitor_w = BUFFER_MONITOR_WIDTH;
   }
@@ -329,7 +297,6 @@ static gboolean buffer_monitor_update_cb(gpointer data) {
     buffer_monitor_timer_id = 0;
     return G_SOURCE_REMOVE;
   }
-
   buffer_monitor_collect();
   int height = 42 + (row_count > 0 ? row_count : 1) * BUFFER_MONITOR_ROW_H;
   if (have_rx_buffered_latency) {
@@ -357,11 +324,9 @@ static void buffer_monitor_show_popover(GtkWidget *anchor, gpointer data) {
   if (popover == NULL) {
     return;
   }
-
   GtkAllocation a;
   gtk_widget_get_allocation(anchor, &a);
   GdkRectangle rect = { -1, a.height / 2, 1, 1 };
-
 #ifdef __linux__
   /*
    * On Wayland this is only a placement preference; the compositor remains
@@ -380,12 +345,10 @@ static void buffer_monitor_show_popover(GtkWidget *anchor, gpointer data) {
 static void buffer_monitor_create(void) {
   memset(rows, 0, sizeof(rows));
   row_count = 0;
-
   buffer_monitor_area = gtk_drawing_area_new();
   gtk_widget_set_size_request(buffer_monitor_area, BUFFER_MONITOR_WIDTH, 220);
   g_signal_connect(buffer_monitor_area, "draw",
                    G_CALLBACK(buffer_monitor_draw_cb), NULL);
-
   /*
    * Backend split:
    *
@@ -403,7 +366,6 @@ static void buffer_monitor_create(void) {
     if (anchor == NULL) {
       anchor = topgrid;
     }
-
     if (anchor != NULL) {
       GtkWidget *popover = gtk_popover_new(anchor);
       gtk_popover_set_position(GTK_POPOVER(popover), GTK_POS_LEFT);
@@ -423,7 +385,6 @@ static void buffer_monitor_create(void) {
       }
     }
   }
-
   if (buffer_monitor_window == NULL) {
     GtkWidget *dlg = gtk_dialog_new();
     gtk_window_set_transient_for(GTK_WINDOW(dlg), GTK_WINDOW(top_window));
@@ -431,12 +392,10 @@ static void buffer_monitor_create(void) {
     gtk_window_set_resizable(GTK_WINDOW(dlg), FALSE);
     gtk_window_set_accept_focus(GTK_WINDOW(dlg), FALSE);
     gtk_widget_set_can_focus(dlg, FALSE);
-
     GtkWidget *hb = gtk_header_bar_new();
     gtk_window_set_titlebar(GTK_WINDOW(dlg), hb);
     gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(hb), FALSE);
     gtk_header_bar_set_title(GTK_HEADER_BAR(hb), "Buffer Monitor");
-
     GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     gtk_container_add(GTK_CONTAINER(content), buffer_monitor_area);
     buffer_monitor_window = dlg;
@@ -446,7 +405,6 @@ static void buffer_monitor_create(void) {
     buffer_monitor_position();
     gtk_window_present(GTK_WINDOW(top_window));
   }
-
   buffer_monitor_collect();
   buffer_monitor_timer_id =
           g_timeout_add(BUFFER_MONITOR_REFRESH, buffer_monitor_update_cb, NULL);

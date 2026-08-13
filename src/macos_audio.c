@@ -153,7 +153,6 @@ int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   if (rx->local_audio_buffer == NULL || rx->coreaudio_output_handle == NULL) {
     return 1;
   }
-
   int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_acquire);
   int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
   int queued = inpt - outpt;
@@ -174,7 +173,6 @@ int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
   if (mic_ring_buffer == NULL) {
     return 1;
   }
-
   int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
   int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);
   int queued = inpt - outpt;
@@ -196,7 +194,6 @@ int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   if (rx->sidetone_buffer == NULL || rx->coreaudio_output_handle == NULL) {
     return 1;
   }
-
   int inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_acquire);
   int outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
   int queued = inpt - outpt;

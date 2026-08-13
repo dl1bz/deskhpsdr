@@ -219,8 +219,6 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     t_perror("new_discover: setsockopt SO_REUSEPORT failed");
   }
   rc = devices;
-  // start a receive thread to collect discovery response packets
-  discover_thread_id = g_thread_new("new discover receive", new_discover_receive_thread, NULL);
   // send discovery packet
   buffer[0] = 0x00;
   buffer[1] = 0x00;
@@ -235,6 +233,9 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     close(discovery_socket);
     return;
   }
+  // Start the collector only after the probe was sent successfully. UDP
+  // responses queue in the socket until the thread starts receiving.
+  discover_thread_id = g_thread_new("new discover receive", new_discover_receive_thread, NULL);
   // wait for receive thread to complete
   g_thread_join(discover_thread_id);
   close(discovery_socket);
@@ -265,15 +266,21 @@ gpointer new_discover_receive_thread(gpointer data) {
   struct timeval tv;
   int i;
   double frequency_min, frequency_max;
-  tv.tv_sec = 2;
-  tv.tv_usec = 0;
+  /*
+   * Keep recvfrom() interruptible, but enforce discovery lifetime with an
+   * absolute monotonic deadline. Continuous P2 stream traffic must never
+   * extend discovery indefinitely.
+   */
+  tv.tv_sec = 0;
+  tv.tv_usec = 250000;
   setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
+  const gint64 deadline_us = g_get_monotonic_time() + (2 * G_USEC_PER_SEC);
   len = sizeof(addr);
-  while (1) {
+  while (g_get_monotonic_time() < deadline_us) {
     int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &addr, &len);
     if (bytes_read < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        break;
+        continue;
       }
       t_print("new_discover: bytes read %d\n", bytes_read);
       t_perror("new_discover: recvfrom socket failed for discover_receive_thread");

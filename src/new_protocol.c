@@ -677,7 +677,6 @@ int new_protocol_get_buffer_diag(int ddc, P2_BUFFER_DIAG *diag) {
   if (diag == NULL || ddc < 0 || ddc >= MAX_DDC) {
     return 0;
   }
-
   memset(diag, 0, sizeof(*diag));
   diag->active = rxcase[ddc] != RXACTION_SKIP;
   diag->jitter_enabled = g_atomic_int_get(&p2_jitter_buffer_enabled)
@@ -685,7 +684,6 @@ int new_protocol_get_buffer_diag(int ddc, P2_BUFFER_DIAG *diag) {
   diag->jitter_capacity = P2_JITTER_SLOT_COUNT;
   diag->jitter_target_ms = (double)g_atomic_int_get(&p2_jitter_buffer_depth_ms);
   diag->rxiq_capacity = RXIQRINGBUFLEN;
-
   /*
    * This is diagnostics only. Never block a P2 producer/consumer just to
    * paint the monitor: if the jitter mutex is busy, leave this sample at zero
@@ -699,7 +697,6 @@ int new_protocol_get_buffer_diag(int ddc, P2_BUFFER_DIAG *diag) {
     }
     g_mutex_unlock(&state->mutex);
   }
-
   int inpt = iq_inptr[ddc];
   MEMORY_BARRIER;
   int outpt = iq_outptr[ddc];
@@ -708,7 +705,6 @@ int new_protocol_get_buffer_diag(int ddc, P2_BUFFER_DIAG *diag) {
     queued += RXIQRINGBUFLEN;
   }
   diag->rxiq_queued = (unsigned int)queued;
-
   gint peak;
   do {
     peak = g_atomic_int_get(&iq_diag_peak[ddc]);
@@ -717,7 +713,6 @@ int new_protocol_get_buffer_diag(int ddc, P2_BUFFER_DIAG *diag) {
     peak = queued;
   }
   diag->rxiq_peak = (unsigned int)peak;
-
   return 1;
 }
 
@@ -2975,7 +2970,6 @@ static inline void p2_iq_diag_update_peak(int ddc, int queued) {
   if (ddc < 0 || ddc >= MAX_DDC || queued <= 0) {
     return;
   }
-
   gint peak = g_atomic_int_get(&iq_diag_peak[ddc]);
   while (queued > peak &&
          !g_atomic_int_compare_and_exchange(&iq_diag_peak[ddc], peak, queued)) {
@@ -3018,7 +3012,6 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
     iq_buffer[ddc][iptr] = mybuf;
     MEMORY_BARRIER;
     iq_inptr[ddc] = nptr;
-
     int queued = nptr - iq_outptr[ddc];
     if (queued < 0) {
       queued += RXIQRINGBUFLEN;

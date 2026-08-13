@@ -269,8 +269,6 @@ static void discover(struct ifaddrs* iface, int discflag) {
     g_usleep(20000);
   }
   rc = devices;
-  // start a receive thread to collect discovery response packets
-  discover_thread_id = g_thread_new("old discover receive", discover_receive_thread, NULL);
   // send discovery packet
   // If this is a TCP connection, send a "long" packet
   switch (discflag) {
@@ -293,6 +291,9 @@ static void discover(struct ifaddrs* iface, int discflag) {
     close(discovery_socket);
     return;
   }
+  // Start the collector only after the probe was sent successfully. UDP
+  // responses queue in the socket until the thread starts receiving.
+  discover_thread_id = g_thread_new("old discover receive", discover_receive_thread, NULL);
   // wait for receive thread to complete
   g_thread_join(discover_thread_id);
   close(discovery_socket);
@@ -338,13 +339,22 @@ static gpointer discover_receive_thread(gpointer data) {
   struct timeval tv;
   int i;
   t_print("discover_receive_thread\n");
-  tv.tv_sec = 5;  // Increased timeout for remote connections
-  tv.tv_usec = 0;
+  /*
+   * SO_RCVTIMEO is only a wake-up interval, not the discovery lifetime.
+   * A streaming radio can otherwise keep recvfrom() returning packets forever
+   * and the GTK main thread blocks indefinitely in g_thread_join().
+   */
+  tv.tv_sec = 0;
+  tv.tv_usec = 250000;
   setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
+  const gint64 deadline_us = g_get_monotonic_time() + (5 * G_USEC_PER_SEC);
   len = sizeof(addr);
-  while (1) {
-    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 1032, (struct sockaddr *) &addr, &len);
+  while (g_get_monotonic_time() < deadline_us) {
+    int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &addr, &len);
     if (bytes_read < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        continue;
+      }
       t_print("discovery: bytes read %d\n", bytes_read);
       t_perror("old_discovery: recvfrom socket failed for discover_receive_thread");
       break;
@@ -539,7 +549,10 @@ void old_discovery(void) {
   // and need no discovery any more
   //
   if (!discover_only_stemlab && !targeted) {
-    getifaddrs(&addrs);
+    if (getifaddrs(&addrs) != 0) {
+      t_perror("old_discovery: getifaddrs failed");
+      return;
+    }
     ifa = addrs;
     while (ifa) {
       g_main_context_iteration(NULL, 0);
