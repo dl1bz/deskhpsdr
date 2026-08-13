@@ -101,6 +101,8 @@ void memRestoreState(void) {
     GetPropI1("mem.%d.altband", b,         mem[b].alt_bd);
     GetPropI1("mem.%d.ctcss_enabled", b,   mem[b].ctcss_enabled);
     GetPropI1("mem.%d.ctcss", b,           mem[b].ctcss);
+    mem[b].bd = band_migrate_legacy_index(mem[b].bd, mem[b].frequency);
+    mem[b].alt_bd = band_migrate_legacy_index(mem[b].alt_bd, mem[b].alt_frequency);
   }
 }
 

@@ -38,6 +38,7 @@ enum _band_enum {
   band15,
   band12,
   band10,
+  band8,
   band6,
   band70,
   band144,
@@ -46,7 +47,6 @@ enum _band_enum {
   band902,
   band1240,
   band2300,
-  band3400,
   bandAIR,
   bandWWV,
   bandGen,
@@ -132,6 +132,7 @@ extern void radio_change_region (int region);
 
 extern void bandSaveState (void);
 extern void bandRestoreState (void);
+extern int band_migrate_legacy_index(int band, long long frequency);
 extern void band_apply_iaru_region (void);
 
 char *getFrequencyInfo (long long frequency, int filter_low, int filter_high);

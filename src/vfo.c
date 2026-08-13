@@ -686,6 +686,7 @@ void vfo_restore_state(void) {
     GetPropI1("vfo.%d.deviation", i,        vfo[i].deviation);
     GetPropI1("vfo.%d.step", i,             vfo[i].step);
     GetPropI1("vfo.%d.rit_step", i,         vfo[i].rit_step);
+    vfo[i].band = band_migrate_legacy_index(vfo[i].band, vfo[i].frequency);
     // Sanity check: if !ctun, offset must be zero
     if (!vfo[i].ctun) {
       vfo[i].offset = 0;

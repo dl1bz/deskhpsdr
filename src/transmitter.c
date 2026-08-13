@@ -670,7 +670,7 @@ static gboolean tx_update_display(gpointer data) {
     int rev_power;
     double v1;
     rc = vfo_get_tx_vfo();
-    int is6m = (vfo[rc].band == band6);
+    int is6m = (vfo[rc].band == band8 || vfo[rc].band == band6);
     //
     // Updated values of constant1/2 throughout,
     // taking the values from the Thetis

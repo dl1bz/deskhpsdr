@@ -163,6 +163,12 @@ static BANDSTACK_ENTRY bandstack_entries10[] = {
   {28400000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
+static BANDSTACK_ENTRY bandstack_entries8[] = {
+  {40660000LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
+  {40680000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
+  {40700000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
+};
+
 static BANDSTACK_ENTRY bandstack_entries6[] = {
   {50010000LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
   {50125000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
@@ -214,11 +220,6 @@ static BANDSTACK_ENTRY bandstack_entries2300[] = {
   {2300300000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
 };
 
-static BANDSTACK_ENTRY bandstack_entries3400[] = {
-  {3400010000LL, 0, 0LL, modeCWU, filterF6, 2500, 0, 0},
-  {3400100000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0},
-  {3400300000LL, 0, 0LL, modeUSB, filterF5, 2500, 0, 0}
-};
 
 static BANDSTACK_ENTRY bandstack_entriesAIR[] = {
   {118800000LL, 0, 0LL, modeAM, filterF3, 2500, 0, 0},
@@ -254,6 +255,7 @@ static BANDSTACK bandstack17   = {3, 1, bandstack_entries17};
 static BANDSTACK bandstack15   = {3, 1, bandstack_entries15};
 static BANDSTACK bandstack12   = {3, 1, bandstack_entries12};
 static BANDSTACK bandstack10   = {3, 1, bandstack_entries10};
+static BANDSTACK bandstack8    = {3, 1, bandstack_entries8};
 static BANDSTACK bandstack6    = {3, 1, bandstack_entries6};
 static BANDSTACK bandstack70   = {3, 1, bandstack_entries70};
 static BANDSTACK bandstack144  = {6, 1, bandstack_entries144};
@@ -262,7 +264,6 @@ static BANDSTACK bandstack430  = {3, 1, bandstack_entries430};
 static BANDSTACK bandstack902  = {3, 1, bandstack_entries902};
 static BANDSTACK bandstack1240 = {3, 1, bandstack_entries1240};
 static BANDSTACK bandstack2300 = {3, 1, bandstack_entries2300};
-static BANDSTACK bandstack3400 = {3, 1, bandstack_entries3400};
 static BANDSTACK bandstackAIR  = {6, 1, bandstack_entriesAIR};
 static BANDSTACK bandstackGEN  = {3, 1, bandstack_entriesGEN};
 static BANDSTACK bandstackWWV  = {6, 1, bandstack_entriesWWV};
@@ -351,6 +352,7 @@ static BAND bands[BANDS + XVTRS] = {
   {"15",     &bandstack15,      0, 0, 0, 0, 0, 0, 38.8,   21000000LL,   21450000LL, 0LL, 0LL, 0},
   {"12",     &bandstack12,      0, 0, 0, 0, 0, 0, 38.8,   24890000LL,   24990000LL, 0LL, 0LL, 0},
   {"10",     &bandstack10,      0, 0, 0, 0, 0, 0, 38.8,   28000000LL,   29700000LL, 0LL, 0LL, 0},
+  {"8",      &bandstack8,       0, 0, 0, 0, 0, 0, 38.8,   40650000LL,   40750000LL, 0LL, 0LL, 0},
   {"6",      &bandstack6,       0, 0, 0, 0, 0, 0, 53.0,   50000000LL,   54000000LL, 0LL, 0LL, 0},
   {"4",      &bandstack70,      0, 0, 0, 0, 0, 0, 53.0,   70000000LL,   70500000LL, 0LL, 0LL, 0},
   {"144",    &bandstack144,     0, 0, 0, 0, 0, 0, 53.0,  144000000LL,  148000000LL, 0LL, 0LL, 0},
@@ -359,7 +361,6 @@ static BAND bands[BANDS + XVTRS] = {
   {"902",    &bandstack902,     0, 0, 0, 0, 0, 0, 53.0,  902000000LL,  928000000LL, 0LL, 0LL, 0},
   {"1240",   &bandstack1240,    0, 0, 0, 0, 0, 0, 53.0, 1240000000LL, 1300000000LL, 0LL, 0LL, 0},
   {"2300",   &bandstack2300,    0, 0, 0, 0, 0, 0, 53.0, 2300000000LL, 2450000000LL, 0LL, 0LL, 0},
-  {"3400",   &bandstack3400,    0, 0, 0, 0, 0, 0, 53.0, 3400000000LL, 3410000000LL, 0LL, 0LL, 0},
   {"AIR",    &bandstackAIR,     0, 0, 0, 0, 0, 0, 53.0,  108000000LL,  137000000LL, 0LL, 0LL, 0},
   {"WWV",    &bandstackWWV,     0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 0},
   {"GEN",    &bandstackGEN,     0, 0, 0, 0, 0, 0, 53.0,          0LL,          0LL, 0LL, 0LL, 0},
@@ -459,6 +460,8 @@ void band_apply_iaru_region(void) {
     bands[band80].frequencyMax = 3800000LL;
     bands[band40].frequencyMin = 7000000LL;
     bands[band40].frequencyMax = 7200000LL;
+    bands[band8].frequencyMin = 40650000LL;
+    bands[band8].frequencyMax = 40750000LL;
     bands[band144].frequencyMin = 144000000LL;
     bands[band144].frequencyMax = 146000000LL;
     bands[band430].frequencyMin = 430000000LL;
@@ -475,6 +478,8 @@ void band_apply_iaru_region(void) {
     bands[band80].frequencyMax = 4000000LL;
     bands[band40].frequencyMin = 7000000LL;
     bands[band40].frequencyMax = 7300000LL;
+    bands[band8].frequencyMin = 40660000LL;
+    bands[band8].frequencyMax = 40700000LL;
     bands[band144].frequencyMin = 144000000LL;
     bands[band144].frequencyMax = 148000000LL;
     bands[band430].frequencyMin = 420000000LL;
@@ -490,6 +495,8 @@ void band_apply_iaru_region(void) {
     bands[band80].frequencyMax = 3900000LL;
     bands[band40].frequencyMin = 7000000LL;
     bands[band40].frequencyMax = 7200000LL;
+    bands[band8].frequencyMin = 40660000LL;
+    bands[band8].frequencyMax = 40700000LL;
     bands[band144].frequencyMin = 144000000LL;
     bands[band144].frequencyMax = 148000000LL;
     bands[band430].frequencyMin = 430000000LL;
@@ -541,6 +548,21 @@ void radio_change_region(int r) {
     bandstack60.entry = bandstack_entries60_CA;
     break;
   }
+}
+
+static int legacy_band_layout = 0;
+
+int band_migrate_legacy_index(int band, long long frequency) {
+  if (!legacy_band_layout) {
+    return band;
+  }
+  if (band >= 12 && band <= 19) {
+    return band + 1;
+  }
+  if (band == 20) {
+    return get_band_from_frequency(frequency);
+  }
+  return band;
 }
 
 void bandSaveState(void) {
@@ -601,52 +623,55 @@ void bandSaveState(void) {
 }
 
 void bandRestoreState(void) {
+  const char *legacy_title = getProperty("band.12.title");
+  legacy_band_layout = legacy_title != NULL && strcmp(legacy_title, "6") == 0;
+  if (legacy_band_layout) {
+    t_print("bandRestoreState: migrating legacy band layout for 8m support\n");
+  }
   for (int b = 0; b < BANDS + XVTRS; b++) {
-    //
-    // For the "normal" (non-XVTR) bands, do not change the title,
-    // and do not fill in XVTR-specific data. There is no GUI for these bands
-    // to change frequencyMin, frequencyMax, and disablePA, but
-    // we allow users to change this by hand-editing the props file.
-    //
+    int p = b;
+    if (legacy_band_layout && b >= band6 && b <= band2300) {
+      p = b - 1;
+    }
+    if (legacy_band_layout && b == band8) {
+      continue;
+    }
     if (b >= BANDS) {
-      GetPropS1("band.%d.title", b,              bands[b].title);
-      GetPropI1("band.%d.frequencyLO", b,        bands[b].frequencyLO);
-      GetPropI1("band.%d.errorLO", b,            bands[b].errorLO);
-      GetPropI1("band.%d.gain", b,               bands[b].gain);
+      GetPropS1("band.%d.title", p,              bands[b].title);
+      GetPropI1("band.%d.frequencyLO", p,        bands[b].frequencyLO);
+      GetPropI1("band.%d.errorLO", p,            bands[b].errorLO);
+      GetPropI1("band.%d.gain", p,               bands[b].gain);
     }
     if (b > 11) {
-      GetPropI1("band.%d.frequencyMin", b,       bands[b].frequencyMin);
-      GetPropI1("band.%d.frequencyMax", b,       bands[b].frequencyMax);
+      GetPropI1("band.%d.frequencyMin", p,       bands[b].frequencyMin);
+      GetPropI1("band.%d.frequencyMax", p,       bands[b].frequencyMax);
     }
-    GetPropI1("band.%d.disablePA", b,          bands[b].disablePA);
-    GetPropI1("band.%d.current", b,            bands[b].bandstack->current_entry);
-    GetPropI1("band.%d.alexRxAntenna", b,      bands[b].alexRxAntenna);
-    GetPropI1("band.%d.alexTxAntenna", b,      bands[b].alexTxAntenna);
-    GetPropI1("band.%d.alexAttenuation", b,    bands[b].alexAttenuation);
-    GetPropF1("band.%d.pa_calibration", b,     bands[b].pa_calibration);
-    GetPropI1("band.%d.tx_drive", b,           band_settings[b].tx_drive);
-    GetPropI1("band.%d.tune_drive", b,         band_settings[b].tune_drive);
+    GetPropI1("band.%d.disablePA", p,          bands[b].disablePA);
+    GetPropI1("band.%d.current", p,            bands[b].bandstack->current_entry);
+    GetPropI1("band.%d.alexRxAntenna", p,      bands[b].alexRxAntenna);
+    GetPropI1("band.%d.alexTxAntenna", p,      bands[b].alexTxAntenna);
+    GetPropI1("band.%d.alexAttenuation", p,    bands[b].alexAttenuation);
+    GetPropF1("band.%d.pa_calibration", p,     bands[b].pa_calibration);
+    GetPropI1("band.%d.tx_drive", p,           band_settings[b].tx_drive);
+    GetPropI1("band.%d.tune_drive", p,         band_settings[b].tune_drive);
     band_settings[b].ps_tx_att = PS_TX_ATT_UNSET;
-    GetPropI1("band.%d.ps_tx_att", b,           band_settings[b].ps_tx_att);
-    GetPropI1("band.%d.OCrx", b,               bands[b].OCrx);
-    GetPropI1("band.%d.OCtx", b,               bands[b].OCtx);
+    GetPropI1("band.%d.ps_tx_att", p,           band_settings[b].ps_tx_att);
+    GetPropI1("band.%d.OCrx", p,               bands[b].OCrx);
+    GetPropI1("band.%d.OCtx", p,               bands[b].OCtx);
     for (int stack = 0; stack < bands[b].bandstack->entries; stack++) {
       BANDSTACK_ENTRY *entry = bands[b].bandstack->entry;
       entry += stack;
-      GetPropI2("band.%d.stack.%d.a", b, stack,              entry->frequency);
-      GetPropI2("band.%d.stack.%d.mode", b,                  stack, entry->mode);
-      GetPropI2("band.%d.stack.%d.filter", b,                stack, entry->filter);
-      GetPropI2("band.%d.stack.%d.ctun", b, stack,           entry->ctun);
-      GetPropI2("band.%d.stack.%d.c", b, stack,              entry->ctun_frequency);
-      GetPropI2("band.%d.stack.%d.deviation", b, stack,      entry->deviation);
-      GetPropI2("band.%d.stack.%d.ctcss_enabled", b, stack,  entry->ctcss_enabled);
-      GetPropI2("band.%d.stack.%d.ctcss", b, stack,          entry->ctcss);
+      GetPropI2("band.%d.stack.%d.a", p, stack,              entry->frequency);
+      GetPropI2("band.%d.stack.%d.mode", p,                  stack, entry->mode);
+      GetPropI2("band.%d.stack.%d.filter", p,                stack, entry->filter);
+      GetPropI2("band.%d.stack.%d.ctun", p, stack,           entry->ctun);
+      GetPropI2("band.%d.stack.%d.c", p, stack,              entry->ctun_frequency);
+      GetPropI2("band.%d.stack.%d.deviation", p, stack,      entry->deviation);
+      GetPropI2("band.%d.stack.%d.ctcss_enabled", p, stack,  entry->ctcss_enabled);
+      GetPropI2("band.%d.stack.%d.ctcss", p, stack,          entry->ctcss);
     }
   }
   for (int b = 0; b < BANDS + XVTRS; b++) {
-    //
-    // Some sanity checks
-    //
     if (bands[b].bandstack->current_entry >= bands[b].bandstack->entries) {
       bands[b].bandstack->current_entry = 0;
     }
@@ -679,6 +704,10 @@ void bandRestoreState(void) {
         band_settings[b].ps_tx_att = 31;
       }
     }
+  }
+  if (legacy_band_layout) {
+    bands[band8].OCrx = bands[band6].OCrx;
+    bands[band8].OCtx = bands[band6].OCtx;
   }
   band_apply_iaru_region();
 }

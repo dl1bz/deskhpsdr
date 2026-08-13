@@ -50,7 +50,7 @@ enum ACTION {
   BAND_220,
   BAND_2300,
   BAND_30,
-  BAND_3400,
+  BAND_8,
   BAND_40,
   BAND_430,
   BAND_6,

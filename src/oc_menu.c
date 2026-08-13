@@ -62,8 +62,14 @@ static void oc_rx_cb(GtkWidget *widget, gpointer data) {
   //t_print("oc_rx_cb: band=%d oc=%d mask=%d\n",b,oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     band->OCrx |= mask;
+    if (b == band6) {
+      band_get_band(band8)->OCrx |= mask;
+    }
   } else {
     band->OCrx &= ~mask;
+    if (b == band6) {
+      band_get_band(band8)->OCrx &= ~mask;
+    }
   }
   schedule_high_priority();
 }
@@ -76,8 +82,14 @@ static void oc_tx_cb(GtkWidget *widget, gpointer data) {
   //t_print("oc_tx_cb: band=%d oc=%d mask=%d\n",b,oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     band->OCtx |= mask;
+    if (b == band6) {
+      band_get_band(band8)->OCtx |= mask;
+    }
   } else {
     band->OCtx &= ~mask;
+    if (b == band6) {
+      band_get_band(band8)->OCtx &= ~mask;
+    }
   }
   schedule_high_priority();
 }
@@ -167,8 +179,9 @@ void oc_menu(GtkWidget *parent) {
   i = bandGen;
   for (;;) {
     const BAND *band = band_get_band(i);
-    if (strlen(band->title) > 0) {
-      GtkWidget *band_label = gtk_label_new(band->title);
+    if (i != band8 && strlen(band->title) > 0) {
+      const char *title = i == band6 ? "8/6" : band->title;
+      GtkWidget *band_label = gtk_label_new(title);
       gtk_widget_set_name(band_label, "boldlabel");
       gtk_widget_show(band_label);
       gtk_grid_attach(GTK_GRID(grid), band_label, 0, row, 1, 1);

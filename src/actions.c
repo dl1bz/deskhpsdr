@@ -94,7 +94,7 @@ ACTION_TABLE ActionTable[] = {
   {BAND_220,            "Band 220",             "220",          MIDI_KEY},
   {BAND_2300,           "Band 2300",            "2300",         MIDI_KEY},
   {BAND_30,             "Band 30",              "30",           MIDI_KEY},
-  {BAND_3400,           "Band 3400",            "3400",         MIDI_KEY},
+  {BAND_8,              "Band 8",               "8",            MIDI_KEY},
   {BAND_40,             "Band 40",              "40",           MIDI_KEY},
   {BAND_430,            "Band 430",             "430",          MIDI_KEY},
   {BAND_6,              "Band 6",               "6",            MIDI_KEY},
@@ -685,9 +685,9 @@ int process_action(void *data) {
       vfo_band_changed(active_receiver->id, band30);
     }
     break;
-  case BAND_3400:
+  case BAND_8:
     if (a->mode == PRESSED) {
-      vfo_band_changed(active_receiver->id, band3400);
+      vfo_band_changed(active_receiver->id, band8);
     }
     break;
   case BAND_40:

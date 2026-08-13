@@ -1682,6 +1682,9 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         case band10:
           b = 10;
           break;
+        case band8:
+          b = 8;
+          break;
         case band6:
           b = 6;
           break;
@@ -1736,6 +1739,9 @@ gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           break;
         case 10:
           band = band10;
+          break;
+        case 8:
+          band = band8;
           break;
         case 6:
           band = band6;

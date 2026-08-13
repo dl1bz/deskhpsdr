@@ -2614,7 +2614,7 @@ void ozy_send_buffer(void) {
       if (filter_board == APOLLO) { output_buffer[C2] |= 0x2C; }
       if ((filter_board == APOLLO) && tune) { output_buffer[C2] |= 0x10; }
       // Alex 6M low noise amplifier
-      if (rxb == band6) { output_buffer[C3] = output_buffer[C3] | 0x40; }
+      if (rxb == band8 || rxb == band6) { output_buffer[C3] = output_buffer[C3] | 0x40; }
       if (txband->disablePA || !pa_enabled) {
         output_buffer[C3] |= 0x80; // disable Alex T/R relay
         if (radio_is_transmitting()) {
