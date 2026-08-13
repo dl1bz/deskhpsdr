@@ -221,7 +221,9 @@ static TCI_SET_LOCK tci_set_locks[TCI_SET_LOCK_COUNT];
 
 static gpointer tci_lws_server (gpointer data);
 static void tci_lws_free_queue (CLIENT *client);
-static int tci_has_audio_monitor_source (void);
+#ifdef COREAUDIO
+  static int tci_has_audio_monitor_source (void);
+#endif
 static void tci_update_rx_audio_global (void);
 static void tci_audio_wakeup (void);
 static void tci_audio_tx_chrono_wakeup (void);
@@ -773,6 +775,7 @@ static void tci_cw_macros_empty (void) {
   tci_cw_send_to_all(msg);
 }
 
+#ifdef COREAUDIO
 static int tci_has_audio_monitor_source (void) {
   int enabled = 0;
   g_mutex_lock (&tci_mutex);
@@ -786,6 +789,7 @@ static int tci_has_audio_monitor_source (void) {
   g_mutex_unlock (&tci_mutex);
   return enabled;
 }
+#endif
 
 static void tci_update_rx_audio_global (void) {
   int enabled = 0;
