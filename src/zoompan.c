@@ -341,15 +341,15 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   // width = my_width - 50;
   width = my_width;
   height = my_height;
-  t_print("%s: width=%d height=%d\n", __func__, width, height);
+  ui_print("%s: width=%d height=%d\n", __func__, width, height);
   int widget_height = 0;
   widget_height = height;
   // int zoombox_width = (int)floor(width / 2.95); // Breite zoom_box
   int zoombox_width = (int) floor(width / 3);  // Breite zoom_box
   // int panbox_width = width / 2.68; // Breite pan_box
   int panbox_width = width - zoombox_width; // Breite pan_box: Gesamtbreite - Breite zoom_box
-  t_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __func__, zoombox_width, panbox_width,
-          zoombox_width + panbox_width);
+  ui_print("%s: zoombox_width=%d panbox_width=%d summe=%d\n", __func__, zoombox_width, panbox_width,
+           zoombox_width + panbox_width);
   zoompan = gtk_grid_new();
   WEAKEN(zoompan);
   gtk_widget_set_size_request(zoompan, width, height);

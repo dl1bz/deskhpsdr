@@ -167,9 +167,9 @@ GtkWidget *toolbar_init(int my_width, int my_height, int window_height) {
   if (row_height < 1) { row_height = 1; }
   int button_width = MAX(1, width / GRID_COLS);
   const char *button_css = "small_button";
-  t_print("toolbar_init: width=%d height=%d rows=%d row_height=%d button_width=%d\n", width, height,
-          visible_rows, row_height, button_width);
-  t_print("toolbar_init: button_css=%s\n", button_css);
+  ui_print("toolbar_init: width=%d height=%d rows=%d row_height=%d button_width=%d\n", width, height,
+           visible_rows, row_height, button_width);
+  ui_print("toolbar_init: button_css=%s\n", button_css);
   toolbar_switches = switches_toolbar[function];
   // Sim-State immer beim Neuaufbau zurücksetzen
   for (int i = 0; i < TOOLBAR_BUTTON_COUNT; ++i) {

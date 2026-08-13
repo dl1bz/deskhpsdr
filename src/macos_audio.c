@@ -660,7 +660,7 @@ float audio_get_next_mic_sample(void) {
   } else if (now_us >= next_log_us) {
     unsigned int underruns = atomic_exchange_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
     unsigned int overruns = atomic_exchange_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
-    d_print("CoreAudio MIC ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u overruns=%u\n",
+    l_print("CoreAudio MIC ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u overruns=%u\n",
             queued, (double) queued * 1000.0 / 48000.0,
             min_queued, (double) min_queued * 1000.0 / 48000.0,
             max_queued, (double) max_queued * 1000.0 / 48000.0,
@@ -842,7 +842,7 @@ void audio_reprime_output(RECEIVER *rx) {
       g_atomic_int_set(&output_ring_starved[rx->id], 0);
       atomic_store_explicit(&rx_ring_diag_underruns[rx->id], 0U, memory_order_relaxed);
     }
-    d_print("%s: RX%d reprime %d -> %d samples (added %d silence)\n",
+    l_print("%s: RX%d reprime %d -> %d samples (added %d silence)\n",
             __func__, rx->id, avail, rx_lat_target, missing);
   }
 }
@@ -911,7 +911,7 @@ int audio_write(RECEIVER *rx, float left, float right) {
       atomic_store_explicit(&rx->local_audio_buffer_inpt, oldpt, memory_order_release);
       inpt = oldpt;
       avail = rx_lat_target;
-      d_print("%s: RX ring high-water correction, reduced to %d samples\n",
+      l_print("%s: RX ring high-water correction, reduced to %d samples\n",
               __func__, rx_lat_target);
     }
     if (rx->local_audio_mute) {
@@ -949,7 +949,7 @@ int audio_write(RECEIVER *rx, float left, float right) {
           unsigned int underruns =
                   atomic_exchange_explicit(&rx_ring_diag_underruns[rx->id],
                                            0U, memory_order_relaxed);
-          d_print("CoreAudio RX ring: rx=%d queued=%d (%.2f ms) "
+          l_print("CoreAudio RX ring: rx=%d queued=%d (%.2f ms) "
                   "min=%d (%.2f ms) max=%d (%.2f ms) "
                   "underruns=%u low_corr=%u high_corr=%u\n",
                   rx->id,
@@ -1060,7 +1060,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     } else if (diag_now_us >= diag_next_log_us) {
       unsigned int diag_underruns =
               atomic_exchange_explicit(&cw_ring_diag_underruns, 0U, memory_order_relaxed);
-      d_print("CoreAudio CW ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u low_corr=%u high_corr=%u\n",
+      l_print("CoreAudio CW ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u low_corr=%u high_corr=%u\n",
               avail, (double) avail * 1000.0 / 48000.0,
               diag_min_avail, (double) diag_min_avail * 1000.0 / 48000.0,
               diag_max_avail, (double) diag_max_avail * 1000.0 / 48000.0,

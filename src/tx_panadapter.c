@@ -944,7 +944,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 }
 
 void tx_panadapter_init(TRANSMITTER *tx, int width, int height) {
-  t_print("tx_panadapter_init: %d x %d\n", width, height);
+  ui_print("tx_panadapter_init: %d x %d\n", width, height);
   tx->panadapter_surface = NULL;
   tx->panadapter = gtk_drawing_area_new();
   gtk_widget_set_size_request(tx->panadapter, width, height);

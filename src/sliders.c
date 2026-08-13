@@ -1652,13 +1652,13 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   if (can_transmit && display_extra_sliders) {
     widget_height = height / 3;
   }
-  t_print("sliders_init: width=%d height=%d widget_height=%d\n", width, height, widget_height);
+  ui_print("sliders_init: width=%d height=%d widget_height=%d\n", width, height, widget_height);
   int box_left_width = (int) floor(my_width / 3);  // abrunden auf ganze Zahl
   int box_right_width = box_left_width - 50;
   int box_middle_width = my_width - box_left_width - box_right_width - 50;
-  t_print("%s: my_width = %d box_left_width = %d box_middle_width = %d box_right_width = %d (summe = %d)\n",
-          __func__, my_width, box_left_width, box_middle_width, box_right_width,
-          box_left_width + box_middle_width + box_right_width);
+  ui_print("%s: my_width = %d box_left_width = %d box_middle_width = %d box_right_width = %d (summe = %d)\n",
+           __func__, my_width, box_left_width, box_middle_width, box_right_width,
+           box_left_width + box_middle_width + box_right_width);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   /* Basic layout GRID "sliders"
   *

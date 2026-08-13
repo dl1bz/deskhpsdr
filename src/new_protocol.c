@@ -668,7 +668,7 @@ void new_protocol_set_jitter_buffer(int enabled, int depth_ms) {
   g_atomic_int_set(&p2_jitter_buffer_enabled, enabled);
   g_atomic_int_set(&p2_jitter_buffer_depth_ms, depth_ms);
   p2_jitter_reset_all();
-  d_print("P2 jitter buffer: %s depth=%d ms\n",
+  l_print("P2 jitter buffer: %s depth=%d ms\n",
           enabled ? "ON" : "OFF",
           depth_ms);
 }
@@ -817,7 +817,7 @@ static gpointer p2_jitter_thread(gpointer data) {
      * No packet slots need clearing here because queued == 0.
      */
     if (state->queued == 0) {
-      d_print("P2 jitter underflow: ddc=%d reserve exhausted, pausing for resync\n", ddc);
+      l_print("P2 jitter underflow: ddc=%d reserve exhausted, pausing for resync\n", ddc);
       state->started = 0;
       state->primed = 0;
       state->expected_sequence = 0;
@@ -872,7 +872,7 @@ static gpointer p2_jitter_thread(gpointer data) {
         }
         state->expected_sequence++;
       }
-      d_print("P2 jitter latency trim: ddc=%d queued=%u->%u dropped=%u target=%.1f\n",
+      l_print("P2 jitter latency trim: ddc=%d queued=%u->%u dropped=%u target=%.1f\n",
               ddc, before, state->queued, dropped, target_packets);
     }
     state->next_release_us += state->packet_period_us;
@@ -2789,7 +2789,7 @@ static gpointer new_protocol_thread(gpointer data) {
         ingress_expected[ingress_stream] = ingress_sequence + 1;
       }
       if (ingress_now_us - ingress_report_us >= G_USEC_PER_SEC) {
-        d_print("P2 ingress: IQ0 pkt=%" G_GUINT64_FORMAT " miss=%" G_GUINT64_FORMAT
+        l_print("P2 ingress: IQ0 pkt=%" G_GUINT64_FORMAT " miss=%" G_GUINT64_FORMAT
                 " reorder=%" G_GUINT64_FORMAT " gap=%.3fms"
                 " MIC pkt=%" G_GUINT64_FORMAT " miss=%" G_GUINT64_FORMAT
                 " reorder=%" G_GUINT64_FORMAT " gap=%.3fms"

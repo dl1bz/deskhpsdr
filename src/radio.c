@@ -909,24 +909,6 @@ void radio_reconfigure (void) {
       destroy_widget_safe (&sliders);
     }
   }
-  /*
-  if (display_toolbar) {
-    if (toolbar == NULL) {
-      toolbar = toolbar_init(my_width, TOOLBAR_HEIGHT);
-      gtk_fixed_put(GTK_FIXED(fixed), toolbar, 0, y);
-    } else {
-      gtk_fixed_move(GTK_FIXED(fixed), toolbar, 0, y);
-    }
-
-    gtk_widget_show_all(toolbar);
-  } else {
-    if (toolbar != NULL) {
-      // gtk_container_remove(GTK_CONTAINER(fixed), toolbar);
-      // toolbar = NULL;
-      destroy_widget_safe(&toolbar);
-    }
-  }
-  */
   if (display_toolbar) {
     int toolbar_height = toolbar_get_height(my_width, my_height, TOOLBAR_HEIGHT);
     if (toolbar != NULL && toolbar_needs_rebuild(my_width, toolbar_height, my_height)) {
@@ -1204,20 +1186,18 @@ static void radio_create_visual (void) {
   gtk_container_remove (GTK_CONTAINER (top_window), topgrid);
   gtk_container_add (GTK_CONTAINER (top_window), fixed);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print ("%s: css_dark_theme ? : %d\n", __func__, css_dark_theme);
+  ui_print("%s: css_dark_theme ? : %d\n", __func__, css_dark_theme);
   win_set_bgcolor (top_window, &radio_bgcolor);
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  //t_print("radio: vfo_init\n");
   int my_height = full_screen ? screen_height : display_height;
   int my_width  = full_screen ? screen_width  : display_width;
   VFO_WIDTH = my_width - MENU_WIDTH - METER_WIDTH;
   vfo_panel = vfo_init (VFO_WIDTH, VFO_HEIGHT);
   gtk_fixed_put (GTK_FIXED (fixed), vfo_panel, 0, y);
-  //t_print("radio: meter_init\n");
   meter = meter_init (METER_WIDTH, METER_HEIGHT);
   gtk_fixed_put (GTK_FIXED (fixed), meter, VFO_WIDTH, y);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print ("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+  ui_print("%s: hide_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
            y);
   hide_b = gtk_button_new_with_label ("Hide");
   gtk_widget_set_name (hide_b, "boldlabel_vfo_sf");
@@ -1228,7 +1208,7 @@ static void radio_create_visual (void) {
   gtk_fixed_put (GTK_FIXED (fixed), hide_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print ("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+  ui_print("%s: menu_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
            y);
   menu_b = gtk_button_new_with_label ("Menu");
   gtk_widget_set_tooltip_text (menu_b, "Main Menu and Settings");
@@ -1238,7 +1218,7 @@ static void radio_create_visual (void) {
   gtk_fixed_put (GTK_FIXED (fixed), menu_b, VFO_WIDTH + METER_WIDTH, y + 1);
   y += MENU_HEIGHT - 10;
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  t_print ("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
+  ui_print("%s: exit_b MENU_WIDTH=%d MENU_HEIGHT=%d VFO_WIDTH=%d y=%d\n", __func__, MENU_WIDTH, MENU_HEIGHT, VFO_WIDTH,
            y);
   exit_b = gtk_button_new_with_label ("Exit");
   gtk_widget_set_tooltip_text (exit_b, "Close and Exit this App");

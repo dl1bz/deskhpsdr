@@ -46,6 +46,7 @@
 static GMutex t_print_mutex;  // globaler Mutex
 
 extern int log_debug;
+extern int ui_debug;
 
 static void v_t_print(const gchar *format, va_list args) {
   struct timespec ts;
@@ -93,7 +94,7 @@ void t_print(const gchar *format, ...) {
   va_end(args);
 }
 
-void d_print(const gchar *format, ...) {
+void l_print(const gchar *format, ...) {
   if (!log_debug) {
     return;
   }
@@ -103,6 +104,15 @@ void d_print(const gchar *format, ...) {
   va_end(args);
 }
 
+void ui_print(const gchar *format, ...) {
+  if (!ui_debug) {
+    return;
+  }
+  va_list args;
+  va_start(args, format);
+  v_t_print(format, args);
+  va_end(args);
+}
 
 void t_perror(const gchar *string) {
   t_print("%s: %s\n", string, strerror(errno));

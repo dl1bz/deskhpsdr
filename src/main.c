@@ -94,6 +94,7 @@ int p2_angelia_ddc0_map = 0;
 int display_debug = 0;
 int display_sysinfo = 0;
 int log_debug = 0;
+int ui_debug = 0;
 
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;
@@ -715,6 +716,8 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
     t_print("no default display!\n");
     exit(EXIT_FAILURE);
   }
+  const gchar *quit_accels[] = { "<Primary>q", NULL };
+  gtk_application_set_accels_for_action(app, "app.quit", quit_accels);
   screen = gdk_display_get_default_screen(display);
 #ifdef __linux__
   t_print("Forcing GTK theme to Adwaita\n");
@@ -936,9 +939,7 @@ int main(int argc, char **argv) {
       .activate = quit_action_cb
     }
   };
-  const gchar *quit_accels[] = { "<Primary>q", NULL };
   g_action_map_add_action_entries(G_ACTION_MAP(deskhpsdr), app_actions, G_N_ELEMENTS(app_actions), NULL);
-  gtk_application_set_accels_for_action(deskhpsdr, "app.quit", quit_accels);
   rc = g_application_run(G_APPLICATION(deskhpsdr), argc, argv);
   t_print("exiting ...\n");
   g_object_unref(deskhpsdr);

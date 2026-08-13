@@ -26,5 +26,6 @@
 #include <gdk/gdk.h>
 
 extern void t_print(const gchar *format, ...);
-extern void d_print(const gchar *format, ...);
+extern void l_print(const gchar *format, ...);
+extern void ui_print(const gchar *format, ...);
 extern void t_perror(const gchar *string);

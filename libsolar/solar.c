@@ -151,10 +151,8 @@ static int parse_es6_row_time(const char *text, time_t *timestamp) {
   return 0;
 }
 
-static void inspect_es6_row(xmlNode *row, Es6Stats *stats) {
-  xmlChar *content = xmlNodeGetContent(row);
-  if (!content) { return; }
-  const char *text = (const char *)content;
+static void inspect_es6_text(const char *text, Es6Stats *stats) {
+  if (!text || !stats) { return; }
 
   if (text_has_50mhz_frequency(text)) {
     uint64_t hash = es6_row_hash(text);
@@ -186,7 +184,12 @@ static void inspect_es6_row(xmlNode *row, Es6Stats *stats) {
       stats->marker_time = marker_time;
     }
   }
+}
 
+static void inspect_es6_row(xmlNode *row, Es6Stats *stats) {
+  xmlChar *content = xmlNodeGetContent(row);
+  if (!content) { return; }
+  inspect_es6_text((const char *)content, stats);
   xmlFree(content);
 }
 
@@ -197,6 +200,22 @@ static void count_es6_rows(xmlNode *node, Es6Stats *stats) {
   }
 }
 
+static void count_es6_text_lines(xmlNode *root, Es6Stats *stats) {
+  xmlChar *content = root ? xmlNodeGetContent(root) : NULL;
+  if (!content) { return; }
+
+  char *line = (char *)content;
+  while (*line) {
+    char *end = strchr(line, '\n');
+    if (end) { *end = '\0'; }
+    inspect_es6_text(line, stats);
+    if (!end) { break; }
+    line = end + 1;
+  }
+
+  xmlFree(content);
+}
+
 static int parse_es6_status(const char *html, size_t size, int *spots, int *unique,
                             char *marker, size_t marker_size, int *age_minutes) {
   htmlDocPtr doc = htmlReadMemory(html, (int)size, ES6_URL, NULL,
@@ -204,7 +223,17 @@ static int parse_es6_status(const char *html, size_t size, int *spots, int *uniq
   if (!doc) { return -1; }
   Es6Stats stats = {0};
   xmlNode *root = xmlDocGetRootElement(doc);
-  if (root) { count_es6_rows(root, &stats); }
+  if (root) {
+    count_es6_rows(root, &stats);
+    /*
+     * DXRobot currently publishes the E-skip log as preformatted text rather
+     * than table rows. Keep the table parser for compatibility, but fall back
+     * to line-by-line document text when it found nothing.
+     */
+    if (!stats.marker_found && stats.spots == 0) {
+      count_es6_text_lines(root, &stats);
+    }
+  }
   xmlFreeDoc(doc);
   if (spots) { *spots = stats.spots; }
   if (unique) { *unique = stats.unique; }
@@ -259,8 +288,12 @@ int fetch_es6_status(int *spots, int *unique, char *marker, size_t marker_size, 
     fprintf(stderr, "fetch_es6_status: curl error %d: %s\n", (int)res, curl_easy_strerror(res));
     goto cleanup;
   }
-  long response_code;
+  long response_code = 0;
+  char *effective_url = NULL;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+  curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &effective_url);
+  fprintf(stderr, "fetch_es6_status: HTTP code=%ld bytes=%zu effective_url=%s\n",
+          response_code, chunk.size, effective_url ? effective_url : "(null)");
   if (response_code != 200) {
     fprintf(stderr, "fetch_es6_status: HTTP error %ld\n", response_code);
     goto cleanup;
