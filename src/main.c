@@ -42,6 +42,7 @@
 #include "audio.h"
 #include "band.h"
 #include "bandstack.h"
+#include "buffer_monitor.h"
 #include "main.h"
 #include "discovered.h"
 #include "actions.h"
@@ -294,9 +295,12 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       new_menu();
     }
     break;
-  // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T
+  // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T; B toggles Buffer Monitor
   case GDK_KEY_b:
     start_band();
+    break;
+  case GDK_KEY_B:
+    buffer_monitor_toggle();
     break;
   case GDK_KEY_M:
     start_mode();

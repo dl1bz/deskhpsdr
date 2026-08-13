@@ -53,6 +53,68 @@ guint64 audio_get_xrun_count(void) {
   return (guint64) g_atomic_int_get(&audio_xrun_count);
 }
 
+
+int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
+  if (diag == NULL) return 0;
+  memset(diag, 0, sizeof(*diag));
+  if (rx == NULL) return 0;
+
+  g_mutex_lock(&rx->local_audio_mutex);
+  if (rx->playstream != NULL) {
+    int err = 0;
+    pa_usec_t usec = pa_simple_get_latency(rx->playstream, &err);
+    if (usec != (pa_usec_t)-1) {
+      int server_samples = (int)((usec * 48000ULL + 500000ULL) / 1000000ULL);
+      diag->available = 1;
+      diag->queued = server_samples + rx->local_audio_buffer_offset;
+      diag->capacity = diag->queued > out_buffer_size ? diag->queued : out_buffer_size;
+      if (rx->pulseaudio_buffer_size > 0) {
+        diag->target = rx->pulseaudio_buffer_size * 4;
+        if (diag->capacity < diag->target) diag->capacity = diag->target;
+      }
+    }
+  }
+  g_mutex_unlock(&rx->local_audio_mutex);
+  return diag->available;
+}
+
+int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
+  if (diag == NULL) return 0;
+  memset(diag, 0, sizeof(*diag));
+
+  g_mutex_lock(&mic_ring_mutex);
+  if (mic_ring_buffer != NULL) {
+    int queued = mic_ring_write_pt - mic_ring_read_pt;
+    if (queued < 0) queued += MICRINGLEN;
+    diag->available = 1;
+    diag->queued = queued;
+    diag->capacity = MICRINGLEN - 1;
+  }
+  g_mutex_unlock(&mic_ring_mutex);
+  return diag->available;
+}
+
+int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
+  if (diag == NULL) return 0;
+  memset(diag, 0, sizeof(*diag));
+  if (rx == NULL) return 0;
+
+  g_mutex_lock(&rx->local_audio_mutex);
+  if (rx->playstream != NULL && rx->local_audio_cw_active) {
+    int err = 0;
+    pa_usec_t usec = pa_simple_get_latency(rx->playstream, &err);
+    if (usec != (pa_usec_t)-1) {
+      int server_samples = (int)((usec * 48000ULL + 500000ULL) / 1000000ULL);
+      diag->available = 1;
+      diag->queued = server_samples + rx->local_audio_buffer_offset;
+      diag->capacity = diag->queued > out_buffer_size ? diag->queued : out_buffer_size;
+    }
+  }
+  g_mutex_unlock(&rx->local_audio_mutex);
+  return diag->available;
+}
+
+
 GMutex mic_ring_mutex;
 static GMutex enum_mutex;
 static GCond  enum_cond;

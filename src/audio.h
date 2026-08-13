@@ -47,6 +47,19 @@ extern int cw_audio_write (RECEIVER *rx, float sample);
 extern void audio_release_cards (void);
 extern void audio_get_cards (void);
 extern guint64 audio_get_xrun_count (void);
+typedef struct {
+  int available;
+  int queued;
+  int capacity;
+  int low;
+  int target;
+  int high;
+} AUDIO_BUFFER_DIAG;
+
+extern int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag);
+extern int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag);
+extern int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag);
+
 #ifdef COREAUDIO
   extern void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels);
   extern void audio_process_local_mic_input(const float *samples, unsigned int frames);

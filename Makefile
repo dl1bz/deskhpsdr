@@ -657,6 +657,7 @@ src/appearance.c \
 src/band.c \
 src/band_menu.c \
 src/bandstack_menu.c \
+src/buffer_monitor.c \
 src/controller_mapping.c \
 src/css.c \
 src/cw_engine.c \
@@ -837,6 +838,7 @@ src/appearance.o \
 src/band.o \
 src/band_menu.o \
 src/bandstack_menu.o \
+src/buffer_monitor.o \
 src/controller_mapping.o \
 src/css.o \
 src/cw_engine.o \

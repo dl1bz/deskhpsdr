@@ -104,6 +104,20 @@ extern void new_protocol_menu_stop (void);
 extern int p2_jitter_buffer_enabled;
 extern int p2_jitter_buffer_depth_ms;
 extern void new_protocol_set_jitter_buffer (int enabled, int depth_ms);
+
+typedef struct {
+  int active;
+  int jitter_enabled;
+  unsigned int jitter_queued;
+  unsigned int jitter_capacity;
+  double jitter_ms;
+  double jitter_target_ms;
+  unsigned int rxiq_queued;
+  unsigned int rxiq_peak;
+  unsigned int rxiq_capacity;
+} P2_BUFFER_DIAG;
+
+extern int new_protocol_get_buffer_diag (int ddc, P2_BUFFER_DIAG *diag);
 extern void saturn_post_iq_data (int ddc, mybuffer *buffer);
 extern void saturn_post_micaudio (int bytes, mybuffer *buffer);
 extern void saturn_post_high_priority (mybuffer *buffer);

@@ -120,6 +120,8 @@ static inline void rx_audio_latency_limits(int *low, int *target, int *high_base
   }
 }
 
+
+
 #define CW_LAT_LOW            128
 #define CW_LAT_TARGET         256
 #define CW_LAT_HIGH           384
@@ -139,6 +141,73 @@ static atomic_uint mic_ring_diag_generation;
 static atomic_uint mic_ring_underruns;
 static atomic_uint mic_ring_overruns;
 static atomic_uint cw_ring_diag_underruns;
+
+
+int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
+  if (rx == NULL || diag == NULL) {
+    return 0;
+  }
+  memset(diag, 0, sizeof(*diag));
+  diag->capacity = MY_RING_BUFFER_SIZE;
+  rx_audio_latency_limits(&diag->low, &diag->target, &diag->high);
+  if (rx->local_audio_buffer == NULL || rx->coreaudio_output_handle == NULL) {
+    return 1;
+  }
+
+  int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_acquire);
+  int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
+  int queued = inpt - outpt;
+  if (queued < 0) {
+    queued += MY_RING_BUFFER_SIZE;
+  }
+  diag->queued = queued;
+  diag->available = 1;
+  return 1;
+}
+
+int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
+  if (diag == NULL) {
+    return 0;
+  }
+  memset(diag, 0, sizeof(*diag));
+  diag->capacity = MY_RING_BUFFER_SIZE;
+  if (mic_ring_buffer == NULL) {
+    return 1;
+  }
+
+  int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
+  int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);
+  int queued = inpt - outpt;
+  if (queued < 0) {
+    queued += MY_RING_BUFFER_SIZE;
+  }
+  diag->queued = queued;
+  diag->available = 1;
+  return 1;
+}
+
+int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
+  if (rx == NULL || diag == NULL) {
+    return 0;
+  }
+  memset(diag, 0, sizeof(*diag));
+  diag->capacity = MY_RING_BUFFER_SIZE;
+  diag->target = CW_LAT_TARGET;
+  if (rx->sidetone_buffer == NULL || rx->coreaudio_output_handle == NULL) {
+    return 1;
+  }
+
+  int inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_acquire);
+  int outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
+  int queued = inpt - outpt;
+  if (queued < 0) {
+    queued += MY_RING_BUFFER_SIZE;
+  }
+  diag->queued = queued;
+  diag->available = 1;
+  return 1;
+}
+
 
 //
 // Request a ring reset without modifying the consumer-owned output pointer.
