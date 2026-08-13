@@ -92,20 +92,6 @@ int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   return diag->available;
 }
 
-int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
-  if (diag == NULL) { return 0; }
-  memset(diag, 0, sizeof(*diag));
-  if (mic_ring_buffer == NULL) { return 0; }
-  int read_pt = mic_ring_read_pt;
-  int write_pt = mic_ring_write_pt;
-  int queued = write_pt - read_pt;
-  if (queued < 0) { queued += MICRINGLEN; }
-  diag->available = 1;
-  diag->queued = queued;
-  diag->capacity = MICRINGLEN - 1;
-  return 1;
-}
-
 int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   if (diag == NULL) { return 0; }
   memset(diag, 0, sizeof(*diag));
@@ -177,6 +163,21 @@ AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 float  *mic_ring_buffer = NULL;
 volatile int mic_ring_read_pt = 0;
 volatile int mic_ring_write_pt = 0;
+
+int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
+  if (diag == NULL) { return 0; }
+  memset(diag, 0, sizeof(*diag));
+  if (mic_ring_buffer == NULL) { return 0; }
+  int read_pt = mic_ring_read_pt;
+  int write_pt = mic_ring_write_pt;
+  int queued = write_pt - read_pt;
+  if (queued < 0) { queued += MICRINGLEN; }
+  diag->available = 1;
+  diag->queued = queued;
+  diag->capacity = MICRINGLEN - 1;
+  return 1;
+}
+
 
 int audio_open_output(RECEIVER *rx) {
   int err;
