@@ -847,7 +847,6 @@ void audio_get_cards(void) {
   snd_pcm_info_t *pcminfo;
   snd_ctl_card_info_alloca(&info);
   snd_pcm_info_alloca(&pcminfo);
-  int i;
   int card = -1;
   t_print("%s\n", __func__);
   g_mutex_lock(&audio_mutex);
@@ -966,7 +965,7 @@ void audio_get_cards(void) {
         input_devices[n_input_devices].name = g_strdup(name);
         input_devices[n_input_devices].description = g_strdup(descr ? descr : name);
         if (descr != NULL) {
-          for (i = 0; i < (int) strlen(input_devices[n_input_devices].description); i++) {
+          for (int i = 0; i < (int) strlen(input_devices[n_input_devices].description); i++) {
             if (input_devices[n_input_devices].description[i] == '\n') {
               input_devices[n_input_devices].description[i] = '\0';
               break;
