@@ -2004,7 +2004,7 @@ static void new_protocol_high_priority(void) {
   high_priority_buffer_to_radio[1429] = (alex1 >> 16) & 0xFF;
   high_priority_buffer_to_radio[1430] = (alex1 >>  8) & 0xFF;
   high_priority_buffer_to_radio[1431] = (alex1) & 0xFF;
-  //t_print("ALEX0 bits:  %02X %02X %02X %02X\n",high_priority_buffer_to_radio[1428],high_priority_buffer_to_radio[1429],high_priority_buffer_to_radio[1430],high_priority_buffer_to_radio[1431]);
+  //t_print("ALEX1 bits:  %02X %02X %02X %02X\n",high_priority_buffer_to_radio[1428],high_priority_buffer_to_radio[1429],high_priority_buffer_to_radio[1430],high_priority_buffer_to_radio[1431]);
   //
   // ADC step attenuator of ADC0 and ADC1
   //
