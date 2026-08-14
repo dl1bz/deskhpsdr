@@ -250,8 +250,8 @@ static pthread_mutex_t send_rxaudio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 // them a linked list, and maintain a free list.
 //
 // Buffers move between the receive thread and several consumer threads.
-// The free-list transition therefore must be thread-safe, but its critical
-// section contains pointer/state updates only -- no allocation.
+// The free-stack transition is lock-free and contains only atomic
+// pointer/state updates -- no allocation.
 //
 ////////////////////////////////////////////////////////////////////////////
 
@@ -269,21 +269,27 @@ static int num_buf = 0;
 static mybuffer *buflist = NULL;
 
 /*
- * O(1) intrusive free-buffer list for new_protocol_thread().
+ * Network receive-buffer ownership.
  *
- * buflist remains the ownership list.  freebuflist contains only free
- * receive buffers and uses the buffer's own free_next pointer, so no
- * allocator is involved when buffers move between producer and consumers.
- * The mutex protects only the free-list pointer updates.
+ * The network receive pool is an intrusive lock-free LIFO stack:
+ *
+ *   - new_protocol_thread() is the only consumer/pop side
+ *   - HP/MIC/IQ/jitter threads may concurrently return/push buffers
+ *
+ * No mutex and no allocator are used in the receive hot path.  LIFO reuse
+ * also tends to keep the active working set cache-hot.
+ *
+ * free_next is only used while a network buffer is on this free stack.
  */
-static mybuffer *freebuflist = NULL;
-static pthread_mutex_t freebuf_mutex = PTHREAD_MUTEX_INITIALIZER;
+static gpointer freebuf_head = NULL;
+
 /*
  * Protocol restart epoch.  Buffers already owned by a consumer retain their
  * old generation until that consumer releases them.  They are never forced
- * back onto the free list during restart.
+ * free during restart.
  */
 static volatile gint buffer_generation = 1;
+
 
 //
 // The buffers used by new_protocol_thread
@@ -479,16 +485,22 @@ static void allocate_my_buffers(int count) {
       t_print("NewProtocol: malloc failed while allocating receive buffers\n");
       return;
     }
-    bp->free = 1;
+    g_atomic_int_set(&bp->free, 1);
     bp->owner = MYBUFFER_OWNER_NETWORK;
     bp->generation = (uint32_t) g_atomic_int_get(&buffer_generation);
     bp->next = buflist;
     buflist = bp;
+    /*
+     * Allocation occurs outside the packet receive hot path.  Publish the
+     * new free buffer with the same CAS push used by consumer releases so a
+     * concurrent late release during protocol restart remains safe.
+     */
+    gpointer head;
+    do {
+      head = g_atomic_pointer_get(&freebuf_head);
+      bp->free_next = (mybuffer *) head;
+    } while (!g_atomic_pointer_compare_and_exchange(&freebuf_head, head, bp));
     num_buf++;
-    pthread_mutex_lock(&freebuf_mutex);
-    bp->free_next = freebuflist;
-    freebuflist = bp;
-    pthread_mutex_unlock(&freebuf_mutex);
   }
 }
 
@@ -500,8 +512,11 @@ static void ensure_my_buffers(int count) {
 }
 
 /*
- * Return a receive buffer to the intrusive free list exactly once.
- * No allocation occurs here; the critical section only redirects pointers.
+ * Return a receive buffer.
+ *
+ * Saturn/XDMA owns a separate pool.  Network buffers are pushed onto the
+ * lock-free free stack.  The 0->1 CAS prevents duplicate insertion if a
+ * release path is reached twice before the buffer is reused.
  */
 static void release_my_buffer(mybuffer *bp) {
   if (bp == NULL) {
@@ -513,13 +528,14 @@ static void release_my_buffer(mybuffer *bp) {
     return;
   }
 #endif
-  pthread_mutex_lock(&freebuf_mutex);
-  if (!g_atomic_int_get(&bp->free)) {
-    g_atomic_int_set(&bp->free, 1);
-    bp->free_next = freebuflist;
-    freebuflist = bp;
+  if (!g_atomic_int_compare_and_exchange(&bp->free, 0, 1)) {
+    return;
   }
-  pthread_mutex_unlock(&freebuf_mutex);
+  gpointer head;
+  do {
+    head = g_atomic_pointer_get(&freebuf_head);
+    bp->free_next = (mybuffer *) head;
+  } while (!g_atomic_pointer_compare_and_exchange(&freebuf_head, head, bp));
 }
 
 /*
@@ -551,20 +567,28 @@ static int my_buffer_is_current(mybuffer *bp) {
 }
 
 /*
- * Obtain a free receive buffer in O(1).  This hot path performs no dynamic
- * allocation; under the mutex it only removes one pointer from freebuflist
- * and assigns the current protocol generation.
+ * Obtain a network receive buffer in O(1) without locking.
+ *
+ * new_protocol_thread() is the only popper.  Multiple consumer threads may
+ * push concurrently.  Since no other thread can pop the current head, the
+ * single-consumer Treiber-stack pop is not exposed to an ABA removal race.
  */
 static mybuffer *get_my_buffer(void) {
-  pthread_mutex_lock(&freebuf_mutex);
-  mybuffer *bp = freebuflist;
-  if (bp != NULL) {
-    freebuflist = bp->free_next;
-    bp->free_next = NULL;
-    bp->generation = (uint32_t) g_atomic_int_get(&buffer_generation);
-    g_atomic_int_set(&bp->free, 0);
+  mybuffer *bp;
+  mybuffer *next;
+  for (;;) {
+    bp = (mybuffer *) g_atomic_pointer_get(&freebuf_head);
+    if (bp == NULL) {
+      return NULL;
+    }
+    next = bp->free_next;
+    if (g_atomic_pointer_compare_and_exchange(&freebuf_head, bp, next)) {
+      break;
+    }
   }
-  pthread_mutex_unlock(&freebuf_mutex);
+  bp->free_next = NULL;
+  g_atomic_int_set(&bp->free, 0);
+  bp->generation = (uint32_t) g_atomic_int_get(&buffer_generation);
   return bp;
 }
 
