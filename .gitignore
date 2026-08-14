@@ -43,7 +43,7 @@ libsolar/*.o
 libtelnet/libtelnet.a
 libtelnet/*.o
 fftw-3.3.11/*
-libwebsockets-5/*
+libwebsockets-5/
 make.config.deskhpsdr
 .vscode/*
 src/.vscode/*

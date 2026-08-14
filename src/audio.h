@@ -63,6 +63,7 @@ extern int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag);
 #ifdef COREAUDIO
   extern void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels);
   extern void audio_process_local_mic_input(const float *samples, unsigned int frames);
+  extern void audio_reset_mic_buffer(void);
   extern void audio_reprime_output(RECEIVER *rx);
   extern int audio_open_tci_monitor (const char *audio_name);
   extern void audio_close_tci_monitor (void);

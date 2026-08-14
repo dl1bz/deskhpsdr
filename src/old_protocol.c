@@ -665,6 +665,11 @@ void old_protocol_stop(void) {
 
 void old_protocol_run(void) {
   t_print("%s\n", __func__);
+#ifdef COREAUDIO
+  if (transmitter != NULL && transmitter->local_microphone) {
+    audio_reset_mic_buffer();
+  }
+#endif
   pthread_mutex_lock(&send_ozy_mutex);
   metis_restart();
   pthread_mutex_unlock(&send_ozy_mutex);

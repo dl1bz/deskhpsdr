@@ -223,6 +223,17 @@ static void local_mic_ring_request_reset(int silence_frames) {
   atomic_store_explicit(&mic_ring_reset_pending, 1, memory_order_release);
 }
 
+void audio_reset_mic_buffer(void) {
+  /*
+   * A protocol restart temporarily stops the P2 mic consumer while CoreAudio
+   * continues to produce samples.  Drop that stale backlog on the consumer's
+   * next read using the existing producer/consumer reset handshake, while
+   * retaining 20 ms (960 frames at 48 kHz) of reserve.
+   */
+  local_mic_ring_request_reset(960);
+}
+
+
 static inline void local_mic_ring_push(float sample) {
   int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_relaxed);
   int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);

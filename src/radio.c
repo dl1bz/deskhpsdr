@@ -2758,8 +2758,12 @@ static void radio_restore_state (void) {
   if (rx_audio_network_reserve_ms > 500) { rx_audio_network_reserve_ms = 500; }
 #endif
   p2_jitter_buffer_enabled = p2_jitter_buffer_enabled ? 1 : 0;
-  if (p2_jitter_buffer_depth_ms < 5) { p2_jitter_buffer_depth_ms = 5; }
-  if (p2_jitter_buffer_depth_ms > 500) { p2_jitter_buffer_depth_ms = 500; }
+  if (p2_jitter_buffer_depth_ms < P2_JITTER_MIN_MS) {
+    p2_jitter_buffer_depth_ms = P2_JITTER_MIN_MS;
+  }
+  if (p2_jitter_buffer_depth_ms > P2_JITTER_MAX_MS) {
+    p2_jitter_buffer_depth_ms = P2_JITTER_MAX_MS;
+  }
   GetPropF0 ("diversity_gain",                                div_gain);
   GetPropF0 ("diversity_phase",                               div_phase);
   GetPropF0 ("diversity_cos",                                 div_cos);

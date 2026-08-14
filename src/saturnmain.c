@@ -157,20 +157,30 @@ static int num_buf[MAXMYBUF];
 // head of buffer list
 //
 static mybuffer *buflist[MAXMYBUF];
+static pthread_mutex_t saturn_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
+static uint32_t saturn_buffer_generation = 1;
 
 //
 // Obtain a free buffer. If no one is available allocate
 // new ones. Note these buffer "live" as long as the
 // program lives. They are never released.
 //
+// The Saturn/XDMA pool is intentionally separate from the P2 network
+// free list.  Ownership transitions are serialized here so the producer
+// and the never-ending HP/MIC/IQ consumer threads cannot race.
+//
 static mybuffer *get_my_buffer(int numlist) {
   int i, j, first;
   const char *desc;
+  pthread_mutex_lock(&saturn_buffer_mutex);
   mybuffer *bp = buflist[numlist];
   while (bp) {
     if (bp->free) {
       // found free buffer. Mark as used and return that one.
       bp->free = 0;
+      bp->owner = MYBUFFER_OWNER_SATURN;
+      bp->generation = saturn_buffer_generation;
+      pthread_mutex_unlock(&saturn_buffer_mutex);
       return bp;
     }
     bp = bp->next;
@@ -204,6 +214,9 @@ static mybuffer *get_my_buffer(int numlist) {
   for (i = 0; i < j; i++) {
     bp = malloc(sizeof(mybuffer));
     bp->free = 1;
+    bp->owner = MYBUFFER_OWNER_SATURN;
+    bp->generation = saturn_buffer_generation;
+    bp->free_next = NULL;
     bp->next = buflist[numlist];
     buflist[numlist] = bp;
     num_buf[numlist]++;
@@ -212,18 +225,45 @@ static mybuffer *get_my_buffer(int numlist) {
           first ? "set" : "increased", num_buf[numlist]);
   // Mark the first buffer in list as used and return that one.
   buflist[numlist]->free = 0;
-  return buflist[numlist];
+  buflist[numlist]->generation = saturn_buffer_generation;
+  bp = buflist[numlist];
+  pthread_mutex_unlock(&saturn_buffer_mutex);
+  return bp;
 }
 
-void saturn_free_buffers(void) {
-  mybuffer *mybuf;
-  for (int i = 0; i < MAXMYBUF; i++) {
-    mybuf = buflist[i];
-    while (mybuf) {
-      mybuf->free = 1;
-      mybuf = mybuf->next;
-    }
+void saturn_release_buffer(mybuffer *mybuf) {
+  if (mybuf == NULL) {
+    return;
   }
+  pthread_mutex_lock(&saturn_buffer_mutex);
+  if (mybuf->owner == MYBUFFER_OWNER_SATURN) {
+    mybuf->free = 1;
+  }
+  pthread_mutex_unlock(&saturn_buffer_mutex);
+}
+
+int saturn_buffer_is_current(mybuffer *mybuf) {
+  int current = 0;
+  if (mybuf == NULL) {
+    return 0;
+  }
+  pthread_mutex_lock(&saturn_buffer_mutex);
+  current = mybuf->owner == MYBUFFER_OWNER_SATURN &&
+            !mybuf->free &&
+            mybuf->generation == saturn_buffer_generation;
+  pthread_mutex_unlock(&saturn_buffer_mutex);
+  return current;
+}
+
+void saturn_advance_buffer_generation(void) {
+  pthread_mutex_lock(&saturn_buffer_mutex);
+  saturn_buffer_generation++;
+  if (saturn_buffer_generation == 0) {
+    // Generation 0 is not special, but avoid wrapping onto zero so stale
+    // zero-initialized memory can never look current.
+    saturn_buffer_generation = 1;
+  }
+  pthread_mutex_unlock(&saturn_buffer_mutex);
 }
 
 bool CreateDynamicMemory(void) {                            // return true if error
@@ -688,7 +728,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
         * (uint32_t *) mybuf->buffer = htonl(SequenceCounter++);     // add sequence count
         saturn_post_high_priority(mybuf);
       } else {
-        mybuf->free = 1;
+        saturn_release_buffer(mybuf);
       }
       if (ServerActive) {
         if (TXActive != 1) {
@@ -1025,7 +1065,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
             } else {
               SequenceCounter[DDC] = 0;
             }
-            mybuf->free = 1;
+            saturn_release_buffer(mybuf);
           } else {
             saturn_post_iq_data(DDC - 6, mybuf);
           }

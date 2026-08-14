@@ -247,10 +247,11 @@ static pthread_mutex_t send_rxaudio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 // alleviate the system load a little.
 //
 // Therefore we allocate a pool of network buffers *once*, make
-// them a linked list, and simply maintain a "free" flag.
+// them a linked list, and maintain a free list.
 //
-// This ONLY applies to the network buffers filled with data in
-// new_protocol_thread(), so this need not be thread-safe.
+// Buffers move between the receive thread and several consumer threads.
+// The free-list transition therefore must be thread-safe, but its critical
+// section contains pointer/state updates only -- no allocation.
 //
 ////////////////////////////////////////////////////////////////////////////
 
@@ -259,12 +260,8 @@ static pthread_mutex_t send_rxaudio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 //
 static int num_buf = 0;
 
-#define P2_INITIAL_BUFFERS 1024
-#define P2_REFILL_BUFFERS 64
-
+#define P2_INITIAL_BUFFERS 8192
 // DL1YCFs recommendation
-// #define P2_INITIAL_BUFFERS 128
-// #define P2_REFILL_BUFFERS 32
 
 //
 /* head of buffer ownership list */
@@ -272,15 +269,21 @@ static int num_buf = 0;
 static mybuffer *buflist = NULL;
 
 /*
- * O(1) free-buffer queue for new_protocol_thread().
+ * O(1) intrusive free-buffer list for new_protocol_thread().
  *
- * buflist remains the ownership list so all buffers can be marked free
- * on a protocol restart.  The receive thread obtains buffers from this
- * queue and therefore never scans the complete buffer list before
- * recvfrom().
+ * buflist remains the ownership list.  freebuflist contains only free
+ * receive buffers and uses the buffer's own free_next pointer, so no
+ * allocator is involved when buffers move between producer and consumers.
+ * The mutex protects only the free-list pointer updates.
  */
-static GAsyncQueue *buffer_free_queue = NULL;
-static GMutex buffer_alloc_mutex;
+static mybuffer *freebuflist = NULL;
+static pthread_mutex_t freebuf_mutex = PTHREAD_MUTEX_INITIALIZER;
+/*
+ * Protocol restart epoch.  Buffers already owned by a consumer retain their
+ * old generation until that consumer releases them.  They are never forced
+ * back onto the free list during restart.
+ */
+static volatile gint buffer_generation = 1;
 
 //
 // The buffers used by new_protocol_thread
@@ -465,25 +468,27 @@ static void  process_high_priority(void);
 static void  process_mic_data(const unsigned char *buffer);
 
 //
-// Allocate additional receive buffers and add them to the O(1) free queue.
+// Allocate receive buffers.  Allocation is performed during protocol setup,
+// never from the receive hot path.
 //
 static void allocate_my_buffers(int count) {
   int i;
-  mybuffer *bp;
-  if (buffer_free_queue == NULL) {
-    buffer_free_queue = g_async_queue_new();
-  }
   for (i = 0; i < count; i++) {
-    bp = malloc(sizeof(mybuffer));
+    mybuffer *bp = malloc(sizeof(mybuffer));
     if (bp == NULL) {
       t_print("NewProtocol: malloc failed while allocating receive buffers\n");
       return;
     }
     bp->free = 1;
+    bp->owner = MYBUFFER_OWNER_NETWORK;
+    bp->generation = (uint32_t) g_atomic_int_get(&buffer_generation);
     bp->next = buflist;
     buflist = bp;
     num_buf++;
-    g_async_queue_push(buffer_free_queue, bp);
+    pthread_mutex_lock(&freebuf_mutex);
+    bp->free_next = freebuflist;
+    freebuflist = bp;
+    pthread_mutex_unlock(&freebuf_mutex);
   }
 }
 
@@ -495,61 +500,71 @@ static void ensure_my_buffers(int count) {
 }
 
 /*
- * Return a receive buffer to the freelist exactly once.  The consumer
- * threads may finish packets concurrently with new_protocol_thread(),
- * therefore the free flag is updated atomically before queueing it.
+ * Return a receive buffer to the intrusive free list exactly once.
+ * No allocation occurs here; the critical section only redirects pointers.
  */
 static void release_my_buffer(mybuffer *bp) {
-  if (bp == NULL || buffer_free_queue == NULL) {
+  if (bp == NULL) {
     return;
   }
-  if (g_atomic_int_compare_and_exchange(&bp->free, 0, 1)) {
-    g_async_queue_push(buffer_free_queue, bp);
+#ifdef SATURN
+  if (bp->owner == MYBUFFER_OWNER_SATURN) {
+    saturn_release_buffer(bp);
+    return;
   }
-}
-
-/*
- * Rebuild the freelist on a protocol restart.  This replaces the old
- * "mark every buffer free" loop and guarantees one queue entry per
- * owned receive buffer.
- */
-static void rebuild_my_buffer_freelist(void) {
-  if (buffer_free_queue == NULL) {
-    buffer_free_queue = g_async_queue_new();
-  }
-  while (g_async_queue_try_pop(buffer_free_queue) != NULL) {
-    /* drain stale freelist entries */
-  }
-  for (mybuffer *bp = buflist; bp != NULL; bp = bp->next) {
+#endif
+  pthread_mutex_lock(&freebuf_mutex);
+  if (!g_atomic_int_get(&bp->free)) {
     g_atomic_int_set(&bp->free, 1);
-    g_async_queue_push(buffer_free_queue, bp);
+    bp->free_next = freebuflist;
+    freebuflist = bp;
   }
+  pthread_mutex_unlock(&freebuf_mutex);
 }
 
 /*
- * Obtain a free receive buffer in O(1).  Allocation is only a fallback
- * when the preallocated pool is genuinely exhausted; there is no
- * linked-list scan in front of recvfrom().
+ * Start a new protocol generation.  Do NOT mark buffers owned by consumers
+ * free here: old ring entries may still reference them.  Those consumers
+ * discard stale-generation packets and return the buffers normally.
+ */
+static void advance_my_buffer_generation(void) {
+  g_atomic_int_inc(&buffer_generation);
+}
+
+/*
+ * Return true only for a buffer belonging to the current protocol run.
+ * A stale buffer is still owned by its consumer and must be released once.
+ */
+static int my_buffer_is_current(mybuffer *bp) {
+  if (bp == NULL) {
+    return 0;
+  }
+#ifdef SATURN
+  if (bp->owner == MYBUFFER_OWNER_SATURN) {
+    return saturn_buffer_is_current(bp);
+  }
+#endif
+  if (g_atomic_int_get(&bp->free)) {
+    return 0;
+  }
+  return bp->generation == (uint32_t) g_atomic_int_get(&buffer_generation);
+}
+
+/*
+ * Obtain a free receive buffer in O(1).  This hot path performs no dynamic
+ * allocation; under the mutex it only removes one pointer from freebuflist
+ * and assigns the current protocol generation.
  */
 static mybuffer *get_my_buffer(void) {
-  mybuffer *bp;
-  if (buffer_free_queue == NULL) {
-    buffer_free_queue = g_async_queue_new();
-  }
-  bp = g_async_queue_try_pop(buffer_free_queue);
-  if (bp == NULL) {
-    g_mutex_lock(&buffer_alloc_mutex);
-    bp = g_async_queue_try_pop(buffer_free_queue);
-    if (bp == NULL) {
-      allocate_my_buffers(P2_REFILL_BUFFERS);
-      t_print("NewProtocol: number of buffers increased to %d\n", num_buf);
-      bp = g_async_queue_try_pop(buffer_free_queue);
-    }
-    g_mutex_unlock(&buffer_alloc_mutex);
-  }
+  pthread_mutex_lock(&freebuf_mutex);
+  mybuffer *bp = freebuflist;
   if (bp != NULL) {
+    freebuflist = bp->free_next;
+    bp->free_next = NULL;
+    bp->generation = (uint32_t) g_atomic_int_get(&buffer_generation);
     g_atomic_int_set(&bp->free, 0);
   }
+  pthread_mutex_unlock(&freebuf_mutex);
   return bp;
 }
 
@@ -656,10 +671,10 @@ static void p2_jitter_reset_all(void) {
 
 void new_protocol_set_jitter_buffer(int enabled, int depth_ms) {
   enabled = enabled ? 1 : 0;
-  if (depth_ms < 5) {
-    depth_ms = 5;
-  } else if (depth_ms > 500) {
-    depth_ms = 500;
+  if (depth_ms < P2_JITTER_MIN_MS) {
+    depth_ms = P2_JITTER_MIN_MS;
+  } else if (depth_ms > P2_JITTER_MAX_MS) {
+    depth_ms = P2_JITTER_MAX_MS;
   }
   if (g_atomic_int_get(&p2_jitter_buffer_enabled) == enabled &&
       g_atomic_int_get(&p2_jitter_buffer_depth_ms) == depth_ms) {
@@ -2442,18 +2457,26 @@ void new_protocol_menu_start(void) {
   memset(rxid, 0, sizeof(rxid));
   memset(ddc_sequence, 0, sizeof(ddc_sequence));
   update_action_table();
+  if (!have_saturn_xdma) {
+    advance_my_buffer_generation();
+  }
   p2_jitter_reset_all();
   //
-  // Mark all buffers free.
+  // Keep buffers still owned by old consumer-ring entries reserved until
+  // those consumers discard and release them.  Only ensure pool capacity.
   //
   if (have_saturn_xdma) {
 #ifdef SATURN
-    saturn_free_buffers();
+    saturn_advance_buffer_generation();
 #endif
   } else {
     ensure_my_buffers(P2_INITIAL_BUFFERS);
-    rebuild_my_buffer_freelist();
   }
+#ifdef COREAUDIO
+  if (transmitter != NULL && transmitter->local_microphone) {
+    audio_reset_mic_buffer();
+  }
+#endif
   P2running = 1;
   for (int ddc = 0; ddc < MAX_DDC; ddc++) {
     g_mutex_lock(&p2_jitter[ddc].mutex);
@@ -2713,6 +2736,7 @@ static gpointer new_protocol_thread(gpointer data) {
   gint64 ingress_last_us[10] = { 0 };
   gint64 ingress_max_gap_us[10] = { 0 };
   gint64 ingress_report_us = g_get_monotonic_time();
+  gint64 buffer_exhaustion_report_us = 0;
   //
   // This thread should do as little work as possible and avoid any blocking.
   // Ideally, all data is just copied into ring buffers, and other threads
@@ -2728,7 +2752,12 @@ static gpointer new_protocol_thread(gpointer data) {
     unsigned char *buffer;
     mybuf = get_my_buffer();
     if (mybuf == NULL) {
-      t_print("new_protocol_thread: no receive buffer available\n");
+      gint64 now_us = g_get_monotonic_time();
+      if (buffer_exhaustion_report_us == 0 ||
+          now_us - buffer_exhaustion_report_us >= G_USEC_PER_SEC) {
+        t_print("new_protocol_thread: no receive buffer available\n");
+        buffer_exhaustion_report_us = now_us;
+      }
       g_usleep(1000);
       continue;
     }
@@ -2750,6 +2779,7 @@ static gpointer new_protocol_thread(gpointer data) {
       }
       t_perror("recvfrom socket failed for new_protocol_thread:");
       g_idle_add(fatal_error, "P2 receive (Network problem?)");
+      release_my_buffer(mybuf);
       P2running = 0;
       break;
     }
@@ -2870,7 +2900,10 @@ static gpointer high_priority_thread(gpointer data) {
     high_priority_buffer = (mybuffer *) high_priority_ring[optr];
     MEMORY_BARRIER;
     high_priority_outptr = nptr;
-    if (high_priority_buffer->free) { continue; }
+    if (!my_buffer_is_current(high_priority_buffer)) {
+      release_my_buffer(high_priority_buffer);
+      continue;
+    }
     process_high_priority();
     release_my_buffer(high_priority_buffer);
   }
@@ -2896,8 +2929,11 @@ static gpointer mic_line_thread(gpointer data) {
     mybuf = (mybuffer *) mic_line_buffer[mic_outptr];
     MEMORY_BARRIER;
     mic_outptr = nptr;
-    // This can happen when restarting the protocol
-    if (mybuf->free) { continue; }
+    // Discard packets still queued from a previous protocol generation.
+    if (!my_buffer_is_current(mybuf)) {
+      release_my_buffer(mybuf);
+      continue;
+    }
     process_mic_data(mybuf->buffer);
     release_my_buffer(mybuf);
   }
@@ -3060,8 +3096,11 @@ static gpointer iq_thread(gpointer data) {
     mybuf = (mybuffer *) iq_buffer[ddc][optr];
     MEMORY_BARRIER;
     iq_outptr[ddc] = nptr;
-    // This can happen when restarting the protocol
-    if (mybuf->free) { continue; }
+    // Discard packets still queued from a previous protocol generation.
+    if (!my_buffer_is_current(mybuf)) {
+      release_my_buffer(mybuf);
+      continue;
+    }
     buffer = (unsigned char *) mybuf->buffer;
     //
     //  TEMP: perform additional sequence check

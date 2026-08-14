@@ -46,7 +46,12 @@ void saturn_handle_general_packet(bool FromNetwork, uint8_t *PacketBuffer);
 void saturn_handle_ddc_specific(bool FromNetwork, unsigned char *receive_specific_buffer);
 void saturn_handle_duc_specific(bool FromNetwork, unsigned char *transmit_specific_buffer);
 void saturn_handle_duc_iq(bool FromNetwork, uint8_t *UDPInBuffer);
-void saturn_free_buffers(void);
+
+struct mybuffer_;
+void saturn_release_buffer(struct mybuffer_ *buffer);
+int saturn_buffer_is_current(struct mybuffer_ *buffer);
+void saturn_advance_buffer_generation(void);
+
 void saturn_exit(void);
 
 int saturn_minor_version_min(void);

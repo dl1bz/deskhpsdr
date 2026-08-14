@@ -57,6 +57,9 @@
 
 #define NET_BUFFER_SIZE  1500
 
+#define P2_JITTER_MIN_MS 5
+#define P2_JITTER_MAX_MS 350
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // PEDESTRIAN BUFFER MANAGEMENT
@@ -68,9 +71,15 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
+#define MYBUFFER_OWNER_NETWORK 0
+#define MYBUFFER_OWNER_SATURN  1
+
 struct mybuffer_ {
   struct mybuffer_ *next;
+  struct mybuffer_ *free_next;
   int             free;
+  int             owner;
+  uint32_t        generation;
   long            lowfence;
   unsigned char   buffer[NET_BUFFER_SIZE];
   long            highfence;

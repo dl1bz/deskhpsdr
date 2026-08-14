@@ -896,7 +896,9 @@ static GtkWidget *build_general_page(void) {
     gtk_widget_set_name(depth_label, "boldlabel");
     gtk_widget_set_halign(depth_label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(network_grid), depth_label, 0, network_row, 1, 1);
-    p2_jitter_depth_b = gtk_spin_button_new_with_range(5.0, 500.0, 5.0);
+    p2_jitter_depth_b = gtk_spin_button_new_with_range(P2_JITTER_MIN_MS,
+      P2_JITTER_MAX_MS,
+      5.0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(p2_jitter_depth_b), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(p2_jitter_depth_b), p2_jitter_buffer_depth_ms);
     gtk_widget_set_sensitive(p2_jitter_depth_b, p2_jitter_buffer_enabled);
