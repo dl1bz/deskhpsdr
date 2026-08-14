@@ -2191,7 +2191,13 @@ static void new_protocol_transmit_specific(void) {
     transmit_specific_buffer[58] = 31;   // ADC1
     transmit_specific_buffer[59] = 31;   // ADC0
   }
-  if (transmitter->puresignal) {
+  if (transmitter->puresignal || (duplex && transmitter->twotone)) {
+    /*
+     * PureSignal and duplex two-tone analysis use the same physical
+     * coupler -> ADC0 feedback path.  Reuse the feedback attenuation already
+     * established for PureSignal instead of maintaining a second IMD-specific
+     * attenuation value.
+     */
     transmit_specific_buffer[59] = transmitter->attenuation;
   }
   //t_print("new_protocol_transmit_specific: %s:%d\n",inet_ntoa(transmitter_addr.sin_addr),ntohs(transmitter_addr.sin_port));

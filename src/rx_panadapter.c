@@ -816,6 +816,206 @@ static int autoscale_panadapter_with_offset (double noise_value, int offset_db) 
   return value;
 }
 
+
+typedef struct {
+  gboolean valid;
+  double p0_db;
+  double p1_db;
+  double imd3_l_db;
+  double imd3_u_db;
+  double imd5_l_db;
+  double imd5_u_db;
+  double imd7_l_db;
+  double imd7_u_db;
+  double imd9_l_db;
+  double imd9_u_db;
+  double symmetry_db;
+  double fundamental_db;
+  double imd3_db;
+  double imd5_db;
+  double imd7_db;
+  double imd9_db;
+  double imd3_dbc;
+  double imd5_dbc;
+  double imd7_dbc;
+  double imd9_dbc;
+} RX_IMD_MEASURE;
+
+static double rx_imd_peak_at_offset(const RECEIVER *rx, int mywidth,
+                                    double carrier_x, double offset_hz,
+                                    double soffset, gboolean *valid) {
+  int x = (int) llround(carrier_x + offset_hz / rx->hz_per_pixel);
+  int idx = rx->pan + x;
+  int best = idx;
+  double peak = -1000.0;
+  *valid = FALSE;
+  if (x < 3 || x >= mywidth - 3 || idx < 3 || idx >= rx->pixels - 3) {
+    return peak;
+  }
+  /*
+   * The internal two-tone generator fixes all wanted products to the
+   * 1200-Hz grid.  Search only a very small neighbourhood around the
+   * mathematically known position, then interpolate the selected peak with
+   * its two direct neighbours.  This avoids making the result depend on the
+   * display-pixel phase while still preventing unrelated nearby spurs from
+   * being selected over a wide search window.
+   */
+  for (int k = -2; k <= 2; k++) {
+    double v = (double) rx->pixel_samples[idx + k] + soffset;
+    if (v > peak) {
+      peak = v;
+      best = idx + k;
+    }
+  }
+  if (best > 0 && best + 1 < rx->pixels) {
+    double ym = (double) rx->pixel_samples[best - 1] + soffset;
+    double y0 = (double) rx->pixel_samples[best] + soffset;
+    double yp = (double) rx->pixel_samples[best + 1] + soffset;
+    double denom = ym - (2.0 * y0) + yp;
+    if (fabs(denom) > 1.0e-9) {
+      double delta = 0.5 * (ym - yp) / denom;
+      if (delta >= -1.0 && delta <= 1.0) {
+        double interp = y0 - 0.25 * (ym - yp) * delta;
+        if (interp >= y0 && interp < y0 + 6.0) {
+          peak = interp;
+        } else {
+          peak = y0;
+        }
+      } else {
+        peak = y0;
+      }
+    } else {
+      peak = y0;
+    }
+  }
+  *valid = TRUE;
+  return peak;
+}
+
+static RX_IMD_MEASURE rx_panadapter_measure_imd(RECEIVER *rx, int mywidth,
+    double carrier_x,
+    double soffset, int mode) {
+  RX_IMD_MEASURE m = {0};
+  gboolean ok[10] = {0};
+  double sign;
+  double p0, p1, l3, u3, l5, u5, l7, u7, l9, u9;
+  if (rx == NULL || rx->id != 0 || transmitter == NULL ||
+      protocol != NEW_PROTOCOL ||
+      transmitter->puresignal ||
+      !duplex || !transmitter->twotone || !radio_is_transmitting() ||
+      rx->pixel_samples == NULL || rx->hz_per_pixel <= 0.0 ||
+      (mode != modeUSB && mode != modeLSB)) {
+    return m;
+  }
+  sign = (mode == modeLSB) ? -1.0 : 1.0;
+  p0 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * 700.0,  soffset, &ok[0]);
+  p1 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * 1900.0, soffset, &ok[1]);
+  l3 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * -500.0, soffset, &ok[2]);
+  u3 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * 3100.0, soffset, &ok[3]);
+  l5 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * -1700.0, soffset, &ok[4]);
+  u5 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * 4300.0, soffset, &ok[5]);
+  l7 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * -2900.0, soffset, &ok[6]);
+  u7 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * 5500.0, soffset, &ok[7]);
+  l9 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * -4100.0, soffset, &ok[8]);
+  u9 = rx_imd_peak_at_offset(rx, mywidth, carrier_x, sign * 6700.0, soffset, &ok[9]);
+  for (int i = 0; i < 10; i++) {
+    if (!ok[i]) {
+      return m;
+    }
+  }
+  /*
+   * Use the mean power of the two fundamentals as the reference.  The
+   * left/right IM products are likewise averaged in the dB domain; this
+   * keeps the displayed result stable if the feedback path has a small
+   * frequency slope.
+   */
+  m.p0_db = p0;
+  m.p1_db = p1;
+  m.imd3_l_db = l3;
+  m.imd3_u_db = u3;
+  m.imd5_l_db = l5;
+  m.imd5_u_db = u5;
+  m.imd7_l_db = l7;
+  m.imd7_u_db = u7;
+  m.imd9_l_db = l9;
+  m.imd9_u_db = u9;
+  m.symmetry_db = fmax(fabs(l3 - u3),
+                       fmax(fabs(l5 - u5),
+                            fmax(fabs(l7 - u7), fabs(l9 - u9))));
+  m.fundamental_db = 0.5 * (p0 + p1);
+  m.imd3_db = 0.5 * (l3 + u3);
+  m.imd5_db = 0.5 * (l5 + u5);
+  m.imd7_db = 0.5 * (l7 + u7);
+  m.imd9_db = 0.5 * (l9 + u9);
+  m.imd3_dbc = m.imd3_db - m.fundamental_db;
+  m.imd5_dbc = m.imd5_db - m.fundamental_db;
+  m.imd7_dbc = m.imd7_db - m.fundamental_db;
+  m.imd9_dbc = m.imd9_db - m.fundamental_db;
+  m.valid = TRUE;
+  return m;
+}
+
+static void rx_panadapter_draw_imd(cairo_t *cr, RECEIVER *rx, int mywidth,
+                                   int myheight, double carrier_x,
+                                   double soffset, int mode) {
+  RX_IMD_MEASURE m = rx_panadapter_measure_imd(rx, mywidth, carrier_x,
+    soffset, mode);
+  char rows[6][64];
+  const char *sym;
+  cairo_text_extents_t ext;
+  double width = 0.0;
+  const double font_size = 18.0;
+  const double title_size = 18.0;
+  const double line_height = 24.0;
+  const double pad_x = 12.0;
+  const double pad_y = 10.0;
+  const double box_height = 2.0 * pad_y + title_size + 6.0 * line_height;
+  double x;
+  double y = 6.0;
+  if (!m.valid) {
+    return;
+  }
+  sym = (m.symmetry_db <= 2.0) ? "OK" : "CHECK";
+  snprintf(rows[0], sizeof(rows[0]), "IMD3        %6.1f dBc", m.imd3_dbc);
+  snprintf(rows[1], sizeof(rows[1]), "IMD5        %6.1f dBc", m.imd5_dbc);
+  snprintf(rows[2], sizeof(rows[2]), "IMD7        %6.1f dBc", m.imd7_dbc);
+  snprintf(rows[3], sizeof(rows[3]), "IMD9        %6.1f dBc", m.imd9_dbc);
+  snprintf(rows[4], sizeof(rows[4]), "Feedback RX %6.1f dBm", m.fundamental_db);
+  snprintf(rows[5], sizeof(rows[5]), "Symmetry    %6.1f dB [%s]", m.symmetry_db, sym);
+  cairo_save(cr);
+  cairo_select_font_face(cr, DISPLAY_FONT_BOLD,
+                         CAIRO_FONT_SLANT_NORMAL,
+                         CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size(cr, title_size);
+  cairo_text_extents(cr, "2-TONE TX ANALYSIS", &ext);
+  width = ext.width;
+  cairo_set_font_size(cr, font_size);
+  for (int i = 0; i < 6; i++) {
+    cairo_text_extents(cr, rows[i], &ext);
+    width = fmax(width, ext.width);
+  }
+  width += 2.0 * pad_x;
+  x = 8.0;
+  y = (double) myheight - box_height - 8.0;
+  if (y < 4.0) {
+    y = 4.0;
+  }
+  cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.76);
+  cairo_rectangle(cr, x, y, width, box_height);
+  cairo_fill(cr);
+  cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.97);
+  cairo_set_font_size(cr, title_size);
+  cairo_move_to(cr, x + pad_x, y + pad_y + title_size);
+  cairo_show_text(cr, "2-TONE TX ANALYSIS");
+  cairo_set_font_size(cr, font_size);
+  for (int i = 0; i < 6; i++) {
+    cairo_move_to(cr, x + pad_x,
+                  y + pad_y + title_size + (i + 1) * line_height);
+    cairo_show_text(cr, rows[i]);
+  }
+  cairo_restore(cr);
+}
+
 static void rx_panadapter_update_image_measure (RECEIVER *rx, int mywidth) {
   static int image_measure_counter = 0;
   float *samples;
@@ -2087,6 +2287,7 @@ void rx_panadapter_update (RECEIVER *rx) {
       cairo_show_text (cr, _text);
     }
   }
+  rx_panadapter_draw_imd(cr, rx, mywidth, myheight, vfofreq, soffset, mode);
   cairo_destroy (cr);
   gtk_widget_queue_draw (rx->panadapter);
 }
