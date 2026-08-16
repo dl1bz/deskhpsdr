@@ -125,6 +125,7 @@ typedef struct _transmitter {
   int tune_use_drive;
   int tune_drive;
   int tune_drive_step;
+  int tune_drive_reset_on_band_change;
   int is_tuned;
   int drive_level;      // amplitude (0-255) corresponding to "drive"
   int drive_per_band;   // save drive per band

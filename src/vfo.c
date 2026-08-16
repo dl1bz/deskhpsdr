@@ -59,6 +59,11 @@ extern int tci_is_applying(void);
 #include "actions.h"
 #include "noise_menu.h"
 #include "equalizer_menu.h"
+#include "message.h"
+#include "sliders.h"
+#include "audio.h"
+#include "zoompan.h"
+#include "wdsp.h"
 
 void vfo_apply_ps_tx_att(void) {
   if (!can_transmit || transmitter == NULL) { return; }
@@ -69,12 +74,19 @@ void vfo_apply_ps_tx_att(void) {
   schedule_high_priority();
   schedule_transmit_specific();
 }
-#include "message.h"
-#include "sliders.h"
-#include "audio.h"
-#include "zoompan.h"
-#include "wdsp.h"
 
+static void vfo_apply_tune_drive_reset(void) {
+  if (!can_transmit || transmitter == NULL ||
+      !transmitter->tune_drive_reset_on_band_change) {
+    return;
+  }
+  if (transmitter->tune_drive != 1) {
+    transmitter->tune_drive = 1;
+    update_slider_tune_drive_scale(TRUE);
+    tci_tune_drive_changed();
+    t_print("%s: Tune Drive reset to 1%%\n", __func__);
+  }
+}
 
 GMutex copy_string_mutex;
 
@@ -780,6 +792,7 @@ static inline void vfo_adjust_band(int v, long long f) {
         update_slider_tune_drive_scale(TRUE);
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
       }
+      vfo_apply_tune_drive_reset();
       if (v == vfo_get_tx_vfo()) { vfo_apply_ps_tx_att(); }
     }
 #if defined (__AUTOG__)
@@ -965,6 +978,7 @@ void vfo_band_changed(int id, int b) {
         update_slider_tune_drive_scale(TRUE);
         t_print("%s: bs->tune_drive = %d\n", __func__, bs->tune_drive);
       }
+      vfo_apply_tune_drive_reset();
     }
     band = band_get_band(b);
     bandstack = bandstack_get_bandstack(b);

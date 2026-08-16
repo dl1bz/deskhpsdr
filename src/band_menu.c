@@ -32,6 +32,7 @@
 #include "filter.h"
 #include "radio.h"
 #include "receiver.h"
+#include "transmitter.h"
 #include "vfo.h"
 
 static GtkWidget *dialog = NULL;
@@ -68,6 +69,15 @@ static void cleanup (void) {
 static gboolean close_cb (void) {
   cleanup();
   return TRUE;
+}
+
+static void tune_drive_reset_cb(GtkToggleButton *button, gpointer data) {
+  (void)data;
+  if (transmitter == NULL) {
+    return;
+  }
+  transmitter->tune_drive_reset_on_band_change =
+          gtk_toggle_button_get_active(button) ? 1 : 0;
 }
 
 gboolean band_select_cb (GtkWidget *widget, gpointer data) {
@@ -158,6 +168,22 @@ void band_menu (GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK (close_cb), NULL);
   gtk_widget_set_size_request (close_b, 150, 0);
   gtk_grid_attach (GTK_GRID (grid), close_b, 0, 0, 2, 1);
+  if (transmitter != NULL) {
+    GtkWidget *reset_b = gtk_check_button_new();
+    GtkWidget *reset_label = gtk_label_new("Tune Drive Reset");
+    gtk_widget_set_name(reset_label, "boldlabel");
+    gtk_widget_set_tooltip_text(reset_b,
+                                "Reset Tune Drive to 1% after each band change");
+    gtk_widget_set_tooltip_text(reset_label,
+                                "Reset Tune Drive to 1% after each band change");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(reset_b),
+                                 transmitter->tune_drive_reset_on_band_change);
+    g_signal_connect(reset_b, "toggled",
+                     G_CALLBACK(tune_drive_reset_cb), NULL);
+    gtk_widget_set_halign(reset_b, GTK_ALIGN_END);
+    gtk_grid_attach(GTK_GRID(grid), reset_b, 2, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), reset_label, 3, 0, 2, 1);
+  }
   long long frequency_min = radio->frequency_min;
   long long frequency_max = radio->frequency_max;
   //t_print("band_menu: min=%lld max=%lld\n",frequency_min,frequency_max);

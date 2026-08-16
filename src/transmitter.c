@@ -354,6 +354,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropF1("transmitter.%d.mic_gain",          tx->id,               tx->mic_gain);
   SetPropI1("transmitter.%d.tune_drive",        tx->id,               tx->tune_drive);
   SetPropI1("transmitter.%d.tune_drive_step",   tx->id,               tx->tune_drive_step);
+  SetPropI1("transmitter.%d.tune_drive_reset_on_band_change", tx->id, tx->tune_drive_reset_on_band_change);
   SetPropI1("transmitter.%d.tune_use_drive",    tx->id,               tx->tune_use_drive);
   SetPropI1("transmitter.%d.drive_per_band",    tx->id,               tx->drive_per_band);
   SetPropI1("transmitter.%d.swr_protection",    tx->id,               tx->swr_protection);
@@ -482,6 +483,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropF1("transmitter.%d.mic_gain",          tx->id,               tx->mic_gain);
   GetPropI1("transmitter.%d.tune_drive",        tx->id,               tx->tune_drive);
   GetPropI1("transmitter.%d.tune_drive_step",   tx->id,               tx->tune_drive_step);
+  GetPropI1("transmitter.%d.tune_drive_reset_on_band_change", tx->id, tx->tune_drive_reset_on_band_change);
   GetPropI1("transmitter.%d.tune_use_drive",    tx->id,               tx->tune_use_drive);
   GetPropI1("transmitter.%d.drive_per_band",    tx->id,               tx->drive_per_band);
   GetPropI1("transmitter.%d.swr_protection",    tx->id,               tx->swr_protection);
@@ -1167,6 +1169,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->drive = 50;
   tx->tune_drive = 2;
   tx->tune_drive_step = 1;
+  tx->tune_drive_reset_on_band_change = 0;
   tx->is_tuned = 0;
   tx->drive_per_band = 1;
   tx->mic_gain = 0.0;
