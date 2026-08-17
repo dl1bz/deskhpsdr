@@ -2,7 +2,7 @@
 
 deskHPSDR by DL1BZ is an mature Open Source desktop application for Hamradio OpenHPSDR SDR transceivers that has been under active development for years. SDR devices based on the OpenHPSDR protocol P1 or P2 are fully supported and both protocol versions are fully supported. It is designed and built as an advanced SDR transceiver front-end application for macOS and Linux for "every-day-use" and runs now extremely stable and reliable. deskHPSDR is largely based on the WDSP software library by Warren C. Pratt (NR0V), similar to other SDR applications like Thetis for WINDOWS.
 
-<img src="https://github.com/dl1bz/deskhpsdr/blob/master/stuff/deskhpsdr/screenshot.png" width="1024px" />
+<img src="stuff/deskhpsdr/screenshot.png" width="1024px" />
 
 ## deskHPSDR ≠ pihpsdr: new app, revised concept, new name
 
