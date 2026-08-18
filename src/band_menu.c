@@ -66,7 +66,7 @@ static void cleanup (void) {
   }
 }
 
-static gboolean close_cb (void) {
+static gboolean close_cb(void) {
   cleanup();
   return TRUE;
 }
@@ -80,7 +80,7 @@ static void tune_drive_reset_cb(GtkToggleButton *button, gpointer data) {
           gtk_toggle_button_get_active(button) ? 1 : 0;
 }
 
-gboolean band_select_cb (GtkWidget *widget, gpointer data) {
+gboolean band_select_cb(GtkWidget *widget, gpointer data) {
   CHOICE *choice = (CHOICE *) data;
   int id = active_receiver->id;
   int newband;
@@ -88,7 +88,7 @@ gboolean band_select_cb (GtkWidget *widget, gpointer data) {
   // If the current band has been clicked, this will cycle through the
   // band stack
   //
-  vfo_band_changed (id, choice->info);
+  vfo_band_changed(id, choice->info);
   newband = vfo[id].band;
   if (newband != choice->info) {
     //
@@ -102,22 +102,22 @@ gboolean band_select_cb (GtkWidget *widget, gpointer data) {
     choice = first;
     current = NULL;
     while (choice) {
-      g_signal_handler_block (G_OBJECT (choice->button), choice->signal);
+      g_signal_handler_block(G_OBJECT(choice->button), choice->signal);
       if (choice->info == newband) {
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (choice->button), TRUE);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(choice->button), TRUE);
         current = choice;
       } else {
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (choice->button), FALSE);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(choice->button), FALSE);
       }
-      g_signal_handler_unblock (G_OBJECT (choice->button), choice->signal);
+      g_signal_handler_unblock(G_OBJECT(choice->button), choice->signal);
       choice = choice->next;
     }
     return FALSE;
   }
   if (current) {
-    g_signal_handler_block (G_OBJECT (current->button), current->signal);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (current->button), current == choice);
-    g_signal_handler_unblock (G_OBJECT (current->button), current->signal);
+    g_signal_handler_block(G_OBJECT(current->button), current->signal);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(current->button), current == choice);
+    g_signal_handler_unblock(G_OBJECT(current->button), current->signal);
   }
   current = choice;
   return FALSE;
@@ -144,30 +144,30 @@ gboolean band_menu_update(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-void band_menu (GtkWidget *parent) {
+void band_menu(GtkWidget *parent) {
   int i, j;
   dialog = gtk_dialog_new();
-  gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (parent));
-  win_set_bgcolor (dialog, &mwin_bgcolor);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  win_set_bgcolor(dialog, &mwin_bgcolor);
   char title[64];
-  snprintf (title, 64, "%s - Band (VFO-%s)", PGNAME, active_receiver->id == 0 ? "A" : "B");
+  snprintf(title, 64, "%s - Band (VFO-%s)", PGNAME, active_receiver->id == 0 ? "A" : "B");
   GtkWidget *headerbar = gtk_header_bar_new();
-  gtk_window_set_titlebar (GTK_WINDOW (dialog), headerbar);
-  gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (headerbar), TRUE);
-  gtk_header_bar_set_title (GTK_HEADER_BAR (headerbar), title);
-  g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
-  g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
-  GtkWidget *content = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
+  gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
+  gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
+  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), title);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_homogeneous (GTK_GRID (grid), TRUE);
-  gtk_grid_set_row_homogeneous (GTK_GRID (grid), TRUE);
-  gtk_grid_set_column_spacing (GTK_GRID (grid), 5);
-  gtk_grid_set_row_spacing (GTK_GRID (grid), 5);
-  GtkWidget *close_b = gtk_button_new_with_label ("Close");
-  gtk_widget_set_name (close_b, "close_button");
-  g_signal_connect (close_b, "button-press-event", G_CALLBACK (close_cb), NULL);
-  gtk_widget_set_size_request (close_b, 150, 0);
-  gtk_grid_attach (GTK_GRID (grid), close_b, 0, 0, 2, 1);
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+  GtkWidget *close_b = gtk_button_new_with_label("Close");
+  gtk_widget_set_name(close_b, "close_button");
+  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  gtk_widget_set_size_request(close_b, 150, 0);
+  gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
   if (transmitter != NULL) {
     GtkWidget *reset_b = gtk_check_button_new();
     GtkWidget *reset_label = gtk_label_new("Tune Drive Reset");
@@ -190,33 +190,33 @@ void band_menu (GtkWidget *parent) {
   j = 0;
   for (i = 0; i < BANDS + XVTRS; i++) {
     const BAND *band;
-    band = (BAND *) band_get_band (i);
-    if (strlen (band->title) > 0) {
+    band = (BAND *) band_get_band(i);
+    if (strlen(band->title) > 0) {
       if (i < BANDS) {
-        if (! (band->frequencyMin == 0.0 && band->frequencyMax == 0.0)) {
+        if (!(band->frequencyMin == 0.0 && band->frequencyMax == 0.0)) {
           if (band->frequencyMin < frequency_min || band->frequencyMax > frequency_max) {
             continue;
           }
         }
       }
-      GtkWidget *w = gtk_toggle_button_new_with_label (band->title);
-      gtk_widget_set_name (w, "small_toggle_button");
-      gtk_widget_show (w);
-      gtk_grid_attach (GTK_GRID (grid), w, j % 5, 1 + (j / 5), 1, 1);
-      CHOICE *choice = g_new (CHOICE, 1);
+      GtkWidget *w = gtk_toggle_button_new_with_label(band->title);
+      gtk_widget_set_name(w, "small_toggle_button");
+      gtk_widget_show(w);
+      gtk_grid_attach(GTK_GRID(grid), w, j % 5, 1 + (j / 5), 1, 1);
+      CHOICE *choice = g_new(CHOICE, 1);
       choice->next = first;
       first = choice;
       choice->info = i;
       choice->button = w;
       if (i == vfo[active_receiver->id].band) {
         current = choice;
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), TRUE);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
       }
-      choice->signal = g_signal_connect (w, "toggled", G_CALLBACK (band_select_cb), choice);
+      choice->signal = g_signal_connect(w, "toggled", G_CALLBACK(band_select_cb), choice);
       j++;
     }
   }
-  gtk_container_add (GTK_CONTAINER (content), grid);
+  gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
-  gtk_widget_show_all (dialog);
+  gtk_widget_show_all(dialog);
 }

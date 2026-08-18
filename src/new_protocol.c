@@ -1391,7 +1391,15 @@ static void new_protocol_general(void) {
 
 
 static long long new_protocol_tci_afsk_tx_offset(int xmit, int txmode) {
-  if (!xmit || !tci_audio_tx_enabled() || active_receiver == NULL) {
+  if (!xmit || active_receiver == NULL) {
+    return 0LL;
+  }
+  /*
+   * Native RTTY bypasses TCI audio, but it must use exactly the same DIGL/DIGU
+   * RF reference shift as the proven AFSK path.  Therefore the offset remains
+   * active while CAT_rtty_is_active even though tci_audio_tx_enabled() is false.
+   */
+  if (!CAT_rtty_is_active && !tci_audio_tx_enabled()) {
     return 0LL;
   }
   switch (txmode) {

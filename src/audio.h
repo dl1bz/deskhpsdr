@@ -38,15 +38,15 @@ extern int n_output_devices;
 extern AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 extern GMutex audio_mutex;
 
-extern int audio_open_input (void);
-extern void audio_close_input (void);
-extern int audio_open_output (RECEIVER *rx);
-extern void audio_close_output (RECEIVER *rx);
-extern int audio_write (RECEIVER *rx, float left_sample, float right_sample);
-extern int cw_audio_write (RECEIVER *rx, float sample);
-extern void audio_release_cards (void);
-extern void audio_get_cards (void);
-extern guint64 audio_get_xrun_count (void);
+extern int audio_open_input(void);
+extern void audio_close_input(void);
+extern int audio_open_output(RECEIVER *rx);
+extern void audio_close_output(RECEIVER *rx);
+extern int audio_write(RECEIVER *rx, float left_sample, float right_sample);
+extern int cw_audio_write(RECEIVER *rx, float sample);
+extern void audio_release_cards(void);
+extern void audio_get_cards(void);
+extern guint64 audio_get_xrun_count(void);
 typedef struct {
   int available;
   int queued;
@@ -65,8 +65,8 @@ extern int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag);
   extern void audio_process_local_mic_input(const float *samples, unsigned int frames);
   extern void audio_reset_mic_buffer(void);
   extern void audio_reprime_output(RECEIVER *rx);
-  extern int audio_open_tci_monitor (const char *audio_name);
-  extern void audio_close_tci_monitor (void);
+  extern int audio_open_tci_monitor(const char *audio_name);
+  extern void audio_close_tci_monitor(void);
 #endif
-float  audio_get_next_mic_sample (void);
+float  audio_get_next_mic_sample(void);
 #endif

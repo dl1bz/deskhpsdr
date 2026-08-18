@@ -936,7 +936,7 @@ typedef struct MYEVENT {
   int            val;
 } myevent;
 
-int ProcessNewMidiConfigureEvent (void *data) {
+int ProcessNewMidiConfigureEvent(void *data) {
   //
   // This is now running in the GTK idle queue
   //
@@ -950,7 +950,7 @@ int ProcessNewMidiConfigureEvent (void *data) {
   char *str_note = NULL;
   char *str_type = NULL;
   char *str_action = NULL;
-  g_free (data);
+  g_free(data);
   if (dialog == NULL) {
     return 0;
   }
@@ -958,7 +958,7 @@ int ProcessNewMidiConfigureEvent (void *data) {
     thisVal = val;
     if (val < thisMin) { thisMin = val; }
     if (val > thisMax) { thisMax = val; }
-    updatePanel (UPDATE_CURRENT);
+    updatePanel(UPDATE_CURRENT);
   } else {
     thisEvent = event;
     thisChannel = channel;
@@ -988,68 +988,68 @@ int ProcessNewMidiConfigureEvent (void *data) {
     // search tree to see if there is already an event in the list
     // which is the same (matching channel/event/note).
     //
-    gboolean valid = gtk_tree_model_get_iter_first (model, &iter);
+    gboolean valid = gtk_tree_model_get_iter_first(model, &iter);
     while (valid) {
-      gtk_tree_model_get (model, &iter, EVENT_COLUMN, &str_event, -1);
-      gtk_tree_model_get (model, &iter, CHANNEL_COLUMN, &str_channel, -1);
-      gtk_tree_model_get (model, &iter, NOTE_COLUMN, &str_note, -1);
-      gtk_tree_model_get (model, &iter, TYPE_COLUMN, &str_type, -1);
-      gtk_tree_model_get (model, &iter, BSTR_COLUMN, &str_action, -1);
+      gtk_tree_model_get(model, &iter, EVENT_COLUMN, &str_event, -1);
+      gtk_tree_model_get(model, &iter, CHANNEL_COLUMN, &str_channel, -1);
+      gtk_tree_model_get(model, &iter, NOTE_COLUMN, &str_note, -1);
+      gtk_tree_model_get(model, &iter, TYPE_COLUMN, &str_type, -1);
+      gtk_tree_model_get(model, &iter, BSTR_COLUMN, &str_action, -1);
       if (str_event != NULL && str_channel != NULL && str_note != NULL && str_type != NULL && str_action != NULL) {
         enum MIDIevent tree_event;
         int tree_channel;
         int tree_note;
-        tree_event = String2Event (str_event);
-        tree_channel = atoi (str_channel);
-        tree_note = atoi (str_note);
+        tree_event = String2Event(str_event);
+        tree_channel = atoi(str_channel);
+        tree_note = atoi(str_note);
         if (thisEvent == tree_event && thisChannel == tree_channel && thisNote == tree_note) {
           thisVal = 0;
           thisMin = 0;
           thisMax = 0;
-          thisType = String2Type (str_type);
+          thisType = String2Type(str_type);
           thisAction = NO_ACTION;
           for (int i = 0; i < ACTIONS; i++) {
             if (ActionTable[i].type & TYPE_HIDE) { continue; }
-            if (!strcmp (ActionTable[i].button_str, str_action) && (ActionTable[i].type & thisType)) {
+            if (!strcmp(ActionTable[i].button_str, str_action) && (ActionTable[i].type & thisType)) {
               thisAction = ActionTable[i].action;
               break;
             }
           }
-          GtkTreePath *path = gtk_tree_model_get_path (model, &iter);
-          gtk_tree_view_set_cursor (GTK_TREE_VIEW (view), path, NULL, FALSE);
-          gtk_tree_path_free (path);
-          updatePanel (UPDATE_EXISTING);
-          gtk_widget_set_sensitive (delete_b, TRUE);
-          gtk_widget_set_sensitive (clear_b, TRUE);
-          g_free (str_event);
-          g_free (str_channel);
-          g_free (str_note);
-          g_free (str_type);
-          g_free (str_action);
+          GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
+          gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, NULL, FALSE);
+          gtk_tree_path_free(path);
+          updatePanel(UPDATE_EXISTING);
+          gtk_widget_set_sensitive(delete_b, TRUE);
+          gtk_widget_set_sensitive(clear_b, TRUE);
+          g_free(str_event);
+          g_free(str_channel);
+          g_free(str_note);
+          g_free(str_type);
+          g_free(str_action);
           return 0;
         }
       }
-      g_free (str_event);
-      g_free (str_channel);
-      g_free (str_note);
-      g_free (str_type);
-      g_free (str_action);
+      g_free(str_event);
+      g_free(str_channel);
+      g_free(str_note);
+      g_free(str_type);
+      g_free(str_action);
       str_event = NULL;
       str_channel = NULL;
       str_note = NULL;
       str_type = NULL;
       str_action = NULL;
-      valid = gtk_tree_model_iter_next (model, &iter);
+      valid = gtk_tree_model_iter_next(model, &iter);
     }
     //
     // This is a new event
     //
-    updatePanel (UPDATE_NEW);
+    updatePanel(UPDATE_NEW);
   }
   return 0;
 }
 
-void NewMidiConfigureEvent (enum MIDIevent event, int channel, int note, int val) {
+void NewMidiConfigureEvent(enum MIDIevent event, int channel, int note, int val) {
   if (ignore_incoming_events) {
     return;
   }
@@ -1069,29 +1069,29 @@ void NewMidiConfigureEvent (enum MIDIevent event, int channel, int note, int val
   //
   // Put it into the idle queue so we can directly use GTK
   //
-  myevent *data = g_new (myevent, 1);
+  myevent *data = g_new(myevent, 1);
   data->event = event;
   data->channel = channel;
   data->note = note;
   data->val = val;
   //t_print("%s: Event=%d Chan=%d Note=%d Val=%d\n", __func__, event, channel, note, val);
-  g_idle_add (ProcessNewMidiConfigureEvent, data);
+  g_idle_add(ProcessNewMidiConfigureEvent, data);
 }
 
-void midiSaveState (void) {
+void midiSaveState(void) {
   char name[128];
   char value[128];
   struct desc *cmd;
   int entry;
   int i;
   entry = 0;
-  SetPropI0 ("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
+  SetPropI0("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
   for (i = 0; i < MAX_MIDI_DEVICES; i++) {
-    SetPropS1 ("mididevice[%d].name", i, "NO_MIDI_DEVICE_FOUND");
+    SetPropS1("mididevice[%d].name", i, "NO_MIDI_DEVICE_FOUND");
   }
   for (i = 0; i < n_midi_devices; i++) {
     if (midi_devices[i].active) {
-      SetPropS1 ("mididevice[%d].name", entry, midi_devices[i].name);
+      SetPropS1("mididevice[%d].name", entry, midi_devices[i].name);
       entry++;
     }
   }
@@ -1103,36 +1103,36 @@ void midiSaveState (void) {
       entry++;
       int channel = cmd->channel;
       //t_print("%s:  channel=%d key=%d entry=%d event=%s type=%s action=%s\n",__func__,channel,i,entry, Event2String(cmd->event),Type2String(cmd->type),ActionTable[cmd->action].str);
-      SetPropI2 ("midi[%d].entry[%d].channel", i, entry,                      channel);
-      SetPropS3 ("midi[%d].entry[%d].channel[%d].event", i, entry, channel,   Event2String (cmd->event));
-      SetPropS3 ("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    Type2String (cmd->type));
-      SetPropA3 ("midi[%d].entry[%d].channel[%d].action", i, entry, channel,  cmd->action);
+      SetPropI2("midi[%d].entry[%d].channel", i, entry,                      channel);
+      SetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel,   Event2String(cmd->event));
+      SetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    Type2String(cmd->type));
+      SetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel,  cmd->action);
       //
       // For wheels, also store the additional parameters,
       //
       if (cmd->type == MIDI_WHEEL) {
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,       cmd->vfl1);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,       cmd->vfl2);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,        cmd->fl1);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,        cmd->fl2);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,       cmd->lft1);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,       cmd->lft2);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,       cmd->rgt1);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,       cmd->rgt2);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,        cmd->fr1);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,        cmd->fr2);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,       cmd->vfr1);
-        SetPropI3 ("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,       cmd->vfr2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,       cmd->vfl1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,       cmd->vfl2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,        cmd->fl1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,        cmd->fl2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,       cmd->lft1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,       cmd->lft2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,       cmd->rgt1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,       cmd->rgt2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,        cmd->fr1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,        cmd->fr2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,       cmd->vfr1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,       cmd->vfr2);
       }
       cmd = cmd->next;
     }
-    snprintf (name, 128, "midi[%d].entries", i);
-    snprintf (value, 128, "%d", entry + 1);
-    setProperty (name, value);
+    snprintf(name, 128, "midi[%d].entries", i);
+    snprintf(value, 128, "%d", entry + 1);
+    setProperty(name, value);
   }
 }
 
-void midiRestoreState (void) {
+void midiRestoreState(void) {
   char str[128];
   int channel;
   int event;
@@ -1148,7 +1148,7 @@ void midiRestoreState (void) {
   get_midi_devices();
   MidiReleaseCommands();
   //t_print("%s\n",__func__);
-  GetPropI0 ("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
+  GetPropI0("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
   //
   // Note this is too early to open the MIDI devices, since the
   // radio has not yet fully been configured. Therefore, only
@@ -1156,31 +1156,31 @@ void midiRestoreState (void) {
   // radio.c when it is appropriate
   //
   for (i = 0; i < MAX_MIDI_DEVICES; i++) {
-    g_strlcpy (str, "NO_MIDI_DEVICE_FOUND", 128);
-    GetPropS1 ("mididevice[%d].name", i,  str);
+    g_strlcpy(str, "NO_MIDI_DEVICE_FOUND", 128);
+    GetPropS1("mididevice[%d].name", i,  str);
     for (j = 0; j < n_midi_devices; j++) {
-      if (strcmp (midi_devices[j].name, str) == 0) {
+      if (strcmp(midi_devices[j].name, str) == 0) {
         midi_devices[j].active = 1;
-        t_print ("%s: MIDI device %s active=%d\n", __func__, str, midi_devices[j].active);
+        t_print("%s: MIDI device %s active=%d\n", __func__, str, midi_devices[j].active);
       }
     }
   }
   // the value i=128 is for the PitchBend
   for (i = 0; i < 129; i++) {
     int entries = -1;
-    GetPropI1 ("midi[%d].entries", i, entries);
+    GetPropI1("midi[%d].entries", i, entries);
     for (int entry = 0; entry < entries; entry++) {
       channel = -1;
-      GetPropI2 ("midi[%d].entry[%d].channel", i, entry,      channel);
+      GetPropI2("midi[%d].entry[%d].channel", i, entry,      channel);
       if (channel < 0) { continue; }
-      g_strlcpy (str, "NONE", 128);
-      GetPropS3 ("midi[%d].entry[%d].channel[%d].event", i, entry, channel, str);
-      event = String2Event (str);
-      g_strlcpy (str, "NONE", 128);
-      GetPropS3 ("midi[%d].entry[%d].channel[%d].type", i, entry, channel, str);
-      type  = String2Type (str);
+      g_strlcpy(str, "NONE", 128);
+      GetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel, str);
+      event = String2Event(str);
+      g_strlcpy(str, "NONE", 128);
+      GetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel, str);
+      type  = String2Type(str);
       action = NO_ACTION;
-      GetPropA3 ("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
+      GetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
       if (event == EVENT_NONE || type == TYPE_NONE || action < 0 || action >= ACTIONS) {
         continue;
       }
@@ -1201,25 +1201,25 @@ void midiRestoreState (void) {
       vfr1 = -1;
       vfr2 = -1;
       if (type == MIDI_WHEEL) {
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,  vfl1);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,  vfl2);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,   fl1);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,   fl2);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,  lft1);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,  lft2);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,  rgt1);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,  rgt2);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,   fr1);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,   fr2);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,  vfr1);
-        GetPropI3 ("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,  vfr2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,  vfl1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,  vfl2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,   fl1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,   fl2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,  lft1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,  lft2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,  rgt1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,  rgt2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,   fr1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,   fr2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,  vfr1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,  vfr2);
       }
       //
       // Construct descriptor and add to the list of MIDI commands
       //
-      struct desc *desc = (struct desc *) malloc (sizeof (struct desc));
+      struct desc *desc = (struct desc *) malloc(sizeof(struct desc));
       if (desc == NULL) {
-        t_print ("%s: failed to allocate MIDI command descriptor\n", __func__);
+        t_print("%s: failed to allocate MIDI command descriptor\n", __func__);
         return;
       }
       desc->next     = NULL;
@@ -1239,7 +1239,7 @@ void midiRestoreState (void) {
       desc->vfr1     = vfr1;
       desc->vfr2     = vfr2;
       desc->channel  = channel;
-      MidiAddCommand (i, desc);
+      MidiAddCommand(i, desc);
     }
   }
 }
@@ -1247,7 +1247,7 @@ void midiRestoreState (void) {
 //
 // Utility functions to convert enums to human-readable strings
 //
-static char *Event2String (enum MIDIevent event) {
+static char *Event2String(enum MIDIevent event) {
   switch (event) {
   case EVENT_NONE:
   default:
@@ -1265,14 +1265,14 @@ static char *Event2String (enum MIDIevent event) {
   }
 }
 
-static enum MIDIevent String2Event (const char *str) {
-  if (!strcmp (str, "NOTE"))  { return MIDI_NOTE;  }
-  if (!strcmp (str, "CTRL"))  { return MIDI_CTRL;  }
-  if (!strcmp (str, "PITCH")) { return MIDI_PITCH; }
+static enum MIDIevent String2Event(const char *str) {
+  if (!strcmp(str, "NOTE"))  { return MIDI_NOTE;  }
+  if (!strcmp(str, "CTRL"))  { return MIDI_CTRL;  }
+  if (!strcmp(str, "PITCH")) { return MIDI_PITCH; }
   return EVENT_NONE;
 }
 
-static char *Type2String (enum ACTIONtype type) {
+static char *Type2String(enum ACTIONtype type) {
   switch (type) {
   case TYPE_HIDE:
   case TYPE_NONE:
@@ -1291,9 +1291,9 @@ static char *Type2String (enum ACTIONtype type) {
   }
 }
 
-static enum ACTIONtype String2Type (const char *str) {
-  if (!strcmp (str, "KEY")) { return MIDI_KEY;   }
-  if (!strcmp (str, "KNOB/SLIDER")) { return MIDI_KNOB;  }
-  if (!strcmp (str, "WHEEL")) { return MIDI_WHEEL; }
+static enum ACTIONtype String2Type(const char *str) {
+  if (!strcmp(str, "KEY")) { return MIDI_KEY;   }
+  if (!strcmp(str, "KNOB/SLIDER")) { return MIDI_KNOB;  }
+  if (!strcmp(str, "WHEEL")) { return MIDI_WHEEL; }
   return TYPE_NONE;
 }

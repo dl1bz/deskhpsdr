@@ -77,31 +77,31 @@ typedef struct _tci_stream_header {
 #define TCI_AUDIO_RX_FRAME_MAX_BYTES \
   (sizeof(TCI_STREAM_HEADER) + (TCI_RX_AUDIO_FRAME_FRAMES * TCI_AUDIO_CHANNELS * sizeof(float)))
 
-void tci_audio_rx_sample (RECEIVER *rx, float left, float right);
-void tci_audio_rx_block (RECEIVER *rx, const float *samples, guint frames);
-guint64 tci_audio_get_write_count (int receiver_id);
-guint tci_audio_get_frame (int receiver_id, guint64 *read_count, unsigned char *frame, size_t frame_size,
-                           size_t *frame_len, int sample_rate, void **resampler_l, void **resampler_r);
-void tci_audio_handle_tx_frame (const unsigned char *data, size_t len, int client_sample_rate,
-                                void **resampler_24_to_48);
+void tci_audio_rx_sample(RECEIVER *rx, float left, float right);
+void tci_audio_rx_block(RECEIVER *rx, const float *samples, guint frames);
+guint64 tci_audio_get_write_count(int receiver_id);
+guint tci_audio_get_frame(int receiver_id, guint64 *read_count, unsigned char *frame, size_t frame_size,
+                          size_t *frame_len, int sample_rate, void **resampler_l, void **resampler_r);
+void tci_audio_handle_tx_frame(const unsigned char *data, size_t len, int client_sample_rate,
+                               void **resampler_24_to_48);
 
-void tci_audio_tx_reset (void);
-void tci_audio_tx_set_active (int active);
-int tci_audio_tx_is_active (void);
-int tci_audio_tx_enabled (void);
-void tci_audio_tx_begin_drain (void);
-void tci_audio_tx_cancel_drain (void);
-int tci_audio_tx_is_draining (void);
-int tci_audio_tx_is_drained (void);
-guint64 tci_audio_tx_pending (void);
-void tci_get_next_mic_sample (double *micsample);
-guint tci_audio_tx_read (float *out, guint frames);
-guint64 tci_audio_tx_available (void);
-void tci_audio_tx_debug_snapshot (guint64 *write_count, guint64 *read_count,
-                                  guint *dropped, guint64 *available, int *enabled);
+void tci_audio_tx_reset(void);
+void tci_audio_tx_set_active(int active);
+int tci_audio_tx_is_active(void);
+int tci_audio_tx_enabled(void);
+void tci_audio_tx_begin_drain(void);
+void tci_audio_tx_cancel_drain(void);
+int tci_audio_tx_is_draining(void);
+int tci_audio_tx_is_drained(void);
+guint64 tci_audio_tx_pending(void);
+void tci_get_next_mic_sample(double *micsample);
+guint tci_audio_tx_read(float *out, guint frames);
+guint64 tci_audio_tx_available(void);
+void tci_audio_tx_debug_snapshot(guint64 *write_count, guint64 *read_count,
+                                 guint *dropped, guint64 *available, int *enabled);
 
-void tci_audio_monitor_set_active (int active);
-int tci_audio_monitor_is_active (void);
-guint tci_audio_monitor_read (float *out, guint frames);
+void tci_audio_monitor_set_active(int active);
+int tci_audio_monitor_is_active(void);
+guint tci_audio_monitor_read(float *out, guint frames);
 
 #endif

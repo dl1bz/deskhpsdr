@@ -126,10 +126,10 @@ typedef struct {
   unsigned int rxiq_capacity;
 } P2_BUFFER_DIAG;
 
-extern int new_protocol_get_buffer_diag (int ddc, P2_BUFFER_DIAG *diag);
-extern void saturn_post_iq_data (int ddc, mybuffer *buffer);
-extern void saturn_post_micaudio (int bytes, mybuffer *buffer);
-extern void saturn_post_high_priority (mybuffer *buffer);
+extern int new_protocol_get_buffer_diag(int ddc, P2_BUFFER_DIAG *diag);
+extern void saturn_post_iq_data(int ddc, mybuffer *buffer);
+extern void saturn_post_micaudio(int bytes, mybuffer *buffer);
+extern void saturn_post_high_priority(mybuffer *buffer);
 
 //
 // if DUMP_TX_DATA is #defined, the first 1000000 samples

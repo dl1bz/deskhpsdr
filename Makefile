@@ -712,6 +712,7 @@ src/rbn.c \
 src/receiver.c \
 src/rigctl.c \
 src/rigctl_menu.c \
+src/rtty_engine.c \
 src/rx_menu.c \
 src/rx_panadapter.c \
 src/screen_menu.c \
@@ -805,6 +806,7 @@ src/rbn.h \
 src/receiver.h \
 src/rigctl.h \
 src/rigctl_menu.h \
+src/rtty_engine.h \
 src/rx_menu.h \
 src/rx_panadapter.h \
 src/screen_menu.h \
@@ -891,6 +893,7 @@ src/radio.o \
 src/radio_menu.o \
 src/rbn.o \
 src/receiver.o \
+src/rtty_engine.o \
 src/rigctl.o \
 src/rigctl_menu.o \
 src/rx_menu.o \

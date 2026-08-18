@@ -37,7 +37,7 @@ extern SWITCH switches_toolbar[MAX_FUNCTIONS][MAX_SWITCHES];
 
 extern SWITCH *switches;
 
-extern void RestoreActions (void);
-extern void SaveActions (void);
+extern void RestoreActions(void);
+extern void SaveActions(void);
 
 #endif

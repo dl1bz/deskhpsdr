@@ -1416,7 +1416,11 @@ static gboolean old_protocol_diversity_rx_active(void) {
 }
 
 static long long old_protocol_tci_afsk_tx_offset(int txmode) {
-  if (!tci_audio_tx_enabled() || active_receiver == NULL) {
+  if (active_receiver == NULL) {
+    return 0LL;
+  }
+  /* Keep the proven AFSK DIGL/DIGU RF reference shift for native RTTY too. */
+  if (!CAT_rtty_is_active && !tci_audio_tx_enabled()) {
     return 0LL;
   }
   switch (txmode) {

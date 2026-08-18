@@ -61,6 +61,7 @@
 #include "message.h"
 #include "toolset.h"
 #include "voice_keyer.h"
+#include "rtty_engine.h"
 
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
@@ -1606,7 +1607,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
       t_print("tx_full_buffer: id=%d fexchange0: error=%d\n", tx->id, error);
     }
   }
-  if (tx->displaying && !(tx->puresignal && tx->feedback)) {
+  if (tx->displaying && !(tx->puresignal && tx->feedback) && !CAT_rtty_is_active) {
     g_mutex_lock(&tx->display_mutex);
     Spectrum0(1, tx->id, 0, 0, tx->iq_output_buffer);
     g_mutex_unlock(&tx->display_mutex);
@@ -1637,7 +1638,44 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     //
     //  Note that the CW shape buffer is tied to the mic sample rate (48 kHz).
     //
-    if (cwmode) {
+    if (CAT_rtty_is_active) {
+      /*
+       * Native RTTY: ITA2 timing and continuous-phase MARK/SPACE FSK are
+       * generated sample-accurately in rtty_engine, bypassing WDSP audio.
+       */
+      int txmode = vfo_get_tx_mode();
+      rtty_engine_render_iq(tx->iq_output_buffer, tx->output_samples, tx->iq_output_rate, txmode);
+      /*
+       * Feed the TX analyzer with the actual native-RTTY I/Q block.  The
+       * normal Spectrum0() call above sees the WDSP output, which native
+       * RTTY deliberately replaces only here.
+       */
+      if (tx->displaying && !(tx->puresignal && tx->feedback)) {
+        g_mutex_lock(&tx->display_mutex);
+        Spectrum0(1, tx->id, 0, 0, tx->iq_output_buffer);
+        g_mutex_unlock(&tx->display_mutex);
+      }
+      for (j = 0; j < tx->output_samples; j++) {
+        double is = tx->iq_output_buffer[j * 2];
+        double qs = tx->iq_output_buffer[(j * 2) + 1];
+        double rtty_gain = (protocol == NEW_PROTOCOL) ? (0.896 * gain) : gain;
+#if defined(__clang__)
+        isample = q_round(is, rtty_gain);
+        qsample = q_round(qs, rtty_gain);
+#else
+        isample = (long)(is * rtty_gain + (is >= 0.0 ? 0.5 : -0.5));
+        qsample = (long)(qs * rtty_gain + (qs >= 0.0 ? 0.5 : -0.5));
+#endif
+        switch (protocol) {
+        case ORIGINAL_PROTOCOL:
+          old_protocol_iq_samples(isample, qsample, 0);
+          break;
+        case NEW_PROTOCOL:
+          new_protocol_iq_samples(isample, qsample);
+          break;
+        }
+      }
+    } else if (cwmode) {
       //
       // "pulse shape case":
       // directly produce the I/Q samples. For a continuous zero-frequency
