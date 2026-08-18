@@ -22,6 +22,8 @@ FFTW_PKG_CONFIG_PATH=""
 
 REINSTALL=0
 
+GIT_SERVER="https://git.bzsax.de"
+
 for arg in "$@"; do
   [ "$arg" = "reinstall" ] && REINSTALL=1
 done
@@ -189,7 +191,7 @@ if [ ! -d "$NR4_DIR" ]; then
 fi
 
 cd "$NR4_DIR" || exit 1
-git clone --depth=1 https://github.com/dl1bz/rnnoise.git || exit 1
+git clone --depth=1 "${GIT_SERVER}/dl1bz/rnnoise.git" || exit 1
 if [ ! -d "$NR4_DIR/rnnoise" ]; then
     echo "Error: '$NR4_DIR/rnnoise' download error."
     echo "Stopping script $SCRIPT_NAME."
@@ -204,7 +206,7 @@ else
 fi
 
 cd "$NR4_DIR" || exit 1
-git clone --depth=1 https://github.com/dl1bz/libspecbleach || exit 1
+git clone --depth=1 "${GIT_SERVER}/dl1bz/libspecbleach" || exit 1
 if [ ! -d "$NR4_DIR/libspecbleach" ]; then
     echo "Error: '$NR4_DIR/libspecbleach' download error."
     echo "Stopping script $SCRIPT_NAME.."

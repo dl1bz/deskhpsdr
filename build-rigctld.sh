@@ -11,6 +11,7 @@
 # === wir verwenden bis auf Weiteres die Hamlib Version 4.5.6
 # === ab der Version 4.6 und höher gibt es Probleme mit dem CW Keying
 USE_HAMLIB_456=ON
+GIT_SERVER="https://git.bzsax.de"
 
 #
 # a shell script to compile hamlib
@@ -18,7 +19,7 @@ USE_HAMLIB_456=ON
 OS_TYPE=$(uname)
 HAMLIB_DIR="${PWD}/hamlib-static"
 if [ "$OS_TYPE" = "Darwin" ]; then
-  HAMLIB_GIT="https://github.com/dl1bz/Hamlib.git"
+  HAMLIB_GIT="${GIT_SERVER}/dl1bz/Hamlib.git"
 else
   HAMLIB_GIT="https://github.com/Hamlib/Hamlib.git"
 fi
