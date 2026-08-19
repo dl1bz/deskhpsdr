@@ -91,6 +91,20 @@ static int frame_bit = 0;
 static uint8_t frame_symbol = 0;
 static int frame_is_fill = 0;
 
+/*
+ * Optional TCI-facing notification for a stably empty Native RTTY payload
+ * buffer. This is deliberately only a buffer-state event: it does not alter
+ * MOX, fill, drain or stop handling.
+ *
+ * The generation token invalidates a pending debounce whenever new payload is
+ * queued or a TX session is aborted/restarted.
+ */
+#define RTTY_BUFFER_EMPTY_DEBOUNCE_MS 250
+static void (*buffer_empty_callback)(void) = NULL;
+static guint buffer_generation = 0;
+static int buffer_empty_armed = 0;
+static int buffer_empty_pending = 0;
+
 static const char letters[32] = {
   '\0', 'E', '\n', 'A', ' ', 'S', 'I', 'U', '\r', 'D', 'R', 'J', 'N', 'F', 'C', 'K',
   'T', 'Z', 'L', 'W', 'H', 'Y', 'P', 'Q', 'O', 'B', 'G', '\0', 'M', 'X', 'V', '\0'
@@ -122,6 +136,32 @@ static int queue_get(uint8_t *symbol) {
   *symbol = queue[q_out];
   q_out = (q_out + 1) % RTTY_QUEUE_SIZE;
   return 1;
+}
+
+
+static int payload_buffer_empty_locked(void) {
+  /* A fill frame is generated locally and is not part of the TCI payload. */
+  return queue_empty() && (!frame_active || frame_is_fill);
+}
+
+static gboolean rtty_buffer_empty_debounce_cb(gpointer data) {
+  guint generation = GPOINTER_TO_UINT(data);
+  void (*callback)(void) = NULL;
+  rtty_engine_init();
+  g_mutex_lock(&rtty_mutex);
+  if (generation == buffer_generation && buffer_empty_pending &&
+      buffer_empty_armed && payload_buffer_empty_locked()) {
+    buffer_empty_pending = 0;
+    buffer_empty_armed = 0;
+    callback = buffer_empty_callback;
+  } else if (generation == buffer_generation) {
+    buffer_empty_pending = 0;
+  }
+  g_mutex_unlock(&rtty_mutex);
+  if (callback != NULL) {
+    callback();
+  }
+  return G_SOURCE_REMOVE;
 }
 
 static int find_symbol(const char *table, char c, uint8_t *symbol) {
@@ -279,6 +319,12 @@ static int rtty_engine_start_locked(void) {
     return 0;
   }
   tx_generation++;
+  buffer_generation++;
+  if (buffer_generation == 0) {
+    buffer_generation = 1;
+  }
+  buffer_empty_armed = 0;
+  buffer_empty_pending = 0;
   if (tx_generation == 0) {
     tx_generation = 1;
   }
@@ -345,6 +391,12 @@ int rtty_engine_queue_text(const char *text) {
       queued_chars++;
     }
     if (queued_chars > 0) {
+      buffer_generation++;
+      if (buffer_generation == 0) {
+        buffer_generation = 1;
+      }
+      buffer_empty_armed = 1;
+      buffer_empty_pending = 0;
       idle_samples = 0.0;
       if (tx_phase == PHASE_FILL_MARK || tx_phase == PHASE_FILL_SPACE) {
         tx_phase = PHASE_STREAM;
@@ -390,6 +442,12 @@ void rtty_engine_stop(void) {
     frame_active = 0;
     frame_bit = 0;
     timing_samples = 0.0;
+    buffer_generation++;
+    if (buffer_generation == 0) {
+      buffer_generation = 1;
+    }
+    buffer_empty_armed = 0;
+    buffer_empty_pending = 0;
     tx_phase = PHASE_TAIL_MARK;
     mark_samples = 0.0;
     idle_samples = 0.0;
@@ -412,6 +470,12 @@ void rtty_engine_abort(void) {
   q_in = q_out = 0;
   frame_active = 0;
   timing_samples = 0.0;
+  buffer_generation++;
+  if (buffer_generation == 0) {
+    buffer_generation = 1;
+  }
+  buffer_empty_armed = 0;
+  buffer_empty_pending = 0;
   mark_samples = 0.0;
   idle_samples = 0.0;
   /*
@@ -423,6 +487,13 @@ void rtty_engine_abort(void) {
   if (was_active) {
     g_idle_add(rtty_mox_off_cb, GUINT_TO_POINTER(generation));
   }
+}
+
+void rtty_engine_set_buffer_empty_callback(void (*callback)(void)) {
+  rtty_engine_init();
+  g_mutex_lock(&rtty_mutex);
+  buffer_empty_callback = callback;
+  g_mutex_unlock(&rtty_mutex);
 }
 
 int rtty_engine_is_active(void) {
@@ -479,6 +550,8 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
   double samples_per_bit;
   int finish_tx = 0;
   guint finish_generation = 0;
+  int schedule_buffer_empty = 0;
+  guint empty_generation = 0;
   if (iq == NULL || frames <= 0 || sample_rate <= 0) { return; }
   rtty_engine_init();
   g_mutex_lock(&rtty_mutex);
@@ -493,6 +566,12 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
     frame_bit = 0;
     frame_is_fill = 0;
     timing_samples = 0.0;
+    buffer_generation++;
+    if (buffer_generation == 0) {
+      buffer_generation = 1;
+    }
+    buffer_empty_armed = 0;
+    buffer_empty_pending = 0;
     mark_samples = 0.0;
     idle_samples = 0.0;
     shape_initialized = 0;
@@ -633,12 +712,19 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
             frame_bit = 6;
             timing_samples += cfg_stop_bits * samples_per_bit;
           } else {
+            int completed_fill = frame_is_fill;
             frame_active = 0;
             frame_bit = 0;
             if (frame_is_fill && cfg_fill == RTTY_FILL_MARK) {
               timing_samples = 0.0;
             }
             frame_is_fill = 0;
+            if (!completed_fill && buffer_empty_armed && !buffer_empty_pending &&
+                queue_empty()) {
+              buffer_empty_pending = 1;
+              schedule_buffer_empty = 1;
+              empty_generation = buffer_generation;
+            }
           }
         }
       } else {
@@ -691,6 +777,10 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
     iq[2 * n + 1] = sin(phase_acc);
   }
   g_mutex_unlock(&rtty_mutex);
+  if (schedule_buffer_empty) {
+    g_timeout_add(RTTY_BUFFER_EMPTY_DEBOUNCE_MS, rtty_buffer_empty_debounce_cb,
+                  GUINT_TO_POINTER(empty_generation));
+  }
   if (finish_tx) {
     g_idle_add(rtty_mox_off_cb, GUINT_TO_POINTER(finish_generation));
   }

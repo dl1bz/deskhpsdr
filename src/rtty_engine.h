@@ -31,6 +31,7 @@ int rtty_engine_queue_text(const char *text);
 void rtty_engine_drain(void);
 void rtty_engine_stop(void);
 void rtty_engine_abort(void);
+void rtty_engine_set_buffer_empty_callback(void (*callback)(void));
 int rtty_engine_is_active(void);
 void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode);
 

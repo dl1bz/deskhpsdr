@@ -334,6 +334,7 @@ static void tci_send_iq_stream_stop(CLIENT *client, int receiver_id);
 static int tci_queue_frame(CLIENT *client, int type, const char *msg, int check_running);
 static GList *tci_clients_snapshot(void);
 static void tci_cw_macros_empty(void);
+static void tci_rtty_buffer_empty(void);
 
 static void tci_begin_apply(void) {
   tci_apply_in_progress = 1;
@@ -372,6 +373,7 @@ void launch_tci(void) {
   tci_audio_set_tx_chrono_callback(tci_audio_tx_chrono_wakeup);
   cw_engine_set_start_delay(tci_cw_macros_delay_ms);
   cw_engine_set_empty_callback(tci_cw_macros_empty);
+  rtty_engine_set_buffer_empty_callback(tci_rtty_buffer_empty);
   tci_running = 1;
   tci_server_thread_id = g_thread_new("tci lws server", tci_lws_server, GINT_TO_POINTER(tci_port));
 }
@@ -428,6 +430,7 @@ void shutdown_tci(void) {
   tci_audio_set_wakeup_callback(NULL);
   tci_audio_set_tx_chrono_callback(NULL);
   cw_engine_set_empty_callback(NULL);
+  rtty_engine_set_buffer_empty_callback(NULL);
   if (tci_lws_context != NULL) {
     GList *clients = tci_clients_snapshot();
     for (GList *l = clients; l != NULL; l = l->next) {
@@ -780,6 +783,23 @@ static void tci_cw_macros_empty(void) {
   char msg[MAXMSGSIZE];
   snprintf(msg, sizeof(msg), "%s;", tci_cmd_name("cw_macros_empty", "CW_MACROS_EMPTY"));
   tci_cw_send_to_all(msg);
+}
+
+static void tci_rtty_buffer_empty(void) {
+  CLIENT *client = NULL;
+  /*
+   * Native RTTY buffer state belongs only to the client that explicitly
+   * enabled the extension and currently owns the RTTY path.
+   */
+  g_mutex_lock(&tci_mutex);
+  if (tci_rtty_owner != NULL && tci_rtty_owner->running &&
+      tci_rtty_owner->rtty_enabled) {
+    client = tci_rtty_owner;
+  }
+  g_mutex_unlock(&tci_mutex);
+  if (client != NULL) {
+    tci_send_text(client, "rtty_buffer_empty;");
+  }
 }
 
 #ifdef COREAUDIO
