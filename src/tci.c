@@ -5228,6 +5228,18 @@ static void tci_cmd_rtty_text(CLIENT *client, const TCI_CMD *cmd) {
   g_free(decoded);
 }
 
+static void tci_cmd_rtty_drain(CLIENT *client, const TCI_CMD *cmd) {
+  (void)cmd;
+  g_mutex_lock(&tci_mutex);
+  if (tci_rtty_owner == NULL || tci_rtty_owner == client) {
+    g_mutex_unlock(&tci_mutex);
+    rtty_engine_drain();
+    t_print("TCI%d rtty_drain\n", client->seq);
+    return;
+  }
+  g_mutex_unlock(&tci_mutex);
+}
+
 static void tci_cmd_rtty_stop(CLIENT *client, const TCI_CMD *cmd) {
   (void)cmd;
   g_mutex_lock(&tci_mutex);
@@ -5383,6 +5395,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "rtty_idle_timeout",  0,  1, tci_cmd_rtty_idle_timeout },
   { "rtty_start",        0,  0, tci_cmd_rtty_start },
   { "rtty_text",         1,  1, tci_cmd_rtty_text },
+  { "rtty_drain",        0,  0, tci_cmd_rtty_drain },
   { "rtty_stop",         0,  0, tci_cmd_rtty_stop },
   { "cw_macros",         2, -1, tci_cmd_cw_macros },
   { "cw_macros_stop",    0,  0, tci_cmd_cw_macros_stop },

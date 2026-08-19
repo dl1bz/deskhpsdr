@@ -28,6 +28,7 @@ void rtty_engine_set_idle_timeout(int seconds);
 int rtty_engine_get_idle_timeout(void);
 int rtty_engine_start(void);
 int rtty_engine_queue_text(const char *text);
+void rtty_engine_drain(void);
 void rtty_engine_stop(void);
 void rtty_engine_abort(void);
 int rtty_engine_is_active(void);

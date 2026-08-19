@@ -55,7 +55,16 @@ static int cfg_start_crlf = 1;
 static int cfg_idle_timeout = 25;
 
 static int active = 0;
+/*
+ * Lock-free mirror used by TCI while holding tci_mutex.  The RTTY engine
+ * itself still owns active under rtty_mutex; keeping this mirror avoids the
+ * tci_mutex -> rtty_mutex lock order that would otherwise invert against the
+ * MOX callbacks (rtty_mutex -> radio_set_mox() -> tci_mutex).
+ */
+static gint active_atomic = 0;
+static guint tx_generation = 0;
 static int stopping = 0;
+static int draining = 0;
 static TX_PHASE tx_phase = PHASE_IDLE;
 static int prefix_pending = 0;
 static int prefix_ltrs_pending = 0;
@@ -183,15 +192,38 @@ static int encode_char(char input) {
 }
 
 static gboolean rtty_mox_on_cb(gpointer data) {
-  (void)data;
-  if (!mox) {
+  guint generation = GPOINTER_TO_UINT(data);
+  rtty_engine_init();
+  g_mutex_lock(&rtty_mutex);
+  /*
+   * START is queued onto the GTK main loop.  The originating RTTY session may
+   * already have been aborted (or superseded by a new session) by the time the
+   * callback runs.  Never key MOX for a stale generation.
+   *
+   * Keep the mutex held through radio_set_mox(): abort/start can originate on
+   * a TCI worker thread, so checking and keying must be one atomic operation
+   * with respect to the RTTY lifecycle.
+   */
+  if (generation == tx_generation && active && CAT_rtty_is_active && !mox) {
     radio_set_mox(1);
   }
+  g_mutex_unlock(&rtty_mutex);
   return G_SOURCE_REMOVE;
 }
 
 static gboolean rtty_mox_off_cb(gpointer data) {
-  (void)data;
+  guint generation = GPOINTER_TO_UINT(data);
+  rtty_engine_init();
+  g_mutex_lock(&rtty_mutex);
+  /*
+   * Ignore an OFF callback belonging to an older RTTY session.  Without this
+   * guard a rapid abort/restart can let the old callback switch the new
+   * session back to RX and clear CAT_rtty_is_active underneath it.
+   */
+  if (generation != tx_generation) {
+    g_mutex_unlock(&rtty_mutex);
+    return G_SOURCE_REMOVE;
+  }
   /*
    * Keep CAT_rtty_is_active asserted until MOX is actually removed.  Otherwise
    * transmitter.c can fall back to the normal DIGL/DIGU WDSP path for a short
@@ -200,9 +232,10 @@ static gboolean rtty_mox_off_cb(gpointer data) {
   if (mox) {
     radio_set_mox_immediate(0);
   }
-  g_mutex_lock(&rtty_mutex);
   active = 0;
+  g_atomic_int_set(&active_atomic, 0);
   stopping = 0;
+  draining = 0;
   tx_phase = PHASE_IDLE;
   idle_samples = 0.0;
   CAT_rtty_is_active = 0;
@@ -245,8 +278,14 @@ static int rtty_engine_start_locked(void) {
   if (active) {
     return 0;
   }
+  tx_generation++;
+  if (tx_generation == 0) {
+    tx_generation = 1;
+  }
   active = 1;
+  g_atomic_int_set(&active_atomic, 1);
   stopping = 0;
+  draining = 0;
   tx_phase = PHASE_PREFIX_MARK;
   prefix_pending = 1;
   prefix_ltrs_pending = 3;
@@ -270,12 +309,16 @@ static int rtty_engine_start_locked(void) {
 
 int rtty_engine_start(void) {
   int start_tx;
+  guint generation = 0;
   rtty_engine_init();
   g_mutex_lock(&rtty_mutex);
   start_tx = rtty_engine_start_locked();
+  if (start_tx) {
+    generation = tx_generation;
+  }
   g_mutex_unlock(&rtty_mutex);
   if (start_tx) {
-    g_idle_add(rtty_mox_on_cb, NULL);
+    g_idle_add(rtty_mox_on_cb, GUINT_TO_POINTER(generation));
   }
   return start_tx;
 }
@@ -283,13 +326,15 @@ int rtty_engine_start(void) {
 int rtty_engine_queue_text(const char *text) {
   int queued_chars = 0;
   int start_tx = 0;
+  guint generation = 0;
   if (text == NULL || text[0] == '\0') { return 0; }
   rtty_engine_init();
   g_mutex_lock(&rtty_mutex);
   if (rtty_engine_start_locked()) {
     start_tx = 1;
+    generation = tx_generation;
   }
-  if (!stopping) {
+  if (!stopping && !draining) {
     while (*text) {
       if (text[0] == '\r' && text[1] == '\n') {
         if (!encode_char('\n')) { break; }
@@ -308,9 +353,31 @@ int rtty_engine_queue_text(const char *text) {
   }
   g_mutex_unlock(&rtty_mutex);
   if (start_tx) {
-    g_idle_add(rtty_mox_on_cb, NULL);
+    g_idle_add(rtty_mox_on_cb, GUINT_TO_POINTER(generation));
   }
   return queued_chars;
+}
+
+void rtty_engine_drain(void) {
+  rtty_engine_init();
+  g_mutex_lock(&rtty_mutex);
+  if (active && !stopping && !draining) {
+    draining = 1;
+    idle_samples = 0.0;
+    /*
+     * If the stream has already fallen into a continuous fill state, there
+     * is no queued payload left to preserve.  Go directly to the normal
+     * MARK tail.  A currently active framed LTRS fill is allowed to finish
+     * so we never cut a Baudot frame in the middle.
+     */
+    if (tx_phase == PHASE_FILL_MARK || tx_phase == PHASE_FILL_SPACE) {
+      stopping = 1;
+      draining = 0;
+      tx_phase = PHASE_TAIL_MARK;
+      mark_samples = 0.0;
+    }
+  }
+  g_mutex_unlock(&rtty_mutex);
 }
 
 void rtty_engine_stop(void) {
@@ -318,6 +385,7 @@ void rtty_engine_stop(void) {
   g_mutex_lock(&rtty_mutex);
   if (active && !stopping) {
     stopping = 1;
+    draining = 0;
     q_in = q_out = 0;
     frame_active = 0;
     frame_bit = 0;
@@ -331,11 +399,15 @@ void rtty_engine_stop(void) {
 
 void rtty_engine_abort(void) {
   int was_active;
+  guint generation;
   rtty_engine_init();
   g_mutex_lock(&rtty_mutex);
   was_active = active;
+  generation = tx_generation;
   active = 0;
+  g_atomic_int_set(&active_atomic, 0);
   stopping = 0;
+  draining = 0;
   tx_phase = PHASE_IDLE;
   q_in = q_out = 0;
   frame_active = 0;
@@ -349,17 +421,12 @@ void rtty_engine_abort(void) {
    */
   g_mutex_unlock(&rtty_mutex);
   if (was_active) {
-    g_idle_add(rtty_mox_off_cb, NULL);
+    g_idle_add(rtty_mox_off_cb, GUINT_TO_POINTER(generation));
   }
 }
 
 int rtty_engine_is_active(void) {
-  int value;
-  rtty_engine_init();
-  g_mutex_lock(&rtty_mutex);
-  value = active;
-  g_mutex_unlock(&rtty_mutex);
-  return value;
+  return g_atomic_int_get(&active_atomic) != 0;
 }
 
 static void load_frame(uint8_t symbol, int is_fill, double samples_per_bit) {
@@ -411,12 +478,15 @@ static double shaped_frequency(double target_hz, int sample_rate) {
 void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) {
   double samples_per_bit;
   int finish_tx = 0;
+  guint finish_generation = 0;
   if (iq == NULL || frames <= 0 || sample_rate <= 0) { return; }
   rtty_engine_init();
   g_mutex_lock(&rtty_mutex);
   if (active && txmode != modeDIGL && txmode != modeDIGU) {
     active = 0;
+    g_atomic_int_set(&active_atomic, 0);
     stopping = 0;
+    draining = 0;
     tx_phase = PHASE_IDLE;
     q_in = q_out = 0;
     frame_active = 0;
@@ -427,8 +497,9 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
     idle_samples = 0.0;
     shape_initialized = 0;
     memset(iq, 0, (size_t)frames * 2U * sizeof(double));
+    finish_generation = tx_generation;
     g_mutex_unlock(&rtty_mutex);
-    g_idle_add(rtty_mox_off_cb, NULL);
+    g_idle_add(rtty_mox_off_cb, GUINT_TO_POINTER(finish_generation));
     return;
   }
   samples_per_bit = (double)sample_rate / cfg_baud;
@@ -495,6 +566,7 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
          */
         tx_phase = PHASE_WAIT_RX;
         finish_tx = 1;
+        finish_generation = tx_generation;
       }
     } else if (tx_phase == PHASE_WAIT_RX) {
       logical_mark = 1;
@@ -507,6 +579,12 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
         } else if (queue_get(&symbol)) {
           idle_samples = 0.0;
           load_frame(symbol, 0, samples_per_bit);
+        } else if (draining) {
+          draining = 0;
+          stopping = 1;
+          tx_phase = PHASE_TAIL_MARK;
+          mark_samples = 0.0;
+          logical_mark = 1;
         } else if (cfg_fill == RTTY_FILL_LTRS) {
           encoder_shift = SHIFT_LTRS;
           load_frame(RTTY_LTRS, 1, samples_per_bit);
@@ -614,6 +692,6 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
   }
   g_mutex_unlock(&rtty_mutex);
   if (finish_tx) {
-    g_idle_add(rtty_mox_off_cb, NULL);
+    g_idle_add(rtty_mox_off_cb, GUINT_TO_POINTER(finish_generation));
   }
 }
