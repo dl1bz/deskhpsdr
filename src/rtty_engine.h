@@ -5,7 +5,8 @@
 
 typedef enum {
   RTTY_FILL_MARK = 0,
-  RTTY_FILL_LTRS = 1
+  RTTY_FILL_LTRS = 1,
+  RTTY_FILL_SPACE = 2
 } RTTY_FILL_MODE;
 
 void rtty_engine_init(void);
@@ -25,6 +26,7 @@ void rtty_engine_set_start_crlf(int enabled);
 int rtty_engine_get_start_crlf(void);
 void rtty_engine_set_idle_timeout(int seconds);
 int rtty_engine_get_idle_timeout(void);
+int rtty_engine_start(void);
 int rtty_engine_queue_text(const char *text);
 void rtty_engine_stop(void);
 void rtty_engine_abort(void);

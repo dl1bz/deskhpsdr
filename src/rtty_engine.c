@@ -33,6 +33,7 @@ typedef enum {
   PHASE_PREFIX_MARK,
   PHASE_STREAM,
   PHASE_FILL_MARK,
+  PHASE_FILL_SPACE,
   PHASE_TAIL_MARK,
   PHASE_WAIT_RX
 } TX_PHASE;
@@ -231,12 +232,53 @@ SETTER(rtty_engine_set_stop_bits, double, cfg_stop_bits, (value == 1.0 || value 
 GETTER(rtty_engine_get_stop_bits, double, cfg_stop_bits)
 SETTER(rtty_engine_set_uos, int, cfg_uos, value ? 1 : 0)
 GETTER(rtty_engine_get_uos, int, cfg_uos)
-SETTER(rtty_engine_set_fill, RTTY_FILL_MODE, cfg_fill, value == RTTY_FILL_LTRS ? RTTY_FILL_LTRS : RTTY_FILL_MARK)
+SETTER(rtty_engine_set_fill, RTTY_FILL_MODE, cfg_fill,
+       value == RTTY_FILL_LTRS ? RTTY_FILL_LTRS :
+       value == RTTY_FILL_SPACE ? RTTY_FILL_SPACE : RTTY_FILL_MARK)
 GETTER(rtty_engine_get_fill, RTTY_FILL_MODE, cfg_fill)
 SETTER(rtty_engine_set_start_crlf, int, cfg_start_crlf, value ? 1 : 0)
 GETTER(rtty_engine_get_start_crlf, int, cfg_start_crlf)
 SETTER(rtty_engine_set_idle_timeout, int, cfg_idle_timeout, (value >= 1 && value <= 300) ? value : cfg_idle_timeout)
 GETTER(rtty_engine_get_idle_timeout, int, cfg_idle_timeout)
+
+static int rtty_engine_start_locked(void) {
+  if (active) {
+    return 0;
+  }
+  active = 1;
+  stopping = 0;
+  tx_phase = PHASE_PREFIX_MARK;
+  prefix_pending = 1;
+  prefix_ltrs_pending = 3;
+  shape_initialized = 0;
+  shape_samples_total = 0;
+  shape_samples_remaining = 0;
+  timing_samples = 0.0;
+  mark_samples = 0.0;
+  idle_samples = 0.0;
+  frame_active = 0;
+  frame_bit = 0;
+  encoder_shift = SHIFT_LTRS;
+  q_in = q_out = 0;
+  CAT_rtty_is_active = 1;
+  if (cfg_start_crlf) {
+    queue_put(RTTY_CR);
+    queue_put(RTTY_LF);
+  }
+  return 1;
+}
+
+int rtty_engine_start(void) {
+  int start_tx;
+  rtty_engine_init();
+  g_mutex_lock(&rtty_mutex);
+  start_tx = rtty_engine_start_locked();
+  g_mutex_unlock(&rtty_mutex);
+  if (start_tx) {
+    g_idle_add(rtty_mox_on_cb, NULL);
+  }
+  return start_tx;
+}
 
 int rtty_engine_queue_text(const char *text) {
   int queued_chars = 0;
@@ -244,27 +286,7 @@ int rtty_engine_queue_text(const char *text) {
   if (text == NULL || text[0] == '\0') { return 0; }
   rtty_engine_init();
   g_mutex_lock(&rtty_mutex);
-  if (!active) {
-    active = 1;
-    stopping = 0;
-    tx_phase = PHASE_PREFIX_MARK;
-    prefix_pending = 1;
-    prefix_ltrs_pending = 3;
-    shape_initialized = 0;
-    shape_samples_total = 0;
-    shape_samples_remaining = 0;
-    timing_samples = 0.0;
-    mark_samples = 0.0;
-    idle_samples = 0.0;
-    frame_active = 0;
-    frame_bit = 0;
-    encoder_shift = SHIFT_LTRS;
-    q_in = q_out = 0;
-    CAT_rtty_is_active = 1;
-    if (cfg_start_crlf) {
-      queue_put(RTTY_CR);
-      queue_put(RTTY_LF);
-    }
+  if (rtty_engine_start_locked()) {
     start_tx = 1;
   }
   if (!stopping) {
@@ -279,7 +301,7 @@ int rtty_engine_queue_text(const char *text) {
     }
     if (queued_chars > 0) {
       idle_samples = 0.0;
-      if (tx_phase == PHASE_FILL_MARK) {
+      if (tx_phase == PHASE_FILL_MARK || tx_phase == PHASE_FILL_SPACE) {
         tx_phase = PHASE_STREAM;
       }
     }
@@ -446,6 +468,19 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
         mark_samples = 0.0;
         idle_samples = 0.0;
       }
+    } else if (tx_phase == PHASE_FILL_SPACE) {
+      /*
+       * SPACE fill is a continuous logical SPACE carrier.  REVERSE is applied
+       * below, exactly as for data and MARK fill.
+       */
+      logical_mark = 0;
+      idle_samples += 1.0;
+      if (idle_samples >= (double)cfg_idle_timeout * (double)sample_rate) {
+        stopping = 1;
+        tx_phase = PHASE_TAIL_MARK;
+        mark_samples = 0.0;
+        idle_samples = 0.0;
+      }
     } else if (tx_phase == PHASE_TAIL_MARK) {
       if (mark_samples <= 0.0) {
         mark_samples = 0.300 * (double)sample_rate;
@@ -475,6 +510,9 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
         } else if (cfg_fill == RTTY_FILL_LTRS) {
           encoder_shift = SHIFT_LTRS;
           load_frame(RTTY_LTRS, 1, samples_per_bit);
+        } else if (cfg_fill == RTTY_FILL_SPACE) {
+          tx_phase = PHASE_FILL_SPACE;
+          logical_mark = 0;
         } else {
           tx_phase = PHASE_FILL_MARK;
           logical_mark = 1;
@@ -482,6 +520,8 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
       }
       if (tx_phase == PHASE_FILL_MARK) {
         logical_mark = 1;
+      } else if (tx_phase == PHASE_FILL_SPACE) {
+        logical_mark = 0;
       } else if (frame_active) {
         if (frame_is_fill) {
           idle_samples += 1.0;

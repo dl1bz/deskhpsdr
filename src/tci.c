@@ -5057,8 +5057,10 @@ static void tci_send_rtty_uos(CLIENT *client) {
 
 static void tci_send_rtty_fill(CLIENT *client) {
   char msg[MAXMSGSIZE];
-  snprintf(msg, sizeof(msg), "%s:%s;", tci_cmd_name("rtty_fill", "RTTY_FILL"),
-           rtty_engine_get_fill() == RTTY_FILL_LTRS ? "LTRS" : "MARK");
+  RTTY_FILL_MODE fill = rtty_engine_get_fill();
+  const char *name = fill == RTTY_FILL_LTRS ? "LTRS" :
+                     fill == RTTY_FILL_SPACE ? "SPACE" : "MARK";
+  snprintf(msg, sizeof(msg), "%s:%s;", tci_cmd_name("rtty_fill", "RTTY_FILL"), name);
   tci_send_text(client, msg);
 }
 
@@ -5123,7 +5125,13 @@ static void tci_cmd_rtty_uos(CLIENT *client, const TCI_CMD *cmd) {
 static void tci_cmd_rtty_fill(CLIENT *client, const TCI_CMD *cmd) {
   if (cmd->argc >= 1 && cmd->argv[0] != NULL && cmd->argv[0][0] != '\0' &&
       tci_rtty_set_allowed(client)) {
-    rtty_engine_set_fill(g_ascii_strcasecmp(cmd->argv[0], "LTRS") == 0 ? RTTY_FILL_LTRS : RTTY_FILL_MARK);
+    RTTY_FILL_MODE fill = RTTY_FILL_MARK;
+    if (g_ascii_strcasecmp(cmd->argv[0], "LTRS") == 0) {
+      fill = RTTY_FILL_LTRS;
+    } else if (g_ascii_strcasecmp(cmd->argv[0], "SPACE") == 0) {
+      fill = RTTY_FILL_SPACE;
+    }
+    rtty_engine_set_fill(fill);
   }
   tci_send_rtty_fill(client);
 }
@@ -5147,6 +5155,38 @@ static void tci_cmd_rtty_idle_timeout(CLIENT *client, const TCI_CMD *cmd) {
   tci_send_rtty_idle_timeout(client);
 }
 
+static void tci_cmd_rtty_start(CLIENT *client, const TCI_CMD *cmd) {
+  int started;
+  (void)cmd;
+  {
+    int tx_vfo = vfo_get_tx_vfo();
+    int mode = vfo[tx_vfo].mode;
+    if (mode != modeDIGL && mode != modeDIGU) {
+      t_print("TCI%d rtty_start ignored: mode must be DIGL or DIGU\n", client->seq);
+      return;
+    }
+  }
+  g_mutex_lock(&tci_mutex);
+  if (tci_rtty_owner != NULL && tci_rtty_owner != client && !rtty_engine_is_active()) {
+    tci_rtty_owner = NULL;
+  }
+  if (tci_rtty_owner != NULL && tci_rtty_owner != client) {
+    int owner_seq = tci_rtty_owner->seq;
+    g_mutex_unlock(&tci_mutex);
+    t_print("TCI%d rtty_start ignored: RTTY TX owned by TCI%d\n", client->seq, owner_seq);
+    return;
+  }
+  if (!rtty_engine_is_active() && (tci_tx_owner != NULL || radio_is_transmitting())) {
+    g_mutex_unlock(&tci_mutex);
+    t_print("TCI%d rtty_start ignored: transmitter already in use\n", client->seq);
+    return;
+  }
+  tci_rtty_owner = client;
+  g_mutex_unlock(&tci_mutex);
+  started = rtty_engine_start();
+  t_print("TCI%d rtty_start%s\n", client->seq, started ? "" : " (already active)");
+}
+
 static void tci_cmd_rtty_text(CLIENT *client, const TCI_CMD *cmd) {
   GString *raw;
   char *decoded;
@@ -5167,8 +5207,9 @@ static void tci_cmd_rtty_text(CLIENT *client, const TCI_CMD *cmd) {
     tci_rtty_owner = NULL;
   }
   if (tci_rtty_owner != NULL && tci_rtty_owner != client) {
+    int owner_seq = tci_rtty_owner->seq;
     g_mutex_unlock(&tci_mutex);
-    t_print("TCI%d rtty_text ignored: RTTY TX owned by TCI%d\n", client->seq, tci_rtty_owner->seq);
+    t_print("TCI%d rtty_text ignored: RTTY TX owned by TCI%d\n", client->seq, owner_seq);
     return;
   }
   if (!rtty_engine_is_active() && (tci_tx_owner != NULL || radio_is_transmitting())) {
@@ -5340,6 +5381,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "rtty_fill",         0,  1, tci_cmd_rtty_fill },
   { "rtty_start_crlf",   0,  1, tci_cmd_rtty_start_crlf },
   { "rtty_idle_timeout",  0,  1, tci_cmd_rtty_idle_timeout },
+  { "rtty_start",        0,  0, tci_cmd_rtty_start },
   { "rtty_text",         1,  1, tci_cmd_rtty_text },
   { "rtty_stop",         0,  0, tci_cmd_rtty_stop },
   { "cw_macros",         2, -1, tci_cmd_cw_macros },
