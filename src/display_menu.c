@@ -293,7 +293,11 @@ static void gradient_cb(GtkWidget *widget, gpointer data) {
 
 static void panadapter_3d_cb(GtkWidget *widget, gpointer data) {
   int value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  for (int i = 0; i < receivers; i++) {
+  /*
+   * 3D waterfall history is a global display option.  Keep all normal
+   * receivers synchronized, including RX2 while it is not displayed yet.
+   */
+  for (int i = 0; i < RECEIVERS; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->display_3d = value;
       waterfall_3d_clear(receiver[i]);

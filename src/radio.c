@@ -1872,6 +1872,12 @@ void radio_change_receivers(int r) {
     break;
   case 2:
     gtk_fixed_put(GTK_FIXED(fixed), receiver[1]->panel, 0, 0);
+    /*
+     * The 3D waterfall setting is global.  RX2 may have been inactive when
+     * the setting changed or may have restored an older per-RX property.
+     */
+    receiver[1]->display_3d = receiver[0]->display_3d;
+    waterfall_3d_clear(receiver[1]);
     receiver[1]->displaying = 1;
     rx_set_displaying(receiver[1]);
     receivers = 2;
