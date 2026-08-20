@@ -364,8 +364,6 @@ static int ozy_i2c_read(unsigned char *buffer, int buffer_size, unsigned char cm
   return rc;
 }
 
-// TODO: we should call this function from somewhere
-// cppcheck-suppress unusedFunction
 void ozy_i2c_readpwr(int addr) {
   int rc = 0;
   unsigned char buffer[8];

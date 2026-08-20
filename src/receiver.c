@@ -1703,8 +1703,6 @@ void rx_set_framerate(RECEIVER *rx) {
 //
 // WDSPRXDEBUG should only be activated for debugging
 //
-// TODO: If the radio is remote, make them a no-op.
-//
 ////////////////////////////////////////////////////////
 
 void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {

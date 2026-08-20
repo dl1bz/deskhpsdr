@@ -148,7 +148,6 @@ int sat_mode;
 int region = REGION_VFO;
 
 DISCOVERED *radio = NULL;
-gboolean radio_is_remote = FALSE;     // only used with CLIENT_SERVER
 
 static char property_path[128];
 static char property_path_bak[256];

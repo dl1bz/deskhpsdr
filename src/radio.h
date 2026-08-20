@@ -59,7 +59,6 @@ enum _pa_power_enum {
 #define TOGGLE(a) a = (a) ? 0 : 1
 
 extern DISCOVERED *radio;
-extern gboolean radio_is_remote;
 
 extern GtkWidget *fixed;
 
