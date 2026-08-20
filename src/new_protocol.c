@@ -2175,17 +2175,6 @@ static void new_protocol_transmit_specific(void) {
   if (mic_input_xlr) {
     transmit_specific_buffer[50] |= 0x20;
   }
-#if 0
-  t_print("%s: TX byte50=0x%02X linein=%d boost=%d ptt=%d tipring=%d bias=%d xlr=%d\n",
-          __func__,
-          transmit_specific_buffer[50],
-          mic_linein,
-          mic_boost,
-          mic_ptt_enabled,
-          mic_ptt_tip_bias_ring,
-          mic_bias_enabled,
-          mic_input_xlr);
-#endif
   //
   // A value of 0..31 represents a LineIn gain of -12.0 .. 34.5 in 1.5 dB steps
   //

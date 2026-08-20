@@ -1325,16 +1325,6 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
           active_receiver->local_audio_mute);
 }
 
-#if 0
-static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
-  // int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  // active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
-  active_receiver->local_audio_mute = !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  update_slider_af_gain_btn();
-  t_print("%s: active_receiver->local_audio_mute = %d\n", __func__, active_receiver->local_audio_mute);
-}
-#endif
-
 void update_slider_split_btn(void) {
   if (display_sliders) {
     sliders_signal_handler_block(GTK_TOGGLE_BUTTON(split_btn), split_btn_signal_id);
