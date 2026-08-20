@@ -64,7 +64,6 @@ static int my_display_width;
 static int my_display_height;
 static int my_full_screen;
 static int my_vfo_layout;
-static int my_rx_stack_horizontal;
 
 static RECEIVER *screen_menu_reference_receiver(void) {
   for (int i = 0; i < RECEIVERS; i++) {
@@ -90,7 +89,6 @@ static int apply(gpointer data) {
   display_height      = my_display_height;
   full_screen         = my_full_screen;
   vfo_layout          = my_vfo_layout;
-  rx_stack_horizontal = my_rx_stack_horizontal;
   radio_reconfigure_screen();
   //
   // VFO layout may have been re-adjusted so update combo-box
@@ -363,7 +361,6 @@ void screen_menu(GtkWidget *parent) {
   my_display_height      = display_height;
   my_full_screen         = full_screen;
   my_vfo_layout          = vfo_layout;
-  my_rx_stack_horizontal = rx_stack_horizontal;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   win_set_bgcolor(dialog, &mwin_bgcolor);

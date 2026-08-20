@@ -2191,25 +2191,8 @@ void rx_panadapter_update(RECEIVER *rx) {
   if (rx->id == 0) {
     display_panadapter_messages(cr, mywidth, rx->fps);
   }
-  //
-  // For horizontal stacking, draw a vertical separator,
-  // at the right edge of RX1, and at the left
-  // edge of RX2.
-  //
-  if (rx_stack_horizontal && receivers > 1) {
-    if (rx->id == 0) {
-      cairo_move_to(cr, mywidth - 1, 0);
-      cairo_line_to(cr, mywidth - 1, myheight);
-    } else {
-      cairo_move_to(cr, 0, 0);
-      cairo_line_to(cr, 0, myheight);
-    }
-    cairo_set_source_rgba(cr, COLOUR_PAN_LINE);
-    cairo_set_line_width(cr, 1);
-    cairo_stroke(cr);
-  }
   if (display_info_bar && active_receiver->display_panadapter && !active_receiver->display_waterfall
-      && rx->id == receivers - 1 && !rx_stack_horizontal) {
+      && rx->id == receivers - 1) {
     // cairo_rectangle(cr, x, y, width, height) -> all as double()
     // X coordinate of the top left corner of the rectangle
     // Y coordinate to the top left corner of the rectangle
@@ -2458,7 +2441,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
   char _text[128];
-  if (can_transmit && !display_info_bar && active_receiver->display_panadapter && !rx_stack_horizontal) {
+  if (can_transmit && !display_info_bar && active_receiver->display_panadapter) {
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
@@ -2595,7 +2578,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
   }
 #ifdef __AH4IOB__
-  if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4 && !rx_stack_horizontal
+  if (can_transmit && device == DEVICE_HERMES_LITE2 && display_ah4
       && active_receiver->display_panadapter) {
     cairo_set_source_rgb(cr, 38.0 / 255, 38.0 / 255, 38.0 / 255);  // Hintergrund
     cairo_rectangle(cr, width - 445.0, 15.0, 135.0, 20.0);  // x, y, Breite, Höhe

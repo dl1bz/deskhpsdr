@@ -326,6 +326,7 @@ typedef struct _receiver {
 
   int display_gradient;
   int display_filled;
+  int display_3d;
   int display_detector_mode;
   int display_average_mode;
   double display_average_time;

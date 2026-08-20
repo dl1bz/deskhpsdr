@@ -336,6 +336,7 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   SetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
   SetPropI1("receiver.%d.display_gradient", rx->id,             rx->display_gradient);
+  SetPropI1("receiver.%d.display_3d", rx->id,                   rx->display_3d);
   SetPropI1("receiver.%d.display_detector_mode", rx->id,        rx->display_detector_mode);
   SetPropI1("receiver.%d.display_average_mode", rx->id,         rx->display_average_mode);
   SetPropF1("receiver.%d.display_average_time", rx->id,         rx->display_average_time);
@@ -473,6 +474,7 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.display_panadapter", rx->id,           rx->display_panadapter);
   GetPropI1("receiver.%d.display_filled", rx->id,               rx->display_filled);
   GetPropI1("receiver.%d.display_gradient", rx->id,             rx->display_gradient);
+  GetPropI1("receiver.%d.display_3d", rx->id,                   rx->display_3d);
   GetPropI1("receiver.%d.display_detector_mode", rx->id,        rx->display_detector_mode);
   GetPropI1("receiver.%d.display_average_mode", rx->id,         rx->display_average_mode);
   GetPropF1("receiver.%d.display_average_time", rx->id,         rx->display_average_time);
@@ -881,6 +883,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_noisefloor_fast_start_count = 5;
   rx->display_filled = 1;
   rx->display_gradient = 1;
+  rx->display_3d = 0;
   rx->display_detector_mode = DET_AVERAGE;
   rx->display_average_mode = AVG_LOGRECURSIVE;
   rx->display_average_time = 250.0;

@@ -35,6 +35,7 @@
 #include "message.h"
 #include "zoompan.h"
 #include "rx_panadapter.h"
+#include "waterfall.h"
 
 enum _containers {
   GENERAL_CONTAINER = 1,
@@ -286,6 +287,16 @@ static void gradient_cb(GtkWidget *widget, gpointer data) {
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->display_gradient = value;
+    }
+  }
+}
+
+static void panadapter_3d_cb(GtkWidget *widget, gpointer data) {
+  int value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->display_3d = value;
+      waterfall_3d_clear(receiver[i]);
     }
   }
 }
@@ -741,6 +752,7 @@ void display_menu(GtkWidget *parent) {
                               "Lower values show more noise floor.");
   gtk_grid_attach(GTK_GRID(general_grid), spinbtn_noise_margin, col, row, 1, 1);
   g_signal_connect(spinbtn_noise_margin, "value-changed", G_CALLBACK(panadapter_noise_margin_cb), NULL);
+  //--------------------------------------------------------------------------------------------------------------
   col++;
   GtkWidget *ChkBtn_wmap = gtk_check_button_new_with_label("Show Worldmap");
   gtk_widget_set_name(ChkBtn_wmap, "boldlabel_blue");
@@ -749,6 +761,14 @@ void display_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_wmap), display_wmap);
   gtk_grid_attach(GTK_GRID(general_grid), ChkBtn_wmap, col, row, 1, 1);
   g_signal_connect(ChkBtn_wmap, "toggled", G_CALLBACK(chkbtn_toggle_cb), &display_wmap);
+  //--------------------------------------------------------------------------------------------------------------
+  row++;
+  GtkWidget *panadapter_3d_b = gtk_check_button_new_with_label("3D Waterfall History");
+  gtk_widget_set_name(panadapter_3d_b, "boldlabel_blue");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(panadapter_3d_b), display_rx->display_3d);
+  gtk_widget_show(panadapter_3d_b);
+  gtk_grid_attach(GTK_GRID(general_grid), panadapter_3d_b, col, row, 1, 1);
+  g_signal_connect(panadapter_3d_b, "toggled", G_CALLBACK(panadapter_3d_cb), NULL);
   //--------------------------------------------------------------------------------------------------------------
   row = 1;
   label = gtk_label_new("Detector:");
@@ -853,16 +873,11 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(general_grid), b_display_waterfall, col, row, 1, 1);
   g_signal_connect(b_display_waterfall, "toggled", G_CALLBACK(display_waterfall_cb), NULL);
   //------------------------------------------------------------------------------------------------------------
-  row = row - 3;
+  row = row - 4;
   col++;
   GtkWidget *b_display_info_bar = gtk_check_button_new_with_label("Display Info Bar");
   gtk_widget_set_name(b_display_info_bar, "boldlabel_blue");
-  if (!rx_stack_horizontal) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_info_bar), display_info_bar);
-  } else {
-    display_info_bar = 0;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_info_bar), display_info_bar);
-  }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_info_bar), display_info_bar);
   gtk_grid_attach(GTK_GRID(general_grid), b_display_info_bar, col, row, 1, 1);
   g_signal_connect(b_display_info_bar, "toggled", G_CALLBACK(toggle_info_bar_cb), NULL);
   //------------------------------------------------------------------------------------------------------------

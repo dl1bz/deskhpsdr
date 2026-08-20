@@ -121,7 +121,6 @@ int ZOOMPAN_HEIGHT = 50;
 int SLIDERS_HEIGHT = 100;
 int TOOLBAR_HEIGHT = 30;
 
-int rx_stack_horizontal = 0;
 
 int suppress_popup_sliders = 0;
 
@@ -843,35 +842,17 @@ void radio_reconfigure(void) {
     rx_height -= toolbar_get_height(my_width, my_height, TOOLBAR_HEIGHT);
   }
   y = VFO_HEIGHT;
-  // if there is only one receiver, both cases here do the same.
-  if (rx_stack_horizontal) {
-    int x = 0;
-    for (i = 0; i < receivers; i++) {
-      RECEIVER *rx = receiver[i];
-      rx->width = my_width / receivers;
-      rx_update_zoom(rx);
-      rx_reconfigure(rx, rx_height);
-      if (!radio_is_transmitting() || duplex) {
-        gtk_fixed_move(GTK_FIXED(fixed), rx->panel, x, y);
-      }
-      rx->x = x;
-      rx->y = y;
-      x = x + my_width / receivers;
+  for (i = 0; i < receivers; i++) {
+    RECEIVER *rx = receiver[i];
+    rx->width = my_width;
+    rx_update_zoom(rx);
+    rx_reconfigure(rx, rx_height / receivers);
+    if (!radio_is_transmitting() || duplex) {
+      gtk_fixed_move(GTK_FIXED(fixed), rx->panel, 0, y);
     }
-    y += rx_height;
-  } else {
-    for (i = 0; i < receivers; i++) {
-      RECEIVER *rx = receiver[i];
-      rx->width = my_width;
-      rx_update_zoom(rx);
-      rx_reconfigure(rx, rx_height / receivers);
-      if (!radio_is_transmitting() || duplex) {
-        gtk_fixed_move(GTK_FIXED(fixed), rx->panel, 0, y);
-      }
-      rx->x = 0;
-      rx->y = y;
-      y += rx_height / receivers;
-    }
+    rx->x = 0;
+    rx->y = y;
+    y += rx_height / receivers;
   }
   if (display_zoompan) {
     if (zoompan == NULL) {
