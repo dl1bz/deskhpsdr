@@ -1155,6 +1155,9 @@ void ps_menu(GtkWidget *parent) {
       gtk_widget_hide(tx_att);
       gtk_widget_show(tx_att_spin);
     }
+  } else if (duplex) {
+    gtk_widget_hide(tx_att);
+    gtk_widget_show(tx_att_spin);
   } else {
     gtk_widget_hide(tx_att_spin);
     gtk_widget_show(tx_att);
