@@ -285,7 +285,7 @@ static void wf3d_toggle_cb(GtkWidget *widget, gpointer data) {
 }
 
 void update_wf3d_btn(void) {
-  if (wf3d_btn == NULL || receiver[0] == NULL) {
+  if (!display_zoompan || wf3d_btn == NULL || receiver[0] == NULL) {
     return;
   }
   int value = receiver[0]->display_3d;
