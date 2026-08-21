@@ -36,6 +36,11 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
+#if defined(__APPLE__) && defined(BUNDLED_APP)
+  #include <CoreFoundation/CoreFoundation.h>
+  #include <limits.h>
+#endif
+
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
 #include "appearance.h"
@@ -886,7 +891,36 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   g_idle_add(init, NULL);
 }
 
+#if defined(__APPLE__) && defined(BUNDLED_APP)
+static void setup_macos_bundle_gsettings(void) {
+  CFBundleRef bundle = CFBundleGetMainBundle();
+  if (bundle == NULL) {
+    return;
+  }
+  CFURLRef resources_url = CFBundleCopyResourcesDirectoryURL(bundle);
+  if (resources_url == NULL) {
+    return;
+  }
+  char resources_path[PATH_MAX];
+  if (CFURLGetFileSystemRepresentation(resources_url,
+                                       true,
+                                       (UInt8 *)resources_path,
+                                       sizeof(resources_path))) {
+    char schema_path[PATH_MAX];
+    snprintf(schema_path,
+             sizeof(schema_path),
+             "%s/share/glib-2.0/schemas",
+             resources_path);
+    g_setenv("GSETTINGS_SCHEMA_DIR", schema_path, TRUE);
+  }
+  CFRelease(resources_url);
+}
+#endif
+
 int main(int argc, char **argv) {
+#if defined(__APPLE__) && defined(BUNDLED_APP)
+  setup_macos_bundle_gsettings();
+#endif
 #if !defined(__WAYLAND__)
   enforce_x11_backend_policy();
 #endif

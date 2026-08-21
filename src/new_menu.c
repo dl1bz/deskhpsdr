@@ -533,6 +533,7 @@ void new_menu(void) {
   if (main_menu == NULL) {
     main_menu = gtk_dialog_new();
     gtk_window_set_transient_for(GTK_WINDOW(main_menu), GTK_WINDOW(top_window));
+    gtk_window_set_position(GTK_WINDOW(main_menu), GTK_WIN_POS_CENTER_ON_PARENT);
     win_set_bgcolor(main_menu, &mwin_bgcolor);
     GtkWidget *headerbar = gtk_header_bar_new();
     gtk_window_set_titlebar(GTK_WINDOW(main_menu), headerbar);

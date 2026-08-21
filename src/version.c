@@ -49,6 +49,9 @@ char build_options[] =
 #ifdef __AH4IOB__
   "AH4IOB "
 #endif
+#ifdef BUNDLED_APP
+  "APP-BUNDLE "
+#endif
 #ifdef __DVL__
   "DEV "
 #endif
