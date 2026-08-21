@@ -39,6 +39,7 @@
 #include "message.h"
 #include "toolset.h"
 #include "rx_panadapter.h"
+#include "waterfall.h"
 
 static int width;
 static int height;
@@ -60,6 +61,9 @@ static GMutex pan_zoom_mutex;
 static GtkWidget *peak_btn;
 static GtkWidget *peak_label;
 static gulong peak_btn_signal_id;
+static GtkWidget *wf3d_btn;
+static GtkWidget *wf3d_label;
+static gulong wf3d_btn_signal_id;
 static GMutex peak_mutex;
 static GMutex zoom_mutex;
 
@@ -269,6 +273,34 @@ static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
   g_mutex_unlock(&peak_mutex);
 }
 
+static void wf3d_toggle_cb(GtkWidget *widget, gpointer data) {
+  int value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  gtk_label_set_text(GTK_LABEL(wf3d_label), value ? "3D WF" : "2D WF");
+  for (int i = 0; i < receivers; i++) {
+    if (receiver[i] != NULL) {
+      receiver[i]->display_3d = value;
+      waterfall_3d_clear(receiver[i]);
+    }
+  }
+}
+
+void update_wf3d_btn(void) {
+  if (wf3d_btn == NULL || receiver[0] == NULL) {
+    return;
+  }
+  int value = receiver[0]->display_3d;
+  if (wf3d_btn_signal_id != 0) {
+    g_signal_handler_block(wf3d_btn, wf3d_btn_signal_id);
+  }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wf3d_btn), value);
+  if (wf3d_label != NULL) {
+    gtk_label_set_text(GTK_LABEL(wf3d_label), value ? "3D WF" : "2D WF");
+  }
+  if (wf3d_btn_signal_id != 0) {
+    g_signal_handler_unblock(wf3d_btn, wf3d_btn_signal_id);
+  }
+}
+
 static void zoom_toggle_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
   g_mutex_lock(&zoom_mutex);
@@ -452,6 +484,25 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
     gtk_widget_set_sensitive(pan_scale, FALSE);
   }
   //-----------------------------------------------------------------------------------------------------------
+  int wf3d_active = receiver[0] != NULL ? receiver[0]->display_3d : 0;
+  wf3d_btn = gtk_toggle_button_new_with_label(wf3d_active ? "3D WF" : "2D WF");
+  WEAKEN(wf3d_btn);
+  gtk_widget_set_name(wf3d_btn, "medium_toggle_button");
+  gtk_widget_set_tooltip_text(wf3d_btn, "Toggle 2D ↔ 3D Waterfall History\n\n"
+                                        "3D Waterfall History increases CPU usage by approximately 10%.\n"
+                                        "If your system does not provide sufficient performance,\n"
+                                        "you will have to DISABLE this feature!");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wf3d_btn), wf3d_active);
+  wf3d_label = gtk_bin_get_child(GTK_BIN(wf3d_btn));
+  gtk_label_set_justify(GTK_LABEL(wf3d_label), GTK_JUSTIFY_CENTER);
+  gtk_widget_set_size_request(wf3d_btn, 70, -1);
+  gtk_widget_set_margin_top(wf3d_btn, 5);
+  gtk_widget_set_margin_bottom(wf3d_btn, 5);
+  gtk_widget_set_margin_start(wf3d_btn, 5);
+  gtk_widget_set_halign(wf3d_btn, GTK_ALIGN_START);
+  gtk_widget_set_valign(wf3d_btn, GTK_ALIGN_CENTER);
+  wf3d_btn_signal_id = g_signal_connect(wf3d_btn, "toggled", G_CALLBACK(wf3d_toggle_cb), NULL);
+  //-----------------------------------------------------------------------------------------------------------
   if (zoompan_has_ant_controls()) {
     rx_ant_combo = gtk_combo_box_text_new();
     WEAKEN(rx_ant_combo);
@@ -495,6 +546,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(pan_box), rx_ant_combo, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(pan_box), tx_ant_combo, FALSE, FALSE, 0);
   }
+  gtk_box_pack_start(GTK_BOX(pan_box), wf3d_btn, FALSE, FALSE, 0);
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(zoompan), pan_box, /* column */ 1, /* row */ 0, /* width */ 1, /* height */ 1);
   gtk_widget_show_all(pan_box);

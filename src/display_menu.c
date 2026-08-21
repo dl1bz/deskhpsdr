@@ -303,6 +303,7 @@ static void panadapter_3d_cb(GtkWidget *widget, gpointer data) {
       waterfall_3d_clear(receiver[i]);
     }
   }
+  update_wf3d_btn();
 }
 
 static void frames_per_second_value_changed_cb(GtkWidget *widget, gpointer data) {
