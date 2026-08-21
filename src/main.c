@@ -36,7 +36,7 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
-#if defined(__APPLE__) && defined(BUNDLED_APP)
+#if defined(__APPLE__)
   #include <CoreFoundation/CoreFoundation.h>
   #include <CoreText/CoreText.h>
   #include <limits.h>
@@ -892,7 +892,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   g_idle_add(init, NULL);
 }
 
-#if defined(__APPLE__) && defined(BUNDLED_APP)
+#if defined(__APPLE__)
 static void register_bundle_fonts(const char *dir_path) {
   GDir *dir = g_dir_open(dir_path, 0, NULL);
   if (dir == NULL) {
@@ -930,7 +930,34 @@ static void register_bundle_fonts(const char *dir_path) {
   g_dir_close(dir);
 }
 
-static void setup_macos_bundle_runtime(void) {
+static void register_macos_bundle_fonts(void) {
+  CFBundleRef bundle = CFBundleGetMainBundle();
+  if (bundle == NULL) {
+    return;
+  }
+  CFURLRef resources_url = CFBundleCopyResourcesDirectoryURL(bundle);
+  if (resources_url == NULL) {
+    return;
+  }
+  char resources_path[PATH_MAX];
+  if (CFURLGetFileSystemRepresentation(resources_url,
+                                       true,
+                                       (UInt8 *)resources_path,
+                                       sizeof(resources_path))) {
+    char fonts_path[PATH_MAX];
+    snprintf(fonts_path,
+             sizeof(fonts_path),
+             "%s/fonts",
+             resources_path);
+    if (g_file_test(fonts_path, G_FILE_TEST_IS_DIR)) {
+      register_bundle_fonts(fonts_path);
+    }
+  }
+  CFRelease(resources_url);
+}
+
+#if defined(BUNDLED_APP)
+static void setup_macos_bundle_gsettings(void) {
   CFBundleRef bundle = CFBundleGetMainBundle();
   if (bundle == NULL) {
     return;
@@ -945,25 +972,23 @@ static void setup_macos_bundle_runtime(void) {
                                        (UInt8 *)resources_path,
                                        sizeof(resources_path))) {
     char schema_path[PATH_MAX];
-    char fonts_path[PATH_MAX];
     snprintf(schema_path,
              sizeof(schema_path),
              "%s/share/glib-2.0/schemas",
              resources_path);
-    snprintf(fonts_path,
-             sizeof(fonts_path),
-             "%s/fonts",
-             resources_path);
     g_setenv("GSETTINGS_SCHEMA_DIR", schema_path, TRUE);
-    register_bundle_fonts(fonts_path);
   }
   CFRelease(resources_url);
 }
 #endif
+#endif
 
 int main(int argc, char **argv) {
+#if defined(__APPLE__)
+  register_macos_bundle_fonts();
+#endif
 #if defined(__APPLE__) && defined(BUNDLED_APP)
-  setup_macos_bundle_runtime();
+  setup_macos_bundle_gsettings();
 #endif
 #if !defined(__WAYLAND__)
   enforce_x11_backend_policy();

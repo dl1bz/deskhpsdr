@@ -1107,14 +1107,10 @@ install-Darwin: all
 		cp "${CURRDIR}/MacOS/rigctld_deskhpsdr" deskHPSDR.app/Contents/Resources; \
 	fi
 	@echo "Copy additional needed Fonts..."
-	@mkdir -p "$(HOME)/Library/Fonts"
-	@cp -R fonts/ttf/Roboto "${HOME}/Library/Fonts"
-	@cp -R fonts/ttf/JetBrainsMono "${HOME}/Library/Fonts"
-	@cp -R fonts/otf/GNU "${HOME}/Library/Fonts"
-	@sleep 1
-	@echo "Rebuild font cache..."
-	-@command -v fc-cache >/dev/null 2>&1 && fc-cache -f "${HOME}/Library/Fonts" >/dev/null 2>&1 || true
-	@sleep 1
+	@mkdir -p deskHPSDR.app/Contents/Resources/fonts
+	@cp -R fonts/ttf/Roboto deskHPSDR.app/Contents/Resources/fonts/
+	@cp -R fonts/ttf/JetBrainsMono deskHPSDR.app/Contents/Resources/fonts/
+	@cp -R fonts/otf/GNU deskHPSDR.app/Contents/Resources/fonts/
 	@if [ -x /usr/bin/codesign ]; then \
 		echo "Strip extended attributes before codesigning..."; \
 		xattr -cr deskHPSDR.app; \
