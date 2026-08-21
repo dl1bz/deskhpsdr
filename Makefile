@@ -587,7 +587,7 @@ SYS_LIBS=-lrt
 endif
 
 ifeq ($(UNAME_S), Darwin)
-SYS_LIBS=-framework IOKit -framework Cocoa -framework WebKit
+SYS_LIBS=-framework IOKit -framework Cocoa -framework WebKit -framework CoreText
 endif
 
 ##############################################################################
