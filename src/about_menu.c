@@ -35,29 +35,10 @@
 #include "discovered.h"
 #include "radio.h"
 #include "version.h"
-#include "hpsdr_logo.h"
+#include "main.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *label;
-
-static GdkPixbuf *create_pixbuf_from_data() {
-  GInputStream *mem_stream;
-  GdkPixbuf *pixbuf, *scaled_pixbuf;
-  GError *error = NULL;
-  mem_stream = g_memory_input_stream_new_from_data(hpsdr_logo, hpsdr_logo_len, NULL);
-  pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
-  if (!pixbuf) {
-    g_printerr("ERROR loading pic: %s\n", error->message);
-    g_error_free(error);
-    g_object_unref(mem_stream);
-    return NULL;
-  }
-  // pic scaling
-  scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, 100, 100, GDK_INTERP_BILINEAR);
-  g_object_unref(pixbuf);  // free original-pixbuf
-  g_object_unref(mem_stream);
-  return scaled_pixbuf;
-}
 
 static void cleanup(void) {
   if (dialog != NULL) {
@@ -104,26 +85,18 @@ void about_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   */
+  //---------------------------------------------------------------------------------------------------------------------
   row++;
-  // load the TRX logo now only from the included hpsdr_logo.h
+  // load the TRX logo now only from the included appicon.h
   GtkWidget *hpsdr_logo_widget = gtk_image_new_from_pixbuf(create_pixbuf_from_data());
   gtk_widget_set_halign(hpsdr_logo_widget, GTK_ALIGN_CENTER);  // Horizontal zentrieren
   gtk_widget_set_valign(hpsdr_logo_widget, GTK_ALIGN_START);   // Vertikal oben ausrichten
   gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
+  //---------------------------------------------------------------------------------------------------------------------
   snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
                                "for SDR-TRX running OpenHPSDR protocol P1 or P2\n\n"
                                "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
                                "(contains code portions of pihpsdr until October 2024)\n"
-                               "Licensed under the GNU General Public License v3.0 (GPL-3.0)\n\n"
-                               "    Credits:\n"
-                               "    Warren, NR0V: WDSP signal processing library development\n"
-                               "    John, G0ORX/N6LYT: first and initial version of pihpsdr\n"
-                               "    Steve, KA6S & Jae, K5JAE: Older CAT emulations in pihpsdr (except TCI)\n"
-                               "    Christoph, DL1YCF: Continuation & current version pihpsdr\n"
-                               "    Richie, MW0LGE: Developer of main version Thetis\n"
-                               "    Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
-                               "    Francesco, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
-                               "    OpenAI/ChatGPT: Code and Protocol Optimizations & Bugfixing, TCI\n\n"
                                "Build OS: %s %s @ %s\n"
                                "Build compiler: %s\n"
                                "Build date: %s (Branch: %s, Commit: %s)\n"
@@ -174,6 +147,27 @@ void about_menu(GtkWidget *parent) {
   gtk_widget_set_name(label, "smalllabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 1, row, 5, 1);
+  row++;
+  GtkWidget *about_sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+  gtk_widget_set_name(about_sep, "menu_separator");
+  gtk_widget_set_size_request(about_sep, -1, 3);
+  gtk_widget_set_margin_top(about_sep, 10);
+  gtk_widget_set_margin_bottom(about_sep, 10);
+  gtk_grid_attach(GTK_GRID(grid), about_sep, 0, row, 6, 1);
+  row++;
+  snprintf(text, sizeof(text), "Licensed under the GNU General Public License v3.0 (GPL-3.0)\n\n"
+                               "Credits:\n"
+                               "Warren, NR0V: WDSP signal processing library development\n"
+                               "John, G0ORX/N6LYT: first and initial version of pihpsdr\n"
+                               "Steve, KA6S & Jae, K5JAE: Older CAT emulations in pihpsdr (except TCI)\n"
+                               "Christoph, DL1YCF: Continuation & current version pihpsdr\n"
+                               "Richie, MW0LGE: Developer of main version Thetis\n"
+                               "Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
+                               "Francesco, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
+                               "OpenAI/ChatGPT: Code and Protocol Optimizations & Bugfixing, TCI");
+  GtkWidget *credits_label = gtk_label_new(text);
+  gtk_widget_set_halign(credits_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), credits_label, 1, row, 5, 1);
   row++;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");

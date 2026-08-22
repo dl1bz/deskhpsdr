@@ -77,7 +77,7 @@
 #ifdef MIDI
   #include "midi_layer.h"
 #endif
-#include "trx_logo.h"
+#include "appicon.h"
 #include "toolset.h"
 
 struct utsname unameData;
@@ -609,11 +609,11 @@ gboolean main_delete(GtkWidget *widget, GdkEvent *event, gpointer data) {
   return TRUE;
 }
 
-static GdkPixbuf *create_pixbuf_from_data(void) {
+GdkPixbuf *create_pixbuf_from_data(void) {
   GInputStream *mem_stream;
   GdkPixbuf *pixbuf, *scaled_pixbuf;
   GError *error = NULL;
-  mem_stream = g_memory_input_stream_new_from_data(trx_logo, trx_logo_len, NULL);
+  mem_stream = g_memory_input_stream_new_from_data(appicon_png, appicon_png_len, NULL);
   pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
   if (!pixbuf) {
     g_printerr("ERROR loading pic: %s\n", error->message);
@@ -833,7 +833,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   int row = 0;
   int col = 0;
   // we make the first startup windows smaller, looks better
-  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.8);
+  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.85);
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing(GTK_GRID(topgrid), 10);
@@ -854,16 +854,21 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   row++;
   snprintf(text, sizeof(text),
            "Ham Radio SDR Transceiver Frontend Application\n"
-           "for SDR-TRX running OpenHPSDR Protocol P1 or P2\n"
-           "Licensed under the GNU General Public License v3.0 (GPL-3.0)");
+           "for SDR-TRX running OpenHPSDR Protocol P1 or P2");
   GtkWidget *deskhpsdr_sub_label = gtk_label_new(text);
   gtk_widget_set_name(deskhpsdr_sub_label, "small_bold_txt");
   gtk_widget_set_halign(deskhpsdr_sub_label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_sub_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------
   row++;
-  snprintf(text, sizeof(text),
-           "\n");
+  snprintf(text, sizeof(text), "Licensed under the GNU General Public License v3.0 (GPL-3.0)");
+  GtkWidget *deskhpsdr_liz_label = gtk_label_new(text);
+  gtk_widget_set_halign(deskhpsdr_liz_label, GTK_ALIGN_START);
+  gtk_widget_set_valign(deskhpsdr_liz_label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_liz_label, col, row, 3, 1);
+  //----------------------------------------------------------------------------------
+  row++;
+  snprintf(text, sizeof(text),"\n");
   GtkWidget *deskhpsdr_other_sub_label = gtk_label_new(text);
   gtk_widget_set_name(deskhpsdr_other_sub_label, "small_bold_txt_blue");
   gtk_widget_set_halign(deskhpsdr_other_sub_label, GTK_ALIGN_START);

@@ -54,6 +54,8 @@ extern int full_screen;
 extern GtkWidget *top_window;
 extern GtkWidget *topgrid;
 
+extern GdkPixbuf *create_pixbuf_from_data(void);
+
 extern pthread_t deskhpsdr_main_thread;
 
 extern void status_text(const char *text);
