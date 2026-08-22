@@ -149,6 +149,7 @@ void ddc_menu(GtkWidget *parent) {
   gboolean is_hermes = (radio != NULL && radio->device == NEW_DEVICE_HERMES);
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);

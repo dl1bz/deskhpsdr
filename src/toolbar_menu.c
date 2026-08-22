@@ -191,6 +191,7 @@ static GtkWidget *toolbar_page_new(int lfunction, int visible_rows) {
 void toolbar_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   win_set_bgcolor(dialog, &radio_bgcolor);
   toolbar_menu_headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), toolbar_menu_headerbar);

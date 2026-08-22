@@ -323,6 +323,7 @@ void filter_menu(GtkWidget *parent) {
   GtkWidget *rxtx_filter_btn;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   win_set_bgcolor(dialog, &mwin_bgcolor);
   char title[64];
   snprintf(title, 64, "%s - Set RX Filter %s (RX%d VFO-%s)", PGNAME, mode_string[m], id + 1, id == 0 ? "A" : "B");
