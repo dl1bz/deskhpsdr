@@ -369,7 +369,7 @@ static void ampview_cb(GtkWidget *widget, gpointer data) {
   gtk_window_set_title(GTK_WINDOW(ampview_dialog), _wtitle);
   gtk_window_set_default_size(GTK_WINDOW(ampview_dialog), 1000, 650);
   gtk_window_set_transient_for(GTK_WINDOW(ampview_dialog), parent);
-  gtk_window_set_position(GTK_WINDOW(ampview_dialog), GTK_WIN_POS_CENTER_ON_PARENT);
+  // gtk_window_set_position(GTK_WINDOW(ampview_dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   gtk_window_set_destroy_with_parent(GTK_WINDOW(ampview_dialog), TRUE);
   win_set_bgcolor(ampview_dialog, &mwin_bgcolor);
   g_signal_connect(ampview_dialog, "delete-event", G_CALLBACK(ampview_delete_cb), NULL);
