@@ -99,11 +99,13 @@ void about_menu(GtkWidget *parent) {
                                "(contains code portions of pihpsdr until October 2024)\n"
                                "Build OS: %s %s @ %s\n"
                                "Build compiler: %s\n"
+                               "Git source: %s\n"
                                "Build date: %s (Branch: %s, Commit: %s)\n"
                                "Build version: %s\n"
                                "Build options: %s\n"
                                "WDSP version: %d.%02d\n\n",
-           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_date, build_branch, build_commit,
+           unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_remote, build_date, build_branch,
+           build_commit,
            build_version,
            build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100);
   switch (radio->protocol) {

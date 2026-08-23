@@ -100,10 +100,11 @@ endif
 endif
 
 # Get git commit version and date
-GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
+GIT_DATE := $(shell git log -1 --format="%as")
 GIT_VERSION := $(shell git describe --abbrev=0 --tags --always)
 GIT_COMMIT := $(shell git log --pretty=format:"%h"  -1)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+GIT_REMOTE := $(shell git remote get-url origin)
 
 #
 # Compile with warning level set to maximum. Note the check against "unintendend" fallthroughs
@@ -607,7 +608,11 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(DEVEL_OPTIONS) \
 	$(WAYLAND_OPTIONS) \
 	$(AUDIO_OPTIONS) \
-	-DGIT_DATE='"$(GIT_DATE)"' -DGIT_VERSION='"$(GIT_VERSION)"' -DGIT_COMMIT='"$(GIT_COMMIT)"' -DGIT_BRANCH='"$(GIT_BRANCH)"'
+	-DGIT_DATE='"$(GIT_DATE)"' \
+	-DGIT_VERSION='"$(GIT_VERSION)"' \
+	-DGIT_COMMIT='"$(GIT_COMMIT)"' \
+	-DGIT_BRANCH='"$(GIT_BRANCH)"' \
+	-DGIT_REMOTE='"$(GIT_REMOTE)"'
 
 INCLUDES=$(GTK_INCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(EXTRA_CFLAGS) $(INCLUDES)

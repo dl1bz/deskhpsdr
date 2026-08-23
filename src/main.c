@@ -833,7 +833,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   int row = 0;
   int col = 0;
   // we make the first startup windows smaller, looks better
-  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.85);
+  gtk_widget_set_size_request(topgrid, display_width * 0.7, display_height * 0.9);
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing(GTK_GRID(topgrid), 10);
@@ -877,8 +877,9 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   row += 2;
   t_print("create build label\n");
   snprintf(text, sizeof(text),
-           "Version %s (build %s from %s branch)\ncompiled with %s\nActivated Compiler Macros:\n%s\nCurrent WDSP version: %d.%02d\nSelected Audio module: %s\nWorking Directory: %s\nX11 backend: %s",
-           build_version, build_date, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100, GetWDSPVersion() % 100,
+           "Version %s\n(build %s from %s %s branch)\ncompiled with %s\nActivated Compiler Macros:\n%s\nCurrent WDSP version: %d.%02d\nSelected Audio module: %s\nWorking Directory: %s\nX11 backend: %s",
+           build_version, build_date, build_remote, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100,
+           GetWDSPVersion() % 100,
            build_audio, config_directory, x11_be);
   GtkWidget *build_date_label = gtk_label_new(text);
   gtk_widget_set_name(build_date_label, "med_txt");

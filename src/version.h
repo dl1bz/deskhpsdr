@@ -28,5 +28,6 @@ extern char build_commit[];
 extern char build_branch[];
 extern char build_options[];
 extern char build_audio[];
+extern char build_remote[];
 
 #endif
