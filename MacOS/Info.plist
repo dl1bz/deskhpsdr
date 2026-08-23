@@ -17,9 +17,9 @@
 	<key>CFBundleSignature</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.7.31</string>
+	<string>2.7.32</string>
 	<key>CFBundleVersion</key>
-	<string>207031</string>
+	<string>207032</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>NSMicrophoneUsageDescription</key>
