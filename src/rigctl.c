@@ -2154,7 +2154,7 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       //ENDDEF
       if (command[4] == ';') {
         // send reply back
-        snprintf(reply, 256, "ZZLA%03d;", (int)(receiver[0]->volume * 100.0));
+        snprintf(reply, 256, "ZZLA%03d;", CLAMP((int)lround(100.0 * pow(10.0, 0.05 * receiver[0]->volume)), 0, 100));
         send_resp(client->fd, reply) ;
       } else {
         int gain = atoi(&command[4]);
@@ -2179,7 +2179,7 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       RXCHECK(1,
       if (command[4] == ';') {
       // send reply back
-      snprintf(reply, 256, "ZZLC%03d;", (int)(255.0 * pow(10.0, 0.05 * receiver[1]->volume)));
+      snprintf(reply, 256, "ZZLC%03d;", CLAMP((int)lround(100.0 * pow(10.0, 0.05 * receiver[1]->volume)), 0, 100));
         send_resp(client->fd, reply) ;
       } else {
         int gain = atoi(&command[4]);
@@ -2236,7 +2236,12 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       } else {
         int mute = atoi(&command[4]);
         receiver[0]->mute_radio = mute;
-        tci_rx_mute_changed(0);
+        if (receiver[0] == active_receiver) {
+          tci_mute_changed(0);
+        } else {
+          tci_rx_mute_changed(0);
+        }
+        g_idle_add(ext_vfo_update, NULL);
       }
       break;
     case 'B': //ZZMB
@@ -2250,12 +2255,17 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       //ENDDEF
       RXCHECK(1,
       if (command[4] == ';') {
-      snprintf(reply, 256, "ZZMA%d;", receiver[1]->mute_radio);
+      snprintf(reply, 256, "ZZMB%d;", receiver[1]->mute_radio);
         send_resp(client->fd, reply) ;
       } else {
         int mute = atoi(&command[4]);
         receiver[1]->mute_radio = mute;
-        tci_rx_mute_changed(1);
+        if (receiver[1] == active_receiver) {
+          tci_mute_changed(1);
+        } else {
+          tci_rx_mute_changed(1);
+        }
+        g_idle_add(ext_vfo_update, NULL);
       }
              )
       break;
@@ -2265,8 +2275,8 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       //SET       ZZMDxx;
       //READ      ZZMD;
       //RESP      ZZMDxx;
-      //NOTE      Modes: LSB (x=0), USB (x=1), DSB (x=3), CWL (x=4)
-      //CONT      CWU (x=5), FMN (x=6), AM (x=7), DIGU (x=7)
+      //NOTE      Modes: LSB (x=0), USB (x=1), DSB (x=2), CWL (x=3)
+      //CONT      CWU (x=4), FMN (x=5), AM (x=6), DIGU (x=7)
       //CONT      SPEC (x=8), DIGL (x=9), SAM (x=10), DRM (x=11)
       //ENDDEF
       if (command[4] == ';') {
@@ -2279,16 +2289,16 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
     case 'E': //ZZME
       //CATDEF    ZZME
       //DESCR     Set/Read VFO-B modes
-      //SET       ZZMEx;
+      //SET       ZZMExx;
       //READ      ZZME;
-      //RESP      ZZMEx;
+      //RESP      ZZMExx;
       //NOTE      x encodes the mode (see ZZMD command)
       //ENDDEF
       if (command[4] == ';') {
-        snprintf(reply, 256, "ZZMD%02d;", vfo[VFO_B].mode);
+        snprintf(reply, 256, "ZZME%02d;", vfo[VFO_B].mode);
         send_resp(client->fd, reply);
       } else if (command[6] == ';') {
-        vfo_id_mode_changed(VFO_A, atoi(&command[4]));
+        vfo_id_mode_changed(VFO_B, atoi(&command[4]));
       }
       break;
     case 'G': //ZZMG
@@ -3300,13 +3310,23 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
             case 1: // Rx1 AF Mute
               if (v == 0) {
                 receiver[0]->mute_radio ^= 1;
-                tci_rx_mute_changed(0);
+                if (receiver[0] == active_receiver) {
+                  tci_mute_changed(0);
+                } else {
+                  tci_rx_mute_changed(0);
+                }
+                g_idle_add(ext_vfo_update, NULL);
               }
               break;
             case 3: // Rx2 AF Mute
               if (v == 0 && receivers > 1 && receiver[1] != NULL) {
                 receiver[1]->mute_radio ^= 1;
-                tci_rx_mute_changed(1);
+                if (receiver[1] == active_receiver) {
+                  tci_mute_changed(1);
+                } else {
+                  tci_rx_mute_changed(1);
+                }
+                g_idle_add(ext_vfo_update, NULL);
               }
               break;
             case 5: // Filter Cut Defaults

@@ -1392,6 +1392,7 @@ int process_action(void *data) {
     if (a->mode == PRESSED) {
       active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
       update_slider_af_gain_btn();
+      g_idle_add(ext_vfo_update, NULL);
     }
     break;
   case MUTE_RX:
@@ -1405,14 +1406,22 @@ int process_action(void *data) {
   case MUTE_RX1:
     if (a->mode == PRESSED) {
       receiver[0]->mute_radio = !receiver[0]->mute_radio;
-      tci_rx_mute_changed(0);
+      if (receiver[0] == active_receiver) {
+        tci_mute_changed(0);
+      } else {
+        tci_rx_mute_changed(0);
+      }
       g_idle_add(ext_vfo_update, NULL);
     }
     break;
   case MUTE_RX2:
     if (a->mode == PRESSED && receivers > 1) {
       receiver[1]->mute_radio = !receiver[1]->mute_radio;
-      tci_rx_mute_changed(1);
+      if (receiver[1] == active_receiver) {
+        tci_mute_changed(1);
+      } else {
+        tci_rx_mute_changed(1);
+      }
       g_idle_add(ext_vfo_update, NULL);
     }
     break;

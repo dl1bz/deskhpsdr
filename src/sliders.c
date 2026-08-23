@@ -44,8 +44,6 @@
 #include "main.h"
 #include "ext.h"
 #include "tci.h"
-
-extern void tci_mute_changed(int receiver_id);
 #include "rigctl.h"
 #include "actions.h"
 #include "message.h"
@@ -1320,6 +1318,7 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
   }
   active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
   update_slider_af_gain_btn();
+  g_idle_add(ext_vfo_update, NULL);
   t_print("%s: active_receiver->local_audio_mute = %d\n",
           __func__,
           active_receiver->local_audio_mute);

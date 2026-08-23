@@ -868,7 +868,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_liz_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------
   row++;
-  snprintf(text, sizeof(text),"\n");
+  snprintf(text, sizeof(text), "\n");
   GtkWidget *deskhpsdr_other_sub_label = gtk_label_new(text);
   gtk_widget_set_name(deskhpsdr_other_sub_label, "small_bold_txt_blue");
   gtk_widget_set_halign(deskhpsdr_other_sub_label, GTK_ALIGN_START);

@@ -383,6 +383,12 @@ static void mute_audio_cb(GtkWidget *widget, gpointer data) {
 static void mute_radio_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = rx_from_data(data);
   rx->mute_radio = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if (rx == active_receiver) {
+    tci_mute_changed(rx->id);
+  } else {
+    tci_rx_mute_changed(rx->id);
+  }
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 static void adc0_filter_bypass_cb(GtkWidget *widget, gpointer data) {

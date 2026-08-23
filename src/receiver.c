@@ -141,6 +141,7 @@ void rx_set_active(RECEIVER *rx) {
   // Make rx the new active receiver
   //
   active_receiver = rx;
+  tci_mute_changed(active_receiver->id);
   g_idle_add(menu_active_receiver_changed, NULL);
   g_idle_add(ext_vfo_update, NULL);
   g_idle_add(zoompan_active_receiver_changed, NULL);

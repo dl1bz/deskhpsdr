@@ -276,7 +276,7 @@ static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
 static void wf3d_toggle_cb(GtkWidget *widget, gpointer data) {
   int value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   gtk_label_set_text(GTK_LABEL(wf3d_label), value ? "3D WF" : "2D WF");
-  for (int i = 0; i < receivers; i++) {
+  for (int i = 0; i < RECEIVERS; i++) {
     if (receiver[i] != NULL) {
       receiver[i]->display_3d = value;
       waterfall_3d_clear(receiver[i]);
