@@ -496,6 +496,8 @@ static void radio_restore_state(void);
 void radio_stop(void) {
   tx_off_cancel();
   rbn_stop();
+  stop_rx200_monitor();
+  stop_lpf_monitor();
   if (can_transmit) {
     t_print("radio_stop: TX: stop display update\n");
     transmitter->displaying = 0;

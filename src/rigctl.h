@@ -61,7 +61,11 @@ extern int sertune_fd;
   extern pthread_mutex_t autogain_mutex;
 #endif
 extern void launch_rx200_monitor (void);
+extern void stop_rx200_monitor (void);
+extern int rx200_get_snapshot (char data[4][64]);
+extern int lpf_get_snapshot (char data[6][64]);
 extern void launch_lpf_monitor (void);
+extern void stop_lpf_monitor (void);
 extern void launch_rigctld_monitor (void);
 extern int cat_control;
 extern unsigned int rigctl_tcp_port;

@@ -34,11 +34,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <sys/time.h>
 #include <sys/ioctl.h>
 #include <spawn.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <libgen.h>
+#include <math.h>
 #ifdef __APPLE__
   #include <mach-o/dyld.h>   // Für _NSGetExecutablePath
 #endif
@@ -76,8 +79,6 @@
 #include "startup.h"
 #include "toolset.h"
 #include "main.h"
-
-#include <math.h>
 
 #include <sys/socket.h>
 #include <arpa/inet.h> //inet_addr
@@ -128,9 +129,15 @@ static GMutex sertune_mutex;
 // Portnummer für die UDP Listener -> move to radio.c
 static pthread_t rx200_listener_thread;  // Thread für den RX200 UDP Listener
 static pthread_mutex_t rx200_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+static gint rx200_listener_started = 0;
+static gint rx200_listener_running = 0;
+static gint rx200_listener_stop = 0;
 
 static pthread_t lpf_listener_thread;  // Thread für den LPF UDP Listener
 static pthread_mutex_t lpf_array_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+static gint lpf_listener_started = 0;
+static gint lpf_listener_running = 0;
+static gint lpf_listener_stop = 0;
 
 static pthread_t rigctld_thread;
 static pthread_mutex_t rigctld_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
@@ -523,7 +530,7 @@ void restart_autogain_hl2(void) {
 #endif
 
 // Callback-Funktion für empfangene RX200 UDP Daten
-static void rx200_process_data(const char *rx200_data[7]) {
+static void rx200_process_data(const char *rx200_data[4]) {
   // Daten von rx200_data in g_rx200_data thread-safe kopieren
   pthread_mutex_lock(&rx200_array_mutex);  // Mutex sperren
   for (int i = 0; i < 4; i++) {
@@ -534,8 +541,26 @@ static void rx200_process_data(const char *rx200_data[7]) {
       g_rx200_data[i][0] = '\0'; // Leeren String setzen, falls NULL
     }
   }
+  rx200_udp_valid = 1;
   pthread_mutex_unlock(&rx200_array_mutex);  // Mutex entsperren
   // t_print("RX200: Pfwd: %sW Pref: %sW SWR %s Timestamp: %s\n", g_rx200_data[0], g_rx200_data[1], g_rx200_data[2], g_rx200_data[3]);
+}
+
+static void rx200_set_invalid(void) {
+  pthread_mutex_lock(&rx200_array_mutex);
+  rx200_udp_valid = 0;
+  pthread_mutex_unlock(&rx200_array_mutex);
+}
+
+int rx200_get_snapshot(char data[4][64]) {
+  int valid;
+  pthread_mutex_lock(&rx200_array_mutex);
+  valid = rx200_udp_valid;
+  for (int i = 0; i < 4; i++) {
+    g_strlcpy(data[i], g_rx200_data[i], sizeof(g_rx200_data[i]));
+  }
+  pthread_mutex_unlock(&rx200_array_mutex);
+  return valid;
 }
 
 // Callback-Funktion für empfangene LPF UDP Daten
@@ -550,8 +575,40 @@ static void lpf_process_data(const char *lpf_data[6]) {
       g_lpf_data[i][0] = '\0'; // Leeren String setzen, falls NULL
     }
   }
+  lpf_udp_valid = 1;
   pthread_mutex_unlock(&lpf_array_mutex);  // Mutex entsperren
   // t_print("LPF: Band: %s PTT: %s\n", g_lpf_data[0], g_lpf_data[5]);
+}
+
+static void lpf_set_invalid(void) {
+  pthread_mutex_lock(&lpf_array_mutex);
+  lpf_udp_valid = 0;
+  pthread_mutex_unlock(&lpf_array_mutex);
+}
+
+int lpf_get_snapshot(char data[6][64]) {
+  int valid;
+  pthread_mutex_lock(&lpf_array_mutex);
+  valid = lpf_udp_valid;
+  for (int i = 0; i < 6; i++) {
+    g_strlcpy(data[i], g_lpf_data[i], sizeof(g_lpf_data[i]));
+  }
+  pthread_mutex_unlock(&lpf_array_mutex);
+  return valid;
+}
+
+static void wake_udp_listener(int port) {
+  int fd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (fd < 0) {
+    return;
+  }
+  struct sockaddr_in addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  addr.sin_port = htons(port);
+  (void) sendto(fd, "{}", 2, 0, (const struct sockaddr *) &addr, sizeof(addr));
+  close(fd);
 }
 
 // RX200 UDP Listener-Funktion
@@ -562,7 +619,7 @@ static void *rx200_udp_listener(void *arg) {
   char buffer[1024];
   // Socket erstellen
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    // perror("Socket creation failed");
+    g_atomic_int_set(&rx200_listener_running, 0);
     pthread_exit(NULL);
   }
   memset(&server_addr, 0, sizeof(server_addr));
@@ -571,51 +628,104 @@ static void *rx200_udp_listener(void *arg) {
   server_addr.sin_port = htons(port);
   // Socket an Port binden
   int opt = 1;
-  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-  setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt));
+  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    t_perror("RX200 UDP Listener: cannot set SO_REUSEADDR");
+  }
+  struct timeval timeout = { .tv_sec = 10, .tv_usec = 0 };
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+    t_perror("RX200 UDP Listener: cannot set receive timeout");
+  }
   if (bind(sockfd, (const struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
     t_perror("RX200 UDP Listener: socket bind failed\n");
     close(sockfd);
+    g_atomic_int_set(&rx200_listener_running, 0);
     pthread_exit(NULL);
   }
   t_print("%s: starting RX200 UDP-Listener at port %d\n", __func__, port);
-  // while (atomic_load(&toggle_listener)) { // Überprüfen, ob der Listener aktiv bleiben soll
-  while (1) { // Überprüfen, ob der Listener aktiv bleiben soll, 1 = immer ohne Abbruchcondition
-    int len = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+  while (!g_atomic_int_get(&rx200_listener_stop)) {
+    int len = recvfrom(sockfd, buffer, sizeof(buffer) - 1, 0, NULL, NULL);
     if (len < 0) {
-      t_print("%s: ERROR: invalid incoming UDP data\n", __func__);
-      rx200_udp_valid = 0;
+      if (errno == EINTR) {
+        continue;
+      }
+      rx200_set_invalid();
+      if (errno != EAGAIN && errno != EWOULDBLOCK) {
+        t_perror("RX200 UDP Listener: recvfrom failed");
+      }
       continue;
+    }
+    if (g_atomic_int_get(&rx200_listener_stop)) {
+      break;
     }
     buffer[len] = '\0'; // Null-terminieren
     // JSON-Daten parsen und Callback aufrufen
     struct json_object *parsed_json = json_tokener_parse(buffer);
-    if (parsed_json) {
-      struct json_object *pwrfwd_rx200, *pwrref_rx200, *swr_rx200, *time_rx200, *rssi_rx200, *rst_rx200, *ssid_rx200;
-      const char *data[7];
-      json_object_object_get_ex(parsed_json, "pwrfwd", &pwrfwd_rx200);
-      json_object_object_get_ex(parsed_json, "pwrref", &pwrref_rx200);
-      json_object_object_get_ex(parsed_json, "swr", &swr_rx200);
-      json_object_object_get_ex(parsed_json, "time", &time_rx200);
-      json_object_object_get_ex(parsed_json, "rssi", &rssi_rx200);
-      json_object_object_get_ex(parsed_json, "rst", &rst_rx200);
-      json_object_object_get_ex(parsed_json, "ssid", &ssid_rx200);
-      data[0] = json_object_get_string(pwrfwd_rx200);
-      data[1] = json_object_get_string(pwrref_rx200);
-      data[2] = json_object_get_string(swr_rx200);
-      data[3] = json_object_get_string(time_rx200);
-      data[4] = json_object_get_string(rssi_rx200);
-      data[5] = json_object_get_string(rst_rx200);
-      data[6] = json_object_get_string(ssid_rx200);
-      rx200_process_data(data);  // Callback aufrufen
-      rx200_udp_valid = 1;
-      json_object_put(parsed_json);  // Speicher freigeben
+    if (parsed_json && json_object_is_type(parsed_json, json_type_object)) {
+      struct json_object *pwrfwd_rx200 = NULL;
+      struct json_object *pwrref_rx200 = NULL;
+      struct json_object *time_rx200 = NULL;
+      const char *data[4];
+      char swr_text[32];
+      gboolean complete =
+              json_object_object_get_ex(parsed_json, "pwrfwd", &pwrfwd_rx200) &&
+              json_object_object_get_ex(parsed_json, "pwrref", &pwrref_rx200) &&
+              json_object_object_get_ex(parsed_json, "time", &time_rx200) &&
+              pwrfwd_rx200 != NULL && pwrref_rx200 != NULL && time_rx200 != NULL;
+      if (complete) {
+        const char *pwrfwd_text = json_object_get_string(pwrfwd_rx200);
+        const char *pwrref_text = json_object_get_string(pwrref_rx200);
+        char *pwrfwd_end = NULL;
+        char *pwrref_end = NULL;
+        errno = 0;
+        double pwrfwd = g_ascii_strtod(pwrfwd_text, &pwrfwd_end);
+        int pwrfwd_errno = errno;
+        errno = 0;
+        double pwrref = g_ascii_strtod(pwrref_text, &pwrref_end);
+        int pwrref_errno = errno;
+        gboolean valid_power =
+                pwrfwd_text != NULL && pwrref_text != NULL &&
+                pwrfwd_end != pwrfwd_text && pwrref_end != pwrref_text &&
+                *pwrfwd_end == '\0' && *pwrref_end == '\0' &&
+                pwrfwd_errno != ERANGE && pwrref_errno != ERANGE &&
+                isfinite(pwrfwd) && isfinite(pwrref) &&
+                pwrfwd >= 0.0 && pwrref >= 0.0;
+        if (!valid_power) {
+          rx200_set_invalid();
+          t_print("%s: RX200: invalid power values received: %s\n", __func__, buffer);
+          json_object_put(parsed_json);
+          continue;
+        }
+        data[0] = pwrfwd_text;
+        data[1] = pwrref_text;
+        data[3] = json_object_get_string(time_rx200);
+        double swr = 0.0;
+        if (pwrfwd > 0.0) {
+          if (pwrref >= pwrfwd) {
+            swr = 99.9;
+          } else {
+            double rho = sqrt(pwrref / pwrfwd);
+            swr = (1.0 + rho) / (1.0 - rho);
+          }
+        }
+        snprintf(swr_text, sizeof(swr_text), "%.1f", swr);
+        data[2] = swr_text;
+        rx200_process_data(data);
+      } else {
+        rx200_set_invalid();
+        t_print("%s: RX200: incomplete JSON data received: %s\n", __func__, buffer);
+      }
+      json_object_put(parsed_json);
     } else {
+      rx200_set_invalid();
       t_print("%s: RX200: invalid JSON data received: %s\n", __func__, buffer);
+      if (parsed_json) {
+        json_object_put(parsed_json);
+      }
     }
   }
   t_print("RX200: UDP-Listener stopped...\n");
   close(sockfd);
+  g_atomic_int_set(&rx200_listener_running, 0);
   pthread_exit(NULL);
 }
 
@@ -627,7 +737,7 @@ static void *lpf_udp_listener(void *arg) {
   char buffer[1024];
   // Socket erstellen
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    // perror("Socket creation failed");
+    g_atomic_int_set(&lpf_listener_running, 0);
     pthread_exit(NULL);
   }
   memset(&server_addr, 0, sizeof(server_addr));
@@ -636,49 +746,82 @@ static void *lpf_udp_listener(void *arg) {
   server_addr.sin_port = htons(port);
   // Socket an Port binden
   int opt = 1;
-  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-  setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt));
+  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    t_perror("LPF UDP Listener: cannot set SO_REUSEADDR");
+  }
+  struct timeval timeout = { .tv_sec = 10, .tv_usec = 0 };
+  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+    t_perror("LPF UDP Listener: cannot set receive timeout");
+  }
   if (bind(sockfd, (const struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
     t_perror("LPF UDP Listener: socket bind failed\n");
     close(sockfd);
+    g_atomic_int_set(&lpf_listener_running, 0);
     pthread_exit(NULL);
   }
   t_print("%s: starting LPF UDP-Listener at port %d\n", __func__, port);
-  // while (atomic_load(&toggle_listener)) { // Überprüfen, ob der Listener aktiv bleiben soll
-  while (1) { // Überprüfen, ob der Listener aktiv bleiben soll, 1 = immer ohne Abbruchcondition
-    int len = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+  while (!g_atomic_int_get(&lpf_listener_stop)) {
+    int len = recvfrom(sockfd, buffer, sizeof(buffer) - 1, 0, NULL, NULL);
     if (len < 0) {
-      t_print("%s: ERROR: invalid incoming UDP data\n", __func__);
-      lpf_udp_valid = 0;
+      if (errno == EINTR) {
+        continue;
+      }
+      lpf_set_invalid();
+      if (errno != EAGAIN && errno != EWOULDBLOCK) {
+        t_perror("LPF UDP Listener: recvfrom failed");
+      }
       continue;
+    }
+    if (g_atomic_int_get(&lpf_listener_stop)) {
+      break;
     }
     buffer[len] = '\0'; // Null-terminieren
     // JSON-Daten parsen und Callback aufrufen
     struct json_object *parsed_json = json_tokener_parse(buffer);
-    if (parsed_json) {
-      struct json_object *band_lpf, *time_lpf, *rssi_lpf, *rst_lpf, *ssid_lpf, *ptt_lpf;
-      const char *data[6];
-      json_object_object_get_ex(parsed_json, "band", &band_lpf);
-      json_object_object_get_ex(parsed_json, "time", &time_lpf);
-      json_object_object_get_ex(parsed_json, "rssi", &rssi_lpf);
-      json_object_object_get_ex(parsed_json, "rst", &rst_lpf);
-      json_object_object_get_ex(parsed_json, "ssid", &ssid_lpf);
-      json_object_object_get_ex(parsed_json, "ptt", &ptt_lpf);
-      data[0] = json_object_get_string(band_lpf);
-      data[1] = json_object_get_string(time_lpf);
-      data[2] = json_object_get_string(rssi_lpf);
-      data[3] = json_object_get_string(rst_lpf);
-      data[4] = json_object_get_string(ssid_lpf);
-      data[5] = json_object_get_string(ptt_lpf);
-      lpf_process_data(data);  // Callback aufrufen
-      lpf_udp_valid = 1;
-      json_object_put(parsed_json);  // Speicher freigeben
+    if (parsed_json && json_object_is_type(parsed_json, json_type_object)) {
+      struct json_object *band_lpf = NULL;
+      struct json_object *time_lpf = NULL;
+      struct json_object *rssi_lpf = NULL;
+      struct json_object *rst_lpf = NULL;
+      struct json_object *ssid_lpf = NULL;
+      struct json_object *ptt_lpf = NULL;
+      const char *data[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+      gboolean complete =
+              json_object_object_get_ex(parsed_json, "band", &band_lpf) &&
+              json_object_object_get_ex(parsed_json, "time", &time_lpf) &&
+              band_lpf != NULL && time_lpf != NULL;
+      if (complete) {
+        data[0] = json_object_get_string(band_lpf);
+        data[1] = json_object_get_string(time_lpf);
+        if (json_object_object_get_ex(parsed_json, "rssi", &rssi_lpf) && rssi_lpf != NULL) {
+          data[2] = json_object_get_string(rssi_lpf);
+        }
+        if (json_object_object_get_ex(parsed_json, "rst", &rst_lpf) && rst_lpf != NULL) {
+          data[3] = json_object_get_string(rst_lpf);
+        }
+        if (json_object_object_get_ex(parsed_json, "ssid", &ssid_lpf) && ssid_lpf != NULL) {
+          data[4] = json_object_get_string(ssid_lpf);
+        }
+        if (json_object_object_get_ex(parsed_json, "ptt", &ptt_lpf) && ptt_lpf != NULL) {
+          data[5] = json_object_get_string(ptt_lpf);
+        }
+        lpf_process_data(data);
+      } else {
+        lpf_set_invalid();
+        t_print("%s: LPF: incomplete JSON data received: %s\n", __func__, buffer);
+      }
+      json_object_put(parsed_json);
     } else {
+      lpf_set_invalid();
       t_print("%s: LPF: invalid JSON data received: %s\n", __func__, buffer);
+      if (parsed_json) {
+        json_object_put(parsed_json);
+      }
     }
   }
   t_print("LPF: UDP-Listener stopped...\n");
   close(sockfd);
+  g_atomic_int_set(&lpf_listener_running, 0);
   pthread_exit(NULL);
 }
 
@@ -822,12 +965,35 @@ static void *rigctld_control_thread(void *arg) {
 }
 
 void launch_rx200_monitor(void) {
-  t_print("---- LAUNCHING RX200 UDP Monitor ----\n", __func__);
-  // RX200 UDP Listener-Thread starten
-  if (pthread_create(&rx200_listener_thread, NULL, rx200_udp_listener, &rx200_udp_port) != 0) {
-    t_perror("ERROR: cannot start RX200 UDP Listener thread\n");
-    // return EXIT_FAILURE;
+  if (g_atomic_int_get(&rx200_listener_started)) {
+    if (g_atomic_int_get(&rx200_listener_running)) {
+      return;
+    }
+    pthread_join(rx200_listener_thread, NULL);
+    g_atomic_int_set(&rx200_listener_started, 0);
   }
+  t_print("---- LAUNCHING RX200 UDP Monitor ----\n");
+  g_atomic_int_set(&rx200_listener_stop, 0);
+  g_atomic_int_set(&rx200_listener_running, 1);
+  int rc = pthread_create(&rx200_listener_thread, NULL, rx200_udp_listener, &rx200_udp_port);
+  if (rc != 0) {
+    g_atomic_int_set(&rx200_listener_running, 0);
+    t_print("ERROR: cannot start RX200 UDP Listener thread: %s\n", strerror(rc));
+    return;
+  }
+  g_atomic_int_set(&rx200_listener_started, 1);
+}
+
+void stop_rx200_monitor(void) {
+  if (!g_atomic_int_get(&rx200_listener_started)) {
+    return;
+  }
+  g_atomic_int_set(&rx200_listener_stop, 1);
+  wake_udp_listener(rx200_udp_port);
+  pthread_join(rx200_listener_thread, NULL);
+  g_atomic_int_set(&rx200_listener_started, 0);
+  g_atomic_int_set(&rx200_listener_running, 0);
+  rx200_set_invalid();
 }
 
 // Funktion zum Starten des Steuer-Threads
@@ -843,12 +1009,35 @@ void launch_rigctld_monitor(void) {
 }
 
 void launch_lpf_monitor(void) {
-  t_print("---- LAUNCHING LPF UDP Monitor ----\n", __func__);
-  // LPF UDP Listener-Thread starten
-  if (pthread_create(&lpf_listener_thread, NULL, lpf_udp_listener, &lpf_udp_port) != 0) {
-    t_perror("ERROR: cannot start LPF UDP Listener thread\n");
-    // return EXIT_FAILURE;
+  if (g_atomic_int_get(&lpf_listener_started)) {
+    if (g_atomic_int_get(&lpf_listener_running)) {
+      return;
+    }
+    pthread_join(lpf_listener_thread, NULL);
+    g_atomic_int_set(&lpf_listener_started, 0);
   }
+  t_print("---- LAUNCHING LPF UDP Monitor ----\n");
+  g_atomic_int_set(&lpf_listener_stop, 0);
+  g_atomic_int_set(&lpf_listener_running, 1);
+  int rc = pthread_create(&lpf_listener_thread, NULL, lpf_udp_listener, &lpf_udp_port);
+  if (rc != 0) {
+    g_atomic_int_set(&lpf_listener_running, 0);
+    t_print("ERROR: cannot start LPF UDP Listener thread: %s\n", strerror(rc));
+    return;
+  }
+  g_atomic_int_set(&lpf_listener_started, 1);
+}
+
+void stop_lpf_monitor(void) {
+  if (!g_atomic_int_get(&lpf_listener_started)) {
+    return;
+  }
+  g_atomic_int_set(&lpf_listener_stop, 1);
+  wake_udp_listener(lpf_udp_port);
+  pthread_join(lpf_listener_thread, NULL);
+  g_atomic_int_set(&lpf_listener_started, 0);
+  g_atomic_int_set(&lpf_listener_running, 0);
+  lpf_set_invalid();
 }
 
 void shutdown_tcp_rigctl(void) {

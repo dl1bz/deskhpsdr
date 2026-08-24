@@ -36,6 +36,7 @@
 #include "band.h"
 #include "discovered.h"
 #include "radio.h"
+#include "rigctl.h"
 #include "main.h"
 #include "receiver.h"
 #include "transmitter.h"
@@ -2488,11 +2489,13 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_restore(cr);
   }
   // show RX200 data
+  char rx200_data[4][64];
+  int rx200_valid = rx200_get_snapshot(rx200_data);
   cairo_select_font_face(cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
   if (can_transmit && display_clock) {
-    if (rx200_udp_valid) {
+    if (rx200_valid) {
       double rx200_x = 0.0;
       double rt_rx200_y = 15.0;
       double rt_rx200_w = 305.0;
@@ -2516,28 +2519,30 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, width - 300, 50.0);
       cairo_show_text(cr, _text);
       cairo_text_extents_t rx200_extents;
-      snprintf(_text, sizeof(_text), "%s W", g_rx200_data[0]);
+      double rx200_fwd = g_ascii_strtod(rx200_data[0], NULL);
+      double rx200_ref = g_ascii_strtod(rx200_data[1], NULL);
+      snprintf(_text, sizeof(_text), "%.0f W", rx200_fwd);
       cairo_text_extents(cr, _text, &rx200_extents);
       rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
       cairo_move_to(cr, rx200_x, 30.0);
       cairo_show_text(cr, _text);
-      snprintf(_text, sizeof(_text), "%s W", g_rx200_data[1]);
+      snprintf(_text, sizeof(_text), "%.0f W", rx200_ref);
       cairo_text_extents(cr, _text, &rx200_extents);
       rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
       cairo_move_to(cr, rx200_x, 50.0);
       cairo_show_text(cr, _text);
-      snprintf(_text, sizeof(_text), "%s", g_rx200_data[3]);
+      snprintf(_text, sizeof(_text), "%s", rx200_data[3]);
       cairo_move_to(cr, width - 190.0, 30.0);
       cairo_show_text(cr, _text);
-      if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
+      if (!(strcmp(rx200_data[2], "0.0") == 0)) {
         snprintf(_text, sizeof(_text), "SWR:");
       } else {
         snprintf(_text, sizeof(_text), " ");
       }
       cairo_move_to(cr, width - 190.0, 50.0);
       cairo_show_text(cr, _text);
-      if (!(strcmp(g_rx200_data[2], "0.0") == 0)) {
-        snprintf(_text, sizeof(_text), "%s:1", g_rx200_data[2]);
+      if (!(strcmp(rx200_data[2], "0.0") == 0)) {
+        snprintf(_text, sizeof(_text), "%s:1", rx200_data[2]);
       } else {
         snprintf(_text, sizeof(_text), " ");
       }
@@ -2561,7 +2566,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   }
   if (can_transmit && display_clock) {
     double y_pos;
-    if (rx200_udp_valid) {
+    if (rx200_valid) {
       y_pos = 70.0;
     } else {
       y_pos = 50.0;
