@@ -2512,12 +2512,32 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_rectangle(cr, width - rt_rx200_w, rt_rx200_y, rt_rx200_w, rt_rx200_h);  // x, y, Breite, Höhe
       cairo_fill(cr);
       cairo_set_source_rgba(cr, COLOUR_WHITE);
+      /*
       snprintf(_text, sizeof(_text), "Fwd:");
       cairo_move_to(cr, width - 300, 30.0);
       cairo_show_text(cr, _text);
       snprintf(_text, sizeof(_text), "Ref:");
       cairo_move_to(cr, width - 300, 50.0);
       cairo_show_text(cr, _text);
+      */
+      PangoLayout *layout = pango_cairo_create_layout(cr);
+      PangoFontDescription *font = pango_font_description_new();
+      pango_font_description_set_family(font, DISPLAY_FONT_UDP_B);
+      pango_font_description_set_style(font, PANGO_STYLE_NORMAL);
+      pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
+      pango_font_description_set_size(font, DISPLAY_FONT_SIZE14 * PANGO_SCALE);
+      pango_layout_set_font_description(layout, font);
+      // pango_layout_set_markup(layout, "P<sub>fwd</sub> :", -1);
+      pango_layout_set_markup(layout, "P<span size=\"65%\" rise=\"-3000\">fwd</span>\u2009:", -1);
+      cairo_move_to(cr, width - 300, 15.0);
+      pango_cairo_show_layout(cr, layout);
+      // pango_layout_set_markup(layout, "P<sub>ref</sub>  :", -1);
+      pango_layout_set_markup(layout, "P<span size=\"65%\" rise=\"-2500\">ref</span><span letter_spacing=\"4000\"> </span>:",
+                              -1);
+      cairo_move_to(cr, width - 300, 35.0);
+      pango_cairo_show_layout(cr, layout);
+      pango_font_description_free(font);
+      g_object_unref(layout);
       cairo_text_extents_t rx200_extents;
       double rx200_fwd = g_ascii_strtod(rx200_data[0], NULL);
       double rx200_ref = g_ascii_strtod(rx200_data[1], NULL);
@@ -2532,23 +2552,28 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_move_to(cr, rx200_x, 50.0);
       cairo_show_text(cr, _text);
       snprintf(_text, sizeof(_text), "%s", rx200_data[3]);
+      //----- Clock ---------------------------------------------------------------------
       cairo_move_to(cr, width - 190.0, 30.0);
       cairo_show_text(cr, _text);
       if (!(strcmp(rx200_data[2], "0.0") == 0)) {
-        snprintf(_text, sizeof(_text), "SWR:");
+        snprintf(_text, sizeof(_text), "SWR :");
       } else {
         snprintf(_text, sizeof(_text), " ");
       }
-      cairo_move_to(cr, width - 190.0, 50.0);
+      //----- SWR -----------------------------------------------------------------------
+      // cairo_move_to(cr, width - 190.0, 50.0);
+      cairo_move_to(cr, width - 303.0, 70.0);
       cairo_show_text(cr, _text);
       if (!(strcmp(rx200_data[2], "0.0") == 0)) {
-        snprintf(_text, sizeof(_text), "%s:1", rx200_data[2]);
+        snprintf(_text, sizeof(_text), "%s", rx200_data[2]);
       } else {
         snprintf(_text, sizeof(_text), " ");
       }
       cairo_text_extents(cr, _text, &rx200_extents);
-      rx200_x = width - 90.0 - (rx200_extents.width + rx200_extents.x_bearing);
-      cairo_move_to(cr, rx200_x, 50.0);
+      // rx200_x = width - 90.0 - (rx200_extents.width + rx200_extents.x_bearing);
+      // cairo_move_to(cr, rx200_x, 50.0);
+      rx200_x = width - 200.0 - (rx200_extents.width + rx200_extents.x_bearing);
+      cairo_move_to(cr, rx200_x, 70.0);
       cairo_show_text(cr, _text);
     } else {
       snprintf(_text, sizeof(_text), " ");
