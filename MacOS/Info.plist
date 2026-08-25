@@ -14,27 +14,20 @@
 	<string>deskhpsdr.icns</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleSignature</key>
-	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>2.7.32</string>
 	<key>CFBundleVersion</key>
 	<string>207032</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+    <key>CFBundleGetInfoString</key>
+    <string>deskHPSDR: OpenHPSDR Host App for SDR-TRX in Amateur Radio</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright (C) 2026 by Heiko Amft, DL1BZ</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow for using Sound input devices</string>
+	<string>deskHPSDR requires access to audio input devices for microphone and transmit audio.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Allow discovery and communication with devices via UDP</string>
-	<key>NSLocalNetworkAllowBroadcasts</key>
-	<true/>
-	<key>NSLocalNetworkPorts</key>
-	<array>
-		<string>1024</string>
-		<string>1025</string>
-		<string>1026</string>
-		<string>1027</string>
-	</array>
+	<string>deskHPSDR requires access to the local network for discovery and communication with SDR devices via UDP.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>CFBundleInfoDictionaryVersion</key>
