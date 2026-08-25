@@ -183,9 +183,9 @@ static void tx_levels_render(TRANSMITTER *tx) {
     cairo_set_source_rgba(cr, COLOUR_PAN_TEXT);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #ifdef __APPLE__
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE1);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE10);
 #endif
     cairo_move_to(cr, margin, y - 2);
     snprintf(level_label, sizeof(level_label), "%d - %s", (int) i, labels[i]);
@@ -315,7 +315,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     cairo_set_source_rgba(cr, COLOUR_PAN_LINE);
     cairo_set_line_width(cr, PAN_LINE_THICK);
     cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
     for (int i = tx->panadapter_high; i >= tx->panadapter_low; i--) {
       if ((abs(i) % tx->panadapter_step) == 0) {
         double y = (double)(tx->panadapter_high - i) * dbm_per_line;
@@ -356,7 +356,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       //
       cairo_set_source_rgba(cr, COLOUR_PAN_LINE);
       cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       cairo_set_line_width(cr, PAN_LINE_THIN);
       cairo_text_extents_t extents;
       f = ((min_display / divisor) * divisor) + divisor;
@@ -563,7 +563,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tx->twotone && !tx->noise;
     if (tx->puresignal && !cwmode) {
       cairo_set_source_rgba(cr, COLOUR_OK);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       cairo_move_to(cr, mywidth / 2 + 10, myheight - 10);
       tx_show_outlined_text(cr, "PureSignal");
       int info[16];
@@ -634,7 +634,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     }
     if (tx->dialog) {
       char text[64];
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
       int _xpos = 0;
       int _ypos = 80;
       if (vfo_get_tx_mode() == modeLSB || vfo_get_tx_mode() == modeDIGL) {
@@ -668,7 +668,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       if (duplex && !cwmode && !tx->show_levels) {
         cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
         cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
         if (!tune) {
           // additional display levels of the audio chain
           _mic_av = GetTXAMeter(transmitter->id, TXA_MIC_AV);
@@ -853,7 +853,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
       // #define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
       cairo_set_source_rgba(cr, COLOUR_PAN_TEXT);  // Set text color
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       double previous_text_positions[num_peaks][2]; // Store previous text positions (x, y)
       for (int j = 0; j < num_peaks; j++) {
         previous_text_positions[j][0] = -1; // Initialize x positions
@@ -914,9 +914,9 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
 #endif
     cairo_text_extents_t nf_extents;
     double _x = 0.0;

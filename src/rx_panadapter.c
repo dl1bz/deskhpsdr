@@ -606,7 +606,7 @@ static gboolean panadapter_draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data
     cairo_stroke_preserve(cr);
     cairo_set_source_rgba(cr, 1, 1, 1, 1);
     cairo_fill(cr);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
     cairo_move_to(cr, x + 10, y + 15);
     cairo_text_path(cr, text2);
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
@@ -1094,7 +1094,7 @@ static void rx_panadapter_draw_image_measure(cairo_t *cr, const RECEIVER *rx, in
   snprintf(text, sizeof(text), "IRR %.1f dB",
            fabs(rx->image_rejection_db));
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
   cairo_text_extents(cr, text, &extents);
   cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.85);
   cairo_rectangle(cr,
@@ -1105,7 +1105,7 @@ static void rx_panadapter_draw_image_measure(cairo_t *cr, const RECEIVER *rx, in
   cairo_fill(cr);
   cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
   cairo_move_to(cr, x, y);
   cairo_show_text(cr, text);
   cairo_restore(cr);
@@ -1197,7 +1197,7 @@ static void rx_panadapter_grid_cache_paint(RECEIVER *rx,
                             ((double) rx->panadapter_high - (double) rx->panadapter_low);
       cairo_set_line_width(cr, PAN_LINE_THIN);
       cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       char v[32];
       for (int i = rx->panadapter_high; i >= rx->panadapter_low; i--) {
         if ((abs(i) % rx->panadapter_step) == 0) {
@@ -1249,7 +1249,7 @@ static void rx_panadapter_grid_cache_paint(RECEIVER *rx,
       long long f = ((long long) floor(min_display / (double) divisor) * divisor) + divisor;
       cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
       int marker_extra = (marker_distance > 100) ? 2 : 0;
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12 + marker_extra);
       while (f < max_display) {
         double x = ((double) f - min_display) / hz_per_pixel;
         cairo_move_to(cr, x, 0);
@@ -1452,7 +1452,7 @@ void rx_panadapter_update(RECEIVER *rx) {
                              DISPLAY_FONT_BOLD,
                              CAIRO_FONT_SLANT_NORMAL,
                              CAIRO_FONT_WEIGHT_BOLD);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       cairo_move_to(cr, mnf_x + 6, 22);
       cairo_show_text(cr, "MNF");
       char mnf_freq_text[32];
@@ -1545,7 +1545,7 @@ void rx_panadapter_update(RECEIVER *rx) {
                                DISPLAY_FONT_BOLD,
                                CAIRO_FONT_SLANT_NORMAL,
                                CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE12 + marker_extra);
         cairo_text_extents_t te;
         cairo_text_extents(cr, pl->label, &te);
         /* Basis-Y unter der Skala; Zeilen vertikal staffeln */
@@ -2131,7 +2131,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     // #define COLOUR_PAN_TEXT 1.0, 1.0, 1.0, 1.0 // Define white color with full opacity
     cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
     double previous_text_positions[num_peaks][2]; // Store previous text positions (x, y)
     for (int j = 0; j < num_peaks; j++) {
       previous_text_positions[j][0] = -1; // Initialize x positions
@@ -2207,10 +2207,10 @@ void rx_panadapter_update(RECEIVER *rx) {
     // cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
     cairo_move_to(cr, mywidth - 390, myheight - 10);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
     cairo_move_to(cr, mywidth / 2, myheight - 10);
 #endif
     if (can_transmit) {
@@ -2222,9 +2222,9 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
 #endif
     if (can_transmit) {
 #if defined (__APPLE__)
@@ -2334,7 +2334,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     // Are shown on display for 2 seconds
     //
     cairo_set_source_rgba(cr, COLOUR_ALARM);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE4);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE20);
     if (sequence_errors != 0) {
       static unsigned int sequence_error_count = 0;
       cairo_move_to(cr, 100.0, 50.0);
@@ -2446,9 +2446,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_set_source_rgba(cr, COLOUR_ORANGE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
 #endif
     cairo_move_to(cr, 375.0, 30.0);
 #if defined (__APPLE__)
@@ -2492,7 +2492,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   char rx200_data[4][64];
   int rx200_valid = rx200_get_snapshot(rx200_data);
   cairo_select_font_face(cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+  cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
   if (can_transmit && display_clock) {
     if (rx200_valid) {
@@ -2612,7 +2612,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #endif
   if (TxInhibit) {
     cairo_set_source_rgba(cr, COLOUR_ALARM);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
     cairo_move_to(cr, 100.0, 30.0);
     cairo_show_text(cr, "TX Inhibit");
   }
@@ -2627,7 +2627,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     static double max1 = 0.0;
     static double max2 = 0.0;
     cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
     //
     // Supply voltage or PA temperature
     //
@@ -2703,7 +2703,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     double cx = (double) width - 100.0;
     double cy = 60.0;
     cairo_set_source_rgba(cr, COLOUR_ATTN);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
     cairo_set_line_width(cr, 2.0);
     cairo_move_to(cr, cx, cy +  5.0);
     cairo_line_to(cr, cx + 90.0, cy +  5.0);

@@ -409,7 +409,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         x += extents.width * (x / (2.0 * cx) - 1.0);
         cairo_move_to(cr, x, y);
         cairo_set_source_rgba(cr, COLOUR_ALARM);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
         cairo_show_text(cr, sf);
         cairo_set_font_size(cr, DISPLAY_FONT_SIZE14);
         meter_set_analog_scale_colour(cr);
@@ -673,7 +673,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_rectangle(cr, x_offset + 13.0, (y_offset + 80) - alc_val, 4.0, alc_val);
         cairo_fill(cr);
         cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE1);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE10);
         meter_set_analog_scale_colour(cr);
         cairo_move_to(cr, x_offset + 25.0, y_offset + 5.0);
         cairo_show_text(cr, vox_enabled ? "VOX | ALC" : "Mic | ALC");
@@ -698,7 +698,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_rectangle(cr, offset, 0.0, peak, 5.0);
         cairo_fill(cr);
         cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
         meter_set_analog_scale_colour(cr);
         cairo_move_to(cr, offset + 105.0, 10.0);
         cairo_show_text(cr, "Mic Lvl");
@@ -840,7 +840,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
       }
       cairo_set_source_rgba(cr, COLOUR_METER);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       // cairo_move_to(cr, 150.0, Y1);
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
         cairo_move_to(cr, 110.0, Y1 - 8);
@@ -876,7 +876,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         }
         cairo_stroke(cr);
         cairo_select_font_face(cr, "FreeSans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
         cairo_move_to(cr, 20, Y4);
         cairo_show_text(cr, "3");
         cairo_move_to(cr, 38, Y4);
@@ -967,7 +967,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_text_extents(cr, sf, &extents);
       cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 + 15);
       cairo_show_text(cr, sf); // dbm
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
       if (active_receiver->smetermode == 100) {
         snprintf(sf, 32, "S=Peak");
         cairo_text_extents(cr, sf, &extents);
@@ -982,7 +982,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       break;
     case POWER:
       cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
         switch (pa_power) {
         case PA_1W:
@@ -1012,7 +1012,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       }
       if (!cwmode) {
         cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
         cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
         snprintf(sf, 32, "ALC %2.1f dB", max_alc);
         cairo_move_to(cr, METER_WIDTH / 2, Y4);

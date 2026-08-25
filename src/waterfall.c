@@ -655,10 +655,10 @@ waterfall_draw_cb(GtkWidget *widget,
     cairo_set_source_rgba(cr, COLOUR_WHITE);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
     cairo_move_to(cr, b_width - 390, b_height - 13);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
     cairo_move_to(cr, b_width - 510, b_height - 10);
 #endif
     if (can_transmit) {
@@ -671,9 +671,9 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_set_source_rgba(cr, COLOUR_ORANGE);
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
 #else
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
 #endif
 #if defined (__APPLE__)
       snprintf(_text, sizeof(_text), "[%d] %s", active_receiver->id, truncate_text_3p(transmitter->microphone_name, 36));
@@ -729,9 +729,9 @@ waterfall_draw_cb(GtkWidget *widget,
     cairo_set_source_rgba(cr, COLOUR_ATTN);
     cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #if defined (__APPLE__)
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE3);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
 #else
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
 #endif
     cairo_font_extents_t font_extents;
     cairo_font_extents(cr, &font_extents);
@@ -803,7 +803,7 @@ waterfall_draw_cb(GtkWidget *widget,
       cairo_text_extents_t perf_extents;
       cairo_font_extents_t perf_font_extents;
       cairo_save(cr);
-      cairo_set_font_size(cr, DISPLAY_FONT_SIZE2);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       cairo_font_extents(cr, &perf_font_extents);
       double perf_line_height = ceil(perf_font_extents.height);
       double perf_y = sr_y - (2.0 * perf_line_height);
