@@ -781,34 +781,11 @@ static void get_local_time(char *zeitString, size_t groesse) {
   struct tm Zeit;
   // Zeit in UTC konvertieren (Thread-sicher)
   gmtime_r(&aktuelleZeit, &Zeit);  // thread-sicher
-  // Zeit in lokales Format konvertieren
-  // localtime_r(&aktuelleZeit, &Zeit); // thread-sicher
   // Formatierter Zeit-String erstellen
-  if (region == REGION_UK) {
-    snprintf(zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
-             Zeit.tm_mday,
-             Zeit.tm_mon + 1,
-             Zeit.tm_year + 1900,
-             Zeit.tm_hour,
-             Zeit.tm_min,
-             Zeit.tm_sec);
-  } else if (region == REGION_US) {
-    snprintf(zeitString, groesse, "%02d/%02d/%04d %02d:%02d:%02d",
-             Zeit.tm_mon + 1,
-             Zeit.tm_mday,
-             Zeit.tm_year + 1900,
-             Zeit.tm_hour,
-             Zeit.tm_min,
-             Zeit.tm_sec);
-  } else {
-    snprintf(zeitString, groesse, "%02d.%02d.%04d %02d:%02d:%02d",
-             Zeit.tm_mday,
-             Zeit.tm_mon + 1, // Monate beginnen bei 0
-             Zeit.tm_year + 1900, // Jahre ab 1900
-             Zeit.tm_hour,
-             Zeit.tm_min,
-             Zeit.tm_sec);
-  }
+  snprintf(zeitString, groesse, "%02d:%02d:%02d",
+           Zeit.tm_hour,
+           Zeit.tm_min,
+           Zeit.tm_sec);
 }
 
 static int autoscale_panadapter_with_offset(double noise_value, int offset_db) {
@@ -2583,9 +2560,9 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       cairo_show_text(cr, _text);
       cairo_move_to(cr, width - 190.0, 50.0);
       cairo_show_text(cr, _text);
-      cairo_move_to(cr, width - 190.0, 30.0);
+      cairo_move_to(cr, width - 120.0, 30.0);
       get_local_time(zeitString, sizeof(zeitString));
-      snprintf(_text, sizeof(_text), "%s", zeitString);
+      snprintf(_text, sizeof(_text), "%s UTC", zeitString);
       cairo_show_text(cr, _text);
     }
   }
