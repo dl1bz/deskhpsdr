@@ -2468,7 +2468,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   // show RX200 data
   char rx200_data[4][64];
   int rx200_valid = rx200_get_snapshot(rx200_data);
-  cairo_select_font_face(cr, DISPLAY_FONT_UDP_B, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_select_font_face(cr, DISPLAY_FONT_UDP_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
   cairo_set_source_rgba(cr, COLOUR_WHITE);
   if (can_transmit && display_clock) {
@@ -2499,7 +2499,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       */
       PangoLayout *layout = pango_cairo_create_layout(cr);
       PangoFontDescription *font = pango_font_description_new();
-      pango_font_description_set_family(font, DISPLAY_FONT_UDP_B);
+      pango_font_description_set_family(font, DISPLAY_FONT_UDP_BOLD);
       pango_font_description_set_style(font, PANGO_STYLE_NORMAL);
       pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
       pango_font_description_set_size(font, DISPLAY_FONT_SIZE14 * PANGO_SCALE);
