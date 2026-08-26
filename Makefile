@@ -585,6 +585,10 @@ CPP_INCLUDE += $(JSON_INCLUDE)
 
 ifeq ($(UNAME_S), Linux)
 SYS_LIBS=-lrt
+
+ifneq (,$(filter armv6l armv7l,$(ARCH)))
+SYS_LIBS += -latomic
+endif
 endif
 
 ifeq ($(UNAME_S), Darwin)
