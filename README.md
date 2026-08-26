@@ -41,7 +41,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Bright / Dark Theme support    | yes ✅                                        |                |
 | Screen Resolution              | min. 1280x600 or higher 🚨                    |                |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                |
-| OS support                     | macOS (15 or higher) ✅, Linux ✅, WINDOWS ❌ |                |
+| OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ❌ |                |
 | using Virtual Environments (VE)| not supported ❌                              | use native OS  |
 | Audio layer support            | CoreAudio (macOS), PulseAudio or ALSA (Linux) |                |
 | Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling  |
@@ -99,7 +99,7 @@ I recommend using deskHPSDR on macOS, it's also being focused and developed on t
 * a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices like Brick2/Brick3 series.
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the``Notes_if_using_HERMES-Lite-2.md``
-* if want using a Raspberry Pi: Revision 5 (aka "Pi5") with >= 8GB RAM is strongly recommended, but deskHPSDR is not optimized for such SoC
+* if want using a Raspberry Pi: Revision 5 (aka "Pi5") with >= 8GB RAM is strongly recommended, but deskHPSDR is not optimized for such SoC. Older 32bit OS for Raspberry Pi are not supported, the code is designed for 64bit environments
 * ⚠️ running deskHPSDR inside Virtual Environments (VE) is not supported, use ever native hardware for running deskHPSDR
 
 ## I want use now deskHPSDR. What I need to do ?
