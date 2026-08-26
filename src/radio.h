@@ -41,6 +41,7 @@ enum _pa_power_enum {
   PA_50W,
   PA_75W,
   PA_100W,
+  PA_125W,
   PA_200W,
   PA_500W,
   PA_1KW

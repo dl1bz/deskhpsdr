@@ -738,7 +738,7 @@ static gboolean tx_update_display(gpointer data) {
     case DEVICE_ORION2:  // Anan7000/8000/G2
     case NEW_DEVICE_ORION2:
     case NEW_DEVICE_SATURN:
-      if (pa_power == PA_100W || pa_power == PA_75W) {
+      if (pa_power == PA_125W || pa_power == PA_100W || pa_power == PA_75W) {
         // ANAN-7000  values.
         constant1 = 5.0;
         constant2 = 0.12;
