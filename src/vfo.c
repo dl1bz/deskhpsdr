@@ -2275,18 +2275,15 @@ void vfo_update(void) {
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
-    snprintf(temp_text, 32, "NFA");
-    cairo_show_text(cr, temp_text);
+    cairo_show_text(cr, "NFA");
     if (vfl->tuned_x != 0) {
       cairo_move_to(cr, vfl->tuned_x, vfl->tuned_y);
       if (transmitter->is_tuned) {
         cairo_set_source_rgba(cr, COLOUR_OK);
-        snprintf(temp_text, 32, "TUNED");
       } else {
-        cairo_set_source_rgba(cr, COLOUR_ALARM);
-        snprintf(temp_text, 32, "TUNED");
+        cairo_set_source_rgba(cr, COLOUR_SHADE);
       }
-      cairo_show_text(cr, temp_text);
+      cairo_show_text(cr, "TUNED");
     }
   }
   // IO device indicator

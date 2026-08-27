@@ -371,7 +371,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           cairo_arc(cr, cx, cx, radius, radians, radians);
           cairo_line_to(cr, x, y);
           cairo_stroke(cr);
-          snprintf(sf, 32, "%d", i);
+          snprintf(sf, sizeof(sf), "%d", i);
           cairo_text_extents(cr, sf, &extents);
           cairo_arc(cr, cx, cx, radius + 6, radians, radians);
           cairo_get_current_point(cr, &x, &y);
@@ -401,7 +401,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
         cairo_line_to(cr, x, y);
         cairo_stroke(cr);
-        snprintf(sf, 32, "+%d", i);
+        snprintf(sf, sizeof(sf), "+%d", i);
         cairo_text_extents(cr, sf, &extents);
         cairo_arc(cr, cx, cx, radius + 7, radians, radians);
         cairo_get_current_point(cr, &x, &y);
@@ -435,7 +435,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       // cairo_set_source_rgba(cr, COLOUR_ORANGE);
       cairo_set_source_rgba(cr, COLOUR_BLACK);
       int current_rxlvl = (int)(max_rxlvl - 0.5);
-      snprintf(sf, 32, "%d dBm", current_rxlvl); // assume max_rxlvl < 0 in roundig
+      snprintf(sf, sizeof(sf), "%d dBm", current_rxlvl); // assume max_rxlvl < 0 in roundig
       if (METER_WIDTH < 210) {
         cairo_set_font_size(cr, 14);
         cairo_move_to(cr, cx - 32, cx - radius + 30);
@@ -458,8 +458,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
 #if defined (__APPLE__)
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #endif
-      // cairo_set_font_size(cr, 16);
-      snprintf(sf, 32, "%s", dbm2smeter[get_SWert(current_rxlvl)]);
+      snprintf(sf, sizeof(sf), "%s", dbm2smeter[get_SWert(current_rxlvl)]);
       cairo_move_to(cr, cx - 90, cx - radius + 64);
       if (current_rxlvl > -69) {
         cairo_save(cr);
@@ -471,12 +470,13 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       }
       // S: PEAK or AVG
       if (active_receiver->smetermode == 100) {
-        snprintf(sf, 32, "S:Peak");
+        snprintf(sf, sizeof(sf), "Peak");
+        cairo_move_to(cr, cx - 20, cx - radius + 20);
       } else if (active_receiver->smetermode == 101) {
-        snprintf(sf, 32, "S:Avg");
+        snprintf(sf, sizeof(sf), "Average");
+        cairo_move_to(cr, cx - 25, cx - radius + 20);
       }
-      cairo_set_font_size(cr, 16);
-      cairo_move_to(cr, cx + 65, cx - radius - 3);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
       cairo_show_text(cr, sf);
       // show active RX
       if (receivers > 1) {
@@ -536,15 +536,15 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           if ((i % 20) == 0) {
             switch (units) {
             case 1:
-              snprintf(sf, 32, "%0.1f", 0.1 * interval * i);
+              snprintf(sf, sizeof(sf), "%0.1f", 0.1 * interval * i);
               break;
             case 2: {
               int p = (int)(0.1 * interval * i);
               // "1000" overwrites the right margin, replace by "1K"
               if (p == 1000) {
-                snprintf(sf, 32, "1K");
+                snprintf(sf, sizeof(sf), "1K");
               } else {
-                snprintf(sf, 32, "%d", p);
+                snprintf(sf, sizeof(sf), "%d", p);
               }
             }
             break;
@@ -571,14 +571,14 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       meter_set_analog_scale_colour(cr);
       switch (pa_power) {
       case PA_1W:
-        snprintf(sf, 32, "%dmW", (int)(1000.0 * max_pwr + 0.5));
+        snprintf(sf, sizeof(sf), "%dmW", (int)(1000.0 * max_pwr + 0.5));
         break;
       case PA_5W:
       case PA_10W:
-        snprintf(sf, 32, "%0.1fW", max_pwr);
+        snprintf(sf, sizeof(sf), "%0.1fW", max_pwr);
         break;
       default:
-        snprintf(sf, 32, "%dW", (int)(max_pwr + 0.5));
+        snprintf(sf, sizeof(sf), "%dW", (int)(max_pwr + 0.5));
         break;
       }
       cairo_move_to(cr, cx - 20, cx - radius + 30);
@@ -593,12 +593,12 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           meter_set_analog_scale_colour(cr);  // display SWR in scale color
         }
       }
-      snprintf(sf, 32, "SWR %1.1f:1", swr);
+      snprintf(sf, sizeof(sf), "SWR %1.1f:1", swr);
       cairo_move_to(cr, cx - 40, cx - radius + 50);
       cairo_show_text(cr, sf);
       if (!cwmode) {
         meter_set_analog_scale_colour(cr);
-        snprintf(sf, 32, "ALC %2.1f dB", max_alc);
+        snprintf(sf, sizeof(sf), "ALC %2.1f dB", max_alc);
         cairo_move_to(cr, cx + 30, cx - radius + 65);
         cairo_show_text(cr, sf);
       }
@@ -959,22 +959,22 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       cairo_select_font_face(cr, DISPLAY_FONT_METER, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #endif
       cairo_set_font_size(cr, size - 4);
-      snprintf(sf, 32, "%s", dbm2smeter[get_SWert((int)(max_rxlvl - 0.5))]);      // assume max_rxlvl < 0 in roundig
+      snprintf(sf, sizeof(sf), "%s", dbm2smeter[get_SWert((int)(max_rxlvl - 0.5))]);      // assume max_rxlvl < 0 in roundig
       cairo_text_extents(cr, sf, &extents);
       cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 - 8);
       cairo_show_text(cr, sf);
-      snprintf(sf, 32, "%-3d dBm", (int)(max_rxlvl - 0.5));    // assume max_rxlvl < 0 in rounding
+      snprintf(sf, sizeof(sf), "%-3d dBm", (int)(max_rxlvl - 0.5));    // assume max_rxlvl < 0 in rounding
       cairo_text_extents(cr, sf, &extents);
       cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 + 15);
       cairo_show_text(cr, sf); // dbm
       cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
       if (active_receiver->smetermode == 100) {
-        snprintf(sf, 32, "S=Peak");
+        snprintf(sf, sizeof(sf), "S=Peak");
         cairo_text_extents(cr, sf, &extents);
         cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 - 32);
         cairo_show_text(cr, sf);
       } else if (active_receiver->smetermode == 101) {
-        snprintf(sf, 32, "S=Avg");
+        snprintf(sf, sizeof(sf), "S=Avg");
         cairo_text_extents(cr, sf, &extents);
         cairo_move_to(cr, METER_WIDTH - extents.width - 15, Y2 - 32);
         cairo_show_text(cr, sf);
@@ -986,14 +986,14 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
         switch (pa_power) {
         case PA_1W:
-          snprintf(sf, 32, "FWD %dmW", (int)(1000.0 * max_pwr + 0.5));
+          snprintf(sf, sizeof(sf), "FWD %dmW", (int)(1000.0 * max_pwr + 0.5));
           break;
         case PA_5W:
         case PA_10W:
-          snprintf(sf, 32, "FWD %0.1fW", max_pwr);
+          snprintf(sf, sizeof(sf), "FWD %0.1fW", max_pwr);
           break;
         default:
-          snprintf(sf, 32, "FWD %dW", (int)(max_pwr + 0.5));
+          snprintf(sf, sizeof(sf), "FWD %dW", (int)(max_pwr + 0.5));
           break;
         }
         cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -1006,7 +1006,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
             cairo_set_source_rgba(cr, COLOUR_OK);  // display SWR in white color
           }
         }
-        snprintf(sf, 32, "SWR %1.1f:1", swr);
+        snprintf(sf, sizeof(sf), "SWR %1.1f:1", swr);
         cairo_move_to(cr, METER_WIDTH / 2, Y2 - 12);
         cairo_show_text(cr, sf);
       }
@@ -1014,7 +1014,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
         cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
         cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
         cairo_set_source_rgba(cr, COLOUR_METER);  // revert to white color
-        snprintf(sf, 32, "ALC %2.1f dB", max_alc);
+        snprintf(sf, sizeof(sf), "ALC %2.1f dB", max_alc);
         cairo_move_to(cr, METER_WIDTH / 2, Y4);
         cairo_show_text(cr, sf);
       }
@@ -1047,23 +1047,23 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           } else {
             cairo_set_source_rgba(cr, COLOUR_METER);
           }
-          snprintf(sf, 32, "Mic %.0f", _mic_av);
+          snprintf(sf, sizeof(sf), "Mic %.0f", _mic_av);
           cairo_move_to(cr, 5, Y4 - 30);
           cairo_show_text(cr, sf);
           cairo_set_source_rgba(cr, COLOUR_METER);
           if (vfo_get_tx_mode() == modeDIGL || vfo_get_tx_mode() == modeDIGU) {
             cairo_set_source_rgba(cr, COLOUR_SHADE);
           }
-          snprintf(sf, 32, "EQ  %.0f", _eq_av);
+          snprintf(sf, sizeof(sf), "EQ  %.0f", _eq_av);
           cairo_move_to(cr, 5, Y4 - 15);
           cairo_show_text(cr, sf);
-          snprintf(sf, 32, "Lev %.0f", _lvlr_av);
+          snprintf(sf, sizeof(sf), "Lev %.0f", _lvlr_av);
           cairo_move_to(cr, 65, Y4 - 30);
           cairo_show_text(cr, sf);
-          snprintf(sf, 32, "CFC %.0f", _cfc_av);
+          snprintf(sf, sizeof(sf), "CFC %.0f", _cfc_av);
           cairo_move_to(cr, 65, Y4 - 15);
           cairo_show_text(cr, sf);
-          snprintf(sf, 32, "PROC %.0f", _proc_av);
+          snprintf(sf, sizeof(sf), "PROC %.0f", _proc_av);
           cairo_move_to(cr, METER_WIDTH / 2, Y4 - 30);
           cairo_show_text(cr, sf);
           cairo_set_source_rgba(cr, COLOUR_METER);
@@ -1072,7 +1072,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           } else {
             cairo_set_source_rgba(cr, COLOUR_METER);
           }
-          snprintf(sf, 32, "Out %.0f", _out_av);
+          snprintf(sf, sizeof(sf), "Out %.0f", _out_av);
           cairo_move_to(cr, METER_WIDTH / 2, Y4 - 15);
           cairo_show_text(cr, sf);
           cairo_set_source_rgba(cr, COLOUR_METER);
