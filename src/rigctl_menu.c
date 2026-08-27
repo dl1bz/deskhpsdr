@@ -42,7 +42,7 @@
 static GtkWidget *dialog = NULL;
 static GtkWidget *serial_baud[MAX_SERIAL + 2];
 static GtkWidget *serial_enable[MAX_SERIAL + 2];
-static GtkWidget *serial_swapRtsDtr[MAX_SERIAL + 2];
+static GtkWidget *serial_ctsTxInhibit = NULL;
 static GtkWidget *rigctld_btn;
 static GtkWidget *rigctl_andromeda_btn;
 static GtkWidget *rigctl_port_select;
@@ -210,9 +210,13 @@ static void andromeda_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-static void serial_swapRtsDtr_cb(GtkWidget *widget, gpointer data) {
-  int id = GPOINTER_TO_INT(data);
-  SerialPorts[id].swapRtsDtr = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+static void serial_ctsTxInhibit_cb(GtkWidget *widget, gpointer data) {
+  (void) data;
+  int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  g_atomic_int_set(&SerialPorts[MAX_SERIAL].ctsTxInhibit, state);
+  if (!state) {
+    radio_set_serial_tx_inhibit(0);
+  }
 }
 
 static gboolean rigctl_reload_menu(gpointer data) {
@@ -235,6 +239,9 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   } else {
     SerialPorts[id].enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     if (id == MAX_SERIAL) {
+      if (serial_ctsTxInhibit != NULL) {
+        gtk_widget_set_sensitive(serial_ctsTxInhibit, SerialPorts[id].enable);
+      }
       launch_sertune();
     }
     if (id == MAX_SERIAL + 1) {
@@ -282,10 +289,18 @@ static void baud_cb(GtkWidget *widget, gpointer data) {
   SerialPorts[id].baud = new;
   if (SerialPorts[id].enable) {
     t_print("%s: closing/re-opening serial port %s\n", __func__, SerialPorts[id].port);
-    disable_serial_rigctl(id);
-    if (launch_serial_rigctl(id) == 0) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[id]), FALSE);
-      SerialPorts[id].enable = 0;
+    if (id < MAX_SERIAL) {
+      disable_serial_rigctl(id);
+      if (launch_serial_rigctl(id) == 0) {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[id]), FALSE);
+        SerialPorts[id].enable = 0;
+      }
+    } else if (id == MAX_SERIAL) {
+      stop_sertune();
+      launch_sertune();
+    } else if (id == MAX_SERIAL + 1) {
+      stop_serptt();
+      launch_serptt();
     }
   }
   t_print("%s: Baud rate changed: Port=%s Baud=%d\n", __func__, SerialPorts[id].port, SerialPorts[id].baud);
@@ -399,7 +414,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 3, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_debug_cb), NULL);
   //-------------------------------------------------------------------------------------
-  GtkWidget *block_cat_rx_if_tune_btn = gtk_check_button_new_with_label("Block [RX] CAT command during TUNE");
+  GtkWidget *block_cat_rx_if_tune_btn = gtk_check_button_new_with_label("Block [RX] CAT command\nduring TUNE");
   gtk_widget_set_tooltip_text(block_cat_rx_if_tune_btn,
                               "When enabled, this option rejects the [RX] CAT command during an active TUNE.\n\n"
                               "Some applications (e.g. iDigi) explicitly send an [RX] CAT command\n"
@@ -563,10 +578,17 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), w, 1, row, 2, 1);
     g_signal_connect(w, "changed", G_CALLBACK(serial_port_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_baud[MAX_SERIAL] = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "4800 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "9600 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "19200 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL]), NULL, "38400 Bd");
     switch (SerialPorts[MAX_SERIAL].baud) {
+    case B4800:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 0);
+      break;
+    case B9600:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 1);
+      break;
     case B19200:
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 2);
       break;
@@ -575,29 +597,31 @@ void rigctl_menu(GtkWidget *parent) {
       break;
     default:
       SerialPorts[MAX_SERIAL].baud = B9600;
-      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 0);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL]), 1);
       break;
     }
     my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL], 3, row, 1, 1);
     g_signal_connect(serial_baud[MAX_SERIAL], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_enable[MAX_SERIAL] =
-            gtk_check_button_new_with_label("Set RTS active during TUNE\nSet DTR active as PTT output");
+            gtk_check_button_new_with_label("RTS: TUNE output\nDTR: TX output");
     gtk_widget_set_name(serial_enable[MAX_SERIAL], "boldlabel_blue");
+    gtk_widget_set_tooltip_text(serial_enable[MAX_SERIAL],
+                                "Output signals on serial port:\n"
+                                "RTS: if TUNE ACTIVE +5V, if TUNE OFF 0V\n"
+                                "DTR: if TX ACTIVE +5V, if TX OFF 0V");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[MAX_SERIAL]), SerialPorts[MAX_SERIAL].enable);
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(MAX_SERIAL));
-    serial_swapRtsDtr[MAX_SERIAL] =
-            gtk_check_button_new_with_label("Swap RTS <-> DTR\n(if required)");
-    gtk_widget_set_name(serial_swapRtsDtr[MAX_SERIAL], "boldlabel_blue");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_swapRtsDtr[MAX_SERIAL]), SerialPorts[MAX_SERIAL].swapRtsDtr);
-    gtk_grid_attach(GTK_GRID(grid), serial_swapRtsDtr[MAX_SERIAL], 5, row, 1, 1);
-    g_signal_connect(serial_swapRtsDtr[MAX_SERIAL], "toggled", G_CALLBACK(serial_swapRtsDtr_cb),
-                     GINT_TO_POINTER(MAX_SERIAL));
-    if (SerialPorts[MAX_SERIAL].enable) {
-      gtk_widget_set_sensitive(serial_swapRtsDtr[MAX_SERIAL], TRUE);
-    } else {
-      gtk_widget_set_sensitive(serial_swapRtsDtr[MAX_SERIAL], FALSE);
-    }
+    serial_ctsTxInhibit = gtk_check_button_new_with_label("CTS TX Inhibit\n(active low)");
+    gtk_widget_set_name(serial_ctsTxInhibit, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(serial_ctsTxInhibit,
+                                "Input signal on serial port:\n"
+                                "Shorten CTS + GND: TX set global to INHIBIT (low active)");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_ctsTxInhibit),
+                                 g_atomic_int_get(&SerialPorts[MAX_SERIAL].ctsTxInhibit));
+    gtk_grid_attach(GTK_GRID(grid), serial_ctsTxInhibit, 5, row, 1, 1);
+    g_signal_connect(serial_ctsTxInhibit, "toggled", G_CALLBACK(serial_ctsTxInhibit_cb), NULL);
+    gtk_widget_set_sensitive(serial_ctsTxInhibit, SerialPorts[MAX_SERIAL].enable);
     //-----------------------------------------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------------------------------------
     row++;
@@ -611,10 +635,17 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), w, 1, row, 2, 1);
     g_signal_connect(w, "changed", G_CALLBACK(serial_port_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
     serial_baud[MAX_SERIAL + 1] = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "4800 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "9600 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "19200 Bd");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(serial_baud[MAX_SERIAL + 1]), NULL, "38400 Bd");
     switch (SerialPorts[MAX_SERIAL + 1].baud) {
+    case B4800:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 0);
+      break;
+    case B9600:
+      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 1);
+      break;
     case B19200:
       gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 2);
       break;
@@ -623,14 +654,17 @@ void rigctl_menu(GtkWidget *parent) {
       break;
     default:
       SerialPorts[MAX_SERIAL + 1].baud = B9600;
-      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 0);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(serial_baud[MAX_SERIAL + 1]), 1);
       break;
     }
     my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL + 1], 3, row, 1, 1);
     g_signal_connect(serial_baud[MAX_SERIAL + 1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
     serial_enable[MAX_SERIAL + 1] =
-            gtk_check_button_new_with_label("Read RTS & CTS as PTT Input\n(shorten RTS+CTS set PTT active)");
+            gtk_check_button_new_with_label("RTS & CTS as PTT Input");
     gtk_widget_set_name(serial_enable[MAX_SERIAL + 1], "boldlabel_blue");
+    gtk_widget_set_tooltip_text(serial_enable[MAX_SERIAL + 1],
+                                "Shorten RTS + CTS set PTT/MOX active.\n"
+                                "(can be used for external footswitch)");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[MAX_SERIAL + 1]), SerialPorts[MAX_SERIAL + 1].enable);
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL + 1], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL + 1], "toggled", G_CALLBACK(serial_enable_cb),

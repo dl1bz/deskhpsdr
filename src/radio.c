@@ -344,7 +344,35 @@ int auto_tune_flag = 0;
 int auto_tune_end = 0;
 
 int enable_tx_inhibit = 0;
-int TxInhibit = 0;
+
+#define TX_INHIBIT_SOURCE_HARDWARE 0x01
+#define TX_INHIBIT_SOURCE_SERIAL   0x02
+
+static gint tx_inhibit_sources = 0;
+
+int radio_get_tx_inhibit(void) {
+  return g_atomic_int_get(&tx_inhibit_sources) != 0;
+}
+
+static void radio_set_tx_inhibit_source(gint source, int state) {
+  gint previous;
+  if (state) {
+    previous = g_atomic_int_or(&tx_inhibit_sources, source);
+    if (previous == 0) {
+      g_idle_add(ext_mox_update_immediate, GINT_TO_POINTER(0));
+    }
+  } else {
+    g_atomic_int_and(&tx_inhibit_sources, ~source);
+  }
+}
+
+void radio_set_hardware_tx_inhibit(int state) {
+  radio_set_tx_inhibit_source(TX_INHIBIT_SOURCE_HARDWARE, state);
+}
+
+void radio_set_serial_tx_inhibit(int state) {
+  radio_set_tx_inhibit_source(TX_INHIBIT_SOURCE_SERIAL, state);
+}
 
 int vfo_encoder_divisor = 1;
 
@@ -494,7 +522,9 @@ static gboolean launch_autogain_hl2_wrapper(gpointer data) {
 static void radio_restore_state(void);
 
 void radio_stop(void) {
+  stop_serptt();
   tx_off_cancel();
+  stop_sertune();
   rbn_stop();
   stop_rx200_monitor();
   stop_lpf_monitor();
@@ -1419,7 +1449,7 @@ void radio_start_radio(void) {
     SerialPorts[id].baud = 0;
     SerialPorts[id].autoreporting = 0;
     SerialPorts[id].g2 = 0;
-    SerialPorts[id].swapRtsDtr = 0;
+    SerialPorts[id].ctsTxInhibit = 0;
     snprintf(SerialPorts[id].port, sizeof(SerialPorts[id].port), "/dev/ttyACM%d", id);
   }
   // On G2-Ultra systems, we need to know the serial port used for the
@@ -2117,7 +2147,7 @@ static void radio_set_mox_now(int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   int was_tune = tune;
   if (!can_transmit) { return; }
-  if (state && TxInhibit) { return; }
+  if (state && radio_get_tx_inhibit()) { return; }
   //
   // - setting MOX (no matter in which direction) stops TUNEing
   // - setting MOX (no matter in which direction) ends a pending VOX
@@ -2167,7 +2197,7 @@ static void radio_graceful_mox_off_complete(void) {
 
 void radio_set_mox(int state) {
   if (!can_transmit) { return; }
-  if (state && TxInhibit) { return; }
+  if (state && radio_get_tx_inhibit()) { return; }
   if (!state && CAT_rtty_is_active) {
     /* Manual/foreign MOX OFF aborts native RTTY immediately. */
     rtty_engine_abort();
@@ -2208,7 +2238,7 @@ void radio_set_vox(int state) {
   //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox,vox,tune,state);
   if (!can_transmit) { return; }
   if (mox || tune) { return; }
-  if (state && TxInhibit) { return; }
+  if (state && radio_get_tx_inhibit()) { return; }
   if (state) {
     tx_off_cancel_target(TX_OFF_TARGET_VOX);
   }
@@ -2223,7 +2253,7 @@ void radio_set_vox(int state) {
 void radio_set_tune(int state) {
   t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __func__, mox, vox, tune, state);
   if (!can_transmit) { return; }
-  if (state && TxInhibit) { return; }
+  if (state && radio_get_tx_inhibit()) { return; }
   int tune_changed = (tune != state);
   // if state==tune, this function is a no-op
   if (tune != state) {
@@ -2877,11 +2907,10 @@ static void radio_restore_state(void) {
   GetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   GetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   GetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
-  GetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,      SerialPorts[MAX_SERIAL].swapRtsDtr);
+  GetPropI1("tune_serial_cts_tx_inhibit[%d]", MAX_SERIAL,   SerialPorts[MAX_SERIAL].ctsTxInhibit);
   GetPropS1("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
   GetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
   GetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
-  GetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
   GetPropS0("own_callsign",                                own_callsign);
   GetPropS0("own_locator",                                 own_locator);
   GetPropS0("dxc_login",                                   dxc_login);
@@ -3176,11 +3205,10 @@ void radio_save_state(void) {
   SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);
   SetPropI1("tune_serial_enable[%d]", MAX_SERIAL,          SerialPorts[MAX_SERIAL].enable);
-  SetPropI1("tune_serial_swapRtsDtr[%d]", MAX_SERIAL,      SerialPorts[MAX_SERIAL].swapRtsDtr);
+  SetPropI1("tune_serial_cts_tx_inhibit[%d]", MAX_SERIAL,   g_atomic_int_get(&SerialPorts[MAX_SERIAL].ctsTxInhibit));
   SetPropS1("ptt_serial_port[%d]", MAX_SERIAL + 1,         SerialPorts[MAX_SERIAL + 1].port);
   SetPropI1("ptt_serial_baud_rate[%i]", MAX_SERIAL + 1,    SerialPorts[MAX_SERIAL + 1].baud);
   SetPropI1("ptt_serial_enable[%d]", MAX_SERIAL + 1,       SerialPorts[MAX_SERIAL + 1].enable);
-  SetPropI1("ptt_serial_swapRtsDtr[%d]", MAX_SERIAL + 1,   SerialPorts[MAX_SERIAL + 1].swapRtsDtr);
   SetPropS0("own_callsign",                                own_callsign);
   SetPropS0("own_locator",                                 own_locator);
   SetPropS0("dxc_login",                                   dxc_login);

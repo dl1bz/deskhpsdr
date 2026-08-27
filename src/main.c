@@ -102,6 +102,9 @@ int display_sysinfo = 0;
 int log_debug = 0;
 int ui_debug = 0;
 
+int sertune_ptt_hold_ms = 0;
+int sertune_invert = 1;
+
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;
 

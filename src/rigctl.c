@@ -95,8 +95,8 @@ int rigctl_tcp_autoreporting = 0;
 volatile int rigctld_enabled = 0;
 volatile int use_rigctld = 0;
 
-int serptt_fd;
-int sertune_fd;
+int serptt_fd = -1;
+int sertune_fd = -1;
 volatile gboolean serptt_cts = FALSE;
 int autogain_is_adjusted = 1;
 
@@ -117,9 +117,14 @@ static GMutex mutex_numcat;   // only needed to make in/de-crements of "cat_cont
 
 static GThread *rigctl_server_thread_id = NULL;
 static GThread *serptt_thread_id = NULL;
+static gint serptt_thread_failed = 0;
+static gint serptt_generation = 0;
 static GThread *sertune_thread_id = NULL;
 static guint serptt_off_timeout = 0;
+static gint serptt_thread_stop = 0;
 static GMutex sertune_mutex;
+static gint sertune_thread_stop = 0;
+static gint sertune_thread_failed = 0;
 #if defined (__AUTOG__)
   pthread_t autogain_thread;
   pthread_mutex_t autogain_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
@@ -210,16 +215,13 @@ int rigctl_tcp_running(void) {
   return (server_socket >= 0);
 }
 
-// Funktion zum Abrufen des CTS-Status der seriellen PTT
-static gboolean get_serptt_cts(int fd) {
+// Return CTS state of the serial PTT port: 1=active, 0=inactive, -1=error.
+static int get_serptt_cts(int fd) {
   int status;
-  // Holen des CTS-Status von einem seriellen Gerät
   if (ioctl(fd, TIOCMGET, &status) < 0) {
-    // Fehlerbehandlung
-    return FALSE;  // Gibt FALSE zurück, wenn ein Fehler auftritt
+    return -1;
   }
-  // Überprüft, ob der CTS-Pin gesetzt ist
-  return (status & TIOCM_CTS) != 0 ? TRUE : FALSE;
+  return (status & TIOCM_CTS) != 0 ? 1 : 0;
 }
 
 static gboolean serptt_off_timeout_cb(gpointer user_data) {
@@ -235,9 +237,32 @@ static gboolean serptt_off_timeout_cb(gpointer user_data) {
   return G_SOURCE_REMOVE;
 }
 
+static gboolean update_serptt_cts(gpointer user_data);
+
+/*
+ * Queue a CTS state together with the monitor generation that produced it.
+ * This prevents an event from an old serPTT worker from affecting a newly
+ * opened serPTT session after a rapid stop/restart.
+ */
+static void queue_serptt_cts(gboolean state, gint generation) {
+  guint value = ((guint) generation << 1) | (state ? 1U : 0U);
+  g_idle_add(update_serptt_cts, GUINT_TO_POINTER(value));
+}
+
 // Funktion zur Aktualisierung des CTS-Status der seriellen PTT
 static gboolean update_serptt_cts(gpointer user_data) {
-  gboolean current_state_serptt = GPOINTER_TO_INT(user_data);  // Umwandlung von gpointer zu gboolean
+  guint value = GPOINTER_TO_UINT(user_data);
+  gint generation = (gint)(value >> 1);
+  gboolean current_state_serptt = (value & 1U) ? TRUE : FALSE;
+  /*
+   * Ignore events from a stopped or superseded monitor.  Checking only
+   * serptt_thread_id is insufficient because an old queued event may run
+   * after a new serPTT worker has already been started.
+   */
+  if (serptt_thread_id == NULL ||
+      generation != g_atomic_int_get(&serptt_generation)) {
+    return G_SOURCE_REMOVE;
+  }
   // Wenn sich der Zustand von `serptt_cts` geändert hat
   if (current_state_serptt != serptt_cts) {
     serptt_cts = current_state_serptt;
@@ -266,21 +291,40 @@ static gboolean update_serptt_cts(gpointer user_data) {
 }
 
 static gpointer monitor_serptt_cts_thread(gpointer user_data) {
-  gboolean last_state_serptt = FALSE;  // Umstellung von bool auf gboolean
+  gboolean last_state_serptt = FALSE;
+  gint generation = g_atomic_int_get(&serptt_generation);
   int fd = * (int *) user_data;
   if (fd < 0) {
-    if (SerialPorts[MAX_SERIAL + 1].enable) {
-      SerialPorts[MAX_SERIAL + 1].enable = 0;
-    }
-    t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL + 1].port);
+    t_print("%s: ERROR invalid serial PTT fd for %s\n", __func__, SerialPorts[MAX_SERIAL + 1].port);
+    return NULL;
   }
-  while (fd >= 0) {  // Solange fd gültig ist
-    gboolean current_state_serptt = get_serptt_cts(fd);  // Get the current CTS state
+  while (!g_atomic_int_get(&serptt_thread_stop)) {
+    int state = get_serptt_cts(fd);
+    if (state < 0) {
+      t_perror("monitor_serptt_cts_thread: TIOCMGET failed");
+      break;
+    }
+    gboolean current_state_serptt = state ? TRUE : FALSE;
     if (current_state_serptt != last_state_serptt) {
       last_state_serptt = current_state_serptt;
-      g_idle_add(update_serptt_cts, GINT_TO_POINTER(current_state_serptt));    // Update if state changes
+      queue_serptt_cts(current_state_serptt, generation);
     }
-    g_usleep(50000);  // 50 ms warten
+    g_usleep(50000);
+  }
+  /*
+   * On an unexpected monitor failure, release a possibly asserted serial PTT.
+   * An intentional shutdown is handled synchronously by stop_serptt().
+   */
+  if (!g_atomic_int_get(&serptt_thread_stop)) {
+    /*
+     * Keep the GThread handle intact so stop_serptt() can still join it,
+     * but mark an unexpected monitor exit so launch_serptt() can reap the
+     * dead worker and restart the port.
+     */
+    g_atomic_int_set(&serptt_thread_failed, 1);
+    if (last_state_serptt) {
+      queue_serptt_cts(FALSE, generation);
+    }
   }
   return NULL;
 }
@@ -288,90 +332,228 @@ static gpointer monitor_serptt_cts_thread(gpointer user_data) {
 static gpointer monitor_sertune_thread(gpointer user_data) {
   int fd = * (int *) user_data;
   int status;
+  int last_tune = tune ? 1 : 0;
+  gint64 rts_until = 0;
   if (fd < 0) {
     if (SerialPorts[MAX_SERIAL].enable) {
       SerialPorts[MAX_SERIAL].enable = 0;
     }
+    radio_set_serial_tx_inhibit(0);
     t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL].port);
+    return NULL;
   }
-  while (!(fd < 0)) {
-    ioctl(fd, TIOCMGET, &status);          // Read state
+  while (!g_atomic_int_get(&sertune_thread_stop)) {
+    if (ioctl(fd, TIOCMGET, &status) < 0) {
+      t_perror("monitor_sertune_thread: TIOCMGET failed");
+      break;
+    }
+    int current_tune = tune ? 1 : 0;
+    gint64 now = g_get_monotonic_time();
     /*
-    if (mox || vox || tune) {
-      t_print("%s: MOX: %d VOX: %d TUNE: %d\n", __func__, mox, vox, tune); // add debug output
-    }
-    */
-    // if using TUNE we set RTS & DTR active,
-    // if we transmit (MOX, VOX, TUNE) set DTR active, which can be used as external PTT output
-    if (radio_is_transmitting()) {
-      g_mutex_lock(&sertune_mutex);        // Lock thread
-      if (tune) {
-        status |= TIOCM_RTS;               // Set RTS active
-        status |= TIOCM_DTR;               // Set DTR active
-        ioctl(fd, TIOCMSET, &status);      // Write new state
-      } else {
-        if (SerialPorts[MAX_SERIAL].swapRtsDtr) {
-          status |= TIOCM_RTS;             // Set RTS active instead DTR if RTS <-> DTR is swapped
-        } else {
-          status |= TIOCM_DTR;             // Set DTR active (default)
-        }
-        ioctl(fd, TIOCMSET, &status);      // Write new state
+     * Dedicated ATU/TUNE serial port:
+     *   RTS: configurable ATU start hold on TUNE 0 -> 1
+     *   DTR: actual TX state, independent of TUNE
+     *   CTS: optional active-low TX inhibit
+     *
+     * RTS/DTR output polarity is controlled by sertune_invert.
+     */
+    if (current_tune && !last_tune) {
+      if (sertune_ptt_hold_ms > 0) {
+        rts_until = now + ((gint64) sertune_ptt_hold_ms * 1000);
       }
-      g_mutex_unlock(&sertune_mutex);      // Unlock thread
-    } else {
-      g_mutex_lock(&sertune_mutex);        // Lock thread
-      status &= ~TIOCM_RTS;                // Clear RTS
-      status &= ~TIOCM_DTR;                // Clear DTR
-      ioctl(fd, TIOCMSET, &status);        // Set new state
-      g_mutex_unlock(&sertune_mutex);      // Unlock thread
     }
+    if (!current_tune && sertune_ptt_hold_ms > 0) {
+      rts_until = 0;
+    }
+    last_tune = current_tune;
+    if (g_atomic_int_get(&SerialPorts[MAX_SERIAL].ctsTxInhibit)) {
+      /*
+       * UART-TTL CTS is electrically active low.  TIOCM_CTS is set by
+       * the driver when CTS is asserted, i.e. when the CTS input is
+       * pulled low.  An open/high CTS input must therefore allow TX.
+       */
+      radio_set_serial_tx_inhibit((status & TIOCM_CTS) != 0);
+    } else {
+      radio_set_serial_tx_inhibit(0);
+    }
+    gboolean rts_active =
+            (sertune_ptt_hold_ms == 0 && current_tune) ||
+            (sertune_ptt_hold_ms > 0 && rts_until > now);
+    gboolean dtr_active = radio_is_transmitting();
+    if (sertune_invert) {
+      rts_active = !rts_active;
+      dtr_active = !dtr_active;
+    }
+    g_mutex_lock(&sertune_mutex);
+    if (rts_active) {
+      status &= ~TIOCM_RTS;
+    } else {
+      status |= TIOCM_RTS;
+    }
+    if (dtr_active) {
+      status &= ~TIOCM_DTR;
+    } else {
+      status |= TIOCM_DTR;
+    }
+    if (ioctl(fd, TIOCMSET, &status) < 0) {
+      g_mutex_unlock(&sertune_mutex);
+      t_perror("monitor_sertune_thread: TIOCMSET failed");
+      break;
+    }
+    g_mutex_unlock(&sertune_mutex);
     g_usleep(10000);  // delay 10 ms
+  }
+  if (!g_atomic_int_get(&sertune_thread_stop)) {
+    /*
+     * Keep the GThread handle intact so stop_sertune() can still join it.
+     * launch_sertune() uses this flag to reap a failed worker and reopen
+     * the serial port on the next start attempt.
+     */
+    g_atomic_int_set(&sertune_thread_failed, 1);
+    radio_set_serial_tx_inhibit(0);
   }
   return NULL;
 }
 
+void stop_serptt(void) {
+  int was_active = (serptt_thread_id != NULL || serptt_fd >= 0);
+  gboolean release_ptt = serptt_cts || serptt_off_timeout != 0;
+  if (serptt_thread_id != NULL) {
+    g_atomic_int_set(&serptt_thread_stop, 1);
+    g_atomic_int_inc(&serptt_generation);
+    g_thread_join(serptt_thread_id);
+    serptt_thread_id = NULL;
+  }
+  if (serptt_off_timeout != 0) {
+    g_source_remove(serptt_off_timeout);
+    serptt_off_timeout = 0;
+  }
+  if (serptt_fd >= 0) {
+    close(serptt_fd);
+    serptt_fd = -1;
+  }
+  if (serptt_cts) {
+    serptt_cts = FALSE;
+    tci_tx_footswitch_changed(FALSE);
+  }
+  if (release_ptt) {
+    /* Preserve the normal serial-PTT OFF path, including hardware-PTT recheck. */
+    ext_mox_update(GINT_TO_POINTER(0));
+  }
+  if (was_active) {
+    t_print("---- Shutdown SerPTT Thread at %s ----\n", SerialPorts[MAX_SERIAL + 1].port);
+  }
+}
+
 void launch_serptt(void) {
   if (SerialPorts[MAX_SERIAL + 1].enable) {
+    if (serptt_thread_id != NULL) {
+      if (!g_atomic_int_get(&serptt_thread_failed)) {
+        return;
+      }
+      /*
+       * The monitor exited unexpectedly. Reap the dead worker and close
+       * the stale descriptor before attempting to reopen the port.
+       */
+      stop_serptt();
+    }
     serptt_fd = open(SerialPorts[MAX_SERIAL + 1].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
     if (serptt_fd < 0) {
       SerialPorts[MAX_SERIAL + 1].enable = 0;
       t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL + 1].port);
     } else {
+      g_atomic_int_set(&serptt_thread_stop, 0);
+      g_atomic_int_set(&serptt_thread_failed, 0);
+      g_atomic_int_inc(&serptt_generation);
       serptt_thread_id = g_thread_new("serPTT-Monitoring", monitor_serptt_cts_thread, &serptt_fd);
       t_print("---- LAUNCHING serPTT control Thread at %s ----\n", SerialPorts[MAX_SERIAL + 1].port);
     }
   } else {
-    if (serptt_thread_id) {
-      serptt_thread_id = NULL;
-      close(serptt_fd);
-      serptt_fd = -1;
-      t_print("---- Shutdown SerPTT Thread at %s ----\n", SerialPorts[MAX_SERIAL + 1].port);
+    stop_serptt();
+  }
+}
+
+void stop_sertune(void) {
+  int status_sertune;
+  int was_active = (sertune_thread_id != NULL || sertune_fd >= 0);
+  if (sertune_thread_id != NULL) {
+    g_atomic_int_set(&sertune_thread_stop, 1);
+    g_thread_join(sertune_thread_id);
+    sertune_thread_id = NULL;
+  }
+  if (sertune_fd >= 0) {
+    if (ioctl(sertune_fd, TIOCMGET, &status_sertune) == 0) {
+      if (sertune_invert) {
+        status_sertune &= ~TIOCM_RTS;
+        status_sertune &= ~TIOCM_DTR;
+      } else {
+        status_sertune |= TIOCM_RTS;
+        status_sertune |= TIOCM_DTR;
+      }
+      if (ioctl(sertune_fd, TIOCMSET, &status_sertune) < 0) {
+        t_perror("stop_sertune: TIOCMSET shutdown failed");
+      }
+    } else {
+      t_perror("stop_sertune: TIOCMGET shutdown failed");
     }
+    close(sertune_fd);
+    sertune_fd = -1;
+  }
+  radio_set_serial_tx_inhibit(0);
+  if (was_active) {
+    t_print("---- Shutdown serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
   }
 }
 
 void launch_sertune(void) {
   int status_sertune;
   if (SerialPorts[MAX_SERIAL].enable) {
+    if (sertune_thread_id != NULL) {
+      if (!g_atomic_int_get(&sertune_thread_failed)) {
+        return;
+      }
+      /*
+       * The ATU monitor exited unexpectedly. Reap the dead worker and
+       * close the stale descriptor before attempting to reopen the port.
+       */
+      stop_sertune();
+    }
     sertune_fd = open(SerialPorts[MAX_SERIAL].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
     if (sertune_fd < 0) {
       SerialPorts[MAX_SERIAL].enable = 0;
+      radio_set_serial_tx_inhibit(0);
       t_print("%s: ERROR open serial port %s failed\n", __func__, SerialPorts[MAX_SERIAL].port);
     } else {
-      ioctl(sertune_fd, TIOCMGET, &status_sertune);  // get state
-      status_sertune &= ~TIOCM_RTS;                  // clear RTS
-      status_sertune &= ~TIOCM_DTR;                  // clear DTR
-      ioctl(sertune_fd, TIOCMSET, &status_sertune);  // set new state
+      if (ioctl(sertune_fd, TIOCMGET, &status_sertune) < 0) {
+        t_perror("launch_sertune: TIOCMGET failed");
+        close(sertune_fd);
+        sertune_fd = -1;
+        SerialPorts[MAX_SERIAL].enable = 0;
+        radio_set_serial_tx_inhibit(0);
+        return;
+      }
+      if (sertune_invert) {
+        status_sertune &= ~TIOCM_RTS;
+        status_sertune &= ~TIOCM_DTR;
+      } else {
+        status_sertune |= TIOCM_RTS;
+        status_sertune |= TIOCM_DTR;
+      }
+      if (ioctl(sertune_fd, TIOCMSET, &status_sertune) < 0) {
+        t_perror("launch_sertune: TIOCMSET failed");
+        close(sertune_fd);
+        sertune_fd = -1;
+        SerialPorts[MAX_SERIAL].enable = 0;
+        radio_set_serial_tx_inhibit(0);
+        return;
+      }
+      g_atomic_int_set(&sertune_thread_stop, 0);
+      g_atomic_int_set(&sertune_thread_failed, 0);
       sertune_thread_id = g_thread_new("serTUNE-Monitoring", monitor_sertune_thread, &sertune_fd);
       t_print("---- LAUNCHING serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
     }
   } else {
-    if (sertune_thread_id) {
-      sertune_thread_id = NULL;
-      close(sertune_fd);
-      sertune_fd = -1;
-      t_print("---- Shutdown serTUNE control Thread at %s ----\n", SerialPorts[MAX_SERIAL].port);
-    }
+    stop_sertune();
   }
 }
 

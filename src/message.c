@@ -36,17 +36,16 @@
  * a separate window for debugging purposes.
  */
 
+#include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include <glib.h>
 #include <stdarg.h>
 #include <errno.h>
 #include <time.h>
 #include <stdio.h>
+#include "main.h"
 
 static GMutex t_print_mutex;  // globaler Mutex
-
-extern int log_debug;
-extern int ui_debug;
 
 static void v_t_print(const gchar *format, va_list args) {
   struct timespec ts;

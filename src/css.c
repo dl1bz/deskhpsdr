@@ -1342,6 +1342,8 @@ void StartConfigSave(void) {
   SetPropI0("display_sysinfo", display_sysinfo);
   SetPropI0("log_debug", log_debug);
   SetPropI0("ui_debug", ui_debug);
+  SetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
+  SetPropI0("sertune_invert", sertune_invert);
   SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     char name[32];
@@ -1363,6 +1365,8 @@ void StartConfigLoad(void) {
   GetPropI0("display_sysinfo", display_sysinfo);
   GetPropI0("log_debug", log_debug);
   GetPropI0("ui_debug", ui_debug);
+  GetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
+  GetPropI0("sertune_invert", sertune_invert);
   GetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   p2_angelia_ddc0_map = p2_angelia_ddc0_map ? 1 : 0;
   for (int i = 0; i < P2_MAX_DDCS; i++) {
@@ -1385,6 +1389,12 @@ void StartConfigLoad(void) {
   }
   if (ui_debug < 0 || ui_debug > 1) {
     ui_debug = 0;
+  }
+  if (sertune_ptt_hold_ms < 0) {
+    sertune_ptt_hold_ms = 500;
+  }
+  if (sertune_invert < 0 || sertune_invert > 1) {
+    sertune_invert = 0;
   }
   clearProperties();
 }

@@ -144,7 +144,7 @@ void update_vox(double level) {
   if (capture_state == CAP_XMIT) {
     return;
   }
-  if (vox_enabled && !mox && !tune && !TxInhibit && peak > vox_threshold) {
+  if (vox_enabled && !mox && !tune && !radio_get_tx_inhibit() && peak > vox_threshold) {
     gint64 now = g_get_monotonic_time();
     int start_vox;
     /*

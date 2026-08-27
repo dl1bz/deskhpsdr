@@ -48,6 +48,9 @@ extern int display_sysinfo;
 extern int log_debug;
 extern int ui_debug;
 
+extern int sertune_ptt_hold_ms;
+extern int sertune_invert;
+
 extern int p2_angelia_ddc0_map;
 
 extern int full_screen;

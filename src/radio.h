@@ -281,7 +281,9 @@ extern int auto_tune_flag;
 extern int auto_tune_end;
 
 extern int enable_tx_inhibit;
-extern int TxInhibit;
+extern int radio_get_tx_inhibit(void);
+extern void radio_set_hardware_tx_inhibit(int state);
+extern void radio_set_serial_tx_inhibit(int state);
 
 extern int vfo_encoder_divisor;
 

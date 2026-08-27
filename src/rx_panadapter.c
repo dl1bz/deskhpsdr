@@ -2445,7 +2445,7 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #endif
     cairo_show_text(cr, _text);  // show onscreen if status bar switched off
   }
-  if (strcmp(own_callsign, "YOUR_CALLSIGN") != 0) {
+  if (strcmp(own_callsign, "YOUR_CALLSIGN") != 0 && !radio_get_tx_inhibit()) {
     if (strcmp(own_locator, "JO01AA") != 0) {
       snprintf(_text, sizeof(_text), "%s - %s", own_callsign, own_locator);
     } else {
@@ -2612,13 +2612,14 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     cairo_show_text(cr, _text);
   }
 #endif
-  if (TxInhibit) {
+  if (radio_get_tx_inhibit()) {
     cairo_set_source_rgba(cr, COLOUR_ALARM);
-    cairo_set_font_size(cr, DISPLAY_FONT_SIZE16);
+    cairo_select_font_face(cr, DISPLAY_FONT_UDP_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE20);
     cairo_move_to(cr, 100.0, 30.0);
     cairo_show_text(cr, "TX Inhibit");
   }
-  if (display_pacurr && radio_is_transmitting() && !TxInhibit) {
+  if (display_pacurr && radio_is_transmitting() && !radio_get_tx_inhibit()) {
     double v;  // value
     int flag;  // 0: dont, 1: do
     static unsigned int count = 0;

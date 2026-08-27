@@ -3470,13 +3470,9 @@ static void process_high_priority(void) {
     } else {
       data = buffer[59] & 0x01;          // use IO4 (active=0) on all other gear
     }
-    if (!TxInhibit && data == 0) {
-      TxInhibit = 1;
-      g_idle_add(ext_mox_update_immediate, GINT_TO_POINTER(0));
-    }
-    if (data == 1) { TxInhibit = 0; }
+    radio_set_hardware_tx_inhibit(data == 0);
   } else {
-    TxInhibit = 0;
+    radio_set_hardware_tx_inhibit(0);
   }
   if (enable_auto_tune) {
     data = (buffer[59] >> 2) & 0x01;  // use IO6 (active=0)

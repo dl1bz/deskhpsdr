@@ -33,7 +33,7 @@ struct _SERIALPORT {
   int  andromeda;   // flag for handling ANDROMEDA console
   int  g2;          // This port is used for G2-internal communication
   int  autoreporting;
-  int  swapRtsDtr; // invert RTS and DTR control signals if needed
+  int  ctsTxInhibit; // dedicated TUNE/ATU port: CTS active-low TX inhibit
 };
 
 typedef struct _SERIALPORT SERIALPORT;
@@ -49,7 +49,9 @@ extern void disable_serial_rigctl (int id);
 extern int rigctl_tcp_running (void);
 extern void  shutdown_tcp_rigctl (void);
 extern void launch_serptt (void);
+extern void stop_serptt (void);
 extern void launch_sertune (void);
+extern void stop_sertune (void);
 extern int serptt_fd;
 extern volatile gboolean serptt_cts;
 extern int sertune_fd;

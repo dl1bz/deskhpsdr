@@ -1697,13 +1697,9 @@ static void process_control_bytes(void) {
       } else {
         data = (control_in[1] >> 1) & 0x01;  // Use IO1 (active=0) on all other gear
       }
-      if (!TxInhibit && data == 0) {
-        TxInhibit = 1;
-        g_idle_add(ext_mox_update_immediate, GINT_TO_POINTER(0));
-      }
-      if (data == 1) { TxInhibit = 0; }
+      radio_set_hardware_tx_inhibit(data == 0);
     } else {
-      TxInhibit = 0;
+      radio_set_hardware_tx_inhibit(0);
     }
     if (enable_auto_tune) {
       data = (control_in[1] >> 3) & 0x01;   // Use IO3 (active=0)
