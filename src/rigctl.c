@@ -905,8 +905,26 @@ static void start_rigctld(void) {
   pid_t running_pid = get_pid_by_name("rigctld_deskhpsdr");
   if (running_pid > 0) {
     t_print("%s: Stop old rigctld (PID %d)...\n", __func__, running_pid);
-    kill(running_pid, SIGTERM);
-    waitpid(running_pid, NULL, 0);
+    if (kill(running_pid, SIGTERM) == 0) {
+      int stopped = 0;
+      for (int i = 0; i < 20; i++) {
+        if (kill(running_pid, 0) != 0 && errno == ESRCH) {
+          stopped = 1;
+          break;
+        }
+        usleep(100000);
+      }
+      if (!stopped) {
+        t_print("%s: old rigctld did not terminate, killing PID %d...\n", __func__, running_pid);
+        kill(running_pid, SIGKILL);
+        for (int i = 0; i < 10; i++) {
+          if (kill(running_pid, 0) != 0 && errno == ESRCH) {
+            break;
+          }
+          usleep(100000);
+        }
+      }
+    }
     rigctld_pid = 0;
   }
   if (rigctld_pid != 0) { return; }
