@@ -497,7 +497,8 @@ int ps_calibration_timer(gpointer arg) {
   if (transmitter->puresignal) {
     int tx_att_min;
     int tx_att_max;
-    static int old5 = 0;
+    static int old4 = -1;
+    static int count = 0;
     int info[INFO_SIZE];
     if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
       tx_att_min = -29;
@@ -508,13 +509,25 @@ int ps_calibration_timer(gpointer arg) {
     }
     tx_ps_getinfo(transmitter, info);
     //
-    // newcal is set to 1 if we have a new calibration value
-    // (info[5] is the calibration counter)
+    // newcal is set if the feedback level changed, or if it stayed
+    // constant for more than 10 timer cycles. A new calibration alone
+    // is not sufficient: info[4] may still describe the feedback level
+    // from before the most recent TX attenuation change.
     //
     int newcal = 0;
-    if (info[5] !=  old5) {
-      old5 = info[5];
+    if (info[4] != old4 || count > 10) {
+      old4 = info[4];
       newcal = 1;
+      count = 0;
+    } else {
+      count++;
+    }
+    if (!transmitter->auto_on) {
+      // Force an immediate feedback evaluation when Auto Attenuate is
+      // enabled again, without coupling the PS reset/resume state machine
+      // to Auto Attenuate.
+      old4 = -1;
+      count = 0;
     }
     switch (state) {
     case 0:
