@@ -76,8 +76,8 @@ static inline int clock_gettime(clockid_t clk_id, struct timespec *ts) {
 
 //
 // MacOS does not have clock_nanosleep but it does have nanosleep
-// We ignore clock_id (assuming CLOCK_MONOTONIC)
-// but for the flags we allow TIMER_ABSTIME (sleep until a specific poin
+// We ignore clock_id (assuming/forcing CLOCK_MONOTONIC)
+// but for the flags we allow TIMER_ABSTIME (sleep until a specific point
 // in time), for all other value we sleep for a speficic period.
 //
 
@@ -90,16 +90,27 @@ static inline int clock_nanosleep(clockid_t clock_id, int flags,
   struct timespec now;
   int rc;
   if (flags == TIMER_ABSTIME) {
-    //
-    // sleep until point in the future
-    //
     clock_gettime(CLOCK_MONOTONIC, &now);
+    //
+    // If the requested end-of-sleep time has already been reached
+    // do nothing and return quickly
+    //
+    if (request->tv_sec < now.tv_sec ||
+        (request->tv_sec == now.tv_sec && request->tv_nsec < now.tv_nsec)) {
+      return 0;
+    }
+    //
+    // Determine length of the nap we have to take
+    //
     now.tv_sec = request->tv_sec  - now.tv_sec;
     now.tv_nsec = request->tv_nsec - now.tv_nsec;
     while (now.tv_nsec < 0) {
       now.tv_nsec += 1000000000;
       now.tv_sec--;
     }
+    //
+    // do the sleep
+    //
     rc = nanosleep(&now, remain);
   } else {
     //
