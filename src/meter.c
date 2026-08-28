@@ -134,6 +134,8 @@ static double max_alc   = min_alc;
 static double max_pwr   = min_pwr;
 
 static int max_count = 0;
+static int max_pwrcount = 0;
+static int max_alccount = 0;
 
 static void meter_set_analog_scale_colour(cairo_t *cr) {
   cairo_set_source_rgba(cr, 0.06, 0.045, 0.030, 1.0);
@@ -272,6 +274,8 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     max_pwr   = min_pwr;
     max_alc   = min_alc;
     max_count =    0;
+    max_pwrcount = 0;
+    max_alccount = 0;
   }
   //
   // Only the values max_rxlvl/max_pwr/max_alc are "on display"
@@ -290,22 +294,26 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
   switch (meter_type) {
   case POWER:
     pwr = value;
-    if (max_count > CNTMAX) {
+    if (max_pwrcount > CNTMAX) {
       max_pwr = EXPAV1 * max_pwr + EXPAV2 * pwr;
-      max_alc = EXPAV1 * max_alc + EXPAV2 * alc;
       // This is perhaps not necessary ...
       if (max_pwr < min_pwr) { max_pwr = min_pwr; }
+    }
+    if (max_alccount > CNTMAX) {
+      max_alc = EXPAV1 * max_alc + EXPAV2 * alc;
       // ... but alc goes to -Infinity during CW
       if (max_alc < min_alc) { max_alc = min_alc; }
     }
     if (pwr > max_pwr) {
       max_pwr = pwr;
-      max_count = 0;
+      max_pwrcount = 0;
     }
     if (alc > max_alc) {
       max_alc = alc;
-      max_count = 0;
+      max_alccount = 0;
     }
+    max_pwrcount++;
+    max_alccount++;
     break;
   case SMETER:
     rxlvl = value; // all corrections now in receiver.c
@@ -317,9 +325,9 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       max_rxlvl = rxlvl;
       max_count = 0;
     }
+    max_count++;
     break;
   }
-  max_count++;
   //
   // From now on, DO NOT USE rxlvl,pwr,alc but use max_rxlvl etc.
   //
