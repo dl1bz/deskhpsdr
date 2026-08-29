@@ -414,6 +414,7 @@ static void attenuation_value_changed_cb(GtkWidget *widget, gpointer data) {
 void update_attenuation_label(void) {
   if (hermes_mode == HERMES_MODE_BRICK) {
     gtk_label_set_text(GTK_LABEL(attenuation_label), "S-ATT");
+    gtk_widget_set_tooltip_text(attenuation_label, "S-ATT : RX Step Attenuator");
   } else {
     gtk_label_set_text(GTK_LABEL(attenuation_label), "ATT");
   }
@@ -1063,17 +1064,17 @@ void update_slider_preamp_button(gboolean show_widget) {
     char preamp_tip[256];
     if (transmitter->addgain_enable) {
       snprintf(preamp_tip, sizeof(preamp_tip),
-               "Switch the Mic Preamplifier ON or OFF\n"
+               "Switch the optional Mic Preamplifier ON or OFF\n"
                "[Always OFF in DIGU/DIGL]\n"
-               "Additional gain on top of Mic Gain\n"
+               "Additional Gain on top of current Mic Gain setting\n"
                "Current Mic Gain %+ddb + Current Preamp Gain %+ddb = %+ddb\n\n"
                "Adjust this value in Menu → TX Menu.", (int) transmitter->mic_gain, (int) transmitter->addgain_gain,
                (int)(transmitter->mic_gain + transmitter->addgain_gain));
     } else {
       snprintf(preamp_tip, sizeof(preamp_tip),
-               "Switch the Mic Preamplifier ON or OFF\n"
+               "Switch the optional Mic Preamplifier ON or OFF\n"
                "[Always OFF in DIGU/DIGL]\n"
-               "Additional gain on top of Mic Gain\n"
+               "Additional Gain on top of current Mic Gain setting\n"
                "Current Mic Gain %+ddb\n\n"
                "Adjust this value in Menu → TX Menu.", (int) transmitter->mic_gain);
     }
@@ -2125,6 +2126,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     //-----------------------------------------------------------------------------------------------------------
     if (hermes_mode == HERMES_MODE_BRICK) {
       attenuation_label = gtk_label_new("S-ATT");
+      gtk_widget_set_tooltip_text(attenuation_label, "S-ATT : RX Step Attenuator");
     } else {
       attenuation_label = gtk_label_new("ATT");
     }
@@ -2376,17 +2378,17 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     char preamp_tip[256];
     if (transmitter->addgain_enable) {
       snprintf(preamp_tip, sizeof(preamp_tip),
-               "Switch the Mic Preamplifier ON or OFF\n"
+               "Switch the optional Mic Preamplifier ON or OFF\n"
                "[Always OFF in DIGU/DIGL]\n"
-               "Additional gain on top of Mic Gain\n"
+               "Additional Gain on top of current Mic Gain\n"
                "Current Mic Gain %+ddb + Current Preamp Gain %+ddb = %+ddb\n\n"
                "Adjust this value in Menu → TX Menu.", (int) transmitter->mic_gain, (int) transmitter->addgain_gain,
                (int)(transmitter->mic_gain + transmitter->addgain_gain));
     } else {
       snprintf(preamp_tip, sizeof(preamp_tip),
-               "Switch the Mic Preamplifier ON or OFF\n"
+               "Switch the optional Mic Preamplifier ON or OFF\n"
                "[Always OFF in DIGU/DIGL]\n"
-               "Additional gain on top of Mic Gain\n"
+               "Additional Gain gain on top of current Mic Gain\n"
                "Current Mic Gain %+ddb\n\n"
                "Adjust this value in Menu → TX Menu.", (int) transmitter->mic_gain);
     }
@@ -2484,7 +2486,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, TRUE, TRUE, 0);
       }
-      gtk_widget_set_tooltip_text(drive_scale, "Set TX Pwr in %");
+      gtk_widget_set_tooltip_text(drive_scale, "Set TX Pwr in %\n\n"
+                                               "100% ≙ your max. calibrated PA\n"
+                                               "output settings in PA Menu");
     }
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       if (optimize_for_touchscreen) {

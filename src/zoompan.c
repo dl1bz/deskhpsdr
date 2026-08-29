@@ -457,9 +457,10 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_valign(peak_btn, GTK_ALIGN_CENTER);
   peak_btn_signal_id = g_signal_connect(peak_btn, "toggled", G_CALLBACK(peak_toggle_cb), &pan_peak_hold_enabled);
   //-------------------------------------------------------------------------------------------
-  pan_label = gtk_label_new("Pan");
+  pan_label = gtk_label_new("<- Pan ->");
   WEAKEN(pan_label);
   gtk_widget_set_name(pan_label, "boldlabel_border_blue");
+  gtk_widget_set_tooltip_text(pan_label, "Move the spectrum left or right\nif Zoom level > 1");
   // Label breiter erzwingen
   gtk_widget_set_size_request(pan_label, 60, -1);
   gtk_widget_set_margin_top(pan_label, 5);
@@ -472,7 +473,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   pan_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0,
                                        active_receiver->zoom == 1 ? active_receiver->width : active_receiver->width * (active_receiver->zoom - 1), 1.0);
   WEAKEN(pan_scale);
-  gtk_widget_set_tooltip_text(pan_scale, "Move the spectrum left or right\nif Zoom > 1");
+  gtk_widget_set_tooltip_text(pan_scale, "Move the spectrum left or right\nif Zoom level > 1");
   gtk_widget_set_margin_end(pan_scale, 5);  // rechter Rand (Ende)
   gtk_widget_set_hexpand(pan_scale, TRUE);
   gtk_widget_set_halign(pan_scale, GTK_ALIGN_FILL);
