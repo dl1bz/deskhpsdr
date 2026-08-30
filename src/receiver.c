@@ -352,6 +352,8 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropF1("receiver.%d.tci_rxaudio_scale", rx->id,            rx->tci_rxaudio_scale);
   SetPropI1("receiver.%d.agc", rx->id,                          rx->agc);
   SetPropF1("receiver.%d.agc_gain", rx->id,                     rx->agc_gain);
+  SetPropI1("receiver.%d.agc_auto", rx->id,                     rx->agc_auto);
+  SetPropF1("receiver.%d.agc_auto_offset", rx->id,              rx->agc_auto_offset);
   SetPropF1("receiver.%d.agc_slope", rx->id,                    rx->agc_slope);
   SetPropF1("receiver.%d.agc_hang_threshold", rx->id,           rx->agc_hang_threshold);
   SetPropI1("receiver.%d.dither", rx->id,                       rx->dither);
@@ -490,6 +492,8 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropF1("receiver.%d.tci_rxaudio_scale", rx->id,            rx->tci_rxaudio_scale);
   GetPropI1("receiver.%d.agc", rx->id,                          rx->agc);
   GetPropF1("receiver.%d.agc_gain", rx->id,                     rx->agc_gain);
+  GetPropI1("receiver.%d.agc_auto", rx->id,                     rx->agc_auto);
+  GetPropF1("receiver.%d.agc_auto_offset", rx->id,              rx->agc_auto_offset);
   GetPropF1("receiver.%d.agc_slope", rx->id,                    rx->agc_slope);
   GetPropF1("receiver.%d.agc_hang_threshold", rx->id,           rx->agc_hang_threshold);
   GetPropI1("receiver.%d.dither", rx->id,                       rx->dither);
@@ -941,6 +945,8 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   }
   rx->agc = AGC_MEDIUM;
   rx->agc_gain = 80.0;
+  rx->agc_auto = 0;
+  rx->agc_auto_offset = -25.0;
   rx->agc_slope = 35.0;
   rx->agc_hang_threshold = 0.0;
   rx->local_audio = 0;

@@ -84,12 +84,12 @@ static void update_agc_hang_threshold_scale(RECEIVER *rx) {
   }
 }
 
-static void agc_hang_threshold_value_changed_cb(GtkWidget *widget, gpointer data) {
+static void agc_hang_threshold_value_changed_cb(GtkSpinButton *widget, gpointer data) {
   RECEIVER *rx = (RECEIVER *) data;
   if (rx == NULL) {
     return;
   }
-  rx->agc_hang_threshold = (int) gtk_range_get_value(GTK_RANGE(widget));
+  rx->agc_hang_threshold = (int) gtk_spin_button_get_value(widget);
   rx_set_agc(rx);
 }
 
@@ -105,6 +105,26 @@ static void agc_cb(GtkComboBox *widget, gpointer data) {
     update_slider_agc_btn();
   }
   update_agc_hang_threshold_scale(rx);
+}
+
+
+static void agc_auto_cb(GtkToggleButton *widget, gpointer data) {
+  RECEIVER *rx = (RECEIVER *) data;
+  if (rx == NULL) {
+    return;
+  }
+  rx->agc_auto = gtk_toggle_button_get_active(widget);
+  if (rx->agc_auto) {
+    rx->panadapter_noisefloor_first_run = 1;
+  }
+}
+
+static void agc_auto_offset_cb(GtkSpinButton *widget, gpointer data) {
+  RECEIVER *rx = (RECEIVER *) data;
+  if (rx == NULL) {
+    return;
+  }
+  rx->agc_auto_offset = gtk_spin_button_get_value(widget);
 }
 
 static void add_agc_rx_controls(GtkWidget *grid, int row, RECEIVER *rx, int show_rx_name, int box_width,
@@ -148,6 +168,47 @@ static void add_agc_rx_controls(GtkWidget *grid, int row, RECEIVER *rx, int show
   g_signal_connect(agc_combo, "changed", G_CALLBACK(agc_cb), rx);
   gtk_box_pack_start(GTK_BOX(box_agc), agc_combo, FALSE, FALSE, 0);
   gtk_grid_attach(GTK_GRID(grid), box_agc, 0, row, 1, 1);
+  GtkWidget *box_auto = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
+  gtk_widget_set_size_request(box_auto, box_width, widget_heigth);
+  gtk_box_set_spacing(GTK_BOX(box_auto), 5);
+  snprintf(label, sizeof(label), "AGC Automatic RX%d", rx->id + 1);
+  GtkWidget *agc_auto_title = gtk_label_new(label);
+  gtk_widget_set_name(agc_auto_title, "boldlabel_border_black");
+  gtk_widget_set_size_request(agc_auto_title, box_width / 2, -1);
+  gtk_widget_set_halign(agc_auto_title, GTK_ALIGN_START);
+  gtk_widget_set_valign(agc_auto_title, GTK_ALIGN_CENTER);
+  gtk_box_pack_start(GTK_BOX(box_auto), agc_auto_title, FALSE, FALSE, 0);
+  GtkWidget *agc_auto_check = gtk_check_button_new_with_label("On");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(agc_auto_check), rx->agc_auto);
+  gtk_widget_set_tooltip_text(agc_auto_check,
+                              "Automatically sets AGC gain from the measured noise floor.");
+  gtk_widget_set_size_request(agc_auto_check, box_width / 2, -1);
+  gtk_widget_set_halign(agc_auto_check, GTK_ALIGN_START);
+  gtk_widget_set_valign(agc_auto_check, GTK_ALIGN_CENTER);
+  g_signal_connect(agc_auto_check, "toggled", G_CALLBACK(agc_auto_cb), rx);
+  gtk_box_pack_start(GTK_BOX(box_auto), agc_auto_check, FALSE, FALSE, 0);
+  gtk_grid_attach(GTK_GRID(grid), box_auto, 0, row + 1, 1, 1);
+  GtkWidget *box_auto_offset = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
+  gtk_widget_set_size_request(box_auto_offset, box_width, widget_heigth);
+  gtk_box_set_spacing(GTK_BOX(box_auto_offset), 5);
+  snprintf(label, sizeof(label), "AGC Auto Offset RX%d", rx->id + 1);
+  GtkWidget *agc_auto_offset_title = gtk_label_new(label);
+  gtk_widget_set_name(agc_auto_offset_title, "boldlabel_border_black");
+  gtk_widget_set_size_request(agc_auto_offset_title, box_width / 2, -1);
+  gtk_widget_set_halign(agc_auto_offset_title, GTK_ALIGN_START);
+  gtk_widget_set_valign(agc_auto_offset_title, GTK_ALIGN_CENTER);
+  gtk_box_pack_start(GTK_BOX(box_auto_offset), agc_auto_offset_title, FALSE, FALSE, 0);
+  GtkWidget *agc_auto_offset_spin = gtk_spin_button_new_with_range(-35.0, -15.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_auto_offset_spin), rx->agc_auto_offset);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(agc_auto_offset_spin), 0);
+  gtk_widget_set_tooltip_text(agc_auto_offset_spin,
+                              "Offset applied to the measured noise floor when calculating automatic AGC gain.");
+  gtk_widget_set_size_request(agc_auto_offset_spin, 90, -1);
+  gtk_widget_set_halign(agc_auto_offset_spin, GTK_ALIGN_START);
+  gtk_widget_set_valign(agc_auto_offset_spin, GTK_ALIGN_CENTER);
+  g_signal_connect(agc_auto_offset_spin, "value_changed", G_CALLBACK(agc_auto_offset_cb), rx);
+  gtk_box_pack_start(GTK_BOX(box_auto_offset), agc_auto_offset_spin, FALSE, FALSE, 0);
+  gtk_grid_attach(GTK_GRID(grid), box_auto_offset, 0, row + 2, 1, 1);
   GtkWidget *box_threshold = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 3);
   gtk_widget_set_size_request(box_threshold, box_width, widget_heigth);
   gtk_box_set_spacing(GTK_BOX(box_threshold), 5);
@@ -166,13 +227,12 @@ static void add_agc_rx_controls(GtkWidget *grid, int row, RECEIVER *rx, int show
   gtk_widget_set_valign(agc_hang_threshold_label[id], GTK_ALIGN_CENTER);
   gtk_widget_show(agc_hang_threshold_label[id]);
   gtk_box_pack_start(GTK_BOX(box_threshold), agc_hang_threshold_label[id], FALSE, FALSE, 0);
-  agc_hang_threshold_scale[id] = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 100.0, 1.0);
-  gtk_range_set_increments(GTK_RANGE(agc_hang_threshold_scale[id]), 1.0, 1.0);
-  gtk_range_set_value(GTK_RANGE(agc_hang_threshold_scale[id]), rx->agc_hang_threshold);
-  for (float i = 0.0; i <= 100.0; i += 50.0) {
-    gtk_scale_add_mark(GTK_SCALE(agc_hang_threshold_scale[id]), i, GTK_POS_TOP, NULL);
-  }
-  gtk_widget_set_size_request(agc_hang_threshold_scale[id], box_width / 2, -1);
+  agc_hang_threshold_scale[id] = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_hang_threshold_scale[id]), rx->agc_hang_threshold);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(agc_hang_threshold_scale[id]), 0);
+  gtk_widget_set_tooltip_text(agc_hang_threshold_scale[id],
+                              "AGC hang threshold used by the Long and Slow AGC modes.");
+  gtk_widget_set_size_request(agc_hang_threshold_scale[id], 90, -1);
   gtk_widget_set_margin_top(agc_hang_threshold_scale[id], 0);
   gtk_widget_set_margin_bottom(agc_hang_threshold_scale[id], 0);
   gtk_widget_set_margin_end(agc_hang_threshold_scale[id], 0);
@@ -183,7 +243,7 @@ static void add_agc_rx_controls(GtkWidget *grid, int row, RECEIVER *rx, int show
     G_CALLBACK(agc_hang_threshold_value_changed_cb),
     rx);
   gtk_box_pack_start(GTK_BOX(box_threshold), agc_hang_threshold_scale[id], FALSE, FALSE, 0);
-  gtk_grid_attach(GTK_GRID(grid), box_threshold, 0, row + 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), box_threshold, 0, row + 3, 1, 1);
 }
 
 void agc_menu(GtkWidget *parent) {
@@ -238,7 +298,7 @@ void agc_menu(GtkWidget *parent) {
   for (int i = 0; i < receivers; i++) {
     if (receiver[i] != NULL) {
       add_agc_rx_controls(grid, row, receiver[i], show_rx_name, box_width, widget_heigth);
-      row += 2;
+      row += 4;
     }
   }
   gtk_container_add(GTK_CONTAINER(content), grid);

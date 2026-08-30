@@ -41,6 +41,8 @@
 #include "receiver.h"
 #include "transmitter.h"
 #include "rx_panadapter.h"
+#include "sliders.h"
+#include "tci.h"
 #include "vfo.h"
 #include "mode.h"
 #include "actions.h"
@@ -1913,9 +1915,10 @@ void rx_panadapter_update(RECEIVER *rx) {
    * lower-power systems.  The noise floor changes slowly, so measure it
    * at most once per second (immediately after a reset).
    */
-  if (!rx->panadapter_smoothed_noise_floor_valid
-      || rx->panadapter_last_noisefloor_measure_us == 0
-      || now_us - rx->panadapter_last_noisefloor_measure_us >= noisefloor_measure_interval_us) {
+  if (!radio_is_transmitting()
+      && (!rx->panadapter_smoothed_noise_floor_valid
+          || rx->panadapter_last_noisefloor_measure_us == 0
+          || now_us - rx->panadapter_last_noisefloor_measure_us >= noisefloor_measure_interval_us)) {
     double *qsorted_samples = malloc(mywidth * sizeof(double));
     if (qsorted_samples != NULL) {
       for (int i = 0; i < mywidth; i++) {
@@ -1937,31 +1940,47 @@ void rx_panadapter_update(RECEIVER *rx) {
       noise_floor_measured = TRUE;
     }
   }
-  // Update rx->panadapter_low from EMA-smoothed noise floor when autoscale is active.
-  if (rx->panadapter_autoscale_enabled
+  // Apply noise-floor based regulation when either consumer is active.
+  if ((rx->panadapter_autoscale_enabled || rx->agc_auto)
       && noise_floor_measured
       && (rx->panadapter_noisefloor_first_run
           || rx->panadapter_noisefloor_fast_start_count > 0
           || difftime(current_time, rx->panadapter_last_noisefloor_calc_time) >= noisefloor_update_interval)) {
-    int new_panadapter_low = autoscale_panadapter_with_offset(rx->panadapter_smoothed_noise_floor,
-      rx->panadapter_noise_margin);
-    int adjusted_panadapter_low = (int)(new_panadapter_low - panadapter_scale_corr_f);
-    if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
-        || rx->panadapter_low < adjusted_panadapter_low) {
-      if (rx->panadapter_low != adjusted_panadapter_low) {
-        ui_print("%s: rx->panadapter_low: %d -> %d noise_floor: %.1f ema: %.1f autoscale: %d noise_margin: %ddb\n",
-                 __func__,
-                 rx->panadapter_low,
-                 adjusted_panadapter_low,
-                 noise_floor_level,
-                 rx->panadapter_smoothed_noise_floor,
-                 new_panadapter_low,
-                 rx->panadapter_noise_margin);
-        rx->panadapter_low = adjusted_panadapter_low;
+    if (rx->panadapter_autoscale_enabled) {
+      int new_panadapter_low = autoscale_panadapter_with_offset(rx->panadapter_smoothed_noise_floor,
+        rx->panadapter_noise_margin);
+      int adjusted_panadapter_low = (int)(new_panadapter_low - panadapter_scale_corr_f);
+      if (abs(adjusted_panadapter_low - rx->panadapter_low) > 10
+          || rx->panadapter_low < adjusted_panadapter_low) {
+        if (rx->panadapter_low != adjusted_panadapter_low) {
+          ui_print("%s: rx->panadapter_low: %d -> %d noise_floor: %.1f ema: %.1f autoscale: %d noise_margin: %ddb\n",
+                   __func__,
+                   rx->panadapter_low,
+                   adjusted_panadapter_low,
+                   noise_floor_level,
+                   rx->panadapter_smoothed_noise_floor,
+                   new_panadapter_low,
+                   rx->panadapter_noise_margin);
+          rx->panadapter_low = adjusted_panadapter_low;
+        }
+      }
+      if (rx->panadapter_high <= -50) {
+        rx->panadapter_high = -50;
       }
     }
-    if (rx->panadapter_high <= -50) {
-      rx->panadapter_high = -50;
+    if (rx->agc_auto) {
+      double target_agc = -rx->panadapter_smoothed_noise_floor + rx->agc_auto_offset;
+      if (target_agc < -20.0) {
+        target_agc = -20.0;
+      } else if (target_agc > 120.0) {
+        target_agc = 120.0;
+      }
+      rx->agc_gain = target_agc;
+      rx_set_agc(rx);
+      tci_agc_gain_changed(rx->id);
+      if (rx == active_receiver) {
+        update_slider_agc_gain_scale();
+      }
     }
     // update time of the last calculation
     rx->panadapter_last_noisefloor_calc_time = current_time;

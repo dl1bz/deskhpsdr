@@ -60,6 +60,8 @@ typedef struct _receiver {
 
   int agc;
   double agc_gain;
+  int agc_auto;
+  double agc_auto_offset;
   double agc_slope;
   double agc_hang_threshold;
   double agc_hang;
