@@ -28,6 +28,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <pthread.h>
 #include <sched.h>
 #include <semaphore.h>
@@ -80,6 +81,32 @@ guint64 audio_get_xrun_count(void) {
 // during RX and quite empty during CW-TX.
 //
 //
+
+
+#define AUDIO_TEST_SAMPLE_RATE 48000
+#define AUDIO_TEST_TONE_FRAMES (2 * AUDIO_TEST_SAMPLE_RATE)
+#define AUDIO_TEST_TOTAL_FRAMES (3 * AUDIO_TEST_TONE_FRAMES)
+#define AUDIO_TEST_FADE_FRAMES 240
+#define AUDIO_TEST_LEVEL 0.1f
+
+static float audio_test_sample_for_frame(int frame) {
+  static const double frequencies[3] = { 600.0, 800.0, 1000.0 };
+  int tone = frame / AUDIO_TEST_TONE_FRAMES;
+  int tone_frame = frame % AUDIO_TEST_TONE_FRAMES;
+  if (tone < 0 || tone >= 3) {
+    return 0.0f;
+  }
+  float envelope = 1.0f;
+  if (tone_frame < AUDIO_TEST_FADE_FRAMES) {
+    envelope = (float)tone_frame / (float)AUDIO_TEST_FADE_FRAMES;
+  } else if (tone_frame >= AUDIO_TEST_TONE_FRAMES - AUDIO_TEST_FADE_FRAMES) {
+    envelope = (float)(AUDIO_TEST_TONE_FRAMES - 1 - tone_frame) /
+               (float)AUDIO_TEST_FADE_FRAMES;
+  }
+  double phase = 6.28318530717958647692 * frequencies[tone] *
+                 (double)tone_frame / (double)AUDIO_TEST_SAMPLE_RATE;
+  return AUDIO_TEST_LEVEL * envelope * (float)sin(phase);
+}
 
 #define MY_RING_BUFFER_SIZE 48000
 
@@ -495,10 +522,79 @@ void audio_close_tci_monitor(void) {
 
 //
 //
+int audio_test_start(RECEIVER *rx) {
+  if (rx == NULL || !rx->local_audio) {
+    return -1;
+  }
+  g_mutex_lock(&rx->local_audio_mutex);
+  if (rx->coreaudio_output_handle == NULL) {
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return -1;
+  }
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return 0;
+  }
+  // Drop queued RX and sidetone audio. The test is generated in the
+  // CoreAudio render callback and therefore bypasses WDSP completely.
+  int rx_in = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_acquire);
+  atomic_store_explicit(&rx->local_audio_buffer_outpt, rx_in, memory_order_release);
+  int st_in = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_acquire);
+  atomic_store_explicit(&rx->sidetone_buffer_outpt, st_in, memory_order_release);
+  atomic_store_explicit(&rx->audio_test_frame, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->audio_test_active, 1, memory_order_release);
+  if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
+    g_atomic_int_set(&output_ring_primed[rx->id], 0);
+    g_atomic_int_set(&output_ring_starved[rx->id], 0);
+  }
+  g_mutex_unlock(&rx->local_audio_mutex);
+  return 0;
+}
+
+void audio_test_stop(RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+  atomic_store_explicit(&rx->audio_test_active, 0, memory_order_release);
+  atomic_store_explicit(&rx->audio_test_frame, 0, memory_order_relaxed);
+}
+
 void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels) {
   gboolean ring_underrun = FALSE;
   gboolean ring_had_audio = FALSE;
   if (rx == NULL || out == NULL || (channels != 1 && channels != 2)) {
+    return;
+  }
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    for (unsigned int i = 0; i < frames; i++) {
+      int frame = atomic_fetch_add_explicit(&rx->audio_test_frame, 1, memory_order_relaxed);
+      float sample = 0.0f;
+      if (frame < AUDIO_TEST_TOTAL_FRAMES) {
+        sample = audio_test_sample_for_frame(frame);
+      }
+      if (channels == 2) {
+        switch (rx->audio_channel) {
+        case LEFT:
+          *out++ = sample;
+          *out++ = 0.0f;
+          break;
+        case RIGHT:
+          *out++ = 0.0f;
+          *out++ = sample;
+          break;
+        case STEREO:
+        default:
+          *out++ = sample;
+          *out++ = sample;
+          break;
+        }
+      } else {
+        *out++ = sample;
+      }
+      if (frame + 1 >= AUDIO_TEST_TOTAL_FRAMES) {
+        atomic_store_explicit(&rx->audio_test_active, 0, memory_order_release);
+      }
+    }
     return;
   }
   gboolean valid_rx_id = rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]));
@@ -782,6 +878,7 @@ void audio_close_input(void) {
 // shut down the stream connected with audio from one of the RX
 //
 void audio_close_output(RECEIVER *rx) {
+  audio_test_stop(rx);
   t_print("%s: device=%s\n", __func__, rx->audio_name);
   /*
    * First prevent producers from entering audio_write()/cw_audio_write().
@@ -871,6 +968,9 @@ void audio_reprime_output(RECEIVER *rx) {
 // normal operation.
 //
 int audio_write(RECEIVER *rx, float left, float right) {
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    return 0;
+  }
   static gint64 diag_next_log_us[8] = { 0 };
   static int diag_min_queued[8] = { 0 };
   static int diag_max_queued[8] = { 0 };
@@ -995,6 +1095,9 @@ int audio_write(RECEIVER *rx, float left, float right) {
 // Thus we have an active latency management.
 //
 int cw_audio_write(RECEIVER *rx, float sample) {
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    return 0;
+  }
   static gint64 diag_next_log_us = 0;
   static int diag_min_avail = MY_RING_BUFFER_SIZE;
   static int diag_max_avail = 0;

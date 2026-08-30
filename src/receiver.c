@@ -491,8 +491,10 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropF1("receiver.%d.volume", rx->id,                       rx->volume);
   GetPropF1("receiver.%d.tci_rxaudio_scale", rx->id,            rx->tci_rxaudio_scale);
   GetPropI1("receiver.%d.agc", rx->id,                          rx->agc);
-  GetPropF1("receiver.%d.agc_gain", rx->id,                     rx->agc_gain);
   GetPropI1("receiver.%d.agc_auto", rx->id,                     rx->agc_auto);
+  if (!rx->agc_auto) {
+    GetPropF1("receiver.%d.agc_gain", rx->id,                   rx->agc_gain);
+  }
   GetPropF1("receiver.%d.agc_auto_offset", rx->id,              rx->agc_auto_offset);
   GetPropF1("receiver.%d.agc_slope", rx->id,                    rx->agc_slope);
   GetPropF1("receiver.%d.agc_hang_threshold", rx->id,           rx->agc_hang_threshold);
@@ -951,6 +953,9 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->agc_hang_threshold = 0.0;
   rx->local_audio = 0;
   g_mutex_init(&rx->local_audio_mutex);
+  atomic_init(&rx->audio_test_active, 0);
+  atomic_init(&rx->audio_test_frame, 0);
+  rx->audio_test_thread = NULL;
   rx->local_audio_buffer = NULL;
 #if defined(COREAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
   rx->sidetone_buffer = NULL;

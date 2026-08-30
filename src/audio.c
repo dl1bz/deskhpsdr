@@ -33,6 +33,32 @@ static const int out_latency = 200000;
 static const int mic_buffer_size = 256;
 static const int out_buffer_size = 256;
 
+#define AUDIO_TEST_SAMPLE_RATE 48000
+#define AUDIO_TEST_TONE_FRAMES (2 * AUDIO_TEST_SAMPLE_RATE)
+#define AUDIO_TEST_TOTAL_FRAMES (3 * AUDIO_TEST_TONE_FRAMES)
+#define AUDIO_TEST_FADE_FRAMES 240
+#define AUDIO_TEST_LEVEL 0.1f
+
+static float audio_test_sample_for_frame(int frame) {
+  static const double frequencies[3] = { 600.0, 800.0, 1000.0 };
+  int tone = frame / AUDIO_TEST_TONE_FRAMES;
+  int tone_frame = frame % AUDIO_TEST_TONE_FRAMES;
+  if (tone < 0 || tone >= 3) {
+    return 0.0f;
+  }
+  float envelope = 1.0f;
+  if (tone_frame < AUDIO_TEST_FADE_FRAMES) {
+    envelope = (float)tone_frame / (float)AUDIO_TEST_FADE_FRAMES;
+  } else if (tone_frame >= AUDIO_TEST_TONE_FRAMES - AUDIO_TEST_FADE_FRAMES) {
+    envelope = (float)(AUDIO_TEST_TONE_FRAMES - 1 - tone_frame) /
+               (float)AUDIO_TEST_FADE_FRAMES;
+  }
+  double phase = 6.28318530717958647692 * frequencies[tone] *
+                 (double)tone_frame / (double)AUDIO_TEST_SAMPLE_RATE;
+  return AUDIO_TEST_LEVEL * envelope * (float)sin(phase);
+}
+
+
 static const int out_buflen = 48 * (out_latency / 1000); // Length of ALSA buffer
 static const int out_cw_border = 1536;                // separates CW-TX from other buffer fillings
 
@@ -49,6 +75,7 @@ static const int cw_high_water = 1152;                // high water mark for CW
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <sched.h>
 #include <semaphore.h>
 
@@ -215,7 +242,9 @@ int audio_open_output(RECEIVER *rx) {
     if ((err = snd_pcm_set_params(rx->playback_handle, formats[i], SND_PCM_ACCESS_RW_INTERLEAVED, channels, rate,
                                   soft_resample, out_latency)) < 0) {
       t_print("%s: snd_pcm_set_params stereo failed: %s\n", __func__, snd_strerror(err));
+      g_mutex_unlock(&rx->local_audio_mutex);
       audio_close_output(rx);
+      g_mutex_lock(&rx->local_audio_mutex);
       if ((err = snd_pcm_open(&rx->playback_handle, hw, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) < 0) {
         t_print("%s: cannot reopen audio device %s (%s)\n", __func__, hw, snd_strerror(err));
         g_mutex_unlock(&rx->local_audio_mutex);
@@ -372,6 +401,7 @@ int audio_open_input(void) {
 }
 
 void audio_close_output(RECEIVER *rx) {
+  audio_test_stop(rx);
   t_print("%s: rx=%d handle=%p buffer=%p\n", __func__, rx->id, rx->playback_handle, rx->local_audio_buffer);
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->playback_handle != NULL) {
@@ -427,9 +457,146 @@ void audio_close_input(void) {
 // Note that when sending the buffer, delay "jumps" by the buffer size
 //
 
+
+static gpointer audio_test_thread(gpointer data) {
+  RECEIVER *rx = (RECEIVER *)data;
+  int16_t buffer16[out_buffer_size * 2];
+  int32_t buffer32[out_buffer_size * 2];
+  float bufferf[out_buffer_size * 2];
+  while (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    int start = atomic_load_explicit(&rx->audio_test_frame, memory_order_relaxed);
+    if (start >= AUDIO_TEST_TOTAL_FRAMES) {
+      break;
+    }
+    int frames = AUDIO_TEST_TOTAL_FRAMES - start;
+    if (frames > out_buffer_size) {
+      frames = out_buffer_size;
+    }
+    g_mutex_lock(&rx->local_audio_mutex);
+    if (!atomic_load_explicit(&rx->audio_test_active, memory_order_acquire) ||
+        rx->playback_handle == NULL) {
+      g_mutex_unlock(&rx->local_audio_mutex);
+      break;
+    }
+    int channels = rx->local_audio_channels;
+    void *buffer = NULL;
+    switch (rx->local_audio_format) {
+    case SND_PCM_FORMAT_S16_LE:
+      for (int i = 0; i < frames; i++) {
+        int16_t sample = (int16_t)(audio_test_sample_for_frame(start + i) * 32767.0f);
+        if (channels == 2) {
+          buffer16[2 * i] = rx->audio_channel == RIGHT ? 0 : sample;
+          buffer16[2 * i + 1] = rx->audio_channel == LEFT ? 0 : sample;
+        } else {
+          buffer16[i] = sample;
+        }
+      }
+      buffer = buffer16;
+      break;
+    case SND_PCM_FORMAT_S32_LE:
+      for (int i = 0; i < frames; i++) {
+        int32_t sample = (int32_t)(audio_test_sample_for_frame(start + i) * 2147483647.0f);
+        if (channels == 2) {
+          buffer32[2 * i] = rx->audio_channel == RIGHT ? 0 : sample;
+          buffer32[2 * i + 1] = rx->audio_channel == LEFT ? 0 : sample;
+        } else {
+          buffer32[i] = sample;
+        }
+      }
+      buffer = buffer32;
+      break;
+    case SND_PCM_FORMAT_FLOAT_LE:
+      for (int i = 0; i < frames; i++) {
+        float sample = audio_test_sample_for_frame(start + i);
+        if (channels == 2) {
+          bufferf[2 * i] = rx->audio_channel == RIGHT ? 0.0f : sample;
+          bufferf[2 * i + 1] = rx->audio_channel == LEFT ? 0.0f : sample;
+        } else {
+          bufferf[i] = sample;
+        }
+      }
+      buffer = bufferf;
+      break;
+    default:
+      break;
+    }
+    long rc = buffer != NULL ?
+              snd_pcm_writei(rx->playback_handle, buffer, frames) : -EINVAL;
+    if (rc == -EPIPE) {
+      snd_pcm_prepare(rx->playback_handle);
+    }
+    g_mutex_unlock(&rx->local_audio_mutex);
+    if (rc < 0 && rc != -EPIPE) {
+      t_print("%s: audio test write failed: %s\n", __func__, snd_strerror((int)rc));
+      break;
+    }
+    if (rc > 0) {
+      atomic_store_explicit(&rx->audio_test_frame, start + (int)rc, memory_order_relaxed);
+    }
+  }
+  atomic_store_explicit(&rx->audio_test_active, 0, memory_order_release);
+  return NULL;
+}
+
+int audio_test_start(RECEIVER *rx) {
+  if (rx == NULL || !rx->local_audio) {
+    return -1;
+  }
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    return 0;
+  }
+  // Reap a worker that completed normally before starting another test.
+  audio_test_stop(rx);
+  g_mutex_lock(&rx->local_audio_mutex);
+  if (rx->playback_handle == NULL) {
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return -1;
+  }
+  snd_pcm_drop(rx->playback_handle);
+  if (snd_pcm_prepare(rx->playback_handle) < 0) {
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return -1;
+  }
+  rx->local_audio_buffer_offset = 0;
+  rx->local_audio_cw_active = 0;
+  atomic_store_explicit(&rx->audio_test_frame, 0, memory_order_relaxed);
+  atomic_store_explicit(&rx->audio_test_active, 1, memory_order_release);
+  rx->audio_test_thread = g_thread_new("audio-test", audio_test_thread, rx);
+  if (rx->audio_test_thread == NULL) {
+    atomic_store_explicit(&rx->audio_test_active, 0, memory_order_release);
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return -1;
+  }
+  g_mutex_unlock(&rx->local_audio_mutex);
+  return 0;
+}
+
+void audio_test_stop(RECEIVER *rx) {
+  if (rx == NULL) {
+    return;
+  }
+  atomic_store_explicit(&rx->audio_test_active, 0, memory_order_release);
+  // Detach the handle under the backend mutex, then join without holding it:
+  // the worker may itself be waiting for this mutex to observe the stop.
+  g_mutex_lock(&rx->local_audio_mutex);
+  GThread *thread = rx->audio_test_thread;
+  rx->audio_test_thread = NULL;
+  g_mutex_unlock(&rx->local_audio_mutex);
+  if (thread != NULL && thread != g_thread_self()) {
+    g_thread_join(thread);
+  }
+}
+
 int cw_audio_write(RECEIVER *rx, float sample) {
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    return 0;
+  }
   snd_pcm_sframes_t delay;
   g_mutex_lock(&rx->local_audio_mutex);
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return 0;
+  }
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
     static int count = 0;
     if (!rx->local_audio_cw_active) {
@@ -579,6 +746,9 @@ int cw_audio_write(RECEIVER *rx, float sample) {
 //
 
 int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    return 0;
+  }
   snd_pcm_sframes_t delay;
   int txmode = vfo_get_tx_mode();
   float mono_sample = 0.0f;
@@ -599,6 +769,10 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   }
   // lock AFTER checking the "quick return" condition but BEFORE checking the pointers
   g_mutex_lock(&rx->local_audio_mutex);
+  if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
+    g_mutex_unlock(&rx->local_audio_mutex);
+    return 0;
+  }
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
     if (rx->local_audio_cw_active) {
       // Drop a partially filled CW block so RX audio restarts on a clean block boundary.

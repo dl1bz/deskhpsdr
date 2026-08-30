@@ -372,6 +372,10 @@ static void local_audio_cb(GtkWidget *widget, gpointer data) {
       audio_close_output(rx);
     }
   }
+  GtkWidget *audio_test_b = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "audio-test-button"));
+  if (audio_test_b != NULL) {
+    gtk_widget_set_sensitive(audio_test_b, rx->local_audio);
+  }
   t_print("local_audio_cb: local_audio=%d\n", rx->local_audio);
 }
 
@@ -415,6 +419,14 @@ static void wheel_present_options_cb(GtkWidget *widget, gpointer data) {
 #endif
 
 //
+static void audio_test_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  RECEIVER *rx = rx_from_data(data);
+  if (audio_test_start(rx) < 0) {
+    t_print("%s: audio test could not be started rx=%d\n", __func__, rx->id);
+  }
+}
+
 // possible the device has been changed:
 // call audio_close_output with old device, audio_open_output with new one
 //
@@ -756,6 +768,15 @@ static void add_local_audio_controls_at(GtkWidget *grid, RECEIVER *rx, int *row,
   g_object_set_data(G_OBJECT(output), "local-audio-button", local_audio_b);
   my_combo_attach(GTK_GRID(grid), output, 2, output_row, 1, 1);
   g_signal_connect(output, "changed", G_CALLBACK(local_output_changed_cb), rx);
+  GtkWidget *audio_test_b = gtk_button_new_with_label("Test Audio");
+  gtk_widget_set_tooltip_text(audio_test_b,
+                              "Plays 600 Hz, 800 Hz and 1000 Hz for 2 seconds each "
+                              "directly through the selected local audio output.");
+  gtk_widget_set_sensitive(audio_test_b, rx->local_audio);
+  g_object_set_data(G_OBJECT(local_audio_b), "audio-test-button", audio_test_b);
+  gtk_widget_show(audio_test_b);
+  gtk_grid_attach(GTK_GRID(grid), audio_test_b, 3, output_row, 1, 1);
+  g_signal_connect(audio_test_b, "clicked", G_CALLBACK(audio_test_cb), rx);
   GtkWidget *channel = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Stereo / Mono Downmix (L+R)");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(channel), NULL, "Left Channel only");

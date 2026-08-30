@@ -289,6 +289,9 @@ typedef struct _receiver {
 #endif
 
   GMutex local_audio_mutex;
+  atomic_int audio_test_active;
+  atomic_int audio_test_frame;
+  GThread *audio_test_thread;
 
   int squelch_enable;
   double squelch;
