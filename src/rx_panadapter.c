@@ -1848,11 +1848,7 @@ void rx_panadapter_update(RECEIVER *rx) {
                    * (double) myheight
                    / (rx->panadapter_high - rx->panadapter_low));
     if (rx->agc != AGC_MEDIUM && rx->agc != AGC_FAST) {
-      if (active) {
-        cairo_set_source_rgba(cr, GRAD_CORAL);
-      } else {
-        cairo_set_source_rgba(cr, COLOUR_ATTN_WEAK);
-      }
+      cairo_set_source_rgba(cr, GRAD_CORAL);
       cairo_move_to(cr, 40.0, hang_y - 8.0);
       cairo_rectangle(cr, 40, hang_y - 8.0, 8.0, 8.0);
       cairo_fill(cr);
@@ -1860,8 +1856,26 @@ void rx_panadapter_update(RECEIVER *rx) {
       cairo_line_to(cr, (double) mywidth - 40.0, hang_y);
       cairo_set_line_width(cr, PAN_LINE_THICK);
       cairo_stroke(cr);
-      cairo_move_to(cr, 48.0, hang_y);
-      cairo_show_text(cr, "-H");
+      cairo_move_to(cr, 50.0, hang_y - 2.0);
+      if ((protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) && active) {
+        cairo_save(cr);
+        char AGChold[64];
+        double agc_hang_line_dbm = rx->agc_hang + soffset;
+        snprintf(AGChold, sizeof(AGChold), "AGC-Th %ddbm", (int) agc_hang_line_dbm);
+        cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
+        cairo_text_path(cr, AGChold);
+        cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+        cairo_set_line_width(cr, 2.0);
+        cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+        cairo_stroke_preserve(cr);
+        cairo_set_source_rgba(cr, GRAD_CORAL);
+        cairo_fill(cr);
+        cairo_restore(cr);
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
+        cairo_show_text(cr, "-H");
+      }
     }
     if (active) {
       cairo_set_source_rgba(cr, GRAD_CORAL);
@@ -1876,19 +1890,31 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_line_width(cr, PAN_LINE_THICK);
     cairo_stroke(cr);
     cairo_move_to(cr, 48.0, knee_y);
-    if (active) {
-      cairo_set_source_rgba(cr, GRAD_CORAL);
+    if ((protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) && active) {
+      cairo_save(cr);
+      // cairo_move_to(cr, 58.0, knee_y - 2.0);
+      cairo_move_to(cr, 51.0, knee_y - 2.0);
+      char AGCgain[64];
+      if (active_receiver->agc_auto) {
+        snprintf(AGCgain, sizeof(AGCgain), "AGC-G Auto");
+      } else {
+        double agc_line_dbm = active_receiver->agc_thresh + soffset;
+        snprintf(AGCgain, sizeof(AGCgain), "AGC-G %ddbm", (int) agc_line_dbm);
+      }
+      cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+      cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
+      // cairo_show_text(cr, AGCgain);
+      cairo_text_path(cr, AGCgain);
+      cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+      cairo_set_line_width(cr, 2.0);
+      cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+      cairo_stroke_preserve(cr);
+      // cairo_set_source_rgba(cr, GRAD_CORAL);
+      cairo_set_source_rgba(cr, COLOUR_WHITE);
+      cairo_fill(cr);
+      cairo_restore(cr);
     } else {
       cairo_set_source_rgba(cr, COLOUR_OK_WEAK);
-    }
-    if (device == DEVICE_HERMES_LITE2) {
-      cairo_move_to(cr, 58.0, knee_y - 2.0);
-      cairo_show_text(cr, "[AGC]");
-      char AGCgain[64];
-      snprintf(AGCgain, 64, "%+d", (int) active_receiver->agc_gain);
-      cairo_move_to(cr, 62.0, knee_y + 12.0);
-      cairo_show_text(cr, AGCgain);
-    } else {
       cairo_show_text(cr, "-Gain");
     }
   }

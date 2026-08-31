@@ -202,7 +202,8 @@ static void add_agc_rx_controls(GtkWidget *grid, int row, RECEIVER *rx, int show
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_auto_offset_spin), rx->agc_auto_offset);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(agc_auto_offset_spin), 0);
   gtk_widget_set_tooltip_text(agc_auto_offset_spin,
-                              "Offset applied to the measured noise floor when calculating automatic AGC gain.");
+                              "Offset used to calculate WDSP AGC gain from the measured noise floor.\n"
+                              "This is NOT the dB distance between the noise floor and the AGC knee line !");
   gtk_widget_set_size_request(agc_auto_offset_spin, 90, -1);
   gtk_widget_set_halign(agc_auto_offset_spin, GTK_ALIGN_START);
   gtk_widget_set_valign(agc_auto_offset_spin, GTK_ALIGN_CENTER);
