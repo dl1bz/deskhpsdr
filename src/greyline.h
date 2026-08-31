@@ -1,5 +1,7 @@
-/*  Copyright (C)
-*   2024 - 2026 Heiko Amft, DL1BZ (Project deskHPSDR)
+/* Copyright (C)
+* 2024-2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
+*
+* SPDX-License-Identifier: GPL-3.0-or-later
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by

@@ -1,8 +1,8 @@
 /* Copyright (C)
 * 2015 - John Melton, G0ORX/N6LYT
-* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
+* 2024-2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
-*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
+* SPDX-License-Identifier: GPL-3.0-or-later
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -864,7 +864,7 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   gtk_grid_attach(GTK_GRID(topgrid), deskhpsdr_sub_label, col, row, 3, 1);
   //----------------------------------------------------------------------------------
   row++;
-  snprintf(text, sizeof(text), "Licensed under the GNU General Public License v3.0 (GPL-3.0)");
+  snprintf(text, sizeof(text), "Licensed under the GNU General Public License v3.0 (GPL-3.0-only)");
   GtkWidget *deskhpsdr_liz_label = gtk_label_new(text);
   gtk_widget_set_halign(deskhpsdr_liz_label, GTK_ALIGN_START);
   gtk_widget_set_valign(deskhpsdr_liz_label, GTK_ALIGN_END);

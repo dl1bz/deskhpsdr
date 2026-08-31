@@ -1,8 +1,8 @@
 /* Copyright (C)
 * 2015 - John Melton, G0ORX/N6LYT
-* 2024,2025 - Heiko Amft, DL1BZ (Project deskHPSDR)
+* 2024-2026 - Heiko Amft, DL1BZ (Project deskHPSDR)
 *
-*   This source code has been forked and was adapted from piHPSDR by DL1YCF to deskHPSDR in October 2024
+* SPDX-License-Identifier: GPL-3.0-or-later
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
