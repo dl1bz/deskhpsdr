@@ -1,7 +1,7 @@
 CC      := clang
 CFLAGS  := -Wall -Wextra -Wpedantic -O2
-TARGET  := p2_discover
-SRC     := p2_discover.c
+TARGET  := p2_tool
+SRC     := p2_tool.c
 
 .PHONY: all clean install
 
@@ -15,4 +15,3 @@ clean:
 
 install: $(TARGET)
 	install -m 0755 $(TARGET) /usr/local/bin/$(TARGET)
-

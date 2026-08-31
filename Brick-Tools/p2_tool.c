@@ -1,4 +1,4 @@
-// p2_discover.c
+// p2_tool.c
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -17,11 +17,24 @@
 
 #define DISCOVERY_PORT 1024
 #define DISCOVERY_LEN  60
+#define SET_IP_LEN     115
 #define RX_TIMEOUT_SEC 2
 
 static int verbose = 0;
 static int set_ip_requested = 0;
 static struct in_addr set_ip_addr;
+static int target_mac_requested = 0;
+static unsigned char target_mac[6];
+
+#define MAX_DISCOVERED_DEVICES 64
+
+struct discovered_device {
+  unsigned char mac[6];
+  struct ifaddrs *ifa;
+};
+
+static struct discovered_device discovered_devices[MAX_DISCOVERED_DEVICES];
+static int discovered_count = 0;
 
 #define NEW_DEVICE_ATLAS        1000
 #define NEW_DEVICE_HERMES       1001
@@ -69,8 +82,36 @@ static void hexdump(const unsigned char *buf, ssize_t len) {
   printf("\n");
 }
 
+static int parse_mac(const char *text, unsigned char *mac) {
+  unsigned int b[6];
+  char tail;
+  if (sscanf(text, "%2x:%2x:%2x:%2x:%2x:%2x%c",
+             &b[0], &b[1], &b[2], &b[3], &b[4], &b[5], &tail) != 6) {
+    return -1;
+  }
+  for (int i = 0; i < 6; i++) {
+    mac[i] = (unsigned char)b[i];
+  }
+  return 0;
+}
+
+static void remember_device(const unsigned char *mac, struct ifaddrs *ifa) {
+  for (int i = 0; i < discovered_count; i++) {
+    if (memcmp(discovered_devices[i].mac, mac, 6) == 0) {
+      return;
+    }
+  }
+  if (discovered_count >= MAX_DISCOVERED_DEVICES) {
+    fprintf(stderr, "Too many Protocol 2 devices detected; ignoring additional devices.\n");
+    return;
+  }
+  memcpy(discovered_devices[discovered_count].mac, mac, 6);
+  discovered_devices[discovered_count].ifa = ifa;
+  discovered_count++;
+}
+
 static int send_set_ip_packet(int sock, const unsigned char *mac) {
-  unsigned char packet[DISCOVERY_LEN];
+  unsigned char packet[SET_IP_LEN];
   struct sockaddr_in dst;
   memset(packet, 0, sizeof(packet));
   packet[4] = 0x03;
@@ -193,39 +234,125 @@ static void discover_on_interface(struct ifaddrs *ifa) {
     if (verbose) {
       hexdump(buf, n);
     }
-    if (set_ip_requested) {
-      char new_ip[INET_ADDRSTRLEN];
-      if (!inet_ntop(AF_INET, &set_ip_addr, new_ip, sizeof(new_ip))) {
-        strcpy(new_ip, "?");
-      }
-      if (send_set_ip_packet(sock, &buf[5]) == 0) {
-        printf("set-ip sent to %02x:%02x:%02x:%02x:%02x:%02x new_ip=%s if=%s\n",
-               buf[5], buf[6], buf[7], buf[8], buf[9], buf[10],
-               new_ip, ifa->ifa_name);
-      }
-      break;
-    }
+    remember_device(&buf[5], ifa);
   }
   close(sock);
 }
 
+static int set_ip_on_interface(struct ifaddrs *ifa, const unsigned char *mac) {
+  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sock < 0) {
+    perror("socket");
+    return -1;
+  }
+  int optval = 1;
+  setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
+#ifdef __linux__
+  if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
+                 ifa->ifa_name, strlen(ifa->ifa_name)) < 0) {
+    if (verbose) {
+      perror("setsockopt(SO_BINDTODEVICE)");
+    }
+  }
+#endif
+  struct sockaddr_in bind_addr;
+  memset(&bind_addr, 0, sizeof(bind_addr));
+  bind_addr.sin_family = AF_INET;
+  bind_addr.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+  bind_addr.sin_port = htons(0);
+  if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) < 0) {
+    perror("bind(set-ip)");
+    close(sock);
+    return -1;
+  }
+  int rc = send_set_ip_packet(sock, mac);
+  close(sock);
+  return rc;
+}
+
+static int apply_ip_change(void) {
+  int selected = -1;
+  if (discovered_count == 0) {
+    fprintf(stderr, "ERROR: No Protocol 2 device found.\n");
+    return 1;
+  }
+  if (target_mac_requested) {
+    for (int i = 0; i < discovered_count; i++) {
+      if (memcmp(discovered_devices[i].mac, target_mac, 6) == 0) {
+        selected = i;
+        break;
+      }
+    }
+    if (selected < 0) {
+      fprintf(stderr,
+              "ERROR: Target MAC %02x:%02x:%02x:%02x:%02x:%02x was not found.\n",
+              target_mac[0], target_mac[1], target_mac[2],
+              target_mac[3], target_mac[4], target_mac[5]);
+      return 1;
+    }
+  } else {
+    if (discovered_count > 1) {
+      fprintf(stderr,
+              "ERROR: More than one Protocol 2 device found. "
+              "Specify the target with -mac xx:xx:xx:xx:xx:xx.\n");
+      return 1;
+    }
+    selected = 0;
+  }
+  char new_ip[INET_ADDRSTRLEN];
+  if (!inet_ntop(AF_INET, &set_ip_addr, new_ip, sizeof(new_ip))) {
+    strcpy(new_ip, "?");
+  }
+  const unsigned char *mac = discovered_devices[selected].mac;
+  struct ifaddrs *ifa = discovered_devices[selected].ifa;
+  if (set_ip_on_interface(ifa, mac) != 0) {
+    return 1;
+  }
+  printf("set-ip sent to %02x:%02x:%02x:%02x:%02x:%02x new_ip=%s if=%s\n",
+         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
+         new_ip, ifa->ifa_name);
+  return 0;
+}
+
 int main(int argc, char **argv) {
   const char *wanted_if = NULL;
+  const char *usage =
+          "Usage: %s [-v] [-ip ip-address | -dhcp] "
+          "[-mac xx:xx:xx:xx:xx:xx] [interface]\n";
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-v") == 0) {
       verbose = 1;
-    } else if (strcmp(argv[i], "-s") == 0) {
-      if (++i >= argc || inet_pton(AF_INET, argv[i], &set_ip_addr) != 1) {
-        fprintf(stderr, "Usage: %s [-v] [-s ip-address] [interface]\n", argv[0]);
+    } else if (strcmp(argv[i], "-ip") == 0) {
+      if (set_ip_requested || ++i >= argc ||
+          inet_pton(AF_INET, argv[i], &set_ip_addr) != 1) {
+        fprintf(stderr, usage, argv[0]);
         return 1;
       }
       set_ip_requested = 1;
+    } else if (strcmp(argv[i], "-dhcp") == 0) {
+      if (set_ip_requested) {
+        fprintf(stderr, usage, argv[0]);
+        return 1;
+      }
+      set_ip_addr.s_addr = htonl(INADDR_ANY);
+      set_ip_requested = 1;
+    } else if (strcmp(argv[i], "-mac") == 0) {
+      if (++i >= argc || target_mac_requested ||
+          parse_mac(argv[i], target_mac) != 0) {
+        fprintf(stderr, usage, argv[0]);
+        return 1;
+      }
+      target_mac_requested = 1;
     } else if (!wanted_if) {
       wanted_if = argv[i];
     } else {
-      fprintf(stderr, "Usage: %s [-v] [-s ip-address] [interface]\n", argv[0]);
+      fprintf(stderr, usage, argv[0]);
       return 1;
     }
+  }
+  if (target_mac_requested && !set_ip_requested) {
+    fprintf(stderr, usage, argv[0]);
+    return 1;
   }
   struct ifaddrs *addrs = NULL;
   if (getifaddrs(&addrs) != 0) {
@@ -250,6 +377,10 @@ int main(int argc, char **argv) {
     }
     discover_on_interface(ifa);
   }
+  int rc = 0;
+  if (set_ip_requested) {
+    rc = apply_ip_change();
+  }
   freeifaddrs(addrs);
-  return 0;
+  return rc;
 }
