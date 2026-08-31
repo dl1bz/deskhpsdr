@@ -2486,9 +2486,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, TRUE, TRUE, 0);
       }
-      gtk_widget_set_tooltip_text(drive_scale, "Set TX Pwr in %\n\n"
-                                               "100% ≙ your max. calibrated PA\n"
-                                               "output settings in PA Menu");
+      gtk_widget_set_tooltip_text(drive_scale, "TX Power: 0–100% transmitter drive. Actual RF output power is\n"
+                                               "non-linear with this setting and depends on the radio, band,\n"
+                                               "and your PA calibration in PA Menu.\n"
+                                               "-> Refer to the power meter for your actual RF output power.\n\n"
+                                               "100% ≙ your max. calibrated PA output in PA Menu.");
     }
     if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
       if (optimize_for_touchscreen) {
@@ -2730,7 +2732,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_name(tune_drive_btn, "front_toggle_button");
     // gtk_widget_set_name(tune_drive_btn, "medium_toggle_button");
     if (!transmitter->tune_use_drive) {
-      gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE with TUNE Drive:\nSet tune level in percent of maximum TX PWR");
+      gtk_widget_set_tooltip_text(tune_drive_btn, "Start TUNE with adjusted TUNE Drive");
     } else if (transmitter->tune_use_drive) {
       gtk_widget_set_tooltip_text(tune_drive_btn, "TUNE Drive = TX PWR");
     }
@@ -2760,7 +2762,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
-    gtk_widget_set_tooltip_text(tune_drive_scale, "Set TX Pwr in % for TUNE");
+    gtk_widget_set_tooltip_text(tune_drive_scale, "Set TUNE drive:\n"
+                                                  "Set the TUNE transmitter drive as a percentage of maximum\n"
+                                                  "RF output power.\n"
+                                                  "Like TXPWR, actual RF output power in TUNE state\n"
+                                                  "is non-linear with this setting.\n\n"
+                                                  "-> Refer to the power meter for your actual RF output power.");
     gtk_widget_set_margin_top(tune_drive_scale, 5);
     gtk_widget_set_margin_bottom(tune_drive_scale, 5);
     gtk_widget_set_margin_start(tune_drive_scale, 3);
