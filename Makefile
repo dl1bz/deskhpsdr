@@ -715,6 +715,7 @@ src/pa_menu.c \
 src/property.c \
 src/protocols.c \
 src/ps_menu.c \
+src/p2_programmer.c \
 src/radio.c \
 src/radio_menu.c \
 src/rbn.c \
@@ -806,6 +807,7 @@ src/oc_menu.h \
 src/old_discovery.h \
 src/old_protocol.h \
 src/pa_menu.h \
+src/p2_programmer.h \
 src/property.h \
 src/protocols.h \
 src/ps_menu.h \
