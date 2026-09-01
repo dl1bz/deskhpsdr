@@ -1,5 +1,13 @@
 // p2_tool.c
 
+#ifdef _MSC_VER
+  #ifndef _CRT_SECURE_NO_WARNINGS
+    #define _CRT_SECURE_NO_WARNINGS
+  #endif
+  #pragma comment(lib, "Ws2_32.lib")
+  #pragma comment(lib, "Iphlpapi.lib")
+#endif
+
 #ifdef _WIN32
   #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
