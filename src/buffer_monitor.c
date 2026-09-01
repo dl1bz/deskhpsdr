@@ -160,6 +160,18 @@ static void buffer_monitor_collect(void) {
       }
       row_update(n++, name, value, ms,
                  (double)diag.queued / scale_samples, 1);
+#ifdef COREAUDIO
+      if (n < BUFFER_MONITOR_MAX_ROWS) {
+        char corr_name[32];
+        char corr_value[64];
+        g_snprintf(corr_name, sizeof(corr_name), "RX%d Corrections", rx + 1);
+        g_snprintf(corr_value, sizeof(corr_value), "LOW %u   HIGH %u",
+                   diag.low_corrections, diag.high_corrections);
+        row_update(n++, corr_name, corr_value,
+                   (double)(diag.low_corrections + diag.high_corrections),
+                   0.0, 0);
+      }
+#endif
       if (rx == 0) {
         rx_buffered_latency_ms += ms;
         have_rx_buffered_latency = 1;

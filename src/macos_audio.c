@@ -58,6 +58,8 @@ static volatile gint audio_xrun_count = 0;
 static volatile gint output_ring_primed[8] = { 0 };
 static volatile gint output_ring_starved[8] = { 0 };
 static atomic_uint rx_ring_diag_underruns[8];
+static atomic_uint rx_ring_diag_low_corrections[8];
+static atomic_uint rx_ring_diag_high_corrections[8];
 
 guint64 audio_get_xrun_count(void) {
   return (guint64) g_atomic_int_get(&audio_xrun_count);
@@ -189,6 +191,12 @@ int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
     queued += MY_RING_BUFFER_SIZE;
   }
   diag->queued = queued;
+  if (rx->id >= 0 && rx->id < 8) {
+    diag->low_corrections =
+            atomic_load_explicit(&rx_ring_diag_low_corrections[rx->id], memory_order_relaxed);
+    diag->high_corrections =
+            atomic_load_explicit(&rx_ring_diag_high_corrections[rx->id], memory_order_relaxed);
+  }
   diag->available = 1;
   return 1;
 }
@@ -807,6 +815,8 @@ int audio_open_output(RECEIVER *rx) {
     g_atomic_int_set(&output_ring_primed[rx->id], 0);
     g_atomic_int_set(&output_ring_starved[rx->id], 0);
     atomic_store_explicit(&rx_ring_diag_underruns[rx->id], 0U, memory_order_relaxed);
+    atomic_store_explicit(&rx_ring_diag_low_corrections[rx->id], 0U, memory_order_relaxed);
+    atomic_store_explicit(&rx_ring_diag_high_corrections[rx->id], 0U, memory_order_relaxed);
   }
   if (rx->local_audio_buffer == NULL || rx->sidetone_buffer == NULL) {
     g_free(rx->local_audio_buffer);
@@ -995,9 +1005,12 @@ int audio_write(RECEIVER *rx, float left, float right) {
     int rx_lat_target;
     int rx_lat_high_base;
     rx_audio_latency_limits(&rx_lat_low, &rx_lat_target, &rx_lat_high_base);
-    if (avail < rx_lat_low) {
+    if (g_atomic_int_get(&coreaudio_rx_latency_correction_enabled) &&
+        avail < rx_lat_low) {
       if (rx->id >= 0 && rx->id < 8) {
         diag_low_corrections[rx->id]++;
+        atomic_fetch_add_explicit(&rx_ring_diag_low_corrections[rx->id],
+                                  1U, memory_order_relaxed);
       }
       int oldpt = inpt;
       for (int i = 0; i < rx_lat_target - avail; i++) {
@@ -1014,9 +1027,12 @@ int audio_write(RECEIVER *rx, float left, float right) {
     if (rx_lat_high < rx_lat_high_base) {
       rx_lat_high = rx_lat_high_base;
     }
-    if (avail > rx_lat_high) {
+    if (g_atomic_int_get(&coreaudio_rx_latency_correction_enabled) &&
+        avail > rx_lat_high) {
       if (rx->id >= 0 && rx->id < 8) {
         diag_high_corrections[rx->id]++;
+        atomic_fetch_add_explicit(&rx_ring_diag_high_corrections[rx->id],
+                                  1U, memory_order_relaxed);
       }
       int oldpt = inpt - avail + rx_lat_target;
       while (oldpt < 0) { oldpt += MY_RING_BUFFER_SIZE; }

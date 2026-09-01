@@ -843,6 +843,12 @@ static void rx_audio_reserve_depth_cb(GtkSpinButton *spin, gpointer data) {
   }
   g_atomic_int_set(&rx_audio_network_reserve_ms, reserve_ms);
 }
+
+static void coreaudio_rx_latency_correction_toggle_cb(GtkToggleButton *button, gpointer data) {
+  (void)data;
+  g_atomic_int_set(&coreaudio_rx_latency_correction_enabled,
+                   gtk_toggle_button_get_active(button) ? 1 : 0);
+}
 #endif
 
 static GtkWidget *build_general_page(void) {
@@ -980,6 +986,22 @@ static GtkWidget *build_general_page(void) {
     gtk_widget_set_halign(audio_reserve_unit, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(network_grid), audio_reserve_unit,
                     2, network_row, 1, 1);
+    network_row++;
+    GtkWidget *latency_correction_b =
+            gtk_check_button_new_with_label("CoreAudio RX Latency Correction");
+    gtk_widget_set_name(latency_correction_b, "boldlabel");
+    gtk_widget_set_tooltip_text(
+            latency_correction_b,
+            "Keep the CoreAudio RX ring near its target latency by inserting silence\n"
+            "at low water and dropping queued audio at high water.\n"
+            "Disable only for diagnosing RX audio stuttering or gating.");
+    gtk_toggle_button_set_active(
+            GTK_TOGGLE_BUTTON(latency_correction_b),
+            g_atomic_int_get(&coreaudio_rx_latency_correction_enabled));
+    gtk_grid_attach(GTK_GRID(network_grid), latency_correction_b,
+                    0, network_row, 3, 1);
+    g_signal_connect(latency_correction_b, "toggled",
+                     G_CALLBACK(coreaudio_rx_latency_correction_toggle_cb), NULL);
 #endif
     gtk_box_pack_start(GTK_BOX(page), network_frame, FALSE, FALSE, 0);
   }

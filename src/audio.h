@@ -56,6 +56,8 @@ typedef struct {
   int low;
   int target;
   int high;
+  unsigned int low_corrections;
+  unsigned int high_corrections;
 } AUDIO_BUFFER_DIAG;
 
 extern int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag);

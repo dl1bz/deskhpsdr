@@ -249,6 +249,7 @@ int display_sliders = 0;
 #ifdef __APPLE__
   int rx_audio_network_reserve_enabled = 0;
   int rx_audio_network_reserve_ms = 100;
+  int coreaudio_rx_latency_correction_enabled = 1;
 #endif
 int display_extra_sliders = 1;
 int display_toolbar = 0;
