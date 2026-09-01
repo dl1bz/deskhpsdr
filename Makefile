@@ -895,6 +895,7 @@ src/oc_menu.o \
 src/old_discovery.o \
 src/old_protocol.o \
 src/pa_menu.o \
+src/p2_programmer.o \
 src/property.o \
 src/protocols.o \
 src/ps_menu.o \

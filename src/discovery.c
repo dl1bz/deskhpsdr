@@ -56,6 +56,7 @@
 #include "nw_toolset.h"
 #include "css.h"
 #include "ddc_menu.h"
+#include "p2_programmer.h"
 
 static GtkWidget *discovery_dialog;
 static DISCOVERED *d;
@@ -298,6 +299,11 @@ static gboolean reboot_cb(GtkWidget *widget, GdkEventButton *event, gpointer dat
     t_print("%s: HL2: reboot send error\n", __func__);
   }
   return TRUE;
+}
+
+static void p2_setup_clicked(GtkWidget *widget, gpointer data) {
+  (void) widget;
+  p2_programmer_open(discovery_dialog, (const DISCOVERED *) data);
 }
 
 static gboolean protocols_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
@@ -580,9 +586,21 @@ void discovery(void) {
       gtk_widget_show(start_button);
       gtk_grid_attach(GTK_GRID(grid), start_button, 3, row, 1, 1);
       g_signal_connect(start_button, "clicked", G_CALLBACK(start_clicked), GINT_TO_POINTER(d - discovered));
+      int p2_setup_column = 4;
+      if (d->protocol == NEW_PROTOCOL && d->status == STATE_AVAILABLE && !d->use_routing &&
+          strcmp(d->info.network.interface_name, "XDMA") != 0) {
+        GtkWidget *setup_button = gtk_button_new_with_label("Setup");
+        gtk_widget_set_name(setup_button, "discovery_btn");
+        gtk_widget_set_tooltip_text(setup_button, "Configure or program this Protocol 2 SDR Device");
+        gtk_widget_set_margin_top(setup_button, 10);
+        gtk_widget_set_margin_start(setup_button, 5);
+        gtk_grid_attach(GTK_GRID(grid), setup_button, 4, row, 1, 1);
+        g_signal_connect(setup_button, "clicked", G_CALLBACK(p2_setup_clicked), (gpointer) d);
+        p2_setup_column = 5;
+      }
       // Reboot-Button für Hermes Lite 2
       // Voraussetzung: DEVICE_HERMES_LITE2 & NEW_DEVICE_HERMES_LITE2 ist im Projekt definiert.
-      // Spalte 4 ist in Nicht-STEMlab-Pfaden frei.
+      // Bei Protocol 2 liegt Setup in Spalte 4, daher Reboot dort in Spalte 5.
       if ((d->device == DEVICE_HERMES_LITE2 || d->device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1
           && !have_radioberry2 && !have_radioberry3) {
         GtkWidget *reboot_button = gtk_button_new_with_label("Reboot");
@@ -590,7 +608,7 @@ void discovery(void) {
         gtk_widget_set_tooltip_text(reboot_button, "Reboot this SDR Device");
         gtk_widget_set_margin_top(reboot_button, 10);
         gtk_widget_set_margin_start(reboot_button, 5);
-        gtk_grid_attach(GTK_GRID(grid), reboot_button, 4, row, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), reboot_button, p2_setup_column, row, 1, 1);
         g_signal_connect(reboot_button, "clicked", G_CALLBACK(reboot_clicked), (gpointer) d);
       }
       // if not available then cannot start it

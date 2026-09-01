@@ -1,21 +1,31 @@
 // p2_tool.c
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <ifaddrs.h>
-#include <net/if.h>
-#include <netinet/in.h>
+#ifdef _WIN32
+  #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+  #endif
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+  #include <windows.h>
+  #include <iphlpapi.h>
+#else
+  #include <arpa/inet.h>
+  #include <errno.h>
+  #include <ifaddrs.h>
+  #include <net/if.h>
+  #include <netinet/in.h>
+  #include <sys/socket.h>
+  #include <sys/time.h>
+  #include <unistd.h>
+  #ifdef __linux__
+    #include <linux/if.h>
+  #endif
+#endif
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <unistd.h>
-
-#ifdef __linux__
-  #include <linux/if.h>
-#endif
 
 #define DISCOVERY_PORT 1024
 #define DISCOVERY_LEN  60
@@ -26,6 +36,146 @@
 #define RX_TIMEOUT_SEC 2
 #define ERASE_TIMEOUT_SEC 30
 #define PROGRAM_RETRIES 5
+
+#ifdef _WIN32
+  typedef SOCKET p2_socket_t;
+  typedef int p2_socklen_t;
+  #define P2_INVALID_SOCKET INVALID_SOCKET
+  #define P2_SOCKET_ERROR SOCKET_ERROR
+#else
+  typedef int p2_socket_t;
+  typedef socklen_t p2_socklen_t;
+  #define P2_INVALID_SOCKET (-1)
+  #define P2_SOCKET_ERROR (-1)
+#endif
+
+#define P2_IFNAME_LEN 256
+
+struct p2_interface {
+  char name[P2_IFNAME_LEN];
+  char alt_name[P2_IFNAME_LEN];
+  struct in_addr address;
+};
+
+static int p2_network_init(void) {
+#ifdef _WIN32
+  WSADATA wsa;
+  int rc = WSAStartup(MAKEWORD(2, 2), &wsa);
+  if (rc != 0) {
+    fprintf(stderr, "WSAStartup failed: %d\n", rc);
+    return -1;
+  }
+#endif
+  return 0;
+}
+
+static void p2_network_cleanup(void) {
+#ifdef _WIN32
+  WSACleanup();
+#endif
+}
+
+static void p2_close_socket(p2_socket_t sock) {
+#ifdef _WIN32
+  closesocket(sock);
+#else
+  close(sock);
+#endif
+}
+
+static void p2_socket_error(const char *what) {
+#ifdef _WIN32
+  fprintf(stderr, "%s failed: WSA error %d\n", what, WSAGetLastError());
+#else
+  perror(what);
+#endif
+}
+
+static int p2_socket_timed_out(void) {
+#ifdef _WIN32
+  int err = WSAGetLastError();
+  return err == WSAETIMEDOUT || err == WSAEWOULDBLOCK;
+#else
+  return errno == EAGAIN || errno == EWOULDBLOCK;
+#endif
+}
+
+static int p2_set_recv_timeout(p2_socket_t sock, int timeout_sec) {
+#ifdef _WIN32
+  DWORD timeout_ms = (DWORD)timeout_sec * 1000U;
+  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,
+                 (const char *)&timeout_ms, sizeof(timeout_ms)) == SOCKET_ERROR) {
+    p2_socket_error("setsockopt(SO_RCVTIMEO)");
+    return -1;
+  }
+#else
+  struct timeval tv;
+  tv.tv_sec = timeout_sec;
+  tv.tv_usec = 0;
+  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+    p2_socket_error("setsockopt(SO_RCVTIMEO)");
+    return -1;
+  }
+#endif
+  return 0;
+}
+
+static int p2_set_int_option(p2_socket_t sock, int level, int option, int value) {
+#ifdef _WIN32
+  return setsockopt(sock, level, option, (const char *)&value, sizeof(value));
+#else
+  return setsockopt(sock, level, option, &value, sizeof(value));
+#endif
+}
+
+static int interface_matches(const struct p2_interface *iface, const char *wanted) {
+  if (!wanted) {
+    return 1;
+  }
+#ifdef _WIN32
+  if (_stricmp(iface->name, wanted) == 0) {
+    return 1;
+  }
+  return iface->alt_name[0] != '\0' && _stricmp(iface->alt_name, wanted) == 0;
+#else
+  return strcmp(iface->name, wanted) == 0;
+#endif
+}
+
+
+static void print_help(const char *program) {
+  printf("p2_tool - OpenHPSDR Protocol 2 utility\n\n");
+  printf("Usage:\n");
+  printf("  %s [options] [interface]\n\n", program);
+  printf("Options:\n");
+  printf("  -h, --help                 Show this help\n");
+  printf("  -v                         Enable verbose output\n");
+  printf("  -ip <address>              Set a static IPv4 address\n");
+  printf("  -dhcp                      Enable DHCP\n");
+  printf("  -rbf <file.rbf>            Program FPGA firmware\n");
+  printf("  -mac <xx:xx:xx:xx:xx:xx>  Select a specific device\n\n");
+  printf("Without an action, p2_tool discovers Protocol 2 devices.\n\n");
+  printf("Examples:\n");
+  printf("  %s\n", program);
+  printf("  %s -v\n", program);
+  printf("  %s -ip 192.168.1.100 en0\n", program);
+  printf("  %s -dhcp en0\n", program);
+  printf("  %s -rbf firmware.rbf en0\n", program);
+  printf("  %s -rbf firmware.rbf -mac 00:1c:c0:a2:22:5c en0\n\n", program);
+  printf("Notes:\n");
+  printf("  -ip, -dhcp and -rbf are mutually exclusive.\n");
+  printf("  Static IPv4 addresses ending in .0 or .255 are rejected.\n");
+  printf("  0/8, 127/8, multicast (224/4) and reserved (240/4)\n");
+  printf("  IPv4 address ranges are rejected for static configuration.\n");
+  printf("  If multiple Protocol 2 devices are found, use -mac to select\n");
+  printf("  the target device.\n");
+#ifdef _WIN32
+  printf("  On Windows, interface may be an adapter Friendly Name or\n");
+  printf("  internal adapter name.\n");
+#endif
+  printf("  A power-cycle of the radio is required after changing the IP\n");
+  printf("  configuration or programming FPGA firmware.\n");
+}
 
 static int verbose = 0;
 static int set_ip_requested = 0;
@@ -39,7 +189,7 @@ static const char *rbf_filename = NULL;
 
 struct discovered_device {
   unsigned char mac[6];
-  struct ifaddrs *ifa;
+  struct p2_interface iface;
   struct sockaddr_in addr;
 };
 
@@ -82,10 +232,10 @@ static const char *device_name(int id, int software_version) {
   }
 }
 
-static void hexdump(const unsigned char *buf, ssize_t len) {
-  for (ssize_t i = 0; i < len; i++) {
+static void hexdump(const unsigned char *buf, int len) {
+  for (int i = 0; i < len; i++) {
     if ((i % 16) == 0) {
-      printf("\n%04zd: ", i);
+      printf("\n%04x: ", i);
     }
     printf("%02x ", buf[i]);
   }
@@ -105,7 +255,8 @@ static int parse_mac(const char *text, unsigned char *mac) {
   return 0;
 }
 
-static void remember_device(const unsigned char *mac, struct ifaddrs *ifa,
+static void remember_device(const unsigned char *mac,
+                            const struct p2_interface *iface,
                             const struct sockaddr_in *addr) {
   for (int i = 0; i < discovered_count; i++) {
     if (memcmp(discovered_devices[i].mac, mac, 6) == 0) {
@@ -117,13 +268,13 @@ static void remember_device(const unsigned char *mac, struct ifaddrs *ifa,
     return;
   }
   memcpy(discovered_devices[discovered_count].mac, mac, 6);
-  discovered_devices[discovered_count].ifa = ifa;
+  discovered_devices[discovered_count].iface = *iface;
   discovered_devices[discovered_count].addr = *addr;
   discovered_devices[discovered_count].addr.sin_port = htons(DISCOVERY_PORT);
   discovered_count++;
 }
 
-static int send_set_ip_packet(int sock, const unsigned char *mac) {
+static int send_set_ip_packet(p2_socket_t sock, const unsigned char *mac) {
   unsigned char packet[SET_IP_LEN];
   struct sockaddr_in dst;
   memset(packet, 0, sizeof(packet));
@@ -134,51 +285,50 @@ static int send_set_ip_packet(int sock, const unsigned char *mac) {
   dst.sin_family = AF_INET;
   dst.sin_port = htons(DISCOVERY_PORT);
   dst.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-  if (sendto(sock, packet, sizeof(packet), 0,
-             (struct sockaddr *)&dst, sizeof(dst)) < 0) {
-    perror("sendto(set-ip)");
+  if (sendto(sock, (const char *)packet, (int)sizeof(packet), 0,
+             (struct sockaddr *)&dst, sizeof(dst)) == P2_SOCKET_ERROR) {
+    p2_socket_error("sendto(set-ip)");
     return -1;
   }
   return 0;
 }
 
-static void discover_on_interface(struct ifaddrs *ifa) {
-  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (sock < 0) {
-    perror("socket");
+static void discover_on_interface(const struct p2_interface *iface) {
+  p2_socket_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sock == P2_INVALID_SOCKET) {
+    p2_socket_error("socket");
     return;
   }
   int optval = 1;
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+  p2_set_int_option(sock, SOL_SOCKET, SO_REUSEADDR, optval);
 #ifdef SO_REUSEPORT
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+  p2_set_int_option(sock, SOL_SOCKET, SO_REUSEPORT, optval);
 #endif
-  setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
-#ifdef __linux__
+  p2_set_int_option(sock, SOL_SOCKET, SO_BROADCAST, optval);
+#ifdef SO_BINDTODEVICE
   if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
-                 ifa->ifa_name, strlen(ifa->ifa_name)) < 0) {
+                 iface->name, strlen(iface->name)) < 0) {
     if (verbose) {
-      perror("setsockopt(SO_BINDTODEVICE)");
+      p2_socket_error("setsockopt(SO_BINDTODEVICE)");
     }
   }
 #endif
-  struct sockaddr_in *if_addr = (struct sockaddr_in *)ifa->ifa_addr;
   struct sockaddr_in bind_addr;
   memset(&bind_addr, 0, sizeof(bind_addr));
   bind_addr.sin_family = AF_INET;
-  bind_addr.sin_addr = if_addr->sin_addr;
+  bind_addr.sin_addr = iface->address;
   bind_addr.sin_port = htons(0);
-  if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) < 0) {
+  if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) == P2_SOCKET_ERROR) {
     if (verbose) {
-      perror("bind");
+      p2_socket_error("bind");
     }
-    close(sock);
+    p2_close_socket(sock);
     return;
   }
-  struct timeval tv;
-  tv.tv_sec = RX_TIMEOUT_SEC;
-  tv.tv_usec = 0;
-  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  if (p2_set_recv_timeout(sock, RX_TIMEOUT_SEC) != 0) {
+    p2_close_socket(sock);
+    return;
+  }
   unsigned char packet[DISCOVERY_LEN];
   memset(packet, 0, sizeof(packet));
   packet[4] = 0x02;
@@ -187,21 +337,21 @@ static void discover_on_interface(struct ifaddrs *ifa) {
   dst.sin_family = AF_INET;
   dst.sin_port = htons(DISCOVERY_PORT);
   dst.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-  if (sendto(sock, packet, sizeof(packet), 0,
-             (struct sockaddr *)&dst, sizeof(dst)) < 0) {
+  if (sendto(sock, (const char *)packet, (int)sizeof(packet), 0,
+             (struct sockaddr *)&dst, sizeof(dst)) == P2_SOCKET_ERROR) {
     if (verbose) {
-      perror("sendto");
+      p2_socket_error("sendto");
     }
-    close(sock);
+    p2_close_socket(sock);
     return;
   }
   for (;;) {
     unsigned char buf[2048];
     struct sockaddr_in src;
-    socklen_t srclen = sizeof(src);
-    ssize_t n = recvfrom(sock, buf, sizeof(buf), 0,
-                         (struct sockaddr *)&src, &srclen);
-    if (n < 0) {
+    p2_socklen_t srclen = (p2_socklen_t)sizeof(src);
+    int n = recvfrom(sock, (char *)buf, (int)sizeof(buf), 0,
+                     (struct sockaddr *)&src, &srclen);
+    if (n == P2_SOCKET_ERROR) {
       break;
     }
     if (n < 24) {
@@ -241,45 +391,46 @@ static void discover_on_interface(struct ifaddrs *ifa) {
            rx_count,
            status);
     if (verbose) {
-      printf(" if=%s len=%zd", ifa->ifa_name, n);
+      printf(" if=%s len=%d", iface->name, n);
     }
     printf("\n");
     if (verbose) {
       hexdump(buf, n);
     }
-    remember_device(&buf[5], ifa, &src);
+    remember_device(&buf[5], iface, &src);
   }
-  close(sock);
+  p2_close_socket(sock);
 }
 
-static int set_ip_on_interface(struct ifaddrs *ifa, const unsigned char *mac) {
-  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (sock < 0) {
-    perror("socket");
+static int set_ip_on_interface(const struct p2_interface *iface,
+                               const unsigned char *mac) {
+  p2_socket_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sock == P2_INVALID_SOCKET) {
+    p2_socket_error("socket");
     return -1;
   }
   int optval = 1;
-  setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
-#ifdef __linux__
+  p2_set_int_option(sock, SOL_SOCKET, SO_BROADCAST, optval);
+#ifdef SO_BINDTODEVICE
   if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
-                 ifa->ifa_name, strlen(ifa->ifa_name)) < 0) {
+                 iface->name, strlen(iface->name)) < 0) {
     if (verbose) {
-      perror("setsockopt(SO_BINDTODEVICE)");
+      p2_socket_error("setsockopt(SO_BINDTODEVICE)");
     }
   }
 #endif
   struct sockaddr_in bind_addr;
   memset(&bind_addr, 0, sizeof(bind_addr));
   bind_addr.sin_family = AF_INET;
-  bind_addr.sin_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+  bind_addr.sin_addr = iface->address;
   bind_addr.sin_port = htons(0);
-  if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) < 0) {
-    perror("bind(set-ip)");
-    close(sock);
+  if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) == P2_SOCKET_ERROR) {
+    p2_socket_error("bind(set-ip)");
+    p2_close_socket(sock);
     return -1;
   }
   int rc = send_set_ip_packet(sock, mac);
-  close(sock);
+  p2_close_socket(sock);
   return rc;
 }
 
@@ -319,13 +470,13 @@ static int apply_ip_change(void) {
     strcpy(new_ip, "?");
   }
   const unsigned char *mac = discovered_devices[selected].mac;
-  struct ifaddrs *ifa = discovered_devices[selected].ifa;
-  if (set_ip_on_interface(ifa, mac) != 0) {
+  const struct p2_interface *iface = &discovered_devices[selected].iface;
+  if (set_ip_on_interface(iface, mac) != 0) {
     return 1;
   }
   printf("set-ip sent to %02x:%02x:%02x:%02x:%02x:%02x new_ip=%s if=%s\n",
          mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
-         new_ip, ifa->ifa_name);
+         new_ip, iface->name);
   return 0;
 }
 
@@ -343,59 +494,56 @@ static void write_be32(unsigned char *p, uint32_t value) {
   p[3] = (unsigned char)value;
 }
 
-static int open_device_socket(const struct discovered_device *dev, int timeout_sec) {
-  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (sock < 0) {
-    perror("socket");
-    return -1;
+static p2_socket_t open_device_socket(const struct discovered_device *dev,
+                                      int timeout_sec) {
+  p2_socket_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sock == P2_INVALID_SOCKET) {
+    p2_socket_error("socket");
+    return P2_INVALID_SOCKET;
   }
   int optval = 1;
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+  p2_set_int_option(sock, SOL_SOCKET, SO_REUSEADDR, optval);
 #ifdef SO_REUSEPORT
-  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+  p2_set_int_option(sock, SOL_SOCKET, SO_REUSEPORT, optval);
 #endif
-#ifdef __linux__
+#ifdef SO_BINDTODEVICE
   if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
-                 dev->ifa->ifa_name, strlen(dev->ifa->ifa_name)) < 0) {
+                 dev->iface.name, strlen(dev->iface.name)) < 0) {
     if (verbose) {
-      perror("setsockopt(SO_BINDTODEVICE)");
+      p2_socket_error("setsockopt(SO_BINDTODEVICE)");
     }
   }
 #endif
   struct sockaddr_in bind_addr;
   memset(&bind_addr, 0, sizeof(bind_addr));
   bind_addr.sin_family = AF_INET;
-  bind_addr.sin_addr = ((struct sockaddr_in *)dev->ifa->ifa_addr)->sin_addr;
+  bind_addr.sin_addr = dev->iface.address;
   bind_addr.sin_port = htons(0);
-  if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) < 0) {
-    perror("bind(program)");
-    close(sock);
-    return -1;
+  if (bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) == P2_SOCKET_ERROR) {
+    p2_socket_error("bind(program)");
+    p2_close_socket(sock);
+    return P2_INVALID_SOCKET;
   }
-  struct timeval tv;
-  tv.tv_sec = timeout_sec;
-  tv.tv_usec = 0;
-  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-    perror("setsockopt(SO_RCVTIMEO)");
-    close(sock);
-    return -1;
+  if (p2_set_recv_timeout(sock, timeout_sec) != 0) {
+    p2_close_socket(sock);
+    return P2_INVALID_SOCKET;
   }
   return sock;
 }
 
-static int recv_program_reply(int sock, const struct discovered_device *dev,
+static int recv_program_reply(p2_socket_t sock, const struct discovered_device *dev,
                               unsigned char expected_type, uint32_t expected_seq) {
   unsigned char buf[2048];
   for (;;) {
     struct sockaddr_in src;
-    socklen_t srclen = sizeof(src);
-    ssize_t n = recvfrom(sock, buf, sizeof(buf), 0,
-                         (struct sockaddr *)&src, &srclen);
-    if (n < 0) {
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+    p2_socklen_t srclen = (p2_socklen_t)sizeof(src);
+    int n = recvfrom(sock, (char *)buf, (int)sizeof(buf), 0,
+                     (struct sockaddr *)&src, &srclen);
+    if (n == P2_SOCKET_ERROR) {
+      if (p2_socket_timed_out()) {
         return 0;
       }
-      perror("recvfrom(program)");
+      p2_socket_error("recvfrom(program)");
       return -1;
     }
     if (n < 5) {
@@ -405,7 +553,7 @@ static int recv_program_reply(int sock, const struct discovered_device *dev,
       continue;
     }
     if (verbose) {
-      printf("program reply type=%u seq=%u len=%zd\n",
+      printf("program reply type=%u seq=%u len=%d\n",
              buf[4], read_be32(buf), n);
       hexdump(buf, n);
     }
@@ -415,14 +563,14 @@ static int recv_program_reply(int sock, const struct discovered_device *dev,
   }
 }
 
-static int erase_device(int sock, const struct discovered_device *dev) {
+static int erase_device(p2_socket_t sock, const struct discovered_device *dev) {
   unsigned char packet[ERASE_LEN];
   memset(packet, 0, sizeof(packet));
   packet[4] = 0x04;
   printf("Erasing FPGA flash...\n");
-  if (sendto(sock, packet, sizeof(packet), 0,
-             (const struct sockaddr *)&dev->addr, sizeof(dev->addr)) < 0) {
-    perror("sendto(erase)");
+  if (sendto(sock, (const char *)packet, (int)sizeof(packet), 0,
+             (const struct sockaddr *)&dev->addr, sizeof(dev->addr)) == P2_SOCKET_ERROR) {
+    p2_socket_error("sendto(erase)");
     return -1;
   }
   /*
@@ -481,22 +629,18 @@ static int program_rbf_device(const struct discovered_device *dev,
          dev->mac[0], dev->mac[1], dev->mac[2],
          dev->mac[3], dev->mac[4], dev->mac[5]);
   printf("Size: %ld bytes, %u blocks\n", file_size, blocks);
-  int sock = open_device_socket(dev, ERASE_TIMEOUT_SEC);
-  if (sock < 0) {
+  p2_socket_t sock = open_device_socket(dev, ERASE_TIMEOUT_SEC);
+  if (sock == P2_INVALID_SOCKET) {
     fclose(fp);
     return 1;
   }
   if (erase_device(sock, dev) != 0) {
-    close(sock);
+    p2_close_socket(sock);
     fclose(fp);
     return 1;
   }
-  struct timeval tv;
-  tv.tv_sec = RX_TIMEOUT_SEC;
-  tv.tv_usec = 0;
-  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-    perror("setsockopt(SO_RCVTIMEO)");
-    close(sock);
+  if (p2_set_recv_timeout(sock, RX_TIMEOUT_SEC) != 0) {
+    p2_close_socket(sock);
     fclose(fp);
     return 1;
   }
@@ -511,22 +655,22 @@ static int program_rbf_device(const struct discovered_device *dev,
     size_t nread = fread(&packet[9], 1, PROGRAM_DATA, fp);
     if (nread == 0 && ferror(fp)) {
       perror("fread");
-      close(sock);
+      p2_close_socket(sock);
       fclose(fp);
       return 1;
     }
     int acknowledged = 0;
     for (int attempt = 0; attempt < PROGRAM_RETRIES; attempt++) {
-      if (sendto(sock, packet, sizeof(packet), 0,
-                 (const struct sockaddr *)&dev->addr, sizeof(dev->addr)) < 0) {
-        perror("sendto(program)");
-        close(sock);
+      if (sendto(sock, (const char *)packet, (int)sizeof(packet), 0,
+                 (const struct sockaddr *)&dev->addr, sizeof(dev->addr)) == P2_SOCKET_ERROR) {
+        p2_socket_error("sendto(program)");
+        p2_close_socket(sock);
         fclose(fp);
         return 1;
       }
       int rc = recv_program_reply(sock, dev, 0x04, seq);
       if (rc < 0) {
-        close(sock);
+        p2_close_socket(sock);
         fclose(fp);
         return 1;
       }
@@ -541,7 +685,7 @@ static int program_rbf_device(const struct discovered_device *dev,
     }
     if (!acknowledged) {
       fprintf(stderr, "ERROR: No acknowledgement for RBF block %u.\n", seq);
-      close(sock);
+      p2_close_socket(sock);
       fclose(fp);
       return 1;
     }
@@ -553,7 +697,7 @@ static int program_rbf_device(const struct discovered_device *dev,
     }
   }
   printf("\nProgram complete.\n");
-  close(sock);
+  p2_close_socket(sock);
   fclose(fp);
   return 0;
 }
@@ -566,57 +710,81 @@ static int apply_rbf_program(void) {
   return program_rbf_device(&discovered_devices[selected], rbf_filename);
 }
 
-int main(int argc, char **argv) {
-  const char *wanted_if = NULL;
-  const char *usage =
-          "Usage: %s [-v] [-ip ip-address | -dhcp | -rbf file.rbf] "
-          "[-mac xx:xx:xx:xx:xx:xx] [interface]\n";
-  for (int i = 1; i < argc; i++) {
-    if (strcmp(argv[i], "-v") == 0) {
-      verbose = 1;
-    } else if (strcmp(argv[i], "-ip") == 0) {
-      if (set_ip_requested || rbf_requested || ++i >= argc ||
-          inet_pton(AF_INET, argv[i], &set_ip_addr) != 1) {
-        fprintf(stderr, usage, argv[0]);
-        return 1;
+#ifdef _WIN32
+static int wide_to_utf8(const wchar_t *src, char *dst, size_t dst_size) {
+  if (!src || !dst || dst_size == 0) {
+    return -1;
+  }
+  int rc = WideCharToMultiByte(CP_UTF8, 0, src, -1,
+                               dst, (int)dst_size, NULL, NULL);
+  if (rc <= 0) {
+    dst[0] = '\0';
+    return -1;
+  }
+  return 0;
+}
+
+static int discover_windows_interfaces(const char *wanted_if) {
+  ULONG size = 0;
+  ULONG flags = GAA_FLAG_SKIP_ANYCAST |
+                GAA_FLAG_SKIP_MULTICAST |
+                GAA_FLAG_SKIP_DNS_SERVER;
+  DWORD rc = GetAdaptersAddresses(AF_INET, flags, NULL, NULL, &size);
+  if (rc != ERROR_BUFFER_OVERFLOW) {
+    fprintf(stderr, "GetAdaptersAddresses(size) failed: %lu\n",
+            (unsigned long)rc);
+    return -1;
+  }
+  IP_ADAPTER_ADDRESSES *addrs = (IP_ADAPTER_ADDRESSES *)malloc(size);
+  if (!addrs) {
+    fprintf(stderr, "ERROR: Out of memory enumerating network adapters.\n");
+    return -1;
+  }
+  rc = GetAdaptersAddresses(AF_INET, flags, NULL, addrs, &size);
+  if (rc != NO_ERROR) {
+    fprintf(stderr, "GetAdaptersAddresses failed: %lu\n", (unsigned long)rc);
+    free(addrs);
+    return -1;
+  }
+  for (IP_ADAPTER_ADDRESSES *aa = addrs; aa; aa = aa->Next) {
+    if (aa->OperStatus != IfOperStatusUp ||
+        aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) {
+      continue;
+    }
+    for (IP_ADAPTER_UNICAST_ADDRESS *ua = aa->FirstUnicastAddress;
+         ua; ua = ua->Next) {
+      if (!ua->Address.lpSockaddr ||
+          ua->Address.lpSockaddr->sa_family != AF_INET) {
+        continue;
       }
-      set_ip_requested = 1;
-    } else if (strcmp(argv[i], "-dhcp") == 0) {
-      if (set_ip_requested || rbf_requested) {
-        fprintf(stderr, usage, argv[0]);
-        return 1;
+      struct p2_interface iface;
+      memset(&iface, 0, sizeof(iface));
+      if (aa->FriendlyName) {
+        wide_to_utf8(aa->FriendlyName, iface.name, sizeof(iface.name));
       }
-      set_ip_addr.s_addr = htonl(INADDR_ANY);
-      set_ip_requested = 1;
-    } else if (strcmp(argv[i], "-rbf") == 0) {
-      if (set_ip_requested || rbf_requested || ++i >= argc) {
-        fprintf(stderr, usage, argv[0]);
-        return 1;
+      if (iface.name[0] == '\0' && aa->AdapterName) {
+        snprintf(iface.name, sizeof(iface.name), "%s", aa->AdapterName);
       }
-      rbf_filename = argv[i];
-      rbf_requested = 1;
-    } else if (strcmp(argv[i], "-mac") == 0) {
-      if (++i >= argc || target_mac_requested ||
-          parse_mac(argv[i], target_mac) != 0) {
-        fprintf(stderr, usage, argv[0]);
-        return 1;
+      if (aa->AdapterName) {
+        snprintf(iface.alt_name, sizeof(iface.alt_name), "%s", aa->AdapterName);
       }
-      target_mac_requested = 1;
-    } else if (!wanted_if) {
-      wanted_if = argv[i];
-    } else {
-      fprintf(stderr, usage, argv[0]);
-      return 1;
+      iface.address =
+              ((struct sockaddr_in *)ua->Address.lpSockaddr)->sin_addr;
+      if (!interface_matches(&iface, wanted_if)) {
+        continue;
+      }
+      discover_on_interface(&iface);
     }
   }
-  if (target_mac_requested && !set_ip_requested && !rbf_requested) {
-    fprintf(stderr, usage, argv[0]);
-    return 1;
-  }
+  free(addrs);
+  return 0;
+}
+#else
+static int discover_unix_interfaces(const char *wanted_if) {
   struct ifaddrs *addrs = NULL;
   if (getifaddrs(&addrs) != 0) {
     perror("getifaddrs");
-    return 1;
+    return -1;
   }
   for (struct ifaddrs *ifa = addrs; ifa != NULL; ifa = ifa->ifa_next) {
     if (!ifa->ifa_addr) {
@@ -631,17 +799,112 @@ int main(int argc, char **argv) {
     if (ifa->ifa_flags & IFF_LOOPBACK) {
       continue;
     }
-    if (wanted_if && strcmp(ifa->ifa_name, wanted_if) != 0) {
+    struct p2_interface iface;
+    memset(&iface, 0, sizeof(iface));
+    snprintf(iface.name, sizeof(iface.name), "%s", ifa->ifa_name);
+    iface.address = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+    if (!interface_matches(&iface, wanted_if)) {
       continue;
     }
-    discover_on_interface(ifa);
+    discover_on_interface(&iface);
   }
+  freeifaddrs(addrs);
+  return 0;
+}
+#endif
+
+int main(int argc, char **argv) {
+  const char *wanted_if = NULL;
+  const char *usage =
+          "Usage: %s [-v] [-ip ip-address | -dhcp | -rbf file.rbf] "
+          "[-mac xx:xx:xx:xx:xx:xx] [interface]\n";
+  if (p2_network_init() != 0) {
+    return 1;
+  }
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+      print_help(argv[0]);
+      p2_network_cleanup();
+      return 0;
+    } else if (strcmp(argv[i], "-v") == 0) {
+      verbose = 1;
+    } else if (strcmp(argv[i], "-ip") == 0) {
+      if (set_ip_requested || rbf_requested || ++i >= argc ||
+          inet_pton(AF_INET, argv[i], &set_ip_addr) != 1) {
+        fprintf(stderr, usage, argv[0]);
+        p2_network_cleanup();
+        return 1;
+      }
+      uint32_t host_ip = ntohl(set_ip_addr.s_addr);
+      uint8_t first_octet = (uint8_t)((host_ip >> 24) & 0xffU);
+      uint8_t last_octet = (uint8_t)(host_ip & 0xffU);
+      if (last_octet == 0U || last_octet == 255U) {
+        fprintf(stderr,
+                "ERROR: Static IPv4 address must not end in .0 or .255.\n");
+        p2_network_cleanup();
+        return 1;
+      }
+      if (first_octet == 0U || first_octet == 127U || first_octet >= 224U) {
+        fprintf(stderr,
+                "ERROR: IPv4 address is not valid as a static host address.\n");
+        p2_network_cleanup();
+        return 1;
+      }
+      set_ip_requested = 1;
+    } else if (strcmp(argv[i], "-dhcp") == 0) {
+      if (set_ip_requested || rbf_requested) {
+        fprintf(stderr, usage, argv[0]);
+        p2_network_cleanup();
+        return 1;
+      }
+      set_ip_addr.s_addr = htonl(INADDR_ANY);
+      set_ip_requested = 1;
+    } else if (strcmp(argv[i], "-rbf") == 0) {
+      if (set_ip_requested || rbf_requested || ++i >= argc) {
+        fprintf(stderr, usage, argv[0]);
+        p2_network_cleanup();
+        return 1;
+      }
+      rbf_filename = argv[i];
+      rbf_requested = 1;
+    } else if (strcmp(argv[i], "-mac") == 0) {
+      if (++i >= argc || target_mac_requested ||
+          parse_mac(argv[i], target_mac) != 0) {
+        fprintf(stderr, usage, argv[0]);
+        p2_network_cleanup();
+        return 1;
+      }
+      target_mac_requested = 1;
+    } else if (!wanted_if) {
+      wanted_if = argv[i];
+    } else {
+      fprintf(stderr, usage, argv[0]);
+      p2_network_cleanup();
+      return 1;
+    }
+  }
+  if (target_mac_requested && !set_ip_requested && !rbf_requested) {
+    fprintf(stderr, usage, argv[0]);
+    p2_network_cleanup();
+    return 1;
+  }
+#ifdef _WIN32
+  if (discover_windows_interfaces(wanted_if) != 0) {
+    p2_network_cleanup();
+    return 1;
+  }
+#else
+  if (discover_unix_interfaces(wanted_if) != 0) {
+    p2_network_cleanup();
+    return 1;
+  }
+#endif
   int rc = 0;
   if (set_ip_requested) {
     rc = apply_ip_change();
   } else if (rbf_requested) {
     rc = apply_rbf_program();
   }
-  freeifaddrs(addrs);
+  p2_network_cleanup();
   return rc;
 }
