@@ -2981,7 +2981,8 @@ static void radio_restore_state(void) {
 #endif
   t_print("%s: radio state (except receiver/transmitter) restored.\n", __func__);
   if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
-                     device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2)) {
+                     device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2) &&
+      !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
     reassign_pa_trim();
     t_print("%s: using HL2: re-assign pa_trim[]\n", __func__);
   }

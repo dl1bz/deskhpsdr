@@ -697,7 +697,7 @@ void update_drive_scale(void) {
   int txmode = vfo_get_tx_mode();
   double value;
   value = radio_get_drive();
-  if (device == DEVICE_HERMES_LITE2) { return; }
+  if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) { return; }
   if (txmode == modeDIGU || txmode == modeDIGL) {
     if (value > drive_digi_max) { value = drive_digi_max; }
   }
@@ -722,7 +722,7 @@ void set_drive(double value) {
   }
   radio_set_drive(value);
   if (display_sliders) {
-    if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+    if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
       value /= 20;
     }
     sliders_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
@@ -732,7 +732,7 @@ void set_drive(double value) {
       gtk_range_set_value(GTK_RANGE(drive_scale), value);
     }
     // update the tooltip text if tx_drive is changed
-    if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+    if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
       snprintf(txpwr_ttip_txt, sizeof(txpwr_ttip_txt), "Set TX Pwr in W ≙ %.0f %%", radio_get_drive());
       gtk_widget_set_tooltip_text(drive_scale, NULL);
       gtk_widget_set_tooltip_text(drive_scale, txpwr_ttip_txt);
@@ -751,7 +751,7 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
     value = gtk_range_get_value(GTK_RANGE(widget));
   }
   // double value = gtk_range_get_value(GTK_RANGE(drive_scale));
-  if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+  if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
     value *= 20;
   }
   t_print("%s: value=%f at device %d\n", __func__, value, device);
@@ -769,7 +769,7 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
       t_print("%s: bs->tx_drive = %d\n", __func__, bs->tx_drive);
     }
   }
-  if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+  if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
     value /= 20;
   }
   if (GTK_IS_SPIN_BUTTON(widget)) {
@@ -778,7 +778,7 @@ static void drive_value_changed_cb(GtkWidget *widget, gpointer data) {
     gtk_range_set_value(GTK_RANGE(widget), value);
   }
   // update the tooltip text if tx_drive is changed
-  if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+  if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
     snprintf(txpwr_ttip_txt, sizeof(txpwr_ttip_txt), "Set TX Pwr in W ≙ %.0f %%", radio_get_drive());
     gtk_widget_set_tooltip_text(widget, NULL);
     gtk_widget_set_tooltip_text(widget, txpwr_ttip_txt);
@@ -2442,7 +2442,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_valign(drive_label, GTK_ALIGN_CENTER);
     gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_label, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+    if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
       if (optimize_for_touchscreen) {
         drive_scale = gtk_spin_button_new_with_range(0.0, 5.0, 0.1);
         WEAKEN(drive_scale);
@@ -2492,7 +2492,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                                                "-> Refer to the power meter for your actual RF output power.\n\n"
                                                "100% ≙ your max. calibrated PA output in PA Menu.");
     }
-    if (device == DEVICE_HERMES_LITE2 && pa_enabled) {
+    if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
       if (optimize_for_touchscreen) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive() / 20);
       } else {

@@ -542,7 +542,8 @@ static double compute_power(double p) {
   double interval = 0.1 * pa_power_list[pa_power];
   int i = 0;
   if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
-                     device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2)) {
+                     device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2) &&
+      !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
     reassign_pa_trim();
   }
   if (p > pa_trim[10]) {
