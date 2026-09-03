@@ -42,6 +42,8 @@
   #define DISPLAY_FONT_BOLD       "Tahoma"
   #define DISPLAY_FONT_METER      "Roboto-Bold" // "Monaco"
   #define DISPLAY_FONT_MONO       "Monaco"
+  #define DISPLAY_FONT_LCD        "Open 24 Display St"
+  #define DISPLAY_FONT_MATRIX     "Small LCD Sign"
 #else
   #define DISPLAY_FONT_NORMAL     "FreeSans"
   #define DISPLAY_FONT_BOLD       "FreeSans"
@@ -104,6 +106,7 @@
 #define COLOUR_VFO_BACKGND   0.15, 0.15, 0.15, 1.00 // Default: 0.00, 0.00, 0.00, 1.00
 #define COLOUR_SHADE         0.70, 0.70, 0.70, 1.00 // Default: 0.70, 0.70, 0.70, 1.00
 #define COLOUR_METER         1.00, 1.00, 1.00, 1.00 // Default: 1.00, 1.00, 1.00, 1.00
+#define COLOUR_BG_BLACK      0.00, 0.00, 0.00, 1.00
 
 //
 // Settings for a coloured (gradient) spectrum, only availabe for RX.
@@ -174,6 +177,10 @@ struct _VFO_BAR_LAYOUT {
   int size1;               // Font size for the "LED markers"
   int size2;               // Font size for the "small dial digits"
   int size3;               // Font size for the "large dial digits"
+
+  int lcdsize1;
+  int lcdsize2;
+  int lcdsize3;
 
   int vfo_a_x, vfo_a_y;    // coordinates of VFO A/B dial
   int vfo_b_x, vfo_b_y;

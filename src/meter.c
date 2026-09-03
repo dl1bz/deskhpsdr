@@ -202,7 +202,7 @@ meter_configure_event_cb(GtkWidget         *widget,
   /* Initialize the surface to black */
   cairo_t *cr;
   cr = cairo_create(meter_surface);
-  cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
+  cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   cairo_paint(cr);
   cairo_destroy(cr);
   return TRUE;
@@ -742,7 +742,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     int Y4 = 4 * Y1 - 6;
     int size;
     cairo_text_extents_t extents;
-    cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
+    cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
     cairo_paint(cr);
     cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_line_width(cr, PAN_LINE_THICK);

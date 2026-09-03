@@ -2814,6 +2814,13 @@ static void radio_restore_state(void) {
 #endif
   GetPropI0("tx_out_of_band",                                tx_out_of_band_allowed);
   GetPropI0("filter_board",                                  filter_board);
+  if (protocol == NEW_PROTOCOL && radio != NULL &&
+      radio->info.network.mac_address[0] == 0x02 &&
+      (radio->info.network.mac_address[1] == 0xB2 ||
+       radio->info.network.mac_address[1] == 0xB3)) {
+    hermes_mode = HERMES_MODE_BRICK;
+    filter_board = ALEX;
+  }
   GetPropI0("pa_enabled",                                    pa_enabled);
   if (device == DEVICE_HERMES_LITE2) {
     GetPropI0("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);

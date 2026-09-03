@@ -894,7 +894,7 @@ static gboolean tx_levels_configure_cb(GtkWidget *widget, GdkEventConfigure *eve
                                CAIRO_CONTENT_COLOR,
                                w, h);
   cairo_t *cr = cairo_create(tx->levels_surface);
-  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+  cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   cairo_paint(cr);
   cairo_destroy(cr);
   return TRUE;

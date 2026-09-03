@@ -1342,6 +1342,7 @@ void StartConfigSave(void) {
   SetPropI0("display_sysinfo", display_sysinfo);
   SetPropI0("log_debug", log_debug);
   SetPropI0("ui_debug", ui_debug);
+  SetPropI0("qrg_bg_color_alter", qrg_bg_color_alter);
   SetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
   SetPropI0("sertune_invert", sertune_invert);
   SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
@@ -1365,6 +1366,7 @@ void StartConfigLoad(void) {
   GetPropI0("display_sysinfo", display_sysinfo);
   GetPropI0("log_debug", log_debug);
   GetPropI0("ui_debug", ui_debug);
+  GetPropI0("qrg_bg_color_alter", qrg_bg_color_alter);
   GetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
   GetPropI0("sertune_invert", sertune_invert);
   GetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
@@ -1386,6 +1388,9 @@ void StartConfigLoad(void) {
   }
   if (log_debug < 0 || log_debug > 1) {
     log_debug = 0;
+  }
+  if (qrg_bg_color_alter < 0 || qrg_bg_color_alter > 1) {
+    qrg_bg_color_alter = 0;
   }
   if (ui_debug < 0 || ui_debug > 1) {
     ui_debug = 0;

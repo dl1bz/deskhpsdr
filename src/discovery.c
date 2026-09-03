@@ -554,6 +554,13 @@ void discovery(void) {
           snprintf(text, sizeof(text), "%s (%s v%d) fpga:%x (%s) on /dev/xdma*", d->name,
                    d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2", d->software_version,
                    d->fpga_version, macStr);
+        } else if (g_str_has_prefix(d->name, "Brick2") || g_str_has_prefix(d->name, "Brick3")) {
+          snprintf(text, sizeof(text), "%s (%s) %s (%s) on %s: ",
+                   d->name,
+                   d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2",
+                   inet_ntoa(d->info.network.address.sin_addr),
+                   macStr,
+                   d->info.network.interface_name);
         } else {
           snprintf(text, sizeof(text), "%s %s (%s) %s (%s) on %s: ",
                    d->name,

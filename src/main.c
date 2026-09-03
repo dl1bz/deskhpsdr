@@ -101,6 +101,7 @@ int display_debug = 0;
 int display_sysinfo = 0;
 int log_debug = 0;
 int ui_debug = 0;
+int qrg_bg_color_alter = 0;
 
 int sertune_ptt_hold_ms = 0;
 int sertune_invert = 1;

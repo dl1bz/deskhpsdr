@@ -360,6 +360,26 @@ gpointer new_discover_receive_thread(gpointer data) {
             for (i = 0; i < 6; i++) {
               discovered[devices].info.network.mac_address[i] = buffer[i + 5];
             }
+            if (discovered[devices].info.network.mac_address[0] == 0x02 &&
+                discovered[devices].info.network.mac_address[1] == 0xB2) {
+              switch (discovered[devices].info.network.mac_address[2]) {
+              case 0x01:
+                g_strlcpy(discovered[devices].name, "Brick2 14bit-LP", sizeof(discovered[devices].name));
+                break;
+              case 0x02:
+                g_strlcpy(discovered[devices].name, "Brick2 16bit-LP", sizeof(discovered[devices].name));
+                break;
+              case 0x03:
+                g_strlcpy(discovered[devices].name, "Brick2 14bit-HP", sizeof(discovered[devices].name));
+                break;
+              default:
+                g_strlcpy(discovered[devices].name, "Brick2", sizeof(discovered[devices].name));
+                break;
+              }
+            } else if (discovered[devices].info.network.mac_address[0] == 0x02 &&
+                       discovered[devices].info.network.mac_address[1] == 0xB3) {
+              g_strlcpy(discovered[devices].name, "Brick3", sizeof(discovered[devices].name));
+            }
             memcpy((void *) &discovered[devices].info.network.address, (void *) &addr, sizeof(addr));
             discovered[devices].info.network.address_length = sizeof(addr);
             memcpy((void *) &discovered[devices].info.network.interface_address, (void *) &interface_addr,

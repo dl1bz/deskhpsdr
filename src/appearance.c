@@ -56,6 +56,10 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .size2 = 30,
     .size3 = 50,
 
+    .lcdsize1 = 16,
+    .lcdsize2 = 22,
+    .lcdsize3 = 34,
+
     .vfo_a_x = -5,
     .vfo_a_y = 70,
     .vfo_b_x = -560,

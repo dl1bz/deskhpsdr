@@ -563,6 +563,8 @@ void new_menu(void) {
     } else {
       restart_b = gtk_button_new_with_label("Restart Protocol");
     }
+    gtk_widget_set_tooltip_text(restart_b,
+                                "Restart / Reinitialize the current\nrunning OpenHPSDR Protocol");
     g_signal_connect(restart_b, "button-press-event", G_CALLBACK(restart_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), restart_b, 2, 0, 2, 1);
     GtkWidget *minimize_b = gtk_button_new_with_label("Iconify");
@@ -580,7 +582,9 @@ void new_menu(void) {
     // First Column: Menus related to the Radio in general.
     //               Radio/Screen/Display/Meter/XVTR
     //
-    GtkWidget *radio_b = gtk_button_new_with_label("Radio");
+    GtkWidget *radio_b = gtk_button_new_with_label("SDR Device");
+    gtk_widget_set_tooltip_text(radio_b,
+                                "Device specific Settings for your SDR Device");
     g_signal_connect(radio_b, "button-press-event", G_CALLBACK(radio_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), radio_b, col, row, 1, 1);
     row++;

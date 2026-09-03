@@ -1122,6 +1122,7 @@ install-Darwin: all
 	@mkdir -p deskHPSDR.app/Contents/Resources/fonts
 	@cp -R fonts/ttf/Roboto deskHPSDR.app/Contents/Resources/fonts/
 	@cp -R fonts/ttf/JetBrainsMono deskHPSDR.app/Contents/Resources/fonts/
+	@cp -R fonts/ttf/Digital deskHPSDR.app/Contents/Resources/fonts/
 	@cp -R fonts/otf/GNU deskHPSDR.app/Contents/Resources/fonts/
 	@if [ -x /usr/bin/codesign ]; then \
 		echo "Strip extended attributes before codesigning..."; \
@@ -1166,10 +1167,12 @@ install-Linux: all
 	@if [ -d /usr/share/fonts/truetype ]; then \
 		sudo cp -R fonts/ttf/Roboto /usr/share/fonts/truetype; \
 		sudo cp -R fonts/ttf/JetBrainsMono /usr/share/fonts/truetype; \
+		sudo cp -R fonts/ttf/Digital /usr/share/fonts/truetype; \
 	else \
 		mkdir -p "${HOME}/.local/share/fonts/truetype"; \
 		cp -R fonts/ttf/Roboto "${HOME}/.local/share/fonts/truetype"; \
 		cp -R fonts/ttf/JetBrainsMono "${HOME}/.local/share/fonts/truetype"; \
+		cp -R fonts/ttf/Digital "${HOME}/.local/share/fonts/truetype"; \
 	fi; \
 	if [ -d /usr/share/fonts/opentype ]; then \
 		sudo cp -R fonts/otf/GNU /usr/share/fonts/opentype; \

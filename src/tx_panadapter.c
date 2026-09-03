@@ -90,7 +90,7 @@ tx_panadapter_configure_event_cb(GtkWidget         *widget,
     mywidth,
     myheight);
   cairo_t *cr = cairo_create(tx->panadapter_surface);
-  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+  cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   cairo_paint(cr);
   cairo_destroy(cr);
   return TRUE;
@@ -171,7 +171,7 @@ static void tx_levels_render(TRANSMITTER *tx) {
   const char *labels[] = {"Mic", "TX-EQ", "Leveler", "CFC", "PROC", "ALC", "Out"};
   const int N = 7;
   cairo_t *cr = cairo_create(tx->levels_surface);
-  cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+  cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   cairo_paint(cr);
   int margin = 20;
   int bar_h  = ((h - 2 * margin) / N) * 0.4;  // 40 % der alten Höhe
@@ -282,7 +282,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
     double hz_per_pixel = display_span / (double) tx->pixels;
     cairo_t *cr;
     cr = cairo_create(tx->panadapter_surface);
-    cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+    cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
     cairo_paint(cr);
     // filter
     filter_left = filter_right = 0.5 * mywidth;

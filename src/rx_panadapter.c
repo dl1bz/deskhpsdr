@@ -533,7 +533,7 @@ static gboolean panadapter_configure_event_cb(GtkWidget *widget, GdkEventConfigu
   if (display_wmap) {
     cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15);  // 0.00..1.00 Transparenz abnehmend
   } else {
-    cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+    cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   }
   cairo_paint(cr);
   cairo_destroy(cr);
@@ -1312,7 +1312,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     //------------------------------------------------------------------------------
     cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15);  // 0.00..1.00 Transparenz abnehmend
   } else {
-    cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
+    cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   }
   cairo_rectangle(cr, 0, 0, mywidth, myheight);
   cairo_fill(cr);

@@ -47,6 +47,7 @@ extern int display_debug;
 extern int display_sysinfo;
 extern int log_debug;
 extern int ui_debug;
+extern int qrg_bg_color_alter;
 
 extern int sertune_ptt_hold_ms;
 extern int sertune_invert;

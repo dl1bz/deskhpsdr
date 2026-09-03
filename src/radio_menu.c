@@ -515,7 +515,7 @@ void radio_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   char _title[32];
-  snprintf(_title, 32, "%s - Radio", PGNAME);
+  snprintf(_title, 32, "%s - SDR Device Settings", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
@@ -596,7 +596,7 @@ void radio_menu(GtkWidget *parent) {
   g_signal_connect(rit_combo, "changed", G_CALLBACK(rit_cb), NULL);
   row++;
   GtkWidget *sr_note = gtk_label_new(NULL);
-  gtk_label_set_markup(GTK_LABEL(sr_note), "<b>Samplerate settings were\nmoved to the RX Menu</b>");
+  gtk_label_set_markup(GTK_LABEL(sr_note), "<b>SDR-Device Samplerate\nSettings in RX Menu</b>");
   gtk_label_set_justify(GTK_LABEL(sr_note), GTK_JUSTIFY_CENTER);
   gtk_label_set_xalign(GTK_LABEL(sr_note), 0.5);
   gtk_widget_set_halign(sr_note, GTK_ALIGN_CENTER);

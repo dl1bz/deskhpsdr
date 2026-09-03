@@ -121,6 +121,16 @@ static void vfo_lcd_draw_background(cairo_t *cr, double x, double y, double w, d
     cairo_pattern_add_color_stop_rgb(pat, 0.0, 1.00, 0.52, 0.48);
     cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.95, 0.28, 0.34);
     cairo_pattern_add_color_stop_rgb(pat, 1.0, 0.72, 0.08, 0.18);
+  } else if (qrg_bg_color_alter) {
+    if (active) {
+      cairo_pattern_add_color_stop_rgb(pat, 0.0, 0.38, 0.76, 1.00);
+      cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.18, 0.60, 1.00);
+      cairo_pattern_add_color_stop_rgb(pat, 1.0, 0.09, 0.42, 0.82);
+    } else {
+      cairo_pattern_add_color_stop_rgb(pat, 0.0, 0.16, 0.46, 0.82);
+      cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.10, 0.35, 0.70);
+      cairo_pattern_add_color_stop_rgb(pat, 1.0, 0.05, 0.23, 0.54);
+    }
   } else if (active) {
     cairo_pattern_add_color_stop_rgb(pat, 0.0, 1.00, 0.70, 0.24);
     cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.95, 0.52, 0.10);
@@ -135,6 +145,8 @@ static void vfo_lcd_draw_background(cairo_t *cr, double x, double y, double w, d
   cairo_pattern_destroy(pat);
   if (tx) {
     cairo_set_source_rgba(cr, 0.55, 0.04, 0.10, 0.95);
+  } else if (qrg_bg_color_alter) {
+    cairo_set_source_rgba(cr, 0.00, 0.10, 0.24, active ? 0.95 : 0.75);
   } else {
     cairo_set_source_rgba(cr, 0.24, 0.10, 0.00, active ? 0.95 : 0.75);
   }
@@ -147,6 +159,12 @@ static void vfo_lcd_set_text_colour(cairo_t *cr, int alarm, int active) {
   if (alarm) {
     /* Dark maroon keeps TX/out-of-band readable on the amber LCD background. */
     cairo_set_source_rgba(cr, 0.48, 0.00, 0.00, 1.0);
+  } else if (qrg_bg_color_alter) {
+    if (active) {
+      cairo_set_source_rgba(cr, 0.015, 0.08, 0.18, 1.0);
+    } else {
+      cairo_set_source_rgba(cr, 0.04, 0.12, 0.24, 1.0);
+    }
   } else if (active) {
     /* Dark amber-brown gives the digits a softer LCD-segment look than pure black. */
     cairo_set_source_rgba(cr, 0.22, 0.11, 0.015, 1.0);
@@ -1596,7 +1614,7 @@ static gboolean vfo_configure_event_cb(GtkWidget         *widget,
   /* Initialize the surface to black */
   cairo_t *cr;
   cr = cairo_create(vfo_surface);
-  cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
+  cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   cairo_paint(cr);
   cairo_destroy(cr);
   g_idle_add(ext_vfo_update, NULL);
@@ -1662,7 +1680,7 @@ void vfo_update(void) {
   char temp_text[32];
   cairo_t *cr;
   cr = cairo_create(vfo_surface);
-  cairo_set_source_rgba(cr, COLOUR_VFO_BACKGND);
+  cairo_set_source_rgba(cr, COLOUR_BG_BLACK);
   cairo_paint(cr);
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   // -----------------------------------------------------------
@@ -1821,7 +1839,12 @@ void vfo_update(void) {
     cairo_move_to(cr, text_x, text_y);
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
     cairo_set_font_size(cr, vfl->size2 * font_scale);
+    cairo_save(cr);
+    if (qrg_bg_color_alter && lcd_active) {
+      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+    }
     cairo_show_text(cr, "A:");
+    cairo_restore(cr);
     cairo_set_font_size(cr, vfl->size3 * font_scale);
     if (hidden_text[0]) {
       cairo_save(cr);
@@ -1830,11 +1853,19 @@ void vfo_update(void) {
       cairo_restore(cr);
     }
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    cairo_save(cr);
+#ifdef __APPLE__
+    cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    if (qrg_bg_color_alter && lcd_active) {
+      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+    }
+#endif
     cairo_show_text(cr, main_text);
     if (hz_text[0]) {
       cairo_set_font_size(cr, vfl->size2 * font_scale);
       cairo_show_text(cr, hz_text);
     }
+    cairo_restore(cr);
   }
   // -----------------------------------------------------------
   //
@@ -1883,7 +1914,12 @@ void vfo_update(void) {
     cairo_move_to(cr, text_x, text_y);
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
     cairo_set_font_size(cr, vfl->size2 * font_scale);
+    cairo_save(cr);
+    if (qrg_bg_color_alter && lcd_active) {
+      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+    }
     cairo_show_text(cr, "B:");
+    cairo_restore(cr);
     cairo_set_font_size(cr, vfl->size3 * font_scale);
     if (hidden_text[0]) {
       cairo_save(cr);
@@ -1892,11 +1928,19 @@ void vfo_update(void) {
       cairo_restore(cr);
     }
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    cairo_save(cr);
+#ifdef __APPLE__
+    cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    if (qrg_bg_color_alter && lcd_active) {
+      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+    }
+#endif
     cairo_show_text(cr, main_text);
     if (hz_text[0]) {
       cairo_set_font_size(cr, vfl->size2 * font_scale);
       cairo_show_text(cr, hz_text);
     }
+    cairo_restore(cr);
   }
   //
   // Everything that follows uses font size 1
