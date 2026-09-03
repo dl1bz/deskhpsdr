@@ -2119,7 +2119,7 @@ void tx_set_filter(TRANSMITTER *tx) {
   tx_set_bandpass(tx);
   tx_set_deviation(tx);
   /* Reconfigure only when the filter change crosses a display-span tier. */
-  if (tx_display_span_hz(tx) != old_display_span) {
+  if (tx->analyzer_created && tx_display_span_hz(tx) != old_display_span) {
     tx_set_analyzer(tx);
   }
 }

@@ -1748,32 +1748,66 @@ void vfo_update(void) {
       break;
     }
     cairo_set_font_size(cr, vfl->size1 + 2);
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    if (qrg_bg_color_alter) {
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
+    } else {
+      // cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_ORANGE);
+    }
     cairo_move_to(cr, vfl->mode_x, vfl->mode_y);
+    cairo_save(cr);
+#ifdef __APPLE__
+    cairo_select_font_face(cr, DISPLAY_FONT_MATRIX, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#endif
     cairo_show_text(cr, temp_text);
+    cairo_restore(cr);
     switch (vfo[id].mode) {
     case modeDIGL:
       if (active_receiver->digi_offset_l > 0) {
-        snprintf(temp_text, sizeof(temp_text), "RX OFFSET");
+        snprintf(temp_text, sizeof(temp_text), "RX%d OFFSET", (int) active_receiver->id + 1);
         cairo_set_font_size(cr, vfl->size1 - 5);
-        cairo_set_source_rgba(cr, COLOUR_ORANGE);
+        if (qrg_bg_color_alter) {
+          cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
+        } else {
+          cairo_set_source_rgba(cr, COLOUR_ORANGE);
+        }
+#ifdef __APPLE__
+        cairo_move_to(cr, vfl->mode_x + 282, vfl->mode_y - 10);
+        cairo_show_text(cr, temp_text);
+        snprintf(temp_text, sizeof(temp_text), "%d Hz", active_receiver->digi_offset_l);
+        cairo_move_to(cr, vfl->mode_x + 290, vfl->mode_y + 1);
+        cairo_show_text(cr, temp_text);
+#else
         cairo_move_to(cr, vfl->mode_x + 182, vfl->mode_y - 8);
         cairo_show_text(cr, temp_text);
         snprintf(temp_text, sizeof(temp_text), "%d Hz", active_receiver->digi_offset_l);
         cairo_move_to(cr, vfl->mode_x + 187, vfl->mode_y + 3);
         cairo_show_text(cr, temp_text);
+#endif
       }
       break;
     case modeDIGU:
       if (active_receiver->digi_offset_u > 0) {
-        snprintf(temp_text, sizeof(temp_text), "RX OFFSET");
+        snprintf(temp_text, sizeof(temp_text), "RX%d OFFSET", (int) active_receiver->id + 1);
         cairo_set_font_size(cr, vfl->size1 - 5);
-        cairo_set_source_rgba(cr, COLOUR_ORANGE);
+        if (qrg_bg_color_alter) {
+          cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
+        } else {
+          cairo_set_source_rgba(cr, COLOUR_ORANGE);
+        }
+#ifdef __APPLE__
+        cairo_move_to(cr, vfl->mode_x + 282, vfl->mode_y - 10);
+        cairo_show_text(cr, temp_text);
+        snprintf(temp_text, sizeof(temp_text), "%d Hz", active_receiver->digi_offset_u);
+        cairo_move_to(cr, vfl->mode_x + 290, vfl->mode_y + 1);
+        cairo_show_text(cr, temp_text);
+#else
         cairo_move_to(cr, vfl->mode_x + 182, vfl->mode_y - 8);
         cairo_show_text(cr, temp_text);
         snprintf(temp_text, sizeof(temp_text), "%d Hz", active_receiver->digi_offset_u);
         cairo_move_to(cr, vfl->mode_x + 187, vfl->mode_y + 3);
         cairo_show_text(cr, temp_text);
+#endif
       }
       break;
     default:
@@ -1841,7 +1875,8 @@ void vfo_update(void) {
     cairo_set_font_size(cr, vfl->size2 * font_scale);
     cairo_save(cr);
     if (qrg_bg_color_alter && lcd_active) {
-      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
     cairo_show_text(cr, "A:");
     cairo_restore(cr);
@@ -1857,7 +1892,8 @@ void vfo_update(void) {
 #ifdef __APPLE__
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     if (qrg_bg_color_alter && lcd_active) {
-      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
 #endif
     cairo_show_text(cr, main_text);
@@ -1916,7 +1952,8 @@ void vfo_update(void) {
     cairo_set_font_size(cr, vfl->size2 * font_scale);
     cairo_save(cr);
     if (qrg_bg_color_alter && lcd_active) {
-      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
     cairo_show_text(cr, "B:");
     cairo_restore(cr);
@@ -1932,7 +1969,8 @@ void vfo_update(void) {
 #ifdef __APPLE__
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     if (qrg_bg_color_alter && lcd_active) {
-      cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
 #endif
     cairo_show_text(cr, main_text);
@@ -1946,7 +1984,7 @@ void vfo_update(void) {
   // Everything that follows uses font size 1
   //
   // cairo_set_font_size(cr, vfl->size1);
-  cairo_set_font_size(cr, 14.0);
+  cairo_set_font_size(cr, 14.0); // was 14
   // -----------------------------------------------------------
   //
   // Draw string indicating Zoom status
@@ -2106,27 +2144,40 @@ void vfo_update(void) {
   //
   // -----------------------------------------------------------
   if (vfl->agc_x != 0) {
+#ifdef __APPLE__
+    if (active_receiver->id == VFO_A) {
+      cairo_move_to(cr, vfl->agc_x + 60, vfl->agc_y + 25);
+    } else {
+      cairo_move_to(cr, vfl->agc_x + 630, vfl->agc_y + 25);
+    }
+    if (qrg_bg_color_alter) {
+      // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
+    } else {
+      cairo_set_source_rgba(cr, 0.22, 0.11, 0.015, 1.0);
+    }
+#else
     cairo_move_to(cr, vfl->agc_x, vfl->agc_y);
+    cairo_set_source_rgba(cr, COLOUR_ATTN);
+#endif
     switch (active_receiver->agc) {
     case AGC_OFF:
+#ifndef __APPLE__
       cairo_set_source_rgba(cr, COLOUR_SHADE);
-      cairo_show_text(cr, "AGC off");
+#endif
+      cairo_show_text(cr, "AGC--");
       break;
     case AGC_LONG:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      cairo_show_text(cr, "AGC long");
+      cairo_show_text(cr, "AGC-L");
       break;
     case AGC_SLOW:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      cairo_show_text(cr, "AGC slow");
+      cairo_show_text(cr, "AGC-S");
       break;
     case AGC_MEDIUM:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      cairo_show_text(cr, "AGC med");
+      cairo_show_text(cr, "AGC-M");
       break;
     case AGC_FAST:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-      cairo_show_text(cr, "AGC fast");
+      cairo_show_text(cr, "AGC-F");
       break;
     }
   }
@@ -2420,6 +2471,24 @@ void vfo_update(void) {
   // Draw string indicating SPLIT status
   //
   // -----------------------------------------------------------
+#ifdef __APPLE__
+  if (vfl->split_x != 0) {
+    if (active_receiver->id == VFO_A) {
+      cairo_move_to(cr, vfl->split_x - 68, vfl->split_y - 22);
+    } else {
+      cairo_move_to(cr, vfl->split_x + 503, vfl->split_y - 22);
+    }
+    if (qrg_bg_color_alter) {
+      // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
+    } else {
+      cairo_set_source_rgba(cr, 0.22, 0.11, 0.015, 1.0);
+    }
+    if (split) {
+      cairo_show_text(cr, "SPLIT");
+    }
+  }
+#else
   if (vfl->split_x != 0) {
     cairo_move_to(cr, vfl->split_x, vfl->split_y);
     if (split) {
@@ -2429,6 +2498,7 @@ void vfo_update(void) {
     }
     cairo_show_text(cr, "Split");
   }
+#endif
   // -----------------------------------------------------------
   //
   // Draw string indicating SAT status

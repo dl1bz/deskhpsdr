@@ -142,6 +142,7 @@
 #define COLOUR_DBLUE         0.00, 0.00, 1.00, 1.00 // blue
 #define COLOUR_LBLUE         0.85, 0.85, 1.00, 1.00 // light blue
 #define COLOUR_BLACK         0.00, 0.00, 0.00, 1.00 // black
+#define COLOUR_WHITE_LABEL   0.906, 0.929, 0.957, 1.0 // like button label
 
 //
 // Settings for a "black and white" spectrum (note the TX spectrum is always B&W).
