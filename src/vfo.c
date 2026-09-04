@@ -1902,6 +1902,21 @@ void vfo_update(void) {
       cairo_show_text(cr, hz_text);
     }
     cairo_restore(cr);
+    int lcd_rx_a = 0;
+    snprintf(main_text, sizeof(main_text), "RX%d%s", (int) lcd_rx_a + 1, (split && txvfo == VFO_A) ? " TX" : "");
+    if (lcd_active) {
+      cairo_move_to(cr, text_x, text_y - 25);
+    } else {
+      cairo_move_to(cr, text_x, text_y - 22);
+    }
+    cairo_save(cr);
+    cairo_set_font_size(cr, vfl->size1 * font_scale);
+    vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    if (qrg_bg_color_alter && lcd_active) {
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
+    }
+    cairo_show_text(cr, main_text);
+    cairo_restore(cr);
   }
   // -----------------------------------------------------------
   //
@@ -1978,6 +1993,26 @@ void vfo_update(void) {
       cairo_set_font_size(cr, vfl->size2 * font_scale);
       cairo_show_text(cr, hz_text);
     }
+    cairo_restore(cr);
+    int lcd_rx_b;
+    if (receivers == 2) {
+      lcd_rx_b = 1; // VFO B -> RX2
+    } else {
+      lcd_rx_b = active_receiver->id; // bei 1 RX existiert nur RX1
+    }
+    snprintf(main_text, sizeof(main_text), "RX%d%s", (int) lcd_rx_b + 1, (split && txvfo == VFO_B) ? " TX" : "");
+    if (lcd_active) {
+      cairo_move_to(cr, text_x, text_y - 25);
+    } else {
+      cairo_move_to(cr, text_x, text_y - 22);
+    }
+    cairo_save(cr);
+    cairo_set_font_size(cr, vfl->size1 * font_scale * 0.9);
+    vfo_lcd_set_text_colour(cr, alarm, lcd_active);
+    if (qrg_bg_color_alter && lcd_active) {
+      cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
+    }
+    cairo_show_text(cr, main_text);
     cairo_restore(cr);
   }
   //

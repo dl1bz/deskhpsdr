@@ -49,6 +49,7 @@
   #define DISPLAY_FONT_BOLD       "FreeSans"
   #define DISPLAY_FONT_METER      "FreeSansBold"
   #define DISPLAY_FONT_LCD        "Open 24 Display St"
+  #define DISPLAY_FONT_MATRIX     "Small LCD Sign"
 #endif
 
 #define DISPLAY_FONT_UDP          "JetBrains Mono"
