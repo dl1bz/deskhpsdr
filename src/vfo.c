@@ -2183,7 +2183,7 @@ void vfo_update(void) {
   //
   // -----------------------------------------------------------
   if (vfl->agc_x != 0) {
-#if defined(__APPLE__) || defined(__linux__)
+#ifdef __APPLE__
     if (active_receiver->id == VFO_A) {
       cairo_move_to(cr, vfl->agc_x + 60, vfl->agc_y + 25);
     } else {
@@ -2201,7 +2201,7 @@ void vfo_update(void) {
 #endif
     switch (active_receiver->agc) {
     case AGC_OFF:
-#if defined(__APPLE__) || defined(__linux__)
+#ifdef __APPLE__
       cairo_set_source_rgba(cr, COLOUR_SHADE);
 #endif
       cairo_show_text(cr, "AGC--");
