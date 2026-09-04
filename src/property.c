@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "property.h"
 #include "radio.h"
 #include "message.h"
@@ -79,17 +80,43 @@ void loadProperties(const char *filename) {
   //
   /////////////////////////////////////////////////////////////////////////////////////////
   if (f) {
-    const char *value;
-    const char *name;
-    char string[256];
     double version = -1;
-    while (fgets(string, sizeof(string), f)) {
+    GString *line = g_string_new(NULL);
+    int c;
+    while ((c = fgetc(f)) != EOF) {
+      if (c != '\n') {
+        g_string_append_c(line, (char)c);
+        continue;
+      }
       lines++;
-      if (string[0] != '#') {
-        name = strtok(string, "=");
-        value = strtok(NULL, "\n");
+      if (line->len > 0 && line->str[0] != '#') {
+        char *separator = strchr(line->str, '=');
         // Beware of "illegal" lines in corrupted files
-        if (name != NULL && value != NULL) {
+        if (separator != NULL && separator != line->str && separator[1] != '\0') {
+          *separator = '\0';
+          const char *name = line->str;
+          const char *value = separator + 1;
+          property = malloc(sizeof(PROPERTY));
+          property->name = g_strdup(name);
+          property->value = g_strdup(value);
+          property->next_property = properties;
+          properties = property;
+          if (strcmp(name, "property_version") == 0) {
+            version = atof(value);
+          }
+        }
+      }
+      g_string_truncate(line, 0);
+    }
+    // Process a final line that does not end in a newline.
+    if (line->len > 0) {
+      lines++;
+      if (line->str[0] != '#') {
+        char *separator = strchr(line->str, '=');
+        if (separator != NULL && separator != line->str && separator[1] != '\0') {
+          *separator = '\0';
+          const char *name = line->str;
+          const char *value = separator + 1;
           property = malloc(sizeof(PROPERTY));
           property->name = g_strdup(name);
           property->value = g_strdup(value);
@@ -101,6 +128,7 @@ void loadProperties(const char *filename) {
         }
       }
     }
+    g_string_free(line, TRUE);
     if (version >= 0.0 && version != PROPERTY_VERSION) {
       clearProperties();
       t_print("loadProperties: version=%f expected version=%f ignoring\n", version, PROPERTY_VERSION);
@@ -118,21 +146,48 @@ void loadProperties(const char *filename) {
 */
 void saveProperties(const char *filename) {
   PROPERTY* property;
-  FILE* f = fopen(filename, "w+");
-  char line[512];
-  if (!f) {
-    t_print("can't open %s\n", filename);
+  char version[32];
+  char *tmpname = g_strdup_printf("%s.tmp.XXXXXX", filename);
+  int fd = mkstemp(tmpname);
+  if (fd < 0) {
+    t_print("can't create temporary property file for %s\n", filename);
+    g_free(tmpname);
     return;
   }
-  snprintf(line, 512, "%0.2f", PROPERTY_VERSION);
-  setProperty("property_version", line);
+  FILE *f = fdopen(fd, "w");
+  if (!f) {
+    t_print("can't open temporary property file for %s\n", filename);
+    close(fd);
+    unlink(tmpname);
+    g_free(tmpname);
+    return;
+  }
+  snprintf(version, sizeof(version), "%0.2f", PROPERTY_VERSION);
+  setProperty("property_version", version);
+  gboolean ok = TRUE;
   property = properties;
-  while (property) {
-    snprintf(line, 512, "%s=%s\n", property->name, property->value);
-    fwrite(line, 1, strlen(line), f);
+  while (property && ok) {
+    if (fprintf(f, "%s=%s\n", property->name, property->value) < 0) {
+      ok = FALSE;
+    }
     property = property->next_property;
   }
-  fclose(f);
+  if (ok && fflush(f) != 0) {
+    ok = FALSE;
+  }
+  if (ok && fsync(fd) != 0) {
+    ok = FALSE;
+  }
+  if (fclose(f) != 0) {
+    ok = FALSE;
+  }
+  if (ok && rename(tmpname, filename) == 0) {
+    g_free(tmpname);
+    return;
+  }
+  t_print("can't save %s\n", filename);
+  unlink(tmpname);
+  g_free(tmpname);
 }
 
 /* --------------------------------------------------------------------------*/
