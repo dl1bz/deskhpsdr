@@ -48,7 +48,7 @@
   #define DISPLAY_FONT_NORMAL     "FreeSans"
   #define DISPLAY_FONT_BOLD       "FreeSans"
   #define DISPLAY_FONT_METER      "FreeSansBold"
-
+  #define DISPLAY_FONT_LCD        "Open 24 Display St"
 #endif
 
 #define DISPLAY_FONT_UDP          "JetBrains Mono"

@@ -1891,11 +1891,11 @@ void vfo_update(void) {
     cairo_save(cr);
 #ifdef __APPLE__
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#endif
     if (qrg_bg_color_alter && lcd_active) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
-#endif
     cairo_show_text(cr, main_text);
     if (hz_text[0]) {
       cairo_set_font_size(cr, vfl->size2 * font_scale);
@@ -1968,11 +1968,11 @@ void vfo_update(void) {
     cairo_save(cr);
 #ifdef __APPLE__
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#endif
     if (qrg_bg_color_alter && lcd_active) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
-#endif
     cairo_show_text(cr, main_text);
     if (hz_text[0]) {
       cairo_set_font_size(cr, vfl->size2 * font_scale);
