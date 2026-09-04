@@ -1891,6 +1891,8 @@ void vfo_update(void) {
     cairo_save(cr);
 #ifdef __APPLE__
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#else
+    cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #endif
     if (qrg_bg_color_alter && lcd_active) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
@@ -1982,6 +1984,8 @@ void vfo_update(void) {
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
     cairo_save(cr);
 #ifdef __APPLE__
+    cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+#else
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #endif
     if (qrg_bg_color_alter && lcd_active) {
