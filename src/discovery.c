@@ -35,6 +35,7 @@
 #include <ifaddrs.h>
 #include <errno.h>
 
+#include "discovery.h"
 #include "discovered.h"
 #include "old_discovery.h"
 #include "new_discovery.h"
@@ -65,7 +66,6 @@ static GtkWidget *apps_combobox[MAX_DEVICES];
 
 GtkWidget *tcpaddr;
 GtkWidget *tcpport;
-#define IPADDR_LEN 64  // Increased to support hostnames
 static char ipaddr_buf[IPADDR_LEN] = "";
 char *ipaddr_radio = &ipaddr_buf[0];
 int radio_port = 1024;  // Default discovery port
@@ -330,8 +330,8 @@ static gboolean radio_ip_cb(GtkWidget *widget, GdkEventButton *event, gpointer d
   cp = gtk_entry_get_text(GTK_ENTRY(tcpaddr));
   len = strnlen(cp, IPADDR_LEN);
   if (len == 0) {
-    // if the text entry field is empty, delete ip.addr
-    unlink("ip.addr");
+    ipaddr_radio[0] = '\0';
+    StartConfigSave();
     return TRUE;
   }
   // Accept both IP addresses and hostnames
@@ -352,11 +352,7 @@ static gboolean radio_ip_cb(GtkWidget *widget, GdkEventButton *event, gpointer d
     return TRUE;
   }
   g_strlcpy(ipaddr_radio, cp, IPADDR_LEN);
-  FILE *fp = fopen("ip.addr", "w");
-  if (fp) {
-    fprintf(fp, "%s\n", ipaddr_radio);
-    fclose(fp);
-  }
+  StartConfigSave();
   return FALSE;
 }
 
@@ -367,6 +363,7 @@ static gboolean radio_port_cb(GtkWidget *widget, GdkEventButton *event, gpointer
   if (strlen(cp) == 0) {
     // If empty, use default port
     radio_port = 1024;
+    StartConfigSave();
     return TRUE;
   }
   port = atoi(cp);
@@ -375,11 +372,7 @@ static gboolean radio_port_cb(GtkWidget *widget, GdkEventButton *event, gpointer
     return TRUE;
   }
   radio_port = port;
-  FILE *fp = fopen("radio.port", "w");
-  if (fp) {
-    fprintf(fp, "%d\n", radio_port);
-    fclose(fp);
-  }
+  StartConfigSave();
   return FALSE;
 }
 
@@ -401,34 +394,8 @@ void discovery(void) {
   // On the discovery screen, make the combo-boxes "touchscreen-friendly"
   //
   optimize_for_touchscreen = 1;
-  protocolsRestoreState();
   selected_device = 0;
   devices = 0;
-  // Try to locate IP addr
-  FILE *fp = fopen("ip.addr", "r");
-  if (fp) {
-    (void) fgets(ipaddr_radio, IPADDR_LEN, fp);
-    fclose(fp);
-    ipaddr_radio[IPADDR_LEN - 1] = 0;
-    // remove possible trailing newline char in ipaddr_radio
-    int len = strnlen(ipaddr_radio, IPADDR_LEN);
-    while (--len >= 0) {
-      if (ipaddr_radio[len] != '\n') { break; }
-      ipaddr_radio[len] = 0;
-    }
-  }
-  // Try to locate port
-  fp = fopen("radio.port", "r");
-  if (fp) {
-    char port_buf[8];
-    if (fgets(port_buf, sizeof(port_buf), fp)) {
-      int port = atoi(port_buf);
-      if (port >= 1 && port <= 65535) {
-        radio_port = port;
-      }
-    }
-    fclose(fp);
-  }
 #ifdef USBOZY
   if (enable_usbozy && !discover_only_stemlab) {
     //

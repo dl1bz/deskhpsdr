@@ -293,7 +293,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
   }
   // Start the collector only after the probe was sent successfully. UDP
   // responses queue in the socket until the thread starts receiving.
-  discover_thread_id = g_thread_new("old discover receive", discover_receive_thread, NULL);
+  discover_thread_id = g_thread_new("old discover receive", discover_receive_thread, GINT_TO_POINTER(discflag));
   // wait for receive thread to complete
   g_thread_join(discover_thread_id);
   close(discovery_socket);
@@ -333,6 +333,8 @@ static void discover(struct ifaddrs* iface, int discflag) {
 }
 
 static gpointer discover_receive_thread(gpointer data) {
+  const int discflag = GPOINTER_TO_INT(data);
+  const int targeted = (discflag == 2);
   struct sockaddr_in addr;
   socklen_t len;
   unsigned char buffer[2048];
@@ -487,6 +489,9 @@ static gpointer discover_receive_thread(gpointer data) {
                   discovered[devices].frequency_min * 1E-6,
                   discovered[devices].frequency_max * 1E-6);
           devices++;
+          if (targeted) {
+            break;
+          }
         }
       }
     }

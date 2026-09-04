@@ -121,7 +121,7 @@ static void vfo_lcd_draw_background(cairo_t *cr, double x, double y, double w, d
     cairo_pattern_add_color_stop_rgb(pat, 0.0, 1.00, 0.52, 0.48);
     cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.95, 0.28, 0.34);
     cairo_pattern_add_color_stop_rgb(pat, 1.0, 0.72, 0.08, 0.18);
-  } else if (qrg_bg_color_alter) {
+  } else if (freq_bgcolor_alter) {
     if (active) {
       cairo_pattern_add_color_stop_rgb(pat, 0.0, 0.38, 0.76, 1.00);
       cairo_pattern_add_color_stop_rgb(pat, 0.55, 0.18, 0.60, 1.00);
@@ -145,7 +145,7 @@ static void vfo_lcd_draw_background(cairo_t *cr, double x, double y, double w, d
   cairo_pattern_destroy(pat);
   if (tx) {
     cairo_set_source_rgba(cr, 0.55, 0.04, 0.10, 0.95);
-  } else if (qrg_bg_color_alter) {
+  } else if (freq_bgcolor_alter) {
     cairo_set_source_rgba(cr, 0.00, 0.10, 0.24, active ? 0.95 : 0.75);
   } else {
     cairo_set_source_rgba(cr, 0.24, 0.10, 0.00, active ? 0.95 : 0.75);
@@ -159,7 +159,7 @@ static void vfo_lcd_set_text_colour(cairo_t *cr, int alarm, int active) {
   if (alarm) {
     /* Dark maroon keeps TX/out-of-band readable on the amber LCD background. */
     cairo_set_source_rgba(cr, 0.48, 0.00, 0.00, 1.0);
-  } else if (qrg_bg_color_alter) {
+  } else if (freq_bgcolor_alter) {
     if (active) {
       cairo_set_source_rgba(cr, 0.015, 0.08, 0.18, 1.0);
     } else {
@@ -1748,7 +1748,7 @@ void vfo_update(void) {
       break;
     }
     cairo_set_font_size(cr, vfl->size1 + 2);
-    if (qrg_bg_color_alter) {
+    if (freq_bgcolor_alter) {
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     } else {
       // cairo_set_source_rgba(cr, COLOUR_ATTN);
@@ -1766,7 +1766,7 @@ void vfo_update(void) {
       if (active_receiver->digi_offset_l > 0) {
         snprintf(temp_text, sizeof(temp_text), "RX%d OFFSET", (int) active_receiver->id + 1);
         cairo_set_font_size(cr, vfl->size1 - 5);
-        if (qrg_bg_color_alter) {
+        if (freq_bgcolor_alter) {
           cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
         } else {
           cairo_set_source_rgba(cr, COLOUR_ORANGE);
@@ -1790,7 +1790,7 @@ void vfo_update(void) {
       if (active_receiver->digi_offset_u > 0) {
         snprintf(temp_text, sizeof(temp_text), "RX%d OFFSET", (int) active_receiver->id + 1);
         cairo_set_font_size(cr, vfl->size1 - 5);
-        if (qrg_bg_color_alter) {
+        if (freq_bgcolor_alter) {
           cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
         } else {
           cairo_set_source_rgba(cr, COLOUR_ORANGE);
@@ -1874,7 +1874,7 @@ void vfo_update(void) {
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
     cairo_set_font_size(cr, vfl->size2 * font_scale);
     cairo_save(cr);
-    if (qrg_bg_color_alter && lcd_active) {
+    if (freq_bgcolor_alter && lcd_active) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
@@ -1894,7 +1894,7 @@ void vfo_update(void) {
 #else
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #endif
-    if (qrg_bg_color_alter && lcd_active) {
+    if (freq_bgcolor_alter && lcd_active) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
@@ -1914,7 +1914,7 @@ void vfo_update(void) {
     cairo_save(cr);
     cairo_set_font_size(cr, vfl->size1 * font_scale);
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
-    if (qrg_bg_color_alter && lcd_active) {
+    if (freq_bgcolor_alter && lcd_active) {
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
     cairo_show_text(cr, main_text);
@@ -1968,7 +1968,7 @@ void vfo_update(void) {
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
     cairo_set_font_size(cr, vfl->size2 * font_scale);
     cairo_save(cr);
-    if (qrg_bg_color_alter && lcd_active) {
+    if (freq_bgcolor_alter && lcd_active) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
@@ -1988,7 +1988,7 @@ void vfo_update(void) {
 #else
     cairo_select_font_face(cr, DISPLAY_FONT_LCD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 #endif
-    if (qrg_bg_color_alter && lcd_active) {
+    if (freq_bgcolor_alter && lcd_active) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
@@ -2013,7 +2013,7 @@ void vfo_update(void) {
     cairo_save(cr);
     cairo_set_font_size(cr, vfl->size1 * font_scale * 0.9);
     vfo_lcd_set_text_colour(cr, alarm, lcd_active);
-    if (qrg_bg_color_alter && lcd_active) {
+    if (freq_bgcolor_alter && lcd_active) {
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     }
     cairo_show_text(cr, main_text);
@@ -2189,7 +2189,7 @@ void vfo_update(void) {
     } else {
       cairo_move_to(cr, vfl->agc_x + 630, vfl->agc_y + 25);
     }
-    if (qrg_bg_color_alter) {
+    if (freq_bgcolor_alter) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     } else {
@@ -2517,7 +2517,7 @@ void vfo_update(void) {
     } else {
       cairo_move_to(cr, vfl->split_x + 503, vfl->split_y - 22);
     }
-    if (qrg_bg_color_alter) {
+    if (freq_bgcolor_alter) {
       // cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
       cairo_set_source_rgba(cr, COLOUR_WHITE_LABEL);
     } else {

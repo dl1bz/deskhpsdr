@@ -24,11 +24,13 @@
 #include <string.h>
 #include "css.h"
 #include "ddc_menu.h"
+#include "discovery.h"
 #include "message.h"
 #include "screen_menu.h"
 #include "main.h"
 #include "toolset.h"
 #include "property.h"
+#include "protocols.h"
 
 const char *css_filename = "deskhpsdr.css";
 
@@ -1342,10 +1344,18 @@ void StartConfigSave(void) {
   SetPropI0("display_sysinfo", display_sysinfo);
   SetPropI0("log_debug", log_debug);
   SetPropI0("ui_debug", ui_debug);
-  SetPropI0("qrg_bg_color_alter", qrg_bg_color_alter);
+  SetPropI0("freq_bgcolor_alter", freq_bgcolor_alter);
   SetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
   SetPropI0("sertune_invert", sertune_invert);
   SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
+  SetPropS0("radio_host", ipaddr_radio);
+  SetPropI0("radio_port", radio_port);
+  SetPropI0("enable_protocol_1", enable_protocol_1);
+  SetPropI0("enable_protocol_2", enable_protocol_2);
+  SetPropI0("enable_stemlab", enable_stemlab);
+  SetPropI0("enable_usbozy", enable_usbozy);
+  SetPropI0("enable_saturn_xdma", enable_saturn_xdma);
+  SetPropI0("autostart", autostart);
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     char name[32];
     snprintf(name, sizeof(name), "p2_ddc%d_adc", i);
@@ -1366,10 +1376,25 @@ void StartConfigLoad(void) {
   GetPropI0("display_sysinfo", display_sysinfo);
   GetPropI0("log_debug", log_debug);
   GetPropI0("ui_debug", ui_debug);
-  GetPropI0("qrg_bg_color_alter", qrg_bg_color_alter);
+  GetPropI0("qrg_bg_color_alter", freq_bgcolor_alter);
+  GetPropI0("freq_bgcolor_alter", freq_bgcolor_alter);
   GetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
   GetPropI0("sertune_invert", sertune_invert);
   GetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
+  const char *radio_host = getProperty("radio_host");
+  if (radio_host) {
+    g_strlcpy(ipaddr_radio, radio_host, IPADDR_LEN);
+  }
+  GetPropI0("radio_port", radio_port);
+  GetPropI0("enable_protocol_1", enable_protocol_1);
+  GetPropI0("enable_protocol_2", enable_protocol_2);
+  GetPropI0("enable_stemlab", enable_stemlab);
+  GetPropI0("enable_usbozy", enable_usbozy);
+  GetPropI0("enable_saturn_xdma", enable_saturn_xdma);
+  GetPropI0("autostart", autostart);
+  if (radio_port < 1 || radio_port > 65535) {
+    radio_port = 1024;
+  }
   p2_angelia_ddc0_map = p2_angelia_ddc0_map ? 1 : 0;
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     char name[32];
@@ -1389,8 +1414,8 @@ void StartConfigLoad(void) {
   if (log_debug < 0 || log_debug > 1) {
     log_debug = 0;
   }
-  if (qrg_bg_color_alter < 0 || qrg_bg_color_alter > 1) {
-    qrg_bg_color_alter = 0;
+  if (freq_bgcolor_alter < 0 || freq_bgcolor_alter > 1) {
+    freq_bgcolor_alter = 0;
   }
   if (ui_debug < 0 || ui_debug > 1) {
     ui_debug = 0;

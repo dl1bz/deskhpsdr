@@ -22,6 +22,8 @@
 #include <stddef.h>
 #include <netinet/in.h>
 
+#define IPADDR_LEN 64  // Increased to support hostnames
+
 extern int  discover_only_stemlab;
 
 extern int delayed_discovery(gpointer data);

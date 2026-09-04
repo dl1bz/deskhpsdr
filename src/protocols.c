@@ -31,60 +31,42 @@
 #include <arpa/inet.h>
 #include "radio.h"
 #include "protocols.h"
-#include "property.h"
+#include "css.h"
 #include "new_menu.h"
 
 static GtkWidget *dialog;
 
-gboolean enable_protocol_1;
-gboolean enable_protocol_2;
-gboolean enable_stemlab;
-gboolean enable_usbozy;
-gboolean enable_saturn_xdma;
-gboolean autostart;
+gboolean enable_protocol_1 = TRUE;
+gboolean enable_protocol_2 = TRUE;
+gboolean enable_stemlab = TRUE;
+gboolean enable_usbozy = TRUE;
+gboolean enable_saturn_xdma = TRUE;
+gboolean autostart = FALSE;
 
 static void protocolsSaveState(void) {
-  clearProperties();
-  SetPropI0("enable_protocol_1",     enable_protocol_1);
-  SetPropI0("enable_protocol_2",     enable_protocol_2);
-  SetPropI0("enable_stemlab",        enable_stemlab);
-  SetPropI0("enable_usbozy",         enable_usbozy);
-  SetPropI0("enable_saturn_xdma",    enable_saturn_xdma);
-  SetPropI0("autostart",             autostart);
-  saveProperties("protocols.props");
+  StartConfigSave();
 }
 
-void protocolsRestoreState(void) {
-  loadProperties("protocols.props");
-  //
-  // Set defauls
-  //
-  enable_protocol_1 = TRUE;
-  enable_protocol_2 = TRUE;
-  enable_stemlab = TRUE;
-  enable_usbozy = TRUE;
-  enable_saturn_xdma = TRUE;
-  autostart = FALSE;
-  GetPropI0("enable_protocol_1",     enable_protocol_1);
-  GetPropI0("enable_protocol_2",     enable_protocol_2);
-  GetPropI0("enable_stemlab",        enable_stemlab);
-  GetPropI0("enable_usbozy",         enable_usbozy);
-  GetPropI0("enable_saturn_xdma",    enable_saturn_xdma);
-  GetPropI0("autostart",             autostart);
-  clearProperties();
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)event;
+  (void)data;
+  gtk_widget_destroy(widget);
+  return TRUE;
 }
 
-static void cleanup(void) {
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  dialog = NULL;
+  protocolsSaveState();
+}
+
+static void close_button_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
   if (dialog != NULL) {
     gtk_widget_destroy(dialog);
-    dialog = NULL;
-    protocolsSaveState();
   }
-}
-
-static gboolean close_cb(void) {
-  cleanup();
-  return TRUE;
 }
 
 static void protocol_1_cb(GtkToggleButton *widget, gpointer data) {
@@ -122,6 +104,10 @@ static void autostart_cb(GtkToggleButton *widget, gpointer data) {
 
 void configure_protocols(GtkWidget *parent) {
   int row;
+  if (dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(dialog));
+    return;
+  }
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   GtkWidget *headerbar = gtk_header_bar_new();
@@ -130,14 +116,14 @@ void configure_protocols(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Protocols", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete-event", G_CALLBACK(delete_event_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   row = 0;
   GtkWidget *close_b = gtk_button_new_with_label("Close");
-  g_signal_connect(close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "clicked", G_CALLBACK(close_button_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   row++;
   GtkWidget *b_enable_protocol_1 = gtk_check_button_new_with_label("Enable Protocol 1");
