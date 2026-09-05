@@ -2298,7 +2298,6 @@ void rx_set_noise(const RECEIVER *rx) {
 #ifndef WDSP1
   // NNR is designed to operate post-AGC.  Only the documented operator
   // controls are exposed here: model selection and mask floor.
-  SetRXANNRPosition(rx->id, 1);
   SetRXANNRModel(rx->id, rx->nnr_model);
   SetRXANNRMaskFloor(rx->id, rx->nnr_mask_floor);
 #endif
