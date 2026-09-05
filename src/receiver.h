@@ -43,6 +43,12 @@ enum _audio_channel_enum {
 #define RX_CW_ZERO_BEAT_STEP_HZ 5
 #define RX_CW_ZERO_BEAT_BINS (((RX_CW_ZERO_BEAT_MAX_HZ - RX_CW_ZERO_BEAT_MIN_HZ) / RX_CW_ZERO_BEAT_STEP_HZ) + 1)
 
+#ifdef WDSP1
+  #define NR_MAX 4
+#else
+  #define NR_MAX 5
+#endif
+
 typedef struct _receiver {
   int id;
   GMutex mutex;

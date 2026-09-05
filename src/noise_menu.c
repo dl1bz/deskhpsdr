@@ -74,6 +74,7 @@ static void cleanup(void) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
     gtk_widget_destroy(tmp);
+    memset(noise_menu_pages, 0, sizeof(noise_menu_pages));
     noise_menu_headerbar = NULL;
     noise_menu_stack = NULL;
     noise_menu_rx_buttons[0] = NULL;
@@ -217,7 +218,9 @@ static void update_noise_for_rx(RECEIVER *rx) {
     update_slider_nr_btn(noise_nr_allowed(rx));
     update_slider_snb_button(noise_nr_allowed(rx));
   }
-  noise_menu_sync_page(noise_menu_page_for_rx(rx));
+  if (dialog != NULL) {
+    noise_menu_sync_page(noise_menu_page_for_rx(rx));
+  }
 }
 
 void update_noise(void) {
@@ -514,6 +517,7 @@ static void nr4_sel_changed(GtkWidget *widget, gpointer data) {
   }
 }
 
+#ifndef WDSP1
 static void nnr_sel_changed(GtkWidget *widget, gpointer data) {
   NOISE_MENU_PAGE *page = (NOISE_MENU_PAGE *) data;
   if (page == NULL) {
@@ -522,7 +526,9 @@ static void nnr_sel_changed(GtkWidget *widget, gpointer data) {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     gtk_widget_show(page->nnr_container);
   } else {
-    gtk_widget_hide(page->nnr_container);
+    if (page->nnr_container != NULL) {
+      gtk_widget_hide(page->nnr_container);
+    }
   }
 }
 
@@ -561,6 +567,8 @@ static void nnr_defaults_cb(GtkWidget *widget, gpointer data) {
   g_signal_handlers_unblock_by_func(page->nnr_floor_b, G_CALLBACK(nnr_mask_floor_cb), rx);
   update_noise_for_rx(rx);
 }
+
+#endif
 
 static void nr4_reduction_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = noise_menu_get_rx(data);
@@ -611,31 +619,40 @@ static void noise_menu_update_page_selection(NOISE_MENU_PAGE *page) {
   if (page == NULL || page->rx == NULL) {
     return;
   }
+#ifndef WDSP1
   if (page->rx->nr == 5) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nnr_sel), TRUE);
     gtk_widget_show(page->nnr_container);
     gtk_widget_hide(page->nr_container);
     gtk_widget_hide(page->nb_container);
     gtk_widget_hide(page->nr4_container);
-  } else if (page->rx->nr == 4) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nr4_sel), TRUE);
-    gtk_widget_show(page->nr4_container);
-    gtk_widget_hide(page->nr_container);
-    gtk_widget_hide(page->nb_container);
-    gtk_widget_hide(page->nnr_container);
-  } else if (page->rx->nb > 0) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nb_sel), TRUE);
-    gtk_widget_show(page->nb_container);
-    gtk_widget_hide(page->nr_container);
-    gtk_widget_hide(page->nr4_container);
-    gtk_widget_hide(page->nnr_container);
-  } else {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nr_sel), TRUE);
-    gtk_widget_show(page->nr_container);
-    gtk_widget_hide(page->nb_container);
-    gtk_widget_hide(page->nr4_container);
-    gtk_widget_hide(page->nnr_container);
-  }
+  } else
+#endif
+    if (page->rx->nr == 4) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nr4_sel), TRUE);
+      gtk_widget_show(page->nr4_container);
+      gtk_widget_hide(page->nr_container);
+      gtk_widget_hide(page->nb_container);
+      if (page->nnr_container != NULL) {
+        gtk_widget_hide(page->nnr_container);
+      }
+    } else if (page->rx->nb > 0) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nb_sel), TRUE);
+      gtk_widget_show(page->nb_container);
+      gtk_widget_hide(page->nr_container);
+      gtk_widget_hide(page->nr4_container);
+      if (page->nnr_container != NULL) {
+        gtk_widget_hide(page->nnr_container);
+      }
+    } else {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nr_sel), TRUE);
+      gtk_widget_show(page->nr_container);
+      gtk_widget_hide(page->nb_container);
+      gtk_widget_hide(page->nr4_container);
+      if (page->nnr_container != NULL) {
+        gtk_widget_hide(page->nnr_container);
+      }
+    }
 }
 
 static const char *noise_menu_stack_name(int rx_id) {
@@ -645,9 +662,17 @@ static const char *noise_menu_stack_name(int rx_id) {
 static void noise_menu_update_title(int rx_id) {
   char title[80];
   if (receivers > 1) {
+#ifdef WDSP1
+    snprintf(title, sizeof(title), "%s - Noise [NR1-NR4] - RX%d", PGNAME, rx_id + 1);
+#else
     snprintf(title, sizeof(title), "%s - Noise [NR1-NR4/NNR] - RX%d", PGNAME, rx_id + 1);
+#endif
   } else {
+#ifdef WDSP1
+    snprintf(title, sizeof(title), "%s - Noise [NR1-NR4]", PGNAME);
+#else
     snprintf(title, sizeof(title), "%s - Noise [NR1-NR4/NNR]", PGNAME);
+#endif
   }
   if (dialog != NULL) {
     gtk_window_set_title(GTK_WINDOW(dialog), title);
@@ -738,7 +763,9 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NR2");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NR3");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NR4");
+#ifndef WDSP1
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NNR");
+#endif
   gtk_combo_box_set_active(GTK_COMBO_BOX(nr_combo), rx->nr);
   gtk_widget_set_hexpand(GTK_WIDGET(nr_combo), FALSE);
   gtk_widget_set_halign(nr_combo, GTK_ALIGN_START);
@@ -826,6 +853,7 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_widget_show(nr4_sel);
   gtk_grid_attach(GTK_GRID(grid), nr4_sel, 2, row, 1, 1);
   g_signal_connect(nr4_sel, "toggled", G_CALLBACK(nr4_sel_changed), page);
+#ifndef WDSP1
   GtkWidget *nnr_sel = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(nr_sel), "NNR Settings");
   page->nnr_sel = nnr_sel;
   gtk_widget_set_name(nnr_sel, "boldlabel");
@@ -833,6 +861,7 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_widget_show(nnr_sel);
   gtk_grid_attach(GTK_GRID(grid), nnr_sel, 3, row, 1, 1);
   g_signal_connect(nnr_sel, "toggled", G_CALLBACK(nnr_sel_changed), page);
+#endif
   //
   // Hiding/Showing ComboBoxes optimized for Touch-Screens does not
   // work. Therefore, we have to group the NR, NB, NR4, and NNR controls
@@ -1095,6 +1124,7 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   g_signal_connect(G_OBJECT(nr4_threshold_b), "changed", G_CALLBACK(nr4_threshold_cb), rx);
   gtk_container_add(GTK_CONTAINER(page->nr4_container), nr4_grid);
   //
+#ifndef WDSP1
   // NNR controls
   //
   page->nnr_container = gtk_fixed_new();
@@ -1131,6 +1161,7 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_grid_attach(GTK_GRID(nnr_grid), nnr_defaults_b, 3, 1, 1, 1);
   g_signal_connect(nnr_defaults_b, "clicked", G_CALLBACK(nnr_defaults_cb), page);
   gtk_container_add(GTK_CONTAINER(page->nnr_container), nnr_grid);
+#endif
   return grid;
 }
 

@@ -505,6 +505,7 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.preamp", rx->id,                       rx->preamp);
   GetPropI1("receiver.%d.nb", rx->id,                           rx->nb);
   GetPropI1("receiver.%d.nr", rx->id,                           rx->nr);
+  if (rx->nr < 0 || rx->nr > NR_MAX) { rx->nr = 0; }
   GetPropI1("receiver.%d.anf", rx->id,                          rx->anf);
   GetPropI1("receiver.%d.snb", rx->id,                          rx->snb);
   // GetPropI1("receiver.%d.mnf", rx->id,                          rx->mnf);
@@ -533,6 +534,10 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropF1("receiver.%d.nr4_post_filter_threshold", rx->id,    rx->nr4_post_filter_threshold);
   GetPropI1("receiver.%d.nnr_model", rx->id,                      rx->nnr_model);
   GetPropF1("receiver.%d.nnr_mask_floor", rx->id,                 rx->nnr_mask_floor);
+  if (rx->nnr_model < 0) { rx->nnr_model = 0; }
+  if (rx->nnr_model > 1) { rx->nnr_model = 1; }
+  if (rx->nnr_mask_floor < -50.0) { rx->nnr_mask_floor = -50.0; }
+  if (rx->nnr_mask_floor > -10.0) { rx->nnr_mask_floor = -10.0; }
   GetPropI1("receiver.%d.deviation", rx->id,                    rx->deviation);
   GetPropI1("receiver.%d.squelch_enable", rx->id,               rx->squelch_enable);
   GetPropF1("receiver.%d.squelch", rx->id,                      rx->squelch);
@@ -2243,7 +2248,9 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRRun(rx->id, 0);
   SetRXARNNRRun(rx->id, 0);
   SetRXASBNRRun(rx->id, 0);
+#ifndef WDSP1
   SetRXANNRRun(rx->id, 0);
+#endif
   //
   // c) NR
   //
@@ -2286,16 +2293,23 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXASBNRnoiseRescale(rx->id,        rx->nr4_noise_rescale);
   SetRXASBNRpostFilterThreshold(rx->id, rx->nr4_post_filter_threshold);
   //
-  // i) NNR
+  // i) NNR (WDSP 2.10 only)
   //
+#ifndef WDSP1
   // NNR is designed to operate post-AGC.  Only the documented operator
   // controls are exposed here: model selection and mask floor.
   SetRXANNRPosition(rx->id, 1);
   SetRXANNRModel(rx->id, rx->nnr_model);
   SetRXANNRMaskFloor(rx->id, rx->nnr_mask_floor);
+#endif
   //
   // Enable exactly the selected noise-reduction engine.
   //
+#ifdef WDSP1
+  if (rx->nr > NR_MAX) {
+    rx->nr = 0;
+  }
+#endif
   if (nr_allowed) {
     switch (rx->nr) {
     case 1:
@@ -2310,9 +2324,11 @@ void rx_set_noise(const RECEIVER *rx) {
     case 4:
       SetRXASBNRRun(rx->id, 1);
       break;
+#ifndef WDSP1
     case 5:
       SetRXANNRRun(rx->id, 1);
       break;
+#endif
     default:
       break;
     }

@@ -569,6 +569,7 @@ static void modesettingsRestoreState(void) {
     GetPropF1("modeset.%d.nb_thresh", i,             mode_settings[i].nb_thresh);
     GetPropI1("modeset.%d.nb2_mode", i,              mode_settings[i].nb2_mode);
     GetPropI1("modeset.%d.nr", i,                    mode_settings[i].nr);
+    if (mode_settings[i].nr < 0 || mode_settings[i].nr > NR_MAX) { mode_settings[i].nr = 0; }
     GetPropI1("modeset.%d.nr_agc", i,                mode_settings[i].nr_agc);
     GetPropI1("modeset.%d.nr2_gain_method", i,       mode_settings[i].nr2_gain_method);
     GetPropI1("modeset.%d.nr2_npe_method", i,        mode_settings[i].nr2_npe_method);
@@ -587,6 +588,10 @@ static void modesettingsRestoreState(void) {
     GetPropF1("modeset.%d.nr4_post_filter_threshold", i, mode_settings[i].nr4_post_filter_threshold);
     GetPropI1("modeset.%d.nnr_model", i,                mode_settings[i].nnr_model);
     GetPropF1("modeset.%d.nnr_mask_floor", i,           mode_settings[i].nnr_mask_floor);
+    if (mode_settings[i].nnr_model < 0) { mode_settings[i].nnr_model = 0; }
+    if (mode_settings[i].nnr_model > 1) { mode_settings[i].nnr_model = 1; }
+    if (mode_settings[i].nnr_mask_floor < -50.0) { mode_settings[i].nnr_mask_floor = -50.0; }
+    if (mode_settings[i].nnr_mask_floor > -10.0) { mode_settings[i].nnr_mask_floor = -10.0; }
     GetPropI1("modeset.%d.anf", i,                   mode_settings[i].anf);
     GetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
     GetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
@@ -2137,10 +2142,12 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR4");
       break;
+#ifndef WDSP1
     case 5:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NNR");
       break;
+#endif
     default:
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       cairo_show_text(cr, "NR");

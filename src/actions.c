@@ -1446,7 +1446,7 @@ int process_action(void *data) {
         active_receiver->nr = 0;
       } else {
         active_receiver->nr++;
-        if (active_receiver->nr > 5) { active_receiver->nr = 0; }
+        if (active_receiver->nr > NR_MAX) { active_receiver->nr = 0; }
       }
       if (id == 0) {
         mode_settings[mode].nr = active_receiver->nr;

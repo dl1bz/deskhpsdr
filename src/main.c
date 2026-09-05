@@ -370,7 +370,9 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     break;
   case GDK_KEY_r:
     // toggle NR
-    if (active_receiver->nr == 0) {
+    if (vfo[active_receiver->id].mode == modeDIGL || vfo[active_receiver->id].mode == modeDIGU) {
+      active_receiver->nr = 0;
+    } else if (active_receiver->nr == 0) {
       active_receiver->nr = 1;
     } else if (active_receiver->nr == 1) {
       active_receiver->nr = 2;
@@ -379,7 +381,11 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     } else if (active_receiver->nr == 3) {
       active_receiver->nr = 4;
     } else if (active_receiver->nr == 4) {
+#ifndef WDSP1
       active_receiver->nr = 5;
+#else
+      active_receiver->nr = 0;
+#endif
     } else {
       active_receiver->nr = 0;
     }
