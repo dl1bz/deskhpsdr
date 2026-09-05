@@ -387,6 +387,8 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropF1("receiver.%d.nr4_whitening_factor", rx->id,         rx->nr4_whitening_factor);
   SetPropF1("receiver.%d.nr4_noise_rescale", rx->id,            rx->nr4_noise_rescale);
   SetPropF1("receiver.%d.nr4_post_filter_threshold", rx->id,    rx->nr4_post_filter_threshold);
+  SetPropI1("receiver.%d.nnr_model", rx->id,                      rx->nnr_model);
+  SetPropF1("receiver.%d.nnr_mask_floor", rx->id,                 rx->nnr_mask_floor);
   SetPropI1("receiver.%d.deviation", rx->id,                    rx->deviation);
   SetPropI1("receiver.%d.squelch_enable", rx->id,               rx->squelch_enable);
   SetPropF1("receiver.%d.squelch", rx->id,                      rx->squelch);
@@ -529,6 +531,8 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropF1("receiver.%d.nr4_whitening_factor", rx->id,         rx->nr4_whitening_factor);
   GetPropF1("receiver.%d.nr4_noise_rescale", rx->id,            rx->nr4_noise_rescale);
   GetPropF1("receiver.%d.nr4_post_filter_threshold", rx->id,    rx->nr4_post_filter_threshold);
+  GetPropI1("receiver.%d.nnr_model", rx->id,                      rx->nnr_model);
+  GetPropF1("receiver.%d.nnr_mask_floor", rx->id,                 rx->nnr_mask_floor);
   GetPropI1("receiver.%d.deviation", rx->id,                    rx->deviation);
   GetPropI1("receiver.%d.squelch_enable", rx->id,               rx->squelch_enable);
   GetPropF1("receiver.%d.squelch", rx->id,                      rx->squelch);
@@ -938,6 +942,8 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->nr4_whitening_factor = 0.0;
   rx->nr4_noise_rescale = 2.0;
   rx->nr4_post_filter_threshold = -10.0;
+  rx->nnr_model = 0;
+  rx->nnr_mask_floor = -25.0;
   const BAND *b = band_get_band(vfo[rx->id].band);
   rx->alex_antenna = b->alexRxAntenna;
   if (have_alex_att) {
@@ -2237,6 +2243,7 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRRun(rx->id, 0);
   SetRXARNNRRun(rx->id, 0);
   SetRXASBNRRun(rx->id, 0);
+  SetRXANNRRun(rx->id, 0);
   //
   // c) NR
   //
@@ -2265,7 +2272,7 @@ void rx_set_noise(const RECEIVER *rx) {
   //
   SetRXASNBARun(rx->id, nr_allowed && rx->snb);
   //
-  // These WDSP functions only exist in a special, non-official version
+  // The following two engines are local deskHPSDR extensions.
   //
   // g) NR3
   //
@@ -2278,6 +2285,14 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXASBNRwhiteningFactor(rx->id,     rx->nr4_whitening_factor);
   SetRXASBNRnoiseRescale(rx->id,        rx->nr4_noise_rescale);
   SetRXASBNRpostFilterThreshold(rx->id, rx->nr4_post_filter_threshold);
+  //
+  // i) NNR
+  //
+  // NNR is designed to operate post-AGC.  Only the documented operator
+  // controls are exposed here: model selection and mask floor.
+  SetRXANNRPosition(rx->id, 1);
+  SetRXANNRModel(rx->id, rx->nnr_model);
+  SetRXANNRMaskFloor(rx->id, rx->nnr_mask_floor);
   //
   // Enable exactly the selected noise-reduction engine.
   //
@@ -2294,6 +2309,9 @@ void rx_set_noise(const RECEIVER *rx) {
       break;
     case 4:
       SetRXASBNRRun(rx->id, 1);
+      break;
+    case 5:
+      SetRXANNRRun(rx->id, 1);
       break;
     default:
       break;

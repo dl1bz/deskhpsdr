@@ -378,6 +378,8 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       active_receiver->nr = 3;
     } else if (active_receiver->nr == 3) {
       active_receiver->nr = 4;
+    } else if (active_receiver->nr == 4) {
+      active_receiver->nr = 5;
     } else {
       active_receiver->nr = 0;
     }

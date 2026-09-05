@@ -195,7 +195,8 @@ static const char *nr_labels[] = {
   "NR",
   "NR2",
   "NR3",
-  "NR4"
+  "NR4",
+  "NNR"
 };
 
 //
@@ -1394,7 +1395,7 @@ static gboolean nr_btn_pressed_cb(GtkWidget *widget, GdkEventButton *event, gpoi
   }
   int id = active_receiver->id;
   active_receiver->nr++;
-  if (active_receiver->nr > 4) {
+  if (active_receiver->nr > 5) {
     active_receiver->nr = 0;
   }
   if (id == 0) {
@@ -2057,7 +2058,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4\n\n"
+                                        "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
                                         "Right click: Open NR Menu");
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
@@ -2188,7 +2189,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4\n\n"
+                                        "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
                                         "Right click: Open NR Menu");
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));

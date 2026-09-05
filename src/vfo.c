@@ -353,6 +353,8 @@ static void modesettingsSaveState(void) {
     SetPropF1("modeset.%d.nr4_whitening_factor", i,  mode_settings[i].nr4_whitening_factor);
     SetPropF1("modeset.%d.nr4_noise_rescale", i,     mode_settings[i].nr4_noise_rescale);
     SetPropF1("modeset.%d.nr4_post_filter_threshold", i, mode_settings[i].nr4_post_filter_threshold);
+    SetPropI1("modeset.%d.nnr_model", i,                mode_settings[i].nnr_model);
+    SetPropF1("modeset.%d.nnr_mask_floor", i,           mode_settings[i].nnr_mask_floor);
     SetPropI1("modeset.%d.anf", i,                   mode_settings[i].anf);
     SetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
     SetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
@@ -454,6 +456,8 @@ static void modesettingsRestoreState(void) {
     mode_settings[i].nr4_whitening_factor = 0.0;
     mode_settings[i].nr4_noise_rescale = 2.0;
     mode_settings[i].nr4_post_filter_threshold = 2.0;
+    mode_settings[i].nnr_model = 0;
+    mode_settings[i].nnr_mask_floor = -25.0;
     mode_settings[i].anf = 0;
     mode_settings[i].snb = 0;
     mode_settings[i].en_rxeq = 0;
@@ -581,6 +585,8 @@ static void modesettingsRestoreState(void) {
     GetPropF1("modeset.%d.nr4_whitening_factor", i,  mode_settings[i].nr4_whitening_factor);
     GetPropF1("modeset.%d.nr4_noise_rescale", i,     mode_settings[i].nr4_noise_rescale);
     GetPropF1("modeset.%d.nr4_post_filter_threshold", i, mode_settings[i].nr4_post_filter_threshold);
+    GetPropI1("modeset.%d.nnr_model", i,                mode_settings[i].nnr_model);
+    GetPropF1("modeset.%d.nnr_mask_floor", i,           mode_settings[i].nnr_mask_floor);
     GetPropI1("modeset.%d.anf", i,                   mode_settings[i].anf);
     GetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
     GetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
@@ -903,6 +909,8 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   rx->nr4_whitening_factor      = mode_settings[m].nr4_whitening_factor;
   rx->nr4_noise_rescale         = mode_settings[m].nr4_noise_rescale;
   rx->nr4_post_filter_threshold = mode_settings[m].nr4_post_filter_threshold;
+  rx->nnr_model                  = mode_settings[m].nnr_model;
+  rx->nnr_mask_floor             = mode_settings[m].nnr_mask_floor;
   rx->anf                       = mode_settings[m].anf;
   rx->snb                       = mode_settings[m].snb;
   rx->agc                       = mode_settings[m].agc;
@@ -2128,6 +2136,10 @@ void vfo_update(void) {
     case 4:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR4");
+      break;
+    case 5:
+      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_show_text(cr, "NNR");
       break;
     default:
       cairo_set_source_rgba(cr, COLOUR_SHADE);

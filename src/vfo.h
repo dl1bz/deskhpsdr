@@ -99,7 +99,7 @@ struct _mode_settings {
   double nb_advtime;
   double nb_thresh;
   int    nb2_mode;
-  int    nr;                        // Noise reduction (0..2 or 0..4)
+  int    nr;                        // Noise reduction (0..5)
   int    nr_agc;                    // NR parameters
   int    nr2_gain_method;
   int    nr2_npe_method;
@@ -117,6 +117,8 @@ struct _mode_settings {
   double nr4_whitening_factor;
   double nr4_noise_rescale;
   double nr4_post_filter_threshold;
+  int nnr_model;                    // NNR parameters
+  double nnr_mask_floor;
   int anf;                          // Automatic notch filter
   int snb;                          // Spectral noise blanker
   int agc;                          // AGC characteristics (slow/medium/fast etc.)

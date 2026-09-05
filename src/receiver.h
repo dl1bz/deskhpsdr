@@ -110,6 +110,7 @@ typedef struct _receiver {
   // nr = 2:         Spectral Noise Reduction, "NR2", "AEMNR"
   // nr = 3:         non-standard extension to WDSP
   // nr = 4:         non-standard extension to WDSP
+  // nr = 5:         Neural Noise Reduction, "NNR"
   //
   // nb = 0:         No noise blanker
   // nb = 1:         Preemptive Wideband Blanker, "NB", "ANB"
@@ -184,6 +185,12 @@ typedef struct _receiver {
   double nr4_whitening_factor;
   double nr4_noise_rescale;
   double nr4_post_filter_threshold;
+
+  //
+  // NNR parameters
+  //
+  int nnr_model;
+  double nnr_mask_floor;
 
   int alex_antenna;
   int alex_attenuation;

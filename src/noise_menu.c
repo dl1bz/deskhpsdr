@@ -48,9 +48,13 @@ typedef struct _NOISE_MENU_PAGE {
   GtkWidget *nr_container;
   GtkWidget *nb_container;
   GtkWidget *nr4_container;
+  GtkWidget *nnr_container;
+  GtkWidget *nnr_model_combo;
+  GtkWidget *nnr_floor_b;
   GtkWidget *nr_sel;
   GtkWidget *nb_sel;
   GtkWidget *nr4_sel;
+  GtkWidget *nnr_sel;
 } NOISE_MENU_PAGE;
 
 static NOISE_MENU_PAGE noise_menu_pages[2];
@@ -137,11 +141,17 @@ static void noise_menu_sync_page(NOISE_MENU_PAGE *page) {
   if (page->nr4_sel != NULL) {
     gtk_widget_set_sensitive(page->nr4_sel, nr_allowed);
   }
+  if (page->nnr_sel != NULL) {
+    gtk_widget_set_sensitive(page->nnr_sel, nr_allowed);
+  }
   if (page->nr_container != NULL) {
     gtk_widget_set_sensitive(page->nr_container, nr_allowed);
   }
   if (page->nr4_container != NULL) {
     gtk_widget_set_sensitive(page->nr4_container, nr_allowed);
+  }
+  if (page->nnr_container != NULL) {
+    gtk_widget_set_sensitive(page->nnr_container, nr_allowed);
   }
   if (!nr_allowed && page->nb_sel != NULL) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nb_sel), TRUE);
@@ -197,6 +207,8 @@ static void update_noise_for_rx(RECEIVER *rx) {
     mode_settings[mode].nr4_whitening_factor = rx->nr4_whitening_factor;
     mode_settings[mode].nr4_noise_rescale = rx->nr4_noise_rescale;
     mode_settings[mode].nr4_post_filter_threshold = rx->nr4_post_filter_threshold;
+    mode_settings[mode].nnr_model = rx->nnr_model;
+    mode_settings[mode].nnr_mask_floor = rx->nnr_mask_floor;
     copy_mode_settings(mode);
   }
   rx_set_noise(rx);
@@ -502,6 +514,54 @@ static void nr4_sel_changed(GtkWidget *widget, gpointer data) {
   }
 }
 
+static void nnr_sel_changed(GtkWidget *widget, gpointer data) {
+  NOISE_MENU_PAGE *page = (NOISE_MENU_PAGE *) data;
+  if (page == NULL) {
+    return;
+  }
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+    gtk_widget_show(page->nnr_container);
+  } else {
+    gtk_widget_hide(page->nnr_container);
+  }
+}
+
+static void nnr_model_cb(GtkWidget *widget, gpointer data) {
+  RECEIVER *rx = noise_menu_get_rx(data);
+  if (rx == NULL) {
+    return;
+  }
+  rx->nnr_model = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+  update_noise_for_rx(rx);
+}
+
+static void nnr_mask_floor_cb(GtkWidget *widget, gpointer data) {
+  RECEIVER *rx = noise_menu_get_rx(data);
+  if (rx == NULL) {
+    return;
+  }
+  rx->nnr_mask_floor = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  update_noise_for_rx(rx);
+}
+
+static void nnr_defaults_cb(GtkWidget *widget, gpointer data) {
+  (void) widget;
+  NOISE_MENU_PAGE *page = (NOISE_MENU_PAGE *) data;
+  if (page == NULL || page->rx == NULL) {
+    return;
+  }
+  RECEIVER *rx = page->rx;
+  rx->nnr_model = 0;
+  rx->nnr_mask_floor = -25.0;
+  g_signal_handlers_block_by_func(page->nnr_model_combo, G_CALLBACK(nnr_model_cb), rx);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(page->nnr_model_combo), rx->nnr_model);
+  g_signal_handlers_unblock_by_func(page->nnr_model_combo, G_CALLBACK(nnr_model_cb), rx);
+  g_signal_handlers_block_by_func(page->nnr_floor_b, G_CALLBACK(nnr_mask_floor_cb), rx);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(page->nnr_floor_b), rx->nnr_mask_floor);
+  g_signal_handlers_unblock_by_func(page->nnr_floor_b, G_CALLBACK(nnr_mask_floor_cb), rx);
+  update_noise_for_rx(rx);
+}
+
 static void nr4_reduction_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = noise_menu_get_rx(data);
   if (rx == NULL) {
@@ -551,21 +611,30 @@ static void noise_menu_update_page_selection(NOISE_MENU_PAGE *page) {
   if (page == NULL || page->rx == NULL) {
     return;
   }
-  if (page->rx->nr == 4) {
+  if (page->rx->nr == 5) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nnr_sel), TRUE);
+    gtk_widget_show(page->nnr_container);
+    gtk_widget_hide(page->nr_container);
+    gtk_widget_hide(page->nb_container);
+    gtk_widget_hide(page->nr4_container);
+  } else if (page->rx->nr == 4) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nr4_sel), TRUE);
     gtk_widget_show(page->nr4_container);
     gtk_widget_hide(page->nr_container);
     gtk_widget_hide(page->nb_container);
+    gtk_widget_hide(page->nnr_container);
   } else if (page->rx->nb > 0) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nb_sel), TRUE);
     gtk_widget_show(page->nb_container);
     gtk_widget_hide(page->nr_container);
     gtk_widget_hide(page->nr4_container);
+    gtk_widget_hide(page->nnr_container);
   } else {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(page->nr_sel), TRUE);
     gtk_widget_show(page->nr_container);
     gtk_widget_hide(page->nb_container);
     gtk_widget_hide(page->nr4_container);
+    gtk_widget_hide(page->nnr_container);
   }
 }
 
@@ -576,9 +645,9 @@ static const char *noise_menu_stack_name(int rx_id) {
 static void noise_menu_update_title(int rx_id) {
   char title[80];
   if (receivers > 1) {
-    snprintf(title, sizeof(title), "%s - Noise [NR1-NR4] - RX%d", PGNAME, rx_id + 1);
+    snprintf(title, sizeof(title), "%s - Noise [NR1-NR4/NNR] - RX%d", PGNAME, rx_id + 1);
   } else {
-    snprintf(title, sizeof(title), "%s - Noise [NR1-NR4]", PGNAME);
+    snprintf(title, sizeof(title), "%s - Noise [NR1-NR4/NNR]", PGNAME);
   }
   if (dialog != NULL) {
     gtk_window_set_title(GTK_WINDOW(dialog), title);
@@ -669,6 +738,7 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NR2");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NR3");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NR4");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nr_combo), NULL, "NNR");
   gtk_combo_box_set_active(GTK_COMBO_BOX(nr_combo), rx->nr);
   gtk_widget_set_hexpand(GTK_WIDGET(nr_combo), FALSE);
   gtk_widget_set_halign(nr_combo, GTK_ALIGN_START);
@@ -731,7 +801,7 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_grid_attach(GTK_GRID(grid), line, 0, row, 4, 1);
   //---------------------------------------------------------------------------------
   //
-  // Third row: select settings: NR, NB, NR4 settings
+  // Third row: select settings: NR, NB, NR4, NNR settings
   //
   row++;
   GtkWidget *nr_sel = gtk_radio_button_new_with_label_from_widget(NULL, "NR Settings");
@@ -756,9 +826,16 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_widget_show(nr4_sel);
   gtk_grid_attach(GTK_GRID(grid), nr4_sel, 2, row, 1, 1);
   g_signal_connect(nr4_sel, "toggled", G_CALLBACK(nr4_sel_changed), page);
+  GtkWidget *nnr_sel = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(nr_sel), "NNR Settings");
+  page->nnr_sel = nnr_sel;
+  gtk_widget_set_name(nnr_sel, "boldlabel");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(nnr_sel), 0);
+  gtk_widget_show(nnr_sel);
+  gtk_grid_attach(GTK_GRID(grid), nnr_sel, 3, row, 1, 1);
+  g_signal_connect(nnr_sel, "toggled", G_CALLBACK(nnr_sel_changed), page);
   //
   // Hiding/Showing ComboBoxes optimized for Touch-Screens does not
-  // work. Therefore, we have to group the NR, NB, and NR4 controls
+  // work. Therefore, we have to group the NR, NB, NR4, and NNR controls
   // in a container, which then can be shown/hidden
   //
   //
@@ -1017,6 +1094,43 @@ static GtkWidget *build_noise_page(RECEIVER *rx, NOISE_MENU_PAGE *page) {
   gtk_grid_attach(GTK_GRID(nr4_grid), nr4_threshold_b, 3, 2, 1, 1);
   g_signal_connect(G_OBJECT(nr4_threshold_b), "changed", G_CALLBACK(nr4_threshold_cb), rx);
   gtk_container_add(GTK_CONTAINER(page->nr4_container), nr4_grid);
+  //
+  // NNR controls
+  //
+  page->nnr_container = gtk_fixed_new();
+  gtk_grid_attach(GTK_GRID(grid), page->nnr_container, 0, row, 4, 3);
+  GtkWidget *nnr_grid = gtk_grid_new();
+  gtk_grid_set_column_homogeneous(GTK_GRID(nnr_grid), TRUE);
+  gtk_grid_set_row_homogeneous(GTK_GRID(nnr_grid), TRUE);
+  gtk_grid_set_column_spacing(GTK_GRID(nnr_grid), 5);
+  gtk_grid_set_row_spacing(GTK_GRID(nnr_grid), 5);
+  //
+  GtkWidget *nnr_model_title = gtk_label_new("NNR Model");
+  gtk_widget_set_name(nnr_model_title, "boldlabel");
+  gtk_widget_set_halign(nnr_model_title, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(nnr_grid), nnr_model_title, 0, 0, 1, 1);
+  GtkWidget *nnr_model_combo = gtk_combo_box_text_new();
+  page->nnr_model_combo = nnr_model_combo;
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nnr_model_combo), NULL, "Standard");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(nnr_model_combo), NULL, "Premium");
+  gtk_combo_box_set_active(GTK_COMBO_BOX(nnr_model_combo), rx->nnr_model);
+  my_combo_attach(GTK_GRID(nnr_grid), nnr_model_combo, 1, 0, 1, 1);
+  g_signal_connect(nnr_model_combo, "changed", G_CALLBACK(nnr_model_cb), rx);
+  //
+  GtkWidget *nnr_floor_title = gtk_label_new("NNR Mask Floor (dB)");
+  gtk_widget_set_name(nnr_floor_title, "boldlabel");
+  gtk_widget_set_halign(nnr_floor_title, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(nnr_grid), nnr_floor_title, 2, 0, 1, 1);
+  GtkWidget *nnr_floor_b = gtk_spin_button_new_with_range(-50.0, -10.0, 1.0);
+  page->nnr_floor_b = nnr_floor_b;
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(nnr_floor_b), rx->nnr_mask_floor);
+  gtk_grid_attach(GTK_GRID(nnr_grid), nnr_floor_b, 3, 0, 1, 1);
+  g_signal_connect(nnr_floor_b, "changed", G_CALLBACK(nnr_mask_floor_cb), rx);
+  //
+  GtkWidget *nnr_defaults_b = gtk_button_new_with_label("Defaults");
+  gtk_grid_attach(GTK_GRID(nnr_grid), nnr_defaults_b, 3, 1, 1, 1);
+  g_signal_connect(nnr_defaults_b, "clicked", G_CALLBACK(nnr_defaults_cb), page);
+  gtk_container_add(GTK_CONTAINER(page->nnr_container), nnr_grid);
   return grid;
 }
 
