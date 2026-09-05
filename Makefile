@@ -122,7 +122,7 @@ ifeq ($(WDSP1),ON)
 WDSP_DIR := wdsp-1.29
 CFLAGS += -DWDSP1
 else
-WDSP_DIR := wdsp-2.00
+WDSP_DIR := wdsp-2.10
 endif
 
 # clang detection (macOS: CC may be "cc" but still clang)
@@ -1018,7 +1018,7 @@ clean:
 	rm -f src/*.orig
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
-	@if [ -d wdsp-2.00 ]; then $(MAKE) -C wdsp-2.00 clean; fi
+	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)
@@ -1034,7 +1034,7 @@ uninstall:
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
-	@if [ -d wdsp-2.00 ]; then $(MAKE) -C wdsp-2.00 clean; fi
+	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 	@echo "Remove installed deskHPSDR binary..."
