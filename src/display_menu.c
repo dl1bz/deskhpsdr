@@ -57,8 +57,6 @@ static GtkWidget *panadapter_high_r = NULL;
 static GtkWidget *panadapter_low_r = NULL;
 static GtkWidget *b_display_solardata;
 
-static GMutex peak_mutex;
-
 static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
@@ -82,9 +80,7 @@ static void chkbtn_toggle_cb(GtkWidget *widget, gpointer data) {
 
 static void chkbtn_peakTX_cb(GtkWidget *widget, gpointer data) {
   int *value = (int *) data;
-  g_mutex_lock(&peak_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  g_mutex_unlock(&peak_mutex);
 }
 
 static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
@@ -94,9 +90,7 @@ static void chkbtn_peak_cb(GtkWidget *widget, gpointer data) {
       rx_panadapter_peak_hold_clear(receiver[i]);
     }
   }
-  g_mutex_lock(&peak_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  g_mutex_unlock(&peak_mutex);
   if (display_zoompan) {
     update_peak_btn();
   }
@@ -1172,6 +1166,5 @@ void display_menu(GtkWidget *parent) {
     gtk_widget_hide(general_container);
     gtk_widget_hide(peaks_container);
   }
-  g_mutex_init(&peak_mutex);
 }
 

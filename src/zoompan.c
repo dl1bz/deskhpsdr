@@ -64,7 +64,6 @@ static gulong peak_btn_signal_id;
 static GtkWidget *wf3d_btn;
 static GtkWidget *wf3d_label;
 static gulong wf3d_btn_signal_id;
-static GMutex peak_mutex;
 static GMutex zoom_mutex;
 
 
@@ -268,9 +267,7 @@ static void peak_toggle_cb(GtkWidget *widget, gpointer data) {
   if (active_receiver) {
     rx_panadapter_peak_hold_clear(active_receiver);
   }
-  g_mutex_lock(&peak_mutex);
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  g_mutex_unlock(&peak_mutex);
 }
 
 static void wf3d_toggle_cb(GtkWidget *widget, gpointer data) {
@@ -551,7 +548,5 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   // In Grid einhängen → 1 Spalte, volle Kontrolle über Breite via Box
   gtk_grid_attach(GTK_GRID(zoompan), pan_box, /* column */ 1, /* row */ 0, /* width */ 1, /* height */ 1);
   gtk_widget_show_all(pan_box);
-  g_mutex_init(&pan_zoom_mutex);
-  g_mutex_init(&peak_mutex);
   return zoompan;
 }
