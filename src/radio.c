@@ -876,8 +876,16 @@ void radio_reconfigure(void) {
   y = VFO_HEIGHT;
   for (i = 0; i < receivers; i++) {
     RECEIVER *rx = receiver[i];
+    //
+    // rx->width and the pixel buffer must be updated as one atomic step with
+    // respect to the RX display timer, otherwise the draw code can observe a
+    // new width against an old (smaller) pixel_samples buffer. rx_reconfigure()
+    // takes display_mutex itself, so release it again before calling it.
+    //
+    g_mutex_lock(&rx->display_mutex);
     rx->width = my_width;
-    rx_update_zoom(rx);
+    rx_update_zoom_locked(rx);
+    g_mutex_unlock(&rx->display_mutex);
     rx_reconfigure(rx, rx_height / receivers);
     if (!radio_is_transmitting() || duplex) {
       gtk_fixed_move(GTK_FIXED(fixed), rx->panel, 0, y);

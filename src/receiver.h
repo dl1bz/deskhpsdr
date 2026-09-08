@@ -417,5 +417,10 @@ extern void   rx_set_squelch(const RECEIVER *rx);
 
 extern void   rx_vfo_changed(RECEIVER *rx);
 extern void   rx_update_zoom(RECEIVER *rx);
+//
+// Same as rx_update_zoom(), but the caller must already hold
+// rx->display_mutex (GMutex is not recursive).
+//
+extern void   rx_update_zoom_locked(RECEIVER *rx);
 
 #endif

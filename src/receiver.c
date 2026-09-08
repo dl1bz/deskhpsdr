@@ -712,20 +712,42 @@ static int rx_update_display(gpointer data) {
       return TRUE;
     }
   }
+  //
+  // Returning FALSE destroys this GSource. rx->update_timer_id must be cleared
+  // as well, otherwise it keeps a dead source id that rx_set_displaying() will
+  // later hand to g_source_remove(). GLib recycles source ids, so that can tear
+  // down an unrelated live source (the other RX display timer, vfo_timeout,
+  // full_screen_timeout, ...) and parts of the GUI silently stop updating.
+  //
+  // Only clear it if the source being dispatched really is the one we recorded.
+  //
+  {
+    GSource *self = g_main_current_source();
+    if (self != NULL && g_source_get_id(self) == rx->update_timer_id) {
+      rx->update_timer_id = 0;
+    }
+  }
   return FALSE;
 }
 
+//
+// Tear down the RX display timer, tolerating an id that has already been
+// destroyed. Always leaves rx->update_timer_id at 0.
+//
+static void rx_remove_update_timer(RECEIVER *rx) {
+  if (rx->update_timer_id > 0) {
+    GSource *src = g_main_context_find_source_by_id(NULL, rx->update_timer_id);
+    if (src != NULL) {
+      g_source_destroy(src);
+    }
+    rx->update_timer_id = 0;
+  }
+}
+
 void rx_set_displaying(RECEIVER *rx) {
+  rx_remove_update_timer(rx);
   if (rx->displaying) {
-    if (rx->update_timer_id > 0) {
-      g_source_remove(rx->update_timer_id);
-    }
     rx->update_timer_id = gdk_threads_add_timeout_full(G_PRIORITY_HIGH_IDLE, 1000 / rx->fps, rx_update_display, rx, NULL);
-  } else {
-    if (rx->update_timer_id > 0) {
-      g_source_remove(rx->update_timer_id);
-      rx->update_timer_id = 0;
-    }
   }
 }
 
@@ -1633,13 +1655,26 @@ void rx_add_div_iq_samples(RECEIVER *rx, double i0, double q0, double i1, double
   rx_add_iq_samples(rx, i_sample, q_sample);
 }
 
-void rx_update_zoom(RECEIVER *rx) {
+void rx_update_zoom_locked(RECEIVER *rx) {
   //
   // This is called whenever rx->zoom or rx->width changes,
   // since in both cases the analyzer must be restarted.
   //
-  rx->pixels = rx->width * rx->zoom;
-  rx->hz_per_pixel = (double) rx->sample_rate / (double) rx->pixels;
+  // The caller MUST hold rx->display_mutex. That mutex is what keeps
+  // GetPixels() (which writes rx->pixels floats into rx->pixel_samples)
+  // and the panadapter/waterfall draw code away from the buffer while it
+  // is being replaced here. Without it, a zoom change coming from the
+  // rigctl/CAT thread or from a menu callback frees the buffer under a
+  // running display update, which corrupts the malloc arena and makes the
+  // whole GUI hang on the next allocation.
+  //
+  // Note the ordering below: the replacement buffer is allocated first and
+  // rx->pixels is published LAST, so rx->pixels never describes a larger
+  // buffer than the one rx->pixel_samples actually points to.
+  //
+  int new_pixels = rx->width * rx->zoom;
+  float *new_samples = g_new(float, new_pixels);
+  rx->hz_per_pixel = (double) rx->sample_rate / (double) new_pixels;
   if (rx->zoom == 1) {
     rx->pan = 0;
   } else {
@@ -1648,16 +1683,28 @@ void rx_update_zoom(RECEIVER *rx) {
       long long min_frequency = vfo[vfo_id].frequency - (long long)(rx->sample_rate / 2);
       rx->pan = ((vfo[vfo_id].ctun_frequency - min_frequency) / rx->hz_per_pixel) - (rx->width / 2);
       if (rx->pan < 0) { rx->pan = 0; }
-      if (rx->pan > (rx->pixels - rx->width)) { rx->pan = rx->pixels - rx->width; }
+      if (rx->pan > (new_pixels - rx->width)) { rx->pan = new_pixels - rx->width; }
     } else {
-      rx->pan = (rx->pixels / 2) - (rx->width / 2);
+      rx->pan = (new_pixels / 2) - (rx->width / 2);
     }
   }
   if (rx->pixel_samples != NULL) {
     g_free(rx->pixel_samples);
   }
-  rx->pixel_samples = g_new(float, rx->pixels);
+  rx->pixel_samples = new_samples;
+  rx->pixels = new_pixels;
   rx_set_analyzer(rx);
+}
+
+void rx_update_zoom(RECEIVER *rx) {
+  //
+  // Locking wrapper around rx_update_zoom_locked(). Use this one unless
+  // rx->display_mutex is already held -- GMutex is not recursive, so
+  // callers that already hold it must call rx_update_zoom_locked().
+  //
+  g_mutex_lock(&rx->display_mutex);
+  rx_update_zoom_locked(rx);
+  g_mutex_unlock(&rx->display_mutex);
 }
 
 void rx_set_filter(RECEIVER *rx) {

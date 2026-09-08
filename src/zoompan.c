@@ -216,7 +216,11 @@ static void zoom_value_changed_cb(GtkWidget *widget, gpointer data) {
   g_mutex_lock(&pan_zoom_mutex);
   g_mutex_lock(&active_receiver->display_mutex);
   active_receiver->zoom = (int)(gtk_range_get_value(GTK_RANGE(zoom_scale)) + 0.5);
-  rx_update_zoom(active_receiver);
+  //
+  // display_mutex is already held here (and stays held across the pan-range
+  // updates below), so call the non-locking variant -- GMutex is not recursive.
+  //
+  rx_update_zoom_locked(active_receiver);
   g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
   gtk_range_set_range(GTK_RANGE(pan_scale), 0.0,
                       (double)(active_receiver->zoom == 1 ? active_receiver->pixels : active_receiver->pixels - active_receiver->width));

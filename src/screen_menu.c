@@ -115,6 +115,16 @@ static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
+    //
+    // Cancel any pending debounced apply(). Without this, changing a screen
+    // setting and closing the menu within 500 msec leaves a timeout armed that
+    // fires after the dialog is gone and after radio_save_state() has already
+    // written the pre-change geometry to the props file.
+    //
+    if (apply_timeout != 0) {
+      g_source_remove(apply_timeout);
+      apply_timeout = 0;
+    }
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
