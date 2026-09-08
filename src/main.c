@@ -977,7 +977,7 @@ static void register_macos_bundle_fonts(void) {
 }
 
 #if defined(BUNDLED_APP)
-static void setup_macos_bundle_gsettings(void) {
+static void setup_macos_bundle_environment(void) {
   CFBundleRef bundle = CFBundleGetMainBundle();
   if (bundle == NULL) {
     return;
@@ -997,6 +997,18 @@ static void setup_macos_bundle_gsettings(void) {
              "%s/share/glib-2.0/schemas",
              resources_path);
     g_setenv("GSETTINGS_SCHEMA_DIR", schema_path, TRUE);
+    char pixbuf_module_dir[PATH_MAX];
+    snprintf(pixbuf_module_dir,
+             sizeof(pixbuf_module_dir),
+             "%s/../Frameworks",
+             resources_path);
+    g_setenv("GDK_PIXBUF_MODULEDIR", pixbuf_module_dir, TRUE);
+    char pixbuf_module_file[PATH_MAX];
+    snprintf(pixbuf_module_file,
+             sizeof(pixbuf_module_file),
+             "%s/gdk-pixbuf-loaders.cache",
+             resources_path);
+    g_setenv("GDK_PIXBUF_MODULE_FILE", pixbuf_module_file, TRUE);
   }
   CFRelease(resources_url);
 }
@@ -1008,7 +1020,7 @@ int main(int argc, char **argv) {
   register_macos_bundle_fonts();
 #endif
 #if defined(__APPLE__) && defined(BUNDLED_APP)
-  setup_macos_bundle_gsettings();
+  setup_macos_bundle_environment();
 #endif
 #if !defined(__WAYLAND__)
   enforce_x11_backend_policy();

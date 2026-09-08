@@ -4,26 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 GTK_PREFIX="/opt/deskhpsdr-gtk3min"
-BREW_PREFIX="$(brew --prefix)"
-
-ARCH="$(uname -m)"
-case "$ARCH" in
-    arm64)
-        ZIP_ARCH="arm64"
-        ;;
-    x86_64)
-        ZIP_ARCH="x86_64"
-        ;;
-    *)
-        echo "ERROR: unsupported architecture: $ARCH"
-        exit 1
-        ;;
-esac
-
+BREW_PREFIX="/opt/homebrew"
 APP="deskHPSDR.app"
 EXE="deskhpsdr"
 GIT_VERSION="$(git describe --abbrev=0 --tags --always)"
-ZIP="deskHPSDR-v${GIT_VERSION}-macos-${ZIP_ARCH}.zip"
+ZIP="deskHPSDR-v${GIT_VERSION}-macos-arm64.zip"
 ZIP_NOTARY="deskHPSDR-notary.zip"
 IDENTITY="Developer ID Application: Heiko Amft (SAJWA8RU2X)"
 PROFILE="DL1BZ-DeveloperID"
@@ -125,9 +110,7 @@ done
 }
 
 LOADER_SRC_DIR="$GTK_PREFIX/lib/gdk-pixbuf-2.0/2.10.0/loaders"
-LOADER_CACHE_SRC="$GTK_PREFIX/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
 LOADER_DST_DIR="$APP/Contents/Frameworks"
-LOADER_CACHE_DST="$APP/Contents/Resources/gdk-pixbuf-loaders.cache"
 
 [ -d "$LOADER_SRC_DIR" ] || {
   echo "ERROR: gdk-pixbuf loader source dir missing: $LOADER_SRC_DIR"
@@ -144,27 +127,6 @@ cp "$LOADER_SRC_DIR"/*.so "$LOADER_DST_DIR/"
 for loader in "$LOADER_DST_DIR"/libpixbufloader-*.so; do
   dylibbundler -of -b -x "$loader" -d "$APP/Contents/Frameworks" -p "@loader_path" -s "$GTK_PREFIX/lib" -s "$BREW_PREFIX/lib"
 done
-
-[ -f "$LOADER_CACHE_SRC" ] || {
-  echo "ERROR: gdk-pixbuf loaders.cache missing: $LOADER_CACHE_SRC"
-  exit 1
-}
-
-sed \
-  -e '/^#/d' \
-  -e "s|$LOADER_SRC_DIR/|@executable_path/../Frameworks/|g" \
-  -e "s|$LOADER_SRC_DIR|@executable_path/../Frameworks|g" \
-  "$LOADER_CACHE_SRC" > "$LOADER_CACHE_DST"
-
-grep -q '"@executable_path/../Frameworks/libpixbufloader-svg.so"' "$LOADER_CACHE_DST" || {
-  echo "ERROR: relocatable SVG loader missing from bundled loaders.cache"
-  exit 1
-}
-
-if grep -E "/Users/|/opt/homebrew|/usr/local|$GTK_PREFIX" "$LOADER_CACHE_DST"; then
-  echo "ERROR: external path in bundled gdk-pixbuf loaders.cache"
-  exit 1
-fi
 
 SCHEMA_SRC_DIR="$GTK_PREFIX/share/glib-2.0/schemas"
 SCHEMA_DST_DIR="$APP/Contents/Resources/share/glib-2.0/schemas"
