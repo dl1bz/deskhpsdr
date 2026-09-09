@@ -9,7 +9,7 @@ RANLIB ?= ranlib
 ifeq ($(UNAME_S), Darwin)
     CFLAGS ?= -O2 -flto
 else
-    CFLAGS ?= -02
+    CFLAGS ?= -O2
 endif
 CFLAGS += -pthread -D_GNU_SOURCE -Wno-parentheses -Wcast-align
 CFLAGS += -I../wdsp-libs/include
