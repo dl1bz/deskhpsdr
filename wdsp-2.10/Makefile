@@ -7,6 +7,8 @@ AR ?= ar
 RANLIB ?= ranlib
 
 ifeq ($(UNAME_S), Darwin)
+    # WDSP NNR debug output into working directory
+    # CFLAGS ?= -O2 -flto -DNNET_PROFILE
     CFLAGS ?= -O2 -flto
 else
     CFLAGS ?= -O2

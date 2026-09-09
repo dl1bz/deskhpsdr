@@ -247,6 +247,42 @@ void LinuxResetEvent(HANDLE handle) {
   while (sem_trywait(sem) == 0) ;
 }
 
+void sendbuf(void *arg); // declared in analyzer.c but not in header file
+
+static void wdsp_thread_name(void(__cdecl *start_address)(void *), void *arglist, char *tname, size_t size) {
+  if (start_address == &wdspmain) {
+    snprintf(tname, size, "Wchan%d", (int)(uintptr_t)arglist);
+  } else if (start_address == &sendbuf) {
+    snprintf(tname, size, "Wdisp%d", (int)(uintptr_t)arglist);
+  } else if (start_address == &flushChannel) {
+    snprintf(tname, size, "Wflush%d", (int)(uintptr_t)arglist);
+  } else if (start_address == &syncb_main) {
+    snprintf(tname, size, "WSync");
+  } else {
+    snprintf(tname, size, "WDSP");
+  }
+}
+
+#ifdef __APPLE__
+typedef struct {
+  void(__cdecl *start_address)(void *);
+  void *arglist;
+  char tname[64];
+} WDSP_THREAD_START;
+
+static void *wdsp_thread_start(void *context) {
+  WDSP_THREAD_START *start = (WDSP_THREAD_START *)context;
+  void(__cdecl *start_address)(void *) = start->start_address;
+  void *arglist = start->arglist;
+  char tname[64];
+  snprintf(tname, sizeof(tname), "%s", start->tname);
+  free(start);
+  (void)pthread_setname_np(tname);
+  start_address(arglist);
+  return NULL;
+}
+#endif
+
 HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, void *arglist) {
   pthread_t threadid;
   pthread_attr_t  attr;
@@ -263,10 +299,26 @@ HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, v
     pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
+#ifdef __APPLE__
+  WDSP_THREAD_START *start = malloc(sizeof(*start));
+  if (start == NULL) {
+    pthread_attr_destroy(&attr);
+    return (HANDLE) -1;
+  }
+  start->start_address = start_address;
+  start->arglist = arglist;
+  wdsp_thread_name(start_address, arglist, start->tname, sizeof(start->tname));
+  if (pthread_create(&threadid, &attr, wdsp_thread_start, start)) {
+    free(start);
+    pthread_attr_destroy(&attr);
+    return (HANDLE) -1;
+  }
+#else
   if (pthread_create(&threadid, &attr, (void * (*)(void *))start_address, arglist)) {
     pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
+#endif
   pthread_attr_destroy(&attr);
 #if !defined(__APPLE__) && !defined(NO_PTHREAD_SETNAME_NP)
   //
@@ -277,20 +329,8 @@ HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, v
   // one sees what the individual threads are doing when
   // watching the system via "top -h"
   //
-  void sendbuf(void *arg); // declared in analyzer.c but not in header file
   char tname[64];
-  if (start_address == &wdspmain) {
-    snprintf(tname, sizeof(tname), "Wchan%d", (int)(uintptr_t)arglist);
-  } else if (start_address == &sendbuf) {
-    snprintf(tname, sizeof(tname), "Wdisp%d", (int)(uintptr_t)arglist);
-  } else if (start_address == &flushChannel) {
-    snprintf(tname, sizeof(tname), "Wflush%d", (int)(uintptr_t)arglist);
-  } else if (start_address == &syncb_main) {
-    snprintf(tname, sizeof(tname), "WSync");
-  } else {
-    // in case there are more worker types
-    snprintf(tname, sizeof(tname), "WDSP");
-  }
+  wdsp_thread_name(start_address, arglist, tname, sizeof(tname));
   //
   // Ignore return value since we continue anyway.
   //
