@@ -115,7 +115,7 @@ GIT_REMOTE := $(shell git remote get-url origin)
 ifeq ($(GDB), ON)
 	CFLAGS?= -g -O0 -DG_ENABLE_DEBUG
 else
-	CFLAGS?= -O3
+	CFLAGS?= -O2
 endif
 
 ifeq ($(WDSP1),ON)

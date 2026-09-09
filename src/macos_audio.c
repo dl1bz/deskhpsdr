@@ -166,6 +166,11 @@ static inline void rx_audio_catchup_limits(int target, int *stop, int *start) {
 #define CW_LAT_TARGET         256
 #define CW_LAT_HIGH           384
 
+#define MIC_LAT_LOW            192
+#define MIC_LAT_TARGET         384
+#define MIC_LAT_HIGH           768
+#define MIC_LAT_CORRECTION_RATE 0.01
+
 //
 // Ring buffer for "local microphone" samples stored locally here.
 // NOTE: lead large buffer for some "loopback" devices which produce
@@ -180,6 +185,10 @@ static atomic_int mic_ring_silence_frames;
 static atomic_uint mic_ring_diag_generation;
 static atomic_uint mic_ring_underruns;
 static atomic_uint mic_ring_overruns;
+static atomic_uint mic_ring_diag_low_corrections;
+static atomic_uint mic_ring_diag_high_corrections;
+static double mic_ring_consumer_phase = 0.0;
+static int mic_ring_consumer_correction = 0;
 static atomic_uint cw_ring_diag_underruns;
 
 
@@ -218,6 +227,9 @@ int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
   }
   memset(diag, 0, sizeof(*diag));
   diag->capacity = MY_RING_BUFFER_SIZE;
+  diag->low = MIC_LAT_LOW;
+  diag->target = MIC_LAT_TARGET;
+  diag->high = MIC_LAT_HIGH;
   if (mic_ring_buffer == NULL) {
     return 1;
   }
@@ -228,6 +240,10 @@ int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag) {
     queued += MY_RING_BUFFER_SIZE;
   }
   diag->queued = queued;
+  diag->low_corrections =
+          atomic_load_explicit(&mic_ring_diag_low_corrections, memory_order_relaxed);
+  diag->high_corrections =
+          atomic_load_explicit(&mic_ring_diag_high_corrections, memory_order_relaxed);
   diag->available = 1;
   return 1;
 }
@@ -300,7 +316,6 @@ static inline void local_mic_ring_push(float sample) {
 static inline float local_mic_ring_pop(void) {
   int outpt;
   int inpt;
-  int newpt;
   float sample;
   if (mic_ring_buffer == NULL) {
     return 0.0f;
@@ -315,6 +330,8 @@ static inline float local_mic_ring_pop(void) {
     inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
     atomic_store_explicit(&mic_ring_outpt, inpt, memory_order_release);
     atomic_store_explicit(&mic_ring_silence_frames, reset_frames, memory_order_relaxed);
+    mic_ring_consumer_phase = 0.0;
+    mic_ring_consumer_correction = 0;
     atomic_fetch_add_explicit(&mic_ring_diag_generation, 1U, memory_order_release);
   }
   int silence_frames = atomic_load_explicit(&mic_ring_silence_frames, memory_order_relaxed);
@@ -324,16 +341,70 @@ static inline float local_mic_ring_pop(void) {
   }
   outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_relaxed);
   inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
-  if (outpt == inpt) {
+  int queued = inpt - outpt;
+  if (queued < 0) {
+    queued += MY_RING_BUFFER_SIZE;
+  }
+  if (queued == 0) {
+    mic_ring_consumer_phase = 0.0;
+    mic_ring_consumer_correction = -1;
     atomic_fetch_add_explicit(&mic_ring_underruns, 1U, memory_order_relaxed);
     return 0.0f;
   }
-  sample = mic_ring_buffer[outpt];
-  newpt = outpt + 1;
-  if (newpt == MY_RING_BUFFER_SIZE) {
-    newpt = 0;
+  /*
+   * CoreAudio input devices and the SDR TX path both nominally run at 48 kHz,
+   * but their physical clocks are independent. Keep the microphone ring near
+   * the existing 8 ms operating point by changing only the consumer rate by
+   * +/-1 percent outside a hysteresis window. Linear interpolation avoids
+   * hard sample drops or repetitions while correcting long-term clock drift.
+   */
+  if (mic_ring_consumer_correction < 0) {
+    if (queued >= MIC_LAT_TARGET) {
+      mic_ring_consumer_correction = 0;
+      mic_ring_consumer_phase = 0.0;
+    }
+  } else if (mic_ring_consumer_correction > 0) {
+    if (queued <= MIC_LAT_TARGET) {
+      mic_ring_consumer_correction = 0;
+      mic_ring_consumer_phase = 0.0;
+    }
+  } else if (queued <= MIC_LAT_LOW) {
+    mic_ring_consumer_correction = -1;
+  } else if (queued >= MIC_LAT_HIGH) {
+    mic_ring_consumer_correction = 1;
   }
-  atomic_store_explicit(&mic_ring_outpt, newpt, memory_order_release);
+  sample = mic_ring_buffer[outpt];
+  if (queued > 1 && mic_ring_consumer_phase > 0.0) {
+    int nextpt = outpt + 1;
+    if (nextpt == MY_RING_BUFFER_SIZE) {
+      nextpt = 0;
+    }
+    sample += (mic_ring_buffer[nextpt] - sample) * (float)mic_ring_consumer_phase;
+  }
+  double step = 1.0;
+  if (mic_ring_consumer_correction < 0) {
+    step -= MIC_LAT_CORRECTION_RATE;
+  } else if (mic_ring_consumer_correction > 0) {
+    step += MIC_LAT_CORRECTION_RATE;
+  }
+  mic_ring_consumer_phase += step;
+  int advance = (int)mic_ring_consumer_phase;
+  mic_ring_consumer_phase -= (double)advance;
+  if (advance > queued) {
+    advance = queued;
+    mic_ring_consumer_phase = 0.0;
+  }
+  if (advance == 0) {
+    atomic_fetch_add_explicit(&mic_ring_diag_low_corrections, 1U, memory_order_relaxed);
+  } else if (advance > 1) {
+    atomic_fetch_add_explicit(&mic_ring_diag_high_corrections,
+                              (unsigned int)(advance - 1), memory_order_relaxed);
+  }
+  outpt += advance;
+  while (outpt >= MY_RING_BUFFER_SIZE) {
+    outpt -= MY_RING_BUFFER_SIZE;
+  }
+  atomic_store_explicit(&mic_ring_outpt, outpt, memory_order_release);
   return sample;
 }
 
@@ -475,6 +546,10 @@ int audio_open_input(void) {
   atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_diag_low_corrections, 0U, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_diag_high_corrections, 0U, memory_order_relaxed);
+  mic_ring_consumer_phase = 0.0;
+  mic_ring_consumer_correction = 0;
   g_mutex_unlock(&audio_mutex);
   void *handle = coreaudio_input_open(transmitter->microphone_name);
   if (handle == NULL) {
@@ -822,6 +897,8 @@ float audio_get_next_mic_sample(void) {
             atomic_load_explicit(&mic_ring_diag_generation, memory_order_acquire);
     atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
     atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_diag_low_corrections, 0U, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_diag_high_corrections, 0U, memory_order_relaxed);
     return sample;
   }
   unsigned int diag_generation =
@@ -833,6 +910,8 @@ float audio_get_next_mic_sample(void) {
     max_queued = 0;
     atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
     atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_diag_low_corrections, 0U, memory_order_relaxed);
+    atomic_store_explicit(&mic_ring_diag_high_corrections, 0U, memory_order_relaxed);
   }
   int outpt = atomic_load_explicit(&mic_ring_outpt, memory_order_acquire);
   int inpt = atomic_load_explicit(&mic_ring_inpt, memory_order_acquire);
@@ -852,11 +931,13 @@ float audio_get_next_mic_sample(void) {
   } else if (now_us >= next_log_us) {
     unsigned int underruns = atomic_exchange_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
     unsigned int overruns = atomic_exchange_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
-    l_print("CoreAudio MIC ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u overruns=%u\n",
+    unsigned int low_corr = atomic_exchange_explicit(&mic_ring_diag_low_corrections, 0U, memory_order_relaxed);
+    unsigned int high_corr = atomic_exchange_explicit(&mic_ring_diag_high_corrections, 0U, memory_order_relaxed);
+    l_print("CoreAudio MIC ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u overruns=%u corr-low=%u corr-high=%u\n",
             queued, (double) queued * 1000.0 / 48000.0,
             min_queued, (double) min_queued * 1000.0 / 48000.0,
             max_queued, (double) max_queued * 1000.0 / 48000.0,
-            underruns, overruns);
+            underruns, overruns, low_corr, high_corr);
     min_queued = MY_RING_BUFFER_SIZE;
     max_queued = 0;
     next_log_us = now_us + G_USEC_PER_SEC;
@@ -957,6 +1038,10 @@ void audio_close_input(void) {
   atomic_store_explicit(&mic_ring_silence_frames, 0, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_underruns, 0U, memory_order_relaxed);
   atomic_store_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_diag_low_corrections, 0U, memory_order_relaxed);
+  atomic_store_explicit(&mic_ring_diag_high_corrections, 0U, memory_order_relaxed);
+  mic_ring_consumer_phase = 0.0;
+  mic_ring_consumer_correction = 0;
   g_mutex_unlock(&audio_mutex);
 }
 

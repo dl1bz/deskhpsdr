@@ -5,7 +5,7 @@ CC ?= cc
 AR ?= ar
 RANLIB ?= ranlib
 
-CFLAGS ?= -O3
+CFLAGS ?= -O2
 CFLAGS += -pthread -D_GNU_SOURCE -Wno-parentheses -Wcast-align
 CFLAGS += -I../wdsp-libs/include
 

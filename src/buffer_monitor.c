@@ -161,7 +161,7 @@ static void buffer_monitor_collect(void) {
       row_update(n++, name, value, ms,
                  (double)diag.queued / scale_samples, 1);
 #ifdef COREAUDIO
-      if (n < BUFFER_MONITOR_MAX_ROWS) {
+      if (!radio_is_transmitting() && n < BUFFER_MONITOR_MAX_ROWS) {
         char corr_name[32];
         char corr_value[64];
         g_snprintf(corr_name, sizeof(corr_name), "RX%d Corrections", rx + 1);
@@ -193,6 +193,16 @@ static void buffer_monitor_collect(void) {
 #endif
       row_update(n++, mic_name, value, ms,
                  (double)diag.queued / (double)diag.capacity, 1);
+#ifdef COREAUDIO
+      if (radio_is_transmitting() && n < BUFFER_MONITOR_MAX_ROWS) {
+        char corr_value[64];
+        g_snprintf(corr_value, sizeof(corr_value), "LOW %u   HIGH %u",
+                   diag.low_corrections, diag.high_corrections);
+        row_update(n++, "Mic Corrections", corr_value,
+                   (double)(diag.low_corrections + diag.high_corrections),
+                   0.0, 0);
+      }
+#endif
     }
   }
   if (active_receiver != NULL && n < BUFFER_MONITOR_MAX_ROWS) {
