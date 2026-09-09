@@ -297,6 +297,7 @@ static void save_native_response_cb(GtkNativeDialog *ndlg, gint response_id, gpo
   g_object_unref(ndlg);
 }
 
+/*
 static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
   GtkFileChooserNative *native;
   native = gtk_file_chooser_native_new(
@@ -326,6 +327,49 @@ static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(native), TRUE);
   // Async: kein run(), kein Block
   g_signal_connect(native, "response", G_CALLBACK(save_native_response_cb), NULL);
+  gtk_native_dialog_show(GTK_NATIVE_DIALOG(native));
+}
+*/
+static void audio_profile_save_cb(GtkWidget *widget, gpointer user_data) {
+  GtkFileChooserNative *native;
+  native = gtk_file_chooser_native_new(
+                   "Export deskHPSDR Audio Profile",
+                   NULL,                           // bewusst ohne Parent
+                   GTK_FILE_CHOOSER_ACTION_SAVE,
+                   "_Save",
+                   "_Cancel");
+  // Start im workdir
+  if (*workdir) {
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(native), workdir);
+  }
+  // Default-Dateiname vorschlagen
+  {
+    char defname[128];
+    char micname[64];
+    g_strlcpy(micname,
+              transmitter->microphone_name,
+              sizeof(micname));
+    sanitize_filename(micname);
+    snprintf(defname,
+             sizeof(defname),
+             "audio_profile_%s",
+             micname);
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(native), defname);
+  }
+  // Optional: Filter
+  {
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "Audio Profile (*.prop)");
+    gtk_file_filter_add_pattern(filter, "*.prop");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(native), filter);
+  }
+  // Optional: Überschreiben bestätigen
+  gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(native), TRUE);
+  // Async: kein run(), kein Block
+  g_signal_connect(native,
+                   "response",
+                   G_CALLBACK(save_native_response_cb),
+                   NULL);
   gtk_native_dialog_show(GTK_NATIVE_DIALOG(native));
 }
 

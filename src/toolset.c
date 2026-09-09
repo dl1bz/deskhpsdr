@@ -34,6 +34,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <pthread.h>
+#include <ctype.h>
 
 #include "toolset.h"
 #include "solar.h"
@@ -429,6 +430,32 @@ void to_uppercase(char *str) {
       *str = *str - 32;
     }
     str++;
+  }
+}
+
+void remove_char(char *str, char remove) {
+  char *src;
+  char *dst;
+  if (str == NULL) {
+    return;
+  }
+  src = str;
+  dst = str;
+  while (*src != '\0') {
+    if (*src != remove) {
+      *dst++ = *src;
+    }
+    src++;
+  }
+  *dst = '\0';
+}
+
+void sanitize_filename(char *str) {
+  size_t i;
+  for (i = 0; str[i] != '\0'; i++) {
+    if (!isalnum((unsigned char) str[i]) && str[i] != '.') {
+      str[i] = '_';
+    }
   }
 }
 

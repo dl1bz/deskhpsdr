@@ -661,7 +661,7 @@ void show_filter_shift(int rx, int shift) {
 
 static void micgain_value_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
-    if (optimize_for_touchscreen) {
+    if (touch_ui) {
       transmitter->mic_gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
     } else {
       transmitter->mic_gain = gtk_range_get_value(GTK_RANGE(widget));
@@ -684,7 +684,7 @@ void set_mic_gain(double value) {
     tx_set_mic_gain(transmitter);
     if (display_sliders) {
       sliders_signal_handler_block(G_OBJECT(mic_gain_scale), mic_gain_scale_signal_id);
-      if (optimize_for_touchscreen) {
+      if (touch_ui) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), value);
       } else {
         gtk_range_set_value(GTK_RANGE(mic_gain_scale), value);
@@ -706,7 +706,7 @@ void update_drive_scale(void) {
   }
   if (display_sliders) {
     sliders_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
-    if (optimize_for_touchscreen) {
+    if (touch_ui) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), value);
     } else {
       gtk_range_set_value(GTK_RANGE(drive_scale), value);
@@ -729,7 +729,7 @@ void set_drive(double value) {
       value /= 20;
     }
     sliders_signal_handler_block(G_OBJECT(drive_scale), drive_scale_signal_id);
-    if (optimize_for_touchscreen) {
+    if (touch_ui) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), value);
     } else {
       gtk_range_set_value(GTK_RANGE(drive_scale), value);
@@ -1714,7 +1714,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_btn, FALSE, FALSE, 0);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  if (optimize_for_touchscreen) {
+  if (touch_ui) {
     af_gain_scale = gtk_spin_button_new_with_range(-40.0, 0.0, 1.0);
     WEAKEN(af_gain_scale);
     gtk_widget_set_name(af_gain_scale, "front_spin_button");
@@ -1746,7 +1746,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_tooltip_text(af_gain_scale, "Set AF Volume");
   af_gain_scale_signal_id = g_signal_connect(G_OBJECT(af_gain_scale), "value_changed",
     G_CALLBACK(afgain_value_changed_cb), NULL);
-  if (optimize_for_touchscreen) {
+  if (touch_ui) {
     nr_menu_btn = gtk_button_new_with_label("NR Menu");
     WEAKEN(nr_menu_btn);
     gtk_widget_set_name(nr_menu_btn, "medium_toggle_button");
@@ -1828,7 +1828,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_box_pack_start(GTK_BOX(box_Z1_middle), agc_btn, FALSE, FALSE, 0);
   //-----------------------------------------------------------------------------------------------------------
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  if (optimize_for_touchscreen) {
+  if (touch_ui) {
     agc_gain_scale = gtk_spin_button_new_with_range(-20.0, 120.0, 1.0);
     WEAKEN(agc_gain_scale);
     gtk_widget_set_name(agc_gain_scale, "front_spin_button");
@@ -1866,7 +1866,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     G_CALLBACK(agcgain_value_changed_cb),
     NULL);
   //------------------------------------------------------------------------------------------------------
-  if (optimize_for_touchscreen) {
+  if (touch_ui) {
     vfo_fdwn_btn = gtk_button_new_with_label("<<");
     WEAKEN(vfo_fdwn_btn);
     gtk_widget_set_name(vfo_fdwn_btn, "medium_toggle_button");
@@ -2152,7 +2152,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_label, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (optimize_for_touchscreen) {
+    if (touch_ui) {
       attenuation_scale = gtk_spin_button_new_with_range(0.0, 31.0, 1.0);
       WEAKEN(attenuation_scale);
       gtk_widget_set_name(attenuation_scale, "front_spin_button");
@@ -2332,7 +2332,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       NULL);
     gtk_box_pack_start(GTK_BOX(box_Z2_left), mic_gain_btn, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (optimize_for_touchscreen) {
+    if (touch_ui) {
       mic_gain_scale = gtk_spin_button_new_with_range(-12.0, 50.0, 1.0);
       gtk_widget_set_name(mic_gain_scale, "front_spin_button");
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
@@ -2362,7 +2362,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     mic_gain_scale_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
       G_CALLBACK(micgain_value_changed_cb), NULL);
     //-----------------------------------------------------------------------------------------------------------
-    if (can_transmit && optimize_for_touchscreen) {
+    if (can_transmit && touch_ui) {
       vox_menu_btn = gtk_button_new_with_label("VOX Menu");
       WEAKEN(vox_menu_btn);
       gtk_widget_set_name(vox_menu_btn, "medium_toggle_button");
@@ -2419,7 +2419,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_margin_start(preamp_btn, 0);
     gtk_widget_set_margin_end(preamp_btn, 5);
     gtk_widget_set_valign(preamp_btn, GTK_ALIGN_CENTER);
-    if (optimize_for_touchscreen) {
+    if (touch_ui) {
       gtk_widget_set_halign(preamp_btn, GTK_ALIGN_END);
       // Widgets in Box packen
       gtk_box_pack_start(GTK_BOX(box_Z2_left), preamp_btn, TRUE, TRUE, 0);
@@ -2458,7 +2458,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_label, FALSE, FALSE, 0);
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
-      if (optimize_for_touchscreen) {
+      if (touch_ui) {
         drive_scale = gtk_spin_button_new_with_range(0.0, 5.0, 0.1);
         WEAKEN(drive_scale);
         gtk_widget_set_name(drive_scale, "front_spin_button");
@@ -2481,7 +2481,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       snprintf(txpwr_ttip_txt, sizeof(txpwr_ttip_txt), "Set TX Pwr in W ≙ %.0f %%", radio_get_drive());
       gtk_widget_set_tooltip_text(drive_scale, txpwr_ttip_txt);
     } else {
-      if (optimize_for_touchscreen) {
+      if (touch_ui) {
         drive_scale = gtk_spin_button_new_with_range(0.0, drive_max, 1.00);
         WEAKEN(drive_scale);
         gtk_widget_set_name(drive_scale, "front_spin_button");
@@ -2508,19 +2508,19 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                                                "100% ≙ your max. calibrated PA output in PA Menu.");
     }
     if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
-      if (optimize_for_touchscreen) {
+      if (touch_ui) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive() / 20);
       } else {
         gtk_range_set_increments(GTK_RANGE(drive_scale), 0.1, 0.1);
         gtk_range_set_value(GTK_RANGE(drive_scale), radio_get_drive() / 20);
       }
-      if (!optimize_for_touchscreen) {
+      if (!touch_ui) {
         for (float i = 0.0; i <= 5.0; i += 0.5) {
           gtk_scale_add_mark(GTK_SCALE(drive_scale), i, GTK_POS_TOP, NULL);
         }
       }
     } else {
-      if (optimize_for_touchscreen) {
+      if (touch_ui) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(drive_scale), radio_get_drive());
       } else {
         gtk_range_set_increments(GTK_RANGE(drive_scale), 1.0, 1.0);
@@ -2532,7 +2532,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     drive_scale_signal_id = g_signal_connect(G_OBJECT(drive_scale), "value_changed", G_CALLBACK(drive_value_changed_cb),
       NULL);
-    if (optimize_for_touchscreen) {
+    if (touch_ui) {
       band_menu_btn = gtk_button_new_with_label("Band");
       WEAKEN(band_menu_btn);
       gtk_widget_set_name(band_menu_btn, "medium_toggle_button");
@@ -2650,7 +2650,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z2_right), squelch_enable, FALSE, FALSE, 0);
   //-------------------------------------------------------------------------------------------
-  if (optimize_for_touchscreen) {
+  if (touch_ui) {
     squelch_scale = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
     WEAKEN(squelch_scale);
     gtk_widget_set_name(squelch_scale, "front_spin_button");

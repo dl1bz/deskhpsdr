@@ -464,16 +464,16 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), css_button_grid, col + 1, row, 1, 1);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // Optimize for touchscreen
-  GtkWidget *ChkBtn_tscreen = gtk_check_button_new_with_label("Alternate UI\n(better for Touch)");
+  GtkWidget *ChkBtn_tscreen = gtk_check_button_new_with_label("Touch UI\n(for Touchscreen)");
   gtk_widget_set_name(ChkBtn_tscreen, "boldlabel");
   gtk_widget_set_margin_start(ChkBtn_tscreen, 20);    // linker Rand (Anfang)
   gtk_widget_set_tooltip_text(ChkBtn_tscreen,
                               "Use spin buttons instead of sliders for easier or more exact\n"
                               "UI operation, e.g. if you have problems with your mouse.\n\n"
                               "Can be an great improvement too in the case of using touchscreen.");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_tscreen), optimize_for_touchscreen);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_tscreen), touch_ui);
   gtk_grid_attach(GTK_GRID(grid), ChkBtn_tscreen, 2, 0, 1, 1);
-  g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &optimize_for_touchscreen);
+  g_signal_connect(ChkBtn_tscreen, "toggled", G_CALLBACK(chkbtn_toggle_cb), &touch_ui);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   /* ComboBox */
   GtkWidget *css_theme_combo = gtk_combo_box_text_new();

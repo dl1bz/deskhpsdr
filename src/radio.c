@@ -95,6 +95,7 @@
 #include "version.h"
 #include "exit_menu.h"
 #include "message.h"
+#include "toolset.h"
 
 #if defined(__APPLE__)
   static int dock_guard_pixels = 0;  // wird zur Laufzeit bestimmt
@@ -153,6 +154,7 @@ static char property_path[128];
 static char property_path_bak[256];
 int backup_index = 0;
 static GMutex property_mutex;
+int backup_unlock = 0;
 
 static void radio_format_mac_address(char *text, size_t size) {
   if (text == NULL || size == 0) {
@@ -480,7 +482,7 @@ int capture_replay_pointer;
 double *capture_data = NULL;
 
 int can_transmit = 0;
-int optimize_for_touchscreen = 0;
+int touch_ui = 1;
 
 gboolean duplex = FALSE;
 gboolean mute_rx_while_transmitting = TRUE;
@@ -1422,7 +1424,7 @@ void radio_start_radio(void) {
   // The setting can be changed in the RADIO menu and is stored in the
   // props file, so will be restored therefrom as well.
   //
-  optimize_for_touchscreen = 0;
+  // touch_ui = 0;
   protocol = radio->protocol;
   device = radio->device;
   if (device == DEVICE_HERMES_LITE2) {
@@ -2747,7 +2749,7 @@ static void radio_restore_state(void) {
   GetPropI0("display_height",                                display_height);
   GetPropI0("full_screen",                                   full_screen);
   GetPropI0("vfo_layout",                                    vfo_layout);
-  GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
+  GetPropI0("touch_ui",                          touch_ui);
   GetPropI0("capture_max",                                   capture_max);
   GetPropI0("max_pan_label_rows",                            max_pan_label_rows);
   GetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
@@ -3025,7 +3027,7 @@ static void radio_restore_state(void) {
 void radio_save_state(void) {
   g_mutex_lock(&property_mutex);
   clearProperties();
-  if (radio && radio->name[0] != '\0') {
+  if (radio && radio->name[0] != '\0' && backup_unlock) {
     backup_index++;
     if (backup_index < 1) { backup_index = 1; }
     if (backup_index > 9) { backup_index = 1; }
@@ -3087,7 +3089,7 @@ void radio_save_state(void) {
   SetPropI0("display_height",                                display_height);
   SetPropI0("full_screen",                                   full_screen);
   SetPropI0("vfo_layout",                                    vfo_layout);
-  SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
+  SetPropI0("touch_ui",                          touch_ui);
   SetPropI0("capture_max",                                   capture_max);
   SetPropI0("max_pan_label_rows",                            max_pan_label_rows);
   SetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
@@ -3274,11 +3276,19 @@ void radio_save_state(void) {
 #endif
   saveProperties(property_path);
   sync();
-  if (radio && radio->name[0] != '\0' && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL)) {
-    snprintf(property_path_bak, sizeof(property_path_bak), "bak%d_%s_%s_%s", (int) backup_index, radio->name,
-             inet_ntoa(radio->info.network.address.sin_addr), property_path);
+  if (radio && radio->name[0] != '\0' && (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) && backup_unlock) {
+    char sec_property_path[128];
+    g_strlcpy(sec_property_path, property_path, sizeof(sec_property_path));
+    remove_char(sec_property_path, '-');
+    char sec_radioname[128];
+    g_strlcpy(sec_radioname, radio->name, sizeof(sec_radioname));
+    remove_char(sec_radioname, ' ');
+    snprintf(property_path_bak, sizeof(property_path_bak), "bak_%s_%d_%s_%s", sec_radioname, (int) backup_index,
+             inet_ntoa(radio->info.network.address.sin_addr), sec_property_path);
+    sanitize_filename(property_path_bak);
     saveProperties(property_path_bak);
     sync();
+    backup_unlock = 0;
   }
   g_mutex_unlock(&property_mutex);
 }
@@ -3287,7 +3297,7 @@ void radio_save_state(void) {
 ///////////////////////////////////////////////////////////////////////////////////////////
 //
 // A mechanism to make ComboBoxes "touchscreen-friendly".
-// If the variable "optimize_for_touchscreen" is nonzero, their
+// If the variable "touch_ui" is nonzero, their
 // behaviour is modified such that they only react on "button release"
 // events, the first release event pops up the menu, the second one makes
 // the choice.
@@ -3298,7 +3308,7 @@ void radio_save_state(void) {
 // hold the button while making a choice, but with a touch-screen it may make the
 // GUI un-usable.
 //
-// The variable "optimize_for_touchscreen" can be changed in the RADIO menu (or whereever
+// The variable "touch_ui" can be changed in the RADIO menu (or whereever
 // it is decided to move this).
 //
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -3323,7 +3333,7 @@ static gboolean eventbox_callback(GtkWidget *widget, GdkEvent *event, gpointer d
 // Then, the choice can be made from the menu in the usual way.
 //
 void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol) {
-  if (optimize_for_touchscreen) {
+  if (touch_ui) {
     GtkWidget *eventbox = gtk_event_box_new();
     g_signal_connect(eventbox, "event",   G_CALLBACK(eventbox_callback),   combo);
     gtk_container_add(GTK_CONTAINER(eventbox), combo);

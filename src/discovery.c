@@ -393,7 +393,7 @@ void discovery(void) {
   //
   // On the discovery screen, make the combo-boxes "touchscreen-friendly"
   //
-  optimize_for_touchscreen = 1;
+  touch_ui = 1;
   selected_device = 0;
   devices = 0;
 #ifdef USBOZY

@@ -62,6 +62,7 @@ void stop_program(void) {
     saturn_exit();
 #endif
   }
+  backup_unlock = 1;
   radio_save_state();
   t_print("%s: radio state saved\n", __func__);
 }

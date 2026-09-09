@@ -49,6 +49,8 @@ extern char *truncate_text_malloc(const char *text, size_t max_length);
 extern char *truncate_text_3p(const char *text, size_t max_length);
 extern gboolean check_and_run_idle_cb(gpointer data);
 extern void to_uppercase(char *str);
+extern void remove_char(char *str, char remove);
+extern void sanitize_filename(char *str);
 extern int file_present(const char *filename);
 extern const char *extract_short_msg(const char *msg);
 extern void sort_cfc(TRANSMITTER *tx);

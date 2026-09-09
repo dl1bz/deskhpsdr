@@ -153,6 +153,7 @@ enum _sat_mode_enum {
 };
 
 extern int backup_index;
+extern int backup_unlock;
 
 extern int rxgain_index_0;
 extern int rxgain_index_1;
@@ -465,7 +466,7 @@ extern void   open_atu_window(GtkWindow *top_window,  const char *win_title, con
 
 extern int compare_doubles(const void *a, const void *b);
 
-extern int optimize_for_touchscreen;
+extern int touch_ui;
 extern void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol);
 extern gboolean win_set_bgcolor(GtkWidget *widget, gpointer data);
 

@@ -91,7 +91,7 @@ int full_screen;
 int this_monitor;
 
 int use_wayland;
-int css_dark_theme;
+int css_dark_theme = 1;
 
 int iaru_region = 2;
 
