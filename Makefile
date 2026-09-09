@@ -114,6 +114,9 @@ GIT_REMOTE := $(shell git remote get-url origin)
 #
 ifeq ($(GDB), ON)
 	CFLAGS?= -g -O0 -DG_ENABLE_DEBUG
+	LDFLAGS?= -flto
+else ifeq ($(UNAME_S), Darwin)
+	CFLAGS?= -O2 -flto
 else
 	CFLAGS?= -O2
 endif

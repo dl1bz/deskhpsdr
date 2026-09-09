@@ -17,7 +17,11 @@
 UNAME := $(shell uname)
 UNAME_S := $(shell uname -s)
 
-CFLAGS?=-O3 -D_GNU_SOURCE -Wno-parentheses
+ifeq ($(UNAME_S), Darwin)
+	CFLAGS?=-O2 -flto -D_GNU_SOURCE -Wno-parentheses
+else
+	CFLAGS?=-O2 -D_GNU_SOURCE -Wno-parentheses
+endif
 CFLAGS+= `pkg-config --cflags libcurl libxml-2.0`
 LIBS = `pkg-config --libs libcurl libxml-2.0`
 

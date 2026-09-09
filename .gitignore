@@ -38,6 +38,9 @@ wdsp-1.29/*.orig
 wdsp-2.00/*.orig
 wdsp-2.00/libwdsp.a
 wdsp-2.00/*.o
+wdsp-2.10/*.orig
+wdsp-2.10/libwdsp.a
+wdsp-2.10/*.o
 libsolar/libsolar.a
 libsolar/*.o
 libtelnet/libtelnet.a
@@ -59,4 +62,4 @@ Brick-Tools/p2_discover
 Brick-Tools/p2_tool
 *.zip
 MacOS/build-*.sh
-
+rx200-sim*

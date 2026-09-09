@@ -18,9 +18,13 @@ UNAME := $(shell uname)
 UNAME_S := $(shell uname -s)
 
 # Build-Target für statische libtelnet.a
-CFLAGS  := -Wall -Wextra -O3 -Wno-parentheses
-AR      := ar
-ARFLAGS := rcs
+ifeq ($(UNAME_S), Darwin)
+	CFLAGS  ?= -Wall -Wextra -O2 -flto -Wno-parentheses
+else
+	CFLAGS  ?= -Wall -Wextra -O2 -Wno-parentheses
+endif
+AR      ?= ar
+ARFLAGS ?= rcs
 
 ifeq ($(UNAME_S),Darwin)
 # SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
