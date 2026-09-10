@@ -49,6 +49,7 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *n2adr_hpf_btn = NULL;
 static GtkWidget *ChkBtn_txinhibit = NULL;
 static GtkWidget *ChkBtn_autotune = NULL;
+static GtkWidget *ChkBtn_mute_rx_when_tx = NULL;
 static gulong callsign_box_signal_id;
 static gulong locator_box_signal_id;
 
@@ -59,6 +60,7 @@ static void cleanup(void) {
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
+    ChkBtn_mute_rx_when_tx = NULL;
     radio_save_state();
   }
 }
@@ -181,6 +183,9 @@ static void split_cb(GtkWidget *widget, gpointer data) {
 //
 void setDuplex(void) {
   if (!can_transmit) { return; }
+  if (ChkBtn_mute_rx_when_tx != NULL) {
+    gtk_widget_set_sensitive(ChkBtn_mute_rx_when_tx, duplex);
+  }
   if (duplex) {
     // TX is in separate window, also in full-screen mode
     gtk_container_remove(GTK_CONTAINER(fixed), transmitter->panel);
@@ -863,11 +868,15 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(split_cb), NULL);
     col += 2;
-    ChkBtn = gtk_check_button_new_with_label("Mute RX when TX");
-    gtk_widget_set_name(ChkBtn, "boldlabel");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), mute_rx_while_transmitting);
-    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mute_rx_while_transmitting);
+    ChkBtn_mute_rx_when_tx = gtk_check_button_new_with_label("Mute RX when TX");
+    gtk_widget_set_name(ChkBtn_mute_rx_when_tx, "boldlabel");
+    gtk_widget_set_tooltip_text(ChkBtn_mute_rx_when_tx,
+                                "Mutes receiver audio during TX when DUPLEX is enabled.\n"
+                                "This setting has no effect when DUPLEX is disabled.");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_mute_rx_when_tx), mute_rx_while_transmitting);
+    gtk_widget_set_sensitive(ChkBtn_mute_rx_when_tx, duplex);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn_mute_rx_when_tx, col, row, 1, 1);
+    g_signal_connect(ChkBtn_mute_rx_when_tx, "toggled", G_CALLBACK(toggle_cb), &mute_rx_while_transmitting);
     col++;
     if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
