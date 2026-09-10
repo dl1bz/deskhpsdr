@@ -45,6 +45,14 @@ typedef struct _transmitter {
   double *mic_input_buffer;
   double *iq_output_buffer;
 
+  // Processed TX monitor (WDSP TX output -> local 48 kHz audio)
+  void *monitor_resampler_i;
+  void *monitor_resampler_q;
+  float *monitor_input_i;
+  float *monitor_input_q;
+  float *monitor_output_i;
+  float *monitor_output_q;
+
   float *pixel_samples;
   int display_panadapter;
   int display_waterfall;
@@ -279,6 +287,13 @@ extern void   tx_set_fft_size(const TRANSMITTER *tx);
 extern void   tx_set_filter(TRANSMITTER *tx);
 extern void   tx_set_framerate(TRANSMITTER *tx);
 extern void   tx_set_mic_gain(const TRANSMITTER *tx);
+extern void   tx_set_monitor(int state);
+extern int    tx_get_monitor(void);
+extern int    tx_monitor_audio_active(void);
+extern void   tx_set_monitor_gain_db(double gain_db);
+extern double tx_get_monitor_gain_db(void);
+extern void   tx_set_monitor_post(int state);
+extern int    tx_get_monitor_post(void);
 extern void   tx_set_mode(TRANSMITTER* tx, int m);
 extern void   tx_set_out_of_band(TRANSMITTER *tx);
 extern void   tx_set_pre_emphasize(const TRANSMITTER *tx);

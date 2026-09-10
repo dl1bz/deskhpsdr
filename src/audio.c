@@ -587,6 +587,16 @@ void audio_test_stop(RECEIVER *rx) {
   }
 }
 
+static int audio_write_internal(RECEIVER *rx, float left_sample, float right_sample, int ignore_mute);
+
+int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
+  return audio_write_internal(rx, left_sample, right_sample, 0);
+}
+
+int audio_write_monitor(RECEIVER *rx, float left_sample, float right_sample) {
+  return audio_write_internal(rx, left_sample, right_sample, 1);
+}
+
 int cw_audio_write(RECEIVER *rx, float sample) {
   if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
     return 0;
@@ -745,7 +755,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
 // since cw_audio_write may be active
 //
 
-int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
+static int audio_write_internal(RECEIVER *rx, float left_sample, float right_sample, int ignore_mute) {
   if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
     return 0;
   }
@@ -763,7 +773,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
     return 0;
   }
-  if (rx->local_audio_mute) {
+  if (rx->local_audio_mute && !ignore_mute) {
     left_sample = 0.0f;
     right_sample = 0.0f;
   }

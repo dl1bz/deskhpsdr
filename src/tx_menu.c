@@ -1026,6 +1026,13 @@ static void mic_in_cb(GtkWidget *widget, gpointer data) {
   schedule_transmit_specific();
 }
 
+static void monitor_tap_cb(GtkWidget *widget, gpointer data) {
+  (void) data;
+  int post = !tx_get_monitor_post();
+  tx_set_monitor_post(post);
+  gtk_button_set_label(GTK_BUTTON(widget), post ? "POST TX MONITOR" : "PRE TX MONITOR");
+}
+
 static void ctcss_frequency_cb(GtkWidget *widget, gpointer data) {
   transmitter->ctcss = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   tx_set_ctcss(transmitter);
@@ -1271,11 +1278,22 @@ void tx_menu(GtkWidget *parent) {
       pos = 1;
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(btn), pos);
-    my_combo_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
+    my_combo_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
     g_signal_connect(btn, "changed", G_CALLBACK(mic_in_cb), NULL);
     if (transmitter->local_microphone) {
       gtk_widget_set_sensitive(btn, FALSE);
     }
+    col++;
+    btn = gtk_button_new_with_label(tx_get_monitor_post() ? "POST TX MONITOR" : "PRE TX MONITOR");
+    gtk_widget_set_name(btn, "boldlabel");
+    gtk_widget_set_tooltip_text(btn,
+                                "TX Monitor tap:\n"
+                                "PRE  = TX audio after Mic Gain/PreAmp, but before WDSP\n"
+                                "POST = TX audio after the complete WDSP TX processing chain\n\n"
+                                "Activation: Long press [VOL RX1/RX2] for switch to TX Monitor\n"
+                                "            Long press again for switch back to [VOL RX1/RX2]");
+    gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
+    g_signal_connect(btn, "clicked", G_CALLBACK(monitor_tap_cb), NULL);
     col++;
     label = gtk_label_new("SDR LineIn (dB)");
     gtk_widget_set_name(label, "boldlabel");

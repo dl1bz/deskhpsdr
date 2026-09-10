@@ -43,6 +43,7 @@ extern void audio_close_input(void);
 extern int audio_open_output(RECEIVER *rx);
 extern void audio_close_output(RECEIVER *rx);
 extern int audio_write(RECEIVER *rx, float left_sample, float right_sample);
+extern int audio_write_monitor(RECEIVER *rx, float left_sample, float right_sample);
 extern int cw_audio_write(RECEIVER *rx, float sample);
 extern int audio_test_start(RECEIVER *rx);
 extern void audio_test_stop(RECEIVER *rx);

@@ -1139,7 +1139,7 @@ void audio_reprime_output(RECEIVER *rx) {
 // So mutex locking/unlocking should only cost few CPU cycles in
 // normal operation.
 //
-int audio_write(RECEIVER *rx, float left, float right) {
+static int audio_write_internal(RECEIVER *rx, float left, float right, int ignore_mute) {
   if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
     return 0;
   }
@@ -1189,7 +1189,7 @@ int audio_write(RECEIVER *rx, float left, float right) {
      * is lost here only in the unavoidable emergency case that the ring is
      * actually full.
      */
-    if (rx->local_audio_mute) {
+    if (rx->local_audio_mute && !ignore_mute) {
       left = 0.0f;
       right = 0.0f;
     }
@@ -1262,6 +1262,14 @@ int audio_write(RECEIVER *rx, float left, float right) {
 //
 // Thus we have an active latency management.
 //
+int audio_write(RECEIVER *rx, float left, float right) {
+  return audio_write_internal(rx, left, right, 0);
+}
+
+int audio_write_monitor(RECEIVER *rx, float left, float right) {
+  return audio_write_internal(rx, left, right, 1);
+}
+
 int cw_audio_write(RECEIVER *rx, float sample) {
   if (atomic_load_explicit(&rx->audio_test_active, memory_order_acquire)) {
     return 0;

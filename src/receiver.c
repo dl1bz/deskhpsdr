@@ -1451,6 +1451,11 @@ static void rx_process_buffer(RECEIVER *rx) {
   float tci_rx_samples[rx->output_samples * TCI_AUDIO_CHANNELS];
   // Without DUPLEX; xmit will always be false.
   int xmit = radio_is_transmitting();
+  // PRE/POST TX Monitor owns the active RX local audio sink while it is
+  // actually producing monitor audio. Do not feed a second 48 kHz producer
+  // into the same local output stream during DUPLEX TX.
+  int tx_monitor_replaces_local_audio =
+          xmit && rx == active_receiver && tx_monitor_audio_active();
   for (int i = 0; i < rx->output_samples; i++) {
     double left_sample = rx->audio_output_buffer[i * 2];
     double right_sample = rx->audio_output_buffer[(i * 2) + 1];
@@ -1519,7 +1524,7 @@ static void rx_process_buffer(RECEIVER *rx) {
     if (right_sample >  1.0f) { right_sample =  1.0f; }
     if (right_sample < -1.0f) { right_sample = -1.0f; }
     short right_audio_sample = (short)(right_sample * 32767.0f);
-    if (rx->local_audio) {
+    if (rx->local_audio && !tx_monitor_replaces_local_audio) {
       audio_write(rx, (float) left_sample, (float) right_sample);
     }
     if (rx == active_receiver) {

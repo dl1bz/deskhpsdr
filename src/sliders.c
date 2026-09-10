@@ -66,6 +66,9 @@ static GtkWidget *af_gain_label;
 static GtkWidget *af_gain_btn;
 static GtkWidget *af_gain_scale;
 static gulong    af_gain_btn_signal_id;
+static gboolean  af_gain_monitor_mode = FALSE;
+static gboolean  af_gain_monitor_volume_initialized = FALSE;
+static gboolean  af_gain_long_press = FALSE;
 static GtkWidget *rf_gain_label = NULL;
 static GtkWidget *rf_gain_scale = NULL;
 static gulong rf_gain_scale_signal_id;
@@ -316,12 +319,15 @@ int sliders_active_receiver_changed(void *data) {
     // new active receiver
     //
     sliders_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    const double af_value = af_gain_monitor_mode ? tx_get_monitor_gain_db() : active_receiver->volume;
     if (GTK_IS_SPIN_BUTTON(af_gain_scale)) {
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale), active_receiver->volume);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale), af_value);
     } else if (GTK_IS_RANGE(af_gain_scale)) {
-      gtk_range_set_value(GTK_RANGE(af_gain_scale), active_receiver->volume);
+      gtk_range_set_value(GTK_RANGE(af_gain_scale), af_value);
     }
     sliders_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    gtk_widget_set_tooltip_text(af_gain_scale,
+                                af_gain_monitor_mode ? "Set TX Monitor Volume" : "Set AF Volume");
     update_slider_af_gain_btn();
     sliders_signal_handler_block(G_OBJECT(agc_gain_scale), agc_gain_scale_signal_id);
     if (GTK_IS_SPIN_BUTTON(agc_gain_scale)) {
@@ -561,13 +567,19 @@ void set_agc_gain(int rx, double value) {
 
 static void afgain_value_changed_cb(GtkWidget *widget, gpointer data) {
   (void)data;
+  double value;
   if (GTK_IS_SPIN_BUTTON(widget)) {
-    active_receiver->volume = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+    value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   } else if (GTK_IS_RANGE(widget)) {
-    active_receiver->volume = gtk_range_get_value(GTK_RANGE(widget));
+    value = gtk_range_get_value(GTK_RANGE(widget));
   } else {
     return;
   }
+  if (af_gain_monitor_mode) {
+    tx_set_monitor_gain_db(value);
+    return;
+  }
+  active_receiver->volume = value;
   rx_set_af_gain(active_receiver);
   tci_volume_changed(active_receiver->id);
 }
@@ -1152,15 +1164,16 @@ void update_slider_lev_scale(gboolean show_widget) {
 
 void update_slider_af_gain_scale(void) {
   if (display_sliders && af_gain_scale != NULL && active_receiver != NULL) {
+    const double value = af_gain_monitor_mode ? tx_get_monitor_gain_db() : active_receiver->volume;
     sliders_signal_handler_block(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
     if (GTK_IS_SPIN_BUTTON(af_gain_scale)) {
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale),
-                                (double) active_receiver->volume);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale), value);
     } else if (GTK_IS_RANGE(af_gain_scale)) {
-      gtk_range_set_value(GTK_RANGE(af_gain_scale),
-                          (double) active_receiver->volume);
+      gtk_range_set_value(GTK_RANGE(af_gain_scale), value);
     }
     sliders_signal_handler_unblock(G_OBJECT(af_gain_scale), af_gain_scale_signal_id);
+    gtk_widget_set_tooltip_text(af_gain_scale,
+                                af_gain_monitor_mode ? "Set TX Monitor Volume" : "Set AF Volume");
     gtk_widget_queue_draw(af_gain_scale);
   }
 }
@@ -1295,19 +1308,29 @@ static gboolean tune_drive_button_press_cb(GtkWidget *widget, GdkEventButton *ev
 void update_slider_af_gain_btn(void) {
   if (display_sliders && af_gain_btn != NULL && af_gain_label != NULL && active_receiver != NULL) {
     char label[16];
-    const int rx_num = active_receiver->id + 1;
     sliders_signal_handler_block(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
-    // invert button, red = MUTE, green = Playback
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);
-    if (active_receiver->local_audio_mute) {
-      snprintf(label, sizeof(label), "MUTE RX%d", rx_num);
-      gtk_label_set_text(GTK_LABEL(af_gain_label), label);
-      gtk_widget_set_tooltip_text(af_gain_btn, "Press button for PLAY local Audio");
-    } else {
-      snprintf(label, sizeof(label), "VOL RX%d", rx_num);
-      gtk_label_set_text(GTK_LABEL(af_gain_label), label);
+    if (af_gain_monitor_mode) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), tx_get_monitor());
+      gtk_label_set_text(GTK_LABEL(af_gain_label), tx_get_monitor() ? "MON EN" : "MON DIS");
       gtk_widget_set_tooltip_text(af_gain_btn,
-                                  "Press button for MUTE local Audio.\nTCI audio remains unaffected and continues running.");
+                                  tx_get_monitor()
+                                  ? "Press button to disable TX monitor.\nLong press to return to RX volume/mute."
+                                  : "Press button to enable TX monitor.\nLong press to return to RX volume/mute.");
+    } else {
+      const int rx_num = active_receiver->id + 1;
+      // invert button, red = MUTE, green = Playback
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(af_gain_btn), !active_receiver->local_audio_mute);
+      if (active_receiver->local_audio_mute) {
+        snprintf(label, sizeof(label), "MUTE RX%d", rx_num);
+        gtk_label_set_text(GTK_LABEL(af_gain_label), label);
+        gtk_widget_set_tooltip_text(af_gain_btn,
+                                    "Press button for PLAY local Audio.\nLong press for TX Monitor.");
+      } else {
+        snprintf(label, sizeof(label), "VOL RX%d", rx_num);
+        gtk_label_set_text(GTK_LABEL(af_gain_label), label);
+        gtk_widget_set_tooltip_text(af_gain_btn,
+                                    "Press button for MUTE local Audio.\nTCI audio remains unaffected and continues running.\nLong press for TX Monitor.");
+      }
     }
     sliders_signal_handler_unblock(G_OBJECT(af_gain_btn), af_gain_btn_signal_id);
     gtk_widget_queue_draw(af_gain_btn);
@@ -1320,12 +1343,59 @@ static void af_gain_toggle_cb(GtkWidget *widget, gpointer data) {
   if (active_receiver == NULL) {
     return;
   }
+  if (af_gain_long_press) {
+    update_slider_af_gain_btn();
+    return;
+  }
+  if (af_gain_monitor_mode) {
+    tx_set_monitor(!tx_get_monitor());
+    update_slider_af_gain_btn();
+    t_print("%s: TX monitor = %d\n", __func__, tx_get_monitor());
+    return;
+  }
   active_receiver->local_audio_mute = !active_receiver->local_audio_mute;
   update_slider_af_gain_btn();
   g_idle_add(ext_vfo_update, NULL);
   t_print("%s: active_receiver->local_audio_mute = %d\n",
           __func__,
           active_receiver->local_audio_mute);
+}
+
+static gboolean af_gain_long_press_clear_cb(gpointer data) {
+  (void) data;
+  af_gain_long_press = FALSE;
+  return G_SOURCE_REMOVE;
+}
+
+static void af_gain_long_press_cb(GtkGestureLongPress *gesture, gdouble x, gdouble y, gpointer data) {
+  (void) gesture;
+  (void) x;
+  (void) y;
+  (void) data;
+  af_gain_long_press = TRUE;
+  if (!af_gain_monitor_mode) {
+    // Initialize the TX monitor volume from the active RX only once per
+    // deskHPSDR session. Subsequent MON entries keep the user's MON level.
+    if (!af_gain_monitor_volume_initialized) {
+      tx_set_monitor_gain_db(active_receiver->volume);
+      af_gain_monitor_volume_initialized = TRUE;
+    }
+    af_gain_monitor_mode = TRUE;
+  } else {
+    tx_set_monitor(0);
+    af_gain_monitor_mode = FALSE;
+  }
+  update_slider_af_gain_btn();
+  update_slider_af_gain_scale();
+}
+
+static void af_gain_long_press_end_cb(GtkGesture *gesture, GdkEventSequence *sequence, gpointer data) {
+  (void) gesture;
+  (void) sequence;
+  (void) data;
+  if (af_gain_long_press) {
+    g_idle_add(af_gain_long_press_clear_cb, NULL);
+  }
 }
 
 void update_slider_split_btn(void) {
@@ -1711,6 +1781,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_valign(af_gain_btn, GTK_ALIGN_CENTER);
   af_gain_btn_signal_id = g_signal_connect(G_OBJECT(af_gain_btn), "toggled", G_CALLBACK(af_gain_toggle_cb),
     NULL);
+  GtkGesture *af_gain_long_press_gesture = gtk_gesture_long_press_new(af_gain_btn);
+  gtk_event_controller_set_propagation_phase(GTK_EVENT_CONTROLLER(af_gain_long_press_gesture), GTK_PHASE_TARGET);
+  g_signal_connect(af_gain_long_press_gesture, "pressed", G_CALLBACK(af_gain_long_press_cb), NULL);
+  g_signal_connect(af_gain_long_press_gesture, "end", G_CALLBACK(af_gain_long_press_end_cb), NULL);
+  g_object_set_data_full(G_OBJECT(af_gain_btn), "af-gain-long-press-gesture",
+                         af_gain_long_press_gesture, g_object_unref);
   // Widgets in Box packen
   gtk_box_pack_start(GTK_BOX(box_Z1_left), af_gain_btn, FALSE, FALSE, 0);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
