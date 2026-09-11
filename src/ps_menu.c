@@ -38,6 +38,7 @@
 #include "message.h"
 #include "sliders.h"
 #include "version.h"
+#include "main.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *feedback_l;
@@ -367,7 +368,9 @@ static void ampview_cb(GtkWidget *widget, gpointer data) {
   snprintf(_wtitle, sizeof(_wtitle), "%s by DL1BZ %s - Pure Signal AmpView", PGNAME, build_version);
   ampview_dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(ampview_dialog), _wtitle);
-  gtk_window_set_default_size(GTK_WINDOW(ampview_dialog), 1000, 650);
+  int ampview_height = 650;
+  if (ampview_height > display_height - 50) { ampview_height = display_height - 50; }
+  gtk_window_set_default_size(GTK_WINDOW(ampview_dialog), 1000, ampview_height);
   gtk_window_set_transient_for(GTK_WINDOW(ampview_dialog), parent);
   // gtk_window_set_position(GTK_WINDOW(ampview_dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   gtk_window_set_destroy_with_parent(GTK_WINDOW(ampview_dialog), TRUE);

@@ -474,32 +474,41 @@ const char *extract_short_msg(const char *msg) {
   return s;
 }
 
-static const TRANSMITTER *tx_ctx;
-
-static int cmp_cfc_idx(const void *xa, const void *xb) {
-  int i = * (const int *) xa;
-  int j = * (const int *) xb;
-  return (tx_ctx->cfc_freq[i] > tx_ctx->cfc_freq[j]) -
-         (tx_ctx->cfc_freq[i] < tx_ctx->cfc_freq[j]);
+void sort_cfc_profile(double *freq, double *level, double *post,
+                      double *comp_weight, double *post_weight) {
+  int idx[N_CFC];
+  for (int k = 0; k < N_CFC; k++) { idx[k] = k + 1; }
+  for (int a = 0; a < N_CFC - 1; a++) {
+    for (int b = a + 1; b < N_CFC; b++) {
+      if (freq[idx[a]] > freq[idx[b]]) {
+        int tmp = idx[a];
+        idx[a] = idx[b];
+        idx[b] = tmp;
+      }
+    }
+  }
+  double f[N_CFC + 1], l[N_CFC + 1], p[N_CFC + 1];
+  double cw[N_CFC], pw[N_CFC];
+  for (int k = 1; k <= N_CFC; k++) {
+    int i = idx[k - 1];
+    f[k] = freq[i];
+    l[k] = level[i];
+    p[k] = post[i];
+    cw[k - 1] = comp_weight[i - 1];
+    pw[k - 1] = post_weight[i - 1];
+  }
+  for (int k = 1; k <= N_CFC; k++) {
+    freq[k] = f[k];
+    level[k] = l[k];
+    post[k] = p[k];
+    comp_weight[k - 1] = cw[k - 1];
+    post_weight[k - 1] = pw[k - 1];
+  }
 }
 
 void sort_cfc(TRANSMITTER *tx) {
-  int idx[N_CFC];
-  tx_ctx = tx;
-  for (int k = 0; k < N_CFC; k++) { idx[k] = k + 1; }
-  qsort(idx, N_CFC, sizeof(int), cmp_cfc_idx);
-  float f[N_CFC + 1], l[N_CFC + 1], p[N_CFC + 1];
-  for (int k = 1; k <= N_CFC; k++) {
-    int i = idx[k - 1];
-    f[k] = tx->cfc_freq[i];
-    l[k] = tx->cfc_lvl[i];
-    p[k] = tx->cfc_post[i];
-  }
-  for (int k = 1; k <= N_CFC; k++) {
-    tx->cfc_freq[k] = f[k];
-    tx->cfc_lvl[k]  = l[k];
-    tx->cfc_post[k] = p[k];
-  }
+  sort_cfc_profile(tx->cfc_freq, tx->cfc_lvl, tx->cfc_post,
+                   tx->cfc_comp_weight, tx->cfc_post_weight);
   t_print("%s: CFC_FREQ sorted\n", __func__);
 }
 

@@ -385,6 +385,12 @@ static void modesettingsSaveState(void) {
     SetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
     SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
+    SetPropI1("modeset.%d.cfc_comp_curve_degree", i, mode_settings[i].cfc_comp_curve_degree);
+    SetPropI1("modeset.%d.cfc_comp_curve_r", i,      mode_settings[i].cfc_comp_curve_r);
+    SetPropI1("modeset.%d.cfc_comp_curve_umethod", i, mode_settings[i].cfc_comp_curve_umethod);
+    SetPropI1("modeset.%d.cfc_post_curve_degree", i, mode_settings[i].cfc_post_curve_degree);
+    SetPropI1("modeset.%d.cfc_post_curve_r", i,      mode_settings[i].cfc_post_curve_r);
+    SetPropI1("modeset.%d.cfc_post_curve_umethod", i, mode_settings[i].cfc_post_curve_umethod);
     for (int j = 0; j < 13; j++) {
       SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
       SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
@@ -399,6 +405,10 @@ static void modesettingsSaveState(void) {
       SetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
       SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
       SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
+      if (j < 12) {
+        SetPropF2("modeset.%d.cfc_comp_weight.%d", i, j, mode_settings[i].cfc_comp_weight[j]);
+        SetPropF2("modeset.%d.cfc_post_weight.%d", i, j, mode_settings[i].cfc_post_weight[j]);
+      }
     }
   }
 }
@@ -502,6 +512,16 @@ static void modesettingsRestoreState(void) {
     mode_settings[i].dexp_filter_high = 2000;
     mode_settings[i].cfc = 0;
     mode_settings[i].cfc_eq = 0;
+    mode_settings[i].cfc_comp_curve_degree = 0;
+    mode_settings[i].cfc_comp_curve_r = 0;
+    mode_settings[i].cfc_comp_curve_umethod = 0;
+    mode_settings[i].cfc_post_curve_degree = 0;
+    mode_settings[i].cfc_post_curve_r = 0;
+    mode_settings[i].cfc_post_curve_umethod = 0;
+    for (int j = 0; j < 12; j++) {
+      mode_settings[i].cfc_comp_weight[j] = 1.0;
+      mode_settings[i].cfc_post_weight[j] = 1.0;
+    }
     mode_settings[i].lev_gain = 0.0;
     mode_settings[i].lev_enable = 0;
     mode_settings[i].phrot_enable = 0;
@@ -643,6 +663,12 @@ static void modesettingsRestoreState(void) {
     GetPropI1("modeset.%d.dexp_filter_high", i,      mode_settings[i].dexp_filter_high);
     GetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
     GetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
+    GetPropI1("modeset.%d.cfc_comp_curve_degree", i, mode_settings[i].cfc_comp_curve_degree);
+    GetPropI1("modeset.%d.cfc_comp_curve_r", i,      mode_settings[i].cfc_comp_curve_r);
+    GetPropI1("modeset.%d.cfc_comp_curve_umethod", i, mode_settings[i].cfc_comp_curve_umethod);
+    GetPropI1("modeset.%d.cfc_post_curve_degree", i, mode_settings[i].cfc_post_curve_degree);
+    GetPropI1("modeset.%d.cfc_post_curve_r", i,      mode_settings[i].cfc_post_curve_r);
+    GetPropI1("modeset.%d.cfc_post_curve_umethod", i, mode_settings[i].cfc_post_curve_umethod);
     GetPropI1("modeset.%d.lev_enable", i,            mode_settings[i].lev_enable);
     GetPropF1("modeset.%d.lev_gain", i,              mode_settings[i].lev_gain);
     GetPropI1("modeset.%d.phrot_enable", i,          mode_settings[i].phrot_enable);
@@ -660,10 +686,16 @@ static void modesettingsRestoreState(void) {
       GetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
       GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
       GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
+      if (j < 12) {
+        GetPropF2("modeset.%d.cfc_comp_weight.%d", i, j, mode_settings[i].cfc_comp_weight[j]);
+        GetPropF2("modeset.%d.cfc_post_weight.%d", i, j, mode_settings[i].cfc_post_weight[j]);
+      }
     }
-    /* Normalize complete EQ control-point triplets once after loading. */
+    /* Normalize complete control-point tuples once after loading. */
     sort_eq_profile(mode_settings[i].tx_eq_freq, mode_settings[i].tx_eq_gain, mode_settings[i].tx_eq_weight);
     sort_eq_profile(mode_settings[i].rx_eq_freq, mode_settings[i].rx_eq_gain, mode_settings[i].rx_eq_weight);
+    sort_cfc_profile(mode_settings[i].cfc_freq, mode_settings[i].cfc_lvl, mode_settings[i].cfc_post,
+                     mode_settings[i].cfc_comp_weight, mode_settings[i].cfc_post_weight);
   }
 }
 
@@ -997,6 +1029,16 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     transmitter->dexp_filter_high = mode_settings[m].dexp_filter_high;
     transmitter->cfc              = mode_settings[m].cfc;
     transmitter->cfc_eq           = mode_settings[m].cfc_eq;
+    transmitter->cfc_comp_curve_degree = mode_settings[m].cfc_comp_curve_degree;
+    transmitter->cfc_comp_curve_r = mode_settings[m].cfc_comp_curve_r;
+    transmitter->cfc_comp_curve_umethod = mode_settings[m].cfc_comp_curve_umethod;
+    transmitter->cfc_post_curve_degree = mode_settings[m].cfc_post_curve_degree;
+    transmitter->cfc_post_curve_r = mode_settings[m].cfc_post_curve_r;
+    transmitter->cfc_post_curve_umethod = mode_settings[m].cfc_post_curve_umethod;
+    for (int i = 0; i < 12; i++) {
+      transmitter->cfc_comp_weight[i] = mode_settings[m].cfc_comp_weight[i];
+      transmitter->cfc_post_weight[i] = mode_settings[m].cfc_post_weight[i];
+    }
     transmitter->lev_enable       = mode_settings[m].lev_enable;
     transmitter->lev_gain         = mode_settings[m].lev_gain;
     transmitter->phrot_enable     = mode_settings[m].phrot_enable;

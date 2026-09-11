@@ -160,6 +160,14 @@ struct _mode_settings {
   double cfc_freq[13];              // CFC corner frequencies
   double cfc_lvl[13];               // CFC compression at corner frequency
   double cfc_post[13];              // CFC post-EQ gain at corner frequency
+  int cfc_comp_curve_degree;
+  int cfc_comp_curve_r;
+  int cfc_comp_curve_umethod;
+  double cfc_comp_weight[12];
+  int cfc_post_curve_degree;
+  int cfc_post_curve_r;
+  int cfc_post_curve_umethod;
+  double cfc_post_weight[12];
 };
 
 extern struct _mode_settings mode_settings[];

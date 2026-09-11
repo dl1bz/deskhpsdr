@@ -155,6 +155,14 @@ typedef struct _transmitter {
   double cfc_freq[13];      // CFC corner frequencies
   double cfc_lvl[13];       // compression level for corner frequencies
   double cfc_post[13];      // EQ gain for corner frequencies
+  int cfc_comp_curve_degree;
+  int cfc_comp_curve_r;
+  int cfc_comp_curve_umethod;
+  double cfc_comp_weight[12];
+  int cfc_post_curve_degree;
+  int cfc_post_curve_r;
+  int cfc_post_curve_umethod;
+  double cfc_post_weight[12];
 
   int dexp;                 // use downward expander (DEXP)
   int    dexp_trigger;      // threshold for the "noise gate" in dB (!)

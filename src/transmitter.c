@@ -364,6 +364,12 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropF1("transmitter.%d.compressor_level",  tx->id,               tx->compressor_level);
   SetPropI1("transmitter.%d.cfc",               tx->id,               tx->cfc);
   SetPropI1("transmitter.%d.cfc_eq",            tx->id,               tx->cfc_eq);
+  SetPropI1("transmitter.%d.cfc_comp_curve_degree", tx->id,            tx->cfc_comp_curve_degree);
+  SetPropI1("transmitter.%d.cfc_comp_curve_r",      tx->id,            tx->cfc_comp_curve_r);
+  SetPropI1("transmitter.%d.cfc_comp_curve_umethod", tx->id,           tx->cfc_comp_curve_umethod);
+  SetPropI1("transmitter.%d.cfc_post_curve_degree", tx->id,            tx->cfc_post_curve_degree);
+  SetPropI1("transmitter.%d.cfc_post_curve_r",      tx->id,            tx->cfc_post_curve_r);
+  SetPropI1("transmitter.%d.cfc_post_curve_umethod", tx->id,           tx->cfc_post_curve_umethod);
   SetPropI1("transmitter.%d.dexp",              tx->id,               tx->dexp);
   SetPropI1("transmitter.%d.dexp_exp",          tx->id,               tx->dexp_exp);
   SetPropI1("transmitter.%d.dexp_filter",       tx->id,               tx->dexp_filter);
@@ -392,6 +398,10 @@ void tx_save_state(const TRANSMITTER *tx) {
     SetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, i,            tx->cfc_freq[i]);
     SetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, i,            tx->cfc_lvl[i]);
     SetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
+    if (i < 12) {
+      SetPropF2("transmitter.%d.cfc_comp_weight[%d]", tx->id, i,        tx->cfc_comp_weight[i]);
+      SetPropF2("transmitter.%d.cfc_post_weight[%d]", tx->id, i,        tx->cfc_post_weight[i]);
+    }
   }
   SetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   SetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
@@ -503,6 +513,12 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropF1("transmitter.%d.compressor_level",  tx->id,               tx->compressor_level);
   GetPropI1("transmitter.%d.cfc",               tx->id,               tx->cfc);
   GetPropI1("transmitter.%d.cfc_eq",            tx->id,               tx->cfc_eq);
+  GetPropI1("transmitter.%d.cfc_comp_curve_degree", tx->id,            tx->cfc_comp_curve_degree);
+  GetPropI1("transmitter.%d.cfc_comp_curve_r",      tx->id,            tx->cfc_comp_curve_r);
+  GetPropI1("transmitter.%d.cfc_comp_curve_umethod", tx->id,           tx->cfc_comp_curve_umethod);
+  GetPropI1("transmitter.%d.cfc_post_curve_degree", tx->id,            tx->cfc_post_curve_degree);
+  GetPropI1("transmitter.%d.cfc_post_curve_r",      tx->id,            tx->cfc_post_curve_r);
+  GetPropI1("transmitter.%d.cfc_post_curve_umethod", tx->id,           tx->cfc_post_curve_umethod);
   GetPropI1("transmitter.%d.dexp",              tx->id,               tx->dexp);
   GetPropI1("transmitter.%d.dexp_exp",          tx->id,               tx->dexp_exp);
   GetPropI1("transmitter.%d.dexp_filter",       tx->id,               tx->dexp_filter);
@@ -531,10 +547,15 @@ static void tx_restore_state(TRANSMITTER *tx) {
     GetPropF2("transmitter.%d.cfc_freq[%d]",    tx->id, i,            tx->cfc_freq[i]);
     GetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, i,            tx->cfc_lvl[i]);
     GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
+    if (i < 12) {
+      GetPropF2("transmitter.%d.cfc_comp_weight[%d]", tx->id, i,        tx->cfc_comp_weight[i]);
+      GetPropF2("transmitter.%d.cfc_post_weight[%d]", tx->id, i,        tx->cfc_post_weight[i]);
+    }
   }
-  /* Preserve the complete EQ control-point triplet when restoring old or
+  /* Preserve complete control-point tuples when restoring old or
    * hand-edited profiles with unsorted frequencies. */
   sort_tx_eq(tx);
+  sort_cfc(tx);
   GetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   GetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
   GetPropF1("transmitter.%d.lev_gain",          tx->id,               tx->lev_gain);
@@ -1195,6 +1216,16 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->compressor_level = 4.0;
   tx->cfc              =       0;
   tx->cfc_eq           =       0;
+  tx->cfc_comp_curve_degree = 0;
+  tx->cfc_comp_curve_r = 0;
+  tx->cfc_comp_curve_umethod = 0;
+  tx->cfc_post_curve_degree = 0;
+  tx->cfc_post_curve_r = 0;
+  tx->cfc_post_curve_umethod = 0;
+  for (int i = 0; i < 12; i++) {
+    tx->cfc_comp_weight[i] = 1.0;
+    tx->cfc_post_weight[i] = 1.0;
+  }
   tx->cfc_freq[ 0]     =     0.0;  // Not used
   tx->cfc_freq[ 1]     =    50.0;
   tx->cfc_freq[ 2]     =   150.0;
@@ -2712,6 +2743,12 @@ void tx_set_compressor(TRANSMITTER *tx) {
   t_print("%s: PH-ROT state %d, stages %d, freq %.1fHz\n",
           __func__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
   SetTXACFCOMPprofile(tx->id, 12, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
+#ifndef WDSP1
+  SetTXACFCOMPCompCurve(tx->id, tx->cfc_comp_curve_degree, tx->cfc_comp_curve_r, tx->cfc_comp_curve_umethod);
+  SetTXACFCOMPCompWeights(tx->id, 12, tx->cfc_comp_weight);
+  SetTXACFCOMPPeqCurve(tx->id, tx->cfc_post_curve_degree, tx->cfc_post_curve_r, tx->cfc_post_curve_umethod);
+  SetTXACFCOMPPeqWeights(tx->id, 12, tx->cfc_post_weight);
+#endif
   SetTXACFCOMPPrecomp(tx->id, tx->cfc_lvl[0]);
   SetTXACFCOMPRun(tx->id, tx->cfc);  // Pre CFC on/off
   SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);

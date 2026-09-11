@@ -53,6 +53,7 @@ extern void remove_char(char *str, char remove);
 extern void sanitize_filename(char *str);
 extern int file_present(const char *filename);
 extern const char *extract_short_msg(const char *msg);
+extern void sort_cfc_profile(double *freq, double *level, double *post, double *comp_weight, double *post_weight);
 extern void sort_cfc(TRANSMITTER *tx);
 extern void sort_eq_profile(double *freq, double *gain, double *weight);
 extern void sort_tx_eq(TRANSMITTER *tx);
