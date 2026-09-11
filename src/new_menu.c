@@ -719,7 +719,8 @@ void new_menu(void) {
     GtkWidget *ant_b = gtk_button_new_with_label("Ant");
     g_signal_connect(ant_b, "button-press-event", G_CALLBACK(ant_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), ant_b, col, row, 1, 1);
-    if (protocol == NEW_PROTOCOL) {
+    if (protocol == NEW_PROTOCOL &&
+        (device == NEW_DEVICE_HERMES || device == NEW_DEVICE_ANGELIA)) {
       row++;
       GtkWidget *ddc_b = gtk_button_new_with_label("P2 ADC/DDC");
       gtk_widget_set_tooltip_text(ddc_b, "Advanced Protocol 2 ADC/DDC assignment");

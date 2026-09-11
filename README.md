@@ -45,7 +45,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | using Virtual Environments (VE)| not supported ❌                              | use native OS     |
 | Audio layer support            | CoreAudio (macOS), PulseAudio or ALSA (Linux) |                   |
 | Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling     |
-| TX Audio Monitor               | supported ✅                                  | Pre & Post        |
+| TX Audio Monitor               | supported ✅ (since 2.7.39)                   | Pre & Post        |
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter ✅ |                   |
 | RBN support                    | yes, inclusive show Spots on RX Panadapter ✅ |                   |
 | SDR TX support                 | yes, fully supported ✅                       |                   |
