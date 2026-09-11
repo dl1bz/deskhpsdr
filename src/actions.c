@@ -301,6 +301,8 @@ ACTION_TABLE ActionTable[] = {
   {XVTR_8,              "XVTR 8",                "XVTR8",        MIDI_KEY},
   {XVTR_9,              "XVTR 9",                "XVTR9",        MIDI_KEY},
   {XVTR_10,             "XVTR 10",               "XVTR10",       MIDI_KEY},
+  {TX_MONITOR,          "TX Monitor\nOn/Off",     "TXMON",        MIDI_KEY},
+  {TX_MONITOR_VOLUME,   "TX Monitor\nVolume",     "TXMONVOL",     MIDI_KNOB | MIDI_WHEEL},
   {ACTIONS,             "None",                 "NONE",         TYPE_NONE}
 };
 
@@ -2005,6 +2007,17 @@ int process_action(void *data) {
       if (can_transmit) {
         tx_set_twotone(transmitter, NOT(transmitter->twotone));
       }
+    }
+    break;
+  case TX_MONITOR:
+    if (can_transmit && a->mode == PRESSED) {
+      set_tx_monitor_state(!tx_get_monitor());
+    }
+    break;
+  case TX_MONITOR_VOLUME:
+    if (can_transmit) {
+      value = KnobOrWheel(a, tx_get_monitor_gain_db(), -40.0, 0.0, 1.0);
+      set_tx_monitor_gain(value);
     }
     break;
   case VFO:

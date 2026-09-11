@@ -603,6 +603,28 @@ void set_af_gain(int rx, double value) {
   }
 }
 
+void set_tx_monitor_state(int state) {
+  if (active_receiver == NULL) {
+    return;
+  }
+  if (!af_gain_monitor_volume_initialized) {
+    tx_set_monitor_gain_db(active_receiver->volume);
+    af_gain_monitor_volume_initialized = TRUE;
+  }
+  af_gain_monitor_mode = TRUE;
+  tx_set_monitor(state ? 1 : 0);
+  update_slider_af_gain_btn();
+  update_slider_af_gain_scale();
+}
+
+void set_tx_monitor_gain(double value) {
+  tx_set_monitor_gain_db(value);
+  af_gain_monitor_volume_initialized = TRUE;
+  if (af_gain_monitor_mode) {
+    update_slider_af_gain_scale();
+  }
+}
+
 static void rf_gain_value_changed_cb(GtkWidget *widget, gpointer data) {
   adc[active_receiver->adc].gain = gtk_range_get_value(GTK_RANGE(rf_gain_scale));
 }

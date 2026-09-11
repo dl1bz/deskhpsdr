@@ -257,6 +257,8 @@ enum ACTION {
   XVTR_8,
   XVTR_9,
   XVTR_10,
+  TX_MONITOR,
+  TX_MONITOR_VOLUME,
   ACTIONS
 };
 

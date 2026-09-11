@@ -58,6 +58,8 @@ extern void sliders_show_row(int row);
 
 extern void set_agc_gain(int rx, double value);
 extern void set_af_gain(int rx, double value);
+extern void set_tx_monitor_state(int state);
+extern void set_tx_monitor_gain(double value);
 extern void set_rf_gain(int rx, double value);
 extern void set_mic_gain(double value);
 extern void set_linein_gain(double value);
