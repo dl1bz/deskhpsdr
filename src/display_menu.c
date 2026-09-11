@@ -703,7 +703,6 @@ void display_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(general_grid), waterfall_automatic_b, col, row, 1, 1);
   g_signal_connect(waterfall_automatic_b, "toggled", G_CALLBACK(waterfall_automatic_cb), NULL);
   //--------------------------------------------------------------------------------------------------------------
-  // if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     row++;
     col = 0;
@@ -731,7 +730,7 @@ void display_menu(GtkWidget *parent) {
     }
   }
   //------------------------------------------------------------------------------------------------------------
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (device == DEVICE_HERMES_LITE2) {
     row++;
   } else {
     row += 2;
@@ -892,7 +891,7 @@ void display_menu(GtkWidget *parent) {
   GtkWidget *b_display_panadapter_ovf = gtk_check_button_new_with_label("Show ADC OVF Alarm");
   gtk_widget_set_name(b_display_panadapter_ovf, "stdlabel_blue");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_panadapter_ovf), display_rx->panadapter_ovf_on);
-  if (!autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+  if (!autogain_enabled && device == DEVICE_HERMES_LITE2) {
     gtk_widget_hide(b_display_panadapter_ovf);
   } else {
     gtk_widget_show(b_display_panadapter_ovf);

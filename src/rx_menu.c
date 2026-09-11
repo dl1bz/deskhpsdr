@@ -595,17 +595,17 @@ static void add_dither_random_controls(GtkWidget *grid, RECEIVER *rx, int *row) 
   }
   rx_menu_sync_original_protocol_dither_random_from_effective();
   // We assume Dither/Random are either both available or both not available
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (device == DEVICE_HERMES_LITE2) {
     //
     // In protocol 1 the HL2 (ab-) uses the Dither bit for its "Band Volts" output.
     // The SQUARE SDR 2 uses the very same bit to switch its loudspeaker, so if that
     // radio is selected in the RADIO menu, name the control after what it really does.
     //
-    const char *dither_label = "HL2 Band Volts / Dither Bit";
-    const char *dither_tip   = "activate Band Voltage output at the Hermes Lite 2";
+    const char *dither_label = "Dither Bit (HL2 Band Volts)";
+    const char *dither_tip   = "Setting the Dither Bit activates the Band Voltage\noutput when using the Hermes Lite 2";
     if (protocol == ORIGINAL_PROTOCOL && device == DEVICE_HERMES_LITE2 &&
         hl2_audio_codec == HL2_CODEC_SQUARESDR2) {
-      dither_label = "Speaker (Band Volts)";
+      dither_label = "Dither Bit (Speaker)";
       dither_tip   = "SQUARE SDR 2: switch the loudspeaker ON or OFF.\n\n"
                      "This is the same bit the Hermes Lite 2 uses for its\n"
                      "Band Voltage output (the Dither bit), but the SQUARE SDR 2\n"
@@ -655,7 +655,7 @@ static void add_dither_random_controls(GtkWidget *grid, RECEIVER *rx, int *row) 
 
 #if defined (__AUTOG__)
 static void add_hl2_autogain_controls(GtkWidget *grid, int *row) {
-  if (device != DEVICE_HERMES_LITE2 && device != NEW_DEVICE_HERMES_LITE2) {
+  if (device != DEVICE_HERMES_LITE2) {
     return;
   }
   autogain_b = gtk_check_button_new_with_label("HL2 ADC Auto Gain RxPGA");
@@ -912,7 +912,7 @@ static GtkWidget *build_general_page(void) {
     have_hardware_controls = TRUE;
   }
 #if defined (__AUTOG__)
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (device == DEVICE_HERMES_LITE2) {
     add_hl2_autogain_controls(hardware_grid, &row);
     have_hardware_controls = TRUE;
   }

@@ -556,8 +556,7 @@ static void tx_restore_state(TRANSMITTER *tx) {
 static double compute_power(double p) {
   double interval = 0.1 * pa_power_list[pa_power];
   int i = 0;
-  if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
-                     device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2) &&
+  if (pa_enabled && (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2) &&
       !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
     reassign_pa_trim();
   }
@@ -772,8 +771,6 @@ static gboolean tx_update_display(gpointer data) {
       break;
     case DEVICE_HERMES_LITE:
     case DEVICE_HERMES_LITE2:
-    case NEW_DEVICE_HERMES_LITE:
-    case NEW_DEVICE_HERMES_LITE2:
       //
       // These values are a fit to the "HL2FilterE3" data in Quisk.
       // No difference in the Fwd and Rev formula.
@@ -789,8 +786,7 @@ static gboolean tx_update_display(gpointer data) {
     // Special hook for HL2s with an incorrectly wound current
     // sense transformer: Exchange fwd and rev readings
     //
-    if (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2 ||
-        device == NEW_DEVICE_HERMES_LITE || device == NEW_DEVICE_HERMES_LITE2) {
+    if (device == DEVICE_HERMES_LITE || device == DEVICE_HERMES_LITE2) {
       if (rev_power > fwd_power) {
         fwd_power   = alex_reverse_power;
         rev_power   = alex_forward_power;

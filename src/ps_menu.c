@@ -500,7 +500,7 @@ int ps_calibration_timer(gpointer arg) {
     static int old4 = -1;
     static int count = 0;
     int info[INFO_SIZE];
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if (device == DEVICE_HERMES_LITE2) {
       tx_att_min = -29;
       tx_att_max = 31;
     } else {
@@ -1145,7 +1145,7 @@ void ps_menu(GtkWidget *parent) {
   snprintf(text, 16, "%d", transmitter->attenuation);
   gtk_entry_set_text(GTK_ENTRY(tx_att), text);
   gtk_entry_set_width_chars(GTK_ENTRY(tx_att), 10);
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (device == DEVICE_HERMES_LITE2) {
     tx_att_spin = gtk_spin_button_new_with_range(-29.0, 31.0, 1.0);
   } else {
     tx_att_spin = gtk_spin_button_new_with_range(0.0, 31.0, 1.0);

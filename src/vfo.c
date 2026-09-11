@@ -865,7 +865,7 @@ static inline void vfo_adjust_band(int v, long long f) {
       if (v == vfo_get_tx_vfo()) { vfo_apply_ps_tx_att(); }
     }
 #if defined (__AUTOG__)
-    if (can_transmit && autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+    if (can_transmit && autogain_enabled && device == DEVICE_HERMES_LITE2) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __func__, autogain_is_adjusted);
     }
@@ -1072,7 +1072,7 @@ void vfo_band_changed(int id, int b) {
     }
     disable_split_for_band_change(id);
 #if defined (__AUTOG__)
-    if (autogain_enabled && (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2)) {
+    if (autogain_enabled && device == DEVICE_HERMES_LITE2) {
       autogain_is_adjusted = 0;
       t_print("%s: autogain_is_adjusted=%d\n", __func__, autogain_is_adjusted);
     }
@@ -2447,7 +2447,7 @@ void vfo_update(void) {
     }
     cairo_show_text(cr, temp_text);
 #if defined (__AUTOG__)
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if (device == DEVICE_HERMES_LITE2) {
       cairo_move_to(cr, vfl->base_x + 265, vfl->base_y + 20);
       if (autogain_enabled && autogain_is_adjusted) {
         cairo_set_source_rgba(cr, COLOUR_OK);

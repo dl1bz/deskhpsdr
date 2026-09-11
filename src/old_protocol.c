@@ -2423,7 +2423,7 @@ void ozy_send_buffer(void) {
     // NOTE: on the SQUARE SDR 2 (HL2_CODEC_SQUARESDR2) the very same bit is used
     //       by the gateware to switch the internal loudspeaker ON/OFF. There the
     //       bit must NOT be forced, it has to stay under control of the
-    //       "HL2 Band Volts / Dither Bit" checkbox in the RX menu.
+    //       "Dither Bit (HL2 Band Volts)" checkbox in the RX menu.
     //
     if (device == DEVICE_HERMES_LITE2 && hl2_audio_codec == HL2_CODEC_AK4951) {
       output_buffer[C3] |= LT2208_DITHER_ON;

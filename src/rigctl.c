@@ -670,7 +670,7 @@ static void *autogain_thread_function(void *arg) {
 }
 
 void launch_autogain_hl2(void) {
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (device == DEVICE_HERMES_LITE2) {
     if (autogain_enabled) {
       if (!autogain_thread_running) {
         autogain_thread_running = 1;
@@ -692,7 +692,7 @@ void launch_autogain_hl2(void) {
 }
 
 void restart_autogain_hl2(void) {
-  if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+  if (device == DEVICE_HERMES_LITE2) {
     if (autogain_thread_running) {
       autogain_thread_running = 0;           // Stop-Signal setzen
       // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten

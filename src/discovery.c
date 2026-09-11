@@ -572,10 +572,8 @@ void discovery(void) {
         g_signal_connect(setup_button, "clicked", G_CALLBACK(p2_setup_clicked), (gpointer) d);
         p2_setup_column = 5;
       }
-      // Reboot-Button für Hermes Lite 2
-      // Voraussetzung: DEVICE_HERMES_LITE2 & NEW_DEVICE_HERMES_LITE2 ist im Projekt definiert.
-      // Bei Protocol 2 liegt Setup in Spalte 4, daher Reboot dort in Spalte 5.
-      if ((d->device == DEVICE_HERMES_LITE2 || d->device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1
+      // Reboot button for Hermes Lite 2 (Protocol 1 only).
+      if (d->device == DEVICE_HERMES_LITE2 && !have_radioberry1
           && !have_radioberry2 && !have_radioberry3) {
         GtkWidget *reboot_button = gtk_button_new_with_label("Reboot");
         gtk_widget_set_name(reboot_button, "discovery_btn");

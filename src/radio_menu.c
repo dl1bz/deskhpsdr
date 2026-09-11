@@ -303,14 +303,14 @@ void n2adr_oc_settings_tx(void) {
 void load_filters(void) {
   switch (filter_board) {
   case N2ADR_TX:
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     }
     n2adr_oc_settings_tx();
     break;
   case N2ADR:
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
@@ -319,7 +319,7 @@ void load_filters(void) {
   case ALEX:
   case APOLLO:
   case CHARLY25:
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
@@ -327,13 +327,13 @@ void load_filters(void) {
     radio_set_alex_antennas();
     break;
   case NO_FILTER_BOARD:
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
     break;
   default:
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
@@ -352,42 +352,42 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
   case 0:
   default:
     filter_board = NO_FILTER_BOARD;
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
     break;
   case 1:
     filter_board = ALEX;
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
     break;
   case 2:
     filter_board = APOLLO;
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
     break;
   case 3:
     filter_board = CHARLY25;
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
     break;
   case 4:
     filter_board = N2ADR;
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, FALSE);
     }
     break;
   case 5:
     filter_board = N2ADR_TX;
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       gtk_widget_set_sensitive(n2adr_hpf_btn, TRUE);
     }
@@ -397,7 +397,7 @@ static void filter_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void n2adr_hpf_btn_cb(GtkWidget *widget, gpointer data) {
-  if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+  if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
       && !have_radioberry3) {
     n2adr_hpf_enable = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     load_filters();
@@ -712,7 +712,7 @@ void radio_menu(GtkWidget *parent) {
     }
     my_combo_attach(GTK_GRID(grid), filter_combo, 2, row, 1, 1);
     g_signal_connect(filter_combo, "changed", G_CALLBACK(filter_cb), NULL);
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       n2adr_hpf_btn = gtk_check_button_new_with_label("+RX: N2ADR HPF 3MHz");
       gtk_widget_set_name(n2adr_hpf_btn, "boldlabel_blue");
@@ -887,7 +887,7 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn_mute_rx_when_tx, col, row, 1, 1);
     g_signal_connect(ChkBtn_mute_rx_when_tx, "toggled", G_CALLBACK(toggle_cb), &mute_rx_while_transmitting);
     col++;
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && !have_radioberry1 && !have_radioberry2
+    if (device == DEVICE_HERMES_LITE2 && !have_radioberry1 && !have_radioberry2
         && !have_radioberry3) {
       ChkBtn = gtk_check_button_new_with_label("HL2 5W PA enable");
       gtk_widget_set_tooltip_text(ChkBtn,
@@ -940,11 +940,10 @@ void radio_menu(GtkWidget *parent) {
     col++;
   }
   break;
-  case NEW_DEVICE_HERMES_LITE2:
   case DEVICE_HERMES_LITE2: {
     if (!have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
       GtkWidget *codec_combo = gtk_combo_box_text_new();
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "No local audio codec");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "No audio codec");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "HL2+ audio codec (AK4951)");
       if (protocol == ORIGINAL_PROTOCOL && device == DEVICE_HERMES_LITE2) {
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "SQUARE SDR 2 audio codec");
@@ -957,7 +956,7 @@ void radio_menu(GtkWidget *parent) {
                                     "SQUARE SDR 2 audio codec:\n"
                                     "Codec on the main board. Here the Dither bit is\n"
                                     "NOT touched, in this gateware it switches the\n"
-                                    "loudspeaker ON/OFF. Use <Speaker (Band Volts)>\n"
+                                    "loudspeaker ON/OFF. Use <Dither Bit (Speaker)>\n"
                                     "in the RX menu for that.");
       } else {
         gtk_widget_set_tooltip_text(codec_combo,

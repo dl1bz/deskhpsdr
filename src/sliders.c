@@ -1216,7 +1216,7 @@ void update_slider_agc_gain_scale(void) {
 }
 
 void update_slider_autogain_btn(void) {
-  if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && display_sliders) {
+  if (device == DEVICE_HERMES_LITE2 && display_sliders) {
     sliders_signal_handler_block(GTK_TOGGLE_BUTTON(autogain_btn), autogain_btn_signal_id);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(autogain_btn), autogain_enabled);
     sliders_signal_handler_unblock(GTK_TOGGLE_BUTTON(autogain_btn), autogain_btn_signal_id);
@@ -2063,7 +2063,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_box_set_spacing(GTK_BOX(box_Z1_right), 5);
     //-----------------------------------------------------------------------------------------------------------
 #if defined (__AUTOG__)
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && can_transmit) {
+    if (device == DEVICE_HERMES_LITE2 && can_transmit) {
       autogain_btn = gtk_toggle_button_new_with_label("RxPGA");
       WEAKEN(autogain_btn);
       gtk_widget_set_tooltip_text(autogain_btn, "AutoGain ON/OFF");
@@ -2104,7 +2104,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_box_pack_start(GTK_BOX(box_Z1_right), rf_gain_label, FALSE, FALSE, 0);
     }
 #else
-    if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
+    if (device == DEVICE_HERMES_LITE2) {
       rf_gain_label = gtk_label_new("RxPGA");
     } else {
       rf_gain_label = gtk_label_new("RF Gain");
@@ -2537,7 +2537,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_size_request(box_Z2_middle, box_middle_width, widget_height);
     gtk_box_set_spacing(GTK_BOX(box_Z2_middle), 5);
     //-----------------------------------------------------------------------------------------------------------
-    if ((device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) && pa_enabled && !have_radioberry1
+    if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1
         && !have_radioberry2 && !have_radioberry3) {
       drive_label = gtk_label_new("TXPwr(W)");
     } else {
