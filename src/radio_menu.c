@@ -131,6 +131,15 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   radio_reconfigure_screen();
 }
 
+static void hl2_codec_cb(GtkWidget *widget, gpointer data) {
+  hl2_audio_codec = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+  schedule_general();
+  schedule_transmit_specific();
+  schedule_high_priority();
+  g_idle_add(ext_vfo_update, NULL);
+  radio_reconfigure_screen();
+}
+
 static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
   int mode = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   if (mode == hermes_mode) {
@@ -934,13 +943,24 @@ void radio_menu(GtkWidget *parent) {
   case NEW_DEVICE_HERMES_LITE2:
   case DEVICE_HERMES_LITE2: {
     if (!have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
-      ChkBtn = gtk_check_button_new_with_label("HL2+ audio codec");
-      gtk_widget_set_name(ChkBtn, "boldlabel");
-      gtk_widget_set_tooltip_text(ChkBtn,
-                                  "Activate only if using a Hermes Lite 2\nwith the AK4951 Companion Board,\ncalled Hermes Lite 2 Plus");
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), hl2_audio_codec);
-      gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
-      g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &hl2_audio_codec);
+      GtkWidget *codec_combo = gtk_combo_box_text_new();
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "No local audio codec");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "HL2+ audio codec (AK4951)");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "SQUARE SDR 2 audio codec");
+      gtk_widget_set_tooltip_text(codec_combo,
+                                  "Local audio codec of the HL2-compatible SDR.\n\n"
+                                  "HL2+ audio codec (AK4951):\n"
+                                  "Hermes Lite 2 with the AK4951 Companion Board.\n"
+                                  "The Dither bit is set permanently, the gateware\n"
+                                  "uses it to detect the codec.\n\n"
+                                  "SQUARE SDR 2 audio codec:\n"
+                                  "Codec on the main board. Here the Dither bit is\n"
+                                  "NOT touched, in this gateware it switches the\n"
+                                  "loudspeaker ON/OFF. Use <Speaker (Band Volts)>\n"
+                                  "in the RX menu for that.");
+      gtk_combo_box_set_active(GTK_COMBO_BOX(codec_combo), hl2_audio_codec);
+      gtk_grid_attach(GTK_GRID(grid), codec_combo, col, row, 1, 1);
+      g_signal_connect(codec_combo, "changed", G_CALLBACK(hl2_codec_cb), NULL);
       col++;
       ChkBtn = gtk_check_button_new_with_label("HL2 CL1 10Mhz Ref Clock");
       gtk_widget_set_name(ChkBtn, "boldlabel");
@@ -963,7 +983,7 @@ void radio_menu(GtkWidget *parent) {
       g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &enable_hl2_atu_gateware);
       col++;
     } else {
-      hl2_audio_codec = 0;
+      hl2_audio_codec = HL2_CODEC_OFF;
       hl2_cl1_input = 0;
     }
   }

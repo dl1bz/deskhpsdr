@@ -191,9 +191,16 @@ int atlas_janus = 0;
 
 //
 // if hl2_audio_codec is set,  audio data is included in the HPSDR
-// data stream and the "dither" bit is set. This is used by a
-// "compagnion board" and  a variant of the HL2 firmware
-// This bit can be set in the "RADIO" menu.
+// data stream. This is used by a "compagnion board" and  a variant
+// of the HL2 firmware. This can be set in the "RADIO" menu.
+//
+// HL2_CODEC_AK4951     (HL2+ companion board): in addition the "dither"
+//                      bit is set permanently, the gateware uses it to
+//                      flag "audio codec present".
+// HL2_CODEC_SQUARESDR2 (SQUARE SDR 2, codec on the main board): the
+//                      "dither" bit is NOT touched here, in that gateware
+//                      it switches the internal loudspeaker ON/OFF and is
+//                      controlled by "HL2 Band Volts / Dither Bit" (RX menu).
 //
 // if hl2_cl1_input is set, CL1 is used as a master clock input
 // for a 10 MHz reference clock.
@@ -2810,6 +2817,10 @@ static void radio_restore_state(void) {
   GetPropI0("atlas_mic_source",                              atlas_mic_source);
   GetPropI0("atlas_janus",                                   atlas_janus);
   GetPropI0("hl2_audio_codec",                               hl2_audio_codec);
+  // sanity check, the props file may contain values from another version
+  if (hl2_audio_codec < HL2_CODEC_OFF || hl2_audio_codec > HL2_CODEC_SQUARESDR2) {
+    hl2_audio_codec = HL2_CODEC_OFF;
+  }
   GetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
   GetPropI0("anan10E",                                       anan10E);
   GetPropI0("hermes_mode",                                   hermes_mode);

@@ -378,6 +378,14 @@ extern double drive_digi_max;    // maximum value allowed in DIGU/DIGL
 extern gboolean display_warnings;
 extern gboolean display_pacurr;
 
+//
+// Values for hl2_audio_codec (kept numerically compatible with the
+// former ON/OFF checkbox: 0 = off, 1 = HL2+ companion board)
+//
+#define HL2_CODEC_OFF        0
+#define HL2_CODEC_AK4951     1   // HL2+ companion board: dither bit = "codec present"
+#define HL2_CODEC_SQUARESDR2 2   // SQUARE SDR 2: dither bit = internal speaker ON/OFF
+
 extern int hl2_audio_codec;
 extern int hl2_cl1_input;
 extern int anan10E;
