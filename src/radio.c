@@ -2818,7 +2818,9 @@ static void radio_restore_state(void) {
   GetPropI0("atlas_janus",                                   atlas_janus);
   GetPropI0("hl2_audio_codec",                               hl2_audio_codec);
   // sanity check, the props file may contain values from another version
-  if (hl2_audio_codec < HL2_CODEC_OFF || hl2_audio_codec > HL2_CODEC_SQUARESDR2) {
+  if (hl2_audio_codec < HL2_CODEC_OFF || hl2_audio_codec > HL2_CODEC_SQUARESDR2 ||
+      (hl2_audio_codec == HL2_CODEC_SQUARESDR2 &&
+       (protocol != ORIGINAL_PROTOCOL || device != DEVICE_HERMES_LITE2))) {
     hl2_audio_codec = HL2_CODEC_OFF;
   }
   GetPropI0("hl2_cl1_input",                                 hl2_cl1_input)

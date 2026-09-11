@@ -603,15 +603,14 @@ static void add_dither_random_controls(GtkWidget *grid, RECEIVER *rx, int *row) 
     //
     const char *dither_label = "HL2 Band Volts / Dither Bit";
     const char *dither_tip   = "activate Band Voltage output at the Hermes Lite 2";
-
-    if (hl2_audio_codec == HL2_CODEC_SQUARESDR2) {
+    if (protocol == ORIGINAL_PROTOCOL && device == DEVICE_HERMES_LITE2 &&
+        hl2_audio_codec == HL2_CODEC_SQUARESDR2) {
       dither_label = "Speaker (Band Volts)";
       dither_tip   = "SQUARE SDR 2: switch the loudspeaker ON or OFF.\n\n"
                      "This is the same bit the Hermes Lite 2 uses for its\n"
                      "Band Voltage output (the Dither bit), but the SQUARE SDR 2\n"
                      "gateware uses it to control the speaker instead.";
     }
-
     GtkWidget *dither_b = gtk_check_button_new_with_label(dither_label);
     gtk_widget_set_name(dither_b, "boldlabel");
     gtk_widget_set_tooltip_text(dither_b, dither_tip);

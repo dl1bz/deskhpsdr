@@ -946,18 +946,25 @@ void radio_menu(GtkWidget *parent) {
       GtkWidget *codec_combo = gtk_combo_box_text_new();
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "No local audio codec");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "HL2+ audio codec (AK4951)");
-      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "SQUARE SDR 2 audio codec");
-      gtk_widget_set_tooltip_text(codec_combo,
-                                  "Local audio codec of the HL2-compatible SDR.\n\n"
-                                  "HL2+ audio codec (AK4951):\n"
-                                  "Hermes Lite 2 with the AK4951 Companion Board.\n"
-                                  "The Dither bit is set permanently, the gateware\n"
-                                  "uses it to detect the codec.\n\n"
-                                  "SQUARE SDR 2 audio codec:\n"
-                                  "Codec on the main board. Here the Dither bit is\n"
-                                  "NOT touched, in this gateware it switches the\n"
-                                  "loudspeaker ON/OFF. Use <Speaker (Band Volts)>\n"
-                                  "in the RX menu for that.");
+      if (protocol == ORIGINAL_PROTOCOL && device == DEVICE_HERMES_LITE2) {
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(codec_combo), NULL, "SQUARE SDR 2 audio codec");
+        gtk_widget_set_tooltip_text(codec_combo,
+                                    "Local audio codec of the HL2-compatible SDR.\n\n"
+                                    "HL2+ audio codec (AK4951):\n"
+                                    "Hermes Lite 2 with the AK4951 Companion Board.\n"
+                                    "The Dither bit is set permanently, the gateware\n"
+                                    "uses it to detect the codec.\n\n"
+                                    "SQUARE SDR 2 audio codec:\n"
+                                    "Codec on the main board. Here the Dither bit is\n"
+                                    "NOT touched, in this gateware it switches the\n"
+                                    "loudspeaker ON/OFF. Use <Speaker (Band Volts)>\n"
+                                    "in the RX menu for that.");
+      } else {
+        gtk_widget_set_tooltip_text(codec_combo,
+                                    "Local audio codec of the HL2-compatible SDR.\n\n"
+                                    "HL2+ audio codec (AK4951):\n"
+                                    "Hermes Lite 2 with the AK4951 Companion Board.");
+      }
       gtk_combo_box_set_active(GTK_COMBO_BOX(codec_combo), hl2_audio_codec);
       gtk_grid_attach(GTK_GRID(grid), codec_combo, col, row, 1, 1);
       g_signal_connect(codec_combo, "changed", G_CALLBACK(hl2_codec_cb), NULL);
