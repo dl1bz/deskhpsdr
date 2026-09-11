@@ -39,6 +39,7 @@
 #include "property.h"
 #include "radio.h"
 #include "receiver.h"
+#include "toolset.h"
 #include "transmitter.h"
 #include "vfo.h"
 #include "meter.h"
@@ -398,9 +399,15 @@ void rx_save_state(const RECEIVER *rx) {
   }
   SetPropI1("receiver.%d.pan", rx->id,                          rx->pan);
   SetPropI1("receiver.%d.eq_enable", rx->id,                    rx->eq_enable);
+  SetPropI1("receiver.%d.eq_curve_degree", rx->id,               rx->eq_curve_degree);
+  SetPropI1("receiver.%d.eq_curve_r", rx->id,                    rx->eq_curve_r);
+  SetPropI1("receiver.%d.eq_curve_umethod", rx->id,              rx->eq_curve_umethod);
   for (int i = 0; i < 13; i++) {
     SetPropF2("receiver.%d.eq_freq[%d]", rx->id, i,             rx->eq_freq[i]);
     SetPropF2("receiver.%d.eq_gain[%d]", rx->id, i,             rx->eq_gain[i]);
+    if (i < 12) {
+      SetPropF2("receiver.%d.eq_weight[%d]", rx->id, i,           rx->eq_weight[i]);
+    }
   }
 }
 
@@ -548,10 +555,19 @@ void rx_restore_state(RECEIVER *rx) {
   }
   GetPropI1("receiver.%d.pan", rx->id,                          rx->pan);
   GetPropI1("receiver.%d.eq_enable", rx->id,                    rx->eq_enable);
+  GetPropI1("receiver.%d.eq_curve_degree", rx->id,               rx->eq_curve_degree);
+  GetPropI1("receiver.%d.eq_curve_r", rx->id,                    rx->eq_curve_r);
+  GetPropI1("receiver.%d.eq_curve_umethod", rx->id,              rx->eq_curve_umethod);
   for (int i = 0; i < 13; i++) {
     GetPropF2("receiver.%d.eq_freq[%d]", rx->id, i,             rx->eq_freq[i]);
     GetPropF2("receiver.%d.eq_gain[%d]", rx->id, i,             rx->eq_gain[i]);
+    if (i < 12) {
+      GetPropF2("receiver.%d.eq_weight[%d]", rx->id, i,           rx->eq_weight[i]);
+    }
   }
+  /* Preserve the complete EQ control-point triplet when restoring old or
+   * hand-edited profiles with unsorted frequencies. */
+  sort_rx_eq(rx);
 }
 
 void rx_reconfigure(RECEIVER *rx, int height) {
@@ -1012,6 +1028,12 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->zoom = 1;
   rx->pan = 0;
   rx->eq_enable = 0;
+  rx->eq_curve_degree = 0;
+  rx->eq_curve_r = 0;
+  rx->eq_curve_umethod = 0;
+  for (int i = 0; i < 12; i++) {
+    rx->eq_weight[i] = 1.0;
+  }
   rx->eq_freq[0]  =     0.0;
   rx->eq_freq[1]  =    50.0;
   rx->eq_freq[2]  =   100.0;
@@ -2206,6 +2228,10 @@ void rx_set_equalizer(RECEIVER *rx) {
   // Apply the equalizer parameters stored in rx
   //
   SetRXAEQProfile(rx->id, 12, rx->eq_freq, rx->eq_gain);
+#ifndef WDSP1
+  SetRXAEQCurve(rx->id, rx->eq_curve_degree, rx->eq_curve_r, rx->eq_curve_umethod);
+  SetRXAEQWeights(rx->id, 12, rx->eq_weight);
+#endif
   SetRXAEQRun(rx->id, rx->eq_enable);
 }
 

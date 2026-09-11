@@ -380,6 +380,12 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   SetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
   SetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
+  SetPropI1("transmitter.%d.eq_curve_degree",   tx->id,               tx->eq_curve_degree);
+  SetPropI1("transmitter.%d.eq_curve_r",        tx->id,               tx->eq_curve_r);
+  SetPropI1("transmitter.%d.eq_curve_umethod",  tx->id,               tx->eq_curve_umethod);
+  for (int i = 0; i < 12; i++) {
+    SetPropF2("transmitter.%d.eq_weight[%d]",   tx->id, i,            tx->eq_weight[i]);
+  }
   for (int i = 0; i < 13; i++) {
     SetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
     SetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, i,            tx->eq_gain[i]);
@@ -513,6 +519,12 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.display_filled",    tx->id,               tx->display_filled);
   GetPropI1("transmitter.%d.eq_enable",         tx->id,               tx->eq_enable);
   GetPropI1("transmitter.%d.eq_ctfmode",        tx->id,               tx->eq_ctfmode);
+  GetPropI1("transmitter.%d.eq_curve_degree",   tx->id,               tx->eq_curve_degree);
+  GetPropI1("transmitter.%d.eq_curve_r",        tx->id,               tx->eq_curve_r);
+  GetPropI1("transmitter.%d.eq_curve_umethod",  tx->id,               tx->eq_curve_umethod);
+  for (int i = 0; i < 12; i++) {
+    GetPropF2("transmitter.%d.eq_weight[%d]",   tx->id, i,            tx->eq_weight[i]);
+  }
   for (int i = 0; i < 13; i++) {
     GetPropF2("transmitter.%d.eq_freq[%d]",     tx->id, i,            tx->eq_freq[i]);
     GetPropF2("transmitter.%d.eq_gain[%d]",     tx->id, i,            tx->eq_gain[i]);
@@ -520,6 +532,9 @@ static void tx_restore_state(TRANSMITTER *tx) {
     GetPropF2("transmitter.%d.cfc_lvl[%d]",     tx->id, i,            tx->cfc_lvl[i]);
     GetPropF2("transmitter.%d.cfc_post[%d]",    tx->id, i,            tx->cfc_post[i]);
   }
+  /* Preserve the complete EQ control-point triplet when restoring old or
+   * hand-edited profiles with unsorted frequencies. */
+  sort_tx_eq(tx);
   GetPropI1("transmitter.%d.lev_attack",        tx->id,               tx->lev_attack);
   GetPropI1("transmitter.%d.lev_decay",         tx->id,               tx->lev_decay);
   GetPropF1("transmitter.%d.lev_gain",          tx->id,               tx->lev_gain);
@@ -1255,6 +1270,12 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->alc = 0.0;
   tx->eq_enable = 0;
   tx->eq_ctfmode = 0;
+  tx->eq_curve_degree = 0;
+  tx->eq_curve_r = 0;
+  tx->eq_curve_umethod = 0;
+  for (int i = 0; i < 12; i++) {
+    tx->eq_weight[i] = 1.0;
+  }
   tx->eq_freq[0]  =     0.0; // not used
   tx->eq_freq[1]  =    70.0;
   tx->eq_freq[2]  =   150.0;
@@ -2853,6 +2874,10 @@ void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
 
 void tx_set_equalizer(TRANSMITTER *tx) {
   SetTXAEQProfile(tx->id, 12, tx->eq_freq, tx->eq_gain);
+#ifndef WDSP1
+  SetTXAEQCurve(tx->id, tx->eq_curve_degree, tx->eq_curve_r, tx->eq_curve_umethod);
+  SetTXAEQWeights(tx->id, 12, tx->eq_weight);
+#endif
   SetTXAEQRun(tx->id, tx->eq_enable);
   t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __func__, tx->eq_enable, tx->eq_gain[0]);
 }

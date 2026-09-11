@@ -355,6 +355,10 @@ typedef struct _receiver {
   int  eq_enable;
   double eq_freq[13];
   double eq_gain[13];
+  int eq_curve_degree;
+  int eq_curve_r;
+  int eq_curve_umethod;
+  double eq_weight[12];
 } RECEIVER;
 
 extern RECEIVER *rx_create_pure_signal_receiver(int id, int sample_rate, int pixels, int fps);

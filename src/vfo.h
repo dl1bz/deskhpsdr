@@ -125,12 +125,20 @@ struct _mode_settings {
   int en_rxeq;                      // RX equalizer on/off
   double rx_eq_freq[13];            // RX equalizer settings
   double rx_eq_gain[13];
+  int rx_eq_curve_degree;
+  int rx_eq_curve_r;
+  int rx_eq_curve_umethod;
+  double rx_eq_weight[12];
   //
   // TX (EQ, CMPR, DEXP, CRC) settings
   //
   int en_txeq;                      // TX equalizer on/off
   double tx_eq_freq[13];            // TX equalizer settings
   double tx_eq_gain[13];
+  int tx_eq_curve_degree;
+  int tx_eq_curve_r;
+  int tx_eq_curve_umethod;
+  double tx_eq_weight[12];
   int compressor;                   // TX compressor on/off
   double compressor_level;          // TX compressor level
   int dexp;                         // Downward Expander (DEXP) on/off

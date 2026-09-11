@@ -179,6 +179,12 @@ void audioSaveProfile(const char *filename) {
   int i = modeLSB;
   SetPropS0("PGNAME",                              PGNAME);
   SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+  SetPropI1("modeset.%d.rxeq_curve_degree", i,      mode_settings[i].rx_eq_curve_degree);
+  SetPropI1("modeset.%d.rxeq_curve_r", i,           mode_settings[i].rx_eq_curve_r);
+  SetPropI1("modeset.%d.rxeq_curve_umethod", i,     mode_settings[i].rx_eq_curve_umethod);
+  SetPropI1("modeset.%d.txeq_curve_degree", i,      mode_settings[i].tx_eq_curve_degree);
+  SetPropI1("modeset.%d.txeq_curve_r", i,           mode_settings[i].tx_eq_curve_r);
+  SetPropI1("modeset.%d.txeq_curve_umethod", i,     mode_settings[i].tx_eq_curve_umethod);
   SetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
   SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
   SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
@@ -190,8 +196,14 @@ void audioSaveProfile(const char *filename) {
   for (int j = 0; j < 13; j++) {
     SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
     SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+    if (j < 12) {
+      SetPropF2("modeset.%d.txeq_weight.%d", i, j,    mode_settings[i].tx_eq_weight[j]);
+    }
     SetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
     SetPropF2("modeset.%d.rxeqfrq.%d", i, j,       mode_settings[i].rx_eq_freq[j]);
+    if (j < 12) {
+      SetPropF2("modeset.%d.rxeq_weight.%d", i, j,  mode_settings[i].rx_eq_weight[j]);
+    }
     SetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
     SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
     SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
@@ -206,13 +218,26 @@ void audioSaveProfile(const char *filename) {
 
 static void audioLoadProfile(const char *filename) {
   int i = modeLSB;
-  char pg_name[16];
+  char pg_name[16] = {0};
   // snprintf(DateiName, 64, "audio_profile_%d.prop", mic_prof.nr);
   if (!filename || access(filename, F_OK) != 0) {
     return;
   }
   t_print("%s: file=%s mode=%d\n", __func__, filename, i);
   loadProperties(filename);
+  /* Backward compatibility for profiles saved before TX EQ curve support. */
+  mode_settings[i].rx_eq_curve_degree = 0;
+  mode_settings[i].rx_eq_curve_r = 0;
+  mode_settings[i].rx_eq_curve_umethod = 0;
+  for (int j = 0; j < 12; j++) {
+    mode_settings[i].rx_eq_weight[j] = 1.0;
+  }
+  mode_settings[i].tx_eq_curve_degree = 0;
+  mode_settings[i].tx_eq_curve_r = 0;
+  mode_settings[i].tx_eq_curve_umethod = 0;
+  for (int j = 0; j < 12; j++) {
+    mode_settings[i].tx_eq_weight[j] = 1.0;
+  }
   GetPropS0("PGNAME",                              pg_name);
   if (strcmp(pg_name, PGNAME) != 0) {
     t_print("%s: Load file %s failed, not deskHPSDR format\n", __func__, filename);
@@ -220,6 +245,12 @@ static void audioLoadProfile(const char *filename) {
     return;
   }
   GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+  GetPropI1("modeset.%d.rxeq_curve_degree", i,      mode_settings[i].rx_eq_curve_degree);
+  GetPropI1("modeset.%d.rxeq_curve_r", i,           mode_settings[i].rx_eq_curve_r);
+  GetPropI1("modeset.%d.rxeq_curve_umethod", i,     mode_settings[i].rx_eq_curve_umethod);
+  GetPropI1("modeset.%d.txeq_curve_degree", i,      mode_settings[i].tx_eq_curve_degree);
+  GetPropI1("modeset.%d.txeq_curve_r", i,           mode_settings[i].tx_eq_curve_r);
+  GetPropI1("modeset.%d.txeq_curve_umethod", i,     mode_settings[i].tx_eq_curve_umethod);
   GetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
   GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
   GetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
@@ -231,15 +262,29 @@ static void audioLoadProfile(const char *filename) {
   for (int j = 0; j < 13; j++) {
     GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
     GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+    if (j < 12) {
+      GetPropF2("modeset.%d.txeq_weight.%d", i, j,    mode_settings[i].tx_eq_weight[j]);
+    }
     GetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
     GetPropF2("modeset.%d.rxeqfrq.%d", i, j,       mode_settings[i].rx_eq_freq[j]);
+    if (j < 12) {
+      GetPropF2("modeset.%d.rxeq_weight.%d", i, j,  mode_settings[i].rx_eq_weight[j]);
+    }
     GetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
     GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
     GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
   }
+  sort_eq_profile(mode_settings[i].tx_eq_freq, mode_settings[i].tx_eq_gain, mode_settings[i].tx_eq_weight);
+  sort_eq_profile(mode_settings[i].rx_eq_freq, mode_settings[i].rx_eq_gain, mode_settings[i].rx_eq_weight);
   GetPropI0("transmitter.addgain_enable",          transmitter->addgain_enable);
   GetPropF0("transmitter.addgain_gain",            transmitter->addgain_gain);
   transmitter->eq_enable        = mode_settings[i].en_txeq;
+  transmitter->eq_curve_degree = mode_settings[i].tx_eq_curve_degree;
+  transmitter->eq_curve_r = mode_settings[i].tx_eq_curve_r;
+  transmitter->eq_curve_umethod = mode_settings[i].tx_eq_curve_umethod;
+  for (int j = 0; j < 12; j++) {
+    transmitter->eq_weight[j] = mode_settings[i].tx_eq_weight[j];
+  }
   transmitter->compressor       = mode_settings[i].compressor;
   transmitter->compressor_level = mode_settings[i].compressor_level;
   transmitter->lev_enable       = mode_settings[i].lev_enable;
@@ -253,6 +298,24 @@ static void audioLoadProfile(const char *filename) {
     transmitter->cfc_freq[j]    = mode_settings[i].cfc_freq[j];
     transmitter->cfc_lvl[j]     = mode_settings[i].cfc_lvl[j];
     transmitter->cfc_post[j]    = mode_settings[i].cfc_post[j];
+  }
+  /* Restore the single RX EQ profile identically to all configured receivers. */
+  for (int r = 0; r < RECEIVERS; r++) {
+    if (receiver[r] == NULL) {
+      continue;
+    }
+    receiver[r]->eq_enable = mode_settings[i].en_rxeq;
+    receiver[r]->eq_curve_degree = mode_settings[i].rx_eq_curve_degree;
+    receiver[r]->eq_curve_r = mode_settings[i].rx_eq_curve_r;
+    receiver[r]->eq_curve_umethod = mode_settings[i].rx_eq_curve_umethod;
+    for (int j = 0; j < 13; j++) {
+      receiver[r]->eq_gain[j] = mode_settings[i].rx_eq_gain[j];
+      receiver[r]->eq_freq[j] = mode_settings[i].rx_eq_freq[j];
+      if (j < 12) {
+        receiver[r]->eq_weight[j] = mode_settings[i].rx_eq_weight[j];
+      }
+    }
+    sort_rx_eq(receiver[r]);
   }
   GetPropI0("transmitter.tx_filter_high",          tx_filter_high);
   GetPropI0("transmitter.tx_filter_low",           tx_filter_low);

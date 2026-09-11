@@ -691,6 +691,8 @@ src/display_menu.c \
 src/diversity_menu.c \
 src/dxcluster.c \
 src/equalizer_menu.c \
+src/tx_eq_graph.c \
+src/rx_eq_graph.c \
 src/exit_menu.c \
 src/ext.c \
 src/extras_menu.c \
@@ -786,6 +788,8 @@ src/display_menu.h \
 src/diversity_menu.h \
 src/dxcluster.h \
 src/equalizer_menu.h \
+src/tx_eq_graph.h \
+src/rx_eq_graph.h \
 src/exit_menu.h \
 src/ext.h \
 src/extras_menu.h \
@@ -876,6 +880,8 @@ src/display_menu.o \
 src/diversity_menu.o \
 src/dxcluster.o \
 src/equalizer_menu.o \
+src/tx_eq_graph.o \
+src/rx_eq_graph.o \
 src/exit_menu.o \
 src/ext.o \
 src/extras_menu.o \

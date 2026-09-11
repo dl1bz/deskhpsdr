@@ -58,6 +58,7 @@ extern int tci_is_applying(void);
 #include "filter.h"
 #include "actions.h"
 #include "noise_menu.h"
+#include "toolset.h"
 #include "equalizer_menu.h"
 #include "message.h"
 #include "sliders.h"
@@ -359,7 +360,13 @@ static void modesettingsSaveState(void) {
     SetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
     SetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
     SetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
+    SetPropI1("modeset.%d.rxeq_curve_degree", i,      mode_settings[i].rx_eq_curve_degree);
+    SetPropI1("modeset.%d.rxeq_curve_r", i,           mode_settings[i].rx_eq_curve_r);
+    SetPropI1("modeset.%d.rxeq_curve_umethod", i,     mode_settings[i].rx_eq_curve_umethod);
     SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+    SetPropI1("modeset.%d.txeq_curve_degree", i,      mode_settings[i].tx_eq_curve_degree);
+    SetPropI1("modeset.%d.txeq_curve_r", i,           mode_settings[i].tx_eq_curve_r);
+    SetPropI1("modeset.%d.txeq_curve_umethod", i,     mode_settings[i].tx_eq_curve_umethod);
     SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
     SetPropI1("modeset.%d.dexp", i,                  mode_settings[i].dexp);
@@ -381,8 +388,14 @@ static void modesettingsSaveState(void) {
     for (int j = 0; j < 13; j++) {
       SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
       SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+      if (j < 12) {
+        SetPropF2("modeset.%d.txeq_weight.%d", i, j,    mode_settings[i].tx_eq_weight[j]);
+      }
       SetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
       SetPropF2("modeset.%d.rxeqfrq.%d", i, j,       mode_settings[i].rx_eq_freq[j]);
+      if (j < 12) {
+        SetPropF2("modeset.%d.rxeq_weight.%d", i, j,  mode_settings[i].rx_eq_weight[j]);
+      }
       SetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
       SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
       SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
@@ -461,7 +474,19 @@ static void modesettingsRestoreState(void) {
     mode_settings[i].anf = 0;
     mode_settings[i].snb = 0;
     mode_settings[i].en_rxeq = 0;
+    mode_settings[i].rx_eq_curve_degree = 0;
+    mode_settings[i].rx_eq_curve_r = 0;
+    mode_settings[i].rx_eq_curve_umethod = 0;
+    for (int j = 0; j < 12; j++) {
+      mode_settings[i].rx_eq_weight[j] = 1.0;
+    }
     mode_settings[i].en_txeq = 0;
+    mode_settings[i].tx_eq_curve_degree = 0;
+    mode_settings[i].tx_eq_curve_r = 0;
+    mode_settings[i].tx_eq_curve_umethod = 0;
+    for (int j = 0; j < 12; j++) {
+      mode_settings[i].tx_eq_weight[j] = 1.0;
+    }
     mode_settings[i].compressor = 0;
     mode_settings[i].compressor_level = 4.0;
     mode_settings[i].dexp = 0;
@@ -596,7 +621,13 @@ static void modesettingsRestoreState(void) {
     GetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
     GetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
     GetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
+    GetPropI1("modeset.%d.rxeq_curve_degree", i,      mode_settings[i].rx_eq_curve_degree);
+    GetPropI1("modeset.%d.rxeq_curve_r", i,           mode_settings[i].rx_eq_curve_r);
+    GetPropI1("modeset.%d.rxeq_curve_umethod", i,     mode_settings[i].rx_eq_curve_umethod);
     GetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
+    GetPropI1("modeset.%d.txeq_curve_degree", i,      mode_settings[i].tx_eq_curve_degree);
+    GetPropI1("modeset.%d.txeq_curve_r", i,           mode_settings[i].tx_eq_curve_r);
+    GetPropI1("modeset.%d.txeq_curve_umethod", i,     mode_settings[i].tx_eq_curve_umethod);
     GetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
     GetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
     GetPropI1("modeset.%d.dexp", i,                  mode_settings[i].dexp);
@@ -618,12 +649,21 @@ static void modesettingsRestoreState(void) {
     for (int j = 0; j < 13; j++) {
       GetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
       GetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
+      if (j < 12) {
+        GetPropF2("modeset.%d.txeq_weight.%d", i, j,    mode_settings[i].tx_eq_weight[j]);
+      }
       GetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
       GetPropF2("modeset.%d.rxeqfrq.%d", i, j,       mode_settings[i].rx_eq_freq[j]);
+      if (j < 12) {
+        GetPropF2("modeset.%d.rxeq_weight.%d", i, j,  mode_settings[i].rx_eq_weight[j]);
+      }
       GetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
       GetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
       GetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
     }
+    /* Normalize complete EQ control-point triplets once after loading. */
+    sort_eq_profile(mode_settings[i].tx_eq_freq, mode_settings[i].tx_eq_gain, mode_settings[i].tx_eq_weight);
+    sort_eq_profile(mode_settings[i].rx_eq_freq, mode_settings[i].rx_eq_gain, mode_settings[i].rx_eq_weight);
   }
 }
 
@@ -920,6 +960,12 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   rx->snb                       = mode_settings[m].snb;
   rx->agc                       = mode_settings[m].agc;
   rx->eq_enable                 = mode_settings[m].en_rxeq;
+  rx->eq_curve_degree            = mode_settings[m].rx_eq_curve_degree;
+  rx->eq_curve_r                 = mode_settings[m].rx_eq_curve_r;
+  rx->eq_curve_umethod           = mode_settings[m].rx_eq_curve_umethod;
+  for (int i = 0; i < 12; i++) {
+    rx->eq_weight[i] = mode_settings[m].rx_eq_weight[i];
+  }
   for (int i = 0; i < 13; i++) {
     rx->eq_gain[i] = mode_settings[m].rx_eq_gain[i];
     rx->eq_freq[i] = mode_settings[m].rx_eq_freq[i];
@@ -930,6 +976,12 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   //
   if ((id == vfo_get_tx_vfo()) && can_transmit) {
     transmitter->eq_enable        = mode_settings[m].en_txeq;
+    transmitter->eq_curve_degree = mode_settings[m].tx_eq_curve_degree;
+    transmitter->eq_curve_r      = mode_settings[m].tx_eq_curve_r;
+    transmitter->eq_curve_umethod = mode_settings[m].tx_eq_curve_umethod;
+    for (int i = 0; i < 12; i++) {
+      transmitter->eq_weight[i] = mode_settings[m].tx_eq_weight[i];
+    }
     transmitter->compressor       = mode_settings[m].compressor;
     transmitter->compressor_level = mode_settings[m].compressor_level;
     transmitter->dexp             = mode_settings[m].dexp;

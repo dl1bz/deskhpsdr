@@ -35,6 +35,8 @@
 #include "transmitter.h"
 #include "message.h"
 #include "tx_menu.h"
+#include "tx_eq_graph.h"
+#include "rx_eq_graph.h"
 #include "toolset.h"
 
 static GtkWidget *dialog = NULL;
@@ -109,6 +111,35 @@ static void freq_changed_cb(GtkWidget *widget, gpointer data) {
   int mode;
   int i = GPOINTER_TO_INT(data);
   double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  /* Keep the 12 control points in frequency order.  WDSP sorts the
+   * frequency/gain pairs internally, but the NURBS weights are tied to
+   * the control-point indices.  Allowing two points to cross here would
+   * therefore make a weight follow the wrong frequency point.
+   *
+   * Use the same 10 Hz minimum spacing as the graphical editors. */
+  if (i >= 1 && i <= 12) {
+    const double *freq = NULL;
+    if (eqid == 0 || eqid == 1) {
+      if (eqid < receivers) {
+        freq = receiver[eqid]->eq_freq;
+      }
+    } else if (eqid == 2 && can_transmit) {
+      freq = transmitter->eq_freq;
+    }
+    if (freq != NULL) {
+      double lo = (i > 1) ? freq[i - 1] + 10.0 : 10.0;
+      double hi = (i < 12) ? freq[i + 1] - 10.0 : 16000.0;
+      double clamped = val;
+      if (clamped < lo) { clamped = lo; }
+      if (clamped > hi) { clamped = hi; }
+      if (clamped != val) {
+        /* gtk_spin_button_set_value() emits value-changed again.  Return
+         * here; the second invocation performs the normal update once. */
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), clamped);
+        return;
+      }
+    }
+  }
   switch (eqid) {
   case 0:
   case 1:
@@ -118,12 +149,14 @@ static void freq_changed_cb(GtkWidget *widget, gpointer data) {
       mode_settings[mode].rx_eq_freq[i] = val;
       copy_mode_settings(mode);
     }
+    rx_eq_graph_refresh(eqid);
     break;
   case 2:
     mode = vfo[vfo_get_tx_vfo()].mode;
     transmitter->eq_freq[i] = val;
     mode_settings[mode].tx_eq_freq[i] = val;
     copy_mode_settings(mode);
+    tx_eq_graph_refresh();
     break;
   }
   update_eq();
@@ -143,6 +176,7 @@ static void gain_changed_cb(GtkWidget *widget, gpointer data) {
       mode_settings[mode].rx_eq_gain[i] = val;
       copy_mode_settings(mode);
     }
+    rx_eq_graph_refresh(eqid);
     break;
   case 2:
     if (can_transmit) {
@@ -150,6 +184,7 @@ static void gain_changed_cb(GtkWidget *widget, gpointer data) {
       transmitter->eq_gain[i] = val;
       mode_settings[mode].tx_eq_gain[i] = val;
       copy_mode_settings(mode);
+      tx_eq_graph_refresh();
     }
     break;
   }
@@ -300,6 +335,18 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_widget_set_size_request(line, -1, 3);
     gtk_grid_attach(GTK_GRID(mygrid), line, 0, myrow, 4, 1);
     myrow++;
+    if (myeq < 2) {
+      char rxeq_label_txt[256];
+      snprintf(rxeq_label_txt, sizeof(rxeq_label_txt),
+               "RX Equalizer — Continuous-Gain EQ Model\n"
+               "Start here to adjust and shape your RX audio.");
+      GtkWidget *rxeq_label = gtk_label_new(rxeq_label_txt);
+      gtk_widget_set_name(rxeq_label, "smalllabel_blue_bold");
+      gtk_grid_attach(GTK_GRID(mygrid), rxeq_label, 0, myrow, 4, 1);
+      myrow++;
+      GtkWidget *graph = rx_eq_graph_create(receiver[myeq]);
+      gtk_grid_attach(GTK_GRID(mygrid), graph, 0, myrow, 4, 1);
+    }
     if (myeq == 2 && can_transmit) {
       char txeq_label_txt[256];
       snprintf(txeq_label_txt, sizeof(txeq_label_txt),
@@ -308,6 +355,9 @@ void equalizer_menu(GtkWidget *parent) {
       GtkWidget *txeq_label = gtk_label_new(txeq_label_txt);
       gtk_widget_set_name(txeq_label, "smalllabel_blue_bold");
       gtk_grid_attach(GTK_GRID(mygrid), txeq_label, 0, myrow, 4, 1);
+      myrow++;
+      GtkWidget *graph = tx_eq_graph_create(transmitter);
+      gtk_grid_attach(GTK_GRID(mygrid), graph, 0, myrow, 4, 1);
     }
     myrow++;
     label = gtk_label_new("Frequency");
@@ -327,28 +377,35 @@ void equalizer_menu(GtkWidget *parent) {
       myrow++; // neue Zeile
       //----------------------------------------------------------------------------------------------------------------
       // links 1.Spalte Freq
-      mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
-      gtk_grid_attach(GTK_GRID(mygrid), mbtn, 0, myrow, 1, 1);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i]);
-      g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i));
+      GtkWidget *freq_left = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+      gtk_grid_attach(GTK_GRID(mygrid), freq_left, 0, myrow, 1, 1);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(freq_left), freqs[i]);
+      g_signal_connect(freq_left, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i));
       //----------------------------------------------------------------------------------------------------------------
       // links 2.Spalte Gain
-      mbtn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
-      gtk_grid_attach(GTK_GRID(mygrid), mbtn, 1, myrow, 1, 1);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), gains[i]);
-      g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i));
+      GtkWidget *gain_left = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+      gtk_grid_attach(GTK_GRID(mygrid), gain_left, 1, myrow, 1, 1);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(gain_left), gains[i]);
+      g_signal_connect(gain_left, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i));
       //----------------------------------------------------------------------------------------------------------------
       // rechts 1.Spalte Freq
-      mbtn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
-      gtk_grid_attach(GTK_GRID(mygrid), mbtn, 2, myrow, 1, 1);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), freqs[i + max_eq_zeilen]);
-      g_signal_connect(mbtn, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
+      GtkWidget *freq_right = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+      gtk_grid_attach(GTK_GRID(mygrid), freq_right, 2, myrow, 1, 1);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(freq_right), freqs[i + max_eq_zeilen]);
+      g_signal_connect(freq_right, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
       //----------------------------------------------------------------------------------------------------------------
       // rechts 2.Spalte Gain
-      mbtn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
-      gtk_grid_attach(GTK_GRID(mygrid), mbtn, 3, myrow, 1, 1);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), gains[i + max_eq_zeilen]);
-      g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
+      GtkWidget *gain_right = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+      gtk_grid_attach(GTK_GRID(mygrid), gain_right, 3, myrow, 1, 1);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(gain_right), gains[i + max_eq_zeilen]);
+      g_signal_connect(gain_right, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
+      if (myeq < 2) {
+        rx_eq_graph_bind_control(myeq, i, freq_left, gain_left);
+        rx_eq_graph_bind_control(myeq, i + max_eq_zeilen, freq_right, gain_right);
+      } else if (myeq == 2) {
+        tx_eq_graph_bind_control(i, freq_left, gain_left);
+        tx_eq_graph_bind_control(i + max_eq_zeilen, freq_right, gain_right);
+      }
       //----------------------------------------------------------------------------------------------------------------
     }
   }

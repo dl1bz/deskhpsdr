@@ -213,6 +213,10 @@ typedef struct _transmitter {
   double eq_freq[13];  // frequency in Hz
   double eq_gain[13];  // gain in dB
   int eq_ctfmode;
+  int eq_curve_degree;
+  int eq_curve_r;
+  int eq_curve_umethod;
+  double eq_weight[12];
 
   // --- Zusatzfenster: TX Levelanzeigen ---
   GtkWidget *levels_dialog;

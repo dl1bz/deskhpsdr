@@ -54,7 +54,9 @@ extern void sanitize_filename(char *str);
 extern int file_present(const char *filename);
 extern const char *extract_short_msg(const char *msg);
 extern void sort_cfc(TRANSMITTER *tx);
+extern void sort_eq_profile(double *freq, double *gain, double *weight);
 extern void sort_tx_eq(TRANSMITTER *tx);
+extern void sort_rx_eq(RECEIVER *rx);
 #ifdef __APPLE__
   extern int get_macos_major_version(void);
 #endif
