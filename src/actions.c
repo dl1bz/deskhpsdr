@@ -2011,7 +2011,8 @@ int process_action(void *data) {
     break;
   case TX_MONITOR:
     if (can_transmit && a->mode == PRESSED) {
-      set_tx_monitor_state(!tx_get_monitor());
+      // set_tx_monitor_state(!tx_get_monitor());
+      tx_set_monitor(!tx_get_monitor());
     }
     break;
   case TX_MONITOR_VOLUME:

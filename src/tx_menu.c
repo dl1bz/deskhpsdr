@@ -1293,6 +1293,9 @@ void tx_menu(GtkWidget *parent) {
                                 "Activation: Long press [VOL RX1/RX2] for switch to TX Monitor\n"
                                 "            Long press again for switch back to [VOL RX1/RX2]");
     gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
+    gtk_widget_set_margin_start(btn, 8);
+    gtk_widget_set_hexpand(btn, FALSE);
+    gtk_widget_set_halign(btn, GTK_ALIGN_START);
     g_signal_connect(btn, "clicked", G_CALLBACK(monitor_tap_cb), NULL);
     col++;
     label = gtk_label_new("SDR LineIn (dB)");

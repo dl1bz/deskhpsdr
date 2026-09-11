@@ -713,19 +713,38 @@ waterfall_draw_cb(GtkWidget *widget,
 #endif
       if (sunspots != -1) {
         if (iaru_region == 1) {
-          snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f Es6:%s", sunspots, solar_flux, a_index,
+          snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f Es6:%s", sunspots, solar_flux, a_index,
                    k_index, xray, geomagfield, muf, es6_status > 0 ? "ON" : es6_status == 0 ? "---" : "N/A");
         } else {
-          snprintf(_text, 128, "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", sunspots, solar_flux, a_index, k_index, xray,
+          snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", sunspots, solar_flux, a_index, k_index,
+                   xray,
                    geomagfield, muf);
         }
       } else {
-        snprintf(_text, 128, " ");
+        snprintf(_text, sizeof(_text), " ");
       }
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, _text);
     }
   }
+#ifdef __APPLE__
+  if (display_info_bar && waterfall_is_last_visible(rx) && (rx->display_panadapter == 0
+      || rx->display_panadapter == 1)) {
+    cairo_save(cr);
+    cairo_move_to(cr, ((b_width / 3) * 2) - 55, b_height - 13);
+    cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
+    cairo_set_source_rgba(cr, COLOUR_ALARM);
+    char _text[32];
+    if (tx_get_monitor() && tx_get_monitor_post()) {
+      snprintf(_text, sizeof(_text), "TxM-Pst [%+03ddb]", (int) tx_get_monitor_gain_db());
+      cairo_show_text(cr, _text);
+    } else if (tx_get_monitor() && !tx_get_monitor_post()) {
+      snprintf(_text, sizeof(_text), "TxM-Pre [%+03ddb]", (int) tx_get_monitor_gain_db());
+      cairo_show_text(cr, _text);
+    }
+    cairo_restore(cr);
+  }
+#endif
   if (rx->display_waterfall) {
     /*
      * RX-local waterfall status.  Noise floor and sample rate belong to the
