@@ -596,9 +596,25 @@ static void add_dither_random_controls(GtkWidget *grid, RECEIVER *rx, int *row) 
   rx_menu_sync_original_protocol_dither_random_from_effective();
   // We assume Dither/Random are either both available or both not available
   if (device == DEVICE_HERMES_LITE2 || device == NEW_DEVICE_HERMES_LITE2) {
-    GtkWidget *dither_b = gtk_check_button_new_with_label("HL2 Band Volts / Dither Bit");
+    //
+    // In protocol 1 the HL2 (ab-) uses the Dither bit for its "Band Volts" output.
+    // The SQUARE SDR 2 uses the very same bit to switch its loudspeaker, so if that
+    // radio is selected in the RADIO menu, name the control after what it really does.
+    //
+    const char *dither_label = "HL2 Band Volts / Dither Bit";
+    const char *dither_tip   = "activate Band Voltage output at the Hermes Lite 2";
+
+    if (hl2_audio_codec == HL2_CODEC_SQUARESDR2) {
+      dither_label = "Speaker (Band Volts)";
+      dither_tip   = "SQUARE SDR 2: switch the loudspeaker ON or OFF.\n\n"
+                     "This is the same bit the Hermes Lite 2 uses for its\n"
+                     "Band Voltage output (the Dither bit), but the SQUARE SDR 2\n"
+                     "gateware uses it to control the speaker instead.";
+    }
+
+    GtkWidget *dither_b = gtk_check_button_new_with_label(dither_label);
     gtk_widget_set_name(dither_b, "boldlabel");
-    gtk_widget_set_tooltip_text(dither_b, "activate Band Voltage output at the Hermes Lite 2");
+    gtk_widget_set_tooltip_text(dither_b, dither_tip);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dither_b), rx->dither);
     gtk_widget_set_sensitive(dither_b, !original_protocol_rx2_global);
     gtk_grid_attach(GTK_GRID(grid), dither_b, 0, *row, 1, 1);
