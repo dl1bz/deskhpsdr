@@ -3062,6 +3062,7 @@ void radio_save_state(void) {
   //
   gtk_window_get_position(GTK_WINDOW(top_window), &window_x_pos, &window_y_pos);
   SetPropI0("backup_index",                                  backup_index);
+  SetPropS0("PGNAME",                                        PGNAME);
   char radio_mac[18];
   radio_format_mac_address(radio_mac, sizeof(radio_mac));
   SetPropS0("radio_mac",                                     radio_mac);
@@ -3096,7 +3097,7 @@ void radio_save_state(void) {
   SetPropI0("display_height",                                display_height);
   SetPropI0("full_screen",                                   full_screen);
   SetPropI0("vfo_layout",                                    vfo_layout);
-  SetPropI0("touch_ui",                          touch_ui);
+  SetPropI0("touch_ui",                                      touch_ui);
   SetPropI0("capture_max",                                   capture_max);
   SetPropI0("max_pan_label_rows",                            max_pan_label_rows);
   SetPropI0("pan_spot_lifetime_min",                         pan_spot_lifetime_min);
@@ -3289,8 +3290,8 @@ void radio_save_state(void) {
     remove_char(sec_property_path, '-');
     char sec_radioname[128];
     g_strlcpy(sec_radioname, radio->name, sizeof(sec_radioname));
-    remove_char(sec_radioname, ' ');
-    snprintf(property_path_bak, sizeof(property_path_bak), "bak_%s_%d_%s_%s", sec_radioname, (int) backup_index,
+    replace_char(sec_radioname, ' ', '_');
+    snprintf(property_path_bak, sizeof(property_path_bak), "bak_%d_%s_%s_%s", (int) backup_index, sec_radioname,
              inet_ntoa(radio->info.network.address.sin_addr), sec_property_path);
     sanitize_filename(property_path_bak);
     saveProperties(property_path_bak);

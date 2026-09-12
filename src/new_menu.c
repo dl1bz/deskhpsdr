@@ -707,7 +707,7 @@ void new_menu(void) {
     g_signal_connect(dsp_b, "button-press-event", G_CALLBACK(dsp_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), dsp_b, col, row, 1, 1);
     row++;
-    GtkWidget *equalizer_b = gtk_button_new_with_label("EQ RX/TX");
+    GtkWidget *equalizer_b = gtk_button_new_with_label("WDSP EQ");
     if (_mode == modeDIGU || _mode == modeDIGL) {
       gtk_widget_set_sensitive(equalizer_b, FALSE);
     } else {

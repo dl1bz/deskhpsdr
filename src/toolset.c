@@ -450,6 +450,19 @@ void remove_char(char *str, char remove) {
   *dst = '\0';
 }
 
+// replace_char(str, ' ', '_');
+void replace_char(char *str, char find, char replace) {
+  if (str == NULL) {
+    return;
+  }
+  while (*str != '\0') {
+    if (*str == find) {
+      *str = replace;
+    }
+    str++;
+  }
+}
+
 void sanitize_filename(char *str) {
   size_t i;
   for (i = 0; str[i] != '\0'; i++) {

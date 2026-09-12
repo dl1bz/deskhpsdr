@@ -1256,7 +1256,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), mbtn, col, row, 1, 1);
   g_signal_connect(mbtn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(TX_CONTAINER));
   col++;
-  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "TX ProAudio Tools");
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "WDSP TX Audio Tools");
   gtk_widget_set_name(btn, "smalllabel_blue_bold");
   gtk_widget_set_tooltip_text(btn, "Adjust Leveler, Phase Rotator, Speech Processor & DEXP\n"
                                    "Enable/Disable CESSB function");
@@ -1264,7 +1264,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(PROAUDIO_CONTAINER));
   col++;
-  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "CFC");
+  btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "WDSP CFC");
   gtk_widget_set_name(btn, "smalllabel_blue_bold");
   gtk_widget_set_tooltip_text(btn, "Adjust Continuous Frequency Compressor");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == CFC_CONTAINER));
@@ -1717,7 +1717,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(proaudio_grid), btn, 2, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_CESSB_ENABLE));
   row++;
-  btn = gtk_check_button_new_with_label("TX-EQ Ctfmode");
+  btn = gtk_check_button_new_with_label("WDSP TX EQ Ctfmode");
   gtk_widget_set_tooltip_text(btn, "The cutoff-mode used in the generation\nof the EQ filter can be selected.\n\n"
                                    "If ON:\nNo roll-off outside the specified passband (default is OFF).");
   gtk_widget_set_name(btn, "boldlabel_blue");
@@ -1870,7 +1870,7 @@ void tx_menu(GtkWidget *parent) {
   char cfc_label_txt[256];
   snprintf(cfc_label_txt, sizeof(cfc_label_txt),
            "CFC: Multiband Compressor, not an EQ.\n"
-           "Adjust and shape your audio with the TX-EQ first.");
+           "Adjust and shape your audio with the WDSP TX EQ first.");
   GtkWidget *cfc_label = gtk_label_new(cfc_label_txt);
   gtk_widget_set_name(cfc_label, "smalllabel_blue_bold");
   gtk_grid_attach(GTK_GRID(cfc_grid), cfc_label, 0, row, 6, 1);
