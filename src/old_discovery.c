@@ -430,6 +430,11 @@ static gpointer discover_receive_thread(gpointer data) {
             discovered[devices].frequency_min = 0.0;
             discovered[devices].frequency_max = 61440000.0;
             break;
+          case DEVICE_G2E:
+            g_strlcpy(discovered[devices].name, "Anan G2E", sizeof(discovered[devices].name));
+            discovered[devices].frequency_min = 0.0;
+            discovered[devices].frequency_max = 61440000.0;
+            break;
           case DEVICE_STEMLAB:
             // This is in principle the same as HERMES but has two ADCs
             // (and therefore, can do DIVERSITY).

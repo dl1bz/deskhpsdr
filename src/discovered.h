@@ -43,6 +43,7 @@
 #define DEVICE_HERMES_LITE         6
 #define DEVICE_HERMES_LITE2      506
 #define DEVICE_ORION2             10
+#define DEVICE_G2E                20
 #define DEVICE_STEMLAB           100
 #define DEVICE_STEMLAB_Z20       101
 
@@ -55,6 +56,8 @@
 #define NEW_DEVICE_ORION        1004
 #define NEW_DEVICE_ORION2       1005
 #define NEW_DEVICE_SATURN       1010
+#define NEW_DEVICE_SATURN2      1011
+#define NEW_DEVICE_G2E          1020
 
 #define STATE_AVAILABLE 2
 #define STATE_SENDING 3

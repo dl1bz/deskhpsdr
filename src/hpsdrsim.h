@@ -1,8 +1,6 @@
 /* Copyright (C)
 * 2019 - Christoph van Wüllen, DL1YCF
 *
-* SPDX-License-Identifier: GPL-3.0-or-later
-*
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
 *   the Free Software Foundation, either version 3 of the License, or
@@ -50,7 +48,7 @@
 #define ODEV_ORION2        10
 #define DEV_SATURN         10
 #define DEV_SATURN2        11
-#define DEV_G1             20
+#define DEV_G2E            20
 #define DEV_C25           100
 
 EXTERN int ODEVICE;
@@ -135,8 +133,9 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
 // These give about -24 dBc at full drive, that is
 // about the value a reasonable amp gives.
 //
-#define IM3a  0.60
-#define IM3b  0.20
+#define IM0  0.75
+#define IM1  0.20
+#define IM2  0.05
 
 //
 // Digital Inputs, reported to the SDR program

@@ -1520,11 +1520,13 @@ void radio_start_radio(void) {
   case DEVICE_ANGELIA:
   case DEVICE_ORION:
   case DEVICE_STEMLAB_Z20:
+  case DEVICE_G2E:
   case NEW_DEVICE_HERMES:
   case NEW_DEVICE_HERMES2:
   case NEW_DEVICE_ANGELIA:
   case NEW_DEVICE_ORION:
   case NEW_DEVICE_SATURN:  // make 100W the default for G2
+  case NEW_DEVICE_G2E:
     pa_power = PA_100W;
     break;
   case DEVICE_ORION2:
@@ -1562,8 +1564,10 @@ void radio_start_radio(void) {
     have_alex_att = 1;
     break;
   case DEVICE_ORION2:
+  case DEVICE_G2E:
   case NEW_DEVICE_ORION2:
   case NEW_DEVICE_SATURN:
+  case NEW_DEVICE_G2E:
     // ANAN7000/8000/G2 boards have no ALEX attenuator
     have_rx_att = 1;
     break;
@@ -1711,9 +1715,11 @@ void radio_start_radio(void) {
   case DEVICE_HERMES:
   case DEVICE_HERMES_LITE:
   case DEVICE_HERMES_LITE2:
+  case DEVICE_G2E:
   case NEW_DEVICE_ATLAS:
   case NEW_DEVICE_HERMES:
   case NEW_DEVICE_HERMES2:
+  case NEW_DEVICE_G2E:
     //
     // If there are two MERCURY cards on the ATLAS bus, this is detected
     // in old_protocol.c, But, n_adc can keep the value of 1 since the

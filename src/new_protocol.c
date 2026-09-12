@@ -1749,6 +1749,28 @@ static void new_protocol_high_priority(void) {
   // Set RX filters
   //
   switch (device) {
+  case NEW_DEVICE_G2E:
+    // G2E has a single ADC and uses the ANAN-7000 style RX BPF bank.
+    BPFfreq = DDCfrequency[rxvfo];
+    if (adc0_filter_bypass) {
+      BPFfreq = 0LL;
+    }
+    if (BPFfreq < 1500000LL) {
+      alex0 |= ALEX_ANAN7000_RX_BYPASS_BPF;
+    } else if (BPFfreq < 2100000LL) {
+      alex0 |= ALEX_ANAN7000_RX_160_BPF;
+    } else if (BPFfreq < 5500000LL) {
+      alex0 |= ALEX_ANAN7000_RX_80_60_BPF;
+    } else if (BPFfreq < 11000000LL) {
+      alex0 |= ALEX_ANAN7000_RX_40_30_BPF;
+    } else if (BPFfreq < 22000000LL) {
+      alex0 |= ALEX_ANAN7000_RX_20_15_BPF;
+    } else if (BPFfreq < 35000000LL) {
+      alex0 |= ALEX_ANAN7000_RX_12_10_BPF;
+    } else {
+      alex0 |= ALEX_ANAN7000_RX_6_PRE_BPF;
+    }
+    break;
   case NEW_DEVICE_SATURN:
   case NEW_DEVICE_ORION2:
     //
@@ -1880,7 +1902,8 @@ static void new_protocol_high_priority(void) {
   //                      in either case.
   //
   LPFfreq = DUCfrequency;
-  if (!xmit && (device != NEW_DEVICE_ORION2 && device != NEW_DEVICE_SATURN) && receiver[0]->alex_antenna < 3) {
+  if (!xmit && (device != NEW_DEVICE_ORION2 && device != NEW_DEVICE_SATURN && device != NEW_DEVICE_G2E)
+      && receiver[0]->alex_antenna < 3) {
     LPFfreq = 40000000LL;  // disable the LPF
     if (receiver[0]->adc == 0) {
       LPFfreq = DDCfrequency[0];
@@ -1940,7 +1963,7 @@ static void new_protocol_high_priority(void) {
   if (xmit && transmitter->puresignal) {
     rxant = receiver[PS_RX_FEEDBACK]->alex_antenna;     // 0, 6, or 7
   }
-  if (device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN) {
+  if (device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN || device == NEW_DEVICE_G2E) {
     rxant += 100;
   } else if (new_pa_board) {
     // New-PA setting invalid on ANAN-7000,8000

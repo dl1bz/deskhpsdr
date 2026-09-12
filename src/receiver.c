@@ -854,8 +854,10 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
     case DEVICE_HERMES:
     case DEVICE_HERMES_LITE:
     case DEVICE_HERMES_LITE2:
+    case DEVICE_G2E:
     case NEW_DEVICE_ATLAS:
     case NEW_DEVICE_HERMES:
+    case NEW_DEVICE_G2E:
       rx->adc = 0;
       break;
     default:

@@ -771,6 +771,18 @@ static gboolean tx_update_display(gpointer data) {
       rev_cal_offset = 2;
       fwd_cal_offset = 4;
       break;
+    case DEVICE_G2E:
+    case NEW_DEVICE_G2E:
+      //
+      // Measurements made by Larry P. with his G2E showed that 5.0 is
+      // the right value for constant1.
+      //
+      constant1 = 5.0;
+      constant2 = 0.12;
+      rconstant2 = is6m ? 0.7 : 0.15;
+      rev_cal_offset = 42;
+      fwd_cal_offset = 48;
+      break;
     case DEVICE_ORION2:  // Anan7000/8000/G2
     case NEW_DEVICE_ORION2:
     case NEW_DEVICE_SATURN:

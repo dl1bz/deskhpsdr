@@ -931,7 +931,8 @@ void radio_menu(GtkWidget *parent) {
   }
   switch (device) {
   case NEW_DEVICE_ORION2:
-  case NEW_DEVICE_SATURN: {
+  case NEW_DEVICE_SATURN:
+  case NEW_DEVICE_G2E: {
     ChkBtn = gtk_check_button_new_with_label("Mute Spkr Amp");
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), mute_spkr_amp);

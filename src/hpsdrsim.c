@@ -1,8 +1,6 @@
 /* Copyright (C)
 *  2019 - Christoph van Wüllen, DL1YCF
 *
-* SPDX-License-Identifier: GPL-3.0-or-later
-*
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
 *   the Free Software Foundation, either version 3 of the License, or
@@ -82,6 +80,7 @@
 #ifdef __APPLE__
   #include "MacOS.h"  // emulate clock_gettime on old MacOS systems
 #endif
+#include <stdalign.h>
 
 #define EXTERN
 #include "hpsdrsim.h"
@@ -263,8 +262,7 @@ int main(int argc, char *argv[]) {
   uint32_t code;
   int16_t sample;
   struct sockaddr_in addr_udp;
-  uint32_t buffer_words[1032 / sizeof(uint32_t)];
-  uint8_t *buffer = (uint8_t *)buffer_words;
+  alignas(uint32_t) uint8_t buffer[1032];
   struct timeval tv;
   int yes = 1;
   uint8_t *bp;
@@ -276,7 +274,7 @@ int main(int argc, char *argv[]) {
   uint32_t last_seqnum = 0xffffffff, seqnum;  // sequence number of received packet
   int udp_retries = 0;
   int bytes_read, bytes_left;
-  uint32_t *code0 = buffer_words;  // fast access to code of first buffer
+  uint32_t *code0 = (uint32_t *) buffer;  // fast access to code of first buffer
   double run, off, off2, inc;
   struct timeval tvzero = {0, 0};
   fd_set fds;
@@ -332,8 +330,8 @@ int main(int argc, char *argv[]) {
     if (!strncmp(argv[i], "-hermes2",      8))  {ODEVICE = DEV_HERMES2;      NDEVICE = DEV_HERMES2;  MAC5 = 0x16; continue;}
     if (!strncmp(argv[i], "-angelia",      8))  {ODEVICE = ODEV_ANGELIA;     NDEVICE = NDEV_ANGELIA; MAC5 = 0x17; continue;}
     if (!strncmp(argv[i], "-orion2",       7))  {ODEVICE = ODEV_ORION2;      NDEVICE = NDEV_ORION2;  MAC5 = 0x18; continue;}
-    if (!strncmp(argv[i], "-g2",           3))  {ODEVICE = DEV_NONE;         NDEVICE = DEV_SATURN;   MAC5 = 0x19; continue;}
-    if (!strncmp(argv[i], "-g1",           3))  {ODEVICE = DEV_G1;           NDEVICE = DEV_G1;       MAC5 = 0x19; continue;}
+    if (!strcmp(argv[i], "-g2"))              {ODEVICE = DEV_NONE;         NDEVICE = DEV_SATURN;   MAC5 = 0x19; continue;}
+    if (!strcmp(argv[i], "-g2e"))             {ODEVICE = DEV_G2E;          NDEVICE = DEV_G2E;      MAC5 = 0x19; continue;}
     if (!strncmp(argv[i], "-orion",        6))  {ODEVICE = ODEV_ORION;       NDEVICE = NDEV_ORION;   MAC5 = 0x1A; continue;}
     if (!strncmp(argv[i], "-c25",          4))  {ODEVICE = DEV_C25;          NDEVICE = DEV_NONE;     MAC5 = 0x1B; continue;}
     if (!strncmp(argv[i], "-diversity",   10))  {diversity = 1; continue;}
@@ -380,8 +378,8 @@ int main(int argc, char *argv[]) {
     TXDAC = 1;
     maxpwr = 20.0;
   }
-  if (ODEVICE ==  DEV_G1) {
-    t_print("DEVICE is Anan-G1\n");
+  if (ODEVICE ==  DEV_G2E) {
+    t_print("DEVICE is Anan-G2E\n");
     c1 = 3.3;
     c2 = 0.12;
     TXDAC = 1;
@@ -719,9 +717,6 @@ int main(int argc, char *argv[]) {
       continue;
     }
     count = 0;
-    if (bytes_read < (int)sizeof(*code0)) {
-      continue;
-    }
     code = *code0;
     switch (code) {
     // PC to SDR transmission via process_ep2
@@ -1459,7 +1454,7 @@ void *handler_ep6(void *arg) {
   struct timespec delay;
   long wait;
   int noiseIQpt, divpt, rxptr;
-  double i1, q1, fac1, fac1a, fac2, fac3, fac4;
+  double i1, q1, ampl, fac1, fac1a, fac2, fac3, fac4;
   unsigned int seed;
   int decimation;
   seed = ((uintptr_t) &seed) & 0xffffff;
@@ -1625,9 +1620,10 @@ void *handler_ep6(void *arg) {
       for (j = 0; j < n; j++) {
         // ADC1: noise + weak tone on RX, feedback sig. on TX (except STEMlab)
         if (ptt && (ODEVICE != DEV_C25)) {
-          i1 = isample[rxptr] * txdrv_dbl;
-          q1 = qsample[rxptr] * txdrv_dbl;
-          fac3 = IM3a + IM3b * (i1 * i1 + q1 * q1);
+          i1 = isample[rxptr];
+          q1 = qsample[rxptr];
+          ampl = i1 * i1 + q1 * q1;
+          fac3 = txdrv_dbl * (IM0 + IM1 * ampl + IM2 * ampl * ampl);
           adc1isample = (txatt_dbl * i1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
           adc1qsample = (txatt_dbl * q1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
         } else if (diversity && do_tone == 1) {
@@ -1651,7 +1647,7 @@ void *handler_ep6(void *arg) {
         if (ptt && (ODEVICE == DEV_C25)) {
           i1 = isample[rxptr] * txdrv_dbl;
           q1 = qsample[rxptr] * txdrv_dbl;
-          fac3 = IM3a + IM3b * (i1 * i1 + q1 * q1);
+          fac3 = IM0 + IM1 * ampl + IM2 * ampl * ampl;
           adc2isample = (txatt_dbl * i1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
           adc2qsample = (txatt_dbl * q1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
         } else if (diversity) {
@@ -1673,8 +1669,6 @@ void *handler_ep6(void *arg) {
           dacqsample = qsample[rxptr] * 0.407 * 8388607.0;
         }
         for (k = 0; k < receivers; k++) {
-          myisample = 0;
-          myqsample = 0;
           switch (rx_adc[k]) {
           case 0: // ADC1
             myisample = adc1isample;
