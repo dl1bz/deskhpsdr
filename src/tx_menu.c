@@ -1228,8 +1228,8 @@ void tx_menu(GtkWidget *parent) {
   g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
-  gtk_grid_set_column_spacing(GTK_GRID(grid), 0);
-  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_container_add(GTK_CONTAINER(content), grid);
   int row = 0;
@@ -1244,7 +1244,9 @@ void tx_menu(GtkWidget *parent) {
   //
   tx_container = gtk_fixed_new();
   proaudio_container = gtk_fixed_new();
-  cfc_container = gtk_fixed_new();
+  cfc_container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_hexpand(cfc_container, TRUE);
+  gtk_widget_set_halign(cfc_container, GTK_ALIGN_FILL);
   peaks_container = gtk_fixed_new();
   col++;
   mbtn = gtk_radio_button_new_with_label_from_widget(NULL, "TX Basic Settings");
@@ -1826,7 +1828,9 @@ void tx_menu(GtkWidget *parent) {
   //
   gtk_grid_attach(GTK_GRID(grid), cfc_container, 0, 1, 5, 1);
   GtkWidget *cfc_grid = gtk_grid_new();
-  gtk_grid_set_column_spacing(GTK_GRID(cfc_grid), 5);
+  gtk_widget_set_hexpand(cfc_grid, TRUE);
+  gtk_widget_set_halign(cfc_grid, GTK_ALIGN_FILL);
+  gtk_grid_set_column_spacing(GTK_GRID(cfc_grid), 2);
   gtk_grid_set_row_spacing(GTK_GRID(cfc_grid), 3);
   gtk_container_add(GTK_CONTAINER(cfc_container), cfc_grid);
   row = 0;
@@ -1840,11 +1844,12 @@ void tx_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->cfc_eq);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(CFC_EQ));
-  label = gtk_label_new("Pre Compression:");
+  label = gtk_label_new("Pre Comp:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 2, row, 1, 1);
   btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+  gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[0]);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCLVL));
@@ -1853,6 +1858,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 4, row, 1, 1);
   btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+  gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[0]);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 5, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST));
@@ -1863,7 +1869,8 @@ void tx_menu(GtkWidget *parent) {
   row++;
   char cfc_label_txt[256];
   snprintf(cfc_label_txt, sizeof(cfc_label_txt),
-           "CFC: This is a Multiband Compressor, not an EQ. Adjust and shape your audio with the TX-EQ first.");
+           "CFC: Multiband Compressor, not an EQ.\n"
+           "Adjust and shape your audio with the TX-EQ first.");
   GtkWidget *cfc_label = gtk_label_new(cfc_label_txt);
   gtk_widget_set_name(cfc_label, "smalllabel_blue_bold");
   gtk_grid_attach(GTK_GRID(cfc_grid), cfc_label, 0, row, 6, 1);
@@ -1872,24 +1879,31 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(cfc_grid), cfc_graph, 0, row, 6, 1);
   // Frequency, Level, Post-Gain
   row++;
-  label = gtk_label_new("Frequency");
+  GtkWidget *cfc_points_grid = gtk_grid_new();
+  gtk_grid_set_column_spacing(GTK_GRID(cfc_points_grid), 2);
+  gtk_grid_set_row_spacing(GTK_GRID(cfc_points_grid), 3);
+  gtk_widget_set_halign(cfc_points_grid, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(cfc_points_grid, FALSE);
+  gtk_grid_attach(GTK_GRID(cfc_grid), cfc_points_grid, 0, row, 6, 1);
+  int cfc_point_row = 0;
+  label = gtk_label_new("Freq.");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(cfc_grid), label, 0, row, 1, 1);
-  label = gtk_label_new("Frequency");
+  gtk_grid_attach(GTK_GRID(cfc_points_grid), label, 0, cfc_point_row, 1, 1);
+  label = gtk_label_new("Pre");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(cfc_grid), label, 3, row, 1, 1);
-  label = gtk_label_new("Pre Comp Level");
+  gtk_grid_attach(GTK_GRID(cfc_points_grid), label, 1, cfc_point_row, 1, 1);
+  label = gtk_label_new("Post");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(cfc_grid), label, 1, row, 1, 1);
-  label = gtk_label_new("Pre Comp Level");
+  gtk_grid_attach(GTK_GRID(cfc_points_grid), label, 2, cfc_point_row, 1, 1);
+  label = gtk_label_new("Freq.");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(cfc_grid), label, 4, row, 1, 1);
-  label = gtk_label_new("Post Gain");
+  gtk_grid_attach(GTK_GRID(cfc_points_grid), label, 3, cfc_point_row, 1, 1);
+  label = gtk_label_new("Pre");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(cfc_grid), label, 2, row, 1, 1);
-  label = gtk_label_new("Post Gain");
+  gtk_grid_attach(GTK_GRID(cfc_points_grid), label, 4, cfc_point_row, 1, 1);
+  label = gtk_label_new("Post");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_grid_attach(GTK_GRID(cfc_grid), label, 5, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(cfc_points_grid), label, 5, cfc_point_row, 1, 1);
   if (can_transmit) {
     sort_cfc(transmitter);
     int cfc_mode = vfo[vfo_get_tx_vfo()].mode;
@@ -1904,41 +1918,53 @@ void tx_menu(GtkWidget *parent) {
   }
   const int max_cfc_zeilen = 6;
   for (int i = 1; i <= max_cfc_zeilen; i++) {
-    row++; // neue Zeile
+    cfc_point_row++;
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(btn), 5);
+    gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i]);
-    gtk_grid_attach(GTK_GRID(cfc_grid), btn, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(cfc_points_grid), btn, 0, cfc_point_row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCFREQ + i));
     cfc_graph_bind_control(i, btn, NULL, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(btn), 5);
+    gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i + max_cfc_zeilen]);
-    gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(cfc_points_grid), btn, 3, cfc_point_row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCFREQ + i + max_cfc_zeilen));
     cfc_graph_bind_control(i + max_cfc_zeilen, btn, NULL, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
+    gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[i]);
-    gtk_grid_attach(GTK_GRID(cfc_grid), btn, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(cfc_points_grid), btn, 1, cfc_point_row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCLVL + i));
     cfc_graph_bind_control(i, NULL, btn, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
+    gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[i + max_cfc_zeilen]);
-    gtk_grid_attach(GTK_GRID(cfc_grid), btn, 4, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(cfc_points_grid), btn, 4, cfc_point_row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCLVL + i + max_cfc_zeilen));
     cfc_graph_bind_control(i + max_cfc_zeilen, NULL, btn, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
+    gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[i]);
-    gtk_grid_attach(GTK_GRID(cfc_grid), btn, 2, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(cfc_points_grid), btn, 2, cfc_point_row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST + i));
     cfc_graph_bind_control(i, NULL, NULL, btn);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
+    gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[i + max_cfc_zeilen]);
-    gtk_grid_attach(GTK_GRID(cfc_grid), btn, 5, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(cfc_points_grid), btn, 5, cfc_point_row, 1, 1);
     g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(CFCPOST + i + max_cfc_zeilen));
     cfc_graph_bind_control(i + max_cfc_zeilen, NULL, NULL, btn);
     //------------------------------------------------------------------------------------------------------------------

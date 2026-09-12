@@ -479,20 +479,24 @@ GtkWidget *cfc_graph_create(TRANSMITTER *tx) {
   CFC_GRAPH *g = g_new0(CFC_GRAPH, 1);
   g->tx = tx;
   GtkWidget *frame = gtk_frame_new("CFC Curves");
+  gtk_widget_set_hexpand(frame, TRUE);
+  gtk_widget_set_halign(frame, GTK_ALIGN_FILL);
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
   gtk_container_set_border_width(GTK_CONTAINER(box), 3);
   gtk_container_add(GTK_CONTAINER(frame), box);
   g->area = gtk_drawing_area_new();
-  // gtk_widget_set_size_request(g->area, 820, 170);
-  gtk_widget_set_size_request(g->area, 620, 170);
+  gtk_widget_set_size_request(g->area, -1, 170);
   gtk_widget_set_hexpand(g->area, TRUE);
+  gtk_widget_set_halign(g->area, GTK_ALIGN_FILL);
   gtk_widget_add_events(g->area, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
                         GDK_POINTER_MOTION_MASK | GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK);
   gtk_widget_set_has_tooltip(g->area, TRUE);
   gtk_box_pack_start(GTK_BOX(box), g->area, TRUE, TRUE, 0);
   GtkWidget *controls = gtk_grid_new();
-  gtk_grid_set_column_spacing(GTK_GRID(controls), 8);
+  gtk_grid_set_column_spacing(GTK_GRID(controls), 4);
   gtk_grid_set_row_spacing(GTK_GRID(controls), 2);
+  gtk_widget_set_halign(controls, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(controls, FALSE);
   gtk_box_pack_start(GTK_BOX(box), controls, FALSE, FALSE, 0);
   GtkWidget *label = gtk_label_new("Pre curve:");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
@@ -519,10 +523,9 @@ GtkWidget *cfc_graph_create(TRANSMITTER *tx) {
   gtk_widget_set_tooltip_text(post_weights,
                               "Enable rational NURBS weights for Post Gain. Hover a square point and use the mouse wheel to adjust its weight.");
   GtkWidget *hint =
-          gtk_label_new("Solid/circles: Pre Compression   Dashed/squares: Post Gain   Drag points; DSP updates on release.");
-  gtk_widget_set_halign(hint, GTK_ALIGN_END);
-  gtk_widget_set_hexpand(hint, TRUE);
-  gtk_grid_attach(GTK_GRID(controls), hint, 3, 0, 1, 2);
+          gtk_label_new("Solid/circles: Pre   Dashed/squares: Post   Drag points; DSP updates on release.");
+  gtk_widget_set_halign(hint, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(controls), hint, 0, 2, 3, 1);
   g_signal_connect(g->area, "draw", G_CALLBACK(draw_cb), g);
   g_signal_connect(g->area, "query-tooltip", G_CALLBACK(query_tooltip_cb), g);
   g_signal_connect(g->area, "button-press-event", G_CALLBACK(button_press_cb), g);
