@@ -1759,7 +1759,9 @@ static void new_protocol_high_priority(void) {
     //
     // ADC0 band pass
     //
-    BPFfreq = 0LL;
+    // Default to the active receiver frequency.  Zero is the BPF bypass
+    // sentinel and must only be selected by an explicit filter bypass.
+    BPFfreq = DDCfrequency[rxvfo];
     if (receivers > 1) {
       if (receiver[othervfo]->adc == 0) {
         BPFfreq = DDCfrequency[othervfo];   // Take frequency of non-active receiver
@@ -1792,7 +1794,9 @@ static void new_protocol_high_priority(void) {
     //
     // ADC1 band pass
     //
-    BPFfreq = 0LL;
+    // Default to the active receiver frequency.  Zero is the BPF bypass
+    // sentinel and must only be selected by an explicit filter bypass.
+    BPFfreq = DDCfrequency[rxvfo];
     if (receivers > 1) {
       if (receiver[othervfo]->adc == 1) {
         BPFfreq = DDCfrequency[othervfo];   // Take frequency of non-active receiver
