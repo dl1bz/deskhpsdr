@@ -39,12 +39,14 @@
 #include "rx_panadapter.h"
 
 #define RBN_RECONNECT_SECONDS 30
+#define RBN_CONNECT_TIMEOUT_SECONDS 10
 
 typedef struct {
   telnet_t       *telnet;
   int             sockfd;
   GIOChannel     *gio;
   guint           io_watch_id;
+  guint           connect_timeout_id;
   guint           reconnect_id;
   GString        *linebuf;
 } RbnCtx;
@@ -60,6 +62,9 @@ static const telnet_telopt_t rbn_telopts[] = {
 };
 
 static gboolean rbn_reconnect_cb(gpointer data);
+static gboolean rbn_connect_cb(GIOChannel *source, GIOCondition cond, gpointer data);
+static gboolean rbn_connect_timeout_cb(gpointer data);
+static gboolean rbn_socket_cb(GIOChannel *source, GIOCondition cond, gpointer data);
 
 static const char *rbn_login_call(void) {
   if (dxc_login[0] != '\0' && strcmp(dxc_login, "YOUR_CALLSIGN") != 0) {
@@ -218,20 +223,19 @@ static void rbn_schedule_reconnect(RbnCtx *ctx) {
   ctx->reconnect_id = g_timeout_add_seconds(RBN_RECONNECT_SECONDS, rbn_reconnect_cb, NULL);
 }
 
-void rbn_stop(void) {
-  RbnCtx *ctx = g_rbn_ctx;
+static void rbn_disconnect_transport(RbnCtx *ctx) {
   if (!ctx) {
     return;
   }
-  if (ctx->reconnect_id != 0) {
-    g_source_remove(ctx->reconnect_id);
-    ctx->reconnect_id = 0;
+  if (ctx->connect_timeout_id != 0) {
+    g_source_remove(ctx->connect_timeout_id);
+    ctx->connect_timeout_id = 0;
+  }
+  if (ctx->io_watch_id != 0) {
+    g_source_remove(ctx->io_watch_id);
+    ctx->io_watch_id = 0;
   }
   if (ctx->gio) {
-    if (ctx->io_watch_id != 0) {
-      g_source_remove(ctx->io_watch_id);
-      ctx->io_watch_id = 0;
-    }
     g_io_channel_shutdown(ctx->gio, TRUE, NULL);
     g_io_channel_unref(ctx->gio);
     ctx->gio = NULL;
@@ -244,6 +248,18 @@ void rbn_stop(void) {
     close(ctx->sockfd);
     ctx->sockfd = -1;
   }
+}
+
+void rbn_stop(void) {
+  RbnCtx *ctx = g_rbn_ctx;
+  if (!ctx) {
+    return;
+  }
+  if (ctx->reconnect_id != 0) {
+    g_source_remove(ctx->reconnect_id);
+    ctx->reconnect_id = 0;
+  }
+  rbn_disconnect_transport(ctx);
   if (ctx->linebuf) {
     g_string_free(ctx->linebuf, TRUE);
     ctx->linebuf = NULL;
@@ -253,15 +269,19 @@ void rbn_stop(void) {
   t_print("RBN: stopped\n");
 }
 
-static int rbn_connect_tcp(const char *host, long int port) {
+static int rbn_connect_tcp(const char *host, long int port, gboolean *in_progress) {
   struct addrinfo hints;
   struct addrinfo *res = NULL;
   struct addrinfo *rp;
   int sock = -1;
   char port_str[16];
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
+  hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
+  if (!host || !in_progress) {
+    return -1;
+  }
+  *in_progress = FALSE;
   snprintf(port_str, sizeof(port_str), "%ld", port);
   int rc = getaddrinfo(host, port_str, &hints, &res);
   if (rc != 0) {
@@ -273,7 +293,17 @@ static int rbn_connect_tcp(const char *host, long int port) {
     if (sock < 0) {
       continue;
     }
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (flags == -1 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+      close(sock);
+      sock = -1;
+      continue;
+    }
     if (connect(sock, rp->ai_addr, rp->ai_addrlen) == 0) {
+      break;
+    }
+    if (errno == EINPROGRESS) {
+      *in_progress = TRUE;
       break;
     }
     close(sock);
@@ -282,12 +312,6 @@ static int rbn_connect_tcp(const char *host, long int port) {
   freeaddrinfo(res);
   if (sock < 0) {
     t_print("RBN: connect to %s:%s failed: %s\n", host, port_str, g_strerror(errno));
-  }
-  if (sock >= 0) {
-    int flags = fcntl(sock, F_GETFL, 0);
-    if (flags >= 0) {
-      fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-    }
   }
   return sock;
 }
@@ -309,6 +333,72 @@ static void rbn_telnet_event_handler(telnet_t *telnet, telnet_event_t *ev, void 
   default:
     break;
   }
+}
+
+static gboolean rbn_finish_connect(RbnCtx *ctx) {
+  if (!ctx || ctx->sockfd < 0 || !ctx->gio) {
+    return FALSE;
+  }
+  ctx->telnet = telnet_init(rbn_telopts, rbn_telnet_event_handler, 0, ctx);
+  if (!ctx->telnet) {
+    t_print("RBN: telnet_init failed\n");
+    rbn_disconnect_transport(ctx);
+    rbn_schedule_reconnect(ctx);
+    return FALSE;
+  }
+  ctx->io_watch_id = g_io_add_watch(ctx->gio,
+                                    G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
+                                    rbn_socket_cb,
+                                    ctx);
+  const char *login = rbn_login_call();
+  t_print("RBN: connected to %s:%ld, login %s\n", rbn_address, rbn_port, login);
+  char cmd[64];
+  snprintf(cmd, sizeof(cmd), "%s\n", login);
+  telnet_send(ctx->telnet, cmd, strlen(cmd));
+  return TRUE;
+}
+
+static gboolean rbn_connect_cb(GIOChannel *source, GIOCondition cond, gpointer data) {
+  RbnCtx *ctx = (RbnCtx *) data;
+  int fd = g_io_channel_unix_get_fd(source);
+  int error = 0;
+  socklen_t error_len = sizeof(error);
+  (void) cond;
+  if (!ctx) {
+    return FALSE;
+  }
+  ctx->io_watch_id = 0;
+  if (ctx->connect_timeout_id != 0) {
+    g_source_remove(ctx->connect_timeout_id);
+    ctx->connect_timeout_id = 0;
+  }
+  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &error_len) < 0) {
+    error = errno;
+  }
+  if (error != 0) {
+    t_print("RBN: connect failed: %s\n", g_strerror(error));
+    rbn_disconnect_transport(ctx);
+    rbn_schedule_reconnect(ctx);
+    return FALSE;
+  }
+  rbn_finish_connect(ctx);
+  return FALSE;
+}
+
+static gboolean rbn_connect_timeout_cb(gpointer data) {
+  RbnCtx *ctx = (RbnCtx *) data;
+  if (!ctx) {
+    return G_SOURCE_REMOVE;
+  }
+  ctx->connect_timeout_id = 0;
+  if (ctx->io_watch_id != 0) {
+    g_source_remove(ctx->io_watch_id);
+    ctx->io_watch_id = 0;
+  }
+  t_print("RBN: connect timed out after %d seconds\n", RBN_CONNECT_TIMEOUT_SECONDS);
+  rbn_disconnect_transport(ctx);
+  rbn_schedule_reconnect(ctx);
+  return G_SOURCE_REMOVE;
 }
 
 static gboolean rbn_socket_cb(GIOChannel *source, GIOCondition cond, gpointer data) {
@@ -356,32 +446,27 @@ void rbn_start(void) {
   RbnCtx *ctx = g_new0(RbnCtx, 1);
   ctx->sockfd = -1;
   ctx->linebuf = g_string_new(NULL);
-  ctx->sockfd = rbn_connect_tcp(rbn_address, rbn_port);
+  gboolean in_progress = FALSE;
+  ctx->sockfd = rbn_connect_tcp(rbn_address, rbn_port, &in_progress);
+  g_rbn_ctx = ctx;
   if (ctx->sockfd < 0) {
-    g_rbn_ctx = ctx;
-    rbn_schedule_reconnect(ctx);
-    return;
-  }
-  ctx->telnet = telnet_init(rbn_telopts, rbn_telnet_event_handler, 0, ctx);
-  if (!ctx->telnet) {
-    t_print("RBN: telnet_init failed\n");
-    g_rbn_ctx = ctx;
     rbn_schedule_reconnect(ctx);
     return;
   }
   ctx->gio = g_io_channel_unix_new(ctx->sockfd);
   g_io_channel_set_encoding(ctx->gio, NULL, NULL);
   g_io_channel_set_buffered(ctx->gio, FALSE);
+  if (!in_progress) {
+    rbn_finish_connect(ctx);
+    return;
+  }
   ctx->io_watch_id = g_io_add_watch(ctx->gio,
-                                    G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-                                    rbn_socket_cb,
+                                    G_IO_OUT | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
+                                    rbn_connect_cb,
                                     ctx);
-  g_rbn_ctx = ctx;
-  const char *login = rbn_login_call();
-  t_print("RBN: connected to %s:%ld, login %s\n", rbn_address, rbn_port, login);
-  char cmd[64];
-  snprintf(cmd, sizeof(cmd), "%s\n", login);
-  telnet_send(ctx->telnet, cmd, strlen(cmd));
+  ctx->connect_timeout_id = g_timeout_add_seconds(RBN_CONNECT_TIMEOUT_SECONDS,
+    rbn_connect_timeout_cb,
+    ctx);
 }
 
 void rbn_update_from_settings(void) {

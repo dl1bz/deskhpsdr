@@ -51,6 +51,7 @@ typedef struct {
   GtkTextTag     *tag_self;
   char           *callsign;
   guint           io_watch_id;   /* GSource-ID von g_io_add_watch */
+  guint           connect_timeout_id;
   GString        *linebuf;       /* Puffer für unvollständige Telnet-Zeilen */
 } DxClusterCtx;
 
@@ -219,6 +220,10 @@ dxcluster_disconnect(DxClusterCtx *ctx) {
   if (!ctx) {
     return;
   }
+  if (ctx->connect_timeout_id != 0) {
+    g_source_remove(ctx->connect_timeout_id);
+    ctx->connect_timeout_id = 0;
+  }
   if (ctx->gio) {
     g_io_channel_shutdown(ctx->gio, FALSE, NULL);
     g_io_channel_unref(ctx->gio);
@@ -310,18 +315,88 @@ dxcluster_socket_cb(GIOChannel *source, GIOCondition cond, gpointer data) {
 
 /* -------------------------------------------------------------------------- */
 
+static gboolean
+dxcluster_finish_connect(DxClusterCtx *ctx) {
+  if (!ctx || ctx->sockfd < 0 || !ctx->gio) {
+    return FALSE;
+  }
+  ctx->telnet = telnet_init(telopts, dxcluster_telnet_event_handler, 0, ctx);
+  if (!ctx->telnet) {
+    fprintf(stderr, "telnet_init fehlgeschlagen\n");
+    dxcluster_disconnect(ctx);
+    return FALSE;
+  }
+  char *login = g_strdup_printf("%s\r\n", ctx->callsign);
+  telnet_send(ctx->telnet, login, strlen(login));
+  g_free(login);
+  ctx->io_watch_id = g_io_add_watch(
+                             ctx->gio,
+                             (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL),
+                             dxcluster_socket_cb,
+                             ctx);
+  dxcluster_append_text(ctx,
+                        "[Verbunden zum DX-Cluster]\n",
+                        strlen("[Verbunden zum DX-Cluster]\n"));
+  return TRUE;
+}
+
+static gboolean
+dxcluster_connect_cb(GIOChannel *source, GIOCondition cond, gpointer data) {
+  DxClusterCtx *ctx = (DxClusterCtx *) data;
+  int fd = g_io_channel_unix_get_fd(source);
+  int error = 0;
+  socklen_t error_len = sizeof(error);
+  (void) cond;
+  ctx->io_watch_id = 0;
+  if (ctx->connect_timeout_id != 0) {
+    g_source_remove(ctx->connect_timeout_id);
+    ctx->connect_timeout_id = 0;
+  }
+  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &error_len) < 0) {
+    error = errno;
+  }
+  if (error != 0) {
+    char *msg = g_strdup_printf("[Verbindung fehlgeschlagen: %s]\n",
+                                g_strerror(error));
+    dxcluster_append_text(ctx, msg, strlen(msg));
+    g_free(msg);
+    dxcluster_disconnect(ctx);
+    return FALSE;
+  }
+  dxcluster_finish_connect(ctx);
+  return FALSE;
+}
+
+static gboolean
+dxcluster_connect_timeout_cb(gpointer data) {
+  DxClusterCtx *ctx = (DxClusterCtx *) data;
+  ctx->connect_timeout_id = 0;
+  dxcluster_append_text(ctx,
+                        "[Verbindungsaufbau nach 10 Sekunden abgebrochen]\n",
+                        strlen("[Verbindungsaufbau nach 10 Sekunden abgebrochen]\n"));
+  if (ctx->io_watch_id != 0) {
+    g_source_remove(ctx->io_watch_id);
+    ctx->io_watch_id = 0;
+  }
+  dxcluster_disconnect(ctx);
+  return G_SOURCE_REMOVE;
+}
+
+/* -------------------------------------------------------------------------- */
+
 static int
-dxcluster_connect_tcp(const char *host, const char *port) {
+dxcluster_connect_tcp(const char *host, const char *port, gboolean *in_progress) {
   struct addrinfo hints;
   struct addrinfo *res = NULL, *rp;
   int sock = -1;
   int ret;
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family   = AF_UNSPEC;
+  hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
-  if (!host || !port) {
+  if (!host || !port || !in_progress) {
     return -1;
   }
+  *in_progress = FALSE;
   if ((ret = getaddrinfo(host, port, &hints, &res)) != 0) {
     fprintf(stderr, "getaddrinfo(%s:%s): %s\n",
             host, port, gai_strerror(ret));
@@ -332,7 +407,17 @@ dxcluster_connect_tcp(const char *host, const char *port) {
     if (sock == -1) {
       continue;
     }
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (flags == -1 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+      close(sock);
+      sock = -1;
+      continue;
+    }
     if (connect(sock, rp->ai_addr, rp->ai_addrlen) == 0) {
+      break;
+    }
+    if (errno == EINPROGRESS) {
+      *in_progress = TRUE;
       break;
     }
     close(sock);
@@ -342,10 +427,6 @@ dxcluster_connect_tcp(const char *host, const char *port) {
   if (sock < 0) {
     fprintf(stderr, "Verbindung zu %s:%s fehlgeschlagen\n", host, port);
     return -1;
-  }
-  int flags = fcntl(sock, F_GETFL, 0);
-  if (flags != -1) {
-    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
   }
   return sock;
 }
@@ -496,36 +577,30 @@ dxcluster_open_window(const char *host,
   /* Singleton-Kontext setzen */
   g_dxcluster_ctx = ctx;
   /* verbinden */
-  ctx->sockfd = dxcluster_connect_tcp(host, port);
+  gboolean in_progress = FALSE;
+  ctx->sockfd = dxcluster_connect_tcp(host, port, &in_progress);
   if (ctx->sockfd < 0) {
     dxcluster_append_text(ctx,
                           "Konnte keine Verbindung zum DX-Cluster herstellen.\n",
                           strlen("Konnte keine Verbindung zum DX-Cluster herstellen.\n"));
     return;
   }
-  /* libtelnet */
-  ctx->telnet = telnet_init(telopts, dxcluster_telnet_event_handler, 0, ctx);
-  if (!ctx->telnet) {
-    fprintf(stderr, "telnet_init fehlgeschlagen\n");
-    dxcluster_disconnect(ctx);
-    return;
-  }
-  /* Auto-login */
-  {
-    char *login = g_strdup_printf("%s\r\n", callsign);
-    telnet_send(ctx->telnet, login, strlen(login));
-    g_free(login);
-  }
-  /* GIO-Watch */
   ctx->gio = g_io_channel_unix_new(ctx->sockfd);
   g_io_channel_set_encoding(ctx->gio, NULL, NULL);
   g_io_channel_set_buffered(ctx->gio, FALSE);
+  if (!in_progress) {
+    dxcluster_finish_connect(ctx);
+    return;
+  }
+  dxcluster_append_text(ctx,
+                        "[Verbindung zum DX-Cluster wird aufgebaut ...]\n",
+                        strlen("[Verbindung zum DX-Cluster wird aufgebaut ...]\n"));
   ctx->io_watch_id = g_io_add_watch(
                              ctx->gio,
-                             (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL),
-                             dxcluster_socket_cb,
+                             (GIOCondition)(G_IO_OUT | G_IO_HUP | G_IO_ERR | G_IO_NVAL),
+                             dxcluster_connect_cb,
                              ctx);
-  dxcluster_append_text(ctx,
-                        "[Verbunden zum DX-Cluster]\n",
-                        strlen("[Verbunden zum DX-Cluster]\n"));
+  ctx->connect_timeout_id = g_timeout_add_seconds(10,
+    dxcluster_connect_timeout_cb,
+    ctx);
 }
