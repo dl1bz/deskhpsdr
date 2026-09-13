@@ -326,7 +326,7 @@ void create_rxa(int channel) {
                                2,                        // overlap
                                1,                        // lookahead
                                -25.0,                      // mask floor
-                               1);                       // output mode, 1=>(q=0.0)
+                               0);                       // output mode, 1=>(q=0.0) or 0=>(q=i)
   // RNNoise based noise reduction (NR3)
   rxa[channel].rnnr.p = create_rnnr(
                                 0,

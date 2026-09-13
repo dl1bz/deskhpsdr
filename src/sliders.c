@@ -2786,8 +2786,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_name(binaural_btn, "medium_toggle_button");
   // gtk_widget_set_name(binaural_btn, "front_toggle_button");
   gtk_widget_set_tooltip_text(binaural_btn, "Outputs I and Q on the Left and Right audio channels.\n\n"
-                                            "If Audio Output Device is Mono,\n"
-                                            "Binaural option is not available");
+                                            "If Audio Output Device is Mono or NNR is active,\n"
+                                            "Binaural option is not available or switched off");
   if (active_receiver->local_audio_channels == 1) {
     active_receiver->binaural = 0;
   }

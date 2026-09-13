@@ -560,8 +560,8 @@ void fft_menu(GtkWidget *parent) {
     if (i < receivers) {
       w = gtk_check_button_new();
       gtk_widget_set_tooltip_text(w, "Outputs I and Q on the Left and Right audio channels.\n\n"
-                                     "If Audio Output Device is Mono,\n"
-                                     "Binaural option is not available");
+                                     "If Audio Output Device is Mono or NNR is active,\n"
+                                     "Binaural option is not available or switched off");
       if (receiver[i]->local_audio_channels == 1) {
         receiver[i]->binaural = 0;
       }
