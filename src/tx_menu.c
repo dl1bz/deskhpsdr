@@ -61,6 +61,8 @@ static GtkWidget *save_button;
 
 static GtkWidget *sdr_mic_btn = NULL;
 static GtkWidget *sdr_linein_btn = NULL;
+static GtkWidget *loc_mic_btn = NULL;
+static gulong loc_mic_btn_signal_id;
 //
 // Some symbolic constants used in callbacks
 //
@@ -583,7 +585,7 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
 }
 
 void update_sdr_mic_btn(void) {
-  if (!transmitter) { return; }
+  if (!transmitter || !sdr_mic_btn || !sdr_linein_btn) { return; }
   if (transmitter && transmitter->local_microphone) {
     gtk_widget_set_sensitive(sdr_mic_btn, FALSE);
     gtk_widget_set_sensitive(sdr_linein_btn, FALSE);
@@ -593,6 +595,14 @@ void update_sdr_mic_btn(void) {
   } else {
     return;
   }
+}
+
+void update_local_mic_btn(void) {
+  if (!transmitter || !loc_mic_btn) { return; }
+  g_signal_handler_block(GTK_TOGGLE_BUTTON(loc_mic_btn), loc_mic_btn_signal_id);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(loc_mic_btn), transmitter->local_microphone);
+  g_signal_handler_unblock(GTK_TOGGLE_BUTTON(loc_mic_btn), loc_mic_btn_signal_id);
+  gtk_widget_queue_draw(loc_mic_btn);
 }
 
 static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
@@ -1206,14 +1216,20 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
   g_mutex_lock(&copy_string_mutex);
   g_strlcpy(transmitter->microphone_name, input_devices[i].name, sizeof(transmitter->microphone_name));
   g_mutex_unlock(&copy_string_mutex);
-  if (was_local_microphone && audio_open_input() == 0) {
+  // Keep an already active local mic alive across device changes.
+  // When the device is selected in the TX menu (flag == TRUE), selecting
+  // a device also enables Local Audio if it was previously disabled.
+  if ((was_local_microphone || flag) && audio_open_input() == 0) {
     transmitter->local_microphone = 1;
   }
+  // Synchronize all UI representations with the final state.
+  update_local_mic_btn();
   if (n_input_devices > 0) {
     if (flag) {
       update_slider_local_mic_input(i);
     }
     update_slider_local_mic_button();
+    update_sdr_mic_btn();
   }
   char m_name[128];
   if (transmitter && transmitter->local_microphone) {
@@ -1396,14 +1412,14 @@ void tx_menu(GtkWidget *parent) {
   if (n_input_devices > 0) {
     row++;
     col = 0;
-    btn = gtk_check_button_new_with_label("Use computer\naudio input");
-    gtk_widget_set_tooltip_text(btn, "Enable computer audio as mic input\n"
-                                     "(if your SDR-TRX hasn't an own mic input)");
-    gtk_widget_set_halign(btn, GTK_ALIGN_CENTER);
-    gtk_widget_set_name(btn, "smallabel");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->local_microphone);
-    gtk_grid_attach(GTK_GRID(tx_grid), btn, col++, row, 1, 1);
-    g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_LOCAL_MIC));
+    loc_mic_btn = gtk_check_button_new_with_label("Use computer\naudio input");
+    gtk_widget_set_tooltip_text(loc_mic_btn, "Enable computer audio as mic input\n"
+                                             "(if your SDR-TRX hasn't an own mic input)");
+    gtk_widget_set_halign(loc_mic_btn, GTK_ALIGN_CENTER);
+    gtk_widget_set_name(loc_mic_btn, "smallabel");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(loc_mic_btn), transmitter->local_microphone);
+    gtk_grid_attach(GTK_GRID(tx_grid), loc_mic_btn, col++, row, 1, 1);
+    loc_mic_btn_signal_id = g_signal_connect(loc_mic_btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_LOCAL_MIC));
     input = gtk_combo_box_text_new();
     gtk_widget_set_tooltip_text(input, "Select one of your local audio devices as mic input,\n"
                                        "which is connected to your computer.");

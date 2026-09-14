@@ -24,4 +24,5 @@ extern void set_tune(double value);
 extern void audioSaveProfile(const char *filename);
 extern void showAudioProfileSaveDialog(void);
 extern void update_sdr_mic_btn(void);
+extern void update_local_mic_btn(void);
 extern void local_input_changed_cb(GtkWidget *widget, gpointer data);
