@@ -1989,8 +1989,15 @@ void rx_set_analyzer(const RECEIVER *rx) {
 }
 
 void rx_begin_off(const RECEIVER *rx) {
+#ifdef WDSP1
+  // WDSP 1.x has no separate WaitChannelFlush() API.  Use its original
+  // synchronous channel shutdown so the RX channel is fully stopped before
+  // the TX transition continues.
+  SetChannelState(rx->id, 0, 1);
+#else
   // Start receiver slew-down without waiting for the WDSP flush.
   SetChannelState(rx->id, 0, 0);
+#endif
 }
 
 void rx_wait_off(const RECEIVER *rx) {
