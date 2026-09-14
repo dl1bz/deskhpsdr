@@ -71,6 +71,38 @@ COMMON_CONFIGURE_FLAGS=(
     --with-pic
 )
 
+PLATFORM_CONFIGURE_FLAGS=()
+PLATFORM_CFLAGS="-O3"
+PLATFORM_CC=""
+
+case "$(uname -s)-$(uname -m)" in
+    Darwin-arm64)
+        echo "FFTW platform optimization: macOS ARM64 / NEON"
+        PLATFORM_CONFIGURE_FLAGS+=(--enable-neon)
+        PLATFORM_CFLAGS="-O3 -mcpu=native"
+        PLATFORM_CC="clang"
+        ;;
+    Linux-aarch64|Linux-arm64)
+        echo "FFTW platform optimization: Linux ARM64 / NEON"
+        PLATFORM_CONFIGURE_FLAGS+=(--enable-neon)
+        PLATFORM_CFLAGS="-O3 -mcpu=native"
+        ;;
+    Linux-x86_64)
+        echo "FFTW platform optimization: Linux x86_64 / SSE2 / AVX / AVX2"
+        PLATFORM_CONFIGURE_FLAGS+=(--enable-sse2 --enable-avx --enable-avx2)
+        PLATFORM_CFLAGS="-O3 -march=native"
+        ;;
+    Darwin-x86_64)
+        echo "FFTW platform optimization: macOS x86_64 / SSE2 / AVX / AVX2"
+        PLATFORM_CONFIGURE_FLAGS+=(--enable-sse2 --enable-avx --enable-avx2)
+        PLATFORM_CFLAGS="-O3 -march=native"
+        PLATFORM_CC="clang"
+        ;;
+    *)
+        echo "FFTW platform optimization: generic"
+        ;;
+esac
+
 echo "Removing previous FFTW build and installation directories..."
 rm -rf "${DOUBLE_BUILD_DIR}"
 rm -rf "${FLOAT_BUILD_DIR}"
@@ -83,14 +115,18 @@ mkdir -p "${FLOAT_BUILD_DIR}"
 echo ""
 echo "Building FFTW 3.3.11 double precision..."
 cd "${DOUBLE_BUILD_DIR}"
-"${SOURCE_DIR}/configure" "${COMMON_CONFIGURE_FLAGS[@]}" --prefix="${DOUBLE_PREFIX}"
+CC="${PLATFORM_CC:-cc}" CFLAGS="${PLATFORM_CFLAGS}" \
+"${SOURCE_DIR}/configure" "${COMMON_CONFIGURE_FLAGS[@]}" \
+    "${PLATFORM_CONFIGURE_FLAGS[@]}" --prefix="${DOUBLE_PREFIX}"
 make -j"${JOBS}"
 make install
 
 echo ""
 echo "Building FFTW 3.3.11 single precision..."
 cd "${FLOAT_BUILD_DIR}"
-"${SOURCE_DIR}/configure" "${COMMON_CONFIGURE_FLAGS[@]}" --enable-float --prefix="${FLOAT_PREFIX}"
+CC="${PLATFORM_CC:-cc}" CFLAGS="${PLATFORM_CFLAGS}" \
+"${SOURCE_DIR}/configure" "${COMMON_CONFIGURE_FLAGS[@]}" \
+    "${PLATFORM_CONFIGURE_FLAGS[@]}" --enable-float --prefix="${FLOAT_PREFIX}"
 make -j"${JOBS}"
 make install
 

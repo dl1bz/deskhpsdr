@@ -1,6 +1,7 @@
 # Makefile for the WDSP library on Linux/macOS.
 # Creates libwdsp.a for static linking.
 UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
 
 CC ?= cc
 AR ?= ar
@@ -9,9 +10,21 @@ RANLIB ?= ranlib
 ifeq ($(UNAME_S), Darwin)
     # WDSP NNR debug output into working directory
     # CFLAGS ?= -O2 -flto -DNNET_PROFILE
-    CFLAGS ?= -O2 -flto
+    ifeq ($(UNAME_M), arm64)
+        CFLAGS ?= -O2 -mcpu=native -flto
+    else ifeq ($(UNAME_M), x86_64)
+        CFLAGS ?= -O2 -march=native -flto
+    else
+        CFLAGS ?= -O2 -flto
+    endif
 else
-    CFLAGS ?= -O2
+    ifeq ($(UNAME_M), aarch64)
+        CFLAGS ?= -O2 -mcpu=native
+    else ifeq ($(UNAME_M), x86_64)
+        CFLAGS ?= -O2 -march=native
+    else
+        CFLAGS ?= -O2
+    endif
 endif
 CFLAGS += -pthread -D_GNU_SOURCE -Wno-parentheses -Wcast-align
 CFLAGS += -I../wdsp-libs/include

@@ -116,9 +116,21 @@ ifeq ($(GDB), ON)
 	CFLAGS?= -g -O0 -DG_ENABLE_DEBUG
 	LDFLAGS?= -flto
 else ifeq ($(UNAME_S), Darwin)
-	CFLAGS?= -O2 -flto
+	ifeq ($(ARCH),arm64)
+		CFLAGS?= -O2 -mcpu=native -flto
+	else ifeq ($(ARCH),x86_64)
+		CFLAGS?= -O2 -march=native -flto
+	else
+		CFLAGS?= -O2 -flto
+	endif
 else
-	CFLAGS?= -O2
+	ifeq ($(ARCH),aarch64)
+		CFLAGS?= -O2 -mcpu=native
+	else ifeq ($(ARCH),x86_64)
+		CFLAGS?= -O2 -march=native
+	else
+		CFLAGS?= -O2
+	endif
 endif
 
 ifeq ($(WDSP1),ON)
