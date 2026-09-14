@@ -344,7 +344,7 @@ GtkWidget *rx_eq_graph_create(RECEIVER *rx) {
   gtk_container_set_border_width(GTK_CONTAINER(box), 5);
   gtk_container_add(GTK_CONTAINER(frame), box);
   g->area = gtk_drawing_area_new();
-  gtk_widget_set_size_request(g->area, 620, 250);
+  gtk_widget_set_size_request(g->area, 560, 230);
   gtk_widget_set_hexpand(g->area, TRUE);
   gtk_widget_add_events(g->area, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
                         GDK_POINTER_MOTION_MASK | GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK);

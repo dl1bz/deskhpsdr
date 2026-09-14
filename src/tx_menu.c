@@ -44,6 +44,7 @@
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *input;
+static GtkWidget *headerbar = NULL;
 static GtkWidget *tx_spin_low;
 static GtkWidget *tx_spin_high;
 static GtkWidget *tx_tune_drive_spin;
@@ -57,6 +58,9 @@ static GtkWidget *peaks_container;
 static GtkWidget *load_button;
 static GtkWidget *audio_profile;
 static GtkWidget *save_button;
+
+static GtkWidget *sdr_mic_btn = NULL;
+static GtkWidget *sdr_linein_btn = NULL;
 //
 // Some symbolic constants used in callbacks
 //
@@ -578,6 +582,19 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
+void update_sdr_mic_btn(void) {
+  if (!transmitter) { return; }
+  if (transmitter && transmitter->local_microphone) {
+    gtk_widget_set_sensitive(sdr_mic_btn, FALSE);
+    gtk_widget_set_sensitive(sdr_linein_btn, FALSE);
+  } else if (transmitter && !transmitter->local_microphone) {
+    gtk_widget_set_sensitive(sdr_mic_btn, TRUE);
+    gtk_widget_set_sensitive(sdr_linein_btn, TRUE);
+  } else {
+    return;
+  }
+}
+
 static void audioprofile_changed_cb(GtkWidget *widget, gpointer data) {
   GtkWidget *load_button = GTK_WIDGET(data);
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));    // Rückgabe als Index
@@ -1083,6 +1100,17 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
         }
       }
       update_slider_local_mic_button();
+      update_sdr_mic_btn();
+      char m_name[128];
+      if (transmitter && transmitter->local_microphone) {
+        snprintf(m_name, sizeof(m_name), "%s - TX Menu (Mic Profile:%s)", PGNAME, truncate_text_3p(transmitter->microphone_name,
+            36));
+      } else if (transmitter && !transmitter->local_microphone) {
+        snprintf(m_name, sizeof(m_name), "%s - TX Menu (Mic Profile: SDR Device Mic)", PGNAME);
+      } else {
+        snprintf(m_name, sizeof(m_name), "%s - TX Menu", PGNAME);
+      }
+      gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), m_name);
       break;
     case TX_FM_EMP:
       transmitter->pre_emphasize = !v;
@@ -1187,6 +1215,16 @@ void local_input_changed_cb(GtkWidget *widget, gpointer data) {
     }
     update_slider_local_mic_button();
   }
+  char m_name[128];
+  if (transmitter && transmitter->local_microphone) {
+    snprintf(m_name, sizeof(m_name), "%s - TX Menu (Mic Profile:%s)", PGNAME, truncate_text_3p(transmitter->microphone_name,
+        36));
+  } else if (transmitter && !transmitter->local_microphone) {
+    snprintf(m_name, sizeof(m_name), "%s - TX Menu (Mic Profile: SDR Device Mic)", PGNAME);
+  } else {
+    snprintf(m_name, sizeof(m_name), "%s - TX Menu", PGNAME);
+  }
+  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), m_name);
 }
 
 static void tune_drive_step_changed_cb(GtkComboBox *widget, gpointer data) {
@@ -1216,14 +1254,22 @@ void tx_menu(GtkWidget *parent) {
   GtkWidget *combo;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 580, 600); // set window size (can expand)
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   win_set_bgcolor(dialog, &mwin_bgcolor);
-  GtkWidget *headerbar = gtk_header_bar_new();
+  headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  char _title[64];
-  snprintf(_title, 64, "%s TX Menu (Mic profile:%d)", PGNAME, mic_prof.nr);
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
+  char m_name[128];
+  if (transmitter && transmitter->local_microphone) {
+    snprintf(m_name, sizeof(m_name), "%s - TX Menu (Mic Profile:%s)", PGNAME, truncate_text_3p(transmitter->microphone_name,
+        36));
+  } else if (transmitter && !transmitter->local_microphone) {
+    snprintf(m_name, sizeof(m_name), "%s - TX Menu (Mic Profile: SDR Device Mic)", PGNAME);
+  } else {
+    snprintf(m_name, sizeof(m_name), "%s - TX Menu", PGNAME);
+  }
+  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), m_name);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -1390,22 +1436,20 @@ void tx_menu(GtkWidget *parent) {
     //
     // Mic Boost, Mic In, and Line In can the handled mutually exclusive
     //
-    btn = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(btn), NULL, "Mic In");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(btn), NULL, "Mic Boost");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(btn), NULL, "Line In");
+    sdr_mic_btn = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sdr_mic_btn), NULL, "Mic In");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sdr_mic_btn), NULL, "Mic Boost");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(sdr_mic_btn), NULL, "Line In");
     int pos = 0;
     if (mic_linein) {
       pos = 2;
     } else if (mic_boost) {
       pos = 1;
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(btn), pos);
-    my_combo_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
-    g_signal_connect(btn, "changed", G_CALLBACK(mic_in_cb), NULL);
-    if (transmitter->local_microphone) {
-      gtk_widget_set_sensitive(btn, FALSE);
-    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(sdr_mic_btn), pos);
+    my_combo_attach(GTK_GRID(tx_grid), sdr_mic_btn, col, row, 1, 1);
+    g_signal_connect(sdr_mic_btn, "changed", G_CALLBACK(mic_in_cb), NULL);
+    update_sdr_mic_btn();
     col++;
     btn = gtk_button_new_with_label(tx_get_monitor_post() ? "POST TX MONITOR" : "PRE TX MONITOR");
     gtk_widget_set_name(btn, "boldlabel");
@@ -1426,14 +1470,12 @@ void tx_menu(GtkWidget *parent) {
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
     col++;
-    btn = gtk_spin_button_new_with_range(-34.5, 12.0, 1.5);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(btn), 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), linein_gain);
-    gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
-    g_signal_connect(G_OBJECT(btn), "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_LINEIN));
-    if (transmitter->local_microphone) {
-      gtk_widget_set_sensitive(btn, FALSE);
-    }
+    sdr_linein_btn = gtk_spin_button_new_with_range(-34.5, 12.0, 1.5);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(sdr_linein_btn), 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(sdr_linein_btn), linein_gain);
+    gtk_grid_attach(GTK_GRID(tx_grid), sdr_linein_btn, col, row, 1, 1);
+    g_signal_connect(G_OBJECT(sdr_linein_btn), "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_LINEIN));
+    update_sdr_mic_btn();
     row++;
     GtkWidget *trennline = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_widget_set_size_request(trennline, -1, 3);
@@ -1641,7 +1683,7 @@ void tx_menu(GtkWidget *parent) {
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_AM_CARRIER));
   row++;
   col = 2;
-  btn = gtk_check_button_new_with_label("Fill Panadapter");
+  btn = gtk_check_button_new_with_label("Fill TX Panadapter");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->display_filled);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);

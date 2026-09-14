@@ -226,21 +226,29 @@ void equalizer_menu(GtkWidget *parent) {
   }
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 580, 600);  // set window size (can expand)
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   win_set_bgcolor(dialog, &mwin_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  char _title[64];
-  snprintf(_title, 64, "%s - WDSP Equalizer (Mic Profile:%d)", PGNAME, mic_prof.nr);
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
+  char m_name[128];
+  if (transmitter && transmitter->local_microphone) {
+    snprintf(m_name, sizeof(m_name), "%s - WDSP EQ Menu (Mic Profile:%s)", PGNAME,
+             truncate_text_3p(transmitter->microphone_name, 36));
+  } else if (transmitter && !transmitter->local_microphone) {
+    snprintf(m_name, sizeof(m_name), "%s - WDSP EQ Menu (Mic Profile: SDR Device Mic)", PGNAME);
+  } else {
+    snprintf(m_name, sizeof(m_name), "%s - WDSP EQ Menu", PGNAME);
+  }
+  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), m_name);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
-  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
@@ -337,9 +345,7 @@ void equalizer_menu(GtkWidget *parent) {
     myrow++;
     if (myeq < 2) {
       char rxeq_label_txt[256];
-      snprintf(rxeq_label_txt, sizeof(rxeq_label_txt),
-               "RX Equalizer — Continuous-Gain EQ Model\n"
-               "Start here to adjust and shape your RX audio.");
+      snprintf(rxeq_label_txt, sizeof(rxeq_label_txt), "RX Equalizer — Continuous-Gain EQ Model");
       GtkWidget *rxeq_label = gtk_label_new(rxeq_label_txt);
       gtk_widget_set_name(rxeq_label, "smalllabel_blue_bold");
       gtk_grid_attach(GTK_GRID(mygrid), rxeq_label, 0, myrow, 4, 1);
@@ -349,9 +355,7 @@ void equalizer_menu(GtkWidget *parent) {
     }
     if (myeq == 2 && can_transmit) {
       char txeq_label_txt[256];
-      snprintf(txeq_label_txt, sizeof(txeq_label_txt),
-               "TX Equalizer — Continuous-Gain EQ Model\n"
-               "Start here to adjust and shape your TX audio.");
+      snprintf(txeq_label_txt, sizeof(txeq_label_txt), "TX Equalizer — Continuous-Gain EQ Model");
       GtkWidget *txeq_label = gtk_label_new(txeq_label_txt);
       gtk_widget_set_name(txeq_label, "smalllabel_blue_bold");
       gtk_grid_attach(GTK_GRID(mygrid), txeq_label, 0, myrow, 4, 1);
