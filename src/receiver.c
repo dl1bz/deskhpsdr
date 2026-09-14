@@ -1995,7 +1995,11 @@ void rx_begin_off(const RECEIVER *rx) {
 
 void rx_wait_off(const RECEIVER *rx) {
   // Complete a previously started receiver shutdown.
+#ifndef WDSP1
   WaitChannelFlush(rx->id, 100);
+#else
+  (void) rx;
+#endif
 }
 
 void rx_off(const RECEIVER *rx) {
@@ -2369,13 +2373,14 @@ void rx_set_noise(const RECEIVER *rx) {
   //
   // Enable exactly the selected noise-reduction engine.
   //
+  int nr = rx->nr;
 #ifdef WDSP1
-  if (rx->nr > NR_MAX) {
-    rx->nr = 0;
+  if (nr > NR_MAX) {
+    nr = 0;
   }
 #endif
   if (nr_allowed) {
-    switch (rx->nr) {
+    switch (nr) {
     case 1:
       SetRXAANRRun(rx->id, 1);
       break;
