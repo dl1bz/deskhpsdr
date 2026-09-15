@@ -1,4 +1,4 @@
-# Troubleshooting deskHPSDR for final Version 2.6
+# Troubleshooting deskHPSDR for Version 2.7
 
 ## Things you can or should do for first-aid
 
@@ -11,12 +11,22 @@ The first you need to do is be sure using most up-to-date codebase:<br>
 ```$ git checkout master```<br>
 ```$ git pull```<br>
 
-If ```git pull``` failed, you can try this:<br>
+If ```git pull``` failed, you can try this:<br><br>
 ```$ git reset --hard origin/master```<br>
+```$ git config pull.rebase true```<br>
 ```$ git pull```<br>
-```$ git update-index --assume-unchanged make.config.deskhpsdr```<br>
 
-This reset your local codebase similiar to my repository at github.com. Mostly ```git pull``` failed, if you have done local changes in the codebase. Please don't edit the Makefile direct ! Only do all it in the ```make.config.deskhpsdr```, this file will be used and included in the Makefile.
+This reset your local codebase similiar to my repository at github.com. Mostly ```git pull``` failed, if you have done local changes in the codebase.
+
+If nothing helps, delete the whole deskHPSDR source directory and clone again:<br><br>
+```$ rm -fr deskhpsdr```<br>
+```$ git clone https://git.bzsax.de/dl1bz/deskhpsdr.git```<br>
+```$ cd deskhpsdr```<br>
+
+Please don't edit the Makefile direct ! Only do all it in the ```make.config.deskhpsdr```, this file will be used and included in the Makefile.<br>
+A template ```make.config.deskhpsdr.template``` is included and can be used, if you make a copy:<br><br>
+```$ cp make.config.deskhpsdr.template make.config.deskhpsdr```<br><br>
+Edit ```make.config.deskhpsdr``` how you need.
 
 After all, check and follow the instructions written in the ```COMPILE.macOS``` or ```COMPILE.linux``` for compiling deskHPSDR depend on your used OS.
 
@@ -32,15 +42,23 @@ USBOZY=OFF
 STEMLAB=OFF
 AUDIO=PULSE
 AUTOGAIN=ON
-REGION1=ON
 ```
-Please use ```AUTOGAIN=ON``` only if your SDR is a Hermes Lite 2, otherwise set ```AUTOGAIN=OFF```.<br>
-```REGION1=ON``` set the band borders in the RX panadpter to IARU Region 1 (if OFF all is US based).<br>
-deskHPSDR is made for desktop systems, they all have enough CPU power. But my tests were shown, with a Raspberry Pi5 the worldmap works too without any issues.<br>
+Use ```AUTOGAIN=ON``` has only an effect if your SDR is a Hermes Lite 2.<br>
+deskHPSDR is made for desktop systems, they all have enough CPU power. But my tests were shown, a Raspberry Pi5 works too without any issues.<br>
 **Not defined or non existent options are ever interpreted like ```OFF```**.
 
+### 1.2 Recompile deskHPSDR
 
-### 2. Remove the config files
+Every recompile needs the following step:<br>
+
+```$ make clean && make && make install```<br>
+
+```$ make clean && make install```<br>
+
+Important is ```make clean```, because it removes all old fragments from the last compiling and prevent a mix of old and new.<br>
+```make install``` do additional things, which needed deskHPSDR for a clean rumtime (e.g. copy needed fonts and so on).
+
+### 2. Remove the config files if deskHPSDR don't start anymore
 
 deskHPSDR is using for every SDR device a config file, where all settings you have done will be saved and reloaded automaticly. Sometimes this or these file(s) can be wrong for various reasons. If you sure, that deskHPSDR was compiled correct - but don't work correct, try at first to remove these config files.
 
@@ -56,7 +74,7 @@ This can be mandatory, if I change code or change variables inside the code.
 
 ### 3. Your used OS
 
-It is also important, that your OS is not a very old version and it is up-to-date. I was ever made tests with macOS 14.x and 15.x with my Macs and Linux with PiOS 64bit at my Raspberry Pi5.<br>
+It is also important, that your OS is not a very old version and it is up-to-date. I was ever made tests with macOS 15.x and 26.x with my Macs and Linux with PiOS 64bit at my Raspberry Pi5.<br>
 Do from time to time this, depend from you OS:
 Linux (includes OS and all other updates): ```$ apt-get update && apt-get upgrade```<br>
 macOS (OS update do normal at macOS level, but we need to update Homebrew too): ```$ brew update && brew upgrade```<br>
@@ -66,7 +84,3 @@ Note: I cannot support old OS - only actual version of the OS. At Linux I can on
 ### 4. Your SDR device
 
 I personally only own a Hermes Lite 2 and a Brick2 as SDR transceiver, connected via Ethernet. The Hermes Lite 2 use the older HPSDR protocol 1 via network and the Brick2 uses protocol 2 via network. **These are my both available SDR devices for testing deskHPSDR here**. Other SDR can work with deskHPSDR, but I cannot check all available SDR devices, that is impossible. The ANAN should be run too, they are HPSDR protocol based SDR.
-
-### 5. deskHPSDR and piHPSDR
-
-In October 2024 deskHPSDR was born as a code fork from DL1YCF version of piHPSDR. Today the codebase of deskHPSDR is no longer comparable to piHPSDR. They look similar, but they are not. deskHPSDR is now an independent application without any relations to pihpsdr. I have different goals than Christoph/DL1YCF with his pihpsdr. My focus is macOS as OS and the Hermes Lite 2 as SDR device. I am no longer referring to  pihpsdr, it is Thetis. What I want with deskHPSDR is a kind of "Thetis for macOS". That's what drives me in the whole development of deskHPSDR. So please don't ask me things about pihpsdr, that is the wrong address. Ask me about deskHPSDR and I will answer. Use the issues tab at Github.com or contact me via EMail. Normally I will answer fast. If I can help, I will do it.
