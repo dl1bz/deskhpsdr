@@ -28,16 +28,10 @@ wdsp-libs/*
 hamlib-static/
 MacOS/rigctld_deskhpsdr
 LINUX/rigctld_deskhpsdr
-wdsp-1.27/libwdsp.a
-wdsp-1.27/*.o
-wdsp-1.28/libwdsp.a
-wdsp-1.28/*.o
 wdsp-1.29/libwdsp.a
 wdsp-1.29/*.o
 wdsp-1.29/*.orig
-wdsp-2.00/*.orig
-wdsp-2.00/libwdsp.a
-wdsp-2.00/*.o
+wdsp-2.00/*
 wdsp-2.10/*.orig
 wdsp-2.10/libwdsp.a
 wdsp-2.10/*.o
