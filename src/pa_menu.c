@@ -54,7 +54,7 @@ static void cleanup(void) {
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
-    radio_save_state();
+    // radio_save_state();
   }
 }
 
@@ -68,7 +68,7 @@ static void destroy_cb(GtkWidget *widget, gpointer data) {
   memset(pa_r_spin, 0, sizeof(pa_r_spin));
   sub_menu = NULL;
   active_menu = NO_MENU;
-  radio_save_state();
+  // radio_save_state();
 }
 
 static void update_pa_calibration_widgets(void) {

@@ -65,7 +65,7 @@ static void cleanup(void) {
     sub_menu = NULL;
     active_menu  = NO_MENU;
     vfo_num_pad(-1, myvfo);
-    radio_save_state();
+    // radio_save_state();
   }
 }
 

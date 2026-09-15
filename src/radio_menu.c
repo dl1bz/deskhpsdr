@@ -61,7 +61,7 @@ static void cleanup(void) {
     sub_menu = NULL;
     active_menu  = NO_MENU;
     ChkBtn_mute_rx_when_tx = NULL;
-    radio_save_state();
+    // radio_save_state();
   }
 }
 

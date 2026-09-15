@@ -74,7 +74,7 @@ static void cleanup(void) {
     rx_iq_status_label[1] = NULL;
     sub_menu = NULL;
     active_menu  = NO_MENU;
-    radio_save_state();
+    // radio_save_state();
   }
 }
 

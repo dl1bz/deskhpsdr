@@ -81,7 +81,7 @@ static void cleanup(void) {
     noise_menu_rx_buttons[1] = NULL;
     sub_menu = NULL;
     active_menu  = NO_MENU;
-    radio_save_state();
+    // radio_save_state();
   }
 }
 
