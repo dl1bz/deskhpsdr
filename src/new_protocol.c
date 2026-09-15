@@ -2534,7 +2534,7 @@ void new_protocol_menu_start(void) {
   } else {
     ensure_my_buffers(P2_INITIAL_BUFFERS);
   }
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
   if (transmitter != NULL && transmitter->local_microphone) {
     audio_reset_mic_buffer();
   }

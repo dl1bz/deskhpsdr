@@ -255,10 +255,10 @@ int force_iob = 0;
 int display_zoompan = 0;
 int display_sliders = 0;
 
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
   int rx_audio_network_reserve_enabled = 0;
   int rx_audio_network_reserve_ms = 100;
-  int coreaudio_rx_latency_correction_enabled = 1;
+  int audio_rx_latency_correction_enabled = 1;
 #endif
 int display_extra_sliders = 1;
 int display_toolbar = 0;
@@ -2098,7 +2098,7 @@ static void rxtx(int state) {
       }
       for (i = 0; i < receivers; i++) {
         gtk_fixed_put(GTK_FIXED(fixed), receiver[i]->panel, receiver[i]->x, receiver[i]->y);
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
         audio_reprime_output(receiver[i]);
 #endif
         rx_on(receiver[i]);
@@ -2792,7 +2792,7 @@ static void radio_restore_state(void) {
   diversity_brick3_mode = diversity_brick3_mode ? 1 : 0;
   GetPropI0("p2_jitter_buffer_enabled",                       p2_jitter_buffer_enabled);
   GetPropI0("p2_jitter_buffer_depth_ms",                      p2_jitter_buffer_depth_ms);
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
   GetPropI0("rx_audio_network_reserve_enabled",                rx_audio_network_reserve_enabled);
   GetPropI0("rx_audio_network_reserve_ms",                     rx_audio_network_reserve_ms);
   rx_audio_network_reserve_enabled = rx_audio_network_reserve_enabled ? 1 : 0;
@@ -3122,7 +3122,7 @@ void radio_save_state(void) {
   SetPropI0("diversity_brick3_mode",                         diversity_brick3_mode);
   SetPropI0("p2_jitter_buffer_enabled",                       p2_jitter_buffer_enabled);
   SetPropI0("p2_jitter_buffer_depth_ms",                      p2_jitter_buffer_depth_ms);
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
   SetPropI0("rx_audio_network_reserve_enabled",                rx_audio_network_reserve_enabled);
   SetPropI0("rx_audio_network_reserve_ms",                     rx_audio_network_reserve_ms);
 #endif

@@ -33,7 +33,7 @@
 #include <string.h>
 
 #include "audio.h"
-#include "coreaudio.h"
+#include "audio_backend.h"
 #include "message.h"
 #include "tci_audio.h"
 
@@ -174,7 +174,7 @@ static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
   }
 }
 
-int coreaudio_get_cards(void) {
+int audio_backend_get_cards(void) {
   AudioObjectPropertyAddress address = {
     kAudioHardwarePropertyDevices,
     kAudioObjectPropertyScopeGlobal,
@@ -403,7 +403,7 @@ static OSStatus coreaudio_render_cb(void *refcon,
   return noErr;
 }
 
-void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels) {
+void *audio_backend_output_open(RECEIVER *rx, const char *device_name, int *channels) {
   if (rx == NULL || device_name == NULL || channels == NULL) {
     return NULL;
   }
@@ -519,7 +519,7 @@ fail:
   return NULL;
 }
 
-void coreaudio_output_close(void *handle) {
+void audio_backend_output_close(void *handle) {
   COREAUDIO_OUTPUT *output = (COREAUDIO_OUTPUT *) handle;
   if (output == NULL) {
     return;
@@ -596,7 +596,7 @@ static OSStatus coreaudio_tci_monitor_cb(void *refcon,
   return noErr;
 }
 
-void *coreaudio_tci_monitor_open(const char *device_name, int *channels) {
+void *audio_backend_tci_monitor_open(const char *device_name, int *channels) {
   if (device_name == NULL || channels == NULL) {
     return NULL;
   }
@@ -689,7 +689,7 @@ fail:
   return NULL;
 }
 
-void coreaudio_tci_monitor_close(void *handle) {
+void audio_backend_tci_monitor_close(void *handle) {
   COREAUDIO_TCI_MONITOR *monitor = (COREAUDIO_TCI_MONITOR *) handle;
   if (monitor == NULL) {
     return;
@@ -773,7 +773,7 @@ static OSStatus coreaudio_input_cb(void *refcon,
   return noErr;
 }
 
-void *coreaudio_input_open(const char *device_name) {
+void *audio_backend_input_open(const char *device_name) {
   if (device_name == NULL || device_name[0] == '\0') {
     return NULL;
   }
@@ -922,7 +922,7 @@ fail:
   return NULL;
 }
 
-void coreaudio_input_close(void *handle) {
+void audio_backend_input_close(void *handle) {
   COREAUDIO_INPUT *input = (COREAUDIO_INPUT *) handle;
   if (input == NULL) {
     return;
@@ -944,19 +944,19 @@ void coreaudio_input_close(void *handle) {
 
 
 
-int coreaudio_output_is_alive(void *handle) {
+int audio_backend_output_is_alive(void *handle) {
   COREAUDIO_OUTPUT *output = (COREAUDIO_OUTPUT *) handle;
   return output != NULL &&
          atomic_load_explicit(&output->alive, memory_order_acquire);
 }
 
-int coreaudio_input_is_alive(void *handle) {
+int audio_backend_input_is_alive(void *handle) {
   COREAUDIO_INPUT *input = (COREAUDIO_INPUT *) handle;
   return input != NULL &&
          atomic_load_explicit(&input->alive, memory_order_acquire);
 }
 
-int coreaudio_tci_monitor_is_alive(void *handle) {
+int audio_backend_tci_monitor_is_alive(void *handle) {
   COREAUDIO_TCI_MONITOR *monitor = (COREAUDIO_TCI_MONITOR *) handle;
   return monitor != NULL &&
          atomic_load_explicit(&monitor->alive, memory_order_acquire);

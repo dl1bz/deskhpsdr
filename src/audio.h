@@ -65,7 +65,7 @@ extern int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag);
 extern int audio_get_mic_buffer_diag(AUDIO_BUFFER_DIAG *diag);
 extern int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag);
 
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
   extern void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, int channels);
   extern void audio_process_local_mic_input(const float *samples, unsigned int frames);
   extern void audio_reset_mic_buffer(void);

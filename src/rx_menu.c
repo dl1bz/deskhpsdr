@@ -44,7 +44,7 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *autogain_b;
 static GtkWidget *autogain_time_b;
 static GtkWidget *p2_jitter_depth_b = NULL;
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
   static GtkWidget *rx_audio_reserve_depth_b = NULL;
 #endif
 static GtkWidget *rx_menu_headerbar = NULL;
@@ -74,7 +74,7 @@ static void cleanup(void) {
     rx_menu_headerbar = NULL;
     rx_menu_stack = NULL;
     p2_jitter_depth_b = NULL;
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
     rx_audio_reserve_depth_b = NULL;
 #endif
     for (int i = 0; i < RX_MENU_TAB_COUNT; i++) {
@@ -836,7 +836,7 @@ static void p2_jitter_depth_cb(GtkSpinButton *spin, gpointer data) {
   new_protocol_set_jitter_buffer(p2_jitter_buffer_enabled, depth_ms);
 }
 
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
 static void rx_audio_reserve_toggle_cb(GtkToggleButton *button, gpointer data) {
   (void)data;
   g_atomic_int_set(&rx_audio_network_reserve_enabled,
@@ -859,9 +859,9 @@ static void rx_audio_reserve_depth_cb(GtkSpinButton *spin, gpointer data) {
   g_atomic_int_set(&rx_audio_network_reserve_ms, reserve_ms);
 }
 
-static void coreaudio_rx_latency_correction_toggle_cb(GtkToggleButton *button, gpointer data) {
+static void audio_rx_latency_correction_toggle_cb(GtkToggleButton *button, gpointer data) {
   (void)data;
-  g_atomic_int_set(&coreaudio_rx_latency_correction_enabled,
+  g_atomic_int_set(&audio_rx_latency_correction_enabled,
                    gtk_toggle_button_get_active(button) ? 1 : 0);
 }
 #endif
@@ -958,14 +958,14 @@ static GtkWidget *build_general_page(void) {
     GtkWidget *depth_unit = gtk_label_new("ms");
     gtk_widget_set_halign(depth_unit, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(network_grid), depth_unit, 2, network_row, 1, 1);
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
     network_row++;
     GtkWidget *audio_reserve_b =
             gtk_check_button_new_with_label("RX Audio Network Reserve");
     gtk_widget_set_name(audio_reserve_b, "boldlabel");
     gtk_widget_set_tooltip_text(
             audio_reserve_b,
-            "Add post-WDSP CoreAudio buffering for bursty network delivery.\n"
+            "Add post-WDSP audio buffering for bursty network delivery.\n"
             "This does not pace or delay Protocol 2 IQ processing.");
     gtk_toggle_button_set_active(
             GTK_TOGGLE_BUTTON(audio_reserve_b),
@@ -991,7 +991,7 @@ static GtkWidget *build_general_page(void) {
             g_atomic_int_get(&rx_audio_network_reserve_enabled));
     gtk_widget_set_tooltip_text(
             rx_audio_reserve_depth_b,
-            "Target post-WDSP CoreAudio reserve in milliseconds.\n"
+            "Target post-WDSP audio reserve in milliseconds.\n"
             "150 ms uses approximately 100/150/250 ms LOW/TARGET/HIGH levels.");
     gtk_grid_attach(GTK_GRID(network_grid), rx_audio_reserve_depth_b,
                     1, network_row, 1, 1);
@@ -1012,11 +1012,11 @@ static GtkWidget *build_general_page(void) {
             "Disable only for diagnosing RX audio stuttering or gating.");
     gtk_toggle_button_set_active(
             GTK_TOGGLE_BUTTON(latency_correction_b),
-            g_atomic_int_get(&coreaudio_rx_latency_correction_enabled));
+            g_atomic_int_get(&audio_rx_latency_correction_enabled));
     gtk_grid_attach(GTK_GRID(network_grid), latency_correction_b,
                     0, network_row, 3, 1);
     g_signal_connect(latency_correction_b, "toggled",
-                     G_CALLBACK(coreaudio_rx_latency_correction_toggle_cb), NULL);
+                     G_CALLBACK(audio_rx_latency_correction_toggle_cb), NULL);
 #endif
     gtk_box_pack_start(GTK_BOX(page), network_frame, FALSE, FALSE, 0);
   }

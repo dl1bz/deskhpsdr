@@ -997,7 +997,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   atomic_init(&rx->audio_test_frame, 0);
   rx->audio_test_thread = NULL;
   rx->local_audio_buffer = NULL;
-#if defined(COREAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
+#if defined(AUDIO_RINGBUFFER) && !defined(PULSEAUDIO) && !defined(ALSA)
   rx->sidetone_buffer = NULL;
   atomic_init(&rx->local_audio_buffer_inpt, 0);
   atomic_init(&rx->local_audio_buffer_outpt, 0);

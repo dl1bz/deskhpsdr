@@ -57,3 +57,5 @@ Brick-Tools/p2_tool
 *.zip
 MacOS/build-*.sh
 rx200-sim*
+miniaudio/*.txt
+miniaudio/test*

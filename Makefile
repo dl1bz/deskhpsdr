@@ -440,11 +440,15 @@ CPP_DEFINES += -D__WAYLAND__
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
-override AUDIO := COREAUDIO
+  ifneq ($(AUDIO), MINIAUDIO)
+    override AUDIO := COREAUDIO
+  endif
 endif
 ifeq ($(UNAME_S), Linux)
-  ifneq ($(AUDIO) , ALSA)
-    override AUDIO := PULSE
+  ifneq ($(AUDIO), MINIAUDIO)
+    ifneq ($(AUDIO), ALSA)
+      override AUDIO := PULSE
+    endif
   endif
 endif
 
@@ -488,7 +492,7 @@ CPP_SOURCES += src/audio.c
 ##############################################################################
 
 ifeq ($(AUDIO), COREAUDIO)
-AUDIO_OPTIONS=-DCOREAUDIO
+AUDIO_OPTIONS=-DAUDIO_RINGBUFFER -DCOREAUDIO
 AUDIO_INCLUDE=
 AUDIO_LIBS=-framework CoreAudio \
 	-framework AudioToolbox \
@@ -496,11 +500,34 @@ AUDIO_LIBS=-framework CoreAudio \
 	-framework CoreFoundation \
 	-framework CoreServices \
 	-framework CoreMIDI
-AUDIO_SOURCES=src/macos_audio.c src/coreaudio.c
-AUDIO_OBJS=src/macos_audio.o src/coreaudio.o
+AUDIO_SOURCES=src/buffered_audio.c src/coreaudio.c
+AUDIO_OBJS=src/buffered_audio.o src/coreaudio.o
+CPP_DEFINES += -DAUDIO_RINGBUFFER -DCOREAUDIO
+CPP_SOURCES += src/buffered_audio.c src/coreaudio.c
 endif
-CPP_DEFINES += -DCOREAUDIO
-CPP_SOURCES += src/macos_audio.c src/coreaudio.c
+
+##############################################################################
+#
+# miniaudio backend (cross-platform; CoreAudio/ALSA/PulseAudio/WASAPI)
+#
+##############################################################################
+
+ifeq ($(AUDIO), MINIAUDIO)
+MINIAUDIO_DIR ?= miniaudio
+AUDIO_OPTIONS=-DAUDIO_RINGBUFFER -DMINIAUDIO
+AUDIO_INCLUDE=-I$(MINIAUDIO_DIR)
+AUDIO_LIBS=$(MINIAUDIO_DIR)/libminiaudio.a
+ifeq ($(UNAME_S), Darwin)
+AUDIO_LIBS += -framework CoreFoundation -framework CoreAudio -framework AudioToolbox
+endif
+ifeq ($(UNAME_S), Linux)
+AUDIO_LIBS += -lasound -lpulse
+endif
+AUDIO_SOURCES=src/buffered_audio.c src/miniaudio_audio.c
+AUDIO_OBJS=src/buffered_audio.o src/miniaudio_audio.o
+CPP_DEFINES += -DAUDIO_RINGBUFFER -DMINIAUDIO
+CPP_SOURCES += src/buffered_audio.c src/miniaudio_audio.c
+endif
 
 ##############################################################################
 #
@@ -974,6 +1001,9 @@ $(PROGRAM):  $(OBJS) $(AUDIO_OBJS) $(USBOZY_OBJS) $(TCI_OBJS) \
 ifneq (z$(WDSP_INCLUDE), z)
 	@+make -C $(WDSP_DIR)
 endif
+ifeq ($(AUDIO), MINIAUDIO)
+	@+$(MAKE) -C $(MINIAUDIO_DIR)
+endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
 endif
@@ -1043,6 +1073,7 @@ clean:
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
 	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
+	@if [ -d miniaudio ]; then $(MAKE) -C miniaudio clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)

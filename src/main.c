@@ -282,6 +282,13 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   // F5                ==>  TX drive
   // F6                ==>  Attenuation/Preamp
   //
+  // Handle Shift-B via the modifier state instead of relying on Quartz to
+  // deliver GDK_KEY_B consistently after the monitor window was presented.
+  if ((event->keyval == GDK_KEY_b || event->keyval == GDK_KEY_B) &&
+      (event->state & GDK_SHIFT_MASK) != 0) {
+    buffer_monitor_toggle();
+    return TRUE;
+  }
   switch (event->keyval) {
 #ifdef TTS
   case GDK_KEY_F1:
@@ -308,12 +315,12 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
       new_menu();
     }
     break;
-  // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T; B toggles Buffer Monitor
+  // DH0DM: add additional keyboard shortcuts b,m,v,n,a,w,e,r,T; Shift-B toggles Buffer Monitor
   case GDK_KEY_b:
     start_band();
     break;
   case GDK_KEY_B:
-    buffer_monitor_toggle();
+    start_band();
     break;
   case GDK_KEY_M:
     start_mode();

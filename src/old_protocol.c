@@ -665,7 +665,7 @@ void old_protocol_stop(void) {
 
 void old_protocol_run(void) {
   t_print("%s\n", __func__);
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
   if (transmitter != NULL && transmitter->local_microphone) {
     audio_reset_mic_buffer();
   }

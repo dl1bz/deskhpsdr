@@ -181,10 +181,10 @@ extern const int pa_power_list[];
 extern int display_zoompan;
 extern int display_sliders;
 
-#ifdef __APPLE__
+#ifdef AUDIO_RINGBUFFER
   extern int rx_audio_network_reserve_enabled;
   extern int rx_audio_network_reserve_ms;
-  extern int coreaudio_rx_latency_correction_enabled;
+  extern int audio_rx_latency_correction_enabled;
 #endif
 extern int display_extra_sliders;
 extern int display_toolbar;

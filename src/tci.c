@@ -230,7 +230,7 @@ static TCI_SET_LOCK tci_set_locks[TCI_SET_LOCK_COUNT];
 
 static gpointer tci_lws_server(gpointer data);
 static void tci_lws_free_queue(CLIENT *client);
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
   static int tci_has_audio_monitor_source(void);
 #endif
 static void tci_update_rx_audio_global(void);
@@ -804,7 +804,7 @@ static void tci_rtty_buffer_empty(void) {
   }
 }
 
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
 static int tci_has_audio_monitor_source(void) {
   int enabled = 0;
   g_mutex_lock(&tci_mutex);
@@ -1759,7 +1759,7 @@ static void tci_tx_client_cleanup_tx_audio_locked(CLIENT *client) {
 }
 
 static void tci_tx_client_close_monitor_if_unused(void) {
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
   if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
     audio_close_tci_monitor();
   }
@@ -3840,7 +3840,7 @@ static void tci_cmd_trx(CLIENT *client, const TCI_CMD *cmd) {
                            accepting_tx_audio);
       if (source_tci) {
         tci_tx_client_start_tx_audio(client, preserve_tx_audio);
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
         if (tci_audio_monitor && !preserve_tx_audio) {
           // audio_open_tci_monitor("Externe Kopfhörer");
           audio_open_tci_monitor(active_receiver->audio_name);
@@ -4567,7 +4567,7 @@ static void tci_cmd_audio_stop(CLIENT *client, const TCI_CMD *cmd) {
             (unsigned long long) tci_audio_get_write_count(receiver_id),
             client->audio_sample_rate);
   }
-#ifdef COREAUDIO
+#ifdef AUDIO_RINGBUFFER
   if (tci_audio_monitor && !tci_has_audio_monitor_source()) {
     audio_close_tci_monitor();
   }

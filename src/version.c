@@ -59,15 +59,14 @@ char build_options[] =
         "";
 
 char build_audio[] =
-#ifdef ALSA
+#ifdef MINIAUDIO
+  "miniAudio";
+#elif defined(ALSA)
   "ALSA";
-#endif
-#ifdef PULSEAUDIO
+#elif defined(PULSEAUDIO)
   "PulseAudio";
-#endif
-#ifdef COREAUDIO
+#elif defined(COREAUDIO)
   "CoreAudio";
-#endif
-#if !defined(ALSA) && !defined(COREAUDIO) && !defined(PULSEAUDIO)
-  "(unkown)";
+#else
+  "(unknown)";
 #endif

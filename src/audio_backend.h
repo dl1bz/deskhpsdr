@@ -17,27 +17,24 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-//
-//  Native CoreAudio output backend.
-//
-
-#ifndef _COREAUDIO_H
-#define _COREAUDIO_H
+#ifndef _AUDIO_BACKEND_H
+#define _AUDIO_BACKEND_H
 
 #include "receiver.h"
 
-extern void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels);
-extern void coreaudio_output_close(void *handle);
+extern void *audio_backend_output_open(RECEIVER *rx, const char *device_name, int *channels);
+extern void audio_backend_output_close(void *handle);
 
-extern void *coreaudio_input_open(const char *device_name);
-extern void coreaudio_input_close(void *handle);
+extern void *audio_backend_input_open(const char *device_name);
+extern void audio_backend_input_close(void *handle);
 
-extern void *coreaudio_tci_monitor_open(const char *device_name, int *channels);
-extern void coreaudio_tci_monitor_close(void *handle);
-extern int coreaudio_output_is_alive(void *handle);
-extern int coreaudio_input_is_alive(void *handle);
-extern int coreaudio_tci_monitor_is_alive(void *handle);
+extern void *audio_backend_tci_monitor_open(const char *device_name, int *channels);
+extern void audio_backend_tci_monitor_close(void *handle);
 
-extern int coreaudio_get_cards(void);
+extern int audio_backend_output_is_alive(void *handle);
+extern int audio_backend_input_is_alive(void *handle);
+extern int audio_backend_tci_monitor_is_alive(void *handle);
+
+extern int audio_backend_get_cards(void);
 
 #endif

@@ -261,7 +261,7 @@ typedef struct _receiver {
   int pulseaudio_buffer_size;  /* 0 = AUTO, otherwise requested quantum in frames */
 #endif
 
-#if defined(COREAUDIO) && defined(PULSEAUDIO) && defined(ALSA)
+#if defined(AUDIO_RINGBUFFER) && defined(PULSEAUDIO) && defined(ALSA)
   // this is only possible for "cppcheck" runs
   // declare all data without conflicts
   void *playstream;
@@ -274,8 +274,8 @@ typedef struct _receiver {
   snd_pcm_t *playback_handle;
   snd_pcm_format_t local_audio_format;
 #endif
-#if defined(COREAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
-  void *coreaudio_output_handle;
+#if defined(AUDIO_RINGBUFFER) && !defined(PULSEAUDIO) && !defined(ALSA)
+  void *audio_backend_output_handle;
   atomic_int local_audio_buffer_inpt;      // producer pointer in RX audio ring-buffer
   atomic_int local_audio_buffer_outpt;     // consumer pointer in RX audio ring-buffer
   atomic_int sidetone_buffer_inpt;         // producer pointer in sidetone ring-buffer
@@ -285,7 +285,7 @@ typedef struct _receiver {
   float *local_audio_buffer;
   float *sidetone_buffer;
 #endif
-#if !defined(COREAUDIO) && !defined(PULSEAUDIO) && defined(ALSA)
+#if !defined(AUDIO_RINGBUFFER) && !defined(PULSEAUDIO) && defined(ALSA)
   snd_pcm_t *playback_handle;
   snd_pcm_format_t local_audio_format;
   void *local_audio_buffer;        // different formats possible, so void*
@@ -293,7 +293,7 @@ typedef struct _receiver {
   int local_audio_cw_active;
   int local_audio_channels;
 #endif
-#if !defined(COREAUDIO) && defined(PULSEAUDIO) && !defined(ALSA)
+#if !defined(AUDIO_RINGBUFFER) && defined(PULSEAUDIO) && !defined(ALSA)
   pa_simple *playstream;
   float *local_audio_buffer;
   int local_audio_buffer_offset;

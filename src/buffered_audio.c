@@ -19,7 +19,7 @@
 */
 
 //
-// Native macOS audio engine using CoreAudio/AUHAL.
+// Shared buffered audio engine for native and miniaudio backends.
 //
 
 #include <gtk/gtk.h>
@@ -35,7 +35,7 @@
 #include <sched.h>
 #include <semaphore.h>
 
-#include "coreaudio.h"
+#include "audio_backend.h"
 
 #include "radio.h"
 #include "receiver.h"
@@ -46,7 +46,7 @@
 #include "vfo.h"
 #include "tci_audio.h"
 
-static void *coreaudio_input_handle = NULL;
+static void *audio_backend_input_handle = NULL;
 
 int n_input_devices;
 AUDIO_DEVICE input_devices[MAX_AUDIO_DEVICES];
@@ -201,7 +201,7 @@ int audio_get_rx_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   rx_audio_latency_limits(&diag->low, &diag->target);
   int catchup_stop;
   rx_audio_catchup_limits(diag->target, &catchup_stop, &diag->high);
-  if (rx->local_audio_buffer == NULL || rx->coreaudio_output_handle == NULL) {
+  if (rx->local_audio_buffer == NULL || rx->audio_backend_output_handle == NULL) {
     return 1;
   }
   int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_acquire);
@@ -255,7 +255,7 @@ int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
   memset(diag, 0, sizeof(*diag));
   diag->capacity = MY_RING_BUFFER_SIZE;
   diag->target = CW_LAT_TARGET;
-  if (rx->sidetone_buffer == NULL || rx->coreaudio_output_handle == NULL) {
+  if (rx->sidetone_buffer == NULL || rx->audio_backend_output_handle == NULL) {
     return 1;
   }
   int inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_acquire);
@@ -408,12 +408,12 @@ static inline float local_mic_ring_pop(void) {
   return sample;
 }
 
-static void *coreaudio_tci_monitor_handle = NULL;
+static void *audio_backend_tci_monitor_handle = NULL;
 
 
 static GMutex tci_monitor_mutex;
 
-static gboolean coreaudio_device_watch_cb(gpointer data) {
+static gboolean audio_backend_device_watch_cb(gpointer data) {
   (void) data;
   /*
    * DeviceIsAlive is updated by CoreAudio property listeners. All state
@@ -427,8 +427,8 @@ static gboolean coreaudio_device_watch_cb(gpointer data) {
     }
     int device_lost;
     g_mutex_lock(&rx->local_audio_mutex);
-    device_lost = rx->coreaudio_output_handle != NULL &&
-                  !coreaudio_output_is_alive(rx->coreaudio_output_handle);
+    device_lost = rx->audio_backend_output_handle != NULL &&
+                  !audio_backend_output_is_alive(rx->audio_backend_output_handle);
     g_mutex_unlock(&rx->local_audio_mutex);
     if (device_lost) {
       t_print("%s: CoreAudio output device lost rx=%d name=%s -> Local Audio OFF\n",
@@ -439,8 +439,8 @@ static gboolean coreaudio_device_watch_cb(gpointer data) {
   }
   int input_lost;
   g_mutex_lock(&audio_mutex);
-  input_lost = coreaudio_input_handle != NULL &&
-               !coreaudio_input_is_alive(coreaudio_input_handle);
+  input_lost = audio_backend_input_handle != NULL &&
+               !audio_backend_input_is_alive(audio_backend_input_handle);
   g_mutex_unlock(&audio_mutex);
   if (input_lost) {
     t_print("%s: CoreAudio input device lost name=%s -> Local Microphone OFF\n",
@@ -454,8 +454,8 @@ static gboolean coreaudio_device_watch_cb(gpointer data) {
   }
   int monitor_lost;
   g_mutex_lock(&tci_monitor_mutex);
-  monitor_lost = coreaudio_tci_monitor_handle != NULL &&
-                 !coreaudio_tci_monitor_is_alive(coreaudio_tci_monitor_handle);
+  monitor_lost = audio_backend_tci_monitor_handle != NULL &&
+                 !audio_backend_tci_monitor_is_alive(audio_backend_tci_monitor_handle);
   g_mutex_unlock(&tci_monitor_mutex);
   if (monitor_lost) {
     t_print("%s: CoreAudio TCI monitor device lost -> TCI Audio Monitor OFF\n",
@@ -466,10 +466,10 @@ static gboolean coreaudio_device_watch_cb(gpointer data) {
   return G_SOURCE_CONTINUE;
 }
 
-static void coreaudio_start_device_watch(void) {
+static void audio_backend_start_device_watch(void) {
   static gsize started = 0;
   if (g_once_init_enter(&started)) {
-    g_timeout_add(250, coreaudio_device_watch_cb, NULL);
+    g_timeout_add(250, audio_backend_device_watch_cb, NULL);
     g_once_init_leave(&started, 1);
   }
 }
@@ -505,9 +505,9 @@ void audio_get_cards(void) {
     g_mutex_init(&tci_monitor_mutex);
     g_once_init_leave(&mutex_inited, 1);
   }
-  coreaudio_start_device_watch();
+  audio_backend_start_device_watch();
   t_print("%s: native CoreAudio call audio_get_cards\n", __func__);
-  if (coreaudio_get_cards() != 0) {
+  if (audio_backend_get_cards() != 0) {
     t_print("%s: native CoreAudio device enumeration failed\n", __func__);
   }
 }
@@ -529,7 +529,7 @@ int audio_open_input(void) {
     return -1;
   }
   g_mutex_lock(&audio_mutex);
-  if (coreaudio_input_handle != NULL || mic_ring_buffer != NULL) {
+  if (audio_backend_input_handle != NULL || mic_ring_buffer != NULL) {
     g_mutex_unlock(&audio_mutex);
     return 0;
   }
@@ -551,7 +551,7 @@ int audio_open_input(void) {
   mic_ring_consumer_phase = 0.0;
   mic_ring_consumer_correction = 0;
   g_mutex_unlock(&audio_mutex);
-  void *handle = coreaudio_input_open(transmitter->microphone_name);
+  void *handle = audio_backend_input_open(transmitter->microphone_name);
   if (handle == NULL) {
     g_mutex_lock(&audio_mutex);
     g_free(mic_ring_buffer);
@@ -564,7 +564,7 @@ int audio_open_input(void) {
     return -1;
   }
   g_mutex_lock(&audio_mutex);
-  coreaudio_input_handle = handle;
+  audio_backend_input_handle = handle;
   g_mutex_unlock(&audio_mutex);
   t_print("%s: native CoreAudio input name=%s\n", __func__, transmitter->microphone_name);
   return 0;
@@ -578,7 +578,7 @@ int audio_open_tci_monitor(const char *audio_name) {
     return -1;
   }
   g_mutex_lock(&tci_monitor_mutex);
-  if (coreaudio_tci_monitor_handle != NULL) {
+  if (audio_backend_tci_monitor_handle != NULL) {
     g_mutex_unlock(&tci_monitor_mutex);
     return 0;
   }
@@ -588,13 +588,13 @@ int audio_open_tci_monitor(const char *audio_name) {
   //
   tci_audio_monitor_set_active(1);
   int channels = 0;
-  void *handle = coreaudio_tci_monitor_open(audio_name, &channels);
+  void *handle = audio_backend_tci_monitor_open(audio_name, &channels);
   if (handle == NULL) {
     tci_audio_monitor_set_active(0);
     return -1;
   }
   g_mutex_lock(&tci_monitor_mutex);
-  coreaudio_tci_monitor_handle = handle;
+  audio_backend_tci_monitor_handle = handle;
   g_mutex_unlock(&tci_monitor_mutex);
   t_print("%s: opened native CoreAudio TCI monitor name=%s channels=%d\n",
           __func__, audio_name, channels);
@@ -605,13 +605,13 @@ int audio_open_tci_monitor(const char *audio_name) {
 void audio_close_tci_monitor(void) {
   void *handle = NULL;
   g_mutex_lock(&tci_monitor_mutex);
-  handle = coreaudio_tci_monitor_handle;
-  coreaudio_tci_monitor_handle = NULL;
+  handle = audio_backend_tci_monitor_handle;
+  audio_backend_tci_monitor_handle = NULL;
   g_mutex_unlock(&tci_monitor_mutex);
   //
   // Stop the RT consumer first, then disable/reset the producer ring.
   //
-  coreaudio_tci_monitor_close(handle);
+  audio_backend_tci_monitor_close(handle);
   tci_audio_monitor_set_active(0);
 }
 
@@ -623,7 +623,7 @@ int audio_test_start(RECEIVER *rx) {
     return -1;
   }
   g_mutex_lock(&rx->local_audio_mutex);
-  if (rx->coreaudio_output_handle == NULL) {
+  if (rx->audio_backend_output_handle == NULL) {
     g_mutex_unlock(&rx->local_audio_mutex);
     return -1;
   }
@@ -713,7 +713,7 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
     if (valid_rx_id) {
       rx_phase = rx_ring_consumer_phase[rx->id];
       rx_catchup = rx_ring_consumer_catchup[rx->id];
-      if (!g_atomic_int_get(&coreaudio_rx_latency_correction_enabled) ||
+      if (!g_atomic_int_get(&audio_rx_latency_correction_enabled) ||
           rx->local_audio_cw_active) {
         rx_phase = 0.0;
         rx_catchup = FALSE;
@@ -959,7 +959,7 @@ int audio_open_output(RECEIVER *rx) {
    * Publish the backend handle only after AudioOutputUnitStart() succeeds.
    */
   g_mutex_lock(&rx->local_audio_mutex);
-  rx->coreaudio_output_handle = NULL;
+  rx->audio_backend_output_handle = NULL;
   rx->local_audio_buffer = g_new(float, 2 * MY_RING_BUFFER_SIZE);
   rx->sidetone_buffer = g_new0(float, MY_RING_BUFFER_SIZE);
   atomic_store_explicit(&rx->local_audio_buffer_inpt, 0, memory_order_relaxed);
@@ -987,7 +987,7 @@ int audio_open_output(RECEIVER *rx) {
   }
   g_mutex_unlock(&rx->local_audio_mutex);
   int channels = 0;
-  void *handle = coreaudio_output_open(rx, rx->audio_name, &channels);
+  void *handle = audio_backend_output_open(rx, rx->audio_name, &channels);
   if (handle == NULL) {
     g_mutex_lock(&rx->local_audio_mutex);
     g_free(rx->local_audio_buffer);
@@ -999,7 +999,7 @@ int audio_open_output(RECEIVER *rx) {
   }
   g_mutex_lock(&rx->local_audio_mutex);
   rx->local_audio_channels = channels;
-  rx->coreaudio_output_handle = handle;
+  rx->audio_backend_output_handle = handle;
   g_mutex_unlock(&rx->local_audio_mutex);
   t_print("%s: native CoreAudio output name=%s channels=%d\n",
           __func__, rx->audio_name, rx->local_audio_channels);
@@ -1019,13 +1019,13 @@ void audio_close_input(void) {
   }
   void *handle = NULL;
   g_mutex_lock(&audio_mutex);
-  handle = coreaudio_input_handle;
-  coreaudio_input_handle = NULL;
+  handle = audio_backend_input_handle;
+  audio_backend_input_handle = NULL;
   g_mutex_unlock(&audio_mutex);
   //
   // Stop and dispose AUHAL before freeing the lock-free mic ring.
   //
-  coreaudio_input_close(handle);
+  audio_backend_input_close(handle);
   g_mutex_lock(&audio_mutex);
   if (mic_ring_buffer != NULL) {
     g_free(mic_ring_buffer);
@@ -1061,10 +1061,10 @@ void audio_close_output(RECEIVER *rx) {
    */
   void *handle;
   g_mutex_lock(&rx->local_audio_mutex);
-  handle = rx->coreaudio_output_handle;
-  rx->coreaudio_output_handle = NULL;
+  handle = rx->audio_backend_output_handle;
+  rx->audio_backend_output_handle = NULL;
   g_mutex_unlock(&rx->local_audio_mutex);
-  coreaudio_output_close(handle);
+  audio_backend_output_close(handle);
   g_mutex_lock(&rx->local_audio_mutex);
   if (rx->id >= 0 && rx->id < (int)(sizeof(output_ring_primed) / sizeof(output_ring_primed[0]))) {
     g_atomic_int_set(&output_ring_primed[rx->id], 0);
@@ -1093,7 +1093,7 @@ void audio_close_output(RECEIVER *rx) {
 // are added as silence.
 //
 void audio_reprime_output(RECEIVER *rx) {
-  if (rx == NULL || rx->local_audio_buffer == NULL || rx->coreaudio_output_handle == NULL) {
+  if (rx == NULL || rx->local_audio_buffer == NULL || rx->audio_backend_output_handle == NULL) {
     return;
   }
   int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_relaxed);
@@ -1156,7 +1156,7 @@ static int audio_write_internal(RECEIVER *rx, float left, float right, int ignor
   }
   g_mutex_lock(&rx->local_audio_mutex);
   rx->local_audio_cw_active = 0;
-  if (rx->coreaudio_output_handle != NULL && buffer != NULL) {
+  if (rx->audio_backend_output_handle != NULL && buffer != NULL) {
     int inpt = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_relaxed);
     int outpt = atomic_load_explicit(&rx->local_audio_buffer_outpt, memory_order_acquire);
     int avail = inpt - outpt;
@@ -1164,7 +1164,7 @@ static int audio_write_internal(RECEIVER *rx, float left, float right, int ignor
     int rx_lat_low;
     int rx_lat_target;
     rx_audio_latency_limits(&rx_lat_low, &rx_lat_target);
-    if (g_atomic_int_get(&coreaudio_rx_latency_correction_enabled) &&
+    if (g_atomic_int_get(&audio_rx_latency_correction_enabled) &&
         avail < rx_lat_low) {
       if (rx->id >= 0 && rx->id < 8) {
         diag_low_corrections[rx->id]++;
@@ -1280,7 +1280,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   static unsigned int diag_low_corrections = 0;
   static unsigned int diag_high_corrections = 0;
   g_mutex_lock(&rx->local_audio_mutex);
-  if (rx->coreaudio_output_handle != NULL && rx->sidetone_buffer != NULL) {
+  if (rx->audio_backend_output_handle != NULL && rx->sidetone_buffer != NULL) {
     static int count = 0;
     int inpt = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_relaxed);
     int outpt = atomic_load_explicit(&rx->sidetone_buffer_outpt, memory_order_acquire);
