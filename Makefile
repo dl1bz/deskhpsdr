@@ -479,7 +479,7 @@ ifeq ($(UNAME_S), Darwin)
 AUDIO_LIBS += -framework CoreFoundation -framework CoreAudio -framework AudioToolbox
 endif
 ifeq ($(UNAME_S), Linux)
-AUDIO_LIBS += -lasound -lpulse
+AUDIO_LIBS += -ldl
 endif
 AUDIO_SOURCES=src/buffered_audio.c src/miniaudio_audio.c
 AUDIO_OBJS=src/buffered_audio.o src/miniaudio_audio.o
