@@ -17,13 +17,13 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 **deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Soapy SDR and GPIO code and support is official REMOVED now.**
 
 
-| Feature                        | Current deskHPSDR version 2.7                 | Notes             |
+| Feature                        | Current deskHPSDR version 2.8                 | Notes             |
 | -------------------------------- | ----------------------------------------------- | ------------------- |
 | TCI CAT                        | supported ✅                                  | TCI 2.0           |
 | TCI Audio                      | supported (only 48k and 24k) ✅               | TCI 2.0           |
 | TCI I/Q                        | supported (48k/96k/192k/384k) ✅              | TCI 2.0           |
 | PTT external                   | supported (via serial RTS/CTS or MIDI) ✅     |                   |
-| MIDI Control                   | supported ✅                                  |                   |
+| MIDI Control                   | supported using RTmidi library ✅             |                   |
 | Hamlib                         | supported (with own included rigctld) ✅      |                   |
 | CW                             | supported ✅                                  | via MIDI & TCI    |
 | OpenHPSDR protocol 1           | supported ✅                                  |                   |
@@ -43,7 +43,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                   |
 | OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ❌ |                   |
 | using Virtual Environments (VE)| not supported ❌                              | use native OS     |
-| Audio layer support            | CoreAudio (macOS), PulseAudio or ALSA (Linux) |                   |
+| Audio backend                  | CoreAudio (macOS), miniAudio (macOS & Linux)  |                   |
 | Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling     |
 | TX Audio Monitor               | supported ✅ (since 2.7.39)                   | Pre & Post        |
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter ✅ |                   |
@@ -142,9 +142,13 @@ deskHPSDR is primarily developed for and under macOS. Made as an cross-platform 
 On March 4, 2025 the **first final version 2.6 of deskHPSDR** was published.<br>
 With publishing first new main version 2.7 in May 2026 all support for versions < 2.7.x were closed inclusive older versions with SoapySDR and GPIO support.
 
-### Version 2.7.x (current version)
+### Version 2.7.x (previous version, EOL mid of September 2026)
 
-Current development start from version 2.7 in May 2026.<br>
+First version 2.7 was published in May 2026.<br>
+
+### Version 2.8.x (current version)
+
+Current development start from version 2.8 in September 2026.<br>
 
 Most of the new functions need to be activated in the ``make.config.deskhpsdr`` as compiling option. Please look in the beginning of the  ``Makefile`` and set the needed options only in ``make.config.deskhpsdr``, but don't modify the ``Makefile`` itself !
 
