@@ -1533,9 +1533,9 @@ void MidiOutCore :: sendMessage(const unsigned char *message, size_t size) {
   CoreMidiData *data = static_cast<CoreMidiData *> (apiData_);
   OSStatus result;
   ByteCount bufsize = nBytes > 65535 ? 65535 : nBytes;
-  Byte buffer[bufsize + 16]; // pad for other struct members
-  ByteCount listSize = sizeof(buffer);
-  MIDIPacketList *packetList = (MIDIPacketList *)buffer;
+  std::vector<Byte> buffer(bufsize + 16); // pad for other struct members
+  ByteCount listSize = buffer.size();
+  MIDIPacketList *packetList = reinterpret_cast<MIDIPacketList *>(buffer.data());
   ByteCount remainingBytes = nBytes;
   while (remainingBytes) {
     MIDIPacket *packet = MIDIPacketListInit(packetList);
