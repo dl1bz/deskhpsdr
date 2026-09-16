@@ -53,6 +53,10 @@ static int miniaudio_context_ready = 0;
 static GMutex miniaudio_context_mutex;
 static gsize miniaudio_context_mutex_ready = 0;
 
+#if defined(__linux__)
+  char miniaudio_backend[16] = "auto";
+#endif
+
 static void miniaudio_init_mutex(void) {
   if (g_once_init_enter(&miniaudio_context_mutex_ready)) {
     g_mutex_init(&miniaudio_context_mutex);
@@ -64,7 +68,24 @@ static int miniaudio_ensure_context(void) {
   miniaudio_init_mutex();
   g_mutex_lock(&miniaudio_context_mutex);
   if (!miniaudio_context_ready) {
-    ma_result result = ma_context_init(NULL, 0, NULL, &miniaudio_context);
+    ma_result result;
+#if defined(__linux__)
+    ma_backend backend;
+    if (g_ascii_strcasecmp(miniaudio_backend, "pulse") == 0) {
+      backend = ma_backend_pulseaudio;
+      t_print("%s: requested backend=PulseAudio\n", __func__);
+      result = ma_context_init(&backend, 1, NULL, &miniaudio_context);
+    } else if (g_ascii_strcasecmp(miniaudio_backend, "alsa") == 0) {
+      backend = ma_backend_alsa;
+      t_print("%s: requested backend=ALSA\n", __func__);
+      result = ma_context_init(&backend, 1, NULL, &miniaudio_context);
+    } else {
+      t_print("%s: requested backend=auto\n", __func__);
+      result = ma_context_init(NULL, 0, NULL, &miniaudio_context);
+    }
+#else
+    result = ma_context_init(NULL, 0, NULL, &miniaudio_context);
+#endif
     if (result != MA_SUCCESS) {
       t_print("%s: ma_context_init failed: %s\n", __func__, ma_result_description(result));
       g_mutex_unlock(&miniaudio_context_mutex);

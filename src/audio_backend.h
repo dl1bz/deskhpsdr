@@ -37,4 +37,8 @@ extern int audio_backend_tci_monitor_is_alive(void *handle);
 
 extern int audio_backend_get_cards(void);
 
+#if defined(MINIAUDIO) && defined(__linux__)
+  extern char miniaudio_backend[16];
+#endif
+
 #endif

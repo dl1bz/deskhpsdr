@@ -31,6 +31,7 @@
 #include "toolset.h"
 #include "property.h"
 #include "protocols.h"
+#include "audio_backend.h"
 
 const char *css_filename = "deskhpsdr.css";
 
@@ -1357,6 +1358,9 @@ void StartConfigSave(void) {
   SetPropI0("enable_usbozy", enable_usbozy);
   SetPropI0("enable_saturn_xdma", enable_saturn_xdma);
   SetPropI0("autostart", autostart);
+#if defined(MINIAUDIO) && defined(__linux__)
+  SetPropS0("audio_backend", miniaudio_backend);
+#endif
   for (int i = 0; i < P2_MAX_DDCS; i++) {
     char name[32];
     snprintf(name, sizeof(name), "p2_ddc%d_adc", i);
@@ -1394,6 +1398,17 @@ void StartConfigLoad(void) {
   GetPropI0("enable_usbozy", enable_usbozy);
   GetPropI0("enable_saturn_xdma", enable_saturn_xdma);
   GetPropI0("autostart", autostart);
+#if defined(MINIAUDIO) && defined(__linux__)
+  const char *audio_backend = getProperty("audio_backend");
+  if (audio_backend != NULL &&
+      (g_ascii_strcasecmp(audio_backend, "auto") == 0 ||
+       g_ascii_strcasecmp(audio_backend, "pulse") == 0 ||
+       g_ascii_strcasecmp(audio_backend, "alsa") == 0)) {
+    g_strlcpy(miniaudio_backend, audio_backend, sizeof(miniaudio_backend));
+  } else {
+    g_strlcpy(miniaudio_backend, "auto", sizeof(miniaudio_backend));
+  }
+#endif
   if (radio_port < 1 || radio_port > 65535) {
     radio_port = 1024;
   }
