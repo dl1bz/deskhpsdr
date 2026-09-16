@@ -1003,11 +1003,15 @@ static GtkWidget *build_general_page(void) {
                     2, network_row, 1, 1);
     network_row++;
     GtkWidget *latency_correction_b =
+#ifdef COREAUDIO
             gtk_check_button_new_with_label("CoreAudio RX Latency Correction");
+#else
+            gtk_check_button_new_with_label("RX Latency Correction");
+#endif
     gtk_widget_set_name(latency_correction_b, "boldlabel");
     gtk_widget_set_tooltip_text(
             latency_correction_b,
-            "Keep the CoreAudio RX ring near its target latency by inserting silence\n"
+            "Keep the RX audio ring near its target latency by inserting silence\n"
             "at low water and dropping queued audio at high water.\n"
             "Disable only for diagnosing RX audio stuttering or gating.");
     gtk_toggle_button_set_active(

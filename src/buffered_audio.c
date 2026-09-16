@@ -72,14 +72,14 @@ guint64 audio_get_xrun_count(void) {
 // We now use callback functions to provide the "headphone" audio data,
 // and therefore can control the latency.
 // RX audio samples are put into a ring buffer and "fetched" therefreom
-// by the CoreAudio "headphone" callback.
+// by the audio backend output callback.
 //
 // RX audio and CW sidetone use separate ring buffers. On an RX/TX transition
 // the RX ring is no longer discarded: its WDSP-slewed tail is allowed to drain
 // naturally while the sidetone starts from its own low-latency ring.
 // The sidetone filling is kept close to an explicit low-latency target to
 // reduce underrun risk and avoid larger latency swings.
-// Of course, a small CoreAudio audio buffer size (128 sample) helps
+// Of course, a small audio backend buffer size (128 sample) helps
 // keeping the latency small. The CW buffer is kept around CW_LAT_TARGET
 // with a narrow correction window to reduce occasional underruns/clicks.
 //
@@ -136,7 +136,7 @@ static inline void rx_audio_latency_limits(int *low, int *target) {
     reserve_ms = 500;
   }
   /*
-   * Local RX audio is delivered to CoreAudio at 48 kHz.  Above the
+   * Local RX audio is delivered to the audio backend at 48 kHz.  Above the
    * normal low-latency operating point, use 2/3 of the requested
    * reserve as low-water.  HIGH handling is deliberately separate:
    * the ring itself is now the reserve for temporary scheduling bursts.
@@ -272,7 +272,7 @@ int audio_get_cw_buffer_diag(RECEIVER *rx, AUDIO_BUFFER_DIAG *diag) {
 
 //
 // Request a ring reset without modifying the consumer-owned output pointer.
-// The CoreAudio callback is the producer; the protocol mic path is the
+// The audio backend callback is the producer; the protocol mic path is the
 // consumer. The consumer performs the actual flush on its next read and then
 // returns the requested amount of silence before consuming new mic samples.
 //
@@ -289,7 +289,7 @@ static void local_mic_ring_request_reset(int silence_frames) {
 
 void audio_reset_mic_buffer(void) {
   /*
-   * A protocol restart temporarily stops the P2 mic consumer while CoreAudio
+   * A protocol restart temporarily stops the P2 mic consumer while the audio backend
    * continues to produce samples.  Drop that stale backlog on the consumer's
    * next read using the existing producer/consumer reset handshake, while
    * retaining 20 ms (960 frames at 48 kHz) of reserve.
@@ -352,7 +352,7 @@ static inline float local_mic_ring_pop(void) {
     return 0.0f;
   }
   /*
-   * CoreAudio input devices and the SDR TX path both nominally run at 48 kHz,
+   * Audio input devices and the SDR TX path both nominally run at 48 kHz,
    * but their physical clocks are independent. Keep the microphone ring near
    * the existing 8 ms operating point by changing only the consumer rate by
    * +/-1 percent outside a hysteresis window. Linear interpolation avoids
@@ -416,9 +416,9 @@ static GMutex tci_monitor_mutex;
 static gboolean audio_backend_device_watch_cb(gpointer data) {
   (void) data;
   /*
-   * DeviceIsAlive is updated by CoreAudio property listeners. All state
+   * DeviceIsAlive is updated by audio backend device monitoring. All state
    * changes and close/dispose operations are deliberately done here on the
-   * GLib main loop, never from a CoreAudio callback.
+   * GLib main loop, never from an audio backend callback.
    */
   for (int i = 0; i < receivers; i++) {
     RECEIVER *rx = receiver[i];
@@ -431,7 +431,7 @@ static gboolean audio_backend_device_watch_cb(gpointer data) {
                   !audio_backend_output_is_alive(rx->audio_backend_output_handle);
     g_mutex_unlock(&rx->local_audio_mutex);
     if (device_lost) {
-      t_print("%s: CoreAudio output device lost rx=%d name=%s -> Local Audio OFF\n",
+      t_print("%s: Audio output device lost rx=%d name=%s -> Local Audio OFF\n",
               __func__, rx->id, rx->audio_name);
       rx->local_audio = 0;
       audio_close_output(rx);
@@ -443,7 +443,7 @@ static gboolean audio_backend_device_watch_cb(gpointer data) {
                !audio_backend_input_is_alive(audio_backend_input_handle);
   g_mutex_unlock(&audio_mutex);
   if (input_lost) {
-    t_print("%s: CoreAudio input device lost name=%s -> Local Microphone OFF\n",
+    t_print("%s: Audio input device lost name=%s -> Local Microphone OFF\n",
             __func__,
             transmitter != NULL ? transmitter->microphone_name : "(unknown)");
     if (transmitter != NULL) {
@@ -458,7 +458,7 @@ static gboolean audio_backend_device_watch_cb(gpointer data) {
                  !audio_backend_tci_monitor_is_alive(audio_backend_tci_monitor_handle);
   g_mutex_unlock(&tci_monitor_mutex);
   if (monitor_lost) {
-    t_print("%s: CoreAudio TCI monitor device lost -> TCI Audio Monitor OFF\n",
+    t_print("%s: Audio TCI monitor device lost -> TCI Audio Monitor OFF\n",
             __func__);
     tci_audio_monitor = 0;
     audio_close_tci_monitor();
@@ -496,7 +496,7 @@ void audio_release_cards(void) {
 //
 // AUDIO_GET_CARDS
 //
-// Enumerate suitable native CoreAudio input and output devices.
+// Enumerate suitable audio backend input and output devices.
 //
 void audio_get_cards(void) {
   static gsize mutex_inited = 0;
@@ -506,9 +506,9 @@ void audio_get_cards(void) {
     g_once_init_leave(&mutex_inited, 1);
   }
   audio_backend_start_device_watch();
-  t_print("%s: native CoreAudio call audio_get_cards\n", __func__);
+  t_print("%s: audio backend call audio_get_cards\n", __func__);
   if (audio_backend_get_cards() != 0) {
-    t_print("%s: native CoreAudio device enumeration failed\n", __func__);
+    t_print("%s: audio backend device enumeration failed\n", __func__);
   }
 }
 
@@ -516,12 +516,12 @@ void audio_get_cards(void) {
 //
 // AUDIO_OPEN_INPUT
 //
-// Open native CoreAudio input connected to the TX microphone.
+// Open audio backend input connected to the TX microphone.
 //
 
 
 int audio_open_input(void) {
-  t_print("%s: native CoreAudio call audio_open_input\n", __func__);
+  t_print("%s: audio backend call audio_open_input\n", __func__);
   if (!can_transmit) {
     return -1;
   }
@@ -566,7 +566,7 @@ int audio_open_input(void) {
   g_mutex_lock(&audio_mutex);
   audio_backend_input_handle = handle;
   g_mutex_unlock(&audio_mutex);
-  t_print("%s: native CoreAudio input name=%s\n", __func__, transmitter->microphone_name);
+  t_print("%s: audio backend input name=%s\n", __func__, transmitter->microphone_name);
   return 0;
 }
 
@@ -584,7 +584,7 @@ int audio_open_tci_monitor(const char *audio_name) {
   }
   g_mutex_unlock(&tci_monitor_mutex);
   //
-  // Enable/reset the producer before CoreAudio starts consuming.
+  // Enable/reset the producer before the audio backend starts consuming.
   //
   tci_audio_monitor_set_active(1);
   int channels = 0;
@@ -596,7 +596,7 @@ int audio_open_tci_monitor(const char *audio_name) {
   g_mutex_lock(&tci_monitor_mutex);
   audio_backend_tci_monitor_handle = handle;
   g_mutex_unlock(&tci_monitor_mutex);
-  t_print("%s: opened native CoreAudio TCI monitor name=%s channels=%d\n",
+  t_print("%s: opened audio backend TCI monitor name=%s channels=%d\n",
           __func__, audio_name, channels);
   return 0;
 }
@@ -632,7 +632,7 @@ int audio_test_start(RECEIVER *rx) {
     return 0;
   }
   // Drop queued RX and sidetone audio. The test is generated in the
-  // CoreAudio render callback and therefore bypasses WDSP completely.
+  // audio backend render callback and therefore bypasses WDSP completely.
   int rx_in = atomic_load_explicit(&rx->local_audio_buffer_inpt, memory_order_acquire);
   atomic_store_explicit(&rx->local_audio_buffer_outpt, rx_in, memory_order_release);
   int st_in = atomic_load_explicit(&rx->sidetone_buffer_inpt, memory_order_acquire);
@@ -846,7 +846,7 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
 
 
 //
-// Feed native CoreAudio microphone samples into the shared mic ring.
+// Feed audio backend microphone samples into the shared mic ring.
 //
 void audio_process_local_mic_input(const float *samples, unsigned int frames) {
   static int last_was_tx = 0;
@@ -868,7 +868,7 @@ void audio_process_local_mic_input(const float *samples, unsigned int frames) {
       //
       // RX -> TX: discard microphone samples accumulated while receiving.
       // Do not add silence here; TX should start with the freshest available
-      // CoreAudio input samples.
+      // Audio backend input samples.
       //
       local_mic_ring_request_reset(384);
     }
@@ -933,7 +933,7 @@ float audio_get_next_mic_sample(void) {
     unsigned int overruns = atomic_exchange_explicit(&mic_ring_overruns, 0U, memory_order_relaxed);
     unsigned int low_corr = atomic_exchange_explicit(&mic_ring_diag_low_corrections, 0U, memory_order_relaxed);
     unsigned int high_corr = atomic_exchange_explicit(&mic_ring_diag_high_corrections, 0U, memory_order_relaxed);
-    l_print("CoreAudio MIC ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u overruns=%u corr-low=%u corr-high=%u\n",
+    l_print("Audio MIC ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u overruns=%u corr-low=%u corr-high=%u\n",
             queued, (double) queued * 1000.0 / 48000.0,
             min_queued, (double) min_queued * 1000.0 / 48000.0,
             max_queued, (double) max_queued * 1000.0 / 48000.0,
@@ -948,14 +948,14 @@ float audio_get_next_mic_sample(void) {
 //
 // AUDIO_OPEN_OUTPUT
 //
-// Open native CoreAudio output for data from one of the RX.
+// Open audio backend output for data from one of the RX.
 //
 int audio_open_output(RECEIVER *rx) {
   if (rx == NULL) {
     return -1;
   }
   /*
-   * Allocate and initialize rings before the CoreAudio unit is started.
+   * Allocate and initialize rings before the audio backend is started.
    * Publish the backend handle only after AudioOutputUnitStart() succeeds.
    */
   g_mutex_lock(&rx->local_audio_mutex);
@@ -1001,7 +1001,7 @@ int audio_open_output(RECEIVER *rx) {
   rx->local_audio_channels = channels;
   rx->audio_backend_output_handle = handle;
   g_mutex_unlock(&rx->local_audio_mutex);
-  t_print("%s: native CoreAudio output name=%s channels=%d\n",
+  t_print("%s: audio backend output name=%s channels=%d\n",
           __func__, rx->audio_name, rx->local_audio_channels);
   return 0;
 }
@@ -1013,7 +1013,7 @@ int audio_open_output(RECEIVER *rx) {
 // close a TX microphone stream
 //
 void audio_close_input(void) {
-  t_print("%s: native CoreAudio call audio_close_input\n", __func__);
+  t_print("%s: audio backend call audio_close_input\n", __func__);
   if (transmitter != NULL) {
     t_print("%s: micname=%s\n", __func__, transmitter->microphone_name);
   }
@@ -1056,7 +1056,7 @@ void audio_close_output(RECEIVER *rx) {
   t_print("%s: device=%s\n", __func__, rx->audio_name);
   /*
    * First prevent producers from entering audio_write()/cw_audio_write().
-   * Then stop CoreAudio and wait for its callback to leave. Only after that
+   * Then stop the audio backend and wait for its callback to leave. Only after that
    * may the lock-free callback-visible rings be released.
    */
   void *handle;
@@ -1088,7 +1088,7 @@ void audio_close_output(RECEIVER *rx) {
 //
 // Re-prime the normal RX ring before RX is restarted after a TX/TUNE phase.
 // rxtx() calls this while the receiver producer is still stopped, so this
-// remains a single-producer operation with respect to the CoreAudio consumer.
+// remains a single-producer operation with respect to the audio backend consumer.
 // Existing queued audio is preserved; only missing samples up to RX_LAT_TARGET
 // are added as silence.
 //
@@ -1130,7 +1130,7 @@ void audio_reprime_output(RECEIVER *rx) {
 //
 // AUDIO_WRITE
 //
-// Store RX audio in the ring consumed by the native CoreAudio callback.
+// Store RX audio in the ring consumed by the audio backend callback.
 //
 // Note that the check on radio_is_transmitting() takes care that "blocking"
 // by the mutex can only occur in the moment of a RX/TX transition if
@@ -1183,7 +1183,7 @@ static int audio_write_internal(RECEIVER *rx, float left, float right, int ignor
       avail = rx_lat_target;
     }
     /*
-     * High-latency recovery is performed by the CoreAudio consumer using a
+     * High-latency recovery is performed by the audio backend consumer using a
      * small fractional read-rate increase.  The producer therefore never
      * drops samples merely because a latency watermark is exceeded.  A sample
      * is lost here only in the unavoidable emergency case that the ring is
@@ -1228,7 +1228,7 @@ static int audio_write_internal(RECEIVER *rx, float left, float right, int ignor
           unsigned int underruns =
                   atomic_exchange_explicit(&rx_ring_diag_underruns[rx->id],
                                            0U, memory_order_relaxed);
-          l_print("CoreAudio RX ring: rx=%d queued=%d (%.2f ms) "
+          l_print("Audio RX ring: rx=%d queued=%d (%.2f ms) "
                   "min=%d (%.2f ms) max=%d (%.2f ms) "
                   "underruns=%u low_corr=%u high_corr=%u\n",
                   rx->id,
@@ -1257,8 +1257,8 @@ static int audio_write_internal(RECEIVER *rx, float left, float right, int ignor
 // During CW, between the elements the side tone contains "true" silence.
 // We detect a sequence of 16 subsequent zero samples, and insert or delete
 // a zero sample depending on the buffer water mark:
-// If there are more than two CoreAudio buffers available, delete one sample,
-// if it drops down to less than one CoreAudio buffer, insert one sample
+// If there are more than two audio backend buffers available, delete one sample,
+// if it drops down to less than one audio backend buffer, insert one sample
 //
 // Thus we have an active latency management.
 //
@@ -1350,7 +1350,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     } else if (diag_now_us >= diag_next_log_us) {
       unsigned int diag_underruns =
               atomic_exchange_explicit(&cw_ring_diag_underruns, 0U, memory_order_relaxed);
-      l_print("CoreAudio CW ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u low_corr=%u high_corr=%u\n",
+      l_print("Audio CW ring: queued=%d (%.2f ms) min=%d (%.2f ms) max=%d (%.2f ms) underruns=%u low_corr=%u high_corr=%u\n",
               avail, (double) avail * 1000.0 / 48000.0,
               diag_min_avail, (double) diag_min_avail * 1000.0 / 48000.0,
               diag_max_avail, (double) diag_max_avail * 1000.0 / 48000.0,

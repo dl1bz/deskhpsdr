@@ -14,10 +14,18 @@ CFLAGS  += -I. -DMA_NO_DECODING -DMA_NO_ENCODING \
            -DMA_NO_GENERATION -DMA_ENABLE_ONLY_SPECIFIC_BACKENDS \
            -DMA_NO_RUNTIME_LINKING
 
+ifeq ($(ARCH),arm64)
+  CFLAGS += -mcpu=native
+else ifeq ($(ARCH),aarch64)
+  CFLAGS += -mcpu=native
+else ifeq ($(ARCH),x86_64)
+  CFLAGS += -march=native
+endif
+
 ifeq ($(UNAME_S),Darwin)
-  CFLAGS += -mcpu=native -DMA_ENABLE_COREAUDIO
+  CFLAGS += -DMA_ENABLE_COREAUDIO
 else ifeq ($(UNAME_S),Linux)
-  CFLAGS += -mcpu=native -DMA_ENABLE_ALSA -DMA_ENABLE_PULSEAUDIO
+  CFLAGS += -DMA_ENABLE_ALSA -DMA_ENABLE_PULSEAUDIO
 else
   $(error Unsupported host OS '$(UNAME_S)' for this miniaudio Makefile)
 endif

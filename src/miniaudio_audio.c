@@ -71,6 +71,7 @@ static int miniaudio_ensure_context(void) {
       return -1;
     }
     miniaudio_context_ready = 1;
+    t_print("%s: backend=%s\n", __func__, ma_get_backend_name(miniaudio_context.backend));
   }
   g_mutex_unlock(&miniaudio_context_mutex);
   return 0;
