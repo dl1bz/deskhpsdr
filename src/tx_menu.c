@@ -642,6 +642,18 @@ static void aprof_nosave_btn_clicked(GtkWidget *widget, gpointer data) {
   gtk_widget_destroy(GTK_WIDGET(data));    // Schließt nur das Fenster, ohne das Programm zu beenden
 }
 
+static gboolean aprof_delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)event;
+  (void)data;
+  gtk_widget_destroy(widget);
+  return TRUE;
+}
+
+static void aprof_destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+}
+
 // Funktion, die auf die Enter-Taste reagiert
 gboolean aprof_enter_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   if (event->keyval == GDK_KEY_Return) {
@@ -668,8 +680,8 @@ void showAudioProfileSaveDialog(void) {
   snprintf(_title, 64, "%s", PGNAME);
   gtk_window_set_title(GTK_WINDOW(aprof_dialog_win), _title);
   gtk_window_set_default_size(GTK_WINDOW(aprof_dialog_win), window_width, window_height);
-  g_signal_connect(aprof_dialog_win, "destroy", G_CALLBACK(aprof_nosave_btn_clicked), aprof_dialog_win);
-  g_signal_connect(aprof_dialog_win, "delete_event", G_CALLBACK(aprof_nosave_btn_clicked), aprof_dialog_win);
+  g_signal_connect(aprof_dialog_win, "delete_event", G_CALLBACK(aprof_delete_event_cb), NULL);
+  g_signal_connect(aprof_dialog_win, "destroy", G_CALLBACK(aprof_destroy_cb), NULL);
   // Entferne die Fensterdekorationen (Schließen-Button, etc.)
   gtk_window_set_decorated(GTK_WINDOW(aprof_dialog_win), FALSE);
   // Berechne die mittige Position auf dem Bildschirm
@@ -750,6 +762,14 @@ static void cleanup(void) {
 static gboolean close_cb(void) {
   cleanup();
   return TRUE;
+}
+
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  dialog = NULL;
+  sub_menu = NULL;
+  active_menu = NO_MENU;
 }
 
 static void tx_panadapter_peaks_in_passband_filled_cb(GtkWidget *widget, gpointer data) {
@@ -1287,7 +1307,7 @@ void tx_menu(GtkWidget *parent) {
   }
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), m_name);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);

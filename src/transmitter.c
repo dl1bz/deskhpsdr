@@ -108,6 +108,20 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+static void tx_dialog_destroy_cb(GtkWidget *widget, gpointer data) {
+  TRANSMITTER *tx = (TRANSMITTER *)data;
+  if (tx != NULL && tx->dialog == widget) {
+    tx->dialog = NULL;
+  }
+}
+
+static void tx_levels_destroy_cb(GtkWidget *widget, gpointer data) {
+  TRANSMITTER *tx = (TRANSMITTER *)data;
+  if (tx != NULL && tx->levels_dialog == widget) {
+    tx->levels_dialog = NULL;
+  }
+}
+
 #if defined (__clang__)
 static inline long q_round(double x, double gain) {
   return __builtin_lrint(x * gain);
@@ -896,7 +910,7 @@ void tx_create_dialog(TRANSMITTER *tx) {
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), FALSE);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "TX [duplex]");
   g_signal_connect(tx->dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(tx->dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(tx->dialog, "destroy", G_CALLBACK(tx_dialog_destroy_cb), tx);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
   //t_print("create_dialog: add tx->panel\n");
   gtk_widget_set_size_request(tx->panel, tx_dialog_width, tx_dialog_height);
@@ -996,7 +1010,7 @@ void tx_create_levels_window(TRANSMITTER *tx) {
     gtk_container_add(GTK_CONTAINER(levels_popover), levels_box);
     gtk_box_pack_start(GTK_BOX(levels_box), tx->levels_area, TRUE, TRUE, 0);
     tx->levels_dialog = levels_popover;
-    g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(close_cb), NULL);
+    g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(tx_levels_destroy_cb), tx);
     if (gtk_widget_get_mapped(anchor)) {
       levels_show_popover_cb(anchor, tx->levels_dialog);
     } else {
@@ -1025,7 +1039,7 @@ X11_FALLBACK:
     GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     gtk_container_add(GTK_CONTAINER(content), tx->levels_area);
     tx->levels_dialog = dlg;                           // einheitliches Handle
-    g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(close_cb), NULL);
+    g_signal_connect(tx->levels_dialog, "destroy", G_CALLBACK(tx_levels_destroy_cb), tx);
     gtk_widget_show_all(tx->levels_dialog);
     gtk_window_move(GTK_WINDOW(tx->levels_dialog), tx->levels_x_pos, tx->levels_y_pos);
     gtk_window_present(GTK_WINDOW(top_window));        // Fokus im Main-Window

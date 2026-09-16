@@ -94,7 +94,19 @@ static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
+    // Stop the level worker before destroying widgets used by level_update().
+    run_level = 0;
+    if (level_thread_id != NULL) {
+      g_thread_join(level_thread_id);
+      level_thread_id = NULL;
+    }
+    if (hold != 0) {
+      g_source_remove(vox_timeout);
+      hold = 0;
+    }
     gtk_widget_destroy(tmp);
+    level = NULL;
+    led = NULL;
     sub_menu = NULL;
     active_menu  = NO_MENU;
     // radio_save_state();
@@ -104,6 +116,14 @@ static void cleanup(void) {
 static gboolean close_cb(void) {
   cleanup();
   return TRUE;
+}
+
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  dialog = NULL;
+  sub_menu = NULL;
+  active_menu = NO_MENU;
 }
 
 static gboolean enable_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
@@ -116,11 +136,6 @@ static void start_level_thread(void) {
   run_level = 1;
   level_thread_id = g_thread_new("VOX level", level_thread, NULL);
   t_print("level_thread: id=%p\n", level_thread_id);
-}
-
-// cppcheck-suppress constParameterCallback
-static void destroy_cb(GtkWidget *widget, gpointer data) {
-  run_level = 0;
 }
 
 static void vox_value_changed_cb(GtkWidget *widget, gpointer data) {
@@ -160,7 +175,6 @@ static void vox_filter_high_changed_cb(GtkSpinButton *spin, gpointer data) {
 
 void vox_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
-  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   win_set_bgcolor(dialog, &mwin_bgcolor);
@@ -171,7 +185,7 @@ void vox_menu(GtkWidget *parent) {
   snprintf(_title, 32, "%s - VOX", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 10);

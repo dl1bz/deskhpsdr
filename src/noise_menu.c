@@ -90,6 +90,14 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  dialog = NULL;
+  sub_menu = NULL;
+  active_menu = NO_MENU;
+}
+
 static void nr_cb(GtkToggleButton *widget, gpointer data);
 static void snb_cb(GtkWidget *widget, gpointer data);
 
@@ -1156,7 +1164,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(noise_menu_headerbar), TRUE);
   noise_menu_update_title(active_receiver != NULL ? active_receiver->id : 0);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_container_set_border_width(GTK_CONTAINER(content), 0);
   GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);

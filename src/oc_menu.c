@@ -54,6 +54,14 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  dialog = NULL;
+  sub_menu = NULL;
+  active_menu = NO_MENU;
+}
+
 static void oc_rx_cb(GtkWidget *widget, gpointer data) {
   int b = (GPOINTER_TO_UINT(data)) >> 4;
   int oc = (GPOINTER_TO_UINT(data)) & 0xF;
@@ -129,7 +137,7 @@ void oc_menu(GtkWidget *parent) {
   snprintf(_title, 64, "%s - Open Collector Output", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_widget_set_size_request(sw, 600, 400);

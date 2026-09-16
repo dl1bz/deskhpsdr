@@ -82,7 +82,7 @@ int active_menu = NO_MENU;
 
 int menu_active_receiver_changed(void *data) {
   if (sub_menu != NULL) {
-    gtk_widget_destroy(sub_menu);
+    gtk_window_close(GTK_WINDOW(sub_menu));
     sub_menu = NULL;
   }
   return FALSE;
@@ -94,7 +94,7 @@ static void cleanup(void) {
     main_menu = NULL;
   }
   if (sub_menu != NULL) {
-    gtk_widget_destroy(sub_menu);
+    gtk_window_close(GTK_WINDOW(sub_menu));
     sub_menu = NULL;
   }
   active_menu = NO_MENU;
@@ -127,6 +127,13 @@ static void submenu_from_main_end(void) {
 static gboolean close_cb(void) {
   cleanup();
   return TRUE;
+}
+
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  main_menu = NULL;
+  active_menu = NO_MENU;
 }
 
 //
@@ -527,7 +534,7 @@ void new_menu(void) {
   int col, row, maxrow;
   int _mode = vfo_get_tx_mode();
   if (sub_menu != NULL) {
-    gtk_widget_destroy(sub_menu);
+    gtk_window_close(GTK_WINDOW(sub_menu));
     sub_menu = NULL;
   }
   if (main_menu == NULL) {
@@ -542,7 +549,7 @@ void new_menu(void) {
     snprintf(_title, 32, "%s - Menu", PGNAME);
     gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
     g_signal_connect(main_menu, "delete_event", G_CALLBACK(close_cb), NULL);
-    g_signal_connect(main_menu, "destroy", G_CALLBACK(close_cb), NULL);
+    g_signal_connect(main_menu, "destroy", G_CALLBACK(destroy_cb), NULL);
     GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(main_menu));
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_column_spacing(GTK_GRID(grid), 10);

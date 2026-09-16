@@ -184,6 +184,11 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+}
+
 static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   /* korrektes Gerät aus der Discover-Liste selektieren */
   selected_device = GPOINTER_TO_INT(data);
@@ -483,7 +488,7 @@ void discovery(void) {
   snprintf(_title, 64, "%s by DL1BZ %s - Discover SDR Device", PGNAME, build_version);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(discovery_dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(discovery_dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(discovery_dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content;
   content = gtk_dialog_get_content_area(GTK_DIALOG(discovery_dialog));
   GtkWidget *grid = gtk_grid_new();

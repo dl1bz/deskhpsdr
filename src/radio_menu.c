@@ -70,6 +70,14 @@ static gboolean close_cb(void) {
   return TRUE;
 }
 
+static void destroy_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  dialog = NULL;
+  sub_menu = NULL;
+  active_menu = NO_MENU;
+}
+
 static void ppm_value_changed_cb(GtkWidget *widget, gpointer data) {
   ppm_factor = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   rx_frequency_changed(active_receiver);
@@ -532,7 +540,7 @@ void radio_menu(GtkWidget *parent) {
   snprintf(_title, 32, "%s - SDR Device Settings", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
-  g_signal_connect(dialog, "destroy", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
