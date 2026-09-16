@@ -24,13 +24,6 @@
 #include <gtk/gtk.h>
 #include <time.h>
 #include <stdatomic.h>
-#ifdef ALSA
-  #include <alsa/asoundlib.h>
-#endif
-#ifdef PULSEAUDIO
-  #include <pulse/pulseaudio.h>
-  #include <pulse/simple.h>
-#endif
 
 enum _audio_channel_enum {
   STEREO = 0,
@@ -257,24 +250,7 @@ typedef struct _receiver {
   int audio_device;
   int local_audio_mute;
   gchar audio_name[512];
-#ifdef PULSEAUDIO
-  int pulseaudio_buffer_size;  /* 0 = AUTO, otherwise requested quantum in frames */
-#endif
-
-#if defined(AUDIO_RINGBUFFER) && defined(PULSEAUDIO) && defined(ALSA)
-  // this is only possible for "cppcheck" runs
-  // declare all data without conflicts
-  void *playstream;
-  int local_audio_buffer_inpt;
-  int local_audio_buffer_outpt;
-  int local_audio_buffer_offset;
-  int local_audio_cw_active;
-  int local_audio_channels;
-  void *local_audio_buffer;
-  snd_pcm_t *playback_handle;
-  snd_pcm_format_t local_audio_format;
-#endif
-#if defined(AUDIO_RINGBUFFER) && !defined(PULSEAUDIO) && !defined(ALSA)
+#ifdef AUDIO_RINGBUFFER
   void *audio_backend_output_handle;
   atomic_int local_audio_buffer_inpt;      // producer pointer in RX audio ring-buffer
   atomic_int local_audio_buffer_outpt;     // consumer pointer in RX audio ring-buffer
@@ -284,21 +260,6 @@ typedef struct _receiver {
   int local_audio_cw_active;
   float *local_audio_buffer;
   float *sidetone_buffer;
-#endif
-#if !defined(AUDIO_RINGBUFFER) && !defined(PULSEAUDIO) && defined(ALSA)
-  snd_pcm_t *playback_handle;
-  snd_pcm_format_t local_audio_format;
-  void *local_audio_buffer;        // different formats possible, so void*
-  int local_audio_buffer_offset;
-  int local_audio_cw_active;
-  int local_audio_channels;
-#endif
-#if !defined(AUDIO_RINGBUFFER) && defined(PULSEAUDIO) && !defined(ALSA)
-  pa_simple *playstream;
-  float *local_audio_buffer;
-  int local_audio_buffer_offset;
-  int local_audio_cw_active;
-  int local_audio_channels;
 #endif
 
   GMutex local_audio_mutex;

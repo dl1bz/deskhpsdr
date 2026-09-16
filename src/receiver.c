@@ -296,9 +296,6 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
   SetPropI1("receiver.%d.local_audio_mute", rx->id,             rx->local_audio_mute);
   SetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
-#ifdef PULSEAUDIO
-  SetPropI1("receiver.%d.pulseaudio_buffer_size", rx->id,       rx->pulseaudio_buffer_size);
-#endif
   SetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   SetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   SetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
@@ -425,22 +422,6 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
   GetPropI1("receiver.%d.local_audio_mute", rx->id,             rx->local_audio_mute);
   GetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
-#ifdef PULSEAUDIO
-  GetPropI1("receiver.%d.pulseaudio_buffer_size", rx->id,       rx->pulseaudio_buffer_size);
-  switch (rx->pulseaudio_buffer_size) {
-  case 0:
-  case 128:
-  case 256:
-  case 512:
-  case 1024:
-  case 2048:
-  case 4096:
-    break;
-  default:
-    rx->pulseaudio_buffer_size = 0;
-    break;
-  }
-#endif
   GetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   GetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   GetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
@@ -997,7 +978,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   atomic_init(&rx->audio_test_frame, 0);
   rx->audio_test_thread = NULL;
   rx->local_audio_buffer = NULL;
-#if defined(AUDIO_RINGBUFFER) && !defined(PULSEAUDIO) && !defined(ALSA)
+#ifdef AUDIO_RINGBUFFER
   rx->sidetone_buffer = NULL;
   atomic_init(&rx->local_audio_buffer_inpt, 0);
   atomic_init(&rx->local_audio_buffer_outpt, 0);
@@ -1007,9 +988,6 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
 #endif
   rx->local_audio_channels = 2;
   g_strlcpy(rx->audio_name, "NO AUDIO", sizeof(rx->audio_name));
-#ifdef PULSEAUDIO
-  rx->pulseaudio_buffer_size = 0;
-#endif
   rx->mute_when_not_active = 0;
   rx->audio_channel = STEREO;
   rx->audio_device = -1;

@@ -20,7 +20,7 @@ SATURN   ?= OFF
 USBOZY   ?= OFF
 STEMLAB  ?= OFF
 TTS      ?= OFF
-AUDIO    ?= PULSE
+AUDIO    ?= DEFAULT
 AUTOGAIN ?= OFF
 WDSP1    ?= OFF
 AH4IOB   ?= OFF
@@ -35,18 +35,13 @@ DEVEL    ?= OFF
 #  SATURN       | If ON, compile with native SATURN/G2 XDMA support
 #  USBOZY       | If ON, deskHPSDR can talk to legacy USB OZY radios (needs  libusb-1.0)
 #  STEMLAB      | If ON, deskHPSDR can start SDR app on RedPitay via Web interface (needs libcurl)
-#  AUDIO        | If AUDIO=ALSA, use ALSA rather than PulseAudio on Linux (use PulseAudio recommend)
+#  AUDIO        | DEFAULT uses native CoreAudio on macOS and miniaudio on Linux
 #  AUTOGAIN     | If ON (only if using a Hermes Lite 2 or similar), activate automatic regulation of RxPGA gain
 #  AH4IOB       | If ON, enable support for AH-4 compatible ATU using the Hermes Lite 2 IO board
 #  DEVEL        | ONLY FOR INTERNAL DEVELOPER USE AND TESTING ! Leave it ever OFF please !
 #
-#  If you want to use a non-default compile time option, write them
-#  into a file "make.config.deskhpsdr". So, for example, if you want to
-#  have AUDIO=ALSA, create a file make.config.deskhpsdr in
-#  the deskhpsdr directory with line that read
-#
-#  AUDIO=ALSA
-#
+#  If you want to use a non-default compile time option, write it
+#  into a file "make.config.deskhpsdr".
 #################################################################################################################
 
 # ------------------------------------------------------------------
@@ -434,56 +429,19 @@ CPP_DEFINES += -D__WAYLAND__
 ##############################################################################
 #
 # Options for audio module
-#  - macOS: native CoreAudio
-#  - Linux: either PULSEAUDIO (default) or ALSA (upon request)
+#  - macOS: native CoreAudio by default, miniaudio optional
+#  - Linux: miniaudio (PulseAudio/ALSA backend selection handled by miniaudio)
 #
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
-  ifneq ($(AUDIO), MINIAUDIO)
+  ifeq ($(AUDIO), DEFAULT)
     override AUDIO := COREAUDIO
   endif
 endif
 ifeq ($(UNAME_S), Linux)
-  ifneq ($(AUDIO), MINIAUDIO)
-    ifneq ($(AUDIO), ALSA)
-      override AUDIO := PULSE
-    endif
-  endif
+  override AUDIO := MINIAUDIO
 endif
-
-##############################################################################
-#
-# PulseAudio backend (Linux only)
-#
-##############################################################################
-
-ifeq ($(AUDIO), PULSE)
-AUDIO_OPTIONS=-DPULSEAUDIO
-AUDIO_INCLUDE=
-AUDIO_LIBS=-lpulse-simple -lpulse -lpulse-mainloop-glib
-AUDIO_SOURCES=src/pulseaudio.c
-AUDIO_OBJS=src/pulseaudio.o
-endif
-# Include the PulseAudio implementation in the cppcheck source set.
-CPP_DEFINES += -DPULSEAUDIO
-CPP_SOURCES += src/pulseaudio.c
-
-##############################################################################
-#
-# Add libraries for using ALSA, if requested
-#
-##############################################################################
-
-ifeq ($(AUDIO), ALSA)
-AUDIO_OPTIONS=-DALSA
-AUDIO_INCLUDE=
-AUDIO_LIBS=-lasound
-AUDIO_SOURCES=src/audio.c
-AUDIO_OBJS=src/audio.o
-endif
-CPP_DEFINES += -DALSA
-CPP_SOURCES += src/audio.c
 
 ##############################################################################
 #

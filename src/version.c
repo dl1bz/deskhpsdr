@@ -61,10 +61,6 @@ char build_options[] =
 char build_audio[] =
 #ifdef MINIAUDIO
   "miniAudio";
-#elif defined(ALSA)
-  "ALSA";
-#elif defined(PULSEAUDIO)
-  "PulseAudio";
 #elif defined(COREAUDIO)
   "CoreAudio";
 #else
