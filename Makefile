@@ -266,26 +266,27 @@ endif
 #
 ##############################################################################
 
+RTMIDI_DIR ?= rtmidi
+RTMIDI_LIB := $(RTMIDI_DIR)/librtmidi.a
+
 ifeq ($(UNAME_S),Darwin)
 override MIDI := ON
 endif
 ifeq ($(MIDI),ON)
 MIDI_OPTIONS=-DMIDI
-MIDI_HEADERS= src/midi_layer.h src/midi_menu.h src/alsa_midi.h
+MIDI_HEADERS= src/midi_layer.h src/midi_menu.h src/alsa_midi.h rtmidi/rtmidi_c.h
+MIDI_SOURCES= src/rtmidi_midi.c src/midi2.c src/midi3.c src/midi_menu.c
+MIDI_OBJS= src/rtmidi_midi.o src/midi2.o src/midi3.o src/midi_menu.o
+MIDI_INCLUDE=-I./rtmidi
 ifeq ($(UNAME_S), Darwin)
-MIDI_SOURCES= src/mac_midi.c src/midi2.c src/midi3.c src/midi_menu.c
-MIDI_OBJS= src/mac_midi.o src/midi2.o src/midi3.o src/midi_menu.o
-MIDI_LIBS= -framework CoreMIDI -framework Foundation
+MIDI_LIBS= $(RTMIDI_LIB) -framework CoreMIDI -framework CoreAudio -framework CoreFoundation -framework CoreServices -lc++
 endif
 ifeq ($(UNAME_S), Linux)
-MIDI_SOURCES= src/alsa_midi.c src/midi2.c src/midi3.c src/midi_menu.c
-MIDI_OBJS= src/alsa_midi.o src/midi2.o src/midi3.o src/midi_menu.o
-MIDI_LIBS= -lasound
-endif
+MIDI_LIBS= $(RTMIDI_LIB) -lasound -lstdc++
 endif
 CPP_DEFINES += -DMIDI
-CPP_SOURCES += src/mac_midi.c src/midi2.c src/midi3.c src/midi_menu.c
-CPP_SOURCES += src/alsa_midi.c src/midi2.c src/midi3.c src/midi_menu.c
+CPP_SOURCES += src/rtmidi_midi.c src/midi2.c src/midi3.c src/midi_menu.c
+endif
 
 
 ##############################################################################
@@ -617,7 +618,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	-DGIT_BRANCH='"$(GIT_BRANCH)"' \
 	-DGIT_REMOTE='"$(GIT_REMOTE)"'
 
-INCLUDES=$(GTK_INCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE)
+INCLUDES=$(GTK_INCLUDE) $(WDSP_INCLUDE) $(SOLAR_INCLUDE) $(TELNET_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(TCI_INCLUDE) $(JSON_INCLUDE) $(MIDI_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(EXTRA_CFLAGS) $(INCLUDES)
 
 .c.o:
@@ -961,6 +962,9 @@ endif
 ifeq ($(AUDIO), MINIAUDIO)
 	@+$(MAKE) -C $(MINIAUDIO_DIR)
 endif
+ifeq ($(MIDI),ON)
+	@+$(MAKE) -C $(RTMIDI_DIR)
+endif
 ifneq (z$(SOLAR_INCLUDE), z)
 	@+make -C libsolar
 endif
@@ -1030,6 +1034,7 @@ clean:
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
 	@if [ -d miniaudio ]; then $(MAKE) -C miniaudio clean; fi
+	@if [ -d rtmidi ]; then $(MAKE) -C rtmidi clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 ifeq ($(UNAME_S), Darwin)
@@ -1045,6 +1050,7 @@ uninstall:
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
 	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
+	@if [ -d rtmidi ]; then $(MAKE) -C rtmidi clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi
 	@echo "Remove installed deskHPSDR binary..."

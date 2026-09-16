@@ -22,13 +22,13 @@
 #define RTMIDI_C_H
 
 #if defined(RTMIDI_EXPORT)
-#if defined _WIN32 || defined __CYGWIN__
-#define RTMIDIAPI __declspec(dllexport)
+  #if defined _WIN32 || defined __CYGWIN__
+    #define RTMIDIAPI __declspec(dllexport)
+  #else
+    #define RTMIDIAPI __attribute__((visibility("default")))
+  #endif
 #else
-#define RTMIDIAPI __attribute__((visibility("default")))
-#endif
-#else
-#define RTMIDIAPI //__declspec(dllimport)
+  #define RTMIDIAPI //__declspec(dllimport)
 #endif
 
 #ifdef __cplusplus
@@ -37,39 +37,39 @@ extern "C" {
 
 //! \brief Wraps an RtMidi object for C function return statuses.
 struct RtMidiWrapper {
-    //! The wrapped RtMidi object.
-    void* ptr;
-    void* callback_proxy;
-    void* error_callback_proxy;
+  //! The wrapped RtMidi object.
+  void *ptr;
+  void *callback_proxy;
+  void *error_callback_proxy;
 
-    //! True when the last function call was OK.
-    bool ok;
+  //! True when the last function call was OK.
+  bool ok;
 
-    //! If an error occurred (ok != true), set to an error message.
-    char* msg;
+  //! If an error occurred (ok != true), set to an error message.
+  char *msg;
 };
 
 //! \brief Typedef for a generic RtMidi pointer.
-typedef struct RtMidiWrapper* RtMidiPtr;
+typedef struct RtMidiWrapper *RtMidiPtr;
 
 //! \brief Typedef for a generic RtMidiIn pointer.
-typedef struct RtMidiWrapper* RtMidiInPtr;
+typedef struct RtMidiWrapper *RtMidiInPtr;
 
 //! \brief Typedef for a generic RtMidiOut pointer.
-typedef struct RtMidiWrapper* RtMidiOutPtr;
+typedef struct RtMidiWrapper *RtMidiOutPtr;
 
 //! \brief MIDI API specifier arguments.  See \ref RtMidi::Api.
 enum RtMidiApi {
-    RTMIDI_API_UNSPECIFIED,    /*!< Search for a working compiled API. */
-    RTMIDI_API_MACOSX_CORE,    /*!< Macintosh OS-X CoreMIDI API. */
-    RTMIDI_API_LINUX_ALSA,     /*!< The Advanced Linux Sound Architecture API. */
-    RTMIDI_API_UNIX_JACK,      /*!< The Jack Low-Latency MIDI Server API. */
-    RTMIDI_API_WINDOWS_MM,     /*!< The Microsoft Multimedia MIDI API. */
-    RTMIDI_API_RTMIDI_DUMMY,   /*!< A compilable but non-functional API. */
-    RTMIDI_API_WEB_MIDI_API,   /*!< W3C Web MIDI API. */
-    RTMIDI_API_WINDOWS_UWP,    /*!< The Microsoft Universal Windows Platform MIDI API. */
-    RTMIDI_API_ANDROID,        /*!< The Android MIDI API. */
-    RTMIDI_API_NUM             /*!< Number of values in this enum. */
+  RTMIDI_API_UNSPECIFIED,    /*!< Search for a working compiled API. */
+  RTMIDI_API_MACOSX_CORE,    /*!< Macintosh OS-X CoreMIDI API. */
+  RTMIDI_API_LINUX_ALSA,     /*!< The Advanced Linux Sound Architecture API. */
+  RTMIDI_API_UNIX_JACK,      /*!< The Jack Low-Latency MIDI Server API. */
+  RTMIDI_API_WINDOWS_MM,     /*!< The Microsoft Multimedia MIDI API. */
+  RTMIDI_API_RTMIDI_DUMMY,   /*!< A compilable but non-functional API. */
+  RTMIDI_API_WEB_MIDI_API,   /*!< W3C Web MIDI API. */
+  RTMIDI_API_WINDOWS_UWP,    /*!< The Microsoft Universal Windows Platform MIDI API. */
+  RTMIDI_API_ANDROID,        /*!< The Android MIDI API. */
+  RTMIDI_API_NUM             /*!< Number of values in this enum. */
 };
 
 //! \brief Defined RtMidiError types. See \ref RtMidiError::Type.
@@ -95,8 +95,8 @@ enum RtMidiErrorType {
  *
  * See \ref RtMidiIn::RtMidiCallback.
  */
-typedef void(* RtMidiCCallback) (double timeStamp, const unsigned char* message,
-                                 size_t messageSize, void *userData);
+typedef void(* RtMidiCCallback)(double timeStamp, const unsigned char *message,
+                                size_t messageSize, void *userData);
 
 /*! \brief The type of a RtMidi error callback function.
  *
@@ -106,16 +106,16 @@ typedef void(* RtMidiCCallback) (double timeStamp, const unsigned char* message,
  *
  * See \ref MidiApi::setErrorCallback.
  */
-typedef void(* RtMidiErrorCCallback) (enum RtMidiErrorType type,
-                                      const char *errorText,
-                                      void *userData);
+typedef void(* RtMidiErrorCCallback)(enum RtMidiErrorType type,
+                                     const char *errorText,
+                                     void *userData);
 
 /* RtMidi API */
 
 /*! \brief Return the current RtMidi version.
  *! See \ref RtMidi::getVersion().
 */
-RTMIDIAPI const char* rtmidi_get_version();
+RTMIDIAPI const char *rtmidi_get_version();
 
 /*! \brief Determine the available compiled MIDI APIs.
  *
@@ -130,7 +130,7 @@ RTMIDIAPI const char* rtmidi_get_version();
  *
  * See \ref RtMidi::getCompiledApi().
 */
-RTMIDIAPI int rtmidi_get_compiled_api (enum RtMidiApi *apis, unsigned int apis_size);
+RTMIDIAPI int rtmidi_get_compiled_api(enum RtMidiApi *apis, unsigned int apis_size);
 
 //! \brief Return the name of a specified compiled MIDI API.
 //! See \ref RtMidi::getApiName().
@@ -151,7 +151,7 @@ RTMIDIAPI enum RtMidiApi rtmidi_compiled_api_by_name(const char *name);
  *
  * See RtMidi::openPort().
  */
-RTMIDIAPI void rtmidi_open_port (RtMidiPtr device, unsigned int portNumber, const char *portName);
+RTMIDIAPI void rtmidi_open_port(RtMidiPtr device, unsigned int portNumber, const char *portName);
 
 /*! \brief Creates a virtual MIDI port to which other software applications can
  * connect.
@@ -160,31 +160,31 @@ RTMIDIAPI void rtmidi_open_port (RtMidiPtr device, unsigned int portNumber, cons
  *
  * See RtMidi::openVirtualPort().
  */
-RTMIDIAPI void rtmidi_open_virtual_port (RtMidiPtr device, const char *portName);
+RTMIDIAPI void rtmidi_open_virtual_port(RtMidiPtr device, const char *portName);
 
 /*! \brief Close a MIDI connection.
  * See RtMidi::closePort().
  */
-RTMIDIAPI void rtmidi_close_port (RtMidiPtr device);
+RTMIDIAPI void rtmidi_close_port(RtMidiPtr device);
 
 /*! \brief Return the number of available MIDI ports.
  * See RtMidi::getPortCount().
  */
-RTMIDIAPI unsigned int rtmidi_get_port_count (RtMidiPtr device);
+RTMIDIAPI unsigned int rtmidi_get_port_count(RtMidiPtr device);
 
 /*! \brief Access a string identifier for the specified MIDI input port number.
- * 
+ *
  * To prevent memory leaks a char buffer must be passed to this function.
  * NULL can be passed as bufOut parameter, and that will write the required buffer length in the bufLen.
- * 
+ *
  * See RtMidi::getPortName().
  */
-RTMIDIAPI int rtmidi_get_port_name (RtMidiPtr device, unsigned int portNumber, char * bufOut, int * bufLen);
+RTMIDIAPI int rtmidi_get_port_name(RtMidiPtr device, unsigned int portNumber, char *bufOut, int *bufLen);
 
 /* RtMidiIn API */
 
 //! \brief Create a default RtMidiInPtr value, with no initialization.
-RTMIDIAPI RtMidiInPtr rtmidi_in_create_default (void);
+RTMIDIAPI RtMidiInPtr rtmidi_in_create_default(void);
 
 /*! \brief Create a  RtMidiInPtr value, with given api, clientName and queueSizeLimit.
  *
@@ -197,26 +197,26 @@ RTMIDIAPI RtMidiInPtr rtmidi_in_create_default (void);
  *
  * See RtMidiIn::RtMidiIn().
  */
-RTMIDIAPI RtMidiInPtr rtmidi_in_create (enum RtMidiApi api, const char *clientName, unsigned int queueSizeLimit);
+RTMIDIAPI RtMidiInPtr rtmidi_in_create(enum RtMidiApi api, const char *clientName, unsigned int queueSizeLimit);
 
 //! \brief Free the given RtMidiInPtr.
-RTMIDIAPI void rtmidi_in_free (RtMidiInPtr device);
+RTMIDIAPI void rtmidi_in_free(RtMidiInPtr device);
 
 //! \brief Returns the MIDI API specifier for the given instance of RtMidiIn.
 //! See \ref RtMidiIn::getCurrentApi().
-RTMIDIAPI enum RtMidiApi rtmidi_in_get_current_api (RtMidiPtr device);
+RTMIDIAPI enum RtMidiApi rtmidi_in_get_current_api(RtMidiPtr device);
 
 //! \brief Set a callback function to be invoked for incoming MIDI messages.
 //! See \ref RtMidiIn::setCallback().
-RTMIDIAPI void rtmidi_in_set_callback (RtMidiInPtr device, RtMidiCCallback callback, void *userData);
+RTMIDIAPI void rtmidi_in_set_callback(RtMidiInPtr device, RtMidiCCallback callback, void *userData);
 
 //! \brief Cancel use of the current callback function (if one exists).
 //! See \ref RtMidiIn::cancelCallback().
-RTMIDIAPI void rtmidi_in_cancel_callback (RtMidiInPtr device);
+RTMIDIAPI void rtmidi_in_cancel_callback(RtMidiInPtr device);
 
 //! \brief Specify whether certain MIDI message types should be queued or ignored during input.
 //! See \ref RtMidiIn::ignoreTypes().
-RTMIDIAPI void rtmidi_in_ignore_types (RtMidiInPtr device, bool midiSysex, bool midiTime, bool midiSense);
+RTMIDIAPI void rtmidi_in_ignore_types(RtMidiInPtr device, bool midiSysex, bool midiTime, bool midiSense);
 
 /*! Fill the user-provided array with the data bytes for the next available
  * MIDI message in the input queue and return the event delta-time in seconds.
@@ -230,12 +230,12 @@ RTMIDIAPI void rtmidi_in_ignore_types (RtMidiInPtr device, bool midiSysex, bool 
  *
  * See RtMidiIn::getMessage().
  */
-RTMIDIAPI double rtmidi_in_get_message (RtMidiInPtr device, unsigned char *message, size_t *size);
+RTMIDIAPI double rtmidi_in_get_message(RtMidiInPtr device, unsigned char *message, size_t *size);
 
 /* RtMidiOut API */
 
 //! \brief Create a default RtMidiInPtr value, with no initialization.
-RTMIDIAPI RtMidiOutPtr rtmidi_out_create_default (void);
+RTMIDIAPI RtMidiOutPtr rtmidi_out_create_default(void);
 
 /*! \brief Create a RtMidiOutPtr value, with given and clientName.
  *
@@ -246,22 +246,22 @@ RTMIDIAPI RtMidiOutPtr rtmidi_out_create_default (void);
  *
  * See RtMidiOut::RtMidiOut().
  */
-RTMIDIAPI RtMidiOutPtr rtmidi_out_create (enum RtMidiApi api, const char *clientName);
+RTMIDIAPI RtMidiOutPtr rtmidi_out_create(enum RtMidiApi api, const char *clientName);
 
 //! \brief Free the given RtMidiOutPtr.
-RTMIDIAPI void rtmidi_out_free (RtMidiOutPtr device);
+RTMIDIAPI void rtmidi_out_free(RtMidiOutPtr device);
 
 //! \brief Returns the MIDI API specifier for the given instance of RtMidiOut.
 //! See \ref RtMidiOut::getCurrentApi().
-RTMIDIAPI enum RtMidiApi rtmidi_out_get_current_api (RtMidiPtr device);
+RTMIDIAPI enum RtMidiApi rtmidi_out_get_current_api(RtMidiPtr device);
 
 //! \brief Immediately send a single message out an open MIDI output port.
 //! See \ref RtMidiOut::sendMessage().
-RTMIDIAPI int rtmidi_out_send_message (RtMidiOutPtr device, const unsigned char *message, int length);
+RTMIDIAPI int rtmidi_out_send_message(RtMidiOutPtr device, const unsigned char *message, int length);
 
 //! \brief Set error callback function on a RtMidiPtr.
 //! See \ref MidiApi::setErrorCallback().
-RTMIDIAPI void rtmidi_set_error_callback (RtMidiPtr device, RtMidiErrorCCallback callback, void *userData);
+RTMIDIAPI void rtmidi_set_error_callback(RtMidiPtr device, RtMidiErrorCCallback callback, void *userData);
 
 #ifdef __cplusplus
 }
