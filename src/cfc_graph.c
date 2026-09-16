@@ -8,9 +8,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#ifndef WDSP1
-  #include <wdsp.h>
-#endif
+#include <wdsp.h>
 
 #include "cfc_graph.h"
 #include "radio.h"
@@ -116,20 +114,16 @@ static void save_curve_to_mode(CFC_GRAPH *g) {
 }
 
 static void apply_comp_curve(CFC_GRAPH *g) {
-#ifndef WDSP1
   SetTXACFCOMPCompCurve(g->tx->id, g->tx->cfc_comp_curve_degree,
                         g->tx->cfc_comp_curve_r, g->tx->cfc_comp_curve_umethod);
   SetTXACFCOMPCompWeights(g->tx->id, CFC_POINTS, g->tx->cfc_comp_weight);
-#endif
   gtk_widget_queue_draw(g->area);
 }
 
 static void apply_post_curve(CFC_GRAPH *g) {
-#ifndef WDSP1
   SetTXACFCOMPPeqCurve(g->tx->id, g->tx->cfc_post_curve_degree,
                        g->tx->cfc_post_curve_r, g->tx->cfc_post_curve_umethod);
   SetTXACFCOMPPeqWeights(g->tx->id, CFC_POINTS, g->tx->cfc_post_weight);
-#endif
   gtk_widget_queue_draw(g->area);
 }
 
@@ -196,7 +190,6 @@ static void draw_legacy_curve(CFC_GRAPH *g, cairo_t *cr, double width, double he
   cairo_stroke(cr);
 }
 
-#ifndef WDSP1
 static void draw_wdsp_curve(CFC_GRAPH *g, cairo_t *cr, double width, double height,
                             CFC_POINT_KIND kind) {
   double X[CFC_DRAW_POINTS];
@@ -219,7 +212,6 @@ static void draw_wdsp_curve(CFC_GRAPH *g, cairo_t *cr, double width, double heig
   }
   if (started) { cairo_stroke(cr); }
 }
-#endif
 
 static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
   CFC_GRAPH *g = data;
@@ -262,24 +254,18 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
   /* Compression: solid curve. */
   cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, 0.95);
   cairo_set_line_width(cr, 2.0);
-#ifndef WDSP1
   if (g->tx->cfc_comp_curve_degree >= 1 && !g->dragging) {
     draw_wdsp_curve(g, cr, width, height, CFC_POINT_COMP);
-  } else
-#endif
-  {
+  } else {
     draw_legacy_curve(g, cr, width, height, CFC_POINT_COMP);
   }
   /* Post gain: dashed curve. */
   const double dashes[] = {7.0, 5.0};
   cairo_set_dash(cr, dashes, 2, 0.0);
   cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, 0.70);
-#ifndef WDSP1
   if (g->tx->cfc_post_curve_degree >= 1 && !g->dragging) {
     draw_wdsp_curve(g, cr, width, height, CFC_POINT_POST);
-  } else
-#endif
-  {
+  } else {
     draw_legacy_curve(g, cr, width, height, CFC_POINT_POST);
   }
   cairo_set_dash(cr, NULL, 0, 0.0);
@@ -469,9 +455,6 @@ static GtkWidget *curve_combo(int degree) {
   else if (degree == 5) { active = 3; }
   else if (degree == 7) { active = 4; }
   gtk_combo_box_set_active(GTK_COMBO_BOX(combo), active);
-#ifdef WDSP1
-  gtk_widget_set_sensitive(combo, FALSE);
-#endif
   return combo;
 }
 
@@ -514,10 +497,6 @@ GtkWidget *cfc_graph_create(TRANSMITTER *tx) {
   GtkWidget *post_weights = gtk_check_button_new_with_label("NURBS weights");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(post_weights), tx->cfc_post_curve_r != 0);
   gtk_grid_attach(GTK_GRID(controls), post_weights, 2, 1, 1, 1);
-#ifdef WDSP1
-  gtk_widget_set_sensitive(comp_weights, FALSE);
-  gtk_widget_set_sensitive(post_weights, FALSE);
-#endif
   gtk_widget_set_tooltip_text(comp_weights,
                               "Enable rational NURBS weights for Pre Compression. Hover a circular point and use the mouse wheel to adjust its weight.");
   gtk_widget_set_tooltip_text(post_weights,

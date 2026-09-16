@@ -22,7 +22,6 @@ STEMLAB  ?= OFF
 TTS      ?= OFF
 AUDIO    ?= DEFAULT
 AUTOGAIN ?= OFF
-WDSP1    ?= OFF
 AH4IOB   ?= OFF
 DEVEL    ?= OFF
 
@@ -128,12 +127,7 @@ else
 	endif
 endif
 
-ifeq ($(WDSP1),ON)
-WDSP_DIR := wdsp-1.29
-CFLAGS += -DWDSP1
-else
 WDSP_DIR := wdsp-2.10
-endif
 
 # clang detection (macOS: CC may be "cc" but still clang)
 IS_CLANG := $(shell $(CC) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0)
@@ -440,6 +434,11 @@ ifeq ($(UNAME_S), Darwin)
   endif
 endif
 ifeq ($(UNAME_S), Linux)
+  ifeq ($(AUDIO), PULSE)
+    $(warning AUDIO=PULSE is obsolete; using AUDIO=MINIAUDIO)
+  else ifeq ($(AUDIO), ALSA)
+    $(warning AUDIO=ALSA is obsolete; using AUDIO=MINIAUDIO)
+  endif
   override AUDIO := MINIAUDIO
 endif
 
@@ -1029,7 +1028,6 @@ clean:
 	rm -f src/*.o
 	rm -f src/*.orig
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
 	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
 	@if [ -d miniaudio ]; then $(MAKE) -C miniaudio clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
@@ -1046,7 +1044,6 @@ uninstall:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp-1.29 ]; then $(MAKE) -C wdsp-1.29 clean; fi
 	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi

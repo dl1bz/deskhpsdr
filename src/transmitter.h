@@ -108,16 +108,7 @@ typedef struct _transmitter {
   double ps_moxdelay;
   double ps_loopdelay;
   int    ps_oneshot;
-#ifdef WDSP1
-  int    ps_ints;
-  int    ps_spi;
-  int    ps_stbl;
-  int    ps_map;
-  int    ps_pin;
-  int    ps_ptol;
-#else
   int    ps_tolerance_mode;
-#endif
 
   int ctcss_enabled;
   int ctcss;

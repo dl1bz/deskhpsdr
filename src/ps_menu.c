@@ -748,13 +748,6 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-#ifdef WDSP1
-static void tol_cb(GtkWidget *widget, gpointer data) {
-  transmitter->ps_ptol = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  tx_ps_setparams(transmitter);
-  ps_off_on();
-}
-#endif
 
 
 static void oneshot_cb(GtkWidget *widget, gpointer data) {
@@ -763,15 +756,7 @@ static void oneshot_cb(GtkWidget *widget, gpointer data) {
   ps_off_on();
 }
 
-#ifdef WDSP1
-static void map_cb(GtkWidget *widget, gpointer data) {
-  transmitter->ps_map = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  tx_ps_setparams(transmitter);
-  ps_off_on();
-}
-#endif
 
-#ifndef WDSP1
 static void tolerance_mode_cb(GtkComboBox *combo, gpointer data) {
   int mode = gtk_combo_box_get_active(combo);
   if (mode < 0 || mode > 2 || mode == transmitter->ps_tolerance_mode) {
@@ -781,7 +766,6 @@ static void tolerance_mode_cb(GtkComboBox *combo, gpointer data) {
   tx_ps_setparams(transmitter);
   ps_off_on();
 }
-#endif
 
 
 static void auto_cb(GtkWidget *widget, gpointer data) {
@@ -1014,31 +998,11 @@ void ps_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), ps_ant_combo, col, row, 1, 1);
   g_signal_connect(ps_ant_combo, "changed", G_CALLBACK(ps_ant_cb), NULL);
   col++;
-#ifdef WDSP1
-  GtkWidget *map_b = gtk_check_button_new_with_label("PS MAP");
-  gtk_widget_set_name(map_b, "boldlabel");
-  gtk_widget_set_tooltip_text(map_b, "Enable adaptive PureSignal sample mapping for heavily compressed amplifiers.\n"
-                                     "Correction may be less stable if active. First try with OFF.");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(map_b), transmitter->ps_map);
-  gtk_grid_attach(GTK_GRID(grid), map_b, col, row, 1, 1);
-  g_signal_connect(map_b, "toggled", G_CALLBACK(map_cb), NULL);
-  col++;
-  GtkWidget *tol_b = gtk_check_button_new_with_label("PS Relax Tolerance");
-  gtk_widget_set_name(tol_b, "boldlabel");
-  gtk_widget_set_tooltip_text(tol_b, "Relax PureSignal calibration tolerance for difficult amplifiers.\n"
-                                     "May help when calibration is rejected or unstable.");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tol_b), transmitter->ps_ptol);
-  gtk_grid_attach(GTK_GRID(grid), tol_b, col, row, 2, 1);
-  g_signal_connect(tol_b, "toggled", G_CALLBACK(tol_cb), NULL);
-  col++;
-  col++;
-#endif
   GtkWidget *oneshot_b = gtk_check_button_new_with_label("OneShot");
   gtk_widget_set_name(oneshot_b, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(oneshot_b), transmitter->ps_oneshot);
   gtk_grid_attach(GTK_GRID(grid), oneshot_b, col, row, 1, 1);
   g_signal_connect(oneshot_b, "toggled", G_CALLBACK(oneshot_cb), NULL);
-#ifndef WDSP1
   col++;
   GtkWidget *tolerance_label = gtk_label_new("PS Stability:");
   gtk_widget_set_name(tolerance_label, "boldlabel");
@@ -1057,7 +1021,6 @@ void ps_menu(GtkWidget *parent) {
   gtk_combo_box_set_active(GTK_COMBO_BOX(tolerance_combo), transmitter->ps_tolerance_mode);
   my_combo_attach(GTK_GRID(grid), tolerance_combo, col, row, 1, 1);
   g_signal_connect(tolerance_combo, "changed", G_CALLBACK(tolerance_mode_cb), NULL);
-#endif
   row++;
   col = 0;
   feedback_l = gtk_label_new("Feedback Lvl");

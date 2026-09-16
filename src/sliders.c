@@ -199,9 +199,7 @@ static const char *nr_labels[] = {
   "NR2",
   "NR3",
   "NR4"
-#ifndef WDSP1
   , "NNR"
-#endif
 };
 
 //
@@ -2157,15 +2155,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_style_context_remove_class(nr_context, "active");
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
-#ifdef WDSP1
-    gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4\n\n"
-                                        "Right click: Open NR Menu");
-#else
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
                                         "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
                                         "Right click: Open NR Menu");
-#endif
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
     gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);
@@ -2294,15 +2286,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_style_context_remove_class(nr_context, "active");
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
-#ifdef WDSP1
-    gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4\n\n"
-                                        "Right click: Open NR Menu");
-#else
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
                                         "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
                                         "Right click: Open NR Menu");
-#endif
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
     gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);

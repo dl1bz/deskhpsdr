@@ -1967,24 +1967,13 @@ void rx_set_analyzer(const RECEIVER *rx) {
 }
 
 void rx_begin_off(const RECEIVER *rx) {
-#ifdef WDSP1
-  // WDSP 1.x has no separate WaitChannelFlush() API.  Use its original
-  // synchronous channel shutdown so the RX channel is fully stopped before
-  // the TX transition continues.
-  SetChannelState(rx->id, 0, 1);
-#else
   // Start receiver slew-down without waiting for the WDSP flush.
   SetChannelState(rx->id, 0, 0);
-#endif
 }
 
 void rx_wait_off(const RECEIVER *rx) {
   // Complete a previously started receiver shutdown.
-#ifndef WDSP1
   WaitChannelFlush(rx->id, 100);
-#else
-  (void) rx;
-#endif
 }
 
 void rx_off(const RECEIVER *rx) {
@@ -2219,10 +2208,8 @@ void rx_set_equalizer(RECEIVER *rx) {
   // Apply the equalizer parameters stored in rx
   //
   SetRXAEQProfile(rx->id, 12, rx->eq_freq, rx->eq_gain);
-#ifndef WDSP1
   SetRXAEQCurve(rx->id, rx->eq_curve_degree, rx->eq_curve_r, rx->eq_curve_umethod);
   SetRXAEQWeights(rx->id, 12, rx->eq_weight);
-#endif
   SetRXAEQRun(rx->id, rx->eq_enable);
 }
 
@@ -2302,9 +2289,7 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRRun(rx->id, 0);
   SetRXARNNRRun(rx->id, 0);
   SetRXASBNRRun(rx->id, 0);
-#ifndef WDSP1
   SetRXANNRRun(rx->id, 0);
-#endif
   //
   // c) NR
   //
@@ -2349,21 +2334,14 @@ void rx_set_noise(const RECEIVER *rx) {
   //
   // i) NNR (WDSP 2.10 only)
   //
-#ifndef WDSP1
   // NNR is designed to operate post-AGC.  Only the documented operator
   // controls are exposed here: model selection and mask floor.
   SetRXANNRModel(rx->id, rx->nnr_model);
   SetRXANNRMaskFloor(rx->id, rx->nnr_mask_floor);
-#endif
   //
   // Enable exactly the selected noise-reduction engine.
   //
   int nr = rx->nr;
-#ifdef WDSP1
-  if (nr > NR_MAX) {
-    nr = 0;
-  }
-#endif
   if (nr_allowed) {
     switch (nr) {
     case 1:
@@ -2378,11 +2356,9 @@ void rx_set_noise(const RECEIVER *rx) {
     case 4:
       SetRXASBNRRun(rx->id, 1);
       break;
-#ifndef WDSP1
     case 5:
       SetRXANNRRun(rx->id, 1);
       break;
-#endif
     default:
       break;
     }

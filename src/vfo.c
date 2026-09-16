@@ -2236,12 +2236,10 @@ void vfo_update(void) {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NR4");
       break;
-#ifndef WDSP1
     case 5:
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_show_text(cr, "NNR");
       break;
-#endif
     default:
       cairo_set_source_rgba(cr, COLOUR_SHADE);
       cairo_show_text(cr, "NR");

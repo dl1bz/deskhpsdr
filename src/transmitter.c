@@ -326,16 +326,7 @@ void tx_save_state(const TRANSMITTER *tx) {
   SetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   SetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
   SetPropI1("transmitter.%d.ps_oneshot",        tx->id,               tx->ps_oneshot);
-#ifdef WDSP1
-  SetPropI1("transmitter.%d.ps_ints",           tx->id,               tx->ps_ints);
-  SetPropI1("transmitter.%d.ps_spi",            tx->id,               tx->ps_spi);
-  SetPropI1("transmitter.%d.ps_stbl",           tx->id,               tx->ps_stbl);
-  SetPropI1("transmitter.%d.ps_map",            tx->id,               tx->ps_map);
-  SetPropI1("transmitter.%d.ps_pin",            tx->id,               tx->ps_pin);
-  SetPropI1("transmitter.%d.ps_ptol",           tx->id,               tx->ps_ptol);
-#else
   SetPropI1("transmitter.%d.ps_tolerance_mode", tx->id,               tx->ps_tolerance_mode);
-#endif
   SetPropF1("transmitter.%d.ps_moxdelay",       tx->id,               tx->ps_moxdelay);
   SetPropF1("transmitter.%d.ps_loopdelay",      tx->id,               tx->ps_loopdelay);
   SetPropF1("transmitter.%d.ps_setpk",          tx->id,               tx->ps_setpk);
@@ -422,9 +413,7 @@ void tx_save_state(const TRANSMITTER *tx) {
 }
 
 static void tx_restore_state(TRANSMITTER *tx) {
-#ifndef WDSP1
   int legacy_ps_relax_tolerance = -1;
-#endif
   GetPropI1("transmitter.%d.alcmode",           tx->id,               tx->alcmode);
   GetPropI1("transmitter.%d.low_latency",       tx->id,               tx->low_latency);
   GetPropI1("transmitter.%d.fft_size",          tx->id,               tx->fft_size);
@@ -454,14 +443,6 @@ static void tx_restore_state(TRANSMITTER *tx) {
   GetPropI1("transmitter.%d.feedback",          tx->id,               tx->feedback);
   GetPropF1("transmitter.%d.ps_ampdelay",       tx->id,               tx->ps_ampdelay);
   GetPropI1("transmitter.%d.ps_oneshot",        tx->id,               tx->ps_oneshot);
-#ifdef WDSP1
-  GetPropI1("transmitter.%d.ps_ints",           tx->id,               tx->ps_ints);
-  GetPropI1("transmitter.%d.ps_spi",            tx->id,               tx->ps_spi);
-  GetPropI1("transmitter.%d.ps_stbl",           tx->id,               tx->ps_stbl);
-  GetPropI1("transmitter.%d.ps_map",            tx->id,               tx->ps_map);
-  GetPropI1("transmitter.%d.ps_pin",            tx->id,               tx->ps_pin);
-  GetPropI1("transmitter.%d.ps_ptol",           tx->id,               tx->ps_ptol);
-#else
   GetPropI1("transmitter.%d.ps_relax_tolerance", tx->id,              legacy_ps_relax_tolerance);
   if (legacy_ps_relax_tolerance >= 0) {
     tx->ps_tolerance_mode = legacy_ps_relax_tolerance ? 2 : 0;
@@ -470,7 +451,6 @@ static void tx_restore_state(TRANSMITTER *tx) {
   if (tx->ps_tolerance_mode < 0 || tx->ps_tolerance_mode > 2) {
     tx->ps_tolerance_mode = 2;
   }
-#endif
   GetPropF1("transmitter.%d.ps_moxdelay",       tx->id,               tx->ps_moxdelay);
   GetPropF1("transmitter.%d.ps_loopdelay",      tx->id,               tx->ps_loopdelay);
   GetPropF1("transmitter.%d.ps_setpk",          tx->id,               tx->ps_setpk);
@@ -1191,16 +1171,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   //
   tx->ps_ampdelay = 150;      // ATTENTION: this value is in nano-seconds
   tx->ps_oneshot = 0;
-#ifdef WDSP1
-  tx->ps_ints = 16;
-  tx->ps_spi = 256;           // ints=16/spi=256 corresponds to "TINT=0.5 dB"
-  tx->ps_stbl = 1;            // "Stbl" un-checked
-  tx->ps_map = 0;             // "Map" checked
-  tx->ps_pin = 1;             // "Pin" checked
-  tx->ps_ptol = 0;            // "Relax Tolerance" un-checked
-#else
   tx->ps_tolerance_mode = 2; // relaxed PS3 compression check (0.02)
-#endif
   tx->ps_moxdelay = 0.2;      // "MOX Wait" 0.2 sec
   tx->ps_loopdelay = 0.0;     // "CAL Wait" 0.0 sec
   tx->feedback = 0;
@@ -2486,61 +2457,8 @@ double tx_ps_getpk(const TRANSMITTER *tx) {
 void tx_ps_getdisp(const TRANSMITTER *tx, double *x, double *ym, double *yc, double *ys,
                    double *xm_cor, double *ym_cor, double *xa_cor, double *ya_cor,
                    int *nsamps, int *cpts, double *phs_ref_deg) {
-#ifdef WDSP1
-  enum { correction_points = 512 };
-  const int ints = tx->ps_ints;
-  const int samples = ints * tx->ps_spi;
-  double cm[4 * ints];
-  double cc[4 * ints];
-  double cs[4 * ints];
-  /*
-   * WDSP 1.29 returns raw amplifier samples and cubic spline
-   * coefficients.  Convert them to the common WDSP 2.00-style data
-   * consumed by AmpView.  yc/ys are intentionally swapped so that the
-   * common plot expression atan2(ys, yc) matches the 1.29/Thetis
-   * expression atan2(yc, ys).
-   */
-  GetPSDisp(tx->id, x, ym, ys, yc, cm, cc, cs);
-  *nsamps = samples;
-  *cpts = correction_points;
-  *phs_ref_deg = atan2(ys[samples - 1], yc[samples - 1]) * 180.0 / M_PI;
-  double dx = 1.0 / (double)ints;
-  double qyc = cc[4 * (ints - 1) + 0]
-               + dx * (cc[4 * (ints - 1) + 1]
-                       + dx * (cc[4 * (ints - 1) + 2]
-                               + dx * cc[4 * (ints - 1) + 3]));
-  double qys = cs[4 * (ints - 1) + 0]
-               + dx * (cs[4 * (ints - 1) + 1]
-                       + dx * (cs[4 * (ints - 1) + 2]
-                               + dx * cs[4 * (ints - 1) + 3]));
-  const double correction_phase_ref = atan2(qys, qyc) * 180.0 / M_PI;
-  for (int i = 0; i < correction_points; i++) {
-    const double qx = (double)(i + 1) / (double)correction_points;
-    int k = (int)(qx * ints);
-    if (k >= ints) { k = ints - 1; }
-    const double interval_start = (double)k / (double)ints;
-    const double local_x = qx - interval_start;
-    const double qym = cm[4 * k + 0]
-                       + local_x * (cm[4 * k + 1]
-                                    + local_x * (cm[4 * k + 2]
-                                      + local_x * cm[4 * k + 3]));
-    qyc = cc[4 * k + 0]
-          + local_x * (cc[4 * k + 1]
-                       + local_x * (cc[4 * k + 2]
-                                    + local_x * cc[4 * k + 3]));
-    qys = cs[4 * k + 0]
-          + local_x * (cs[4 * k + 1]
-                       + local_x * (cs[4 * k + 2]
-                                    + local_x * cs[4 * k + 3]));
-    xm_cor[i] = qx;
-    ym_cor[i] = qym;
-    xa_cor[i] = qx;
-    ya_cor[i] = atan2(qys, qyc) * 180.0 / M_PI - correction_phase_ref;
-  }
-#else
   GetPSDisp(tx->id, x, ym, yc, ys, xm_cor, ym_cor, xa_cor, ya_cor,
             nsamps, cpts, phs_ref_deg);
-#endif
 }
 
 void tx_ps_mox(const TRANSMITTER *tx, int state) {
@@ -2645,22 +2563,13 @@ void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
 void tx_ps_setparams(const TRANSMITTER *tx) {
   SetPSHWPeak(tx->id, tx->ps_setpk);
   t_print("%s: TX id=%d PS tx->ps_setpk=%g\n", __func__, tx->id, tx->ps_setpk);
-#ifdef WDSP1
-  SetPSMapMode(tx->id, tx->ps_map);
-  SetPSPtol(tx->id, tx->ps_ptol ? 0.4 : 0.8);
-  SetPSIntsAndSpi(tx->id, tx->ps_ints, tx->ps_spi);
-  SetPSStabilize(tx->id, tx->ps_stbl);
-  SetPSPinMode(tx->id, tx->ps_pin);
-#endif
   SetPSMoxDelay(tx->id, tx->ps_moxdelay);
-#ifndef WDSP1
   static const double ps_deadlock_min_frac[] = {0.06, 0.04, 0.02};
   int tolerance_mode = tx->ps_tolerance_mode;
   if (tolerance_mode < 0 || tolerance_mode > 2) {
     tolerance_mode = 2;
   }
   SetPSDeadlockMinFrac(tx->id, ps_deadlock_min_frac[tolerance_mode]);
-#endif
   // Note that the TXDelay is internally stored in NanoSeconds
   SetPSTXDelay(tx->id, 1E-9 * tx->ps_ampdelay);
   SetPSLoopDelay(tx->id, tx->ps_loopdelay);
@@ -2755,12 +2664,10 @@ void tx_set_compressor(TRANSMITTER *tx) {
   t_print("%s: PH-ROT state %d, stages %d, freq %.1fHz\n",
           __func__, tx->phrot_enable, tx->phrot_stage, tx->phrot_freq);
   SetTXACFCOMPprofile(tx->id, 12, tx->cfc_freq + 1, tx->cfc_lvl + 1, tx->cfc_post + 1);
-#ifndef WDSP1
   SetTXACFCOMPCompCurve(tx->id, tx->cfc_comp_curve_degree, tx->cfc_comp_curve_r, tx->cfc_comp_curve_umethod);
   SetTXACFCOMPCompWeights(tx->id, 12, tx->cfc_comp_weight);
   SetTXACFCOMPPeqCurve(tx->id, tx->cfc_post_curve_degree, tx->cfc_post_curve_r, tx->cfc_post_curve_umethod);
   SetTXACFCOMPPeqWeights(tx->id, 12, tx->cfc_post_weight);
-#endif
   SetTXACFCOMPPrecomp(tx->id, tx->cfc_lvl[0]);
   SetTXACFCOMPRun(tx->id, tx->cfc);  // Pre CFC on/off
   SetTXACFCOMPPrePeq(tx->id, tx->cfc_post[0]);
@@ -2919,10 +2826,8 @@ void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
 
 void tx_set_equalizer(TRANSMITTER *tx) {
   SetTXAEQProfile(tx->id, 12, tx->eq_freq, tx->eq_gain);
-#ifndef WDSP1
   SetTXAEQCurve(tx->id, tx->eq_curve_degree, tx->eq_curve_r, tx->eq_curve_umethod);
   SetTXAEQWeights(tx->id, 12, tx->eq_weight);
-#endif
   SetTXAEQRun(tx->id, tx->eq_enable);
   t_print("%s: TX-EQ state: %d, Gain: %.1fdb\n", __func__, tx->eq_enable, tx->eq_gain[0]);
 }

@@ -390,11 +390,7 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     } else if (active_receiver->nr == 3) {
       active_receiver->nr = 4;
     } else if (active_receiver->nr == 4) {
-#ifndef WDSP1
       active_receiver->nr = 5;
-#else
-      active_receiver->nr = 0;
-#endif
     } else {
       active_receiver->nr = 0;
     }

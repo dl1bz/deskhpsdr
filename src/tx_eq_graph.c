@@ -9,9 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef WDSP1
-  #include <wdsp.h>
-#endif
+#include <wdsp.h>
 
 #include "tx_eq_graph.h"
 #include "radio.h"
@@ -100,10 +98,8 @@ static void save_curve_to_mode(TX_EQ_GRAPH *g) {
 }
 
 static void apply_curve(TX_EQ_GRAPH *g) {
-#ifndef WDSP1
   SetTXAEQCurve(g->tx->id, g->tx->eq_curve_degree, g->tx->eq_curve_r, g->tx->eq_curve_umethod);
   SetTXAEQWeights(g->tx->id, TX_EQ_POINTS, g->tx->eq_weight);
-#endif
   gtk_widget_queue_draw(g->area);
 }
 
@@ -170,7 +166,6 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
   }
   cairo_set_source_rgba(cr, fg.red, fg.green, fg.blue, 0.9);
   cairo_set_line_width(cr, 2.0);
-#ifndef WDSP1
   if (g->tx->eq_curve_degree >= 1) {
     double X[TX_EQ_DRAW_POINTS];
     double Y[TX_EQ_DRAW_POINTS];
@@ -190,9 +185,7 @@ static gboolean draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
       }
     }
     if (started) { cairo_stroke(cr); }
-  } else
-#endif
-  {
+  } else {
     for (int i = 1; i <= TX_EQ_POINTS; i++) {
       double f = (g->dragging && g->selected == i) ? g->drag_freq : g->tx->eq_freq[i];
       double gain = (g->dragging && g->selected == i) ? g->drag_gain : g->tx->eq_gain[i];
