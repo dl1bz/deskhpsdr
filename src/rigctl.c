@@ -5559,13 +5559,13 @@ int parse_cmd(void *data) {
       //NOTE      y : 0-255 mapped to 0-100
       //ENDDEF
       if (command[3] == ';') {
-        int id = atoi(&command[2]);
+        int id = SET(command[2] == '1');
         RXCHECK(id,
                 snprintf(reply, 256, "SQ%d%03d;", id, (int)((double) receiver[id]->squelch / 100.0 * 255.0 + 0.5));
                 send_resp(client->fd, reply);
                )
       } else if (command[6] == ';') {
-        int id = atoi(&command[2]);
+        int id = SET(command[2] == '1');
         int p2 = atoi(&command[3]);
         RXCHECK(id,
                 receiver[id]->squelch = (int)((double) p2 / 255.0 * 100.0 + 0.5);
