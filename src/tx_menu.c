@@ -1318,7 +1318,7 @@ void tx_menu(GtkWidget *parent) {
   int col = 0;
   btn = gtk_button_new_with_label("Close");
   gtk_widget_set_name(btn, "close_button");
-  g_signal_connect(btn, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(btn, "clicked", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   //
   // Must init the containers here since setting the buttons emits
