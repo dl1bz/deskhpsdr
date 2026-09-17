@@ -1667,7 +1667,7 @@ void radio_start_radio(void) {
       // it does not fit  in windows 640 pixels wide.
       // if needed, the MAC address of the radio can be
       // found in the ABOUT menu.
-      snprintf(text, 1024, "%s by DL1BZ %s[%s] :: WDSP Version %d.%02d :: SDR Device: %s (%s) %s on %s [%s]",
+      snprintf(text, 1024, "%s by DL1BZ %s[%s] :: WDSP Version %d.%02d :: SDR Device: %s (%s) %s on %s [%s] :: %s",
                PGNAME,
                build_version,
                unameData.machine,
@@ -1677,7 +1677,8 @@ void radio_start_radio(void) {
                version,
                ip,
                iface,
-               p);
+               p,
+               build_audio);
     }
     break;
   }
@@ -1803,6 +1804,13 @@ void radio_start_radio(void) {
   radio_change_region(region);
   radio_create_visual();
   radio_reconfigure_screen();
+  // Apply the saved main-window position only after the startup window has
+  // been converted to the radio UI.  Doing this during radio_restore_state()
+  // visibly moved the still-active startup window while radio initialization
+  // was in progress.
+  if (!use_wayland && (window_x_pos < screen_width - 100) && (window_y_pos < screen_height - 100)) {
+    gtk_window_move(GTK_WINDOW(top_window), window_x_pos, window_y_pos);
+  }
   /*
    * The CW engine is used by CAT/TCI CW text paths and must not depend on
    * rigctl being enabled.  Start it once during radio initialization;
@@ -2772,15 +2780,6 @@ static void radio_restore_state(void) {
   //
   if (display_width  > screen_width) { display_width  = screen_width; }
   if (display_height > screen_height) { display_height = screen_height; }
-  //
-  // Re-position top window to the position in the props file, provided
-  // there are at least 100 pixels left. This assumes the default setting
-  // (GDK_GRAVITY_NORTH_WEST) where the "position" refers to the top left corner
-  // of the window.
-  //
-  if (!use_wayland && (window_x_pos < screen_width - 100) && (window_y_pos < screen_height - 100)) {
-    gtk_window_move(GTK_WINDOW(top_window), window_x_pos, window_y_pos);
-  }
   GetPropC0("radio_bgcolor",                                 radio_bgcolor);
   GetPropC0("mwin_bgcolor",                                  mwin_bgcolor);
   GetPropC0("tx_pan_fill_col",                               tx_pan_fill_col);
