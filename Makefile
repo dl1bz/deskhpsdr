@@ -592,7 +592,7 @@ endif
 endif
 
 ifeq ($(UNAME_S), Darwin)
-SYS_LIBS=-framework IOKit -framework Cocoa -framework WebKit -framework CoreText
+SYS_LIBS=-framework IOKit -framework Cocoa -framework WebKit -framework CoreText -framework SystemConfiguration
 endif
 
 ##############################################################################
