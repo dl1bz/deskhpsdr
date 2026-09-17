@@ -1973,7 +1973,7 @@ void rx_begin_off(const RECEIVER *rx) {
 
 void rx_wait_off(const RECEIVER *rx) {
   // Complete a previously started receiver shutdown.
-  WaitChannelFlush(rx->id, 100);
+  SetChannelState(rx->id, 0, 1);
 }
 
 void rx_off(const RECEIVER *rx) {

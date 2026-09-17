@@ -289,7 +289,6 @@ WDSP_API void OpenChannel (int channel, int in_size, int dsp_size, int input_sam
                            int bfo);
 WDSP_API void SetAllRates (int channel, int in_rate, int dsp_rate, int out_rate);
 WDSP_API int SetChannelState (int channel, int state, int dmode);
-WDSP_API int WaitChannelFlush (int channel, int timeout_ms);
 WDSP_API void SetChannelTDelayDown (int channel, double time);
 WDSP_API void SetChannelTDelayUp (int channel, double time);
 WDSP_API void SetChannelTSlewDown (int channel, double time);

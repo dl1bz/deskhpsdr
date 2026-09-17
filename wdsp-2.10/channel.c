@@ -236,8 +236,7 @@ void SetAllRates(int channel, int in_rate, int dsp_rate, int out_rate) {
   }
 }
 
-PORT
-int WaitChannelFlush(int channel, int timeout_ms) {
+static int waitChannelFlush(int channel, int timeout_ms) {
   IOB a = ch[channel].iob.pc;
   int count = 0;
   while (_InterlockedAnd(&ch[channel].flushflag, 1) && count < timeout_ms) {
@@ -265,7 +264,7 @@ int SetChannelState(int channel, int state, int dmode) {
       InterlockedBitTestAndSet(&a->slew.downflag, 0);
       InterlockedBitTestAndSet(&ch[channel].flushflag, 0);
       if (dmode) {
-        WaitChannelFlush(channel, timeout);
+        waitChannelFlush(channel, timeout);
       }
       break;
     case 1:
@@ -275,6 +274,8 @@ int SetChannelState(int channel, int state, int dmode) {
       InterlockedBitTestAndSet(&ch[channel].exchange, 0);
       break;
     }
+  } else if (!state && dmode) {
+    waitChannelFlush(channel, timeout);
   }
   return prior_state;
 }

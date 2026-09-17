@@ -272,7 +272,7 @@ typedef struct {
 
 static void *wdsp_thread_start(void *context) {
   WDSP_THREAD_START *start = (WDSP_THREAD_START *)context;
-  void(__cdecl *start_address)(void *) = start->start_address;
+  void(__cdecl * start_address)(void *) = start->start_address;
   void *arglist = start->arglist;
   char tname[64];
   snprintf(tname, sizeof(tname), "%s", start->tname);
