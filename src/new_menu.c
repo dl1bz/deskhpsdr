@@ -76,7 +76,6 @@
 GtkWidget *main_menu = NULL;
 GtkWidget *sub_menu = NULL;
 static GtkWidget *restart_b = NULL;
-static gboolean opening_submenu_from_main = FALSE;
 
 int active_menu = NO_MENU;
 
@@ -89,38 +88,190 @@ int menu_active_receiver_changed(void *data) {
 }
 
 static void cleanup(void) {
-  if (main_menu != NULL && !opening_submenu_from_main) {
+  if (main_menu != NULL) {
     gtk_widget_destroy(main_menu);
     main_menu = NULL;
   }
   if (sub_menu != NULL) {
     gtk_window_close(GTK_WINDOW(sub_menu));
-    sub_menu = NULL;
   }
   active_menu = NO_MENU;
 }
 
-static void return_to_main_menu_cb(GtkWidget *widget, gpointer data) {
+typedef enum {
+  MAIN_SUBMENU_ABOUT,
+  MAIN_SUBMENU_RADIO,
+  MAIN_SUBMENU_RX,
+  MAIN_SUBMENU_ANT,
+  MAIN_SUBMENU_DISPLAY,
+  MAIN_SUBMENU_PA,
+  MAIN_SUBMENU_RIGCTL,
+  MAIN_SUBMENU_TOOLBAR,
+  MAIN_SUBMENU_CW,
+  MAIN_SUBMENU_OC,
+  MAIN_SUBMENU_EXTRAS,
+  MAIN_SUBMENU_DDC,
+  MAIN_SUBMENU_XVTR,
+  MAIN_SUBMENU_EQUALIZER,
+  MAIN_SUBMENU_METER,
+  MAIN_SUBMENU_MODE,
+  MAIN_SUBMENU_FILTER,
+  MAIN_SUBMENU_NOISE,
+  MAIN_SUBMENU_VFO,
+  MAIN_SUBMENU_BAND,
+  MAIN_SUBMENU_BANDSTACK,
+  MAIN_SUBMENU_STORE,
+  MAIN_SUBMENU_AGC,
+  MAIN_SUBMENU_VOX,
+  MAIN_SUBMENU_DSP,
+  MAIN_SUBMENU_SCREEN,
+  MAIN_SUBMENU_DIVERSITY,
+  MAIN_SUBMENU_TX,
+  MAIN_SUBMENU_PS,
+#ifdef MIDI
+  MAIN_SUBMENU_MIDI,
+#endif
+#ifdef SATURN
+  MAIN_SUBMENU_SATURN,
+#endif
+} MAIN_SUBMENU;
+
+static gboolean restore_main_menu_idle(gpointer data) {
+  (void)data;
   if (main_menu != NULL) {
     gtk_widget_show(main_menu);
     gtk_window_present(GTK_WINDOW(main_menu));
   }
+  return G_SOURCE_REMOVE;
 }
 
-static void submenu_from_main_begin(void) {
-  opening_submenu_from_main = TRUE;
-  if (main_menu != NULL) {
-    gtk_widget_hide(main_menu);
+static void return_to_main_menu_cb(GtkWidget *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  g_idle_add(restore_main_menu_idle, NULL);
+}
+
+static void open_submenu_from_main(MAIN_SUBMENU menu) {
+  if (main_menu == NULL) {
+    return;
   }
-}
-
-static void submenu_from_main_end(void) {
-  opening_submenu_from_main = FALSE;
+  gtk_widget_hide(main_menu);
+  switch (menu) {
+#ifdef SATURN
+  case MAIN_SUBMENU_SATURN:
+    saturn_menu(top_window);
+    break;
+#endif
+  case MAIN_SUBMENU_ABOUT:
+    about_menu(top_window);
+    break;
+  case MAIN_SUBMENU_RADIO:
+    radio_menu(top_window);
+    break;
+  case MAIN_SUBMENU_RX:
+    rx_menu(top_window);
+    break;
+  case MAIN_SUBMENU_ANT:
+    ant_menu(top_window);
+    break;
+  case MAIN_SUBMENU_DISPLAY:
+    display_menu(top_window);
+    break;
+  case MAIN_SUBMENU_PA:
+    pa_menu(top_window);
+    break;
+  case MAIN_SUBMENU_RIGCTL:
+    rigctl_menu(top_window);
+    break;
+  case MAIN_SUBMENU_TOOLBAR:
+    toolbar_menu(top_window);
+    break;
+  case MAIN_SUBMENU_CW:
+    cw_menu(top_window);
+    break;
+  case MAIN_SUBMENU_OC:
+    oc_menu(top_window);
+    break;
+  case MAIN_SUBMENU_EXTRAS:
+    extras_menu(top_window);
+    break;
+  case MAIN_SUBMENU_DDC:
+    ddc_menu(top_window);
+    break;
+  case MAIN_SUBMENU_XVTR:
+    xvtr_menu(top_window);
+    break;
+  case MAIN_SUBMENU_EQUALIZER:
+    equalizer_menu(top_window);
+    break;
+  case MAIN_SUBMENU_METER:
+    meter_menu(top_window);
+    break;
+  case MAIN_SUBMENU_MODE:
+    mode_menu(top_window);
+    active_menu = MODE_MENU;
+    break;
+  case MAIN_SUBMENU_FILTER:
+    filter_menu(top_window);
+    active_menu = FILTER_MENU;
+    break;
+  case MAIN_SUBMENU_NOISE:
+    noise_menu(top_window);
+    active_menu = NOISE_MENU;
+    break;
+  case MAIN_SUBMENU_VFO:
+    vfo_menu(top_window, active_receiver->id);
+    active_menu = VFO_MENU;
+    break;
+  case MAIN_SUBMENU_BAND:
+    band_menu(top_window);
+    active_menu = BAND_MENU;
+    break;
+  case MAIN_SUBMENU_BANDSTACK:
+    bandstack_menu(top_window);
+    active_menu = BANDSTACK_MENU;
+    break;
+  case MAIN_SUBMENU_STORE:
+    store_menu(top_window);
+    active_menu = STORE_MENU;
+    break;
+  case MAIN_SUBMENU_AGC:
+    agc_menu(top_window);
+    active_menu = AGC_MENU;
+    break;
+  case MAIN_SUBMENU_VOX:
+    vox_menu(top_window);
+    break;
+  case MAIN_SUBMENU_DSP:
+    fft_menu(top_window);
+    break;
+  case MAIN_SUBMENU_SCREEN:
+    screen_menu(top_window);
+    break;
+  case MAIN_SUBMENU_DIVERSITY:
+    diversity_menu(top_window);
+    break;
+  case MAIN_SUBMENU_TX:
+    if (can_transmit) {
+      tx_menu(top_window);
+    }
+    break;
+  case MAIN_SUBMENU_PS:
+    if (can_transmit) {
+      ps_menu(top_window);
+    }
+    break;
+#ifdef MIDI
+  case MAIN_SUBMENU_MIDI:
+    midi_menu(top_window);
+    break;
+#endif
+  }
   if (sub_menu != NULL) {
     g_signal_connect_after(sub_menu, "destroy", G_CALLBACK(return_to_main_menu_cb), NULL);
-  } else if (main_menu != NULL) {
-    gtk_widget_show(main_menu);
-    gtk_window_present(GTK_WINDOW(main_menu));
+    gtk_window_present(GTK_WINDOW(sub_menu));
+  } else {
+    g_idle_add(restore_main_menu_idle, NULL);
   }
 }
 
@@ -161,125 +312,126 @@ static gboolean minimize_cb(GtkWidget *widget, GdkEventButton *event, gpointer d
 #ifdef SATURN
 // cppcheck-suppress constParameterCallback
 static gboolean saturn_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  saturn_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_SATURN);
   return TRUE;
 }
 
 #endif
 
 static gboolean about_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  about_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_ABOUT);
   return TRUE;
 }
 
 static gboolean radio_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  radio_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_RADIO);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean rx_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_rx();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_RX);
   return TRUE;
 }
 
 static gboolean ant_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  ant_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_ANT);
   return TRUE;
 }
 
 static gboolean display_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  display_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_DISPLAY);
   return TRUE;
 }
 
 static gboolean pa_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  pa_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_PA);
   return TRUE;
 }
 
 static gboolean rigctl_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  rigctl_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_RIGCTL);
   return TRUE;
 }
 
 static gboolean toolbar_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  toolbar_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_TOOLBAR);
   return TRUE;
 }
 
 static gboolean cw_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  cw_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_CW);
   return TRUE;
 }
 
 static gboolean oc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  oc_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_OC);
   return TRUE;
 }
 
 static gboolean extras_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  extras_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_EXTRAS);
   return TRUE;
 }
 
 static gboolean ddc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  ddc_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_DDC);
   return TRUE;
 }
 
 
 static gboolean xvtr_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  xvtr_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_XVTR);
   return TRUE;
 }
 
 static gboolean equalizer_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  equalizer_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_EQUALIZER);
   return TRUE;
 }
 
@@ -295,9 +447,10 @@ void start_meter(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean meter_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_meter();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_METER);
   return TRUE;
 }
 
@@ -339,57 +492,64 @@ void start_filter(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean mode_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_mode();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_MODE);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean filter_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_filter();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_FILTER);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean noise_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_noise();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_NOISE);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean vfo_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_vfo(active_receiver->id);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_VFO);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean band_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_band();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_BAND);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean bstk_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_bandstack();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_BANDSTACK);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean store_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_store();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_STORE);
   return TRUE;
 }
 
@@ -404,9 +564,10 @@ void start_noise(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean agc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_agc();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_AGC);
   return TRUE;
 }
 
@@ -426,9 +587,10 @@ void start_vox(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean vox_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_vox();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_VOX);
   return TRUE;
 }
 
@@ -439,9 +601,10 @@ void start_dsp(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean dsp_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_dsp();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_DSP);
   return TRUE;
 }
 
@@ -451,18 +614,19 @@ void start_diversity(void) {
 }
 
 static gboolean screen_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  cleanup();
-  screen_menu(top_window);
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_SCREEN);
   return TRUE;
 }
 
 // cppcheck-suppress constParameterCallback
 static gboolean diversity_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_diversity();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_DIVERSITY);
   return TRUE;
 }
 
@@ -493,9 +657,10 @@ void start_tx(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean tx_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_tx();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_TX);
   return TRUE;
 }
 
@@ -508,9 +673,10 @@ void start_ps(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean ps_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_ps();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_PS);
   return TRUE;
 }
 
@@ -522,9 +688,10 @@ void start_midi(void) {
 
 // cppcheck-suppress constParameterCallback
 static gboolean midi_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  submenu_from_main_begin();
-  start_midi();
-  submenu_from_main_end();
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_MIDI);
   return TRUE;
 }
 
