@@ -393,8 +393,10 @@ int ozy_software_version;
 int mercury_software_version[2] = {0, 0};
 int penelope_software_version;
 
-int adc0_overload = 0;
-int adc1_overload = 0;
+int adc0_p_ovl = 0;
+int adc1_p_ovl = 0;
+int adc0_fs_ovl = 0;
+int adc1_fs_ovl = 0;
 int tx_fifo_underrun = 0;
 int tx_fifo_overrun = 0;
 int sequence_errors = 0;

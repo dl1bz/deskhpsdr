@@ -822,10 +822,10 @@ static gpointer ozy_i2c_thread(gpointer arg) {
         break;
       case 2:
         ozy_i2c_readpwr(I2C_MERC1_ADC_OFS);
-        adc0_overload |= mercury_overload[0];
+        adc0_p_ovl |= mercury_overload[0];
         if (mercury_software_version[1]) {
           ozy_i2c_readpwr(I2C_MERC2_ADC_OFS);
-          adc1_overload |= mercury_overload[1];
+          adc1_p_ovl |= mercury_overload[1];
         }
         cycle = 3;
         break;
@@ -1689,7 +1689,7 @@ static void process_control_bytes(void) {
   }
   switch ((control_in[0] >> 3) & 0x1F) {
   case 0:
-    adc0_overload |= (control_in[1] & 0x01);
+    adc0_p_ovl |= (control_in[1] & 0x01);
     //
     // Hermes IOx inputs (x=1,2,3,4), used for TxInhibit and AutoTune
     // This inputs are active if the bit is cleared
@@ -1781,8 +1781,8 @@ static void process_control_bytes(void) {
     ADC1 = adc1_acc / 16;
     break;
   case 4:
-    adc0_overload |= control_in[1] & 0x01;
-    adc1_overload |= control_in[2] & 0x01;
+    adc0_p_ovl |= control_in[1] & 0x01;
+    adc1_p_ovl |= control_in[2] & 0x01;
     if (device == DEVICE_METIS || device == DEVICE_OZY) {
       //
       // If  Mercury card #1 is reported, assign RX1 with the first card (ADC1)

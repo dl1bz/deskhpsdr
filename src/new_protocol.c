@@ -467,7 +467,7 @@ static gpointer new_protocol_timer_thread(gpointer data);
 static gpointer high_priority_thread(gpointer data);
 static gpointer mic_line_thread(gpointer data);
 static gpointer iq_thread(gpointer data);
-static void  process_iq_data(const unsigned char *buffer, RECEIVER *rx);
+static void  process_iq_data(const unsigned char *buffer, RECEIVER *rx, int adc);
 static void  process_ps_iq_data(const unsigned char *buffer);
 static void process_div_iq_data(const unsigned char *buffer);
 static void  process_high_priority(void);
@@ -3198,7 +3198,8 @@ static gpointer iq_thread(gpointer data) {
     case RXACTION_SKIP:
       break;
     case RXACTION_NORMAL:
-      process_iq_data(buffer, receiver[rxid[ddc]]);
+      process_iq_data(buffer, receiver[rxid[ddc]],
+                      p2_receiver_adc_assignment(ddc, receiver[rxid[ddc]]->adc));
       break;
     case RXACTION_PS:
       process_ps_iq_data(buffer);
@@ -3225,7 +3226,7 @@ static double p2_iq_sample_gain(const RECEIVER *rx) {
   return 1.0;
 }
 
-static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
+static void process_iq_data(const unsigned char *buffer, RECEIVER *rx, int adc) {
   int b;
   int leftsample;
   int rightsample;
@@ -3258,7 +3259,11 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
         leftsample <= P2_SOFT_ADC_OVF_NEG_THRESHOLD ||
         rightsample >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
         rightsample <= P2_SOFT_ADC_OVF_NEG_THRESHOLD) {
-      adc0_overload = 1;
+      if (adc == 1) {
+        adc1_fs_ovl = 1;
+      } else {
+        adc0_fs_ovl = 1;
+      }
     }
     // The "obscure" constant 1.1920928955078125E-7 is 1/(2^23)
     leftsampledouble = (double) leftsample * 1.1920928955078125E-7;
@@ -3307,6 +3312,12 @@ static void process_div_iq_data(const unsigned char *buffer) {
     rightsample0  = (int)((signed char) buffer[b++]) << 16;
     rightsample0 |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
     rightsample0 |= (int)((unsigned char) buffer[b++] & 0xFF);
+    if (leftsample0 >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
+        leftsample0 <= P2_SOFT_ADC_OVF_NEG_THRESHOLD ||
+        rightsample0 >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
+        rightsample0 <= P2_SOFT_ADC_OVF_NEG_THRESHOLD) {
+      adc0_fs_ovl = 1;
+    }
     leftsampledouble0 = (double) leftsample0 * 1.1920928955078125E-7;
     rightsampledouble0 = (double) rightsample0 * 1.1920928955078125E-7;
     leftsample1   = (int)((signed char) buffer[b++]) << 16;
@@ -3315,6 +3326,12 @@ static void process_div_iq_data(const unsigned char *buffer) {
     rightsample1  = (int)((signed char) buffer[b++]) << 16;
     rightsample1 |= (int)((((unsigned char) buffer[b++]) << 8) & 0xFF00);
     rightsample1 |= (int)((unsigned char) buffer[b++] & 0xFF);
+    if (leftsample1 >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
+        leftsample1 <= P2_SOFT_ADC_OVF_NEG_THRESHOLD ||
+        rightsample1 >= P2_SOFT_ADC_OVF_POS_THRESHOLD ||
+        rightsample1 <= P2_SOFT_ADC_OVF_NEG_THRESHOLD) {
+      adc1_fs_ovl = 1;
+    }
     leftsampledouble1 = (double) leftsample1 * 1.1920928955078125E-7;
     rightsampledouble1 = (double) rightsample1 * 1.1920928955078125E-7;
     double iq_gain = p2_iq_sample_gain(receiver[0]);
@@ -3450,8 +3467,8 @@ static void process_high_priority(void) {
   }
   tx_fifo_overrun |= (buffer[4] & 0x40) >> 6;
   tx_fifo_underrun |= (buffer[4] & 0x20) >> 5;
-  adc0_overload |= buffer[5] & 0x01;
-  adc1_overload |= ((buffer[5] & 0x02) >> 1);
+  adc0_p_ovl |= buffer[5] & 0x01;
+  adc1_p_ovl |= ((buffer[5] & 0x02) >> 1);
   if ((buffer[5] & 0x03) != 0) {
     t_print("%s: ADC overload flags buffer[5]=0x%02X adc0=%d adc1=%d\n",
             __func__,

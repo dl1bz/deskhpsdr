@@ -2430,11 +2430,11 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
         sequence_error_count = 0;
       }
     }
-    if (adc0_overload || adc1_overload) {
+    if (adc0_p_ovl || adc1_p_ovl) {
       static unsigned int adc_error_count = 0;
       cairo_move_to(cr, 100.0, 70.0);
       cairo_set_source_rgba(cr, COLOUR_ALARM);
-      if (adc0_overload && !adc1_overload) {
+      if (adc0_p_ovl && !adc1_p_ovl) {
         if (active_receiver->panadapter_ovf_on) {
 #if defined(__AUTOG__)
           if (device == DEVICE_HERMES_LITE2) {
@@ -2455,12 +2455,12 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #endif
         }
       }
-      if (adc1_overload && !adc0_overload) {
+      if (adc1_p_ovl && !adc0_p_ovl) {
         if (active_receiver->panadapter_ovf_on) {
           cairo_show_text(cr, "ADC1 overload");
         }
       }
-      if (adc0_overload && adc1_overload) {
+      if (adc0_p_ovl && adc1_p_ovl) {
         if (active_receiver->panadapter_ovf_on) {
           cairo_show_text(cr, "ADC0+1 overload");
         }
@@ -2469,16 +2469,16 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #if defined (__AUTOG__)
       if (!autogain_enabled && adc_error_count > 2 * fps) {
         adc_error_count = 0;
-        adc0_overload = 0;
-        adc1_overload = 0;
+        adc0_p_ovl = 0;
+        adc1_p_ovl = 0;
 #ifdef USBOZY
         mercury_overload[0] = 0;
         mercury_overload[1] = 0;
 #endif
       } else if (adc_error_count > 1 * fps) {
         adc_error_count = 0;
-        adc0_overload = 0;
-        adc1_overload = 0;
+        adc0_p_ovl = 0;
+        adc1_p_ovl = 0;
 #ifdef USBOZY
         mercury_overload[0] = 0;
         mercury_overload[1] = 0;
@@ -2487,8 +2487,8 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
 #else
       if (adc_error_count > 2 * fps) {
         adc_error_count = 0;
-        adc0_overload = 0;
-        adc1_overload = 0;
+        adc0_p_ovl = 0;
+        adc1_p_ovl = 0;
 #ifdef USBOZY
         mercury_overload[0] = 0;
         mercury_overload[1] = 0;
@@ -2496,9 +2496,29 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
       }
 #endif
     }
+    if (adc0_fs_ovl || adc1_fs_ovl) {
+      static unsigned int adc_fs_error_count = 0;
+      cairo_move_to(cr, 100.0, 90.0);
+      cairo_set_source_rgba(cr, COLOUR_ALARM);
+      if (active_receiver->panadapter_ovf_on) {
+        if (adc0_fs_ovl && adc1_fs_ovl) {
+          cairo_show_text(cr, "ADC0+1 Full Scale");
+        } else if (adc0_fs_ovl) {
+          cairo_show_text(cr, "ADC0 Full Scale");
+        } else {
+          cairo_show_text(cr, "ADC1 Full Scale");
+        }
+      }
+      adc_fs_error_count++;
+      if (adc_fs_error_count > 2 * fps) {
+        adc_fs_error_count = 0;
+        adc0_fs_ovl = 0;
+        adc1_fs_ovl = 0;
+      }
+    }
     if (high_swr_seen) {
       static unsigned int swr_protection_count = 0;
-      cairo_move_to(cr, 100.0, 90.0);
+      cairo_move_to(cr, 100.0, 110.0);
       snprintf(text, sizeof(text), "! High SWR");
       cairo_show_text(cr, text);
       swr_protection_count++;
@@ -2509,12 +2529,12 @@ void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
     }
     static unsigned int tx_fifo_count = 0;
     if (tx_fifo_underrun) {
-      cairo_move_to(cr, 100.0, 110.0);
+      cairo_move_to(cr, 100.0, 130.0);
       cairo_show_text(cr, "TX Underrun");
       tx_fifo_count++;
     }
     if (tx_fifo_overrun) {
-      cairo_move_to(cr, 100.0, 130.0);
+      cairo_move_to(cr, 100.0, 150.0);
       cairo_show_text(cr, "TX Overrun");
       tx_fifo_count++;
     }
