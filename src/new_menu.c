@@ -96,6 +96,7 @@ static void cleanup(void) {
     gtk_window_close(GTK_WINDOW(sub_menu));
   }
   active_menu = NO_MENU;
+  // radio_save_state();
 }
 
 typedef enum {

@@ -54,10 +54,10 @@ static void cleanup(void) {
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
-    // radio_save_state();
+    radio_save_state();
     int _mode = vfo_get_tx_mode();
     if (_mode < 3 && can_transmit) {
-      showAudioProfileSaveDialog();
+      // showAudioProfileSaveDialog();
       // char fn[64];
       // snprintf(fn, sizeof(fn), "audio_profile_%d.prop", mic_prof.nr);
       // audioSaveProfile(fn);
