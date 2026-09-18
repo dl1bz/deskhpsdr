@@ -1378,6 +1378,11 @@ void tx_menu(GtkWidget *parent) {
     col += 3;
     load_button = gtk_button_new_with_label("Activate");
     gtk_widget_set_name(load_button, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(load_button,
+                                "Load and activate the selected Audio_Profile,\n"
+                                "which contain the WDSP RX and TX audio chain.\n\n"
+                                "Do not confuse:\n"
+                                "This button don't load the whole SDR device config !");
     gtk_grid_attach(GTK_GRID(tx_grid), load_button, col, row, 1, 1);
     g_signal_connect(load_button, "clicked", G_CALLBACK(load_button_clicked_cb), load_button);
     if (!check_file(mic_prof.nr)) {
@@ -1388,6 +1393,11 @@ void tx_menu(GtkWidget *parent) {
     col++;
     save_button = gtk_button_new_with_label("Save");
     gtk_widget_set_name(save_button, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(save_button,
+                                "Save the selected Audio_Profile,\n"
+                                "which contain the WDSP RX and TX audio chain.\n\n"
+                                "Do not confuse:\n"
+                                "This button don't save the whole SDR device config !");
     gtk_grid_attach(GTK_GRID(tx_grid), save_button, col, row, 1, 1);
     g_signal_connect(save_button, "clicked", G_CALLBACK(save_button_clicked_cb), save_button);
     col = 0;
@@ -1414,12 +1424,16 @@ void tx_menu(GtkWidget *parent) {
     col += 3;
     GtkWidget *loadfile_btn = gtk_button_new_with_label("Import file");
     gtk_widget_set_name(loadfile_btn, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(loadfile_btn,
+                                "Load an exported Audio_Profile file");
     gtk_grid_attach(GTK_GRID(tx_grid), loadfile_btn, col, row, 1, 1);
     g_signal_connect(loadfile_btn, "clicked", G_CALLBACK(audio_profile_load_cb),
                      dialog);   // <-- wichtig: TX-Menu-Dialog als Parent
     col++;
     GtkWidget *savefile_btn = gtk_button_new_with_label("Export file");
     gtk_widget_set_name(savefile_btn, "boldlabel_blue");
+    gtk_widget_set_tooltip_text(savefile_btn,
+                                "Export the current Audio_Profile into an export file for transport.");
     gtk_grid_attach(GTK_GRID(tx_grid), savefile_btn, col, row, 1, 1);
     g_signal_connect(savefile_btn, "clicked", G_CALLBACK(audio_profile_save_cb),
                      dialog);
