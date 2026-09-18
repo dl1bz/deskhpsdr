@@ -234,7 +234,7 @@ void equalizer_menu(GtkWidget *parent) {
   }
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
-  gtk_window_set_default_size(GTK_WINDOW(dialog), 580, 600);  // set window size (can expand)
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 580, 550);  // set window size (can expand)
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   win_set_bgcolor(dialog, &mwin_bgcolor);
   GtkWidget *headerbar = gtk_header_bar_new();
@@ -343,6 +343,7 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(mygrid), label, mycol, myrow, 2, 1);
     mycol += 2;
     mbtn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(mbtn), "eq-spin");
     gtk_grid_attach(GTK_GRID(mygrid), mbtn, mycol, myrow, 1, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mbtn), gains[0]);
     g_signal_connect(mbtn, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(0));
@@ -352,22 +353,26 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(mygrid), line, 0, myrow, 4, 1);
     myrow++;
     if (myeq < 2) {
+      /*
       char rxeq_label_txt[256];
       snprintf(rxeq_label_txt, sizeof(rxeq_label_txt), "RX Equalizer — Continuous-Gain EQ Model");
       GtkWidget *rxeq_label = gtk_label_new(rxeq_label_txt);
       gtk_widget_set_name(rxeq_label, "smalllabel_blue_bold");
       gtk_grid_attach(GTK_GRID(mygrid), rxeq_label, 0, myrow, 4, 1);
       myrow++;
+      */
       GtkWidget *graph = rx_eq_graph_create(receiver[myeq]);
       gtk_grid_attach(GTK_GRID(mygrid), graph, 0, myrow, 4, 1);
     }
     if (myeq == 2 && can_transmit) {
+      /*
       char txeq_label_txt[256];
       snprintf(txeq_label_txt, sizeof(txeq_label_txt), "TX Equalizer — Continuous-Gain EQ Model");
       GtkWidget *txeq_label = gtk_label_new(txeq_label_txt);
       gtk_widget_set_name(txeq_label, "smalllabel_blue_bold");
       gtk_grid_attach(GTK_GRID(mygrid), txeq_label, 0, myrow, 4, 1);
       myrow++;
+      */
       GtkWidget *graph = tx_eq_graph_create(transmitter);
       gtk_grid_attach(GTK_GRID(mygrid), graph, 0, myrow, 4, 1);
     }
@@ -390,24 +395,28 @@ void equalizer_menu(GtkWidget *parent) {
       //----------------------------------------------------------------------------------------------------------------
       // links 1.Spalte Freq
       GtkWidget *freq_left = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+      gtk_style_context_add_class(gtk_widget_get_style_context(freq_left), "eq-spin");
       gtk_grid_attach(GTK_GRID(mygrid), freq_left, 0, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(freq_left), freqs[i]);
       g_signal_connect(freq_left, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i));
       //----------------------------------------------------------------------------------------------------------------
       // links 2.Spalte Gain
       GtkWidget *gain_left = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+      gtk_style_context_add_class(gtk_widget_get_style_context(gain_left), "eq-spin");
       gtk_grid_attach(GTK_GRID(mygrid), gain_left, 1, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(gain_left), gains[i]);
       g_signal_connect(gain_left, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i));
       //----------------------------------------------------------------------------------------------------------------
       // rechts 1.Spalte Freq
       GtkWidget *freq_right = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+      gtk_style_context_add_class(gtk_widget_get_style_context(freq_right), "eq-spin");
       gtk_grid_attach(GTK_GRID(mygrid), freq_right, 2, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(freq_right), freqs[i + max_eq_zeilen]);
       g_signal_connect(freq_right, "value-changed", G_CALLBACK(freq_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));
       //----------------------------------------------------------------------------------------------------------------
       // rechts 2.Spalte Gain
       GtkWidget *gain_right = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+      gtk_style_context_add_class(gtk_widget_get_style_context(gain_right), "eq-spin");
       gtk_grid_attach(GTK_GRID(mygrid), gain_right, 3, myrow, 1, 1);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(gain_right), gains[i + max_eq_zeilen]);
       g_signal_connect(gain_right, "value-changed", G_CALLBACK(gain_changed_cb), GINT_TO_POINTER(i + max_eq_zeilen));

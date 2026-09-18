@@ -348,6 +348,7 @@ GtkWidget *rx_eq_graph_create(RECEIVER *rx) {
   GtkWidget *label = gtk_label_new("Curve:");
   gtk_box_pack_start(GTK_BOX(controls), label, FALSE, FALSE, 0);
   GtkWidget *combo = gtk_combo_box_text_new();
+  gtk_style_context_add_class(gtk_widget_get_style_context(combo), "eq-combo");
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Legacy linear");
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Linear (1)");
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Cubic (3)");

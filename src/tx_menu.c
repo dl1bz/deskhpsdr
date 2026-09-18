@@ -1290,7 +1290,7 @@ void tx_menu(GtkWidget *parent) {
   GtkWidget *combo;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
-  gtk_window_set_default_size(GTK_WINDOW(dialog), 580, 600); // set window size (can expand)
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 580, 550); // set window size (can expand)
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
   win_set_bgcolor(dialog, &mwin_bgcolor);
   headerbar = gtk_header_bar_new();
@@ -1941,6 +1941,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 2, row, 1, 1);
   btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+  gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
   gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[0]);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 3, row, 1, 1);
@@ -1950,6 +1951,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(cfc_grid), label, 4, row, 1, 1);
   btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+  gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
   gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[0]);
   gtk_grid_attach(GTK_GRID(cfc_grid), btn, 5, row, 1, 1);
@@ -1959,6 +1961,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_size_request(line, -1, 3);
   gtk_grid_attach(GTK_GRID(cfc_grid), line, 0, row, 6, 1);
   row++;
+  /*
   char cfc_label_txt[256];
   snprintf(cfc_label_txt, sizeof(cfc_label_txt),
            "CFC: Multiband Compressor, not an EQ.\n"
@@ -1967,6 +1970,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_widget_set_name(cfc_label, "smalllabel_blue_bold");
   gtk_grid_attach(GTK_GRID(cfc_grid), cfc_label, 0, row, 6, 1);
   row++;
+  */
   GtkWidget *cfc_graph = cfc_graph_create(transmitter);
   gtk_grid_attach(GTK_GRID(cfc_grid), cfc_graph, 0, row, 6, 1);
   // Frequency, Level, Post-Gain
@@ -2013,6 +2017,7 @@ void tx_menu(GtkWidget *parent) {
     cfc_point_row++;
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
     gtk_entry_set_width_chars(GTK_ENTRY(btn), 5);
     gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i]);
@@ -2021,6 +2026,7 @@ void tx_menu(GtkWidget *parent) {
     cfc_graph_bind_control(i, btn, NULL, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(10.0, 16000.0, 10.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
     gtk_entry_set_width_chars(GTK_ENTRY(btn), 5);
     gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_freq[i + max_cfc_zeilen]);
@@ -2029,6 +2035,7 @@ void tx_menu(GtkWidget *parent) {
     cfc_graph_bind_control(i + max_cfc_zeilen, btn, NULL, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
     gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
     gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[i]);
@@ -2037,6 +2044,7 @@ void tx_menu(GtkWidget *parent) {
     cfc_graph_bind_control(i, NULL, btn, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(0.0, 20.0, 1.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
     gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
     gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_lvl[i + max_cfc_zeilen]);
@@ -2045,6 +2053,7 @@ void tx_menu(GtkWidget *parent) {
     cfc_graph_bind_control(i + max_cfc_zeilen, NULL, btn, NULL);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
     gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
     gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[i]);
@@ -2053,6 +2062,7 @@ void tx_menu(GtkWidget *parent) {
     cfc_graph_bind_control(i, NULL, NULL, btn);
     //------------------------------------------------------------------------------------------------------------------
     btn = gtk_spin_button_new_with_range(-20.0, 20.0, 1.0);
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "cfc-spin");
     gtk_entry_set_width_chars(GTK_ENTRY(btn), 3);
     gtk_widget_set_hexpand(btn, FALSE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), transmitter->cfc_post[i + max_cfc_zeilen]);
