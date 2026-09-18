@@ -2939,14 +2939,21 @@ void tx_set_singletone(const TRANSMITTER *tx, int state, double freq) {
   }
 }
 
+static guint ps_calibration_timer_id = 0;
+
+static void start_ps_calibration_timer(void) {
+  if (ps_calibration_timer_id == 0) {
+    ps_calibration_timer_id = g_timeout_add((guint) 100, ps_calibration_timer, &ps_calibration_timer_id);
+  }
+}
+
 void tx_set_twotone(TRANSMITTER *tx, int state) {
   //
-  // During a two-tone experiment, call a function periodically
-  // (every 100 msec) that calibrates the TX attenuation value
-  // if PureSignal is running with AutoCalibration. The timer will
-  // automatically be removed.
+  // While a PS calibration source is active, call a function periodically
+  // (every 100 msec) that calibrates the TX attenuation value if PureSignal
+  // is running with Auto Attenuate. The timer removes itself when neither
+  // Two Tone nor Noise is active.
   //
-  static guint timer = 0;
   int was_active = tx->twotone || tx->noise;
   if (state == tx->twotone) { return; }
   if (state && tx->noise) {
@@ -2969,9 +2976,7 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
     SetTXAPostGenTTMag(tx->id, 0.49999, 0.49999);
     SetTXAPostGenMode(tx->id, 1);
     SetTXAPostGenRun(tx->id, 1);
-    if (timer == 0) {
-      timer = g_timeout_add((guint) 100, ps_calibration_timer, &timer);
-    }
+    start_ps_calibration_timer();
   } else {
     SetTXAPostGenRun(tx->id, 0);
     //
@@ -3015,6 +3020,7 @@ void tx_set_noise(TRANSMITTER *tx, int state) {
     SetTXAPreGenNoiseMag(tx->id, pow(10.0, 0.05 * (double) tx->noise_level_db));
     SetTXAPreGenMode(tx->id, 2);
     SetTXAPreGenRun(tx->id, 1);
+    start_ps_calibration_timer();
   } else {
     SetTXAPreGenRun(tx->id, 0);
     if (!tx->twotone &&

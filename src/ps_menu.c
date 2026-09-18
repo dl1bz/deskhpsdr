@@ -463,12 +463,12 @@ static void clear_fields(void) {
   // the "Feedback" and "Correcting" string in black colour.
   // This will not be re-coloured until a new valid calibration
   // has taken place.
-  // This is called when disabling PS, but also when starting a two-tone experiment.
+  // This is called when disabling PS, but also when starting a PS calibration.
   // In the latter case, the fields stay cleared until the first successful "new"
   // calibration result is obtained.
   //
   if (dialog == NULL) {
-    // e.g. doing a two-tone experiment and PS menu is not open
+    // e.g. doing a PS calibration and PS menu is not open
     return;
   }
   gtk_label_set_markup(GTK_LABEL(feedback_l), "<span color='black'>Feedback Lvl</span>");
@@ -483,24 +483,24 @@ static void clear_fields(void) {
 }
 
 //
-// This is periodically when starting  a
-// two-tone experiment. If running PURESIGNAL
-// with auto calibration, this thread will
-// adjust the TX-ATT value. This thread also
+// This is called periodically while a PS calibration source
+// (Two Tone or Noise) is active. If running PURESIGNAL
+// with Auto Attenuate, this thread will adjust the TX-ATT
+// value. This thread also
 // updates the PS status. If PS is not enabled,
 // this is essentially a no-op.
 //
 int ps_calibration_timer(gpointer arg) {
   guint *timer = (guint *) arg;
   static int state = -1;
-  if (!transmitter->twotone) {
+  if (!transmitter->twotone && !transmitter->noise) {
     state = -1;
     *timer = 0;
     return G_SOURCE_REMOVE;
   }
   if (state < 0) {
     //
-    // Initialized two-tone experiment
+    // Initialized PS calibration
     //
     state = 1;          // start with PS reset
     clear_fields();     // clear all data until the next calibration has been done
@@ -548,8 +548,8 @@ int ps_calibration_timer(gpointer arg) {
       // calibration result; it must not gate the PS reset/resume sequence.
       //
       if (transmitter->auto_on && newcal
-          && ((info[4] > 165 && transmitter->attenuation < tx_att_max)
-              || (info[4] < 140 && transmitter->attenuation > tx_att_min))) {
+          && ((info[4] > 155 && transmitter->attenuation < tx_att_max)
+              || (info[4] < 150 && transmitter->attenuation > tx_att_min))) {
         int delta_att;
         int new_att;
         if (info[4] > 275) {
@@ -814,7 +814,7 @@ static void resume_cb(GtkWidget *widget, gpointer data) {
   // done in WDSP, and hence no attenuation adjustment.
   // If not auto-adjusting, do not change attenuation value.
   if (transmitter->puresignal) {
-    if (transmitter->twotone && transmitter->auto_on) {
+    if ((transmitter->twotone || transmitter->noise) && transmitter->auto_on) {
       transmitter->attenuation = 0;
       store_tx_att_for_current_band();
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);
@@ -942,9 +942,9 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), twotone_b, col, row, 1, 1);
   g_signal_connect(twotone_b, "toggled", G_CALLBACK(twotone_cb), NULL);
   col++;
-  GtkWidget *auto_b = gtk_check_button_new_with_label("Auto Attenuate (2-Tone)");
+  GtkWidget *auto_b = gtk_check_button_new_with_label("Auto Attenuate");
   gtk_widget_set_name(auto_b, "boldlabel");
-  gtk_widget_set_tooltip_text(auto_b, "Automatically adjusts TX attenuation during Two Tone calibration.");
+  gtk_widget_set_tooltip_text(auto_b, "Automatically adjusts TX attenuation during PS calibration (Two Tone or Noise).");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(auto_b), transmitter->auto_on);
   gtk_grid_attach(GTK_GRID(grid), auto_b, col, row, 1, 1);
   g_signal_connect(auto_b, "toggled", G_CALLBACK(auto_cb), NULL);
