@@ -204,6 +204,9 @@ FFTW_LOCAL_FLOAT_LIB := $(FFTW_LOCAL_FLOAT)/lib/libfftw3f.a
 
 FFTW_LOCAL_COMPLETE := $(and $(wildcard $(FFTW_LOCAL_DOUBLE)/include/fftw3.h),$(wildcard $(FFTW_LOCAL_DOUBLE_LIB)),$(wildcard $(FFTW_LOCAL_FLOAT_LIB)))
 
+$(info Allow git rebase, this is required.)
+$(shell git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config pull.rebase true)
+
 ifneq ($(FFTW_LOCAL_COMPLETE),)
 $(info Local FFTW 3.3.11 found, using static libraries.)
 FFTW_CFLAGS := -I./$(FFTW_LOCAL_DOUBLE)/include
