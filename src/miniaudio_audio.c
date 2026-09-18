@@ -32,7 +32,8 @@
 #include "tci_audio.h"
 
 #define MINIAUDIO_SAMPLE_RATE 48000
-#define MINIAUDIO_PERIOD_FRAMES 256
+#define MINIAUDIO_PLAYBACK_PERIOD_FRAMES 256
+#define MINIAUDIO_CAPTURE_PERIOD_FRAMES 64
 #define MINIAUDIO_TCI_MONITOR_CHUNK 1024
 
 typedef enum {
@@ -205,7 +206,7 @@ static void *miniaudio_open_playback(const char *device_name, RECEIVER *rx,
   config.playback.format = ma_format_f32;
   config.playback.channels = (ma_uint32)stream->channels;
   config.sampleRate = MINIAUDIO_SAMPLE_RATE;
-  config.periodSizeInFrames = MINIAUDIO_PERIOD_FRAMES;
+  config.periodSizeInFrames = MINIAUDIO_PLAYBACK_PERIOD_FRAMES;
   config.dataCallback = miniaudio_data_cb;
   config.pUserData = stream;
   ma_result result = ma_device_init(&miniaudio_context, &config, &stream->device);
@@ -262,7 +263,7 @@ void *audio_backend_input_open(const char *device_name) {
   config.capture.format = ma_format_f32;
   config.capture.channels = 1;
   config.sampleRate = MINIAUDIO_SAMPLE_RATE;
-  config.periodSizeInFrames = MINIAUDIO_PERIOD_FRAMES;
+  config.periodSizeInFrames = MINIAUDIO_CAPTURE_PERIOD_FRAMES;
   config.dataCallback = miniaudio_data_cb;
   config.pUserData = stream;
   ma_result result = ma_device_init(&miniaudio_context, &config, &stream->device);
