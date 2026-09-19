@@ -52,6 +52,7 @@
 #include "toolset.h"
 #include "noise_menu.h"
 #include "new_menu.h"
+#include "ps_menu.h"
 
 static int width;
 static int height;
@@ -1548,6 +1549,9 @@ void update_slider_ps_btn(void) {
 
 static void ps_toggle_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
+    if (!transmitter->puresignal) {
+      ps_zero_att_warning_show(GTK_WINDOW(top_window));
+    }
     tx_ps_onoff(transmitter, transmitter->puresignal ? 0 : 1);
   }
   update_slider_ps_btn();

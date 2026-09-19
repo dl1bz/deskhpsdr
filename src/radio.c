@@ -56,6 +56,7 @@
 #include "band.h"
 #include "channel.h"
 #include "property.h"
+#include "ps_menu.h"
 #include "new_menu.h"
 #include "new_protocol.h"
 #include "old_protocol.h"
@@ -500,6 +501,13 @@ double drive_max = 100.0;
 double drive_digi_max = 100.0; // maximum drive in DIGU/DIGL
 
 gboolean display_warnings = TRUE;
+gboolean ps_zero_att_warning = TRUE;
+
+static gboolean ps_zero_att_startup_warning(gpointer data) {
+  (void)data;
+  ps_zero_att_warning_show(GTK_WINDOW(top_window));
+  return G_SOURCE_REMOVE;
+}
 gboolean display_pacurr = TRUE;
 
 gint window_x_pos = 0;
@@ -1866,6 +1874,7 @@ void radio_start_radio(void) {
     radio_calc_drive_level();
     if (transmitter->puresignal) {
       tx_ps_onoff(transmitter, 1);
+      g_idle_add(ps_zero_att_startup_warning, NULL);
     }
   }
   schedule_high_priority();
@@ -2898,6 +2907,7 @@ static void radio_restore_state(void) {
   GetPropI0("sat_mode",                                      sat_mode);
   GetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   GetPropI0("radio.display_warnings",                        display_warnings);
+  GetPropI0("radio.ps_zero_att_warning",                     ps_zero_att_warning);
   GetPropI0("radio.display_pacurr",                          display_pacurr);
   GetPropI0("tci_enable",                                    tci_enable);
   GetPropI0("tci_port",                                      tci_port);
@@ -3205,6 +3215,7 @@ void radio_save_state(void) {
   SetPropI0("sat_mode",                                      sat_mode);
   SetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   SetPropI0("radio.display_warnings",                        display_warnings);
+  SetPropI0("radio.ps_zero_att_warning",                     ps_zero_att_warning);
   SetPropI0("radio.display_pacurr",                          display_pacurr);
   SetPropI0("tci_enable",                                    tci_enable);
   SetPropI0("tci_port",                                      tci_port);

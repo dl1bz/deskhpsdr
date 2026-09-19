@@ -20,4 +20,5 @@
 */
 
 extern void ps_menu(GtkWidget *parent);
+extern void ps_zero_att_warning_show(GtkWindow *parent);
 extern int  ps_calibration_timer(gpointer arg);

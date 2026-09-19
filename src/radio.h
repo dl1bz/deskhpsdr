@@ -378,6 +378,7 @@ extern double drive_max;         // maximum value of the drive slider
 extern double drive_digi_max;    // maximum value allowed in DIGU/DIGL
 
 extern gboolean display_warnings;
+extern gboolean ps_zero_att_warning;
 extern gboolean display_pacurr;
 
 //

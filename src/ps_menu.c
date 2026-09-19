@@ -88,6 +88,38 @@ static void store_tx_att_for_current_band(void) {
 static GtkWidget *entry[INFO_SIZE];
 
 static void ps_off_on(void);
+
+void ps_zero_att_warning_show(GtkWindow *parent) {
+  if (!ps_zero_att_warning || transmitter->attenuation != 0) { return; }
+  GtkWidget *msg = gtk_message_dialog_new(parent,
+                                          GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                          GTK_MESSAGE_WARNING,
+                                          GTK_BUTTONS_OK,
+                                          NULL);
+  gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(msg),
+                                "<span foreground=\"red\" weight=\"bold\" size=\"15pt\">PureSignal TX Attenuation</span>");
+  char ps_warning_wtitle[64];
+  char warning_text[512];
+  snprintf(ps_warning_wtitle, sizeof(ps_warning_wtitle), "%s - WARNING", PGNAME);
+  gtk_window_set_title(GTK_WINDOW(msg), ps_warning_wtitle);
+  snprintf(warning_text, sizeof(warning_text),
+           "TX attenuation is currently set very low (%d dB).\n\n"
+           "Please verify that the PureSignal feedback level is appropriate or execute a new PS calibration.\n\n"
+           "A feedback level that is too high may cause ADC overload.\n\n"
+           "Note: External attenuation in the feedback path may make %d dB a valid setting.", (int)transmitter->attenuation,
+           (int)transmitter->attenuation);
+  gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(msg), "%s", warning_text);
+  GtkWidget *check = gtk_check_button_new_with_label("Don't show this warning again");
+  GtkWidget *area = gtk_message_dialog_get_message_area(GTK_MESSAGE_DIALOG(msg));
+  gtk_box_pack_start(GTK_BOX(area), check, FALSE, FALSE, 6);
+  gtk_widget_set_halign(check, GTK_ALIGN_CENTER);
+  gtk_widget_show(check);
+  gtk_dialog_run(GTK_DIALOG(msg));
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check))) {
+    ps_zero_att_warning = FALSE;
+  }
+  gtk_widget_destroy(msg);
+}
 static void twotone_cb(GtkWidget *widget, gpointer data);
 static void noise_cb(GtkWidget *widget, gpointer data);
 
@@ -733,6 +765,9 @@ static void ps_ant_cb(GtkWidget *widget, gpointer data) {
 static void enable_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+    if (val && !transmitter->puresignal) {
+      ps_zero_att_warning_show(GTK_WINDOW(dialog));
+    }
     clear_fields();
     tx_ps_onoff(transmitter, val);
     if (val) {

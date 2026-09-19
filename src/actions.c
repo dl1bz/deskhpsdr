@@ -1568,6 +1568,9 @@ int process_action(void *data) {
   case PS:
     if (a->mode == PRESSED) {
       if (can_transmit) {
+        if (!transmitter->puresignal) {
+          ps_zero_att_warning_show(GTK_WINDOW(top_window));
+        }
         tx_ps_onoff(transmitter, transmitter->puresignal ? 0 : 1);
       }
       if (display_sliders && (have_rx_gain || have_rx_att)) {
