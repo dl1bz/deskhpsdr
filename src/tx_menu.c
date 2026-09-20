@@ -536,7 +536,7 @@ static void load_button_clicked_cb(GtkWidget *widget, gpointer data) {
   if (_mode < 3) {
     if (!access(DateiName, F_OK)) {
       audioLoadProfile(DateiName);
-      start_tx();
+      g_idle_add(ext_start_tx, NULL);
       t_print("%s: Mode %d accepted, file %s exist...loaded Mic Profile %d successful.\n", __func__, _mode, DateiName,
               mic_prof.nr);
     } else {
@@ -571,7 +571,7 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
     char DateiName[64];
     snprintf(DateiName, sizeof(DateiName), "audio_profile_%d.prop", mic_prof.nr);
     audioSaveProfile(DateiName);
-    start_tx();
+    g_idle_add(ext_start_tx, NULL);
     t_print("%s: Mic Profile %d saved, Mode %d supported.\n", __func__, mic_prof.nr, _mode);
     gtk_widget_set_sensitive(load_button, TRUE);
     // Force the GUI to update
@@ -744,8 +744,23 @@ static void cleanup(void) {
   if (dialog != NULL) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
+    input = NULL;
+    headerbar = NULL;
+    tx_spin_low = NULL;
+    tx_spin_high = NULL;
     tx_tune_drive_spin = NULL;
     tx_tune_drive_spin_signal_id = 0;
+    tx_container = NULL;
+    proaudio_container = NULL;
+    cfc_container = NULL;
+    peaks_container = NULL;
+    load_button = NULL;
+    audio_profile = NULL;
+    save_button = NULL;
+    sdr_mic_btn = NULL;
+    sdr_linein_btn = NULL;
+    loc_mic_btn = NULL;
+    loc_mic_btn_signal_id = 0;
     gtk_widget_destroy(tmp);
     sub_menu = NULL;
     active_menu  = NO_MENU;
