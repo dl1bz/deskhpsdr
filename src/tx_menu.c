@@ -571,7 +571,6 @@ static void save_button_clicked_cb(GtkWidget *widget, gpointer data) {
     char DateiName[64];
     snprintf(DateiName, sizeof(DateiName), "audio_profile_%d.prop", mic_prof.nr);
     audioSaveProfile(DateiName);
-    g_idle_add(ext_start_tx, NULL);
     t_print("%s: Mic Profile %d saved, Mode %d supported.\n", __func__, mic_prof.nr, _mode);
     gtk_widget_set_sensitive(load_button, TRUE);
     // Force the GUI to update
