@@ -1348,6 +1348,7 @@ void StartConfigSave(void) {
   clearProperties();
   const char *filename = "startup_config.props";
   SetPropI0("css_dark_theme", css_dark_theme);
+  SetPropI0("allow_external_css", allow_external_css);
   SetPropI0("iaru_region", iaru_region);
   SetPropI0("display_debug", display_debug);
   SetPropI0("display_sysinfo", display_sysinfo);
@@ -1384,6 +1385,7 @@ void StartConfigLoad(void) {
   }
   loadProperties(filename);
   GetPropI0("css_dark_theme", css_dark_theme);
+  GetPropI0("allow_external_css", allow_external_css);
   GetPropI0("iaru_region", iaru_region);
   GetPropI0("display_debug", display_debug);
   GetPropI0("display_sysinfo", display_sysinfo);
@@ -1427,6 +1429,9 @@ void StartConfigLoad(void) {
     GetPropI0(name, p2_ddc_adc_map[i]);
     p2_ddc_adc_map[i] = p2_ddc_adc_map[i] ? 1 : 0;
   }
+  if (allow_external_css < 0 || allow_external_css > 1) {
+    allow_external_css = 1;
+  }
   if (iaru_region < 1 || iaru_region > 3) {
     iaru_region = 2;
   }
@@ -1461,53 +1466,63 @@ void load_css(void) {
   GdkDisplay *display = gdk_display_get_default();
   GdkScreen *screen = gdk_display_get_default_screen(display);
   GError *error = NULL;
-  /* alten Provider entfernen (wichtig für Theme-Switch) */
-  static GtkCssProvider *current_provider = NULL;
-  if (current_provider != NULL) {
+  static GtkCssProvider *base_provider = NULL;
+  static GtkCssProvider *user_provider = NULL;
+  /* Remove old providers first (important for theme switching/reload). */
+  if (user_provider != NULL) {
     gtk_style_context_remove_provider_for_screen(screen,
-        GTK_STYLE_PROVIDER(current_provider));
-    g_object_unref(current_provider);
-    current_provider = NULL;
+        GTK_STYLE_PROVIDER(user_provider));
+    g_object_unref(user_provider);
+    user_provider = NULL;
   }
-  GtkCssProvider *provider = gtk_css_provider_new();
-  // 1. Laden aus Datei
+  if (base_provider != NULL) {
+    gtk_style_context_remove_provider_for_screen(screen,
+        GTK_STYLE_PROVIDER(base_provider));
+    g_object_unref(base_provider);
+    base_provider = NULL;
+  }
   if (css_dark_theme) {
     css_filename = "deskhpsdr-dark.css";
   } else {
     css_filename = "deskhpsdr.css";
   }
-  gtk_css_provider_load_from_path(provider, css_filename, &error);
+  /* The built-in CSS is always the complete application base. */
+  base_provider = gtk_css_provider_new();
+  if (css_dark_theme) {
+    gtk_css_provider_load_from_data(base_provider, css_dark, -1, &error);
+  } else {
+    gtk_css_provider_load_from_data(base_provider, css, -1, &error);
+  }
   if (!error) {
     gtk_style_context_add_provider_for_screen(screen,
-        GTK_STYLE_PROVIDER(provider),
+        GTK_STYLE_PROVIDER(base_provider),
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-    t_print("%s: CSS data loaded from file %s\n", __func__, css_filename);
+    t_print("%s: hard-coded CSS data successfully loaded\n", __func__);
   } else {
-    t_print("%s: failed to load CSS data from file %s: %s\n",
-            __func__, css_filename, extract_short_msg(error->message));
+    t_print("%s: failed to load hard-coded CSS data: %s\n",
+            __func__, extract_short_msg(error->message));
     g_clear_error(&error);
-    // 2. Laden aus Hardcoded-String
-    if (css_dark_theme) {
-      gtk_css_provider_load_from_data(provider, css_dark, -1, &error);
-    } else {
-      gtk_css_provider_load_from_data(provider, css, -1, &error);
-    }
+    g_object_unref(base_provider);
+    base_provider = NULL;
+  }
+  /* Optional external CSS only overrides matching built-in definitions. */
+  if (allow_external_css) {
+    user_provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(user_provider, css_filename, &error);
     if (!error) {
       gtk_style_context_add_provider_for_screen(screen,
-          GTK_STYLE_PROVIDER(provider),
-          GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-      t_print("%s: hard-coded CSS data successfully loaded\n", __func__);
+          GTK_STYLE_PROVIDER(user_provider),
+          GTK_STYLE_PROVIDER_PRIORITY_USER);
+      t_print("%s: external CSS overrides loaded from file %s\n", __func__, css_filename);
     } else {
-      t_print("%s: failed to load hard-coded CSS data: %s\n",
-              __func__, extract_short_msg(error->message));
+      t_print("%s: failed to load external CSS data from file %s: %s\n",
+              __func__, css_filename, extract_short_msg(error->message));
       g_clear_error(&error);
-      g_object_unref(provider);
-      provider = NULL;
+      g_object_unref(user_provider);
+      user_provider = NULL;
     }
-  }
-  /* Provider merken für nächsten Reload */
-  if (provider != NULL) {
-    current_provider = provider;
+  } else {
+    t_print("%s: external CSS disabled by startup configuration\n", __func__);
   }
   StartConfigSave();
 }

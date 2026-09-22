@@ -412,7 +412,8 @@ void screen_menu(GtkWidget *parent) {
                               "Default theme filename: deskhpsdr.css\n"
                               "Dark theme filename: deskhpsdr-dark.css\n\n"
                               "You can edit this saved file and make your own adjustments\n"
-                              "If deskhpsdr detect this file, it will be used instead of the hardcoded CSS defintions\n\n"
+                              "The internal CSS always remains active as the base. Definitions in this file\n"
+                              "override matching internal definitions when external CSS is enabled.\n\n"
                               "Be aware, a GTK CSS is not identical with a HTML CSS, you need to know, what you do !\n\n"
                               "There is NO SUPPORT for this special option");
   gtk_widget_set_name(save_css_btn, "boldlabel_blue");
@@ -422,8 +423,8 @@ void screen_menu(GtkWidget *parent) {
   GtkWidget *remove_css_btn = gtk_button_new_with_label("Remove CSS");
   gtk_widget_set_tooltip_text(remove_css_btn,
                               "Remove the corresponding CSS file from the working directory\n"
-                              "Make first a backup of your CSS file if exist and used\n"
-                              "This bring back the use of internal, hardcoded CSS defintions\n"
+                              "Make first a backup of your CSS file if it exists and is used\n"
+                              "The internal, hardcoded CSS remains active without external overrides.\n"
                               "IF YOU DO THIS, ALL YOUR OWN CHANGES WILL BE LOST !\n\n"
                               "There is NO SUPPORT for this special option");
   gtk_widget_set_name(remove_css_btn, "boldlabel_blue");

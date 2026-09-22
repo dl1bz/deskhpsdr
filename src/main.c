@@ -92,6 +92,7 @@ int this_monitor;
 
 int use_wayland;
 int css_dark_theme = 1;
+int allow_external_css = 1;
 
 int iaru_region = 2;
 

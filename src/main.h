@@ -40,6 +40,7 @@ extern int this_monitor;
 
 extern int use_wayland;
 extern int css_dark_theme;
+extern int allow_external_css;
 
 extern int iaru_region;
 
