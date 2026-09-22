@@ -1422,7 +1422,7 @@ static void new_protocol_high_priority(void) {
   long long LPFfreq;          // frequency determining the LPF filters
   long long BPFfreq;          // frequency determining the BPF filters
   unsigned long phase;
-  if (data_socket == -1 && !have_saturn_xdma) {
+  if ((data_socket == -1 && !have_saturn_xdma) || active_receiver == NULL) {
     return;
   }
   pthread_mutex_lock(&hi_prio_mutex);
