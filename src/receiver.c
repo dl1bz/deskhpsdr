@@ -1578,9 +1578,10 @@ void rx_full_buffer(RECEIVER *rx) {
       t_print("%s: id=%d fexchange0: error=%d\n", __func__, rx->id, error);
     }
     if (rx->displaying) {
-      g_mutex_lock(&rx->display_mutex);
-      Spectrum0(1, rx->id, 0, 0, rx->iq_input_buffer);
-      g_mutex_unlock(&rx->display_mutex);
+      if (g_mutex_trylock(&rx->display_mutex)) {
+        Spectrum0(1, rx->id, 0, 0, rx->iq_input_buffer);
+        g_mutex_unlock(&rx->display_mutex);
+      }
     }
     rx_process_buffer(rx);
     g_mutex_unlock(&rx->mutex);
