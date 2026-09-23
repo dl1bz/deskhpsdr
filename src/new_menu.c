@@ -64,6 +64,7 @@
 #include "new_protocol.h"
 #include "mode.h"
 #include "vfo.h"
+#include "startup.h"
 #ifdef MIDI
   #include "midi_layer.h"
   #include "midi_menu.h"
@@ -713,8 +714,8 @@ void new_menu(void) {
     GtkWidget *headerbar = gtk_header_bar_new();
     gtk_window_set_titlebar(GTK_WINDOW(main_menu), headerbar);
     gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-    char _title[32];
-    snprintf(_title, 32, "%s - Menu", PGNAME);
+    char _title[296];
+    snprintf(_title, sizeof(_title), "%s - Menu [%s]", PGNAME, workdir);
     gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
     g_signal_connect(main_menu, "delete_event", G_CALLBACK(close_cb), NULL);
     g_signal_connect(main_menu, "destroy", G_CALLBACK(destroy_cb), NULL);
