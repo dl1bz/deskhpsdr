@@ -1,6 +1,6 @@
 # deskHPSDR by DL1BZ for OpenHPSDR protocol 1 & 2
 
-deskHPSDR by DL1BZ is an mature Open Source desktop application for Hamradio OpenHPSDR SDR transceivers that has been under active development for years. SDR devices based on the OpenHPSDR protocol P1 or P2 are fully supported and both protocol versions are fully supported. It is designed and built as an advanced SDR transceiver front-end application for macOS and Linux for "every-day-use" and runs now extremely stable and reliable. deskHPSDR is largely based on the WDSP software library by Warren C. Pratt (NR0V), similar to other SDR applications like Thetis for WINDOWS.
+deskHPSDR by DL1BZ is an mature Open Source desktop application for Hamradio OpenHPSDR SDR transceivers that has been under active development for years. SDR devices based on the OpenHPSDR protocol P1 or P2 are fully supported and both protocol versions are fully supported. It is designed and built as an advanced SDR transceiver front-end application for macOS, Linux and WINDOWS for "every-day-use" and runs now extremely stable and reliable. deskHPSDR is largely based on the WDSP software library by Warren C. Pratt (NR0V), similar to other SDR applications like Thetis for WINDOWS.
 
 <img src="stuff/deskhpsdr/screenshot.png" width="1024px" />
 
@@ -41,9 +41,9 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Bright / Dark Theme support    | yes ✅                                        |                   |
 | Screen Resolution              | min. 1280x600 or higher 🚨                    |                   |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                   |
-| OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ❌ |                   |
+| OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ✅ |                   |
 | using Virtual Environments (VE)| not supported ❌                              | use native OS     |
-| Audio backend                  | CoreAudio (macOS), miniAudio (macOS & Linux)  |                   |
+| Audio backend                  | CoreAudio (macOS), miniAudio (macOS,Linux,Win)|                   |
 | Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling     |
 | TX Audio Monitor               | supported ✅ (since 2.7.39)                   | Pre & Post        |
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter ✅ |                   |
@@ -86,8 +86,6 @@ deskHPSDR is fully Open Source, but a full non-commercial hobby software project
 
 My main focus of deskHPSDR development is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The second focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, but not for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
-**There are no plans whatsoever to ever port deskHPSDR to WINDOWS! It's made for UNIX style OS only like macOS or Linux.**
-
 ## Requirements
 
 I recommend using deskHPSDR on macOS, it's also being focused and developed on this OS platform. It can be build and run under Linux too, but my recommendation remains unequivocally macOS for for stable and stress-free operation with deskHPSDR. macOS will also remain the only platform, where I provide ready-made app bundles without build them first.
@@ -120,7 +118,6 @@ I only accept user requests, if they
 a) fit the concept and
 b) are useful to everyone.
 I decline requests for "only one user" functions and regarding the following questions:
-- porting deskHPSDR to WINDOWS -> NO
 - provide ready-to-run binaries for Linux (regardless of the form) -> NO
 - supporting SDR devices, which don't work with OpenHPSDR protcols P1 or P2 -> NO
 - add any kind of additonal build-in or special client-server-support like pihpsdr -> NO
