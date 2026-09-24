@@ -140,11 +140,7 @@ static void subsolar_point_utc(double *sub_lat, double *sub_lon) {
      For higher precision, swap in a proper NOAA/SPA implementation. */
   time_t t = time(NULL);
   struct tm gmt;
-#if defined(_WIN32)
-  gmtime_s(&gmt, &t);
-#else
   gmtime_r(&t, &gmt);
-#endif
   int year = gmt.tm_year + 1900;
   int month = gmt.tm_mon + 1;
   int day = gmt.tm_mday;

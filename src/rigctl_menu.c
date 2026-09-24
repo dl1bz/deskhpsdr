@@ -227,12 +227,6 @@ static void serial_ctsTxInhibit_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-static gboolean rigctl_reload_menu(gpointer data) {
-  cleanup();
-  rigctl_menu(top_window);
-  return FALSE;             // Gibt FALSE zurück, damit die Funktion nur einmal ausgeführt wird
-}
-
 static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   if (id < MAX_SERIAL) {
@@ -255,7 +249,6 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
     if (id == MAX_SERIAL + 1) {
       launch_serptt();
     }
-    g_idle_add(rigctl_reload_menu, NULL);  // execute in main thread
   }
   t_print("%s: Serial enable : ID=%d Enabled=%d\n", __func__, id, SerialPorts[id].enable);
 }
