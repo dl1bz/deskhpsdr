@@ -52,8 +52,6 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Used UI framework              | GTK3                                          |                   |
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                   |
 | Supported Compiler             | clang (recommended), gcc                      |                   |
-| App Publishing                 | **Source code only, no binaries distributed** |                   |
-|                                | **except macOS (digitally signed & notarized)**|                   |
 
 Other useful app features (availability depend from used SDR device):
 
@@ -93,8 +91,9 @@ I recommend using deskHPSDR on macOS, it's also being focused and developed on t
 * modern Desktop-OS like macOS (15 or newer) or Linux with installed developer tools like compiler, linker etc.
 * minimum screensize starts from 1280x600
 * **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
-* *macOS only*: please read the``COMPILE.macOS`` first
+* *macOS only*: please read the``COMPILE.macOS`` first, ready-to-run app bundles for ARM & Intel available (digitally signed and notarized)
 * *Linux only*: please read the``COMPILE.linux`` first
+* *WINDOWS only*: complex build process, nothing for normal users, WINDOWS version published as setup package instead
 * a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices like Brick2/Brick3 series.
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the``Notes_if_using_HERMES-Lite-2.md``
@@ -121,14 +120,13 @@ I decline requests for "only one user" functions and regarding the following que
 - provide ready-to-run binaries for Linux (regardless of the form) -> NO
 - supporting SDR devices, which don't work with OpenHPSDR protcols P1 or P2 -> NO
 - add any kind of additonal build-in or special client-server-support like pihpsdr -> NO
-- add any kind of TX Audio Monitor -> NO
 - help for solving OS problems, if these in my assessment do not directly concern deskHPSDR
 
 Especially Linux environments are highly fragmented and differ from distribution to distribution, so I cannot guarantee that deskHPSDR will run on just any Linux distribution. I test only and exclusively Debian-based environments - but I’m not interested in anything else.
 
 ## macOS is first choice
 
-deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority.
+deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority. WINDOWS version also available.
 
 ## Latest Changes
 
