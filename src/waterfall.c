@@ -222,7 +222,7 @@ static inline float waterfall_3d_sample_at(const float *frame, int width, double
 
 static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstride,
                                 int width, int terrain_height, const float *samples,
-                                int pan, float soffset, float low, float high,
+                                int pan, int display_shift, float soffset, float low, float high,
                                 long long frequency) {
   if (rx == NULL || pixels == NULL || samples == NULL || terrain_height < 24 ||
       rx->id < 0 || rx->id >= WATERFALL_3D_MAX_RX || high <= low) {
@@ -259,7 +259,10 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
   }
   h->capture_accumulator -= 1.0;
   float *dst = h->frames + (size_t)h->head * width;
-  memcpy(dst, samples + pan, (size_t)width * sizeof(float));
+  for (int x = 0; x < width; x++) {
+    int source_x = x - display_shift;
+    dst[x] = (source_x >= 0 && source_x < width) ? samples[pan + source_x] : -200.0F;
+  }
   h->head = (h->head + 1) % WATERFALL_3D_DEPTH;
   if (h->count < WATERFALL_3D_DEPTH) {
     h->count++;
@@ -919,6 +922,7 @@ void waterfall_update(RECEIVER *rx) {
       terrain_height = 0;
     }
     double hz_per_pixel = (double) rx->sample_rate / ((double) width * rx->zoom);
+    int display_shift = (int)lround((double)rx_get_mode_dc_offset(rx->id) / hz_per_pixel);
     //
     // The existing waterfall corresponds to a VFO frequency rx->waterfall_frequency, a zoom value rx->waterfall_zoom and
     // a pan value rx->waterfall_pan. If the zoom value changes, or if the waterfill needs horizontal shifting larger
@@ -1062,11 +1066,13 @@ void waterfall_update(RECEIVER *rx) {
       }
       if (terrain_height > 0) {
         waterfall_3d_render(rx, pixels, rowstride, width, terrain_height,
-                            samples, pan, soffset, wf_low, wf_high, vfofreq);
+                            samples, pan, display_shift, soffset, wf_low, wf_high, vfofreq);
       }
       p = pixels + (size_t)terrain_height * rowstride;
       for (int i = 0; i < width; i++) {
-        float sample = samples[i + pan] + soffset;
+        int source_i = i - display_shift;
+        float sample = (source_i >= 0 && source_i < width) ?
+                       samples[source_i + pan] + soffset : -200.0F;
         if (sample < wf_low) {
           *p++ = colorLowR;
           *p++ = colorLowG;
