@@ -50,7 +50,13 @@ typedef void (*TCI_AUDIO_TX_CHRONO_CALLBACK) (void);
 #define TCI_STREAM_TX_CHRONO 3
 #define TCI_TX_AUDIO_FRAME_FRAMES 512
 #define TCI_TX_AUDIO_24K_FRAME_FRAMES TCI_TX_AUDIO_FRAME_FRAMES
-#define TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES (TCI_TX_AUDIO_FRAME_FRAMES * 2)
+#define TCI_TX_AUDIO_MIN_SAMPLE_RATE 8000
+#define TCI_TX_AUDIO_MAX_SAMPLE_RATE 48000
+#define TCI_TX_AUDIO_MAX_RESAMPLE_RATIO (TCI_AUDIO_SAMPLE_RATE / TCI_TX_AUDIO_MIN_SAMPLE_RATE)
+#define TCI_TX_AUDIO_RESAMPLE_HEADROOM_FRAMES TCI_TX_AUDIO_FRAME_FRAMES
+#define TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES \
+  ((TCI_TX_AUDIO_FRAME_FRAMES * TCI_TX_AUDIO_MAX_RESAMPLE_RATIO) + \
+   TCI_TX_AUDIO_RESAMPLE_HEADROOM_FRAMES)
 #define TCI_TX_AUDIO_CHRONO_LENGTH (TCI_TX_AUDIO_FRAME_FRAMES * 2)
 #define TCI_AUDIO_MONITOR_RING_FRAMES (48000 * 4)
 #define TCI_TX_AUDIO_RING_FRAMES (48000 * 4)
@@ -84,8 +90,8 @@ void tci_audio_rx_block(RECEIVER *rx, const float *samples, guint frames);
 guint64 tci_audio_get_write_count(int receiver_id);
 guint tci_audio_get_frame(int receiver_id, guint64 *read_count, unsigned char *frame, size_t frame_size,
                           size_t *frame_len, int sample_rate, void **resampler_l, void **resampler_r);
-void tci_audio_handle_tx_frame(const unsigned char *data, size_t len, int client_sample_rate,
-                               void **resampler_24_to_48);
+int tci_audio_handle_tx_frame(const unsigned char *data, size_t len, int client_sample_rate,
+                              void **resampler, int *resampler_input_rate);
 
 void tci_audio_tx_reset(void);
 void tci_audio_tx_set_active(int active);

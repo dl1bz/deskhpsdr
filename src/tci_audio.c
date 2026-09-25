@@ -599,64 +599,72 @@ guint tci_audio_get_frame(int receiver_id, guint64 *read_count, unsigned char *f
   return out_frames;
 }
 
-void tci_audio_handle_tx_frame(const unsigned char *data, size_t len, int client_sample_rate,
-                               void **resampler_24_to_48) {
+int tci_audio_handle_tx_frame(const unsigned char *data, size_t len, int client_sample_rate,
+                              void **resampler, int *resampler_input_rate) {
   TCI_STREAM_HEADER header;
   size_t payload_bytes;
   size_t sample_count;
-  if (data == NULL || len < 64) { return; }
+  if (data == NULL || len < sizeof(TCI_STREAM_HEADER)) { return 0; }
   memcpy(&header, data, sizeof(header));
-  if (header.type != TCI_STREAM_TX_AUDIO) { return; }
-  payload_bytes = len - 64;
-  if (payload_bytes < sizeof(float)) { return; }
-  if (header.length <= 0 || (64 + ((size_t) header.length * sizeof(float))) > len) {
-    return;
-  }
+  if (header.type != TCI_STREAM_TX_AUDIO) { return 0; }
+  payload_bytes = len - sizeof(TCI_STREAM_HEADER);
+  if (payload_bytes < sizeof(float)) { return 0; }
+  if (header.length == 0 || ((size_t) header.length * sizeof(float)) > payload_bytes) { return 0; }
   sample_count = (size_t) header.length;
-  if (sample_count < 2) { return; }
+  if (sample_count < TCI_AUDIO_CHANNELS) { return 0; }
+  /* The binary frame describes the audio actually on the wire.  Prefer its
+   * sample rate; the negotiated client rate is only a fallback for clients
+   * which leave the header field unset. */
+  int sample_rate = (header.sample_rate > 0) ? (int) header.sample_rate : client_sample_rate;
+  if (sample_rate < TCI_TX_AUDIO_MIN_SAMPLE_RATE || sample_rate > TCI_TX_AUDIO_MAX_SAMPLE_RATE) { return 0; }
   float samples[TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES];
-  float input[TCI_TX_AUDIO_24K_FRAME_FRAMES];
+  float input[TCI_TX_AUDIO_FRAME_FRAMES];
   float output[TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES];
-  guint frames = (guint)(sample_count / 2);
+  guint frames = (guint)(sample_count / TCI_AUDIO_CHANNELS);
   guint push_frames;
-  int sample_rate = tci_audio_normalize_sample_rate(client_sample_rate);
-  if (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
-    if (frames > TCI_TX_AUDIO_24K_FRAME_FRAMES) {
-      frames = TCI_TX_AUDIO_24K_FRAME_FRAMES;
-    }
-  } else if (frames > TCI_TX_AUDIO_FRAME_FRAMES) {
+  if (frames > TCI_TX_AUDIO_FRAME_FRAMES) {
     frames = TCI_TX_AUDIO_FRAME_FRAMES;
   }
   for (guint i = 0; i < frames; i++) {
     float left;
-    float right;
-    memcpy(&left, data + 64 + (((size_t) i * 2) * sizeof(float)), sizeof(left));
-    memcpy(&right, data + 64 + ((((size_t) i * 2) + 1) * sizeof(float)), sizeof(right));
-    samples[i] = left;
-    if (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
-      input[i] = left;
-    }
+    memcpy(&left, data + sizeof(TCI_STREAM_HEADER) +
+           (((size_t) i * TCI_AUDIO_CHANNELS) * sizeof(float)), sizeof(left));
+    input[i] = left;
   }
   push_frames = frames;
-  if (sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
+  if (sample_rate != TCI_AUDIO_SAMPLE_RATE) {
     int out_frames = 0;
-    if (resampler_24_to_48 == NULL) { return; }
-    if (*resampler_24_to_48 == NULL) {
-      *resampler_24_to_48 = create_resampleFV(TCI_AUDIO_SAMPLE_RATE_24K, TCI_AUDIO_SAMPLE_RATE);
+    if (resampler == NULL || resampler_input_rate == NULL) { return 0; }
+    if (*resampler != NULL && *resampler_input_rate != sample_rate) {
+      tci_audio_destroy_tx_resampler(resampler);
     }
-    if (*resampler_24_to_48 == NULL) { return; }
-    xresampleFV(input, output, (int) frames, &out_frames, *resampler_24_to_48);
-    if (out_frames <= 0) { return; }
+    if (*resampler == NULL) {
+      *resampler = create_resampleFV(sample_rate, TCI_AUDIO_SAMPLE_RATE);
+      if (*resampler == NULL) {
+        *resampler_input_rate = 0;
+        return 0;
+      }
+      *resampler_input_rate = sample_rate;
+    }
+    xresampleFV(input, output, (int) frames, &out_frames, *resampler);
+    if (out_frames <= 0) { return 0; }
     push_frames = (guint) out_frames;
     if (push_frames > TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES) {
       push_frames = TCI_TX_AUDIO_INTERNAL_FRAME_FRAMES;
     }
     memcpy(samples, output, push_frames * sizeof(float));
   } else {
-    tci_audio_destroy_tx_resampler(resampler_24_to_48);
+    if (resampler != NULL) {
+      tci_audio_destroy_tx_resampler(resampler);
+    }
+    if (resampler_input_rate != NULL) {
+      *resampler_input_rate = 0;
+    }
+    memcpy(samples, input, push_frames * sizeof(float));
   }
   if (tci_audio_monitor_is_active()) {
     tci_audio_monitor_push_mono_block(samples, push_frames, 0.01f);
   }
   tci_audio_tx_push_block(samples, push_frames);
+  return sample_rate;
 }

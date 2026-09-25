@@ -156,12 +156,14 @@ typedef struct _client {
   void *rx_audio_resampler_l[TCI_RX_AUDIO_MAX_RECEIVERS];
   void *rx_audio_resampler_r[TCI_RX_AUDIO_MAX_RECEIVERS];
   int audio_sample_rate;
-  void *tx_audio_resampler_24_to_48;
+  void *tx_audio_resampler;
+  int tx_audio_resampler_input_rate;
   int tx_audio_session;
   int tx_audio_enabled;
   int rtty_enabled;             // Native RTTY extension explicitly enabled by this client
   gint64 tx_chrono_next_us;
-  guint tx_chrono_tick;
+  guint tx_chrono_tick;          // sample-rate phase accumulator (Hz units)
+  int tx_audio_input_rate;       // actual TX_AUDIO wire rate from frame header
   guint64 tx_chrono_queue_count;
   guint64 tx_audio_rx_count;
   unsigned char *binary_rx_buf;
@@ -921,7 +923,9 @@ static int tci_queue_tx_chrono_frame(CLIENT *client) {
   if (client == NULL || !client->running || !client->tx_audio_enabled) { return 0; }
   memset(&header, 0, sizeof(header));
   header.receiver = 0;
-  header.sample_rate = (uint32_t) client->audio_sample_rate;
+  int chrono_rate = client->tx_audio_input_rate > 0 ?
+                    client->tx_audio_input_rate : client->audio_sample_rate;
+  header.sample_rate = (uint32_t) chrono_rate;
   header.format = TCI_AUDIO_FORMAT_FLOAT32;
   header.length = (uint32_t)(tci_audio_get_stream_frames() * TCI_AUDIO_CHANNELS);
   header.type = TCI_STREAM_TX_CHRONO;
@@ -958,26 +962,27 @@ static void tci_service_tx_chrono(void) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    int send_chrono = 0;
+    guint send_chrono = 0;
     if (client == NULL || !client->running) { continue; }
     g_mutex_lock(&tci_mutex);
     if (client->tx_audio_enabled) {
-      if (client->audio_sample_rate == TCI_AUDIO_SAMPLE_RATE_24K) {
-        client->tx_chrono_tick++;
-        if (client->tx_chrono_tick >= 2) {
-          client->tx_chrono_tick = 0;
-          send_chrono = 1;
-        }
-      } else {
-        client->tx_chrono_tick = 0;
-        send_chrono = 1;
+      int chrono_rate = client->tx_audio_input_rate > 0 ?
+                        client->tx_audio_input_rate : client->audio_sample_rate;
+      if (chrono_rate > 0) {
+        /* The callback runs once per 512 internal 48-kHz TX samples.  Use a
+         * phase accumulator so TX_CHRONO keeps the correct average cadence
+         * for any accepted wire sample rate (24 kHz remains exactly every
+         * second callback, 44.1 kHz naturally alternates as required). */
+        client->tx_chrono_tick += (guint) chrono_rate;
+        send_chrono = client->tx_chrono_tick / TCI_AUDIO_SAMPLE_RATE;
+        client->tx_chrono_tick %= TCI_AUDIO_SAMPLE_RATE;
       }
     } else {
       client->tx_chrono_next_us = 0;
       client->tx_chrono_tick = 0;
     }
     g_mutex_unlock(&tci_mutex);
-    if (send_chrono) {
+    for (guint i = 0; i < send_chrono; i++) {
       tci_queue_tx_chrono_frame(client);
     }
   }
@@ -1007,8 +1012,12 @@ static void tci_handle_binary(CLIENT *client, const unsigned char *data, size_t 
       audio_sample_rate = client->audio_sample_rate;
       log_frame = tci_debug &&
                   (tx_audio_rx_count <= 10 || (tx_audio_rx_count % 100) == 0);
-      tci_audio_handle_tx_frame(data, len, audio_sample_rate,
-                                &client->tx_audio_resampler_24_to_48);
+      int accepted_sample_rate = tci_audio_handle_tx_frame(data, len, audio_sample_rate,
+        &client->tx_audio_resampler,
+        &client->tx_audio_resampler_input_rate);
+      if (accepted_sample_rate > 0) {
+        client->tx_audio_input_rate = accepted_sample_rate;
+      }
     }
     g_mutex_unlock(&tci_mutex);
     if (tx_audio_enabled) {
@@ -1755,7 +1764,9 @@ static void tci_tx_client_cleanup_tx_audio_locked(CLIENT *client) {
   client->tx_audio_rx_count = 0;
   tci_audio_tx_set_active(0);
   tci_audio_tx_reset();
-  tci_audio_destroy_tx_resampler(&client->tx_audio_resampler_24_to_48);
+  tci_audio_destroy_tx_resampler(&client->tx_audio_resampler);
+  client->tx_audio_resampler_input_rate = 0;
+  client->tx_audio_input_rate = 0;
 }
 
 static void tci_tx_client_close_monitor_if_unused(void) {
@@ -1784,7 +1795,9 @@ static void tci_tx_client_start_tx_audio(CLIENT *client, int preserve) {
   if (!preserve) {
     tci_audio_tx_set_active(0);
     tci_audio_tx_reset();
-    tci_audio_destroy_tx_resampler(&client->tx_audio_resampler_24_to_48);
+    tci_audio_destroy_tx_resampler(&client->tx_audio_resampler);
+    client->tx_audio_resampler_input_rate = 0;
+    client->tx_audio_input_rate = 0;
   }
   tci_audio_tx_cancel_drain();
   tci_audio_tx_set_active(1);
@@ -4453,7 +4466,9 @@ static void tci_cmd_audio_samplerate(CLIENT *client, const TCI_CMD *cmd) {
         tci_audio_destroy_rx_resamplers(&client->rx_audio_resampler_l[i],
                                         &client->rx_audio_resampler_r[i]);
       }
-      tci_audio_destroy_tx_resampler(&client->tx_audio_resampler_24_to_48);
+      tci_audio_destroy_tx_resampler(&client->tx_audio_resampler);
+      client->tx_audio_resampler_input_rate = 0;
+      client->tx_audio_input_rate = 0;
     }
   }
   tci_send_audio_samplerate(client);
@@ -5654,7 +5669,9 @@ static void tci_init_client(CLIENT *client, int fd, int seq) {
   client->device_index    = -1;
   client->audio_sample_rate = TCI_AUDIO_SAMPLE_RATE;
   client->iq_sample_rate = 0;
-  client->tx_audio_resampler_24_to_48 = NULL;
+  client->tx_audio_resampler = NULL;
+  client->tx_audio_resampler_input_rate = 0;
+  client->tx_audio_input_rate = 0;
   client->tx_audio_session = 0;
   client->tx_audio_enabled = 0;
   client->rtty_enabled = 0;
@@ -6069,7 +6086,7 @@ static int tci_lws_callback(struct lws *wsi, enum lws_callback_reasons reason,
       tci_audio_destroy_rx_resamplers(&client->rx_audio_resampler_l[i],
                                       &client->rx_audio_resampler_r[i]);
     }
-    tci_audio_destroy_tx_resampler(&client->tx_audio_resampler_24_to_48);
+    tci_audio_destroy_tx_resampler(&client->tx_audio_resampler);
     g_free(client->binary_rx_buf);
     client->binary_rx_buf = NULL;
     client->binary_rx_len = 0;
