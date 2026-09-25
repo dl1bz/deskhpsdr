@@ -6162,8 +6162,9 @@ static gpointer tci_lws_server(gpointer data) {
       }
       g_list_free(clients);
     }
-    lws_service(tci_lws_context, 0);
-    g_usleep(1000);
+    lws_service(tci_lws_context, 1);
+    // lws_service(tci_lws_context, 0);
+    // g_usleep(1000);
   }
   lws_context_destroy(tci_lws_context);
   tci_lws_context = NULL;
