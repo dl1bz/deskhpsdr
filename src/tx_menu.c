@@ -1297,6 +1297,7 @@ static void tune_drive_step_changed_cb(GtkComboBox *widget, gpointer data) {
 }
 
 void tx_menu(GtkWidget *parent) {
+  audio_get_cards();
   char temp[32];
   GtkWidget *btn;
   GtkWidget *mbtn;  // main button for radio buttons

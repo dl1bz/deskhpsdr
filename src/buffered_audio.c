@@ -475,8 +475,7 @@ static void audio_backend_start_device_watch(void) {
 }
 
 
-void audio_release_cards(void) {
-  audio_close_tci_monitor();
+static void audio_clear_cards(void) {
   g_mutex_lock(&audio_mutex);
   for (int i = 0; i < n_input_devices; i++) {
     g_free(input_devices[i].name);
@@ -493,6 +492,11 @@ void audio_release_cards(void) {
   g_mutex_unlock(&audio_mutex);
 }
 
+void audio_release_cards(void) {
+  audio_close_tci_monitor();
+  audio_clear_cards();
+}
+
 //
 // AUDIO_GET_CARDS
 //
@@ -506,6 +510,7 @@ void audio_get_cards(void) {
     g_once_init_leave(&mutex_inited, 1);
   }
   audio_backend_start_device_watch();
+  audio_clear_cards();
   t_print("%s: audio backend call audio_get_cards\n", __func__);
   if (audio_backend_get_cards() != 0) {
     t_print("%s: audio backend device enumeration failed\n", __func__);

@@ -2837,8 +2837,8 @@ static void radio_restore_state(void) {
   GetPropI0("hl2_cl1_input",                                 hl2_cl1_input)
   GetPropI0("anan10E",                                       anan10E);
   if (!(protocol == NEW_PROTOCOL && radio != NULL &&
-    radio->info.network.mac_address[0] == 0x02 &&
-    radio->info.network.mac_address[1] == 0xB3)) {
+        radio->info.network.mac_address[0] == 0x02 &&
+        radio->info.network.mac_address[1] == 0xB3)) {
     GetPropI0("hermes_mode",                                 hermes_mode);
   }
   GetPropI0("tci_audio_monitor",                             tci_audio_monitor);

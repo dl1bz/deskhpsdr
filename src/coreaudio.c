@@ -164,6 +164,21 @@ static int coreaudio_device_name(AudioDeviceID device, char *name, size_t name_s
 }
 
 
+static int coreaudio_has_sample_rate(AudioDeviceID device, Float64 sample_rate) {
+  AudioObjectPropertyAddress address = {
+    kAudioDevicePropertyNominalSampleRate,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  Float64 current_rate = 0.0;
+  UInt32 size = sizeof(current_rate);
+  if (AudioObjectGetPropertyData(device, &address, 0, NULL, &size, &current_rate) != noErr) {
+    return 0;
+  }
+  return current_rate >= sample_rate - 0.5 && current_rate <= sample_rate + 0.5;
+}
+
+
 static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
   for (int i = 0; i < count; i++) {
     g_free(devices[i].name);
@@ -216,6 +231,12 @@ int audio_backend_get_cards(void) {
     }
     int input_channels = coreaudio_device_channels(devices[i], kAudioDevicePropertyScopeInput);
     int output_channels = coreaudio_device_channels(devices[i], kAudioDevicePropertyScopeOutput);
+    int has_48k = coreaudio_has_sample_rate(devices[i], COREAUDIO_SAMPLE_RATE);
+    if (!has_48k && (input_channels > 0 || output_channels > 0)) {
+      t_print("%s: skipping device not currently running at 48 kHz, ID=%u, Name=%s\n",
+              __func__, (unsigned int) devices[i], name);
+      continue;
+    }
     if (input_channels > 0 && n_input_devices < MAX_AUDIO_DEVICES) {
       input_devices[n_input_devices].name = g_strdup(name);
       input_devices[n_input_devices].description = g_strdup(name);

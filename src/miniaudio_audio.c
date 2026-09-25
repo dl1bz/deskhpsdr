@@ -24,6 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__APPLE__)
+  #include <CoreAudio/CoreAudio.h>
+  #include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include "miniaudio.h"
 
 #include "audio_backend.h"
@@ -317,6 +322,69 @@ int audio_backend_tci_monitor_is_alive(void *handle) {
   return audio_backend_output_is_alive(handle);
 }
 
+#if defined(__APPLE__)
+static int miniaudio_coreaudio_current_rate_is_48k(const ma_device_info *basic_info) {
+  CFStringRef uid = CFStringCreateWithCString(kCFAllocatorDefault, basic_info->id.coreaudio,
+    kCFStringEncodingUTF8);
+  if (uid == NULL) {
+    return 0;
+  }
+  AudioDeviceID device = kAudioObjectUnknown;
+  AudioValueTranslation translation = {
+    .mInputData = &uid,
+    .mInputDataSize = sizeof(uid),
+    .mOutputData = &device,
+    .mOutputDataSize = sizeof(device)
+  };
+  AudioObjectPropertyAddress device_address = {
+    kAudioHardwarePropertyDeviceForUID,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  UInt32 size = sizeof(translation);
+  OSStatus status = AudioObjectGetPropertyData(kAudioObjectSystemObject, &device_address, 0, NULL,
+    &size, &translation);
+  CFRelease(uid);
+  if (status != noErr || device == kAudioObjectUnknown) {
+    return 0;
+  }
+  AudioObjectPropertyAddress rate_address = {
+    kAudioDevicePropertyNominalSampleRate,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  Float64 current_rate = 0.0;
+  size = sizeof(current_rate);
+  if (AudioObjectGetPropertyData(device, &rate_address, 0, NULL, &size, &current_rate) != noErr) {
+    return 0;
+  }
+  return current_rate >= MINIAUDIO_SAMPLE_RATE - 0.5 &&
+         current_rate <= MINIAUDIO_SAMPLE_RATE + 0.5;
+}
+#endif
+
+static int miniaudio_device_supports_48k(ma_device_type type, const ma_device_info *basic_info) {
+#if defined(__APPLE__)
+  (void)type;
+  return miniaudio_coreaudio_current_rate_is_48k(basic_info);
+#else
+  ma_device_info info;
+  memset(&info, 0, sizeof(info));
+  ma_result result = ma_context_get_device_info(&miniaudio_context, type, &basic_info->id, &info);
+  if (result != MA_SUCCESS) {
+    t_print("%s: cannot query device=%s: %s\n", __func__, basic_info->name,
+            ma_result_description(result));
+    return 0;
+  }
+  for (ma_uint32 i = 0; i < info.nativeDataFormatCount; i++) {
+    if (info.nativeDataFormats[i].sampleRate == MINIAUDIO_SAMPLE_RATE) {
+      return 1;
+    }
+  }
+  return 0;
+#endif
+}
+
 int audio_backend_get_cards(void) {
   ma_device_info *playback_infos = NULL;
   ma_uint32 playback_count = 0;
@@ -334,6 +402,16 @@ int audio_backend_get_cards(void) {
   }
   g_mutex_lock(&audio_mutex);
   for (ma_uint32 i = 0; i < capture_count && n_input_devices < MAX_AUDIO_DEVICES; i++) {
+    if (!miniaudio_device_supports_48k(ma_device_type_capture, &capture_infos[i])) {
+#if defined(__APPLE__)
+      t_print("%s: skipping capture device not currently running at 48 kHz: %s\n",
+              __func__, capture_infos[i].name);
+#else
+      t_print("%s: skipping capture device without 48 kHz support: %s\n",
+              __func__, capture_infos[i].name);
+#endif
+      continue;
+    }
     AUDIO_DEVICE *entry = &input_devices[n_input_devices];
     entry->name = g_strdup(capture_infos[i].name);
     entry->description = g_strdup(capture_infos[i].name);
@@ -341,6 +419,16 @@ int audio_backend_get_cards(void) {
     n_input_devices++;
   }
   for (ma_uint32 i = 0; i < playback_count && n_output_devices < MAX_AUDIO_DEVICES; i++) {
+    if (!miniaudio_device_supports_48k(ma_device_type_playback, &playback_infos[i])) {
+#if defined(__APPLE__)
+      t_print("%s: skipping playback device not currently running at 48 kHz: %s\n",
+              __func__, playback_infos[i].name);
+#else
+      t_print("%s: skipping playback device without 48 kHz support: %s\n",
+              __func__, playback_infos[i].name);
+#endif
+      continue;
+    }
     AUDIO_DEVICE *entry = &output_devices[n_output_devices];
     entry->name = g_strdup(playback_infos[i].name);
     entry->description = g_strdup(playback_infos[i].name);

@@ -1078,6 +1078,7 @@ static GtkWidget *build_rx_page(RECEIVER *rx) {
 }
 
 void rx_menu(GtkWidget *parent) {
+  audio_get_cards();
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
