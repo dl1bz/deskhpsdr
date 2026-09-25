@@ -390,14 +390,29 @@ int audio_backend_get_cards(void) {
   ma_uint32 playback_count = 0;
   ma_device_info *capture_infos = NULL;
   ma_uint32 capture_count = 0;
+  ma_context *enumeration_context = &miniaudio_context;
+#if defined(__APPLE__)
+  ma_context fresh_context;
+  ma_result result = ma_context_init(NULL, 0, NULL, &fresh_context);
+  if (result != MA_SUCCESS) {
+    t_print("%s: fresh ma_context_init failed: %s\n", __func__, ma_result_description(result));
+    return -1;
+  }
+  enumeration_context = &fresh_context;
+#else
   if (miniaudio_ensure_context() != 0) {
     return -1;
   }
-  ma_result result = ma_context_get_devices(&miniaudio_context,
-    &playback_infos, &playback_count,
-    &capture_infos, &capture_count);
+  ma_result result;
+#endif
+  result = ma_context_get_devices(enumeration_context,
+                                  &playback_infos, &playback_count,
+                                  &capture_infos, &capture_count);
   if (result != MA_SUCCESS) {
     t_print("%s: ma_context_get_devices failed: %s\n", __func__, ma_result_description(result));
+#if defined(__APPLE__)
+    ma_context_uninit(&fresh_context);
+#endif
     return -1;
   }
   g_mutex_lock(&audio_mutex);
@@ -436,6 +451,9 @@ int audio_backend_get_cards(void) {
     n_output_devices++;
   }
   g_mutex_unlock(&audio_mutex);
+#if defined(__APPLE__)
+  ma_context_uninit(&fresh_context);
+#endif
   t_print("%s: miniaudio devices input=%d output=%d\n", __func__,
           n_input_devices, n_output_devices);
   return 0;

@@ -1043,6 +1043,59 @@ static void lev_scale_changed_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+static void local_mic_input_refresh(GtkComboBox *combo) {
+  audio_get_cards();
+  sliders_signal_handler_block(G_OBJECT(combo), local_mic_input_signal_id);
+  gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
+  int active = -1;
+  for (int i = 0; i < n_input_devices; i++) {
+#ifdef __APPLE__
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL,
+                              truncate_text_3p(input_devices[i].description, 32));
+#else
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo), NULL,
+                              truncate_text_3p(input_devices[i].description, 28));
+#endif
+    if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
+      active = i;
+    }
+  }
+  gtk_combo_box_set_active(combo, active);
+  sliders_signal_handler_unblock(G_OBJECT(combo), local_mic_input_signal_id);
+}
+
+static gboolean local_mic_input_reopen_popup_cb(gpointer data) {
+  GtkComboBox *combo = GTK_COMBO_BOX(data);
+  if (GTK_IS_COMBO_BOX(combo)) {
+    gtk_combo_box_popup(combo);
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static void local_mic_input_popup_notify_cb(GObject *object, GParamSpec *pspec, gpointer data) {
+  (void)pspec;
+  (void)data;
+  static gboolean reopening = FALSE;
+  gboolean popup_shown = FALSE;
+  g_object_get(object, "popup-shown", &popup_shown, NULL);
+  if (!popup_shown) {
+    return;
+  }
+  if (reopening) {
+    reopening = FALSE;
+    return;
+  }
+  /*
+   * Quartz creates the native popup before popup-shown is notified.  Rebuild
+   * the model, then reopen the popup on the next main-loop iteration so the
+   * first user click already sees the freshly enumerated device list.
+   */
+  gtk_combo_box_popdown(GTK_COMBO_BOX(object));
+  local_mic_input_refresh(GTK_COMBO_BOX(object));
+  reopening = TRUE;
+  g_idle_add(local_mic_input_reopen_popup_cb, object);
+}
+
 void update_slider_local_mic_input(int src) {
   if (display_sliders) {
     // t_print("%s: local_mic_input = %d src = %d\n", __func__, gtk_combo_box_get_active(GTK_COMBO_BOX(local_mic_input)), src);
@@ -3015,6 +3068,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gboolean flag = FALSE;
       local_mic_input_signal_id = g_signal_connect(local_mic_input, "changed", G_CALLBACK(local_input_changed_cb),
         GINT_TO_POINTER(flag));
+      g_signal_connect(local_mic_input, "notify::popup-shown", G_CALLBACK(local_mic_input_popup_notify_cb), NULL);
       // Widgets in Box packen
       gtk_box_pack_start(GTK_BOX(box_Z3_middle), local_mic_button, FALSE, FALSE, 0);
       gtk_box_pack_start(GTK_BOX(box_Z3_middle), local_mic_input, FALSE, FALSE, 0);
