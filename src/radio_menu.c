@@ -536,8 +536,8 @@ void radio_menu(GtkWidget *parent) {
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  char _title[32];
-  snprintf(_title, 32, "%s - SDR Device Settings", PGNAME);
+  char _title[128];
+  snprintf(_title, sizeof(_title), "%s - SDR Device Settings [%s]", PGNAME, radio->name);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
@@ -622,7 +622,7 @@ void radio_menu(GtkWidget *parent) {
   gtk_label_set_justify(GTK_LABEL(sr_note), GTK_JUSTIFY_CENTER);
   gtk_label_set_xalign(GTK_LABEL(sr_note), 0.5);
   gtk_widget_set_halign(sr_note, GTK_ALIGN_CENTER);
-  gtk_grid_attach(GTK_GRID(grid), sr_note, 0, row + 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), sr_note, 0, 5, 1, 1);
   label = gtk_label_new("SAT mode:");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_widget_set_name(label, "boldlabel");
@@ -647,7 +647,7 @@ void radio_menu(GtkWidget *parent) {
   label = gtk_label_new("IARU Region:");
   gtk_widget_set_name(label, "boldlabel_blue");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), label, 3, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
   //--------------------------------------------------------------------------------------------------------
   row++;
   GtkWidget *region_combo = gtk_combo_box_text_new();
@@ -681,7 +681,7 @@ void radio_menu(GtkWidget *parent) {
                               "2 - Region 2 / Americas\n"
                               "3 - Region 3 / Asia-Pacific\n\n"
                               "This does not affect the separate 60m channel marker setting.");
-  my_combo_attach(GTK_GRID(grid), iaru_region_combo_box, 3, row, 1, 1);
+  my_combo_attach(GTK_GRID(grid), iaru_region_combo_box, 0, 4, 1, 1);
   g_signal_connect(iaru_region_combo_box, "changed", G_CALLBACK(iaru_region_cb), NULL);
   //--------------------------------------------------------------------------------------------------------
   row++;
@@ -825,7 +825,8 @@ void radio_menu(GtkWidget *parent) {
     row = 1;
     label = gtk_label_new("ORION/SATURN Mic jack:");
     gtk_widget_set_name(label, "boldlabel");
-    gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+    // gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), label, 3, row, 2, 1);
     row++;
     GtkWidget *ptt_ring_b = gtk_radio_button_new_with_label(NULL, "PTT On Ring, Mic and Bias on Tip");
