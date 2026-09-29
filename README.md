@@ -41,9 +41,9 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Bright / Dark Theme support    | yes ✅                                        |                   |
 | Screen Resolution              | min. 1280x600 or higher 🚨                    |                   |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                   |
-| OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ✅ |                   |
+| OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ❌ |                   |
 | using Virtual Environments (VE)| not supported ❌                              | use native OS     |
-| Audio backend                  | CoreAudio (macOS), miniAudio (macOS,Linux,Win)|                   |
+| Audio backend                  | CoreAudio (macOS), miniAudio (macOS & Linux)  |                   |
 | Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling     |
 | TX Audio Monitor               | supported ✅ (since 2.7.39)                   | Pre & Post        |
 | DX Cluster support             | yes, inclusive show Spots on RX Panadapter ✅ |                   |
@@ -52,6 +52,8 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Used UI framework              | GTK3                                          |                   |
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                   |
 | Supported Compiler             | clang (recommended), gcc                      |                   |
+| App Publishing                 | **Source code only, no binaries distributed** |                   |
+|                                | **except macOS (digitally signed & notarized)**|                   |
 
 Other useful app features (availability depend from used SDR device):
 
@@ -84,16 +86,18 @@ deskHPSDR is fully Open Source, but a full non-commercial hobby software project
 
 My main focus of deskHPSDR development is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The second focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, but not for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
+**There are no plans whatsoever to ever port deskHPSDR to WINDOWS! It's made for UNIX style OS only like macOS or Linux.**
+
 ## Requirements
 
-I recommend using deskHPSDR on macOS, it's also being focused and developed on this OS platform. It can be build and run under Linux too, but my recommendation remains unequivocally macOS for for stable and stress-free operation with deskHPSDR. macOS will also remain the only platform, where I provide ready-made app bundles without build them first.
+I recommend using deskHPSDR on macOS, it's also being focused and developed on this OS platform. It can be build and run under Linux too, but my recommendation remains unequivocally macOS for for stable and stress-free operation with deskHPSDR. macOS will also remain the only platform, where I provide ready-made app bundles without build them first. Same for WINDOWS, a setup package is provided too.
 
 * modern Desktop-OS like macOS (15 or newer) or Linux with installed developer tools like compiler, linker etc.
 * minimum screensize starts from 1280x600
 * **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
-* *macOS only*: please read the``COMPILE.macOS`` first, ready-to-run app bundles for ARM & Intel available (digitally signed and notarized)
+* *macOS only*: please read the``COMPILE.macOS`` first, app bundles for ARM and Intel available
 * *Linux only*: please read the``COMPILE.linux`` first
-* *WINDOWS only*: complex build process, nothing for normal users, WINDOWS version published as setup package instead
+* *WINDOWS*: no self-compiling required, setup package available
 * a SDR device or SDR transceiver, which supports HPSDR protocol 1 (older) like the Hermes Lite 2 or protocol 2 (newer) like the ANAN or similiar devices like Brick2/Brick3 series.
 * a very good running network without any issues (Ethernet preferred, WiFi not recommended) and a DHCP server inside (without DHCP is possible too, but more complicated or difficult working with the SDR devices)
 * for Hermes Lite 2 specific notes look into the``Notes_if_using_HERMES-Lite-2.md``
@@ -107,7 +111,7 @@ I will never publish any ready-compiled binaries or appimages for Linux. The tas
 
 ## My development of deskHPSDR
 
-deskHPSDR is under my active development, because software projects never finished.😉<br>
+deskHPSDR is under my active development.<br>
 My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.<br>
 ⚠️☝️ I'm the solo maintainer of this project deskHPSDR, there is no developer team behind. This app is MY OWN interpretation how such an SDR TRX app should work. I alone make all the design decisions, no one else. During publishing this app as Open Source, I'm ready to share my own work and development with interested users or interested communities. However, this does not give rise to any demands or claims for anyone, but I'm open for useful user requests. That doesn't mean, that I accept every request.
 
@@ -120,13 +124,13 @@ I decline requests for "only one user" functions and regarding the following que
 - provide ready-to-run binaries for Linux (regardless of the form) -> NO
 - supporting SDR devices, which don't work with OpenHPSDR protcols P1 or P2 -> NO
 - add any kind of additonal build-in or special client-server-support like pihpsdr -> NO
-- help for solving OS problems, if these in my assessment do not directly concern deskHPSDR
+- help for solving OS problems, if these in my assessment do not directly concern deskHPSDR -> NO
 
 Especially Linux environments are highly fragmented and differ from distribution to distribution, so I cannot guarantee that deskHPSDR will run on just any Linux distribution. I test only and exclusively Debian-based environments - but I’m not interested in anything else.
 
 ## macOS is first choice
 
-deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority. WINDOWS version also available.
+deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority. WINDOWS also supported now.
 
 ## Latest Changes
 
@@ -181,13 +185,17 @@ This overwrite ALL local changes you are made, which are different from my curre
 
 So far, deskHPSDR has been successfully tested on the following systems:<br>
 
-* Macbook Air M1 running macOS 26 aka Tahoe
+* Macbook Air M1 running macOS 27 aka Golden Gate
 * Mac mini M4 2024 running macOS 26 aka Tahoe
-* old Macbook Pro i7 & LENOVO Desktop PC running Linux Mint "Faye" Debian-Edition
+* Intel iMac 21" i5 running macOS 15 Sequoia
+* old Macbook Pro i7 & FUJITSU Desktop PC running Linux Mint "Faye" Debian-Edition
 * Raspberry Pi5 & CM5 with NVMe SSD running current official 64bit PiOS ("Trixie") and X11 environment (no Wayland!)
+* Lenovo Desktop PC i5 16GB 2TB SSD NVIDIA Quadro running WINDOWS 11 Pro
+* HUAWEI Notebook 16" i5 16GB 512GB SSD running WINDOWS 11 Pro
+* DELL Notebook 13" i7 16GB 512GB SSD running WINDOWS 11 Pro
 
 **All radio tests are made with my Hermes Lite 2 SDR-Transceiver using OpenHPSDR protocol P1 and**
-**my Brick2 14bit SDR transceiver with P2 OpenHPSDR protocol under macOS 26.**
+**my two Brick2 14bit SDR transceivers with P2 OpenHPSDR protocol under macOS.**
 **It is not possible for me to check ALL types of OpenHPSDR SDR devices.**
 
 ## Credits
@@ -202,6 +210,10 @@ Special thanks to:<br>
 - Anton (developer of Brick SDR series) for share his technical documentations with me for add Brick SDR support
 - OpenAI/ChatGPT for brainstorming, code optimizations and save me a lot of time in development
 - all of the active users and contributors for support deskHPSDR
+
+## Using Github as mirror
+
+Github.com hold **not** the primary Git repository of deskHPSDR, it act's only as mirror and support platform. Not all deskHPSDR branches are and will be available at deskHPSDRs Github.com project page.
 
 ## Exclusion of any Guarantee and any Warrenty and limited Support
 
