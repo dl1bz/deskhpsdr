@@ -1451,7 +1451,8 @@ void rx_panadapter_update(RECEIVER *rx) {
   } else if (mode == modeDIGU) {
     filter_low -= (double) rx->digi_offset_u;
     filter_high -= (double) rx->digi_offset_u;
-  } else if (mode == modeDIGL) {
+  } else if (mode == modeDIGL &&
+             rx->digi_offset_l > 0) {  // Mirror the shifted DIGL passband to preserve the intended MARK/SPACE orientation
     filter_low = - (filter_low + (double) rx->digi_offset_l);
     filter_high = - (filter_high + (double) rx->digi_offset_l);
   }
