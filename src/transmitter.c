@@ -1555,6 +1555,49 @@ int tx_monitor_audio_active(void) {
   return 1;
 }
 
+static void tx_monitor_write(float left, float right) {
+  audio_write_monitor(active_receiver, left, right);
+  // Protocol 2 has a dedicated RX-audio stream back to the radio. While the
+  // TX monitor owns the active receiver audio sink, mirror the same monitor
+  // samples to that stream so the radio headphones/speaker follow the host.
+  if (protocol == NEW_PROTOCOL) {
+    if (left > 1.0f) { left = 1.0f; }
+    if (left < -1.0f) { left = -1.0f; }
+    if (right > 1.0f) { right = 1.0f; }
+    if (right < -1.0f) { right = -1.0f; }
+    new_protocol_audio_samples((short)(left * 32767.0f),
+                               (short)(right * 32767.0f));
+  }
+}
+
+static void tx_monitor_p1_samples(TRANSMITTER *tx, int txmode, int index,
+                                  short *left, short *right) {
+  *left = 0;
+  *right = 0;
+  if (protocol != ORIGINAL_PROTOCOL || !tx_monitor_allowed(tx, txmode)) {
+    return;
+  }
+  double monitor_gain = atomic_load_explicit(&tx_monitor_gain, memory_order_relaxed);
+  double l;
+  double r;
+  if (atomic_load_explicit(&tx_monitor_post, memory_order_relaxed)) {
+    l = monitor_gain * tx->iq_output_buffer[2 * index];
+    r = monitor_gain * tx->iq_output_buffer[2 * index + 1];
+  } else {
+    double panel_gain = (txmode == modeDIGL || txmode == modeDIGU ||
+                         capture_state == CAP_XMIT || capture_state == CAP_XMIT_DONE)
+                        ? 1.0
+                        : pow(10.0, tx->mic_gain * 0.05);
+    l = r = monitor_gain * panel_gain * tx->mic_input_buffer[2 * index];
+  }
+  if (l > 1.0) { l = 1.0; }
+  if (l < -1.0) { l = -1.0; }
+  if (r > 1.0) { r = 1.0; }
+  if (r < -1.0) { r = -1.0; }
+  *left = (short)(l * 32767.0);
+  *right = (short)(r * 32767.0);
+}
+
 static void tx_monitor_pre_input(TRANSMITTER *tx, int txmode) {
   if (atomic_load_explicit(&tx_monitor_post, memory_order_relaxed) ||
       !tx_monitor_allowed(tx, txmode)) {
@@ -1571,7 +1614,7 @@ static void tx_monitor_pre_input(TRANSMITTER *tx, int txmode) {
                       : pow(10.0, tx->mic_gain * 0.05);
   for (int i = 0; i < tx->samples; i++) {
     double sample = monitor_gain * panel_gain * tx->mic_input_buffer[2 * i];
-    audio_write_monitor(active_receiver, sample, sample);
+    tx_monitor_write(sample, sample);
   }
 }
 
@@ -1587,9 +1630,8 @@ static void tx_monitor_processed_output(TRANSMITTER *tx, int txmode) {
   }
   if (tx->iq_output_rate == 48000) {
     for (int i = 0; i < tx->output_samples; i++) {
-      audio_write_monitor(active_receiver,
-                          monitor_gain * tx->monitor_input_i[i],
-                          monitor_gain * tx->monitor_input_q[i]);
+      tx_monitor_write(monitor_gain * tx->monitor_input_i[i],
+                       monitor_gain * tx->monitor_input_q[i]);
     }
     return;
   }
@@ -1604,9 +1646,8 @@ static void tx_monitor_processed_output(TRANSMITTER *tx, int txmode) {
               &out_q, tx->monitor_resampler_q);
   int frames = min(out_i, out_q);
   for (int i = 0; i < frames; i++) {
-    audio_write_monitor(active_receiver,
-                        monitor_gain * tx->monitor_output_i[i],
-                        monitor_gain * tx->monitor_output_q[i]);
+    tx_monitor_write(monitor_gain * tx->monitor_output_i[i],
+                     monitor_gain * tx->monitor_output_q[i]);
   }
 }
 
@@ -1864,9 +1905,13 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         qsample = (long)(qs * gain + (qs >= 0.0 ? 0.5 : -0.5));
 #endif
         switch (protocol) {
-        case ORIGINAL_PROTOCOL:
-          old_protocol_iq_samples(isample, qsample, 0);
-          break;
+        case ORIGINAL_PROTOCOL: {
+          short monitor_left;
+          short monitor_right;
+          tx_monitor_p1_samples(tx, txmode, j, &monitor_left, &monitor_right);
+          old_protocol_iq_audio_samples(isample, qsample, monitor_left, monitor_right);
+        }
+        break;
         case NEW_PROTOCOL:
           new_protocol_iq_samples(isample, qsample);
           break;

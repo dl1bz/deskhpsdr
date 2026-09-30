@@ -46,6 +46,7 @@ extern void old_protocol_set_mic_sample_rate(int rate);
 
 extern void old_protocol_audio_samples(short left_audio_sample, short right_audio_sample);
 extern void old_protocol_iq_samples(int isample, int qsample, int side);
+extern void old_protocol_iq_audio_samples(int isample, int qsample, int left, int right);
 extern uint64_t old_protocol_tx_fence_begin(void);
 extern int old_protocol_tx_fence_complete(uint64_t fence);
 #ifdef __APPLE__

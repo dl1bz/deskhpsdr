@@ -2127,7 +2127,7 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
   }
 }
 
-void old_protocol_iq_samples(int isample, int qsample, int side) {
+void old_protocol_iq_audio_samples(int isample, int qsample, int left, int right) {
   if (radio_is_transmitting()) {
     pthread_mutex_lock(&send_audio_mutex);
     int tc = atomic_load_explicit(&txring_count, memory_order_relaxed);
@@ -2179,10 +2179,10 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
       TXRINGBUF[iptr++] = 0;
       TXRINGBUF[iptr++] = 0;
     } else {
-      TXRINGBUF[iptr++] = side  >> 8;
-      TXRINGBUF[iptr++] = side;
-      TXRINGBUF[iptr++] = side >> 8;
-      TXRINGBUF[iptr++] = side;
+      TXRINGBUF[iptr++] = left >> 8;
+      TXRINGBUF[iptr++] = left;
+      TXRINGBUF[iptr++] = right >> 8;
+      TXRINGBUF[iptr++] = right;
     }
     if (device == DEVICE_HERMES_LITE2) {
       //
@@ -2226,6 +2226,11 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
     }
     pthread_mutex_unlock(&send_audio_mutex);
   }
+}
+
+
+void old_protocol_iq_samples(int isample, int qsample, int side) {
+  old_protocol_iq_audio_samples(isample, qsample, side, side);
 }
 
 
