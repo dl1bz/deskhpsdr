@@ -2478,7 +2478,9 @@ static inline void tx_levels_hide(TRANSMITTER *tx) {
   if (!tx) { return; }
   if (tx->levels_surface) { cairo_surface_destroy(tx->levels_surface); tx->levels_surface = NULL; }
   if (tx->levels_dialog)  {
-    gtk_window_get_position(GTK_WINDOW(tx->levels_dialog), &tx->levels_x_pos, &tx->levels_y_pos);
+    if (GTK_IS_WINDOW(tx->levels_dialog)) {
+      gtk_window_get_position(GTK_WINDOW(tx->levels_dialog), &tx->levels_x_pos, &tx->levels_y_pos);
+    }
     gtk_widget_destroy(tx->levels_dialog);
     tx->levels_dialog  = NULL;
   }

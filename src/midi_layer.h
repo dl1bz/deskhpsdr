@@ -103,6 +103,7 @@ struct desc {
   int               fr1, fr2;    // Wheel only: range of controller values for "fast right"
   int               rgt1, rgt2;  // Wheel only: range of controller values for "slow right"
   int               action;      // SDR "action" to generate
+  int               invert;      // reverse controller direction for this mapping
   struct desc       *next;       // Next defined action for a controller/key with that note value (NULL for end of list)
 };
 

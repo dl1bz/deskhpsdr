@@ -836,6 +836,7 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
   }
   if (valid_rx_id) {
     if (ring_underrun && ring_was_primed && rx->local_audio
+        && !radio_is_transmitting()
         && !g_atomic_int_get(&output_ring_starved[rx->id])) {
       g_atomic_int_inc(&audio_xrun_count);
       atomic_fetch_add_explicit(&rx_ring_diag_underruns[rx->id], 1U, memory_order_relaxed);
@@ -844,7 +845,7 @@ void audio_render_local_output(RECEIVER *rx, float *out, unsigned int frames, in
       g_atomic_int_set(&output_ring_primed[rx->id], 1);
     }
     g_atomic_int_set(&output_ring_starved[rx->id], ring_underrun);
-  } else if (ring_underrun && rx->local_audio) {
+  } else if (ring_underrun && rx->local_audio && !radio_is_transmitting()) {
     g_atomic_int_inc(&audio_xrun_count);
   }
 }

@@ -55,6 +55,7 @@ enum {
   TYPE_COLUMN,
   ACTION_COLUMN,
   BSTR_COLUMN,
+  INVERT_COLUMN,
   N_COLUMNS
 };
 
@@ -76,6 +77,7 @@ static GtkWidget *newType;
 static GtkWidget *newMin;
 static GtkWidget *newMax;
 static GtkWidget *newAction;
+static GtkWidget *newInvert;
 static GtkWidget *delete_b;
 static GtkWidget *clear_b;
 static GtkWidget *device_b[MAX_MIDI_DEVICES];
@@ -106,6 +108,8 @@ static GtkWidget *set_vfr1, *set_vfr2;
 
 static enum ACTIONtype thisType;
 static int thisAction;
+static int thisInvert;
+static int updating_invert_widget;
 
 //
 // While choosing an action in the dialog, new incoming events
@@ -156,6 +160,14 @@ static void destroy_cb(GtkWidget *widget, gpointer data) {
 
 static void ignore_cb(GtkWidget *widget, gpointer data) {
   midiIgnoreCtrlPairs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
+static void invert_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
+  thisInvert = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if (updating_invert_widget || current_cmd == NULL) { return; }
+  current_cmd->invert = thisInvert;
+  gtk_list_store_set(store, &iter, INVERT_COLUMN, thisInvert ? "Yes" : "No", -1);
 }
 
 static void device_cb(GtkWidget *widget, gpointer data) {
@@ -397,6 +409,7 @@ static void add_store(int key, const struct desc *cmd) {
                      TYPE_COLUMN, Type2String(cmd->type),
                      ACTION_COLUMN, str_action,
                      BSTR_COLUMN, ActionTable[cmd->action].button_str,
+                     INVERT_COLUMN, cmd->invert ? "Yes" : "No",
                      -1);
   if (scrolled_window != NULL) {
     GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
@@ -455,6 +468,7 @@ static void updateDescription(void) {
   current_cmd->type   = thisType;
   current_cmd->event  = thisEvent;
   current_cmd->action = thisAction;
+  current_cmd->invert = thisInvert;
   current_cmd->vfl1  = thisVfl1;
   current_cmd->vfl2  = thisVfl2;
   current_cmd->fl1   = thisFl1;
@@ -489,6 +503,7 @@ static void updateDescription(void) {
                        TYPE_COLUMN, Type2String(thisType),
                        ACTION_COLUMN, str_action,
                        BSTR_COLUMN, ActionTable[thisAction].button_str,
+                       INVERT_COLUMN, thisInvert ? "Yes" : "No",
                        -1);
   }
 }
@@ -640,6 +655,9 @@ void midi_menu(GtkWidget *parent) {
   label = gtk_label_new("Action");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col++, row, 1, 1);
+  label = gtk_label_new("Invert");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_grid_attach(GTK_GRID(grid), label, col++, row, 1, 1);
   row++;
   col = 0;
   newEvent = gtk_label_new(NULL);
@@ -659,7 +677,12 @@ void midi_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), newMax, col++, row, 1, 1);
   newAction = gtk_button_new_with_label("    ");
   g_signal_connect(newAction, "button-press-event", G_CALLBACK(action_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), newAction, col, row, 3, 1);
+  gtk_grid_attach(GTK_GRID(grid), newAction, col++, row, 1, 1);
+  newInvert = gtk_check_button_new();
+  gtk_widget_set_tooltip_text(newInvert, "Reverse the direction of this MIDI control");
+  gtk_widget_set_halign(newInvert, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(grid), newInvert, col, row, 1, 1);
+  g_signal_connect(newInvert, "toggled", G_CALLBACK(invert_cb), NULL);
   row++;
   clear_b = gtk_button_new_with_label("Delete All");
   gtk_grid_attach(GTK_GRID(grid), clear_b, 0, row, 1, 1);
@@ -691,6 +714,8 @@ void midi_menu(GtkWidget *parent) {
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "TYPE", renderer, "text", TYPE_COLUMN, NULL);
   renderer = gtk_cell_renderer_text_new();
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "ACTION", renderer, "text", ACTION_COLUMN, NULL);
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "INVERT", renderer, "text", INVERT_COLUMN, NULL);
   store = gtk_list_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
                              G_TYPE_STRING, G_TYPE_STRING);
   load_store();
@@ -833,6 +858,10 @@ static int updatePanel(int state) {
   gchar text[32];
   switch (state) {
   case UPDATE_NEW:
+    thisInvert = 0;
+    updating_invert_widget = 1;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newInvert), FALSE);
+    updating_invert_widget = 0;
     gtk_label_set_text(GTK_LABEL(newEvent), Event2String(thisEvent));
     snprintf(text, 32, "%d", thisChannel);
     gtk_label_set_text(GTK_LABEL(newChannel), text);
@@ -931,7 +960,11 @@ static int updatePanel(int state) {
       thisFr2   = current_cmd->fr2;
       thisVfr1  = current_cmd->vfr1;
       thisVfr2  = current_cmd->vfr2;
+      thisInvert = current_cmd->invert;
     }
+    updating_invert_widget = 1;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newInvert), thisInvert);
+    updating_invert_widget = 0;
     update_wheelparams(NULL);
     break;
   }
@@ -977,6 +1010,7 @@ int ProcessNewMidiConfigureEvent(void *data) {
     thisMax = val;
     thisType = TYPE_NONE;
     thisAction = NO_ACTION;
+    thisInvert = 0;
     //
     // set default values for wheel parameters
     //
@@ -1116,6 +1150,7 @@ void midiSaveState(void) {
       SetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel,   Event2String(cmd->event));
       SetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    Type2String(cmd->type));
       SetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel,  cmd->action);
+      SetPropI3("midi[%d].entry[%d].channel[%d].invert", i, entry, channel,  cmd->invert);
       //
       // For wheels, also store the additional parameters,
       //
@@ -1147,6 +1182,7 @@ void midiRestoreState(void) {
   int event;
   int type;
   int action;
+  int invert;
   int vfl1, vfl2;
   int fl1, fl2;
   int lft1, lft2;
@@ -1190,6 +1226,8 @@ void midiRestoreState(void) {
       type  = String2Type(str);
       action = NO_ACTION;
       GetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
+      invert = 0;
+      GetPropI3("midi[%d].entry[%d].channel[%d].invert", i, entry, channel, invert);
       if (event == EVENT_NONE || type == TYPE_NONE || action < 0 || action >= ACTIONS) {
         continue;
       }
@@ -1233,6 +1271,7 @@ void midiRestoreState(void) {
       }
       desc->next     = NULL;
       desc->action   = action; // MIDIaction
+      desc->invert   = invert;
       desc->type     = type;   // MIDItype
       desc->event    = event;  // MIDIevent
       desc->vfl1     = vfl1;
