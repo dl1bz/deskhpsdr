@@ -25,5 +25,6 @@ extern gboolean enable_saturn_xdma;
 extern gboolean enable_stemlab;
 extern gboolean enable_usbozy;
 extern gboolean autostart;
+extern gboolean reuse_last_device;
 
-extern void configure_protocols(GtkWidget *parent);
+extern gboolean configure_protocols(GtkWidget *parent);

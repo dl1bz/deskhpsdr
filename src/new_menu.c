@@ -38,6 +38,7 @@
 #include "cw_menu.h"
 #include "store_menu.h"
 #include "xvtr_menu.h"
+#include "protocols.h"
 #include "equalizer_menu.h"
 #include "radio.h"
 #include "meter_menu.h"
@@ -114,6 +115,7 @@ typedef enum {
   MAIN_SUBMENU_EXTRAS,
   MAIN_SUBMENU_DDC,
   MAIN_SUBMENU_XVTR,
+  MAIN_SUBMENU_DISCOVERY,
   MAIN_SUBMENU_EQUALIZER,
   MAIN_SUBMENU_METER,
   MAIN_SUBMENU_MODE,
@@ -202,6 +204,9 @@ static void open_submenu_from_main(MAIN_SUBMENU menu) {
     break;
   case MAIN_SUBMENU_XVTR:
     xvtr_menu(top_window);
+    break;
+  case MAIN_SUBMENU_DISCOVERY:
+    (void)configure_protocols(top_window);
     break;
   case MAIN_SUBMENU_EQUALIZER:
     equalizer_menu(top_window);
@@ -426,6 +431,14 @@ static gboolean xvtr_cb(GtkWidget *widget, GdkEventButton *event, gpointer data)
   (void)event;
   (void)data;
   open_submenu_from_main(MAIN_SUBMENU_XVTR);
+  return TRUE;
+}
+
+static gboolean discovery_options_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
+  open_submenu_from_main(MAIN_SUBMENU_DISCOVERY);
   return TRUE;
 }
 
@@ -756,7 +769,7 @@ void new_menu(void) {
     col = 0;
     //
     // First Column: Menus related to the Radio in general.
-    //               Radio/Screen/Display/Meter/XVTR
+    //               Radio/Screen/Display/Meter/XVTR/Discovery
     //
     GtkWidget *radio_b = gtk_button_new_with_label("SDR Device");
     gtk_widget_set_tooltip_text(radio_b,
@@ -779,6 +792,12 @@ void new_menu(void) {
     GtkWidget *xvtr_b = gtk_button_new_with_label("XVTR");
     g_signal_connect(xvtr_b, "button-press-event", G_CALLBACK(xvtr_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), xvtr_b, col, row, 1, 1);
+    row++;
+    GtkWidget *discovery_b = gtk_button_new_with_label("Discovery");
+    gtk_widget_set_tooltip_text(discovery_b,
+                                "Configure SDR discovery and startup options");
+    g_signal_connect(discovery_b, "button-press-event", G_CALLBACK(discovery_options_cb), NULL);
+    gtk_grid_attach(GTK_GRID(grid), discovery_b, col, row, 1, 1);
     row++;
 #ifdef SATURN
     if (have_saturn_xdma) { // only display on the xdma client

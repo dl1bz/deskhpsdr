@@ -141,6 +141,44 @@ static void discover(struct ifaddrs* iface, int discflag) {
     }
 #endif
     break;
+  case 4:
+    /*
+     * Reuse last device: use the normal interface-bound broadcast path,
+     * but accept only the saved IP/MAC in the receive thread.  Do not
+     * unicast here: routing could otherwise select a different interface.
+     */
+    g_strlcpy(interface_name, iface->ifa_name, sizeof(interface_name));
+    discovery_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (discovery_socket < 0) {
+      t_perror("reuse discovery: create socket failed:");
+      return;
+    }
+    memcpy(&interface_addr, iface->ifa_addr, sizeof(interface_addr));
+    memcpy(&interface_netmask, iface->ifa_netmask, sizeof(interface_netmask));
+    interface_addr.sin_family = AF_INET;
+    interface_addr.sin_port = htons(0);
+    if (bind(discovery_socket, (struct sockaddr *) &interface_addr, sizeof(interface_addr)) < 0) {
+      t_perror("reuse discovery: bind socket failed:");
+      close(discovery_socket);
+      return;
+    }
+    optval = 1;
+    if (setsockopt(discovery_socket, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval)) != 0) {
+      t_perror("reuse discovery: setsockopt SO_BROADCAST failed:");
+      close(discovery_socket);
+      return;
+    }
+    to_addr.sin_family = AF_INET;
+    to_addr.sin_port = htons(radio_port);
+    to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+#ifdef __APPLE__
+    if ((iface->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
+      to_addr.sin_addr = interface_addr.sin_addr;
+    }
+#endif
+    t_print("reuse discovery: probing last P1 device via %s address %s\n",
+            interface_name, inet_ntoa(interface_addr.sin_addr));
+    break;
   case 2: {
     int is_direct;
     //
@@ -274,6 +312,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
   switch (discflag) {
   case 1:
   case 2:
+  case 4:
     len = 63; // send UDP packet
     break;
   case 3:
@@ -300,6 +339,9 @@ static void discover(struct ifaddrs* iface, int discflag) {
   switch (discflag) {
   case 1:
     t_print("discover: exiting discover for %s\n", iface->ifa_name);
+    break;
+  case 4:
+    t_print("discover: exiting reuse discover for %s on %s\n", last_device_ip, iface->ifa_name);
     break;
   case 2:
     t_print("discover: exiting HPSDR discover for IP %s\n", ipaddr_radio);
@@ -334,7 +376,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
 
 static gpointer discover_receive_thread(gpointer data) {
   const int discflag = GPOINTER_TO_INT(data);
-  const int targeted = (discflag == 2);
+  const int targeted = (discflag == 2 || discflag == 4);
   struct sockaddr_in addr;
   socklen_t len;
   unsigned char buffer[2048];
@@ -349,7 +391,7 @@ static gpointer discover_receive_thread(gpointer data) {
   tv.tv_sec = 0;
   tv.tv_usec = 250000;
   setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
-  const gint64 deadline_us = g_get_monotonic_time() + (5 * G_USEC_PER_SEC);
+  const gint64 deadline_us = g_get_monotonic_time() + ((discflag == 4 ? 250 : 5000) * 1000);
   len = sizeof(addr);
   while (g_get_monotonic_time() < deadline_us) {
     int bytes_read = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &addr, &len);
@@ -366,6 +408,9 @@ static gpointer discover_receive_thread(gpointer data) {
     if ((buffer[0] & 0xFF) == 0xEF && (buffer[1] & 0xFF) == 0xFE) {
       int status = buffer[2] & 0xFF;
       if (status == 2 || status == 3) {
+        if (discflag == 4 && !discovery_last_device_matches(ORIGINAL_PROTOCOL, &addr, &buffer[3])) {
+          continue;
+        }
         if (devices < MAX_DEVICES) {
           discovered[devices].protocol = ORIGINAL_PROTOCOL;
           discovered[devices].device = buffer[10] & 0xFF;
@@ -545,6 +590,31 @@ static int is_macos(void) {
   }
 #endif
   return 0; // Kein macOS erkannt
+}
+
+void old_reuse_discovery(void) {
+  struct ifaddrs *addrs, *ifa;
+  if (getifaddrs(&addrs) != 0) {
+    t_perror("old_reuse_discovery: getifaddrs failed");
+    return;
+  }
+  for (ifa = addrs; ifa != NULL; ifa = ifa->ifa_next) {
+    g_main_context_iteration(NULL, 0);
+    if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET
+        && (ifa->ifa_flags & IFF_UP) == IFF_UP
+        && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
+#ifdef __APPLE__
+        && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
+#else
+        && strncmp("veth", ifa->ifa_name, 4)
+        && strncmp("dock", ifa->ifa_name, 4)
+        && strncmp("hass", ifa->ifa_name, 4)
+#endif
+       ) {
+      discover(ifa, 4);
+    }
+  }
+  freeifaddrs(addrs);
 }
 
 void old_discovery(void) {

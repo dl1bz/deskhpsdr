@@ -31,6 +31,12 @@ extern void discovery(void);
 extern char *ipaddr_radio;
 extern int radio_port;
 extern int active_device_index;
+extern int last_device_protocol;
+extern char last_device_ip[INET_ADDRSTRLEN];
+extern unsigned char last_device_mac[6];
+extern int last_device_valid;
+
+int discovery_last_device_matches(int protocol, const struct sockaddr_in *addr, const unsigned char *mac);
 
 int discovery_resolve_target(const char *host,
                              struct sockaddr_in *target,

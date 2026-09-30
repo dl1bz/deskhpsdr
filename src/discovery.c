@@ -72,6 +72,18 @@ int radio_port = 1024;  // Default discovery port
 
 int active_device_index;
 
+int last_device_protocol = -1;
+char last_device_ip[INET_ADDRSTRLEN] = "";
+unsigned char last_device_mac[6] = {0};
+int last_device_valid = 0;
+
+int discovery_last_device_matches(int protocol, const struct sockaddr_in *addr, const unsigned char *mac) {
+  struct in_addr saved;
+  if (!last_device_valid || protocol != last_device_protocol || addr == NULL || mac == NULL) { return 0; }
+  if (inet_aton(last_device_ip, &saved) == 0 || addr->sin_addr.s_addr != saved.s_addr) { return 0; }
+  return memcmp(mac, last_device_mac, 6) == 0;
+}
+
 int discover_only_stemlab = 0;
 
 int delayed_discovery(gpointer data);
@@ -199,6 +211,15 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
   }
   active_device_index = selected_device;
   radio = &discovered[selected_device];
+  if (radio->protocol == ORIGINAL_PROTOCOL || radio->protocol == NEW_PROTOCOL) {
+    const char *last_ip = inet_ntop(AF_INET, &radio->info.network.address.sin_addr, last_device_ip, sizeof(last_device_ip));
+    if (last_ip != NULL) {
+      last_device_protocol = radio->protocol;
+      memcpy(last_device_mac, radio->info.network.mac_address, sizeof(last_device_mac));
+      last_device_valid = 1;
+      StartConfigSave();
+    }
+  }
   t_print("%s: selected_device=%d protocol=%d device=%d name=%s\n",
           __func__, selected_device, radio->protocol, radio->device, radio->name);
   if (!(radio->protocol == NEW_PROTOCOL && radio->device == NEW_DEVICE_ANGELIA)) {
@@ -312,7 +333,10 @@ static void p2_setup_clicked(GtkWidget *widget, gpointer data) {
 }
 
 static gboolean protocols_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  configure_protocols(discovery_dialog);
+  if (configure_protocols(discovery_dialog)) {
+    gtk_widget_destroy(discovery_dialog);
+    g_timeout_add(100, delayed_discovery, NULL);
+  }
   return TRUE;
 }
 
@@ -401,6 +425,17 @@ void discovery(void) {
   touch_ui = 1;
   selected_device = 0;
   devices = 0;
+  if (!discover_only_stemlab && ipaddr_radio[0] == '\0' && reuse_last_device && last_device_valid) {
+    status_text("Looking for last used SDR ...");
+    if (last_device_protocol == ORIGINAL_PROTOCOL && enable_protocol_1) {
+      old_reuse_discovery();
+    } else if (last_device_protocol == NEW_PROTOCOL && enable_protocol_2) {
+      new_reuse_discovery();
+    }
+    if (devices > 0) {
+      goto discovery_done;
+    }
+  }
 #ifdef USBOZY
   if (enable_usbozy && !discover_only_stemlab) {
     //
@@ -457,6 +492,7 @@ void discovery(void) {
     status_text("Protocol 2 ... Discovering Devices (Wait for up to 5 seconds)");
     new_discovery();
   }
+discovery_done:
   status_text("Discovery completed.");
   // subsequent discoveries check all protocols enabled.
   discover_only_stemlab = 0;
@@ -673,7 +709,7 @@ void discovery(void) {
   GtkWidget *discover_b = gtk_button_new_with_label("Discover");
   g_signal_connect(discover_b, "clicked", G_CALLBACK(discover_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), discover_b, 1, row, 1, 1);
-  GtkWidget *protocols_b = gtk_button_new_with_label("Protocols");
+  GtkWidget *protocols_b = gtk_button_new_with_label("Discover Options");
   g_signal_connect(protocols_b, "clicked", G_CALLBACK(protocols_clicked), NULL);
   gtk_grid_attach(GTK_GRID(grid), protocols_b, 2, row, 1, 1);
   row++;

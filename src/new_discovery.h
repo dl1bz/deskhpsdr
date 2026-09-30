@@ -23,5 +23,6 @@
 #define _NEW_DISCOVERY_H
 
 void new_discovery(void);
+void new_reuse_discovery(void);
 
 #endif

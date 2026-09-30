@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 #include <errno.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "css.h"
 #include "ddc_menu.h"
 #include "discovery.h"
@@ -1367,6 +1368,14 @@ void StartConfigSave(void) {
   SetPropI0("enable_usbozy", enable_usbozy);
   SetPropI0("enable_saturn_xdma", enable_saturn_xdma);
   SetPropI0("autostart", autostart);
+  SetPropI0("reuse_last_device", reuse_last_device);
+  SetPropI0("last_device_valid", last_device_valid);
+  SetPropI0("last_device_protocol", last_device_protocol);
+  SetPropS0("last_device_ip", last_device_ip);
+  char last_mac[18];
+  snprintf(last_mac, sizeof(last_mac), "%02X:%02X:%02X:%02X:%02X:%02X", last_device_mac[0], last_device_mac[1],
+           last_device_mac[2], last_device_mac[3], last_device_mac[4], last_device_mac[5]);
+  SetPropS0("last_device_mac", last_mac);
 #if defined(MINIAUDIO) && defined(__linux__)
   SetPropS0("audio_backend", miniaudio_backend);
 #endif
@@ -1408,6 +1417,22 @@ void StartConfigLoad(void) {
   GetPropI0("enable_usbozy", enable_usbozy);
   GetPropI0("enable_saturn_xdma", enable_saturn_xdma);
   GetPropI0("autostart", autostart);
+  GetPropI0("reuse_last_device", reuse_last_device);
+  GetPropI0("last_device_valid", last_device_valid);
+  GetPropI0("last_device_protocol", last_device_protocol);
+  const char *last_ip = getProperty("last_device_ip");
+  if (last_ip) { g_strlcpy(last_device_ip, last_ip, sizeof(last_device_ip)); }
+  const char *last_mac = getProperty("last_device_mac");
+  unsigned int lm[6];
+  struct in_addr last_addr;
+  if (last_mac == NULL ||
+      sscanf(last_mac, "%02x:%02x:%02x:%02x:%02x:%02x", &lm[0], &lm[1], &lm[2], &lm[3], &lm[4], &lm[5]) != 6 ||
+      inet_aton(last_device_ip, &last_addr) == 0 ||
+      (last_device_protocol != ORIGINAL_PROTOCOL && last_device_protocol != NEW_PROTOCOL)) {
+    last_device_valid = 0;
+  } else {
+    for (int i = 0; i < 6; i++) { last_device_mac[i] = (unsigned char)lm[i]; }
+  }
 #if defined(MINIAUDIO) && defined(__linux__)
   const char *audio_backend = getProperty("audio_backend");
   if (audio_backend != NULL &&

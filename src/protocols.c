@@ -42,6 +42,9 @@ gboolean enable_stemlab = TRUE;
 gboolean enable_usbozy = TRUE;
 gboolean enable_saturn_xdma = TRUE;
 gboolean autostart = FALSE;
+gboolean reuse_last_device = FALSE;
+
+static gboolean reuse_changed;
 
 static void protocolsSaveState(void) {
   StartConfigSave();
@@ -102,11 +105,20 @@ static void autostart_cb(GtkToggleButton *widget, gpointer data) {
   autostart = gtk_toggle_button_get_active(widget);
 }
 
-void configure_protocols(GtkWidget *parent) {
+static void reuse_last_device_cb(GtkToggleButton *widget, gpointer data) {
+  gboolean value = gtk_toggle_button_get_active(widget);
+  if (value != reuse_last_device) {
+    reuse_last_device = value;
+    reuse_changed = TRUE;
+  }
+}
+
+gboolean configure_protocols(GtkWidget *parent) {
   int row;
+  reuse_changed = FALSE;
   if (dialog != NULL) {
     gtk_window_present(GTK_WINDOW(dialog));
-    return;
+    return FALSE;
   }
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
@@ -114,7 +126,7 @@ void configure_protocols(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
   char _title[32];
-  snprintf(_title, 32, "%s - Protocols", PGNAME);
+  snprintf(_title, sizeof(_title), "%s - Discover Options", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
   g_signal_connect(dialog, "delete-event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
@@ -167,7 +179,14 @@ void configure_protocols(GtkWidget *parent) {
   gtk_widget_show(b_autostart);
   g_signal_connect(b_autostart, "toggled", G_CALLBACK(autostart_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), b_autostart, 0, row, 1, 1);
+  row++;
+  GtkWidget *b_reuse = gtk_check_button_new_with_label("Reuse last selected device");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_reuse), reuse_last_device);
+  gtk_widget_show(b_reuse);
+  g_signal_connect(b_reuse, "toggled", G_CALLBACK(reuse_last_device_cb), NULL);
+  gtk_grid_attach(GTK_GRID(grid), b_reuse, 0, row, 1, 1);
   gtk_container_add(GTK_CONTAINER(content), grid);
   gtk_widget_show_all(dialog);
   gtk_dialog_run(GTK_DIALOG(dialog));
+  return reuse_changed;
 }
