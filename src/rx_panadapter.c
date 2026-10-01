@@ -2408,27 +2408,32 @@ void rx_panadapter_init(RECEIVER * rx, int width, int height) {
 void display_panadapter_messages(cairo_t *cr, int width, unsigned int fps) {
   char text[64];
   static unsigned int msg_cycle = 0;
-  if (display_warnings) {
+  if (!display_warnings) {
+    sequence_error_reset();
+  } else {
     //
     // Sequence errors
     // ADC overloads
     // TX FIFO under- and overruns
     // high SWR warning
     //
-    // Are shown on display for 2 seconds
+    // Use their individual display/hold times.
     //
     cairo_set_source_rgba(cr, COLOUR_ALARM);
     cairo_set_font_size(cr, DISPLAY_FONT_SIZE20);
-    if (sequence_errors != 0) {
-      static unsigned int sequence_error_count = 0;
-      cairo_move_to(cr, 100.0, 50.0);
-      cairo_set_source_rgba(cr, COLOUR_ORANGE);
-      cairo_show_text(cr, "UDP Packet Loss");
-      cairo_set_source_rgba(cr, COLOUR_ALARM);
-      sequence_error_count++;
-      if (sequence_error_count >= 2 * fps) {
-        sequence_errors = 0;
-        sequence_error_count = 0;
+    {
+      const unsigned int loss_count = sequence_error_display_count();
+      if (loss_count != 0) {
+        cairo_move_to(cr, 100.0, 50.0);
+        if (loss_count == 1) {
+          cairo_set_source_rgba(cr, COLOUR_OK);
+        } else if (loss_count <= 4) {
+          cairo_set_source_rgba(cr, GRAD_YELLOW);
+        } else {
+          cairo_set_source_rgba(cr, COLOUR_ALARM);
+        }
+        cairo_show_text(cr, "UDP Packet Loss");
+        cairo_set_source_rgba(cr, COLOUR_ALARM);
       }
     }
     if (adc0_p_ovl || adc1_p_ovl) {

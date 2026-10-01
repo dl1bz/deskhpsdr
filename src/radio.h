@@ -23,6 +23,7 @@
 #define _RADIO_H
 
 #include <stdatomic.h>
+#include <stdint.h>
 #include <math.h>
 #include "adc.h"
 #include "dac.h"
@@ -309,7 +310,9 @@ extern int adc1_fs_ovl; /* Full-scale detected from ADC1 I/Q samples */
 extern int tx_fifo_underrun;
 extern int tx_fifo_overrun;
 extern int high_swr_seen;
-extern int sequence_errors;
+uint32_t sequence_error_add(uint32_t expected, uint32_t received);
+unsigned int sequence_error_display_count(void);
+void sequence_error_reset(void);
 
 extern unsigned int exciter_power;
 extern unsigned int alex_forward_power;

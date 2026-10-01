@@ -400,7 +400,100 @@ int adc0_fs_ovl = 0;
 int adc1_fs_ovl = 0;
 int tx_fifo_underrun = 0;
 int tx_fifo_overrun = 0;
-int sequence_errors = 0;
+enum { SEQUENCE_LOSS_IDLE, SEQUENCE_LOSS_MEASURE, SEQUENCE_LOSS_HOLD };
+
+static GMutex sequence_loss_mutex;
+static int sequence_loss_state = SEQUENCE_LOSS_IDLE;
+static unsigned int sequence_loss_count = 0;
+static unsigned int sequence_loss_hold_count = 0;
+static unsigned int sequence_loss_pending_count = 0;
+static gint64 sequence_loss_started = 0;
+static gint64 sequence_loss_hold_started = 0;
+
+static unsigned int sequence_loss_saturating_add(unsigned int value, uint32_t add) {
+  const unsigned int max_value = ~0U;
+  if (add >= max_value - value) {
+    return max_value;
+  }
+  return value + (unsigned int)add;
+}
+
+static void sequence_loss_advance(gint64 now) {
+  const gint64 measure_time = 5 * G_USEC_PER_SEC;
+  const gint64 hold_time = 3 * G_USEC_PER_SEC;
+  for (;;) {
+    if (sequence_loss_state == SEQUENCE_LOSS_MEASURE &&
+        now - sequence_loss_started >= measure_time) {
+      sequence_loss_hold_count = sequence_loss_count;
+      sequence_loss_count = 0;
+      sequence_loss_state = SEQUENCE_LOSS_HOLD;
+      sequence_loss_hold_started = sequence_loss_started + measure_time;
+      continue;
+    }
+    if (sequence_loss_state == SEQUENCE_LOSS_HOLD &&
+        now - sequence_loss_hold_started >= hold_time) {
+      sequence_loss_hold_count = 0;
+      if (sequence_loss_pending_count != 0) {
+        sequence_loss_count = sequence_loss_pending_count;
+        sequence_loss_pending_count = 0;
+        sequence_loss_state = SEQUENCE_LOSS_MEASURE;
+        sequence_loss_started = sequence_loss_hold_started + hold_time;
+      } else {
+        sequence_loss_state = SEQUENCE_LOSS_IDLE;
+        sequence_loss_started = 0;
+        sequence_loss_hold_started = 0;
+      }
+      continue;
+    }
+    break;
+  }
+}
+
+uint32_t sequence_error_add(uint32_t expected, uint32_t received) {
+  // Sequence numbers are 32-bit counters.  Unsigned subtraction therefore
+  // also handles wrap-around.  Values in the upper half of the sequence
+  // space indicate an old/reordered packet, not packets missing ahead.
+  uint32_t missing = received - expected;
+  if (missing != 0 && missing < UINT32_C(0x80000000)) {
+    const gint64 now = g_get_monotonic_time();
+    g_mutex_lock(&sequence_loss_mutex);
+    sequence_loss_advance(now);
+    if (sequence_loss_state == SEQUENCE_LOSS_IDLE) {
+      sequence_loss_state = SEQUENCE_LOSS_MEASURE;
+      sequence_loss_started = now;
+      sequence_loss_count = missing;
+    } else if (sequence_loss_state == SEQUENCE_LOSS_MEASURE) {
+      sequence_loss_count = sequence_loss_saturating_add(sequence_loss_count, missing);
+    } else {
+      sequence_loss_pending_count = sequence_loss_saturating_add(sequence_loss_pending_count, missing);
+    }
+    g_mutex_unlock(&sequence_loss_mutex);
+    return missing;
+  }
+  return 0;
+}
+
+unsigned int sequence_error_display_count(void) {
+  const gint64 now = g_get_monotonic_time();
+  unsigned int count;
+  g_mutex_lock(&sequence_loss_mutex);
+  sequence_loss_advance(now);
+  count = (sequence_loss_state == SEQUENCE_LOSS_HOLD)
+          ? sequence_loss_hold_count : sequence_loss_count;
+  g_mutex_unlock(&sequence_loss_mutex);
+  return count;
+}
+
+void sequence_error_reset(void) {
+  g_mutex_lock(&sequence_loss_mutex);
+  sequence_loss_state = SEQUENCE_LOSS_IDLE;
+  sequence_loss_count = 0;
+  sequence_loss_hold_count = 0;
+  sequence_loss_pending_count = 0;
+  sequence_loss_started = 0;
+  sequence_loss_hold_started = 0;
+  g_mutex_unlock(&sequence_loss_mutex);
+}
 int high_swr_seen = 0;
 
 unsigned int exciter_power = 0;

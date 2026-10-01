@@ -117,12 +117,14 @@ typedef struct {
   GCond cond;
   P2_JITTER_SLOT slots[P2_JITTER_SLOT_COUNT];
   uint32_t expected_sequence;
+  uint32_t resync_expected_sequence;
   gint64 first_arrival_us;
   gint64 next_release_us;
   gint64 packet_period_us;
   unsigned int queued;
   int started;
   int primed;
+  int resync_expected_valid;
 } P2_JITTER_STATE;
 
 static P2_JITTER_STATE p2_jitter[MAX_DDC];
@@ -162,12 +164,12 @@ static unsigned long high_priority_sequence = 0;
 static unsigned long general_sequence = 0;
 static unsigned long rx_specific_sequence = 0;
 static unsigned long tx_specific_sequence = 0;
-static unsigned long ddc_sequence[MAX_DDC];
+static uint32_t ddc_sequence[MAX_DDC];
 
 static unsigned long tx_iq_sequence = 0;
 
-static unsigned long highprio_rcvd_sequence = 0;
-static unsigned long micsamples_sequence = 0;
+static uint32_t highprio_rcvd_sequence = 0;
+static uint32_t micsamples_sequence = 0;
 
 #ifdef __APPLE__
   static sem_t *high_priority_sem_buffer;
@@ -682,12 +684,14 @@ static void p2_jitter_reset_locked(P2_JITTER_STATE *state) {
     state->slots[i].sequence = 0;
   }
   state->expected_sequence = 0;
+  state->resync_expected_sequence = 0;
   state->first_arrival_us = 0;
   state->next_release_us = 0;
   state->packet_period_us = 0;
   state->queued = 0;
   state->started = 0;
   state->primed = 0;
+  state->resync_expected_valid = 0;
 }
 
 static void p2_jitter_reset_all(void) {
@@ -788,6 +792,20 @@ static int p2_jitter_enqueue(int ddc, mybuffer *mybuf) {
   state->packet_period_us = period_us;
   if (!state->started) {
     state->started = 1;
+    if (state->resync_expected_valid) {
+      int32_t delta = (int32_t)(sequence - state->resync_expected_sequence);
+      if (delta < 0) {
+        // Old/reordered packet from before the underflow: keep the resync anchor.
+        state->started = 0;
+        release_my_buffer(mybuf);
+        g_mutex_unlock(&state->mutex);
+        return 1;
+      }
+      if (delta > 0) {
+        sequence_error_add(state->resync_expected_sequence, sequence);
+      }
+      state->resync_expected_valid = 0;
+    }
     state->expected_sequence = sequence;
     state->first_arrival_us = now_us;
     state->next_release_us = 0;
@@ -859,18 +877,19 @@ static gpointer p2_jitter_thread(gpointer data) {
     /*
      * A completely drained jitter queue means the configured network
      * reserve has been exhausted.  Do not keep advancing expected_sequence
-     * into the future while no packets are available.  Stop the pacer and
-     * let p2_jitter_enqueue() establish a fresh sequence/time origin from
-     * the first packets that arrive after the outage.  The normal priming
-     * path above will then rebuild the configured depth before output
-     * resumes.
-     * No packet slots need clearing here because queued == 0.
+     * into the future while no packets are available.  Preserve the next
+     * expected sequence as a resync anchor, then stop the pacer.  The first
+     * packet that arrives after the outage can then account for any confirmed
+     * missing sequence range before establishing a fresh sequence/time origin.
+     * The normal priming path above will rebuild the configured depth before
+     * output resumes.  No packet slots need clearing here because queued == 0.
      */
     if (state->queued == 0) {
       l_print("P2 jitter underflow: ddc=%d reserve exhausted, pausing for resync\n", ddc);
+      state->resync_expected_sequence = state->expected_sequence;
+      state->resync_expected_valid = 1;
       state->started = 0;
       state->primed = 0;
-      state->expected_sequence = 0;
       state->first_arrival_us = 0;
       state->next_release_us = 0;
       state->packet_period_us = 0;
@@ -885,6 +904,13 @@ static gpointer p2_jitter_thread(gpointer data) {
       if (state->queued > 0) {
         state->queued--;
       }
+    } else {
+      /*
+       * The reorder window has expired for this sequence number.  Unlike a
+       * socket-ingress gap, this is now a confirmed missing IQ datagram.
+       * Latency trimming below deliberately does not use this path.
+       */
+      sequence_error_add(state->expected_sequence, state->expected_sequence + 1);
     }
     state->expected_sequence++;
     /*
@@ -2917,10 +2943,24 @@ static gpointer new_protocol_thread(gpointer data) {
         int32_t delta = (int32_t)(ingress_sequence - ingress_expected[ingress_stream]);
         if (delta > 0) {
           ingress_missing[ingress_stream] += (guint64)delta;
+          /*
+           * IQ streams with an active jitter buffer can legitimately arrive
+           * out of order.  In that case the jitter pacer decides whether an
+           * expected datagram is really missing.  HP/MIC and unbuffered IQ
+           * have no reorder window, so their socket-ingress gap remains the
+           * authoritative loss indication.
+           */
+          if (ingress_stream >= 8 || !p2_jitter_should_buffer(ingress_stream)) {
+            sequence_error_add(ingress_expected[ingress_stream], ingress_sequence);
+          }
+          ingress_expected[ingress_stream] = ingress_sequence + 1;
         } else if (delta < 0) {
+          // An old/reordered datagram is not packet loss.  Do not move the
+          // expected sequence backwards when it arrives late.
           ingress_reordered[ingress_stream]++;
+        } else {
+          ingress_expected[ingress_stream] = ingress_sequence + 1;
         }
-        ingress_expected[ingress_stream] = ingress_sequence + 1;
       }
       if (ingress_now_us - ingress_report_us >= G_USEC_PER_SEC) {
         l_print("P2 ingress: IQ0 pkt=%" G_GUINT64_FORMAT " miss=%" G_GUINT64_FORMAT
@@ -3136,15 +3176,22 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
   // Check sequence HERE
   //
   unsigned const char *buffer = mybuf->buffer;
-  unsigned long sequence = ((buffer[0] & 0xFF) << 24)
-                           + ((buffer[1] & 0xFF) << 16)
-                           + ((buffer[2] & 0xFF) << 8)
-                           + (buffer[3] & 0xFF);
+  uint32_t sequence = ((buffer[0] & 0xFF) << 24)
+                      + ((buffer[1] & 0xFF) << 16)
+                      + ((buffer[2] & 0xFF) << 8)
+                      + (buffer[3] & 0xFF);
   if (ddc_sequence[ddc] != sequence) {
-    t_print("%s: DDC(%d) sequence error: expected %ld got %ld\n", __func__, ddc, ddc_sequence[ddc], sequence);
-    sequence_errors++;
+    t_print("%s: DDC(%d) sequence error: expected %lu got %lu\n", __func__, ddc,
+            (unsigned long) ddc_sequence[ddc], (unsigned long) sequence);
+    // UDP loss is counted at socket ingress, before jitter buffering.  This
+    // downstream check is diagnostic only because the jitter buffer may
+    // intentionally trim or reorder packets.
+    if ((uint32_t)(sequence - ddc_sequence[ddc]) < UINT32_C(0x80000000)) {
+      ddc_sequence[ddc] = sequence + 1;
+    }
+  } else {
+    ddc_sequence[ddc] = sequence + 1;
   }
-  ddc_sequence[ddc] = sequence + 1;
   int iptr = iq_inptr[ddc];
   int nptr = iptr + 1;
   if (nptr >= RXIQRINGBUFLEN) { nptr = 0; }
@@ -3176,8 +3223,8 @@ static gpointer iq_thread(gpointer data) {
   // TEMPORARY: additional sequence check here
   //
   int nptr, optr;
-  long sequence;
-  long expected_sequence = 0;
+  uint32_t sequence;
+  uint32_t expected_sequence = 0;
   mybuffer *mybuf;
   const unsigned char *buffer;
   t_print("iq_thread: ddc=%d\n", ddc);
@@ -3212,8 +3259,8 @@ static gpointer iq_thread(gpointer data) {
     sequence = ((buffer[0] & 0xFF) << 24) + ((buffer[1] & 0xFF) << 16) + ((buffer[2] & 0xFF) << 8) + (buffer[3] & 0xFF);
     if (expected_sequence == 0) { expected_sequence = sequence; }
     if (sequence != expected_sequence) {
-      t_print("%s: DDC(%d) sequence error: expected %ld got %ld\n", __func__, ddc, expected_sequence, sequence);
-      sequence_errors++;
+      t_print("%s: DDC(%d) sequence error: expected %lu got %lu\n", __func__, ddc,
+              (unsigned long) expected_sequence, (unsigned long) sequence);
     }
     expected_sequence = sequence + 1;
     //
@@ -3457,11 +3504,15 @@ static void process_high_priority(void) {
   const unsigned char *buffer = high_priority_buffer->buffer;
   sequence = ((buffer[0] & 0xFF) << 24) + ((buffer[1] & 0xFF) << 16) + ((buffer[2] & 0xFF) << 8) + (buffer[3] & 0xFF);
   if (sequence != highprio_rcvd_sequence) {
-    t_print("HighPrio SeqErr Expected=%ld Seen=%ld\n", highprio_rcvd_sequence, sequence);
-    highprio_rcvd_sequence = sequence;
-    sequence_errors++;
+    t_print("HighPrio SeqErr Expected=%lu Seen=%lu\n",
+            (unsigned long) highprio_rcvd_sequence, (unsigned long) sequence);
+    // UDP loss is counted once at socket ingress.
+    if ((uint32_t)(sequence - highprio_rcvd_sequence) < UINT32_C(0x80000000)) {
+      highprio_rcvd_sequence = sequence + 1;
+    }
+  } else {
+    highprio_rcvd_sequence++;
   }
-  highprio_rcvd_sequence++;
   previous_ptt = radio_ptt;
   previous_dot = radio_dot;
   previous_dash = radio_dash;
@@ -3628,10 +3679,15 @@ static void process_mic_data(const unsigned char *buffer) {
   float fsample;
   sequence = ((buffer[0] & 0xFF) << 24) + ((buffer[1] & 0xFF) << 16) + ((buffer[2] & 0xFF) << 8) + (buffer[3] & 0xFF);
   if (sequence != micsamples_sequence) {
-    t_print("MicSample SeqErr Expected=%ld Seen=%ld\n", micsamples_sequence, sequence);
-    sequence_errors++;
+    t_print("MicSample SeqErr Expected=%lu Seen=%lu\n",
+            (unsigned long) micsamples_sequence, (unsigned long) sequence);
+    // UDP loss is counted once at socket ingress.
+    if ((uint32_t)(sequence - micsamples_sequence) < UINT32_C(0x80000000)) {
+      micsamples_sequence = sequence + 1;
+    }
+  } else {
+    micsamples_sequence = sequence + 1;
   }
-  micsamples_sequence = sequence + 1;
   b = 4;
   for (i = 0; i < MIC_SAMPLES; i++) {
     short sample = (short)(buffer[b++] << 8);

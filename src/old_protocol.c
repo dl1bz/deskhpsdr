@@ -1186,11 +1186,20 @@ static gpointer receive_thread(gpointer arg) {
           sequence = ((buffer[4] & 0xFF) << 24) + ((buffer[5] & 0xFF) << 16) + ((buffer[6] & 0xFF) << 8) + (buffer[7] & 0xFF);
           // A sequence error with a seqnum of zero usually indicates a METIS restart
           // and is no error condition
-          if (sequence != 0 && sequence != last_seq_num + 1) {
-            t_print("SEQ ERROR: last %ld, recvd %ld\n", (long) last_seq_num, (long) sequence);
-            sequence_errors++;
+          if (sequence == 0) {
+            // A zero sequence usually indicates a METIS restart.
+            last_seq_num = sequence;
+          } else if (sequence != last_seq_num + 1) {
+            uint32_t expected = last_seq_num + 1;
+            uint32_t missing = sequence_error_add(expected, sequence);
+            t_print("SEQ ERROR: last %ld, recvd %ld, missing %lu\n",
+                    (long) last_seq_num, (long) sequence, (unsigned long) missing);
+            if (missing != 0) {
+              last_seq_num = sequence;
+            }
+          } else {
+            last_seq_num = sequence;
           }
-          last_seq_num = sequence;
           switch (ep) {
           case 6: // EP6
             // process the data
@@ -1294,15 +1303,20 @@ static gpointer receive_thread(gpointer arg) {
           ep = buffer[3] & 0xFF;
           sequence = ((buffer[4] & 0xFF) << 24) | ((buffer[5] & 0xFF) << 16) |
                      ((buffer[6] & 0xFF) << 8) | (buffer[7] & 0xFF);
-          if (sequence != 0 && sequence != last_seq_num + 1) {
-            long diff = (long) sequence - (long) last_seq_num;
-            if (diff > 1 || diff < 0) {
-              t_print("SEQ ERROR: last %ld, recvd %ld (diff=%ld)\n",
-                      (long) last_seq_num, (long) sequence, diff);
-              sequence_errors++;
+          if (sequence == 0) {
+            // A zero sequence usually indicates a METIS restart.
+            last_seq_num = sequence;
+          } else if (sequence != last_seq_num + 1) {
+            uint32_t expected = last_seq_num + 1;
+            uint32_t missing = sequence_error_add(expected, sequence);
+            t_print("SEQ ERROR: last %ld, recvd %ld, missing %lu\n",
+                    (long) last_seq_num, (long) sequence, (unsigned long) missing);
+            if (missing != 0) {
+              last_seq_num = sequence;
             }
+          } else {
+            last_seq_num = sequence;
           }
-          last_seq_num = sequence;
           switch (ep) {
           case 6:
             // HL2 IQ-Daten

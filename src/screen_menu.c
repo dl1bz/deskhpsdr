@@ -192,6 +192,8 @@ static void display_toolbar_cb(GtkWidget *widget, gpointer data) {
 
 static void display_warnings_cb(GtkWidget *widget, gpointer data) {
   display_warnings = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  // Changing warning visibility starts a fresh UDP-loss measurement window.
+  sequence_error_reset();
 }
 
 static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
