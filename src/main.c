@@ -109,6 +109,8 @@ int brick_ddc0_fix = 0;
 int sertune_ptt_hold_ms = 0;
 int sertune_invert = 1;
 
+int enable_mouse_wheel = 1;
+
 static GdkCursor *cursor_arrow;
 static GdkCursor *cursor_watch;
 

@@ -248,6 +248,9 @@ gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointe
     t_print("%s: ERROR: called with NULL RECEIVER pointer!\n", __func__);
     return FALSE;  // Event nicht verarbeitet
   }
+  if (!enable_mouse_wheel) {
+    return FALSE; // no mouse wheel event processing
+  }
 #ifdef __APPLE__
   // if using Apple Magic Mouse it's tricky to use the mouse because we have only touch but no real wheel
   // for safer use we need to press the OPTION key for VFO movement in VFO step and

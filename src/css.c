@@ -1358,6 +1358,7 @@ void StartConfigSave(void) {
   SetPropI0("freq_bgcolor_alter", freq_bgcolor_alter);
   SetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
   SetPropI0("sertune_invert", sertune_invert);
+  SetPropI0("enable_mouse_wheel", enable_mouse_wheel);
   SetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   SetPropI0("brick_ddc0_fix", brick_ddc0_fix);
   SetPropS0("radio_host", ipaddr_radio);
@@ -1404,6 +1405,7 @@ void StartConfigLoad(void) {
   GetPropI0("freq_bgcolor_alter", freq_bgcolor_alter);
   GetPropI0("sertune_ptt_hold_ms", sertune_ptt_hold_ms);
   GetPropI0("sertune_invert", sertune_invert);
+  GetPropI0("enable_mouse_wheel", enable_mouse_wheel);
   GetPropI0("p2_angelia_ddc0_map", p2_angelia_ddc0_map);
   GetPropI0("brick_ddc0_fix", brick_ddc0_fix);
   const char *radio_host = getProperty("radio_host");
@@ -1483,6 +1485,9 @@ void StartConfigLoad(void) {
   }
   if (sertune_invert < 0 || sertune_invert > 1) {
     sertune_invert = 0;
+  }
+  if (enable_mouse_wheel < 0 || enable_mouse_wheel > 1) {
+    enable_mouse_wheel = 1;
   }
   clearProperties();
 }
