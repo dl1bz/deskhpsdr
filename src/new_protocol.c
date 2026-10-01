@@ -461,6 +461,7 @@ static pthread_mutex_t rx_spec_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t tx_spec_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t hi_prio_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t general_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t p2_send_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int radio_dash = 0;
 static int radio_dot = 0;
@@ -1081,10 +1082,22 @@ static int p2_route_retry_errno(int err) {
   return err == EHOSTDOWN || err == EHOSTUNREACH || err == ENETDOWN || err == ENETUNREACH;
 }
 
+static ssize_t p2_serialized_sendto(int fd, const void *buf, size_t len, int flags,
+                                    const struct sockaddr *addr, socklen_t addrlen) {
+  ssize_t rc;
+  int saved_errno;
+  pthread_mutex_lock(&p2_send_mutex);
+  rc = sendto(fd, buf, len, flags, addr, addrlen);
+  saved_errno = errno;
+  pthread_mutex_unlock(&p2_send_mutex);
+  errno = saved_errno;
+  return rc;
+}
+
 static ssize_t p2_sendto_route_retry(int fd, const void *buf, size_t len, int flags,
                                      const struct sockaddr *addr, socklen_t addrlen,
                                      const char *tag) {
-  ssize_t rc = sendto(fd, buf, len, flags, addr, addrlen);
+  ssize_t rc = p2_serialized_sendto(fd, buf, len, flags, addr, addrlen);
   if (rc >= 0 || !p2_route_retry_errno(errno)) {
     return rc;
   }
@@ -1094,7 +1107,7 @@ static ssize_t p2_sendto_route_retry(int fd, const void *buf, size_t len, int fl
   for (int attempt = 0; attempt < 3; attempt++) {
     p2_prime_route();
     usleep(50000);
-    rc = sendto(fd, buf, len, flags, addr, addrlen);
+    rc = p2_serialized_sendto(fd, buf, len, flags, addr, addrlen);
     if (rc >= 0) {
       t_print("%s: sendto recovered after route retry %d\n",
               tag, attempt + 1);
@@ -2798,7 +2811,8 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
       }
       FIFO += 240.0;  // number of samples in THIS packet
-      if (sendto(data_socket, iqbuffer, sizeof(iqbuffer), 0, (struct sockaddr *) &iq_addr, iq_addr_length) < 0) {
+      if (p2_serialized_sendto(data_socket, iqbuffer, sizeof(iqbuffer), 0,
+                               (struct sockaddr *) &iq_addr, iq_addr_length) < 0) {
         g_idle_add(fatal_error, "TX IQ send failed (Network down?)");
         atomic_store_explicit(&P2running, 0, memory_order_release);
       } else {
