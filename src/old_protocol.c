@@ -149,7 +149,7 @@ static struct sockaddr_in data_addr;
 
 static unsigned char control_in[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
-static volatile int P1running = 0;
+static atomic_int P1running = 0;
 
 static uint32_t last_seq_num = -0xffffffff;
 static int tx_fifo_flag = 0;
@@ -498,7 +498,8 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
     nptr = out + 1008;
     if (nptr >= TXRINGBUFLEN) { nptr = 0; }
     // Falls TX gestoppt ist oder Drain-Modus aktiv → skip
-    if (!P1running || atomic_load_explicit(&txring_drain, memory_order_acquire)) {
+    if (!atomic_load_explicit(&P1running, memory_order_acquire) ||
+        atomic_load_explicit(&txring_drain, memory_order_acquire)) {
       atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
       (void) atomic_fetch_add_explicit(&txring_blocks_completed, 1, memory_order_release);
       continue;
@@ -569,7 +570,8 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
     }
     nptr = out + 1008;
     if (nptr >= TXRINGBUFLEN) { nptr = 0; }
-    if (!P1running || atomic_load_explicit(&txring_drain, memory_order_acquire)) {
+    if (!atomic_load_explicit(&P1running, memory_order_acquire) ||
+        atomic_load_explicit(&txring_drain, memory_order_acquire)) {
       atomic_store_explicit(&txring_outptr, nptr, memory_order_release);
       (void) atomic_fetch_add_explicit(&txring_blocks_completed, 1, memory_order_release);
       continue;
@@ -658,7 +660,7 @@ void old_protocol_stop(void) {
   if (device == DEVICE_OZY) { return; }
   t_print("%s\n", __func__);
   pthread_mutex_lock(&send_ozy_mutex);
-  P1running = 0;
+  atomic_store_explicit(&P1running, 0, memory_order_release);
   metis_start_stop(0);
   pthread_mutex_unlock(&send_ozy_mutex);
 }
@@ -742,7 +744,7 @@ void old_protocol_init(int rate) {
 #ifdef USBOZY
     t_print("old_protocol_init: initialise ozy on USB\n");
     ozy_initialise();
-    P1running = 1;
+    atomic_store_explicit(&P1running, 1, memory_order_release);
     start_usb_receive_threads();
 #endif
   } else {
@@ -807,7 +809,7 @@ static gpointer ozy_i2c_thread(gpointer arg) {
   t_print("old_protocol: OZY I2C read thread\n");
   cycle = 0;
   for (;;) {
-    if (P1running) {
+    if (atomic_load_explicit(&P1running, memory_order_acquire)) {
       switch (cycle) {
       case 0:
         ozy_i2c_readpwr(I2C_PENNY_ALC);
@@ -863,7 +865,7 @@ static gpointer ozy_ep6_rx_thread(gpointer arg) {
     //
     // If the protocol has been stopped, just swallow all incoming packets
     //
-    if (!P1running) { continue; }
+    if (!atomic_load_explicit(&P1running, memory_order_acquire)) { continue; }
     //t_print("%s: read %d bytes\n",__func__,bytes);
     if (bytes == 0) {
       t_print("old_protocol_ep6_read: ozy_read returned 0 bytes... retrying\n");
@@ -1159,7 +1161,7 @@ static gpointer receive_thread(gpointer arg) {
       //
       // If the protocol has been stopped, just swallow all incoming packets
       //
-      if (bytes_read <= 0 || !P1running) {
+      if (bytes_read <= 0 || !atomic_load_explicit(&P1running, memory_order_acquire)) {
         continue;
       }
 #ifdef __APPLE__
@@ -1285,7 +1287,7 @@ static gpointer receive_thread(gpointer arg) {
         }
         if (bytes_read >= 0 || errno != EAGAIN) { break; }
       }
-      if (bytes_read <= 0 || !P1running) { continue; }
+      if (bytes_read <= 0 || !atomic_load_explicit(&P1running, memory_order_acquire)) { continue; }
       if (buffer[0] == 0xEF && buffer[1] == 0xFE) {
         switch (buffer[2]) {
         case 1:
@@ -2235,7 +2237,7 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
 
 
 uint64_t old_protocol_tx_fence_begin(void) {
-  if (!P1running || !radio_is_transmitting()) {
+  if (!atomic_load_explicit(&P1running, memory_order_acquire) || !radio_is_transmitting()) {
     return 0;
   }
   int count = atomic_load_explicit(&txring_count, memory_order_acquire);
@@ -3389,7 +3391,7 @@ static void metis_restart(void) {
   // Note we send 504 audio samples = 8 OZY buffers =  4 METIS buffers
   //
   if (device != DEVICE_OZY) {
-    P1running = 1;  // set it HERE so outgoing data will not be suppressed
+    atomic_store_explicit(&P1running, 1, memory_order_release);  // set it HERE so outgoing data will not be suppressed
   }
   command = 1;
   for (i = 0; i < 504; i++) {
@@ -3400,7 +3402,6 @@ static void metis_restart(void) {
   // No mutex here, since metis_restart() is mutex protected
   if (device != DEVICE_OZY) {
     metis_start_stop(1);
-    usleep(100000);
   }
 }
 

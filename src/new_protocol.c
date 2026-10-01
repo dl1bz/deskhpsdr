@@ -130,7 +130,7 @@ static int p2_jitter_initialized = 0;
 
 int data_socket = -1;
 
-static volatile int P2running;
+static atomic_int P2running;
 
 static struct sockaddr_in base_addr;
 static int base_addr_length;
@@ -227,6 +227,15 @@ static volatile int txiq_outptr       = 0;  // pointer updated when reading from
 static volatile int txiq_count        = 0;  // number of samples queued since last sem_post
 static atomic_uint_fast64_t txiq_blocks_queued;
 static atomic_uint_fast64_t txiq_blocks_sent;
+
+/*
+ * P2 reports TX FIFO underflow while the DUC FIFO is initially filling.
+ * Arm underflow reporting only after the first clean TX status packet.
+ * The report flags keep diagnostics to one line per TX phase.
+ */
+static int p2_tx_fifo_armed = 0;
+static int p2_tx_fifo_underrun_reported = 0;
+static int p2_tx_fifo_overrun_reported = 0;
 
 static volatile int rxaudio_inptr     = 0;  // pointer updated when writing into the ring buffer
 static volatile int rxaudio_outptr    = 0;  // pointer updated when reading from the ring buffer
@@ -819,7 +828,8 @@ static gpointer p2_jitter_thread(gpointer data) {
   while (1) {
     mybuffer *release_packet = NULL;
     g_mutex_lock(&state->mutex);
-    while (!state->started || !g_atomic_int_get(&p2_jitter_buffer_enabled) || !P2running) {
+    while (!state->started || !g_atomic_int_get(&p2_jitter_buffer_enabled) ||
+           !atomic_load_explicit(&P2running, memory_order_acquire)) {
       g_cond_wait(&state->cond, &state->mutex);
     }
     gint64 now_us = g_get_monotonic_time();
@@ -1370,7 +1380,7 @@ static void new_protocol_general(void) {
               inet_ntoa(base_addr.sin_addr), ntohs(base_addr.sin_port),
               (long) sizeof(general_buffer), base_addr_length);
       g_idle_add(fatal_error, "GP send failed (Network down?)");
-      P2running = 0;
+      atomic_store_explicit(&P2running, 0, memory_order_release);
       pthread_mutex_unlock(&general_mutex);
       return;
     }
@@ -1453,7 +1463,7 @@ static void new_protocol_high_priority(void) {
   high_priority_buffer_to_radio[1] = (high_priority_sequence >> 16) & 0xFF;
   high_priority_buffer_to_radio[2] = (high_priority_sequence >>  8) & 0xFF;
   high_priority_buffer_to_radio[3] = (high_priority_sequence) & 0xFF;
-  high_priority_buffer_to_radio[4] = P2running;
+  high_priority_buffer_to_radio[4] = atomic_load_explicit(&P2running, memory_order_acquire);
   if (xmit) {
     if (txmode == modeCWU || txmode == modeCWL) {
       //
@@ -2117,7 +2127,7 @@ static void new_protocol_high_priority(void) {
               inet_ntoa(high_priority_addr.sin_addr), ntohs(high_priority_addr.sin_port),
               (long) sizeof(high_priority_buffer_to_radio), high_priority_addr_length);
       g_idle_add(fatal_error, "HP send failed (Network down?)");
-      P2running = 0;
+      atomic_store_explicit(&P2running, 0, memory_order_release);
       pthread_mutex_unlock(&hi_prio_mutex);
       return;
     } else if (rc != sizeof(high_priority_buffer_to_radio)) {
@@ -2247,7 +2257,7 @@ static void new_protocol_transmit_specific(void) {
               inet_ntoa(transmitter_addr.sin_addr), ntohs(transmitter_addr.sin_port),
               (long) sizeof(transmit_specific_buffer), transmitter_addr_length);
       g_idle_add(fatal_error, "TxSpec send failed (Network down?)");
-      P2running = 0;
+      atomic_store_explicit(&P2running, 0, memory_order_release);
       pthread_mutex_unlock(&tx_spec_mutex);
       return;
     }
@@ -2410,7 +2420,7 @@ static void new_protocol_receive_specific(void) {
               inet_ntoa(receiver_addr.sin_addr), ntohs(receiver_addr.sin_port),
               (long) sizeof(receive_specific_buffer), receiver_addr_length);
       g_idle_add(fatal_error, "RxSpec send failed (Network down?)");
-      P2running = 0;
+      atomic_store_explicit(&P2running, 0, memory_order_release);
       pthread_mutex_unlock(&rx_spec_mutex);
       return;
     } else if (rc != sizeof(receive_specific_buffer)) {
@@ -2436,7 +2446,7 @@ void new_protocol_menu_stop(void) {
   fd_set fds;
   struct timeval tv;
   char *buffer;
-  P2running = 0;
+  atomic_store_explicit(&P2running, 0, memory_order_release);
   for (int ddc = 0; ddc < MAX_DDC; ddc++) {
     g_mutex_lock(&p2_jitter[ddc].mutex);
     g_cond_broadcast(&p2_jitter[ddc].cond);
@@ -2508,6 +2518,9 @@ void new_protocol_menu_start(void) {
   txiq_count = 0;
   atomic_store_explicit(&txiq_blocks_queued, 0, memory_order_relaxed);
   atomic_store_explicit(&txiq_blocks_sent, 0, memory_order_relaxed);
+  p2_tx_fifo_armed = 0;
+  p2_tx_fifo_underrun_reported = 0;
+  p2_tx_fifo_overrun_reported = 0;
   pthread_mutex_lock(&send_rxaudio_mutex);
   rxaudio_inptr = 0;
   rxaudio_outptr = 0;
@@ -2539,7 +2552,7 @@ void new_protocol_menu_start(void) {
     audio_reset_mic_buffer();
   }
 #endif
-  P2running = 1;
+  atomic_store_explicit(&P2running, 1, memory_order_release);
   for (int ddc = 0; ddc < MAX_DDC; ddc++) {
     g_mutex_lock(&p2_jitter[ddc].mutex);
     g_cond_broadcast(&p2_jitter[ddc].cond);
@@ -2586,6 +2599,8 @@ void new_protocol_menu_start(void) {
 static gpointer new_protocol_rxaudio_thread(gpointer data) {
   int nptr;
   int catch_up = 0;
+  double last = -9999.9;
+  double FIFO = 0.0;
   unsigned char audiobuffer[260];
   //
   // Ideally, a RX audio buffer with 64 samples is sent every 1333 usecs.
@@ -2594,13 +2609,13 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
   // After sending a packet in network mode, wait a little bit before
   // attempting to send the next one.
   //
-  while (P2running) {
+  while (atomic_load_explicit(&P2running, memory_order_acquire)) {
 #ifdef __APPLE__
     sem_wait(rxaudio_sem);
 #else
     sem_wait(&rxaudio_sem);
 #endif
-    if (!P2running) { break; }
+    if (!atomic_load_explicit(&P2running, memory_order_acquire)) { break; }
     nptr = rxaudio_outptr + 256;
     if (nptr >= RXAUDIORINGBUFLEN) { nptr = 0; }
     if (rxaudio_drain) {
@@ -2632,8 +2647,6 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
       // fixed time we had before.
       //
       struct timespec ts;
-      static double last = -9999.9;
-      static double FIFO = 0.0;
       double now;
       clock_gettime(CLOCK_MONOTONIC, &ts);
       now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
@@ -2694,7 +2707,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
                 err,
                 strerror(err));
         g_idle_add(fatal_error, "Audio send failed (Network down?)");
-        P2running = 0;
+        atomic_store_explicit(&P2running, 0, memory_order_release);
         break;
       }
       if (rc != (ssize_t) sizeof(audiobuffer)) {
@@ -2703,7 +2716,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
                 (long) sizeof(audiobuffer),
                 rc);
         g_idle_add(fatal_error, "Audio send failed (short UDP packet)");
-        P2running = 0;
+        atomic_store_explicit(&P2running, 0, memory_order_release);
         break;
       }
     }
@@ -2719,6 +2732,8 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
 
 static gpointer new_protocol_txiq_thread(gpointer data) {
   int nptr;
+  double last = -9999.9;
+  double FIFO = 0.0;
   unsigned char iqbuffer[1444];
   //
   // Ideally, a TX IQ buffer with 240 sample is sent every 1250 usecs.
@@ -2728,13 +2743,13 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
   // after sending a packet, there is a delay of 1000 usec before
   // sending the next one.
   //
-  while (P2running) {
+  while (atomic_load_explicit(&P2running, memory_order_acquire)) {
 #ifdef __APPLE__
     sem_wait(txiq_sem);
 #else
     sem_wait(&txiq_sem);
 #endif
-    if (!P2running) { break; }
+    if (!atomic_load_explicit(&P2running, memory_order_acquire)) { break; }
     iqbuffer[0] = (tx_iq_sequence >> 24) & 0xFF;
     iqbuffer[1] = (tx_iq_sequence >> 16) & 0xFF;
     iqbuffer[2] = (tx_iq_sequence >>  8) & 0xFF;
@@ -2759,8 +2774,6 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
       // If we lag behind and FIFO goes low, send packet immediately.
       //
       struct timespec ts;
-      static double last = -9999.9;
-      static double FIFO = 0.0;
       double now;
       clock_gettime(CLOCK_MONOTONIC, &ts);
       now = ts.tv_sec + 1.0E-9 * ts.tv_nsec;
@@ -2787,7 +2800,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
       FIFO += 240.0;  // number of samples in THIS packet
       if (sendto(data_socket, iqbuffer, sizeof(iqbuffer), 0, (struct sockaddr *) &iq_addr, iq_addr_length) < 0) {
         g_idle_add(fatal_error, "TX IQ send failed (Network down?)");
-        P2running = 0;
+        atomic_store_explicit(&P2running, 0, memory_order_release);
       } else {
         (void) atomic_fetch_add_explicit(&txiq_blocks_sent, 1, memory_order_release);
       }
@@ -2821,7 +2834,7 @@ static gpointer new_protocol_thread(gpointer data) {
   // DDC-IQ and Microphone packets since they eventually get stuck in WDSP
   // (fexchange calls).
   //
-  while (P2running) {
+  while (atomic_load_explicit(&P2running, memory_order_acquire)) {
     int ddc;
     short sourceport;
     int bytesread;
@@ -2840,7 +2853,7 @@ static gpointer new_protocol_thread(gpointer data) {
     }
     buffer = mybuf->buffer;
     bytesread = recvfrom(data_socket, buffer, NET_BUFFER_SIZE, 0, (struct sockaddr *) &addr, &length);
-    if (!P2running) {
+    if (!atomic_load_explicit(&P2running, memory_order_acquire)) {
       //
       // When leaving deskHPSDR, it may happen that the protocol has been stopped while
       // we were doing "recvfrom". In this case, we want to let the main
@@ -2857,7 +2870,7 @@ static gpointer new_protocol_thread(gpointer data) {
       t_perror("recvfrom socket failed for new_protocol_thread:");
       g_idle_add(fatal_error, "P2 receive (Network problem?)");
       release_my_buffer(mybuf);
-      P2running = 0;
+      atomic_store_explicit(&P2running, 0, memory_order_release);
       break;
     }
     sourceport = ntohs(addr.sin_port);
@@ -3027,7 +3040,7 @@ static gpointer mic_line_thread(gpointer data) {
 void saturn_post_high_priority(mybuffer *buffer) {
   int iptr;
   int nptr;
-  if (!P2running) {
+  if (!atomic_load_explicit(&P2running, memory_order_acquire)) {
     release_my_buffer(buffer);
     return;
   }
@@ -3050,7 +3063,7 @@ void saturn_post_high_priority(mybuffer *buffer) {
 }
 
 void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
-  if (!P2running) {
+  if (!atomic_load_explicit(&P2running, memory_order_acquire)) {
     release_my_buffer(mybuf);
     return;
   }
@@ -3096,7 +3109,7 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
     release_my_buffer(mybuf);
     return;
   }
-  if (!P2running) {
+  if (!atomic_load_explicit(&P2running, memory_order_acquire)) {
     release_my_buffer(mybuf);
     return;
   }
@@ -3465,8 +3478,50 @@ static void process_high_priority(void) {
     tx_off_cancel();
     new_protocol_high_priority();
   }
-  tx_fifo_overrun |= (buffer[4] & 0x40) >> 6;
-  tx_fifo_underrun |= (buffer[4] & 0x20) >> 5;
+  /*
+   * The P2 DUC reports underflow while its TX FIFO is initially filling.
+   * Ignore that expected transition state and arm underflow reporting only
+   * after a TX status packet has shown a filled/non-underflowing FIFO.
+   */
+  int xmit = radio_is_transmitting() | radio_ptt;
+  int fifo_underrun = (buffer[4] & 0x20) != 0;
+  int fifo_overrun = (buffer[4] & 0x40) != 0;
+  if (!xmit) {
+    p2_tx_fifo_armed = 0;
+    p2_tx_fifo_underrun_reported = 0;
+    p2_tx_fifo_overrun_reported = 0;
+  } else {
+    if (!fifo_underrun) {
+      p2_tx_fifo_armed = 1;
+    } else if (p2_tx_fifo_armed) {
+      tx_fifo_underrun = 1;
+      if (!p2_tx_fifo_underrun_reported) {
+        uint64_t queued = atomic_load_explicit(&txiq_blocks_queued, memory_order_acquire);
+        uint64_t sent = atomic_load_explicit(&txiq_blocks_sent, memory_order_acquire);
+        t_print("%s: P2 TX FIFO underrun byte4=0x%02X seq=%lu queued=%llu sent=%llu pending=%llu txiq_count=%d\n",
+                __func__, buffer[4], sequence,
+                (unsigned long long) queued,
+                (unsigned long long) sent,
+                (unsigned long long)(queued - sent),
+                txiq_count);
+        p2_tx_fifo_underrun_reported = 1;
+      }
+    }
+    if (fifo_overrun) {
+      tx_fifo_overrun = 1;
+      if (!p2_tx_fifo_overrun_reported) {
+        uint64_t queued = atomic_load_explicit(&txiq_blocks_queued, memory_order_acquire);
+        uint64_t sent = atomic_load_explicit(&txiq_blocks_sent, memory_order_acquire);
+        t_print("%s: P2 TX FIFO overrun byte4=0x%02X seq=%lu queued=%llu sent=%llu pending=%llu txiq_count=%d\n",
+                __func__, buffer[4], sequence,
+                (unsigned long long) queued,
+                (unsigned long long) sent,
+                (unsigned long long)(queued - sent),
+                txiq_count);
+        p2_tx_fifo_overrun_reported = 1;
+      }
+    }
+  }
   adc0_p_ovl |= buffer[5] & 0x01;
   adc1_p_ovl |= ((buffer[5] & 0x02) >> 1);
   if ((buffer[5] & 0x03) != 0) {
@@ -3602,9 +3657,9 @@ void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sa
       // to minimize CW side tone latency (17 msec measured on my ANAN-7000).
       //
       rxaudio_drain = 1;
-      while (P2running && rxaudio_inptr != rxaudio_outptr) { usleep(1000); }
+      while (atomic_load_explicit(&P2running, memory_order_acquire) && rxaudio_inptr != rxaudio_outptr) { usleep(1000); }
       rxaudio_drain = 0;
-      if (!P2running) {
+      if (!atomic_load_explicit(&P2running, memory_order_acquire)) {
         pthread_mutex_unlock(&send_rxaudio_mutex);
         return;
       }
@@ -3725,7 +3780,7 @@ void new_protocol_iq_samples(int isample, int qsample) {
 }
 
 uint64_t new_protocol_tx_fence_begin(void) {
-  if (!P2running || !radio_is_transmitting() || txiq_count < 0) {
+  if (!atomic_load_explicit(&P2running, memory_order_acquire) || !radio_is_transmitting() || txiq_count < 0) {
     return 0;
   }
   // First close a partially filled packet, then append one complete
@@ -3781,7 +3836,7 @@ void *new_protocol_timer_thread(void *arg) {
     ts.tv_sec++;
   }
   clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-  while (P2running) {
+  while (atomic_load_explicit(&P2running, memory_order_acquire)) {
     cycling++;
     switch (cycling) {
     case 1:
