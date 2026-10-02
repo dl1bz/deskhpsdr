@@ -248,7 +248,7 @@ gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointe
     t_print("%s: ERROR: called with NULL RECEIVER pointer!\n", __func__);
     return FALSE;  // Event nicht verarbeitet
   }
-  if (!enable_mouse_wheel) {
+  if (!mouse_wheel_mode) {
     return FALSE; // no mouse wheel event processing
   }
 #ifdef __APPLE__
@@ -277,12 +277,22 @@ gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointe
     }
   }
 #else
-  // add press SHIFT if using mouse wheel for VFO movement in VFO step 10 instead 1
-  int wheel_step = (event->state & GDK_SHIFT_MASK) ? 10 : 1;
-  if (event->direction == GDK_SCROLL_UP) {
-    vfo_step(wheel_step);
-  } else if (event->direction == GDK_SCROLL_DOWN) {
-    vfo_step(-wheel_step);
+  if (mouse_wheel_mode == 2) {
+    gboolean shift = (event->state & GDK_SHIFT_MASK) != 0;
+    gboolean control = (event->state & GDK_CONTROL_MASK) != 0;
+    if (shift && control) {
+      vfo_step(event->direction == GDK_SCROLL_UP ? 10 : -10);
+    } else if (control) {
+      vfo_step(event->direction == GDK_SCROLL_UP ? 1 : -1);
+    }
+  } else if (mouse_wheel_mode == 1) {
+    // add press SHIFT if using mouse wheel for VFO movement in VFO step 10 instead 1
+    int wheel_step = (event->state & GDK_SHIFT_MASK) ? 10 : 1;
+    if (event->direction == GDK_SCROLL_UP) {
+      vfo_step(wheel_step);
+    } else if (event->direction == GDK_SCROLL_DOWN) {
+      vfo_step(-wheel_step);
+    }
   }
 #endif
   return TRUE;

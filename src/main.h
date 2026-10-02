@@ -55,7 +55,7 @@ extern int brick_ddc0_fix;
 extern int sertune_ptt_hold_ms;
 extern int sertune_invert;
 
-extern int enable_mouse_wheel;
+extern int mouse_wheel_mode;
 
 extern int p2_angelia_ddc0_map;
 
