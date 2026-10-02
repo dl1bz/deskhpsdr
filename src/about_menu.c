@@ -103,8 +103,7 @@ void about_menu(GtkWidget *parent) {
   //---------------------------------------------------------------------------------------------------------------------
   snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
                                "for SDR-TRX running OpenHPSDR protocol P1 or P2\n\n"
-                               "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n"
-                               "(contains code portions of pihpsdr until October 2024)\n"
+                               "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n\n"
                                "Build OS: %s %s @ %s\n"
                                "Build compiler: %s\n"
                                "Git source: %s\n"
@@ -168,13 +167,13 @@ void about_menu(GtkWidget *parent) {
   snprintf(text, sizeof(text), "Licensed under the GNU General Public License v3.0 (GPL-3.0-only)\n\n"
                                "Credits:\n"
                                "Warren, NR0V: WDSP signal processing library development\n"
-                               "John, G0ORX/N6LYT: first and initial version of pihpsdr\n"
-                               "Steve, KA6S & Jae, K5JAE: Older CAT emulations in pihpsdr (except TCI)\n"
-                               "Christoph, DL1YCF: Continuation & current version pihpsdr\n"
-                               "Richie, MW0LGE: Developer of main version Thetis\n"
-                               "Reid, MI0BOT: Adaptation of Thetis for the Hermes Lite 2\n"
+                               "John, G0ORX/N6LYT & Christoph, DL1YCF: pihpsdr\n"
+                               "Steve, KA6S & Jae, K5JAE: Initial CAT emulations in pihpsdr (except TCI)\n"
+                               "Richie, MW0LGE & Reid, MI0BOT: Thetis\n"
+                               "Steve, KF7O: Hermes Lite 2 project\n"
+                               "EU1SW & LinOObs: Development and support Brick SDR devices\n"
                                "Francesco, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
-                               "OpenAI/ChatGPT: Code and Protocol Optimizations & Bugfixing, TCI");
+                               "OpenAI/ChatGPT: Code Optimizations & Bugfixing, TCI, WINDOWS porting");
   GtkWidget *credits_label = gtk_label_new(text);
   gtk_widget_set_halign(credits_label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), credits_label, 1, row, 5, 1);
