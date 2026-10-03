@@ -28,7 +28,9 @@
 #include <CoreAudio/CoreAudio.h>
 #include <CoreFoundation/CoreFoundation.h>
 
+#include <errno.h>
 #include <stdatomic.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -255,11 +257,17 @@ static int coreaudio_set_sample_rate(AudioDeviceID device, Float64 rate, const c
  *
  * The same device can be open several times (RX output, TCI monitor,
  * microphone), so switched devices are reference counted.
+ *
+ * A device is only switched once its restore information is known
+ * (original rate and device UID) and has been written to a journal
+ * file in the working directory. If deskHPSDR does not get to restore
+ * the rate (crash, kill), the next start restores it from the journal.
  */
-static int coreaudio_ensure_sample_rate(AudioDeviceID device, const char *device_name);
+#define COREAUDIO_RATE_JOURNAL "coreaudio_rates.txt"
 
 typedef struct {
   AudioDeviceID device;
+  char uid[256];
   Float64 original_rate;
   int users;
 } COREAUDIO_RATE_SWITCH;
@@ -267,27 +275,156 @@ typedef struct {
 static COREAUDIO_RATE_SWITCH rate_switches[MAX_AUDIO_DEVICES];
 static GMutex rate_switch_mutex;
 static int rate_restore_registered = 0;
+static int rate_journal_recovered = 0;
+
+static int coreaudio_device_uid(AudioDeviceID device, char *uid, size_t uid_size) {
+  AudioObjectPropertyAddress address = {
+    kAudioDevicePropertyDeviceUID,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  CFStringRef cfuid = NULL;
+  UInt32 size = sizeof(cfuid);
+  if (AudioObjectGetPropertyData(device, &address, 0, NULL, &size, &cfuid) != noErr || cfuid == NULL) {
+    return 0;
+  }
+  Boolean ok = CFStringGetCString(cfuid, uid, (CFIndex) uid_size, kCFStringEncodingUTF8);
+  CFRelease(cfuid);
+  return ok && uid[0] != '\0' && strchr(uid, '\t') == NULL && strchr(uid, '\n') == NULL;
+}
+
+static AudioDeviceID coreaudio_device_from_uid(const char *uid) {
+  AudioObjectPropertyAddress address = {
+    kAudioHardwarePropertyTranslateUIDToDevice,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  CFStringRef cfuid = CFStringCreateWithCString(NULL, uid, kCFStringEncodingUTF8);
+  if (cfuid == NULL) {
+    return kAudioObjectUnknown;
+  }
+  AudioDeviceID device = kAudioObjectUnknown;
+  UInt32 size = sizeof(device);
+  if (AudioObjectGetPropertyData(kAudioObjectSystemObject, &address, sizeof(cfuid), &cfuid,
+                                 &size, &device) != noErr) {
+    device = kAudioObjectUnknown;
+  }
+  CFRelease(cfuid);
+  return device;
+}
+
+// Rewrites the journal from rate_switches. Caller holds rate_switch_mutex.
+static int coreaudio_write_rate_journal(void) {
+  int entries = 0;
+  for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
+    if (rate_switches[i].users > 0) {
+      entries++;
+    }
+  }
+  if (entries == 0) {
+    if (unlink(COREAUDIO_RATE_JOURNAL) != 0 && errno != ENOENT) {
+      t_print("%s: cannot remove %s: %s\n", __func__, COREAUDIO_RATE_JOURNAL, strerror(errno));
+      return 0;
+    }
+    return 1;
+  }
+  const char *tmpname = COREAUDIO_RATE_JOURNAL ".tmp";
+  FILE *fp = fopen(tmpname, "w");
+  if (fp == NULL) {
+    t_print("%s: cannot write %s: %s\n", __func__, tmpname, strerror(errno));
+    return 0;
+  }
+  int ok = 1;
+  for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
+    if (rate_switches[i].users > 0 &&
+        fprintf(fp, "%s\t%.0f\n", rate_switches[i].uid, rate_switches[i].original_rate) < 0) {
+      ok = 0;
+    }
+  }
+  if (fflush(fp) != 0 || fsync(fileno(fp)) != 0) {
+    ok = 0;
+  }
+  if (fclose(fp) != 0) {
+    ok = 0;
+  }
+  if (!ok || rename(tmpname, COREAUDIO_RATE_JOURNAL) != 0) {
+    t_print("%s: cannot write %s: %s\n", __func__, COREAUDIO_RATE_JOURNAL, strerror(errno));
+    unlink(tmpname);
+    return 0;
+  }
+  return 1;
+}
+
+static void coreaudio_restore_one(int i) {
+  if (coreaudio_has_sample_rate(rate_switches[i].device, COREAUDIO_SAMPLE_RATE)) {
+    char name[512];
+    if (!coreaudio_device_name(rate_switches[i].device, name, sizeof(name))) {
+      g_strlcpy(name, rate_switches[i].uid, sizeof(name));
+    }
+    coreaudio_set_sample_rate(rate_switches[i].device, rate_switches[i].original_rate, name);
+  }
+  rate_switches[i].users = 0;
+}
+
+/*
+ * Restores the rates left over from a previous run that did not close its
+ * devices. Runs once, before deskHPSDR switches any device itself.
+ */
+static void coreaudio_recover_rate_journal(void) {
+  g_mutex_lock(&rate_switch_mutex);
+  if (rate_journal_recovered) {
+    g_mutex_unlock(&rate_switch_mutex);
+    return;
+  }
+  rate_journal_recovered = 1;
+  FILE *fp = fopen(COREAUDIO_RATE_JOURNAL, "r");
+  if (fp == NULL) {
+    g_mutex_unlock(&rate_switch_mutex);
+    return;
+  }
+  char line[512];
+  while (fgets(line, sizeof(line), fp) != NULL) {
+    char *tab = strchr(line, '\t');
+    if (tab == NULL) {
+      continue;
+    }
+    *tab = '\0';
+    Float64 rate = g_ascii_strtod(tab + 1, NULL);
+    AudioDeviceID device = coreaudio_device_from_uid(line);
+    if (rate <= 0.0 || device == kAudioObjectUnknown) {
+      t_print("%s: cannot restore %s to %.0f Hz, device not present\n", __func__, line, rate);
+      continue;
+    }
+    if (coreaudio_has_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
+      char name[512];
+      if (!coreaudio_device_name(device, name, sizeof(name))) {
+        g_strlcpy(name, line, sizeof(name));
+      }
+      t_print("%s: restoring rate left over from previous run: %s\n", __func__, name);
+      coreaudio_set_sample_rate(device, rate, name);
+    }
+  }
+  fclose(fp);
+  coreaudio_write_rate_journal();
+  g_mutex_unlock(&rate_switch_mutex);
+}
 
 // Not every exit path closes the audio devices first.
 static void coreaudio_restore_sample_rates(void) {
   if (!g_mutex_trylock(&rate_switch_mutex)) {
-    return;
+    return;  // the journal still holds the rates for the next start
   }
   for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
-    if (rate_switches[i].users > 0 &&
-        coreaudio_has_sample_rate(rate_switches[i].device, COREAUDIO_SAMPLE_RATE)) {
-      char name[512];
-      if (!coreaudio_device_name(rate_switches[i].device, name, sizeof(name))) {
-        snprintf(name, sizeof(name), "ID=%u", (unsigned int) rate_switches[i].device);
-      }
-      coreaudio_set_sample_rate(rate_switches[i].device, rate_switches[i].original_rate, name);
-      rate_switches[i].users = 0;
+    if (rate_switches[i].users > 0) {
+      coreaudio_restore_one(i);
     }
   }
+  coreaudio_write_rate_journal();
   g_mutex_unlock(&rate_switch_mutex);
 }
 
 static int coreaudio_acquire_sample_rate(AudioDeviceID device, const char *device_name) {
+  coreaudio_recover_rate_journal();
   g_mutex_lock(&rate_switch_mutex);
   for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
     if (rate_switches[i].users > 0 && rate_switches[i].device == device) {
@@ -296,54 +433,67 @@ static int coreaudio_acquire_sample_rate(AudioDeviceID device, const char *devic
       return 1;
     }
   }
-  Float64 original_rate = coreaudio_current_sample_rate(device);
-  int ok = coreaudio_ensure_sample_rate(device, device_name);
-  if (ok && original_rate > 0.0 &&
-      (original_rate < COREAUDIO_SAMPLE_RATE - 0.5 || original_rate > COREAUDIO_SAMPLE_RATE + 0.5)) {
-    for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
-      if (rate_switches[i].users == 0) {
-        rate_switches[i].device = device;
-        rate_switches[i].original_rate = original_rate;
-        rate_switches[i].users = 1;
-        if (!rate_restore_registered) {
-          rate_restore_registered = 1;
-          atexit(coreaudio_restore_sample_rates);
-        }
-        break;
-      }
+  if (coreaudio_has_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
+    g_mutex_unlock(&rate_switch_mutex);
+    return 1;
+  }
+  if (!coreaudio_supports_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
+    t_print("%s: device does not support 48 kHz: %s\n", __func__, device_name);
+    g_mutex_unlock(&rate_switch_mutex);
+    return 0;
+  }
+  // Collect and save the restore information before touching the device.
+  int slot = -1;
+  for (int i = 0; i < MAX_AUDIO_DEVICES && slot < 0; i++) {
+    if (rate_switches[i].users == 0) {
+      slot = i;
     }
   }
+  Float64 original_rate = coreaudio_current_sample_rate(device);
+  if (slot < 0 || original_rate <= 0.0 ||
+      !coreaudio_device_uid(device, rate_switches[slot].uid, sizeof(rate_switches[slot].uid))) {
+    t_print("%s: no restore information, not switching to 48 kHz: %s\n", __func__, device_name);
+    g_mutex_unlock(&rate_switch_mutex);
+    return 0;
+  }
+  rate_switches[slot].device = device;
+  rate_switches[slot].original_rate = original_rate;
+  rate_switches[slot].users = 1;
+  if (!coreaudio_write_rate_journal()) {
+    t_print("%s: cannot save restore information, not switching to 48 kHz: %s\n", __func__, device_name);
+    rate_switches[slot].users = 0;
+    coreaudio_write_rate_journal();
+    g_mutex_unlock(&rate_switch_mutex);
+    return 0;
+  }
+  if (!rate_restore_registered) {
+    rate_restore_registered = 1;
+    atexit(coreaudio_restore_sample_rates);
+  }
+  if (!coreaudio_set_sample_rate(device, COREAUDIO_SAMPLE_RATE, device_name)) {
+    coreaudio_restore_one(slot);  // in case the switch arrives late
+    coreaudio_write_rate_journal();
+    g_mutex_unlock(&rate_switch_mutex);
+    return 0;
+  }
   g_mutex_unlock(&rate_switch_mutex);
-  return ok;
+  return 1;
 }
 
 static void coreaudio_release_sample_rate(AudioDeviceID device) {
   g_mutex_lock(&rate_switch_mutex);
   for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
     if (rate_switches[i].users > 0 && rate_switches[i].device == device) {
-      if (--rate_switches[i].users == 0 &&
-          coreaudio_has_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
-        char name[512];
-        if (!coreaudio_device_name(device, name, sizeof(name))) {
-          snprintf(name, sizeof(name), "ID=%u", (unsigned int) device);
-        }
-        coreaudio_set_sample_rate(device, rate_switches[i].original_rate, name);
+      if (rate_switches[i].users == 1) {
+        coreaudio_restore_one(i);
+        coreaudio_write_rate_journal();
+      } else {
+        rate_switches[i].users--;
       }
       break;
     }
   }
   g_mutex_unlock(&rate_switch_mutex);
-}
-
-static int coreaudio_ensure_sample_rate(AudioDeviceID device, const char *device_name) {
-  if (coreaudio_has_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
-    return 1;
-  }
-  if (!coreaudio_supports_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
-    t_print("%s: device does not support 48 kHz: %s\n", __func__, device_name);
-    return 0;
-  }
-  return coreaudio_set_sample_rate(device, COREAUDIO_SAMPLE_RATE, device_name);
 }
 
 static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
@@ -357,6 +507,7 @@ static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
 }
 
 int audio_backend_get_cards(void) {
+  coreaudio_recover_rate_journal();
   AudioObjectPropertyAddress address = {
     kAudioHardwarePropertyDevices,
     kAudioObjectPropertyScopeGlobal,
