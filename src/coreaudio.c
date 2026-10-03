@@ -31,6 +31,7 @@
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "audio.h"
 #include "audio_backend.h"
@@ -41,6 +42,7 @@
 #define COREAUDIO_OUTPUT_BUFFER_TARGET 128
 #define COREAUDIO_INPUT_BUFFER_TARGET 256
 #define COREAUDIO_TCI_MONITOR_BUFFER_TARGET 128
+#define COREAUDIO_RATE_SWITCH_TIMEOUT_MS 500
 
 typedef struct {
   AudioComponentInstance unit;
@@ -179,6 +181,171 @@ static int coreaudio_has_sample_rate(AudioDeviceID device, Float64 sample_rate) 
 }
 
 
+static int coreaudio_supports_sample_rate(AudioDeviceID device, Float64 sample_rate) {
+  AudioObjectPropertyAddress address = {
+    kAudioDevicePropertyAvailableNominalSampleRates,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  UInt32 size = 0;
+  if (AudioObjectGetPropertyDataSize(device, &address, 0, NULL, &size) != noErr || size == 0) {
+    return 0;
+  }
+  AudioValueRange *ranges = malloc(size);
+  if (ranges == NULL) {
+    return 0;
+  }
+  int supported = 0;
+  if (AudioObjectGetPropertyData(device, &address, 0, NULL, &size, ranges) == noErr) {
+    UInt32 count = size / sizeof(AudioValueRange);
+    for (UInt32 i = 0; i < count && !supported; i++) {
+      supported = sample_rate >= ranges[i].mMinimum - 0.5 &&
+                  sample_rate <= ranges[i].mMaximum + 0.5;
+    }
+  }
+  free(ranges);
+  return supported;
+}
+
+static Float64 coreaudio_current_sample_rate(AudioDeviceID device) {
+  AudioObjectPropertyAddress address = {
+    kAudioDevicePropertyNominalSampleRate,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  Float64 rate = 0.0;
+  UInt32 size = sizeof(rate);
+  if (AudioObjectGetPropertyData(device, &address, 0, NULL, &size, &rate) != noErr) {
+    return 0.0;
+  }
+  return rate;
+}
+
+static int coreaudio_set_sample_rate(AudioDeviceID device, Float64 rate, const char *device_name) {
+  AudioObjectPropertyAddress address = {
+    kAudioDevicePropertyNominalSampleRate,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain
+  };
+  OSStatus status = AudioObjectSetPropertyData(device, &address, 0, NULL, sizeof(rate), &rate);
+  if (status != noErr) {
+    t_print("%s: cannot switch device to %.0f Hz: %s status=%d\n",
+            __func__, rate, device_name, (int) status);
+    return 0;
+  }
+  // The HAL applies the new rate asynchronously.
+  for (int waited = 0; waited < COREAUDIO_RATE_SWITCH_TIMEOUT_MS; waited += 10) {
+    if (coreaudio_has_sample_rate(device, rate)) {
+      t_print("%s: switched device to %.0f Hz: %s\n", __func__, rate, device_name);
+      return 1;
+    }
+    usleep(10000);
+  }
+  t_print("%s: device did not switch to %.0f Hz: %s\n", __func__, rate, device_name);
+  return 0;
+}
+
+/*
+ * The local audio path runs at 48 kHz without sample-rate conversion.
+ * A device that supports 48 kHz but currently runs at another rate
+ * (e.g. the built-in speakers at 44.1 kHz) is switched to 48 kHz while
+ * deskHPSDR uses it. This changes the device's system-wide rate, the
+ * same as Audio MIDI Setup. The previous rate is restored when the last
+ * user closes the device, unless someone else changed it meanwhile.
+ *
+ * The same device can be open several times (RX output, TCI monitor,
+ * microphone), so switched devices are reference counted.
+ */
+static int coreaudio_ensure_sample_rate(AudioDeviceID device, const char *device_name);
+
+typedef struct {
+  AudioDeviceID device;
+  Float64 original_rate;
+  int users;
+} COREAUDIO_RATE_SWITCH;
+
+static COREAUDIO_RATE_SWITCH rate_switches[MAX_AUDIO_DEVICES];
+static GMutex rate_switch_mutex;
+static int rate_restore_registered = 0;
+
+// Not every exit path closes the audio devices first.
+static void coreaudio_restore_sample_rates(void) {
+  if (!g_mutex_trylock(&rate_switch_mutex)) {
+    return;
+  }
+  for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
+    if (rate_switches[i].users > 0 &&
+        coreaudio_has_sample_rate(rate_switches[i].device, COREAUDIO_SAMPLE_RATE)) {
+      char name[512];
+      if (!coreaudio_device_name(rate_switches[i].device, name, sizeof(name))) {
+        snprintf(name, sizeof(name), "ID=%u", (unsigned int) rate_switches[i].device);
+      }
+      coreaudio_set_sample_rate(rate_switches[i].device, rate_switches[i].original_rate, name);
+      rate_switches[i].users = 0;
+    }
+  }
+  g_mutex_unlock(&rate_switch_mutex);
+}
+
+static int coreaudio_acquire_sample_rate(AudioDeviceID device, const char *device_name) {
+  g_mutex_lock(&rate_switch_mutex);
+  for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
+    if (rate_switches[i].users > 0 && rate_switches[i].device == device) {
+      rate_switches[i].users++;
+      g_mutex_unlock(&rate_switch_mutex);
+      return 1;
+    }
+  }
+  Float64 original_rate = coreaudio_current_sample_rate(device);
+  int ok = coreaudio_ensure_sample_rate(device, device_name);
+  if (ok && original_rate > 0.0 &&
+      (original_rate < COREAUDIO_SAMPLE_RATE - 0.5 || original_rate > COREAUDIO_SAMPLE_RATE + 0.5)) {
+    for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
+      if (rate_switches[i].users == 0) {
+        rate_switches[i].device = device;
+        rate_switches[i].original_rate = original_rate;
+        rate_switches[i].users = 1;
+        if (!rate_restore_registered) {
+          rate_restore_registered = 1;
+          atexit(coreaudio_restore_sample_rates);
+        }
+        break;
+      }
+    }
+  }
+  g_mutex_unlock(&rate_switch_mutex);
+  return ok;
+}
+
+static void coreaudio_release_sample_rate(AudioDeviceID device) {
+  g_mutex_lock(&rate_switch_mutex);
+  for (int i = 0; i < MAX_AUDIO_DEVICES; i++) {
+    if (rate_switches[i].users > 0 && rate_switches[i].device == device) {
+      if (--rate_switches[i].users == 0 &&
+          coreaudio_has_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
+        char name[512];
+        if (!coreaudio_device_name(device, name, sizeof(name))) {
+          snprintf(name, sizeof(name), "ID=%u", (unsigned int) device);
+        }
+        coreaudio_set_sample_rate(device, rate_switches[i].original_rate, name);
+      }
+      break;
+    }
+  }
+  g_mutex_unlock(&rate_switch_mutex);
+}
+
+static int coreaudio_ensure_sample_rate(AudioDeviceID device, const char *device_name) {
+  if (coreaudio_has_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
+    return 1;
+  }
+  if (!coreaudio_supports_sample_rate(device, COREAUDIO_SAMPLE_RATE)) {
+    t_print("%s: device does not support 48 kHz: %s\n", __func__, device_name);
+    return 0;
+  }
+  return coreaudio_set_sample_rate(device, COREAUDIO_SAMPLE_RATE, device_name);
+}
+
 static void coreaudio_free_device_list(AUDIO_DEVICE *devices, int count) {
   for (int i = 0; i < count; i++) {
     g_free(devices[i].name);
@@ -233,9 +400,13 @@ int audio_backend_get_cards(void) {
     int output_channels = coreaudio_device_channels(devices[i], kAudioDevicePropertyScopeOutput);
     int has_48k = coreaudio_has_sample_rate(devices[i], COREAUDIO_SAMPLE_RATE);
     if (!has_48k && (input_channels > 0 || output_channels > 0)) {
-      t_print("%s: skipping device not currently running at 48 kHz, ID=%u, Name=%s\n",
+      if (!coreaudio_supports_sample_rate(devices[i], COREAUDIO_SAMPLE_RATE)) {
+        t_print("%s: skipping device without 48 kHz support, ID=%u, Name=%s\n",
+                __func__, (unsigned int) devices[i], name);
+        continue;
+      }
+      t_print("%s: device not running at 48 kHz, will be switched on open, ID=%u, Name=%s\n",
               __func__, (unsigned int) devices[i], name);
-      continue;
     }
     if (input_channels > 0 && n_input_devices < MAX_AUDIO_DEVICES) {
       input_devices[n_input_devices].name = g_strdup(name);
@@ -424,7 +595,7 @@ static OSStatus coreaudio_render_cb(void *refcon,
   return noErr;
 }
 
-void *audio_backend_output_open(RECEIVER *rx, const char *device_name, int *channels) {
+static void *coreaudio_output_open(RECEIVER *rx, const char *device_name, int *channels) {
   if (rx == NULL || device_name == NULL || channels == NULL) {
     return NULL;
   }
@@ -540,6 +711,21 @@ fail:
   return NULL;
 }
 
+void *audio_backend_output_open(RECEIVER *rx, const char *device_name, int *channels) {
+  AudioDeviceID device = coreaudio_find_output_device(device_name);
+  if (device == kAudioObjectUnknown) {
+    return coreaudio_output_open(rx, device_name, channels);  // logs that the device was not found
+  }
+  if (!coreaudio_acquire_sample_rate(device, device_name)) {
+    return NULL;
+  }
+  void *handle = coreaudio_output_open(rx, device_name, channels);
+  if (handle == NULL) {
+    coreaudio_release_sample_rate(device);
+  }
+  return handle;
+}
+
 void audio_backend_output_close(void *handle) {
   COREAUDIO_OUTPUT *output = (COREAUDIO_OUTPUT *) handle;
   if (output == NULL) {
@@ -558,6 +744,7 @@ void audio_backend_output_close(void *handle) {
     AudioUnitUninitialize(output->unit);
     AudioComponentInstanceDispose(output->unit);
   }
+  coreaudio_release_sample_rate(output->device);
   free(output);
 }
 
@@ -617,7 +804,7 @@ static OSStatus coreaudio_tci_monitor_cb(void *refcon,
   return noErr;
 }
 
-void *audio_backend_tci_monitor_open(const char *device_name, int *channels) {
+static void *coreaudio_tci_monitor_open(const char *device_name, int *channels) {
   if (device_name == NULL || channels == NULL) {
     return NULL;
   }
@@ -710,6 +897,21 @@ fail:
   return NULL;
 }
 
+void *audio_backend_tci_monitor_open(const char *device_name, int *channels) {
+  AudioDeviceID device = coreaudio_find_output_device(device_name);
+  if (device == kAudioObjectUnknown) {
+    return coreaudio_tci_monitor_open(device_name, channels);  // logs that the device was not found
+  }
+  if (!coreaudio_acquire_sample_rate(device, device_name)) {
+    return NULL;
+  }
+  void *handle = coreaudio_tci_monitor_open(device_name, channels);
+  if (handle == NULL) {
+    coreaudio_release_sample_rate(device);
+  }
+  return handle;
+}
+
 void audio_backend_tci_monitor_close(void *handle) {
   COREAUDIO_TCI_MONITOR *monitor = (COREAUDIO_TCI_MONITOR *) handle;
   if (monitor == NULL) {
@@ -723,6 +925,7 @@ void audio_backend_tci_monitor_close(void *handle) {
     AudioUnitUninitialize(monitor->unit);
     AudioComponentInstanceDispose(monitor->unit);
   }
+  coreaudio_release_sample_rate(monitor->device);
   free(monitor);
 }
 
@@ -794,7 +997,7 @@ static OSStatus coreaudio_input_cb(void *refcon,
   return noErr;
 }
 
-void *audio_backend_input_open(const char *device_name) {
+static void *coreaudio_input_open(const char *device_name) {
   if (device_name == NULL || device_name[0] == '\0') {
     return NULL;
   }
@@ -943,6 +1146,21 @@ fail:
   return NULL;
 }
 
+void *audio_backend_input_open(const char *device_name) {
+  AudioDeviceID device = coreaudio_find_input_device(device_name);
+  if (device == kAudioObjectUnknown) {
+    return coreaudio_input_open(device_name);  // logs that the device was not found
+  }
+  if (!coreaudio_acquire_sample_rate(device, device_name)) {
+    return NULL;
+  }
+  void *handle = coreaudio_input_open(device_name);
+  if (handle == NULL) {
+    coreaudio_release_sample_rate(device);
+  }
+  return handle;
+}
+
 void audio_backend_input_close(void *handle) {
   COREAUDIO_INPUT *input = (COREAUDIO_INPUT *) handle;
   if (input == NULL) {
@@ -959,6 +1177,7 @@ void audio_backend_input_close(void *handle) {
     AudioUnitUninitialize(input->unit);
     AudioComponentInstanceDispose(input->unit);
   }
+  coreaudio_release_sample_rate(input->device);
   free(input->buffer);
   free(input);
 }
