@@ -3938,7 +3938,12 @@ static void tci_cmd_tune(CLIENT *client, const TCI_CMD *cmd) {
         tci_tx_owner = NULL;
         tci_tx_owner_mode = TCI_TX_OWNER_NONE;
         allow = 1;
-      } else if (tci_tx_owner == NULL && !tx_active && !tune_active) {
+      } else if (tci_tx_owner == NULL && (tune_active || !tx_active)) {
+        /*
+         * Switching a locally started TUNE off is always safe. TCI tuner
+         * controllers (e.g. ICOM AH-4 interfaces) end the tune carrier once
+         * the tuner has finished, also when TUNE was pressed in the GUI.
+         */
         allow = 1;
       } else if (tci_tx_owner != NULL) {
         owner_seq = tci_tx_owner->seq;
