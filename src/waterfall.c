@@ -59,8 +59,9 @@ static guint performance_timer_id = 0;
 
 #define WATERFALL_3D_MAX_RX 8
 #define WATERFALL_3D_DEPTH 80
-#define WATERFALL_3D_INTERP 5
-#define WATERFALL_3D_TARGET_HZ 8.0
+#define WATERFALL_3D_INTERP 10
+#define WATERFALL_3D_TARGET_HZ 16.0
+#define WATERFALL_3D_COLOUR_LUT_SIZE 2048
 
 typedef struct {
   float *frames;
@@ -78,6 +79,66 @@ typedef struct {
 
 static WATERFALL_3D_HISTORY waterfall_3d_history[WATERFALL_3D_MAX_RX];
 
+typedef struct {
+  float *samples;
+  int width;
+  int terrain_height;
+  float soffset;
+  float low;
+  float high;
+  long long frequency;
+  int zoom;
+  int sample_rate;
+  guint generation;
+} WATERFALL_3D_JOB;
+
+typedef struct {
+  GMutex mutex;
+  GCond cond;
+  GThread *thread;
+  gboolean stop;
+  gboolean job_pending;
+  gboolean worker_busy;
+  gboolean reset_pending;
+  guint generation;
+  gint64 next_capture_us;
+  gboolean mapping_valid;
+  long long frequency;
+  int pan;
+  int zoom;
+  int sample_rate;
+  int width;
+  int terrain_height;
+  WATERFALL_3D_JOB job;
+  unsigned char *ready_pixels;
+  int ready_width;
+  int ready_height;
+  guint ready_generation;
+  gboolean ready_valid;
+  int rx_id;
+} WATERFALL_3D_WORKER;
+
+static WATERFALL_3D_WORKER waterfall_3d_worker[WATERFALL_3D_MAX_RX];
+static gsize waterfall_3d_workers_ready = 0;
+
+static gpointer waterfall_3d_worker_main(gpointer data);
+
+static void waterfall_3d_workers_init(void) {
+  if (g_once_init_enter(&waterfall_3d_workers_ready)) {
+    for (int i = 0; i < WATERFALL_3D_MAX_RX; i++) {
+      WATERFALL_3D_WORKER *w = &waterfall_3d_worker[i];
+      g_mutex_init(&w->mutex);
+      g_cond_init(&w->cond);
+      w->generation = 1;
+      w->next_capture_us = 0;
+      w->rx_id = i;
+    }
+    g_once_init_leave(&waterfall_3d_workers_ready, 1);
+  }
+}
+
+
+
 static void waterfall_3d_reset_history(WATERFALL_3D_HISTORY *h) {
   if (h == NULL) {
     return;
@@ -94,7 +155,19 @@ void waterfall_3d_clear(RECEIVER *rx) {
   if (rx == NULL || rx->id < 0 || rx->id >= WATERFALL_3D_MAX_RX) {
     return;
   }
-  waterfall_3d_reset_history(&waterfall_3d_history[rx->id]);
+  waterfall_3d_workers_init();
+  WATERFALL_3D_WORKER *w = &waterfall_3d_worker[rx->id];
+  g_mutex_lock(&w->mutex);
+  w->generation++;
+  w->next_capture_us = 0;
+  w->reset_pending = TRUE;
+  w->ready_valid = FALSE;
+  if (w->job_pending) {
+    free(w->job.samples);
+    w->job.samples = NULL;
+    w->job_pending = FALSE;
+  }
+  g_mutex_unlock(&w->mutex);
   if (rx->pixbuf != NULL) {
     int height = gdk_pixbuf_get_height(rx->pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(rx->pixbuf);
@@ -146,15 +219,19 @@ static void waterfall_3d_smooth_depth(WATERFALL_3D_HISTORY *h) {
   }
 }
 
-static inline void waterfall_3d_rgb(float sample, float low, float high,
-                                    unsigned char *r, unsigned char *g, unsigned char *b) {
-  float p = (sample - low) / (high - low);
+static inline void waterfall_3d_rgb_exact(float p,
+    unsigned char *r, unsigned char *g, unsigned char *b) {
   p = CLAMP(p, 0.0f, 1.0f);
   /* Give weak 3D signals more colour separation without moving the
    * upper part of the waterfall transfer function.  Keep 0.30 and above
    * bit-for-bit on the existing scale; only expand the lower 30 %. */
   if (p > 0.0f && p < 0.30f) {
-    p = 0.30f * powf(p / 0.30f, 0.75f);
+    /* x^0.75 == sqrt(x) * sqrt(sqrt(x)).  Avoid the general-purpose powf()
+     * in the 3D terrain inner loop; this transfer is evaluated hundreds of
+     * thousands of times per captured frame. */
+    float q = p * (1.0f / 0.30f);
+    float root = sqrtf(q);
+    p = 0.30f * root * sqrtf(root);
   }
   /* Use the same level-to-colour transfer function as the conventional
    * waterfall so equal signal levels have the same visual intensity. */
@@ -196,6 +273,32 @@ static inline void waterfall_3d_rgb(float sample, float low, float high,
   }
 }
 
+static unsigned char waterfall_3d_colour_lut[WATERFALL_3D_COLOUR_LUT_SIZE][3];
+static gsize waterfall_3d_colour_lut_ready = 0;
+
+static void waterfall_3d_prepare_colour_lut(void) {
+  if (g_once_init_enter(&waterfall_3d_colour_lut_ready)) {
+    for (int i = 0; i < WATERFALL_3D_COLOUR_LUT_SIZE; i++) {
+      float p = (float)i / (float)(WATERFALL_3D_COLOUR_LUT_SIZE - 1);
+      waterfall_3d_rgb_exact(p,
+                             &waterfall_3d_colour_lut[i][0],
+                             &waterfall_3d_colour_lut[i][1],
+                             &waterfall_3d_colour_lut[i][2]);
+    }
+    g_once_init_leave(&waterfall_3d_colour_lut_ready, 1);
+  }
+}
+
+static inline void waterfall_3d_rgb(float p,
+                                    unsigned char *r, unsigned char *g, unsigned char *b) {
+  p = CLAMP(p, 0.0f, 1.0f);
+  int index = (int)(p * (float)(WATERFALL_3D_COLOUR_LUT_SIZE - 1) + 0.5f);
+  const unsigned char *rgb = waterfall_3d_colour_lut[index];
+  *r = rgb[0];
+  *g = rgb[1];
+  *b = rgb[2];
+}
+
 static inline void waterfall_3d_put_pixel(unsigned char *pixels, int rowstride,
     int width, int height, int x, int y,
     unsigned char r, unsigned char g, unsigned char b) {
@@ -220,15 +323,16 @@ static inline float waterfall_3d_sample_at(const float *frame, int width, double
   return (float)((1.0 - f) * frame[i] + f * frame[i + 1]);
 }
 
-static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstride,
-                                int width, int terrain_height, const float *samples,
-                                int pan, int display_shift, float soffset, float low, float high,
-                                long long frequency) {
+static void waterfall_3d_render_sync(RECEIVER *rx, unsigned char *pixels, int rowstride,
+                                     int width, int terrain_height, const float *samples,
+                                     int pan, int display_shift, float soffset, float low, float high,
+                                     long long frequency) {
   if (rx == NULL || pixels == NULL || samples == NULL || terrain_height < 24 ||
       rx->id < 0 || rx->id >= WATERFALL_3D_MAX_RX || high <= low) {
     return;
   }
   WATERFALL_3D_HISTORY *h = &waterfall_3d_history[rx->id];
+  waterfall_3d_prepare_colour_lut();
   if (!waterfall_3d_prepare(h, width)) {
     return;
   }
@@ -242,8 +346,8 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
   h->zoom = rx->zoom;
   h->sample_rate = rx->sample_rate;
   h->mapping_valid = TRUE;
-  /* waterfall_3d_render() is called once for each waterfall row that is
-   * actually generated.  Keep the 3D history at a constant 8 Hz target while
+  /* waterfall_3d_render_sync() is called once for each captured 3D row that is
+   * actually generated.  Keep the 3D history at the configured target rate while
    * remaining locked to those real rows.  The phase accumulator follows
    * runtime FPS changes immediately and introduces no independent timer. */
   if (rx->fps <= 0) {
@@ -275,9 +379,9 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
   /* Perspective model:
    *   - newest real history slice uses the full width at the front;
    *   - older slices recede upward and shrink symmetrically towards centre;
-   *   - 80 captured FFT frames keep the Z history fine at the 8 Hz target;
-   *   - four linearly interpolated virtual slices are inserted between every
-   *     pair of captured frames, yielding up to 396 visible depth planes;
+   *   - captured FFT frames advance at the configured 3D target rate;
+   *   - WATERFALL_3D_INTERP linearly interpolated depth steps are rendered
+   *     between each pair of captured frames;
    *   - every display column is sampled with linear interpolation, so there
    *     is no x decimation and no coarse horizontal stair-stepping;
    *   - ribbons are rasterised directly into the RGB pixbuf. */
@@ -285,6 +389,8 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
   const double amplitude_span = terrain_height * 0.82;
   const double perspective_shrink = 0.18;   /* oldest slice retains 82% width */
   const double signal_range = (double)high - (double)low;
+  const double inv_signal_range = 1.0 / signal_range;
+  const float inv_colour_range = 1.0f / (high - low);
   const double centre = 0.5 * (double)(width - 1);
   for (int age = h->count - 2; age >= 0; age--) {
     int newer_idx = h->head - 1 - age;
@@ -312,6 +418,8 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
                          (older_real_depth - newer_real_depth) * t_far;
       double near_scale = 1.0 - perspective_shrink * near_depth;
       double far_scale = 1.0 - perspective_shrink * far_depth;
+      double inv_near_scale = 1.0 / near_scale;
+      double inv_far_scale = 1.0 / far_scale;
       double near_half = centre * near_scale;
       double far_half = centre * far_scale;
       double near_left = centre - near_half;
@@ -327,16 +435,16 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
         continue;
       }
       for (int x = x0; x <= x1; x++) {
-        double source_near = ((double)x - near_left) / near_scale;
-        double source_far = ((double)x - far_left) / far_scale;
+        double source_near = ((double)x - near_left) * inv_near_scale;
+        double source_far = ((double)x - far_left) * inv_far_scale;
         float sn0 = waterfall_3d_sample_at(newer, width, source_near);
         float so0 = waterfall_3d_sample_at(older, width, source_near);
         float sn1 = waterfall_3d_sample_at(newer, width, source_far);
         float so1 = waterfall_3d_sample_at(older, width, source_far);
         float s_near = (float)((1.0 - t_near) * sn0 + t_near * so0) + soffset;
         float s_far = (float)((1.0 - t_far) * sn1 + t_far * so1) + soffset;
-        double nn = CLAMP(((double)s_near - low) / signal_range, 0.0, 1.0);
-        double no = CLAMP(((double)s_far - low) / signal_range, 0.0, 1.0);
+        double nn = CLAMP(((double)s_near - low) * inv_signal_range, 0.0, 1.0);
+        double no = CLAMP(((double)s_far - low) * inv_signal_range, 0.0, 1.0);
         int yn = near_base - (int)lround(nn * amplitude_span);
         int yo = far_base - (int)lround(no * amplitude_span);
         yn = CLAMP(yn, 0, terrain_height - 1);
@@ -344,8 +452,9 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
         int y0 = MIN(yn, yo);
         int y1 = MAX(yn, yo);
         float colour_sample = MAX(s_near, s_far);
+        float colour_norm = (colour_sample - low) * inv_colour_range;
         unsigned char rr, gg, bb;
-        waterfall_3d_rgb(colour_sample, low, high, &rr, &gg, &bb);
+        waterfall_3d_rgb(colour_norm, &rr, &gg, &bb);
         rr = (unsigned char)((double)rr * age_gain);
         gg = (unsigned char)((double)gg * age_gain);
         bb = (unsigned char)((double)bb * age_gain);
@@ -385,7 +494,7 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
       int ridge_y = front_base - (int)lround(norm * amplitude_span);
       ridge_y = CLAMP(ridge_y, 0, terrain_height - 1);
       unsigned char rr, gg, bb;
-      waterfall_3d_rgb(sample, low, high, &rr, &gg, &bb);
+      waterfall_3d_rgb((sample - low) * inv_colour_range, &rr, &gg, &bb);
       int span = MAX(1, front_base - ridge_y);
       for (int y = ridge_y; y <= front_base; y++) {
         double t = (double)(y - ridge_y) / (double)span;
@@ -402,6 +511,208 @@ static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstri
       waterfall_3d_put_pixel(pixels, rowstride, width, terrain_height,
                              x, ridge_y, rr, gg, bb);
     }
+  }
+}
+
+
+static gpointer waterfall_3d_worker_main(gpointer data) {
+  WATERFALL_3D_WORKER *w = data;
+  for (;;) {
+    WATERFALL_3D_JOB job = {0};
+    gboolean do_reset = FALSE;
+    g_mutex_lock(&w->mutex);
+    while (!w->stop && !w->job_pending) {
+      g_cond_wait(&w->cond, &w->mutex);
+    }
+    if (w->stop) {
+      g_mutex_unlock(&w->mutex);
+      break;
+    }
+    job = w->job;
+    w->job.samples = NULL;
+    w->job_pending = FALSE;
+    w->worker_busy = TRUE;
+    if (w->reset_pending) {
+      do_reset = TRUE;
+      w->reset_pending = FALSE;
+    }
+    g_mutex_unlock(&w->mutex);
+    if (do_reset) {
+      waterfall_3d_reset_history(&waterfall_3d_history[w->rx_id]);
+    }
+    size_t rowstride = (size_t)job.width * 3U;
+    size_t image_bytes = rowstride * (size_t)job.terrain_height;
+    unsigned char *rendered = calloc(image_bytes, 1);
+    if (rendered != NULL) {
+      RECEIVER snapshot = {0};
+      snapshot.id = w->rx_id;
+      snapshot.zoom = job.zoom;
+      snapshot.sample_rate = job.sample_rate;
+      /* Jobs are already paced at the configured 3D capture rate. */
+      snapshot.fps = (int)WATERFALL_3D_TARGET_HZ;
+      waterfall_3d_render_sync(&snapshot, rendered, (int)rowstride,
+                               job.width, job.terrain_height, job.samples,
+                               0, 0, job.soffset, job.low, job.high,
+                               job.frequency);
+    }
+    g_mutex_lock(&w->mutex);
+    if (!w->stop && rendered != NULL && job.generation == w->generation) {
+      free(w->ready_pixels);
+      w->ready_pixels = rendered;
+      rendered = NULL;
+      w->ready_width = job.width;
+      w->ready_height = job.terrain_height;
+      w->ready_generation = job.generation;
+      w->ready_valid = TRUE;
+    }
+    w->worker_busy = FALSE;
+    g_mutex_unlock(&w->mutex);
+    free(rendered);
+    free(job.samples);
+  }
+  return NULL;
+}
+
+static void waterfall_3d_render(RECEIVER *rx, unsigned char *pixels, int rowstride,
+                                int width, int terrain_height, const float *samples,
+                                int pan, int display_shift, float soffset, float low, float high,
+                                long long frequency) {
+  if (rx == NULL || pixels == NULL || samples == NULL || terrain_height < 24 ||
+      rx->id < 0 || rx->id >= WATERFALL_3D_MAX_RX || high <= low || rx->fps <= 0) {
+    return;
+  }
+  waterfall_3d_workers_init();
+  WATERFALL_3D_WORKER *w = &waterfall_3d_worker[rx->id];
+  /* The GUI only consumes complete worker frames.  Holding the mutex during
+   * this row copy prevents the worker from replacing/freeing ready_pixels. */
+  g_mutex_lock(&w->mutex);
+  if (w->mapping_valid &&
+      (w->frequency != frequency || w->pan != pan || w->zoom != rx->zoom ||
+       w->sample_rate != rx->sample_rate || w->width != width ||
+       w->terrain_height != terrain_height)) {
+    w->generation++;
+    w->next_capture_us = 0;
+    w->reset_pending = TRUE;
+    w->ready_valid = FALSE;
+    if (w->job_pending) {
+      free(w->job.samples);
+      w->job.samples = NULL;
+      w->job_pending = FALSE;
+    }
+  }
+  w->frequency = frequency;
+  w->pan = pan;
+  w->zoom = rx->zoom;
+  w->sample_rate = rx->sample_rate;
+  w->width = width;
+  w->terrain_height = terrain_height;
+  w->mapping_valid = TRUE;
+  if (w->ready_valid && w->ready_generation == w->generation &&
+      w->ready_width == width && w->ready_height == terrain_height) {
+    const size_t copy_bytes = (size_t)width * 3U;
+    for (int y = 0; y < terrain_height; y++) {
+      memcpy(pixels + (size_t)y * rowstride,
+             w->ready_pixels + (size_t)y * copy_bytes,
+             copy_bytes);
+    }
+  }
+  const gint64 capture_interval_us =
+          (gint64)((double)G_USEC_PER_SEC / WATERFALL_3D_TARGET_HZ + 0.5);
+  const gint64 now_us = g_get_monotonic_time();
+  if (w->next_capture_us == 0) {
+    w->next_capture_us = now_us;
+  }
+  if (now_us < w->next_capture_us) {
+    g_mutex_unlock(&w->mutex);
+    return;
+  }
+  /* Advance the absolute deadline rather than deriving capture cadence from
+   * the configured display FPS.  waterfall_3d_render() can be called less
+   * often than rx->fps when a display cycle is not rendered, so the old
+   * accumulator under-ran the requested 3D rate.  Skip missed deadlines
+   * without queueing catch-up jobs, while preserving the long-term phase. */
+  do {
+    w->next_capture_us += capture_interval_us;
+  } while (w->next_capture_us <= now_us);
+  /* Never queue behind an expensive terrain render.  At the target rate the
+   * worker normally finishes well before the next capture.  If it does not,
+   * dropping this 3D snapshot is preferable to blocking the GTK display loop. */
+  if (w->job_pending || w->worker_busy) {
+    g_mutex_unlock(&w->mutex);
+    return;
+  }
+  guint generation = w->generation;
+  g_mutex_unlock(&w->mutex);
+  float *snapshot = malloc((size_t)width * sizeof(float));
+  if (snapshot == NULL) {
+    return;
+  }
+  for (int x = 0; x < width; x++) {
+    int source_x = x - display_shift;
+    snapshot[x] = (source_x >= 0 && source_x < width) ?
+                  samples[pan + source_x] : -200.0F;
+  }
+  g_mutex_lock(&w->mutex);
+  if (generation != w->generation || w->job_pending || w->worker_busy || w->stop) {
+    g_mutex_unlock(&w->mutex);
+    free(snapshot);
+    return;
+  }
+  if (w->thread == NULL) {
+    w->thread = g_thread_new("waterfall-3d", waterfall_3d_worker_main, w);
+    if (w->thread == NULL) {
+      g_mutex_unlock(&w->mutex);
+      free(snapshot);
+      return;
+    }
+  }
+  w->job.samples = snapshot;
+  w->job.width = width;
+  w->job.terrain_height = terrain_height;
+  w->job.soffset = soffset;
+  w->job.low = low;
+  w->job.high = high;
+  w->job.frequency = frequency;
+  w->job.zoom = rx->zoom;
+  w->job.sample_rate = rx->sample_rate;
+  w->job.generation = generation;
+  w->job_pending = TRUE;
+  g_cond_signal(&w->cond);
+  g_mutex_unlock(&w->mutex);
+}
+
+void waterfall_3d_shutdown(void) {
+  if (!waterfall_3d_workers_ready) {
+    return;
+  }
+  for (int i = 0; i < WATERFALL_3D_MAX_RX; i++) {
+    WATERFALL_3D_WORKER *w = &waterfall_3d_worker[i];
+    g_mutex_lock(&w->mutex);
+    w->stop = TRUE;
+    if (w->job_pending) {
+      free(w->job.samples);
+      w->job.samples = NULL;
+      w->job_pending = FALSE;
+    }
+    GThread *thread = w->thread;
+    g_cond_signal(&w->cond);
+    g_mutex_unlock(&w->mutex);
+    if (thread != NULL) {
+      g_thread_join(thread);
+    }
+    g_mutex_lock(&w->mutex);
+    w->thread = NULL;
+    free(w->ready_pixels);
+    w->ready_pixels = NULL;
+    w->ready_valid = FALSE;
+    w->worker_busy = FALSE;
+    w->stop = FALSE;
+    w->generation++;
+    w->next_capture_us = 0;
+    w->mapping_valid = FALSE;
+    w->reset_pending = TRUE;
+    waterfall_3d_reset_history(&waterfall_3d_history[i]);
+    g_mutex_unlock(&w->mutex);
   }
 }
 
