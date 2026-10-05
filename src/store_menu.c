@@ -63,7 +63,6 @@ static void destroy_cb(GtkWidget *widget, gpointer data) {
 
 static gboolean store_select_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int ind = GPOINTER_TO_INT(data);
-  char label_str[40];
   char fw[16];
   char sm[16];
   store_memory_slot(ind);
@@ -85,10 +84,11 @@ static gboolean store_select_cb(GtkWidget *widget, GdkEventButton *event, gpoint
     sm[0] = 0;
     break;
   }
-  snprintf(label_str, 40, "M%d=%8.3f MHz (%s%s, %s)", ind,
-           mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
-           sm, mode_string[mode], fw);
+  char *label_str = g_strdup_printf("M%d=%8.3f MHz (%s%s, %s)", ind,
+                                    mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
+                                    sm, mode_string[mode], fw);
   gtk_button_set_label(GTK_BUTTON(store_button[ind]), label_str);
+  g_free(label_str);
   return FALSE;
 }
 
@@ -149,10 +149,11 @@ void store_menu(GtkWidget *parent) {
       sm[0] = 0;
       break;
     }
-    snprintf(label_str, 50, "M%d=%8.3f MHz (%s%s, %s)", ind,
-             mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
-             sm, mode_string[mode], fw);
-    b = gtk_button_new_with_label(label_str);
+    char *memory_label = g_strdup_printf("M%d=%8.3f MHz (%s%s, %s)", ind,
+                                         mem[ind].ctun ? (double) mem[ind].ctun_frequency * 1E-6 : (double) mem[ind].frequency * 1E-6,
+                                         sm, mode_string[mode], fw);
+    b = gtk_button_new_with_label(memory_label);
+    g_free(memory_label);
     store_button[ind] = b;
     g_signal_connect(b, "button-press-event", G_CALLBACK(recall_select_cb), GINT_TO_POINTER(ind));
     gtk_grid_attach(GTK_GRID(grid), b, 1, ind + 1, 3, 1);

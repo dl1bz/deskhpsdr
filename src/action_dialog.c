@@ -79,7 +79,7 @@ int action_dialog_with_hide(GtkWidget *parent, int filter, int hide_flags, enum 
     if (ActionTable[i].type & hide_flags) { continue; }
     if ((ActionTable[i].type & filter) || (ActionTable[i].type == TYPE_NONE)) {
       const char *action_label = ActionTable[i].str;
-      char xvtr_label[16];
+      char xvtr_label[24];
       if ((hide_flags & TYPE_HIDE_TOOLBAR) &&
           ActionTable[i].action >= XVTR_1 && ActionTable[i].action <= XVTR_10) {
         int slot = ActionTable[i].action - XVTR_1;
