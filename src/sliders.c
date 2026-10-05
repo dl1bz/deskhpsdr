@@ -1787,6 +1787,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   width = my_width;
   int selected_mode = vfo[active_receiver->id].mode;
   int widget_height = 0;
+  int spin_abstand = 8;
   height = my_height;
   widget_height = height / 2;
   if (can_transmit && display_extra_sliders) {
@@ -1874,8 +1875,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(af_gain_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(af_gain_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(af_gain_scale), active_receiver->volume);
-    gtk_widget_set_margin_top(af_gain_scale, 5);
-    gtk_widget_set_margin_bottom(af_gain_scale, 5);
+    gtk_widget_set_margin_top(af_gain_scale, spin_abstand);
+    gtk_widget_set_margin_bottom(af_gain_scale, spin_abstand);
     gtk_widget_set_margin_start(af_gain_scale, 0);
     gtk_widget_set_margin_end(af_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(af_gain_scale, FALSE);  // fülle Box nicht nach rechts
@@ -1988,8 +1989,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(agc_gain_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(agc_gain_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(agc_gain_scale), (double) active_receiver->agc_gain);
-    gtk_widget_set_margin_top(agc_gain_scale, 5);
-    gtk_widget_set_margin_bottom(agc_gain_scale, 5);
+    gtk_widget_set_margin_top(agc_gain_scale, spin_abstand);
+    gtk_widget_set_margin_bottom(agc_gain_scale, spin_abstand);
     gtk_widget_set_margin_start(agc_gain_scale, 0);
     gtk_widget_set_margin_end(agc_gain_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(agc_gain_scale, FALSE);  // fülle Box nicht nach rechts
@@ -2306,13 +2307,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(attenuation_scale), TRUE);
       gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(attenuation_scale), TRUE);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(attenuation_scale), adc[active_receiver->adc].attenuation);
-      gtk_widget_set_margin_top(attenuation_scale, 5);
-      gtk_widget_set_margin_bottom(attenuation_scale, 5);
+      gtk_widget_set_margin_top(attenuation_scale, spin_abstand);
+      gtk_widget_set_margin_bottom(attenuation_scale, spin_abstand);
       gtk_widget_set_margin_start(attenuation_scale, 0);
       gtk_widget_set_margin_end(attenuation_scale, 0);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(attenuation_scale, FALSE);  // fülle Box nicht nach rechts
       gtk_widget_set_halign(attenuation_scale, GTK_ALIGN_CENTER);
-      // gtk_widget_set_valign(attenuation_scale, GTK_ALIGN_CENTER);
       // Widgets in Box packen
       gtk_box_pack_start(GTK_BOX(box_Z1_right), attenuation_scale, TRUE, FALSE, 0);
     } else {
@@ -2479,8 +2479,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(mic_gain_scale), TRUE);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mic_gain_scale), (double) transmitter->mic_gain);
-      gtk_widget_set_margin_top(mic_gain_scale, 5);
-      gtk_widget_set_margin_bottom(mic_gain_scale, 5);
+      gtk_widget_set_margin_top(mic_gain_scale, spin_abstand);
+      gtk_widget_set_margin_bottom(mic_gain_scale, spin_abstand);
       gtk_widget_set_margin_start(mic_gain_scale, 3);
       gtk_widget_set_margin_end(mic_gain_scale, 0);  // rechter Rand (Ende)
       gtk_widget_set_hexpand(mic_gain_scale, FALSE);  // fülle Box nicht nach rechts
@@ -2605,8 +2605,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_name(drive_scale, "front_spin_button");
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
-        gtk_widget_set_margin_top(drive_scale, 5);
-        gtk_widget_set_margin_bottom(drive_scale, 5);
+        gtk_widget_set_margin_top(drive_scale, spin_abstand);
+        gtk_widget_set_margin_bottom(drive_scale, spin_abstand);
         gtk_widget_set_margin_start(drive_scale, 0);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
@@ -2628,8 +2628,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_widget_set_name(drive_scale, "front_spin_button");
         gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(drive_scale), TRUE);
         gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(drive_scale), TRUE);
-        gtk_widget_set_margin_top(drive_scale, 5);
-        gtk_widget_set_margin_bottom(drive_scale, 5);
+        gtk_widget_set_margin_top(drive_scale, spin_abstand);
+        gtk_widget_set_margin_bottom(drive_scale, spin_abstand);
         gtk_widget_set_margin_start(drive_scale, 0);
         gtk_widget_set_margin_end(drive_scale, 0);  // rechter Rand (Ende)
         gtk_widget_set_hexpand(drive_scale, FALSE);  // fülle Box nicht nach rechts
@@ -2798,8 +2798,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(squelch_scale), TRUE);
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(squelch_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(squelch_scale), active_receiver->squelch);
-    gtk_widget_set_margin_top(squelch_scale, 5);
-    gtk_widget_set_margin_bottom(squelch_scale, 5);
+    gtk_widget_set_margin_top(squelch_scale, spin_abstand);
+    gtk_widget_set_margin_bottom(squelch_scale, spin_abstand);
     gtk_widget_set_margin_start(squelch_scale, 0);
     gtk_widget_set_margin_end(squelch_scale, 0);
     gtk_widget_set_hexpand(squelch_scale, FALSE);
@@ -2924,8 +2924,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
                                                   "Like TXPWR, actual RF output power in TUNE state\n"
                                                   "is non-linear with this setting.\n\n"
                                                   "-> Refer to the power meter for your actual RF output power.");
-    gtk_widget_set_margin_top(tune_drive_scale, 5);
-    gtk_widget_set_margin_bottom(tune_drive_scale, 5);
+    gtk_widget_set_margin_top(tune_drive_scale, spin_abstand);
+    gtk_widget_set_margin_bottom(tune_drive_scale, spin_abstand);
     gtk_widget_set_margin_start(tune_drive_scale, 3);
     gtk_widget_set_margin_end(tune_drive_scale, 0);  // rechter Rand (Ende)
     gtk_widget_set_hexpand(tune_drive_scale, FALSE);  // fülle Box nicht nach rechts
