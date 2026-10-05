@@ -2070,6 +2070,18 @@ void rx_set_af_gain(const RECEIVER *rx) {
   SetRXAPanelGain1(rx->id, amplitude);
 }
 
+void rx_set_agc_gain(RECEIVER *rx) {
+  //
+  // Apply only the AGC top gain.  This is used by AGC auto, where the
+  // AGC mode, slope and timing parameters are unchanged.  Recalculate
+  // the panadapter AGC line positions because they depend on AGC top.
+  //
+  int id = rx->id;
+  SetRXAAGCTop(id, rx->agc_gain);
+  GetRXAAGCHangLevel(id, &rx->agc_hang);
+  GetRXAAGCThresh(id, &rx->agc_thresh, 4096.0, (double) rx->sample_rate);
+}
+
 void rx_set_agc(RECEIVER *rx) {
   //
   // Apply the AGC settings stored in rx.

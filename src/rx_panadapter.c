@@ -2064,7 +2064,7 @@ void rx_panadapter_update(RECEIVER *rx) {
         target_agc = 120.0;
       }
       rx->agc_gain = target_agc;
-      rx_set_agc(rx);
+      rx_set_agc_gain(rx);
       tci_agc_gain_changed(rx->id);
       if (rx == active_receiver) {
         update_slider_agc_gain_scale();

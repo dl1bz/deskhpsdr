@@ -354,6 +354,7 @@ extern void   rx_set_af_binaural(const RECEIVER *rx);
 extern void   rx_audio_output_opened(RECEIVER *rx);
 extern void   rx_set_af_gain(const RECEIVER *rx);
 extern void   rx_set_agc(RECEIVER *rx);
+extern void   rx_set_agc_gain(RECEIVER *rx);
 extern void   rx_set_analyzer(const RECEIVER *rx);
 extern void   rx_set_average(const RECEIVER *rx);
 extern void   rx_set_bandpass(const RECEIVER *rx);
