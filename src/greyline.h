@@ -40,9 +40,9 @@ void open_greyline_win_for_parent(GtkWindow *parent, int window_width, const cha
 void open_greyline_win_wh(int window_width, int window_height, const char *locator);
 
 void open_greyline_win_for_parent_wh(GtkWindow *parent,
-int window_width,
-int window_height,
-const char *locator);
+                                     int window_width,
+                                     int window_height,
+                                     const char *locator);
 
 #ifdef __cplusplus
 }
