@@ -64,7 +64,7 @@ static TCI_RX_AUDIO_RING tci_rx_audio_ring[TCI_RX_AUDIO_MAX_RECEIVERS];
 static TCI_TX_AUDIO_RING tci_tx_audio_ring;
 static TCI_AUDIO_MONITOR_RING tci_audio_monitor_ring;
 static atomic_int tci_audio_monitor_enabled = 0;
-static int tci_rx_audio_enabled = 0;
+static atomic_int tci_rx_audio_enabled = 0;
 static guint tci_rx_audio_wakeup_count = 0;
 static gint64 tci_tx_audio_last_frame_us = 0;
 static int tci_tx_audio_enabled = 0;
@@ -446,11 +446,11 @@ guint tci_audio_monitor_read(float *out, guint frames) {
 }
 
 void tci_audio_set_active(int active) {
-  tci_rx_audio_enabled = active ? 1 : 0;
+  atomic_store_explicit(&tci_rx_audio_enabled, active ? 1 : 0, memory_order_release);
 }
 
 int tci_audio_is_active(void) {
-  return tci_rx_audio_enabled;
+  return atomic_load_explicit(&tci_rx_audio_enabled, memory_order_acquire);
 }
 
 void tci_audio_set_wakeup_callback(TCI_AUDIO_WAKEUP_CALLBACK callback) {
@@ -471,7 +471,8 @@ void tci_audio_rx_block(RECEIVER *rx, const float *samples, guint frames) {
   TCI_RX_AUDIO_RING *ring;
   int do_wakeup = 0;
   int id;
-  if (!tci_rx_audio_enabled || rx == NULL || samples == NULL || frames == 0) { return; }
+  if (!atomic_load_explicit(&tci_rx_audio_enabled, memory_order_acquire) || rx == NULL || samples == NULL ||
+      frames == 0) { return; }
   id = rx->id;
   if (id < 0 || id >= TCI_RX_AUDIO_MAX_RECEIVERS) { return; }
   ring = &tci_rx_audio_ring[id];
