@@ -803,6 +803,7 @@ RECEIVER *rx_create_pure_signal_receiver(int id, int sample_rate, int width, int
     rx_restore_state(rx);
     g_mutex_init(&rx->mutex);
     g_mutex_init(&rx->display_mutex);
+    g_mutex_init(&rx->analyzer_mutex);
     rx->sample_rate = sample_rate;
     rx->fps = fps;
     rx->width = width; // used to re-calculate rx->pixels upon sample rate change
@@ -837,6 +838,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->id = id;
   g_mutex_init(&rx->mutex);
   g_mutex_init(&rx->display_mutex);
+  g_mutex_init(&rx->analyzer_mutex);
   switch (id) {
   case 0:
     rx->adc = 0;
@@ -1594,7 +1596,9 @@ void rx_full_buffer(RECEIVER *rx) {
     }
     if (rx->displaying) {
       if (g_mutex_trylock(&rx->display_mutex)) {
+        g_mutex_lock(&rx->analyzer_mutex);
         Spectrum0(1, rx->id, 0, 0, rx->iq_input_buffer);
+        g_mutex_unlock(&rx->analyzer_mutex);
         g_mutex_unlock(&rx->display_mutex);
       }
     }
@@ -1839,7 +1843,9 @@ void rx_close(const RECEIVER *rx) {
 
 int rx_get_pixels(RECEIVER *rx) {
   int rc;
+  g_mutex_lock(&rx->analyzer_mutex);
   GetPixels(rx->id, 0, rx->pixel_samples, &rc);
+  g_mutex_unlock(&rx->analyzer_mutex);
   return rc;
 }
 
@@ -1857,7 +1863,7 @@ double rx_get_smeter(const RECEIVER *rx) {
   return level;
 }
 
-void rx_create_analyzer(const RECEIVER *rx) {
+void rx_create_analyzer(RECEIVER *rx) {
   //
   // After the analyzer has been created, its parameters
   // are set via rx_set_analyzer
@@ -1871,7 +1877,7 @@ void rx_create_analyzer(const RECEIVER *rx) {
   }
 }
 
-void rx_set_analyzer(const RECEIVER *rx) {
+void rx_set_analyzer(RECEIVER *rx) {
   //
   // The analyzer depends on the framerate (fps), the
   // number of pixels, and the sample rate, as well as the
@@ -1948,6 +1954,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
           rx->id,
           rx->buffer_size,
           overlap, rx->pixels, window_type, afft_size, (double) rx->sample_rate / (double) afft_size);
+  g_mutex_lock(&rx->analyzer_mutex);
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination
@@ -1992,6 +1999,7 @@ void rx_set_analyzer(const RECEIVER *rx) {
   }
   t_print("RX:WDSP SetDisplaySampleRate rx->id=%d rx->width=%d rx->zoom=%d rx->sample_rate=%d\n", rx->id, rx->width,
           rx->zoom, rx->sample_rate);
+  g_mutex_unlock(&rx->analyzer_mutex);
 }
 
 void rx_begin_off(const RECEIVER *rx) {

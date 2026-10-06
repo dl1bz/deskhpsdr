@@ -2165,7 +2165,9 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
       }
       if (tx->displaying && tx->feedback) {
         g_mutex_lock(&rx_feedback->display_mutex);
+        g_mutex_lock(&rx_feedback->analyzer_mutex);
         Spectrum0(1, rx_feedback->id, 0, 0, rx_feedback->iq_input_buffer);
+        g_mutex_unlock(&rx_feedback->analyzer_mutex);
         g_mutex_unlock(&rx_feedback->display_mutex);
       }
     }

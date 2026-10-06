@@ -42,6 +42,7 @@ typedef struct _receiver {
   int id;
   GMutex mutex;
   GMutex display_mutex;
+  GMutex analyzer_mutex;
 
   int adc;
 
@@ -332,7 +333,7 @@ extern void   rx_add_div_iq_samples(RECEIVER *rx, double i0, double q0, double i
 extern void   rx_change_sample_rate(RECEIVER *rx, int sample_rate);
 extern void   rx_change_adc(const RECEIVER *rx);
 extern void   rx_close(const RECEIVER *rx);
-extern void   rx_create_analyzer(const RECEIVER *rx);
+extern void   rx_create_analyzer(RECEIVER *rx);
 extern void   rx_filter_changed(RECEIVER *rx);
 extern int    rx_get_pixels(RECEIVER *rx);
 extern double rx_get_smeter(const RECEIVER *rx);
@@ -355,7 +356,7 @@ extern void   rx_audio_output_opened(RECEIVER *rx);
 extern void   rx_set_af_gain(const RECEIVER *rx);
 extern void   rx_set_agc(RECEIVER *rx);
 extern void   rx_set_agc_gain(RECEIVER *rx);
-extern void   rx_set_analyzer(const RECEIVER *rx);
+extern void   rx_set_analyzer(RECEIVER *rx);
 extern void   rx_set_average(const RECEIVER *rx);
 extern void   rx_set_bandpass(const RECEIVER *rx);
 extern void   rx_set_cw_peak(const RECEIVER *rx, int state, double freq);
