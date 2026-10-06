@@ -933,8 +933,11 @@ int main(int argc, char *argv[]) {
       memset(qsample, 0, OLDRTXLEN * sizeof(double));
       enable_thread = 1;
       active_thread = 1;
-      if (pthread_create(&thread, NULL, handler_ep6, NULL) < 0) {
-        t_perror("create old protocol thread");
+      int rc = pthread_create(&thread, NULL, handler_ep6, NULL);
+      if (rc != 0) {
+        t_print("create old protocol thread failed: %s\n", strerror(rc));
+        active_thread = 0;
+        enable_thread = 0;
         restore_terminal_attributes();
         return EXIT_FAILURE;
       }

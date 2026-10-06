@@ -322,8 +322,11 @@ void new_protocol_general_packet(unsigned char *buffer) {
   // The HighPrio thread keeps running all the time.
   //
   if (!highprio_thread_id) {
-    if (pthread_create(&highprio_thread_id, NULL, highprio_thread, NULL) < 0) {
-      t_perror("***** ERROR: Create HighPrio thread");
+    int thread_rc = pthread_create(&highprio_thread_id, NULL, highprio_thread, NULL);
+    if (thread_rc != 0) {
+      t_print("***** ERROR: Create HighPrio thread: %s\n", strerror(thread_rc));
+      highprio_thread_id = 0;
+      return;
     }
     pthread_detach(highprio_thread_id);
     //
@@ -684,28 +687,28 @@ void *highprio_thread(void *data) {
       t_print("HP: Run=%d\n", rc);
       // if run=0, wait for threads to complete, otherwise spawn them off
       if (run) {
-        if (pthread_create(&ddc_specific_thread_id, NULL, ddc_specific_thread, NULL) < 0) {
-          t_perror("***** ERROR: Create DDC specific thread");
+        if ((rc = pthread_create(&ddc_specific_thread_id, NULL, ddc_specific_thread, NULL)) != 0) {
+          t_print("***** ERROR: Create DDC specific thread: %s\n", strerror(rc));
         }
-        if (pthread_create(&duc_specific_thread_id, NULL, duc_specific_thread, NULL) < 0) {
-          t_perror("***** ERROR: Create DUC specific thread");
+        if ((rc = pthread_create(&duc_specific_thread_id, NULL, duc_specific_thread, NULL)) != 0) {
+          t_print("***** ERROR: Create DUC specific thread: %s\n", strerror(rc));
         }
         for (i = 0; i < NUMRECEIVERS; i++) {
-          if (pthread_create(&rx_thread_id[i], NULL, rx_thread, (void *)(uintptr_t) i) < 0) {
-            t_perror("***** ERROR: Create RX thread");
+          if ((rc = pthread_create(&rx_thread_id[i], NULL, rx_thread, (void *)(uintptr_t) i)) != 0) {
+            t_print("***** ERROR: Create RX thread: %s\n", strerror(rc));
           }
         }
-        if (pthread_create(&tx_thread_id, NULL, tx_thread, NULL) < 0) {
-          t_perror("***** ERROR: Create TX thread");
+        if ((rc = pthread_create(&tx_thread_id, NULL, tx_thread, NULL)) != 0) {
+          t_print("***** ERROR: Create TX thread: %s\n", strerror(rc));
         }
-        if (pthread_create(&send_highprio_thread_id, NULL, send_highprio_thread, NULL) < 0) {
-          t_perror("***** ERROR: Create SendHighPrio thread");
+        if ((rc = pthread_create(&send_highprio_thread_id, NULL, send_highprio_thread, NULL)) != 0) {
+          t_print("***** ERROR: Create SendHighPrio thread: %s\n", strerror(rc));
         }
-        if (pthread_create(&mic_thread_id, NULL, mic_thread, NULL) < 0) {
-          t_perror("***** ERROR: Create Mic thread");
+        if ((rc = pthread_create(&mic_thread_id, NULL, mic_thread, NULL)) != 0) {
+          t_print("***** ERROR: Create Mic thread: %s\n", strerror(rc));
         }
-        if (pthread_create(&audio_thread_id, NULL, audio_thread, NULL) < 0) {
-          t_perror("***** ERROR: Create Audio thread");
+        if ((rc = pthread_create(&audio_thread_id, NULL, audio_thread, NULL)) != 0) {
+          t_print("***** ERROR: Create Audio thread: %s\n", strerror(rc));
         }
       } else {
         // Clean-Up done below
