@@ -41,8 +41,8 @@ static GtkWidget *rx_iq_gain_spin[2] = { NULL, NULL };
 static GtkWidget *rx_iq_phase_spin[2] = { NULL, NULL };
 static GtkWidget *rx_iq_auto_button[2] = { NULL, NULL };
 static GtkWidget *rx_iq_status_label[2] = { NULL, NULL };
-static volatile int rx_iq_auto_running[2] = { 0, 0 };
-static volatile int rx_iq_auto_cancel[2] = { 0, 0 };
+static gint rx_iq_auto_running[2] = { 0, 0 };
+static gint rx_iq_auto_cancel[2] = { 0, 0 };
 
 typedef struct _rx_iq_auto_result {
   int id;
@@ -150,7 +150,7 @@ static void rx_iq_reset_cb(GtkWidget *widget, gpointer data) {
   RECEIVER *rx = receiver[id];
   (void)widget;
   if (id >= 0 && id < 2) {
-    rx_iq_auto_cancel[id] = 1;
+    g_atomic_int_set(&rx_iq_auto_cancel[id], 1);
   }
   rx->rx_iq_gain = 0.0;
   rx->rx_iq_phase = 0.0;
@@ -184,8 +184,8 @@ static gboolean rx_iq_auto_finish_cb(gpointer data) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_iq_phase_spin[id]), result->phase);
       }
     }
-    rx_iq_auto_running[id] = 0;
-    rx_iq_auto_cancel[id] = 0;
+    g_atomic_int_set(&rx_iq_auto_running[id], 0);
+    g_atomic_int_set(&rx_iq_auto_cancel[id], 0);
     if (rx_iq_auto_button[id] != NULL) {
       gtk_widget_set_sensitive(rx_iq_auto_button[id], TRUE);
     }
@@ -204,7 +204,7 @@ static double rx_iq_auto_measure(RECEIVER *rx, double gain, double phase) {
     return -999.0;
   }
   id = rx->id;
-  if (id < 0 || id >= 2 || rx_iq_auto_cancel[id]) {
+  if (id < 0 || id >= 2 || g_atomic_int_get(&rx_iq_auto_cancel[id])) {
     return -999.0;
   }
   rx->rx_iq_gain = gain;
@@ -216,7 +216,7 @@ static double rx_iq_auto_measure(RECEIVER *rx, double gain, double phase) {
    */
   g_usleep(250000);
   for (n = 0; n < 5; n++) {
-    if (rx_iq_auto_cancel[id]) {
+    if (g_atomic_int_get(&rx_iq_auto_cancel[id])) {
       return -999.0;
     }
     if (rx->image_measure && rx->image_measure_valid) {
@@ -225,7 +225,7 @@ static double rx_iq_auto_measure(RECEIVER *rx, double gain, double phase) {
     }
     g_usleep(100000);
   }
-  if (rx_iq_auto_cancel[id] || valid == 0) {
+  if (g_atomic_int_get(&rx_iq_auto_cancel[id]) || valid == 0) {
     return -999.0;
   }
   return sum / (double)valid;
@@ -237,7 +237,7 @@ static int rx_iq_auto_opt_gain(RECEIVER *rx, double *best_gain, double best_phas
   double limit = center + range + (step * 0.5);
   for (gain = center - range; gain <= limit; gain += step) {
     double irr;
-    if (g_get_monotonic_time() >= deadline || rx_iq_auto_cancel[rx->id]) {
+    if (g_get_monotonic_time() >= deadline || g_atomic_int_get(&rx_iq_auto_cancel[rx->id])) {
       return 0;
     }
     irr = rx_iq_auto_measure(rx, gain, best_phase);
@@ -257,7 +257,7 @@ static int rx_iq_auto_opt_phase(RECEIVER *rx, double best_gain, double *best_pha
   double limit = center + range + (step * 0.5);
   for (phase = center - range; phase <= limit; phase += step) {
     double irr;
-    if (g_get_monotonic_time() >= deadline || rx_iq_auto_cancel[rx->id]) {
+    if (g_get_monotonic_time() >= deadline || g_atomic_int_get(&rx_iq_auto_cancel[rx->id])) {
       return 0;
     }
     irr = rx_iq_auto_measure(rx, best_gain, phase);
@@ -351,7 +351,7 @@ static gpointer rx_iq_auto_thread(gpointer data) {
   g_idle_add(rx_iq_auto_finish_cb, result);
   return NULL;
 cancelled:
-  if (rx_iq_auto_cancel[rx->id]) {
+  if (g_atomic_int_get(&rx_iq_auto_cancel[rx->id])) {
     result->gain = job->start_gain;
     result->phase = job->start_phase;
     result->apply = 0;
@@ -383,7 +383,7 @@ static void rx_iq_auto_cb(GtkWidget *widget, gpointer data) {
     return;
   }
   rx = receiver[id];
-  if (rx_iq_auto_running[id]) {
+  if (g_atomic_int_get(&rx_iq_auto_running[id])) {
     return;
   }
   if (!rx->image_measure || !rx->image_measure_valid || rx->image_signal_db < -100.0) {
@@ -391,8 +391,8 @@ static void rx_iq_auto_cb(GtkWidget *widget, gpointer data) {
     rx_iq_set_status(id, "No calibration signal");
     return;
   }
-  rx_iq_auto_cancel[id] = 0;
-  rx_iq_auto_running[id] = 1;
+  g_atomic_int_set(&rx_iq_auto_cancel[id], 0);
+  g_atomic_int_set(&rx_iq_auto_running[id], 1);
   rx_iq_set_status(id, "Auto calibrating...");
   if (widget != NULL) {
     gtk_widget_set_sensitive(widget, FALSE);
@@ -614,7 +614,7 @@ void fft_menu(GtkWidget *parent) {
       gtk_widget_set_tooltip_text(w, "Run one-shot RX IQ calibration using the active image rejection measurement");
       if (chan >= 0 && chan < 2) {
         rx_iq_auto_button[chan] = w;
-        gtk_widget_set_sensitive(w, !rx_iq_auto_running[chan]);
+        gtk_widget_set_sensitive(w, !g_atomic_int_get(&rx_iq_auto_running[chan]));
       }
       gtk_grid_attach(GTK_GRID(grid), w, col, 10, 1, 1);
       g_signal_connect(w, "clicked", G_CALLBACK(rx_iq_auto_cb), GINT_TO_POINTER(chan));
