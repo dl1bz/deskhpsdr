@@ -2324,13 +2324,13 @@ void tx_close(const TRANSMITTER *tx) {
   CloseChannel(tx->id);
 }
 
-void tx_create_analyzer(const TRANSMITTER *tx) {
+void tx_create_analyzer(TRANSMITTER *tx) {
   int rc;
   XCreateAnalyzer(tx->id, &rc, 262144, 1, 1, NULL);
   if (rc != 0) {
     t_print("CreateAnalyzer failed for TXid=%d\n", tx->id);
   } else {
-    ((TRANSMITTER *)tx)->analyzer_created = 1;
+    tx->analyzer_created = 1;
     tx_set_analyzer(tx);
   }
 }

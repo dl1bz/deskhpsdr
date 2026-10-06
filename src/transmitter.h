@@ -248,7 +248,7 @@ extern void   tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_0, dou
                                    double q_sample_1);
 
 extern void   tx_close(const TRANSMITTER *tx);
-extern void   tx_create_analyzer(const TRANSMITTER *tx);
+extern void   tx_create_analyzer(TRANSMITTER *tx);
 extern double tx_get_alc(const TRANSMITTER *tx);
 extern int    tx_get_pixels(TRANSMITTER *tx);
 extern void   tx_off(const TRANSMITTER *tx);
