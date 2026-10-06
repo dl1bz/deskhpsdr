@@ -69,8 +69,8 @@ extern sem_t RFGPIOMutex;                   // protect access to RF GPIO registe
 extern sem_t CodecRegMutex;                 // protect writes to codec
 
 bool IsTXMode;                              // true if in TX
-bool SDRActive;                             // true if this SDR is running at the moment
-bool Exiting = false;
+atomic_bool SDRActive = false;              // true if this SDR is running at the moment
+static atomic_bool Exiting = false;
 extern bool saturn_server_en;
 extern bool client_enable_tx;
 extern atomic_bool ServerActive;
@@ -502,7 +502,7 @@ void saturn_init_duc_iq(void) {
   EnableDUCMux(true);                                   // enable operation
 }
 
-static int TXActive = 0;   // The client actively transmitting, 0-none, 1-xdma, 2-network
+static atomic_int TXActive = 0;  // The client actively transmitting, 0-none, 1-xdma, 2-network
 
 void saturn_handle_duc_iq(bool FromNetwork, uint8_t *UDPInBuffer) {
   uint32_t Cntr;                                          // sample counter
@@ -513,9 +513,9 @@ void saturn_handle_duc_iq(bool FromNetwork, uint8_t *UDPInBuffer) {
   bool FIFODUCOverflow, FIFODUCUnderflow, FIFODUCOverThreshold;
   //t_print("DUC I/Q %sbuffer received, TXActive=%d\n", (FromNetwork)?"network ":"", TXActive);
   if (FromNetwork) { //RRK
-    if (TXActive == 1) { return; }
+    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 1) { return; }
   } else {
-    if (TXActive == 2) { return; }
+    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 2) { return; }
   }
   DepthDUC = ReadFIFOMonitorChannel(eTXDUCDMA, &FIFODUCOverflow, &FIFODUCOverThreshold, &FIFODUCUnderflow,
                                     &Current);  // read the FIFO free locations
@@ -638,12 +638,24 @@ void saturn_exit(void) {
   // clean exit
   //
   t_print("%s: Exiting\n", __func__);
-  Exiting = true;
-  SDRActive = false;
+  atomic_store_explicit(&Exiting, true, memory_order_release);
+  atomic_store_explicit(&SDRActive, false, memory_order_release);
+  atomic_store_explicit(&ServerActive, false, memory_order_release);
+  if (saturn_high_priority_thread_id != NULL) {
+    g_thread_join(saturn_high_priority_thread_id);
+    saturn_high_priority_thread_id = NULL;
+  }
+  if (saturn_micaudio_thread_id != NULL) {
+    g_thread_join(saturn_micaudio_thread_id);
+    saturn_micaudio_thread_id = NULL;
+  }
+  if (saturn_rx_thread_id != NULL) {
+    g_thread_join(saturn_rx_thread_id);
+    saturn_rx_thread_id = NULL;
+  }
   SetMOX(false);
   SetTXEnable(false);
   EnableCW(false, false);
-  atomic_store_explicit(&ServerActive, false, memory_order_release);
   CloseXDMADriver();
   sem_destroy(&DDCInSelMutex);
   sem_destroy(&DDCResetFIFOMutex);
@@ -674,11 +686,15 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
   struct sockaddr_in DestAddr;
   struct iovec iovecinst;
   struct msghdr datagram;
-  while (!Exiting) {
+  while (!atomic_load_explicit(&Exiting, memory_order_acquire)) {
     uint32_t SequenceCounter = 0;                       // sequence count
     uint32_t SequenceCounter2 = 0;
-    while (!SDRActive) {
+    while (!atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+           !atomic_load_explicit(&Exiting, memory_order_acquire)) {
       usleep(10000);
+    }
+    if (atomic_load_explicit(&Exiting, memory_order_acquire)) {
+      break;
     }
     memcpy(&DestAddr, &reply_addr, sizeof(struct
                                           sockaddr_in));           // local copy of PC destination address (reply_addr is global)
@@ -699,7 +715,8 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
     // when a DDC becomes enabled, its paired DDC may not know yet and may still be set to interleaved.
     // when a DDC is set to interleaved, the paired DDC may not have been disabled yet.
     //
-    while (SDRActive) {                            // main loop
+    while (atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+           !atomic_load_explicit(&Exiting, memory_order_acquire)) {                            // main loop
       uint16_t SleepCount;                                      // counter for sending next message
       uint8_t PTTBits;                                          // PTT bits - and change means a new message needed
       mybuffer *mybuf = get_my_buffer(HPMYBUF);
@@ -727,14 +744,14 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
       * (uint16_t *)(UDPBuffer + 57) = * (uint16_t *)(mybuf->buffer + 57) = htons(Word);    // AIN3 user_analog1
       Word = (uint16_t) GetAnalogueIn(3);
       * (uint16_t *)(UDPBuffer + 55) = * (uint16_t *)(mybuf->buffer + 55) = htons(Word);    // AIN4 user_analog2
-      if (TXActive != 2) {
+      if (atomic_load_explicit(&TXActive, memory_order_acquire) != 2) {
         * (uint32_t *) mybuf->buffer = htonl(SequenceCounter++);     // add sequence count
         saturn_post_high_priority(mybuf);
       } else {
         saturn_release_buffer(mybuf);
       }
       if (atomic_load_explicit(&ServerActive, memory_order_acquire)) {
-        if (TXActive != 1) {
+        if (atomic_load_explicit(&TXActive, memory_order_acquire) != 1) {
           * (uint32_t *) UDPBuffer = htonl(SequenceCounter2++);      // add sequence count
           iovecinst.iov_base = UDPBuffer;
           memcpy(&DestAddr, &reply_addr, sizeof(struct
@@ -848,11 +865,15 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
   // if sufficient FIFO data available: DMA that data and transfer it out.
   // if it turns out to be too inefficient, we'll have to try larger DMA.
   //
-  while (!Exiting) {
+  while (!atomic_load_explicit(&Exiting, memory_order_acquire)) {
     uint32_t SequenceCounter = 0;
     uint32_t SequenceCounter2 = 0;
-    while (!SDRActive) {
+    while (!atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+           !atomic_load_explicit(&Exiting, memory_order_acquire)) {
       usleep(10000);
+    }
+    if (atomic_load_explicit(&Exiting, memory_order_acquire)) {
+      break;
     }
     memcpy(&DestAddr, &reply_addr, sizeof(struct
                                           sockaddr_in));           // local copy of PC destination address (reply_addr is global)
@@ -864,7 +885,8 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
     datagram.msg_name = &DestAddr;                   // MAC addr & port to send to
     datagram.msg_namelen = sizeof(DestAddr);
     t_print("starting %s\n", __func__);
-    while (SDRActive) {
+    while (atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+           !atomic_load_explicit(&Exiting, memory_order_acquire)) {
       //
       // now wait until there is data, then DMA it
       //
@@ -879,7 +901,9 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
       //if(FIFOUnderflow)
       //  t_print("Codec Mic FIFO Underflowed, depth now = %d\n", Depth);
 #endif
-      while (Depth < (VMICSAMPLESPERFRAME / 4)) {         // 16 locations = 64 samples
+      while (Depth < (VMICSAMPLESPERFRAME / 4) &&
+             atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+             !atomic_load_explicit(&Exiting, memory_order_acquire)) {  // 16 locations = 64 samples
         usleep(1000);                       // 1ms wait
         Depth = ReadFIFOMonitorChannel(eMicCodecDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
                                        &Current);  // read the FIFO Depth register
@@ -893,11 +917,15 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
         //  t_print("Codec Mic FIFO Underflowed, depth now = %d\n", Depth);
 #endif
       }
+      if (!atomic_load_explicit(&SDRActive, memory_order_acquire) ||
+          atomic_load_explicit(&Exiting, memory_order_acquire)) {
+        continue;
+      }
       DMAReadFromFPGA(DMAReadfile_fd, MicBasePtr, VDMAMICTRANSFERSIZE, VADDRMICSTREAMREAD);
       // create the packet
       mybuffer *mybuf = get_my_buffer(MICMYBUF);
       * (uint32_t *) mybuf->buffer = htonl(SequenceCounter++);     // add sequence count
-      if (TXActive == 2) {
+      if (atomic_load_explicit(&TXActive, memory_order_acquire) == 2) {
         memset(mybuf->buffer + 4, 0, VDMAMICTRANSFERSIZE);  // copy in mic samples
       } else {
         memcpy(mybuf->buffer + 4, MicBasePtr, VDMAMICTRANSFERSIZE);  // copy in mic samples
@@ -909,7 +937,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
                                               sockaddr_in));           // local copy of PC destination address (reply_addr is global)
         // create the packet into UDPBuffer
         * (uint32_t *) UDPBuffer = htonl(SequenceCounter2++);     // add sequence count
-        if (TXActive == 1) {
+        if (atomic_load_explicit(&TXActive, memory_order_acquire) == 1) {
           memset(UDPBuffer + 4, 0, VDMAMICTRANSFERSIZE);  // copy in mic samples
         } else {
           memcpy(UDPBuffer + 4, MicBasePtr, VDMAMICTRANSFERSIZE);  // copy in mic samples
@@ -1018,9 +1046,13 @@ static gpointer saturn_rx_thread(gpointer arg) {
   t_print("%s: enable data transfer\n", __func__);
   SetRXDDCEnabled(true);
   HeaderFound = false;
-  while (!Exiting) {
-    while (!SDRActive) {
+  while (!atomic_load_explicit(&Exiting, memory_order_acquire)) {
+    while (!atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+           !atomic_load_explicit(&Exiting, memory_order_acquire)) {
       usleep(10000);
+    }
+    if (atomic_load_explicit(&Exiting, memory_order_acquire)) {
+      break;
     }
     for (DDC = 0; DDC < VNUMDDC; DDC++) {
       SequenceCounter[DDC] = 0;
@@ -1035,7 +1067,8 @@ static gpointer saturn_rx_thread(gpointer arg) {
       datagram[DDC].msg_namelen = sizeof(DestAddr);
     }
     t_print("starting %s\n", __func__);
-    while (SDRActive) {
+    while (atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+           !atomic_load_explicit(&Exiting, memory_order_acquire)) {
       //
       // loop through all DDC I/Q buffers.
       // while there is enough I/Q data for this DDC in local (ARM) memory, make DDC Packets
@@ -1112,7 +1145,9 @@ static gpointer saturn_rx_thread(gpointer arg) {
       //  t_print("read: depth = %d\n", Depth);
 #endif
       //    t_print("read: depth = %d\n", Depth);
-      while (Depth < (DMATransferSize / 8U)) {  // 8 bytes per location
+      while (Depth < (DMATransferSize / 8U) &&
+             atomic_load_explicit(&SDRActive, memory_order_acquire) &&
+             !atomic_load_explicit(&Exiting, memory_order_acquire)) {  // 8 bytes per location
         usleep(500);               // 1ms wait
         Depth = ReadFIFOMonitorChannel(eRXDDCDMA, &FIFOOverflow, &FIFOOverThreshold, &FIFOUnderflow,
                                        &Current);  // read the FIFO Depth register
@@ -1126,6 +1161,10 @@ static gpointer saturn_rx_thread(gpointer arg) {
         //  t_print("RX DDC FIFO Underflowed, depth now = %d\n", Current);
         //  t_print("read: depth = %d\n", Depth);
 #endif
+      }
+      if (!atomic_load_explicit(&SDRActive, memory_order_acquire) ||
+          atomic_load_explicit(&Exiting, memory_order_acquire)) {
+        continue;
       }
       if (Depth > 4096) {
         DMATransferSize = 32768;
@@ -1227,6 +1266,9 @@ static gpointer saturn_rx_thread(gpointer arg) {
 }
 
 void saturn_init(void) {
+  atomic_store_explicit(&Exiting, false, memory_order_release);
+  atomic_store_explicit(&SDRActive, false, memory_order_release);
+  atomic_store_explicit(&TXActive, 0, memory_order_release);
   saturn_init_speaker_audio();
   saturn_init_duc_iq();
   start_saturn_receive_thread();
@@ -1277,23 +1319,23 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
     }
     // for now just return until client TX issues can be worked out
     return;
-    if (TXActive == 1) { return; }
-    TXActive = (IsTXMode && client_enable_tx) ? 2 : 0;
+    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 1) { return; }
+    atomic_store_explicit(&TXActive, (IsTXMode && client_enable_tx) ? 2 : 0, memory_order_release);
   } else {
     if (RunBit) {
-      SDRActive = true;
+      atomic_store_explicit(&SDRActive, true, memory_order_release);
       SetTXEnable(true);
     } else {
-      SDRActive = false;
+      atomic_store_explicit(&SDRActive, false, memory_order_release);
       SetTXEnable(false);
       IsTXMode = false;
       SetMOX(false);
       EnableCW(false, false);
     }
-    if (TXActive == 2) { return; }
-    TXActive = (IsTXMode) ? 1 : 0;
+    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 2) { return; }
+    atomic_store_explicit(&TXActive, IsTXMode ? 1 : 0, memory_order_release);
   }
-  SetMOX((bool) TXActive);
+  SetMOX(atomic_load_explicit(&TXActive, memory_order_acquire) != 0);
   //
   // DUC frequency & drive level
   //
@@ -1543,9 +1585,9 @@ void saturn_handle_duc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
   uint8_t CWRampTime;
   //t_print("DUC specific %sbuffer received\n", (FromNetwork)?"network ":"");
   if (FromNetwork) {
-    if (TXActive == 1 || !client_enable_tx) { return; }
+    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 1 || !client_enable_tx) { return; }
   } else {
-    if (TXActive == 2) { return; }
+    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 2) { return; }
   }
   // iambic settings
   IambicSpeed = * (uint8_t *)(UDPInBuffer + 9);           // keyer speed

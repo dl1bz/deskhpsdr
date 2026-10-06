@@ -86,7 +86,7 @@ struct ThreadSocketData {
 extern struct ThreadSocketData SocketData[];        // data for each thread
 extern struct sockaddr_in reply_addr;               // destination address for outgoing data
 extern bool IsTXMode;                               // true if in TX
-extern bool SDRActive;                              // true if this SDR is running at the moment
+extern atomic_bool SDRActive;                       // true if this SDR is running at the moment
 extern atomic_bool ReplyAddressSet;                        // true when reply address has been set
 extern atomic_bool StartBitReceived;                       // true when "run" bit has been set
 extern atomic_bool NewMessageReceived;                     // set whenever a message is received
