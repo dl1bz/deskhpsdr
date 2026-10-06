@@ -478,7 +478,25 @@ cleanup:
   if (duc_iq_started) {
     pthread_join(DUCIQThread, NULL);
   }
-  // Child workers close their own sockets. Close sockets without a worker here.
+  // Child workers close their own sockets. If socket creation succeeded but
+  // pthread_create() failed, no worker owns that socket and cleanup must close it.
+  if (!ddc_specific_started && SocketData[VPORTDDCSPECIFIC].Socketid > 0) {
+    close(SocketData[VPORTDDCSPECIFIC].Socketid);
+    SocketData[VPORTDDCSPECIFIC].Socketid = 0;
+  }
+  if (!duc_specific_started && SocketData[VPORTDUCSPECIFIC].Socketid > 0) {
+    close(SocketData[VPORTDUCSPECIFIC].Socketid);
+    SocketData[VPORTDUCSPECIFIC].Socketid = 0;
+  }
+  if (!high_priority_started && SocketData[VPORTHIGHPRIORITYTOSDR].Socketid > 0) {
+    close(SocketData[VPORTHIGHPRIORITYTOSDR].Socketid);
+    SocketData[VPORTHIGHPRIORITYTOSDR].Socketid = 0;
+  }
+  if (!duc_iq_started && SocketData[VPORTDUCIQ].Socketid > 0) {
+    close(SocketData[VPORTDUCIQ].Socketid);
+    SocketData[VPORTDUCIQ].Socketid = 0;
+  }
+  // The command and DDC I/Q sockets have no listener worker ownership.
   if (SocketData[VPORTCOMMAND].Socketid > 0) {
     close(SocketData[VPORTCOMMAND].Socketid);
     SocketData[VPORTCOMMAND].Socketid = 0;
