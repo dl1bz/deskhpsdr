@@ -2344,6 +2344,8 @@ void rx_panadapter_update(RECEIVER *rx) {
       cairo_show_text(cr, _text);
     }
     if (display_solardata) {
+      SOLAR_DATA_SNAPSHOT solar;
+      get_solar_data_snapshot(&solar);
       check_and_run(1);  // 0=no_log_output, 1=print_to_log
       // g_idle_add(check_and_run_idle_cb, GINT_TO_POINTER(1));
 #if defined (__APPLE__)
@@ -2351,14 +2353,14 @@ void rx_panadapter_update(RECEIVER *rx) {
 #else
       cairo_move_to(cr, (mywidth / 4) - 130, myheight - 10);
 #endif
-      if (sunspots != -1) {
+      if (solar.sunspots != -1) {
         if (iaru_region == 1) {
-          snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f Es6:%s", sunspots, solar_flux,
-                   a_index, k_index, xray, geomagfield, muf,
-                   es6_status > 0 ? "ON" : es6_status == 0 ? "---" : "N/A");
+          snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f Es6:%s", solar.sunspots, solar.solar_flux,
+                   solar.a_index, solar.k_index, solar.xray, solar.geomagfield, solar.muf,
+                   solar.es6_status > 0 ? "ON" : solar.es6_status == 0 ? "---" : "N/A");
         } else {
-          snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", sunspots, solar_flux,
-                   a_index, k_index, xray, geomagfield, muf);
+          snprintf(_text, sizeof(_text), "SN:%d SFI:%d A:%d K:%d X:%s GmF:%s MUF3k:%.1f", solar.sunspots, solar.solar_flux,
+                   solar.a_index, solar.k_index, solar.xray, solar.geomagfield, solar.muf);
         }
       } else {
         snprintf(_text, sizeof(_text), " ");

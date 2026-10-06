@@ -28,14 +28,18 @@
 #define WEAKEN(w)  g_object_add_weak_pointer(G_OBJECT((w)), (gpointer*)&(w))
 #define UNWEAKEN(w)  if (w) g_object_remove_weak_pointer(G_OBJECT((w)), (gpointer*)&(w))
 
-extern int sunspots;
-extern int a_index;
-extern int k_index;
-extern int solar_flux;
-extern float muf;
-extern int es6_status;
-extern char geomagfield[32];
-extern char xray[16];
+typedef struct {
+  int sunspots;
+  int a_index;
+  int k_index;
+  int solar_flux;
+  float muf;
+  int es6_status;
+  char geomagfield[32];
+  char xray[16];
+} SOLAR_DATA_SNAPSHOT;
+
+extern void get_solar_data_snapshot(SOLAR_DATA_SNAPSHOT *snapshot);
 
 extern void toolset_init(void);
 extern void get_screen_size(int *width, int *height);

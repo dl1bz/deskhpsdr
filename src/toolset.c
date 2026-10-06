@@ -52,14 +52,14 @@
 static GMutex solar_data_mutex;
 static gint solar_update_running = 0;
 
-int sunspots = -1;
-int a_index = -1;
-int k_index = -1;
-int solar_flux = -1;
-float muf = -1.0f;
-int es6_status = -1;
-char geomagfield[32];
-char xray[16];
+static int sunspots = -1;
+static int a_index = -1;
+static int k_index = -1;
+static int solar_flux = -1;
+static float muf = -1.0f;
+static int es6_status = -1;
+static char geomagfield[32];
+static char xray[16];
 
 /*
   int w, h;
@@ -69,6 +69,20 @@ char xray[16];
 
 void toolset_init(void) {
   g_mutex_init(&solar_data_mutex);
+}
+
+void get_solar_data_snapshot(SOLAR_DATA_SNAPSHOT *snapshot) {
+  if (snapshot == NULL) { return; }
+  g_mutex_lock(&solar_data_mutex);
+  snapshot->sunspots = sunspots;
+  snapshot->solar_flux = solar_flux;
+  snapshot->a_index = a_index;
+  snapshot->k_index = k_index;
+  snapshot->muf = muf;
+  snapshot->es6_status = es6_status;
+  g_strlcpy(snapshot->geomagfield, geomagfield, sizeof(snapshot->geomagfield));
+  g_strlcpy(snapshot->xray, xray, sizeof(snapshot->xray));
+  g_mutex_unlock(&solar_data_mutex);
 }
 
 void get_screen_size(int *width, int *height) {
@@ -301,15 +315,18 @@ static void *solar_thread_func(void *arg) {
     g_strlcpy(xray,        sd.xray,        sizeof(xray));
     g_mutex_unlock(&solar_data_mutex);
     if (is_dbg) {
+      SOLAR_DATA_SNAPSHOT snapshot;
+      get_solar_data_snapshot(&snapshot);
       t_print("Solar data updated from %s at %s: SN:%d SFI:%d A:%d K:%d X:%s GmF:%s\n",
-              host, ts, sunspots, solar_flux, a_index, k_index, xray, geomagfield);
-      if (muf > 0.0f) {
-        t_print("MUF3k updated: %.1f MHz\n", muf);
+              host, ts, snapshot.sunspots, snapshot.solar_flux, snapshot.a_index, snapshot.k_index,
+              snapshot.xray, snapshot.geomagfield);
+      if (snapshot.muf > 0.0f) {
+        t_print("MUF3k updated: %.1f MHz\n", snapshot.muf);
       }
-      if (iaru_region == 1 && es6_status >= 0) {
+      if (iaru_region == 1 && snapshot.es6_status >= 0) {
         if (es6_age_minutes >= 0) {
           t_print("Es6 updated: %s (marker=%s, age=%dm, spots=%d, unique=%d)\n",
-                  es6_status > 0 ? "ON" : "---", es6_marker, es6_age_minutes,
+                  snapshot.es6_status > 0 ? "ON" : "---", es6_marker, es6_age_minutes,
                   es6_spots, es6_unique);
         } else {
           t_print("Es6 updated: %s (marker=%s, spots=%d, unique=%d)\n",
