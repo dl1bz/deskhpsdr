@@ -1922,6 +1922,18 @@ void rx_set_analyzer(const RECEIVER *rx) {
       }
     } else {
       int want = rx->width * rx->zoom;
+      /*
+       * Auto FFT must also cover at least one display interval.  Otherwise
+       * sample_rate / fps can exceed the selected FFT size, forcing overlap
+       * to zero and changing the analyzer cadence discontinuously.  This is
+       * especially easy to hit at 192 kHz with a low display rate.
+       */
+      if (rx->fps > 0) {
+        int frame_samples = (int) ceil((double) rx->sample_rate / (double) rx->fps);
+        if (want < frame_samples) {
+          want = frame_samples;
+        }
+      }
       if (want <= 16384) { afft_size = 16384; }
       else if (want <= 32768) { afft_size = 32768; }
       else if (want <= 65536) { afft_size = 65536; }
