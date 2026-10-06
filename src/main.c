@@ -206,7 +206,7 @@ void status_text(const char *text) {
 }
 
 static pthread_t wisdom_thread_id;
-static int wisdom_running = 0;
+static gint wisdom_running = 0;
 
 static void *wisdom_thread(void *arg) {
   int wdsp_subversion = GetWDSPVersion() % 100;
@@ -216,7 +216,7 @@ static void *wisdom_thread(void *arg) {
   } else {
     t_print("%s: Re-using existing WDSP wisdom file.\n", __func__);
   }
-  wisdom_running = 0;
+  g_atomic_int_set(&wisdom_running, 0);
   return NULL;
 }
 
@@ -673,13 +673,13 @@ static int init(void *data) {
   snprintf(wisdom_directory, sizeof(wisdom_directory), "%s/", text);
   t_print("Securing wisdom file in directory: %s\n", wisdom_directory);
   status_text("Checking FFTW Wisdom file ...");
-  wisdom_running = 1;
+  g_atomic_int_set(&wisdom_running, 1);
   int wisdom_rc = pthread_create(&wisdom_thread_id, NULL, wisdom_thread, wisdom_directory);
   if (wisdom_rc != 0) {
     t_print("%s: pthread_create wisdom_thread failed: %s\n", __func__, strerror(wisdom_rc));
-    wisdom_running = 0;
+    g_atomic_int_set(&wisdom_running, 0);
   }
-  while (wisdom_running) {
+  while (g_atomic_int_get(&wisdom_running)) {
     // wait for the wisdom thread to complete, meanwhile
     // handling any GTK events.
     usleep(100000);  // 100ms
@@ -689,6 +689,12 @@ static int init(void *data) {
     snprintf(text, sizeof(text), "Please do not close this window until wisdom plans are completed ...\n\n... %s",
              wisdom_get_status());
     status_text(text);
+  }
+  if (wisdom_rc == 0) {
+    int join_rc = pthread_join(wisdom_thread_id, NULL);
+    if (join_rc != 0) {
+      t_print("%s: pthread_join wisdom_thread failed: %s\n", __func__, strerror(join_rc));
+    }
   }
   //
   // When widsom plans are complete, start discovery process
