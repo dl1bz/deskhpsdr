@@ -1767,12 +1767,12 @@ static void process_control_bytes(void) {
     }
     if (enable_auto_tune) {
       data = (control_in[1] >> 3) & 0x01;   // Use IO3 (active=0)
-      auto_tune_end = data;
-      if (data == 0 && !auto_tune_flag) {
+      atomic_store_explicit(&auto_tune_end, data, memory_order_release);
+      if (data == 0 && !atomic_load_explicit(&auto_tune_flag, memory_order_acquire)) {
         radio_start_auto_tune();
       }
     } else {
-      auto_tune_end = 1;
+      atomic_store_explicit(&auto_tune_end, 1, memory_order_release);
     }
     if (device != DEVICE_HERMES_LITE2) {
       if (mercury_software_version[0] != control_in[2]) {

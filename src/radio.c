@@ -351,8 +351,8 @@ int cw_breakin = 1;                    // 0=disabled 1=enabled
 int cw_ramp_width = 9;                 // default value (in ms)
 
 int enable_auto_tune = 0;
-int auto_tune_flag = 0;
-int auto_tune_end = 0;
+atomic_int auto_tune_flag = 0;
+atomic_int auto_tune_end = 0;
 
 int enable_tx_inhibit = 0;
 
@@ -3542,7 +3542,7 @@ static gpointer auto_tune_thread(gpointer data) {
       count++;
     }
     usleep(50000);
-    if (auto_tune_end) {
+    if (atomic_load_explicit(&auto_tune_end, memory_order_acquire)) {
       g_idle_add(ext_tune_update, GINT_TO_POINTER(0));
       break;
     }
@@ -3552,18 +3552,18 @@ static gpointer auto_tune_thread(gpointer data) {
     }
   }
   usleep(50000);       // debouncing
-  auto_tune_flag = 0;
+  atomic_store_explicit(&auto_tune_flag, 0, memory_order_release);
   return NULL;
 }
 
 void radio_start_auto_tune(void) {
   static GThread *tune_thread_id = NULL;
   if (tune_thread_id) {
-    auto_tune_end  = 1;
+    atomic_store_explicit(&auto_tune_end, 1, memory_order_release);
     g_thread_join(tune_thread_id);
   }
-  auto_tune_flag = 1;
-  auto_tune_end  = 0;
+  atomic_store_explicit(&auto_tune_flag, 1, memory_order_release);
+  atomic_store_explicit(&auto_tune_end, 0, memory_order_release);
   tune_thread_id = g_thread_new("TUNE", auto_tune_thread, NULL);
 }
 

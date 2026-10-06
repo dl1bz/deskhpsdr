@@ -1556,7 +1556,7 @@ static gboolean andromeda_handler(gpointer data) {
         }
         break;
       case 4:
-        new = auto_tune_flag;
+        new = atomic_load_explicit(&auto_tune_flag, memory_order_acquire);
         break;
       case 6:
         new = vfo[active_receiver->id].rit_enabled;

@@ -3734,12 +3734,12 @@ static void process_high_priority(void) {
   }
   if (enable_auto_tune) {
     data = (buffer[59] >> 2) & 0x01;  // use IO6 (active=0)
-    auto_tune_end = data;
-    if (data == 0 && !auto_tune_flag) {
+    atomic_store_explicit(&auto_tune_end, data, memory_order_release);
+    if (data == 0 && !atomic_load_explicit(&auto_tune_flag, memory_order_acquire)) {
       radio_start_auto_tune();
     }
   } else {
-    auto_tune_end = 1;
+    atomic_store_explicit(&auto_tune_end, 1, memory_order_release);
   }
 }
 

@@ -280,8 +280,8 @@ extern int cw_breakin;
 extern int cw_ramp_width;
 
 extern int enable_auto_tune;
-extern int auto_tune_flag;
-extern int auto_tune_end;
+extern atomic_int auto_tune_flag;
+extern atomic_int auto_tune_end;
 
 extern int enable_tx_inhibit;
 extern int radio_get_tx_inhibit(void);
