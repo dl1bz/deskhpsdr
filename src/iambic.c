@@ -590,7 +590,7 @@ void keyer_close(void) {
 #ifdef __APPLE__
   sem_close(cw_event);
 #else
-  sem_close(&cw_event);
+  sem_destroy(&cw_event);
 #endif
 }
 
@@ -600,13 +600,27 @@ int keyer_init(void) {
   external_straight_key = 0;
 #ifdef __APPLE__
   cw_event = apple_sem(0);
+  if (!cw_event) {
+    t_print("%s: apple_sem() failed\n", __func__);
+    return -1;
+  }
 #else
-  sem_init(&cw_event, 0, 0);
+  if (sem_init(&cw_event, 0, 0) != 0) {
+    t_perror("keyer_init: sem_init");
+    return -1;
+  }
 #endif
   running = 1;
   rc = pthread_create(&keyer_thread_id, NULL, keyer_thread, NULL);
-  if (rc < 0) {
-    g_idle_add(fatal_error, "Could not start keyer thread");
+  if (rc != 0) {
+    t_print("%s: pthread_create failed: %s\n", __func__, strerror(rc));
+    running = 0;
+#ifdef __APPLE__
+    sem_close(cw_event);
+#else
+    sem_destroy(&cw_event);
+#endif
+    return -1;
   }
   return 0;
 }

@@ -725,8 +725,15 @@ void old_protocol_init(int rate) {
     return;
   }
 #else
-  (void) sem_init(&txring_sem, 0, 0);
-  (void) sem_init(&rxring_sem, 0, 0);
+  if (sem_init(&txring_sem, 0, 0) != 0) {
+    t_perror("old_protocol_init: sem_init(txring_sem)");
+    return;
+  }
+  if (sem_init(&rxring_sem, 0, 0) != 0) {
+    t_perror("old_protocol_init: sem_init(rxring_sem)");
+    sem_destroy(&txring_sem);
+    return;
+  }
 #endif
   pthread_mutex_lock(&send_ozy_mutex);
   old_protocol_set_mic_sample_rate(rate);

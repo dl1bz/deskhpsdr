@@ -300,10 +300,13 @@ void saturn_register_init(void) {
   //
   // initialise register access semaphores
   //
-  sem_init(&DDCInSelMutex, 0, 1);                                   // for DDC input select register
-  sem_init(&DDCResetFIFOMutex, 0, 1);                               // for FIFO reset register
-  sem_init(&RFGPIOMutex, 0, 1);                                     // for RF GPIO register
-  sem_init(&CodecRegMutex, 0, 1);                                   // for codec access
+  if (sem_init(&DDCInSelMutex, 0, 1) != 0 ||
+      sem_init(&DDCResetFIFOMutex, 0, 1) != 0 ||
+      sem_init(&RFGPIOMutex, 0, 1) != 0 ||
+      sem_init(&CodecRegMutex, 0, 1) != 0) {
+    t_perror("saturn_register_init: sem_init");
+    exit(-1);
+  }
   //
   // setup Saturn hardware
   //

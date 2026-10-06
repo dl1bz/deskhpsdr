@@ -1179,15 +1179,48 @@ void new_protocol_init(void) {
   //
 #ifdef __APPLE__
   high_priority_sem_buffer = apple_sem(0);
+  if (!high_priority_sem_buffer) {
+    t_print("%s: apple_sem(high_priority) failed\n", __func__);
+    return;
+  }
   mic_line_sem = apple_sem(0);
+  if (!mic_line_sem) {
+    t_print("%s: apple_sem(mic) failed\n", __func__);
+    sem_close(high_priority_sem_buffer);
+    return;
+  }
   for (i = 0; i < MAX_DDC; i++) {
     iq_sem[i] = apple_sem(0);
+    if (!iq_sem[i]) {
+      t_print("%s: apple_sem(iq[%d]) failed\n", __func__, i);
+      while (--i >= 0) {
+        sem_close(iq_sem[i]);
+      }
+      sem_close(mic_line_sem);
+      sem_close(high_priority_sem_buffer);
+      return;
+    }
   }
 #else
-  (void) sem_init(&high_priority_sem_buffer, 0, 0);  // check return value!
-  (void) sem_init(&mic_line_sem, 0, 0);  // check return value!
+  if (sem_init(&high_priority_sem_buffer, 0, 0) != 0) {
+    t_perror("new_protocol_init: sem_init(high_priority)");
+    return;
+  }
+  if (sem_init(&mic_line_sem, 0, 0) != 0) {
+    t_perror("new_protocol_init: sem_init(mic)");
+    sem_destroy(&high_priority_sem_buffer);
+    return;
+  }
   for (i = 0; i < MAX_DDC; i++) {
-    (void) sem_init(&iq_sem[i], 0, 0);  // check return value!
+    if (sem_init(&iq_sem[i], 0, 0) != 0) {
+      t_perror("new_protocol_init: sem_init(iq)");
+      while (--i >= 0) {
+        sem_destroy(&iq_sem[i]);
+      }
+      sem_destroy(&mic_line_sem);
+      sem_destroy(&high_priority_sem_buffer);
+      return;
+    }
   }
 #endif
   high_priority_thread_id = g_thread_new("P2 HP", high_priority_thread, NULL);
@@ -2591,6 +2624,31 @@ void new_protocol_menu_start(void) {
     audio_reset_mic_buffer();
   }
 #endif
+#ifdef __APPLE__
+  txiq_sem = apple_sem(0);
+  if (!txiq_sem) {
+    t_print("%s: apple_sem(txiq) failed\n", __func__);
+    return;
+  }
+  rxaudio_sem = apple_sem(0);
+  if (!rxaudio_sem) {
+    t_print("%s: apple_sem(rxaudio) failed\n", __func__);
+    sem_close(txiq_sem);
+    return;
+  }
+#else
+  if (sem_init(&txiq_sem, 0, 0) != 0) {
+    t_perror("new_protocol_menu_start: sem_init(txiq)");
+    return;
+  }
+  t_print("%s: txiq_sem initialized\n", __func__);
+  if (sem_init(&rxaudio_sem, 0, 0) != 0) {
+    t_perror("new_protocol_menu_start: sem_init(rxaudio)");
+    sem_destroy(&txiq_sem);
+    return;
+  }
+  t_print("%s: rxaudio_sem initialized\n", __func__);
+#endif
   atomic_store_explicit(&P2running, 1, memory_order_release);
   for (int ddc = 0; ddc < MAX_DDC; ddc++) {
     g_mutex_lock(&p2_jitter[ddc].mutex);
@@ -2598,15 +2656,6 @@ void new_protocol_menu_start(void) {
     g_mutex_unlock(&p2_jitter[ddc].mutex);
   }
   t_print("%s: P2running set\n", __func__);
-#ifdef __APPLE__
-  txiq_sem = apple_sem(0);
-  rxaudio_sem = apple_sem(0);
-#else
-  (void) sem_init(&txiq_sem, 0, 0);  // check return value!
-  t_print("%s: txiq_sem initialized\n", __func__);
-  (void) sem_init(&rxaudio_sem, 0, 0);  // check return value!
-  t_print("%s: rxaudio_sem initialized\n", __func__);
-#endif
   new_protocol_rxaudio_thread_id = g_thread_new("P2 SPKR", new_protocol_rxaudio_thread, NULL);
   t_print("%s: P2 SPKR thread started\n", __func__);
   new_protocol_txiq_thread_id = g_thread_new("P2 TXIQ", new_protocol_txiq_thread, NULL);
