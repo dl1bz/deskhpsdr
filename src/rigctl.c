@@ -151,7 +151,7 @@ static gint rigctld_thread_stop = 0;
 static pid_t rigctld_pid = 0;
 extern char **environ;  // wird von posix_spawnp benötigt
 
-static int tcp_running = 0;
+static atomic_int tcp_running = 0;
 static char rigctld_path[PATH_MAX];
 
 static int server_socket = -1;
@@ -1276,12 +1276,21 @@ void shutdown_tcp_rigctl(void) {
   linger.l_onoff = 1;
   linger.l_linger = 0;
   t_print("%s: server_socket=%d\n", __func__, server_socket);
-  tcp_running = 0;
+  atomic_store_explicit(&tcp_running, 0, memory_order_release);
   rigctld_enabled = 0;
   if (g_atomic_int_get(&rigctld_thread_started)) {
     g_atomic_int_set(&rigctld_thread_stop, 1);
     pthread_join(rigctld_thread, NULL);
     g_atomic_int_set(&rigctld_thread_started, 0);
+  }
+  //
+  // Stop and join the listening server before tearing down client state.
+  // rigctl_server() uses select() with a short timeout, so no cross-thread
+  // close() of the listening socket is needed to wake a blocking accept().
+  //
+  if (rigctl_server_thread_id) {
+    g_thread_join(rigctl_server_thread_id);
+    rigctl_server_thread_id = NULL;
   }
   //
   // Gracefully terminate all active TCP connections
@@ -1310,20 +1319,6 @@ void shutdown_tcp_rigctl(void) {
       tcp_client[id].thread_id = NULL;
     }
   }
-  //
-  // Close server socket
-  //
-  if (server_socket >= 0) {
-    // t_print("%s: setting SO_LINGER to 0 for server_socket: %d\n", __func__, server_socket);
-    if (setsockopt(server_socket, SOL_SOCKET, SO_LINGER, (const char *) &linger, sizeof(linger)) == -1) {
-      t_perror("setsockopt(...,SO_LINGER,...) failed for server:");
-    }
-    t_print("%s: closing server_socket: %d\n", __func__, server_socket);
-    close(server_socket);
-    server_socket = -1;
-  }
-  // TODO: join with the server thread, but this requires to make the accept() there
-  //       non-blocking (use select())
 }
 
 static void send_resp(int fd, char *msg) {
@@ -1641,7 +1636,7 @@ static gpointer rigctl_server(gpointer data) {
   // must start the thread here in order NOT to inherit a lock
   cw_engine_clear();
   cw_engine_start_thread();
-  while (tcp_running) {
+  while (atomic_load_explicit(&tcp_running, memory_order_acquire)) {
     int spare;
     //
     // find a spare slot
@@ -1662,6 +1657,21 @@ static gpointer rigctl_server(gpointer data) {
     // A slot is available, try to get connection via accept()
     // (this initializes fd, address, address_length)
     //
+    fd_set readfds;
+    struct timeval timeout = { .tv_sec = 0, .tv_usec = 100000 };
+    FD_ZERO(&readfds);
+    FD_SET(server_socket, &readfds);
+    int ready = select(server_socket + 1, &readfds, NULL, NULL, &timeout);
+    if (ready < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      t_perror("rigctl_server: select failed");
+      break;
+    }
+    if (ready == 0 || !atomic_load_explicit(&tcp_running, memory_order_acquire)) {
+      continue;
+    }
     t_print("%s: slot= %d waiting for connection\n", __func__, spare);
     tcp_client[spare].fd = accept(server_socket, (struct sockaddr *) &tcp_client[spare].address,
                                   &tcp_client[spare].address_length);
@@ -1716,6 +1726,7 @@ static gpointer rigctl_server(gpointer data) {
     }
   }
   close(server_socket);
+  server_socket = -1;
   return NULL;
 }
 
@@ -6074,7 +6085,10 @@ void disable_serial_rigctl(int id) {
 
 void launch_tcp_rigctl(void) {
   t_print("---- LAUNCHING RIGCTL SERVER ----\n");
-  tcp_running = 1;
+  if (rigctl_server_thread_id) {
+    return;
+  }
+  atomic_store_explicit(&tcp_running, 1, memory_order_release);
   //
   // Start CW thread and auto reporter, if not yet done
   //
