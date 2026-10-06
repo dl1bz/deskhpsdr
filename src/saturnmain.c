@@ -73,7 +73,7 @@ bool SDRActive;                             // true if this SDR is running at th
 bool Exiting = false;
 extern bool saturn_server_en;
 extern bool client_enable_tx;
-extern bool ServerActive;
+extern atomic_bool ServerActive;
 extern bool MOXAsserted;
 
 //
@@ -643,7 +643,7 @@ void saturn_exit(void) {
   SetMOX(false);
   SetTXEnable(false);
   EnableCW(false, false);
-  ServerActive = false;
+  atomic_store_explicit(&ServerActive, false, memory_order_release);
   CloseXDMADriver();
   sem_destroy(&DDCInSelMutex);
   sem_destroy(&DDCResetFIFOMutex);
@@ -733,7 +733,7 @@ static gpointer saturn_high_priority_thread(gpointer arg) {
       } else {
         saturn_release_buffer(mybuf);
       }
-      if (ServerActive) {
+      if (atomic_load_explicit(&ServerActive, memory_order_acquire)) {
         if (TXActive != 1) {
           * (uint32_t *) UDPBuffer = htonl(SequenceCounter2++);      // add sequence count
           iovecinst.iov_base = UDPBuffer;
@@ -903,7 +903,7 @@ static gpointer saturn_micaudio_thread(gpointer arg) {
         memcpy(mybuf->buffer + 4, MicBasePtr, VDMAMICTRANSFERSIZE);  // copy in mic samples
       }
       saturn_post_micaudio(VMICPACKETSIZE, mybuf);
-      if (ServerActive) {
+      if (atomic_load_explicit(&ServerActive, memory_order_acquire)) {
         iovecinst.iov_base = UDPBuffer;
         memcpy(&DestAddr, &reply_addr, sizeof(struct
                                               sockaddr_in));           // local copy of PC destination address (reply_addr is global)
@@ -1055,7 +1055,7 @@ static gpointer saturn_rx_thread(gpointer arg) {
           memcpy(mybuf->buffer + 16, IQReadPtr[DDC], VIQBYTESPERFRAME);
           IQReadPtr[DDC] += VIQBYTESPERFRAME;
           if (DDC < 6) {
-            if (ServerActive) {
+            if (atomic_load_explicit(&ServerActive, memory_order_acquire)) {
               iovecinst[DDC].iov_base = mybuf->buffer;
               memcpy(&DestAddr[DDC], &reply_addr, sizeof(struct
                   sockaddr_in));           // local copy of PC destination address (reply_addr is global)
@@ -1260,18 +1260,20 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
   //if(!IsTXMode) TXActive = 0;
   if (FromNetwork) {
     if (RunBit) {
-      StartBitReceived = true;
-      if (ReplyAddressSet && StartBitReceived) {
-        ServerActive = true;  // only set active if we have replay address too
+      atomic_store_explicit(&StartBitReceived, true, memory_order_release);
+      if (atomic_load_explicit(&ReplyAddressSet, memory_order_acquire) &&
+          atomic_load_explicit(&StartBitReceived, memory_order_acquire)) {
+        atomic_store_explicit(&ServerActive, true, memory_order_release);  // only set active if we have replay address too
       }
     } else {
-      ServerActive = false;                                       // set state of whole app
+      atomic_store_explicit(&ServerActive, false,
+                            memory_order_release);                                       // set state of whole app
       for (i = 4; i < VNUMDDC; i++) {        // disable upper bank of DDCs
         SetP2SampleRate(i, false, 48, false);
       }
       WriteP2DDCRateRegister();
       t_print("Server set to inactive by client app\n");
-      StartBitReceived = false;
+      atomic_store_explicit(&StartBitReceived, false, memory_order_release);
     }
     // for now just return until client TX issues can be worked out
     return;
@@ -1406,7 +1408,7 @@ void saturn_handle_general_packet(bool FromNetwork, uint8_t *PacketBuffer) {
   EnableVITA49((bool)(Byte & 2));
   SetFreqPhaseWord((bool)(Byte & 8));
   Byte = * (uint8_t *)(PacketBuffer + 38);            // enable timeout
-  HW_Timer_Enable = ((bool)(Byte & 1));
+  atomic_store_explicit(&HW_Timer_Enable, (bool)(Byte & 1), memory_order_release);
   Byte = * (uint8_t *)(PacketBuffer + 58);            // Only Bit0 used for "PA enable"
   SetPAEnabled((bool)(Byte & 1));
   //SetApolloEnabled((bool)(Byte & 2));

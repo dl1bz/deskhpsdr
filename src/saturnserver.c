@@ -63,16 +63,16 @@
 
 struct sockaddr_in reply_addr;              // destination address for outgoing data
 
-bool ReplyAddressSet = false;               // true when reply address has been set
-bool StartBitReceived = false;              // true when "run" bit has been set
-bool NewMessageReceived = false;            // set whenever a message is received
-bool ExitRequested = false;                 // true if "exit checking" thread requests shutdown
+atomic_bool ReplyAddressSet = false;               // true when reply address has been set
+atomic_bool StartBitReceived = false;              // true when "run" bit has been set
+atomic_bool NewMessageReceived = false;            // set whenever a message is received
+static atomic_bool ExitRequested = false;                 // true if "exit checking" thread requests shutdown
 bool SkipExitCheck = false;                 // true to skip "exit checking", if running as a service
 bool ThreadError = false;                   // true if a thread reports an error
-bool ServerActive = false;
+atomic_bool ServerActive = false;
 bool saturn_server_en = false;
 bool client_enable_tx = false;
-bool HW_Timer_Enable = true;
+atomic_bool HW_Timer_Enable = true;
 
 #define VDISCOVERYSIZE 60                   // discovery packet
 #define VDISCOVERYREPLYSIZE 60              // reply packet
@@ -171,13 +171,14 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
 //
 // cppcheck-suppress constParameterCallback
 void *CheckForActivity(void *arg) {
-  while (1) {
+  while (!atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
     sleep(1000);                                   // wait for 1 second
-    bool PreviouslyActiveState = ServerActive;     // see if active on entry
-    if (!NewMessageReceived && HW_Timer_Enable) {  // if no messages received,
-      ServerActive = false;                        // set back to inactive
-      ReplyAddressSet = false;
-      StartBitReceived = false;
+    bool PreviouslyActiveState = atomic_load_explicit(&ServerActive, memory_order_acquire);
+    bool MessageReceived = atomic_exchange_explicit(&NewMessageReceived, false, memory_order_acq_rel);
+    if (!MessageReceived && atomic_load_explicit(&HW_Timer_Enable, memory_order_acquire)) {
+      atomic_store_explicit(&ServerActive, false, memory_order_release);
+      atomic_store_explicit(&ReplyAddressSet, false, memory_order_release);
+      atomic_store_explicit(&StartBitReceived, false, memory_order_release);
       if (PreviouslyActiveState) {
         for (int i = 4; i < VNUMDDC; i++) {        // disable upper bank of DDCs
           SetP2SampleRate(i, false, 48, false);
@@ -186,7 +187,6 @@ void *CheckForActivity(void *arg) {
         t_print("Reverted to Inactive State after no activity\n");
       }
     }
-    NewMessageReceived = false;
   }
   t_print("ENDING CheckForActivity thread\n");
 }
@@ -195,15 +195,15 @@ void *CheckForActivity(void *arg) {
 // perform ordely shutdown of the program
 //
 void shutdown_saturn_server(void) {
-  ServerActive = false;
+  atomic_store_explicit(&ServerActive, false, memory_order_release);
   close(SocketData[0].Socketid);                          // close incoming data socket
-  ExitRequested = true;
+  atomic_store_explicit(&ExitRequested, true, memory_order_release);
   t_print("Shutdown COMPLETE\n");
 }
 
 void start_saturn_server(void) {
   int rc;
-  ExitRequested = false;
+  atomic_store_explicit(&ExitRequested, false, memory_order_release);
   rc = pthread_create(&saturn_server_thread, NULL, saturn_server, NULL);
   if (rc != 0) {
     t_print("%s: pthread_create saturn_server thread failed: %s\n", __func__, strerror(rc));
@@ -338,7 +338,7 @@ void *saturn_server(void *arg) {
   // cmd=04: erase (not supported)
   // cmd=05: program (not supported)
   //
-  while (!ExitRequested) {
+  while (!atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
     memset(&iovecinst, 0, sizeof(struct iovec));
     memset(&datagram, 0, sizeof(datagram));
     iovecinst.iov_base = &UDPInBuffer;                  // set buffer for incoming message number i
@@ -361,7 +361,7 @@ void *saturn_server(void *arg) {
     //
     CmdByte = UDPInBuffer[4];
     if (size == VDISCOVERYSIZE) {
-      NewMessageReceived = true;
+      atomic_store_explicit(&NewMessageReceived, true, memory_order_release);
       switch (CmdByte) {
       //
       // general packet. Get the port numbers and establish listener threads
@@ -377,9 +377,10 @@ void *saturn_server(void *arg) {
         reply_addr.sin_port =
                 addr_from.sin_port;                       // (but each outgoing thread needs to set its own sin_port)
         saturn_handle_general_packet(true, UDPInBuffer);
-        ReplyAddressSet = true;
-        if (ReplyAddressSet && StartBitReceived) {
-          ServerActive = true;  // only set active if we have start bit too
+        atomic_store_explicit(&ReplyAddressSet, true, memory_order_release);
+        if (atomic_load_explicit(&ReplyAddressSet, memory_order_acquire) &&
+            atomic_load_explicit(&StartBitReceived, memory_order_acquire)) {
+          atomic_store_explicit(&ServerActive, true, memory_order_release);  // only set active if we have start bit too
         }
         break;
       //
@@ -387,7 +388,7 @@ void *saturn_server(void *arg) {
       //
       case 2:
         t_print("P2 Discovery packet\n");
-        if (ServerActive) {
+        if (atomic_load_explicit(&ServerActive, memory_order_acquire)) {
           DiscoveryReply[4] = 3;  // response 2 if not active, 3 if running
         } else {
           DiscoveryReply[4] = 2;
@@ -436,7 +437,7 @@ void *IncomingHighPriority(void *arg) {                 // listener thread
   //
   // main processing loop
   //
-  while (!ExitRequested) {
+  while (!atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
     memset(&iovecinst, 0, sizeof(struct iovec));
     memset(&datagram, 0, sizeof(datagram));
     iovecinst.iov_base = &UDPInBuffer;                  // set buffer for incoming message number i
@@ -455,7 +456,7 @@ void *IncomingHighPriority(void *arg) {                 // listener thread
     // if correct packet, process it
     //
     if (size == VHIGHPRIOTIYTOSDRSIZE) {
-      NewMessageReceived = true;
+      atomic_store_explicit(&NewMessageReceived, true, memory_order_release);
       saturn_handle_high_priority(true, UDPInBuffer);
     }
   }
@@ -483,7 +484,7 @@ void *IncomingDDCSpecific(void *arg) {                  // listener thread
   //
   // main processing loop
   //
-  while (!ExitRequested) {
+  while (!atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
     memset(&iovecinst, 0, sizeof(struct iovec));
     memset(&datagram, 0, sizeof(datagram));
     iovecinst.iov_base = &UDPInBuffer;                  // set buffer for incoming message number i
@@ -498,7 +499,7 @@ void *IncomingDDCSpecific(void *arg) {                  // listener thread
       return NULL;
     }
     if (size == VDDCSPECIFICSIZE) {
-      NewMessageReceived = true;
+      atomic_store_explicit(&NewMessageReceived, true, memory_order_release);
       saturn_handle_ddc_specific(true, UDPInBuffer);
     }
   }
@@ -526,7 +527,7 @@ void *IncomingDUCSpecific(void *arg) {                  // listener thread
   //
   // main processing loop
   //
-  while (!ExitRequested) {
+  while (!atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
     memset(&iovecinst, 0, sizeof(struct iovec));
     memset(&datagram, 0, sizeof(datagram));
     iovecinst.iov_base = &UDPInBuffer;                  // set buffer for incoming message number i
@@ -541,7 +542,7 @@ void *IncomingDUCSpecific(void *arg) {                  // listener thread
       return NULL;
     }
     if (size == VDUCSPECIFICSIZE) {
-      NewMessageReceived = true;
+      atomic_store_explicit(&NewMessageReceived, true, memory_order_release);
       saturn_handle_duc_specific(true, UDPInBuffer);
     }
   }
@@ -592,7 +593,7 @@ void *IncomingDUCIQ(void *arg) {                        // listener thread
   //
   // main processing loop
   //
-  while (!ExitRequested) {
+  while (!atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
     memset(&iovecinst, 0, sizeof(struct iovec));
     memset(&datagram, 0, sizeof(datagram));
     iovecinst.iov_base = &UDPInBuffer;                  // set buffer for incoming message number i
@@ -607,7 +608,7 @@ void *IncomingDUCIQ(void *arg) {                        // listener thread
       return NULL;
     }
     if (size == VDUCIQSIZE) {
-      NewMessageReceived = true;
+      atomic_store_explicit(&NewMessageReceived, true, memory_order_release);
       saturn_handle_duc_iq(true, UDPInBuffer);
     }
   }
