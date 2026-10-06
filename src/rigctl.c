@@ -214,7 +214,7 @@ static gpointer rigctl_client(gpointer data);
 #define RXCHECK(id, what)     if (id >= 0 && id < receivers) { what; }
 
 int rigctl_tcp_running(void) {
-  return (server_socket >= 0);
+  return atomic_load_explicit(&tcp_running, memory_order_acquire);
 }
 
 // Return CTS state of the serial PTT port: 1=active, 0=inactive, -1=error.
@@ -1272,10 +1272,6 @@ void stop_lpf_monitor(void) {
 }
 
 void shutdown_tcp_rigctl(void) {
-  struct linger linger = { 0 };
-  linger.l_onoff = 1;
-  linger.l_linger = 0;
-  t_print("%s: server_socket=%d\n", __func__, server_socket);
   atomic_store_explicit(&tcp_running, 0, memory_order_release);
   rigctld_enabled = 0;
   if (g_atomic_int_get(&rigctld_thread_started)) {
@@ -1606,7 +1602,7 @@ static gpointer rigctl_server(gpointer data) {
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (server_socket < 0) {
     t_perror("rigctl_server: listen socket failed");
-    return NULL;
+    goto cleanup;
   }
   setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
   setsockopt(server_socket, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
