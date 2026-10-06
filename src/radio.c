@@ -3020,7 +3020,9 @@ static void radio_restore_state(void) {
   GetPropI0("adc0_filter_bypass",                            adc0_filter_bypass);
   GetPropI0("adc1_filter_bypass",                            adc1_filter_bypass);
 #ifdef SATURN
-  GetPropI0("client_enable_tx",                              client_enable_tx);
+  int client_enable_tx_prop = atomic_load_explicit(&client_enable_tx, memory_order_acquire);
+  GetPropI0("client_enable_tx",                              client_enable_tx_prop);
+  atomic_store_explicit(&client_enable_tx, client_enable_tx_prop != 0, memory_order_release);
   GetPropI0("saturn_server_en",                              saturn_server_en);
 #endif
   for (int i = 0; i < 11; i++) {
@@ -3328,7 +3330,8 @@ void radio_save_state(void) {
   SetPropI0("adc0_filter_bypass",                            adc0_filter_bypass);
   SetPropI0("adc1_filter_bypass",                            adc1_filter_bypass);
 #ifdef SATURN
-  SetPropI0("client_enable_tx",                              client_enable_tx);
+  int client_enable_tx_prop = atomic_load_explicit(&client_enable_tx, memory_order_acquire);
+  SetPropI0("client_enable_tx",                              client_enable_tx_prop);
   SetPropI0("saturn_server_en",                              saturn_server_en);
 #endif
   for (int i = 0; i < 11; i++) {

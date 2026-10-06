@@ -72,7 +72,6 @@ bool IsTXMode;                              // true if in TX
 atomic_bool SDRActive = false;              // true if this SDR is running at the moment
 static atomic_bool Exiting = false;
 extern bool saturn_server_en;
-extern bool client_enable_tx;
 extern atomic_bool ServerActive;
 extern bool MOXAsserted;
 
@@ -1320,7 +1319,8 @@ void saturn_handle_high_priority(bool FromNetwork, unsigned char *UDPInBuffer) {
     // for now just return until client TX issues can be worked out
     return;
     if (atomic_load_explicit(&TXActive, memory_order_acquire) == 1) { return; }
-    atomic_store_explicit(&TXActive, (IsTXMode && client_enable_tx) ? 2 : 0, memory_order_release);
+    atomic_store_explicit(&TXActive, (IsTXMode &&
+                                      atomic_load_explicit(&client_enable_tx, memory_order_acquire)) ? 2 : 0, memory_order_release);
   } else {
     if (RunBit) {
       atomic_store_explicit(&SDRActive, true, memory_order_release);
@@ -1585,7 +1585,8 @@ void saturn_handle_duc_specific(bool FromNetwork, unsigned char *UDPInBuffer) {
   uint8_t CWRampTime;
   //t_print("DUC specific %sbuffer received\n", (FromNetwork)?"network ":"");
   if (FromNetwork) {
-    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 1 || !client_enable_tx) { return; }
+    if (atomic_load_explicit(&TXActive, memory_order_acquire) == 1 ||
+        !atomic_load_explicit(&client_enable_tx, memory_order_acquire)) { return; }
   } else {
     if (atomic_load_explicit(&TXActive, memory_order_acquire) == 2) { return; }
   }

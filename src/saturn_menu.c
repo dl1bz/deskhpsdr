@@ -65,7 +65,7 @@ static void server_enable_cb(GtkWidget *widget, gpointer data) {
   if (saturn_server_en) {
     start_saturn_server();
   } else {
-    client_enable_tx = 0;
+    atomic_store_explicit(&client_enable_tx, false, memory_order_release);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(client_enable_tx_b), 0);
     shutdown_saturn_server();
   }
@@ -75,7 +75,7 @@ static void server_enable_cb(GtkWidget *widget, gpointer data) {
 #ifdef SATURNTEST
 static void client_enable_tx_cb(GtkWidget *widget, gpointer data) {
   if (!saturn_server_en) { gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), 0); }
-  else { client_enable_tx = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)); }
+  else { atomic_store_explicit(&client_enable_tx, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)), memory_order_release); }
 }
 
 #endif
@@ -84,7 +84,7 @@ void saturn_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   // paranoia is always good when programming
   if (!saturn_server_en) {
-    client_enable_tx = FALSE;
+    atomic_store_explicit(&client_enable_tx, false, memory_order_release);
   }
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
@@ -111,7 +111,8 @@ void saturn_menu(GtkWidget *parent) {
   g_signal_connect(server_enable_b, "toggled", G_CALLBACK(server_enable_cb), NULL);
 #ifdef SATURNTEST
   client_enable_tx_b = gtk_check_button_new_with_label("Client Transmit Enable");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(client_enable_tx_b), client_enable_tx);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(client_enable_tx_b), atomic_load_explicit(&client_enable_tx,
+      memory_order_acquire));
   gtk_widget_show(client_enable_tx_b);
   gtk_grid_attach(GTK_GRID(grid), client_enable_tx_b, 1, 1, 1, 1);
   g_signal_connect(client_enable_tx_b, "toggled", G_CALLBACK(client_enable_tx_cb), NULL);

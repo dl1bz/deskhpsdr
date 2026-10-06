@@ -177,5 +177,5 @@ void *IncomingSpkrAudio(void *arg);             // listener thread
 // END InSpkrAudio.h
 
 extern bool saturn_server_en;
-extern bool client_enable_tx;
+extern atomic_bool client_enable_tx;
 #endif
