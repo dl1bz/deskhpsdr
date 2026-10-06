@@ -224,9 +224,9 @@ static int local_pa_enable = 0;
 static unsigned char *RXAUDIORINGBUF = NULL;
 static unsigned char *TXIQRINGBUF = NULL;
 
-static volatile int txiq_inptr        = 0;  // pointer updated when writing into the ring buffer
-static volatile int txiq_outptr       = 0;  // pointer updated when reading from the ring buffer
-static volatile int txiq_count        = 0;  // number of samples queued since last sem_post
+static atomic_int txiq_inptr;  // pointer updated when writing into the ring buffer
+static atomic_int txiq_outptr;  // pointer updated when reading from the ring buffer
+static atomic_int txiq_count;  // number of samples queued since last sem_post
 static atomic_uint_fast64_t txiq_blocks_queued;
 static atomic_uint_fast64_t txiq_blocks_sent;
 
@@ -239,11 +239,11 @@ static int p2_tx_fifo_armed = 0;
 static int p2_tx_fifo_underrun_reported = 0;
 static int p2_tx_fifo_overrun_reported = 0;
 
-static volatile int rxaudio_inptr     = 0;  // pointer updated when writing into the ring buffer
-static volatile int rxaudio_outptr    = 0;  // pointer updated when reading from the ring buffer
-static volatile int rxaudio_count     = 0;  // number of samples queued since last sem_post
-static volatile int rxaudio_drain     = 0;  // a flag for draining the RX audio buffer
-static volatile int rxaudio_flag      = 0;  // 0: RX, 1: TX
+static atomic_int rxaudio_inptr;  // pointer updated when writing into the ring buffer
+static atomic_int rxaudio_outptr;  // pointer updated when reading from the ring buffer
+static int rxaudio_count = 0;  // number of samples queued since last sem_post
+static atomic_int rxaudio_drain;  // a flag for draining the RX audio buffer
+static int rxaudio_flag = 0;  // 0: RX, 1: TX
 
 static pthread_mutex_t send_rxaudio_mutex   = PTHREAD_MUTEX_INITIALIZER;
 
@@ -307,23 +307,23 @@ static volatile gint buffer_generation = 1;
 //
 #define RXIQRINGBUFLEN 1024
 static volatile mybuffer *iq_buffer[MAX_DDC][RXIQRINGBUFLEN];
-static volatile int iq_inptr[MAX_DDC] = { 0 };
-static volatile int iq_outptr[MAX_DDC] = { 0 };
-static volatile int iq_count[MAX_DDC] = { 0 };
+static atomic_int iq_inptr[MAX_DDC];
+static atomic_int iq_outptr[MAX_DDC];
+static int iq_count[MAX_DDC] = { 0 };
 static volatile gint iq_diag_peak[MAX_DDC] = { 0 };
 
 static mybuffer *high_priority_buffer;
 
 #define HPRIORINGBUFLEN 64
 static volatile mybuffer *high_priority_ring[HPRIORINGBUFLEN];
-static volatile int high_priority_inptr = 0;
-static volatile int high_priority_outptr = 0;
+static atomic_int high_priority_inptr;
+static atomic_int high_priority_outptr;
 
 #define MICRINGBUFLEN 128
 static volatile mybuffer *mic_line_buffer[MICRINGBUFLEN];
-static volatile int mic_inptr = 0;
-static volatile int mic_outptr = 0;
-static volatile int mic_count = 0;
+static atomic_int mic_inptr;
+static atomic_int mic_outptr;
+static int mic_count = 0;
 
 static unsigned char general_buffer[60];
 static unsigned char high_priority_buffer_to_radio[1444];
@@ -750,9 +750,8 @@ int new_protocol_get_buffer_diag(int ddc, P2_BUFFER_DIAG *diag) {
     }
     g_mutex_unlock(&state->mutex);
   }
-  int inpt = iq_inptr[ddc];
-  MEMORY_BARRIER;
-  int outpt = iq_outptr[ddc];
+  int inpt = atomic_load_explicit(&iq_inptr[ddc], memory_order_acquire);
+  int outpt = atomic_load_explicit(&iq_outptr[ddc], memory_order_acquire);
   int queued = inpt - outpt;
   if (queued < 0) {
     queued += RXIQRINGBUFLEN;
@@ -2552,19 +2551,19 @@ void new_protocol_menu_start(void) {
   micsamples_sequence = 0;
   audio_sequence = 0;
   tx_iq_sequence = 0;
-  txiq_inptr = 0;
-  txiq_outptr = 0;
-  txiq_count = 0;
+  atomic_store_explicit(&txiq_inptr, 0, memory_order_relaxed);
+  atomic_store_explicit(&txiq_outptr, 0, memory_order_relaxed);
+  atomic_store_explicit(&txiq_count, 0, memory_order_relaxed);
   atomic_store_explicit(&txiq_blocks_queued, 0, memory_order_relaxed);
   atomic_store_explicit(&txiq_blocks_sent, 0, memory_order_relaxed);
   p2_tx_fifo_armed = 0;
   p2_tx_fifo_underrun_reported = 0;
   p2_tx_fifo_overrun_reported = 0;
   pthread_mutex_lock(&send_rxaudio_mutex);
-  rxaudio_inptr = 0;
-  rxaudio_outptr = 0;
+  atomic_store_explicit(&rxaudio_inptr, 0, memory_order_relaxed);
+  atomic_store_explicit(&rxaudio_outptr, 0, memory_order_relaxed);
   rxaudio_count = 0;
-  rxaudio_drain = 0;
+  atomic_store_explicit(&rxaudio_drain, 0, memory_order_relaxed);
   rxaudio_flag = 0;
   pthread_mutex_unlock(&send_rxaudio_mutex);
   memset(rxcase, 0, sizeof(rxcase));
@@ -2655,11 +2654,13 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
     sem_wait(&rxaudio_sem);
 #endif
     if (!atomic_load_explicit(&P2running, memory_order_acquire)) { break; }
-    nptr = rxaudio_outptr + 256;
+    (void) atomic_load_explicit(&rxaudio_inptr, memory_order_acquire);
+    int outptr = atomic_load_explicit(&rxaudio_outptr, memory_order_relaxed);
+    nptr = outptr + 256;
     if (nptr >= RXAUDIORINGBUFLEN) { nptr = 0; }
-    if (rxaudio_drain) {
+    if (atomic_load_explicit(&rxaudio_drain, memory_order_acquire)) {
       // remove data from buffer but do not send
-      rxaudio_outptr = nptr;
+      atomic_store_explicit(&rxaudio_outptr, nptr, memory_order_release);
       continue;
     }
     audiobuffer[0] = (audio_sequence >> 24) & 0xFF;
@@ -2667,9 +2668,8 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
     audiobuffer[2] = (audio_sequence >>  8) & 0xFF;
     audiobuffer[3] = (audio_sequence) & 0xFF;
     audio_sequence++;
-    memcpy(&audiobuffer[4], &RXAUDIORINGBUF[rxaudio_outptr], 256);
-    MEMORY_BARRIER;
-    rxaudio_outptr = nptr;
+    memcpy(&audiobuffer[4], &RXAUDIORINGBUF[outptr], 256);
+    atomic_store_explicit(&rxaudio_outptr, nptr, memory_order_release);
     if (have_saturn_xdma) {
 #ifdef SATURN
       saturn_handle_speaker_audio(audiobuffer);
@@ -2704,7 +2704,8 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
       // host backlog has been reduced again.  Hysteresis keeps normal
       // WDSP block bursts out of this catch-up path.
       //
-      int queued_bytes = rxaudio_inptr - rxaudio_outptr;
+      int queued_bytes = atomic_load_explicit(&rxaudio_inptr, memory_order_acquire)
+                         - atomic_load_explicit(&rxaudio_outptr, memory_order_acquire);
       if (queued_bytes < 0) { queued_bytes += RXAUDIORINGBUFLEN; }
       if (!catch_up && queued_bytes >= (RXAUDIORINGBUFLEN / 2)) {
         catch_up = 1;
@@ -2760,11 +2761,13 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
       }
     }
   }
-  if (rxaudio_inptr != rxaudio_outptr || rxaudio_count != 0 || rxaudio_drain) {
+  int rxaudio_in = atomic_load_explicit(&rxaudio_inptr, memory_order_acquire);
+  int rxaudio_out = atomic_load_explicit(&rxaudio_outptr, memory_order_acquire);
+  if (rxaudio_in != rxaudio_out ||
+      atomic_load_explicit(&rxaudio_drain, memory_order_acquire)) {
     t_print("%s: discarding queued RX audio on exit\n", __func__);
-    rxaudio_outptr = rxaudio_inptr;
-    rxaudio_count = 0;
-    rxaudio_drain = 0;
+    atomic_store_explicit(&rxaudio_outptr, rxaudio_in, memory_order_release);
+    atomic_store_explicit(&rxaudio_drain, 0, memory_order_release);
   }
   return NULL;
 }
@@ -2794,11 +2797,12 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
     iqbuffer[2] = (tx_iq_sequence >>  8) & 0xFF;
     iqbuffer[3] = (tx_iq_sequence) & 0xFF;
     tx_iq_sequence++;
-    nptr = txiq_outptr + 1440;
+    (void) atomic_load_explicit(&txiq_inptr, memory_order_acquire);
+    int outptr = atomic_load_explicit(&txiq_outptr, memory_order_relaxed);
+    nptr = outptr + 1440;
     if (nptr >= TXIQRINGBUFLEN) { nptr = 0; }
-    memcpy(&iqbuffer[4], &TXIQRINGBUF[txiq_outptr], 1440);
-    MEMORY_BARRIER;
-    txiq_outptr = nptr;
+    memcpy(&iqbuffer[4], &TXIQRINGBUF[outptr], 1440);
+    atomic_store_explicit(&txiq_outptr, nptr, memory_order_release);
     if (have_saturn_xdma) {
 #ifdef SATURN
       saturn_handle_duc_iq(false, iqbuffer);
@@ -3038,12 +3042,12 @@ static gpointer high_priority_thread(gpointer data) {
 #else
     sem_wait(&high_priority_sem_buffer);
 #endif
-    optr = high_priority_outptr;
+    (void) atomic_load_explicit(&high_priority_inptr, memory_order_acquire);
+    optr = atomic_load_explicit(&high_priority_outptr, memory_order_relaxed);
     nptr = optr + 1;
     if (nptr >= HPRIORINGBUFLEN) { nptr = 0; }
     high_priority_buffer = (mybuffer *) high_priority_ring[optr];
-    MEMORY_BARRIER;
-    high_priority_outptr = nptr;
+    atomic_store_explicit(&high_priority_outptr, nptr, memory_order_release);
     if (!my_buffer_is_current(high_priority_buffer)) {
       release_my_buffer(high_priority_buffer);
       continue;
@@ -3068,11 +3072,12 @@ static gpointer mic_line_thread(gpointer data) {
 #else
     sem_wait(&mic_line_sem);
 #endif
-    nptr = mic_outptr + 1;
+    (void) atomic_load_explicit(&mic_inptr, memory_order_acquire);
+    int outptr = atomic_load_explicit(&mic_outptr, memory_order_relaxed);
+    nptr = outptr + 1;
     if (nptr >= MICRINGBUFLEN) { nptr = 0; }
-    mybuf = (mybuffer *) mic_line_buffer[mic_outptr];
-    MEMORY_BARRIER;
-    mic_outptr = nptr;
+    mybuf = (mybuffer *) mic_line_buffer[outptr];
+    atomic_store_explicit(&mic_outptr, nptr, memory_order_release);
     // Discard packets still queued from a previous protocol generation.
     if (!my_buffer_is_current(mybuf)) {
       release_my_buffer(mybuf);
@@ -3098,13 +3103,12 @@ void saturn_post_high_priority(mybuffer *buffer) {
     release_my_buffer(buffer);
     return;
   }
-  iptr = high_priority_inptr;
+  iptr = atomic_load_explicit(&high_priority_inptr, memory_order_relaxed);
   nptr = iptr + 1;
   if (nptr >= HPRIORINGBUFLEN) { nptr = 0; }
-  if (nptr != high_priority_outptr) {
+  if (nptr != atomic_load_explicit(&high_priority_outptr, memory_order_acquire)) {
     high_priority_ring[iptr] = buffer;
-    MEMORY_BARRIER;
-    high_priority_inptr = nptr;
+    atomic_store_explicit(&high_priority_inptr, nptr, memory_order_release);
 #ifdef __APPLE__
     sem_post(high_priority_sem_buffer);
 #else
@@ -3126,17 +3130,17 @@ void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
     release_my_buffer(mybuf);
     return;
   }
-  int nptr = mic_inptr + 1;
+  int iptr = atomic_load_explicit(&mic_inptr, memory_order_relaxed);
+  int nptr = iptr + 1;
   if (nptr >= MICRINGBUFLEN) { nptr = 0; }
-  if (nptr != mic_outptr) {
-    mic_line_buffer[mic_inptr] = mybuf;
-    MEMORY_BARRIER;
+  if (nptr != atomic_load_explicit(&mic_outptr, memory_order_acquire)) {
+    mic_line_buffer[iptr] = mybuf;
+    atomic_store_explicit(&mic_inptr, nptr, memory_order_release);
 #ifdef __APPLE__
     sem_post(mic_line_sem);
 #else
     sem_post(&mic_line_sem);
 #endif
-    mic_inptr = nptr;
   } else {
     t_print("%s: buffer overflow.\n", __func__);
     release_my_buffer(mybuf);
@@ -3192,14 +3196,13 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
   } else {
     ddc_sequence[ddc] = sequence + 1;
   }
-  int iptr = iq_inptr[ddc];
+  int iptr = atomic_load_explicit(&iq_inptr[ddc], memory_order_relaxed);
   int nptr = iptr + 1;
   if (nptr >= RXIQRINGBUFLEN) { nptr = 0; }
-  if (nptr != iq_outptr[ddc]) {
+  if (nptr != atomic_load_explicit(&iq_outptr[ddc], memory_order_acquire)) {
     iq_buffer[ddc][iptr] = mybuf;
-    MEMORY_BARRIER;
-    iq_inptr[ddc] = nptr;
-    int queued = nptr - iq_outptr[ddc];
+    atomic_store_explicit(&iq_inptr[ddc], nptr, memory_order_release);
+    int queued = nptr - atomic_load_explicit(&iq_outptr[ddc], memory_order_acquire);
     if (queued < 0) {
       queued += RXIQRINGBUFLEN;
     }
@@ -3241,12 +3244,12 @@ static gpointer iq_thread(gpointer data) {
 #else
     sem_wait(&iq_sem[ddc]);
 #endif
-    optr = iq_outptr[ddc];
+    (void) atomic_load_explicit(&iq_inptr[ddc], memory_order_acquire);
+    optr = atomic_load_explicit(&iq_outptr[ddc], memory_order_relaxed);
     nptr = optr + 1;
     if (nptr >= RXIQRINGBUFLEN) { nptr = 0; }
     mybuf = (mybuffer *) iq_buffer[ddc][optr];
-    MEMORY_BARRIER;
-    iq_outptr[ddc] = nptr;
+    atomic_store_explicit(&iq_outptr[ddc], nptr, memory_order_release);
     // Discard packets still queued from a previous protocol generation.
     if (!my_buffer_is_current(mybuf)) {
       release_my_buffer(mybuf);
@@ -3568,7 +3571,7 @@ static void process_high_priority(void) {
                 (unsigned long long) queued,
                 (unsigned long long) sent,
                 (unsigned long long)(queued - sent),
-                txiq_count);
+                atomic_load_explicit(&txiq_count, memory_order_acquire));
         p2_tx_fifo_underrun_reported = 1;
       }
     }
@@ -3582,7 +3585,7 @@ static void process_high_priority(void) {
                 (unsigned long long) queued,
                 (unsigned long long) sent,
                 (unsigned long long)(queued - sent),
-                txiq_count);
+                atomic_load_explicit(&txiq_count, memory_order_acquire));
         p2_tx_fifo_overrun_reported = 1;
       }
     }
@@ -3726,26 +3729,29 @@ void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sa
       // This is done to start CW TX with an "empty" buffer in order
       // to minimize CW side tone latency (17 msec measured on my ANAN-7000).
       //
-      rxaudio_drain = 1;
-      while (atomic_load_explicit(&P2running, memory_order_acquire) && rxaudio_inptr != rxaudio_outptr) { usleep(1000); }
-      rxaudio_drain = 0;
+      atomic_store_explicit(&rxaudio_drain, 1, memory_order_release);
+      while (atomic_load_explicit(&P2running, memory_order_acquire) &&
+             atomic_load_explicit(&rxaudio_inptr, memory_order_acquire) !=
+             atomic_load_explicit(&rxaudio_outptr, memory_order_acquire)) { usleep(1000); }
+      atomic_store_explicit(&rxaudio_drain, 0, memory_order_release);
       if (!atomic_load_explicit(&P2running, memory_order_acquire)) {
         pthread_mutex_unlock(&send_rxaudio_mutex);
         return;
       }
       rxaudio_flag = 1;
     }
-    int iptr = rxaudio_inptr + 4 * rxaudio_count;
+    int inptr = atomic_load_explicit(&rxaudio_inptr, memory_order_relaxed);
+    int iptr = inptr + 4 * rxaudio_count;
     RXAUDIORINGBUF[iptr++] = (left_audio_sample  >> 8) & 0xFF;
     RXAUDIORINGBUF[iptr++] = (left_audio_sample) & 0xFF;
     RXAUDIORINGBUF[iptr++] = (right_audio_sample >> 8) & 0xFF;
     RXAUDIORINGBUF[iptr++] = (right_audio_sample) & 0xFF;
     rxaudio_count++;
     if (rxaudio_count >= 64) {
-      int nptr = rxaudio_inptr + 256;
+      int nptr = inptr + 256;
       if (nptr >= RXAUDIORINGBUFLEN) { nptr = 0; }
-      if (nptr != rxaudio_outptr) {
-        rxaudio_inptr = nptr;
+      if (nptr != atomic_load_explicit(&rxaudio_outptr, memory_order_acquire)) {
+        atomic_store_explicit(&rxaudio_inptr, nptr, memory_order_release);
 #ifdef __APPLE__
         sem_post(rxaudio_sem);
 #else
@@ -3783,17 +3789,18 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
     //
     rxaudio_flag = 0;
   }
-  int iptr = rxaudio_inptr + 4 * rxaudio_count;
+  int inptr = atomic_load_explicit(&rxaudio_inptr, memory_order_relaxed);
+  int iptr = inptr + 4 * rxaudio_count;
   RXAUDIORINGBUF[iptr++] = (left_audio_sample  >> 8) & 0xFF;
   RXAUDIORINGBUF[iptr++] = (left_audio_sample) & 0xFF;
   RXAUDIORINGBUF[iptr++] = (right_audio_sample >> 8) & 0xFF;
   RXAUDIORINGBUF[iptr++] = (right_audio_sample) & 0xFF;
   rxaudio_count++;
   if (rxaudio_count >= 64) {
-    int nptr = rxaudio_inptr + 256;
+    int nptr = inptr + 256;
     if (nptr >= RXAUDIORINGBUFLEN) { nptr = 0; }
-    if (nptr != rxaudio_outptr) {
-      rxaudio_inptr = nptr;
+    if (nptr != atomic_load_explicit(&rxaudio_outptr, memory_order_acquire)) {
+      atomic_store_explicit(&rxaudio_inptr, nptr, memory_order_release);
 #ifdef __APPLE__
       sem_post(rxaudio_sem);
 #else
@@ -3810,8 +3817,9 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 }
 
 void new_protocol_iq_samples(int isample, int qsample) {
-  if (txiq_count < 0) {
-    txiq_count++;
+  int count = atomic_load_explicit(&txiq_count, memory_order_relaxed);
+  if (count < 0) {
+    atomic_store_explicit(&txiq_count, count + 1, memory_order_relaxed);
     return;
   }
 #if defined(DUMP_TX_DATA)
@@ -3821,20 +3829,22 @@ void new_protocol_iq_samples(int isample, int qsample) {
     rxiq_count++;
   }
 #endif
-  int iptr = txiq_inptr + 6 * txiq_count;
+  int inptr = atomic_load_explicit(&txiq_inptr, memory_order_relaxed);
+  int iptr = inptr + 6 * count;
   TXIQRINGBUF[iptr++] = (isample >> 16) & 0xFF;
   TXIQRINGBUF[iptr++] = (isample >>  8) & 0xFF;
   TXIQRINGBUF[iptr++] = (isample) & 0xFF;
   TXIQRINGBUF[iptr++] = (qsample >> 16) & 0xFF;
   TXIQRINGBUF[iptr++] = (qsample >>  8) & 0xFF;
   TXIQRINGBUF[iptr++] = (qsample) & 0xFF;
-  txiq_count++;
-  if (txiq_count >= 240) {
-    int nptr = txiq_inptr + 1440;
+  count++;
+  atomic_store_explicit(&txiq_count, count, memory_order_relaxed);
+  if (count >= 240) {
+    int nptr = inptr + 1440;
     if (nptr >= TXIQRINGBUFLEN) { nptr = 0; }
-    if (nptr != txiq_outptr) {
-      txiq_inptr = nptr;
-      txiq_count = 0;
+    if (nptr != atomic_load_explicit(&txiq_outptr, memory_order_acquire)) {
+      atomic_store_explicit(&txiq_inptr, nptr, memory_order_release);
+      atomic_store_explicit(&txiq_count, 0, memory_order_relaxed);
       (void) atomic_fetch_add_explicit(&txiq_blocks_queued, 1, memory_order_release);
 #ifdef __APPLE__
       sem_post(txiq_sem);
@@ -3844,27 +3854,29 @@ void new_protocol_iq_samples(int isample, int qsample) {
     } else {
       t_print("%s: output buffer overflow\n", __func__);
       // skip 4800 samples ( 25 msec @ 192k )
-      txiq_count = -4800;
+      atomic_store_explicit(&txiq_count, -4800, memory_order_relaxed);
     }
   }
 }
 
 uint64_t new_protocol_tx_fence_begin(void) {
-  if (!atomic_load_explicit(&P2running, memory_order_acquire) || !radio_is_transmitting() || txiq_count < 0) {
+  if (!atomic_load_explicit(&P2running, memory_order_acquire) || !radio_is_transmitting() ||
+      atomic_load_explicit(&txiq_count, memory_order_acquire) < 0) {
     return 0;
   }
   // First close a partially filled packet, then append one complete
   // zero packet. The returned fence therefore follows every speech
   // sample and leaves no partial packet behind in the host ring.
-  int zeros = txiq_count == 0 ? 0 : 240 - txiq_count;
+  int count = atomic_load_explicit(&txiq_count, memory_order_acquire);
+  int zeros = count == 0 ? 0 : 240 - count;
   zeros += 240;
   for (int i = 0; i < zeros; i++) {
     new_protocol_iq_samples(0, 0);
-    if (txiq_count < 0) {
+    if (atomic_load_explicit(&txiq_count, memory_order_acquire) < 0) {
       return 0;
     }
   }
-  if (txiq_count != 0) {
+  if (atomic_load_explicit(&txiq_count, memory_order_acquire) != 0) {
     return 0;
   }
   return atomic_load_explicit(&txiq_blocks_queued, memory_order_acquire);
