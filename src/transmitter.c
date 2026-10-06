@@ -1089,6 +1089,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->low_latency = 0;
   tx->alcmode = ALC_PEAK;
   g_mutex_init(&tx->display_mutex);
+  g_mutex_init(&tx->analyzer_mutex);
   tx->update_timer_id = 0;
   tx->out_of_band_timer_id = 0;
   switch (protocol) {
@@ -1766,7 +1767,9 @@ static void tx_full_buffer(TRANSMITTER *tx) {
   if (tx->displaying && !(tx->puresignal && tx->feedback) &&
       !atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire)) {
     g_mutex_lock(&tx->display_mutex);
+    g_mutex_lock(&tx->analyzer_mutex);
     Spectrum0(1, tx->id, 0, 0, tx->iq_output_buffer);
+    g_mutex_unlock(&tx->analyzer_mutex);
     g_mutex_unlock(&tx->display_mutex);
   }
   if (radio_is_transmitting()) {
@@ -1809,7 +1812,9 @@ static void tx_full_buffer(TRANSMITTER *tx) {
        */
       if (tx->displaying && !(tx->puresignal && tx->feedback)) {
         g_mutex_lock(&tx->display_mutex);
+        g_mutex_lock(&tx->analyzer_mutex);
         Spectrum0(1, tx->id, 0, 0, tx->iq_output_buffer);
+        g_mutex_unlock(&tx->analyzer_mutex);
         g_mutex_unlock(&tx->display_mutex);
       }
       for (j = 0; j < tx->output_samples; j++) {
@@ -2349,7 +2354,9 @@ double tx_get_alc(const TRANSMITTER *tx) {
 
 int tx_get_pixels(TRANSMITTER *tx) {
   int rc;
+  g_mutex_lock(&tx->analyzer_mutex);
   GetPixels(tx->id, 0, tx->pixel_samples, &rc);
+  g_mutex_unlock(&tx->analyzer_mutex);
   return rc;
 }
 
@@ -2375,7 +2382,7 @@ double tx_display_span_hz(const TRANSMITTER *tx) {
   return 24000.0;
 }
 
-void tx_set_analyzer(const TRANSMITTER *tx) {
+void tx_set_analyzer(TRANSMITTER *tx) {
   int flp[] = {0};
   const double keep_time = 0.1;
   const int n_pixout = 1;
@@ -2442,6 +2449,7 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
                                     keep_time * (double) afft_size * (double) tx->fps);
   overlap = (int) max(0.0, ceil(afft_size - (double) tx->iq_output_rate / (double) tx->fps));
   t_print("TX SetAnalyzer fft_size=%d overlap=%d pixels=%d\n", afft_size, overlap, tx->pixels);
+  g_mutex_lock(&tx->analyzer_mutex);
   SetAnalyzer(tx->id,                // id of the TXA channel
               n_pixout,              // 1 = "use same data for scope and waterfall"
               spur_elimination_ffts, // 1 = "no spur elimination"
@@ -2462,6 +2470,7 @@ void tx_set_analyzer(const TRANSMITTER *tx) {
               span_max_freq,         // frequency at last pixel value
               max_w                  // max samples to hold in input ring buffers
              );
+  g_mutex_unlock(&tx->analyzer_mutex);
   if (receiver[PS_RX_FEEDBACK] != NULL) {
     rx_set_analyzer(receiver[PS_RX_FEEDBACK]);
   }

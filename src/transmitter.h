@@ -58,6 +58,7 @@ typedef struct _transmitter {
   int display_waterfall;
   guint update_timer_id;
   GMutex display_mutex;
+  GMutex analyzer_mutex;
   int display_detector_mode;
   int display_average_mode;
   double display_average_time;
@@ -274,7 +275,7 @@ extern void   tx_ps_setpk(const TRANSMITTER *tx, double pk);
 extern void   tx_save_state(const TRANSMITTER *tx);
 
 extern void   tx_set_am_carrier_level(const TRANSMITTER *tx);
-extern void   tx_set_analyzer(const TRANSMITTER *tx);
+extern void   tx_set_analyzer(TRANSMITTER *tx);
 extern double tx_display_span_hz(const TRANSMITTER *tx);
 extern void   tx_set_average(const TRANSMITTER *tx);
 extern void   tx_set_bandpass(const TRANSMITTER *tx);
