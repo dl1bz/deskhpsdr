@@ -1619,8 +1619,7 @@ static gpointer rigctl_server(gpointer data) {
   server_address.sin_port = htons(port);
   if (bind(server_socket, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
     t_perror("rigctl_server: listen socket bind failed");
-    close(server_socket);
-    return NULL;
+    goto cleanup;
   }
   for (int id = 0; id < MAX_TCP_CLIENTS; id++) {
     tcp_client[id].fd = -1;
@@ -1630,8 +1629,7 @@ static gpointer rigctl_server(gpointer data) {
   // listen with a max queue of 3
   if (listen(server_socket, 3) < 0) {
     t_perror("rigctl_server: listen failed");
-    close(server_socket);
-    return NULL;
+    goto cleanup;
   }
   // must start the thread here in order NOT to inherit a lock
   cw_engine_clear();
@@ -1725,8 +1723,12 @@ static gpointer rigctl_server(gpointer data) {
       tcp_client[spare].andromeda_timer = g_timeout_add(500, andromeda_handler, &tcp_client[spare]);
     }
   }
-  close(server_socket);
-  server_socket = -1;
+cleanup:
+  if (server_socket >= 0) {
+    close(server_socket);
+    server_socket = -1;
+  }
+  atomic_store_explicit(&tcp_running, 0, memory_order_release);
   return NULL;
 }
 
