@@ -151,6 +151,7 @@ static struct sockaddr_in data_addr;
 static unsigned char control_in[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
 static atomic_int P1running = 0;
+static atomic_int p1_initialized = 0;
 
 static uint32_t last_seq_num = -0xffffffff;
 static int tx_fifo_flag = 0;
@@ -653,6 +654,9 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
 #endif
 
 void old_protocol_stop(void) {
+  if (!atomic_load_explicit(&p1_initialized, memory_order_acquire)) {
+    return;
+  }
   //
   // Mutex is needed since in the TCP case, sending TX IQ packets
   // must not occur while the "stop" packet is sent.
@@ -667,6 +671,9 @@ void old_protocol_stop(void) {
 }
 
 void old_protocol_run(void) {
+  if (!atomic_load_explicit(&p1_initialized, memory_order_acquire)) {
+    return;
+  }
   t_print("%s\n", __func__);
 #ifdef AUDIO_RINGBUFFER
   if (transmitter != NULL && transmitter->local_microphone) {
@@ -676,6 +683,7 @@ void old_protocol_run(void) {
   pthread_mutex_lock(&send_ozy_mutex);
   metis_restart();
   pthread_mutex_unlock(&send_ozy_mutex);
+  atomic_store_explicit(&p1_initialized, 1, memory_order_release);
 }
 
 void old_protocol_set_mic_sample_rate(int rate) {
@@ -692,6 +700,7 @@ void old_protocol_set_mic_sample_rate(int rate) {
 //
 void old_protocol_init(int rate) {
   int i;
+  atomic_store_explicit(&p1_initialized, 0, memory_order_relaxed);
 #ifdef __APPLE__
   atomic_init(&sr,          0);
 #endif

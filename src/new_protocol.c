@@ -134,6 +134,8 @@ static int p2_jitter_initialized = 0;
 int data_socket = -1;
 
 static atomic_int P2running;
+static atomic_int p2_initialized;
+static atomic_int p2_session_started;
 
 static struct sockaddr_in base_addr;
 static int base_addr_length;
@@ -1149,6 +1151,8 @@ static ssize_t p2_sendto_route_retry(int fd, const void *buf, size_t len, int fl
 
 void new_protocol_init(void) {
   int i;
+  atomic_store_explicit(&p2_initialized, 0, memory_order_relaxed);
+  atomic_store_explicit(&p2_session_started, 0, memory_order_relaxed);
   //
   // This function initializes the P2 engine and does everything that
   // is only done once. Actions needed for a normal P2 restart are
@@ -1399,8 +1403,10 @@ void new_protocol_init(void) {
     }
   }
   //
-  // This does all the work which has to be done both at startup and upon each restart
+  // This does all the work which has to be done both at startup and upon each restart.
+  // At this point the persistent P2 engine is fully initialized.
   //
+  atomic_store_explicit(&p2_initialized, 1, memory_order_release);
   new_protocol_menu_start();
 }
 
@@ -2515,6 +2521,9 @@ static void new_protocol_receive_specific(void) {
 // Function available to e.g. rigctl to stop the protocol
 //
 void new_protocol_menu_stop(void) {
+  if (!atomic_exchange_explicit(&p2_session_started, 0, memory_order_acq_rel)) {
+    return;
+  }
   fd_set fds;
   struct timeval tv;
   char *buffer;
@@ -2575,6 +2584,13 @@ void new_protocol_menu_stop(void) {
 // Function available e.g. to rigctl to (re-) start the new protocol
 //
 void new_protocol_menu_start(void) {
+  if (!atomic_load_explicit(&p2_initialized, memory_order_acquire)) {
+    t_print("%s: P2 engine not initialized\n", __func__);
+    return;
+  }
+  if (atomic_load_explicit(&p2_session_started, memory_order_acquire)) {
+    return;
+  }
   //
   // reset sequence numbers, action table, etc.
   //
@@ -2682,6 +2698,7 @@ void new_protocol_menu_start(void) {
   t_print("%s: send high_priority\n", __func__);
   new_protocol_high_priority();
   new_protocol_timer_thread_id = g_thread_new("P2 task", new_protocol_timer_thread, NULL);
+  atomic_store_explicit(&p2_session_started, 1, memory_order_release);
 }
 
 static gpointer new_protocol_rxaudio_thread(gpointer data) {
