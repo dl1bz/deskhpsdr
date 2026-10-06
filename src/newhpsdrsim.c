@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdatomic.h>
 #include <pthread.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -117,7 +118,7 @@ static int txatt2 = -1;
 static int ramplen = -1;
 
 //stat from high-priority packet
-static int run = 0;
+static atomic_int run = 0;
 static int ptt = -1;
 static int cwx = -1;
 static int dot = -1;
@@ -158,7 +159,8 @@ static pthread_t audio_thread_id;
 static pthread_t highprio_thread_id = 0;
 static pthread_t send_highprio_thread_id;
 
-static unsigned int watchdog_count = 0;
+static atomic_uint atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
+static atomic_int highprio_active = 0;
 
 void   *ddc_specific_thread(void *);
 void   *duc_specific_thread(void *);
@@ -172,7 +174,7 @@ void   *audio_thread(void *);
 static double txlevel;
 
 int new_protocol_running() {
-  if (run) { return 1; }
+  if (atomic_load_explicit(&run, memory_order_acquire)) { return 1; }
   else { return 0; }
 }
 
@@ -190,112 +192,112 @@ void new_protocol_general_packet(unsigned char *buffer) {
 #endif
   rc = (buffer[5] << 8) + buffer[6];
   if (rc == 0) { rc = 1025; }
-  if (rc != ddc_port || !run) {
+  if (rc != ddc_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     ddc_port = rc;
     t_print("GP: RX specific rcv        port is  %4d\n", rc);
   }
   rc = (buffer[7] << 8) + buffer[8];
   if (rc == 0) { rc = 1026; }
-  if (rc != duc_port || !run) {
+  if (rc != duc_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     duc_port = rc;
     t_print("GP: TX specific rcv        port is  %4d\n", rc);
   }
   rc = (buffer[9] << 8) + buffer[10];
   if (rc == 0) { rc = 1027; }
-  if (rc != hp_port || !run) {
+  if (rc != hp_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     hp_port = rc;
     t_print("GP: HighPrio Port rcv      port is  %4d\n", rc);
   }
   rc = (buffer[11] << 8) + buffer[12];
   if (rc == 0) { rc = 1025; }
-  if (rc != shp_port || !run) {
+  if (rc != shp_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     shp_port = rc;
     t_print("GP: HighPrio Port snd      port is  %4d\n", rc);
   }
   rc = (buffer[13] << 8) + buffer[14];
   if (rc == 0) { rc = 1028; }
-  if (rc != audio_port || !run) {
+  if (rc != audio_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     audio_port = rc;
     t_print("GP: Audio rcv              port is  %4d\n", rc);
   }
   rc = (buffer[15] << 8) + buffer[16];
   if (rc == 0) { rc = 1029; }
-  if (rc != duc0_port || !run) {
+  if (rc != duc0_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     duc0_port = rc;
     t_print("GP: TX data rcv base       port is  %4d\n", rc);
   }
   rc = (buffer[17] << 8) + buffer[18];
   if (rc == 0) { rc = 1035; }
-  if (rc != ddc0_port || !run) {
+  if (rc != ddc0_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     ddc0_port = rc;
     t_print("GP: RX data snd base       port is  %4d\n", rc);
   }
   rc = (buffer[19] << 8) + buffer[20];
   if (rc == 0) { rc = 1026; }
-  if (rc != mic_port || !run) {
+  if (rc != mic_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     mic_port = rc;
     t_print("GP: Microphone data snd    port is  %4d\n", rc);
   }
   rc = (buffer[21] << 8) + buffer[22];
   if (rc == 0) { rc = 1027; }
-  if (rc != wide_port || !run) {
+  if (rc != wide_port || !atomic_load_explicit(&run, memory_order_acquire)) {
     wide_port = rc;
     t_print("GP: Wideband data snd       port is  %4d\n", rc);
   }
   rc = buffer[23];
-  if (rc != wide_enable || !run) {
+  if (rc != wide_enable || !atomic_load_explicit(&run, memory_order_acquire)) {
     wide_enable = rc;
     t_print("GP: Wideband Enable Flag is %d\n", rc);
   }
   rc = (buffer[24] << 8) + buffer[25];
   if (rc == 0) { rc = 512; }
-  if (rc != wide_len || !run) {
+  if (rc != wide_len || !atomic_load_explicit(&run, memory_order_acquire)) {
     wide_len = rc;
     t_print("GP: WideBand Length is %d\n", rc);
   }
   rc = buffer[26];
   if (rc == 0) { rc = 16; }
-  if (rc != wide_size || !run) {
+  if (rc != wide_size || !atomic_load_explicit(&run, memory_order_acquire)) {
     wide_size = rc;
     t_print("GP: Wideband sample size is %d\n", rc);
   }
   rc = buffer[27];
-  if (rc != wide_rate || !run) {
+  if (rc != wide_rate || !atomic_load_explicit(&run, memory_order_acquire)) {
     wide_rate = rc;
     t_print("GP: Wideband sample rate is %d\n", rc);
   }
   rc = buffer[28];
-  if (rc != wide_ppf || !run) {
+  if (rc != wide_ppf || !atomic_load_explicit(&run, memory_order_acquire)) {
     wide_ppf = rc;
     t_print("GP: Wideband PPF is %d\n", rc);
   }
   rc = (buffer[29] << 8) + buffer[30];
-  if (rc != port_mm || !run) {
+  if (rc != port_mm || !atomic_load_explicit(&run, memory_order_acquire)) {
     port_mm = rc;
     t_print("GP: MemMapped Registers rcv port is %d\n", rc);
   }
   rc = (buffer[31] << 8) + buffer[32];
-  if (rc != port_smm || !run) {
+  if (rc != port_smm || !atomic_load_explicit(&run, memory_order_acquire)) {
     port_smm = rc;
     t_print("GP: MemMapped Registers snd port is %d\n", rc);
   }
   rc = (buffer[33] << 8) + buffer[34];
-  if (rc != pwm_min || !run) {
+  if (rc != pwm_min || !atomic_load_explicit(&run, memory_order_acquire)) {
     pwm_min = rc;
     t_print("GP: PWM Min value is %d\n", rc);
   }
   rc = (buffer[35] << 8) + buffer[36];
-  if (rc != pwm_max || !run) {
+  if (rc != pwm_max || !atomic_load_explicit(&run, memory_order_acquire)) {
     pwm_max = rc;
     t_print("GP: PWM Max value is %d\n", rc);
   }
   rc = buffer[37];
-  if (rc != bits || !run) {
+  if (rc != bits || !atomic_load_explicit(&run, memory_order_acquire)) {
     bits = rc;
     t_print("GP: ModeBits=x%02x\n", rc);
   }
   rc = buffer[38];
-  if (rc != hwtim || !run) {
+  if (rc != hwtim || !atomic_load_explicit(&run, memory_order_acquire)) {
     hwtim = rc;
     t_print("GP: Hardware Watchdog enabled=%d\n", rc);
   }
@@ -303,17 +305,17 @@ void new_protocol_general_packet(unsigned char *buffer) {
   if (iqform == 0) { iqform = 3; }
   if (iqform != 3) { t_print("GP: Wrong IQ Format requested: %d\n", iqform); }
   rc = (buffer[58] & 0x01);
-  if (rc != pa_enable || !run) {
+  if (rc != pa_enable || !atomic_load_explicit(&run, memory_order_acquire)) {
     pa_enable = rc;
     t_print("GP: PA enabled=%d\n", rc);
   }
   rc = buffer[59] & 0x01;
-  if (rc != alex0_enable || !run) {
+  if (rc != alex0_enable || !atomic_load_explicit(&run, memory_order_acquire)) {
     alex0_enable = rc;
     t_print("GP: ALEX0 register enable=%d\n", rc);
   }
   rc = (buffer[59] & 0x02) >> 1;
-  if (rc != alex1_enable || !run) {
+  if (rc != alex1_enable || !atomic_load_explicit(&run, memory_order_acquire)) {
     alex1_enable = rc;
     t_print("GP: ALEX1 register enable=%d\n", rc);
   }
@@ -321,11 +323,13 @@ void new_protocol_general_packet(unsigned char *buffer) {
   // Start HighPrio thread if we arrive here for the first time
   // The HighPrio thread keeps running all the time.
   //
-  if (!highprio_thread_id) {
+  int expected = 0;
+  if (atomic_compare_exchange_strong_explicit(&highprio_active, &expected, 1,
+      memory_order_acq_rel, memory_order_acquire)) {
     int thread_rc = pthread_create(&highprio_thread_id, NULL, highprio_thread, NULL);
     if (thread_rc != 0) {
       t_print("***** ERROR: Create HighPrio thread: %s\n", strerror(thread_rc));
-      highprio_thread_id = 0;
+      atomic_store_explicit(&highprio_active, 0, memory_order_release);
       return;
     }
     pthread_detach(highprio_thread_id);
@@ -372,9 +376,9 @@ void *ddc_specific_thread(void *data) {
     close(sock);
     return NULL;
   }
-  watchdog_count = 0;
+  atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
   seqnum = 0;
-  while (run) {
+  while (atomic_load_explicit(&run, memory_order_acquire)) {
     rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr *)&addr, &lenaddr);
     if (rc < 0 && errno != EAGAIN) {
       t_perror("***** ERROR: DDC specific thread: recvmsg");
@@ -488,7 +492,7 @@ void *duc_specific_thread(void *data) {
     return NULL;
   }
   seqnum = 0;
-  while (run) {
+  while (atomic_load_explicit(&run, memory_order_acquire)) {
     rc = recvfrom(sock, buffer, 60, 0, (struct sockaddr *)&addr, &lenaddr);
     if (rc < 0 && errno != EAGAIN) {
       t_perror("***** ERROR: TXspec: recvmsg");
@@ -499,7 +503,7 @@ void *duc_specific_thread(void *data) {
       t_print("TX: wrong length\n");
       break;
     }
-    watchdog_count = 0;
+    atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
     seqold = seqnum;
     seqnum = (buffer[0] >> 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
 #ifdef DUC_SPEC_PACKETLIST
@@ -656,7 +660,7 @@ void *highprio_thread(void *data) {
   while (1) {
     //
     rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr *)&addr, &lenaddr);
-    if (watchdog_count > 5000) {
+    if (atomic_load_explicit(&watchdog_count, memory_order_relaxed) > 5000) {
       t_print("HP: watchdog barked\n");
       break;
     }
@@ -669,7 +673,7 @@ void *highprio_thread(void *data) {
       t_print("Received HighPrio packet with incorrect length %d\n", rc);
       break;
     }
-    watchdog_count = 0;
+    atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
     hp_mod = 0;
     seqold = seqnum;
     seqnum = (buffer[0] >> 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
@@ -680,35 +684,49 @@ void *highprio_thread(void *data) {
       t_print("HP: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
     }
     rc = (buffer[4] >> 0) & 0x01;
-    if (rc != run) {
-      run = rc;
+    if (rc != atomic_load_explicit(&run, memory_order_acquire)) {
+      atomic_store_explicit(&run, rc, memory_order_release);
       hp_mod = 1;
       txptr = -1;
       t_print("HP: Run=%d\n", rc);
       // if run=0, wait for threads to complete, otherwise spawn them off
-      if (run) {
+      if (atomic_load_explicit(&run, memory_order_acquire)) {
         if ((rc = pthread_create(&ddc_specific_thread_id, NULL, ddc_specific_thread, NULL)) != 0) {
           t_print("***** ERROR: Create DDC specific thread: %s\n", strerror(rc));
+        } else {
+          ddc_started = 1;
         }
         if ((rc = pthread_create(&duc_specific_thread_id, NULL, duc_specific_thread, NULL)) != 0) {
           t_print("***** ERROR: Create DUC specific thread: %s\n", strerror(rc));
+        } else {
+          duc_started = 1;
         }
         for (i = 0; i < NUMRECEIVERS; i++) {
           if ((rc = pthread_create(&rx_thread_id[i], NULL, rx_thread, (void *)(uintptr_t) i)) != 0) {
             t_print("***** ERROR: Create RX thread: %s\n", strerror(rc));
+          } else {
+            rx_started[i] = 1;
           }
         }
         if ((rc = pthread_create(&tx_thread_id, NULL, tx_thread, NULL)) != 0) {
           t_print("***** ERROR: Create TX thread: %s\n", strerror(rc));
+        } else {
+          tx_started = 1;
         }
         if ((rc = pthread_create(&send_highprio_thread_id, NULL, send_highprio_thread, NULL)) != 0) {
           t_print("***** ERROR: Create SendHighPrio thread: %s\n", strerror(rc));
+        } else {
+          send_hp_started = 1;
         }
         if ((rc = pthread_create(&mic_thread_id, NULL, mic_thread, NULL)) != 0) {
           t_print("***** ERROR: Create Mic thread: %s\n", strerror(rc));
+        } else {
+          mic_started = 1;
         }
         if ((rc = pthread_create(&audio_thread_id, NULL, audio_thread, NULL)) != 0) {
           t_print("***** ERROR: Create Audio thread: %s\n", strerror(rc));
+        } else {
+          audio_started = 1;
         }
       } else {
         // Clean-Up done below
@@ -856,21 +874,20 @@ void *highprio_thread(void *data) {
       t_print("HP-----------------------------------HP\n");
     }
   }
-  run = 0;
-  pthread_join(ddc_specific_thread_id, NULL);
-  pthread_join(duc_specific_thread_id, NULL);
+  atomic_store_explicit(&run, 0, memory_order_release);
+  if (ddc_started) { pthread_join(ddc_specific_thread_id, NULL); }
+  if (duc_started) { pthread_join(duc_specific_thread_id, NULL); }
   for (i = 0; i < NUMRECEIVERS; i++) {
-    pthread_join(rx_thread_id[i], NULL);
+    if (rx_started[i]) { pthread_join(rx_thread_id[i], NULL); }
   }
-  pthread_join(send_highprio_thread_id, NULL);
-  pthread_join(tx_thread_id, NULL);
-  pthread_join(mic_thread_id, NULL);
-  pthread_join(audio_thread_id, NULL);
+  if (send_hp_started) { pthread_join(send_highprio_thread_id, NULL); }
+  if (tx_started) { pthread_join(tx_thread_id, NULL); }
+  if (mic_started) { pthread_join(mic_thread_id, NULL); }
+  if (audio_started) { pthread_join(audio_thread_id, NULL); }
   t_print("HP thread terminating.\n");
-  watchdog_count = 0;
-  highprio_thread_id = 0;
+  atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
   close(sock);
-  highprio_thread_id = 0;
+  atomic_store_explicit(&highprio_active, 0, memory_order_release);
   return NULL;
 }
 
@@ -934,7 +951,7 @@ void *rx_thread(void *data) {
   clock_gettime(CLOCK_MONOTONIC, &tsdelay);
   rxptr = NEWRTXLEN / 2 - 8192;
   divptr = 0;
-  while (run) {
+  while (atomic_load_explicit(&run, memory_order_acquire)) {
     if (ddcenable[myddc] <= 0 || rxrate[myddc] == 0 || rxfreq[myddc] == 0) {
       usleep(5000);
       clock_gettime(CLOCK_MONOTONIC, &tsdelay);
@@ -1203,6 +1220,13 @@ void *tx_thread(void *data) {
   int yes = 1;
   int rc;
   int i;
+  int ddc_started = 0;
+  int duc_started = 0;
+  int rx_started[NUMRECEIVERS] = {0};
+  int tx_started = 0;
+  int send_hp_started = 0;
+  int mic_started = 0;
+  int audio_started = 0;
   unsigned char *p;
   int samp1, samp2;
   double di, dq;
@@ -1233,7 +1257,7 @@ void *tx_thread(void *data) {
     return NULL;
   }
   seqnum = 0;
-  while (run) {
+  while (atomic_load_explicit(&run, memory_order_acquire)) {
     rc = recvfrom(sock, buffer, 1444, 0, (struct sockaddr *)&addr, &lenaddr);
     if (rc < 0 && errno != EAGAIN) {
       t_perror("***** ERROR: TX thread: recvmsg");
@@ -1244,7 +1268,7 @@ void *tx_thread(void *data) {
       t_print("Received TX packet with incorrect length");
       break;
     }
-    watchdog_count = 0;
+    atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
     seqold = seqnum;
     seqnum = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
     if (seqnum != 0 && seqnum != seqold + 1) {
@@ -1361,7 +1385,7 @@ void *send_highprio_thread(void *data) {
   seqnum = 0;
   clock_gettime(CLOCK_MONOTONIC, &tsdelay);
   while (1) {
-    if (!run) {
+    if (!atomic_load_explicit(&run, memory_order_acquire)) {
       close(sock);
       break;
     }
@@ -1506,9 +1530,9 @@ void *audio_thread(void *data) {
     return NULL;
   }
   seqnum = 0;
-  while (run) {
+  while (atomic_load_explicit(&run, memory_order_acquire)) {
     rc = recvfrom(sock, buffer, 260, 0, (struct sockaddr *)&addr, &lenaddr);
-    watchdog_count++;
+    atomic_fetch_add_explicit(&watchdog_count, 1, memory_order_relaxed);
     if (rc < 0 && errno != EAGAIN) {
       t_perror("***** ERROR: Audio thread: recvmsg");
       break;
@@ -1518,7 +1542,7 @@ void *audio_thread(void *data) {
       t_print("Received Audio packet with incorrect length");
       break;
     }
-    watchdog_count = 0;
+    atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
     seqold = seqnum;
     seqnum = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
     if (seqnum != 0 && seqnum != seqold + 1) {
@@ -1560,7 +1584,7 @@ void *mic_thread(void *data) {
   }
   memset(buffer, 0, 132);
   clock_gettime(CLOCK_MONOTONIC, &delay);
-  while (run) {
+  while (atomic_load_explicit(&run, memory_order_acquire)) {
     // update seq number
     p = buffer;
     *p++ = (seqnum >> 24) & 0xFF;
