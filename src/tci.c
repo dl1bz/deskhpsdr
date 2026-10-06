@@ -93,7 +93,7 @@ enum OpCode {
 };
 
 static GThread *tci_server_thread_id = NULL;
-static gint g_atomic_int_set(&tci_running, 0);
+static gint tci_running = 0;
 static struct lws_context *tci_lws_context = NULL;
 static int tci_lws_seq = 0;
 static int tci_lws_pending_writable = 0;
