@@ -58,9 +58,6 @@ extern int sertune_fd;
 #if defined (__AUTOG__)
   extern void launch_autogain_hl2 (void);
   extern void restart_autogain_hl2 (void);
-  extern volatile int autogain_thread_running;
-  extern pthread_t autogain_thread;
-  extern pthread_mutex_t autogain_mutex;
 #endif
 extern void launch_rx200_monitor (void);
 extern void stop_rx200_monitor (void);

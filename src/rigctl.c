@@ -128,7 +128,8 @@ static gint sertune_thread_failed = 0;
 #if defined (__AUTOG__)
   pthread_t autogain_thread;
   pthread_mutex_t autogain_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
-  volatile int autogain_thread_running = 0;
+  static pthread_mutex_t autogain_lifecycle_mutex = PTHREAD_MUTEX_INITIALIZER;
+  static gint autogain_thread_running = 0;
 #endif
 
 // Portnummer für die UDP Listener -> move to radio.c
@@ -584,7 +585,7 @@ static void *autogain_thread_function(void *arg) {
   This function needs more fine adjustment, not all is completed yet
   */
   clock_gettime(CLOCK_MONOTONIC, &start_time);              // get start time
-  while (1) {
+  while (g_atomic_int_get(&autogain_thread_running)) {
     clock_gettime(CLOCK_MONOTONIC, &current_time);          // get currect time
     elapsed_time = current_time.tv_sec - start_time.tv_sec; // calculate time difference in s
     if (elapsed_time > 10 && autogain_first_run) {          // set a delay of 10s
@@ -614,7 +615,8 @@ static void *autogain_thread_function(void *arg) {
         autogain_is_adjusted = 0;
         pthread_mutex_unlock(&autogain_mutex);
         g_idle_add(ext_vfo_update, NULL);
-        while (!radio_is_transmitting() && !radio_ptt && adc0_p_ovl && gain > min_gain) {
+        while (g_atomic_int_get(&autogain_thread_running) &&
+               !radio_is_transmitting() && !radio_ptt && adc0_p_ovl && gain > min_gain) {
           gain -= gain_step; // decrease gain with gain_step
           if (gain < min_gain) {
             gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
@@ -627,7 +629,8 @@ static void *autogain_thread_function(void *arg) {
         t_print("%s: RxPGA[RX%d] re-adjusted, new RxPGA gain is %+ddb\n", __func__, active_receiver->id, (int) gain);
       }
       if (!radio_is_transmitting() && !radio_ptt && adc1_error_count >= adc_count_limit && !autogain_first_run) {
-        while (!radio_is_transmitting() && !radio_ptt && adc1_p_ovl && gain > min_gain) {
+        while (g_atomic_int_get(&autogain_thread_running) &&
+               !radio_is_transmitting() && !radio_ptt && adc1_p_ovl && gain > min_gain) {
           gain -= gain_step; // decrease gain with gain_step
           if (gain < min_gain) {
             gain = min_gain;  // Sicherstellen, dass GAIN nicht kleiner MIN_GAIN
@@ -639,7 +642,8 @@ static void *autogain_thread_function(void *arg) {
         }
       }
       if (!radio_is_transmitting() && !radio_ptt && !adc0_p_ovl && !autogain_is_adjusted && !autogain_first_run) {
-        while (!radio_is_transmitting() && !radio_ptt && !adc0_p_ovl && gain >= min_gain && gain < max_gain) {
+        while (g_atomic_int_get(&autogain_thread_running) &&
+               !radio_is_transmitting() && !radio_ptt && !adc0_p_ovl && gain >= min_gain && gain < max_gain) {
           gain += 1.0;                                  // increase gain +1db
           pthread_mutex_lock(&autogain_mutex);
           set_rf_gain(active_receiver->id, gain);       // set gain
@@ -669,44 +673,63 @@ static void *autogain_thread_function(void *arg) {
   return NULL;
 }
 
-void launch_autogain_hl2(void) {
-  if (device == DEVICE_HERMES_LITE2) {
-    if (autogain_enabled) {
-      if (!autogain_thread_running) {
-        autogain_thread_running = 1;
-        if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
-          t_print("%s: ERROR cannot start autogain_thread\n", __func__);
-        } else {
-          t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
-        }
-      }
-    } else {
-      if (autogain_thread_running) {
-        autogain_thread_running = 0;           // Stop-Signal setzen
-        // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten
-        pthread_cancel(autogain_thread);
-        t_print("---- Shutdown HL2 AutoGain Thread ----\n");
-      }
-    }
+static void stop_autogain_hl2_locked(void) {
+  if (g_atomic_int_get(&autogain_thread_running)) {
+    g_atomic_int_set(&autogain_thread_running, 0);
+    pthread_join(autogain_thread, NULL);
   }
 }
 
-void restart_autogain_hl2(void) {
-  if (device == DEVICE_HERMES_LITE2) {
-    if (autogain_thread_running) {
-      autogain_thread_running = 0;           // Stop-Signal setzen
-      // pthread_join(autogain_thread, NULL);   // Auf sauberen Thread-Exit warten
-      pthread_cancel(autogain_thread);
-      t_print("---- Stop HL2 AutoGain Thread ----\n");
-    }
-    autogain_thread_running = 1;             // Neustart vorbereiten
-    if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
-      autogain_thread_running = 0;
-      t_print("%s: ERROR cannot start autogain_thread\n", __func__);
-    } else {
-      t_print("---- Restart HL2 AutoGain Thread ----\n");
-    }
+void launch_autogain_hl2(void) {
+  if (device != DEVICE_HERMES_LITE2) {
+    return;
   }
+  pthread_mutex_lock(&autogain_lifecycle_mutex);
+  if (!autogain_enabled) {
+    if (g_atomic_int_get(&autogain_thread_running)) {
+      stop_autogain_hl2_locked();
+      t_print("---- Shutdown HL2 AutoGain Thread ----\n");
+    }
+    pthread_mutex_unlock(&autogain_lifecycle_mutex);
+    return;
+  }
+  if (g_atomic_int_get(&autogain_thread_running)) {
+    pthread_mutex_unlock(&autogain_lifecycle_mutex);
+    return;
+  }
+  g_atomic_int_set(&autogain_thread_running, 1);
+  if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
+    g_atomic_int_set(&autogain_thread_running, 0);
+    t_print("%s: ERROR cannot start autogain_thread\n", __func__);
+    pthread_mutex_unlock(&autogain_lifecycle_mutex);
+    return;
+  }
+  t_print("---- LAUNCHING HL2 AutoGain Thread ----\n");
+  pthread_mutex_unlock(&autogain_lifecycle_mutex);
+}
+
+void restart_autogain_hl2(void) {
+  if (device != DEVICE_HERMES_LITE2) {
+    return;
+  }
+  pthread_mutex_lock(&autogain_lifecycle_mutex);
+  if (g_atomic_int_get(&autogain_thread_running)) {
+    stop_autogain_hl2_locked();
+    t_print("---- Stop HL2 AutoGain Thread ----\n");
+  }
+  if (!autogain_enabled) {
+    pthread_mutex_unlock(&autogain_lifecycle_mutex);
+    return;
+  }
+  g_atomic_int_set(&autogain_thread_running, 1);
+  if (pthread_create(&autogain_thread, NULL, autogain_thread_function, NULL) != 0) {
+    g_atomic_int_set(&autogain_thread_running, 0);
+    t_print("%s: ERROR cannot start autogain_thread\n", __func__);
+    pthread_mutex_unlock(&autogain_lifecycle_mutex);
+    return;
+  }
+  t_print("---- Restart HL2 AutoGain Thread ----\n");
+  pthread_mutex_unlock(&autogain_lifecycle_mutex);
 }
 
 #endif
