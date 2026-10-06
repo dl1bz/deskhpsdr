@@ -221,7 +221,7 @@ int *kdot;
 int *kdash;
 int *kmemr;
 int *kmeml;
-static int running = 0;
+static gint running = 0;
 #ifdef __APPLE__
   static sem_t *cw_event;
 #else
@@ -267,9 +267,9 @@ void keyer_update(void) {
     kmemr = &dash_memory;
   }
   if (cw_keyer_internal == 0) {
-    if (!running) { keyer_init(); }
+    if (!g_atomic_int_get(&running)) { keyer_init(); }
   } else {
-    if (running) { keyer_close(); }
+    if (g_atomic_int_get(&running)) { keyer_close(); }
   }
 }
 
@@ -286,7 +286,7 @@ static int enforce_cw_vox;
 
 void keyer_event(int left, int state) {
   //t_print("%s: running=%d left=%d state=%d\n",__func__,running,left,state);
-  if (!running) { return; }
+  if (!g_atomic_int_get(&running)) { return; }
   if (state) {
     // This is to remember whether the key stroke interrupts a running CAT CW
     // Since in this case we return to RX after vox delay.
@@ -311,7 +311,7 @@ void keyer_event(int left, int state) {
 }
 
 void keyer_straight_event(int state) {
-  if (!running) { return; }
+  if (!g_atomic_int_get(&running)) { return; }
   if (state && CAT_cw_is_active) { enforce_cw_vox = 1; }
   external_straight_key = state;
   if (state) {
@@ -331,8 +331,8 @@ static void *keyer_thread(void *arg) {
   int txmode;
   int moxbefore;
   int cwvox;
-  t_print("keyer_thread  state running= %d\n", running);
-  while (running) {
+  t_print("keyer_thread  state running= %d\n", g_atomic_int_get(&running));
+  while (g_atomic_int_get(&running)) {
     enforce_cw_vox = 0;
 #ifdef __APPLE__
     if (sem_wait_nointr(cw_event) != 0) { continue; }
@@ -579,7 +579,7 @@ static void *keyer_thread(void *arg) {
 void keyer_close(void) {
   t_print(".... closing keyer thread.\n");
   external_straight_key = 0;
-  running = 0;
+  g_atomic_int_set(&running, 0);
   // keyer thread may be sleeping, so wake it up
 #ifdef __APPLE__
   sem_post(cw_event);
@@ -610,11 +610,11 @@ int keyer_init(void) {
     return -1;
   }
 #endif
-  running = 1;
+  g_atomic_int_set(&running, 1);
   rc = pthread_create(&keyer_thread_id, NULL, keyer_thread, NULL);
   if (rc != 0) {
     t_print("%s: pthread_create failed: %s\n", __func__, strerror(rc));
-    running = 0;
+    g_atomic_int_set(&running, 0);
 #ifdef __APPLE__
     sem_close(cw_event);
 #else
