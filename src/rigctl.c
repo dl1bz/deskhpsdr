@@ -147,6 +147,8 @@ static gint lpf_listener_stop = 0;
 
 static pthread_t rigctld_thread;
 static pthread_mutex_t rigctld_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
+static gint rigctld_thread_started = 0;
+static gint rigctld_thread_stop = 0;
 static pid_t rigctld_pid = 0;
 extern char **environ;  // wird von posix_spawnp benötigt
 
@@ -1173,7 +1175,7 @@ void stop_rigctld(void) {
 }
 
 static void *rigctld_control_thread(void *arg) {
-  while (1) {
+  while (!g_atomic_int_get(&rigctld_thread_stop)) {
     pthread_mutex_lock(&rigctld_mutex);
     int enabled = rigctld_enabled;
     pthread_mutex_unlock(&rigctld_mutex);
@@ -1182,7 +1184,12 @@ static void *rigctld_control_thread(void *arg) {
     } else if (!enabled && rigctld_pid != 0) {
       stop_rigctld();
     }
-    sleep(1);  // Sekündlich prüfen
+    for (int i = 0; i < 10 && !g_atomic_int_get(&rigctld_thread_stop); i++) {
+      g_usleep(100000);
+    }
+  }
+  if (rigctld_pid != 0) {
+    stop_rigctld();
   }
   return NULL;
 }
@@ -1221,14 +1228,18 @@ void stop_rx200_monitor(void) {
 
 // Funktion zum Starten des Steuer-Threads
 void launch_rigctld_monitor(void) {
-  if (use_rigctld) {
-    t_print("---- LAUNCHING RIGCTLD SERVER ----\n", __func__);
-    if (pthread_create(&rigctld_thread, NULL, rigctld_control_thread, NULL) != 0) {
-      t_perror("ERROR: cannot start rigctld thread\n");
-      // exit(EXIT_FAILURE);
-    }
-    pthread_detach(rigctld_thread);
+  int rc;
+  if (!use_rigctld || g_atomic_int_get(&rigctld_thread_started)) {
+    return;
   }
+  t_print("---- LAUNCHING RIGCTLD SERVER ----\n");
+  g_atomic_int_set(&rigctld_thread_stop, 0);
+  rc = pthread_create(&rigctld_thread, NULL, rigctld_control_thread, NULL);
+  if (rc != 0) {
+    t_print("%s: ERROR cannot start rigctld thread: %s\n", __func__, strerror(rc));
+    return;
+  }
+  g_atomic_int_set(&rigctld_thread_started, 1);
 }
 
 void launch_lpf_monitor(void) {
@@ -1270,6 +1281,11 @@ void shutdown_tcp_rigctl(void) {
   t_print("%s: server_socket=%d\n", __func__, server_socket);
   tcp_running = 0;
   rigctld_enabled = 0;
+  if (g_atomic_int_get(&rigctld_thread_started)) {
+    g_atomic_int_set(&rigctld_thread_stop, 1);
+    pthread_join(rigctld_thread, NULL);
+    g_atomic_int_set(&rigctld_thread_started, 0);
+  }
   //
   // Gracefully terminate all active TCP connections
   //
