@@ -424,8 +424,8 @@ static gpointer cw_engine_thread(gpointer data) {
       dotsamples = 57600 / cw_keyer_speed;
       dashsamples = (3456 * cw_keyer_weight) / cw_keyer_speed;
     }
-    int start_new_tx = !CAT_cw_is_active;
-    CAT_cw_is_active = 1;
+    int start_new_tx = !atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire);
+    atomic_store_explicit(&CAT_cw_is_active, 1, memory_order_release);
     schedule_transmit_specific();
     if (!mox) {
       // activate PTT
@@ -438,7 +438,7 @@ static gpointer cw_engine_thread(gpointer data) {
       while ((!mox || cw_not_ready) && i-- > 0) { usleep(1000L); }
       // still no MOX? --> silently discard CW character and give up
       if (!mox) {
-        CAT_cw_is_active = 0;
+        atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
         schedule_transmit_specific();
         continue;
       }
@@ -456,7 +456,7 @@ static gpointer cw_engine_thread(gpointer data) {
       // Do not remove PTT in the latter case
       g_atomic_int_set(&cw_engine_buffered_speed, 0);
       g_atomic_int_set(&cw_engine_start_delay_done, 0);
-      CAT_cw_is_active = 0;
+      atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
       schedule_transmit_specific();
       // If a CW key has been hit, we continue in TX mode.
       // This also applies if we have an active foot-switch
@@ -487,7 +487,7 @@ static gpointer cw_engine_thread(gpointer data) {
         g_atomic_int_set(&join_cw_characters, 0);
         cw_engine_clear();
         g_atomic_int_set(&cw_engine_start_delay_done, 0);
-        CAT_cw_is_active = 0;
+        atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
         schedule_transmit_specific();
         if (!cw_key_hit && mox && !radio_ptt) {
           g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
@@ -514,7 +514,7 @@ static gpointer cw_engine_thread(gpointer data) {
       if (g_atomic_int_get(&cw_engine_terminal)) {
         continue;
       }
-      CAT_cw_is_active = 0;
+      atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
       g_atomic_int_set(&cw_engine_start_delay_done, 0);
       schedule_transmit_specific();
       if (!cw_key_hit && !radio_ptt) {
@@ -532,8 +532,8 @@ static gpointer cw_engine_thread(gpointer data) {
   // This very rarely happens. But we should shut down the
   // local CW system gracefully, in case we were in the mid
   // of a transmission
-  if (CAT_cw_is_active) {
-    CAT_cw_is_active = 0;
+  if (atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) {
+    atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
     g_atomic_int_set(&cw_engine_start_delay_done, 0);
     schedule_transmit_specific();
     g_idle_add(ext_mox_update, GINT_TO_POINTER(0));
@@ -566,8 +566,9 @@ void cw_engine_set_terminal(int enabled) {
   g_mutex_lock(&cw_buf_mutex);
   int buffer_empty = (cw_buf_in == cw_buf_out);
   g_mutex_unlock(&cw_buf_mutex);
-  if (!g_atomic_int_get(&cw_engine_terminal) && buffer_empty && CAT_cw_is_active) {
-    CAT_cw_is_active = 0;
+  if (!g_atomic_int_get(&cw_engine_terminal) && buffer_empty &&
+      atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) {
+    atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
     g_atomic_int_set(&cw_engine_start_delay_done, 0);
     schedule_transmit_specific();
     if (!cw_key_hit && mox && !radio_ptt) {

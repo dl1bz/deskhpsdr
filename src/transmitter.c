@@ -1540,7 +1540,7 @@ int tx_get_monitor_post(void) {
 static int tx_monitor_allowed(TRANSMITTER *tx, int txmode) {
   return atomic_load_explicit(&mon_enabled, memory_order_relaxed) &&
          radio_is_transmitting() && !tune && !tx->twotone && !tx->noise &&
-         txmode != modeCWU && txmode != modeCWL && !CAT_rtty_is_active &&
+         txmode != modeCWU && txmode != modeCWL && !atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) &&
          !tci_audio_tx_enabled();
 }
 
@@ -1763,7 +1763,8 @@ static void tx_full_buffer(TRANSMITTER *tx) {
       tx_monitor_processed_output(tx, txmode);
     }
   }
-  if (tx->displaying && !(tx->puresignal && tx->feedback) && !CAT_rtty_is_active) {
+  if (tx->displaying && !(tx->puresignal && tx->feedback) &&
+      !atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire)) {
     g_mutex_lock(&tx->display_mutex);
     Spectrum0(1, tx->id, 0, 0, tx->iq_output_buffer);
     g_mutex_unlock(&tx->display_mutex);
@@ -1794,7 +1795,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     //
     //  Note that the CW shape buffer is tied to the mic sample rate (48 kHz).
     //
-    if (CAT_rtty_is_active) {
+    if (atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire)) {
       /*
        * Native RTTY: ITA2 timing and continuous-phase MARK/SPACE FSK are
        * generated sample-accurately in rtty_engine, bypassing WDSP audio.
@@ -1855,7 +1856,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         // Apply a minimum side tone volume for CAT CW messages.
         //
         int vol = cw_keyer_sidetone_volume;
-        if (vol == 0 && CAT_cw_is_active) { vol = 12; }
+        if (vol == 0 && atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) { vol = 12; }
         double sidevol = 64.0 * vol; // between 0.0 and 8128.0
         for (j = 0; j < tx->output_samples; j++) {
           double ramp = tx->cw_sig_rf[j];       // between 0.0 and 1.0
@@ -2054,7 +2055,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
       }
       // Apply a minimum side tone volume for CAT CW messages.
       int vol = cw_keyer_sidetone_volume;
-      if (vol == 0 && CAT_cw_is_active) { vol = 12; }
+      if (vol == 0 && atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) { vol = 12; }
       cwsample = 0.00196 * vol * val * sine_generator(&p1local, &p2local, cw_keyer_sidetone_frequency);
       g_mutex_unlock(&tx->cw_ramp_mutex);
     } else {
@@ -2091,7 +2092,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, float mic_sample) {
       // has the same volume than a FGPA-generated one.
       // Note cwsample = 0.00196 * level = 0.0 ... 0.25
       //
-      if (!cw_keyer_internal || CAT_cw_is_active) {
+      if (!cw_keyer_internal || atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) {
         if (device == NEW_DEVICE_SATURN) {
           //
           // This comes from an analysis of the G2 sidetone

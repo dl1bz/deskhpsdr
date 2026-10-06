@@ -290,7 +290,7 @@ void keyer_event(int left, int state) {
   if (state) {
     // This is to remember whether the key stroke interrupts a running CAT CW
     // Since in this case we return to RX after vox delay.
-    if (CAT_cw_is_active) { enforce_cw_vox = 1; }
+    if (atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) { enforce_cw_vox = 1; }
   }
   if (left) {
     // left paddle hit or released
@@ -312,7 +312,7 @@ void keyer_event(int left, int state) {
 
 void keyer_straight_event(int state) {
   if (!g_atomic_int_get(&running)) { return; }
-  if (state && CAT_cw_is_active) { enforce_cw_vox = 1; }
+  if (state && atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) { enforce_cw_vox = 1; }
   external_straight_key = state;
   if (state) {
 #ifdef __APPLE__

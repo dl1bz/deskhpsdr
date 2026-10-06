@@ -1485,9 +1485,9 @@ static long long new_protocol_tci_afsk_tx_offset(int xmit, int txmode) {
   /*
    * Native RTTY bypasses TCI audio, but it must use exactly the same DIGL/DIGU
    * RF reference shift as the proven AFSK path.  Therefore the offset remains
-   * active while CAT_rtty_is_active even though tci_audio_tx_enabled() is false.
+   * active while atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) even though tci_audio_tx_enabled() is false.
    */
-  if (!CAT_rtty_is_active && !tci_audio_tx_enabled()) {
+  if (!atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) && !tci_audio_tx_enabled()) {
     return 0LL;
   }
   switch (txmode) {
@@ -1553,8 +1553,8 @@ static void new_protocol_high_priority(void) {
       // radio reports a PTT signal, since only then we can use
       // a foot-switch to extend the TX time in a rag-chew QSO
       //
-      if (tune || CAT_cw_is_active
-          || MIDI_cw_is_active
+      if (tune || atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)
+          || atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire)
           || !cw_keyer_internal
           || transmitter->twotone
           || transmitter->noise
@@ -2235,8 +2235,8 @@ static void new_protocol_transmit_specific(void) {
   transmit_specific_buffer[4] = 1; // 1 DAC
   transmit_specific_buffer[5] = 0; //  default no CW
   if ((txmode == modeCWU || txmode == modeCWL) && cw_keyer_internal
-      && !CAT_cw_is_active
-      && !MIDI_cw_is_active) {
+      && !atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)
+      && !atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire)) {
     //
     // Set this byte only if in CW, and if using "CW handled in radio"
     //
@@ -3704,9 +3704,10 @@ static void process_high_priority(void) {
     // If currently a CAT or Keyer CW transmission is running,
     // clear CAT/MIDI_cw_is_active to re-enable "CW handled in radio"
     //
-    if (CAT_cw_is_active || MIDI_cw_is_active) {
-      CAT_cw_is_active = 0;
-      MIDI_cw_is_active = 0;
+    if (atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire) ||
+        atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire)) {
+      atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
+      atomic_store_explicit(&MIDI_cw_is_active, 0, memory_order_release);
       new_protocol_transmit_specific();
     }
     cw_key_hit = 1;

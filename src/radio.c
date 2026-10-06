@@ -559,9 +559,9 @@ int vox_enabled = 0;
 double vox_threshold = 0.001;
 double vox_hang = 250.0;
 _Atomic int vox = 0;
-int CAT_cw_is_active = 0;
-int CAT_rtty_is_active = 0;
-int MIDI_cw_is_active = 0;
+atomic_int CAT_cw_is_active = 0;
+atomic_int CAT_rtty_is_active = 0;
+atomic_int MIDI_cw_is_active = 0;
 int radio_ptt = 0;
 int cw_key_hit = 0;
 int n_adc = 1;
@@ -2326,7 +2326,7 @@ static void radio_graceful_mox_off_complete(void) {
 void radio_set_mox(int state) {
   if (!can_transmit) { return; }
   if (state && radio_get_tx_inhibit()) { return; }
-  if (!state && CAT_rtty_is_active) {
+  if (!state && atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire)) {
     /* Manual/foreign MOX OFF aborts native RTTY immediately. */
     rtty_engine_abort();
     return;

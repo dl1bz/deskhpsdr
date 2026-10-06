@@ -474,7 +474,7 @@ void schedule_action(enum ACTION action, enum ACTION_MODE mode, int val) {
     // intended for external keyers (MIDI or GPIO connected)
     // which take care of PTT themselves.
     //
-    if (mode == PRESSED && (!cw_keyer_internal || MIDI_cw_is_active)) {
+    if (mode == PRESSED && (!cw_keyer_internal || atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire))) {
       cw_key_down = 960000; // max. 20 sec to protect hardware
       cw_key_up = 0;
       cw_key_hit = 1;
@@ -2184,13 +2184,14 @@ int process_action(void *data) {
     //
     switch (a->mode) {
     case PRESSED:
-      MIDI_cw_is_active = 1;         // disable "CW handled in radio"
+      atomic_store_explicit(&MIDI_cw_is_active, 1, memory_order_release);         // disable "CW handled in radio"
       cw_key_hit = 1;                // this tells rigctl to abort CAT CW
       schedule_transmit_specific();
       radio_mox_update(1);
       break;
     case RELEASED:
-      MIDI_cw_is_active = 0;         // enable "CW handled in radio", if it was selected
+      atomic_store_explicit(&MIDI_cw_is_active, 0,
+                            memory_order_release);         // enable "CW handled in radio", if it was selected
       schedule_transmit_specific();
       if (!radio_ptt) {
         radio_mox_update(0);

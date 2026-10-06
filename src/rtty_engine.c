@@ -264,7 +264,7 @@ static gboolean rtty_mox_on_cb(gpointer data) {
    * a TCI worker thread, so checking and keying must be one atomic operation
    * with respect to the RTTY lifecycle.
    */
-  if (generation == tx_generation && active && CAT_rtty_is_active && !mox) {
+  if (generation == tx_generation && active && atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) && !mox) {
     radio_set_mox(1);
   }
   g_mutex_unlock(&rtty_mutex);
@@ -278,14 +278,14 @@ static gboolean rtty_mox_off_cb(gpointer data) {
   /*
    * Ignore an OFF callback belonging to an older RTTY session.  Without this
    * guard a rapid abort/restart can let the old callback switch the new
-   * session back to RX and clear CAT_rtty_is_active underneath it.
+   * session back to RX and clear atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) underneath it.
    */
   if (generation != tx_generation) {
     g_mutex_unlock(&rtty_mutex);
     return G_SOURCE_REMOVE;
   }
   /*
-   * Keep CAT_rtty_is_active asserted until MOX is actually removed.  Otherwise
+   * Keep atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) asserted until MOX is actually removed.  Otherwise
    * transmitter.c can fall back to the normal DIGL/DIGU WDSP path for a short
    * interval between the sample-accurate MARK tail and this GTK idle callback.
    */
@@ -298,7 +298,7 @@ static gboolean rtty_mox_off_cb(gpointer data) {
   draining = 0;
   tx_phase = PHASE_IDLE;
   idle_samples = 0.0;
-  CAT_rtty_is_active = 0;
+  atomic_store_explicit(&CAT_rtty_is_active, 0, memory_order_release);
   g_mutex_unlock(&rtty_mutex);
   return G_SOURCE_REMOVE;
 }
@@ -365,7 +365,7 @@ static int rtty_engine_start_locked(void) {
   frame_bit = 0;
   encoder_shift = SHIFT_LTRS;
   q_in = q_out = 0;
-  CAT_rtty_is_active = 1;
+  atomic_store_explicit(&CAT_rtty_is_active, 1, memory_order_release);
   if (cfg_start_crlf) {
     queue_put(RTTY_CR);
     queue_put(RTTY_LF);
@@ -499,7 +499,7 @@ void rtty_engine_abort(void) {
   mark_samples = 0.0;
   idle_samples = 0.0;
   /*
-   * Keep CAT_rtty_is_active asserted until rtty_mox_off_cb() has actually
+   * Keep atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) asserted until rtty_mox_off_cb() has actually
    * removed MOX.  Otherwise tx_full_buffer() can briefly fall back to the
    * normal WDSP DIGL/DIGU path while the transmitter is still keyed.
    */
@@ -660,7 +660,7 @@ void rtty_engine_render_iq(double *iq, int frames, int sample_rate, int txmode) 
       if (mark_samples <= 0.0) {
         /*
          * Hold physical MARK until MOX is really removed by the main thread.
-         * Do not clear CAT_rtty_is_active here: transmitter.c uses it to keep
+         * Do not clear atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) here: transmitter.c uses it to keep
          * selecting the native-I/Q path.
          */
         tx_phase = PHASE_WAIT_RX;

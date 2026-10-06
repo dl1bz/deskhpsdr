@@ -1483,7 +1483,7 @@ static long long old_protocol_tci_afsk_tx_offset(int txmode) {
     return 0LL;
   }
   /* Keep the proven AFSK DIGL/DIGU RF reference shift for native RTTY too. */
-  if (!CAT_rtty_is_active && !tci_audio_tx_enabled()) {
+  if (!atomic_load_explicit(&CAT_rtty_is_active, memory_order_acquire) && !tci_audio_tx_enabled()) {
     return 0LL;
   }
   switch (txmode) {
@@ -1740,8 +1740,8 @@ static void process_control_bytes(void) {
   radio_dot  = (control_in[0] >> 2) & 0x01;
   // Stops CAT cw transmission if radio reports "CW action"
   if (radio_dash || radio_dot) {
-    CAT_cw_is_active = 0;
-    MIDI_cw_is_active = 0;
+    atomic_store_explicit(&CAT_cw_is_active, 0, memory_order_release);
+    atomic_store_explicit(&MIDI_cw_is_active, 0, memory_order_release);
     cw_key_hit = 1;
   }
   if (!cw_keyer_internal) {
@@ -2896,8 +2896,8 @@ void ozy_send_buffer(void) {
           && !transmitter->twotone
           && !transmitter->noise
           && cw_keyer_internal
-          && !MIDI_cw_is_active
-          && !CAT_cw_is_active) {
+          && !atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire)
+          && !atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)) {
         output_buffer[C1] |= 0x01;
       }
       //
@@ -3283,8 +3283,8 @@ if (radio_is_transmitting()) {
     //    However, if we are doing CAT CW, local CW or tuning/TwoTone,
     //    we must put the SDR into TX mode *here*.
     //
-    if (tune || CAT_cw_is_active
-        || MIDI_cw_is_active
+    if (tune || atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)
+        || atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire)
         || !cw_keyer_internal
         || transmitter->twotone
         || transmitter->noise
