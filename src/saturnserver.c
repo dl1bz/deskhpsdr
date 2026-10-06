@@ -154,6 +154,8 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
   Ptr->addr_cmddata.sin_port = htons(Ptr->Portid);
   if (bind(Ptr->Socketid, (struct sockaddr *) &Ptr->addr_cmddata, sizeof(struct sockaddr_in)) < 0) {
     t_perror("bind");
+    close(Ptr->Socketid);
+    Ptr->Socketid = -1;
     return EXIT_FAILURE;
   }
   struct sockaddr_in checkin;
@@ -259,7 +261,10 @@ void *saturn_server(void *arg) {
   //
   // create socket for incoming data on the command port
   //
-  MakeSocket(SocketData, 0);
+  if (MakeSocket(SocketData, 0) != 0) {
+    t_print("%s: cannot create command socket\n", __func__);
+    return NULL;
+  }
 #if defined(__linux__)
   //
   // get MAC address of ethernet adapter "eth0"
@@ -274,21 +279,30 @@ void *saturn_server(void *arg) {
   // Since this is intended to work on RaspPi only, just use fake addr.
   for (i = 0; i < 6; ++i) { DiscoveryReply[i + 5] = 0xAA; }
 #endif
-  MakeSocket(SocketData + VPORTDDCSPECIFIC, 0);          // create and bind a socket
+  if (MakeSocket(SocketData + VPORTDDCSPECIFIC, 0) != 0) {
+    t_print("%s: cannot create DDC specific socket\n", __func__);
+    return NULL;
+  }
   rc = pthread_create(&DDCSpecificThread, NULL, IncomingDDCSpecific, (void *) &SocketData[VPORTDDCSPECIFIC]);
   if (rc != 0) {
     t_print("%s: pthread_create DDC specific failed: %s\n", __func__, strerror(rc));
     return NULL;
   }
   pthread_detach(DDCSpecificThread);
-  MakeSocket(SocketData + VPORTDUCSPECIFIC, 0);          // create and bind a socket
+  if (MakeSocket(SocketData + VPORTDUCSPECIFIC, 0) != 0) {
+    t_print("%s: cannot create DUC specific socket\n", __func__);
+    return NULL;
+  }
   rc = pthread_create(&DUCSpecificThread, NULL, IncomingDUCSpecific, (void *) &SocketData[VPORTDUCSPECIFIC]);
   if (rc != 0) {
     t_print("%s: pthread_create DUC specific failed: %s\n", __func__, strerror(rc));
     return NULL;
   }
   pthread_detach(DUCSpecificThread);
-  MakeSocket(SocketData + VPORTHIGHPRIORITYTOSDR, 0);          // create and bind a socket
+  if (MakeSocket(SocketData + VPORTHIGHPRIORITYTOSDR, 0) != 0) {
+    t_print("%s: cannot create high priority socket\n", __func__);
+    return NULL;
+  }
   rc = pthread_create(&HighPriorityToSDRThread, NULL, IncomingHighPriority,
                       (void *) &SocketData[VPORTHIGHPRIORITYTOSDR]);
   if (rc != 0) {
@@ -296,7 +310,10 @@ void *saturn_server(void *arg) {
     return NULL;
   }
   pthread_detach(HighPriorityToSDRThread);
-  MakeSocket(SocketData + VPORTDUCIQ, 0);          // create and bind a socket
+  if (MakeSocket(SocketData + VPORTDUCIQ, 0) != 0) {
+    t_print("%s: cannot create DUC I/Q socket\n", __func__);
+    return NULL;
+  }
   rc = pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void *) &SocketData[VPORTDUCIQ]);
   if (rc != 0) {
     t_print("%s: pthread_create DUC I/Q failed: %s\n", __func__, strerror(rc));
@@ -322,16 +339,12 @@ void *saturn_server(void *arg) {
   //
   // create all the DDC sockets
   //
-  MakeSocket(SocketData + VPORTDDCIQ0, 0);
-  MakeSocket(SocketData + VPORTDDCIQ1, 1);
-  MakeSocket(SocketData + VPORTDDCIQ2, 2);
-  MakeSocket(SocketData + VPORTDDCIQ3, 3);
-  MakeSocket(SocketData + VPORTDDCIQ4, 4);
-  MakeSocket(SocketData + VPORTDDCIQ5, 5);
-  MakeSocket(SocketData + VPORTDDCIQ6, 6);
-  MakeSocket(SocketData + VPORTDDCIQ7, 7);
-  MakeSocket(SocketData + VPORTDDCIQ8, 8);
-  MakeSocket(SocketData + VPORTDDCIQ9, 9);
+  for (i = 0; i < 10; i++) {
+    if (MakeSocket(SocketData + VPORTDDCIQ0 + i, i) != 0) {
+      t_print("%s: cannot create DDC I/Q socket %d\n", __func__, i);
+      return NULL;
+    }
+  }
   //
   // now main processing loop. Process received Command packets arriving at port 1024
   // these are identified by the command byte (byte 4)
