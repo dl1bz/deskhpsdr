@@ -114,7 +114,8 @@ static void binaural_cb(GtkWidget *widget, gpointer data) {
 static void image_measure_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   RECEIVER *rx = receiver[id];
-  rx->image_measure = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  atomic_store_explicit(&rx->image_measure, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)),
+                        memory_order_relaxed);
 }
 
 static void image_measure_hz_cb(GtkWidget *widget, gpointer data) {
@@ -136,13 +137,13 @@ static void rx_iq_set_status(int id, const char *status) {
 static void rx_iq_gain_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   RECEIVER *rx = receiver[id];
-  rx->rx_iq_gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  atomic_store_explicit(&rx->rx_iq_gain, gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)), memory_order_relaxed);
 }
 
 static void rx_iq_phase_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
   RECEIVER *rx = receiver[id];
-  rx->rx_iq_phase = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  atomic_store_explicit(&rx->rx_iq_phase, gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)), memory_order_relaxed);
 }
 
 static void rx_iq_reset_cb(GtkWidget *widget, gpointer data) {
@@ -152,8 +153,8 @@ static void rx_iq_reset_cb(GtkWidget *widget, gpointer data) {
   if (id >= 0 && id < 2) {
     g_atomic_int_set(&rx_iq_auto_cancel[id], 1);
   }
-  rx->rx_iq_gain = 0.0;
-  rx->rx_iq_phase = 0.0;
+  atomic_store_explicit(&rx->rx_iq_gain, 0.0, memory_order_relaxed);
+  atomic_store_explicit(&rx->rx_iq_phase, 0.0, memory_order_relaxed);
   rx_iq_set_status(id, "Idle");
   if (id >= 0 && id < 2) {
     if (rx_iq_gain_spin[id] != NULL) {
@@ -175,8 +176,8 @@ static gboolean rx_iq_auto_finish_cb(gpointer data) {
   id = result->id;
   if (id >= 0 && id < 2) {
     if (result->apply && id < receivers && receiver[id] != NULL) {
-      receiver[id]->rx_iq_gain = result->gain;
-      receiver[id]->rx_iq_phase = result->phase;
+      atomic_store_explicit(&receiver[id]->rx_iq_gain, result->gain, memory_order_relaxed);
+      atomic_store_explicit(&receiver[id]->rx_iq_phase, result->phase, memory_order_relaxed);
       if (rx_iq_gain_spin[id] != NULL) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(rx_iq_gain_spin[id]), result->gain);
       }
@@ -195,6 +196,25 @@ static gboolean rx_iq_auto_finish_cb(gpointer data) {
   return FALSE;
 }
 
+static gboolean rx_iq_measure_snapshot(RECEIVER *rx, double *signal_db, double *rejection_db) {
+  gboolean valid;
+  if (rx == NULL) {
+    return FALSE;
+  }
+  g_mutex_lock(&rx->image_measure_mutex);
+  valid = rx->image_measure_valid;
+  if (valid) {
+    if (signal_db != NULL) {
+      *signal_db = rx->image_signal_db;
+    }
+    if (rejection_db != NULL) {
+      *rejection_db = rx->image_rejection_db;
+    }
+  }
+  g_mutex_unlock(&rx->image_measure_mutex);
+  return valid;
+}
+
 static double rx_iq_auto_measure(RECEIVER *rx, double gain, double phase) {
   int id;
   int n;
@@ -207,8 +227,8 @@ static double rx_iq_auto_measure(RECEIVER *rx, double gain, double phase) {
   if (id < 0 || id >= 2 || g_atomic_int_get(&rx_iq_auto_cancel[id])) {
     return -999.0;
   }
-  rx->rx_iq_gain = gain;
-  rx->rx_iq_phase = phase;
+  atomic_store_explicit(&rx->rx_iq_gain, gain, memory_order_relaxed);
+  atomic_store_explicit(&rx->rx_iq_phase, phase, memory_order_relaxed);
   /*
    * The image rejection value is produced asynchronously by the panadapter.
    * Do not evaluate immediately after changing IQ gain/phase; wait for fresh
@@ -219,9 +239,12 @@ static double rx_iq_auto_measure(RECEIVER *rx, double gain, double phase) {
     if (g_atomic_int_get(&rx_iq_auto_cancel[id])) {
       return -999.0;
     }
-    if (rx->image_measure && rx->image_measure_valid) {
-      sum += fabs(rx->image_rejection_db);
-      valid++;
+    if (atomic_load_explicit(&rx->image_measure, memory_order_relaxed)) {
+      double rejection_db;
+      if (rx_iq_measure_snapshot(rx, NULL, &rejection_db)) {
+        sum += fabs(rejection_db);
+        valid++;
+      }
     }
     g_usleep(100000);
   }
@@ -246,8 +269,8 @@ static int rx_iq_auto_opt_gain(RECEIVER *rx, double *best_gain, double best_phas
       *best_gain = gain;
     }
   }
-  rx->rx_iq_gain = *best_gain;
-  rx->rx_iq_phase = best_phase;
+  atomic_store_explicit(&rx->rx_iq_gain, *best_gain, memory_order_relaxed);
+  atomic_store_explicit(&rx->rx_iq_phase, best_phase, memory_order_relaxed);
   return 1;
 }
 
@@ -266,8 +289,8 @@ static int rx_iq_auto_opt_phase(RECEIVER *rx, double best_gain, double *best_pha
       *best_phase = phase;
     }
   }
-  rx->rx_iq_gain = best_gain;
-  rx->rx_iq_phase = *best_phase;
+  atomic_store_explicit(&rx->rx_iq_gain, best_gain, memory_order_relaxed);
+  atomic_store_explicit(&rx->rx_iq_phase, *best_phase, memory_order_relaxed);
   return 1;
 }
 
@@ -294,17 +317,22 @@ static gpointer rx_iq_auto_thread(gpointer data) {
     return NULL;
   }
   rx = receiver[job->id];
-  if (!rx->image_measure || !rx->image_measure_valid || rx->image_signal_db < -100.0) {
-    t_print("RX%d auto IQ aborted: no calibration signal\n", rx->id);
-    result->apply = 0;
-    g_strlcpy(result->status, "No calibration signal", sizeof(result->status));
-    g_free(job);
-    g_idle_add(rx_iq_auto_finish_cb, result);
-    return NULL;
+  {
+    double signal_db;
+    double rejection_db;
+    if (!atomic_load_explicit(&rx->image_measure, memory_order_relaxed) ||
+        !rx_iq_measure_snapshot(rx, &signal_db, &rejection_db) || signal_db < -100.0) {
+      t_print("RX%d auto IQ aborted: no calibration signal\n", rx->id);
+      result->apply = 0;
+      g_strlcpy(result->status, "No calibration signal", sizeof(result->status));
+      g_free(job);
+      g_idle_add(rx_iq_auto_finish_cb, result);
+      return NULL;
+    }
+    best_irr = fabs(rejection_db);
   }
   best_gain = job->start_gain;
   best_phase = job->start_phase;
-  best_irr = fabs(rx->image_rejection_db);
   deadline = g_get_monotonic_time() + (10 * G_USEC_PER_SEC);
   t_print("RX%d auto IQ started: gain=%+.4f dB phase=%+.4f deg IRR=%.1f dB\n",
           rx->id, job->start_gain, job->start_phase, best_irr);
@@ -386,10 +414,14 @@ static void rx_iq_auto_cb(GtkWidget *widget, gpointer data) {
   if (g_atomic_int_get(&rx_iq_auto_running[id])) {
     return;
   }
-  if (!rx->image_measure || !rx->image_measure_valid || rx->image_signal_db < -100.0) {
-    t_print("RX%d auto IQ aborted: no calibration signal\n", id);
-    rx_iq_set_status(id, "No calibration signal");
-    return;
+  {
+    double signal_db;
+    if (!atomic_load_explicit(&rx->image_measure, memory_order_relaxed) ||
+        !rx_iq_measure_snapshot(rx, &signal_db, NULL) || signal_db < -100.0) {
+      t_print("RX%d auto IQ aborted: no calibration signal\n", id);
+      rx_iq_set_status(id, "No calibration signal");
+      return;
+    }
   }
   g_atomic_int_set(&rx_iq_auto_cancel[id], 0);
   g_atomic_int_set(&rx_iq_auto_running[id], 1);
@@ -399,9 +431,13 @@ static void rx_iq_auto_cb(GtkWidget *widget, gpointer data) {
   }
   job = g_new0(RX_IQ_AUTO_JOB, 1);
   job->id = id;
-  job->start_gain = rx->rx_iq_gain;
-  job->start_phase = rx->rx_iq_phase;
-  job->start_irr = fabs(rx->image_rejection_db);
+  job->start_gain = atomic_load_explicit(&rx->rx_iq_gain, memory_order_relaxed);
+  job->start_phase = atomic_load_explicit(&rx->rx_iq_phase, memory_order_relaxed);
+  {
+    double rejection_db = 0.0;
+    rx_iq_measure_snapshot(rx, NULL, &rejection_db);
+    job->start_irr = fabs(rejection_db);
+  }
   g_thread_unref(g_thread_new("rx_iq_auto", rx_iq_auto_thread, job));
 }
 
@@ -578,7 +614,8 @@ void fft_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), w, col, 4, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(binaural_cb), GINT_TO_POINTER(chan));
       w = gtk_check_button_new();
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), receiver[i]->image_measure);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), atomic_load_explicit(&receiver[i]->image_measure,
+          memory_order_relaxed));
       gtk_widget_set_tooltip_text(w, "Enable RX image rejection measurement in the panadapter");
       gtk_grid_attach(GTK_GRID(grid), w, col, 5, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(image_measure_cb), GINT_TO_POINTER(chan));
@@ -590,7 +627,7 @@ void fft_menu(GtkWidget *parent) {
       g_signal_connect(w, "value_changed", G_CALLBACK(image_measure_hz_cb), GINT_TO_POINTER(chan));
       w = gtk_spin_button_new_with_range(-5.0, 5.0, 0.01);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(w), 2);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), receiver[i]->rx_iq_gain);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), atomic_load_explicit(&receiver[i]->rx_iq_gain, memory_order_relaxed));
       gtk_widget_set_tooltip_text(w, "Manual RX IQ gain correction in dB");
       if (chan >= 0 && chan < 2) {
         rx_iq_gain_spin[chan] = w;
@@ -599,7 +636,7 @@ void fft_menu(GtkWidget *parent) {
       g_signal_connect(w, "value_changed", G_CALLBACK(rx_iq_gain_cb), GINT_TO_POINTER(chan));
       w = gtk_spin_button_new_with_range(-20.0, 20.0, 0.01);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(w), 2);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), receiver[i]->rx_iq_phase);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), atomic_load_explicit(&receiver[i]->rx_iq_phase, memory_order_relaxed));
       gtk_widget_set_tooltip_text(w, "Manual RX IQ phase correction in degrees");
       if (chan >= 0 && chan < 2) {
         rx_iq_phase_spin[chan] = w;

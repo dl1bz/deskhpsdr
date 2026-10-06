@@ -43,6 +43,7 @@ typedef struct _receiver {
   GMutex mutex;
   GMutex display_mutex;
   GMutex analyzer_mutex;
+  GMutex image_measure_mutex;
 
   int adc;
 
@@ -81,14 +82,14 @@ typedef struct _receiver {
 
   double hz_per_pixel;
 
-  int image_measure;
+  atomic_int image_measure;
   double image_measure_hz;
   int image_measure_valid;
   double image_signal_db;
   double image_mirror_db;
   double image_rejection_db;
-  double rx_iq_gain;
-  double rx_iq_phase;
+  _Atomic double rx_iq_gain;
+  _Atomic double rx_iq_phase;
   char rx_iq_status[64];
 
   int digi_offset_u;

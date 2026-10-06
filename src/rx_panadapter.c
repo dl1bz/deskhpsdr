@@ -1008,10 +1008,12 @@ static void rx_panadapter_update_image_measure(RECEIVER *rx, int mywidth) {
   double measure_hz;
   float signal_db;
   float mirror_db;
-  if (rx == NULL || !rx->image_measure) {
+  if (rx == NULL || !atomic_load_explicit(&rx->image_measure, memory_order_relaxed)) {
     return;
   }
+  g_mutex_lock(&rx->image_measure_mutex);
   rx->image_measure_valid = 0;
+  g_mutex_unlock(&rx->image_measure_mutex);
   samples = rx->pixel_samples;
   if (samples == NULL || mywidth <= 6 || rx->pixels <= 0 || rx->hz_per_pixel <= 0.0) {
     return;
@@ -1045,33 +1047,43 @@ static void rx_panadapter_update_image_measure(RECEIVER *rx, int mywidth) {
       mirror_db = samples[mirror_idx + k];
     }
   }
+  g_mutex_lock(&rx->image_measure_mutex);
   rx->image_signal_db = (double) signal_db;
   rx->image_mirror_db = (double) mirror_db;
-  rx->image_rejection_db = rx->image_signal_db - rx->image_mirror_db;
+  rx->image_rejection_db = (double) signal_db - (double) mirror_db;
   rx->image_measure_valid = 1;
+  g_mutex_unlock(&rx->image_measure_mutex);
   if ((image_measure_counter++ % 100) == 0) {
     t_print("RX%d image rejection: signal=%5.1f dB image=%5.1f dB reject=%5.1f dB offset=%.0f Hz\n",
             rx->id,
-            rx->image_signal_db,
-            rx->image_mirror_db,
-            rx->image_rejection_db,
+            (double) signal_db,
+            (double) mirror_db,
+            (double) signal_db - (double) mirror_db,
             measure_hz);
   }
 }
 
-static void rx_panadapter_draw_image_measure(cairo_t *cr, const RECEIVER *rx, int mywidth, int myheight) {
+static void rx_panadapter_draw_image_measure(cairo_t *cr, RECEIVER *rx, int mywidth, int myheight) {
   char text[96];
   double x;
   double y;
-  if (cr == NULL || rx == NULL || !rx->image_measure || !rx->image_measure_valid) {
+  double rejection_db;
+  if (cr == NULL || rx == NULL || !atomic_load_explicit(&rx->image_measure, memory_order_relaxed)) {
     return;
   }
+  g_mutex_lock(&rx->image_measure_mutex);
+  if (!rx->image_measure_valid) {
+    g_mutex_unlock(&rx->image_measure_mutex);
+    return;
+  }
+  rejection_db = rx->image_rejection_db;
+  g_mutex_unlock(&rx->image_measure_mutex);
   x = 60.0;
   y = (double) myheight * 0.95;
   cairo_save(cr);
   cairo_text_extents_t extents;
   snprintf(text, sizeof(text), "IRR %.1f dB",
-           fabs(rx->image_rejection_db));
+           fabs(rejection_db));
   cairo_select_font_face(cr, DISPLAY_FONT_BOLD, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE12);
   cairo_text_extents(cr, text, &extents);

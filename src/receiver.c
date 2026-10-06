@@ -337,8 +337,10 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.panadapter_ovf_on", rx->id,            rx->panadapter_ovf_on);
   SetPropI1("receiver.%d.panadapter_autoscale_enabled", rx->id, rx->panadapter_autoscale_enabled);
   SetPropF1("receiver.%d.image_measure_hz", rx->id,             rx->image_measure_hz);
-  SetPropF1("receiver.%d.rx_iq_gain", rx->id,                   rx->rx_iq_gain);
-  SetPropF1("receiver.%d.rx_iq_phase", rx->id,                  rx->rx_iq_phase);
+  SetPropF1("receiver.%d.rx_iq_gain", rx->id,                   atomic_load_explicit(&rx->rx_iq_gain,
+      memory_order_relaxed));
+  SetPropF1("receiver.%d.rx_iq_phase", rx->id,                  atomic_load_explicit(&rx->rx_iq_phase,
+      memory_order_relaxed));
   SetPropI1("receiver.%d.digi_offset_u", rx->id,                 rx->digi_offset_u);
   SetPropI1("receiver.%d.digi_offset_l", rx->id,                 rx->digi_offset_l);
   SetPropI1("receiver.%d.pan_peak_preserve", rx->id,            rx->pan_peak_preserve);
@@ -804,6 +806,10 @@ RECEIVER *rx_create_pure_signal_receiver(int id, int sample_rate, int width, int
     g_mutex_init(&rx->mutex);
     g_mutex_init(&rx->display_mutex);
     g_mutex_init(&rx->analyzer_mutex);
+    g_mutex_init(&rx->image_measure_mutex);
+    atomic_init(&rx->image_measure, 0);
+    atomic_init(&rx->rx_iq_gain, 0.0);
+    atomic_init(&rx->rx_iq_phase, 0.0);
     rx->sample_rate = sample_rate;
     rx->fps = fps;
     rx->width = width; // used to re-calculate rx->pixels upon sample rate change
@@ -839,6 +845,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   g_mutex_init(&rx->mutex);
   g_mutex_init(&rx->display_mutex);
   g_mutex_init(&rx->analyzer_mutex);
+  g_mutex_init(&rx->image_measure_mutex);
   switch (id) {
   case 0:
     rx->adc = 0;
@@ -897,14 +904,14 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx->panadapter_peaks_as_smeter = 0;
   rx->panadapter_ovf_on  = 1;
   rx->panadapter_autoscale_enabled = 0;
-  rx->image_measure = 0;
+  atomic_init(&rx->image_measure, 0);
   rx->image_measure_hz = 1000.0;
   rx->image_measure_valid = 0;
   rx->image_signal_db = -200.0;
   rx->image_mirror_db = -200.0;
   rx->image_rejection_db = 0.0;
-  rx->rx_iq_gain = 0.0;
-  rx->rx_iq_phase = 0.0;
+  atomic_init(&rx->rx_iq_gain, 0.0);
+  atomic_init(&rx->rx_iq_phase, 0.0);
   rx->digi_offset_u = 0;
   rx->digi_offset_l = 0;
   strcpy(rx->rx_iq_status, "Idle");
@@ -1617,11 +1624,13 @@ static void rx_apply_iq_correction(const RECEIVER *rx, double *i_sample, double 
   if (rx == NULL || i_sample == NULL || q_sample == NULL) {
     return;
   }
-  if (rx->rx_iq_gain == 0.0 && rx->rx_iq_phase == 0.0) {
+  gain = atomic_load_explicit(&rx->rx_iq_gain, memory_order_relaxed);
+  phase = atomic_load_explicit(&rx->rx_iq_phase, memory_order_relaxed);
+  if (gain == 0.0 && phase == 0.0) {
     return;
   }
-  gain = pow(10.0, rx->rx_iq_gain / 20.0);
-  phase = rx->rx_iq_phase * M_PI / 180.0;
+  gain = pow(10.0, gain / 20.0);
+  phase = phase * M_PI / 180.0;
   c = cos(phase);
   if (fabs(c) < 1.0e-12) {
     return;
