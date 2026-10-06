@@ -198,6 +198,7 @@
 #include "mode.h"
 #include "vfo.h"
 #include "message.h"
+#include "sem_utils.h"
 
 static void *keyer_thread(void *arg);
 static pthread_t keyer_thread_id;
@@ -334,9 +335,9 @@ static void *keyer_thread(void *arg) {
   while (running) {
     enforce_cw_vox = 0;
 #ifdef __APPLE__
-    sem_wait(cw_event);
+    if (sem_wait_nointr(cw_event) != 0) { continue; }
 #else
-    sem_wait(&cw_event);
+    if (sem_wait_nointr(&cw_event) != 0) { continue; }
 #endif
     // swallow any cw_events posted during the last "cw hang" time.
     if (!kcwl && !kcwr && !external_straight_key) { continue; }

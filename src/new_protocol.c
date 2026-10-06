@@ -66,6 +66,7 @@
 #include "nw_toolset.h"
 #include "tci_audio.h"
 #include "ddc_menu.h"
+#include "sem_utils.h"
 
 #ifdef SATURN
   #include "saturnmain.h"
@@ -2649,9 +2650,9 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
   //
   while (atomic_load_explicit(&P2running, memory_order_acquire)) {
 #ifdef __APPLE__
-    sem_wait(rxaudio_sem);
+    if (sem_wait_nointr(rxaudio_sem) != 0) { continue; }
 #else
-    sem_wait(&rxaudio_sem);
+    if (sem_wait_nointr(&rxaudio_sem) != 0) { continue; }
 #endif
     if (!atomic_load_explicit(&P2running, memory_order_acquire)) { break; }
     (void) atomic_load_explicit(&rxaudio_inptr, memory_order_acquire);
@@ -2787,9 +2788,9 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
   //
   while (atomic_load_explicit(&P2running, memory_order_acquire)) {
 #ifdef __APPLE__
-    sem_wait(txiq_sem);
+    if (sem_wait_nointr(txiq_sem) != 0) { continue; }
 #else
-    sem_wait(&txiq_sem);
+    if (sem_wait_nointr(&txiq_sem) != 0) { continue; }
 #endif
     if (!atomic_load_explicit(&P2running, memory_order_acquire)) { break; }
     iqbuffer[0] = (tx_iq_sequence >> 24) & 0xFF;
@@ -3038,9 +3039,9 @@ static gpointer high_priority_thread(gpointer data) {
   t_print("high_priority_thread\n");
   while (1) {
 #ifdef __APPLE__
-    sem_wait(high_priority_sem_buffer);
+    if (sem_wait_nointr(high_priority_sem_buffer) != 0) { continue; }
 #else
-    sem_wait(&high_priority_sem_buffer);
+    if (sem_wait_nointr(&high_priority_sem_buffer) != 0) { continue; }
 #endif
     (void) atomic_load_explicit(&high_priority_inptr, memory_order_acquire);
     optr = atomic_load_explicit(&high_priority_outptr, memory_order_relaxed);
@@ -3068,9 +3069,9 @@ static gpointer mic_line_thread(gpointer data) {
   //
   while (1) {
 #ifdef __APPLE__
-    sem_wait(mic_line_sem);
+    if (sem_wait_nointr(mic_line_sem) != 0) { continue; }
 #else
-    sem_wait(&mic_line_sem);
+    if (sem_wait_nointr(&mic_line_sem) != 0) { continue; }
 #endif
     (void) atomic_load_explicit(&mic_inptr, memory_order_acquire);
     int outptr = atomic_load_explicit(&mic_outptr, memory_order_relaxed);
@@ -3240,9 +3241,9 @@ static gpointer iq_thread(gpointer data) {
   //
   while (1) {
 #ifdef __APPLE__
-    sem_wait(iq_sem[ddc]);
+    if (sem_wait_nointr(iq_sem[ddc]) != 0) { continue; }
 #else
-    sem_wait(&iq_sem[ddc]);
+    if (sem_wait_nointr(&iq_sem[ddc]) != 0) { continue; }
 #endif
     (void) atomic_load_explicit(&iq_inptr[ddc], memory_order_acquire);
     optr = atomic_load_explicit(&iq_outptr[ddc], memory_order_relaxed);

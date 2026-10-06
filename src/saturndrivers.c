@@ -37,6 +37,7 @@
 #include <stdlib.h>                     // for function min()
 #include <math.h>
 #include "saturndrivers.h"
+#include "sem_utils.h"
 //#include "saturnregisters.h"
 #include <semaphore.h>
 #include <assert.h>
@@ -326,7 +327,7 @@ void ResetDMAStreamFIFO(EDMAStreamSelect DDCNum) {
     DataBit = (1 << VBITCODECSPKFIFORESET);
     break;
   }
-  sem_wait(&DDCResetFIFOMutex);                       // get protected access
+  if (sem_wait_nointr(&DDCResetFIFOMutex) != 0) { return; }                       // get protected access
   Data = RegisterRead(VADDRFIFORESET);        // read current content
   Data = Data & ~DataBit;
   RegisterWrite(VADDRFIFORESET, Data);        // set reset bit to zero

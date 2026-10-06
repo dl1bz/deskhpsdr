@@ -59,6 +59,7 @@
 #include "message.h"
 #include "rigctl.h"
 #include "nw_toolset.h"
+#include "sem_utils.h"
 #ifdef __APPLE__
   #include "toolset.h"
 #endif
@@ -489,7 +490,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   old_protocol_update_timing();
   t_print("%s: sr=%d\n", __func__, atomic_load_explicit(&sr, memory_order_relaxed));
   for (;;) {
-    sem_wait(txring_sem);
+    if (sem_wait_nointr(txring_sem) != 0) { continue; }
     int out = atomic_load_explicit(&txring_outptr, memory_order_relaxed);
     int in  = atomic_load_explicit(&txring_inptr,  memory_order_acquire);
     if (out == in) {
@@ -562,7 +563,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
   // If "txring_drain" is set, drain the buffer
   //
   for (;;) {
-    sem_wait(&txring_sem);
+    if (sem_wait_nointr(&txring_sem) != 0) { continue; }
     int out = atomic_load_explicit(&txring_outptr, memory_order_relaxed);
     int in  = atomic_load_explicit(&txring_inptr,  memory_order_acquire);
     if (out == in) {
@@ -2072,9 +2073,9 @@ static gpointer process_ozy_input_buffer_thread(gpointer arg) {
   //
   for (;;) {
 #ifdef __APPLE__
-    sem_wait(rxring_sem);
+    if (sem_wait_nointr(rxring_sem) != 0) { continue; }
 #else
-    sem_wait(&rxring_sem);
+    if (sem_wait_nointr(&rxring_sem) != 0) { continue; }
 #endif
     int out = atomic_load_explicit(&rxring_outptr, memory_order_relaxed);
     int nptr = out + 1024;
