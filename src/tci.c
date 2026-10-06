@@ -107,6 +107,7 @@ static int tci_cw_msg_call_pos = 0;
 static int tci_cw_msg_call_repeat = 1;
 static int tci_cw_msg_call_repeat_index = 0;
 static int tci_cw_msg_suffix_pending = 0;
+static GMutex tci_cw_msg_mutex;
 static int tci_cw_macros_delay_ms = 10;
 static gint tci_iq_stream_clients = 0;
 static int tci_iq_stream_sample_rate = 0;
@@ -707,7 +708,7 @@ static GList *tci_clients_snapshot(void) {
   return clients;
 }
 
-static void tci_cw_msg_reset_state(void) {
+static void tci_cw_msg_reset_state_locked(void) {
   tci_cw_msg_pending_callsign[0] = 0;
   tci_cw_msg_active_callsign[0] = 0;
   tci_cw_msg_active_suffix[0] = 0;
@@ -716,6 +717,12 @@ static void tci_cw_msg_reset_state(void) {
   tci_cw_msg_call_repeat = 1;
   tci_cw_msg_call_repeat_index = 0;
   tci_cw_msg_suffix_pending = 0;
+}
+
+static void tci_cw_msg_reset_state(void) {
+  g_mutex_lock(&tci_cw_msg_mutex);
+  tci_cw_msg_reset_state_locked();
+  g_mutex_unlock(&tci_cw_msg_mutex);
 }
 
 
@@ -736,48 +743,53 @@ static void tci_cw_send_to_all(const char *msg) {
 
 static int tci_cw_msg_queue_next(void) {
   int call_len;
+  int queued = 0;
+  char callsign_msg[MAXMSGSIZE] = {0};
+  g_mutex_lock(&tci_cw_msg_mutex);
   if (!tci_cw_msg_active) {
+    g_mutex_unlock(&tci_cw_msg_mutex);
     return 0;
   }
   call_len = (int) strlen(tci_cw_msg_active_callsign);
   if (call_len > 0 && tci_cw_msg_call_repeat_index < tci_cw_msg_call_repeat) {
     if (tci_cw_msg_call_pos < call_len) {
-      if (!cw_engine_queue_char(tci_cw_msg_active_callsign[tci_cw_msg_call_pos])) {
-        return 0;
+      if (cw_engine_queue_char(tci_cw_msg_active_callsign[tci_cw_msg_call_pos])) {
+        tci_cw_msg_call_pos++;
+        queued = 1;
       }
-      tci_cw_msg_call_pos++;
-      return 1;
+      g_mutex_unlock(&tci_cw_msg_mutex);
+      return queued;
     }
     tci_cw_msg_call_repeat_index++;
     if (tci_cw_msg_call_repeat_index < tci_cw_msg_call_repeat) {
       tci_cw_msg_call_pos = 0;
-      if (!cw_engine_queue_char(' ')) {
-        return 0;
-      }
-      return 1;
+      queued = cw_engine_queue_char(' ');
+      g_mutex_unlock(&tci_cw_msg_mutex);
+      return queued;
     }
   }
   if (tci_cw_msg_pending_callsign[0] != 0) {
-    char callsign_msg[MAXMSGSIZE];
     snprintf(callsign_msg, sizeof(callsign_msg), "%s:%s;",
              tci_cmd_name("callsign_send", "CALLSIGN_SEND"), tci_cw_msg_pending_callsign);
-    tci_cw_send_to_all(callsign_msg);
     tci_cw_msg_pending_callsign[0] = 0;
   }
   if (tci_cw_msg_suffix_pending) {
     tci_cw_msg_suffix_pending = 0;
     if (tci_cw_msg_active_suffix[0] != 0) {
-      int queued;
       char suffix_text[MAXMSGSIZE];
       snprintf(suffix_text, sizeof(suffix_text), " %s", tci_cw_msg_active_suffix);
-      queued = cw_engine_queue_text(suffix_text);
-      if (queued > 0) {
-        return 1;
-      }
+      queued = cw_engine_queue_text(suffix_text) > 0;
     }
   }
-  tci_cw_msg_reset_state();
-  return 0;
+  if (!queued) {
+    tci_cw_msg_reset_state_locked();
+  }
+  g_mutex_unlock(&tci_cw_msg_mutex);
+  // Never enter the TCI/LWS client path while holding the CW-message lock.
+  if (callsign_msg[0] != 0) {
+    tci_cw_send_to_all(callsign_msg);
+  }
+  return queued;
 }
 
 static void tci_cw_macros_empty(void) {
@@ -4854,19 +4866,24 @@ static void tci_cmd_cw_msg(CLIENT *client, const TCI_CMD *cmd) {
   char *callsign_arg = NULL;
   char *callsign = NULL;
   char *suffix = NULL;
+  char log_suffix[MAXMSGSIZE];
   GString *prefix_text;
   int repeat = 1;
   int queued = 0;
   if (cmd->argc == 1 && cmd->argv[0] != NULL) {
-    if (!tci_cw_msg_active || tci_cw_msg_pending_callsign[0] == 0) {
-      t_print("TCI%d cw_msg callsign correction ignored: no active cw_msg\n", client->seq);
-      return;
-    }
     callsign_arg = tci_cw_decode_text(cmd->argv[0]);
     if (callsign_arg == NULL) {
       return;
     }
     callsign = tci_cw_msg_extract_callsign(callsign_arg, NULL);
+    g_mutex_lock(&tci_cw_msg_mutex);
+    if (!tci_cw_msg_active || tci_cw_msg_pending_callsign[0] == 0) {
+      g_mutex_unlock(&tci_cw_msg_mutex);
+      t_print("TCI%d cw_msg callsign correction ignored: no active cw_msg\n", client->seq);
+      g_free(callsign_arg);
+      g_free(callsign);
+      return;
+    }
     if (callsign != NULL && callsign[0] != 0 && strcmp(callsign, "_") != 0) {
       int new_len = (int) strlen(callsign);
       g_strlcpy(tci_cw_msg_active_callsign, callsign, sizeof(tci_cw_msg_active_callsign));
@@ -4878,6 +4895,7 @@ static void tci_cmd_cw_msg(CLIENT *client, const TCI_CMD *cmd) {
               tci_cw_msg_active_callsign, tci_cw_msg_call_pos, tci_cw_msg_call_repeat_index + 1,
               tci_cw_msg_call_repeat);
     }
+    g_mutex_unlock(&tci_cw_msg_mutex);
     g_free(callsign_arg);
     g_free(callsign);
     return;
@@ -4895,7 +4913,13 @@ static void tci_cmd_cw_msg(CLIENT *client, const TCI_CMD *cmd) {
     return;
   }
   callsign = tci_cw_msg_extract_callsign(callsign_arg, &repeat);
-  tci_cw_msg_reset_state();
+  prefix_text = g_string_new(NULL);
+  tci_cw_msg_append_part(prefix_text, prefix);
+  if (prefix_text->len > 0) {
+    g_string_append_c(prefix_text, ' ');
+  }
+  g_mutex_lock(&tci_cw_msg_mutex);
+  tci_cw_msg_reset_state_locked();
   g_strlcpy(tci_cw_msg_active_callsign, callsign, sizeof(tci_cw_msg_active_callsign));
   g_strlcpy(tci_cw_msg_pending_callsign, callsign, sizeof(tci_cw_msg_pending_callsign));
   if (suffix[0] != 0 && strcmp(suffix, "_") != 0) {
@@ -4906,16 +4930,18 @@ static void tci_cmd_cw_msg(CLIENT *client, const TCI_CMD *cmd) {
   tci_cw_msg_call_repeat_index = 0;
   tci_cw_msg_call_pos = 0;
   tci_cw_msg_active = 1;
-  prefix_text = g_string_new(NULL);
-  tci_cw_msg_append_part(prefix_text, prefix);
+  g_strlcpy(log_suffix, tci_cw_msg_active_suffix[0] ? tci_cw_msg_active_suffix : "_", sizeof(log_suffix));
   if (prefix_text->len > 0) {
-    g_string_append_c(prefix_text, ' ');
+    // Keep the state update and prefix enqueue atomic with respect to the
+    // CW-empty callback, which may run in the CW worker thread.
     queued = cw_engine_queue_text(prefix_text->str);
-  } else {
+  }
+  g_mutex_unlock(&tci_cw_msg_mutex);
+  if (prefix_text->len == 0) {
     queued = tci_cw_msg_queue_next();
   }
   t_print("TCI%d cw_msg queued=%d prefix=%s callsign=%s repeat=%d suffix=%s\n", client->seq, queued,
-          prefix_text->str, callsign, repeat, tci_cw_msg_active_suffix[0] ? tci_cw_msg_active_suffix : "_");
+          prefix_text->str, callsign, repeat, log_suffix);
   g_string_free(prefix_text, TRUE);
   g_free(prefix);
   g_free(callsign_arg);
