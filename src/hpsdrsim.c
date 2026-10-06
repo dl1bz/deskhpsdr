@@ -64,6 +64,7 @@
 #include <limits.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdatomic.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -193,8 +194,8 @@ static int sock_udp;
 /*
  * These two variables monitor whether the TX thread is active
  */
-static int enable_thread = 0;
-static int active_thread = 0;
+static atomic_int enable_thread = 0;
+static atomic_int active_thread = 0;
 
 static void process_ep2(uint8_t *frame);
 static void *handler_ep6(void *arg);
@@ -702,10 +703,10 @@ int main(int argc, char *argv[]) {
       // This avoids firing accept() too often if it constantly fails
       udp_retries = 0;
     }
-    if (count >= 5000 && active_thread) {
+    if (count >= 5000 && atomic_load_explicit(&active_thread, memory_order_acquire)) {
       t_print("WATCHDOG STOP the transmission via handler_ep6\n");
-      enable_thread = 0;
-      while (active_thread) { usleep(1000); }
+      atomic_store_explicit(&enable_thread, 0, memory_order_release);
+      while (atomic_load_explicit(&active_thread, memory_order_acquire)) { usleep(1000); }
       txptr = -1;
       if (sock_TCP_Client > -1) {
         close(sock_TCP_Client);
@@ -761,7 +762,7 @@ int main(int argc, char *argv[]) {
       } else {
         do_tone = 0;
       }
-      if (active_thread) {
+      if (atomic_load_explicit(&active_thread, memory_order_acquire)) {
         if (txptr < 0) {
           txptr = OLDRTXLEN / 2;
         }
@@ -866,7 +867,7 @@ int main(int argc, char *argv[]) {
       buffer[7] = MAC5; // specifies type of radio
       buffer[8] = MAC6; // encodes old protocol
       buffer[ 2] = 2;
-      if (active_thread || new_protocol_running()) {
+      if (atomic_load_explicit(&active_thread, memory_order_acquire) || new_protocol_running()) {
         buffer[2] = 3;
       }
       buffer[9] = 31; // software version
@@ -882,7 +883,7 @@ int main(int argc, char *argv[]) {
         // We will get into trouble if we respond via TCP while the radio is
         // running with TCP.
         // We simply suppress the response in this (very unlikely) case.
-        if (!active_thread) {
+        if (!atomic_load_explicit(&active_thread, memory_order_acquire)) {
           if (send(sock_TCP_Client, buffer, 60, 0) < 0) {
             t_print("TCP send error occurred when responding to an incoming Metis detection request!\n");
           }
@@ -902,8 +903,8 @@ int main(int argc, char *argv[]) {
         break;
       }
       t_print("STOP the transmission via handler_ep6 / code: 0x%08x\n", code);
-      enable_thread = 0;
-      while (active_thread) { usleep(1000); }
+      atomic_store_explicit(&enable_thread, 0, memory_order_release);
+      while (atomic_load_explicit(&active_thread, memory_order_acquire)) { usleep(1000); }
       txptr = -1;
       if (sock_TCP_Client > -1) {
         close(sock_TCP_Client);
@@ -923,21 +924,21 @@ int main(int argc, char *argv[]) {
         break;
       }
       t_print("START the PC-to-SDR handler thread / code: 0x%08x\n", code);
-      enable_thread = 0;
-      while (active_thread) { usleep(1000); }
+      atomic_store_explicit(&enable_thread, 0, memory_order_release);
+      while (atomic_load_explicit(&active_thread, memory_order_acquire)) { usleep(1000); }
       memset(&addr_old, 0, sizeof(addr_old));
       addr_old.sin_family = AF_INET;
       addr_old.sin_addr.s_addr = addr_from.sin_addr.s_addr;
       addr_old.sin_port = addr_from.sin_port;
       memset(isample, 0, OLDRTXLEN * sizeof(double));
       memset(qsample, 0, OLDRTXLEN * sizeof(double));
-      enable_thread = 1;
-      active_thread = 1;
+      atomic_store_explicit(&enable_thread, 1, memory_order_release);
+      atomic_store_explicit(&active_thread, 1, memory_order_release);
       int rc = pthread_create(&thread, NULL, handler_ep6, NULL);
       if (rc != 0) {
         t_print("create old protocol thread failed: %s\n", strerror(rc));
-        active_thread = 0;
-        enable_thread = 0;
+        atomic_store_explicit(&active_thread, 0, memory_order_release);
+        atomic_store_explicit(&enable_thread, 0, memory_order_release);
         restore_terminal_attributes();
         return EXIT_FAILURE;
       }
@@ -1035,7 +1036,7 @@ int main(int argc, char *argv[]) {
         }
         t_print("NewProtocol erase packet received\n");
         memset(buffer, 0, 60);
-        buffer [4] = 0x02 + active_thread;
+        buffer [4] = 0x02 + atomic_load_explicit(&active_thread, memory_order_acquire);
         buffer [5] = MAC1;
         buffer[ 6] = MAC2;
         buffer[ 7] = MAC3;
@@ -1102,7 +1103,7 @@ int main(int argc, char *argv[]) {
         if (buffer[ 9] != MAC5) { break; } // specifies type of radio
         if (buffer[10] != MAC6N) { break; } // encodes new protocol
         memset(buffer, 0, 60);
-        buffer [4] = 0x02 + active_thread;
+        buffer [4] = 0x02 + atomic_load_explicit(&active_thread, memory_order_acquire);
         buffer [5] = MAC1;
         buffer[ 6] = MAC2;
         buffer[ 7] = MAC3;
@@ -1469,7 +1470,7 @@ void *handler_ep6(void *arg) {
   rxptr = OLDRTXLEN / 2 - 4096;
   clock_gettime(CLOCK_MONOTONIC, &delay);
   while (1) {
-    if (!enable_thread) { break; }
+    if (!atomic_load_explicit(&enable_thread, memory_order_acquire)) { break; }
     if (receivers > 0) {
       size = receivers * 6 + 2;
       n = 504 / size;  // number of samples per 512-byte-block
@@ -1732,7 +1733,7 @@ void *handler_ep6(void *arg) {
       sendto(sock_udp, buffer, 1032, 0, (struct sockaddr *)&addr_old, sizeof(addr_old));
     }
   }
-  active_thread = 0;
+  atomic_store_explicit(&active_thread, 0, memory_order_release);
   return NULL;
 }
 
