@@ -24,6 +24,47 @@ static RtMidiInPtr midi_input[MAX_MIDI_DEVICES];
 static gboolean configure = FALSE;
 static gboolean initialized = FALSE;
 
+typedef struct {
+  int index;
+  enum MIDIevent event;
+  int channel;
+  int note;
+  int val;
+} MIDI_EVENT;
+
+static gboolean process_midi_event(gpointer user_data) {
+  MIDI_EVENT *data = (MIDI_EVENT *)user_data;
+  int index = data->index;
+  enum MIDIevent event = data->event;
+  int channel = data->channel;
+  int note = data->note;
+  int val = data->val;
+  g_free(data);
+  /*
+   * RtMidi invokes midi_callback() from its own worker thread.  Keep all
+   * deskHPSDR MIDI state and action processing in the GLib main context so
+   * MidiCommandsTable and the GUI can be changed without racing the callback.
+   */
+  if (index < 0 || index >= MAX_MIDI_DEVICES || !midi_devices[index].active) { return G_SOURCE_REMOVE; }
+  if (event == MIDI_CTRL && midiIgnoreCtrlPairs && note >= 32 && note < 64) { return G_SOURCE_REMOVE; }
+  if (configure) {
+    NewMidiConfigureEvent(event, channel, note, val);
+  } else {
+    NewMidiEvent(event, channel, note, val);
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static void queue_midi_event(int index, enum MIDIevent event, int channel, int note, int val) {
+  MIDI_EVENT *data = g_new(MIDI_EVENT, 1);
+  data->index = index;
+  data->event = event;
+  data->channel = channel;
+  data->note = note;
+  data->val = val;
+  g_idle_add(process_midi_event, data);
+}
+
 static void midi_callback(double timestamp, const unsigned char *message, size_t message_size, void *user_data) {
   int index = GPOINTER_TO_INT(user_data);
   unsigned char status;
@@ -31,7 +72,7 @@ static void midi_callback(double timestamp, const unsigned char *message, size_t
   int arg1;
   int arg2;
   (void)timestamp;
-  if (index < 0 || index >= MAX_MIDI_DEVICES || !midi_devices[index].active) { return; }
+  if (index < 0 || index >= MAX_MIDI_DEVICES) { return; }
   if (message == NULL || message_size < 1) { return; }
   status = message[0];
   if ((status & 0x80) == 0) { return; }
@@ -40,43 +81,25 @@ static void midi_callback(double timestamp, const unsigned char *message, size_t
   case 0x80:
     if (message_size < 3) { return; }
     arg1 = message[1];
-    if (configure) {
-      NewMidiConfigureEvent(MIDI_NOTE, channel, arg1, 0);
-    } else {
-      NewMidiEvent(MIDI_NOTE, channel, arg1, 0);
-    }
+    queue_midi_event(index, MIDI_NOTE, channel, arg1, 0);
     break;
   case 0x90:
     if (message_size < 3) { return; }
     arg1 = message[1];
     arg2 = message[2];
-    if (configure) {
-      NewMidiConfigureEvent(MIDI_NOTE, channel, arg1, arg2 == 0 ? 0 : 1);
-    } else {
-      NewMidiEvent(MIDI_NOTE, channel, arg1, arg2 == 0 ? 0 : 1);
-    }
+    queue_midi_event(index, MIDI_NOTE, channel, arg1, arg2 == 0 ? 0 : 1);
     break;
   case 0xb0:
     if (message_size < 3) { return; }
     arg1 = message[1];
     arg2 = message[2];
-    if (!midiIgnoreCtrlPairs || arg1 < 32 || arg1 >= 64) {
-      if (configure) {
-        NewMidiConfigureEvent(MIDI_CTRL, channel, arg1, arg2);
-      } else {
-        NewMidiEvent(MIDI_CTRL, channel, arg1, arg2);
-      }
-    }
+    queue_midi_event(index, MIDI_CTRL, channel, arg1, arg2);
     break;
   case 0xe0:
     if (message_size < 3) { return; }
     arg1 = message[1];
     arg2 = message[2];
-    if (configure) {
-      NewMidiConfigureEvent(MIDI_PITCH, channel, 0, arg1 + 128 * arg2);
-    } else {
-      NewMidiEvent(MIDI_PITCH, channel, 0, arg1 + 128 * arg2);
-    }
+    queue_midi_event(index, MIDI_PITCH, channel, 0, arg1 + 128 * arg2);
     break;
   default:
     break;
