@@ -89,11 +89,11 @@
 #include <json-c/json.h>
 
 unsigned int rigctl_tcp_port = 19090;
-volatile int rigctl_tcp_enable = 0;
+atomic_int rigctl_tcp_enable = 0;
 int rigctl_tcp_andromeda = 0;
 int rigctl_tcp_autoreporting = 0;
-volatile int rigctld_enabled = 0;
-volatile int use_rigctld = 0;
+atomic_int rigctld_enabled = 0;
+atomic_int use_rigctld = 0;
 
 int serptt_fd = -1;
 int sertune_fd = -1;
@@ -146,7 +146,6 @@ static gint lpf_listener_running = 0;
 static gint lpf_listener_stop = 0;
 
 static pthread_t rigctld_thread;
-static pthread_mutex_t rigctld_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex für Threadsicherheit
 static gint rigctld_thread_started = 0;
 static gint rigctld_thread_stop = 0;
 static pid_t rigctld_pid = 0;
@@ -1176,9 +1175,7 @@ void stop_rigctld(void) {
 
 static void *rigctld_control_thread(void *arg) {
   while (!g_atomic_int_get(&rigctld_thread_stop)) {
-    pthread_mutex_lock(&rigctld_mutex);
-    int enabled = rigctld_enabled;
-    pthread_mutex_unlock(&rigctld_mutex);
+    int enabled = atomic_load_explicit(&rigctld_enabled, memory_order_acquire);
     if (enabled && rigctld_pid == 0) {
       start_rigctld();
     } else if (!enabled && rigctld_pid != 0) {

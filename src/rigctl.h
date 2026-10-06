@@ -22,6 +22,8 @@
 #ifndef RIGCTL_H
 #define RIGCTL_H
 
+#include <stdatomic.h>
+
 struct _SERIALPORT {
   //
   // parity and bits are not included, since we
@@ -68,12 +70,12 @@ extern void stop_lpf_monitor (void);
 extern void launch_rigctld_monitor (void);
 extern int cat_control;
 extern unsigned int rigctl_tcp_port;
-extern volatile int rigctl_tcp_enable;
+extern atomic_int rigctl_tcp_enable;
 extern int rigctl_tcp_andromeda;
 extern int rigctl_tcp_autoreporting;
 extern int autogain_is_adjusted;
-extern volatile int rigctld_enabled;
-extern volatile int use_rigctld;
+extern atomic_int rigctld_enabled;
+extern atomic_int use_rigctld;
 extern void stop_rigctld (void);
 
 #endif // RIGCTL_H
