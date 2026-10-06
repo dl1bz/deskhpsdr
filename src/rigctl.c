@@ -162,7 +162,7 @@ typedef struct _client {
   int fifo;                         // serial only: this is a FIFO and not a true serial line
   int busy;                         // serial only (for FIFO handling)
   int done;                         // serial only (for FIFO handling)
-  int running;                      // set this to zero to terminate client
+  gint running;                     // atomic: set to zero to terminate client
   socklen_t address_length;         // TCP only: initialized by accept(), never used
   struct sockaddr_in address;       // TCP only: initialized by accept(), never used
   GThread *thread_id;               // ID of thread that serves the client
@@ -1304,15 +1304,13 @@ void shutdown_tcp_rigctl(void) {
       g_source_remove(tcp_client[id].auto_timer);
       tcp_client[id].auto_timer = 0;
     }
-    tcp_client[id].running = 0;
+    g_atomic_int_set(&tcp_client[id].running, 0);
     if (tcp_client[id].fd != -1) {
-      // t_print("%s: setting SO_LINGER to 0 for client_socket: %d\n", __func__, tcp_client[id].fd);
-      if (setsockopt(tcp_client[id].fd, SOL_SOCKET, SO_LINGER, (const char *) &linger, sizeof(linger)) == -1) {
-        t_perror("setsockopt(...,SO_LINGER,...) failed for client:");
+      // Wake a client blocked in recv(); the client thread owns close().
+      if (shutdown(tcp_client[id].fd, SHUT_RDWR) == -1 &&
+          errno != ENOTCONN && errno != EINVAL) {
+        t_perror("shutdown client socket failed");
       }
-      t_print("%s: closing client socket: %d\n", __func__, tcp_client[id].fd);
-      close(tcp_client[id].fd);
-      tcp_client[id].fd = -1;
     }
     if (tcp_client[id].thread_id) {
       g_thread_join(tcp_client[id].thread_id);
@@ -1437,7 +1435,7 @@ static gboolean autoreport_handler(gpointer data) {
   // Auto-reporting to a FIFO is suppressed because all data sent there will
   // be echoed back and then be read again.
   //
-  if (client->fifo || !client->running) {
+  if (client->fifo || !g_atomic_int_get(&client->running)) {
     //
     // return and remove timer
     //
@@ -1478,7 +1476,7 @@ static gboolean andromeda_handler(gpointer data) {
   //
   CLIENT *client = (CLIENT *) data;
   char reply[256];
-  if (!client->running || client->andromeda_type == 4) {
+  if (!g_atomic_int_get(&client->running) || client->andromeda_type == 4) {
     //
     // If the client is no longer running, remove source.
     // The same applies for ANDROMEDA type-4 clients since there
@@ -1696,7 +1694,7 @@ static gpointer rigctl_server(gpointer data) {
     tcp_client[spare].fifo            = 0;
     tcp_client[spare].busy            = 0;
     tcp_client[spare].done            = 0;
-    tcp_client[spare].running         = 1;
+    g_atomic_int_set(&tcp_client[spare].running, 1);
     tcp_client[spare].andromeda_timer = 0;
     tcp_client[spare].auto_reporting  = SET(rigctl_tcp_autoreporting);
     tcp_client[spare].andromeda_type  = 0;
@@ -1745,7 +1743,7 @@ static gpointer rigctl_client(gpointer data) {
   char  cmd_input[MAXDATASIZE] ;
   char *command = g_new(char, MAXDATASIZE);
   int command_index = 0;
-  while (client->running && (numbytes = recv(client->fd, cmd_input, MAXDATASIZE - 2, 0)) > 0) {
+  while (g_atomic_int_get(&client->running) && (numbytes = recv(client->fd, cmd_input, MAXDATASIZE - 2, 0)) > 0) {
     for (i = 0; i < numbytes; i++) {
       //
       // Filter out newlines and other non-printable characters
@@ -1791,7 +1789,7 @@ static gpointer rigctl_client(gpointer data) {
       g_source_remove(client->auto_timer);
       client->auto_timer = 0;
     }
-    client->running = 0;
+    g_atomic_int_set(&client->running, 0);
     close(client->fd);
     client->fd = -1;
   }
@@ -5901,8 +5899,8 @@ static gpointer serial_server(gpointer data) {
   // if (rigctl_debug) { t_print("RIGCTL: SER INC cat_control=%d\n", cat_control); }
   g_mutex_unlock(&mutex_numcat);
   g_idle_add(ext_vfo_update, NULL);
-  client->running = TRUE;
-  while (client->running) {
+  g_atomic_int_set(&client->running, TRUE);
+  while (g_atomic_int_get(&client->running)) {
     //
     // If the "serial line" is a FIFO, we must not drain it
     // by reading our own responses (they must go to the other
@@ -5925,7 +5923,7 @@ static gpointer serial_server(gpointer data) {
     }
     client->busy = 0;
     client->done = 0;
-    if (!client->running) { break; }
+    if (!g_atomic_int_get(&client->running)) { break; }
     //
     // Blocking I/O with a time-out
     //
@@ -5943,7 +5941,7 @@ static gpointer serial_server(gpointer data) {
     // is available. Therefore the serial thread is not shut down if
     // the read() failed -- it will try again and again until it is
     // shut down by the rigctl menu.
-    if (!client->running) { break; }
+    if (!g_atomic_int_get(&client->running)) { break; }
     if (numbytes > 0) {
       for (i = 0; i < numbytes; i++) {
         //
@@ -5976,7 +5974,7 @@ static gpointer serial_server(gpointer data) {
   // if (rigctl_debug) { t_print("RIGCTL: SER DEC - cat_control=%d\n", cat_control); }
   g_mutex_unlock(&mutex_numcat);
   g_idle_add(ext_vfo_update, NULL);
-  t_print("%s: Exiting Thread, running=%d\n", __func__, client->running);
+  t_print("%s: Exiting Thread, running=%d\n", __func__, g_atomic_int_get(&client->running));
   return NULL;
 }
 
@@ -6021,7 +6019,7 @@ int launch_serial_rigctl(int id) {
   //
   serial_client[id].busy = 0;
   serial_client[id].done = 0;
-  serial_client[id].running = 1;
+  g_atomic_int_set(&serial_client[id].running, 1);
   serial_client[id].andromeda_timer = 0;
   serial_client[id].auto_reporting = SET(SerialPorts[id].autoreporting);
   serial_client[id].andromeda_type = 0;
@@ -6064,7 +6062,7 @@ void disable_serial_rigctl(int id) {
     g_source_remove(serial_client[id].auto_timer);
     serial_client[id].auto_timer = 0;
   }
-  serial_client[id].running = FALSE;
+  g_atomic_int_set(&serial_client[id].running, FALSE);
   if (serial_client[id].fifo) {
     //
     // If the "serial port" is a fifo then the serial thread
