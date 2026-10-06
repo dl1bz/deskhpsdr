@@ -123,6 +123,10 @@ pthread_t MicThread;
 pthread_t HighPriorityFromSDRThread;
 pthread_t CheckForNoActivityThread;           // thread looks for inactvity
 
+static pthread_mutex_t saturn_server_lifecycle_mutex = PTHREAD_MUTEX_INITIALIZER;
+static atomic_bool saturn_server_running = false;
+static bool saturn_server_thread_started = false;
+
 //
 // function to make an incoming or outgoing socket, bound to the specified port in the structure
 // 1st parameter is a link into the socket data table
@@ -194,27 +198,44 @@ void *CheckForActivity(void *arg) {
     }
   }
   t_print("ENDING CheckForActivity thread\n");
+  return NULL;
 }
 
 //
 // perform ordely shutdown of the program
 //
 void shutdown_saturn_server(void) {
+  pthread_mutex_lock(&saturn_server_lifecycle_mutex);
   atomic_store_explicit(&ServerActive, false, memory_order_release);
-  close(SocketData[0].Socketid);                          // close incoming data socket
   atomic_store_explicit(&ExitRequested, true, memory_order_release);
+  if (saturn_server_thread_started && !pthread_equal(pthread_self(), saturn_server_thread)) {
+    pthread_join(saturn_server_thread, NULL);
+    saturn_server_thread_started = false;
+  }
+  pthread_mutex_unlock(&saturn_server_lifecycle_mutex);
   t_print("Shutdown COMPLETE\n");
 }
 
 void start_saturn_server(void) {
   int rc;
+  pthread_mutex_lock(&saturn_server_lifecycle_mutex);
+  if (saturn_server_thread_started) {
+    if (atomic_load_explicit(&saturn_server_running, memory_order_acquire)) {
+      pthread_mutex_unlock(&saturn_server_lifecycle_mutex);
+      return;
+    }
+    pthread_join(saturn_server_thread, NULL);
+    saturn_server_thread_started = false;
+  }
   atomic_store_explicit(&ExitRequested, false, memory_order_release);
   rc = pthread_create(&saturn_server_thread, NULL, saturn_server, NULL);
   if (rc != 0) {
     t_print("%s: pthread_create saturn_server thread failed: %s\n", __func__, strerror(rc));
+    pthread_mutex_unlock(&saturn_server_lifecycle_mutex);
     return;
   }
-  pthread_detach(saturn_server_thread);
+  saturn_server_thread_started = true;
+  pthread_mutex_unlock(&saturn_server_lifecycle_mutex);
 }
 
 //
@@ -225,6 +246,12 @@ void start_saturn_server(void) {
 void *saturn_server(void *arg) {
   int i, size;
   int rc;
+  bool activity_started = false;
+  bool ddc_specific_started = false;
+  bool duc_specific_started = false;
+  bool high_priority_started = false;
+  bool duc_iq_started = false;
+  atomic_store_explicit(&saturn_server_running, true, memory_order_release);
   uint8_t UDPInBuffer[VDISCOVERYSIZE];
   //
   // part written discovery reply packet
@@ -255,15 +282,15 @@ void *saturn_server(void *arg) {
   rc = pthread_create(&CheckForNoActivityThread, NULL, CheckForActivity, NULL);
   if (rc != 0) {
     t_print("%s: pthread_create check for exit failed: %s\n", __func__, strerror(rc));
-    return NULL;
+    goto cleanup;
   }
-  pthread_detach(CheckForNoActivityThread);
+  activity_started = true;
   //
   // create socket for incoming data on the command port
   //
   if (MakeSocket(SocketData, 0) != 0) {
     t_print("%s: cannot create command socket\n", __func__);
-    return NULL;
+    goto cleanup;
   }
 #if defined(__linux__)
   //
@@ -281,45 +308,45 @@ void *saturn_server(void *arg) {
 #endif
   if (MakeSocket(SocketData + VPORTDDCSPECIFIC, 0) != 0) {
     t_print("%s: cannot create DDC specific socket\n", __func__);
-    return NULL;
+    goto cleanup;
   }
   rc = pthread_create(&DDCSpecificThread, NULL, IncomingDDCSpecific, (void *) &SocketData[VPORTDDCSPECIFIC]);
   if (rc != 0) {
     t_print("%s: pthread_create DDC specific failed: %s\n", __func__, strerror(rc));
-    return NULL;
+    goto cleanup;
   }
-  pthread_detach(DDCSpecificThread);
+  ddc_specific_started = true;
   if (MakeSocket(SocketData + VPORTDUCSPECIFIC, 0) != 0) {
     t_print("%s: cannot create DUC specific socket\n", __func__);
-    return NULL;
+    goto cleanup;
   }
   rc = pthread_create(&DUCSpecificThread, NULL, IncomingDUCSpecific, (void *) &SocketData[VPORTDUCSPECIFIC]);
   if (rc != 0) {
     t_print("%s: pthread_create DUC specific failed: %s\n", __func__, strerror(rc));
-    return NULL;
+    goto cleanup;
   }
-  pthread_detach(DUCSpecificThread);
+  duc_specific_started = true;
   if (MakeSocket(SocketData + VPORTHIGHPRIORITYTOSDR, 0) != 0) {
     t_print("%s: cannot create high priority socket\n", __func__);
-    return NULL;
+    goto cleanup;
   }
   rc = pthread_create(&HighPriorityToSDRThread, NULL, IncomingHighPriority,
                       (void *) &SocketData[VPORTHIGHPRIORITYTOSDR]);
   if (rc != 0) {
     t_print("%s: pthread_create High priority to SDR failed: %s\n", __func__, strerror(rc));
-    return NULL;
+    goto cleanup;
   }
-  pthread_detach(HighPriorityToSDRThread);
+  high_priority_started = true;
   if (MakeSocket(SocketData + VPORTDUCIQ, 0) != 0) {
     t_print("%s: cannot create DUC I/Q socket\n", __func__);
-    return NULL;
+    goto cleanup;
   }
   rc = pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void *) &SocketData[VPORTDUCIQ]);
   if (rc != 0) {
     t_print("%s: pthread_create DUC I/Q failed: %s\n", __func__, strerror(rc));
-    return NULL;
+    goto cleanup;
   }
-  pthread_detach(DUCIQThread);
+  duc_iq_started = true;
   //
   // create outgoing mic data thread
   // note this shares a port with incoming DUC specific, so don't create a new port
@@ -342,7 +369,7 @@ void *saturn_server(void *arg) {
   for (i = 0; i < 10; i++) {
     if (MakeSocket(SocketData + VPORTDDCIQ0 + i, i) != 0) {
       t_print("%s: cannot create DDC I/Q socket %d\n", __func__, i);
-      return NULL;
+      goto cleanup;
     }
   }
   //
@@ -366,7 +393,7 @@ void *saturn_server(void *arg) {
     size = recvmsg(SocketData[0].Socketid, &datagram, 0);         // get one message. If it times out, gets size=-1
     if (size < 0 && errno != EAGAIN) {
       t_perror("recvfrom, port 1024");
-      return NULL;
+      goto cleanup;
     }
     if (ThreadError) {
       break;
@@ -434,7 +461,36 @@ void *saturn_server(void *arg) {
   // clean exit
   //
   t_print("Exiting\n");
-  shutdown_saturn_server();
+cleanup:
+  atomic_store_explicit(&ExitRequested, true, memory_order_release);
+  if (activity_started) {
+    pthread_join(CheckForNoActivityThread, NULL);
+  }
+  if (ddc_specific_started) {
+    pthread_join(DDCSpecificThread, NULL);
+  }
+  if (duc_specific_started) {
+    pthread_join(DUCSpecificThread, NULL);
+  }
+  if (high_priority_started) {
+    pthread_join(HighPriorityToSDRThread, NULL);
+  }
+  if (duc_iq_started) {
+    pthread_join(DUCIQThread, NULL);
+  }
+  // Child workers close their own sockets. Close sockets without a worker here.
+  if (SocketData[VPORTCOMMAND].Socketid > 0) {
+    close(SocketData[VPORTCOMMAND].Socketid);
+    SocketData[VPORTCOMMAND].Socketid = 0;
+  }
+  for (i = 0; i < 10; i++) {
+    if (SocketData[VPORTDDCIQ0 + i].Socketid > 0) {
+      close(SocketData[VPORTDDCIQ0 + i].Socketid);
+      SocketData[VPORTDDCIQ0 + i].Socketid = 0;
+    }
+  }
+  atomic_store_explicit(&ServerActive, false, memory_order_release);
+  atomic_store_explicit(&saturn_server_running, false, memory_order_release);
   return NULL;
 }
 
