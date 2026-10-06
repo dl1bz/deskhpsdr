@@ -47,6 +47,7 @@ static GdkRGBA led_red  = {COLOUR_ALARM};
 static GdkRGBA led_green = {COLOUR_OK};
 
 static GThread *level_thread_id;
+static GMutex level_mutex;
 static int run_level = 0;
 static double peak = 0.0;
 static guint vox_timeout;
@@ -58,9 +59,13 @@ static int vox_timeout_cb(gpointer data) {
 }
 
 static int level_update(void *data) {
-  if (run_level) {
-    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(level), peak);
-    if (peak > vox_threshold) {
+  g_mutex_lock(&level_mutex);
+  int running = run_level;
+  double current_peak = peak;
+  g_mutex_unlock(&level_mutex);
+  if (running) {
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(level), current_peak);
+    if (current_peak > vox_threshold) {
       // red indicator
       led_color = led_red;
       led_set_color(led);
@@ -82,8 +87,15 @@ static int level_update(void *data) {
 }
 
 static gpointer level_thread(gpointer arg) {
-  while (run_level) {
-    peak = vox_get_peak();
+  for (;;) {
+    double current_peak = vox_get_peak();
+    g_mutex_lock(&level_mutex);
+    if (!run_level) {
+      g_mutex_unlock(&level_mutex);
+      break;
+    }
+    peak = current_peak;
+    g_mutex_unlock(&level_mutex);
     g_idle_add(level_update, NULL);
     usleep(100000);  // 100ms
   }
@@ -95,7 +107,9 @@ static void cleanup(void) {
     GtkWidget *tmp = dialog;
     dialog = NULL;
     // Stop the level worker before destroying widgets used by level_update().
+    g_mutex_lock(&level_mutex);
     run_level = 0;
+    g_mutex_unlock(&level_mutex);
     if (level_thread_id != NULL) {
       g_thread_join(level_thread_id);
       level_thread_id = NULL;
@@ -133,7 +147,10 @@ static gboolean enable_cb(GtkWidget *widget, GdkEventButton *event, gpointer dat
 }
 
 static void start_level_thread(void) {
+  g_mutex_lock(&level_mutex);
   run_level = 1;
+  peak = 0.0;
+  g_mutex_unlock(&level_mutex);
   level_thread_id = g_thread_new("VOX level", level_thread, NULL);
   t_print("level_thread: id=%p\n", level_thread_id);
 }
