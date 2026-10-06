@@ -93,7 +93,7 @@ enum OpCode {
 };
 
 static GThread *tci_server_thread_id = NULL;
-static int tci_running = 0;
+static gint g_atomic_int_set(&tci_running, 0);
 static struct lws_context *tci_lws_context = NULL;
 static int tci_lws_seq = 0;
 static int tci_lws_pending_writable = 0;
@@ -120,7 +120,7 @@ typedef enum {
 typedef struct _client {
   int seq;                      // Seq. number of the client
   int fd;                       // socket
-  int running;                  // set this to zero to close client connection
+  gint running;                 // atomic: set this to zero to close client connection
   guint tci_timer;              // GTK id  of the periodic task
   guint tx_clear_timer;          // TX audio/MOX drain poll task
   guint tx_clear_generation;
@@ -378,7 +378,7 @@ void launch_tci(void) {
   cw_engine_set_start_delay(tci_cw_macros_delay_ms);
   cw_engine_set_empty_callback(tci_cw_macros_empty);
   rtty_engine_set_buffer_empty_callback(tci_rtty_buffer_empty);
-  tci_running = 1;
+  g_atomic_int_set(&tci_running, 1);
   tci_server_thread_id = g_thread_new("tci lws server", tci_lws_server, GINT_TO_POINTER(tci_port));
 }
 
@@ -391,7 +391,7 @@ static int tci_has_clients(void) {
 }
 
 void tci_send_stop_and_flush(void) {
-  if (!tci_running || tci_lws_context == NULL) {
+  if (!g_atomic_int_get(&tci_running) || tci_lws_context == NULL) {
     return;
   }
   GList *clients = tci_clients_snapshot();
@@ -446,7 +446,7 @@ void shutdown_tci(void) {
           client->iq_stream_enabled[i] = 0;
         }
         (void) tci_queue_frame(client, opTEXT, "stop;", 0);
-        client->running = 0;
+        g_atomic_int_set(&client->running, 0);
         lws_set_timeout(client->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
       }
     }
@@ -466,7 +466,7 @@ void shutdown_tci(void) {
       g_usleep(10000);
     }
   }
-  tci_running = 0;
+  g_atomic_int_set(&tci_running, 0);
   if (tci_lws_context != NULL) {
     lws_cancel_service(tci_lws_context);
   }
@@ -481,7 +481,7 @@ void shutdown_tci(void) {
 static int tci_queue_frame(CLIENT *client, int type, const char *msg, int check_running) {
   RESPONSE *resp;
   if (client == NULL) { return 0; }
-  if (check_running && !client->running) { return 0; }
+  if (check_running && !g_atomic_int_get(&client->running)) { return 0; }
   resp = g_new(RESPONSE, 1);
   resp->client = client;
   resp->type = type;
@@ -521,7 +521,7 @@ static int tci_queue_frame(CLIENT *client, int type, const char *msg, int check_
 
 static int tci_queue_binary_frame(CLIENT *client, const unsigned char *data, size_t len) {
   RESPONSE *resp;
-  if (client == NULL || data == NULL || len == 0 || !client->running) { return 0; }
+  if (client == NULL || data == NULL || len == 0 || !g_atomic_int_get(&client->running)) { return 0; }
   resp = g_new(RESPONSE, 1);
   resp->client = client;
   resp->type = opBIN;
@@ -571,7 +571,7 @@ static void tci_update_iq_stream_global(void) {
   g_mutex_lock(&tci_mutex);
   for (GList *l = tci_clients; l != NULL && (!enabled || (tci_iq_stream_owner != NULL && !owner_enabled)); l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client == NULL || !client->running) {
+    if (client == NULL || !g_atomic_int_get(&client->running)) {
       continue;
     }
     for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
@@ -646,7 +646,7 @@ void tci_rx_iq_block(RECEIVER *rx, const double *iq, guint frames) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running && client->iq_stream_enabled[rx->id]) {
+    if (client != NULL && g_atomic_int_get(&client->running) && client->iq_stream_enabled[rx->id]) {
       double phase = client->iq_cw_phase[rx->id];
       double phase_inc = 0.0;
       memcpy(frame, &header, sizeof(header));
@@ -727,7 +727,7 @@ static void tci_cw_send_to_all(const char *msg) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_text(client, msg);
     }
   }
@@ -812,7 +812,7 @@ static int tci_has_audio_monitor_source(void) {
   g_mutex_lock(&tci_mutex);
   for (GList *l = tci_clients; l != NULL && !enabled; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running && client->tx_audio_enabled) {
+    if (client != NULL && g_atomic_int_get(&client->running) && client->tx_audio_enabled) {
       enabled = 1;
       break;
     }
@@ -827,7 +827,7 @@ static void tci_update_rx_audio_global(void) {
   g_mutex_lock(&tci_mutex);
   for (GList *l = tci_clients; l != NULL && !enabled; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
         if (client->rx_audio_enabled[i]) {
           enabled = 1;
@@ -863,7 +863,7 @@ static void tci_queue_rx_audio_frame(CLIENT *client, int receiver_id) {
   size_t frame_len;
   guint frames;
   int queued;
-  if (client == NULL || !client->running || !client->rx_audio_enabled[receiver_id]) { return; }
+  if (client == NULL || !g_atomic_int_get(&client->running) || !client->rx_audio_enabled[receiver_id]) { return; }
   frames = tci_audio_get_frame(receiver_id, &client->rx_audio_read_count[receiver_id], frame, sizeof(frame),
                                &frame_len,
                                client->audio_sample_rate,
@@ -920,7 +920,7 @@ static void tci_queue_rx_audio_frame(CLIENT *client, int receiver_id) {
 static int tci_queue_tx_chrono_frame(CLIENT *client) {
   TCI_STREAM_HEADER header;
   int queued;
-  if (client == NULL || !client->running || !client->tx_audio_enabled) { return 0; }
+  if (client == NULL || !g_atomic_int_get(&client->running) || !client->tx_audio_enabled) { return 0; }
   memset(&header, 0, sizeof(header));
   header.receiver = 0;
   int chrono_rate = client->tx_audio_input_rate > 0 ?
@@ -952,7 +952,7 @@ static int tci_queue_tx_chrono_frame(CLIENT *client) {
     t_print("TCI%d TX chrono queue FAILED enabled=%d running=%d\n",
             client->seq,
             client->tx_audio_enabled,
-            client->running);
+            g_atomic_int_get(&client->running));
   }
   return queued;
 }
@@ -963,7 +963,7 @@ static void tci_service_tx_chrono(void) {
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
     guint send_chrono = 0;
-    if (client == NULL || !client->running) { continue; }
+    if (client == NULL || !g_atomic_int_get(&client->running)) { continue; }
     g_mutex_lock(&tci_mutex);
     if (client->tx_audio_enabled) {
       int chrono_rate = client->tx_audio_input_rate > 0 ?
@@ -1133,7 +1133,7 @@ static void tci_service_rx_audio(void) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client == NULL || !client->running) { continue; }
+    if (client == NULL || !g_atomic_int_get(&client->running)) { continue; }
     for (int i = 0; i < TCI_RX_AUDIO_MAX_RECEIVERS; i++) {
       if (client->rx_audio_enabled[i]) {
         tci_queue_rx_audio_frame(client, i);
@@ -1160,7 +1160,7 @@ static void tci_broadcast_dds(int v) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_dds(client, v);
     }
   }
@@ -1193,7 +1193,7 @@ static void tci_broadcast_mox_state(int state) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_mox_state(client, state);
     }
   }
@@ -1201,7 +1201,7 @@ static void tci_broadcast_mox_state(int state) {
 }
 
 void tci_mox_changed(int state) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_mox_state(state);
 }
 
@@ -1210,7 +1210,7 @@ void tci_mox_changed(int state) {
 
 static gboolean tci_broadcast_mox_true_cb(gpointer data) {
   (void) data;
-  if (tci_running) {
+  if (g_atomic_int_get(&tci_running)) {
     tci_broadcast_mox_state(1);
   }
   return G_SOURCE_REMOVE;
@@ -1218,14 +1218,14 @@ static gboolean tci_broadcast_mox_true_cb(gpointer data) {
 
 static gboolean tci_broadcast_mox_false_cb(gpointer data) {
   (void) data;
-  if (tci_running) {
+  if (g_atomic_int_get(&tci_running)) {
     tci_broadcast_mox_state(0);
   }
   return G_SOURCE_REMOVE;
 }
 
 static void tci_schedule_fast_mox_report(int state) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (state) {
     g_timeout_add(TCI_TRX_TX_REPORT_DELAY_MS, tci_broadcast_mox_true_cb, NULL);
   } else {
@@ -1237,7 +1237,7 @@ static void tci_broadcast_tx_footswitch_state(int state) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       if (state) {
         tci_send_text(client, "tx_footswitch:0,true;");
       } else {
@@ -1249,7 +1249,7 @@ static void tci_broadcast_tx_footswitch_state(int state) {
 }
 
 void tci_tx_footswitch_changed(int state) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_tx_footswitch_state(state);
 }
 
@@ -1257,7 +1257,7 @@ static void tci_broadcast_tune_state(int state) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       if (state) {
         tci_send_text(client, "tune:0,true;");
       } else {
@@ -1269,7 +1269,7 @@ static void tci_broadcast_tune_state(int state) {
 }
 
 void tci_tune_changed(int state) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_tune_state(state);
 }
 
@@ -1297,7 +1297,7 @@ static void tci_broadcast_lock(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_lock(client, VFO_A);
       tci_send_vfo_locks(client, VFO_A);
     }
@@ -1306,7 +1306,7 @@ static void tci_broadcast_lock(void) {
 }
 
 void tci_lock_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_lock();
 }
 
@@ -1338,7 +1338,7 @@ static void tci_broadcast_vfo(int v, int c) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_vfo(client, v, c);
     }
   }
@@ -1477,7 +1477,7 @@ static void tci_broadcast_rx_filter_band_value(int receiver_id, int low, int hig
   snprintf(msg, MAXMSGSIZE, "rx_filter_band:%d,%d,%d;", receiver_id, low, high);
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_text(client, msg);
     }
   }
@@ -1486,12 +1486,12 @@ static void tci_broadcast_rx_filter_band_value(int receiver_id, int low, int hig
 
 void tci_rx_filter_band_changed(int receiver_id) {
   GList *clients;
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_filter_band(client, receiver_id);
     }
   }
@@ -1545,7 +1545,7 @@ static void tci_broadcast_rit_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rit_enable(client, receiver_id);
     }
   }
@@ -1553,7 +1553,7 @@ static void tci_broadcast_rit_enable(int receiver_id) {
 }
 
 void tci_rit_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   tci_broadcast_rit_enable(receiver_id);
   if (vfo[receiver_id].rit_enabled) {
@@ -1580,7 +1580,7 @@ static void tci_broadcast_xit_enable(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_xit_enable(client);
     }
   }
@@ -1589,7 +1589,7 @@ static void tci_broadcast_xit_enable(void) {
 
 void tci_xit_enable_changed(void) {
   int txvfo;
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   txvfo = vfo_get_tx_vfo();
   if (txvfo < VFO_A || txvfo > VFO_B) { return; }
   tci_broadcast_xit_enable();
@@ -1623,7 +1623,7 @@ static void tci_broadcast_rit_offset(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rit_offset(client, receiver_id);
     }
   }
@@ -1631,7 +1631,7 @@ static void tci_broadcast_rit_offset(int receiver_id) {
 }
 
 void tci_rit_offset_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   if (!vfo[receiver_id].rit_enabled) { return; }
   tci_broadcast_rit_offset(receiver_id);
@@ -1658,7 +1658,7 @@ static void tci_broadcast_xit_offset(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_xit_offset(client);
     }
   }
@@ -1667,7 +1667,7 @@ static void tci_broadcast_xit_offset(void) {
 
 void tci_xit_offset_changed(void) {
   int txvfo;
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   txvfo = vfo_get_tx_vfo();
   if (txvfo < VFO_A || txvfo > VFO_B) { return; }
   if (!vfo[txvfo].xit_enabled) { return; }
@@ -1853,7 +1853,7 @@ static gboolean tci_tx_client_finish_clear_mox(CLIENT *client,
   client->tx_clear_timer = 0;
   client->tx_clear_stage = TCI_TX_CLEAR_NONE;
   client->tx_clear_started_us = 0;
-  running = client->running;
+  running = g_atomic_int_get(&client->running);
   if (tci_tx_owner == client && tci_tx_owner_mode == TCI_TX_OWNER_MOX) {
     tci_tx_owner = NULL;
     tci_tx_owner_mode = TCI_TX_OWNER_NONE;
@@ -1895,7 +1895,7 @@ static gboolean tci_tx_client_clear_mox_cb(gpointer data) {
   }
   stage = client->tx_clear_stage;
   started_us = client->tx_clear_started_us;
-  running = client->running;
+  running = g_atomic_int_get(&client->running);
   if (!running || stage == TCI_TX_CLEAR_NONE) {
     client->tx_clear_timer = 0;
     g_mutex_unlock(&tci_mutex);
@@ -2071,7 +2071,7 @@ static void tci_broadcast_digu_offset(void) {
   int value = tci_get_active_digu_offset();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_digu_offset_value(client, value);
     }
   }
@@ -2083,7 +2083,7 @@ static void tci_broadcast_digl_offset(void) {
   int value = tci_get_active_digl_offset();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_digl_offset_value(client, value);
     }
   }
@@ -2091,12 +2091,12 @@ static void tci_broadcast_digl_offset(void) {
 }
 
 void tci_digu_offset_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_digu_offset();
 }
 
 void tci_digl_offset_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_digl_offset();
 }
 
@@ -2128,7 +2128,7 @@ static void tci_broadcast_mute_state(int state) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_mute_state(client, state);
     }
   }
@@ -2155,7 +2155,7 @@ static void tci_broadcast_rx_mute_state(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_mute_state(client, receiver_id, state);
     }
   }
@@ -2164,7 +2164,7 @@ static void tci_broadcast_rx_mute_state(int receiver_id, int state) {
 
 
 void tci_mute_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (active_receiver != NULL) {
     tci_broadcast_mute_state(active_receiver->mute_radio ? 1 : 0);
   }
@@ -2173,7 +2173,7 @@ void tci_mute_changed(int receiver_id) {
 }
 
 void tci_rx_mute_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (receiver_id < 0 || receiver_id >= receivers || receiver[receiver_id] == NULL) { return; }
   tci_broadcast_rx_mute_state(receiver_id, receiver[receiver_id]->mute_radio ? 1 : 0);
 }
@@ -2234,7 +2234,7 @@ static void tci_broadcast_sql_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_sql_enable(client, receiver_id);
     }
   }
@@ -2247,7 +2247,7 @@ static void tci_broadcast_sql_enable_value(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_sql_enable_value(client, receiver_id, state);
     }
   }
@@ -2260,7 +2260,7 @@ static void tci_broadcast_sql_level(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_sql_level(client, receiver_id);
     }
   }
@@ -2274,7 +2274,7 @@ static void tci_broadcast_sql_level_value(int receiver_id, double value) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_sql_level_value(client, receiver_id, value);
     }
   }
@@ -2282,12 +2282,12 @@ static void tci_broadcast_sql_level_value(int receiver_id, double value) {
 }
 
 void tci_sql_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_sql_enable(receiver_id);
 }
 
 void tci_sql_level_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_sql_level(receiver_id);
 }
 
@@ -2314,7 +2314,7 @@ static void tci_broadcast_rx_anf_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_anf_enable(client, receiver_id);
     }
   }
@@ -2327,7 +2327,7 @@ static void tci_broadcast_rx_anf_enable_value(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_anf_enable_value(client, receiver_id, state);
     }
   }
@@ -2335,7 +2335,7 @@ static void tci_broadcast_rx_anf_enable_value(int receiver_id, int state) {
 }
 
 void tci_rx_anf_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_rx_anf_enable(receiver_id);
 }
 
@@ -2360,7 +2360,7 @@ static void tci_broadcast_rx_nf_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_nf_enable(client, receiver_id);
     }
   }
@@ -2373,7 +2373,7 @@ static void tci_broadcast_rx_nf_enable_value(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_nf_enable_value(client, receiver_id, state);
     }
   }
@@ -2381,7 +2381,7 @@ static void tci_broadcast_rx_nf_enable_value(int receiver_id, int state) {
 }
 
 void tci_rx_nf_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_rx_nf_enable(receiver_id);
 }
 
@@ -2422,7 +2422,7 @@ static void tci_broadcast_rx_nb_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_nb_enable(client, receiver_id);
     }
   }
@@ -2435,7 +2435,7 @@ static void tci_broadcast_rx_nb_enable_value(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_nb_enable_value(client, receiver_id, state);
     }
   }
@@ -2443,7 +2443,7 @@ static void tci_broadcast_rx_nb_enable_value(int receiver_id, int state) {
 }
 
 void tci_rx_nb_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_rx_nb_enable(receiver_id);
 }
 
@@ -2470,7 +2470,7 @@ static void tci_broadcast_rx_bin_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_bin_enable(client, receiver_id);
     }
   }
@@ -2483,7 +2483,7 @@ static void tci_broadcast_rx_bin_enable_value(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_bin_enable_value(client, receiver_id, state);
     }
   }
@@ -2491,7 +2491,7 @@ static void tci_broadcast_rx_bin_enable_value(int receiver_id, int state) {
 }
 
 void tci_rx_bin_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_rx_bin_enable(receiver_id);
 }
 
@@ -2532,7 +2532,7 @@ static void tci_broadcast_rx_apf_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_apf_enable(client, receiver_id);
     }
   }
@@ -2545,7 +2545,7 @@ static void tci_broadcast_rx_apf_enable_value(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_apf_enable_value(client, receiver_id, state);
     }
   }
@@ -2553,7 +2553,7 @@ static void tci_broadcast_rx_apf_enable_value(int receiver_id, int state) {
 }
 
 void tci_rx_apf_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_rx_apf_enable(receiver_id);
 }
 
@@ -2607,7 +2607,7 @@ static void tci_broadcast_rx_nr_enable(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_nr_enable(client, receiver_id);
     }
   }
@@ -2620,7 +2620,7 @@ static void tci_broadcast_rx_nr_enable_value(int receiver_id, int state) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_nr_enable_value(client, receiver_id, state);
     }
   }
@@ -2628,7 +2628,7 @@ static void tci_broadcast_rx_nr_enable_value(int receiver_id, int state) {
 }
 
 void tci_rx_nr_enable_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_rx_nr_enable(receiver_id);
 }
 
@@ -2678,7 +2678,7 @@ static void tci_broadcast_volume(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_volume(client);
     }
   }
@@ -2690,7 +2690,7 @@ static void tci_broadcast_volume_value(double value) {
   value = tci_clamp_volume(value);
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_volume_value(client, value);
     }
   }
@@ -2703,7 +2703,7 @@ static void tci_broadcast_rx_volume(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_rx_volume(client, receiver_id, 0);
       tci_send_rx_volume(client, receiver_id, 1);
     }
@@ -2718,7 +2718,7 @@ static void tci_broadcast_rx_volume_value(int receiver_id, double value) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       /* deskHPSDR has one AF gain per receiver, mirrored to both TCI channels. */
       tci_send_rx_volume_value(client, receiver_id, 0, value);
       tci_send_rx_volume_value(client, receiver_id, 1, value);
@@ -2728,7 +2728,7 @@ static void tci_broadcast_rx_volume_value(int receiver_id, double value) {
 }
 
 void tci_volume_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_volume();
   tci_broadcast_rx_volume(receiver_id);
 }
@@ -2763,7 +2763,7 @@ static void tci_broadcast_agc_gain(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_agc_gain(client, receiver_id);
     }
   }
@@ -2777,7 +2777,7 @@ static void tci_broadcast_agc_gain_value(int receiver_id, double value) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_agc_gain_value(client, receiver_id, value);
     }
   }
@@ -2785,7 +2785,7 @@ static void tci_broadcast_agc_gain_value(int receiver_id, double value) {
 }
 
 void tci_agc_gain_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_agc_gain(receiver_id);
 }
 
@@ -2836,7 +2836,7 @@ static void tci_broadcast_agc_mode(int receiver_id) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_agc_mode(client, receiver_id);
     }
   }
@@ -2849,7 +2849,7 @@ static void tci_broadcast_agc_mode_value(int receiver_id, int agc) {
   clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_agc_mode_value(client, receiver_id, agc);
     }
   }
@@ -2857,7 +2857,7 @@ static void tci_broadcast_agc_mode_value(int receiver_id, int agc) {
 }
 
 void tci_agc_mode_changed(int receiver_id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_agc_mode(receiver_id);
 }
 
@@ -2873,7 +2873,7 @@ static void tci_broadcast_txfreq(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_txfreq(client);
     }
   }
@@ -2884,7 +2884,7 @@ static void tci_broadcast_drive(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_drive(client);
     }
   }
@@ -2895,7 +2895,7 @@ static void tci_broadcast_tune_drive(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_tune_drive(client);
     }
   }
@@ -2906,7 +2906,7 @@ static void tci_broadcast_split(void) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_split(client);
     }
   }
@@ -2914,7 +2914,7 @@ static void tci_broadcast_split(void) {
 }
 
 void tci_split_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_split();
 }
 
@@ -2971,7 +2971,7 @@ static void tci_broadcast_mode_value(int v, int m) {
   GList *clients = tci_clients_snapshot();
   for (GList *l = clients; l != NULL; l = l->next) {
     CLIENT *client = (CLIENT *) l->data;
-    if (client != NULL && client->running) {
+    if (client != NULL && g_atomic_int_get(&client->running)) {
       tci_send_mode_value(client, v, m);
       tci_send_rx_filter_band(client, v);
       if (m == modeDIGU) {
@@ -2985,7 +2985,7 @@ static void tci_broadcast_mode_value(int v, int m) {
 }
 
 void tci_vfo_changed(int id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (id == VFO_A) {
     tci_broadcast_dds(VFO_A);
     tci_broadcast_vfo(VFO_A, 0);
@@ -3000,7 +3000,7 @@ void tci_vfo_changed(int id) {
 }
 
 void tci_vfos_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_dds(VFO_A);
   tci_broadcast_vfo(VFO_A, 0);
   tci_broadcast_vfo(VFO_A, 1);
@@ -3018,18 +3018,18 @@ void tci_vfos_changed(void) {
 }
 
 void tci_mode_changed(int id) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   if (id < VFO_A || id > VFO_B) { return; }
   tci_broadcast_mode_value(id, vfo[id].mode);
 }
 
 void tci_tx_frequency_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_txfreq();
 }
 
 void tci_drive_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_drive();
   if (transmitter != NULL && transmitter->tune_use_drive) {
     tci_broadcast_tune_drive();
@@ -3037,7 +3037,7 @@ void tci_drive_changed(void) {
 }
 
 void tci_tune_drive_changed(void) {
-  if (!tci_running) { return; }
+  if (!g_atomic_int_get(&tci_running)) { return; }
   tci_broadcast_tune_drive();
 }
 
@@ -5356,7 +5356,7 @@ static void tci_cmd_stop(CLIENT *client, const TCI_CMD *cmd) {
     tci_rtty_owner = NULL;
     abort_rtty = rtty_engine_is_active();
   }
-  client->running = 0;
+  g_atomic_int_set(&client->running, 0);
   g_mutex_unlock(&tci_mutex);
   if (abort_rtty) {
     rtty_engine_abort();
@@ -5553,7 +5553,7 @@ static gboolean tci_reporter(gpointer data) {
   //
   CLIENT *client = (CLIENT *) data;
   g_mutex_lock(&tci_mutex);
-  if (!client->running) {
+  if (!g_atomic_int_get(&client->running)) {
     g_mutex_unlock(&tci_mutex);
     return FALSE;
   }
@@ -5644,7 +5644,7 @@ static gboolean tci_reporter(gpointer data) {
 static void tci_init_client(CLIENT *client, int fd, int seq) {
   if (client == NULL) { return; }
   client->fd              = fd;
-  client->running         = 1;
+  g_atomic_int_set(&client->running, 1);
   client->seq             = seq;
   client->last_fa         = -1;
   client->last_fb         = -1;
@@ -5769,7 +5769,7 @@ static void tci_process_ws_payload(CLIENT *client, int type, char *msg) {
   case opCLOSE:
     if (rigctl_debug) { t_print("TCI%d CLOSE rcvd\n", client->seq); }
     g_mutex_lock(&tci_mutex);
-    client->running = 0;
+    g_atomic_int_set(&client->running, 0);
     g_mutex_unlock(&tci_mutex);
     break;
   default:
@@ -5944,7 +5944,7 @@ static int tci_lws_write_queued(CLIENT *client) {
     client->idle_queued--;
   }
   if (rc < 0) {
-    client->running = 0;
+    g_atomic_int_set(&client->running, 0);
     g_mutex_unlock(&tci_mutex);
     return -1;
   }
@@ -6022,7 +6022,7 @@ static int tci_lws_callback(struct lws *wsi, enum lws_callback_reasons reason,
     break;
   case LWS_CALLBACK_SERVER_WRITEABLE:
     if (client == NULL || client->wsi == NULL) { return 0; }
-    if (!client->running) { return -1; }
+    if (!g_atomic_int_get(&client->running)) { return -1; }
     // if (rigctl_debug && client->lws_tx_queue != NULL && !g_queue_is_empty(client->lws_tx_queue)) {
     //  t_print("LWS WRITEABLE queued=%u\n", g_queue_get_length(client->lws_tx_queue));
     // }
@@ -6044,7 +6044,7 @@ static int tci_lws_callback(struct lws *wsi, enum lws_callback_reasons reason,
     client->tx_audio_enabled = 0;
     client->tx_chrono_next_us = 0;
     client->tx_chrono_tick = 0;
-    client->running = 0;
+    g_atomic_int_set(&client->running, 0);
     client->wsi = NULL;
     if (client == tci_iq_stream_owner) {
       tci_iq_stream_owner = NULL;
@@ -6141,7 +6141,7 @@ static gpointer tci_lws_server(gpointer data) {
     t_print("%s: lws_create_context failed\n", __func__);
     return NULL;
   }
-  while (tci_running) {
+  while (g_atomic_int_get(&tci_running)) {
     int do_writable = 0;
     tci_service_rx_audio();
     g_mutex_lock(&tci_mutex);
@@ -6156,7 +6156,7 @@ static gpointer tci_lws_server(gpointer data) {
         CLIENT *client = (CLIENT *) l->data;
         struct lws *wsi = NULL;
         g_mutex_lock(&tci_mutex);
-        if (client != NULL && client->running && client->wsi != NULL &&
+        if (client != NULL && g_atomic_int_get(&client->running) && client->wsi != NULL &&
             client->lws_tx_queue != NULL && !g_queue_is_empty(client->lws_tx_queue)) {
           wsi = client->wsi;
         }
