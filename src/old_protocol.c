@@ -1130,19 +1130,33 @@ static gpointer receive_thread(gpointer arg) {
       break;
     default:
       for (;;) {
-        if (tcp_socket >= 0) {
+        pthread_mutex_lock(&send_ozy_mutex);
+        int rx_socket = tcp_socket;
+        pthread_mutex_unlock(&send_ozy_mutex);
+        if (rx_socket >= 0) {
           // TCP messages may be split, so collect exactly 1032 bytes.
-          // Remember, this is a STREAMING protocol.
+          // Remember, this is a STREAMING protocol. Keep the same socket
+          // snapshot for the complete frame so reconnects cannot mix streams.
           bytes_read = 0;
           left = 1032;
           while (left > 0) {
-            ret = recvfrom(tcp_socket, buffer + bytes_read, (size_t)(left), 0, NULL, 0);
+            ret = recvfrom(rx_socket, buffer + bytes_read, (size_t)(left), 0, NULL, 0);
             if (ret < 0 && errno == EAGAIN) { continue; } // time-out
-            if (ret < 0) { break; }                       // error
+            if (ret <= 0) { break; }                      // error or orderly peer shutdown
             bytes_read += ret;
             left -= ret;
           }
-          if (ret < 0) {
+          if (ret == 0) {
+            // The peer closed the TCP stream. Retire only the socket on which
+            // EOF was observed; a reconnect may already have installed a new one.
+            pthread_mutex_lock(&send_ozy_mutex);
+            if (tcp_socket == rx_socket) {
+              tcp_socket = -1;
+              close(rx_socket);
+            }
+            pthread_mutex_unlock(&send_ozy_mutex);
+            bytes_read = -1;                         // discard any partial frame
+          } else if (ret < 0) {
             bytes_read = ret;                        // error case: discard whole packet
           }
         } else if (data_socket >= 0) {
@@ -1248,18 +1262,32 @@ static gpointer receive_thread(gpointer arg) {
       break;
     default:
       for (;;) {
-        if (tcp_socket >= 0) {
-          // TCP-Modus: 1032 Bytes sammeln
+        pthread_mutex_lock(&send_ozy_mutex);
+        int rx_socket = tcp_socket;
+        pthread_mutex_unlock(&send_ozy_mutex);
+        if (rx_socket >= 0) {
+          // TCP-Modus: 1032 Bytes sammeln. Fuer den kompletten Frame denselben
+          // Socket-Snapshot verwenden, damit ein Reconnect keine Streams mischt.
           bytes_read = 0;
           left = 1032;
           while (left > 0) {
-            ret = recvfrom(tcp_socket, buffer + bytes_read, (size_t) left, 0, NULL, 0);
+            ret = recvfrom(rx_socket, buffer + bytes_read, (size_t) left, 0, NULL, 0);
             if (ret < 0 && errno == EAGAIN) { continue; }
-            if (ret < 0) { break; }
+            if (ret <= 0) { break; }
             bytes_read += ret;
             left -= ret;
           }
-          if (ret < 0) {
+          if (ret == 0) {
+            // EOF nur fuer genau den Socket retiren, auf dem es beobachtet wurde.
+            // Ein Reconnect kann inzwischen bereits einen neuen Socket gesetzt haben.
+            pthread_mutex_lock(&send_ozy_mutex);
+            if (tcp_socket == rx_socket) {
+              tcp_socket = -1;
+              close(rx_socket);
+            }
+            pthread_mutex_unlock(&send_ozy_mutex);
+            bytes_read = -1; // eventuellen Teil-Frame verwerfen
+          } else if (ret < 0) {
             bytes_read = ret; // Fehlerfall
           }
         } else if (data_socket >= 0) {
