@@ -674,7 +674,11 @@ static int init(void *data) {
   t_print("Securing wisdom file in directory: %s\n", wisdom_directory);
   status_text("Checking FFTW Wisdom file ...");
   wisdom_running = 1;
-  pthread_create(&wisdom_thread_id, NULL, wisdom_thread, wisdom_directory);
+  int wisdom_rc = pthread_create(&wisdom_thread_id, NULL, wisdom_thread, wisdom_directory);
+  if (wisdom_rc != 0) {
+    t_print("%s: pthread_create wisdom_thread failed: %s\n", __func__, strerror(wisdom_rc));
+    wisdom_running = 0;
+  }
   while (wisdom_running) {
     // wait for the wisdom thread to complete, meanwhile
     // handling any GTK events.
