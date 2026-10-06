@@ -202,9 +202,11 @@ void shutdown_saturn_server(void) {
 }
 
 void start_saturn_server(void) {
+  int rc;
   ExitRequested = false;
-  if (pthread_create(&saturn_server_thread, NULL, saturn_server, NULL) < 0) {
-    t_perror("pthread_create saturn_server thread");
+  rc = pthread_create(&saturn_server_thread, NULL, saturn_server, NULL);
+  if (rc != 0) {
+    t_print("%s: pthread_create saturn_server thread failed: %s\n", __func__, strerror(rc));
     return;
   }
   pthread_detach(saturn_server_thread);
@@ -217,6 +219,7 @@ void start_saturn_server(void) {
 //
 void *saturn_server(void *arg) {
   int i, size;
+  int rc;
   uint8_t UDPInBuffer[VDISCOVERYSIZE];
   //
   // part written discovery reply packet
@@ -244,8 +247,9 @@ void *saturn_server(void *arg) {
   //
   // start up thread to check for no longer getting messages, to set back to inactive
   //
-  if (pthread_create(&CheckForNoActivityThread, NULL, CheckForActivity, NULL) < 0) {
-    t_perror("pthread_create check for exit");
+  rc = pthread_create(&CheckForNoActivityThread, NULL, CheckForActivity, NULL);
+  if (rc != 0) {
+    t_print("%s: pthread_create check for exit failed: %s\n", __func__, strerror(rc));
     return NULL;
   }
   pthread_detach(CheckForNoActivityThread);
@@ -268,27 +272,31 @@ void *saturn_server(void *arg) {
   for (i = 0; i < 6; ++i) { DiscoveryReply[i + 5] = 0xAA; }
 #endif
   MakeSocket(SocketData + VPORTDDCSPECIFIC, 0);          // create and bind a socket
-  if (pthread_create(&DDCSpecificThread, NULL, IncomingDDCSpecific, (void *) &SocketData[VPORTDDCSPECIFIC]) < 0) {
-    t_perror("pthread_create DDC specific");
+  rc = pthread_create(&DDCSpecificThread, NULL, IncomingDDCSpecific, (void *) &SocketData[VPORTDDCSPECIFIC]);
+  if (rc != 0) {
+    t_print("%s: pthread_create DDC specific failed: %s\n", __func__, strerror(rc));
     return NULL;
   }
   pthread_detach(DDCSpecificThread);
   MakeSocket(SocketData + VPORTDUCSPECIFIC, 0);          // create and bind a socket
-  if (pthread_create(&DUCSpecificThread, NULL, IncomingDUCSpecific, (void *) &SocketData[VPORTDUCSPECIFIC]) < 0) {
-    t_perror("pthread_create DUC specific");
+  rc = pthread_create(&DUCSpecificThread, NULL, IncomingDUCSpecific, (void *) &SocketData[VPORTDUCSPECIFIC]);
+  if (rc != 0) {
+    t_print("%s: pthread_create DUC specific failed: %s\n", __func__, strerror(rc));
     return NULL;
   }
   pthread_detach(DUCSpecificThread);
   MakeSocket(SocketData + VPORTHIGHPRIORITYTOSDR, 0);          // create and bind a socket
-  if (pthread_create(&HighPriorityToSDRThread, NULL, IncomingHighPriority,
-                     (void *) &SocketData[VPORTHIGHPRIORITYTOSDR]) < 0) {
-    t_perror("pthread_create High priority to SDR");
+  rc = pthread_create(&HighPriorityToSDRThread, NULL, IncomingHighPriority,
+                      (void *) &SocketData[VPORTHIGHPRIORITYTOSDR]);
+  if (rc != 0) {
+    t_print("%s: pthread_create High priority to SDR failed: %s\n", __func__, strerror(rc));
     return NULL;
   }
   pthread_detach(HighPriorityToSDRThread);
   MakeSocket(SocketData + VPORTDUCIQ, 0);          // create and bind a socket
-  if (pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void *) &SocketData[VPORTDUCIQ]) < 0) {
-    t_perror("pthread_create DUC I/Q");
+  rc = pthread_create(&DUCIQThread, NULL, IncomingDUCIQ, (void *) &SocketData[VPORTDUCIQ]);
+  if (rc != 0) {
+    t_print("%s: pthread_create DUC I/Q failed: %s\n", __func__, strerror(rc));
     return NULL;
   }
   pthread_detach(DUCIQThread);
