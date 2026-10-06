@@ -172,7 +172,10 @@ int MakeSocket(struct ThreadSocketData* Ptr, int DDCid) {
 // cppcheck-suppress constParameterCallback
 void *CheckForActivity(void *arg) {
   while (!atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
-    sleep(1000);                                   // wait for 1 second
+    sleep(1);                                      // wait for 1 second
+    if (atomic_load_explicit(&ExitRequested, memory_order_acquire)) {
+      break;
+    }
     bool PreviouslyActiveState = atomic_load_explicit(&ServerActive, memory_order_acquire);
     bool MessageReceived = atomic_exchange_explicit(&NewMessageReceived, false, memory_order_acq_rel);
     if (!MessageReceived && atomic_load_explicit(&HW_Timer_Enable, memory_order_acquire)) {
