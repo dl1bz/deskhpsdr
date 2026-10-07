@@ -410,6 +410,10 @@ void flush_iobuffs(int channel) {
 
 PORT  //double, interleaved I/Q
 void fexchange0(int channel, double *in, double *out, int *error) {
+  if (channel < 0 || channel >= MAX_CHANNELS || !InterlockedAnd(&ch[channel].open, 1)) {
+    if (error) { *error = -1; }
+    return;
+  }
   int n;
   int doit = 0;
   IOB a;
@@ -460,6 +464,10 @@ void fexchange0(int channel, double *in, double *out, int *error) {
 
 PORT  //separate I/Q buffers
 void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Qout, int *error) {
+  if (channel < 0 || channel >= MAX_CHANNELS || !InterlockedAnd(&ch[channel].open, 1)) {
+    if (error) { *error = -1; }
+    return;
+  }
   int i, n;
   int doit = 0;
   IOB a;

@@ -29,6 +29,7 @@ warren@wpratt.com
 #include "comm.h"
 
 struct _ch {
+  volatile long open;
   int type;
   volatile long run;      // when 1, thread loops; when 0, thread terminates
   volatile long thread_active; // set before thread start; cleared by worker on exit

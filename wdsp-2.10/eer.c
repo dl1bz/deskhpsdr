@@ -128,21 +128,26 @@ __declspec(align(16)) EER peer[MAX_EXT_EERS];     // array of pointers for EERs 
 PORT
 void create_eerEXT(int id, int run, int size, int rate, double mgain, double pgain, int rundelays, double mdelay,
                    double pdelay, int amiq) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] != 0) { return; }
   peer[id] = create_eer(run, size, 0, 0, 0, rate, mgain, pgain, rundelays, mdelay, pdelay, amiq);
 }
 
 PORT
 void destroy_eerEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   destroy_eer(peer[id]);
+  peer[id] = 0;
 }
 
 PORT
 void flush_eerEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   flush_eer(peer[id]);
 }
 
 PORT
 void SetEERRun(int id, int run) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->run = run;
@@ -151,6 +156,7 @@ void SetEERRun(int id, int run) {
 
 PORT
 void SetEERAMIQ(int id, int amiq) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->amiq = amiq;
@@ -159,6 +165,7 @@ void SetEERAMIQ(int id, int amiq) {
 
 PORT
 void SetEERMgain(int id, double gain) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->mgain = gain;
@@ -167,6 +174,7 @@ void SetEERMgain(int id, double gain) {
 
 PORT
 void SetEERPgain(int id, double gain) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->pgain = gain;
@@ -175,6 +183,7 @@ void SetEERPgain(int id, double gain) {
 
 PORT
 void SetEERRunDelays(int id, int run) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->rundelays = run;
@@ -185,6 +194,7 @@ void SetEERRunDelays(int id, int run) {
 
 PORT
 void SetEERMdelay(int id, double delay) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->mdelay = delay;
@@ -194,6 +204,7 @@ void SetEERMdelay(int id, double delay) {
 
 PORT
 void SetEERPdelay(int id, double delay) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->pdelay = delay;
@@ -203,6 +214,7 @@ void SetEERPdelay(int id, double delay) {
 
 PORT
 void SetEERSize(int id, int size) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->size = size;
@@ -213,6 +225,7 @@ void SetEERSize(int id, int size) {
 
 PORT
 void SetEERSamplerate(int id, int rate) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   EnterCriticalSection(&a->cs_update);
   a->rate = rate;
@@ -339,6 +352,7 @@ void pSetEERSamplerate(EER a, int rate) {
 
 PORT
 void xeerEXTF(int id, float *inI, float *inQ, float *outI, float *outQ, float *outMI, float *outMQ, int mox, int size) {
+  if (id < 0 || id >= MAX_EXT_EERS || peer[id] == 0) { return; }
   EER a = peer[id];
   if (mox && a->run) {
     int i;

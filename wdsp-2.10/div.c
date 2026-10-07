@@ -30,7 +30,9 @@ warren@wpratt.com
 
 MDIV create_div(int run, int nr, int size, double **in, double *out) {
   int i;
-  MDIV a = (MDIV) malloc0(sizeof(mdiv));
+  MDIV a;
+  if (nr < 1 || nr > MAX_NR || size <= 0) { return 0; }
+  a = (MDIV) malloc0(sizeof(mdiv));
   a->run = run;
   a->nr = nr;
   a->size = size;
@@ -99,21 +101,26 @@ __declspec(align(16)) MDIV pdiv[MAX_EXT_DIVS];    // array of pointers for DIVs 
 
 PORT
 void create_divEXT(int id, int run, int nr, int size) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] != 0 || nr < 1 || nr > MAX_NR || size <= 0) { return; }
   pdiv[id] = create_div(run, nr, size, 0, 0);
 }
 
 PORT
 void destroy_divEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   destroy_div(pdiv[id]);
+  pdiv[id] = 0;
 }
 
 PORT
 void flush_divEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   flush_div(pdiv[id]);
 }
 
 PORT
 void xdivEXT(int id, int nsamples, double **in, double *out) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   int i;
   MDIV a = pdiv[id];
   a->size = nsamples;
@@ -125,6 +132,7 @@ void xdivEXT(int id, int nsamples, double **in, double *out) {
 // 0 - does nothing; 1 - operates
 PORT
 void SetEXTDIVRun(int id, int run) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   MDIV a = pdiv[id];
   EnterCriticalSection(&a->cs_update);
   a->run = run;
@@ -134,6 +142,7 @@ void SetEXTDIVRun(int id, int run) {
 // size of data buffer in complex samples
 PORT
 void SetEXTDIVBuffsize(int id, int size) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   MDIV a = pdiv[id];
   EnterCriticalSection(&a->cs_update);
   a->size = size;
@@ -143,7 +152,9 @@ void SetEXTDIVBuffsize(int id, int size) {
 // number of receivers being used for diversity
 PORT
 void SetEXTDIVNr(int id, int nr) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   MDIV a = pdiv[id];
+  if (nr < 1 || nr > MAX_NR) { return; }
   EnterCriticalSection(&a->cs_update);
   a->nr = nr;
   LeaveCriticalSection(&a->cs_update);
@@ -153,7 +164,9 @@ void SetEXTDIVNr(int id, int nr) {
 //  if output==nr, mixing occurs
 PORT
 void SetEXTDIVOutput(int id, int output) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   MDIV a = pdiv[id];
+  if (output < 0 || output > a->nr) { return; }
   EnterCriticalSection(&a->cs_update);
   a->output = output;
   LeaveCriticalSection(&a->cs_update);
@@ -163,7 +176,9 @@ void SetEXTDIVOutput(int id, int output) {
 //  can be set to 1.0 and 0.0 for "reference receiver"
 PORT
 void SetEXTDIVRotate(int id, int nr, double *Irotate, double *Qrotate) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   MDIV a = pdiv[id];
+  if (nr < 0 || nr > MAX_NR || (nr > 0 && (Irotate == 0 || Qrotate == 0))) { return; }
   EnterCriticalSection(&a->cs_update);
   memcpy(a->Irotate, Irotate, nr * sizeof(double));
   memcpy(a->Qrotate, Qrotate, nr * sizeof(double));
@@ -177,6 +192,7 @@ void SetEXTDIVRotate(int id, int nr, double *Irotate, double *Qrotate) {
 ********************************************************************************************************/
 PORT
 void xdivEXTF(int id, int size, float **input, float *Iout, float *Qout) {
+  if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   int i, j;
   MDIV a = pdiv[id];
   if (a->run) {

@@ -28,6 +28,23 @@ warren@wpratt.com
 
 struct _ch ch[MAX_CHANNELS];
 
+static int valid_channel_id(int channel) {
+  return channel >= 0 && channel < MAX_CHANNELS;
+}
+
+static int valid_channel_type(int type) {
+  return type == 0 || type == 1 || type == 31;
+}
+
+static int valid_channel_sizes_rates(int in_size, int dsp_size, int in_rate, int dsp_rate, int out_rate) {
+  return in_size > 0 && dsp_size > 0 && in_rate > 0 && dsp_rate > 0 && out_rate > 0;
+}
+
+static int channel_is_open(int channel) {
+  return valid_channel_id(channel) && InterlockedAnd(&ch[channel].open, 1);
+}
+
+
 void start_thread(int channel) {
   HANDLE handle;
   InterlockedBitTestAndSet(&ch[channel].thread_active, 0);
@@ -78,6 +95,12 @@ void build_channel(int channel) {
 PORT
 void OpenChannel(int channel, int in_size, int dsp_size, int input_samplerate, int dsp_rate, int output_samplerate,
                  int type, int state, double tdelayup, double tslewup, double tdelaydown, double tslewdown, int bfo) {
+  if (!valid_channel_id(channel) || channel_is_open(channel) ||
+      !valid_channel_sizes_rates(in_size, dsp_size, input_samplerate, dsp_rate, output_samplerate) ||
+      !valid_channel_type(type) || (state != 0 && state != 1) ||
+      tdelayup < 0.0 || tslewup < 0.0 || tdelaydown < 0.0 || tslewdown < 0.0) {
+    return;
+  }
   ch[channel].in_size = in_size;
   ch[channel].dsp_size = dsp_size;
   ch[channel].in_rate = input_samplerate;
@@ -92,6 +115,7 @@ void OpenChannel(int channel, int in_size, int dsp_size, int input_samplerate, i
   ch[channel].bfo = bfo;
   InterlockedBitTestAndReset(&ch[channel].exchange, 0);
   build_channel(channel);
+  InterlockedBitTestAndSet(&ch[channel].open, 0);
   if (ch[channel].state) {
     InterlockedBitTestAndSet(&ch[channel].iob.pc->slew.upflag, 0);
     InterlockedBitTestAndSet(&ch[channel].iob.ch_upslew, 0);
@@ -122,9 +146,11 @@ void post_main_destroy(int channel) {
 
 PORT
 void CloseChannel(int channel) {
+  if (!channel_is_open(channel)) { return; }
   pre_main_destroy(channel);
   destroy_main(channel);
   post_main_destroy(channel);
+  InterlockedBitTestAndReset(&ch[channel].open, 0);
 }
 
 void flushChannel(void *p) {
@@ -155,16 +181,19 @@ void flushChannel(void *p) {
 
 PORT
 void SetType(int channel, int type) {
+  if (!channel_is_open(channel) || !valid_channel_type(type)) { return; }
   // no need to rebuild buffers; but we did anyway
   if (type != ch[channel].type) {
     CloseChannel(channel);
     ch[channel].type = type;
     build_channel(channel);
+    InterlockedBitTestAndSet(&ch[channel].open, 0);
   }
 }
 
 PORT
 void SetInputBuffsize(int channel, int in_size) {
+  if (!channel_is_open(channel) || in_size <= 0) { return; }
   // we do not rebuild main here since it didn't change
   if (in_size != ch[channel].in_size) {
     pre_main_destroy(channel);
@@ -177,6 +206,7 @@ void SetInputBuffsize(int channel, int in_size) {
 
 PORT
 void SetDSPBuffsize(int channel, int dsp_size) {
+  if (!channel_is_open(channel) || dsp_size <= 0) { return; }
   if (dsp_size != ch[channel].dsp_size) {
     int oldstate = SetChannelState(channel, 0, 1);
     pre_main_destroy(channel);
@@ -191,6 +221,7 @@ void SetDSPBuffsize(int channel, int dsp_size) {
 
 PORT
 void SetInputSamplerate(int channel, int in_rate) {
+  if (!channel_is_open(channel) || in_rate <= 0) { return; }
   // no re-build of main required
   if (in_rate != ch[channel].in_rate) {
     pre_main_destroy(channel);
@@ -204,6 +235,7 @@ void SetInputSamplerate(int channel, int in_rate) {
 
 PORT
 void SetDSPSamplerate(int channel, int dsp_rate) {
+  if (!channel_is_open(channel) || dsp_rate <= 0) { return; }
   if (dsp_rate != ch[channel].dsp_rate) {
     int oldstate = SetChannelState(channel, 0, 1);
     pre_main_destroy(channel);
@@ -218,6 +250,7 @@ void SetDSPSamplerate(int channel, int dsp_rate) {
 
 PORT
 void SetOutputSamplerate(int channel, int out_rate) {
+  if (!channel_is_open(channel) || out_rate <= 0) { return; }
   // no re-build of main required
   if (out_rate != ch[channel].out_rate) {
     pre_main_destroy(channel);
@@ -231,6 +264,7 @@ void SetOutputSamplerate(int channel, int out_rate) {
 
 PORT
 void SetAllRates(int channel, int in_rate, int dsp_rate, int out_rate) {
+  if (!channel_is_open(channel) || in_rate <= 0 || dsp_rate <= 0 || out_rate <= 0) { return; }
   if ((in_rate != ch[channel].in_rate) || (dsp_rate != ch[channel].dsp_rate) || (out_rate != ch[channel].out_rate)) {
     pre_main_destroy(channel);
     post_main_destroy(channel);
@@ -263,6 +297,7 @@ static int waitChannelFlush(int channel, int timeout_ms) {
 
 PORT
 int SetChannelState(int channel, int state, int dmode) {
+  if (!channel_is_open(channel) || (state != 0 && state != 1)) { return 0; }
   IOB a = ch[channel].iob.pc;
   int prior_state = ch[channel].state;
   const int timeout = 100;
@@ -291,6 +326,7 @@ int SetChannelState(int channel, int state, int dmode) {
 
 PORT
 void SetChannelTDelayUp(int channel, double time) {
+  if (!channel_is_open(channel) || time < 0.0) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;
@@ -302,6 +338,7 @@ void SetChannelTDelayUp(int channel, double time) {
 
 PORT
 void SetChannelTSlewUp(int channel, double time) {
+  if (!channel_is_open(channel) || time < 0.0) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;
@@ -313,6 +350,7 @@ void SetChannelTSlewUp(int channel, double time) {
 
 PORT
 void SetChannelTDelayDown(int channel, double time) {
+  if (!channel_is_open(channel) || time < 0.0) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;
@@ -324,6 +362,7 @@ void SetChannelTDelayDown(int channel, double time) {
 
 PORT
 void SetChannelTSlewDown(int channel, double time) {
+  if (!channel_is_open(channel) || time < 0.0) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;

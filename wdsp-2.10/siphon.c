@@ -175,6 +175,10 @@ void RXAGetaSipF(int channel, float *out, int size) {
   SIPHON a = rxa[channel].sip1.p;
   int i;
   EnterCriticalSection(&a->update);
+  if (size < 0 || size > a->sipsize) {
+    LeaveCriticalSection(&a->update);
+    return;
+  }
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
@@ -189,6 +193,10 @@ void RXAGetaSipF1(int channel, float *out, int size) {
   SIPHON a = rxa[channel].sip1.p;
   int i;
   EnterCriticalSection(&a->update);
+  if (size < 0 || size > a->sipsize) {
+    LeaveCriticalSection(&a->update);
+    return;
+  }
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
@@ -234,6 +242,10 @@ void TXAGetaSipF(int channel, float *out, int size) {
   SIPHON a = txa[channel].sip1.p;
   int i;
   EnterCriticalSection(&a->update);
+  if (size < 0 || size > a->sipsize) {
+    LeaveCriticalSection(&a->update);
+    return;
+  }
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
@@ -248,6 +260,10 @@ void TXAGetaSipF1(int channel, float *out, int size) {
   SIPHON a = txa[channel].sip1.p;
   int i;
   EnterCriticalSection(&a->update);
+  if (size < 0 || size > a->sipsize) {
+    LeaveCriticalSection(&a->update);
+    return;
+  }
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
@@ -300,6 +316,11 @@ void TXASetSipAllocDisps(int channel, int n_alloc_disps, int *alloc_run, int *al
   SIPHON a = txa[channel].sip1.p;
   int i;
   EnterCriticalSection(&a->update);
+  if (n_alloc_disps < 0 || n_alloc_disps > dMAX_DISPLAYS ||
+      (n_alloc_disps > 0 && (alloc_run == 0 || alloc_disp == 0))) {
+    LeaveCriticalSection(&a->update);
+    return;
+  }
   a->n_alloc_disps = n_alloc_disps;
   for (i = 0; i < a->n_alloc_disps; i++) {
     a->alloc_run[i]  = alloc_run[i];
@@ -320,21 +341,26 @@ __declspec(align(16)) SIPHON psiphon[MAX_EXT_SIPHONS];    // array of pointers f
 
 PORT
 void create_siphonEXT(int id, int run, int insize, int sipsize, int fftsize, int specmode) {
+  if (id < 0 || id >= MAX_EXT_SIPHONS || psiphon[id] != 0) { return; }
   psiphon[id] = create_siphon(run, 0, 0, 0, insize, 0, sipsize, fftsize, specmode);
 }
 
 PORT
 void destroy_siphonEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_SIPHONS || psiphon[id] == 0) { return; }
   destroy_siphon(psiphon[id]);
+  psiphon[id] = 0;
 }
 
 PORT
 void flush_siphonEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_SIPHONS || psiphon[id] == 0) { return; }
   flush_siphon(psiphon[id]);
 }
 
 PORT
 void xsiphonEXT(int id, double *buff) {
+  if (id < 0 || id >= MAX_EXT_SIPHONS || psiphon[id] == 0) { return; }
   SIPHON a = psiphon[id];
   a->in = buff;
   xsiphon(a, 0);
@@ -343,9 +369,15 @@ void xsiphonEXT(int id, double *buff) {
 PORT
 void GetaSipF1EXT(int id, float *out, int size) {
   // return raw samples as floats
-  SIPHON a = psiphon[id];
+  SIPHON a;
+  if (id < 0 || id >= MAX_EXT_SIPHONS || psiphon[id] == 0) { return; }
+  a = psiphon[id];
   int i;
   EnterCriticalSection(&a->update);
+  if (size < 0 || size > a->sipsize) {
+    LeaveCriticalSection(&a->update);
+    return;
+  }
   a->outsize = size;
   suck(a);
   LeaveCriticalSection(&a->update);
@@ -357,6 +389,7 @@ void GetaSipF1EXT(int id, float *out, int size) {
 
 PORT
 void SetSiphonInsize(int id, int size) {
+  if (id < 0 || id >= MAX_EXT_SIPHONS || psiphon[id] == 0) { return; }
   SIPHON a = psiphon[id];
   EnterCriticalSection(&a->update);
   a->insize = size;

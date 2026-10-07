@@ -539,6 +539,10 @@ PORT
 void SetTXACFCOMPprofile(int channel, int nfreqs, double *F, double *G, double *E) {
   CFCOMP a = txa[channel].cfcomp.p;
   EnterCriticalSection(&ch[channel].csDSP);
+  if (nfreqs < 1 || nfreqs > a->max_freqs || F == 0 || G == 0 || E == 0) {
+    LeaveCriticalSection(&ch[channel].csDSP);
+    return;
+  }
   a->nfreqsG = nfreqs;
   a->nfreqsE = nfreqs;
   memcpy(a->Fg, F, a->nfreqsG * sizeof(double));
@@ -555,6 +559,10 @@ PORT
 void SetTXACFCOMPGprofile(int channel, int nfreqs, double *F, double *G) {
   CFCOMP a = txa[channel].cfcomp.p;
   EnterCriticalSection(&ch[channel].csDSP);
+  if (nfreqs < 1 || nfreqs > a->max_freqs || F == 0 || G == 0) {
+    LeaveCriticalSection(&ch[channel].csDSP);
+    return;
+  }
   a->nfreqsG = nfreqs;
   memcpy(a->Fg, F, a->nfreqsG * sizeof(double));
   memcpy(a->G,  G, a->nfreqsG * sizeof(double));
@@ -567,6 +575,10 @@ PORT
 void SetTXACFCOMPEprofile(int channel, int nfreqs, double *F, double *E) {
   CFCOMP a = txa[channel].cfcomp.p;
   EnterCriticalSection(&ch[channel].csDSP);
+  if (nfreqs < 1 || nfreqs > a->max_freqs || F == 0 || E == 0) {
+    LeaveCriticalSection(&ch[channel].csDSP);
+    return;
+  }
   a->nfreqsE = nfreqs;
   memcpy(a->Fe, F, a->nfreqsE * sizeof(double));
   memcpy(a->E,  E, a->nfreqsE * sizeof(double));
@@ -661,6 +673,10 @@ void SetTXACFCOMPCompWeights(int channel, int nfreq, double *weights) {
   CFCOMP a = txa[channel].cfcomp.p;
   NURBS b = a->png;
   EnterCriticalSection(&ch[channel].csDSP);
+  if (nfreq < 0 || nfreq > a->nfreqsG || nfreq > b->max_cp || (nfreq > 0 && weights == 0)) {
+    LeaveCriticalSection(&ch[channel].csDSP);
+    return;
+  }
   for (int i = 0; i < nfreq; i++) {
     b->W[i] = weights[i];
   }
@@ -701,6 +717,10 @@ void SetTXACFCOMPPeqWeights(int channel, int nfreq, double *weights) {
   CFCOMP a = txa[channel].cfcomp.p;
   NURBS b = a->pne;
   EnterCriticalSection(&ch[channel].csDSP);
+  if (nfreq < 0 || nfreq > a->nfreqsE || nfreq > b->max_cp || (nfreq > 0 && weights == 0)) {
+    LeaveCriticalSection(&ch[channel].csDSP);
+    return;
+  }
   for (int i = 0; i < nfreq; i++) {
     b->W[i] = weights[i];
   }

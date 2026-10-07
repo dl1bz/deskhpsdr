@@ -299,21 +299,26 @@ void create_anbEXT(
         double backtau,
         double threshold
 ) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] != 0) { return; }
   panb[id] = create_anb(run, buffsize, 0, 0, samplerate, tau, hangtime, advtime, backtau, threshold);
 }
 
 PORT
 void destroy_anbEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   destroy_anb(panb[id]);
+  panb[id] = 0;
 }
 
 PORT
 void flush_anbEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   flush_anb(panb[id]);
 }
 
 PORT
 void xanbEXT(int id, double *in, double *out) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   a->in = in;
   a->out = out;
@@ -322,6 +327,7 @@ void xanbEXT(int id, double *in, double *out) {
 
 PORT
 void SetEXTANBRun(int id, int run) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->run = run;
@@ -330,6 +336,7 @@ void SetEXTANBRun(int id, int run) {
 
 PORT
 void SetEXTANBBuffsize(int id, int size) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->buffsize = size;
@@ -338,6 +345,7 @@ void SetEXTANBBuffsize(int id, int size) {
 
 PORT
 void SetEXTANBSamplerate(int id, int rate) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->samplerate = (double) rate;
@@ -347,6 +355,7 @@ void SetEXTANBSamplerate(int id, int rate) {
 
 PORT
 void SetEXTANBTau(int id, double tau) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->tau = tau;
@@ -356,6 +365,7 @@ void SetEXTANBTau(int id, double tau) {
 
 PORT
 void SetEXTANBHangtime(int id, double time) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->hangtime = time;
@@ -365,6 +375,7 @@ void SetEXTANBHangtime(int id, double time) {
 
 PORT
 void SetEXTANBAdvtime(int id, double time) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->advtime = time;
@@ -374,6 +385,7 @@ void SetEXTANBAdvtime(int id, double time) {
 
 PORT
 void SetEXTANBBacktau(int id, double tau) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->backtau = tau;
@@ -383,6 +395,7 @@ void SetEXTANBBacktau(int id, double tau) {
 
 PORT
 void SetEXTANBThreshold(int id, double thresh) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   ANB a = panb[id];
   EnterCriticalSection(&a->cs_update);
   a->threshold = thresh;
@@ -397,6 +410,7 @@ void SetEXTANBThreshold(int id, double thresh) {
 
 PORT
 void xanbEXTF(int id, float *I, float *Q) {
+  if (id < 0 || id >= MAX_EXT_ANBS || panb[id] == 0) { return; }
   int i;
   ANB a = panb[id];
   a->in = a->legacy;

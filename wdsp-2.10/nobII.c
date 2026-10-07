@@ -33,6 +33,21 @@ warren@wpratt.com
 #define MAX_SEQ_TIME        (0.025)
 #define MAX_SAMPLERATE        (1536000.0)
 
+#define LEGACY_BUFFSIZE       (2048)
+
+static int valid_nob_timing(double samplerate, double advslewtime, double advtime,
+                            double hangslewtime, double hangtime, double max_imp_seq_time,
+                            double backtau) {
+  return samplerate > 0.0 && samplerate <= MAX_SAMPLERATE &&
+         advslewtime >= 0.0 && advslewtime <= MAX_ADV_SLEW_TIME &&
+         advtime >= 0.0 && advtime <= MAX_ADV_TIME &&
+         hangslewtime >= 0.0 && hangslewtime <= MAX_HANG_SLEW_TIME &&
+         hangtime >= 0.0 && hangtime <= MAX_HANG_TIME &&
+         max_imp_seq_time >= 0.0 && max_imp_seq_time <= MAX_SEQ_TIME &&
+         backtau > 0.0;
+}
+
+
 void init_nob(NOB a) {
   int i;
   double coef;
@@ -74,7 +89,10 @@ NOB create_nob(
         double backtau,
         double threshold
 ) {
-  NOB a = (NOB) malloc0(sizeof(nob));
+  NOB a;
+  if (buffsize <= 0 || !valid_nob_timing(samplerate, advslewtime, advtime, hangslewtime,
+                                        hangtime, max_imp_seq_time, backtau)) { return 0; }
+  a = (NOB) malloc0(sizeof(nob));
   a->run = run;
   a->buffsize = buffsize;
   a->in = in;
@@ -113,13 +131,14 @@ NOB create_nob(
   a->fcoefs[9] = 0.012457989;
   InitializeCriticalSectionAndSpinCount(&a->cs_update, 2500);
   init_nob(a);
-  a->legacy = (double *) malloc0(2048 * sizeof(
+  a->legacy = (double *) malloc0(LEGACY_BUFFSIZE * sizeof(
                                          complex));                             /////////////// legacy interface - remove
   return a;
 }
 
 PORT
 void destroy_nob(NOB a) {
+  DeleteCriticalSection(&a->cs_update);
   _aligned_free(a->legacy);                                              ///////////////  remove
   _aligned_free(a->fcoefs);
   _aligned_free(a->ffbuff);
@@ -443,11 +462,13 @@ void setBuffers_nob(NOB a, double *in, double *out) {
 }
 
 void setSamplerate_nob(NOB a, int rate) {
+  if (rate <= 0 || rate > MAX_SAMPLERATE) { return; }
   a->samplerate = rate;
   init_nob(a);
 }
 
 void setSize_nob(NOB a, int size) {
+  if (size <= 0) { return; }
   a->buffsize = size;
   flush_nob(a);
 }
@@ -474,6 +495,7 @@ void pSetRCVRNOBMode(NOB a, int mode) {
 
 PORT
 void pSetRCVRNOBBuffsize(NOB a, int size) {
+  if (size <= 0) { return; }
   EnterCriticalSection(&a->cs_update);
   a->buffsize = size;
   LeaveCriticalSection(&a->cs_update);
@@ -481,6 +503,7 @@ void pSetRCVRNOBBuffsize(NOB a, int size) {
 
 PORT
 void pSetRCVRNOBSamplerate(NOB a, int rate) {
+  if (rate <= 0 || rate > MAX_SAMPLERATE) { return; }
   EnterCriticalSection(&a->cs_update);
   a->samplerate = (double) rate;
   init_nob(a);
@@ -489,6 +512,7 @@ void pSetRCVRNOBSamplerate(NOB a, int rate) {
 
 PORT
 void pSetRCVRNOBTau(NOB a, double tau) {
+  if (tau < 0.0 || tau > MAX_ADV_SLEW_TIME || tau > MAX_HANG_SLEW_TIME) { return; }
   EnterCriticalSection(&a->cs_update);
   a->advslewtime = tau;
   a->hangslewtime = tau;
@@ -498,6 +522,7 @@ void pSetRCVRNOBTau(NOB a, double tau) {
 
 PORT
 void pSetRCVRNOBHangtime(NOB a, double time) {
+  if (time < 0.0 || time > MAX_HANG_TIME) { return; }
   EnterCriticalSection(&a->cs_update);
   a->hangtime = time;
   init_nob(a);
@@ -506,6 +531,7 @@ void pSetRCVRNOBHangtime(NOB a, double time) {
 
 PORT
 void pSetRCVRNOBAdvtime(NOB a, double time) {
+  if (time < 0.0 || time > MAX_ADV_TIME) { return; }
   EnterCriticalSection(&a->cs_update);
   a->advtime = time;
   init_nob(a);
@@ -514,6 +540,7 @@ void pSetRCVRNOBAdvtime(NOB a, double time) {
 
 PORT
 void pSetRCVRNOBBacktau(NOB a, double tau) {
+  if (tau <= 0.0) { return; }
   EnterCriticalSection(&a->cs_update);
   a->backtau = tau;
   init_nob(a);
@@ -549,6 +576,9 @@ void create_nobEXT(
         double backtau,
         double threshold
 ) {
+  if (buffsize <= 0 || buffsize > LEGACY_BUFFSIZE ||
+      !valid_nob_timing(samplerate, slewtime, advtime, slewtime, hangtime, MAX_SEQ_TIME, backtau)) { return; }
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] != 0) { return; }
   double advslewtime = slewtime;
   double hangslewtime = slewtime;
   double max_imp_seq_time = 0.025;
@@ -558,16 +588,20 @@ void create_nobEXT(
 
 PORT
 void destroy_nobEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   destroy_nob(pnob[id]);
+  pnob[id] = 0;
 }
 
 PORT
 void flush_nobEXT(int id) {
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   flush_nob(pnob[id]);
 }
 
 PORT
 void xnobEXT(int id, double *in, double *out) {
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   a->in = in;
   a->out = out;
@@ -576,6 +610,7 @@ void xnobEXT(int id, double *in, double *out) {
 
 PORT
 void SetEXTNOBRun(int id, int run) {
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->run = run;
@@ -584,6 +619,7 @@ void SetEXTNOBRun(int id, int run) {
 
 PORT
 void SetEXTNOBMode(int id, int mode) {
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->mode = mode;
@@ -592,6 +628,8 @@ void SetEXTNOBMode(int id, int mode) {
 
 PORT
 void SetEXTNOBBuffsize(int id, int size) {
+  if (size <= 0 || size > LEGACY_BUFFSIZE) { return; }
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->buffsize = size;
@@ -600,6 +638,8 @@ void SetEXTNOBBuffsize(int id, int size) {
 
 PORT
 void SetEXTNOBSamplerate(int id, int rate) {
+  if (rate <= 0 || rate > MAX_SAMPLERATE) { return; }
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->samplerate = (double) rate;
@@ -609,6 +649,8 @@ void SetEXTNOBSamplerate(int id, int rate) {
 
 PORT
 void SetEXTNOBTau(int id, double tau) {
+  if (tau < 0.0 || tau > MAX_ADV_SLEW_TIME || tau > MAX_HANG_SLEW_TIME) { return; }
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->advslewtime = tau;
@@ -619,6 +661,8 @@ void SetEXTNOBTau(int id, double tau) {
 
 PORT
 void SetEXTNOBHangtime(int id, double time) {
+  if (time < 0.0 || time > MAX_HANG_TIME) { return; }
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->hangtime = time;
@@ -628,6 +672,8 @@ void SetEXTNOBHangtime(int id, double time) {
 
 PORT
 void SetEXTNOBAdvtime(int id, double time) {
+  if (time < 0.0 || time > MAX_ADV_TIME) { return; }
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->advtime = time;
@@ -637,6 +683,8 @@ void SetEXTNOBAdvtime(int id, double time) {
 
 PORT
 void SetEXTNOBBacktau(int id, double tau) {
+  if (tau <= 0.0) { return; }
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->backtau = tau;
@@ -646,6 +694,7 @@ void SetEXTNOBBacktau(int id, double tau) {
 
 PORT
 void SetEXTNOBThreshold(int id, double thresh) {
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   EnterCriticalSection(&a->cs_update);
   a->threshold = thresh;
@@ -660,6 +709,7 @@ void SetEXTNOBThreshold(int id, double thresh) {
 
 PORT
 void xnobEXTF(int id, float *I, float *Q) {
+  if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   int i;
   NOB a = pnob[id];
   a->in = a->legacy;
