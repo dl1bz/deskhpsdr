@@ -187,7 +187,10 @@ int readZetaHat(const char *zeta_file, int *rows, int *cols,
                 double *gmin, double *gmax, double *ximin, double *ximax, double *zetaHat, int *zetaValid) {
   char zetaBinary[256];
   char bin[50] = ".bin";
-  sprintf(zetaBinary, "%s%s", zeta_file, bin);
+  int pathlen;
+  if (zeta_file == 0) { return -1; }
+  pathlen = snprintf(zetaBinary, sizeof(zetaBinary), "%s%s", zeta_file, bin);
+  if (pathlen < 0 || (size_t)pathlen >= sizeof(zetaBinary)) { return -1; }
   FILE* pzetaBinary;
   int e = 0;
   if (pzetaBinary = fopen(zetaBinary, "rb")) {
@@ -199,6 +202,7 @@ int readZetaHat(const char *zeta_file, int *rows, int *cols,
     if (e == 0 && fread(gmax,      sizeof(double), 1,     pzetaBinary) != 1) { e = 1; }
     if (e == 0 && fread(ximin,     sizeof(double), 1,     pzetaBinary) != 1) { e = 1; }
     if (e == 0 && fread(ximax,     sizeof(double), 1,     pzetaBinary) != 1) { e = 1; }
+    if (e == 0 && (*rows != 60 || *cols != 60)) { e = 1; }
     if (e == 0) { nvals = (*rows) * (*cols); }
     if (e == 0 && fread(zetaHat,   sizeof(double), nvals, pzetaBinary) != nvals) { e = 1; }
     if (e == 0 && fread(zetaValid, sizeof(int),    nvals, pzetaBinary) != nvals) { e = 1; }

@@ -79,7 +79,8 @@ static NNIO nnio_parse(const unsigned char *raw, size_t nbytes,
   NNIO f = 0;
   unsigned int version, ntensors;
   unsigned long long data_offset, data_bytes;
-  int i, d, k, numel, total, cursor;
+  int i, d, k;
+  size_t numel, total, cursor;
   if (nbytes < NNIO_HDRLEN) {
     dprintf("nnio: %s is too short to be a tensor file\n", what);
     return 0;
@@ -97,7 +98,8 @@ static NNIO nnio_parse(const unsigned char *raw, size_t nbytes,
     return 0;
   }
   if (ntensors == 0 || ntensors > 100000 ||
-      (unsigned long long)nbytes < data_offset + data_bytes ||
+      data_offset > (unsigned long long)nbytes ||
+      data_bytes > (unsigned long long)nbytes - data_offset ||
       (unsigned long long)nbytes <
       NNIO_HDRLEN + (unsigned long long)ntensors * NNIO_ENTRYLEN) {
     dprintf("nnio: %s has an inconsistent header\n", what);
@@ -122,25 +124,34 @@ static NNIO nnio_parse(const unsigned char *raw, size_t nbytes,
     numel = 1;
     f->ent[i].ndim = (int)ndim;
     for (d = 0; d < NNIO_MAXDIM; d++) {
-      f->ent[i].dims[d] = (int)nnio_u32(e + 48 + 4 * d);
+      unsigned int dim = nnio_u32(e + 48 + 4 * d);
+      if (dim > INT_MAX) {
+        dprintf("nnio: tensor '%s' has bad dim[%d]\n", f->ent[i].name, d);
+        goto fail;
+      }
+      f->ent[i].dims[d] = (int)dim;
       if (d < (int)ndim) {
-        if (f->ent[i].dims[d] < 1) {
+        if (dim < 1 || numel > (size_t)INT_MAX / dim) {
           dprintf("nnio: tensor '%s' has bad dim[%d]\n", f->ent[i].name, d);
           goto fail;
         }
-        numel *= f->ent[i].dims[d];
+        numel *= dim;
       }
     }
-    f->ent[i].numel = numel;
+    f->ent[i].numel = (int)numel;
     if ((dtype != NNIO_DT_F32 && dtype != NNIO_DT_F64) ||
-        nbytes_t != (unsigned int)numel * (dtype == NNIO_DT_F32 ? 4u : 8u) ||
+        (size_t)nbytes_t != numel * (dtype == NNIO_DT_F32 ? 4u : 8u) ||
         (unsigned long long)offset + nbytes_t > data_bytes) {
       dprintf("nnio: tensor '%s' has an inconsistent descriptor\n", f->ent[i].name);
       goto fail;
     }
+    if (total > (size_t)INT_MAX - numel) {
+      dprintf("nnio: %s has too many tensor elements\n", what);
+      goto fail;
+    }
     total += numel;
   }
-  f->nblob = total;
+  f->nblob = (int)total;
   f->blob = (double *) malloc0((size_t)total * sizeof(double));
   cursor = 0;
   for (i = 0; i < (int)ntensors; i++) {

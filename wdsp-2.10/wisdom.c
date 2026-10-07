@@ -44,8 +44,11 @@ int WDSPwisdom(char *directory) {
   double *fftout;
   char wisdom_file[1024];
   const int maxsize = MAX_WISDOM_SIZE + 1;
-  strcpy(wisdom_file, directory);
-  strncat(wisdom_file, "wdspWisdom01", 16);
+  if (directory == 0 ||
+      snprintf(wisdom_file, sizeof(wisdom_file), "%s%s", directory, "wdspWisdom01") < 0 ||
+      strlen(directory) + strlen("wdspWisdom01") >= sizeof(wisdom_file)) {
+    return -1;
+  }
   if (!fftw_import_wisdom_from_filename(wisdom_file)) {
     fftin = (double *) malloc0(maxsize * sizeof(complex));
     fftout = (double *) malloc0(maxsize * sizeof(complex));
