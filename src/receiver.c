@@ -69,8 +69,8 @@ static gboolean making_active = FALSE;
 #define RX_CW_ZERO_BEAT_MIN_RATIO 6.0
 #define RX_CW_ZERO_BEAT_MAX_CORRECTION_HZ 1500LL
 
-/* WDSP 2.10 analyzer output buffers are limited to dMAX_PIXELS (16384). */
-#define RX_WDSP_MAX_PIXELS 16384
+/* WDSP 2.10 analyzer output buffers are limited to dMAX_PIXELS (32768). */
+#define RX_WDSP_MAX_PIXELS 32768
 
 #ifndef M_PI
   #define M_PI 3.14159265358979323846
@@ -1861,7 +1861,7 @@ int rx_get_pixels(RECEIVER *rx) {
   g_mutex_unlock(&rx->analyzer_mutex);
   /*
    * Keep rx->pixels as the virtual zoom/display width.  WDSP 2.10 can
-   * return at most 16384 analyzer pixels, so for wider zoomed displays
+   * return at most 32768 analyzer pixels, so for wider zoomed displays
    * expand the analyzer result to the virtual pixel grid in-place.
    * Walking backwards is safe because every destination index is >= the
    * source index from which it is interpolated.
