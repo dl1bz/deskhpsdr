@@ -69,6 +69,9 @@ static gboolean making_active = FALSE;
 #define RX_CW_ZERO_BEAT_MIN_RATIO 6.0
 #define RX_CW_ZERO_BEAT_MAX_CORRECTION_HZ 1500LL
 
+/* WDSP 2.10 analyzer output buffers are limited to dMAX_PIXELS (16384). */
+#define RX_WDSP_MAX_PIXELS 16384
+
 #ifndef M_PI
   #define M_PI 3.14159265358979323846
 #endif
@@ -1852,9 +1855,28 @@ void rx_close(const RECEIVER *rx) {
 
 int rx_get_pixels(RECEIVER *rx) {
   int rc;
+  const int analyzer_pixels = min(rx->pixels, RX_WDSP_MAX_PIXELS);
   g_mutex_lock(&rx->analyzer_mutex);
   GetPixels(rx->id, 0, rx->pixel_samples, &rc);
   g_mutex_unlock(&rx->analyzer_mutex);
+  /*
+   * Keep rx->pixels as the virtual zoom/display width.  WDSP 2.10 can
+   * return at most 16384 analyzer pixels, so for wider zoomed displays
+   * expand the analyzer result to the virtual pixel grid in-place.
+   * Walking backwards is safe because every destination index is >= the
+   * source index from which it is interpolated.
+   */
+  if (rc && rx->pixels > analyzer_pixels && analyzer_pixels > 1) {
+    const double scale = (double)(analyzer_pixels - 1) / (double)(rx->pixels - 1);
+    for (int i = rx->pixels - 1; i >= 0; i--) {
+      const double pos = (double)i * scale;
+      const int lo = (int)pos;
+      const int hi = min(lo + 1, analyzer_pixels - 1);
+      const double frac = pos - (double)lo;
+      rx->pixel_samples[i] = (float)((1.0 - frac) * (double)rx->pixel_samples[lo]
+                                     + frac * (double)rx->pixel_samples[hi]);
+    }
+  }
   return rc;
 }
 
@@ -1909,7 +1931,12 @@ void rx_set_analyzer(RECEIVER *rx) {
   const int clip = 0;
   const int window_type = rx->pan_window_type; // 5 = Kaiser, 2 = Hann
   int afft_size;
-  const int pixels = rx->pixels;
+  /*
+   * rx->pixels is the virtual display width (width * zoom) and may exceed
+   * WDSP 2.10's fixed analyzer output limit.  Keep the display geometry
+   * unchanged, but never request more pixels from WDSP than it can hold.
+   */
+  const int pixels = min(rx->pixels, RX_WDSP_MAX_PIXELS);
   const int Pan_NormOneHz = 1; // 0 = do not normalize; 1 = normalize to one Hz bandwidth
   //
   // RX FEEDBACK receiver:
@@ -1959,10 +1986,10 @@ void rx_set_analyzer(RECEIVER *rx) {
   int max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
                                     keep_time * (double) afft_size * (double) rx->fps);
   int overlap = (int) fmax(0.0, ceil(afft_size - (double) rx->sample_rate / (double) rx->fps));
-  t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d window_type=%d afft_size=%d bin_width=%.3f Hz\n",
+  t_print("RX:WDSP SetAnalyzer id=%d input_samples=%d overlap=%d pixels=%d display_pixels=%d window_type=%d afft_size=%d bin_width=%.3f Hz\n",
           rx->id,
           rx->buffer_size,
-          overlap, rx->pixels, window_type, afft_size, (double) rx->sample_rate / (double) afft_size);
+          overlap, pixels, rx->pixels, window_type, afft_size, (double) rx->sample_rate / (double) afft_size);
   g_mutex_lock(&rx->analyzer_mutex);
   SetAnalyzer(rx->id,
               n_pixout,
