@@ -960,7 +960,7 @@ void __cdecl sendbuf(void *arg) {
 
 static void start_dispatcher(int disp) {
   HANDLE handle = (HANDLE) _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
-  if ((uintptr_t)handle == (uintptr_t)-1) {
+  if ((uintptr_t)handle == (uintptr_t) -1) {
     InterlockedBitTestAndReset(&pdisp[disp]->dispatcher, 0);
   }
 }
@@ -1068,25 +1068,36 @@ void SetAnalyzer(int disp,       // display identifier
                 ) {
   DP a;
   int i, j;
-
   if (!valid_display(disp)) {
     analyzer_parameter_error("SetAnalyzer", disp);
     return;
   }
   a = pdisp[disp];
+  long long out_size = (typ == 0) ? (long long)sz / 2 + 1 : (long long)sz;
+  long long usable_bins = out_size - 1 - 2LL * (long long)clp;
+  double total_bins = (double)n_stch * (double)usable_bins;
   if (n_pixout < 1 || n_pixout > dMAX_PIXOUTS ||
       n_fft < 1 || n_fft > a->max_num_fft || n_fft > dMAX_NUM_FFT ||
       n_stch < 1 || n_stch > a->max_stitch || n_stch > dMAX_STITCH ||
+      (typ != 0 && typ != 1) || flp == NULL ||
       sz < 1 || sz > a->max_size ||
       bf_sz < 1 || bf_sz > a->bsize || (a->bsize % bf_sz) != 0 ||
       ovrlp < 0 || ovrlp >= sz ||
+      clp < 0 || usable_bins <= 0 ||
+      !isfinite(fscLin) || !isfinite(fscHin) || fscLin < 0.0 || fscHin < 0.0 ||
+      fscLin + fscHin >= total_bins - 1.0 ||
       n_pix < 2 || n_pix > dMAX_PIXELS ||
       calset < 0 || calset >= dMAX_CAL_SETS ||
       max_w < 0 || max_w > a->bsize) {
     analyzer_parameter_error("SetAnalyzer", disp);
     return;
   }
-
+  for (i = 0; i < n_fft; i++) {
+    if (flp[i] != 0 && flp[i] != 1) {
+      analyzer_parameter_error("SetAnalyzer", disp);
+      return;
+    }
+  }
   EnterCriticalSection(&a->SetAnalyzerSection);
   a->end_dispatcher = 1;
   while (InterlockedAnd(&a->dispatcher, 1)) {
@@ -1101,7 +1112,7 @@ void SetAnalyzer(int disp,       // display identifier
   a->type = typ;
   a->buff_size = bf_sz;
   for (i = 0; i < a->num_fft; i++) {
-    a->flip[i] = *(flp + i);
+    a->flip[i] = flp[i];
   }
   a->overlap = ovrlp;
   a->clip = clp;
@@ -1208,7 +1219,6 @@ void XCreateAnalyzer(int disp,
                     ) {
   int i, j;
   DP a;
-
   if (success == 0) {
     fprintf(stderr, "WDSP: XCreateAnalyzer requires a success pointer\n");
     return;
@@ -1221,7 +1231,6 @@ void XCreateAnalyzer(int disp,
     analyzer_parameter_error("XCreateAnalyzer", disp);
     return;
   }
-
   a = (DP) malloc0(sizeof(dp));
   if (a == 0) {
     analyzer_parameter_error("XCreateAnalyzer", disp);

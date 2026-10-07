@@ -49,7 +49,7 @@ void start_thread(int channel) {
   HANDLE handle;
   InterlockedBitTestAndSet(&ch[channel].thread_active, 0);
   handle = (HANDLE) _beginthread(wdspmain, 0, (void *)(uintptr_t)channel);
-  if ((uintptr_t)handle == (uintptr_t)-1) {
+  if ((uintptr_t)handle == (uintptr_t) -1) {
     InterlockedBitTestAndReset(&ch[channel].run, 0);
     InterlockedBitTestAndReset(&ch[channel].thread_active, 0);
   }

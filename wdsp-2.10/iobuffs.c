@@ -368,7 +368,7 @@ void create_iobuffs(int channel) {
   a->Sem_Flush = CreateSemaphore(0, 0, 1, 0);
   InterlockedBitTestAndSet(&a->flush_thread_active, 0);
   HANDLE flush_thread = (HANDLE) _beginthread(flushChannel, 0, (void *)(uintptr_t)a->channel);
-  if ((uintptr_t)flush_thread == (uintptr_t)-1) {
+  if ((uintptr_t)flush_thread == (uintptr_t) -1) {
     InterlockedBitTestAndReset(&a->flush_thread_active, 0);
   }
 }

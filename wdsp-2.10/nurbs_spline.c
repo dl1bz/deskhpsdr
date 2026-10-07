@@ -47,6 +47,7 @@ warren@pratt.one
 #include "nurbs_spline.h"
 #include "nurbs_fit.h"
 
+#include <stdint.h>
 #include <math.h>
 #include <float.h>
 #include <stdlib.h>
@@ -735,14 +736,22 @@ static int write_spline(FILE *f, const NS_Spline *s, double *cksum) {
 static NS_Spline *read_spline(FILE *f, double *cksum) {
   NS_Spline *s = (NS_Spline *)ns_calloc(1, sizeof(NS_Spline));
   char key[64];
-  if (fscanf(f, "%63s %d", key, &s->n_branches) != 2) { goto err; }
+  int n_branches;
+  if (fscanf(f, "%63s %d", key, &n_branches) != 2) { goto err; }
+  if (n_branches < 1 || n_branches > NS_MAX_BRANCHES) { goto err; }
+  s->n_branches = n_branches;
   *cksum += s->n_branches;
-  s->branches = (NS_Branch *)ns_calloc(s->n_branches, sizeof(NS_Branch));
+  s->branches = (NS_Branch *)ns_calloc((size_t)s->n_branches, sizeof(NS_Branch));
   for (int b = 0; b < s->n_branches; b++) {
     NS_Branch *br = &s->branches[b];
     int bnum;
     if (fscanf(f, "%63s %d %63s %d %63s %lf",
                key, &bnum, key, &br->n_pts, key, &br->t_mid) != 6) {
+      goto err;
+    }
+    if (bnum != b || br->n_pts < 0 ||
+        (size_t)br->n_pts > SIZE_MAX / sizeof(double) ||
+        (br->n_pts > 0 && (size_t)(br->n_pts - 1) > SIZE_MAX / sizeof(NS_Seg))) {
       goto err;
     }
     *cksum += br->n_pts + br->t_mid;

@@ -30,7 +30,7 @@ void start_syncbthread(SYNCB a) {
   HANDLE handle;
   InterlockedBitTestAndSet(&a->thread_active, 0);
   handle = (HANDLE) _beginthread(syncb_main, 0, (void *)a);
-  if ((uintptr_t)handle == (uintptr_t)-1) {
+  if ((uintptr_t)handle == (uintptr_t) -1) {
     InterlockedBitTestAndReset(&a->run, 0);
     InterlockedBitTestAndReset(&a->thread_active, 0);
     return;

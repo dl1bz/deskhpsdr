@@ -91,7 +91,7 @@ NOB create_nob(
 ) {
   NOB a;
   if (buffsize <= 0 || !valid_nob_timing(samplerate, advslewtime, advtime, hangslewtime,
-                                        hangtime, max_imp_seq_time, backtau)) { return 0; }
+                                         hangtime, max_imp_seq_time, backtau)) { return 0; }
   a = (NOB) malloc0(sizeof(nob));
   a->run = run;
   a->buffsize = buffsize;

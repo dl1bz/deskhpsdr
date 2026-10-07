@@ -1004,7 +1004,7 @@ CALCC create_calcc(int channel, int runcal, int size, int rate, double hw_scale,
   a->hCorrChangeExited = CreateEvent(NULL, FALSE, FALSE, NULL);
   InterlockedExchange(&a->corr_thread_active, 1);
   HANDLE corr_thread = (HANDLE) _beginthread(doPSCorrChange, 0, (void *)a);
-  if ((uintptr_t)corr_thread == (uintptr_t)-1) {
+  if ((uintptr_t)corr_thread == (uintptr_t) -1) {
     InterlockedExchange(&a->corr_thread_active, 0);
   }
   return a;
