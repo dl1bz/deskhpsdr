@@ -103,7 +103,10 @@ double ctcss_frequencies[CTCSS_FREQUENCIES] = {
 static int p1radio = 0, p2radio = 0; // sine tone to the radio
 static int p1local = 0, p2local = 0; // sine tone to local audio
 
-static gboolean close_cb(void) {
+static gboolean close_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   // there is nothing to clean up
   return TRUE;
 }

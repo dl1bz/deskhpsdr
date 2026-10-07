@@ -65,7 +65,16 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -250,7 +259,7 @@ void equalizer_menu(GtkWidget *parent) {
     snprintf(m_name, sizeof(m_name), "%s - WDSP EQ Menu", PGNAME);
   }
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), m_name);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
@@ -259,7 +268,7 @@ void equalizer_menu(GtkWidget *parent) {
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "clicked", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   col++;
   GtkWidget *rx1_sel = gtk_radio_button_new_with_label_from_widget(NULL, "RX1 EQ Settings");

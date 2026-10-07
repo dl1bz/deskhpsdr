@@ -47,7 +47,16 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -95,14 +104,14 @@ void saturn_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Saturn", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
   gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
-  g_signal_connect(close_b, "pressed", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "clicked", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
   GtkWidget *server_enable_b = gtk_check_button_new_with_label("Saturn Server Enable");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(server_enable_b), saturn_server_en);

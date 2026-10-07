@@ -84,7 +84,6 @@ int active_menu = NO_MENU;
 int menu_active_receiver_changed(void *data) {
   if (sub_menu != NULL) {
     gtk_window_close(GTK_WINDOW(sub_menu));
-    sub_menu = NULL;
   }
   return FALSE;
 }
@@ -282,7 +281,16 @@ static void open_submenu_from_main(MAIN_SUBMENU menu) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -417,12 +425,10 @@ static gboolean extras_cb(GtkWidget *widget, GdkEventButton *event, gpointer dat
   return TRUE;
 }
 
-static gboolean ddc_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  (void)widget;
-  (void)event;
+static void ddc_cb(GtkButton *button, gpointer data) {
+  (void)button;
   (void)data;
   open_submenu_from_main(MAIN_SUBMENU_DDC);
-  return TRUE;
 }
 
 
@@ -717,7 +723,7 @@ void new_menu(void) {
   int _mode = vfo_get_tx_mode();
   if (sub_menu != NULL) {
     gtk_window_close(GTK_WINDOW(sub_menu));
-    sub_menu = NULL;
+    return;
   }
   if (main_menu == NULL) {
     main_menu = gtk_dialog_new();
@@ -730,7 +736,7 @@ void new_menu(void) {
     char _title[296];
     snprintf(_title, sizeof(_title), "%s - Menu [%s]", PGNAME, workdir);
     gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-    g_signal_connect(main_menu, "delete_event", G_CALLBACK(close_cb), NULL);
+    g_signal_connect(main_menu, "delete_event", G_CALLBACK(delete_event_cb), NULL);
     g_signal_connect(main_menu, "destroy", G_CALLBACK(destroy_cb), NULL);
     GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(main_menu));
     GtkWidget *grid = gtk_grid_new();
@@ -743,7 +749,7 @@ void new_menu(void) {
     //
     GtkWidget *close_b = gtk_button_new_with_label("Close");
     gtk_widget_set_name(close_b, "close_button");
-    g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+    g_signal_connect(close_b, "clicked", G_CALLBACK(close_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
     if (protocol == ORIGINAL_PROTOCOL) {
       restart_b = gtk_button_new_with_label("Restart Protocol P1");

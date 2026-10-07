@@ -79,7 +79,16 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -1087,7 +1096,7 @@ void rx_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), rx_menu_headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(rx_menu_headerbar), TRUE);
   rx_menu_update_title(rx_menu_headerbar, RX_MENU_TAB_RX1);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   g_signal_connect(dialog, "response", G_CALLBACK(response_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));

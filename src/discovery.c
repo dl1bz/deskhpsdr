@@ -191,7 +191,10 @@ cleanup:
   return rc;
 }
 
-static gboolean close_cb(void) {
+static gboolean close_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   // There is nothing to clean up
   return TRUE;
 }

@@ -61,7 +61,16 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -205,14 +214,14 @@ void toolbar_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), toolbar_menu_headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(toolbar_menu_headerbar), TRUE);
   set_toolbar_menu_title(toolbar_menu_headerbar, function);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
   gtk_container_set_border_width(GTK_CONTAINER(box), 8);
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "clicked", G_CALLBACK(close_cb), NULL);
   gtk_box_pack_start(GTK_BOX(box), close_b, FALSE, FALSE, 0);
   int my_width = full_screen ? screen_width : display_width;
   int my_height = full_screen ? screen_height : display_height;

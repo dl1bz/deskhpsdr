@@ -44,7 +44,16 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -106,7 +115,7 @@ void meter_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - Meter", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
@@ -131,7 +140,7 @@ void meter_menu(GtkWidget *parent) {
   gtk_widget_set_margin_end(close_b, 0);    // rechter Rand (Ende)
   gtk_widget_set_halign(close_b, GTK_ALIGN_START);
   gtk_widget_set_valign(close_b, GTK_ALIGN_CENTER);
-  g_signal_connect(close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(close_b, "clicked", G_CALLBACK(close_cb), NULL);
   gtk_box_pack_start(GTK_BOX(box_Z0), close_b, FALSE, FALSE, 0);
   gtk_grid_attach(GTK_GRID(grid), box_Z0, 0, 0, 1, 1);
   //----------------------------------------------------------------------------------------------------------

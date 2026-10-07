@@ -85,7 +85,16 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -1163,7 +1172,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_window_set_titlebar(GTK_WINDOW(dialog), noise_menu_headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(noise_menu_headerbar), TRUE);
   noise_menu_update_title(active_receiver != NULL ? active_receiver->id : 0);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_container_set_border_width(GTK_CONTAINER(content), 0);

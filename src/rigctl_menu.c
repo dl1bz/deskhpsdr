@@ -59,7 +59,16 @@ static void cleanup(void) {
   }
 }
 
-static gboolean close_cb(void) {
+static void close_cb(GtkButton *button, gpointer data) {
+  (void)button;
+  (void)data;
+  cleanup();
+}
+
+static gboolean delete_event_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+  (void)widget;
+  (void)event;
+  (void)data;
   cleanup();
   return TRUE;
 }
@@ -387,7 +396,7 @@ void rigctl_menu(GtkWidget *parent) {
   char _title[32];
   snprintf(_title, 32, "%s - CAT/TCI", PGNAME);
   gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), _title);
-  g_signal_connect(dialog, "delete_event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(dialog, "delete_event", G_CALLBACK(delete_event_cb), NULL);
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
@@ -396,7 +405,7 @@ void rigctl_menu(GtkWidget *parent) {
   int row = 0;
   w = gtk_button_new_with_label("Close");
   gtk_widget_set_name(w, "close_button");
-  g_signal_connect(w, "button-press-event", G_CALLBACK(close_cb), NULL);
+  g_signal_connect(w, "clicked", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 2, 1);
   //-------------------------------------------------------------------------------------
   w = gtk_check_button_new_with_label("Enable CAT Debug");
