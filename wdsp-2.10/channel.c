@@ -29,7 +29,13 @@ warren@wpratt.com
 struct _ch ch[MAX_CHANNELS];
 
 void start_thread(int channel) {
-  HANDLE handle = (HANDLE) _beginthread(wdspmain, 0, (void *)(uintptr_t)channel);
+  HANDLE handle;
+  InterlockedBitTestAndSet(&ch[channel].thread_active, 0);
+  handle = (HANDLE) _beginthread(wdspmain, 0, (void *)(uintptr_t)channel);
+  if ((uintptr_t)handle == (uintptr_t)-1) {
+    InterlockedBitTestAndReset(&ch[channel].run, 0);
+    InterlockedBitTestAndReset(&ch[channel].thread_active, 0);
+  }
   //SetThreadPriority(handle, THREAD_PRIORITY_HIGHEST);
 }
 
@@ -103,7 +109,9 @@ void pre_main_destroy(int channel) {
   InterlockedBitTestAndReset(&ch[channel].run, 0);
   InterlockedBitTestAndSet(&ch[channel].iob.pc->exec_bypass, 0);
   ReleaseSemaphore(a->Sem_BuffReady, 1, 0);
-  Sleep(25);
+  while (InterlockedAnd(&ch[channel].thread_active, 1)) {
+    Sleep(1);
+  }
 }
 
 void post_main_destroy(int channel) {
@@ -136,6 +144,7 @@ void flushChannel(void *p) {
     }
   }
   InterlockedBitTestAndReset(&a->flush_bypass, 0);
+  InterlockedBitTestAndReset(&a->flush_thread_active, 0);
 }
 
 /********************************************************************************************************

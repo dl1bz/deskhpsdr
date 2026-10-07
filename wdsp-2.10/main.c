@@ -56,6 +56,7 @@ void wdspmain(void *pargs) {
 #ifdef _WIN32
   if (hTask != 0) { AvRevertMmThreadCharacteristics(hTask); }
 #endif
+  InterlockedBitTestAndReset(&ch[channel].thread_active, 0);
 }
 
 void create_main(int channel) {

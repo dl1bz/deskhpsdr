@@ -89,6 +89,7 @@ typedef struct _rmatch {
   double av_deviation;
   VARSAMP v;
   int varmode;
+  CRITICAL_SECTION cs_reconfig;
   CRITICAL_SECTION cs_ring;
   CRITICAL_SECTION cs_var;
   // blend / slew

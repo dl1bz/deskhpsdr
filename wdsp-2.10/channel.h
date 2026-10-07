@@ -31,6 +31,7 @@ warren@wpratt.com
 struct _ch {
   int type;
   volatile long run;      // when 1, thread loops; when 0, thread terminates
+  volatile long thread_active; // set before thread start; cleared by worker on exit
   volatile long exchange;   // when 1, fexchange() operates; when 0, it just returns
   int in_rate;        // input samplerate
   int out_rate;       // output samplerate

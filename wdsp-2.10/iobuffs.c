@@ -366,14 +366,18 @@ void create_iobuffs(int channel) {
   create_slews(a);
   InterlockedBitTestAndReset(&a->flush_bypass, 0);
   a->Sem_Flush = CreateSemaphore(0, 0, 1, 0);
-  _beginthread(flushChannel, 0, (void *)(uintptr_t)a->channel);
+  InterlockedBitTestAndSet(&a->flush_thread_active, 0);
+  HANDLE flush_thread = (HANDLE) _beginthread(flushChannel, 0, (void *)(uintptr_t)a->channel);
+  if ((uintptr_t)flush_thread == (uintptr_t)-1) {
+    InterlockedBitTestAndReset(&a->flush_thread_active, 0);
+  }
 }
 
 void destroy_iobuffs(int channel) {
   IOB a = ch[channel].iob.pc;
   InterlockedBitTestAndSet(&a->flush_bypass, 0);
   ReleaseSemaphore(a->Sem_Flush, 1, 0);
-  while (InterlockedAnd(&a->flush_bypass, 0xffffffff)) { Sleep(1); }
+  while (InterlockedAnd(&a->flush_thread_active, 1)) { Sleep(1); }
   CloseHandle(a->Sem_Flush);
   destroy_slews(a);
   CloseHandle(a->Sem_OutReady);

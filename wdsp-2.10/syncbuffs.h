@@ -45,6 +45,7 @@ typedef struct _syncb {
   int   r1_outidx;              // in 'double', actual index into the buffer is 2 times this
   int   r1_unqueuedsamps;           // number of input samples not yet queued/released for execution
   volatile long run;              // when 1, thread loops; when 0, thread terminates
+  volatile long thread_active;    // set before thread start; cleared by worker on exit
   volatile long accept;           // flag indicating whether accepting input data
   HANDLE Sem_BuffReady;           // count = number of output-sized buffers queued for processing
   CRITICAL_SECTION csOUT;           // used to block output while parameters are updated or buffers flushed
@@ -60,7 +61,7 @@ extern void flush_syncbuffs(SYNCB a);
 
 extern void Syncbound(SYNCB a, int nsamples, double **in);
 
-extern void syncbdata(SYNCB a);
+extern int syncbdata(SYNCB a);
 
 extern void syncb_main(void *p);
 

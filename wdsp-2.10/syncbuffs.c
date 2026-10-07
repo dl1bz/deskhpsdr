@@ -27,7 +27,14 @@ warren@pratt.one
 #include "comm.h"
 
 void start_syncbthread(SYNCB a) {
-  HANDLE handle = (HANDLE) _beginthread(syncb_main, 0, (void *)a);
+  HANDLE handle;
+  InterlockedBitTestAndSet(&a->thread_active, 0);
+  handle = (HANDLE) _beginthread(syncb_main, 0, (void *)a);
+  if ((uintptr_t)handle == (uintptr_t)-1) {
+    InterlockedBitTestAndReset(&a->run, 0);
+    InterlockedBitTestAndReset(&a->thread_active, 0);
+    return;
+  }
   SetThreadPriority(handle, THREAD_PRIORITY_HIGHEST);
 }
 
@@ -68,13 +75,14 @@ void destroy_syncbuffs(SYNCB a) {
   InterlockedBitTestAndReset(&a->accept, 0);    // shut the Syncbound() gate to prevent new infusions
   EnterCriticalSection(&a->csIN);         // wait until the current Inbound() infusion is finished
   EnterCriticalSection(&a->csOUT);        // block the syncb thread before syncbdata()
-  Sleep(25);                    // wait for the thread to arrive at the top of the syncb_main() loop
   InterlockedBitTestAndReset(&a->run, 0);     // set a trap for the syncb thread
   ReleaseSemaphore(a->Sem_BuffReady, 1,
                    0);   // be sure the syncb thread can pass WaitForSingleObject in syncb_main()                  //
   LeaveCriticalSection(&a->csOUT);        // let the thread pass to the trap in syncbdata()
   LeaveCriticalSection(&a->csIN);
-  Sleep(2);                     // wait for the syncb thread to die
+  while (InterlockedAnd(&a->thread_active, 1)) {
+    Sleep(1);
+  }
   DeleteCriticalSection(&a->csOUT);
   DeleteCriticalSection(&a->csIN);
   CloseHandle(a->Sem_BuffReady);
@@ -99,6 +107,9 @@ void flush_syncbuffs(SYNCB a) {
 void Syncbound(SYNCB a, int nsamples, double **in) {
   int i, n;
   int first, second;
+  if (nsamples <= 0 || nsamples > a->r1_active_buffsize) {
+    return;
+  }
   if (_InterlockedAnd(&a->accept, 1)) {
     EnterCriticalSection(&a->csIN);
     if (nsamples > (a->r1_active_buffsize - a->r1_inidx)) {
@@ -124,13 +135,13 @@ void Syncbound(SYNCB a, int nsamples, double **in) {
   }
 }
 
-void syncbdata(SYNCB a) {
+int syncbdata(SYNCB a) {
   int i;
   int first, second;
   EnterCriticalSection(&a->csOUT);
   if (!_InterlockedAnd(&a->run, 1)) {
     LeaveCriticalSection(&a->csOUT);
-    _endthread();
+    return 0;
   }
   if (a->r1_outsize > (a->r1_active_buffsize - a->r1_outidx)) {
     first = a->r1_active_buffsize - a->r1_outidx;
@@ -147,28 +158,35 @@ void syncbdata(SYNCB a) {
     a->r1_outidx -= a->r1_active_buffsize;
   }
   LeaveCriticalSection(&a->csOUT);
+  return 1;
 }
 
 void syncb_main(void *p) {
   SYNCB a = (SYNCB)p;
   while (_InterlockedAnd(&a->run, 1)) {
     WaitForSingleObject(a->Sem_BuffReady, INFINITE);
-    syncbdata(a);
+    if (!syncbdata(a)) {
+      break;
+    }
     a->exf();
   }
-  _endthread();
+  InterlockedBitTestAndReset(&a->thread_active, 0);
 }
 
 void SetSYNCBRingOutsize(SYNCB a, int size) {
+  if (size <= 0 || size > a->max_outsize || size > a->r1_active_buffsize) {
+    return;
+  }
   InterlockedBitTestAndReset(&a->accept, 0);    // shut the Syncbound() gate to prevent new infusions
   EnterCriticalSection(&a->csIN);         // wait until the current Syncbound() infusion is finished
   EnterCriticalSection(&a->csOUT);        // block the syncb thread before syncbdata()
-  Sleep(25);                    // wait for the thread to arrive at the top of the syncb_main() loop
   InterlockedBitTestAndReset(&a->run, 0);     // set a trap for the syncb thread
   ReleaseSemaphore(a->Sem_BuffReady, 1,
                    0);   // be sure the syncb thread can pass WaitForSingleObject in syncb_main()                  //
   LeaveCriticalSection(&a->csOUT);        // let the thread pass to the trap in syncbdata()
-  Sleep(2);                     // wait for the syncb thread to die
+  while (InterlockedAnd(&a->thread_active, 1)) {
+    Sleep(1);
+  }
   flush_syncbuffs(a);               // restore ring to pristine condition
   a->r1_outsize = size;             // set its new outsize
   InterlockedBitTestAndSet(&a->run, 0);     // remove the syncb thread trap

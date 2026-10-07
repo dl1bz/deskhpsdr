@@ -223,21 +223,27 @@ RMATCH create_rmatch(
   a->prop_gain = prop_gain;
   a->varmode = varmode;
   a->tslew = tslew;
+  InitializeCriticalSectionAndSpinCount(&a->cs_reconfig, 2500);
   calc_rmatch(a);
   return a;
 }
 
 void destroy_rmatch(RMATCH a) {
+  EnterCriticalSection(&a->cs_reconfig);
+  InterlockedBitTestAndReset(&a->run, 0);
   decalc_rmatch(a);
+  LeaveCriticalSection(&a->cs_reconfig);
+  DeleteCriticalSection(&a->cs_reconfig);
   _aligned_free(a);
 }
 
 void reset_rmatch(RMATCH a) {
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 void control(RMATCH a, int change) {
@@ -282,6 +288,7 @@ void upslew(RMATCH a, int newsamps) {
 PORT
 void xrmatchIN(void *b, double *in) {
   RMATCH a = (RMATCH)b;
+  EnterCriticalSection(&a->cs_reconfig);
   if (InterlockedAnd(&a->run, 1)) {
     int newsamps, first, second, ovfl;
     double var;
@@ -333,6 +340,7 @@ void xrmatchIN(void *b, double *in) {
     if (a->control_flag) { control(a, a->insize); }
     LeaveCriticalSection(&a->cs_ring);
   }
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 void dslew(RMATCH a) {
@@ -391,6 +399,7 @@ void dslew(RMATCH a) {
 PORT
 void xrmatchOUT(void *b, double *out) {
   RMATCH a = (RMATCH)b;
+  EnterCriticalSection(&a->cs_reconfig);
   if (InterlockedAnd(&a->run, 1)) {
     int first, second;
     a->out = out;
@@ -422,11 +431,13 @@ void xrmatchOUT(void *b, double *out) {
     if (a->control_flag) { control(a, -(a->outsize)); }
     LeaveCriticalSection(&a->cs_ring);
   }
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void getRMatchDiags(void *b, int *underflows, int *overflows, double *var, int *ringsize, int *nring) {
   RMATCH a = (RMATCH)b;
+  EnterCriticalSection(&a->cs_reconfig);
   *underflows = InterlockedAnd(&a->underflows, 0xFFFFFFFF);
   *overflows  = InterlockedAnd(&a->overflows,  0xFFFFFFFF);
   EnterCriticalSection(&a->cs_var);
@@ -434,22 +445,27 @@ void getRMatchDiags(void *b, int *underflows, int *overflows, double *var, int *
   *ringsize = a->ringsize;
   *nring = a->n_ring;
   LeaveCriticalSection(&a->cs_var);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void resetRMatchDiags(void *b) {
   RMATCH a = (RMATCH)b;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedExchange(&a->underflows, 0);
   InterlockedExchange(&a->overflows,  0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void forceRMatchVar(void *b, int force, double fvar) {
   RMATCH a = (RMATCH)b;
+  EnterCriticalSection(&a->cs_reconfig);
   EnterCriticalSection(&a->cs_var);
   a->force = force;
   a->fvar = fvar;
   LeaveCriticalSection(&a->cs_var);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
@@ -489,76 +505,84 @@ void destroy_rmatchV(void *ptr) {
 PORT
 void setRMatchInsize(void *ptr, int insize) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->insize = insize;
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchOutsize(void *ptr, int outsize) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->outsize = outsize;
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchNomInrate(void *ptr, int nom_inrate) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->nom_inrate = nom_inrate;
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchNomOutrate(void *ptr, int nom_outrate) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->nom_outrate = nom_outrate;
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchRingsize(void *ptr, int ringsize) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->ringsize = ringsize;
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchFeedbackGain(void *b, double feedback_gain) {
   RMATCH a = (RMATCH)b;
+  EnterCriticalSection(&a->cs_reconfig);
   EnterCriticalSection(&a->cs_var);
   a->prop_gain = feedback_gain;
   a->pr_gain = a->prop_gain * 48000.0 / (double)a->nom_outrate;
   LeaveCriticalSection(&a->cs_var);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchSlewTime(void *b, double slew_time) {
   RMATCH a = (RMATCH)b;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);   // turn OFF new data coming into the rmatch
-  Sleep(10);                  // wait for processing to cease
   decalc_rmatch(a);             // deallocate all memory EXCEPT the data structure holding all current parameters
   a->tslew = slew_time;           // change the value of 'slew_time'
   calc_rmatch(a);               // recalculate/reallocate everything in the RMATCH
-  InterlockedBitTestAndSet(&a->run, 0);   // turn ON the dataflow
+  InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);   // turn ON the dataflow
 }
 
 PORT
@@ -566,8 +590,8 @@ void setRMatchSlewTime1(void *b, double slew_time) {
   RMATCH a = (RMATCH)b;
   double theta, dtheta;
   int m;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   _aligned_free(a->cslew);
   a->tslew = slew_time;
   a->ntslew = (int)(a->tslew * a->nom_outrate);
@@ -580,67 +604,75 @@ void setRMatchSlewTime1(void *b, double slew_time) {
     theta += dtheta;
   }
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchPropRingMin(void *ptr, int prop_min) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->prop_ringmin = prop_min;
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchPropRingMax(void *ptr, int prop_max) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->prop_ringmax = prop_max; // must be a power of two
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchFFRingMin(void *ptr, int ff_ringmin) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->ff_ringmin = ff_ringmin;
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchFFRingMax(void *ptr, int ff_ringmax) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   decalc_rmatch(a);
   a->ff_ringmax = ff_ringmax; // must be a power of two
   calc_rmatch(a);
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void setRMatchFFAlpha(void *ptr, double ff_alpha) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   InterlockedBitTestAndReset(&a->run, 0);
-  Sleep(10);
   a->ff_alpha = ff_alpha;
   InterlockedBitTestAndSet(&a->run, 0);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 PORT
 void getControlFlag(void *ptr, int *control_flag) {
   RMATCH a = (RMATCH)ptr;
+  EnterCriticalSection(&a->cs_reconfig);
   EnterCriticalSection(&a->cs_ring);
   *control_flag = a->control_flag;
   LeaveCriticalSection(&a->cs_ring);
+  LeaveCriticalSection(&a->cs_reconfig);
 }
 
 // the following function is DEPRECATED

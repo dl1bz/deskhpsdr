@@ -55,6 +55,7 @@ typedef struct _iobf {
   HANDLE Sem_BuffReady;           // count = number of 'dsp_size' buffers queued for processing
   volatile long exec_bypass;
   volatile long flush_bypass;
+  volatile long flush_thread_active;
   HANDLE Sem_Flush;
   struct {
     int ustate;

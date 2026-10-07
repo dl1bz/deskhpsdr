@@ -30,6 +30,18 @@ warren@wpratt.com
 
 DP pdisp[dMAX_DISPLAYS];
 
+static int valid_display(int disp) {
+  return disp >= 0 && disp < dMAX_DISPLAYS && pdisp[disp] != 0;
+}
+
+static int valid_pixout(int pixout) {
+  return pixout >= 0 && pixout < dMAX_PIXOUTS;
+}
+
+static void analyzer_parameter_error(const char *function, int disp) {
+  fprintf(stderr, "WDSP: %s rejected invalid analyzer parameters for display %d\n", function, disp);
+}
+
 double bessi0(double x) {
   double ax, ans;
   double y;
@@ -946,6 +958,13 @@ void __cdecl sendbuf(void *arg) {
   _endthread();
 }
 
+static void start_dispatcher(int disp) {
+  HANDLE handle = (HANDLE) _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
+  if ((uintptr_t)handle == (uintptr_t)-1) {
+    InterlockedBitTestAndReset(&pdisp[disp]->dispatcher, 0);
+  }
+}
+
 void CalcBandwidthNormalization(DP a) {
   double bin_width;
   bin_width = (double)a->sample_rate / (double)a->size;
@@ -1047,8 +1066,27 @@ void SetAnalyzer(int disp,       // display identifier
                  double fmax,    // frequency at last pixel value
                  int max_w
                 ) {
-  DP a = pdisp[disp];
+  DP a;
   int i, j;
+
+  if (!valid_display(disp)) {
+    analyzer_parameter_error("SetAnalyzer", disp);
+    return;
+  }
+  a = pdisp[disp];
+  if (n_pixout < 1 || n_pixout > dMAX_PIXOUTS ||
+      n_fft < 1 || n_fft > a->max_num_fft || n_fft > dMAX_NUM_FFT ||
+      n_stch < 1 || n_stch > a->max_stitch || n_stch > dMAX_STITCH ||
+      sz < 1 || sz > a->max_size ||
+      bf_sz < 1 || bf_sz > a->bsize || (a->bsize % bf_sz) != 0 ||
+      ovrlp < 0 || ovrlp >= sz ||
+      n_pix < 2 || n_pix > dMAX_PIXELS ||
+      calset < 0 || calset >= dMAX_CAL_SETS ||
+      max_w < 0 || max_w > a->bsize) {
+    analyzer_parameter_error("SetAnalyzer", disp);
+    return;
+  }
+
   EnterCriticalSection(&a->SetAnalyzerSection);
   a->end_dispatcher = 1;
   while (InterlockedAnd(&a->dispatcher, 1)) {
@@ -1169,7 +1207,26 @@ void XCreateAnalyzer(int disp,
                      char *app_data_path
                     ) {
   int i, j;
-  DP a = (DP) malloc0(sizeof(dp));
+  DP a;
+
+  if (success == 0) {
+    fprintf(stderr, "WDSP: XCreateAnalyzer requires a success pointer\n");
+    return;
+  }
+  *success = -1;
+  if (disp < 0 || disp >= dMAX_DISPLAYS || pdisp[disp] != 0 ||
+      m_size < 1 ||
+      m_num_fft < 1 || m_num_fft > dMAX_NUM_FFT ||
+      m_stitch < 1 || m_stitch > dMAX_STITCH) {
+    analyzer_parameter_error("XCreateAnalyzer", disp);
+    return;
+  }
+
+  a = (DP) malloc0(sizeof(dp));
+  if (a == 0) {
+    analyzer_parameter_error("XCreateAnalyzer", disp);
+    return;
+  }
   pdisp[disp] = a;
   a->max_size = m_size;
   a->max_num_fft = m_num_fft;
@@ -1437,7 +1494,7 @@ void CloseBuffer(int disp, int ss, int LO) {
   if (!InterlockedAnd(&a->dispatcher, 1)) {
     InterlockedBitTestAndSet(&a->dispatcher, 0);
     LeaveCriticalSection(&a->SetAnalyzerSection);
-    _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
+    start_dispatcher(disp);
   } else {
     LeaveCriticalSection(&a->SetAnalyzerSection);
   }
@@ -1474,7 +1531,7 @@ void Spectrum(int disp, int ss, int LO, dINREAL* pI, dINREAL* pQ) {
   if (!InterlockedAnd(&a->dispatcher, 1)) {
     InterlockedBitTestAndSet(&a->dispatcher, 0);
     LeaveCriticalSection(&a->SetAnalyzerSection);
-    _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
+    start_dispatcher(disp);
   } else {
     LeaveCriticalSection(&a->SetAnalyzerSection);
   }
@@ -1515,7 +1572,7 @@ void Spectrum2(int run, int disp, int ss, int LO, dINREAL* pbuff) {
     if (!InterlockedAnd(&a->dispatcher, 1)) {
       InterlockedBitTestAndSet(&a->dispatcher, 0);
       LeaveCriticalSection(&a->SetAnalyzerSection);
-      _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
+      start_dispatcher(disp);
     } else {
       LeaveCriticalSection(&a->SetAnalyzerSection);
     }
@@ -1557,7 +1614,7 @@ void Spectrum0(int run, int disp, int ss, int LO, double *pbuff) {
     if (!InterlockedAnd(&a->dispatcher, 1)) {
       InterlockedBitTestAndSet(&a->dispatcher, 0);
       LeaveCriticalSection(&a->SetAnalyzerSection);
-      _beginthread(sendbuf, 0, (void *)(uintptr_t)disp);
+      start_dispatcher(disp);
     } else {
       LeaveCriticalSection(&a->SetAnalyzerSection);
     }
@@ -1566,7 +1623,12 @@ void Spectrum0(int run, int disp, int ss, int LO, double *pbuff) {
 
 PORT
 void SetDisplayDetectorMode(int disp, int pixout, int mode) {
-  DP a = pdisp[disp];
+  DP a;
+  if (!valid_display(disp) || !valid_pixout(pixout)) {
+    analyzer_parameter_error("SetDisplayDetectorMode", disp);
+    return;
+  }
+  a = pdisp[disp];
   if (a->det_type[pixout] != mode) {
     EnterCriticalSection(&a->ResampleSection);
     a->det_type[pixout] = mode;
@@ -1577,7 +1639,12 @@ void SetDisplayDetectorMode(int disp, int pixout, int mode) {
 PORT
 void SetDisplayAverageMode(int disp, int pixout, int mode) {
   int i;
-  DP a = pdisp[disp];
+  DP a;
+  if (!valid_display(disp) || !valid_pixout(pixout)) {
+    analyzer_parameter_error("SetDisplayAverageMode", disp);
+    return;
+  }
+  a = pdisp[disp];
   if (a->av_mode[pixout] != mode) {
     EnterCriticalSection(&a->ResampleSection);
     a->av_mode[pixout] = mode;
@@ -1607,7 +1674,12 @@ void SetDisplayAverageMode(int disp, int pixout, int mode) {
 
 PORT
 void SetDisplayNumAverage(int disp, int pixout, int num) {
-  DP a = pdisp[disp];
+  DP a;
+  if (!valid_display(disp) || !valid_pixout(pixout) || num < 1 || num > dMAX_AVERAGE) {
+    analyzer_parameter_error("SetDisplayNumAverage", disp);
+    return;
+  }
+  a = pdisp[disp];
   if (a->num_average[pixout] != num) {
     EnterCriticalSection(&a->ResampleSection);
     a->num_average[pixout] = num;
@@ -1620,7 +1692,12 @@ void SetDisplayNumAverage(int disp, int pixout, int num) {
 
 PORT
 void SetDisplayAvBackmult(int disp, int pixout, double mult) {
-  DP a = pdisp[disp];
+  DP a;
+  if (!valid_display(disp) || !valid_pixout(pixout)) {
+    analyzer_parameter_error("SetDisplayAvBackmult", disp);
+    return;
+  }
+  a = pdisp[disp];
   if (a->av_backmult[pixout] != mult) {
     EnterCriticalSection(&a->ResampleSection);
     a->av_backmult[pixout] = mult;
@@ -1630,7 +1707,12 @@ void SetDisplayAvBackmult(int disp, int pixout, double mult) {
 
 PORT
 void SetDisplaySampleRate(int disp, int rate) {
-  DP a = pdisp[disp];
+  DP a;
+  if (!valid_display(disp) || rate <= 0) {
+    analyzer_parameter_error("SetDisplaySampleRate", disp);
+    return;
+  }
+  a = pdisp[disp];
   if (a->sample_rate != rate) {
     EnterCriticalSection(&a->ResampleSection);
     a->sample_rate = rate;
@@ -1641,7 +1723,12 @@ void SetDisplaySampleRate(int disp, int rate) {
 
 PORT
 void SetDisplayNormOneHz(int disp, int pixout, int norm) {
-  DP a = pdisp[disp];
+  DP a;
+  if (!valid_display(disp) || !valid_pixout(pixout)) {
+    analyzer_parameter_error("SetDisplayNormOneHz", disp);
+    return;
+  }
+  a = pdisp[disp];
   if (a->normalize[pixout] != norm) {
     EnterCriticalSection(&a->ResampleSection);
     a->normalize[pixout] = norm;

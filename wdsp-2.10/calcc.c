@@ -196,6 +196,7 @@ typedef struct _calcc {
     CurveEMA      m_calavg_save, c_calavg_save, s_calavg_save;
   } util;
   HANDLE hCorrChangeExited;
+  volatile LONG corr_thread_active;
 } calcc, *CALCC;
 
 void __cdecl doPSCorrChange(void *arg);
@@ -1001,7 +1002,11 @@ CALCC create_calcc(int channel, int runcal, int size, int rate, double hw_scale,
     a->SemsPSCorr[i] = CreateSemaphoreW(0, 0, 1, 0);
   }
   a->hCorrChangeExited = CreateEvent(NULL, FALSE, FALSE, NULL);
-  _beginthread(doPSCorrChange, 0, (void *)a);
+  InterlockedExchange(&a->corr_thread_active, 1);
+  HANDLE corr_thread = (HANDLE) _beginthread(doPSCorrChange, 0, (void *)a);
+  if ((uintptr_t)corr_thread == (uintptr_t)-1) {
+    InterlockedExchange(&a->corr_thread_active, 0);
+  }
   return a;
 }
 
@@ -1019,12 +1024,19 @@ void destroy_calcc(CALCC a) {
   a->util.c_spline_save = NULL;
   ns_free(a->util.s_spline_save);
   a->util.s_spline_save = NULL;
-  for (int i = 0; i < 4; i++)
-    while (WaitForSingleObject(a->SemsPSCorr[i], 0) == WAIT_OBJECT_0);
-  InterlockedBitTestAndReset(&b->busy, 0);
-  ReleaseSemaphore(a->SemsPSCorr[4], 1, 0);
-  WaitForSingleObject(a->hCorrChangeExited, 500);
+  if (InterlockedCompareExchange(&a->corr_thread_active, 0, 0)) {
+    for (int i = 0; i < 4; i++)
+      while (WaitForSingleObject(a->SemsPSCorr[i], 0) == WAIT_OBJECT_0);
+    InterlockedBitTestAndReset(&b->busy, 0);
+    ReleaseSemaphore(a->SemsPSCorr[4], 1, 0);
+    WaitForSingleObject(a->hCorrChangeExited, INFINITE);
+  } else {
+    InterlockedBitTestAndReset(&b->busy, 0);
+  }
   CloseHandle(a->hCorrChangeExited);
+  for (int i = 0; i < 5; i++) {
+    CloseHandle(a->SemsPSCorr[i]);
+  }
   ns_free(a->m_spline);
   a->m_spline = NULL;
   ns_free(a->c_spline);
@@ -1664,6 +1676,7 @@ void __cdecl doPSCorrChange(void *arg) {
       case 4:
         b = txa[a->channel].iqc.p;
         InterlockedBitTestAndReset(&b->busy, 0);
+        InterlockedExchange(&a->corr_thread_active, 0);
         SetEvent(a->hCorrChangeExited);
         return;
       default:
