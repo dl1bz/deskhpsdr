@@ -1578,8 +1578,6 @@ void save_css(GtkWidget *widget, gpointer data) {
   }
   fclose(file);
   load_css();   /* Theme neu laden */
-  screen_menu_cleanup();
-  screen_menu(top_window);
 }
 
 void remove_css(GtkWidget *widget, gpointer data) {
@@ -1596,6 +1594,4 @@ void remove_css(GtkWidget *widget, gpointer data) {
     }
   }
   load_css();
-  screen_menu_cleanup();
-  screen_menu(top_window);
 }

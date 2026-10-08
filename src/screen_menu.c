@@ -374,8 +374,12 @@ static void css_theme_changed_cb(GtkComboBox *combo, gpointer user_data) {
   }
   load_css();
   win_set_bgcolor(top_window, &radio_bgcolor);
-  screen_menu_cleanup();
-  screen_menu(top_window);
+  if (main_menu != NULL) {
+    win_set_bgcolor(main_menu, &mwin_bgcolor);
+  }
+  if (dialog != NULL) {
+    win_set_bgcolor(dialog, &mwin_bgcolor);
+  }
 }
 
 void screen_menu(GtkWidget *parent) {
