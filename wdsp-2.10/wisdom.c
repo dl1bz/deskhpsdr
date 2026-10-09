@@ -38,6 +38,7 @@ PORT
 int WDSPwisdom(char *directory) {
   int wisdom_return = 0; // 0 from existing, 1 rebuilt
   fftw_plan tplan;
+  int planning_failed = 0;
   int psize;
   FILE *stream;
   double *fftin;
@@ -52,6 +53,10 @@ int WDSPwisdom(char *directory) {
   if (!fftw_import_wisdom_from_filename(wisdom_file)) {
     fftin = (double *) malloc0(maxsize * sizeof(complex));
     fftout = (double *) malloc0(maxsize * sizeof(complex));
+    if (fftin == NULL || fftout == NULL) {
+      planning_failed = 1;
+      goto wisdom_cleanup;
+    }
 #ifdef _WIN32
     AllocConsole();               // create console
     freopen_s(&stream, "conout$", "w", stdout); // redirect output to console
@@ -65,48 +70,76 @@ int WDSPwisdom(char *directory) {
       fflush(stdout);
       sprintf(status, "Planning COMPLEX FORWARD  FFT size %d\n", psize);
       tplan = fftw_plan_dft_1d(psize, (fftw_complex *)fftin, (fftw_complex *)fftout, FFTW_FORWARD, FFTW_PATIENT);
+      if (tplan == NULL) {
+        planning_failed = 1;
+        break;
+      }
       fftw_execute(tplan);
       fftw_destroy_plan(tplan);
       fprintf(stdout, "Planning COMPLEX BACKWARD FFT size %d\n", psize);
       fflush(stdout);
       sprintf(status, "Planning COMPLEX BACKWARD FFT size %d\n", psize);
       tplan = fftw_plan_dft_1d(psize, (fftw_complex *)fftin, (fftw_complex *)fftout, FFTW_BACKWARD, FFTW_PATIENT);
+      if (tplan == NULL) {
+        planning_failed = 1;
+        break;
+      }
       fftw_execute(tplan);
       fftw_destroy_plan(tplan);
       fprintf(stdout, "Planning COMPLEX BACKWARD FFT size %d\n", psize + 1);
       fflush(stdout);
       sprintf(status, "Planning COMPLEX BACKWARD FFT size %d\n", psize + 1);
       tplan = fftw_plan_dft_1d(psize + 1, (fftw_complex *)fftin, (fftw_complex *)fftout, FFTW_BACKWARD, FFTW_PATIENT);
+      if (tplan == NULL) {
+        planning_failed = 1;
+        break;
+      }
       fftw_execute(tplan);
       fftw_destroy_plan(tplan);
       psize *= 2;
     }
-    psize = 64;
-    while (psize <= MAX_WISDOM_SIZE) {
-      fprintf(stdout, "Planning REAL    FORWARD  FFT size %d\n", psize);
-      fflush(stdout);
-      sprintf(status, "Planning REAL    FORWARD  FFT size %d\n", psize);
-      tplan = fftw_plan_dft_r2c_1d(psize, fftin, (fftw_complex *)fftout, FFTW_PATIENT);
-      fftw_execute(tplan);
-      fftw_destroy_plan(tplan);
-      fprintf(stdout, "Planning REAL    INVERSE  FFT size %d\n", psize);
-      fflush(stdout);
-      sprintf(status, "Planning REAL    INVERSE  FFT size %d\n", psize);
-      tplan = fftw_plan_dft_c2r_1d(psize, (fftw_complex *)fftin, fftout, FFTW_PATIENT);
-      fftw_execute(tplan);
-      fftw_destroy_plan(tplan);
-      psize *= 2;
+    if (!planning_failed) {
+      psize = 64;
+      while (psize <= MAX_WISDOM_SIZE) {
+        fprintf(stdout, "Planning REAL    FORWARD  FFT size %d\n", psize);
+        fflush(stdout);
+        sprintf(status, "Planning REAL    FORWARD  FFT size %d\n", psize);
+        tplan = fftw_plan_dft_r2c_1d(psize, fftin, (fftw_complex *)fftout, FFTW_PATIENT);
+        if (tplan == NULL) {
+          planning_failed = 1;
+          break;
+        }
+        fftw_execute(tplan);
+        fftw_destroy_plan(tplan);
+        fprintf(stdout, "Planning REAL    INVERSE  FFT size %d\n", psize);
+        fflush(stdout);
+        sprintf(status, "Planning REAL    INVERSE  FFT size %d\n", psize);
+        tplan = fftw_plan_dft_c2r_1d(psize, (fftw_complex *)fftin, fftout, FFTW_PATIENT);
+        if (tplan == NULL) {
+          planning_failed = 1;
+          break;
+        }
+        fftw_execute(tplan);
+        fftw_destroy_plan(tplan);
+        psize *= 2;
+      }
     }
-    fprintf(stdout, "\nFFTW planning complete.\n");
-    fflush(stdout);
-    sprintf(status, "\nFFTW planning complete.\n");
-    fftw_export_wisdom_to_filename(wisdom_file);
-    _aligned_free(fftout);
-    _aligned_free(fftin);
+    if (!planning_failed) {
+      fprintf(stdout, "\nFFTW planning complete.\n");
+      fflush(stdout);
+      sprintf(status, "\nFFTW planning complete.\n");
+      fftw_export_wisdom_to_filename(wisdom_file);
+      wisdom_return = 1;
+    } else {
+      snprintf(status, sizeof(status), "FFTW wisdom planning failed");
+      fprintf(stderr, "FFTW wisdom planning failed\n");
+    }
+wisdom_cleanup:
+    if (fftout != NULL) { _aligned_free(fftout); }
+    if (fftin != NULL) { _aligned_free(fftin); }
 #ifdef _WIN32
     FreeConsole();              // dismiss console
 #endif
-    wisdom_return = 1;
   }
-  return wisdom_return;
+  return planning_failed ? -1 : wisdom_return;
 }

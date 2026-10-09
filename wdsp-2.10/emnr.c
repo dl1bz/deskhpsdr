@@ -228,8 +228,10 @@ void CwriteZetaHat(const char *cfile, int zetaHat_rows, int zetaHat_cols,
                    double zetaHat_gmin, double zetaHat_gmax, double zetaHat_ximin, double zetaHat_ximax, double *zetaHat, int *zetaValid) {
   int n, i, j;
   char cfilename[256];
-  char dot_c[50] = ".c";
-  sprintf(cfilename, "%s%s", cfile, dot_c);
+  int filename_len;
+  if (cfile == NULL) { return; }
+  filename_len = snprintf(cfilename, sizeof(cfilename), "%s.c", cfile);
+  if (filename_len < 0 || (size_t)filename_len >= sizeof(cfilename)) { return; }
   FILE* pcfile;
   if (pcfile = fopen(cfilename, "w")) {
     fprintf(pcfile, "int CzetaRows = %d;\n",        zetaHat_rows);
