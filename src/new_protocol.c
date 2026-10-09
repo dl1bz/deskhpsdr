@@ -137,6 +137,15 @@ static atomic_int P2running;
 static atomic_int p2_initialized;
 static atomic_int p2_session_started;
 
+static void p2_report_runtime_failure(const char *message) {
+  int expected = 1;
+  if (atomic_compare_exchange_strong_explicit(&P2running, &expected, 0,
+      memory_order_acq_rel, memory_order_acquire)) {
+    g_idle_add(fatal_error, (gpointer) message);
+  }
+}
+
+
 static struct sockaddr_in base_addr;
 static int base_addr_length;
 
@@ -1227,19 +1236,6 @@ void new_protocol_init(void) {
     }
   }
 #endif
-  high_priority_thread_id = g_thread_new("P2 HP", high_priority_thread, NULL);
-  mic_line_thread_id = g_thread_new("P2 MIC", mic_line_thread, NULL);
-  for (i = 0; i < MAX_DDC; i++) {
-    char text[16];
-    snprintf(text, 16, "P2 DDC%d", i);
-    iq_thread_id[i] = g_thread_new(text, iq_thread, GINT_TO_POINTER(i));
-    g_mutex_init(&p2_jitter[i].mutex);
-    g_cond_init(&p2_jitter[i].cond);
-    p2_jitter_reset_locked(&p2_jitter[i]);
-    snprintf(text, 16, "P2 JIT%d", i);
-    g_thread_new(text, p2_jitter_thread, GINT_TO_POINTER(i));
-  }
-  p2_jitter_initialized = 1;
   //
   // Setup communication (this is also done *once*)
   // In XDMA mode, just call saturn_init(), in network mode, establish
@@ -1255,6 +1251,16 @@ void new_protocol_init(void) {
     if (data_socket < 0) {
       t_perror("Could not create data socket:");
       g_idle_add(fatal_error, "P2: could not create data socket");
+#ifdef __APPLE__
+      for (int j = 0; j < MAX_DDC; j++) { sem_close(iq_sem[j]); }
+      sem_close(mic_line_sem);
+      sem_close(high_priority_sem_buffer);
+#else
+      for (int j = 0; j < MAX_DDC; j++) { sem_destroy(&iq_sem[j]); }
+      sem_destroy(&mic_line_sem);
+      sem_destroy(&high_priority_sem_buffer);
+#endif
+      return;
     }
     int optval = 1;
     socklen_t optlen = sizeof(optval);
@@ -1344,6 +1350,18 @@ void new_protocol_init(void) {
              radio->info.network.interface_length) < 0) {
       t_perror("bind socket failed for data_socket:");
       g_idle_add(fatal_error, "Bind failed for data socket");
+      close(data_socket);
+      data_socket = -1;
+#ifdef __APPLE__
+      for (int j = 0; j < MAX_DDC; j++) { sem_close(iq_sem[j]); }
+      sem_close(mic_line_sem);
+      sem_close(high_priority_sem_buffer);
+#else
+      for (int j = 0; j < MAX_DDC; j++) { sem_destroy(&iq_sem[j]); }
+      sem_destroy(&mic_line_sem);
+      sem_destroy(&high_priority_sem_buffer);
+#endif
+      return;
     }
     {
       struct sockaddr_in local;
@@ -1402,6 +1420,19 @@ void new_protocol_init(void) {
       data_addr[i].sin_port = htons(RX_IQ_TO_HOST_PORT_0 + i);
     }
   }
+  high_priority_thread_id = g_thread_new("P2 HP", high_priority_thread, NULL);
+  mic_line_thread_id = g_thread_new("P2 MIC", mic_line_thread, NULL);
+  for (i = 0; i < MAX_DDC; i++) {
+    char text[16];
+    snprintf(text, 16, "P2 DDC%d", i);
+    iq_thread_id[i] = g_thread_new(text, iq_thread, GINT_TO_POINTER(i));
+    g_mutex_init(&p2_jitter[i].mutex);
+    g_cond_init(&p2_jitter[i].cond);
+    p2_jitter_reset_locked(&p2_jitter[i]);
+    snprintf(text, 16, "P2 JIT%d", i);
+    g_thread_new(text, p2_jitter_thread, GINT_TO_POINTER(i));
+  }
+  p2_jitter_initialized = 1;
   //
   // This does all the work which has to be done both at startup and upon each restart.
   // At this point the persistent P2 engine is fully initialized.
@@ -1457,8 +1488,7 @@ static void new_protocol_general(void) {
               __func__, data_socket, err, strerror(err),
               inet_ntoa(base_addr.sin_addr), ntohs(base_addr.sin_port),
               (long) sizeof(general_buffer), base_addr_length);
-      g_idle_add(fatal_error, "GP send failed (Network down?)");
-      atomic_store_explicit(&P2running, 0, memory_order_release);
+      p2_report_runtime_failure("GP send failed (Network down?)");
       pthread_mutex_unlock(&general_mutex);
       return;
     }
@@ -2204,8 +2234,7 @@ static void new_protocol_high_priority(void) {
               __func__, data_socket, err, strerror(err),
               inet_ntoa(high_priority_addr.sin_addr), ntohs(high_priority_addr.sin_port),
               (long) sizeof(high_priority_buffer_to_radio), high_priority_addr_length);
-      g_idle_add(fatal_error, "HP send failed (Network down?)");
-      atomic_store_explicit(&P2running, 0, memory_order_release);
+      p2_report_runtime_failure("HP send failed (Network down?)");
       pthread_mutex_unlock(&hi_prio_mutex);
       return;
     } else if (rc != sizeof(high_priority_buffer_to_radio)) {
@@ -2334,8 +2363,7 @@ static void new_protocol_transmit_specific(void) {
               __func__, data_socket, err, strerror(err),
               inet_ntoa(transmitter_addr.sin_addr), ntohs(transmitter_addr.sin_port),
               (long) sizeof(transmit_specific_buffer), transmitter_addr_length);
-      g_idle_add(fatal_error, "TxSpec send failed (Network down?)");
-      atomic_store_explicit(&P2running, 0, memory_order_release);
+      p2_report_runtime_failure("TxSpec send failed (Network down?)");
       pthread_mutex_unlock(&tx_spec_mutex);
       return;
     }
@@ -2497,8 +2525,7 @@ static void new_protocol_receive_specific(void) {
               __func__, data_socket, err, strerror(err),
               inet_ntoa(receiver_addr.sin_addr), ntohs(receiver_addr.sin_port),
               (long) sizeof(receive_specific_buffer), receiver_addr_length);
-      g_idle_add(fatal_error, "RxSpec send failed (Network down?)");
-      atomic_store_explicit(&P2running, 0, memory_order_release);
+      p2_report_runtime_failure("RxSpec send failed (Network down?)");
       pthread_mutex_unlock(&rx_spec_mutex);
       return;
     } else if (rc != sizeof(receive_specific_buffer)) {
@@ -2699,6 +2726,11 @@ void new_protocol_menu_start(void) {
   new_protocol_high_priority();
   new_protocol_timer_thread_id = g_thread_new("P2 task", new_protocol_timer_thread, NULL);
   atomic_store_explicit(&p2_session_started, 1, memory_order_release);
+  if (!atomic_load_explicit(&P2running, memory_order_acquire)) {
+    t_print("%s: P2 startup failed, stopping session\n", __func__);
+    new_protocol_menu_stop();
+    return;
+  }
 }
 
 static gpointer new_protocol_rxaudio_thread(gpointer data) {
@@ -2813,8 +2845,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
                 (long) sizeof(audiobuffer),
                 err,
                 strerror(err));
-        g_idle_add(fatal_error, "Audio send failed (Network down?)");
-        atomic_store_explicit(&P2running, 0, memory_order_release);
+        p2_report_runtime_failure("Audio send failed (Network down?)");
         break;
       }
       if (rc != (ssize_t) sizeof(audiobuffer)) {
@@ -2822,8 +2853,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
                 __func__,
                 (long) sizeof(audiobuffer),
                 rc);
-        g_idle_add(fatal_error, "Audio send failed (short UDP packet)");
-        atomic_store_explicit(&P2running, 0, memory_order_release);
+        p2_report_runtime_failure("Audio send failed (short UDP packet)");
         break;
       }
     }
@@ -2910,8 +2940,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
       FIFO += 240.0;  // number of samples in THIS packet
       if (p2_serialized_sendto(data_socket, iqbuffer, sizeof(iqbuffer), 0,
                                (struct sockaddr *) &iq_addr, iq_addr_length) < 0) {
-        g_idle_add(fatal_error, "TX IQ send failed (Network down?)");
-        atomic_store_explicit(&P2running, 0, memory_order_release);
+        p2_report_runtime_failure("TX IQ send failed (Network down?)");
       } else {
         (void) atomic_fetch_add_explicit(&txiq_blocks_sent, 1, memory_order_release);
       }
@@ -2979,9 +3008,8 @@ static gpointer new_protocol_thread(gpointer data) {
         continue;
       }
       t_perror("recvfrom socket failed for new_protocol_thread:");
-      g_idle_add(fatal_error, "P2 receive (Network problem?)");
+      p2_report_runtime_failure("P2 receive (Network problem?)");
       release_my_buffer(mybuf);
-      atomic_store_explicit(&P2running, 0, memory_order_release);
       break;
     }
     sourceport = ntohs(addr.sin_port);
