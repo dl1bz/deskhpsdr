@@ -556,6 +556,10 @@ static void delete_cb(GtkButton *widget, GdkEventButton *event, gpointer user_da
 }
 
 void midi_menu(GtkWidget *parent) {
+  if (dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(dialog));
+    return;
+  }
   int col;
   int row;
   int height;

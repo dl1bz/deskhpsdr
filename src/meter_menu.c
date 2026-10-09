@@ -102,6 +102,10 @@ static void alc_select_cb(GtkToggleButton *widget, gpointer data) {
 }
 
 void meter_menu(GtkWidget *parent) {
+  if (dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(dialog));
+    return;
+  }
   int box_width = 300;
   int widget_heigth = 50;
   GtkWidget *w;

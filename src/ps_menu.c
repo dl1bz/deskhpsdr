@@ -911,6 +911,10 @@ static void noise_level_cb(GtkWidget *widget, gpointer data) {
 }
 
 void ps_menu(GtkWidget *parent) {
+  if (dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(dialog));
+    return;
+  }
   int i;
   char text[16];
   dialog = gtk_dialog_new();

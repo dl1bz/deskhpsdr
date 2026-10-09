@@ -1306,6 +1306,10 @@ static void tune_drive_step_changed_cb(GtkComboBox *widget, gpointer data) {
 }
 
 void tx_menu(GtkWidget *parent) {
+  if (dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(dialog));
+    return;
+  }
   audio_get_cards();
   char temp[32];
   GtkWidget *btn;

@@ -274,7 +274,10 @@ static void open_submenu_from_main(MAIN_SUBMENU menu) {
 #endif
   }
   if (sub_menu != NULL) {
-    g_signal_connect_after(sub_menu, "destroy", G_CALLBACK(return_to_main_menu_cb), NULL);
+    if (g_signal_handler_find(sub_menu, G_SIGNAL_MATCH_FUNC,
+                              0, 0, NULL, G_CALLBACK(return_to_main_menu_cb), NULL) == 0) {
+      g_signal_connect_after(sub_menu, "destroy", G_CALLBACK(return_to_main_menu_cb), NULL);
+    }
     gtk_window_present(GTK_WINDOW(sub_menu));
   } else {
     g_idle_add(restore_main_menu_idle, NULL);

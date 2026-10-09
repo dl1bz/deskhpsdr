@@ -494,6 +494,10 @@ static void filter_size_cb(GtkWidget *widget, gpointer data) {
 }
 
 void fft_menu(GtkWidget *parent) {
+  if (dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(dialog));
+    return;
+  }
   GtkWidget *w;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));

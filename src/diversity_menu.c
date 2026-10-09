@@ -256,6 +256,10 @@ void set_diversity(int state) {
 }
 
 void diversity_menu(GtkWidget *parent) {
+  if (dialog != NULL) {
+    gtk_window_present(GTK_WINDOW(dialog));
+    return;
+  }
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
