@@ -1912,10 +1912,15 @@ void pscc(int channel, int size, double *tx, double *rx) {
 PORT
 void PSSaveCorr(int channel, char *filename) {
   CALCC a;
-  int i = 0;
+  size_t i;
+  if (!filename) { return; }
+  for (i = 0; i < sizeof(a->util.save_file); ++i) {
+    if (filename[i] == '\0') { break; }
+  }
+  if (i == sizeof(a->util.save_file)) { return; }
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   a = txa[channel].calcc.p;
-  while (a->util.save_file[i++] = *filename++);
+  memcpy(a->util.save_file, filename, i + 1);
   ReleaseSemaphore(a->SemsPSCorr[1], 1, 0);
   LeaveCriticalSection(&txa[channel].calcc.cs_update);
 }
@@ -1923,10 +1928,15 @@ void PSSaveCorr(int channel, char *filename) {
 PORT
 void PSRestoreCorr(int channel, char *filename) {
   CALCC a;
-  int i = 0;
+  size_t i;
+  if (!filename) { return; }
+  for (i = 0; i < sizeof(a->util.restore_file); ++i) {
+    if (filename[i] == '\0') { break; }
+  }
+  if (i == sizeof(a->util.restore_file)) { return; }
   EnterCriticalSection(&txa[channel].calcc.cs_update);
   a = txa[channel].calcc.p;
-  while (a->util.restore_file[i++] = *filename++);
+  memcpy(a->util.restore_file, filename, i + 1);
   a->ctrl.turnon = 1;
   ReleaseSemaphore(a->SemsPSCorr[2], 1, 0);
   LeaveCriticalSection(&txa[channel].calcc.cs_update);

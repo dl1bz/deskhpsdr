@@ -25,6 +25,8 @@ warren@wpratt.com
 */
 
 #include "comm.h"
+#include <limits.h>
+#include <stdint.h>
 
 struct _ch ch[MAX_CHANNELS];
 
@@ -36,8 +38,50 @@ static int valid_channel_type(int type) {
   return type == 0 || type == 1 || type == 31;
 }
 
+/* Buffer sizes must describe whole samples and fit the I/O ring indices.
+ * Reject unsupported fractional rate ratios rather than silently truncating
+ * integer divisions (or creating zero-length buffers).
+ */
+static int scaled_size(int size, int from_rate, int to_rate, int *result) {
+  int64_t value;
+  if (size <= 0 || from_rate <= 0 || to_rate <= 0) { return 0; }
+  value = (int64_t)size * to_rate;
+  if (value % from_rate != 0) { return 0; }
+  value /= from_rate;
+  if (value <= 0 || value > INT_MAX / DSP_MULT) { return 0; }
+  *result = (int)value;
+  return 1;
+}
+
 static int valid_channel_sizes_rates(int in_size, int dsp_size, int in_rate, int dsp_rate, int out_rate) {
-  return in_size > 0 && dsp_size > 0 && in_rate > 0 && dsp_rate > 0 && out_rate > 0;
+  int dsp_insize, dsp_outsize, out_size;
+  int r1_size, r2_size;
+  if (!scaled_size(dsp_size, dsp_rate, in_rate, &dsp_insize) ||
+      !scaled_size(dsp_size, dsp_rate, out_rate, &dsp_outsize) ||
+      !scaled_size(in_size, in_rate, out_rate, &out_size) ||
+      in_size > INT_MAX / DSP_MULT || dsp_size > INT_MAX / DSP_MULT) { return 0; }
+  /* iobuffs.c wraps ring indices only on exact equality. Both producer
+   * and consumer block sizes must divide the ring capacity; otherwise
+   * an index eventually crosses the allocation boundary. */
+  r1_size = in_size > dsp_insize ? in_size : dsp_insize;
+  r2_size = out_size > dsp_outsize ? out_size : dsp_outsize;
+  if ((int64_t)DSP_MULT * r1_size % in_size != 0 ||
+      (int64_t)DSP_MULT * r1_size % dsp_insize != 0 ||
+      (int64_t)DSP_MULT * r2_size % out_size != 0 ||
+      (int64_t)DSP_MULT * r2_size % dsp_outsize != 0) { return 0; }
+  /* Sem_OutReady is created with a maximum count of 1000. */
+  if ((int64_t)(DSP_MULT - 1) * r2_size / out_size > 1000) { return 0; }
+  return 1;
+}
+
+/* Slew/delay durations are converted to signed sample counters in
+ * create_slews() and the channel setters. Reject NaN, infinity and values
+ * outside the representable range before performing those casts.
+ * Keep one sample of headroom for the +1 slew-table allocation.
+ */
+static int valid_sample_time(double time, int rate) {
+  return rate > 0 && time >= 0.0 &&
+         time * (double)rate < (double)INT_MAX;
 }
 
 static int channel_is_open(int channel) {
@@ -57,21 +101,10 @@ void start_thread(int channel) {
 }
 
 void pre_main_build(int channel) {
-  if (ch[channel].in_rate  >= ch[channel].dsp_rate) {
-    ch[channel].dsp_insize  = ch[channel].dsp_size * (ch[channel].in_rate  / ch[channel].dsp_rate);
-  } else {
-    ch[channel].dsp_insize  = ch[channel].dsp_size / (ch[channel].dsp_rate /  ch[channel].in_rate);
-  }
-  if (ch[channel].out_rate >= ch[channel].dsp_rate) {
-    ch[channel].dsp_outsize = ch[channel].dsp_size * (ch[channel].out_rate / ch[channel].dsp_rate);
-  } else {
-    ch[channel].dsp_outsize = ch[channel].dsp_size / (ch[channel].dsp_rate / ch[channel].out_rate);
-  }
-  if (ch[channel].in_rate  >= ch[channel].out_rate) {
-    ch[channel].out_size    = ch[channel].in_size  / (ch[channel].in_rate  / ch[channel].out_rate);
-  } else {
-    ch[channel].out_size    = ch[channel].in_size  * (ch[channel].out_rate /  ch[channel].in_rate);
-  }
+  /* All three conversions were validated before building the channel. */
+  scaled_size(ch[channel].dsp_size, ch[channel].dsp_rate, ch[channel].in_rate, &ch[channel].dsp_insize);
+  scaled_size(ch[channel].dsp_size, ch[channel].dsp_rate, ch[channel].out_rate, &ch[channel].dsp_outsize);
+  scaled_size(ch[channel].in_size, ch[channel].in_rate, ch[channel].out_rate, &ch[channel].out_size);
   InitializeCriticalSectionAndSpinCount(&ch[channel].csDSP, 2500);
   InitializeCriticalSectionAndSpinCount(&ch[channel].csEXCH,  2500);
   InterlockedBitTestAndReset(&ch[channel].flushflag, 0);
@@ -98,7 +131,10 @@ void OpenChannel(int channel, int in_size, int dsp_size, int input_samplerate, i
   if (!valid_channel_id(channel) || channel_is_open(channel) ||
       !valid_channel_sizes_rates(in_size, dsp_size, input_samplerate, dsp_rate, output_samplerate) ||
       !valid_channel_type(type) || (state != 0 && state != 1) ||
-      tdelayup < 0.0 || tslewup < 0.0 || tdelaydown < 0.0 || tslewdown < 0.0) {
+      !valid_sample_time(tdelayup, input_samplerate) ||
+      !valid_sample_time(tslewup, input_samplerate) ||
+      !valid_sample_time(tdelaydown, output_samplerate) ||
+      !valid_sample_time(tslewdown, output_samplerate)) {
     return;
   }
   ch[channel].in_size = in_size;
@@ -193,7 +229,9 @@ void SetType(int channel, int type) {
 
 PORT
 void SetInputBuffsize(int channel, int in_size) {
-  if (!channel_is_open(channel) || in_size <= 0) { return; }
+  if (!channel_is_open(channel) ||
+      !valid_channel_sizes_rates(in_size, ch[channel].dsp_size, ch[channel].in_rate, ch[channel].dsp_rate,
+                                 ch[channel].out_rate)) { return; }
   // we do not rebuild main here since it didn't change
   if (in_size != ch[channel].in_size) {
     pre_main_destroy(channel);
@@ -206,7 +244,9 @@ void SetInputBuffsize(int channel, int in_size) {
 
 PORT
 void SetDSPBuffsize(int channel, int dsp_size) {
-  if (!channel_is_open(channel) || dsp_size <= 0) { return; }
+  if (!channel_is_open(channel) ||
+      !valid_channel_sizes_rates(ch[channel].in_size, dsp_size, ch[channel].in_rate, ch[channel].dsp_rate,
+                                 ch[channel].out_rate)) { return; }
   if (dsp_size != ch[channel].dsp_size) {
     int oldstate = SetChannelState(channel, 0, 1);
     pre_main_destroy(channel);
@@ -221,7 +261,11 @@ void SetDSPBuffsize(int channel, int dsp_size) {
 
 PORT
 void SetInputSamplerate(int channel, int in_rate) {
-  if (!channel_is_open(channel) || in_rate <= 0) { return; }
+  if (!channel_is_open(channel) ||
+      !(valid_sample_time(ch[channel].tdelayup, in_rate) &&
+        valid_sample_time(ch[channel].tslewup, in_rate)) ||
+      !valid_channel_sizes_rates(ch[channel].in_size, ch[channel].dsp_size, in_rate, ch[channel].dsp_rate,
+                                 ch[channel].out_rate)) { return; }
   // no re-build of main required
   if (in_rate != ch[channel].in_rate) {
     pre_main_destroy(channel);
@@ -235,7 +279,9 @@ void SetInputSamplerate(int channel, int in_rate) {
 
 PORT
 void SetDSPSamplerate(int channel, int dsp_rate) {
-  if (!channel_is_open(channel) || dsp_rate <= 0) { return; }
+  if (!channel_is_open(channel) ||
+      !valid_channel_sizes_rates(ch[channel].in_size, ch[channel].dsp_size, ch[channel].in_rate, dsp_rate,
+                                 ch[channel].out_rate)) { return; }
   if (dsp_rate != ch[channel].dsp_rate) {
     int oldstate = SetChannelState(channel, 0, 1);
     pre_main_destroy(channel);
@@ -250,7 +296,11 @@ void SetDSPSamplerate(int channel, int dsp_rate) {
 
 PORT
 void SetOutputSamplerate(int channel, int out_rate) {
-  if (!channel_is_open(channel) || out_rate <= 0) { return; }
+  if (!channel_is_open(channel) ||
+      !(valid_sample_time(ch[channel].tdelaydown, out_rate) &&
+        valid_sample_time(ch[channel].tslewdown, out_rate)) ||
+      !valid_channel_sizes_rates(ch[channel].in_size, ch[channel].dsp_size, ch[channel].in_rate, ch[channel].dsp_rate,
+                                 out_rate)) { return; }
   // no re-build of main required
   if (out_rate != ch[channel].out_rate) {
     pre_main_destroy(channel);
@@ -264,7 +314,12 @@ void SetOutputSamplerate(int channel, int out_rate) {
 
 PORT
 void SetAllRates(int channel, int in_rate, int dsp_rate, int out_rate) {
-  if (!channel_is_open(channel) || in_rate <= 0 || dsp_rate <= 0 || out_rate <= 0) { return; }
+  if (!channel_is_open(channel) ||
+      !(valid_sample_time(ch[channel].tdelayup, in_rate) &&
+        valid_sample_time(ch[channel].tslewup, in_rate) &&
+        valid_sample_time(ch[channel].tdelaydown, out_rate) &&
+        valid_sample_time(ch[channel].tslewdown, out_rate)) ||
+      !valid_channel_sizes_rates(ch[channel].in_size, ch[channel].dsp_size, in_rate, dsp_rate, out_rate)) { return; }
   if ((in_rate != ch[channel].in_rate) || (dsp_rate != ch[channel].dsp_rate) || (out_rate != ch[channel].out_rate)) {
     pre_main_destroy(channel);
     post_main_destroy(channel);
@@ -312,6 +367,8 @@ int SetChannelState(int channel, int state, int dmode) {
       }
       break;
     case 1:
+      // Finish any pending turn-off before starting the turn-on slew.
+      waitChannelFlush(channel, timeout);
       InterlockedBitTestAndSet(&a->slew.upflag, 0);
       InterlockedBitTestAndSet(&ch[channel].iob.ch_upslew, 0);
       InterlockedBitTestAndReset(&ch[channel].iob.pc->exec_bypass, 0);
@@ -326,7 +383,7 @@ int SetChannelState(int channel, int state, int dmode) {
 
 PORT
 void SetChannelTDelayUp(int channel, double time) {
-  if (!channel_is_open(channel) || time < 0.0) { return; }
+  if (!channel_is_open(channel) || !valid_sample_time(time, ch[channel].in_rate)) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;
@@ -338,7 +395,7 @@ void SetChannelTDelayUp(int channel, double time) {
 
 PORT
 void SetChannelTSlewUp(int channel, double time) {
-  if (!channel_is_open(channel) || time < 0.0) { return; }
+  if (!channel_is_open(channel) || !valid_sample_time(time, ch[channel].in_rate)) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;
@@ -350,7 +407,7 @@ void SetChannelTSlewUp(int channel, double time) {
 
 PORT
 void SetChannelTDelayDown(int channel, double time) {
-  if (!channel_is_open(channel) || time < 0.0) { return; }
+  if (!channel_is_open(channel) || !valid_sample_time(time, ch[channel].out_rate)) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;
@@ -362,7 +419,7 @@ void SetChannelTDelayDown(int channel, double time) {
 
 PORT
 void SetChannelTSlewDown(int channel, double time) {
-  if (!channel_is_open(channel) || time < 0.0) { return; }
+  if (!channel_is_open(channel) || !valid_sample_time(time, ch[channel].out_rate)) { return; }
   IOB a;
   EnterCriticalSection(&ch[channel].csEXCH);
   a = ch[channel].iob.pc;

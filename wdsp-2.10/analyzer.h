@@ -100,7 +100,7 @@ typedef struct _dp {
   volatile LONG *pnum_threads;              // pointer to current number of active worker threads
   int stop;                       // when set, fft threads will be returned to the pool
   int end_dispatcher;                   // set this flag to one to destroy the dispatcher thread
-  volatile int dispatcher;                // one if the dispatcher thread is alive & active
+  volatile LONG dispatcher;                // one if the dispatcher thread is alive & active
   int ss;                         // sub-span being processed
   int LO;                         // LO (within current sub-span) being processed
   int flag;
@@ -120,6 +120,8 @@ typedef struct _dp {
   volatile LONG snap[dMAX_STITCH][dMAX_NUM_FFT];      // set to 1 to allow a snap of raw spectrum data
   HANDLE hSnapEvent[dMAX_STITCH][dMAX_NUM_FFT];     // mutex handles; mutexes will be used to signal a snap is complete
   double *snap_buff[dMAX_STITCH][dMAX_NUM_FFT];     // pointers to buffers for the snap
+  CRITICAL_SECTION SnapRequestSection[dMAX_STITCH][dMAX_NUM_FFT]; // serialize callers
+  CRITICAL_SECTION SnapCopySection[dMAX_STITCH][dMAX_NUM_FFT];    // synchronize copy/cancel
 
   CRITICAL_SECTION PB_ControlsSection[dMAX_PIXOUTS];
   CRITICAL_SECTION SetAnalyzerSection;

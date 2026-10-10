@@ -123,6 +123,10 @@ void xdivEXT(int id, int nsamples, double **in, double *out) {
   if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   int i;
   MDIV a = pdiv[id];
+  if (nsamples <= 0 || in == 0 || out == 0) { return; }
+  for (i = 0; i < a->nr; i++) {
+    if (in[i] == 0) { return; }
+  }
   a->size = nsamples;
   a->out = out;
   for (i = 0; i < a->nr; i++) { a->in[i] = in[i]; }
@@ -145,7 +149,7 @@ void SetEXTDIVBuffsize(int id, int size) {
   if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   MDIV a = pdiv[id];
   EnterCriticalSection(&a->cs_update);
-  a->size = size;
+  if (size > 0) { a->size = size; }
   LeaveCriticalSection(&a->cs_update);
 }
 
@@ -195,6 +199,12 @@ void xdivEXTF(int id, int size, float **input, float *Iout, float *Qout) {
   if (id < 0 || id >= MAX_EXT_DIVS || pdiv[id] == 0) { return; }
   int i, j;
   MDIV a = pdiv[id];
+  /* Legacy buffers hold at most 2048 complex samples. */
+  if (size <= 0 || size > 2048 || a->nr < 1 || a->nr > 3 ||
+      input == 0 || Iout == 0 || Qout == 0) { return; }
+  for (i = 0; i < 2 * a->nr; i++) {
+    if (input[i] == 0) { return; }
+  }
   if (a->run) {
     a->size = size;
     for (i = 0; i < a->nr; i++) {

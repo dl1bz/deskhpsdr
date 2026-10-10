@@ -780,11 +780,13 @@ DWORD WINAPI Cspectra(void *pargs) {
     InterlockedDecrement(a->pnum_threads);
     return 0;
   }
+  EnterCriticalSection(&a->SnapCopySection[ss][LO]);
   if (InterlockedBitTestAndReset(&(a->snap[ss][LO]), 0)) {
     memcpy((char *)(a->snap_buff[ss][LO]), (char *)(a->fft_out[ss][LO]) + trans_size, trans_size);
     memcpy((char *)(a->snap_buff[ss][LO]) + trans_size, (char *)(a->fft_out[ss][LO]), trans_size);
     SetEvent(a->hSnapEvent[ss][LO]);
   }
+  LeaveCriticalSection(&a->SnapCopySection[ss][LO]);
   EnterCriticalSection(&(a->EliminateSection[ss]));
   if ((ss >= a->begin_ss) && (ss <= a->end_ss)) {
     Celiminate(disp, ss, LO);
@@ -1243,8 +1245,10 @@ void XCreateAnalyzer(int disp,
   a->pnum_threads = (LONG *) malloc0(sizeof(LONG));
   for (i = 0; i < a->max_stitch; i++)
     for (j = 0; j < a->max_num_fft; j++) {
-      a->hSnapEvent[i][j] = CreateEvent(NULL, FALSE, FALSE, TEXT("snap"));
+      a->hSnapEvent[i][j] = CreateEvent(NULL, FALSE, FALSE, NULL);
       a->snap[i][j] = 0;
+      InitializeCriticalSection(&a->SnapRequestSection[i][j]);
+      InitializeCriticalSection(&a->SnapCopySection[i][j]);
     }
   InitializeCriticalSectionAndSpinCount(&a->ResampleSection, 0);
   InitializeCriticalSectionAndSpinCount(&a->SetAnalyzerSection, 0);
@@ -1318,10 +1322,18 @@ void XCreateAnalyzer(int disp,
 
 PORT
 void DestroyAnalyzer(int disp) {
-  DP a = pdisp[disp];
+  DP a;
   int i, j;
+  if (disp < 0 || disp >= dMAX_DISPLAYS || pdisp[disp] == 0) {
+    return;
+  }
+  a = pdisp[disp];
   a->end_dispatcher = 1;
   while (InterlockedAnd(&a->dispatcher, 1)) {
+    Sleep(1);
+  }
+  a->stop = 1;
+  while (_InterlockedAnd(a->pnum_threads, 1023)) {
     Sleep(1);
   }
   for (i = 0; i < a->max_stitch; i++)
@@ -1377,12 +1389,15 @@ void DestroyAnalyzer(int disp) {
   for (i = 0; i < a->max_stitch; i++)
     for (j = 0; j < a->max_num_fft; j++) {
       CloseHandle(a->hSnapEvent[i][j]);
+      DeleteCriticalSection(&a->SnapCopySection[i][j]);
+      DeleteCriticalSection(&a->SnapRequestSection[i][j]);
     }
   _aligned_free((void *) a->pnum_threads);
   // Destroy DetectMaxBin functionality.
   Destroy_DetectMaxBin(disp);
   //
   _aligned_free(a);
+  pdisp[disp] = 0;
 }
 
 PORT
@@ -1410,9 +1425,14 @@ void SnapSpectrum(int disp,
                   int LO,
                   double *snap_buff) {
   DP a = pdisp[disp];
+  EnterCriticalSection(&a->SnapRequestSection[ss][LO]);
+  ResetEvent(a->hSnapEvent[ss][LO]);
+  EnterCriticalSection(&a->SnapCopySection[ss][LO]);
   a->snap_buff[ss][LO] = snap_buff;
   InterlockedBitTestAndSet(&(a->snap[ss][LO]), 0);
+  LeaveCriticalSection(&a->SnapCopySection[ss][LO]);
   WaitForSingleObject(a->hSnapEvent[ss][LO], INFINITE);
+  LeaveCriticalSection(&a->SnapRequestSection[ss][LO]);
 }
 
 PORT
@@ -1423,15 +1443,23 @@ void SnapSpectrumTimeout(int disp,
                          DWORD timeout,
                          int *flag) {
   DP a = pdisp[disp];
-  a->snap_buff[ss][LO] = snap_buff;
+  DWORD wait_result;
+  EnterCriticalSection(&a->SnapRequestSection[ss][LO]);
   ResetEvent(a->hSnapEvent[ss][LO]);
+  EnterCriticalSection(&a->SnapCopySection[ss][LO]);
+  a->snap_buff[ss][LO] = snap_buff;
   InterlockedBitTestAndSet(&(a->snap[ss][LO]), 0);
-  if (!WaitForSingleObject(a->hSnapEvent[ss][LO], timeout)) {
-    *flag = 1;
-  } else {
+  LeaveCriticalSection(&a->SnapCopySection[ss][LO]);
+  wait_result = WaitForSingleObject(a->hSnapEvent[ss][LO], timeout);
+  if (wait_result != WAIT_OBJECT_0) {
+    // A timed-out request must not leave a worker writing to the caller's buffer.
+    EnterCriticalSection(&a->SnapCopySection[ss][LO]);
     InterlockedBitTestAndReset(&(a->snap[ss][LO]), 0);
-    *flag = 0;
+    a->snap_buff[ss][LO] = NULL;
+    LeaveCriticalSection(&a->SnapCopySection[ss][LO]);
   }
+  *flag = (wait_result == WAIT_OBJECT_0);
+  LeaveCriticalSection(&a->SnapRequestSection[ss][LO]);
 }
 
 int calcompare(const void *a, const void *b) {

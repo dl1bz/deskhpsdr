@@ -601,6 +601,7 @@ void flush_nobEXT(int id) {
 
 PORT
 void xnobEXT(int id, double *in, double *out) {
+  if (in == 0 || out == 0) { return; }
   if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   NOB a = pnob[id];
   a->in = in;
@@ -709,6 +710,7 @@ void SetEXTNOBThreshold(int id, double thresh) {
 
 PORT
 void xnobEXTF(int id, float *I, float *Q) {
+  if (I == 0 || Q == 0) { return; }
   if (id < 0 || id >= MAX_EXT_NOBS || pnob[id] == 0) { return; }
   int i;
   NOB a = pnob[id];

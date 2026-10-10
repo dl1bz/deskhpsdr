@@ -25,6 +25,7 @@ warren@wpratt.com
 */
 
 #include "comm.h"
+#include <errno.h>
 
 /********************************************************************************************************
 *                                                   *
@@ -56,13 +57,13 @@ void create_slews(IOB a) {
   a->slew.ntdown = (int)(ch[a->channel].tslewdown * ch[a->channel].out_rate);
   a->slew.cup   = (double *) malloc0((a->slew.ntup + 1) * sizeof(double));
   a->slew.cdown = (double *) malloc0((a->slew.ntdown + 1) * sizeof(double));
-  delta = PI / (double)a->slew.ntup;
+  delta = a->slew.ntup > 0 ? PI / (double)a->slew.ntup : 0.0;
   theta = 0.0;
   for (i = 0; i <= a->slew.ntup; i++) {
     a->slew.cup[i] = 0.5 * (1.0 - cos(theta));
     theta += delta;
   }
-  delta = PI / (double)a->slew.ntdown;
+  delta = a->slew.ntdown > 0 ? PI / (double)a->slew.ntdown : 0.0;
   theta = 0.0;
   for (i = 0; i <= a->slew.ntdown; i++) {
     a->slew.cdown[i] = 0.5 * (1 + cos(theta));
@@ -402,15 +403,29 @@ void flush_iobuffs(int channel) {
   while (!WaitForSingleObject(a->Sem_BuffReady, 1));
   n = a->r2_havesamps / a->out_size;
   a->r2_unqueuedsamps = a->r2_havesamps - n * a->out_size;
-  CloseHandle(a->Sem_OutReady);
-  a->Sem_OutReady  = CreateSemaphore(0, n, 1000, 0);
+  HANDLE new_sem = CreateSemaphore(0, n, 1000, 0);
+  if (new_sem) {
+    HANDLE old_sem = a->Sem_OutReady;
+    a->Sem_OutReady = new_sem;
+    CloseHandle(old_sem);
+  } else {
+    /* Flush holds csDSP and csEXCH, excluding ring producers/consumers. */
+    DWORD result;
+    do {
+      result = WaitForSingleObject(a->Sem_OutReady, 0);
+    } while (result == WAIT_OBJECT_0);
+    if (result != WAIT_OBJECT_0 && (errno == EAGAIN || errno == ETIMEDOUT)) {
+      ReleaseSemaphore(a->Sem_OutReady, n, NULL);
+    }
+  }
   flush_slews(a);
 }
 
 
 PORT  //double, interleaved I/Q
 void fexchange0(int channel, double *in, double *out, int *error) {
-  if (channel < 0 || channel >= MAX_CHANNELS || !InterlockedAnd(&ch[channel].open, 1)) {
+  if (!error || !in || !out || channel < 0 || channel >= MAX_CHANNELS ||
+      !InterlockedAnd(&ch[channel].open, 1)) {
     if (error) { *error = -1; }
     return;
   }
@@ -435,13 +450,18 @@ void fexchange0(int channel, double *in, double *out, int *error) {
     if ((a->r1_inidx += a->in_size) == a->r1_active_buffsize) {
       a->r1_inidx = 0;
     }
+    if (a->bfo && WaitForSingleObject(a->Sem_OutReady, INFINITE) != WAIT_OBJECT_0) {
+      memset(out, 0, a->out_size * sizeof(complex));
+      *error = -2;
+      LeaveCriticalSection(&ch[channel].csEXCH);
+      return;
+    }
     EnterCriticalSection(&a->r2_ControlSection);
     if (a->r2_havesamps >= a->out_size) {
       doit = 1;
     }
     if ((a->r2_havesamps -= a->out_size) < 0) { a->r2_havesamps = 0; }
     LeaveCriticalSection(&a->r2_ControlSection);
-    if (a->bfo) { WaitForSingleObject(a->Sem_OutReady, INFINITE); }
     if (a->bfo || doit)
       if (_InterlockedAnd(&a->slew.downflag, 1)) {
         downslew0(a, out);
@@ -464,7 +484,9 @@ void fexchange0(int channel, double *in, double *out, int *error) {
 
 PORT  //separate I/Q buffers
 void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Qout, int *error) {
-  if (channel < 0 || channel >= MAX_CHANNELS || !InterlockedAnd(&ch[channel].open, 1)) {
+  if (!error || !Iin || !Qin || !Iout || !Qout ||
+      channel < 0 || channel >= MAX_CHANNELS ||
+      !InterlockedAnd(&ch[channel].open, 1)) {
     if (error) { *error = -1; }
     return;
   }
@@ -491,13 +513,19 @@ void fexchange2(int channel, INREAL *Iin, INREAL *Qin, OUTREAL *Iout, OUTREAL *Q
     if ((a->r1_inidx += a->in_size) == a->r1_active_buffsize) {
       a->r1_inidx = 0;
     }
+    if (a->bfo && WaitForSingleObject(a->Sem_OutReady, INFINITE) != WAIT_OBJECT_0) {
+      memset(Iout, 0, a->out_size * sizeof(OUTREAL));
+      memset(Qout, 0, a->out_size * sizeof(OUTREAL));
+      *error = -2;
+      LeaveCriticalSection(&ch[channel].csEXCH);
+      return;
+    }
     EnterCriticalSection(&a->r2_ControlSection);
     if (a->r2_havesamps >= a->out_size) {
       doit = 1;
     }
     if ((a->r2_havesamps -= a->out_size) < 0) { a->r2_havesamps = 0; }
     LeaveCriticalSection(&a->r2_ControlSection);
-    if (a->bfo) { WaitForSingleObject(a->Sem_OutReady, INFINITE); }
     if (a->bfo || doit) {
       if (_InterlockedAnd(&a->slew.downflag, 1)) {
         downslew2(a, Iout, Qout);
