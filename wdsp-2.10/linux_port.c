@@ -69,10 +69,13 @@ void wdsp_sleep_ms(unsigned int milliseconds) {
   }
 }
 
-void QueueUserWorkItem(void *function, void *context, int flags) {
+int QueueUserWorkItem(void *function, void *context, int flags) {
   pthread_t t;
-  pthread_create(&t, NULL, function, context);
+  if (pthread_create(&t, NULL, (void *(*)(void *))function, context) != 0) {
+    return 0;
+  }
   pthread_join(t, NULL);
+  return 1;
 }
 
 static inline void init_crit_section(pthread_mutex_t *mutex) {

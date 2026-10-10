@@ -939,10 +939,13 @@ void __cdecl sendbuf(void *arg) {
           InterlockedBitTestAndSet(&(a->input_busy[a->ss][a->LO]), 0);
           a->IQO_idx[a->ss][a->LO] = a->IQout_index[a->ss][a->LO];
           InterlockedIncrement(a->pnum_threads);
-          if (a->type == 0) {
-            QueueUserWorkItem(spectra, (void *)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0);
-          } else {
-            QueueUserWorkItem(Cspectra, (void *)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0);
+          int queued = a->type == 0
+                       ? QueueUserWorkItem(spectra, (void *)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0)
+                       : QueueUserWorkItem(Cspectra, (void *)(((uintptr_t)arg << 12) + (a->ss << 4) + a->LO), 0);
+          if (!queued) {
+            InterlockedDecrement(a->pnum_threads);
+            InterlockedBitTestAndReset(&(a->input_busy[a->ss][a->LO]), 0);
+            continue;
           }
           if ((a->IQout_index[a->ss][a->LO] += a->incr) >= a->bsize) {
             a->IQout_index[a->ss][a->LO] -= a->bsize;
