@@ -215,6 +215,7 @@ HANDLE LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count
   }
   if (sem == SEM_FAILED) {
     perror("WDSP:CreateSemaphore");
+    return NULL;
   }
   //
   // we can unlink the semaphore NOW. It will remain functional
@@ -224,11 +225,16 @@ HANDLE LinuxCreateSemaphore(int attributes, int initial_count, int maximum_count
   sem_unlink(sname);
 #else
   sem = malloc0(sizeof(sem_t));
+  if (sem == NULL) {
+    return NULL;
+  }
   int result;
   // DL1YCF: added correct initial count
   result = sem_init(sem, 0, initial_count);
   if (result < 0) {
     perror("WDSP:CreateSemaphore");
+    free(sem);
+    return NULL;
   }
 #endif
   return sem;
@@ -291,7 +297,6 @@ static void wdsp_thread_name(void(__cdecl *start_address)(void *), void *arglist
   }
 }
 
-#ifdef __APPLE__
 typedef struct {
   void(__cdecl *start_address)(void *);
   void *arglist;
@@ -305,11 +310,12 @@ static void *wdsp_thread_start(void *context) {
   char tname[64];
   snprintf(tname, sizeof(tname), "%s", start->tname);
   free(start);
+#ifdef __APPLE__
   (void)pthread_setname_np(tname);
+#endif
   start_address(arglist);
   return NULL;
 }
-#endif
 
 HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, void *arglist) {
   pthread_t threadid;
@@ -327,7 +333,6 @@ HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, v
     pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
-#ifdef __APPLE__
   WDSP_THREAD_START *start = malloc(sizeof(*start));
   if (start == NULL) {
     pthread_attr_destroy(&attr);
@@ -341,12 +346,6 @@ HANDLE _beginthread(void(__cdecl *start_address)(void *), unsigned stack_size, v
     pthread_attr_destroy(&attr);
     return (HANDLE) -1;
   }
-#else
-  if (pthread_create(&threadid, &attr, (void * (*)(void *))start_address, arglist)) {
-    pthread_attr_destroy(&attr);
-    return (HANDLE) -1;
-  }
-#endif
   pthread_attr_destroy(&attr);
 #if !defined(__APPLE__) && !defined(NO_PTHREAD_SETNAME_NP)
   //
@@ -388,6 +387,7 @@ void SetThreadPriority(HANDLE thread, int priority)  {
 }
 
 void CloseHandle(HANDLE hObject) {
+  if (hObject == NULL) { return; }
   //
   // This routine is *ONLY* called to release semaphores
   // The WDSP transmitter thread terminates upon each TX/RX
