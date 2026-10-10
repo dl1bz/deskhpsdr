@@ -69,12 +69,37 @@ void wdsp_sleep_ms(unsigned int milliseconds) {
   }
 }
 
-int QueueUserWorkItem(void *function, void *context, int flags) {
+typedef struct {
+  DWORD (*function)(void *);
+  void *context;
+} wdsp_work_item;
+
+static void *wdsp_work_item_start(void *arg) {
+  wdsp_work_item *item = (wdsp_work_item *)arg;
+  DWORD (*function)(void *) = item->function;
+  void *context = item->context;
+  free(item);
+  (void)function(context);
+  return NULL;
+}
+
+int QueueUserWorkItem(DWORD (*function)(void *), void *context, int flags) {
   pthread_t t;
-  if (pthread_create(&t, NULL, (void *(*)(void *))function, context) != 0) {
+  wdsp_work_item *item = malloc(sizeof(*item));
+  if (!item) { return 0; }
+  item->function = function;
+  item->context = context;
+  int rc = pthread_create(&t, NULL, wdsp_work_item_start, item);
+  if (rc != 0) {
+    free(item);
     return 0;
   }
-  pthread_join(t, NULL);
+  // Once started, the worker owns its context and decrements pnum_threads.
+  // A join error must not be reported as a thread-start failure to sendbuf().
+  rc = pthread_join(t, NULL);
+  if (rc != 0) {
+    fprintf(stderr, "WDSP: analyzer worker pthread_join failed (%d)\n", rc);
+  }
   return 1;
 }
 

@@ -102,7 +102,7 @@ john.d.melton@googlemail.com
     #define INT_MAX 2147483647
   #endif
 
-  int QueueUserWorkItem(void *function, void *context, int flags);
+  int QueueUserWorkItem(DWORD (*function)(void *), void *context, int flags);
 
   // these two functions are the same on LINUX
   void InitializeCriticalSection(pthread_mutex_t *mutex);
