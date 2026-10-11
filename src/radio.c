@@ -1564,6 +1564,7 @@ void radio_start_radio(void) {
     SerialPorts[id].andromeda = 0;
     SerialPorts[id].baud = 0;
     SerialPorts[id].autoreporting = 0;
+    SerialPorts[id].rtscts = 0;
     SerialPorts[id].g2 = 0;
     SerialPorts[id].ctsTxInhibit = 0;
     snprintf(SerialPorts[id].port, sizeof(SerialPorts[id].port), "/dev/ttyACM%d", id);
@@ -3038,6 +3039,7 @@ static void radio_restore_state(void) {
       GetPropI1("rigctl_serial_andromeda[%d]", id,             SerialPorts[id].andromeda);
       GetPropI1("rigctl_serial_baud_rate[%i]", id,             SerialPorts[id].baud);
       GetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
+      GetPropI1("rigctl_serial_rtscts[%d]", id,               SerialPorts[id].rtscts);
       if (SerialPorts[id].andromeda) {
         SerialPorts[id].baud = B9600;
       }
@@ -3343,6 +3345,7 @@ void radio_save_state(void) {
     SetPropI1("rigctl_serial_baud_rate[%i]", id,             SerialPorts[id].baud);
     SetPropS1("rigctl_serial_port[%d]", id,                  SerialPorts[id].port);
     SetPropI1("rigctl_serial_autoreporting[%d]", id,         SerialPorts[id].autoreporting);
+    SetPropI1("rigctl_serial_rtscts[%d]", id,               SerialPorts[id].rtscts);
   }
   SetPropS1("tune_serial_port[%d]", MAX_SERIAL,            SerialPorts[MAX_SERIAL].port);
   SetPropI1("tune_serial_baud_rate[%i]", MAX_SERIAL,       SerialPorts[MAX_SERIAL].baud);

@@ -262,6 +262,21 @@ static void serial_enable_cb(GtkWidget *widget, gpointer data) {
   t_print("%s: Serial enable : ID=%d Enabled=%d\n", __func__, id, SerialPorts[id].enable);
 }
 
+// Hardware flow control is configured when opening the CAT port.
+static void serial_rtscts_cb(GtkWidget *widget, gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  int enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  if (SerialPorts[id].rtscts == enabled) { return; }
+  SerialPorts[id].rtscts = enabled;
+  if (SerialPorts[id].enable) {
+    disable_serial_rigctl(id);
+    if (!launch_serial_rigctl(id)) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(serial_enable[id]), FALSE);
+      SerialPorts[id].enable = 0;
+    }
+  }
+}
+
 // Set Baud Rate
 static void baud_cb(GtkWidget *widget, gpointer data) {
   int id = GPOINTER_TO_INT(data);
@@ -409,7 +424,6 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 2, 1);
   //-------------------------------------------------------------------------------------
   w = gtk_check_button_new_with_label("Enable CAT Debug");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_tooltip_text(w,
                               "Enable more debug output for CAT communications\n"
                               "Use it carefully - log level and logfile will be\n"
@@ -419,18 +433,16 @@ void rigctl_menu(GtkWidget *parent) {
   g_signal_connect(w, "toggled", G_CALLBACK(rigctl_debug_cb), NULL);
   //-------------------------------------------------------------------------------------
   w = gtk_check_button_new_with_label("Enable TCI Debug");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_debug);
   gtk_grid_attach(GTK_GRID(grid), w, 3, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tci_debug_cb), NULL);
   //-------------------------------------------------------------------------------------
-  GtkWidget *block_cat_rx_if_tune_btn = gtk_check_button_new_with_label("Block [RX] CAT command\nduring TUNE");
+  GtkWidget *block_cat_rx_if_tune_btn = gtk_check_button_new_with_label("Block [RX] CAT\ncommand during TUNE");
   gtk_widget_set_tooltip_text(block_cat_rx_if_tune_btn,
                               "When enabled, this option rejects the [RX] CAT command during an active TUNE.\n\n"
                               "Some applications (e.g. iDigi) explicitly send an [RX] CAT command\n"
                               "if they do not switch to [TX] on their own.\n"
                               "In this case, any active TUNE process is stopped immediately.\n");
-  gtk_widget_set_name(block_cat_rx_if_tune_btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(block_cat_rx_if_tune_btn), block_cat_rx_if_tune);
   gtk_grid_attach(GTK_GRID(grid), block_cat_rx_if_tune_btn, 4, row, 1, 1);
   g_signal_connect(block_cat_rx_if_tune_btn, "toggled", G_CALLBACK(block_cat_rx_if_tune_cb), NULL);
@@ -481,7 +493,6 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(rigctl_tcp_enable_cb), NULL);
   rigctl_andromeda_btn = gtk_check_button_new_with_label("Andromeda");
-  gtk_widget_set_name(rigctl_andromeda_btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rigctl_andromeda_btn), rigctl_tcp_andromeda);
   gtk_grid_attach(GTK_GRID(grid), rigctl_andromeda_btn, 5, row, 1, 1);
   g_signal_connect(rigctl_andromeda_btn, "toggled", G_CALLBACK(tcp_andromeda_cb), NULL);
@@ -494,7 +505,6 @@ void rigctl_menu(GtkWidget *parent) {
   }
   gtk_widget_show(rigctl_andromeda_btn);
   w = gtk_check_button_new_with_label("AutoRprt");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), rigctl_tcp_autoreporting);
   gtk_grid_attach(GTK_GRID(grid), w, 6, row, 1, 1);
   g_signal_connect(w, "toggled", G_CALLBACK(tcp_autoreporting_cb), NULL);
@@ -546,17 +556,20 @@ void rigctl_menu(GtkWidget *parent) {
       gtk_grid_attach(GTK_GRID(grid), serial_enable[i], 4, row, 1, 1);
       g_signal_connect(serial_enable[i], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(i));
       w = gtk_check_button_new_with_label("Andromeda");
-      gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_tooltip_text(w,
                                   "Use Apache Labs Andromeda SDR CAT emulation\ninstead of the Kenwood TS2000 CAT emulation");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), SerialPorts[i].andromeda);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(andromeda_cb), GINT_TO_POINTER(i));
       w = gtk_check_button_new_with_label("AutoRprt");
-      gtk_widget_set_name(w, "boldlabel");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), SerialPorts[i].autoreporting);
       gtk_grid_attach(GTK_GRID(grid), w, 6, row, 1, 1);
       g_signal_connect(w, "toggled", G_CALLBACK(serial_autoreporting_cb), GINT_TO_POINTER(i));
+      w = gtk_check_button_new_with_label("RTS/CTS");
+      gtk_widget_set_tooltip_text(w, "Enable hardware RTS/CTS flow control for this CAT serial port");
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), SerialPorts[i].rtscts);
+      gtk_grid_attach(GTK_GRID(grid), w, 7, row, 1, 1);
+      g_signal_connect(w, "toggled", G_CALLBACK(serial_rtscts_cb), GINT_TO_POINTER(i));
     } else {
       //
       // If the Serial port is used for the G2 panel, just report port name.
@@ -614,7 +627,6 @@ void rigctl_menu(GtkWidget *parent) {
     g_signal_connect(serial_baud[MAX_SERIAL], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_enable[MAX_SERIAL] =
             gtk_check_button_new_with_label("RTS: TUNE output\nDTR: TX output");
-    gtk_widget_set_name(serial_enable[MAX_SERIAL], "boldlabel_blue");
     gtk_widget_set_tooltip_text(serial_enable[MAX_SERIAL],
                                 "Output signals on serial port:\n"
                                 "RTS: if TUNE ACTIVE +5V, if TUNE OFF 0V\n"
@@ -623,7 +635,6 @@ void rigctl_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), serial_enable[MAX_SERIAL], 4, row, 1, 1);
     g_signal_connect(serial_enable[MAX_SERIAL], "toggled", G_CALLBACK(serial_enable_cb), GINT_TO_POINTER(MAX_SERIAL));
     serial_ctsTxInhibit = gtk_check_button_new_with_label("CTS TX Inhibit\n(active low)");
-    gtk_widget_set_name(serial_ctsTxInhibit, "boldlabel_blue");
     gtk_widget_set_tooltip_text(serial_ctsTxInhibit,
                                 "Input signal on serial port:\n"
                                 "Shorten CTS + GND: TX set global to INHIBIT (low active)");
@@ -670,8 +681,7 @@ void rigctl_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), serial_baud[MAX_SERIAL + 1], 3, row, 1, 1);
     g_signal_connect(serial_baud[MAX_SERIAL + 1], "changed", G_CALLBACK(baud_cb), GINT_TO_POINTER(MAX_SERIAL + 1));
     serial_enable[MAX_SERIAL + 1] =
-            gtk_check_button_new_with_label("RTS & CTS as PTT Input");
-    gtk_widget_set_name(serial_enable[MAX_SERIAL + 1], "boldlabel_blue");
+            gtk_check_button_new_with_label("RTS & CTS\nas PTT Input");
     gtk_widget_set_tooltip_text(serial_enable[MAX_SERIAL + 1],
                                 "Shorten RTS + CTS set PTT/MOX active.\n"
                                 "(can be used for external footswitch)");
@@ -713,7 +723,6 @@ void rigctl_menu(GtkWidget *parent) {
   //-----------------------------------------------------------------------------------------------------------------
 #ifdef __APPLE__
   w = gtk_check_button_new_with_label("RumLogNG compatibility");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_cmd_uppercase);
   gtk_widget_set_tooltip_text(w,
                               "Send all CW specific TCI commands UPPERCASE\n"
@@ -771,7 +780,6 @@ void rigctl_menu(GtkWidget *parent) {
   row--;
   col++;
   w = gtk_check_button_new_with_label("Report TX Frequency Only");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_txonly);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
@@ -782,7 +790,6 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(w,
                               "Swap I and Q sample order in the outgoing TCI IQ stream for client compatibility.\n\n"
                               "Default: OFF (Change it only if required)");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_iq_swap);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
@@ -794,7 +801,6 @@ void rigctl_menu(GtkWidget *parent) {
                               "Invert Q in the outgoing TCI IQ stream to match clients\n"
                               "that expect the opposite spectral orientation, e.g. SDC DIGI/CW decoding.\n\n"
                               "Default: ON (Change it only if required)");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_iq_conjugate);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 1, 1);
@@ -806,7 +812,6 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_widget_set_tooltip_text(w,
                               "Switch on an audio monitor for incoming TCI Audio\n"
                               "of an application which send TCI audio to deskHPSDR.");
-  gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_halign(w, GTK_ALIGN_START);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_audio_monitor);
   gtk_grid_attach(GTK_GRID(grid), w, col, row, 2, 1);

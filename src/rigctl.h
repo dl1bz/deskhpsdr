@@ -35,6 +35,7 @@ struct _SERIALPORT {
   int  andromeda;   // flag for handling ANDROMEDA console
   int  g2;          // This port is used for G2-internal communication
   int  autoreporting;
+  int  rtscts;      // optional hardware flow control for CAT ports
   int  ctsTxInhibit; // dedicated TUNE/ATU port: CTS active-low TX inhibit
 };
 
