@@ -907,8 +907,8 @@ static void activate_deskhpsdr(GtkApplication *app, gpointer data) {
   row += 2;
   t_print("create build label\n");
   snprintf(text, sizeof(text),
-           "Version %s\n(build %s from %s %s branch)\ncompiled with %s\nActivated Compiler Macros:\n%s\nCurrent WDSP version: %d.%02d\nSelected Audio module: %s\nWorking Directory: %s\nX11 backend: %s",
-           build_version, build_date, build_remote, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100,
+           "Version %s [%s]\n(build %s from %s %s branch)\ncompiled with %s\nActivated Compiler Macros:\n%s\nCurrent WDSP version: %d.%02d\nSelected Audio module: %s\nWorking Directory: %s\nX11 backend: %s",
+           build_version, build_commit, build_date, build_remote, build_branch, __VERSION__, build_options, GetWDSPVersion() / 100,
            GetWDSPVersion() % 100,
            build_audio, config_directory, x11_be);
   GtkWidget *build_date_label = gtk_label_new(text);
