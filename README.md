@@ -41,7 +41,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Bright / Dark Theme support    | yes ✅                                        |                   |
 | Screen Resolution              | min. 1280x600 or higher 🚨                    |                   |
 | Input devices                  | Touchscreen, Mouse, Keyboard, MIDI            |                   |
-| OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ❌ |                   |
+| OS support (64bit OS required) | macOS (15 or higher) ✅, Linux ✅, WINDOWS ✅ |                   |
 | using Virtual Environments (VE)| not supported ❌                              | use native OS     |
 | Audio backend                  | CoreAudio (macOS), miniAudio (macOS & Linux)  |                   |
 | Audio devices support          | mono,stereo (only 48kHz audio rate supported) | no resampling     |
@@ -52,8 +52,8 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Used UI framework              | GTK3                                          |                   |
 | Programming language           | C, partially Objective C/Swift (macOS only)   |                   |
 | Supported Compiler             | clang (recommended), gcc                      |                   |
-| App Publishing                 | **Source code only, no binaries distributed** |                   |
-|                                | **except macOS (digitally signed & notarized)**|                   |
+| App Publishing                 | primarily as Source code only (Linux) except  |                   |
+|                                | Setup package (WIN) & App Bundles  (macOS)    |                   |
 
 Other useful app features (availability depend from used SDR device):
 
@@ -86,8 +86,6 @@ deskHPSDR is fully Open Source, but a full non-commercial hobby software project
 
 My main focus of deskHPSDR development is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The second focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, but not for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
 
-**There are no plans whatsoever to ever port deskHPSDR to WINDOWS! It's made for UNIX style OS only like macOS or Linux.**
-
 ## Requirements
 
 I recommend using deskHPSDR on macOS, it's also being focused and developed on this OS platform. It can be build and run under Linux too, but my recommendation remains unequivocally macOS for for stable and stress-free operation with deskHPSDR. macOS will also remain the only platform, where I provide ready-made app bundles without build them first. Same for WINDOWS, a setup package is provided too.
@@ -112,7 +110,6 @@ I will never publish any ready-compiled binaries or appimages for Linux. The tas
 ## My development of deskHPSDR
 
 deskHPSDR is under my active development.<br>
-My guiding principle is to adapt most of the core functions from [Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) to deskHPSDR, but without the surrounding playground. What I mean is, it will never be like Thetis, but we will get as close as we can.<br>
 ⚠️☝️ I'm the solo maintainer of this project deskHPSDR, there is no developer team behind. This app is MY OWN interpretation how such an SDR TRX app should work. I alone make all the design decisions, no one else. During publishing this app as Open Source, I'm ready to share my own work and development with interested users or interested communities. However, this does not give rise to any demands or claims for anyone, but I'm open for useful user requests. That doesn't mean, that I accept every request.
 
 ## Management of user requests - read first before make a user request
@@ -204,10 +201,9 @@ Big thanks and huge respect to all involved developers for their work on pihpsdr
 Special thanks to:<br>
 
 - my lovely wife any my family for her great patience and understanding
-- John/G0ORX, Steve/KA6S & Jae/K5JAE and all those involved for initial pihpsdr development
-- Christoph/DL1YCF for continue development and current pihpsdr
-- Dr. Warren C. Pratt NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
-- Anton (developer of Brick SDR series) for share his technical documentations with me for add Brick SDR support
+- John/G0ORX, Steve/KA6S & Jae/K5JAE, Christoph/DL1YCF: pihpsdr development
+- Dr. Warren C. Pratt/NR0V for the great software library WDSP, the "heart" of our deskHPSDR application
+- Anton (developer of Brick SDR series) for share his technical documentations with me for add stable Brick SDR support
 - OpenAI/ChatGPT for brainstorming, code optimizations and save me a lot of time in development
 - all of the active users and contributors for support deskHPSDR
 
