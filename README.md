@@ -1,5 +1,9 @@
 # deskHPSDR by DL1BZ for OpenHPSDR protocol 1 & 2
 
+Do you like software from developers who can really code instead of just relying on "vibe coding"?<br>
+Do you want to use your SDR with an app that doesn't force you to register online just because you want to operate your SDR radio?<br>
+Then welcome to the right place - the good old world with an app made by human, not by machines.
+
 deskHPSDR by DL1BZ is an mature Open Source desktop application for Hamradio OpenHPSDR SDR transceivers that has been under active development for years. SDR devices based on the OpenHPSDR protocol P1 or P2 are fully supported and both protocol versions are fully supported. It is designed and built as an advanced SDR transceiver front-end application for macOS, Linux and WINDOWS for "every-day-use" and runs now extremely stable and reliable. deskHPSDR is largely based on the WDSP software library by Warren C. Pratt (NR0V), similar to other SDR applications like Thetis for WINDOWS.
 
 <img src="stuff/deskhpsdr/screenshot.png" width="1024px" />
@@ -20,7 +24,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | Feature                        | Current deskHPSDR version 2.8                 | Notes             |
 | -------------------------------- | ----------------------------------------------- | ------------------- |
 | TCI CAT                        | supported ✅                                  | TCI 2.0           |
-| TCI Audio                      | supported (only 48k and 24k) ✅               | TCI 2.0           |
+| TCI Audio                      | supported ✅                                  | TCI 2.0           |
 | TCI I/Q                        | supported (48k/96k/192k/384k) ✅              | TCI 2.0           |
 | PTT external                   | supported (via serial RTS/CTS or MIDI) ✅     |                   |
 | MIDI Control                   | supported using RTmidi library ✅             |                   |
