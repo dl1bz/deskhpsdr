@@ -28,6 +28,8 @@
 
 #include <wdsp.h>
 
+#include "wdsp_analyzer_modes.h"
+
 #include "band.h"
 #include "bandstack.h"
 #include "channel.h"
@@ -2678,21 +2680,21 @@ void tx_set_average(const TRANSMITTER *tx) {
    * configured averaging mode and time unchanged.
    */
   if (mode == modeCWL || mode == modeCWU) {
-    wdspmode = AVERAGE_MODE_NONE;
+    wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_NONE;
   } else {
     switch (tx->display_average_mode) {
     case AVG_NONE:
-      wdspmode = AVERAGE_MODE_NONE;
+      wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_NONE;
       break;
     case AVG_RECURSIVE:
-      wdspmode = AVERAGE_MODE_RECURSIVE;
+      wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_RECURSIVE;
       break;
     case AVG_LOGRECURSIVE:
     default:
-      wdspmode = AVERAGE_MODE_LOG_RECURSIVE;
+      wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_LOG_RECURSIVE;
       break;
     case AVG_TIMEWINDOW:
-      wdspmode = AVERAGE_MODE_TIME_WINDOW;
+      wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_TIME_WINDOW;
       break;
     }
   }
@@ -2701,7 +2703,7 @@ void tx_set_average(const TRANSMITTER *tx) {
   // to "Time Window", so I generally switch to NONE first, and then
   // to the target averaging mode
   //
-  SetDisplayAverageMode(tx->id, 0, AVERAGE_MODE_NONE);
+  SetDisplayAverageMode(tx->id, 0, DESKHPSDR_WDSP_AVERAGE_MODE_NONE);
   usleep(50000);
   SetDisplayAverageMode(tx->id, 0, wdspmode);
 }
@@ -2793,16 +2795,16 @@ void tx_set_detector(const TRANSMITTER *tx) {
   switch (tx->display_detector_mode) {
   case DET_PEAK:
   default:
-    wdspmode = DETECTOR_MODE_PEAK;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_PEAK;
     break;
   case DET_AVERAGE:
-    wdspmode = DETECTOR_MODE_AVERAGE;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_AVERAGE;
     break;
   case DET_ROSENFELL:
-    wdspmode = DETECTOR_MODE_ROSENFELL;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_ROSENFELL;
     break;
   case DET_SAMPLEHOLD:
-    wdspmode = DETECTOR_MODE_SAMPLE;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_SAMPLE;
     break;
   }
   SetDisplayDetectorMode(tx->id, 0, wdspmode);

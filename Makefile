@@ -127,7 +127,7 @@ else
 	endif
 endif
 
-WDSP_DIR := wdsp-2.10
+WDSP_DIR := wdsp-2.11
 
 # clang detection (macOS: CC may be "cc" but still clang)
 IS_CLANG := $(shell $(CC) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0)
@@ -1031,7 +1031,7 @@ clean:
 	rm -f src/*.o
 	rm -f src/*.orig
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
+	@if [ -d wdsp-2.11 ]; then $(MAKE) -C wdsp-2.11 clean; fi
 	@if [ -d miniaudio ]; then $(MAKE) -C miniaudio clean; fi
 	@if [ -d rtmidi ]; then $(MAKE) -C rtmidi clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
@@ -1048,7 +1048,7 @@ uninstall:
 	@echo "Cleanup source directory of deskHPSDR..."
 	rm -f src/*.o
 	rm -f $(PROGRAM) hpsdrsim bootloader
-	@if [ -d wdsp-2.10 ]; then $(MAKE) -C wdsp-2.10 clean; fi
+	@if [ -d wdsp-2.11 ]; then $(MAKE) -C wdsp-2.11 clean; fi
 	@if [ -d rtmidi ]; then $(MAKE) -C rtmidi clean; fi
 	@if [ -d libsolar ]; then $(MAKE) -C libsolar clean; fi
 	@if [ -d libtelnet ]; then $(MAKE) -C libtelnet clean; fi

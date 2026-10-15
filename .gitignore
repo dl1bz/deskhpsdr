@@ -33,6 +33,9 @@ wdsp-2.00/*
 wdsp-2.10/*.orig
 wdsp-2.10/libwdsp.a
 wdsp-2.10/*.o
+wdsp-2.11/*.orig
+wdsp-2.11/libwdsp.a
+wdsp-2.11/*.o
 libsolar/libsolar.a
 libsolar/*.o
 libtelnet/libtelnet.a

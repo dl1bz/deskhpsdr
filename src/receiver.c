@@ -26,6 +26,8 @@
 
 #include <wdsp.h>
 
+#include "wdsp_analyzer_modes.h"
+
 #include "agc.h"
 #include "audio.h"
 #include "band.h"
@@ -1271,8 +1273,12 @@ void rx_filter_changed(RECEIVER *rx) {
 
 void rx_mode_changed(RECEIVER *rx) {
   rx_set_mode(rx);
+  // A mode change can alter NR/SNB/ANF eligibility, not just the NNR model.
+  rx_set_noise(rx);
   if (rx_diversity_rx_active() && rx != NULL && rx->id == 0 && receivers > 1 && receiver[1] != NULL) {
     rx_set_mode(receiver[1]);
+    // RX2 follows VFO A in diversity; refresh its effective NR state too.
+    rx_set_noise(receiver[1]);
   }
   rx_filter_changed(rx);
 }
@@ -2204,17 +2210,17 @@ void rx_set_average(const RECEIVER *rx) {
   SetDisplayNumAverage(rx->id, 0, display_average);
   switch (rx->display_average_mode) {
   case AVG_NONE:
-    wdspmode = AVERAGE_MODE_NONE;
+    wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_NONE;
     break;
   case AVG_RECURSIVE:
-    wdspmode = AVERAGE_MODE_RECURSIVE;
+    wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_RECURSIVE;
     break;
   case AVG_LOGRECURSIVE:
   default:
-    wdspmode = AVERAGE_MODE_LOG_RECURSIVE;
+    wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_LOG_RECURSIVE;
     break;
   case AVG_TIMEWINDOW:
-    wdspmode = AVERAGE_MODE_TIME_WINDOW;
+    wdspmode = DESKHPSDR_WDSP_AVERAGE_MODE_TIME_WINDOW;
     break;
   }
   //
@@ -2222,7 +2228,7 @@ void rx_set_average(const RECEIVER *rx) {
   // to "Time Window", so I generally switch to NONE first, and then
   // to the target averaging mode
   //
-  SetDisplayAverageMode(rx->id, 0, AVERAGE_MODE_NONE);
+  SetDisplayAverageMode(rx->id, 0, DESKHPSDR_WDSP_AVERAGE_MODE_NONE);
   usleep(50000);
   SetDisplayAverageMode(rx->id, 0, wdspmode);
 }
@@ -2267,17 +2273,17 @@ void rx_set_detector(const RECEIVER *rx) {
   int wdspmode;
   switch (rx->display_detector_mode) {
   case DET_PEAK:
-    wdspmode = DETECTOR_MODE_PEAK;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_PEAK;
     break;
   case DET_AVERAGE:
   default:
-    wdspmode = DETECTOR_MODE_AVERAGE;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_AVERAGE;
     break;
   case DET_ROSENFELL:
-    wdspmode = DETECTOR_MODE_ROSENFELL;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_ROSENFELL;
     break;
   case DET_SAMPLEHOLD:
-    wdspmode = DETECTOR_MODE_SAMPLE;
+    wdspmode = DESKHPSDR_WDSP_DETECTOR_MODE_SAMPLE;
     break;
   }
   SetDisplayDetectorMode(rx->id, 0, wdspmode);
@@ -2312,6 +2318,11 @@ void rx_set_mode(RECEIVER *rx) {
   //
   int vfo_id = rx_diversity_effective_vfo_id(rx);
   SetRXAMode(rx->id, vfo[vfo_id].mode);
+  // NNR uses dedicated CW model slots; the operator selection remains 0/1.
+  if (rx->nr == 5) {
+    int cw = (vfo[vfo_id].mode == modeCWL || vfo[vfo_id].mode == modeCWU);
+    SetRXANNRModel(rx->id, rx->nnr_model + (cw ? 2 : 0));
+  }
   rx_set_squelch(rx);
   if (rx_diversity_rx_active() && rx->id == 1) {
     rx_set_offset(rx, vfo[vfo_id].offset - rx_get_mode_dc_offset(vfo_id) + rx_get_digi_monitor_offset(vfo_id));
@@ -2346,7 +2357,8 @@ void rx_set_noise(const RECEIVER *rx) {
   // Set/Update all parameters stored  in rx
   // that areassociated with the "QRM fighters"
   //
-  int mode = vfo[rx->id].mode;
+  int vfo_id = rx_diversity_effective_vfo_id(rx);
+  int mode = vfo[vfo_id].mode;
   int nr_allowed = (mode != modeDIGL && mode != modeDIGU);
   //
   // a) NB
@@ -2416,11 +2428,10 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXASBNRnoiseRescale(rx->id,        rx->nr4_noise_rescale);
   SetRXASBNRpostFilterThreshold(rx->id, rx->nr4_post_filter_threshold);
   //
-  // i) NNR (WDSP 2.10 only)
-  //
-  // NNR is designed to operate post-AGC.  Only the documented operator
-  // controls are exposed here: model selection and mask floor.
-  SetRXANNRModel(rx->id, rx->nnr_model);
+  // i) NNR (WDSP 2.11): voice slots 0/1, CW slots 2/3.
+  // The operator chooses Standard/Premium; CW mode selects the CW model.
+  int cw_nnr = (mode == modeCWL || mode == modeCWU);
+  SetRXANNRModel(rx->id, rx->nnr_model + (cw_nnr ? 2 : 0));
   SetRXANNRMaskFloor(rx->id, rx->nnr_mask_floor);
   //
   // Enable exactly the selected noise-reduction engine.
