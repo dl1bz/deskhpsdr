@@ -11,6 +11,7 @@ GNUmakefile
 *.a
 *.tgz
 *.tar.gz
+*.html
 deskhpsdr
 !release/
 !release/deskhpsdr

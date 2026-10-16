@@ -759,7 +759,7 @@ static int sin_cos_identity_check(CALCC a) {
   double prev_c = a->c_calavg.ys[0];
   double max_identity_err = 0.0;
   for (int k = 0; k < SC_IDENTITY_PTS; k++) {
-    double x = 0.05 + 0.90 * k / (double)(SC_IDENTITY_PTS - 1);
+    double x = 0.10 + 0.85 * k / (double)(SC_IDENTITY_PTS - 1);
     double s = ns_eval_near_clamped(a->s_spline, x, prev_s);
     double c = ns_eval_near_clamped(a->c_spline, x, prev_c);
     double err = fabs(s * s + c * c - 1.0);

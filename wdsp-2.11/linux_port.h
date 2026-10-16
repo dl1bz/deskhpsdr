@@ -72,8 +72,6 @@ john.d.melton@googlemail.com
   void wdsp_aligned_free(void *ptr);
   void wdsp_sleep_ms(unsigned int milliseconds);
 
-  #define _aligned_malloc(size, alignment) wdsp_aligned_malloc((size), (alignment))
-  #define _aligned_free(ptr) wdsp_aligned_free(ptr)
   // Activate these for malloc debug
   //#define _aligned_malloc(x,y) my_malloc(x);
   //#define _aligned_free(x) my_free(x);

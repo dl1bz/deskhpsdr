@@ -45,6 +45,7 @@ warren@wpratt.com
 #endif
 #include <assert.h>
 #include "fftw3.h"
+#include "wdsp_align.h"
 
 #include "amd.h"
 #include "ammod.h"
@@ -129,7 +130,7 @@ warren@wpratt.com
 #define dMAX_DISPLAYS         72          // maximum number of displays = max instances
 #define dMAX_STITCH           4         // maximum number of sub-spans to stitch together
 #define dMAX_NUM_FFT          1         // maximum number of ffts for an elimination
-#define dMAX_PIXELS           16384       // maximum number of pixels that can be requested
+#define dMAX_PIXELS           32768       // maximum number of pixels that can be requested
 #define dMAX_AVERAGE          60          // maximum number of pixel frames that will be window-averaged
 #ifdef _Thetis
   #define dINREAL             double

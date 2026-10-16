@@ -27,6 +27,8 @@ warren@pratt.one
 #ifndef _nnrbypass_h
 #define _nnrbypass_h
 
+#include "wdsp_align.h"
+
 typedef struct _nnrbypass *NNRBYPASS;
 
 extern NNRBYPASS create_nnrbypass(int run, int size, int nc_default, double *in,
