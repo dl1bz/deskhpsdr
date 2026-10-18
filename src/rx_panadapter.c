@@ -55,7 +55,8 @@
   #include "ozyio.h"
 #endif
 #include "audio.h"
-#include "map_d.h"
+// #include "map_d.h"
+#include "map_v2.h"
 
 char zeitString[20];
 int val_agcsetpoint = 0;
@@ -475,7 +476,7 @@ static void init_worldmap_surface(int w, int h) {
   worldmap_surface_width = 0;
   worldmap_surface_height = 0;
   GError *error = NULL;
-  GInputStream *mem_stream = g_memory_input_stream_new_from_data(worldmap_png, worldmap_png_len, NULL);
+  GInputStream *mem_stream = g_memory_input_stream_new_from_data(worldmap_pic, worldmap_pic_len, NULL);
   GdkPixbuf *raw_pixbuf = gdk_pixbuf_new_from_stream(mem_stream, NULL, &error);
   g_object_unref(mem_stream);
   if (!raw_pixbuf) {
