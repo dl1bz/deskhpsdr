@@ -134,8 +134,35 @@ static gboolean locator_to_latlon(const char *loc, double *lat, double *lon) {
   return TRUE;
 }
 
+/* The default locator is a placeholder, not an actual station position. */
+gboolean greyline_has_station_locator(const char *locator) {
+  double lat, lon;
+  if (!locator) { return FALSE; }
+  const size_t len = strlen(locator);
+  if (len != 4 && len != 6) { return FALSE; }
+  if (g_ascii_strcasecmp(locator, "JO01AA") == 0) { return FALSE; }
+  return locator_to_latlon(locator, &lat, &lon);
+}
+
+/* Station marker for the world-map panadapter background (no label). */
+void greyline_draw_station_marker(cairo_t *cr, int width, int height, const char *locator) {
+  double lat, lon;
+  if (!cr || width <= 0 || height <= 0 || !locator_to_latlon(locator, &lat, &lon)) { return; }
+  const double x = (lon + 180.0) / 360.0 * (double) width;
+  const double y = (90.0 - lat) / 180.0 * (double) height;
+  cairo_save(cr);
+  cairo_set_source_rgba(cr, 1.0, 0.2, 0.2, 0.9);
+  cairo_arc(cr, x, y, 4.0, 0, 2.0 * M_PI);
+  cairo_fill(cr);
+  cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.9);
+  cairo_set_line_width(cr, 1.0);
+  cairo_arc(cr, x, y, 6.5, 0, 2.0 * M_PI);
+  cairo_stroke(cr);
+  cairo_restore(cr);
+}
+
 /* --- Solar position: subsolar point (lat, lon) for current UTC --- */
-static void subsolar_point_utc(double *sub_lat, double *sub_lon) {
+void greyline_subsolar_point_utc(double *sub_lat, double *sub_lon) {
   /* This is a practical approximation suitable for greyline visualization.
      For higher precision, swap in a proper NOAA/SPA implementation. */
   time_t t = time(NULL);
@@ -189,7 +216,7 @@ static void subsolar_point_utc(double *sub_lat, double *sub_lon) {
 /* --- D-Layer estimation helpers (solar altitude based) --- */
 static double solar_altitude_deg(double lat_deg, double lon_deg) {
   double sub_lat, sub_lon;
-  subsolar_point_utc(&sub_lat, &sub_lon);
+  greyline_subsolar_point_utc(&sub_lat, &sub_lon);
   double lat = DEG2RAD(lat_deg);
   double lon = DEG2RAD(lon_deg);
   double dec = DEG2RAD(sub_lat);
@@ -303,7 +330,7 @@ static double terminator_lat_for_lon(double sub_lat, double sub_lon, double lon)
 
 static void draw_greyline_overlay(cairo_t *cr, int w, int h) {
   double sub_lat, sub_lon;
-  subsolar_point_utc(&sub_lat, &sub_lon);
+  greyline_subsolar_point_utc(&sub_lat, &sub_lon);
   int steps = w;
   if (steps < 400) { steps = 400; }
   double step = (double) w / (double) steps;

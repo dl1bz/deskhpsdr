@@ -55,8 +55,8 @@
   #include "ozyio.h"
 #endif
 #include "audio.h"
-// #include "map_d.h"
-#include "map_v2.h"
+#include "wmap.h"
+#include "greyline.h"
 
 char zeitString[20];
 int val_agcsetpoint = 0;
@@ -459,6 +459,64 @@ void pan_add_dx_spot_source(double freq_khz, const char *dxcall, PAN_SPOT_SOURCE
 static cairo_surface_t *worldmap_surface = NULL;
 static int worldmap_surface_width = 0;
 static int worldmap_surface_height = 0;
+
+/* Cached day/night mask for the equirectangular world-map background.
+ * Rebuild once per UTC minute, never in the normal analyzer frame path.
+ */
+static cairo_surface_t *worldmap_night_surface = NULL;
+static int worldmap_night_width = 0;
+static int worldmap_night_height = 0;
+static time_t worldmap_night_minute = (time_t) -1;
+
+static void update_worldmap_night_surface(int w, int h) {
+  if (w <= 0 || h <= 0) { return; }
+  time_t minute = time(NULL) / 60;
+  if (worldmap_night_surface && worldmap_night_width == w &&
+      worldmap_night_height == h && worldmap_night_minute == minute) { return; }
+  if (worldmap_night_surface) {
+    cairo_surface_destroy(worldmap_night_surface);
+    worldmap_night_surface = NULL;
+  }
+  worldmap_night_width = 0;
+  worldmap_night_height = 0;
+  cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+  if (cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS) {
+    cairo_surface_destroy(surface);
+    return;
+  }
+  double solar_lat, solar_lon;
+  greyline_subsolar_point_utc(&solar_lat, &solar_lon);
+  const double slat = solar_lat * (M_PI / 180.0);
+  const double sin_slat = sin(slat);
+  const double cos_slat = cos(slat);
+  const double twilight = sin(3.0 * M_PI / 180.0);
+  unsigned char *data = cairo_image_surface_get_data(surface);
+  const int stride = cairo_image_surface_get_stride(surface);
+  for (int y = 0; y < h; ++y) {
+    double lat = (90.0 - 180.0 * ((y + 0.5) / h)) * (M_PI / 180.0);
+    double a = sin(lat) * sin_slat;
+    double b = cos(lat) * cos_slat;
+    uint32_t *row = (uint32_t *)(void *)(data + y * stride);
+    for (int x = 0; x < w; ++x) {
+      double lon = -180.0 + 360.0 * ((x + 0.5) / w);
+      double elevation_sin = a + b * cos((lon - solar_lon) * (M_PI / 180.0));
+      /* Smooth +/-3-degree twilight transition; max opacity 48%. */
+      double t = (twilight - elevation_sin) / (2.0 * twilight);
+      if (t < 0.0) { t = 0.0; }
+      if (t > 1.0) { t = 1.0; }
+      t = t * t * (3.0 - 2.0 * t);
+      unsigned alpha = (unsigned)(t * 123.0 + 0.5);
+      /* Premultiplied dark-blue night color, Cairo ARGB32. */
+      row[x] = (alpha << 24) | ((alpha * 8 / 255) << 16) |
+               ((alpha * 14 / 255) << 8) | (alpha * 34 / 255);
+    }
+  }
+  cairo_surface_mark_dirty(surface);
+  worldmap_night_surface = surface;
+  worldmap_night_width = w;
+  worldmap_night_height = h;
+  worldmap_night_minute = minute;
+}
 
 /*
  * Decode and scale the embedded map only when the panadapter size changes.
@@ -1382,6 +1440,13 @@ void rx_panadapter_update(RECEIVER *rx) {
     if (worldmap_surface) {
       cairo_set_source_surface(cr, worldmap_surface, 0, 0);
       cairo_paint(cr);
+      if (greyline_has_station_locator(own_locator)) {
+        update_worldmap_night_surface(mywidth, myheight);
+      }
+      if (greyline_has_station_locator(own_locator) && worldmap_night_surface) {
+        cairo_set_source_surface(cr, worldmap_night_surface, 0, 0);
+        cairo_paint(cr);
+      }
     }
     //------------------------------------------------------------------------------
     cairo_set_source_rgba(cr, COLOUR_PAN_BG_MAP, 0.15);  // 0.00..1.00 Transparenz abnehmend
@@ -1390,6 +1455,9 @@ void rx_panadapter_update(RECEIVER *rx) {
   }
   cairo_rectangle(cr, 0, 0, mywidth, myheight);
   cairo_fill(cr);
+  if (display_wmap && worldmap_surface && greyline_has_station_locator(own_locator)) {
+    greyline_draw_station_marker(cr, mywidth, myheight, own_locator);
+  }
   double HzPerPixel = rx->hz_per_pixel;  // need this many times
   int vfo_id = rx_panadapter_effective_vfo_id(rx);
   int mode = vfo[vfo_id].mode;

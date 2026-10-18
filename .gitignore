@@ -15,6 +15,7 @@ GNUmakefile
 deskhpsdr
 !release/
 !release/deskhpsdr
+!prepare/
 deskHPSDR.app
 hpsdrsim
 wdspWisdom*

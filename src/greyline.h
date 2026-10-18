@@ -27,6 +27,15 @@
 extern "C" {
 #endif
 
+/* TRUE only for a usable station locator (not the JO01AA placeholder). */
+gboolean greyline_has_station_locator(const char *locator);
+
+/* Draw the station position on an equirectangular map, without a label. */
+void greyline_draw_station_marker(cairo_t *cr, int width, int height, const char *locator);
+
+/* Subsolar latitude/longitude (degrees) for the current UTC time. */
+void greyline_subsolar_point_utc(double *lat, double *lon);
+
 /* Preferred API:
  * Pass only the desired window width. The height is computed automatically from the
  * embedded map image aspect ratio (day_jpg.h).
