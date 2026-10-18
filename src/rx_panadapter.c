@@ -1440,6 +1440,12 @@ void rx_panadapter_update(RECEIVER *rx) {
     if (worldmap_surface) {
       cairo_set_source_surface(cr, worldmap_surface, 0, 0);
       cairo_paint(cr);
+      if (css_dark_theme && !greyline_has_station_locator(own_locator)) {
+        // Dim only the map when no station locator is configured.
+        cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.30);
+        cairo_rectangle(cr, 0, 0, mywidth, myheight);
+        cairo_fill(cr);
+      }
       if (greyline_has_station_locator(own_locator)) {
         update_worldmap_night_surface(mywidth, myheight);
       }

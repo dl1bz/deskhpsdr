@@ -1142,6 +1142,10 @@ void radio_menu(GtkWidget *parent) {
   gtk_widget_set_margin_end(label, 5);
   gtk_box_pack_start(GTK_BOX(Data_box), label, FALSE, FALSE, 0);
   GtkWidget *locator_box = gtk_entry_new();
+  gtk_widget_set_tooltip_text(locator_box,
+                              "Please set your Maidenhead Locator, need by\n"
+                              "- Station Position Marker on RX Panadapter\n"
+                              "- Greyline calculation");
   gtk_entry_set_max_length(GTK_ENTRY(locator_box), sizeof(own_locator) - 1);
   gtk_entry_set_text(GTK_ENTRY(locator_box), own_locator);
   gtk_box_pack_start(GTK_BOX(Data_box), locator_box, FALSE, FALSE, 0);
