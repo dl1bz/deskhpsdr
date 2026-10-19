@@ -4,7 +4,7 @@ Do you like software from developers who can really code instead of just relying
 Do you want to use your SDR with an app that doesn't force you to register online just because you want to operate your SDR radio?<br>
 Then welcome to the right place - the good old world with an app made by human, not by machines.
 
-deskHPSDR by DL1BZ is an mature Open Source desktop application for Hamradio OpenHPSDR SDR transceivers that has been under active development for years. SDR devices based on the OpenHPSDR protocol P1 or P2 are fully supported and both protocol versions are fully supported. It is designed and built as an advanced SDR transceiver front-end application for macOS, Linux and WINDOWS for "every-day-use" and runs now extremely stable and reliable. deskHPSDR is largely based on the WDSP software library by Warren C. Pratt (NR0V), similar to other SDR applications like Thetis for WINDOWS.
+deskHPSDR by DL1BZ is an mature Open Source desktop application for Hamradio OpenHPSDR SDR transceivers that has been under active development for years. SDR devices based on the OpenHPSDR protocol P1 or P2 are fully supported and both protocol versions are fully supported. It is designed and built as an advanced SDR transceiver front-end application for macOS, Linux and WINDOWS for "every-day-use" and runs now extremely stable and reliable. deskHPSDR is largely based on the WDSP software library by Warren C. Pratt (NR0V) - by using the same WDSP functions (e.g. PureSignal, Broadcast Quality CFC Audio Tools) and get the same results in comparison with other WDSP-driven Apps like Thetis.
 
 <img src="stuff/deskhpsdr/screenshot.png" width="1024px" />
 
@@ -35,7 +35,7 @@ My goal was to make an more optimzed version running with focus on Desktop-OS li
 | GPIO                           | GPIO code removed since V2.7 ❌               |                   |
 | Soapy API / Soapy protocol     | Soapy code removed since V2.7 ❌              |                   |
 | Hermes Lite 2 N2ADR IO board   | supported ✅                                  |                   |
-| Use WDSP library ?             | yes, current 2.10 ✅                          |                   |
+| Use WDSP library ?             | yes, current 2.11 ✅                          |                   |
 | Pure Signal / Pre-Distortion   | supported up to 192k samplingrate ✅          |                   |
 | Noise Reduction                | NR1 - NR4 + NNR available ✅                  | NNR high CPU load |
 | CAT over TCP                   | supported (TS2000 & PowerSDR emulation) ✅    |                   |
@@ -94,8 +94,8 @@ My main focus of deskHPSDR development is macOS, which is my primary development
 
 I recommend using deskHPSDR on macOS, it's also being focused and developed on this OS platform. It can be build and run under Linux too, but my recommendation remains unequivocally macOS for for stable and stress-free operation with deskHPSDR. macOS will also remain the only platform, where I provide ready-made app bundles without build them first. Same for WINDOWS, a setup package is provided too.
 
-* modern Desktop-OS like macOS (15 or newer) or Linux with installed developer tools like compiler, linker etc.
-* minimum screensize starts from 1280x600
+* modern Desktop-OS like macOS (15 or newer), Linux with installed developer tools like compiler, linker etc. or WINDOWS 10/11 64bit (32bit OS is not supported)
+* minimum screensize/resolution support by deskHPSDR starts from 1280x600
 * **basic knowledge**: how to use your OS, a shell, a text editor and how to compile applications from source code
 * *macOS only*: please read the``COMPILE.macOS`` first, app bundles for ARM and Intel available
 * *Linux only*: please read the``COMPILE.linux`` first
@@ -108,13 +108,13 @@ I recommend using deskHPSDR on macOS, it's also being focused and developed on t
 
 ## I want use now deskHPSDR. What I need to do ?
 
-deskHPSDR is published exclusively as source code only (except macOS, meanwhile are ready-made app bundles available, look into [releases](https://github.com/dl1bz/deskhpsdr/releases) ). You need to clone this Github repository and compile the app before you can use it. Please read all included instructions carefully to avoid installation errors by yourself. Additional notes you can find too under the discussion tab of this project. Please have a look there too from time to time.<br>
-I will never publish any ready-compiled binaries or appimages for Linux. The task of compiling it yourself remains.
+deskHPSDR is published basically like the most Open Source applications as source code only. You need to clone this Github repository and compile the app before you can use it. Please read all included instructions carefully to avoid installation errors by yourself. Additional notes you can find too under the discussion tab of this project. Please have a look there too from time to time.<br>
+Binaries are available for macOS and WINDOWS, but I will never publish any ready-compiled binaries or appimages for Linux. Look into the [release section of deskHPSDR](https://github.com/dl1bz/deskhpsdr/releases).
 
-## My development of deskHPSDR
+## deskHPSDR follows a clear app concept
 
 deskHPSDR is under my active development.<br>
-⚠️☝️ I'm the solo maintainer of this project deskHPSDR, there is no developer team behind. This app is MY OWN interpretation how such an SDR TRX app should work. I alone make all the design decisions, no one else. During publishing this app as Open Source, I'm ready to share my own work and development with interested users or interested communities. However, this does not give rise to any demands or claims for anyone, but I'm open for useful user requests. That doesn't mean, that I accept every request.
+⚠️☝️ I'm the solo maintainer of this project deskHPSDR, there is no developer team behind. This app is MY OWN interpretation how such an SDR TRX app should work. I alone make all the design decisions. During publishing this app as Open Source, I'm ready to share my own work and development with interested users or interested communities. However, this does not give rise to any demands or claims for anyone, but I'm open for useful user requests. That doesn't mean, that I accept every user request.
 
 ## Management of user requests - read first before make a user request
 
@@ -131,7 +131,7 @@ Especially Linux environments are highly fragmented and differ from distribution
 
 ## macOS is first choice
 
-deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux, but Linux is and will be not a priority. WINDOWS also supported now.
+deskHPSDR is primarily developed for and under macOS. Made as an cross-platform app, it runs on Linux and on WINDOWS too.
 
 ## Latest Changes
 
