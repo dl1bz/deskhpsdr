@@ -485,6 +485,16 @@ static void att_spin_cb(GtkWidget *widget, gpointer data) {
   schedule_high_priority();
 }
 
+// Diagnostic adjustment of TX/feedback alignment (stored in nanoseconds).
+// Apply without resetting PureSignal so successive calibrations can be compared.
+static void ps_tx_delay_cb(GtkSpinButton *spin, gpointer data) {
+  (void)data;
+  double delay_ns = gtk_spin_button_get_value(spin);
+  if (delay_ns == transmitter->ps_ampdelay) { return; }
+  transmitter->ps_ampdelay = delay_ns;
+  tx_ps_setparams(transmitter);
+}
+
 static void setpk_cb(GtkWidget *widget, gpointer data) {
   double newpk = -1.0;
   char text[16];
@@ -1077,6 +1087,23 @@ void ps_menu(GtkWidget *parent) {
   gtk_combo_box_set_active(GTK_COMBO_BOX(tolerance_combo), transmitter->ps_tolerance_mode);
   my_combo_attach(GTK_GRID(grid), tolerance_combo, col, row, 1, 1);
   g_signal_connect(tolerance_combo, "changed", G_CALLBACK(tolerance_mode_cb), NULL);
+  row++;
+  col = 2;
+  GtkWidget *delay_label = gtk_label_new("PS TX Delay (ns):");
+  gtk_widget_set_name(delay_label, "boldlabel");
+  gtk_widget_set_halign(delay_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), delay_label, col, row, 2, 1);
+  col += 1;
+  GtkWidget *delay_spin = gtk_spin_button_new_with_range(-10000.0, 10000.0, 50.0);
+  gtk_widget_set_name(delay_spin, "small_button");
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(delay_spin), 0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(delay_spin), transmitter->ps_ampdelay);
+  gtk_widget_set_tooltip_text(delay_spin,
+                              "PureSignal TX/feedback timing adjustment in nanoseconds.\n"
+                              "Positive values delay TX; negative values delay RX.\n"
+                              "For diagnosis, compare identity deviations after each change.");
+  gtk_grid_attach(GTK_GRID(grid), delay_spin, col, row, 1, 1);
+  g_signal_connect(delay_spin, "value-changed", G_CALLBACK(ps_tx_delay_cb), NULL);
   row++;
   col = 0;
   feedback_l = gtk_label_new("Feedback Lvl");
