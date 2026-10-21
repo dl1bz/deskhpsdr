@@ -78,7 +78,6 @@ void new_reuse_discovery(void) {
     if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET
         && (ifa->ifa_flags & IFF_UP) == IFF_UP
         && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
-        && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
         && strncmp("veth", ifa->ifa_name, 4)
         && strncmp("dock", ifa->ifa_name, 4)
         && strncmp("hass", ifa->ifa_name, 4)) {
@@ -107,7 +106,6 @@ void new_discovery(void) {
                 ifa->ifa_addr->sa_family == AF_INET
                 && (ifa->ifa_flags & IFF_UP) == IFF_UP
                 && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
-                && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
                 && strncmp("veth", ifa->ifa_name, 4)
                 && strncmp("dock", ifa->ifa_name, 4)
                 && strncmp("hass", ifa->ifa_name, 4)
@@ -185,20 +183,10 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     //  to_addr.sin_addr.s_addr = htonl(ntohl(interface_addr.sin_addr.s_addr)
     //          | (ntohl(interface_netmask.sin_addr.s_addr) ^ 0xFFFFFFFF));
     //
-#ifdef __APPLE__
-    //
-    // MacOS fails for broadcasts to the loopback interface(s).
-    // so if this is a loopback, simply use the loopback addr
-    // (Note: currently we are not discovering on LO in P2)
-    //
+    // Loopback has no usable broadcast path: probe its IPv4 address directly.
     if ((iface->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
-      //
-      // No broadcast on loopback interfaces. Send UDP packet
-      // to interface address
-      //
       to_addr.sin_addr = interface_addr.sin_addr;
     }
-#endif
     break;
   case 4:
     /*
@@ -232,6 +220,9 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(radio_port);
     to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    if ((iface->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
+      to_addr.sin_addr = interface_addr.sin_addr;
+    }
     t_print("reuse discovery: probing last P2 device via %s address %s\n",
             interface_name, inet_ntoa(interface_addr.sin_addr));
     break;
@@ -283,6 +274,20 @@ static void new_discover(struct ifaddrs* iface, int discflag) {
   buffer[4] = 0x02;
   for (i = 5; i < 60; i++) {
     buffer[i] = 0x00;
+  }
+  // Diagnostic: record the actual socket endpoint and discovery destination.
+  {
+    struct sockaddr_in bound = {0};
+    socklen_t bound_len = sizeof(bound);
+    char bound_ip[INET_ADDRSTRLEN] = "?";
+    char target_ip[INET_ADDRSTRLEN] = "?";
+    if (getsockname(discovery_socket, (struct sockaddr *) &bound, &bound_len) == 0) {
+      inet_ntop(AF_INET, &bound.sin_addr, bound_ip, sizeof(bound_ip));
+    }
+    inet_ntop(AF_INET, &to_addr.sin_addr, target_ip, sizeof(target_ip));
+    t_print("P2 DISC TX: interface=%s bound=%s:%u target=%s:%u mode=%d\n",
+            interface_name, bound_ip, (unsigned) ntohs(bound.sin_port),
+            target_ip, (unsigned) ntohs(to_addr.sin_port), discflag);
   }
   if (sendto(discovery_socket, buffer, 60, 0, (struct sockaddr *) &to_addr, sizeof(to_addr)) < 0) {
     t_perror("new_discover: sendto socket failed for discovery_socket\n");
@@ -348,6 +353,9 @@ gpointer new_discover_receive_thread(gpointer data) {
       break;
     }
     t_print("new_discover: received %d bytes\n", bytes_read);
+    if (bytes_read < 24) {
+      continue;
+    }
     if (bytes_read == 1444) {
       // if (devices > 0) {
       //   break;
@@ -357,6 +365,29 @@ gpointer new_discover_receive_thread(gpointer data) {
       if (buffer[0] == 0 && buffer[1] == 0 && buffer[2] == 0 && buffer[3] == 0) {
         int status = buffer[4] & 0xFF;
         if (status == 2 || status == 3) {
+          // Diagnostic: correlate each accepted P2 reply with its receiving socket.
+          {
+            struct sockaddr_in bound = {0};
+            socklen_t bound_len = sizeof(bound);
+            char bound_ip[INET_ADDRSTRLEN] = "?";
+            char peer_ip[INET_ADDRSTRLEN] = "?";
+            if (getsockname(discovery_socket, (struct sockaddr *) &bound, &bound_len) == 0) {
+              inet_ntop(AF_INET, &bound.sin_addr, bound_ip, sizeof(bound_ip));
+            }
+            inet_ntop(AF_INET, &addr.sin_addr, peer_ip, sizeof(peer_ip));
+            t_print("P2 DISC RX: interface=%s bound=%s:%u peer=%s:%u mode=%d mac=%02X:%02X:%02X:%02X:%02X:%02X\n",
+                    interface_name, bound_ip, (unsigned) ntohs(bound.sin_port),
+                    peer_ip, (unsigned) ntohs(addr.sin_port), discflag,
+                    buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10]);
+          }
+          // A loopback reply can also reach a LAN-bound discovery socket
+          // (e.g. from p2tunnel). Do not list 127/8 as a LAN device.
+          // Keep targeted discovery and genuine loopback discovery unchanged.
+          if (discflag == 1 &&
+              (ntohl(addr.sin_addr.s_addr) >> 24) == 127 &&
+              (ntohl(interface_addr.sin_addr.s_addr) >> 24) != 127) {
+            continue;
+          }
           if (discflag == 4 && !discovery_last_device_matches(NEW_PROTOCOL, &addr, &buffer[5])) {
             continue;
           }

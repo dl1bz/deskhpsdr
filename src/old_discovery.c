@@ -127,19 +127,10 @@ static void discover(struct ifaddrs* iface, int discflag) {
     //  to_addr.sin_addr.s_addr = htonl(ntohl(interface_addr.sin_addr.s_addr)
     //          | (ntohl(interface_netmask.sin_addr.s_addr) ^ 0xFFFFFFFF));
     //
-#ifdef __APPLE__
-    //
-    // MacOS fails for broadcasts to the loopback interface(s).
-    // so if this is a loopback, simply use the loopback addr
-    //
+    // Loopback has no usable broadcast path: probe its IPv4 address directly.
     if ((iface->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
-      //
-      // No broadcast on loopback interfaces. Send UDP packet
-      // to interface address
-      //
       to_addr.sin_addr = interface_addr.sin_addr;
     }
-#endif
     break;
   case 4:
     /*
@@ -171,11 +162,9 @@ static void discover(struct ifaddrs* iface, int discflag) {
     to_addr.sin_family = AF_INET;
     to_addr.sin_port = htons(radio_port);
     to_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-#ifdef __APPLE__
     if ((iface->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
       to_addr.sin_addr = interface_addr.sin_addr;
     }
-#endif
     t_print("reuse discovery: probing last P1 device via %s address %s\n",
             interface_name, inet_ntoa(interface_addr.sin_addr));
     break;
@@ -405,6 +394,9 @@ static gpointer discover_receive_thread(gpointer data) {
     }
     if (bytes_read == 0) { break; }
     t_print("old_discovery: received %d bytes\n", bytes_read);
+    if (bytes_read < 22) {
+      continue;
+    }
     if ((buffer[0] & 0xFF) == 0xEF && (buffer[1] & 0xFF) == 0xFE) {
       int status = buffer[2] & 0xFF;
       if (status == 2 || status == 3) {
@@ -603,9 +595,7 @@ void old_reuse_discovery(void) {
     if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET
         && (ifa->ifa_flags & IFF_UP) == IFF_UP
         && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
-#ifdef __APPLE__
-        && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
-#else
+#ifndef __APPLE__
         && strncmp("veth", ifa->ifa_name, 4)
         && strncmp("dock", ifa->ifa_name, 4)
         && strncmp("hass", ifa->ifa_name, 4)
@@ -647,9 +637,6 @@ void old_discovery(void) {
       if (ifa->ifa_addr) {
         if (
                 ifa->ifa_addr->sa_family == AF_INET
-#ifdef __APPLE__
-                && (ifa->ifa_flags & IFF_LOOPBACK) != IFF_LOOPBACK
-#endif
                 && (ifa->ifa_flags & IFF_UP) == IFF_UP
                 && (ifa->ifa_flags & IFF_RUNNING) == IFF_RUNNING
 #ifndef __APPLE__
