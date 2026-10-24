@@ -346,8 +346,12 @@ static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
   // we just "scanf" from the combobox text entry
   //
   if (p == NULL || sscanf(p, "%d", &samplerate) != 1) { return; }
-  rx_change_sample_rate(rx, samplerate);
-  rx_menu_sync_shared_sample_rate(rx, samplerate);
+  if (protocol == ORIGINAL_PROTOCOL && n_adc <= 1) {
+    radio_change_sample_rate(samplerate);
+  } else {
+    rx_change_sample_rate(rx, samplerate);
+    rx_menu_sync_shared_sample_rate(rx, samplerate);
+  }
 }
 
 static void adc_cb(GtkToggleButton *widget, gpointer data) {
