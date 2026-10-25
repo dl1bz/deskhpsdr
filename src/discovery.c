@@ -722,7 +722,7 @@ discovery_done:
   tcpaddr = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(tcpaddr), IPADDR_LEN);
   gtk_widget_set_tooltip_text(tcpaddr, "Input IP Address or Hostname\n"
-                                       "(Hostname will be resolved via DNS)");
+                              "(Hostname will be resolved via DNS)");
   gtk_grid_attach(GTK_GRID(grid), tcpaddr, 2, row, 1, 1);
   gtk_entry_set_text(GTK_ENTRY(tcpaddr), ipaddr_radio);
   g_signal_connect(tcpaddr, "changed", G_CALLBACK(radio_ip_cb), NULL);
@@ -743,7 +743,7 @@ discovery_done:
   snprintf(port_str, sizeof(port_str), "%d", radio_port);
   gtk_entry_set_text(GTK_ENTRY(tcpport), port_str);
   gtk_widget_set_tooltip_text(tcpport, "Input Portnumber\n"
-                                       "(default Port 1024)");
+                              "(default Port 1024)");
   gtk_grid_attach(GTK_GRID(grid), tcpport, 2, row, 1, 1);
   g_signal_connect(tcpport, "changed", G_CALLBACK(radio_port_cb), NULL);
   if (have_angelia_p2) {

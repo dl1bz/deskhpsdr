@@ -400,7 +400,7 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_set_name(zoom_btn, "medium_toggle_button");
   // gtk_widget_set_name(zoom_btn, "front_toggle_button");
   gtk_widget_set_tooltip_text(zoom_btn, "Enabled:  Save the current zoom level for next app start\n"
-                                        "Disabled: Start the app always with zoom level = 1");
+                              "Disabled: Start the app always with zoom level = 1");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_btn), save_zoom_state);
   // begin label definition inside button
   zoom_label = gtk_bin_get_child(GTK_BIN(zoom_btn));
@@ -489,9 +489,9 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   WEAKEN(wf3d_btn);
   gtk_widget_set_name(wf3d_btn, "medium_toggle_button");
   gtk_widget_set_tooltip_text(wf3d_btn, "Toggle 2D ↔ 3D Waterfall History\n\n"
-                                        "3D Waterfall History increases CPU usage by approximately 10%.\n"
-                                        "If your system does not provide sufficient performance,\n"
-                                        "you will have to DISABLE this feature!");
+                              "3D Waterfall History increases CPU usage by approximately 10%.\n"
+                              "If your system does not provide sufficient performance,\n"
+                              "you will have to DISABLE this feature!");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wf3d_btn), wf3d_active);
   wf3d_label = gtk_bin_get_child(GTK_BIN(wf3d_btn));
   gtk_label_set_justify(GTK_LABEL(wf3d_label), GTK_JUSTIFY_CENTER);

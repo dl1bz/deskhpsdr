@@ -1032,7 +1032,7 @@ void radio_menu(GtkWidget *parent) {
     col = 0;
     ChkBtn_txinhibit = gtk_check_button_new_with_label("Enable external\nTxInhibit Input");
     gtk_widget_set_tooltip_text(ChkBtn_txinhibit, "Default setting: OFF\n"
-                                                  "(look into SDR device manual before using)");
+                                "(look into SDR device manual before using)");
     gtk_widget_set_no_show_all(ChkBtn_txinhibit, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(ChkBtn_txinhibit, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_txinhibit), enable_tx_inhibit);
@@ -1042,9 +1042,9 @@ void radio_menu(GtkWidget *parent) {
     col += 2;
     ChkBtn_autotune = gtk_check_button_new_with_label("Enable external\nAutoTune Input");
     gtk_widget_set_tooltip_text(ChkBtn_autotune, "Start TUNE while the external active-low AutoTune input is asserted.\n"
-                                                 "Protocol 1 uses IO3; Protocol 2 uses IO6.\n"
-                                                 "Default setting: OFF\n"
-                                                 "(look into SDR device manual before using)");
+                                "Protocol 1 uses IO3; Protocol 2 uses IO6.\n"
+                                "Default setting: OFF\n"
+                                "(look into SDR device manual before using)");
     gtk_widget_set_no_show_all(ChkBtn_autotune, hermes_mode == HERMES_MODE_BRICK);
     gtk_widget_set_name(ChkBtn_autotune, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_autotune), enable_auto_tune);
@@ -1064,7 +1064,7 @@ void radio_menu(GtkWidget *parent) {
     ChkBtn = gtk_check_button_new_with_label("Disable Split\non Band Change");
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_widget_set_tooltip_text(ChkBtn, "Disable split automatically when the active receiver changes bands.\n"
-                                        "Default setting: OFF");
+                                "Default setting: OFF");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), disable_split_on_band_change);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &disable_split_on_band_change);

@@ -1122,8 +1122,8 @@ void display_menu(GtkWidget *parent) {
   col = 0;
   GtkWidget *ChkBtn_peakTX_label = gtk_label_new("Enable PEAKS & HOLD for TX");
   gtk_widget_set_tooltip_text(ChkBtn_peakTX_label, "Enable Peaks & Hold function for TX panadapter\n\n"
-                                                   "Usable only as Peaks Decay, Peaks Hold not available with TX.\n"
-                                                   "NOT usable if Duplex TX mode active !");
+                              "Usable only as Peaks Decay, Peaks Hold not available with TX.\n"
+                              "NOT usable if Duplex TX mode active !");
   gtk_widget_set_name(ChkBtn_peakTX_label, "boldlabel");
   gtk_widget_set_halign(ChkBtn_peakTX_label, GTK_ALIGN_END);
   gtk_widget_set_margin_end(ChkBtn_peakTX_label, 5);
@@ -1131,8 +1131,8 @@ void display_menu(GtkWidget *parent) {
   col += 2;
   GtkWidget *ChkBtn_peakTX = gtk_check_button_new();
   gtk_widget_set_tooltip_text(ChkBtn_peakTX, "Enable Peaks & Hold function for TX panadapter\n\n"
-                                             "Usable only as Peaks Decay, Peaks Hold not available with TX.\n"
-                                             "NOT usable if Duplex TX mode active !");
+                              "Usable only as Peaks Decay, Peaks Hold not available with TX.\n"
+                              "NOT usable if Duplex TX mode active !");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_peakTX), pan_peak_hold_TX_enabled);
   g_signal_connect(ChkBtn_peakTX, "toggled", G_CALLBACK(chkbtn_peakTX_cb), &pan_peak_hold_TX_enabled);
   gtk_grid_attach(GTK_GRID(peak_hold_grid), ChkBtn_peakTX, col, row, 2, 1);

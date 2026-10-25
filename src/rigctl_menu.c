@@ -702,7 +702,7 @@ void rigctl_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 1, 1);
   tci_port_select = gtk_spin_button_new_with_range(1025, 65535, 1);
   gtk_widget_set_tooltip_text(tci_port_select, "Select TCI port\n"
-                                               "(only accessible if TCI is OFF)");
+                              "(only accessible if TCI is OFF)");
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(tci_port_select), (double) tci_port);
   gtk_grid_attach(GTK_GRID(grid), tci_port_select, 1, row, 1, 1);
   g_signal_connect(tci_port_select, "value_changed", G_CALLBACK(tci_port_changed_cb), NULL);
@@ -714,8 +714,8 @@ void rigctl_menu(GtkWidget *parent) {
   w = gtk_check_button_new_with_label("Enable");
   gtk_widget_set_name(w, "boldlabel");
   gtk_widget_set_tooltip_text(w, "Enable / Disable TCI\n"
-                                 "For change the TCI server port TCI\n"
-                                 "need to be switched OFF");
+                              "For change the TCI server port TCI\n"
+                              "need to be switched OFF");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), tci_enable);
   gtk_widget_show(w);
   gtk_grid_attach(GTK_GRID(grid), w, 2, row, 1, 1);

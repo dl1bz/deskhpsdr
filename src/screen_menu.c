@@ -591,8 +591,8 @@ void screen_menu(GtkWidget *parent) {
     gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(bg_col_btn), &bg_col_init);
     g_signal_connect(bg_col_btn, "color-set", G_CALLBACK(bg_colour_set), &radio_bgcolor);
     gtk_widget_set_tooltip_text(bg_col_btn, "Default theme only:\n"
-                                            "Set background color of Slider front surface\n\n"
-                                            "Default color is RGB #E6E6FA");
+                                "Set background color of Slider front surface\n\n"
+                                "Default color is RGB #E6E6FA");
     gtk_widget_set_margin_top(bg_col_btn, 5);
     gtk_widget_set_margin_bottom(bg_col_btn, 5);
     gtk_box_pack_start(GTK_BOX(Z3_box), bg_col_btn, FALSE, FALSE, 0);
@@ -611,8 +611,8 @@ void screen_menu(GtkWidget *parent) {
     gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(win_bg_col_btn), &win_bg_col_init);
     g_signal_connect(win_bg_col_btn, "color-set", G_CALLBACK(win_bg_colour_set), &mwin_bgcolor);
     gtk_widget_set_tooltip_text(win_bg_col_btn, "Default theme only:\n"
-                                                "Set background color of Menu surface\n\n"
-                                                "Default color is RGB #F6F6F6");
+                                "Set background color of Menu surface\n\n"
+                                "Default color is RGB #F6F6F6");
     gtk_widget_set_margin_top(win_bg_col_btn, 5);
     gtk_widget_set_margin_bottom(win_bg_col_btn, 5);
     gtk_box_pack_start(GTK_BOX(Z3_box), win_bg_col_btn, FALSE, FALSE, 0);
@@ -671,7 +671,7 @@ void screen_menu(GtkWidget *parent) {
   GtkWidget *b_save_zoom_state = gtk_check_button_new_with_label("Save Zoom Level");
   gtk_widget_set_name(b_save_zoom_state, "boldlabel_blue");
   gtk_widget_set_tooltip_text(b_save_zoom_state, "Enabled:  Save the current zoom level for next app start\n"
-                                                 "Disabled: Start the app always with zoom level = 1");
+                              "Disabled: Start the app always with zoom level = 1");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_save_zoom_state), save_zoom_state);
   gtk_widget_show(b_save_zoom_state);
   gtk_grid_attach(GTK_GRID(grid), b_save_zoom_state, 0, row, 1, 1);
@@ -693,9 +693,9 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_margin_top(fft_window_combo, 5);
   gtk_widget_set_margin_bottom(fft_window_combo, 5);
   gtk_widget_set_tooltip_text(fft_window_combo, "[RX] FFT Window Type\n"
-                                                "Selects the FFT window used for spectrum processing.\n"
-                                                "Different windows trade off frequency resolution,\n"
-                                                "side-lobe suppression and amplitude accuracy.");
+                              "Selects the FFT window used for spectrum processing.\n"
+                              "Different windows trade off frequency resolution,\n"
+                              "side-lobe suppression and amplitude accuracy.");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Rectangular");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "4-term Blackman-Harris");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_window_combo), NULL, "Hann");
@@ -714,8 +714,8 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_margin_top(fft_size_combo, 5);
   gtk_widget_set_margin_bottom(fft_size_combo, 5);
   gtk_widget_set_tooltip_text(fft_size_combo, "Selects the FFT size used for the RX panadapter.\n"
-                                              "Larger FFT sizes improve frequency resolution but reduce display speed.\n"
-                                              "\nSimilar to Thetis Bin Width/Hz: rx->sample_rate / fft_size");
+                              "Larger FFT sizes improve frequency resolution but reduce display speed.\n"
+                              "\nSimilar to Thetis Bin Width/Hz: rx->sample_rate / fft_size");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(fft_size_combo), NULL, "Auto (default)");
   int fft_base = 16384;
   double combobox_sr = 0.0;
@@ -808,11 +808,11 @@ void screen_menu(GtkWidget *parent) {
     b_use_levels_popup = gtk_check_button_new_with_label("Use Popup");
     gtk_widget_set_name(b_use_levels_popup, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_use_levels_popup, "If ENABLED,\n"
-                                                    "show the TX Audio AF levels as Popup instead\n"
-                                                    "of a separate, detached window.\n\n"
-                                                    "REQUIRED if X11 backend running with Wayland !\n\n"
-                                                    "Note: If Wayland is used, this option\n"
-                                                    "cannot be modified and appears unresponsive.");
+                                "show the TX Audio AF levels as Popup instead\n"
+                                "of a separate, detached window.\n\n"
+                                "REQUIRED if X11 backend running with Wayland !\n\n"
+                                "Note: If Wayland is used, this option\n"
+                                "cannot be modified and appears unresponsive.");
     if (use_wayland) {
       transmitter->use_levels_popup = 1;
     }
@@ -832,10 +832,10 @@ void screen_menu(GtkWidget *parent) {
       b_inner_levels_popup = gtk_check_button_new_with_label("Show Popup inside");
       gtk_widget_set_name(b_inner_levels_popup, "boldlabel_blue");
       gtk_widget_set_tooltip_text(b_inner_levels_popup, "Show TX Audio Levels Popup:\n"
-                                                        "ENABLED: inside deskHPSDR main window [right in the middle]\n"
-                                                        "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
-                                                        "If Fullscreen selected, TX Audio Levels Popup is ever\n"
-                                                        "inside deskHPSDR main window [right in the middle]");
+                                  "ENABLED: inside deskHPSDR main window [right in the middle]\n"
+                                  "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
+                                  "If Fullscreen selected, TX Audio Levels Popup is ever\n"
+                                  "inside deskHPSDR main window [right in the middle]");
       if (full_screen) {
         transmitter->inner_levels_popup = 1;
       }

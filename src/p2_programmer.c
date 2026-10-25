@@ -106,7 +106,7 @@ static void p2_error_dialog(GtkWindow *parent, const char *message) {
 static void p2_success_and_exit(P2Programmer *ui, const char *message) {
   char text[512];
   snprintf(text, sizeof(text), "%s\n\nPower-cycle the SDR device before continuing.\n"
-                               "deskHPSDR will now exit.", message);
+           "deskHPSDR will now exit.", message);
   GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(ui->dialog),
     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
     GTK_MESSAGE_INFO,

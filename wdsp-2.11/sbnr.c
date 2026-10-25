@@ -91,7 +91,7 @@ void setSamplerate_sbnr(SBNR a, int rate) {
 void xsbnr(SBNR a, int pos) {
   if (a->run && pos == a->position) {
     SpectralBleachAdaptiveParameters parameters =
-    (SpectralBleachAdaptiveParameters) {
+            (SpectralBleachAdaptiveParameters) {
       .residual_listen = false,
       .reduction_amount = a->reduction_amount,
       .smoothing_factor = a->smoothing_factor,

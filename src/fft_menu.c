@@ -584,9 +584,9 @@ void fft_menu(GtkWidget *parent) {
     //
     w = gtk_combo_box_text_new();
     gtk_widget_set_tooltip_text(w, "TX Low Latency sets CESSB option to *DISABLED*\n\n"
-                                   "These two functions cannot be used simultaneously.\n"
-                                   "Setting to Linear Phase is REQUIRED when using CESSB.\n\n"
-                                   "Note: RX is not affected. Selection is unrestricted.");
+                                "These two functions cannot be used simultaneously.\n"
+                                "Setting to Linear Phase is REQUIRED when using CESSB.\n\n"
+                                "Note: RX is not affected. Selection is unrestricted.");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Linear Phase");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, "Low Latency");
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), ftype);
@@ -598,8 +598,8 @@ void fft_menu(GtkWidget *parent) {
     //
     w = gtk_combo_box_text_new();
     gtk_widget_set_tooltip_text(w, "Sets the number of coefficients (NC) used by the WDSP FIR filters.\n\n"
-                                   "Higher values provide steeper filter skirts at the cost of increased CPU load.\n\n"
-                                   "Default setting: 2048 (change only for a specific reason)");
+                                "Higher values provide steeper filter skirts at the cost of increased CPU load.\n\n"
+                                "Default setting: 2048 (change only for a specific reason)");
     s = 512;
     j = 0;
     for (;;) {
@@ -617,8 +617,8 @@ void fft_menu(GtkWidget *parent) {
     if (i < receivers) {
       w = gtk_check_button_new();
       gtk_widget_set_tooltip_text(w, "Outputs I and Q on the Left and Right audio channels.\n\n"
-                                     "If Audio Output Device is Mono or NNR is active,\n"
-                                     "Binaural option is not available or switched off");
+                                  "If Audio Output Device is Mono or NNR is active,\n"
+                                  "Binaural option is not available or switched off");
       if (receiver[i]->local_audio_channels == 1) {
         receiver[i]->binaural = 0;
       }

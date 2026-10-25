@@ -1369,7 +1369,7 @@ void tx_menu(GtkWidget *parent) {
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "WDSP TX Audio Tools");
   gtk_widget_set_name(btn, "smalllabel_blue_bold");
   gtk_widget_set_tooltip_text(btn, "Adjust Leveler, Phase Rotator, Speech Processor & DEXP\n"
-                                   "Enable/Disable CESSB function");
+                              "Enable/Disable CESSB function");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == PROAUDIO_CONTAINER));
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(PROAUDIO_CONTAINER));
@@ -1476,7 +1476,7 @@ void tx_menu(GtkWidget *parent) {
     col = 0;
     loc_mic_btn = gtk_check_button_new_with_label("Use computer\naudio input");
     gtk_widget_set_tooltip_text(loc_mic_btn, "Enable computer audio as mic input\n"
-                                             "(if your SDR-TRX hasn't an own mic input)");
+                                "(if your SDR-TRX hasn't an own mic input)");
     gtk_widget_set_halign(loc_mic_btn, GTK_ALIGN_CENTER);
     gtk_widget_set_name(loc_mic_btn, "smallabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(loc_mic_btn), transmitter->local_microphone);
@@ -1484,7 +1484,7 @@ void tx_menu(GtkWidget *parent) {
     loc_mic_btn_signal_id = g_signal_connect(loc_mic_btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_LOCAL_MIC));
     input = gtk_combo_box_text_new();
     gtk_widget_set_tooltip_text(input, "Select one of your local audio devices as mic input,\n"
-                                       "which is connected to your computer.");
+                                "which is connected to your computer.");
     for (int i = 0; i < n_input_devices; i++) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(input), NULL, input_devices[i].description);
       if (strcmp(transmitter->microphone_name, input_devices[i].name) == 0) {
@@ -1816,8 +1816,8 @@ void tx_menu(GtkWidget *parent) {
   row++;
   btn = gtk_check_button_new_with_label("Speech Proc");
   gtk_widget_set_tooltip_text(btn, "Speech Processor:\n"
-                                   "Type: Baseband Compressor — Optimize your voice transmission\n"
-                                   "Requires ENABLE(>1) when using the CESSB function");
+                              "Type: Baseband Compressor — Optimize your voice transmission\n"
+                              "Requires ENABLE(>1) when using the CESSB function");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->compressor);
@@ -1829,8 +1829,8 @@ void tx_menu(GtkWidget *parent) {
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_COMP));
   btn = gtk_check_button_new_with_label("Auto CESSB");
   gtk_widget_set_tooltip_text(btn, "Controlled-Envelope SSB\nWorks only if:\n"
-                                   "- Speech Processor is ENABLED\n"
-                                   "- TX-DSP is NOT set to Low Latency");
+                              "- Speech Processor is ENABLED\n"
+                              "- TX-DSP is NOT set to Low Latency");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->cessb_enable);
@@ -1839,7 +1839,7 @@ void tx_menu(GtkWidget *parent) {
   row++;
   btn = gtk_check_button_new_with_label("WDSP TX EQ Ctfmode");
   gtk_widget_set_tooltip_text(btn, "The cutoff-mode used in the generation\nof the EQ filter can be selected.\n\n"
-                                   "If ON:\nNo roll-off outside the specified passband (default is OFF).");
+                              "If ON:\nNo roll-off outside the specified passband (default is OFF).");
   gtk_widget_set_name(btn, "boldlabel_blue");
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), transmitter->eq_ctfmode);

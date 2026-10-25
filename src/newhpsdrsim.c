@@ -159,7 +159,7 @@ static pthread_t audio_thread_id;
 static pthread_t highprio_thread_id = 0;
 static pthread_t send_highprio_thread_id;
 
-static atomic_uint atomic_store_explicit(&watchdog_count, 0, memory_order_relaxed);
+static atomic_uint watchdog_count = 0;
 static atomic_int highprio_active = 0;
 
 void   *ddc_specific_thread(void *);
@@ -638,6 +638,13 @@ void *highprio_thread(void *data) {
   uint32_t u32;
   int i;
   int alex0_mod, alex1_mod, hp_mod;
+  int ddc_started = 0;
+  int duc_started = 0;
+  int rx_started[NUMRECEIVERS] = {0};
+  int tx_started = 0;
+  int send_hp_started = 0;
+  int mic_started = 0;
+  int audio_started = 0;
   sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (sock < 0) {
     t_perror("***** ERROR: HP: socket");
@@ -1220,13 +1227,6 @@ void *tx_thread(void *data) {
   int yes = 1;
   int rc;
   int i;
-  int ddc_started = 0;
-  int duc_started = 0;
-  int rx_started[NUMRECEIVERS] = {0};
-  int tx_started = 0;
-  int send_hp_started = 0;
-  int mic_started = 0;
-  int audio_started = 0;
   unsigned char *p;
   int samp1, samp2;
   double di, dq;

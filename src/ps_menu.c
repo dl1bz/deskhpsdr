@@ -1020,8 +1020,8 @@ void ps_menu(GtkWidget *parent) {
   GtkWidget *feedback_b = gtk_toggle_button_new_with_label("MON");
   gtk_widget_set_name(feedback_b, "small_toggle_button");
   gtk_widget_set_tooltip_text(feedback_b, "Show the received PureSignal feedback signal on the TX panadapter\n"
-                                          "instead of the transmitted signal.\n"
-                                          "This only changes the display and does not affect correction.");
+                              "instead of the transmitted signal.\n"
+                              "This only changes the display and does not affect correction.");
   gtk_widget_show(feedback_b);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(feedback_b), transmitter->feedback);
   gtk_grid_attach(GTK_GRID(grid), feedback_b, col, row, 1, 1);
@@ -1045,8 +1045,8 @@ void ps_menu(GtkWidget *parent) {
   col++;
   GtkWidget *ps_ant_combo = gtk_combo_box_text_new();
   gtk_widget_set_tooltip_text(ps_ant_combo, "Select Ant input for feedback PS-RX.\n"
-                                            "Available ant paths depend on the radio and filter board,\n"
-                                            "choose the path that matches the actual feedback RX wiring.");
+                              "Available ant paths depend on the radio and filter board,\n"
+                              "choose the path that matches the actual feedback RX wiring.");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "Internal");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "Ext1");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(ps_ant_combo), NULL, "ByPass");

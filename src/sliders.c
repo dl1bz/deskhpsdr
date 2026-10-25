@@ -1963,7 +1963,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_style_context_remove_class(agc_context, "active");
   }
   gtk_widget_set_tooltip_text(agc_btn, "Set AGC speed:\n"
-                                       "OFF → LONG → SLOW → MIDDLE → FAST");
+                              "OFF → LONG → SLOW → MIDDLE → FAST");
   // begin label definition inside button
   agc_label = gtk_bin_get_child(GTK_BIN(agc_btn));
   gtk_label_set_justify(GTK_LABEL(agc_label), GTK_JUSTIFY_CENTER);
@@ -2197,9 +2197,9 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_widget_set_hexpand(rf_gain_scale, FALSE);  // fülle Box nicht nach rechts
     if (strcmp(radio->name, "sdrplay") == 0) {
       gtk_widget_set_tooltip_text(rf_gain_scale, "[RFGR] Set RF Gain Reduction:\n\n"
-                                                 "0 = no RF Gain Reduction\n"
-                                                 "higher Value = increase RF Gain Reduction\n"
-                                                 "(Range of RF Gain Reduction is device-dependent)");
+                                  "0 = no RF Gain Reduction\n"
+                                  "higher Value = increase RF Gain Reduction\n"
+                                  "(Range of RF Gain Reduction is device-dependent)");
     }
     // Widgets in Box packen
     gtk_box_pack_start(GTK_BOX(box_Z1_right), rf_gain_scale, TRUE, TRUE, 0);
@@ -2214,8 +2214,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
-                                        "Right click: Open NR Menu");
+                                "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
+                                "Right click: Open NR Menu");
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
     gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);
@@ -2239,12 +2239,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       // gtk_widget_set_name(snb_btn, "front_toggle_button");
       gtk_widget_set_name(ps_btn, "medium_toggle_button");
       gtk_widget_set_tooltip_text(ps_btn, "Pure Signal ON / OFF\n"
-                                          "(aka Digital Predistortion [DPD] for RF)\n"
-                                          "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
-                                          "Please check first PS Menu for correct settings.\n"
-                                          "When using an external PA, an RF sampler is required\n"
-                                          "to provide RF signal feedback to the SDR.\n\n"
-                                          "Right click: open PS Menu");
+                                  "(aka Digital Predistortion [DPD] for RF)\n"
+                                  "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
+                                  "Please check first PS Menu for correct settings.\n"
+                                  "When using an external PA, an RF sampler is required\n"
+                                  "to provide RF signal feedback to the SDR.\n\n"
+                                  "Right click: open PS Menu");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ps_btn), transmitter->puresignal);
       // begin label definition inside button
       ps_label = gtk_bin_get_child(GTK_BIN(ps_btn));
@@ -2344,8 +2344,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     }
     gtk_widget_set_name(nr_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(nr_btn, "Set Noise Reduction type:\n"
-                                        "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
-                                        "Right click: Open NR Menu");
+                                "OFF → NR → NR2 → NR3 → NR4 → NNR\n\n"
+                                "Right click: Open NR Menu");
     // begin label definition inside button
     nr_label = gtk_bin_get_child(GTK_BIN(nr_btn));
     gtk_label_set_justify(GTK_LABEL(nr_label), GTK_JUSTIFY_CENTER);
@@ -2369,12 +2369,12 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       // gtk_widget_set_name(snb_btn, "front_toggle_button");
       gtk_widget_set_name(ps_btn, "medium_toggle_button");
       gtk_widget_set_tooltip_text(ps_btn, "Pure Signal ON / OFF\n"
-                                          "(aka Digital Predistortion [DPD] for RF)\n"
-                                          "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
-                                          "Please check first PS Menu for correct settings.\n"
-                                          "When using an external PA, an RF sampler is required\n"
-                                          "to provide RF signal feedback to the SDR.\n\n"
-                                          "Right click: open PS Menu");
+                                  "(aka Digital Predistortion [DPD] for RF)\n"
+                                  "When enabled, enhances IP3 performance up to -60 dBc.\n\n"
+                                  "Please check first PS Menu for correct settings.\n"
+                                  "When using an external PA, an RF sampler is required\n"
+                                  "to provide RF signal feedback to the SDR.\n\n"
+                                  "Right click: open PS Menu");
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ps_btn), transmitter->puresignal);
       // begin label definition inside button
       ps_label = gtk_bin_get_child(GTK_BIN(ps_btn));
@@ -2508,7 +2508,7 @@ GtkWidget *sliders_init(int my_width, int my_height) {
       WEAKEN(vox_menu_btn);
       gtk_widget_set_name(vox_menu_btn, "medium_toggle_button");
       gtk_widget_set_tooltip_text(vox_menu_btn, "Left click  : VOX menu\n"
-                                                "Right click : VOX ON/OFF");
+                                  "Right click : VOX ON/OFF");
       vox_menu_label = gtk_bin_get_child(GTK_BIN(vox_menu_btn));
       gtk_label_set_justify(GTK_LABEL(vox_menu_label), GTK_JUSTIFY_CENTER);
       gtk_widget_set_margin_start(vox_menu_label, 3);
@@ -2643,10 +2643,10 @@ GtkWidget *sliders_init(int my_width, int my_height) {
         gtk_box_pack_start(GTK_BOX(box_Z2_middle), drive_scale, TRUE, TRUE, 0);
       }
       gtk_widget_set_tooltip_text(drive_scale, "TX Power: 0–100% transmitter drive. Actual RF output power is\n"
-                                               "non-linear with this setting and depends on the radio, band,\n"
-                                               "and your PA calibration in PA Menu.\n"
-                                               "-> Refer to the power meter for your actual RF output power.\n\n"
-                                               "100% ≙ your max. calibrated PA output in PA Menu.");
+                                  "non-linear with this setting and depends on the radio, band,\n"
+                                  "and your PA calibration in PA Menu.\n"
+                                  "-> Refer to the power meter for your actual RF output power.\n\n"
+                                  "100% ≙ your max. calibrated PA output in PA Menu.");
     }
     if (device == DEVICE_HERMES_LITE2 && pa_enabled && !have_radioberry1 && !have_radioberry2 && !have_radioberry3) {
       if (touch_ui) {
@@ -2829,8 +2829,8 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   gtk_widget_set_name(binaural_btn, "medium_toggle_button");
   // gtk_widget_set_name(binaural_btn, "front_toggle_button");
   gtk_widget_set_tooltip_text(binaural_btn, "Outputs I and Q on the Left and Right audio channels.\n\n"
-                                            "If Audio Output Device is Mono or NNR is active,\n"
-                                            "Binaural option is not available or switched off");
+                              "If Audio Output Device is Mono or NNR is active,\n"
+                              "Binaural option is not available or switched off");
   if (active_receiver->local_audio_channels == 1) {
     active_receiver->binaural = 0;
   }
@@ -2919,11 +2919,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(tune_drive_scale), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tune_drive_scale), transmitter->tune_drive);
     gtk_widget_set_tooltip_text(tune_drive_scale, "Set TUNE drive:\n"
-                                                  "Set the TUNE transmitter drive as a percentage of maximum\n"
-                                                  "RF output power.\n"
-                                                  "Like TXPWR, actual RF output power in TUNE state\n"
-                                                  "is non-linear with this setting.\n\n"
-                                                  "-> Refer to the power meter for your actual RF output power.");
+                                "Set the TUNE transmitter drive as a percentage of maximum\n"
+                                "RF output power.\n"
+                                "Like TXPWR, actual RF output power in TUNE state\n"
+                                "is non-linear with this setting.\n\n"
+                                "-> Refer to the power meter for your actual RF output power.");
     gtk_widget_set_margin_top(tune_drive_scale, spin_abstand);
     gtk_widget_set_margin_bottom(tune_drive_scale, spin_abstand);
     gtk_widget_set_margin_start(tune_drive_scale, 3);
@@ -2938,11 +2938,11 @@ GtkWidget *sliders_init(int my_width, int my_height) {
     WEAKEN(split_btn);
     gtk_widget_set_name(split_btn, "medium_toggle_button");
     gtk_widget_set_tooltip_text(split_btn, "Enable split mode:\n\n"
-                                           "In split mode with a single receiver:\n"
-                                           "RX is on VFO A and TX is on VFO B.\n\n"
-                                           "In split mode with two receivers:\n"
-                                           "RX1 is for RX and RX2 is for TX.\n\n"
-                                           "Note: When split mode is activated, VFO B is set to VFO A once.");
+                                "In split mode with a single receiver:\n"
+                                "RX is on VFO A and TX is on VFO B.\n\n"
+                                "In split mode with two receivers:\n"
+                                "RX1 is for RX and RX2 is for TX.\n\n"
+                                "Note: When split mode is activated, VFO B is set to VFO A once.");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(split_btn), split);
     // begin label definition inside button
     split_label = gtk_bin_get_child(GTK_BIN(split_btn));

@@ -2759,21 +2759,21 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       //NOTE      x=0: AGC OFF, x=1: LONG, x=2: SLOW, x=3: MEDIUM, x=4: FAST
       //ENDDEF
       RXCHECK(1,
-      if (command[4] == ';') {
-      snprintf(reply, 256, "ZZGU%d;", receiver[1]->agc);
+              if (command[4] == ';') {
+        snprintf(reply, 256, "ZZGU%d;", receiver[1]->agc);
         send_resp(client, reply) ;
       } else if (command[5] == ';') {
-      int agc = atoi(&command[4]);
-        // update RX2 AGC
-        RXCHECK(1,
-                receiver[1]->agc = agc;
-                rx_set_agc(receiver[1]);
-                tci_agc_mode_changed(1);
-                g_idle_add(ext_vfo_update, NULL);
+          int agc = atoi(&command[4]);
+          // update RX2 AGC
+          RXCHECK(1,
+                  receiver[1]->agc = agc;
+                  rx_set_agc(receiver[1]);
+                  tci_agc_mode_changed(1);
+                  g_idle_add(ext_vfo_update, NULL);
+                 )
+        }
                )
-      }
-             )
-      break;
+          break;
     default:
       implemented = FALSE;
       break;
@@ -2819,23 +2819,23 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       //NOTE      x = 0...100, mapped logarithmically to -40 ... 0 dB.
       //ENDDEF
       RXCHECK(1,
-      if (command[4] == ';') {
-      // send reply back
-      snprintf(reply, 256, "ZZLC%03d;", CLAMP((int)lround(100.0 * pow(10.0, 0.05 * receiver[1]->volume)), 0, 100));
+              if (command[4] == ';') {
+        // send reply back
+        snprintf(reply, 256, "ZZLC%03d;", CLAMP((int)lround(100.0 * pow(10.0, 0.05 * receiver[1]->volume)), 0, 100));
         send_resp(client, reply) ;
       } else {
-        int gain = atoi(&command[4]);
-        // gain is 0..100
-        if (gain < 2) {
-          receiver[1]->volume = -40.0;
-        } else {
-          receiver[1]->volume = 20.0 * log10(0.01 * (double) gain);
+          int gain = atoi(&command[4]);
+          // gain is 0..100
+          if (gain < 2) {
+            receiver[1]->volume = -40.0;
+          } else {
+            receiver[1]->volume = 20.0 * log10(0.01 * (double) gain);
+          }
+          set_af_gain(1, receiver[1]->volume);
+          tci_volume_changed(1);
         }
-        set_af_gain(1, receiver[1]->volume);
-        tci_volume_changed(1);
-      }
-             )
-      break;
+               )
+          break;
     case 'I': //ZZLI
       //CATDEF    ZZLI
       //DESCR     Set/Read PURESIGNAL status
@@ -2896,21 +2896,21 @@ gboolean parse_extended_cmd(const char *command, CLIENT *client) {
       //CONT      This only affects the audio sent to the radio via the HPSDR protocol.
       //ENDDEF
       RXCHECK(1,
-      if (command[4] == ';') {
-      snprintf(reply, 256, "ZZMB%d;", receiver[1]->mute_radio);
+              if (command[4] == ';') {
+        snprintf(reply, 256, "ZZMB%d;", receiver[1]->mute_radio);
         send_resp(client, reply) ;
       } else {
-        int mute = atoi(&command[4]);
-        receiver[1]->mute_radio = mute;
-        if (receiver[1] == active_receiver) {
-          tci_mute_changed(1);
-        } else {
-          tci_rx_mute_changed(1);
+          int mute = atoi(&command[4]);
+          receiver[1]->mute_radio = mute;
+          if (receiver[1] == active_receiver) {
+            tci_mute_changed(1);
+          } else {
+            tci_rx_mute_changed(1);
+          }
+          g_idle_add(ext_vfo_update, NULL);
         }
-        g_idle_add(ext_vfo_update, NULL);
-      }
-             )
-      break;
+               )
+          break;
     case 'D': //ZZMD
       //CATDEF    ZZMD
       //DESCR     Set/Read VFO-A modes
@@ -5806,12 +5806,12 @@ int parse_cmd(void *data) {
         int id = atoi(&command[2]);
         RXCHECK(id,
                 int val = (int)((receiver[id]->meter + 127.0) * 0.277778);
-        if (val > 30) { val = 30; }
-      if (val < 0) { val = 0; }
-      snprintf(reply, 256, "SM%d%04d;", id, val);
-      send_resp(client, reply);
-             )
-      }
+                if (val > 30) { val = 30; }
+                if (val < 0) { val = 0; }
+                  snprintf(reply, 256, "SM%d%04d;", id, val);
+                  send_resp(client, reply);
+                 )
+          }
       break;
     case 'Q': //SQ
       //CATDEF    SQ

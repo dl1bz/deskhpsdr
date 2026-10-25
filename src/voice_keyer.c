@@ -846,10 +846,10 @@ void voice_keyer_show(void) {
   gtk_box_pack_start(GTK_BOX(row_top), btn_stop, FALSE, FALSE, 0);
   GtkWidget *tx_audiochain_btn = gtk_check_button_new_with_label("XMIT through WDSP TX audiochain");
   gtk_widget_set_tooltip_text(tx_audiochain_btn, "If ENABLED, audio from file goes through the whole\n"
-                                                 "WDSP TX audio chain like TX-EQ, CFC, Limiter, Speech Processor\n"
-                                                 "except the Mic Gain ▶ always set to 0.0db if playback.\n\n"
-                                                 "If DISABLED, the WDSP TX audio chain is set to BYPASS\n"
-                                                 "and the audio file will be sent flat without any editing.");
+                              "WDSP TX audio chain like TX-EQ, CFC, Limiter, Speech Processor\n"
+                              "except the Mic Gain ▶ always set to 0.0db if playback.\n\n"
+                              "If DISABLED, the WDSP TX audio chain is set to BYPASS\n"
+                              "and the audio file will be sent flat without any editing.");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tx_audiochain_btn), use_tx_audiochain);
   g_signal_connect(tx_audiochain_btn, "toggled", G_CALLBACK(use_tx_audiochain_btn_cb), &use_tx_audiochain);
   gtk_box_pack_start(GTK_BOX(row_top), tx_audiochain_btn, FALSE, FALSE, 0);
@@ -858,9 +858,9 @@ void voice_keyer_show(void) {
     gtk_box_pack_start(GTK_BOX(vbox), row, FALSE, FALSE, 0);
     vk_btn_load[i] = gtk_button_new_with_label("Load WAV");
     gtk_widget_set_tooltip_text(vk_btn_load[i], "Load WAV file (required format 48kHz/mono/PCM16)\n\n"
-                                                "The max. playback length is ever equal with the\n"
-                                                "setting in Radio Menu <Audio Capture Time>, so first adjust\n"
-                                                "this value in Radio Menu. The upper limit is MAX 120s.");
+                                "The max. playback length is ever equal with the\n"
+                                "setting in Radio Menu <Audio Capture Time>, so first adjust\n"
+                                "this value in Radio Menu. The upper limit is MAX 120s.");
     gtk_box_pack_start(GTK_BOX(row), vk_btn_load[i], FALSE, FALSE, 0);
     vk_btn_play[i] = gtk_button_new_with_label("Play");
     gtk_widget_set_sensitive(vk_btn_play[i], vk_paths[i][0] != 0);

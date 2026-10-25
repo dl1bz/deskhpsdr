@@ -111,15 +111,15 @@ void about_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), hpsdr_logo_widget, 0, row, 1, 1);
   //---------------------------------------------------------------------------------------------------------------------
   snprintf(text, sizeof(text), "Ham Radio SDR Transceiver Frontend Application\n"
-                               "for SDR-TRX running OpenHPSDR protocol P1 or P2\n\n"
-                               "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n\n"
-                               "Build OS: %s %s @ %s\n"
-                               "Build compiler: %s\n"
-                               "Git source: %s\n"
-                               "Build date: %s (Branch: %s, Commit: %s)\n"
-                               "Build version: %s\n"
-                               "Build options: %s\n"
-                               "WDSP version: %d.%02d\n\n",
+           "for SDR-TRX running OpenHPSDR protocol P1 or P2\n\n"
+           "deskHPSDR is developed by Heiko Amft, DL1BZ (dl1bz@bzsax.de)\n\n"
+           "Build OS: %s %s @ %s\n"
+           "Build compiler: %s\n"
+           "Git source: %s\n"
+           "Build date: %s (Branch: %s, Commit: %s)\n"
+           "Build version: %s\n"
+           "Build options: %s\n"
+           "WDSP version: %d.%02d\n\n",
            unameData.sysname, unameData.release, unameData.machine, __VERSION__, build_remote, build_date, build_branch,
            build_commit,
            build_version,
@@ -143,8 +143,8 @@ void about_menu(GtkWidget *parent) {
                  radio->software_version / 10, radio->software_version % 10);
       } else {
         snprintf(line, sizeof(line), "SDR Device: %s, Protocol %s, Firmware v%d.%d\n"
-                                     "    MAC address SDR: %02X:%02X:%02X:%02X:%02X:%02X\n"
-                                     "    IP address SDR: %s [on %s w/ local IP %s]",
+                 "    MAC address SDR: %02X:%02X:%02X:%02X:%02X:%02X\n"
+                 "    IP address SDR: %s [on %s w/ local IP %s]",
                  radio->name, radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                  radio->software_version / 10, radio->software_version % 10,
                  radio->info.network.mac_address[0],
@@ -174,15 +174,15 @@ void about_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), about_sep, 0, row, 6, 1);
   row++;
   snprintf(text, sizeof(text), "Licensed under the GNU General Public License v3.0 (GPL-3.0-only)\n\n"
-                               "Credits:\n"
-                               "Warren, NR0V: WDSP signal processing library development\n"
-                               "John, G0ORX/N6LYT & Christoph, DL1YCF: pihpsdr\n"
-                               "Steve, KA6S & Jae, K5JAE: Initial CAT emulations in pihpsdr (except TCI)\n"
-                               "Richie, MW0LGE & Reid, MI0BOT: Thetis\n"
-                               "Steve, KF7O: Hermes Lite 2 project\n"
-                               "EU1SW & LinOObs: Development and support Brick SDR devices\n"
-                               "Francesco, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
-                               "OpenAI/ChatGPT: Code Optimizations & Bugfixing, TCI, WINDOWS porting");
+           "Credits:\n"
+           "Warren, NR0V: WDSP signal processing library development\n"
+           "John, G0ORX/N6LYT & Christoph, DL1YCF: pihpsdr\n"
+           "Steve, KA6S & Jae, K5JAE: Initial CAT emulations in pihpsdr (except TCI)\n"
+           "Richie, MW0LGE & Reid, MI0BOT: Thetis\n"
+           "Steve, KF7O: Hermes Lite 2 project\n"
+           "EU1SW & LinOObs: Development and support Brick SDR devices\n"
+           "Francesco, IZ7KHR: improved SDR device discovery using protocol P1 and P2\n"
+           "OpenAI/ChatGPT: Code Optimizations & Bugfixing, TCI, WINDOWS porting");
   GtkWidget *credits_label = gtk_label_new(text);
   gtk_widget_set_halign(credits_label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), credits_label, 1, row, 5, 1);
