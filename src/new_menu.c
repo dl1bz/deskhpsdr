@@ -57,6 +57,7 @@
 #include "vfo_menu.h"
 #include "fft_menu.h"
 #include "main.h"
+#include "message.h"
 #include "actions.h"
 #include "extras_menu.h"
 #include "ddc_menu.h"
@@ -78,6 +79,8 @@
 GtkWidget *main_menu = NULL;
 GtkWidget *sub_menu = NULL;
 static GtkWidget *restart_b = NULL;
+static GtkWidget *opened_submenu = NULL;
+static guint restore_main_menu_source = 0;
 
 int active_menu = NO_MENU;
 
@@ -88,7 +91,16 @@ int menu_active_receiver_changed(void *data) {
   return FALSE;
 }
 
+static void cancel_main_menu_restore(void) {
+  if (restore_main_menu_source != 0) {
+    g_source_remove(restore_main_menu_source);
+    restore_main_menu_source = 0;
+  }
+}
+
 static void cleanup(void) {
+  cancel_main_menu_restore();
+  opened_submenu = NULL;
   if (main_menu != NULL) {
     gtk_widget_destroy(main_menu);
     main_menu = NULL;
@@ -141,24 +153,33 @@ typedef enum {
 
 static gboolean restore_main_menu_idle(gpointer data) {
   (void)data;
-  if (main_menu != NULL) {
-    gtk_widget_show(main_menu);
-    gtk_window_present(GTK_WINDOW(main_menu));
+  restore_main_menu_source = 0;
+  if (main_menu == NULL && opened_submenu == NULL && sub_menu == NULL) {
+    new_menu();
   }
   return G_SOURCE_REMOVE;
 }
 
+static void schedule_main_menu_restore(void) {
+  cancel_main_menu_restore();
+  restore_main_menu_source = g_idle_add(restore_main_menu_idle, NULL);
+}
+
 static void return_to_main_menu_cb(GtkWidget *widget, gpointer data) {
-  (void)widget;
   (void)data;
-  g_idle_add(restore_main_menu_idle, NULL);
+  if (widget == opened_submenu) {
+    opened_submenu = NULL;
+    schedule_main_menu_restore();
+  }
 }
 
 static void open_submenu_from_main(MAIN_SUBMENU menu) {
-  if (main_menu == NULL) {
+  if (main_menu == NULL || opened_submenu != NULL) {
     return;
   }
-  gtk_widget_hide(main_menu);
+  cancel_main_menu_restore();
+  gtk_widget_destroy(main_menu);
+  /* destroy_cb() clears main_menu; the submenu now owns the transition. */
   switch (menu) {
 #ifdef SATURN
   case MAIN_SUBMENU_SATURN:
@@ -274,13 +295,12 @@ static void open_submenu_from_main(MAIN_SUBMENU menu) {
 #endif
   }
   if (sub_menu != NULL) {
-    if (g_signal_handler_find(sub_menu, G_SIGNAL_MATCH_FUNC,
-                              0, 0, NULL, G_CALLBACK(return_to_main_menu_cb), NULL) == 0) {
-      g_signal_connect_after(sub_menu, "destroy", G_CALLBACK(return_to_main_menu_cb), NULL);
-    }
-    gtk_window_present(GTK_WINDOW(sub_menu));
+    opened_submenu = sub_menu;
+    g_signal_connect_after(opened_submenu, "destroy",
+                           G_CALLBACK(return_to_main_menu_cb), NULL);
+    gtk_window_present(GTK_WINDOW(opened_submenu));
   } else {
-    g_idle_add(restore_main_menu_idle, NULL);
+    schedule_main_menu_restore();
   }
 }
 
@@ -722,9 +742,17 @@ static gboolean midi_cb(GtkWidget *widget, GdkEventButton *event, gpointer data)
 #endif
 
 void new_menu(void) {
+  cancel_main_menu_restore();
   int col, row, maxrow;
   int _mode = vfo_get_tx_mode();
   if (sub_menu != NULL) {
+    /* A directly opened submenu has no return callback yet.  Treat this
+       explicit main-menu request as a transition back to the main menu. */
+    if (opened_submenu == NULL) {
+      opened_submenu = sub_menu;
+      g_signal_connect_after(opened_submenu, "destroy",
+                             G_CALLBACK(return_to_main_menu_cb), NULL);
+    }
     gtk_window_close(GTK_WINDOW(sub_menu));
     return;
   }
