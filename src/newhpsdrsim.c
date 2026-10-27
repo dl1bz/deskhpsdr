@@ -397,6 +397,53 @@ void *ddc_specific_thread(void *data) {
     if (seqnum != 0 && seqnum != seqold + 1) {
       t_print("RXspec: SEQ ERROR, old=%lu new=%lu\n", seqold, seqnum);
     }
+    // Validate the complete Protocol 2 DDC configuration before changing state.
+    // A synchronized even/odd pair uses the odd DDC without its enable bit.
+    {
+      int enabled[NUMRECEIVERS];
+      int invalid = 0;
+      int adc_count = buffer[4];
+      if (adc_count < 1 || adc_count > 2) {
+        t_print("RXspec: rejected: invalid ADC count %d\n", adc_count);
+        continue;
+      }
+      for (i = 0; i < NUMRECEIVERS; i++) {
+        int direct = (buffer[7 + i / 8] >> (i % 8)) & 1;
+        int paired = (i & 1) && (buffer[1363 + i - 1] == (1 << i));
+        enabled[i] = direct || paired;
+      }
+      for (i = 0; i < NUMRECEIVERS; i++) {
+        int source = buffer[17 + 6 * i];
+        int rate = (buffer[18 + 6 * i] << 8) | buffer[19 + 6 * i];
+        int sample_size = buffer[22 + 6 * i];
+        if (source > 2 || (source == 1 && adc_count < 2)) {
+          t_print("RXspec: rejected: DDC%d invalid ADC source %d (ADCs=%d)\n",
+                  i, source, adc_count);
+          invalid = 1;
+          break;
+        }
+        if (enabled[i] && sample_size != 24) {
+          t_print("RXspec: rejected: DDC%d sample size %d (expected 24)\n",
+                  i, sample_size);
+          invalid = 1;
+          break;
+        }
+        if (enabled[i] && rate != 48 && rate != 96 && rate != 192 &&
+            rate != 384 && rate != 768 && rate != 1536) {
+          t_print("RXspec: rejected: DDC%d unsupported rate %d\n", i, rate);
+          invalid = 1;
+          break;
+        }
+        if (!(i & 1) && buffer[1363 + i] != 0 &&
+            buffer[1363 + i] != (1 << (i + 1))) {
+          t_print("RXspec: rejected: DDC%d invalid sync map %02x\n",
+                  i, buffer[1363 + i]);
+          invalid = 1;
+          break;
+        }
+      }
+      if (invalid) { continue; }
+    }
     if (n_adc != buffer[4]) {
       n_adc = buffer[4];
       t_print("RX: Number of ADCs: %d\n", n_adc);
