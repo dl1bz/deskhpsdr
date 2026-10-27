@@ -425,8 +425,8 @@ static void new_protocol_trace_diversity_receive_specific(int xmit) {
   static unsigned char last_dither = 0;
   static unsigned char last_random = 0;
   static unsigned char last_sync = 0;
-  static unsigned char last_ddc[10];
-  unsigned char current_ddc[10];
+  static unsigned char last_ddc[12];
+  unsigned char current_ddc[12];
   memcpy(current_ddc, &receive_specific_buffer[17], sizeof(current_ddc));
   int should_log = !last_valid ||
                    diversity_enabled != last_diversity ||
