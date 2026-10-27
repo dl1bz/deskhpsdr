@@ -448,7 +448,7 @@ static void new_protocol_trace_diversity_receive_specific(int xmit) {
             receive_specific_buffer[22],
             receive_specific_buffer[23],
             ((unsigned int) receive_specific_buffer[24] << 8) | receive_specific_buffer[25],
-            receive_specific_buffer[26]);
+            receive_specific_buffer[28]);
   }
   last_valid = 1;
   last_diversity = diversity_enabled;
@@ -2471,7 +2471,7 @@ static void new_protocol_receive_specific(void) {
     receive_specific_buffer[23] = n_adc;                         // TX-DAC (last ADC + 1) associated with DDC1
     receive_specific_buffer[24] = 0;                             // sample rate MSB
     receive_specific_buffer[25] = 192;                           // sample rate LSB
-    receive_specific_buffer[26] = 24;                            // bits per sample
+    receive_specific_buffer[28] = 24;                            // bits per sample
     receive_specific_buffer[1363] = 0x02;                        // sync DDC1 to DDC0
     receive_specific_buffer[7] |= 1;                             // enable  DDC0
   }
