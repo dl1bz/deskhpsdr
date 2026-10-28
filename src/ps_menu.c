@@ -509,6 +509,13 @@ static void setpk_cb(GtkWidget *widget, gpointer data) {
   gtk_entry_set_text(GTK_ENTRY(set_pk), text);
 }
 
+// Commit SetPk when leaving the entry, just as when pressing Enter.
+static gboolean setpk_focus_out_cb(GtkWidget *widget, GdkEventFocus *event, gpointer data) {
+  (void)event;
+  setpk_cb(widget, data);
+  return FALSE;
+}
+
 static void clear_fields(void) {
   //
   // This clears most of the text fields and puts
@@ -1183,6 +1190,7 @@ void ps_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), set_pk, col, row, 1, 1);
   gtk_entry_set_width_chars(GTK_ENTRY(set_pk), 10);
   g_signal_connect(set_pk, "activate", G_CALLBACK(setpk_cb), NULL);
+  g_signal_connect(set_pk, "focus-out-event", G_CALLBACK(setpk_focus_out_cb), NULL);
   //------------------------------------------------------------------------
   col++;
   lbl = gtk_label_new("TX ATT");
