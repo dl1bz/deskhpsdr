@@ -377,7 +377,7 @@ static gboolean ampview_update_cb(gpointer data) {
     int info[INFO_SIZE];
     tx_ps_getinfo(transmitter, info);
     ampview_feedback_level = info[4];
-    ampview_getpk = tx_ps_getpk(transmitter);
+    ampview_getpk = tx_ps_getmx(transmitter);
     ampview_correcting = info[14];
     ampview_feedback_valid = 1;
   } else {
