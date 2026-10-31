@@ -792,9 +792,9 @@ void screen_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), b_display_levels, 0, row, 1, 1);
     g_signal_connect(b_display_levels, "toggled", G_CALLBACK(display_levels_cb), NULL);
     //----------------------------------------------------------------------------------------
-    b_display_af_peak = gtk_check_button_new_with_label("Show as Peak");
+    b_display_af_peak = gtk_check_button_new_with_label("Show PEAK levels");
     gtk_widget_set_name(b_display_af_peak, "boldlabel_blue");
-    gtk_widget_set_tooltip_text(b_display_af_peak, "Show TX Audio AF levels as Peak (default is Average)");
+    gtk_widget_set_tooltip_text(b_display_af_peak, "Show TX Audio AF levels as PEAK (default is Average)");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_display_af_peak), transmitter->show_af_peak);
     gtk_widget_show(b_display_af_peak);
     gtk_grid_attach(GTK_GRID(grid), b_display_af_peak, 1, row, 1, 1);
@@ -805,10 +805,10 @@ void screen_menu(GtkWidget *parent) {
       gtk_widget_set_sensitive(b_display_af_peak, TRUE);
     }
     //----------------------------------------------------------------------------------------
-    b_use_levels_popup = gtk_check_button_new_with_label("Use Popup");
+    b_use_levels_popup = gtk_check_button_new_with_label("Use Popover");
     gtk_widget_set_name(b_use_levels_popup, "boldlabel_blue");
     gtk_widget_set_tooltip_text(b_use_levels_popup, "If ENABLED,\n"
-                                "show the TX Audio AF levels as Popup instead\n"
+                                "show the TX Audio AF levels as Popover instead\n"
                                 "of a separate, detached window.\n\n"
                                 "REQUIRED if X11 backend running with Wayland !\n\n"
                                 "Note: If Wayland is used, this option\n"
@@ -829,12 +829,12 @@ void screen_menu(GtkWidget *parent) {
 #ifdef __linux__
     //----------------------------------------------------------------------------------------
     if (use_wayland) {
-      b_inner_levels_popup = gtk_check_button_new_with_label("Show Popup inside");
+      b_inner_levels_popup = gtk_check_button_new_with_label("Show Popover inside");
       gtk_widget_set_name(b_inner_levels_popup, "boldlabel_blue");
-      gtk_widget_set_tooltip_text(b_inner_levels_popup, "Show TX Audio Levels Popup:\n"
+      gtk_widget_set_tooltip_text(b_inner_levels_popup, "Show TX Audio Levels Popover:\n"
                                   "ENABLED: inside deskHPSDR main window [right in the middle]\n"
                                   "DISABLED: outside deskHPSDR main window [right in the middle]\n\n"
-                                  "If Fullscreen selected, TX Audio Levels Popup is ever\n"
+                                  "If Fullscreen selected, TX Audio Levels Popover is ever\n"
                                   "inside deskHPSDR main window [right in the middle]");
       if (full_screen) {
         transmitter->inner_levels_popup = 1;
