@@ -91,12 +91,10 @@ Other useful app features (availability depend from used SDR device):
 
 The app focus is fonie/SSB & digimodes, less CW. deskHPSDR has more added options integraded from the WDSP library like pihpsdr, especially tools for the WDSP RX and TX audio chain, and they are all user-acessible and user-adjustable (pihpsdr has many things only "hardcoded" without user-access). deskHPSDR support **max. two RX and one TX**, although some SDR hardware supports more, like the Hermes Lite 2 with up to four RX slices.
 
-⚠️☝️ deskHPSDR **is not made** as a "measurement tool" or for other, very special purposes where SDR devices are used (e.g. SDR Lab, IF-tap, IF-/Panadapter-Mode). There are other, more specialized apps for such cases - use these for your special purposes. It's - not more, not less - a SDR transceiver GUI frontend for use in hamradio which will be actively and continuously developed. All things outside the hamradio universe are generally not supported by this app. The support for commercial SDR products is very limited, because I don't accept and reject any kind of NDA aka "Non-Disclosure Agreement" for development deskHPSDR and it's SDR device support.<br>
-deskHPSDR is fully Open Source, but a full non-commercial hobby software project by DL1BZ, which can be used completely free without any kind of payments, but with full respect of all copyrights around the app deskHPSDR.
+⚠️☝️ The support for commercial SDR products is very limited, because I don't accept and reject any kind of NDA aka "Non-Disclosure Agreement" for development deskHPSDR to support such SDR devices.<br>
 
-**deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR. deskHPSDR hasn't a special Client-Server-Mode like pihpsdr (make no sense, we HAVE network-connected SDR devices yet).
-
-My main focus of deskHPSDR development is macOS, which is my primary development environment for deskHPSDR. Normally all should be running with Linux too. The second focus is Fonie/SSB/Digimodes and less CW. This SDR software app is made for SDR transceiver used in Hamradio as daily-used app, but not for special operations with wide-range RX-only SDR devices. If you agree with me and my ideas, deskHPSDR can be very useful for you. If not, look around for other solutions.
+**deskHPSDR need a screen size 1280x600 at minimum or higher** for best GUI experiences, that's one of the difference against piHPSDR.<br>
+My main focus of deskHPSDR development is macOS, which is my primary development environment for deskHPSDR, but I support Linux and WINDOWS too. The second focus is Fonie/SSB/Digimodes and less CW.
 
 ## Requirements
 
@@ -122,13 +120,17 @@ Binaries are available for macOS and WINDOWS, but I will never publish any ready
 ## deskHPSDR follows a clear app concept
 
 deskHPSDR is under my active development.<br>
-⚠️☝️ I'm the solo maintainer of this project deskHPSDR, there is no developer team behind. This app is MY OWN interpretation how such an SDR TRX app should work. I alone make all the design decisions. During publishing this app as Open Source, I'm ready to share my own work and development with interested users or interested communities. However, this does not give rise to any demands or claims for anyone, but I'm open for useful user requests. That doesn't mean, that I accept every user request.
+⚠️☝️ I'm the solo maintainer of this project deskHPSDR, there is no developer team behind. This app is MY OWN interpretation how such an SDR TRX app should work. I alone make all the design decisions.<br>
+First I'm creating this app exclusively for my own purposes, not for a community. I am not interested in what other SDR apps might do better, nor do I care how many active users deskHPSDR has. Those who like it are free to use it.
+
+During publishing this app as Open Source, I'm ready to share my own work and development with interested users or interested communities. However, this does not give rise to any demands or claims for anyone, but I'm open for useful user requests. That doesn't mean, that I accept every user request.
 
 ## Management of user requests - read first before make a user request
 
 I only accept user requests, if they
 a) fit the concept and
-b) are useful to everyone.
+b) are useful to everyone
+c) running with all supported OS (macOS, Linux and WINDOWS).
 I decline requests for "only one user" functions and regarding the following questions:
 - provide ready-to-run binaries for Linux (regardless of the form) -> NO
 - supporting SDR devices, which don't work with OpenHPSDR protcols P1 or P2 -> NO
@@ -148,7 +150,6 @@ deskHPSDR is primarily developed for and under macOS. Made as an cross-platform 
 ### Version 2.6.x (previous version, EOL May 2026)
 
 On March 4, 2025 the **first final version 2.6 of deskHPSDR** was published.<br>
-With publishing first new main version 2.7 in May 2026 all support for versions < 2.7.x were closed inclusive older versions with SoapySDR and GPIO support.
 
 ### Version 2.7.x (previous version, EOL mid of September 2026)
 
@@ -164,8 +165,6 @@ Most of the new functions need to be activated in the ``make.config.deskhpsdr`` 
 
 - the **Issues tab is only for reporting issues, bugs or malfunctions of this app** !
 - for all other things please use necessarily the [discussions tab](https://github.com/dl1bz/deskhpsdr/discussions/categories/changelog-deskhpsdr)
-
-Please note: My development focus is only macOS. Linux is of no interest to me. Yes, this app can run with Linux too, that's a result of how this app is programmed based on C program language. However, that does not mean I provide any kind of support for Linux. From time to time, I test whether the app can be built on Linux and whether it runs. If it does that successfully, the topic Linux is closed for me at this point. Read carefully my instructions for build with Linux in document ``COMPILE.linux``.
 
 ## Known problems if using Git for update the code base at your local computer
 
