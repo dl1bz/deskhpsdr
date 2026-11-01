@@ -8,6 +8,14 @@ deskHPSDR by DL1BZ is an mature Open Source desktop application for Hamradio Ope
 
 <img src="stuff/deskhpsdr/screenshot.png" width="1024px" />
 
+## What you get with deskHPSR and what you don't get
+
+deskHPSDR is a solid, long-term developed SDR application for SDR devices, which work with OpenHPSDR protocols P1 and P2, mostly via Ethernet. The codebase go back until 2016, when John Melton/G0ORX was publishing the first version of pihpsdr. deskHPSDR isn't "new, AI generated hot stuff" - it's a solid, handmade application written in C. Written from people, they understand a lot of programming, are licensed ham-operators and have a huge knowledge in SDR technology. They known the supported SDR hardware very good for which this application is written. Means, the developer think always as hamradio operator, how could the app work at best in hamradio as SDR transceiver frontend. For that - exactly for that - deskHPSDR is made and thought. Clear concept with a clear focus as SDR application for use in hamradio.
+
+What isn't deskHPSDR and what will it never be?<br>
+This app is not made as a "super-duper all-in-one I can all in hamradio" application. If you want such an app, your are here at the wrong place - then you have to move on and look around elsewhere. The base concept of deskHPSDR is modular, not compact. No integrated logbook, no integration of digimodes and other things, where we have yet much better applications since long time for that. However, there are the necessary interfaces to connect such specialized programs to deskHPSDR, which serves as the transceiver application. This gives every user the option and freedom to use their favorite apps with deskHPSDR. Everything is possible, nothing is mandatory. deskHPSDR will never have support for any kind of SOAPY-API driven SDR devices, RTL based SDR devices or similar SDR devices. Only SDR devices with TX functionality running OpenHPSDR protocol P1 or P2 and based on the well-known OpenHPSDR platforms like HERMES, ORION, ANGELIA, SATURN etc. are supported. You don't get a measurement tool with deskHPSDR, you get a SDR transceiver frontend app.<br>
+Last but not least - deskHPSDR is Open Source and a pure hobby project, means, you can use it without any costs, you can take and modify this app as you want. Not included is any kind of personal app support.
+
 ## deskHPSDR ≠ pihpsdr: new app, revised concept, new name
 
 The very first codebase of deskHPSDR was forked ONCE from [DL1YCF's pihpsdr codebase](https://github.com/dl1ycf/pihpsdr) in October 2024 without any backward dependencies to pihpsdr.<br>
@@ -18,7 +26,7 @@ A large part of the old pihpsdr code is rewritten now and/or replaced with my ne
 My goal was to make an more optimzed version running with focus on Desktop-OS like Linux and macOS, what means I don't support small displays less as 1280x600.<br>
 ⚠️☝️ Single-board computers such as the Raspberry Pi and similar platforms are not within the scope of deskHPSDR development. Hardware-specific features such as GPIO are not available on standard desktop systems. Therefore, I don't want to add functionality that is only usable by a small subset of users. My goal is to keep the application focused on features that are available and useful across all supported desktop platforms. That means there will be no exceptions.
 
-**deskHPSDR is a dedicated SDR transceiver frontend application using OpenHPSDR protocols 1 or 2 for everyday use in amateur radio. Soapy SDR and GPIO code and support is official REMOVED now.**
+**Soapy SDR and GPIO code and support is official REMOVED now.**
 
 
 | Feature                        | Current deskHPSDR version 2.8                 | Notes             |
