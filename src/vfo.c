@@ -2139,7 +2139,7 @@ void vfo_update(void) {
   if (vfl->zoom_x != 0) {
     cairo_move_to(cr, vfl->zoom_x, vfl->zoom_y);
     if (active_receiver->zoom > 1) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2199,11 +2199,11 @@ void vfo_update(void) {
     cairo_move_to(cr, vfl->nb_x, vfl->nb_y);
     switch (active_receiver->nb) {
     case 1:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "NB");
       break;
     case 2:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "NB2");
       break;
     default:
@@ -2221,23 +2221,23 @@ void vfo_update(void) {
     cairo_move_to(cr, vfl->nr_x, vfl->nr_y);
     switch (active_receiver->nr) {
     case 1:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "NR");
       break;
     case 2:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "NR2");
       break;
     case 3:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "NR3");
       break;
     case 4:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "NR4");
       break;
     case 5:
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "NNR");
       break;
     default:
@@ -2254,7 +2254,7 @@ void vfo_update(void) {
   if (vfl->anf_x != 0) {
     cairo_move_to(cr, vfl->anf_x, vfl->anf_y);
     if (active_receiver->anf) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2268,7 +2268,7 @@ void vfo_update(void) {
   if (vfl->snb_x != 0) {
     cairo_move_to(cr, vfl->snb_x, vfl->snb_y);
     if (active_receiver->snb) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2282,7 +2282,7 @@ void vfo_update(void) {
   if (vfl->dexp_x != 0 && can_transmit) {
     cairo_move_to(cr, vfl->dexp_x, vfl->dexp_y);
     if (transmitter->dexp) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2340,15 +2340,15 @@ void vfo_update(void) {
     cairo_move_to(cr, vfl->cmpr_x, vfl->cmpr_y);
     if (transmitter->cfc && transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC %+d %+d", (int) transmitter->cfc_lvl[0], (int) transmitter->cfc_post[0]);
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     }
     if (transmitter->cfc && !transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC PR %+d", (int) transmitter->cfc_lvl[0]);
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     }
     if (!transmitter->cfc && transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC PO %+d", (int) transmitter->cfc_post[0]);
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     }
     if (!transmitter->cfc && !transmitter->cfc_eq) {
       snprintf(temp_text, 32, "CFC");
@@ -2364,7 +2364,7 @@ void vfo_update(void) {
   if (vfl->eq_x != 0) {
     cairo_move_to(cr, vfl->eq_x + 22, vfl->eq_y);
     if (active_receiver->eq_enable) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       cairo_show_text(cr, "RxEQ");
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
@@ -2381,7 +2381,7 @@ void vfo_update(void) {
     if (can_transmit) {
       if (transmitter->compressor) {
         snprintf(temp_text, 32, "PROC %+d", (int) transmitter->compressor_level);
-        cairo_set_source_rgba(cr, COLOUR_ATTN);
+        cairo_set_source_rgba(cr, COLOUR_OK);
       }
       if (!transmitter->compressor) {
         snprintf(temp_text, 32, "PROC");
@@ -2403,7 +2403,7 @@ void vfo_update(void) {
     if (s >= STEPS) { s = 0; }
     snprintf(temp_text, 32, "Step %s", step_labels[s]);
     cairo_move_to(cr, vfl->step_x, vfl->step_y);
-    cairo_set_source_rgba(cr, COLOUR_ATTN);
+    cairo_set_source_rgba(cr, COLOUR_OK);
     cairo_show_text(cr, temp_text);
   }
   // -----------------------------------------------------------
@@ -2414,7 +2414,7 @@ void vfo_update(void) {
   if (vfl->ctun_x != 0) {
     cairo_move_to(cr, vfl->ctun_x + 5, vfl->ctun_y);
     if (vfo[id].ctun) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2428,7 +2428,7 @@ void vfo_update(void) {
   if (vfl->cat_x != 0) {
     cairo_move_to(cr, vfl->cat_x, vfl->cat_y);
     if (cat_control > 0) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     }
@@ -2457,7 +2457,7 @@ void vfo_update(void) {
   if (can_transmit && vfl->eq_x != 0) {
     cairo_move_to(cr, vfl->base_x + 40, vfl->base_y);
     if (transmitter->eq_enable) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       if (transmitter->eq_gain[0] == 0.0) {
         snprintf(temp_text, 32, "TxEQ");
       } else {
@@ -2470,7 +2470,7 @@ void vfo_update(void) {
     cairo_show_text(cr, temp_text);
     cairo_move_to(cr, vfl->base_x + 110, vfl->base_y);
     if (transmitter->lev_enable) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       snprintf(temp_text, 32, "LEV %+d", (int) transmitter->lev_gain);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
@@ -2479,7 +2479,7 @@ void vfo_update(void) {
     cairo_show_text(cr, temp_text);
     cairo_move_to(cr, vfl->base_x + 180, vfl->base_y);
     if (transmitter->phrot_enable) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       snprintf(temp_text, 32, "PH-ROT %+d", (int) transmitter->phrot_stage);
     } else {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
@@ -2535,11 +2535,11 @@ void vfo_update(void) {
   if (vfl->iob_x != 0 && device == DEVICE_HERMES_LITE2) {
     cairo_move_to(cr, vfl->iob_x, vfl->iob_y);
     if (hl2_pico_is_present()) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       snprintf(temp_text, sizeof(temp_text), "IO: Pico or SoC");
       cairo_show_text(cr, temp_text);
     } else if (hl2_iob_is_present()) {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
       snprintf(temp_text, sizeof(temp_text), "IO: N2ADR Board");
       cairo_show_text(cr, temp_text);
     } else {
@@ -2588,7 +2588,7 @@ void vfo_update(void) {
     if (m == modeDIGU || m == modeDIGL) {
       cairo_set_source_rgba(cr, COLOUR_SHADE);
     } else {
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
+      cairo_set_source_rgba(cr, COLOUR_OK);
     }
     if (transmitter->addgain_enable) {
       snprintf(temp_text, sizeof(temp_text), "MicG %+d", (int) transmitter->mic_gain + (int) transmitter->addgain_gain);

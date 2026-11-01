@@ -346,6 +346,13 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
   case GDK_KEY_n:
     start_noise();
     break;
+  case GDK_KEY_c:
+    vfo_ctun_update(active_receiver->id, NOT(vfo[active_receiver->id].ctun));
+    g_idle_add(ext_vfo_update, NULL);
+    break;
+  case GDK_KEY_l:
+    set_locked(!locked);
+    break;
   case GDK_KEY_a:
     // toggle anf
     if (active_receiver->anf > 0) {
