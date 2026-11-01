@@ -1603,19 +1603,26 @@ void vfo_id_move(int id, long long hz, int round) {
   }
 }
 
-static void vfo_move_fixed_hz(long long hz) {
-  if (active_receiver == NULL || locked) { return; }
-  int id = active_receiver->id;
+static void vfo_id_move_fixed_hz(int id, long long hz) {
+  if (id < VFO_A || id > VFO_B || locked) { return; }
   // vfo_id_move reverses the sign when CTUN is disabled.
   vfo_id_move(id, vfo[id].ctun ? hz : -hz, 0);
 }
 
+void vfo_id_move_10hz(int id, int direction) {
+  if (direction != 0) { vfo_id_move_fixed_hz(id, direction > 0 ? 10LL : -10LL); }
+}
+
+void vfo_id_move_100hz(int id, int direction) {
+  if (direction != 0) { vfo_id_move_fixed_hz(id, direction > 0 ? 100LL : -100LL); }
+}
+
 void vfo_move_10hz(int direction) {
-  if (direction != 0) { vfo_move_fixed_hz(direction > 0 ? 10LL : -10LL); }
+  if (active_receiver != NULL) { vfo_id_move_10hz(active_receiver->id, direction); }
 }
 
 void vfo_move_100hz(int direction) {
-  if (direction != 0) { vfo_move_fixed_hz(direction > 0 ? 100LL : -100LL); }
+  if (active_receiver != NULL) { vfo_id_move_100hz(active_receiver->id, direction); }
 }
 
 void vfo_move(long long hz, int round) {

@@ -438,19 +438,21 @@ gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     }
     break;
   case GDK_KEY_Up:
+  case GDK_KEY_Down: {
+    int direction = (event->keyval == GDK_KEY_Up) ? +1 : -1;
+    int id = active_receiver->id;
+#ifdef __APPLE__
+    if (event->state & GDK_MOD1_MASK) {
+      id = 1 - id;  // Option: other VFO
+    }
+#endif
     if (event->state & GDK_SHIFT_MASK) {
-      vfo_move_100hz(+1); // +100 Hz
+      vfo_id_move_100hz(id, direction);
     } else {
-      vfo_move_10hz(+1);      // +10 Hz
+      vfo_id_move_10hz(id, direction);
     }
     return TRUE;
-  case GDK_KEY_Down:
-    if (event->state & GDK_SHIFT_MASK) {
-      vfo_move_100hz(-1); // -100 Hz
-    } else {
-      vfo_move_10hz(-1);      // -10 Hz
-    }
-    return TRUE;
+  }
   case GDK_KEY_Page_Down: {
     double _vol = active_receiver->volume;
     _vol -= 1;
