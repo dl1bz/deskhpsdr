@@ -188,6 +188,8 @@ extern void       vfo_step(int steps);
 extern void       vfo_id_step(int id, int steps);
 extern void       vfo_set_rit_step(int step);
 extern void       vfo_id_set_rit_step(int id, int step);
+extern void       vfo_move_10hz(int direction);
+extern void       vfo_move_100hz(int direction);
 extern void       vfo_move(long long hz, int round);
 extern void       vfo_id_move(int id, long long hz, int round);
 extern void       vfo_id_move_to(int id, long long hz);
