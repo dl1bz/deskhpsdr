@@ -57,6 +57,7 @@ enum {
   BSTR_COLUMN,
   INVERT_COLUMN,
   TOGGLE_COLUMN,
+  DESCRIPTOR_COLUMN,
   N_COLUMNS
 };
 
@@ -125,8 +126,6 @@ static enum ACTIONtype thisType;
 static int thisAction;
 static int thisInvert;
 static int thisToggle;
-static int updating_invert_widget;
-static int updating_toggle_widget;
 
 //
 // While choosing an action in the dialog, new incoming events
@@ -190,21 +189,16 @@ static void ignore_cb(GtkWidget *widget, gpointer data) {
 
 static void invert_cb(GtkWidget *widget, gpointer data) {
   (void)data;
+  // Stage the UI value; updateDescription() commits the assignment.
   thisInvert = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  if (updating_invert_widget || current_cmd == NULL) { return; }
-  current_cmd->invert = thisInvert;
-  gtk_list_store_set(store, &iter, INVERT_COLUMN, thisInvert ? "Yes" : "No", -1);
 }
 
 static void toggle_cb(GtkWidget *widget, gpointer data) {
   (void)data;
+  // Do not modify the live MIDI descriptor until Update is pressed.
   thisToggle = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   gtk_widget_set_sensitive(newInvert,
                            !(thisEvent == MIDI_CTRL && thisType == MIDI_KEY && thisToggle));
-  if (updating_toggle_widget || current_cmd == NULL) { return; }
-  current_cmd->toggle = thisToggle;
-  current_cmd->last_cc = -1;
-  gtk_list_store_set(store, &iter, TOGGLE_COLUMN, thisToggle ? "Yes" : "No", -1);
 }
 
 static void update_toggle_sensitivity(void) {
@@ -273,16 +267,25 @@ static void type_changed_cb(GtkWidget *widget, gpointer data) {
   g_free(type);
 }
 
-static gboolean action_cb(GtkWidget *widget, gpointer data) {
-  if (thisType == TYPE_NONE) { return TRUE; }
+static void action_cb(GtkButton *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  if (thisType == TYPE_NONE) { return; }
   //t_print("%s: type=%d action=%d\n", __func__, thisType, thisAction);
   ignore_incoming_events = 1;
   thisAction = action_dialog(dialog, thisType, thisAction);
   //t_print("%s: new action=%d\n", __func__, thisAction);
   gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
-  updateDescription();
   ignore_incoming_events = 0;
-  return TRUE;
+}
+
+static void update_cb(GtkButton *widget, gpointer data) {
+  (void)widget;
+  (void)data;
+  if (thisEvent == EVENT_NONE || thisType == TYPE_NONE || thisAction == NO_ACTION) {
+    return;
+  }
+  updateDescription();
 }
 
 static void row_inserted_cb(GtkTreeModel *tree_model, GtkTreePath *path, GtkTreeIter *iter, gpointer user_data) {
@@ -322,6 +325,7 @@ static void tree_selection_changed_cb(GtkTreeSelection *selection, gpointer data
           break;
         }
       }
+      gtk_tree_model_get(model, &iter, DESCRIPTOR_COLUMN, &current_cmd, -1);
       updatePanel(UPDATE_EXISTING);
     }
     g_free(str_event);
@@ -332,24 +336,97 @@ static void tree_selection_changed_cb(GtkTreeSelection *selection, gpointer data
   }
 }
 
+// Resolve the selected row by descriptor identity, not by a possibly
+// duplicated channel/event combination.
 static void find_current_cmd(void) {
-  struct desc *cmd;
-  if (thisNote < 0 || thisNote > 128) {
-    current_cmd = NULL;
-    return;
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+  GtkTreeIter selected;
+  current_cmd = NULL;
+  if (gtk_tree_selection_get_selected(selection, NULL, &selected)) {
+    gtk_tree_model_get(model, &selected, DESCRIPTOR_COLUMN, &current_cmd, -1);
   }
-  cmd = MidiCommandsTable[thisNote];
-  //
-  // Find the first command in the MIDI table which has the same channel
-  // and the same type, but do not look at the action.
-  //
-  while (cmd != NULL) {
-    if ((cmd->channel == thisChannel) && cmd->event == thisEvent) {
+}
+
+// A selected row is the authoritative owner of its descriptor.  Never
+// derive the list index from the mutable MIDI-learn editor state.
+static gboolean selected_assignment(GtkTreeIter *row, struct desc **cmd, int *note) {
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+  GtkTreeModel *selected_model = NULL;
+  gchar *note_text = NULL;
+  *cmd = NULL;
+  if (!gtk_tree_selection_get_selected(selection, &selected_model, row)) { return FALSE; }
+  gtk_tree_model_get(selected_model, row, DESCRIPTOR_COLUMN, cmd,
+                     NOTE_COLUMN, &note_text, -1);
+  if (note_text == NULL || *cmd == NULL) {
+    g_free(note_text);
+    return FALSE;
+  }
+  char *end = NULL;
+  long parsed = strtol(note_text, &end, 10);
+  gboolean valid = (end != note_text && *end == '\0' && parsed >= 0 && parsed <= 128);
+  g_free(note_text);
+  if (!valid) { return FALSE; }
+  *note = (int)parsed;
+  for (struct desc *it = MidiCommandsTable[*note]; it != NULL; it = it->next) {
+    if (it == *cmd) { return TRUE; }
+  }
+  return FALSE;
+}
+
+// Keep MIDI-learn from discarding a staged edit.  The editor values are
+// committed only by Update, never by an incoming MIDI message.
+static gboolean assignment_is_dirty(void) {
+  GtkTreeIter row;
+  struct desc *cmd;
+  int note;
+  if (!selected_assignment(&row, &cmd, &note)) {
+    // A new MIDI-learn event has no selected row.  Once the user starts
+    // configuring it, subsequent MIDI input must not discard the draft.
+    if (thisEvent == EVENT_NONE) { return FALSE; }
+    enum ACTIONtype default_type = TYPE_NONE;
+    switch (thisEvent) {
+    case MIDI_NOTE:
+      default_type = MIDI_KEY;
+      break;
+    case MIDI_CTRL:
+      default_type = MIDI_WHEEL;
+      break;
+    case MIDI_PITCH:
+      default_type = MIDI_KNOB;
+      break;
+    default:
       break;
     }
-    cmd = cmd->next;
+    return thisAction != NO_ACTION || thisInvert || thisToggle ||
+           (thisType != TYPE_NONE && thisType != default_type) ||
+           thisDelay != 0 ||
+           thisVfl1 != -1 || thisVfl2 != -1 ||
+           thisFl1 != -1 || thisFl2 != -1 ||
+           thisLft1 != 0 || thisLft2 != 63 ||
+           thisRgt1 != 65 || thisRgt2 != 127 ||
+           thisFr1 != -1 || thisFr2 != -1 ||
+           thisVfr1 != -1 || thisVfr2 != -1;
   }
-  current_cmd = cmd;
+  int toggle = (thisEvent == MIDI_CTRL && thisType == MIDI_KEY) ? thisToggle : 0;
+  return note != thisNote || cmd->channel != thisChannel ||
+         cmd->event != thisEvent || cmd->type != thisType ||
+         cmd->action != thisAction || cmd->invert != thisInvert ||
+         cmd->toggle != toggle ||
+         (thisType == MIDI_WHEEL &&
+          (cmd->vfl1 != thisVfl1 || cmd->vfl2 != thisVfl2 ||
+           cmd->fl1 != thisFl1 || cmd->fl2 != thisFl2 ||
+           cmd->lft1 != thisLft1 || cmd->lft2 != thisLft2 ||
+           cmd->rgt1 != thisRgt1 || cmd->rgt2 != thisRgt2 ||
+           cmd->fr1 != thisFr1 || cmd->fr2 != thisFr2 ||
+           cmd->vfr1 != thisVfr1 || cmd->vfr2 != thisVfr2));
+}
+
+static struct desc *find_assignment(int note, int channel, enum MIDIevent event) {
+  if (note < 0 || note > 128) { return NULL; }
+  for (struct desc *cmd = MidiCommandsTable[note]; cmd != NULL; cmd = cmd->next) {
+    if (cmd->channel == channel && cmd->event == event) { return cmd; }
+  }
+  return NULL;
 }
 
 static void wheelparam_cb(GtkWidget *widget, gpointer user_data) {
@@ -421,12 +498,44 @@ static void wheelparam_cb(GtkWidget *widget, gpointer user_data) {
 }
 
 static void clear_cb(GtkWidget *widget, gpointer user_data) {
+  (void)widget;
+  (void)user_data;
+  // Clearing the model emits a selection change.  Reset the editor after
+  // the model and descriptors have been cleared so no stale row survives.
   gtk_list_store_clear(store);
   MidiReleaseCommands();
   current_cmd = NULL;
   thisEvent = EVENT_NONE;
+  thisChannel = 0;
+  thisNote = 0;
+  thisVal = 0;
+  thisMin = 0;
+  thisMax = 0;
   thisType = TYPE_NONE;
   thisAction = NO_ACTION;
+  thisInvert = 0;
+  thisToggle = 0;
+  thisDelay = 0;
+  thisVfl1 = thisVfl2 = thisFl1 = thisFl2 = -1;
+  thisLft1 = 0;
+  thisLft2 = 63;
+  thisRgt1 = 65;
+  thisRgt2 = 127;
+  thisFr1 = thisFr2 = thisVfr1 = thisVfr2 = -1;
+  gtk_label_set_text(GTK_LABEL(newEvent), "");
+  gtk_label_set_text(GTK_LABEL(newChannel), "");
+  gtk_label_set_text(GTK_LABEL(newNote), "");
+  gtk_label_set_text(GTK_LABEL(newVal), "");
+  gtk_label_set_text(GTK_LABEL(newMin), "");
+  gtk_label_set_text(GTK_LABEL(newMax), "");
+  gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(newType));
+  gtk_widget_set_sensitive(newType, FALSE);
+  gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[NO_ACTION].str);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newInvert), FALSE);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newToggle), FALSE);
+  update_toggle_sensitivity();
+  update_wheelparams(NULL);
+  gtk_widget_hide(WheelContainer);
   gtk_widget_set_sensitive(delete_b, FALSE);
   gtk_widget_set_sensitive(clear_b, FALSE);
 }
@@ -455,6 +564,7 @@ static void add_store(int key, const struct desc *cmd) {
                      BSTR_COLUMN, ActionTable[cmd->action].button_str,
                      INVERT_COLUMN, cmd->invert ? "Yes" : "No",
                      TOGGLE_COLUMN, cmd->toggle ? "Yes" : "No",
+                     DESCRIPTOR_COLUMN, (gpointer)cmd,
                      -1);
   if (scrolled_window != NULL) {
     GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
@@ -494,6 +604,28 @@ static void updateDescription(void) {
   // sub-window
   //
   find_current_cmd();
+  if (current_cmd != NULL) {
+    GtkTreeIter selected_row;
+    struct desc *selected_cmd;
+    int selected_note;
+    if (!selected_assignment(&selected_row, &selected_cmd, &selected_note) ||
+        selected_cmd != current_cmd || selected_note != thisNote) {
+      t_print("%s: selected MIDI descriptor/index mismatch\n", __func__);
+      return;
+    }
+    iter = selected_row;
+  }
+  // A selected row may be edited, but must not be silently replaced by
+  // another descriptor with the same key.
+  if (current_cmd != NULL &&
+      (current_cmd->channel != thisChannel || current_cmd->event != thisEvent)) {
+    t_print("%s: selected MIDI assignment does not match the event key\n", __func__);
+    return;
+  }
+  if (current_cmd == NULL && find_assignment(thisNote, thisChannel, thisEvent) != NULL) {
+    t_print("%s: MIDI assignment already exists; select its row to update\n", __func__);
+    return;
+  }
   if (current_cmd == NULL) {
     //
     // This is a new Note/Event combination, so we need a new entry
@@ -509,13 +641,22 @@ static void updateDescription(void) {
   //
   // Modify or initialize the command
   //
+  // Preserve the last CC value for unchanged toggle assignments.
+  // Reset only for new commands or changes affecting CC interpretation.
+  int reset_last_cc = addFlag ||
+                      current_cmd->channel != thisChannel ||
+                      current_cmd->event != thisEvent ||
+                      current_cmd->type != thisType ||
+                      current_cmd->action != thisAction ||
+                      current_cmd->toggle !=
+                      ((thisEvent == MIDI_CTRL && thisType == MIDI_KEY) ? thisToggle : 0);
   current_cmd->channel = thisChannel;
   current_cmd->type   = thisType;
   current_cmd->event  = thisEvent;
   current_cmd->action = thisAction;
   current_cmd->invert = thisInvert;
   current_cmd->toggle = (thisEvent == MIDI_CTRL && thisType == MIDI_KEY) ? thisToggle : 0;
-  current_cmd->last_cc = -1;
+  if (reset_last_cc) { current_cmd->last_cc = -1; }
   current_cmd->vfl1  = thisVfl1;
   current_cmd->vfl2  = thisVfl2;
   current_cmd->fl1   = thisFl1;
@@ -552,46 +693,29 @@ static void updateDescription(void) {
                        BSTR_COLUMN, ActionTable[thisAction].button_str,
                        INVERT_COLUMN, thisInvert ? "Yes" : "No",
                        TOGGLE_COLUMN, current_cmd->toggle ? "Yes" : "No",
+                       DESCRIPTOR_COLUMN, (gpointer)current_cmd,
                        -1);
   }
 }
 
-static void delete_cb(GtkButton *widget, GdkEventButton *event, gpointer user_data) {
-  struct desc *previous_cmd;
-  struct desc *next_cmd;
-  //t_print("%s: thisNote=%d current_cmd=%p\n", __func__, thisNote, current_cmd);
-  if (current_cmd == NULL) {
-    t_print("%s: current_cmd is NULL!\n", __func__);
+static void delete_cb(GtkButton *widget, gpointer user_data) {
+  (void)widget;
+  (void)user_data;
+  GtkTreeIter selected_row;
+  struct desc *target;
+  int note;
+  if (!selected_assignment(&selected_row, &target, &note)) {
+    t_print("%s: selected MIDI assignment is not in the command table\n", __func__);
     return;
   }
-  if (thisNote < 0 || thisNote > 128) {
-    t_print("%s: invalid MIDI note/controller index=%d\n", __func__, thisNote);
-    return;
-  }
-  // remove from MidiCommandsTable
-  if (MidiCommandsTable[thisNote] == current_cmd) {
-    MidiCommandsTable[thisNote] = current_cmd->next;
-    g_free(current_cmd);
-    current_cmd = NULL;
-  } else {
-    previous_cmd = MidiCommandsTable[thisNote];
-    if (previous_cmd == NULL) {
-      current_cmd = NULL;
-      return;
-    }
-    while (previous_cmd->next != NULL) {
-      next_cmd = previous_cmd->next;
-      if (next_cmd == current_cmd) {
-        previous_cmd->next = next_cmd->next;
-        g_free(next_cmd);
-        current_cmd = NULL; // note next_cmd == current_cmd
-        break;
-      }
-      previous_cmd = next_cmd;
-    }
-  }
-  // remove from list store. This triggers "tree selection changed"
-  gtk_list_store_remove(store, &iter);
+  struct desc **link = &MidiCommandsTable[note];
+  while (*link != NULL && *link != target) { link = &(*link)->next; }
+  if (*link != target) { return; }
+  *link = target->next;
+  current_cmd = NULL;
+  // Remove the UI reference before releasing its descriptor.
+  gtk_list_store_remove(store, &selected_row);
+  free(target);
 }
 
 void midi_menu(GtkWidget *parent) {
@@ -731,7 +855,7 @@ void midi_menu(GtkWidget *parent) {
   newMax = gtk_label_new(NULL);
   gtk_grid_attach(GTK_GRID(grid), newMax, col++, row, 1, 1);
   newAction = gtk_button_new_with_label("    ");
-  g_signal_connect(newAction, "button-press-event", G_CALLBACK(action_cb), NULL);
+  g_signal_connect(newAction, "clicked", G_CALLBACK(action_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), newAction, col++, row, 1, 1);
   newInvert = gtk_check_button_new();
   gtk_widget_set_tooltip_text(newInvert, "Reverse the direction of this MIDI control");
@@ -747,8 +871,12 @@ void midi_menu(GtkWidget *parent) {
   clear_b = gtk_button_new_with_label("Delete All");
   gtk_grid_attach(GTK_GRID(grid), clear_b, 0, row, 1, 1);
   g_signal_connect(clear_b, "clicked", G_CALLBACK(clear_cb), NULL);
+  GtkWidget *update_b = gtk_button_new_with_label("Update");
+  gtk_widget_set_tooltip_text(update_b, "Apply the selected MIDI assignment and its settings");
+  gtk_grid_attach(GTK_GRID(grid), update_b, 2, row, 1, 1);
+  g_signal_connect(update_b, "clicked", G_CALLBACK(update_cb), NULL);
   delete_b = gtk_button_new_with_label("Delete");
-  g_signal_connect(delete_b, "button-press-event", G_CALLBACK(delete_cb), NULL);
+  g_signal_connect(delete_b, "clicked", G_CALLBACK(delete_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), delete_b, 1, row, 1, 1);
   GtkWidget *ignore_b = gtk_check_button_new_with_label("Ignore Controller Pairs");
   gtk_widget_set_name(ignore_b, "boldlabel");
@@ -779,7 +907,7 @@ void midi_menu(GtkWidget *parent) {
   renderer = gtk_cell_renderer_text_new();
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "TOGGLE", renderer, "text", TOGGLE_COLUMN, NULL);
   store = gtk_list_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
-                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_POINTER);
   load_store();
   gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
   gtk_container_add(GTK_CONTAINER(scrolled_window), view);
@@ -921,13 +1049,9 @@ static int updatePanel(int state) {
   switch (state) {
   case UPDATE_NEW:
     thisToggle = 0;
-    updating_toggle_widget = 1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newToggle), FALSE);
-    updating_toggle_widget = 0;
     thisInvert = 0;
-    updating_invert_widget = 1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newInvert), FALSE);
-    updating_invert_widget = 0;
     gtk_label_set_text(GTK_LABEL(newEvent), Event2String(thisEvent));
     midi_channel_label(thisChannel, text, sizeof(text));
     gtk_label_set_text(GTK_LABEL(newChannel), text);
@@ -1036,13 +1160,10 @@ static int updatePanel(int state) {
     } else {
       thisToggle = 0;
     }
-    updating_toggle_widget = 1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newToggle), thisToggle);
-    updating_toggle_widget = 0;
     update_toggle_sensitivity();
-    updating_invert_widget = 1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newInvert), thisInvert);
-    updating_invert_widget = 0;
+    gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
     update_wheelparams(NULL);
     break;
   }
@@ -1071,9 +1192,12 @@ int ProcessNewMidiConfigureEvent(void *data) {
   char *str_type = NULL;
   char *str_action = NULL;
   g_free(data);
-  if (dialog == NULL) {
+  // An event queued before the action dialog opened must not change MIDI learn.
+  if (ignore_incoming_events || dialog == NULL) {
     return 0;
   }
+  // Do not let MIDI-learn overwrite pending changes to a selected row.
+  if (assignment_is_dirty()) { return 0; }
   if (event == thisEvent && channel == thisChannel && note == thisNote) {
     thisVal = val;
     if (val < thisMin) { thisMin = val; }
@@ -1163,8 +1287,11 @@ int ProcessNewMidiConfigureEvent(void *data) {
       valid = gtk_tree_model_iter_next(model, &iter);
     }
     //
-    // This is a new event
+    // This is a new event; discard the previously selected row.
     //
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    gtk_tree_selection_unselect_all(selection);
+    current_cmd = NULL;
     updatePanel(UPDATE_NEW);
   }
   return 0;
@@ -1371,6 +1498,12 @@ void midiRestoreState(void) {
       desc->vfr1     = vfr1;
       desc->vfr2     = vfr2;
       desc->channel  = channel;
+      if (find_assignment(i, channel, event) != NULL) {
+        t_print("%s: duplicate MIDI assignment skipped (index=%d channel=%d event=%d)\n",
+                __func__, i, channel, event);
+        free(desc);
+        continue;
+      }
       MidiAddCommand(i, desc);
     }
   }
