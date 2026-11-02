@@ -49,6 +49,7 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *n2adr_hpf_btn = NULL;
 static GtkWidget *ChkBtn_txinhibit = NULL;
 static GtkWidget *ChkBtn_autotune = NULL;
+static GtkWidget *ChkBtn_pa_enable = NULL;
 static GtkWidget *ChkBtn_mute_rx_when_tx = NULL;
 static gulong callsign_box_signal_id;
 static gulong locator_box_signal_id;
@@ -61,6 +62,7 @@ static void cleanup(void) {
     sub_menu = NULL;
     active_menu  = NO_MENU;
     ChkBtn_mute_rx_when_tx = NULL;
+    ChkBtn_pa_enable = NULL;
     // radio_save_state();
   }
 }
@@ -188,11 +190,16 @@ static void hermes_mode_cb(GtkWidget *widget, gpointer data) {
     break;
   }
   if (hermes_mode == HERMES_MODE_BRICK) {
+    pa_enabled = 1;
     gtk_widget_hide(ChkBtn_txinhibit);
     gtk_widget_hide(ChkBtn_autotune);
   } else {
     gtk_widget_show(ChkBtn_txinhibit);
     gtk_widget_show(ChkBtn_autotune);
+  }
+  if (ChkBtn_pa_enable != NULL) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn_pa_enable), pa_enabled);
+    gtk_widget_set_sensitive(ChkBtn_pa_enable, hermes_mode != HERMES_MODE_BRICK);
   }
   update_attenuation_label();
   radio_save_state();
@@ -920,8 +927,10 @@ void radio_menu(GtkWidget *parent) {
                                   "device-depend and SDR-specific\n"
                                   "TX power settings for correct output !");
     }
+    ChkBtn_pa_enable = ChkBtn;
     gtk_widget_set_name(ChkBtn, "boldlabel");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChkBtn), pa_enabled);
+    gtk_widget_set_sensitive(ChkBtn, hermes_mode != HERMES_MODE_BRICK);
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &pa_enabled);
     row++;

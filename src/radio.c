@@ -2951,6 +2951,9 @@ static void radio_restore_state(void) {
     filter_board = ALEX;
   }
   GetPropI0("pa_enabled",                                    pa_enabled);
+  if (hermes_mode == HERMES_MODE_BRICK) {
+    pa_enabled = 1;
+  }
   if (device == DEVICE_HERMES_LITE2) {
     GetPropI0("enable_hl2_atu_gateware",                     enable_hl2_atu_gateware);
     GetPropI0("force_iob",                                   force_iob);
