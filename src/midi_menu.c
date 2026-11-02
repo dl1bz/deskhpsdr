@@ -889,6 +889,7 @@ static int updatePanel(int state) {
     case MIDI_CTRL:
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "WHEEL");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "KNOB/SLIDER");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "KEY");
       gtk_widget_set_sensitive(newType, TRUE);
       break;
     case MIDI_PITCH:
@@ -933,8 +934,11 @@ static int updatePanel(int state) {
     case MIDI_CTRL:
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "WHEEL");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "KNOB/SLIDER");
+      gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(newType), NULL, "KEY");
       if (thisType == MIDI_KNOB) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 1);
+      } else if (thisType == MIDI_KEY) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 2);
       } else {
         thisType = MIDI_WHEEL;
         gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 0);

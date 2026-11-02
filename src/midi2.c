@@ -86,7 +86,10 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
         DoTheMidi(desc->action, desc->type, val);
         break;
       case MIDI_CTRL:
-        if (desc->type == MIDI_KNOB) {
+        if (desc->type == MIDI_KEY) {
+          // CC buttons use zero for release and nonzero for press.
+          DoTheMidi(desc->action, desc->type, desc->invert ? !val : !!val);
+        } else if (desc->type == MIDI_KNOB) {
           // CHANGED Jan 2024: report the "raw" value (0-127) upstream
           DoTheMidi(desc->action, desc->type, desc->invert ? 127 - val : val);
         } else if (desc->type == MIDI_WHEEL) {
