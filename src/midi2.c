@@ -87,8 +87,19 @@ void NewMidiEvent(enum MIDIevent event, int channel, int note, int val) {
         break;
       case MIDI_CTRL:
         if (desc->type == MIDI_KEY) {
-          // CC buttons use zero for release and nonzero for press.
-          DoTheMidi(desc->action, desc->type, desc->invert ? !val : !!val);
+          if (desc->toggle) {
+            // Toggle controllers send alternating CC values on successive presses.
+            // Ignore repeated values; issue a complete button pulse per change.
+            // This also prevents momentary actions (e.g. PTT) staying asserted.
+            if (desc->last_cc != val) {
+              desc->last_cc = val;
+              DoTheMidi(desc->action, desc->type, 1);
+              DoTheMidi(desc->action, desc->type, 0);
+            }
+          } else {
+            // CC buttons use zero for release and nonzero for press.
+            DoTheMidi(desc->action, desc->type, desc->invert ? !val : !!val);
+          }
         } else if (desc->type == MIDI_KNOB) {
           // CHANGED Jan 2024: report the "raw" value (0-127) upstream
           DoTheMidi(desc->action, desc->type, desc->invert ? 127 - val : val);

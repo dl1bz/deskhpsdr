@@ -104,6 +104,8 @@ struct desc {
   int               rgt1, rgt2;  // Wheel only: range of controller values for "slow right"
   int               action;      // SDR "action" to generate
   int               invert;      // reverse controller direction for this mapping
+  int               toggle;      // CC KEY: each changed value generates a button pulse
+  int               last_cc;     // runtime state; -1 until first CC event
   struct desc       *next;       // Next defined action for a controller/key with that note value (NULL for end of list)
 };
 

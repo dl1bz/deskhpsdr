@@ -56,6 +56,7 @@ enum {
   ACTION_COLUMN,
   BSTR_COLUMN,
   INVERT_COLUMN,
+  TOGGLE_COLUMN,
   N_COLUMNS
 };
 
@@ -78,11 +79,25 @@ static GtkWidget *newMin;
 static GtkWidget *newMax;
 static GtkWidget *newAction;
 static GtkWidget *newInvert;
+static GtkWidget *newToggle;
 static GtkWidget *delete_b;
 static GtkWidget *clear_b;
 static GtkWidget *device_b[MAX_MIDI_DEVICES];
 
 static enum MIDIevent thisEvent;
+// MIDI channels are stored as 0..15; -1 denotes any channel.
+// Keep the wildcard distinct from user-facing channel numbers 1..16.
+static const char *midi_channel_label(int channel, char *buf, size_t size) {
+  if (channel == -1) { return "All Channels"; }
+  snprintf(buf, size, "%d", channel + 1);
+  return buf;
+}
+
+static int midi_channel_from_label(const char *label) {
+  if (strcmp(label, "All Channels") == 0) { return -1; }
+  return atoi(label) - 1;
+}
+
 static int thisChannel;
 static int thisNote;
 static int thisVal;
@@ -109,7 +124,9 @@ static GtkWidget *set_vfr1, *set_vfr2;
 static enum ACTIONtype thisType;
 static int thisAction;
 static int thisInvert;
+static int thisToggle;
 static int updating_invert_widget;
+static int updating_toggle_widget;
 
 //
 // While choosing an action in the dialog, new incoming events
@@ -179,6 +196,23 @@ static void invert_cb(GtkWidget *widget, gpointer data) {
   gtk_list_store_set(store, &iter, INVERT_COLUMN, thisInvert ? "Yes" : "No", -1);
 }
 
+static void toggle_cb(GtkWidget *widget, gpointer data) {
+  (void)data;
+  thisToggle = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  gtk_widget_set_sensitive(newInvert,
+                           !(thisEvent == MIDI_CTRL && thisType == MIDI_KEY && thisToggle));
+  if (updating_toggle_widget || current_cmd == NULL) { return; }
+  current_cmd->toggle = thisToggle;
+  current_cmd->last_cc = -1;
+  gtk_list_store_set(store, &iter, TOGGLE_COLUMN, thisToggle ? "Yes" : "No", -1);
+}
+
+static void update_toggle_sensitivity(void) {
+  gboolean enabled = (thisEvent == MIDI_CTRL && thisType == MIDI_KEY);
+  gtk_widget_set_sensitive(newToggle, enabled);
+  gtk_widget_set_sensitive(newInvert, !(enabled && thisToggle));
+}
+
 static void device_cb(GtkWidget *widget, gpointer data) {
   int ind = GPOINTER_TO_INT(data);
   int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -235,6 +269,7 @@ static void type_changed_cb(GtkWidget *widget, gpointer data) {
   }
   gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
   update_wheelparams(NULL);
+  update_toggle_sensitivity();
   g_free(type);
 }
 
@@ -273,7 +308,7 @@ static void tree_selection_changed_cb(GtkTreeSelection *selection, gpointer data
     gtk_tree_model_get(model, &iter, BSTR_COLUMN, &str_action, -1);
     if (str_event != NULL && str_channel != NULL && str_note != NULL && str_type != NULL && str_action != NULL) {
       thisEvent = String2Event(str_event);
-      thisChannel = atoi(str_channel);
+      thisChannel = midi_channel_from_label(str_channel);
       thisNote = atoi(str_note);
       thisVal = 0;
       thisMin = 127;
@@ -401,7 +436,7 @@ static void add_store(int key, const struct desc *cmd) {
   char str_note[64];
   char str_action[64];
   char *cp;
-  snprintf(str_channel, 64, "%d", cmd->channel);
+  midi_channel_label(cmd->channel, str_channel, sizeof(str_channel));
   snprintf(str_note, 64, "%d", key);
   gtk_list_store_prepend(store, &iter);
   // convert line breaks to spaces for window
@@ -419,6 +454,7 @@ static void add_store(int key, const struct desc *cmd) {
                      ACTION_COLUMN, str_action,
                      BSTR_COLUMN, ActionTable[cmd->action].button_str,
                      INVERT_COLUMN, cmd->invert ? "Yes" : "No",
+                     TOGGLE_COLUMN, cmd->toggle ? "Yes" : "No",
                      -1);
   if (scrolled_window != NULL) {
     GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
@@ -478,6 +514,8 @@ static void updateDescription(void) {
   current_cmd->event  = thisEvent;
   current_cmd->action = thisAction;
   current_cmd->invert = thisInvert;
+  current_cmd->toggle = (thisEvent == MIDI_CTRL && thisType == MIDI_KEY) ? thisToggle : 0;
+  current_cmd->last_cc = -1;
   current_cmd->vfl1  = thisVfl1;
   current_cmd->vfl2  = thisVfl2;
   current_cmd->fl1   = thisFl1;
@@ -490,7 +528,7 @@ static void updateDescription(void) {
   current_cmd->fr2   = thisFr2;
   current_cmd->vfr1  = thisVfr1;
   current_cmd->vfr2  = thisVfr2;
-  snprintf(str_channel, 64, "%d", thisChannel);
+  midi_channel_label(thisChannel, str_channel, sizeof(str_channel));
   snprintf(str_note, 64, "%d", thisNote);
   if (addFlag) {
     MidiAddCommand(thisNote, current_cmd);
@@ -513,6 +551,7 @@ static void updateDescription(void) {
                        ACTION_COLUMN, str_action,
                        BSTR_COLUMN, ActionTable[thisAction].button_str,
                        INVERT_COLUMN, thisInvert ? "Yes" : "No",
+                       TOGGLE_COLUMN, current_cmd->toggle ? "Yes" : "No",
                        -1);
   }
 }
@@ -671,6 +710,9 @@ void midi_menu(GtkWidget *parent) {
   label = gtk_label_new("Invert");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col++, row, 1, 1);
+  label = gtk_label_new("Toggle");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_grid_attach(GTK_GRID(grid), label, col++, row, 1, 1);
   row++;
   col = 0;
   newEvent = gtk_label_new(NULL);
@@ -696,6 +738,11 @@ void midi_menu(GtkWidget *parent) {
   gtk_widget_set_halign(newInvert, GTK_ALIGN_CENTER);
   gtk_grid_attach(GTK_GRID(grid), newInvert, col, row, 1, 1);
   g_signal_connect(newInvert, "toggled", G_CALLBACK(invert_cb), NULL);
+  newToggle = gtk_check_button_new();
+  gtk_widget_set_tooltip_text(newToggle, "CC KEY: trigger on each changed controller value (toggle button)");
+  gtk_widget_set_halign(newToggle, GTK_ALIGN_CENTER);
+  gtk_grid_attach(GTK_GRID(grid), newToggle, ++col, row, 1, 1);
+  g_signal_connect(newToggle, "toggled", G_CALLBACK(toggle_cb), NULL);
   row++;
   clear_b = gtk_button_new_with_label("Delete All");
   gtk_grid_attach(GTK_GRID(grid), clear_b, 0, row, 1, 1);
@@ -729,8 +776,10 @@ void midi_menu(GtkWidget *parent) {
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "ACTION", renderer, "text", ACTION_COLUMN, NULL);
   renderer = gtk_cell_renderer_text_new();
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "INVERT", renderer, "text", INVERT_COLUMN, NULL);
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(view), -1, "TOGGLE", renderer, "text", TOGGLE_COLUMN, NULL);
   store = gtk_list_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
-                             G_TYPE_STRING, G_TYPE_STRING);
+                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
   load_store();
   gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
   gtk_container_add(GTK_CONTAINER(scrolled_window), view);
@@ -871,12 +920,16 @@ static int updatePanel(int state) {
   gchar text[32];
   switch (state) {
   case UPDATE_NEW:
+    thisToggle = 0;
+    updating_toggle_widget = 1;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newToggle), FALSE);
+    updating_toggle_widget = 0;
     thisInvert = 0;
     updating_invert_widget = 1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newInvert), FALSE);
     updating_invert_widget = 0;
     gtk_label_set_text(GTK_LABEL(newEvent), Event2String(thisEvent));
-    snprintf(text, 32, "%d", thisChannel);
+    midi_channel_label(thisChannel, text, sizeof(text));
     gtk_label_set_text(GTK_LABEL(newChannel), text);
     snprintf(text, 32, "%d", thisNote);
     gtk_label_set_text(GTK_LABEL(newNote), text);
@@ -901,6 +954,7 @@ static int updatePanel(int state) {
       t_print("%s: Unknown Event in UPDATE_NEW\n", __func__);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(newType), 0);
+    update_toggle_sensitivity();
     gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
     snprintf(text, 32, "%d", thisVal);
     gtk_label_set_text(GTK_LABEL(newVal), text);
@@ -919,7 +973,7 @@ static int updatePanel(int state) {
     break;
   case UPDATE_EXISTING:
     gtk_label_set_text(GTK_LABEL(newEvent), Event2String(thisEvent));
-    snprintf(text, 32, "%d", thisChannel);
+    midi_channel_label(thisChannel, text, sizeof(text));
     gtk_label_set_text(GTK_LABEL(newChannel), text);
     snprintf(text, 32, "%d", thisNote);
     gtk_label_set_text(GTK_LABEL(newNote), text);
@@ -978,7 +1032,14 @@ static int updatePanel(int state) {
       thisVfr1  = current_cmd->vfr1;
       thisVfr2  = current_cmd->vfr2;
       thisInvert = current_cmd->invert;
+      thisToggle = current_cmd->toggle;
+    } else {
+      thisToggle = 0;
     }
+    updating_toggle_widget = 1;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newToggle), thisToggle);
+    updating_toggle_widget = 0;
+    update_toggle_sensitivity();
     updating_invert_widget = 1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(newInvert), thisInvert);
     updating_invert_widget = 0;
@@ -1060,7 +1121,7 @@ int ProcessNewMidiConfigureEvent(void *data) {
         int tree_channel;
         int tree_note;
         tree_event = String2Event(str_event);
-        tree_channel = atoi(str_channel);
+        tree_channel = midi_channel_from_label(str_channel);
         tree_note = atoi(str_note);
         if (thisEvent == tree_event && thisChannel == tree_channel && thisNote == tree_note) {
           thisVal = 0;
@@ -1168,6 +1229,7 @@ void midiSaveState(void) {
       SetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    Type2String(cmd->type));
       SetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel,  cmd->action);
       SetPropI3("midi[%d].entry[%d].channel[%d].invert", i, entry, channel,  cmd->invert);
+      SetPropI3("midi[%d].entry[%d].channel[%d].toggle", i, entry, channel,  cmd->toggle);
       //
       // For wheels, also store the additional parameters,
       //
@@ -1200,6 +1262,7 @@ void midiRestoreState(void) {
   int type;
   int action;
   int invert;
+  int toggle;
   int vfl1, vfl2;
   int fl1, fl2;
   int lft1, lft2;
@@ -1232,9 +1295,9 @@ void midiRestoreState(void) {
     int entries = -1;
     GetPropI1("midi[%d].entries", i, entries);
     for (int entry = 0; entry < entries; entry++) {
-      channel = -1;
+      channel = -2;
       GetPropI2("midi[%d].entry[%d].channel", i, entry,      channel);
-      if (channel < 0) { continue; }
+      if (channel < -1 || channel > 15) { continue; }
       g_strlcpy(str, "NONE", 128);
       GetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel, str);
       event = String2Event(str);
@@ -1245,6 +1308,8 @@ void midiRestoreState(void) {
       GetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
       invert = 0;
       GetPropI3("midi[%d].entry[%d].channel[%d].invert", i, entry, channel, invert);
+      toggle = 0;
+      GetPropI3("midi[%d].entry[%d].channel[%d].toggle", i, entry, channel, toggle);
       if (event == EVENT_NONE || type == TYPE_NONE || action < 0 || action >= ACTIONS) {
         continue;
       }
@@ -1289,6 +1354,8 @@ void midiRestoreState(void) {
       desc->next     = NULL;
       desc->action   = action; // MIDIaction
       desc->invert   = invert;
+      desc->toggle   = (event == MIDI_CTRL && type == MIDI_KEY) ? !!toggle : 0;
+      desc->last_cc  = -1;
       desc->type     = type;   // MIDItype
       desc->event    = event;  // MIDIevent
       desc->vfl1     = vfl1;
