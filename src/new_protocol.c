@@ -2265,7 +2265,10 @@ static void new_protocol_transmit_specific(void) {
   transmit_specific_buffer[5] = 0; //  default no CW
   if ((txmode == modeCWU || txmode == modeCWL) && cw_keyer_internal
       && !atomic_load_explicit(&CAT_cw_is_active, memory_order_acquire)
-      && !atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire)) {
+      && !atomic_load_explicit(&MIDI_cw_is_active, memory_order_acquire)
+      && !tune
+      && !transmitter->twotone
+      && !transmitter->noise) {
     //
     // Set this byte only if in CW, and if using "CW handled in radio"
     //
