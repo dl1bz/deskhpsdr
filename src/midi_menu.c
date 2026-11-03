@@ -207,6 +207,15 @@ static void update_toggle_sensitivity(void) {
   gtk_widget_set_sensitive(newInvert, !(enabled && thisToggle));
 }
 
+// Use the same MIDI action/type rules for editing, committing and restoring.
+// TYPE_HIDE actions must not be assignable through MIDI, as in action_dialog().
+static gboolean midi_action_valid_for_type(int action, enum ACTIONtype type) {
+  if (action <= NO_ACTION || action >= ACTIONS) { return FALSE; }
+  if (type != MIDI_KEY && type != MIDI_KNOB && type != MIDI_WHEEL) { return FALSE; }
+  return !(ActionTable[action].type & TYPE_HIDE) &&
+         (ActionTable[action].type & type);
+}
+
 static void device_cb(GtkWidget *widget, gpointer data) {
   int ind = GPOINTER_TO_INT(data);
   int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
@@ -258,7 +267,7 @@ static void type_changed_cb(GtkWidget *widget, gpointer data) {
   //
   // If the type changed, the current action may no longer be allowed
   //
-  if (ActionTable[thisAction].type && thisType == 0) {
+  if (thisAction != NO_ACTION && !midi_action_valid_for_type(thisAction, thisType)) {
     thisAction = NO_ACTION;
   }
   gtk_button_set_label(GTK_BUTTON(newAction), ActionTable[thisAction].str);
@@ -595,8 +604,9 @@ static void updateDescription(void) {
     t_print("%s: invalid MIDI note/controller index=%d\n", __func__, thisNote);
     return;
   }
-  if (thisAction < 0 || thisAction >= ACTIONS) {
-    t_print("%s: invalid MIDI action index=%d\n", __func__, thisAction);
+  if (!midi_action_valid_for_type(thisAction, thisType)) {
+    t_print("%s: invalid MIDI action/type combination (action=%d type=%d)\n",
+            __func__, thisAction, thisType);
     return;
   }
   //
@@ -1437,7 +1447,9 @@ void midiRestoreState(void) {
       GetPropI3("midi[%d].entry[%d].channel[%d].invert", i, entry, channel, invert);
       toggle = 0;
       GetPropI3("midi[%d].entry[%d].channel[%d].toggle", i, entry, channel, toggle);
-      if (event == EVENT_NONE || type == TYPE_NONE || action < 0 || action >= ACTIONS) {
+      if (event == EVENT_NONE || !midi_action_valid_for_type(action, type)) {
+        t_print("%s: invalid MIDI assignment skipped (index=%d channel=%d event=%d type=%d action=%d)\n",
+                __func__, i, channel, event, type, action);
         continue;
       }
       //
