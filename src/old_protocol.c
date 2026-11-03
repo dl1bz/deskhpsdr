@@ -198,7 +198,7 @@ static inline unsigned char hl2_iob_write_c0(void) {
 static inline unsigned char hl2_iob_read_c0(void) {
   return atomic_load_explicit(&hl2_iob_active_bus, memory_order_relaxed) == 1 ? 0xF8 : 0xFA;
 }
-static int hl2_iob_last_read_reg = -1;
+static atomic_int hl2_iob_last_read_reg = -1;
 
 //
 // "HermesLite-II I/O Bord detected" flag
@@ -296,7 +296,9 @@ static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
   }
   // IO-board readback: first status byte is C4 (matches existing process_control_bytes() logic)
   if (atomic_load_explicit(&hl2_iob_present, memory_order_relaxed) &&
-      !hl2_pico_present && addr == 0x3D) {
+      !hl2_pico_present && addr == 0x3D &&
+      atomic_load_explicit(&hl2_iob_last_read_reg, memory_order_relaxed) == REG_ANTENNA_TUNER &&
+      atomic_load_explicit(&hl2_iob_reg7_fastpoll_active, memory_order_relaxed)) {
     // atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
     unsigned char oldv = atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed);
     if (oldv != c4) {
@@ -716,7 +718,7 @@ void old_protocol_init(int rate) {
   int i;
   hl2_iob_detect_phase = 0;
   hl2_iob_detect_expect_bus = 0;
-  hl2_iob_last_read_reg = -1;
+  atomic_store_explicit(&hl2_iob_last_read_reg, -1, memory_order_relaxed);
   hl2_pico_present = 0;
   atomic_store_explicit(&hl2_iob_active_bus, 2, memory_order_relaxed);
 #ifdef __AH4IOB__
@@ -1733,13 +1735,13 @@ static void process_control_bytes(void) {
       }
     } else if (iob_present && response_bus ==
                atomic_load_explicit(&hl2_iob_active_bus, memory_order_relaxed)) {
-      if (hl2_iob_last_read_reg == REG_LPF_STATUS && hl2_pico_present) {
+      if (atomic_load_explicit(&hl2_iob_last_read_reg, memory_order_relaxed) == REG_LPF_STATUS && hl2_pico_present) {
         hl2_iob_lpf_status = control_in[4];
         if (rigctl_debug) {
           t_print("LPF: 0x%02X (%s)\n", hl2_iob_lpf_status,
                   hl2_lpf_status_to_string(hl2_iob_lpf_status));
         }
-      } else {
+      } else if (atomic_load_explicit(&hl2_iob_last_read_reg, memory_order_relaxed) == REG_ANTENNA_TUNER) {
 #ifdef __AH4IOB__
         atomic_store_explicit(&hl2_iob_tuner_status, control_in[4], memory_order_relaxed);
 #else
@@ -3257,7 +3259,7 @@ void ozy_send_buffer(void) {
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr (HL2 IO board)
         output_buffer[C3] = REG_ANTENNA_TUNER;            // tuner status register
         output_buffer[C4] = 0x00;                         // data (ignored on read)
-        hl2_iob_last_read_reg = REG_ANTENNA_TUNER;
+        atomic_store_explicit(&hl2_iob_last_read_reg, REG_ANTENNA_TUNER, memory_order_relaxed);
         hl2_command_loop = hl2_pico_present ? 12 : 0;
         break;
       case 12:
@@ -3274,7 +3276,7 @@ void ozy_send_buffer(void) {
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = REG_LPF_STATUS;               // Pico LPF status register
         output_buffer[C4] = 0x00;                         // data (ignored on read)
-        hl2_iob_last_read_reg = REG_LPF_STATUS;
+        atomic_store_explicit(&hl2_iob_last_read_reg, REG_LPF_STATUS, memory_order_relaxed);
         hl2_command_loop = 0;
         break;
       case 20:
