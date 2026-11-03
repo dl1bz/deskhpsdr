@@ -247,6 +247,8 @@ int hl2_pico_present = 0;
 // probably not needed
 //
 static pthread_mutex_t send_audio_mutex   = PTHREAD_MUTEX_INITIALIZER;
+// Serialize P1 DSP processing with WDSP channel shutdown.
+static pthread_mutex_t p1_processing_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 //
 // This mutex "protects" ozy_send_buffer. This is necessary only for
@@ -677,6 +679,9 @@ void old_protocol_stop(void) {
   atomic_store_explicit(&P1running, 0, memory_order_release);
   metis_start_stop(0);
   pthread_mutex_unlock(&send_ozy_mutex);
+  // Wait for any in-flight P1 IQ/mic block before radio_stop closes WDSP.
+  pthread_mutex_lock(&p1_processing_mutex);
+  pthread_mutex_unlock(&p1_processing_mutex);
 }
 
 void old_protocol_run(void) {
@@ -805,6 +810,7 @@ void old_protocol_init(int rate) {
     output_buffer[i] = 0;
   }
   metis_restart();
+  atomic_store_explicit(&p1_initialized, 1, memory_order_release);
   pthread_mutex_unlock(&send_ozy_mutex);
 }
 
@@ -2111,10 +2117,14 @@ static gpointer process_ozy_input_buffer_thread(gpointer arg) {
     //
     // This data can change while processing one buffer
     //
-    st_num_hpsdr_receivers = how_many_receivers();
-    st_rxfdbk = rx_feedback_channel();
-    st_txfdbk = tx_feedback_channel();
-    for (int i = 0; i < 1024; i++) { process_ozy_byte(RXRINGBUF[out + i] & 0xFF); }
+    pthread_mutex_lock(&p1_processing_mutex);
+    if (atomic_load_explicit(&P1running, memory_order_acquire)) {
+      st_num_hpsdr_receivers = how_many_receivers();
+      st_rxfdbk = rx_feedback_channel();
+      st_txfdbk = tx_feedback_channel();
+      for (int i = 0; i < 1024; i++) { process_ozy_byte(RXRINGBUF[out + i] & 0xFF); }
+    }
+    pthread_mutex_unlock(&p1_processing_mutex);
     MEMORY_BARRIER;
     atomic_store_explicit(&rxring_outptr, nptr, memory_order_release);
   }
