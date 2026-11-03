@@ -188,8 +188,16 @@ static void open_tcp_socket(void);
 static void open_udp_socket(void);
 static int how_many_receivers(void);
 
-static int hl2_iob_detect_phase = 0;              // 0 = 0x41, 1 = 0x1d/REG_LPF_DETECT
-static int hl2_iob_detect_expect_major = 0;       // nächster 0x3D-Readback gehört zum 0x1D-Major-Detect
+// Probe legacy IO board on bus 2, then Pico on bus 2 and bus 1.
+static int hl2_iob_detect_phase = 0;              // 0 = legacy, 1 = Pico/I2C2, 2 = Pico/I2C1
+static int hl2_iob_detect_expect_bus = 0;         // 0 = none, 1/2 = pending Pico probe
+static atomic_int hl2_iob_active_bus = 2;         // legacy IO board defaults to I2C2
+static inline unsigned char hl2_iob_write_c0(void) {
+  return atomic_load_explicit(&hl2_iob_active_bus, memory_order_relaxed) == 1 ? 0x78 : 0x7A;
+}
+static inline unsigned char hl2_iob_read_c0(void) {
+  return atomic_load_explicit(&hl2_iob_active_bus, memory_order_relaxed) == 1 ? 0xF8 : 0xFA;
+}
 static int hl2_iob_last_read_reg = -1;
 
 //
@@ -285,7 +293,8 @@ static inline void hl2_iob_fastpath_sniff_512(const unsigned char *buf) {
     return;
   }
   // IO-board readback: first status byte is C4 (matches existing process_control_bytes() logic)
-  if (atomic_load_explicit(&hl2_iob_present, memory_order_relaxed) && addr == 0x3D) {
+  if (atomic_load_explicit(&hl2_iob_present, memory_order_relaxed) &&
+      !hl2_pico_present && addr == 0x3D) {
     // atomic_store_explicit(&hl2_iob_tuner_status, c4, memory_order_relaxed);
     unsigned char oldv = atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed);
     if (oldv != c4) {
@@ -392,7 +401,7 @@ void hl2_iob_set_antenna_tuner(unsigned char value) {
    * C3 = REG_ANTENNA_TUNER (7)
    * C4 = value      -> zu schreibender Wert
    */
-  buffer[C0] = 0x7A;              // I2C-2 without ACK
+  buffer[C0] = hl2_iob_write_c0(); // detected I2C bus
   buffer[C1] = 0x06;              // write
   buffer[C2] = 0x80 | 0x1d;       // I2C addr of HL2 IO board
   buffer[C3] = REG_ANTENNA_TUNER; // Register 7
@@ -700,6 +709,16 @@ void old_protocol_set_mic_sample_rate(int rate) {
 //
 void old_protocol_init(int rate) {
   int i;
+  hl2_iob_detect_phase = 0;
+  hl2_iob_detect_expect_bus = 0;
+  hl2_iob_last_read_reg = -1;
+  hl2_pico_present = 0;
+  atomic_store_explicit(&hl2_iob_active_bus, 2, memory_order_relaxed);
+#ifdef __AH4IOB__
+  atomic_store_explicit(&hl2_iob_present, 0, memory_order_relaxed);
+#else
+  hl2_iob_present = 0;
+#endif
   atomic_store_explicit(&p1_initialized, 0, memory_order_relaxed);
 #ifdef __APPLE__
   atomic_init(&sr,          0);
@@ -1673,61 +1692,54 @@ static void process_control_bytes(void) {
     // t_print("HL2IOB-ACK: addr=0x%02X C1=0x%02X C2=0x%02X C3=0x%02X C4=0x%02X\n",
     //        addr, control_in[1], control_in[2], control_in[3], control_in[4]);
     //
-    // 1) Board-Detect über REG_BOARD_ID (0x41): alle Datenbytes = 0xF1
-    //
-    if (
+    // ACK addr identifies the FPGA I2C command slot: 0x3C = bus 1, 0x3D = bus 2.
+    // Only a pending Pico probe may select a bus. Ordinary status replies must
+    // never be mistaken for discovery replies.
+    const int response_bus = addr == 0x3C ? 1 : (addr == 0x3D ? 2 : 0);
 #ifdef __AH4IOB__
-            !present &&
+    const int iob_present = atomic_load_explicit(&hl2_iob_present, memory_order_relaxed);
 #else
-            !hl2_iob_present &&
+    const int iob_present = hl2_iob_present;
 #endif
-            addr == 0x3D &&
-            control_in[1] == 0xF1 &&
-            control_in[2] == 0xF1 &&
-            control_in[3] == 0xF1 &&
-            control_in[4] == 0xF1) {
-      t_print("%s: HL2IOB: board detected\n", __func__);
+    if (!iob_present && response_bus == 2 &&
+        control_in[1] == 0xF1 && control_in[2] == 0xF1 &&
+        control_in[3] == 0xF1 && control_in[4] == 0xF1 &&
+        hl2_iob_detect_expect_bus == 0) {
 #ifdef __AH4IOB__
       atomic_store_explicit(&hl2_iob_present, 1, memory_order_relaxed);
-      t_print("%s: set hl2_iob_present = %d\n", __func__,
-              atomic_load_explicit(&hl2_iob_present, memory_order_relaxed));
-    } else if (present && addr == 0x3D) {
-      atomic_store_explicit(&hl2_iob_tuner_status, control_in[4], memory_order_relaxed);
-      // t_print("HL2IOB (old): C4=0x%02X tuner status = 0x%02X\n",
-      //        control_in[4],
-      //        atomic_load_explicit(&hl2_iob_tuner_status, memory_order_relaxed));
 #else
       hl2_iob_present = 1;
-      t_print("%s: set hl2_iob_present = %d\n", __func__, hl2_iob_present);
-    } else if (!hl2_iob_present && addr == 0x3D && hl2_iob_detect_expect_major) {
-      hl2_iob_detect_expect_major = 0;
+#endif
+      atomic_store_explicit(&hl2_iob_active_bus, 2, memory_order_relaxed);
+      t_print("%s: HL2 IO board detected on I2C2\n", __func__);
+    } else if (!iob_present && response_bus != 0 &&
+               hl2_iob_detect_expect_bus == response_bus) {
+      hl2_iob_detect_expect_bus = 0;
       if (control_in[4] == 0xEF) {
+#ifdef __AH4IOB__
+        atomic_store_explicit(&hl2_iob_present, 1, memory_order_relaxed);
+#else
         hl2_iob_present = 1;
+#endif
         hl2_pico_present = 1;
-        t_print("%s: HL2 Pico: detected via 0x1D REG_LPF_STATUS=%d match 0xEF\n", __func__, REG_LPF_STATUS);
+        atomic_store_explicit(&hl2_iob_active_bus, response_bus, memory_order_relaxed);
+        t_print("%s: HL2 Pico detected on I2C%d (0x1D, ID 0xEF)\n", __func__, response_bus);
       }
-    } else if (hl2_iob_present && addr == 0x3D) {
-      //
-      // 2) Alle weiteren I2C-Reads gehen ans IO-Board.
-      //    Laut HL2IOBoard-Doku liefert ein Read von REG_ANTENNA_TUNER
-      //    das Register selbst plus die nächsten drei Register.
-      //    Das erste Byte ist der Tuner-Status:
-      //      0x00 -> Tune erfolgreich
-      //      0xEE -> "send RF" (Tastung aktiv halten)
-      //      >=0xF0 -> Fehlercode
-      //
-      if (hl2_iob_last_read_reg == REG_LPF_STATUS) {
+    } else if (iob_present && response_bus ==
+               atomic_load_explicit(&hl2_iob_active_bus, memory_order_relaxed)) {
+      if (hl2_iob_last_read_reg == REG_LPF_STATUS && hl2_pico_present) {
         hl2_iob_lpf_status = control_in[4];
         if (rigctl_debug) {
-          t_print("LPF: 0x%02X (%s)\n", hl2_iob_lpf_status, hl2_lpf_status_to_string(hl2_iob_lpf_status));
+          t_print("LPF: 0x%02X (%s)\n", hl2_iob_lpf_status,
+                  hl2_lpf_status_to_string(hl2_iob_lpf_status));
         }
       } else {
+#ifdef __AH4IOB__
+        atomic_store_explicit(&hl2_iob_tuner_status, control_in[4], memory_order_relaxed);
+#else
         hl2_iob_tuner_status = control_in[4];
-        if (rigctl_debug) {
-          t_print("HL2IOB: C4=0x%02X tuner status = 0x%02X\n", control_in[4], hl2_iob_tuner_status);
-        }
-      }
 #endif
+      }
     }
     //
     // ACK-Pakete sind rein für das IO-Board – hier fertig behandeln.
@@ -3077,27 +3089,36 @@ void ozy_send_buffer(void) {
           */
           // 1) Override bleibt erhalten
           if (force_iob) {
+#ifdef __AH4IOB__
+            atomic_store_explicit(&hl2_iob_present, 1, memory_order_relaxed);
+#else
             hl2_iob_present = 1;
+#endif
           }
-          // 2) Standard/Fallback Detection im Wechsel:
-          //    Phase 0 -> PCA9536 auf 0x41
-          //    Phase 1 -> Pico auf 0x1d / REG_LPF_DETECT
-          else if (!hl2_iob_present) {
-            output_buffer[C0] = 0xFA;
+          // Keep the legacy PCA9536 detection on I2C2. Probe the Pico
+          // separately on both buses without changing legacy IO-board traffic.
+          else if (
+#ifdef __AH4IOB__
+                  !atomic_load_explicit(&hl2_iob_present, memory_order_relaxed)
+#else
+                  !hl2_iob_present
+#endif
+          ) {
             output_buffer[C1] = 0x07;
+            output_buffer[C4] = 0x00;
             if (hl2_iob_detect_phase == 0) {
+              output_buffer[C0] = 0xFA;
               output_buffer[C2] = 0x80 | 0x41;
               output_buffer[C3] = 0x00;
-              output_buffer[C4] = 0x00;
-              hl2_iob_detect_phase = 1;
-              hl2_iob_detect_expect_major = 0;
+              hl2_iob_detect_expect_bus = 0;
             } else {
+              const int probe_bus = hl2_iob_detect_phase == 1 ? 2 : 1;
+              output_buffer[C0] = probe_bus == 1 ? 0xF8 : 0xFA;
               output_buffer[C2] = 0x80 | 0x1d;
               output_buffer[C3] = REG_LPF_DETECT;
-              output_buffer[C4] = 0x00;
-              hl2_iob_detect_phase = 0;
-              hl2_iob_detect_expect_major = 1;
+              hl2_iob_detect_expect_bus = probe_bus;
             }
+            hl2_iob_detect_phase = (hl2_iob_detect_phase + 1) % 3;
           }
           hl2_query_count = 25;
         } else {
@@ -3139,7 +3160,7 @@ void ozy_send_buffer(void) {
         break;
       case 3:
         // send MSByte (bits 32-39) of TX frequency
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 0;                            // REG_TX_FREQ_BYTE4
@@ -3148,7 +3169,7 @@ void ozy_send_buffer(void) {
         break;
       case 4:
         // send bits 24-31 of TX frequency
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 1;                            // REG_TX_FREQ_BYTE3
@@ -3157,7 +3178,7 @@ void ozy_send_buffer(void) {
         break;
       case 5:
         // send bits 16-23 of TX frequency
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 2;                            // REG_TX_FREQ_BYTE2
@@ -3166,7 +3187,7 @@ void ozy_send_buffer(void) {
         break;
       case 6:
         // send bits 8-15 of TX frequency
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 3;                           // REG_TX_FREQ_BYTE1
@@ -3177,7 +3198,7 @@ void ozy_send_buffer(void) {
         // send LSByte (bits 0-7) of TX frequency
         // This transfers 40-bit TXfreq data from the latch
         // to become effective and must occur last
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 4;                            // REG_TX_FREQ_BYTE0
@@ -3186,7 +3207,7 @@ void ozy_send_buffer(void) {
         //t_print("HL2IOB: Sent TX freq %lld\n", hl2_iob_tx_freq);
         break;
       case 8:
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 11;                           // REG_RF_INPUTS
@@ -3195,7 +3216,7 @@ void ozy_send_buffer(void) {
         //t_print("HL2IOB: Sent RF INP MODE %d\n", hl2_iob_rfmode);
         break;
       case 9:
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 13;                           // REG_FCODE_RX1
@@ -3204,7 +3225,7 @@ void ozy_send_buffer(void) {
         //t_print("HL2IOB: Sent RX1 freq code %d\n", hl2_iob_rx1_code);
         break;
       case 10:
-        output_buffer[C0] = 0x7A;                         // I2C-2 without ACK
+        output_buffer[C0] = hl2_iob_write_c0();                         // I2C-2 without ACK
         output_buffer[C1] = 0x06;                         // write
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = 14;                           // REG_FCODE_RX2
@@ -3221,7 +3242,7 @@ void ozy_send_buffer(void) {
         //  - C3 = REG_ANTENNA_TUNER (7)
         //  - C4 = dummy (ignored on read)
         //
-        output_buffer[C0] = 0xFA;                         // I2C-2 *with* ACK
+        output_buffer[C0] = hl2_iob_read_c0();                         // I2C-2 *with* ACK
         output_buffer[C1] = 0x07;                         // read
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr (HL2 IO board)
         output_buffer[C3] = REG_ANTENNA_TUNER;            // tuner status register
@@ -3238,7 +3259,7 @@ void ozy_send_buffer(void) {
         //  - C3 = REG_LPF_STATUS (34)
         //  - C4 = dummy (ignored on read)
         //
-        output_buffer[C0] = 0xFA;                         // I2C-2 *with* ACK
+        output_buffer[C0] = hl2_iob_read_c0();                         // I2C-2 *with* ACK
         output_buffer[C1] = 0x07;                         // read
         output_buffer[C2] = 0x80 | 0x1d;                  // i2c addr
         output_buffer[C3] = REG_LPF_STATUS;               // Pico LPF status register
