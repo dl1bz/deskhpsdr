@@ -292,44 +292,6 @@ static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
   return TRUE;
 }
 
-// --- Hermes Lite 2: Reboot via C&C-Frame @ UDP:1025, target addr 0x3A ---
-// Paketlayout (60 Bytes):
-//   0x00..: EF FE 05 7F (0x3A<<1) 00 00 00 01 00...00
-static int hl2_send_reboot_1025(const struct sockaddr_in *dst_in) {
-  int s = socket(AF_INET, SOCK_DGRAM, 0);
-  if (s < 0) { return -1; }
-  uint8_t msg[60];
-  memset(msg, 0, sizeof msg);
-  msg[0] = 0xEF;
-  msg[1] = 0xFE;
-  msg[2] = 0x05;
-  msg[3] = 0x7F;
-  msg[4] = (uint8_t)(0x3A << 1);
-  msg[5] = 0x00;
-  msg[6] = 0x00;
-  msg[7] = 0x00;
-  msg[8] = 0x01;
-  struct sockaddr_in to = *dst_in;
-  to.sin_port = htons(1025);
-  ssize_t n = sendto(s, msg, sizeof msg, 0, (struct sockaddr *) &to, sizeof to);
-  close(s);
-  return (n == (ssize_t) sizeof msg) ? 0 : -1;
-}
-
-static gboolean reboot_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  DISCOVERED *radio = (DISCOVERED *) data;
-  struct sockaddr_in dst = radio->info.network.address;
-  int rc = hl2_send_reboot_1025(&dst);
-  if (rc == 0) {
-    status_text("HL2: reboot command sent\n");
-    t_print("%s: HL2: reboot command sent\n", __func__);
-  } else {
-    status_text("HL2: reboot send error\n");
-    t_print("%s: HL2: reboot send error\n", __func__);
-  }
-  return TRUE;
-}
-
 static void p2_setup_clicked(GtkWidget *widget, gpointer data) {
   (void) widget;
   p2_programmer_open(discovery_dialog, (const DISCOVERED *) data);
@@ -416,7 +378,6 @@ static void p2_angelia_ddc0_map_toggled(GtkToggleButton *button, gpointer data) 
 
 /* -- Wrapper für Wayland-sichere Button-Signale ("clicked") -- */
 static void start_clicked(GtkButton *btn, gpointer data)    { (void) btn; start_cb(NULL, NULL, data); }
-static void reboot_clicked(GtkButton *btn, gpointer data)   { (void) btn; reboot_cb(NULL, NULL, data); }
 static void discover_clicked(GtkButton *btn, gpointer data) { (void) btn; discover_cb(NULL, NULL, data); }
 static void protocols_clicked(GtkButton *btn, gpointer data) { (void) btn; protocols_cb(NULL, NULL, data); }
 static void exit_clicked(GtkButton *btn, gpointer data)     { (void) btn; exit_cb(NULL, NULL, data); }
@@ -604,28 +565,17 @@ discovery_done:
       gtk_widget_show(start_button);
       gtk_grid_attach(GTK_GRID(grid), start_button, 3, row, 1, 1);
       g_signal_connect(start_button, "clicked", G_CALLBACK(start_clicked), GINT_TO_POINTER(d - discovered));
-      int p2_setup_column = 4;
-      if (d->protocol == NEW_PROTOCOL && d->status == STATE_AVAILABLE && !d->use_routing &&
+      if ((d->protocol == NEW_PROTOCOL ||
+           (d->protocol == ORIGINAL_PROTOCOL && d->device == DEVICE_HERMES_LITE2)) &&
+          d->status == STATE_AVAILABLE && !d->use_routing &&
           strcmp(d->info.network.interface_name, "XDMA") != 0) {
         GtkWidget *setup_button = gtk_button_new_with_label("Setup");
         gtk_widget_set_name(setup_button, "discovery_btn");
-        gtk_widget_set_tooltip_text(setup_button, "Configure or program this Protocol 2 SDR Device");
+        gtk_widget_set_tooltip_text(setup_button, "Configure or program this SDR Device");
         gtk_widget_set_margin_top(setup_button, 10);
         gtk_widget_set_margin_start(setup_button, 5);
         gtk_grid_attach(GTK_GRID(grid), setup_button, 4, row, 1, 1);
         g_signal_connect(setup_button, "clicked", G_CALLBACK(p2_setup_clicked), (gpointer) d);
-        p2_setup_column = 5;
-      }
-      // Reboot button for Hermes Lite 2 (Protocol 1 only).
-      if (d->device == DEVICE_HERMES_LITE2 && !have_radioberry1
-          && !have_radioberry2 && !have_radioberry3) {
-        GtkWidget *reboot_button = gtk_button_new_with_label("Reboot");
-        gtk_widget_set_name(reboot_button, "discovery_btn");
-        gtk_widget_set_tooltip_text(reboot_button, "Reboot this SDR Device");
-        gtk_widget_set_margin_top(reboot_button, 10);
-        gtk_widget_set_margin_start(reboot_button, 5);
-        gtk_grid_attach(GTK_GRID(grid), reboot_button, p2_setup_column, row, 1, 1);
-        g_signal_connect(reboot_button, "clicked", G_CALLBACK(reboot_clicked), (gpointer) d);
       }
       // if not available then cannot start it
       switch (d->status) {

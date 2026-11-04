@@ -54,6 +54,9 @@ typedef struct {
   GtkWidget *parent;
   GtkWidget *dialog;
   GtkWidget *ip_entry;
+  GtkWidget *mac_entry;
+  GtkWidget *mac_button;
+  GtkWidget *reboot_button;
   GtkWidget *status_label;
   GtkWidget *progress;
   GtkWidget *set_ip_button;
@@ -62,6 +65,7 @@ typedef struct {
   GtkWidget *close_button;
   struct p2_target target;
   int busy;
+  int protocol;
 } P2Programmer;
 
 typedef enum {
@@ -85,6 +89,9 @@ typedef struct {
 
 static void p2_set_controls_sensitive(P2Programmer *ui, gboolean sensitive) {
   gtk_widget_set_sensitive(ui->ip_entry, sensitive);
+  if (ui->mac_entry) { gtk_widget_set_sensitive(ui->mac_entry, sensitive); }
+  if (ui->mac_button) { gtk_widget_set_sensitive(ui->mac_button, sensitive); }
+  if (ui->reboot_button) { gtk_widget_set_sensitive(ui->reboot_button, sensitive); }
   gtk_widget_set_sensitive(ui->set_ip_button, sensitive);
   gtk_widget_set_sensitive(ui->dhcp_button, sensitive);
   gtk_widget_set_sensitive(ui->program_button, sensitive);
@@ -410,11 +417,125 @@ static int p2_program_rbf(P2Programmer *ui, const char *filename,
   return 0;
 }
 
+/* Protocol 1 Hermes Lite 2 network bootloader (hermeslite.py). */
+static int p1_reply(int sock, const struct p2_target *target, unsigned char type,
+                    char *error, size_t error_len) {
+  unsigned char reply[256];
+  for (;;) {
+    struct sockaddr_in src;
+    socklen_t len = sizeof(src);
+    ssize_t n = recvfrom(sock, reply, sizeof(reply), 0, (struct sockaddr *)&src, &len);
+    if (n < 0) {
+      if (errno == EINTR) { continue; }
+      snprintf(error, error_len, "HL2 response: %s", strerror(errno));
+      return -1;
+    }
+    if (src.sin_addr.s_addr != target->address.sin_addr.s_addr ||
+        src.sin_port != htons(P2_PROGRAM_PORT)) { continue; }
+    if (n != 60 || reply[0] != 0xef || reply[1] != 0xfe ||
+        memcmp(reply + 3, target->mac, 6) != 0) { continue; }
+    if (reply[2] != type) {
+      snprintf(error, error_len, "Unexpected HL2 response type %u (expected %u).",
+               reply[2], type);
+      return -1;
+    }
+    return 0;
+  }
+}
+
+static int p1_program_rbf(P2Programmer *ui, const char *filename,
+                          char *error, size_t error_len) {
+  FILE *fp = fopen(filename, "rb");
+  if (!fp) {
+    snprintf(error, error_len, "Cannot open RBF: %s", strerror(errno));
+    return -1;
+  }
+  unsigned char header[36];
+  memset(header, 0xff, 32);
+  header[32] = 0x6a;
+  header[33] = 0xf7;
+  header[34] = 0xf7;
+  header[35] = 0xf7;
+  unsigned char actual[36];
+  if (fread(actual, 1, sizeof(actual), fp) != sizeof(actual) ||
+      memcmp(header, actual, sizeof(header)) != 0) {
+    snprintf(error, error_len, "Invalid HL2 RBF header.");
+    fclose(fp);
+    return -1;
+  }
+  if (fseek(fp, 0, SEEK_END) != 0) {
+    snprintf(error, error_len, "Cannot seek RBF.");
+    fclose(fp);
+    return -1;
+  }
+  long size = ftell(fp);
+  if (size <= 0 || (uint64_t)size > (uint64_t)UINT32_MAX * 256U ||
+      fseek(fp, 0, SEEK_SET) != 0) {
+    snprintf(error, error_len, "Invalid RBF size.");
+    fclose(fp);
+    return -1;
+  }
+  uint32_t blocks = (uint32_t)(((uint64_t)size + 255U) / 256U);
+  int sock = p2_bind_socket(&ui->target, 10, 0, error, error_len);
+  if (sock < 0) { fclose(fp); return -1; }
+  unsigned char discover[60] = {0xef, 0xfe, 0x02};
+  if (sendto(sock, discover, sizeof(discover), 0,
+             (struct sockaddr *)&ui->target.address, sizeof(ui->target.address)) != sizeof(discover) ||
+      p1_reply(sock, &ui->target, 2, error, error_len) != 0) {
+    if (!error[0]) { snprintf(error, error_len, "HL2 must be idle and respond to discovery."); }
+    close(sock);
+    fclose(fp);
+    return -1;
+  }
+  p2_post_event(ui, P2_UI_STATUS, 0.0, "Erasing HL2 FPGA flash...");
+  unsigned char erase[60] = {0xef, 0xfe, 0x03, 0x02};
+  if (sendto(sock, erase, sizeof(erase), 0,
+             (struct sockaddr *)&ui->target.address, sizeof(ui->target.address)) != sizeof(erase) ||
+      p1_reply(sock, &ui->target, 3, error, error_len) != 0) {
+    if (!error[0]) { snprintf(error, error_len, "HL2 erase send failed."); }
+    close(sock);
+    fclose(fp);
+    return -1;
+  }
+  p2_post_event(ui, P2_UI_STATUS, 0.0, "Erase complete. Programming HL2...");
+  for (uint32_t block = 0; block < blocks; ++block) {
+    unsigned char packet[264] = {0xef, 0xfe, 0x03, 0x01};
+    p2_write_be32(packet + 4, blocks);
+    memset(packet + 8, 0xff, 256);
+    size_t n = fread(packet + 8, 1, 256, fp);
+    if (n == 0 || (n < 256 && block + 1 != blocks)) {
+      snprintf(error, error_len, "RBF read error at block %u.", block);
+      close(sock);
+      fclose(fp);
+      return -1;
+    }
+    if (sendto(sock, packet, sizeof(packet), 0,
+               (struct sockaddr *)&ui->target.address, sizeof(ui->target.address)) != sizeof(packet) ||
+        p1_reply(sock, &ui->target, 4, error, error_len) != 0) {
+      if (!error[0]) { snprintf(error, error_len, "HL2 block %u send failed.", block); }
+      close(sock);
+      fclose(fp);
+      return -1;
+    }
+    if (block == 0 || block + 1 == blocks || (block + 1) % 100 == 0) {
+      char progress[96];
+      snprintf(progress, sizeof(progress), "%u%% (%u/%u)",
+               (unsigned)(((uint64_t)(block + 1) * 100) / blocks), block + 1, blocks);
+      p2_post_event(ui, P2_UI_PROGRESS, (double)(block + 1) / blocks, progress);
+    }
+  }
+  close(sock);
+  fclose(fp);
+  return 0;
+}
+
 static gpointer p2_program_thread(gpointer data) {
   P2ProgramJob *job = (P2ProgramJob *)data;
   char error[256];
   error[0] = '\0';
-  if (p2_program_rbf(job->ui, job->filename, error, sizeof(error)) == 0) {
+  if ((job->ui->protocol == ORIGINAL_PROTOCOL
+       ? p1_program_rbf(job->ui, job->filename, error, sizeof(error))
+       : p2_program_rbf(job->ui, job->filename, error, sizeof(error))) == 0) {
     p2_post_event(job->ui, P2_UI_SUCCESS, 1.0, "FPGA programming completed successfully.");
   } else {
     p2_post_event(job->ui, P2_UI_ERROR, 0.0,
@@ -468,6 +589,154 @@ static void p2_dhcp_clicked(GtkButton *button, gpointer data) {
   p2_success_and_exit(ui, "DHCP command sent successfully.");
 }
 
+
+/* HL2 configuration commands use UDP 1025 (not the FPGA bootloader port). */
+static int hl2_command(P2Programmer *ui, unsigned char addr, const unsigned char data[4],
+                       unsigned char reply[60], char *error, size_t error_len) {
+  int sock = p2_bind_socket(&ui->target, 2, 0, error, error_len);
+  if (sock < 0) { return -1; }
+  struct sockaddr_in dst = ui->target.address;
+  dst.sin_port = htons(1025);
+  unsigned char packet[60] = {0xef, 0xfe, 0x05, 0x7f};
+  packet[4] = (unsigned char)(addr << 1);
+  memcpy(packet + 5, data, 4);
+  int result = -1;
+  for (int attempt = 0; attempt < 3; ++attempt) {
+    if (sendto(sock, packet, sizeof(packet), 0, (struct sockaddr *)&dst, sizeof(dst)) != sizeof(packet)) {
+      snprintf(error, error_len, "HL2 command send failed: %s", strerror(errno));
+      break;
+    }
+    for (;;) {
+      struct sockaddr_in from;
+      socklen_t fromlen = sizeof(from);
+      ssize_t n = recvfrom(sock, reply, 60, 0, (struct sockaddr *)&from, &fromlen);
+      if (n < 0) {
+        if (errno == EINTR) { continue; }
+        break;
+      }
+      if (n == 60 && from.sin_addr.s_addr == dst.sin_addr.s_addr &&
+          from.sin_port == dst.sin_port && reply[0] == 0xef && reply[1] == 0xfe &&
+          memcmp(reply + 3, ui->target.mac, 6) == 0) {
+        result = 0;
+        break;
+      }
+    }
+    if (result == 0) { break; }
+  }
+  close(sock);
+  if (result != 0 && !error[0]) { snprintf(error, error_len, "No HL2 response on UDP 1025."); }
+  return result;
+}
+
+static int hl2_eeprom(P2Programmer *ui, unsigned char reg, int value,
+                      unsigned char *read_value, char *error, size_t error_len) {
+  unsigned char cmd[4] = {value < 0 ? 0x07 : 0x06, 0xac,
+                          (unsigned char)((reg << 4) | (value < 0 ? 0x0c : 0)),
+                          (unsigned char)(value < 0 ? 0 : value)
+                         };
+  unsigned char reply[60];
+  if (hl2_command(ui, 0x3d, cmd, reply, error, error_len) != 0) { return -1; }
+  if (read_value) { *read_value = reply[0x19]; } /* response_data bits 15:8 */
+  return 0;
+}
+
+static int hl2_write_checked(P2Programmer *ui, unsigned char reg, unsigned char value,
+                             char *error, size_t error_len) {
+  unsigned char actual;
+  if (hl2_eeprom(ui, reg, value, NULL, error, error_len) != 0) { return -1; }
+  g_usleep(10000);
+  if (hl2_eeprom(ui, reg, -1, &actual, error, error_len) != 0) { return -1; }
+  if (actual != value) {
+    snprintf(error, error_len, "HL2 EEPROM register %u: readback %02X, expected %02X.",
+             reg, actual, value);
+    return -1;
+  }
+  return 0;
+}
+
+static void hl2_config_result(P2Programmer *ui, const char *success, const char *error) {
+  if (error[0]) { p2_error_dialog(GTK_WINDOW(ui->dialog), error); }
+  else { gtk_label_set_text(GTK_LABEL(ui->status_label), success); }
+}
+
+static void hl2_mac_clicked(GtkButton *button, gpointer data) {
+  (void)button;
+  P2Programmer *ui = data;
+  unsigned int mac[2];
+  char error[256] = {0};
+  const char *text = gtk_entry_get_text(GTK_ENTRY(ui->mac_entry));
+  if (strlen(text) != 5 || text[2] != ':' ||
+      !g_ascii_isxdigit(text[0]) || !g_ascii_isxdigit(text[1]) ||
+      !g_ascii_isxdigit(text[3]) || !g_ascii_isxdigit(text[4]) ||
+      sscanf(text, "%2x:%2x", &mac[0], &mac[1]) != 2) {
+    p2_error_dialog(GTK_WINDOW(ui->dialog),
+                    "Enter the last two MAC octets as HH:HH (hexadecimal).");
+    return;
+  }
+  if (mac[0] == 0xff && mac[1] == 0xff) {
+    p2_error_dialog(GTK_WINDOW(ui->dialog), "Invalid alternate MAC address.");
+    return;
+  }
+  unsigned char flags;
+  if (hl2_eeprom(ui, 6, -1, &flags, error, sizeof(error)) == 0 &&
+      hl2_write_checked(ui, 12, (unsigned char)mac[0], error, sizeof(error)) == 0 &&
+      hl2_write_checked(ui, 13, (unsigned char)mac[1], error, sizeof(error)) == 0) {
+    hl2_write_checked(ui, 6, flags | 0x40, error, sizeof(error));
+  }
+  hl2_config_result(ui, "Alternate MAC saved. Reboot HL2 to activate.", error);
+}
+
+static void hl2_ip_clicked(GtkButton *button, gpointer data) {
+  (void)button;
+  P2Programmer *ui = data;
+  struct in_addr ip;
+  char error[256] = {0};
+  if (inet_pton(AF_INET, gtk_entry_get_text(GTK_ENTRY(ui->ip_entry)), &ip) != 1) {
+    p2_error_dialog(GTK_WINDOW(ui->dialog), "Invalid IPv4 address.");
+    return;
+  }
+  const unsigned char *octets = (const unsigned char *)&ip.s_addr;
+  if (!octets[0] || octets[0] == 127 || octets[0] >= 224 ||
+      octets[3] == 0 || octets[3] == 255) {
+    p2_error_dialog(GTK_WINDOW(ui->dialog), "Invalid static host IPv4 address.");
+    return;
+  }
+  unsigned char flags;
+  if (hl2_eeprom(ui, 6, -1, &flags, error, sizeof(error)) == 0) {
+    for (int i = 0; i < 4; ++i)
+      if (hl2_write_checked(ui, 8 + i, octets[i], error, sizeof(error)) != 0) { break; }
+    if (!error[0]) { hl2_write_checked(ui, 6, (flags | 0x80) & ~0x20, error, sizeof(error)); }
+  }
+  hl2_config_result(ui, "Static IP saved. Reboot HL2 to activate.", error);
+}
+
+static void hl2_dhcp_clicked(GtkButton *button, gpointer data) {
+  (void)button;
+  P2Programmer *ui = data;
+  char error[256] = {0};
+  unsigned char flags;
+  if (hl2_eeprom(ui, 6, -1, &flags, error, sizeof(error)) == 0) {
+    hl2_write_checked(ui, 6, (flags & ~0x80) | 0x20, error, sizeof(error));
+  }
+  hl2_config_result(ui, "DHCP preference saved. Reboot HL2 to activate.", error);
+}
+
+static void hl2_reboot_clicked(GtkButton *button, gpointer data) {
+  (void)button;
+  P2Programmer *ui = data;
+  unsigned char cmd[4] = {0, 0, 0, 1};
+  unsigned char packet[60] = {0xef, 0xfe, 0x05, 0x7f, 0x74};
+  memcpy(packet + 5, cmd, 4);
+  struct sockaddr_in dst = ui->target.address;
+  dst.sin_port = htons(1025);
+  int sock = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sock < 0 || sendto(sock, packet, sizeof(packet), 0,
+                         (struct sockaddr *)&dst, sizeof(dst)) != sizeof(packet)) {
+    p2_error_dialog(GTK_WINDOW(ui->dialog), "Failed to send HL2 reboot command.");
+  } else { gtk_label_set_text(GTK_LABEL(ui->status_label), "HL2 reboot command sent."); }
+  if (sock >= 0) { close(sock); }
+}
+
 static void p2_warning_agree_toggled(GtkToggleButton *toggle, gpointer data) {
   GtkWidget *ok_button = GTK_WIDGET(data);
   gtk_widget_set_sensitive(ok_button, gtk_toggle_button_get_active(toggle));
@@ -476,7 +745,8 @@ static void p2_warning_agree_toggled(GtkToggleButton *toggle, gpointer data) {
 static void p2_program_clicked(GtkButton *button, gpointer data) {
   (void)button;
   P2Programmer *ui = (P2Programmer *)data;
-  GtkFileChooserNative *chooser = gtk_file_chooser_native_new("Select Protocol 2 RBF file",
+  GtkFileChooserNative *chooser = gtk_file_chooser_native_new(ui->protocol == ORIGINAL_PROTOCOL ? "Select HL2 RBF file" :
+    "Select Protocol 2 RBF file",
     GTK_WINDOW(ui->dialog),
     GTK_FILE_CHOOSER_ACTION_OPEN,
     "_Program",
@@ -571,18 +841,22 @@ static void p2_dialog_response(GtkDialog *dialog, gint response_id, gpointer dat
 }
 
 void p2_programmer_open(GtkWidget *parent, const DISCOVERED *radio) {
-  if (parent == NULL || radio == NULL || radio->protocol != NEW_PROTOCOL) {
+  if (parent == NULL || radio == NULL ||
+      (radio->protocol != NEW_PROTOCOL &&
+       !(radio->protocol == ORIGINAL_PROTOCOL && radio->device == DEVICE_HERMES_LITE2))) {
     return;
   }
   P2Programmer *ui = g_new0(P2Programmer, 1);
   ui->parent = parent;
+  ui->protocol = radio->protocol;
   memcpy(ui->target.mac, radio->info.network.mac_address, 6);
   ui->target.address = radio->info.network.address;
   ui->target.address.sin_port = htons(P2_PROGRAM_PORT);
   ui->target.local_address = radio->info.network.interface_address;
   g_strlcpy(ui->target.interface_name, radio->info.network.interface_name,
             sizeof(ui->target.interface_name));
-  ui->dialog = gtk_dialog_new_with_buttons("Protocol 2 Device Setup & Programming",
+  ui->dialog = gtk_dialog_new_with_buttons(radio->protocol == ORIGINAL_PROTOCOL
+    ? "Protocol 1 Device Setup & Programming" : "Protocol 2 Device Setup & Programming",
     GTK_WINDOW(parent),
     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
     "Close", GTK_RESPONSE_CLOSE,
@@ -650,6 +924,40 @@ void p2_programmer_open(GtkWidget *parent, const DISCOVERED *radio) {
   gtk_widget_set_hexpand(ui->progress, TRUE);
   gtk_grid_attach(GTK_GRID(grid), ui->progress, 0, 5, 3, 1);
   gtk_container_add(GTK_CONTAINER(content), grid);
+  if (ui->protocol == ORIGINAL_PROTOCOL) {
+    /* Keep the existing P2 layout and replace its actions with HL2 EEPROM commands. */
+    g_signal_handlers_disconnect_by_func(ui->set_ip_button, G_CALLBACK(p2_set_ip_clicked), ui);
+    g_signal_handlers_disconnect_by_func(ui->dhcp_button, G_CALLBACK(p2_dhcp_clicked), ui);
+    g_signal_connect(ui->set_ip_button, "clicked", G_CALLBACK(hl2_ip_clicked), ui);
+    g_signal_connect(ui->dhcp_button, "clicked", G_CALLBACK(hl2_dhcp_clicked), ui);
+    GtkWidget *mac_label = gtk_label_new("MAC:");
+    gtk_widget_set_halign(mac_label, GTK_ALIGN_END);
+    gtk_grid_attach(GTK_GRID(grid), mac_label, 0, 6, 1, 1);
+    GtkWidget *mac_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    char mac_prefix[16];
+    char mac_suffix[6];
+    snprintf(mac_prefix, sizeof(mac_prefix), "%02X:%02X:%02X:%02X:",
+             ui->target.mac[0], ui->target.mac[1],
+             ui->target.mac[2], ui->target.mac[3]);
+    snprintf(mac_suffix, sizeof(mac_suffix), "%02X:%02X",
+             ui->target.mac[4], ui->target.mac[5]);
+    GtkWidget *mac_fixed = gtk_label_new(mac_prefix);
+    gtk_box_pack_start(GTK_BOX(mac_box), mac_fixed, FALSE, FALSE, 0);
+    ui->mac_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(ui->mac_entry), mac_suffix);
+    gtk_entry_set_max_length(GTK_ENTRY(ui->mac_entry), 5);
+    gtk_entry_set_width_chars(GTK_ENTRY(ui->mac_entry), 5);
+    gtk_widget_set_tooltip_text(ui->mac_entry, "Editable MAC suffix: HH:HH (hexadecimal).");
+    gtk_box_pack_start(GTK_BOX(mac_box), ui->mac_entry, FALSE, FALSE, 0);
+    gtk_grid_attach(GTK_GRID(grid), mac_box, 1, 6, 1, 1);
+    ui->mac_button = gtk_button_new_with_label("Set MAC");
+    gtk_widget_set_tooltip_text(ui->mac_button, "HL2: only the last two MAC octets can be changed.");
+    gtk_grid_attach(GTK_GRID(grid), ui->mac_button, 2, 6, 1, 1);
+    g_signal_connect(ui->mac_button, "clicked", G_CALLBACK(hl2_mac_clicked), ui);
+    ui->reboot_button = gtk_button_new_with_label("Reboot HL2");
+    gtk_grid_attach(GTK_GRID(grid), ui->reboot_button, 1, 7, 2, 1);
+    g_signal_connect(ui->reboot_button, "clicked", G_CALLBACK(hl2_reboot_clicked), ui);
+  }
   g_signal_connect(ui->dialog, "delete-event", G_CALLBACK(p2_delete_event), ui);
   g_signal_connect(ui->dialog, "destroy", G_CALLBACK(p2_dialog_destroyed), ui);
   g_signal_connect(ui->dialog, "response", G_CALLBACK(p2_dialog_response), ui);

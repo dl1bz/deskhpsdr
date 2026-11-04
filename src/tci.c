@@ -162,6 +162,7 @@ typedef struct _client {
   int tx_audio_session;
   int tx_audio_enabled;
   int rtty_enabled;             // Native RTTY extension explicitly enabled by this client
+  int rtty_line_length;         // Client-specific TX line length (40..69)
   gint64 tx_chrono_next_us;
   guint tx_chrono_tick;          // sample-rate phase accumulator (Hz units)
   int tx_audio_input_rate;       // actual TX_AUDIO wire rate from frame header
@@ -5030,6 +5031,7 @@ static void tci_cmd_rtty_enable(CLIENT *client, const TCI_CMD *cmd) {
   }
   g_mutex_lock(&tci_mutex);
   if (enable) {
+    /* The configured line length belongs to this client, not the engine. */
     client->rtty_enabled = 1;
   } else {
     client->rtty_enabled = 0;
@@ -5138,11 +5140,27 @@ static void tci_send_rtty_start_crlf(CLIENT *client) {
   tci_send_text(client, msg);
 }
 
+static void tci_send_rtty_line_length(CLIENT *client) {
+  char msg[MAXMSGSIZE];
+  snprintf(msg, sizeof(msg), "%s:%d;", tci_cmd_name("rtty_line_length", "RTTY_LINE_LENGTH"),
+           client->rtty_line_length);
+  tci_send_text(client, msg);
+}
+
 static void tci_send_rtty_idle_timeout(CLIENT *client) {
   char msg[MAXMSGSIZE];
   snprintf(msg, sizeof(msg), "%s:%d;", tci_cmd_name("rtty_idle_timeout", "RTTY_IDLE_TIMEOUT"),
            rtty_engine_get_idle_timeout());
   tci_send_text(client, msg);
+}
+
+static void tci_cmd_rtty_line_length(CLIENT *client, const TCI_CMD *cmd) {
+  if (cmd->argc >= 1 && cmd->argv[0] != NULL && cmd->argv[0][0] != '\0' &&
+      tci_rtty_set_allowed(client)) {
+    int columns = tci_int(cmd->argv[0], client->rtty_line_length);
+    client->rtty_line_length = MAX(40, MIN(69, columns));
+  }
+  tci_send_rtty_line_length(client);
 }
 
 static void tci_cmd_rtty_baud(CLIENT *client, const TCI_CMD *cmd) {
@@ -5251,6 +5269,9 @@ static void tci_cmd_rtty_start(CLIENT *client, const TCI_CMD *cmd) {
   }
   tci_rtty_owner = client;
   g_mutex_unlock(&tci_mutex);
+  if (!rtty_engine_is_active()) {
+    rtty_engine_set_line_length(client->rtty_line_length);
+  }
   started = rtty_engine_start();
   t_print("TCI%d rtty_start%s\n", client->seq, started ? "" : " (already active)");
 }
@@ -5287,6 +5308,9 @@ static void tci_cmd_rtty_text(CLIENT *client, const TCI_CMD *cmd) {
   }
   tci_rtty_owner = client;
   g_mutex_unlock(&tci_mutex);
+  if (!rtty_engine_is_active()) {
+    rtty_engine_set_line_length(client->rtty_line_length);
+  }
   raw = g_string_new(cmd->argv[0]);
   decoded = tci_rtty_decode_text(raw->str);
   g_string_free(raw, TRUE);
@@ -5460,6 +5484,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "rtty_uos",          0,  1, tci_cmd_rtty_uos },
   { "rtty_fill",         0,  1, tci_cmd_rtty_fill },
   { "rtty_start_crlf",   0,  1, tci_cmd_rtty_start_crlf },
+  { "rtty_line_length",  0,  1, tci_cmd_rtty_line_length },
   { "rtty_idle_timeout",  0,  1, tci_cmd_rtty_idle_timeout },
   { "rtty_start",        0,  0, tci_cmd_rtty_start },
   { "rtty_text",         1,  1, tci_cmd_rtty_text },
@@ -5706,6 +5731,7 @@ static void tci_init_client(CLIENT *client, int fd, int seq) {
   client->tx_audio_session = 0;
   client->tx_audio_enabled = 0;
   client->rtty_enabled = 0;
+  client->rtty_line_length = 65;
   client->text_rx_buf = NULL;
   client->text_rx_len = 0;
   client->text_rx_size = 0;

@@ -44,6 +44,8 @@ void rtty_engine_set_fill(RTTY_FILL_MODE fill);
 RTTY_FILL_MODE rtty_engine_get_fill(void);
 void rtty_engine_set_start_crlf(int enabled);
 int rtty_engine_get_start_crlf(void);
+void rtty_engine_set_line_length(int columns);
+int rtty_engine_get_line_length(void);
 void rtty_engine_set_idle_timeout(int seconds);
 int rtty_engine_get_idle_timeout(void);
 int rtty_engine_start(void);

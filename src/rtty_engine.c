@@ -36,6 +36,9 @@
 #include "rtty_engine.h"
 
 #define RTTY_QUEUE_SIZE 32768
+#define RTTY_LINE_COLUMNS_DEFAULT 65
+#define RTTY_LINE_COLUMNS_MIN 40
+#define RTTY_LINE_COLUMNS_MAX 69
 #define RTTY_LTRS 0x1f
 #define RTTY_FIGS 0x1b
 #define RTTY_SPACE 0x04
@@ -64,6 +67,10 @@ static uint8_t queue[RTTY_QUEUE_SIZE];
 static int q_in = 0;
 static int q_out = 0;
 static SHIFT_STATE encoder_shift = SHIFT_LTRS;
+static int line_columns = 0;
+/* Last explicit line break (CR or LF), for paired-break normalization. */
+static int last_line_break = 0;
+static int cfg_line_length = RTTY_LINE_COLUMNS_DEFAULT;
 
 static double cfg_baud = 45.4545454545;
 static int cfg_shift = 170;
@@ -238,9 +245,33 @@ static int encode_char_internal(char input) {
 static int encode_char(char input) {
   int q_checkpoint = q_in;
   SHIFT_STATE shift_checkpoint = encoder_shift;
-  if (encode_char_internal(input)) {
+  int column_checkpoint = line_columns;
+  int break_checkpoint = last_line_break;
+  char c = (char)toupper((unsigned char)input);
+  /* Normalize CR/LF and LF/CR to a single physical CR+LF, including
+   * pairs split across rtty_text commands.  Repeated CR or repeated LF
+   * still represent distinct line breaks.
+   */
+  if (c == '\r' || c == '\n') {
+    if (last_line_break != 0 && last_line_break != c) {
+      last_line_break = 0;
+      return 1;
+    }
+    if (!encode_char_internal('\n')) { goto rollback; }
+    line_columns = 0;
+    last_line_break = c;
     return 1;
   }
+  last_line_break = 0;
+  if (line_columns >= cfg_line_length) {
+    if (!encode_char_internal('\n')) { goto rollback; }
+    line_columns = 0;
+  }
+  if (encode_char_internal(input)) {
+    line_columns++;
+    return 1;
+  }
+rollback:
   /*
    * A single input character may need multiple ITA2 symbols (for example
    * FIGS+digit or SPACE+LTRS with UOS).  Never leave a partial character in
@@ -248,6 +279,8 @@ static int encode_char(char input) {
    */
   q_in = q_checkpoint;
   encoder_shift = shift_checkpoint;
+  line_columns = column_checkpoint;
+  last_line_break = break_checkpoint;
   return 0;
 }
 
@@ -331,6 +364,10 @@ SETTER(rtty_engine_set_fill, RTTY_FILL_MODE, cfg_fill,
 GETTER(rtty_engine_get_fill, RTTY_FILL_MODE, cfg_fill)
 SETTER(rtty_engine_set_start_crlf, int, cfg_start_crlf, value ? 1 : 0)
 GETTER(rtty_engine_get_start_crlf, int, cfg_start_crlf)
+SETTER(rtty_engine_set_line_length, int, cfg_line_length,
+       value < RTTY_LINE_COLUMNS_MIN ? RTTY_LINE_COLUMNS_MIN :
+       value > RTTY_LINE_COLUMNS_MAX ? RTTY_LINE_COLUMNS_MAX : value)
+GETTER(rtty_engine_get_line_length, int, cfg_line_length)
 SETTER(rtty_engine_set_idle_timeout, int, cfg_idle_timeout, (value >= 1 && value <= 300) ? value : cfg_idle_timeout)
 GETTER(rtty_engine_get_idle_timeout, int, cfg_idle_timeout)
 
@@ -364,6 +401,8 @@ static int rtty_engine_start_locked(void) {
   frame_active = 0;
   frame_bit = 0;
   encoder_shift = SHIFT_LTRS;
+  line_columns = 0;
+  last_line_break = 0;
   q_in = q_out = 0;
   atomic_store_explicit(&CAT_rtty_is_active, 1, memory_order_release);
   if (cfg_start_crlf) {
